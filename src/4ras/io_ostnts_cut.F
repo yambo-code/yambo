@@ -47,7 +47,6 @@
  if (ioOSTNTS_cut/=0) goto 1
 
  sec_size=11
- if(n_spin.eq.2) sec_size=10
  if (any((/io_sec(io_db,:)==1/))) then
 
    ioOSTNTS_cut=io_header(io_db,R_LATT=.true.,WF=.true.)
@@ -58,7 +57,7 @@
 &       VAR=" X band range           :",I1=X%ib,CHECK=.true.,OP=(/">=","<="/))
    call io_elemental(io_db,UNIT=HARTREE,&
 &       VAR=" X e/h energy range [ev]:",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/))
-   if(n_spin.eq.2) call io_elemental(io_db,DB_I0=db_nspin,&
+   call io_elemental(io_db,DB_I0=db_nspin,&
 &       VAR=" Spin multiplicity      :",I0=n_spin,CHECK=.true.,OP=(/"=="/))
    call io_elemental(io_db,DB_I0=db_nbm,&
 &       VAR=" Metallic bands         :",I0=Xen%nbm,CHECK=.true.,OP=(/"=="/))

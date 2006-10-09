@@ -67,7 +67,6 @@
 !============
 !
  
-!call wf_load(0, 1, X%ib, (/1,Xk%nibz/), (/1,n_spinor/), &
  call wf_load(0, 1, X%ib, (/1,Xk%nibz/), space='G', title='-Oscillators/G space')
 
  allocate( kg(3,wf_ng) ) 
@@ -105,10 +104,9 @@
    enddo
    call setup_optcut( ik )
 
-   do i_spin   = 1, n_spin
-
-     do iv = X%ib(1), Xen%nbm
-       if (.not.px%i2p(ik,iv)) cycle
+   do iv = X%ib(1), Xen%nbm
+     if (.not.px%i2p(ik,iv)) cycle
+     do i_spin   = 1, n_spin
        ivfft=wf_state(iv,ik,i_spin)
        do ic = Xen%nbf+1, X%ib(2)
          omega = Xen%E(iv,ik,i_spin)-Xen%E(ic,ik,i_spin)
@@ -122,9 +120,9 @@
 
           Xcut_q0grad(:,ic,iv,ik,i_spin) = PS(:)/omega
        enddo ! cond. bands
-       call live_timing(steps=1)
-     enddo   ! valence bands
-   enddo     ! spinors
+     enddo     ! spinors
+     call live_timing(steps=1)
+   enddo   ! valence bands
  enddo       ! k-points
 
  call live_timing
@@ -135,14 +133,14 @@
  deallocate(kg)
  call WF_free()
  do i_spin = 1,n_spin
- call pp_redux_wait(Xcut_q0grad(:,:,:,:,i_spin))
+   call pp_redux_wait(Xcut_q0grad(:,:,:,:,i_spin))
  enddo
-!call pp_redux_wait(Xcut_q0grad)
 
  if (master_node) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=io_db)
  io_err=ioOSTNTS_cut(X,Xen,io_db)
 
 1 continue
+! Note: this order is inefficient
  allocate(Xcut_rhoq0(X%ib(2),Xen%nbm,Xk%nbz,n_spin))
  call mem_est('Xcut_rhoq0',(/ product( (/X%ib(2),Xen%nbm,Xk%nbz,n_spin/) ) /) )
  Xcut_rhoq0=(0.,0.)

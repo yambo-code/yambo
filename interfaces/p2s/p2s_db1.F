@@ -136,11 +136,11 @@
  if(.not.l_inversion) call msg("s","Inversion ... not found.")
 
  nsym=nsym
- if(n_spin.eq.1) then
+ if(n_spinor.eq.1) then
    i_time_rev = 1  ! Turn time reversal on
    if (l_inversion) nsym=nsym/2
    call msg("s","Time reversal being used.")
- else ! spinor for now
+ else ! spinor for now: really spin orbit present
    i_time_rev = 0
    call msg("s","Time reversal not being used.")
  endif
@@ -247,10 +247,10 @@
 
  call pw_eigenvalues(pwunit)
 
- allocate( en%E(en%nb,k%nibz,max(n_spin,n_sp_pol)) )
+ allocate( en%E(en%nb,k%nibz,n_spin) )
 ! PW energies in Ry
  en%E(:,:,1) = eig( 1:en%nb, 1:k%nibz )/2.0_DP
- if(n_spin.eq.2) en%E(:,:,2) = en%E(:,:,1)
+ if(n_spinor.eq.2) en%E(:,:,2) = en%E(:,:,1)
  call msg('l','done')
 
  call msg('s',' :: Electrons             :',default_nel)

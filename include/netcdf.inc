@@ -14,6 +14,21 @@
       integer nf_float
       integer nf_real
       integer nf_double
+      integer nf_ubyte
+      integer nf_ushort
+      integer nf_uint
+      integer nf_int64
+      integer nf_uint64
+      integer nf_string
+
+!
+! the user doesn't use these classes of user defined type, but they
+! are returned by nc_inq_user_type.
+!
+      integer nf_vlen
+      integer nf_opaque
+      integer nf_enum
+      integer nf_compound
 
       parameter (nf_byte = 1)
       parameter (nf_int1 = nf_byte)
@@ -24,6 +39,16 @@
       parameter (nf_float = 5)
       parameter (nf_real = nf_float)
       parameter (nf_double = 6)
+      parameter (nf_ubyte = 7)
+      parameter (nf_ushort = 8)
+      parameter (nf_uint = 9)
+      parameter (nf_int64 = 10)
+      parameter (nf_uint64 = 11)
+      parameter (nf_string = 12)
+      parameter (nf_vlen = 13)
+      parameter (nf_opaque = 14)
+      parameter (nf_enum = 15)
+      parameter (nf_compound = 16)
 
 !
 ! default fill values:
@@ -37,6 +62,11 @@
       real              nf_fill_float
       real              nf_fill_real
       doubleprecision   nf_fill_double
+      integer           nf_fill_ubyte
+      integer           nf_fill_ushort
+!      real              nf_fill_uint
+!      real              nf_fill_int64
+!      real              nf_fill_uint64
 
       parameter (nf_fill_byte = -127)
       parameter (nf_fill_int1 = nf_fill_byte)
@@ -47,6 +77,8 @@
       parameter (nf_fill_float = 9.9692099683868690e+36)
       parameter (nf_fill_real = nf_fill_float)
       parameter (nf_fill_double = 9.9692099683868690e+36)
+      parameter (nf_fill_ubyte = 255)
+      parameter (nf_fill_ushort = 65535)
 
 !
 ! mode flags for opening and creating a netcdf dataset:
@@ -64,6 +96,8 @@
       integer nf_align_chunk
       integer nf_format_classic
       integer nf_format_64bit
+      integer nf_format_netcdf4
+      integer nf_format_netcdf4_classic
 
       parameter (nf_nowrite = 0)
       parameter (nf_write = 1)
@@ -78,6 +112,8 @@
       parameter (nf_align_chunk = -1)
       parameter (nf_format_classic = 1)
       parameter (nf_format_64bit = 2)
+      parameter (nf_format_netcdf4 = 3)
+      parameter (nf_format_netcdf4_classic = 4)
 
 !
 ! size argument for defining an unlimited dimension:
@@ -100,10 +136,10 @@
       integer nf_max_name
       integer nf_max_var_dims
 
-      parameter (nf_max_dims = 512)
-      parameter (nf_max_attrs = 4096)
-      parameter (nf_max_vars = 4096)
-      parameter (nf_max_name = 128)
+      parameter (nf_max_dims = 1024)
+      parameter (nf_max_attrs = 8192)
+      parameter (nf_max_vars = 8192)
+      parameter (nf_max_name = 256)
       parameter (nf_max_var_dims = nf_max_dims)
 
 !
@@ -140,6 +176,7 @@
       integer nf_enomem
       integer nf_evarsize
       integer nf_edimsize
+      integer nf_etrunc
 
       parameter (nf_noerr = 0)
       parameter (nf_ebadid = -33)
@@ -172,6 +209,7 @@
       parameter (nf_enomem = -61)
       parameter (nf_evarsize = -62)
       parameter (nf_edimsize = -63)
+      parameter (nf_etrunc = -64)
 !
 ! error handling modes:
 !
@@ -326,6 +364,11 @@
 !                         (integer             ncid,
 !                          integer             unlimdimid)
       external        nf_inq_unlimdim
+
+      integer         nf_inq_format
+!                         (integer             ncid,
+!                          integer             format)
+      external        nf_inq_format
 
 !
 ! dimension routines:
@@ -1243,12 +1286,12 @@
 !     
 !     advisory maximums:
 !     
-      parameter(maxncop = 32)
-      parameter(maxncdim = 100)
-      parameter(maxncatt = 2000)
-      parameter(maxncvar = 2000)
+      parameter(maxncop = 64)
+      parameter(maxncdim = 1024)
+      parameter(maxncatt = 8192)
+      parameter(maxncvar = 8192)
 !     not enforced 
-      parameter(maxncnam = 128)
+      parameter(maxncnam = 256)
       parameter(maxvdims = maxncdim)
 
 !     

@@ -4,7 +4,7 @@
  *
  *   Purpose:   C++ class interface for netCDF
  *
- *   $Header: /upc/share/CVS/netcdf-3/cxx/netcdfcpp.h,v 1.8 2004/04/30 10:38:39 ed Exp $
+ *   $Header: /upc/share/CVS/netcdf-3/cxx/netcdfcpp.h,v 1.9 2005/05/02 22:38:42 russ Exp $
  *********************************************************************/
 
 #ifndef NETCDF_HH
@@ -43,7 +43,10 @@ class NcFile
 
     enum FileFormat {
        Classic,         // netCDF classic format (i.e. version 1 format)
-       Offset64Bits     // netCDF 64-bit offset format
+       Offset64Bits,    // netCDF 64-bit offset format
+       Netcdf4,		// netCDF-4 using HDF5 format
+       Netcdf4Classic,	// netCDF-4 using HDF5 format using only netCDF-3 calls
+       BadFormat
     };
 
     NcFile( const char * path, FileMode = ReadOnly ,
@@ -104,6 +107,7 @@ class NcFile
 
     NcBool set_fill( FillMode = Fill );    // set fill-mode
     FillMode get_fill( void ) const;       // get fill-mode
+    FileFormat get_format( void ) const;   // get format version
 
     NcBool sync( void );                   // synchronize to disk
     NcBool close( void );                  // to close earlier than dtr

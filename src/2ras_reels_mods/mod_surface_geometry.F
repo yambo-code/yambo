@@ -140,9 +140,9 @@ end subroutine init_surface
 
 !     Test for inversion symmetry, if time reversal not used
 
-        inv = reshape( (/ 1, 0, 0, &
-&                         0, 1, 0, &
-&                         0, 0, 1 /), (/ 3,3 /) )
+        inv = reshape( (/-1, 0, 0, &
+&                         0,-1, 0, &
+&                         0, 0,-1 /), (/ 3,3 /) )
         do is = 1, nsym ! should be over real syms
           forall(i=1:3,j=1:3) sym1(i,j) = abs(dl_sop(i,j,is)-inv(i,j))
           if((all(sym1.lt.0.001).and.i_time_rev.eq.0).or. &

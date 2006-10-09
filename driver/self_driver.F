@@ -69,7 +69,10 @@
  infile=inf
  call std_presets(instr,ind,od,js)
 #ifdef PJ_RAS
- call ras_reels_presets()
+ call ras_presets()
+#endif
+#ifdef PJ_REELS
+ call reels_presets()
 #endif
  call it_reset(1)
  call bz_samp_reset(Xk)  

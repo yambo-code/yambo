@@ -25,7 +25,7 @@
  use qexml_module
  use qexml_data
  use com,                   ONLY : msg, error
- use electrons,             ONLY : levels, default_nel, n_spin, n_sp_pol
+ use electrons,             ONLY : levels, default_nel, n_spin, n_sp_pol, n_spinor
  use R_lattice,             ONLY : bz_samp, ng_vec, g_vec
  use D_lattice,             ONLY : nsym, i_time_rev, i_space_inv, dl_sop, &
 &                                  DL_vol, a, alat, default_Tel
@@ -39,7 +39,7 @@
 !ws
  real(SP)                       :: lsop(3,3), acopy(3,3)
  real(SP)                       :: b(3,3)
- integer                        :: i1, ik, ierr, isym(3,3,48), nspinpw, n_spinor
+ integer                        :: i1, ik, ierr, isym(3,3,48), nspinpw
  logical                        :: l_identity, l_inversion
  character(lchlen)              :: lch
 
@@ -154,11 +154,11 @@
  if(l_inversion) call msg("s","Inversion ... found")
  if(.not.l_inversion) call msg("s","Inversion ... not found.")
 
- if(n_spin.eq.1) then
+ if(n_spinor.eq.1) then
    i_time_rev = 1  ! Turn time reversal on
    nsym=nsym/2
    call msg("s","Time reversal being used.")
- else ! spinor for now
+ else ! spinor for now: really means spin orbit coupling...
    i_time_rev = 0
    nsym=nsym
    call msg("s","Time reversal not being used.")
@@ -292,6 +292,18 @@
      call msg('s',trim(lch))
    endif
    call qexml_read_gk(ik, npwk=npwk_, index=index_, ierr=ierr)
+
+!>>>DEBUG
+! These lines are needed if using gkvector files from multiple runs,
+! patched using Perl script and modified qexml.F.
+!  kshift = k%nibz ! default
+!  kshift = 10
+!  if(ik.gt.kshift) then
+!    call qexml_read_gk(ik, ikgk=ik-kshift, npwk=npwk_, index=index_, ierr=ierr)   else
+!    call qexml_read_gk(ik, npwk=npwk_, index=index_, ierr=ierr)
+!  endif
+!<<<DEBUG
+
    if (ierr.ne.0) call errore('qexml_read_gk','IOTK error',ABS(ierr))
    if(npwk_.gt.wf_ng_disk) then
       call msg('s',' :: RL vectors        (WF):',wf_ng)
@@ -317,7 +329,7 @@
  call msg('s',' :: Lattice factors [a.u.]:',alat)
  call msg('s',' :: K-points              :',k%nibz)
  call msg('s',' :: Bands                 :',en%nb)
- call msg('s',' :: Spinor components     :',n_spin)
+ call msg('s',' :: Spinor components     :',n_spinor)
  call msg('s',' :: Spin polarizations    :',n_sp_pol)
  if(i_time_rev==1) call msg('s',' :: Symmmetries  [spatial]:',nsym/2)
  if(i_time_rev==1) call msg('s',' :: Symmmetries    [T-rev]:',nsym/2*i_time_rev)

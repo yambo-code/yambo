@@ -59,10 +59,6 @@ subroutine init_bulk(defs)
 &         E_unit,verb_level=V_more  )
   call it(defs,'BlkBroad', '[RAS] Broadening of bulk eps ', bbroad, E_unit )
 
-  bshift = bshift/HARTREE
-  bbroad = bbroad/HARTREE
-
-  lbulkshift = merge(.true., .false., bshift.gt.0.001)
   return
 end subroutine init_bulk
 
@@ -95,7 +91,7 @@ end subroutine init_bulk
     endif
 
 !   Test on inputs
-    if (index(btype,'KK') > 0 .and. bbroad < 0.0001) then
+    if (index(btype,'KK') > 0 .and. bbroad < 0.000001) then
       errmsg='No broadening specified for KK of bulk eps.'
       lerr = .true.
       return
@@ -191,6 +187,7 @@ end subroutine init_bulk
     !
     ! Rigid shift of the bulk spectrum
     !
+    lbulkshift = merge(.true., .false., bshift.gt.0.00001)
     if(lbulkshift) call shift_bulkeps
     !
     ! Transform and regrid

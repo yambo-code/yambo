@@ -1,0 +1,29 @@
+
+ These sources have been slightly adpated from Abinit 4.6.5.
+
+ xcspol: XC_LDA_C_PW
+ LDA or LSD, Teter Pade parametrization (4/93, published in S. Goedecker, 
+ M. Teter, J. Huetter, Phys.Rev.B54, 1703 (1996)), 
+ which reproduces Perdew-Wang (which reproduces Ceperley-Alder!).
+
+ xcpzca: XC_LDA_C_PZ
+ LDA, Perdew-Zunger-Ceperley-Alder (no spin-polarization)
+
+ xcwign: XC_LDA_C_WIGNER
+ LDA, Wigner functional (no spin-polarization)
+
+ xchelu: XC_LDA_C_HL
+ LDA, Hedin-Lundqvist functional (no spin-polarization)
+
+ xcxalp: XC_LDA_C_XALPHA
+ LDA, "X-alpha" functional (no spin-polarization)
+ 
+ Note that, in order to get LDA exchange and correlation separated
+
+ Exx = -efac*rsm1
+ Vxx = -vfac*rsm1
+
+ in xcpzca xcwign xchelu xcxalp. While in xcspol xctetr there is not
+ such a type of distinction.
+
+ Andrea (9/8/06)

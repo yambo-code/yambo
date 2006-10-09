@@ -1,0 +1,279 @@
+!
+! Copyright (C) 2000-2005 A. Marini and the SELF team 
+!         http://www.fisica.uniroma2.it/~self
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+ subroutine acfdt_tot_energy(Xen,Xk,q,X)
+!=======================================
+ use pars,           ONLY:SP,schlen,HARTREE,pi,DP
+ use ACFDT,          ONLY:ACFDT_n_freqs,ACFDT_n_lambda,ACFDT_E_range
+ use FFT_m,          ONLY:fft_size
+ use frequency,      ONLY:w_samp,W_reset
+ use wave_func,      ONLY:wf_load,WF_free
+ use memory_m,       ONLY:mem_est
+ use timing,         ONLY:live_timing
+ use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
+ use par_indexes_m,  ONLY:par_indexes
+ use R_lattice,      ONLY:bz_samp,bare_qpg,nqibz
+ use electrons,      ONLY:levels,nel
+ use D_lattice,      ONLY:DL_vol
+ use com,            ONLY:msg
+ use X_m,            ONLY:X_t,X_alloc,X_mat
+ use QP_m,           ONLY:QP_nb,QP_nk,QP_n_states,QP_table,QP_state,QP_Sx,QP_Vxc
+ use collision,      ONLY:ggwinfo,collision_reset
+ use matrix_operate, ONLY:mat_dia_inv,INV,USE_LK
+ use IO_m,           ONLY:io_control,RD_CL_IF_END,OP_RD
+ use xc_functionals, ONLY:E_xc,XC_EXCHANGE_CORRELATION,XC_LDA_C_KP,XC_EXCHANGE,&
+&                         XC_LDA_X,GS_xc_FUNCTIONAL,XC_CORRELATION
+ implicit none
+ type(levels) ::Xen 
+ type(bz_samp)::Xk,q
+ type(X_t)    ::X
+!
+!ws
+ integer  ::i1,ib,ik
+ real(SP) ::Er(9),rfac(4)
+ character(9)     ::ttl(4)
+ character(schlen)::ch
+!
+! Xo
+!
+ type(w_samp)      ::Xw
+ integer           ::iqibz,i_err,ID,io_err
+ integer, external ::X_em1,ioX
+ complex(SP), allocatable ::X_s(:,:),tddftk(:,:)
+ complex(DP), allocatable ::dX(:)
+!
+! ACFDT
+!
+ integer       ::iw,il
+ real(SP)      ::Ex_LDA,Ec_LDA,dEc_LDA,ACFDT_EXX,ACFDT_Ec,sug_E_rng
+ type(ggwinfo)    ::isc
+ type(pp_indexes) ::plw
+ real(SP), allocatable :: lambda(:)
+ real(SP), allocatable :: lambda_weight(:)
+ real(SP), allocatable :: freq(:)
+ real(SP), allocatable :: freq_weight(:)
+!
+! DFT 
+!
+ real(SP),allocatable  :: rho(:)
+#if defined DP
+ real(DP):: ddot
+#else
+ real(SP):: sdot
+#endif
+!DEBUG >
+! real(SP),allocatable :: rho(:),E_DFT(:,:)
+! real(SP),   external :: expw,ecpw,decpw
+!DEBUG <
+
+ call section('*','ACFDT Total Energy')
+!=======================================
+ call collision_reset(isc)
+ call pp_indexes_reset(plw)
+
+ call msg('s','[ACFDT] LDA Total energy')
+!-----------------------------------------
+ call wf_load(0,1,(/1,Xen%nbm/),(/1,Xk%nibz/),title='-Density')
+
+ allocate(E_xc(fft_size),rho(fft_size))
+ call el_density(Xen,Xk,rho,.false.)
+
+ call xc_lda_driver(Xen,Xk,XC_EXCHANGE_CORRELATION,XC_LDA_C_KP,0)
+#if defined DP
+ dEc_LDA=ddot(fft_size,rho,1,E_xc,1)
+#else 
+ dEc_LDA=sdot(fft_size,rho,1,E_xc,1)
+#endif
+
+ call xc_lda_driver(Xen,Xk,XC_EXCHANGE,XC_LDA_X,0)
+#if defined DP
+ Ex_LDA=ddot(fft_size,rho,1,E_xc,1)
+#else 
+ Ex_LDA=sdot(fft_size,rho,1,E_xc,1)
+#endif
+
+ call xc_lda_driver(Xen,Xk,XC_CORRELATION,GS_xc_FUNCTIONAL,0)
+#if defined DP
+ Ec_LDA=ddot(fft_size,rho,1,E_xc,1)
+#else 
+ Ec_LDA=sdot(fft_size,rho,1,E_xc,1)
+#endif
+
+ deallocate(E_xc,rho)
+ call WF_free()
+!
+ call section('+','Gauss-Legendre grids ([E]nergy/[L]ambda)')
+!============================================================
+!
+!GL-grid setup (energy)
+!======================
+ allocate(freq(2*ACFDT_n_freqs+1),freq_weight(2*ACFDT_n_freqs+1))
+
+ call gauss_leg_grid(0.,ACFDT_E_range(1),freq(:ACFDT_n_freqs),&
+&                    freq_weight(:ACFDT_n_freqs),ACFDT_n_freqs)
+
+ call gauss_leg_grid(ACFDT_E_range(1),ACFDT_E_range(2),freq(ACFDT_n_freqs+1:),&
+&                    freq_weight(ACFDT_n_freqs+1:),ACFDT_n_freqs)
+
+ ACFDT_n_freqs=2*ACFDT_n_freqs+1
+
+ freq(ACFDT_n_freqs)=1.2*freq(ACFDT_n_freqs-1)
+ freq_weight(ACFDT_n_freqs)=0.
+!
+!GL-grid setup (coupling)
+!========================
+ allocate(lambda(ACFDT_n_lambda),lambda_weight(ACFDT_n_lambda))
+ call gauss_leg_grid(0.,1.,lambda,lambda_weight,ACFDT_n_lambda)
+ lambda_weight(:)=lambda_weight(:)*2.*pi
+!
+! Report
+!========
+ sug_E_rng=(nel/DL_vol)**(2./3.)*HARTREE
+ call msg('r','[E] Energy borders [ev][suggested]:',(/25.*sug_E_rng,250*sug_E_rng/))
+ call msg('r','                            [used]:',(/ACFDT_E_range*HARTREE/))
+ call msg('r','    Energy points                 :',(/(ACFDT_n_freqs-1)/2+1,ACFDT_n_freqs/))
+ call msg('r','    First point               [ev]:',(/freq(1)*HARTREE/))
+ call msg('nr','[L] Pts(1-5):',(/lambda(1:min(5,ACFDT_n_lambda))/))
+ call msg(' r','    Wgs(1-5):',(/lambda_weight(1:min(5,ACFDT_n_lambda))/))
+ call msg(' r','    Points  :',(/ACFDT_n_lambda/))
+
+ call section('=','Non-interacting Response Function [Xo]')
+!==========================================================
+ call X_checks(Xen,X)
+ do iqibz=1,nqibz
+   X%iq=iqibz
+   X%ordering='c'
+   call W_reset(Xw)
+   Xw%n=ACFDT_n_freqs
+   Xw%er=0.
+   Xw%dr=(/freq(1),freq(ACFDT_n_freqs)/)
+   allocate(Xw%p(ACFDT_n_freqs))
+   Xw%p(:)=(0.,1.)*freq(:)
+   call mem_est("W-p",(/ACFDT_n_freqs/))
+   i_err=X_em1(Xen,Xk,q,X,Xw,iqibz>1)
+   if (i_err==0) exit
+ enddo
+
+ call section('=','Correlation Energy Loop')
+!===========================================
+ call msg('r','[Ec] RL components :',X%ng)
+
+ allocate(X_s(X%ng,X%ng),isc%gamp(1,X%ng),tddftk(X%ng,X%ng),dX(X%ng))
+ call mem_est("X_WS",(/2*size(X_s)+3*X%ng/))
+ call X_alloc('X',(/X%ng,X%ng,ACFDT_n_freqs/))
+
+ ACFDT_Ec=0.
+
+ call par_indexes(plw,(/ACFDT_n_lambda,ACFDT_n_freqs/))
+ call live_timing('Ec',plw%stps(myid+1)*q%nibz)
+!
+! X I/O (section 1)
+!
+ call io_control(ACTION=OP_RD,SEC=(/1/),ID=ID)
+ io_err=ioX(X,Xw,ID)
+
+ do iqibz=1,q%nibz
+!
+! X I/O
+!
+   call io_control(ACTION=RD_CL_IF_END,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
+   io_err=ioX(X,Xw,ID)
+
+   isc%qs(2)=iqibz
+   call scatterGamp(isc,'x')
+
+   do il=1,ACFDT_n_lambda
+     do iw=1,ACFDT_n_freqs
+       if (.not.plw%i2p(il,iw)) cycle
+!
+! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(gp)*Lambda]
+!
+       do i1=1,X%ng 
+         tddftk(:,i1)=-X_mat(:,i1,iw)*4.*pi*lambda(il)/bare_qpg(iqibz,i1)**2.
+         tddftk(i1,i1)=tddftk(i1,i1)+1.
+       enddo
+       call mat_dia_inv(INV,USE_LK,tddftk)
+       X_s=matmul(tddftk,X_mat(:,:,iw))
+       forall(i1=1:X%ng) dX(i1)=(X_s(i1,i1)-X_mat(i1,i1,iw))*4.*pi*isc%gamp(1,i1)
+       ACFDT_Ec=ACFDT_Ec-q%nstar(iqibz)*lambda_weight(il)*freq_weight(iw)*sum(dX)
+       call live_timing(steps=1)
+     enddo
+   enddo
+ enddo
+ call pp_redux_wait(ACFDT_Ec)
+ call live_timing
+!
+! Partial CLEAN
+!
+ call X_alloc('X')
+ call collision_reset(isc)
+ call pp_indexes_reset(plw)
+ deallocate(X_s,tddftk,dX)
+ call mem_est("X_WS")
+
+! Exchange Energy (EXX)
+!-----------------------------------------
+ QP_nb=Xen%nbm
+ QP_nk=Xk%nibz
+ if (allocated(QP_state)) deallocate(QP_state)
+ allocate(QP_state(QP_nb,QP_nk))
+ QP_state=.TRUE.
+
+ call QP_xxvxc(Xen,Xk,Xk,q) 
+
+ ACFDT_EXX=0.
+
+ do i1=1,QP_n_states
+   ib=QP_table(i1,1)
+   ik=QP_table(i1,3)
+   ACFDT_EXX=ACFDT_EXX+Xen%f(ib,ik,1)*Xk%weights(ik)*QP_Sx(i1)
+ enddo
+ ACFDT_EXX=ACFDT_EXX/DL_vol/2._SP
+
+ call section('=','Summary')
+!---------------------------
+ Er(:4)=(/Ex_LDA,ACFDT_EXX*DL_vol,Ec_LDA,ACFDT_Ec*DL_vol/)
+ Er(5)=Er(1)+Er(3)
+ Er(6)=Er(2)+Er(4)
+ Er(7)=dEc_LDA
+ Er(8)=Er(5)+Er(7)
+ Er(9)=Er(6)+Er(7)
+ ttl=(/'[meV/Vol]',' [eV/Vol]','[mHa/Vol]',' [mHa/el]'/)
+ rfac=(/HARTREE*1000.d0/DL_vol,HARTREE/dble(nel),&
+&       1000.d0/dble(DL_vol),1000.d0/dble(nel)/)
+ do i1=1,4
+  write (ch,'(2a)') ttl(i1),' Ex         LDA-EXX    :'
+  call msg('r',trim(ch),Er(1:2)*rfac(i1))
+  call msg('r','          Ec         LDA-Rpa    :',Er(3:4)*rfac(i1))
+  call msg('r','          Exc        LDA-EXX/Rpa:',Er(5:6)*rfac(i1))
+  call msg('r','          HEGc(orrection)       :',(/Er(7)*rfac(i1)/))
+  call msg('rn','          Exc+HEGc   LDA-EXX/Rpa:',Er(8:9)*rfac(i1))
+ enddo
+!
+! CLEAN
+!
+ deallocate(freq,freq_weight,lambda,lambda_weight)
+ deallocate(QP_Sx,QP_Vxc,QP_table,QP_state)
+ deallocate(Xw%p)
+ call mem_est("QP_table QP_state QP_Sx QP_Vxc W-p")
+
+ end subroutine
+

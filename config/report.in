@@ -1,0 +1,22 @@
+
+# @PACKAGE_STRING@
+# =================================================================
+# system is @build_cpu@@@build_os@
+# Source in @abs_top_srcdir@
+# Targets in @prefix@/bin 
+# -----------------------------------------------------------------
+# Double precision   [@enable_dp@] Redundant compilation [@enable_debug@] MPI [@mpibuild@]  
+# NETCDF(Large Files)[@netcdf@](@enable_largedb@) IoTK [@compile_p2s@]
+# Built-in BLAS [@compile_blas@] Built-in LAPACK [@compile_lapack@] SCALAPACK [@enable_scalapack@]
+# @FFT_DESCRIPTION@
+# -----------------------------------------------------------------
+# Prepocessing: @FCCPP@ @FCPPFLAGS@
+# C           : @CC@ @CFLAGS@
+# Parallel C  : @MPICC@ @PCFLAGS@ 
+# Fortran 90  : @F90@ @FCFLAGS@ @FCMFLAG@
+# Parallel F90: @PF90@ @PF90FLAGS@ @FCMFLAG@ 
+# Fortran 77  : @F77@ @FFLAGS@
+# No opt flag : @UFFLAGS@
+# -----------------------------------------------------------------
+# Use @MAKE@ to compile
+# -----------------------------------------------------------------

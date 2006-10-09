@@ -1,0 +1,3 @@
+objs = o_strngths_cut.o rasdriver.o  \
+       ras_spectrum.o reels_spectrum.o extract_eps_surf.o io_ostnts_cut.o \
+       io_slab_eps.o write_eps_tensor.o

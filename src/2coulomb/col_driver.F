@@ -1,0 +1,148 @@
+!
+! Copyright (C) 2000-2005 A. Marini and the SELF team 
+!         http://www.fisica.uniroma2.it/~self
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+!================================================================================
+! DESCRIPTION :
+! 
+! the variables generated/read in this series of rotuines are:
+!
+! RIM_qpg(q,G1,G2)=\int_{BZ`(Gamma)} \d^3q`/(2*pi**3) 2/(|q+q`+G1||q+q`+G2|)
+!
+!  calculated by means of Montecarlo technique, that is
+!
+! \int_{BZ`(Gamma)} \d^3q` F(q`) \sim Volout/Nrout \sum_{ir} F(q_ir)      
+!
+! where ir=1,RIM_n_rand_pts is the index of the random points generated in the large
+! volume 8.*k_grid_uc_vol (that must contain the region BZ`) that are in the
+! region BZ`.
+!
+! Now some derivated quantities
+!!
+! 4 pi / |q+G|^2 = 2 pi DLVol NqBZ qpg(q,G)                                  
+! |q+G| = Sqrt[ 2 / ( DLVol NqBZ qpg(q,G)) ]                                  
+!
+!================================================================================
+!
+ subroutine col_driver()
+!=======================
+!
+!Here I launch the routine to create/read the 
+!data.qpgint file after some important checks and definitions.
+!	
+!-------------------------------------------------------------
+ use pars,          ONLY:SP,schlen,pi
+ use memory_m,      ONLY:mem_est
+ use X_m,           ONLY:q0_defmod
+ use drivers,       ONLY:l_rim,l_col_cut
+ use parser_m,      ONLY:parser
+ use stderr,        ONLY:string_pack
+ use com,           ONLY:msg,gen_fmt
+ use vec_operate,   ONLY:iku_v_module,sort
+ use D_lattice,     ONLY:DL_vol
+ use R_lattice,     ONLY:d3q_factor,RIM_is_diagonal,RIM_qpg,bare_qpg,&
+&                        nqibz,g_vec,qpt,nqbz,RIM_ng,RIM_n_rand_pts
+ use wave_func,     ONLY:wf_ng
+ use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY
+ implicit none
+!ws
+ integer          :: i1,i2,iq,q_modi(nqibz),ID,io_err
+ integer, external:: ioRIM
+ real(SP)         :: r(2),q_mod(nqibz)
+ character(schlen):: lch1,lch2
+!
+!------------------
+! Bare interaction
+!==================
+!
+ allocate(bare_qpg(nqibz,wf_ng))
+ call mem_est("bare_qpg",(/size(bare_qpg)/))
+ bare_qpg(1,1)=q0_defmod
+ do i1=2,wf_ng
+   bare_qpg(1,i1)=iku_v_module(g_vec(i1,:))
+ enddo
+ do i2=2,nqibz
+  do i1=1,wf_ng
+    bare_qpg(i2,i1)=iku_v_module(qpt(i2,:)+g_vec(i1,:))
+  enddo
+ enddo
+!
+!-------------------------------------------------------------------
+! RIM
+!=====
+ if (l_rim) l_rim=all((/RIM_ng>0,RIM_n_rand_pts>0/))
+!
+! In case I am not using the RIM I need to reset
+! NG and n_rand_pts as they are dumped from the DB and
+! they are not zero even if l_rim=F. This means that the BS DB (for example)
+! is not recalculated if l_rim=F whene there is a precalculated db.RIM
+!
+ if (.not.l_rim) then
+   RIM_ng=0
+   RIM_n_rand_pts=0
+ endif
+
+ call parser('QpgFull',RIM_is_diagonal)
+ RIM_is_diagonal=.not.RIM_is_diagonal
+
+ if (l_rim) then
+
+   call section('*','Coloumb potential Random Integration (RIM)')
+
+   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
+   io_err=ioRIM(ID)
+
+   if (io_err/=0) then
+     call rim()
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
+     io_err=ioRIM(ID)
+   endif
+
+   call msg('nr','Summary of Coulomb integrals for non-metallic bands |Q|[au] RIM/Bare:')
+   do i1=1,nqibz
+     q_mod(i1)=iku_v_module(qpt(i1,:))
+   enddo
+   call sort(arrin=q_mod,indx=q_modi)
+   do i1=1,nqibz,2
+     lch2=' '
+     do i2=i1,min(i1+1,nqibz)
+       iq=q_modi(i2)
+       write (lch1,'(a,i3.3,a)') 'Q [',iq,']:'
+       if (i2/=i1) write (lch1,'(2a,i3.3,a)') trim(lch2),' * Q [',iq,']:'
+       r(1)=iku_v_module(qpt(iq,:))
+       r(2)=2./(abs(bare_qpg(iq,1))**2.*DL_vol*real(nqbz))
+       if (i2==1) r(2)=2.*7.7956/(2.*pi)**3.*d3q_factor**(1./3.)
+       r(2)=RIM_qpg(iq,1,1)/r(2)
+       write (lch2,trim(string_pack('(a,2(',gen_fmt(r_v=r),'))' ) )) trim(lch1),r
+     enddo
+     if (i1==1) call msg('nr',trim(lch2))
+     if (i1/=1) call msg('r',trim(lch2))
+   enddo
+ endif
+!
+!-------------------------------------------------------------------
+! CUTOFF
+!========
+ if (.not.l_col_cut) return
+
+ call col_cut()
+
+ end subroutine
+!

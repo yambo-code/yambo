@@ -1,0 +1,3 @@
+objs = 	avint.o  xermsg.o fdump.o  j4save.o xercnt.o xerhlt.o \
+	xerprn.o xersve.o i1mach.o xgetua.o \
+        dpolft.o dpcoef.o dp1vlu.o

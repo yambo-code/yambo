@@ -1,0 +1,93 @@
+=============
+Interface F2S
+=============
+
+This utility interfaces the FHI96SPIN plane wave pseudopotential
+method with the SELF program package. From the main output file, the
+restart file, an input file and an auxilary file the SELF data bases
+are generated. The inclusion of the non-local pseudopotentials
+presently is left for future versions of the interface.
+
+Installation 
+============ 
+The interface is setup and compiled during
+the usual configure procedure used for the whole package. It is
+compiled alongside with the other interfaces using the comand
+
+make interfaces
+
+In order to provide the auxillary file 'r-lattice' that contains
+information about the reciprocal lattice vectores, the currently
+available version of FHI96SPIN needs a modification. The subroutine
+write_cell contained in the file wr_wvf_n_cell.f needs to be replaced
+with the one provided in the directory interfaces/f2s/FHI96SPIN-src.
+Also the argument list in the call of this subroutine in main.f needs
+adjustment. In the directory interfaces/f2s/FHI96SPIN-src an adjusted
+main.f can be found.
+
+Usage
+=====
+
+The self databases are generated in three steps
+
+1.run fhi96spin to obtain the Kohn-Sham wave functions and energies
+  
+  from this run the main output file fort.6, restart file fort.71 and
+  the file r-lattice are needed as well as the inputfile inp.ini
+
+2.collect the basic input files under a common basename
+
+   fort.6       ->       <basename>
+   inp.ini	->	 <basename>.inp
+   fort.71 	->  	 <basename>.wvf
+   r-lattice    ->       <basename>.rl
+
+   this can be done by issuing the commands
+   
+   cp fort.6    <basename>
+   cp inp.ini   <basename>.inp
+   cp fort.71   <basename>.wvf
+   cp r-lattice <basename>.rl
+
+3.run f2s to create the SELF databases
+
+  the f2s-interfase requires the path + the basename
+  of the input files and generates the SELF databases in the directory SAVE
+
+  f2s -F <path+basename>
+
+  e.g. with the fhi-files with the basename BN stored in the directory FHI
+  type f2s -F FHI/BN.
+
+  Besides the option '-F' the following options are available
+
+   -H             :Long Help
+   -h             :Short Help
+
+   This option print the list of options with/without a short explanation
+
+   -F <path+basename>       : path + basename of the FHI files
+
+   This option passes the path and basename of the FHI files to the interface
+
+   -O <opt>       :Output directory
+
+   This option passes name of the output directory. Default is "./".
+
+   -S             :DataBases fragmentation
+
+  This option will generate subdirectories, by k-point and spin
+  component, inside the SAVE directory.
+
+Hints
+=====
+
+The interface sofar does not provide a translation of the
+pseudopotential into the format required by SELF. The fact that
+non-local pseudopotentials are used in the calculation in principal
+needs to be taken into account in the calculation of the RPA response
+function.
+
+Although FHI96SPIN includes a discription of the full spin polarization  
+the interface sofar does not support the use spin polarized wave functions.
+

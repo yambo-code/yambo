@@ -1,0 +1,5 @@
+#if defined PJ_PH
+ objs = G_RIM_Gf.o QP_elph.o
+#else
+ objs =
+#endif

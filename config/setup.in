@@ -1,0 +1,51 @@
+@SET_MAKE@
+#====================================
+#        @PACKAGE_STRING@ setup
+#====================================
+#
+# Main setup
+#
+package_string    = @PACKAGE_STRING@
+cpu         = @build_cpu@
+os          = @build_os@
+debug       = @enable_debug@
+shell       = @SHELL@
+tcsh        = @TCSH@
+make        = @MAKE@
+xecho       = @MYECHO@
+ar          = @AR@
+arflags     = @AR_FLAGS@
+awk         = @AWK@
+cc          = @CC@
+cflags      = @CFLAGS@
+pcc         = @MPICC@
+pccflags    = @PCFLAGS@
+cpp         = @FCCPP@
+cppflags    = @FCPPFLAGS@
+f90         = @F90@
+f90flags    = @FCFLAGS@ @FCMFLAG@
+f90uflags   = @FCUFLAGS@ @FCMFLAG@
+f90suffix   = @F90SUFFIX@
+pf90        = @PF90@
+pf90flags   = @PF90FLAGS@ @FCMFLAG@
+f77         = @F77@
+f77flags    = @FFLAGS@
+f77uflags   = @UFFLAGS@
+package_bugreport = @PACKAGE_BUGREPORT@
+#
+# Paths
+#
+prefix      = @prefix@
+exec_prefix = @exec_prefix@/bin
+srcdir      = @abs_top_srcdir@
+libdir      = @abs_top_srcdir@/lib
+libpath     = -L@abs_top_srcdir@/lib @LDFLAGS@
+includedir  = @abs_top_srcdir@/include
+lblas       = @BLAS_LIBS@
+llapack     = @LAPACK_LIBS@
+lblacs      = @BLACS_LIBS@
+lscalapack  = @SCALAPACK_LIBS@
+lmpi        = @MPILIBS@
+lnetcdf     = @NCLIBS@
+iotk_dir    = @iotk_dir@
+lfftw	    = @FFTW_LIBS@

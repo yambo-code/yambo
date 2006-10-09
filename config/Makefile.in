@@ -1,0 +1,204 @@
+#
+# Copyright (C) 2000-2005 A. Marini and the SELF team
+#         http://www.fisica.uniroma2.it/~self
+#
+# This file is distributed under the terms of the GNU
+# General Public License. You can redistribute it and/or
+# modify it under the terms of the GNU General Public
+# License as published by the Free Software Foundation;
+# either version 2, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will
+# be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public
+# License along with this program; if not, write to the Free
+# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+#
+cpu         = @build_cpu@
+os          = @build_os@
+mpi         = @mpi_cpp@
+netcdf      = @dnetcdf@
+scalapack   = @dscalapack@
+precision   = @dp_cpp@
+fft         = @FFT_CPP@
+xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@
+debug       = @enable_debug@
+do_blas     = @compile_blas@
+do_lapack   = @compile_lapack@
+do_p2s      = @compile_p2s@
+shell       = @SHELL@
+tcsh        = @TCSH@
+make        = @MAKE@
+xecho       = @MYECHO@
+package_bugreport = @PACKAGE_BUGREPORT@
+prefix      = @prefix@
+exec_prefix = @exec_prefix@
+bindir      = @bindir@
+libdir      = @libdir@
+includedir  = @includedir@
+
+CFGFILES = config/setup config/Makefile config/report \
+  	   sbin/mkmkfl driver/codever.h src/2wf_and_fft/sgfft.F  \
+	   src/0external_c/.objects Makefile driver/version.h
+TARGETS  = self interfaces spp
+PROJECTS = self_ph self_ras self_reels 
+EXE      = $(TARGETS) $(PROJECTS) a2s f2s p2s
+# Libraries (ordered for compiling & linking)
+SLIBS        = 0external_c 0modules 1xc 1parser 1common 2io 2wf_and_fft \
+               2coulomb 3kop 3qp_ctl \
+               4it 4tddft 5X 6qp 7acfdt 7bse
+PJ_RASLIBS   = 0external_c 0modules 1xc 1parser 1common 2io 2wf_and_fft \
+               2ras_reels_mods 2coulomb \
+               3kop 3qp_ctl \
+               4ras \
+               4it 4tddft 5X 6qp 7acfdt 7bse
+PJ_REELSLIBS = 0external_c 0modules 1xc 1parser 1common 2io 2wf_and_fft \
+               2ras_reels_mods 2coulomb \
+               3kop 3qp_ctl \
+               4reels \
+               4it 4tddft 5X 6qp 7acfdt 7bse
+PJ_PHLIBS    = 0external_c 0modules 1xc 1parser 1common 2io 2wf_and_fft \
+               2coulomb 3kop 3qp_ctl \
+               4it 4tddft 5elph 5X 6qp 7acfdt 7bse
+2SLIBS       = 0external_c 0modules 1parser 1common 2io 
+SPPLIBS      = 0external_c 0modules 1xc 1parser 1common 2io \
+               2wf_and_fft 3kop 4it 
+
+nothing: 
+	@echo
+	@echo "SELF" @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ targets
+	@echo $(TARGETS) "(stable)" $(PROJECTS) "(projects)"
+	@echo
+saves:
+	@echo
+	@echo "SELF" @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ saves
+	@echo "save version patchlevel subversion"
+	@echo
+libs:
+	@LIBS2DO="slatec" ; $(mklib)
+	@if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; $(mklib); fi
+	@if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; $(mklib); fi
+self: libs
+	@LIBS2DO="$(SLIBS)" ; $(mksrc)
+	@X2DO="self"; XPATH="driver";XLIBS="$(SLIBS)";$(mkx)
+# PROJECTS #
+self_ph: libs
+	@LIBS2DO="0modules 1parser 2modules";ADF="-DPJ_PH"; $(mksrc)
+	@LIBS2DO="$(PJ_PHLIBS)";ADF="-DPJ_PH"; $(mksrc)
+	@X2DO="self_ph"; XPATH="driver";XLIBS="$(PJ_PHLIBS)";ADF="-DPJ_PH";$(mkx)
+self_ras: libs
+	@LIBS2DO="$(PJ_RASLIBS)";ADF="-DPJ_RAS"; $(mksrc)
+	@X2DO="self_ras"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-DPJ_RAS";$(mkx)
+self_reels: libs
+	@LIBS2DO="$(PJ_REELSLIBS)";ADF="-DPJ_REELS"; $(mksrc)
+	@X2DO="self_reels"; XPATH="driver";XLIBS="$(PJ_REELSLIBS)";ADF="-DPJ_REELS";$(mkx)
+interfaces: libs
+	@LIBS2DO="$(2SLIBS)" ; $(mksrc)
+	@X2DO="a2s" ;XPATH="interfaces/a2s";XLIBS="$(2SLIBS)";$(mkx)
+	@LIBS2DO="$(2SLIBS)" ; $(mksrc)
+	@X2DO="f2s" ;XPATH="interfaces/f2s";XLIBS="$(2SLIBS)";$(mkx)
+	@if test "$(do_p2s)" = yes ; then X2DO="p2s" ; XPATH="interfaces/p2s" ; \
+	XLIBS="$(2SLIBS)" ; $(mkx) ; fi
+interfaces_todo: libs
+	@X2DO="f2s" ;XPATH="interfaces/f2s";XLIBS="$(2SLIBS)";$(mkx)
+spp: libs
+	@LIBS2DO="$(SPPLIBS)" ; $(mksrc)
+	@X2DO="spp" ;XPATH="spp";XLIBS="$(SPPLIBS)";$(mkx)
+save: 
+	@$(oclean);$(confclean);$(amdclean);$(xclean)
+	@./sbin/ss none
+	@rm -f ./sbin/ss
+version: 
+	@$(oclean);$(confclean);$(amdclean);$(xclean)
+	@./sbin/ss version
+	@rm -f ./sbin/ss
+patchlevel: 
+	@$(oclean);$(confclean);$(amdclean);$(xclean)
+	@./sbin/ss patchlevel
+	@rm -f ./sbin/ss
+subversion: 
+	@$(oclean);$(confclean);$(amdclean);$(xclean)
+	@./sbin/ss subversion
+	@rm -f ./sbin/ss
+clean:
+	@echo "modes: clean_[o/a/m/am/oam/oamx] distclean cclean"
+clean_a: 
+	@$(aclean)
+clean_m: 
+	@$(mclean)
+clean_o: 
+	@$(oclean)
+clean_am: 
+	@$(aclean);$(mclean)
+clean_oam: 
+	@$(oclean);$(aclean);$(mclean)
+clean_oamx: 
+	@$(oclean);$(aclean);$(mclean);$(xclean)
+distclean: 
+	@$(oclean);$(amdclean);$(xclean);$(confclean)
+cclean:
+	@$(confclean)
+
+# Functions
+define mksrc
+ for ldir in $$LIBS2DO; do \
+  if test ! -f "$(libdir)/lib$$ldir.a" || test "$(debug)" = yes  ; \
+  then rm -f "$(libdir)/lib$$ldir.a" ; \
+  ./sbin/mkmkfl src/$$ldir lib$$ldir.a .objects l $(xcpp) $$ADF ; \
+  cd src/$$ldir ; $(make) VPATH=src/$$ldir || exit "$$?" ; cd ../../; fi \
+ done
+endef
+define mklib
+ for ldir in $$LIBS2DO; do \
+  if test ! -f "$(libdir)/lib$$ldir.a" ; \
+  then ./sbin/mkmkfl lib/$$ldir lib$$ldir.a .objects l $(precision) ; \
+  cd lib/$$ldir ; $(make) VPATH=lib/$$ldir || exit "$$?" ; cd ../../; fi \
+ done
+endef
+define mkx
+ LLIBS="";for exe in $$XLIBS; do LLIBS="$$LLIBS -l$$exe" ; done ; \
+ for exe in $$X2DO; do \
+  if test ! -f "$(bindir)/$$exe" || test "$(debug)" = yes  ; \
+  then ./sbin/mkmkfl $$XPATH $$exe .objects x $$LLIBS $(xcpp) $$ADF ; \
+  cd $$XPATH ; $(make) VPATH=$$XPATH || exit "$$?" ; fi ; \
+ done
+endef
+define oclean
+ find . \( -name '*.o' -o -name 'Makefile' -o -name '*.f90' \
+        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' \) \
+        -type f -print | grep -v '\.\/Makefile' | xargs rm -f
+ echo "[.o .f90 _cpp ifc Makefiles locks] cleaned" 
+ if test "$(debug)" = yes ; then \
+ find . -name '.debug*' | xargs rm -fr ; \
+ echo "[debug subdirectories] cleaned" ; fi
+endef
+define aclean
+ find . \( -name '*.a' \) \
+   -type f -print | grep -v netcdf | grep -v iotk | xargs rm -f
+ echo "[.a] cleaned" 
+endef
+define mclean
+ find . \( -name '*.mod' \) \
+   -type f -print | grep -v netcdf | grep -v iotk | xargs rm -f
+ echo "[.mod <soft>] cleaned" 
+endef
+define amdclean
+ find . \( -name '*.a' -o -name '*.mod' \) -type f -print | xargs rm -f
+ echo "[.a .mod <deep>] cleaned" 
+endef
+define xclean
+ for exe in $(EXE); do rm -f $(bindir)/$$exe; done
+ if test "$@" = "distclean"  ; then rm -f ./sbin/ss ; fi
+ echo "[targets] cleaned"
+endef
+define confclean
+ rm -f $(CFGFILES)
+ rm -f config.status config.log
+ rm -fr autom4te.cache
+ echo "[autoconf files] cleaned"
+endef

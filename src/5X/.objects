@@ -1,0 +1,4 @@
+objs = O_driver.o \
+       X_O_kb_pp_comp.o X_O_kbsum.o X_O_strengths.o X_O_Ylm.o \
+       X_drude.o  X_checks.o X_Gf.o X_ehg.o X_em1.o X_os.o X_s.o \
+       X_delta_part.o X_RIM_Gf.o

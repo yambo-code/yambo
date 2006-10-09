@@ -1,0 +1,193 @@
+!
+! Copyright (C) 2000-2005 A. Marini and the SELF team 
+!         http://www.fisica.uniroma2.it/~self
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+ subroutine BZ_RIM(Xk,Xen)
+!=========================
+ use pars,                ONLY:SP,DP,lchlen
+ use R_lattice,           ONLY:bz_samp,bz_samp_reset,g_vec,nkibz,k_grid_b,&
+&                              ng_in_shell,g_vec,n_g_shells
+ use wave_func,           ONLY: ng_wf,wf_igk
+ use D_lattice,           ONLY:dl_sop,alat,nsym,default_Tel,a
+ use com,                 ONLY:msg,inpath,error
+ use vec_operate,         ONLY:c2a,ak2bz,v_is_zero,iku_v_module
+ use SPP,                 ONLY:BZ_RIM_nkpts,Kcoo_out,BZ_RIM_path,RIM_G_shells
+ use electrons,           ONLY:levels,E_reset,default_nel,n_bands,&
+&                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
+&                              BZ_RIM_tot_nkpts,n_spin,BZ_RIM_max_filling
+ use timing,              ONLY:live_timing_is_on
+ use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP,OP_WR_CL
+ use matrix_operate,      ONLY:m3inv
+ implicit none
+ type(bz_samp) :: Xk
+ type(levels)  :: Xen
+!ws
+ real(SP)     ::dummy,v(3),rand_kpt(BZ_RIM_nkpts+1,3),k_b_m1(3,3),&
+&               iv(3),k_distance,a_save(3,3),alat_save(3)
+ integer      ::i1,i2,ikbz,i3
+ integer,  parameter   :: iseed(4) = (/11,123,44,1546/)
+ real(DP)  :: rr
+ real(DP),external  :: dlaran
+ character(lchlen)  :: inpath_save
+ logical            :: add_X_grid
+!
+!BZ DB1 I/O
+!
+ type(levels)      :: BZ_E
+ type(bz_samp)     :: BZ_k
+ integer           :: ID,i_err
+ integer, external :: ioDB1,ioE_RIM
+!----------------------------------------------------------------
+! Here I want to read the BZ_RIM_path/SAVE/s.db1 to load
+! the %E_RIM and RIM k-points.
+! To do this I need to deallocate a few arrays
+!
+ deallocate(g_vec,dl_sop,ng_wf,wf_igk)
+!
+ inpath_save=inpath
+ inpath=BZ_RIM_path
+
+ call bz_samp_reset(BZ_k)
+ call E_reset(BZ_E)
+!
+! Saves 2 check
+!---------------
+ a_save=a
+ alat_save=alat
+!
+! DB1
+!=====
+ call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
+ i_err=ioDB1(BZ_E,BZ_k,ID)
+ inpath=inpath_save
+!
+! DB1 checks
+!------------
+ if (i_err==0.and.any(alat/=alat_save).or.any(a/=a_save))  then
+   call msg("s",':: RIM DB1 DL structure does not fit')
+   i_err=-1
+ endif
+
+ if (i_err/=0.or.trim(BZ_RIM_path)==".") then
+   call section('*',"== BZ RIM grid generator ==")
+   live_timing_is_on=.false.
+   call msg("s"," ========== RIM K-grid ==========")
+   do i1=1,BZ_RIM_nkpts
+     do i2=1,3
+       call random_number(rr)
+       rand_kpt(i1,i2)=(2.*rr-1.)
+     enddo
+     dummy=ak2bz(rand_kpt(i1,:))
+     call c2a(v_in=rand_kpt(i1,:),mode="ka2i")
+     if (trim(Kcoo_out)=="cc") call c2a(v_in=rand_kpt(i1,:),mode="ki2c")
+     if (trim(Kcoo_out)=="rlu") call c2a(v_in=rand_kpt(i1,:),mode="ki2a")
+     call msg("s"," ",rand_kpt(i1,:))
+   enddo
+   live_timing_is_on=.true.
+   return
+ endif
+
+ call section('*','BZ RIM DB')
+!=============================
+ call msg('s',':: Electrons             :',default_nel)
+ call msg('s',':: Temperature       [ev]:',default_Tel)
+ call msg('s',':: Lattice factors [a.u.]:',alat)
+ call msg('s',':: K points              :',nkibz)
+ call msg('s',':: Bands                 :',n_bands)
+ call msg('s',':: Symmmetries           :',nsym)
+
+ call section('+','BZ RIM K-points Tables setup...')
+!===================================================
+ add_X_grid=.true.
+!
+ BZ_RIM_nbands=BZ_E%nb
+ BZ_RIM_tot_nkpts=BZ_k%nibz
+ if (add_X_grid) BZ_RIM_tot_nkpts=BZ_RIM_tot_nkpts+Xk%nbz
+!
+!Xk (IBZ->BZ)
+!--------------
+ call k_ibz2bz(Xk,'i',.true.)
+
+ allocate(BZ_RIM_nkpt(Xk%nbz))
+ BZ_RIM_nkpt=0
+!
+! First I transform the k_grid_b from c to iku
+!
+ call c2a(v_in=k_grid_b(1,:),v_out=k_b_m1(:,1),mode='kc2i')
+ call c2a(v_in=k_grid_b(2,:),v_out=k_b_m1(:,2),mode='kc2i')
+ call c2a(v_in=k_grid_b(3,:),v_out=k_b_m1(:,3),mode='kc2i')
+ call m3inv(M=k_b_m1)
+
+ do while(.not.allocated(BZ_RIM_table)) 
+   if (maxval(BZ_RIM_nkpt)>0) then
+     if (add_X_grid)      allocate(BZ_RIM_table(Xk%nbz,maxval(BZ_RIM_nkpt)+1))
+     if (.not.add_X_grid) allocate(BZ_RIM_table(Xk%nbz,maxval(BZ_RIM_nkpt)))
+     BZ_RIM_table=0
+   endif
+   BZ_RIM_nkpt=0
+   do i1=1,BZ_k%nibz
+     k_distance=1.E5
+     ikbz=0
+     do i2=1,Xk%nbz
+       do i3=1,ng_in_shell(min(n_g_shells,RIM_G_shells) )
+         v=BZ_k%pt(i1,:)-Xk%ptbz(i2,:)-g_vec(i3,:)
+         iv=matmul(k_b_m1,v)
+         iv=real(int(iv),SP)
+         if (.not.v_is_zero(iv)) cycle
+         if (iku_v_module(v)<k_distance) then
+           k_distance=iku_v_module(v)
+           ikbz=i2
+         endif
+       enddo
+     enddo
+     if (ikbz==0) call error(' Undefined BZ grid point (try increasing Srch_G_sh)')
+     BZ_RIM_nkpt(ikbz)=BZ_RIM_nkpt(ikbz)+1
+     if (allocated(BZ_RIM_table)) BZ_RIM_table(ikbz,BZ_RIM_nkpt(ikbz))=i1
+   enddo
+ enddo
+ call msg('l','done')
+ BZ_RIM_max_filling=maxval(BZ_RIM_nkpt)
+ if (add_X_grid) BZ_RIM_max_filling=BZ_RIM_max_filling+1
+ call msg('s',':: BZ blocks filling     :',(/minval(BZ_RIM_nkpt),BZ_RIM_max_filling/))
+!
+!  At the end I add to the Xen%E_RIM array the Xen%E energies
+!
+ allocate(Xen%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spin))
+ Xen%E_RIM(:,:BZ_k%nibz,:)=BZ_E%E(:,:,:)
+
+ if (add_X_grid) then
+   forall(i1=1:Xk%nbz) BZ_RIM_nkpt(i1)=BZ_RIM_nkpt(i1)+1
+   forall(i1=1:Xk%nbz) BZ_RIM_table(i1,BZ_RIM_nkpt(i1))=BZ_k%nibz+i1
+   do i1=1,Xk%nbz
+     Xen%E_RIM(:,BZ_k%nibz+i1,:)=Xen%E(:BZ_RIM_nbands,Xk%sstar(i1,1),:)+Xen%Efermi(1)
+   enddo
+ endif
+!
+! Final I/O
+!===========
+ call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=NONE,ID=ID)
+ i_err=ioE_RIM(Xen,ID)
+!
+!CLEAN
+!
+ deallocate(BZ_RIM_nkpt,BZ_RIM_table,Xen%E_RIM)
+ call k_ibz2bz(Xk,'d',.false.)
+
+ end subroutine

@@ -1,0 +1,15 @@
+#if defined DP
+objs =  zaxpy.o  zdotc.o  zgemm.o  zgeru.o  zswap.o  ztrmv.o  \
+	izamax.o dznrm2.o zcopy.o  zdotu.o  zgemv.o  zscal.o  \
+	ztrmm.o  ztrsm.o  daxpy.o  dscal.o  zher2k.o zher2.o  \
+	zhemv.o  zsyr2k.o zgerc.o  zher.o   dcopy.o  idamax.o \
+	dzasum.o ztrsv.o  xerbla.o zsymm.o  zhemm.o  zsyrk.o  \
+        zherk.o  zdscal.o dcabs1.o ddot.o
+#else
+objs =  caxpy.o  cdotc.o  cgemm.o  cgeru.o  cswap.o  ctrmv.o  \
+	icamax.o scnrm2.o ccopy.o  cdotu.o  cgemv.o  cscal.o  \
+	ctrmm.o  ctrsm.o  saxpy.o  sscal.o  cher2k.o cher2.o  \
+	chemv.o  csyr2k.o cgerc.o  cher.o   scopy.o  isamax.o \
+	scasum.o ctrsv.o  xerbla.o csymm.o  chemm.o  csyrk.o  \
+        cherk.o  csscal.o sdot.o
+#endif

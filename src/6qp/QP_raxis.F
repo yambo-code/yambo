@@ -1,0 +1,359 @@
+!
+! Copyright (C) 2000-2005 A. Marini and the SELF team 
+!         http://www.fisica.uniroma2.it/~self
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+ subroutine QP_raxis(X,Xen,Xk,en,k,q,qp,Xw)
+!==========================================
+ use pars,          ONLY:SP,schlen,pi,IP,HARTREE
+ use drivers,       ONLY:l_life
+ use electrons,     ONLY:levels
+ use frequency,     ONLY:w_samp,cg_index_bg,cg_npts,W_reset
+ use timing,        ONLY:live_timing
+ use com,           ONLY:msg
+ use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
+ use par_indexes_m, ONLY:par_indexes
+ use collision,     ONLY:ggwinfo,collision_reset
+ use IO_m,          ONLY:io_control,REP,VERIFY,NONE,RD,RD_CL,OP_RD,&
+&                        OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END
+ use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_dSc_steps,&
+&                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
+&                        QP_W,QP_solver,QP_W_er,QP_W_dr,QP_n_W_freqs,&
+&                        QP_G_er,QP_G_dr,QP_Sc_steps
+ use X_m,           ONLY:X_alloc,X_mat,X_t
+ use functions,     ONLY:e2et,h2ht
+ use parser_m,      ONLY:parser
+ use memory_m,      ONLY:mem_est
+ use R_lattice,     ONLY:qindx_S,bz_samp,nqibz,nqbz
+ use wave_func,     ONLY:wf_load,wf_free
+ implicit none
+ type(levels) ::en,Xen
+ type(bz_samp)::Xk,k,q
+ type(X_t)    ::X
+ type(QP_t)   ::qp
+ type(w_samp) ::Xw
+!ws
+ type(ggwinfo)    ::isc,iscp
+ type(pp_indexes) ::px
+ type(w_samp)     ::Sc_W(qp%n_states),X_life_W(q%nibz)
+ integer :: i1,i2,i3,i_or,iqbz,iqibz,ib,i_err,&
+&           life_hh,life_ee,iv4(4),io_err,XID,WID,QP_n_W_freqs_redux
+ complex(SP) :: lrhotw(X%ng)
+#if defined DP
+ complex(DP) :: zdotc,zdotu
+#else
+ complex(SP) :: cdotc,cdotu
+#endif
+ real(SP)            ::life_Fe,life_Fh
+ integer, allocatable::life_W_table(:,:)
+ integer, external   ::ioX,qp_state_extract,ioQP,QP_life_transitions,X_em1
+ character(schlen)   ::ch
+!
+!---------------------------------------------------------------------
+! Presets
+!
+ call collision_reset(isc)
+ call collision_reset(iscp)
+ call pp_indexes_reset(px)
+ if (l_life) then
+   do i1=1,q%nibz
+     call W_reset(X_life_W(i1))
+     X_life_W(i1)%dr=Xw%dr
+   enddo
+ else
+   do i1=1,qp%n_states
+     call W_reset(Sc_W(i1))
+   enddo
+ endif
+
+ call k_expand(k)
+
+!#################
+!ALLOCATION (W/Sc)
+!################################################################################
+ if (.not.l_life) then
+   QP_n_W_freqs=Xw%n(1)
+   QP_n_W_freqs_redux=Xw%n(1)
+   allocate(QP_W(QP_n_states,QP_n_G_bands(2),QP_n_W_freqs),stat=i_err)
+   call mem_est("QP_W",(/size(QP_W)/),errors=(/i_err/))
+ endif
+!################################################################################
+!
+!Sc Energy points (1 type each QP state !)
+!=========================================
+ if (trim(QP_solver)=='n') then
+   do i1=1,qp%n_states
+     Sc_W(i1)%n=QP_dSc_steps
+     allocate(Sc_W(i1)%p(Sc_W(i1)%n(1)))
+     forall (i2=1:QP_dSc_steps) Sc_W(i1)%p(i2)=&
+&           en%E(QP_table(i1,1),QP_table(i1,3),1)+(i2-1)*QP_dSc_delta
+   enddo
+ else if (trim(QP_solver)=='g') then
+   do i1=1,qp%n_states
+     Sc_W(i1)%n=QP_Sc_steps
+     Sc_W(i1)%er=QP_G_er
+     Sc_W(i1)%dr=QP_G_dr
+     call freqs_setup(Sc_W(i1))
+     QP_Sc_steps=Sc_W(i1)%n(1)
+   enddo
+ endif
+!----------------------------------------------------------------------
+!W DB 
+!=======================
+ call io_control(ACTION=OP_RD,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=WID)
+ io_err=ioQP('W',qp,WID)
+ if (io_err==0) then
+   if (QP_solver=="n".or.QP_solver=="g") then
+     QP_Sc=cmplx(0.,0.,SP)
+     call live_timing('GoWo Sc',q%nbz)
+     do iqbz=1,q%nbz
+       if (iqbz< q%nbz) call io_control(ACTION=RD,COM=NONE,SEC=(/2+iqbz/),ID=WID)
+       if (iqbz==q%nbz) call io_control(ACTION=RD_CL,COM=NONE,SEC=(/2+iqbz/),ID=WID)
+       io_err=ioQP('W',qp,WID)
+       Xw%er=QP_W_er
+       Xw%dr=QP_W_dr
+       Xw%n =QP_n_W_freqs
+       call freqs_setup(Xw)
+       call QP_W2Sc(iqbz,k,en,Xw,Sc_W)
+       call live_timing(steps=1)
+     enddo
+     deallocate(QP_W)
+     call mem_est("QP_W")
+     call live_timing()
+     return
+   endif
+   if (QP_solver=="s") return
+ endif
+!
+ call section('+','Correlation Self-Energy')
+!===========================================
+ if (.not.l_life) call msg('r', '[GoWo] Bands range     :',QP_n_G_bands)
+ call msg('r', '[GoWo] G damping   [ev]:',QP_G_damp*HARTREE)
+ call msg('r','')
+ iv4=(/1,1,0,0/)
+ do while(qp_state_extract(iv4)>0)
+   write (ch,'(4(a,i3.3))') 'QP @ K ',iv4(1),' - ',iv4(2),' : b ',iv4(3),' - ',iv4(4)
+   call msg('r',trim(ch))
+ enddo
+ call msg('r','')
+!
+ if (l_life) then
+   call section('=','Lifetimes Transitions Selector')
+!--------------------------------------------------
+   QP_n_W_freqs=QP_life_transitions(-1,en,k,q,X_life_W(1))
+   allocate(life_W_table(q%nibz,QP_n_W_freqs))
+   call mem_est("life_W_table",(/size(life_W_table)/),(/IP/))
+   life_W_table=0
+   QP_n_W_freqs_redux=-1
+   do iqibz=1,q%nibz
+     X_life_W(iqibz)%dr=Xw%dr
+
+     i1=QP_life_transitions(iqibz,en,k,q,X_life_W(iqibz))
+     life_W_table(iqibz,:size(cg_index_bg))=cg_index_bg(:)
+
+     QP_n_W_freqs_redux=max(QP_n_W_freqs_redux,cg_npts)
+     deallocate(cg_index_bg)
+     call mem_est("CGi")
+   enddo
+   do iqibz=1,q%nibz
+     X%iq=iqibz
+     i_err=X_em1(Xen,Xk,q,X,X_life_W(iqibz),iqibz>1)
+     if (i_err==0) exit
+   enddo
+ endif
+!
+! WFs
+!==================
+ call wf_load(X%ng,maxval(qindx_S(:,:,2)),&
+&            (/QP_n_G_bands(1),max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-Sc')
+!
+!Test the spatial Inversion
+!==========================
+ call SpaceInvTest(en,Xk)
+!
+!#################
+!ALLOCATION (isc)
+!################################################################################
+ call X_alloc('X',(/X%ng,X%ng,QP_n_W_freqs_redux/))
+
+ allocate(isc%gamp(X%ng,X%ng),isc%rhotw(X%ng),iscp%rhotw(X%ng),stat=i_err)
+ call mem_est("ISC-GAMP",(/X%ng**2+2*X%ng/),errors=(/i_err/))
+
+!################################################################################
+!
+!MPI index
+ call par_indexes(px,(/QP_n_states,QP_n_G_bands(2)/),low_range=(/1,QP_n_G_bands(1)/))
+!
+ QP_Sc=cmplx(0.,0.,SP)
+ isc%ngrho=X%ng
+ isc%iqref=0
+!
+!Main Loop
+ call pp_redux_wait
+ call live_timing('GoWo Sc',px%stps(myid+1)*q%nbz)
+
+ do iqbz=1,q%nbz
+   if (.not.l_life) QP_W=(0.,0.)
+   isc%qs(2:)=(/q%sstar(iqbz,1),q%sstar(iqbz,2)/)
+   iqibz=isc%qs(2)
+   if (iqibz/=isc%iqref) then
+     call scatterGamp(isc,'c')
+!
+! X I/O
+!
+     if (iqibz==1) call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1,2,3/),ID=XID)
+     if (iqibz/=1) call io_control(ACTION=RD_CL_IF_END,COM=NONE,&
+&                                  SEC=(/2*iqibz,2*iqibz+1/),ID=XID)
+     if (l_life) then
+       io_err=ioX(X,X_life_W(iqibz),XID)
+     else
+       io_err=ioX(X,Xw,XID)
+!
+! Xw%er/dr/n are not known here and are not read from ioX so
+! I need to redefine them in terms of Xw%p (read from ioX)
+!
+       Xw%er=(/real(Xw%p(1)),real(Xw%p(Xw%n(1)))/)
+       Xw%dr=(/aimag(Xw%p(1)),aimag(Xw%p(Xw%n(1)))/)
+     endif
+
+     call X_delta_part(X,Xw,isc%gamp)
+ 
+     if (l_life) QP_n_W_freqs=0
+
+   endif
+
+   do i1=1,QP_n_states
+     isc%is=(/QP_table(i1,1),QP_table(i1,3),1,1/)
+     isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iqbz,1),:),1/)
+     iscp%is=(/QP_table(i1,2),QP_table(i1,3),1,1/)
+     isc%qs(1)=qindx_S(QP_table(i1,3),iqbz,2)
+     iscp%qs=isc%qs
+     do ib=QP_n_G_bands(1),QP_n_G_bands(2)
+       isc%os(1)=ib
+       i_or=IOR(e2et(isc%is(:2),isc%os(:2),en,life_Fe),&
+&             h2ht(isc%is(:2),isc%os(:2),en,life_Fh))
+       if (l_life) QP_n_W_freqs=QP_n_W_freqs+i_or
+
+       if (.not.px%i2p(i1,ib)) cycle
+
+       iscp%os=isc%os
+       call live_timing(steps=1)
+ 
+       if (l_life.and.i_or==0) cycle
+ 
+       call scatterBamp(isc)
+       iscp%rhotw=isc%rhotw
+ 
+       if (any(isc%is/=iscp%is)) call scatterBamp(iscp)
+ 
+       if (l_life) then
+
+         i2=life_W_table(iqibz,QP_n_W_freqs)
+
+         do i3=1,X%ng
+#if defined DP
+           lrhotw(i3)=zdotu(X%ng,isc%rhotw,1,X_mat(1,i3,i2),1)
+#else
+           lrhotw(i3)=cdotu(X%ng,isc%rhotw,1,X_mat(1,i3,i2),1)
+#endif
+         enddo
+#if defined DP
+         qp%E(i1)=qp%E(i1)-(0.,2.)*pi*(life_Fe+life_Fh)*zdotc(X%ng,iscp%rhotw,1,lrhotw,1)
+#else
+         qp%E(i1)=qp%E(i1)-(0.,2.)*pi*(life_Fe+life_Fh)*cdotc(X%ng,iscp%rhotw,1,lrhotw,1)
+#endif
+       else
+
+         do i2=1,QP_n_W_freqs
+           do i3=1,X%ng
+#if defined DP
+             lrhotw(i3)=zdotu(X%ng,isc%rhotw,1,X_mat(1,i3,i2),1)
+#else
+             lrhotw(i3)=cdotu(X%ng,isc%rhotw,1,X_mat(1,i3,i2),1)
+#endif
+          enddo
+#if defined DP
+             QP_W(i1,ib,i2)=-2.*zdotc(X%ng,iscp%rhotw,1,lrhotw,1)
+#else
+             QP_W(i1,ib,i2)=-2.*cdotc(X%ng,iscp%rhotw,1,lrhotw,1)
+#endif
+          enddo
+
+       endif
+     enddo
+ 
+   enddo
+
+   call pp_redux_wait
+   call pp_redux_wait(QP_W)
+!
+! To be written in W
+!
+   if (.not.l_life) then
+     QP_W_er=Xw%er
+     QP_W_dr=Xw%dr
+     QP_n_W_freqs=Xw%n(1)
+!
+     if (iqbz==1) then
+       call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=WID)
+     else
+       call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2+iqbz/),ID=WID)
+     endif
+     io_err=ioQP('W',qp,WID)
+
+     if (trim(QP_solver)=='n'.or.trim(QP_solver)=='g') call QP_W2Sc(iqbz,k,en,Xw,Sc_W)
+   endif
+
+ enddo
+ call live_timing()
+ call pp_redux_wait()
+!
+! CLEAN
+!
+ deallocate(isc%gamp,isc%rhotw,iscp%rhotw)
+ call mem_est("ISC-GAMP")
+ if (l_life) then
+   deallocate(life_W_table)
+   call mem_est("life_W_table")
+   call pp_redux_wait(qp%E)
+ else
+   if (trim(QP_solver)=='n'.or.trim(QP_solver)=='g') then
+     deallocate(QP_W)
+     call mem_est("QP_W")
+   endif
+ endif
+ if (l_life) then
+   do i1=1,q%nibz
+     call W_reset(X_life_W(i1))
+   enddo
+ else
+   do i1=1,qp%n_states
+     call W_reset(Sc_W(i1))
+   enddo
+ endif
+
+ call X_alloc('X')
+ call wf_free()
+ call collision_reset(isc)
+ call collision_reset(iscp)
+ call pp_indexes_reset(px)
+
+ end subroutine
+!
+

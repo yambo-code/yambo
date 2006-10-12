@@ -42,7 +42,7 @@
 
  if (any((/io_sec(ID,:)==1/))) then
 
-   ioXXVXC=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.)
+   ioXXVXC=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.)
    if (ioXXVXC/=0) goto 1
 
    call io_elemental(ID,VAR="PARS",VAR_SZ=8,MENU=0)

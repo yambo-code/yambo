@@ -43,10 +43,10 @@
  type(w_samp) ::Xw
 !ws
  type(QP_t):: qp
- integer ::i1,i3,io_err,ID
- integer, external ::ioQP
- real(SP)::dscp
- character(schlen)::ch1,ch2,lfmt
+ integer   ::i1,i3,io_err,ID
+ real(SP)  ::dscp,r_numbers(7)
+ character(schlen)::ch1,ch2,local_fmt
+ integer, external::ioQP
 !----------------------------------------------------------------
 ! Parser
 !--------
@@ -83,7 +83,7 @@
 !Basic defs
 !===========
 !
- call QP_table_setup(en)
+ call QP_state_table_setup(en)
 !
 ! Here I copy several informations to the qp_t type.
 ! This is because I want the qp to be completely independent of the run
@@ -94,9 +94,13 @@
  qp%n_states=QP_n_states
 !
 ! In lifetimes calculations  the X db may be not
-! present.
+! present. So I need to define some variables that 
+! must be correctly written in the QP_description(s)
 !
- if (l_life.and.X%ng_db==0) X%ng_db=X%ng
+ if (l_life) then
+   call X_checks(Xen,X)
+   if (X%ng_db==0) X%ng_db=X%ng
+ endif
 
  call QP_descriptions(qp,X,Xw)
 
@@ -191,25 +195,29 @@
    call msg(' r','- So : Sc(Eo)     - S   : Sc(E)')
    call msg('rn','- xx/Vxc : Sx/Vxc - dSp : Sc derivative precision')
    i3=QP_table(1,3)
-   write (ch1,'(a,i3.3,a)') 'K [',i3,'] (iku):'
+   write (ch1,'(a,i4.4,a)') 'K [',i3,'] (iku):'
    call msg('r',trim(ch1),k%pt(i3,:))
    do i1=1,QP_n_states
-   if (l_el_corr) then
-     xx_dummy=real(QP_Sx(i1))*HARTREE
-     xc_dummy=real(QP_Vxc(i1))*HARTREE
-   else
-     xx_dummy=0.
-     xc_dummy=0.
-   endif
+     if (l_el_corr) then
+       xx_dummy=real(QP_Sx(i1))*HARTREE
+       xc_dummy=real(QP_Vxc(i1))*HARTREE
+     else
+       xx_dummy=0.
+       xc_dummy=0.
+     endif
      if (QP_table(i1,3)/=i3) then
        i3=QP_table(i1,3)
-       write (ch1,'(a,i3.3,a)') 'K [',i3,'] (iku):'
+       write (ch1,'(a,i4.4,a)') 'K [',i3,'] (iku):'
        call msg('nr',trim(ch1),k%pt(i3,:))
      endif
-     write (ch1,'(a,i3.3,3(a,f6.2),a,f4.2,4(a,f6.2))') &
-&     'B=',QP_table(i1,1),' Eo=',real(qp%Eo(i1))*HARTREE,' E=',real(qp%E(i1))*HARTREE,&
-&     ' E-Eo=',real(qp%E(i1)-qp%Eo(i1))*HARTREE,' Z=',real(qp%Z(i1)),&
-&     ' So=',real(QP_Sc(i1,1))*HARTREE,' xx=',xx_dummy,' Vxc=',xc_dummy
+     r_numbers=(/real(qp%Eo(i1))*HARTREE,real(qp%E(i1))*HARTREE,&
+&                real(qp%E(i1)-qp%Eo(i1))*HARTREE,real(qp%Z(i1)),&
+&                real(QP_Sc(i1,1))*HARTREE,xx_dummy,xc_dummy/)
+     ch2=gen_fmt(r_v=r_numbers)
+     local_fmt=string_pack('(a,i4.4,3(a,f6.2),a,f4.2,4(a,',trim(ch2),'))')
+     write (ch1,trim(local_fmt)) 'B=',QP_table(i1,1),' Eo=',r_numbers(1),&
+&          ' E=',r_numbers(2),' E-Eo=',r_numbers(3),' Z=',r_numbers(4),&
+&          ' So=',r_numbers(5),' xx=',r_numbers(6),' Vxc=',r_numbers(7)
      if (QP_dSc_steps>2) then
        dscp=abs(QP_dSc(i1,2)-QP_dSc(i1,1))/abs(QP_dSc(i1,1))
        ch2=trim(ch1)
@@ -251,25 +259,28 @@
  call msg('rn','- Gm : Width [meV] - Gf  : Width [fs]')
 
  i3=QP_table(1,3)
- write (ch1,'(a,i3.3,a)') 'K [',i3,'] (iku):'
+ write (ch1,'(a,i4.4,a)') 'K [',i3,'] (iku):'
  call msg('r',trim(ch1),k%pt(i3,:))
  do i1=1,QP_n_states
+   r_numbers(:2)=(/aimag(qp%E(i1))*HARTREE/1.E-3,&
+&                  0.65822/2./aimag(qp%E(i1))/HARTREE/)
    if (QP_table(i1,3)/=i3) then
      i3=QP_table(i1,3)
-     write (ch1,'(a,i3.3,a)') 'K [',i3,'] (iku):'
+     write (ch1,'(a,i4.4,a)') 'K [',i3,'] (iku):'
      call msg('nr',trim(ch1),k%pt(i3,:))
    endif
- write (ch1,'(a,i3.3,a,f6.2,a,f4.2,4(a,f12.5))') &
-&  'B=',QP_table(i1,1),' Eo=',real(qp%Eo(i1))*HARTREE,&
-&  ' Z=',real(qp%Z(i1)),&
-&  ' Gm=',aimag(qp%E(i1))*HARTREE/1.E-3,' Gf=',0.65822/2./aimag(qp%E(i1))/HARTREE
+   ch2=gen_fmt(r_v=r_numbers(:2))
+   local_fmt=string_pack('(a,i4.4,a,f6.2,a,f4.2,4(a,',trim(ch2),'))')
+   write (ch1,trim(local_fmt)) &
+&    'B=',QP_table(i1,1),' Eo=',real(qp%Eo(i1))*HARTREE,&
+&   ' Z=',real(qp%Z(i1)),' Gm=',r_numbers(1),' Gf=',r_numbers(2)
    if (i1< QP_n_states) call msg('r',ch1)
    if (i1==QP_n_states) call msg('rn',ch1)
  enddo
 !
 ! o.qp
 !=======
- QP_rep_string='kpbne0el'
+ QP_rep_string='kpbne0lmlf'
  call QP_of(k,qp)
 !
 ! CLEAN

@@ -40,10 +40,10 @@
  use vec_operate,    ONLY:v_module
  use timing,         ONLY:live_timing_is_on
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_solver,QP_nb,&
-&                         QP_state,QP_reset,QP_ctl_E
+&                         QP_state,QP_reset,QP_ctl_E,QP_table
  use X_m,            ONLY:X_t,q0_defmod,X_duplicate,X_reset
  use stderr,         ONLY:tty_size,logfile
- use R_lattice,      ONLY:ng_closed,ng_vec,n_g_shells,qp_states_k,&
+ use R_lattice,      ONLY:ng_closed,ng_vec,n_g_shells,&
 &                         Xk_grid_is_uniform,bz_samp,nqibz,bz_samp_reset
  use wave_func,      ONLY:wf_ng,ioWF
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,REP
@@ -328,7 +328,7 @@
    if (.not.l_life) call initactivate(1,'DysSolver GDamping NewtDchk QPreport')
    if (l_life) call initactivate(1,'LifeTrCG')
    if (l_life) call initactivate(-1,'GbndRnge GDamping ETStpsXd EMStpsXs')
-   if (trim(QP_solver)=="g") call initactivate(-1,'NewtDchk QPreport')
+   if (trim(QP_solver)=="g") call initactivate(-1,'NewtDchk QPreport GDamping')
    if (trim(QP_solver)=="g") call initactivate(1,'GEnSteps GEnRnge GDmRnge')
  endif
 !
@@ -413,13 +413,21 @@
 !
 !If qp limits are requested they are added at the end of the input file
  if ( any((/l_xxvxc,l_gowo,l_life/)) ) then
-   call init_qp()
 !
 !  The QP_state is read from ioxxvxc in DUMP mode.
-!  I use it to propose the value in the input file but
-!  afterword I must deallocate it to use user defined values
+!  If it is not allocated I define it on the basis 
+!  of the input file
+
+   if (.not.allocated(QP_state)) call QP_state_table_setup(en)
 !
-   if (allocated(QP_state)) deallocate(QP_state)
+!  I use it to propose the value in the input file ...
+!
+   call QP_init()
+!
+!  ... but afterword I must deallocate it to use user defined values
+!
+   deallocate(QP_state)
+   if (allocated(QP_table)) deallocate(QP_table)
  endif
 !
  if (infile_editing) return

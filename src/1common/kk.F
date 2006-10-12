@@ -33,14 +33,14 @@
 !fo is not INITIALIZED to 0. !
 !
 !-------------------------------------------------
- use pars
+ use pars,    ONLY:SP
  implicit none
- integer     :: ni,no
- real(SP)    :: wi(ni)
- complex(SP) :: fi(ni),fo(no),wo(no),y0
+ integer      :: ni,no
+ real(SP)     :: wi(ni)
+ complex(SP)  :: fi(ni),fo(no),wo(no),y0
 !ws
- integer     :: i1,i2
- complex(SP) :: m(ni-1),q(ni-1)
+ integer      :: i1,i2
+ complex(SP)  :: m(ni-1),q(ni-1)
 
  do i1=1,ni-1
    m(i1)=(fi(i1)-fi(i1+1))/(wi(i1)-wi(i1+1))

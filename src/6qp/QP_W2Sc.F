@@ -30,7 +30,7 @@
  use frequency,     ONLY:w_samp
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
- use functions,     ONLY:bose_f
+ use functions,     ONLY:bose_f,bose_decay
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:qindx_S,bz_samp,nqbz
  implicit none
@@ -71,8 +71,10 @@
 !
 ! 1st term: (2-f_os+fbose)
 !==========================
-     forall(i2=1:QP_n_W_freqs) QP_W_here(i2)=QP_W(i1,ib,i2)*(2.-E%f(os(1),os(2),1)+&
-&                                                            bose_f(real(Xw%p(i2))) )
+!
+     forall(i2=1:Xw%n(1)) QP_W_here(i2)=QP_W(i1,ib,i2)*&
+&                            (2.-E%f(os(1),os(2),1)+bose_f(real(Xw%p(i2))))*&
+&                            bose_decay(real(Xw%p(i2)))
 
      call kk(QP_W_here,real(Xw%p(:)),QP_n_W_freqs,dSc,Sc_W(i1)%p,Sc_W(i1)%n(1),&
 &            E%E(os(1),os(2),1)+tsign*cmplx(0.,QP_G_damp,SP))
@@ -81,8 +83,9 @@
 ! 2nd term: (f_os+fbose)
 !==========================
 !
-     forall(i2=1:Xw%n(1)) QP_W_here(i2)=QP_W(i1,ib,i2)*(E%f(os(1),os(2),1)+&
-&                                                       bose_f(real(Xw%p(i2))) )
+     forall(i2=1:Xw%n(1)) QP_W_here(i2)=QP_W(i1,ib,i2)*&
+&                            (E%f(os(1),os(2),1)+bose_f(real(Xw%p(i2))))*&
+&                            bose_decay(real(Xw%p(i2)))
 !
      call kk(-QP_W_here,real(Xw%p(:)),QP_n_W_freqs,dSc,-Sc_W(i1)%p,Sc_W(i1)%n(1),&
 &            -E%E(os(1),os(2),1)-cmplx(0.,QP_G_damp,SP))

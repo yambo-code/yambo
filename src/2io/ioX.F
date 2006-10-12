@@ -77,7 +77,7 @@
 
  if (any((/io_sec(ID,:)==1/))) then
 
-   ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.)
+   ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.)
    if (ioX/=0) goto 1
 
    call io_elemental(ID,VAR="PARS_1",VAR_SZ=5,MENU=0)

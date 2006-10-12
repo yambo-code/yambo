@@ -56,18 +56,16 @@
  subroutine X_delta_part(X,Xw,Gamp)
 !==================================
  use pars,          ONLY:SP
- use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:i_space_inv
  use X_m,           ONLY:X_t,X_mat
- use functions,     ONLY:bose_decay
  use frequency,     ONLY:w_samp
  implicit none
  type(X_t)    :: X
  type(w_samp) :: Xw
  complex(SP)  :: Gamp(X%ng,X%ng)
 !ws
- integer :: i1,i2,i3
- complex(SP)::Xt(X%ng,X%ng)
+ integer    :: i1,i2,i3
+ complex(SP):: Xt(X%ng,X%ng)
 !---------------------------------------------------------------------
  if (i_space_inv==1) then
    forall(i1=1:X%ng,i2=1:X%ng,i3=1:Xw%n(1)) &
@@ -80,13 +78,5 @@
 &                                (0.,0.5)* real(Xt(i1,i2)-Xt(i2,i1))
    enddo
  endif
-
- if (.not.Finite_Tel) return
-!
-! To compensate the Tel/w divergence of the Bose function at finite
-! Tel I multiply the X_mat function by [w/(Tel*Bose_E_cut)]^2
-! 
- forall(i1=1:X%ng,i2=1:X%ng,i3=1:Xw%n(1)) &
-&       X_mat(i1,i2,i3)=X_mat(i1,i2,i3)*bose_decay( real(Xw%p(i3)) )
 
  end subroutine

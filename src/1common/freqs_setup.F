@@ -30,7 +30,7 @@
  implicit none
  type(w_samp):: wv 
 !ws
- integer :: i1
+ integer          :: i1
  real(SP),external:: damping
 !
 !If %p is associated and consitent with %er/%dr return
@@ -73,7 +73,7 @@
  endif
  forall(i1=1:wv%n(1)-1) wv%p(i1+1)=wv%er(1)+(wv%er(2)-wv%er(1))/(wv%n(1)-1)*i1
  do i1=1,wv%n(1)
-  wv%p(i1)=real(wv%p(i1))+damping(wv%er,wv%dr,real(wv%p(i1)))*cmplx(0.,1.,SP)
+   wv%p(i1)=real(wv%p(i1))+damping(wv%er,wv%dr,real(wv%p(i1)))*cmplx(0.,1.,SP)
  enddo
 
  end subroutine

@@ -21,6 +21,9 @@
 !
  subroutine QP_descriptions(qp,X,Xw)
 !===================================
+! 
+! WARNING ! Changes here must be updated in ioX as well.
+!
  use pars,          ONLY:HARTREE
  use X_m,           ONLY:X_t,use_X_RIM
  use QP_m,          ONLY:QP_t,QP_ng_Sx,QP_n_G_bands,QP_cg_percent,&
@@ -41,7 +44,7 @@
  type(w_samp)::Xw
 !ws
  integer           :: i4(4),n_descs_save
- integer, external :: qp_state_extract
+ integer, external :: QP_state_extract
 
  n_descs_save=qp%n_descs
 
@@ -143,7 +146,7 @@
 #endif
 
  i4=(/1,1,0,0/)
- do while(qp_state_extract(i4)>0)
+ do while(QP_state_extract(i4)>0)
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),&
 &        '(4(a,i3.3))') ' QP @ K ',i4(1),' - ',i4(2),' : b ',i4(3),' - ',i4(4)

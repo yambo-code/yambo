@@ -19,12 +19,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine init_qp()
+ subroutine QP_init()
 !====================
 !
 ! QP_state -> input file
 !
- use pars
  use QP_m,      ONLY : QP_nk,QP_nb,QP_state
  use drivers,   ONLY : infile_editing
  use it_m,      ONLY : nflines,flines,infile
@@ -34,12 +33,13 @@
  integer :: i1,state(4)
  logical :: l_lines_in_input(2)
  integer :: nflines_save
- integer, external :: qp_state_extract
+ integer, external :: QP_state_extract
 
  call parser('QPkrange',l_lines_in_input(1))
  call parser('QPerange',l_lines_in_input(2))
-
+!
 !If there are already the QP lines or there's not the input file todo return
+!
  if (any(l_lines_in_input).and..not.infile_editing) return 
  
  nflines_save=nflines
@@ -51,7 +51,7 @@
    nflines=nflines+1
  else
    state=(/1,1,0,0/)
-   do while(qp_state_extract(state)>0)
+   do while(QP_state_extract(state)>0)
      write (flines(nflines+1),'(4(i3,a))') state(1),'|',state(2),'|',state(3),'|',state(4),'|'
      nflines=nflines+1
    enddo

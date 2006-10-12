@@ -378,16 +378,16 @@
 
    integer function r_verify(rv1,rv2)
    integer  :: i1
-   real(SP) :: rv1(:),rv2(:),eq_accuracy
-   r_verify=0
-   eq_accuracy=1.E-5
-   if (minval( abs(rv1) )>0.) eq_accuracy=minval(abs(rv1))/2.
+   real(SP) :: rv1(:),rv2(:),eq_accuracy,acc_fraction
+   r_verify   =0
+   eq_accuracy=1.E-5_SP
+   acc_fraction=0.001_SP
 !
 ! Define the accuracy of the comparison
 !
    do i1=1,size(rv1)
-     if ( abs(rv1(i1))>0._SP) eq_accuracy=min( eq_accuracy , abs(rv1(i1))/2._SP )
-     if ( abs(rv2(i1))>0._SP) eq_accuracy=min( eq_accuracy , abs(rv2(i1))/2._SP )
+     if ( abs(rv1(i1))>0._SP) eq_accuracy=min( eq_accuracy , abs(rv1(i1))*acc_fraction )
+     if ( abs(rv2(i1))>0._SP) eq_accuracy=min( eq_accuracy , abs(rv2(i1))*acc_fraction )
    enddo
 
    do i1=1,size(rv1)

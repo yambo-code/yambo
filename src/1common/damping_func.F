@@ -21,7 +21,7 @@
 !
  function damping(er,dr,E)
 !-------------------------
- use pars
+ use pars,  ONLY: SP
  real(SP):: damping,E,er(2),dr(2)
 !ws
  integer :: isign
@@ -36,16 +36,22 @@
  d2=dr(2)
  select case(isign)
    case(1)
-     d1=dr(1);d2=dr(2)
+     d1=dr(1)
+     d2=dr(2)
    case(-1)
-     d1=dr(2);d2=dr(1)
+     d1=dr(2)
+     d2=dr(1)
    case(0)
     if (E>=0.) then
-      d1=dr(1);d2=dr(2)
-      e1=0.;e2=er(2)
+      d1=dr(1)
+      d2=dr(2)
+      e1=0.
+      e2=er(2)
     else
-      d1=dr(2);d2=dr(1)
-      e1=er(1);e2=0.
+      d1=dr(2)
+      d2=dr(1)
+      e1=er(1)
+      e2=0.
     endif
  end select
  damping=d1+(d2-d1)/(e2-e1)*(E-e1)

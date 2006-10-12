@@ -48,7 +48,7 @@
 
  if (any((/io_sec(ID,:)==1/))) then
 
-   ioQP=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.)
+   ioQP=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.)
    if (ioQP/=0) goto 1
 
    call io_elemental(ID,VAR="PARS",VAR_SZ=4,MENU=0)
@@ -72,14 +72,23 @@
      write (ch,'(a,i3.3)') 'DESC_strings_',i1
      call io_elemental(ID,VAR=trim(ch),CH0="",VAR_SZ=1,MENU=0)
 !
-! if db.W I don't check the "GoWo [solver type]" line.
+! if db.W I don't check the lines
+!
+! - GoWo solver       
+! - dS/dw steps
+! - dS/dw step
+! - Sx RL components
+! - QP
+!
 ! In any case the QP lines are skipped. The QP_state check is
 ! used instead
 !
      if (what=="W") then
-       if (1<=i1.and.i1<=4) then
+       if (index(qp%description(i1),'QP')>0) then
          call io_elemental(ID,CH0=qp%description(i1))
-       else if (12<=i1.and.i1<=14) then
+       else if (index(qp%description(i1),'GoWo solver')>0.or.&
+&               index(qp%description(i1),'dS/dw step')>0.or.&
+&               index(qp%description(i1),'Sx RL components')>0) then
          call io_elemental(ID,CH0=qp%description(i1))
        else
          call io_elemental(ID,CH0=qp%description(i1),VAR='',CHECK=.true.,OP=(/"=="/)) 
@@ -90,7 +99,7 @@
        else
          call io_elemental(ID,CH0=qp%description(i1),VAR='',CHECK=.true.,OP=(/"=="/)) 
        endif
-    endif
+     endif
 
      if (i1<n_descs_disk) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      if (i1==n_descs_disk) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)

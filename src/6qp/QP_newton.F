@@ -62,6 +62,9 @@
    do i2=1,QP_dSc_steps-1
      QP_dSc(i1,i2)=(QP_Sc(i1,i2+1)-QP_Sc(i1,i2))/QP_dSc_delta
      Z(i2)=1./(1.-QP_dSc(i1,i2))
+
+     if (.not.l_el_corr) Z(i2)=1.
+
      Eqp(i2)=qp%Eo(i1)+Z(i2)*QP_Sc(i1,1)
      if (l_el_corr) Eqp(i2)=Eqp(i2)+Z(i2)*(QP_Sx(i1)-QP_Vxc(i1))
    enddo

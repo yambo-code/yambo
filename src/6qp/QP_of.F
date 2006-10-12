@@ -50,9 +50,8 @@
  data abbrev/'xc','s0','sq','e0','eq','zf','ds','ee','kp','bn',&
 &            'xx','lm','lf'/
 !-------------------------------------------------------------------
- select case (trim(QP_solver)) 
+ if (trim(QP_solver)=='n'.or.trim(QP_solver)=='s'.or.l_life) then
 !===================================================================
- case ('n','s')
 !
  file_name='qp'
  call of_open_close(file_name,'ot')
@@ -99,7 +98,8 @@
  call of_open_close(file_name)
 !
 !===================================================================
- case ('g')
+ else if (trim(QP_solver)=='g') then
+!===================================================================
 
  call W_reset(Sc_W)
  Sc_W%n=QP_Sc_steps
@@ -119,19 +119,23 @@
    call msg('o G_Sc','#')
    titles(1)='Energy'
    titles(2:3)=(/'Re[G]','Im[G]'/)
-   titles(4:5)=(/'Re[Sigma]','Im[Sigma]'/)
-   call msg('o G_Sc','#',titles(:5),INDENT=0,USE_TABS=.TRUE.)
+   titles(4:5)=(/'Re[S_tot]','Im[S_tot]'/)
+   titles(6)  ='Re[S_c]'
+   call msg('o G_Sc','#',titles(:6),INDENT=0,USE_TABS=.TRUE.)
    call msg('o G_Sc','#')
    do i2=1,QP_Sc_steps
      rstr=0.
      rstr(1:3)=(/real(Sc_W%p(i2)),real(QP_G(i1,i2)),aimag(QP_G(i1,i2))/)*HARTREE
      rstr(4:5)=(/real(QP_Sc(i1,i2)),aimag(QP_Sc(i1,i2))/)*HARTREE
+     rstr(6)=rstr(4)
      if (l_el_corr) rstr(4)=rstr(4)+real(QP_Sx(i1)-QP_Vxc(i1))*HARTREE
-     call msg('o G_Sc','',rstr(:5),INDENT=-2,USE_TABS=.TRUE.)
+     call msg('o G_Sc','',rstr(:6),INDENT=-2,USE_TABS=.TRUE.)
    enddo
    call of_open_close(G_Sc_name)
  enddo
  call W_reset(Sc_W)
 
- end select
+!===================================================================
+ endif
+
  end subroutine

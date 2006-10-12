@@ -1,3 +1,3 @@
 objs = QP_driver.o QP_newton.o QP_secant.o QP_ppa.o QP_raxis.o \
-       QP_table_setup.o QP_descriptions.o QP_xxvxc.o \
+       QP_descriptions.o QP_xxvxc.o \
        QP_W2Sc.o QP_life_transitions.o QP_of.o 

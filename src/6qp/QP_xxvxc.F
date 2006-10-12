@@ -67,7 +67,7 @@
 !
 !QP list
  integer           :: i4(4)
- integer, external :: qp_state_extract
+ integer, external :: QP_state_extract
 !
 !IO
  integer           :: ID,io_err
@@ -84,7 +84,7 @@
  endif
  if (QP_ng_Sx==0) QP_ng_Sx=wf_ng
 
- call QP_table_setup(E)
+ call QP_state_table_setup(E)
 !
 ! Alloc
 !===================
@@ -106,7 +106,7 @@
  call msg('rn','[EXS] Bands range :',(/QP_Sx_low_band,E%nbm/))
 
  i4=(/1,1,0,0/)
- do while(qp_state_extract(i4)>0)
+ do while(QP_state_extract(i4)>0)
    write (ch,'(4(a,i3.3))') 'QP @ K ',i4(1),' - ',i4(2),' : b ',i4(3),' - ',i4(4)
    call msg('r',trim(ch))
  enddo

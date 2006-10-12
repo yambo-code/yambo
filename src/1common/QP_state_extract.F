@@ -19,9 +19,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function qp_state_extract(state)
+ integer function QP_state_extract(state)
 !========================================
- use pars
+!
+! Parser of the QP_state logical array
+!
  use QP_m,      ONLY:QP_state,QP_nb,QP_nk
  implicit none
  integer           :: state(4)
@@ -29,7 +31,7 @@
  integer :: i1,i2,i3,ik1,ik2,ib1,ib2,proposed_state(4)
  logical :: flag
 
- qp_state_extract=1
+ QP_state_extract=1
 
 ! state(1) = ik1
 ! state(2) = ik2
@@ -45,14 +47,14 @@
      if (QP_state(i2,i1)) goto 1
    enddo
  enddo
- qp_state_extract=-1
+ QP_state_extract=-1
  return
  
 1 ik1=i1 
   ib1=i2
 
  if (ib1==state(4).and.ik1==state(1)) then
-   qp_state_extract=-1
+   QP_state_extract=-1
    return
  endif
 
@@ -83,7 +85,7 @@
  enddo
 
  if (all((/state==proposed_state/))) then
-   qp_state_extract=-1
+   QP_state_extract=-1
  else
    state=proposed_state
  endif

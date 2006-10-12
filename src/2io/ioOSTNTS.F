@@ -45,7 +45,7 @@
  sec_size=8
  if (any((/io_sec(io_db,:)==1/))) then
 
-   ioOSTNTS=io_header(io_db,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.)
+   ioOSTNTS=io_header(io_db,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.)
    if (ioOSTNTS/=0) goto 1
 
    call io_elemental(io_db,VAR="PARS",VAR_SZ=sec_size,MENU=0)

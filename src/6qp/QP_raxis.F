@@ -37,7 +37,7 @@
 &                        QP_W,QP_solver,QP_W_er,QP_W_dr,QP_n_W_freqs,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps
  use X_m,           ONLY:X_alloc,X_mat,X_t
- use functions,     ONLY:e2et,h2ht
+ use functions,     ONLY:e2et,h2ht,bose_decay
  use parser_m,      ONLY:parser
  use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:qindx_S,bz_samp,nqibz,nqbz
@@ -62,7 +62,7 @@
 #endif
  real(SP)            ::life_Fe,life_Fh
  integer, allocatable::life_W_table(:,:)
- integer, external   ::ioX,qp_state_extract,ioQP,QP_life_transitions,X_em1
+ integer, external   ::ioX,QP_state_extract,ioQP,QP_life_transitions,X_em1
  character(schlen)   ::ch
 !
 !---------------------------------------------------------------------
@@ -105,6 +105,10 @@
 &           en%E(QP_table(i1,1),QP_table(i1,3),1)+(i2-1)*QP_dSc_delta
    enddo
  else if (trim(QP_solver)=='g') then
+!
+! I need to put to 0. the G damping embodied in QP_W2Sc
+!
+   QP_G_damp=0.
    do i1=1,qp%n_states
      Sc_W(i1)%n=QP_Sc_steps
      Sc_W(i1)%er=QP_G_er
@@ -114,6 +118,19 @@
    enddo
  endif
 !----------------------------------------------------------------------
+!
+ call section('+','Correlation Self-Energy')
+!===========================================
+ if (.not.l_life) call msg('r', '[GoWo] Bands range     :',QP_n_G_bands)
+ call msg('r', '[GoWo] G damping   [ev]:',QP_G_damp*HARTREE)
+ call msg('r','')
+ iv4=(/1,1,0,0/)
+ do while(QP_state_extract(iv4)>0)
+   write (ch,'(4(a,i3.3))') 'QP @ K ',iv4(1),' - ',iv4(2),' : b ',iv4(3),' - ',iv4(4)
+   call msg('r',trim(ch))
+ enddo
+ call msg('r','')
+
 !W DB 
 !=======================
  call io_control(ACTION=OP_RD,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=WID)
@@ -126,10 +143,14 @@
        if (iqbz< q%nbz) call io_control(ACTION=RD,COM=NONE,SEC=(/2+iqbz/),ID=WID)
        if (iqbz==q%nbz) call io_control(ACTION=RD_CL,COM=NONE,SEC=(/2+iqbz/),ID=WID)
        io_err=ioQP('W',qp,WID)
+!
+! Xw%p is stored in ioX, not in ioW !
+!
        Xw%er=QP_W_er
        Xw%dr=QP_W_dr
-       Xw%n =QP_n_W_freqs
+       Xw%n=QP_n_W_freqs
        call freqs_setup(Xw)
+!
        call QP_W2Sc(iqbz,k,en,Xw,Sc_W)
        call live_timing(steps=1)
      enddo
@@ -140,18 +161,6 @@
    endif
    if (QP_solver=="s") return
  endif
-!
- call section('+','Correlation Self-Energy')
-!===========================================
- if (.not.l_life) call msg('r', '[GoWo] Bands range     :',QP_n_G_bands)
- call msg('r', '[GoWo] G damping   [ev]:',QP_G_damp*HARTREE)
- call msg('r','')
- iv4=(/1,1,0,0/)
- do while(qp_state_extract(iv4)>0)
-   write (ch,'(4(a,i3.3))') 'QP @ K ',iv4(1),' - ',iv4(2),' : b ',iv4(3),' - ',iv4(4)
-   call msg('r',trim(ch))
- enddo
- call msg('r','')
 !
  if (l_life) then
    call section('=','Lifetimes Transitions Selector')
@@ -222,6 +231,7 @@
 &                                  SEC=(/2*iqibz,2*iqibz+1/),ID=XID)
      if (l_life) then
        io_err=ioX(X,X_life_W(iqibz),XID)
+       call X_delta_part(X,X_life_W(iqibz),isc%gamp)
      else
        io_err=ioX(X,Xw,XID)
 !
@@ -230,10 +240,9 @@
 !
        Xw%er=(/real(Xw%p(1)),real(Xw%p(Xw%n(1)))/)
        Xw%dr=(/aimag(Xw%p(1)),aimag(Xw%p(Xw%n(1)))/)
+       call X_delta_part(X,Xw,isc%gamp)
      endif
 
-     call X_delta_part(X,Xw,isc%gamp)
- 
      if (l_life) QP_n_W_freqs=0
 
    endif
@@ -273,10 +282,19 @@
            lrhotw(i3)=cdotu(X%ng,isc%rhotw,1,X_mat(1,i3,i2),1)
 #endif
          enddo
+!       
+! To compensate the Tel/w divergence of the Bose function at finite
+! Tel I multiply the X_mat function by [w/(Tel*Bose_E_cut)]^2
+!
+! Note that the same procedure is applied in QP_W2Sc when S_c is
+! calculated
+! 
 #if defined DP
-         qp%E(i1)=qp%E(i1)-(0.,2.)*pi*(life_Fe+life_Fh)*zdotc(X%ng,iscp%rhotw,1,lrhotw,1)
+         qp%E(i1)=qp%E(i1)-(0.,2.)*pi*(life_Fe+life_Fh)*bose_decay( real(Xw%p(i2)) )*&
+&                          zdotc(X%ng,iscp%rhotw,1,lrhotw,1)
 #else
-         qp%E(i1)=qp%E(i1)-(0.,2.)*pi*(life_Fe+life_Fh)*cdotc(X%ng,iscp%rhotw,1,lrhotw,1)
+         qp%E(i1)=qp%E(i1)-(0.,2.)*pi*(life_Fe+life_Fh)*bose_decay( real(Xw%p(i2)) )*&
+&                          cdotc(X%ng,iscp%rhotw,1,lrhotw,1)
 #endif
        else
 

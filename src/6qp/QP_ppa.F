@@ -58,7 +58,7 @@
  type(ggwinfo)    ::isc,iscp
  type(pp_indexes) ::px
  integer          ::gfmf,iv4(4),io_err,ID
- integer, external::ioX,qp_state_extract
+ integer, external::ioX,QP_state_extract
  character(schlen)::ch
 !
  call collision_reset(isc)
@@ -74,7 +74,7 @@
  call msg('r', '[GoWo/PPA] G damping   [ev]:',QP_G_damp*HARTREE)
  call msg('r','')
  iv4=(/1,1,0,0/)
- do while(qp_state_extract(iv4)>0)
+ do while(QP_state_extract(iv4)>0)
    write (ch,'(4(a,i3.3))') 'QP @ K ',iv4(1),' - ',iv4(2),' : b ',iv4(3),' - ',iv4(4)
    call msg('r',trim(ch))
  enddo

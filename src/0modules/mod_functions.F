@@ -58,6 +58,15 @@
  if (abs(E)<=bose_E_cut*Tel) bose_decay=E**2./(Tel*bose_E_cut)**2.
  end function
 !
+!=================================================================
+!
+! Lifetime functions e2et/h2ht
+!
+! Gamma_n = 2 i \sum_m  { -/+ i Im[e^-1(e_n -e_m) (2-f+bose_f) <- e2et
+!                           + i Im[e^-1(e_m -e_n) (f+bose_f)   <- h2ht }
+!
+! where - for T-ordered theory, + for causal (finite Tel)
+!
  function e2et(is,os,E,F)
 !========================
  use electrons,   ONLY:levels
@@ -73,8 +82,9 @@
 !
  dE=E%E(is(1),is(2),1)-E%E(os(1),os(2),1)
 !
- F=-(2.-E%f(os(1),os(2),1)+bose_f(dE))
- if (Finite_Tel) F=-F
+ F=               -(2.-E%f(os(1),os(2),1)+bose_f(dE))
+ if (Finite_Tel) F=(2.-E%f(os(1),os(2),1)+bose_f(dE))
+!
  if (dE>0..and.abs(F)>epsilon(1.)) e2et=1
  if (e2et==0) F=0.
  end function
@@ -94,8 +104,9 @@
 !"Hole 2 Hole" decay
 !
  dE=E%E(os(1),os(2),1)-E%E(is(1),is(2),1)
+!
  F=E%f(os(1),os(2),1)+bose_f(dE)
- if (Finite_Tel) F=-F
+!
  if (dE>0..and.abs(F)>epsilon(1.)) h2ht=1
  if (h2ht==0) F=0.
  end function

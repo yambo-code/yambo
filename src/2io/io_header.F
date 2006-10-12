@@ -19,11 +19,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K)
+ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,&
+&                           T_EL)
 !================================================================
- use pars,          ONLY:SP,schlen
+ use pars,          ONLY:SP,schlen,HARTREE
  use drivers,       ONLY:list_dbs
  use com,           ONLY:code_version,msg,warning
+ use D_lattice,     ONLY:Tel
  use R_lattice,     ONLY:nqibz,nqbz,nkibz,nkbz,qpt
  use wave_func,     ONLY:wf_ng
  use vec_operate,   ONLY:v_is_zero
@@ -31,10 +33,11 @@
  use IO_m,          ONLY:io_elemental,io_bulk,io_code_version,io_status,&
 &                        read_is_on,write_is_on,serial_number,&
 &                        io_serial_number,io_file,io_com,io_mode,&
-&                        DUMP,VERIFY,NONE,io_fragmented,dbs_fragment
+&                        DUMP,VERIFY,NONE,io_fragmented,dbs_fragment,&
+&                        version_is_newer
  implicit none
  integer            :: ID
- logical,optional   :: QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K
+ logical,optional   :: QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,T_EL
 !ws
  integer             :: i1,nqibz_disk,MENU_here,R_LATT_vec(4),&
 &                       R_LATT_vec_disk(4),MODE,MENU
@@ -124,6 +127,19 @@
 ! Things that may be dumped
 !===========================
 !
+ if (present(T_EL).and.version_is_newer(ID,(/3,0,1/)) ) then
+
+   io_mode(ID)=MODE
+
+   call io_elemental(ID,VAR="T_EL",VAR_SZ=1,MENU=MENU)
+   MENU=0
+   call io_elemental(ID,R0=Tel,&
+&       VAR=' Electronic Temperature       [ev]:',UNIT=HARTREE,WARN=WARN,OP=(/"=="/))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   io_header=io_status(ID)
+   if (io_header/=0) goto 1
+ endif
+
  if (present(QP_ctl_K)) then
 
    io_mode(ID)=MODE
@@ -131,7 +147,7 @@
    call io_elemental(ID,VAR="QP_CTL_K",VAR_SZ=3,MENU=MENU)
    MENU=0
    call io_elemental(ID,R1=QP_ctl_E(2,:),&
-&       VAR=' Kernel QP corrections        :',CHECK=WARN,OP=(/"==","==","=="/))
+&       VAR=' Kernel QP corrections        :',WARN=WARN,OP=(/"==","==","=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    io_header=io_status(ID)
    if (io_header/=0) goto 1

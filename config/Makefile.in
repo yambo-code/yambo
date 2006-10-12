@@ -188,8 +188,9 @@ define mclean
  echo "[.mod <soft>] cleaned" 
 endef
 define amdclean
- find . \( -name '*.a' -o -name '*.mod' \) -type f -print | xargs rm -f
- echo "[.a .mod <deep>] cleaned" 
+ find . \( -name '*.a' -o -name '*.mod' -o -name 'netcdf*h' \
+           -o -name 'netcdf*inc' \) -type f -print | xargs rm -f
+ echo "[.a .mod netcdf <deep>] cleaned" 
 endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done

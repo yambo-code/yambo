@@ -19,8 +19,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine QP_table_setup(en)
-!=============================
+ subroutine QP_state_table_setup(en)
+!===================================
+!
+! There are 2 objects that command the QP corrections
+! indexes: QP_state & QP_table.
+!
+! QP_table gives the band/k indexes for any QP state
+! QP_state is T if that band/k is a QP state
+!
+! QP_state is read from QP based DBs (xxvxc/QP...)
+!
 !
 ! IN :  either input_file or QP_state
 ! Out:  QP_table(1:QP_n_states,:) = (n,n`,ikibz)
@@ -127,7 +136,6 @@
  endif
  deallocate(QP_i_limits,QP_r_limits)
 
-
 1 continue
  if (k_rng_lines==0.and.e_rng_lines==0) then
    if (.not.associated(en%E)) return
@@ -151,12 +159,15 @@
      QP_table(QP_n_states,3)=i1
    enddo
  enddo
+
  contains
+
   subroutine i_check(k_i,ilim)
    integer :: k_i(2),ilim
    if (k_i(1)>ilim.or.k_i(1)<1) k_i(1)=1
    if (k_i(2)>ilim.or.k_i(2)<1) k_i(2)=ilim
    if (k_i(1)>k_i(2)) k_i(1)=1
   end subroutine
+
  end subroutine
 !

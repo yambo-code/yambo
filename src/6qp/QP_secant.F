@@ -161,7 +161,7 @@
    do i2=1,QP_dSc_steps-1
      QP_dSc(i1,i2)=(QP_Sc(i1,i2+1)-QP_Sc(i1,i2))/QP_dSc_delta
      Z(i2)=1./(1.-QP_dSc(i1,i2))
-     Eqp(i2)=Eqp_raxis(i1,1)+Z(i2)*aimag(QP_Sc(i1,1))
+     Eqp(i2)=Eqp_raxis(i1,1)+cmplx(0.,real(Z(i2))*aimag(QP_Sc(i1,1)),SP)
    enddo
    qp%E(i1)=Eqp(1)
    qp%Z(i1)=Z(1)
@@ -177,7 +177,10 @@
  call mem_est("QP_W")
 !
  contains 
+
+!======================
   subroutine W2Sc_here
+!======================
 
   if (allocated(QP_solver_state)) then
     do i1=1,QP_n_states
@@ -195,7 +198,6 @@
     Xw%er=QP_W_er
     Xw%dr=QP_W_dr
     Xw%n=QP_n_W_freqs
-    
     call freqs_setup(Xw)
 
     call QP_W2Sc(iqbz,k,en,Xw,Sc_W)

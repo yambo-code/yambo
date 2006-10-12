@@ -47,7 +47,7 @@
  type(w_samp)     ::Sc_W(qp%n_states)
  type(pp_indexes) ::px
  integer          ::io_err,ID,iv4(4)
- integer, external::ioELPH,qp_state_extract
+ integer, external::ioELPH,QP_state_extract
  character(schlen)::ch
  logical          ::use_G_RIM
  complex(SP), allocatable :: dc(:),Gf_save(:)
@@ -77,7 +77,7 @@
  if (use_G_RIM) call msg('r', '[GoWo/El-Ph] RIM energy bands  :',BZ_RIM_nbands)
  call msg('r','')
  iv4=(/1,1,0,0/)
- do while(qp_state_extract(iv4)>0)
+ do while(QP_state_extract(iv4)>0)
    write (ch,'(4(a,i3.3))') 'QP @ K ',iv4(1),' - ',iv4(2),' : b ',iv4(3),' - ',iv4(4)
    call msg('r',trim(ch))
  enddo
@@ -162,7 +162,7 @@
 &                                  Gf(Sc_W(i1)%p(iw),en,(/ob,ok,1/),sqrt(ph_freqs_sq(iq,im)))
          endif
 
-         forall (iw=1:Sc_W(i1)%n(1)) dc(iw)=dc(iw)-Gf_save(iw)/real(q%nbz)/2.*&
+         forall (iw=1:Sc_W(i1)%n(1)) dc(iw)=dc(iw)+Gf_save(iw)/real(q%nbz)/2.*&
 &               conjg(elph_dV(ikbz,im,ib-elph_bands(1)+1,ob-elph_bands(1)+1))*&
 &                     elph_dV(ikbz,im,ib-elph_bands(1)+1,ob-elph_bands(1)+1)/&
 &                     sqrt(ph_freqs_sq(iq,im))

@@ -95,9 +95,9 @@
      complex(SP), optional :: C1(:)
      end subroutine
 
-     integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K)
+     integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,T_EL)
      integer            :: ID
-     logical,optional   :: QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K
+     logical,optional   :: QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,T_EL
      end function
 
    end interface

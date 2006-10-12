@@ -2264,7 +2264,8 @@ CONTAINS
               
               DO ig = 1, npwk
                   !
-                  wf( ig, ib ) = wf_( igk( ig )  )
+!                 wf( ig, ib ) = wf_( igk( ig )  )
+                  wf( ig, ib-ibnds+1 ) = wf_( igk( ig )  )
                   !
               ENDDO
               !

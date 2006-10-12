@@ -28,6 +28,7 @@ module eels_qpt
   use R_lattice,        ONLY : bz_samp
   use surface_geometry
   use eels_kinematics
+  use intchar
 
   real(SP), private         :: q1(3), qa(3), qs(3)
   integer, allocatable      :: iqpar(:)
@@ -62,6 +63,9 @@ contains
   end subroutine print_qpar
 
   subroutine qpar_hw( q0, q,  wv ) 
+    !
+    ! Generate list of qpar ordered wrt qGwx
+    !
     use frequency,           ONLY : w_samp
     use vec_operate,         ONLY : v_module
     implicit none
@@ -87,7 +91,7 @@ contains
     do i1 = 1,nqpar
       q1(:) = qpar(i1,:)
       qmag = sign(v_module(q1),dot_product(q1,q0))
-      hwq_ = hwq(qmag)
+      hwq_ = hwq(qmag)  ! Calculates the energy corresponding to this |Q| in specular geometry
       qGwx(i1) = hwq_
       if(hwq_ <= wmin) iqmin = i1
       if(hwq_ <= wmax) iqmax = min(i1+1,nqpar)
@@ -121,16 +125,22 @@ contains
     integer                      :: indx(nqpar),indx2(nqpar)
 !   real(SP)                     :: v_module
 
+    !
+    ! Sort Qpar array in order of increasing qGwx energy
+    !
     do i1 = 1,nqpar
       q1(:) = q%ptbz(iqpar(i1),:) 
+      !
       ! Return the magnitude of |q1| times the sign of q1.q0
+      !
       tempin(i1) = sign(sqrt(dot_product(q1,q1)),dot_product(q1,q0))
     enddo
-!   call sort(nqpar,tempin,tempout,indx)
     call sort(tempin,tempout,indx)
     indx2(:) = iqpar(1:nqpar)
     iqpar(1:nqpar) = indx2(indx(:))
-
+    !
+    ! Now define this sorted qpar array
+    !
     allocate(qpar(nqpar,3)) 
 
 !<-- DEBUG
@@ -156,45 +166,46 @@ contains
     integer                      :: itemp(q%nbz), iqi, isi
     character(lchlen)            :: lch1,lch2
 
-!    call rresetfmt(3,q%pt(1,:))
-!    write (lch1,'(7a)') '(a,i3.3,a,3(',trim(rfmt),'),a,',trim(rfmt),')'
-!    do i1=1,q%nibz
-!      write (lch2,trim(lch1))   'Q [',i1,'] :',q%pt(i1,:),'(iku) * weight ',q%weights(i1)
-!      call msg('r',trim(lch2))
-!    enddo
-     call k_ibz2bz(q,'i')    
-!--> DEBUG
-!    write(*,102) "iq","q%ptbz       ","iqi","q%pt       ","isi"
-!<-- DEBUG
-!    call rresetfmt(3,q%ptbz(1,:))
-!    write (lch1,'(7a)') '(a,i3.3,a,3(',trim(rfmt),'),a,',trim(rfmt),')'
-     do i1=1,q%nbz
-       iqi = q%sstar(i1,1)
-       isi = q%sstar(i1,2)
-!--> DEBUG
-!      write(*,101) i1,q%ptbz(i1,:),iqi,q%pt(iqi,:),isi
-!      write (lch2,trim(lch1))   'Q [',i1,'] :',iqi,q%ptbz(i1,:),'(iku)',
-!      call msg('r',trim(lch2))
-!      write(*,100) i1,q%ptbz(i1,:)
-!<-- DEBUG
-     enddo
-100 format(i5,5x,3f8.3)
-101 format(i5,5x,3f8.3,i5,3f8.3,i3)
-102 format(a5,5x,a24  ,a5,a24  ,a3)
+!-->DEBUG ! this information is written already in the report file
+!   do i1=1,q%nibz
+!     write (lch2,200)   'Q [',i1,'] :',q%pt(i1,:),' (iku) * weight ',q%weights(i1)
+!     call msg('r',trim(lch2))
+!   enddo
+!<--DEBUG
+    !
+    ! Generate the q points in the full BZ -> q%ptbz
+    !
+    call k_ibz2bz(q,'i',.false.)  ! i,a,c Shift to the BZ?   
+    !
+    ! Write the list to the report file (reduce this)
+    !
+    call msg('r','Q points in the full BZ : '//intc(q%nbz))
+    do i1=1,q%nbz
+      iqi = q%sstar(i1,1)
+      isi = q%sstar(i1,2)
+      write (lch2,201)   'Q [',i1,'] :',q%ptbz(i1,:),' (iku) ',iqi,isi
+      call msg('r',trim(lch2))
+    enddo
+    !
+    ! Identify points parallel to Q_||
+    !
+    nqpar = 0
+    do i1 = 1,q%nbz
+      if(collin(q%ptbz(i1,:),q0(:), 0.0001)) then
+        nqpar = nqpar + 1
+        itemp(nqpar) = i1
+      endif
+    enddo
+    !
+    ! Store nqpar points in iqpar: relates qpar back to q%ptbz array
+    !
+    call msg('nr','Total Q_|| points found: ',nqpar)
+    allocate(iqpar(nqpar)) 
+    iqpar(1:nqpar) = itemp(1:nqpar)
 
-     nqpar = 0
-     do i1=1,q%nbz
-       if(collin(q%ptbz(i1,:),q0(:), 0.0001)) then
-         nqpar = nqpar + 1
-         itemp(nqpar) = i1
-       endif
-     enddo
-     call msg('nr','Total Q_|| points found: ',nqpar)
-     allocate(iqpar(nqpar)) 
-     iqpar(1:nqpar) = itemp(1:nqpar)
-
-     return
-
+    return
+200 format(a,i5,a,3f12.5,a,f10.5)
+201 format(a,i5,a,3f12.5,a,2i5)
   end subroutine qpar_1BZ
 
   logical function collin(q,q_orig,comp)

@@ -34,13 +34,13 @@ subroutine calc_eps( iq,  Xen,Xk, X, q, wq, epsm1, ngblk, nw ,iqf )
   !
   ! eps(hw) is calculated on the input mesh wq(1:nw)
   !
-  use pars,            ONLY : PI, HARTREE, lchlen
-  use com,            ONLY : msg
-  use parser_m,       ONLY : parser
-  use X_m,                    ONLY : X_t, X_mat, X_epsilon, X_alloc
-  use frequency,               ONLY : w_samp
-  use R_lattice,               ONLY : bz_samp, bare_qpg, ng_vec, g_vec
-  use electrons,              ONLY : levels
+  use pars,                  only : PI, HARTREE, lchlen
+  use com,                   only : msg
+  use parser_m,              only : parser
+  use X_m,                   only : X_t, X_mat, X_epsilon, X_alloc
+  use frequency,             only : w_samp
+  use R_lattice,             only : bz_samp, bare_qpg, ng_vec, g_vec
+  use electrons,             only : levels
   use eels_qpt
   use eels_gvec
 ! use eels_wgrid
@@ -48,11 +48,11 @@ subroutine calc_eps( iq,  Xen,Xk, X, q, wq, epsm1, ngblk, nw ,iqf )
   use surface_geometry
   implicit none
   type(levels),       intent(in) :: Xen    ! Energies
-  type(bz_samp),   intent(in) :: Xk, q  ! K/Q points
-  type(X_t), intent(inout) :: X   ! Polarization
-  type(w_samp), intent(in)       ::  wq    ! Energy ranges
+  type(bz_samp),      intent(in) :: Xk, q  ! K/Q points
+  type(X_t),       intent(inout) :: X   ! Polarization
+  type(w_samp),       intent(in) ::  wq    ! Energy ranges
   integer,            intent(in) :: ngblk, nw, iq, iqf  ! IBZ, FBZ
-  complex(SP),        intent(out):: epsm1(ngblk,ngblk,nw)
+  complex(SP),       intent(out) :: epsm1(ngblk,ngblk,nw)
 !ws
   complex(SP)                    :: eps(ngblk,ngblk,nw),head(nw)
   integer                        :: i1,i2,fr(2),nau, irq, rtype, npol
@@ -65,19 +65,18 @@ subroutine calc_eps( iq,  Xen,Xk, X, q, wq, epsm1, ngblk, nw ,iqf )
 
   nwp = (nw+1)/2
 
-
   do i1 = 1, wq % n(1), wq % n(2) ! loop over all hw in units of n(2) blocks
     !
     fr = (/ i1, i1+wq%n(2)-1 /) ! the small block of frequencies
     !
-    call X_os(X_mat,q,iq,fr,Xen,Xk,wq,X)   
+    call X_os(X_mat,iq,fr,Xen,Xk,wq,X)   
     !
     eps(1:X%ng,1:X%ng,fr(1):fr(2)) = X_mat(:,:,:)  ! Save for all frequencies
     !
     head(fr(1):fr(2)) = 1.0_SP - X_mat(1,1,:)*4.0_SP*pi/ &
 &                         bare_qpg(iq,1) / bare_qpg(iq,1)
     ! 
-    call Xs(iq,fr,X,wq)
+    call X_s(iq,fr,X,wq)
     !
     epsm1(1:X%ng,1:X%ng,fr(1):fr(2)) = X_mat(:,:,:)  ! Save for all frequencies
     !

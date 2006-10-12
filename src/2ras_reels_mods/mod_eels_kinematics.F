@@ -67,8 +67,9 @@ end subroutine init_kinematics
     implicit none
     real(SP)                   :: fac = 180.0_SP/pi
 
+   write(*,*) "FAC",fac
     call msg('nr','Kinematic settings for EELS calculation:')
-    call msg('r','Incident energy (eV) :',E0*HARTREE )
+    call msg('r','Incident  energy (eV)  :',E0*HARTREE )
     call msg('r','Incident   angle (deg) :',theta0*fac )
     call msg('r','Deflection angle (deg) :',thetap*fac )
     call msg('r','Scattering angle (deg) :',thetas*fac )
@@ -84,7 +85,12 @@ end subroutine init_kinematics
 
     lfail = .false.
 
-    thetas   = theta0 + thetap
+    theta0 = theta0_in
+    thetap = thetap_in
+    phi    = phi_in
+
+    thetas_in   = theta0_in + thetap_in
+    thetas = thetas_in
 
     lplanar = .false.
     if(abs(phi).le.0.001) lplanar = .true.
@@ -98,17 +104,13 @@ end subroutine init_kinematics
 !   lfixed = .false.
 !   if(abs(thetas + theta0 - 90.0_SP).le.0.0001) lfixed = .true.
 
-    E0       = E0/HARTREE        ! E0(eV) -> E0(au)
+!   E0       = E0        ! E0(eV) -> E0(au) E0 already in au
     kmag     = sqrt(2.0_SP*E0) ! kmag   -> au
     thetas    = thetas*rad
     theta0    = theta0*rad
     thetap    = thetap*rad
     phi       = phi*rad
 
-    thetas_in = thetas
-    theta0_in = theta0
-    thetap_in = thetap
-    phi_in    = phi
 
     sintheta0 = sin(theta0)
     costheta0 = cos(theta0)

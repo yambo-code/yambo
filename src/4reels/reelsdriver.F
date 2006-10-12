@@ -20,18 +20,18 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine reelsdriver(Xen,Xk,q,wv,X)
-  use pars,                   ONLY : SP, schlen, lchlen
-  use com,                    ONLY : msg
-  use X_m,                    ONLY : X_t, X_mat, X_epsilon
-  use parser_m,               ONLY : parser
-  use electrons,              ONLY : levels
-  use R_lattice,               ONLY : bz_samp, bare_qpg, ng_vec, g_vec
+  use pars,                    only : SP, schlen, lchlen
+  use com,                     only : msg
+  use X_m,                     only : X_t, X_mat, X_epsilon
+  use parser_m,                only : parser
+  use electrons,               only : levels
+  use R_lattice,               only : bz_samp, bare_qpg, ng_vec, g_vec
   
-  use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP
-  use wave_func,               ONLY : wf_ng
-  use frequency,               ONLY : w_samp, W_duplicate
-  use vec_operate,             ONLY : v_module
-  use par_proc_m,              ONLY : pp_redux_wait
+  use IO_m,                    only : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP
+  use wave_func,               only : wf_ng
+  use frequency,               only : w_samp, W_duplicate
+  use vec_operate,             only : v_module
+  use par_proc_m,              only : pp_redux_wait
   use bulkeps
   use eels_kinematics
   use surface_geometry
@@ -77,7 +77,8 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
 
   call section('+','Input processing.')
   !
-  call input_reels(lfail)
+  call setup_reels(lfail)
+  write(*,*) "done!"
   !
   call print_reels ! general runtime options
   !
@@ -86,10 +87,9 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
   ! Set up energy ranges/meshes and energy data from input (wv) 
   !
   call freqs_setup(wv) 
-! call typ_cp(wv, wq) ! Copy to reels wrange, wq
-  call W_duplicate(wv, wq) ! Copy to reels wrange, wq
-  call freqs_setup(wq) 
-  call Xchecks(q,Xen,X) ! what does this do?
+  call W_duplicate(wv, wq) ! Copies n,er,dr but not p
+  call freqs_setup(wq)     ! Define wq%p 
+! call Xchecks(q,Xen,X) ! what does this do? REMOVED FOR NOW...NB
   !
   ! nw    = number of points epsm1 is calculated on (i.e., wq%n(1) from input
   ! nwp   = number of points loss is calculated for at each q = (nw+1)/2
@@ -98,6 +98,7 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
   nw  = wq%n(1)
   nwp = (nw+1)/2 ! or nwp - 1? Check.
   ngblk = X%ng
+! call print_eels_freqs  ! Just report some basic information on the wv array
   !
   ! G-vectors
   !
@@ -106,7 +107,6 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
   !
   ! Process and scan the bulk file
   !
-! call input_bulkeps
   call scan_bulkeps( lbulkerr, bulkmsg ) 
   call msg('nrs',trim(bulkmsg))
   if(lbulkerr) call msg('nrs','Calculation will continue, but '//&
@@ -148,7 +148,9 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
     call section('=','Generate Q_|| vs hw table.')
     call qpar_1BZ( X%q0, q )
     call qpar_sort( X%q0, q )
+    write(*,*) "Q3"
     call qpar_hw( X%q0, q,  wv)   
+    write(*,*) "Q4"
 
     call section('=','Generate Gz tables.')
     call setup_iGz( ng_vec , iqmin, iqmax, wf_ng )
@@ -157,6 +159,7 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
     if(.not.lanalytical) then
       call calc_zk
     endif
+
     call section('=','Energy grid setup.')
     call init_wgrid(wq, nqpar)
     call wqgrid(wq)
@@ -198,11 +201,14 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
 
       call print_qpar(iq,iqf,iqi,qpar(iq,:),q%ptbz(iqf,:),q%pt(iqi,:))
       call setup_iGzrot(iqi, isi,   ngblk )     
+       write(*,*) "C"
       call modify_Xgspace( iqi,  ngblk )
-
+       write(*,*) "D"
       call select_wgrid(wq, iq) ! takes the grid for THIS iq
+       write(*,*) "E"
       call add_broad(wq)
 
+       write(*,*) "F"
 !     call get_reels_epsm1av
 
       select case(iqmin-iq)
@@ -210,24 +216,30 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
         !
         ! Calculate eps^1 for the irreducible q (IBZ)
         !
+       write(*,*) "G"
         call calc_eps( iqi, Xen, Xk, X, q, wq, epsm1, ngblk, nw, iqf )
+       write(*,*) "H"
         !
         ! Transform eps^1 to the reducible q (FBZ)
         !
+       write(*,*) "I"
         call rotate_eps( iqi, iqf, isi, epsm1 )
         !
         ! If no symmetry present, force to be symmetric (physical) in plane
         !
+       write(*,*) "J"
         call average_inveps  
         !
         ! No interpolation for iq = 1
         !
+       write(*,*) "K"
         epsm1_avA(:,:,1:nwp) = epsm1(:,:,nwp:nw) ! copy upper half for next iq
         epsm1_av(1:ngblk,1:ngblk,1:nwp) = epsm1(1:ngblk,1:ngblk,1:nwp)
         !
       case default 
 !       call section('=','Next iq')
         !
+       write(*,*) "L"
         call calc_eps( iqi, Xen, Xk, X, q, wq, epsm1, ngblk, nw, iqf)
         !
         call rotate_eps( iqi, iqf, isi, epsm1 )
@@ -244,6 +256,7 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
         !
       end select
       ! 
+      write(*,*) "M"
       if(lanalytical)      call calc_loss_analytical(lossq,epsm1_av,g_vec)
 !     if(.not.lanalytical) call calc_loss_numerical
       !
@@ -253,13 +266,16 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
       !
       !  Write loss for this qpar and group of frequencies
       !
+      write(*,*) "N"
       call write_loss( real(wq%p(1:nwp)), lossq, nwp, ipol)
 
 !     Save to single array for rel. difference calculations...
-      loss(ipol,1:5,grange(iq,1):grange(iq,2)) = lossq(1:5,1:nwp) 
+      write(*,*) "O"
+!     loss(ipol,1:5,grange(iq,1):grange(iq,2)) = lossq(1:5,1:nwp) 
 
     enddo ! end of loop on qpar for this ipol
 
+      write(*,*) "done main loop"
 !   Deallocations
 !   Will need to improve data hiding: many of these are not used here.
 
@@ -291,28 +307,34 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
 
 contains
 
-  subroutine input_reels( lfail)
+  subroutine setup_reels( lfail)
     implicit none
     logical,            intent(out) :: lfail
-!   call input_surface_geometry( lfail)
+    lfail = .false.
+
+    call setup_surface_geometry( lfail)
     call print_surface_geometry
+    write(*,*) "a"
 
-!   call input_eels_kin( lfail )
+    call setup_eels_kin( lfail )
     call print_eels_kin
+    write(*,*) "a"
 
-!   call input_eels_det( lfail)
+    call setup_eels_det( lfail)
     call print_eels_det
+    write(*,*) "a"
 
-!   call input_eels_int( lfail)
+!   call setup_eels_int( lfail)
     call print_eels_int
+    write(*,*) "a"
     return
-  end subroutine input_reels
+  end subroutine setup_reels
 
   subroutine print_reels
     !
     ! General runtime options/flags
     !
-    use reels_module,      ONLY : npol, lepsmix
+    use reels_module,      only : npol, lepsmix
     implicit none
 
     if(lepsmix) call msg('r','Linear interpolation between eps(q) and eps(q+1).')
@@ -341,8 +363,8 @@ contains
 end subroutine reelsdriver
 
 subroutine write_loss( hw, loss, nw, ipol)
-  use com,                    ONLY : msg, of_open_close
-  use pars,                   ONLY : SP, schlen, HARTREE
+  use com,                    only : msg, of_open_close
+  use pars,                   only : SP, schlen, HARTREE
   implicit none
   integer,          intent(in)    :: ipol, nw
   real(SP),         intent(in)    :: loss(5,nw), hw(nw)
@@ -368,9 +390,9 @@ subroutine write_loss( hw, loss, nw, ipol)
 end subroutine write_loss
 
 subroutine setup_output_reels(qname, q0, ipol)
-  use pars,                   ONLY : SP, schlen
-  use com,                    ONLY : msg, of_open_close
-  use vec_operate,            ONLY : v_module
+  use pars,                   only : SP, schlen
+  use com,                    only : msg, of_open_close
+  use vec_operate,            only : v_module
   implicit none
   character(schlen)               :: of_name
   character(len=1), intent(in)    :: qname

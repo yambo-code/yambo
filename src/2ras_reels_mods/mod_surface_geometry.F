@@ -115,6 +115,7 @@ end subroutine init_surface
       call msg('r','-              X',q0x(1:3)/fac )
       fac = sqrt(dot_product(q0y,q0y))
       call msg('r','-              Y',q0y(1:3)/fac )
+     write(*,*) "norm",norm
       fac = sqrt(dot_product(norm,norm))
       call msg('r','Surface normal :',norm(1:3)/fac )
       call msg('r','Surface vector indices (ix,iy,iz) :',(/ix,iy,iz/) )

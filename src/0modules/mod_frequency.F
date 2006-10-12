@@ -55,7 +55,7 @@
  Wo%per_memstps=Wi%per_memstps
  Wo%er=Wi%er
  Wo%dr=Wi%dr
- end subroutine
+ end subroutine W_duplicate
 
  subroutine W_reset(W)
 !=====================
@@ -67,7 +67,7 @@
  W%dr=(/.1,.1/)/HARTREE
  nullify(W%p)
  call mem_est("W-p")
- end subroutine
+ end subroutine W_reset
 
 
  end module frequency

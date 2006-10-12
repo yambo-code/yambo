@@ -81,6 +81,7 @@ contains
     do ig_ = 1, ngeels
       ig = iGz0indx(ig_) ! the real eps(Q_||,G,G')
       iGzrotindx(ig_) = g_rot( isinv, ig )
+!     write(*,*) "ig",ig_,ig,isinv,iGzrotindx(ig_)
     enddo
     if(ANY(iGzrotindx.eq.0)) stop
 

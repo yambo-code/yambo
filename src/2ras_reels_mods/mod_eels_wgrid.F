@@ -243,7 +243,7 @@ contains
     implicit none
     type(w_samp), intent(inout) :: wv
     integer :: i1
-    real(SP) :: damping
+    real(SP), external :: damping
 
     do i1=1,wv%n(1)
       wv%p(i1)=real(wv%p(i1)) + &
@@ -283,21 +283,6 @@ contains
 120 format(a4, a8,  a3,a9)
 121 format(i4, f8.3,i3,f9.4)
 
-!   if(lanalytical) &
-!     call msg('r','Analytical integration of inverse epsilon.')
-!   if(.not.lanalytical) &
-!     call msg('r','Numerical integration of inverse epsilon.')
-!   call msg('r','Detector integration factors:')
-!   call msg('r','Vacuum  limit (a.u.) :',dv )
-!   call msg('r','Surface limit (a.u.) :',ds )
-!   call msg('r','Slab    limit (a.u.) :',dc )
-!   if(detint.eq."av") call msg('r','Simple averaging over detector window.' )
-!   if(detint.eq."no") call msg('r','No integration over detector window.' )
-!   if(detint.eq."fu") then 
-!      call msg('r','Full integration over detector window.' )
-!      call msg('r','Number of integration points :',detintm )
-!   endif
-!   return
   end subroutine print_wgrid
 
 end module eels_wgrid

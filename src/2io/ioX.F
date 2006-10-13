@@ -140,7 +140,6 @@
 !---------------
 !
  call io_fragment(ID,i_pointer=iq)
-
 !
 !  type(X_t)    ::X(4) ! x s d p
 !

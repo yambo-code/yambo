@@ -63,7 +63,7 @@
 
    is=(/QP_table(i1,1),QP_table(i1,3)/)   ! (nk) QP
    os(2)=k%sstar(qindx_S(is(2),iqbz,1),1) ! (nk) intermediate state
-
+ 
    do ib=QP_n_G_bands(1),QP_n_G_bands(2)
      if (.not.px%i1p(ib)) cycle
 
@@ -73,10 +73,12 @@
 !==========================
 !
      forall(i2=1:Xw%n(1)) QP_W_here(i2)=QP_W(i1,ib,i2)*&
-&                            (2.-E%f(os(1),os(2),1)+bose_f(real(Xw%p(i2))))*&
-&                            bose_decay(real(Xw%p(i2)))
+&                         (2.-E%f(os(1),os(2),1)+bose_f(real(Xw%p(i2))))*&
+&                         bose_decay(real(Xw%p(i2)))
 
-     call kk(QP_W_here,real(Xw%p(:)),QP_n_W_freqs,dSc,Sc_W(i1)%p,Sc_W(i1)%n(1),&
+     call kk(QP_W_here,real(Xw%p(:)),QP_n_W_freqs,dSc,&
+&            real(Sc_W(i1)%p(:))-cmplx(0.,tsign,SP)*aimag(Sc_W(i1)%p(:)),&
+&            Sc_W(i1)%n(1),&
 &            E%E(os(1),os(2),1)+tsign*cmplx(0.,QP_G_damp,SP))
 
 !
@@ -84,10 +86,11 @@
 !==========================
 !
      forall(i2=1:Xw%n(1)) QP_W_here(i2)=QP_W(i1,ib,i2)*&
-&                            (E%f(os(1),os(2),1)+bose_f(real(Xw%p(i2))))*&
-&                            bose_decay(real(Xw%p(i2)))
+&                         (E%f(os(1),os(2),1)+bose_f(real(Xw%p(i2))))*&
+&                         bose_decay(real(Xw%p(i2)))
 !
-     call kk(-QP_W_here,real(Xw%p(:)),QP_n_W_freqs,dSc,-Sc_W(i1)%p,Sc_W(i1)%n(1),&
+     call kk(-QP_W_here,real(Xw%p(:)),QP_n_W_freqs,dSc,&
+&            -real(Sc_W(i1)%p(:))+cmplx(0.,1.,SP)*aimag(Sc_W(i1)%p(:)),Sc_W(i1)%n(1),&
 &            -E%E(os(1),os(2),1)-cmplx(0.,QP_G_damp,SP))
 
    enddo

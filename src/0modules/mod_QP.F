@@ -38,6 +38,7 @@
   integer           :: QP_n_G_bands(2)
   integer           :: QP_Sx_low_band
   logical           :: QP_dSc_test
+  logical           :: QP_W_partially_done
   character(schlen) :: QP_rep_string
   character(schlen) :: QP_solver
   character(schlen) :: QP_xc_FUNCTIONAL

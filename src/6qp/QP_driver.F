@@ -34,7 +34,7 @@
  use QP_m,          ONLY:QP_t,QP_dSc,QP_dSc_steps,QP_Vxc,QP_Sc,QP_solver,QP_table,&
 &                        QP_Sx,pp_taylor_terms,QP_n_states,QP_nb,&
 &                        QP_nk,QP_rep_string,QP_state,QP_dSc_test,QP_reset,&
-&                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_G
+&                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_G,QP_W_partially_done
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  implicit none
  type(levels) ::en,Xen
@@ -143,7 +143,13 @@
 !--------------------------------------------------------
 !Solver "type"
 !=============
- if (trim(QP_solver)=='n') call QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
+ if (trim(QP_solver)=='n') then
+   call QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
+! When the W q-loop is completed the S_c cannot be
+! calculated on-fly 
+!
+   if (QP_W_partially_done) return
+ endif
  if (trim(QP_solver)=='s') call QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
 
 !--------------------------------------------------------
@@ -229,8 +235,10 @@
 !
 ! QP i/o
 !========
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
-   io_err=ioQP('QP',qp,ID)
+   if (l_el_corr) then
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
+     io_err=ioQP('QP',qp,ID)
+   endif
 !
  endif
 !

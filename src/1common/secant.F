@@ -21,10 +21,10 @@
 !
  subroutine secant(x1,f1,x2,f2,ires,acc)
 !=======================================
- use pars
+ use pars, ONLY:SP
  implicit none
- integer :: ires
- real(SP):: f1,f2,x1,x2,acc
+ integer      :: ires
+ real(SP)     :: f1,f2,x1,x2,acc
 !ws
  real(SP):: Dx
  ires=0
@@ -32,12 +32,12 @@
  if (abs(f2)<=acc) ires=-2
  if (abs(f1)<=acc.or.abs(f2)<=acc) return
  if (abs(f1).lt.abs(f2)) then
-  ires=2
-  Dx=-f2*(x1-x2)/(f1-f2)
-  x2=x2+Dx
+   ires=2
+   Dx=-f2*(x1-x2)/(f1-f2)
+   x2=x2+Dx
  else if (abs(f1).gt.abs(f2)) then
-  ires=1
-  Dx=-f1*(x1-x2)/(f1-f2)
-  x1=x1+Dx
+   ires=1
+   Dx=-f1*(x1-x2)/(f1-f2)
+   x1=x1+Dx
  endif
  end subroutine

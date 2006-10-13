@@ -27,7 +27,8 @@
 &                      QP_Sx_low_band,QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                      QP_W_er,QP_W_dr,QP_cg_percent,QP_xc_FUNCTIONAL,&
 &                      QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_E,QP_ctl_W,QP_ctl_Z,&
-&                      QP_ctl_short_descr,QP_Sc_steps,QP_G_er,QP_G_dr
+&                      QP_ctl_short_descr,QP_Sc_steps,QP_G_er,QP_G_dr,&
+&                      QP_W_partially_done
   use functions,  ONLY:bose_E_cut
   use D_lattice,  ONLY:i_space_inv,n_atoms_max,n_atom_species,pp_n_l_comp_max,pp_kbv_dim
   use R_lattice,  ONLY:RL_v_comp_acc,n_g_shells,ng_closed,bse_scattering,&
@@ -220,6 +221,7 @@
   QP_dSc_delta=0.1/HARTREE
   QP_W_er=0.
   QP_W_dr=0.1/HARTREE
+  QP_W_partially_done=.false.
   QP_G_er=(/0.,10./HARTREE/)
   QP_G_dr=0.1/HARTREE
   QP_cg_percent=100.

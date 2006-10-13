@@ -52,7 +52,7 @@
  type(ggwinfo)    ::isc,iscp
  type(pp_indexes) ::px
  type(w_samp)     ::Sc_W(qp%n_states),X_life_W(q%nibz)
- integer :: i1,i2,i3,i_or,iqbz,iqibz,ib,i_err,&
+ integer :: i1,i2,i3,i_or,iqbz,iqibz,ib,i_err,iq_to_start,&
 &           life_hh,life_ee,iv4(4),io_err,XID,WID,QP_n_W_freqs_redux
  complex(SP) :: lrhotw(X%ng)
 #if defined DP
@@ -135,6 +135,10 @@
 !=======================
  call io_control(ACTION=OP_RD,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=WID)
  io_err=ioQP('W',qp,WID)
+!
+ iq_to_start=1
+ if (io_err>0) iq_to_start=io_err
+!
  if (io_err==0) then
    if (QP_solver=="n".or.QP_solver=="g") then
      QP_Sc=cmplx(0.,0.,SP)
@@ -215,20 +219,22 @@
 !
 !Main Loop
  call pp_redux_wait
- call live_timing('GoWo Sc',px%stps(myid+1)*q%nbz)
+ call live_timing('GoWo Sc',px%stps(myid+1)*(q%nbz-iq_to_start+1))
 
- do iqbz=1,q%nbz
+ do iqbz=iq_to_start,q%nbz
    if (.not.l_life) QP_W=(0.,0.)
    isc%qs(2:)=(/q%sstar(iqbz,1),q%sstar(iqbz,2)/)
    iqibz=isc%qs(2)
+
    if (iqibz/=isc%iqref) then
      call scatterGamp(isc,'c')
 !
 ! X I/O
 !
-     if (iqibz==1) call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1,2,3/),ID=XID)
-     if (iqibz/=1) call io_control(ACTION=RD_CL_IF_END,COM=NONE,&
-&                                  SEC=(/2*iqibz,2*iqibz+1/),ID=XID)
+     if (iqbz==iq_to_start) call io_control(ACTION=OP_RD,COM=NONE,&
+&                                SEC=(/1,2,2*iqibz+1/),ID=XID)
+     if (iqbz/=iq_to_start) call io_control(ACTION=RD_CL_IF_END,COM=NONE,&
+&                                SEC=(/2*iqibz,2*iqibz+1/),ID=XID)
      if (l_life) then
        io_err=ioX(X,X_life_W(iqibz),XID)
        call X_delta_part(X,X_life_W(iqibz),isc%gamp)
@@ -371,6 +377,7 @@
  call collision_reset(isc)
  call collision_reset(iscp)
  call pp_indexes_reset(px)
+ call pp_redux_wait()
 
  end subroutine
 !

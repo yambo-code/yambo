@@ -22,15 +22,18 @@
  integer function ioQP(what,qp,ID)
 !=================================
  use pars,           ONLY:SP,schlen
+ use R_lattice,      ONLY:nqbz
  use par_proc_m,     ONLY:myid
  use memory_m,       ONLY:mem_est
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use QP_m,           ONLY:QP_t,QP_state,QP_nk,QP_nb,QP_dSc_steps,&
 &                         QP_n_G_bands,QP_cg_percent,QP_n_states,QP_W,&
-&                         QP_n_W_freqs,QP_W_dr,QP_W_er
+&                         QP_n_W_freqs,QP_W_dr,QP_W_er,QP_W_partially_done
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
-&                         write_is_on,io_mode,DUMP,VERIFY
+&                         write_is_on,io_mode,DUMP,VERIFY,&
+&                         io_fragment,io_check_restart,io_restart,&
+&                         io_netcdf_support
  implicit none
  type(QP_t)  ::qp
  character(*)::what ! 'qp'/'W'
@@ -43,8 +46,13 @@
  character(schlen)    ::ch
  character(2)         ::OP(1)
 
+
  ioQP=io_connect(desc=what,type=2,ID=ID)
  if (ioQP/=0) goto 1
+!
+! Check the restart point 
+!  
+ if (what=="W") call io_check_restart("W",ID)
 
  if (any((/io_sec(ID,:)==1/))) then
 
@@ -133,7 +141,6 @@
        if (i_found/=0) io_status(ID)=-1
      enddo
    endif
-
 !
 ! From the W db I can extract the QP_table. Not from the QP db that 
 ! can be used with different ns* dbs'. IN this latter case I 
@@ -160,6 +167,18 @@
    ioQP=io_status(ID)
    if (ioQP/=0) goto 1
  
+ endif
+!
+! Sections 1 & 2 are used in VERIFY mode.
+! Now that the menu is closed I can return with ioQP/=0 if
+! there is a restart point
+!
+ if (what=="W") then
+   ioQP=io_restart(ID)
+   if (ioQP/=0.and.io_netcdf_support(ID)) then
+     QP_W_partially_done=.true.
+     goto 1
+   endif
  endif
 
  if (any((/io_sec(ID,:)==3/)).and.what/="W") then
@@ -211,8 +230,12 @@
  enddo
 
  if (any((/io_sec(ID,:)==2+iqbz/)).and.what=="W") then
-
-
+! 
+! Fragmentation
+!--------------- 
+!
+   call io_fragment(ID,i_pointer=iqbz)
+!
    write (ch,'(a,i3.3)') "W_PARS_",iqbz
 
    call io_elemental(ID,VAR=trim(ch),VAR_SZ=7,MENU=0)
@@ -245,6 +268,8 @@
  
    ioQP=io_status(ID)
    if (ioQP/=0) goto 1
+
+   call io_check_restart("W",ID,now=iqbz,todo=nqbz)
  
  endif
 

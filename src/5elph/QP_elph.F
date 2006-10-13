@@ -150,16 +150,17 @@
      do ob=elph_bands(1),QP_PH_n_G_bands
        if (.not.px%i2p(iqbz,ob)) cycle
        do im=1,ph_modes
-
-!DEBUG >
+!
+! Skip Acoustic modes @ Gamma
+!
          if (iq==1.and.im<=3) cycle
-!DEBUG <
+         if (iq==1) cycle
 
          if (use_G_RIM.and.ob<=BZ_RIM_nbands) then
            call G_RIM_Gf(Sc_W(i1),en,(/ob,okbz,1/),sqrt(ph_freqs_sq(iq,im)),Gf_save) 
          else
            forall (iw=1:Sc_W(i1)%n(1)) Gf_save(iw)=&
-&                                  Gf(Sc_W(i1)%p(iw),en,(/ob,ok,1/),sqrt(ph_freqs_sq(iq,im)))
+&                                  Gf(Sc_W(i1)%p(iw),en,(/ob,ok,1/),sqrt(ph_freqs_sq(iq,im)),1)
          endif
 
          forall (iw=1:Sc_W(i1)%n(1)) dc(iw)=dc(iw)+Gf_save(iw)/real(q%nbz)/2.*&
@@ -185,21 +186,34 @@
 
  contains
 !
-   pure function Gf(W,e,vs,E_ph)
+   pure function Gf(W,e,vs,E_ph,i_type)
 !===============================
    implicit none
    type(levels), intent(in) ::e
-   integer     , intent(in) ::vs(3)
+   integer     , intent(in) ::vs(3),i_type
    complex(SP) , intent(in) ::W
    real(SP)    , intent(in) ::E_ph
    complex(SP) ::Gf
    complex(SP) ::lW !ws
    lW=W
    if (Finite_Tel) lW=conjg(W)
-   Gf=(&
+!
+! ORI
+   if (i_type==1) Gf=(&
 &      (2.-e%f(vs(1),vs(2),vs(3))+bose_f(E_ph))/(lW-e%E(vs(1),vs(2),vs(3))-E_ph)+&
 &      (e%f(vs(1),vs(2),vs(3))+bose_f(E_ph))/(conjg(W)-e%E(vs(1),vs(2),vs(3))+E_ph)&
 &     )
+
+   if (i_type==2)   Gf=2.*( (W-e%E(vs(1),vs(2),vs(3)))*(bose_f(E_ph)+1.)+&
+&       E_ph*(1.-e%f(vs(1),vs(2),vs(3))) )/&
+&     ( (W-e%E(vs(1),vs(2),vs(3)))**2 - E_ph**2 )
+!
+! W_ph =0
+!
+   if (i_type==3) Gf=2.*( (W-e%E(vs(1),vs(2),vs(3)) )*(bose_f(E_ph)+1.) )/&
+&        ( (W-e%E(vs(1),vs(2),vs(3)))**2 )
+!
+
    end function
 !
  end subroutine

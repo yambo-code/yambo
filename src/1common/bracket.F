@@ -21,10 +21,10 @@
 !
  subroutine bracket(x1,f1,x2,f2,ires)
 !====================================
- use pars
+ use pars,ONLY: SP
  implicit none
- integer :: ires
- real(SP):: f1,f2,x1,x2
+ integer     :: ires
+ real(SP)    :: f1,f2,x1,x2
 !ws
  real(SP),parameter :: precision=1.E-5,factor=1.6
 !

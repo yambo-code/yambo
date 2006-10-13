@@ -47,7 +47,7 @@
 ! 2. SECANT SOLUTION: see "Numerical Recipes (Fortran version)", Pag. 248
 !
 !-------------------------------------------------------------------------
- use pars
+ use pars,          ONLY:SP,HARTREE,IP
  use memory_m,      ONLY:mem_est
  use timing,        ONLY:live_timing
  use com,           ONLY:msg
@@ -55,10 +55,11 @@
  use R_lattice,     ONLY:bz_samp
  use frequency,     ONLY:w_samp,W_reset
  use X_m,           ONLY:X_t
- use parser_m,      ONLY:parser
+ use par_proc_m,    ONLY:pp_redux_wait
  use QP_m,          ONLY:QP_t,QP_Vxc,QP_Sx,QP_Sc,QP_n_W_freqs,QP_W,QP_n_states,&
 &                        QP_solver_state,QP_dSc_steps,QP_dSc,QP_n_G_bands,&
-&                        QP_dSc_test,QP_W_dr,QP_W_er,QP_dSc_delta
+&                        QP_dSc_test,QP_W_dr,QP_W_er,QP_dSc_delta,&
+&                        QP_W_partially_done
  use IO_m,          ONLY:io_control,NONE,RD,RD_CL,OP_RD
  implicit none
  type(levels)::en,Xen
@@ -114,7 +115,7 @@
  QP_solver_state=2
  call W2Sc_here
 
- call live_timing('[SECANT] Brackets',QP_n_states)
+ call live_timing('[SECANT] Brackets',QP_n_states,SERIAL=.true.)
  do while(any(QP_solver_state/=0))
    do i1=1,qp%n_states
      i2=QP_solver_state(i1)
@@ -125,26 +126,27 @@
    call W2Sc_here
  enddo
  call live_timing()
-
+ call pp_redux_wait()
 !
 ! Root
 !======
  QP_solver_state=1
- call live_timing('[SECANT]  Root(s)',QP_n_states)
+ call live_timing('[SECANT]  Root(s)',QP_n_states,SERIAL=.true.)
  do while(any(QP_solver_state>=0))
    do i1=1,qp%n_states
      i2=QP_solver_state(i1)
      call secant(Eqp_raxis(i1,1),Sc_raxis(i1,1),&
 &                Eqp_raxis(i1,2),Sc_raxis(i1,2),QP_solver_state(i1),root_acc)
-     if (i2/=0.and.QP_solver_state(i1)<=0) call live_timing(steps=1)
+     if (i2>0.and.QP_solver_state(i1)<0) call live_timing(steps=1)
    enddo
    call W2Sc_here
  enddo
  call live_timing()
+ call pp_redux_wait()
 
 ! Analytic continuation 
 !=======================
- call live_timing('[SECANT] Analytic continuation',q%nbz)
+ call live_timing('[SECANT] Analytic continuation',q%nbz,SERIAL=.true.)
  do i1=1,qp%n_states
    Eqp_raxis(i1,1)=Eqp_raxis(i1,iabs(QP_solver_state(i1)))
    call W_reset(Sc_W(i1))
@@ -175,6 +177,7 @@
  enddo
  deallocate(QP_W)
  call mem_est("QP_W")
+ call pp_redux_wait()
 !
  contains 
 

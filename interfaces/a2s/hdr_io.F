@@ -537,7 +537,7 @@
    end do
    write(unitfi, '(a)' ) '   occ ='
    do ii=1,hdr%bantot,10
-    write(unitfi, '(a,10f6.2))') '        ',hdr%occ(ii:min(hdr%bantot,ii+10-1))
+    write(unitfi, '(a,10f6.2)') '        ',hdr%occ(ii:min(hdr%bantot,ii+10-1))
    end do
    write(unitfi, '(a)' ) ' tnons ='
    do isym=1,hdr%nsym/2

@@ -74,8 +74,8 @@
  integer     ,optional :: steps
  logical     ,optional :: SERIAL
  if (present(message).and.present(steps)) then
-  if (present(SERIAL)) call live_timing_activate(message,steps,.TRUE.)
-  if (.not.present(SERIAL)) call live_timing_activate(message,steps,.FALSE.)
+   if (present(SERIAL)) call live_timing_activate(message,steps,.TRUE.)
+   if (.not.present(SERIAL)) call live_timing_activate(message,steps,.FALSE.)
  endif
  if (.not.present(message).and.present(steps)) call live_timing_add(steps)
  if (.not.present(message).and..not.present(steps)) call live_timing_finalize()
@@ -312,8 +312,7 @@
  if (i1< 10) write (lfmt,'(a,i1.1,a)') '%',nhash-hashes_done+1,'s'
  call live_time_msg("","|","",lfmt,NO_CPUT=.true.)
  perc=int(real(steps_done)/real(time_steps)*100.)
- write (lfmt,'(5a)') '(','1x,a,i3.3,5a)'
- write (lmsg,trim(lfmt)) '[',perc,'%] ',ech,'(E) ',xch,'(X)'
+ write (lmsg,'(1x,a,i3.3,5a)') '[',perc,'%] ',ech,'(E) ',xch,'(X)'
  call live_time_msg("",lmsg,"","%s",NO_CPUT=.true.)
  
  end subroutine

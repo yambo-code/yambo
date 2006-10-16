@@ -1,2 +1,2 @@
-objs = reelsdriver.o epsinv.o loss_bulk.o
+objs = reelsdriver.o epsinv.o loss_bulk.o average_epsm1_q.o
 

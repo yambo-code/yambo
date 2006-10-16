@@ -3,6 +3,7 @@ module reels_module
   integer                       :: npol
   logical                       :: lepsmix
   logical                       :: lreels
+  complex(SP), allocatable,save :: epsm1_avA(:,:,:)
 
 contains
 

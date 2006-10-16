@@ -79,12 +79,14 @@ contains
 
     iGzrotindx(:) = 0
     do ig_ = 1, ngeels
-      ig = iGz0indx(ig_) ! the real eps(Q_||,G,G')
-      iGzrotindx(ig_) = g_rot( isinv, ig )
+      ig = iGz0indx(ig_)                    ! the real eps(Q_||,G,G')
+      iGzrotindx(ig_) = g_rot( isinv, ig )  ! the...
 !     write(*,*) "ig",ig_,ig,isinv,iGzrotindx(ig_)
     enddo
     if(ANY(iGzrotindx.eq.0)) stop
-
+    !
+    ! Report the new iGz0 list
+    !
     write(lch1,99) "ig","iG","ix","iy","iz","iG_1","ix","iy","iz"
     call msg('r',trim(lch1))
     do ig_ = 1,ngblk

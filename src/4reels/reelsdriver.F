@@ -21,15 +21,16 @@
 !
 subroutine reelsdriver(Xen,Xk,q,wv,X)
   use pars,                    only : SP, schlen, lchlen
+  use memory_m,                only : mem_est
   use com,                     only : msg
-  use X_m,                     only : X_t, X_mat, X_epsilon
+  use X_m,                     only : X_t, X_mat, X_epsilon, X_poles_tab
   use parser_m,                only : parser
   use electrons,               only : levels
   use R_lattice,               only : bz_samp, bare_qpg, ng_vec, g_vec
   
   use IO_m,                    only : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP
   use wave_func,               only : wf_ng
-  use frequency,               only : w_samp, W_duplicate
+  use frequency,               only : w_samp, W_duplicate, rg_index_bg,bg_npts,cg_pt,cg_index_bg
   use vec_operate,             only : v_module
   use par_proc_m,              only : pp_redux_wait
   use bulkeps
@@ -38,11 +39,14 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
   use eels_detector
   use eels_integration
   use eels_scattering
-  use eels_qpt
-  use eels_gvec
-  use eels_wgrid
-  use eels_inveps
+  use eels_qpt,                only : iqmin, iqmax, nqpar, qpar,  qpar_1BZ, &
+&                                     qpar_sort, iqpar, qpar_1BZ, qpar_sort, qpar_hw
+  use eels_gvec,               only : setup_iGz, lorderG
+  use eels_wgrid,              only : nw, nwp, init_wgrid, nwtot, hwgrid, wgrid, wqgrid, &
+&                                     print_wgrid
+  use eels_inveps,             only : print_eps, sort_eps, epsm1_avA
   use intchar
+  use reels_module,            only : npol, lepsmix
 ! use allocatable_arrays
   implicit none 
   type(levels),       intent(in) :: Xen    ! Energies
@@ -51,8 +55,8 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
   type(w_samp),       intent(in) :: wv     ! Energy ranges
 !ws
   type(w_samp)                   :: wq     ! Energy ranges
-  integer                        :: i1,i2,fr(2),nau,iq, ipol, rtype, npol
-  integer                        :: iqi, isi, iqf, nwp, nw, ngblk, is
+  integer                        :: i1,i2,fr(2),nau,iq, ipol, rtype
+  integer                        :: is
  real(SP)                        :: v_module, od(5), deltab
   character(10)                  :: headings(7)
   character(schlen)              :: lch, filename
@@ -65,8 +69,7 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
   real(SP),  allocatable         :: hw(:)
   real(SP), allocatable          :: lossq(:,:), lossbq(:)
   real(SP), allocatable          :: loss(:,:,:)
-  complex(SP), allocatable       :: epsm1(:,:,:)
-  complex(SP), allocatable       :: epsm1_av(:,:,:),epsm1_avA(:,:,:),epsm1_avB(:,:,:)
+  complex(SP), allocatable       :: epsm1_av(:,:,:)
 
   logical                        :: lfail, lbulkerr, lepsmix
   real(SP)                       :: qtest(3)
@@ -78,27 +81,31 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
   call section('+','Input processing.')
   !
   call setup_reels(lfail)
-  write(*,*) "done!"
   !
   call print_reels ! general runtime options
   !
   call section('=','Initialiation of Q_{||}-independent quantities.')
   !
   ! Set up energy ranges/meshes and energy data from input (wv) 
+  ! Note: wv = mesh across full frequency range
+  !       wq = mesh redefined for each Q
   !
-  call freqs_setup(wv) 
+  call freqs_setup(wv)     ! Define wv%n(), alloc and fill wv%p 
   call W_duplicate(wv, wq) ! Copies n,er,dr but not p
-  call freqs_setup(wq)     ! Define wq%p 
-! call Xchecks(q,Xen,X) ! what does this do? REMOVED FOR NOW...NB
+  call freqs_setup(wq)     ! Define wq%n(), alloc and fill wq%p 
+  call X_checks(Xen,X)     ! Some checks/reset on X%ib() and X%iq() 
   !
-  ! nw    = number of points epsm1 is calculated on (i.e., wq%n(1) from input
+  ! nw    = number of points epsm1 is calculated on (i.e., wq%n(1) from input)
   ! nwp   = number of points loss is calculated for at each q = (nw+1)/2
   ! nwtot = total number of points in spectrum = nwp*nqtot
   !
   nw  = wq%n(1)
   nwp = (nw+1)/2 ! or nwp - 1? Check.
-  ngblk = X%ng
-! call print_eels_freqs  ! Just report some basic information on the wv array
+
+  allocate( lossq(5, nwp ) )
+  allocate( lossbq(nwp ) )
+  allocate( epsm1_av (X%ng, X%ng, nwp) )
+  allocate( epsm1_avA (X%ng, X%ng, nwp) )
   !
   ! G-vectors
   !
@@ -116,20 +123,14 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
   !
   call setup_det
   !
-  ! Local allocations
-  !
-  allocate( lossq(5, nwp ) )
-  allocate( lossbq(nwp ) )
-  allocate( epsm1    (ngblk, ngblk, nw ) )
-  allocate( epsm1_av (X%ng, X%ng, nwp) )
-  allocate( epsm1_avA(X%ng, X%ng, nwp) )
-  allocate( epsm1_avB(X%ng, X%ng, nwp) )
-  !
   ! Main loop over polarizations for difference spectra
+  !
+  allocate(loss(npol,5,nwtot))
   !
   do ipol = 1, npol 
     call section('*','REELS polarization'//intc(ipol)//'/'//intc(npol))
 
+    write(*,*) "AAA"
     select case(ipol)
     case(1)
       X%q0 = q0x
@@ -138,9 +139,14 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
       X%q0 = q0y
       qname = 'y'
     end select
-    call setup_output_reels(qname, X%q0, ipol)
+    write(*,*) "AAA",qname, X%q0, ipol
+!   call setup_output_reels(qname, X%q0, ipol)
+
+    write(*,*) "AAA"
+!   call calc_loss_function(loss, Xen, Xk, X, q, wq)
         
     call section('+','Scattering frames set up.')
+    write(*,*) "AAA"
 
     call scattering_frame( X%q0 )
     call electron_velocity
@@ -148,9 +154,7 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
     call section('=','Generate Q_|| vs hw table.')
     call qpar_1BZ( X%q0, q )
     call qpar_sort( X%q0, q )
-    write(*,*) "Q3"
     call qpar_hw( X%q0, q,  wv)   
-    write(*,*) "Q4"
 
     call section('=','Generate Gz tables.')
     call setup_iGz( ng_vec , iqmin, iqmax, wf_ng )
@@ -161,19 +165,18 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
     endif
 
     call section('=','Energy grid setup.')
-    call init_wgrid(wq, nqpar)
+    call init_wgrid(wq)
     call wqgrid(wq)
-    call wgrid( wq%n(1) )
-    call print_wgrid( wq%n(1) )
+    call wgrid
+    call print_wgrid( wq )
 
-    allocate(loss(npol,5,nwtot))
 
     call section('=','Kinematic prefactors setup.')
     call init_prefactors
     call calc_prefactors
     call print_prefactors
 
-    call section('=','Check in-plane symmetries.')
+!   call section('=','Check in-plane symmetries.')
 !   call in_plane_symmetry(lplansym)
     !
     ! Generate the bulk data for this grid
@@ -191,88 +194,34 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
     call section('*','Main REELS loop')
     call section('+','REELS for iq:'//intc(1)//'/'//intc(iqmax-iqmin+1))
 
-    do iq = iqmin, iqmax     ! Loop over qpar for this polarization
-!     iq runs over index of qpar, not FBZ
+    do iq = iqmin, iqmax     ! Loop over qpar for this polarization (iq = qpar index)
+
       if(iq.ne.iqmin) call section('=','REELS for iq:'//intc(iq-iqmin+1)//&
 &     '/'//intc(iqmax-iqmin+1))
-      iqf = iqpar(iq)         ! iqf = iq(fbz)
-      iqi = q%sstar(iqf, 1) ! iqi = iq(ibz)
-      isi = q%sstar(iqf, 2)
 
-      call print_qpar(iq,iqf,iqi,qpar(iq,:),q%ptbz(iqf,:),q%pt(iqi,:))
-      call setup_iGzrot(iqi, isi,   ngblk )     
-       write(*,*) "C"
-      call modify_Xgspace( iqi,  ngblk )
-       write(*,*) "D"
-      call select_wgrid(wq, iq) ! takes the grid for THIS iq
-       write(*,*) "E"
-      call add_broad(wq)
+      call average_epsm1_q(epsm1_av, iq, Xen, Xk, X, q, wq)
 
-       write(*,*) "F"
-!     call get_reels_epsm1av
-
-      select case(iqmin-iq)
-      case(0)
-        !
-        ! Calculate eps^1 for the irreducible q (IBZ)
-        !
-       write(*,*) "G"
-        call calc_eps( iqi, Xen, Xk, X, q, wq, epsm1, ngblk, nw, iqf )
-       write(*,*) "H"
-        !
-        ! Transform eps^1 to the reducible q (FBZ)
-        !
-       write(*,*) "I"
-        call rotate_eps( iqi, iqf, isi, epsm1 )
-        !
-        ! If no symmetry present, force to be symmetric (physical) in plane
-        !
-       write(*,*) "J"
-        call average_inveps  
-        !
-        ! No interpolation for iq = 1
-        !
-       write(*,*) "K"
-        epsm1_avA(:,:,1:nwp) = epsm1(:,:,nwp:nw) ! copy upper half for next iq
-        epsm1_av(1:ngblk,1:ngblk,1:nwp) = epsm1(1:ngblk,1:ngblk,1:nwp)
-        !
-      case default 
-!       call section('=','Next iq')
-        !
-       write(*,*) "L"
-        call calc_eps( iqi, Xen, Xk, X, q, wq, epsm1, ngblk, nw, iqf)
-        !
-        call rotate_eps( iqi, iqf, isi, epsm1 )
-        !
-        call average_inveps  
-        !
-        epsm1_avB(:,:,1:nwp) = epsm1(:,:,   1:nwp ) ! Use for interpolation
-        !
-        ! Interpolate eps^-1 for iq-1 and iq exact frequencies
-        !
-        call interpolate_inveps( epsm1_av, epsm1_avA, epsm1_avB )
-        !
-        epsm1_avA(:,:,1:nwp) = epsm1(:,:, nwp:nw  ) ! For next iq average
-        !
-      end select
       ! 
-      write(*,*) "M"
       if(lanalytical)      call calc_loss_analytical(lossq,epsm1_av,g_vec)
 !     if(.not.lanalytical) call calc_loss_numerical
       !
-      ! The bulk part ?
+      ! The bulk part 
       !
       ! call calc_loss_bulk(lossbq, real(wq%p(1:nwp)), eps_b, nwp )
       !
-      !  Write loss for this qpar and group of frequencies
+      ! Write loss for this qpar and group of frequencies
       !
-      write(*,*) "N"
       call write_loss( real(wq%p(1:nwp)), lossq, nwp, ipol)
 
 !     Save to single array for rel. difference calculations...
-      write(*,*) "O"
 !     loss(ipol,1:5,grange(iq,1):grange(iq,2)) = lossq(1:5,1:nwp) 
-
+      !
+      ! Clean up q-dependent allocates
+      !
+      if (allocated(rg_index_bg)) deallocate(rg_index_bg)
+      deallocate(X_poles_tab, bg_npts,cg_pt,cg_index_bg)
+      call mem_est("X_poles_tab RGi BGn CGp CGi")
+      !
     enddo ! end of loop on qpar for this ipol
 
       write(*,*) "done main loop"
@@ -296,10 +245,9 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
   endif
 
   deallocate(lossq)
-  deallocate(epsm1)
   deallocate(epsm1_av)
-  deallocate(epsm1_avA)
-  deallocate(epsm1_avB)
+!     deallocate(bg_npts,cg_pt,cg_index_bg)
+!     call mem_est(" RGi BGn CGp CGi")
 ! deallocate(wq%cgx,wq%npcg,wq%pcg,wq%cgt,wq%p)
   call pp_redux_wait
 
@@ -346,17 +294,21 @@ contains
   end subroutine print_reels
   
   subroutine cleanup_eels_qpar
+    ! For easier coding: take more care of this when code works
+    use eels_qpt,   only : qGwx, iqpar, qpar
+    use eels_wgrid, only : hwgrid, hwqgrid, grange
+    use eels_gvec,  only : iGz0indx, iGzrotindx
     implicit none
-    deallocate(loss)
-    deallocate(grange)
-    deallocate(eps_b)
-    deallocate(hwqgrid)
-    deallocate(hwgrid)
-    deallocate(iGz0indx)
-    deallocate(iGzrotindx)
-    deallocate(iqpar)
-    deallocate(qpar)
-    deallocate(qGwx)
+    if(allocated(loss)) deallocate(loss)
+    if(allocated(grange)) deallocate(grange)
+    if(allocated(eps_b)) deallocate(eps_b)
+    if(allocated(hwqgrid)) deallocate(hwqgrid)
+    if(allocated(hwgrid)) deallocate(hwgrid)
+    if(allocated(iGz0indx)) deallocate(iGz0indx)
+    if(allocated(iGzrotindx)) deallocate(iGzrotindx)
+    if(allocated(iqpar)) deallocate(iqpar)
+    if(allocated(qpar)) deallocate(qpar)
+    if(allocated(qGwx)) deallocate(qGwx)
     call end_prefactors
   end subroutine cleanup_eels_qpar
 
@@ -433,21 +385,12 @@ end subroutine setup_output_reels
 !   real(SP)                       :: limits(3)
 !   character(schlen)              :: inttype, mixing
 !   
-!   inttype = "analytical"! EELS integration method (analytical/numerical)
-!   limits = (/ -10.0, 0.0, 10.0 /) ! Integration limits (vac/surf/slab)
 !   mixing = "off"
 !   npol = 1
 ! 
- !  call it(defs,'EELIntMd', &
-! &      '[REELS] EELS integration method (`analytical`,`numerical`)', inttype )
-!   call it(defs,'IntLimit', '[REELS] Integration limits vac/surf/slab (a.u.)', limits )
 !   call it(defs,'EpsMix'  , '[REELS] DF mixing (`on`;`off`)', mixing )
 !   call it(defs,'npol'  , '[REELS] Number of polarizations (`1`,`2`)', npol )
 ! 
-!   lanalytical = merge (.true., .false., trim(inttype).ne."numerical")
-!   dv       = limits(1)
-!   dsurf    = limits(2)
-!   dc       = limits(3)
 !   lepsmix = merge(.true., .false., trim(mixing).eq."on")
 
 ! gbroad could be here too

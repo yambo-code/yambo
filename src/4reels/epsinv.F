@@ -37,7 +37,7 @@ subroutine calc_eps( iq,  Xen,Xk, X, q, wq, epsm1, ngblk, nw ,iqf )
   use pars,                  only : PI, HARTREE, lchlen
   use com,                   only : msg
   use parser_m,              only : parser
-  use X_m,                   only : X_t, X_mat, X_epsilon, X_alloc
+  use X_m,                   only : X_t, X_mat, X_epsilon, X_alloc, q0_defmod
   use frequency,             only : w_samp
   use R_lattice,             only : bz_samp, bare_qpg, ng_vec, g_vec
   use electrons,             only : levels
@@ -55,38 +55,48 @@ subroutine calc_eps( iq,  Xen,Xk, X, q, wq, epsm1, ngblk, nw ,iqf )
   complex(SP),       intent(out) :: epsm1(ngblk,ngblk,nw)
 !ws
   complex(SP)                    :: eps(ngblk,ngblk,nw),head(nw)
-  integer                        :: i1,i2,fr(2),nau, irq, rtype, npol
+  integer                        :: i1,i2,fr(2),nau, irq, rtype, npol, ig1, ig2
   integer                        :: iGtmp(9,3), nwp
   complex(SP)                    :: epstmp(9,9)
- real(SP) :: v_module,od(5), deltab
+ real(SP) :: v_module,od(5), deltab, q_mod
   character(lchlen)              :: prmsg
 
+  write(*,*) "Allocate X%X"
   call X_alloc('X',(/X%ng,X%ng,wq%n(2)/)) ! X(G,G') matrix
+
+  q_mod=bare_qpg(iq,1)
+  if (iq==1) q_mod=q0_defmod ! used for head only
 
   nwp = (nw+1)/2
 
   do i1 = 1, wq % n(1), wq % n(2) ! loop over all hw in units of n(2) blocks
+  write(*,*) "i1 cal cpe",i1
     !
     fr = (/ i1, i1+wq%n(2)-1 /) ! the small block of frequencies
     !
+  write(*,*) "Call X_os"
     call X_os(X_mat,iq,fr,Xen,Xk,wq,X)   
+    !
+    ! Save eps_GG' for checking setup
     !
     eps(1:X%ng,1:X%ng,fr(1):fr(2)) = X_mat(:,:,:)  ! Save for all frequencies
     !
-    head(fr(1):fr(2)) = 1.0_SP - X_mat(1,1,:)*4.0_SP*pi/ &
-&                         bare_qpg(iq,1) / bare_qpg(iq,1)
+!    head(fr(1):fr(2)) = 1.0_SP - X_mat(1,1,:)*4.0_SP*pi/ &
+!&                         bare_qpg(iq,1) / bare_qpg(iq,1)
+    head(fr(1):fr(2)) = 1.0_SP - X_mat(1,1,:)*4.0_SP*pi/q_mod**2
     ! 
+    write(*,*) "Call X_s"
     call X_s(iq,fr,X,wq)
     !
     epsm1(1:X%ng,1:X%ng,fr(1):fr(2)) = X_mat(:,:,:)  ! Save for all frequencies
     !
   enddo
   !
-  ! Fill in eps prefactors for eps: use modified cint
+  ! Fill in eps prefactors for eps: uses modified bare_qpg (modify_Xgspace)
   !
-  forall(i1=1:X%ng,i2=1:X%ng) &
-&    eps(i1,i2,nwp)=1.0_SP - eps(i1,i2,nwp)*4.0_SP*pi / &
-&                         bare_qpg(iq,1) / bare_qpg(iq,1)
+  forall(ig1=1:X%ng,ig2=1:X%ng) &
+&    eps(ig1,ig2,nwp)=1.0_SP - eps(ig1,ig2,nwp)*4.0_SP*pi / &
+&                         bare_qpg(iq,ig1) / bare_qpg(iq,ig2)
   !
   !-> print eps block for iw* <----------------------------
   !
@@ -104,6 +114,7 @@ subroutine calc_eps( iq,  Xen,Xk, X, q, wq, epsm1, ngblk, nw ,iqf )
   call print_eps(iGtmp,epstmp,ngblk,prmsg)
   !--------------------------------------------------------
   !
+  write(*,*) "de Allocate X%X"
   call X_alloc('X') ! X_mat
   !
   return

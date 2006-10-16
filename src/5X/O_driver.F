@@ -182,8 +182,8 @@
    do i1=1,wv%n(1),wv%n(2)
      fr=(/i1,i1+wv%n(2)-1/)
      call X_os(X_mat,iq,fr,Xen,Xk,wv,X)     
-     X_epsilon(1,fr(1):fr(2))=1.-X_mat(1,1,:)*4.*pi/q_mod**2._SP
-     X_epsilon(6,fr(1):fr(2))=-X_mat(1,1,:)*eps_2_alpha/q_mod**2._SP
+     X_epsilon(1,fr(1):fr(2))=1.0_SP-X_mat(1,1,:)*4.0_SP*pi/q_mod**2
+     X_epsilon(6,fr(1):fr(2))=-X_mat(1,1,:)*eps_2_alpha/q_mod**2
      call X_s(iq,fr,X,wv)
      X_epsilon(2,fr(1):fr(2))=1./(X_mat(1,1,:)+1.)
      X_epsilon(3,fr(1):fr(2))=-1./X_epsilon(1,:)

@@ -178,8 +178,15 @@ contains
     real(SP)                 :: q(3), qpar(3), qz(3)
     real(SP)                 :: hw, kpmag, qparm, bpar, qzm, bq2, qtot2, bqfac
 
+    bqfac_w = 0.0; bpar_w = 0.0; qparm_w = 0.0; kpmag_w = 0.0
     do iw = 1, nwtot
       hw = hwgrid( iw )
+      !
+      ! Don't calculate prefactors outside the physical range.
+      !
+      if(hw.ge.E0.or.hw.lt.0.0) then 
+        cycle
+      endif
 
       kpmag = kpmagf( hw )                 !  <= | k'(hw) |
 

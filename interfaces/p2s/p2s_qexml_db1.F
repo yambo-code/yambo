@@ -104,9 +104,9 @@
  a(1,:) = a1_(:) ! assuming always atomic units?
  a(2,:) = a2_(:)
  a(3,:) = a3_(:)
- alat(1) = 1.0_SP*abs( maxval(a(1,:)) )
- alat(2) = 1.0_SP*abs( maxval(a(2,:)) )
- alat(3) = 1.0_SP*abs( maxval(a(3,:)) )
+ alat(1) = 1.0_SP*maxval(abs(a(1,:)) )
+ alat(2) = 1.0_SP*maxval(abs(a(2,:)) )
+ alat(3) = 1.0_SP*maxval(abs(a(3,:)) )
 
 ! Use acopy to avoid passing non-contiguous arrays (just for fun)
  acopy = transpose(a)

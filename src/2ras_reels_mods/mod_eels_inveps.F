@@ -26,10 +26,11 @@ module eels_inveps
   use pars,                   ONLY : schlen, SP, pi, lchlen
 
 ! logical                   :: linveps
+  complex(SP), allocatable,  save :: epsm1_avA(:,:,:)
   save
   private
 
-  public :: average_inveps, interpolate_inveps, sort_eps, rotate_eps, print_eps
+  public :: average_inveps, interpolate_inveps, sort_eps, rotate_eps, print_eps, epsm1_avA
   
 
 contains
@@ -44,9 +45,10 @@ contains
     return
   end subroutine rotate_eps
 
-  subroutine interpolate_inveps(epsm1_av, epsm1_avA, epsm1_avB )
+  subroutine interpolate_inveps(epsm1_av, epsm1_avB )
+    
     implicit none
-    complex(SP), intent(in)          :: epsm1_avA(:,:,:),epsm1_avB(:,:,:)
+    complex(SP), intent(in)          :: epsm1_avB(:,:,:)
     complex(SP), intent(inout)       :: epsm1_av(:,:,:)
     integer                          :: nwp, ngblk, ig1, ig2, iw
     real(SP)                         :: mixfac
@@ -69,11 +71,13 @@ contains
 
 
   subroutine sort_eps(iGtmp,epstmp,iGindx,gvecaff,eps,ngblk)
-    use eels_gvec,             ONLY : lorderG
     !   
     !   Use this routine to order eps for printing with respect to
     !   iGz0indx elements or default gvec ordering
+    !   Generates: iGtmp(iG,3) array = gvecaff
+    !              epstmp(8,8)       = eps
     ! 
+    use eels_gvec,             ONLY : lorderG
     implicit none
     integer, intent(in)            :: iGindx(:)
     integer, intent(in)            :: gvecaff(:,:)
@@ -84,12 +88,6 @@ contains
     integer                        :: ngblk
 
     itmp = min(8,ngblk) 
-!<-- DEBUG
-!   if(itmp.gt.size(epstmp,1)) then
-!      write(*,*) "call sort eps wrong!"
-!      return
-!   endif
-!--> DEBUG
     !
     !   G-vectors
     !
@@ -102,8 +100,9 @@ contains
 &              iGtmp(9,:) = gvecaff(iGindx(ngblk),:) 
     if((.not.lorderG).and.ngblk.gt.8) &
 &              iGtmp(9,:) = gvecaff(ngblk,:) 
-
-!   eps matrix
+    !
+    !   eps matrix
+    !
     epstmp(1:itmp,1:itmp) = eps(1:itmp, 1:itmp)
     if(ngblk.gt.8) then 
       epstmp(1:8, 9  ) = eps(  1:8, ngblk)

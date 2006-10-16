@@ -23,20 +23,21 @@ module eels_wgrid
   !
   ! Routines for the q-dependent energy grids
   !
-  use pars,                   ONLY : schlen, SP, PI, HARTREE
-  use frequency,              ONLY : w_samp
+  use pars,                   only : schlen, SP, PI, HARTREE
+  use frequency,              only : w_samp
+  use eels_qpt,               only : iqmin, iqmax, nqpar
+  implicit none
   real(SP), allocatable           :: hwqgrid(:,:) ! n(2) ?
   real(SP), allocatable           :: hwgrid(:) 
-  integer                         :: nwtot
+  integer                         :: nwtot, nw, nwp
   integer, allocatable            :: grange(:,:)
 
 contains
 
-  subroutine init_wgrid(wq, nqpar)
-    use com,                   ONLY : msg
+  subroutine init_wgrid(wq)
+    use com,                   only : msg
     implicit none
-    type(w_samp) :: wq
-    integer, intent(in)            :: nqpar
+    type(w_samp), intent(inout)    :: wq
     character(schlen)              :: lch1
 
 !   Odd number of points always!
@@ -60,17 +61,15 @@ contains
     allocate(hwqgrid(wq%n(1),nqpar))
     allocate(grange(nqpar,2))
 
-
     return 
   end subroutine init_wgrid
 
-  subroutine wgrid( nw )
+  subroutine wgrid
     !
     ! Set up full contiguous grid (no degeneracy)
     !
-    use eels_qpt
+    use eels_qpt, only : nqeels
     implicit none
-    integer, intent(in) :: nw
     integer :: ist, iw, iq, i1
     real(SP), allocatable :: tempw(:)
 
@@ -121,6 +120,8 @@ contains
     write(*,*) "Make wgrid: nw = ",nw," nqpar = ",nqpar
     write(*,*) "Make wgrid: wmin = ",wmin*HARTREE," wmax = ",wmax*HARTREE
     endif
+
+!nqpar, iqmin
 
     if(nqpar == 1) then
       if(qGwx(iqmin).gt.wmax.or.qGwx(iqmin).lt.wmin) then 
@@ -262,26 +263,47 @@ contains
 
   end subroutine select_wgrid
   
-  subroutine print_wgrid(nw)
+  subroutine print_wgrid(wq)
     use eels_qpt
-    use com,   ONLY:msg
+    use com,                only:msg
     implicit none
-    integer, intent(in) :: nw
+    character(schlen)              :: lch
+!   integer, intent(in) :: nw
+    type(w_samp), intent(in) :: wq
     integer :: iq, iw
+    !
+    ! Report some of the grid parameters
+    !
+    call msg('rs','Energy points per q [full/step]: ',wq%n)
+    call msg('r','Full energy range (eV): ',wq%er*HARTREE)
 
+    write(lch,'(a5,a8,a9,a10)') "iq","nwmin","nwmax","nwp"
+    call msg('r',trim(lch))
+    write(lch,'(3x,i10,i9,i10)') 1,nw,nwp
+    call msg('r',trim(lch))
+
+    do iq = iqmin, iqmax
+      write(lch,'(i3, 3(a,f8.3))') iq," [",hwqgrid(1,iq)*HARTREE,":",&
+&            hwqgrid(nw,iq)*HARTREE," ]",hwqgrid(nwp,iq)*HARTREE
+      call msg('r',trim(lch))
+    enddo
+    !
+    ! Write the energy grid to file for testing USE MSG
+    !
     open(unit=80,file="wgrid.dat")
-    write(80,120) "# iw","hw","iq","qGwx"
+    write(80,120) "# hw","qGwx","iw","iq"
     do iq = iqmin, iqmax
       do iw = 1, nw
 !        write(80,121) iw,hwqgrid(iw,iq)*HARTREE,iq-iqmin+1,qGwx(iq)
-         write(80,121) iw,hwqgrid(iw,iq)*HARTREE,iq,qGwx(iq)
+!        write(80,121) iw,hwqgrid(iw,iq)*HARTREE,iq,qGwx(iq)
+         write(80,121) hwqgrid(iw,iq)*HARTREE,qGwx(iq),iw,iq
       enddo
          write(80,*) 
          write(80,*) 
     enddo
     close(80)
 120 format(a4, a8,  a3,a9)
-121 format(i4, f8.3,i3,f9.4)
+121 format(f8.3,f9.4,i4,i3)
 
   end subroutine print_wgrid
 

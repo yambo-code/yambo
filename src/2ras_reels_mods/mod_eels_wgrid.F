@@ -23,6 +23,7 @@ module eels_wgrid
   !
   ! Routines for the q-dependent energy grids
   !
+  use com,                   only : msg
   use pars,                   only : schlen, SP, PI, HARTREE
   use frequency,              only : w_samp
   use eels_qpt,               only : iqmin, iqmax, nqpar
@@ -30,7 +31,7 @@ module eels_wgrid
   real(SP), allocatable           :: hwqgrid(:,:) ! n(2) ?
   real(SP), allocatable           :: hwgrid(:) 
   integer                         :: nwtot, nw, nwp
-  integer, allocatable            :: grange(:,:)
+  integer, allocatable            :: hw_range(:,:)
 
 contains
 
@@ -59,7 +60,7 @@ contains
     endif
       
     allocate(hwqgrid(wq%n(1),nqpar))
-    allocate(grange(nqpar,2))
+    allocate(hw_range(nqpar,2))
 
     return 
   end subroutine init_wgrid
@@ -69,32 +70,49 @@ contains
     ! Set up full contiguous grid (no degeneracy)
     !
     use eels_qpt, only : nqeels
+    use reels_module,          only : lepsmix
     implicit none
     integer :: ist, iw, iq, i1
     real(SP), allocatable :: tempw(:)
+    character(schlen)              :: lch1
 
+!   For both cases of lepsmix, take only the intermediate points.
+!   since only one spectra should be returned in loss 
+!   if no mixing, reels_sec will contain the bare spectra
+    
     ist = (nw+1)/2
     allocate(tempw(nqeels*nw))
-    do iw = 1,ist-1
-      tempw(iw) = hwqgrid(iw,iqmin) 
-    enddo
-    iw = ist
-    do iq = iqmin, iqmax
-      grange(iq,1) = iw
-      do i1 = ist, nw
-        tempw(iw) = hwqgrid(i1,iq) 
-        iw = iw + 1
+
+!  iw is a counter to track through hwqgrid...
+   iw = 1
+   if(.not.lepsmix) then
+     iw = 1
+     do i1 = 1,ist-1
+       tempw(iw) = hwqgrid(i1,iqmin) 
+       iw = iw + 1
+     enddo
+   endif
+
+!  hw_range refers to points on the full continuous grid, and is just used
+!  for filling loss(:,nwtot)
+      do iq = iqmin, iqmax
+        hw_range(iq,1) = iw
+        do i1 = ist, nw
+          tempw(iw) = hwqgrid(i1,iq) 
+          iw = iw + 1
+        enddo
+        hw_range(iq,2) = iw-1
       enddo
-      grange(iq,2) = iw-1
-    enddo
-    grange(iqmin,1) = 1 ! reset to lowest limit
-    nwtot = iw-1
+      nwtot = iw-1
+
+    if(.not.lepsmix) hw_range(iqmin,1) = 1
+
     allocate(hwgrid(nwtot)) ! this shouldnt depend on ipol in fact...
     hwgrid(:) = tempw(1:nwtot)
     deallocate(tempw) 
-    do iw=1,nwtot
-      write(81,*) iw,hwgrid(iw)*HARTREE
-    enddo
+
+
+
     return
   end subroutine wgrid
 
@@ -257,9 +275,11 @@ contains
     implicit none
     type(w_samp), intent(out) :: wq
     integer, intent(in) :: iq
+    complex(SP)         :: ctemp(size(real(wq%p(:))))
 !   integer             :: i1, iw
 
-    wq%p(:) = hwqgrid(:,iq) 
+    ctemp(:) = cmplx(hwqgrid(:,iq),aimag(wq%p(:)) )
+    wq%p(:) = ctemp(:)
 
   end subroutine select_wgrid
   
@@ -287,6 +307,15 @@ contains
 &            hwqgrid(nw,iq)*HARTREE," ]",hwqgrid(nwp,iq)*HARTREE
       call msg('r',trim(lch))
     enddo
+
+    call msg('nr','Mapping to contiguous grid in loss:')
+    do iq = iqmin, iqmax
+      write(lch,'(a,i3,a,i4,a,i4,a)') &
+&     'Range: iq = ',iq,'--> [',hw_range(iq,1),' -',hw_range(iq,2),']'
+      call msg('r',trim(lch))
+    enddo
+    write(lch,'(a,i4,a)') 'Contiguous range : [1 -',nwtot,']'
+    call msg('nr',trim(lch))
     !
     ! Write the energy grid to file for testing USE MSG
     !

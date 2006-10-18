@@ -23,7 +23,7 @@ module eels_integration
   !
   ! Integration of epsilon-1
   !
-  use pars,             ONLY : schlen, SP, pi
+  use pars,             only : schlen, SP, pi
 
   real(SP)                  :: dc, dv, dsurf
   real(SP)                       :: limits(3)
@@ -42,7 +42,7 @@ module eels_integration
 contains
 
 subroutine init_reels_integration(defs)
-  use it_m,                  ONLY : it, initdefs, E_unit,G_unit,T_unit
+  use it_m,                  only : it, initdefs, E_unit,G_unit,T_unit
   implicit none
   type(initdefs), intent(inout)  :: defs
 
@@ -59,7 +59,7 @@ subroutine init_reels_integration(defs)
 end subroutine init_reels_integration
 
   subroutine print_eels_int
-    use com,   ONLY:msg
+    use com,   only:msg
     implicit none
     real(SP)    :: fac = 180.0_SP/pi
 
@@ -98,14 +98,17 @@ end subroutine init_reels_integration
   subroutine calc_loss_numerical
   end subroutine calc_loss_numerical
  
-  subroutine calc_loss_analytical(loss, epsm1, gvec)
+  subroutine calc_loss_analytical(lossqw, epsm1)
+    !
+    ! Calculate loss spectrum for this polarization and iqpar
+    !
     use eels_scattering
-    use eels_gvec,              ONLY : iGz0indx
-    use surface_geometry,       ONLY : iz
+    use eels_gvec,              only : iGz0indx
+    use surface_geometry,       only : iz
+    use R_lattice,              only : g_vec
     implicit none
-    complex(SP), intent(in)         :: epsm1(:,:,:) ! order?
-    real(SP), intent(in)            :: gvec(:,:)
-    real(SP), intent(out)           :: loss(:,:) ! different components
+    complex(SP), intent(in)         :: epsm1(:,:,:) 
+    real(SP), intent(out)           :: lossqw(:,:) ! different components
 !
     integer                         :: ig, ig_1, iw, ngblk, nw
     complex(SP)                     :: iq0Gz(size(epsm1,1)) ! ngblk
@@ -114,47 +117,47 @@ end subroutine init_reels_integration
 
     ngblk = size(epsm1,1)
     nw = size(epsm1,3)
-!<-- DEBUG
-!   if(nw.ne.size(loss,2)) then
-!     write(*,*) "ERROR: inconsitenta arrays",nw,size(loss,2)
-!   endif
-!--> DEBUG
 
+! What is nw here for the epsmix cases?
+
+    if(nw.ne.size(loss,2)) then
+       write(*,*) "ERROR: inconsitenta arrays loss analytical ",nw,size(loss,2)
+    endif
     !
     !  Energy independent arrays
     !
     q0z = 0.0_SP ! not used for now
     do ig = 1, ngblk
       ig_1  = iGz0indx(ig) ! the real index of G
-      g1(:) = gvec(ig_1,:) 
+      g1(:) = g_vec(ig_1,:) 
       iq0Gz(ig) = ci * ( g1(iz) + q0z ) 
     enddo
     !
     !   Loop over energy
     !
     do iw = 1, nw
-      call calc_loss_iw( loss_iw, iw, iq0Gz, epsm1(1:ngblk,1:ngblk,iw), ngblk )
-      loss(1:4,iw) = loss_iw(1:4)
+      call integrate_loss( lossq, iw, iq0Gz, epsm1(1:ngblk,1:ngblk,iw), ngblk )
+      lossqw(1:4,iw) = lossq(1:4)
     enddo
 
     return
   end subroutine calc_loss_analytical
 
-  subroutine calc_loss_iw( loss, iw, iq0Gz, epsm1_w, ngblk )
+  subroutine integrate_loss( lossq, iw, iq0Gz, epsm1_w, ngblk )
     !
-    ! Calculates the loss for a single energy, including
+    ! Calculates the loss for a single energy (and iq), including
     ! detector integration
     !
     use eels_scattering
     use eels_detector
-    use eels_wgrid,             ONLY : hwgrid
+    use eels_wgrid,             only : hwgrid
     implicit none
     integer,     intent(in)         :: ngblk, iw
     complex(SP), intent(in)         :: iq0Gz(ngblk), epsm1_w(ngblk,ngblk)
-    real(SP),    intent(out)        :: loss(4)
+    real(SP),    intent(out)        :: lossq(4)
 !   ws
     integer                         :: idet
-    real(SP)                        :: lossq(3), hw
+    real(SP)                        :: lossg(3), hw
     real(SP)                        :: bpar, qparm, bqfac, bq2
     real(SP)                        :: phid, thetad
 
@@ -164,49 +167,56 @@ end subroutine init_reels_integration
 
       qparm = qparm_w(iw)      
       bpar  = bpar_w(iw)      
-      call calc_Img_qpar( lossq, iq0Gz, qparm, bpar, epsm1_w, ngblk )
+      call calc_Img_qpar( lossg, iq0Gz, qparm, bpar, epsm1_w, ngblk )
 
     else if(detint.eq."av") then ! average
 
       qparm = qparm_w(iw)      
       bpar  = bpar_w(iw)      
-      call calc_Img_qpar( lossq, iq0Gz, qparm, bpar, epsm1_w, ngblk )
+      call calc_Img_qpar( lossg, iq0Gz, qparm, bpar, epsm1_w, ngblk )
 
-    else if(detint.eq."pr") then ! exact + integration over kinematic factor
+!DISABLED
+!   else if(detint.eq."pr") then ! exact + integration over kinematic factor?
+! Integration over kinematic factor could be numerical or analytical
 
-      qparm = qparm_w(iw)      
-      bpar  = bpar_w(iw)      
-      call calc_Img_qpar( lossq, iq0Gz, qparm, bpar, epsm1_w, ngblk )
-      do idet = 1, ndet 
-        phid   = phi_det(idet)
-        thetad = theta_det(idet)
-      enddo
+!     qparm = qparm_w(iw)      
+!     bpar  = bpar_w(iw)      
+!     call calc_Img_qpar( lossg, iq0Gz, qparm, bpar, epsm1_w, ngblk )
+!     do idet = 1, ndet 
+!       phid   = phi_det(idet)
+!       thetad = theta_det(idet)
+!     enddo
 
-    else if(detint.eq."fu") then ! full numerical integration
+!DISABLED
+!   else if(detint.eq."fu") then ! full numerical integration
 
-      ! Numerically integrate over spherical surface region
-      do idet = 1, ndet 
-        phid   = phi_det(idet)
-        thetad = theta_det(idet)
-        !
-        call reset_trig_det( thetad, phid ) ! get cos/sin for thetad/phid
-        !
-        hw = hwgrid(iw)
-        !
-        call calc_pre_qpar( hw, bqfac, bq2, qparm, bpar )
-        !
-        ! Call the bulk here on a requested grid.
- 
-        !
-        call calc_Img_qpar( lossq, iq0Gz, qparm, bpar, epsm1_w, ngblk )
-      enddo
+!     ! Numerically integrate over spherical surface region
+!     do idet = 1, ndet 
+!       phid   = phi_det(idet)
+!       thetad = theta_det(idet)
+!       !
+!       call reset_trig_det( thetad, phid ) ! get cos/sin for thetad/phid
+!       !
+!       hw = hwgrid(iw)
+!       !
+!       call calc_pre_qpar( hw, bqfac, bq2, qparm, bpar )
+!       !
+!       ! Call the bulk here on a requested grid.
+!
+!       !
+!       call calc_Img_qpar( lossg, iq0Gz, qparm, bpar, epsm1_w, ngblk )
+!     enddo
 
     else 
-      lossq = 0
+      lossg = 0
     endif
-
-    loss(1:3) = lossq(:) * bqfac
-    loss(4)   = lossq(1)
+    !
+    ! Since want small possibility in future to integrate prefactors over detector,
+    ! (even just analytically), include the prefactors here.
+    ! qparm_w and bqfac should be on same energy mesh.
+    !
+    lossq(1:3) = lossg(:) * bqfac
+    lossq(4)   = lossg(1)
 !<-- DEBUG 
 !   loss(:,1) = loss(:,1) + aimag( bqfac_w(:) * eHint(:)*eFint(:)/az ) ! Total 
 !   loss(:,2) = loss(:,2) + aimag( bqfac_w(:) * eHint(:)*eFint(:)/az )! No bulk
@@ -215,7 +225,7 @@ end subroutine init_reels_integration
 !   loss(:,5) = loss(:,5) + aimag(                       eFint(:)/az )! eFint
 !--> DEBUG 
     return
-  end subroutine calc_loss_iw
+  end subroutine integrate_loss
  
   subroutine calc_Img_qpar(lossq, iq0Gz, qparm, bpar, epsm1, ngblk )
     implicit none

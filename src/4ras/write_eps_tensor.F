@@ -1,7 +1,7 @@
 subroutine write_eps_tensor( q0v, eps_i, hw, nw, npol, epstype ) 
-  use pars,                  ONLY : SP, HARTREE, schlen
-  use com,                   ONLY : msg, of_open_close
-  use vec_operate,           ONLY : v_module
+  use pars,                  only : SP, HARTREE, schlen
+  use com,                   only : msg, of_open_close
+  use vec_operate,           only : v_module
   implicit none
   integer,          intent(in)    :: nw, npol
   complex(SP),      intent(in)    :: eps_i(nw, npol) 

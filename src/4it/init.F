@@ -395,7 +395,7 @@
 &     ' E0 Theta0 Thetap Phi DetAngle '//&             ! Kinematics
 &     ' DetIntMd NumIntPt'//&                          ! Det. integration
 &     ' EELIntMd IntLimit EpsMix'//&                   ! REELS integration
-&     ' GausConv')                    ! General flags
+&     ' ETStpsLs GausConv')                    ! General flags
  endif
 #endif
 !---------------------------------------------------------------------------------

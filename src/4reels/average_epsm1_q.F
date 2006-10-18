@@ -24,7 +24,7 @@ subroutine average_epsm1_q(epsm1_av, iq, Xen, Xk, X, q, wq)
   ! Calculates eps^1(iq) averaged on iq and iq-1
   !
   use X_m,                     only : X_t
-  use pars,                    only : SP
+  use pars,                    only : SP, HARTREE
   use R_lattice,               only : bz_samp
   use frequency,               only : w_samp
   use electrons,               only : levels
@@ -32,6 +32,7 @@ subroutine average_epsm1_q(epsm1_av, iq, Xen, Xk, X, q, wq)
   use eels_gvec,               only : setup_iGzrot, modify_Xgspace
   use eels_wgrid,              only : nw, nwp, select_wgrid, add_broad
   use eels_inveps,             only : epsm1_avA, average_inveps, interpolate_inveps, rotate_eps
+  use reels_module,            only : lepsmix
   implicit none
   integer,              intent(in) :: iq     ! The index in iqpar
   type(levels),         intent(in) :: Xen
@@ -67,6 +68,7 @@ subroutine average_epsm1_q(epsm1_av, iq, Xen, Xk, X, q, wq)
   !
   ! Calculate eps^1 for the irreducible q (IBZ)
   !
+  write(*,*) "calc_eps"
   call calc_eps( iqi, Xen, Xk, X, q, wq, epsm1, ngblk, nw, iqf )
   !
   call rotate_eps( iqi, iqf, isi, epsm1 )
@@ -75,6 +77,13 @@ subroutine average_epsm1_q(epsm1_av, iq, Xen, Xk, X, q, wq)
   !
   call average_inveps
   !
+  ! If not interpolating, copy and return (nwp = nw)
+  !
+  if(.not.lepsmix) then
+    epsm1_av(1:ngblk,1:ngblk,1:nwp) = epsm1(1:ngblk,1:ngblk,1:nwp)
+    return
+  endif
+  !
   ! Calculate epsm1 interpolated from A(iq-1) and B(iq)
   !
   select case(iqmin-iq)
@@ -82,6 +91,7 @@ subroutine average_epsm1_q(epsm1_av, iq, Xen, Xk, X, q, wq)
     !
     ! No interpolation for first iqpar
     !
+  write(*,*) "av <- epsm1",lepsmix
     epsm1_av(1:ngblk,1:ngblk,1:nwp) = epsm1(1:ngblk,1:ngblk,1:nwp)
     !
   case default
@@ -96,7 +106,7 @@ subroutine average_epsm1_q(epsm1_av, iq, Xen, Xk, X, q, wq)
   !
   ! Copy upper half for next iq
   !
-    write(*,*) "copyint",size(epsm1_avA,1),size(epsm1_avA,2),size(epsm1_avA,3)
+    write(*,*) "copyint",size(epsm1_avA,3),size(epsm1,3),nwp,nw
   epsm1_avA(:,:,1:nwp) = epsm1(:,:, nwp:nw  ) 
     write(*,*) "copyint done"
   !

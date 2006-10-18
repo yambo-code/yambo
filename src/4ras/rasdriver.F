@@ -21,27 +21,28 @@
 !
 subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
     
-  use pars,                    ONLY : SP, PI, schlen, lchlen
-  use com,                     ONLY : msg
- use memory_m,      ONLY:mem_est
-  use parser_m,                ONLY : parser
-  use optcut,                  ONLY : loptcut, setup_cutoff, print_cutoff
-  use electrons,               ONLY : levels
-  use R_lattice,               ONLY : bz_samp, bare_qpg
-  use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP
-  use X_m,                     ONLY : X_t, X_epsilon, X_mat, X_alloc
- use frequency,                ONLY : w_samp 
+  use pars,                    only : SP, PI, schlen, lchlen
+  use com,                     only : msg
+  use memory_m,                only : mem_est
+  use parser_m,                only : parser
+  use optcut,                  only : loptcut, setup_cutoff, print_cutoff
+  use electrons,               only : levels
+  use R_lattice,               only : bz_samp, bare_qpg
+  use IO_m,                    only : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP
+  use X_m,                     only : X_t, X_epsilon, X_mat, X_alloc
+ use frequency,                only : w_samp 
   use optcut,                  only : loptcut, Xcut_rhoq0 ! just for dealloc
-  use vec_operate,             ONLY : v_module
-  use par_proc_m,              ONLY : pp_redux_wait
-  use wave_func,               ONLY : WF_free
+  use vec_operate,             only : v_module
+  use par_proc_m,              only : pp_redux_wait
+  use wave_func,               only : WF_free
   use ras_module
   use surface_geometry
-  use bulkeps
+  use bulkeps,                 only : lbulkerr, GetBulkEps
   use eels_kinematics
   use eels_detector
   use analyse_peaks
-  use model_loss_function,     ONLY : lossformlg, lossfm, print_eels_form
+  use model_loss_function,     only : lossformlg, lossfm, print_eels_form
+  use reels_module,            only : write_reelsdiff
   implicit none
   type(levels),       intent(in) :: Xen    ! Energies
   type(bz_samp),      intent(in) :: Xk, q     ! K points
@@ -57,7 +58,7 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   real(SP),  allocatable         :: lossf(:,:)
 
   integer                        :: nw, npol, io_err, ID
-  logical                        :: lfail, lbulkerr, lsurferr, lreelserr, lraserr
+  logical                        :: lfail, lsurferr, lreelserr, lraserr
   character(lchlen)              :: bulkmsg
 ! External functions
   integer, external              :: ioslabeps
@@ -87,8 +88,10 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   if(lreels) then
     call section('=','REELS setup')
     call setup_eels_kin( lfail )
+    if(lfail) lreelserr = .true.
     call print_eels_kin
     call setup_eels_det( lfail)
+    if(lfail) lreelserr = .true.
     call print_eels_det
     call check_eels_det( lfail )
     if(lfail) lreelserr = .true.
@@ -111,7 +114,7 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   ! Read and process the bulk data
   !
   call section('=','Bulk epsilon data import')
-  call GetBulkEps(real(wv % p), nw, eps_b, lbulkerr, bulkmsg)
+  call GetBulkEps(real(wv % p), nw, eps_b, bulkmsg)
   if(lbulkerr) lreelserr = .true.
   if(lbulkerr) lraserr = .true.
   call msg('nrs',bulkmsg)
@@ -262,15 +265,15 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
 end subroutine rasdriver
 
 subroutine ras_clean
- use memory_m,      ONLY:mem_est
+ use memory_m,      only:mem_est
  use bulkeps,        only : clean_bulkeps
  use surface_geometry, only : gvecaff
  use optcut, only : end_optcut,loptcut
-  use frequency,     ONLY:rg_index_bg,bg_npts,cg_pt,cg_index_bg
-  use X_m,                     ONLY : X_poles_tab
-  use R_lattice,        ONLY: g_vec, bare_qpg, g_rot, qindx_free
-  use D_lattice,        ONLY: dl_sop
-  use wave_func,        ONLY: ng_wf, wf_igk
+  use frequency,     only:rg_index_bg,bg_npts,cg_pt,cg_index_bg
+  use X_m,                     only : X_poles_tab
+  use R_lattice,        only: g_vec, bare_qpg, g_rot, qindx_free
+  use D_lattice,        only: dl_sop
+  use wave_func,        only: ng_wf, wf_igk
 
   call qindx_free
   call clean_bulkeps
@@ -301,8 +304,8 @@ end subroutine ras_clean
 
 
 subroutine ras2close
- use memory_m,      ONLY:mem_est
-  use R_lattice,        ONLY: ng_in_shell,E_of_shell
+ use memory_m,      only:mem_est
+  use R_lattice,        only: ng_in_shell,E_of_shell
   if(allocated(E_of_shell)) then
     deallocate(E_of_shell)
 !   call mem_est(" RL_Eshells ")
@@ -313,7 +316,7 @@ subroutine ras2close
 end subroutine ras2close
  
 subroutine print_eels_general( npol )
-  use com, ONLY : msg
+  use com, only : msg
   implicit none
   integer, intent(in)      :: npol
 

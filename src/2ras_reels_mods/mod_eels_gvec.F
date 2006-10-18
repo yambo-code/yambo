@@ -104,18 +104,20 @@ contains
 100 format(i5,i7,3i4,2x,i7,3i4)
   end subroutine setup_iGzrot
 
-  subroutine setup_iGz( ngvec, iqmin, iqmax, ngfft )
+  subroutine setup_iGz( iqmin, iqmax )
+    use R_lattice,               only : ng_vec
+    use wave_func,               only : wf_ng
     implicit none
-    integer, intent(in)          :: iqmin, iqmax, ngvec, ngfft
+    integer, intent(in)          :: iqmin, iqmax
     integer                      :: ig, ig1
-    integer                      :: gtemp(ngvec), ii
+    integer                      :: gtemp(ng_vec), ii
     logical                      :: lbelow
     character(lchlen)            :: lch1
 
    ! This routine necessary if Q = q+G has G != 0
 
     ngeels = 0
-    do ig = 1, ngvec
+    do ig = 1, ng_vec
       !
       !  Search for the true set of G = (0,0,Gz)
       !
@@ -133,9 +135,9 @@ contains
     ii = 0
     do ig = 1,ngeels
       ig1 = iGz0indx(ig)
-      if(ig1.gt.ngfft.and.lbelow) then
+      if(ig1.gt.wf_ng.and.lbelow) then
          lbelow =.false.
-         write(lch1,101) "ngfft",ngfft
+         write(lch1,101) "wf_ng",wf_ng
          call msg('r',lch1)
       endif
       write(lch1,100) ig,ig1,gvecaff(ig1,ix),gvecaff(ig1,iy),gvecaff(ig1,iz)
@@ -147,7 +149,7 @@ contains
     call msg('r',lch1)
     call msg('r',lch1)
     call msg('r',lch1)
-    write(lch1,101) "ngmax",ngvec
+    write(lch1,101) "ngmax",ng_vec
     call msg('r',lch1)
     ig1 = iGz0indx(ngeels)
     write(lch1,100) ngeels,ig1,gvecaff(ig1,ix),gvecaff(ig1,iy),gvecaff(ig1,iz)

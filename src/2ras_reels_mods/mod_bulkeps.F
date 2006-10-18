@@ -32,6 +32,10 @@ module bulkeps
   character(schlen)             :: bfile, btype
   logical                       :: lbulkshift
   !
+  ! Tracks if the bulk data has been successfully read or processed.
+  !
+  logical                       :: lbulkerr
+  !
   ! The -original- bulk data is stored here:
   !
   real(SP), allocatable, private:: e1in(:),e2in(:),hwin(:)
@@ -39,7 +43,7 @@ module bulkeps
 
   public :: init_bulk
   public :: GetBulkEps           ! All in one
-  public :: scan_bulkeps, clean_bulkeps
+  public :: scan_bulkeps, clean_bulkeps, lbulkerr, generate_bulkeps, regrid
   ! 
   ! For input
   ! 
@@ -71,19 +75,18 @@ end subroutine init_bulk
     return
   end subroutine clean_bulkeps
 
-  subroutine scan_bulkeps(lerr, errmsg)
+  subroutine scan_bulkeps(errmsg)
     !
     ! Read and store bulk file data.
     !
     implicit none
-    logical, intent(out)           :: lerr
     character(lchlen), intent(out) :: errmsg
     logical                        :: ldum
     real(SP)                       :: dum
     integer                        :: i
     integer, parameter             :: un = 56
 
-    lerr = .false. ! If error occurs, lerr -> .true.
+    lbulkerr = .false. ! If error occurs, lerr -> .true.
 !   Check if already read
     if(allocated(e2in)) then 
       errmsg='Bulk data already associated.'
@@ -93,7 +96,7 @@ end subroutine init_bulk
 !   Test on inputs
     if (index(btype,'KK') > 0 .and. bbroad < 0.000001) then
       errmsg='No broadening specified for KK of bulk eps.'
-      lerr = .true.
+      lbulkerr = .true.
       return
     endif
 
@@ -101,7 +104,7 @@ end subroutine init_bulk
     inquire ( file = bfile, exist = ldum) 
     if(.not.ldum) then
       errmsg='Unable to find file '//trim(bfile)
-      lerr = .true.
+      lbulkerr = .true.
       return
     endif
 
@@ -118,7 +121,7 @@ end subroutine init_bulk
     if (nline <= 1) then
       errmsg='Problem determining number of lines in bulk file.'
       return
-      lerr = .true.
+      lbulkerr = .true.
     endif
 
 !   Allocate internal storage arrays
@@ -132,7 +135,7 @@ end subroutine init_bulk
       if(trim(btype).eq."3ri") read(un,*,err=999, end=999) hwin(i), e1in(i), e2in(i)
       if(trim(btype).eq."3ir") read(un,*,err=999, end=999) hwin(i), e2in(i), e1in(i)
       hwin(i) = hwin(i)/HARTREE
-      write(73,*) hwin(i)*HARTREE,e2in(i),e1in(i)
+!     write(73,*) hwin(i)*HARTREE,e2in(i),e1in(i)
     enddo
     close(un)
 
@@ -143,12 +146,12 @@ end subroutine init_bulk
 
 999 continue
     errmsg='Strange problem reading the bulk file.'
-    lerr = .true.
+    lbulkerr = .true.
     close(un)
     return
 998 continue
     errmsg='Problem opening the bulk file for reading.'
-    lerr = .true.
+    lbulkerr = .true.
     return
   end subroutine scan_bulkeps
 
@@ -161,13 +164,60 @@ end subroutine init_bulk
     return
   end subroutine shift_bulkeps
 
-  subroutine GetBulkEps(hw, nw, eps_b, lerr, errmsg)
+  subroutine GetBulkEps(hw, nw, eps_b, errmsg)
+    !
+    ! A wrapper routine to read and process the bulk data in one call.
+    !
     implicit none
 !   Input
     integer, intent(in)      :: nw       ! column
     real(SP), intent(in)     :: hw(:)
 !   Output
-    logical, intent(inout)     :: lerr
+    complex(SP), intent(out) :: eps_b(:)
+    character(lchlen), intent(inout) :: errmsg
+!   Work space
+    integer                  :: i
+
+    ! Check to see if this has been read before, and failed...
+    if(lbulkerr) return
+    !
+    ! Try to read in the data....if not, return
+    !
+    call scan_bulkeps(errmsg)
+    if(lbulkerr) return
+    !
+    ! Process the bulk data into the required form
+    !
+    call generate_bulkeps(hw, nw, eps_b, errmsg)
+    if(lbulkerr) return
+! -->DEBUG
+!   !
+!   !  Dump the calculated stuff to file for checking
+!   !
+    open(unit=81,file = "bulk.out")
+    do i = 1, nw
+      write(81,102) hw(i)*HARTREE, real(eps_b(i)), AIMAG(eps_b(i))
+    enddo
+    close(81)
+! <--DEBUG
+    !
+    !   Successful generation of bulk data
+    !
+    write(errmsg,103) 'Processed ',nw,' data [',&
+&   hw(1)*HARTREE,'-',hw(nw)*HARTREE,'eV] from',nline,' records [',&
+&   hwin(1)*HARTREE,'-',hwin(nline)*HARTREE,'eV]'
+    return
+
+102   format(f8.3,2f9.4)
+103 format(a,i4,a,f5.2,a,f5.2,a,i5,a,f5.2,a,f5.2,a)
+  end subroutine getbulkeps
+
+  subroutine generate_bulkeps(hw, nw, eps_b, errmsg)
+    implicit none
+!   Input
+    integer, intent(in)      :: nw       ! column
+    real(SP), intent(in)     :: hw(:)
+!   Output
     complex(SP), intent(out) :: eps_b(:)
     character(lchlen), intent(inout) :: errmsg
 !   Work space
@@ -176,14 +226,6 @@ end subroutine init_bulk
     real(SP)                 :: ahalb, deb, fz
     complex(SP)              :: eps, omega
     logical                  :: lerr2
-
-    ! Check to see if this has been read before, and failed...
-    if(lerr) return
-    !
-    ! Try to read in the data....if not, return
-    !
-    call scan_bulkeps(lerr, errmsg)
-    if(lerr) return
     !
     ! Rigid shift of the bulk spectrum
     !
@@ -198,7 +240,7 @@ end subroutine init_bulk
       !
       call regrid( 'imag', hwin, e2in, hw, e2, lerr2)
       if (lerr2) then
-        lerr = .true.
+        lbulkerr = .true.
         errmsg='Problem doing regrid of imag. bulk eps data.'
         return 
       endif
@@ -213,7 +255,7 @@ end subroutine init_bulk
         omega = CMPLX(hw(i),bbroad) 
         call epsKK(omega,e2,hw,nw,ahalb,fz,eps,nw,lerr2)
         if (lerr2) then
-          lerr = .true.
+          lbulkerr = .true.
           errmsg='Problem doing Kramers Kronig of resonant part.'
           return 
         endif
@@ -221,7 +263,7 @@ end subroutine init_bulk
         omega = CMPLX(-hw(i),-bbroad) 
         call epsKK(omega,e2,hw,nw,ahalb,fz,eps,nw,lerr2)
         if (lerr2) then
-          lerr = .true.
+          lbulkerr = .true.
           errmsg='Problem doing Kramers Kronig of anti-resonant part.'
           return 
         endif
@@ -238,13 +280,13 @@ end subroutine init_bulk
 
       call regrid( 'real', hwin, e1in, hw, e1, lerr2)
       if (lerr2) then
-        lerr = .true.
+        lbulkerr = .true.
         errmsg='Problem doing regrid of real. bulk eps data.'
         return 
       endif
       call regrid( 'imag', hwin, e2in, hw, e2, lerr2)
       if (lerr2) then
-        lerr = .true.
+        lbulkerr = .true.
         errmsg='Problem doing regrid of imag. bulk eps data.'
         return 
       endif
@@ -253,7 +295,7 @@ end subroutine init_bulk
         eps_b(i) = cmplx( e1(i), e2(i), SP)
       enddo
     else
-      lerr = .true.
+      lbulkerr = .true.
       errmsg='Wrong input option for bulk file format.'
       return
     endif
@@ -280,15 +322,15 @@ end subroutine init_bulk
 
 102   format(f8.3,2f9.4)
 103 format(a,i4,a,f5.2,a,f5.2,a,i5,a,f5.2,a,f5.2,a)
-  end subroutine getbulkeps
+  end subroutine generate_bulkeps
 
   subroutine epsKK(x,am,xp,n,a,fz,fc,nmax,lerr)
     implicit none
+    logical,     intent(out) :: lerr
     integer,     intent(in)  :: n, nmax
     real(SP),    intent(in)  :: a, fz, xp(nmax), am(nmax)
     complex(SP), intent(in)  :: x
     complex(SP), intent(out) :: fc
-    logical,     intent(out) :: lerr
 !   Work space
     integer :: m, j
     real(SP) :: ev, e
@@ -322,7 +364,7 @@ end subroutine init_bulk
     return
   end subroutine epsKK
 
-  subroutine regrid(form,xin,fin,xout,fout,lerr)
+  subroutine regrid(form,xin,fin,xout,fout, lerr)
     !
     !   Simple linear interpolation routine to map a function (epsilon) on an
     !   irregular grid to a different irregular grid.
@@ -330,11 +372,11 @@ end subroutine init_bulk
     !
     implicit none
     character(len=4), intent(in) :: form
+    logical,  intent(out) :: lerr
     real(SP), intent(in)  :: fin(:)    ! function known at xin
     real(SP), intent(out) :: fout(:)   ! function required at xout
     real(SP), intent(in)  :: xin(:)  
     real(SP), intent(in)  :: xout(:)  
-    logical,  intent(out) :: lerr
     integer               :: n_in,n_out, i
     real(SP)              :: ratio
     integer               :: i1,i2
@@ -344,7 +386,7 @@ end subroutine init_bulk
     n_in  = size(fin)
     n_out = size(fout)
 
-    if (n_out.ne.size(xout)) then
+    if (n_out.ne.size(xout).or.n_in.ne.size(xin)) then
        lerr = .true.
        return
     endif
@@ -386,7 +428,6 @@ end subroutine init_bulk
           i1 = i1-1
        endif
        if( i2 .gt. n_in ) then
-          write(*,*) "how can this be?",i,n_out,n_in,i1,i2, xin(i1)
           fout(i) = fin(n_out)
        else if( abs( xin(i2) - xin(i1) ) <= 0.00001 ) then ! buggy
           fout(i) = fin(i1)

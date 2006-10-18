@@ -140,8 +140,10 @@
    n_poles=X_ehg(iq,X,Xen,Xk,minmax_ehe)
    deallocate(X_poles)
 
-   if (self_detect_E_range) Xw%er=minmax_ehe
-   call freqs_setup(Xw)
+   if (self_detect_E_range) then
+     Xw%er=minmax_ehe
+     call freqs_setup(Xw)
+   endif
 
  endif 
 !

@@ -67,7 +67,6 @@ end subroutine init_kinematics
     implicit none
     real(SP)                   :: fac = 180.0_SP/pi
 
-   write(*,*) "FAC",fac
     call msg('nr','Kinematic settings for EELS calculation:')
     call msg('r','Incident  energy (eV)  :',E0*HARTREE )
     call msg('r','Incident   angle (deg) :',theta0*fac )

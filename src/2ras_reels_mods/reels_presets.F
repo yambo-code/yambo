@@ -28,7 +28,7 @@
    use eels_detector,         only : thetadet, detint, detintm
    use eels_integration,      only : inttype, limits
    use model_loss_function,   only : model
-   use reels_module,          only : lepsmix, npol
+   use reels_module,          only : lepsmix, npol, nfull
    implicit none
    !
    ! mod_surface_geometry
@@ -75,6 +75,7 @@
    !
    lepsmix = .false.
    npol = 1
+   nfull = 1001
    !
    !
    !

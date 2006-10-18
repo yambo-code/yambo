@@ -50,13 +50,13 @@ subroutine calc_eps( iq,  Xen,Xk, X, q, wq, epsm1, ngblk, nw ,iqf )
   type(levels),       intent(in) :: Xen    ! Energies
   type(bz_samp),      intent(in) :: Xk, q  ! K/Q points
   type(X_t),       intent(inout) :: X   ! Polarization
-  type(w_samp),       intent(in) ::  wq    ! Energy ranges
+  type(w_samp),    intent(inout) ::  wq    ! Energy ranges ?? INOUT?
   integer,            intent(in) :: ngblk, nw, iq, iqf  ! IBZ, FBZ
   complex(SP),       intent(out) :: epsm1(ngblk,ngblk,nw)
 !ws
   complex(SP)                    :: eps(ngblk,ngblk,nw),head(nw)
   integer                        :: i1,i2,fr(2),nau, irq, rtype, npol, ig1, ig2
-  integer                        :: iGtmp(9,3), nwp
+  integer                        :: iGtmp(9,3), ist
   complex(SP)                    :: epstmp(9,9)
  real(SP) :: v_module,od(5), deltab, q_mod
   character(lchlen)              :: prmsg
@@ -67,14 +67,13 @@ subroutine calc_eps( iq,  Xen,Xk, X, q, wq, epsm1, ngblk, nw ,iqf )
   q_mod=bare_qpg(iq,1)
   if (iq==1) q_mod=q0_defmod ! used for head only
 
-  nwp = (nw+1)/2
+  ist = (nw+1)/2
 
   do i1 = 1, wq % n(1), wq % n(2) ! loop over all hw in units of n(2) blocks
-  write(*,*) "i1 cal cpe",i1
     !
     fr = (/ i1, i1+wq%n(2)-1 /) ! the small block of frequencies
     !
-  write(*,*) "Call X_os"
+    write(*,*) "Call X_os"
     call X_os(X_mat,iq,fr,Xen,Xk,wq,X)   
     !
     ! Save eps_GG' for checking setup
@@ -95,26 +94,25 @@ subroutine calc_eps( iq,  Xen,Xk, X, q, wq, epsm1, ngblk, nw ,iqf )
   ! Fill in eps prefactors for eps: uses modified bare_qpg (modify_Xgspace)
   !
   forall(ig1=1:X%ng,ig2=1:X%ng) &
-&    eps(ig1,ig2,nwp)=1.0_SP - eps(ig1,ig2,nwp)*4.0_SP*pi / &
+&    eps(ig1,ig2,ist)=1.0_SP - eps(ig1,ig2,ist)*4.0_SP*pi / &
 &                         bare_qpg(iq,ig1) / bare_qpg(iq,ig2)
   !
   !-> print eps block for iw* <----------------------------
   !
-  call sort_eps(iGtmp,epstmp,iGz0indx,gvecaff,eps(:,:,nwp),ngblk)
-  if(lorderG) write(prmsg,101) nwp, real(wq%p(nwp))*HARTREE,q%ptbz(iqf,1:3)
-  if(.not.lorderG) write(prmsg,102) nwp, real(wq%p(nwp))*HARTREE,q%pt(iq,1:3)
+  call sort_eps(iGtmp,epstmp,iGz0indx,gvecaff,eps(:,:,ist),ngblk)
+  if(lorderG) write(prmsg,101) ist, real(wq%p(ist))*HARTREE,q%ptbz(iqf,1:3)
+  if(.not.lorderG) write(prmsg,102) ist, real(wq%p(ist))*HARTREE,q%pt(iq,1:3)
   call print_eps(iGtmp,epstmp,ngblk,prmsg)
   !--------------------------------------------------------
   !
   !-> print epsm1 block for iw*
   !
-  call sort_eps(iGtmp,epstmp,iGz0indx,gvecaff,epsm1(:,:,nwp),ngblk)
-  if(lorderG) write(prmsg,103) nwp, real(wq%p(nwp))*HARTREE,q%ptbz(iqf,1:3)
-  if(.not.lorderG) write(prmsg,104) nwp, real(wq%p(nwp))*HARTREE,q%pt(iq,1:3)
+  call sort_eps(iGtmp,epstmp,iGz0indx,gvecaff,epsm1(:,:,ist),ngblk)
+  if(lorderG) write(prmsg,103) ist, real(wq%p(ist))*HARTREE,q%ptbz(iqf,1:3)
+  if(.not.lorderG) write(prmsg,104) ist, real(wq%p(ist))*HARTREE,q%pt(iq,1:3)
   call print_eps(iGtmp,epstmp,ngblk,prmsg)
   !--------------------------------------------------------
   !
-  write(*,*) "de Allocate X%X"
   call X_alloc('X') ! X_mat
   !
   return

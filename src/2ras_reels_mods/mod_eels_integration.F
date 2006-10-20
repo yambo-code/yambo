@@ -27,6 +27,7 @@ module eels_integration
 
   real(SP)                  :: dc, dv, dsurf
   real(SP)                       :: limits(3)
+  real(SP), parameter       :: zero = 1.0e-5_SP
   character(schlen)              :: inttype
   logical                   :: lanalytical
   save
@@ -75,19 +76,36 @@ end subroutine init_reels_integration
   end subroutine print_eels_int
 
   complex(SP) function Hzintd(z0,a,b,d1,d2)
+    !
+    !
+    !
     real(SP)           :: b,d1,d2, z0 
     complex(SP)        :: a,ctmp0,ctmp1,ctmp2
+    !
+    ! Filter case where q_z + G_z = 0
+    !
+    if(abs(a).lt.zero) then
+       Hzintd = cmplx( b*( (d2-z0) - (d1-z0) ) , 0.0_SP)
+       return
+    endif
 
     ctmp0 = 1.d0/(b**2 + a**2)
     ctmp1 = exp(a*d1)*(a*cos(b*(d1-z0)) + b*sin(b*(d1-z0)))
     ctmp2 = exp(a*d2)*(a*cos(b*(d2-z0)) + b*sin(b*(d2-z0)))
     Hzintd = (ctmp2-ctmp1)*ctmp0
-
+    return
   end function Hzintd
 
   complex(SP) function Fzintd(z0,a,b,d1,d2)
     real b,d1,d2, z0
     complex a,ctmp0,ctmp1,ctmp2
+    !
+    ! Filter case where ctmp0 = 0
+    !
+    if(abs(a+b).lt.zero) then
+       Fzintd = cmplx( 0.0_SP , 0.0_SP)
+       return
+    endif
 
     ctmp0 = (b + a)
     ctmp1 = exp(ctmp0*d2 - b*z0) -  exp(ctmp0*d1 - b*z0)
@@ -98,7 +116,7 @@ end subroutine init_reels_integration
   subroutine calc_loss_numerical
   end subroutine calc_loss_numerical
  
-  subroutine calc_loss_analytical(lossqw, epsm1)
+  subroutine calc_loss_analytical(lossqw, iq, epsm1)
     !
     ! Calculate loss spectrum for this polarization and iqpar
     !
@@ -106,22 +124,24 @@ end subroutine init_reels_integration
     use eels_gvec,              only : iGz0indx
     use surface_geometry,       only : iz
     use R_lattice,              only : g_vec
+    use eels_wgrid,             only : wqtab
     implicit none
     complex(SP), intent(in)         :: epsm1(:,:,:) 
     real(SP), intent(out)           :: lossqw(:,:) ! different components
+    integer, intent(in)             :: iq
 !
-    integer                         :: ig, ig_1, iw, ngblk, nw
+    integer                         :: ig, ig_1, iw, ngblk, nwp, iwtot
     complex(SP)                     :: iq0Gz(size(epsm1,1)) ! ngblk
-    real(SP)                        :: g1(3), q0z, loss_iw(4)
+    real(SP)                        :: g1(3), q0z, lossq(4)
     complex(SP), parameter          :: ci = cmplx(0.0_SP, 1.0_SP)
 
     ngblk = size(epsm1,1)
-    nw = size(epsm1,3)
+    nwp = size(epsm1,3)
 
 ! What is nw here for the epsmix cases?
 
-    if(nw.ne.size(loss,2)) then
-       write(*,*) "ERROR: inconsitenta arrays loss analytical ",nw,size(loss,2)
+    if(nwp.ne.size(lossqw,2)) then
+       write(*,*) "ERROR: inconsitenta arrays loss analytical ",nwp,size(lossqw,2)
     endif
     !
     !  Energy independent arrays
@@ -133,10 +153,11 @@ end subroutine init_reels_integration
       iq0Gz(ig) = ci * ( g1(iz) + q0z ) 
     enddo
     !
-    !   Loop over energy
+    !  Loop over energy: iw is on nwp mesh; iwtot is on nwtot mesh for prefactors
     !
-    do iw = 1, nw
-      call integrate_loss( lossq, iw, iq0Gz, epsm1(1:ngblk,1:ngblk,iw), ngblk )
+    do iw = 1, nwp
+      iwtot = wqtab(iw,iq)
+      call integrate_loss( lossq, iwtot, iq0Gz, epsm1(1:ngblk,1:ngblk,iw), ngblk )
       lossqw(1:4,iw) = lossq(1:4)
     enddo
 
@@ -148,7 +169,7 @@ end subroutine init_reels_integration
     ! Calculates the loss for a single energy (and iq), including
     ! detector integration
     !
-    use eels_scattering
+    use eels_scattering,        only : qparm_w, bpar_w, bqfac_w
     use eels_detector
     use eels_wgrid,             only : hwgrid
     implicit none
@@ -160,6 +181,9 @@ end subroutine init_reels_integration
     real(SP)                        :: lossg(3), hw
     real(SP)                        :: bpar, qparm, bqfac, bq2
     real(SP)                        :: phid, thetad
+
+
+
 
     !   Select detector integration
 
@@ -215,7 +239,7 @@ end subroutine init_reels_integration
     ! (even just analytically), include the prefactors here.
     ! qparm_w and bqfac should be on same energy mesh.
     !
-    lossq(1:3) = lossg(:) * bqfac
+    lossq(1:3) = lossg(1:3) * bqfac_w(iw)
     lossq(4)   = lossg(1)
 !<-- DEBUG 
 !   loss(:,1) = loss(:,1) + aimag( bqfac_w(:) * eHint(:)*eFint(:)/az ) ! Total 
@@ -227,20 +251,27 @@ end subroutine init_reels_integration
     return
   end subroutine integrate_loss
  
-  subroutine calc_Img_qpar(lossq, iq0Gz, qparm, bpar, epsm1, ngblk )
+  subroutine calc_Img_qpar(lossg, iq0Gz, qparm, bpar, epsm1, ngblk )
     implicit none
     integer,     intent(in)         :: ngblk
     complex(SP), intent(in)         :: epsm1(ngblk,ngblk) ! order?
     real(SP),    intent(in)         :: bpar, qparm
     complex(SP), intent(in)         :: iq0Gz(ngblk)
-    real(SP),    intent(out)        :: lossq(3) ! different components
+    real(SP),    intent(out)        :: lossg(3) ! different components
 !
     integer                         :: ig1, ig2
     complex(SP)                     :: iq0Gz1, iq0Gz2
     complex(SP)                     :: eHint, eFint
-    real(SP)                        :: az = 1.0
+    real(SP)                        :: az = 1.0 ! THIS IS A QUICK FIX...
+ 
 
-    lossq(:) = 0.0_SP
+    write(*,*) 
+    write(*,*)  "Check the integration"
+    write(*,*) 
+    write(*,*) ngblk,dc, dsurf,dv
+    write(*,*) qparm, bpar
+
+    lossg(:) = 0.0_SP
     do ig1 = 1, ngblk ! loop over G = Gz
 
       iq0Gz1 = iq0Gz(ig1)
@@ -254,7 +285,7 @@ end subroutine init_reels_integration
         eFint = eFint + epsm1(ig1,ig2) *  &
 &                 ( Fzintd(dsurf, -iq0Gz2, -qparm, dsurf, dc) - &
 &                   Fzintd(dsurf, -iq0Gz2, +qparm, dv, dsurf) + &
-&          2.0_SP * Hzintd(dsurf, -iq0Gz2,  bpar, dv, dsurf) )
+&          2.0_SP * Hzintd(dsurf, -iq0Gz2,  bpar,  dv, dsurf) )
 !<-- DEBUG
 !! Testing: eps part only
 !!               eFint(iw) = eFint(iw) + epsm1(ig1,ig2,iw)
@@ -262,12 +293,15 @@ end subroutine init_reels_integration
 !!                eFint(iw) = eFint(iw) + (1.d0,0.d0) *  &
 !--> DEBUG
       enddo
+    write(*,*) "iG",ig1,eHint,eFint
 
-      lossq(1) = lossq(1) + aimag( eHint*eFint/az ) ! Total 
-      lossq(2) = lossq(2) + aimag( eHint/az       ) ! eHint
-      lossq(3) = lossq(3) + aimag(       eFint/az ) ! eFint
+      lossg(1) = lossg(1) + aimag( eHint*eFint/az ) ! Total 
+!     lossg(2) = lossg(2) + aimag( eHint/az       ) ! eHint is real...why?
+      lossg(2) = lossg(2) + real( eHint/az       ) ! eHint
+      lossg(3) = lossg(3) + aimag(       eFint/az ) ! eFint
 
     enddo ! end loop over G
+    write(*,*) 
     return
   end subroutine calc_Img_qpar
 

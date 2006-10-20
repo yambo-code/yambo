@@ -50,7 +50,7 @@ subroutine calc_loss_function(ipol, Xen, Xk, X, q, wq)
 ! Local arrays
   integer,            intent(in) :: ipol
   complex(SP), allocatable       :: eps_b(:)
-  real(SP)                       :: lossqw(5, nwp ), lossbq(nwp)
+  real(SP)                       :: lossqw(4, nwp ), lossbq(nwp)
   complex(SP), allocatable       :: epsm1_av(:,:,:)
   integer                        :: iq
   character(lchlen)              :: bulkmsg
@@ -79,7 +79,7 @@ subroutine calc_loss_function(ipol, Xen, Xk, X, q, wq)
   call wgrid                   ! sets nwtot
   call print_wgrid( wq )
 
-  call alloc_loss( 5, nwtot )
+  call alloc_loss( 4, nwtot )
 
   call section('=','Kinematic prefactors setup.')
   call init_prefactors
@@ -119,7 +119,7 @@ subroutine calc_loss_function(ipol, Xen, Xk, X, q, wq)
     write(*,*) "call average epsm1 done",wq%p(1)*HARTREE
     ! The correct grid should now be in wq!
     !
-    if(lanalytical)      call calc_loss_analytical(lossqw,epsm1_av)
+    if(lanalytical)      call calc_loss_analytical(lossqw,iq,epsm1_av)
     write(*,*) "call loss analytical done",nwp,hw_range(iq,:)
 
 !   if(.not.lanalytical) call calc_loss_numerical
@@ -132,12 +132,13 @@ subroutine calc_loss_function(ipol, Xen, Xk, X, q, wq)
     !
     call write_loss_sec( 1 )
     !
+    write(*,*) "call hw range", hw_range(iq,1),hw_range(iq,2),nwp
     if(lepsmix) then
-      loss( 1:5, hw_range(iq,1):hw_range(iq,2) ) = lossqw(1:5,1:nwp)
+      loss( 1:4, hw_range(iq,1):hw_range(iq,2) ) = lossqw(1:4,1:nwp)
     else
-      if(iq.eq.iqmin) loss( 1:5, hw_range(iq,1):hw_range(iq,2) ) = lossqw(1:5,1:nwp)
-      if(iq.ne.iqmin) loss( 1:5, hw_range(iq,1):hw_range(iq,2) ) = &
-&                                         lossqw(1:5, (nwp+1)/2:nwp)
+      if(iq.eq.iqmin) loss( 1:4, hw_range(iq,1):hw_range(iq,2) ) = lossqw(1:4,1:nwp)
+      if(iq.ne.iqmin) loss( 1:4, hw_range(iq,1):hw_range(iq,2) ) = &
+&                                         lossqw(1:4, (nwp+1)/2:nwp)
     endif
     !
     ! Clean up q-dependent allocates
@@ -215,11 +216,15 @@ subroutine write_loss_sec( imode )
 
     call of_open_close(of_name,'oa')
     do iw = 1, nwp
-      od = (/ hw(iw)*HARTREE, &
+      od(1:5) = (/ hw(iw)*HARTREE, &
 &             lossqw(1,iw), lossqw(2,iw), lossqw(3,iw), &
-&             lossqw(4,iw), lossqw(5,iw), lossqw(5,iw), &
-&             lossqw(5,iw) /)
-      call msg('o reels_sec','',od, INDENT=0, USE_TABS=.true.)
+&             lossqw(4,iw) /)
+      call msg('o reels_sec','',od(1:5), INDENT=0, USE_TABS=.true.)
+!      od = (/ hw(iw)*HARTREE, &
+!&             lossqw(1,iw), lossqw(2,iw), lossqw(3,iw), &
+!&             lossqw(4,iw), lossqw(5,iw), lossqw(5,iw), &
+!&             lossqw(5,iw) /)
+!      call msg('o reels_sec','',od, INDENT=0, USE_TABS=.true.)
     enddo
     call msg('o reels_sec','','')
     call msg('o reels_sec','','')
@@ -239,13 +244,14 @@ subroutine cleanup_eels_qpar
   ! For easier coding: take more care of this when code works
   !
   use eels_qpt,        only : qGwx, iqpar, qpar
-  use eels_wgrid,      only : hwqgrid, hw_range
+  use eels_wgrid,      only : hwqgrid, hw_range, wqtab
   use eels_gvec,       only : iGz0indx, iGzrotindx
   use eels_scattering, only : end_prefactors
   implicit none
 ! if(allocated(loss)) deallocate(loss)
   if(allocated(hw_range)) deallocate(hw_range)
   if(allocated(hwqgrid)) deallocate(hwqgrid)
+  if(allocated(wqtab)) deallocate(wqtab)
   if(allocated(iGz0indx)) deallocate(iGz0indx)
   if(allocated(iGzrotindx)) deallocate(iGzrotindx)
   if(allocated(iqpar)) deallocate(iqpar)

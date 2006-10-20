@@ -93,10 +93,13 @@ contains
       qmag = sign(v_module(q1),dot_product(q1,q0))
       hwq_ = hwq(qmag)  ! Calculates the energy corresponding to this |Q| in specular geometry
       qGwx(i1) = hwq_
-      if(hwq_ <= wmin) iqmin = i1
+!     if(hwq_ <= wmin .and. hwq_.ge.0.0_SP) iqmin = i1 ! doesnt work
+      if(hwq_ <= wmin) iqmin = i1 ! This will allow negative energies q !
       if(hwq_ <= wmax) iqmax = min(i1+1,nqpar)
     enddo
 
+    write(lch1,102) "Requested range: min=", wmin*HARTREE," max=", wmax*HARTREE
+    call msg('nr',trim(lch1))
     write(lch1,101) "iq ","iqpar","qpar","qpar","qpar","qGwx(eV)"
     write(lch2,'(5x,20("-"))') 
     call msg('nr',trim(lch1))
@@ -107,8 +110,9 @@ contains
       call msg('r',trim(lch1))
       if(i1.eq.iqmax) call msg('r',trim(lch2),"-> iqmax <-----")
     enddo
-100 format(i5,i5,3f8.3,f10.3)
+100 format(i4,i6,3f8.3,f10.3)
 101 format(a5,a5,3a8,a10)
+102 format(a,f8.3,a,f8.3)
 
     nqeels = iqmax - iqmin + 1
 

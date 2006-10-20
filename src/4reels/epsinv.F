@@ -85,11 +85,30 @@ subroutine calc_eps( iq,  Xen,Xk, X, q, wq, epsm1, ngblk, nw ,iqf )
     head(fr(1):fr(2)) = 1.0_SP - X_mat(1,1,:)*4.0_SP*pi/q_mod**2
     ! 
     write(*,*) "Call X_s"
+    !
+    ! X_s returns X_mat_GG' = 4*pi/|q+G||q+G'| * X_GG'
+    !
     call X_s(iq,fr,X,wq)
+!   Can just do direct inverse???
     !
     epsm1(1:X%ng,1:X%ng,fr(1):fr(2)) = X_mat(:,:,:)  ! Save for all frequencies
-    !
+     
   enddo
+
+  call X_alloc('X') ! X_mat
+  !
+  ! Add the delta_GG' to give epsm1_GG'
+  !
+  do i1 = 1, wq % n(1)
+    forall(ig1=1:X%ng) epsm1(ig1,ig1,i1) = 1.0_SP + epsm1(ig1,ig1,i1)
+  enddo
+
+!  do i1 = 1, wq % n(1)
+!  forall(ig1=1:X%ng,ig2=1:X%ng) &
+!&    eps(ig1,ig2,ist)=1.0_SP - eps(ig1,ig2,ist)*4.0_SP*pi / &
+!&                         bare_qpg(iq,ig1) / bare_qpg(iq,ig2)
+!  enddo
+
   !
   ! Fill in eps prefactors for eps: uses modified bare_qpg (modify_Xgspace)
   !
@@ -113,7 +132,6 @@ subroutine calc_eps( iq,  Xen,Xk, X, q, wq, epsm1, ngblk, nw ,iqf )
   call print_eps(iGtmp,epstmp,ngblk,prmsg)
   !--------------------------------------------------------
   !
-  call X_alloc('X') ! X_mat
   !
   return
 100 format(a,a,i4,a,f8.3,a,3f8.3)

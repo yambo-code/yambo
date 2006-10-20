@@ -7,7 +7,7 @@ subroutine write_reels_sec( hw, loss, nw, ipol, q0, imode)
   use vec_operate,            only : v_module
   implicit none
   integer,          intent(in)    :: ipol, nw, imode
-  real(SP),         intent(in)    :: loss(5,nw), hw(nw),q0(3)
+  real(SP),         intent(in)    :: loss(4,nw), hw(nw),q0(3)
 ! ws
   character(10)                   :: headings(7)
   real(SP)                        :: od(8)
@@ -47,11 +47,15 @@ subroutine write_reels_sec( hw, loss, nw, ipol, q0, imode)
 
     call of_open_close(of_name,'a')
     do iw = 1, nw
-      od = (/ hw(iw)*HARTREE, &
+      od(1:5) = (/ hw(iw)*HARTREE, &
 &             loss(1,iw), loss(2,iw), loss(3,iw), &
-&             loss(4,iw), loss(5,iw), loss(5,iw), &
-&             loss(5,iw) /) 
-      call msg('o reels_sec','',od, INDENT=0, USE_TABS=.true.)
+&             loss(4,iw) /) 
+      call msg('o reels_sec','',od(1:5), INDENT=0, USE_TABS=.true.)
+!      od = (/ hw(iw)*HARTREE, &
+!&             loss(1,iw), loss(2,iw), loss(3,iw), &
+!&             loss(4,iw), loss(5,iw), loss(5,iw), &
+!&             loss(5,iw) /) 
+!      call msg('o reels_sec','',od, INDENT=0, USE_TABS=.true.)
     enddo
     call msg('o reels_sec','','')
     call msg('o reels_sec','','')
@@ -79,7 +83,7 @@ subroutine write_reels_x( loss, hw, nw)
   use pars,                   only : SP, schlen, HARTREE
   implicit none
   integer,          intent(in)    :: nw
-  real(SP),         intent(in)    :: loss(5,nw), hw(nw)
+  real(SP),         intent(in)    :: loss(4,nw), hw(nw)
 ! ws
   real(SP)                        :: od(8)
   integer                         :: iw
@@ -89,11 +93,15 @@ subroutine write_reels_x( loss, hw, nw)
   call of_open_close(of_name,'ot')
 
   do iw = 1, nw
-    od = (/ hw(iw)*HARTREE, &
+    od(1:5) = (/ hw(iw)*HARTREE, &
 &           loss(1,iw), loss(2,iw), loss(3,iw), &
-&           loss(4,iw), loss(5,iw), loss(5,iw), &
-&           loss(5,iw) /)
-    call msg('o reels','',od, INDENT=0, USE_TABS=.true.)
+&           loss(4,iw) /)
+    call msg('o reels','',od(1:5), INDENT=0, USE_TABS=.true.)
+!    od = (/ hw(iw)*HARTREE, &
+!&           loss(1,iw), loss(2,iw), loss(3,iw), &
+!&           loss(4,iw), loss(5,iw), loss(5,iw), &
+!&           loss(5,iw) /)
+!    call msg('o reels','',od, INDENT=0, USE_TABS=.true.)
   enddo
   call of_open_close(of_name)
 

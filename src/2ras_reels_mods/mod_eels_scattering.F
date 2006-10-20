@@ -35,7 +35,7 @@ module eels_scattering
   save
   private
 
-  public :: xaxis,  bpar_w, qparm_w
+  public :: xaxis,  bpar_w, qparm_w, bqfac_w
   public :: scattering_frame, electron_velocity, init_prefactors, end_prefactors
   public :: calc_pre_qpar, calc_prefactors, print_prefactors
 

@@ -23,19 +23,45 @@ module eels_wgrid
   !
   ! Routines for the q-dependent energy grids
   !
-  use com,                   only : msg
+  use com,                    only : msg
   use pars,                   only : schlen, SP, PI, HARTREE
   use frequency,              only : w_samp
   use eels_qpt,               only : iqmin, iqmax, nqpar
   implicit none
   real(SP), allocatable           :: hwqgrid(:,:) ! n(2) ?
+  !
+  ! hwgrid( nw , nqpar ) : For iq in [1:nqpar] and iw in [1:nw] ????
+  !                        hwgrid(iw,iq) gives the energy in a.u.
+  !
+  integer, allocatable            :: wqtab(:,:) ! n(2) ?
+  !
+  ! wqtab ( nw , nqpar ) : For iq in [1:nqpar] and iw in [1:nw] ????
+  !                        wqtab(iw,iq) gives the index of iw in [1:nwtot] array
+  !                        (used for prefactors)
+  !
   real(SP), allocatable           :: hwgrid(:) 
+  !
+  ! hwgrid ( nwtot )     : Energies on the nwtot continuous grid
+  !
   integer                         :: nwtot, nw, nwp
+  !
+  ! nw    = number of points epsm1 is calculated on (i.e., wq%n(1) from input)
+  ! nwp   = number of points lossq is calculated at for each q:
+  !         if lepsmix=true: nwp=(nw+1)/2 ; if lepsmix = false: nwp=nw
+  ! nwtot = total number of points in spectrum = nwp*nqtot ???
+  !
   integer, allocatable            :: hw_range(:,:)
+  !
+  !  hw_range (nqpar, 2) : For iq in [1:nqpar], hw_range(iq,1 or 2) gives the upper
+  !                        and lower index of iw in [1:nwtot] array for this iq block
+  !                        when filling loss(:,nwtot) array
 
 contains
 
   subroutine init_wgrid(wq)
+    !
+    !
+    !
     use com,                   only : msg
     implicit none
     type(w_samp), intent(inout)    :: wq
@@ -59,8 +85,9 @@ contains
       call msg('nrs','Warning: EnStps total|memory must be the same.')
     endif
       
-    allocate(hwqgrid(wq%n(1),nqpar))
-    allocate(hw_range(nqpar,2))
+    allocate( hwqgrid ( wq%n(1), nqpar ))
+    allocate( wqtab   ( wq%n(1), nqpar ))
+    allocate( hw_range( nqpar , 2 ))
 
     return 
   end subroutine init_wgrid
@@ -72,7 +99,7 @@ contains
     use eels_qpt, only : nqeels
     use reels_module,          only : lepsmix
     implicit none
-    integer :: ist, iw, iq, i1
+    integer :: ist, iw, iq, i1, iw1
     real(SP), allocatable :: tempw(:)
     character(schlen)              :: lch1
 
@@ -83,34 +110,37 @@ contains
     ist = (nw+1)/2
     allocate(tempw(nqeels*nw))
 
-!  iw is a counter to track through hwqgrid...
-   iw = 1
-   if(.not.lepsmix) then
-     iw = 1
-     do i1 = 1,ist-1
-       tempw(iw) = hwqgrid(i1,iqmin) 
-       iw = iw + 1
-     enddo
-   endif
-
-!  hw_range refers to points on the full continuous grid, and is just used
-!  for filling loss(:,nwtot)
-      do iq = iqmin, iqmax
-        hw_range(iq,1) = iw
-        do i1 = ist, nw
-          tempw(iw) = hwqgrid(i1,iq) 
-          iw = iw + 1
-        enddo
-        hw_range(iq,2) = iw-1
+!   iw is a counter to walk through hwqgrid...
+    iw = 1
+    if(.not.lepsmix) then
+      iw = 1
+      do i1 = 1,ist-1
+        tempw(iw) = hwqgrid(i1,iqmin) 
+        iw = iw + 1
       enddo
-      nwtot = iw-1
+    endif
 
+    do iq = iqmin, iqmax
+      hw_range(iq,1) = iw
+      do i1 = ist, nw
+        tempw(iw) = hwqgrid(i1,iq) 
+        wqtab(i1,iq) = iw
+        iw = iw + 1
+      enddo
+      hw_range(iq,2) = iw-1
+    enddo
+    nwtot = iw-1
     if(.not.lepsmix) hw_range(iqmin,1) = 1
 
-    allocate(hwgrid(nwtot)) ! this shouldnt depend on ipol in fact...
+
+!   Overwrite for other case
+    if(.not.lepsmix) then
+      forall(iq=iqmin:iqmax,iw=1:nw) wqtab(iw,iq) = (iq-iqmin)*ist + iw
+    endif
+
+    allocate(hwgrid(nwtot)) ! this shouldnt depend on ipol in fact...check!
     hwgrid(:) = tempw(1:nwtot)
     deallocate(tempw) 
-
 
 
     return
@@ -194,7 +224,6 @@ contains
 
 !   Intermediate points I...F (the double grids)
 
-!   do iq = 1,nqpar-1
     do iq = iqmin, iqmax-1
       dw1 = (qGwx(iq+1) - qGwx(iq))/ist
       do iw = 1,ist-1
@@ -207,7 +236,6 @@ contains
 
 !   Exact energies (I, O, X, H, F)
 
-!   do iq = 1,nqpar
     do iq = iqmin, iqmax
       hwqgrid(ist,iq) =  qGwx(iq)
       if(ldebug) write(*,*) "hwqgridC",ist,iq,hwqgrid(ist,iq)*HARTREE
@@ -228,12 +256,14 @@ contains
         if(ldebug) write(*,*) "hwqgridD",iw,iqmin,hwqgrid(iw,iqmin)*HARTREE
       enddo
     else if(wmin.ge.qGwx(iqmin)) then
-!   Points at lower end below O
-!                o o o O o o o              |   hwqgrid(1,1:7)
-!        i i i I i i i
-!                |                         |  
-!              wmin----------------------wmax
-!   Generate points below I, but not below zero.
+      !
+      !   Points at lower end below O
+      !                o o o O o o o              |   hwqgrid(1,1:7)
+      !        i i i I i i i
+      !                |                         |  
+      !              wmin----------------------wmax
+      !   Generate points below I, but not below zero.
+      !
       dw1 = ( qGwx(iqmin+1) - qGwx(iqmin) )/ist ! ist intervals
       dw2 = ( qGwx(iqmin)   - 0.0_SP      )/ist ! ist intervals
       dw1 = abs(min(dw1,dw2)) ! force to be positive
@@ -274,9 +304,8 @@ contains
   subroutine select_wgrid(wq, iq)
     implicit none
     type(w_samp), intent(out) :: wq
-    integer, intent(in) :: iq
-    complex(SP)         :: ctemp(size(real(wq%p(:))))
-!   integer             :: i1, iw
+    integer,       intent(in) :: iq
+    complex(SP)               :: ctemp(size(real(wq%p(:))))
 
     ctemp(:) = cmplx(hwqgrid(:,iq),aimag(wq%p(:)) )
     wq%p(:) = ctemp(:)
@@ -320,19 +349,17 @@ contains
     ! Write the energy grid to file for testing USE MSG
     !
     open(unit=80,file="wgrid.dat")
-    write(80,120) "# hw","qGwx","iw","iq"
+    write(80,120) "# hw","qGwx","iw","iq","wqtab"
     do iq = iqmin, iqmax
       do iw = 1, nw
-!        write(80,121) iw,hwqgrid(iw,iq)*HARTREE,iq-iqmin+1,qGwx(iq)
-!        write(80,121) iw,hwqgrid(iw,iq)*HARTREE,iq,qGwx(iq)
-         write(80,121) hwqgrid(iw,iq)*HARTREE,qGwx(iq),iw,iq
+         write(80,121) hwqgrid(iw,iq)*HARTREE,qGwx(iq),iw,iq,wqtab(iw,iq)
       enddo
          write(80,*) 
          write(80,*) 
     enddo
     close(80)
-120 format(a4, a8,  a3,a9)
-121 format(f8.3,f9.4,i4,i3)
+120 format(a8,  a9,  a3,a3,a6)
+121 format(f8.3,f9.4,i4,i3,i6)
 
   end subroutine print_wgrid
 

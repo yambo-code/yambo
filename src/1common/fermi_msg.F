@@ -30,7 +30,7 @@
 ! ws
  integer :: i1
  real(SP):: r1
- real(SP),parameter:: tresh=1.E-5
+ real(SP),parameter:: tresh=epsilon(1._SP)
  character(lchlen) :: lch
 !
  E%nbm=0

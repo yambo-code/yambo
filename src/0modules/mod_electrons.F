@@ -22,7 +22,7 @@
  module electrons
 !================
    use pars
-   real(SP) :: nel,default_nel,spin_occ
+   real(SP) :: nel,default_nel,spin_occ,filled_tresh
    integer  :: n_bands,n_met_bands,n_full_bands
 !
 ! Spin support

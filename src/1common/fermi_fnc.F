@@ -21,12 +21,12 @@
 !
  function Ffermi(E,T)
 !--------------------
- use pars
+ use pars,      ONLY:SP
+ use electrons, ONLY:filled_tresh
  implicit none
- real(SP) :: E,T,Ffermi
- real(SP),parameter :: tresh=1.E-5
+ real(SP)::E,T,Ffermi
  Ffermi=1.
  if (T==0..and.E>0.) Ffermi=0.
  if (T/=0.) Ffermi=1./(1.+exp(E/T))
- if (Ffermi<tresh)  Ffermi=0.
+ if (Ffermi<filled_tresh)  Ffermi=0.
  end function

@@ -31,7 +31,7 @@
 ! 4 (debug)
 !
  use pars,          ONLY:SP,schlen
- use electrons,     ONLY:levels,nel
+ use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,V_more,&
 &                        V_qp,V_io,V_debug,rstatus,initmode
@@ -127,6 +127,7 @@
  call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',&
 &                        ng_closed,unit=G_unit,verb_level=V_more)
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit,verb_level=V_more)
+ call it(defs,'OccTresh','Occupation treshold (metallic bands)',filled_tresh,verb_level=V_more)
 !
 !RIM/CUTOFF
  call it(defs,'Em1Anys', '[RIM] X Y Z Static Inverse dielectric matrix',&

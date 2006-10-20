@@ -279,9 +279,9 @@
 
  call io_disconnect(-ID)
  io_file(ID)=' '
- write (subfolder,'(2a,i3.3)') trim(io_extension(ID)),'_',i_fragment
+ write (subfolder,'(2a,i5.5)') trim(io_extension(ID)),'_',i_fragment
  if (present(j_pointer)) then
-   write (subfolder,'(2a,i3.3,a,i3.3)') trim(io_extension(ID)),'_',i_fragment,'_',j_pointer
+   write (subfolder,'(2a,i5.5,a,i5.5)') trim(io_extension(ID)),'_',i_fragment,'_',j_pointer
  endif
  ierr=io_connect('fragment',subfolder=subfolder,type=2,ID=ID)
 

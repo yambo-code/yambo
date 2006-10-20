@@ -35,7 +35,8 @@
 &                      Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                      RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,&
 &                      Sphere_radius,Box_length
-  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_RIM_nbands,BZ_RIM_tot_nkpts
+  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_RIM_nbands,BZ_RIM_tot_nkpts,&
+&                      filled_tresh
   use par_proc_m, ONLY:myid,master_node
   use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,&
 &                      of_unit,of_unit,write_to_of,write_to_report,max_open_ofs,&
@@ -157,6 +158,7 @@
   n_spinor=1
   BZ_RIM_nbands=0
   BZ_RIM_tot_nkpts=0
+  filled_tresh=0.00001
 !
 !memory
 !=================================

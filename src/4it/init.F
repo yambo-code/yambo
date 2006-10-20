@@ -259,7 +259,7 @@
 !-----------------------------------------------------------------------------
 !
 !Common
- call initactivate(1,'InDir OutDir StdoHash KptsAcc Nelectro ElecTemp')
+ call initactivate(1,'InDir OutDir StdoHash KptsAcc Nelectro ElecTemp OccTresh')
 !
 !FFT
  if (any((/(l_optics.and.l_lr),(l_optics.and.l_bse),l_em1d,&

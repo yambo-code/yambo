@@ -77,7 +77,7 @@
  if (any((/io_sec(ID,:)==2/))) then
 
    do i1=1,n_descs_disk
-     write (ch,'(a,i3.3)') 'DESC_strings_',i1
+     write (ch,'(a,i5.5)') 'DESC_strings_',i1
      call io_elemental(ID,VAR=trim(ch),CH0="",VAR_SZ=1,MENU=0)
 !
 ! if db.W I don't check the lines
@@ -236,7 +236,7 @@
 !
    call io_fragment(ID,i_pointer=iqbz)
 !
-   write (ch,'(a,i3.3)') "W_PARS_",iqbz
+   write (ch,'(a,i5.5)') "W_PARS_",iqbz
 
    call io_elemental(ID,VAR=trim(ch),VAR_SZ=7,MENU=0)
 !
@@ -250,7 +250,7 @@
 
    allocate(qp_W_disk(QP_n_states,QP_n_G_bands(2),2))
 
-   write (ch,'(a,i3.3)') "W_Q_",iqbz
+   write (ch,'(a,i5.5)') "W_Q_",iqbz
 
    call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/QP_n_states,QP_n_G_bands_disk(2),2,QP_n_W_freqs/))
 

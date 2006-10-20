@@ -334,14 +334,20 @@
      QP_W_dr=Xw%dr
      QP_n_W_freqs=Xw%n(1)
 !
-     if (iqbz==1) then
-       call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=WID)
+! Only if I am doing secant solver of Dyson I store on disk
+! the W m.e. 
+!
+     if (trim(QP_solver)=='n'.or.trim(QP_solver)=='g') then
+       call QP_W2Sc(iqbz,k,en,Xw,Sc_W)
      else
-       call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2+iqbz/),ID=WID)
+       if (iqbz==1) then
+         call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=WID)
+       else
+         call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2+iqbz/),ID=WID)
+       endif
+       io_err=ioQP('W',qp,WID)
      endif
-     io_err=ioQP('W',qp,WID)
 
-     if (trim(QP_solver)=='n'.or.trim(QP_solver)=='g') call QP_W2Sc(iqbz,k,en,Xw,Sc_W)
    endif
 
  enddo

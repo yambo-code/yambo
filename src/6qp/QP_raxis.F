@@ -19,9 +19,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine QP_raxis(X,Xen,Xk,en,k,q,qp,Xw)
-!==========================================
+ subroutine QP_raxis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
+!==================================================
  use pars,          ONLY:SP,schlen,pi,IP,HARTREE
+ use stderr,        ONLY:string_pack
  use drivers,       ONLY:l_life
  use electrons,     ONLY:levels
  use frequency,     ONLY:w_samp,cg_index_bg,cg_npts,W_reset
@@ -31,7 +32,7 @@
  use par_indexes_m, ONLY:par_indexes
  use collision,     ONLY:ggwinfo,collision_reset
  use IO_m,          ONLY:io_control,REP,VERIFY,NONE,RD,RD_CL,OP_RD,&
-&                        OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END
+&                        OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END,OP_RD_CL
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        QP_W,QP_solver,QP_W_er,QP_W_dr,QP_n_W_freqs,&
@@ -48,7 +49,9 @@
  type(X_t)    ::X
  type(QP_t)   ::qp
  type(w_samp) ::Xw
-!ws
+ integer      ::GW_iter
+!
+! WorkSpace -- GPL_END --
  type(ggwinfo)    ::isc,iscp
  type(pp_indexes) ::px
  type(w_samp)     ::Sc_W(qp%n_states),X_life_W(q%nibz)
@@ -63,7 +66,7 @@
  real(SP)            ::life_Fe,life_Fh
  integer, allocatable::life_W_table(:,:)
  integer, external   ::ioX,QP_state_extract,ioQP,QP_life_transitions,X_em1
- character(schlen)   ::ch
+ character(schlen)   ::ch,Sc_name
 !
 !---------------------------------------------------------------------
 ! Presets
@@ -119,10 +122,18 @@
  endif
 !----------------------------------------------------------------------
 !
- call section('+','Correlation Self-Energy')
-!===========================================
- if (.not.l_life) call msg('r', '[GoWo] Bands range     :',QP_n_G_bands)
- call msg('r', '[GoWo] G damping   [ev]:',QP_G_damp*HARTREE)
+ if (GW_iter<9) write (Sc_name,'(a,i1.1)') 'G',GW_iter
+ if (GW_iter>9) write (Sc_name,'(a,i2.2)') 'G',GW_iter
+ ch=trim(string_pack(Sc_name,'W0 on the Real Axis'))
+!===================================================
+ if (GW_iter==0) then
+   call section('+',trim(ch))
+ else
+   call section('=',trim(ch))
+ endif
+
+ if (.not.l_life) call msg('r', '[GW] Bands range     :',QP_n_G_bands)
+ call msg('r', '[GW] G damping   [ev]:',QP_G_damp*HARTREE)
  call msg('r','')
  iv4=(/1,1,0,0/)
  do while(QP_state_extract(iv4)>0)
@@ -142,7 +153,7 @@
  if (io_err==0) then
    if (QP_solver=="n".or.QP_solver=="g") then
      QP_Sc=cmplx(0.,0.,SP)
-     call live_timing('GoWo Sc',q%nbz)
+     call live_timing(string_pack(Sc_name,'W0'),q%nbz)
      do iqbz=1,q%nbz
        if (iqbz< q%nbz) call io_control(ACTION=RD,COM=NONE,SEC=(/2+iqbz/),ID=WID)
        if (iqbz==q%nbz) call io_control(ACTION=RD_CL,COM=NONE,SEC=(/2+iqbz/),ID=WID)
@@ -219,7 +230,7 @@
 !
 !Main Loop
  call pp_redux_wait
- call live_timing('GoWo Sc',px%stps(myid+1)*(q%nbz-iq_to_start+1))
+ call live_timing(string_pack(Sc_name,'W0'),px%stps(myid+1)*(q%nbz-iq_to_start+1))
 
  do iqbz=iq_to_start,q%nbz
    if (.not.l_life) QP_W=(0.,0.)
@@ -235,6 +246,7 @@
 &                                SEC=(/1,2,2*iqibz+1/),ID=XID)
      if (iqbz/=iq_to_start) call io_control(ACTION=RD_CL_IF_END,COM=NONE,&
 &                                SEC=(/2*iqibz,2*iqibz+1/),ID=XID)
+     if (q%nbz==1) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=XID)
      if (l_life) then
        io_err=ioX(X,X_life_W(iqibz),XID)
        call X_delta_part(X,X_life_W(iqibz),isc%gamp)
@@ -384,6 +396,8 @@
  call collision_reset(iscp)
  call pp_indexes_reset(px)
  call pp_redux_wait()
+
+! -- GPL_START --
 
  end subroutine
 !

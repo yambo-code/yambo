@@ -38,7 +38,7 @@
  type(w_samp):: wv
  integer     :: iq
 !
-! Fxc I/O
+! Fxc I/O -- GPL_END --
 !
  integer           ::ioFxc_err,ID
  integer, external ::ioBS_Fxc
@@ -86,5 +86,7 @@
 
  allocate(X_poles(BS_K_dim))
  X_poles=FXC_K_diagonal
+
+! -- GPL_START --
 
  end subroutine

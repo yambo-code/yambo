@@ -157,13 +157,14 @@
    qpfit_rest%short_descr='[QP@G]'
    qpfit_free%short_descr='[QP@G]'
    ch='External QP corrections (G)'
+   if (present(qp_impose)) ch='Internal QP corrections (G)'
  endif
 !
 ! Section report
 !
  if (depth>0) then
    call section('=',trim(ch))
- else
+ else 
    call section('*',trim(ch))
  endif
 !
@@ -179,7 +180,7 @@
 !
  if (.not.present(qp_impose).and..not.present(qpfit_impose)) then
    qpfit_rest%db=QP_ctl_db(Eid)
-   call qpapply_db(band_range,en,k,qp,qpfit_rest,msg_fmt,DB_corrected)
+   call QP_apply_db(band_range,en,k,qp,qpfit_rest,msg_fmt,DB_corrected)
    if (trim(qpfit_rest%db)=="none") QP_ctl_db(Eid)="none"
 !
 ! Now I have to include the input file QP parameters in qpfit_free
@@ -194,7 +195,7 @@
 ! 2] I am imposing an qp_impose that contains qp corrections
 !
  if (present(qp_impose)) call &
-&   qpapply_db(band_range,en,k,qp_impose,qpfit_rest,msg_fmt,DB_corrected)
+&   QP_apply_db(band_range,en,k,qp_impose,qpfit_rest,msg_fmt,DB_corrected)
 !
 ! 3] I am using an externally defined FIT parameters
 !
@@ -206,7 +207,7 @@
 !
 ! Finally I apply the generalized stretch
 !
- call qpapply_stretch(band_range,en,qpfit_rest,qpfit_free,DB_corrected)
+ call QP_apply_stretch(band_range,en,qpfit_rest,qpfit_free,DB_corrected)
 
  if (.not.QP_ctl_applied) return
 !

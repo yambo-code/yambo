@@ -55,8 +55,8 @@
 !
  file_name='qp'
  call of_open_close(file_name,'ot')
- if (trim(QP_solver)=='n') call msg('o qp','# GoWo [Newton Solver]')
- if (trim(QP_solver)=='s') call msg('o qp','# GoWo [Secant method Solver]')
+ if (trim(QP_solver)=='n') call msg('o qp','# GW [Newton Solver]')
+ if (trim(QP_solver)=='s') call msg('o qp','# GW [Secant method Solver]')
 
  call msg('o qp','#')
  do i1=2,qp%n_descs
@@ -110,7 +110,7 @@
  do  i1=1,QP_n_states
    write (G_Sc_name,'(2(a,i3.3))') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3)
    call of_open_close(G_Sc_name,'ot')
-   call msg('o G_Sc','# GoWo [Green`s function & Self-Energy]')
+   call msg('o G_Sc','# GW [Green`s function & Self-Energy]')
    call msg('o G_Sc','#')
    do i2=2,qp%n_descs
      if (index(qp%description(i2),'dS/dw')/=0) cycle

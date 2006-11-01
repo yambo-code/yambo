@@ -37,7 +37,7 @@
    logical :: l_el_corr,l_ph_corr
 !
 ! QP
-   logical :: l_xxvxc,l_ppa,l_gowo,l_life
+   logical :: l_xxvxc,l_ppa,l_gw0,l_life
 !
 ! LR
    logical :: l_optics,l_lr,l_em1d,l_em1s

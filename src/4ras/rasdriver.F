@@ -30,7 +30,7 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   use R_lattice,               only : bz_samp, bare_qpg
   use IO_m,                    only : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP
   use X_m,                     only : X_t, X_epsilon, X_mat, X_alloc
- use frequency,                only : w_samp 
+  use frequency,               only : w_samp 
   use optcut,                  only : loptcut, Xcut_rhoq0 ! just for dealloc
   use vec_operate,             only : v_module
   use par_proc_m,              only : pp_redux_wait
@@ -42,7 +42,7 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   use eels_detector
   use analyse_peaks
   use model_loss_function,     only : lossformlg, lossfm, print_eels_form
-  use reels_module,            only : write_reelsdiff
+  !use reels_module,            only : write_reelsdiff
   implicit none
   type(levels),       intent(in) :: Xen    ! Energies
   type(bz_samp),      intent(in) :: Xk, q     ! K points
@@ -236,7 +236,7 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
 !<- DEBUG
 !   call msg('nrs','Q_|| * d_surf range: ',qpard)
 !-> DEBUG
-    call write_reelsdiff(lossf, real(wv % p), nw ) 
+    !call write_reelsdiff(lossf, real(wv % p), nw ) 
     !
   endif
 ! checked:

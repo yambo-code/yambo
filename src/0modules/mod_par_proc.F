@@ -31,7 +31,8 @@
    end type pp_indexes
    interface pp_redux_wait
      module procedure i1share,i18share,i2share,i3share,r0share,&
-&                     r1share,r3share,c1share,c2share,c3share,c4share,pwait
+&                     r1share,r2share,r3share,c1share,c2share,&
+&                     c3share,c4share,pwait
    end interface pp_redux_wait
 
  contains
@@ -224,6 +225,31 @@
  allocate(larray(dimension))
  larray=0.
  call mpi_allreduce(array(1),larray,dimension,&
+&     mpi_real,mpi_sum,mpi_comm_world,ierr)
+ array=reshape(larray,dimensions)
+ deallocate(larray)
+ call mpi_barrier(mpi_comm_world,ierr)
+#endif
+ end subroutine
+
+ subroutine r2share(array,mode)
+!==============================
+ implicit none
+ real(SP):: array(:,:)
+ integer, optional :: mode
+#if defined MPI
+ include 'mpif.h'
+ integer :: ierr
+!ws
+ integer::dimensions(2),dimension
+ real(SP),allocatable::larray(:)
+ if (ncpu==1) return
+ call mpi_barrier(mpi_comm_world,ierr)
+ dimensions=shape(array)
+ dimension=product(dimensions)
+ allocate(larray(dimension))
+ larray=0.
+ call mpi_allreduce(array(1,1),larray,dimension,&
 &     mpi_real,mpi_sum,mpi_comm_world,ierr)
  array=reshape(larray,dimensions)
  deallocate(larray)

@@ -34,7 +34,8 @@
  use QP_m,          ONLY:QP_t,QP_dSc,QP_dSc_steps,QP_Vxc,QP_Sc,QP_solver,QP_table,&
 &                        QP_Sx,pp_taylor_terms,QP_n_states,QP_nb,&
 &                        QP_nk,QP_rep_string,QP_state,QP_dSc_test,QP_reset,&
-&                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_G,QP_W_partially_done
+&                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_G,QP_W_partially_done,&
+&                        GWo_iterations
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  implicit none
  type(levels) ::en,Xen
@@ -52,21 +53,24 @@
 !--------
  call parser('NewtDchk',QP_dSc_test)
 !
-! S_x/Vxc ?
+! S_x/Vxc are always need if not l_life or el. correlations is
+! skipped
 !----------
  if (.not.allocated(QP_Sx).and..not.allocated(QP_Vxc).and.l_el_corr.and.&
      .not.l_life) return
-
+!
+! Head message
+!--------------
  call QP_reset(qp)
  qp%n_descs=1
  if (trim(QP_solver)=='n') then
-   write (qp%description(1),'(a)') ' GoWo solver            : Newton'
+   write (qp%description(1),'(a)') ' GW solver              : Newton'
    call section('*','Dyson equation: Newton solver')
  else if (trim(QP_solver)=='s') then
-   write (qp%description(1),'(a)') ' GoWo solver            : Secant'
+   write (qp%description(1),'(a)') ' GW solver              : Secant'
    call section('*','Dyson equation: non perturbative secant method')
  else if (trim(QP_solver)=='g') then
-   write (qp%description(1),'(a)') ' GoWo solver            : Full Green`s function'
+   write (qp%description(1),'(a)') ' GW solver              : Full Green`s function'
    call section('*','Dyson equation: full Green`s function')
    call msg('rn','[Green] Sc steps             :',QP_Sc_steps)
    call msg('r', '[Green] Sc energy range  [ev]:',QP_G_er*HARTREE)
@@ -78,10 +82,14 @@
  if (l_ppa) write (qp%description(2),trim(&
 &   string_pack('(a,',gen_fmt(r_v=(/X%ppaE*HARTREE/)),',a,i2)') )) &
 &   ' PPA imaginary pt   [ev]:',X%ppaE*HARTREE,' * Taylor Terms ',pp_taylor_terms
- if (.not.l_ppa) qp%description(2)=' == Real Axis GoWo =='
+ if (.not.l_ppa) qp%description(2)=' == Real Axis GW =='
 !
 !Basic defs
 !===========
+!
+! When using secant no SC available
+!
+ if (trim(QP_solver)=='s') GWo_iterations=0
 !
  call QP_state_table_setup(en)
 !
@@ -145,7 +153,8 @@
 !=============
  if (trim(QP_solver)=='n') then
    call QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
-! When the W q-loop is completed the S_c cannot be
+!
+! When the W q-loop is not completed done the S_c cannot be
 ! calculated on-fly 
 !
    if (QP_W_partially_done) return
@@ -156,7 +165,7 @@
 !Lifetimes
 !=========
  if (l_life) then
-   call QP_raxis(X,Xen,Xk,en,k,q,qp,Xw) 
+   call QP_raxis(X,Xen,Xk,en,k,q,qp,Xw,0) 
    qp%Z=1.
    call QP_width_report
    return
@@ -169,7 +178,7 @@
 ! Electronic
 !------------
  if (trim(QP_solver)=='g'.and.l_el_corr.and.&
-&                                  .not.l_ppa) call QP_raxis(X,Xen,Xk,en,k,q,qp,Xw)
+&                                  .not.l_ppa) call QP_raxis(X,Xen,Xk,en,k,q,qp,Xw,0)
 
 #if defined PJ_PH
 !

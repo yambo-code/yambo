@@ -19,9 +19,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine qpapply_fit(band_range,qp,en,qpfit,what)
-!===================================================
- use pars
+ subroutine QP_apply_fit(band_range,qp,en,qpfit,what)
+!====================================================
+ use pars,          ONLY:SP,schlen,DP
  use com,           ONLY:warning
  use QP_m,          ONLY:QP_t
  use QP_CTL,        ONLY:qp_fit_ctl

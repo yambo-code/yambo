@@ -21,7 +21,7 @@
 !
  subroutine tddft_BSK_disk_2_FXC(iq,Xk,W)
 !========================================
- use pars
+ use pars,          ONLY:SP,pi
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:nqbz,bz_samp,nXkibz
@@ -41,7 +41,8 @@
  type(bz_samp) ::Xk
  type(w_samp)  ::W
  integer       ::iq
-!ws
+!
+!WorkSpace -- GPL_END --
  type(X_t)  :: X
  integer    :: ik1,ik2,O_x_dim,icv1,icv2,alloc_err(2)
  complex(SP):: Co,Hrx
@@ -155,6 +156,8 @@
  call WF_free()
  deallocate(FXC_K_diagonal,FXC)
  call mem_est("FXC_K_diagonal FXC")
+
+! -- GPL_START --
 
  end subroutine
 

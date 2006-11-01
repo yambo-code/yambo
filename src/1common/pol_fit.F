@@ -21,22 +21,38 @@
 !
  subroutine polfit(N,X,Y,order,Tt,Ferr,t_zero)
 !=============================================
- use pars
+ use pars, ONLY:DP
  implicit none
  integer  :: N,order
- real(DP):: X(N),Y(N),Tt(order+1),Ferr,t_zero
+ real(DP) :: X(N),Y(N),Tt(order+1),Ferr,t_zero
 !ws
- integer :: NDEG
+ integer  :: NDEG
  real(DP) :: W(N),R(N),IERR,wk(3*N+3*order+3)
 !
  Ferr=0.
- if (N<order) return
  W(:)=1./sum(Y(:)**2.)
+
+!
+ if (N<=1) then
+   Ferr=-1.
+   return
+ endif
+!
+! Simple linear fit on 2 points
+!
+ if (N==2.and.order==1) then
+   Tt(2) = ( Y(1)-Y(2) ) / ( X(1) - X(2) )
+   Tt(1) = Y(1) - Tt(2)*X(1)
+   return
+ endif
+!
+! General fit on N points
+!
  Ferr=-1.
  call DPOLFT (N,X,Y,W,order,NDEG,Ferr,R,IERR,wk)
  if (NDEG<order) then
-  Ferr=-1.
-  return
+   Ferr=-1.
+   return
  endif
  call DPCOEF (order,t_zero,Tt,wk)
 

@@ -41,10 +41,12 @@
  use timing,         ONLY:live_timing_is_on
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_solver,QP_nb,&
 &                         QP_state,QP_reset,QP_ctl_E,QP_table
- use X_m,            ONLY:X_t,q0_defmod,X_duplicate,X_reset
+ use X_m,            ONLY:X_t,X_duplicate,X_reset
  use stderr,         ONLY:tty_size,logfile
- use R_lattice,      ONLY:ng_closed,ng_vec,n_g_shells,&
-&                         Xk_grid_is_uniform,bz_samp,nqibz,bz_samp_reset
+ use R_lattice,      ONLY:ng_closed,ng_vec,n_g_shells,q0_defmod,&
+&                         Xk_grid_is_uniform,bz_samp,nqibz,bz_samp_reset,&
+& cut_geometry,ph_radius
+
  use wave_func,      ONLY:wf_ng,ioWF
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,REP
  use BS,             ONLY:BS_bands,BS_n_g_exch,BS_n_g_W,BSS_mode,BSS_q0,&
@@ -66,7 +68,8 @@
 !ws
  integer :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,ioBS_FXC_err,ioQINDX_err
  integer, external :: ioX,ioOSTNTS,ioGROT,ioQINDX,ioRIM,ioE_RIM,&
-&                     ioXXVXC,ioQP,ioBS,ioBS_FXC,ioDB1,ioKB_PP,ioELPH
+&                     ioXXVXC,ioQP,ioBS,ioBS_FXC,ioDB1,ioKB_PP,ioELPH,&
+&                     ioCOL_CUT
  type(X_t)     ::Xbsk
  type(QP_t)    ::qp
  type(w_samp)  ::Xxcw
@@ -170,6 +173,10 @@
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_err=ioRIM(io_ID) 
 !
+!CUTOFF
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
+ io_err=ioCOL_CUT(io_ID) 
+!
 !E_RIM
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_err=ioE_RIM(en,io_ID) 
@@ -263,7 +270,7 @@
 !
 !FFT
  if (any((/(l_optics.and.l_lr),(l_optics.and.l_bse),l_em1d,&
-&          l_em1s,l_acfdt,l_xxvxc/))) call initactivate(1,'FFTGvecs')
+&          l_em1s,l_acfdt,l_xxvxc,l_col_cut/))) call initactivate(1,'FFTGvecs')
 !
 !Setup
  if (l_setup) call initactivate(1,'MaxGvecs IkSigLim IkXLim')
@@ -272,7 +279,7 @@
  if (l_rim) call initactivate(1,'RandQpts RandGvec QpgFull Em1Anys IDEm1Ref')
 !
 !Col CUTOFF 
- if (l_col_cut) call initactivate(1,'CUTSphere CUTBox')
+ if (l_col_cut) call initactivate(1,'CUTGeo CUTBox CUTSphere CUTCylLen')
 !
 !XX
  if (l_xxvxc) call initactivate(1,'EXXRLvcs SxLowBnd GfnQPdb GfnQP_N GfnQP_E GfnQP_W GfnQP_Z')
@@ -313,11 +320,14 @@
  endif
 !
 ! GW/Life
- if (l_gowo.or.l_life) then
+ if (l_gw0.or.l_life) then
    if (l_el_corr.or.l_life) then
      call initactivate(1,'XfnQPdb XfnQP_N XfnQP_E XfnQP_W XfnQP_Z')
      call initactivate(1,'GfnQPdb GfnQP_N GfnQP_E GfnQP_W GfnQP_Z')
-     call initactivate(1,'GbndRnge GDamping')
+     call initactivate(1,'GbndRnge GDamping') 
+! -- GPL_END --
+     if (trim(QP_solver)=="n".and.l_el_corr) call initactivate(1,'GWoIter')
+! -- GPL_START --
      if (.not.l_ppa) call Xon('Xd',(/'BndsRn','NGsBlk',&
 &                    'DmRnge','CGrdSp','ETStps','EMStps','DrudeW','EhEngy','LongDr'/)) 
    endif
@@ -412,7 +422,7 @@
  if (l_setup.and.ioQINDX_err/=0) call init_qpt()
 !
 !If qp limits are requested they are added at the end of the input file
- if ( any((/l_xxvxc,l_gowo,l_life/)) ) then
+ if ( any((/l_xxvxc,l_gw0,l_life/)) ) then
 !
 !  The QP_state is read from ioxxvxc in DUMP mode.
 !  If it is not allocated I define it on the basis 
@@ -493,7 +503,7 @@
    l_em1d=(rstatus(7)/=0)
    l_em1s=(rstatus(8)/=0)
    l_ppa=(rstatus(9)/=0)
-   l_gowo=(rstatus(10)/=0)
+   l_gw0=(rstatus(10)/=0)
    l_life=(rstatus(11)/=0)
    l_bss=(rstatus(12)/=0)
    l_acfdt=(rstatus(13)/=0)
@@ -511,7 +521,7 @@
    l_ph_corr=(rstatus(17)/=0)
    l_el_corr=(rstatus(18)/=0)
 #else
-   l_el_corr=l_gowo
+   l_el_corr=l_gw0
 #endif
    if (.not.Xk_grid_is_uniform) then
      rstatus(4:14)=0
@@ -522,7 +532,7 @@
      l_em1d=.false.
      l_em1s=.false.
      l_ppa=.false.
-     l_gowo=.false.
+     l_gw0=.false.
      l_life=.false.
      l_bss=.false.
      l_acfdt=.false.
@@ -571,7 +581,7 @@
 #if defined  PJ_PH
    if (.not.l_el_corr.and..not.l_ph_corr) l_el_corr=.true.
 #endif
-   if (l_gowo.and.l_el_corr) call initactivate(1,'xxvxc')
+   if (l_gw0.and.l_el_corr) call initactivate(1,'xxvxc')
    if (l_el_corr.and.l_ppa) QP_solver='n'
    if (l_ppa) call initactivate(1,'em1d')
    if (l_bss) call initactivate(1,'bse')
@@ -620,7 +630,7 @@
      call W_duplicate(Xw(4),Xw(2))
    endif
 #if !defined  PJ_PH
-   if (l_gowo) l_el_corr=.true.
+   if (l_gw0) l_el_corr=.true.
 #endif
   end subroutine varsetup2
 !
@@ -700,10 +710,10 @@
 !
 ! Dyson Solver
 !
-     if ( trim(rstr_piece(i1)) == 'gowo' ) then
+     if ( trim(rstr_piece(i1)) == 'gw0' ) then
        QP_solver=trim(rstr_piece(i1+1))
-       if (index(QP_solver,'n')==0.and.index(QP_solver,'s')==0.and.&
-&          index(QP_solver,'g')==0) QP_solver='n'
+       if (trim(QP_solver)/='n'.and.trim(QP_solver)/='s'.and.&
+&          trim(QP_solver)/='g') QP_solver='n'
 #if !defined  PJ_PH
        l_el_corr=.true.
 #endif

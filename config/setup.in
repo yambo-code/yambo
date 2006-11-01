@@ -37,10 +37,10 @@ package_bugreport = @PACKAGE_BUGREPORT@
 #
 prefix      = @prefix@
 exec_prefix = @exec_prefix@/bin
-srcdir      = @abs_top_srcdir@
-libdir      = @abs_top_srcdir@/lib
-libpath     = -L@abs_top_srcdir@/lib @LDFLAGS@
-includedir  = @abs_top_srcdir@/include
+srcdir      = @srcdir_path@
+libdir      = @srcdir_path@/lib
+libpath     = -L@srcdir_path@/lib @LDFLAGS@
+includedir  = @srcdir_path@/include
 lblas       = @BLAS_LIBS@
 llapack     = @LAPACK_LIBS@
 lblacs      = @BLACS_LIBS@

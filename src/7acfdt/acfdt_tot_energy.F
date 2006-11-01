@@ -46,7 +46,7 @@
  type(bz_samp)::Xk,q
  type(X_t)    ::X
 !
-!ws
+!WorkSpace -- GPL_END --
  integer  ::i1,ib,ik
  real(SP) ::Er(9),rfac(4)
  character(9)     ::ttl(4)
@@ -274,6 +274,8 @@
  deallocate(QP_Sx,QP_Vxc,QP_table,QP_state)
  deallocate(Xw%p)
  call mem_est("QP_table QP_state QP_Sx QP_Vxc W-p")
+
+! -- GPL_START --
 
  end subroutine
 

@@ -358,7 +358,7 @@
  use stderr,   ONLY: c_print,write_to_log,tty_size
  use timing,   ONLY: live_time_msg
  implicit none
- character(*) mesg,how,val(:)
+ character(*)     :: mesg,how,val(:)
  integer,optional :: INDENT
  logical,optional :: USE_TABS
 !ws

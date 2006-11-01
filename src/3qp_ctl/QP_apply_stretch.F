@@ -19,8 +19,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine qpapply_stretch(band_range,E,qpfit_rest,qpfit_free,&
-&                           DB_corrected)
+ subroutine QP_apply_stretch(band_range,E,qpfit_rest,qpfit_free,&
+&                            DB_corrected)
 !================================================================
 !
 ! Here I apply the strecth for both qpfit_rest (respecting the 
@@ -40,28 +40,28 @@
  integer  ::i1,i2,l_isec(5)
  real(SP) ::Eoc,Eov
  character(lchlen) ::ch
- logical           ::qpapplydone,l_continue
+ logical           ::QP_apply_done,l_continue
 !
 ! Is there anything to do ?
 !---------------------------
  l_continue=.false.
  if (any(qpfit_rest%E/=(/0.,1.,0.,1./)).or.any(qpfit_free%E/=(/0.,1.,0.,1./))) then
-   if (qpapplydone(band_range,(/1,E%nk/),E,'E')) return
+   if (QP_apply_done(band_range,(/1,E%nk/),E,'E')) return
    l_continue=.true.
  endif
  if (any((/qpfit_rest%W(:)/=0/)).or.any((/qpfit_free%W(:)/=0/))) then
-   if (qpapplydone(band_range,(/1,E%nk/),E,'W')) return
+   if (QP_apply_done(band_range,(/1,E%nk/),E,'W')) return
    l_continue=.true.
  endif
  if (qpfit_rest%Z/=(1.,0.).or.qpfit_free%Z/=(1.,0.)) then
-   if (qpapplydone(band_range,(/1,E%nk/),E,'Z')) return
+   if (QP_apply_done(band_range,(/1,E%nk/),E,'Z')) return
    l_continue=.true.
  endif
  if (.not.l_continue) return
 !
  if (.not.QP_ctl_applied) then
    QP_ctl_applied=.true.
-   call section('p','QP Corrections (Linear/Quadratic extrapolation approach)')
+   call section('p','QP Corrections extrapolation')
  endif
 
 !Backup (only once)
@@ -91,7 +91,7 @@
  write (ch,'(4a)') '-- ',trim(qpfit_free%short_descr),&
 &      ' Linear/Quadratic extrapolation ',repeat('-',19)
  call msg('r',trim(ch))
- call msg('r','=== DB derived ===')
+ call msg('r','=== QP/DB derived ===')
  call fit_report(qpfit_rest)
  call msg('r','=== Additional ===')
  call fit_report(qpfit_free)
@@ -107,10 +107,10 @@
 !
    integer  :: i1,i2,i3
    real(SP) :: delta
-   logical  :: qpapplydone
+   logical  :: QP_apply_done
    do i1=band_range(1),band_range(2)
      do i2=1,E%nk
-       if (qpapplydone((/i1,i1/),(/i2,i2/),E,what)) cycle
+       if (QP_apply_done((/i1,i1/),(/i2,i2/),E,what)) cycle
        if (E%Eo(i1,i2,1)> 1.E-5) iref=0
        if (E%Eo(i1,i2,1)<=1.E-5) iref=nM
        if (E%Eo(i1,i2,1)> 1.E-5) rref=Eoc

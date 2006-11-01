@@ -19,31 +19,24 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- logical function qpapplydone(br,kr,en,what)
-!===========================================
-!
-! (E) qp_done = 1 3 5 7
-! (W) qp_done = 2 3 6 7
-! (Z) qp_done = 4 5 6 7
-!
- use electrons,     ONLY:levels
+ subroutine cutoff_sphere()
+!==========================
+ use pars,          ONLY:SP
+ use wave_func,     ONLY:wf_ng
+ use R_lattice,     ONLY:ph_radius,bare_qpg,nqibz
  implicit none
- type(levels) ::en
- integer      ::br(2),kr(2)
- character(1) ::what
 !ws
- integer :: i1,i2,i3,iref(4)
-!
- qpapplydone=.true.
- if (what=='E') iref=(/1,3,5,7/)
- if (what=='W') iref=(/2,3,6,7/)
- if (what=='Z') iref=(/3,5,6,7/)
- do i1=br(1),br(2)
-   do i2=kr(1),kr(2)
-     if (en%qp_done(i1,i2)/=iref(1).and.&
-&        en%qp_done(i1,i2)/=iref(2).and.&
-&        en%qp_done(i1,i2)/=iref(3).and.&
-&        en%qp_done(i1,i2)/=iref(4)) qpapplydone=.false.
+ integer ::iq,ig
+ real(SP)::dummy
+
+ do iq=1,nqibz
+   do ig=1,wf_ng
+     dummy=sqrt(1. - cos(bare_qpg(iq,ig)*ph_radius) )
+     if (abs(dummy)<1.E-5) dummy=1.E-5
+     bare_qpg(iq,ig)=bare_qpg(iq,ig)/dummy
    enddo
  enddo
- end function
+ bare_qpg(1,1)=sqrt(2.0)/ph_radius
+
+ end subroutine
+!

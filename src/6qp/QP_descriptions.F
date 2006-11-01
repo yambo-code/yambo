@@ -22,14 +22,14 @@
  subroutine QP_descriptions(qp,X,Xw)
 !===================================
 ! 
-! WARNING ! Changes here must be updated in ioX as well.
+! WARNING ! Changes here must be updated in ioQP as well.
 !
  use pars,          ONLY:HARTREE
  use X_m,           ONLY:X_t,use_X_RIM
  use QP_m,          ONLY:QP_t,QP_ng_Sx,QP_n_G_bands,QP_cg_percent,&
-&                        QP_dSc_delta,QP_G_damp,QP_dSc_steps
+&                        QP_dSc_delta,QP_G_damp,QP_dSc_steps,GWo_iterations
  use stderr,        ONLY:string_pack
- use drivers,       ONLY:l_life,l_ppa,l_gowo,l_ph_corr,l_el_corr
+ use drivers,       ONLY:l_life,l_ppa,l_gw0,l_ph_corr,l_el_corr
  use R_lattice,     ONLY:RIM_qpg,RIM_n_rand_pts,RIM_ng
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:BZ_RIM_tot_nkpts
@@ -59,6 +59,10 @@
 &        ' RIM random pts         :',RIM_n_rand_pts
  endif
  if (.not.l_life) then
+   qp%n_descs=qp%n_descs+1
+   write (qp%description(qp%n_descs),trim(&
+&        string_pack('(a,',gen_fmt( i_v=(/GWo_iterations /) ),')'))) &
+&        ' GW SC iterations       :',GWo_iterations
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),trim(&
 &        string_pack('(a,',gen_fmt( i_v=(/QP_dSc_steps /) ),')'))) &

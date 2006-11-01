@@ -26,7 +26,7 @@
 !
 !  k%ptbz
 !
- use pars
+ use pars,           ONLY:SP,schlen
  use memory_m,       ONLY:mem_est
  use vec_operate,    ONLY:c2a,k2bz
  use R_lattice,      ONLY:b,rl_sop,bz_samp

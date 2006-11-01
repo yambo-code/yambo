@@ -19,8 +19,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine qindx(k,Xk,q)
-!========================
+ subroutine bz_samp_indexes(k,Xk,q)
+!==================================
 !
 ! ikbz=(ik,is) --<--:--<-- okbz=(ok,os) = (IK-Q)
 !                   :
@@ -44,12 +44,12 @@
  use com,            ONLY:msg,gen_fmt,error
  use par_proc_m,     ONLY:pp_redux_wait
  use matrix_operate, ONLY:m3inv
- use vec_operate,    ONLY:v_is_zero,c2a,rlu_v_is_zero
+ use vec_operate,    ONLY:v_is_zero,c2a,rlu_v_is_zero,iku_v_module
  use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:b,d3q_factor,RL_v_comp_acc,RL_vol,g_vec,ng_vec,&
 &                         nqibz,nqbz,qindx_X,qindx_B,qindx_S,qp_states_k,&
 &                         bse_scattering,qindx_alloc,rl_sop,Xk_grid_is_uniform,&
-&                         k_grid,k_grid_b,qpt,bz_samp
+&                         k_grid,k_grid_b,qpt,bz_samp,q_module,q0_defmod
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  implicit none
  type(bz_samp)::k,Xk,q
@@ -73,9 +73,13 @@
  if (io_err==0) then
    call k_expand(q)
    call Q_report
-   allocate(qpt(q%nibz,3))
+   allocate(qpt(q%nibz,3),q_module(q%nibz))
    qpt=q%pt
-   call mem_est("q-pt",(/q%nibz*3/),(/SP/))   
+   do i1=1,q%nibz
+     q_module(i1)=iku_v_module(qpt(i1,:))
+   enddo
+   q_module(1)=q0_defmod
+   call mem_est("q-pt q_module",(/q%nibz*3,q%nibz/),(/SP/))   
    return
  endif
 !
@@ -118,9 +122,13 @@
    if (.not.allocated(qpt)) then
      call k_reduce(q)
      deallocate(q%ptbz)
-     allocate(qpt(q%nibz,3))
+     allocate(qpt(q%nibz,3),q_module(q%nibz))
      qpt=q%pt
-     call mem_est("q-pt",(/q%nibz*3/),(/SP/))   
+     do i1=1,q%nibz
+       q_module(i1)=iku_v_module(qpt(i1,:))
+     enddo
+     q_module(1)=q0_defmod
+     call mem_est("q-pt q_module",(/q%nibz*3,q%nibz/),(/SP/))   
    else
      q%nibz=nqibz
      allocate(q%pt(q%nibz,3))
@@ -148,9 +156,10 @@
    if (q%nbz/=Xk%nbz) then
      call msg('rsn','[K latt] Q BZ pts are /= from X grid BS pts. Gamma point only.')
      deallocate(q%pt,qpt)
-     allocate(q%pt(1,3),qpt(1,3)) 
+     allocate(q%pt(1,3),qpt(1,3),q_module(1)) 
      q%pt=0.
      qpt=0.
+     q_module=q0_defmod
      nqbz=1
      nqibz=1
      q%nibz=1

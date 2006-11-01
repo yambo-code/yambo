@@ -19,25 +19,31 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine col_cut()
-!====================
+ logical function QP_apply_done(br,kr,en,what)
+!=============================================
 !
- use pars,          ONLY:SP
- use memory_m,      ONLY:mem_est
- use X_m,           ONLY:q0_defmod
- use drivers,       ONLY:l_rim,l_col_cut
- use parser_m,      ONLY:parser
- use stderr,        ONLY:string_pack
- use com,           ONLY:msg,gen_fmt
- use vec_operate,   ONLY:iku_v_module,sort
- use D_lattice,     ONLY:DL_vol
- use R_lattice,     ONLY:d3q_factor,RIM_is_diagonal,RIM_qpg,bare_qpg,&
-&                        nqibz,g_vec,qpt,nqbz,RIM_ng,RIM_n_rand_pts
- use wave_func,     ONLY:wf_ng
- use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY
+! (E) qp_done = 1 3 5 7
+! (W) qp_done = 2 3 6 7
+! (Z) qp_done = 4 5 6 7
+!
+ use electrons,     ONLY:levels
  implicit none
-
- call section('*','Coloumb potential CutOff')
-
- end subroutine
+ type(levels) ::en
+ integer      ::br(2),kr(2)
+ character(1) ::what
+!ws
+ integer :: i1,i2,i3,iref(4)
 !
+ QP_apply_done=.true.
+ if (what=='E') iref=(/1,3,5,7/)
+ if (what=='W') iref=(/2,3,6,7/)
+ if (what=='Z') iref=(/3,5,6,7/)
+ do i1=br(1),br(2)
+   do i2=kr(1),kr(2)
+     if (en%qp_done(i1,i2)/=iref(1).and.&
+&        en%qp_done(i1,i2)/=iref(2).and.&
+&        en%qp_done(i1,i2)/=iref(3).and.&
+&        en%qp_done(i1,i2)/=iref(4)) QP_apply_done=.false.
+   enddo
+ enddo
+ end function

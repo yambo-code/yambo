@@ -57,7 +57,7 @@
          edf=Xen%E(ic,ik,is)-Xen%E(iv,ikp,is)
          ff=Xen%f(iv,ikp,is)*(spin_occ-Xen%f(ic,ik,is))
          if (ff<epsilon(1.)) cycle
-         if (edf==0.and.&
+         if (edf<1.E-5.and.&
 &            any((/ic/=Xen%bf,iv/=Xen%bf,ik/=Xen%kf,is/=Xen%sf/)) ) cycle
          if (any((/abs(edf)<X%ehe(1),abs(edf)>X%ehe(2).and.X%ehe(2)>0./))) cycle
          X_ehg=X_ehg+1

@@ -19,10 +19,10 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Self, 3.0.1, self@roma2.infn.it)
+AC_INIT(Self, 3.0.2, self@roma2.infn.it)
 SVERSION="3"
 SPATCHLEVEL="0"
-SSUBLEVEL="1"
+SSUBLEVEL="2"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -36,6 +36,7 @@ m4_include([config/acx_gmake.m4])
 m4_include([config/netcdf_f90.m4])
 m4_include([config/fftw.m4])
 m4_include([config/slk.m4])
+m4_include([config/acx_report.m4])
 
 AC_PREFIX_DEFAULT($PWD)
 
@@ -252,7 +253,9 @@ AC_ARG_ENABLE(extlibs, AC_HELP_STRING([--enable-largedb],
 if test x"$enable_largedb" = "x"; then enable_largedb="no"; fi
 AC_SUBST(enable_largedb)
 KH_PATH_NETCDF_F90
-
+# ============================================================================
+# Prepare the REPORT file variables
+ACX_REPORT()
 # ============================================================================
 AC_CONFIG_FILES([config/setup config/Makefile config/report
                  src/2wf_and_fft/sgfft.F

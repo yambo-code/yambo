@@ -1,22 +1,26 @@
 
-# @PACKAGE_STRING@
-# =================================================================
-# system is @build_cpu@@@build_os@
-# Source in @abs_top_srcdir@
-# Targets in @prefix@/bin 
-# -----------------------------------------------------------------
-# Double precision   [@enable_dp@] Redundant compilation [@enable_debug@] MPI [@mpibuild@]  
-# NETCDF(Large Files)[@netcdf@](@enable_largedb@) IoTK [@compile_p2s@]
-# Built-in BLAS [@compile_blas@] Built-in LAPACK [@compile_lapack@] SCALAPACK [@enable_scalapack@]
-# @FFT_DESCRIPTION@
-# -----------------------------------------------------------------
-# Prepocessing: @FCCPP@ @FCPPFLAGS@
-# C           : @CC@ @CFLAGS@
-# Parallel C  : @MPICC@ @PCFLAGS@ 
-# Fortran 90  : @F90@ @FCFLAGS@ @FCMFLAG@
-# Parallel F90: @PF90@ @PF90FLAGS@ @FCMFLAG@ 
-# Fortran 77  : @F77@ @FFLAGS@
-# No opt flag : @UFFLAGS@
-# -----------------------------------------------------------------
-# Use @MAKE@ to compile
-# -----------------------------------------------------------------
+#
+# [VER] @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@
+# 
+# [SYS] @build_os@@@build_cpu@
+# [SRC] @srcdir_path@
+# [BIN] @prefix@/bin
+# [FFT] @FFT_DESCRIPTION@
+#
+# [@DP_str@] Double precision
+# [@Red_str@] Redundant compilation  
+# [@MPI_str@] MPI 
+# [@NETCDF_str@@NETCDF_LF_str@] NETCDF/Large Files 
+# [@IOTK_str@] IoTK
+# [@BLAS_str@@LAPACK_str@@SLK_str@] Built-in BLAS/LAPACK/SCALAPACK
+#
+# [ CPP ] @FCCPP@ @FCPPFLAGS@
+# [  C  ] @CC@ @CFLAGS@
+# [MPIC ] @MPICC@ @PCFLAGS@
+# [ F90 ] @F90@ @FCFLAGS@ @FCMFLAG@ 
+# [MPIF ] @PF90@ @PF90FLAGS@ @FCMFLAG@
+# [ F77 ] @F77@ @FFLAGS@
+# [NoOpt] @UFFLAGS@
+#
+# [MAKE ] @MAKE@
+#

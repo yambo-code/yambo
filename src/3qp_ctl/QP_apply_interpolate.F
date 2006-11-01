@@ -19,9 +19,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine qpapply_interpolate(band_range,qp,en,k,l_qp,&
-&                               DB_corrected,n_neigh)
-!=======================================================
+ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
+&                                DB_corrected,n_neigh)
+!=========================================================
 !
 ! Using qp% elements (all must be defined) I QP correct
 ! the en type
@@ -52,7 +52,6 @@
 !::::::::::::::::::::::::::
  nk_interpolated=0
  nk_exact=0
- if (n_neigh==0) n_neigh=1
  do i1=1,k%nibz
    k_near=0
    k_dist=1.E5
@@ -74,16 +73,16 @@
      nk_interpolated=nk_interpolated+1
    endif
  enddo
- call msg('r','[QP] Kpts covered exactly   [o/o]:',&
+ call msg('r','[QP] Kpts covered exactly  [o/o]:',&
 &              real(nk_exact)/real(k%nibz)*100._SP)
- if (.not.l_qp(4)) then
-  call msg('r','[Interpolate] Nighbours         :',n_neigh)
-  call msg('r','[Interpolate] Kpts covered [o/o]:',&
-&              real(nk_interpolated)/real(k%nibz)*100._SP)
+ if (.not.l_qp(4).and.nk_interpolated>0) then
+   call msg('r','[Interpolate] Nighbours         :',n_neigh)
+   call msg('r','[Interpolate] Kpts covered [o/o]:',&
+&               real(nk_interpolated)/real(k%nibz)*100._SP)
  endif
  if (all(DB_corrected(band_range(1):band_range(2),:)==1)) l_qp(:3)=.false.
 !
-! IBZ -> BZ (a)
+! Clean
 !:::::::::::::::::
  call k_ibz2bz(k,'d',.false.)
 !
@@ -94,7 +93,7 @@
    real(SP)   :: Dl(band_range(2)),Wl(band_range(2))
    complex(SP):: Zl(band_range(2))
    integer    :: i3,i4,bqp
-   logical    :: qpapplydone
+   logical    :: QP_apply_done
    Dl=0.
    Wl=0.
    Zl=(0.,0.)
@@ -110,19 +109,19 @@
    enddo
    do i3=band_range(1),band_range(2)
      if (l_qp(1)) then
-       if (qpapplydone((/i3,i3/),(/ik,ik/),en,'E')) cycle
+       if (QP_apply_done((/i3,i3/),(/ik,ik/),en,'E')) cycle
        if (Dl(i3)==0._SP) cycle
        en%E(i3,ik,1)=en%Eo(i3,ik,1)+Dl(i3)/real(ln_neigh)
        DB_corrected(i3,ik)=1
      endif
      if (l_qp(2)) then
-       if (qpapplydone((/i3,i3/),(/ik,ik/),en,'W')) cycle
+       if (QP_apply_done((/i3,i3/),(/ik,ik/),en,'W')) cycle
        if (Wl(i3)==0._SP) cycle
        en%W(i3,ik)=Wl(i3)/real(ln_neigh)
        DB_corrected(i3,ik)=1
      endif
      if (l_qp(3)) then
-       if (qpapplydone((/i3,i3/),(/ik,ik/),en,'Z')) cycle
+       if (QP_apply_done((/i3,i3/),(/ik,ik/),en,'Z')) cycle
        if (Zl(i3)==(0._SP,0._SP)) cycle
        en%Z(i3,ik)=Zl(i3)/real(ln_neigh)
        DB_corrected(i3,ik)=1

@@ -39,7 +39,7 @@
  type(w_samp) ::Xw,Sc_W(QP_n_states)
  integer      ::iqbz
 !
-!ws
+!WorkSpace -- GPL_END --
  integer         :: i1,i2,ib,is(2),os(2)
  type(pp_indexes):: px
  real(SP)        :: tsign
@@ -124,5 +124,7 @@
      enddo
    enddo
  endif
+
+! -- GPL_START --
 
  end subroutine

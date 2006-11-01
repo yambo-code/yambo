@@ -67,7 +67,7 @@
  type(X_t):: X
  type(QP_t):: qp
  type(w_samp)::Xw
-!ws
+!ws ELPH_GPL_END
  integer      :: i1,i2,ID,io_err,iqbz
  type(w_samp) :: Sc_W(qp%n_states)
  real(SP)     :: Eqp_raxis(qp%n_states,2),Sc_raxis(qp%n_states,2)
@@ -81,7 +81,7 @@
 !
 !I need to store on disk the <W> m. elemnts
 !------------------------------------------
- call QP_raxis(X,Xen,Xk,en,k,q,qp,Xw)
+ call QP_raxis(X,Xen,Xk,en,k,q,qp,Xw,0)
 !
 !I prepare the Sc energy type
 !============================
@@ -215,5 +215,7 @@
   endif
 
   end subroutine
+
+! -- GPL_START --
 
  end subroutine

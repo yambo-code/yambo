@@ -38,7 +38,7 @@
  integer      :: ik1,ik2,O_x_dim,iq
  complex(SP)  :: O1x(FXC_n_g_corr,O_x_dim),O2x(FXC_n_g_corr,O_x_dim)
 !
-! WorkSpace
+! WorkSpace -- GPL_END --
 !
  integer      :: blk_pos(2),ik,ic,iv,i1,i2,iw,iw_blk
  complex(SP)  :: Co
@@ -277,5 +277,7 @@
    Fb2x2=0.
    if (abs(E1-E2)<T) Fb2x2=1.
    end function
-!
+
+! -- GPL_START --
+
  end subroutine

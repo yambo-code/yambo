@@ -28,12 +28,13 @@
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use QP_m,           ONLY:QP_t,QP_state,QP_nk,QP_nb,QP_dSc_steps,&
 &                         QP_n_G_bands,QP_cg_percent,QP_n_states,QP_W,&
-&                         QP_n_W_freqs,QP_W_dr,QP_W_er,QP_W_partially_done
+&                         QP_n_W_freqs,QP_W_dr,QP_W_er,QP_W_partially_done,&
+&                         GWo_iterations
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
 &                         write_is_on,io_mode,DUMP,VERIFY,&
 &                         io_fragment,io_check_restart,io_restart,&
-&                         io_netcdf_support
+&                         io_netcdf_support,version_is_newer
  implicit none
  type(QP_t)  ::qp
  character(*)::what ! 'qp'/'W'
@@ -45,7 +46,6 @@
  integer ,allocatable ::qp_table_disk(:,:)
  character(schlen)    ::ch
  character(2)         ::OP(1)
-
 
  ioQP=io_connect(desc=what,type=2,ID=ID)
  if (ioQP/=0) goto 1
@@ -59,7 +59,11 @@
    ioQP=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.)
    if (ioQP/=0) goto 1
 
-   call io_elemental(ID,VAR="PARS",VAR_SZ=4,MENU=0)
+   if (version_is_newer(ID,(/3,0,1/)).and.what/="W") then
+     call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
+   else
+     call io_elemental(ID,VAR="PARS",VAR_SZ=4,MENU=0)
+   endif
 
    if (what/="W") OP="<="
    if (what=="W" ) OP="=="
@@ -68,6 +72,11 @@
    call io_elemental(ID,I0=qp%nk,DB_I0=QP_nk_disk,CHECK=.true.,OP=OP)
    call io_elemental(ID,I0=qp%n_states,DB_I0=QP_n_states_disk,&
 &       VAR=' QP tot states          :',CHECK=.true.,OP=OP)
+
+   if (version_is_newer(ID,(/3,0,1/)).and.what/="W") &
+&    call io_elemental(ID,I0=GWo_iterations,&
+&       VAR=' GW SC iterations       :',CHECK=.true.,OP=(/"=="/))
+
    call io_elemental(ID,I0=qp%n_descs,DB_I0=n_descs_disk,CHECK=.true.,OP=OP)
 
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
@@ -82,19 +91,25 @@
 !
 ! if db.W I don't check the lines
 !
-! - GoWo solver       
+! - GW solver       
 ! - dS/dw steps
 ! - dS/dw step
 ! - Sx RL components
 ! - QP
 !
 ! In any case the QP lines are skipped. The QP_state check is
-! used instead
+! used instead. Also the GW SC iterations are skipped, as
+! they are written before.
+!
+     if (index(qp%description(i1),'GW SC')>0) then
+       call io_elemental(ID,CH0=qp%description(i1))
+       cycle
+     endif
 !
      if (what=="W") then
        if (index(qp%description(i1),'QP')>0) then
          call io_elemental(ID,CH0=qp%description(i1))
-       else if (index(qp%description(i1),'GoWo solver')>0.or.&
+       else if (index(qp%description(i1),'GW solver')>0.or.&
 &               index(qp%description(i1),'dS/dw step')>0.or.&
 &               index(qp%description(i1),'Sx RL components')>0) then
          call io_elemental(ID,CH0=qp%description(i1))

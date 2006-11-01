@@ -41,8 +41,8 @@
 !
 !================================================================================
 !
- subroutine col_driver()
-!=======================
+ subroutine col_driver(q)
+!========================
 !
 !Here I launch the routine to create/read the 
 !data.qpgint file after some important checks and definitions.
@@ -50,7 +50,6 @@
 !-------------------------------------------------------------
  use pars,          ONLY:SP,schlen,pi
  use memory_m,      ONLY:mem_est
- use X_m,           ONLY:q0_defmod
  use drivers,       ONLY:l_rim,l_col_cut
  use parser_m,      ONLY:parser
  use stderr,        ONLY:string_pack
@@ -58,10 +57,12 @@
  use vec_operate,   ONLY:iku_v_module,sort
  use D_lattice,     ONLY:DL_vol
  use R_lattice,     ONLY:d3q_factor,RIM_is_diagonal,RIM_qpg,bare_qpg,&
-&                        nqibz,g_vec,qpt,nqbz,RIM_ng,RIM_n_rand_pts
+&                        nqibz,g_vec,qpt,nqbz,RIM_ng,RIM_n_rand_pts,&
+&                        bz_samp,q_module
  use wave_func,     ONLY:wf_ng
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY
  implicit none
+ type(bz_samp) :: q
 !ws
  integer          :: i1,i2,iq,q_modi(nqibz),ID,io_err
  integer, external:: ioRIM
@@ -74,14 +75,14 @@
 !
  allocate(bare_qpg(nqibz,wf_ng))
  call mem_est("bare_qpg",(/size(bare_qpg)/))
- bare_qpg(1,1)=q0_defmod
+ bare_qpg(1,1)=q_module(1)
  do i1=2,wf_ng
    bare_qpg(1,i1)=iku_v_module(g_vec(i1,:))
  enddo
  do i2=2,nqibz
-  do i1=1,wf_ng
-    bare_qpg(i2,i1)=iku_v_module(qpt(i2,:)+g_vec(i1,:))
-  enddo
+   do i1=1,wf_ng
+     bare_qpg(i2,i1)=iku_v_module(qpt(i2,:)+g_vec(i1,:))
+   enddo
  enddo
 !
 !-------------------------------------------------------------------
@@ -142,7 +143,7 @@
 !========
  if (.not.l_col_cut) return
 
- call col_cut()
+ call cutoff_driver(q)
 
  end subroutine
 !

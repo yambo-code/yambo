@@ -21,19 +21,32 @@
 !
  module R_lattice
 !================
-   use pars
+   use pars, ONLY:SP,schlen
 !
 ! K lattice
 !
-   integer  :: k_grid(3),k_grid_dim
-   real(SP) :: k_grid_uc_vol,k_grid_b(3,3)
+   integer  :: k_grid(3)
+   integer  :: k_grid_dim
+   real(SP) :: k_grid_uc_vol
+   real(SP) :: k_grid_b(3,3)
    logical  :: Xk_grid_is_uniform
 !
 ! Q/K-sampling
 !
-   integer  :: nqbz,nqibz,nkbz,nkibz,nXkbz,nXkibz
-   real(SP) :: RL_vol,d3k_factor,d3q_factor,b(3,3),RL_v_comp_acc
+   integer  :: nqbz
+   integer  :: nqibz
+   integer  :: nkbz
+   integer  :: nkibz
+   integer  :: nXkbz
+   integer  :: nXkibz
+   real(SP) :: RL_vol
+   real(SP) :: d3k_factor
+   real(SP) :: d3q_factor
+   real(SP) :: b(3,3)
+   real(SP) :: RL_v_comp_acc
    real(SP),allocatable :: qpt(:,:)
+   real(SP),allocatable :: q_module(:)
+   real(SP),  parameter :: q0_defmod=1.E-5
    type bz_samp
      integer           :: nibz,nbz
      integer, pointer  :: nstar(:)
@@ -81,9 +94,12 @@
 !
 ! Coulomb (including Cutoff)
 !
-   real(SP)                :: Sphere_radius
-   real(SP)                :: Box_length(3)
+   real(SP)                :: ph_radius
+   real(SP)                :: cyl_length
+   real(SP)                :: box_length(3)
+   character(schlen)       :: cut_geometry
    complex(SP),allocatable :: bare_qpg(:,:)
+   logical                 :: CUTOFF_plus_RIM
 
  contains
 

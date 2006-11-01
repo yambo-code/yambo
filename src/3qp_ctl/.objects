@@ -1,2 +1,2 @@
-objs= mod_QP_CTL.o qp_apply_db.o qp_apply_done.o qp_apply_fit.o \
-      qp_apply_interpolate.o qp_apply_stretch.o
+objs= mod_QP_CTL.o QP_apply_db.o QP_apply_done.o QP_apply_fit.o \
+      QP_apply_interpolate.o QP_apply_stretch.o

@@ -22,13 +22,13 @@
  subroutine K_diagonalization(iq,W) 
 !==================================
  use pars,           ONLY:SP,DP,pi
- use X_m,            ONLY:X_epsilon,q0_defmod
+ use X_m,            ONLY:X_epsilon
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,Kernel_by_V,&
 &                         BS_K_coupling
  use memory_m,       ONLY:mem_est
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK,USE_SLK,INV
  use frequency,      ONLY:w_samp
- use R_lattice,      ONLY:d3k_factor
+ use R_lattice,      ONLY:d3k_factor,q_module
  use com,            ONLY:isec
  use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,ncpu,myid,pp_indexes_reset
  use timing,         ONLY:live_timing
@@ -276,7 +276,7 @@
  call live_timing
  call pp_redux_wait(X_epsilon)
 !
- X_epsilon(2,:)=1.+X_epsilon(2,:)*d3k_factor/pi**2./q0_defmod**2
+ X_epsilon(2,:)=1.+X_epsilon(2,:)*d3k_factor/pi**2./q_module(1)**2
  X_epsilon(1,:)=W%p(:)
  call pp_indexes_reset(px)
 !

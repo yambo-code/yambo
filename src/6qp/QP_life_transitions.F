@@ -36,7 +36,7 @@
  type(bz_samp)::q,k
  type(w_samp) ::X_life_W
  integer      ::iqibz_in
-!ws
+!ws 
  integer :: iqbz,iqibz,ob,ib,ik,ok,ob_max,ob_min,i1,n_of_transitions(q%nibz),&
 &           i_or,i2
  real(SP)             :: F
@@ -56,6 +56,10 @@
 ! [1] E(ib,ik)-E(ob,ok)>0 & 2-f(ok,ob)+bose(E(ik,ib)-E(ok,ob))>0
 ! [2] E(ib,ik)-E(ob,ok)<0 & f(ok,ob)+bose(E(ok,ob)-E(ik,ib))>0
 !
+ QP_life_transitions=0
+
+! -- GPL_END --
+
  do i1=1,2
    n_of_transitions=0
    ob_min=QP_n_G_bands(2)
@@ -113,5 +117,7 @@
 
  deallocate(bg_npts,cg_pt,rg_index_bg)
  call mem_est("BGn CGp RGi")
+
+! -- GPL_START --
 
  end function

@@ -42,7 +42,8 @@
  type(levels)  ::en
  type(bz_samp) ::k,q
  type(QP_t)    ::qp
-!ws
+!
+!WorkSpace  -- GPL_END --
  integer          ::iqbz,iq,iq_ref,iqs,ik,ok,ikbz,okbz,ib,ob,is,os,im,i1,i2,iw
  type(w_samp)     ::Sc_W(qp%n_states)
  type(pp_indexes) ::px
@@ -71,10 +72,10 @@
 !-----------------------------
  use_G_RIM=associated(en%E_RIM)
 !
- call msg('r', '[GoWo/El-Ph] Bands range       :',(/elph_bands(1),QP_PH_n_G_bands/))
- if (QP_solver/="g") call msg('r', '[GoWo/El-Ph] G damping     [ev]:',QP_G_damp*HARTREE)
- if (use_G_RIM) call msg('r', '[GoWo/El-Ph] RIM energy points :',BZ_RIM_tot_nkpts)
- if (use_G_RIM) call msg('r', '[GoWo/El-Ph] RIM energy bands  :',BZ_RIM_nbands)
+ call msg('r', '[GW/El-Ph] Bands range       :',(/elph_bands(1),QP_PH_n_G_bands/))
+ if (QP_solver/="g") call msg('r', '[GW/El-Ph] G damping     [ev]:',QP_G_damp*HARTREE)
+ if (use_G_RIM) call msg('r', '[GW/El-Ph] RIM energy points :',BZ_RIM_tot_nkpts)
+ if (use_G_RIM) call msg('r', '[GW/El-Ph] RIM energy bands  :',BZ_RIM_nbands)
  call msg('r','')
  iv4=(/1,1,0,0/)
  do while(QP_state_extract(iv4)>0)
@@ -215,6 +216,7 @@
 !
 
    end function
-!
- end subroutine
 
+! -- GPL_START --
+
+ end subroutine

@@ -23,7 +23,7 @@
 !=========================================
  use pars,           ONLY:SP,pi
  use memory_m,       ONLY:mem_est
- use X_m,            ONLY:X_t,X_epsilon,X_alloc,X_rhoq0,q0_defmod,&
+ use X_m,            ONLY:X_t,X_epsilon,X_alloc,X_rhoq0,&
 &                         alpha_dim,eps_2_alpha
  use BS,             ONLY:BSS_n_freqs,BS_K_dim,BSS_rhoq0,&
 &                         BS_bands,BSS_q0,BS_eh_table,BSS_mode,BS_eh_E,&
@@ -32,7 +32,7 @@
  use drivers,        ONLY:l_bs_fxc
  use frequency,      ONLY:w_samp
  use electrons,      ONLY:levels
- use R_lattice,      ONLY:d3k_factor,bz_samp
+ use R_lattice,      ONLY:d3k_factor,bz_samp,q_module
  use vec_operate,    ONLY:v_module
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,NONE
  use TDDFT,          ONLY:FXC_description,FXC_n_descs
@@ -57,18 +57,19 @@
 !
 ! Titles & Descriptions
 !=======================
- BSS_of_title(1:3)=(/'E/ev[1]','e/Im[2]','e/Re[3]'/)
 !
 ! Polarizability ?
 !------------------
  if (trim(alpha_dim)/='adim') then
    call msg('r', 'Optical renormalization   [au]:',eps_2_alpha)
    call msg('rn','Polarizability dimension      :',trim(alpha_dim))
-   BSS_of_title(4:5)=(/'ao/Im[4]','ao/Re[5]'/) 
-   if (index(BSS_mode,'h')/=0) BSS_of_title(6:7)=(/'e`/Im[6]','e`/Re[7]'/)
+   BSS_of_title(1:3)=(/'E/ev[1]','alpha/Im','alpha/Re'/)
+   BSS_of_title(4:5)=(/'alphao/Im','alphao/Re'/) 
+   if (index(BSS_mode,'h')/=0) BSS_of_title(6:7)=(/'alpha`/Im','alpha`/Re'/)
  else
-   BSS_of_title(4:5)=(/'ao/Im[4]','ao/Re[5]'/) 
-   if (index(BSS_mode,'h')/=0) BSS_of_title(6:7)=(/'a`/Im[6]','a`/Re[7]'/)
+   BSS_of_title(1:3)=(/'E/ev','e/Im','e/Re'/)
+   BSS_of_title(4:5)=(/'eo/Im','eo/Re'/) 
+   if (index(BSS_mode,'h')/=0) BSS_of_title(6:7)=(/'e`/Im','e`/Re'/)
  endif
 !
 ! Eps_0
@@ -111,7 +112,7 @@
 &                     BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))/(conjg(W_bss%p(:))+BS_eh_E(i1))
      endif
    enddo
-   X_epsilon(3,:)=X_epsilon(3,:)*d3k_factor/pi**2./q0_defmod**2.+1.
+   X_epsilon(3,:)=X_epsilon(3,:)*d3k_factor/pi**2./q_module(1)**2.+1.
  endif
  X%ib=X_ib_save
 

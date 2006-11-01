@@ -43,11 +43,11 @@
  use vec_operate,   ONLY:v_module
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv,i_space_inv
  use electrons,     ONLY:levels,spin_occ,n_spin, n_spinor
- use R_lattice,     ONLY:g_rot,qindx_X,bz_samp
+ use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,q_module 
  use wave_func,     ONLY:wf_load
  use memory_m,      ONLY:mem_est
  use X_m,           ONLY:X_t,X_poles,X_rhoq0,iq_now,X_poles_tab,&
-&                        self_detect_E_range,half_X_mat_only,use_X_RIM,q0_defmod
+&                        self_detect_E_range,half_X_mat_only,use_X_RIM
 #if defined PJ_RAS
  use optcut,                ONLY : loptcut, Xcut_rhoq0
  use analyse_peaks,         ONLY : lAnalysePeaks
@@ -113,7 +113,7 @@
 &               (spin_occ-Xen%f(Xen%bf,Xen%kf,Xen%sf))*&
 &               real(n_spinor,SP)/spin_occ/real(Xk%nbz)/DL_vol
    do iw=fr(1),fr(2)
-     drude_Gf(iw-fr(1)+1)=X_drude(real(Xw%p(iw)),X%Wd,q0_defmod)/drude_factor
+     drude_Gf(iw-fr(1)+1)=X_drude(real(Xw%p(iw)),X%Wd,q_module(1))/drude_factor
    enddo
  endif
 !
@@ -140,10 +140,12 @@
    n_poles=X_ehg(iq,X,Xen,Xk,minmax_ehe)
    deallocate(X_poles)
 
-   if (self_detect_E_range) then
-     Xw%er=minmax_ehe
-     call freqs_setup(Xw)
-   endif
+   if (self_detect_E_range) Xw%er=minmax_ehe
+!
+!  This call is needed as Xw%p is deallocated insied
+!  the q-loop of X_em1
+!
+   call freqs_setup(Xw)
 
  endif 
 !

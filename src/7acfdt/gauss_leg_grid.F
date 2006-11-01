@@ -36,7 +36,8 @@
  implicit none
  integer:: n
  real(SP):: x1,x2,x(n),w(n)
-!ws
+!
+!WorkSpace  -- GPL_END --
  real(DP),parameter:: eps=3.d-14
  integer ::i,j,m
  real(DP)::p1,p2,p3,pp,xl,xm,z,z1
@@ -63,5 +64,8 @@
    w(i)=xl/((1.d0-z*z)*pp*pp*pi)
    w(n+1-i)=w(i)
  end do
+
+! -- GPL_START --
+
  end subroutine
 

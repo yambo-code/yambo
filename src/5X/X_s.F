@@ -27,7 +27,7 @@
  use timing,        ONLY:live_timing
  use memory_m,      ONLY:mem_est
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,ncpu,pp_indexes_reset
- use R_lattice,     ONLY:bare_qpg
+ use R_lattice,     ONLY:bare_qpg,q_module
  use frequency,     ONLY:w_samp
  use par_indexes_m, ONLY:par_indexes
  use stderr,        ONLY:string_pack
@@ -97,7 +97,7 @@
 !
    if (l_bs_fxc) then
 !
-! BS Fxc
+! BS Fxc -- GPL_END --
 !-----------------------------------------------------
      if ( mod(fr(1)+iw-1,FXC_n_mem_freqs)==1.or.wv%n(1)==1) then
        FXC_w_ref=fr(1)+iw-2
@@ -128,11 +128,13 @@
 ! Fxc to be written to the o file
      X_fxc(fr(1)+iw-1-FXC_w_ref)=FXC(1,1,fr(1)+iw-1-FXC_w_ref)
 !
+! -- GPL_START --
+!
    else if (l_lrc_fxc) then
 !
 ! LRC Fxc
 !-----------------------------------------------------
-     tddftk(1,1)=-Xo(1,1)*FXC_LRC_alpha/bare_qpg(iq,1)**2.
+     tddftk(1,1)=-Xo(1,1)*FXC_LRC_alpha/q_module(iq)**2
    else if (l_alda_fxc) then
 !
 ! ALDA Fxc
@@ -146,7 +148,7 @@
    if (.not.px%i1p(iw)) cycle
 
    do i1=1,X%ng ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
-     tddftk(:,i1)=tddftk(:,i1)-Xo(:,i1)*4.*pi/bare_qpg(iq,i1)**2.
+     tddftk(:,i1)=tddftk(:,i1)-Xo(:,i1)*4.*pi/bare_qpg(iq,i1)**2
      tddftk(i1,i1)=tddftk(i1,i1)+1.
    enddo
    call mat_dia_inv(INV,INV_MODE,tddftk)

@@ -98,8 +98,8 @@
 !::::::::::::::::
  call setup(en,Xen,k,Xk)
  ierr=init(en,q,k,X,Xw,instr,lnstr,.true.,.false.)
- call qindx(k,Xk,q) 
- call col_driver()
+ call bz_samp_indexes(k,Xk,q) 
+ call col_driver(q)
 !-----------------------------------------------------------------------
 ! QP corrections (from input file)
 !::::::::::::::::::::::::::::::::::
@@ -111,31 +111,36 @@
 #if defined PJ_RAS
         lras.or.&
 #endif
-        (l_gowo.and..not.l_ppa.and.l_el_corr).or.l_life
+        (l_gw0.and..not.l_ppa.and.l_el_corr).or.l_life
  if (switch) call QP_apply(X(3)%ib,Xen,Xk,1,msg_fmt='s')
  switch=l_em1s.or.(l_optics.and.l_bse).or.l_bss
  if (switch) call QP_apply(X(2)%ib,Xen,Xk,1,msg_fmt='s')
- switch=(l_em1d.and.l_ppa).or.(l_gowo.and.l_ppa.and.l_el_corr)
+ switch=(l_em1d.and.l_ppa).or.(l_gw0.and.l_ppa.and.l_el_corr)
  if (switch) call QP_apply(X(4)%ib,Xen,Xk,1,msg_fmt='s')
  if (l_acfdt) call QP_apply(X(1)%ib,Xen,Xk,1,msg_fmt='s')
 !----------------------------------------------------------------------------
  if (l_xxvxc) call QP_xxvxc(en,k,Xk,q)
-
+! -- GPL_END --
 #if defined PJ_RAS
  if (lras.or.lreels) call rasdriver(Xen,Xk,q,Xw(3),X(3))
 #endif
 #if defined PJ_REELS
  if (lreels)         call reelsdriver(Xen,Xk,q,Xw(3),X(3))
 #endif
+! -- GPL_START --
  if (l_optics.and.l_lr) call O_driver(Xen,Xk,q,Xw(3),X(3))
 
  if (l_em1s)                            ierr=X_em1(Xen,Xk,q,X(2),Xw(2),.false.)
- if (l_em1d.or.(l_gowo.and.l_el_corr)) then
+ if (l_em1d.or.(l_gw0.and.l_el_corr)) then
    if (l_ppa)                           ierr=X_em1(Xen,Xk,q,X(4),Xw(4),.false.)
+! -- GPL_END --
    if (.not.l_ppa)                      ierr=X_em1(Xen,Xk,q,X(3),Xw(3),.false.)
+! -- GPL_START --
  endif
- if ((l_gowo.and..not.l_ppa).or.l_life) call QP_driver(X(3),Xen,Xk,en,k,q,Xw(3))
- if (l_gowo.and.l_ppa)                  call QP_driver(X(4),Xen,Xk,en,k,q,Xw(4))
+! -- GPL_END --
+ if ((l_gw0.and..not.l_ppa).or.l_life) call QP_driver(X(3),Xen,Xk,en,k,q,Xw(3))
+! -- GPL_START --
+ if (l_gw0.and.l_ppa)                  call QP_driver(X(4),Xen,Xk,en,k,q,Xw(4))
  if ((l_optics.and.l_bse).or.l_bss) call K_driver(Xen,Xk,q,X(2),Xw(2))
  if (l_acfdt) call acfdt_tot_energy(Xen,Xk,q,X(1))
 !----------------------------------------------------------------------------

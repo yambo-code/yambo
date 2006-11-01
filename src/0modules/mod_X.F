@@ -31,13 +31,12 @@
 !
 ! Response function
 !
-  real(SP), parameter :: q0_defmod=1.E-5
-  integer :: iq_now
   real(SP),    allocatable :: X_poles(:)
   integer ,    allocatable :: X_poles_tab(:,:)
   complex(SP), allocatable :: X_rhoq0(:,:,:,:)
   complex(SP), allocatable :: X_q0grad(:,:,:,:,:)
   complex(SP), allocatable :: X_mat(:,:,:)
+  integer :: iq_now
   logical :: half_X_mat_only
   logical :: self_detect_E_range
   logical :: use_X_RIM

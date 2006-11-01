@@ -28,13 +28,13 @@
 &                      QP_W_er,QP_W_dr,QP_cg_percent,QP_xc_FUNCTIONAL,&
 &                      QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_E,QP_ctl_W,QP_ctl_Z,&
 &                      QP_ctl_short_descr,QP_Sc_steps,QP_G_er,QP_G_dr,&
-&                      QP_W_partially_done
+&                      QP_W_partially_done,GWo_SC_done,GWo_iterations
   use functions,  ONLY:bose_E_cut
   use D_lattice,  ONLY:i_space_inv,n_atoms_max,n_atom_species,pp_n_l_comp_max,pp_kbv_dim
   use R_lattice,  ONLY:RL_v_comp_acc,n_g_shells,ng_closed,bse_scattering,&
 &                      Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                      RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,&
-&                      Sphere_radius,Box_length
+&                      ph_radius,box_length,cyl_length,cut_geometry,CUTOFF_plus_RIM
   use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_RIM_nbands,BZ_RIM_tot_nkpts,&
 &                      filled_tresh
   use par_proc_m, ONLY:myid,master_node
@@ -120,7 +120,11 @@
   RIM_ng=0
   RIM_n_rand_pts=0
   Box_length=0.
-  Sphere_radius=0.
+  ph_radius=0.
+  box_length=0.
+  cyl_length=0.
+  cut_geometry='sphere'
+  CUTOFF_plus_RIM=.false.
 !
 !D_lattice
 !=================================
@@ -142,7 +146,7 @@
   l_em1d=.false.
   l_em1s=.false.
   l_ppa=.false.
-  l_gowo=.false.
+  l_gw0=.false.
   l_bse=.false.
   l_lr=.false.
   l_bss=.false.
@@ -228,6 +232,8 @@
   QP_G_dr=0.1/HARTREE
   QP_cg_percent=100.
   QP_xc_FUNCTIONAL=' '
+  GWo_iterations=0
+  GWo_SC_done=.false.
 
   QP_ctl_db="none"
   QP_ctl_interp_neigh=1

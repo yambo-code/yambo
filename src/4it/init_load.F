@@ -38,13 +38,13 @@
  use X_m,           ONLY:X_t
  use QP_m,          ONLY:QP_rep_string,QP_cg_percent,QP_G_damp,QP_solver,&
 &                        pp_taylor_terms,QP_n_G_bands,QP_ng_Sx,QP_Sx_low_band,&
-&                        QP_G_er,QP_G_dr,QP_Sc_steps
+&                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations
  use timing,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel
  use R_lattice,     ONLY:RL_v_comp_acc,n_g_shells,ng_closed,QP_states_k,nXkibz,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
-&                        RIM_n_rand_pts,sphere_radius,box_length
+&                        RIM_n_rand_pts,ph_radius,box_length,cyl_length,cut_geometry
  use BS,            ONLY:BS_res_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_columns,&
 &                        BS_n_g_W,BS_n_g_exch,BSS_mode,Haydock_treshold,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BS_cpl_mode
@@ -83,7 +83,9 @@
  type(X_t)     ::X(4)
  type(w_samp)  ::Xw(4)
 !
-!RunLevels  
+!===========
+! RunLevels  
+!===========
  call it('r',defs,'setup',   '[R INI] Initialization')  ! [1]
  call it('r',defs,'optics',  '[R OPT] Optics') ! [2]
  call it('r',defs,'linres',  '[R LR] Linear Response.') ! [3]
@@ -93,7 +95,7 @@
  call it('r',defs,'em1d',    '[R Xd] Dynamical Inverse Dielectric Matrix') ! [7]
  call it('r',defs,'em1s',    '[R Xs] Static Inverse Dielectric Matrix') ! [8]
  call it('r',defs,'ppa',     '[R Xp] Plasmon Pole Approximation') ! [9]
- call it('r',defs,'gowo',    '[R GW] GoWo Quasiparticle energy levels') ! [10]
+ call it('r',defs,'gw0',     '[R GW] GoWo Quasiparticle energy levels') ! [10]
  call it('r',defs,'life',    '[R GW] GoWo Quasiparticle lifetimes') ! [11]
  call it('r',defs,'bss',     '[R BSS] Bethe Salpeter Equation solver') ! [12]
  call it('r',defs,'acfdt',   '[R ETOT] ACFDT Total Energy') ! [13]
@@ -112,8 +114,9 @@
  call it('r',defs,'el_ph',   '[R] Electron-Phonon Correlation') ! [17]
  call it('r',defs,'el_el',   '[R] Electron-Electron Correlation') ! [18]
 #endif
-!
+!========
 ! Basics
+!========
  call it(defs,'Nelectro','Electrons number',nel,verb_level=V_more)
  call it(defs,'ElecTemp','Electronic Temperature',Tel,T_unit,verb_level=V_more)
  call it(defs,'OutDir',  '[IO] Output(s) directory',outpath,verb_level=V_io)
@@ -128,21 +131,27 @@
 &                        ng_closed,unit=G_unit,verb_level=V_more)
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit,verb_level=V_more)
  call it(defs,'OccTresh','Occupation treshold (metallic bands)',filled_tresh,verb_level=V_more)
-!
-!RIM/CUTOFF
+ call it(defs,'BoseCut', '[BOSE] Finite Tel Bose function cutoff',bose_E_cut,verb_level=V_more)
+!=====
+! RIM
+!=====
  call it(defs,'Em1Anys', '[RIM] X Y Z Static Inverse dielectric matrix',&
 &                         RIM_epsm1,verb_level=V_more)
  call it(defs,'IDEm1Ref','[RIM] Dielectric matrix reference component 1(x)/2(y)/3(z)',&
 &                         RIM_id_epsm1_reference,verb_level=V_more)
  call it(defs,'RandQpts','[RIM] Number of random q-points in the BZ',RIM_n_rand_pts)
  call it(defs,'RandGvec','[RIM] Coulomb interaction RS components',RIM_ng,G_unit)
- call it(defs,'CUTSphere','[CUT] Coulomb Cutoff Sphere radius',Sphere_radius,&
-&                         verb_level=V_debug)
- call it(defs,'CUTBox','[CUT] Coulomb Cutoff Box sides',Box_length,&
-&                         verb_level=V_debug)
- call it(defs,'BoseCut', '[BOSE] Finite Tel Bose function cutoff',bose_E_cut,verb_level=V_more)
-!
-!Sxc
+!========
+! CUTOFF
+!========
+ call it(defs,'CUTGeo','[CUT] Coulomb Cutoff geometry: box/cylinder/sphere',cut_geometry,&
+&                         verb_level=V_more)
+ call it(defs,'CUTBox','[CUT] [au] Box sides',box_length,verb_level=V_more)
+ call it(defs,'CUTSphere','[CUT] [au] Sphere radius',ph_radius,verb_level=V_more)
+ call it(defs,'CUTCylLen','[CUT] [au] Cylinder length',cyl_length,verb_level=V_more)
+!======
+! S_xc
+!======
  call it(defs,'EXXRLvcs','[XX] Exchange RL components',QP_ng_Sx,G_unit)
  call it(defs,'SxLowBnd','[XX] Exchange summation low band',QP_Sx_low_band,verb_level=V_more)
  call it(defs,'GbndRnge','[GW] G[W] bands range',QP_n_G_bands)
@@ -152,8 +161,10 @@
  call it(defs,'GEnSteps','[GW] G_gw energy steps',QP_Sc_steps)
  call it(defs,'GEnRnge','[GW] G_gw energy range',QP_G_er,E_unit)
  call it(defs,'GDmRnge','[GW] G_gw damping range',QP_G_dr,E_unit)
-!
+ call it(defs,'GWoIter','[GW] GWo SC iterations',GWo_iterations,verb_level=V_more)
+!=======
 ! El-Ph
+!=======
 #if defined PJ_PH
  call it(defs,'GphBRnge', '[ELPH] G[W] bands range',QP_PH_n_G_bands)
 #endif
@@ -180,8 +191,9 @@
 
  call it('f',defs,'QpgFull', '[F RIM] Coulomb interaction: Full matrix',verb_level=V_more)
  call it('f',defs,'NewtDchk','[F GW] Test dSc/dw convergence',verb_level=V_more)
-!
-!QP parameters
+!===============
+! QP parameters
+!===============
  call it(defs,'XfnQPdb', '[EXTQP Xd] Database',QP_ctl_db(1),verb_level=V_qp)
  call it(defs,'XfnQP_N', '[EXTQP Xd] Interpolation neighbours',&
 &                         QP_ctl_interp_neigh(1),verb_level=V_qp)
@@ -194,25 +206,31 @@
  call it(defs,'KfnQP_E', '[EXTQP BSK BSS] E parameters (c/v)',QP_ctl_E(2,:),verb_level=V_more)
 ! call it(defs,'KfnQP_W','[EXTQP BSK BSS] W parameters (c/v)',QP_ctl_W(2,:),verb_level=V_debug)
 ! call it(defs,'KfnQP_Z','[EXTQP BSK BSS] Z parameters',QP_ctl_Z(2),verb_level=V_debug)
- call it(defs,'GfnQPdb', '[EXTQP G] Database',QP_ctl_db(3),verb_level=V_qp)
- call it(defs,'GfnQP_N', '[EXTQP G] Interpolation neighbours',&
-&                         QP_ctl_interp_neigh(3),verb_level=V_qp)
- call it(defs,'GfnQP_E', '[EXTQP G] E parameters (c/v)',QP_ctl_E(3,:),verb_level=V_more)
+! call it(defs,'GfnQPdb', '[EXTQP G] Database',QP_ctl_db(3),verb_level=V_qp)
+! call it(defs,'GfnQP_N', '[EXTQP G] Interpolation neighbours',&
+!&                         QP_ctl_interp_neigh(3),verb_level=V_qp)
+! call it(defs,'GfnQP_E', '[EXTQP G] E parameters (c/v)',QP_ctl_E(3,:),verb_level=V_more)
 ! call it(defs,'GfnQP_W','[EXTQP G] W parameters (c/v)',QP_ctl_W(3,:),verb_level=V_debug)
 ! call it(defs,'GfnQP_Z','[EXTQP G] Z parameters',QP_ctl_Z(3),verb_level=V_debug)
 !
-!Xs Xp Xd Xx
+!=============
+! Xs Xp Xd Xx
+!=============
  call Xload(X(1),Xw(1))
  call Xload(X(2),Xw(2))
  call Xload(X(3),Xw(3))
  call Xload(X(4),Xw(4))
 !
-!ACFDT
+!=======
+! ACFDT
+!=======
  call it(defs,'AC_n_LAM', '[ACFDT] Coupling Costant GL-grid points',ACFDT_n_lambda)
  call it(defs,'AC_n_FR',  '[ACFDT] Integration frequency points',ACFDT_n_freqs)
  call it(defs,'AC_E_Rng', '[ACFDT] Imaginary axis 2nd & 3rd energy points',ACFDT_E_range,E_unit)
 !
-!BSE
+!=====
+! BSE
+!=====
  call it(defs,'BSresKmod',  '[BSK] Resonant Kernel mode. (`x`;`c`;`d`)',BS_res_mode)
  call it(defs,'BScplKmod',  '[BSK] Coupling Kernel mode. (`x`;`c`;`d`)',BS_cpl_mode)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',&
@@ -232,7 +250,9 @@
 &              Haydock_treshold,verb_level=V_more)
  call it(defs,'BEnSteps','[BSS] Energy steps',BSS_n_freqs)
 !
-!Fxc
+!======
+! F_xc
+!======
  call it(defs,'FxcGRLc',  '[TDDFT] XC-kernel RL size',FXC_n_g_corr,G_unit)
  call it(defs,'FxcMEStps','[TDDFT] [o/o] Memory energy steps',&
 &                         FXC_per_memstps,verb_level=V_more)

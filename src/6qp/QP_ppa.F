@@ -19,9 +19,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine QP_ppa(X,Xen,Xk,en,k,q,qp,Xw)
-!========================================
+ subroutine QP_ppa(X,Xk,en,k,q,qp,Xw,GW_iter)
+!============================================
  use pars,          ONLY:SP,pi,HARTREE,schlen
+ use stderr,        ONLY:string_pack
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels
@@ -32,7 +33,7 @@
  use par_indexes_m, ONLY:par_indexes
  use collision,     ONLY:ggwinfo,collision_reset
  use functions,     ONLY:bose_f
- use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD,RD_CL,OP_RD
+ use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END
  use QP_m,          ONLY:QP_t,pp_taylor_terms,QP_n_G_bands,QP_nb,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta
  use X_m,           ONLY:X_alloc,X_mat,X_t
@@ -40,11 +41,12 @@
  use wave_func,     ONLY:wf_load,wf_free
  use R_lattice,     ONLY:qindx_S,bz_samp,nqibz
  implicit none
- type(levels)::en,Xen
+ type(levels) ::en
  type(bz_samp)::Xk,k,q
- type(X_t):: X
- type(QP_t):: qp
- type(w_samp)::Xw
+ type(X_t)    ::X
+ type(QP_t)   ::qp
+ type(w_samp) ::Xw
+ integer      ::GW_iter
 !ws
  integer :: i1,i2,i3,i4,iqbz,iqibz,ib,ig1,ig2,alloc_err
  real(SP):: PPaPtlr(q%nibz)
@@ -59,26 +61,33 @@
  type(pp_indexes) ::px
  integer          ::gfmf,iv4(4),io_err,ID
  integer, external::ioX,QP_state_extract
- character(schlen)::ch
+ character(schlen)::ch,Sc_name
 !
  call collision_reset(isc)
  call collision_reset(iscp)
  call pp_indexes_reset(px)
 !--------------------------------------------------------------------------------
- call section('+','Correlation: the P(lasmon) P(ole) A(pproximation)')
+ if (GW_iter<9) write (Sc_name,'(a,i1.1)') 'G',GW_iter
+ if (GW_iter>9) write (Sc_name,'(a,i2.2)') 'G',GW_iter
+ ch=trim(string_pack(Sc_name,'W0 : the P(lasmon) P(ole) A(pproximation)'))
+ if (GW_iter==0) then
+   call section('+',trim(ch))
+ else
+   call section('=',trim(ch))
+ endif
 !=================================================================================
-
+ if (GW_iter==0) then
+   call msg('r', '[GW/PPA] Bands range     :',QP_n_G_bands)
+   call msg('r', '[GW/PPA] G damping   [ev]:',QP_G_damp*HARTREE)
+   call msg('r','')
+   iv4=(/1,1,0,0/)
+   do while(QP_state_extract(iv4)>0)
+     write (ch,'(4(a,i3.3))') 'QP @ K ',iv4(1),' - ',iv4(2),' : b ',iv4(3),' - ',iv4(4)
+     call msg('r',trim(ch))
+   enddo
+   call msg('r','')
+ endif
  call k_expand(k)
-
- call msg('r', '[GoWo/PPA] Bands range     :',QP_n_G_bands)
- call msg('r', '[GoWo/PPA] G damping   [ev]:',QP_G_damp*HARTREE)
- call msg('r','')
- iv4=(/1,1,0,0/)
- do while(QP_state_extract(iv4)>0)
-   write (ch,'(4(a,i3.3))') 'QP @ K ',iv4(1),' - ',iv4(2),' : b ',iv4(3),' - ',iv4(4)
-   call msg('r',trim(ch))
- enddo
- call msg('r','')
 !
 ! WFs
 !==================
@@ -124,7 +133,7 @@
  call par_indexes(px,(/q%nbz,QP_n_G_bands(2)/),(/1,QP_n_G_bands(1)/))
  call pp_redux_wait
 
- call live_timing('PPA Sc',px%stps(myid+1)*QP_n_states)
+ call live_timing(trim(string_pack(Sc_name,'W0 PPA')),px%stps(myid+1)*QP_n_states)
 
  do iqbz=1,q%nbz
    isc%qs(2:)=(/q%sstar(iqbz,1),q%sstar(iqbz,2)/)
@@ -133,10 +142,10 @@
      call scatterGamp(isc,'c')
 
      if (iqibz==1) call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1,2,3/),ID=ID)
-     if (iqibz> 1) call io_control(ACTION=RD,COM=NONE,&
+     if (q%nbz==1) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
+     if (iqibz> 1) call io_control(ACTION=RD_CL_IF_END,COM=NONE,&
 &                                  SEC=(/2*isc%qs(2),2*isc%qs(2)+1/),ID=ID)
-     if (iqibz==nqibz) call io_control(ACTION=RD_CL,COM=NONE,&
-&                                      SEC=(/2*nqibz,2*nqibz+1/),ID=ID)
+
      io_err=ioX(X,Xw,ID)
      forall(i1=1:X%ng,i2=1:X%ng) &
 &          PPaP(i1,i2)=PPaPf(X_mat(i1,i2,1),X_mat(i1,i2,2),X%ppaE)

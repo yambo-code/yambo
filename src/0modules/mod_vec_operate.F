@@ -56,7 +56,8 @@
  use R_lattice, ONLY:RL_v_comp_acc
  implicit none
  real(SP) :: v(3)
- v_is_zero=all((/abs(v(1))<=RL_v_comp_acc,abs(v(2))<=RL_v_comp_acc,abs(v(3))<=RL_v_comp_acc/))
+ v_is_zero=all((/abs(v(1))<=RL_v_comp_acc,abs(v(2))<=RL_v_comp_acc,&
+&                abs(v(3))<=RL_v_comp_acc/))
  end function
 
  logical function rlu_v_is_zero(v)

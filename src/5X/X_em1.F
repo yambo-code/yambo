@@ -25,7 +25,7 @@
 ! Calculates and stores on file the dielectric matrix.
 !
  use pars,          ONLY:SP
- use drivers,       ONLY:l_life,l_bs_fxc,l_alda_fxc,l_acfdt,l_gowo
+ use drivers,       ONLY:l_life,l_bs_fxc,l_alda_fxc,l_acfdt,l_gw0
  use X_m,           ONLY:X_t,X_alloc,X_mat,X_poles_tab,self_detect_E_range
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp,rg_index_bg,bg_npts,cg_pt,cg_index_bg
@@ -59,7 +59,7 @@
      Xw%n=1
    else if (X%whoami==3) then
      call section(sec_mode,'Dynamical Dielectric Matrix')
-     if (l_gowo) self_detect_E_range=.true.
+     if (l_gw0) self_detect_E_range=.true.
    else if (X%whoami==4) then
      call section(sec_mode,'Dynamic Dielectric Matrix (PPA)')
      Xw%n=2

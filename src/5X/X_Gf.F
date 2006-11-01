@@ -22,7 +22,6 @@
  function X_Gf(W,pole,ordering)
 !==============================
  use pars, ONLY:SP,pi
- use X_m,  ONLY:q0_defmod
  implicit none
  real(SP)    ::pole
  complex(SP) ::W,X_Gf

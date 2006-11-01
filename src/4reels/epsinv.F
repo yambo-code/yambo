@@ -37,9 +37,9 @@ subroutine calc_eps( iq,  Xen,Xk, X, q, wq, epsm1, ngblk, nw ,iqf )
   use pars,                  only : PI, HARTREE, lchlen
   use com,                   only : msg
   use parser_m,              only : parser
-  use X_m,                   only : X_t, X_mat, X_epsilon, X_alloc, q0_defmod
+  use X_m,                   only : X_t, X_mat, X_epsilon, X_alloc
   use frequency,             only : w_samp
-  use R_lattice,             only : bz_samp, bare_qpg, ng_vec, g_vec
+  use R_lattice,             only : bz_samp, bare_qpg, ng_vec, g_vec, q0_defmod
   use electrons,             only : levels
   use eels_qpt
   use eels_gvec

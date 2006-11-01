@@ -27,10 +27,10 @@
  use drivers,       ONLY:l_bs_fxc,l_lrc_fxc,l_alda_fxc
  use frequency,     ONLY:w_samp,rg_index_bg,bg_npts,cg_pt,cg_index_bg
  use electrons,     ONLY:levels,BZ_RIM_tot_nkpts
- use R_lattice,     ONLY:bz_samp,bare_qpg
+ use R_lattice,     ONLY:bz_samp,q_module
  use com,           ONLY:msg,of_open_close
- use vec_operate,   ONLY:v_module
- use X_m,           ONLY:X_t,X_epsilon,X_mat,X_alloc,X_poles_tab,X_fxc,q0_defmod,&
+ use vec_operate,   ONLY:v_module,iku_v_module
+ use X_m,           ONLY:X_t,X_epsilon,X_mat,X_alloc,X_poles_tab,X_fxc,&
 &                        alpha_dim,eps_2_alpha,use_X_RIM
  use parser_m,      ONLY:parser
  use par_proc_m,    ONLY:pp_redux_wait
@@ -44,7 +44,7 @@
  type(w_samp):: wv 
 !ws
  integer          :: i1,i2,fr(2),iq
- real(SP)         :: od(5),q_mod
+ real(SP)         :: od(5)
  character(10)    :: headings(10)
  character(schlen):: ch,of_name(4)
  logical          :: lnoe0
@@ -61,9 +61,6 @@
  call X_checks(Xen,X)
 !
  do iq=X%iq(1),X%iq(2)
-!
-   q_mod=bare_qpg(iq,1)
-   if (iq==1) q_mod=q0_defmod
 !
 ! TDDFT setup
 !------------------------------------------------------
@@ -182,8 +179,8 @@
    do i1=1,wv%n(1),wv%n(2)
      fr=(/i1,i1+wv%n(2)-1/)
      call X_os(X_mat,iq,fr,Xen,Xk,wv,X)     
-     X_epsilon(1,fr(1):fr(2))=1.0_SP-X_mat(1,1,:)*4.0_SP*pi/q_mod**2
-     X_epsilon(6,fr(1):fr(2))=-X_mat(1,1,:)*eps_2_alpha/q_mod**2
+     X_epsilon(1,fr(1):fr(2))=1.0_SP-X_mat(1,1,:)*4.0_SP*pi/q_module(iq)**2
+     X_epsilon(6,fr(1):fr(2))=-X_mat(1,1,:)*eps_2_alpha/q_module(iq)**2
      call X_s(iq,fr,X,wv)
      X_epsilon(2,fr(1):fr(2))=1./(X_mat(1,1,:)+1.)
      X_epsilon(3,fr(1):fr(2))=-1./X_epsilon(1,:)
@@ -234,8 +231,8 @@
     call pp_redux_wait(X_fxc)
     call of_open_close(of_name(3),'oa')
     do i1=1,wv%n(1)
-      call msg('o fxc','',(/real(wv%p(i1))*HARTREE,real(X_fxc(i1)*q_mod**2.),&
-&                          aimag(X_fxc(i1)*q_mod**2.)/),INDENT=-2,USE_TABS=.true.)
+      call msg('o fxc','',(/real(wv%p(i1))*HARTREE,real(X_fxc(i1)*q_module(iq)**2.),&
+&                          aimag(X_fxc(i1)*q_module(iq)**2.)/),INDENT=-2,USE_TABS=.true.)
     enddo
     call of_open_close(of_name(3))
   endif
@@ -257,10 +254,12 @@
  call WF_free()
  call pp_redux_wait
 
+! -- GPL_END --
  if (l_bs_fxc) then
    deallocate(FXC,FXC_K_diagonal)
    call mem_est("FXC FXC_K_diagonal")
  endif
+! -- GPL_START --
 
  end subroutine
 

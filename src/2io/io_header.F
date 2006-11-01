@@ -127,7 +127,7 @@
 ! Things that may be dumped
 !===========================
 !
- if (present(T_EL).and.version_is_newer(ID,(/3,0,1/)) ) then
+ if (present(T_EL).and.version_is_newer(ID,(/3,0,2/)) ) then
 
    io_mode(ID)=MODE
 

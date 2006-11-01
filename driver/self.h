@@ -39,7 +39,7 @@
   {"em1d",   "d","Dynamical Inverse Dielectric Matrix",0,0,0,0},     /* 15 */
   {"em1s",   "b","Static Inverse Dielectric Matrix",0,0,0,0},        /* 15 */
   {"ppa",    "p","Plasmon Pole Approximation",0,0,0,0},              /* 17 */
-  {"gowo",   "g","Dyson Equation solver [n(ewton)/s(ecant)/g(reen)]",0,0,1,0}, /* 18 */
+  {"gw0",    "g","Dyson Equation solver [n(ewton)/s(ecant)/g(reen)]",0,0,1,0}, /* 18 */
   {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0},                  /* 19 */
   {"bss",    "y","BSE solver [opt=h/d/i/t]",0,0,1,0},                      /* 20 */
   {"acfdt",  "a","ACFDT Total Energy",0,0,0,0},                            /* 21 */

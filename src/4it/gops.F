@@ -21,7 +21,7 @@
 !
  subroutine gops()
 !=================
- use pars
+ use pars,         ONLY:SP,IP
  use timing,       ONLY:live_timing
  use memory_m,     ONLY:mem_est
  use com,          ONLY:msg

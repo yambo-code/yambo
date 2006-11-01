@@ -32,7 +32,7 @@
  implicit none
  type(bz_samp) ::k,q
 !
-!ws
+!ws ELPH_GPL_END
  type(pp_indexes)  ::px
  integer           ::iq,io_pw_err(nqibz),io_elph_err,ID
  integer, external ::ioELPH
@@ -307,6 +307,8 @@
     enddo
   enddo
   end subroutine
+!
+! ELPH_GPL_START
 !
  end subroutine
 

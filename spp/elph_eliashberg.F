@@ -29,6 +29,9 @@
 &                              elph_Emax,elph_eli_broad
  use ELPH,                ONLY:ph_modes,elph_bands,elph_dV,ph_freqs_sq
  use IO_m,                ONLY:io_control,OP_RD,VERIFY,RD_CL_IF_END,DUMP
+ use timing,              ONLY:live_timing
+ use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
+ use par_indexes_m,       ONLY:par_indexes
  implicit none
  type(levels) ::en
  type(bz_samp)::k,q
@@ -38,6 +41,7 @@
  real(SP)          ::dFfermi,dos_ef,gamma(nqibz,ph_modes),&
 &                    aF(elph_steps),aF_energy(elph_steps),omega,estep
  character(schlen) ::o_file_name,ch
+ type(pp_indexes)  ::px
 !
 !I/O
 !
@@ -63,6 +67,7 @@
 !=========
  aF=0.
  aF_energy=0.
+ gamma=0.
  estep=elph_Emax/(elph_steps-1)
 !
  call io_control(ACTION=OP_RD,SEC=(/1/),MODE=DUMP,ID=ID)
@@ -76,10 +81,13 @@
 !
 ! Eliashberg Function
 !=====================
+ call par_indexes(px,(/q%nibz/))
+ call live_timing('Eliashberg',px%stps(myid+1))
  call k_expand(q) ! need q%weights
  do iq=1,nqibz 
    call io_control(ACTION=RD_CL_IF_END,SEC=(/iq+1/),ID=ID)
    io_err=ioELPH(ID)
+   if (.not.px%i1p(iq)) cycle
    call elph_gamma(iq)
    do im=1,ph_modes
      omega = sqrt( MAX( ph_freqs_sq(iq,im),0. ) )
@@ -90,7 +98,11 @@
 &             dFfermi(aF_energy(i2)-omega,elph_eli_broad)/omega/dos_ef
      enddo
    enddo
+   call live_timing(steps=1)
  enddo
+ call live_timing()
+ call pp_redux_wait(gamma)
+ call pp_redux_wait(aF)
 !
 ! Output file
 !=====================
@@ -145,7 +157,6 @@
   integer  ::iibz1,iibz2,im,ib1,ib2
   real(SP) ::weight
  
-  gamma(iq,:)=0.
   do i1=1,k%nbz
     iibz1=k%sstar(i1,1)
     iibz2=k%sstar(qindx_X(iq,i1,1),1)

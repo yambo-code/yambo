@@ -55,8 +55,8 @@
 &                      FXC_per_memstps,FXC_LRC_alpha,FXC_SVD_cutoff,&
 &                      FXC_is_causal
   use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
-  use memory_m,   ONLY:mem_element,mem_element_size,element_loaded,mem_sum,preset_kind
   use ELPH,       ONLY:ph_modes,elph_bands
+  use memory_m,   ONLY:mem_reset
   use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND
   implicit none
   character(*) :: INSTR,IND,OD,JS
@@ -166,11 +166,7 @@
 !
 !memory
 !=================================
-  mem_element=' '
-  mem_element_size=0.
-  element_loaded=0
-  mem_sum=0.
-  preset_kind=2.*SP ! complex is the defaults
+  call mem_reset()
 !
 !wave_func
 !=================================

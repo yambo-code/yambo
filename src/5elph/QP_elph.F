@@ -21,7 +21,7 @@
 !
  subroutine QP_elph(en,k,q,qp)
 !=============================
- use pars,          ONLY:SP,schlen,HARTREE
+ use pars,          ONLY:SP,schlen,HARTREE,HA2THZ
  use frequency,     ONLY:w_samp,W_reset
  use electrons,     ONLY:levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts
  use timing,        ONLY:live_timing
@@ -51,6 +51,7 @@
  integer, external::ioELPH,QP_state_extract
  character(schlen)::ch
  logical          ::use_G_RIM
+ real(SP)         ::W_debye
  complex(SP), allocatable :: dc(:),Gf_save(:)
 !
  call pp_indexes_reset(px)
@@ -71,6 +72,8 @@
 ! Green`s function energy RIM
 !-----------------------------
  use_G_RIM=associated(en%E_RIM)
+!
+ if (QP_PH_n_G_bands>elph_bands(2)) QP_PH_n_G_bands=elph_bands(2)
 !
  call msg('r', '[GW/El-Ph] Bands range       :',(/elph_bands(1),QP_PH_n_G_bands/))
  if (QP_solver/="g") call msg('r', '[GW/El-Ph] G damping     [ev]:',QP_G_damp*HARTREE)
@@ -109,7 +112,6 @@
      QP_Sc_steps=Sc_W(i1)%n(1)
    enddo
  endif
-
  allocate(dc(Sc_W(1)%n(1)),Gf_save(Sc_W(1)%n(1)))
 !
 !====
@@ -140,7 +142,7 @@
      okbz=qindx_S(ik,iqbz,1)
      ok=k%sstar(okbz,1)
      os=k%sstar(okbz,1)
-     ikbz=ik_is_table(sop_inv(iqs),ik)
+     ikbz=ik_is_table(ik,sop_inv(iqs))
 ! 
 ! <k n|dV_{SCF}/du^{nu}|k-Rq n'>=
 ! <(R^-1 k) n|dV_{SCF}/du^{nu}|(R^-1 k)- q n'>= dV ( ikbz,nu,n,n' )
@@ -155,15 +157,13 @@
 ! Skip Acoustic modes @ Gamma
 !
          if (iq==1.and.im<=3) cycle
-         if (iq==1) cycle
 
          if (use_G_RIM.and.ob<=BZ_RIM_nbands) then
            call G_RIM_Gf(Sc_W(i1),en,(/ob,okbz,1/),sqrt(ph_freqs_sq(iq,im)),Gf_save) 
          else
            forall (iw=1:Sc_W(i1)%n(1)) Gf_save(iw)=&
-&                                  Gf(Sc_W(i1)%p(iw),en,(/ob,ok,1/),sqrt(ph_freqs_sq(iq,im)),1)
+&                                  Gf(Sc_W(i1)%p(iw),en,(/ob,ok,1/),sqrt(ph_freqs_sq(iq,im)))
          endif
-
          forall (iw=1:Sc_W(i1)%n(1)) dc(iw)=dc(iw)+Gf_save(iw)/real(q%nbz)/2.*&
 &               conjg(elph_dV(ikbz,im,ib-elph_bands(1)+1,ob-elph_bands(1)+1))*&
 &                     elph_dV(ikbz,im,ib-elph_bands(1)+1,ob-elph_bands(1)+1)/&
@@ -178,6 +178,11 @@
 !
  call live_timing()
 !
+! Debye energy
+!--------------
+ W_debye=sqrt(maxval(ph_freqs_sq))
+ call msg('nr','[Ph] Debye energy [ev/ThZ]:',(/W_debye*HARTREE,W_debye*HA2THZ/))
+!
  call pp_redux_wait(QP_Sc)
 !
 ! CLEAN
@@ -187,11 +192,11 @@
 
  contains
 !
-   pure function Gf(W,e,vs,E_ph,i_type)
+   pure function Gf(W,e,vs,E_ph)
 !===============================
    implicit none
    type(levels), intent(in) ::e
-   integer     , intent(in) ::vs(3),i_type
+   integer     , intent(in) ::vs(3)
    complex(SP) , intent(in) ::W
    real(SP)    , intent(in) ::E_ph
    complex(SP) ::Gf
@@ -200,21 +205,22 @@
    if (Finite_Tel) lW=conjg(W)
 !
 ! ORI
-   if (i_type==1) Gf=(&
+!   if (i_type==1) 
+   Gf=(&
 &      (2.-e%f(vs(1),vs(2),vs(3))+bose_f(E_ph))/(lW-e%E(vs(1),vs(2),vs(3))-E_ph)+&
 &      (e%f(vs(1),vs(2),vs(3))+bose_f(E_ph))/(conjg(W)-e%E(vs(1),vs(2),vs(3))+E_ph)&
 &     )
 
-   if (i_type==2)   Gf=2.*( (W-e%E(vs(1),vs(2),vs(3)))*(bose_f(E_ph)+1.)+&
-&       E_ph*(1.-e%f(vs(1),vs(2),vs(3))) )/&
-&     ( (W-e%E(vs(1),vs(2),vs(3)))**2 - E_ph**2 )
+!   if (i_type==2)   Gf=2.*( (W-e%E(vs(1),vs(2),vs(3)))*(bose_f(E_ph)+1.)+&
+!&       E_ph*(1.-e%f(vs(1),vs(2),vs(3))) )/&
+!&     ( (W-e%E(vs(1),vs(2),vs(3)))**2 - E_ph**2 )
 !
 ! W_ph =0
 !
-   if (i_type==3) Gf=2.*( (W-e%E(vs(1),vs(2),vs(3)) )*(bose_f(E_ph)+1.) )/&
-&        ( (W-e%E(vs(1),vs(2),vs(3)))**2 )
+!   if (i_type==3) Gf=2.*( (W-e%E(vs(1),vs(2),vs(3)) )*(bose_f(E_ph)+1.) )/&
+!&        ( (W-e%E(vs(1),vs(2),vs(3)))**2 )
 !
-
+!
    end function
 
 ! -- GPL_START --

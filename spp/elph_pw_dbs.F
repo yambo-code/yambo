@@ -24,6 +24,7 @@
  use ELPH,                ONLY:ph_freqs_sq,ph_modes,elph_bands,elph_free
  use com,                 ONLY:msg
  use R_lattice,           ONLY:bz_samp,nqibz
+ use D_lattice,           ONLY:nsym
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,&
 &                              OP_RD_CL,VERIFY
  use timing,              ONLY:live_timing
@@ -33,15 +34,15 @@
  type(bz_samp) ::k,q
 !
 !ws ELPH_GPL_END
- type(pp_indexes)  ::px
- integer           ::iq,io_pw_err(nqibz),io_elph_err,ID
- integer, external ::ioELPH
+ type(pp_indexes)   ::px
+ integer,allocatable::ikbz_is_table(:,:)
+ integer            ::iq,io_pw_err(nqibz),io_elph_err,ID
+ integer, external  ::ioELPH
 !
  call section("*","== Electron-Phonon Interface: Databases ==")
 !--------------------------------------------------------------
  call pp_indexes_reset(px)
 !
-
  call k_ibz2bz(k,'i',.false.)
  call par_indexes(px,(/nqibz/),(/1/))
  call live_timing('ELPH databases (CHECK)',px%stps(myid+1))
@@ -61,6 +62,11 @@
    call msg("s",":: Database incorrect Q-point")
    return
  endif
+!
+! KBZ + SYM table
+!
+ allocate(ikbz_is_table(k%nbz,nsym))
+ call k_syms_tab(ikbz_is_table)
 !
 ! Check if DB is already done
 !
@@ -124,7 +130,7 @@
 ! K Table
   integer           :: i1,ik,k_found(k%nbz),k2k_tab(2*k%nbz),nk_dV,ikkp(2),&
 &                      ikkp_s,ikbz_rot
-  integer           :: kst(k%nbz,nsym),nsmall,small(nsym)
+  integer           :: nsmall,small(nsym)
 
   elph_pw_dbs_io=-1
 
@@ -236,12 +242,11 @@
 !  The pw_k K-grid is reduced using the small group of q. 
 !  I need to expand the K-grid to define the missing elements of elph_dV
 !-----------------------------------------------------------------------
-  call k_syms_tab(kst)
   call q_small(real(pw_q),small,nsmall)
   do ik=1,k%nbz
     if (k_found(ik)==0) cycle
     do i1=1,nsmall
-      ikbz_rot=kst(ik,sop_inv(small(i1)))
+      ikbz_rot=ikbz_is_table(ik,sop_inv(small(i1)))
       if (k_found(ikbz_rot)/=0) cycle
       elph_dV(ikbz_rot,:,:,:)=elph_dV(ik,:,:,:)
       k_found(ikbz_rot)=-1
@@ -283,29 +288,42 @@
   enddo
   end subroutine
 !
-  subroutine k_syms_tab(kst)
-!============================
+  subroutine k_syms_tab(ikbz_is_table)
+!=====================================
   use pars,           ONLY:SP
   use vec_operate,    ONLY:rlu_v_is_zero,c2a
-  use D_lattice,      ONLY:nsym
-  use R_lattice,      ONLY:rl_sop,nkbz
+  use D_lattice,      ONLY:nsym,sop_tab
+  use memory_m,       ONLY:mem_est
+  use R_lattice,      ONLY:rl_sop,nkbz,ik_is_table
   implicit none
-  integer :: kst(nkbz,nsym)
-  integer :: i1,is,i2
+  integer :: ikbz_is_table(nkbz,nsym)
+  integer :: i1,is,ir,ikibz,i2
   real(SP):: r_v(3)
-  kst=0
+  ikbz_is_table=0
+!
+! First I find the action of all the syms on the IBZ kpts
+!
+! R_is k_ibz = k_{ik_is_table(k_ibz,is)}
+!
+! where ik_is_table(k_ibz,is) is a BZ index
+!
+  call k_sym2sym(k,'k')
+  call k_ibz2bz(k,'i',.false.) ! in k_sym2sym there is the k_ibz2bz(k,'d',...) call
+!
+! To extend ik_is_table to the BZ I simply have that
+!
+! R_is k_bz = R_is S k_ibz = ik_is_table(k_ibz,sop_tab(R_is,S))
+!
   do i1=1,k%nbz
+    ikibz=k%sstar(i1,1)
+    ir   =k%sstar(i1,2)
     do is=1,nsym
-      do i2=1,k%nbz
-        call c2a(v_in=matmul(rl_sop(:,:,is),k%ptbz(i1,:))-k%ptbz(i2,:),&
-&                v_out=r_v,mode='ki2a')
-        if (rlu_v_is_zero(r_v)) then
-          kst(i1,is)=i2
-          exit
-        endif
-      enddo
+      ikbz_is_table(i1,is)=ik_is_table(ikibz,sop_tab(is,ir))
     enddo
   enddo
+  deallocate(ik_is_table)
+  call mem_est("ik_is_table")
+
   end subroutine
 !
 ! ELPH_GPL_START

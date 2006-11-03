@@ -25,7 +25,7 @@
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
 &                         io_elemental,io_status,io_bulk,io_header,&
 &                         read_is_on,write_is_on,RD_CL,RD_CL_IF_END,io_action,&
-&                         io_mode,DUMP
+&                         io_mode,DUMP,io_fragment 
  use ELPH,           ONLY:ph_modes,elph_bands,elph_alloc,ph_freqs_sq,elph_dV,&
 &                         QP_PH_n_G_bands
  use R_lattice,      ONLY:nkbz,nqibz
@@ -63,6 +63,11 @@
 
  iq=maxval(io_sec(ID,:))-1
  if (iq<=0) goto 1
+!
+! Fragmentation
+!---------------
+!
+ call io_fragment(ID,i_pointer=iq)
 !
 ! Allocation
 !
@@ -103,6 +108,8 @@
    endif
 
  enddo
+
+ deallocate(elph_dV_disk)
 
 1 call io_disconnect(ID=ID)
 

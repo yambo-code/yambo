@@ -198,7 +198,7 @@
  local_fmt=string_pack(ch,',2a,2(',&
 &                 gen_fmt( r_v= reshape(real(QP_Sx)*HARTREE,(/QP_n_states/)) ) ,')))')
 
- do i1=1,QP_n_states
+ do i1=1,QP_n_states,n_spinor
    if (QP_table(i1,3)/=i2) then
      i2=QP_table(i1,3)
      write (ch,'(a,i3.3,a)') 'K [',i2,'] (iku):'
@@ -214,13 +214,6 @@
 &   real(QP_Sx(i1)*HARTREE),aimag(QP_Sx(i1)*HARTREE),&
 &   '<',QP_table(i1,1),trim(ch_spin),'|V_xc|',QP_table(i1,2),trim(ch_spin),'> = ',&
 &   real(QP_Vxc(i1)*HARTREE),aimag(QP_Vxc(i1)*HARTREE)
-
-!   write (ch,trim(local_fmt)) &
-!&   '<',QP_table(i1,1),'|S_x|,QP_table(i1,2),'> = ',&
-!&   real(QP_Sx(i1)*HARTREE),aimag(QP_Sx(i1)*HARTREE),&
-!&   '<',QP_table(i1,1),'|V_xc|',QP_table(i1,2),'> = ',&
-!&   real(QP_Vxc(i1)*HARTREE),aimag(QP_Vxc(i1)*HARTREE)
-
 
    if (i1/=QP_n_states) call msg('r',trim(ch))
    if (i1==QP_n_states) call msg('rn',trim(ch))

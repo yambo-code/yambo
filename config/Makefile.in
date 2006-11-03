@@ -52,6 +52,7 @@ EXE      = $(TARGETS) $(PROJECTS) a2s f2s p2s
 SLIBS        = 0external_c 0modules 1xc 1parser 1common 2io 2wf_and_fft \
                2coulomb 3kop 3qp_ctl \
                4it 4tddft 5X 6qp 7acfdt 7bse
+# -- GPL_END --
 PJ_RASLIBS   = 0external_c 0modules 1xc 1parser 1common 2io 2wf_and_fft \
                2ras_reels_mods 2coulomb \
                3kop 3qp_ctl \
@@ -65,6 +66,7 @@ PJ_REELSLIBS = 0external_c 0modules 1xc 1parser 1common 2io 2wf_and_fft \
 PJ_PHLIBS    = 0external_c 0modules 1xc 1parser 1common 2io 2wf_and_fft \
                2coulomb 3kop 3qp_ctl \
                4it 4tddft 5elph 5X 6qp 7acfdt 7bse
+# -- GPL_START --
 2SLIBS       = 0external_c 0modules 1parser 1common 2io 
 SPPLIBS      = 0external_c 0modules 1xc 1parser 1common 2io \
                2wf_and_fft 3kop 4it 
@@ -83,9 +85,9 @@ libs:
 self: libs
 	@LIBS2DO="$(SLIBS)" ; $(mksrc)
 	@X2DO="self"; XPATH="driver";XLIBS="$(SLIBS)";$(mkx)
-# PROJECTS #
+# PROJECTS # -- GPL_END --
 self_ph: libs
-	@LIBS2DO="0modules 1parser 2modules";ADF="-DPJ_PH"; $(mksrc)
+	@LIBS2DO="0modules 1parser";ADF="-DPJ_PH"; $(mksrc)
 	@LIBS2DO="$(PJ_PHLIBS)";ADF="-DPJ_PH"; $(mksrc)
 	@X2DO="self_ph"; XPATH="driver";XLIBS="$(PJ_PHLIBS)";ADF="-DPJ_PH";$(mkx)
 self_ras: libs
@@ -94,6 +96,7 @@ self_ras: libs
 self_reels: libs
 	@LIBS2DO="$(PJ_REELSLIBS)";ADF="-DPJ_REELS"; $(mksrc)
 	@X2DO="self_reels"; XPATH="driver";XLIBS="$(PJ_REELSLIBS)";ADF="-DPJ_REELS";$(mkx)
+# -- GPL_START --
 interfaces: libs
 	@LIBS2DO="$(2SLIBS)" ; $(mksrc)
 	@X2DO="a2s" ;XPATH="interfaces/a2s";XLIBS="$(2SLIBS)";$(mkx)
@@ -145,7 +148,9 @@ cclean:
 define make_message
  echo;echo "SELF" 3.0.1 targets;echo;\
  for target in $(TARGETS); do echo  " [stable] $$target" ; done;echo;\
+# -- GPL_END --
  for target in $(PROJECTS); do echo " [devel] $$target" ; done;\
+# -- GPL_START --
  echo;
 endef
 define mksrc

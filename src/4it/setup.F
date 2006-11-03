@@ -22,7 +22,7 @@
  subroutine setup(en,Xen,k,Xk)
 !=============================
  use pars,           ONLY:SP,HARTREE,IP,pi,schlen
- use electrons,      ONLY:levels,nel,n_met_bands,n_full_bands,E_duplicate,n_spin
+ use electrons,      ONLY:levels,nel,n_met_bands,n_full_bands,E_duplicate,n_sp_pol
  use memory_m,       ONLY:mem_est
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,sop_inv,sop_tab
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,nkibz,nkbz,nXkibz,nXkbz,&
@@ -157,9 +157,9 @@
    endif
    call msg('r',trim(ch(2)))
 
-   do is=1,n_spin
+   do is=1,n_sp_pol
      do i2=1,min(en%nb,en%nbf+4*int(nel)),8
-       if (n_spin==1) then
+       if (n_sp_pol==1) then
          call msg('r','E ',(/(en%E(i3,i1,1)*HARTREE,i3=i2,min(i2+7,en%nb))/))
        else
          if (i2==1) then

@@ -69,6 +69,5 @@
  enddo
  call k_ibz2bz(k,'d',.false.)
 !
-
  end subroutine
 

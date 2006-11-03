@@ -21,14 +21,23 @@
 !
  module memory_m
 !===============
-   use pars
+   use pars,       ONLY:SP,lchlen,schlen
    use stderr,     ONLY:string_split
-   integer, parameter :: max_mem_elements=500
-   character(schlen)  :: mem_element(max_mem_elements)
-   integer            :: element_loaded,preset_kind
-   real(SP)           :: mem_element_size(max_mem_elements),mem_sum
+   integer, parameter :: max_mem_elements=2000
+   integer, parameter :: preset_kind=2*SP
+   character(schlen), private  :: mem_element(max_mem_elements)
+   integer          , private  :: element_loaded
+   real(SP)         , private  :: mem_element_size(max_mem_elements)
+   real(SP)         , private  :: mem_sum
 
  contains
+
+ subroutine mem_reset()
+  mem_element=' '
+  mem_element_size=0.
+  element_loaded=0
+  mem_sum=0.
+ end subroutine
 
  subroutine mem_est(what,elements_size,elements_kind,errors,quiet,overall_report)
 !================================================================================
@@ -63,13 +72,14 @@
      if (len_trim(input_name(i1))==0) cycle
      do i2=1,max_mem_elements
        if (trim(mem_element(i2))=="") exit
+       if (trim(mem_element(i2))==trim(input_name(i1))) exit
      enddo
      if (i2==element_loaded+1) element_loaded=element_loaded+1
 
      mem_element(i2)=trim(input_name(i1))
      local_kind=preset_kind
      if (present(elements_kind)) local_kind=elements_kind(i1)
-     mem_element_size(i2)=real(elements_size(i1)*local_kind)/1.E9
+     mem_element_size(i2)=mem_element_size(i2)+real(elements_size(i1)*local_kind)/1.E9
      if (present(errors)) then
        if (errors(i1)/=0) then
          write (ch(1),'(3a,f10.5,a)') 'Mem All. failed. Element ',trim(mem_element(i2)),&

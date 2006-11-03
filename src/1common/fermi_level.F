@@ -34,7 +34,7 @@
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Tel
  use electrons,     ONLY:levels,nel,n_spin,n_sp_pol,spin_occ,&
-&                        BZ_RIM_nbands,BZ_RIM_tot_nkpts
+&                        BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spinor
  use R_lattice,     ONLY:bz_samp
  use com,           ONLY:msg
  use vec_operate,   ONLY:sort
@@ -45,12 +45,16 @@
  real(SP):: test_Tel
 !ws
  integer :: i1,i2,is,ib,ik,trials(2),ires
- integer :: index(E%nk*E%nb*n_spin,3),index_s(E%nk*E%nb*n_spin),n_spinor
+ integer :: index(E%nk*E%nb*n_spin,3),index_s(E%nk*E%nb*n_spin)
  real(SP):: E_s(E%nk*E%nb*n_spin)
  real(SP):: lnel(2),Ef(2),Ffermi,Efdist,neltresh
  real(SP),parameter :: Telstep=0.0001/HARTREE
 !
- n_spinor = min(merge(1,2,n_sp_pol.eq.2),n_spin)
+!     n_spin n_sp_pol n_spinor  spin_occ ffac
+!       1        1        1         2      2
+!       2        1        2        0.5     1
+!       2        2        1         1      1
+!
  spin_occ=2.0_SP/real(n_spin,SP)/real(n_spinor,SP)
 !
  neltresh=1.E-5

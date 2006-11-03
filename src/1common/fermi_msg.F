@@ -23,7 +23,7 @@
 !============================
  use pars,          ONLY:SP,lchlen,HARTREE
  use com,           ONLY:msg
- use electrons,     ONLY:levels,n_spin,n_spinor
+ use electrons,     ONLY:levels,n_sp_pol,spin_occ,n_spinor
  implicit none
  type(levels)::E
  integer     ::mode
@@ -33,10 +33,12 @@
  real(SP),parameter:: tresh=epsilon(1._SP)
  character(lchlen) :: lch
 !
+! Evaluate Metallic/Filled bands
+!--------------------------------
  E%nbm=0
  E%nbf=0
  do i1=1,E%nb
-   r1=sum(E%f(i1,:,:))/2._SP/real(n_spinor)
+   r1=sum(E%f(i1,:,:))*2/real(n_spinor)
    if (r1<=tresh) cycle
    if (abs(r1-real(E%nk,SP))<=tresh) then
      E%nbf=i1
@@ -45,17 +47,18 @@
    E%nbm=i1
  enddo
  if (E%nbm==0) E%nbm=E%nbf
+!
  if (mode<=1) return
  i1=1
  if (E%nbf==0) i1=0
  if (E%nbf/=E%nbm) then
    E%Efermi(2:)=0.
-   call msg('r','Bands summary              : Full        Metallic    Empty')
+   call msg('r','States summary             : Full        Metallic    Empty')
    write (lch,'(29x,3(i4.4,a,i4.4,3x))') i1,'-',E%nbf,&
 &                                       E%nbf+1,'-',E%nbm,E%nbm+1,'-',E%nb
    call msg('r',trim(lch))
  else
-   call msg('r','Bands summary              : Full        Empty')
+   call msg('r','States summary             : Full        Empty')
    write (lch,'(29x,3(i4.4,a,i4.4,3x))') i1,'-',E%nbf,E%nbm+1,'-',E%nb
    call msg('r',trim(lch))
 !
@@ -65,15 +68,15 @@
 !
    E%Efermi(2:)=E%Efermi(1)+(/maxval(E%E(E%nbf,:,:)),minval(E%E(E%nbf+1,:,:))/)
 !
-   if (n_spin==1) then
-     call msg('r','Indirect Gap  [ev][min-max]:',(/&
-&             ( minval(E%E(E%nbf+1,:,1))-maxval(E%E(E%nbf,:,1)) )*HARTREE,&
-&             ( maxval(E%E(E%nbf+1,:,1))-minval(E%E(E%nbf,:,1)) )*HARTREE /))
-   else
+   if (n_sp_pol==2) then
      call msg('r','Indirect Gap [ev][min-max][up]:',(/&
 &             ( minval(E%E(E%nbf+1,:,2))-maxval(E%E(E%nbf,:,2)) )*HARTREE,&
 &             ( maxval(E%E(E%nbf+1,:,2))-minval(E%E(E%nbf,:,2)) )*HARTREE /))
      call msg('r','                          [dn]:',(/&
+&             ( minval(E%E(E%nbf+1,:,1))-maxval(E%E(E%nbf,:,1)) )*HARTREE,&
+&             ( maxval(E%E(E%nbf+1,:,1))-minval(E%E(E%nbf,:,1)) )*HARTREE /))
+   else
+     call msg('r','Indirect Gap  [ev][min-max]:',(/&
 &             ( minval(E%E(E%nbf+1,:,1))-maxval(E%E(E%nbf,:,1)) )*HARTREE,&
 &             ( maxval(E%E(E%nbf+1,:,1))-minval(E%E(E%nbf,:,1)) )*HARTREE /))
    endif

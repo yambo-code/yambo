@@ -79,7 +79,7 @@
      q_module(i1)=iku_v_module(qpt(i1,:))
    enddo
    q_module(1)=q0_defmod
-   call mem_est("q-pt q_module",(/q%nibz*3,q%nibz/),(/SP/))   
+   call mem_est("q-pt q_module",(/q%nibz*3,q%nibz/),(/SP,SP/))   
    return
  endif
 !
@@ -128,7 +128,7 @@
        q_module(i1)=iku_v_module(qpt(i1,:))
      enddo
      q_module(1)=q0_defmod
-     call mem_est("q-pt q_module",(/q%nibz*3,q%nibz/),(/SP/))   
+     call mem_est("q-pt q_module",(/q%nibz*3,q%nibz/),(/SP,SP/))   
    else
      q%nibz=nqibz
      allocate(q%pt(q%nibz,3))

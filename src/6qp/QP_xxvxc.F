@@ -30,7 +30,7 @@
  use com,           ONLY:msg,depth,gen_fmt
  use timing,        ONLY:live_timing
  use stderr,        ONLY:string_pack
- use electrons,     ONLY:levels,n_spin
+ use electrons,     ONLY:levels,n_spin,n_spinor
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use collision,     ONLY:ggwinfo,collision_reset
@@ -60,10 +60,6 @@
 !
 !Vxc
  complex(SP),allocatable ::c_vec(:)
-!DEBUG >
-! real(SP),allocatable    ::rho(:),vxc(:)
-! real(4), external       ::vxcca
-!DEBUG <
 !
 !QP list
  integer           :: i4(4)
@@ -167,14 +163,6 @@
  call xc_lda_driver(E,Xk,GS_xc_KIND,GS_xc_FUNCTIONAL,1)
  QP_xc_FUNCTIONAL=trim(xc_string(GS_xc_KIND,GS_xc_FUNCTIONAL))
 
-!DEBUG >
-! allocate(rho(fft_size),vxc(fft_size))
-! call el_density(en,Xk,rho,.false.)
-! do i1=1,fft_size ! V_xc
-!   vxc(i1)=vxcca(rho(i1)*real(fft_size)/DL_vol)
-! enddo
-!DEBUG <
-
  do i1=1,QP_n_states
    ifft=wf_state(QP_table(i1,1),QP_table(i1,3),1)
    c_vec(:)=wf(:,ifft)*V_xc(:)
@@ -186,9 +174,6 @@
  enddo
  deallocate(V_xc,c_vec)
  call WF_free()
-!DEBUG >
-! deallocate(rho,vxc,c_vec)
-!DEBUG <
 !
 1 i2=QP_table(1,3)
  write (ch,'(a,i3.3,a)') 'K [',i2,'] (iku):'

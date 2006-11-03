@@ -88,7 +88,7 @@
      ik_rand=BZ_RIM_table(ikbz,i1) 
 
      do i2=1,BZ_RIM_nkpt(ikpbz)
-       ikp_rand=BZ_RIM_table(ikpbz,i1) 
+       ikp_rand=BZ_RIM_table(ikpbz,i2) 
      
        rand_pole=Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ikp_rand,i_spin)
 

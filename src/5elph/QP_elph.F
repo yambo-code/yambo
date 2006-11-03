@@ -35,7 +35,7 @@
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,QP_solver,QP_dSc_steps,&
 &                        QP_dSc_delta
  use D_lattice,     ONLY:sop_inv
- use R_lattice,     ONLY:qindx_S,bz_samp,ik_is_table
+ use R_lattice,     ONLY:qindx_S,bz_samp,ik_is_table,q_module
  use ELPH,          ONLY:ph_modes,elph_bands,ph_freqs_sq,elph_dV,&
 &                        elph_free,QP_PH_n_G_bands
  implicit none
@@ -133,6 +133,7 @@
 ! with the live_timing hashes
 !
      if (iq==1) call live_timing('El-Ph Sc',px%stps(myid+1)*QP_n_states)
+!
    endif
 !
    do i1=1,QP_n_states

@@ -30,25 +30,31 @@ module eels_wgrid
   implicit none
   real(SP), allocatable           :: hwqgrid(:,:) ! n(2) ?
   !
-  ! hwgrid( nw , nqpar ) : For iq in [1:nqpar] and iw in [1:nw] ????
-  !                        hwgrid(iw,iq) gives the energy in a.u.
+  ! hwgrid( nw , nqpar ) : For iq in [1:nqpar] and iw in [1:nw] (epsm1)
+  !                        hwqgrid(iw,iq) gives the energy in a.u.
+  !                        Independent of lepsmix and nwp
   !
   integer, allocatable            :: wqtab(:,:) ! n(2) ?
   !
-  ! wqtab ( nw , nqpar ) : For iq in [1:nqpar] and iw in [1:nw] ????
+  ! wqtab ( nw    , nqpar ) : For iq in [1:nqpar] and iw in [1:nwsec]
   !                        wqtab(iw,iq) gives the index of iw in [1:nwtot] array
-  !                        (used for prefactors)
+  !                        (used to find prefactor for (iw,iq) in each loss_sec)
   !
   real(SP), allocatable           :: hwgrid(:) 
   !
   ! hwgrid ( nwtot )     : Energies on the nwtot continuous grid
   !
-  integer                         :: nwtot, nw, nwp
+  integer                         :: nwtot, nw, nwp, nwsec
   !
   ! nw    = number of points epsm1 is calculated on (i.e., wq%n(1) from input)
-  ! nwp   = number of points lossq is calculated at for each q:
-  !         if lepsmix=true: nwp=(nw+1)/2 ; if lepsmix = false: nwp=nw
-  ! nwtot = total number of points in spectrum = nwp*nqtot ???
+  ! nwp   = magic point (nw+1)/2 : at which loss is calculated exactly
+  ! nwsec = number of points lossq/lossqw is calculated at for each q (section):
+  !         if lepsmix=false: nwsec = nw
+  !         if lepsmix=true : nwsec = nwp - 1 (iq=iqmin)
+  !                                   nwp     (iqmin<iq<iqmax),
+  !                                   nw      (iq=iqmax).
+  ! nwtot = total number of (unique) points in spectrum = nqeels*nwp + (nwp-1)
+  ! nwfull = number of points in interpolated spectrum 
   !
   integer, allocatable            :: hw_range(:,:)
   !
@@ -99,45 +105,45 @@ contains
     use eels_qpt, only : nqeels
     use reels_module,          only : lepsmix
     implicit none
-    integer :: ist, iw, iq, i1, iw1
+    integer :: iw, iq, i1, iw1
     real(SP), allocatable :: tempw(:)
     character(schlen)              :: lch1
 
-!   For both cases of lepsmix, take only the intermediate points.
-!   since only one spectra should be returned in loss 
-!   if no mixing, reels_sec will contain the bare spectra
-    
-    ist = (nw+1)/2
     allocate(tempw(nqeels*nw))
-
-!   iw is a counter to walk through hwqgrid...
-    iw = 1
-    if(.not.lepsmix) then
-      iw = 1
-      do i1 = 1,ist-1
-        tempw(iw) = hwqgrid(i1,iqmin) 
-        iw = iw + 1
-      enddo
-    endif
-
-    do iq = iqmin, iqmax
-      hw_range(iq,1) = iw
-      do i1 = ist, nw
-        tempw(iw) = hwqgrid(i1,iq) 
-        wqtab(i1,iq) = iw
-        iw = iw + 1
-      enddo
-      hw_range(iq,2) = iw-1
+    !
+    ! Define the nwtot grid (common for lepsmix T/F)
+    !
+    forall(iw=1:nwp-1) tempw(iw) = hwqgrid(iw,iqmin)
+    iw = nwp
+    do iq = iqmin,iqmax
+       do i1 = nwp, nw
+         tempw(iw) = hwqgrid(i1,iq)
+         iw = iw + 1
+       enddo
     enddo
-    nwtot = iw-1
-    if(.not.lepsmix) hw_range(iqmin,1) = 1
-
-
-!   Overwrite for other case
-    if(.not.lepsmix) then
-      forall(iq=iqmin:iqmax,iw=1:nw) wqtab(iw,iq) = (iq-iqmin)*ist + iw
+    nwtot = iw-1 
+    !
+    ! Define the wqtab and hw_range arrays
+    !
+    if(lepsmix) then
+      iw = 1
+      do iq = iqmin,iqmax
+        hw_range(iq,1) = iw
+        nwsec = get_nwsec(iq)
+        hw_range(iq,2) = iw + nwsec - 1
+        iw = iw+nwsec
+      enddo
+    else
+      forall(iq=iqmin:iqmax,iw=1:nwsec) wqtab(iw,iq) = (iq-iqmin)*nwp + iw
+      do iq = iqmin,iqmax
+        hw_range(iq,1) = (iq-iqmin)*nwp + nwp
+        hw_range(iq,2) = (iq-iqmin+1)*nw
+      enddo
+      hw_range(iqmin,1) = 1
     endif
-
+    !
+    ! Reset the hwgrid (doesnt have to be done here now, nwtot is known before)
+    !
     allocate(hwgrid(nwtot)) ! this shouldnt depend on ipol in fact...check!
     hwgrid(:) = tempw(1:nwtot)
     deallocate(tempw) 
@@ -326,6 +332,7 @@ contains
     call msg('rs','Energy points per q [full/step]: ',wq%n)
     call msg('r','Full energy range (eV): ',wq%er*HARTREE)
 
+    call msg('nr','Large overlapping grid:')
     write(lch,'(a5,a8,a9,a10)') "iq","nwmin","nwmax","nwp"
     call msg('r',trim(lch))
     write(lch,'(3x,i10,i9,i10)') 1,nw,nwp
@@ -351,6 +358,7 @@ contains
     open(unit=80,file="wgrid.dat")
     write(80,120) "# hw","qGwx","iw","iq","wqtab"
     do iq = iqmin, iqmax
+!     nwsec = get_nwsec(iq)
       do iw = 1, nw
          write(80,121) hwqgrid(iw,iq)*HARTREE,qGwx(iq),iw,iq,wqtab(iw,iq)
       enddo
@@ -362,5 +370,19 @@ contains
 121 format(f8.3,f9.4,i4,i3,i6)
 
   end subroutine print_wgrid
+  
+    integer function get_nwsec(iq)
+    use reels_module,          only : lepsmix
+    integer, intent(in)  :: iq
+    if(lepsmix) then
+       if(iq.eq.iqmin)                 get_nwsec = nwp - 1
+       if(iq.gt.iqmin.and.iq.lt.iqmax) get_nwsec = nwp
+       if(iq.eq.iqmax)                 get_nwsec = nw
+    else
+      get_nwsec = nw
+    endif
+    return
+  end function get_nwsec
+
 
 end module eels_wgrid

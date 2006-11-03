@@ -32,7 +32,7 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
   use eels_detector,           only : setup_det
   use surface_geometry,        only : q0x, q0y, qname, setup_gvecaff
   use eels_gvec,               only : lorderG
-  use eels_wgrid,              only : nw, nwp, nwtot, hwgrid
+  use eels_wgrid,              only : nw, nwp, nwtot, hwgrid, nwsec
   use reels_module,            only : npol, nfull, lepsmix
   use intchar,                 only : intc
   use loss_module,             only : loss, dealloc_loss
@@ -79,14 +79,15 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
   call X_checks(Xen,X)     ! Some checks/reset on X%ib() and X%iq() 
   !
   ! nw    = number of points epsm1 is calculated on (i.e., wq%n(1) from input)
-  ! nwp   = number of points lossq is calculated at for each q:
-  !         if epsmix=true: nwp=(nw+1)/2 ; epsmix = false nwp=nw
+  ! nwsec = number of points lossq is calculated at for each section:
+  !         if epsmix=true: nwsec=(nw+1)/2 ; epsmix = false nwsec=nw
   ! nwtot = total number of points in spectrum = nwp*nqtot
   ! nfull = final grid used in plotting (interpolated)
   !
   nw  = wq%n(1)
-  nwp = nw
-  if(lepsmix) nwp = (nw+1)/2 ! or nwp - 1? Check.
+  nwp = (nw+1)/2
+  nwsec = nw
+  if(lepsmix) nwsec = nwp
   !
   ! G-vectors
   !

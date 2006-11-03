@@ -297,6 +297,7 @@ end subroutine init_reels_integration
 
       lossg(1) = lossg(1) + aimag( eHint*eFint/az ) ! Total 
 !     lossg(2) = lossg(2) + aimag( eHint/az       ) ! eHint is real...why?
+! no - its real only for G=0
       lossg(2) = lossg(2) + real( eHint/az       ) ! eHint
       lossg(3) = lossg(3) + aimag(       eFint/az ) ! eFint
 

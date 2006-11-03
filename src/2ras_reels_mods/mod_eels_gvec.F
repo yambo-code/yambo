@@ -63,6 +63,7 @@ contains
     ! {G_1} = R^-1 {G_z} for now:
     ! i.e. iGzrotindx(iG) = R^-1 {G}
     !
+    use com,                only : error
     use R_lattice,          ONLY  : g_rot
     use D_lattice,          ONLY  : sop_inv, dl_sop
     implicit none
@@ -70,7 +71,7 @@ contains
     integer                      :: ig, ig1, ig2, ig_, isinv
     character(lchlen)            :: lch1
 
-    ! NB: isinv != isi + nsym/(itr+1)+1 -- this is I^-1 R !
+    ! NB: isinv != isi + nsym/(itr+1)+1 -- that is I^-1 R !
     isinv = sop_inv(isi) ! This is the inverse operator.   
     write(lch1,'(a10,i2,a)') "R     (is=",isi,") "
     call msg('nr',trim(lch1),reshape(dl_sop(:,:,isi),(/9/)))   
@@ -78,8 +79,13 @@ contains
     call msg('r',trim(lch1),reshape(dl_sop(:,:,isinv),(/9/)))   
 
     iGzrotindx(:) = 0
+    write(*,*) "ngeels",ngeels
+! NEED to check that enough Gs are used...
     do ig_ = 1, ngeels
       ig = iGz0indx(ig_)                    ! the real eps(Q_||,G,G')
+      if(ig.gt.size(g_rot,2)) then
+         call error("Reqested too many g-vectors, rerun gops")
+      endif
       iGzrotindx(ig_) = g_rot( isinv, ig )  ! the...
 !     write(*,*) "ig",ig_,ig,isinv,iGzrotindx(ig_)
     enddo

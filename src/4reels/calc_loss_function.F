@@ -30,7 +30,7 @@ subroutine calc_loss_function(ipol, Xen, Xk, X, q, wq)
   use eels_qpt,                only : iqmin, iqmax, qpar_1BZ, qpar_sort, qpar_hw
   use wave_func,               only : wf_ng
   use eels_wgrid,              only : init_wgrid, wqgrid, wgrid, print_wgrid, hwgrid, &
-&                                     nw, nwp, nwtot, hw_range
+&                                     nw, nwp, nwtot, hw_range, nwsec, get_nwsec
   use intchar,                 only : intc
   use bulkeps,                 only : lbulkerr, generate_bulkeps
   use eels_integration,        only : lanalytical, calc_zk, calc_loss_analytical
@@ -50,7 +50,7 @@ subroutine calc_loss_function(ipol, Xen, Xk, X, q, wq)
 ! Local arrays
   integer,            intent(in) :: ipol
   complex(SP), allocatable       :: eps_b(:)
-  real(SP)                       :: lossqw(4, nwp ), lossbq(nwp)
+  real(SP)                       :: lossqw(4, nwsec ), lossbq(nwsec)
   complex(SP), allocatable       :: epsm1_av(:,:,:)
   integer                        :: iq
   character(lchlen)              :: bulkmsg
@@ -114,6 +114,10 @@ subroutine calc_loss_function(ipol, Xen, Xk, X, q, wq)
     if(iq.ne.iqmin) call section('=','REELS for iq:'//intc(iq-iqmin+1)//&
 &                                             '/'//intc(iqmax-iqmin+1))
     !
+    ! Define nwsec if mixing
+    !
+    nwsec = get_nwsec(iq)
+
     write(*,*) "call average epsm1"
     call average_epsm1_q(epsm1_av, iq, Xen, Xk, X, q, wq)
     write(*,*) "call average epsm1 done",wq%p(1)*HARTREE
@@ -163,7 +167,6 @@ contains
 
 !subroutine cleanup_eels_qpar
 !end cleanup_eels_qpar
-
 subroutine write_loss_sec( imode )
   use com,                    only : msg, of_open_close
   use pars,                   only : schlen, HARTREE, lchlen
@@ -176,7 +179,7 @@ subroutine write_loss_sec( imode )
   integer,          intent(in)    :: imode
 ! real(SP),         intent(in)    :: loss(5,nw), hw(nw), q0(3)
 ! ws
-  real(SP)                        :: hw(nwp)
+  real(SP)                        :: hw(nwsec)
   character(10)                   :: headings(7)
   real(SP)                        :: od(8)
   integer                         :: iw
@@ -186,7 +189,7 @@ subroutine write_loss_sec( imode )
 ! Maybe this wont work for two files. Might need to use 'o reels_sec'//qname
 ! because of write at end.
 
-  hw(:) = real(wq%p(1:nwp))
+  hw(:) = real(wq%p(1:nwsec))
 
   select case(imode)
   case(0)
@@ -215,7 +218,7 @@ subroutine write_loss_sec( imode )
   case(1)
 
     call of_open_close(of_name,'oa')
-    do iw = 1, nwp
+    do iw = 1, nwsec
       od(1:5) = (/ hw(iw)*HARTREE, &
 &             lossqw(1,iw), lossqw(2,iw), lossqw(3,iw), &
 &             lossqw(4,iw) /)

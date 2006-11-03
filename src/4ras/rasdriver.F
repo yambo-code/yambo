@@ -42,7 +42,6 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   use eels_detector
   use analyse_peaks
   use model_loss_function,     only : lossformlg, lossfm, print_eels_form
-  !use reels_module,            only : write_reelsdiff
   implicit none
   type(levels),       intent(in) :: Xen    ! Energies
   type(bz_samp),      intent(in) :: Xk, q     ! K points
@@ -236,7 +235,7 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
 !<- DEBUG
 !   call msg('nrs','Q_|| * d_surf range: ',qpard)
 !-> DEBUG
-    !call write_reelsdiff(lossf, real(wv % p), nw ) 
+    call write_reelsdiff(lossf, real(wv % p), nw ) 
     !
   endif
 ! checked:

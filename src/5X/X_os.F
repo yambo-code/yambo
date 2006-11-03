@@ -141,11 +141,13 @@
    deallocate(X_poles)
 
    if (self_detect_E_range) Xw%er=minmax_ehe
+#if !defined PJ_REELS
 !
-!  This call is needed as Xw%p is deallocated insied
+!  This call is needed as Xw%p is deallocated inside
 !  the q-loop of X_em1
 !
    call freqs_setup(Xw)
+#endif
 
  endif 
 !

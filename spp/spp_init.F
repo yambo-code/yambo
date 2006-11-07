@@ -84,7 +84,9 @@
  call string_split(instr,rstr_piece)
  do i1=1,50
    if ( trim(rstr_piece(i1))=="jobstr" ) cycle
-   if ( i1>1.and.trim(rstr_piece(i1-1))=="jobstr" ) cycle
+   if ( i1>1) then
+     if (trim(rstr_piece(i1-1))=="jobstr" ) cycle
+   endif
    do i2=1,nrnlvls
      if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1)) ) then
        infile_editing=.true.

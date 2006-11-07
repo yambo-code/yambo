@@ -118,8 +118,10 @@
 !
 !  CLEAN
 !
-   deallocate(Xw%p)
-   call mem_est("W-p")
+   if (associated(Xw%p)) then
+     deallocate(Xw%p)
+     call mem_est("W-p")
+   endif
    if (allocated(rg_index_bg)) deallocate(rg_index_bg)
    deallocate(X_poles_tab,bg_npts,cg_pt,cg_index_bg)
    call mem_est("X_poles_tab RGi BGn CGp CGi")

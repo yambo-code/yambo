@@ -126,8 +126,10 @@
  do i2=0,GWK%nibz
    do i1=1,GWK_Q%nibz
      if (int_ctl(i1)/=i2.and..not.( i2==0.and.int_ctl(i1)/=0.and.i1<nXkibz )) cycle
-     if (int_ctl(i1)/=0.and.GWK_table(int_ctl(i1))>0) cycle
-     if (int_ctl(i1)/=0) GWK_table(int_ctl(i1))=1
+     if (int_ctl(i1)/=0) then
+        if(GWK_table(int_ctl(i1))>0) cycle
+        GWK_table(int_ctl(i1))=1
+     endif
      if (trim(Kcoo_out)=="cc") call c2a(v_in=GWK_Q%pt(i1,:),mode="ki2c")
      if (trim(Kcoo_out)=="rlu") call c2a(v_in=GWK_Q%pt(i1,:),mode="ki2a")
      if (int_ctl(i1)==0) write (ch,'(3f10.4)') GWK_Q%pt(i1,:)

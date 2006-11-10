@@ -70,33 +70,38 @@ subroutine write_reels_sec( hw, loss, nw, ipol, q0, imode)
   return
 end subroutine write_reels_sec
 
+! File			Grid	Data
 ! 1pol
-! o.reels_sec-rpa
-! o.reels-rpa
+! o.reels_sec-rpa   	dynamic	4
+! o.reels-rpa		regular 1
 ! 2pol
-! o.reels_sec_X-rpa
-! o.reels_sec_Y-rpa
-! o.reels_diff-rpa
+! o.reels_sec_X-rpa	dynamic 4
+! o.reels_sec_Y-rpa 	dynamic 4
+! o.reels_diff-rpa	regular 1
 
 subroutine write_reels_x( loss, hw, nw)
   use com,                    only : msg, of_open_close
   use pars,                   only : SP, schlen, HARTREE
   implicit none
   integer,          intent(in)    :: nw
-  real(SP),         intent(in)    :: loss(4,nw), hw(nw)
+  real(SP),         intent(in)    :: loss(nw), hw(nw)
 ! ws
   real(SP)                        :: od(8)
   integer                         :: iw
   character(schlen)               :: of_name
 
+
   write (of_name,'(a,a)') 'reels','-rpa'
   call of_open_close(of_name,'ot')
 
   do iw = 1, nw
-    od(1:5) = (/ hw(iw)*HARTREE, &
-&           loss(1,iw), loss(2,iw), loss(3,iw), &
-&           loss(4,iw) /)
-    call msg('o reels','',od(1:5), INDENT=0, USE_TABS=.true.)
+    od(1:2) = (/ hw(iw)*HARTREE, &
+&           loss(iw) /)
+    call msg('o reels','',od(1:2), INDENT=0, USE_TABS=.true.)
+!    od(1:5) = (/ hw(iw)*HARTREE, &
+!&           loss(1,iw), loss(2,iw), loss(3,iw), &
+!&           loss(4,iw) /)
+!    call msg('o reels','',od(1:5), INDENT=0, USE_TABS=.true.)
 !    od = (/ hw(iw)*HARTREE, &
 !&           loss(1,iw), loss(2,iw), loss(3,iw), &
 !&           loss(4,iw), loss(5,iw), loss(5,iw), &

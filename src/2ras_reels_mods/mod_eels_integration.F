@@ -130,18 +130,18 @@ end subroutine init_reels_integration
     real(SP), intent(out)           :: lossqw(:,:) ! different components
     integer, intent(in)             :: iq
 !
-    integer                         :: ig, ig_1, iw, ngblk, nwp, iwtot
+    integer                         :: ig, ig_1, iw, ngblk, nwsec, iwtot
     complex(SP)                     :: iq0Gz(size(epsm1,1)) ! ngblk
     real(SP)                        :: g1(3), q0z, lossq(4)
     complex(SP), parameter          :: ci = cmplx(0.0_SP, 1.0_SP)
 
     ngblk = size(epsm1,1)
-    nwp = size(epsm1,3)
+    nwsec = size(epsm1,3)
 
 ! What is nw here for the epsmix cases?
 
-    if(nwp.ne.size(lossqw,2)) then
-       write(*,*) "ERROR: inconsitenta arrays loss analytical ",nwp,size(lossqw,2)
+    if(nwsec.ne.size(lossqw,2)) then
+       write(*,*) "ERROR: inconsitenta arrays loss analytical ",nwsec,size(lossqw,2)
     endif
     !
     !  Energy independent arrays
@@ -153,9 +153,9 @@ end subroutine init_reels_integration
       iq0Gz(ig) = ci * ( g1(iz) + q0z ) 
     enddo
     !
-    !  Loop over energy: iw is on nwp mesh; iwtot is on nwtot mesh for prefactors
+    !  Loop over energy: iw is on nwsec mesh; iwtot is on nwtot mesh for prefactors
     !
-    do iw = 1, nwp
+    do iw = 1, nwsec
       iwtot = wqtab(iw,iq)
       call integrate_loss( lossq, iwtot, iq0Gz, epsm1(1:ngblk,1:ngblk,iw), ngblk )
       lossqw(1:4,iw) = lossq(1:4)
@@ -296,9 +296,8 @@ end subroutine init_reels_integration
     write(*,*) "iG",ig1,eHint,eFint
 
       lossg(1) = lossg(1) + aimag( eHint*eFint/az ) ! Total 
-!     lossg(2) = lossg(2) + aimag( eHint/az       ) ! eHint is real...why?
-! no - its real only for G=0
-      lossg(2) = lossg(2) + real( eHint/az       ) ! eHint
+      lossg(2) = lossg(2) + aimag( eHint/az       ) ! eHint 
+!     lossg(2) = lossg(2) + real( eHint/az       ) ! eHint is real if G=0
       lossg(3) = lossg(3) + aimag(       eFint/az ) ! eFint
 
     enddo ! end loop over G

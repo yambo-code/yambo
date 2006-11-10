@@ -86,8 +86,8 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
   !
   nw  = wq%n(1)
   nwp = (nw+1)/2
-  nwsec = nw
-  if(lepsmix) nwsec = nwp
+! nwsec = nw
+! if(lepsmix) nwsec = nwp
   !
   ! G-vectors
   !
@@ -132,22 +132,29 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
       write(56,*) hwgrid(iw)*HARTREE,loss(1,iw)
     enddo
 ! End check
-
+    !
+    ! Regrid to densest mesh the total loss for final output
+    !
     call regrid('imag',hwgrid,loss(1,:),real(wfull%p),lossxy(:,ipol),lfail)
+! Write loss to file just for checking regrids
+    open(unit=57,file="lossxy.dat")
+    do iw=1,nfull
+      write(57,*) real(wfull%p(iw))*HARTREE,lossxy(iw,1)
+    enddo
+! End check
 
     call dealloc_loss
     call cleanup_pol
 
   enddo    ! Loop on npol
 
-  write(*,*) "Clean bulk"
   call clean_bulkeps
 
   if (npol.eq.1) then
     !
     ! Write regular REELS spectra
     !
-  write(*,*) "write_reels"
+  write(*,*) "write_reels_x",wfull%n(1),nfull
     call write_reels_x( lossxy(:,1), real(wfull%p), wfull%n(1) )
     !
   else if (npol.eq.2) then

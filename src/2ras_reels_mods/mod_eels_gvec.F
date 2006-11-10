@@ -64,7 +64,7 @@ contains
     ! i.e. iGzrotindx(iG) = R^-1 {G}
     !
     use com,                only : error
-    use R_lattice,          ONLY  : g_rot
+    use R_lattice,          ONLY  : g_rot,ng_closed
     use D_lattice,          ONLY  : sop_inv, dl_sop
     implicit none
     integer,          intent(in) :: iqi, isi, ngblk
@@ -79,17 +79,20 @@ contains
     call msg('r',trim(lch1),reshape(dl_sop(:,:,isinv),(/9/)))   
 
     iGzrotindx(:) = 0
-    write(*,*) "ngeels",ngeels
 ! NEED to check that enough Gs are used...
-    do ig_ = 1, ngeels
+! 4it/gops.F: allocate(g_rot(nsym,ng_closed))
+    do ig_ = 1, ngblk
+!   do ig_ = 1, ngeels
       ig = iGz0indx(ig_)                    ! the real eps(Q_||,G,G')
+!     write(*,*) "ig",ig_,ngeels,ig,isinv,size(g_rot,1),size(g_rot,2)
       if(ig.gt.size(g_rot,2)) then
          call error("Reqested too many g-vectors, rerun gops")
       endif
       iGzrotindx(ig_) = g_rot( isinv, ig )  ! the...
+!     iGzrotindx(ig_) = iGz0indx(ig_)  ! quick fix
 !     write(*,*) "ig",ig_,ig,isinv,iGzrotindx(ig_)
     enddo
-    if(ANY(iGzrotindx.eq.0)) stop
+    if(ANY(iGzrotindx(1:ngblk).eq.0)) stop "Wrong iGzrotindx"
     !
     ! Report the new iGz0 list
     !
@@ -111,6 +114,7 @@ contains
   end subroutine setup_iGzrot
 
   subroutine setup_iGz( iqmin, iqmax )
+! ngeels is the number of G = (0,0,Gz) in ng_vec
     use R_lattice,               only : ng_vec
     use wave_func,               only : wf_ng
     implicit none
@@ -136,6 +140,8 @@ contains
     allocate(iGz0indx(ngeels))
     allocate(iGzrotindx(ngeels))
 
+    write(lch1,103) "iGz","iG","Gx","Gy","Gz"
+    call msg('r',lch1)
     iGz0indx(1:ngeels) = gtemp(1:ngeels)
     lbelow = .true.
     ii = 0
@@ -165,6 +171,7 @@ contains
     return
 99  format(a,i6,a,i5,a,i5)
 100 format(2i7,3x,3i4)
+103 format(2a7,3x,3a4)
 102 format(2(1x,"------"),(1x,"--"),3(1x,"---"))
 101 format(2x,a7,1x,20("-"),"> ",i7)
 

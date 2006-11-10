@@ -372,6 +372,9 @@ end subroutine init_bulk
     !
     implicit none
     character(len=4), intent(in) :: form
+    ! form = real
+    !        imag
+    !        free
     logical,  intent(out) :: lerr
     real(SP), intent(in)  :: fin(:)    ! function known at xin
     real(SP), intent(out) :: fout(:)   ! function required at xout
@@ -398,13 +401,14 @@ end subroutine init_bulk
        !
        ! 0 <---hw [Im(eps)=0] hw---> +inf
        !
-       if (form=='imag' .and. (xout(i).lt.xin(1).or.xout(i).gt.xin(n_in))) then
+       if ((form=='imag'.or.form=='free') .and. &
+&         (xout(i).lt.xin(1).or.xout(i).gt.xin(n_in))) then
           fout(i) = 0.0_SP
           cycle
        !
        ! 0 <---hw [Re(eps)=Re(eps=0)]
        !
-       else if (form=='real' .and. xout(i).lt.xin(1)) then
+       else if (form=='real'.and. xout(i).lt.xin(1)) then
           fout(i) = fin(1)
           cycle
        !
@@ -421,12 +425,16 @@ end subroutine init_bulk
        !
        ! Find bracketing two points in xin(1:n_in)
        !
-       i2 = i1 + 1
-!      if ( xin(i1) >  xout(i) ) then
-       if ( i2 >  n_in ) then
-          i2 = i1
-          i1 = i1-1
+       if ( xin(i1) >  xout(i) ) then  ! swap points
+         i2 = i1
+         i1 = i1-1
+       else if ( xin(i1) <=  xout(i) ) then ! ok
+         i2 = i1 + 1
        endif
+!      if ( i2 >  n_in ) then
+!         i2 = i1
+!         i1 = i1-1
+!      endif
        if( i2 .gt. n_in ) then
           fout(i) = fin(n_out)
        else if( abs( xin(i2) - xin(i1) ) <= 0.00001 ) then ! buggy

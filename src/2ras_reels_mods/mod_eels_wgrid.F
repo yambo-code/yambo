@@ -50,17 +50,17 @@ module eels_wgrid
   ! nwp   = magic point (nw+1)/2 : at which loss is calculated exactly
   ! nwsec = number of points lossq/lossqw is calculated at for each q (section):
   !         if lepsmix=false: nwsec = nw
-  !         if lepsmix=true : nwsec = nwp - 1 (iq=iqmin)
-  !                                   nwp     (iqmin<iq<iqmax),
-  !                                   nw      (iq=iqmax).
+  !         if lepsmix=true : nwsec = nwp     (iqmin <= iq < iqmax),
+  !                                   nw      (         iq = iqmax).
   ! nwtot = total number of (unique) points in spectrum = nqeels*nwp + (nwp-1)
   ! nwfull = number of points in interpolated spectrum 
   !
-  integer, allocatable            :: hw_range(:,:)
+  integer, allocatable            :: wr(:,:)
   !
-  !  hw_range (nqpar, 2) : For iq in [1:nqpar], hw_range(iq,1 or 2) gives the upper
+  !  wr (nqpar, 3) : For iq in [1:nqpar], wr(iq,1 or 2) gives the upper
   !                        and lower index of iw in [1:nwtot] array for this iq block
   !                        when filling loss(:,nwtot) array
+  !                   wr(iq,3) gives the size wr(iq,2)-wr(iq,1)+1
 
 contains
 
@@ -92,8 +92,7 @@ contains
     endif
       
     allocate( hwqgrid ( wq%n(1), nqpar ))
-    allocate( wqtab   ( wq%n(1), nqpar ))
-    allocate( hw_range( nqpar , 2 ))
+    allocate( wr( nqpar , 3 ))
 
     return 
   end subroutine init_wgrid
@@ -123,24 +122,31 @@ contains
     enddo
     nwtot = iw-1 
     !
-    ! Define the wqtab and hw_range arrays
+    ! Define the wqtab and wr arrays
     !
+    allocate( wqtab   ( nw, nqpar ))
+
     if(lepsmix) then
       iw = 1
       do iq = iqmin,iqmax
-        hw_range(iq,1) = iw
+        wr(iq,1) = iw
         nwsec = get_nwsec(iq)
-        hw_range(iq,2) = iw + nwsec - 1
-        iw = iw+nwsec
+        do i1 = 1,nwsec  ! need a second counter as nwsec is nonuniform
+           wqtab(i1,iq) = iw
+           iw = iw + 1
+        enddo
+        wr(iq,2) = iw - 1
       enddo
     else
+      nwsec = get_nwsec(1)
       forall(iq=iqmin:iqmax,iw=1:nwsec) wqtab(iw,iq) = (iq-iqmin)*nwp + iw
       do iq = iqmin,iqmax
-        hw_range(iq,1) = (iq-iqmin)*nwp + nwp
-        hw_range(iq,2) = (iq-iqmin+1)*nw
+        wr(iq,1) = (iq-iqmin)*nwp + nwp
+        wr(iq,2) = (iq-iqmin)*nwp + nw
       enddo
-      hw_range(iqmin,1) = 1
+      wr(iqmin,1) = 1
     endif
+    forall(iq=iqmin:iqmax) wr(iq,3) = wr(iq,2) - wr(iq,1) + 1
     !
     ! Reset the hwgrid (doesnt have to be done here now, nwtot is known before)
     !
@@ -344,22 +350,31 @@ contains
       call msg('r',trim(lch))
     enddo
 
-    call msg('nr','Mapping to contiguous grid in loss:')
-    do iq = iqmin, iqmax
-      write(lch,'(a,i3,a,i4,a,i4,a)') &
-&     'Range: iq = ',iq,'--> [',hw_range(iq,1),' -',hw_range(iq,2),']'
-      call msg('r',trim(lch))
-    enddo
     write(lch,'(a,i4,a)') 'Contiguous range : [1 -',nwtot,']'
     call msg('nr',trim(lch))
+
+    call msg('nr','Mapping to contiguous grid for loss:')
+    do iq = iqmin, iqmax
+      write(lch,'(a,i3,a,i4,a,i4,a,i4)') &
+&     'Range: iq = ',iq,'--> [',wr(iq,1),' -',wr(iq,2),'] size:',wr(iq,3)
+      call msg('r',trim(lch))
+    enddo
+
+    call msg('nr','Mapping to sectional grids for loss:')
+    do iq = iqmin, iqmax
+      nwsec = get_nwsec(iq)
+      write(lch,'(a,i3,a,i4,a,i4,a,i4)') &
+&     'Range: iq = ',iq,'--> [',wqtab(1,iq),' -',wqtab(nwsec,iq),'] size:',nwsec
+      call msg('r',trim(lch))
+    enddo
     !
     ! Write the energy grid to file for testing USE MSG
     !
     open(unit=80,file="wgrid.dat")
     write(80,120) "# hw","qGwx","iw","iq","wqtab"
     do iq = iqmin, iqmax
-!     nwsec = get_nwsec(iq)
-      do iw = 1, nw
+      nwsec = get_nwsec(iq)
+      do iw = 1, nwsec
          write(80,121) hwqgrid(iw,iq)*HARTREE,qGwx(iq),iw,iq,wqtab(iw,iq)
       enddo
          write(80,*) 
@@ -375,9 +390,8 @@ contains
     use reels_module,          only : lepsmix
     integer, intent(in)  :: iq
     if(lepsmix) then
-       if(iq.eq.iqmin)                 get_nwsec = nwp - 1
-       if(iq.gt.iqmin.and.iq.lt.iqmax) get_nwsec = nwp
-       if(iq.eq.iqmax)                 get_nwsec = nw
+       if(iq.ge.iqmin) get_nwsec = nwp
+       if(iq.eq.iqmax) get_nwsec = nw   ! overwrite for iqmax
     else
       get_nwsec = nw
     endif

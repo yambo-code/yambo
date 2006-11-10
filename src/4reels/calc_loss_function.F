@@ -30,7 +30,7 @@ subroutine calc_loss_function(ipol, Xen, Xk, X, q, wq)
   use eels_qpt,                only : iqmin, iqmax, qpar_1BZ, qpar_sort, qpar_hw
   use wave_func,               only : wf_ng
   use eels_wgrid,              only : init_wgrid, wqgrid, wgrid, print_wgrid, hwgrid, &
-&                                     nw, nwp, nwtot, hw_range, nwsec, get_nwsec
+&                                     nw, nwp, nwtot, wr, nwsec, get_nwsec
   use intchar,                 only : intc
   use bulkeps,                 only : lbulkerr, generate_bulkeps
   use eels_integration,        only : lanalytical, calc_zk, calc_loss_analytical
@@ -50,7 +50,8 @@ subroutine calc_loss_function(ipol, Xen, Xk, X, q, wq)
 ! Local arrays
   integer,            intent(in) :: ipol
   complex(SP), allocatable       :: eps_b(:)
-  real(SP)                       :: lossqw(4, nwsec ), lossbq(nwsec)
+! real(SP)                       :: lossqw(4, nw ), lossbq(nw) ! dynamic or largest?
+  real(SP), allocatable          :: lossqw( :,: ), lossbq(:) ! dynamic or largest?
   complex(SP), allocatable       :: epsm1_av(:,:,:)
   integer                        :: iq
   character(lchlen)              :: bulkmsg
@@ -100,10 +101,8 @@ subroutine calc_loss_function(ipol, Xen, Xk, X, q, wq)
     if(lbulkerr) call msg('nrs',trim(bulkmsg))
   endif
   !
-  allocate( epsm1_av (X%ng, X%ng, nwp) )
   allocate( epsm1_avA(X%ng, X%ng, nwp) )
   !
-! call write_reels_sec( real(wq%p(1:nwp)), lossqw, nwp, ipol, X%q0, 0)
   call write_loss_sec( 0 )
   !
   call section('*','Main REELS loop')
@@ -114,9 +113,11 @@ subroutine calc_loss_function(ipol, Xen, Xk, X, q, wq)
     if(iq.ne.iqmin) call section('=','REELS for iq:'//intc(iq-iqmin+1)//&
 &                                             '/'//intc(iqmax-iqmin+1))
     !
-    ! Define nwsec if mixing
+    ! Define nwsec for mixing
     !
     nwsec = get_nwsec(iq)
+    allocate( epsm1_av ( X%ng, X%ng, nwsec) )
+    allocate( lossqw   ( 4, nwsec) )
 
     write(*,*) "call average epsm1"
     call average_epsm1_q(epsm1_av, iq, Xen, Xk, X, q, wq)
@@ -124,7 +125,7 @@ subroutine calc_loss_function(ipol, Xen, Xk, X, q, wq)
     ! The correct grid should now be in wq!
     !
     if(lanalytical)      call calc_loss_analytical(lossqw,iq,epsm1_av)
-    write(*,*) "call loss analytical done",nwp,hw_range(iq,:)
+    write(*,*) "call loss analytical done",nwp,wr(iq,:)
 
 !   if(.not.lanalytical) call calc_loss_numerical
     !
@@ -132,21 +133,24 @@ subroutine calc_loss_function(ipol, Xen, Xk, X, q, wq)
     !
     ! call calc_loss_bulk(lossbq, real(wq%p(1:nwp)), eps_b, nwp )
     !
-    ! Write loss for this qpar and group of frequencies (nwp block)
+    ! Write loss for this qpar and group of frequencies (nwsec block)
     !
     call write_loss_sec( 1 )
     !
-    write(*,*) "call hw range", hw_range(iq,1),hw_range(iq,2),nwp
+    write(*,*) "call hw range", wr(iq,:)
+!   loss( 1:4, wr(iq,1):wr(iq,2) ) = lossqw(1:4,1:wr(iq,3))
     if(lepsmix) then
-      loss( 1:4, hw_range(iq,1):hw_range(iq,2) ) = lossqw(1:4,1:nwp)
+      loss( 1:4, wr(iq,1):wr(iq,2) ) = lossqw(1:4,1:nwsec)
     else
-      if(iq.eq.iqmin) loss( 1:4, hw_range(iq,1):hw_range(iq,2) ) = lossqw(1:4,1:nwp)
-      if(iq.ne.iqmin) loss( 1:4, hw_range(iq,1):hw_range(iq,2) ) = &
-&                                         lossqw(1:4, (nwp+1)/2:nwp)
+      if(iq.eq.iqmin) loss( 1:4, wr(iq,1):wr(iq,2) ) = lossqw(1:4,1:nwsec)
+      ! this is the only place where loss != 1:nwsec
+      if(iq.ne.iqmin) loss( 1:4, wr(iq,1):wr(iq,2) ) = &
+&                                         lossqw(1:4, nwp:nwsec)
     endif
     !
     ! Clean up q-dependent allocates
     !
+    deallocate(epsm1_av,lossqw)
     if (allocated(rg_index_bg)) deallocate(rg_index_bg)
     deallocate(X_poles_tab, bg_npts,cg_pt,cg_index_bg)
     call mem_est("X_poles_tab RGi BGn CGp CGi")
@@ -247,12 +251,12 @@ subroutine cleanup_eels_qpar
   ! For easier coding: take more care of this when code works
   !
   use eels_qpt,        only : qGwx, iqpar, qpar
-  use eels_wgrid,      only : hwqgrid, hw_range, wqtab
+  use eels_wgrid,      only : hwqgrid, wr, wqtab
   use eels_gvec,       only : iGz0indx, iGzrotindx
   use eels_scattering, only : end_prefactors
   implicit none
 ! if(allocated(loss)) deallocate(loss)
-  if(allocated(hw_range)) deallocate(hw_range)
+  if(allocated(wr)) deallocate(wr)
   if(allocated(hwqgrid)) deallocate(hwqgrid)
   if(allocated(wqtab)) deallocate(wqtab)
   if(allocated(iGz0indx)) deallocate(iGz0indx)

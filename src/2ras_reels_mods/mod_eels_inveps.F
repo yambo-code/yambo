@@ -46,7 +46,11 @@ contains
   end subroutine rotate_eps
 
   subroutine interpolate_inveps(epsm1_av, epsm1_avB )
-    
+    !    
+    !          x x x X x x x   B
+    !  . . . O o o o[ ]        A  
+    !          1 2 3 4 
+    !    
     implicit none
     complex(SP), intent(in)          :: epsm1_avB(:,:,:)
     complex(SP), intent(inout)       :: epsm1_av(:,:,:)
@@ -55,13 +59,14 @@ contains
 
     nwp = size(epsm1_av,3)
     ngblk = size(epsm1_av,1)
+    if(size(epsm1_avB,3).ne.nwp.or.size(epsm1_avA,3).ne.nwp) stop "inconsistent interp"
 
     do iw = 1,nwp
-      mixfac = real(nwp-iw)/real(nwp)
+      mixfac = real(iw)/real(nwp) 
       do ig1 = 1,ngblk
       do ig2 = 1,ngblk
-        epsm1_av(ig1,ig2,iw) =     mixfac * epsm1_avA(ig1,ig2,iw) + &
-&                       (1.0_SP-mixfac) * epsm1_avB(ig1,ig2,iw)
+        epsm1_av(ig1,ig2,iw) =     mixfac * epsm1_avB(ig1,ig2,iw) + &
+&                       (1.0_SP-mixfac) * epsm1_avA(ig1,ig2,iw)
       enddo
       enddo
     enddo

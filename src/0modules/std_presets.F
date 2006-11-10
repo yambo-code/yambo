@@ -154,6 +154,7 @@
   l_acfdt=.false.
   l_el_corr=.false.
   l_ph_corr=.false.
+  gpl_version=.false.
 !
 !electrons
 !=================================

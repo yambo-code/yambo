@@ -24,8 +24,10 @@
    use pars
 !
 ! Generic  Drivers
-   logical :: list_dbs,infile_editing
+   logical :: list_dbs
+   logical :: infile_editing
    logical :: Finite_Tel
+   logical :: gpl_version
 !
 ! Runlevels
    logical :: l_setup,l_rim,l_col_cut,l_acfdt

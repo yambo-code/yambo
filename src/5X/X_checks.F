@@ -25,6 +25,7 @@
  use electrons,     ONLY:levels,BZ_RIM_nbands
  use drivers,       ONLY:l_bs_fxc
  use R_lattice,     ONLY:bz_samp,nqibz
+ use TDDFT,         ONLY:FXC_n_g_corr
  implicit none
  type(X_t)    :: X 
  type(levels) ::Xen
@@ -51,5 +52,9 @@
 ! going to use the X RIM
 !
  use_X_RIM=X%ib(2)<=BZ_RIM_nbands.and.(.not.l_bs_fxc)
+!
+! Fxc Checks
+!
+ if (FXC_n_g_corr>X%ng) FXC_n_g_corr=X%ng
 !
  end subroutine

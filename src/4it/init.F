@@ -22,6 +22,7 @@
  integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 !================================================================
 !
+! init =-2  : Unsupported Runlevel(s) combination
 ! init =-1  : Missing CORE DBs
 ! init = 0  : everything is OK. Job continues.
 ! init = 1  : input file editing mode
@@ -36,7 +37,7 @@
  use parser_m,       ONLY:parser
  use par_proc_m,     ONLY:pp_redux_wait,master_node
  use com,            ONLY:msg,repfile,outpath,jobstr,&
-&                         title,file_exists,rename_file,write_to_report
+&                         title,file_exists,rename_file,write_to_report,error
  use vec_operate,    ONLY:v_module
  use timing,         ONLY:live_timing_is_on
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_solver,QP_nb,&
@@ -538,6 +539,17 @@
      l_acfdt=.false.
      l_bs_fxc=.false.
    endif
+!
+! not GPL barriers
+!
+   if (gpl_version.and.any((/&
+&            l_life,l_acfdt,l_bs_fxc,l_lrc_fxc,&
+&            l_gw0.and..not.l_ppa&
+&           /))) then
+     init=-2
+     return
+   endif
+
   end subroutine logicalson
 !========================================================================
   subroutine X_var_setup 

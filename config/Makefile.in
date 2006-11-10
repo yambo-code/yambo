@@ -146,7 +146,7 @@ cclean:
 
 # Functions
 define make_message
- echo;echo "SELF" 3.0.1 targets;echo;\
+ echo;echo "SELF" @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ targets;echo;\
  for target in $(TARGETS); do echo  " [stable] $$target" ; done;echo;\
 # -- GPL_END --
  for target in $(PROJECTS); do echo " [devel] $$target" ; done;\

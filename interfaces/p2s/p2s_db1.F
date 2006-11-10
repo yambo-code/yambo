@@ -23,7 +23,7 @@
 !===============================
  use pw_interface
  use com,                   ONLY : msg,error
- use electrons,             ONLY : levels, default_nel, n_spin, n_sp_pol
+ use electrons,             ONLY : levels, default_nel, n_spin, n_sp_pol, n_spinor
  use R_lattice,             ONLY : bz_samp, ng_vec, g_vec
  use D_lattice,             ONLY : nsym, i_time_rev, i_space_inv, dl_sop, &
 &                                  DL_vol, a, alat, default_Tel
@@ -36,7 +36,7 @@
 !ws
  real(SP)                       :: lsop(3,3), acopy(3,3)
  real(SP)                       :: b(3,3)
- integer                        :: i1, ik, nspinpw, n_spinor
+ integer                        :: i1, ik, nspinpw 
  logical                        :: l_identity, l_inversion
  character(schlen)              :: lch
 
@@ -55,15 +55,16 @@
    n_sp_pol  = 1
    n_spinor  = 1
    n_spin    = 1
+! -- GPL_END --
  case(2)
    n_sp_pol  = 2
    n_spinor  = 1
    n_spin    = 2
-   ! NB not coded fully
  case(4)
    n_sp_pol  = 1
    n_spinor  = 2
    n_spin    = 2
+! -- GPL_START --
  end select
  k%nibz = pwdim%nktot
 

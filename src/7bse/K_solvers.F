@@ -63,7 +63,8 @@
  if (trim(alpha_dim)/='adim') then
    call msg('r', 'Optical renormalization   [au]:',eps_2_alpha)
    call msg('rn','Polarizability dimension      :',trim(alpha_dim))
-   BSS_of_title(1:3)=(/'E/ev[1]','alpha/Im','alpha/Re'/)
+   BSS_of_title(1)  ='E/ev[1]'
+   BSS_of_title(2:3)=(/'alpha/Im','alpha/Re'/)
    BSS_of_title(4:5)=(/'alphao/Im','alphao/Re'/) 
    if (index(BSS_mode,'h')/=0) BSS_of_title(6:7)=(/'alpha`/Im','alpha`/Re'/)
  else

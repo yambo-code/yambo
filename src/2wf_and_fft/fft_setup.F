@@ -21,8 +21,8 @@
 !
  subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
 !==============================================
- use pars
- use memory_m,       ONLY : mem_est
+ use pars,           ONLY:SP,pi,IP
+ use memory_m,       ONLY:mem_est
  use vec_operate,    ONLY:c2a
  use D_lattice,      ONLY:a,nsym,dl_sop,sop_inv
  use R_lattice,      ONLY:b,g_vec

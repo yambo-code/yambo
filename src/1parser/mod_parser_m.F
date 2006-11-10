@@ -69,8 +69,8 @@
   dim=shape(res)
   if (iparse_isdef(cstr(trim(name)))==0) return
   do i1=1,dim(1)
-   call iparse_block_int(cstr(trim(name)),0,i1-1,res(i1))
-   call ps_convert(0.,res(i1),name)
+    call iparse_block_int(cstr(trim(name)),0,i1-1,res(i1))
+    call ps_convert(0.,res(i1),name)
   enddo
  end subroutine
 
@@ -85,10 +85,10 @@
   dim=shape(res)
   if (iparse_isdef(cstr(trim(name)))==0) return
   do i1=1,dim(1)
-   do i2=1,dim(2)
-    call iparse_block_int(cstr(trim(name)),i1-1,i2-1,res(i1,i2))
-    call ps_convert(0.,res(i1,i2),name)
-   enddo
+    do i2=1,dim(2)
+      call iparse_block_int(cstr(trim(name)),i1-1,i2-1,res(i1,i2))
+      call ps_convert(0.,res(i1,i2),name)
+    enddo
   enddo
  end subroutine
 
@@ -118,10 +118,10 @@
   dim=shape(res)
   if (iparse_isdef(cstr(trim(name)))==0) return
   do i1=1,dim(1)
-   dres=res(i1)
-   call iparse_block_double(cstr(trim(name)),0,i1-1,dres)
-   res(i1)=dres
-   call ps_convert(res(i1),0,name)
+    dres=res(i1)
+    call iparse_block_double(cstr(trim(name)),0,i1-1,dres)
+    res(i1)=dres
+    call ps_convert(res(i1),0,name)
   enddo
  end subroutine
 
@@ -137,12 +137,12 @@
   dim=shape(res)
   if (iparse_isdef(cstr(trim(name)))==0) return
   do i1=1,dim(1)
-   do i2=1,dim(2)
-    dres=res(i1,i2)
-    call iparse_block_double(cstr(trim(name)),i1-1,i2-1,dres)
-    res(i1,i2)=dres
-    call ps_convert(res(i1,i2),0,name)
-   enddo
+    do i2=1,dim(2)
+      dres=res(i1,i2)
+      call iparse_block_double(cstr(trim(name)),i1-1,i2-1,dres)
+      res(i1,i2)=dres
+      call ps_convert(res(i1,i2),0,name)
+    enddo
   enddo
  end subroutine
 

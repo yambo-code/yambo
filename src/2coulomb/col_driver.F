@@ -41,8 +41,8 @@
 !
 !================================================================================
 !
- subroutine col_driver(q)
-!========================
+ subroutine col_driver(bare_NG,q)
+!================================
 !
 !Here I launch the routine to create/read the 
 !data.qpgint file after some important checks and definitions.
@@ -62,6 +62,7 @@
  use wave_func,     ONLY:wf_ng
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY
  implicit none
+ integer       :: bare_NG
  type(bz_samp) :: q
 !ws
  integer          :: i1,i2,iq,q_modi(nqibz),ID,io_err
@@ -73,14 +74,14 @@
 ! Bare interaction
 !==================
 !
- allocate(bare_qpg(nqibz,wf_ng))
+ allocate(bare_qpg(nqibz,max(bare_NG,wf_ng)))
  call mem_est("bare_qpg",(/size(bare_qpg)/))
  bare_qpg(1,1)=q_module(1)
- do i1=2,wf_ng
+ do i1=2,max(bare_NG,wf_ng)
    bare_qpg(1,i1)=iku_v_module(g_vec(i1,:))
  enddo
  do i2=2,nqibz
-   do i1=1,wf_ng
+   do i1=1,max(bare_NG,wf_ng)
      bare_qpg(i2,i1)=iku_v_module(qpt(i2,:)+g_vec(i1,:))
    enddo
  enddo

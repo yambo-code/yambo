@@ -34,6 +34,7 @@
  use com,           ONLY:msg
  use par_proc_m,    ONLY:myid,ncpu,p_finalize
  use it_m,          ONLY:it_reset,infile
+ use QP_m,          ONLY:QP_ng_Sx
  use QP_CTL,        ONLY:QP_apply
  use wave_func,     ONLY:wf_ng
  use electrons,     ONLY:levels,E_reset
@@ -99,7 +100,7 @@
  call setup(en,Xen,k,Xk)
  ierr=init(en,q,k,X,Xw,instr,lnstr,.true.,.false.)
  call bz_samp_indexes(k,Xk,q) 
- call col_driver(q)
+ call col_driver(maxval((/wf_ng,QP_ng_Sx/)),q)
 !-----------------------------------------------------------------------
 ! QP corrections (from input file)
 !::::::::::::::::::::::::::::::::::

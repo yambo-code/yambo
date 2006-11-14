@@ -181,7 +181,7 @@
  if (.not.present(qp_impose).and..not.present(qpfit_impose)) then
    qpfit_rest%db=QP_ctl_db(Eid)
    call QP_apply_db(band_range,en,k,qp,qpfit_rest,msg_fmt,DB_corrected)
-   if (trim(qpfit_rest%db)=="none") QP_ctl_db(Eid)="none"
+   if (trim(qpfit_rest%db)=="none") QP_ctl_db(Eid)=trim(qpfit_rest%db)
 !
 ! Now I have to include the input file QP parameters in qpfit_free
 ! being careful that the scissor must go in qpfit%E(1)

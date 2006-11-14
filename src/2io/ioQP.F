@@ -86,7 +86,7 @@
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
 
  endif
-
+ 
  if (any((/io_sec(ID,:)==2/))) then
 
    do i1=1,n_descs_disk
@@ -112,7 +112,7 @@
 !
      if (what=="W") then
        if (index(qp%description(i1),'QP')>0) then
-         call io_elemental(ID,CH0=qp%description(i1))
+          call io_elemental(ID,CH0=qp%description(i1))
        else if (index(qp%description(i1),'GW solver')>0.or.&
 &               index(qp%description(i1),'dS/dw step')>0.or.&
 &               index(qp%description(i1),'Sx RL components')>0) then
@@ -203,10 +203,12 @@
  if (any((/io_sec(ID,:)==3/)).and.what/="W") then
 !
 ! I arrive here only in DUMP mode as in qp_solver I use only sections
-! 1 and 2 to VERIFY. IN case everything is find I do not load the 
+! 1 and 2 to VERIFY. IN case everything is fine I do not load the 
 ! corrections.
 !
    call io_bulk(ID,VAR="QP_kpts",VAR_SZ=(/qp%nk,3/))
+
+   if (.not.associated(qp%k)) allocate(qp%k(qp%nk,3))
    call io_bulk(ID,R2=qp%k)
 
    allocate(qp_E_Eo_Z_disk(3,qp%n_states,2))

@@ -65,7 +65,9 @@
     character(schlen)  :: description(max_qp_descs)
     integer,    pointer:: table(:,:)
     real(SP)   ,pointer:: k(:,:)
-    complex(SP),pointer:: E(:),Z(:),Eo(:)
+    complex(SP),pointer:: Eo(:)
+    complex(SP),pointer:: E(:)
+    complex(SP),pointer:: Z(:)
     integer  :: n_descs
     integer  :: nk
     integer  :: nb

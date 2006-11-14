@@ -57,7 +57,7 @@
 !  0 Stable s.         -> INPATH/SAVE/subfolder/s.desc
 !  1 Stable db.        -> INPATH/SAVE/subfolder/db.desc
 !  2 Job dependent db. -> OUTPATH/JOBSTR/subfolder/db.desc
-!  3 Job dependent o.  -> OUTPATH/o-JOBSTR
+!  3 Job dependent o.  -> OUTPATH/o.desc-JOBSTR
 !  4 ----------------  -> RESTART/db.desc_FOLDER
 !                                           |
 !                                           JOBSTR, or  SAVE if no JOBSTR 

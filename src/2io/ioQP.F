@@ -47,7 +47,11 @@
  character(schlen)    ::ch
  character(2)         ::OP(1)
 
- ioQP=io_connect(desc=what,type=2,ID=ID)
+ if (what=="qp".or.what=="W") then
+   ioQP=io_connect(desc=what,type=2,ID=ID)
+ else
+   ioQP=io_connect(desc=what,type=-1,ID=ID)
+ endif
  if (ioQP/=0) goto 1
 !
 ! Check the restart point 

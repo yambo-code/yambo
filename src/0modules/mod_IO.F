@@ -164,11 +164,15 @@
 !
 ! Build the file name
 !
- if (len_trim(io_file(ID))==0) then
+ if (len_trim(io_file(ID))==0.and.type/=-1) then
    io_file(ID)=get_name(desc,subfolder,type,open_is_on(ID),&
 &                       write_is_on(ID),io_netcdf_support(ID))
    alternative_file=get_name(desc,subfolder,type,open_is_on(ID),&
 &                            write_is_on(ID),.not.io_netcdf_support(ID))
+ else if (type==-1) then
+   io_file(ID)=get_name(desc,subfolder,-1,open_is_on(ID),write_is_on(ID),.false.)
+   alternative_file=' '
+   io_netcdf_support(ID)=index(desc,'ndb')>0
  endif
 !
 ! Create Directories 

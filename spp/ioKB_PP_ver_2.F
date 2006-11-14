@@ -41,7 +41,7 @@
 
  ik=maxval(io_sec(ID,:))-1
 
- ioKB_PP_ver_2 =io_connect(desc="s.kbpp",subfolder=".",type=-1,ID=ID)
+ ioKB_PP_ver_2 =io_connect(desc="s.kbpp",type=-1,ID=ID)
  if (ioKB_PP_ver_2/=0) goto 1
 
  if (any ((/io_sec(ID,:)==1/)) ) then

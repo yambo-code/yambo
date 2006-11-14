@@ -38,7 +38,7 @@
 
  ik=maxval(io_sec(ID,:))
 
- ioWF_ver_2 =io_connect(desc="s.db2",subfolder=".",type=-1,ID=ID)
+ ioWF_ver_2 =io_connect(desc="s.db2",type=-1,ID=ID)
 
  if (ioWF_ver_2/=0) goto 1
 

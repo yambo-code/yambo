@@ -37,7 +37,7 @@
 &                         io_netcdf_support,version_is_newer
  implicit none
  type(QP_t)  ::qp
- character(*)::what ! 'qp'/'W'
+ character(*)::what ! 'QP'/'W'
  integer     ::ID
 !ws
  integer              ::i1,i2,iqbz,QP_n_G_bands_disk(2),i_found,&
@@ -47,10 +47,10 @@
  character(schlen)    ::ch
  character(2)         ::OP(1)
 
- if (what=="qp".or.what=="W") then
+ if (what=="QP".or.what=="W") then
    ioQP=io_connect(desc=what,type=2,ID=ID)
  else
-   ioQP=io_connect(desc=what,type=-1,ID=ID)
+   ioQP=io_connect(desc=what,type=-2,ID=ID)
  endif
  if (ioQP/=0) goto 1
 !

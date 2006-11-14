@@ -53,14 +53,15 @@
  character(lchlen) function get_name(desc,subfolder,type,TO_RD,TO_WR,NETCDF)
 !==================================================================================
 !
-! -1 ----------------  -> subfolder/desc
-!  0 Stable s.         -> INPATH/SAVE/subfolder/s.desc
-!  1 Stable db.        -> INPATH/SAVE/subfolder/db.desc
-!  2 Job dependent db. -> OUTPATH/JOBSTR/subfolder/db.desc
+! -2 ----------------  -> desc (NETCDF as OUTPUT)
+! -1 ----------------  -> subfolder/(n)desc
+!  0 Stable s.         -> INPATH/SAVE/subfolder/(n)s.desc
+!  1 Stable db.        -> INPATH/SAVE/subfolder/(n)db.desc
+!  2 Job dependent db. -> OUTPATH/JOBSTR/subfolder/(n)db.desc
 !  3 Job dependent o.  -> OUTPATH/o.desc-JOBSTR
-!  4 ----------------  -> RESTART/db.desc_FOLDER
-!                                           |
-!                                           JOBSTR, or  SAVE if no JOBSTR 
+!  4 ----------------  -> RESTART/(n)db.desc_FOLDER
+!                                            |
+!                                            JOBSTR, or  SAVE if no JOBSTR 
  use stderr,ONLY:string_pack
  character(*)           :: desc
  integer                :: type,ID
@@ -74,9 +75,14 @@
  folder="SAVE"
  if (.not.TO_RD.and..not.TO_WR) return
  select case(type)
+  case(-2)
+   get_name=string_pack('./',desc)
+   NETCDF=index(desc,'ndb')>0
+   return
   case(-1)
    ch(2)=desc
-   folder=subfolder
+   folder="."
+   if (present(subfolder)) folder=subfolder
   case(0)
    ch(2)=string_pack('s.',desc)
   case(1)

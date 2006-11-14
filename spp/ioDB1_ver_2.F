@@ -41,7 +41,7 @@
  integer, allocatable :: I_on_disk(:)
  real(SP),allocatable :: R_on_disk(:)
 
- ioDB1_ver_2 =io_connect(desc="s.db1",subfolder=".",type=-1,ID=ID)
+ ioDB1_ver_2 =io_connect(desc="s.db1",type=-1,ID=ID)
  if (ioDB1_ver_2/=0) goto 1
 !
 ! Serial Number

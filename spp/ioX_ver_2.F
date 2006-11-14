@@ -40,8 +40,8 @@
  character(schlen)    :: VAR_NAME
  character(100)       :: ch_on_disk
 
- if (X%whoami==2) ioX_ver_2 =io_connect(desc="db.em1s",subfolder=".",type=-1,ID=ID)
- if (X%whoami==4) ioX_ver_2 =io_connect(desc="db.pp",subfolder=".",type=-1,ID=ID)
+ if (X%whoami==2) ioX_ver_2 =io_connect(desc="db.em1s",type=-1,ID=ID)
+ if (X%whoami==4) ioX_ver_2 =io_connect(desc="db.pp",type=-1,ID=ID)
  if (ioX_ver_2/=0) goto 1
 
  if (any ((/io_sec(ID,:)==1/)) ) then

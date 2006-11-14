@@ -65,6 +65,7 @@
    Kcoo_in="iku"
    Kcoo_out="rlu"
    Kgw_1=0.
+   qlong= (/0.,0.,0./)
 !
 !BZ RIM
    RIM_G_shells=1
@@ -105,7 +106,7 @@
  lelph=rstatus(3)/=0
  lbzrim=rstatus(4)/=0
 
- if (lkanalyze) call initactivate(1,"KcooIn KcooOut GWKpts")
+ if (lkanalyze) call initactivate(1,"KcooIn KcooOut GWKpts KGrdShft")
  if (lbzrim) call initactivate(1,"BZ_RIM_path Srch_G_sh BZ_RIM_Nk KcooOut")
  if (lexcwf) call initactivate(1,"Order State Window Cells Hole")
  if (lelph) call initactivate(1,"DBsPATH EEfermi EfGbroad EfEbroad EliStps EliEmax")

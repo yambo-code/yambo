@@ -36,6 +36,7 @@
  call it(defs,'KcooIn','K-pts coordinates (in) cc/rlu/iku',Kcoo_in)
  call it(defs,'KcooOut','K-pts coordinates (out) cc/rlu/iku',Kcoo_out)
  call it(defs,'GWKpts','GW K-point grid',Kgw_1)
+ call it(defs,'KGrdShft','K-grid shifts',qlong)
 !
 !EXC WF
  call it(defs,'Order','Energies order `mode` [(e)nergy/(i)ntensity]', sort_mode)

@@ -27,7 +27,7 @@
 ! K analysis
 !===============================================================
   logical  :: lkanalyze
-  real(SP) :: Kgw_1(3)
+  real(SP) :: Kgw_1(3), qlong(3)
   character(schlen) :: Kcoo_in,Kcoo_out
 !
 ! Exc WF

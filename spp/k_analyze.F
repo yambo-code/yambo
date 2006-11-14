@@ -28,15 +28,16 @@
  use com,                 ONLY:msg
  use parser_m,            ONLY:parser
  use vec_operate,         ONLY:c2a,rlu_v_is_zero,v_is_zero
- use SPP,                 ONLY:Kcoo_in,Kcoo_out
+ use SPP,                 ONLY:Kcoo_in,Kcoo_out,qlong
  use timing,              ONLY:live_timing_is_on
  implicit none
  type(levels) ::en       
  type(bz_samp)::k,Xk,q
 !ws
  type(bz_samp)::GWK,GWK_Q
- real(SP)     ::real_ctl,v(3),ka(3)
- integer      ::i1,i2,is
+ real(SP)     ::real_ctl,v(3),ka(3),q0(3)
+ integer      ::i1,i2,is,ik
+ real(SP):: kout(Xk%nibz,3)
  real(SP), allocatable :: GWK_table(:)
  integer,  allocatable :: int_ctl(:)
  character(schlen)     :: ch
@@ -138,6 +139,57 @@
    enddo
  enddo
  live_timing_is_on=.true.
+!
+! Generate shifted k-points set for longitudinal gauge calculation
+!-------
+ call parser('KGrdShft',qlong)
+ if(any(abs(qlong).gt.1e-6)) then
+   live_timing_is_on=.false.
+   kout(:,:) = Xk%pt(:,:)
+   call msg("s"," ")
+   write(ch,'(a,a,a)') " == Unshifted IBZ K-grid [",trim(Kcoo_out),"] ====="
+   call msg("s",trim(ch))
+   !
+   ! Convert IBZ mesh to Kcoo_out
+   !
+   do ik=1,Xk%nibz
+     if (trim(Kcoo_out)=="cc") call c2a(v_in=kout(ik,:),mode="ki2c")
+     if (trim(Kcoo_out)=="rlu") call c2a(v_in=kout(ik,:),mode="ki2a")
+     write(ch,'(3f12.7)') kout(ik,:)
+     call msg("s",trim(ch))
+   enddo
+   i2=0
+   do i1=1,3
+     if(abs(qlong(i1)).gt.1e-6) then
+       q0(:) = 0; q0(i1) = qlong(i1)
+       i2 = i2 + 1
+       !
+       ! Convert input q0 to iku
+       !
+       if (trim(Kcoo_in)=="cc")  call c2a(v_in=q0(:),mode="kc2i")
+       if (trim(Kcoo_in)=="rlu") call c2a(v_in=q0(:),mode="ka2i")
+       !
+       ! Convert q0[iku] to Kcoo_out
+       !
+       if (trim(Kcoo_out)=="cc")  call c2a(v_in=q0(:),mode="ki2c")
+       if (trim(Kcoo_out)=="rlu") call c2a(v_in=q0(:),mode="ki2a")
+       !
+       ! Print shift vector in new basis
+       !
+       write(ch,'(a,i1,a,3(f8.5,a),2a)') " == Shifted K-grid[",i2,&
+&      "]: {K} + (",q0(1),",",q0(2),",",q0(3),") [",trim(Kcoo_out),"]"
+       call msg("s",trim(ch))
+       !
+       ! Print the shifted mesh
+       !
+       do ik=1,Xk%nibz
+         write(ch,'(3f12.7)') kout(ik,:)+q0(:)
+         call msg("s",trim(ch))
+       enddo
+     endif
+   enddo
+
+ endif
 
 !
 ! CLEAN

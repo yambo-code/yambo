@@ -38,7 +38,7 @@
  use par_proc_m,     ONLY:pp_redux_wait,master_node
  use com,            ONLY:msg,repfile,outpath,jobstr,&
 &                         title,file_exists,rename_file,write_to_report,error
- use vec_operate,    ONLY:v_module
+ use vec_operate,    ONLY:v_norm
  use timing,         ONLY:live_timing_is_on
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_solver,QP_nb,&
 &                         QP_state,QP_reset,QP_ctl_E,QP_table
@@ -624,11 +624,11 @@
    Xw(3)%n(2)=Xw(3)%n(1)
    Xw(1)%n(2)=Xw(1)%n(1)
 !  q0 renormalization
-   BSS_q0(:)=BSS_q0(:)*q0_defmod/v_module(BSS_q0)
-   X(1)%q0(:)=X(1)%q0(:)*q0_defmod/v_module(X(1)%q0)
-   X(2)%q0(:)=X(2)%q0(:)*q0_defmod/v_module(X(2)%q0)
-   X(3)%q0(:)=X(3)%q0(:)*q0_defmod/v_module(X(3)%q0)
-   X(4)%q0(:)=X(4)%q0(:)*q0_defmod/v_module(X(4)%q0)
+   BSS_q0(:)=BSS_q0(:)*q0_defmod/v_norm(BSS_q0)
+   X(1)%q0(:)=X(1)%q0(:)*q0_defmod/v_norm(X(1)%q0)
+   X(2)%q0(:)=X(2)%q0(:)*q0_defmod/v_norm(X(2)%q0)
+   X(3)%q0(:)=X(3)%q0(:)*q0_defmod/v_norm(X(3)%q0)
+   X(4)%q0(:)=X(4)%q0(:)*q0_defmod/v_norm(X(4)%q0)
    if (l_em1s) Xw(2)%dr=0.001/HARTREE
 !
    if (len_trim(BS_cpl_mode)==0) BS_cpl_mode="none"

@@ -40,7 +40,6 @@
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use frequency,     ONLY:w_samp,bg_npts,cg_pt,cg_npts
  use par_indexes_m, ONLY:par_indexes
- use vec_operate,   ONLY:v_module
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv,i_space_inv
  use electrons,     ONLY:levels,spin_occ,n_spin, n_spinor
  use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,q_module 

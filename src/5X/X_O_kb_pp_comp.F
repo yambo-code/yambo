@@ -24,7 +24,7 @@
  subroutine X_O_kb_pp_comp(ik,Xk,kbv)
 !===================================
  use pars,          ONLY:SP,pi
- use vec_operate,   ONLY:iku_v_module,v_module,c2a
+ use vec_operate,   ONLY:iku_v_norm,v_norm,c2a
  use R_lattice,     ONLY:b,g_vec,bz_samp
  use D_lattice,     ONLY:pp_kbv_dim,pp_n_l_comp_max,n_atom_species,atom_pos,&
 &                        n_atoms,pp_n_l_comp,pp_kbs,pp_kb,pp_kbd
@@ -41,11 +41,11 @@
 
  kbv=(0._SP,0._SP)
  igm=1
- if (iku_v_module(Xk%pt(ik,:))<=1.E-5) igm=2
+ if (iku_v_norm(Xk%pt(ik,:))<=1.E-5) igm=2
  do ig=igm,wf_ng
    call c2a(b,(Xk%pt(ik,:)+g_vec(ig,:)),v1,'ki2c')
    call c2a(b,g_vec(ig,:),v2,'ki2c')
-   r1=v_module(v1)
+   r1=v_norm(v1)
    call X_O_Ylm(Ylm,dYlm,Ygrad,pp_n_l_comp_max,v1)
    i1=0
    do is = 1,n_atom_species

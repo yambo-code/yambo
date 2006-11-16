@@ -30,14 +30,14 @@
  use D_lattice,             ONLY : nsym, i_time_rev, i_space_inv, dl_sop, &
 &                                  DL_vol, a, alat, default_Tel
  use wave_func,             ONLY : ng_wf, wf_ng_disk, wf_igk, wf_ng
- use vec_operate,           ONLY : internal_product
+ use vec_operate,           ONLY : cross_product
  implicit none
  type(levels),     intent(out)  :: en     ! Energies
  type(bz_samp),    intent(out)  :: k      ! K/Q points
  integer,          intent(in)   :: pwunit ! unit of index.dat
  logical,          intent(in)   :: verboseIO
 !ws
- real(SP)                       :: lsop(3,3), acopy(3,3)
+ real(SP)                       :: lsop(3,3), acopy(3,3),cp(3)
  real(SP)                       :: b(3,3)
  integer                        :: i1, ik, ierr, isym(3,3,48), nspinpw
  logical                        :: l_identity, l_inversion
@@ -110,14 +110,13 @@
 
 ! Use acopy to avoid passing non-contiguous arrays (just for fun)
  acopy = transpose(a)
+ cp = cross_product(acopy(:,2),acopy(:,3))
  do i1=1,3
- DL_vol= DL_vol+a(1,i1)*internal_product(acopy(:,2),acopy(:,3),i1)
+   DL_vol= DL_vol+a(1,i1)*cp(i1)
  enddo
- do i1=1,3
- b(1,i1)=internal_product(acopy(:,2),acopy(:,3),i1)*2.*PI/DL_vol
- b(2,i1)=internal_product(acopy(:,3),acopy(:,1),i1)*2.*PI/DL_vol
- b(3,i1)=internal_product(acopy(:,1),acopy(:,2),i1)*2.*PI/DL_vol
- enddo
+ b(1,:)=cross_product(acopy(:,2),acopy(:,3))*2.*PI/DL_vol
+ b(2,:)=cross_product(acopy(:,3),acopy(:,1))*2.*PI/DL_vol
+ b(3,:)=cross_product(acopy(:,1),acopy(:,2))*2.*PI/DL_vol
  call msg("l","done")
 
 !---------------------------------------------------------------------*

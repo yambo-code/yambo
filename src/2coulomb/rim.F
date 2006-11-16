@@ -27,7 +27,7 @@
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,master_node,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use timing,        ONLY:live_timing
- use vec_operate,   ONLY:iku_v_module,v_is_zero,c2a
+ use vec_operate,   ONLY:iku_v_norm,v_is_zero,c2a
  use R_lattice,     ONLY:RL_vol,k_grid_uc_vol,k_grid_b,bz_samp,qpt,nqbz,&
 &                        nqibz,RIM_epsm1,RIM_is_diagonal,RIM_RL_vol,&
 &                        RIM_n_rand_pts,RIM_ng,RIM_qpg,&

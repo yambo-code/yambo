@@ -56,7 +56,7 @@ subroutine init_surface(defs)
 end subroutine init_surface
 
   subroutine setup_surface_geometry(lfail)
-    use vec_operate,          ONLY : v_module, internal_product
+    use vec_operate,          ONLY : v_norm, cross_product
     use com,                  ONLY : error
     implicit none
     logical, intent(out)          :: lfail
@@ -66,13 +66,11 @@ end subroutine init_surface
 
     lfail = .false.
 
-    q0x(:)=q0x(:)*1.E-5/v_module(q0x)
-    q0y(:)=q0y(:)*1.E-5/v_module(q0y)
+    q0x(:)=q0x(:)*1.E-5/v_norm(q0x)
+    q0y(:)=q0y(:)*1.E-5/v_norm(q0y)
 
-    do i1 = 1,3
-      norm(i1) = internal_product( q0x, q0y, i1 )
-    enddo
-      norm = norm*1.E-5/v_module(norm)  ! Required if norm is to be used as a q0
+    norm = cross_product( q0x, q0y )
+    norm = norm*1.E-5/v_module(norm)  ! Required if norm is to be used as a q0
 
     if ( all( abs(norm).LT.eps) ) then
       lfail = .true.

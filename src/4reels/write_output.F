@@ -4,7 +4,7 @@ subroutine write_reels_sec( hw, loss, nw, ipol, q0, imode)
   use pars,                   only : SP, schlen, HARTREE, lchlen
   use reels_module,           only : npol
   use surface_geometry,       only : q0x, q0y, qname
-  use vec_operate,            only : v_module
+  use vec_operate,            only : v_norm
   implicit none
   integer,          intent(in)    :: ipol, nw, imode
   real(SP),         intent(in)    :: loss(4,nw), hw(nw),q0(3)
@@ -26,12 +26,12 @@ subroutine write_reels_sec( hw, loss, nw, ipol, q0, imode)
       write (of_name,'(a,a)') 'reels_sec','-rpa'
       call of_open_close(of_name,'ot')
       write (lch,'(a,3f10.5)') &
-&               'REELS @ q || ', q0/v_module(q0)
+&               'REELS @ q || ', q0/v_norm(q0)
     else if(npol.eq.2) then  
       write (of_name,'(a,a,a)') 'reels_sec_',qname,'-rpa'
       call of_open_close(of_name,'ot')
     write (lch,'(3a,3f10.5)') &
-&               'REELS @ q || ',qname,' : ', q0/v_module(q0)
+&               'REELS @ q || ',qname,' : ', q0/v_norm(q0)
     endif
 
     call msg('o reels_sec','#',trim(lch), INDENT=0) ! <-- writes to file...

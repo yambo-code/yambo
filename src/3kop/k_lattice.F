@@ -30,7 +30,7 @@
  use pars,           ONLY:SP,schlen
  use X_m,            ONLY:eps_2_alpha,alpha_dim
  use memory_m,       ONLY:mem_est
- use vec_operate,    ONLY:v_module,v_is_zero,rlu_v_is_zero,internal_product,&
+ use vec_operate,    ONLY:v_norm,v_is_zero,rlu_v_is_zero,cross_product,&
 &                         c2a,sort,ak2bz,k_is_in_bz
  use com,            ONLY:msg,gen_fmt,error
  use matrix_operate, ONLY:m3inv,m3det
@@ -79,7 +79,7 @@
  do i1=1,Xk%nbz
    v0=Xk%ptbz(order(i1),:)-Xk%ptbz(1,:)
    v0_ibz_mod=ak2bz(v0)
-   if (v_module(v0)<=1.E-5) cycle
+   if (v_norm(v0)<=1.E-5) cycle
    select case(k_grid_dim)
      case(0)
        k_grid_dim=1
@@ -98,7 +98,7 @@
 ! I use k_grid_b/v_module(k_grid_b(1,:)) to avoid small numbers
 ! when a large set of k-points is used
 !
-       if (abs(m3det(k_grid_b))/v_module(k_grid_b(1,:))<1.E-5)then
+       if (abs(m3det(k_grid_b))/v_norm(k_grid_b(1,:))<1.E-5)then
          k_grid_b(3,:)=0.
          cycle
        endif
@@ -178,9 +178,9 @@
  call c2a(b_in=b,v_in=k_grid_b(2,:),mode='ka2c')
  call c2a(b_in=b,v_in=k_grid_b(3,:),mode='ka2c')
  k_grid_uc_vol=0.
+ v0=cross_product(k_grid_b(2,:),k_grid_b(3,:))
  do i1=1,3
-  k_grid_uc_vol=k_grid_uc_vol+&
-&               k_grid_b(1,i1)*internal_product(k_grid_b(2,:),k_grid_b(3,:),i1)
+   k_grid_uc_vol=k_grid_uc_vol+k_grid_b(1,i1)*v0(i1)
  enddo
  k_grid_uc_vol=abs(k_grid_uc_vol)
 !
@@ -234,7 +234,7 @@
    real(SP) :: v1(3),v2(3),proj
    proj=0.
    if (v_is_zero(v2)) return
-   proj=dot_product(v1,v2)/v_module(v2)**2.
+   proj=dot_product(v1,v2)/v_norm(v2)**2.
    end function
 
  end subroutine

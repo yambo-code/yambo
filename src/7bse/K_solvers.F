@@ -33,7 +33,6 @@
  use frequency,      ONLY:w_samp
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:d3k_factor,bz_samp,q_module
- use vec_operate,    ONLY:v_module
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,NONE
  use TDDFT,          ONLY:FXC_description,FXC_n_descs
  implicit none

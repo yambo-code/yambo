@@ -29,7 +29,7 @@
  use electrons,     ONLY:levels,BZ_RIM_tot_nkpts
  use R_lattice,     ONLY:bz_samp,q_module,bare_qpg
  use com,           ONLY:msg,of_open_close
- use vec_operate,   ONLY:v_module,iku_v_module
+ use vec_operate,   ONLY:v_norm,iku_v_norm
  use X_m,           ONLY:X_t,X_epsilon,X_mat,X_alloc,X_poles_tab,X_fxc,&
 &                        alpha_dim,eps_2_alpha,use_X_RIM
  use parser_m,      ONLY:parser
@@ -114,10 +114,10 @@
 ! Titles & headings
 !///////////////////////////////////////////////////////////////////////
    write (ch,'(a,i3,a)') '# Absorption @ IQ',iq,' [iku]:'
-   if (iq==1) call msg("o eps",trim(ch),X%q0/v_module(X%q0),INDENT=0)
+   if (iq==1) call msg("o eps",trim(ch),X%q0/v_norm(X%q0),INDENT=0)
    if (iq/=1) call msg("o eps",trim(ch),q%pt(iq,:),INDENT=0)
    write (ch,'(a,i3,a)') '# EELS @ IQ',iq,' [iku]:'
-   if (iq==1) call msg("o eel",trim(ch),X%q0/v_module(X%q0),INDENT=0)
+   if (iq==1) call msg("o eel",trim(ch),X%q0/v_norm(X%q0),INDENT=0)
    if (iq/=1) call msg("o eel",trim(ch),q%pt(iq,:),INDENT=0)
    write (ch,'(3a,i3,a)') '# Polarizability ( -<<X>> ) [',trim(alpha_dim),'] @ IQ',iq,' [iku]:'
    call msg("o alpha",trim(ch),q%pt(iq,:),INDENT=0)

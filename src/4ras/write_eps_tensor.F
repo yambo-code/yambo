@@ -1,7 +1,7 @@
 subroutine write_eps_tensor( q0v, eps_i, hw, nw, npol, epstype ) 
   use pars,                  only : SP, HARTREE, schlen
   use com,                   only : msg, of_open_close
-  use vec_operate,           only : v_module
+  use vec_operate,           only : v_norm
   implicit none
   integer,          intent(in)    :: nw, npol
   complex(SP),      intent(in)    :: eps_i(nw, npol) 
@@ -23,7 +23,7 @@ subroutine write_eps_tensor( q0v, eps_i, hw, nw, npol, epstype )
 
   do ipol = 1, npol
     q0(:) = q0v(:,ipol)
-    write (lch,'(1x,5a,3f10.5)') 'Eps_',trim(epstype),' @ q || ',qname(ipol),' : ', q0/v_module(q0)
+    write (lch,'(1x,5a,3f10.5)') 'Eps_',trim(epstype),' @ q || ',qname(ipol),' : ', q0/v_norm(q0)
     call msg('o eps','#',trim(lch),INDENT=0)
   enddo
 

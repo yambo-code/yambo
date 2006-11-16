@@ -43,7 +43,7 @@
 ! F(v,w)=8 \prod_i sin[(v_i-w_i)L_i/2]/(v_i-w_i)
 !------------------------------------------------------------------
  use pars,          ONLY:SP,schlen,lchlen
- use vec_operate,   ONLY:v_is_zero,v_module
+ use vec_operate,   ONLY:v_is_zero,v_norm
  use com,           ONLY:msg
  use R_lattice,     ONLY:ph_radius,box_length,cyl_length,cut_geometry,bz_samp
  use stderr,        ONLY:string_split,string_pack

@@ -30,7 +30,6 @@
  use stderr,        ONLY:string_pack
  use R_lattice,     ONLY:bz_samp,RIM_qpg,RIM_n_rand_pts,RIM_ng
  use com,           ONLY:gen_fmt
- use vec_operate,   ONLY:v_module
  implicit none
  integer      ::iq
  type(X_t)    ::X

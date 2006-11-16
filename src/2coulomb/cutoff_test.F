@@ -22,7 +22,7 @@
  subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
 !====================================================================
  use pars,          ONLY:SP,schlen,pi
- use vec_operate,   ONLY:v_module
+ use vec_operate,   ONLY:v_norm
  use D_lattice,     ONLY:alat,sop_inv,DL_vol,a
  use R_lattice,     ONLY:bz_samp,ph_radius,bare_qpg,cyl_length,box_length,&
 &                        g_vec,g_rot
@@ -57,7 +57,7 @@
 !
 ! DL points along the 3 possible planes
 !---------------------------------------
- dummy=(/v_module(a(1,:)),v_module(a(2,:)),v_module(a(3,:))/)
+ dummy=(/v_norm(a(1,:)),v_norm(a(2,:)),v_norm(a(3,:))/)
  if (cut_is_sphere.or.cut_is_cyl) dummy=2.*plot_factor*ph_radius
  if (cut_is_cyl) then
    if (is_cut(1)) dummy(1)=2.*plot_factor*cyl_length
@@ -173,7 +173,7 @@
  real(SP) function V_in_sphere(r)
  real(SP) :: r(3)
  V_in_sphere=0.
- if (v_module(r)<ph_radius.and.v_module(r)>0.1) V_in_sphere=1./v_module(r)
+ if (v_norm(r)<ph_radius.and.v_norm(r)>0.1) V_in_sphere=1./v_norm(r)
  end function
 
  real(SP) function V_in_box(r)
@@ -181,7 +181,7 @@
  V_in_box=0.
  if ( (.not.is_cut(1).or.abs(r(1))<box_length(1)/2.).and.&
 &     (.not.is_cut(2).or.abs(r(2))<box_length(2)/2.).and.&
-&     (.not.is_cut(3).or.abs(r(3))<box_length(3)/2.)) V_in_box=1./v_module(r)
+&     (.not.is_cut(3).or.abs(r(3))<box_length(3)/2.)) V_in_box=1./v_norm(r)
  end function
 
  end subroutine

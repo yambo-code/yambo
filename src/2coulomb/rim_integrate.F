@@ -22,7 +22,7 @@
  subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii)
 !==================================================================
  use pars,          ONLY:SP,pi
- use vec_operate,   ONLY:iku_v_module,v_is_zero
+ use vec_operate,   ONLY:iku_v_norm,v_is_zero
  use R_lattice,     ONLY:g_vec,RIM_n_rand_pts,k_grid_uc_vol,RIM_qpg,&
 &                        RIM_is_diagonal,RIM_ng,qpt,RIM_anisotropy
  use D_lattice,     ONLY:alat
@@ -50,7 +50,7 @@
      do i3=1,RIM_n_rand_pts
        v1(:)=g_vec(i1,:)+qpt(iq,:)+qr(i3,:)
        v2(:)=g_vec(i2,:)+qpt(iq,:)+qr(i3,:)
-       r1=iku_v_module(v1)*iku_v_module(v2)
+       r1=iku_v_norm(v1)*iku_v_norm(v2)
        RIM_qpg(iq,i1,i2)=RIM_qpg(iq,i1,i2)+2.*rfac/r1
      enddo
      RIM_qpg(iq,i2,i1)=RIM_qpg(iq,i1,i2)
@@ -69,7 +69,7 @@
  i2max=RIM_ng 
  if (RIM_is_diagonal) i2max=1
  do i1=1,RIM_n_rand_pts
-   r1=iku_v_module(qr(i1,:))
+   r1=iku_v_norm(qr(i1,:))
    v1=4.*pi**2.*(/qr(i1,1)**2.,qr(i1,2)**2,qr(i1,3)**2/)
    v1(:)=v1(:)/alat(:)**2./r1**4.
    if(r1>=G_sph_radii) then
@@ -77,7 +77,7 @@
      RIM_qpg(1,1,1)=RIM_qpg(1,1,1)+2.*rfac/(r1**2.)
      RIM_anisotropy=RIM_anisotropy+2.*rfac*dot_product(em1_anis,v1)
      do i2=2,i2max,1
-       r1=r1*iku_v_module(g_vec(i2,:)+qr(i1,:))
+       r1=r1*iku_v_norm(g_vec(i2,:)+qr(i1,:))
        RIM_qpg(1,1,i2)=RIM_qpg(1,1,i2)+rfac/r1
      enddo
    endif

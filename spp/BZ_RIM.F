@@ -27,7 +27,7 @@
  use wave_func,           ONLY: ng_wf,wf_igk
  use D_lattice,           ONLY:dl_sop,alat,nsym,default_Tel,a
  use com,                 ONLY:msg,inpath,error
- use vec_operate,         ONLY:c2a,ak2bz,v_is_zero,iku_v_module
+ use vec_operate,         ONLY:c2a,ak2bz,v_is_zero,iku_v_norm
  use SPP,                 ONLY:BZ_RIM_nkpts,Kcoo_out,BZ_RIM_path,RIM_G_shells
  use electrons,           ONLY:levels,E_reset,default_nel,n_bands,&
 &                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
@@ -151,8 +151,8 @@
          iv=matmul(k_b_m1,v)
          iv=real(int(iv),SP)
          if (.not.v_is_zero(iv)) cycle
-         if (iku_v_module(v)<k_distance) then
-           k_distance=iku_v_module(v)
+         if (iku_v_norm(v)<k_distance) then
+           k_distance=iku_v_norm(v)
            ikbz=i2
          endif
        enddo

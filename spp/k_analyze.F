@@ -146,7 +146,6 @@
  if(any(abs(qlong).gt.1e-6)) then
    live_timing_is_on=.false.
    kout(:,:) = Xk%pt(:,:)
-   call msg("s"," ")
    write(ch,'(a,a,a)') " == Unshifted IBZ K-grid [",trim(Kcoo_out),"] ====="
    call msg("s",trim(ch))
    !
@@ -190,6 +189,7 @@
    enddo
 
  endif
+ live_timing_is_on=.true.
 
 !
 ! CLEAN

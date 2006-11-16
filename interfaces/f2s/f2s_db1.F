@@ -29,7 +29,7 @@
 &                                  DL_vol, a, alat, default_Tel,&
 &                                  n_atom_species,n_atoms,n_atoms_max,atom_pos
  use wave_func,             ONLY : ng_wf, wf_igk,wf_ng_disk,wf_ng
- use vec_operate,           ONLY : internal_product
+ use vec_operate,           ONLY : cross_product
  use xc_functionals,        ONLY : XC_EXCHANGE_CORRELATION,GS_xc_KIND,GS_xc_FUNCTIONAL,&
 &                                  xc_string,XC_LDA_C_PW,XC_LDA_C_PZ,XC_LDA_C_WIGNER,&
 &                                  XC_LDA_C_HL,XC_LDA_C_XALPHA
@@ -43,7 +43,7 @@
  type(fwvf_type),  intent(out)  :: fhi_wvf
  type(fgg_type)                 :: fhi_gg
 !ws
- real(SP)                       :: lsop(3,3), b(3,3)
+ real(SP)                       :: lsop(3,3), b(3,3),cp(3)
  integer                        :: i1, ik, i2, i3, inel, ii
  logical                        :: l_identity, l_inversion
  character(schlen)              :: filename
@@ -109,14 +109,13 @@
  alat(2)=2*maxval(abs(a(2,:)))
  alat(3)=2*maxval(abs(a(3,:)))
  DL_vol=0.0
+ cp=cross_product(a(2,:),a(3,:))
  do i1=1,3
-  DL_vol=DL_vol+a(1,i1)*internal_product(a(2,:),a(3,:),i1)
+   DL_vol=DL_vol+a(1,i1)*cp(i1)
  enddo
- do i1=1,3
-  b(1,i1)=internal_product(a(2,:),a(3,:),i1)*2.*pi/DL_vol
-  b(2,i1)=internal_product(a(3,:),a(1,:),i1)*2.*pi/DL_vol
-  b(3,i1)=internal_product(a(1,:),a(2,:),i1)*2.*pi/DL_vol
- enddo
+ b(1,:)=cross_product(a(2,:),a(3,:))*2.*pi/DL_vol
+ b(2,:)=cross_product(a(3,:),a(1,:))*2.*pi/DL_vol
+ b(3,:)=cross_product(a(1,:),a(2,:))*2.*pi/DL_vol
 
  nsym    = fhi_inp%nrot
  en%nb   = fhi_wvf%nx

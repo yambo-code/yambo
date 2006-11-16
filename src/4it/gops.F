@@ -28,7 +28,7 @@
  use D_lattice,    ONLY:nsym,alat,sop_inv
  use R_lattice,    ONLY:n_g_shells,ng_in_shell,ng_closed,&
 &                       g_vec,g_rot,E_of_shell,rl_sop
- use vec_operate,  ONLY:iku_v_module,v_is_zero
+ use vec_operate,  ONLY:iku_v_norm,v_is_zero
  use IO_m,         ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY
  implicit none
 !ws
@@ -101,14 +101,14 @@
 !
      if (i1==1) cycle
 
-     G_module(1)=iku_v_module(g_vec(i_G_shell,:))
-     G_module(2)=iku_v_module(g_vec(i1,:))
+     G_module(1)=iku_v_norm(g_vec(i_G_shell,:))
+     G_module(2)=iku_v_norm(g_vec(i1,:))
 !
      if (abs( G_module(2)-G_module(1) )>1.E-5) n_g_shells=n_g_shells+1
 !
      i_G_shell=i1
      ng_in_shell_TMP(n_g_shells)=i_G_shell
-     E_of_shell_TMP(n_g_shells)=iku_v_module(g_vec(i_G_shell,:))*2./2.
+     E_of_shell_TMP(n_g_shells)=iku_v_norm(g_vec(i_G_shell,:))*2./2.
 
    endif
 

@@ -32,7 +32,7 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   use X_m,                     only : X_t, X_epsilon, X_mat, X_alloc
   use frequency,               only : w_samp 
   use optcut,                  only : loptcut, Xcut_rhoq0 ! just for dealloc
-  use vec_operate,             only : v_module
+  use vec_operate,             only : v_norm
   use par_proc_m,              only : pp_redux_wait
   use wave_func,               only : WF_free
   use ras_module
@@ -152,7 +152,7 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
        q0v(:,3) = norm
     end select
     write (lch,'(3a,3f10.5)') &
-&            'Absorption @ q || ',qname,' : ', X%q0/v_module(X%q0)
+&            'Absorption @ q || ',qname,' : ', X%q0/v_norm(X%q0)
     call msg('ns',trim(lch)) ! <-- to std out + newline
        
     call X_alloc('X',(/X%ng,X%ng,wv%n(2)/))

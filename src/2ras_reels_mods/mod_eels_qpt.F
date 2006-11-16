@@ -67,7 +67,7 @@ contains
     ! Generate list of qpar ordered wrt qGwx
     !
     use frequency,           ONLY : w_samp
-    use vec_operate,         ONLY : v_module
+    use vec_operate,         ONLY : v_norm
     implicit none
     real(SP),         intent(in) :: q0(3)
     type(bz_samp),    intent(in) :: q
@@ -90,7 +90,7 @@ contains
     iqmax = nqpar
     do i1 = 1,nqpar
       q1(:) = qpar(i1,:)
-      qmag = sign(v_module(q1),dot_product(q1,q0))
+      qmag = sign(v_norm(q1),dot_product(q1,q0))
       hwq_ = hwq(qmag)  ! Calculates the energy corresponding to this |Q| in specular geometry
       qGwx(i1) = hwq_
 !     if(hwq_ <= wmin .and. hwq_.ge.0.0_SP) iqmin = i1 ! doesnt work

@@ -58,7 +58,7 @@ subroutine calc_eps( iq,  Xen,Xk, X, q, wq, epsm1, ngblk, nw ,iqf )
   integer                        :: i1,i2,fr(2),nau, irq, rtype, npol, ig1, ig2
   integer                        :: iGtmp(9,3), ist
   complex(SP)                    :: epstmp(9,9)
- real(SP) :: v_module,od(5), deltab, q_mod
+ real(SP) :: v_norm,od(5), deltab, q_mod
   character(lchlen)              :: prmsg
 
   write(*,*) "Allocate X%X"

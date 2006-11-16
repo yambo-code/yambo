@@ -31,7 +31,7 @@
 !
  use pars,          ONLY:SP,pi
  use wave_func,     ONLY:wf_ng
- use vec_operate,   ONLY:iku_v_module,v_module
+ use vec_operate,   ONLY:iku_v_norm,v_norm
  use D_lattice,     ONLY:DL_vol,alat,sop_inv,a
  use R_lattice,     ONLY:bare_qpg,RL_vol,RIM_ng,RIM_qpg,bz_samp,&
 &                        box_length,g_vec,g_rot,ng_closed,RIM_anisotropy,&
@@ -56,7 +56,7 @@
  do iq=1,q%nibz
    do ig=1,ng_closed
      if (iq==1.and.ig==1) cycle
-     V_bare(iq,ig)=1./iku_v_module(q%pt(iq,:)+g_vec(ig,:))**2.
+     V_bare(iq,ig)=1./iku_v_norm(q%pt(iq,:)+g_vec(ig,:))**2.
    enddo
  enddo
  V_bare(1,1)=7.7956*(RL_vol/real(q%nbz))**(-2./3.)
@@ -132,17 +132,17 @@
  if (all(is_cut)) then ! BOX XYZ
    vol_factor=DL_vol
  else if (all((/is_cut(1),is_cut(2),.not.is_cut(3)/)))  then ! BOX XY
-   vol_factor=DL_vol/v_module(a(3,:))
+   vol_factor=DL_vol/v_norm(a(3,:))
  else if (all((/is_cut(1),.not.is_cut(2),is_cut(3)/)))  then ! BOX XZ
-   vol_factor=DL_vol/v_module(a(2,:))
+   vol_factor=DL_vol/v_norm(a(2,:))
  else if (all((/.not.is_cut(1),is_cut(2),is_cut(3)/)))  then ! BOX YZ
-   vol_factor=DL_vol/v_module(a(1,:))
+   vol_factor=DL_vol/v_norm(a(1,:))
  else if (all((/is_cut(1),.not.is_cut(2),.not.is_cut(3)/)))  then ! BOX X
-   vol_factor=v_module(a(1,:))
+   vol_factor=v_norm(a(1,:))
  else if (all((/.not.is_cut(1),is_cut(2),.not.is_cut(3)/)))  then ! BOX Y
-   vol_factor=v_module(a(2,:))
+   vol_factor=v_norm(a(2,:))
  else if (all((/.not.is_cut(1),.not.is_cut(2),is_cut(3)/)))  then ! BOX Z
-   vol_factor=v_module(a(3,:))
+   vol_factor=v_norm(a(3,:))
  endif
 
  forall (iq=1:q%nibz,ig=1:wf_ng) bare_qpg(iq,ig)=sqrt(vol_factor/V_cut(iq,ig))

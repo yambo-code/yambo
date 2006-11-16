@@ -177,7 +177,7 @@ subroutine write_loss_sec( imode )
   use eels_wgrid,             only : hwqgrid
 ! use reels_module,           only : npol
   use surface_geometry,       only : qname
-  use vec_operate,            only : v_module
+  use vec_operate,            only : v_norm
   implicit none
 ! integer,          intent(in)    :: ipol, nw, imode
   integer,          intent(in)    :: imode
@@ -202,12 +202,12 @@ subroutine write_loss_sec( imode )
       write (of_name,'(a,a)') 'reels_sec','-rpa'
       call of_open_close(of_name,'ot')
       write (lch,'(a,3f10.5)') &
-&               'REELS @ q || ', X%q0/v_module(X%q0)
+&               'REELS @ q || ', X%q0/v_norm(X%q0)
     else if(npol.eq.2) then
       write (of_name,'(a,a,a)') 'reels_sec_',qname,'-rpa'
       call of_open_close(of_name,'ot')
     write (lch,'(3a,3f10.5)') &
-&               'REELS @ q || ',qname,' : ', X%q0/v_module(X%q0)
+&               'REELS @ q || ',qname,' : ', X%q0/v_norm(X%q0)
     endif
 
     call msg('o reels_sec','#',trim(lch), INDENT=0) ! <-- writes to file...

@@ -44,7 +44,7 @@
  use com,            ONLY:msg,gen_fmt,error
  use par_proc_m,     ONLY:pp_redux_wait
  use matrix_operate, ONLY:m3inv
- use vec_operate,    ONLY:v_is_zero,c2a,rlu_v_is_zero,iku_v_module
+ use vec_operate,    ONLY:v_is_zero,c2a,rlu_v_is_zero,iku_v_norm
  use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:b,d3q_factor,RL_v_comp_acc,RL_vol,g_vec,ng_vec,&
 &                         nqibz,nqbz,qindx_X,qindx_B,qindx_S,qp_states_k,&
@@ -76,7 +76,7 @@
    allocate(qpt(q%nibz,3),q_module(q%nibz))
    qpt=q%pt
    do i1=1,q%nibz
-     q_module(i1)=iku_v_module(qpt(i1,:))
+     q_module(i1)=iku_v_norm(qpt(i1,:))
    enddo
    q_module(1)=q0_defmod
    call mem_est("q-pt q_module",(/q%nibz*3,q%nibz/),(/SP,SP/))   
@@ -125,7 +125,7 @@
      allocate(qpt(q%nibz,3),q_module(q%nibz))
      qpt=q%pt
      do i1=1,q%nibz
-       q_module(i1)=iku_v_module(qpt(i1,:))
+       q_module(i1)=iku_v_norm(qpt(i1,:))
      enddo
      q_module(1)=q0_defmod
      call mem_est("q-pt q_module",(/q%nibz*3,q%nibz/),(/SP,SP/))   

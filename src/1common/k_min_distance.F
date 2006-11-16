@@ -22,7 +22,7 @@
  real function kmin_distance(k,p) ! k/p are iku 
 !================================
  use pars
- use vec_operate,  ONLY:iku_v_module,c2a
+ use vec_operate,  ONLY:iku_v_norm,c2a
  use R_lattice,    ONLY:b
  implicit none
  real(SP) :: k(3),p(3)
@@ -32,12 +32,12 @@
  real(SP) :: di(3),da(3)
  di=k-p
  call c2a(b,di,da,'ki2a')
- kmin_distance=iku_v_module(di)
+ kmin_distance=iku_v_norm(di)
  do i1=-ni,ni
   do i2=-ni,ni
    do i3=-ni,ni
     call c2a(b,da(:)-(/i1,i2,i3/),di,'ka2c')
-    kmin_distance=min(kmin_distance,iku_v_module(di))
+    kmin_distance=min(kmin_distance,iku_v_norm(di))
    enddo
   enddo
  enddo

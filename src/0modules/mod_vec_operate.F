@@ -25,43 +25,33 @@
 !
  contains
 ! 
- function v_module(v)
-!--------------------
+ function v_norm(v)
+!------------------
  implicit none
- real(SP) :: v(3),v_module
- v_module=sqrt(dot_product(v,v))
- end function v_module
+ real(SP) :: v(3),v_norm
+ v_norm=sqrt(dot_product(v,v))
+ end function v_norm
 !
- function iku_v_module(v)
-!------------------------
+ function iku_v_norm(v)
+!----------------------
  use D_lattice,      ONLY:alat
  implicit none
- real(SP) :: v(3),u(3),iku_v_module
+ real(SP) :: v(3),u(3),iku_v_norm
  u(:)=v(:)*2.*pi/alat(:)
- iku_v_module=sqrt(dot_product(u,u))
- end function iku_v_module
+ iku_v_norm=sqrt(dot_product(u,u))
+ end function iku_v_norm
 
  function cross_product(a,b)
 !------------------------
-   implicit none
-   real(SP), intent(in) :: a(3),b(3)
-   real(SP)             :: cross_product(3)
+ implicit none
+ real(SP), intent(in) :: a(3),b(3)
+ real(SP)             :: cross_product(3)
 
-   cross_product(1) = a(2) * b(3) - a(3) * b(2)
-   cross_product(2) = a(3) * b(1) - a(1) * b(3)
-   cross_product(3) = a(1) * b(2) - a(2) * b(1)
+ cross_product(1) = a(2) * b(3) - a(3) * b(2)
+ cross_product(2) = a(3) * b(1) - a(1) * b(3)
+ cross_product(3) = a(1) * b(2) - a(2) * b(1)
 
  end function cross_product
-
- function internal_product(u,v,ic)
-!---------------------------------
- implicit none
- integer :: ic
- real(SP):: u(3),v(3),internal_product
- if (ic==1) internal_product=u(2)*v(3)-v(2)*u(3)
- if (ic==2) internal_product=u(3)*v(1)-v(3)*u(1)
- if (ic==3) internal_product=u(1)*v(2)-v(1)*u(2)
- end function internal_product
 !
  logical function v_is_zero(v)
 !-----------------------------
@@ -134,13 +124,13 @@
 
  call c2a(b_here,v_in,q,'ki2a')
  call c2a(b_here,v_in,p,'ki2c')
- dist=v_module(p)
+ dist=v_norm(p)
  do i1=-ni,ni
    do i2=-ni,ni
      do i3=-ni,ni
        call c2a(b_here,q(:)-(/i1,i2,i3/),u,'ka2c')
-       if (v_module(u)<dist-1.E-5) p=u
-       if (v_module(u)<dist-1.E-5) dist=v_module(u)
+       if (v_norm(u)<dist-1.E-5) p=u
+       if (v_norm(u)<dist-1.E-5) dist=v_norm(u)
      enddo
    enddo
  enddo
@@ -164,7 +154,7 @@
 
  call c2a(v_in=k,v_out=k_i,mode='ka2i')
  call k2bz(v_in=k_i)
- ak2bz=iku_v_module(k_i)
+ ak2bz=iku_v_norm(k_i)
  call c2a(v_in=k_i,v_out=k,mode='ki2a')
 
  end function ak2bz

@@ -54,7 +54,7 @@
  use parser_m,      ONLY:parser
  use stderr,        ONLY:string_pack
  use com,           ONLY:msg,gen_fmt
- use vec_operate,   ONLY:iku_v_module,sort
+ use vec_operate,   ONLY:iku_v_norm,sort
  use D_lattice,     ONLY:DL_vol
  use R_lattice,     ONLY:d3q_factor,RIM_is_diagonal,RIM_qpg,bare_qpg,&
 &                        nqibz,g_vec,qpt,nqbz,RIM_ng,RIM_n_rand_pts,&
@@ -78,11 +78,11 @@
  call mem_est("bare_qpg",(/size(bare_qpg)/))
  bare_qpg(1,1)=q_module(1)
  do i1=2,max(bare_NG,wf_ng)
-   bare_qpg(1,i1)=iku_v_module(g_vec(i1,:))
+   bare_qpg(1,i1)=iku_v_norm(g_vec(i1,:))
  enddo
  do i2=2,nqibz
    do i1=1,max(bare_NG,wf_ng)
-     bare_qpg(i2,i1)=iku_v_module(qpt(i2,:)+g_vec(i1,:))
+     bare_qpg(i2,i1)=iku_v_norm(qpt(i2,:)+g_vec(i1,:))
    enddo
  enddo
 !
@@ -119,7 +119,7 @@
 
    call msg('nr','Summary of Coulomb integrals for non-metallic bands |Q|[au] RIM/Bare:')
    do i1=1,nqibz
-     q_mod(i1)=iku_v_module(qpt(i1,:))
+     q_mod(i1)=iku_v_norm(qpt(i1,:))
    enddo
    call sort(arrin=q_mod,indx=q_modi)
    do i1=1,nqibz,2
@@ -128,7 +128,7 @@
        iq=q_modi(i2)
        write (lch1,'(a,i3.3,a)') 'Q [',iq,']:'
        if (i2/=i1) write (lch1,'(2a,i3.3,a)') trim(lch2),' * Q [',iq,']:'
-       r(1)=iku_v_module(qpt(iq,:))
+       r(1)=iku_v_norm(qpt(iq,:))
        r(2)=2./(abs(bare_qpg(iq,1))**2.*DL_vol*real(nqbz))
        if (i2==1) r(2)=2.*7.7956/(2.*pi)**3.*d3q_factor**(1./3.)
        r(2)=RIM_qpg(iq,1,1)/r(2)

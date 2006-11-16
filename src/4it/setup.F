@@ -29,12 +29,12 @@
 &                         k_grid_b,rl_sop,bz_samp
  use wave_func,      ONLY:ng_wf
  use com,            ONLY:msg,gen_fmt,error
- use vec_operate,    ONLY:iku_v_module,internal_product,c2a
+ use vec_operate,    ONLY:iku_v_norm,cross_product,c2a
  implicit none
  type(levels)    ::en,Xen
  type(bz_samp)::k,Xk
 !ws
- real(SP)          :: v1(3),m(3,3)
+ real(SP)          :: v1(3),m(3,3),cp(3)
  integer           :: i1,i2,i3,is
  character(schlen) :: ch(5)
 
@@ -46,17 +46,17 @@
  call msg('r','A2 =',a(2,:)/alat(:))
  call msg('rn','A3 =',a(3,:)/alat(:))
  DL_vol=0.
+ cp=cross_product(a(2,:),a(3,:))
  do i1=1,3
-   DL_vol=DL_vol+a(1,i1)*internal_product(a(2,:),a(3,:),i1)
+   DL_vol=DL_vol+a(1,i1)*cp(i1)
  enddo
  call msg('r','DL volume [au]:',DL_vol)
  RL_vol=(2.*pi)**3./DL_vol
 
- do i1=1,3
-   b(1,i1)=internal_product(a(2,:),a(3,:),i1)*2.*pi/DL_vol
-   b(2,i1)=internal_product(a(3,:),a(1,:),i1)*2.*pi/DL_vol
-   b(3,i1)=internal_product(a(1,:),a(2,:),i1)*2.*pi/DL_vol
- enddo
+ b(1,:)=cross_product(a(2,:),a(3,:))*2.*pi/DL_vol
+ b(2,:)=cross_product(a(3,:),a(1,:))*2.*pi/DL_vol
+ b(3,:)=cross_product(a(1,:),a(2,:))*2.*pi/DL_vol
+
  call msg('nr','Reciprocal Lattice(RL) unit cell [iku]')
  call c2a(b,b(1,:),v1,'kc2i')
  call msg('r','B1 =',v1)

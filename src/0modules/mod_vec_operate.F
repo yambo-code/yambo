@@ -30,7 +30,7 @@
  implicit none
  real(SP) :: v(3),v_module
  v_module=sqrt(dot_product(v,v))
- end function
+ end function v_module
 !
  function iku_v_module(v)
 !------------------------
@@ -39,7 +39,19 @@
  real(SP) :: v(3),u(3),iku_v_module
  u(:)=v(:)*2.*pi/alat(:)
  iku_v_module=sqrt(dot_product(u,u))
- end function
+ end function iku_v_module
+
+ function cross_product(a,b)
+!------------------------
+   implicit none
+   real(SP), intent(in) :: a(3),b(3)
+   real(SP)             :: cross_product(3)
+
+   cross_product(1) = a(2) * b(3) - a(3) * b(2)
+   cross_product(2) = a(3) * b(1) - a(1) * b(3)
+   cross_product(3) = a(1) * b(2) - a(2) * b(1)
+
+ end function cross_product
 
  function internal_product(u,v,ic)
 !---------------------------------
@@ -49,7 +61,7 @@
  if (ic==1) internal_product=u(2)*v(3)-v(2)*u(3)
  if (ic==2) internal_product=u(3)*v(1)-v(3)*u(1)
  if (ic==3) internal_product=u(1)*v(2)-v(1)*u(2)
- end function
+ end function internal_product
 !
  logical function v_is_zero(v)
 !-----------------------------
@@ -58,7 +70,7 @@
  real(SP) :: v(3)
  v_is_zero=all((/abs(v(1))<=RL_v_comp_acc,abs(v(2))<=RL_v_comp_acc,&
 &                abs(v(3))<=RL_v_comp_acc/))
- end function
+ end function v_is_zero
 
  logical function rlu_v_is_zero(v)
 !--------------------------------
@@ -66,7 +78,7 @@
  real(SP) :: v(3),u(3)
  u=v-nint(v)
  rlu_v_is_zero=v_is_zero(u)
- end function
+ end function rlu_v_is_zero
 !
  subroutine c2a(b_in,v_in,v_out,mode)
 !------------------------------------
@@ -102,7 +114,7 @@
    v_in=matmul(mat,u) 
    if (index(mode,'2i')/=0) v_in(:)=v_in(:)/n(:) ! * -> rlu
  endif
- end subroutine
+ end subroutine c2a
 
  subroutine k2bz(v_in,v_out,b_in) ! k is iku !
 !================================
@@ -137,7 +149,7 @@
  if (present(v_out))      v_out=q
  if (.not.present(v_out)) v_in=q
 
- end subroutine
+ end subroutine k2bz
 !
  real(SP) function ak2bz(k) ! k is rlu !
 !==========================
@@ -155,7 +167,7 @@
  ak2bz=iku_v_module(k_i)
  call c2a(v_in=k_i,v_out=k,mode='ki2a')
 
- end function
+ end function ak2bz
 !
  logical function k_is_in_bz(k,lb) ! k is iku !
 !=================================
@@ -164,7 +176,7 @@
  real(SP) :: k(3),p(3),lb(3,3)
  call k2bz(k,p,lb)
  k_is_in_bz=v_is_zero(k-p)
- end function
+ end function k_is_in_bz
 !
  subroutine sort(arrin,arrout,indx)                             
 !==================================
@@ -244,6 +256,6 @@
  if (.not.present(arrout)) arrin=l_arrout
  if (present(indx)) indx=l_indx
  deallocate(l_indx,l_arrout)
- end subroutine
+ end subroutine sort
 !
- end module
+ end module vec_operate

@@ -25,7 +25,6 @@ module surface_geometry
   !
   use pars,             ONLY : SP
   use com,              ONLY : msg
-  use cross_product
   use D_lattice,        ONLY : alat, a
 
   real(SP)                  :: q0x(3), q0y(3), norm(3), az

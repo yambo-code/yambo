@@ -25,7 +25,6 @@ module eels_scattering
   !
   use com,             ONLY : msg
   Use pars,            only : HARTREE, SP, PI
-  use cross_product
   use surface_geometry
   use eels_kinematics
 
@@ -42,6 +41,7 @@ module eels_scattering
 contains
 
   subroutine scattering_frame( q0 )
+    use vec_operate,      only : cross_product
     implicit none
     real(SP),  intent(in)    :: q0(3)
     real(SP)                 :: fac
@@ -59,7 +59,7 @@ contains
     zaxis(2) = -norm(2)/fac
     zaxis(3) = -norm(3)/fac
 
-    yaxis = cross(zaxis,xaxis)
+    yaxis = cross_product(zaxis,xaxis)
 
     call msg('r','New EELS reference frame:')
     call msg('r','EELS X-axis: (v||) ',xaxis(1:3))

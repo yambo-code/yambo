@@ -22,7 +22,25 @@
  subroutine el_density(en,Xk,rho,use_si)
 !=======================================
 !
-!Electronic density
+!Electronic density.
+!
+!Note that here the identity
+!
+! \sum_{S_k} F(S_k r) = 1/R_k \sum_{S} F(S r) (1)
+! 
+!where S_k is a symm. op. in the star of k, S is a generic symm. op.
+!and R_k is the rank of the small group at k.
+!
+!Using (1) the density is calculated in two steps
+!
+! rho(r) = 1/nkibz \sum_{ n k S_k } f_{n k} |wf_{n k}(S_k^-1 r)|^2=
+!        = 1/nkibz \sum_{S} \sum_{n k} f_{n k}/R_k |wf_{n k}(S^-1 r)|^2 =
+!        = 1/nsym \sum_{S} ( \sum_{n k} f_{n k} w_k |wf_{n k}(S^-1 r)|^2 )
+!
+!where we have used the relation
+!
+! w_k = nsym/(nkibz * rank(k))
+!
 !
  use pars,          ONLY:SP
  use R_lattice,     ONLY:bz_samp
@@ -49,6 +67,9 @@
      enddo
    enddo
  enddo
+!
+! Simmetrization
+!
  rho_syms=nsym/(i_time_rev+1)
  if (use_si) rho_syms=nsym
  do i1=1,rho_syms

@@ -26,6 +26,40 @@
 ! 
 !   k%star k%nstar k%weights k%nbz
 !
+!Given the kpoints and the simmetry operations
+!this sub. calculates weights (and rangs of the point
+!groups) as well the simm. operations contained
+!in each star:
+!
+!k%star(ik,i) = is | R_is ik =!= ik  with i=1,k%nstar(ik)
+!
+!k%nstar(ik)   = # of k-points in the Star of ik
+!k%weights(ik) = k%nstar(ik) / (Sum_ik nk(ik) )  = Num. of symm / rank(ko) / Nk^BZ
+!
+!---------------------------------------------------------------------------------
+!
+!2-dimension example:
+!
+!-------------------
+!|        |        |
+!|   X1   |   X2   |
+!|        |        |
+!-------------------
+!|        |        |
+!|   X3   |   ko   |
+!|        |        |
+!-------------------
+!
+!In this case we have 8 symmetries and we obtain
+!from the IRREDUCIBLE ko other 3 REDUCIBLE k-points i
+!(X1, X2, X3)
+!
+!rang(ko) = 2  (I plus inversion that sends X2 < - > X3)
+!k%nstar(ko) = Num. of symm / rank(ko) = 8/2 = 4 (points in the star)
+!
+! N.B
+! rang(ik) = # of symmetries | R_is ik = ik
+!
  use pars
  use memory_m,       ONLY:mem_est
  use vec_operate,    ONLY:rlu_v_is_zero,c2a,k2bz

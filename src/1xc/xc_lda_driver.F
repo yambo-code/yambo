@@ -105,7 +105,7 @@
       call xchelu(dvxc(:,1),exc,fft_size,ORDER,rspts,vxc(:,1))
 
     case (XC_LDA_C_XALPHA)
-      call xcxalp(1._DP,exc,fft_size,ORDER,rspts,vxc(:,1),dvxc(:,1))
+      call xcxalp(3._DP/2._DP,exc,fft_size,ORDER,rspts,vxc(:,1),dvxc(:,1))
 
     case (XC_LDA_C_KP)
       call xc_rpa_kp(rspts,exc)

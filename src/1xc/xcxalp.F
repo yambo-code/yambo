@@ -6,9 +6,14 @@
 !! FUNCTION
 !! Returns exc, vxc, and eventually d(vxc)/d($\rho$) from input $\rho$.
 !! "X$\alpha$" method is used in this subroutine:
-!! a single fixed value is chosen for "alpha", set below.
 !! Expression is exc=-alpha*efac/rs (hartree), efac below.
 !! rs = $(3/(4\pi))^{1/3}* \rho (r)^{-1/3}$.
+!
+! Note that you recover LDAX when   \alpha=1 
+!                       SLATER when \alpha=3/2
+!
+! this is following PW notation
+!
 !!
 !! COPYRIGHT
 !! Copyright (C) 1998-2005 ABINIT group (DCA, XG, GMR)

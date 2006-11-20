@@ -66,8 +66,14 @@
      if (lRIM) isc%gamp(ig,ig2)=RIM_qpg(iq,ig1,ig2)/2.
      if (.not.lRIM) then 
        isc%gamp(ig,ig2)=Co/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
-       if (iq==1.and.ig1==1) isc%gamp(ig,ig2)=isc%gamp(ig,ig2)*bare_qpg(iq,ig1)/aqpg
-       if (iq==1.and.ig2==1) isc%gamp(ig,ig2)=isc%gamp(ig,ig2)*bare_qpg(iq,ig2)/aqpg
+!
+! When using the CUTOFF the (1,1) component of the Col potential
+! is already regolarized.
+!
+       if (.not.l_col_cut) then
+         if (iq==1.and.ig1==1) isc%gamp(ig,ig2)=isc%gamp(ig,ig2)*bare_qpg(iq,ig1)/aqpg
+         if (iq==1.and.ig2==1) isc%gamp(ig,ig2)=isc%gamp(ig,ig2)*bare_qpg(iq,ig2)/aqpg
+       endif
      endif
    enddo
  enddo

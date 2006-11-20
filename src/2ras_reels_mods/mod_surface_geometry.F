@@ -70,7 +70,7 @@ end subroutine init_surface
     q0y(:)=q0y(:)*1.E-5/v_norm(q0y)
 
     norm = cross_product( q0x, q0y )
-    norm = norm*1.E-5/v_module(norm)  ! Required if norm is to be used as a q0
+    norm = norm*1.E-5/v_norm(norm)  ! Required if norm is to be used as a q0
 
     if ( all( abs(norm).LT.eps) ) then
       lfail = .true.

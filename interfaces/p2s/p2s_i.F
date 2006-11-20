@@ -152,13 +152,11 @@
 
  call msg('s','== DB2 (wavefunctions) ... ')
 
-!allocate(wf_disk(2,n_bands,wf_ng_disk,max(n_spin,n_sp_pol)))
  allocate(wf_disk(2,n_bands,wf_ng_disk,n_spin))
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
 
  isec = 1
  do ik=1,nkibz
-!  do ispinor = 1, n_spinor
      !
      ! Print verbose wfc read message
      !
@@ -189,9 +187,7 @@
 !    if(n_spin.eq.4) io_err=ioWF(ID,wf_disk,ispinor)
      io_err=ioWF(ID,wf_disk)
 
-   enddo
-!enddo
-!if(nkibz*n_spinor.ne.isec-1) call error("Wrong total number of wfcs.")
+ enddo
 
  deallocate(wf_disk)
 

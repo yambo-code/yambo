@@ -31,6 +31,7 @@
 &                                  DL_vol, a, alat, default_Tel
  use wave_func,             ONLY : ng_wf, wf_ng_disk, wf_igk, wf_ng
  use vec_operate,           ONLY : cross_product
+ use xc_functionals,        ONLY : GS_xc_KIND,GS_xc_FUNCTIONAL, xc_string
  implicit none
  type(levels),     intent(out)  :: en     ! Energies
  type(bz_samp),    intent(out)  :: k      ! K/Q points
@@ -42,6 +43,7 @@
  integer                        :: i1, ik, ierr, isym(3,3,48), nspinpw
  logical                        :: l_identity, l_inversion
  character(lchlen)              :: lch
+ character(256)                 :: pw_dft
 
 !---------------------------------------------------------------------*
 !    Read dimensions                                                  *
@@ -198,6 +200,14 @@
  if (i_time_rev==1.and.n_spin.eq.1) nsym=2*nsym
 
 !---------------------------------------------------------------------*
+!    Read XC functional                                               *
+!---------------------------------------------------------------------*
+
+ call qexml_read_xc(dft=pw_dft, ierr=ierr)
+ call msg("s","XC functional found: "//trim(pw_dft))
+ call scan_xc(pw_dft,GS_xc_KIND,GS_xc_FUNCTIONAL)
+
+!---------------------------------------------------------------------*
 !    Read band structure                                              *
 !---------------------------------------------------------------------*
 
@@ -336,6 +346,45 @@
  if(i_time_rev==0) call msg('s',' :: Symmmetries    [T-rev]:',nsym*i_time_rev)
  call msg('s',' :: RL vectors        (WF):',wf_ng)
  call msg('s',' :: RL vectors    (CHARGE):',ng_vec)
+ call msg('s',' :: XC potential          : ',xc_string(GS_xc_KIND,GS_xc_FUNCTIONAL))
 
    return
  end subroutine 
+
+ subroutine scan_xc(pw_dft, GS_xc_KIND_,GS_xc_FUNCTIONAL_)
+   ! Default: GS_xc_KIND_ = -1 , GS_xc_FUNCTIONAL_ = -1
+   use xc_functionals,        ONLY : XC_EXCHANGE_CORRELATION, XC_EXCHANGE, &
+&                                  xc_string,XC_LDA_C_PW,XC_LDA_C_PZ,XC_LDA_C_WIGNER,   &
+&                                  XC_LDA_C_HL,XC_LDA_C_XALPHA
+   implicit none
+   character(256), intent(in)    :: pw_dft
+   integer, intent(out)          :: GS_xc_KIND_,GS_xc_FUNCTIONAL_
+   !
+   ! No support for GGA yet
+   !
+   if(index(pw_dft,'NOGX')==0.or.index(pw_dft,'NOGC')==0) then
+     return
+   endif
+   !
+   ! This list mimics the support for the Abinit functionals only.
+   !
+   if(index(pw_dft,'PZ')/=0.and.index(pw_dft,'SLA')/=0) then
+     GS_xc_FUNCTIONAL_ = XC_LDA_C_PZ
+     GS_xc_KIND_ = XC_EXCHANGE_CORRELATION
+   else if(index(pw_dft,'PW')/=0.and.index(pw_dft,'SLA')/=0) then
+     GS_xc_FUNCTIONAL_ = XC_LDA_C_PW
+     GS_xc_KIND_ = XC_EXCHANGE_CORRELATION
+   else if(index(pw_dft,'WIG')/=0.and.index(pw_dft,'SLA')/=0) then
+     GS_xc_FUNCTIONAL_ = XC_LDA_C_WIGNER
+     GS_xc_KIND_ = XC_EXCHANGE_CORRELATION
+   else if(index(pw_dft,'HL')/=0.and.index(pw_dft,'SLA')/=0) then
+     GS_xc_FUNCTIONAL_ = XC_LDA_C_HL
+     GS_xc_KIND_ = XC_EXCHANGE_CORRELATION
+   else if(index(pw_dft,'SL1')/=0) then ! Have to check this...
+     GS_xc_FUNCTIONAL_ = XC_LDA_C_XALPHA
+     GS_xc_KIND_ = XC_EXCHANGE
+   endif
+
+   return
+ end subroutine scan_xc
+

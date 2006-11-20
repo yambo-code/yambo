@@ -45,7 +45,7 @@
  use pars,          ONLY:SP,schlen,lchlen
  use vec_operate,   ONLY:v_is_zero,v_norm
  use com,           ONLY:msg
- use R_lattice,     ONLY:ph_radius,box_length,cyl_length,cut_geometry,bz_samp
+ use R_lattice,     ONLY:cyl_ph_radius,box_length,cyl_length,cut_geometry,bz_samp
  use stderr,        ONLY:string_split,string_pack
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY
  implicit none
@@ -80,20 +80,32 @@
 !
  is_cut=.false.
  is_cut(1)=index(str_piece(2),'x')/=0
+!
+!Box
  if (cut_is_box.or..not.is_cut(1)) is_cut(2)=index(str_piece(2),'y')/=0
  if (cut_is_box.or.(.not.is_cut(1).and..not.is_cut(2))) &
 &   is_cut(3)=index(str_piece(2),'z')/=0
+!
+!Sphere
  if (cut_is_sphere) is_cut=.true.
 !
+!Cylinder
+#if defined PJ_CYL_CUT
+ if (cut_is_cyl.or..not.is_cut(1)) is_cut(2)=index(str_piece(2),'y')/=0
+ if (cut_is_cyl.or.(.not.is_cut(1).and..not.is_cut(2))) &
+&   is_cut(3)=index(str_piece(2),'z')/=0
+ if (cut_is_cyl.and.any((/.not.is_cut/)) ) cyl_length=0.
+#endif
+!
  if (.not.cut_is_box) box_length=0.
- if (.not.cut_is_sphere) ph_radius=0.
+ if (.not.cut_is_sphere) cyl_ph_radius=0.
  if (.not.cut_is_cyl) cyl_length=0.
 !
 ! Return conditions
 !
  if (.not.any((/cut_is_sphere,cut_is_box,cut_is_cyl/))) return
  if (.not.any(is_cut)) return
- if (cut_is_sphere.and.ph_radius==0.) return
+ if (cut_is_sphere.and.cyl_ph_radius==0.) return
  if (cut_is_box.and.all(box_length==0.)) return
  if (cut_is_cyl.and.cyl_length==0.) return
 
@@ -114,7 +126,7 @@
 !
 !lengths
 !-------
- if (cut_is_sphere) call msg('r','Sphere radius   [au]:',ph_radius)
+ if (cut_is_sphere) call msg('r','Sphere radius   [au]:',cyl_ph_radius)
  if (cut_is_box) then
    i1=0
    if (is_cut(1)) i1=i1+1
@@ -124,8 +136,15 @@
    if (is_cut(3)) i1=i1+1
    if (is_cut(3)) length(i1)=box_length(3)
    call msg('r','Box sides        [au]:',length(:i1))
+#if defined PJ_CYL_CUT
  else if (cut_is_cyl) then
-   call msg('r','Cyl. length      [au]:',cyl_length)
+   if (cyl_length > 0.) then
+     call msg('r','Cyl. length      [au]:',cyl_length)
+   else
+     call msg('r','Cyl. length          : infinite')
+   endif
+   call msg('r',  'Cyl. radius      [au]:',cyl_ph_radius)
+#endif
  endif
 
 ! Checking geometry symmetry
@@ -168,6 +187,10 @@
  if (io_err/=0) then
    if (cut_is_sphere) call cutoff_sphere()
    if (cut_is_box)    call cutoff_box(q,is_cut)
+#if defined PJ_CYL_CUT
+   if (cut_is_cyl)    call cutoff_cylinder(q,is_cut)
+#endif
+!
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=ioCOL_CUT(ID)
 !

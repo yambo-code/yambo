@@ -25,7 +25,7 @@
  use wave_func,      ONLY:wf_ng
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts,CUTOFF_plus_RIM,&
-&                         ph_radius,box_length,cyl_length,cut_geometry,&
+&                         cyl_ph_radius,box_length,cyl_length,cut_geometry,&
 &                         ng_closed,nqibz,bare_qpg
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,write_is_on
@@ -53,7 +53,7 @@
    call io_elemental(ID,VAR="PARS",VAR_SZ=10,MENU=0)
    call io_elemental(ID,R1=box_length,&
 &       VAR=' Box sides length            [au]:',CHECK=.true.,OP=(/"==","==","=="/))
-   call io_elemental(ID,R0=ph_radius,&
+   call io_elemental(ID,R0=cyl_ph_radius,&
 &       VAR=' Sphere/Cylinder radius      [au]:',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,R0=cyl_length,&
 &       VAR=' Cylinder length             [au]:',CHECK=.true.,OP=(/"=="/))

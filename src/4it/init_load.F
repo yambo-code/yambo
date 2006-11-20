@@ -44,7 +44,7 @@
  use D_lattice,     ONLY:Tel
  use R_lattice,     ONLY:RL_v_comp_acc,n_g_shells,ng_closed,QP_states_k,nXkibz,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
-&                        RIM_n_rand_pts,ph_radius,box_length,cyl_length,cut_geometry
+&                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry
  use BS,            ONLY:BS_res_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_columns,&
 &                        BS_n_g_W,BS_n_g_exch,BSS_mode,Haydock_treshold,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BS_cpl_mode
@@ -147,7 +147,7 @@
  call it(defs,'CUTGeo','[CUT] Coulomb Cutoff geometry: box/cylinder/sphere',cut_geometry,&
 &                         verb_level=V_more)
  call it(defs,'CUTBox','[CUT] [au] Box sides',box_length,verb_level=V_more)
- call it(defs,'CUTSphere','[CUT] [au] Sphere radius',ph_radius,verb_level=V_more)
+ call it(defs,'CUTRadius','[CUT] [au] Sphere/Cylinder radius',cyl_ph_radius,verb_level=V_more)
  call it(defs,'CUTCylLen','[CUT] [au] Cylinder length',cyl_length,verb_level=V_more)
 !======
 ! S_xc

@@ -46,7 +46,7 @@ typedef struct
  #define F90_FUNC_(name,NAME) name
 #endif
 #include "codever.h"
-#if defined self  || PJ_RAS || PJ_REELS || PJ_PH || PJ_GKS
+#if defined self  || PJ_RAS || PJ_REELS || PJ_PH || PJ_GKS || PJ_CYL_CUT || PJ_SPIN
  #include "self_cpp.h"
 #endif
 #if defined spp 
@@ -119,7 +119,7 @@ main(int argc, char *argv[])
 /* 
  Switch off MPI_init as I have options used to create the input file...
 */
-#if defined self  || PJ_RAS || PJ_REELS || PJ_PH || PJ_GKS
+#if defined self  || PJ_RAS || PJ_REELS || PJ_PH || PJ_GKS || PJ_CYL_CUT || PJ_SPIN
      if (j> 9) {mpi_init=-1;};
 #endif
 #if defined spp
@@ -200,7 +200,7 @@ main(int argc, char *argv[])
    MPI_Comm_size(MPI_COMM_WORLD, &np);  /* get number of processes */
  };
 #endif
-#if defined self  || PJ_RAS || PJ_REELS || PJ_PH || PJ_GKS
+#if defined self  || PJ_RAS || PJ_REELS || PJ_PH || PJ_GKS || PJ_CYL_CUT || PJ_SPIN
  /* 
    Running the Fortran SELF driver 
  ===========================================================================
@@ -246,7 +246,7 @@ main(int argc, char *argv[])
  */
  strcpy(edit_line,"vi ");
  strncat(edit_line,inf,strlen(inf));
-#if defined self  || PJ_RAS || PJ_REELS || spp || PJ_PH || PJ_GKS
+#if defined self  || PJ_RAS || PJ_REELS || spp || PJ_PH || PJ_GKS || PJ_CYL_CUT || PJ_SPIN
  if (iif == 1 && ttd>0 ) 
  {
   system(edit_line);

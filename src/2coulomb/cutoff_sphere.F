@@ -23,7 +23,7 @@
 !==========================
  use pars,          ONLY:SP
  use wave_func,     ONLY:wf_ng
- use R_lattice,     ONLY:ph_radius,bare_qpg,nqibz
+ use R_lattice,     ONLY:cyl_ph_radius,bare_qpg,nqibz
  implicit none
 !ws
  integer ::iq,ig
@@ -31,12 +31,12 @@
 
  do iq=1,nqibz
    do ig=1,wf_ng
-     dummy=sqrt(1. - cos(bare_qpg(iq,ig)*ph_radius) )
+     dummy=sqrt(1. - cos(bare_qpg(iq,ig)*cyl_ph_radius) )
      if (abs(dummy)<1.E-5) dummy=1.E-5
      bare_qpg(iq,ig)=bare_qpg(iq,ig)/dummy
    enddo
  enddo
- bare_qpg(1,1)=sqrt(2.0)/ph_radius
+ bare_qpg(1,1)=sqrt(2.0)/cyl_ph_radius
 
  end subroutine
 !

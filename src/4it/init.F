@@ -46,7 +46,7 @@
  use stderr,         ONLY:tty_size,logfile
  use R_lattice,      ONLY:ng_closed,ng_vec,n_g_shells,q0_defmod,&
 &                         Xk_grid_is_uniform,bz_samp,nqibz,bz_samp_reset,&
-& cut_geometry,ph_radius
+& cut_geometry,cyl_ph_radius
 
  use wave_func,      ONLY:wf_ng,ioWF
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,REP
@@ -280,7 +280,7 @@
  if (l_rim) call initactivate(1,'RandQpts RandGvec QpgFull Em1Anys IDEm1Ref')
 !
 !Col CUTOFF 
- if (l_col_cut) call initactivate(1,'CUTGeo CUTBox CUTSphere CUTCylLen')
+ if (l_col_cut) call initactivate(1,'CUTGeo CUTBox CUTRadius CUTCylLen')
 !
 !XX
  if (l_xxvxc) call initactivate(1,'EXXRLvcs SxLowBnd GfnQPdb GfnQP_N GfnQP_E GfnQP_W GfnQP_Z')

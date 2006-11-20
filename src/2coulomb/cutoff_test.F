@@ -24,7 +24,7 @@
  use pars,          ONLY:SP,schlen,pi
  use vec_operate,   ONLY:v_norm
  use D_lattice,     ONLY:alat,sop_inv,DL_vol,a
- use R_lattice,     ONLY:bz_samp,ph_radius,bare_qpg,cyl_length,box_length,&
+ use R_lattice,     ONLY:bz_samp,cyl_ph_radius,bare_qpg,cyl_length,box_length,&
 &                        g_vec,g_rot
  use wave_func,     ONLY:wf_ng
  use com,           ONLY:msg,of_open_close
@@ -58,12 +58,14 @@
 ! DL points along the 3 possible planes
 !---------------------------------------
  dummy=(/v_norm(a(1,:)),v_norm(a(2,:)),v_norm(a(3,:))/)
- if (cut_is_sphere.or.cut_is_cyl) dummy=2.*plot_factor*ph_radius
+ if (cut_is_sphere) dummy=2.*plot_factor*cyl_ph_radius
+#if defined PJ_CYL_CUT
  if (cut_is_cyl) then
    if (is_cut(1)) dummy(1)=2.*plot_factor*cyl_length
    if (is_cut(2)) dummy(2)=2.*plot_factor*cyl_length
    if (is_cut(3)) dummy(3)=2.*plot_factor*cyl_length
  endif
+#endif
  if (cut_is_box) then
    if (is_cut(1)) dummy(1)=2.*plot_factor*box_length(1)
    if (is_cut(2)) dummy(2)=2.*plot_factor*box_length(2)
@@ -91,7 +93,13 @@
        v_yz(ip,1)=V_in_box( pl_yz_pt(ip,:) )
        v_xz(ip,1)=V_in_box( pl_xz_pt(ip,:) )
      endif
-
+#if defined PJ_CYL_CUT
+     if (cut_is_cyl) then
+       v_xy(ip,1)=V_in_cyl( pl_xy_pt(ip,:) )
+       v_yz(ip,1)=V_in_cyl( pl_yz_pt(ip,:) )
+       v_xz(ip,1)=V_in_cyl( pl_xz_pt(ip,:) )
+     endif
+#endif
    enddo
  enddo
 !
@@ -173,7 +181,7 @@
  real(SP) function V_in_sphere(r)
  real(SP) :: r(3)
  V_in_sphere=0.
- if (v_norm(r)<ph_radius.and.v_norm(r)>0.1) V_in_sphere=1./v_norm(r)
+ if (v_norm(r)<cyl_ph_radius.and.v_norm(r)>0.1) V_in_sphere=1./v_norm(r)
  end function
 
  real(SP) function V_in_box(r)
@@ -183,6 +191,23 @@
 &     (.not.is_cut(2).or.abs(r(2))<box_length(2)/2.).and.&
 &     (.not.is_cut(3).or.abs(r(3))<box_length(3)/2.)) V_in_box=1./v_norm(r)
  end function
+
+#if defined PJ_CYL_CUT
+ real(SP) function V_in_cyl(r)
+ real(SP) :: r(3)
+ V_in_cyl=0.
+ if (cyl_length>0) then 
+   if ( (is_cut(1).and.abs(r(1))<cyl_length.and.abs(r(2))**2+abs(r(3))**2<cyl_ph_radius).or.&
+&       (is_cut(2).and.abs(r(2))<cyl_length.and.abs(r(1))**2+abs(r(3))**2<cyl_ph_radius).or.&
+&       (is_cut(3).and.abs(r(3))<cyl_length.and.abs(r(1))**2+abs(r(2))**2<cyl_ph_radius) ) &
+&     V_in_cyl=1./v_norm(r)
+ else
+   if ( (is_cut(1).and.sqrt(abs(r(2))**2+abs(r(3))**2)<cyl_ph_radius).or.&
+&       (is_cut(2).and.sqrt(abs(r(1))**2+abs(r(3))**2)<cyl_ph_radius).or.&
+&       (is_cut(3).and.sqrt(abs(r(1))**2+abs(r(2))**2)<cyl_ph_radius)) V_in_cyl=1./v_norm(r)
+ endif
+ end function
+#endif
 
  end subroutine
 !

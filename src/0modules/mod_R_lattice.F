@@ -94,12 +94,18 @@
 !
 ! Coulomb (including Cutoff)
 !
-   real(SP)                :: ph_radius
+   real(SP)                :: cyl_ph_radius
    real(SP)                :: cyl_length
    real(SP)                :: box_length(3)
+   real(SP)                :: cyl_cut
    character(schlen)       :: cut_geometry
    complex(SP),allocatable :: bare_qpg(:,:)
    logical                 :: CUTOFF_plus_RIM
+#if defined PJ_CYL_CUT
+   real(SP)                :: cyl_vr_save
+   real(SP)                :: cyl_vz_save
+   real(SP)                :: cyl_zz_save
+#endif
 
  contains
 

@@ -26,7 +26,8 @@
 !to the qpg_anisotropy (if db.qpgint exists!)
 !Wen mode=='x' the standard Coulomb integral is used.
 !
- use pars
+ use pars,          ONLY:SP,pi
+ use drivers,       ONLY:l_col_cut
  use collision,     ONLY:ggwinfo
  use R_lattice,     ONLY:d3q_factor,RIM_ng,RIM_qpg,RIM_is_diagonal,&
 &                        bare_qpg,RIM_anisotropy,RIM_n_rand_pts

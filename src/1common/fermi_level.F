@@ -33,8 +33,8 @@
  use pars,          ONLY:SP,DP,HARTREE,Kelvin
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Tel
- use electrons,     ONLY:levels,nel,n_spin,n_sp_pol,spin_occ,&
-&                        BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spinor
+ use electrons,     ONLY:levels,nel,n_sp_pol,spin_occ,&
+&                        BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spinor,n_spin
  use R_lattice,     ONLY:bz_samp
  use com,           ONLY:msg
  use vec_operate,   ONLY:sort
@@ -45,23 +45,23 @@
  real(SP):: test_Tel
 !ws
  integer :: i1,i2,is,ib,ik,trials(2),ires
- integer :: index(E%nk*E%nb*n_spin,3),index_s(E%nk*E%nb*n_spin)
- real(SP):: E_s(E%nk*E%nb*n_spin)
+ integer :: index(E%nk*E%nb*n_sp_pol,3),index_s(E%nk*E%nb*n_sp_pol)
+ real(SP):: E_s(E%nk*E%nb*n_sp_pol)
  real(SP):: lnel(2),Ef(2),Ffermi,Efdist,neltresh
  real(SP),parameter :: Telstep=0.0001/HARTREE
 !
-!     n_spin n_sp_pol n_spinor  spin_occ ffac
-!       1        1        1         2      2
-!       2        1        2        0.5     1
-!       2        2        1         1      1
+!     n_spin n_sp_pol n_spinor  spin_occ 
+!       1        1        1         2      
+!       2        1        2         1      non collinear
+!       2        2        1         1          collinear
 !
- spin_occ=2.0_SP/real(n_spin,SP)/real(n_spinor,SP)
+ spin_occ=2.0_SP/real(n_spin)
 !
  neltresh=1.E-5
  i1=0
  do ik=1,E%nk
    do ib=1,E%nb
-     do is=1,n_spin
+     do is=1,n_sp_pol
        i1=i1+1
        index(i1,:)=(/ib,ik,is/)
        E_s(i1)=E%E(ib,ik,is)
@@ -74,6 +74,8 @@
 !
 ! First guess
 !--------------
+!
+! real(nel)/2.0_SP*real(n_spinor) is last occupied state
 !
  Ef(1)=minval(E%E(nint( real(nel)/2.0_SP*real(n_spinor)+.1),:,:))
  Ef(2)=maxval(E%E(nint( real(nel)/2.0_SP*real(n_spinor)+.1),:,:))
@@ -116,12 +118,13 @@
 !
  if (.not.associated(E%f)) allocate(E%f(E%nb,E%nk,n_spin))
  Efdist=1.E5
- do i1=1,E%nk*E%nb*n_spin
+ do i1=1,E%nk*E%nb*n_sp_pol
    ib=index( index_s(i1) , 1)
    ik=index( index_s(i1) , 2)
    is=index( index_s(i1) , 3)
 
    E%f(ib,ik,is)=spin_occ*Ffermi(E_s(i1)-E%Efermi(1),test_Tel)
+   if (n_spinor==2) E%f(ib,ik,2)=E%f(ib,ik,1)
 
    if (abs(E%E(ib,ik,is)-E%Efermi(1))<Efdist) then
      E%bf=ib
@@ -138,12 +141,13 @@
  if (BZ_RIM_nbands>0) then
    do ik=1,BZ_RIM_tot_nkpts
      do ib=1,BZ_RIM_nbands
-       do is=1,n_spin
-         E%E_RIM(ib,ik,is)=E%E_RIM(ib,ik,is)-E%Efermi(1)
+       do is=1,n_sp_pol
          E%f_RIM(ib,ik,is)=spin_occ*Ffermi(E%E_RIM(ib,ik,is),test_Tel)
+         if (n_spinor==2) E%f_RIM(ib,ik,2)=E%f_RIM(ib,ik,1)
        enddo
      enddo
    enddo
+   E%E_RIM(:,:,:)=E%E_RIM(:,:,:)-E%Efermi(1)
  endif
 !
 ! Mode = 1. Define E%f and exits
@@ -157,7 +161,7 @@
  call fermi_msg(E,mode)
  if (E%nbf/=E%nbm) then
    call msg('r','Electrons - <f_met>        :',(/lnel(1)+nel,&
-&               sum(E%f(E%nbf+1:E%nbm,:,:))/real(K%nibz*n_spin*(E%nbm-E%nbf))/))
+&               sum(E%f(E%nbf+1:E%nbm,:,:))/real(K%nibz*spin_occ*(E%nbm-E%nbf))/))
  endif
 !
  contains
@@ -171,7 +175,7 @@
    real(SP) :: Ffermi 
    real(DP):: nel_acc
    nel_acc=0.d0
-   do i1=1,E%nk*E%nb*n_spin
+   do i1=1,E%nk*E%nb*n_sp_pol
      ib=index( index_s(i1) , 1)
      ik=index( index_s(i1) , 2)
      is=index( index_s(i1) , 3)

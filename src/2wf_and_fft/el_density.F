@@ -76,5 +76,8 @@
    rho(:)=rho(:)+real(cv(fft_rot_r(i1,:)))/real(nsym)
  enddo
  if (.not.use_si) rho=rho*(1+i_time_rev)
+
+ write (*,*) sum(rho)
+
  end subroutine
 !

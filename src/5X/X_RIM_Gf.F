@@ -51,7 +51,7 @@
 !
 ! In the X_o loop the Gf is multiplied by 
 !
-!  f0fac*real(n_spinor,SP)/spin_occ/real(Xk%nbz)/DL_vol
+!  f0fac/spin_occ/real(Xk%nbz)/DL_vol
 !
 ! so that I have to divide/multiply to correctly renormalize 
 !

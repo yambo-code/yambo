@@ -28,7 +28,7 @@
 !
 !     n_spin n_sp_pol n_spinor  spin_occ ffac
 !       1        1        1         2      2
-!       2        1        2        0.5     1
+!       2        1        2         1      1
 !       2        2        1         1      1
 !
  use pars,          ONLY:SP,schlen,HARTREE
@@ -41,7 +41,7 @@
  use frequency,     ONLY:w_samp,bg_npts,cg_pt,cg_npts
  use par_indexes_m, ONLY:par_indexes
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv,i_space_inv
- use electrons,     ONLY:levels,spin_occ,n_spin, n_spinor
+ use electrons,     ONLY:levels,spin_occ,n_spin
  use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,q_module 
  use wave_func,     ONLY:wf_load
  use memory_m,      ONLY:mem_est
@@ -109,8 +109,8 @@
 ! evaluated at the fermi state
 !
    drude_factor=Xen%f(Xen%bf,Xen%kf,Xen%sf)*&
-&               (spin_occ-Xen%f(Xen%bf,Xen%kf,Xen%sf))*&
-&               real(n_spinor,SP)/spin_occ/real(Xk%nbz)/DL_vol
+&               (spin_occ-Xen%f(Xen%bf,Xen%kf,Xen%sf))/&
+&               spin_occ/real(Xk%nbz)/DL_vol
    do iw=fr(1),fr(2)
      drude_Gf(iw-fr(1)+1)=X_drude(real(Xw%p(iw)),X%Wd,q_module(1))/drude_factor
    enddo
@@ -227,8 +227,8 @@
      isc%is = (/ic,ik,1,i_spin/)
      isc%os = (/iv,ik,1,i_spin/)
      isc%qs = (/1,1,1/)
-     ffac = Xen%f(iv,ik,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))*&
-&           real(n_spinor,SP)/spin_occ/real(Xk%nbz)/DL_vol
+     ffac = Xen%f(iv,ik,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))/&
+&           spin_occ/real(Xk%nbz)/DL_vol
 #if defined PJ_RAS
        if(iq==1 .and. X%ng==1 ) isave=(/iv,ic,ik,i_spin/)
 #endif
@@ -327,8 +327,8 @@
       isc%is=(/ic,ik,is,i_spin/)
       isc%os=(/iv,ikp,isp,i_spin/)
       isc%qs=(/qindx_X(iq,ikbz,2),iq,1/)
-      ffac=Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))*&
-&          real(n_spinor,SP)/spin_occ/real(Xk%nbz)/DL_vol
+      ffac=Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))/&
+&          spin_occ/real(Xk%nbz)/DL_vol
       call scatterBamp(isc)
       do g2=1,X%ng
 #if defined DP

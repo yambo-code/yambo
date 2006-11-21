@@ -38,8 +38,7 @@
  E%nbm=0
  E%nbf=0
  do i1=1,E%nb
-   if (n_spinor==1) r1=sum(E%f(i1,:,:))/2.
-   if (n_spinor==2) r1=sum(E%f(i1,:,:))
+   r1=sum(E%f(i1,:,:))/2.
    if (r1<=tresh) cycle
    if (abs(r1-real(E%nk,SP))<=tresh) then
      E%nbf=i1

@@ -27,6 +27,14 @@
 !
 ! Spin support
 !
+!     n_spin n_sp_pol n_spinor  
+!       1        1        1              
+!       2        1        2    non collinear
+!       2        2        1        collinear
+!
+! Note that in the non collinear case n_spin is an index
+! for the spinor components. It is not a Physical quantity.
+!
    integer  :: n_spin,n_sp_pol,n_spinor
 !
    type levels

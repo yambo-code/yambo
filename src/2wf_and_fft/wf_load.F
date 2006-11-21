@@ -26,7 +26,7 @@
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
  use stderr,        ONLY:string_pack
- use electrons,     ONLY:n_bands,nel,n_spin
+ use electrons,     ONLY:n_bands,nel,n_spin,n_spinor,n_sp_pol
  use R_lattice,     ONLY:nkibz
  use par_indexes_m, ONLY:par_indexes
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
@@ -150,13 +150,26 @@
  call pp_indexes_reset(px)
 
  if (.not.wf_norm_test) return
+!
+! Check normalization @ 1st k-point only.
+! 
+!
  mndp=10.
  mxdp=-1.
- do i1=1,min(int(nel)/2+5,wf_total_states)
-   do i2=1,min(int(nel)/2+5,wf_total_states)
-     c=dot_product(wf(:,i1),wf(:,i2))
-     if (abs(c)>mxdp) mxdp=abs(c)
-     if (abs(c)<mndp) mndp=abs(c)
+ do i1=1,min(int(nel)+5,wf_b(2))
+   do i2=1,min(int(nel)+5,wf_b(2))
+
+     do is=1,n_sp_pol
+
+       c=dot_product(wf(:, wf_state(i1,1,is) ),wf(:, wf_state(i2,1,is) ))
+
+       if (n_spinor==2) then
+         c=c+dot_product(wf(:, wf_state(i1,1,2) ),wf(:, wf_state(i2,1,2) ))
+       endif
+
+       if (abs(c)>mxdp) mxdp=abs(c)
+       if (abs(c)<mndp) mndp=abs(c)
+     enddo
    enddo
  enddo
  wf_norm_test=.false.

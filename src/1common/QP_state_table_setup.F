@@ -38,7 +38,11 @@
  use pars,          ONLY:SP,HARTREE,IP
  use memory_m,      ONLY:mem_est
  use QP_m,          ONLY:QP_nk,QP_nb,QP_state,QP_n_states,QP_table
+#if defined PJ_SPIN
+ use electrons,     ONLY:levels,n_spin
+#else
  use electrons,     ONLY:levels
+#endif
  use parser_m,      ONLY:parser
  implicit none
  type(levels)::en
@@ -144,24 +148,41 @@
    QP_state(:,:)=.true.
  endif
 
+#if defined PJ_SPIN
+2 QP_n_states=product(shape(pack(QP_state,QP_state)))*n_spin
+#else
 2 QP_n_states=product(shape(pack(QP_state,QP_state)))
+#endif
  if (.not.allocated(QP_table)) then
+#if defined PJ_SPIN
+   allocate(QP_table(QP_n_states,4))
+   call mem_est("QP_table",(/QP_n_states*4/),(/IP/))
+#else
    allocate(QP_table(QP_n_states,3))
    call mem_est("QP_table",(/QP_n_states*3/),(/IP/))
+#endif
  endif
 
  QP_n_states=0
  do i1=1,QP_nk
    do i2=1,QP_nb
      if (.not.QP_state(i2,i1)) cycle
+#if defined PJ_SPIN
+     QP_table(QP_n_states+1:QP_n_states+(n_spin),1:2)=i2
+     QP_table(QP_n_states+1:QP_n_states+(n_spin),3)=i1
+     QP_table(QP_n_states+1,4)=1
+     if (n_spin>1) QP_table(QP_n_states+2,4)=2
+     QP_n_states=QP_n_states+n_spin
+#else
      QP_n_states=QP_n_states+1
      QP_table(QP_n_states,1:2)=i2
      QP_table(QP_n_states,3)=i1
+#endif
    enddo
+
  enddo
 
  contains
-
   subroutine i_check(k_i,ilim)
    integer :: k_i(2),ilim
    if (k_i(1)>ilim.or.k_i(1)<1) k_i(1)=1

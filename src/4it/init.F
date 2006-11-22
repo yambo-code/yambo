@@ -213,7 +213,7 @@
  do i1=1,4
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
    io_X_err(i1)=ioX(X(i1),Xw(i1),io_ID)
-   X(i1)%iq=(/1,nqibz/)
+   if (nqibz>0) X(i1)%iq=(/1,nqibz/)
    if (io_X_err(i1)>0) X(i1)%iq(1)=io_X_err(i1)+1
  enddo
 !

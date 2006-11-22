@@ -23,7 +23,11 @@
 !============================
  use pars,           ONLY:SP
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts
+#if defined PJ_SPIN 
+ use electrons,      ONLY:n_met_bands,n_spin
+#else
  use electrons,      ONLY:n_met_bands
+#endif
  use QP_m,           ONLY:QP_Sx,QP_ng_Sx,QP_nb,QP_nk,QP_Vxc,QP_n_states,&
 &                         QP_Sx_low_band,QP_table,QP_state,QP_xc_FUNCTIONAL
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
@@ -32,7 +36,11 @@
  implicit none
  integer :: ID
 !ws
+#if defined PJ_SPIN
+ integer           :: QP_n_states_disk,bands(2),i1,i2,i_found,QP_state_disk(2+n_spin)
+#else
  integer           :: QP_n_states_disk,bands(2),i1,i2,QP_state_disk(3),i_found
+#endif
  real(SP)          :: sx(2),vxc(2)
 
  ioXXVXC=io_connect(desc="xxvxc",type=2,ID=ID)
@@ -81,7 +89,11 @@
      QP_state=.false.
    endif
 !  
+#if defined PJ_SPIN
+   call io_bulk(ID,VAR="Sx_Vxc",VAR_SZ=(/(6+n_spin)*QP_n_states_disk/))
+#else
    call io_bulk(ID,VAR="Sx_Vxc",VAR_SZ=(/7*QP_n_states_disk/))
+#endif
    do i1=1,QP_n_states_disk
      if (write_is_on(ID)) then
        QP_state_disk=QP_table(i1,:)

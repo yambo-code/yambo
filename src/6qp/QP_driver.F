@@ -24,7 +24,11 @@
  use pars,          ONLY:SP,schlen,IP,HARTREE
  use memory_m,      ONLY:mem_est
  use drivers,       ONLY:l_life,l_ppa,l_el_corr,l_ph_corr
- use electrons,     ONLY:levels
+#if defined PJ_SPIN
+ use electrons,     ONLY:levels,n_sp_pol,n_spinor
+#else
+ use electrons,     ONLY:levels,n_spinor
+#endif
  use stderr,        ONLY:string_pack
  use R_lattice,     ONLY:bz_samp
  use frequency,     ONLY:w_samp
@@ -46,7 +50,11 @@
  type(QP_t):: qp
  integer   ::i1,i3,io_err,ID
  real(SP)  ::dscp,r_numbers(7)
+#if defined PJ_SPIN
+ character(schlen)::ch1,ch2,local_fmt,ch_spin
+#else
  character(schlen)::ch1,ch2,local_fmt
+#endif
  integer, external::ioQP
 !----------------------------------------------------------------
 ! Parser
@@ -229,8 +237,16 @@
 &                real(qp%E(i1)-qp%Eo(i1))*HARTREE,real(qp%Z(i1)),&
 &                real(QP_Sc(i1,1))*HARTREE,xx_dummy,xc_dummy/)
      ch2=gen_fmt(r_v=r_numbers)
+#if defined PJ_SPIN
+     ch_spin=' '
+     if (n_sp_pol==2 .AND. QP_table(i1,4)==1) ch_spin=' [up] ' 
+     if (n_sp_pol==2 .AND. QP_table(i1,4)==2) ch_spin=' [dn] '
+     local_fmt=string_pack('(a,a,i4.4,3(a,f6.2),a,f4.2,4(a,',trim(ch2),'))')
+     write (ch1,trim(local_fmt)) trim(ch_spin), ' B=',QP_table(i1,1),' Eo=',r_numbers(1),&
+#else
      local_fmt=string_pack('(a,i4.4,3(a,f6.2),a,f4.2,4(a,',trim(ch2),'))')
      write (ch1,trim(local_fmt)) 'B=',QP_table(i1,1),' Eo=',r_numbers(1),&
+#endif
 &          ' E=',r_numbers(2),' E-Eo=',r_numbers(3),' Z=',r_numbers(4),&
 &          ' So=',r_numbers(5),' xx=',r_numbers(6),' Vxc=',r_numbers(7)
      if (QP_dSc_steps>2) then
@@ -278,7 +294,7 @@
  i3=QP_table(1,3)
  write (ch1,'(a,i4.4,a)') 'K [',i3,'] (iku):'
  call msg('r',trim(ch1),k%pt(i3,:))
- do i1=1,QP_n_states
+ do i1=1,QP_n_states,n_spinor
    r_numbers(:2)=(/aimag(qp%E(i1))*HARTREE/1.E-3,&
 &                  0.65822/2./aimag(qp%E(i1))/HARTREE/)
    if (QP_table(i1,3)/=i3) then
@@ -287,9 +303,20 @@
      call msg('nr',trim(ch1),k%pt(i3,:))
    endif
    ch2=gen_fmt(r_v=r_numbers(:2))
+#if defined PJ_SPIN
+   ch_spin=' '
+   if (n_sp_pol==2 .AND. QP_table(i1,4)==1) ch_spin=' [up] '
+   if (n_sp_pol==2 .AND. QP_table(i1,4)==2) ch_spin=' [dn] '
+   local_fmt=string_pack('(a,a,i4.4,a,f6.2,a,f4.2,4(a,',trim(ch2),'))')
+#else
    local_fmt=string_pack('(a,i4.4,a,f6.2,a,f4.2,4(a,',trim(ch2),'))')
+#endif
    write (ch1,trim(local_fmt)) &
+#if defined PJ_SPIN
+&   trim(ch_spin),'B=',QP_table(i1,1),' Eo=',real(qp%Eo(i1))*HARTREE,&
+#else
 &    'B=',QP_table(i1,1),' Eo=',real(qp%Eo(i1))*HARTREE,&
+#endif
 &   ' Z=',real(qp%Z(i1)),' Gm=',r_numbers(1),' Gf=',r_numbers(2)
    if (i1< QP_n_states) call msg('r',ch1)
    if (i1==QP_n_states) call msg('rn',ch1)

@@ -25,7 +25,11 @@
  use stderr,        ONLY:string_pack
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
+#if defined PJ_SPIN
+ use electrons,     ONLY:levels,spin_occ
+#else
  use electrons,     ONLY:levels
+#endif
  use timing,        ONLY:live_timing
  use com,           ONLY:msg
  use drivers,       ONLY:Finite_Tel
@@ -161,9 +165,15 @@
      endif
    endif
    do i1=1,QP_n_states
+#if defined PJ_SPIN
+     isc%is=(/QP_table(i1,1),QP_table(i1,3),1,QP_table(i1,4)/)
+     isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iqbz,1),:),QP_table(i1,4)/)
+     iscp%is=(/QP_table(i1,2),QP_table(i1,3),1,QP_table(i1,4)/)
+#else
      isc%is=(/QP_table(i1,1),QP_table(i1,3),1,1/)
      isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iqbz,1),:),1/)
      iscp%is=(/QP_table(i1,2),QP_table(i1,3),1,1/)
+#endif
      isc%qs(1)=qindx_S(QP_table(i1,3),iqbz,2)
      iscp%qs=isc%qs
      dc=cmplx(0.,0.,SP)
@@ -204,7 +214,11 @@
          do ig1=1,X%ng
            do ig2=1,X%ng
              do i4=1,QP_dSc_steps
+#if defined PJ_SPIN
+               dc(i4)=dc(i4)+4./spin_occ*pi*isc%rhotw(ig1)*&
+#else
                dc(i4)=dc(i4)+2.*pi*isc%rhotw(ig1)*&
+#endif
 &                     PPaR(ig1,ig2,1)*conjg(iscp%rhotw(ig2))*&
 &                     (Gfm(1,E(i4),en,isc%os,PPaP(ig1,ig2))+&
 &                      Gfp(1,E(i4),en,isc%os,PPaP(ig1,ig2)))

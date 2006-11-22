@@ -30,7 +30,11 @@
  use com,           ONLY:msg,depth,gen_fmt
  use timing,        ONLY:live_timing
  use stderr,        ONLY:string_pack
- use electrons,     ONLY:levels,n_spin,n_spinor
+#if defined PJ_SPIN 
+ use electrons,     ONLY:levels,n_spinor,n_sp_pol,spin_occ
+#else
+ use electrons,     ONLY:levels,n_spinor,n_sp_pol
+#endif
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use collision,     ONLY:ggwinfo,collision_reset
@@ -126,9 +130,15 @@
    isc%qs(2:)=(/q%sstar(iq,1),q%sstar(iq,2)/)
    if (isc%qs(2)/=isc%iqref) call scatterGamp(isc,'x')
    do i1=1,QP_n_states
+#if defined PJ_SPIN
+     isc%is=(/QP_table(i1,1),QP_table(i1,3),1,QP_table(i1,4)/)
+     isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iq,1),:),QP_table(i1,4)/)
+     iscp%is=(/QP_table(i1,2),QP_table(i1,3),1,QP_table(i1,4)/)
+#else
      isc%is=(/QP_table(i1,1),QP_table(i1,3),1,1/)
      isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iq,1),:),1/)
      iscp%is=(/QP_table(i1,2),QP_table(i1,3),1,1/)
+#endif
      isc%qs(1)=qindx_S(QP_table(i1,3),iq,2)
      iscp%qs=isc%qs
      do ib=QP_Sx_low_band,E%nbm
@@ -139,7 +149,11 @@
        call scatterBamp(isc)
        iscp%rhotw=isc%rhotw
        if (any(isc%is/=iscp%is)) call scatterBamp(iscp)
+#if defined PJ_SPIN
+       isc%rhotw=-4./spin_occ*pi*isc%rhotw*conjg(iscp%rhotw)*E%f(ib,isc%os(2),isc%os(4))
+#else
        isc%rhotw=-2.*pi*isc%rhotw*conjg(iscp%rhotw)*E%f(ib,isc%os(2),isc%os(4))
+#endif
        dsx=(0.d0,0.d0)
 #if defined DP
        dsx=zdotu(QP_ng_Sx,isc%rhotw,1,isc%gamp(1,:),1)
@@ -184,6 +198,22 @@
 &                 gen_fmt( r_v= reshape(real(QP_Sx)*HARTREE,(/QP_n_states/)) ) ,')))')
 
  do i1=1,QP_n_states,n_spinor
+!
+! In the non-collinear case
+!
+! <Spinor|\Sigma_x|Spinor> = <Spinor UP|\Sigma_x|Spinor UP> +
+!                            <Spinor DN|\Sigma_x|Spinor DN>
+!
+! Here QP_Sx(i1) = <Spinor|\Sigma_x|Spinor> i1=1,3,5,...
+!      QP_Sx(i1) = 0                        otherwise
+!
+#if defined PJ_SPIN
+   if (n_spinor==2) then
+     QP_Sx(i1)  = QP_Sx(i1)+QP_Sx(i1+1)
+     QP_Sx(i1+1)= (0.,0.)
+   endif
+#endif
+!
    if (QP_table(i1,3)/=i2) then
      i2=QP_table(i1,3)
      write (ch,'(a,i3.3,a)') 'K [',i2,'] (iku):'
@@ -191,8 +221,8 @@
    endif
 
    ch_spin=' '
-   if (n_spin==2.and.QP_table(i1,4)==1) ch_spin='(up)'
-   if (n_spin==2.and.QP_table(i1,4)==2) ch_spin='(dn)'
+   if (n_sp_pol==2.and.QP_table(i1,4)==1) ch_spin='(up)'
+   if (n_sp_pol==2.and.QP_table(i1,4)==2) ch_spin='(dn)'
 
    write (ch,trim(local_fmt)) &
 &   '<',QP_table(i1,1),trim(ch_spin),'|S_x|',QP_table(i1,2),trim(ch_spin),'> = ',&

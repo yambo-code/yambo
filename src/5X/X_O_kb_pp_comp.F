@@ -46,7 +46,7 @@
    call c2a(b,(Xk%pt(ik,:)+g_vec(ig,:)),v1,'ki2c')
    call c2a(b,g_vec(ig,:),v2,'ki2c')
    r1=v_norm(v1)
-   call X_O_Ylm(Ylm,dYlm,Ygrad,pp_n_l_comp_max,v1)
+   call X_O_kb_Ylm(Ylm,dYlm,Ygrad,pp_n_l_comp_max,v1)
    i1=0
    do is = 1,n_atom_species
      do ia = 1,n_atoms(is)

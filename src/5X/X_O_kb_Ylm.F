@@ -19,8 +19,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine X_O_Ylm(Ylm,dYlm,Ygrad,lang,k)
-!=========================================
+ subroutine X_O_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
+!============================================
 !
 ! Ylm(il,im) := Spherical harmonic 
 ! dYlm([1,2],il,im) := Derivative of the Spherical harmonic [1=theta,2=phi]

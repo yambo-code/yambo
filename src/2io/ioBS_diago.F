@@ -21,7 +21,7 @@
 !
  integer function ioBS_diago(iq,BS_H_dim,bsE,bsR,ID)
 !===================================================
- use pars
+ use pars,          ONLY:SP,schlen
  use BS,            ONLY:BS_identifier,BSS_q0
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&

@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  module X_m
-  use pars, ONLY:SP,HARTREE
+  use pars, ONLY:SP,HARTREE,lchlen
 !
 ! Absorption & Polarizability
 !
@@ -40,6 +40,7 @@
   logical :: half_X_mat_only
   logical :: self_detect_E_range
   logical :: use_X_RIM
+  character(lchlen) :: long_path
   type X_t
    integer  :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp
    integer  :: ng

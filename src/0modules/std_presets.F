@@ -22,7 +22,7 @@
  subroutine std_presets(INSTR,IND,OD,JS)
   use drivers
   use X_m,        ONLY:iq_now,self_detect_E_range,half_X_mat_ONLY,eps_2_alpha,&
-&                      alpha_dim,use_X_RIM
+&                      alpha_dim,use_X_RIM,long_path
   use QP_m,       ONLY:pp_taylor_terms,QP_rep_string,QP_dSc_steps,QP_n_W_freqs,&
 &                      QP_Sx_low_band,QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                      QP_W_er,QP_W_dr,QP_cg_percent,QP_xc_FUNCTIONAL,&
@@ -209,6 +209,7 @@
   use_X_RIM=.false.
   eps_2_alpha=1._SP
   alpha_dim='adim'
+  long_path='none'
 !
 !QPm
 !=================================

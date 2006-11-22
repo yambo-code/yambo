@@ -77,7 +77,5 @@
  enddo
  if (.not.use_si) rho=rho*(1+i_time_rev)
 
- write (*,*) sum(rho)
-
  end subroutine
 !

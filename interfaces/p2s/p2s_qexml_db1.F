@@ -247,9 +247,8 @@
    en%E(:,:,1) = eig_( 1:en%nb, 1:k%nibz )
    en%E(:,:,2) = eig_( 1:en%nb, 1:k%nibz )
  case(2)
-! to be fixed
    allocate( en%E(en%nb, k%nibz, n_spin) )
-   en%E(:,:,:) = eig_s_( 1:en%nb, 1:k%nibz, : )
+   en%E(:,:,:) = eig_s_( 1:en%nb, 1:k%nibz, 1:n_spin )
    deallocate(eig_s_)
  end select
 
@@ -380,9 +379,9 @@
    else if(index(pw_dft,'HL')/=0.and.index(pw_dft,'SLA')/=0) then
      GS_xc_FUNCTIONAL_ = XC_LDA_C_HL
      GS_xc_KIND_ = XC_EXCHANGE_CORRELATION
-   else if(index(pw_dft,'SL1')/=0) then ! Have to check this...
-     GS_xc_FUNCTIONAL_ = XC_LDA_C_XALPHA
-     GS_xc_KIND_ = XC_EXCHANGE
+!  else if(index(pw_dft,'SL1')/=0) then ! Have to check this...
+!    GS_xc_FUNCTIONAL_ = XC_LDA_C_XALPHA
+!    GS_xc_KIND_ = XC_EXCHANGE
    endif
 
    return

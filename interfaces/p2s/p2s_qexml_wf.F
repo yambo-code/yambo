@@ -33,7 +33,7 @@
  integer,           intent(in)  :: ikibz,pwunit
  real(SP),          intent(out) :: wf_disk(2,n_bands,wf_ng_disk,n_spin)
 !ws
- integer        :: ib, ierr, npwk, ik, ig, ispinor
+ integer        :: ib, ierr, npwk, ik, ig, ispin
 !
 ! holds the double precision pwscf record
 !
@@ -43,19 +43,18 @@
 !---------------------------------------------------------------------*
 !    Main data                                                        *
 !---------------------------------------------------------------------*
- if(n_sp_pol.eq.2) stop 'p2s: n_sp_pol=2 not coded in WF'
 
  npwk = ng_wf(ikibz)
- do ispinor=1,n_spin
+ do ispin=1,n_spin
    
-   call qexml_read_wfc(ibnds=1, ibnde=n_bands, ik=ikibz, ispin=ispinor, &
+   call qexml_read_wfc(ibnds=1, ibnde=n_bands, ik=ikibz, ispin=ispin, &
 &       npwk=npwk, igk = wf_igk(1:npwk,ikibz), wf = wf_disk_DP, ierr=ierr)
    if(ierr.ne.0) call errore('qexml_read_wfc','Check qexml version?',ierr)
 
    wf_disk_DP_T=transpose(wf_disk_DP)
 
-   wf_disk(1,1:n_bands,1:ng_wf(ikibz),ispinor) =  real( wf_disk_DP_T(:,:) )
-   wf_disk(2,1:n_bands,1:ng_wf(ikibz),ispinor) = aimag( wf_disk_DP_T(:,:) )
+   wf_disk(1,1:n_bands,1:ng_wf(ikibz),ispin) =  real( wf_disk_DP_T(:,:) )
+   wf_disk(2,1:n_bands,1:ng_wf(ikibz),ispin) = aimag( wf_disk_DP_T(:,:) )
  enddo
 
   return

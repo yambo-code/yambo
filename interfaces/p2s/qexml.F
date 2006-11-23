@@ -2034,7 +2034,7 @@ CONTAINS
       INTEGER        :: nbnd_, num_k_points_, nspin_, natomwfc_, nsppol
       REAL(dbl)      :: ef_, nelec_ 
       CHARACTER(256) :: energy_units_, k_units_
-      INTEGER        :: ik, ispin
+      INTEGER        :: ik, ispin, spin_dimen
       REAL(dbl), ALLOCATABLE :: xk_(:,:), wk_(:), occ_s_(:,:,:), eig_s_(:,:,:)
       !
       
@@ -2099,15 +2099,17 @@ CONTAINS
       !
       ALLOCATE(  xk_    (3, num_k_points_ ) )
       ALLOCATE(  wk_    (   num_k_points_ ) )
-      ALLOCATE(  eig_s_ ( nbnd_, num_k_points_, nspin_ ) )
-      ALLOCATE(  occ_s_ ( nbnd_, num_k_points_, nspin_ ) )
+      ALLOCATE(  eig_s_ ( nbnd_, num_k_points_, nsppol ) )
+      ALLOCATE(  occ_s_ ( nbnd_, num_k_points_, nsppol ) )
       !
       CALL iotk_scan_begin( iunpun, "EIGENVALUES_AND_EIGENVECTORS", IERR=ierr )
       IF (ierr/=0) RETURN
-!       write(*,*) "XXX"
+        write(*,*) "XXX k",num_k_points_
+        write(*,*) "XXX nbnd",nbnd_
+        write(*,*) "XXX n_sp_pol",nsppol
       !
       DO ik = 1, num_k_points_
-!       write(*,*) "XXX",ik
+        write(*,*) "XXX",ik
 !         !
           CALL iotk_scan_begin( iunpun, "K-POINT" // TRIM(iotk_index( ik )), IERR=ierr )
           IF (ierr/=0) RETURN
@@ -2119,7 +2121,6 @@ CONTAINS
           !
           CALL iotk_scan_dat( iunpun, "WEIGHT", wk_(ik), IERR=ierr )
           IF (ierr/=0) RETURN
-!       write(*,*) "XXX",nspin_
           !
           DO ispin = 1, nsppol ! to be tested
               !
@@ -2140,7 +2141,7 @@ CONTAINS
       !         
       CALL iotk_scan_end( iunpun, "EIGENVALUES_AND_EIGENVECTORS", IERR=ierr )
       IF (ierr/=0) RETURN
-!       write(*,*) "XXX"
+        write(*,*) "XXX"
       !
       CALL iotk_scan_end( iunpun, "BAND_STRUCTURE", IERR=ierr )
       IF (ierr/=0) RETURN
@@ -2157,9 +2158,9 @@ CONTAINS
       IF ( PRESENT( xk ) )               xk(1:3, 1:num_k_points_)  = xk_(:,:)
       IF ( PRESENT( wk ) )               wk(     1:num_k_points_)  = wk_(:)
       IF ( PRESENT( occ ) )              occ  (1:nbnd_, 1:num_k_points_ )           = occ_s_(:,:,1)
-      IF ( PRESENT( occ_s ) )            occ_s(1:nbnd_, 1:num_k_points_, 1:nspin_ ) = occ_s_(:,:,:)
+      IF ( PRESENT( occ_s ) )            occ_s(1:nbnd_, 1:num_k_points_, 1:nsppol ) = occ_s_(:,:,:)
       IF ( PRESENT( eig ) )              eig  (1:nbnd_, 1:num_k_points_ )           = eig_s_(:,:,1)
-      IF ( PRESENT( eig_s ) )            eig_s(1:nbnd_, 1:num_k_points_, 1:nspin_ ) = eig_s_(:,:,:)
+      IF ( PRESENT( eig_s ) )            eig_s(1:nbnd_, 1:num_k_points_, 1:nsppol ) = eig_s_(:,:,:)
       !
       DEALLOCATE( xk_)
       DEALLOCATE( wk_)
@@ -2205,6 +2206,7 @@ CONTAINS
       !
       !
       ! to be fixed in the fmt (fixed in 3.1.1)
+      ! ispin=2 refers to both spin polarized and spinor cases.
       !
       IF ( ispin == 2 .and. pwversion.eq.31 ) THEN
           !

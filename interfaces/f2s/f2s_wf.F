@@ -26,7 +26,7 @@
  use D_lattice,             ONLY : n_atom_species,pp_n_l_comp_max,&
 &                                  PP_alloc,pp_kbs,pp_kb,pp_kbd
  use R_lattice,             ONLY : nkibz
- use wave_func,             ONLY : wf_ng_disk, ng_wf
+ use wave_func,             ONLY : wf_ng_disk, ng_wf_k
  use f2s_datatypes
  implicit none
  integer        :: ikibz          

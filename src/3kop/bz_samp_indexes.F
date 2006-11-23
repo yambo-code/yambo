@@ -38,7 +38,7 @@
 ! qindx_S(ik,iqbz,1)=okbz
 ! qindx_S(ik,iqbz,2)=iGo
 !
- use pars
+ use pars,           ONLY:SP,lchlen
  use drivers,        ONLY:l_bse
  use memory_m,       ONLY:mem_est
  use com,            ONLY:msg,gen_fmt,error
@@ -226,7 +226,7 @@
      if (iqs/=1.and..not.bse_scattering) cycle
      if (iqs==1) qindx_X(iqibz,i1,1)=i2
      if (bse_scattering) qindx_B(i1,i2,1)=i3
-     v1=Xk%ptbz(i1,:)-Xk%ptbz(i2,:)-q%ptbz(i3,:)
+     v1=Xk%ptbz(i1,:)-Xk%ptbz(i2,:)-q%ptbz(i3,:) 
      call c2a(v_in=v1,mode='ka2i')
      do i3=1,ng_vec
        if (v_is_zero(v1-g_vec(i3,:))) then

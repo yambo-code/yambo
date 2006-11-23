@@ -272,15 +272,15 @@ subroutine ras_clean
   use X_m,                     only : X_poles_tab
   use R_lattice,        only: g_vec, bare_qpg, g_rot, qindx_free
   use D_lattice,        only: dl_sop
-  use wave_func,        only: ng_wf, wf_igk
+  use wave_func,        only: ng_wf_k, wf_igk
 
   call qindx_free
   call clean_bulkeps
   if(allocated(gvecaff)) deallocate(gvecaff)
   if(loptcut) call end_optcut
 
-  deallocate(g_vec,dl_sop,ng_wf,wf_igk)
-  call mem_est("g_vec dl_sop ng_wf wf_igk")
+  deallocate(g_vec,dl_sop,ng_wf_k,wf_igk)
+  call mem_est("g_vec dl_sop ng_wf_k wf_igk")
 
   if(allocated(X_poles_tab)) then
     deallocate(X_poles_tab)

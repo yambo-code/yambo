@@ -32,7 +32,7 @@
  use D_lattice,        ONLY:dl_sop
  use R_lattice,        ONLY:g_vec,bz_samp,nkibz,nqibz,nkbz,nXkbz,qpt,&
 &                           qindx_free,bz_samp_reset
- use wave_func,        ONLY:ng_wf,wf_igk,wf_ng_disk,wf_ng,ioWF
+ use wave_func,        ONLY:ng_wf_k,wf_igk,wf_ng_disk,wf_ng,ioWF
  use com,              ONLY:code_version,build_date,msg,error
  use X_m,              ONLY:X_t,X_reset,X_mat
  use frequency,        ONLY:w_samp,W_reset
@@ -123,7 +123,7 @@
 
  write_to_dbs=master_node
 
- deallocate(wf_disk,ng_wf)
+ deallocate(wf_disk,ng_wf_k)
 
 !===============
 !    KB_PP

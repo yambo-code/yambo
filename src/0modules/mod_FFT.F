@@ -23,7 +23,6 @@
    use pars
    real(SP)             :: fft_norm
    integer              :: fft_size
-   integer              :: fft_sign
    integer              :: fft_dim(3)
    integer              :: fft_dim_loaded(3)
    integer, allocatable :: fft_g_table(:,:)
@@ -31,5 +30,6 @@
 !
 !  FFTW support
 !
-   integer(8)              :: fftw_plan
+   integer(8)  :: fftw_plan !(FW) +1 sign: G-space to R-space & oscillators
+                            !(BW) -1 sign: R-space to G-space
  end module

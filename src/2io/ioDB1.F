@@ -28,7 +28,7 @@
  use D_lattice,        ONLY:a, alat, nsym, i_time_rev, default_Tel, dl_sop,Tel
  use R_lattice,        ONLY:ng_vec, g_vec, bz_samp,nkibz,&
 &                           qp_states_k,nXkibz,ng_closed
- use wave_func,        ONLY:wf_ng_disk, ng_wf, wf_igk,wf_ng
+ use wave_func,        ONLY:wf_ng_disk, ng_wf_k, wf_igk,wf_ng
  use IO_m,             ONLY:io_connect, io_disconnect, io_sec, &
 &                           io_elemental, io_status, io_bulk,read_is_on,&
 &                           serial_number,io_header,io_serial_number,&
@@ -134,11 +134,11 @@
    E%Z=(0._SP,0._SP)
 
    allocate(g_vec(ng_vec,3),k%pt(k%nibz,3))
-   allocate(dl_sop(3,3,nsym),ng_wf(k%nibz))
+   allocate(dl_sop(3,3,nsym),ng_wf_k(k%nibz))
    allocate(wf_igk(wf_ng_disk,k%nibz))
 
-   call mem_est("g_vec k_pt dl_sop ng_wf wf_igk",&
-&               (/size(g_vec),size(k%pt),size(dl_sop),size(ng_wf),size(wf_igk)/),&
+   call mem_est("g_vec k_pt dl_sop ng_wf_k wf_igk",&
+&               (/size(g_vec),size(k%pt),size(dl_sop),size(ng_wf_k),size(wf_igk)/),&
 &               (/SP,        SP,        SP,           IP,         IP/) )
 
  endif
@@ -173,8 +173,8 @@
 !
 ! Wfc grids
 !
-  call io_bulk(ID, VAR="WFC_NG", VAR_SZ=shape(ng_wf) )
-  call io_bulk(ID, I1=ng_wf )
+  call io_bulk(ID, VAR="WFC_NG", VAR_SZ=shape(ng_wf_k) )
+  call io_bulk(ID, I1=ng_wf_k )
 
   call io_bulk(ID, VAR="WFC_GRID", VAR_SZ=shape(wf_igk) )
   call io_bulk(ID, I2=wf_igk )

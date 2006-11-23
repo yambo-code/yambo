@@ -26,7 +26,7 @@
    character(1)           :: wf_space
    complex(SP),allocatable:: wf(:,:)
    integer    ,allocatable:: wf_state(:,:,:)
-   integer    ,allocatable:: ng_wf(:),wf_igk(:,:)
+   integer    ,allocatable:: ng_wf_k(:),wf_igk(:,:)
    logical                :: wf_norm_test
 
    interface

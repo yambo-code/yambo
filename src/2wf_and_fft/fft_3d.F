@@ -19,6 +19,20 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+!=====================================================================
+! Driver to 3D FFT: FFTW, Goedecker
+!
+! fft_sign = +1  : G-space to R-space, output = \sum_G f(G)exp(+iG*R) (FW)
+! fft_sign = -1  : R-space to G-space, output = \int_R f(R)exp(-iG*R) (BW)
+!
+! Note that as the SELF convention for the oscillators is
+! 
+!  <n k | e ^{iq.r} | n' k-q> 
+!
+! the +1 sign (FW) is used in scatter_Bamp as well
+!
+!=====================================================================
+!
 #if defined FFTW
  subroutine fft_3d(c,n,fft_sign,fftw_plan)
 !=========================================
@@ -27,40 +41,29 @@
  integer     :: fft_sign,n(3)
  integer(8)  :: fftw_plan
  complex(DP) :: c(n(1),n(2),n(3))
- integer , parameter :: &
-&          FFTW_R2HC=0,FFTW_HC2R=1,FFTW_DHT=2,FFTW_REDFT00=3,&
-&          FFTW_REDFT01=4,FFTW_REDFT10=5,FFTW_REDFT11=6,FFTW_RODFT00=7,&
-&          FFTW_RODFT01=8,FFTW_RODFT10=9,FFTW_RODFT11=10,FFTW_FORWARD=-1,&
-&          FFTW_BACKWARD=+1,FFTW_MEASURE=0,FFTW_DESTROY_INPUT=1,&
-&          FFTW_UNALIGNED=2,FFTW_CONSERVE_MEMORY=4,FFTW_EXHAUSTIVE=8,&
-&          FFTW_PRESERVE_INPUT=16,FFTW_PATIENT=32,FFTW_ESTIMATE=64,&
-&          FFTW_ESTIMATE_PATIENT=128,FFTW_BELIEVE_PCOST=256,&
-&          FFTW_NO_DFT_R2HC=512,FFTW_NO_NONTHREADED=1024,FFTW_NO_BUFFERING=2048,&
-&          FFTW_NO_INDIRECT_OP=4096,FFTW_ALLOW_LARGE_GENERIC=8192,&
-&          FFTW_NO_RANK_SPLITS=16384,FFTW_NO_VRANK_SPLITS=32768,&
-&          FFTW_NO_VRECURSE=65536,FFTW_NO_SIMD=131072,FFTW_NO_SLOW=262144,&
-&          FFTW_NO_FIXED_RADIX_LARGE_N=524288,FFTW_ALLOW_PRUNING=1048576
+!ws
+ integer     :: i_sign
+ integer , parameter :: FFTW_ESTIMATE=64
 
- if (fftw_plan==0) call dfftw_plan_dft_3d(fftw_plan,n(1),n(2),n(3),&
-&                       c,c,fft_sign,FFTW_ESTIMATE)
+ if (fftw_plan==0) then
+   if (fft_sign>0) i_sign=+1
+   if (fft_sign<0) i_sign=-1
+   call dfftw_plan_dft_3d(fftw_plan,n(1),n(2),n(3),&
+&                         c,c,i_sign,FFTW_ESTIMATE)
+ endif
 
  call dfftw_execute_dft(fftw_plan,c,c)
+
  end subroutine
 #else
  subroutine fft_3d(c,n,fft_sign)
 !===============================
-!
-! Computes the forward fourier transform of a complex 
-! function c. The fourier transform is returned in c
-!
-!    fft_sign <0  inverse  fft_sign >0  direct    
-!-------------------------------------------------------
- use pars, ONLY:DP
+ use pars,ONLY:DP
  implicit none
- integer    :: n(3),fft_sign
- complex(DP):: c(n(1),n(2),n(3))
+ integer     :: n(3),fft_sign
+ complex(DP) :: c(n(1),n(2),n(3))
 !ws
- integer    :: i1,ln(3),ipos
+ integer     :: i1,ln(3),ipos
  real(DP), allocatable :: zi(:,:,:,:,:)
 !
 ! ln(:):memory dimension of Z. ndi must always be greater or
@@ -72,7 +75,7 @@
 !       optimal performance.
  ln=n
  do i1=1,3
-  if (n(i1)/2*2==n(i1)) ln(i1)=n(i1)+1
+   if (n(i1)/2*2==n(i1)) ln(i1)=n(i1)+1
  enddo
  allocate(zi(2,ln(1),ln(2),ln(3),2))
  ipos=1

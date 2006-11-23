@@ -25,7 +25,7 @@
  use memory_m,      ONLY:mem_est
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_type
  use com,           ONLY:msg
- use FFT_m,         ONLY:fft_size,fftw_plan,fft_dim,fft_sign,fft_g_table
+ use FFT_m,         ONLY:fft_size,fftw_plan,fft_dim,fft_g_table
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,G_m_G
  use wave_func,     ONLY:wf_load,WF_free
@@ -57,15 +57,13 @@
  call xc_lda_driver(E,k,GS_xc_KIND,GS_xc_FUNCTIONAL,2)
  F_xc_DP=F_xc
 !
-! BACKWARD FFT
+! need to reset the plan to do a BACKWARD FFT (R->G)
 !
- fft_sign=-fft_sign
-! need to reset the plan 
  fftw_plan=0
 #if defined FFTW
- call fft_3d(F_xc_DP,fft_dim,fft_sign,fftw_plan)
+ call fft_3d(F_xc_DP,fft_dim,-1,fftw_plan)
 #else
- call fft_3d(F_xc_DP,fft_dim,fft_sign)
+ call fft_3d(F_xc_DP,fft_dim,-1)
 #endif
 !
 ! Fxc
@@ -78,9 +76,8 @@
    enddo
  enddo
 !
-! Back to FORWARD FFT & Clean
+! Clean
 !
- fft_sign=-fft_sign
  deallocate(F_xc,F_xc_DP)
  call WF_free()
 

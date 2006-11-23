@@ -24,7 +24,7 @@
  use pars,                ONLY:SP,DP,lchlen
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,g_vec,nkibz,k_grid_b,&
 &                              ng_in_shell,g_vec,n_g_shells
- use wave_func,           ONLY: ng_wf,wf_igk
+ use wave_func,           ONLY: ng_wf_k,wf_igk
  use D_lattice,           ONLY:dl_sop,alat,nsym,default_Tel,a
  use com,                 ONLY:msg,inpath,error
  use vec_operate,         ONLY:c2a,ak2bz,v_is_zero,iku_v_norm
@@ -59,7 +59,7 @@
 ! the %E_RIM and RIM k-points.
 ! To do this I need to deallocate a few arrays
 !
- deallocate(g_vec,dl_sop,ng_wf,wf_igk)
+ deallocate(g_vec,dl_sop,ng_wf_k,wf_igk)
 !
  inpath_save=inpath
  inpath=BZ_RIM_path

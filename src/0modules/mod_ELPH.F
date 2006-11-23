@@ -27,22 +27,24 @@
    integer   :: elph_bands(2),QP_PH_n_G_bands
    real(SP),    allocatable :: ph_freqs_sq(:,:)
    complex(SP), allocatable :: elph_dV(:,:,:,:)
-
+   complex(SP), allocatable :: dV_bare(:,:,:)
  contains
 
  subroutine elph_alloc()
  use memory_m,  ONLY:mem_est
- use R_lattice, ONLY:nqibz,nkbz
+ use R_lattice, ONLY:nqibz,nkbz,ng_vec
  implicit none
- integer     ::alloc_err(2)
+ integer     ::alloc_err(3)
 
  if (allocated(ph_freqs_sq)) return
 
  allocate(ph_freqs_sq(nqibz,ph_modes),stat=alloc_err(1))
+ allocate(dV_bare(nqibz,ng_vec,ph_modes),stat=alloc_err(2))
  allocate(elph_dV(nkbz,ph_modes,elph_bands(2)-elph_bands(1)+1,&
-&                 elph_bands(2)-elph_bands(1)+1),stat=alloc_err(2))
- call mem_est("ph_freqs_sq elph_dV",(/size(ph_freqs_sq),size(elph_dV)/),&
-&              (/SP, 2*SP/),errors=alloc_err)
+&                 elph_bands(2)-elph_bands(1)+1),stat=alloc_err(3))
+ call mem_est("ph_freqs_sq elph_dV dV_bare",&
+&             (/size(ph_freqs_sq),size(dV_bare),size(elph_dV)/),&
+&             (/SP, 2*SP,2*SP/),errors=alloc_err)
  end subroutine
 
  subroutine elph_free()

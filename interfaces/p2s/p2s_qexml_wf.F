@@ -27,7 +27,7 @@
  use D_lattice,             only : n_atom_species,pp_n_l_comp_max,&
 &                                  PP_alloc,pp_kbs,pp_kb,pp_kbd
  use R_lattice,             only : nkibz
- use wave_func,             only : wf_ng_disk,ng_wf,  wf_igk, wf_ng
+ use wave_func,             only : wf_ng_disk,ng_wf_k,  wf_igk, wf_ng
  use qexml_module
  implicit none
  integer,           intent(in)  :: ikibz,pwunit
@@ -37,14 +37,14 @@
 !
 ! holds the double precision pwscf record
 !
- complex(dbl)   :: wf_disk_DP(ng_wf(ikibz), n_bands) ! note order
- complex(dbl)   :: wf_disk_DP_T(n_bands,ng_wf(ikibz)) ! note order
+ complex(dbl)   :: wf_disk_DP(ng_wf_k(ikibz), n_bands) ! note order
+ complex(dbl)   :: wf_disk_DP_T(n_bands,ng_wf_k(ikibz)) ! note order
 !
 !---------------------------------------------------------------------*
 !    Main data                                                        *
 !---------------------------------------------------------------------*
 
- npwk = ng_wf(ikibz)
+ npwk = ng_wf_k(ikibz)
  do ispin=1,n_spin
    
    call qexml_read_wfc(ibnds=1, ibnde=n_bands, ik=ikibz, ispin=ispin, &
@@ -53,8 +53,8 @@
 
    wf_disk_DP_T=transpose(wf_disk_DP)
 
-   wf_disk(1,1:n_bands,1:ng_wf(ikibz),ispin) =  real( wf_disk_DP_T(:,:) )
-   wf_disk(2,1:n_bands,1:ng_wf(ikibz),ispin) = aimag( wf_disk_DP_T(:,:) )
+   wf_disk(1,1:n_bands,1:ng_wf_k(ikibz),ispin) =  real( wf_disk_DP_T(:,:) )
+   wf_disk(2,1:n_bands,1:ng_wf_k(ikibz),ispin) = aimag( wf_disk_DP_T(:,:) )
  enddo
 
   return

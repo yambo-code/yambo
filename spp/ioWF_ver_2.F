@@ -24,7 +24,7 @@
  use pars,             ONLY:SP,schlen
  use electrons,        ONLY:n_bands,n_spin
  use R_lattice,        ONLY:nkibz
- use wave_func,        ONLY:wf_ng_disk,ng_wf
+ use wave_func,        ONLY:wf_ng_disk,ng_wf_k
  use IO_m,             ONLY:io_connect, io_disconnect, io_sec, io_bulk,&
 &                           io_elemental,io_unit,io_netcdf_support,io_file,&
 &                           read_is_on
@@ -50,22 +50,22 @@
  if (io_netcdf_support(ID)) then
 
    write (VAR_NAME,'(a,i5.5,a)') 'wf-k',ik,'CDr'
-   call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=(/n_bands*ng_wf(ik)/))
-   call io_bulk(ID,R1=wf_on_disk(1,:n_bands*ng_wf(ik)))
+   call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=(/n_bands*ng_wf_k(ik)/))
+   call io_bulk(ID,R1=wf_on_disk(1,:n_bands*ng_wf_k(ik)))
 !
    write (VAR_NAME,'(a,i5.5,a)') 'wf-k',ik,'CDi'
-   call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=(/n_bands*ng_wf(ik)/))
-   call io_bulk(ID,R1=wf_on_disk(2,:n_bands*ng_wf(ik)))
+   call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=(/n_bands*ng_wf_k(ik)/))
+   call io_bulk(ID,R1=wf_on_disk(2,:n_bands*ng_wf_k(ik)))
 
    do ib=1,n_bands
-     wf(ib,:ng_wf(ik),1)=cmplx(wf_on_disk(1,(ib-1)*ng_wf(ik)+1:ib*ng_wf(ik)),&
-&                              wf_on_disk(2,(ib-1)*ng_wf(ik)+1:ib*ng_wf(ik)),SP)
-     wf(ib,ng_wf(ik)+1:,1)=cmplx(0.,0.,SP)
+     wf(ib,:ng_wf_k(ik),1)=cmplx(wf_on_disk(1,(ib-1)*ng_wf_k(ik)+1:ib*ng_wf_k(ik)),&
+&                              wf_on_disk(2,(ib-1)*ng_wf_k(ik)+1:ib*ng_wf_k(ik)),SP)
+     wf(ib,ng_wf_k(ik)+1:,1)=cmplx(0.,0.,SP)
    enddo
  else
    do ib=1,n_bands
-     call io_bulk(ID,C1=wf(ib,:ng_wf(ik),1))
-     wf(ib,ng_wf(ik)+1:,1)=cmplx(0.,0.,SP)
+     call io_bulk(ID,C1=wf(ib,:ng_wf_k(ik),1))
+     wf(ib,ng_wf_k(ik)+1:,1)=cmplx(0.,0.,SP)
    enddo
  endif
 

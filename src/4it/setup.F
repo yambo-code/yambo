@@ -27,7 +27,7 @@
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,sop_inv,sop_tab
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,nkibz,nkbz,nXkibz,nXkbz,&
 &                         k_grid_b,rl_sop,bz_samp
- use wave_func,      ONLY:ng_wf
+ use wave_func,      ONLY:ng_wf_k
  use com,            ONLY:msg,gen_fmt,error
  use vec_operate,    ONLY:iku_v_norm,cross_product,c2a
  implicit none
@@ -144,16 +144,16 @@
  call msg('rn','X BZ K-points :',Xk%nbz)
  do i1=1,k%nibz
    ch(3)=gen_fmt(r_v=k%pt(i1,:))
-   ch(4)=gen_fmt((/ng_wf(i1)/))
+   ch(4)=gen_fmt((/ng_wf_k(i1)/))
    ch(5)=gen_fmt(r_v=(/0.01/))
 
    write (ch(1),'(7a)') '(a,i5.5,a,3(',trim(ch(3)),&
 &                       '),1x,a,',trim(ch(4)),',a,',trim(ch(5)),',1x,a)'
-   write (ch(2),trim(ch(1))) 'K [',i1,'] :',k%pt(i1,:),'(iku) * G`s',ng_wf(i1)
+   write (ch(2),trim(ch(1))) 'K [',i1,'] :',k%pt(i1,:),'(iku) * G`s',ng_wf_k(i1)
 
    if (i1<=Xk%nibz) then
      write (ch(2),trim(ch(1))) '*X* K [',i1,'] :',&
-&          k%pt(i1,:),'(iku) * G`s',ng_wf(i1),'* weight ',Xk%weights(i1)
+&          k%pt(i1,:),'(iku) * G`s',ng_wf_k(i1),'* weight ',Xk%weights(i1)
    endif
    call msg('r',trim(ch(2)))
 

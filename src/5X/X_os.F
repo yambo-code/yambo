@@ -193,7 +193,7 @@
  n_poles=0
 !
 ! Here I prepare the scattering module.
-! Note the collision_reset destrois the fftw_plan
+! Note the collision_reset destrois the bw_plan
 !
  call collision_reset(isc)
  isc%ngrho=X%ng

@@ -27,7 +27,7 @@
  use R_lattice,             ONLY : bz_samp, ng_vec, g_vec
  use D_lattice,             ONLY : nsym, i_time_rev, i_space_inv, dl_sop, &
 &                                  DL_vol, a, alat, default_Tel
- use wave_func,             ONLY : ng_wf, wf_ng_disk, wf_igk,wf_ng
+ use wave_func,             ONLY : ng_wf_k, wf_ng_disk, wf_igk,wf_ng
  use vec_operate,           ONLY : cross_product
  implicit none
  type(levels),     intent(out)  :: en     ! Energies
@@ -209,7 +209,7 @@
 !    Read G-vectors                                                   *
 !---------------------------------------------------------------------*
 
- allocate(ng_wf(k%nibz),g_vec(ng_vec,3))
+ allocate(ng_wf_k(k%nibz),g_vec(ng_vec,3))
 
  call msg('s','RL vectors...')
  call pw_gvectors(pwunit)
@@ -227,14 +227,14 @@
 !---------------------------------------------------------------------*
 
  call msg('s','IGK arrays...')
- ng_wf(:) = pw_npwk(:)
- wf_ng_disk   = maxval(ng_wf) ! max for writing, allocation
+ ng_wf_k(:) = pw_npwk(:)
+ wf_ng_disk   = maxval(ng_wf_k) ! max for writing, allocation
  wf_ng   = wf_ng_disk
  allocate(wf_igk(wf_ng_disk,k%nibz))
  forall(i1=1:wf_ng_disk) wf_igk(i1,:)=i1
 
  do i1 = 1,k%nibz
-    wf_igk(1:ng_wf(i1),i1)= pw_igk(1:ng_wf(i1),i1) ! same as f2s
+    wf_igk(1:ng_wf_k(i1),i1)= pw_igk(1:ng_wf_k(i1),i1) ! same as f2s
  enddo
 
  call msg('l','done')

@@ -31,8 +31,8 @@
  use par_indexes_m, ONLY:par_indexes
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,&
-&                        fftw_plan,fft_g_table,fft_size,fft_sign
- use wave_func,     ONLY:ng_wf,wf_igk,WF_alloc,wf_b,wf_k,wf_space,wf,wf_s,&
+&                        fftw_plan,fft_g_table,fft_size
+ use wave_func,     ONLY:ng_wf_k,wf_igk,WF_alloc,wf_b,wf_k,wf_space,wf,wf_s,&
 &                        wf_state,wf_ng,wf_norm_test,wf_free,wf_ng_disk,ioWF
  use timing,        ONLY:live_timing
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END
@@ -118,7 +118,7 @@
 &                is<wf_s(1),is>wf_s(2)/))) cycle
        wf_total_states=wf_total_states+1
        wf_state(i2,ikibz,is)=wf_total_states
-       do i3=1,ng_wf(ikibz)
+       do i3=1,ng_wf_k(ikibz)
          ig=wf_igk(i3,ikibz)
          if (ig>wf_ng) cycle
          igfft=ig
@@ -131,9 +131,9 @@
          cycle
        endif
 #if defined FFTW
-       call fft_3d(wf_DP,fft_dim,fft_sign,fftw_plan)
+       call fft_3d(wf_DP,fft_dim,+1,fftw_plan)
 #else
-       call fft_3d(wf_DP,fft_dim,fft_sign)
+       call fft_3d(wf_DP,fft_dim,+1)
 #endif
        wf(:,wf_total_states)=wf_DP(:)*fft_norm
        call live_timing(steps=1)

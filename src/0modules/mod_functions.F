@@ -113,7 +113,7 @@
 
  logical function K_scatter(E,Ep,Er,Dr)
 !======================================
- use pars
+ use pars, ONLY:SP
  implicit none
  real(SP)::E,Ep,Er(2),Dr(2),D
  K_scatter=.false.
@@ -122,5 +122,17 @@
  K_scatter=abs(E-Ep)<=D
  end function
 
+ integer function BZ_index(ik,k)
+!===============================
+!
+! Returns the BZ index of a given ik in the IBZ
+!
+ use R_lattice,      ONLY:bz_samp
+ implicit none
+ type(bz_samp) :: k
+ integer       :: ik
+ if (ik==1) BZ_index=1
+ if (ik>1 ) BZ_index=1+sum(k%nstar(:ik-1))
+ end function
 
  end module

@@ -29,7 +29,7 @@
  use R_lattice,             ONLY : bz_samp, ng_vec, g_vec
  use D_lattice,             ONLY : nsym, i_time_rev, i_space_inv, dl_sop, &
 &                                  DL_vol, a, alat, default_Tel
- use wave_func,             ONLY : ng_wf, wf_ng_disk, wf_igk, wf_ng
+ use wave_func,             ONLY : ng_wf_k, wf_ng_disk, wf_igk, wf_ng
  use vec_operate,           ONLY : cross_product
  use xc_functionals,        ONLY : GS_xc_KIND,GS_xc_FUNCTIONAL, xc_string
  implicit none
@@ -284,7 +284,7 @@
 
  call msg('s',' IGK arrays...')
 
- allocate( ng_wf(k%nibz) )
+ allocate( ng_wf_k(k%nibz) )
  allocate( wf_igk(wf_ng_disk, k%nibz) ) ! in ioDB1: wf_igk(wf_ng_disk,k%nibz))
  wf_igk(:,:)=-1 ! for checking
 
@@ -320,11 +320,11 @@
       call error('MAX_NPW < gkvectors size. Fix data-file.xml manually! ')
    endif
    wf_igk(1:npwk_, ik)= index_(1:npwk_) ! CHECK!
-   ng_wf(ik) = npwk_
+   ng_wf_k(ik) = npwk_
  enddo
  deallocate(index_)
 
- if(any(ng_wf.eq.0)) call error('At least one npw(k) = 0!')
+ if(any(ng_wf_k.eq.0)) call error('At least one npw(k) = 0!')
 
  call msg('l','done')
 

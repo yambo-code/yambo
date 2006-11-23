@@ -45,7 +45,7 @@
   use timing,     ONLY:log_line_to_dump,log_line,nhash,live_timing_is_on,&
 &                      cput_seg,cput_sec,cput_tot,parallel_timing,ct
   use wave_func,  ONLY:wf_b,wf_k,wf_ng,wf_space,wf_norm_test
-  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_sign
+  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim
   use IO_m,       ONLY:io_reset,max_io_units,write_to_dbs,dbs_fragment,serial_number
   use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                      BS_res_mode,BS_K_dim,BS_cpl_mode,&
@@ -182,15 +182,6 @@
   fft_dim_loaded=0
   fft_size=0
   fft_dim=0
-!
-! Beacause of the different convention used in FFTW and Goedecker
-! fft_sign is case dependent but always FFTW_FORWARD
-!
-#if defined FFTW
-  fft_sign=-1
-#else
-  fft_sign=1
-#endif
 !
 !IO
 !=================================

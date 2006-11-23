@@ -25,7 +25,7 @@
  use electrons,        ONLY:levels,default_nel,n_spin,n_sp_pol
  use D_lattice,        ONLY:a, alat, nsym, i_time_rev, default_Tel, dl_sop,Tel
  use R_lattice,        ONLY:ng_vec, g_vec, bz_samp
- use wave_func,        ONLY:wf_ng_disk, ng_wf, wf_igk,wf_ng
+ use wave_func,        ONLY:wf_ng_disk, ng_wf_k, wf_igk,wf_ng
  use IO_m,             ONLY:io_connect, io_disconnect,  &
 &                           io_bulk, read_is_on, serial_number,&
 &                           io_netcdf_support
@@ -85,7 +85,7 @@
 
  if (read_is_on(ID)) then 
    allocate(en%E(en%nb,k%nibz,n_spin),g_vec(ng_vec,3),k%pt(k%nibz,3),&
-&           dl_sop(3,3,nsym*(i_time_rev+1)),ng_wf(k%nibz))
+&           dl_sop(3,3,nsym*(i_time_rev+1)),ng_wf_k(k%nibz))
  endif
 !
 ! Sym-GsID 
@@ -93,8 +93,8 @@
  allocate(I_on_disk(k%nibz))
  call io_bulk(ID,VAR="Sym-GsID",VAR_SZ=(/k%nibz/))
  call io_bulk(ID,I1=I_on_disk)
- ng_wf=I_on_disk
- wf_ng_disk=maxval(ng_wf)
+ ng_wf_k=I_on_disk
+ wf_ng_disk=maxval(ng_wf_k)
  deallocate(I_on_disk)
 !
  if (read_is_on(ID)) allocate(wf_igk(wf_ng_disk,k%nibz))

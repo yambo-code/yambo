@@ -39,8 +39,7 @@
  use D_lattice,      ONLY:nsym,i_time_rev
  use R_lattice,      ONLY:g_rot
  use wave_func,      ONLY:wf,wf_state
- use FFT_m,          ONLY:fft_size,fft_rot_r,fft_dim,fftw_plan,&
-&                         fft_g_table,fft_sign
+ use FFT_m,          ONLY:fft_size,fft_rot_r,fft_dim,fftw_plan,fft_g_table
  implicit none
  type(ggwinfo)::isc
 !ws
@@ -72,9 +71,9 @@
  if (lotr) rhotwr=rhotwr(:)*conjg(wf(fft_rot_r(os,:),offt))
  if (.not.lotr) rhotwr=rhotwr(:)*wf(fft_rot_r(os,:),offt)
 #if defined FFTW
- call fft_3d(rhotwr,fft_dim,fft_sign,fftw_plan)
+ call fft_3d(rhotwr,fft_dim,+1,fftw_plan)
 #else
- call fft_3d(rhotwr,fft_dim,fft_sign)
+ call fft_3d(rhotwr,fft_dim,+1)
 #endif
  isc%rhotw(1:isc%ngrho)=rhotwr(fft_g_table(g_rot(qs,1:isc%ngrho),iGo))
  if (all((/isc%qs(2)==1,ib==ob/))) isc%rhotw(1)=(1.,0.)

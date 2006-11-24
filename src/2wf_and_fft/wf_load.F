@@ -32,8 +32,8 @@
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,&
 &                        fftw_plan,fft_g_table,fft_size
- use wave_func,     ONLY:ng_wf_k,wf_igk,WF_alloc,wf_b,wf_k,wf_space,wf,wf_s,&
-&                        wf_state,wf_ng,wf_norm_test,wf_free,wf_ng_disk,ioWF
+ use wave_func,     ONLY:wf_nc_k,wf_igk,WF_alloc,wf_b,wf_k,wf_space,wf,wf_s,&
+&                        wf_state,wf_ng,wf_norm_test,wf_free,wf_ncx,ioWF
  use timing,        ONLY:live_timing
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END
  implicit none
@@ -45,7 +45,7 @@
  type(pp_indexes) ::px
  character(1)     ::wf_space_here
  character(schlen)::wf_title
- integer          ::i1,ikibz,i2,i3,is,wf_total_states,ig,igfft,s_2_load(2),iG_max
+ integer          ::i1,ikibz,i2,ic,is,wf_total_states,ig,igfft,s_2_load(2),iG_max
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
  real(SP),    allocatable :: wf_disk(:,:,:,:)
@@ -99,7 +99,7 @@
 
  call live_timing('[WF loader] Wfs (re)loading',wf_total_states,SERIAL=.true.)
 
- allocate(wf_disk(2,n_bands,wf_ng_disk,n_spin))
+ allocate(wf_disk(2,n_bands,wf_ncx,n_spin))
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
 
  call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
@@ -118,12 +118,12 @@
 &                is<wf_s(1),is>wf_s(2)/))) cycle
        wf_total_states=wf_total_states+1
        wf_state(i2,ikibz,is)=wf_total_states
-       do i3=1,ng_wf_k(ikibz)
-         ig=wf_igk(i3,ikibz)
+       do ic=1,wf_nc_k(ikibz)
+         ig=wf_igk(ic,ikibz)
          if (ig>wf_ng) cycle
          igfft=ig
          if (wf_space=='R') igfft=fft_g_table(ig,1)
-         wf_DP(igfft)=cmplx(wf_disk(1,i2,i3,is),wf_disk(2,i2,i3,is),DP)
+         wf_DP(igfft)=cmplx(wf_disk(1,i2,ic,is),wf_disk(2,i2,ic,is),DP)
        enddo
        if (wf_space=='G') then
          wf(:,wf_total_states)=wf_DP(:)

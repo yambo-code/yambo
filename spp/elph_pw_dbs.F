@@ -179,7 +179,6 @@
   allocate(dV_bare_disk(ng_vec,ph_modes))
   read (io_unit(ID)) dV_bare_disk
   dV_bare(iq,:,:)=dV_bare_disk(:,:)
-  write (400,'(2f30.20)') dV_bare(1,:,1)
 !
 ! Espresso <-> SELF k table correspondance
 !------------------------------------------
@@ -264,12 +263,9 @@
   enddo
 !
 ! DEBUG >
-
-  call elph_dV_bare_2_gkkp(k,iq)
-
+!  call elph_dV_bare_2_gkkp(k,iq)
 ! DEBUG <
-
-
+!
   if (any((/k_found==0/))) then
     elph_pw_dbs_io=-3
     goto 1

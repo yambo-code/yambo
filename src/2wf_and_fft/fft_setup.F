@@ -160,6 +160,9 @@
    do i1=1,3
      if (any((/mod(test_fft_size(i1),2),mod(test_fft_size(i1),3),&
 &              mod(test_fft_size(i1),5),mod(test_fft_size(i1),7)/)==0)) cycle
+!DEBUG>
+      test_fft_size(i1)=(test_fft_size(i1)/3+1)*3
+!DEBUG<
      test_fft_size(i1)=test_fft_size(i1)+mod(test_fft_size(i1),2)
    enddo
 #else

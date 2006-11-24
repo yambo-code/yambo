@@ -26,7 +26,7 @@
 &                           atom_pos,pp_n_l_comp_max,&
 &                           pp_n_l_comp,pp_kbs,pp_kb,PP_alloc,pp_kbd
  use memory_m,         ONLY:mem_est
- use wave_func,        ONLY:wf_ng_disk,wf_igk,ng_wf_k,wf_ng
+ use wave_func,        ONLY:wf_ncx,wf_igk,wf_nc_k,wf_ng
  use IO_m,             ONLY:io_connect, io_disconnect, io_sec, &
 &                           io_elemental, io_status, io_bulk,io_header,&
 &                           read_is_on,write_is_on
@@ -83,7 +83,7 @@
  endif
 !
 
- allocate(pp_disk(wf_ng_disk,n_atom_species,pp_n_l_comp_max))
+ allocate(pp_disk(wf_ncx,n_atom_species,pp_n_l_comp_max))
 
  if (write_is_on(ID)) pp_disk=pp_kb
 
@@ -93,7 +93,7 @@
 
  if (read_is_on(ID)) then
    pp_kb=0._SP
-   do i1=1,ng_wf_k(ik)
+   do i1=1,wf_nc_k(ik)
      if (wf_igk(i1,ik) > wf_ng) cycle
      pp_kb( wf_igk(i1,ik) ,:,:) = pp_disk(i1,:,:)
    enddo
@@ -107,7 +107,7 @@
 
  if (read_is_on(ID)) then
    pp_kbd=0._SP
-   do i1=1,ng_wf_k(ik)
+   do i1=1,wf_nc_k(ik)
      if (wf_igk(i1,ik) > wf_ng) cycle
      pp_kbd( wf_igk(i1,ik) ,:,:) = pp_disk(i1,:,:)
    enddo

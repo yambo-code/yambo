@@ -19,10 +19,10 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Self, 3.0.2, self@roma2.infn.it)
+AC_INIT(Self, 3.0.3, self@roma2.infn.it)
 SVERSION="3"
 SPATCHLEVEL="0"
-SSUBLEVEL="2"
+SSUBLEVEL="3"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -108,6 +108,7 @@ fi
 #
 AC_SUBST(enable_dp)
 AC_SUBST(dp_cpp)
+
 # ============================================================================
 # check for IOTK library
 AC_ARG_WITH(iotk, AC_HELP_STRING([--with-iotk=<lib>],
@@ -127,6 +128,27 @@ if ! test "$with_iotk" = "" ; then
 fi
 AC_SUBST(compile_p2s)
 AC_SUBST(iotk_dir)
+
+# ============================================================================
+# check for ETSF library
+AC_ARG_WITH(etsf, AC_HELP_STRING([--with-etsf=<lib>],
+ [Path of the ETSF I/O library directory]))
+compile_e2s="no"
+etsf_io_dir=""
+if ! test "$with_etsf" = "" ; then
+ AC_MSG_CHECKING([$with_etsf for the ETSF I/O library])
+ if test -r $with_etsf/lib/libetsf_io.a ; then
+  compile_e2s="yes"
+  etsf_dir="$with_etsf/include/ifort"
+  AC_MSG_RESULT([yes])
+  cp "$with_etsf/lib/libetsf_io.a" lib/
+  cp "$with_etsf/lib/libetsf_io_low_level.a" lib/
+ else
+  AC_MSG_RESULT([no])
+ fi
+fi
+AC_SUBST(compile_e2s)
+AC_SUBST(etsf_dir)
 
 # ============================================================================
 # Fortran 90

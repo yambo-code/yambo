@@ -23,41 +23,53 @@
 !====================================
  use pars,          ONLY:SP,DP
  use D_lattice,     ONLY:nsym,i_time_rev
- use R_lattice,     ONLY:ng_vec,nkibz,qindx_X,bz_samp
+ use R_lattice,     ONLY:ng_vec,nkibz,qindx_X,bz_samp,g_vec
  use ELPH,          ONLY:ph_modes,elph_bands,elph_dV,dV_bare
- use wave_func,     ONLY:wf,wf_state,wf_load,WF_free,wf_ng
+ use wave_func,     ONLY:wf,wf_state,wf_load,WF_free,wf_igk,wf_nc_k,wf_ncx
  use functions,     ONLY:BZ_index
- use FFT_m,         ONLY:fft_dim,fft_g_table,fft_size,fft_rot_r
+ use FFT_m,         ONLY:fft_dim,fft_g_table,fft_size,fft_rot_r,fft_norm
  implicit none
  type(bz_samp) :: k
  integer       :: iq
 !
 !Work Space
- integer     :: ik,iko,iko_bz,il,ig,ib1,ib2,ifft1,ifft2,ir,iso
+ integer     :: ik,iko,iko_bz,il,ig,ib1,ib2,ifft1,ifft2,ir,iso,ic
  integer(8)  :: fw_plan,bw_plan
  complex(SP) :: cdotc
- complex(DP), allocatable :: aux1(:)
+ complex(DP), allocatable :: dV_bare_r(:),aux1(:)
  complex(SP), allocatable :: aux2(:),aux3(:)
 
  if (iq==1) call wf_load(ng_vec,1,elph_bands,(/1,nkibz/),title='-ELPH')
 
- allocate(aux1(fft_size),aux2(wf_ng),aux3(wf_ng))
+ allocate(dV_bare_r(fft_size),aux1(fft_size),aux2(wf_ncx),aux3(wf_ncx))
 
  fw_plan=0
  bw_plan=0
 
  do il=1,ph_modes
-   aux1=cmplx(0.,0.,DP)
+   dV_bare_r=cmplx(0.,0.,DP)
    do ig=1,ng_vec
-     aux1( fft_g_table(ig,1) ) = dV_bare(iq,ig,il)
+     dV_bare_r( fft_g_table(ig,1) ) = dV_bare(iq,ig,il)
    enddo
    !
    ! G->R (FW) +1
+   !
 #if defined FFTW
-   call fft_3d(aux1,fft_dim,+1,fw_plan)
+   call fft_3d(dV_bare_r,fft_dim,+1,fw_plan)
 #else
-   call fft_3d(aux1,fft_dim,+1)
+   call fft_3d(dV_bare_r,fft_dim,+1)
 #endif
+
+ write (*,*) wf_igk(:,1)
+ write (*,*) wf_igk(:,2)
+ write (*,*) wf_igk(:,3)
+ stop
+
+!DEBUG
+! if (iq==2.and.il==1) then
+! write (100,'(f20.10)') real(dV_bare_r)
+! write (200,'(f20.10)') aimag(dV_bare_r)
+! endif
    !
    do ik=1,nkibz
      iko_bz=qindx_X(iq,BZ_index(ik,k),1)
@@ -66,38 +78,64 @@
    
      if (iso>nsym/(i_time_rev+1)) iso=iso-nsym/(i_time_rev+1)
 
-     do ib1=elph_bands(1),elph_bands(2)
-       do ib2=elph_bands(1),elph_bands(2)
+     do ib2=elph_bands(1),elph_bands(2)
 
-         ifft1=wf_state(ib1,ik,1)
-         ifft2=wf_state(ib2,iko,1)
+       ifft2=wf_state(ib2,iko,1)
 
-         if (iso==k%sstar(iko_bz,2)) then
-           aux1(:)=aux1(:)* wf(fft_rot_r(iso,:),ifft2)
-         else
-           aux1(:)=aux1(:)*conjg( wf(fft_rot_r(iso,:),ifft2) )
-         endif
-         !
-         ! R->G (BW) -1
-         !
+       if (iso==k%sstar(iko_bz,2)) then
+         aux1(:)=dV_bare_r(:)* wf(fft_rot_r(iso,:),ifft2)/fft_norm
+       else
+         aux1(:)=dV_bare_r(:)*conjg( wf(fft_rot_r(iso,:),ifft2) )/fft_norm
+       endif
+
+ if (iq==2.and.il==1.and.iko==1.and.ib2==1) then
+ write (300,'(f20.10)') real(aux1)
+ write (400,'(f20.10)') aimag(aux1)
+ endif
+       !
+       ! R->G (BW) -1 of the dV_bare x wf(ik-iq)
+       !
 #if defined FFTW
-         call fft_3d(aux1,fft_dim,-1,bw_plan)
+       call fft_3d(aux1,fft_dim,-1,bw_plan)
 #else
-         call fft_3d(aux1,fft_dim,-1)
+       call fft_3d(aux1,fft_dim,-1)
 #endif
-         aux2(1:wf_ng)=aux1(fft_g_table(1:wf_ng,1))
+       do ic=1,wf_ncx
+         aux2(ic)=aux1(fft_g_table(wf_igk(ic,iko),1))/real(fft_size,SP)
+       enddo
 
+!DEBUG
+! if (iq==2.and.il==1.and.iko==1.and.ib2==1) then
+! write (500,'(f20.10)') real(aux2(:wf_ncx))
+! write (600,'(f20.10)') aimag(aux2(:wf_ncx))
+! endif
+
+       do ib1=elph_bands(1),elph_bands(2)
+         ifft1=wf_state(ib1,ik,1)
+         !
+         ! R->G (BW) -1 of the left WF, wf(ik)
+         !
          aux1=wf(:,ifft1)
 #if defined FFTW
          call fft_3d(aux1,fft_dim,-1,bw_plan)
 #else
          call fft_3d(aux1,fft_dim,-1)
 #endif
-         aux3(1:wf_ng)=aux1(fft_g_table(1:wf_ng,1))
+         ! Note the fft_norm factor due to the fft_norm factor
+         ! already embodied in wf definition (wf = wf_DP * fft_norm) in wf_load
+         !
+         do ic=1,wf_ncx
+           aux3(ic)=aux1(fft_g_table(wf_igk(ic,ik),1))/real(fft_size,SP)/fft_norm
+         enddo
 
-         write (*,'(/5i3)') iq,ik,ib1,ib2,il
-         write (*,'(2f20.15)') cdotc(wf_ng,aux2,1,aux3,1)
-         write (*,'(2f20.15)') elph_dV(BZ_index(ik,k),il,ib1-elph_bands(1)+1,ib2-elph_bands(1)+1)
+!DEBUG
+! if (iq==2.and.il==1.and.iko==1.and.ib2==1.and.ib1==1) then
+! write (700,'(f20.10)') real(aux3(:wf_ncx))
+! write (800,'(f20.10)') aimag(aux3(:wf_ncx))
+!         write (*,'(/5i3)') iq,ik,ib1,ib2,il
+!         write (*,'(2f20.15)') cdotc(wf_ncx,aux2,1,aux3,1)
+! endif
+!!         write (*,'(2f20.15)') elph_dV(BZ_index(ik,k),il,ib1-elph_bands(1)+1,ib2-elph_bands(1)+1)
 
        enddo
      enddo
@@ -109,7 +147,7 @@
 
  if (iq==3) stop
 
- deallocate(aux1,aux2,aux3)
+ deallocate(dV_bare_r,aux1,aux2,aux3)
 
  end subroutine
 

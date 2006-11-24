@@ -29,7 +29,7 @@
  use R_lattice,             ONLY : bz_samp, ng_vec, g_vec
  use D_lattice,             ONLY : nsym, i_time_rev, i_space_inv, dl_sop, &
 &                                  DL_vol, a, alat, default_Tel
- use wave_func,             ONLY : ng_wf_k, wf_ng_disk, wf_igk, wf_ng
+ use wave_func,             ONLY : wf_nc_k, wf_ncx, wf_igk, wf_ng
  use vec_operate,           ONLY : cross_product
  use xc_functionals,        ONLY : GS_xc_KIND,GS_xc_FUNCTIONAL, xc_string
  implicit none
@@ -78,8 +78,8 @@
  ng_vec = ngm_
  default_nel = nelec_
  default_Tel = 0.0_SP 
- wf_ng_disk  = npwx_ ! max for writing, allocation
- wf_ng      = wf_ng_disk ! this is written
+ wf_ncx  = npwx_ ! max for writing, allocation
+ wf_ng   = wf_ncx ! this is written
 
  call msg("l","done")
 
@@ -274,7 +274,7 @@
  call msg('l','done')
 
 !---------------------------------------------------------------------*
-!    Read wf_ng_disk and igk arrays                                   *
+!    Read wf_ncx and igk arrays                                   *
 !---------------------------------------------------------------------*
 
 ! This whole qexml is terribly slow as it reads and rereads the data.xml
@@ -284,11 +284,11 @@
 
  call msg('s',' IGK arrays...')
 
- allocate( ng_wf_k(k%nibz) )
- allocate( wf_igk(wf_ng_disk, k%nibz) ) ! in ioDB1: wf_igk(wf_ng_disk,k%nibz))
+ allocate( wf_nc_k(k%nibz) )
+ allocate( wf_igk(wf_ncx, k%nibz) ) ! in ioDB1: wf_igk(wf_ncx,k%nibz))
  wf_igk(:,:)=-1 ! for checking
 
-!allocate(index_(wf_ng_disk)) ! avoid in case of v3.1 bug
+!allocate(index_(wf_ncx)) ! avoid in case of v3.1 bug
  allocate(index_(ng_vec))     ! overkill...
  do ik = 1,k%nibz
    !
@@ -313,18 +313,18 @@
 !<<<DEBUG
 
    if (ierr.ne.0) call errore('qexml_read_gk','IOTK error',ABS(ierr))
-   if(npwk_.gt.wf_ng_disk) then
+   if(npwk_.gt.wf_ncx) then
       call msg('s',' :: RL vectors        (WF):',wf_ng)
       call msg('s','PWscf v3.1 contains a bug in parallel jobs: npw(k) is ',npwk_)
       call msg('s','MAX_NPW < gkvectors size. Fix data-file.xml manually!')
       call error('MAX_NPW < gkvectors size. Fix data-file.xml manually! ')
    endif
    wf_igk(1:npwk_, ik)= index_(1:npwk_) ! CHECK!
-   ng_wf_k(ik) = npwk_
+   wf_nc_k(ik) = npwk_
  enddo
  deallocate(index_)
 
- if(any(ng_wf_k.eq.0)) call error('At least one npw(k) = 0!')
+ if(any(wf_nc_k.eq.0)) call error('At least one npw(k) = 0!')
 
  call msg('l','done')
 

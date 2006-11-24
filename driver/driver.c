@@ -61,6 +61,9 @@ typedef struct
 #if defined p2s
  #include "p2s.h"
 #endif
+#if defined e2s
+ #include "e2s.h"
+#endif
 static void usage(int verbose);
 static void title(FILE *file_name,char *cmnt);
 main(int argc, char *argv[])
@@ -230,6 +233,14 @@ main(int argc, char *argv[])
  ===========================================================================
  */
  F90_FUNC(p2s_i,P2S_I)(
+          rnstr2,&lni,inf,&iif,id,&iid,od,&iod,js,&ijs,&np,&pid);
+#endif
+#if defined e2s 
+ /* 
+   Running the Fortran P2S driver 
+ ===========================================================================
+ */
+ F90_FUNC(e2s_i,E2S_I)(
           rnstr2,&lni,inf,&iif,id,&iid,od,&iod,js,&ijs,&np,&pid);
 #endif
 #if defined f2s 

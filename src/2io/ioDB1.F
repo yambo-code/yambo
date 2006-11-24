@@ -28,11 +28,11 @@
  use D_lattice,        ONLY:a, alat, nsym, i_time_rev, default_Tel, dl_sop,Tel
  use R_lattice,        ONLY:ng_vec, g_vec, bz_samp,nkibz,&
 &                           qp_states_k,nXkibz,ng_closed
- use wave_func,        ONLY:wf_ng_disk, ng_wf_k, wf_igk,wf_ng
+ use wave_func,        ONLY:wf_ncx, wf_nc_k, wf_igk,wf_ng
  use IO_m,             ONLY:io_connect, io_disconnect, io_sec, &
 &                           io_elemental, io_status, io_bulk,read_is_on,&
 &                           serial_number,io_header,io_serial_number,&
-&                           DUMP,io_mode,write_is_on,io_code_version
+&                           DUMP,io_mode,write_is_on,io_code_version,version_is_newer
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_G_bands
  use BS,               ONLY:BS_bands
  use xc_functionals,   ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL
@@ -48,13 +48,16 @@
 !
 ! Dimensions
 !
-   call io_elemental(ID, VAR="DIMENSIONS",VAR_SZ=16)
+   call io_elemental(ID, VAR="DIMENSIONS",VAR_SZ=17)
 !
 ! ONLY DB1 can define the serial_number 
 !
    call io_elemental(ID,I0=serial_number,DB_I0=serial_number)
    io_serial_number(ID)=serial_number
-
+!
+! Code_version here and not in io_header because io_header
+! writes the serial_number as well.
+!
    call io_elemental(ID,DB_I1=io_code_version(ID,:),I1=code_version)
   
    call io_elemental(ID,I0=E%nb,CHECK=.true.,OP=(/"=="/),&
@@ -63,8 +66,8 @@
 &                    VAR=' K-points                        :')
    call io_elemental(ID,I0=ng_vec,CHECK=.true.,OP=(/"=="/),&
 &                    VAR=' G-vectors             [RL space]:')
-   call io_elemental(ID,I0=wf_ng_disk,CHECK=.true.,OP=(/"=="/),&
-&                    VAR='                  [wavefunctions]:')
+   call io_elemental(ID,I0=wf_ncx,CHECK=.true.,OP=(/"=="/),&
+&                    VAR=' Components       [wavefunctions]:')
    call io_elemental(ID,I0=i_time_rev,CHECK=.true.,OP=(/"=="/))
    if (i_time_rev==1) then
      call io_elemental(ID,I0=nsym,CHECK=.true.,OP=(/"=="/),&
@@ -89,7 +92,21 @@
    call io_elemental(ID, I0=GS_xc_KIND)
    call io_elemental(ID, I0=GS_xc_FUNCTIONAL)
 
-   call io_elemental(ID, VAR="",VAR_SZ=0)
+   if (version_is_newer(ID,(/3,0,3/))) then
+     call io_elemental(ID, VAR="",VAR_SZ=0,MENU=0)
+!
+! WF real G-vectors components. This IO entry has been added only in ver. 3.0.3
+! to correctly hadle PW use of igk indexes.
+! Note the difference between wf_ncx, wf_nc_k and wf_ng. In PW in general
+! wf_ng = maxval(wf_igk) > wf_ncx
+!
+     call io_elemental(ID, VAR="WF_G_COMPONENTS",VAR_SZ=1,MENU=0)
+     call io_elemental(ID,I0=wf_ng,CHECK=.true.,OP=(/"=="/),&
+&                      VAR=' WF G-vectors        (ver.>3.0.3):')
+     call io_elemental(ID, VAR="",VAR_SZ=0)
+   else
+     call io_elemental(ID, VAR="",VAR_SZ=0)
+   endif
 !
 ! Exporting E%nb/k%nibz when in DUMP
 !-------------------------------------
@@ -111,7 +128,7 @@
      nel=default_nel
 
      ng_closed=ng_vec
-     wf_ng=wf_ng_disk
+     if (.not.version_is_newer(ID,(/3,0,3/))) wf_ng=wf_ncx
 
    endif
 
@@ -134,11 +151,11 @@
    E%Z=(0._SP,0._SP)
 
    allocate(g_vec(ng_vec,3),k%pt(k%nibz,3))
-   allocate(dl_sop(3,3,nsym),ng_wf_k(k%nibz))
-   allocate(wf_igk(wf_ng_disk,k%nibz))
+   allocate(dl_sop(3,3,nsym),wf_nc_k(k%nibz))
+   allocate(wf_igk(wf_ncx,k%nibz))
 
-   call mem_est("g_vec k_pt dl_sop ng_wf_k wf_igk",&
-&               (/size(g_vec),size(k%pt),size(dl_sop),size(ng_wf_k),size(wf_igk)/),&
+   call mem_est("g_vec k_pt dl_sop wf_nc_k wf_igk",&
+&               (/size(g_vec),size(k%pt),size(dl_sop),size(wf_nc_k),size(wf_igk)/),&
 &               (/SP,        SP,        SP,           IP,         IP/) )
 
  endif
@@ -173,8 +190,8 @@
 !
 ! Wfc grids
 !
-  call io_bulk(ID, VAR="WFC_NG", VAR_SZ=shape(ng_wf_k) )
-  call io_bulk(ID, I1=ng_wf_k )
+  call io_bulk(ID, VAR="WFC_NG", VAR_SZ=shape(wf_nc_k) )
+  call io_bulk(ID, I1=wf_nc_k )
 
   call io_bulk(ID, VAR="WFC_GRID", VAR_SZ=shape(wf_igk) )
   call io_bulk(ID, I2=wf_igk )

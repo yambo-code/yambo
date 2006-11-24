@@ -112,7 +112,7 @@ end subroutine init_cutoff
 
   subroutine nG_limits(nkibz)
     use com,               ONLY : msg
-    use wave_func,         ONLY : wf_ng, wf_ng_disk
+    use wave_func,         ONLY : wf_ng, wf_ncx
     implicit none
    
     integer, intent (in)       :: nkibz
@@ -167,7 +167,7 @@ end subroutine init_cutoff
    
   subroutine setup_optcut( ik )
     use com,   ONLY:msg
-    use wave_func,         ONLY : wf_ng, wf_ng_disk
+    use wave_func,         ONLY : wf_ng, wf_ncx
     implicit none
     integer, intent (in)       :: ik
 !ws
@@ -249,7 +249,7 @@ end subroutine init_cutoff
                 endif
                 icount = icount + 1
                 ig1=igtab(n1,n2,n3)
-                if (ig1.lt.1.or.ig1.gt.wf_ng_disk) then
+                if (ig1.lt.1.or.ig1.gt.wf_ncx) then
                    call msg('sr','[ERROR] Bug found in check_index.')
                    stop
                 endif

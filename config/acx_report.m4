@@ -41,6 +41,9 @@ if test "$enable_largedb" = "yes" ; then NETCDF_LF_str="X"; fi
 IOTK_str=" "
 if test "$compile_p2s" = "yes" ; then IOTK_str="X"; fi
 
+ETSF_str=" "
+if test "$compile_e2s" = "yes" ; then ETSF_str="X"; fi
+
 BLAS_str=" "
 if test "$compile_blas" = "yes" ; then BLAS_str="X"; fi
 
@@ -56,6 +59,7 @@ AC_SUBST(Red_str)
 AC_SUBST(MPI_str)
 AC_SUBST(NETCDF_str)
 AC_SUBST(NETCDF_LF_str)
+AC_SUBST(ETSF_str)
 AC_SUBST(IOTK_str)
 AC_SUBST(BLAS_str)
 AC_SUBST(LAPACK_str)

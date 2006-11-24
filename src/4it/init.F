@@ -48,7 +48,7 @@
 &                         Xk_grid_is_uniform,bz_samp,nqibz,bz_samp_reset,&
 & cut_geometry,cyl_ph_radius
 
- use wave_func,      ONLY:wf_ng,ioWF
+ use wave_func,      ONLY:ioWF
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,REP
  use BS,             ONLY:BS_bands,BS_n_g_exch,BS_n_g_W,BSS_mode,BSS_q0,&
 &                         BS_eh_en,BS_res_mode,BS_cpl_mode
@@ -162,7 +162,6 @@
  if (io_err==0) then
    QP_ng_Sx=ng_closed
    BS_n_g_exch=ng_closed
-   wf_ng=ng_closed 
  endif
 !
 ! KINDX

@@ -29,7 +29,15 @@
 ! 
 !  <n k | e ^{iq.r} | n' k-q> 
 !
-! the +1 sign (FW) is used in scatter_Bamp as well
+! the +1 sign (FW) is used in scatter_Bamp as well.
+!
+! Note that that inverse operation of 
+!
+! call fft_3d(wf,fft_dim, 1,bw_plan)
+!
+! is
+!
+! call fft_3d(wf/real(fft_size,SP),fft_dim, 1,fw_plan)
 !
 !=====================================================================
 !

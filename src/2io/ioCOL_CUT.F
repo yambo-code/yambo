@@ -34,7 +34,7 @@
 !
 !ws
  real(SP),allocatable::bare_qpg_disk(:,:,:)
- integer             ::CUT_RIM_ng,CUT_RIM_npts,wf_ng_disk
+ integer             ::CUT_RIM_ng,CUT_RIM_npts,wf_ncx
 !
  ioCOL_CUT=io_connect(desc="cutoff",type=1,ID=ID)
 !
@@ -57,7 +57,7 @@
 &       VAR=' Sphere/Cylinder radius      [au]:',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,R0=cyl_length,&
 &       VAR=' Cylinder length             [au]:',CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,I0=wf_ng,DB_I0=wf_ng_disk,&
+   call io_elemental(ID,I0=wf_ng,DB_I0=wf_ncx,&
 &       VAR=' RL components                   :',CHECK=.true.,OP=(/"<="/))
    call io_elemental(ID,I0=ng_closed,&
 &       VAR=' RL components used in the sum   :',CHECK=.true.,OP=(/"=="/))
@@ -81,7 +81,7 @@
 !
  if (any((/io_sec(ID,:)==2/))) then
 ! 
-   allocate(bare_qpg_disk(nqibz,wf_ng_disk,2))
+   allocate(bare_qpg_disk(nqibz,wf_ncx,2))
 ! 
    if (write_is_on(ID)) call mat_c2r(bare_qpg,bare_qpg_disk)
 

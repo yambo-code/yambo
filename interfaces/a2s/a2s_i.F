@@ -29,7 +29,7 @@
  use D_lattice,           ONLY:n_atoms_max
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz
  use timing,              ONLY:live_timing_is_on
- use wave_func,           ONLY:wf_ng_disk,ioWF
+ use wave_func,           ONLY:wf_ncx,ioWF
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
  implicit none
  type(levels)                 :: en 
@@ -95,7 +95,7 @@
 !
  call msg('s',' == Writing DB2 (wavefunctions) + nlPP ...')
  
- allocate(wf_disk(2,n_bands,wf_ng_disk,n_spin))
+ allocate(wf_disk(2,n_bands,wf_ncx,n_spin))
  do ik=1,nkibz
 !------------------------------------------------
    call a2s_wf(wf_disk,ik,trim(KSS_file_name))

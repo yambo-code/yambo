@@ -28,7 +28,7 @@
  use D_lattice,             ONLY : nsym, i_time_rev, i_space_inv, dl_sop, &
 &                                  DL_vol, a, alat, default_Tel,&
 &                                  n_atom_species,n_atoms,n_atoms_max,atom_pos
- use wave_func,             ONLY : ng_wf_k, wf_igk,wf_ng_disk,wf_ng
+ use wave_func,             ONLY : wf_nc_k, wf_igk,wf_ncx,wf_ng
  use vec_operate,           ONLY : cross_product
  use xc_functionals,        ONLY : XC_EXCHANGE_CORRELATION,GS_xc_KIND,GS_xc_FUNCTIONAL,&
 &                                  xc_string,XC_LDA_C_PW,XC_LDA_C_PZ,XC_LDA_C_WIGNER,&
@@ -146,7 +146,7 @@
  call msg('nl',' Atoms positions...')
  call msg('l','not done')
 !
- allocate(ng_wf_k(k%nibz),g_vec(ng_vec,3),en%E(en%nb,k%nibz,n_spin),asop(3,3,nsym))
+ allocate(wf_nc_k(k%nibz),g_vec(ng_vec,3),en%E(en%nb,k%nibz,n_spin),asop(3,3,nsym))
 
  call msg('nl',' Symmetries...')
  do i3=1,fhi_inp%nrot
@@ -211,14 +211,14 @@
  do i1 = 1,ng_vec
     g_vec(i1,:)= fhi_gg%gg(i1,:)*alat(:)/fhi_inp%alat
  enddo
- ng_wf_k(:)=fhi_wvf%ngw(:)
- wf_ng_disk=maxval(fhi_wvf%ngw)
- wf_ng=wf_ng_disk
- allocate(wf_igk(wf_ng_disk,k%nibz))
- forall(i1=1:wf_ng_disk) wf_igk(i1,:)=i1
+ wf_nc_k(:)=fhi_wvf%ngw(:)
+ wf_ncx=maxval(fhi_wvf%ngw)
+ allocate(wf_igk(wf_ncx,k%nibz))
+ forall(i1=1:wf_ncx) wf_igk(i1,:)=i1
  do i1=1,fhi_wvf%nkptx
-  wf_igk(:ng_wf_k(i1),i1)=fhi_wvf%igk(:ng_wf_k(i1),i1)
+  wf_igk(:wf_nc_k(i1),i1)=fhi_wvf%igk(:wf_nc_k(i1),i1)
  enddo
+ wf_ng=maxval(wf_igk)
 ! transfer KS-energies to SELF
  call msg('l','done')
 !

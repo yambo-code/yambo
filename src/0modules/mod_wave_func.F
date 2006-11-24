@@ -22,11 +22,17 @@
  module wave_func
    use pars
    integer                :: wf_b(2),wf_k(2),wf_s(2)
-   integer                :: wf_ng_disk,wf_ng
+   ! Max Num. of COMPONENTS
+   integer                :: wf_ncx
+   ! Max Num. of G-VECTORS (>= wf_ncx)
+   integer                :: wf_ng
    character(1)           :: wf_space
    complex(SP),allocatable:: wf(:,:)
    integer    ,allocatable:: wf_state(:,:,:)
-   integer    ,allocatable:: ng_wf_k(:),wf_igk(:,:)
+   ! Num. of COMPONENTS at each k
+   integer    ,allocatable:: wf_nc_k(:)
+   ! Table correspondance G-vec <-> Components: G_ic = wf_igk(ic,ik)
+   integer    ,allocatable:: wf_igk(:,:)
    logical                :: wf_norm_test
 
    interface

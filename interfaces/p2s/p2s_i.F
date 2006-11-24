@@ -30,7 +30,7 @@
  use D_lattice,           only : n_atoms_max
  use R_lattice,           only : bz_samp,bz_samp_reset,nkibz
  use timing,              only : live_timing_is_on
- use wave_func,           only : wf_ng_disk,ioWF
+ use wave_func,           only : wf_ncx,ioWF
  use IO_m,                only : io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
 !
 ! PW MODULES
@@ -152,7 +152,7 @@
 
  call msg('s','== DB2 (wavefunctions) ... ')
 
- allocate(wf_disk(2,n_bands,wf_ng_disk,n_spin))
+ allocate(wf_disk(2,n_bands,wf_ncx,n_spin))
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
 
  isec = 1

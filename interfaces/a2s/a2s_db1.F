@@ -29,7 +29,7 @@
 &                                  DL_vol, a, alat, default_Tel,&
 &                                  pp_n_l_comp_max,n_atom_species,n_atoms,pp_n_l_comp,&
 &                                  n_atoms_max,atom_pos
- use wave_func,             ONLY : ng_wf_k, wf_igk,wf_ng_disk,wf_ng
+ use wave_func,             ONLY : wf_nc_k, wf_igk,wf_ncx,wf_ng
  use vec_operate,           ONLY : cross_product
  use defs_datatypes,        ONLY : hdr_type, wffile_type
  use xc_functionals,        ONLY : XC_EXCHANGE_CORRELATION,GS_xc_KIND,GS_xc_FUNCTIONAL,&
@@ -151,7 +151,7 @@
 !
 ! ALLOCATION
 !
- allocate(ng_wf_k(k%nibz),g_vec(ng_vec,3),rstr(en%nb))
+ allocate(wf_nc_k(k%nibz),g_vec(ng_vec,3),rstr(en%nb))
  allocate(en%E(en%nb,k%nibz,n_spin),agvec(3,ng_vec),asop(3,3,a_nsym))
 !
  call msg('s','Symmetries...')
@@ -232,10 +232,10 @@
  do i1=1,ng_vec
    g_vec(i1,:)=matmul(transpose(b),agvec(:,i1))*alat(:)/2./pi
  enddo
- ng_wf_k=ng_vec
- wf_ng_disk=maxval(ng_wf_k)
- wf_ng=wf_ng_disk
- allocate(wf_igk(wf_ng_disk,k%nibz))
+ wf_nc_k=ng_vec
+ wf_ncx=maxval(wf_nc_k)
+ wf_ng=wf_ncx
+ allocate(wf_igk(wf_ncx,k%nibz))
  forall(i1=1:ng_vec) wf_igk(i1,:)=i1
  call msg('l','done')
 !

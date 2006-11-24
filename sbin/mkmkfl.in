@@ -90,6 +90,10 @@ case $target in
    llibs="$llibs -liotk \$(llapack) \$(lblas) \$(lnetcdf) \$(lfftw) -lm $llmpi"
    linclude="$linclude -I\$(iotk_dir)"
     ;;
+  e2s)
+   llibs="$llibs -letsf_io \$(llapack) \$(lblas) \$(lnetcdf) \$(lfftw) -lm $llmpi"
+   linclude="$linclude -I\$(etsf_dir)"
+    ;;
 esac
 
 cat config/setup >>$cdir/Makefile

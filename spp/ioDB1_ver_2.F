@@ -25,7 +25,7 @@
  use electrons,        ONLY:levels,default_nel,n_spin,n_sp_pol
  use D_lattice,        ONLY:a, alat, nsym, i_time_rev, default_Tel, dl_sop,Tel
  use R_lattice,        ONLY:ng_vec, g_vec, bz_samp
- use wave_func,        ONLY:wf_ng_disk, ng_wf_k, wf_igk,wf_ng
+ use wave_func,        ONLY:wf_ncx, wf_nc_k, wf_igk,wf_ng
  use IO_m,             ONLY:io_connect, io_disconnect,  &
 &                           io_bulk, read_is_on, serial_number,&
 &                           io_netcdf_support
@@ -67,7 +67,7 @@
  n_spin  =1
  n_sp_pol=1
  i_time_rev= I_on_disk(5)
- wf_ng_disk= I_on_disk(6)
+ wf_ncx= I_on_disk(6)
  deallocate(I_on_disk)
 !
 ! HRD 
@@ -85,7 +85,7 @@
 
  if (read_is_on(ID)) then 
    allocate(en%E(en%nb,k%nibz,n_spin),g_vec(ng_vec,3),k%pt(k%nibz,3),&
-&           dl_sop(3,3,nsym*(i_time_rev+1)),ng_wf_k(k%nibz))
+&           dl_sop(3,3,nsym*(i_time_rev+1)),wf_nc_k(k%nibz))
  endif
 !
 ! Sym-GsID 
@@ -93,11 +93,11 @@
  allocate(I_on_disk(k%nibz))
  call io_bulk(ID,VAR="Sym-GsID",VAR_SZ=(/k%nibz/))
  call io_bulk(ID,I1=I_on_disk)
- ng_wf_k=I_on_disk
- wf_ng_disk=maxval(ng_wf_k)
+ wf_nc_k=I_on_disk
+ wf_ncx=maxval(wf_nc_k)
  deallocate(I_on_disk)
 !
- if (read_is_on(ID)) allocate(wf_igk(wf_ng_disk,k%nibz))
+ if (read_is_on(ID)) allocate(wf_igk(wf_ncx,k%nibz))
 !
 ! Sym-GsRD 
 !
@@ -116,8 +116,8 @@
 !
 ! En-IgkID 
 !
-   allocate(I_on_disk(k%nibz*wf_ng_disk))
-   call io_bulk(ID,VAR="En-IgkID",VAR_SZ=(/k%nibz*wf_ng_disk/))
+   allocate(I_on_disk(k%nibz*wf_ncx))
+   call io_bulk(ID,VAR="En-IgkID",VAR_SZ=(/k%nibz*wf_ncx/))
    call io_bulk(ID,I1=I_on_disk)
 !
 ! En-IgkRD 
@@ -129,12 +129,12 @@
    do i1=1,k%nibz
      k%pt(i1,:)=R_on_disk((3+en%nb)*(i1-1)+1:(3+en%nb)*(i1-1)+3)
      en%E(:,i1,1)=R_on_disk((3+en%nb)*(i1-1)+4:(3+en%nb)*i1)
-     wf_igk(:,i1)=I_on_disk(wf_ng_disk*(i1-1)+1:wf_ng_disk*i1)
+     wf_igk(:,i1)=I_on_disk(wf_ncx*(i1-1)+1:wf_ncx*i1)
    enddo
    deallocate(I_on_disk)
    deallocate(R_on_disk)
  else
-   allocate(I_on_disk(wf_ng_disk))
+   allocate(I_on_disk(wf_ncx))
    allocate(R_on_disk(3+en%nb))
    do i1=1,k%nibz
      call io_bulk(ID,I1=I_on_disk)

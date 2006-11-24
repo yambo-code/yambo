@@ -11,7 +11,8 @@
 # [@Red_str@] Redundant compilation  
 # [@MPI_str@] MPI 
 # [@NETCDF_str@@NETCDF_LF_str@] NETCDF/Large Files 
-# [@IOTK_str@] IoTK
+# [@IOTK_str@] IoTK support
+# [@ETSF_str@] ETSF I/O support
 # [@BLAS_str@@LAPACK_str@@SLK_str@] Built-in BLAS/LAPACK/SCALAPACK
 #
 # [ CPP ] @FCCPP@ @FCPPFLAGS@

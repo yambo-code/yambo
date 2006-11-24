@@ -79,10 +79,6 @@
 #else
  real(SP):: sdot
 #endif
-!DEBUG >
-! real(SP),allocatable :: rho(:),E_DFT(:,:)
-! real(SP),   external :: expw,ecpw,decpw
-!DEBUG <
 
  call section('*','ACFDT Total Energy')
 !=======================================

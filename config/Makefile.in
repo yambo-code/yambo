@@ -31,6 +31,7 @@ debug       = @enable_debug@
 do_blas     = @compile_blas@
 do_lapack   = @compile_lapack@
 do_p2s      = @compile_p2s@
+do_e2s      = @compile_e2s@
 shell       = @SHELL@
 tcsh        = @TCSH@
 make        = @MAKE@
@@ -114,6 +115,8 @@ interfaces: libs
 	@LIBS2DO="$(2SLIBS)" ; $(mksrc)
 	@X2DO="f2s" ;XPATH="interfaces/f2s";XLIBS="$(2SLIBS)";$(mkx)
 	@if test "$(do_p2s)" = yes ; then X2DO="p2s" ; XPATH="interfaces/p2s" ; \
+	XLIBS="$(2SLIBS)" ; $(mkx) ; fi
+	@if test "$(do_e2s)" = yes ; then X2DO="e2s" ; XPATH="interfaces/e2s" ; \
 	XLIBS="$(2SLIBS)" ; $(mkx) ; fi
 interfaces_todo: libs
 	@X2DO="f2s" ;XPATH="interfaces/f2s";XLIBS="$(2SLIBS)";$(mkx)

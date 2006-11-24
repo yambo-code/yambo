@@ -26,12 +26,12 @@
  use D_lattice,             ONLY : n_atom_species,pp_n_l_comp_max,&
 &                                  PP_alloc,pp_kbs,pp_kb,pp_kbd
  use R_lattice,             ONLY : nkibz
- use wave_func,             ONLY : wf_ng_disk
+ use wave_func,             ONLY : wf_ncx
  use defs_datatypes,        ONLY : hdr_type, wffile_type
  implicit none
  integer        :: ikibz          
  character(*)   :: KSS_file_name
- real(SP)       :: wf_disk(2,n_bands,wf_ng_disk,n_spin)
+ real(SP)       :: wf_disk(2,n_bands,wf_ncx,n_spin)
 !ws
  integer        :: i1,i2
 !
@@ -39,9 +39,9 @@
 !
  type(hdr_type)                 :: ahdr
  type(wffile_type)              :: wff
- real(DP)                       :: pp_kb_kdb_disk(wf_ng_disk),&
+ real(DP)                       :: pp_kb_kdb_disk(wf_ncx),&
 &                                  pp_kbs_disk(n_atom_species,pp_n_l_comp_max)
- complex(DP)                    :: wf_disk_DP(wf_ng_disk)
+ complex(DP)                    :: wf_disk_DP(wf_ncx)
  integer                        :: fform
 
  if (ikibz==1) then

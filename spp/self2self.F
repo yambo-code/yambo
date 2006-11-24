@@ -32,7 +32,7 @@
  use D_lattice,        ONLY:dl_sop
  use R_lattice,        ONLY:g_vec,bz_samp,nkibz,nqibz,nkbz,nXkbz,qpt,&
 &                           qindx_free,bz_samp_reset
- use wave_func,        ONLY:ng_wf_k,wf_igk,wf_ng_disk,wf_ng,ioWF
+ use wave_func,        ONLY:wf_nc_k,wf_igk,wf_ncx,wf_ng,ioWF
  use com,              ONLY:code_version,build_date,msg,error
  use X_m,              ONLY:X_t,X_reset,X_mat
  use frequency,        ONLY:w_samp,W_reset
@@ -98,7 +98,7 @@
 !===============
 2 call pp_redux_wait()
  if (io_err(2)==0) goto 3 
- allocate(wf_disk(2,n_bands,wf_ng_disk,n_spin))
+ allocate(wf_disk(2,n_bands,wf_ncx,n_spin))
 
  write_to_dbs=dbs_fragment.or.master_node
 
@@ -123,14 +123,14 @@
 
  write_to_dbs=master_node
 
- deallocate(wf_disk,ng_wf_k)
+ deallocate(wf_disk,wf_nc_k)
 
 !===============
 !    KB_PP
 !===============
 3 call pp_redux_wait()
  if (io_err(3)==0) goto 4 
- wf_ng=wf_ng_disk
+ wf_ng=wf_ncx
  do ik=1,nkibz
 
    if (ik==1    ) call io_control(ACTION=OP_RD,MODE=DUMP,SEC=(/1,2/),ID=ID)

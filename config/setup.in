@@ -48,4 +48,5 @@ lscalapack  = @SCALAPACK_LIBS@
 lmpi        = @MPILIBS@
 lnetcdf     = @NCLIBS@
 iotk_dir    = @iotk_dir@
+etsf_dir    = @etsf_dir@
 lfftw	    = @FFTW_LIBS@

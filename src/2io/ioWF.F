@@ -24,7 +24,7 @@
  use pars,             ONLY:SP,schlen
  use electrons,        ONLY:n_bands,n_spin
  use R_lattice,        ONLY:nkibz
- use wave_func,        ONLY:wf_ng_disk
+ use wave_func,        ONLY:wf_ncx
  use IO_m,             ONLY:io_connect, io_disconnect, io_sec, &
 &                           io_status, io_bulk,io_header,&
 &                           io_fragment,RD_CL_IF_END,RD_CL,io_action
@@ -59,11 +59,11 @@
  call io_fragment(ID,i_pointer=ik)
 
  write (VAR_NAME,'(a,i6.6)') 'WF_IK_RE_',ik
- call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=(/n_bands,wf_ng_disk,n_spin/))
+ call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=(/n_bands,wf_ncx,n_spin/))
  call io_bulk(ID,R3=wf(1,:,:,:))
 
  write (VAR_NAME,'(a,i6.6)') 'WF_IK_IM_',ik
- call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=(/n_bands,wf_ng_disk,n_spin/))
+ call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=(/n_bands,wf_ncx,n_spin/))
  call io_bulk(ID,R3=wf(2,:,:,:))
 
 1 call io_disconnect(ID=ID)

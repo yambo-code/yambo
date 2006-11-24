@@ -26,11 +26,11 @@
  use D_lattice,             ONLY : n_atom_species,pp_n_l_comp_max,&
 &                                  PP_alloc,pp_kbs,pp_kb,pp_kbd
  use R_lattice,             ONLY : nkibz
- use wave_func,             ONLY : wf_ng_disk, ng_wf_k
+ use wave_func,             ONLY : wf_ncx, wf_nc_k
  use f2s_datatypes
  implicit none
  integer        :: ikibz          
- real(SP)       :: wf_disk(2,n_bands,wf_ng_disk,n_spin)
+ real(SP)       :: wf_disk(2,n_bands,wf_ncx,n_spin)
  type(finp_type),  intent(in)   :: fhi_inp
  type(fwvf_type)                :: fhi_wvf
 !ws
@@ -58,8 +58,8 @@
   read(12) !! fhi_wvf%ngw(ik)
   do i1=1,n_bands
    read(12) (fhi_wvf%c0(ig),ig=1,fhi_wvf%ngwx)
-   wf_disk(1,i1,:wf_ng_disk,1)=real(fhi_wvf%c0(:wf_ng_disk))
-   wf_disk(2,i1,:wf_ng_disk,1)=aimag(fhi_wvf%c0(:wf_ng_disk))
+   wf_disk(1,i1,:wf_ncx,1)=real(fhi_wvf%c0(:wf_ncx))
+   wf_disk(2,i1,:wf_ncx,1)=aimag(fhi_wvf%c0(:wf_ncx))
   enddo
   read(12)!! (fhi_wvf%en(ii,ik),ii=1,fhi_wvf%nx)
 

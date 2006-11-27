@@ -73,6 +73,18 @@
      XC_MGGA_X_TPSS       = 201, &  ! Perdew, Tao, Staroverov & Scuseria exchange
      XC_MGGA_C_TPSS       = 202     ! Perdew, Tao, Staroverov & Scuseria correlation
 
+#if defined PJ_GKS
+  ! the OEP/KLI/CEDA
+  integer, public, parameter :: &
+    XC_OEP_EXX           = 301    ! OEP-EXX
+
+  ! the GKS
+  integer, public, parameter :: &
+    XC_GKS_HF            = 401, &  ! Hartree-Fock
+    XC_GKS_SXLDA         = 402, &  ! Kleinman-Bylander Screened-Exchange LDA
+    XC_GKS_CHSX          = 403     ! Coulomb-Hole Screened-eXchange
+#endif
+
   contains
 
   character(lchlen) function xc_string(kind,functional)
@@ -110,6 +122,16 @@
       xc_string=string_pack('Perdew & Wang ',ch_kind)
      case(XC_LDA_C_KP)
       xc_string=string_pack('Kurth & Perdew ',ch_kind)
+#if defined PJ_GKS
+     case(XC_OEP_EXX)
+      xc_string=string_pack('Exact-Exchange (OEP) ',ch_kind)
+     case(XC_GKS_HF)
+      xc_string=string_pack('Hartree-Fock (nonlocal) ',ch_kind)
+     case(XC_GKS_SXLDA)  
+      xc_string=string_pack('Screened-eXchange LDA (nonlocal) ',ch_kind)
+     case(XC_GKS_CHSX)  
+      xc_string=string_pack('Coulomb-Hole Screened-eXchange (nonlocal) ',ch_kind)
+#endif
    end select
    
   end function

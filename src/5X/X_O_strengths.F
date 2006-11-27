@@ -21,16 +21,19 @@
 !
  subroutine X_O_strengths(Xen,Xk,X,field_dir)
 !============================================
- use pars,          ONLY:SP
- use com,           ONLY:warning
- use electrons,     ONLY:levels,n_spin
- use par_proc_m,    ONLY:pp_redux_wait,master_node
- use D_lattice,     ONLY:nsym,i_time_rev,dl_sop,sop_inv
- use R_lattice,     ONLY:bz_samp
- use X_m,           ONLY:X_rhoq0,X_alloc,X_t,X_q0grad,long_path
- use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
- use memory_m,      ONLY:mem_est
- use wave_func,     ONLY:wf_ng,wf_load,WF_free
+ use pars,           ONLY:SP
+ use com,            ONLY:warning
+ use electrons,      ONLY:levels,n_spin
+ use par_proc_m,     ONLY:pp_redux_wait,master_node
+ use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
+ use R_lattice,      ONLY:bz_samp
+ use X_m,            ONLY:X_rhoq0,X_alloc,X_t,X_q0grad,long_path
+ use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
+ use memory_m,       ONLY:mem_est
+ use wave_func,      ONLY:wf_ng,wf_load,WF_free
+#if defined PJ_GKS
+ use xc_functionals, ONLY:GS_xc_FUNCTIONAL
+#endif
  implicit none
  type(bz_samp), intent(inout) :: Xk
  type(levels),  intent(inout) :: Xen
@@ -81,6 +84,13 @@
    !
    if (use_trans_gauge) call X_O_transverse(Xen,Xk,X)
    !
+#if defined PJ_GKS
+   !
+   ! When using xc non-local approximation Vnl add the contribution [r,Vnl]
+   !
+   if (GS_xc_FUNCTIONAL > 400) call X_O_gks(Xen,Xk,X) 
+   !
+#endif
    ! Free any loaded WFs
    !
    call WF_free()

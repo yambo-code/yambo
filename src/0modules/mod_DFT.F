@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2005 A. Marini and the SELF team 
+! Copyright (C) 2000-2005 M. Gruening and the SELF team 
 !         http://www.fisica.uniroma2.it/~self
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -20,8 +20,19 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  module DFT
-
 #if defined PJ_GKS
+ use pars,          ONLY:SP
+ implicit none
+  type gks_nlcm
+   complex(SP), pointer :: damp(:,:,:)
+   integer :: ifeps  
+   integer :: dim
+  end type gks_nlcm
+  type gks_X_states
+   integer :: n_state
+   integer, allocatable:: table(:,:)
+  end type gks_X_states
+
 
 #endif
 

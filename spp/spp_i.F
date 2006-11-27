@@ -30,7 +30,7 @@
  use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP
  use com,                 ONLY:msg,write_to_report
  use it_m,                ONLY:it_reset,infile
- use SPP,                 ONLY:lkanalyze,lelph,elph_gamma_broad,lbzrim
+ use SPP,                 ONLY:lkanalyze,lelph,elph_gamma_broad,lbzrim,lexcwf
  implicit none
  type(levels)                 :: en,Xen
  type(bz_samp)                :: k,Xk,q
@@ -121,7 +121,7 @@
 !==========
  if (lkanalyze) call k_analize(en,k,Xk,q)
  if (lbzrim) call BZ_RIM(Xk,Xen)
-! if (lexcwf) call Pwf(excwf,sp,Xk,Xen)
+! if (lexcwf) call plot_exc_wf()
  if (lelph) call elph_pw_dbs(k,q)
  if (lelph.and.elph_gamma_broad>0.) call elph_eliashberg(k,en,q)
 !

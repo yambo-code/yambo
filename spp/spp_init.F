@@ -52,6 +52,8 @@
    lambda = 1          
    window = 1.
    sort_mode = "i"
+   action_mode = "s"
+   max_energy = 10.
 !
 !ELPH
    elph_steps=200
@@ -108,7 +110,7 @@
 
  if (lkanalyze) call initactivate(1,"KcooIn KcooOut GWKpts KGrdShft")
  if (lbzrim) call initactivate(1,"BZ_RIM_path Srch_G_sh BZ_RIM_Nk KcooOut")
- if (lexcwf) call initactivate(1,"Order State Window Cells Hole")
+ if (lexcwf) call initactivate(1,"Action Max_Energy Order State Window Cells Hole")
  if (lelph) call initactivate(1,"DBsPATH EEfermi EfGbroad EfEbroad EliStps EliEmax")
 !
  if (infile_editing) then
@@ -117,6 +119,7 @@
    close(12)
    call pp_redux_wait
  endif
+
 
  contains
   subroutine call_init_load(mode) 

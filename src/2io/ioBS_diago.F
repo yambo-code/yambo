@@ -21,16 +21,20 @@
 !
  integer function ioBS_diago(iq,BS_H_dim,bsE,bsR,ID)
 !===================================================
- use pars,          ONLY:SP,schlen
- use BS,            ONLY:BS_identifier,BSS_q0
+ use pars,          ONLY:SP,schlen,IP
+ use BS,            ONLY:BS_identifier,BSS_q0,BSS_write_eig_2_db,&
+&                        BS_eh_table,BS_K_dim,BS_mat
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&
-&                        io_header
+&                        io_header,write_is_on,read_is_on
+ use memory_m,      ONLY:mem_est
  implicit none
  integer     :: iq,ID,BS_H_dim
  real(SP)    :: bsE(2,BS_H_dim),bsR(2,BS_H_dim)
 !ws
- character(schlen)   ::db_name
+ integer          :: i1
+ real(SP)         :: BS_mat_disk(2,BS_H_dim)
+ character(schlen):: db_name
 
  write (db_name,'(a,i2.2)') 'BS_diago_Q',iq
 
@@ -44,9 +48,11 @@
 !
    ioBS_diago=io_header(ID,QP_ctl_K=.true.)
 
-   call io_elemental(ID,VAR="PARS",VAR_SZ=4,MENU=0)
+   call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
    call io_elemental(ID,VAR=&
 &       " BSK Identifier                  :",I0=BS_identifier,CHECK=.TRUE.,OP=(/"=="/))
+   call io_elemental(ID,VAR=&
+&       " Excitonic eigenstates included  :",L0=BSS_write_eig_2_db,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR=&
 &       " Field direction                 :",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
@@ -64,6 +70,39 @@
    call io_bulk(ID,R2=bsE)
    call io_bulk(ID,'BS_Residuals',VAR_SZ=(/2,BS_H_dim/))
    call io_bulk(ID,R2=bsR)
+ endif
+!
+ if (any((/io_sec(ID,:)==3/))) then
+   ! 
+   ! If not switched on skip this section
+   !
+   if (.not.BSS_write_eig_2_db) goto 1
+   !
+   ! BS_eh_table
+   !
+   if (.not.allocated(BS_eh_table)) then 
+     allocate(BS_eh_table(BS_K_dim,3))
+     call mem_est("BS_eh_table",(/3*BS_K_dim/),(/IP/))
+   endif
+   !
+   call io_bulk(ID,'BS_TABLE',VAR_SZ=(/BS_K_dim,3/))
+   call io_bulk(ID,I2=BS_eh_table)
+   !
+   ! Eigenstates (resonant only matrix)
+   !
+   call io_bulk(ID,'BS_EIGENSTATES',VAR_SZ=(/2,BS_H_dim,BS_H_dim/))
+   !
+   do i1=1,BS_H_dim
+     !
+     if (write_is_on(ID)) BS_mat_disk(1,:)=real(BS_mat(:,i1))
+     if (write_is_on(ID)) BS_mat_disk(2,:)=aimag(BS_mat(:,i1))
+     !
+     call io_bulk(ID,R2=BS_mat_disk,IPOS=(/1,1,i1/))
+     !
+     if (read_is_on(ID)) BS_mat(:,i1)=BS_mat_disk(1,:)+(0._SP,1._SP)*BS_mat_disk(2,:)
+     !
+   enddo
+   !
  endif
 !
 1 call io_disconnect(ID)

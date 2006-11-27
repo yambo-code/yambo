@@ -32,23 +32,23 @@
  use com,           ONLY:msg,error
  
  implicit none
- logical       ::is_cut(3)
  type(bz_samp) ::q
 !ws
  integer       ::iq,ig,iort1,iort2,ipar
- real(SP)      ::cyl_ph_radius2,cyl_cut2,c,c2,Vd
- complex(SP)   ::V_cut(q%nibz,wf_ng)
- real(SP)      ::BESJ1
+ integer       :: neval,ier,last,key,lenw,lenw2,limit,leniw,maxp1
+ real(SP)      ::cyl_ph_radius2,cyl_cut2,c1,c2,Vd
+ real(SP)      ::BESJ1 
  real(SP),  external ::F1,F2,F3,F4,F5,F6
- real(SP)      :: abserr
- integer       :: neval,ier,last,iwork(2)
- real(SP)      :: work(8)
+ real(SP)      :: abserr,epsabs
  real(SP)      :: z
+ complex(SP)   ::V_cut(q%nibz,wf_ng)
+ real(SP),  allocatable ::work(:),work2(:)
+ integer,   allocatable ::iwork(:),iwork2(:)
  type(pp_indexes) ::px
  logical       ::infcyl
+ logical       ::is_cut(3)
 !
 !-------------------------------
- write(*,*) 'dentro1'
  call pp_indexes_reset(px)
 
  infcyl=cyl_length==0.
@@ -92,54 +92,78 @@
 !
  call live_timing('Cylinder',px%stps(myid+1))
 
-  do iq=1,q%nibz
+ if (.not.infcyl) then !finite cylinder
+   epsabs=8e-1
+   key=4
+   limit=2
+   lenw=limit*4
+   leniw=8
+   maxp1=2
+   lenw2=leniw*2+maxp1*25
+   allocate (iwork(limit),work(lenw))
+   allocate (iwork2(leniw),work2(lenw2))
    do ig=1,wf_ng
-     if (.not.px%i2p(iq,ig)) cycle
-     cyl_vz_save=(q%pt(iq,ipar)+g_vec(ig,ipar) )*2.*pi/alat(ipar)
-     cyl_vr_save=sqrt(((q%pt(iq,iort1)+g_vec(ig,iort1))*2.*pi/alat(iort1))**2+&
+     do iq=1,q%nibz
+       if (.not.px%i2p(iq,ig)) cycle
+       cyl_vz_save=(q%pt(iq,ipar)+g_vec(ig,ipar) )*2.*pi/alat(ipar)
+       cyl_vr_save=sqrt(((q%pt(iq,iort1)+g_vec(ig,iort1))*2.*pi/alat(iort1))**2+&
 &            ((q%pt(iq,iort2)+g_vec(ig,iort2))*2.*pi/alat(iort2))**2)
-    if (.not.infcyl) then !finite cylinder
-     if(cyl_vr_save==0..and.cyl_vz_save/=0) then
-
-      c=1./cyl_vz_save**2-cos(cyl_vz_save*cyl_cut)/cyl_vz_save**2-&
-&       cyl_cut*sin(cyl_vz_save*cyl_cut)/cyl_vz_save
-      c2=sin(cyl_vz_save*cyl_cut)*sqrt(cyl_ph_radius2+cyl_cut2)
-
-      call qag(F3,0,cyl_cut,1e-3,0.,3,Vd,abserr,neval,ier, &
- &             2,8,last,iwork,work)
-      V_cut(iq,ig)=c+(c2-Vd)/cyl_vz_save
-     elseif(cyl_vz_save==0.) then
-    
-      call qag(F4,0,cyl_ph_radius,1e-2,0.,3,Vd,abserr,neval,ier, &
- &             2,8,last,iwork,work)
-      V_cut(iq,ig)=Vd
-     else
+!  
+       if (cyl_vr_save==0..and.cyl_vz_save/=0) then
+         c1=1./cyl_vz_save**2-cos(cyl_vz_save*cyl_cut)/cyl_vz_save**2-&
+&        cyl_cut*sin(cyl_vz_save*cyl_cut)/cyl_vz_save
+         c2=sin(cyl_vz_save*cyl_cut)*sqrt(cyl_ph_radius2+cyl_cut2)
+         call qawo (F3,0,cyl_cut,cyl_vz_save,2,epsabs,0,Vd,&
+&                   abserr,neval,ier,leniw,maxp1,lenw2,last,iwork2,work2)
+         V_cut(iq,ig)=c1+(c2-Vd)/cyl_vz_save
+       elseif (cyl_vz_save==0.) then
+         call qag(F4,0,cyl_ph_radius,epsabs,0,key,Vd,abserr, &
+&                 neval,ier,limit,lenw,last,iwork,work)
+        V_cut(iq,ig)=Vd
+       else
+         call qawo(F2,0,cyl_cut,cyl_vz_save,1,epsabs,0,Vd,  &
+&                  abserr,neval,ier,leniw,maxp1,lenw2,last,iwork2,work2)
      
-
-       call qag(F2,0,cyl_cut,1e-3,0.,3,Vd,abserr,neval,ier, &
- &             2,8,last,iwork,work)
-      V_cut(iq,ig)=Vd
-     endif
-    else   ! infinite
-     if (cyl_vz_save==0.and.cyl_vr_save>0.) then
-       
-      call qag(F5,0,cyl_ph_radius,1e-2,0.,3,Vd,abserr,neval,ier, &
- &             2,8,last,iwork,work)
-      V_cut(iq,ig)=-Vd+cyl_ph_radius*log(2*cyl_cut)*BESJ1(cyl_vr_save*cyl_ph_radius)/cyl_vr_save 
-     else if (cyl_vz_save/=0.) then
-      V_cut(iq,ig)=F6(cyl_vr_save,abs(cyl_vz_save))/(cyl_vz_save**2+cyl_vr_save**2)
-     endif
-    endif
-    call live_timing(steps=1)
+         V_cut(iq,ig)=Vd
+       endif
+      call live_timing(steps=1)
+     enddo
    enddo
- enddo
-
+   deallocate(iwork,iwork2,work,work2)
+!
+ else   ! infinite
+!    
+    limit=2
+    lenw=limit*4
+    epsabs=1e-2
+    key=3
+    allocate (iwork(limit),work(lenw))
+    do ig=1,wf_ng
+      do iq=1,q%nibz
+        if (.not.px%i2p(iq,ig)) cycle
+          cyl_vz_save=(q%pt(iq,ipar)+g_vec(ig,ipar) )*2.*pi/alat(ipar)
+          cyl_vr_save=sqrt(((q%pt(iq,iort1)+g_vec(ig,iort1))*2.*pi/alat(iort1))**2+&
+&                    ((q%pt(iq,iort2)+g_vec(ig,iort2))*2.*pi/alat(iort2))**2)
+!  
+        if (cyl_vz_save==0.and.cyl_vr_save>0.) then
+          call qag(F5,0,cyl_ph_radius,epsabs,0,key,Vd,abserr, &
+&                  neval,ier,limit,lenw,last,iwork,work)
+          V_cut(iq,ig)=-Vd+cyl_ph_radius*log(2*cyl_cut)* &
+&                      BESJ1(cyl_vr_save*cyl_ph_radius)/cyl_vr_save 
+        else if (cyl_vz_save/=0.) then
+          V_cut(iq,ig)=F6(cyl_vr_save,abs(cyl_vz_save))/(cyl_vz_save**2+cyl_vr_save**2)
+        endif
+     call live_timing(steps=1)
+    enddo
+  enddo
+  deallocate(iwork,work)
+ endif
+ 
  V_cut(1,1)=0.5*(-cyl_cut2+cyl_cut*sqrt(cyl_cut2+cyl_ph_radius2)+&
 &           cyl_ph_radius2*log((cyl_cut+sqrt(cyl_cut2+cyl_ph_radius2))/&
             cyl_ph_radius))
  call live_timing()
  forall (iq=1:q%nibz,ig=1:wf_ng) bare_qpg(iq,ig)=sqrt(1./V_cut(iq,ig))
-
 
  end subroutine
 !
@@ -165,22 +189,21 @@
  real(SP) z,G
  real(SP),  external ::F1
  real(SP)      :: abserr
- integer       :: neval,ier,last,iwork(4)
- real(SP)      :: work(16) 
+ integer       :: neval,ier,last,iwork(3)
+ real(SP)      :: work(12) 
  cyl_zz_save=z
 
- call qag(F1,0,cyl_ph_radius,1e-3,0.,6,G,abserr,neval,ier, &
- &             4,16,last,iwork,work)
- F2=G*cos(cyl_vz_save*z)
+ call qag(F1,0,cyl_ph_radius,8.e-1,0.,4,G,abserr,neval,ier, &
+ &             3,12,last,iwork,work)
+ F2=G
  end function F2
 !
  function F3(z)
 !----------------------------
  use pars,          ONLY:SP 
  use R_lattice,     ONLY:cyl_vr_save,cyl_vz_save,cyl_zz_save,cyl_ph_radius
- real(SP) z,arg
- arg=cyl_vz_save*z
- F3=z*sin(arg)/sqrt(cyl_ph_radius**2+z**2)
+ real(SP) z
+ F3=z/sqrt(cyl_ph_radius**2+z**2)
  end function F3
 !
  function F4(z)

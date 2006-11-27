@@ -125,11 +125,19 @@
  endif
  if (present(R2)) then
    if (write_is_on(ID)) then
-     call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
-&                     R2,(/io_rec_pos(ID)/)))
+     if (present(IPOS)) then
+       call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),R2,IPOS))
+     else
+       call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
+&                       R2,(/io_rec_pos(ID)/)))
+     endif
    else if (read_is_on(ID)) then
-     call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
-&                     R2,(/io_rec_pos(ID)/)))
+     if (present(IPOS)) then
+       call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),R2,IPOS))
+     else
+       call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
+&                       R2,(/io_rec_pos(ID)/)))
+     endif
    endif
    io_rec_pos(ID)=io_rec_pos(ID)+size(R2)
  endif

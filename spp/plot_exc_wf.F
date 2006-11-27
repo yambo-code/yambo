@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine pwf(excwf,sp,Xk,Xen)
+ subroutine plot_exc_wf(excwf,sp,Xk,Xen)
 !==================================
  use pars
  use com,   ONLY:msg

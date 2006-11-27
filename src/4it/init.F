@@ -46,7 +46,7 @@
  use stderr,         ONLY:tty_size,logfile
  use R_lattice,      ONLY:ng_closed,ng_vec,n_g_shells,q0_defmod,&
 &                         Xk_grid_is_uniform,bz_samp,nqibz,bz_samp_reset,&
-& cut_geometry,cyl_ph_radius
+&                         cut_geometry,cyl_ph_radius
 
  use wave_func,      ONLY:ioWF
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,REP
@@ -279,7 +279,7 @@
  if (l_rim) call initactivate(1,'RandQpts RandGvec QpgFull Em1Anys IDEm1Ref')
 !
 !Col CUTOFF 
- if (l_col_cut) call initactivate(1,'CUTGeo CUTBox CUTRadius CUTCylLen')
+ if (l_col_cut) call initactivate(1,'CUTGeo CUTBox CUTRadius CUTCylLen CUTCol_test')
 !
 !XX
  if (l_xxvxc) call initactivate(1,'EXXRLvcs SxLowBnd GfnQPdb GfnQP_N GfnQP_E GfnQP_W GfnQP_Z')
@@ -367,7 +367,7 @@
 ! BSE solver
  if (l_bss) then
   call initactivate(1,'KfnQPdb KfnQP_N KfnQP_E KfnQP_W KfnQP_Z')
-  call initactivate(1,'BSSmod BEnRange BDmRange BEnSteps BLongDir ')
+  call initactivate(1,'BSSmod BEnRange BDmRange BEnSteps BLongDir WRbsWF')
   if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs')
   if (index(BSS_mode,'t')/=0)  call initactivate(1,'FxcGRLc FxcSVDcut FxcMEStps FxcCausal')
  endif

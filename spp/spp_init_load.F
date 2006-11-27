@@ -39,11 +39,13 @@
  call it(defs,'KGrdShft','K-grid shifts',qlong)
 !
 !EXC WF
+ call it(defs,'Action','Sort energies or plot WF [(s)ort/(p)lot]', action_mode)
+ call it(defs,'Max_Energy','Max value energy to be shown', max_energy,E_unit)
  call it(defs,'Order','Energies order `mode` [(e)nergy/(i)ntensity]', sort_mode)
- call it(defs,'State','Ordered Index of to BS state',lambda)
+ call it(defs,'State','Ordered Index of the BS state',lambda)
  call it(defs,'Window','[o/o] BS states window',window)
- call it(defs,'Cells', 'Number of BS WF cell repetitions',ncell)
- call it(defs,'Hole', '[cc] Hole position',r_hole)
+ call it(defs,'Cells', 'Number of cell repetitions (even)',ncell)
+ call it(defs,'Hole', '[cc] Hole position in unit cell',r_hole)
 !
 !EL-PH
  call it(defs,'DBsPATH', 'Path to the PW el-ph databases',elph_dbs_path)

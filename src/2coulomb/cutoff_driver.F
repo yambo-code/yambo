@@ -48,6 +48,7 @@
  use R_lattice,     ONLY:cyl_ph_radius,box_length,cyl_length,cut_geometry,bz_samp
  use stderr,        ONLY:string_split,string_pack
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY
+ use parser_m,      ONLY:parser
  implicit none
  type(bz_samp) :: q
 !
@@ -55,6 +56,7 @@
  logical ::cut_is_sphere,cut_is_box,cut_is_cyl,is_cut(3)
  integer ::i1,i2,i3,i4
  real(SP)::length(3)
+ logical ::l_col_test
  character(schlen)::str_piece(5)
  character(lchlen)::ch1,ch2
 !
@@ -66,6 +68,10 @@
 !
  integer ::ID,io_err
  integer, external :: ioCOL_CUT
+!
+! Real-Space Test 
+!-----------------
+ call parser('CUTCol_test',l_col_test)
 !
 ! Parsing the cut_geometry string
 !---------------------------------
@@ -94,12 +100,15 @@
  if (cut_is_cyl.or..not.is_cut(1)) is_cut(2)=index(str_piece(2),'y')/=0
  if (cut_is_cyl.or.(.not.is_cut(1).and..not.is_cut(2))) &
 &   is_cut(3)=index(str_piece(2),'z')/=0
- if (cut_is_cyl.and.any((/.not.is_cut/)) ) cyl_length=0.
 #endif
 !
  if (.not.cut_is_box) box_length=0.
- if (.not.cut_is_sphere) cyl_ph_radius=0.
+#if defined PJ_CYL_CUT
+ if (.not.cut_is_sphere.and..not.cut_is_cyl) cyl_ph_radius=0.
  if (.not.cut_is_cyl) cyl_length=0.
+#else
+if (.not.cut_is_sphere) cyl_ph_radius=0.
+#endif
 !
 ! Return conditions
 !
@@ -107,8 +116,7 @@
  if (.not.any(is_cut)) return
  if (cut_is_sphere.and.cyl_ph_radius==0.) return
  if (cut_is_box.and.all(box_length==0.)) return
- if (cut_is_cyl.and.cyl_length==0.) return
-
+ if (cut_is_cyl.and.cyl_ph_radius==0.) return
  ch1=string_pack('Coloumb potential CutOff :',str_piece(1))
  call section('*',trim(ch1))
 !===============================================================
@@ -183,7 +191,6 @@
 !------------------------------
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  io_err=ioCOL_CUT(ID)
-
  if (io_err/=0) then
    if (cut_is_sphere) call cutoff_sphere()
    if (cut_is_box)    call cutoff_box(q,is_cut)
@@ -196,7 +203,7 @@
 !
 ! Test
 !------
-   call cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
+   if (l_col_test) call cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
  endif
 
  contains

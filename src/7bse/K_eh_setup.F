@@ -30,7 +30,7 @@
 !   O_v_state(Xk%nbz,maxval(O_n_v_states)
 !   O_c_state(Xk%nbz,maxval(O_n_c_states)
 !
- use pars
+ use pars,         ONLY:SP,IP
  use memory_m,     ONLY:mem_est
  use BS,           ONLY:BS_K_dim,O_v_state,O_c_state,BS_res_K_corr,&
 &                       O_n_v_states,O_n_c_states,BS_eh_E,BS_eh_en,&

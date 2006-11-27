@@ -61,9 +61,10 @@
  if (cut_is_sphere) dummy=2.*plot_factor*cyl_ph_radius
 #if defined PJ_CYL_CUT
  if (cut_is_cyl) then
-   if (is_cut(1)) dummy(1)=2.*plot_factor*cyl_length
-   if (is_cut(2)) dummy(2)=2.*plot_factor*cyl_length
-   if (is_cut(3)) dummy(3)=2.*plot_factor*cyl_length
+   dummy=(/v_norm(a(1,:)),v_norm(a(2,:)),v_norm(a(3,:))/)
+   if (is_cut(1)) dummy(1)=2.*plot_factor*dummy(1)*10
+   if (is_cut(2)) dummy(2)=2.*plot_factor*dummy(2)*10
+   if (is_cut(3)) dummy(3)=2.*plot_factor*dummy(3)*10
  endif
 #endif
  if (cut_is_box) then

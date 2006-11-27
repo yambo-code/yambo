@@ -79,6 +79,7 @@
   real(SP) :: BSS_q0(3)
   real(SP) :: Haydock_treshold
   real(SP) :: Haydock_v0_mod
+  logical  :: BSS_write_eig_2_db
   complex(SP),allocatable :: BSS_rhoq0(:)
 
   interface 

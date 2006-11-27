@@ -29,8 +29,8 @@
  integer ::iq,ig
  real(SP)::dummy
 
- do iq=1,nqibz
-   do ig=1,wf_ng
+ do ig=1,wf_ng
+   do iq=1,nqibz
      dummy=sqrt(1. - cos(bare_qpg(iq,ig)*cyl_ph_radius) )
      if (abs(dummy)<1.E-5) dummy=1.E-5
      bare_qpg(iq,ig)=bare_qpg(iq,ig)/dummy

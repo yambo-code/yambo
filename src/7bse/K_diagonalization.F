@@ -24,16 +24,17 @@
  use pars,           ONLY:SP,DP,pi
  use X_m,            ONLY:X_epsilon
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,Kernel_by_V,&
-&                         BS_K_coupling
+&                         BS_K_coupling,BSS_write_eig_2_db
  use memory_m,       ONLY:mem_est
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK,USE_SLK,INV
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:d3k_factor,q_module
  use com,            ONLY:isec
- use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,ncpu,myid,pp_indexes_reset
  use timing,         ONLY:live_timing
+ use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,ncpu,myid,pp_indexes_reset
  use par_indexes_m,  ONLY:par_indexes
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,VERIFY,OP_WR_CL
+ use parser_m,       ONLY:parser
  implicit none
  type(w_samp)  :: W
  integer       :: iq
@@ -68,12 +69,17 @@
  integer           ::io_err,ID
  integer, external ::ioBS_diago
 !  
-!==============================================================
+! Sectioning
+!============================================
  if (isec(2)/=0) then
    call section('=','Diagonalization solver')
  else if (isec(2)==0) then
    call section('+','Diagonalization solver')
  endif
+!
+! Eigenstates 2 DB ?
+!====================
+ call parser('WRbsWF',BSS_write_eig_2_db)
 !
 ! Allocation & Par Procs
 !=======================
@@ -287,7 +293,7 @@
 ! Diagonalization DB (OUT)
 !=========================
  if (io_err/=0) then
-   call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
+   call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
    io_err=ioBS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
  endif
 !

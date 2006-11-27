@@ -149,6 +149,7 @@
  call it(defs,'CUTBox','[CUT] [au] Box sides',box_length,verb_level=V_more)
  call it(defs,'CUTRadius','[CUT] [au] Sphere/Cylinder radius',cyl_ph_radius,verb_level=V_more)
  call it(defs,'CUTCylLen','[CUT] [au] Cylinder length',cyl_length,verb_level=V_more)
+ call it('f',defs,'CUTCol_test','[CUT] Perform a cutoff test in R-space',verb_level=V_more)
 !======
 ! S_xc
 !======
@@ -249,6 +250,7 @@
  call it(defs,'BSHayTrs','[BSS] [o/o] Haydock treshold. Strict(>0)/Average(<0)',&
 &              Haydock_treshold,verb_level=V_more)
  call it(defs,'BEnSteps','[BSS] Energy steps',BSS_n_freqs)
+ call it('f',defs,'WRbsWF', '[TBSS] Write to disk excitonic the FWs',verb_level=V_more)
 !
 !======
 ! F_xc

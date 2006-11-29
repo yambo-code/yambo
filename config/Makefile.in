@@ -82,6 +82,7 @@ saves:
 	@echo "SELF" @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ saves
 	@echo "save version patchlevel subversion"
 	@echo
+all: $(EXE)
 libs:
 	@LIBS2DO="slatec" ; $(mklib)
 	@if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; $(mklib); fi

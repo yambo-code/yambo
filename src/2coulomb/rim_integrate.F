@@ -24,7 +24,7 @@
  use pars,          ONLY:SP,pi
  use vec_operate,   ONLY:iku_v_norm,v_is_zero
  use R_lattice,     ONLY:g_vec,RIM_n_rand_pts,k_grid_uc_vol,RIM_qpg,&
-&                        RIM_is_diagonal,RIM_ng,qpt,RIM_anisotropy
+&                        RIM_is_diagonal,RIM_ng,q_pt,RIM_anisotropy
  use D_lattice,     ONLY:alat
  implicit none
  integer  :: iq,N_out,N_out_G
@@ -48,8 +48,8 @@
    if (RIM_is_diagonal) i2max=i1
    do i2=i1,i2max
      do i3=1,RIM_n_rand_pts
-       v1(:)=g_vec(i1,:)+qpt(iq,:)+qr(i3,:)
-       v2(:)=g_vec(i2,:)+qpt(iq,:)+qr(i3,:)
+       v1(:)=g_vec(i1,:)+q_pt(iq,:)+qr(i3,:)
+       v2(:)=g_vec(i2,:)+q_pt(iq,:)+qr(i3,:)
        r1=iku_v_norm(v1)*iku_v_norm(v2)
        RIM_qpg(iq,i1,i2)=RIM_qpg(iq,i1,i2)+2.*rfac/r1
      enddo

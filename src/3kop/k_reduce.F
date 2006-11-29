@@ -33,7 +33,7 @@
  use pars,           ONLY:SP
  use vec_operate,    ONLY:c2a,rlu_v_is_zero,k2bz
  use D_lattice,      ONLY:nsym
- use R_lattice,      ONLY:b,rl_sop,bz_samp,qpt
+ use R_lattice,      ONLY:b,rl_sop,bz_samp
  implicit none
  type(bz_samp)::k
 ! ws

@@ -28,7 +28,7 @@
  use memory_m,       ONLY:mem_est
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK,USE_SLK,INV
  use frequency,      ONLY:w_samp
- use R_lattice,      ONLY:d3k_factor,q_module
+ use R_lattice,      ONLY:d3k_factor,q_norm
  use com,            ONLY:isec
  use timing,         ONLY:live_timing
  use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,ncpu,myid,pp_indexes_reset
@@ -282,7 +282,7 @@
  call live_timing
  call pp_redux_wait(X_epsilon)
 !
- X_epsilon(2,:)=1.+X_epsilon(2,:)*d3k_factor/pi**2./q_module(1)**2
+ X_epsilon(2,:)=1.+X_epsilon(2,:)*d3k_factor/pi**2./q_norm(1)**2
  X_epsilon(1,:)=W%p(:)
  call pp_indexes_reset(px)
 !

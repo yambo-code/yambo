@@ -27,7 +27,7 @@
  use drivers,       ONLY:l_bs_fxc,l_lrc_fxc,l_alda_fxc
  use frequency,     ONLY:w_samp,rg_index_bg,bg_npts,cg_pt,cg_index_bg
  use electrons,     ONLY:levels,BZ_RIM_tot_nkpts
- use R_lattice,     ONLY:bz_samp,q_module,bare_qpg
+ use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
  use vec_operate,   ONLY:v_norm,iku_v_norm
  use X_m,           ONLY:X_t,X_epsilon,X_mat,X_alloc,X_poles_tab,X_fxc,&
@@ -179,10 +179,10 @@
    do i1=1,wv%n(1),wv%n(2)
      fr=(/i1,i1+wv%n(2)-1/)
      call X_os(X_mat,iq,fr,Xen,Xk,wv,X)     
-     X_epsilon(1,fr(1):fr(2))=1.0_SP-X_mat(1,1,:)*4.0_SP*pi/q_module(iq)**2
-     X_epsilon(6,fr(1):fr(2))=-X_mat(1,1,:)*eps_2_alpha/q_module(iq)**2
+     X_epsilon(1,fr(1):fr(2))=1.0_SP-X_mat(1,1,:)*4.0_SP*pi/q_norm(iq)**2
+     X_epsilon(6,fr(1):fr(2))=-X_mat(1,1,:)*eps_2_alpha/q_norm(iq)**2
      call X_s(iq,fr,X,wv)
-     X_epsilon(2,fr(1):fr(2))=1./(X_mat(1,1,:)*bare_qpg(iq,1)**2/q_module(iq)**2+1.)
+     X_epsilon(2,fr(1):fr(2))=1./(X_mat(1,1,:)*bare_qpg(iq,1)**2/q_norm(iq)**2+1.)
      X_epsilon(3,fr(1):fr(2))=-1./X_epsilon(1,:)
      X_epsilon(4,fr(1):fr(2))=-1./X_epsilon(2,:)
 !
@@ -232,8 +232,8 @@
     call pp_redux_wait(X_fxc)
     call of_open_close(of_name(3),'oa')
     do i1=1,wv%n(1)
-      call msg('o fxc','',(/real(wv%p(i1))*HARTREE,real(X_fxc(i1)*q_module(iq)**2.),&
-&                          aimag(X_fxc(i1)*q_module(iq)**2.)/),INDENT=-2,USE_TABS=.true.)
+      call msg('o fxc','',(/real(wv%p(i1))*HARTREE,real(X_fxc(i1)*q_norm(iq)**2.),&
+&                          aimag(X_fxc(i1)*q_norm(iq)**2.)/),INDENT=-2,USE_TABS=.true.)
     enddo
     call of_open_close(of_name(3))
   endif

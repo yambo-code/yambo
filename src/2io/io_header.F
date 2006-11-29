@@ -26,7 +26,7 @@
  use drivers,       ONLY:list_dbs
  use com,           ONLY:code_version,msg,warning
  use D_lattice,     ONLY:Tel
- use R_lattice,     ONLY:nqibz,nqbz,nkibz,nkbz,qpt
+ use R_lattice,     ONLY:nqibz,nqbz,nkibz,nkbz,q_pt
  use wave_func,     ONLY:wf_ng
  use vec_operate,   ONLY:v_is_zero
  use QP_m,          ONLY:QP_ctl_E
@@ -109,14 +109,14 @@
 
    allocate(l_qpt(nqibz_disk,3))
 
-   if (write_is_on(ID)) l_qpt=qpt
+   if (write_is_on(ID)) l_qpt=q_pt
 
    call io_bulk(ID,VAR="HEAD_QPT",VAR_SZ=(/nqibz_disk,3/))
    call io_bulk(ID,R2=l_qpt)
 
-   if (read_is_on(ID).and.allocated(qpt)) then
+   if (read_is_on(ID).and.allocated(q_pt)) then
      do i1=1,nqibz
-       if (.not.v_is_zero(qpt(i1,:)-l_qpt(i1,:))) io_header=-1
+       if (.not.v_is_zero(q_pt(i1,:)-l_qpt(i1,:))) io_header=-1
      enddo
      if (io_header/=0) goto 1
    endif

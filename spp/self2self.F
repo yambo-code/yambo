@@ -30,7 +30,7 @@
 &                           OP_RD,RD_CL,OP_APP_WR_CL,RD,dbs_fragment,write_to_dbs
  use electrons,        ONLY:levels,n_bands,E_reset,n_spin
  use D_lattice,        ONLY:dl_sop
- use R_lattice,        ONLY:g_vec,bz_samp,nkibz,nqibz,nkbz,nXkbz,qpt,&
+ use R_lattice,        ONLY:g_vec,bz_samp,nkibz,nqibz,nkbz,nXkbz,q_pt,&
 &                           qindx_free,bz_samp_reset
  use wave_func,        ONLY:wf_nc_k,wf_igk,wf_ncx,wf_ng,ioWF
  use com,              ONLY:code_version,build_date,msg,error
@@ -166,8 +166,8 @@
  enddo
  if (all((/io_err(:4)<0/))) goto 5
 
- allocate(qpt(q%nibz,3))
- qpt=q%pt
+ allocate(q_pt(q%nibz,3))
+ q_pt=q%pt
  nkbz=nXkbz
  do i_type=1,4
    if (i_type==1.or.i_type==3) cycle

@@ -44,8 +44,7 @@
    real(SP) :: d3q_factor
    real(SP) :: b(3,3)
    real(SP) :: RL_v_comp_acc
-   real(SP),allocatable :: qpt(:,:)
-   real(SP),allocatable :: q_module(:)
+   real(SP),allocatable :: q_norm(:)
    real(SP),  parameter :: q0_defmod=1.E-5
    type bz_samp
      integer           :: nibz,nbz
@@ -58,6 +57,11 @@
      character(6)      :: description
      character(1)      :: units
    end type bz_samp
+!
+! Q sampling shadow tables
+!
+   real(SP),allocatable :: q_pt(:,:)
+   integer ,allocatable :: q_sstar(:,:)
 !
 ! Q/K-tables (scattering geometry)
 !

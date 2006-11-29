@@ -19,13 +19,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine init_qpt()
-!=====================
+ subroutine init_q_pts()
+!=======================
  use pars,      ONLY:SP
  use drivers,   ONLY:infile_editing
  use memory_m,  ONLY:mem_est
  use it_m,      ONLY:nflines,flines,infile,infile_verbosity,V_more
- use R_lattice, ONLY:nqibz,qpt
+ use R_lattice, ONLY:nqibz,q_pt
  use parser_m,  ONLY:parser
  implicit none
 !ws
@@ -47,11 +47,11 @@
    i_nqibz=0
    call parser('nQptIBZ',i_nqibz)
    if (i_nqibz==0) return
-   allocate(qpt(i_nqibz,3))
-   qpt=0.
+   allocate(q_pt(i_nqibz,3))
+   q_pt=0.
    nqibz=i_nqibz
-   call parser('QptCoord',qpt)    
-   call mem_est("q-pt",(/nqibz*3/),(/SP/))  
+   call parser('QptCoord',q_pt)    
+   call mem_est("q_pt",(/nqibz*3/),(/SP/))  
    return
  endif 
 !

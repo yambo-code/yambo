@@ -25,7 +25,7 @@
  use com,            ONLY:warning
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_epsilon
- use R_lattice,      ONLY:d3k_factor,q_module
+ use R_lattice,      ONLY:d3k_factor,q_norm
  use frequency,      ONLY:w_samp
  use com,            ONLY:msg,gen_fmt,isec
  use BS,             ONLY:BSS_n_descs,BS_K_dim,BS_mat,Haydock_treshold,&
@@ -199,7 +199,7 @@
    integer :: i1,iw
    real(SP):: Co
    complex(SP) :: G(2,it)
-   Co=d3k_factor/pi**2./q_module(1)**2.*Haydock_v0_mod**2.
+   Co=d3k_factor/pi**2./q_norm(1)**2.*Haydock_v0_mod**2.
    do iw=1,W%n(1)
      G=(0.,0.)
      G(:,it)=1./(W%p(iw)-Af(it))

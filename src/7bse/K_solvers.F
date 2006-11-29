@@ -32,7 +32,7 @@
  use drivers,        ONLY:l_bs_fxc
  use frequency,      ONLY:w_samp
  use electrons,      ONLY:levels
- use R_lattice,      ONLY:d3k_factor,bz_samp,q_module
+ use R_lattice,      ONLY:d3k_factor,bz_samp,q_norm
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,NONE
  use TDDFT,          ONLY:FXC_description,FXC_n_descs
  implicit none
@@ -112,7 +112,7 @@
 &                     BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))/(conjg(W_bss%p(:))+BS_eh_E(i1))
      endif
    enddo
-   X_epsilon(3,:)=X_epsilon(3,:)*d3k_factor/pi**2./q_module(1)**2.+1.
+   X_epsilon(3,:)=X_epsilon(3,:)*d3k_factor/pi**2./q_norm(1)**2.+1.
  endif
  X%ib=X_ib_save
 

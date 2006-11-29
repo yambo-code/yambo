@@ -417,9 +417,9 @@
    call pp_redux_wait
  endif
 !
-! To handle externally defined Q-points I use the init_qpt
+! To handle externally defined Q-points I use the init_q_pts
 !
- if (l_setup.and.ioQINDX_err/=0) call init_qpt()
+ if (l_setup.and.ioQINDX_err/=0) call init_q_pts()
 !
 !If qp limits are requested they are added at the end of the input file
  if ( any((/l_xxvxc,l_gw0,l_life/)) ) then

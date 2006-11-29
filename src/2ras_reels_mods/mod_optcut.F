@@ -120,7 +120,7 @@ end subroutine init_cutoff
     integer                    :: ngw_k, ik, i1
 
     allocate( nxk(nkibz) )
-    ngw_k = min(wf_ng_disk, wf_ng) ! for case where wf_ng > wf_ng_disk
+    ngw_k = wf_ng
     
     do ik = 1,nkibz
 
@@ -173,7 +173,7 @@ end subroutine init_cutoff
 !ws
     integer                    :: ig,ngw_k,n1,n2,n3
     
-    ngw_k = min(wf_ng_disk, wf_ng) ! for case where wf_ng > wf_ng_disk
+    ngw_k = wf_ng
     n = nxk(ik) 
 
     ! Set up igtab array
@@ -287,7 +287,7 @@ end subroutine init_cutoff
 !<-------------------------------------------------------------------->! 
    
   subroutine PScut(kg,PS,wfv,wfc)
-!   use wave_func,         ONLY : wf_ng, wf_ng_disk
+!   use wave_func,         ONLY : wf_ng
     implicit none
     complex(SP),   intent(out)   :: PS(3)
     real(SP),      intent(in)    :: kg(:,:)

@@ -27,7 +27,7 @@
  use timing,        ONLY:live_timing
  use memory_m,      ONLY:mem_est
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,ncpu,pp_indexes_reset
- use R_lattice,     ONLY:bare_qpg,q_module
+ use R_lattice,     ONLY:bare_qpg,q_norm
  use frequency,     ONLY:w_samp
  use par_indexes_m, ONLY:par_indexes
  use stderr,        ONLY:string_pack
@@ -134,7 +134,7 @@
 !
 ! LRC Fxc
 !-----------------------------------------------------
-     tddftk(1,1)=-Xo(1,1)*FXC_LRC_alpha/q_module(iq)**2
+     tddftk(1,1)=-Xo(1,1)*FXC_LRC_alpha/q_norm(iq)**2
    else if (l_alda_fxc) then
 !
 ! ALDA Fxc

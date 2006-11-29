@@ -38,18 +38,19 @@
 ! qindx_S(ik,iqbz,1)=okbz
 ! qindx_S(ik,iqbz,2)=iGo
 !
- use pars,           ONLY:SP,lchlen
+ use pars,           ONLY:SP,lchlen,IP
  use drivers,        ONLY:l_bse
  use memory_m,       ONLY:mem_est
  use com,            ONLY:msg,gen_fmt,error
  use par_proc_m,     ONLY:pp_redux_wait
  use matrix_operate, ONLY:m3inv
- use vec_operate,    ONLY:v_is_zero,c2a,rlu_v_is_zero,iku_v_norm
+ use vec_operate,    ONLY:v_is_zero,c2a,rlu_v_is_zero
  use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:b,d3q_factor,RL_v_comp_acc,RL_vol,g_vec,ng_vec,&
 &                         nqibz,nqbz,qindx_X,qindx_B,qindx_S,qp_states_k,&
 &                         bse_scattering,qindx_alloc,rl_sop,Xk_grid_is_uniform,&
-&                         k_grid,k_grid_b,qpt,bz_samp,q_module,q0_defmod
+&                         k_grid,k_grid_b,q_pt,bz_samp,q_norm,q0_defmod,&
+&                         q_sstar
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  implicit none
  type(bz_samp)::k,Xk,q
@@ -73,13 +74,7 @@
  if (io_err==0) then
    call k_expand(q)
    call Q_report
-   allocate(qpt(q%nibz,3),q_module(q%nibz))
-   qpt=q%pt
-   do i1=1,q%nibz
-     q_module(i1)=iku_v_norm(qpt(i1,:))
-   enddo
-   q_module(1)=q0_defmod
-   call mem_est("q-pt q_module",(/q%nibz*3,q%nibz/),(/SP,SP/))   
+   call q_shadows()
    return
  endif
 !
@@ -119,20 +114,14 @@
    do i1=1,q%nbz
      call c2a(v_in=Xk%ptbz(i1,:)-Xk%ptbz(1,:),v_out=q%ptbz(i1,:),mode='ka2i')
    enddo
-   if (.not.allocated(qpt)) then
+   if (.not.allocated(q_pt)) then
      call k_reduce(q)
+     call q_shadows()
      deallocate(q%ptbz)
-     allocate(qpt(q%nibz,3),q_module(q%nibz))
-     qpt=q%pt
-     do i1=1,q%nibz
-       q_module(i1)=iku_v_norm(qpt(i1,:))
-     enddo
-     q_module(1)=q0_defmod
-     call mem_est("q-pt q_module",(/q%nibz*3,q%nibz/),(/SP,SP/))   
    else
      q%nibz=nqibz
      allocate(q%pt(q%nibz,3))
-     q%pt=qpt
+     q%pt=q_pt
      call msg('rsn','[K latt] User defined Q-grid.')
      user_defined_qpts=.true.
      bse_scattering=.true.
@@ -155,11 +144,12 @@
 !
    if (q%nbz/=Xk%nbz) then
      call msg('rsn','[K latt] Q BZ pts are /= from X grid BS pts. Gamma point only.')
-     deallocate(q%pt,qpt)
-     allocate(q%pt(1,3),qpt(1,3),q_module(1)) 
+     deallocate(q%pt,q_pt)
+     allocate(q%pt(1,3),q_pt(1,3),q_norm(1),q_sstar(1,2)) 
      q%pt=0.
-     qpt=0.
-     q_module=q0_defmod
+     q_pt=0.
+     q_norm=q0_defmod
+     q_sstar=1
      nqbz=1
      nqibz=1
      q%nibz=1
@@ -175,7 +165,7 @@
      call define_q_map(q%ptbz(:,:),(/0.,0.,0./))
    endif
  else
-   call msg('rsn','[K latt] X grid is not uniform.  Gamma point only.')
+   call msg('nrsn','[K latt] X grid is not uniform.  Gamma point only.')
    nqbz=1
    nqibz=1
    q%nibz=1
@@ -278,6 +268,7 @@
  contains 
 
    subroutine Q_report()
+!-----------------------
    character(lchlen)::ch(4)
    call msg('nr','IBZ Q-points :',q%nibz)
    call msg('rn','BZ  Q-points :',q%nbz)
@@ -292,6 +283,7 @@
    end subroutine
 
    subroutine k_grid_shift(v)
+!----------------------------
    implicit none
    integer  :: v(3),u(3),i1
    do i1=1,3
@@ -305,6 +297,7 @@
    end subroutine
 
    subroutine define_q_map(qpt_map,q_ref)
+!----------------------------------------
    real(SP)::qpt_map(Xk%nbz,3),q_ref(3)
    q_map=0
    do i1=1,Xk%nbz
@@ -335,6 +328,26 @@
        enddo
      enddo
    enddo
+   end subroutine
+
+   subroutine q_shadows()
+!-------------------------
+   use vec_operate,    ONLY:iku_v_norm
+   allocate(q_pt(q%nibz,3),q_norm(q%nibz))
+   q_pt=q%pt
+   do i1=1,q%nibz
+     q_norm(i1)=iku_v_norm(q_pt(i1,:))
+   enddo
+   q_norm(1)=q0_defmod
+   call mem_est("q_pt q_norm",(/q%nibz*3,q%nibz/),(/SP,SP/))
+   !
+   ! sstar
+   !
+   if (associated(q%sstar)) then
+     allocate(q_sstar(q%nbz,2))
+     q_sstar=q%sstar
+     call mem_est("q_sstar",(/q%nbz*2/),(/IP/))
+   endif
    end subroutine
 
  end subroutine

@@ -42,7 +42,7 @@
  use par_indexes_m, ONLY:par_indexes
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv,i_space_inv
  use electrons,     ONLY:levels,spin_occ,n_spin
- use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,q_module 
+ use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,q_norm 
  use wave_func,     ONLY:wf_load
  use memory_m,      ONLY:mem_est
  use X_m,           ONLY:X_t,X_poles,X_rhoq0,iq_now,X_poles_tab,&
@@ -112,7 +112,7 @@
 &               (spin_occ-Xen%f(Xen%bf,Xen%kf,Xen%sf))/&
 &               spin_occ/real(Xk%nbz)/DL_vol
    do iw=fr(1),fr(2)
-     drude_Gf(iw-fr(1)+1)=X_drude(real(Xw%p(iw)),X%Wd,q_module(1))/drude_factor
+     drude_Gf(iw-fr(1)+1)=X_drude(real(Xw%p(iw)),X%Wd,q_norm(1))/drude_factor
    enddo
  endif
 !

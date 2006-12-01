@@ -1,1 +1,1 @@
-objs = e2s_i.o 
+objs = etsf_data.o e2s_i.o e2s_db1.o e2s_wf.o

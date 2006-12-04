@@ -65,8 +65,8 @@
  integer    :: ik2bz,iv2,ic2,ik2,is2,is2p
  integer    :: icv1,icv2,iOvv,iOcc
  integer    :: i1,i2,i3,iqs,iqibz,ig0
-#if defined DP
- complex(DP):: zdotc,zdotu
+#if defined _DOUBLE
+ complex(SP):: zdotc,zdotu
 #else
  complex(SP):: cdotc,cdotu
 #endif
@@ -399,13 +399,13 @@
          H_cpl_x=(0.,0.)
          H_cpl_c=(0.,0.)
 ! :::Exchange    (resonant):::
-#if defined DP
+#if defined _DOUBLE
          if (BS_res_K_exchange) H_res_x=zdotc(BS_n_g_exch,O2x(1,icv2),1,O1x(1,icv1),1)
 #else
          if (BS_res_K_exchange) H_res_x=cdotc(BS_n_g_exch,O2x(1,icv2),1,O1x(1,icv1),1)
 #endif
 ! :::Exchange    (coupling):::
-#if defined DP
+#if defined _DOUBLE
          if (BS_cpl_K_exchange) H_cpl_x=zdotu(BS_n_g_exch,&
 &                               O2x( g_rot(nsym/2+1,1:BS_n_g_exch),icv2),1,O1x(1,icv1),1)
 #else
@@ -436,14 +436,14 @@
            if (BS_W_is_diagonal) forall(i1=1:BS_n_g_W) Cc(i1)=Occ(i1)*BS_W(i1,1,iqibz)
            if (.not.BS_W_is_diagonal) then
              do i1=1,BS_n_g_W 
-#if defined DP
+#if defined _DOUBLE
                Cc(i1)=zdotu(BS_n_g_W,Occ,1,BS_W(1,i1,iqibz),1)
 #else
                Cc(i1)=cdotu(BS_n_g_W,Occ,1,BS_W(1,i1,iqibz),1)
 #endif
              enddo
            endif
-#if defined DP
+#if defined _DOUBLE
            H_res_c=zdotc(BS_n_g_W,Ovv,1,Cc,1)*4.*pi
 #else
            H_res_c=cdotc(BS_n_g_W,Ovv,1,Cc,1)*4.*pi

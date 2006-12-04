@@ -50,14 +50,13 @@
  integer(8)  :: fftw_plan
  complex(DP) :: c(n(1),n(2),n(3))
 !ws
- integer     :: i_sign
+ integer             :: i_sign
  integer , parameter :: FFTW_ESTIMATE=64
 
  if (fftw_plan==0) then
    if (fft_sign>0) i_sign=+1
    if (fft_sign<0) i_sign=-1
-   call dfftw_plan_dft_3d(fftw_plan,n(1),n(2),n(3),&
-&                         c,c,i_sign,FFTW_ESTIMATE)
+   call dfftw_plan_dft_3d(fftw_plan,n(1),n(2),n(3),c,c,i_sign,FFTW_ESTIMATE)
  endif
 
  call dfftw_execute_dft(fftw_plan,c,c)

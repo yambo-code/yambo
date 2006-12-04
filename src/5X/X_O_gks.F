@@ -49,7 +49,7 @@
  type(pp_indexes) ::px
  complex(DP) :: dsx(3) 
  integer iq, ib, i1,alloc_err, i_spin 
-#if defined DP
+#if defined _DOUBLE
  complex(DP):: zdotc,zdotu
 #else 
  complex(SP):: cdotc,cdotu
@@ -101,7 +101,7 @@
       isc%rhotw=4.*pi*isc%rhotw*conjg(iscp%rhotw)*Xen%f(ib,isc%os(2),isc%os(4))
       dsx=(0._DP,0._DP)
       !NB only valid for damp%dim=1  
-#if defined DP
+#if defined _DOUBLE
       dsx(1)=zdotu(X%ngostnts,isc%rhotw,1,damp%damp(1,1,:),1)
       dsx(2)=zdotu(X%ngostnts,isc%rhotw,1,damp%damp(2,1,:),1)
       dsx(3)=zdotu(X%ngostnts,isc%rhotw,1,damp%damp(3,1,:),1)

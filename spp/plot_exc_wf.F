@@ -91,7 +91,7 @@
  integer               :: i1
  real(SP)              :: r1(3)
  real(SP)              :: kdum, kr
-#if defined DP
+#if defined _DOUBLE
  complex(DP):: zdotu
 #else
  complex(SP):: cdotu
@@ -281,7 +281,7 @@
 !=====================================================================================
        wf_vc(neh) = exp(cI*kr*2*pi/alat(1))*wf_vc(neh)
      end do
-#if defined DP
+#if defined _DOUBLE
      wf_eh(ir) = zdotu(BS_K_dim,BS_mat(1,wf_L),1,wf_vc,1)
 #else
      wf_eh(ir) = cdotu(BS_K_dim,BS_mat(1,wf_L),1,wf_vc,1)

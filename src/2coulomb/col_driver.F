@@ -65,9 +65,9 @@
  integer       :: bare_NG
  type(bz_samp) :: q
 !ws
- integer          :: i1,i2,iq,q_modi(nqibz),ID,io_err
+ integer          :: i1,i2,iq,q_norm_i(nqibz),ID,io_err
  integer, external:: ioRIM
- real(SP)         :: r(2),q_mod(nqibz)
+ real(SP)         :: r(2),q_norm_s(nqibz)
  character(schlen):: lch1,lch2
 !
 !------------------
@@ -118,17 +118,14 @@
    endif
 
    call msg('nr','Summary of Coulomb integrals for non-metallic bands |Q|[au] RIM/Bare:')
-   do i1=1,nqibz
-     q_mod(i1)=iku_v_norm(q_pt(i1,:))
-   enddo
-   call sort(arrin=q_mod,indx=q_modi)
+   call sort(arrin=q_norm,arrout=q_norm_s,indx=q_norm_i)
    do i1=1,nqibz,2
      lch2=' '
      do i2=i1,min(i1+1,nqibz)
-       iq=q_modi(i2)
+       iq=q_norm_i(i2)
        write (lch1,'(a,i3.3,a)') 'Q [',iq,']:'
        if (i2/=i1) write (lch1,'(2a,i3.3,a)') trim(lch2),' * Q [',iq,']:'
-       r(1)=iku_v_norm(q_pt(iq,:))
+       r(1)=q_norm(iq)
        r(2)=2./(abs(bare_qpg(iq,1))**2.*DL_vol*real(nqbz))
        if (i2==1) r(2)=2.*7.7956/(2.*pi)**3.*d3q_factor**(1./3.)
        r(2)=RIM_qpg(iq,1,1)/r(2)

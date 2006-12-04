@@ -116,7 +116,6 @@
    enddo
    if (.not.allocated(q_pt)) then
      call k_reduce(q)
-     call q_shadows()
      deallocate(q%ptbz)
    else
      q%nibz=nqibz
@@ -133,6 +132,7 @@
 !  to the q%ptbz obtaine trought q_expand
 !
    call k_expand(q)
+   call q_shadows()
    call k_ibz2bz(q,'a',.false.)
    nqbz=q%nbz
    nqibz=q%nibz
@@ -162,7 +162,7 @@
      if (.not.Xk_grid_is_uniform) bse_scattering=.false.
      gamma_point_only=.true.
    else
-     call define_q_map(q%ptbz(:,:),(/0.,0.,0./))
+     call define_q_map(q%ptbz(:,:),(/0._SP,0._SP,0._SP/))
    endif
  else
    call msg('nrsn','[K latt] X grid is not uniform.  Gamma point only.')
@@ -333,17 +333,22 @@
    subroutine q_shadows()
 !-------------------------
    use vec_operate,    ONLY:iku_v_norm
-   allocate(q_pt(q%nibz,3),q_norm(q%nibz))
-   q_pt=q%pt
-   do i1=1,q%nibz
-     q_norm(i1)=iku_v_norm(q_pt(i1,:))
-   enddo
-   q_norm(1)=q0_defmod
-   call mem_est("q_pt q_norm",(/q%nibz*3,q%nibz/),(/SP,SP/))
+   !
+   ! q_pt & q_norm
+   !
+   if (.not.allocated(q_pt)) then
+     allocate(q_pt(q%nibz,3),q_norm(q%nibz))
+     q_pt=q%pt
+     do i1=1,q%nibz
+       q_norm(i1)=iku_v_norm(q_pt(i1,:))
+     enddo
+     q_norm(1)=q0_defmod
+     call mem_est("q_pt q_norm",(/q%nibz*3,q%nibz/),(/SP,SP/))
+   endif
    !
    ! sstar
    !
-   if (associated(q%sstar)) then
+   if (associated(q%sstar).and..not.allocated(q_sstar)) then
      allocate(q_sstar(q%nbz,2))
      q_sstar=q%sstar
      call mem_est("q_sstar",(/q%nbz*2/),(/IP/))

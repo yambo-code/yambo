@@ -54,7 +54,7 @@
  type(ggwinfo)    ::isc,iscp
  type(pp_indexes) ::px
  integer          ::i1,i2,iq,ib,ik,ifft
-#if defined DP
+#if defined _DOUBLE
  complex(DP):: zdotc,zdotu
 #else 
  complex(SP):: cdotc,cdotu
@@ -155,7 +155,7 @@
        isc%rhotw=-2.*pi*isc%rhotw*conjg(iscp%rhotw)*E%f(ib,isc%os(2),isc%os(4))
 #endif
        dsx=(0.d0,0.d0)
-#if defined DP
+#if defined _DOUBLE
        dsx=zdotu(QP_ng_Sx,isc%rhotw,1,isc%gamp(1,:),1)
 #else 
        dsx=cdotu(QP_ng_Sx,isc%rhotw,1,isc%gamp(1,:),1)
@@ -180,7 +180,7 @@
  do i1=1,QP_n_states
    ifft=wf_state(QP_table(i1,1),QP_table(i1,3),1)
    c_vec(:)=wf(:,ifft)*V_xc(:)
-#if defined DP
+#if defined _DOUBLE
    QP_Vxc(i1)=zdotc(fft_size,wf(:,ifft),1,c_vec,1)
 #else 
    QP_Vxc(i1)=cdotc(fft_size,wf(:,ifft),1,c_vec,1)

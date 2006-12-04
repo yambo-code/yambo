@@ -87,7 +87,7 @@
 
  do i_cpu=1,ncpu
    write (ch,'(a,i2.2,a)') '[P ',i_cpu,'] Kernel filling [o/o]'
-   call msg('rs',trim(ch),real(n_K_elements(i_cpu))/real(tot_n_K_elements)*100.0)
+   call msg('rs',trim(ch),real(n_K_elements(i_cpu))/real(tot_n_K_elements)*100._SP)
  enddo
 
  end subroutine

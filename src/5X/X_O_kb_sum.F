@@ -31,7 +31,7 @@
  complex(SP):: rho(3),kbv(wf_ng,pp_kbv_dim,4)
 !ws
  integer :: i1,i2
-#if defined DP
+#if defined _DOUBLE
  complex(DP):: zdotc,zdotu
 #else 
  complex(SP):: cdotc,cdotu
@@ -41,7 +41,7 @@
  Kc=(0.,0.)
  Kv=(0.,0.)
  do i1=1,pp_kbv_dim
-#if defined DP
+#if defined _DOUBLE
    Cv=zdotu(wf_ng,wf(:,ivfft),1,kbv(:,i1,1),1)
    Cc=zdotu(wf_ng,wf(:,icfft),1,kbv(:,i1,1),1)
 #else
@@ -50,7 +50,7 @@
 #endif
    if (Cc==(0.,0.)) cycle
    do i2=1,3
-#if defined DP
+#if defined _DOUBLE
      call zaxpy(wf_ng,Cc,conjg(kbv(:,i1,1+i2)),1,Kc(:,i2),1)
      call zaxpy(wf_ng,conjg(Cv),kbv(:,i1,1+i2),1,Kv(:,i2),1)
 #else
@@ -60,7 +60,7 @@
    enddo
  enddo
  do i1=1,3
-#if defined DP
+#if defined _DOUBLE
    drho(i1)=zdotc(wf_ng,wf(:,ivfft),1,Kc(1,i1),1)+&
 &           zdotu(wf_ng,wf(:,icfft),1,Kv(1,i1),1)
 #else

@@ -5612,7 +5612,7 @@ if test "${enable_dp+set}" = set; then
   enableval="$enable_dp"
 
 fi;
-dp_cpp="-DDP"
+dp_cpp="-D_DOUBLE"
 if test x"$enable_dp" = "x"; then
  dp_cpp=""
  enable_dp="no"

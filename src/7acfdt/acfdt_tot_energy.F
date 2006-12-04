@@ -74,7 +74,7 @@
 ! DFT 
 !
  real(SP),allocatable  :: rho(:)
-#if defined DP
+#if defined _DOUBLE
  real(DP):: ddot
 #else
  real(SP):: sdot
@@ -93,21 +93,21 @@
  call el_density(Xen,Xk,rho,.false.)
 
  call xc_lda_driver(Xen,Xk,XC_EXCHANGE_CORRELATION,XC_LDA_C_KP,0)
-#if defined DP
+#if defined _DOUBLE
  dEc_LDA=ddot(fft_size,rho,1,E_xc,1)
 #else 
  dEc_LDA=sdot(fft_size,rho,1,E_xc,1)
 #endif
 
  call xc_lda_driver(Xen,Xk,XC_EXCHANGE,XC_LDA_X,0)
-#if defined DP
+#if defined _DOUBLE
  Ex_LDA=ddot(fft_size,rho,1,E_xc,1)
 #else 
  Ex_LDA=sdot(fft_size,rho,1,E_xc,1)
 #endif
 
  call xc_lda_driver(Xen,Xk,XC_CORRELATION,GS_xc_FUNCTIONAL,0)
-#if defined DP
+#if defined _DOUBLE
  Ec_LDA=ddot(fft_size,rho,1,E_xc,1)
 #else 
  Ec_LDA=sdot(fft_size,rho,1,E_xc,1)

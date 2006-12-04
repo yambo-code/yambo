@@ -47,8 +47,8 @@
 !I/O and external functions
  integer                      :: ID,io_err,ioKB_err
  integer, external            :: ioKB_PP
-#if defined DP
- complex(DP)                  :: zdotc
+#if defined _DOUBLE
+ complex(SP)                  :: zdotc
 #else 
  complex(SP)                  :: cdotc
 #endif
@@ -117,7 +117,7 @@
 !
 ! rho = wf_xyz^* fdo(ic,ik)= i < fdo(iv,ik)| grad |  fdo(ic,ik) >
 !
-#if defined DP
+#if defined _DOUBLE
          rho(1)=zdotc(wf_ng,wf_xyz(:,1),1,wf(:,icfft),1)
          rho(2)=zdotc(wf_ng,wf_xyz(:,2),1,wf(:,icfft),1)
          rho(3)=zdotc(wf_ng,wf_xyz(:,3),1,wf(:,icfft),1)

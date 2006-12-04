@@ -100,7 +100,7 @@ AC_SUBST(enable_debug)
 # ============================================================================
 # DP
 AC_ARG_ENABLE(dp, AC_HELP_STRING([--enable-dp], [Double-precision build.]))
-dp_cpp="-DDP"
+dp_cpp="-D_DOUBLE"
 if test x"$enable_dp" = "x"; then
  dp_cpp=""
  enable_dp="no"

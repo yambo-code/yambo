@@ -136,7 +136,7 @@
          enddo
 !
          if (use_fragments) then
-#if defined DP
+#if defined _DOUBLE
            call zgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik1),(1.,0.),&
 &                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1.,0.),&
 &                     Vo(frag_pointer(1)+1),1)
@@ -164,7 +164,7 @@
            endif
          else
 
-#if defined DP
+#if defined _DOUBLE
            call zgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik2),(1.,0.),&
 &                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(2)+1),1,(1.,0.),&
 &                     Vo(frag_pointer(1)+1),1)
@@ -191,7 +191,7 @@
  if (.not.present(iter)) return
 
  if (.not.use_fragments) then
-#if defined DP
+#if defined _DOUBLE
    call zgemv('n',BS_K_dim,BS_K_dim,(1.,0.),BS_mat,BS_K_dim,Vi,1,(0.,0.),Vo,1)
 #else
    call cgemv('n',BS_K_dim,BS_K_dim,(1.,0.),BS_mat,BS_K_dim,Vi,1,(0.,0.),Vo,1)

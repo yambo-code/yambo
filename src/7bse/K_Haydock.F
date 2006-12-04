@@ -123,7 +123,7 @@
 !---------------------------------------
 !|Vn+1> = |Vn+1> - A(n)|Vn> - B(n)|Vn-1>
 !---------------------------------------
-#if defined DP
+#if defined _DOUBLE
    call zaxpy(BS_K_dim,-Af(it),Vn,1,Vnp1,1)
    call zaxpy(BS_K_dim,-cmplx(Bf(it)),Vnm1,1,Vnp1,1)
 #else

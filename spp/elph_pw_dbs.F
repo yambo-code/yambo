@@ -189,10 +189,10 @@
 ! For non zero phonon q PW grid is composed of (k_1,k_1+q,k_2,k_2+q ...).
 ! I table the  k1+q,k2+q ...
 !
-    if (.not.v_is_zero(real(pw_q(:))).and.mod(i1,2)/=0) cycle
+    if (.not.v_is_zero(real(pw_q(:),SP)).and.mod(i1,2)/=0) cycle
     do ik=1,k%nbz
       if (k_found(ik)==1) cycle
-      call c2a(v_in=k%ptbz(ik,:)-real(pw_k(:,i1)),v_out=r_v,mode="ki2a")
+      call c2a(v_in=k%ptbz(ik,:)-real(pw_k(:,i1),SP),v_out=r_v,mode="ki2a")
       if (rlu_v_is_zero(r_v)) then
         k2k_tab(i1)=ik
         k_found(ik)=1
@@ -210,7 +210,7 @@
   allocate(elph_dV_disk(elph_bands(2),elph_bands(2),ph_modes))
   nk_dV=pw_nk
   k_found=0
-  if (.not.v_is_zero(real(pw_q(:)))) nk_dV=pw_nk/2
+  if (.not.v_is_zero(real(pw_q(:),SP))) nk_dV=pw_nk/2
   do i1=1,nk_dV
     read (io_unit(ID)) ikkp     ! k k-q  
     ikkp_s=k2k_tab(ikkp(1))
@@ -251,7 +251,7 @@
 !  The pw_k K-grid is reduced using the small group of q. 
 !  I need to expand the K-grid to define the missing elements of elph_dV
 !-----------------------------------------------------------------------
-  call q_small(real(pw_q),small,nsmall)
+  call q_small(real(pw_q,SP),small,nsmall)
   do ik=1,k%nbz
     if (k_found(ik)==0) cycle
     do i1=1,nsmall
@@ -263,7 +263,7 @@
   enddo
 !
 ! DEBUG >
-!  call elph_dV_bare_2_gkkp(k,iq)
+  call elph_dV_bare_2_gkkp(k,iq)
 ! DEBUG <
 !
   if (any((/k_found==0/))) then

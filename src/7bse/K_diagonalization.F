@@ -41,7 +41,7 @@
 !ws
  type(pp_indexes)     ::px
  integer              ::i1,i2,lib_driver,BS_H_dim,i_of
-#if defined DP
+#if defined _DOUBLE
  complex(DP):: zdotu,zdotc
 #else
  complex(SP):: cdotu,cdotc
@@ -166,7 +166,7 @@
      do i1=1,BS_H_dim
        BS_R_right(i1)=cmplx(0.,0.,SP)
        if (.not.px%i1p(i1)) cycle
-#if defined DP
+#if defined _DOUBLE
        BS_R_right(i1)=zdotc(BS_H_dim,BSS_rhoq0,1,BS_V_right(:,i1),1)
 #else
        BS_R_right(i1)=cdotc(BS_H_dim,BSS_rhoq0,1,BS_V_right(:,i1),1)
@@ -185,7 +185,7 @@
      do i1=1,BS_H_dim
        BS_R(i1)=cmplx(0.,0.,SP)
        if (.not.px%i1p(i1)) cycle
-#if defined DP
+#if defined _DOUBLE
        BS_R(i1)=zdotu(BS_H_dim,BS_V_left(:,i1),1,BSS_rhoq0,1)
 #else
        BS_R(i1)=cdotu(BS_H_dim,BS_V_left(:,i1),1,BSS_rhoq0,1)
@@ -199,7 +199,7 @@
 ! [3] BS_overlap(i,j)=conjg(BS_V_right(k,i))*BS_V_left(k,j)
 !----------------------------------------------------------
      call live_timing('BSK overlap mat',1)
-#if defined DP
+#if defined _DOUBLE
      call zgemm('c','n',BS_H_dim,BS_H_dim,BS_H_dim,(1.,0.),&
 &               BS_V_right,BS_H_dim,BS_V_left,BS_H_dim,(0.,0.),&
 &               BS_overlap,BS_H_dim)
@@ -218,7 +218,7 @@
      do i1=1,BS_H_dim
        BS_R_left(i1)=cmplx(0.,0.,SP)
        if (.not.px%i1p(i1)) cycle
-#if defined DP
+#if defined _DOUBLE
        BS_R_left(i1)=zdotu(BS_H_dim,BS_overlap(i1,:),1,bs_R,1)
 #else
        BS_R_left(i1)=cdotu(BS_H_dim,BS_overlap(i1,:),1,bs_R,1)
@@ -244,7 +244,7 @@
      BS_R=(0.,0.)
      do i1=1,BS_K_dim
        if (.not.px%i1p(i1)) cycle
-#if defined DP
+#if defined _DOUBLE
        BS_R(i1)=zdotc(BS_K_dim,BSS_rhoq0,1,BS_mat(:,i1),1)
 #else
        BS_R(i1)=cdotc(BS_K_dim,BSS_rhoq0,1,BS_mat(:,i1),1)

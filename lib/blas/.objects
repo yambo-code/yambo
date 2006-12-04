@@ -1,4 +1,4 @@
-#if defined DP
+#if defined _DOUBLE
 objs =  zaxpy.o  zdotc.o  zgemm.o  zgeru.o  zswap.o  ztrmv.o  \
 	izamax.o dznrm2.o zcopy.o  zdotu.o  zgemv.o  zscal.o  \
 	ztrmm.o  ztrsm.o  daxpy.o  dscal.o  zher2k.o zher2.o  \

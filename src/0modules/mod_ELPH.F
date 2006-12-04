@@ -50,8 +50,8 @@
  subroutine elph_free()
  use memory_m,  ONLY:mem_est
  implicit none
- deallocate(ph_freqs_sq,elph_dV)
- call mem_est("ph_freqs_sq elph_dV")
+ deallocate(ph_freqs_sq,elph_dV,dV_bare)
+ call mem_est("ph_freqs_sq elph_dV dV_bare")
  end subroutine
 
  end module ELPH

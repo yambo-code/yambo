@@ -58,8 +58,8 @@
  integer :: i1,i2,i3,i_or,iqbz,iqibz,ib,i_err,iq_to_start,&
 &           life_hh,life_ee,iv4(4),io_err,XID,WID,QP_n_W_freqs_redux
  complex(SP) :: lrhotw(X%ng)
-#if defined DP
- complex(DP) :: zdotc,zdotu
+#if defined _DOUBLE
+ complex(SP) :: zdotc,zdotu
 #else
  complex(SP) :: cdotc,cdotu
 #endif
@@ -294,7 +294,7 @@
          i2=life_W_table(iqibz,QP_n_W_freqs)
 
          do i3=1,X%ng
-#if defined DP
+#if defined _DOUBLE
            lrhotw(i3)=zdotu(X%ng,isc%rhotw,1,X_mat(1,i3,i2),1)
 #else
            lrhotw(i3)=cdotu(X%ng,isc%rhotw,1,X_mat(1,i3,i2),1)
@@ -307,7 +307,7 @@
 ! Note that the same procedure is applied in QP_W2Sc when S_c is
 ! calculated
 ! 
-#if defined DP
+#if defined _DOUBLE
          qp%E(i1)=qp%E(i1)-(0.,2.)*pi*(life_Fe+life_Fh)*bose_decay( real(Xw%p(i2)) )*&
 &                          zdotc(X%ng,iscp%rhotw,1,lrhotw,1)
 #else
@@ -318,13 +318,13 @@
 
          do i2=1,QP_n_W_freqs
            do i3=1,X%ng
-#if defined DP
+#if defined _DOUBLE
              lrhotw(i3)=zdotu(X%ng,isc%rhotw,1,X_mat(1,i3,i2),1)
 #else
              lrhotw(i3)=cdotu(X%ng,isc%rhotw,1,X_mat(1,i3,i2),1)
 #endif
           enddo
-#if defined DP
+#if defined _DOUBLE
              QP_W(i1,ib,i2)=-2.*zdotc(X%ng,iscp%rhotw,1,lrhotw,1)
 #else
              QP_W(i1,ib,i2)=-2.*cdotc(X%ng,iscp%rhotw,1,lrhotw,1)

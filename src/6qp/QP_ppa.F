@@ -56,8 +56,8 @@
  real(SP):: PPaPtlr(q%nibz)
  real(SP),    allocatable :: PPaP(:,:),PPaPm(:,:),scconv(:)
  complex(SP), allocatable :: PPaR(:,:,:),PPaM(:),lrhotw(:),lsc(:,:,:),E(:),dc(:)
-#if defined DP
- complex(DP):: zdotc,zdotu
+#if defined _DOUBLE
+ complex(SP):: zdotc,zdotu
 #else
  complex(SP):: cdotc,cdotu
 #endif
@@ -191,13 +191,13 @@
          gfmf=1
          do i3=1,pp_taylor_terms
            do ig1=1,X%ng
-#if defined DP
+#if defined _DOUBLE
              lrhotw(ig1)=zdotu(X%ng,isc%rhotw,1,PPaR(1,ig1,i3),1)
 #else
              lrhotw(ig1)=cdotu(X%ng,isc%rhotw,1,PPaR(1,ig1,i3),1)
 #endif
            enddo
-#if defined DP
+#if defined _DOUBLE
            PPaM(i3)=2.*pi*zdotc(X%ng,iscp%rhotw,1,lrhotw,1)
 #else
            PPaM(i3)=2.*pi*cdotc(X%ng,iscp%rhotw,1,lrhotw,1)

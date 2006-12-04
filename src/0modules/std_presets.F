@@ -217,7 +217,7 @@
   QP_W_er=0.
   QP_W_dr=0.1/HARTREE
   QP_W_partially_done=.false.
-  QP_G_er=(/0.,10./HARTREE/)
+  QP_G_er=(/0._SP,10._SP/HARTREE/)
   QP_G_dr=0.1/HARTREE
   QP_cg_percent=100.
   QP_xc_FUNCTIONAL=' '

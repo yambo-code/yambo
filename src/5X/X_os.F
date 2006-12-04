@@ -253,7 +253,7 @@
      endif
      g2 = 1
 
-#if defined DP
+#if defined _DOUBLE
      call zaxpy(g2,Gf(1)*ffac*iscut,conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
      do g2=2,X%ng
        call zaxpy(g2,Gf(1)*ffac*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
@@ -273,7 +273,7 @@
 ! Filling the upper triangular part of the residual here ! 
 !             ^^^^^
      do g2=1,X%ng
-#if defined DP
+#if defined _DOUBLE
        call zaxpy(g2,Gf(1)*ffac*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
 #else
        call caxpy(g2,Gf(1)*ffac*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
@@ -289,7 +289,7 @@
      iw=i2+fr(1)-1
      if (.not.use_X_RIM.and.cg_pt(i1)/=0.) Gf(i2)=X_Gf(Xw%p(iw),cg_pt(i1),X%ordering)
      do g2=1,X%ng
-#if defined DP
+#if defined _DOUBLE
        call zaxpy(g2,Gf(i2)/Gf(1),XoR(:g2,g2),1,Xo(:g2,g2,i2),1)
        if (g2<g2max) call zaxpy(X%ng-g2,Gf(i2)/conjg(Gf(1)),conjg(XoR(g2,g2+1:)),&
 &                             1,Xo(g2+1:,g2,i2),1)
@@ -331,7 +331,7 @@
 &          spin_occ/real(Xk%nbz)/DL_vol
       call scatterBamp(isc)
       do g2=1,X%ng
-#if defined DP
+#if defined _DOUBLE
         call zaxpy(g2,Gf(1)*ffac*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
 #else
         call caxpy(g2,Gf(1)*ffac*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
@@ -342,7 +342,7 @@
       iw=i2+fr(1)-1
       if (.not.use_X_RIM) Gf(i2)=X_Gf(Xw%p(iw),cg_pt(i1),X%ordering)
       do g2=1,X%ng
-#if defined DP
+#if defined _DOUBLE
         call zaxpy(g2,Gf(i2)/Gf(1),XoR(:g2,g2),1,Xo(:g2,g2,i2),1)
         if (g2<g2max) call zaxpy(X%ng-g2,Gf(i2)/conjg(Gf(1)),conjg(XoR(g2,g2+1:)),&
 &                                1,Xo(g2+1:,g2,i2),1)
@@ -360,7 +360,7 @@
 
  if (iwmax==2) then
    do g2=1,X%ng
-#if defined DP
+#if defined _DOUBLE
      call zcopy(g2,XoR(1,g2),1,Xo(1,g2,1),1)
 #else
      call ccopy(g2,XoR(1,g2),1,Xo(1,g2,1),1)

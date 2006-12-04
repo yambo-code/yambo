@@ -162,7 +162,7 @@
  if (idriver==USE_SVD.and.lib_in_use==USE_LK) then
    allocate(r_WK(5*Md(1)),SV(Md(1)),U(Md(1),Md(1)),VH(Md(1),Md(1)))
    allocate(work(1))
-#if defined DP
+#if defined _DOUBLE
    call ZGESVD('S','A',Md(1),Md(1),M,Md(1),SV,U,Md(1),VH,Md(1),work,-1,r_WK,ifail)
 #else
    call CGESVD('S','A',Md(1),Md(1),M,Md(1),SV,U,Md(1),VH,Md(1),work,-1,r_WK,ifail)
@@ -171,7 +171,7 @@
    lwork=int(real(work(1)))
    deallocate(work)
    allocate(work(lwork))
-#if defined DP
+#if defined _DOUBLE
    call ZGESVD('S','A',Md(1),Md(1),M,Md(1),SV,U,Md(1),VH,Md(1),work,lwork,r_WK,ifail)
 #else
    call CGESVD('S','A',Md(1),Md(1),M,Md(1),SV,U,Md(1),VH,Md(1),work,lwork,r_WK,ifail)
@@ -184,7 +184,7 @@
        VH(i1,:)=VH(i1,:)/SV(i1)
      endif
    enddo
-#if defined DP
+#if defined _DOUBLE
    call zgemm('c','c',Md(1),Md(1),Md(1),(1._SP,0._SP),VH,Md(1),U,Md(1),(0._SP,0._SP),M,MD(1))
 #else
    call cgemm('c','c',Md(1),Md(1),Md(1),(1._SP,0._SP),VH,Md(1),U,Md(1),(0._SP,0._SP),M,MD(1))
@@ -197,14 +197,14 @@
 !------------------------------
  if (idriver==INV.and.lib_in_use==USE_LK) then
    allocate(ipvt(Md(1)))
-#if defined DP
+#if defined _DOUBLE
    call zgetrf(Md(1),Md(1),M,Md(1),ipvt,ifail)
 #else
    call cgetrf(Md(1),Md(1),M,Md(1),ipvt,ifail)
 #endif
  if(ifail.ne.0) call error('Linv: CGETRF failed')
    allocate(work(1))
-#if defined DP
+#if defined _DOUBLE
    call zgetri(Md(1),M,Md(1),ipvt,work,-1,ifail)
 #else
    call cgetri(Md(1),M,Md(1),ipvt,work,-1,ifail)
@@ -212,7 +212,7 @@
    lwork=int(real(work(1)))
    deallocate(work)
    allocate(work(lwork))
-#if defined DP
+#if defined _DOUBLE
    call zgetri(Md(1),M,Md(1),ipvt,work,lwork,ifail)
 #else
    call cgetri(Md(1),M,Md(1),ipvt,work,lwork,ifail)
@@ -235,7 +235,7 @@
  if (idriver==DIAGO.and.lib_in_use==USE_LK.and.present(E_cmpl)) then
 
    allocate(work(1),rwk(2*Md(1)))
-#if defined DP
+#if defined _DOUBLE
    call ZGEEV('V','V',Md(1),M,Md(1),E_cmpl,V_left,Md(1),&
 &             V_right,Md(1),work,-1,rwk,ifail)
 #else
@@ -246,7 +246,7 @@
    lwork=real(work(1))
    deallocate(work)
    allocate(work(lwork))
-#if defined DP
+#if defined _DOUBLE
    call ZGEEV('V','V',Md(1),M,Md(1),E_cmpl,V_left,Md(1),&
 &             V_right,Md(1),work,lwork,rwk,ifail)
 #else
@@ -262,7 +262,7 @@
 !-------------------------------------------
  if (idriver==DIAGO.and.lib_in_use==USE_LK) then
    allocate(work(1),rwk(max(1,3*Md(1)-2)))
-#if defined DP
+#if defined _DOUBLE
    call ZHEEV('V','U',Md(1),M,Md(1),E_real,work,-1,rwk,ifail)
 #else
    call CHEEV('V','U',Md(1),M,Md(1),E_real,work,-1,rwk,ifail)
@@ -271,7 +271,7 @@
    lwork=real(work(1))
    deallocate(work)
    allocate(work(lwork))
-#if defined DP
+#if defined _DOUBLE
    call ZHEEV('V','U',Md(1),M,Md(1),E_real,work,lwork,rwk,ifail)
 #else
    call CHEEV('V','U',Md(1),M,Md(1),E_real,work,lwork,rwk,ifail)

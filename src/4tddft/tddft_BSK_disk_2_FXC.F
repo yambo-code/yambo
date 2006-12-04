@@ -46,8 +46,8 @@
  type(X_t)  :: X
  integer    :: ik1,ik2,O_x_dim,icv1,icv2,alloc_err(2)
  complex(SP):: Co,Hrx
-#if defined DP
- complex(DP):: zdotc
+#if defined _DOUBLE
+ complex(SP):: zdotc
 #else
  complex(SP):: cdotc
 #endif
@@ -127,7 +127,7 @@
          do icv2=1,BS_blk_dim(ik2)
            if (ik1==ik2.and.icv2<icv1) cycle
 
-#if defined DP
+#if defined _DOUBLE
            Hrx=zdotc(BS_n_g_exch,O2x(1,icv2),1,O1x(1,icv1),1)
 #else
            Hrx=cdotc(BS_n_g_exch,O2x(1,icv2),1,O1x(1,icv1),1)

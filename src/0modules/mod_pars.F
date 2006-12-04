@@ -25,8 +25,8 @@
 !
 !KINDS
    integer, parameter  :: DP = selected_real_kind(14,200)
-#if defined DP
-   integer, parameter  :: SP = DP
+#if defined _DOUBLE
+   integer, parameter  :: SP = selected_real_kind(14,200)
 #else
    integer, parameter  :: SP = selected_real_kind(6,30)
 #endif

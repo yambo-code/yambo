@@ -52,8 +52,8 @@
  integer     :: i1,is(4),iv1fft,ic1fft,i2fft,j2fft
  logical     :: l_s_tr(4)
  complex(SP) :: rhotwr1(fft_size),rhotwr2(fft_size)
-#if defined DP
- complex(DP):: zdotc,zdotu
+#if defined _DOUBLE
+ complex(SP):: zdotc,zdotu
 #else
  complex(SP):: cdotc,cdotu
 #endif
@@ -106,13 +106,13 @@
 !=====
 !
  if (l_s_tr(1)) then
-#if defined DP
+#if defined _DOUBLE
    tddft_alda_r_space=zdotc(fft_size,rhotwr1,1,rhotwr2,1)
 #else
    tddft_alda_r_space=cdotc(fft_size,rhotwr1,1,rhotwr2,1)
 #endif
  else
-#if defined DP
+#if defined _DOUBLE
    tddft_alda_r_space=zdotu(fft_size,rhotwr1,1,rhotwr2,1)
 #else
    tddft_alda_r_space=cdotu(fft_size,rhotwr1,1,rhotwr2,1)

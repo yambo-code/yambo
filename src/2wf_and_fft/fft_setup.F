@@ -163,7 +163,7 @@
 !DEBUG>
       test_fft_size(i1)=(test_fft_size(i1)/3+1)*3
 !DEBUG<
-     test_fft_size(i1)=test_fft_size(i1)+mod(test_fft_size(i1),2)
+!     test_fft_size(i1)=test_fft_size(i1)+mod(test_fft_size(i1),2)
    enddo
 #else
    do i1=1,3

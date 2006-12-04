@@ -1,4 +1,4 @@
-#if defined DP
+#if defined _DOUBLE
 objs = 	zgetf2.o  zhetrd.o  zlarft.o  zlaswp.o  \
 	zung2l.o  ilaenv.o  dlanst.o  dlassq.o  \
 	zgetrf.o  zlacgv.o  zlascl.o  zlatrd.o  \

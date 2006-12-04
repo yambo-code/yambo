@@ -45,36 +45,17 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
   type(bz_samp)                :: k
   character(lchlen)            :: ETSF_file_name
   integer                      :: ID,io_err,ik,icycle
-  integer,     external        :: ioDB1,rand_identifier
+  integer,     external        :: ioDB1,rand_identifier, ioKB_PP
   real(SP), allocatable        :: wf_disk(:,:,:,:)
-  logical                      :: letsf_file
-
-  ! The main program memory
-  ! Creating a silane molecule with a 10x10x10 mesh for the density
-  double precision, target    :: rhor(1000)
-  double precision, target    :: rprimd(3, 3)
-  integer, target             :: reduced_symmetry_matrices(3 ,3 ,1)
-  double precision, target    :: reduced_symmetry_translations(3, 1)
-  double precision, target    :: reduced_atom_positions(3, 5)
-  double precision, target    :: valence_charges(2)
-  double precision, target    :: atomic_numbers(2)
-  character(len = 80), target :: atom_species_names(2)
-  character(len = 2), target  :: chemical_symbols(2)
-  character(len = 80), target :: pseudopotential_types(2)
-  integer, target             :: ntypat(5)
-  integer, target             :: space_group => 1
+  logical                      :: letsf_file, lwrite_PP, force_kbpp
 
   ! The local variable to handle ETSF data.
   type(etsf_dims)             :: dims ! The dimensions of our system
-  type(etsf_geometry), target :: geometry ! the description of our system
-  type(etsf_main)             :: main ! a container (will store the density)
-  type(etsf_groups)           :: groups ! a container (will store the geometry)
   logical                     :: lstat ! to get informed on error
   type(etsf_io_low_error)     :: error_data ! to store informations about errors
 
   integer :: i, dummy
   integer :: ncid
-  type(etsf_kpoints) :: k_folder
   double precision, allocatable, target :: my_kpt(:,:) 
 !
 ! Presets
@@ -107,6 +88,13 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
     call p_finalize
     return
   endif
+  !
+  ! Check for KP PP forced creation
+  !
+  force_kbpp = .false.
+  if(index(instr,'forcepp').ne.0) force_kbpp = .true.
+
+  
 
 !etsf_io_data_read direct  all in one go
 ! Open file for reading
@@ -122,7 +110,7 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
   !
   ! Run the ETSF library for the DB1 information
   !
-  call e2s_db1(en,k,trim(ETSF_file_name),ncid)
+  call e2s_db1(en,k,ncid)
   !
   ! Write the data to DB1
   !
@@ -130,25 +118,34 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
   io_err=ioDB1(en,k,ID)
   !
-  ! Wavefucntions...
+  ! Run the ETSF library for the PP information
   !
-  call msg('s',' == Writing DB2 (wavefunctions) + nlPP ...')
- allocate(wf_disk(2,n_bands,wf_ncx,n_spin))
- do ik=1,nkibz
+  call e2s_kb_pp(ncid,lwrite_PP)
+  lwrite_PP = lwrite_PP.or.force_kbpp
+  !
+  ! Wavefunctions...
+  !
+  if(lwrite_PP) call msg('s',' == Writing DB2 (wavefunctions) ...')
+  if(lwrite_PP) call msg('s',' == Writing nlPP ...')
+  if(force_kbpp) call msg('s','[WARNING] KB PP file contains only atomic information...')
+
+  allocate(wf_disk(2,n_bands,wf_ncx,n_spin))
+
+  do ik=1,nkibz
 !------------------------------------------------
-   call e2s_wf(wf_disk,ik,ncid)
+    call e2s_wf(wf_disk,ik,ncid)
 !------------------------------------------------
-   if (ik==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-   if (ik> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
-   io_err=ioWF(ID,wf=wf_disk)
-!  if(n_atoms_max.ne.0) io_err=ioKB_PP(ID)
- enddo
- deallocate(wf_disk)
- call msg('ln','done ==')
+    if (ik==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
+    if (ik> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
+    io_err=ioWF(ID,wf=wf_disk)
+    if(lwrite_PP) io_err=ioKB_PP(ID)
+  enddo
+  deallocate(wf_disk)
+  call msg('ln','done ==')
 !
  ! Close file
   call etsf_io_low_close(ncid, lstat, error_data = error_data)
- call p_finalize
+  call p_finalize
 
 end function
 

@@ -1,4 +1,5 @@
  objs = mod_SPP.o     spp_i.o   spp_init.o spp_init_load.o k_analyze.o \
+        plot_exc_wf.o
         elph_pw_dbs.o elph_eliashberg.o elph_dV_bare_2_gkkp.o \
         self2self.o   BZ_RIM.o \
         ioDB1_ver_2.o ioWF_ver_2.o ioKB_PP_ver_2.o ioX_ver_2.o

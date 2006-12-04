@@ -121,7 +121,7 @@
 !==========
  if (lkanalyze) call k_analize(en,k,Xk,q)
  if (lbzrim) call BZ_RIM(Xk,Xen)
-! if (lexcwf) call plot_exc_wf()
+ if (lexcwf) call plot_exc_wf(Xk)
  if (lelph) call elph_pw_dbs(k,q)
  if (lelph.and.elph_gamma_broad>0.) call elph_eliashberg(k,en,q)
 !

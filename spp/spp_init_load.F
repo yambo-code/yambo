@@ -43,9 +43,14 @@
  call it(defs,'Max_Energy','Max value energy to be shown', max_energy,E_unit)
  call it(defs,'Order','Energies order `mode` [(e)nergy/(i)ntensity]', sort_mode)
  call it(defs,'State','Ordered Index of the BS state',lambda)
- call it(defs,'Window','[o/o] BS states window',window)
+ call it(defs,'Window','[o/o] BS states window (not implemented)',window)
  call it(defs,'Cells', 'Number of cell repetitions (even)',ncell)
  call it(defs,'Hole', '[cc] Hole position in unit cell',r_hole)
+ call it(defs,'Dimension', 'Dimension of the plot [3, integrated /1/2]',p_dim)
+ call it(defs,'Format', 'Format of the output[(g)nuplot/(x)crysden]',p_format)
+ call it(defs,'Direction', '[x/y/z] for 1d or [xy/xz/yz] for 2d',p_dir)
+ call it(defs,'Ntypat', 'Number of different type atoms',ntypat)
+ call it(defs,'Znucl', 'Atomic charge for different atoms (WARNING: now only 2 types)',znucl)
 !
 !EL-PH
  call it(defs,'DBsPATH', 'Path to the PW el-ph databases',elph_dbs_path)

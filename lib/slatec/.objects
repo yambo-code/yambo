@@ -6,4 +6,4 @@ objs = 	avint.o  xermsg.o fdump.o  j4save.o xercnt.o xerhlt.o \
         besi1e.o qage.o   qag.o    qk15.o   qk21.o   qk31.o   \
         qk41.o   qk51.o   qk61.o   qpsrt.o  qawo.o  qawoe.o \
         qc25f.o  qelg.o   qcheb.o  qwgtf.o  qk15w.o  qwgtf.o \
-        
+        sgtsl.o       

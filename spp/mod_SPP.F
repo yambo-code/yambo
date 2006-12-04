@@ -34,12 +34,17 @@
 !===============================================================
   logical      :: lexcwf
   integer      :: lambda       !energy of the exciton
+  integer      :: ncell(3)     !number of repetitions of the cell
+  integer      :: p_dim        !Dimension of the plot 
+  integer      :: ntypat       !Number of different atomic species
+  integer      :: znucl(2)    ! Nuclear charge for each type
   real(SP)     :: window       !energy window in o/o (1 -> 100)
   real(SP)     :: max_energy   !max energy to be shown in ordering
-  integer      :: ncell(3)     !number of repetitions of the cell
   real(SP)     :: r_hole(3)    !position of the hole 
   character(1) :: sort_mode    !to decide if sorting by enegies or intensities
   character(1) :: action_mode  !to decide if sorting or plotting
+  character(1) :: p_format     !Format of the plot
+  character(2)  ::p_dir        !Direction of the plot 
 !
 !EL-PH
 !===============================================================

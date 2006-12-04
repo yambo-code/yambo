@@ -28,10 +28,8 @@ subroutine e2s_wf(wf_disk,ikibz, ncid)
   use pars,                  only : SP
   use com,                   only : msg, error
   use electrons,             only : n_bands, n_spin, n_sp_pol, n_spinor
-! use D_lattice,             only : n_atom_species,pp_n_l_comp_max,&
-!&                                   PP_alloc,pp_kbs,pp_kb,pp_kbd
   use R_lattice,             only : nkibz
-  use wave_func,             only : wf_ncx,wf_nc_k,  wf_igk, wf_ng
+  use wave_func,             only : wf_ncx,wf_nc_k
   implicit none
   integer,           intent(in)  :: ikibz, ncid
   real(SP),          intent(out) :: wf_disk(2,n_bands,wf_ncx,n_spin)
@@ -62,8 +60,6 @@ subroutine e2s_wf(wf_disk,ikibz, ncid)
 ! No high level option to read wavefunction spinor components: the choice
 ! was made to keep high level routines split on nkibz and n_sp_pol
 
-! npwk = wf_nc_k(ikibz)
-
   allocate(wavefunction_section_(dims%real_or_complex, &
 &                                dims%max_number_of_coefficients,    &
 &                                dims%max_number_of_states ) )
@@ -91,11 +87,7 @@ subroutine e2s_wf(wf_disk,ikibz, ncid)
 &        wf_disk(ireal,ib,ig,ispin) = wavefunction_section_(ireal,ig,ib)
 
   enddo
-   deallocate(wavefunction_section_)
+  deallocate(wavefunction_section_)
  
-! Move all allocates to module!
-! call alloc_kpoints_group
-! check dims% is defined and associated (not zero)
-
   return
 end subroutine

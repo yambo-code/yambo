@@ -58,6 +58,7 @@ module etsf_data
   ! Miscellaneous data, not in ETSF specs, that might appear in ETSF file.
   !
   double precision                      :: temperature_
+  integer                               :: ixc_
 
 contains
   !

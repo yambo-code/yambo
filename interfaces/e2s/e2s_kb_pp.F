@@ -23,11 +23,11 @@ subroutine e2s_kb_pp(ncid,lwrite_PP)
   !
   ! Check for KB factors
   !===========================================================
-  lwrite_PP = .true.
   call etsf_io_low_read_var(ncid, "max_number_of_angular_momenta", &
 &                                  max_number_of_angular_momenta_, lstat)
   if(lstat) then
     pp_n_l_comp_max = max_number_of_angular_momenta_
+    lwrite_PP = .true.
   else
     pp_n_l_comp_max = 0
     lwrite_PP = .false.
@@ -35,22 +35,22 @@ subroutine e2s_kb_pp(ncid,lwrite_PP)
   call etsf_io_low_read_var(ncid, "max_number_of_projectors", &
 &                                  max_number_of_projectors_, lstat)
   if(lstat) then
-!   pp_n_l_comp = max_number_of_projectors_
+    pp_n_l_comp = max_number_of_projectors_
+    lwrite_PP = lwrite_PP.and..true.
   else
-!   pp_n_l_comp = 0
+    pp_n_l_comp = 0
     lwrite_PP = .false.
   endif
 
-! call msg('s',':: PP n l comp max      :',pp_n_l_comp_max)
-  call msg('s',':: Writing PP KB information    :',lwrite_PP)
 
-! if(lwrite_PP) then
+  if(lwrite_PP) then
+    call msg('s',':: Writing PP KB information    :',lwrite_PP)
+    call msg('s',':: PP n l comp max      :',pp_n_l_comp_max)
 !   call allocate_gwdata_group
 !   call etsf_io_gwdata_get(ncid, gwdata_group, lstat, error_data)
-
 !   call deallocate_gwdata_group
-!   return
-! endif
+    return
+  endif
 ! !
 ! ! 
 ! !

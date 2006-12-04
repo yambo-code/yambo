@@ -117,24 +117,26 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
   call msg('s',' == Writing DB1 ...')
   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
   io_err=ioDB1(en,k,ID)
+  call msg('l','done ==')
   !
   ! Run the ETSF library for the PP information
   !
+  lwrite_PP = .false.
   call e2s_kb_pp(ncid,lwrite_PP)
   lwrite_PP = lwrite_PP.or.force_kbpp
-  !
-  ! Wavefunctions...
-  !
-  if(lwrite_PP) call msg('s',' == Writing DB2 (wavefunctions) ...')
-  if(lwrite_PP) call msg('s',' == Writing nlPP ...')
+  if(.not.lwrite_PP) call msg('s',' == Writing DB2 (wavefunctions) ...')
+  if(lwrite_PP) call msg('s',' == Writing DB2 (wavefunctions) + nlPP ...')
   if(force_kbpp) call msg('s','[WARNING] KB PP file contains only atomic information...')
-
+  !
+  ! Local wavefunction storage
+  !
   allocate(wf_disk(2,n_bands,wf_ncx,n_spin))
 
   do ik=1,nkibz
-!------------------------------------------------
+    !
+    ! Run the ETSF library for the WF information
+    !
     call e2s_wf(wf_disk,ik,ncid)
-!------------------------------------------------
     if (ik==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
     if (ik> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
     io_err=ioWF(ID,wf=wf_disk)

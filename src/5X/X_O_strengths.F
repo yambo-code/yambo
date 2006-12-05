@@ -85,7 +85,7 @@
    if (use_trans_gauge) call X_O_transverse(Xen,Xk,X)
    !
 #if defined PJ_GKS
-   !
+   ! 
    ! When using xc non-local approximation Vnl add the contribution [r,Vnl]
    !
    if (GS_xc_FUNCTIONAL > 400) call X_O_gks(Xen,Xk,X) 

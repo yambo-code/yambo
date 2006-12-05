@@ -73,7 +73,7 @@ PJ_SPINLIBS  = $(SLIBS)
 # -- GPL_START --
 2SLIBS       = 0external_c 0modules 1parser 1common 2io 
 SPPLIBS      = 0external_c 0modules 1xc 1parser 1common 2io \
-               2wf_and_fft 3kop 4it 7bse
+               2wf_and_fft 3kop 3qp_ctl 4it 7bse
 
 nothing: 
 	@$(make_message)

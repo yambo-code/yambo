@@ -46,6 +46,28 @@
  call it(defs,'Window','[o/o] BS states window (not implemented)',window)
  call it(defs,'Cells', 'Number of cell repetitions (even)',ncell)
  call it(defs,'Hole', '[cc] Hole position in unit cell',r_hole)
+!
+! p_dim:    puo' assumere i valori 1/2/3  controlla se dare in output la
+! funzione eccitonica in 3 dimensioni, oppure in 2 dimensioni (integrata
+! nella direzione perpendicolare al piano, oppure 1 dimenzione (integrata
+! nel piano perpendicolare alla retta.
+! 
+! p_dir:   puo' assumere i valori x/y/z/  /xy/xz/yz   controlla la
+! direzione per il plot 1d oppure il piano per la 2d
+! 
+! p_format: controlla il formato dell'ouptut (g)nuplot/(x)crysden,
+! il plot 1d viene comunque fatto per gnuplot e il 3d per xcrysden
+! 
+! znucl:    qui si danno le cariche nucleari dei diversi tipi di atomi,
+! non ne ho trovato traccia nei database, se ci sono fammi sapere.
+! 
+! Ntypat:  non e' il numero di atomi, ma il tipo di specie diverse. 
+! Questa informazione c'e' nel database, l'ho introdotta in quanto 
+! mi seriva per dimensionare il vettore znucl. Questa parte va migliorata:
+! potrei togliere ntypat come variabile di input e dimensionare
+! dinamicamente znucl. Poi allocare dopo aver letto quanti tipi ci 
+! sono dal database, allocare znucl e leggere il vettore dall'input.
+!
  call it(defs,'Dimension', 'Dimension of the plot [3, integrated /1/2]',p_dim)
  call it(defs,'Format', 'Format of the output[(g)nuplot/(x)crysden]',p_format)
  call it(defs,'Direction', '[x/y/z] for 1d or [xy/xz/yz] for 2d',p_dir)

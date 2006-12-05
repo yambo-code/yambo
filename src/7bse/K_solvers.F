@@ -89,7 +89,7 @@
  endif
  if (iq==1) then
    X%q0=BSS_q0
-   call X_O_strengths(Ken,Xk,X,BSS_q0)  
+   call X_O_strengths(Ken,Xk,X,BSS_q0)
    do i1=1,BS_K_dim
      ik=BS_eh_table(i1,1)
      iv=BS_eh_table(i1,2)

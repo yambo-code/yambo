@@ -28,7 +28,9 @@
  use electrons,             ONLY : levels, default_nel, n_spin, n_sp_pol, n_spinor
  use R_lattice,             ONLY : bz_samp, ng_vec, g_vec
  use D_lattice,             ONLY : nsym, i_time_rev, i_space_inv, dl_sop, &
-&                                  DL_vol, a, alat, default_Tel
+&                                  DL_vol, a, alat, default_Tel, &
+&                                  n_atoms_max,n_atom_species,n_atoms, atom_pos, &
+&                                  znucl
  use wave_func,             ONLY : wf_nc_k, wf_ncx, wf_igk, wf_ng
  use vec_operate,           ONLY : cross_product
  use xc_functionals,        ONLY : GS_xc_KIND,GS_xc_FUNCTIONAL, xc_string
@@ -44,6 +46,7 @@
  logical                        :: l_identity, l_inversion
  character(lchlen)              :: lch
  character(256)                 :: pw_dft
+ character(3), allocatable      :: atom_species_names(:)
 
 !---------------------------------------------------------------------*
 !    Read dimensions                                                  *
@@ -57,6 +60,8 @@
  if (ierr.ne.0) call errore('qexml_read_symmetry','IOTK error',ABS(ierr))
  call qexml_read_planewaves(npwx=npwx_,ngm=ngm_, ierr=ierr)
  if (ierr.ne.0) call errore('qexml_read_planewaves','IOTK error',ABS(ierr))
+ call qexml_read_ions(nat=nat_, nsp=nsp_, ierr=ierr)  
+ if (ierr.ne.0) call errore('qexml_read_ions','IOTK error',ABS(ierr))
 
  en%nb  = nbnd_
  k%nibz = num_k_points_
@@ -80,6 +85,7 @@
  default_Tel = 0.0_SP 
  wf_ncx  = npwx_ ! max for writing, allocation
  wf_ng   = wf_ncx ! this is written
+ n_atom_species = nsp_
 
  call msg("l","done")
 
@@ -121,6 +127,37 @@
  b(3,:)=cross_product(acopy(:,1),acopy(:,2))*2.*PI/DL_vol
  call msg("l","done")
 
+!---------------------------------------------------------------------*
+!    Read atomic positions (for version > 3.0.4)                      *
+!---------------------------------------------------------------------*
+ call msg('s',' Atomic data...')
+ allocate( tau_(3,nat_), ityp_(nat_) )  ! tau is read in cartesian coords
+ allocate( atm_(n_atom_species))
+ call qexml_read_ions( tau=tau_, ityp=ityp_, atm=atm_, ierr=ierr)
+
+ allocate(n_atoms(n_atom_species))
+ n_atoms(:)=0
+ do i1 = 1, nat_
+   n_atoms( ityp_(i1) ) = n_atoms( ityp_(i1) ) +1
+ enddo  
+ n_atoms_max = maxval(n_atoms)
+ allocate(atom_pos(3,n_atoms_max,n_atom_species))
+ n_atoms(:)=0
+ do i1 = 1, nat_
+   n_atoms( ityp_(i1) ) = n_atoms( ityp_(i1) ) +1
+   atom_pos(:, n_atoms( ityp_(i1) ) , ityp_(i1) ) = tau_(:,i1) 
+ enddo
+
+ allocate(atom_species_names(n_atom_species))
+ allocate(znucl(n_atom_species))
+ do i1 = 1, n_atom_species
+   atom_species_names(i1) = atm_(i1)    
+   znucl(i1) = atomic_number(atom_species_names(i1))
+ enddo
+
+ if (ierr.ne.0) call errore('qexml_read_ions','IOTK error',ABS(ierr))
+
+ call msg("l","done")
 !---------------------------------------------------------------------*
 !    Read symmetries                                                  *
 !---------------------------------------------------------------------*
@@ -237,17 +274,16 @@
  deallocate(xk_)
 
 !PW energies (3.1) in HARTREE
+ allocate( en%E(en%nb, k%nibz, n_spin) )
  select case(nspinpw)
  case(1)
-   allocate( en%E(en%nb, k%nibz, 1) )
    en%E(:,:,1) = eig_( 1:en%nb, 1:k%nibz )
    deallocate(eig_)
  case(4)
-   allocate( en%E(en%nb, k%nibz, n_spin) )
    en%E(:,:,1) = eig_( 1:en%nb, 1:k%nibz )
    en%E(:,:,2) = eig_( 1:en%nb, 1:k%nibz )
+   deallocate(eig_)
  case(2)
-   allocate( en%E(en%nb, k%nibz, n_spin) )
    en%E(:,:,:) = eig_s_( 1:en%nb, 1:k%nibz, 1:n_spin )
    deallocate(eig_s_)
  end select
@@ -345,10 +381,49 @@
  if(i_time_rev==0) call msg('s',' :: Symmmetries    [T-rev]:',nsym*i_time_rev)
  call msg('s',' :: RL vectors        (WF):',wf_ng)
  call msg('s',' :: RL vectors    (CHARGE):',ng_vec)
- call msg('s',' :: XC potential          : ',xc_string(GS_xc_KIND,GS_xc_FUNCTIONAL))
+ call msg('s',' :: XC potential          :',xc_string(GS_xc_KIND,GS_xc_FUNCTIONAL))
+ call msg('s',' :: Atomic species        :',n_atom_species)
+ call msg('s',' :: Max atoms/species     :',n_atoms_max)
 
    return
- end subroutine 
+ 
+ contains
+ 
+  integer function atomic_number(atom_name)
+    implicit none
+    character(len=*), intent(in) :: atom_name
+    character(len=2)             :: elements(103)
+    integer                      :: i
+            
+    elements(1:2)=(/'H',                              'He'/)
+    elements(3:10)=(/'Li','Be','B','C','N','O','F','Ne'/)
+    elements(11:18)=(/'Na','Mg','Al','Si','P','S','Cl','Ar'/)
+    elements(19:25)=(/'K','Ca','Sc','Ti','V','Cr','Mn'/)
+    elements(26:30)=(/'Fe','Co','Ni','Cu','Zn'/)
+    elements(31:36)=(/'Ga','Ge','As','Se','Br','Kr'/)
+    elements(37:43)=(/'Rb','Sr','Y','Zr','Nb','Mo','Tc'/)
+    elements(44:48)=(/'Ru','Rh','Pd','Ag','Cd'/)
+    elements(49:54)=(/ 'In','Sn','Sb','Te','I','Xe'/)
+    elements(55:63)=(/'Cs','Ba','La','Ce','Pr','Nd','Pm','Sm','Eu'/)
+    elements(64:71)=(/'Gd','Tb','Dy','Ho','Er','Tm','Yb','Lu'/)
+    elements(72:76)=(/'Hf','Ta','W','Re','Os'/)
+    elements(77:80)=(/'Ir','Pt','Au','Hg'/)
+    elements(81:86)=(/'Tl','Pb','Bi','Po','At','Rn'/)
+    elements(87:94)=(/'Fr','Ra','Ac','Th','Pa','U','Np','Pu'/)
+    elements(95:103)=(/'Am','Cm','Bk','Cf','Es','Fm','Md','No', 'Lr'/)
+      
+    do i = 1, 103
+      if ( trim(atom_name) == trim(elements(i)) ) then
+        atomic_number = i
+        return
+      end if
+    end do
+    znucl = 0
+
+    return 
+  end function atomic_number
+
+ end subroutine p2s_qexml_db1
 
  subroutine scan_xc(pw_dft, GS_xc_KIND_,GS_xc_FUNCTIONAL_)
    ! Default: GS_xc_KIND_ = -1 , GS_xc_FUNCTIONAL_ = -1

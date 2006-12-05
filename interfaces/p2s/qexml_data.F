@@ -7,6 +7,12 @@ module qexml_data
 ! Cell
   real(dbl)                  :: alat_, a1_(3), a2_(3), a3_(3)
 
+! Atoms
+  integer                    :: nat_, nsp_
+  real(dbl), allocatable     :: tau_(:,:)
+  integer, allocatable       :: ityp_(:)
+  character(3), allocatable  :: atm_(:)
+
 ! Symmetry
   integer, allocatable       :: s_(:,:,:)
   integer                    :: nsym_

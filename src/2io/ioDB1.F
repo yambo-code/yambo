@@ -25,7 +25,9 @@
  use memory_m,         ONLY:mem_est
  use com,              ONLY:code_version
  use electrons,        ONLY:levels,default_nel,n_spin,n_bands,nel,n_sp_pol,n_spinor
- use D_lattice,        ONLY:a, alat, nsym, i_time_rev, default_Tel, dl_sop,Tel
+ use D_lattice,        ONLY:a, alat, nsym, i_time_rev, default_Tel, dl_sop, &
+&                           Tel, n_atoms_max,n_atom_species,n_atoms,atom_pos, &
+&                           znucl
  use R_lattice,        ONLY:ng_vec, g_vec, bz_samp,nkibz,&
 &                           qp_states_k,nXkibz,ng_closed
  use wave_func,        ONLY:wf_ncx, wf_nc_k, wf_igk,wf_ng
@@ -48,7 +50,33 @@
 !
 ! Dimensions
 !
-   call io_elemental(ID, VAR="DIMENSIONS",VAR_SZ=17)
+   call io_elemental(ID, VAR="DIMENSIONS",VAR_SZ=16)
+
+! Meaning of DIMENSIONS tag in ioDB1 file:
+!
+!  1 Serial Number 
+!  2 Major version   3 Minor version   4 Patchlevel
+!  5 Bands                   E%nb
+!  6 k-points                k%nibz
+!  7 G-vectors (total)       ng_vec
+!  8 G-vectors (wfc/shell)   wf_ncx
+!  9 Time reversal flag      i_time_rev
+! 10 Symmetries              nsym
+! 11 Spinor cmpts            n_spinor
+! 12 Spins                   n_sp_pol
+! 13 Temperature             default_Tel
+! 14 Electrons               default_nel
+! !5 XC kind                 GS_xc_KIND
+! 16 XC functional           GS_xc_FUNCTIONAL 
+!
+! Added dimensions: (still in SEC=1)
+!
+!------------ 3.0.3 ------------------
+!    G-vectors (wfc/igk)     ng_wf
+!------------ 3.0.4 ------------------
+!    Max atoms/species       max_atom_species
+!    No. of atom species     n_atom_species
+
 !
 ! ONLY DB1 can define the serial_number 
 !
@@ -91,22 +119,39 @@
 &                    VAR=' Electrons                       :')
    call io_elemental(ID, I0=GS_xc_KIND)
    call io_elemental(ID, I0=GS_xc_FUNCTIONAL)
-
-   if (version_is_newer(ID,(/3,0,3/))) then
-     call io_elemental(ID, VAR="",VAR_SZ=0,MENU=0)
+   call io_elemental(ID, VAR="",VAR_SZ=0,MENU=0) 
 !
-! WF real G-vectors components. This IO entry has been added only in ver. 3.0.3
-! to correctly hadle PW use of igk indexes.
+!=------------ DIMENSIONS END -----------------=
+!
+! Wavefunction G-vector components
+!---------------------------------
+!
+! This IO entry has been added only in ver. 3.0.3
+! to correctly handle PW use of igk indexes.
 ! Note the difference between wf_ncx, wf_nc_k and wf_ng. In PW in general
 ! wf_ng = maxval(wf_igk) > wf_ncx
 !
+   if (version_is_newer(ID,(/3,0,3/))) then
+
      call io_elemental(ID, VAR="WF_G_COMPONENTS",VAR_SZ=1,MENU=0)
      call io_elemental(ID,I0=wf_ng,CHECK=.true.,OP=(/"=="/),&
 &                      VAR=' WF G-vectors        (ver.>3.0.3):')
-     call io_elemental(ID, VAR="",VAR_SZ=0)
-   else
-     call io_elemental(ID, VAR="",VAR_SZ=0)
    endif
+!
+! Atomic data
+!-----------------
+   if (version_is_newer(ID,(/3,0,4/))) then 
+     call io_elemental(ID, VAR="MAX_ATOMS",VAR_SZ=1,MENU=0)
+     call io_elemental(ID,I0=n_atoms_max,   CHECK=.true.,OP=(/"=="/),&
+&                      VAR=' Max atoms/species   (ver.>3.0.4):')
+     !
+     call io_elemental(ID, VAR="number_of_atom_species",VAR_SZ=1,MENU=0)
+     call io_elemental(ID,I0=n_atom_species,CHECK=.true.,OP=(/"=="/),&
+&                      VAR=' No. of atom species (ver.>3.0.4):')
+   endif
+   call io_elemental(ID, VAR="",VAR_SZ=0)
+  
+
 !
 ! Exporting E%nb/k%nibz when in DUMP
 !-------------------------------------
@@ -158,6 +203,14 @@
 &               (/size(g_vec),size(k%pt),size(dl_sop),size(wf_nc_k),size(wf_igk)/),&
 &               (/SP,        SP,        SP,           IP,         IP/) )
 
+   if (version_is_newer(ID,(/3,0,4/))) then 
+     allocate(n_atoms(n_atom_species))
+     allocate(znucl(n_atom_species))
+     allocate(atom_pos(3,n_atoms_max,n_atom_species))
+     call mem_est("n_atoms pp_n_l_comp atom_pos znucl",&
+&                 (/n_atom_species,n_atom_species,size(atom_pos),n_atom_species/),&
+&                 (/IP,IP,SP,IP/))
+   endif
  endif
 !
 ! Cell
@@ -167,6 +220,17 @@
 
  call io_bulk(ID,VAR="LATTICE_VECTORS",VAR_SZ=(/3,3/))
  call io_bulk(ID,R2=a)
+!
+! Atoms
+!
+ if (version_is_newer(ID,(/3,0,4/))) then 
+   call io_bulk(ID,VAR="N_ATOMS",VAR_SZ=(/n_atom_species/))
+   call io_bulk(ID,I1=n_atoms)
+   call io_bulk(ID,VAR="ATOM_POS",VAR_SZ=shape(atom_pos))
+   call io_bulk(ID,R3=atom_pos)
+   call io_bulk(ID,VAR="atomic_numbers",VAR_SZ=(/n_atom_species/))
+   call io_bulk(ID,I1=znucl)
+ endif
 !
 ! Symmetry
 !

@@ -40,6 +40,7 @@
    integer  :: n_atom_species
    real(SP) :: DL_vol,a(3,3),alat(3)
    integer,  allocatable :: n_atoms(:)
+   integer,  allocatable :: znucl(:)
    real(SP), allocatable :: atom_pos(:,:,:)
 !
 ! KB Pseudo

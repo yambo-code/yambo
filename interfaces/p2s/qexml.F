@@ -2104,12 +2104,8 @@ CONTAINS
       !
       CALL iotk_scan_begin( iunpun, "EIGENVALUES_AND_EIGENVECTORS", IERR=ierr )
       IF (ierr/=0) RETURN
-        write(*,*) "XXX k",num_k_points_
-        write(*,*) "XXX nbnd",nbnd_
-        write(*,*) "XXX n_sp_pol",nsppol
       !
       DO ik = 1, num_k_points_
-        write(*,*) "XXX",ik
 !         !
           CALL iotk_scan_begin( iunpun, "K-POINT" // TRIM(iotk_index( ik )), IERR=ierr )
           IF (ierr/=0) RETURN
@@ -2141,7 +2137,6 @@ CONTAINS
       !         
       CALL iotk_scan_end( iunpun, "EIGENVALUES_AND_EIGENVECTORS", IERR=ierr )
       IF (ierr/=0) RETURN
-        write(*,*) "XXX"
       !
       CALL iotk_scan_end( iunpun, "BAND_STRUCTURE", IERR=ierr )
       IF (ierr/=0) RETURN

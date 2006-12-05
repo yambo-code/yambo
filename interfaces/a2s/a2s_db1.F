@@ -28,7 +28,7 @@
  use D_lattice,             ONLY : nsym, i_time_rev, i_space_inv, dl_sop, &
 &                                  DL_vol, a, alat, default_Tel,&
 &                                  pp_n_l_comp_max,n_atom_species,n_atoms,pp_n_l_comp,&
-&                                  n_atoms_max,atom_pos
+&                                  n_atoms_max,atom_pos,znucl
  use wave_func,             ONLY : wf_nc_k, wf_igk,wf_ncx,wf_ng
  use vec_operate,           ONLY : cross_product
  use defs_datatypes,        ONLY : hdr_type, wffile_type
@@ -141,8 +141,9 @@
    n_atoms( ahdr%typat(i1) ) = n_atoms( ahdr%typat(i1) ) +1
  enddo
  n_atoms_max=maxval(n_atoms)
- allocate(atom_pos(3,n_atoms_max,n_atom_species))
+ allocate(atom_pos(3,n_atoms_max,n_atom_species),znucl(n_atom_species))
  n_atoms(:)=0
+ znucl=1
  do i1=1,ahdr%natom
    n_atoms( ahdr%typat(i1) ) = n_atoms( ahdr%typat(i1) ) +1
    atom_pos(:, n_atoms( ahdr%typat(i1) ) ,ahdr%typat(i1) )=matmul(transpose(a),ahdr%xred(:,i1))

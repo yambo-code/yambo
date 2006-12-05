@@ -429,8 +429,6 @@
 &                             2.*real(W2_report),isc%is(1:3),isc%os(1:3)
 #endif
 
- end subroutine
-
 ! -- GPL_START --
 
  end subroutine

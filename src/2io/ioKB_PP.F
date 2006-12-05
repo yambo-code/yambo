@@ -49,8 +49,15 @@
    if (ioKB_PP/=0) goto 1
 
    call io_elemental(ID,VAR="PARS",VAR_SZ=3,MENU=0)
+   !
+   ! n_atoms_max and n_atom_species are redundant as they are
+   ! already read from the DB1.
+   ! In the case when kb_pp is not present these variables
+   ! are available anyway.
+   !
    call io_elemental(ID,I0=n_atoms_max)
    call io_elemental(ID,I0=n_atom_species)
+   !
    call io_elemental(ID,I0=pp_n_l_comp_max)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
 

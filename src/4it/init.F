@@ -330,6 +330,11 @@
 ! -- GPL_START --
      if (.not.l_ppa) call Xon('Xd',(/'BndsRn','NGsBlk',&
 &                    'DmRnge','CGrdSp','ETStps','EMStps','DrudeW','EhEngy','LongDr'/)) 
+#if defined PJ_SC
+     call initactivate(-1,'EnRngeXd ETStpsXd CGrdSpXd EMStpsXd XfnQP_E GWoIter')
+     call initactivate(-1,'BoseCut DysSolver NewtDchk QPreport')
+     l_xxvxc=.false.
+#endif
    endif
 #if defined  PJ_PH
    if (l_ph_corr) call initactivate(1,'GphBRnge')
@@ -592,7 +597,9 @@
 #if defined  PJ_PH
    if (.not.l_el_corr.and..not.l_ph_corr) l_el_corr=.true.
 #endif
+#if !defined  PJ_SC
    if (l_gw0.and.l_el_corr) call initactivate(1,'xxvxc')
+#endif
    if (l_el_corr.and.l_ppa) QP_solver='n'
    if (l_ppa) call initactivate(1,'em1d')
    if (l_bss) call initactivate(1,'bse')

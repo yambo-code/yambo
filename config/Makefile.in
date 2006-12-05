@@ -47,7 +47,7 @@ CFGFILES = config/setup config/Makefile config/report \
   	   sbin/mkmkfl driver/codever.h src/2wf_and_fft/sgfft.F  \
 	   src/0external_c/.objects Makefile driver/version.h
 TARGETS  = self interfaces spp
-PROJECTS = self_ph self_ras self_reels self_gks self_cyl_cut self_spin
+PROJECTS = self_ph self_ras self_reels self_gks self_cyl_cut self_spin self_sc
 EXE      = $(TARGETS) $(PROJECTS) a2s f2s p2s
 # Libraries (ordered for compiling & linking)
 SLIBS        = 0external_c 0modules 1xc 1parser 1common 2io 2wf_and_fft \
@@ -67,9 +67,9 @@ PJ_REELSLIBS = 0external_c 0modules 1xc 1parser 1common 2io 2wf_and_fft \
 PJ_PHLIBS    = 0external_c 0modules 1xc 1parser 1common 2io 2wf_and_fft \
                2coulomb 3kop 3qp_ctl \
                4it 4tddft 5elph 5X 6qp 7acfdt 7bse
-PJ_GKSLIBS   = $(SLIBS)
+PJ_GKSLIBS      = $(SLIBS)
 PJ_CYL_CUTLIBS  = $(SLIBS)
-PJ_SPINLIBS  = $(SLIBS)
+PJ_SCLIBS       = $(SLIBS)
 # -- GPL_START --
 2SLIBS       = 0external_c 0modules 1parser 1common 2io 
 SPPLIBS      = 0external_c 0modules 1xc 1parser 1common 2io \
@@ -91,6 +91,9 @@ self: libs
 	@LIBS2DO="$(SLIBS)" ; $(mksrc)
 	@X2DO="self"; XPATH="driver";XLIBS="$(SLIBS)";$(mkx)
 # PROJECTS # -- GPL_END --
+self_sc: libs
+	@LIBS2DO="$(PJ_SCLIBS)";ADF="-DPJ_SC"; $(mksrc)
+	@X2DO="self_sc"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-DPJ_SC";$(mkx)
 self_spin: libs
 	@LIBS2DO="$(PJ_SPINLIBS)";ADF="-DPJ_SPIN"; $(mksrc)
 	@X2DO="self_spin"; XPATH="driver";XLIBS="$(PJ_SPINLIBS)";ADF="-DPJ_SPIN";$(mkx)

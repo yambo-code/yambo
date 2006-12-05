@@ -60,6 +60,9 @@
    if (l_el_corr) then
      if (.not.l_ppa) call QP_raxis(X,Xen,Xk,en,k,q,qp,Xw,iter)
      if (l_ppa)      call   QP_ppa(X,Xk,en,k,q,qp,Xw,iter)
+#if defined PJ_SC
+     return
+#endif
    else
      QP_Sc=cmplx(0.,0.,SP)
    endif

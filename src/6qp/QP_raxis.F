@@ -231,6 +231,10 @@
 !Main Loop
  call pp_redux_wait
  call live_timing(string_pack(Sc_name,'W0'),px%stps(myid+1)*(q%nbz-iq_to_start+1))
+!
+#if defined PJ_SC 
+ open(101,file='o.PJ_SC_W',position='append')
+#endif
 
  do iqbz=iq_to_start,q%nbz
    if (.not.l_life) QP_W=(0.,0.)
@@ -331,6 +335,10 @@
 #endif
           enddo
 
+#if defined PJ_SC 
+          call PJ_SC_report(QP_W(i1,ib,1))
+#endif
+
        endif
      enddo
  
@@ -349,16 +357,20 @@
 ! Only if I am doing secant solver of Dyson I store on disk
 ! the W m.e. 
 !
+#if !defined PJ_SC
      if (trim(QP_solver)=='n'.or.trim(QP_solver)=='g') then
        call QP_W2Sc(iqbz,k,en,Xw,Sc_W)
      else
+#endif
        if (iqbz==1) then
          call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=WID)
        else
          call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2+iqbz/),ID=WID)
        endif
        io_err=ioQP('W',qp,WID)
+#if !defined PJ_SC
      endif
+#endif
 
    endif
 
@@ -396,6 +408,28 @@
  call collision_reset(iscp)
  call pp_indexes_reset(px)
  call pp_redux_wait()
+!
+#if defined PJ_SC 
+
+ close(101)
+
+ contains
+
+ subroutine PJ_SC_report(W2_report)
+ complex(SP) :: W2_report
+ !
+ !  is(3)=(ib,ik,is,i_spin) --<--:--<-- os(3)=(ob,ok,os,o_spin)
+ !                               :
+ !                              /:\ W2_report
+ !                               :
+ !
+ ! 2 to go from Ha to Ry
+ !
+ write (101,'(2f20.10,6i3)')  en%E(isc%is(1),isc%is(2),1)-en%E(isc%os(1),isc%os(2),1),&
+&                             2.*real(W2_report),isc%is(1:3),isc%os(1:3)
+#endif
+
+ end subroutine
 
 ! -- GPL_START --
 

@@ -64,8 +64,10 @@
 ! S_x/Vxc are always need if not l_life or el. correlations is
 ! skipped
 !----------
+#if !defined PJ_SC
  if (.not.allocated(QP_Sx).and..not.allocated(QP_Vxc).and.l_el_corr.and.&
      .not.l_life) return
+#endif
 !
 ! Head message
 !--------------
@@ -166,6 +168,9 @@
 ! calculated on-fly 
 !
    if (QP_W_partially_done) return
+#if defined PJ_SC
+   return
+#endif
  endif
  if (trim(QP_solver)=='s') call QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
 

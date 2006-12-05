@@ -62,6 +62,9 @@
  use memory_m, ONLY:mem_est
  type(w_samp)::W
  W%n=100
+#if defined PJ_SC
+ W%n=1
+#endif
  W%per_memstps=100.
  W%er=(/0.,10./)/HARTREE
  W%dr=(/.1,.1/)/HARTREE

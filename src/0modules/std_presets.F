@@ -212,6 +212,9 @@
   QP_Sx_low_band=1
   QP_dSc_test=.false.
   QP_solver=' '
+#if defined PJ_SC
+  QP_solver='n'
+#endif
   QP_G_damp=0.1/HARTREE
   QP_dSc_delta=0.1/HARTREE
   QP_W_er=0.

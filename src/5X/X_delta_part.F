@@ -67,6 +67,17 @@
  integer    :: i1,i2,i3
  complex(SP):: Xt(X%ng,X%ng)
 !---------------------------------------------------------------------
+!
+#if defined PJ_SC
+ !
+ ! In the calculation for the staticall screened m.e. of W
+ ! the extraction of the delta_like part must be skipped
+ !
+ forall(i1=1:X%ng) X_mat(i1,i1,1)=X_mat(i1,i1,1)+1.
+ forall(i1=1:X%ng,i2=1:X%ng) X_mat(i1,i2,1)=X_mat(i1,i2,1)*Gamp(i1,i2)
+ return
+#endif
+!
  if (i_space_inv==1) then
    forall(i1=1:X%ng,i2=1:X%ng,i3=1:Xw%n(1)) &
 &        X_mat(i1,i2,i3)=aimag(X_mat(i1,i2,i3))*Gamp(i1,i2)

@@ -44,7 +44,7 @@
  integer :: mode
  real(SP):: test_Tel
 !ws
- integer :: i1,i2,is,ib,ik,trials(2),ires
+ integer :: i1,i2,is,ib,ik,trials(2),ires,n_b_full_guess
  integer :: index(E%nk*E%nb*n_sp_pol,3),index_s(E%nk*E%nb*n_sp_pol)
  real(SP):: E_s(E%nk*E%nb*n_sp_pol)
  real(SP):: lnel(2),Ef(2),Ffermi,Efdist,neltresh
@@ -77,8 +77,19 @@
 !
 ! real(nel)/2.0_SP*real(n_spinor) is last occupied state
 !
- Ef(1)=minval(E%E(nint( real(nel)/2.0_SP*real(n_spinor)+.1),:,:))
- Ef(2)=maxval(E%E(nint( real(nel)/2.0_SP*real(n_spinor)+.1),:,:))
+ n_b_full_guess= nint( real(nel)/2.0_SP*real(n_spinor)+.1)
+ !
+ Ef(1)=maxval(E%E(n_b_full_guess,:,:))
+ Ef(2)=minval(E%E(n_b_full_guess+1,:,:))
+ !
+ ! n_b_full_guess is metallic
+ ! 
+ if (Ef(2)<Ef(1)) then
+   Ef(1)=minval(E%E(n_b_full_guess,:,:))
+   Ef(2)=maxval(E%E(n_b_full_guess,:,:))
+   n_b_full_guess=0
+ endif
+
  call ef2nel(test_Tel,Ef(1),lnel(1))
  call ef2nel(test_Tel,Ef(2),lnel(2))
 !
@@ -161,7 +172,7 @@
  call fermi_msg(E,mode)
  if (E%nbf/=E%nbm) then
    call msg('r','Electrons - <f_met>        :',(/lnel(1)+nel,&
-&               sum(E%f(E%nbf+1:E%nbm,:,:))/real(K%nibz*spin_occ*(E%nbm-E%nbf))/))
+&               sum(E%f(E%nbf+1:E%nbm,:,:))/real(K%nibz*(E%nbm-E%nbf))/))
  endif
 !
  contains
@@ -173,15 +184,25 @@
    !ws
    integer  :: i1,ik,ib 
    real(SP) :: Ffermi 
-   real(DP):: nel_acc
+   real(DP) :: nel_acc
+   !
+   ! For some compilers (like PGI) the summed nel_acc
+   ! is different from nel even for insulators.
+   ! This problem is solved comparing nel_acc with nel_theo
+   ! simlarly summed. Note that nel_theo=nel for metals
+   !
+   real(DP) :: nel_theo
    nel_acc=0.d0
+   nel_theo=0.d0
    do i1=1,E%nk*E%nb*n_sp_pol
      ib=index( index_s(i1) , 1)
      ik=index( index_s(i1) , 2)
      is=index( index_s(i1) , 3)
+     if (ib<=n_b_full_guess) nel_theo=nel_theo+2._SP*K%weights(ik)
      nel_acc=nel_acc+spin_occ*Ffermi(E_s(i1)-Ef,tTel)*K%weights(ik)
    enddo
-   lnel=nel_acc-nel
+   if (n_b_full_guess==0) nel_theo=nel
+   lnel=nel_acc-nel_theo
    end subroutine
 
  end subroutine

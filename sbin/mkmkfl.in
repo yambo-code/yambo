@@ -170,16 +170,14 @@ endef
 #
 # Sources that do not want optimization
 #
-xerbla.o:
-	\$(f77) -c \$(f77uflags) xerbla.f
-slamch.o:
-	\$(f77) -c \$(f77uflags) slamch.f
-msg_a_s.o:
-	@rm -f \$*\$(f90suffix)
-	\$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)
-	\$(fc) -c \$(fcuflags) \$(linclude) \$*\$(f90suffix)
-	@rm -f \$*\$(f90suffix)
-msg_r_s.o:
+F77_NOOPT_SRC= xerbla.o slamch.o
+#
+\$(F77_NOOPT_SRC):
+	\$(f77) -c \$(f77uflags) \$*.f
+#
+FC_NOOPT_SRC= mod_parser_m.o 
+#
+\$(FC_NOOPT_SRC):
 	@rm -f \$*\$(f90suffix)
 	\$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)
 	\$(fc) -c \$(fcuflags) \$(linclude) \$*\$(f90suffix)

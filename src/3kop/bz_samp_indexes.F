@@ -74,7 +74,7 @@
  if (io_err==0) then
    call k_expand(q)
    call Q_report
-   call q_shadows()
+   call q_shadows(.false.)
    return
  endif
 !
@@ -105,7 +105,9 @@
 !
  Xk_grid_is_uniform=all(q_map/=0)
 !
+!----------------------------
  if (Xk_grid_is_uniform) then
+!----------------------------
    q%nbz=Xk%nbz
 !
 !  q_ptbz in iku for k_reduce
@@ -132,7 +134,7 @@
 !  to the q%ptbz obtaine trought q_expand
 !
    call k_expand(q)
-   call q_shadows()
+   call q_shadows(.false.)
    call k_ibz2bz(q,'a',.false.)
    nqbz=q%nbz
    nqibz=q%nibz
@@ -144,36 +146,26 @@
 !
    if (q%nbz/=Xk%nbz) then
      call msg('rsn','[K latt] Q BZ pts are /= from X grid BS pts. Gamma point only.')
-     deallocate(q%pt,q_pt)
-     allocate(q%pt(1,3),q_pt(1,3),q_norm(1),q_sstar(1,2)) 
-     q%pt=0.
-     q_pt=0.
-     q_norm=q0_defmod
-     q_sstar=1
-     nqbz=1
-     nqibz=1
-     q%nibz=1
-     q%nbz=1
-!DEBUG >
-! when imposing the G point with a uniform X grid I get
-! segmentation fault in the BSE. 
+     call q_shadows(.true.)
+     !
+     ! when imposing the G point with a uniform X grid I get
+     ! segmentation fault in the BSE. 
      Xk_grid_is_uniform=.false.
-!DEBUG <
+     !
      if (.not.Xk_grid_is_uniform) bse_scattering=.false.
      gamma_point_only=.true.
    else
      call define_q_map(q%ptbz(:,:),(/0._SP,0._SP,0._SP/))
    endif
+!-----
  else
+!-----
    call msg('nrsn','[K latt] X grid is not uniform.  Gamma point only.')
-   nqbz=1
-   nqibz=1
-   q%nibz=1
-   q%nbz=1
-   allocate(q%pt(1,3)) 
-   q%pt=0.
+   call q_shadows(.true.)
    gamma_point_only=.true.
+!------
  endif
+!------
 !
 ! Allocate
 !
@@ -330,20 +322,46 @@
    enddo
    end subroutine
 
-   subroutine q_shadows()
-!-------------------------
+   subroutine q_shadows(force_gamma_only)
+!----------------------------------------
    use vec_operate,    ONLY:iku_v_norm
+   logical                ::force_gamma_only
+   !
+   ! Gamma only, deallocate and reallocate 
+   ! using Gamma point only definition
+   !
+   if (force_gamma_only) then
+     if (allocated(q_pt)) deallocate(q_pt)
+     if (allocated(q_norm)) deallocate(q_norm)
+     if (allocated(q_sstar)) deallocate(q_sstar)
+     if (associated(q%pt)) nullify(q%pt)
+     call mem_est("q_pt q_norm q_sstar q-pt")
+     allocate(q%pt(1,3),q_pt(1,3),q_norm(1),q_sstar(1,2)) 
+     q%pt=0.
+     q_pt=0.
+     q_norm=q0_defmod
+     nqbz=1
+     nqibz=1
+     q%nibz=1
+     q%nbz=1
+     q_sstar=1
+     return
+   endif
    !
    ! q_pt & q_norm
    !
    if (.not.allocated(q_pt)) then
-     allocate(q_pt(q%nibz,3),q_norm(q%nibz))
+     allocate(q_pt(q%nibz,3))
      q_pt=q%pt
+     call mem_est("q_pt",(/q%nibz*3/),(/SP/))
+   endif
+   if (.not.allocated(q_norm)) then
+     allocate(q_norm(q%nibz))
      do i1=1,q%nibz
        q_norm(i1)=iku_v_norm(q_pt(i1,:))
      enddo
      q_norm(1)=q0_defmod
-     call mem_est("q_pt q_norm",(/q%nibz*3,q%nibz/),(/SP,SP/))
+     call mem_est("q_norm",(/q%nibz/),(/SP/))
    endif
    !
    ! sstar

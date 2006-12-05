@@ -22,7 +22,6 @@
  module parser_m
  
   use pars
- 
   interface parser
     module procedure lqparser,aqparser,i1qparser,iqparser,imqparser,&
 &                    r1qparser,rqparser,rmqparser,c1qparser

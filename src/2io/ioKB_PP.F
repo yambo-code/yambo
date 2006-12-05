@@ -61,13 +61,18 @@
    call io_elemental(ID,I0=pp_n_l_comp_max)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
 
-   if (read_is_on(ID).and..not.allocated(n_atoms)) then
+   if (read_is_on(ID)) then
 
-     allocate(n_atoms(n_atom_species),pp_n_l_comp(n_atom_species))
-     allocate(atom_pos(3,n_atoms_max,n_atom_species))
-     call mem_est("n_atoms pp_n_l_comp atom_pos",&
-&                 (/n_atom_species,n_atom_species,size(atom_pos)/),&
-&                 (/IP,IP,SP/))
+     if (.not.allocated(n_atoms)) then
+       allocate(n_atoms(n_atom_species))
+       allocate(atom_pos(3,n_atoms_max,n_atom_species))
+       call mem_est("n_atoms atom_pos",&
+&                   (/n_atom_species,size(atom_pos)/),(/IP,SP/))
+     endif
+     if (.not.allocated(pp_n_l_comp)) then
+       allocate(pp_n_l_comp(n_atom_species))
+       call mem_est("pp_n_l_comp",(/n_atom_species/),(/IP/))
+     endif
 
    endif
 

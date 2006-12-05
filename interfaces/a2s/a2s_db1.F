@@ -143,10 +143,12 @@
  n_atoms_max=maxval(n_atoms)
  allocate(atom_pos(3,n_atoms_max,n_atom_species),znucl(n_atom_species))
  n_atoms(:)=0
- znucl=1
  do i1=1,ahdr%natom
    n_atoms( ahdr%typat(i1) ) = n_atoms( ahdr%typat(i1) ) +1
    atom_pos(:, n_atoms( ahdr%typat(i1) ) ,ahdr%typat(i1) )=matmul(transpose(a),ahdr%xred(:,i1))
+ enddo
+ do i1=1,ahdr%npsp
+   znucl(i1) = ahdr%znuclpsp(i1)
  enddo
  call msg('l','done')
 !

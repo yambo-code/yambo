@@ -1,3 +1,19 @@
+2006-12-05 19:11:46 r62 Andrea Marini <marini@roma2.infn.it>
+
+	 V. 3.0.4_05-12-06
+
+	 ADDS (by Conor)
+	 - Added Nuclear charge and positions in DB1.
+	   (Note that some of the variables are read as well from the KB_PP
+	    db. This redundancy will be removed in the future)
+	 - Added perl script sbin/svn2cl.pl ro create automatically
+	   the ChangeLog using:
+	   > svn log | perl sbin/svn2cl.pl > ChangeLog
+
+2006-12-05 16:12:49 r61 Andrea Marini <marini@roma2.infn.it>
+
+	Added PJ_SC project: calculation of the statically screend m.e. of W_RPA (collaboration with A. Floris and A. Sanna)
+
 2006-12-05 12:34:09 r60 Andrea Marini <marini@roma2.infn.it>
 
 	 BUGS

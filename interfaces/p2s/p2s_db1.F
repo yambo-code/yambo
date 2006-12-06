@@ -26,7 +26,9 @@
  use electrons,             ONLY : levels, default_nel, n_spin, n_sp_pol, n_spinor
  use R_lattice,             ONLY : bz_samp, ng_vec, g_vec
  use D_lattice,             ONLY : nsym, i_time_rev, i_space_inv, dl_sop, &
-&                                  DL_vol, a, alat, default_Tel
+&                                  DL_vol, a, alat, default_Tel,          &
+&                                  n_atoms_max,n_atom_species,n_atoms,    &
+&                                  atom_pos, znucl
  use wave_func,             ONLY : wf_nc_k, wf_ncx, wf_igk,wf_ng
  use vec_operate,           ONLY : cross_product
  implicit none
@@ -36,7 +38,9 @@
 !ws
  real(SP)                       :: lsop(3,3), acopy(3,3),cp(3)
  real(SP)                       :: b(3,3)
- integer                        :: i1, ik, nspinpw 
+ integer                        :: i1, ik, nspinpw, i2
+ integer, allocatable           :: ityp_(:)
+ integer, external              :: atomic_number
  logical                        :: l_identity, l_inversion
  character(schlen)              :: lch
 
@@ -101,6 +105,42 @@
  b(2,:)=cross_product(acopy(:,3),acopy(:,1))*2.*pi/DL_vol
  b(3,:)=cross_product(acopy(:,1),acopy(:,2))*2.*pi/DL_vol
  call msg("l","done")
+
+!---------------------------------------------------------------------*
+!    Read atomic data                                                 *
+!---------------------------------------------------------------------*
+
+ call msg('s','Atomic data...')
+ call pw_atoms(pwunit)
+ n_atom_species = nspecies
+ allocate(ityp_(pwdim%natoms) )
+ do i1=1, pwdim%natoms
+   ityp_(i1) = -1
+   do i2=1,n_atom_species
+     if(trim(atom_type(i1))==trim(species_type(i2))) then
+       ityp_(i1) = i2
+     endif
+   enddo
+ enddo
+
+ allocate(n_atoms(n_atom_species))
+ n_atoms(:)=0
+ do i1 = 1, pwdim%natoms
+   n_atoms( ityp_(i1) ) = n_atoms( ityp_(i1) ) +1
+ enddo
+ n_atoms_max = maxval(n_atoms)
+ allocate(atom_pos(3,n_atoms_max,n_atom_species))
+ n_atoms(:)=0
+ do i1 = 1, pwdim%natoms
+   n_atoms( ityp_(i1) ) = n_atoms( ityp_(i1) ) +1
+   atom_pos(:, n_atoms( ityp_(i1) ) , ityp_(i1) ) = atom_positions(:,i1)*pwcell%alat
+ enddo
+
+ allocate(znucl(n_atom_species))
+ do i1 = 1, n_atom_species
+   znucl(i1) = atomic_number(species_type(i1))
+ enddo
+
 
 !---------------------------------------------------------------------*
 !    Read symmetries                                                  *

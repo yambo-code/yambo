@@ -43,6 +43,7 @@
  real(SP)                       :: lsop(3,3), acopy(3,3),cp(3)
  real(SP)                       :: b(3,3)
  integer                        :: i1, ik, ierr, isym(3,3,48), nspinpw
+ integer, external              :: atomic_number
  logical                        :: l_identity, l_inversion
  character(lchlen)              :: lch
  character(256)                 :: pw_dft
@@ -387,42 +388,6 @@
 
    return
  
- contains
- 
-  integer function atomic_number(atom_name)
-    implicit none
-    character(len=*), intent(in) :: atom_name
-    character(len=2)             :: elements(103)
-    integer                      :: i
-            
-    elements(1:2)=(/'H',                              'He'/)
-    elements(3:10)=(/'Li','Be','B','C','N','O','F','Ne'/)
-    elements(11:18)=(/'Na','Mg','Al','Si','P','S','Cl','Ar'/)
-    elements(19:25)=(/'K','Ca','Sc','Ti','V','Cr','Mn'/)
-    elements(26:30)=(/'Fe','Co','Ni','Cu','Zn'/)
-    elements(31:36)=(/'Ga','Ge','As','Se','Br','Kr'/)
-    elements(37:43)=(/'Rb','Sr','Y','Zr','Nb','Mo','Tc'/)
-    elements(44:48)=(/'Ru','Rh','Pd','Ag','Cd'/)
-    elements(49:54)=(/ 'In','Sn','Sb','Te','I','Xe'/)
-    elements(55:63)=(/'Cs','Ba','La','Ce','Pr','Nd','Pm','Sm','Eu'/)
-    elements(64:71)=(/'Gd','Tb','Dy','Ho','Er','Tm','Yb','Lu'/)
-    elements(72:76)=(/'Hf','Ta','W','Re','Os'/)
-    elements(77:80)=(/'Ir','Pt','Au','Hg'/)
-    elements(81:86)=(/'Tl','Pb','Bi','Po','At','Rn'/)
-    elements(87:94)=(/'Fr','Ra','Ac','Th','Pa','U','Np','Pu'/)
-    elements(95:103)=(/'Am','Cm','Bk','Cf','Es','Fm','Md','No', 'Lr'/)
-      
-    do i = 1, 103
-      if ( trim(atom_name) == trim(elements(i)) ) then
-        atomic_number = i
-        return
-      end if
-    end do
-    znucl = 0
-
-    return 
-  end function atomic_number
-
  end subroutine p2s_qexml_db1
 
  subroutine scan_xc(pw_dft, GS_xc_KIND_,GS_xc_FUNCTIONAL_)

@@ -42,7 +42,7 @@ module pw_interface
   integer, parameter, private:: nstrx = 300
 
   type iotk_dim
-     integer :: nbnd, nktot, nspin, ngvec, npwx, nsym
+     integer :: nbnd, nktot, nspin, ngvec, npwx, nsym, natoms
   end type iotk_dim
 
   type iotk_cell
@@ -63,6 +63,9 @@ module pw_interface
   complex(SP),allocatable :: pw_evec(:,:) ! check 
   integer,  allocatable   :: isym(:,:,:)
   real(SP)                :: nelec, pw_Tel
+  integer                 :: nspecies
+  real(SP),  allocatable   :: atom_positions(:,:)
+  character(len=2), allocatable   :: atom_type(:), species_type(:)
 
   type pw_string
      character(nstrx)          :: attr
@@ -140,6 +143,12 @@ contains
         if (ierr/=0) call errore('pw_dimensions','Unable to find Wfc_grid',ABS(ierr))
     call iotk_scan_attr(attr,'npwx',pwdim%npwx,ierr=ierr)
         if (ierr/=0) call errore('pw_dimensions','Unable to find npwx',ABS(ierr))
+
+    call iotk_scan_empty(pwunit,'Atoms',ATTR=attr,ierr=ierr)
+        if (ierr/=0) call errore('pw_dimensions','Unable to find Atoms',ABS(ierr))
+    call iotk_scan_attr(attr,'natoms',pwdim%natoms,ierr=ierr)
+        if (ierr/=0) call errore('pw_dimensions','Unable to find natoms',ABS(ierr))
+
     call iotk_scan_empty(pwunit,'Symmops',ATTR=attr,ierr=ierr)
         if (ierr/=0) call errore('pw_dimensions','Unable to find Symmops',ABS(ierr))
     call iotk_scan_attr(attr,'nsym',pwdim%nsym,ierr=ierr)
@@ -165,6 +174,47 @@ contains
         if (ierr/=0) call errore('pw_other','Unable to end tag Other_p',ABS(ierr))
     return
   end subroutine pw_other
+
+  subroutine pw_atoms(pwunit)
+    implicit none
+    integer :: ierr, natoms, iat
+    integer, intent(in) :: pwunit  
+    CHARACTER(nstrx)    :: attr    
+
+    call iotk_scan_begin(pwunit,'Atoms',IERR=ierr)
+        if (ierr/=0) call errore('pw_atoms','Unable to find tag Atoms',ABS(ierr))
+    call iotk_scan_empty(pwunit,'Data',ATTR=attr,IERR=ierr)
+        if (ierr/=0) call errore('pw_atoms','Unable to find Data',ABS(ierr))
+    call iotk_scan_attr(attr,'natoms',natoms,IERR=ierr)
+    call iotk_scan_attr(attr,'nspecies',nspecies,IERR=ierr)
+        if (ierr/=0) call errore('pw_atoms','Unable to find nspecies',ABS(ierr))
+
+    call iotk_scan_begin(pwunit,'Positions',IERR=ierr)
+    do iat = 1, natoms
+      call iotk_scan_empty(pwunit,'atom'//TRIM(iotk_index(iat)),ATTR=attr,IERR=ierr)
+      if (ierr/=0) call errore('pw_atoms','Unable to find atom'//TRIM(iotk_index(iat)),ABS(ierr))
+      call iotk_scan_attr(attr,'type',atom_type(iat),IERR=ierr)
+      if (ierr/=0) call errore('pw_atoms','Unable to find type',ABS(ierr))
+      call iotk_scan_attr(attr,'xyz',atom_positions(:,iat),IERR=ierr)
+      if (ierr/=0) call errore('pw_atoms','Unable to find xyz',ABS(ierr))
+    enddo
+    call iotk_scan_end(pwunit,'Positions',IERR=ierr)
+
+    call iotk_scan_begin(pwunit,'Types',IERR=ierr)
+    do iat = 1, nspecies
+      call iotk_scan_empty(pwunit,'specie'//TRIM(iotk_index(iat)),ATTR=attr,IERR=ierr)
+      if (ierr/=0) call errore('pw_atoms','Unable to find atom'//TRIM(iotk_index(iat)),ABS(ierr))
+      call iotk_scan_attr(attr,'type',species_type(iat),IERR=ierr)
+      if (ierr/=0) call errore('pw_atoms','Unable to find type',ABS(ierr))
+    enddo
+    call iotk_scan_end(pwunit,'Types',IERR=ierr)
+
+    call iotk_scan_end(pwunit,'Atoms',IERR=ierr)
+        if (ierr/=0) call errore('pw_cell','Unable to end tag Cell',ABS(ierr))
+ 
+    return
+  end subroutine pw_atoms
+
 
   subroutine pw_cell(pwunit)
     implicit none
@@ -304,6 +354,9 @@ contains
     allocate(pw_igk  ( pwdim%npwx, pwdim%nktot ),stat=ierr) 
     allocate(pw_npwk ( pwdim%nktot ),stat=ierr)
     allocate(isym    ( 3, 3, pwdim%nsym),stat=ierr)
+    allocate(atom_positions  ( 3, pwdim%natoms), stat=ierr)
+    allocate(atom_type  ( pwdim%natoms), stat=ierr)
+    allocate(species_type  ( pwdim%natoms), stat=ierr)
 
 !   allocate(pw_igk  ( pwdim%ngvec,pwdim%nktot ),stat=ierr) 
     return 

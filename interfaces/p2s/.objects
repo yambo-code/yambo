@@ -1,2 +1,2 @@
 objs = pwinput.o qexml.o qexml_data.o \
-       p2s_qexml_db1.o p2s_qexml_wf.o p2s_db1.o p2s_wf.o p2s_i.o
+       p2s_qexml_db1.o p2s_qexml_wf.o p2s_db1.o p2s_wf.o p2s_i.o atomic_number.o

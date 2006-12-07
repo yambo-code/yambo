@@ -1,3 +1,16 @@
+2006-12-06 13:50:30 r64 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	V 3.0.4_05-12-06
+
+	* p2s/p2s_qexml_db1.F  p2s/.objects p2s/atomic_number.F p2s/pwinput.F p2s/p2s_db1.F
+
+	Adds
+	- Atomic data to p2s direct method (pw_export)
+
+2006-12-05 19:27:11 r63 Andrea Marini <marini@roma2.infn.it>
+
+	Fixed KB_PP allocation when n_atom is read from DB1. Added z_nucl to a2s
+
 2006-12-05 19:11:46 r62 Andrea Marini <marini@roma2.infn.it>
 
 	 V. 3.0.4_05-12-06

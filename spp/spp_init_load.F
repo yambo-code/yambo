@@ -57,22 +57,11 @@
 ! 
 ! p_format: controlla il formato dell'ouptut (g)nuplot/(x)crysden,
 ! il plot 1d viene comunque fatto per gnuplot e il 3d per xcrysden
-! 
-! znucl:    qui si danno le cariche nucleari dei diversi tipi di atomi,
-! non ne ho trovato traccia nei database, se ci sono fammi sapere.
-! 
-! Ntypat:  non e' il numero di atomi, ma il tipo di specie diverse. 
-! Questa informazione c'e' nel database, l'ho introdotta in quanto 
-! mi seriva per dimensionare il vettore znucl. Questa parte va migliorata:
-! potrei togliere ntypat come variabile di input e dimensionare
-! dinamicamente znucl. Poi allocare dopo aver letto quanti tipi ci 
-! sono dal database, allocare znucl e leggere il vettore dall'input.
 !
  call it(defs,'Dimension', 'Dimension of the plot [3, integrated /1/2]',p_dim)
  call it(defs,'Format', 'Format of the output[(g)nuplot/(x)crysden]',p_format)
  call it(defs,'Direction', '[x/y/z] for 1d or [xy/xz/yz] for 2d',p_dir)
- call it(defs,'Ntypat', 'Number of different type atoms',ntypat)
- call it(defs,'Znucl', 'Atomic charge for different atoms (WARNING: now only 2 types)',znucl)
+
 !
 !EL-PH
  call it(defs,'DBsPATH', 'Path to the PW el-ph databases',elph_dbs_path)

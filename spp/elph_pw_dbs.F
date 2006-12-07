@@ -33,7 +33,7 @@
  implicit none
  type(bz_samp) ::k,q
 !
-!ws ELPH_GPL_END
+!ws GPL_END
  type(pp_indexes)   ::px
  integer,allocatable::ikbz_is_table(:,:)
  integer            ::iq,io_pw_err(nqibz),io_elph_err,ID
@@ -340,7 +340,7 @@
 
   end subroutine
 !
-! ELPH_GPL_START
+! GPL_START
 !
  end subroutine
 

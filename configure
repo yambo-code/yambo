@@ -11461,12 +11461,13 @@ if test "${with_netcdf+set}" = set; then
 else
   NC_PREFIX="/usr/local/"
 fi;
+
 netcdf="no"
 dnetcdf=""
 NCLIBS=""
 echo "$as_me:$LINENO: checking whether the NetCDF library is installed" >&5
 echo $ECHO_N "checking whether the NetCDF library is installed... $ECHO_C" >&6
-if ! test -z "$NC_PREFIX"; then
+if ! test -z "$NC_PREFIX" && ! test "$with_netcdf" = "no"; then
  ac_ext=${ac_fc_srcext-f}
 ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
 ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'

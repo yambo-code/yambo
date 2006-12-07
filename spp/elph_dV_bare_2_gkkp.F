@@ -32,7 +32,7 @@
  type(bz_samp) :: k
  integer       :: iq
 !
-!Work Space
+!Work Space GPL_END
  integer     :: ik,iko,iko_bz,il,ig,ib1,ib2,ifft1,ifft2,ir,iso,ic
  integer(8)  :: fw_plan,bw_plan
 #if defined _DOUBLE
@@ -156,6 +156,8 @@
  if (iq==3) stop
 
  deallocate(dV_bare_r,aux1,aux2,aux3)
+
+! GPL_START
 
  end subroutine
 

@@ -198,7 +198,7 @@
      ib=index( index_s(i1) , 1)
      ik=index( index_s(i1) , 2)
      is=index( index_s(i1) , 3)
-     if (ib<=n_b_full_guess) nel_theo=nel_theo+2._SP*K%weights(ik)
+     if (ib<=n_b_full_guess) nel_theo=nel_theo+spin_occ*K%weights(ik)
      nel_acc=nel_acc+spin_occ*Ffermi(E_s(i1)-Ef,tTel)*K%weights(ik)
    enddo
    if (n_b_full_guess==0) nel_theo=nel

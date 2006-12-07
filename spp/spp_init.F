@@ -57,8 +57,7 @@
    p_format = 'g'
    max_energy = 1.
    p_dim = 3
-   ntypat = 2
-   znucl = (/1,6/)
+
 !
 !ELPH
    elph_steps=200
@@ -116,7 +115,7 @@
  if (lkanalyze) call initactivate(1,"KcooIn KcooOut GWKpts KGrdShft")
  if (lbzrim) call initactivate(1,"BZ_RIM_path Srch_G_sh BZ_RIM_Nk KcooOut")
  if (lexcwf) call initactivate(1,"Action Max_Energy Order State Window Cells &
-&                              Hole Dimension Direction Format Ntypat Znucl")
+&                              Hole Dimension Direction Format")
  if (lelph) call initactivate(1,"DBsPATH EEfermi EfGbroad EfEbroad EliStps EliEmax")
 !
  if (infile_editing) then

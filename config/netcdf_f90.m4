@@ -6,11 +6,12 @@ AC_DEFUN([KH_PATH_NETCDF_F90],[
 AC_ARG_WITH(netcdf,AC_HELP_STRING([--with-netcdf=<path>],
                                   [Path of the NetCDF installation directory]),
   [NC_PREFIX="$withval"], [NC_PREFIX="/usr/local/"] )
+
 netcdf="no"
 dnetcdf=""
 NCLIBS=""
 AC_MSG_CHECKING([whether the NetCDF library is installed])
-if ! test -z "$NC_PREFIX"; then
+if ! test -z "$NC_PREFIX" && ! test "$with_netcdf" = "no"; then
  AC_LANG([Fortran])
  save_fcflags="$FCFLAGS"
  for flag in "-I" "-M" "-p"; do

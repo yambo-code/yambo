@@ -27,7 +27,7 @@
  use wave_func,   ONLY : wf_load,wf_state,wf_ng,wf,WF_free
  use R_lattice,   ONLY : nXkibz,bz_samp
  use SPP,         ONLY : action_mode,ncell,lambda,window,r_hole,sort_mode,&
- &                      max_energy,p_format,p_dim,p_dir,ntypat,znucl
+ &                      max_energy,p_format,p_dim,p_dir
  use IO_m,        ONLY : io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
  use BS,          ONLY : BS_K_dim,BS_bands,BS_q,BSS_n_descs,BSS_description,&
 &                       BS_eh_table,BS_mat
@@ -42,7 +42,7 @@
  type(bz_samp) ::k,Xk,q
  
 !
-!parameters
+!parameters GPL_END
 !-----------
  real(SP), parameter    :: bohr=0.52917721
  complex,  parameter    :: cI=(0.,1.)
@@ -68,7 +68,7 @@
 ! I/0
 !------
  integer           ::io_err,ID
- integer, external ::ioBS_diago,ioBS,ioKB_PP
+ integer, external ::ioBS_diago,ioBS
 
 !
 !Energies and Residulas
@@ -88,16 +88,9 @@
  complex,  allocatable ::wf_eh(:)
  real(SP), allocatable ::wf2d(:,:)
 !
-! debug
 !-------------
  integer io_ID
-!
-!TO DO:
-!-------------------------------------------
-!Read informations for the database:
-! 1) Allocazione dinamica dall'input di znucl(ntypat) per 
-!    ora e' statica ed e' posta uguale a due. I need ntypat 
-!    in input just for dimensioning znucl
+
 !
 !--------Here I read information from the BS database
 !
@@ -150,9 +143,6 @@
 !=============================================
 ! 
  call wf_load(wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
-!
-!Ricordati di deallocare le WF se necessario!
-!Ricordati di deallocare le fft_rot_r se necessario!
 !
 
 !=============================================
@@ -429,7 +419,7 @@
 !titles
 !  
  if (p_dim==1) then
-  allocate (title(2),od(2)) !ricordati di deallocare)
+  allocate (title(2),od(2))
 ! 
   if (p_dir=='x') then
    allocate (wf1d(nr1)) 
@@ -539,7 +529,7 @@
 ! 
 
   if (p_format=='g') then
-   allocate (title(3),od(3)) !ricordati di deallocare)
+   allocate (title(3),od(3)) 
    if (p_dir=='xy') then 
     extension='o -xy'
     title(1)  ='a1 proj [A]'
@@ -670,6 +660,7 @@
 !  
  endif !if on p_dim
 !
+
  call live_timing 
  end subroutine
 
@@ -677,7 +668,7 @@
 !-----------------------------
  use pars,        ONLY : lchlen
  use com,         ONLY : code_version 
- use D_lattice,   ONLY : n_atom_species,n_atoms,atom_pos
+ use D_lattice,   ONLY : n_atom_species,n_atoms,atom_pos,znucl
  implicit none
 !
 !outputs
@@ -701,6 +692,11 @@
  real(SP)              :: wf_max = 0.
 !
  
+
+! TO DO
+! This subroutine has not yet been well tested 
+! on non-cubic cell
+
 !
 !the atomic cell is given in a.u. and I want
 !to write the output of xcrysden in \AA
@@ -730,23 +726,13 @@
  write(file_name,'(a,i2.2,a)') 'exc_wf',lambda,trim(extension)
  extension='o .xsf'
  call of_open_close(file_name,'ot')
-!
-!Here I read the atomic position
-!
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=ioKB_PP(ID)
-
-  if (ntypat < n_atom_species) call error&
-&                ('ntypat not compatible with the system')
-  if (ntypat > 2) call error&
-&                ('Self in this momens supports ntype=2, change &
-&                  parameter in spp_init.F ')
+ 
    
   n_atoms_tot=0
   do ntype=1,n_atom_species
-   n_atoms_tot=n_atoms_tot+n_atoms(ntype)
+   n_atoms_tot=n_atoms_tot+n_atoms(n_atom_species)
   enddo
-
+ 
 
 !
 ! WRITING ...
@@ -778,8 +764,8 @@
   enddo
  enddo
 
-!deallocation --> allocated in ioKB_PP.F
- deallocate(n_atoms,atom_pos)
+!deallocation --> allocated in ioDB1
+ deallocate(n_atoms,atom_pos,znucl)
 !
 !grids
 !
@@ -878,6 +864,6 @@
  
  end subroutine
 
-!==================================
+!================================== GPL_START
 !
   end subroutine

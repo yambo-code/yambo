@@ -36,7 +36,7 @@
  type(levels) ::en
  type(bz_samp)::k,q
 !
-!ws ELPH_GPL_END
+!ws GPL_END
  integer           ::i1,i2,im,iq
  real(SP)          ::dFfermi,dos_ef,gamma(nqibz,ph_modes),&
 &                    aF(elph_steps),aF_energy(elph_steps),omega,estep
@@ -178,7 +178,7 @@
 
   end subroutine
 !
-! ELPH_GPL_START
+! GPL_START
 !
  end subroutine
 !

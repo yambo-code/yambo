@@ -93,6 +93,7 @@
  wf_total_states=WF_alloc()
  if (wf_space=='R') allocate(wf_DP(fft_size))
  if (wf_space=='G') allocate(wf_DP(wf_ng))
+ if (wf_space=='C') allocate(wf_DP(wf_ncx))
 
  wf_title=string_pack('[FFT',trim(wf_title),'] Mesh size:')
  if (wf_space=='R') call msg('rns',trim(wf_title),fft_dim)
@@ -123,9 +124,10 @@
          if (ig>wf_ng) cycle
          igfft=ig
          if (wf_space=='R') igfft=fft_g_table(ig,1)
+         if (wf_space=='C') igfft=ic
          wf_DP(igfft)=cmplx(wf_disk(1,i2,ic,is),wf_disk(2,i2,ic,is),DP)
        enddo
-       if (wf_space=='G') then
+       if (wf_space=='G'.or.wf_space=='C') then
          wf(:,wf_total_states)=wf_DP(:)
          call live_timing(steps=1)
          cycle
@@ -152,7 +154,6 @@
  if (.not.wf_norm_test) return
 !
 ! Check normalization @ 1st k-point only.
-! 
 !
  mndp=10.
  mxdp=-1.

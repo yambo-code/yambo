@@ -81,7 +81,6 @@
   call msg('r','Infinite cylinder: Length set to 1/dq [au]:',cyl_cut)
  endif
 
- 
  cyl_cut2 = cyl_cut**2
  cyl_ph_radius2  = cyl_ph_radius**2
 
@@ -135,8 +134,8 @@
 !    
     limit=2
     lenw=limit*4
-    epsabs=1e-2
-    key=3
+    epsabs=8e-1
+    key=4
     allocate (iwork(limit),work(lenw))
     do ig=1,wf_ng
       do iq=1,q%nibz
@@ -237,9 +236,18 @@
  use pars,          ONLY:SP
  use R_lattice,     ONLY:cyl_ph_radius
  real(SP) x,y,arg1,arg2,BESJ0,BESJ1,BESK0,BESK1
+ real(SP) bk0,bk1
  arg1=x*cyl_ph_radius
  arg2=y*cyl_ph_radius
- F6=arg1*BESJ1(arg1)*BESK0(arg2)-arg2*BESJ0(arg1)*BESK1(arg2)
+
+ if (arg2 > 80) then
+   bk0=0.
+   bk1=0.
+ else
+   bk0=BESK0(arg2)
+   bk1=BESK1(arg2)
+ endif
+ F6=arg1*BESJ1(arg1)*bk0-arg2*BESJ0(arg1)*bk1
  F6=F6+1
  end function F6
 

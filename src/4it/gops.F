@@ -21,6 +21,11 @@
 !
  subroutine gops()
 !=================
+!
+! Output: g_rot(nsym,ng_closed)
+!
+! R_is G_ig = G_{g_rot(is,ig)}
+!
  use pars,         ONLY:SP,IP
  use timing,       ONLY:live_timing
  use memory_m,     ONLY:mem_est

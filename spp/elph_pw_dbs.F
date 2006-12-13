@@ -100,28 +100,28 @@
 !
 ! s.dbph_ structure
 !
-!   write (99) nmodes,nk_2_write,self_lowb,self_highb,.false.
-!   write (99) alat,xq,xk(:,:nk_2_write)
-!   write (99) w2(:)
-!   write (99) dV_bare(:,:)
+!   read (99) nmodes,nk_2_write,self_lowb,self_highb
+!   read (99) alat,xq,xk(:,:nk_2_write)
+!   read (99) w2(:)
 !   DO ik=1,nksq
-!     write (99) ikq,ikk
-!     write(99) self_gkkp(:,:,:)
+!     read (99) ikq,ikk
+!     read (99) dV_bare_disk(:,:,:)  (wf_ng,self_highb,nmodes)
+!     read (99) elph_dV_disk(:,:,:)  (self_highb,self_highb,nmodes)
 !   ENDDO
 !
   use pars,           ONLY:SP,DP,schlen
   use D_lattice,      ONLY:nsym,sop_inv,alat
-  use R_lattice,      ONLY:ng_vec
   use IO_m,           ONLY:io_control,OP_RD,RD_CL,io_connect,io_unit,&
 &                          io_netcdf_support,io_disconnect,io_file
   use ELPH,           ONLY:ph_modes,elph_bands,elph_alloc,elph_dV,&
-&                          ph_freqs_sq,dV_bare
+&                          ph_freqs_sq,elph_dV_bare
   use SPP,            ONLY:elph_dbs_path
   use vec_operate,    ONLY:v_is_zero,rlu_v_is_zero,c2a
+  use wave_func,      ONLY:wf_ng
   implicit none
   integer           :: iq
 !ws
-  integer           :: pw_nk,ib1,ib2
+  integer           :: pw_nk,ib1,ib2,ig
   real(SP)          :: r_v(3)
 !I/O
   integer           :: ID,io_err
@@ -129,7 +129,7 @@
   real(SP)          :: dVRY2Ha
   real(DP)          :: pw_k(3,2*k%nbz),pw_alat,pw_q(3)
   real(DP),    allocatable :: ph_freqs_sq_disk(:)
-  complex(DP), allocatable :: elph_dV_disk(:,:,:),dV_bare_disk(:,:)
+  complex(DP), allocatable :: elph_dV_disk(:,:,:),dV_bare_disk(:,:,:)
 ! K Table
   integer           :: i1,ik,k_found(k%nbz),k2k_tab(2*k%nbz),nk_dV,ikkp(2),&
 &                      ikkp_s,ikbz_rot
@@ -166,6 +166,7 @@
 ! Allocation
 !----
   if (iq==1) call elph_alloc()
+  elph_dV_bare=(0._DP,0._DP)
   elph_dV=(0._DP,0._DP)
   allocate(ph_freqs_sq_disk(ph_modes))
 !
@@ -173,12 +174,6 @@
 !-------------------------------------------------------------------------
   read (io_unit(ID)) ph_freqs_sq_disk
   ph_freqs_sq(iq,:)=abs(ph_freqs_sq_disk)/4._DP
-!
-! dV bare
-!-------------------------------------------------------------------------
-  allocate(dV_bare_disk(ng_vec,ph_modes))
-  read (io_unit(ID)) dV_bare_disk
-  dV_bare(iq,:,:)=dV_bare_disk(:,:)
 !
 ! Espresso <-> SELF k table correspondance
 !------------------------------------------
@@ -204,10 +199,11 @@
     endif
   enddo
 ! 
-! ELPH_dV
-!=========
+! ELPH_dV & dV_bare
+!===================
 !
   allocate(elph_dV_disk(elph_bands(2),elph_bands(2),ph_modes))
+  allocate(dV_bare_disk(wf_ng,elph_bands(2),ph_modes))
   nk_dV=pw_nk
   k_found=0
   if (.not.v_is_zero(real(pw_q(:),SP))) nk_dV=pw_nk/2
@@ -223,7 +219,9 @@
 !                           |                                 |
 !                           ikkp(1)/ikkp_s                    ikkp(2)
 !
+    read (io_unit(ID)) dV_bare_disk
     read (io_unit(ID)) elph_dV_disk
+    !
     do ib1=elph_bands(1),elph_bands(2)
       do ib2=elph_bands(1),elph_bands(2)
 !
@@ -244,14 +242,26 @@
 !
         elph_dV(ikkp_s,:,ib1-elph_bands(1)+1,ib2-elph_bands(1)+1)=&
 &              elph_dV_disk(ib1,ib2,:)*dVRY2Ha
+        !
+      enddo !ib2
+!
+      do ig=1,wf_ng     
+        elph_dV_bare(ig,ikkp_s,ib1-elph_bands(1)+1,:)=dV_bare_disk(ig,ib1,:)*dVRY2Ha
       enddo
+      !
     enddo
   enddo
 !
 !  The pw_k K-grid is reduced using the small group of q. 
 !  I need to expand the K-grid to define the missing elements of elph_dV
 !-----------------------------------------------------------------------
+  !
+  ! The small group of q
+  ! 
   call q_small(real(pw_q,SP),small,nsmall)
+  !
+!  call elph_dV_bare_2_gkkp(k,iq,k_found)
+  !
   do ik=1,k%nbz
     if (k_found(ik)==0) cycle
     do i1=1,nsmall
@@ -261,10 +271,6 @@
       k_found(ikbz_rot)=-1
     enddo
   enddo
-!
-! DEBUG >
-  call elph_dV_bare_2_gkkp(k,iq)
-! DEBUG <
 !
   if (any((/k_found==0/))) then
     elph_pw_dbs_io=-3

@@ -22,9 +22,11 @@
  subroutine scatterGamp(isc,mode)
 !================================
 !
-!mode is 'x'/'c'. When 'c' isc%gamp(1,1) refers
-!to the qpg_anisotropy (if db.qpgint exists!)
-!Wen mode=='x' the standard Coulomb integral is used.
+! isc%gamp(G,G') = \int_p (region around q) 1/|p+G|/|p+G'|/(2*pi)**3
+!
+! When mode=='x' the standard Coulomb integral is used. When mode='c' the 
+! isc%gamp are used multiplied by eps^-1 so, if present, the anisotropy
+! is incuded.
 !
  use pars,          ONLY:SP,pi
  use drivers,       ONLY:l_col_cut
@@ -34,51 +36,96 @@
  implicit none
  type(ggwinfo)::isc
  character(1) ::mode
-!ws
+!
+!Working Space
+!
  integer :: ng(2),ig1,ig2,iq,ig
- logical :: lRIM
- real(SP):: aqpg,Co
+ logical :: l_RIM
+ real(SP):: reg_q_m2,q_weight,R_sphere
 !
- Co=d3q_factor/(2.*pi)**3. ! = 1./(DL_vol*q%nbz)
-!--------------------------------------------------------------------
-!Note that <1/q^2> = CONSTANT (Omega_RL/NQBZ)^-2/3 
-!                  = CONSTANT d3q_factor^-2/3
-!where
-!CONSTAN = 7.7956 (spherical region)
-!CONSTAN = 7.44   ("Godby" region)
+! q_weight = 1./(DL_vol*q%nbz)
 !
-!Now |q+G| = 1./sqrt(CONSTANT) d3q_factor^1/3
-!----------------------------------------------------------------
- aqpg=1./sqrt(7.44)*d3q_factor**(1./3.)
-!----------------------------------------------------------------
+ q_weight=d3q_factor/(2.*pi)**3. 
+!
+! Note that
+!
+! \int_q (region) 1/q^2 /(2*pi)**3 = CONSTANT / (2 pi)**3 (Omega_RL/NQBZ)^1/3 
+!                                  = CONSTANT / (2 pi)**3 d3q_factor^1/3
+! where
+!
+! CONSTANT = 7.7956 (spherical region)
+! CONSTANT = 7.44   ("Godby" region)
+!
+! reg_q_m2 = \int_q (region) 1/q^2 /(2*pi)**3
+!
+ reg_q_m2=7.44/(2.*pi)**3.*d3q_factor**(1./3.)
+!
+! In the case of a spherical region the radius is
+!
+ R_sphere=(3./4./pi)**(1./3.)*d3q_factor**(1./3.)
+!
  iq=isc%qs(2)
  isc%iqref=iq
+!
+! RIM support ?
+!
  if (.not.allocated(RIM_qpg)) then
    RIM_ng=0
    RIM_n_rand_pts=0
+ else
+   reg_q_m2=RIM_qpg(iq,1,1)/2.
  endif
+!
  ng=shape(isc%gamp)
+!
  do ig=1,ng(1)
    do ig2=1,ng(2)
      ig1=ig
      if (ng(1)==1) ig1=ig2
-     lRIM=all((/ig1<=RIM_ng,ig2<=RIM_ng/))
-     if (RIM_is_diagonal.and.lRIM) lRIM=(ig1==ig2)
-     if (lRIM) isc%gamp(ig,ig2)=RIM_qpg(iq,ig1,ig2)/2.
-     if (.not.lRIM) then 
-       isc%gamp(ig,ig2)=Co/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
-!
-! When using the CUTOFF the (1,1) component of the Col potential
-! is already regolarized.
-!
-       if (.not.l_col_cut) then
-         if (iq==1.and.ig1==1) isc%gamp(ig,ig2)=isc%gamp(ig,ig2)*bare_qpg(iq,ig1)/aqpg
-         if (iq==1.and.ig2==1) isc%gamp(ig,ig2)=isc%gamp(ig,ig2)*bare_qpg(iq,ig2)/aqpg
-       endif
+     !
+     ! RIM support (Both components)
+     !
+     l_RIM=all((/ig1<=RIM_ng,ig2<=RIM_ng/))
+     if (RIM_is_diagonal.and.l_RIM) l_RIM=(ig1==ig2)
+     !
+     if (l_RIM) then
+       isc%gamp(ig,ig2)=RIM_qpg(iq,ig1,ig2)/2.
+       cycle
+     else
+       isc%gamp(ig,ig2)=q_weight/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
      endif
+     !
+     ! Head and wings point special treatment (with no RIM only Gamma is possible)
+     !
+     if ( (RIM_ng==0.and.iq>1) ) cycle
+     !
+     ! When using the CUTOFF all the components of the Col potential is already regolarized.
+     !
+     if (l_col_cut) cycle
+     !
+     ! Wings (0,G) & (G,0) components using the Sphere approx for the region around Gamma:
+     !
+     ! \int_q (region) 1/q /(2*pi)**3 = R_sphere/2. * reg_q_m2
+     !
+     if (ig1==1) then
+       if (ig2>RIM_ng.or.(RIM_is_diagonal.and.ig2>1)) isc%gamp(ig,ig2)=R_sphere/2.*reg_q_m2/bare_qpg(iq,ig2) 
+     endif
+     if (ig2==1) then
+       if (ig1>RIM_ng.or.(RIM_is_diagonal.and.ig1>1)) isc%gamp(ig,ig2)=R_sphere/2.*reg_q_m2/bare_qpg(iq,ig1) 
+     endif
+     !
+     ! head component.
+     !
+     if (ig1==1.and.ig2==1) then
+       isc%gamp(ig,ig2)=reg_q_m2
+       !
+       ! Anisotropy correction 
+       !
+       if (all((/RIM_ng>0,mode=='c',RIM_anisotropy/=0/))) isc%gamp(1,1)=RIM_anisotropy/2.
+     endif
+     !
    enddo
  enddo
 !
- if (all((/RIM_ng>0,mode=='c',iq==1,RIM_anisotropy/=0/))) isc%gamp(1,1)=RIM_anisotropy/2.
  end subroutine
 !

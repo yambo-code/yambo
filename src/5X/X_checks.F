@@ -23,7 +23,7 @@
 !==========================
  use X_m,           ONLY:X_t,use_X_RIM
  use electrons,     ONLY:levels,BZ_RIM_nbands
- use drivers,       ONLY:l_bs_fxc
+ use drivers,       ONLY:l_bs_fxc,l_col_cut
  use R_lattice,     ONLY:bz_samp,nqibz
  use TDDFT,         ONLY:FXC_n_g_corr
  implicit none
@@ -56,5 +56,13 @@
 ! Fxc Checks
 !
  if (FXC_n_g_corr>X%ng) FXC_n_g_corr=X%ng
+!
+! In case the columbian is cutoffed a resonant/antiresonant 
+! only calculation is meaningless because of the dependence 
+! of the alpha from X
+!
+ if (l_col_cut) then
+   if ( trim(X%ordering) == 'a' .or. trim(X%ordering) == 'r' )  X%ordering='t'
+ endif
 !
  end subroutine

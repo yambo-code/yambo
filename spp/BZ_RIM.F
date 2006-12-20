@@ -22,14 +22,14 @@
  subroutine BZ_RIM(Xk,Xen)
 !=========================
  use pars,                ONLY:SP,DP,lchlen
- use R_lattice,           ONLY:bz_samp,bz_samp_reset,g_vec,nkibz,k_grid_b,&
+ use R_lattice,           ONLY:bz_samp,g_vec,nkibz,k_grid_b,&
 &                              ng_in_shell,g_vec,n_g_shells
  use wave_func,           ONLY: wf_nc_k,wf_igk
- use D_lattice,           ONLY:dl_sop,alat,nsym,default_Tel,a
- use com,                 ONLY:msg,inpath,error
+ use D_lattice,           ONLY:alat,nsym,default_Tel,a
+ use com,                 ONLY:msg,error
  use vec_operate,         ONLY:c2a,ak2bz,v_is_zero,iku_v_norm
  use SPP,                 ONLY:BZ_RIM_nkpts,Kcoo_out,BZ_RIM_path,RIM_G_shells
- use electrons,           ONLY:levels,E_reset,default_nel,n_bands,&
+ use electrons,           ONLY:levels,default_nel,n_bands,&
 &                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
 &                              BZ_RIM_tot_nkpts,n_spin,BZ_RIM_max_filling
  use timing,              ONLY:live_timing_is_on
@@ -45,7 +45,6 @@
  integer,  parameter   :: iseed(4) = (/11,123,44,1546/)
  real(DP)  :: rr
  real(DP),external  :: dlaran
- character(lchlen)  :: inpath_save
  logical            :: add_X_grid
 !
 !BZ DB1 I/O
@@ -53,30 +52,16 @@
  type(levels)      :: BZ_E
  type(bz_samp)     :: BZ_k
  integer           :: ID,i_err
- integer, external :: ioDB1,ioE_RIM
+ integer, external :: ioDB1_reload,ioE_RIM
 !----------------------------------------------------------------
-! Here I want to read the BZ_RIM_path/SAVE/s.db1 to load
-! the %E_RIM and RIM k-points.
-! To do this I need to deallocate a few arrays
-!
- deallocate(g_vec,dl_sop,wf_nc_k,wf_igk)
-!
- inpath_save=inpath
- inpath=BZ_RIM_path
-
- call bz_samp_reset(BZ_k)
- call E_reset(BZ_E)
-!
 ! Saves 2 check
 !---------------
  a_save=a
  alat_save=alat
 !
-! DB1
-!=====
- call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
- i_err=ioDB1(BZ_E,BZ_k,ID)
- inpath=inpath_save
+! DB1 reloading
+!==============
+ i_err=ioDB1_reload(BZ_E,BZ_k, trim(BZ_RIM_path) )
 !
 ! DB1 checks
 !------------

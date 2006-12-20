@@ -23,7 +23,7 @@
 !====================================
  use pars,         ONLY:SP,pi,IP
  use memory_m,     ONLY:mem_est
- use drivers,      ONLY:l_bs_fxc
+ use drivers,      ONLY:l_bs_fxc,l_col_cut
  use frequency,    ONLY:w_samp
  use electrons,    ONLY:levels
  use FFT_m,        ONLY:fft_size
@@ -31,7 +31,7 @@
  use functions,    ONLY:K_scatter
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv
  use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,qindx_X,bz_samp,RIM_qpg,&
-&                       RIM_anisotropy,ik_is_table,nXkibz
+&                       RIM_anisotropy,ik_is_table,nXkibz,bare_qpg
  use par_proc_m,   ONLY:pp_redux_wait,myid,ncpu
  use com,          ONLY:msg,warning
  use timing,       ONLY:live_timing,nhash
@@ -250,6 +250,7 @@
 !
    if (allocated(RIM_qpg)) BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2.-RIM_anisotropy/2.
 !
+
    deallocate(isc%gamp)
    call X_alloc('X')
    Xw%n=1
@@ -340,7 +341,7 @@
  call pp_redux_wait
  do ik2=1,BS_columns
    ikk2=sum(BS_blk_dim(:ik2-1))
-   if (load_O_X) call K_exchange(.true.,iq,ik2,Xk,O2x,O_x_dim) 
+   if (load_O_X) call K_exchange(.not.l_col_cut,iq,ik2,Xk,O2x,O_x_dim) 
    do ik1=ik2,1,-1
 !
      if (any((/ik2<BS_blk_coord(2),ik2==BS_blk_coord(2).and.ik1>BS_blk_coord(1)/))) cycle
@@ -352,9 +353,21 @@
 
      if (BS_res_K_corr) call K_scattering(iq,ik1,ik2,Xk,q)  
 
-     if (load_O_X.and.ik1/=ik2) call K_exchange(.true.,iq,ik1,Xk,O1x,O_x_dim)  
+     if (load_O_X.and.ik1/=ik2) call K_exchange(.not.l_col_cut,iq,ik1,Xk,O1x,O_x_dim)  
      if (load_O_X.and.ik1==ik2) O1x=O2x
-
+     !
+     ! When a cutoffed coulomb interaction is used bare_qpg(:,:) elements
+     ! may be complex. In this case I cannot multiply both O1x and O2x by
+     ! 1./bare_qpg as O2x is conjugated in the cdotc call.
+     !
+     if(l_col_cut) then 
+       do i1=1,BS_blk_dim(ik1)
+         do i2=1,BS_n_g_exch
+           O1x(i2,i1)=O1x(i2,i1)/bare_qpg(iq,i2)**2
+         enddo
+       enddo
+     endif 
+!
      O1x(1,:)=(0.,0.)
      O2x(1,:)=(0.,0.)
      BS_mat=(0.,0.)

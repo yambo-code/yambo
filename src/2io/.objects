@@ -3,4 +3,4 @@ objs = ioRIM.o        ioGROT.o     ioELPH.o \
        ioDB1.o        ioWF.o       ioKB_PP.o   ioXXVXC.o \
        ioBS.o         ioBS_diago.o ioBS_FXC.o  ioHaydock.o \
        io_elemental.o io_bulk.o    io_header.o ioE_RIM.o \
-       ioCOL_CUT.o
+       ioCOL_CUT.o    ioDB1_reload.o

@@ -24,7 +24,7 @@
  use pars,          ONLY:pi,SP,HARTREE,schlen
  use D_lattice,     ONLY:dl_sop
  use memory_m,      ONLY:mem_est
- use drivers,       ONLY:l_bs_fxc,l_lrc_fxc,l_alda_fxc
+ use drivers,       ONLY:l_bs_fxc,l_lrc_fxc,l_alda_fxc,l_col_cut
  use frequency,     ONLY:w_samp,rg_index_bg,bg_npts,cg_pt,cg_index_bg
  use electrons,     ONLY:levels,BZ_RIM_tot_nkpts
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
@@ -189,12 +189,15 @@
 ! This relation is exact
 !
 ! alpha=-eps_2_alpha X(1,1) / |q|^2 = (1 -eps_M^-1) eps_2_alpha/4/pi
+!       ---------- 1 --------------   ----------- 2 ----------------
 !
-! lhs does not need the antiresonant part of X
-! rhs DOES need the antiresonant part of X
+! (1) DOES need the antiresonant part of X
+! (2) does not need the antiresonant part of X
 !
-!     X_epsilon(5,fr(1):fr(2))=&
-!&    -X_mat(1,1,:)*bare_qpg(iq,1)**2/q_module(iq)**2/4./pi*eps_2_alpha
+     if (l_col_cut) then
+!
+       X_epsilon(5,fr(1):fr(2))=&
+&              -X_mat(1,1,:)*bare_qpg(iq,1)**2/q_norm(iq)**2/4./pi*eps_2_alpha
 !
 ! In the limit of eps_2_alpha -> \infty
 !
@@ -202,7 +205,9 @@
 !
 ! this does not need the antiresonant part of X
 !
-     X_epsilon(5,fr(1):fr(2))=(X_epsilon(2,fr(1):fr(2))-1._SP)*eps_2_alpha/4./pi
+     else
+       X_epsilon(5,fr(1):fr(2))=(X_epsilon(2,fr(1):fr(2))-1._SP)*eps_2_alpha/4./pi
+     endif
 !
      call of_open_close(of_name(1),'oa')
      call of_open_close(of_name(2),'oa')

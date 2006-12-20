@@ -49,6 +49,7 @@
  use stderr,        ONLY:string_split,string_pack
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY
  use parser_m,      ONLY:parser
+ use drivers,       ONLY:l_col_cut
  implicit none
  type(bz_samp) :: q
 !
@@ -112,11 +113,26 @@ if (.not.cut_is_sphere) cyl_ph_radius=0.
 !
 ! Return conditions
 !
- if (.not.any((/cut_is_sphere,cut_is_box,cut_is_cyl/))) return
- if (.not.any(is_cut)) return
- if (cut_is_sphere.and.cyl_ph_radius==0.) return
- if (cut_is_box.and.all(box_length==0.)) return
- if (cut_is_cyl.and.cyl_ph_radius==0.) return
+ if (.not.any((/cut_is_sphere,cut_is_box,cut_is_cyl/))) then
+   l_col_cut=.false.
+   return
+ endif
+ if (.not.any(is_cut)) then
+   l_col_cut=.false.
+   return
+ endif
+ if (cut_is_sphere.and.cyl_ph_radius==0.) then
+   l_col_cut=.false.
+   return
+ endif
+ if (cut_is_box.and.all(box_length==0.)) then
+   l_col_cut=.false.
+   return
+ endif
+ if (cut_is_cyl.and.cyl_ph_radius==0.) then
+   l_col_cut=.false.
+   return
+ endif
  ch1=string_pack('Coloumb potential CutOff :',str_piece(1))
  call section('*',trim(ch1))
 !===============================================================

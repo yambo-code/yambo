@@ -27,7 +27,11 @@
   implicit none
 
   integer     , public :: GS_xc_KIND,GS_xc_FUNCTIONAL
+#if defined PJ_SPIN 
+  real(SP), public, allocatable:: V_xc(:,:)
+#else
   real(SP), public, allocatable:: V_xc(:)
+#endif
   real(SP), public, allocatable:: E_xc(:)
   real(SP), public, allocatable:: F_xc(:)
 

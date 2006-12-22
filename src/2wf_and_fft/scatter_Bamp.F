@@ -35,6 +35,9 @@
 !  iq_is = ik_is-ok_os + Go
 !
  use pars,           ONLY:DP
+#if defined PJ_SPIN
+ use electrons,      ONLY:n_spinor
+#endif
  use collision,      ONLY:ggwinfo
  use D_lattice,      ONLY:nsym,i_time_rev
  use R_lattice,      ONLY:g_rot
@@ -76,6 +79,10 @@
  call fft_3d(rhotwr,fft_dim,+1)
 #endif
  isc%rhotw(1:isc%ngrho)=rhotwr(fft_g_table(g_rot(qs,1:isc%ngrho),iGo))
+#if defined PJ_SPIN
+ if (all((/isc%qs(2)==1,ib==ob/))) isc%rhotw(1)=sqrt(1./dble(n_spinor))
+#else
  if (all((/isc%qs(2)==1,ib==ob/))) isc%rhotw(1)=(1.,0.)
+#endif
  if (all((/isc%qs(2)==1,ib/=ob/))) isc%rhotw(1)=(0.,0.)
  end subroutine

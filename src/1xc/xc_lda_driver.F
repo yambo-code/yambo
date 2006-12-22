@@ -25,7 +25,11 @@
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:DL_vol
  use com,           ONLY:msg
+#if defined PJ_SPIN
+ use electrons,     ONLY:levels,n_spin
+#else
  use electrons,     ONLY:levels
+#endif
  use FFT_m,         ONLY:fft_size
  use xc_functionals,ONLY:XC_EXCHANGE,XC_EXCHANGE_CORRELATION,XC_CORRELATION,&
 &                        E_xc,F_xc,V_xc,XC_LDA_X,&
@@ -42,12 +46,19 @@
 !
 ! XC routines arrays
 !
+#if defined PJ_SPIN
+ real(SP) :: el_mag(fft_size,3) 
+#endif
  real(SP) :: rho_sp(fft_size),difvxc
  real(DP) :: rspts(fft_size),zeta(fft_size),rho(fft_size)
 !
 !note that multidimensional dvxc & vxc is allowed only in xcspol
 !
+#if defined PJ_SPIN
+ real(DP) :: dvxc(fft_size,3),exc(fft_size),vxc(fft_size,n_spin)
+#else
  real(DP) :: dvxc(fft_size,3),exc(fft_size),vxc(fft_size,1)
+#endif
  real(DP) :: dvx(fft_size),ex(fft_size),vx(fft_size)
 !
 ! Init
@@ -75,6 +86,15 @@
  call el_density(en,Xk,rho_sp,.FALSE.)
  rho=rho_sp*real(fft_size,DP)/real(DL_vol,DP)
  forall (i1=1:fft_size) rspts(i1)=(3._DP/4._DP/pi/rho(i1))**(1._DP/3._DP)
+#if defined PJ_SPIN
+ if (n_spin==2) then
+   ! Electronic magnetization & Zeta
+   !-------------------------
+   call el_magnetization(en,Xk,el_mag)
+   zeta(:)=sqrt(el_mag(:,1)**2+el_mag(:,2)**2+el_mag(:,3)**2)/rho_sp
+ endif
+#endif
+
 !
 ! EXX = X_alpha when alpha=3/4
 !------------------------------
@@ -93,7 +113,11 @@
    select case (FUNCTIONAL)
 
     case (XC_LDA_C_PW)
+#if defined PJ_SPIN
+      call xcspol(dvxc,exc,fft_size,n_spin,ORDER,rspts,vxc,zeta)
+#else
       call xcspol(dvxc,exc,fft_size,1,ORDER,rspts,vxc,zeta)
+#endif
 
     case (XC_LDA_C_PZ)
       call xcpzca(dvxc(:,1),exc,fft_size,ORDER,rho,rspts,vxc(:,1))
@@ -112,6 +136,7 @@
 
    end select
  endif
+
 !
 ! CORRELATION ONLY
 !------------------
@@ -127,9 +152,16 @@
    case(0)
      E_xc=exc
    case(1)
+#if defined PJ_SPIN
+     if (n_spin==1) then
+       V_xc(:,1)=vxc(:,1)
+     else
+       V_xc=vxc
+     endif
+#else
      V_xc=vxc(:,1)
+#endif
    case(2)
      F_xc=dvxc(:,1)
  end select
-
  end subroutine

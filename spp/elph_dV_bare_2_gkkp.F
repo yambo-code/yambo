@@ -23,7 +23,7 @@
 !============================================
  use pars,          ONLY:SP
  use D_lattice,     ONLY:nsym,i_time_rev,sop_inv
- use R_lattice,     ONLY:bz_samp,g_rot
+ use R_lattice,     ONLY:bz_samp,g_rot,ng_in_shell
  use ELPH,          ONLY:ph_modes,elph_bands,elph_dV,elph_dV_bare
  use wave_func,     ONLY:wf_load,wf_ng,wf_state,wf,wf_ncx
 
@@ -44,8 +44,6 @@
  !
  if (iq==1) call wf_load(0,1,elph_bands,(/1,k%nibz/),title='-ELPH',space='G')
  !
-! elph_dV=(0.,0.)
- !
  do ik_bz=1,k%nbz
    !
    if (k_found( ik_bz )==0) cycle
@@ -56,14 +54,17 @@
    do ib1=elph_bands(1),elph_bands(2)
      !
      ifft=wf_state(ib1,ik_ibz,1)
+     wf_rotated=(0.,0.)
      !
      if (ik_is_m1>nsym/(i_time_rev+1)) then
        ik_is_m1=ik_is_m1-nsym/(i_time_rev+1)
        do ig=1,wf_ng
+         if (g_rot(ik_is_m1,ig)>wf_ng) cycle
          wf_rotated(ig)=conjg( wf(g_rot(ik_is_m1,ig),ifft) )
        enddo
      else
        do ig=1,wf_ng
+         if (g_rot(ik_is_m1,ig)>wf_ng) cycle
          wf_rotated(ig)=wf(g_rot(ik_is_m1,ig),ifft)
        enddo
      endif
@@ -76,21 +77,31 @@
            dV_bare(ig)=elph_dV_bare(ig,ik_bz,ib2-elph_bands(1)+1,il)
          enddo
          !
+if (iq/=3) then
+  elph_dV=(0.,0.)
+  cycle
+endif
+wf_rotated=wf(:,ifft)
+!
+!DEBUG
+ if (iq==3.and.il==1.and.ib1==1.and.ib2==1.and.ik_bz==4) then
+   write (100,'(f20.10)') real(wf_rotated)
+   write (101,'(f20.10)') aimag(wf_rotated)
+   write (200,'(f20.10)') real(dV_bare)
+   write (201,'(f20.10)') aimag(dV_bare)
+   write (999,'(/5(a,i3))') ' q=',iq,' ik=',ik_bz,&
+&                           ' ib1=',ib1,' ib2=',ib2,' mu=',il
+   write (999,'(2f20.15)') elph_dV(ik_bz,il,ib1-elph_bands(1)+1,ib2-elph_bands(1)+1)
+   write (999,'(2f20.15)') cdotc(wf_ng,wf_rotated,1,dV_bare,1)
+   do ig=1,wf_ng
+     write (300,'(f20.10,i4)') real(dV_bare(ig)*conjg(wf_rotated(ig))),ig
+     write (301,'(f20.10)') aimag(dV_bare(ig)*conjg(wf_rotated(ig)))
+   enddo
+ endif
+         !
          elph_dV(ik_bz,il,ib1-elph_bands(1)+1,ib2-elph_bands(1)+1)=&
 &                              cdotc(wf_ng,wf_rotated,1,dV_bare,1)
          !
-!DEBUG
-! if (iq==2.and.il==1.and.ib1==1.and.ib2==1.and.ik_bz==2) then
-!   write (100,'(f20.10)') real(wf_rotated)
-!   write (200,'(f20.10)') aimag(wf_rotated)
-!   write (300,'(f20.10)') real(dV_bare)
-!   write (400,'(f20.10)') aimag(dV_bare)
-!   write (999,'(/7i3)') iq,ik_bz,ib1,ib2,il,ik_ibz,ik_is_m1
-!   write (999,'(2f20.15)') elph_dV(ik_bz,il,ib1-elph_bands(1)+1,ib2-elph_bands(1)+1)
-!   write (999,'(2f20.15)') cdotc(wf_ng,wf_rotated,1,dV_bare,1)
-!   write (100,'(2f20.15)') elph_dV(ik_bz,il,ib1-elph_bands(1)+1,ib2-elph_bands(1)+1)
-!   write (200,'(2f20.15)') cdotc(wf_ng,wf_rotated,1,dV_bare,1)
-! endif
          !
        enddo
      enddo

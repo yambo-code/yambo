@@ -31,7 +31,7 @@
  use timing,        ONLY:live_timing
  use stderr,        ONLY:string_pack
 #if defined PJ_SPIN 
- use electrons,     ONLY:levels,n_spinor,n_sp_pol,spin_occ
+ use electrons,     ONLY:levels,n_spinor,n_sp_pol,spin_occ,n_spin
 #else
  use electrons,     ONLY:levels,n_spinor,n_sp_pol
 #endif
@@ -53,7 +53,13 @@
 !ws
  type(ggwinfo)    ::isc,iscp
  type(pp_indexes) ::px
+#if defined PJ_SPIN
+ integer          ::i1,i2,iq,ib,ik,ifft,ifft1,ifft2
+ real(SP),allocatable  ::el_mag(:,:),mod_mag(:)
+ real(SP),allocatable  ::vxc1(:),vxc2(:)
+#else
  integer          ::i1,i2,iq,ib,ik,ifft
+#endif
 #if defined _DOUBLE
  complex(DP):: zdotc,zdotu
 #else 
@@ -173,29 +179,83 @@
 !-----------------------------------------------------------------------------
 ! Vxc
 !=====
+#if defined PJ_SPIN
+ allocate(el_mag(fft_size,3),mod_mag(fft_size))
+ allocate(V_xc(fft_size,n_spin),c_vec(fft_size),vxc1(fft_size),vxc2(fft_size))
+#else
  allocate(V_xc(fft_size),c_vec(fft_size))
+#endif
  call xc_lda_driver(E,Xk,GS_xc_KIND,GS_xc_FUNCTIONAL,1)
  QP_xc_FUNCTIONAL=trim(xc_string(GS_xc_KIND,GS_xc_FUNCTIONAL))
 
+#if defined PJ_SPIN
+ if (n_spinor==2) then
+   call el_magnetization(E,Xk,el_mag)
+   mod_mag=sqrt(el_mag(:,1)**2+el_mag(:,2)**2+el_mag(:,3)**2)
+   do i2=1,fft_size
+     vxc1(i2)=(V_xc(i2,1)+V_xc(i2,2))/2
+     vxc2(i2)=(V_xc(i2,1)-V_xc(i2,2))/2
+   enddo
+ endif
+!
+ do i1=1,QP_n_states,n_spinor
+   if (n_spinor==1) then
+     ifft=wf_state(QP_table(i1,1),QP_table(i1,3),QP_table(i1,4))
+     do i2=1,fft_size
+       c_vec(i2)=wf(i2,ifft)*V_xc(i2,QP_table(i1,4))
+     enddo
+#else
  do i1=1,QP_n_states
    ifft=wf_state(QP_table(i1,1),QP_table(i1,3),1)
    c_vec(:)=wf(:,ifft)*V_xc(:)
+#endif
 #if defined _DOUBLE
    QP_Vxc(i1)=zdotc(fft_size,wf(:,ifft),1,c_vec,1)
 #else 
    QP_Vxc(i1)=cdotc(fft_size,wf(:,ifft),1,c_vec,1)
 #endif
+#if defined PJ_SPIN
+   else if (n_spinor>=2) then
+     ifft1=wf_state(QP_table(i1,1),QP_table(i1,3),QP_table(i1,4))
+     ifft2=wf_state(QP_table(i1,1),QP_table(i1,3),QP_table(i1+1,4))
+     c_vec(:)= (vxc1(:)+vxc2(:)*el_mag(:,3)/mod_mag(:))*wf(:,ifft1)
+#if defined _DOUBLE
+     QP_Vxc(i1)=zdotc(fft_size,wf(:,ifft1),1,c_vec(:),1)
+     c_vec(:)= (vxc1(:)-vxc2(:)*el_mag(:,3)/mod_mag(:))*wf(:,ifft2)
+     QP_Vxc(i1)=QP_Vxc(i1)+zdotc(fft_size,wf(:,ifft2),1,c_vec(:),1)
+     c_vec(:)= (vxc2(:)*(el_mag(:,1)-(0.,1.d0)*el_mag(:,2))/mod_mag(:))*wf(:,ifft2)
+     QP_Vxc(i1)=QP_Vxc(i1)+zdotc(fft_size,wf(:,ifft1),1,c_vec(:),1)
+     c_vec(:)= (vxc2(:)*(el_mag(:,1)+(0.,1.d0)*el_mag(:,2))/mod_mag(:))*wf(:,ifft1)
+     QP_Vxc(i1)=QP_Vxc(i1)+zdotc(fft_size,wf(:,ifft2),1,c_vec(:),1)
+#else
+     QP_Vxc(i1)=cdotc(fft_size,wf(:,ifft1),1,c_vec(:),1)
+     c_vec(:)= (vxc1(:)-vxc2(:)*el_mag(:,3)/mod_mag(:))*wf(:,ifft2)
+     QP_Vxc(i1)=QP_Vxc(i1)+cdotc(fft_size,wf(:,ifft2),1,c_vec(:),1)
+     c_vec(:)= (vxc2(:)*(el_mag(:,1)-(0.,1.d0)*el_mag(:,2))/mod_mag(:))*wf(:,ifft2)
+     QP_Vxc(i1)=QP_Vxc(i1)+cdotc(fft_size,wf(:,ifft1),1,c_vec(:),1)
+     c_vec(:)= (vxc2(:)*(el_mag(:,1)+(0.,1.d0)*el_mag(:,2))/mod_mag(:))*wf(:,ifft1)
+     QP_Vxc(i1)=QP_Vxc(i1)+cdotc(fft_size,wf(:,ifft2),1,c_vec(:),1)
+#endif
+
+   endif
+#endif
  enddo
  deallocate(V_xc,c_vec)
+#if defined PJ_SPIN
+ if (n_spinor==2)  deallocate(vxc1,vxc2)
+#endif
  call WF_free()
 !
 1 i2=QP_table(1,3)
  write (ch,'(a,i3.3,a)') 'K [',i2,'] (iku):'
  call msg('nr',trim(ch),k%pt(i2,:))
+
+#if !defined PJ_SPIN
  ch=string_pack('(2(a,',gen_fmt( reshape(QP_table(:,:2),(/2*QP_n_states/)) ),&
-&                  ',2a,',gen_fmt( reshape(QP_table(:,:2),(/2*QP_n_states/)) ) )
+&               ',2a,',gen_fmt( reshape(QP_table(:,:2),(/2*QP_n_states/)) ) )
  local_fmt=string_pack(ch,',2a,2(',&
-&                 gen_fmt( r_v= reshape(real(QP_Sx)*HARTREE,(/QP_n_states/)) ) ,')))')
+&          gen_fmt( r_v= reshape(real(QP_Sx)*HARTREE,(/QP_n_states/)) ) ,')))')
+#endif
 
  do i1=1,QP_n_states,n_spinor
 !
@@ -213,17 +273,20 @@
      QP_Sx(i1+1)= (0.,0.)
    endif
 #endif
-!
    if (QP_table(i1,3)/=i2) then
      i2=QP_table(i1,3)
      write (ch,'(a,i3.3,a)') 'K [',i2,'] (iku):'
      call msg('r',trim(ch),k%pt(i2,:))
    endif
-
    ch_spin=' '
-   if (n_sp_pol==2.and.QP_table(i1,4)==1) ch_spin='(up)'
-   if (n_sp_pol==2.and.QP_table(i1,4)==2) ch_spin='(dn)'
-
+   if (n_sp_pol==2.and.QP_table(i1,2+n_sp_pol)==1) ch_spin='(up)'
+   if (n_sp_pol==2.and.QP_table(i1,2+n_sp_pol)==2) ch_spin='(dn)'
+#if defined PJ_SPIN
+   ch=string_pack('(2(a,',gen_fmt( reshape(QP_table(:,:2),(/2*QP_n_states/)) ),&
+&                 ',2a,',gen_fmt( reshape(QP_table(:,:2),(/2*QP_n_states/)) ) )
+   local_fmt=string_pack(ch,',2a,2(',&
+&            gen_fmt( r_v= reshape(real(QP_Sx)*HARTREE,(/QP_n_states/)) ) ,')))')
+#endif
    write (ch,trim(local_fmt)) &
 &   '<',QP_table(i1,1),trim(ch_spin),'|S_x|',QP_table(i1,2),trim(ch_spin),'> = ',&
 &   real(QP_Sx(i1)*HARTREE),aimag(QP_Sx(i1)*HARTREE),&
@@ -233,13 +296,14 @@
    if (i1/=QP_n_states) call msg('r',trim(ch))
    if (i1==QP_n_states) call msg('rn',trim(ch))
  enddo
-! I/O
-!=====
+ !
+ ! I/O
+ !=====
  if (io_err/=0) then
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=ioXXVXC(ID)
  endif
  call pp_redux_wait
-!
+ !
  end subroutine
 !

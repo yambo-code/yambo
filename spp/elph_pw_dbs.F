@@ -232,6 +232,9 @@
 !   [<dV/dr>] = [E^{3/2}]   
 !
         dVRY2Ha=2._DP**(-3._DP/2._DP)
+!DEBUG
+ dVRY2Ha=1.
+
 !
 ! If I am reading in the Q mode I need to store all <k1|g|k1-q> ME.
 ! So k1 is the index.
@@ -260,7 +263,7 @@
   ! 
   call q_small(real(pw_q,SP),small,nsmall)
   !
-!  call elph_dV_bare_2_gkkp(k,iq,k_found)
+  call elph_dV_bare_2_gkkp(k,iq,k_found)
   !
   do ik=1,k%nbz
     if (k_found(ik)==0) cycle
@@ -268,6 +271,8 @@
       ikbz_rot=ikbz_is_table(ik,sop_inv(small(i1)))
       if (k_found(ikbz_rot)/=0) cycle
       elph_dV(ikbz_rot,:,:,:)=elph_dV(ik,:,:,:)
+
+ if (iq==7.and.ikbz_rot==61) write (*,*) ik
       k_found(ikbz_rot)=-1
     enddo
   enddo

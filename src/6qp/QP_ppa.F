@@ -26,7 +26,7 @@
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
 #if defined PJ_SPIN
- use electrons,     ONLY:levels,spin_occ
+ use electrons,     ONLY:levels,spin_occ,n_spinor
 #else
  use electrons,     ONLY:levels
 #endif
@@ -230,6 +230,14 @@
      enddo
    enddo
  enddo
+#if defined PJ_SPIN
+ do i1=1,QP_n_states,n_spinor
+   if (n_spinor==2) then
+     QP_Sc(i1,:)  = QP_Sc(i1,:)+QP_Sc(i1+1,:)
+     QP_Sc(i1+1,:)= (0.,0.)
+   endif
+ enddo
+#endif
 
  call live_timing()
 
@@ -288,7 +296,12 @@
    complex(SP)  ::lW !ws
    lW=W
    if (Finite_Tel) lW=conjg(W)
+#if defined PJ_SPIN
+   Gfm=(real(spin_occ)-e%f(vs(1),vs(2),vs(4))+bose_f(Ep))/&
+&      (lW-e%E(vs(1),vs(2),vs(4))-Ep)**n
+#else
    Gfm=(2.-e%f(vs(1),vs(2),vs(4))+bose_f(Ep))/(lW-e%E(vs(1),vs(2),vs(4))-Ep)**n
+#endif
    end function
 
    function Gfp(n,W,e,vs,Ep)

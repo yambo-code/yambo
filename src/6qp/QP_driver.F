@@ -225,7 +225,11 @@
    i3=QP_table(1,3)
    write (ch1,'(a,i4.4,a)') 'K [',i3,'] (iku):'
    call msg('r',trim(ch1),k%pt(i3,:))
+#if defined PJ_SPIN
+   do i1=1,QP_n_states,n_spinor
+#else
    do i1=1,QP_n_states
+#endif
      if (l_el_corr) then
        xx_dummy=real(QP_Sx(i1))*HARTREE
        xc_dummy=real(QP_Vxc(i1))*HARTREE

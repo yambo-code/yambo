@@ -333,7 +333,7 @@
  if (sort_mode == 'e') then
 !
   do j1=1,BS_K_dim
-   if (real(BS_E(j1)).le.max_energy) then 
+   if ( real(BS_E(j1)) >= 0.and.real(BS_E(j1))<=max_energy) then 
     write(local_ch,'(f,f,a,i)')real(BS_E(j1))*HARTREE ,Rs(j1),' |',j1
 !Ask to Andrea if possbile to mix real and integere in msg   
     call msg(extension,'',local_ch,USE_TABS=.FALSE.)
@@ -346,7 +346,7 @@
   call sort( Rs,Rs2,indx)
   do j1=1,BS_K_dim
    j2=BS_K_dim-j1+1
-   if (real(BS_E(indx(j2))).le.max_energy) then
+   if (real(BS_E(indx(j2)))>=0.and.real(BS_E(indx(j2)))<=max_energy) then
     write(local_ch,'(f,f,a,i)')real(BS_E(indx(j2)))*HARTREE ,&
 &                               Rs2(j2),' |',indx(j2)
     call msg(extension,'',local_ch,USE_TABS=.FALSE.)
@@ -730,7 +730,7 @@
    
   n_atoms_tot=0
   do ntype=1,n_atom_species
-   n_atoms_tot=n_atoms_tot+n_atoms(n_atom_species)
+   n_atoms_tot=n_atoms_tot+n_atoms(ntype)
   enddo
  
 

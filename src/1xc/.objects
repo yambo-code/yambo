@@ -1,2 +1,7 @@
+#if defined PJ_SPIN
+objs =  mod_xc_costants.o xc_lda_driver.o xc_rpa_kp.o \
+        xcspol.o xcpzca.o xcwign.o xchelu.o xcxalp.o el_magnetization.o
+#else
 objs =  mod_xc_costants.o xc_lda_driver.o xc_rpa_kp.o \
         xcspol.o xcpzca.o xcwign.o xchelu.o xcxalp.o 
+#endif

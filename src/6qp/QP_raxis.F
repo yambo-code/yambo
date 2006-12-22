@@ -233,7 +233,8 @@
  call live_timing(string_pack(Sc_name,'W0'),px%stps(myid+1)*(q%nbz-iq_to_start+1))
 !
 #if defined PJ_SC 
- open(101,file='o.PJ_SC_W',position='append')
+ open(101,file='o.PJ_SC_W')
+ write(101,'(a/a/a)') '#','#       E_{nkR}-E_{mpS}    <nkR|W|mpS>    n  k  R  m  p  S','#'
 #endif
 
  do iqbz=iq_to_start,q%nbz
@@ -427,6 +428,8 @@
  !
  write (101,'(2f20.10,6i3)')  en%E(isc%is(1),isc%is(2),1)-en%E(isc%os(1),isc%os(2),1),&
 &                             2.*real(W2_report),isc%is(1:3),isc%os(1:3)
+ !
+ end subroutine
 #endif
 
 ! -- GPL_START --

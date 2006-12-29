@@ -36,7 +36,7 @@
  use com,           ONLY:gen_fmt
  use IO_m,          ONLY:version_is_newer
 #if defined PJ_PH
- use ELPH,          ONLY:elph_bands,QP_PH_n_G_bands
+ use ELPH,          ONLY:QP_PH_n_G_bands
 #endif
  implicit none
  type(QP_t)::qp
@@ -144,8 +144,8 @@
    if (l_ph_corr) qp%description(qp%n_descs)=' El-Ph correlation      : yes'
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),trim(&
-&        string_pack('(a,2',gen_fmt(elph_bands),')'))) &
-&        ' El-Ph Sc. G bands      :',(/elph_bands(1),QP_PH_n_G_bands/)
+&        string_pack('(a,2',gen_fmt( (/QP_PH_n_G_bands/) ),')'))) &
+&        ' El-Ph Sc. G bands      :',(/1,QP_PH_n_G_bands/)
  endif
 #endif
 

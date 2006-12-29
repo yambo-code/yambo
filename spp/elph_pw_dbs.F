@@ -21,7 +21,8 @@
 !
  subroutine elph_pw_dbs(k,q)
 !===========================
- use ELPH,                ONLY:ph_freqs_sq,ph_modes,elph_bands,elph_free
+ use ELPH,                ONLY:ph_freqs_sq,ph_modes,elph_nb,elph_dV_free,&
+&                              elph_gkkp_free
  use com,                 ONLY:msg
  use R_lattice,           ONLY:bz_samp,nqibz
  use D_lattice,           ONLY:nsym
@@ -89,9 +90,10 @@
  enddo
  call live_timing()
  call msg("s",':: Modes           :',ph_modes)
- call msg("s",':: Bands range     :',elph_bands)
+ call msg("s",':: Bands range     :',elph_nb)
 !
- call elph_free()
+ call elph_gkkp_free()
+ call elph_dV_free()
 !
  contains
 !
@@ -100,39 +102,37 @@
 !
 ! s.dbph_ structure
 !
-!   read (99) nmodes,nk_2_write,self_lowb,self_highb
-!   read (99) alat,xq,xk(:,:nk_2_write)
-!   read (99) w2(:)
+!   read (99) ph_modes,dV_nk,pw_ngx,elph_nb
+!   read (99) pw_alat,pw_q,pw_kpq
+!   read (99) ph_freqs_sq
 !   DO ik=1,nksq
-!     read (99) ikq,ikk
-!     read (99) dV_bare_disk(:,:,:)  (wf_ng,self_highb,nmodes)
-!     read (99) elph_dV_disk(:,:,:)  (self_highb,self_highb,nmodes)
+!     read (99) dV_bare_disk(:,:,:)  (pw_ngx,elph_nb,ph_modes)
+!     read (99) dV_bare_psi(:,:,:)   (pw_ngx,elph_nb,dV_nk)
+!     read (99) elph_dV_disk(:,:,:)  (elph_nb,elph_nb,ph_modes)
 !   ENDDO
 !
   use pars,           ONLY:SP,DP,schlen
   use D_lattice,      ONLY:nsym,sop_inv,alat
   use IO_m,           ONLY:io_control,OP_RD,RD_CL,io_connect,io_unit,&
 &                          io_netcdf_support,io_disconnect,io_file
-  use ELPH,           ONLY:ph_modes,elph_bands,elph_alloc,elph_dV,&
-&                          ph_freqs_sq,elph_dV_bare
+  use ELPH,           ONLY:ph_modes,elph_nb,elph_dV_alloc,elph_dV,elph_dV_psi,&
+&                          ph_freqs_sq,elph_gkkp,elph_gkkp_alloc,dV_ngx,dV_nk
   use SPP,            ONLY:elph_dbs_path
   use vec_operate,    ONLY:v_is_zero,rlu_v_is_zero,c2a
-  use wave_func,      ONLY:wf_ng
   implicit none
   integer           :: iq
 !ws
-  integer           :: pw_nk,ib1,ib2,ig
+  integer           :: ib1,ib2,ig
   real(SP)          :: r_v(3)
 !I/O
   integer           :: ID,io_err
   character(schlen) :: db_name
   real(SP)          :: dVRY2Ha
-  real(DP)          :: pw_k(3,2*k%nbz),pw_alat,pw_q(3)
+  real(DP)          :: pw_kpq(3,k%nbz),pw_alat,pw_q(3)
   real(DP),    allocatable :: ph_freqs_sq_disk(:)
-  complex(DP), allocatable :: elph_dV_disk(:,:,:),dV_bare_disk(:,:,:)
+  complex(DP), allocatable :: gkkp_disk(:,:,:),dV_disk(:,:,:),dV_psi_disk(:,:)
 ! K Table
-  integer           :: i1,ik,k_found(k%nbz),k2k_tab(2*k%nbz),nk_dV,ikkp(2),&
-&                      ikkp_s,ikbz_rot
+  integer           :: i1,ik,k_found(k%nbz),k2k_tab(k%nbz),ikbz_rot
   integer           :: nsmall,small(nsym)
 
   elph_pw_dbs_io=-1
@@ -149,12 +149,12 @@
 
 ! HEADER 
 !--------
-  read (io_unit(ID)) ph_modes,pw_nk,elph_bands
-  read (io_unit(ID)) pw_alat,pw_q,pw_k(:,:pw_nk)
+  read (io_unit(ID)) ph_modes,dV_nk,dV_ngx,elph_nb
+  read (io_unit(ID)) pw_alat,pw_q,pw_kpq(:,:dV_nk)
 !
   if (any(alat/=pw_alat)) then
     forall (i1=1:3) pw_q(i1)=pw_q(i1)*alat(i1)/pw_alat
-    forall (i1=1:3) pw_k(i1,:)=pw_k(i1,:)*alat(i1)/pw_alat
+    forall (i1=1:3) pw_kpq(i1,:)=pw_kpq(i1,:)*alat(i1)/pw_alat
   endif
 !
   if (iq<0) then
@@ -165,9 +165,13 @@
 !
 ! Allocation
 !----
-  if (iq==1) call elph_alloc()
-  elph_dV_bare=(0._DP,0._DP)
+  if (iq==1) call elph_gkkp_alloc()
+  if (iq> 1) call elph_dV_free()
+  call elph_dV_alloc()
+  !
   elph_dV=(0._DP,0._DP)
+  elph_gkkp=(0._DP,0._DP)
+  elph_dV_psi=(0._DP,0._DP)
   allocate(ph_freqs_sq_disk(ph_modes))
 !
 ! PW energies are in Rydbergs. Here we have the phonon frequencies square
@@ -179,18 +183,18 @@
 !------------------------------------------
   k2k_tab=0
   k_found=0
-  do i1=1,pw_nk
+  do i1=1,dV_nk
 !
 ! For non zero phonon q PW grid is composed of (k_1,k_1+q,k_2,k_2+q ...).
 ! I table the  k1+q,k2+q ...
 !
-    if (.not.v_is_zero(real(pw_q(:),SP)).and.mod(i1,2)/=0) cycle
     do ik=1,k%nbz
       if (k_found(ik)==1) cycle
-      call c2a(v_in=k%ptbz(ik,:)-real(pw_k(:,i1),SP),v_out=r_v,mode="ki2a")
+      call c2a(v_in=k%ptbz(ik,:)-real(pw_kpq(:,i1),SP),v_out=r_v,mode="ki2a")
       if (rlu_v_is_zero(r_v)) then
         k2k_tab(i1)=ik
         k_found(ik)=1
+        exit
       endif
     enddo
     if (k2k_tab(i1)==0) then
@@ -199,31 +203,30 @@
     endif
   enddo
 ! 
-! ELPH_dV & dV_bare
+! ELPH_gkkp & dV
 !===================
 !
-  allocate(elph_dV_disk(elph_bands(2),elph_bands(2),ph_modes))
-  allocate(dV_bare_disk(wf_ng,elph_bands(2),ph_modes))
-  nk_dV=pw_nk
-  k_found=0
-  if (.not.v_is_zero(real(pw_q(:),SP))) nk_dV=pw_nk/2
-  do i1=1,nk_dV
-    read (io_unit(ID)) ikkp     ! k k-q  
-    ikkp_s=k2k_tab(ikkp(1))
-    k_found(ikkp_s)=1
+  allocate(gkkp_disk(elph_nb,elph_nb,ph_modes))
+  allocate(dV_disk(dV_ngx,elph_nb,ph_modes))
+  allocate(dV_psi_disk(dV_ngx,elph_nb))
+!
+! Reading
+!=========
+  do ik=1,dV_nk
 !
 ! Let's remember it again:
 !                                ib1                             ib2
 !                                |                               | 
 ! el_ph_mat(i,j,k,I)= <\psi(k+q) n_i|dV_{SCF}/du^q_{i a}|\psi(k) n_j>
-!                           |                                 |
-!                           ikkp(1)/ikkp_s                    ikkp(2)
+!                           |                          
+!                           ik[PW]/k2k_tab(ik)[SELF]  
 !
-    read (io_unit(ID)) dV_bare_disk
-    read (io_unit(ID)) elph_dV_disk
+    read (io_unit(ID)) dV_disk
+    read (io_unit(ID)) dV_psi_disk
+    read (io_unit(ID)) gkkp_disk
     !
-    do ib1=elph_bands(1),elph_bands(2)
-      do ib2=elph_bands(1),elph_bands(2)
+    do ib1=1,elph_nb
+      do ib2=1,elph_nb
 !
 ! PW energies are in Rydbergs.
 !
@@ -232,9 +235,6 @@
 !   [<dV/dr>] = [E^{3/2}]   
 !
         dVRY2Ha=2._DP**(-3._DP/2._DP)
-!DEBUG
- dVRY2Ha=1.
-
 !
 ! If I am reading in the Q mode I need to store all <k1|g|k1-q> ME.
 ! So k1 is the index.
@@ -243,19 +243,19 @@
 !
 ! NOTE THE BAND ORDER (imposed by PW)
 !
-        elph_dV(ikkp_s,:,ib1-elph_bands(1)+1,ib2-elph_bands(1)+1)=&
-&              elph_dV_disk(ib1,ib2,:)*dVRY2Ha
+        elph_gkkp(k2k_tab(ik),:,ib1,ib2)=gkkp_disk(ib1,ib2,:)*dVRY2Ha
         !
       enddo !ib2
 !
-      do ig=1,wf_ng     
-        elph_dV_bare(ig,ikkp_s,ib1-elph_bands(1)+1,:)=dV_bare_disk(ig,ib1,:)*dVRY2Ha
+      do ig=1,dV_ngx
+        elph_dV(ig,ib1,ik,:)=dV_disk(ig,ib1,:)*dVRY2Ha
+        elph_dV_psi(ig,ib1,ik)=dV_psi_disk(ig,ib1)
       enddo
       !
     enddo
   enddo
 !
-!  The pw_k K-grid is reduced using the small group of q. 
+!  The pw_kpq K-grid is reduced using the small group of q. 
 !  I need to expand the K-grid to define the missing elements of elph_dV
 !-----------------------------------------------------------------------
   !
@@ -263,16 +263,14 @@
   ! 
   call q_small(real(pw_q,SP),small,nsmall)
   !
-  call elph_dV_bare_2_gkkp(k,iq,k_found)
+  call elph_dV_2_gkkp(iq,k2k_tab)
   !
   do ik=1,k%nbz
     if (k_found(ik)==0) cycle
     do i1=1,nsmall
       ikbz_rot=ikbz_is_table(ik,sop_inv(small(i1)))
       if (k_found(ikbz_rot)/=0) cycle
-      elph_dV(ikbz_rot,:,:,:)=elph_dV(ik,:,:,:)
-
- if (iq==7.and.ikbz_rot==61) write (*,*) ik
+      elph_gkkp(ikbz_rot,:,:,:)=elph_gkkp(ik,:,:,:)
       k_found(ikbz_rot)=-1
     enddo
   enddo
@@ -284,7 +282,7 @@
 !
 ! CLEAN
 !
- deallocate(ph_freqs_sq_disk,elph_dV_disk,dV_bare_disk)
+ deallocate(ph_freqs_sq_disk,dV_disk,gkkp_disk,dV_psi_disk)
 
 1 call io_control(ACTION=RD_CL,ID=ID)
   call io_disconnect(ID)

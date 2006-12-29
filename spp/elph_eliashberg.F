@@ -27,7 +27,7 @@
  use R_lattice,           ONLY:bz_samp,nqibz
  use SPP,                 ONLY:elph_steps,elph_Ef,elph_gamma_broad,&
 &                              elph_Emax,elph_eli_broad
- use ELPH,                ONLY:ph_modes,elph_bands,elph_dV,ph_freqs_sq
+ use ELPH,                ONLY:ph_modes,elph_nb,elph_gkkp,ph_freqs_sq
  use IO_m,                ONLY:io_control,OP_RD,VERIFY,RD_CL_IF_END,DUMP
  use timing,              ONLY:live_timing
  use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
@@ -111,7 +111,7 @@
  call of_open_close(o_file_name,'ot')
  call msg('o eli','#',' Eliashberg Function & Gamma factors',INDENT=0)
  call msg('o eli','#','',INDENT=0)
- call msg('o eli',         '#  Bands              :',elph_bands,INDENT=0)
+ call msg('o eli',         '#  Bands              :',elph_nb,INDENT=0)
  call msg('o eli','#','',INDENT=0)
  do iq=1,nqibz
    write (ch,'(a,i3.3,a)') '# Gamma (',iq,') [GHz]:'
@@ -160,16 +160,15 @@
   do i1=1,k%nbz
     iibz1=k%sstar(i1,1)
     iibz2=k%sstar(qindx_X(iq,i1,1),1)
-    do ib1=elph_bands(1),elph_bands(2)
-      do ib2=elph_bands(1),elph_bands(2)
+    do ib1=1,elph_nb
+      do ib2=1,elph_nb
         weight=dFfermi(en%E(ib1,iibz1,1)+elph_Ef,elph_gamma_broad)*&
  &             dFfermi(en%E(ib2,iibz2,1)+elph_Ef,elph_gamma_broad)*2./real(k%nbz)
 !                                                                  |
 !                                                                  SPIN
         do im=1,ph_modes
           gamma(iq,im)=gamma(iq,im)+&
- &              conjg(elph_dV(i1,im,ib1-elph_bands(1)+1,ib2-elph_bands(1)+1))*&
- &                    elph_dV(i1,im,ib1-elph_bands(1)+1,ib2-elph_bands(1)+1) *weight
+ &              conjg(elph_gkkp(i1,im,ib1,ib2))*elph_gkkp(i1,im,ib1,ib2) *weight
         enddo
       enddo
     enddo

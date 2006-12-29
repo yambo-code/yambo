@@ -55,7 +55,7 @@
 &                      FXC_per_memstps,FXC_LRC_alpha,FXC_SVD_cutoff,&
 &                      FXC_is_causal
   use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
-  use ELPH,       ONLY:ph_modes,elph_bands
+  use ELPH,       ONLY:ph_modes,elph_nb
   use memory_m,   ONLY:mem_reset
   use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND
   implicit none
@@ -280,7 +280,7 @@
 ! ELPH
 !=================================
   ph_modes=0
-  elph_bands=0
+  elph_nb=0
 !
  end subroutine
 !

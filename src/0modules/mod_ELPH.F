@@ -24,35 +24,58 @@
    use pars, ONLY:SP
    implicit none
    integer   :: ph_modes
-   integer   :: elph_bands(2),QP_PH_n_G_bands
+   integer   :: elph_nb
+   integer   :: QP_PH_n_G_bands
+   integer   :: dV_ngx
+   integer   :: dV_nk
    real(SP),    allocatable :: ph_freqs_sq(:,:)
+   complex(SP), allocatable :: elph_gkkp(:,:,:,:)
+   complex(SP), allocatable :: elph_dV_psi (:,:,:)
    complex(SP), allocatable :: elph_dV(:,:,:,:)
-   complex(SP), allocatable :: elph_dV_bare(:,:,:,:)
  contains
 
- subroutine elph_alloc()
+ subroutine elph_gkkp_alloc()
+!----------------------------
  use memory_m,  ONLY:mem_est
  use R_lattice, ONLY:nqibz,nkbz
- use wave_func, ONLY:wf_ng
  implicit none
- integer     ::alloc_err(3)
-
+ integer     ::alloc_err(2)
  if (allocated(ph_freqs_sq)) return
-
  allocate(ph_freqs_sq(nqibz,ph_modes),stat=alloc_err(1))
- allocate(elph_dV_bare(wf_ng,nkbz,elph_bands(2),ph_modes),stat=alloc_err(2))
- allocate(elph_dV(nkbz,ph_modes,elph_bands(2)-elph_bands(1)+1,&
-&                 elph_bands(2)-elph_bands(1)+1),stat=alloc_err(3))
- call mem_est("ph_freqs_sq elph_dV elph_dV_bare",&
-&             (/size(ph_freqs_sq),size(elph_dV_bare),size(elph_dV)/),&
-&             (/SP, 2*SP,2*SP/),errors=alloc_err)
+ allocate(elph_gkkp(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err(2))
+ call mem_est("ph_freqs_sq elph_gkkp",&
+&             (/size(ph_freqs_sq),size(elph_gkkp)/),&
+&             (/SP, 2*SP/),errors=alloc_err)
  end subroutine
 
- subroutine elph_free()
+ subroutine elph_gkkp_free()
+!---------------------------
  use memory_m,  ONLY:mem_est
  implicit none
- deallocate(ph_freqs_sq,elph_dV,elph_dV_bare)
- call mem_est("ph_freqs_sq elph_dV dV_bare")
+ deallocate(ph_freqs_sq,elph_gkkp)
+ call mem_est("ph_freqs_sq elph_gkkp")
  end subroutine
+
+ subroutine elph_dV_alloc()
+!--------------------------
+ use memory_m,  ONLY:mem_est
+ implicit none
+ integer     ::alloc_err(2)
+
+ allocate(elph_dV(dV_ngx,elph_nb,dV_nk,ph_modes),stat=alloc_err(1))
+ allocate(elph_dV_psi(dV_ngx,elph_nb,dV_nk),stat=alloc_err(2))
+ call mem_est("elph_dV elph_dV_psi",&
+&             (/size(elph_dV),size(elph_dV_psi)/),&
+&             (/2*SP,2*SP/),errors=alloc_err)
+ end subroutine
+
+ subroutine elph_dV_free()
+!-------------------------
+ use memory_m,  ONLY:mem_est
+ implicit none
+ deallocate(elph_dV,elph_dV_psi)
+ call mem_est("elph_dV elph_dV_psi")
+ end subroutine
+
 
  end module ELPH

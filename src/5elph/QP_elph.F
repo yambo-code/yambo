@@ -36,8 +36,8 @@
 &                        QP_dSc_delta
  use D_lattice,     ONLY:sop_inv
  use R_lattice,     ONLY:qindx_S,bz_samp,ik_is_table,q_norm
- use ELPH,          ONLY:ph_modes,elph_bands,ph_freqs_sq,elph_dV,&
-&                        elph_free,QP_PH_n_G_bands
+ use ELPH,          ONLY:ph_modes,elph_nb,ph_freqs_sq,elph_gkkp,&
+&                        elph_gkkp_free,QP_PH_n_G_bands
  implicit none
  type(levels)  ::en
  type(bz_samp) ::k,q
@@ -73,9 +73,9 @@
 !-----------------------------
  use_G_RIM=associated(en%E_RIM)
 !
- if (QP_PH_n_G_bands>elph_bands(2)) QP_PH_n_G_bands=elph_bands(2)
+ if (QP_PH_n_G_bands>elph_nb) QP_PH_n_G_bands=elph_nb
 !
- call msg('r', '[GW/El-Ph] Bands range       :',(/elph_bands(1),QP_PH_n_G_bands/))
+ call msg('r', '[GW/El-Ph] Bands range       :',(/1,QP_PH_n_G_bands/))
  if (QP_solver/="g") call msg('r', '[GW/El-Ph] G damping     [ev]:',QP_G_damp*HARTREE)
  if (use_G_RIM) call msg('r', '[GW/El-Ph] RIM energy points :',BZ_RIM_tot_nkpts)
  if (use_G_RIM) call msg('r', '[GW/El-Ph] RIM energy bands  :',BZ_RIM_nbands)
@@ -116,7 +116,7 @@
 !
 !====
 !
- call par_indexes(px,(/q%nbz,QP_PH_n_G_bands/),(/1,elph_bands(1)/))
+ call par_indexes(px,(/q%nbz,QP_PH_n_G_bands/))
  call pp_redux_wait
 !
  iq_ref=0
@@ -151,7 +151,7 @@
 !
      dc=cmplx(0.,0.,SP)
 
-     do ob=elph_bands(1),QP_PH_n_G_bands
+     do ob=1,QP_PH_n_G_bands
        if (.not.px%i2p(iqbz,ob)) cycle
        do im=1,ph_modes
 !
@@ -166,8 +166,7 @@
 &                                  Gf(Sc_W(i1)%p(iw),en,(/ob,ok,1/),sqrt(ph_freqs_sq(iq,im)))
          endif
          forall (iw=1:Sc_W(i1)%n(1)) dc(iw)=dc(iw)+Gf_save(iw)/real(q%nbz)/2.*&
-&               conjg(elph_dV(ikbz,im,ib-elph_bands(1)+1,ob-elph_bands(1)+1))*&
-&                     elph_dV(ikbz,im,ib-elph_bands(1)+1,ob-elph_bands(1)+1)/&
+&               conjg(elph_gkkp(ikbz,im,ib,ob))*elph_gkkp(ikbz,im,ib,ob)/&
 &                     sqrt(ph_freqs_sq(iq,im))
        enddo
        call live_timing(steps=1)
@@ -188,7 +187,7 @@
 !
 ! CLEAN
  deallocate(dc,Gf_save)
- call elph_free()
+ call elph_gkkp_free()
  call pp_indexes_reset(px)
 
  contains

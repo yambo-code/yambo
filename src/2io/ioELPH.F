@@ -26,18 +26,18 @@
 &                         io_elemental,io_status,io_bulk,io_header,&
 &                         read_is_on,write_is_on,RD_CL,RD_CL_IF_END,io_action,&
 &                         io_mode,DUMP,io_fragment 
- use ELPH,           ONLY:ph_modes,elph_bands,elph_alloc,ph_freqs_sq,elph_dV,&
+ use ELPH,           ONLY:ph_modes,elph_nb,elph_gkkp_alloc,ph_freqs_sq,elph_gkkp,&
 &                         QP_PH_n_G_bands
  use R_lattice,      ONLY:nkbz,nqibz
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  implicit none
  integer      ::ID
 !ws
- integer                ::iq,dV_dim,im,ik,i1,i2
- real(SP), allocatable  ::elph_dV_disk(:,:,:)
+ integer                ::iq,im,ik,i1,i2
+ real(SP), allocatable  ::elph_gkkp_disk(:,:,:)
  character(schlen)      ::var_name
 
- ioELPH=io_connect(desc='elph',type=2,ID=ID)
+ ioELPH=io_connect(desc='elph_gkkp',type=2,ID=ID)
  if (ioELPH/=0) goto 1
 
  if (any((/io_sec(ID,:)==1/))) then
@@ -49,11 +49,11 @@
    call io_elemental(ID,&
 &       VAR=" Phonon modes           :",I0=ph_modes,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,&
-&       VAR=" El-PH bands range      :",I1=elph_bands,CHECK=.true.,OP=(/"==","=="/))
+&       VAR=" El-PH bands            :",I0=elph_nb,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
 
    if (io_mode(ID)==DUMP.or.write_is_on(ID)) then
-     QP_PH_n_G_bands=elph_bands(2)
+     QP_PH_n_G_bands=elph_nb
    endif
 
    ioELPH=io_status(ID)
@@ -71,7 +71,7 @@
 !
 ! Allocation
 !
- if (read_is_on(ID)) call elph_alloc()
+ if (read_is_on(ID)) call elph_gkkp_alloc()
 !
 ! Manage RD_CL_IF_END
 !
@@ -83,33 +83,32 @@
  call io_bulk(ID,VAR=trim(var_name),VAR_SZ=(/ph_modes/))
  call io_bulk(ID,R1=ph_freqs_sq(iq,:))
 ! 
-! ELPH_dV
+! ELPH_gkkp
 !
- dV_dim=elph_bands(2)-elph_bands(1)+1
- allocate(elph_dV_disk(dV_dim*dV_dim,ph_modes,2))
+ allocate(elph_gkkp_disk(elph_nb*elph_nb,ph_modes,2))
 
- write (var_name,'(a,i3.3)') "ELPH_dV_Q",iq
- call io_bulk(ID,VAR=trim(var_name),VAR_SZ=(/dV_dim*dV_dim,ph_modes,2,nkbz/) )
+ write (var_name,'(a,i3.3)') "ELPH_GKKP_Q",iq
+ call io_bulk(ID,VAR=trim(var_name),VAR_SZ=(/elph_nb*elph_nb,ph_modes,2,nkbz/) )
 
  do ik=1,nkbz
    if (write_is_on(ID)) then
-     forall(im=1:ph_modes,i1=1:dV_dim,i2=1:dV_dim) &
-&          elph_dV_disk((i1-1)*dV_dim+i2,im,1)=real(elph_dV(ik,im,i1,i2))
-     forall(im=1:ph_modes,i1=1:dV_dim,i2=1:dV_dim) &
-&          elph_dV_disk((i1-1)*dV_dim+i2,im,2)=aimag(elph_dV(ik,im,i1,i2))
+     forall(im=1:ph_modes,i1=1:elph_nb,i2=1:elph_nb) &
+&          elph_gkkp_disk((i1-1)*elph_nb+i2,im,1)=real(elph_gkkp(ik,im,i1,i2))
+     forall(im=1:ph_modes,i1=1:elph_nb,i2=1:elph_nb) &
+&          elph_gkkp_disk((i1-1)*elph_nb+i2,im,2)=aimag(elph_gkkp(ik,im,i1,i2))
    endif
 
-   call io_bulk(ID,R3=elph_dV_disk,IPOS=(/1,1,1,ik/))
+   call io_bulk(ID,R3=elph_gkkp_disk,IPOS=(/1,1,1,ik/))
 
    if (read_is_on(ID)) then
-     forall(im=1:ph_modes,i1=1:dV_dim,i2=1:dV_dim) &
-&          elph_dV(ik,im,i1,i2)=elph_dV_disk((i1-1)*dV_dim+i2,im,1)+&
-&                 (0._SP,1._SP)*elph_dV_disk((i1-1)*dV_dim+i2,im,2)
+     forall(im=1:ph_modes,i1=1:elph_nb,i2=1:elph_nb) &
+&          elph_gkkp(ik,im,i1,i2)=elph_gkkp_disk((i1-1)*elph_nb+i2,im,1)+&
+&                 (0._SP,1._SP)*elph_gkkp_disk((i1-1)*elph_nb+i2,im,2)
    endif
 
  enddo
 
- deallocate(elph_dV_disk)
+ deallocate(elph_gkkp_disk)
 
 1 call io_disconnect(ID=ID)
 

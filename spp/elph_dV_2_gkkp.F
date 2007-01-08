@@ -37,7 +37,8 @@
  complex(SP) :: cdotc
 #endif
 
-
+ elph_gkkp(:,:,:,:)=(0.,0.)
+ 
  do ik=1,dV_nk
 
    do ib1=1,elph_nb

@@ -22,7 +22,8 @@
  subroutine K_dump_to_o_file(iq,mode)
 !====================================
  use pars,  ONLY:HARTREE,pi,SP
- use BS,    ONLY:BSS_description,BSS_of_title,BSS_file_name,BSS_n_descs
+ use BS,    ONLY:BSS_description,BSS_of_title,BSS_file_name,&
+&                BSS_n_descs,BS_K_coupling
  use X_m,   ONLY:X_epsilon,alpha_dim,eps_2_alpha
  use com,   ONLY:msg,of_open_close
  implicit none
@@ -31,6 +32,7 @@
  character(5)      :: extension 
  integer           :: i1
  real(SP)          :: od(7)
+ complex(SP)       :: alpha
 !
 !Haydock
  if (iabs(mode)==1)  extension='-bh'
@@ -55,41 +57,50 @@
    call msg(extension,"",trim(BSS_description(i1)),INDENT=0)
  enddo
 !
-! POLARIZABILITY
-!----------------
-!
-! This relation is exact
-!
-! alpha=-eps_2_alpha X(1,1) / |q|^2 = (1 -eps_M^-1) eps_2_alpha/4/pi
-!
-! lhs does not need the antiresonant part of X
-! rhs DOES need the antiresonant part of X
-!
-! In the limit of eps_2_alpha -> \infty
-!
-! alpha=(epsilon_M-1) eps_2_alpha/4/pi
-!
-! this does not need the antiresonant part of X
-!
  if (mode>0) then
    call msg(extension,'#')
    if (mode==1) call msg(extension,'#',BSS_of_title,INDENT=0,USE_TABS=.TRUE.)
    if (mode==2) call msg(extension,'#',BSS_of_title(:5),INDENT=0,USE_TABS=.TRUE.)
    call msg(extension,'#')
    do i1=1,size(X_epsilon(1,:))
-
+     !
      od(1)=real(X_epsilon(1,i1))*HARTREE
      od(2)=aimag(X_epsilon(2,i1))
      od(3)=real(X_epsilon(2,i1))
      od(4)=aimag(X_epsilon(3,i1))
      od(5)=real(X_epsilon(3,i1))
+     !
      if (trim(alpha_dim)/='adim') then
-       od(2)=od(2)*eps_2_alpha/4./pi
-       od(3)=(od(3)-1.)*eps_2_alpha/4./pi
-       od(4)=od(4)*eps_2_alpha/4./pi
-       od(5)=(od(5)-1.)*eps_2_alpha/4./pi
+       !
+       ! POLARIZABILITY
+       !----------------
+       !
+       ! This relation is exact
+       !
+       ! alpha=-eps_2_alpha X(1,1) / |q|^2 = (1 -eps_M^-1) eps_2_alpha/4/pi
+       !
+       ! lhs does not need the antiresonant part of X
+       !
+       if (BS_K_coupling) alpha=1.-1./X_epsilon(2,i1)
+       !
+       ! rhs DOES need the antiresonant part of X
+       !
+       ! In the limit of eps_2_alpha -> \infty
+       !
+       ! alpha=(epsilon_M-1) eps_2_alpha/4/pi
+       !
+       ! this does not need the antiresonant part of X
+       !
+       if (.not.BS_K_coupling) alpha=X_epsilon(2,i1)
+       !
+       od(2:3)=(/aimag(alpha),real(alpha)-1./)*eps_2_alpha/4./pi
+       !
+       if (BS_K_coupling)      alpha=1.-1./X_epsilon(3,i1)
+       if (.not.BS_K_coupling) alpha=X_epsilon(3,i1)
+       od(4:5)=(/aimag(alpha),real(alpha)-1./)*eps_2_alpha/4./pi
+       !
      endif
- 
+     !
      if (mode==1) then
        od(6)=aimag(X_epsilon(4,i1))
        od(7)=real(X_epsilon(4,i1))

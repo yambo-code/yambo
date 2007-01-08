@@ -410,14 +410,18 @@
  call pp_indexes_reset(px)
  call pp_redux_wait()
 !
-#if defined PJ_SC 
+#if defined PJ_SC
 
  close(101)
 
  contains
 
  subroutine PJ_SC_report(W2_report)
+
+ use R_lattice, ONLY:rl_sop
  complex(SP) :: W2_report
+ real(SP)    :: rkpvec(3)
+
  !
  !  is(3)=(ib,ik,is,i_spin) --<--:--<-- os(3)=(ob,ok,os,o_spin)
  !                               :
@@ -426,14 +430,18 @@
  !
  ! 2 to go from Ha to Ry
  !
+ rkpvec=matmul(rl_sop(:,:,isc%os(3)),k%pt(isc%os(2),:))
+
  write (101,'(2f20.10,6i3)')  en%E(isc%is(1),isc%is(2),1)-en%E(isc%os(1),isc%os(2),1),&
 &                             2.*real(W2_report),isc%is(1:3),isc%os(1:3)
- !
+
+ write(107,'(2(i4,3f11.6),f17.10)')  isc%is(1), k%pt(isc%is(2),:),  &
+&                                    isc%os(1), rkpvec, real(W2_report)
+
  end subroutine
 #endif
 
 ! -- GPL_START --
 
  end subroutine
-!
 

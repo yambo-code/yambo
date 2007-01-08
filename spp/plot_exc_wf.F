@@ -22,7 +22,7 @@
  subroutine plot_exc_wf(Xk)
 !=======================================
  use FFT_m,       ONLY : fft_size,fft_dim,fft_rot_r
- use pars,        ONLY : SP,HARTREE,IP,pi
+ use pars,        ONLY : SP,HARTREE,IP,pi,lchlen
  use D_lattice,   ONLY : a,sop_inv,i_time_rev,nsym,alat
  use wave_func,   ONLY : wf_load,wf_state,wf_ng,wf,WF_free
  use R_lattice,   ONLY : nXkibz,bz_samp
@@ -88,9 +88,20 @@
  complex,  allocatable ::wf_eh(:)
  real(SP), allocatable ::wf2d(:,:)
 !
+!Variables needed to the report of eigenvectors
+!-----------------------------------
+ real(SP), allocatable ::A_weight(:)
+ integer           ::j1
+!
 !-------------
  integer io_ID
-
+!-----------------------
+!
+! Outputs
+!
+ character(lchlen) :: file_name
+ character(lchlen) :: local_ch
+ character(5)      :: extension
 !
 !--------Here I read information from the BS database
 !
@@ -186,9 +197,10 @@
 !==================================================================
   call section('=','Excitonic Wave function costruction')
 !Allocation
-  
-   allocate(wf_vc(BS_K_dim),wf_eh(nrtot))
-   call k_ibz2bz(Xk,'i',.false.)
+     
+  allocate(wf_vc(BS_K_dim),wf_eh(nrtot))
+  call k_ibz2bz(Xk,'i',.false.)
+
   call live_timing('Exc-Wfs',nrtot)  
   do ir=1,nrtot
    r_eh(:)=rvecbig(:,ir)-r_hole(:)
@@ -207,18 +219,54 @@
 &           *conjg( wf(fft_rot_r(sop_inv(is),rindex(ir_hole)), iv_fft) )
     if (is > nsym/(i_time_rev+1)) wf_vc(neh) = conjg(wf_vc(neh))
     wf_vc(neh) = exp(cI*kr*2*pi)*wf_vc(neh)
-   enddo
+
+   enddo  !Matrix elements
 #if defined _DOUBLE
      wf_eh(ir) = zdotu(BS_K_dim,BS_mat(1,lambda),1,wf_vc,1)
 #else
      wf_eh(ir) = cdotu(BS_K_dim,BS_mat(1,lambda),1,wf_vc,1)
 #endif
   call live_timing(steps=1)
-  enddo
- 
+  enddo   !grid points
+
  call live_timing
+
+
+
+!report on file of the weights A_cvk of excitonic wf
+
+  allocate(A_weight(BS_K_dim))
+
+  write(extension,'(a,i2.2)') '-',lambda
+  write(file_name,'(a,a)') 'weight',trim(extension)
+  call of_open_close(file_name,'ot')
+  write(extension,'(a,i2.2)')'o -',lambda
+  do j1=1,BSS_n_descs
+   call msg(extension,"",trim(BSS_description(j1)),INDENT=0)
+  enddo
+  call msg(extension,'#')
+  write(local_ch,'(a,i2.2,a)') 'Electron-Hole pairs that contributes &
+                          to Excitonic State ',lambda,' more than 5%'
+  call msg(extension,'#',local_ch,INDENT=0,USE_TABS=.TRUE.)
+  call msg(extension,'#')
+  write(local_ch,'(8x,a,6x,a,5x,a,8x,a,1x,a,6x,a)') 'Band_V','Band_C',&
+                                        ' K_ibz','Sym','|','Weight '
+  call msg(extension,'#',local_ch,INDENT=0,USE_TABS=.TRUE.)
+  do neh = 1,BS_K_dim
+   ikbz = BS_eh_table(neh,1)
+   iv = BS_eh_table(neh,2)
+   ic = BS_eh_table(neh,3)
+   ikibz = Xk%sstar(ikbz,1)
+   is = Xk%sstar(ikbz,2)
+   A_weight(neh)=(BS_mat(neh,lambda)*conjg(BS_mat(neh,lambda)))
+   if (A_weight(neh)>=5e-2) then
+    write(local_ch,'(i,i,i,i,a,f)') iv,ic,ikibz,is,'  |',A_weight(neh)
+    call msg(extension,'',local_ch,USE_TABS=.FALSE.)
+   endif
+  enddo
+  call of_open_close(file_name) 
 !deallocation
- deallocate(BS_eh_table,BS_mat,wf_vc)
+ deallocate(BS_eh_table,BS_mat,wf_vc,A_weight)
 !PLOT
 
  call plot_driver()
@@ -286,15 +334,10 @@
 
  subroutine sort_energies(BS_R,BS_E)
 !----------------------------------------------
- use pars, ONLY:lchlen
  implicit none 
  
  complex BS_R(BS_K_dim),BS_E(BS_K_dim)
-!
-!Output
-!------
- character(lchlen) :: file_name,local_ch
- character(5)   :: extension
+
 !ws
 !--
  integer j1,j2
@@ -333,10 +376,10 @@
  if (sort_mode == 'e') then
 !
   do j1=1,BS_K_dim
-   if ( real(BS_E(j1)) >= 0.and.real(BS_E(j1))<=max_energy) then 
+   if (real(BS_E(j1))<=max_energy) then 
     write(local_ch,'(f,f,a,i)')real(BS_E(j1))*HARTREE ,Rs(j1),' |',j1
 !Ask to Andrea if possbile to mix real and integere in msg   
-    call msg(extension,'',local_ch,USE_TABS=.FALSE.)
+    call msg(extension,'',local_ch,USE_TABS=.TRUE.)
    endif
   enddo
 
@@ -388,14 +431,11 @@
 
  subroutine plot_gnu()
 !-----------------------------
- use pars, ONLY:lchlen
  implicit none
 !
 !output
 !------
- character(lchlen) :: file_name
- character(lchlen) :: local_ch
- character(5)      :: extension
+
  character(lchlen), allocatable :: title(:)
  real(SP), allocatable       ::od(:)
 !
@@ -666,17 +706,15 @@
 
  subroutine plot_xcrysden()
 !-----------------------------
- use pars,        ONLY : lchlen
  use com,         ONLY : code_version 
  use D_lattice,   ONLY : n_atom_species,n_atoms,atom_pos,znucl
  implicit none
 !
 !outputs
 !
- character(lchlen) :: file_name
- character(lchlen) :: local_ch
+ 
  character(lchlen), allocatable :: title(:)
- character(10)     :: extension
+ character(10)     :: extension2
  real(SP)          ::od(3)
 !
 !atomic structures
@@ -721,10 +759,10 @@
 !
 !Open the output file
 !
- if (p_dim==3) extension='-3d.xsf'
- if (p_dim==2) write(extension,'(a,a,a)') '-2d',p_dir,'.xsf'
- write(file_name,'(a,i2.2,a)') 'exc_wf',lambda,trim(extension)
- extension='o .xsf'
+ if (p_dim==3) extension2='-3d.xsf'
+ if (p_dim==2) write(extension2,'(a,a,a)') '-2d',p_dir,'.xsf'
+ write(file_name,'(a,i2.2,a)') 'exc_wf',lambda,trim(extension2)
+ extension2='o .xsf'
  call of_open_close(file_name,'ot')
  
    
@@ -738,13 +776,13 @@
 ! WRITING ...
 !
 !This is the output file common at both grids
- call msg(extension,'CRYSTAL')
- call msg(extension,'PRIMVEC')
- call msg(extension,'',ncell(1)*a(1,:)*bohr)
- call msg(extension,'',ncell(2)*a(2,:)*bohr)
- call msg(extension,'',ncell(3)*a(3,:)*bohr)
- call msg(extension,'PRIMCOORD')
- call msg(extension,'',(/n_atoms_tot*ncell(1)*ncell(2)*ncell(3),1/))
+ call msg(extension2,'CRYSTAL')
+ call msg(extension2,'PRIMVEC')
+ call msg(extension2,'',ncell(1)*a(1,:)*bohr)
+ call msg(extension2,'',ncell(2)*a(2,:)*bohr)
+ call msg(extension2,'',ncell(3)*a(3,:)*bohr)
+ call msg(extension2,'PRIMCOORD')
+ call msg(extension2,'',(/n_atoms_tot*ncell(1)*ncell(2)*ncell(3),1/))
 
 !write the translated atoms of the cell
 ! 
@@ -757,7 +795,7 @@
       od(2)=atom_pos(2,natom,ntype)*bohr+i1*a_angs(2,1)+i2*a_angs(2,2)+i3*a_angs(2,3)
       od(3)=atom_pos(3,natom,ntype)*bohr+i1*a_angs(3,1)+i2*a_angs(3,2)+i3*a_angs(3,3)   
       write(local_ch,'(i,f,f,f)') znucl(ntype),od(1),od(2),od(3)
-      call msg(extension,'',local_ch,INDENT=0,USE_TABS=.FALSE.)
+      call msg(extension2,'',local_ch,INDENT=0,USE_TABS=.FALSE.)
      enddo
     enddo
    enddo
@@ -770,41 +808,41 @@
 !grids
 !
  if (p_dim==3) then  !3d grid
-  call msg(extension,'BEGIN_BLOCK_DATAGRID_3D')
+  call msg(extension2,'BEGIN_BLOCK_DATAGRID_3D')
   write (local_ch,'(a,3(i2.2,a))') 'Generated with SELF ',&
 &                  code_version(1),'.',code_version(2),'.',code_version(3)
-  call msg(extension,local_ch)
-  call msg(extension,'BEGIN_DATAGRID_3D')
-  call msg(extension,'',(/nr1,nr2,nr3/))
-  call msg(extension,'',(/0.,0.,0./))
-  call msg(extension,'',ncell(1)*a_angs(1,:))
-  call msg(extension,'',ncell(2)*a_angs(2,:))
-  call msg(extension,'',ncell(3)*a_angs(3,:))
+  call msg(extension2,local_ch)
+  call msg(extension2,'BEGIN_DATAGRID_3D')
+  call msg(extension2,'',(/nr1,nr2,nr3/))
+  call msg(extension2,'',(/0.,0.,0./))
+  call msg(extension2,'',ncell(1)*a_angs(1,:))
+  call msg(extension2,'',ncell(2)*a_angs(2,:))
+  call msg(extension2,'',ncell(3)*a_angs(3,:))
 !
  elseif (p_dim==2) then   !2D grid 
 !
-  call msg(extension,'BEGIN_BLOCK_DATAGRID_2D')
+  call msg(extension2,'BEGIN_BLOCK_DATAGRID_2D')
   write (local_ch,'(a,3(i2.2,a))') 'Generated with SELF ',&
                    code_version(1),'.',code_version(2),'.',code_version(3)
-  call msg(extension,local_ch)
-  call msg(extension,'BEGIN_DATAGRID_2D')
+  call msg(extension2,local_ch)
+  call msg(extension2,'BEGIN_DATAGRID_2D')
 !
 !here it depends on the plane
 !number of data-points in each direction 
 !
-  if (p_dir=='xy') call msg(extension,'',(/nr1,nr2/)) 
-  if (p_dir=='xz') call msg(extension,'',(/nr1,nr3/)) 
-  if (p_dir=='yz') call msg(extension,'',(/nr2,nr3/))
+  if (p_dir=='xy') call msg(extension2,'',(/nr1,nr2/)) 
+  if (p_dir=='xz') call msg(extension2,'',(/nr1,nr3/)) 
+  if (p_dir=='yz') call msg(extension2,'',(/nr2,nr3/))
 !origin of the datagrid
-  if (p_dir=='xy') call msg(extension,'',ncell(3)*a_angs(3,:)/2)
-  if (p_dir=='xz') call msg(extension,'',ncell(2)*a_angs(2,:)/2) 
-  if (p_dir=='yz') call msg(extension,'',ncell(1)*a_angs(1,:)/2)
+  if (p_dir=='xy') call msg(extension2,'',ncell(3)*a_angs(3,:)/2)
+  if (p_dir=='xz') call msg(extension2,'',ncell(2)*a_angs(2,:)/2) 
+  if (p_dir=='yz') call msg(extension2,'',ncell(1)*a_angs(1,:)/2)
 !first spanning vector of the datagrid
-  if (p_dir=='xy'.or.p_dir=='xz') call msg(extension,'',ncell(1)*a_angs(1,:))
-  if (p_dir=='yz') call msg(extension,'',ncell(2)*a_angs(2,:))
+  if (p_dir=='xy'.or.p_dir=='xz') call msg(extension2,'',ncell(1)*a_angs(1,:))
+  if (p_dir=='yz') call msg(extension2,'',ncell(2)*a_angs(2,:))
 !second spanning vector of the datagrid
-  if (p_dir=='xy')call msg(extension,'',ncell(2)*a_angs(2,:))
-  if (p_dir=='xz'.or.p_dir=='yz') call msg(extension,'',ncell(3)*a_angs(3,:))
+  if (p_dir=='xy')call msg(extension2,'',ncell(2)*a_angs(2,:))
+  if (p_dir=='xz'.or.p_dir=='yz') call msg(extension2,'',ncell(3)*a_angs(3,:))
  endif
 
  if (p_dim==3) then  !plot of the 3d wf
@@ -815,10 +853,10 @@
   do ir3 = 0, nr3-1
    do ir2 = 0, nr2-1
     do ir1 = 0, nr1-1
-     call msg(extension,'',wf3d(ir1+1,ir2+1,ir3+1))
+     call msg(extension2,'',wf3d(ir1+1,ir2+1,ir3+1))
     enddo
    enddo
-   call msg(extension,'')
+   call msg(extension2,'')
   enddo
   deallocate(wf3d)
  endif
@@ -831,7 +869,7 @@
   if (p_dir=='xy') then  !xy plane
    do ir2=1,nr2 
     do ir1=1,nr1
-     call msg(extension,'',wf2d(ir1,ir2))
+     call msg(extension2,'',wf2d(ir1,ir2))
     enddo
    enddo
 !
@@ -839,7 +877,7 @@
 ! 
   do ir3=1,nr3 
     do ir1=1,nr1
-     call msg(extension,'',wf2d(ir1,ir3))
+     call msg(extension2,'',wf2d(ir1,ir3))
     enddo
    enddo
 !
@@ -847,7 +885,7 @@
 !
    do ir3=1,nr3 
     do ir2=1,nr2
-     call msg(extension,'',wf2d(ir2,ir3))
+     call msg(extension2,'',wf2d(ir2,ir3))
     enddo
    enddo  
   endif ! if on p_dir
@@ -855,11 +893,11 @@
  endif !if on p_dim
 ! 
  if (p_dim==3) then 
-  call msg(extension,'','END_DATAGRID_3D')
-  call msg(extension,'','END_BLOCK_DATAGRID_3D')
+  call msg(extension2,'','END_DATAGRID_3D')
+  call msg(extension2,'','END_BLOCK_DATAGRID_3D')
  elseif (p_dim==2) then 
-  call msg(extension,'','END_DATAGRID_2D')
-  call msg(extension,'','END_BLOCK_DATAGRID_2D')
+  call msg(extension2,'','END_DATAGRID_2D')
+  call msg(extension2,'','END_BLOCK_DATAGRID_2D')
  endif
  
  end subroutine

@@ -76,27 +76,30 @@
        !----------------
        !
        ! This relation is exact
+       ! 
+       ! alpha = -eps_2_alpha X(1,1) / |q|^2      (1)
+       !       =  (1 -eps_M^-1) eps_2_alpha/4/pi  (2)
        !
-       ! alpha=-eps_2_alpha X(1,1) / |q|^2 = (1 -eps_M^-1) eps_2_alpha/4/pi
+       ! and BOTH need the antiresonant part of X ( or eps_M(w) )
        !
-       ! lhs does not need the antiresonant part of X
+       ! In the limit of eps_2_alpha (or the volume) -> \infty we get
        !
-       if (BS_K_coupling) alpha=1.-1./X_epsilon(2,i1)
+       ! eps_M^-1 \sim 1 - 4 pi /|q|^2 X(1,1)
        !
-       ! rhs DOES need the antiresonant part of X
+       ! so that
        !
-       ! In the limit of eps_2_alpha -> \infty
+       ! alpha=(epsilon_M-1) eps_2_alpha/4/pi (3)
        !
-       ! alpha=(epsilon_M-1) eps_2_alpha/4/pi
+       ! this does not need the antiresonant part of X. 
+       ! Now when using the BS kernel includes the coupling I use (2) (instead
+       ! of (1) like in O_driver.F)
        !
-       ! this does not need the antiresonant part of X
-       !
-       if (.not.BS_K_coupling) alpha=X_epsilon(2,i1)
+       if (BS_K_coupling)      alpha=1.-1./X_epsilon(2,i1)  ! (2)
+       if (.not.BS_K_coupling) alpha=X_epsilon(2,i1)-1.     ! (3)
        !
        od(2:3)=(/aimag(alpha),real(alpha)-1./)*eps_2_alpha/4./pi
        !
-       if (BS_K_coupling)      alpha=1.-1./X_epsilon(3,i1)
-       if (.not.BS_K_coupling) alpha=X_epsilon(3,i1)
+       alpha=X_epsilon(3,i1)-1.
        od(4:5)=(/aimag(alpha),real(alpha)-1./)*eps_2_alpha/4./pi
        !
      endif

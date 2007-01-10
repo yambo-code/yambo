@@ -185,30 +185,35 @@
      X_epsilon(2,fr(1):fr(2))=1./(X_mat(1,1,:)*bare_qpg(iq,1)**2/q_norm(iq)**2+1.)
      X_epsilon(3,fr(1):fr(2))=-1./X_epsilon(1,:)
      X_epsilon(4,fr(1):fr(2))=-1./X_epsilon(2,:)
-!
-! This relation is exact
-!
-! alpha=-eps_2_alpha X(1,1) / |q|^2 = (1 -eps_M^-1) eps_2_alpha/4/pi
-!       ---------- 1 --------------   ----------- 2 ----------------
-!
-! (1) DOES need the antiresonant part of X
-! (2) does not need the antiresonant part of X
-!
-     if (l_col_cut) then
-!
+     !
+     ! This relation is exact
+     !
+     ! alpha = -eps_2_alpha X(1,1) / |q|^2      (1)
+     !       =  (1 -eps_M^-1) eps_2_alpha/4/pi  (2)
+     !
+     ! and BOTH need the antiresonant part of X ( or eps_M(w) )
+     !
+     ! In the limit of eps_2_alpha (or the volume) -> \infty we get
+     !
+     ! eps_M^-1 \sim 1 - 4 pi /|q|^2 X(1,1)
+     !
+     ! so that
+     !
+     ! alpha=(epsilon_M-1) eps_2_alpha/4/pi (3)
+     !
+     ! this does not need the antiresonant part of X. Now when using the 
+     ! columbian cutoff OR when the Green's function is not resonant or
+     ! antiresonant only I use the full expression
+     !
+     if (l_col_cut.or.(trim(X%ordering)/='a'.and.trim(X%ordering)/='r')) then
+     !
        X_epsilon(5,fr(1):fr(2))=&
-&              -X_mat(1,1,:)*bare_qpg(iq,1)**2/q_norm(iq)**2/4./pi*eps_2_alpha
-!
-! In the limit of eps_2_alpha -> \infty
-!
-! alpha=(epsilon_M-1) eps_2_alpha/4/pi
-!
-! this does not need the antiresonant part of X
-!
+&              -X_mat(1,1,:)*bare_qpg(iq,1)**2/q_norm(iq)**2/4./pi*eps_2_alpha ! (1)
+     !
      else
-       X_epsilon(5,fr(1):fr(2))=(X_epsilon(2,fr(1):fr(2))-1._SP)*eps_2_alpha/4./pi
+       X_epsilon(5,fr(1):fr(2))=(X_epsilon(2,fr(1):fr(2))-1._SP)*eps_2_alpha/4./pi ! (3)
      endif
-!
+     !
      call of_open_close(of_name(1),'oa')
      call of_open_close(of_name(2),'oa')
      call of_open_close(of_name(4),'oa')

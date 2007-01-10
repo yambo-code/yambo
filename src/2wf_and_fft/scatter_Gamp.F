@@ -99,19 +99,42 @@
      !
      if ( (RIM_ng==0.and.iq>1) ) cycle
      !
-     ! When using the CUTOFF all the components of the Col potential is already regolarized.
+     ! When using the CUTOFF all the components of the Col potential are 
+     ! already regolarized.
      !
      if (l_col_cut) cycle
      !
-     ! Wings (0,G) & (G,0) components using the Sphere approx for the region around Gamma:
+     ! Wings (0,G) & (G,0) components using the Sphere approx for the region around Gamma
+     ! and the square root approx for other components:
      !
-     ! \int_q (region) 1/q /(2*pi)**3 = R_sphere/2. * reg_q_m2
+     ! \int_q (region) 1/q /(2*pi)**3 = R_sphere/2. * reg_q_m2 
+     ! 
+     ! for q = 0 
+     ! 
+     ! \int_q (region) 1/q /(2*pi)**3 \sim 
+     !                 sqrt(\int_q (region) 1/q^2 /(2*pi)**3 ) / 
+     ! 
+     ! for q != 0 
      !
-     if (ig1==1) then
-       if (ig2>RIM_ng.or.(RIM_is_diagonal.and.ig2>1)) isc%gamp(ig,ig2)=R_sphere/2.*reg_q_m2/bare_qpg(iq,ig2) 
+     if (ig1==1.and.(ig2>RIM_ng.or.(RIM_is_diagonal.and.ig2>1))) then
+       if (iq==1) then 
+         isc%gamp(ig,ig2)=R_sphere/2.*reg_q_m2/bare_qpg(iq,ig2)
+       else
+         !
+         ! the sqrt(q_weight) is needed as the sqrt(reg_q_m2) contains
+         ! implicitly the q_weight
+         ! 
+         isc%gamp(ig,ig2)=isc%gamp(ig,ig2)*& 
+&                         bare_qpg(iq,ig1)*sqrt(reg_q_m2)/sqrt(q_weight)
+       endif
      endif
-     if (ig2==1) then
-       if (ig1>RIM_ng.or.(RIM_is_diagonal.and.ig1>1)) isc%gamp(ig,ig2)=R_sphere/2.*reg_q_m2/bare_qpg(iq,ig1) 
+     if (ig2==1.and.(ig1>RIM_ng.or.(RIM_is_diagonal.and.ig1>1))) then
+       if (iq==1) then
+         isc%gamp(ig,ig2)=R_sphere/2.*reg_q_m2/bare_qpg(iq,ig1)
+       else 
+         isc%gamp(ig,ig2)=isc%gamp(ig,ig2)*& 
+&                         bare_qpg(iq,ig2)*sqrt(reg_q_m2)/sqrt(q_weight)
+       endif
      endif
      !
      ! head component.

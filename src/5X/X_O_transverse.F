@@ -42,7 +42,7 @@
  integer                      :: is,ia,il,im,alloc_err,i_spin
  complex(SP), allocatable     :: wf_xyz(:,:), kbv(:,:,:)
  complex(SP)                  :: rho(3)
- real(SP)                     :: omega
+ real(SP)                     :: Ev_m_Ec
  type(pp_indexes)             :: px
 !I/O and external functions
  integer                      :: ID,io_err,ioKB_err
@@ -109,13 +109,16 @@
          wf_xyz(:,i1)=wf(:,ivfft)*(Xk%pt(ik,i1)+g_vec(:wf_ng,i1))*2.0_SP*pi/alat(i1)
        enddo
        do ic=Xen%nbf+1,X%ib(2)
-         omega=Xen%E(iv,ik,i_spin)-Xen%E(ic,ik,i_spin)
-         if (associated(Xen%Eo)) omega=Xen%Eo(iv,ik,i_spin)-Xen%Eo(ic,ik,i_spin)
-         if (any((/-omega<X%ehe(1).and.X%ehe(1)>0.0_SP,-omega>X%ehe(2).and.X%ehe(2)>0.0_SP/))) cycle
-         if (abs(omega)<=1.E-5_SP) cycle
+         Ev_m_Ec=Xen%E(iv,ik,i_spin)-Xen%E(ic,ik,i_spin)
+         if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,i_spin)-Xen%Eo(ic,ik,i_spin)
+         if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,&
+&                  -Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/))) cycle
+         if (abs(Ev_m_Ec)<=1.E-5_SP) cycle
          icfft=wf_state(ic,ik,i_spin)
 !
-! rho = wf_xyz^* fdo(ic,ik)= i < fdo(iv,ik)| grad |  fdo(ic,ik) >
+! rho = wf_xyz^* fdo(ic,ik)= - i < fdo(iv,ik)| grad |  fdo(ic,ik) > =
+!       \sum_G -i u^*_{iv ik}(G) i ( k + G ) u_{ic ik}(G)
+!     = \sum_G u^*_{iv ik}(G) ( k + G ) u_{ic ik}(G)
 !
 #if defined _DOUBLE
          rho(1)=zdotc(wf_ng,wf_xyz(:,1),1,wf(:,icfft),1)
@@ -128,9 +131,12 @@
 #endif
          if (ioKB_err==0) call X_O_kb_sum(ivfft,icfft,rho,kbv)
 !
-!     X_q0grad = i <v | p |c> / (Ev-Ec) = i < v k | r | c k >
+! as [x,p_x]=i we get [x,H] = [x,p^2/2]= i p_x
 !
-         X_q0grad(:,ic,iv,ik,i_spin)=rho(:)/omega
+!     X_q0grad = i <v|r|c> = i <v|[r,H]|c>/(Ec-Ev) = i <v|i p|c>/(Ec-Ev) =
+!              = - <v | -i grad |c> / (Ec-Ev) = <v|-i grad|c>/(Ev-Ec)
+!
+         X_q0grad(:,ic,iv,ik,i_spin)=rho(:)/Ev_m_Ec
    
        enddo  ! conduction band loop
 

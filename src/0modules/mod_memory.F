@@ -41,6 +41,7 @@
 
  subroutine mem_est(what,elements_size,elements_kind,errors,quiet,overall_report)
 !================================================================================
+ use drivers,      ONLY:infile_editing
  use com,          ONLY:msg,error
  use par_proc_m,   ONLY:master_node
  implicit none
@@ -123,7 +124,8 @@
    enddo
  endif
 
- stdout_report=master_node.and.mem_moved>mem_tresh.and..not.present(quiet)
+ stdout_report=master_node.and.mem_moved>mem_tresh.and.&
+&              .not.present(quiet).and..not.infile_editing
  if (.not.stdout_report) return
 
  write (ch(2),'(a,f5.3,4a,f5.3,a)') "[M ",mem_sum," Gb] ",trim(action),&

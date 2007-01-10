@@ -185,41 +185,29 @@
      do i1=1,BS_H_dim
        BS_R(i1)=cmplx(0.,0.,SP)
        if (.not.px%i1p(i1)) cycle
-!DEBUG
 #if defined _DOUBLE
-!       BS_R(i1)=zdotu(BS_H_dim,BS_V_left(:,i1),1,BSS_rhoq0,1)
        BS_R(i1)=zdotc(BS_H_dim,BS_V_left(:,i1),1,BSS_rhoq0,1)
 #else
-!       BS_R(i1)=cdotu(BS_H_dim,BS_V_left(:,i1),1,BSS_rhoq0,1)
        BS_R(i1)=cdotc(BS_H_dim,BS_V_left(:,i1),1,BSS_rhoq0,1)
 #endif
-!END DEBUG
        call live_timing(steps=1)
      enddo
      call pp_redux_wait(BS_R)
      BSS_rhoq0(BS_K_dim+1:)=-BSS_rhoq0(BS_K_dim+1:)
      call live_timing
 !
-! [3] BS_overlap(i,j)=conjg(BS_V_right(k,i))*BS_V_left(k,j)
+! [3] BS_overlap(i,j)=conjg(BS_V_left(k,i))*BS_V_right(k,j)
 !----------------------------------------------------------
      call live_timing('BSK overlap mat',1)
-!DEBUG
 #if defined _DOUBLE
-!     call zgemm('c','n',BS_H_dim,BS_H_dim,BS_H_dim,(1.,0.),&
-!&               BS_V_right,BS_H_dim,BS_V_left,BS_H_dim,(0.,0.),&
-!&               BS_overlap,BS_H_dim)
      call zgemm('c','n',BS_H_dim,BS_H_dim,BS_H_dim,(1.,0.),&
 &               BS_V_left,BS_H_dim,BS_V_right,BS_H_dim,(0.,0.),&
 &               BS_overlap,BS_H_dim)
 #else
-!     call cgemm('c','n',BS_H_dim,BS_H_dim,BS_H_dim,(1.,0.),&
-!&               BS_V_right,BS_H_dim,BS_V_left,BS_H_dim,(0.,0.),&
-!&               BS_overlap,BS_H_dim)
      call cgemm('c','n',BS_H_dim,BS_H_dim,BS_H_dim,(1.,0.),&
 &               BS_V_left,BS_H_dim,BS_V_right,BS_H_dim,(0.,0.),&
 &               BS_overlap,BS_H_dim)
 #endif
-!ENDDEBUG
      call mat_dia_inv(INV,USE_SLK,BS_overlap)
      call live_timing(steps=1)
      call live_timing()

@@ -30,7 +30,8 @@
  &                      max_energy,p_format,p_dim,p_dir
  use IO_m,        ONLY : io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
  use BS,          ONLY : BS_K_dim,BS_bands,BS_q,BSS_n_descs,BSS_description,&
-&                       BS_eh_table,BS_mat
+ &                       BS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
+ &                       BS_cpl_K_exchange,BS_cpl_K_corr
  use vec_operate, ONLY: sort
  use com,         ONLY: msg,of_open_close,error
  use X_m,         ONLY: X_t
@@ -107,8 +108,10 @@
 !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_err=ioBS(1,Xbsk,io_ID)
-
-
+ if (BS_cpl_K_exchange) BS_cpl_mode='x'
+ if (BS_cpl_K_corr) BS_cpl_mode='c'
+ if (BS_cpl_K_exchange.and.BS_cpl_K_corr) BS_cpl_mode='xc'
+ if (BS_K_coupling) BS_K_dim=2*BS_K_dim
 !
 ! Allocation of energies and residuum, then also eigenvector
 !
@@ -135,7 +138,7 @@
   call sort_energies(BS_R,BS_E)
   return
  else if (action_mode == 'p') then
-
+  if (BS_K_coupling) call error('When coupling is present only sort mode works')
   call section('*','Excitonic Wave Function')
 !===================================================
 !    Loading tables and eigenvectors

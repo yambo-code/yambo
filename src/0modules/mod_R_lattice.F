@@ -21,7 +21,7 @@
 !
  module R_lattice
 !================
-   use pars, ONLY:SP,schlen, IP
+   use pars, ONLY:SP,schlen,IP
 !
 ! K lattice
 !

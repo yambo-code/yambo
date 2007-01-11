@@ -34,7 +34,7 @@
 &                         io_elemental,io_status,io_bulk,read_is_on,&
 &                         write_is_on,io_mode,DUMP,VERIFY,&
 &                         io_fragment,io_check_restart,io_restart,&
-&                         io_netcdf_support,version_is_newer
+&                         io_netcdf_support,ver_is_gt_or_eq
  implicit none
  type(QP_t)  ::qp
  character(*)::what ! 'QP'/'W'
@@ -63,7 +63,7 @@
    ioQP=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.)
    if (ioQP/=0) goto 1
 
-   if (version_is_newer(ID,(/3,0,1/)).and.what/="W") then
+   if (ver_is_gt_or_eq(ID,(/3,0,1/)).and.what/="W") then
      call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
    else
      call io_elemental(ID,VAR="PARS",VAR_SZ=4,MENU=0)
@@ -77,7 +77,7 @@
    call io_elemental(ID,I0=qp%n_states,DB_I0=QP_n_states_disk,&
 &       VAR=' QP tot states          :',CHECK=.true.,OP=OP)
 
-   if (version_is_newer(ID,(/3,0,1/)).and.what/="W") &
+   if (ver_is_gt_or_eq(ID,(/3,0,1/)).and.what/="W") &
 &    call io_elemental(ID,I0=GWo_iterations,&
 &       VAR=' GW SC iterations       :',CHECK=.true.,OP=(/"=="/))
 

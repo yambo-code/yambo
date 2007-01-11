@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  module X_m
-  use pars, ONLY:SP,HARTREE,lchlen
+  use pars, ONLY:SP,HARTREE,lchlen,schlen
 !
 ! Absorption & Polarizability
 !
@@ -42,19 +42,20 @@
   logical :: use_X_RIM
   character(lchlen) :: long_path
   type X_t
-   integer  :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp
-   integer  :: ng
-   integer  :: ng_db
-   integer  :: iq(2)
-   integer  :: ib(2)
-   integer  :: ngostnts
-   real(SP) :: ehe(2)
-   real(SP) :: q0(3)
-   real(SP) :: cg_percentual
-   real(SP) :: ppaE
-   logical  :: Vnl_included
-   character(1) :: ordering
-   complex(SP)  :: Wd
+    integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp
+    integer    :: ng
+    integer    :: ng_db
+    integer    :: iq(2)
+    integer    :: ib(2)
+    integer    :: ngostnts
+    real(SP)   :: ehe(2)
+    real(SP)   :: q0(3)
+    real(SP)   :: cg_percentual
+    real(SP)   :: ppaE
+    logical    :: Vnl_included
+    complex(SP):: Wd
+    character(1)     :: ordering
+    character(schlen):: f_xc
   end type
 
   contains
@@ -117,6 +118,7 @@
  Xo%cg_percentual=Xi%cg_percentual
  Xo%ppaE=Xi%ppaE
  Xo%Wd=Xi%Wd
+ Xo%f_xc=Xi%f_xc
  end subroutine
 
  subroutine X_reset(X,type)
@@ -136,6 +138,7 @@
  X%cg_percentual=100.
  X%ppaE=1.
  X%ordering="t"       
+ X%f_xc="none"       
  end subroutine
 
  end module

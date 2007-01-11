@@ -23,7 +23,7 @@
 !==================================
  use pars,          ONLY:DP,SP
  use memory_m,      ONLY:mem_est
- use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_type
+ use TDDFT,         ONLY:FXC_n_g_corr,FXC
  use com,           ONLY:msg
  use FFT_m,         ONLY:fft_size,fftw_plan,fft_dim,fft_g_table
  use electrons,     ONLY:levels
@@ -38,7 +38,6 @@
  complex(DP), allocatable :: F_xc_DP(:)
  integer, external        :: eval_G_minus_G
 !
- FXC_type='-alda'
  if (allocated(FXC)) return
 !
 ! Fxc RL size setup looking at the max index of G-G'

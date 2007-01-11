@@ -23,6 +23,7 @@
 !=================================
  use pars,          ONLY:SP,HARTREE
  use X_m,           ONLY:X_t,alpha_dim
+ use IO_m,          ONLY:ver_is_gt_or_eq
  use BS,            ONLY:BSS_n_descs,BSS_description,&
 &                        BS_eh_win,BS_n_g_exch,BS_eh_en,&
 &                        BS_n_g_W,BS_bands,BS_K_dim,BS_res_mode,BS_res_K_exchange,&
@@ -115,6 +116,12 @@
    write (BSS_description(BSS_n_descs),trim(&
 &         string_pack('(a,3(',gen_fmt(r_v=X%q0),'))'))) &
 &         '#    |Field direction  [cc]:',X%q0
+
+   if (ver_is_gt_or_eq(-1,(/3,0,5/))) then
+     BSS_n_descs=BSS_n_descs+1
+     write (BSS_description(BSS_n_descs),'(2a)') &
+&          '#    |xc-Kernel            :',trim(X%f_xc)
+   endif 
 
    if (allocated(RIM_qpg)) then
      BSS_n_descs=BSS_n_descs+1

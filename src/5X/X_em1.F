@@ -47,12 +47,21 @@
  character(1)      :: sec_mode
 !---------------------------------------------------------------------
  self_detect_E_range=.false.
-
+ !
+ ! TDDFT SETUP (-1 argument)
+ !---------------------------
+ ! X%f_xc is setup when using ALDA, so that 
+ ! the comparison in ioX can be done safely
+ !
+ call tddft_do_X_W_typs(-1,X,Xw)
+ ! 
+ ! Sectioning
+ !------------
  sec_mode='*'
  if (depth>0) sec_mode='='
-
+ !
  X_em1=-1
-
+ !
  if (.not.APPEND_NO_VERIFY) then
    if (X%whoami==2) then
      call section(sec_mode,'Static Dielectric Matrix')
@@ -70,14 +79,14 @@
  endif
 
  call X_checks(Xen,X)
-!
-! Build frequency range only if Xw%p was not already allocated
-! like in LifeTimes calculations
-!
+ !
+ ! Build frequency range only if Xw%p was not already allocated
+ ! like in LifeTimes calculations
+ !
  call freqs_setup(Xw)
-!
-! Prepare the IO ( and check if q has been already done)
-!
+ !
+ ! Prepare the IO ( and check if q has been already done)
+ !
  iq_to_start=X%iq(1)
  if (.not.APPEND_NO_VERIFY) then
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=Xdb)
@@ -85,22 +94,22 @@
    if (X_em1==0) return
    if (X_em1> 0) iq_to_start=X_em1
  endif
-!
-! Allocation
-!    
+ !
+ ! Allocation
+ !    
  call X_alloc('X',(/X%ng,X%ng,Xw%n(2)/))
 
  do iq=iq_to_start,X%iq(2)
 !
 ! TDDFT setup
 !------------------------------------------------------
-   if (l_bs_fxc) call tddft_do_X_W_typs(iq,X,Xw)
+   call tddft_do_X_W_typs(iq,X,Xw)
    if (l_alda_fxc) call tddft_alda_g_space(Xen,Xk)
-!
+   !
    call X_os(X_mat,iq,(/1,Xw%n(1)/),Xen,Xk,Xw,X)  
-!
-! When X%whoami == 1 X is Xo (ACFDT). 
-!
+   !
+   ! When X%whoami == 1 X is Xo (ACFDT). 
+   !
    if (X%whoami/=1) call X_s(iq,(/1,Xw%n(1)/),X,Xw)
 
    call pp_redux_wait
@@ -110,14 +119,14 @@
      call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb)
    endif
    i_err=ioX(X,Xw,Xdb)
-!
-!  As only the master node enters ioX 2 write the ng_db components must 
-!  be initialized for all the nodes
-!
+   !
+   ! As only the master node enters ioX 2 write the ng_db components must 
+   ! be initialized for all the nodes
+   !
    X%ng_db=X%ng
-!
-!  CLEAN
-!
+   !
+   ! CLEAN (1)
+   !
    if (associated(Xw%p)) then
      deallocate(Xw%p)
      call mem_est("W-p")
@@ -127,9 +136,9 @@
    call mem_est("X_poles_tab RGi BGn CGp CGi")
 
  enddo
-!
-!CLEAN
-!
+ !
+ ! CLEAN (2)
+ !
  call X_alloc('X')
  call X_alloc('OptOsc')
  if (.not.APPEND_NO_VERIFY.or.X%iq(2)==q%nibz) call WF_free()

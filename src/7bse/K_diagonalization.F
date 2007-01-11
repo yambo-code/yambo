@@ -21,6 +21,10 @@
 !
  subroutine K_diagonalization(iq,W) 
 !==================================
+!
+! Generic diagonalization method to solve resonant and non resonant
+! Hamiltonians.
+!
  use pars,           ONLY:SP,DP,pi
  use X_m,            ONLY:X_epsilon
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,Kernel_by_V,&
@@ -157,6 +161,9 @@
 !                u(j)**H * A = lambda(j) * u(j)**H
 !  where u(j)**H denotes the conjugate transpose of u(j).
 !=========================================================
+! Remember that
+!
+! 1/(w-H)= \sum_ij |i right><i left|j right>^{-1) <j left| /(w-E_i)
 !
 ! [1] BS_R_right(i)=<q0|j><j|i_R>
 !                  =conjg(BSS_rhoq0(j))*BS_V_right(j,i)

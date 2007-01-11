@@ -33,7 +33,7 @@
 &                        io_elemental,io_status,io_bulk,io_restart,&
 &                        read_is_on,write_is_on,io_check_restart,io_header,&
 &                        io_fragment,RD_CL,RD_CL_IF_END,io_action,io_mode,io_unit,&
-&                        version_is_newer
+&                        ver_is_gt_or_eq
  implicit none
  type(X_t)   :: X
  type(w_samp):: Xw
@@ -79,7 +79,9 @@
 
    ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.)
    if (ioX/=0) goto 1
-
+   !
+   ! PARS_1
+   !
    call io_elemental(ID,VAR="PARS_1",VAR_SZ=5,MENU=0)
    call io_elemental(ID,DB_I0=X%ng_db,&
 &       VAR=" X matrix size          :",I0=X%ng,CHECK=.true.,OP=(/"<="/))
@@ -88,15 +90,24 @@
    call io_elemental(ID,UNIT=HARTREE,&
 &       VAR=" X e/h energy range [ev]:",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-
+   !
+   ! PARS_2
+   !
    call io_elemental(ID,VAR="PARS_2",VAR_SZ=1,CH0="",MENU=0)
    call io_elemental(ID,&
 &       VAR=" X Time ordering        :",CH0=X%ordering,CHECK=.true.)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-
+   if (ver_is_gt_or_eq(ID,(/3,0,5/))) then
+     call io_elemental(ID,VAR="TDDFT_KERNEL",VAR_SZ=1,CH0="",MENU=0)
+     call io_elemental(ID,&
+&       VAR=" X xc-Kernel            :",CH0=X%f_xc,CHECK=.true.)
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   endif
+   !
+   ! PARS_3
+   !
    sec_size=6
-
-   if (version_is_newer(ID,(/3,0,1/))) sec_size=8
+   if (ver_is_gt_or_eq(ID,(/3,0,1/))) sec_size=8
    call io_elemental(ID,VAR="PARS_3",VAR_SZ=sec_size,MENU=0)
    call io_elemental(ID,&
 &       VAR=" X poles           [o/o]:",R0=X%cg_percentual,CHECK=.true.,OP=(/"=="/))
@@ -106,10 +117,10 @@
 &       VAR=" [r,Vnl] included       :",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/))
    call io_elemental(ID,&
 &       VAR=" Field direction        :",R1=X%q0,CHECK=.true.,OP=(/"==","==","=="/))
-!
-! BZ Energy RIM
-!
-   if (version_is_newer(ID,(/3,0,1/))) then
+   !
+   ! (PARS_3) BZ Energy RIM
+   !
+   if (ver_is_gt_or_eq(ID,(/3,0,1/))) then
      call io_elemental(ID,&
 &         VAR=" BZ energy Random IM    :",L0=use_X_RIM,WARN=.true.,OP=(/"=="/))
      call io_elemental(ID,&

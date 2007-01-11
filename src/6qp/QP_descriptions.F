@@ -34,7 +34,7 @@
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:BZ_RIM_tot_nkpts
  use com,           ONLY:gen_fmt
- use IO_m,          ONLY:version_is_newer
+ use IO_m,          ONLY:ver_is_gt_or_eq
 #if defined PJ_PH
  use ELPH,          ONLY:QP_PH_n_G_bands
 #endif
@@ -92,6 +92,12 @@
  write (qp%description(qp%n_descs),trim(&
 &     string_pack('(a,2(',gen_fmt( r_v=X%ehe*HARTREE ),',1x))'))) &
 &     ' X e/h E range      [ev]:',X%ehe*HARTREE
+
+ if (ver_is_gt_or_eq(-1,(/3,0,5/))) then
+   qp%n_descs=qp%n_descs+1
+   write (qp%description(qp%n_descs),'(2a)') ' X xc-Kernel            :',trim(X%f_xc)
+ endif
+
  if (.not.l_ppa) then
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),trim(&
@@ -104,7 +110,7 @@
 &          ' X Steps                :',Xw%n(1)
    endif
  endif
- if (version_is_newer(-1,(/3,0,1/))) then
+ if (ver_is_gt_or_eq(-1,(/3,0,1/))) then
    qp%n_descs=qp%n_descs+1
                   qp%description(qp%n_descs)=' X BZ energy RIM        : no'
    if (use_X_RIM) qp%description(qp%n_descs)=' X BZ energy RIM        : yes'
@@ -137,7 +143,7 @@
 ! El-Ph
 !=======
 #if defined PJ_PH
- if (version_is_newer(-1,(/3,0,1/))) then
+ if (ver_is_gt_or_eq(-1,(/3,0,1/))) then
    if (l_el_corr)      qp%n_descs=qp%n_descs+1
    if (.not.l_el_corr) qp%n_descs=n_descs_save+1
    qp%description(qp%n_descs)=' El-Ph correlation      : no'

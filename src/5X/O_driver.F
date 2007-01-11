@@ -21,10 +21,15 @@
 !
  subroutine O_driver(Xen,Xk,q,wv,X)
 !==================================
+! 
+! Optics driver.
+!
+! Calculates dielectric function for a generic q vector.
+! 
  use pars,          ONLY:pi,SP,HARTREE,schlen
  use D_lattice,     ONLY:dl_sop
  use memory_m,      ONLY:mem_est
- use drivers,       ONLY:l_bs_fxc,l_lrc_fxc,l_alda_fxc,l_col_cut
+ use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_col_cut
  use frequency,     ONLY:w_samp,rg_index_bg,bg_npts,cg_pt,cg_index_bg
  use electrons,     ONLY:levels,BZ_RIM_tot_nkpts
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
@@ -64,8 +69,7 @@
 !
 ! TDDFT setup
 !------------------------------------------------------
-   if (l_bs_fxc) call tddft_do_X_W_typs(iq,X,wv)
-   if (l_lrc_fxc) FXC_type='-tddft_lrc'
+   call tddft_do_X_W_typs(iq,X,wv)
    if (l_alda_fxc) call tddft_alda_g_space(Xen,Xk)
 !
 !In TDDFT with BS based kernel eps0 is non-sense

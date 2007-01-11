@@ -34,7 +34,7 @@
 &                        read_is_on,write_is_on,serial_number,&
 &                        io_serial_number,io_file,io_com,io_mode,&
 &                        DUMP,VERIFY,NONE,io_fragmented,dbs_fragment,&
-&                        version_is_newer
+&                        ver_is_gt_or_eq
  implicit none
  integer            :: ID
  logical,optional   :: QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,T_EL
@@ -127,7 +127,7 @@
 ! Things that may be dumped
 !===========================
 !
- if (present(T_EL).and.version_is_newer(ID,(/3,0,2/)) ) then
+ if (present(T_EL).and.ver_is_gt_or_eq(ID,(/3,0,2/)) ) then
 
    io_mode(ID)=MODE
 

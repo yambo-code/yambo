@@ -35,14 +35,14 @@
 &                        io_elemental,io_status,io_bulk,io_restart,&
 &                        read_is_on,write_is_on,io_check_restart,io_header,io_mode,&
 &                        VERIFY,io_fragment,io_fragmented,dbs_fragment,&
-&                        version_is_newer
+&                        ver_is_gt_or_eq
  use TDDFT,         ONLY:FXC_n_g_corr
  implicit none
  type(X_t):: X 
  integer  :: iq,ID
 !
 !ws
- integer             ::ik12(2),i_pointer,var_size
+ integer             ::ik12(2),i_pointer
  character(schlen)   ::ch,db_name
  real(SP),allocatable::BS_mat_disk(:,:,:)
  logical             ::res_corr_disk,res_exch_disk,db_is_large,cpl_disk,&
@@ -52,7 +52,7 @@
 
  ioBS=io_connect(desc=trim(db_name),type=2,ID=ID)
  if (ioBS/=0) goto 1
-
+ !
  call io_check_restart(trim(db_name),ID)
 !
 ! If the DB size > 1.9Gb  I automatically switch on the fragmentation.
@@ -77,17 +77,26 @@
 
    ioBS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.)
    if (ioBS/=0) goto 1
-
+   !
+   ! The inclusion of %f_xc (ver 3.0.5) has broken the 
+   ! database compatibility
+   !
+   if (.not.ver_is_gt_or_eq(ID,(/3,0,5/))) then
+     ioBS=-1
+     goto 1
+   endif
+   !
    BS_DB_is_fragmented=io_fragmented(ID)
- 
+   !
+   ! MODE
+   !
    call io_elemental(ID,VAR="MODE",VAR_SZ=1,CH0="",MENU=0)
    call io_elemental(ID,CH0=BS_res_mode)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-
-   var_size=28
-   if (version_is_newer(ID,(/3,0,1/))) var_size=30
-   call io_elemental(ID,VAR="PARS1",VAR_SZ=var_size,MENU=0)
-
+   !
+   ! PARS1
+   !
+   call io_elemental(ID,VAR="PARS1",VAR_SZ=28,MENU=0)
    call io_elemental(ID,&
 &       VAR=" BSK|Identifier              :",I0=BS_identifier)
    call io_elemental(ID,&
@@ -134,12 +143,22 @@
 &         VAR="    |[r,Vnl] included        :",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/))
      call io_elemental(ID,&
 &         VAR="    |Field direction         :",R1=X%q0,CHECK=.true.,OP=(/"==","==","=="/))
-     if (version_is_newer(ID,(/3,0,1/))) then
-       call io_elemental(ID,I0=RIM_ng,&
-&         VAR=' RIM|RL components      [col]:',CHECK=.true.,OP=(/"=="/))
-       call io_elemental(ID,I0=RIM_n_rand_pts,&
-&         VAR='    |Random points      [col]:',CHECK=.true.,OP=(/"=="/))
-     endif
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     !
+     ! W_TDDFT_KERNEL
+     !
+     call io_elemental(ID,VAR="W_TDDFT_KERNEL",VAR_SZ=1,CH0="",MENU=0)
+     call io_elemental(ID,&
+&       VAR='    |xc-Kernel               :',CH0=X%f_xc,CHECK=.true.)
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     !
+     ! W_RIM
+     !
+     call io_elemental(ID,VAR="W_RIM",VAR_SZ=2,MENU=0)
+     call io_elemental(ID,I0=RIM_ng,&
+&       VAR=' RIM|RL components      [col]:',CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,I0=RIM_n_rand_pts,&
+&       VAR='    |Random points      [col]:',CHECK=.true.,OP=(/"=="/))
    endif
 
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)

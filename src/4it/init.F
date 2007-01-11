@@ -353,9 +353,9 @@
 !
 ! ALDA/LRC Tddft
  if (l_alda_fxc.and.&
-&    any((/l_optics.and.l_lr,l_em1s,l_em1d,l_acfdt,l_ppa/))) call initactivate(1,'FxcGRLc')
+&    any((/l_optics.and.l_lr,l_em1s,l_em1d,l_acfdt,l_ppa,l_gw0/))) call initactivate(1,'FxcGRLc')
  if (l_lrc_fxc.and.&
-&    any((/l_optics.and.l_lr,l_em1s,l_em1d,l_acfdt,l_ppa/))) call initactivate(1,'LRC_alpha')
+&    any((/l_optics.and.l_lr,l_em1s,l_em1d,l_acfdt,l_ppa,l_gw0/))) call initactivate(1,'LRC_alpha')
 !
 ! BSE + TDDFT = no BS db, Fxc + LF on-fly
  if (l_bs_fxc.and.l_bse) then

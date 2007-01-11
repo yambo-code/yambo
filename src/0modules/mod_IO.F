@@ -477,11 +477,11 @@
 
  end function
 
- logical function version_is_newer(ID,version)
+ logical function ver_is_gt_or_eq(ID,version)
 !===========================================================================
  use com, ONLY:code_version
  integer :: ID,version(3),version2comp(3)
- version_is_newer=.false.
+ ver_is_gt_or_eq=.false.
  
  if (ID>0) version2comp=io_code_version(ID,:)
  if (ID<0) version2comp=code_version
@@ -490,7 +490,7 @@
  if (version2comp(1)==version(1).and.version2comp(2)<version(2)) return
  if (version2comp(1)==version(1).and.version2comp(2)==version(2)&
 &    .and.version2comp(3)<version(3)) return
- version_is_newer=.true.
+ ver_is_gt_or_eq=.true.
  end function
 
  subroutine netcdf_call(status)

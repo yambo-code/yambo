@@ -233,7 +233,8 @@
  call live_timing(string_pack(Sc_name,'W0'),px%stps(myid+1)*(q%nbz-iq_to_start+1))
 !
 #if defined PJ_SC 
- open(101,file='o.PJ_SC_W')
+ open(101,file='o.PJ_SC_1_W')
+ open(102,file='o.PJ_SC_2_W')
  write(101,'(a/a/a)') '#','#       E_{nkR}-E_{mpS}    <nkR|W|mpS>    n  k  R  m  p  S','#'
 #endif
 
@@ -413,6 +414,7 @@
 #if defined PJ_SC
 
  close(101)
+ close(102)
 
  contains
 
@@ -420,23 +422,25 @@
 
  use R_lattice, ONLY:rl_sop
  complex(SP) :: W2_report
- real(SP)    :: rkpvec(3)
-
+ real(SP)    :: rkpvec(3),W_constant
  !
  !  is(3)=(ib,ik,is,i_spin) --<--:--<-- os(3)=(ob,ok,os,o_spin)
  !                               :
  !                              /:\ W2_report
  !                               :
  !
- ! 2 to go from Ha to Ry
+ !                 2 to go from Ha to Ry
+ !                 |
+ W_constant=-4.*pi*2./2.*nqbz
+ !
  !
  rkpvec=matmul(rl_sop(:,:,isc%os(3)),k%pt(isc%os(2),:))
 
- write (101,'(2f20.10,6i3)')  en%E(isc%is(1),isc%is(2),1)-en%E(isc%os(1),isc%os(2),1),&
-&                             2.*real(W2_report),isc%is(1:3),isc%os(1:3)
+ write (101,'(2f20.10,6i3)')  en%E(isc%os(1),isc%os(2),1)-en%E(isc%is(1),isc%is(2),1),&
+&                             W_constant*real(W2_report),isc%is(1:3),isc%os(1:3)
 
- write(107,'(2(i4,3f11.6),f17.10)')  isc%is(1), k%pt(isc%is(2),:),  &
-&                                    isc%os(1), rkpvec, real(W2_report)
+ write(102,'(2(i4,3f11.6),f17.10)')  isc%is(1),k%pt(isc%is(2),:),  &
+&                                    isc%os(1),rkpvec,W_constant*real(W2_report)
 
  end subroutine
 #endif

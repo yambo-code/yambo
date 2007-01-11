@@ -34,7 +34,7 @@
  use IO_m,             ONLY:io_connect, io_disconnect, io_sec, &
 &                           io_elemental, io_status, io_bulk,read_is_on,&
 &                           serial_number,io_header,io_serial_number,&
-&                           DUMP,io_mode,write_is_on,io_code_version,version_is_newer
+&                           DUMP,io_mode,write_is_on,io_code_version,ver_is_gt_or_eq
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_G_bands
  use BS,               ONLY:BS_bands
  use xc_functionals,   ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL
@@ -131,7 +131,7 @@
 ! Note the difference between wf_ncx, wf_nc_k and wf_ng. In PW in general
 ! wf_ng = maxval(wf_igk) > wf_ncx
 !
-   if (version_is_newer(ID,(/3,0,3/))) then
+   if (ver_is_gt_or_eq(ID,(/3,0,3/))) then
 
      call io_elemental(ID, VAR="WF_G_COMPONENTS",VAR_SZ=1,MENU=0)
      call io_elemental(ID,I0=wf_ng,CHECK=.true.,OP=(/"=="/),&
@@ -140,7 +140,7 @@
 !
 ! Atomic data
 !-----------------
-   if (version_is_newer(ID,(/3,0,4/))) then 
+   if (ver_is_gt_or_eq(ID,(/3,0,4/))) then 
      call io_elemental(ID, VAR="MAX_ATOMS",VAR_SZ=1,MENU=0)
      call io_elemental(ID,I0=n_atoms_max,   CHECK=.true.,OP=(/"=="/),&
 &                      VAR=' Max atoms/species   (ver.>3.0.4):')
@@ -173,7 +173,7 @@
      nel=default_nel
 
      ng_closed=ng_vec
-     if (.not.version_is_newer(ID,(/3,0,3/))) wf_ng=wf_ncx
+     if (.not.ver_is_gt_or_eq(ID,(/3,0,3/))) wf_ng=wf_ncx
 
    endif
 
@@ -203,7 +203,7 @@
 &               (/size(g_vec),size(k%pt),size(dl_sop),size(wf_nc_k),size(wf_igk)/),&
 &               (/SP,        SP,        SP,           IP,         IP/) )
 
-   if (version_is_newer(ID,(/3,0,4/))) then 
+   if (ver_is_gt_or_eq(ID,(/3,0,4/))) then 
      allocate(n_atoms(n_atom_species))
      allocate(znucl(n_atom_species))
      allocate(atom_pos(3,n_atoms_max,n_atom_species))
@@ -223,7 +223,7 @@
 !
 ! Atoms
 !
- if (version_is_newer(ID,(/3,0,4/))) then 
+ if (ver_is_gt_or_eq(ID,(/3,0,4/))) then 
    call io_bulk(ID,VAR="N_ATOMS",VAR_SZ=(/n_atom_species/))
    call io_bulk(ID,I1=n_atoms)
    call io_bulk(ID,VAR="ATOM_POS",VAR_SZ=shape(atom_pos))

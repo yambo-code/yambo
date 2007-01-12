@@ -108,7 +108,8 @@
 !
 !R_lattice
 !=================================
-  RL_v_comp_acc=1.E-5
+  RL_v_comp_acc=-1. ! If negative the best choise for RL_v_comp_acc
+                    ! is decided in k_lattice.
   n_g_shells=0
   nqibz=0
   ng_closed=0

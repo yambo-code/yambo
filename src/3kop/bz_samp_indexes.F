@@ -55,11 +55,12 @@
  implicit none
  type(bz_samp)::k,Xk,q
 !
-!ws
+!Work Space
+!
  integer :: io_db,io_err,ioQINDX
  integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikbz,iqs
  integer, allocatable :: q_map(:,:,:),q_iptbz(:,:)
- real(SP) :: v1(3),k_b_m1(3,3)
+ real(SP) :: v1(3),k_b_m1(3,3),RL_v_comp_acc_save
  logical  :: connected_grids,user_defined_qpts,gamma_point_only
 !
  call section('*','Transferred momenta grid: Indexes')
@@ -77,9 +78,13 @@
    call q_shadows(.false.)
    return
  endif
-!
-! First I map the Xk grid in a simple cubic Net
-!
+ !
+ ! Save RL_v_comp_acc found in k_lattice 
+ !
+ RL_v_comp_acc_save=RL_v_comp_acc
+ !
+ ! First I map the Xk grid in a simple cubic Net
+ !
  call k_ibz2bz(Xk,'a',.false.)  
 
  allocate(q_map(k_grid(1),k_grid(2),k_grid(3)),q_iptbz(Xk%nbz,3))
@@ -123,7 +128,7 @@
      q%nibz=nqibz
      allocate(q%pt(q%nibz,3))
      q%pt=q_pt
-     call msg('rsn','[K latt] User defined Q-grid.')
+     call msg('rsn','[RL indx] User defined Q-grid.')
      user_defined_qpts=.true.
      bse_scattering=.true.
    endif
@@ -145,7 +150,7 @@
 ! In this case I switch to the Gamma only support
 !
    if (q%nbz/=Xk%nbz) then
-     call msg('rsn','[K latt] Q BZ pts are /= from X grid BS pts. Gamma point only.')
+     call msg('rsn','[RL indx] Q BZ pts are /= from X grid BS pts. Gamma point only.')
      call q_shadows(.true.)
      !
      ! when imposing the G point with a uniform X grid I get
@@ -160,7 +165,7 @@
 !-----
  else
 !-----
-   call msg('nrsn','[K latt] X grid is not uniform.  Gamma point only.')
+   call msg('nrsn','[RL indx] X grid is not uniform.  Gamma point only.')
    call q_shadows(.true.)
    gamma_point_only=.true.
 !------
@@ -184,15 +189,15 @@
  qindx_X=0
  qindx_S=0
  if (bse_scattering) qindx_B=0
-!
-! X indexes
-!
-! qindx_X(iq,ikbz,1)=okbz
-! qindx_X(iq,ikbz,2)=iGo
-!
-! qindx_B(ikbz,okbz,1)=iqbz
-! qindx_B(ikbz,okbz,2)=iGo
-!
+ !
+ ! X indexes
+ !
+ ! qindx_X(iq,ikbz,1)=okbz
+ ! qindx_X(iq,ikbz,2)=iGo
+ !
+ ! qindx_B(ikbz,okbz,1)=iqbz
+ ! qindx_B(ikbz,okbz,2)=iGo
+ !
  do i1=1,Xk%nbz
    do i2=1,Xk%nbz
      v1=matmul(k_b_m1,Xk%ptbz(i1,:)-Xk%ptbz(i2,:)) ! K_i1-K_i2= Q + Go
@@ -220,7 +225,7 @@
    enddo
  enddo
  if (any(qindx_X==0)) call error('Error in Q-grid search [qindx_X]')
-!
+ !
  call msg('rn',':: Indices: Self-Energy')
  call k_ibz2bz(k,'a',.false.)
  connected_grids=.true.
@@ -245,8 +250,15 @@
    enddo
    if (any(qindx_S(i1,:,:)==0)) call error('Null transition detected [qindx_S]')
  enddo
- if (.not.connected_grids) call msg('rsn','[K latt] X & Total k-grids are not connected')
-
+ if (.not.connected_grids) call msg('rsn','[RL indx] X & Total k-grids are not connected')
+ !
+ ! Restore RL_v_comp_acc found in k_lattice 
+ !
+ if (RL_v_comp_acc/=RL_v_comp_acc_save) then
+   call msg('rsn','[RL indx] Index search needed lower RL comparison accuracy')
+   RL_v_comp_acc=RL_v_comp_acc_save
+ endif
+ !
 1 call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=io_db)
  io_err=ioQINDX(Xk,q,io_db)
 !
@@ -291,6 +303,7 @@
    subroutine define_q_map(qpt_map,q_ref)
 !----------------------------------------
    real(SP)::qpt_map(Xk%nbz,3),q_ref(3)
+   !
    q_map=0
    do i1=1,Xk%nbz
      v1=matmul(k_b_m1,qpt_map(i1,:)-q_ref)
@@ -301,18 +314,18 @@
      q_iptbz(i1,:)=nint(v1)
      call k_grid_shift(q_iptbz(i1,:))
      if (q_map(q_iptbz(i1,1),q_iptbz(i1,2),q_iptbz(i1,3))/=0) then
-       call error('Equivalent points in the rlu grid [overlapping stars?]')
+       call error('[RL indx] 2 equivalent points in the rlu grid found')
      endif
      q_map(q_iptbz(i1,1),q_iptbz(i1,2),q_iptbz(i1,3))=i1
    enddo
-!
-! Now I fill the holes in the map shifting the whole grid
-!
+   !
+   ! Now I fill the holes in the map shifting the whole grid
+   !
    do i1=1,Xk%nbz
      do i2=-2,2
        do i3=-2,2
          do i4=-2,2
-           v1=matmul(k_b_m1,qpt_map(i1,:)-q_ref+(/i2,i3,i4/))
+           v1=matmul(k_b_m1,qpt_map(i1,:)-q_ref+real((/i2,i3,i4/)))
            iv1=nint(v1)
            call k_grid_shift(iv1)
            if (q_map(iv1(1),iv1(2),iv1(3))==0) q_map(iv1(1),iv1(2),iv1(3))=i1

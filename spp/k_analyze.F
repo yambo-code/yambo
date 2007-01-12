@@ -133,8 +133,8 @@
      endif
      if (trim(Kcoo_out)=="cc") call c2a(v_in=GWK_Q%pt(i1,:),mode="ki2c")
      if (trim(Kcoo_out)=="rlu") call c2a(v_in=GWK_Q%pt(i1,:),mode="ki2a")
-     if (int_ctl(i1)==0) write (ch,'(3f10.4)') GWK_Q%pt(i1,:)
-     if (int_ctl(i1)/=0) write (ch,'(3f10.4,i3)') GWK_Q%pt(i1,:),int_ctl(i1)
+     if (int_ctl(i1)==0) write (ch,'(3f14.6)') GWK_Q%pt(i1,:)
+     if (int_ctl(i1)/=0) write (ch,'(3f14.6,i3)') GWK_Q%pt(i1,:),int_ctl(i1)
      call msg("s",trim(ch))
    enddo
  enddo

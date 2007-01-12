@@ -21,12 +21,12 @@
 !
  subroutine k_lattice(k,Xk)
 !==========================
-!
-! Output(s)
-!
-!  k_grid_b k_grid_dim k_grid k_grid_uc_vol
-!  eps_2_alpha alpha_dim
-!
+ !
+ ! Output(s)
+ !
+ !  k_grid_b k_grid_dim k_grid k_grid_uc_vol
+ !  eps_2_alpha alpha_dim
+ !
  use pars,           ONLY:SP,schlen
  use X_m,            ONLY:eps_2_alpha,alpha_dim
  use memory_m,       ONLY:mem_est
@@ -35,31 +35,58 @@
  use com,            ONLY:msg,gen_fmt,error
  use matrix_operate, ONLY:m3inv,m3det
  use D_lattice,      ONLY:DL_vol,a
- use R_lattice,      ONLY:b,k_grid_b,k_grid_dim,k_grid,RL_vol,&
-&                         k_grid_uc_vol,nkibz,nkbz,nXkibz,nXkbz,d3k_factor,bz_samp
+ use R_lattice,      ONLY:b,k_grid_b,k_grid_dim,k_grid,RL_vol,RL_v_comp_acc,&
+&                         k_grid_uc_vol,nkibz,nkbz,nXkibz,nXkbz,d3k_factor,&
+&                         bz_samp
  implicit none
  type(bz_samp)::k,Xk
-!ws
- integer  :: i1,i2,i3,iv(3),i_dim_coord(3)
+ !
+ ! Work Space
+ !
+ integer  :: i1,i2,i3,iv(3),i_dim_coord(3),nk_bz
  real(SP) :: v0(3),v1(3),v0_ibz_mod
  real(SP),allocatable ::idist(:)
  integer, allocatable ::order(:)
  character(schlen)    ::ch
-!
-! First I define the Xk type from the first nXkibz kpts of k
-!
+ !
+ ! First I define the Xk type from the first nXkibz kpts of k
+ !
  k%description ='k'
  Xk%description='Xk'
  Xk%nibz=nXkibz
  allocate(Xk%pt(Xk%nibz,3))
  call mem_est("Xk-pt",(/Xk%nibz*3/),(/SP/))
  Xk%pt(:,:)=k%pt(:Xk%nibz,:)
-!
-! IBZ -> BZ
-!
+ !
+ ! IBZ -> BZ
+ !
+ ! To set the precision imposed when comparing two 
+ ! points SELF checks which value yields the same number 
+ ! of expanded k-points.
+ !
+ ! Note that bz_samp_indexes may low RL_v_comp_acc. However
+ ! the value found here is the one used as defualt.
+ !
+ nk_bz=0
+ if (RL_v_comp_acc<0.) then
+   RL_v_comp_acc=1.E-7
+   do i1=1,8
+     if (i1>1) then
+       nullify(k%sstar)
+       call mem_est("k-star")
+     endif
+     call k_expand(k)
+     if (k%nbz==nk_bz) exit
+     nk_bz=k%nbz
+     RL_v_comp_acc=RL_v_comp_acc*10.
+   enddo
+ else
+   call k_expand(k)
+ endif
+ !
  call k_expand(Xk)
  call k_ibz2bz(Xk,'a',.true.)
- call k_expand(k)
+ !
  nkibz=k%nibz
  nkbz=k%nbz
  nXkbz=Xk%nbz
@@ -184,8 +211,9 @@
  enddo
  k_grid_uc_vol=abs(k_grid_uc_vol)
 !
- if (k_grid_dim>0) call msg('r','Grid dimensions         :',k_grid(:k_grid_dim))
- call msg('r',                  'K lattice UC volume [au]:',k_grid_uc_vol)
+ if (k_grid_dim>0) call msg('r','Grid dimensions               :',k_grid(:k_grid_dim))
+ call msg('r',                  'K lattice UC volume       [au]:',k_grid_uc_vol)
+ call msg('r',                  'K vectors comparison precision:',RL_v_comp_acc)
 !
 ! Polarizability convertion factor
 !----------------------------------

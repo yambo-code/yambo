@@ -25,6 +25,7 @@
  use ELPH,          ONLY:ph_modes,elph_nb,elph_dV,elph_dV_psi,elph_gkkp,&
 &                        dV_nk,dV_ngx
  use R_lattice,     ONLY:nkbz
+ use X_m,           ONLY:X_mat
  implicit none
  integer       :: iq,k2k_tab(nkbz)
 !
@@ -38,7 +39,9 @@
 #endif
 
  elph_gkkp(:,:,:,:)=(0.,0.)
- 
+
+ if (iq==1) call elph_epsm1_load()
+
  do ik=1,dV_nk
 
    do ib1=1,elph_nb

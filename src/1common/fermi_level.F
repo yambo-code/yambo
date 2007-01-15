@@ -21,19 +21,22 @@
 !
  subroutine fermi_level(E,K,test_Tel,mode)
 !=========================================
-! Mode = 0 
-!  Update the Fermi energy
-!  Output : E%Efermi(1)
-! Mode = 1 -> Mode 0 +
-!  Define E%f and reports variations in Ef/nbf/nbm
-!  Output : E%Efermi(2:) E%nbf,E%nbm
-! Mode > 1 -> Mode 1 +
-!  Full report of system electronic character
-!
+ !
+ ! Mode = 0 
+ !  Update the Fermi energy
+ !  Output : E%Efermi(1)
+ !
+ ! Mode = 1 -> Mode 0 +
+ !  Define E%f and reports variations in Ef/nbf/nbm
+ !  Output : E%Efermi(2:) E%nbf,E%nbm
+ !
+ ! Mode > 1 -> Mode 1 +
+ !  Full report of system electronic character
+ !
  use pars,          ONLY:SP,DP,HARTREE,Kelvin
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Tel
- use electrons,     ONLY:levels,nel,n_sp_pol,spin_occ,&
+ use electrons,     ONLY:levels,nel,n_sp_pol,spin_occ,filled_tresh,&
 &                        BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spinor,n_spin
  use R_lattice,     ONLY:bz_samp
  use com,           ONLY:msg,error,warning
@@ -43,20 +46,24 @@
  type(bz_samp)::K
  integer :: mode
  real(SP):: test_Tel
-!ws
+ !
+ !Work Space
+ !
  integer :: i1,i2,is,ib,ik,i_trials(3),ires,n_b_full_guess
  integer :: index(E%nk*E%nb*n_sp_pol,3),index_s(E%nk*E%nb*n_sp_pol)
  real(SP):: E_s(E%nk*E%nb*n_sp_pol)
  real(SP):: lnel(2),Ef(2),Ffermi,Efdist,neltresh
  real(SP),parameter :: Telstep=0.0001/HARTREE
-!
-!     n_spin n_sp_pol n_spinor  spin_occ 
-!       1        1        1         2      
-!       2        1        2         1      non collinear
-!       2        2        1         1          collinear
-!
+ !
+ !     n_spin n_sp_pol n_spinor  spin_occ 
+ !       1        1        1         2      
+ !       2        1        2         1      non collinear
+ !       2        2        1         1          collinear
+ !
  spin_occ=2.0_SP/real(n_spin)
-!
+ !
+ ! All energies are stored in E_s...
+ !
  neltresh=1.E-5
  i1=0
  do ik=1,E%nk
@@ -68,16 +75,24 @@
      enddo
    enddo
  enddo
+ !
+ ! ... and sorted
+ !
  call sort(arrin=E_s,indx=index_s)
+ !
+ ! Start Loop
+ ! 
  i_trials=1
+ !
 1 continue
+ !
  i_trials(1)=i_trials(1)+1 
-!
-! First guess
-!--------------
-!
-! real(nel)/2.0_SP*real(n_spinor) is last occupied state
-!
+ !
+ ! First guess
+ !--------------
+ !
+ ! real(nel)/2.0_SP*real(n_spinor) is last occupied state
+ !
  n_b_full_guess= nint( real(nel)/2.0_SP*real(n_spinor)+.1)
  !
  Ef(1)=maxval(E%E(n_b_full_guess,:,:))
@@ -93,23 +108,26 @@
  !
  call ef2nel(test_Tel,Ef(1),lnel(1))
  call ef2nel(test_Tel,Ef(2),lnel(2))
-!
-!Bracketing section: to find a lower and upper limit
-!------------------
-!to the Fermi level.
-!
-!Bracketing done when ires=0
-!
+ !
+ !Bracketing section: to find a lower and upper limit
+ !------------------
+ !to the Fermi level.
+ !
+ !Bracketing done when ires=0
+ !
  call bracket(Ef(1),lnel(1),Ef(2),lnel(2),ires)
  do while (ires/=0)
    call ef2nel(test_Tel,Ef(ires),lnel(ires))
    call bracket(Ef(1),lnel(1),Ef(2),lnel(2),ires)
    i_trials(2)=i_trials(2)+1
    if (i_trials(2)>100) call error('Impossible to bracket the Fermi level')
- enddo
+ enddo 
+ !
  E%Efermi(1)=(Ef(1)+Ef(2))/2.
  ires=1
+ !
  i_trials(3)=1
+ !
  do while (ires>0.and.i_trials(3)<=100)
    call ef2nel(test_Tel,E%Efermi(1),lnel(1))
    if (lnel(1)>neltresh) Ef(2)=E%Efermi(1)
@@ -121,15 +139,21 @@
    E%Efermi(1)=(Ef(1)+Ef(2))/2.
    i_trials(3)=i_trials(3)+1
  enddo
+ !
  if (ires>0) then
    test_Tel=test_Tel+Telstep
    if (i_trials(1)<=100) goto 1
  endif
-!
-! Mode = 0. Check only for the Fermi energy
+ !
+ ! Mode = 0. Check only for the Fermi energy
+ !
  Finite_Tel=(Tel>=1.E-5)
  if (mode==0) return
-!
+ !
+ ! build the occupations ...
+ !
+ !... and find the nearest occupied state to the Fermi level
+ !
  if (.not.associated(E%f)) allocate(E%f(E%nb,E%nk,n_spin))
  Efdist=1.E5
  do i1=1,E%nk*E%nb*n_sp_pol
@@ -141,6 +165,8 @@
    if (n_spinor==2) E%f(ib,ik,2)=E%f(ib,ik,1)
 
    if (abs(E%E(ib,ik,is)-E%Efermi(1))<Efdist) then
+     if ( E%f(ib,ik,is) < filled_tresh ) cycle
+     if ( E%f(ib,ik,is)  ==   spin_occ ) cycle
      E%bf=ib
      E%kf=ik
      E%sf=is
@@ -149,9 +175,10 @@
 
  enddo
  E%E(:,:,:)=E%E(:,:,:)-E%Efermi(1)
-!
-! If %E_RIM is associated I simply extend the %E occupations to %E_RIM
-!======================================================================
+
+ !
+ ! If %E_RIM is associated I simply extend the %E occupations to %E_RIM
+ !
  if (BZ_RIM_nbands>0) then
    do ik=1,BZ_RIM_tot_nkpts
      do ib=1,BZ_RIM_nbands
@@ -163,13 +190,14 @@
    enddo
    E%E_RIM(:,:,:)=E%E_RIM(:,:,:)-E%Efermi(1)
  endif
-!
-! Mode = 1. Define E%f and exits
+ !
+ ! Mode = 1. Define E%f and exits
+ !
  if (mode==1) then
    call fermi_msg(E,1)
    return
  endif
-!
+ !
  call msg('r','Fermi Energy[ev] - T[ev/K] :',&
 &               (/E%Efermi(1)*HARTREE,test_Tel*HARTREE,test_Tel*Kelvin/))
  call fermi_msg(E,mode)

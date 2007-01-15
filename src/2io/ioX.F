@@ -41,6 +41,7 @@
 !ws
  integer             ::sec_size,i1,iq
  character (schlen)  ::ch,db_desc
+ real(SP)            ::Wd_disk(2)
  real(SP),allocatable::X_disk(:,:,:),W_disk(:,:)
 !
 !Integers for alternative PATH search
@@ -98,10 +99,23 @@
 &       VAR=" X Time ordering        :",CH0=X%ordering,CHECK=.true.)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    if (ver_is_gt_or_eq(ID,(/3,0,5/))) then
+     !
+     ! TDDFT_KERNEL
+     !
      call io_elemental(ID,VAR="TDDFT_KERNEL",VAR_SZ=1,CH0="",MENU=0)
      call io_elemental(ID,&
 &       VAR=" X xc-Kernel            :",CH0=X%f_xc,CHECK=.true.)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     !
+     ! DRUDE
+     !
+     call io_elemental(ID,VAR="DRUDE",VAR_SZ=2,MENU=0)
+     Wd_disk=(/real(X%Wd),aimag(X%Wd)/)
+     call io_elemental(ID,UNIT=HARTREE,&
+&       VAR=" X Drude frequency      :",R1=Wd_disk,CHECK=.true.,OP=(/"==","=="/))
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     X%Wd=Wd_disk(1)+(0.,1.)*Wd_disk(2)
+     !
    endif
    !
    ! PARS_3

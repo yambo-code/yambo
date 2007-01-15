@@ -104,9 +104,9 @@
  a(1,:)  = ahdr%rprimd(:,1)
  a(2,:)  = ahdr%rprimd(:,2)
  a(3,:)  = ahdr%rprimd(:,3)
- alat(1) = 2.*maxval(abs(a(1,:)))
- alat(2) = 2.*maxval(abs(a(2,:)))
- alat(3) = 2.*maxval(abs(a(3,:)))
+ alat(1) = maxval(abs(a(1,:)))
+ alat(2) = maxval(abs(a(2,:)))
+ alat(3) = maxval(abs(a(3,:)))
  default_nel = 0.
  do i1 = 1, ahdr%natom
    i2 = ahdr%typat(i1)

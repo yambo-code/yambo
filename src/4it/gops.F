@@ -29,7 +29,6 @@
  use pars,         ONLY:SP,IP
  use timing,       ONLY:live_timing
  use memory_m,     ONLY:mem_est
- use com,          ONLY:msg
  use D_lattice,    ONLY:nsym,alat,sop_inv
  use R_lattice,    ONLY:n_g_shells,ng_in_shell,ng_closed,&
 &                       g_vec,g_rot,E_of_shell,rl_sop
@@ -56,28 +55,28 @@
      call mem_est("RL_Gshells RL_Eshells")
    endif
  endif
-!
-! Init
-!------
+ !
+ ! Init
+ !
  allocate(g_rot(nsym,ng_closed))
  g_rot=0
  ng_in_shell_TMP=0
  E_of_shell_TMP=0.
  G_module=0.
-!
-! Gamma point
-!------------
+ !
+ ! Gamma point
+ !
  g_rot(:,1)=1
  n_g_shells=1
  ng_in_shell_TMP(1)=1
  i_G_shell=1
-!
-! First the shell with  a preliminar calculation of the
-! number of shells only.
-!
- call live_timing('RL-shells',ng_closed-1)
-!=========================================
-!
+ !
+ ! First the shell with  a preliminar calculation of the
+ ! number of shells only.
+ !
+ call live_timing('Shells finder',ng_closed-1)
+ !
+ !
  do i1=2,ng_closed
    i_G_below=0
    do i2=1,nsym
@@ -85,43 +84,43 @@
      do i3=2,ng_closed
        if (v_is_zero(v1-g_vec(i3,:))) then
          g_rot(i2,i1)=i3
-!
-! Number of rotated G a"below" the given G
-! 
+         !
+         ! Number of rotated G a"below" the given G
+         !  
          if (i3<=i1) i_G_below=i_G_below+1
-!
+         !
          exit
        endif
      enddo
    enddo
-!
+   !
    call live_timing(steps=1)
-!
-! If all the rotated G are "below" the given G
-! the shell could be closed
-!
+   !
+   ! If all the rotated G are "below" the given G
+   ! the shell could be closed
+   !
    if (i_G_below==nsym) then
-!
-! Gamma point
-!
+     !
+     ! Gamma point
+     !
      if (i1==1) cycle
 
      G_module(1)=iku_v_norm(g_vec(i_G_shell,:))
      G_module(2)=iku_v_norm(g_vec(i1,:))
-!
+     !
      if (abs( G_module(2)-G_module(1) )>1.E-5) n_g_shells=n_g_shells+1
-!
+     !
      i_G_shell=i1
      ng_in_shell_TMP(n_g_shells)=i_G_shell
      E_of_shell_TMP(n_g_shells)=iku_v_norm(g_vec(i_G_shell,:))*2./2.
-
+     !
    endif
-
+   !
  enddo
  call live_timing()
-!
-!Check for holes
-!
+ !
+ !Check for holes
+ !
  n_g_shells_no_holes=n_g_shells
  do i1=n_g_shells,2,-1
  
@@ -132,23 +131,21 @@
  
  enddo
  n_g_shells=n_g_shells_no_holes
-!
-! Shells Allocation & Transfer 
-!==============================
-!
+ !
+ ! Shells Allocation & Transfer 
+ !
  allocate(ng_in_shell(n_g_shells),E_of_shell(n_g_shells))
  call mem_est("RL_Gshells RL_Eshells",&
 &             (/n_g_shells+nsym*ng_closed,n_g_shells/),(/IP,SP/))
 
  ng_in_shell=ng_in_shell_TMP(:n_g_shells)
  E_of_shell=E_of_shell_TMP(:n_g_shells)
-!
+ !
  ng_closed=ng_in_shell(n_g_shells)
-!
-!I/O
-!===
+ !
+ !I/O
+ !
  call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),ID=ID)
  io_err=ioGROT(ID)
-!
+ !
  end subroutine
-!

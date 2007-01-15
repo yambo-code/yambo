@@ -37,7 +37,7 @@
 !ws GPL_END
  type(pp_indexes)   ::px
  integer,allocatable::ikbz_is_table(:,:)
- integer            ::iq,io_pw_err(nqibz),io_elph_err,ID
+ integer            ::iq,io_pw_err(nqibz),io_elph_err,ID,X_ng
  integer, external  ::ioELPH
 !
  call section("*","== Electron-Phonon Interface: Databases ==")
@@ -121,7 +121,9 @@
   use vec_operate,    ONLY:v_is_zero,rlu_v_is_zero,c2a
   implicit none
   integer           :: iq
-!ws
+!
+!Work Space
+!
   integer           :: ib1,ib2,ig
   real(SP)          :: r_v(3)
 !I/O
@@ -263,7 +265,7 @@
   ! 
   call q_small(real(pw_q,SP),small,nsmall)
   !
-  call elph_dV_2_gkkp(iq,k2k_tab)
+  call elph_dV_2_gkkp(iq,k2k_tab,X_ng)
   !
   do ik=1,k%nbz
     if (k_found(ik)==0) cycle

@@ -99,15 +99,18 @@
  endif
 !if(lAnalysePeaks) call AnalysePeaks(X,Xk,Xen)
 #endif
-!
-! Drude ?
-!===================
- if (all((/real(X%Wd)>0.,aimag(X%Wd)>0.,Xen%nbf/=Xen%nbm,iq==1/))) then
+ !
+ ! Drude Contrib.
+ !
+ if (all((/real(X%Wd)>0.,aimag(X%Wd)>0.,&   ! Non zero Drude Freq.
+&          Xen%kf>0,Xen%nbf/=Xen%nbm,&      ! Metallic system 
+&          iq==1/))) then                   ! Optical response
+ !
    call msg('nrs','[X] Drude contribution @[ev]:',(/real(X%Wd),aimag(X%Wd)/)*HARTREE)
-!
-! drude_factor is the ffac factor calculated in the Xo loop
-! evaluated at the fermi state
-!
+   !
+   ! drude_factor is the ffac factor calculated in the Xo loop
+   ! evaluated at the fermi state
+   !
    drude_factor=Xen%f(Xen%bf,Xen%kf,Xen%sf)*&
 &               (spin_occ-Xen%f(Xen%bf,Xen%kf,Xen%sf))/&
 &               spin_occ/real(Xk%nbz)/DL_vol

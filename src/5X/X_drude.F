@@ -36,9 +36,9 @@
  complex(SP) :: xi,X_drude
  real(SP)    :: Kf,rxi,fac
 !
- Kf=((3.*pi*real(Wd)**2.)/4.)**(1./3.)
+ Kf =((3.*pi*real(Wd)**2.)/4.)**(1./3.)
  fac=Kf*q0_defmod
- xi=W+(0.,1.)*aimag(Wd)*fac
+ xi =W+(0.,1.)*aimag(Wd)*fac
  rxi=real(xi)
 
  if (abs(W)<=10*fac) then

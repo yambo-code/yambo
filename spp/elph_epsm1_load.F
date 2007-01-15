@@ -19,14 +19,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine elph_epsm1_load()
-!============================
+ subroutine elph_epsm1_load(X_ng)
+!================================
  use pars,           ONLY:SP
  use IO_m,           ONLY:io_control,OP_RD,DUMP,RD_CL_IF_END
  use X_m,            ONLY:X_mat,X_t,X_reset,X_alloc
  use R_lattice,      ONLY:nqibz
  use frequency,      ONLY:w_samp,W_reset
  implicit none
+ integer           ::X_ng
  !
  !Work Space GPL_END
  !
@@ -68,6 +69,8 @@
  enddo
  !
  ! Transfer
+ !
+ X_ng=X%ng
  !
  call X_alloc('X')
  call X_alloc('X',(/X%ng,X%ng,nqibz/))

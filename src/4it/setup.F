@@ -32,19 +32,24 @@
  use vec_operate,    ONLY:iku_v_norm,cross_product,c2a
  implicit none
  type(levels)    ::en,Xen
- type(bz_samp)::k,Xk
-!ws
+ type(bz_samp)   ::k,Xk
+ !
+ !Work Space
+ !
  real(SP)          :: v1(3),m(3,3),cp(3)
  integer           :: i1,i2,i3,is
  character(schlen) :: ch(5)
-
- call section('*','Input variables setup')
-!-----------------------------------------
+ !
+ call section('*','Input variables setup') 
+ !
  call msg('r','Unit cell scaling factors [a.u.]:',alat)
  call msg('nr','Direct Lattice(DL) unit cell [iru]')
  call msg('r','A1 =',a(1,:)/alat(:))
  call msg('r','A2 =',a(2,:)/alat(:))
  call msg('rn','A3 =',a(3,:)/alat(:))
+ !
+ ! DL vol
+ !
  DL_vol=0.
  cp=cross_product(a(2,:),a(3,:))
  do i1=1,3
@@ -52,11 +57,13 @@
  enddo
  call msg('r','DL volume [au]:',DL_vol)
  RL_vol=(2.*pi)**3./DL_vol
-
+ !
+ ! RL unit vectors 
+ !
  b(1,:)=cross_product(a(2,:),a(3,:))*2.*pi/DL_vol
  b(2,:)=cross_product(a(3,:),a(1,:))*2.*pi/DL_vol
  b(3,:)=cross_product(a(1,:),a(2,:))*2.*pi/DL_vol
-
+ !
  call msg('nr','Reciprocal Lattice(RL) unit cell [iku]')
  call c2a(b,b(1,:),v1,'kc2i')
  call msg('r','B1 =',v1)
@@ -64,13 +71,13 @@
  call msg('r','B2 =',v1)
  call c2a(b,b(3,:),v1,'kc2i')
  call msg('rn','B3 =',v1)
-! 
-! Symmetries and moltiplication table:
-!
-!  R_i*R_j=R_stab(i,j)
-!
+ ! 
+ ! Symmetries and moltiplication table:
+ !
+ !  R_i*R_j=R_stab(i,j)
+ !
  call msg('r','DL (S)ymmetries [cc]')
-!------------------------------------
+ !
  allocate(rl_sop(3,3,nsym))
  do i1=1,nsym
    forall (i2=1:3,i3=1:3) rl_sop(i2,i3,i1)=dl_sop(i2,i3,i1)*alat(i2)/alat(i3)
@@ -78,15 +85,21 @@
    write (ch(1),'(a,i2.2,a)') '[S',i1,']:'
    call msg('r',trim(ch(1)),reshape(dl_sop(:,:,i1),(/9/)))  
  enddo
+ !
+ ! Time Reversal
+ !
  select case(i_time_rev)
    case(1)
     call msg('r','Time-reversal derived K-space symmetries:',(/nsym/2+1,nsym/))
    case(0)
     call msg('r','K-space Time-reversal not included')
  end select
-
+ !
+ ! Symmetries Multiplication Table
+ !
  allocate(sop_tab(nsym,nsym),sop_inv(nsym))
  call mem_est("SOP-adds SOPs",(/3*3*nsym,nsym**2+nsym/),(/SP,IP/))
+ !
  sop_tab=0
  sop_inv=0
  do i1=1,nsym
@@ -104,10 +117,18 @@
  enddo
  if (any(sop_inv==0)) call error('Error (sinv): check the input symmetries!')
  call msg('r','Group table built correctly')
-
+ !
+ call section('+','K-grid lattice')
+ !
+ call k_lattice(k,Xk) 
+ !
+ ! RL shells
+ !
+ call section('=','RL shells')
+ !
  call gops()
- call msg('nr','G-vector (S)hells. Format: [Snn] G`s')
-!------------------------------------------------------
+ call msg('rn','Shells, format: [Snn] G`s')
+ !
  do i1=n_g_shells,max(n_g_shells-27,1),-5
    ch(1)=' '
    do i2=i1,max(i1-4,1),-1
@@ -125,19 +146,15 @@
    enddo
    call msg('r',trim(ch(2)))
  enddo
-!
- call section('+','K-grid lattice')
-!-------------------------------------------------
- call k_lattice(k,Xk) 
-
+ !
  call section('=','Input (E)nergies[ev] & Occupations')
-!------------------------------------------------------
+ !
  Xen%nk=Xk%nibz
  call E_duplicate(en,Xen)
-
+ !
  call fermi_level(Xen,Xk,Tel,2)
  call extend_occupations(Xen%Efermi,Xen%nbf,Xen%nbm,en)
-!
+ !
  n_met_bands=en%nbm
  n_full_bands=en%nbf
 

@@ -159,10 +159,11 @@
 ! GOPS
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1,2/),ID=io_ID)
  io_err=ioGROT(io_ID) 
- if (io_err==0) then
-   QP_ng_Sx=ng_closed
-   BS_n_g_exch=ng_closed
- endif
+ !
+ ! Updates RL variables
+ !
+ QP_ng_Sx=ng_closed
+ BS_n_g_exch=ng_closed
 !
 ! KINDX
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
@@ -302,7 +303,8 @@
 ! Static screen
  if (l_em1s) then
    call initactivate(1,'XfnQPdb XfnQP_E XfnQP_W XfnQP_Z')
-   call Xon('Xs',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy','LongDr'/))
+   call Xon('Xs',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy',&
+&                  'LongDr','DrudeW'/))
  endif
 !
 ! GW (PPA)

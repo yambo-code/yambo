@@ -19,8 +19,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine elph_epsm1_load(X_ng)
-!================================
+ integer function elph_epsm1_load(X_ng)
+!======================================
  use pars,           ONLY:SP
  use IO_m,           ONLY:io_control,OP_RD,DUMP,RD_CL_IF_END
  use X_m,            ONLY:X_mat,X_t,X_reset,X_alloc
@@ -33,7 +33,7 @@
  !
  type(X_t)         ::X
  type(w_samp)      ::Xw
- integer           ::ID,io_err,iq,ig1,ig2
+ integer           ::ID,iq,ig1,ig2
  integer, external ::ioX
  complex(SP), allocatable :: X_mat_temp(:,:,:)
  !
@@ -45,9 +45,9 @@
  ! I/O
  !
  call io_control(ACTION=OP_RD,MODE=DUMP,SEC=(/1/),ID=ID)
- io_err=ioX(X,Xw,ID)
+ elph_epsm1_load=ioX(X,Xw,ID)
  !
- if (io_err/=0) return
+ if (elph_epsm1_load/=0) return
  !
  ! Allocation
  !
@@ -58,7 +58,7 @@
    !   
    call io_control(ACTION=RD_CL_IF_END,SEC=(/2*iq,2*iq+1/),ID=ID)
    ! 
-   io_err=ioX(X,Xw,ID)
+   elph_epsm1_load=ioX(X,Xw,ID)
    !   
    ! Bare interaction added   
    !   
@@ -85,5 +85,5 @@
 
  ! GPL_START
 
- end subroutine
+ end function
 

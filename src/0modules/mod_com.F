@@ -59,9 +59,9 @@
 !  1 Stable db.        -> INPATH/SAVE/subfolder/(n)db.desc
 !  2 Job dependent db. -> OUTPATH/JOBSTR/subfolder/(n)db.desc
 !  3 Job dependent o.  -> OUTPATH/o.desc-JOBSTR
-!  4 ----------------  -> RESTART/(n)db.desc_FOLDER
-!                                            |
-!                                            JOBSTR, or  SAVE if no JOBSTR 
+!  4 ----------------  -> OUTPATH/RESTART/(n)db.desc_FOLDER
+!                                                    |
+!                                                    JOBSTR, or  SAVE if no JOBSTR 
  use stderr,ONLY:string_pack
  character(*)           :: desc
  integer                :: type,ID
@@ -101,6 +101,11 @@
  end select 
  if (TO_RD) ch(1)=inpath
  if (TO_WR) ch(1)=outpath
+ !
+ ! The RESTART folder is always in the outpath
+ !
+ if (type==4) ch(1)=outpath
+ !
  if (len_trim(folder)>0) ch(1)=string_pack(trim(ch(1)),'/',folder)
  if (present(subfolder).and.type>=0) ch(1)=string_pack(trim(ch(1)),'/',subfolder)
  if (NETCDF) then

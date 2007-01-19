@@ -40,23 +40,25 @@
  logical,optional   :: QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,T_EL
 !ws
  integer             :: i1,nqibz_disk,MENU_here,R_LATT_vec(4),&
-&                       R_LATT_vec_disk(4),MODE,MENU
+&                       R_LATT_vec_disk(4),MODE,MENU,ng_on_db
  real(SP),allocatable:: l_qpt(:,:)
  logical             :: WARN
  character(schlen)   :: ch
-
+ !
  io_header=0
-
+ !
+ ! If I am scanning the DBs (self -D) not print warnings
+ !
  WARN=.true.
  if (list_dbs) WARN=.false.
-
+ !
+ ! Things that CANNOT be dumped
+ !==============================
+ !
  MENU=1
  MODE=io_mode(ID)
  if (io_mode(ID)==DUMP) io_mode(ID)=VERIFY
-!
-! Things that CANNOT be dumped
-!==============================
-!
+ !
  call io_elemental(ID,VAR="FRAGMENTED",VAR_SZ=1,MENU=0)
  call io_elemental(ID,DB_L0=io_fragmented(ID),L0=dbs_fragment)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
@@ -68,7 +70,9 @@
  call io_elemental(ID,VAR="SERIAL_NUMBER",VAR_SZ=1,MENU=0)
  call io_elemental(ID,DB_I0=io_serial_number(ID),I0=serial_number)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-
+ !
+ ! Serial Number
+ !
  if (io_serial_number(ID)/=serial_number) then
    if (present(IMPOSE_SN)) then 
      io_header=-1
@@ -81,7 +85,9 @@
      call warning(trim(ch))
    endif
  endif
-
+ !
+ ! RL lattice
+ !
  if (present(R_LATT)) then
    R_LATT_vec=(/nqibz,nqbz,nkibz,nkbz/)
    call io_elemental(ID,VAR="HEAD_R_LATT",VAR_SZ=4,MENU=MENU)
@@ -94,7 +100,9 @@
    io_header=io_status(ID)
    if (io_header/=0) goto 1
  endif
-
+ !
+ ! Wave Functions RL vectors
+ !
  if (present(WF)) then
    call io_elemental(ID,VAR="HEAD_WF",VAR_SZ=1,MENU=MENU)
    MENU=0
@@ -104,7 +112,9 @@
    io_header=io_status(ID)
    if (io_header/=0) goto 1
  endif
-
+ !
+ ! Q points
+ !
  if (present(QPTS)) then
 
    allocate(l_qpt(nqibz_disk,3))
@@ -118,15 +128,20 @@
      do i1=1,nqibz
        if (.not.v_is_zero(q_pt(i1,:)-l_qpt(i1,:))) io_header=-1
      enddo
-     if (io_header/=0) goto 1
+     if (io_header/=0) then
+       if (WARN) call warning('Wrong Q-points coordinates/order in X database')
+       goto 1
+     endif
    endif
 
    deallocate(l_qpt)
  endif
-!
-! Things that may be dumped
-!===========================
-!
+ !
+ ! Things that can be dumped
+ !===========================
+ !
+ ! Temperature
+ !
  if (present(T_EL).and.ver_is_gt_or_eq(ID,(/3,0,2/)) ) then
 
    io_mode(ID)=MODE
@@ -139,7 +154,9 @@
    io_header=io_status(ID)
    if (io_header/=0) goto 1
  endif
-
+ !
+ ! Kernel QP corrections
+ !
  if (present(QP_ctl_K)) then
 
    io_mode(ID)=MODE
@@ -152,7 +169,8 @@
    io_header=io_status(ID)
    if (io_header/=0) goto 1
  endif
-
+ !
+ !
 1 io_mode(ID)=MODE
 
  end function

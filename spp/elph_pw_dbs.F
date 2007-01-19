@@ -31,6 +31,9 @@
  use timing,              ONLY:live_timing
  use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m,       ONLY:par_indexes
+ !DEBUG
+ use parser_m,            ONLY:parser
+ !END DEBUG
  implicit none
  type(bz_samp) ::k,q
 !
@@ -38,7 +41,13 @@
  type(pp_indexes)   ::px
  integer,allocatable::ikbz_is_table(:,:)
  integer            ::iq,io_pw_err(nqibz),io_elph_err,ID,X_ng
- integer, external  ::ioELPH
+ integer, external  ::ioELPH 
+ !
+ !DEBUG
+ logical :: l_use_dV
+ call parser('UseDV',l_use_dV)
+ !END DEBUG 
+ !
 !
  call section("*","== Electron-Phonon Interface: Databases ==")
 !--------------------------------------------------------------
@@ -265,7 +274,7 @@
   ! 
   call q_small(real(pw_q,SP),small,nsmall)
   !
-  call elph_dV_2_gkkp(iq,k2k_tab,X_ng)
+  if (l_use_dV) call elph_dV_2_gkkp(iq,k2k_tab,X_ng)
   !
   do ik=1,k%nbz
     if (k_found(ik)==0) cycle

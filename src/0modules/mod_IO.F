@@ -95,7 +95,8 @@
      complex(SP), optional :: C1(:)
      end subroutine
 
-     integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,T_EL)
+     integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,&
+&                               QP_ctl_K,T_EL)
      integer            :: ID
      logical,optional   :: QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,T_EL
      end function
@@ -311,13 +312,13 @@
 !===========================================================================
  use drivers, ONLY:list_dbs
  use stderr,  ONLY:string_pack
- use com,     ONLY:code_version,build_date,get_name,file_exists
+ use com,     ONLY:code_version,build_date,get_name,file_exists,outpath
  use timing,  ONLY:date_and_time_string
  use com,     ONLY:msg
  character(*)::desc
  integer     ::ID,i1
  integer, optional::now,todo
- character(lchlen)::restart_file,ch
+ character(lchlen)::restart_file,restart_folder,ch
 
  io_restart(ID)=0
 
@@ -327,13 +328,15 @@
 
    restart_file=get_name(desc=desc,type=4,TO_RD=.false.,TO_WR=.true.,NETCDF=.false.)
 
+   restart_folder = string_pack(trim(outpath),"/RESTART")
+
    if (now==todo) then
      call rm_file(restart_file)
-     call rm_file('RESTART')
+     call rm_file(restart_folder)
      return
    endif
 
-   if (.not.file_exists('RESTART')) call mk_dir('RESTART')
+   if (.not.file_exists(trim(restart_folder))) call mk_dir(trim(restart_folder))
 
    open(unit=81,file=trim(restart_file))
    write (81,'(/2x,a,3(i2.2,a),a)') 'Restart file for SELF ',code_version(1),&

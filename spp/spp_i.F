@@ -21,7 +21,7 @@
 !
  integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
 &                       js,ijs,np,pid)
-!===========================================================
+ !------------------------------------------------------------
  use drivers,             ONLY:infile_editing
  use par_proc_m,          ONLY:ncpu,myid,p_finalize
  use electrons,           ONLY:levels,E_reset,n_bands,default_nel
@@ -30,7 +30,7 @@
  use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP
  use com,                 ONLY:msg,write_to_report
  use it_m,                ONLY:it_reset,infile
- use SPP,                 ONLY:lkanalyze,lelph,elph_gamma_broad,lbzrim,lexcwf
+ use SPP
  implicit none
  type(levels)                 :: en,Xen
  type(bz_samp)                :: k,Xk,q
@@ -41,16 +41,14 @@
  character(iind),  intent(in) :: ind
  character(iod),   intent(in) :: od
  character(ijs),   intent(in) :: js
-!
-!I/O
-!
+ !
+ !I/O
+ !
  integer           :: ID,i_err
  integer, external :: ioDB1,ioQINDX,iogrot,self2self
-
-!-----------------------------------------------------------------
-!
-! Presets
-!=========
+ !
+ ! Presets
+ !
  iinf  =0
  spp_i =0
  ncpu  =np
@@ -63,38 +61,38 @@
  call E_reset(en)
  call E_reset(Xen)
  call it_reset(1)
-!
-! Switch off report file support
-!================================
+ !
+ ! Switch off report file support
+ !
  write_to_report=.FALSE.
-!
-! SELF to SELF
-!=============
+ !
+ ! SELF to SELF
+ !
  i_err=self2self(instr,en,k,q)
  if (i_err/=0) goto 1
-!
-! DB1
-!=====
+ !
+ ! DB1
+ !
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
  iinf=ioDB1(en,k,ID)
  if (iinf/=0) goto 1
-!  
-! GOPS
-!======
+ !  
+ ! G operations table and shells
+ !
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
  i_err=iogrot(ID) 
  if (i_err/=0) goto 1
-!
-! INPUT FILE
-!============ 
+ !
+ ! INPUT FILE
+ !
  call spp_init(instr,lnstr,.false.)
  if (infile_editing) then
    iinf=1
    goto 1
  endif
-
+ !
  call section('*','S(elf) P(ost)/(re) P(rocessor)')
-
+ !
  call section('*','Core DB')
  call msg('s',':: Electrons             :',default_nel)
  call msg('s',':: Temperature       [ev]:',default_Tel)
@@ -103,37 +101,49 @@
  call msg('s',':: Bands                 :',n_bands)
  call msg('s',':: Symmmetries           :',nsym)
  call msg('s',':: RL vectors            :',ng_vec)
-!
-! KINDX 
-!=======
+ !
+ ! BZ sampling index 
+ !
  call section('*','K-point grid')
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),MODE=DUMP,ID=ID)
  i_err=ioQINDX(k,q,ID)
- if (i_err/=0) goto 1
+ !
+ if (i_err/=0) goto 1 
+ !
  call msg('s',':: Q-points   (IBZ):',nqibz)
  call msg('s',':: X K-points (IBZ):',nXkibz)
-!
-! Main SETUP
-!============
+ !
+ ! Main SETUP
+ !
  call setup(en,Xen,k,Xk)
-!
-! SECTIONS
-!==========
+ !
+ ! Specific SECTIONS
+ !
  if (lkanalyze) call k_analize(en,k,Xk,q)
+ !
  if (lbzrim) call BZ_RIM(Xk,Xen)
+ !
  if (lexcwf) call plot_exc_wf(Xk)
- if (lelph) call elph_pw_dbs(k,q)
- if (lelph.and.elph_gamma_broad>0.) call elph_eliashberg(k,en,q)
-!
-! END
-!=====
+ !
+#if defined SPP_PJ_PH
+ !
+ if (lelph) then
+   call elph_pw_dbs(k,q)
+   call elph_eliashberg(k,en,q)
+   call elph_gkkp_E_dep(k,en,q)
+ endif
+ !
+#endif
+ !
+ ! END
+ !
 1 call spp_init(instr,lnstr,.TRUE.)
  if (.not.infile_editing) then
    call section('X','Game Over')
    call msg("nl","")
    call p_finalize()
  endif
-
+ !
  return
+ !
  end function
-

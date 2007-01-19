@@ -25,43 +25,54 @@
  use memory_m,      ONLY:mem_est
  use stderr,        ONLY:string_pack
  use electrons,     ONLY:BZ_RIM_tot_nkpts
- use R_lattice,     ONLY:nqibz
- use matrix_operate,ONLY:mat_c2r,mat_r2c
- use X_m,           ONLY:X_t,X_mat,use_X_RIM
+ use R_lattice,     ONLY:nqibz,g_vec
+ use matrix_operate,ONLY:mat_c2r,mat_r2c,mat_r2c_ordered
+ use X_m,           ONLY:X_t,X_mat,use_X_RIM,X_RLcomp_ig
  use frequency,     ONLY:w_samp
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_com,&
 &                        io_elemental,io_status,io_bulk,io_restart,&
 &                        read_is_on,write_is_on,io_check_restart,io_header,&
 &                        io_fragment,RD_CL,RD_CL_IF_END,io_action,io_mode,io_unit,&
-&                        ver_is_gt_or_eq
+&                        ver_is_gt_or_eq,io_serial_number,serial_number
  implicit none
  type(X_t)   :: X
  type(w_samp):: Xw
  integer     :: ID
-!ws
- integer             ::sec_size,i1,iq
+ !
+ !Work Space
+ !
+ integer             ::sec_size,i1,iq,i_err
+ logical             ::different_db_RL_order
  character (schlen)  ::ch,db_desc
  real(SP)            ::Wd_disk(2)
- real(SP),allocatable::X_disk(:,:,:),W_disk(:,:)
-!
-!Integers for alternative PATH search
-!
+ real(SP),allocatable::X_disk(:,:,:),W_disk(:,:),RL_vecs_disk(:,:)
+ !
+ !Integers for alternative PATH search
+ !
  integer             :: io_unit_save,io_action_save,io_mode_save,io_sec_save(10),&
 &                       io_com_save
-
+ !
+ ! I assume that he RL ordering used to build X is not different
+ ! from the one in DB1
+ !
+ different_db_RL_order=.false.
+ !
  if (X%whoami==1) db_desc='Xx'
  if (X%whoami==2) db_desc='em1s'
  if (X%whoami==3) db_desc='em1d'
  if (X%whoami==4) db_desc='pp'
-!
+ !
  io_unit_save=io_unit(ID)
  io_action_save=io_action(ID)
  io_mode_save=io_mode(ID)
  io_sec_save=io_sec(ID,:)
  io_com_save=io_com(ID)
-
+ !
  ioX=io_connect(desc=trim(db_desc),type=2,ID=ID) 
-
+ !
+ ! The em1s DB is searched in the SAVE folder when 
+ ! it is not found in the JOBNAME folder
+ !
  if (read_is_on(ID).and.X%whoami==2.and.ioX/=0) then
    io_unit(ID)=io_unit_save 
    io_action(ID)=io_action_save 
@@ -71,13 +82,15 @@
    ioX=io_connect(desc=trim(db_desc),type=1,ID=ID) 
  endif
  if (ioX/=0) goto 1
-!
-! Check the restart point
-!
+ !
+ ! Check the restart point
+ !
  call io_check_restart(trim(db_desc),ID)
 
  if (any((/io_sec(ID,:)==1/))) then
-
+   !
+   ! Header
+   !
    ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.)
    if (ioX/=0) goto 1
    !
@@ -131,16 +144,39 @@
 &       VAR=" [r,Vnl] included       :",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/))
    call io_elemental(ID,&
 &       VAR=" Field direction        :",R1=X%q0,CHECK=.true.,OP=(/"==","==","=="/))
-   !
-   ! (PARS_3) BZ Energy RIM
-   !
+
    if (ver_is_gt_or_eq(ID,(/3,0,1/))) then
      call io_elemental(ID,&
 &         VAR=" BZ energy Random IM    :",L0=use_X_RIM,WARN=.true.,OP=(/"=="/))
      call io_elemental(ID,&
 &         VAR=" BZ energy RIM points   :",I0=BZ_RIM_tot_nkpts,CHECK=.true.,OP=(/"=="/))
    endif
-
+   !
+   ! When the SN is different and I am importing this DB 
+   ! from a different calculation I check the RL vectors
+   !
+   if (ver_is_gt_or_eq(ID,(/3,0,6/))) then
+     !
+     allocate(RL_vecs_disk(X%ng_db,3))
+     !
+     if (write_is_on(ID)) RL_vecs_disk(:,:)=g_vec(:X%ng_db,:)
+     !
+     call io_bulk(ID,VAR='X_RL_vecs',VAR_SZ=shape(RL_vecs_disk))
+     call io_bulk(ID,R2=RL_vecs_disk)
+     !
+     if (io_serial_number(ID)/=serial_number.and.read_is_on(ID).and.&
+&        allocated(g_vec)) then
+       if (.not.allocated(X_RLcomp_ig)) allocate(X_RLcomp_ig(X%ng))
+       i_err = X_RLcomp_table() < 0 
+       if ( i_err < 0 ) io_status(ID) = -1
+       if ( i_err > 0 ) different_db_RL_order=.true.
+     endif
+     deallocate(RL_vecs_disk)
+     !
+   endif
+   !
+   ! Close & Menu lower line
+   !
    if (.not.any((/io_sec(ID,:)==2/))) then
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
      ioX=io_status(ID)
@@ -148,26 +184,24 @@
    else
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif
-
  endif
-
+ !
  do i1=1,size(io_sec(ID,:))
    if (io_sec(ID,i1)==0) cycle
    iq=io_sec(ID,i1)/2
  enddo
  if (iq==0) goto 1
-!
-! Manage RD_CL_IF_END
-!
+ !
+ ! Manage RD_CL_IF_END
+ !
  if (io_action(ID)==RD_CL_IF_END.and.iq==nqibz) io_action(ID)=RD_CL
-!
-! Fragmentation
-!---------------
-!
+ !
+ ! Fragmentation
+ !
  call io_fragment(ID,i_pointer=iq)
-!
-!  type(X_t)    ::X(4) ! x s d p
-!
+ !
+ !  type(X_t)    ::X(4)  x s d p
+ !
  if (any((/io_sec(ID,:)==2*iq/))) then
    sec_size=6
 
@@ -195,11 +229,11 @@
    if (ioX/=0) goto 1
 
  endif
-!
-! Sections 1 & 2 are used in VERIFY mode. 
-! Now that the menu is closed I can return with ioX/=0 if
-! there is a restart point
-!
+ !
+ ! Sections 1 & 2 are used in VERIFY mode. 
+ ! Now that the menu is closed I can return with ioX/=0 if
+ ! there is a restart point
+ !
  ioX=io_restart(ID)
  if (ioX/=0) goto 1
 
@@ -234,24 +268,70 @@
    call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/X%ng_db,X%ng_db,2,Xw%n(1)/))
 
    do i1=1,Xw%n(1)
-
+     !
      if (write_is_on(ID)) call mat_c2r(X_mat(:,:,i1),X_disk)
-
+     !
      call io_bulk(ID,R3=X_disk,IPOS=(/1,1,1,i1/))
-
-     if (read_is_on(ID)) call mat_r2c(X_disk,X_mat(:,:,i1))
-
+     !
+     if (read_is_on(ID)) then
+       if (different_db_RL_order)  then
+         call mat_r2c_ordered(X_disk,X_mat(:,:,i1),X_RLcomp_ig)
+       else
+         call mat_r2c(X_disk,X_mat(:,:,i1))
+       endif
+     endif
+     !
    enddo
 
    deallocate(X_disk)
  endif
 
  call io_check_restart(trim(db_desc),ID,now=iq,todo=nqibz)
-!
-! No I/O errors I update Xio at the first q TODO
-!
+ !
+ ! No I/O errors I update Xio at the first q TODO
+ !
  ioX=io_restart(ID)
-
+ !
 1 call io_disconnect(ID)
+ !
+ !
+ contains
+ !
+ integer function X_RLcomp_table()
+ !--------------------------------
+ !
+ ! X has been written using a different RL vectors ordering.
+ ! X_RLcomp_ig is defined in such a way that
+ !
+ ! X_( X_RLcomp_ig(i), X_RLcomp_ig(j) ) = X_on_disk_(i,j)
+ !
+ use vec_operate,   ONLY:v_is_zero
+ use R_lattice,     ONLY:ng_in_shell,n_g_shells
+ !
+ integer :: is,ig1,ig2,g_limits(2)
+ real(SP):: v(3)
+ !
+ X_RLcomp_table=0
+ X_RLcomp_ig=0
+ !
+ do is=1,n_g_shells
+  if (ng_in_shell(is) > X%ng) then
+    if (any(X_RLcomp_ig==0)) X_RLcomp_table=-1
+    return
+  endif
+  g_limits=1
+  if (is > 1 ) g_limits = (/ ng_in_shell(is-1), ng_in_shell(is) /)
+  g_loop: do ig1=g_limits(1),g_limits(2)
+    do ig2=g_limits(1),g_limits(2)
+      v=RL_vecs_disk(ig1,:)-g_vec(ig2,:)
+      if (v_is_zero(v)) then
+        X_RLcomp_ig(ig1)=ig2
+        cycle g_loop
+      endif
+    enddo
+  enddo g_loop
+ enddo
+ !
+ end function
 
  end function

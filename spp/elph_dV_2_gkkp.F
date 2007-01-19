@@ -31,7 +31,8 @@
 !
 !Work Space GPL_END
 !
- integer     :: ik,ib1,ib2,il
+ integer           :: ik,ib1,ib2,il,i_err
+ integer, external :: elph_epsm1_load
 #if defined _DOUBLE
  complex(SP) :: zdotc
 #else
@@ -41,7 +42,7 @@
 
  elph_gkkp(:,:,:,:)=(0.,0.)
 
- if (iq==1) call elph_epsm1_load(X_ng)
+ if (iq==1) i_err=elph_epsm1_load(X_ng)
 
  do ik=1,dV_nk
 
@@ -49,8 +50,12 @@
  
      do il=1,ph_modes
 
-       dV_temp(:X_ng)=matmul(X_mat(:,:,iq),elph_dV(:X_ng,ib2,ik,il))
-       dV_temp(X_ng+1:)=elph_dV(X_ng+1:,ib2,ik,il)
+       if  (allocated(X_mat)) then
+         dV_temp(:X_ng)=matmul(X_mat(:,:,iq),elph_dV(:X_ng,ib2,ik,il))
+         dV_temp(X_ng+1:)=elph_dV(X_ng+1:,ib2,ik,il)
+       else
+         dV_temp(:)=elph_dV(:,ib2,ik,il)
+       endif
 
        do ib1=1,elph_nb
 

@@ -47,7 +47,8 @@ CFGFILES = config/setup config/Makefile config/report \
   	   sbin/mkmkfl driver/codever.h src/2wf_and_fft/sgfft.F  \
 	   src/0external_c/.objects Makefile driver/version.h
 TARGETS  = self interfaces spp
-PROJECTS = self_ph self_ras self_reels self_gks self_cyl_cut self_spin self_sc
+PROJECTS = self_ph self_ras self_reels self_gks self_cyl_cut self_spin self_sc \
+	   spp_ph
 EXE      = $(TARGETS) $(PROJECTS) a2s f2s p2s
 # Libraries (ordered for compiling & linking)
 SLIBS        = 0external_c 0modules 1xc 1parser 1common 2io 2wf_and_fft \
@@ -85,9 +86,11 @@ saves:
 	@echo
 all: $(EXE)
 libs:
-	@LIBS2DO="slatec" ; $(mklib)
-	@if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; $(mklib); fi
-	@if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; $(mklib); fi
+	@LIBS2DO="slatec"; DIR2GO="lib" ; $(mklib)
+	@if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; \
+	DIR2GO="lib" ; $(mklib); fi
+	@if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; \
+	DIR2GO="lib" ; $(mklib); fi
 self: libs
 	@LIBS2DO="$(SLIBS)" ; $(mksrc)
 	@X2DO="self"; XPATH="driver";XLIBS="$(SLIBS)";$(mkx)
@@ -113,18 +116,19 @@ self_ras: libs
 self_reels: libs
 	@LIBS2DO="$(PJ_REELSLIBS)";ADF="-DPJ_REELS"; $(mksrc)
 	@X2DO="self_reels"; XPATH="driver";XLIBS="$(PJ_REELSLIBS)";ADF="-DPJ_REELS";$(mkx)
+spp_ph: libs
+	@LIBS2DO="$(SPPLIBS)" ; $(mksrc)
+	@X2DO="spp_ph" ;XPATH="spp";XLIBS="$(SPPLIBS)"; ADF="-DSPP_PJ_PH";$(mkx)
 # -- GPL_START --
 interfaces: libs
 	@LIBS2DO="$(2SLIBS)" ; $(mksrc)
+	@LIBS2DO="int_modules"; DIR2GO="interfaces" ; $(mklib)
 	@X2DO="a2s" ;XPATH="interfaces/a2s";XLIBS="$(2SLIBS)";$(mkx)
-	@LIBS2DO="$(2SLIBS)" ; $(mksrc)
 	@X2DO="f2s" ;XPATH="interfaces/f2s";XLIBS="$(2SLIBS)";$(mkx)
 	@if test "$(do_p2s)" = yes ; then X2DO="p2s" ; XPATH="interfaces/p2s" ; \
 	XLIBS="$(2SLIBS)" ; $(mkx) ; fi
 	@if test "$(do_e2s)" = yes ; then X2DO="e2s" ; XPATH="interfaces/e2s" ; \
 	XLIBS="$(2SLIBS)" ; $(mkx) ; fi
-interfaces_todo: libs
-	@X2DO="f2s" ;XPATH="interfaces/f2s";XLIBS="$(2SLIBS)";$(mkx)
 spp: libs
 	@LIBS2DO="$(SPPLIBS)" ; $(mksrc)
 	@X2DO="spp" ;XPATH="spp";XLIBS="$(SPPLIBS)";$(mkx)
@@ -181,10 +185,10 @@ define mksrc
  done
 endef
 define mklib
- for ldir in $$LIBS2DO; do \
+ echo $$LIBS2D0 $$DIR2GO; for ldir in $$LIBS2DO; do \
   if test ! -f "$(libdir)/lib$$ldir.a" ; \
-  then ./sbin/mkmkfl lib/$$ldir lib$$ldir.a .objects l $(precision) $$ADF ; \
-  cd lib/$$ldir ; $(make) VPATH=lib/$$ldir || exit "$$?" ; cd ../../; fi \
+  then ./sbin/mkmkfl $$DIR2GO/$$ldir lib$$ldir.a .objects l $(precision) $$ADF ; \
+  cd $$DIR2GO/$$ldir ; $(make) VPATH=$$DIR2GO/$$ldir || exit "$$?" ; cd ../../; fi \
  done
 endef
 define mkx

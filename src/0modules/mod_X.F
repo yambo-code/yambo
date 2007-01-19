@@ -33,6 +33,7 @@
 !
   real(SP),    allocatable :: X_poles(:)
   integer ,    allocatable :: X_poles_tab(:,:)
+  integer ,    allocatable :: X_RLcomp_ig(:)
   complex(SP), allocatable :: X_rhoq0(:,:,:,:)
   complex(SP), allocatable :: X_q0grad(:,:,:,:,:)
   complex(SP), allocatable :: X_mat(:,:,:)
@@ -89,8 +90,16 @@
  else
    select case(what)
    case('X')
+     !
+     ! I clean the RL components mapping
+     !
+     if (allocated(X_RLcomp_ig)) deallocate(X_RLcomp_ig)
+     !
+     ! and the matrix itself
+     !
      if (.not.allocated(X_mat)) return
      deallocate(X_mat)
+     !
    case('OptGrad')
      if (.not.allocated(X_q0grad)) return
      deallocate(X_q0grad)

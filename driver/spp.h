@@ -29,8 +29,10 @@
   {"s2s","s","SELF ver. 2 databases translator",0,0,0,0}, /* 6 */
   {"kpt","k","K-grid generator",0,0,0,0}, /* 7 */
   {"excwf","e","Excitonic Wavefunction plot",0,0,0,0}, /* 8 */
-  {"elph", "p","Electron-Phonon DBs preprocessing",0,0,0,0}, /* 9 */
-  {"bzrim","r","BZ energy RIM analyzer",0,0,0,0}, /* 10 */
+  {"bzrim","r","BZ energy RIM analyzer",0,0,0,0}, /* 9 */
+#if defined SPP_PJ_PH
+  {"elph", "p","Electron-Phonon DBs preprocessing",0,0,0,0}, /* 10 */
+#endif
   {NULL,NULL,NULL,0,0,0,0}
  };
  char *tool="spp";

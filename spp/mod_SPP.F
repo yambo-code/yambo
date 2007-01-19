@@ -20,18 +20,18 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  module SPP
-!==========
+  !
   use pars,    ONLY:SP,lchlen,schlen,HARTREE
   implicit none
-!
-! K analysis
-!===============================================================
+  !
+  ! K analysis
+  !
   logical  :: lkanalyze
   real(SP) :: Kgw_1(3), qlong(3)
   character(schlen) :: Kcoo_in,Kcoo_out
-!
-! Exc WF
-!===============================================================
+  !
+  ! Exc WF
+  !
   logical      :: lexcwf
   integer      :: lambda       !energy of the exciton
   integer      :: ncell(3)     !number of repetitions of the cell
@@ -45,18 +45,22 @@
   character(1) :: action_mode  !to decide if sorting or plotting
   character(1) :: p_format     !Format of the plot
   character(2)  ::p_dir        !Direction of the plot 
-!
-!EL-PH
-!===============================================================
+  !
+#if defined SPP_PJ_PH
+  !
+  !EL-PH
+  !
   logical :: lelph
   integer :: elph_steps
-  real(SP):: elph_gamma_broad,elph_eli_broad,elph_Ef,elph_Emax
+  real(SP):: elph_gamma_broad,elph_broad,elph_Ef,elph_Emax
   character(schlen) :: elph_dbs_path
-!
-! BZ RIM
-!===============================================================
+  !
+#endif
+  !
+  ! BZ RIM
+  !
   integer  :: BZ_RIM_nkpts,RIM_G_shells
   logical  :: lbzrim
   character(lchlen) :: BZ_RIM_path
-
+  !
  end module SPP

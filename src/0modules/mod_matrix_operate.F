@@ -25,57 +25,101 @@
   integer, parameter :: USE_LK=1,USE_SLK=2,ALREADY_FILLED=3
   integer, parameter :: DIAGO=4,INV=5,PDIAGO=6,USE_SVD=7
   type blacs_t
-!variables for blacs initialization and processor grid creation
+    !
+    ! variables for blacs initialization and processor grid creation
+    !
     integer :: ictxt, nprow, npcol, myrow, mycol
-!variables needed to distribute the global array across the grid
+    !
+    ! variables needed to distribute the global array across the grid
+    !
     integer :: descM(9), descV(9), ldrow, ldcol, blocking_factor 
   end type blacs_t
 
  contains
-!
- subroutine mat_r2c(mr,mc)
-!-------------------------
-!The dimension of mc commands
-!
+ !
+ subroutine mat_r2c_ordered(mr,mc,m_order)
+ !----------------------------------------
+ ! Copy mr in mc using m_order indexes for mc
+ !
  implicit none
  real(SP)    :: mr(:,:,:)
  complex(SP) :: mc(:,:)
+ integer     :: m_order(:)
+ !
+ ! Work Space
+ !
  integer     :: i1,i2,mr_shp(3),mc_shp(2)
+ !
  mr_shp=shape(mr)
  mc_shp=shape(mc)
+ !
+ do i1=1,min(mr_shp(1),mc_shp(1))
+   do i2=1,min(mr_shp(2),mc_shp(2))
+     mc(m_order(i1),m_order(i2))=mr(i1,i2,1)+(0._SP,1._SP)*mr(i1,i2,2)
+   enddo
+ enddo
+ !
+ end subroutine
+ !
+ subroutine mat_r2c(mr,mc)
+ !------------------------
+ ! Copy mr in mc 
+ !
+ implicit none
+ real(SP)    :: mr(:,:,:)
+ complex(SP) :: mc(:,:)
+ !
+ ! Work Space
+ !
+ integer     :: i1,i2,mr_shp(3),mc_shp(2)
+ !
+ mr_shp=shape(mr)
+ mc_shp=shape(mc) 
+ !
  do i1=1,min(mr_shp(1),mc_shp(1))
    do i2=1,min(mr_shp(2),mc_shp(2))
      mc(i1,i2)=mr(i1,i2,1)+(0._SP,1._SP)*mr(i1,i2,2)
    enddo
- enddo
+ enddo 
+ !
  end subroutine
-
+ !
  subroutine mat_c2r(mc,mr)
-!-------------------------
-!The dimension of mr commands
-!
+ !------------------------
+ ! Copy mc in mr
+ !
  implicit none
  real(SP)    :: mr(:,:,:)
  complex(SP) :: mc(:,:)
+ !
+ ! Work Space
+ !
  integer     :: i1,i2,mr_shp(3),mc_shp(2)
+ !
  mr_shp=shape(mr)
  mc_shp=shape(mc)
+ !
  do i1=1,min(mr_shp(1),mc_shp(1))
    do i2=1,min(mr_shp(2),mc_shp(2))
      mr(i1,i2,1)=real(mc(i1,i2))
      mr(i1,i2,2)=aimag(mc(i1,i2))
    enddo
  enddo
+ !
  end subroutine
-
+ !
  subroutine m3inv(m,m_inv)
-!-------------------------
+ !------------------------
+ ! Analitic inverse of a 3x3 matrix
+ !
  use pars, ONLY:SP
  use com,  ONLY:error,warning
  implicit none
  real(SP)          :: m(3,3)
  real(SP),optional :: m_inv(3,3)
-!ws
+ !
+ !Work Space
+ !
  real(SP) ::  det,inv(3,3)
  det=m3det(m)
  inv(1,1)=(-(m(2,3)*m(3,2)) + m(2,2)*m(3,3))/det
@@ -91,9 +135,9 @@
  if (present(m_inv))      m_inv=inv
  if (.not.present(m_inv)) m=inv
  end subroutine
-
+ !
  function m3det(m)
-!-----------------
+ !-----------------
  use pars
  implicit none
  real(SP) m(3,3),m3det

@@ -199,13 +199,20 @@
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
  io_err=ioQP('W',qp,io_ID) 
 !
-! KB_PP
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=ioKB_PP(io_ID)
-!
 ! OSTNTS
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_err=ioOSTNTS(X(3),en,io_ID)
+!
+! KB_PP
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
+ io_err=ioKB_PP(io_ID)
+ !
+ ! If the KB non local factors are found set to T the Vnl_included logical
+ !
+ if (io_err==0) forall(i1=1:4) X(i1)%Vnl_included=.true.
+ !
+ ! I transfer to all X types the X(3) used in the previous io's 
+ !
  call X_var_setup
 !
 ! Xx Xs Xp Xd

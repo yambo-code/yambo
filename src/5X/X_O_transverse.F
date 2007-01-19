@@ -57,7 +57,6 @@
 !===================================
  call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
  ioKB_err=ioKB_PP(ID)
- X%Vnl_included=.false.
  if (ioKB_err==0) then
    X%Vnl_included=.true.
    pp_kbv_dim=0

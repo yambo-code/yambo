@@ -60,7 +60,7 @@
 ! N.B
 ! rang(ik) = # of symmetries | R_is ik = ik
 !
- use pars
+ use pars,           ONLY:SP,schlen,IP
  use memory_m,       ONLY:mem_est
  use vec_operate,    ONLY:rlu_v_is_zero,c2a,k2bz
  use D_lattice,      ONLY:nsym

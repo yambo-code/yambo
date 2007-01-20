@@ -23,7 +23,7 @@
 !===================================================
  use pars,                  ONLY : SP, DP, PI, schlen, HARTREE
  use com,                   ONLY : msg
- use electrons,             ONLY : levels, default_nel,n_bands,n_spin,n_sp_pol
+ use electrons,             ONLY : levels, default_nel,n_bands,n_spin,n_sp_pol, spin_orbit
  use R_lattice,             ONLY : bz_samp, ng_vec, g_vec,nkibz
  use D_lattice,             ONLY : nsym, i_time_rev, i_space_inv, dl_sop, &
 &                                  DL_vol, a, alat, default_Tel,&
@@ -34,6 +34,7 @@
 &                                  xc_string,XC_LDA_C_PW,XC_LDA_C_PZ,XC_LDA_C_WIGNER,&
 &                                  XC_LDA_C_HL,XC_LDA_C_XALPHA
  use f2s_datatypes
+ use interfaces,            ONLY : print_interface_dimensions
  implicit none
  character(*)                   :: file_name
  type(levels),     intent(out)  :: en     ! Energies
@@ -49,6 +50,8 @@
  character(schlen)              :: filename
  character(schlen)              :: xcname, cdummy
  integer, allocatable           :: asop(:,:,:)
+
+ spin_orbit = .false.
 
  call msg('nl',' Header/K-points/Energies...')
 ! open and read inp.ini 
@@ -174,6 +177,9 @@
  endif
  call msg("s","Inversion ...")
  if (l_inversion) then
+   !
+   ! Note that this will make SELF run slower....
+   !
    call msg("l","found. Time reversal turned off.")
    i_time_rev=0
  else
@@ -228,18 +234,21 @@
  enddo
 !
  call msg('l','done')
- call msg('s',':: Electrons             :',default_nel)
- call msg('s',':: Temperature       [ev]:',default_Tel*HARTREE)
- call msg('s',':: Lattice factors [a.u.]:',alat)
- call msg('s',':: K-points              :',k%nibz)
- call msg('s',':: Bands                 :',en%nb)
- call msg('s',':: Symmetries   [spatial]:',nsym)
- call msg('s','::                [T-rev]:',nsym*i_time_rev)
- call msg('s',':: Spin  [components/pol]:',(/n_spin,n_sp_pol/))
- call msg('s',':: (WF)     RL vectors   :',wf_ng)
- call msg('s',':: (Charge) RL vectors   :',ng_vec)
+!call msg('s',':: Electrons             :',default_nel)
+!call msg('s',':: Temperature       [ev]:',default_Tel*HARTREE)
+!call msg('s',':: Lattice factors [a.u.]:',alat)
+!call msg('s',':: K-points              :',k%nibz)
+!call msg('s',':: Bands                 :',en%nb)
+!call msg('s',':: Symmetries   [spatial]:',nsym)
+!call msg('s','::                [T-rev]:',nsym*i_time_rev)
+!call msg('s',':: Spin  [components/pol]:',(/n_spin,n_sp_pol/))
+!call msg('s',':: (WF)     RL vectors   :',wf_ng)
+!call msg('s',':: (Charge) RL vectors   :',ng_vec)
+!call msg('s',' ')
 !
  call deallocate_fgg(fhi_gg)
+
+ call print_interface_dimensions(en,k)
 
  end subroutine
 

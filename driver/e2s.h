@@ -23,7 +23,11 @@
   {"help",  "h","Short Help",0,0,0,0}, 
   {"lhelp", "H","Long Help",0,0,0,0}, 
   {"nompi", "N","Skip MPI initialization",0,0,0,0},
+  {"ifile", "F","ETSF filename",0,0,1,0},
+  {"odir","O","Output directory",0,0,1,0},
+  {"dbfrag","S","DataBases fragmentation",0,0,0,0},
   {NULL,NULL,NULL,0,0,0,0}
  };
  char *tool="e2s";
- char *tdesc="E(TSF) 2 S(elf) interface";
+ char *tdesc="E(TSF) 2 S(elf) interface (0.6)";
+

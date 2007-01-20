@@ -16,8 +16,8 @@ $changedfiles = <SVN>;
 close(SVN);
 # Strip the "src/" (add to this list if needed)
 $changedfiles =~ s/  / /g;
-$changedfiles =~ s/src\///;
-$changedfiles =~ s/interfaces\///;
+$changedfiles =~ s/src\///g;
+$changedfiles =~ s/interfaces\///g;
 print "Identified modified files: $changedfiles\n";
 #
 # Grab the version number

@@ -24,7 +24,7 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
   use etsf_io
   use etsf_io_low_level
   use pars,                only : SP,lchlen
-  use com,                 only : msg,write_to_report,outpath
+  use com,                 only : msg,write_to_report,outpath, file_exists
   use par_proc_m,          only : ncpu,myid,p_finalize
   use electrons,           only : levels,E_reset,n_bands,n_spin
   use D_lattice,           only : n_atoms_max
@@ -81,18 +81,35 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
   ! Check for input file
   !
   call msg('s','Checking input file ...')
-  ETSF_file_name = "sih4-output_DS1_WFK-etsf.nc"
-  inquire( file=ETSF_file_name, exist = letsf_file)
-  if ( .not.letsf_file ) then
-    call msg('ln','failed')
-    call p_finalize
-    return
-  endif
+! ETSF_file_name = "sih4-output_DS1_WFK-etsf.nc"
+! inquire( file=ETSF_file_name, exist = letsf_file)
+! if ( .not.letsf_file ) then
+!   call msg('ln','failed')
+!   call p_finalize
+!   return
+! endif
+
+! Check input filenames (e2s.in is default)
+!==========================================
+!deffile = .false.
+ ETSF_file_name = trim(inf)
+! if(index(ETSF_filename,'e2s.in').ne.0) deffile = .true.
+!if(deffile.and.use_pwexport) index_filename = 'index.xml'
+!if(deffile.and.use_qexml)    index_filename = 'data-file.xml'
+ call msg('s','ETSF format file set to ',trim(ETSF_file_name))
+!inquire(file=trim(ETSF_file_name),exist=lexist)
+ if(.not.file_exists(ETSF_file_name)) then
+   call msg('s','ETSF format file not found! Specify -F filename.')
+   stop ' '
+ endif
+
+
+
   !
   ! Check for KP PP forced creation
   !
-  force_kbpp = .false.
-  if(index(instr,'forcepp').ne.0) force_kbpp = .true.
+! force_kbpp = .false.
+! if(index(instr,'forcepp').ne.0) force_kbpp = .true.
 
   
 
@@ -103,7 +120,6 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
 ! 
   call etsf_io_low_open_read(ncid, trim(ETSF_file_name), lstat, error_data = error_data)
   if (.not. lstat) call etsf_long_error(error_data)
-  call msg('l',trim(ETSF_file_name))
   call msg('s','DBs path set to :',trim(outpath))
 
 ! etsf_io_XXX_def for output netcdf 

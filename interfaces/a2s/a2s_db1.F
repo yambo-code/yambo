@@ -23,7 +23,7 @@
 !======================================
  use pars,                  ONLY : SP, DP, PI, schlen
  use com,                   ONLY : msg
- use electrons,             ONLY : levels, default_nel,n_bands,n_spin,n_sp_pol,n_spinor
+ use electrons,             ONLY : levels, default_nel,n_bands,n_spin,n_sp_pol,n_spinor, spin_orbit
  use R_lattice,             ONLY : bz_samp, ng_vec, g_vec,nkibz
  use D_lattice,             ONLY : nsym, i_time_rev, i_space_inv, dl_sop, &
 &                                  DL_vol, a, alat, default_Tel,&
@@ -35,6 +35,7 @@
  use xc_functionals,        ONLY : XC_EXCHANGE_CORRELATION,GS_xc_KIND,GS_xc_FUNCTIONAL,&
 &                                  xc_string,XC_LDA_C_PW,XC_LDA_C_PZ,XC_LDA_C_WIGNER,&
 &                                  XC_LDA_C_HL,XC_LDA_C_XALPHA
+ use interfaces,            ONLY : print_interface_dimensions
  implicit none
  character(*)                   :: KSS_file_name
  type(levels),     intent(out)  :: en
@@ -100,7 +101,6 @@
  k%nibz      = ahdr%nkpt
  nkibz       = k%nibz
  default_Tel = ahdr%tphysel 
- i_time_rev  = 1
  a(1,:)  = ahdr%rprimd(:,1)
  a(2,:)  = ahdr%rprimd(:,2)
  a(3,:)  = ahdr%rprimd(:,3)
@@ -161,6 +161,10 @@
 !===============================
  read(11) (((asop(i1,i2,i3),i1=1,3),i2=1,3),i3=1,a_nsym)
  read(11) 
+ i_time_rev  = 1
+ !
+ ! Search for identity and inversion symmetries.
+ !
  l_identity=.false.
  l_inversion=.false.
  do i1=1,a_nsym
@@ -175,35 +179,53 @@
  if (l_identity) call msg("l","[ID found]...")
  if (l_inversion) then
    if (l_identity) then
+     !
+     ! Special case where I,-I present: no TR used.
+     !
      call msg("l","[INV found. Time rev is off]")
      i_time_rev=0
    else
+     !
+     ! Identity was stripped in outkss: swap all
+     ! symmetries with their inversions
+     !
      call msg("l","[INV found]")
      asop(:,:,:)=-asop(:,:,:)
    endif
  else 
    call msg("l","[INV not found]")
  endif
-!
- if (n_spin==2) then
-   i_time_rev=0
-   call msg("l","...[Time rev off]")
-   nsym=a_nsym*2
- else
+ !
+ ! Calculate total number of symmetries, taking into 
+ ! account spin_orbit and i_time_reversal
+ !
+ if (spin_orbit) then
+   call msg("s","Spin orbit present: time reversal off.")
+   i_time_rev = 0
    nsym=a_nsym
-   if (i_time_rev==1) nsym=a_nsym*2
+ else
+   if (i_time_rev==1) then
+     call msg("s","Time reversal being used.")
+     nsym=a_nsym*2
+   else
+     call msg("s","Time reversal not being used.")
+     nsym=a_nsym
+   endif
  endif
+   
 !
- call msg('s',':: Electrons             :',default_nel)
- call msg('s',':: Temperature       [ev]:',default_Tel)
- call msg('s',':: Lattice factors [a.u.]:',alat)
- call msg('s',':: K-points              :',k%nibz)
- call msg('s',':: Bands                 :',en%nb)
- call msg('s',':: Spin  [components/pol]:',(/n_spin,n_sp_pol/))
- call msg('s',':: Symmetries   [spatial]:',nsym)
- call msg('s','::                [T-rev]:',i_time_rev==1)
- call msg('s',':: (Charge) RL vectors   :',ng_vec)
- call msg('s',':: XC potential          :',xc_string(GS_xc_KIND,GS_xc_FUNCTIONAL))
+!call msg('s',':: Electrons             :',default_nel)
+!call msg('s',':: Temperature       [ev]:',default_Tel)
+!call msg('s',':: Lattice factors [a.u.]:',alat)
+!call msg('s',':: K-points              :',k%nibz)
+!call msg('s',':: Bands                 :',en%nb)
+!call msg('s',':: Spin  [components/pol]:',(/n_spin,n_sp_pol/))
+!call msg('s',':: Symmetries   [spatial]:',nsym)
+!call msg('s','::                [T-rev]:',i_time_rev==1)
+!call msg('s',':: (Charge) RL vectors   :',ng_vec)
+!call msg('s',':: XC potential          :',xc_string(GS_xc_KIND,GS_xc_FUNCTIONAL))
+
+
 !-------------------------------------------------------------------------
 !From abinit help ...
 !
@@ -260,5 +282,10 @@
  enddo
  call msg('l','done')
  close(11)
+
+ call msg('s','Report:')
+!===========================
+ call print_interface_dimensions(en,k)
+
  end subroutine
 

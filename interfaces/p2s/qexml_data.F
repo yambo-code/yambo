@@ -22,6 +22,9 @@ module qexml_data
   integer                    :: ngm_, npwx_
   integer, allocatable       :: igv_(:,:)
 
+! Spin
+  logical                    :: lspinorb_
+
 ! Bandstructure
   integer                    :: nbnd_, num_k_points_, nspin_
   real(dbl)                  :: nelec_

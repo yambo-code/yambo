@@ -41,6 +41,7 @@
 ! for the spinor components. It is not a Physical quantity.
 !
    integer  :: n_spin,n_sp_pol,n_spinor
+   logical  :: spin_orbit
 !
    type levels
      integer         :: nb

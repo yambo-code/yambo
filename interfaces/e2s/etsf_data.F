@@ -10,7 +10,7 @@ module etsf_data
   !
   ! Add ierr after allocates
   !
-  use etsf_io,            only : etsf_charlen, etsf_dims
+  use etsf_io,            only : etsf_charlen, etsf_dims, etsf_chemlen
   !
   ! Dimensions, as defined by the ETSF specifications
   !
@@ -24,6 +24,7 @@ module etsf_data
   double precision, allocatable, target :: reduced_atom_positions_(:,:)
   double precision, allocatable, target :: valence_charges_(:) 
   double precision, allocatable, target :: atomic_numbers_(:) 
+  character(len=etsf_chemlen), allocatable, target :: chemical_symbols_(:) 
   !
   ! Electrons
   !
@@ -59,6 +60,7 @@ module etsf_data
   !
   double precision                      :: temperature_
   integer                               :: ixc_
+  integer,          allocatable, target :: spin_orbit_atom_(:)
 
 contains
   !
@@ -79,6 +81,8 @@ contains
   ! geometry group
   !
   subroutine allocate_geometry_group
+    allocate( atomic_numbers_(dims%number_of_atom_species) )
+    allocate( chemical_symbols_(dims%number_of_atom_species) )
     allocate( atom_species_(dims%number_of_atoms) )
     allocate( primitive_vectors_ (dims%number_of_cartesian_directions, &
 &                                 dims%number_of_vectors ) )
@@ -92,6 +96,8 @@ contains
   
   subroutine deallocate_geometry_group
     if(allocated(atom_species_))              deallocate(atom_species_)
+    if(allocated(atomic_numbers_))            deallocate(atomic_numbers_)
+    if(allocated(chemical_symbols_))          deallocate(chemical_symbols_)
     if(allocated(primitive_vectors_))         deallocate(primitive_vectors_)
     if(allocated(reduced_symmetry_matrices_)) deallocate(reduced_symmetry_matrices_)
     if(allocated(reduced_atom_positions_))    deallocate(reduced_atom_positions_)

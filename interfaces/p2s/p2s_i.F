@@ -58,7 +58,7 @@
 !
  integer           :: pwunit, isec, ispinor
  integer           :: rhounit_, qexml_err
- logical           :: use_qexml, use_pwexport, deffile, lexist, verboseIO
+ logical           :: use_qexml, use_pwexport, deffile, lexist, verboseIO, force_noTR
 !----------------------------------------------------------------
 !
 ! Presets
@@ -94,6 +94,11 @@
 !============
  verboseIO = .false.
  if(index(instr,'verb').ne.0) verboseIO = .true.
+
+! Forcing non generation of TR symmetries
+!============
+ force_noTR = .false.
+ if(index(instr,'notr').ne.0) force_noTR = .true.
 
 ! Check input filenames (p2s.in is default)
 !==========================================
@@ -138,7 +143,7 @@
 !---------------------------------------------------------------------*
 
  if(use_pwexport) call p2s_db1(pwunit,en,k)
- if(use_qexml)    call p2s_qexml_db1(pwunit,verboseIO,en,k)
+ if(use_qexml)    call p2s_qexml_db1(pwunit,verboseIO,force_noTR,en,k)
 
  call msg('s','== Writing DB1 ...')
 !===================================

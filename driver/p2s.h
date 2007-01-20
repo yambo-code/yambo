@@ -28,6 +28,7 @@
   {"dbfrag","S","DataBases fragmentation",0,0,0,0}, 
   {"qexml", "Q","Use qexml module [31 (v3.1), 311 (v3.1.1 and later)]",1,0,0,0}, 
   {"verb",  "V","Verbose wfc I/O reporting",0,0,0,0}, 
+  {"notr",  "X","Force no TR symmetry",0,0,0,0}, 
   {NULL,NULL,NULL,0,0,0,0}
  };
  char *tool="p2s";

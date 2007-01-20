@@ -19,13 +19,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine p2s_qexml_db1(pwunit,verboseIO,en,k)
+ subroutine p2s_qexml_db1(pwunit,verboseIO,force_noTR,en,k)
 !=====================================
  use pars,                  ONLY : SP, PI, lchlen
  use qexml_module
  use qexml_data
  use com,                   ONLY : msg, error
- use electrons,             ONLY : levels, default_nel, n_spin, n_sp_pol, n_spinor
+ use electrons,             ONLY : levels, default_nel, n_spin, n_sp_pol, n_spinor, spin_orbit
  use R_lattice,             ONLY : bz_samp, ng_vec, g_vec
  use D_lattice,             ONLY : nsym, i_time_rev, i_space_inv, dl_sop, &
 &                                  DL_vol, a, alat, default_Tel, &
@@ -34,11 +34,12 @@
  use wave_func,             ONLY : wf_nc_k, wf_ncx, wf_igk, wf_ng
  use vec_operate,           ONLY : cross_product
  use xc_functionals,        ONLY : GS_xc_KIND,GS_xc_FUNCTIONAL, xc_string
+ use interfaces,            ONLY : print_interface_dimensions
  implicit none
  type(levels),     intent(out)  :: en     ! Energies
  type(bz_samp),    intent(out)  :: k      ! K/Q points
  integer,          intent(in)   :: pwunit ! unit of index.dat
- logical,          intent(in)   :: verboseIO
+ logical,          intent(in)   :: verboseIO, force_noTR
 !ws
  real(SP)                       :: lsop(3,3), acopy(3,3),cp(3)
  real(SP)                       :: b(3,3)
@@ -59,6 +60,8 @@
  if (ierr.ne.0) call errore('qexml_read_bands','IOTK error',ABS(ierr))
  call qexml_read_symmetry(nsym=nsym_, ierr=ierr)
  if (ierr.ne.0) call errore('qexml_read_symmetry','IOTK error',ABS(ierr))
+ call qexml_read_spin(lspinorb=lspinorb_, ierr=ierr)
+ if (ierr.ne.0) call errore('qexml_read_spin','IOTK error',ABS(ierr))
  call qexml_read_planewaves(npwx=npwx_,ngm=ngm_, ierr=ierr)
  if (ierr.ne.0) call errore('qexml_read_planewaves','IOTK error',ABS(ierr))
  call qexml_read_ions(nat=nat_, nsp=nsp_, ierr=ierr)  
@@ -80,12 +83,12 @@
    n_spinor  = 2
    n_spin    = 2
  end select
+ spin_orbit = lspinorb_
  nsym   = nsym_
  ng_vec = ngm_
  default_nel = nelec_
  default_Tel = 0.0_SP 
  wf_ncx  = npwx_ ! max for writing, allocation
- wf_ng   = wf_ncx ! this is written
  n_atom_species = nsp_
 
  call msg("l","done")
@@ -110,7 +113,7 @@
  call qexml_read_cell(alat=alat_, a1=a1_, a2=a2_, a3=a3_,ierr=ierr)
  if (ierr.ne.0) call errore('qexml_read_cell','IOTK error',ABS(ierr))
 
- a(1,:) = a1_(:) ! assuming always atomic units?
+ a(1,:) = a1_(:) ! assumes always atomic units
  a(2,:) = a2_(:)
  a(3,:) = a3_(:)
  alat(1) = 1.0_SP*maxval(abs(a(1,:)) )
@@ -173,7 +176,9 @@
    isym(:,:,i1) = transpose(s_(:,:,i1)) 
  enddo
  deallocate(s_)
-
+ !
+ ! Check for identify and inversion symmetry
+ !
  l_identity  = .false.
  l_inversion = .false.
  do i1=1,nsym
@@ -193,15 +198,37 @@
  if(l_inversion) call msg("s","Inversion ... found")
  if(.not.l_inversion) call msg("s","Inversion ... not found.")
 
- if(n_spinor.eq.1) then
-   i_time_rev = 1  ! Turn time reversal on
-   nsym=nsym/2
-   call msg("s","Time reversal being used.")
- else ! spinor for now: really means spin orbit coupling...
-   i_time_rev = 0
-   nsym=nsym
+! Always turn on time reversal except for following cases:
+! (1) Spin orbit coupling present
+! (2) force_noTR = .true.
+ 
+ i_time_rev = 1  
+ if(spin_orbit.or.force_noTR) then
    call msg("s","Time reversal not being used.")
+   i_time_rev = 0
+ else
+   call msg("s","Time reversal being used.")
+   if(l_inversion) then
+     !
+     ! Remove the inversion symmetries from the list for now.
+     !
+     nsym=nsym/2
+   else 
+     nsym=nsym
+   endif
  endif
+ !
+ ! PWscf: R is in fact transpose(R) 
+ !
+ ! Make sure symmetries are constructed correctly:
+ !
+ allocate(dl_sop(3,3,nsym*(1+i_time_rev)))
+ do i1=1,nsym
+   lsop=matmul(transpose(a),isym(:,:,i1))
+   dl_sop(:,:,i1)=matmul(lsop,b)/2.0_SP/PI
+   if (i_time_rev==1) dl_sop(:,:,i1+nsym)=-dl_sop(:,:,i1)
+ enddo
+ if (i_time_rev==1) nsym=2*nsym
 
 !DEBUG<
 !if (l_inversion) then
@@ -225,17 +252,6 @@
 !endif
 !DEBUG<
 
-   if(l_inversion.and.nspinpw.eq.4) call msg("s"," Inversion + spinor calculation!")
-!
-! PWscf: R is in fact transpose(R) ? See pw2gw
-!
- allocate(dl_sop(3,3,nsym*(1+i_time_rev)))
- do i1=1,nsym
-   lsop=matmul(transpose(a),isym(:,:,i1))
-   dl_sop(:,:,i1)=matmul(lsop,b)/2.0_SP/PI
-   if (i_time_rev==1.and.n_spin.eq.1) dl_sop(:,:,i1+nsym)=-dl_sop(:,:,i1)
- enddo
- if (i_time_rev==1.and.n_spin.eq.1) nsym=2*nsym
 
 !---------------------------------------------------------------------*
 !    Read XC functional                                               *
@@ -269,6 +285,7 @@
 ! PW cart tpiba/cart au/cart alat/RLU units
  allocate(k%pt(k%nibz,3))
  do i1 = 1,k%nibz
+!   These are equivalent:
 !   k%pt(i1,:)=kpt(:,i1) * pwcell%tpiba * alat(:)/2.0_SP/PI
     k%pt(i1,:)=xk_(:,i1) * alat(:)/alat_
  enddo
@@ -341,6 +358,7 @@
 !>>>DEBUG
 ! These lines are needed if using gkvector files from multiple runs,
 ! patched using Perl script and modified qexml.F.
+! Superceded by new script using iotk_copy.x
 !  kshift = k%nibz ! default
 !  kshift = 10
 !  if(ik.gt.kshift) then
@@ -360,7 +378,10 @@
    wf_nc_k(ik) = npwk_
  enddo
  deallocate(index_)
-
+ wf_ng = maxval(wf_igk)
+ if(maxval(wf_nc_k).ne.wf_ncx) then
+    call error('maxval(wf_nc_k).ne.wf_ncx ! Check MAX_NPW ')
+ endif
  if(any(wf_nc_k.eq.0)) call error('At least one npw(k) = 0!')
 
  call msg('l','done')
@@ -369,22 +390,27 @@
 !    Print dimensions
 !---------------------------------------------------------------------*
 
- call msg('s',' :: Electrons             :',default_nel)
- call msg('s',' :: Temperature       [ev]:',default_Tel)
- call msg('s',' :: Lattice factors [a.u.]:',alat)
- call msg('s',' :: K-points              :',k%nibz)
- call msg('s',' :: Bands                 :',en%nb)
- call msg('s',' :: Spinor components     :',n_spinor)
- call msg('s',' :: Spin polarizations    :',n_sp_pol)
- if(i_time_rev==1) call msg('s',' :: Symmmetries  [spatial]:',nsym/2)
- if(i_time_rev==1) call msg('s',' :: Symmmetries    [T-rev]:',nsym/2*i_time_rev)
- if(i_time_rev==0) call msg('s',' :: Symmmetries  [spatial]:',nsym)
- if(i_time_rev==0) call msg('s',' :: Symmmetries    [T-rev]:',nsym*i_time_rev)
- call msg('s',' :: RL vectors        (WF):',wf_ng)
- call msg('s',' :: RL vectors    (CHARGE):',ng_vec)
- call msg('s',' :: XC potential          :',xc_string(GS_xc_KIND,GS_xc_FUNCTIONAL))
- call msg('s',' :: Atomic species        :',n_atom_species)
- call msg('s',' :: Max atoms/species     :',n_atoms_max)
+!>>>DEBUG
+!call msg('s',' :: Electrons             :',default_nel)
+!call msg('s',' :: Temperature       [ev]:',default_Tel)
+!call msg('s',' :: Lattice factors [a.u.]:',alat)
+!call msg('s',' :: K-points              :',k%nibz)
+!call msg('s',' :: Bands                 :',en%nb)
+!call msg('s',' :: Spinor components     :',n_spinor)
+!call msg('s',' :: Spin polarizations    :',n_sp_pol)
+!if(i_time_rev==1) call msg('s',' :: Symmmetries  [spatial]:',nsym/2)
+!if(i_time_rev==1) call msg('s',' :: Symmmetries    [T-rev]:',nsym/2*i_time_rev)
+!if(i_time_rev==0) call msg('s',' :: Symmmetries  [spatial]:',nsym)
+!if(i_time_rev==0) call msg('s',' :: Symmmetries    [T-rev]:',nsym*i_time_rev)
+!call msg('s',' :: RL vectors        (WF):',wf_ng)
+!call msg('s',' :: RL vectors    (CHARGE):',ng_vec)
+!call msg('s',' :: XC potential          :',xc_string(GS_xc_KIND,GS_xc_FUNCTIONAL))
+!call msg('s',' :: Atomic species        :',n_atom_species)
+!call msg('s',' :: Max atoms/species     :',n_atoms_max)
+!call msg('s',' ')
+!<<<DEBUG
+
+   call print_interface_dimensions(en,k)
 
    return
  

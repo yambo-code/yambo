@@ -29,6 +29,11 @@
   complex(SP), allocatable :: X_fxc(:)
   character(6)             :: alpha_dim ! 'adim' 'area' 'length' 'volume'
 !
+! Longitudinal calculation
+!
+  real(SP)                 :: q0mod, R_long(3,3), q_long(3,3)
+  integer                  :: num_long_grid
+!
 ! Response function
 !
   real(SP),    allocatable :: X_poles(:)

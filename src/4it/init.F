@@ -297,7 +297,7 @@
    call initactivate(1,'XfnQPdb XfnQP_N XfnQP_E XfnQP_W XfnQP_Z')
    call Xon('Xd',(/'QpntsR','BndsRn','NGsBlk',&
 &                  'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
-&                  'DrudeW','EhEngy','LongDr'/))
+&                  'DrudeW','EhEngy','LongDr','LGPath'/))
  endif
 !
 ! BSE
@@ -390,7 +390,7 @@
  if (lras.or.lreels) then
     call Xon('Xd',(/'QpntsR','BndsRn','NGsBlk',&
 &                 'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
-&                 'DrudeW','EhEngy'/))
+&                 'DrudeW','EhEngy', 'LGPath'/))
     call initactivate(1,'FFTGvecs XfnQP_E'//&
 &     ' BulkFile BulkForm BlkShift BlkBroad Layers'//&  ! Bulk eps data
 &     ' q0x q0y'//&                                     ! Polarizations
@@ -405,7 +405,7 @@
 &     ' E0 Theta0 Thetap Phi DetAngle'//&               ! Kinematics
 &     ' LossForm ImpactFt'//&                           ! Model of loss function
 &     ' DetIntMd NumIntPt'//&                           ! Det. integration
-&     ' GausConv')                    ! General flags
+&     ' GausConv','LGPath')                    ! General flags
  endif
 #endif
 #if defined PJ_REELS

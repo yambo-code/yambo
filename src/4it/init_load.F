@@ -35,7 +35,7 @@
  use frequency,     ONLY:w_samp
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,V_more,&
 &                        V_qp,V_io,V_debug,rstatus,initmode
- use X_m,           ONLY:X_t
+ use X_m,           ONLY:X_t, long_path
  use QP_m,          ONLY:QP_rep_string,QP_cg_percent,QP_G_damp,QP_solver,&
 &                        pp_taylor_terms,QP_n_G_bands,QP_ng_Sx,QP_Sx_low_band,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations
@@ -270,12 +270,12 @@
 !  ws
    integer :: i1
    integer,parameter :: desln=31
-   character(8)::nms(14),sfx
-   character(40)::des(14)
+   character(8)::nms(15),sfx
+   character(40)::des(15)
    character(schlen)::lch1,lch2
    nms=(/'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
 &        'DrudeW','LongDr','EhEngy','PPAPnt','PPTylT',&
-&        'NGsBlk','QpntsR','BndsRn'/)
+&        'NGsBlk','QpntsR','BndsRn', 'LGPath'/)
    des(1) ='Green`s function t/c/r/a'
    des(2) ='Energy range'
    des(3) ='Damping range'
@@ -290,7 +290,8 @@
    des(12)='Response block size'
    des(13)='Transferred momenta'
    des(14)='Polarization function bands'
-   do i1=1,14
+   des(15)='Longitudinal Gauge path'
+   do i1=1,15
     lch1=des(i1);lch2=nms(i1)
 !   Xs%whoami=2;Xx%whoami=1;Xp%whoami=4;Xd%whoami=3
     if (X%whoami==1) sfx='Xx'
@@ -314,6 +315,7 @@
    call it(defs,nms(12),des(12),X%ng,G_unit,verb_level=0) 
    call it(defs,nms(13),des(13),X%iq,verb_level=0)
    call it(defs,nms(14),des(14),X%ib,verb_level=0)
+   call it(defs,nms(15),des(15),long_path,verb_level=V_more)
   end subroutine
  end subroutine
 

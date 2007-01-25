@@ -71,11 +71,12 @@
    ! Attempt calculation within longitudinal gauge if requested
    !
    use_trans_gauge = .true.
+   write(*,*) "long ",long_path
    if(trim(long_path)/='none') then
      !
      ! Use longitudinal gauge, supporting fallback to transverse gauge
      !
-!    call X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
+     call X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
      !
      if(use_trans_gauge) call warning('Reverting to transverse gauge')
    endif

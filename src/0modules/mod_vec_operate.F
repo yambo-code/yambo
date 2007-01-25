@@ -1,4 +1,4 @@
-
+!
 ! Copyright (C) 2000-2005 A. Marini and the SELF team 
 !         http://www.fisica.uniroma2.it/~self
 ! 
@@ -25,6 +25,20 @@
 !
  contains
 ! 
+! 
+ function normalize_v(v)
+!------------------
+   use R_lattice, ONLY:RL_v_comp_acc
+   implicit none
+   real(SP) :: normalize_v(3)
+   real(SP), intent(in) :: v(3)
+   real(SP) :: norm
+   norm = v_norm(v)
+   if(norm.lt.RL_v_comp_acc) return
+   normalize_v(:) = v(:)/norm
+ end function normalize_v
+
+
  function v_norm(v)
 !------------------
  implicit none

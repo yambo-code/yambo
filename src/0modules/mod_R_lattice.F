@@ -21,7 +21,7 @@
 !
  module R_lattice
 !================
-   use pars, ONLY:SP,schlen,IP
+   use pars, ONLY:SP,schlen, IP
 !
 ! K lattice
 !
@@ -146,7 +146,7 @@
    deallocate(qindx_B)
    call mem_est("qindx_B")
  endif
- end subroutine
+ end subroutine qindx_free
 
  subroutine bz_samp_reset(k)
 !===========================
@@ -156,7 +156,23 @@
  k%units=' '
  k%description=' '
  nullify(k%nstar,k%star,k%sstar,k%pt,k%ptbz,k%weights)
- end subroutine
+ end subroutine bz_samp_reset
+
+ subroutine bz_samp_duplicate(BZi, BZo)
+   implicit none
+   type(bz_samp), intent(in)    :: BZi
+   type(bz_samp), intent(inout) :: BZo
+
+   BZo%nibz  = BZi%nibz
+   BZo%nbz   = BZi%nbz
+   BZo%units = BZi%units
+   BZo%description = BZi%description
+
+   allocate( BZo%pt(BZo%nibz,3) )
+   BZo%pt(:,:) = BZi%pt(:,:)
+
+   return
+ end subroutine bz_samp_duplicate
 
  end module R_lattice
 

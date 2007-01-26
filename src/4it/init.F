@@ -297,7 +297,8 @@
    call initactivate(1,'XfnQPdb XfnQP_N XfnQP_E XfnQP_W XfnQP_Z')
    call Xon('Xd',(/'QpntsR','BndsRn','NGsBlk',&
 &                  'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
-&                  'DrudeW','EhEngy','LongDr','LGPath'/))
+&                  'DrudeW','EhEngy','LongDr'/))
+   call initactivate(1,'LongPath')
  endif
 !
 ! BSE
@@ -395,6 +396,7 @@
 &     ' BulkFile BulkForm BlkShift BlkBroad Layers'//&  ! Bulk eps data
 &     ' q0x q0y'//&                                     ! Polarizations
 &     ' Cutoff CutZero CutStep ')               ! Cut off fn
+   call initactivate(1,'LongPath')
  endif
  if (lras) then
     call initactivate(1,&
@@ -420,6 +422,7 @@
 &     ' DetIntMd NumIntPt'//&                          ! Det. integration
 &     ' EELIntMd IntLimit EpsMix'//&                   ! REELS integration
 &     ' ETStpsLs GausConv')                    ! General flags
+   call initactivate(1,'LongPath')
  endif
 #endif
 !---------------------------------------------------------------------------------

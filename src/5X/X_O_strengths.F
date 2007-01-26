@@ -71,7 +71,6 @@
    ! Attempt calculation within longitudinal gauge if requested
    !
    use_trans_gauge = .true.
-   write(*,*) "long ",long_path
    if(trim(long_path)/='none') then
      !
      ! Use longitudinal gauge, supporting fallback to transverse gauge

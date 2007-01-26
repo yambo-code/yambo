@@ -221,6 +221,7 @@
  call Xload(X(2),Xw(2))
  call Xload(X(3),Xw(3))
  call Xload(X(4),Xw(4))
+ call it(defs,'LongPath','[Xd] Longitudinal gauge path',long_path,verb_level=V_more)
 !
 !=======
 ! ACFDT
@@ -270,12 +271,12 @@
 !  ws
    integer :: i1
    integer,parameter :: desln=31
-   character(8)::nms(15),sfx
-   character(40)::des(15)
+   character(8)::nms(14),sfx
+   character(40)::des(14)
    character(schlen)::lch1,lch2
    nms=(/'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
 &        'DrudeW','LongDr','EhEngy','PPAPnt','PPTylT',&
-&        'NGsBlk','QpntsR','BndsRn', 'LGPath'/)
+&        'NGsBlk','QpntsR','BndsRn'/)
    des(1) ='Green`s function t/c/r/a'
    des(2) ='Energy range'
    des(3) ='Damping range'
@@ -290,8 +291,7 @@
    des(12)='Response block size'
    des(13)='Transferred momenta'
    des(14)='Polarization function bands'
-   des(15)='Longitudinal Gauge path'
-   do i1=1,15
+   do i1=1,14
     lch1=des(i1);lch2=nms(i1)
 !   Xs%whoami=2;Xx%whoami=1;Xp%whoami=4;Xd%whoami=3
     if (X%whoami==1) sfx='Xx'
@@ -315,7 +315,6 @@
    call it(defs,nms(12),des(12),X%ng,G_unit,verb_level=0) 
    call it(defs,nms(13),des(13),X%iq,verb_level=0)
    call it(defs,nms(14),des(14),X%ib,verb_level=0)
-   call it(defs,nms(15),des(15),long_path,verb_level=V_more)
   end subroutine
  end subroutine
 

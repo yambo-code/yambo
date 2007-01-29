@@ -22,15 +22,13 @@
  subroutine elph_pw_dbs(k,q)
 !===========================
  use ELPH,                ONLY:ph_freqs_sq,ph_modes,elph_nb,elph_dV_free,&
-&                              elph_gkkp_free
+&                              elph_gkkp_free,max_ph_freq
  use com,                 ONLY:msg
  use R_lattice,           ONLY:bz_samp,nqibz
  use D_lattice,           ONLY:nsym
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,&
 &                              OP_RD_CL,VERIFY
  use timing,              ONLY:live_timing
- use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
- use par_indexes_m,       ONLY:par_indexes
  !DEBUG
  use parser_m,            ONLY:parser
  !END DEBUG
@@ -38,7 +36,6 @@
  type(bz_samp) ::k,q
 !
 !ws GPL_END
- type(pp_indexes)   ::px
  integer,allocatable::ikbz_is_table(:,:)
  integer            ::iq,io_pw_err(nqibz),io_elph_err,ID,X_ng
  integer, external  ::ioELPH 
@@ -51,19 +48,19 @@
 !
  call section("*","== Electron-Phonon Interface: Databases ==")
 !--------------------------------------------------------------
- call pp_indexes_reset(px)
 !
  call k_ibz2bz(k,'i',.false.)
- call par_indexes(px,(/nqibz/),(/1/))
- call live_timing('ELPH databases (CHECK)',px%stps(myid+1))
+ call live_timing('ELPH databases (CHECK)',nqibz)
+ !
  io_pw_err=0
+ max_ph_freq=0.
+ !
  do iq=1,q%nibz
-   if (.not.px%i1p(iq)) cycle
    io_pw_err(iq)=elph_pw_dbs_io(-iq)
    call live_timing(steps=1)
  enddo
  call live_timing()
- call pp_redux_wait(io_pw_err)
+ !
  if (any((/io_pw_err==-1/))) then
    call msg("s",":: Databases incomplete")
    return
@@ -87,12 +84,14 @@
  call io_control(ACTION=OP_APP_WR_CL,SEC=(/1/),ID=ID)
  io_elph_err=ioELPH(ID)
  call live_timing('ELPH databases (WRITE)',nqibz)
+ !
  do iq=1,q%nibz
    io_elph_err=elph_pw_dbs_io(iq)
    if (io_elph_err==-3) then
      call msg("l"," incorrect K-point correspondance")
      return
    endif
+   !
    call io_control(ACTION=OP_APP_WR_CL,SEC=(/iq+1/),ID=ID)
    io_elph_err=ioELPH(ID)
    call live_timing(steps=1)
@@ -171,11 +170,24 @@
   if (iq<0) then
     call c2a(v_in= real(pw_q(:))-q%pt(iabs(iq),:) ,v_out=r_v,mode="ki2a")
     if (.not.rlu_v_is_zero(r_v)) elph_pw_dbs_io=-2
-    goto 1
   endif
 !
+! Phonon Frequencies
+!--------------------
+  allocate(ph_freqs_sq_disk(ph_modes))
+!
+! PW energies are in Rydbergs. Here we have the phonon frequencies square
+!
+  read (io_unit(ID)) ph_freqs_sq_disk
+  max_ph_freq=max(max_ph_freq,sqrt(maxval(real(ph_freqs_sq_disk))))/2.
+  if (iq<0) then
+    deallocate(ph_freqs_sq_disk)
+    goto 1
+  endif
+  ph_freqs_sq(iq,:)=abs(ph_freqs_sq_disk)/4._DP
+!
 ! Allocation
-!----
+!------------
   if (iq==1) call elph_gkkp_alloc()
   if (iq> 1) call elph_dV_free()
   call elph_dV_alloc()
@@ -183,12 +195,6 @@
   elph_dV=(0._DP,0._DP)
   elph_gkkp=(0._DP,0._DP)
   elph_dV_psi=(0._DP,0._DP)
-  allocate(ph_freqs_sq_disk(ph_modes))
-!
-! PW energies are in Rydbergs. Here we have the phonon frequencies square
-!-------------------------------------------------------------------------
-  read (io_unit(ID)) ph_freqs_sq_disk
-  ph_freqs_sq(iq,:)=abs(ph_freqs_sq_disk)/4._DP
 !
 ! Espresso <-> SELF k table correspondance
 !------------------------------------------

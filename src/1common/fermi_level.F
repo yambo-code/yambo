@@ -41,6 +41,7 @@
  use R_lattice,     ONLY:bz_samp
  use com,           ONLY:msg,error,warning
  use vec_operate,   ONLY:sort
+ use functions,     ONLY:Fermi_fnc
  implicit none
  type(levels) ::E
  type(bz_samp)::K
@@ -52,7 +53,7 @@
  integer :: i1,i2,is,ib,ik,i_trials(3),ires,n_b_full_guess
  integer :: index(E%nk*E%nb*n_sp_pol,3),index_s(E%nk*E%nb*n_sp_pol)
  real(SP):: E_s(E%nk*E%nb*n_sp_pol)
- real(SP):: lnel(2),Ef(2),Ffermi,Efdist,neltresh
+ real(SP):: lnel(2),Ef(2),Efdist,neltresh
  real(SP),parameter :: Telstep=0.0001/HARTREE
  !
  !     n_spin n_sp_pol n_spinor  spin_occ 
@@ -161,7 +162,7 @@
    ik=index( index_s(i1) , 2)
    is=index( index_s(i1) , 3)
 
-   E%f(ib,ik,is)=spin_occ*Ffermi(E_s(i1)-E%Efermi(1),test_Tel)
+   E%f(ib,ik,is)=spin_occ*Fermi_fnc(E_s(i1)-E%Efermi(1),test_Tel)
    if (n_spinor==2) E%f(ib,ik,2)=E%f(ib,ik,1)
 
    if (abs(E%E(ib,ik,is)-E%Efermi(1))<Efdist) then
@@ -183,7 +184,7 @@
    do ik=1,BZ_RIM_tot_nkpts
      do ib=1,BZ_RIM_nbands
        do is=1,n_sp_pol
-         E%f_RIM(ib,ik,is)=spin_occ*Ffermi(E%E_RIM(ib,ik,is),test_Tel)
+         E%f_RIM(ib,ik,is)=spin_occ*Fermi_fnc(E%E_RIM(ib,ik,is),test_Tel)
          if (n_spinor==2) E%f_RIM(ib,ik,2)=E%f_RIM(ib,ik,1)
        enddo
      enddo
@@ -214,7 +215,6 @@
    real(SP)::tTel,Ef,lnel
    !ws
    integer  :: i1,ik,ib 
-   real(SP) :: Ffermi 
    real(DP) :: nel_acc
    !
    ! For some compilers (like PGI) the summed nel_acc
@@ -230,7 +230,7 @@
      ik=index( index_s(i1) , 2)
      is=index( index_s(i1) , 3)
      if (ib<=n_b_full_guess) nel_theo=nel_theo+spin_occ*K%weights(ik)
-     nel_acc=nel_acc+spin_occ*Ffermi(E_s(i1)-Ef,tTel)*K%weights(ik)
+     nel_acc=nel_acc+spin_occ*Fermi_fnc(E_s(i1)-Ef,tTel)*K%weights(ik)
    enddo
    if (n_b_full_guess==0) nel_theo=nel
    lnel=nel_acc-nel_theo

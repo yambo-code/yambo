@@ -27,7 +27,7 @@
 &                         read_is_on,write_is_on,RD_CL,RD_CL_IF_END,io_action,&
 &                         io_mode,DUMP,io_fragment 
  use ELPH,           ONLY:ph_modes,elph_nb,elph_gkkp_alloc,ph_freqs_sq,elph_gkkp,&
-&                         QP_PH_n_G_bands
+&                         QP_PH_n_G_bands,max_ph_freq
  use R_lattice,      ONLY:nkbz,nqibz
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  implicit none
@@ -58,7 +58,10 @@
 
    ioELPH=io_status(ID)
    if (ioELPH/=0) goto 1
-
+   !
+   call io_bulk(ID,VAR="MAX_PH_FREQ",VAR_SZ=(/1/))
+   call io_bulk(ID,R0=max_ph_freq)
+   !
  endif
 
  iq=maxval(io_sec(ID,:))-1
@@ -103,7 +106,7 @@
    if (read_is_on(ID)) then
      forall(im=1:ph_modes,i1=1:elph_nb,i2=1:elph_nb) &
 &          elph_gkkp(ik,im,i1,i2)=elph_gkkp_disk((i1-1)*elph_nb+i2,im,1)+&
-&                 (0._SP,1._SP)*elph_gkkp_disk((i1-1)*elph_nb+i2,im,2)
+&                   (0._SP,1._SP)*elph_gkkp_disk((i1-1)*elph_nb+i2,im,2)
    endif
 
  enddo

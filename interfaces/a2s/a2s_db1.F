@@ -23,7 +23,8 @@
 !======================================
  use pars,                  ONLY : SP, DP, PI, schlen
  use com,                   ONLY : msg
- use electrons,             ONLY : levels, default_nel,n_bands,n_spin,n_sp_pol,n_spinor, spin_orbit
+ use electrons,             ONLY : levels, default_nel,n_bands,n_spin,n_sp_pol,&
+&                                  n_spinor, spin_orbit
  use R_lattice,             ONLY : bz_samp, ng_vec, g_vec,nkibz
  use D_lattice,             ONLY : nsym, i_time_rev, i_space_inv, dl_sop, &
 &                                  DL_vol, a, alat, default_Tel,&
@@ -212,19 +213,6 @@
      nsym=a_nsym
    endif
  endif
-   
-!
-!call msg('s',':: Electrons             :',default_nel)
-!call msg('s',':: Temperature       [ev]:',default_Tel)
-!call msg('s',':: Lattice factors [a.u.]:',alat)
-!call msg('s',':: K-points              :',k%nibz)
-!call msg('s',':: Bands                 :',en%nb)
-!call msg('s',':: Spin  [components/pol]:',(/n_spin,n_sp_pol/))
-!call msg('s',':: Symmetries   [spatial]:',nsym)
-!call msg('s','::                [T-rev]:',i_time_rev==1)
-!call msg('s',':: (Charge) RL vectors   :',ng_vec)
-!call msg('s',':: XC potential          :',xc_string(GS_xc_KIND,GS_xc_FUNCTIONAL))
-
 
 !-------------------------------------------------------------------------
 !From abinit help ...

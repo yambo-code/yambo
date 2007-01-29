@@ -26,12 +26,13 @@
 &                     BZ_RIM_tot_nkpts
  use com,        ONLY:msg,warning
  use D_lattice,  ONLY:Tel
+ use functions,  ONLY:Fermi_fnc
  implicit none
  type(levels)::E
  integer     ::X_nbf,X_nbm
  real(SP)    ::X_Efermi(3)
 !ws
- real(SP) :: Ffermi,Ef_test
+ real(SP) :: Ef_test
  real(SP),parameter :: Ef_step=0.1/HARTREE
 !
 ! I extend to the E levels the Fermi level of X k-grid
@@ -68,11 +69,11 @@
   subroutine f_build(Ef)
 !=======================
   integer :: i1,i2,is
-  real(SP)::Ef,Ffermi
+  real(SP):: Ef
   do i1=1,E%nb
     do i2=1,E%nk
       do is=1,n_spin
-        E%f(i1,i2,is)=spin_occ*Ffermi(E%E(i1,i2,is)-Ef,Tel)
+        E%f(i1,i2,is)=spin_occ*Fermi_fnc(E%E(i1,i2,is)-Ef,Tel)
       enddo
     enddo 
   enddo
@@ -80,7 +81,7 @@
     do i1=1,BZ_RIM_nbands
       do i2=1,BZ_RIM_tot_nkpts
         do is=1,n_spin
-          E%f_RIM(i1,i2,is)=spin_occ*Ffermi(E%E_RIM(i1,i2,is)-Ef,Tel)
+          E%f_RIM(i1,i2,is)=spin_occ*Fermi_fnc(E%E_RIM(i1,i2,is)-Ef,Tel)
         enddo
       enddo 
     enddo

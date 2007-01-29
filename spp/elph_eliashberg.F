@@ -26,12 +26,14 @@
  use electrons,           ONLY:levels,n_met_bands,n_full_bands
  use R_lattice,           ONLY:bz_samp,nqibz
  use SPP,                 ONLY:elph_steps,elph_Ef,elph_gamma_broad,&
-&                              elph_Emax,elph_broad
- use ELPH,                ONLY:ph_modes,elph_nb,elph_gkkp,ph_freqs_sq
+&                              elph_broad
+ use ELPH,                ONLY:ph_modes,elph_nb,elph_gkkp,ph_freqs_sq,&
+&                              max_ph_freq
  use IO_m,                ONLY:io_control,OP_RD,VERIFY,RD_CL_IF_END,DUMP
  use timing,              ONLY:live_timing
  use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m,       ONLY:par_indexes
+ use functions,           ONLY:Fermi_fnc_derivative
  implicit none
  type(levels) ::en
  type(bz_samp)::k,q
@@ -39,8 +41,8 @@
  ! Work Space GPL_END
  !
  integer           ::i1,i2,im,iq
- real(SP)          ::dFfermi,dos_ef,gamma(nqibz,ph_modes),&
-&                    aF(elph_steps),aF_energy(elph_steps),omega,estep
+ real(SP)          ::dos_ef,gamma(nqibz,ph_modes),&
+&                    aF(elph_steps),aF_energy(elph_steps),omega,e_step
  character(schlen) ::o_file_name,ch
  type(pp_indexes)  ::px
  !
@@ -63,16 +65,22 @@
  do i1=1,k%nibz
    do i2=1,en%nb
  !                 SPIN
-     dos_ef=dos_ef+2.*k%weights(i1)*dFfermi(en%E(i2,i1,1)+elph_Ef,elph_gamma_broad)
+     dos_ef=dos_ef+2.*k%weights(i1)*&
+&           Fermi_fnc_derivative(en%E(i2,i1,1)+elph_Ef,elph_gamma_broad)
    enddo
  enddo
  !
  ! zeroing
  !
  aF=0.
- aF_energy=0.
  gamma=0.
- estep=elph_Emax/(elph_steps-1)
+ !
+ ! Energy range
+ !
+ e_step=max_ph_freq*1.10/(elph_steps-1)
+ do i2=1,elph_steps
+   aF_energy(i2)=(i2-1)*e_step
+ enddo
  !
  call io_control(ACTION=OP_RD,SEC=(/1/),MODE=DUMP,ID=ID)
  io_err=ioELPH(ID)
@@ -91,6 +99,7 @@
  ! calculate q%weights
  !
  call k_expand(q) 
+ !
  do iq=1,nqibz 
    !
    ! I/O
@@ -108,9 +117,8 @@
      omega = sqrt( MAX( ph_freqs_sq(iq,im),0. ) )
      if (omega<1.E-10) cycle
      do i2=1,elph_steps
-       aF_energy(i2)=(i2-1)*estep
        aF(i2)=aF(i2)+gamma(iq,im)*q%weights(iq)*&
-&             dFfermi(aF_energy(i2)-omega,elph_broad)/omega/dos_ef
+&             Fermi_fnc_derivative(aF_energy(i2)-omega,elph_broad)/omega/dos_ef
      enddo
    enddo
    call live_timing(steps=1)
@@ -180,8 +188,9 @@
     iibz2=k%sstar(qindx_X(iq,i1,1),1)
     do ib1=1,elph_nb
       do ib2=1,elph_nb
-        weight=dFfermi(en%E(ib1,iibz1,1)+elph_Ef,elph_gamma_broad)*&
- &             dFfermi(en%E(ib2,iibz2,1)+elph_Ef,elph_gamma_broad)*2./real(k%nbz)
+        weight=Fermi_fnc_derivative(en%E(ib1,iibz1,1)+elph_Ef,elph_gamma_broad)*&
+ &             Fermi_fnc_derivative(en%E(ib2,iibz2,1)+elph_Ef,elph_gamma_broad)*&
+&              2./real(k%nbz)
         !                                                          |
         !                                                          SPIN
         do im=1,ph_modes

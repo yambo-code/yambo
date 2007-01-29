@@ -69,11 +69,10 @@
  !
  !EL-PH
  !
- call it(defs,'DBsPATH', 'Path to the PW el-ph databases',elph_dbs_path)
+ call it(defs,'DBsPATH',  'Path to the PW el-ph databases',elph_dbs_path)
  call it(defs,'EfGbroad', 'Fermi surface broadening (Gamma)',elph_gamma_broad,E_unit)
- call it(defs,'ElPhBroad', 'Broadening (Eliashberg/Gkkp energy dep)',elph_broad,E_unit)
- call it(defs,'EEfermi', 'External Fermi Level (eliashberg routine)',elph_Ef,E_unit)
- call it(defs,'EliEmax', 'Max energy in Eliashberg function',elph_Emax,E_unit)
+ call it(defs,'ElPhBroad','Broadening (Eliashberg)',elph_broad,E_unit)
+ call it(defs,'EEfermi',  'External Fermi Level (Eliashberg)',elph_Ef,E_unit)
  call it(defs,'ElPhStps', 'Energy steps',elph_steps)
  call it('f',defs,'UseDV','Use dV instead of Gkkp')
  !

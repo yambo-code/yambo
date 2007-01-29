@@ -93,18 +93,6 @@
 
  call msg("l","done")
 
-!DEBUG<
-!call msg('s',' ')
-!call msg('s','  :: Electrons             :',default_nel)
-!call msg('s','  :: Temperature       [ev]:',default_Tel)
-!call msg('s','  :: K-points              :',k%nibz)
-!call msg('s','  :: Bands                 :',en%nb)
-!call msg('s','  :: Spin                  :',n_spin)
-!call msg('s','  :: RL vectors        (WF):',wf_ng)
-!call msg('s','  :: RL vectors    (CHARGE):',ng_vec)
-!call msg('s',' ')
-!DEBUG>
-
 !---------------------------------------------------------------------*
 !    Read cell data                                                   *
 !---------------------------------------------------------------------*

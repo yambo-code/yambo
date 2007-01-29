@@ -130,7 +130,6 @@
  if (lelph) then
    call elph_pw_dbs(k,q)
    call elph_eliashberg(k,en,q)
-   call elph_gkkp_E_dep(k,en,q)
  endif
  !
 #endif

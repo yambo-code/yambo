@@ -28,6 +28,7 @@
    integer   :: QP_PH_n_G_bands
    integer   :: dV_ngx
    integer   :: dV_nk
+   real(SP)  :: max_ph_freq
    real(SP),    allocatable :: ph_freqs_sq(:,:)
    complex(SP), allocatable :: elph_gkkp(:,:,:,:)
    complex(SP), allocatable :: elph_dV_psi (:,:,:)

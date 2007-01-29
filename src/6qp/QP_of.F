@@ -98,7 +98,7 @@
  call of_open_close(file_name)
 !
 !===================================================================
- else if (trim(QP_solver)=='g') then
+ else if (trim(QP_solver)=='g'.and.l_el_corr) then
 !===================================================================
 
  call W_reset(Sc_W)

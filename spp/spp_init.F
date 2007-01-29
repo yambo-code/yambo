@@ -21,6 +21,7 @@
 !
  subroutine spp_init(instr,lnstr,FINALIZE)
  !----------------------------------------
+ use pars,           ONLY:HA2THZ
  use it_m,           ONLY:rstatus,initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
 &                         nrnlvls,rnlvls
@@ -66,7 +67,6 @@
    ! ELPH
    !
    elph_steps=200
-   elph_Emax=1./HARTREE
    elph_broad=0.1/HARTREE
    elph_gamma_broad=0.0
    elph_Ef=0.
@@ -126,9 +126,10 @@
 #if defined SPP_PJ_PH
  !
  lelph=rstatus(4)/=0
- if (lelph) call initactivate(1,"DBsPATH EEfermi EfGbroad ElPhBroad ElPhStps EliEmax")
- !
- if (lelph) call initactivate(1,"UseDV")
+ if (lelph) then
+   call initactivate(1,"DBsPATH EEfermi EfGbroad ElPhBroad ElPhStps")
+   call initactivate(1,"UseDV")
+ endif
  !
 #endif
  !

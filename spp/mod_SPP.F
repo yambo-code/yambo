@@ -37,7 +37,7 @@
   integer      :: ncell(3)     !number of repetitions of the cell
   integer      :: p_dim        !Dimension of the plot 
   integer      :: ntypat       !Number of different atomic species
-  integer      :: znucl(2)    ! Nuclear charge for each type
+  integer      :: znucl(2)     ! Nuclear charge for each type
   real(SP)     :: window       !energy window in o/o (1 -> 100)
   real(SP)     :: max_energy   !max energy to be shown in ordering
   real(SP)     :: r_hole(3)    !position of the hole 
@@ -52,7 +52,10 @@
   !
   logical :: lelph
   integer :: elph_steps
-  real(SP):: elph_gamma_broad,elph_broad,elph_Ef,elph_Emax
+  real(SP):: elph_gamma_broad
+  real(SP):: elph_broad
+  real(SP):: elph_Ef
+  real(SP):: elph_E_max
   character(schlen) :: elph_dbs_path
   !
 #endif

@@ -29,7 +29,7 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
   use pars,                only : SP,pi, lchlen
   use com,                 only : warning, inpath, msg, error
   use timing,              only : live_timing
-  use electrons,           only : levels,n_spin, E_duplicate, E_reset
+  use electrons,           only : levels,n_spin, E_duplicate, E_reset, n_spinor
   use par_proc_m,          only : pp_redux_wait,pp_indexes,myid,master_node,pp_indexes_reset
   use par_indexes_m,       only : par_indexes
   use D_lattice,           only : DL_sop, n_atoms,znucl,atom_pos
@@ -52,8 +52,9 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
   integer                      :: grid_offset
   logical                      :: read_zero_grid
   complex(SP), allocatable     :: wf_k(:)
-  complex(SP)                  :: rho
+  complex(SP)                  :: rho, spinor_avg
   real(SP)                     :: Ev_m_Ec
+  real(SP), parameter          :: fac = 0.70710678118654752440_SP
   type(pp_indexes)             :: px
   logical                      :: lfail
 ! ioDB1 local copies
@@ -178,6 +179,9 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
 &                       -Ev_m_Ec > X%ehe(2) .and. X%ehe(2) > 0.0_SP /))) cycle
             if (abs(Ev_m_Ec)<=1.E-5_SP) cycle
             icfft = wf_state_local(ic,ik,i_spin) 
+            !
+            ! X_q0grad = < v,k+q | c,k >/q
+            !
 #if defined _DOUBLE
             rho = zdotc( wf_ng_long, wf(1:wf_ng_long,ivfft), 1, wf_local(1:wf_ng_long,icfft),1 ) /q0mod
 #else
@@ -188,8 +192,17 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
             X_q0grad(iq,ic,iv,ik,i_spin) = rho
     
           enddo  ! conduction band loop
-
         enddo    ! spin loop
+        !
+        ! Correct for spinor case
+        !
+        if(n_spinor.eq.2) then
+          do ic = Xen_save%nbf+1, X%ib(2)
+            spinor_avg =  ( X_q0grad(iq,ic,iv,ik,1) + X_q0grad(iq,ic,iv,ik,2) )*fac
+            X_q0grad(iq,ic,iv,ik,1) = spinor_avg
+            X_q0grad(iq,ic,iv,ik,2) = spinor_avg
+          enddo
+        endif
         call live_timing(steps=1)
       enddo      ! valence band loop
     enddo        ! k-points

@@ -23,7 +23,7 @@
 !===================================
  use pars,                ONLY:SP,pi
  use timing,              ONLY:live_timing
- use electrons,           ONLY:levels,n_spin
+ use electrons,           ONLY:levels,n_spin, n_spinor
  use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid,master_node,pp_indexes_reset
  use par_indexes_m,       ONLY:par_indexes
  use D_lattice,           ONLY:alat,pp_kbv_dim,&
@@ -41,8 +41,9 @@
  integer                      :: ik,i1,icfft,ivfft,ic,iv
  integer                      :: is,ia,il,im,alloc_err,i_spin
  complex(SP), allocatable     :: wf_xyz(:,:), kbv(:,:,:)
- complex(SP)                  :: rho(3)
+ complex(SP)                  :: rho(3),spinor_avg(3)
  real(SP)                     :: Ev_m_Ec
+ real(SP), parameter          :: fac = 0.70710678118654752440_SP
  type(pp_indexes)             :: px
 !I/O and external functions
  integer                      :: ID,io_err,ioKB_err
@@ -140,6 +141,16 @@
        enddo  ! conduction band loop
 
      enddo    ! spin loop
+     !
+     ! Correct for spinor case
+     !
+     if(n_spinor.eq.2) then
+       do ic = Xen%nbf+1, X%ib(2)
+         spinor_avg(:) =  ( X_q0grad(:,ic,iv,ik,1) + X_q0grad(:,ic,iv,ik,2) )*fac
+         X_q0grad(:,ic,iv,ik,1) = spinor_avg(:)
+         X_q0grad(:,ic,iv,ik,2) = spinor_avg(:)
+       enddo
+     endif
      call live_timing(steps=1)
    enddo      ! valence band loop
  enddo        ! k-points

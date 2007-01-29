@@ -391,12 +391,11 @@
  if (lras.or.lreels) then
     call Xon('Xd',(/'QpntsR','BndsRn','NGsBlk',&
 &                 'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
-&                 'DrudeW','EhEngy', 'LGPath'/))
+&                 'DrudeW','EhEngy'/))
     call initactivate(1,'FFTGvecs XfnQP_E'//&
 &     ' BulkFile BulkForm BlkShift BlkBroad Layers'//&  ! Bulk eps data
 &     ' q0x q0y'//&                                     ! Polarizations
-&     ' Cutoff CutZero CutStep ')               ! Cut off fn
-   call initactivate(1,'LongPath')
+&     ' Cutoff CutZero CutStep LongPath')               ! Cut off fn
  endif
  if (lras) then
     call initactivate(1,&
@@ -405,9 +404,9 @@
  if (lreels) then
     call initactivate(1,&
 &     ' E0 Theta0 Thetap Phi DetAngle'//&               ! Kinematics
-&     ' LossForm ImpactFt'//&                           ! Model of loss function
+&     ' LossForm ImpactFt'//&                        ! Model of loss function
 &     ' DetIntMd NumIntPt'//&                           ! Det. integration
-&     ' GausConv','LGPath')                    ! General flags
+&     ' GausConv')                    ! General flags
  endif
 #endif
 #if defined PJ_REELS
@@ -421,8 +420,7 @@
 &     ' E0 Theta0 Thetap Phi DetAngle '//&             ! Kinematics
 &     ' DetIntMd NumIntPt'//&                          ! Det. integration
 &     ' EELIntMd IntLimit EpsMix'//&                   ! REELS integration
-&     ' ETStpsLs GausConv')                    ! General flags
-   call initactivate(1,'LongPath')
+&     ' ETStpsLs GausConv LongPath')                    ! General flags
  endif
 #endif
 !---------------------------------------------------------------------------------

@@ -74,7 +74,6 @@
  call it(defs,'ElPhBroad','Broadening (Eliashberg)',elph_broad,E_unit)
  call it(defs,'EEfermi',  'External Fermi Level (Eliashberg)',elph_Ef,E_unit)
  call it(defs,'ElPhStps', 'Energy steps',elph_steps)
- call it('f',defs,'UseDV','Use dV instead of Gkkp')
  !
 #endif
  !

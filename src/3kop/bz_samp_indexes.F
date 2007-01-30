@@ -46,7 +46,7 @@
  use matrix_operate, ONLY:m3inv
  use vec_operate,    ONLY:v_is_zero,c2a,rlu_v_is_zero
  use D_lattice,      ONLY:nsym
- use R_lattice,      ONLY:b,d3q_factor,RL_v_comp_acc,RL_vol,g_vec,ng_vec,&
+ use R_lattice,      ONLY:b,d3q_factor,RL_v_comp_norm,RL_vol,g_vec,ng_vec,&
 &                         nqibz,nqbz,qindx_X,qindx_B,qindx_S,qp_states_k,&
 &                         bse_scattering,qindx_alloc,rl_sop,Xk_grid_is_uniform,&
 &                         k_grid,k_grid_b,q_pt,bz_samp,q_norm,q0_defmod,&
@@ -60,7 +60,7 @@
  integer :: io_db,io_err,ioQINDX
  integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikbz,iqs
  integer, allocatable :: q_map(:,:,:),q_iptbz(:,:)
- real(SP) :: v1(3),k_b_m1(3,3),RL_v_comp_acc_save
+ real(SP) :: v1(3),k_b_m1(3,3),RL_v_comp_norm_save
  logical  :: connected_grids,user_defined_qpts,gamma_point_only
 !
  call section('*','Transferred momenta grid: Indexes')
@@ -81,7 +81,7 @@
  !
  ! Save RL_v_comp_acc found in k_lattice 
  !
- RL_v_comp_acc_save=RL_v_comp_acc
+ RL_v_comp_norm_save=RL_v_comp_norm
  !
  ! First I map the Xk grid in a simple cubic Net
  !
@@ -203,8 +203,8 @@
      v1=matmul(k_b_m1,Xk%ptbz(i1,:)-Xk%ptbz(i2,:)) ! K_i1-K_i2= Q + Go
      iv1=nint(v1)
      do while(.not.v_is_zero(v1-real(iv1)))
-       if (RL_v_comp_acc>1.E-3) exit
-       RL_v_comp_acc=RL_v_comp_acc*10.
+       if (RL_v_comp_norm>1.E-3) exit
+       RL_v_comp_norm=RL_v_comp_norm*10.
      enddo 
      call k_grid_shift(iv1)
      i3=q_map(iv1(1),iv1(2),iv1(3))
@@ -254,9 +254,9 @@
  !
  ! Restore RL_v_comp_acc found in k_lattice 
  !
- if (RL_v_comp_acc/=RL_v_comp_acc_save) then
+ if (RL_v_comp_norm/=RL_v_comp_norm_save) then
    call msg('rsn','[RL indx] Index search needed lower RL comparison accuracy')
-   RL_v_comp_acc=RL_v_comp_acc_save
+   RL_v_comp_norm=RL_v_comp_norm_save
  endif
  !
 1 call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=io_db)
@@ -308,8 +308,8 @@
    do i1=1,Xk%nbz
      v1=matmul(k_b_m1,qpt_map(i1,:)-q_ref)
      do while(.not.rlu_v_is_zero(v1))
-       RL_v_comp_acc=RL_v_comp_acc*10.
-       if (RL_v_comp_acc>1.E-3) return
+       RL_v_comp_norm=RL_v_comp_norm*10.
+       if (RL_v_comp_norm>1.E-3) return
      enddo
      q_iptbz(i1,:)=nint(v1)
      call k_grid_shift(q_iptbz(i1,:))

@@ -20,15 +20,12 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  module DFT
-!==========
 #if defined PJ_GKS
-   use pars,          ONLY:SP
-   implicit none
-   integer :: which_gks  
-   integer :: damp_dim
-   integer :: X_gks_nstates
-   integer,     allocatable :: X_gks_table(:,:)
-   complex(SP), allocatable :: damp(:,:,:)
+ use pars,          ONLY:SP,lchlen
+ implicit none
+ logical :: lgks
+ integer :: igks
+ character(lchlen) :: auxpath
 #endif
 
  end module

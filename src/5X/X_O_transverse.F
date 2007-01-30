@@ -21,6 +21,11 @@
 !
  subroutine X_O_transverse(Xen,Xk,X)
 !===================================
+#if defined PJ_GKS
+ use DFT,                 ONLY:lgks,auxpath
+ use com,                 ONLY:inpath
+ use pars,                ONLY:SP,pi,lchlen
+#endif
  use pars,                ONLY:SP,pi
  use timing,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spin, n_spinor
@@ -53,9 +58,19 @@
 #else 
  complex(SP)                  :: cdotc
 #endif
+#if defined PJ_GKS
+ integer                      :: v_limits(2),c_limits(2),nb_aux
+ character(lchlen) :: save_inpath
+#endif 
 !
 ! Check for the KB PP DB 
 !===================================
+#if defined PJ_GKS
+ if (lgks) then
+   save_inpath = inpath
+   inpath = auxpath
+ endif 
+#endif 
  call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
  ioKB_err=ioKB_PP(ID)
  if (ioKB_err==0) then
@@ -76,15 +91,30 @@
 !
 ! Set up the parallel environment
 !
+#if defined PJ_GKS
+ if (lgks) then
+   nb_aux = shape(X_q0grad,2)
+   v_limits =(/1,nb_aux/) 
+   c_limits =(/1,nb_aux/) 
+ else
+   v_limits =(/X%ib(1),Xen%nbm/) 
+   c_limits =(/Xen%nbf+1,X%ib(2)/)
+ end if 
+ call pp_indexes_reset(px)
+ call par_indexes(px,(/Xk%nibz,v_limits(2)/),(/1,v_limits(1)/))
+ call live_timing('Optical strengths (T):',px%stps(myid+1))
+ call pp_redux_wait
+#else
  call pp_indexes_reset(px)
  call par_indexes(px,(/Xk%nibz,Xen%nbm/),(/1,X%ib(1)/))
  call live_timing('Optical strengths (T):',px%stps(myid+1))
  call pp_redux_wait
-
+#endif
  allocate(wf_xyz(wf_ng,3))
 !
 ! Main loop over k in IBZ
 !
+
  do ik=1,Xk%nibz
 !
 ! [Vnl,r]
@@ -95,8 +125,11 @@
      io_err=ioKB_PP(ID)
      call X_O_kb_pp_comp(ik,Xk,kbv)
    endif
-
+#if defined PJ_GKS
+   do iv=v_limits(1),v_limits(2)
+#else
    do iv=X%ib(1),Xen%nbm
+#endif
      if (.not.px%i2p(ik,iv)) cycle
 
      do i_spin=1,n_spin
@@ -108,7 +141,11 @@
        do i1=1,3
          wf_xyz(:,i1)=wf(:,ivfft)*(Xk%pt(ik,i1)+g_vec(:wf_ng,i1))*2.0_SP*pi/alat(i1)
        enddo
+#if defined PJ_GKS
+       do ic=c_limits(1),c_limits(2)
+#else
        do ic=Xen%nbf+1,X%ib(2)
+#endif
          Ev_m_Ec=Xen%E(iv,ik,i_spin)-Xen%E(ic,ik,i_spin)
          if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,i_spin)-Xen%Eo(ic,ik,i_spin)
          if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,&
@@ -158,6 +195,9 @@
 !
 ! CLEAN
 !
+#if defined PJ_GKS
+ if (lgks) inpath = save_inpath
+#endif 
  deallocate(wf_xyz)
  call pp_indexes_reset(px)
  if (ioKB_err==0) then

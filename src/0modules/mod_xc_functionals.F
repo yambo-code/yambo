@@ -85,8 +85,9 @@
   ! the GKS
   integer, public, parameter :: &
     XC_GKS_HF            = 401, &  ! Hartree-Fock
-    XC_GKS_SXLDA         = 402, &  ! Kleinman-Bylander Screened-Exchange LDA
-    XC_GKS_CHSX          = 403     ! Coulomb-Hole Screened-eXchange
+    XC_GKS_SX            = 402, &  ! Screened-eXchange
+    XC_GKS_SXLDA         = 403, &  ! Kleinman-Bylander Screened-Exchange LDA
+    XC_GKS_CHSX          = 404     ! Coulomb-Hole Screened-eXchange
 #endif
 
   contains

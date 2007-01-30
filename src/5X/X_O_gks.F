@@ -21,197 +21,156 @@
 !
  subroutine X_O_gks(Xen,Xk,X)
 !============================
- use pars,          ONLY:SP,DP,pi
+ use pars,          ONLY:SP,DP
  use timing,        ONLY:live_timing
- use electrons,     ONLY:levels,n_spin
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,&
-&                        myid,master_node,pp_indexes_reset
- use par_indexes_m, ONLY:par_indexes
- use wave_func,     ONLY:wf,wf_ng,wf_state
- use R_lattice,     ONLY:bz_samp,qindx_S,q_pt,q_sstar,nqbz  
- use X_m,           ONLY:X_t,X_q0grad
- use collision,     ONLY:ggwinfo,collision_reset
- use com,           ONLY:depth
- use par_indexes_m, ONLY:par_indexes
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset      
- use DFT,           ONLY:X_gks_table, X_gks_nstates, damp, damp_dim
-!
+! use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,&
+!&                        myid,master_node,pp_indexes_reset
+! use par_indexes_m, ONLY:par_indexes
+ use X_m,            ONLY:X_q0grad,X_alloc,X_t
+ use R_lattice,      ONLY:bz_samp
+ use electrons,      ONLY:levels,n_spin
+ use DFT,            ONLY:igks
  implicit none
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
  type(X_t),     intent(inout) :: X
-!
 !ws
- type(ggwinfo) ::isc,iscp
- type(pp_indexes) ::px
- complex(DP) :: dsx(3) 
- integer iq, ib, i1,alloc_err, i_spin 
-#if defined _DOUBLE
- complex(DP):: zdotc,zdotu
-#else 
- complex(SP):: cdotc,cdotu
-#endif
+! type(pp_indexes) ::px
+ complex(DP) :: zsum(3)
+ complex(SP), allocatable :: lda_coeff(:,:,:), X_q0grad_aux(:,:,:,:,:)
+ integer :: bn_lda, bn_aux, bn_min, idum(5), ik, iv, ic, im, in, i_spin
 !
- call collision_reset(isc)
- call collision_reset(iscp) 
- call pp_indexes_reset(px)
-!---------------------------------------------------------------------
+! call pp_indexes_reset(px)
 !
-! set up and allocation
+! bn_aux = number of bands of the auxiliary wavefunctions
+! bn_lda = number of bands for the lda coefficients
+! note the bn_lda < bn_aux (no problem when directly calculated 
+! otherwise a check is needed) 
 !
- call set_X_table(X,Xen,Xk)
- call set_par_nlcm(X%ngostnts)
- allocate(damp(3,damp_dim,X%ngostnts),isc%rhotw(X%ngostnts),iscp%rhotw(X%ngostnts))
- isc%qs   = 1
- isc%ngrho= X%ngostnts
- call fft_setup(isc%ngrho,maxval(qindx_S(:,:,2)),.false.)
-!
- call scatterDamp(isc)
-! 
-! Set up the parallel environment
-! 
- call par_indexes(px,(/nqbz,Xen%nbm/),(/1,X%ib(1)/))
- call live_timing('Optical strengths (GKS):',px%stps(myid+1)*X_gks_nstates)
- call pp_redux_wait
-!
- do iq=1,nqbz
-   isc%qs(2:)=(/q_sstar(iq,1),q_sstar(iq,2)/)
-   if (isc%qs(2)/=isc%iqref) call scatterDamp(isc)
-   do i1=1,X_gks_nstates
-     isc%is=(/X_gks_table(i1,1),X_gks_table(i1,3),X_gks_table(i1,4),1/)
-     isc%os(2:)=(/Xk%sstar(qindx_S(isc%is(2),iq,1),:),1/)
-     iscp%is=(/X_gks_table(i1,2),X_gks_table(i1,3),X_gks_table(i1,4),1/)
-     isc%qs(1)=qindx_S(X_gks_table(i1,3),iq,2)
-     iscp%qs=isc%qs
-     do ib=x%ib(1),Xen%nbm
-       if (.not.px%i2p(iq,ib)) cycle
-       isc%os(1)=ib
-       iscp%os=isc%os
-       call live_timing(steps=1)
-       call scatterBamp(isc)
-       iscp%rhotw=isc%rhotw
-       if (any(isc%is/=iscp%is)) call scatterBamp(iscp)
-       isc%rhotw=4.*pi*isc%rhotw*conjg(iscp%rhotw)*Xen%f(ib,isc%os(2),isc%os(4))
-       dsx=(0._DP,0._DP)
-      !NB only valid for damp%dim=1  
-#if defined _DOUBLE
-       dsx(1)=zdotu(X%ngostnts,isc%rhotw,1,damp(1,1,:),1)
-       dsx(2)=zdotu(X%ngostnts,isc%rhotw,1,damp(2,1,:),1)
-       dsx(3)=zdotu(X%ngostnts,isc%rhotw,1,damp(3,1,:),1)
-#else 
-       dsx(1)=cdotu(X%ngostnts,isc%rhotw,1,damp(1,1,:),1)
-       dsx(2)=cdotu(X%ngostnts,isc%rhotw,1,damp(2,1,:),1)
-       dsx(3)=cdotu(X%ngostnts,isc%rhotw,1,damp(3,1,:),1)
-#endif
-       X_q0grad(:,iscp%is(1),isc%is(1),isc%is(2),isc%is(3))=&
-&       X_q0grad(:,iscp%is(1),isc%is(1),isc%is(2),isc%is(3))+dsx(:) 
-     enddo
-   enddo
- enddo
- call live_timing()
- deallocate(damp,isc%rhotw,iscp%rhotw)
- if (allocated(X_gks_table)) deallocate(X_gks_table)
- do i_spin=1,n_spin
-   call pp_redux_wait(X_q0grad(:,:,:,:,i_spin))
+ idum=shape(X_q0grad)
+ bn_aux = idum(2)
+ allocate(X_q0grad_aux(3,bn_aux,bn_aux,Xk%nibz,n_spin))
+ X_q0grad_aux = X_q0grad
+ call X_alloc('OptGrad')
+ call X_alloc('OptGrad',(/3,X%ib(2),Xen%nbm,Xk%nibz/))  
+ X_q0grad=(0.,0.)
+ call read_ldacoeff()
+ bn_min = min(bn_lda,bn_aux)
+ do i_spin = 1, n_spin
+ !  call par_indexes(px,(/Xk%nibz,Xen%nbm/),(/1,X%ib(1)/))
+ !  call pp_redux_wait
+ !  call live_timing('X_GKS',px%stps(myid+1))
+   do ik = 1, Xk%nibz
+     do iv = X%ib(1), Xen%nbm
+!       if (.not.px%i2p(ik,iv)) cycle
+       do ic=Xen%nbf+1,X%ib(2)
+         zsum (:) = (0._DP,0._DP)
+         do im = 1, bn_min
+           do in = 1, bn_min
+             zsum(:) = zsum(:) + conjg(lda_coeff(ik,iv,im))*lda_coeff(ik,ic,in)*&
+&                 X_q0grad_aux(:,in,im,ik,i_spin)
+           end do
+         end do
+         X_q0grad(:,ic,iv,ik,i_spin) = zsum(:)
+       end do
+     end do
+  !   call live_timing(steps=1)
+   end do
+  !call live_timing()
+  !call pp_redux_wait(X_q0grad(:,:,:,:,i_spin))
+  !call pp_indexes_reset(px)
  end do
- call collision_reset(isc)
- call collision_reset(iscp) 
- call pp_indexes_reset(px)
+ deallocate(X_q0grad_aux,lda_coeff)
 !
 contains
-!============================================
- subroutine set_X_table(X,Xen,Xk)
-!============================================
- use pars,          ONLY:SP,pi
- use R_lattice,     ONLY:bz_samp
- use electrons,     ONLY:levels,n_spin
- use X_m,           ONLY:X_t
- use memory_m,      ONLY:mem_est
- use DFT,           ONLY:X_gks_nstates, X_gks_table
- implicit none
- type(levels),  intent(in)  :: Xen
- type(bz_samp), intent(in)  :: Xk
- type(X_t),     intent(in)  :: X
 !
-! ws
- integer ik, ic, iv, is, in 
-!
- if (.not.allocated(X_gks_table)) then
-   X_gks_nstates = n_spin*Xk%nibz*(Xen%nbm-X%ib(1)+1)*(X%ib(2)-Xen%nbf) 
-   allocate(X_gks_table(X_gks_nstates,4),stat=alloc_err)
-   call mem_est("GKS_X_table",(/size(X_gks_table)/),errors=(/alloc_err/))
- endif 
- in = 0
- do ik=1,Xk%nibz
-   do is = 1,n_spin
-     do iv=X%ib(1),Xen%nbm
-       do ic=Xen%nbf+1,X%ib(2)
-          in = in + 1 
-          X_gks_table(in,1) = iv
-          X_gks_table(in,2) = ic
-          X_gks_table(in,3) = ik
-          X_gks_table(in,4) = is
-       enddo
-     enddo
-   enddo
- enddo
-!
- end subroutine set_X_table
-! 
- subroutine set_par_nlcm(ng)
-!================================
- use xc_functionals, ONLY:GS_xc_FUNCTIONAL,XC_GKS_HF, XC_GKS_SXLDA,XC_GKS_CHSX 
- use DFT,            ONLY:which_gks, damp_dim
- implicit none
- integer,        intent(in)   ::ng
-    
-  select case (GS_xc_FUNCTIONAL)
-  case(XC_GKS_HF)
-    which_gks = 0
-    damp_dim = 1
-  case(XC_GKS_SXLDA)
-    which_gks = 1
-    damp_dim = 1
-  case(XC_GKS_CHSX)
-    which_gks = 2
-    damp_dim = ng
-  end select
- end subroutine set_par_nlcm
-!
- subroutine scatterDamp(isc)
-!================================
- use R_lattice,     ONLY:d3q_factor,bare_qpg,q_pt,g_vec
- use D_lattice,     ONLY:alat
- use collision,     ONLY:bare_qpg, ggwinfo
- use DFT,           ONLY: damp, damp_dim,which_gks  
- implicit none
- type(ggwinfo),intent(inout) ::isc
+!===========================
+  subroutine read_ldacoeff()
+!===========================
+ use pars, ONLY:SP,lchlen
+ use com,  ONLY:inpath,error
+ use DFT,  ONLY:igks
 !ws
- integer :: ng(2),ig1,ig2,iq,ig
- real(SP):: Co
+ implicit none
+ character*10 :: rd_xctyp,rd_xcapprx
+ character(lchlen) :: coeff_file, errmsg
+ integer      :: rd_xc, iter, rd_nibz, ib1,ib2, ialloc
+ complex(SP), allocatable :: dum(:,:,:)
+ logical :: lexist
+ integer, parameter       :: un = 56
+!read
+ coeff_file = 'AUX/db.coeff'
+ inquire (file =coeff_file, exist = lexist) 
+ if(.not.lexist) then 
+   write(errmsg,'(2a)') 'Unable to find file ',trim(coeff_file)
+   call error(errmsg)
+ endif
+ open(un, file = trim(coeff_file),FORM='unformatted',err=998)
+ read(un,err=991) !depends on header (if no header comment this line)
+ read(un,err=991, end=991) iter, rd_nibz, bn_lda
+ read(un,err=992, end=992) rd_xctyp, rd_xcapprx
+ allocate(dum(rd_nibz,bn_lda,bn_lda),stat=ialloc)
+ if (ialloc.ne.0) THEN
+ stop 'deallocation error dum' 
+ endif
+ read(un,err=993, end=993) (((dum(ik,ib1,ib2),ik=1,rd_nibz),ib1=1,bn_lda),ib2=1,bn_lda)
+ close(un)
+! consistency checks: introduce ID instead!?
+ if (rd_nibz.ne.Xk%nibz)  call error('nibz in db.coeff not consistent with s.db files')
+ rd_xc = translate_xc(rd_xctyp, rd_xcapprx)
+ if (igks.ne.rd_xc) then
+!   write(errmsg,'(aiai)') 'Wrong xc functional in db.coeff: ',rd_xc, ' instead of ', igks
+!   call error(errmsg)
+ endif
+ allocate(lda_coeff(Xk%nibz,X%ib(2),bn_lda),stat=ialloc)
+ if (ialloc.ne.0) THEN
+ stop 'deallocation error dum'
+ endif
+ do ik = 1, Xk%nibz
+   do ib1 = 1, X%ib(2)
+     do ib2 = 1, bn_lda
+       lda_coeff(ik,ib1,ib2) = dum(ik,ib1,ib2)
+     end do
+   end do
+ end do 
+ deallocate(dum)
+ return
+991  continue
+    close(un)
+    call error('Strange problem reading db.coeff (dimensions)')
+992  continue
+    close(un)
+    call error('Strange problem reading db.coeff (xc type)')
+993  continue
+    close(un)
+    call error('Strange problem reading db.coeff (coeff)')
+998 continue
+    call error('Problem opening db.coeff for reading.')
+  end subroutine read_ldacoeff
 !
- Co=d3q_factor/(2.*pi)**3. ! = 1./(DL_vol*nqbz)
-!-------------------------------------------------------------------------
-! Calculate (2q+G+G')/(|q+G||q+G'|)**2
-! needed in the evaluation of the nonlocal contribution of the oscillators. 
- !
-! Note that <q_i/q^4> is odd and on a spherical region is zero (CHECK!)
-! so, contrary to Gamp no contribution is coming from the q around 0.
-!-------------------------------------------------------------------------
- iq=isc%qs(2)
- isc%iqref=iq
- ng=shape(damp(1,:,:))
- do ig=1,ng(1)
-   do ig2=1,ng(2)
-      ig1 = ig   
-      if (ng(1)==1) ig1=ig2
-      damp(:,ig,ig2)=Co*((2.*q_pt(iq,:)+g_vec(ig1,:)+g_vec(ig2,:))*2.*pi/alat(:))/&
-&                         (bare_qpg(iq,ig1)**2.)/(bare_qpg(iq,ig2)**2.)
-      if ((iq==1.and.ig1==1).or.(iq==1.and.ig2==1)) damp(:,ig,ig2)=0.
-   enddo
- end do
- end subroutine scatterDamp
+!===========================================
+integer function translate_xc(xctyp,xcapprx)
+!===========================================
+! This function is needed to translate the xc
+! from the old self format (maybe transfer it!)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ character*10 xctyp,xcapprx
+!ws
+! 
+  translate_xc = 0
+  if (trim(xcapprx)=='gks') translate_xc =translate_xc+ 400
+  if (trim(xcapprx)=='') translate_xc =translate_xc+ 300
+  select case(trim(xctyp))
+  case("exx")
+    translate_xc =translate_xc+1
+  case("ssx")
+    translate_xc =translate_xc+2
+  case("sxlda")
+    translate_xc =translate_xc+3
+  case("cohsex")
+    translate_xc =translate_xc+4
+  end select
+  if (trim(xctyp)=='lda') translate_xc = 8
+end function translate_xc
 !
- end subroutine X_O_gks
-
- 
+end subroutine X_O_gks

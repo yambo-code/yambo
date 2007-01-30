@@ -21,8 +21,15 @@
 !
  subroutine X_O_strengths(Xen,Xk,X,field_dir)
 !============================================
+#if defined PJ_GKS
+ use pars,           ONLY:SP,lchlen
+ use com,            ONLY:warning,inpath
+ use xc_functionals, ONLY:GS_xc_FUNCTIONAL
+ use DFT,            ONLY:lgks,igks,auxpath
+#else
  use pars,           ONLY:SP
  use com,            ONLY:warning
+#endif
  use electrons,      ONLY:levels,n_spin
  use par_proc_m,     ONLY:pp_redux_wait,master_node
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
@@ -31,9 +38,6 @@
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use memory_m,       ONLY:mem_est
  use wave_func,      ONLY:wf_ng,wf_load,WF_free
-#if defined PJ_GKS
- use xc_functionals, ONLY:GS_xc_FUNCTIONAL
-#endif
  implicit none
  type(bz_samp), intent(inout) :: Xk
  type(levels),  intent(inout) :: Xen
@@ -43,6 +47,13 @@
  integer                   :: ik,i1,ic,iv,is,i_spin
  real(SP)                  :: field_dir_rot(3)
  logical                   :: use_trans_gauge
+#if defined PJ_GKS
+ character(lchlen) :: save_inpath
+ integer :: io_rld, nb_aux
+ type(bz_samp) :: k
+ type(levels)  :: en
+ integer, external:: ioDB1_reload
+#endif
 !
 !I/O
 !
@@ -61,12 +72,41 @@
    !
    ! OptGrad allocation
    !
+#if  defined PJ_GKS
+   if (GS_xc_FUNCTIONAL > 400) then
+     lgks = .true.
+     igks = GS_xc_FUNCTIONAL
+     auxpath = 'AUX/' 
+     io_rld = ioDB1_reload(en,k,trim(auxpath))
+     nb_aux = en%nb
+     allocate(Xen%Eo(Xen%nb,Xen%nk,n_spin))
+     call mem_est("Eo",(/size(Xen%Eo)/),(/SP/)) 
+          Xen%Eo=en%E
+     call X_alloc('OptGrad',(/3,nb_aux,nb_aux,Xk%nibz/))
+   else           
+    lgks = .false.
+     call X_alloc('OptGrad',(/3,X%ib(2),Xen%nbm,Xk%nibz/))
+   endif
+#else
    call X_alloc('OptGrad',(/3,X%ib(2),Xen%nbm,Xk%nibz/))
+#endif
    X_q0grad=(0.,0.)
    !
    ! Wavefunctions need to be read in both cases
    !
+#if  defined PJ_GKS
+   if (lgks) then
+     save_inpath = inpath
+     inpath = auxpath
+     call wf_load(0,1,(/1,nb_aux/),(/1,Xk%nibz/),space='G',&
+&                 title='-Oscillators (AUX)/G space')
+     inpath = save_inpath
+   else
+     call wf_load(0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
+   end if
+#else
    call wf_load(0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
+#endif
    !
    ! Attempt calculation within longitudinal gauge if requested
    !
@@ -84,22 +124,26 @@
    !
    if (use_trans_gauge) call X_O_transverse(Xen,Xk,X)
    !
-#if defined PJ_GKS
-   ! 
-   ! When using xc non-local approximation Vnl add the contribution [r,Vnl]
-   !
-   if (GS_xc_FUNCTIONAL > 400) call X_O_gks(Xen,Xk,X) 
-   !
-#endif
    ! Free any loaded WFs
    !
    call WF_free()
    !
+#if defined PJ_GKS
+   ! 
+   ! When using xc non-local approximation Vnl add the contribution [r,Vnl]
+   ! 
+   if (lgks) then
+     deallocate(Xen%Eo)      
+     call X_O_gks(Xen,Xk,X)
+     io_rld = ioDB1_reload(en,k,trim(inpath))
+   end if
+   !
+#endif
    ! Write the q0grad to its database
    !
    if (master_node) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=ioOSTNTS(X,Xen,ID)
- endif
+ end if
  !
  ! Calculate the q-dependent oscillators (OptOsc)
  !

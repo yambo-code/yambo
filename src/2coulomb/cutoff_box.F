@@ -35,7 +35,7 @@
  use D_lattice,     ONLY:DL_vol,alat,sop_inv,a
  use R_lattice,     ONLY:bare_qpg,RL_vol,RIM_ng,RIM_qpg,bz_samp,&
 &                        box_length,g_vec,g_rot,ng_closed,RIM_anisotropy,&
-&                        CUTOFF_plus_RIM,RL_v_comp_acc
+&                        CUTOFF_plus_RIM,RL_v_comp_norm
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use timing,        ONLY:live_timing
@@ -94,7 +94,7 @@
 
        do i1=1,3
          if (.not.is_cut(i1).and.&
-&            abs(q%pt(iq,i1)-q%ptbz(iqbz,i1))>RL_v_comp_acc) cycle q_loop
+&            abs(q%pt(iq,i1)-q%ptbz(iqbz,i1))>RL_v_comp_norm) cycle q_loop
        enddo
 
        nq_looped=nq_looped+1
@@ -103,7 +103,7 @@
 
          do i1=1,3
            if (.not.is_cut(i1).and.&
-&              abs(g_vec(ig,i1)-g_vec(ig_p,i1))>RL_v_comp_acc) cycle g_loop
+&              abs(g_vec(ig,i1)-g_vec(ig_p,i1))>RL_v_comp_norm) cycle g_loop
          enddo
 
          ig_r=g_rot( sop_inv(is), ig_p )

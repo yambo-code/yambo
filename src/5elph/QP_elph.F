@@ -27,7 +27,7 @@
  use timing,        ONLY:live_timing
  use com,           ONLY:msg,error
  use drivers,       ONLY:Finite_Tel,l_el_corr
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
+ use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset,master_node
  use par_indexes_m, ONLY:par_indexes
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END
@@ -204,13 +204,16 @@
  !
  call live_timing()
  !
- call Cardona_Allen_report()
- !
  ! Debye energy
  !
  call msg('nr','[Ph] Debye energy [ev/ThZ]:',(/max_ph_freq*HARTREE,max_ph_freq*HA2THZ/))
  !
+ ! All 2 All
+ !
  call pp_redux_wait(QP_Sc)
+ call pp_redux_wait(g_sq_F_res)
+ !
+ call Cardona_Allen_report()
  !
  ! CLEAN
  !

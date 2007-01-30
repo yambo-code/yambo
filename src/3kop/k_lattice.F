@@ -35,7 +35,7 @@
  use com,            ONLY:msg,gen_fmt,error
  use matrix_operate, ONLY:m3inv,m3det
  use D_lattice,      ONLY:DL_vol,a
- use R_lattice,      ONLY:b,k_grid_b,k_grid_dim,k_grid,RL_vol,RL_v_comp_acc,&
+ use R_lattice,      ONLY:b,k_grid_b,k_grid_dim,k_grid,RL_vol,RL_v_comp_norm,&
 &                         k_grid_uc_vol,nkibz,nkbz,nXkibz,nXkbz,d3k_factor,&
 &                         bz_samp
  implicit none
@@ -64,12 +64,14 @@
  ! points SELF checks which value yields the same number 
  ! of expanded k-points.
  !
- ! Note that bz_samp_indexes may low RL_v_comp_acc. However
+ ! Note that bz_samp_indexes may low RL_v_comp_norm. However
  ! the value found here is the one used as defualt.
  !
  nk_bz=0
- if (RL_v_comp_acc<0.) then
-   RL_v_comp_acc=1.E-7
+ if (RL_v_comp_norm<0.) then
+   !
+   RL_v_comp_norm=epsilon(1._SP)
+   !
    do i1=1,8
      if (i1>1) then
        nullify(k%sstar)
@@ -78,7 +80,7 @@
      call k_expand(k)
      if (k%nbz==nk_bz) exit
      nk_bz=k%nbz
-     RL_v_comp_acc=RL_v_comp_acc*10.
+     RL_v_comp_norm=RL_v_comp_norm*10.
    enddo
  else
    call k_expand(k)
@@ -213,7 +215,7 @@
 !
  if (k_grid_dim>0) call msg('r','Grid dimensions               :',k_grid(:k_grid_dim))
  call msg('r',                  'K lattice UC volume       [au]:',k_grid_uc_vol)
- call msg('r',                  'K vectors comparison precision:',RL_v_comp_acc)
+ call msg('r',                  'K vectors comparison precision:',RL_v_comp_norm)
 !
 ! Polarizability convertion factor
 !----------------------------------

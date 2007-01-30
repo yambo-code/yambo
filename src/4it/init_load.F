@@ -42,7 +42,7 @@
  use timing,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel
- use R_lattice,     ONLY:RL_v_comp_acc,n_g_shells,ng_closed,QP_states_k,nXkibz,&
+ use R_lattice,     ONLY:RL_v_comp_norm,n_g_shells,ng_closed,QP_states_k,nXkibz,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry
  use BS,            ONLY:BS_res_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_columns,&
@@ -123,7 +123,7 @@
  call it(defs,'InDir',   '[IO] Input(s) directory',inpath,verb_level=V_io)
  call it(defs,'QPreport','[GW] QP info. Keys: kp/bn/xx/xc/s0/sq/e0/eq/ee/zf/ds/lm/lf',&
 &                        QP_rep_string)
- call it(defs,'KptsAcc', '[KPT] Accuracy in vector comparison',RL_v_comp_acc,verb_level=V_more)
+ call it(defs,'KptsAcc', '[KPT] Accuracy in vector comparison',RL_v_comp_norm,verb_level=V_more)
  call it(defs,'StdoHash','[IO] Live-timing Hashes',nhash,verb_level=V_io)
  call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_more)
  call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_more) 

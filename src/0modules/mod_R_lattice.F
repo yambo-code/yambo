@@ -43,7 +43,8 @@
    real(SP) :: d3k_factor
    real(SP) :: d3q_factor
    real(SP) :: b(3,3)
-   real(SP) :: RL_v_comp_acc
+   real(SP) :: RL_v_comp(3)
+   real(SP) :: RL_v_comp_norm
    real(SP),allocatable :: q_norm(:)
    real(SP),  parameter :: q0_defmod=1.E-5
    type bz_samp

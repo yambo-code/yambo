@@ -46,7 +46,8 @@ includedir  = @includedir@
 CFGFILES = config/setup config/Makefile config/report \
   	   sbin/mkmkfl driver/codever.h src/2wf_and_fft/sgfft.F  \
 	   src/0external_c/.objects Makefile driver/version.h
-TARGETS  = self interfaces spp
+TARGETS  = self interfaces spp 
+UTILS    = changelog
 PROJECTS = self_ph self_ras self_reels self_gks self_cyl_cut self_spin self_sc \
 	   spp_ph
 EXE      = $(TARGETS) $(PROJECTS) a2s f2s p2s
@@ -84,6 +85,8 @@ saves:
 	@echo "SELF" @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ saves
 	@echo "save version patchlevel subversion"
 	@echo
+changelog:
+	svn log | perl sbin/svn2cl.pl > ChangeLog
 all: $(EXE)
 libs:
 	@LIBS2DO="slatec"; DIR2GO="lib" ; $(mklib)
@@ -172,8 +175,9 @@ define make_message
  echo;echo "SELF" @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ targets;echo;\
  for target in $(TARGETS); do echo  " [stable] $$target" ; done;echo;\
 # -- GPL_END --
- for target in $(PROJECTS); do echo " [devel] $$target" ; done;\
+ for target in $(PROJECTS); do echo " [devel] $$target" ; done;echo;\
 # -- GPL_START --
+ for target in $(UTILS); do echo  " [util] $$target" ; done;echo;\
  echo;
 endef
 define mksrc

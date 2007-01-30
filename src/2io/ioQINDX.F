@@ -21,7 +21,7 @@
 !
  integer function ioQINDX(Xk,q,io_db)
 !====================================
- use R_lattice,      ONLY:RL_v_comp_acc,nqibz,nqbz,qindx_X,qindx_B,qindx_S,&
+ use R_lattice,      ONLY:RL_v_comp_norm,nqibz,nqbz,qindx_X,qindx_B,qindx_S,&
 &                         bse_scattering,qp_states_k,nXkibz,qindx_alloc,&
 &                         Xk_grid_is_uniform,bz_samp,nxKbz
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
@@ -46,7 +46,7 @@
    call io_elemental(io_db,&
 &       VAR=" QP states             :",I1=qp_states_k,CHECK=.true.,OP=(/">=","<="/))
    call io_elemental(io_db,&
-&       VAR=" |k| uncertain    [arb]:",R0=RL_v_comp_acc)
+&       VAR=" |k| uncertain    [arb]:",R0=RL_v_comp_norm)
    call io_elemental(io_db,I0=q%nibz)
    call io_elemental(io_db,I0=q%nbz)
    call io_elemental(io_db,&

@@ -336,7 +336,7 @@
      return
    endif
 
-   if (.not.file_exists(trim(restart_folder))) call mk_dir(trim(restart_folder))
+   if (.not.file_exists(trim(restart_folder))) call mk_dir(restart_folder)
 
    open(unit=81,file=trim(restart_file))
    write (81,'(/2x,a,3(i2.2,a),a)') 'Restart file for SELF ',code_version(1),&

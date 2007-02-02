@@ -167,7 +167,7 @@
      if (io_serial_number(ID)/=serial_number.and.read_is_on(ID).and.&
 &        allocated(g_vec)) then
        if (.not.allocated(X_RLcomp_ig)) allocate(X_RLcomp_ig(X%ng))
-       i_err = X_RLcomp_table() < 0 
+       i_err = X_RLcomp_table() 
        if ( i_err < 0 ) io_status(ID) = -1
        if ( i_err > 0 ) different_db_RL_order=.true.
      endif

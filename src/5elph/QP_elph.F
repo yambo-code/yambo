@@ -175,12 +175,12 @@
          !  call G_RIM_Gf(Sc_W(iqp),en,(/ob,okbz,1/),sqrt(ph_freqs_sq(iq,il)),Gf_save) 
          !else
          !  forall (iw=1:Sc_W(iqp)%n(1)) Gf_save(iw)=&
-&        !         Gf(Sc_W(iqp)%p(iw),en,(/ob,ok,1/),sqrt(ph_freqs_sq(iq,il)),1)
+         !&        Gf(Sc_W(iqp)%p(iw),en,(/ob,ok,1/),sqrt(ph_freqs_sq(iq,il)),1)
          !endif
          !
          !forall (iw=1:Sc_W(iqp)%n(1)) dc(iw)=dc(iw)+Gf_save(iw)/real(q%nbz)/2.*&
-&        !       conjg(elph_gkkp(ikbz,il,ib,ob))*elph_gkkp(ikbz,il,ib,ob)/&
-&        !             sqrt(ph_freqs_sq(iq,il))
+         !&      conjg(elph_gkkp(ikbz,il,ib,ob))*elph_gkkp(ikbz,il,ib,ob)/&
+         !&            sqrt(ph_freqs_sq(iq,il))
          !
          ! Cardona-Allen formulation
          !---------------------------

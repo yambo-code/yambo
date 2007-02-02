@@ -81,14 +81,14 @@ case $target in
    llibs="$llibs \$(lnetcdf) -lslatec \$(lfftw) -lm $llmpi"
     ;;
   a2s|f2s)
-   llibs="$llibs -lint_modules \$(llapack) \$(lblas) \$(lnetcdf) \$(lfftw) -lm $llmpi"
+   llibs="-lint_modules $llibs \$(llapack) \$(lblas) \$(lnetcdf) \$(lfftw) -lm $llmpi"
     ;;
   p2s)
-   llibs="$llibs -liotk -lint_modules \$(llapack) \$(lblas) \$(lnetcdf) \$(lfftw) -lm $llmpi"
+   llibs="-lint_modules $llibs -liotk \$(llapack) \$(lblas) \$(lnetcdf) \$(lfftw) -lm $llmpi"
    linclude="$linclude -I\$(iotk_dir)"
     ;;
   e2s)
-   llibs="$llibs -letsf_io -lint_modules \$(llapack) \$(lblas) \$(lnetcdf) \$(lfftw) -lm $llmpi"
+   llibs="-lint_modules $llibs -letsf_io \$(llapack) \$(lblas) \$(lnetcdf) \$(lfftw) -lm $llmpi"
    linclude="$linclude -I\$(etsf_dir)"
     ;;
   spp*)

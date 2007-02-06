@@ -224,7 +224,7 @@
    allocate(Fermi_en%E(Fermi_en%nb,Fermi_en%nk,n_spin))
    Fermi_en%E(:,:,:)=en%E(:,:nXkibz,:)
    call fermi_level(Fermi_en,k,Tel,1)
-   call extend_occupations(Fermi_en%Efermi,Fermi_en%nbf,Fermi_en%nbm,en)
+   call extend_occupations(Fermi_en,en)
    nullify(Fermi_en%E)
  endif
 !

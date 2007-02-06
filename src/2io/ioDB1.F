@@ -207,9 +207,9 @@
      allocate(n_atoms(n_atom_species))
      allocate(znucl(n_atom_species))
      allocate(atom_pos(3,n_atoms_max,n_atom_species))
-     call mem_est("n_atoms pp_n_l_comp atom_pos znucl",&
-&                 (/n_atom_species,n_atom_species,size(atom_pos),n_atom_species/),&
-&                 (/IP,IP,SP,IP/))
+     call mem_est("n_atoms atom_pos znucl",&
+&                 (/n_atom_species,size(atom_pos),n_atom_species/),&
+&                 (/IP,SP,IP/))
    endif
  endif
 !

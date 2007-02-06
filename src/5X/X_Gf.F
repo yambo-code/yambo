@@ -20,17 +20,17 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  function X_Gf(W,pole,ordering)
-!==============================
+ !
  use pars, ONLY:SP,pi
  implicit none
  real(SP)    ::pole
  complex(SP) ::W,X_Gf
  character(*)::ordering
-!
+ !
  if (ordering=="t") X_Gf=1./(W-pole)-1./(conjg(W)+pole)
  if (ordering=="c") X_Gf=1./(W-pole)-1./(W+pole)       
  if (ordering=="r") X_Gf=1./(W-pole)                   
  if (ordering=="a") X_Gf=           -1./(conjg(W)+pole)
-
+ !
  end function
 

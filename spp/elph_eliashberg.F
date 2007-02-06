@@ -191,8 +191,8 @@
         weight=Fermi_fnc_derivative(en%E(ib1,iibz1,1)+elph_Ef,elph_gamma_broad)*&
  &             Fermi_fnc_derivative(en%E(ib2,iibz2,1)+elph_Ef,elph_gamma_broad)*&
 &              2./real(k%nbz)
-        !                                                          |
-        !                                                          SPIN
+        !      |
+        !      SPIN
         do im=1,ph_modes
           gamma(iq,im)=gamma(iq,im)+&
  &              conjg(elph_gkkp(i1,im,ib1,ib2))*elph_gkkp(i1,im,ib1,ib2) *weight

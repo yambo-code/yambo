@@ -153,7 +153,7 @@
  call E_duplicate(en,Xen)
  !
  call fermi_level(Xen,Xk,Tel,2)
- call extend_occupations(Xen%Efermi,Xen%nbf,Xen%nbm,en)
+ call extend_occupations(Xen,en)
  !
  n_met_bands=en%nbm
  n_full_bands=en%nbf

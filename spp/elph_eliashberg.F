@@ -156,18 +156,15 @@
   !
   ! Taken from elphon.f90 (PWscf)
   !
-  ! the factor 2 comes from the factor sqrt(hbar/2/M/omega) that appears
-  ! in the definition of the electron-phonon matrix element g
-  ! The sqrt(1/M) factor is actually hidden into the normal modes
-  !
   ! gamma = \pi \sum_k\sum_{i,j} \delta(e_{k,i}-Ef) \delta(e_{k+q,j}-Ef)
   !         | \sum_mu z(mu,nu) <psi_{k+q,j}|dvscf_q(mu)*psi_{k,i}> |^2
+  !
   ! where z(mu,nu) is the mu component of normal mode nu (z = dyn)
+  !
   ! gamma(nu) is the phonon linewidth of mode nu
   !
   ! The factor N(Ef)^2 that appears in most formulations of el-ph interact
   ! is absent because we sum, not average, over the Fermi surface.
-  ! The factor 2 is provided by the sum over spins
   !
   ! lambda is the adimensional el-ph coupling for mode nu:
   ! lambda(nu)= gamma(nu)/(pi N(Ef) \omega_{q,nu}^2)
@@ -193,6 +190,8 @@
 &              2./real(k%nbz)
         !      |
         !      SPIN
+        ! The factor 2 is provided by the sum over spins
+        !
         do im=1,ph_modes
           gamma(iq,im)=gamma(iq,im)+&
  &              conjg(elph_gkkp(i1,im,ib1,ib2))*elph_gkkp(i1,im,ib1,ib2) *weight
@@ -200,6 +199,11 @@
       enddo
     enddo
   enddo
+  !
+  ! the factor 2 comes from the factor sqrt(hbar/2/M/omega) that appears
+  ! in the definition of the electron-phonon matrix element g
+  ! The sqrt(1/M) factor is actually hidden into the normal modes
+  !
   gamma(iq,:)=gamma(iq,:)*pi/2.
 
   end subroutine

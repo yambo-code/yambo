@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine fermi_level(E,K,test_Tel,mode)
-!=========================================
+ !========================================
  !
  ! Mode = 0 
  !  Update the Fermi energy
@@ -90,7 +90,6 @@
  i_trials(1)=i_trials(1)+1 
  !
  ! First guess
- !--------------
  !
  ! real(nel)/2.0_SP*real(n_spinor) is last occupied state
  !
@@ -111,7 +110,6 @@
  call ef2nel(test_Tel,Ef(2),lnel(2))
  !
  !Bracketing section: to find a lower and upper limit
- !------------------
  !to the Fermi level.
  !
  !Bracketing done when ires=0
@@ -176,7 +174,6 @@
 
  enddo
  E%E(:,:,:)=E%E(:,:,:)-E%Efermi(1)
-
  !
  ! If %E_RIM is associated I simply extend the %E occupations to %E_RIM
  !
@@ -206,14 +203,16 @@
    call msg('r','Electrons - <f_met>        :',(/lnel(1)+nel,&
 &               sum(E%f(E%nbf+1:E%nbm,:,:))/real(K%nibz*(E%nbm-E%nbf))/))
  endif
-!
+ !
  contains
-!
+   !
    subroutine ef2nel(tTel,Ef,lnel)
-!=================================
+   !
    implicit none
    real(SP)::tTel,Ef,lnel
-   !ws
+   !
+   !Work Space
+   !
    integer  :: i1,ik,ib 
    real(DP) :: nel_acc
    !
@@ -235,6 +234,6 @@
    if (n_b_full_guess==0) nel_theo=nel
    lnel=nel_acc-nel_theo
    end subroutine
-
+   !
  end subroutine
 

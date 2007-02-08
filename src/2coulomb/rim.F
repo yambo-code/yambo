@@ -46,9 +46,13 @@
 !------------------------------------------------------------------------------
 !Anisotropy Setup
 !================
+ !
+ ! em1_anis refers to the X part only of epsm1 as in the self-energy
+ ! the bare part is embodied in the exchange.
+ !
  em1_anis=RIM_epsm1(:)-1.
  if (RIM_id_epsm1_reference<0.or.RIM_id_epsm1_reference>3) RIM_id_epsm1_reference=0
- if (RIM_id_epsm1_reference==0) em1_anis=1.
+ if (RIM_id_epsm1_reference==0) em1_anis=0.
  if (RIM_id_epsm1_reference>0 ) em1_anis=em1_anis/em1_anis(RIM_id_epsm1_reference)
 !
 !Filling the small BZ with the random grid

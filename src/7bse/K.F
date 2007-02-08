@@ -245,12 +245,11 @@
      enddo
    enddo
 !
-! Anisotropy correction. Note that isc%gamp(1,1)=qpg_anisotropy while
+! Anisotropy correction. Note that isc%gamp(1,1)=RIM_anisotropy while
 ! the \delta(G,G') term must be multiplied by the standard RIM_qpg(1,1)
 !
-   if (allocated(RIM_qpg)) BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2.-RIM_anisotropy/2.
+   if (RIM_anisotropy/=0.) BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2.-RIM_anisotropy/2.
 !
-
    deallocate(isc%gamp)
    call X_alloc('X')
    Xw%n=1

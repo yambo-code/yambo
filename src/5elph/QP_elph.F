@@ -37,7 +37,8 @@
  use D_lattice,     ONLY:sop_inv
  use R_lattice,     ONLY:qindx_S,bz_samp,ik_is_table,q_norm
  use ELPH,          ONLY:ph_modes,elph_nb,ph_freqs_sq,elph_gkkp,&
-&                        elph_gkkp_free,QP_PH_n_G_bands,max_ph_freq
+&                        elph_gkkp_free,QP_PH_n_G_bands,max_ph_freq,elph_DW
+ use parser_m ! DEBUG
  implicit none
  type(levels)  ::en
  type(bz_samp) ::k,q
@@ -54,6 +55,9 @@
  logical          ::use_G_RIM
  real(SP)         ::g_sq_F_res(QP_n_states,q%nibz,ph_modes)
  complex(SP), allocatable :: dc(:),Gf_save(:)
+ logical :: skip_DW,skip_FAN ! DEBUG
+ call parser('SKIPFAN',skip_FAN)
+ call parser('SKIPDW',skip_DW)
  !
  ! Zeroing
  !
@@ -187,9 +191,21 @@
          !
          if (abs(en%E(ib,ik,1)-en%E(ob,ok,1))<1.E-5) cycle
          !
-         g_sq_F_res(iqp,iq,il)= g_sq_F_res(iqp,iq,il)+&
-&                  2.*conjg(elph_gkkp(ikbz,il,ib,ob))*elph_gkkp(ikbz,il,ib,ob)/&
-&                  (en%E(ib,ik,1)-en%E(ob,ok,1))/real(q%nbz)/sqrt(ph_freqs_sq(iq,il))
+         ! Fan Term
+         !
+         if (.not.skip_FAN) & !DEBUG
+&        g_sq_F_res(iqp,iq,il)= g_sq_F_res(iqp,iq,il)+&
+&                  conjg(elph_gkkp(ikbz,il,ib,ob))*elph_gkkp(ikbz,il,ib,ob)/&
+&                  (en%E(ib,ik,1)-en%E(ob,ok,1))/real(q%nbz)/2./sqrt(ph_freqs_sq(iq,il))
+         !
+         ! Debye Waller Term
+         !
+         if (abs(en%E(ib,ik,1)-en%E(ob,ik,1))<1.E-5) cycle
+         !
+         if (.not.skip_DW) & !DEBUG
+&        g_sq_F_res(iqp,iq,il)= g_sq_F_res(iqp,iq,il)-1./2.*&
+&                  elph_DW(ikbz,il,ib,ob)/&
+&                  (en%E(ib,ik,1)-en%E(ob,ik,1))/real(q%nbz)/2./sqrt(ph_freqs_sq(iq,il))
          !
        enddo
        !

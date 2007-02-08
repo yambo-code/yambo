@@ -29,6 +29,7 @@
    integer   :: elph_nk
    real(SP)  :: max_ph_freq
    real(SP),    allocatable :: ph_freqs_sq(:,:)
+   real(SP),    allocatable :: elph_DW(:,:,:,:)
    complex(SP), allocatable :: elph_gkkp(:,:,:,:)
    !
  contains
@@ -38,21 +39,22 @@
    use memory_m,  ONLY:mem_est
    use R_lattice, ONLY:nqibz,nkbz
    implicit none
-   integer     ::alloc_err(2)
+   integer     ::alloc_err(3)
    if (allocated(ph_freqs_sq)) return
    allocate(ph_freqs_sq(nqibz,ph_modes),stat=alloc_err(1))
    allocate(elph_gkkp(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err(2))
-   call mem_est("ph_freqs_sq elph_gkkp",&
-&               (/size(ph_freqs_sq),size(elph_gkkp)/),&
-&               (/SP, 2*SP/),errors=alloc_err)
+   allocate(elph_DW(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err(3))
+   call mem_est("ph_freqs_sq elph_gkkp elph_DW",&
+&               (/size(ph_freqs_sq),size(elph_gkkp),size(elph_DW)/),&
+&               (/SP, 2*SP,SP/),errors=alloc_err)
    end subroutine
    !
    subroutine elph_gkkp_free()
    !--------------------------
    use memory_m,  ONLY:mem_est
    implicit none
-   deallocate(ph_freqs_sq,elph_gkkp)
-   call mem_est("ph_freqs_sq elph_gkkp")
+   deallocate(ph_freqs_sq,elph_gkkp,elph_DW)
+   call mem_est("ph_freqs_sq elph_gkkp elph_DW")
    end subroutine
    !
  end module ELPH

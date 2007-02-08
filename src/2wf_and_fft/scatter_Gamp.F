@@ -145,6 +145,7 @@
        ! Anisotropy correction 
        !
        if (all((/RIM_ng>0,mode=='c',RIM_anisotropy/=0./))) isc%gamp(1,1)=RIM_anisotropy/2.
+       !
      endif
      !
    enddo

@@ -21,6 +21,7 @@
 !
  subroutine elph_pw_dbs(k,q)
  !--------------------------
+ use pars,                ONLY:DP
  use ELPH,                ONLY:ph_freqs_sq,ph_modes,elph_nb,&
 &                              elph_gkkp_free,max_ph_freq
  use com,                 ONLY:msg
@@ -37,6 +38,7 @@
  integer,allocatable::ikbz_is_table(:,:)
  integer            ::iq,io_pw_err(nqibz),io_elph_err,ID,X_ng
  integer, external  ::ioELPH 
+ complex(DP), allocatable :: grad_at_gamma(:,:,:,:,:)
  !
  !
  call section("*","== Electron-Phonon Interface: Databases ==")
@@ -106,14 +108,16 @@
   !   read (99) ph_freqs_sq
   !   DO ik=1,nksq
   !     read (99) elph_gkkp_disk(:,:,:)  (elph_nb,elph_nb,ph_modes)
+  !     read (99) grad_at_gamma (only at Gamma)
+  !     read (99) polarization_vec
   !   ENDDO
   !
   use pars,           ONLY:SP,DP,schlen
-  use D_lattice,      ONLY:nsym,sop_inv,alat
+  use D_lattice,      ONLY:nsym,sop_inv,alat,n_atoms
   use IO_m,           ONLY:io_control,OP_RD,RD_CL,io_connect,io_unit,&
 &                          io_netcdf_support,io_disconnect,io_file
   use ELPH,           ONLY:ph_modes,elph_nb,elph_nk,&
-&                          ph_freqs_sq,elph_gkkp,elph_gkkp_alloc
+&                          ph_freqs_sq,elph_gkkp,elph_gkkp_alloc,elph_DW
   use SPP,            ONLY:elph_dbs_path
   use vec_operate,    ONLY:v_is_zero,rlu_v_is_zero,c2a
   implicit none
@@ -121,16 +125,21 @@
   !
   !Work Space
   !
-  integer           :: ib1,ib2,ig,il
+  integer           :: ib1,ib2,ig,il,nat,ia,i,j
   real(SP)          :: r_v(3),ph_freq
+  complex(DP)       :: F1(3)
+  !
   !I/O
+  !
   integer           :: ID,io_err
   character(schlen) :: db_name
   real(SP)          :: dVRY2Ha
   real(DP)          :: pw_kpq(3,k%nbz),pw_alat,pw_q(3)
   real(DP),    allocatable :: ph_freqs_sq_disk(:)
-  complex(DP), allocatable :: gkkp_disk(:,:,:)
+  complex(DP), allocatable :: gkkp_disk(:,:,:),pol_vec(:,:,:)
+  !
   ! K Table
+  !
   integer           :: i1,ik,k_found(k%nbz),k2k_tab(k%nbz),ikbz_rot
   integer           :: nsmall,small(nsym)
 
@@ -185,7 +194,8 @@
   !
   if (iq==1) call elph_gkkp_alloc()
   !
-  elph_gkkp=(0._DP,0._DP)
+  elph_gkkp=(0._SP,0._SP)
+  elph_DW  =(0._SP,0._SP)
   !
   ! Espresso <-> SELF k table correspondance
   !
@@ -213,7 +223,10 @@
   ! 
   ! ELPH_gkkp 
   !
-  allocate(gkkp_disk(elph_nb,elph_nb,ph_modes))
+  nat=sum(n_atoms)
+  !
+  allocate(gkkp_disk(elph_nb,elph_nb,ph_modes),pol_vec(ph_modes,nat,3))
+  if (iq==1) allocate(grad_at_gamma(k%nbz,elph_nb,elph_nb,nat,3))
   !
   ! Reading
   !
@@ -226,7 +239,24 @@
     !                           |                          
     !                           ik[PW]/k2k_tab(ik)[SELF]  
     !
+    ! I = (i,a)
+    !
+    ! In PW we define
+    !
+    !  gkkp_disk(i,j,k,l) = el_ph_mat(i,j,k,I) u(I,l)^* eps_I(q l)/sqrt(M_a)
+    !
+    ! On the other hand SELF table the k, k-q transitions and not k+q. So we 
+    ! need to define
+    !
+    !  self_gkkp(i,j,k,l) = [gkkp_disk(j,i,k-q,l)]^*
+    ! 
+    ! or equivalently
+    !
+    !  self_gkkp(i,j,k2k_tab(k),l) = [gkkp_disk(j,i,k,l)]^*
+    !                
     read (io_unit(ID)) gkkp_disk
+    read (io_unit(ID)) pol_vec
+    if (iq==1) read (io_unit(ID)) grad_at_gamma(k2k_tab(ik),:,:,:,:)
     !
     do ib1=1,elph_nb
       do ib2=1,elph_nb
@@ -239,26 +269,40 @@
         !
         dVRY2Ha=2._DP**(-3._DP/2._DP)
         !
-        ! If I am reading in the Q mode I need to store all <k1|g|k1-q> ME.
-        ! So k1 is the index.
+        elph_gkkp(k2k_tab(ik),:,ib1,ib2)=conjg( gkkp_disk(ib2,ib1,:) )*dVRY2Ha
         !
-        ! dV(i,nu,n,n')= <\psi(k) n|dV_{SCF}/du^{nu}|\psi(k-q) n'>
+        ! Debye Waller Term
         !
-        ! NOTE THE BAND ORDER (imposed by PW)
+        F1=(0._DP,0._DP)
+        do ia=1,nat
+          F1(:)=F1(:)+grad_at_gamma(k2k_tab(ik),ib1,ib2,ia,:)*dVRY2Ha
+        enddo
         !
-        elph_gkkp(k2k_tab(ik),:,ib1,ib2)=gkkp_disk(ib1,ib2,:)*dVRY2Ha
+        do i=1,3
+          do j=1,3
+            do ia=1,nat
+              do il=1,ph_modes
+                elph_DW(k2k_tab(ik),il,ib1,ib2)=elph_DW(k2k_tab(ik),il,ib1,ib2)+&
+&               2.*real(&
+&                 F1(i)*conjg(grad_at_gamma(k2k_tab(ik),ib1,ib2,ia,j) )*pol_vec(il,ia,i)*&
+&                 conjg(pol_vec(il,ia,j))*dVRY2Ha&
+&               )
+              enddo
+            enddo
+          enddo
+        enddo
         !
-      enddo !ib2
+      enddo 
       !
     enddo
   enddo
   !
-  ! The pw_kpq K-grid is reduced using the small group of q. 
-  ! I need to expand the K-grid to define the missing elements of elph_dV
-  !
   ! The small group of q
   ! 
   call q_small(real(pw_q,SP),small,nsmall)
+  !
+  ! The pw_kpq K-grid is reduced using the small group of q. 
+  ! I need to expand the K-grid to define the missing elements of elph_dV
   !
   do ik=1,k%nbz
     if (k_found(ik)==0) cycle
@@ -266,6 +310,8 @@
       ikbz_rot=ikbz_is_table(ik,sop_inv(small(i1)))
       if (k_found(ikbz_rot)/=0) cycle
       elph_gkkp(ikbz_rot,:,:,:)=elph_gkkp(ik,:,:,:)
+      elph_DW(ikbz_rot,:,:,:)=elph_DW(ik,:,:,:)
+      if (iq==1) grad_at_gamma(k2k_tab(ik),:,:,:,:)=grad_at_gamma(k2k_tab(ik),:,:,:,:)
       k_found(ikbz_rot)=-1
     enddo
   enddo
@@ -277,7 +323,8 @@
   !
   ! CLEAN
   !
-  deallocate(ph_freqs_sq_disk,gkkp_disk)
+  deallocate(ph_freqs_sq_disk,gkkp_disk,pol_vec)
+  if (iq==nqibz) deallocate(grad_at_gamma)
 
 1 call io_control(ACTION=RD_CL,ID=ID)
   call io_disconnect(ID)
@@ -345,6 +392,7 @@
   call mem_est("ik_is_table")
 
   end subroutine
+  !
   !
   ! GPL_START
   !

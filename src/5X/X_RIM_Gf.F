@@ -79,7 +79,7 @@
        if (ordering=="r") RIM_Gf(iw-fr(1)+1)=RIM_Gf(iw-fr(1)+1)+&
 &                         ffac/(Xw%p(iw)-rand_pole)
        if (ordering=="a") RIM_Gf(iw-fr(1)+1)=RIM_Gf(iw-fr(1)+1)&
-&      !                                         -ffac/(conjg(Xw%p(iw))+rand_pole)
+&                                                -ffac/(conjg(Xw%p(iw))+rand_pole)
      enddo
      !
    enddo

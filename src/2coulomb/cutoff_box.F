@@ -22,7 +22,7 @@
  subroutine cutoff_box(q,is_cut)
 !===============================
 !
-! Vc(q,G)=1/(Vdl Nq)\sum_{G'} V(q'+G') F(q'+G',q+G) [3D BOX] 
+! Vc(q,G)=1/(Vdl Nq)\sum_{q' G'} V(q'+G') F(q'+G',q+G) [3D BOX] 
 !
 ! Note that q\in BZ and
 !
@@ -109,7 +109,7 @@
          ig_r=g_rot( sop_inv(is), ig_p )
          v2= ( q%ptbz(iqbz,:)+g_vec(ig_p,:) )*2.*pi/alat(:)
 
-         V_cut(iq,ig)=V_cut(iq,ig)+V_bare(iq,ig_r)*F_box(v1,v2)
+         V_cut(iq,ig)=V_cut(iq,ig)+V_bare(iqibz,ig_r)*F_box(v1,v2)
 
        enddo g_loop
 

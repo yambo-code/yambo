@@ -94,7 +94,7 @@
 #if defined PJ_RAS
  if (iq == 1) then
    if ((lras.or.lreels).and.loptcut) then
-     call ostrngths_cut( Xen, Xk, X )
+     call X_O_strengths_cut( Xen, Xk, X, X%q0)
    endif
  endif
 !if(lAnalysePeaks) call AnalysePeaks(X,Xk,Xen)

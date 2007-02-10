@@ -26,12 +26,15 @@
   {"ifile",  "F","Input file",0,0,1,0},              /* 3 */
   {"nompi", "N","Skip MPI initialization",0,0,0,0}, /* 4 */
   {"dbfrag","S","DataBases fragmentation",0,0,0,0}, /* 5 */
-  {"s2s","s","SELF ver. 2 databases translator",0,0,0,0}, /* 6 */
-  {"kpt","k","K-grid generator",0,0,0,0}, /* 7 */
-  {"excwf","e","Excitonic Wavefunction plot",0,0,0,0}, /* 8 */
-  {"bzrim","r","BZ energy RIM analyzer",0,0,0,0}, /* 9 */
+  {"s2s","s","SELF ver. 2 databases translator",0,0,0,0}, /* 6,0 */
+  {"kpt","k","K-grid generator",0,0,0,0}, /* 7,1 */
+  {"excwf","e","Excitonic Wavefunction plot",0,0,0,0}, /* 8,2 */
+  {"bzrim","r","BZ energy RIM analyzer",0,0,0,0}, /* 9,3 */
 #if defined SPP_PJ_PH
-  {"elph", "p","Electron-Phonon DBs preprocessing",0,0,0,0}, /* 10 */
+  {"elph", "p","Electron-Phonon DBs preprocessing",0,0,0,0}, /* 10,4 */
+#endif
+#if defined SPP_PJ_RAS
+  {"ras", "a","Surface Anisotropy postprocessor",0,0,0,0}, /* 10,4 */
 #endif
   {NULL,NULL,NULL,0,0,0,0}
  };

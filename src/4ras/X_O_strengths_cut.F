@@ -19,12 +19,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine ostrngths_cut(Xen, Xk, X)
+ subroutine X_O_strengths_cut(Xen, Xk, X, field_dir)
 !====================================
  use pars
  use com,                     ONLY : msg
  use timing,                  ONLY : live_timing
- use electrons,               ONLY : levels, n_spin
+ use electrons,               ONLY : levels, n_spin, n_spinor
  use par_proc_m,              ONLY : pp_redux_wait, pp_indexes, myid, &
 &                                    master_node, pp_indexes_reset
  use par_indexes_m,           ONLY : par_indexes
@@ -40,14 +40,16 @@
  type(bz_samp),  intent(in)       :: Xk
  type(levels),   intent(in)       :: Xen
  type(X_t)                        :: X
+ real(SP),          intent(inout) :: field_dir(3)
 !ws
  integer                          :: io_db, io_err, i_spin
  integer                          :: ik, i1, icfft, ivfft, ic, iv, is
 
- real(SP)                         :: omega, q0s(3)
+ real(SP)                         :: omega, field_dir_rot(3)
  type(pp_indexes)                 :: px
  real(SP), allocatable            :: kg(:,:)
- complex(SP)                      :: PS(3)
+ complex(SP)                      :: PS(3), spinor_avg(3)
+ real(SP), parameter          :: fac = 0.70710678118654752440_SP
  character(schlen)                :: sch ! DEBUG
 !functions
  integer,  external               :: ioOSTNTS_cut
@@ -121,6 +123,16 @@
           Xcut_q0grad(:,ic,iv,ik,i_spin) = PS(:)/omega
        enddo ! cond. bands
      enddo     ! spinors
+     !
+     ! Correct for spinor case
+     !
+     if(n_spinor.eq.2) then
+       do ic = Xen%nbf+1, X%ib(2)
+         spinor_avg(:) =  ( Xcut_q0grad(:,ic,iv,ik,1) + Xcut_q0grad(:,ic,iv,ik,2) )*fac
+         Xcut_q0grad(:,ic,iv,ik,1) = spinor_avg(:)
+         Xcut_q0grad(:,ic,iv,ik,2) = spinor_avg(:)
+       enddo
+     endif
      call live_timing(steps=1)
    enddo   ! valence bands
  enddo       ! k-points
@@ -140,25 +152,28 @@
  io_err=ioOSTNTS_cut(X,Xen,io_db)
 
 1 continue
-! Note: this order is inefficient
+
  allocate(Xcut_rhoq0(X%ib(2),Xen%nbm,Xk%nbz,n_spin))
  call mem_est('Xcut_rhoq0',(/ product( (/X%ib(2),Xen%nbm,Xk%nbz,n_spin/) ) /) )
- Xcut_rhoq0=(0.,0.)
+ Xcut_rhoq0=(0.0_SP,0.0_SP)
  do i1=1,Xk%nbz
    ik  = Xk%sstar(i1, 1)
    is  = sop_inv(Xk%sstar(i1, 2) )
-   q0s = matmul( dl_sop(:,:,is), X%q0 )
-   do i_spin = 1, n_spin
+   field_dir_rot = matmul( dl_sop(:,:,is), field_dir )
    do iv = X%ib(1), Xen%nbm
      do ic = Xen%nbf+1, X%ib(2)
-       Xcut_rhoq0(ic,iv,i1,i_spin) = dot_product( q0s, Xcut_q0grad(:,ic,iv,ik,i_spin) ) ! CUT X
-       if (is>nsym/(i_time_rev+1)) Xcut_rhoq0(ic,iv,i1,i_spin) = &
-&                                  dot_product(Xcut_q0grad(:,ic,iv,ik,i_spin),q0s) 
+       do i_spin = 1, n_spin
+         Xcut_rhoq0(ic,iv,i1,i_spin) = &
+&          dot_product( field_dir_rot, Xcut_q0grad(:,ic,iv,ik,i_spin) ) 
+         if ( is > nsym/(i_time_rev+1) ) Xcut_rhoq0(ic,iv,i1,i_spin) = &
+&          dot_product( Xcut_q0grad(:,ic,iv,ik,i_spin), field_dir_rot ) 
+       enddo
      enddo
-     Xcut_rhoq0(iv,iv,i1,i_spin)=(1.,0.)
-   enddo
+     Xcut_rhoq0(iv,iv,i1,:)=(1.0_SP,0.0_SP)
    enddo
  enddo
+
+ call pp_redux_wait()
 !
 ! CLEAN
  deallocate(Xcut_q0grad)

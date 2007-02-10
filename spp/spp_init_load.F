@@ -23,6 +23,10 @@
 !==============================
  use it_m,          ONLY:it,initdefs,E_unit
  use SPP
+#if defined SPP_PJ_RAS
+ use bulkeps,              ONLY : init_bulk
+ use convolute,            ONLY : init_convolute
+#endif
  implicit none
  type(initdefs)::defs
  !
@@ -31,14 +35,17 @@
  call it('r',defs,'kpt',  '[R] K-grid analysis')  ! [1]
  call it('r',defs,'excwf','[R] Excitonic Wavefunction plot')  ! [2]
  call it('r',defs,'bzrim','[R] BZ energy RIM analyzer')  ! [3]
- call it('r',defs,'elph','[R] Electron-Phonon DBs preprocessing')  ! [4]
+ call it('r',defs,'elph', '[R] Electron-Phonon DBs preprocessing')  ! [4]
+ call it('r',defs,'ras',  '[R] Surface Anisotropy postprocessor')  ! [5]
  !
  !Kpt analysis
  !
  call it(defs,'KcooIn','K-pts coordinates (in) cc/rlu/iku',Kcoo_in)
  call it(defs,'KcooOut','K-pts coordinates (out) cc/rlu/iku',Kcoo_out)
  call it(defs,'GWKpts','GW K-point grid',Kgw_1)
- call it(defs,'KGrdShft','K-grid shifts',qlong)
+ call it(defs,'KShift1','K-grid shift vector[1] ',qlong(1,:))
+ call it(defs,'KShift2','K-grid shift vector[2] ',qlong(2,:))
+ call it(defs,'KShift3','K-grid shift vector[3] ',qlong(3,:))
  !
  !EXC WF
  !
@@ -74,6 +81,18 @@
  call it(defs,'ElPhBroad','Broadening (Eliashberg)',elph_broad,E_unit)
  call it(defs,'EEfermi',  'External Fermi Level (Eliashberg)',elph_Ef,E_unit)
  call it(defs,'ElPhStps', 'Energy steps',elph_steps)
+ !
+#endif
+#if defined SPP_PJ_RAS
+ !
+ ! RAS
+ !
+ call it(defs,'XData',     'Filename of q[x] data',xdata)
+ call it(defs,'YData',     'Filename of q[y] data',ydata)
+ call it(defs,'XDataCol',  'Column of q[x] data',xdatacol)
+ call it(defs,'YDataCol',  'Column of q[y] data',ydatacol)
+ call init_bulk(defs)
+ call init_convolute(defs)
  !
 #endif
  !

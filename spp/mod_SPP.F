@@ -27,7 +27,7 @@
   ! K analysis
   !
   logical  :: lkanalyze
-  real(SP) :: Kgw_1(3), qlong(3)
+  real(SP) :: Kgw_1(3), qlong(3,3)
   character(schlen) :: Kcoo_in,Kcoo_out
   !
   ! Exc WF
@@ -57,6 +57,15 @@
   real(SP):: elph_Ef
   real(SP):: elph_E_max
   character(schlen) :: elph_dbs_path
+  !
+#endif
+#if defined SPP_PJ_RAS
+  !
+  !RAS
+  !
+  logical :: lras
+  character(schlen) :: xdata, ydata
+  character(len=2)  :: xdatacol, ydatacol
   !
 #endif
   !

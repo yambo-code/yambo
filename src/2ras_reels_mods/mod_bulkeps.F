@@ -59,8 +59,13 @@ subroutine init_bulk(defs)
 
   call it(defs,'BulkFile', '[RAS] File containing bulk', bfile )
   call it(defs,'BulkForm', '[RAS] Format of bulk (`3ri`,`3ir`,`2KK`,`3KK`) ',btype )
+#if defined PJ_RAS
   call it(defs,'BlkShift', '[RAS] GW shift of bulk eps ', bshift, &
 &         E_unit,verb_level=V_more  )
+#else
+  call it(defs,'BlkShift', '[RAS] GW shift of bulk eps ', bshift, &
+&         E_unit  )
+#endif
   call it(defs,'BlkBroad', '[RAS] Broadening of bulk eps ', bbroad, E_unit )
 
   return

@@ -27,7 +27,7 @@
  use D_lattice,           ONLY:nsym
  use com,                 ONLY:msg
  use parser_m,            ONLY:parser
- use vec_operate,         ONLY:c2a,rlu_v_is_zero,v_is_zero
+ use vec_operate,         ONLY:c2a,rlu_v_is_zero,v_is_zero,v_norm
  use SPP,                 ONLY:Kcoo_in,Kcoo_out,qlong
  use timing,              ONLY:live_timing_is_on
  implicit none
@@ -142,7 +142,10 @@
 !
 ! Generate shifted k-points set for longitudinal gauge calculation
 !-------
- call parser('KGrdShft',qlong)
+!call parser('KGrdShft',qlong)
+ call parser('KShift1',qlong(1,:))
+ call parser('KShift2',qlong(2,:))
+ call parser('KShift3',qlong(3,:))
  if(any(abs(qlong).gt.1e-6)) then
    live_timing_is_on=.false.
    kout(:,:) = Xk%pt(:,:)
@@ -159,8 +162,8 @@
    enddo
    i2=0
    do i1=1,3
-     if(abs(qlong(i1)).gt.1e-6) then
-       q0(:) = 0; q0(i1) = qlong(i1)
+     q0(1:3) = qlong(i1,1:3)
+     if(v_norm(q0).gt.1e-6) then
        i2 = i2 + 1
        !
        ! Convert input q0 to iku

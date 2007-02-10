@@ -149,10 +149,14 @@
  !
  call X_alloc('OptOsc',(/X%ib(2),Xen%nbm,Xk%nbz/))
  X_rhoq0 = (0.0_SP,0.0_SP)
+ write(*,*) "O_strenghts"
+ write(*,*) "O_strenghts Xk%nbz",Xk%nbz
  do i1 = 1,Xk%nbz
    ik = Xk%sstar(i1,1)
    is = sop_inv(Xk%sstar(i1,2))
    field_dir_rot = matmul( dl_sop(:,:,is), field_dir )
+   write(*,*) "O_strenghts is=",is,nsym/(i_time_rev+1)," field_dir=",field_dir," fdrot=",field_dir_rot
+   write(*,*) "O_strenghts is=", dl_sop(:,:,is)
    do iv = X%ib(1), Xen%nbm
      do ic = Xen%nbf+1, X%ib(2)
        do i_spin = 1, n_spin

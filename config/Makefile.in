@@ -61,6 +61,8 @@ PJ_RASLIBS   = 0external_c 0modules 1xc 1parser 1common 2io 2wf_and_fft \
                3kop 3qp_ctl \
                4ras \
                4it 4tddft 5X 6qp 7acfdt 7bse
+SPPRASLIBS   = 0external_c 0modules 1xc 1parser 1common 2io \
+               2wf_and_fft 2ras_reels_mods 3kop 3qp_ctl 4it 7bse
 PJ_REELSLIBS = 0external_c 0modules 1xc 1parser 1common 2io 2wf_and_fft \
                2ras_reels_mods 2coulomb \
                3kop 3qp_ctl \
@@ -122,6 +124,9 @@ self_reels: libs
 spp_ph: libs
 	@LIBS2DO="$(SPPLIBS)" ; $(mksrc)
 	@X2DO="spp_ph" ;XPATH="spp";XLIBS="$(SPPLIBS)"; ADF="-DSPP_PJ_PH";$(mkx)
+spp_ras: libs
+	@LIBS2DO="$(SPPRASLIBS)" ; $(mksrc)
+	@X2DO="spp_ras" ;XPATH="spp";XLIBS="$(SPPRASLIBS)"; ADF="-DSPP_PJ_RAS";$(mkx)
 # -- GPL_START --
 interfaces: libs
 	@LIBS2DO="$(2SLIBS)" ; $(mksrc)

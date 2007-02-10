@@ -30,6 +30,10 @@
  use stderr,         ONLY:string_split
  use SPP
  use par_proc_m,     ONLY:master_node,pp_redux_wait
+#if defined SPP_PJ_RAS
+ use bulkeps,        only : bshift, bbroad, bfile, btype 
+ use convolute,      only : gbroad
+#endif
  implicit none
  integer          ::lnstr
  character(lnstr) ::instr
@@ -74,12 +78,29 @@
    !
 #endif
    !
+#if defined SPP_PJ_RAS
+   !
+   ! RAS
+   !
+   xdata = 'o.eps-rpa_00'
+   ydata = 'none'
+   xdatacol = 'ir'
+   ydatacol = 'ir'
+   bshift  = 0.0_SP       ! shift
+   bbroad  = 0.0_SP       ! bulk broadening
+   bfile = "bulk.dat"     ! file of bulk
+   btype = "3ir"
+   gbroad  = 0.0          ! gaussian convolution, FWHM
+   !
+#endif
+   !
    ! K analyze
    !
    Kcoo_in="iku"
    Kcoo_out="rlu"
    Kgw_1=0.
-   qlong= (/0.,0.,0./)
+!  qlong= (/0.,0.,0./)
+   qlong= 0.0_SP
    !
    !BZ RIM
    !
@@ -119,7 +140,7 @@
  lexcwf=rstatus(2)/=0
  lbzrim=rstatus(3)/=0
  !
- if (lkanalyze) call initactivate(1,"KcooIn KcooOut GWKpts KGrdShft")
+ if (lkanalyze) call initactivate(1,"KcooIn KcooOut GWKpts KShift1 KShift2 KShift3")
  if (lbzrim) call initactivate(1,"BZ_RIM_path Srch_G_sh BZ_RIM_Nk KcooOut")
  if (lexcwf) call initactivate(1,"Action Max_Energy Order State Window Cells &
 &                              Hole Dimension Direction Format")
@@ -132,6 +153,17 @@
  endif
  !
 #endif
+
+#if defined SPP_PJ_RAS
+ !
+ lras=rstatus(5)/=0
+ if (lras) then
+   call initactivate(1,"XData XDataCol YData YDataCol "//&
+&       " BulkFile BulkForm BlkShift BlkBroad GausConv")
+ endif
+ !
+#endif
+ !
  !
  if (infile_editing) then
    open(unit=12,file=trim(infile))

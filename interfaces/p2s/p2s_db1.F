@@ -31,6 +31,7 @@
 &                                  atom_pos, znucl
  use wave_func,             ONLY : wf_nc_k, wf_ncx, wf_igk,wf_ng
  use vec_operate,           ONLY : cross_product
+ use interfaces,            ONLY : print_interface_dimensions
  implicit none
  type(levels),     intent(out)  :: en     ! Energies
  type(bz_samp),    intent(out)  :: k      ! K/Q points
@@ -181,8 +182,9 @@
    if (l_inversion) nsym=nsym/2
    call msg("s","Time reversal being used.")
  else ! spinor for now: really spin orbit present
+   ! Note that pw_export does not write a spin_orbit flag.
    i_time_rev = 0
-   call msg("s","Time reversal not being used.")
+   call msg("s","Time reversal not being used: check spin orbit.")
  endif
 !DEBUG>
 !if (l_inversion) then
@@ -209,7 +211,7 @@
 !endif
 !DEBUG<
 
- if(l_inversion.and.nspinpw==4) call msg("s"," Inversion + spinor calculation!")
+ if(l_inversion.and.nspinpw==4) call msg("s"," Warning: Inversion + spinor calculation!")
 !
 ! Copy symmetries into real db1 array format
 ! PWscf: R is in fact transpose(R) ? See pw2gw
@@ -293,18 +295,6 @@
  if(n_spinor.eq.2) en%E(:,:,2) = en%E(:,:,1)
  call msg('l','done')
 
- call msg('s',' :: Electrons             :',default_nel)
- call msg('s',' :: Temperature       [ev]:',default_Tel)
- call msg('s',' :: Lattice factors [a.u.]:',alat)
- call msg('s',' :: K-points              :',k%nibz)
- call msg('s',' :: Bands                 :',en%nb)
- call msg('s',' :: Spinor components     :',n_spinor)
- call msg('s',' :: Spin polarizations    :',n_sp_pol)
- if(i_time_rev==1) call msg('s',' :: Symmmetries  [spatial]:',nsym/2)
- if(i_time_rev==1) call msg('s',' :: Symmmetries    [T-rev]:',nsym/2*i_time_rev)
- if(i_time_rev==0) call msg('s',' :: Symmmetries  [spatial]:',nsym)
- if(i_time_rev==0) call msg('s',' :: Symmmetries    [T-rev]:',nsym*i_time_rev)
- call msg('s',' :: RL vectors        (WF):',wf_ng)
- call msg('s',' :: RL vectors    (CHARGE):',ng_vec)
+ call print_interface_dimensions(en,k)
  
  end subroutine

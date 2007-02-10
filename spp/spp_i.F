@@ -134,6 +134,14 @@
  !
 #endif
  !
+#if defined SPP_PJ_RAS
+ !
+ if (lras) then
+   call ras_spp
+ endif
+ !
+#endif
+ !
  ! END
  !
 1 call spp_init(instr,lnstr,.TRUE.)

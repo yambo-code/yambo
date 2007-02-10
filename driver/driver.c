@@ -49,7 +49,7 @@ typedef struct
 #if defined self  || PJ_RAS || PJ_REELS || PJ_PH || PJ_GKS || PJ_CYL_CUT || PJ_SPIN || PJ_SC
  #include "self_cpp.h"
 #endif
-#if defined spp  || SPP_PJ_PH
+#if defined spp  || SPP_PJ_PH || SPP_PJ_RAS
  #include "spp_cpp.h"
 #endif
 #if defined a2s
@@ -125,7 +125,7 @@ main(int argc, char *argv[])
 #if defined self  || PJ_RAS || PJ_REELS || PJ_PH || PJ_GKS || PJ_CYL_CUT || PJ_SPIN || PJ_SC
      if (j> 9) {mpi_init=-1;};
 #endif
-#if defined spp || SPP_PJ_PH
+#if defined spp || SPP_PJ_PH || SPP_PJ_RAS
      if (j> 6) {mpi_init=-1;};
 #endif
 /* 
@@ -211,7 +211,7 @@ main(int argc, char *argv[])
  F90_FUNC(self_driver,SELF_DRIVER)(
           rnstr2,&lni,inf,&iif,id,&iid,od,&iod,js,&ijs,&np,&pid);
 #endif
-#if defined spp  || SPP_PJ_PH
+#if defined spp  || SPP_PJ_PH || SPP_PJ_RAS
  /* 
    Running the Fortran SPP driver
  ===========================================================================
@@ -257,7 +257,7 @@ main(int argc, char *argv[])
  */
  strcpy(edit_line,"vi ");
  strncat(edit_line,inf,strlen(inf));
-#if defined self  || PJ_RAS || PJ_REELS || spp || PJ_PH || PJ_GKS || PJ_CYL_CUT || PJ_SPIN || PJ_SC || SPP_PJ_PH
+#if defined self  || PJ_RAS || PJ_REELS || spp || PJ_PH || PJ_GKS || PJ_CYL_CUT || PJ_SPIN || PJ_SC || SPP_PJ_PH || SPP_PJ_RAS
  if (iif == 1 && ttd>0 ) 
  {
   system(edit_line);

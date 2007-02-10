@@ -37,6 +37,7 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   use wave_func,               only : WF_free
   use ras_module
   use surface_geometry
+! use surface_geometry,       only : d_surf
   use bulkeps,                 only : lbulkerr, GetBulkEps
   use eels_kinematics
   use eels_detector
@@ -223,7 +224,7 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
     !
     call section('=','RAS')
     call CalcRAS(real(wv % p), surf_i(1:nw,1), surf_i(1:nw,2), &
-&                              eps_b(1:nw), nw)
+&                              eps_b(1:nw), nw, d_surf)
     !
   endif
   !

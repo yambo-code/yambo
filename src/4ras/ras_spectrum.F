@@ -19,13 +19,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine CalcRAS(hw, eps_x, eps_y, eps_b, nw)
+subroutine CalcRAS(hw, eps_x, eps_y, eps_b, nw, d_surf)
   use pars,                   ONLY : schlen, SP, HARTREE
   use com,                    ONLY : msg, of_open_close
-  use surface_geometry,       only : d_surf
+! use surface_geometry,       only : d_surf
   implicit none
   integer,             intent(in) :: nw
-  real(SP),            intent(in) :: hw(nw)
+  real(SP),            intent(in) :: hw(nw), d_surf
   complex(SP),         intent(in) :: eps_x(nw),eps_y(nw),eps_b(nw)
 ! Local
   real(SP)                        :: Aw(nw), Bw(nw) 

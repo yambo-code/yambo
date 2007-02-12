@@ -80,7 +80,7 @@
  !-----------------------------
  use_G_RIM=associated(en%E_RIM)
  !
- if (QP_PH_n_G_bands>elph_nb) QP_PH_n_G_bands=elph_nb
+ if (QP_PH_n_G_bands<=0.or.QP_PH_n_G_bands>elph_nb) QP_PH_n_G_bands=elph_nb
  !
  call msg('r', '[GW/El-Ph] Bands range       :',(/1,QP_PH_n_G_bands/))
  if (QP_solver/="g") call msg('r', '[GW/El-Ph] G damping     [ev]:',QP_G_damp*HARTREE)

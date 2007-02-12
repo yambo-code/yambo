@@ -30,7 +30,6 @@
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t
  use BS,             ONLY:BS_bands,BS_q,BS_blk_dim,BS_eh_table,BS_eh_E,&
-&                         O_v_state,O_c_state,O_n_c_states,O_n_v_states,&
 &                         BS_n_g_exch,BSS_n_freqs,BSS_er,BSS_dr,&
 &                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,&

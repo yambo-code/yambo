@@ -20,20 +20,19 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine QP_xxvxc(E,k,Xk,q)
-!=============================
-!
-! V_xc and the S_x 
-!
+ !============================
+ !
+ ! V_xc and the S_x 
+ !
  use pars,          ONLY:SP,schlen,DP,pi,HARTREE
  use memory_m,      ONLY:mem_est
  use drivers,       ONLY:Finite_Tel
  use com,           ONLY:msg,depth,gen_fmt
  use timing,        ONLY:live_timing
  use stderr,        ONLY:string_pack
+ use electrons,     ONLY:levels,spin_is_collinear,n_spin,n_spinor,n_sp_pol
 #if defined PJ_SPIN 
- use electrons,     ONLY:levels,n_spinor,n_sp_pol,spin_occ,n_spin
-#else
- use electrons,     ONLY:levels,n_spinor,n_sp_pol
+ use electrons,     ONLY:spin_occ
 #endif
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
@@ -49,93 +48,112 @@
  implicit none
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
-!
-!ws
+ !
+ !Work Space
+ !
  type(ggwinfo)    ::isc,iscp
  type(pp_indexes) ::px
 #if defined PJ_SPIN
  integer          ::i1,i2,iq,ib,ik,ifft,ifft1,ifft2
- real(SP),allocatable  ::el_mag(:,:),mod_mag(:)
- real(SP),allocatable  ::vxc1(:),vxc2(:)
+ real(SP),allocatable    ::el_mag(:,:),mod_mag(:)
+ real(SP),allocatable    ::vxc1(:),vxc2(:)
 #else
- integer          ::i1,i2,iq,ib,ik,ifft
+ integer                 ::i1,i2,iq,ib,ik,ifft
 #endif
 #if defined _DOUBLE
- complex(DP):: zdotc,zdotu
+ complex(DP)             ::zdotc,zdotu
 #else 
- complex(SP):: cdotc,cdotu
+ complex(SP)             ::cdotc,cdotu
 #endif
- complex(DP)::dsx
+ complex(DP)             ::dsx
+ complex(SP),allocatable ::local_rhotw(:)
  character(schlen)       ::ch,ch_spin,local_fmt
-!
-!Vxc
+ !
+ !Vxc
+ !
  complex(SP),allocatable ::c_vec(:)
-!
-!QP list
+ !
+ !QP list
+ !
  integer           :: i4(4)
  integer, external :: QP_state_extract
-!
-!IO
+ !
+ !IO
+ !
  integer           :: ID,io_err
  integer, external :: ioXXVXC
-!
+ !
+ ! resets
+ !
  call collision_reset(isc)
  call collision_reset(iscp) 
  call pp_indexes_reset(px)
-!---------------------------------------------------------------------
+ !
+ ! title
+ !
  if (depth>0) then
    call section('=','EX(change)S(elf-energy) and Vxc potential')
  else
    call section('*','EX(change)S(elf-energy) and Vxc potential')
  endif
  if (QP_ng_Sx==0) QP_ng_Sx=wf_ng
-
+ !
  call QP_state_table_setup(E)
-!
-! Alloc
-!===================
+ !
+ ! Allocation
+ !
  allocate(QP_Sx(QP_n_states),QP_Vxc(QP_n_states))
  call mem_est("QP_Sx QP_Vxc",(/QP_n_states,QP_n_states/))
  QP_Sx=(0.,0.)
  QP_Vxc=(0.,0.)
-!
-! I/O
-!=====
+ !
+ ! I/O
+ !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=ioXXVXC(ID)
  if (io_err==0) goto 1
-!
-! QP_table -> report
-!===================
+ !
+ !
  if (QP_Sx_low_band>E%nbm) QP_Sx_low_band=1
  call msg('r', '[EXS] Plane waves :',QP_ng_Sx)
  call msg('rn','[EXS] Bands range :',(/QP_Sx_low_band,E%nbm/))
-
+ !
+ ! QP_table -> report
+ !
  i4=(/1,1,0,0/)
  do while(QP_state_extract(i4)>0)
    write (ch,'(4(a,i3.3))') 'QP @ K ',i4(1),' - ',i4(2),' : b ',i4(3),' - ',i4(4)
    call msg('r',trim(ch))
  enddo
  call msg('r','')
-!
-!WFs
-!====
+ !
+ ! WFs
+ !
  call wf_load(QP_ng_Sx,maxval(qindx_S(:,:,2)),&
 &             (/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-Sxx/Rho')
-!
- allocate(isc%gamp(1,QP_ng_Sx),isc%rhotw(QP_ng_Sx),iscp%rhotw(QP_ng_Sx))
+ !
+ ! allocation again
+ !
+ allocate(isc%gamp(QP_ng_Sx,1),isc%rhotw(QP_ng_Sx),iscp%rhotw(QP_ng_Sx),&
+&         local_rhotw(QP_ng_Sx))
  isc%qs   =1
  isc%ngrho=QP_ng_Sx
-!
+ !
  call scatterGamp(isc,'x')
-
+ !
+ ! par indexes
+ !
  call par_indexes(px,(/q%nbz,E%nbm/),(/1,QP_Sx_low_band/))
  call pp_redux_wait
  call live_timing('EXS',px%stps(myid+1)*QP_n_states)
+ !
  do iq=1,q%nbz
+   !
    isc%qs(2:)=(/q%sstar(iq,1),q%sstar(iq,2)/)
    if (isc%qs(2)/=isc%iqref) call scatterGamp(isc,'x')
+   !
    do i1=1,QP_n_states
+     !
 #if defined PJ_SPIN
      isc%is=(/QP_table(i1,1),QP_table(i1,3),1,QP_table(i1,4)/)
      isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iq,1),:),QP_table(i1,4)/)
@@ -145,8 +163,10 @@
      isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iq,1),:),1/)
      iscp%is=(/QP_table(i1,2),QP_table(i1,3),1,1/)
 #endif
+     !
      isc%qs(1)=qindx_S(QP_table(i1,3),iq,2)
      iscp%qs=isc%qs
+     !
      do ib=QP_Sx_low_band,E%nbm
        if (.not.px%i2p(iq,ib)) cycle
        isc%os(1)=ib
@@ -156,69 +176,90 @@
        iscp%rhotw=isc%rhotw
        if (any(isc%is/=iscp%is)) call scatterBamp(iscp)
 #if defined PJ_SPIN
-       isc%rhotw=-4./spin_occ*pi*isc%rhotw*conjg(iscp%rhotw)*E%f(ib,isc%os(2),isc%os(4))
+       local_rhotw=-4./spin_occ*pi*isc%rhotw*conjg(iscp%rhotw)*E%f(ib,isc%os(2),isc%os(4))
 #else
-       isc%rhotw=-2.*pi*isc%rhotw*conjg(iscp%rhotw)*E%f(ib,isc%os(2),isc%os(4))
+       local_rhotw=-2.*pi*isc%rhotw*conjg(iscp%rhotw)*E%f(ib,isc%os(2),isc%os(4))
 #endif
        dsx=(0.d0,0.d0)
 #if defined _DOUBLE
-       dsx=zdotu(QP_ng_Sx,isc%rhotw,1,isc%gamp(1,:),1)
+       dsx=zdotu(QP_ng_Sx,local_rhotw,1,isc%gamp(1,1),1)
 #else 
-       dsx=cdotu(QP_ng_Sx,isc%rhotw,1,isc%gamp(1,:),1)
+       dsx=cdotu(QP_ng_Sx,local_rhotw,1,isc%gamp(1,1),1)
 #endif
        QP_Sx(i1)=QP_Sx(i1)+dsx
      enddo
+     !
    enddo
+   !
  enddo
+ !
  call live_timing()
- deallocate(isc%gamp,isc%rhotw,iscp%rhotw)
+ deallocate(isc%gamp,isc%rhotw,iscp%rhotw,local_rhotw)
+ !
  call pp_redux_wait(QP_Sx)
  call collision_reset(isc)
  call collision_reset(iscp) 
  call pp_indexes_reset(px)
-!-----------------------------------------------------------------------------
-! Vxc
-!=====
+ !
+ ! Vxc
+ !
+ ! ... allocation
+ !
 #if defined PJ_SPIN
  allocate(el_mag(fft_size,3),mod_mag(fft_size))
  allocate(V_xc(fft_size,n_spin),c_vec(fft_size),vxc1(fft_size),vxc2(fft_size))
 #else
  allocate(V_xc(fft_size),c_vec(fft_size))
 #endif
+ !
+ ! ...LDA (and more) Vxc
+ !
  call xc_lda_driver(E,Xk,GS_xc_KIND,GS_xc_FUNCTIONAL,1)
  QP_xc_FUNCTIONAL=trim(xc_string(GS_xc_KIND,GS_xc_FUNCTIONAL))
-
+ !
+ ! Magnetization
+ !
 #if defined PJ_SPIN
- if (n_spinor==2) then
+ if (.not.spin_is_collinear) then
+   !
    call el_magnetization(E,Xk,el_mag)
    mod_mag=sqrt(el_mag(:,1)**2+el_mag(:,2)**2+el_mag(:,3)**2)
    do i2=1,fft_size
      vxc1(i2)=(V_xc(i2,1)+V_xc(i2,2))/2
      vxc2(i2)=(V_xc(i2,1)-V_xc(i2,2))/2
    enddo
+   !
  endif
-!
+ !
  do i1=1,QP_n_states,n_spinor
-   if (n_spinor==1) then
+   !
+   if (spin_is_collinear) then
+     !
      ifft=wf_state(QP_table(i1,1),QP_table(i1,3),QP_table(i1,4))
      do i2=1,fft_size
        c_vec(i2)=wf(i2,ifft)*V_xc(i2,QP_table(i1,4))
      enddo
+     !
 #else
  do i1=1,QP_n_states
+   !
    ifft=wf_state(QP_table(i1,1),QP_table(i1,3),1)
    c_vec(:)=wf(:,ifft)*V_xc(:)
 #endif
+   !
 #if defined _DOUBLE
    QP_Vxc(i1)=zdotc(fft_size,wf(:,ifft),1,c_vec,1)
 #else 
    QP_Vxc(i1)=cdotc(fft_size,wf(:,ifft),1,c_vec,1)
 #endif
+   !
 #if defined PJ_SPIN
-   else if (n_spinor>=2) then
+   else if (.not.spin_is_collinear) then
+     !
      ifft1=wf_state(QP_table(i1,1),QP_table(i1,3),QP_table(i1,4))
      ifft2=wf_state(QP_table(i1,1),QP_table(i1,3),QP_table(i1+1,4))
      c_vec(:)= (vxc1(:)+vxc2(:)*el_mag(:,3)/mod_mag(:))*wf(:,ifft1)
+     !
 #if defined _DOUBLE
      QP_Vxc(i1)=zdotc(fft_size,wf(:,ifft1),1,c_vec(:),1)
      c_vec(:)= (vxc1(:)-vxc2(:)*el_mag(:,3)/mod_mag(:))*wf(:,ifft2)
@@ -236,57 +277,67 @@
      c_vec(:)= (vxc2(:)*(el_mag(:,1)+(0.,1.d0)*el_mag(:,2))/mod_mag(:))*wf(:,ifft1)
      QP_Vxc(i1)=QP_Vxc(i1)+cdotc(fft_size,wf(:,ifft2),1,c_vec(:),1)
 #endif
-
+     !
    endif
 #endif
  enddo
+ !
+ ! Clean
+ !
  deallocate(V_xc,c_vec)
 #if defined PJ_SPIN
- if (n_spinor==2)  deallocate(vxc1,vxc2)
+ deallocate(vxc1,vxc2)
 #endif
  call WF_free()
-!
+ !
+ ! Continue from goto 1 ... reporting the <Vxc/Sig_x> m.e.
+ !
 1 i2=QP_table(1,3)
  write (ch,'(a,i3.3,a)') 'K [',i2,'] (iku):'
  call msg('nr',trim(ch),k%pt(i2,:))
-
+ !
 #if !defined PJ_SPIN
  ch=string_pack('(2(a,',gen_fmt( reshape(QP_table(:,:2),(/2*QP_n_states/)) ),&
 &               ',2a,',gen_fmt( reshape(QP_table(:,:2),(/2*QP_n_states/)) ) )
  local_fmt=string_pack(ch,',2a,2(',&
 &          gen_fmt( r_v= reshape(real(QP_Sx)*HARTREE,(/QP_n_states/)) ) ,')))')
 #endif
-
+ !
  do i1=1,QP_n_states,n_spinor
-!
-! In the non-collinear case
-!
-! <Spinor|\Sigma_x|Spinor> = <Spinor UP|\Sigma_x|Spinor UP> +
-!                            <Spinor DN|\Sigma_x|Spinor DN>
-!
-! Here QP_Sx(i1) = <Spinor|\Sigma_x|Spinor> i1=1,3,5,...
-!      QP_Sx(i1) = 0                        otherwise
-!
+   !
+   ! In the non-collinear case
+   !
+   ! <Spinor|\Sigma_x|Spinor> = <Spinor UP|\Sigma_x|Spinor UP> +
+   !                            <Spinor DN|\Sigma_x|Spinor DN>
+   !
+   ! Here QP_Sx(i1) = <Spinor|\Sigma_x|Spinor> i1=1,3,5,...
+   !      QP_Sx(i1) = 0                        otherwise
+   !
 #if defined PJ_SPIN
-   if (n_spinor==2) then
+   if (.not.spin_is_collinear) then
      QP_Sx(i1)  = QP_Sx(i1)+QP_Sx(i1+1)
      QP_Sx(i1+1)= (0.,0.)
    endif
 #endif
+   !
    if (QP_table(i1,3)/=i2) then
      i2=QP_table(i1,3)
      write (ch,'(a,i3.3,a)') 'K [',i2,'] (iku):'
      call msg('r',trim(ch),k%pt(i2,:))
    endif
+   !
    ch_spin=' '
-   if (n_sp_pol==2.and.QP_table(i1,2+n_sp_pol)==1) ch_spin='(up)'
-   if (n_sp_pol==2.and.QP_table(i1,2+n_sp_pol)==2) ch_spin='(dn)'
+   !
+   if (spin_is_collinear.and.QP_table(i1,2+n_sp_pol)==1) ch_spin='(up)'
+   if (spin_is_collinear.and.QP_table(i1,2+n_sp_pol)==2) ch_spin='(dn)'
+   !
 #if defined PJ_SPIN
    ch=string_pack('(2(a,',gen_fmt( reshape(QP_table(:,:2),(/2*QP_n_states/)) ),&
 &                 ',2a,',gen_fmt( reshape(QP_table(:,:2),(/2*QP_n_states/)) ) )
    local_fmt=string_pack(ch,',2a,2(',&
 &            gen_fmt( r_v= reshape(real(QP_Sx)*HARTREE,(/QP_n_states/)) ) ,')))')
 #endif
+   !
    write (ch,trim(local_fmt)) &
 &   '<',QP_table(i1,1),trim(ch_spin),'|S_x|',QP_table(i1,2),trim(ch_spin),'> = ',&
 &   real(QP_Sx(i1)*HARTREE),aimag(QP_Sx(i1)*HARTREE),&
@@ -295,15 +346,18 @@
 
    if (i1/=QP_n_states) call msg('r',trim(ch))
    if (i1==QP_n_states) call msg('rn',trim(ch))
+   !
  enddo
  !
  ! I/O
- !=====
+ !
  if (io_err/=0) then
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=ioXXVXC(ID)
  endif
+ !
+ ! MPI barrier
+ !
  call pp_redux_wait
  !
  end subroutine
-!

@@ -21,7 +21,7 @@
 !
  integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,&
 &                           T_EL)
-!================================================================
+ !================================================================
  use pars,          ONLY:SP,schlen,HARTREE
  use drivers,       ONLY:list_dbs
  use com,           ONLY:code_version,msg,warning

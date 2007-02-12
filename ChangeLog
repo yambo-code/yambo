@@ -1,0 +1,685 @@
+2007-02-09 10:03:06 r94 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.6_08-02-07
+
+	*  2coulomb/cutoff_box.F 5X/X_RIM_Gf.F
+
+	Bugs:
+	- Incorrect comment in X_RIM_Gf      (Andrea)
+	- Wrong index in V_bare (cutoff_box) (Daniele)
+
+	Patch sent by: Andrea & Daniele
+
+2007-02-08 18:07:33 r93 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.6_08-02-07
+
+	*  spp/elph_eliashberg.F spp/elph_pw_dbs.F include/version.inc 2wf_and_fft/scatter_Gamp.F 2coulomb/rim.F 0modules/mod_electrons.F 0modules/std_presets.F 0modules/mod_drivers.F 0modules/mod_ELPH.F 2io/ioDB1.F 2io/ioELPH.F 7bse/K.F 1common/fermi_msg.F 1common/fermi_level.F 5elph/QP_elph.F 3.0.6_30-01-07
+
+	Bugs:
+	- Possible bug in src/2coulomb/rim.F: em1_anis should be 0. when
+	  no anisotropy correction is included.
+
+	Additions:
+	- Debye-Waller correction added on elph Project.
+
+	Changes:
+	- Several format changes (indentation and comments).
+
+	Patch sent by: Andrea
+
+2007-02-06 11:40:29 r92 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.6_30-01-07
+
+	*  spp/elph_eliashberg.F 2io/ioDB1.F 2io/ioDB1_reload.F 5X/X_Gf.F 5X/X_RIM_Gf.F 4it/setup.F 3qp_ctl/mod_QP_CTL.F 1common/extend_occupations.F
+
+	Bugs:
+	- The definition of Xe%f_RIM was missing in extend_occupations.F.
+	  The call of the extend_occupations has been changed accordingly.
+
+	Patch sent by: Andrea
+
+2007-02-02 12:28:43 r91 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.6_30-01-07
+
+	*  3.0.6_19-01-07 include/version.inc p2s/qexml_data.F p2s/atomic_number.F 0modules/mod_IO.F 2io/ioX.F 5elph/QP_elph.F 3.0.6_30-01-07 sbin/mkmkfl.in
+
+	Bugs:
+	- in p2s/atomic_number.F 0modules/mod_IO.F 5elph/QP_elph.F removed
+	  lines that stopped the compilation on SP5 and  Mare Nostrum
+
+	Patch sent by: Andrea
+
+2007-01-30 18:09:26 r90 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.6_19-01-07
+
+	*  spp/elph_epsm1_load.F spp/elph_dV_2_gkkp.F spp/.objects spp/spp_init_load.F spp/elph_pw_dbs.F config/Makefile.in 2coulomb/cutoff_box.F 0modules/mod_vec_operate.F 0modules/std_presets.F 0modules/mod_R_lattice.F 0modules/mod_DFT.F 0modules/mod_xc_functionals.F 0modules/mod_ELPH.F 2io/ioQINDX.F 5X/X_O_longitudinal.F 5X/X_O_transverse.F 5X/X_O_strengths.F 5X/X_O_gks.F 4it/init_load.F 3kop/k_lattice.F 3kop/bz_samp_indexes.F 5elph/QP_elph.F
+
+	Additions:
+	- max_ph_freq added in mod_ELPH to remove energy range
+	  variable in spp.in and in QP_elph.F [Andrea]
+	- Allen-Cardona el-ph gF^2 function [Andrea]
+	- make changelog [Andrea]
+	- RL_v_comp_acc replaced with RL_v_comp_norm. Added RL_v_comp(3) (2 define)
+	  to have coordinate-dependent vector comparison precision [Andrea]
+
+	Changes:
+	- X_O_gks.F and GKS pre-proc. options [Myrta]
+	- spp/elph_epsm1_load.F spp/elph_dV_2_gkkp.F removed to step to the
+	  old "gkkp-only" PW 2 SELF interface [Andrea]
+
+	Patch sent by: Andrea & Myrta
+
+2007-01-29 15:59:21 r89 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	V 3.0.6_19-01-07
+
+	*  5X/X_O_longitudinal.F 5X/X_O_transverse.F 4it/init.F
+
+	Bugs:
+	- Bug found in calculation of oscillators using spinors, all gauges.
+	  NOTE: previous versions likely yielded erroneous results.
+
+2007-01-29 15:16:17 r88 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.6_19-01-07
+
+	*  spp/elph_gkkp_E_dep.F spp/mod_SPP.F spp/spp_i.F spp/elph_eliashberg.F spp/.objects spp/spp_init_load.F spp/spp_init.F spp/elph_pw_dbs.F int_modules/mod_interfaces.F p2s/p2s_qexml_db1.F a2s/a2s_db1.F 0modules/mod_functions.F 0modules/mod_ELPH.F 2io/ioELPH.F 6qp/QP_of.F 1common/extend_occupations.F 1common/kk.F 1common/.objects 1common/fermi_level.F 5elph/QP_elph.F
+
+	Changes:
+	- [ELPH] Moving from standard approach to Allen Cardona formulation
+	- fermi routines (src/1common/dfermi_fnc.F src/1common/fermi_fnc.F)
+	  moved in mod_functions
+
+	Adds:
+	- Max phonon frequency added in ioELPH (spp/elph_pw_dbs.F changed as well)
+
+	Patch sent by: Andrea
+
+2007-01-26 19:44:58 r87 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	V 3.0.6_19-01-07
+
+	*  5X/X_O_strengths.F 4it/init_load.F 4it/init.F
+
+	Bugs:
+	- Corrected LongPath variable, long gauge works ok now.
+
+2007-01-26 00:52:26 r86 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	V 3.0.6_19-01-07
+
+	*  0modules/mod_vec_operate.F 0modules/mod_R_lattice.F 0modules/mod_X.F 0modules/mod_functions.F 5X/X_O_longitudinal.F 5X/.objects 5X/X_O_strengths.F 4it/init_load.F 4it/init.F
+
+	Additions:
+	- Longitudinal gauge added, for 3 shifted grids.
+	- intc function for easy creation of strings for msg()
+
+	Patch sent by: Conor
+
+2007-01-20 15:17:53 r85 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	V 3.0.6_19-01-07
+
+	*  int_modules/mod_interfaces.F p2s/p2s_i.F p2s/qexml_data.F p2s/p2s_qexml_db1.F a2s/a2s_db1.F e2s/e2s_db1.F e2s/e2s_i.F e2s/etsf_data.F f2s/f2s_db1.F 0modules/mod_electrons.F 0modules/std_presets.F driver/e2s.h driver/p2s.h sbin/makemsg.pl
+
+	Bugs:
+	- Some bugs involving symmetries in p2s and a2s for n_spin>1 fixed.
+	- makemsg.pl now strips directory names properly
+	Additions:
+	- e2s for library 0.6 added, in development still
+	- standard reporting for all four interfaces
+	- new spin_orbit logical replaces some n_spinor.eq.2 tests in interfaces
+
+	Patch sent by: Conor
+
+2007-01-19 14:46:05 r84 Andrea Marini <marini@roma2.infn.it>
+
+	Missing module elements in k_expand causing compilation problems
+
+2007-01-19 13:48:59 r83 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.6_19-01-07
+
+	*  3.0.6_19-01-07 configure spp/elph_epsm1_load.F spp/elph_gkkp_E_dep.F spp/mod_SPP.F spp/spp_i.F spp/elph_eliashberg.F spp/elph_dV_2_gkkp.F spp/.objects spp/spp_init_load.F spp/spp_init.F spp/elph_pw_dbs.F include/version.inc int_modules interfaces/int_modules/mod_interfaces.F interfaces/int_modules/.objects config/Makefile.in config/configure.ac 3.0.5_11-01-07 0modules/mod_vec_operate.F src/0modules/mod_electrons.F src/0modules/mod_IO.F src/0modules/mod_X.F src/0modules/mod_com.F src/0modules/mod_matrix_operate.F src/2io/ioX.F src/2io/io_header.F src/5X/X_O_transverse.F src/4it/init.F driver/spp.h driver/driver.c sbin/mkmkfl.in
+
+	Additions:
+	- interfaces/int_modules/
+	- spp/elph_gkkp_E_dep.F to plot |gkkp(Ek-Ekp)|^2
+	- in ioX the RL vectors are written. This to exchange the
+	  db.em1s/em1d/pp/Xo between different GS codes (PW <-> Abinit for example)
+	- subroutine mat_r2c_ordered in mod_matrix_operate
+
+	Changes:
+	- Comments' formatting
+	- ElPH routines in spp/ in spp_ph (-DSPP_PJ_PH) project
+	- Type 4 (Restart) in get_name changed to  OUTPATH/RESTART/(n)db.desc_FOLDER
+	- src/4it/init.F changed order of ioOSTNTS ioKB_PP
+
+	Patch sent by: Andrea
+
+2007-01-15 15:03:11 r82 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.5_11-01-07
+
+	*  spp/elph_epsm1_load.F spp/elph_dV_2_gkkp.F spp/elph_pw_dbs.F a2s/a2s_db1.F 2io/ioX.F src/5X/X_os.F src/5X/X_drude.F src/4it/setup.F src/4it/init.F src/4it/gops.F src/1common/fermi_level.F
+
+	Bugs:
+	- As RL_v_comp_acc is calculated in k_lattice the call to
+	  gops gave wrong shells.
+	  The two calls have been exchanged in setup.F
+	- Drude tail can be added ONLY when there is a metallic band.
+	  In metallic systems with few k-points there could not be
+	  a metallic band even if the character is metallic (Al 2x2x2)
+
+	Patch sent by: Andrea
+
+2007-01-12 12:51:10 r81 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.5_11-01-07
+
+	*  spp/elph_epsm1_load.F spp/k_analyze.F spp/elph_dV_2_gkkp.F spp/.objects 0modules/std_presets.F src/3kop/k_lattice.F src/3kop/bz_samp_indexes.F
+
+	Bugs:
+	- RL_v_comp_acc found bz_samp_indexes.F gave wrong number og k%nbz.
+	  Solved finding RL_v_comp_acc ONLY in k_lattice.
+	  In bz_samp_indexes.F a local RL_v_comp_acc is used.
+
+	Patch sent by: Andrea
+
+2007-01-11 15:28:54 r80 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.5_11-01-07
+
+	*  configure include/version.inc config/configure.ac 3.0.5_11-01-07 0modules/mod_X.F src/0modules/mod_IO.F src/2io/ioBS.F src/2io/ioDB1.F src/2io/ioX.F src/2io/ioQP.F src/2io/io_header.F src/4tddft/tddft_do_X_W_typs.F src/4tddft/tddft_alda_g_space.F src/5X/O_driver.F src/5X/X_em1.F src/7bse/K_diagonalization.F src/4it/init.F src/6qp/QP_descriptions.F src/6qp/QP_raxis.F 3.0.4_04-01-07
+
+	Bugs:
+	- Missing scaling factors in PJ_SC adds to QP_raxis.F. Added two o.* files
+	  to write the PJ_SC output.
+
+	Additions:
+	- New element of type(Xt) %f_xc : * read/written on ioX, ioBS
+	                                  * in QP_descriptions (-> ioQP)
+	                                  * in K_descriptions
+
+	WARNING: LOST COMPATIBILITY WITH OLDER VERSION OF db.BS
+
+	Changes:
+	- ver_is_gt_or_eq instead of version_is_newer function.
+	- TDDFT setup moved in tddft_do_X_W_typs when be called with
+	  negative iq.
+
+	Patch sent by: Andrea
+
+2007-01-10 15:40:38 r79 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.4_04-01-07
+
+	*  spp/plot_exc_wf.F 2wf_and_fft/scatter_Gamp.F src/0modules/mod_R_lattice.F src/0modules/mod_memory.F src/5X/X_O_transverse.F src/5X/O_driver.F src/7bse/K_dump_to_o_file.F src/7bse/K_diagonalization.F
+
+	Bugs:
+
+	- Wrong order of left and right eigenvectors in K_diagonalization when
+	  coupling is included (Andrea + Daniele). Previous calculation may be
+	  wrong (the importance of the bug is not constant).
+	- mem_est changed to not print memory messages during input file editing (Andrea)
+
+	Changes:
+	- plot_exc_wf (Daniele)
+	- scatter_Gamp (Daniele+Andrea). Proper treatment of off-diagonal elements
+	  of isc%gamp using sphere approx (at gamma) + sqrt (not at gamma)
+
+2007-01-09 17:17:20 r76 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	V 3.0.4_04-01-07
+
+	*  0modules/mod_R_lattice.F
+
+	Bugs: IP was being used without being declared, small error in messaging of qindx resulted.
+
+2007-01-08 18:34:03 r74 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.4_04-01-07
+
+	*  3.0.4_29-12-06 spp/plot_exc_wf.F spp/elph_dV_2_gkkp.F include/version.inc 7bse/K_dump_to_o_file.F src/7bse/K_diagonalization.F src/6qp/QP_raxis.F 3.0.4_04-01-07
+
+	Bugs:
+	- Diagonalization including Coupling still in BETA version.
+	  We (andrea & daniele) are working on it
+
+	Additions:
+	- Polarizability is calculated using eps_M^-1 when BS coupling
+	  is included
+
+	Patch sent by: Daniele & Andrea
+
+2006-12-29 17:22:31 r73 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.4_29-12-06
+
+	*  spp/elph_dV_bare_2_gkkp.F spp/elph_eliashberg.F spp/.objects spp/elph_pw_dbs.F include/version.inc 0modules/std_presets.F src/0modules/mod_ELPH.F src/2io/ioELPH.F src/6qp/QP_descriptions.F src/5elph/QP_elph.F 3.0.4_13-12-06
+
+	Changes:
+	- Deep modification of PW/SELF phonon interfaces. After many useless attempts to use
+	  the gamma point k grid both the perturbed potential AND the shifted wavefunction
+	  are passed now to SELF.
+	  This implyes bigger databases (to contain elph_gkkp/elph_dV/elph_dV_psi)
+
+	  Note that PW cannot be run in parallel at this stage.
+
+	Patch sent by: Andrea
+
+2006-12-22 17:42:46 r72 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.4_13-12-06
+
+	*  spp/elph_dV_bare_2_gkkp.F spp/plot_exc_wf.F spp/elph_pw_dbs.F 2wf_and_fft/scatter_Bamp.F src/2wf_and_fft/scatter_Gamp.F src/0modules/mod_xc_functionals.F src/1xc/.objects src/1xc/xc_lda_driver.F src/1xc/el_magnetization.F src/6qp/QP_driver.F src/6qp/QP_ppa.F src/6qp/QP_xxvxc.F src/6qp/QP_raxis.F
+
+	Additions:
+	- el_magnetization
+	Changes:
+	- Several PJ_SPIN additions
+
+	Patch sent by: Fabrizio
+
+2006-12-20 15:56:19 r71 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.4_13-12-06
+
+	*  spp/BZ_RIM.F spp/.objects include/version.inc 2wf_and_fft/scatter_Gamp.F src/2coulomb/cutoff_driver.F src/2io/.objects src/2io/ioDB1_reload.F src/5X/O_driver.F src/5X/X_checks.F src/7bse/K.F 3.0.4_13-12-06 3.0.4_05-12-06
+
+	Bugs:
+	- BSE & RPA with cutoffed potential (Daniele)
+	Additions:
+	- Subroutine to (re)load a new DB1 (Andrea)
+	Changes:
+	- To support a RPA calculation with a cutoffed potential a causal/resonant
+	  calculation is forced (Andrea)
+	- Completely new scatter_Gamp.F routine (Andrea)
+
+2006-12-13 15:54:25 r70 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.4_05-12-06
+
+	*  spp/elph_dV_bare_2_gkkp.F spp/elph_pw_dbs.F config/Makefile.in 2wf_and_fft/wf_load.F src/2coulomb/cutoff_cylinder.F src/0modules/mod_ELPH.F src/4it/gops.F src/1common/fermi_level.F
+
+	Bugs:
+	- fermi_level loop stuck controller (bracketing iterations counter added)
+	Additions:
+	- Numerical noise controller in cutoff_cylinder (Daniele)
+	- Possibility of wf_load='C'(omponents) in wf_load (Andrea)
+	Changes:
+	- Still fighting with ELPH (Andrea)
+
+2006-12-07 14:47:19 r67 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.4_05-12-06
+
+	*  configure spp/elph_dV_bare_2_gkkp.F spp/plot_exc_wf.F spp/elph_eliashberg.F spp/spp_init_load.F spp/spp_init.F spp/elph_pw_dbs.F config/netcdf_f90.m4 1common/fermi_level.F ChangeLog
+
+	Additions:
+	- Added some non-GPL markers
+	Changes:
+	- --with-nectdf=no option fixed
+	- plot_exc_wf.F changed to remove need of Znucl & ntypat
+
+2006-12-07 11:13:06 r66 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	V 3.0.4_05-12-06
+
+	*  ChangeLog sbin/makemsg.pl
+
+	Additions:
+	- makemsg.pl simple Perl script to generate standard template for log messages
+
+2006-12-06 13:50:30 r64 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	V 3.0.4_05-12-06
+
+	* p2s/p2s_qexml_db1.F  p2s/.objects p2s/atomic_number.F p2s/pwinput.F p2s/p2s_db1.F
+
+	Adds
+	- Atomic data to p2s direct method (pw_export)
+
+2006-12-05 19:27:11 r63 Andrea Marini <marini@roma2.infn.it>
+
+	Fixed KB_PP allocation when n_atom is read from DB1. Added z_nucl to a2s
+
+2006-12-05 19:11:46 r62 Andrea Marini <marini@roma2.infn.it>
+
+	 V. 3.0.4_05-12-06
+
+	 ADDS (by Conor)
+	 - Added Nuclear charge and positions in DB1.
+	   (Note that some of the variables are read as well from the KB_PP
+	    db. This redundancy will be removed in the future)
+	 - Added perl script sbin/svn2cl.pl ro create automatically
+	   the ChangeLog using:
+	   > svn log | perl sbin/svn2cl.pl > ChangeLog
+
+2006-12-05 16:12:49 r61 Andrea Marini <marini@roma2.infn.it>
+
+	Added PJ_SC project: calculation of the statically screend m.e. of W_RPA (collaboration with A. Floris and A. Sanna)
+
+2006-12-05 12:34:09 r60 Andrea Marini <marini@roma2.infn.it>
+
+	 BUGS
+	 - Fixed call q_shadows() in bz_samp_indexes for the case
+	   of non uniform X k-grids (Claudio's BUG)
+	 - Fixed 1common/fermi_level.F to solve the numerical noise
+	   occurring in accumulating the n of el. (nel_acc).
+	   Possibly this solves the metallic treatment of insulating materials.
+	   (BUG reported by Claudio, Deborah, Daniele)
+	 - Removed the optimization of the parser module to avoid
+	   loop stack during input file parsing
+
+2006-12-05 10:08:30 r59 Andrea Marini <marini@roma2.infn.it>
+
+	Patch for GKS project (Myrta)
+
+2006-12-04 17:48:16 r58 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Added igk creation to e2s; fixed kpt, gvec, XC, temp
+
+2006-12-04 13:49:43 r57 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Updated e2s for etsf_io 0.5: wf, kb, db1
+
+2006-12-04 11:21:17 r56 Andrea Marini <marini@roma2.infn.it>
+
+	Plot of EXC wf updated (Daniele). Changes in various spp files. Slatec lib added.
+
+2006-12-04 10:12:13 r55 Andrea Marini <marini@roma2.infn.it>
+
+	 V. 3.0.3_03-12-06
+
+	 Changes
+	 - Fixed shadow q%sstar (q_sstar and q_shadows()).
+	 - Changed -DDP for -D_DOUBLE
+
+2006-12-01 20:14:39 r54 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Added first e2s attempt, for use with etsf_io-0.5
+
+2006-11-29 15:13:44 r53 Andrea Marini <marini@roma2.infn.it>
+
+	 V. 3.0.3_27-11-06
+
+	 Changes
+	 - q_pt for qpt (module R_lattice)
+	 - Added shadow q%sstar (q_sstar). In a near future type(bz_samp) q
+	   should be removed completely.
+
+2006-11-27 13:46:52 r52 Andrea Marini <marini@roma2.infn.it>
+
+	 Changes
+	 - File belonging to PJ_CYL_CUT updated (Daniele's patch)
+
+	 Adds
+	 - Added Eigenstates support in ioBD_diago.
+	   Older revision number DBs must be recalculated.
+	   Note thet the BS_eh_table as well is written in the DB.
+	 - Some SLATEC libs
+	 - Added option to run the Cutoff Pot. real-space TEST
+
+	 BUGS
+	 - mat_c2r and mat_r2c bugs fixed in mod_matrix_operate
+
+2006-11-27 09:27:11 r51 Andrea Marini <marini@roma2.infn.it>
+
+	 Changes
+	 - File belonging to PJ_GKS updated (Myrta's patch)
+
+2006-11-24 14:48:23 r50 Andrea Marini <marini@roma2.infn.it>
+
+	 V. 3.0.3_24-11-06
+
+	 Changes (Still regarding FFT definitions):
+	 - wf_ng_disk for wf_ncx
+	 - ng_wf_k for wf_nc_k
+
+	 Adds
+	 - e(tsf)2s(elf)
+	 - ng_wf entry in ioDB1 (not read in ver.< 3.0.3)
+	   Note that this causes all DB1 created from PW  to
+	   give wrong wf components for high RL vectors.
+
+2006-11-23 17:00:38 r49 Andrea Marini <marini@roma2.infn.it>
+
+	 Changes:
+	 - wf_ng_k for wf_ng (to distinguish from ng_wf)
+	 - removed fft_sign, changed default directions of FFTW:
+	   +1(Forward) for G->R and in scatter_Bamp
+	   -1(Backward) for R->G
+
+	 In previous revisions FFTW sign was wrong. Need to do
+	 carefull comparison with Goedecker FFT.
+
+2006-11-23 15:01:04 r48 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Added spin-polarization case to p2s
+
+2006-11-22 16:49:55 r46 Andrea Marini <marini@roma2.infn.it>
+
+	 Changes:
+	 - 5X/*kb*         : KB needed [r,H] commutator renamed
+	 - 5X/K_O*         : Oscillator subroutines structure changed
+
+	 Adds:
+	 - 0modules/mod_DFT.F to handle PJ_GKS variables
+
+2006-11-22 14:50:59 r45 Andrea Marini <marini@roma2.infn.it>
+
+	Debug line removed from el_density
+
+2006-11-22 14:43:26 r44 Andrea Marini <marini@roma2.infn.it>
+
+	 Version 3.0.2_22-11-06
+
+	 Changes:
+	 - 2io/ioXXVXC.F   : Io with spin
+	 - 6qp/QP_driver.F : Report with spin
+	 - 6qp/QP_ppa.F    : Spin 2 Spin scatterings added
+	 - 6qp/QP_xxvxc.F  : Sigma_x (only) in the spin case (V_xc TODO)
+	 - 1common/QP_state_table_setup.F : Added fourth dimension to handle spin
+
+2006-11-21 14:32:46 r42 Andrea Marini <marini@roma2.infn.it>
+
+	Deep change in Non-Collinear Spin occupations (from 1/2 to 1)
+
+2006-11-21 10:35:18 r41 Andrea Marini <marini@roma2.infn.it>
+
+	Added missing module in scatter_Gamp preventing compilation
+
+2006-11-20 19:25:47 r40 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Added XC reading to p2s
+
+2006-11-20 19:19:56 r39 Andrea Marini <marini@roma2.infn.it>
+
+	LDA X_alpha and use of cutoff in scatter_Gamp fixed.
+
+2006-11-20 16:33:22 r38 Andrea Marini <marini@roma2.infn.it>
+
+	 Version 3.0.2_13-11-06
+
+	 Adds:
+	 - Added  a project for the Cylinder Cutoff (PJ_CYL_CUT).
+	   Exe is self_cyl_cut.
+	 - Added  a project for the Spin (PJ_SPIN). Exe is self_spin
+	 - Added SLATEC Bessel libs.
+
+	 Changes:
+	 - cyl_ph_radius instead of ph_radius
+
+2006-11-17 17:26:14 r36 Andrea Marini <marini@roma2.infn.it>
+
+	Added PJ_GKS: GKS project (myrta)
+
+2006-11-16 18:40:55 r33 Andrea Marini <marini@roma2.infn.it>
+
+	 Version 3.0.2_13-11-06
+
+	 Changes:
+	 - iku_v_norm instead of iku_v_module
+	 - v_norm instead of v_module
+	 - cross_product(3) instead of internal_product
+
+2006-11-16 16:27:00 r32 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Merged longitudinal branch changes 30:31 to trunk (cross_product function)
+
+2006-11-14 19:39:04 r29 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	 Version 3.0.2_13-11-06
+	 Adds: spp -k shifted grids for longitudinal calc
+
+2006-11-14 15:52:37 r28 Andrea Marini <marini@roma2.infn.it>
+
+	Bug fixed in reading QP corrections from DB specified in the input file (3)
+
+2006-11-14 14:31:27 r27 Andrea Marini <marini@roma2.infn.it>
+
+	Bug fixed in reading QP corrections from DB specified in the input file (2)
+
+2006-11-14 12:33:09 r26 Andrea Marini <marini@roma2.infn.it>
+
+	Bug fixed in reading QP corrections from DB specified in the input file
+
+2006-11-13 15:47:19 r25 Andrea Marini <marini@roma2.infn.it>
+
+	3.0.2_13-11-06 saved
+
+2006-11-10 18:07:29 r24 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	REELS wgrid mixing completed
+
+2006-11-10 17:24:35 r23 Andrea Marini <marini@roma2.infn.it>
+
+	Bug in O_driver when using Cutoffed bare_qpg
+
+2006-11-10 13:04:13 r22 Andrea Marini <marini@roma2.infn.it>
+
+	 Version 3.0.2_07-11-06
+
+	 Bugs:
+
+	 Adds:
+	 - gpl_version logical and GPL barrieris in init.F
+
+2006-11-10 10:56:23 r21 Andrea Marini <marini@roma2.infn.it>
+
+	 Version 3.0.2_07-11-06
+
+	 Bugs:
+	 - src/2coulomb/col_driver.F: bare_qpg dimensions when wf_ng<QP_ng_Sx
+
+	 Adds:
+	 - use pars, ONLY added
+	 - tabs fixed
+
+2006-11-09 19:13:16 r20 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Bug fix in spp/k_analyze.F
+
+2006-11-07 09:37:54 r19 Andrea Marini <marini@roma2.infn.it>
+
+	 Version 3.0.2_03-11-06
+
+	 Bugs ( Claudio )
+	 - src/5X/X_em1.F line 121
+	 - spp/spp_init.F line 87
+
+2006-11-03 19:23:07 r18 Andrea Marini <marini@roma2.infn.it>
+
+	small bugs fixed in X_RIM_Gf fermi_msg QP_elph
+
+2006-11-03 16:57:35 r17 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	REELS development: began implementation of lepsmix grids. Added if not define to avoid freqs_setup call in X_os in PJ_REELS.
+
+2006-11-03 15:14:24 r16 Andrea Marini <marini@roma2.infn.it>
+
+	Bug fixed in QP_xxvxc.F
+
+2006-11-03 15:09:09 r15 Andrea Marini <marini@roma2.infn.it>
+
+	 Version 3.0.2_01-11-06
+
+	 Bugs
+	  - In src/3kop/bz_samp_indexes.F call to mem_est
+	  - Fixed the use of n_sp_pol/n_spinor
+
+2006-11-01 16:00:04 r14 Andrea Marini <marini@roma2.infn.it>
+
+	 Version 3.0.2_01-11-06
+	 Adds
+	  - cutoff_*.F [2coulomb]
+	  - ioCOL_CUT [2io]
+	  - acx_report.m4 [config]
+	  - GPL fields delimiters to remove on GPL sections
+	  - SC GWo [6qp/QP_newton.F]. Added GWoIter in init.F
+	  - Added -s option in self_ph (correlation type)
+	  - T_el in io_header from 3.0.2 on
+	 Changes
+	  - qp_*.F -> QP_*.F [3qp_ctl]
+	  - q_indx -> bz_samp_indexes [3kop]
+	 Bugs
+	  - X_os (multiple metallic bands)
+	  - QP_ppa (ioX fro Gamma point only systems)
+
+2006-10-20 19:19:30 r13 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	REELS development: epsm1 integration begun
+
+2006-10-20 13:19:56 r12 Andrea Marini <marini@roma2.infn.it>
+
+	3.0.1_20-10-06. i5.5 format in W fragments. Added occupation tresh OccTresh (T>0). Bug fixed in W fragmentation.
+
+2006-10-18 19:35:25 r11 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	REELS development only: energy grids, output, epsmix fixed
+
+2006-10-16 15:23:12 r10 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	REELS development: reels_driver split, q->0 epsm1 fixed.
+
+2006-10-13 17:31:14 r9 Andrea Marini <marini@roma2.infn.it>
+
+	Bug fix hdr_io.F mod_timing.F driver.c (Claudio). Bugs in Green func. evaluation. Added W fragmentation
+
+2006-10-12 13:02:56 r8 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Fixed wfc read in p2s, updated REELS
+
+2006-10-12 12:21:12 r7 Andrea Marini <marini@roma2.infn.it>
+
+	Temperature added to header of ioX ioQP ioXXVXC ioOSTNTS. Several bugs fixed for finite T GW.
+
+2006-10-09 17:18:31 r6 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	svn tests removed
+
+2006-10-09 17:15:29 r5 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	RAS init fixed, use of nspin in p2s corrected
+
+2006-10-09 14:49:27 r4 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	test 4
+
+2006-10-09 14:47:04 r3 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	test 2
+
+2006-10-09 14:44:32 r2 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	test 1
+
+2006-10-09 14:14:52 r1 svn
+
+	Initial import from 3.0.1_09-10-06
+

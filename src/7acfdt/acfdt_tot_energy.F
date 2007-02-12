@@ -172,7 +172,7 @@
 !===========================================
  call msg('r','[Ec] RL components :',X%ng)
 
- allocate(X_s(X%ng,X%ng),isc%gamp(1,X%ng),tddftk(X%ng,X%ng),dX(X%ng))
+ allocate(X_s(X%ng,X%ng),isc%gamp(X%ng,1),tddftk(X%ng,X%ng),dX(X%ng))
  call mem_est("X_WS",(/2*size(X_s)+3*X%ng/))
  call X_alloc('X',(/X%ng,X%ng,ACFDT_n_freqs/))
 
@@ -208,7 +208,7 @@
        enddo
        call mat_dia_inv(INV,USE_LK,tddftk)
        X_s=matmul(tddftk,X_mat(:,:,iw))
-       forall(i1=1:X%ng) dX(i1)=(X_s(i1,i1)-X_mat(i1,i1,iw))*4.*pi*isc%gamp(1,i1)
+       forall(i1=1:X%ng) dX(i1)=(X_s(i1,i1)-X_mat(i1,i1,iw))*4.*pi*isc%gamp(i1,1)
        ACFDT_Ec=ACFDT_Ec-q%nstar(iqibz)*lambda_weight(il)*freq_weight(iw)*sum(dX)
        call live_timing(steps=1)
      enddo

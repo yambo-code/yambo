@@ -27,7 +27,6 @@
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&
 &                        io_header,write_is_on,read_is_on
-! use memory_m,      ONLY:mem_est
  implicit none
  integer     :: iq,ID,BS_H_dim
  real(SP)    :: bsE(2,BS_H_dim),bsR(2,BS_H_dim)
@@ -79,13 +78,6 @@
    if (.not.BSS_write_eig_2_db) goto 1
    !
    ! BS_eh_table
-   !
-!DEBUG >
-!   if (.not.allocated(BS_eh_table)) then 
-!     allocate(BS_eh_table(BS_H_dim,3))
-!     call mem_est("BS_eh_table",(/3*BS_H_dim/),(/IP/))
-!   endif
-!DEBUG <
    !
    call io_bulk(ID,'BS_TABLE',VAR_SZ=(/BS_H_dim,3/))
    call io_bulk(ID,I2=BS_eh_table)

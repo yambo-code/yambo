@@ -203,8 +203,8 @@ if test -z "${FCFLAGS}"; then
     ;;
   powerpc64*linux* )
     CFLAGS="-q64 -O2"
-#    FCFLAGS="-q64 -O3 -qstrict -qarch=auto -qtune=auto -qdpc -Q -qalias=nointptr"
-    FCFLAGS="-q64 -O3 -qstrict -qarch=auto -qtune=auto"
+    #FCFLAGS="-q64 -O3 -qnostrict -qarch=ppc970 -qtune=ppc970 -qdpc -Q -qalias=nointptr"
+    FCFLAGS="-q64 -O3 -qnostrict -qarch=ppc970 -qtune=ppc970"
     UFFLAGS="-q64 -O0"
     ;;
   powerpc-ibm* )

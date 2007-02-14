@@ -1,3 +1,39 @@
+2007-02-12 18:00:18 r97 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.6_12-02-07
+
+	*  configure include/version.inc config/acx.m4 2wf_and_fft/scatter_Gamp.F 2io/ioBS_diago.F 2io/io_header.F 7bse/K_driver.F 6qp/QP_xxvxc.F 7acfdt/acfdt_tot_energy.F 5elph/QP_elph.F ChangeLog 3.0.6_12-02-07 3.0.6_08-02-07
+
+	Changes:
+	- Configure f90 Flags for ppc updated to -qnostrict -qarch=ppc970 -qtune=ppc970
+	- scatter_Gamp.F/QP_xxvxc.F "restyling"
+	- scatter_Gamp.F now accepts isc%gamp(1,N) and isc%gamp(N,1)
+	- isc%gamp changed to respect row/column ordering in QP_xxvxc/acfdt_tot_energy
+
+	Patch sent by: Andrea
+
+2007-02-11 03:14:26 r96 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	V 3.0.6_08-02-07
+
+	*  5X/X_O_strengths.F
+
+	Changes:
+	- Removed some debugging statements. Sorry!
+
+2007-02-10 14:58:44 r95 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	V 3.0.6_08-02-07
+
+	*  spp/mod_SPP.F spp/ras_spp.F spp/spp_i.F spp/k_analyze.F spp/.objects spp/spp_init_load.F spp/spp_init.F p2s/p2s_db1.F config/Makefile.in 2ras_reels_mods/mod_bulkeps.F 2ras_reels_mods/mod_convolute.F 2ras_reels_mods/.objects 2ras_reels_mods/mod_ras.F 5X/X_os.F 5X/X_O_strengths.F 4ras/rasdriver.F 4ras/X_O_strengths_cut.F 4ras/.objects 4ras/o_strngths_cut.F 4ras/ras_spectrum.F driver/spp.h driver/driver.c
+
+	Additions:
+	- spp_ras runlevel, for post processing surface spectra
+	Changes:
+	- spp k_analyse now accepts shifts along arbitrary directions
+
+	Patch sent by: Conor
+
 2007-02-09 10:03:06 r94 Andrea Marini <marini@roma2.infn.it>
 
 	V 3.0.6_08-02-07

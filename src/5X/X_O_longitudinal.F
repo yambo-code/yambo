@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2005 A. Marini and the SELF team 
+! Copyright (C) 2000-2005 C. Hogan and the SELF team 
 !         http://www.fisica.uniroma2.it/~self
 ! 
 ! This file is distributed under the terms of the GNU 

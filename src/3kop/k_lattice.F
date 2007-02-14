@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine k_lattice(k,Xk)
-!==========================
+ !=========================
  !
  ! Output(s)
  !
@@ -93,7 +93,7 @@
  nkbz=k%nbz
  nXkbz=Xk%nbz
  d3k_factor=RL_vol/real(Xk%nbz)
-!
+ !
  allocate(idist(Xk%nbz),order(Xk%nbz))
  do i1=1,Xk%nbz
    v0=Xk%ptbz(i1,:)-Xk%ptbz(1,:) 
@@ -102,7 +102,7 @@
  enddo
  if (Xk%nbz>1) call sort(idist,indx=order)
  deallocate(idist)
-
+ !
  k_grid_dim=0
  k_grid_b=0.
  do i1=1,Xk%nbz
@@ -122,11 +122,11 @@
        cycle
      case(2)
        k_grid_b(3,:)=v0
-!
-! Here I check the vectors are independent.
-! I use k_grid_b/v_module(k_grid_b(1,:)) to avoid small numbers
-! when a large set of k-points is used
-!
+       !
+       ! Here I check the vectors are independent.
+       ! I use k_grid_b/v_module(k_grid_b(1,:)) to avoid small numbers
+       ! when a large set of k-points is used
+       !
        if (abs(m3det(k_grid_b))/v_norm(k_grid_b(1,:))<1.E-5)then
          k_grid_b(3,:)=0.
          cycle
@@ -140,13 +140,13 @@
  deallocate(order)
  k_grid=0
  k_grid(k_grid_dim+1:)=1
-
+ !
  if (k_grid_dim/=3) then
-!
-! If K-grid dim/=3 I need to define the dim-1 k_grid_b to be
-! the corresponding RL b (For example in a 2D grid in the
-! x,y plane k_grid_b(3,:)\proto(0,0,1)
-!
+   !
+   ! If K-grid dim/=3 I need to define the dim-1 k_grid_b to be
+   ! the corresponding RL b (For example in a 2D grid in the
+   ! x,y plane k_grid_b(3,:)\proto(0,0,1)
+   !
    i3=0
    do i1=1,3
      v1(1)=0.
@@ -159,22 +159,22 @@
          ch='The grid is not 3D but SELF cannot find the _|_ vector(s)'
          goto 1
        endif
-!
-! Note that k_grid_b here is rlu (as output is cc) because I am using 
-! the K components to build it.
-!
+       !
+       ! Note that k_grid_b here is rlu (as output is cc) because I am using 
+       ! the K components to build it.
+       !
        call c2a(b,b(i1,:),k_grid_b(k_grid_dim+i3,:),'kc2a')
      endif
    enddo
  endif
-
+ !
  if (k_grid_dim==0.and.Xk%nbz/=1) then
    ch='The grid is 0D but I have more than 1 kpt.'
    goto 1
  endif 
-!
-! Check Net size to store all BZ KPTS in rlu coordinates
-!
+ !
+ ! Check Net size to store all BZ KPTS in rlu coordinates
+ !
  iv=1
  i2=0
  if (k_grid_dim<3) iv(k_grid_dim+1:)=0
@@ -192,17 +192,17 @@
    ch='Impossible verify the K-grid dimension'
    goto 1
  endif
-!
-! Reporting
-!
+ !
+ ! Reporting
+ !
  write (ch,'(i1,a)') k_grid_dim,'D'
  call msg('r','Compatible Grid is ',trim(ch))
  if (k_grid_dim>0) call msg('r','B1 [rlu]=',k_grid_b(1,:))
  if (k_grid_dim>1) call msg('r','B2      =',k_grid_b(2,:))
  if (k_grid_dim>2) call msg('r','B3      =',k_grid_b(3,:))
-!
-! Note that k_grid_b are Cartesian.
-!
+ !
+ ! Note that k_grid_b are Cartesian.
+ !
  call c2a(b_in=b,v_in=k_grid_b(1,:),mode='ka2c')
  call c2a(b_in=b,v_in=k_grid_b(2,:),mode='ka2c')
  call c2a(b_in=b,v_in=k_grid_b(3,:),mode='ka2c')
@@ -212,14 +212,13 @@
    k_grid_uc_vol=k_grid_uc_vol+k_grid_b(1,i1)*v0(i1)
  enddo
  k_grid_uc_vol=abs(k_grid_uc_vol)
-!
+ !
  if (k_grid_dim>0) call msg('r','Grid dimensions               :',k_grid(:k_grid_dim))
  call msg('r',                  'K lattice UC volume       [au]:',k_grid_uc_vol)
  call msg('r',                  'K vectors comparison precision:',RL_v_comp_norm)
-!
-! Polarizability convertion factor
-!----------------------------------
-!
+ !
+ ! Polarizability convertion factor
+ !
  i_dim_coord=1
  if (all((/Xk%pt(:,1)==0./))) i_dim_coord(1)=0
  if (all((/Xk%pt(:,2)==0./))) i_dim_coord(2)=0
@@ -249,23 +248,23 @@
        eps_2_alpha=DL_vol
    end select
  endif
-!
-! CLEAN
+ !
+ ! CLEAN
+ !
  call k_ibz2bz(Xk,"d",.false.)
  return
-!
+ !
 1 if (len_trim(ch)>0) call error(ch)
-
+ !
  contains
-
+   !
    function proj(v1,v2)
-!======================
+   !
    implicit none
    real(SP) :: v1(3),v2(3),proj
    proj=0.
    if (v_is_zero(v2)) return
    proj=dot_product(v1,v2)/v_norm(v2)**2.
    end function
-
+   !
  end subroutine
-

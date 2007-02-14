@@ -19,16 +19,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-!   ______   ______   _       _______
-!  /  ____) |  ____) | |     |  _____)
-! (  (___   | (___   | |     | (_____
-!  \___  \  |  ___)  | |     |  _____)
-!  ____)  ) | (____  | |___  | |
-! (______/  |______) |_____) |_| 
-!
  integer function self_driver(instr,lnstr,inf,iinf,ind,&
 &                             iind,od,iod,js,ijs,np,pid)
-!=======================================================
+ !           ______   ______   _       _______
+ !          /  ____) |  ____) | |     |  _____)
+ !         (  (___   | (___   | |     | (_____
+ !          \___  \  |  ___)  | |     |  _____)
+ !          ____)  ) | (____  | |___  | |
+ !         (______/  |______) |_____) |_| 
+ !
  use drivers
  use X_m,           ONLY:X_t
  use com,           ONLY:msg
@@ -37,7 +36,7 @@
  use QP_m,          ONLY:QP_ng_Sx
  use QP_CTL,        ONLY:QP_apply
  use wave_func,     ONLY:wf_ng
- use electrons,     ONLY:levels,E_reset
+ use electrons,     ONLY:levels,E_reset,n_bands
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use frequency,     ONLY:w_samp
 #if defined PJ_RAS 
@@ -46,11 +45,16 @@
 #if defined PJ_REELS 
  use reels_module,  ONLY:lreels
 #endif
+ !
  implicit none
  type(levels) ::en,Xen
  type(bz_samp)::q,k,Xk
- type(X_t)    ::X(4) ! x s d p
+ ! 
+ ! 4 response function & energies types: x s d p
+ !
+ type(X_t)    ::X(4) 
  type(w_samp) ::Xw(4)
+ !
  integer,          intent(in)    :: lnstr,iind,iod,ijs,np,pid
  integer,          intent(inout) :: iinf
  character(lnstr), intent(in)    :: instr
@@ -58,16 +62,19 @@
  character(iind),  intent(in)    :: ind
  character(iod),   intent(in)    :: od
  character(ijs),   intent(in)    :: js
-!ws
+ !
+ ! Local Variables
+ !
  integer           ::ierr
  integer, external ::X_em1,init
- logical           ::switch
-!----------------------------------------------------------------
-! PRESETS
-!:::::::::
+ logical           ::apply_QP
+ !
+ ! Presets
+ !
  ncpu  =np
  myid  =pid
  infile=inf
+ !
  call std_presets(instr,ind,od,js)
 #ifdef PJ_RAS
  call ras_presets()
@@ -76,36 +83,70 @@
  call reels_presets()
 #endif
  call it_reset(1)
+ !
+ ! not resetted in init call
+ !
  call bz_samp_reset(Xk)  
  call E_reset(Xen) 
-!----------------------------------------------------------------
-! Input file parsing
-!::::::::::::::::::::
+ !
+ ! INPUT FILE PARSING
+ !====================
+ !
  self_driver=0
- iinf=0 !  No error message from driver.c 
+ !
+ ! iinf=0 => No error message from driver.c 
+ !
+ iinf=0 
  iinf=init(en,q,k,X,Xw,instr,lnstr,.false.,.false.)
-!
-! note the goto 1 stops the job so no file editing
-! of error msg from the driver.c is possible
- if (iinf==2) goto 1
+ !
+ ! the iinf==2 (DB listing mode) stops the job so no file editing
+ ! or error msg from the driver.c is possible
+ !
+ if (iinf==2) then
+   call p_finalize
+   return
+ endif
  if (iinf/=0) return
-!----------------------------------------------------------------
-! Run Summary 
-!::::::::::::::::
-!
+ !
+ ! RUN SUMMARY 
+ !=============
+ !
  call run_summary(en,k)
-!----------------------------------------------------------------
-! Internal setup
-!::::::::::::::::
+ !
+ ! SETUPS ...
+ !============
+ !
+ ! Basical 
+ !
  call setup(en,Xen,k,Xk)
+ !
+ ! Update the default variables
+ !
  ierr=init(en,q,k,X,Xw,instr,lnstr,.true.,.false.)
+ !
+ ! BZ sampling
+ !
  call bz_samp_indexes(k,Xk,q) 
+ !
+ ! COLOUMB DRIVER
+ !================
+ !
  call col_driver(maxval((/wf_ng,QP_ng_Sx/)),q)
-!-----------------------------------------------------------------------
-! QP corrections (from input file)
-!::::::::::::::::::::::::::::::::::
- call section('*','') ! Reset the section numbering
- switch=(l_optics.and.l_lr).or.(l_em1d.and..not.l_ppa).or.&
+ !
+ ! reset the section numbering
+ !
+ call section('*','') 
+ !
+ ! RESPONSE FUNCTIONS  QP CORRECTIONS (FROM INPUT FILE)
+ !======================================================
+ !
+ ! - Xo -
+ !
+ if (l_acfdt)   call QP_apply(X(1)%ib,Xen,Xk,1,msg_fmt='s')
+ !
+ ! - Dynamical X -
+ !
+ apply_QP=(l_optics.and.l_lr).or.(l_em1d.and..not.l_ppa).or.&
 #if defined PJ_REELS
         lreels.or.&
 #endif
@@ -113,40 +154,97 @@
         lras.or.&
 #endif
         (l_gw0.and..not.l_ppa.and.l_el_corr).or.l_life
- if (switch) call QP_apply(X(3)%ib,Xen,Xk,1,msg_fmt='s')
- switch=l_em1s.or.(l_optics.and.l_bse).or.l_bss
- if (switch) call QP_apply(X(2)%ib,Xen,Xk,1,msg_fmt='s')
- switch=(l_em1d.and.l_ppa).or.(l_gw0.and.l_ppa.and.l_el_corr)
- if (switch) call QP_apply(X(4)%ib,Xen,Xk,1,msg_fmt='s')
- if (l_acfdt) call QP_apply(X(1)%ib,Xen,Xk,1,msg_fmt='s')
-!----------------------------------------------------------------------------
+ if (apply_QP)  call QP_apply(X(3)%ib,Xen,Xk,1,msg_fmt='s')
+ !
+ ! - Static X -
+ !
+ apply_QP=l_em1s.or.(l_optics.and.l_bse).or.l_bss
+ if (apply_QP)  call QP_apply(X(2)%ib,Xen,Xk,1,msg_fmt='s')
+ !
+ ! - Plasmon Pole X -
+ !
+ apply_QP=(l_em1d.and.l_ppa).or.(l_gw0.and.l_ppa.and.l_el_corr)
+ if (apply_QP)  call QP_apply(X(4)%ib,Xen,Xk,1,msg_fmt='s')
+ !
+ ! - Green's Function (not the one used in the BSE -
+ !
+ if (l_gw0)     call QP_apply((/1,n_bands/),en,k,3,msg_fmt='s')
+ !
+ ! HARTREE-FOCK AND VXC
+ !======================
+ !
  if (l_xxvxc) call QP_xxvxc(en,k,Xk,q)
-! -- GPL_END --
+ !
+ ! RAS & REELS
+ !=============
+ !
+ ! -- GPL_END --
 #if defined PJ_RAS
  if (lras.or.lreels) call rasdriver(Xen,Xk,q,Xw(3),X(3))
 #endif
 #if defined PJ_REELS
  if (lreels)         call reelsdriver(Xen,Xk,q,Xw(3),X(3))
 #endif
-! -- GPL_START --
+ ! -- GPL_START --
+ !
+ ! OPTICS
+ !========
+ !
  if (l_optics.and.l_lr) call O_driver(Xen,Xk,q,Xw(3),X(3))
-
+ ! 
+ ! INVERSE DIELECTRIC FUNCTIONS
+ !===============================
+ !
+ ! Static
+ !
  if (l_em1s)                            ierr=X_em1(Xen,Xk,q,X(2),Xw(2),.false.)
+ !
  if (l_em1d.or.(l_gw0.and.l_el_corr)) then
+   ! 
+   ! Plasmon Pole 
+   !
    if (l_ppa)                           ierr=X_em1(Xen,Xk,q,X(4),Xw(4),.false.)
-! -- GPL_END --
+   ! 
+   ! Dynamical 
+   !
+   ! -- GPL_END --
    if (.not.l_ppa)                      ierr=X_em1(Xen,Xk,q,X(3),Xw(3),.false.)
-! -- GPL_START --
+   ! -- GPL_START --
  endif
-! -- GPL_END --
+ !
+ ! Real Axis GW
+ !==============
+ !
+ ! -- GPL_END --
  if ((l_gw0.and..not.l_ppa).or.l_life) call QP_driver(X(3),Xen,Xk,en,k,q,Xw(3))
-! -- GPL_START --
+ ! -- GPL_START --
+ !
+ ! PPA GW
+ !========
+ !
  if (l_gw0.and.l_ppa)                  call QP_driver(X(4),Xen,Xk,en,k,q,Xw(4))
+ !
+ ! BETHE-SALPETER
+ !================
+ !
  if ((l_optics.and.l_bse).or.l_bss) call K_driver(Xen,Xk,q,X(2),Xw(2))
+ !
+ ! ACFDT
+ !=======
+ !
  if (l_acfdt) call acfdt_tot_energy(Xen,Xk,q,X(1))
-!----------------------------------------------------------------------------
+ !
+ ! GAME OVER :(
+ !==============
+ !
  call section('X','Game Over & Game summary')
+ !
+ ! Update init defs
+ !
  ierr=init(en,q,k,X,Xw,instr,lnstr,.false.,.true.)
+ !
+ ! Finalize
+ !
  call it_reset(-1)
-1 call p_finalize
+ call p_finalize
  end function

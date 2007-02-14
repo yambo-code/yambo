@@ -1,3 +1,18 @@
+2007-02-14 15:40:31 r98 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.6_12-02-07
+
+	*  config/Makefile.in 5X/X_O_longitudinal.F 4it/init_load.F 4it/init.F 3qp_ctl/mod_QP_CTL.F 3kop/k_lattice.F ChangeLog driver/self_driver.F
+
+	Bugs:
+	- Comments restyling of: init_load.F,init.F,mod_QP_CTL.F,self_driver.F,k_lattice.F
+
+	Additions:
+	- GfnQPdb/GfnQP_N variables activated in the input file
+	  to allow user-defined QP corrections for the Green's function
+
+	Patch sent by: Andrea
+
 2007-02-12 18:00:18 r97 Andrea Marini <marini@roma2.infn.it>
 
 	V 3.0.6_12-02-07

@@ -20,73 +20,73 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  module QP_m
-!===========
-  use pars
-  implicit none
-
-  integer, parameter :: max_qp_descs=100
-!
-  integer :: pp_taylor_terms
-!
-  integer           :: QP_dSc_steps
-  integer           :: QP_Sc_steps
-  integer           :: QP_n_W_freqs
-  integer           :: QP_nb
-  integer           :: QP_nk
-  integer           :: QP_n_states
-  integer           :: QP_ng_Sx
-  integer           :: QP_n_G_bands(2)
-  integer           :: QP_Sx_low_band
-  integer           :: GWo_iterations
-  logical           :: QP_dSc_test
-  logical           :: QP_W_partially_done
-  logical           :: GWo_SC_done
-  character(schlen) :: QP_rep_string
-  character(schlen) :: QP_solver
-  character(schlen) :: QP_xc_FUNCTIONAL
-  real(SP)          :: QP_G_damp
-  real(SP)          :: QP_dSc_delta
-  real(SP)          :: QP_W_er(2)
-  real(SP)          :: QP_W_dr(2)
-  real(SP)          :: QP_G_er(2)
-  real(SP)          :: QP_G_dr(2)
-  real(SP)          :: QP_cg_percent
-  complex(SP),allocatable:: QP_dSc(:,:)
-  complex(SP),allocatable:: QP_W(:,:,:)
-  complex(SP),allocatable:: QP_Sx(:)
-  complex(SP),allocatable:: QP_Sc(:,:)
-  complex(SP),allocatable:: QP_G(:,:)
-  complex(SP),allocatable:: QP_Vxc(:)
-  integer,    allocatable:: QP_solver_state(:)
-  integer,    allocatable:: QP_table(:,:)
-  logical,    allocatable:: QP_state(:,:)
-
-  type QP_t
-    character(schlen)  :: description(max_qp_descs)
-    integer,    pointer:: table(:,:)
-    real(SP)   ,pointer:: k(:,:)
-    complex(SP),pointer:: Eo(:)
-    complex(SP),pointer:: E(:)
-    complex(SP),pointer:: Z(:)
-    integer  :: n_descs
-    integer  :: nk
-    integer  :: nb
-    integer  :: n_states
-  end type QP_t
-!
-! QP CTL
-!
-!?fnQP_db= "EWZ<db-pp.qp"     # [?] QP database.
-!% ?fnQP_E
-!  0 |  0 | 0 |               # [?] QP parameters (E).
-!% 
-!% ?fnQP_W
-!  0 |  0 | 0 | 0 |           # [?] QP parameters (W).
-!%
-!?fbQP_Z= (  0.00000 ,  0.00000 )  eV  # [?] QP parameters (Z).
-!  
-! 1(X) 2(K) 3(G) 
-!
+   !
+   use pars
+   implicit none
+   !
+   integer, parameter :: max_qp_descs=100
+   !
+   integer :: pp_taylor_terms
+   !
+   integer           :: QP_dSc_steps
+   integer           :: QP_Sc_steps
+   integer           :: QP_n_W_freqs
+   integer           :: QP_nb
+   integer           :: QP_nk
+   integer           :: QP_n_states
+   integer           :: QP_ng_Sx
+   integer           :: QP_n_G_bands(2)
+   integer           :: QP_Sx_low_band
+   integer           :: GWo_iterations
+   logical           :: QP_dSc_test
+   logical           :: QP_W_partially_done
+   logical           :: GWo_SC_done
+   character(schlen) :: QP_rep_string
+   character(schlen) :: QP_solver
+   character(schlen) :: QP_xc_FUNCTIONAL
+   real(SP)          :: QP_G_damp
+   real(SP)          :: QP_dSc_delta
+   real(SP)          :: QP_W_er(2)
+   real(SP)          :: QP_W_dr(2)
+   real(SP)          :: QP_G_er(2)
+   real(SP)          :: QP_G_dr(2)
+   real(SP)          :: QP_cg_percent
+   complex(SP),allocatable:: QP_dSc(:,:)
+   complex(SP),allocatable:: QP_W(:,:,:)
+   complex(SP),allocatable:: QP_Sx(:)
+   complex(SP),allocatable:: QP_Sc(:,:)
+   complex(SP),allocatable:: QP_G(:,:)
+   complex(SP),allocatable:: QP_Vxc(:)
+   integer,    allocatable:: QP_solver_state(:)
+   integer,    allocatable:: QP_table(:,:)
+   logical,    allocatable:: QP_state(:,:)
+   !
+   type QP_t
+     character(schlen)  :: description(max_qp_descs)
+     integer,    pointer:: table(:,:)
+     real(SP)   ,pointer:: k(:,:)
+     complex(SP),pointer:: E_prev(:)
+     complex(SP),pointer:: E(:)
+     complex(SP),pointer:: Z(:)
+     integer  :: n_descs
+     integer  :: nk
+     integer  :: nb
+     integer  :: n_states
+   end type QP_t
+   !
+   ! QP CTL
+   !
+   !?fnQP_db= "EWZ<db-pp.qp"     # [?] QP database.
+   !% ?fnQP_E
+   !  0 |  0 | 0 |               # [?] QP parameters (E).
+   !% 
+   !% ?fnQP_W
+   !  0 |  0 | 0 | 0 |           # [?] QP parameters (W).
+   !%
+   !?fbQP_Z= (  0.00000 ,  0.00000 )  eV  # [?] QP parameters (Z).
+   !  
+   ! 1(X) 2(K) 3(G) 
+   !
   character(schlen):: QP_ctl_db(3)
   integer    :: QP_ctl_interp_neigh(3)
   real(SP)   :: QP_ctl_E(3,3)
@@ -94,15 +94,15 @@
   complex(SP):: QP_ctl_Z(3)
   logical    :: QP_ctl_applied
   character(schlen):: QP_ctl_short_descr(3)
-
- contains
-
- subroutine QP_reset(qp)
- type(QP_t)::qp
- qp%description=' '
- qp%n_descs=0
- qp%n_states=0
- nullify(qp%table,qp%k,qp%E,qp%Z,qp%Eo)
- end subroutine
-
+  !
+  contains
+    !
+    subroutine QP_reset(qp)
+    type(QP_t)::qp
+    qp%description=' '
+    qp%n_descs=0
+    qp%n_states=0
+    nullify(qp%table,qp%k,qp%E,qp%Z,qp%E_prev)
+    end subroutine
+    !
  end module 

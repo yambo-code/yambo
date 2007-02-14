@@ -102,7 +102,7 @@
        if (qp%table(i3,3)/=ikqp(i4)) cycle
        bqp=qp%table(i3,1)
        if (bqp<band_range(1).or.bqp>band_range(2)) cycle
-       Dl(bqp)=Dl(bqp)+real(qp%E(i3)-qp%Eo(i3))
+       Dl(bqp)=Dl(bqp)+real(qp%E(i3)-qp%E_prev(i3))
        Wl(bqp)=Wl(bqp)+aimag(qp%E(i3))
        Zl(bqp)=Zl(bqp)+qp%Z(i3)
      enddo

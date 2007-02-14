@@ -217,8 +217,8 @@
      do i1=1,qp%n_states
       qp_E_Eo_Z_disk(1,i1,1)=real(qp%E(i1))
       qp_E_Eo_Z_disk(1,i1,2)=aimag(qp%E(i1))
-      qp_E_Eo_Z_disk(2,i1,1)=real(qp%Eo(i1))
-      qp_E_Eo_Z_disk(2,i1,2)=aimag(qp%Eo(i1))
+      qp_E_Eo_Z_disk(2,i1,1)=real(qp%E_prev(i1))
+      qp_E_Eo_Z_disk(2,i1,2)=aimag(qp%E_prev(i1))
       qp_E_Eo_Z_disk(3,i1,1)=real(qp%Z(i1))
       qp_E_Eo_Z_disk(3,i1,2)=aimag(qp%Z(i1))
      enddo
@@ -229,11 +229,11 @@
    call io_bulk(ID,R3=qp_E_Eo_Z_disk)
 
    if (read_is_on(ID)) then
-     allocate(qp%Z(qp%n_states),qp%E(qp%n_states),qp%Eo(qp%n_states))
-     call mem_est("qp_Z qp_E qp_Eo",(/qp%n_states,qp%n_states,qp%n_states/))
+     allocate(qp%Z(qp%n_states),qp%E(qp%n_states),qp%E_prev(qp%n_states))
+     call mem_est("qp_Z qp_E qp_E_prev",(/qp%n_states,qp%n_states,qp%n_states/))
      do i1=1,qp%n_states
        qp%E(i1) =cmplx(qp_E_Eo_Z_disk(1,i1,1),qp_E_Eo_Z_disk(1,i1,2),SP)
-       qp%Eo(i1)=cmplx(qp_E_Eo_Z_disk(2,i1,1),qp_E_Eo_Z_disk(2,i1,2),SP)
+       qp%E_prev(i1)=cmplx(qp_E_Eo_Z_disk(2,i1,1),qp_E_Eo_Z_disk(2,i1,2),SP)
        qp%Z(i1) =cmplx(qp_E_Eo_Z_disk(3,i1,1),qp_E_Eo_Z_disk(3,i1,2),SP)
      enddo
    endif

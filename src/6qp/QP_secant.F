@@ -106,7 +106,7 @@
 !Brackets
 !========
 
- forall(i1=1:qp%n_states) Eqp_raxis(i1,1)=qp%Eo(i1)
+ forall(i1=1:qp%n_states) Eqp_raxis(i1,1)=qp%E_prev(i1)
  forall(i1=1:qp%n_states) Eqp_raxis(i1,2)=Eqp_raxis(i1,1)+1./HARTREE
 !
  QP_solver_state=1
@@ -209,7 +209,7 @@
   if (allocated(QP_solver_state)) then
     do i1=1,QP_n_states
       if (QP_solver_state(i1)>0) Sc_raxis(i1,QP_solver_state(i1))=&
-&                                qp%Eo(i1)-Eqp_raxis(i1,QP_solver_state(i1))+&
+&                                qp%E_prev(i1)-Eqp_raxis(i1,QP_solver_state(i1))+&
 &                                real(QP_Sc(i1,1))+QP_Sx(i1)-QP_Vxc(i1)
     enddo
   endif

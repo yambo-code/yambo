@@ -119,6 +119,7 @@
      ! for q != 0 
      !
      if (ig1==1.and.(ig2>RIM_ng.or.(RIM_is_diagonal.and.ig2>1))) then
+       !
        if (iq==1) then 
          isc%gamp(i1,i2)=R_sphere/2.*reg_q_m2/bare_qpg(iq,ig2)
        else

@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine BZ_RIM(Xk,Xen)
-!=========================
+ !
  use pars,                ONLY:SP,DP,lchlen
  use R_lattice,           ONLY:bz_samp,g_vec,nkibz,k_grid_b,&
 &                              ng_in_shell,g_vec,n_g_shells
@@ -35,10 +35,14 @@
  use timing,              ONLY:live_timing_is_on
  use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP,OP_WR_CL
  use matrix_operate,      ONLY:m3inv
+ use zeros,               ONLY:k_iku_zero
+ !
  implicit none
  type(bz_samp) :: Xk
  type(levels)  :: Xen
-!ws
+ !
+ ! Work Space
+ !
  real(SP)     ::dummy,v(3),rand_kpt(BZ_RIM_nkpts+1,3),k_b_m1(3,3),&
 &               iv(3),k_distance,a_save(3,3),alat_save(3)
  integer      ::i1,i2,ikbz,i3
@@ -46,30 +50,30 @@
  real(DP)  :: rr
  real(DP),external  :: dlaran
  logical            :: add_X_grid
-!
-!BZ DB1 I/O
-!
+ !
+ ! BZ DB1 I/O
+ !
  type(levels)      :: BZ_E
  type(bz_samp)     :: BZ_k
  integer           :: ID,i_err
  integer, external :: ioDB1_reload,ioE_RIM
-!----------------------------------------------------------------
-! Saves 2 check
-!---------------
+ !
+ ! Saves 2 check
+ !
  a_save=a
  alat_save=alat
-!
-! DB1 reloading
-!==============
+ !
+ ! DB1 reloading
+ !
  i_err=ioDB1_reload(BZ_E,BZ_k, trim(BZ_RIM_path) )
-!
-! DB1 checks
-!------------
+ !
+ ! DB1 checks
+ !
  if (i_err==0.and.any(alat/=alat_save).or.any(a/=a_save))  then
    call msg("s",':: RIM DB1 DL structure does not fit')
    i_err=-1
  endif
-
+ !
  if (i_err/=0.or.trim(BZ_RIM_path)==".") then
    call section('*',"== BZ RIM grid generator ==")
    live_timing_is_on=.false.
@@ -87,39 +91,39 @@
    enddo
    live_timing_is_on=.true.
    return
- endif
-
+ endif 
+ !
  call section('*','BZ RIM DB')
-!=============================
+ !
  call msg('s',':: Electrons             :',default_nel)
  call msg('s',':: Temperature       [ev]:',default_Tel)
  call msg('s',':: Lattice factors [a.u.]:',alat)
  call msg('s',':: K points              :',nkibz)
  call msg('s',':: Bands                 :',n_bands)
  call msg('s',':: Symmmetries           :',nsym)
-
+ !
  call section('+','BZ RIM K-points Tables setup...')
-!===================================================
+ !
  add_X_grid=.true.
-!
+ !
  BZ_RIM_nbands=BZ_E%nb
  BZ_RIM_tot_nkpts=BZ_k%nibz
  if (add_X_grid) BZ_RIM_tot_nkpts=BZ_RIM_tot_nkpts+Xk%nbz
-!
-!Xk (IBZ->BZ)
-!--------------
+ !
+ ! Xk (IBZ->BZ)
+ !
  call k_ibz2bz(Xk,'i',.true.)
-
+ !
  allocate(BZ_RIM_nkpt(Xk%nbz))
  BZ_RIM_nkpt=0
-!
-! First I transform the k_grid_b from c to iku
-!
+ !
+ ! First I transform the k_grid_b from c to iku
+ !
  call c2a(v_in=k_grid_b(1,:),v_out=k_b_m1(:,1),mode='kc2i')
  call c2a(v_in=k_grid_b(2,:),v_out=k_b_m1(:,2),mode='kc2i')
  call c2a(v_in=k_grid_b(3,:),v_out=k_b_m1(:,3),mode='kc2i')
  call m3inv(M=k_b_m1)
-
+ !
  do while(.not.allocated(BZ_RIM_table)) 
    if (maxval(BZ_RIM_nkpt)>0) then
      if (add_X_grid)      allocate(BZ_RIM_table(Xk%nbz,maxval(BZ_RIM_nkpt)+1))
@@ -135,7 +139,7 @@
          v=BZ_k%pt(i1,:)-Xk%ptbz(i2,:)-g_vec(i3,:)
          iv=matmul(k_b_m1,v)
          iv=real(int(iv),SP)
-         if (.not.v_is_zero(iv)) cycle
+         if (.not.v_is_zero(iv,zero_=k_iku_zero)) cycle
          if (iku_v_norm(v)<k_distance) then
            k_distance=iku_v_norm(v)
            ikbz=i2
@@ -151,12 +155,12 @@
  BZ_RIM_max_filling=maxval(BZ_RIM_nkpt)
  if (add_X_grid) BZ_RIM_max_filling=BZ_RIM_max_filling+1
  call msg('s',':: BZ blocks filling     :',(/minval(BZ_RIM_nkpt),BZ_RIM_max_filling/))
-!
-!  At the end I add to the Xen%E_RIM array the Xen%E energies
-!
+ !
+ !  At the end I add to the Xen%E_RIM array the Xen%E energies
+ !
  allocate(Xen%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spin))
  Xen%E_RIM(:,:BZ_k%nibz,:)=BZ_E%E(:,:,:)
-
+ !
  if (add_X_grid) then
    forall(i1=1:Xk%nbz) BZ_RIM_nkpt(i1)=BZ_RIM_nkpt(i1)+1
    forall(i1=1:Xk%nbz) BZ_RIM_table(i1,BZ_RIM_nkpt(i1))=BZ_k%nibz+i1
@@ -164,15 +168,15 @@
      Xen%E_RIM(:,BZ_k%nibz+i1,:)=Xen%E(:BZ_RIM_nbands,Xk%sstar(i1,1),:)+Xen%Efermi(1)
    enddo
  endif
-!
-! Final I/O
-!===========
+ !
+ ! Final I/O
+ !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=NONE,ID=ID)
  i_err=ioE_RIM(Xen,ID)
-!
-!CLEAN
-!
+ !
+ ! CLEAN
+ !
  deallocate(BZ_RIM_nkpt,BZ_RIM_table,Xen%E_RIM)
- call k_ibz2bz(Xk,'d',.false.)
-
+ call k_ibz2bz(Xk,'d',.false.) 
+ !
  end subroutine

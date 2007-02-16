@@ -1,3 +1,19 @@
+2007-02-14 17:53:36 r99 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.6_12-02-07
+
+	*  0modules/mod_QP.F 2io/ioQP.F 3qp_ctl/QP_apply_interpolate.F 3qp_ctl/QP_apply_fit.F 6qp/QP_driver.F 6qp/QP_secant.F 6qp/QP_of.F 6qp/QP_newton.F ChangeLog
+
+	Bugs:
+	- In the GWo iteration process the non interacting G energies
+	  were not updated properly.
+
+	Changes:
+	- Comment Restyling of: mod_QP.F, QP_driver.F, QP_of.F, QP_newton.F
+	- (QP_t)%Eo replaced with %E_prev (to mean the previous iteration QP energy)
+
+	Patch sent by: Andrea
+
 2007-02-14 15:40:31 r98 Andrea Marini <marini@roma2.infn.it>
 
 	V 3.0.6_12-02-07

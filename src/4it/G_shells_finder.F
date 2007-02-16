@@ -19,13 +19,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine gops()
-!=================
-!
-! Output: g_rot(nsym,ng_closed)
-!
-! R_is G_ig = G_{g_rot(is,ig)}
-!
+ subroutine G_shells_finder()
+ !
+ ! Output: g_rot(nsym,ng_closed)
+ !
+ ! R_is G_ig = G_{g_rot(is,ig)}
+ !
  use pars,         ONLY:SP,IP
  use timing,       ONLY:live_timing
  use memory_m,     ONLY:mem_est
@@ -34,19 +33,24 @@
 &                       g_vec,g_rot,E_of_shell,rl_sop
  use vec_operate,  ONLY:iku_v_norm,v_is_zero
  use IO_m,         ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY
+ use zeros,        ONLY:G_iku_zero
+ !
  implicit none
-!ws
+ !
+ ! Work Space
+ !
  integer :: i1,i2,i3,i_G_below,i_G_shell,&
 &           ng_in_shell_TMP(ng_closed),n_g_shells_no_holes
  real(SP):: v1(3),G_module(2),E_of_shell_TMP(ng_closed)
-!
-!I/O
+ !
+ !I/O
+ !
  integer           :: ID,io_err
  integer, external :: ioGROT
-
+ !
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),MODE=VERIFY,ID=ID)
  io_err=ioGROT(ID)
-
+ !
  if (io_err==0) then
    return
  else
@@ -71,18 +75,14 @@
  ng_in_shell_TMP(1)=1
  i_G_shell=1
  !
- ! First the shell with  a preliminar calculation of the
- ! number of shells only.
- !
  call live_timing('Shells finder',ng_closed-1)
- !
  !
  do i1=2,ng_closed
    i_G_below=0
    do i2=1,nsym
      v1=matmul(rl_sop(:,:,i2),g_vec(i1,:))
      do i3=2,ng_closed
-       if (v_is_zero(v1-g_vec(i3,:))) then
+       if (v_is_zero(v1-g_vec(i3,:),zero_=G_iku_zero)) then
          g_rot(i2,i1)=i3
          !
          ! Number of rotated G a"below" the given G

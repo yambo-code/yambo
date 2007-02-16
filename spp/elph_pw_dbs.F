@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine elph_pw_dbs(k,q)
- !--------------------------
+ !
  use pars,                ONLY:DP
  use ELPH,                ONLY:ph_freqs_sq,ph_modes,elph_nb,&
 &                              elph_gkkp_free,max_ph_freq
@@ -120,6 +120,7 @@
 &                          ph_freqs_sq,elph_gkkp,elph_gkkp_alloc,elph_DW
   use SPP,            ONLY:elph_dbs_path
   use vec_operate,    ONLY:v_is_zero,rlu_v_is_zero,c2a
+  use zeros,          ONLY:k_iku_zero,k_rlu_zero
   implicit none
   integer           :: iq
   !
@@ -167,7 +168,7 @@
   !
   if (iq<0) then
     call c2a(v_in= real(pw_q(:))-q%pt(iabs(iq),:) ,v_out=r_v,mode="ki2a")
-    if (.not.rlu_v_is_zero(r_v)) elph_pw_dbs_io=-2
+    if (.not.rlu_v_is_zero(r_v,zero_=k_iku_zero)) elph_pw_dbs_io=-2
   endif
   !
   ! Phonon Frequencies
@@ -209,7 +210,7 @@
     do ik=1,k%nbz
       if (k_found(ik)==1) cycle
       call c2a(v_in=k%ptbz(ik,:)-real(pw_kpq(:,i1),SP),v_out=r_v,mode="ki2a")
-      if (rlu_v_is_zero(r_v)) then
+      if (rlu_v_is_zero(r_v,zero_=k_iku_zero)) then
         k2k_tab(i1)=ik
         k_found(ik)=1
         exit
@@ -338,6 +339,8 @@
   use vec_operate,    ONLY:rlu_v_is_zero,c2a,k2bz
   use D_lattice,      ONLY:nsym
   use R_lattice,      ONLY:rl_sop,nkbz
+  use zeros,          ONLY:k_iku_zero
+  !
   integer  :: nsmall,small(nsym)
   real(SP) :: pw_q(3),r_v(3)
   integer  :: is
@@ -347,7 +350,7 @@
     r_v=matmul(rl_sop(:,:,is),pw_q) -pw_q
     call k2bz(r_v)
     call c2a (v_in=r_v,mode='ki2a')
-    if (rlu_v_is_zero(r_v)) then
+    if (rlu_v_is_zero(r_v,zero_=k_iku_zero)) then
       nsmall=nsmall+1
       small(nsmall)=is
     endif
@@ -358,7 +361,7 @@
   !-----------------------------------
   !
   use pars,           ONLY:SP
-  use vec_operate,    ONLY:rlu_v_is_zero,c2a
+  use vec_operate,    ONLY:c2a
   use D_lattice,      ONLY:nsym,sop_tab
   use memory_m,       ONLY:mem_est
   use R_lattice,      ONLY:rl_sop,nkbz,ik_is_table

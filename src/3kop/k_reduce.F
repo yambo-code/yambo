@@ -20,42 +20,46 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine k_reduce(k)
-!======================
-!
-! Input:
-!
-!  k%ptbz (iku)
-!
-! Output:
-!
-!  k%pt k%nibz
-!
+ !
+ ! Input:
+ !
+ !  k%ptbz (iku)
+ !
+ ! Output:
+ !
+ !  k%pt k%nibz
+ !
  use pars,           ONLY:SP
  use vec_operate,    ONLY:c2a,rlu_v_is_zero,k2bz
  use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:b,rl_sop,bz_samp
+ use zeros,          ONLY:k_rlu_zero
  implicit none
  type(bz_samp)::k
-! ws
+ !
+ ! Work Space
+ !
  integer :: i1,i2,is
- real(SP):: v1(3),v2(3),v3(3),kibz(k%nbz,3)
-
+ real(SP):: v1(3),k_ibz(k%nbz,3),k_bz_shifted(3)
+ !
  k%nibz=0
+ !
  kloop: do i1=1,k%nbz
+   !
    call k2bz(k%ptbz(i1,:),v1,b)
-   call c2a(v_in=v1,v_out=v2,mode='ki2a')
+   call c2a(v_in=v1,v_out=k_bz_shifted,mode='ki2a')
+   !
    do i2=1,k%nibz
      do is=1,nsym
-       call c2a(b,matmul(rl_sop(:,:,is),kibz(i2,:)),v3,'ki2a') 
-       if (rlu_v_is_zero(v2-v3)) cycle kloop
+       call c2a(b,matmul(rl_sop(:,:,is),k_ibz(i2,:)),v1,'ki2a') 
+       if (rlu_v_is_zero(k_bz_shifted-v1,zero_=k_rlu_zero)) cycle kloop
      enddo
    enddo
    k%nibz=k%nibz+1
-   kibz(k%nibz,:)=v1
+   call k2bz(k%ptbz(i1,:),k_ibz(k%nibz,:),b)
  enddo kloop
-
+ !
  allocate(k%pt(k%nibz,3))
- k%pt(:k%nibz,:)=kibz(:k%nibz,:)
-
+ k%pt(:k%nibz,:)=k_ibz(:k%nibz,:)
+ !
  end subroutine
-

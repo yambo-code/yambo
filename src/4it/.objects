@@ -1,1 +1,1 @@
-objs = init_load.o init.o QP_init.o setup.o gops.o init_q_pts.o
+objs = init_load.o init.o QP_init.o setup.o G_shells_finder.o init_q_pts.o

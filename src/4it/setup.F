@@ -20,23 +20,25 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine setup(en,Xen,k,Xk)
-!=============================
- use pars,           ONLY:SP,HARTREE,IP,pi,schlen
+ !
+ use pars,           ONLY:SP,HARTREE,IP,pi,schlen,zero_dfl
  use electrons,      ONLY:levels,nel,n_met_bands,n_full_bands,E_duplicate,n_sp_pol
  use memory_m,       ONLY:mem_est
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,sop_inv,sop_tab
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,nkibz,nkbz,nXkibz,nXkbz,&
-&                         k_grid_b,rl_sop,bz_samp
+&                         k_grid_b,rl_sop,bz_samp,g_vec
  use wave_func,      ONLY:wf_nc_k
  use com,            ONLY:msg,gen_fmt,error
  use vec_operate,    ONLY:iku_v_norm,cross_product,c2a
+ use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
+ !
  implicit none
  type(levels)    ::en,Xen
  type(bz_samp)   ::k,Xk
  !
  !Work Space
  !
- real(SP)          :: v1(3),m(3,3),cp(3)
+ real(SP)          :: v1(3),m(3,3),cp(3),k_rlu(k%nibz,3)
  integer           :: i1,i2,i3,is
  character(schlen) :: ch(5)
  !
@@ -71,6 +73,25 @@
  call msg('r','B2 =',v1)
  call c2a(b,b(3,:),v1,'kc2i')
  call msg('rn','B3 =',v1)
+ !
+ ! ZERO's SETUP
+ !
+ call define_zeros(g_vec(:,1),zero_=G_iku_zero(1))
+ call define_zeros(g_vec(:,2),zero_=G_iku_zero(2))
+ call define_zeros(g_vec(:,3),zero_=G_iku_zero(3))
+ !
+ call define_zeros(k%pt(:,1),zero_=k_iku_zero(1))
+ call define_zeros(k%pt(:,2),zero_=k_iku_zero(2))
+ call define_zeros(k%pt(:,3),zero_=k_iku_zero(3))
+ k_iku_zero=minval(k_iku_zero)
+ !
+ do i1=1,k%nibz
+   call c2a(v_in=k%pt(i1,:),v_out=k_rlu(i1,:),mode='ki2a')
+ enddo
+ call define_zeros(k_rlu(:,1),zero_=k_rlu_zero(1))
+ call define_zeros(k_rlu(:,2),zero_=k_rlu_zero(2))
+ call define_zeros(k_rlu(:,3),zero_=k_rlu_zero(3))
+ k_rlu_zero=minval(k_rlu_zero)
  ! 
  ! Symmetries and moltiplication table:
  !
@@ -126,7 +147,7 @@
  !
  call section('=','RL shells')
  !
- call gops()
+ call G_shells_finder()
  call msg('rn','Shells, format: [Snn] G`s')
  !
  do i1=n_g_shells,max(n_g_shells-27,1),-5
@@ -157,7 +178,7 @@
  !
  n_met_bands=en%nbm
  n_full_bands=en%nbf
-
+ !
  call msg('rn','X BZ K-points :',Xk%nbz)
  do i1=1,k%nibz
    ch(3)=gen_fmt(r_v=k%pt(i1,:))
@@ -191,6 +212,5 @@
    enddo
 
  enddo
-!
+ !
  end subroutine
-

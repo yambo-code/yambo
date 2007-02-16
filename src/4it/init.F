@@ -172,7 +172,7 @@
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  ioQINDX_err=ioQINDX(k,q,io_ID) 
- if (ioQINDX_err==0) call initactivate(-1,'KptsAcc IkSigLim IkXLim')
+ if (ioQINDX_err==0) call initactivate(-1,'IkSigLim IkXLim')
  !
  ! rim
  !
@@ -284,7 +284,7 @@
  !
  !Common
  !
- call initactivate(1,'InDir OutDir StdoHash KptsAcc Nelectro ElecTemp OccTresh')
+ call initactivate(1,'InDir OutDir StdoHash Nelectro ElecTemp OccTresh')
  !
  !FFT
  !

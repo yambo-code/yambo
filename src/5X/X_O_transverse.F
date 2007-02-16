@@ -93,7 +93,7 @@
 !
 #if defined PJ_GKS
  if (lgks) then
-   nb_aux = shape(X_q0grad,2)
+   nb_aux = size(X_q0grad,2)
    v_limits =(/1,nb_aux/) 
    c_limits =(/1,nb_aux/) 
  else

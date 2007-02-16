@@ -256,7 +256,7 @@ contains
   end subroutine reset_DB1
 
   subroutine long_grid_setup(ifail)
-    use R_lattice,       only : RL_v_comp_norm
+    use pars,            only : zero_dfl
     use functions,       only : intc
     use vec_operate,     only : v_is_zero, v_norm, c2a
     use X_m,             only : q_long, q0mod ! Remove q0mod from here
@@ -309,7 +309,7 @@ contains
       !
       do ik = 2, Xk_save%nibz
         if(.not.v_is_zero( Xk_shift%pt(i_grid_k+ik,:) - &
-&                           Xk_save%pt(ik,:) - q_init(:) )) then
+&                          Xk_save%pt(ik,:) - q_init(:) )) then
           call msg('r','Long. gauge shifts are not uniform for all {k}.')
           ifail = ifail + 1
           return
@@ -325,7 +325,7 @@ contains
     !
     q0mod = q_mod(1)  ! a.u.
     q_mod(1:num_long_grid) = q_mod(1:num_long_grid) - q0mod
-    if(.not.all( abs(q_mod).lt.RL_v_comp_norm )) then
+    if(.not.all( abs(q_mod).lt.zero_dfl )) then
       call msg('r','Note: Long. gauge shifts are not uniform for all {k}.')
     endif
 
@@ -341,9 +341,8 @@ contains
     ! and the rotation matrix R_long: v' = R_long . v
     !
     use com,             only : warning
-    use pars,            only : SP
+    use pars,            only : SP,zero_dfl
     use vec_operate,     only : cross_product, v_is_zero, normalize_v
-    use R_lattice,       only : RL_v_comp_norm
     use X_m,             only : q_long, R_long
     implicit none
     integer, intent(inout) :: ifail
@@ -371,7 +370,7 @@ contains
       !
       b(:) = 0.0_SP
       do i1 = 1,3 
-        if(abs(a(i1)).lt.RL_v_comp_norm) then
+        if(abs(a(i1)).lt.zero_dfl) then
           b(i1) = 1.0_SP
           bfound = .true.
           exit
@@ -419,8 +418,7 @@ contains
     ! Select and check the requested field direction
     ! Note that field_dir has length q0_defmod ALWAYS
     !
-    use R_lattice,       only : RL_v_comp_norm
-    use pars,            only : SP
+    use pars,            only : SP,zero_dfl
     use X_m,             only : R_long, q_long
     use vec_operate,     only : v_is_zero, c2a, normalize_v, cross_product, v_norm
     implicit none
@@ -443,7 +441,7 @@ contains
       !
       ! 2 grids defined, check field vector in the plane and rotate
       !
-      if( abs(dot_product(R_long(3,:),field_dir_norm)).gt.RL_v_comp_norm ) then
+      if( abs(dot_product(R_long(3,:),field_dir_norm)).gt.zero_dfl ) then
         call msg('r','Field direction does not lie in plane allowed by grids.')
         ifail = ifail + 1
         return ! Don't overwrite field_dir
@@ -471,7 +469,7 @@ contains
       !
       ! Warn if direction of field is different from that in input (q= -q)
       !
-      if( abs(v_norm(cross_product(R_long(1,:),field_dir_norm))).gt.RL_v_comp_norm ) then
+      if( abs(v_norm(cross_product(R_long(1,:),field_dir_norm))).gt.zero_dfl ) then
           call warning(' Overwriting requested field direction with grid defined value')
       endif
 

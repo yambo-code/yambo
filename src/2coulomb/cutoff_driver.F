@@ -20,28 +20,27 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine cutoff_driver(q)
-!===========================
-!     
-! In this subroutine I calculate the FT of a cutoffed coulomb
-! interaction, zeroed outside a given cylinder/box/sphere geometry.
-!
-! The cutoffed potential in G-space is given by
-!
-! CYLINDER:
-! ---------
-! 
-! Vc(q)=4pi*Int[0,Rc]Int[0,zc]drdz cos(q_z*z)*J0(q_r*r)/sqrt(r**2+z**2)
-! q_r=sqrt(qx**2+qy**2)
-!
-! BOX:
-! ----
-!
-! Vc(q,G)=1/(Vdl Nq)\sum_{G'} V(q'+G') F(q'+G',q+G)
-!
-! Note that q\in BZ and
-!
-! F(v,w)=8 \prod_i sin[(v_i-w_i)L_i/2]/(v_i-w_i)
-!------------------------------------------------------------------
+ !     
+ ! In this subroutine I calculate the FT of a cutoffed coulomb
+ ! interaction, zeroed outside a given cylinder/box/sphere geometry.
+ !
+ ! The cutoffed potential in G-space is given by
+ !
+ ! CYLINDER:
+ ! ---------
+ ! 
+ ! Vc(q)=4pi*Int[0,Rc]Int[0,zc]drdz cos(q_z*z)*J0(q_r*r)/sqrt(r**2+z**2)
+ ! q_r=sqrt(qx**2+qy**2)
+ !
+ ! BOX:
+ ! ----
+ !
+ ! Vc(q,G)=1/(Vdl Nq)\sum_{G'} V(q'+G') F(q'+G',q+G)
+ !
+ ! Note that q\in BZ and
+ !
+ ! F(v,w)=8 \prod_i sin[(v_i-w_i)L_i/2]/(v_i-w_i)
+ !
  use pars,          ONLY:SP,schlen,lchlen
  use vec_operate,   ONLY:v_is_zero,v_norm
  use com,           ONLY:msg
@@ -52,57 +51,60 @@
  use drivers,       ONLY:l_col_cut
  implicit none
  type(bz_samp) :: q
-!
-!ws
+ !
+ ! Work Space
+ !
  logical ::cut_is_sphere,cut_is_box,cut_is_cyl,is_cut(3)
  integer ::i1,i2,i3,i4
  real(SP)::length(3)
  logical ::l_col_test
  character(schlen)::str_piece(5)
  character(lchlen)::ch1,ch2
-!
-! Potential symmetry
-!
+ !
+ ! Potential symmetry
+ !
  real(SP)::sym_points(8,3)
-!
-! I/O
-!
+ !
+ ! I/O
+ !
  integer ::ID,io_err
  integer, external :: ioCOL_CUT
-!
-! Real-Space Test 
-!-----------------
+ !
+ ! Real-Space Test 
+ !
  call parser('CUTCol_test',l_col_test)
-!
-! Parsing the cut_geometry string
-!---------------------------------
-!
+ !
+ ! Parsing the cut_geometry string
+ !
  call string_split(cut_geometry,str_piece)
-
+ !
  cut_is_sphere=trim(str_piece(1))=='sphere'
  cut_is_box=trim(str_piece(1))=='box'
  cut_is_cyl=trim(str_piece(1))=='cylinder'
-!
-! Cutoffed directions
-!
+ !
+ ! Cutoffed directions
+ !
  is_cut=.false.
  is_cut(1)=index(str_piece(2),'x')/=0
-!
-!Box
+ !
+ ! Box
+ !
  if (cut_is_box.or..not.is_cut(1)) is_cut(2)=index(str_piece(2),'y')/=0
  if (cut_is_box.or.(.not.is_cut(1).and..not.is_cut(2))) &
 &   is_cut(3)=index(str_piece(2),'z')/=0
-!
-!Sphere
+ !
+ ! Sphere
+ !
  if (cut_is_sphere) is_cut=.true.
-!
-!Cylinder
+ !
+ ! Cylinder
+ !
 #if defined PJ_CYL_CUT
  if (cut_is_cyl.or..not.is_cut(1)) is_cut(2)=index(str_piece(2),'y')/=0
  if (cut_is_cyl.or.(.not.is_cut(1).and..not.is_cut(2))) &
 &   is_cut(3)=index(str_piece(2),'z')/=0
 #endif
-!
+ !
  if (.not.cut_is_box) box_length=0.
 #if defined PJ_CYL_CUT
  if (.not.cut_is_sphere.and..not.cut_is_cyl) cyl_ph_radius=0.
@@ -110,9 +112,9 @@
 #else
 if (.not.cut_is_sphere) cyl_ph_radius=0.
 #endif
-!
-! Return conditions
-!
+ !
+ ! Return conditions
+ !
  if (.not.any((/cut_is_sphere,cut_is_box,cut_is_cyl/))) then
    l_col_cut=.false.
    return
@@ -133,9 +135,10 @@ if (.not.cut_is_sphere) cyl_ph_radius=0.
    l_col_cut=.false.
    return
  endif
+ !
  ch1=string_pack('Coloumb potential CutOff :',str_piece(1))
  call section('*',trim(ch1))
-!===============================================================
+ !
  ch1=           'Cut directions       :'
  ch2=' '
  if (is_cut(1)) ch1=string_pack(ch1,'X')
@@ -147,9 +150,9 @@ if (.not.cut_is_sphere) cyl_ph_radius=0.
  call msg('r',trim(ch1))
  write (cut_geometry,'(3a)') trim(str_piece(1)),' ',trim(ch2)
  if (cut_is_sphere) is_cut=.true.
-!
-!lengths
-!-------
+ !
+ !lengths
+ !
  if (cut_is_sphere) call msg('r','Sphere radius   [au]:',cyl_ph_radius)
  if (cut_is_box) then
    i1=0
@@ -170,14 +173,14 @@ if (.not.cut_is_sphere) cyl_ph_radius=0.
    call msg('r',  'Cyl. radius      [au]:',cyl_ph_radius)
 #endif
  endif
-
-! Checking geometry symmetry
-!------------------------------------------
-! We generate max 8 points corresponding to
-! the corners of the given geometry.
-! These points must be left unchanged by the
-! symmetry operations.
-!
+ !
+ ! Checking geometry symmetry
+ !
+ ! We generate max 8 points corresponding to
+ ! the corners of the given geometry.
+ ! These points must be left unchanged by the
+ ! symmetry operations.
+ !
  sym_points=0.
  if (cut_is_cyl) then
    do i1=1,3
@@ -202,9 +205,9 @@ if (.not.cut_is_sphere) cyl_ph_radius=0.
  endif
  call msg('rn','Symmetry test passed :',geometry_sym_is_ok())
  if (.not.geometry_sym_is_ok()) return
-!
-! I/O + Specific geometry calls
-!------------------------------
+ !
+ ! I/O + Specific geometry calls
+ !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  io_err=ioCOL_CUT(ID)
  if (io_err/=0) then
@@ -213,39 +216,38 @@ if (.not.cut_is_sphere) cyl_ph_radius=0.
 #if defined PJ_CYL_CUT
    if (cut_is_cyl)    call cutoff_cylinder(q,is_cut)
 #endif
-!
+   !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=ioCOL_CUT(ID)
-!
-! Test
-!------
+   !
+   ! Test
+   !
    if (l_col_test) call cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
  endif
-
+ !
  contains
- 
- logical function geometry_sym_is_ok()
-!-------------------------------------
- use D_lattice,     ONLY:dl_sop,nsym
- integer    :: is,syms_ok
- real(SP)   :: v_rot(3)
-
- geometry_sym_is_ok=.true.
- do i1=1,8
-   syms_ok=0
-   do is=1,nsym
-     v_rot=matmul(dl_sop(:,:,is),sym_points(i1,:))
-     do i2=1,8
-       if (v_is_zero(v_rot-sym_points(i2,:))) then
-         syms_ok=syms_ok+1
-         exit
-       endif
+   !
+   logical function geometry_sym_is_ok()
+     !
+     use D_lattice,     ONLY:dl_sop,nsym
+     integer    :: is,syms_ok
+     real(SP)   :: v_rot(3)
+     !
+     geometry_sym_is_ok=.true.
+     do i1=1,8
+       syms_ok=0
+       do is=1,nsym
+         v_rot=matmul(dl_sop(:,:,is),sym_points(i1,:))
+         do i2=1,8
+           if (v_is_zero(v_rot-sym_points(i2,:))) then
+             syms_ok=syms_ok+1
+             exit
+           endif
+         enddo
+       enddo
+       if (syms_ok/=nsym) geometry_sym_is_ok=.false.
      enddo
-   enddo
-   if (syms_ok/=nsym) geometry_sym_is_ok=.false.
- enddo
-
- end function
-
+     !
+   end function
+   !
  end subroutine
-!

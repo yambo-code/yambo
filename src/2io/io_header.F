@@ -21,7 +21,7 @@
 !
  integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,&
 &                           T_EL)
- !================================================================
+ !
  use pars,          ONLY:SP,schlen,HARTREE
  use drivers,       ONLY:list_dbs
  use com,           ONLY:code_version,msg,warning
@@ -35,13 +35,18 @@
 &                        io_serial_number,io_file,io_com,io_mode,&
 &                        DUMP,VERIFY,NONE,io_fragmented,dbs_fragment,&
 &                        ver_is_gt_or_eq
+ use zeros,         ONLY:define_zeros
+ !
  implicit none
  integer            :: ID
  logical,optional   :: QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,T_EL
-!ws
+ !
+ ! Work Space
+ !
  integer             :: i1,nqibz_disk,MENU_here,R_LATT_vec(4),&
 &                       R_LATT_vec_disk(4),MODE,MENU,ng_on_db
  real(SP),allocatable:: l_qpt(:,:)
+ real(SP)            :: local_zero(3)
  logical             :: WARN
  character(schlen)   :: ch
  !
@@ -125,8 +130,13 @@
    call io_bulk(ID,R2=l_qpt)
 
    if (read_is_on(ID).and.allocated(q_pt)) then
+     !
+     call define_zeros(q_pt(:,1),zero_=local_zero(1))
+     call define_zeros(q_pt(:,2),zero_=local_zero(2))
+     call define_zeros(q_pt(:,3),zero_=local_zero(3))
+     !
      do i1=1,nqibz
-       if (.not.v_is_zero(q_pt(i1,:)-l_qpt(i1,:))) io_header=-1
+       if (.not.v_is_zero(q_pt(i1,:)-l_qpt(i1,:),zero_=local_zero)) io_header=-1
      enddo
      if (io_header/=0) then
        if (WARN) call warning('Wrong Q-points coordinates/order in X database')
@@ -170,7 +180,6 @@
    if (io_header/=0) goto 1
  endif
  !
- !
 1 io_mode(ID)=MODE
-
+ !
  end function

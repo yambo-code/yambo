@@ -20,10 +20,11 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  module pars
-!===========
+   !
    implicit none
-!
-!KINDS
+   !
+   ! KINDS
+   !
    integer, parameter  :: DP = selected_real_kind(14,200)
 #if defined _DOUBLE
    integer, parameter  :: SP = selected_real_kind(14,200)
@@ -31,19 +32,23 @@
    integer, parameter  :: SP = selected_real_kind(6,30)
 #endif
    integer, parameter  :: IP = selected_int_kind(9)
-!
-!STRINGs
+   !
+   ! STRINGs
+   !
    integer, parameter  :: schlen=100
    integer, parameter  :: lchlen=300
-!
-!CONSTANTs
+   !
+   ! CONSTANTs
+   !
    real(SP), parameter :: pi=3.141592653589793238462643383279502884197_SP
-!
-!UNITs CONVERSION
+   real(SP), parameter :: zero_dfl=1.E-5
+   !
+   ! UNITs CONVERSION
+   !
    real(SP), parameter :: HARTREE=27.2113834_SP         ! from ev
    real(SP), parameter :: HA2GHZ=HARTREE*241796_SP
    real(SP), parameter :: HA2THZ=HARTREE*241.796_SP
    real(SP), parameter :: HA2CM1=HARTREE*8065.5_SP
    real(SP), parameter :: Kelvin=1.1604*10.**4*HARTREE  ! from ev
-
+   !
  end module 

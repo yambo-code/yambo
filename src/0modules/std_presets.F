@@ -32,7 +32,7 @@
 &                     QP_W_partially_done,GWo_SC_done,GWo_iterations
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,n_atoms_max,n_atom_species,pp_n_l_comp_max,pp_kbv_dim
- use R_lattice,  ONLY:RL_v_comp_norm,n_g_shells,ng_closed,bse_scattering,&
+ use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,&
 &                     cyl_ph_radius,box_length,cyl_length,cut_geometry,CUTOFF_plus_RIM
@@ -58,12 +58,20 @@
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
  use ELPH,       ONLY:ph_modes,elph_nb
  use memory_m,   ONLY:mem_reset
+ use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND
  !
  implicit none
  !
  character(*) :: INSTR,IND,OD,JS
  integer      :: i1
+ !
+ ! ZEROs 
+ !
+ zero_norm =zero_dfl
+ k_iku_zero=zero_dfl
+ k_rlu_zero=zero_dfl
+ G_iku_zero=zero_dfl
  !
  ! PATHS 
  !
@@ -111,8 +119,6 @@
  !
  !R_lattice
  !
- RL_v_comp_norm=-1. ! If negative the best choise for RL_v_comp_norm
-                    ! is decided in k_lattice.
  n_g_shells=0
  nqibz=0
  ng_closed=0

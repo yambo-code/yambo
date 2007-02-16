@@ -307,9 +307,10 @@
  !
  use vec_operate,   ONLY:v_is_zero
  use R_lattice,     ONLY:ng_in_shell,n_g_shells
+ use zeros,         ONLY:define_zeros
  !
  integer :: is,ig1,ig2,g_limits(2)
- real(SP):: v(3)
+ real(SP):: v(3),local_zero(3)
  !
  X_RLcomp_table=0
  X_RLcomp_ig=0
@@ -319,15 +320,24 @@
     if (any(X_RLcomp_ig==0)) X_RLcomp_table=-1
     return
   endif
+  !
   g_limits=1
   if (is > 1 ) g_limits = (/ ng_in_shell(is-1), ng_in_shell(is) /)
+  !
+  call define_zeros(g_vec(:X%ng,1),zero_=local_zero(1))
+  call define_zeros(g_vec(:X%ng,2),zero_=local_zero(2))
+  call define_zeros(g_vec(:X%ng,3),zero_=local_zero(3))
+  !
   g_loop: do ig1=g_limits(1),g_limits(2)
     do ig2=g_limits(1),g_limits(2)
+      !
       v=RL_vecs_disk(ig1,:)-g_vec(ig2,:)
-      if (v_is_zero(v)) then
+      !
+      if (v_is_zero(v,zero_=local_zero)) then
         X_RLcomp_ig(ig1)=ig2
         cycle g_loop
       endif
+      !
     enddo
   enddo g_loop
  enddo

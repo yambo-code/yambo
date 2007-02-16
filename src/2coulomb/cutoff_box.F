@@ -20,39 +20,40 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine cutoff_box(q,is_cut)
-!===============================
-!
-! Vc(q,G)=1/(Vdl Nq)\sum_{q' G'} V(q'+G') F(q'+G',q+G) [3D BOX] 
-!
-! Note that q\in BZ and
-!
-! F(v,w)= \prod_i 2 sin[(v_i-w_i)L_i/2]/(v_i-w_i)
-!
-!
+ !
+ ! Vc(q,G)=1/(Vdl Nq)\sum_{q' G'} V(q'+G') F(q'+G',q+G) [3D BOX] 
+ !
+ ! Note that q\in BZ and
+ !
+ ! F(v,w)= \prod_i 2 sin[(v_i-w_i)L_i/2]/(v_i-w_i)
+ !
  use pars,          ONLY:SP,pi
  use wave_func,     ONLY:wf_ng
- use vec_operate,   ONLY:iku_v_norm,v_norm
+ use vec_operate,   ONLY:iku_v_norm,v_norm,v_is_zero
  use D_lattice,     ONLY:DL_vol,alat,sop_inv,a
  use R_lattice,     ONLY:bare_qpg,RL_vol,RIM_ng,RIM_qpg,bz_samp,&
 &                        box_length,g_vec,g_rot,ng_closed,RIM_anisotropy,&
-&                        CUTOFF_plus_RIM,RL_v_comp_norm
+&                        CUTOFF_plus_RIM
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use timing,        ONLY:live_timing
+ use zeros,         ONLY:k_iku_zero,G_iku_zero
+ !
  implicit none
  logical      ::is_cut(3)
  type(bz_samp)::q
-!ws
+ !
+ ! Work Space
+ !
  integer      ::iq,ig,iqbz,ig_p,is,ig_r,iqibz,i1,nq_looped
  real(SP)     ::v1(3),v2(3),V_bare(q%nibz,ng_closed),vol_factor
  complex(SP)  ::V_cut(q%nibz,wf_ng)
  type(pp_indexes) ::px
-!
-!-------------------------------
+ !
  call pp_indexes_reset(px)
-!
-! Bare interaction
-!
+ !
+ ! Bare interaction
+ !
  do iq=1,q%nibz
    do ig=1,ng_closed
      if (iq==1.and.ig==1) cycle
@@ -60,75 +61,76 @@
    enddo
  enddo
  V_bare(1,1)=7.7956*(RL_vol/real(q%nbz))**(-2./3.)
-!
-! RIM contribution
-!
+ !
+ ! RIM contribution
+ !
  if (allocated(RIM_qpg).and.RIM_anisotropy==0.) then
    CUTOFF_plus_RIM=.true.
    forall(iq=1:q%nibz,ig=1:RIM_ng) &
           V_bare(iq,ig)=RIM_qpg(iq,ig,ig)*DL_vol*real(q%nbz)/2.
  endif
-!
-! BOX
-!-----
+ !
+ ! BOX
+ !
  call k_ibz2bz(q,'i',.true.)
-!
+ !
  V_cut=cmplx(0.)
-!
+ !
  call par_indexes(px,(/q%nibz,wf_ng/))
-!
+ !
  call live_timing('Box',px%stps(myid+1))
-
+ !
  do iq=1,q%nibz
    do ig=1,wf_ng
-
+     !
      if (.not.px%i2p(iq,ig)) cycle
-
+     !
      v1= ( q%pt(iq,:)+g_vec(ig,:) )*2.*pi/alat(:)
-
+     !
      nq_looped=0
-
+     !
      q_loop: do iqbz=1,q%nbz
        iqibz=q%sstar(iqbz,1)
        is   =q%sstar(iqbz,2)
-
+       !
        do i1=1,3
          if (.not.is_cut(i1).and.&
-&            abs(q%pt(iq,i1)-q%ptbz(iqbz,i1))>RL_v_comp_norm) cycle q_loop
+&            .not.v_is_zero(q%pt(iq,:)-q%ptbz(iqbz,:),zero_=k_iku_zero)) cycle q_loop
        enddo
-
+       !
        nq_looped=nq_looped+1
-
+       !
        g_loop: do ig_p=1,ng_closed
-
+         !
          do i1=1,3
            if (.not.is_cut(i1).and.&
-&              abs(g_vec(ig,i1)-g_vec(ig_p,i1))>RL_v_comp_norm) cycle g_loop
+&              .not.v_is_zero(g_vec(ig,:)-g_vec(ig_p,:),zero_=G_iku_zero)) cycle g_loop
          enddo
-
+         !
          ig_r=g_rot( sop_inv(is), ig_p )
          v2= ( q%ptbz(iqbz,:)+g_vec(ig_p,:) )*2.*pi/alat(:)
-
+         !
          V_cut(iq,ig)=V_cut(iq,ig)+V_bare(iqibz,ig_r)*F_box(v1,v2)
-
+         !
        enddo g_loop
-
+       !
      enddo q_loop
-
+     !
      V_cut(iq,ig)=V_cut(iq,ig)/nq_looped
-
+     !
      call live_timing(steps=1)
-
+     !
    enddo
  enddo
+ !
  call live_timing()
-!
-! MPI 2 all
-!
+ !
+ ! MPI 2 all
+ !
  call pp_redux_wait(V_cut)
-!
-! Volume Factor
-!
+ !
+ ! Volume Factor
+ !
  if (all(is_cut)) then ! BOX XYZ
    vol_factor=DL_vol
  else if (all((/is_cut(1),is_cut(2),.not.is_cut(3)/)))  then ! BOX XY
@@ -146,25 +148,25 @@
  endif
 
  forall (iq=1:q%nibz,ig=1:wf_ng) bare_qpg(iq,ig)=sqrt(vol_factor/V_cut(iq,ig))
-
+ !
  call k_ibz2bz(q,'d',.true.)
-
+ !
  contains
-
- real(SP) function F_box(v1,v2)
-!------------------------------
- real(SP) :: v1(3),v2(3)
- integer  :: i_s
- F_box=1.
- do i_s=1,3
-   if (.not.is_cut(i_s)) cycle
-   if (abs(v1(i_s)-v2(i_s))<=1.E-5) then
-     F_box=F_box*box_length(i_s)
-   else
-     F_box=F_box*2.*sin((v1(i_s)-v2(i_s))*box_length(i_s)/2.)/(v1(i_s)-v2(i_s))
-   endif
- enddo
- end function
-!
+   !
+   real(SP) function F_box(v1,v2)
+     !
+     real(SP) :: v1(3),v2(3)
+     integer  :: i_s
+     !
+     F_box=1.
+     do i_s=1,3
+       if (.not.is_cut(i_s)) cycle
+       if (abs(v1(i_s)-v2(i_s))<=1.E-5) then
+         F_box=F_box*box_length(i_s)
+       else
+         F_box=F_box*2.*sin((v1(i_s)-v2(i_s))*box_length(i_s)/2.)/(v1(i_s)-v2(i_s))
+       endif
+     enddo
+   end function
+   !
  end subroutine
-!

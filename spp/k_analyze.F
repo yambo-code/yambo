@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine k_analize(en,k,Xk,q)
-!===============================
+ !
  use pars,                ONLY:SP,schlen
  use electrons,           ONLY:levels
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,rl_sop,nXkibz
@@ -30,10 +30,14 @@
  use vec_operate,         ONLY:c2a,rlu_v_is_zero,v_is_zero,v_norm
  use SPP,                 ONLY:Kcoo_in,Kcoo_out,qlong
  use timing,              ONLY:live_timing_is_on
+ use zeros,               ONLY:k_iku_zero,k_rlu_zero
+ !
  implicit none
  type(levels) ::en       
  type(bz_samp)::k,Xk,q
-!ws
+ !
+ ! Work Space
+ !
  type(bz_samp)::GWK,GWK_Q
  real(SP)     ::real_ctl,v(3),ka(3),q0(3)
  integer      ::i1,i2,is,ik
@@ -41,23 +45,22 @@
  real(SP), allocatable :: GWK_table(:)
  integer,  allocatable :: int_ctl(:)
  character(schlen)     :: ch
-
-!----------------------------------------------------------------
+ !
  call bz_samp_reset(GWK)
  call bz_samp_reset(GWK_Q)
-!
+ !
  if (len_trim(Kcoo_in)==0) return
-!
+ !
  call section('*',"== GW K-grid analyzer ==")
-!
-!Q/Xk (IBZ->BZ)
-!--------------
+ !
+ !Q/Xk (IBZ->BZ)
+ !
  call k_ibz2bz(q,'i',.false.)
  call k_ibz2bz(Xk,'i',.false.)
  call msg("s",'Q-points  (BZ):',q%nbz)
-!
-!Input file parsing
-!-------------------
+ !
+ !Input file parsing
+ !
  real_ctl=0.
  GWK%nibz=1
  main_loop: do while(real_ctl/=999.)
@@ -67,21 +70,24 @@
    call parser('GWKpts',GWK%pt)
    real_ctl=GWK%pt(GWK%nibz,3)
    if (real_ctl/=999.) then
+     !
      do i1=1,Xk%nbz
        v=Xk%ptbz(i1,:)
        if (trim(Kcoo_in)=="cc")  call c2a(v_in=Xk%ptbz(i1,:),v_out=v,mode="ki2c")
        if (trim(Kcoo_in)=="rlu") call c2a(v_in=Xk%ptbz(i1,:),v_out=v,mode="ki2a")
-       if (v_is_zero(v(:)-GWK%pt(GWK%nibz,:))) exit main_loop
+       if (v_is_zero(v(:)-GWK%pt(GWK%nibz,:),zero_=k_iku_zero)) exit main_loop
      enddo
+     !
      GWK%nibz=GWK%nibz+1
+     !
    endif
  enddo main_loop
  GWK%nibz=GWK%nibz-1
  allocate(GWK_table(GWK%nibz))
  call msg("s",'Read K-points :',GWK%nibz)
-!
-!Extended grid
-!-------------
+ !
+ ! Extended grid
+ !
  allocate(GWK_Q%ptbz(Xk%nibz+GWK%nibz*q%nbz,3))
  GWK_Q%ptbz(:Xk%nibz,:)=k%pt(:Xk%nibz,:)
  GWK_Q%nbz=Xk%nibz
@@ -98,21 +104,23 @@
  call k_reduce(GWK_Q)
  call msg("l","done")
  call msg("s","Reduced K-grid points:",GWK_Q%nibz)
-!
-! the GWK_Q contains the k+(k-q) grids.
-! Before reporting the points I wanto to sign the 
-! position in the final grid of the given QP k-points (read from the input file)
-!
+ !
+ ! the GWK_Q contains the k+(k-q) grids.
+ ! Before reporting the points I wanto to sign the 
+ ! position in the final grid of the given QP k-points (read from the input file)
+ !
  allocate(int_ctl(GWK_Q%nibz))
  int_ctl=0
-!int_ctl =0 -> nothing
-!int_ctl/=0 -> GW (index)
+ !
+ ! int_ctl =0 -> nothing
+ ! int_ctl/=0 -> GW (index)
+ !
  do i1=1,GWK_Q%nibz
    call c2a(v_in=GWK_Q%pt(i1,:),v_out=v,mode='ki2a')
    do i2=1,GWK%nibz
      do is=1,nsym
        call c2a(v_in= matmul(rl_sop(:,:,is),GWK%pt(i2,:)) ,v_out=ka,mode='ki2a')
-       if (rlu_v_is_zero(v(:)-ka(:))) then
+       if (rlu_v_is_zero(v(:)-ka(:),zero_=k_rlu_zero)) then
          if (int_ctl(i1)/=0) cycle
          int_ctl(i1)=i2
          exit
@@ -120,7 +128,7 @@
      enddo
    enddo
  enddo
-!
+ !
  live_timing_is_on=.false.
  call msg("s"," ========== Reduced K-grid ==========")
  GWK_table=0
@@ -139,13 +147,13 @@
    enddo
  enddo
  live_timing_is_on=.true.
-!
-! Generate shifted k-points set for longitudinal gauge calculation
-!-------
-!call parser('KGrdShft',qlong)
+ !
+ ! Generate shifted k-points set for longitudinal gauge calculation
+ !
  call parser('KShift1',qlong(1,:))
  call parser('KShift2',qlong(2,:))
  call parser('KShift3',qlong(3,:))
+ !
  if(any(abs(qlong).gt.1e-6)) then
    live_timing_is_on=.false.
    kout(:,:) = Xk%pt(:,:)
@@ -190,47 +198,17 @@
        enddo
      endif
    enddo
-
+   !
  endif
  live_timing_is_on=.true.
-
-!
-! CLEAN
-!-------
+ !
+ ! CLEAN
+ !
  call bz_samp_reset(GWK)
  call bz_samp_reset(GWK_Q)
  call k_ibz2bz(q,'d',.false.)
  call k_ibz2bz(Xk,'d',.false.)
  deallocate(GWK_table)
  deallocate(int_ctl)
-
+ !
  end subroutine
-!
-! Database of high-Simmetry K-points (to handle somehow)
-!
-! fcc [iku] :
-!
-!   0.00000    0.00000    0.00000 G 
-!   1.00000    0.00000    0.00000 X
-!   0.50000    0.50000    0.50000 L
-!   0.75000    0.75000    0.00000 K
-!   1.00000    0.50000    0.00000 W
-!   1.00000    0.25000    0.25000 U
-!
-! fcc [rlu]:
-!
-!   0.00000    0.00000    0.00000
-!   0.00000    0.50000    0.50000
-!   0.50000    0.50000    0.50000
-!   0.37500    0.37500    0.75000
-!   0.25000    0.50000    0.75000
-!   0.25000    0.62500    0.62500
-!
-! graphene and others .. [rlu]
-!
-! K     2/3 1/3 0
-! M	1/2 1/2 0 
-! L	1/2 1/2 1/2
-! H	1/2 1/3 1/2
-! A	0 0 1/2 
-!

@@ -20,50 +20,54 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  integer function eval_G_minus_G(iG,iGo)
-!=======================================
-!
-! Evaluates the  G-G' table :
-!
-!  g_vec( G_m_G(i,j) ) = g_vec(i)-g_vec(j)
-!
-! and returns the orginal iG that is redefined in output
-! in such a way that G_m_G(iG,j) exists for all j
-!
+ !
+ ! Evaluates the  G-G' table :
+ !
+ !  g_vec( G_m_G(i,j) ) = g_vec(i)-g_vec(j)
+ !
+ ! and returns the orginal iG that is redefined in output
+ ! in such a way that G_m_G(iG,j) exists for all j
+ !
  use pars,         ONLY:SP,IP
  use com,          ONLY:error
  use memory_m,     ONLY:mem_est
  use vec_operate,  ONLY:v_is_zero
  use R_lattice,    ONLY:G_m_G,g_vec,ng_closed,ng_in_shell,n_g_shells
+ use zeros,        ONLY:G_iku_zero
+ !
  implicit none
  integer :: iG,iGo
-!ws
+ !
+ ! Work Space
+ !
  integer :: i1,i2,i3,iG_shell
  real(SP):: v1(3)
-!
-! Init
-!
+ !
+ ! Init
+ !
  eval_G_minus_G=iG
-!
-! Allocation
-!
+ !
+ ! Allocation
+ !
  if (allocated(G_m_G)) return
  allocate(G_m_G(iG,iGo))
  call mem_est("G_m_G",(/shape(G_m_G)/),(/IP/))
-!
-! Loop
-!
+ !
+ ! Loop
+ !
 1 G_m_G=0
-!
-! Find the shell corresponding to iG
+ !
+ ! Find the shell corresponding to iG
+ !
  do i1=1,n_g_shells
    if (ng_in_shell(i1)==iG) iG_shell=i1
  enddo
-!
+ !
  do i1=1,iG
    do i2=1,iGo
      v1=g_vec(i1,:)-g_vec(i2,:)
      do i3=1,ng_closed
-       if (v_is_zero(v1-g_vec(i3,:))) then
+       if (v_is_zero(v1-g_vec(i3,:),zero_=G_iku_zero)) then
          G_m_G(i1,i2)=i3
          exit
        endif
@@ -78,6 +82,5 @@
      endif
    enddo
  enddo 
-
+ !
  end function
-!

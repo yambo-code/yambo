@@ -20,56 +20,58 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine bz_samp_indexes(k,Xk,q)
-!==================================
-!
-! ikbz=(ik,is) --<--:--<-- okbz=(ok,os) = (IK-Q)
-!                   :
-!                  /:\ iqbz=(iq,is)
-!                   :
-!
-! iq_is = ik_is-ok_os+Go
-!
-! qindx_X(iq,ikbz,1)=okbz
-! qindx_X(iq,ikbz,2)=iGo
-!
-! qindx_B(ikbz,okbz,1)=iqbz
-! qindx_B(ikbz,okbz,2)=iGo
-!
-! qindx_S(ik,iqbz,1)=okbz
-! qindx_S(ik,iqbz,2)=iGo
-!
+ !
+ ! ikbz=(ik,is) --<--:--<-- okbz=(ok,os) = (IK-Q)
+ !                   :
+ !                  /:\ iqbz=(iq,is)
+ !                   :
+ !
+ ! iq_is = ik_is-ok_os+Go
+ !
+ ! qindx_X(iq,ikbz,1)=okbz
+ ! qindx_X(iq,ikbz,2)=iGo
+ !
+ ! qindx_B(ikbz,okbz,1)=iqbz
+ ! qindx_B(ikbz,okbz,2)=iGo
+ !
+ ! qindx_S(ik,iqbz,1)=okbz
+ ! qindx_S(ik,iqbz,2)=iGo
+ !
  use pars,           ONLY:SP,lchlen,IP
  use drivers,        ONLY:l_bse
  use memory_m,       ONLY:mem_est
  use com,            ONLY:msg,gen_fmt,error
  use par_proc_m,     ONLY:pp_redux_wait
+ use timing,         ONLY:live_timing
  use matrix_operate, ONLY:m3inv
- use vec_operate,    ONLY:v_is_zero,c2a,rlu_v_is_zero
+ use vec_operate,    ONLY:v_is_zero,c2a
  use D_lattice,      ONLY:nsym
- use R_lattice,      ONLY:b,d3q_factor,RL_v_comp_norm,RL_vol,g_vec,ng_vec,&
+ use R_lattice,      ONLY:b,d3q_factor,RL_vol,g_vec,ng_vec,&
 &                         nqibz,nqbz,qindx_X,qindx_B,qindx_S,qp_states_k,&
 &                         bse_scattering,qindx_alloc,rl_sop,Xk_grid_is_uniform,&
 &                         k_grid,k_grid_b,q_pt,bz_samp,q_norm,q0_defmod,&
 &                         q_sstar
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
+ use zeros,          ONLY:G_iku_zero
+ !
  implicit none
  type(bz_samp)::k,Xk,q
-!
-!Work Space
-!
+ !
+ !Work Space
+ !
  integer :: io_db,io_err,ioQINDX
  integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikbz,iqs
+ real(SP):: v1(3),k_b_m1(3,3),G_zero(3),local_zero(3)
+ logical :: connected_grids,user_defined_qpts,gamma_point_only
  integer, allocatable :: q_map(:,:,:),q_iptbz(:,:)
- real(SP) :: v1(3),k_b_m1(3,3),RL_v_comp_norm_save
- logical  :: connected_grids,user_defined_qpts,gamma_point_only
-!
- call section('*','Transferred momenta grid: Indexes')
-!------------------------------------------------------
+ !
+ call section('*','Transferred momenta grid')
+ !
  user_defined_qpts=.false.
  gamma_point_only=.false.
  if (.not.bse_scattering) bse_scattering=l_bse
  q%description='q'
-!
+ !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3/),MODE=VERIFY,ID=io_db)
  io_err=ioQINDX(Xk,q,io_db)
  if (io_err==0) then
@@ -79,44 +81,40 @@
    return
  endif
  !
- ! Save RL_v_comp_acc found in k_lattice 
- !
- RL_v_comp_norm_save=RL_v_comp_norm
- !
  ! First I map the Xk grid in a simple cubic Net
  !
  call k_ibz2bz(Xk,'a',.false.)  
-
+ !
  allocate(q_map(k_grid(1),k_grid(2),k_grid(3)),q_iptbz(Xk%nbz,3))
-!
-! k_b_m1=transpose(k_grid_b) in rlu
-!
-! k_grid_b is in cc !
-!
+ !
+ ! k_b_m1=transpose(k_grid_b) in rlu
+ !
+ ! k_grid_b is in cc !
+ !
  call c2a(v_in=k_grid_b(1,:),v_out=k_b_m1(:,1),mode='kc2a')
  call c2a(v_in=k_grid_b(2,:),v_out=k_b_m1(:,2),mode='kc2a')
  call c2a(v_in=k_grid_b(3,:),v_out=k_b_m1(:,3),mode='kc2a')
-!
-! q_iptbz(i,:) = Xk%ptbz(1,:) - Vo  in units of k_grid_b
-! q_map gives the index of q_iptbz given the components along k_grid_b
-!
-! As first step I define the map with respect to Q defined as difference
-! of K-pts
-!
+ !
+ ! q_iptbz(i,:) = Xk%ptbz(1,:) - Vo  in units of k_grid_b
+ ! q_map gives the index of q_iptbz given the components along k_grid_b
+ !
+ ! As first step I define the map with respect to Q defined as difference
+ ! of K-pts
+ !
  call m3inv(M=k_b_m1)
  call define_q_map(Xk%ptbz(:,:),Xk%ptbz(1,:))
-!
-! THE GRID IS UNIFORM IF ALL THE Q_MAP IS FILLED
-!
+ !
+ ! THE GRID IS UNIFORM IF ALL THE Q_MAP IS FILLED
+ !
  Xk_grid_is_uniform=all(q_map/=0)
-!
-!----------------------------
+ !
  if (Xk_grid_is_uniform) then
-!----------------------------
+ !---------------------------
+   !
    q%nbz=Xk%nbz
-!
-!  q_ptbz in iku for k_reduce
-!
+   !
+   ! q_ptbz in iku for k_reduce
+   !
    allocate(q%ptbz(q%nbz,3))
    do i1=1,q%nbz
      call c2a(v_in=Xk%ptbz(i1,:)-Xk%ptbz(1,:),v_out=q%ptbz(i1,:),mode='ka2i')
@@ -132,23 +130,23 @@
      user_defined_qpts=.true.
      bse_scattering=.true.
    endif
-!
-!  q_ptbz in rlu for qindx_*.
-!  At difference with the Q list used in evaluating the map before
-!  here I need top recalculate the map so that it correctly points
-!  to the q%ptbz obtaine trought q_expand
-!
+   !
+   ! q_ptbz in rlu for qindx_*.
+   ! At difference with the Q list used in evaluating the map before
+   ! here I need top recalculate the map so that it correctly points
+   ! to the q%ptbz obtaine trought q_expand
+   !
    call k_expand(q)
    call q_shadows(.false.)
    call k_ibz2bz(q,'a',.false.)
-   nqbz=q%nbz
+   nqbz =q%nbz
    nqibz=q%nibz
    call Q_report()
-!
-! When using USER defined Q-points q%nbz may be different from Xk%nbz
-! if the given list is not correct.
-! In this case I switch to the Gamma only support
-!
+   !
+   ! When using USER defined Q-points q%nbz may be different from Xk%nbz
+   ! if the given list is not correct.
+   ! In this case I switch to the Gamma only support
+   !
    if (q%nbz/=Xk%nbz) then
      call msg('rsn','[RL indx] Q BZ pts are /= from X grid BS pts. Gamma point only.')
      call q_shadows(.true.)
@@ -162,28 +160,27 @@
    else
      call define_q_map(q%ptbz(:,:),(/0._SP,0._SP,0._SP/))
    endif
-!-----
+   !
  else
-!-----
+   !
    call msg('nrsn','[RL indx] X grid is not uniform.  Gamma point only.')
    call q_shadows(.true.)
    gamma_point_only=.true.
-!------
+   !
  endif
-!------
-!
-! Allocate
-!
+ !
+ ! Allocate
+ !
  call qindx_alloc()
-!
-! Gamma point only
-!
+ !
+ ! Gamma point only
+ !
  if (gamma_point_only) then
    forall(i1=1:Xk%nbz) qindx_X(1,i1,1)=i1
    forall(i1=1:Xk%nbz) qindx_X(1,i1,2)=1
    goto 1
  endif
-
+ !
  if (.not.bse_scattering) call msg('nr',':: Indices: polarization function')
  if (     bse_scattering) call msg('nr',':: Indices: polarization function + BSE')
  qindx_X=0
@@ -198,14 +195,13 @@
  ! qindx_B(ikbz,okbz,1)=iqbz
  ! qindx_B(ikbz,okbz,2)=iGo
  !
+ call live_timing('X indexes',Xk%nbz,SERIAL=.true.)
+ !
  do i1=1,Xk%nbz
+   !
    do i2=1,Xk%nbz
      v1=matmul(k_b_m1,Xk%ptbz(i1,:)-Xk%ptbz(i2,:)) ! K_i1-K_i2= Q + Go
      iv1=nint(v1)
-     do while(.not.v_is_zero(v1-real(iv1)))
-       if (RL_v_comp_norm>1.E-3) exit
-       RL_v_comp_norm=RL_v_comp_norm*10.
-     enddo 
      call k_grid_shift(iv1)
      i3=q_map(iv1(1),iv1(2),iv1(3))
      iqibz=q%sstar(i3,1)
@@ -216,174 +212,179 @@
      v1=Xk%ptbz(i1,:)-Xk%ptbz(i2,:)-q%ptbz(i3,:) 
      call c2a(v_in=v1,mode='ka2i')
      do i3=1,ng_vec
-       if (v_is_zero(v1-g_vec(i3,:))) then
+       if (v_is_zero(v1-g_vec(i3,:),zero_=G_iku_zero)) then
          if (iqs==1) qindx_X(iqibz,i1,2)=i3
          if (bse_scattering) qindx_B(i1,i2,2)=i3
          exit
        endif
      enddo
    enddo
+   !
+   call live_timing(steps=1)
+   !
  enddo
+ call live_timing()
+ !
  if (any(qindx_X==0)) call error('Error in Q-grid search [qindx_X]')
  !
  call msg('rn',':: Indices: Self-Energy')
+ call live_timing('SE indexes',qp_states_k(2)-qp_states_k(1)+1,SERIAL=.true.)
+ !
  call k_ibz2bz(k,'a',.false.)
+ !
  connected_grids=.true.
+ local_zero=1.E-4
+ !
  do i1=qp_states_k(1),qp_states_k(2),1
    ikbz=sum(k%nstar(:i1-1))+1
    do i2=1,k%nbz
+     !
      v1=matmul(k_b_m1,k%ptbz(ikbz,:)-k%ptbz(i2,:))
      iv1=nint(v1)
-     if (.not.v_is_zero(v1-real(iv1))) connected_grids=.false.
-     if (.not.v_is_zero(v1-real(iv1))) cycle
+     !
+     if (.not.v_is_zero(v1-real(iv1),zero_=local_zero)) connected_grids=.false.
+     if (.not.v_is_zero(v1-real(iv1),zero_=local_zero)) cycle
+     !
      call k_grid_shift(iv1)
      iqbz=q_map(iv1(1),iv1(2),iv1(3))
      qindx_S(i1,iqbz,1)=i2
      v1=k%ptbz(ikbz,:)-k%ptbz(i2,:)-q%ptbz(iqbz,:)
      call c2a(v_in=v1,mode='ka2i')
      do i3=1,ng_vec
-       if (v_is_zero(v1-g_vec(i3,:))) then
+       if (v_is_zero(v1-g_vec(i3,:),zero_=G_iku_zero)) then
          qindx_S(i1,iqbz,2)=i3
          exit
        endif
      enddo
-   enddo
+   enddo 
+   !
    if (any(qindx_S(i1,:,:)==0)) call error('Null transition detected [qindx_S]')
+   !
+   call live_timing(steps=1)
+   !
  enddo
+ !
+ call live_timing()
+ !
  if (.not.connected_grids) call msg('rsn','[RL indx] X & Total k-grids are not connected')
- !
- ! Restore RL_v_comp_acc found in k_lattice 
- !
- if (RL_v_comp_norm/=RL_v_comp_norm_save) then
-   call msg('rsn','[RL indx] Index search needed lower RL comparison accuracy')
-   RL_v_comp_norm=RL_v_comp_norm_save
- endif
  !
 1 call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=io_db)
  io_err=ioQINDX(Xk,q,io_db)
-!
-!CLEAN
-!
+ !
+ !CLEAN
+ !
  call k_ibz2bz(Xk,'d',.false.)
  deallocate(q_map,q_iptbz)
  if (Xk_grid_is_uniform) deallocate(q%ptbz)
  call pp_redux_wait
-
+ !
  contains 
-
+   !
    subroutine Q_report()
-!-----------------------
-   character(lchlen)::ch(4)
-   call msg('nr','IBZ Q-points :',q%nibz)
-   call msg('rn','BZ  Q-points :',q%nbz)
-   d3q_factor=RL_vol/real(q%nbz)
-   do i1=1,q%nibz
-     ch(2)=gen_fmt(r_v=q%pt(i1,:))
-     ch(3)=gen_fmt(r_v=(/q%weights(i1)/))
-     write (ch(1),'(7a)') '(a,i3.3,a,3(',trim(ch(2)),',1x),a,',trim(ch(3)),',1x)'
-     write (ch(2),trim(ch(1)))   'Q [',i1,'] :',q%pt(i1,:),'(iku) * weight ',q%weights(i1)
-     call msg('r',trim(ch(2)))
-   enddo
-   end subroutine
-
-   subroutine k_grid_shift(v)
-!----------------------------
-   implicit none
-   integer  :: v(3),u(3),i1
-   do i1=1,3
-     if (v(i1)>=0) u(i1)=mod(v(i1)+1,k_grid(i1))
-     if (v(i1)>=0.and.u(i1)==0) u(i1)=k_grid(i1)
-     if (v(i1)<0) u(i1)=mod(v(i1),k_grid(i1))
-     if (v(i1)<0.and.u(i1)/=0) u(i1)=u(i1)+k_grid(i1)+1
-     if (v(i1)<0.and.u(i1)==0) u(i1)=1
-   enddo
-   v=u 
-   end subroutine
-
-   subroutine define_q_map(qpt_map,q_ref)
-!----------------------------------------
-   real(SP)::qpt_map(Xk%nbz,3),q_ref(3)
-   !
-   q_map=0
-   do i1=1,Xk%nbz
-     v1=matmul(k_b_m1,qpt_map(i1,:)-q_ref)
-     do while(.not.rlu_v_is_zero(v1))
-       RL_v_comp_norm=RL_v_comp_norm*10.
-       if (RL_v_comp_norm>1.E-3) return
+     character(lchlen)::ch(4)
+     call msg('nr','IBZ Q-points :',q%nibz)
+     call msg('rn','BZ  Q-points :',q%nbz)
+     d3q_factor=RL_vol/real(q%nbz)
+     do i1=1,q%nibz
+       ch(2)=gen_fmt(r_v=q%pt(i1,:))
+       ch(3)=gen_fmt(r_v=(/q%weights(i1)/))
+       write (ch(1),'(7a)') '(a,i3.3,a,3(',trim(ch(2)),',1x),a,',trim(ch(3)),',1x)'
+       write (ch(2),trim(ch(1)))   'Q [',i1,'] :',q%pt(i1,:),'(iku) * weight ',q%weights(i1)
+       call msg('r',trim(ch(2)))
      enddo
-     q_iptbz(i1,:)=nint(v1)
-     call k_grid_shift(q_iptbz(i1,:))
-     if (q_map(q_iptbz(i1,1),q_iptbz(i1,2),q_iptbz(i1,3))/=0) then
-       call error('[RL indx] 2 equivalent points in the rlu grid found')
-     endif
-     q_map(q_iptbz(i1,1),q_iptbz(i1,2),q_iptbz(i1,3))=i1
-   enddo
+   end subroutine
    !
-   ! Now I fill the holes in the map shifting the whole grid
+   subroutine k_grid_shift(v)
+     implicit none
+     integer  :: v(3),u(3),i1
+     do i1=1,3
+       if (v(i1)>=0) u(i1)=mod(v(i1)+1,k_grid(i1))
+       if (v(i1)>=0.and.u(i1)==0) u(i1)=k_grid(i1)
+       if (v(i1)<0) u(i1)=mod(v(i1),k_grid(i1))
+       if (v(i1)<0.and.u(i1)/=0) u(i1)=u(i1)+k_grid(i1)+1
+       if (v(i1)<0.and.u(i1)==0) u(i1)=1
+     enddo
+     v=u 
+   end subroutine
    !
-   do i1=1,Xk%nbz
-     do i2=-2,2
-       do i3=-2,2
-         do i4=-2,2
-           v1=matmul(k_b_m1,qpt_map(i1,:)-q_ref+real((/i2,i3,i4/)))
-           iv1=nint(v1)
-           call k_grid_shift(iv1)
-           if (q_map(iv1(1),iv1(2),iv1(3))==0) q_map(iv1(1),iv1(2),iv1(3))=i1
+   subroutine define_q_map(qpt_map,q_ref)
+     real(SP)::qpt_map(Xk%nbz,3),q_ref(3)
+     !
+     q_map=0
+     do i1=1,Xk%nbz
+       v1=matmul(k_b_m1,qpt_map(i1,:)-q_ref)
+       q_iptbz(i1,:)=nint(v1)
+       call k_grid_shift(q_iptbz(i1,:))
+       if (q_map(q_iptbz(i1,1),q_iptbz(i1,2),q_iptbz(i1,3))/=0) then
+         call error('[RL indx] 2 equivalent points in the rlu grid found')
+       endif
+       q_map(q_iptbz(i1,1),q_iptbz(i1,2),q_iptbz(i1,3))=i1
+     enddo
+     !
+     ! Now I fill the holes in the map shifting the whole grid
+     !
+     do i1=1,Xk%nbz
+       do i2=-2,2
+         do i3=-2,2
+           do i4=-2,2
+             v1=matmul(k_b_m1,qpt_map(i1,:)-q_ref+real((/i2,i3,i4/)))
+             iv1=nint(v1)
+             call k_grid_shift(iv1)
+             if (q_map(iv1(1),iv1(2),iv1(3))==0) q_map(iv1(1),iv1(2),iv1(3))=i1
+           enddo
          enddo
        enddo
      enddo
-   enddo
    end subroutine
-
+   !
    subroutine q_shadows(force_gamma_only)
-!----------------------------------------
-   use vec_operate,    ONLY:iku_v_norm
-   logical                ::force_gamma_only
-   !
-   ! Gamma only, deallocate and reallocate 
-   ! using Gamma point only definition
-   !
-   if (force_gamma_only) then
-     if (allocated(q_pt)) deallocate(q_pt)
-     if (allocated(q_norm)) deallocate(q_norm)
-     if (allocated(q_sstar)) deallocate(q_sstar)
-     if (associated(q%pt)) nullify(q%pt)
-     call mem_est("q_pt q_norm q_sstar q-pt")
-     allocate(q%pt(1,3),q_pt(1,3),q_norm(1),q_sstar(1,2)) 
-     q%pt=0.
-     q_pt=0.
-     q_norm=q0_defmod
-     nqbz=1
-     nqibz=1
-     q%nibz=1
-     q%nbz=1
-     q_sstar=1
-     return
-   endif
-   !
-   ! q_pt & q_norm
-   !
-   if (.not.allocated(q_pt)) then
-     allocate(q_pt(q%nibz,3))
-     q_pt=q%pt
-     call mem_est("q_pt",(/q%nibz*3/),(/SP/))
-   endif
-   if (.not.allocated(q_norm)) then
-     allocate(q_norm(q%nibz))
-     do i1=1,q%nibz
-       q_norm(i1)=iku_v_norm(q_pt(i1,:))
-     enddo
-     q_norm(1)=q0_defmod
-     call mem_est("q_norm",(/q%nibz/),(/SP/))
-   endif
-   !
-   ! sstar
-   !
-   if (associated(q%sstar).and..not.allocated(q_sstar)) then
-     allocate(q_sstar(q%nbz,2))
-     q_sstar=q%sstar
-     call mem_est("q_sstar",(/q%nbz*2/),(/IP/))
-   endif
+     use vec_operate,    ONLY:iku_v_norm
+     logical                ::force_gamma_only
+     !
+     ! Gamma only, deallocate and reallocate 
+     ! using Gamma point only definition
+     !
+     if (force_gamma_only) then
+       if (allocated(q_pt)) deallocate(q_pt)
+       if (allocated(q_norm)) deallocate(q_norm)
+       if (allocated(q_sstar)) deallocate(q_sstar)
+       if (associated(q%pt)) nullify(q%pt)
+       call mem_est("q_pt q_norm q_sstar q-pt")
+       allocate(q%pt(1,3),q_pt(1,3),q_norm(1),q_sstar(1,2)) 
+       q%pt=0.
+       q_pt=0.
+       q_norm=q0_defmod
+       nqbz=1
+       nqibz=1
+       q%nibz=1
+       q%nbz=1
+       q_sstar=1
+       return
+     endif
+     !
+     ! q_pt & q_norm
+     !
+     if (.not.allocated(q_pt)) then
+       allocate(q_pt(q%nibz,3))
+       q_pt=q%pt
+       call mem_est("q_pt",(/q%nibz*3/),(/SP/))
+     endif
+     if (.not.allocated(q_norm)) then
+       allocate(q_norm(q%nibz))
+       do i1=1,q%nibz
+         q_norm(i1)=iku_v_norm(q_pt(i1,:))
+       enddo
+       q_norm(1)=q0_defmod
+       call mem_est("q_norm",(/q%nibz/),(/SP/))
+     endif
+     !
+     ! sstar
+     !
+     if (associated(q%sstar).and..not.allocated(q_sstar)) then
+       allocate(q_sstar(q%nbz,2))
+       q_sstar=q%sstar
+       call mem_est("q_sstar",(/q%nbz*2/),(/IP/))
+     endif
    end subroutine
-
+   !
  end subroutine

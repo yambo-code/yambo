@@ -22,7 +22,7 @@
  subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii)
 !==================================================================
  use pars,          ONLY:SP,pi
- use vec_operate,   ONLY:iku_v_norm,v_is_zero
+ use vec_operate,   ONLY:iku_v_norm
  use R_lattice,     ONLY:g_vec,RIM_n_rand_pts,k_grid_uc_vol,RIM_qpg,&
 &                        RIM_is_diagonal,RIM_ng,q_pt,RIM_anisotropy
  use D_lattice,     ONLY:alat

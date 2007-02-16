@@ -32,7 +32,6 @@
 &                        O_n_vv_scatt,O_n_c_states,O_c_state,&
 &                        O_n_v_states,O_v_state,O_ng,BS_bands,BS_res_K_corr
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
- use vec_operate,   ONLY:rlu_v_is_zero,c2a
  use par_indexes_m, ONLY:par_indexes
  use collision,     ONLY:ggwinfo,collision_reset
  implicit none

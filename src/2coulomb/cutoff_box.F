@@ -29,7 +29,7 @@
  !
  use pars,          ONLY:SP,pi
  use wave_func,     ONLY:wf_ng
- use vec_operate,   ONLY:iku_v_norm,v_norm,v_is_zero
+ use vec_operate,   ONLY:iku_v_norm,v_norm
  use D_lattice,     ONLY:DL_vol,alat,sop_inv,a
  use R_lattice,     ONLY:bare_qpg,RL_vol,RIM_ng,RIM_qpg,bz_samp,&
 &                        box_length,g_vec,g_rot,ng_closed,RIM_anisotropy,&
@@ -95,7 +95,7 @@
        !
        do i1=1,3
          if (.not.is_cut(i1).and.&
-&            .not.v_is_zero(q%pt(iq,:)-q%ptbz(iqbz,:),zero_=k_iku_zero)) cycle q_loop
+&            abs(q%pt(iq,i1)-q%ptbz(iqbz,i1))>k_iku_zero(i1)) cycle q_loop
        enddo
        !
        nq_looped=nq_looped+1
@@ -104,7 +104,7 @@
          !
          do i1=1,3
            if (.not.is_cut(i1).and.&
-&              .not.v_is_zero(g_vec(ig,:)-g_vec(ig_p,:),zero_=G_iku_zero)) cycle g_loop
+&              abs(g_vec(ig,i1)-g_vec(ig_p,i1))>G_iku_zero(i1)) cycle g_loop
          enddo
          !
          ig_r=g_rot( sop_inv(is), ig_p )

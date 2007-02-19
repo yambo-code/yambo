@@ -20,7 +20,9 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine QP_ppa(X,Xk,en,k,q,qp,Xw,GW_iter)
-!============================================
+ !
+ ! Plasomon Pole Correlation Self-Energy
+ !
  use pars,          ONLY:SP,pi,HARTREE,schlen
  use stderr,        ONLY:string_pack
  use memory_m,      ONLY:mem_est
@@ -44,6 +46,7 @@
  use parser_m,      ONLY:parser
  use wave_func,     ONLY:wf_load,wf_free
  use R_lattice,     ONLY:qindx_S,bz_samp,nqibz
+ !
  implicit none
  type(levels) ::en
  type(bz_samp)::Xk,k,q
@@ -51,7 +54,9 @@
  type(QP_t)   ::qp
  type(w_samp) ::Xw
  integer      ::GW_iter
-!ws
+ !
+ ! Work Space
+ !
  integer :: i1,i2,i3,i4,iqbz,iqibz,ib,ig1,ig2,alloc_err
  real(SP):: PPaPtlr(q%nibz)
  real(SP),    allocatable :: PPaP(:,:),PPaPm(:,:),scconv(:)
@@ -66,11 +71,15 @@
  integer          ::gfmf,iv4(4),io_err,ID
  integer, external::ioX,QP_state_extract
  character(schlen)::ch,Sc_name
-!
+ !
+ ! Reset
+ !
  call collision_reset(isc)
  call collision_reset(iscp)
  call pp_indexes_reset(px)
-!--------------------------------------------------------------------------------
+ !
+ ! Section
+ !
  if (GW_iter<9) write (Sc_name,'(a,i1.1)') 'G',GW_iter
  if (GW_iter>9) write (Sc_name,'(a,i2.2)') 'G',GW_iter
  ch=trim(string_pack(Sc_name,'W0 : the P(lasmon) P(ole) A(pproximation)'))
@@ -79,7 +88,7 @@
  else
    call section('=',trim(ch))
  endif
-!=================================================================================
+ !
  if (GW_iter==0) then
    call msg('r', '[GW/PPA] Bands range     :',QP_n_G_bands)
    call msg('r', '[GW/PPA] G damping   [ev]:',QP_G_damp*HARTREE)
@@ -91,33 +100,33 @@
    enddo
    call msg('r','')
  endif
+ !
  call k_expand(k)
-!
-! WFs
-!==================
+ !
+ ! WFs
+ !
  call wf_load(X%ng,maxval(qindx_S(:,:,2)),&
 &             (/1,max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-Sc')
-!
-! Plasmon-Pole DB
-!==================
+ !
+ ! Plasmon-Pole DB
+ !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=ioX(X,Xw,ID)
  if (io_err/=0) return
-
-!###########
-!ALLOCATION
-!################################################################################
+ !
+ ! ALLOCATION
+ !------------
  call X_alloc('X',(/X%ng,X%ng,2/))
-!
+ !
  allocate(PPaP(X%ng,X%ng),PPaR(X%ng,X%ng,max(pp_taylor_terms,1)),stat=alloc_err)
  call mem_est("PPaP",(/size(PPaP)+2*size(PPaR)/),(/SP/),errors=(/alloc_err/))
-
+ !
  allocate(isc%gamp(X%ng,X%ng),isc%rhotw(X%ng),iscp%rhotw(X%ng),stat=alloc_err)
  call mem_est("ISC-GAMP",(/X%ng**2+2*X%ng/),errors=(/alloc_err/))
-
+ !
  allocate(E(QP_dSc_steps),dc(QP_dSc_steps),stat=alloc_err)
  call mem_est("PPA-E",(/QP_dSc_steps*2/),errors=(/alloc_err/))
-
+ !
  if (pp_taylor_terms>0) then
    allocate(PPaPm(X%ng,X%ng),scconv(pp_taylor_terms),&
 &           PPaM(pp_taylor_terms),lrhotw(X%ng),lsc(pp_taylor_terms,QP_n_states,QP_dSc_steps),&
@@ -127,34 +136,42 @@
    call mem_est("PPaPm",(/X%ng**2+pp_taylor_terms,pp_taylor_terms+X%ng+size(lsc)/),&
 &               elements_kind=(/SP,2*SP/),errors=(/alloc_err,alloc_err/))
  endif
-!################################################################################
-!
+ !
  QP_Sc=cmplx(0.,0.,SP)
-
+ !
  isc%ngrho=X%ng
  isc%iqref=0
-
+ !
  call par_indexes(px,(/q%nbz,QP_n_G_bands(2)/),(/1,QP_n_G_bands(1)/))
  call pp_redux_wait
-
- call live_timing(trim(string_pack(Sc_name,'W0 PPA')),px%stps(myid+1)*QP_n_states)
-
- do iqbz=1,q%nbz
+ !
+ call live_timing(trim(string_pack(Sc_name,'W0 PPA')),px%stps(myid+1)*QP_n_states) 
+ !
+ do iqbz=1,q%nbz 
+   !
    isc%qs(2:)=(/q%sstar(iqbz,1),q%sstar(iqbz,2)/)
    iqibz=isc%qs(2)
+   !
    if (iqibz/=isc%iqref) then
      call scatterGamp(isc,'c')
-
+     !
+     ! I/O
+     !
      if (iqibz==1) call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1,2,3/),ID=ID)
      if (q%nbz==1) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
      if (iqibz> 1) call io_control(ACTION=RD_CL_IF_END,COM=NONE,&
 &                                  SEC=(/2*isc%qs(2),2*isc%qs(2)+1/),ID=ID)
-
      io_err=ioX(X,Xw,ID)
+     !
+     ! Poles and Residuals
+     !
      forall(i1=1:X%ng,i2=1:X%ng) &
 &          PPaP(i1,i2)=PPaPf(X_mat(i1,i2,1),X_mat(i1,i2,2),X%ppaE)
      forall(i1=1:X%ng,i2=1:X%ng) &
 &          PPaR(i1,i2,1)=-X_mat(i1,i2,1)/2.*PPaP(i1,i2)*isc%gamp(i1,i2)
+     !
+     ! Taylor expansion
+     !
      if (pp_taylor_terms>0) then
        forall(i1=1:X%ng,i2=1:X%ng) PPaPm(i1,i2)=PPaP(i1,i2)*abs(PPaR(i1,i2,1))
        PPaPtlr(isc%qs(2))=sum(PPaPm)/sum(abs(PPaR(:,:,1)))
@@ -163,8 +180,11 @@
          forall(i1=1:X%ng,i2=1:X%ng) PPaR(i1,i2,i3)=PPaR(i1,i2,i3-1)*PPaP(i1,i2)
        enddo
      endif
+     !
    endif
+   !
    do i1=1,QP_n_states
+     !
 #if defined PJ_SPIN
      isc%is=(/QP_table(i1,1),QP_table(i1,3),1,QP_table(i1,4)/)
      isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iqbz,1),:),QP_table(i1,4)/)
@@ -176,8 +196,11 @@
 #endif
      isc%qs(1)=qindx_S(QP_table(i1,3),iqbz,2)
      iscp%qs=isc%qs
+     !
      dc=cmplx(0.,0.,SP)
+     !
      do ib=QP_n_G_bands(1),QP_n_G_bands(2)
+       !
        if (.not.px%i2p(iqbz,ib)) cycle
        isc%os(1)=ib
        iscp%os=isc%os
@@ -187,6 +210,9 @@
        if (any(isc%is/=iscp%is)) call scatterBamp(iscp)
        forall (i4=1:QP_dSc_steps) E(i4)=en%E(isc%is(1),isc%is(2),isc%is(4))+&
 &                                       (i4-1)*QP_dSc_delta+cmplx(0.,QP_G_damp,SP)
+       !
+       ! Taylor expansion
+       !
        if (pp_taylor_terms>0) then
          gfmf=1
          do i3=1,pp_taylor_terms
@@ -210,6 +236,9 @@
            gfmf=-gfmf
          enddo
        else
+         !
+         ! Standard expression
+         !
          dc=(0.,0.)
          do ig1=1,X%ng
            do ig2=1,X%ng
@@ -227,9 +256,13 @@
          enddo
          QP_Sc(i1,:)=QP_Sc(i1,:)+dc(:)
        endif
+       !
      enddo
    enddo
  enddo
+ !
+ ! Non collinear spin
+ !
 #if defined PJ_SPIN
  do i1=1,QP_n_states,n_spinor
    if (n_spinor==2) then
@@ -238,9 +271,11 @@
    endif
  enddo
 #endif
-
+ !
  call live_timing()
-
+ !
+ ! Taylor terms summing...
+ !
  if (pp_taylor_terms>0) then
    call pp_redux_wait(lsc)
    call pp_redux_wait
@@ -261,8 +296,9 @@
  else
    call pp_redux_wait(QP_Sc)
  endif
-!
-! CLEAN
+ !
+ ! CLEAN
+ !
  deallocate(PPaP,PPaR,isc%gamp,isc%rhotw,iscp%rhotw,E,dc)
  if (pp_taylor_terms>0) deallocate(PPaPm,scconv,PPaM,lrhotw,lsc)
  call mem_est("PPaP ISC-GAMP PPA-E PPaPm")
@@ -271,50 +307,52 @@
  call collision_reset(isc)
  call collision_reset(iscp)
  call pp_indexes_reset(px)
-
+ !
  contains
-
+   !
    pure function PPaPf(e1,e2,Eo)
-!===============================
-   implicit none
-   real(SP)   :: PPaPf
-   real(SP),intent(in)   :: Eo
-   complex(SP),intent(in):: e1,e2
-   PPaPf=Eo/sqrt(e1/e2-1.)
-   if (real(e1/e2)<=1.d0) PPaPf=1.d0
+     !
+     implicit none
+     real(SP)   :: PPaPf
+     real(SP),intent(in)   :: Eo
+     complex(SP),intent(in):: e1,e2
+     PPaPf=Eo/sqrt(e1/e2-1.)
+     if (real(e1/e2)<=1.d0) PPaPf=1.d0
+     !
    end function
-
+   !
    function Gfm(n,W,e,vs,Ep)
-!===========================
-   implicit none
-   type(levels) ::e
-   integer      ::vs(4)
-   complex(SP)  ::W
-   real(SP)     ::Ep
-   integer      ::n
-   complex(SP)  ::Gfm
-   complex(SP)  ::lW !ws
-   lW=W
-   if (Finite_Tel) lW=conjg(W)
+     !
+     implicit none
+     type(levels) ::e
+     integer      ::vs(4)
+     complex(SP)  ::W
+     real(SP)     ::Ep
+     integer      ::n
+     complex(SP)  ::Gfm
+     complex(SP)  ::lW !ws
+     lW=W
+     if (Finite_Tel) lW=conjg(W)
 #if defined PJ_SPIN
-   Gfm=(real(spin_occ)-e%f(vs(1),vs(2),vs(4))+bose_f(Ep))/&
-&      (lW-e%E(vs(1),vs(2),vs(4))-Ep)**n
+     Gfm=(real(spin_occ)-e%f(vs(1),vs(2),vs(4))+bose_f(Ep))/&
+&        (lW-e%E(vs(1),vs(2),vs(4))-Ep)**n
 #else
-   Gfm=(2.-e%f(vs(1),vs(2),vs(4))+bose_f(Ep))/(lW-e%E(vs(1),vs(2),vs(4))-Ep)**n
+     Gfm=(2.-e%f(vs(1),vs(2),vs(4))+bose_f(Ep))/(lW-e%E(vs(1),vs(2),vs(4))-Ep)**n
 #endif
+     !
    end function
-
+   !
    function Gfp(n,W,e,vs,Ep)
-!===========================
-   implicit none
-   type(levels) ::e
-   integer      ::vs(4)
-   complex(SP)  ::W
-   real(SP)     ::Ep
-   integer      ::n
-   complex(SP)  ::Gfp
-   Gfp=(e%f(vs(1),vs(2),vs(4))+bose_f(Ep))/(conjg(W)-e%E(vs(1),vs(2),vs(4))+Ep)**n
+     !
+     implicit none
+     type(levels) ::e
+     integer      ::vs(4)
+     complex(SP)  ::W
+     real(SP)     ::Ep
+     integer      ::n
+     complex(SP)  ::Gfp
+     Gfp=(e%f(vs(1),vs(2),vs(4))+bose_f(Ep))/(conjg(W)-e%E(vs(1),vs(2),vs(4))+Ep)**n
+     !
    end function
-
+   !
  end subroutine
-

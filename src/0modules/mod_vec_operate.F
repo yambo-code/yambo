@@ -260,4 +260,56 @@
      deallocate(l_indx,l_arrout)
    end subroutine sort
    !
+   subroutine degeneration_finder(E,n,first_deg_el,deg_elmnts,deg_grps,deg_accuracy)
+     !
+     ! E = ( 0 1 1 2 3 3 3 ) , n = 7
+     !
+     ! first_deg_el = ( 2 5 0 0 0 0 0 )
+     ! deg_elmnts =   ( 1 2 0 0 0 0 0 )
+     !
+     ! deg_grps = 2
+     !
+     implicit none
+     !
+     integer, intent(in)  :: n
+     integer, intent(out) :: first_deg_el(n),deg_elmnts(n),deg_grps
+     real(SP),intent(in)  :: E(n),deg_accuracy
+     !
+     ! Work Space
+     !
+     integer :: igrp,iref,i1
+     logical :: l_flag
+     !
+     deg_grps=0
+     first_deg_el(2:n)=0
+     deg_elmnts(2:n)=0
+     first_deg_el(1)=0
+     deg_elmnts(1)=0
+     !
+     iref=1
+     do while (iref < n ) 
+       !
+       l_flag=.true.
+       !
+       do i1=iref+1,n
+         if (abs(E(iref)-E(i1)).le.deg_accuracy) then
+           if (l_flag) then
+             deg_grps=deg_grps+1
+             first_deg_el(deg_grps)=iref
+             deg_elmnts(deg_grps)=1
+             l_flag=.false.
+           endif
+           deg_elmnts(deg_grps)=deg_elmnts(deg_grps)+1
+         else
+           exit
+         endif
+       enddo
+       ! 
+       if (l_flag) iref=iref+1
+       if (.not.l_flag) iref=iref+deg_elmnts(deg_grps)
+       !
+     enddo
+     !
+   end subroutine
+   !
  end module vec_operate

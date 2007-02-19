@@ -20,7 +20,11 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine QP_elph(en,k,q,qp)
- !----------------------------
+ !
+ ! This routine calculates the QP shifts due to el-ph intercation
+ ! following the Allen-Cardona formulation (see for example 
+ ! PRB 23, 1495 (1981) )
+ !
  use pars,          ONLY:SP,schlen,HARTREE,HA2THZ
  use frequency,     ONLY:w_samp,W_reset
  use electrons,     ONLY:levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts
@@ -37,7 +41,8 @@
  use D_lattice,     ONLY:sop_inv
  use R_lattice,     ONLY:qindx_S,bz_samp,ik_is_table,q_norm
  use ELPH,          ONLY:ph_modes,elph_nb,ph_freqs_sq,elph_gkkp,&
-&                        elph_gkkp_free,QP_PH_n_G_bands,max_ph_freq,elph_DW
+&                        elph_gkkp_free,QP_PH_n_G_bands,max_ph_freq,elph_DW,&
+&                        PH_damping
  use parser_m ! DEBUG
  implicit none
  type(levels)  ::en
@@ -54,10 +59,12 @@
  character(schlen)::ch
  logical          ::use_G_RIM
  real(SP)         ::g_sq_F_res(QP_n_states,q%nibz,ph_modes)
- complex(SP), allocatable :: dc(:),Gf_save(:)
- logical :: skip_DW,skip_FAN ! DEBUG
+ complex(SP), allocatable :: DP_corr(:),Gf_save(:)
+ ! DEBUG >
+ logical :: skip_DW,skip_FAN 
  call parser('SKIPFAN',skip_FAN)
  call parser('SKIPDW',skip_DW)
+ ! DEBUG <
  !
  ! Zeroing
  !
@@ -83,7 +90,8 @@
  if (QP_PH_n_G_bands<=0.or.QP_PH_n_G_bands>elph_nb) QP_PH_n_G_bands=elph_nb
  !
  call msg('r', '[GW/El-Ph] Bands range       :',(/1,QP_PH_n_G_bands/))
- if (QP_solver/="g") call msg('r', '[GW/El-Ph] G damping     [ev]:',QP_G_damp*HARTREE)
+ call msg('r', '[GW/El-Ph] PH damping   [mev]:',PH_damping*HARTREE*1000.)
+ if (trim(QP_solver)/="g") call msg('r', '[GW/El-Ph] G damping     [ev]:',QP_G_damp*HARTREE)
  if (use_G_RIM) call msg('r', '[GW/El-Ph] RIM energy points :',BZ_RIM_tot_nkpts)
  if (use_G_RIM) call msg('r', '[GW/El-Ph] RIM energy bands  :',BZ_RIM_nbands)
  call msg('r','')
@@ -121,7 +129,7 @@
      QP_Sc_steps=Sc_W(iqp)%n(1)
    enddo
  endif
- allocate(dc(Sc_W(1)%n(1)),Gf_save(Sc_W(1)%n(1)))
+ allocate(DP_corr(Sc_W(1)%n(1)),Gf_save(Sc_W(1)%n(1)))
  !
  call par_indexes(px,(/q%nbz,QP_PH_n_G_bands/))
  call pp_redux_wait
@@ -155,7 +163,7 @@
      ! <k n|dV_{SCF}/du^{nu}|k-Rq n'>=
      ! <(R^-1 k) n|dV_{SCF}/du^{nu}|(R^-1 k)- q n'>= dV ( ikbz,nu,n,n' )
      !                 
-     dc=cmplx(0.,0.,SP)
+     DP_corr=cmplx(0.,0.,SP)
      !
      do ob=1,QP_PH_n_G_bands
        !
@@ -182,7 +190,7 @@
          !&        Gf(Sc_W(iqp)%p(iw),en,(/ob,ok,1/),sqrt(ph_freqs_sq(iq,il)),1)
          !endif
          !
-         !forall (iw=1:Sc_W(iqp)%n(1)) dc(iw)=dc(iw)+Gf_save(iw)/real(q%nbz)/2.*&
+         !forall (iw=1:Sc_W(iqp)%n(1)) DP_corr(iw)=DP_corr(iw)+Gf_save(iw)/real(q%nbz)/2.*&
          !&      conjg(elph_gkkp(ikbz,il,ib,ob))*elph_gkkp(ikbz,il,ib,ob)/&
          !&            sqrt(ph_freqs_sq(iq,il))
          !
@@ -213,7 +221,7 @@
        !
      enddo
      !
-     QP_Sc(iqp,:)=QP_Sc(iqp,:)+dc(:)
+     QP_Sc(iqp,:)=QP_Sc(iqp,:)+DP_corr(:)
      !
    enddo
  enddo
@@ -229,100 +237,128 @@
  call pp_redux_wait(QP_Sc)
  call pp_redux_wait(g_sq_F_res)
  !
+ ! Cardona-Allen g^2 F function and its integrated value
+ !
  call Cardona_Allen_report()
  !
  ! CLEAN
  !
- deallocate(dc,Gf_save)
+ deallocate(DP_corr,Gf_save)
  call elph_gkkp_free()
  call pp_indexes_reset(px)
-
+ !
  contains
    !
    pure function Gf(W,e,vs,E_ph,i_type)
-   !-----------------------------------
-   implicit none
-   type(levels), intent(in) ::e
-   integer     , intent(in) ::vs(3)
-   complex(SP) , intent(in) ::W
-   real(SP)    , intent(in) ::E_ph
-   integer     , intent(in) ::i_type
-   complex(SP) ::Gf
-   !
-   ! Work Space
-   !
-   complex(SP) ::lW 
-   lW=W
-   if (Finite_Tel) lW=conjg(W)
-   !
-   ! ORI
-   !
-   if (i_type==1) &
-     Gf=(&
-&        (2.-e%f(vs(1),vs(2),vs(3))+bose_f(E_ph))/(lW-e%E(vs(1),vs(2),vs(3))-E_ph)+&
-&        (e%f(vs(1),vs(2),vs(3))+bose_f(E_ph))/(conjg(W)-e%E(vs(1),vs(2),vs(3))+E_ph)&
-&       )
-
-   if (i_type==2)   Gf=2.*( (W-e%E(vs(1),vs(2),vs(3)))*(bose_f(E_ph)+1.)+&
-&       E_ph*(1.-e%f(vs(1),vs(2),vs(3))) )/&
-&     ( (W-e%E(vs(1),vs(2),vs(3)))**2 - E_ph**2 )
-   !
-   ! W_ph =0
-   !
-   if (i_type==3) Gf=2.*( (W-e%E(vs(1),vs(2),vs(3)) )*(bose_f(E_ph)+1.) )/&
-&        ( (W-e%E(vs(1),vs(2),vs(3)))**2 )
-
-   !
+     !
+     implicit none
+     type(levels), intent(in) ::e
+     integer     , intent(in) ::vs(3)
+     complex(SP) , intent(in) ::W
+     real(SP)    , intent(in) ::E_ph
+     integer     , intent(in) ::i_type
+     complex(SP) ::Gf
+     !
+     ! Work Space
+     !
+     complex(SP) ::lW 
+     lW=W
+     if (Finite_Tel) lW=conjg(W)
+     !
+     ! ORI
+     !
+     if (i_type==1) &
+       Gf=(&
+&          (2.-e%f(vs(1),vs(2),vs(3))+bose_f(E_ph))/(lW-e%E(vs(1),vs(2),vs(3))-E_ph)+&
+&          (e%f(vs(1),vs(2),vs(3))+bose_f(E_ph))/(conjg(W)-e%E(vs(1),vs(2),vs(3))+E_ph)&
+&         )
+  
+     if (i_type==2)   Gf=2.*( (W-e%E(vs(1),vs(2),vs(3)))*(bose_f(E_ph)+1.)+&
+&         E_ph*(1.-e%f(vs(1),vs(2),vs(3))) )/&
+&       ( (W-e%E(vs(1),vs(2),vs(3)))**2 - E_ph**2 )
+     !
+     ! W_ph =0
+     !
+     if (i_type==3) Gf=2.*( (W-e%E(vs(1),vs(2),vs(3)) )*(bose_f(E_ph)+1.) )/&
+&          ( (W-e%E(vs(1),vs(2),vs(3)))**2 )
+     !
    end function
    !
    subroutine Cardona_Allen_report()
-   !--------------------------------
-   !
-   use functions,  ONLY:Fermi_fnc_derivative,intc
-   use com,        ONLY:msg,of_open_close
-   !
-   integer, parameter ::n_g_sq_freq=1000
-   !
-   real(SP)           ::g_sq_F(n_g_sq_freq),delta_E
-   type(w_samp)       ::g_sq_F_E
-   !
-   call W_reset(g_sq_F_E)
-   g_sq_F_E%n=n_g_sq_freq
-   g_sq_F_E%er=(/0.,max_ph_freq*1.1/)
-   g_sq_F_E%dr=QP_G_damp
-   call freqs_setup(g_sq_F_E)
-   !
-   do iqp=1,QP_n_states  
      !
-     g_sq_F=0.
+     use functions,  ONLY:Fermi_fnc_derivative,intc,bose_f
+     use com,        ONLY:msg,of_open_close
+     !
+     integer, parameter ::n_g_sq_freq=1000
+     !
+     real(SP)     ::g_sq_F(n_g_sq_freq),delta_E,ph_freq
+     type(w_samp) ::g_sq_F_E
+     !
+     call W_reset(g_sq_F_E)
+     g_sq_F_E%n=n_g_sq_freq
+     g_sq_F_E%er=(/0.,max_ph_freq*1.1/)
+     g_sq_F_E%dr=PH_damping
+     if (PH_damping>0.) call freqs_setup(g_sq_F_E)
+     !
+     ! Degenerate bands average
      !
      do iq=1,q%nibz
        do il=1,ph_modes
-         !
-         do iw=1,n_g_sq_freq
-           !
-           delta_E=real(g_sq_F_E%p(iw))-sqrt(ph_freqs_sq(iq,il))
-           !
-           g_sq_F(iw)=g_sq_F(iw)+g_sq_F_res(iqp,iq,il)*&
-&                     Fermi_fnc_derivative(delta_E,aimag(g_sq_F_E%p(iw)))
-           !
-         enddo
+         call QP_states_simmetrize(g_sq_F_res(:,iq,il),en)
        enddo
      enddo
      !
-     ch='g_sq_F_b_'//trim(intc(QP_table(iqp,1)))//'_k_'//trim(intc(QP_table(iqp,3)))
-     call of_open_close(trim(ch),'ot')
-     !
-     do iw=1,n_g_sq_freq
-       call msg('o g_sq','',&
-&              (/real(g_sq_F_E%p(iw))*HARTREE*1000.,g_sq_F(iw)/),&
-&              INDENT=-2,USE_TABS=.TRUE.)
+     do iqp=1,QP_n_states  
+       !
+       g_sq_F=0.
+       DP_corr=0._DP
+       !
+       do iq=1,q%nibz
+         do il=1,ph_modes
+           !
+           ph_freq=sqrt(ph_freqs_sq(iq,il))
+           !
+           ! Integrate g^2 F function (QP correction)
+           ! 
+           DP_corr=DP_corr+g_sq_F_res(iqp,iq,il)*(bose_f(ph_freq)+1.)
+           !
+           ! g^2 F function
+           !
+           if (.not.PH_damping>0.) cycle
+           !
+           do iw=1,n_g_sq_freq
+             !
+             delta_E=real(g_sq_F_E%p(iw))-ph_freq
+             !
+             g_sq_F(iw)=g_sq_F(iw)+g_sq_F_res(iqp,iq,il)*&
+&                       Fermi_fnc_derivative(delta_E,aimag(g_sq_F_E%p(iw)))
+             !
+           enddo
+         enddo
+       enddo
+       !
+       QP_Sc(iqp,:)=QP_Sc(iqp,:)+DP_corr(:)
+       !
+       if (.not.PH_damping>0.) cycle
+       !
+       ch='g_sq_F_b_'//trim(intc(QP_table(iqp,1)))//'_k_'//trim(intc(QP_table(iqp,3)))
+       call of_open_close(trim(ch),'ot')
+       call msg('o g_sq','#',(/'E  [meV]','g^2 F(E)'/),INDENT=0,USE_TABS=.true.)
+       call msg('o g_sq','#')
+       !
+       do iw=1,n_g_sq_freq
+         call msg('o g_sq','',&
+&                (/real(g_sq_F_E%p(iw))*HARTREE*1000.,g_sq_F(iw)/),&
+&                INDENT=-2,USE_TABS=.TRUE.)
+       enddo
+       call of_open_close(trim(ch))
+       !
      enddo
-     call of_open_close(trim(ch))
      !
-   enddo
-   !
-   !
+     ! Clean
+     !
+     if (PH_damping>0.) call W_reset(g_sq_F_E)
+     !
    end subroutine
    !
    ! -- GPL_START --

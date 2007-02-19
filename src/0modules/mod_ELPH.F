@@ -22,11 +22,13 @@
  module ELPH
    !
    use pars, ONLY:SP
+   !
    implicit none
    integer   :: ph_modes
    integer   :: elph_nb
    integer   :: QP_PH_n_G_bands
    integer   :: elph_nk
+   real(SP)  :: ph_damping
    real(SP)  :: max_ph_freq
    real(SP),    allocatable :: ph_freqs_sq(:,:)
    real(SP),    allocatable :: elph_DW(:,:,:,:)
@@ -35,26 +37,26 @@
  contains
    !
    subroutine elph_gkkp_alloc()
-   !---------------------------
-   use memory_m,  ONLY:mem_est
-   use R_lattice, ONLY:nqibz,nkbz
-   implicit none
-   integer     ::alloc_err(3)
-   if (allocated(ph_freqs_sq)) return
-   allocate(ph_freqs_sq(nqibz,ph_modes),stat=alloc_err(1))
-   allocate(elph_gkkp(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err(2))
-   allocate(elph_DW(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err(3))
-   call mem_est("ph_freqs_sq elph_gkkp elph_DW",&
-&               (/size(ph_freqs_sq),size(elph_gkkp),size(elph_DW)/),&
-&               (/SP, 2*SP,SP/),errors=alloc_err)
+     !
+     use memory_m,  ONLY:mem_est
+     use R_lattice, ONLY:nqibz,nkbz
+     implicit none
+     integer     ::alloc_err(3)
+     if (allocated(ph_freqs_sq)) return
+     allocate(ph_freqs_sq(nqibz,ph_modes),stat=alloc_err(1))
+     allocate(elph_gkkp(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err(2))
+     allocate(elph_DW(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err(3))
+     call mem_est("ph_freqs_sq elph_gkkp elph_DW",&
+&                 (/size(ph_freqs_sq),size(elph_gkkp),size(elph_DW)/),&
+&                 (/SP, 2*SP,SP/),errors=alloc_err)
    end subroutine
    !
    subroutine elph_gkkp_free()
-   !--------------------------
-   use memory_m,  ONLY:mem_est
-   implicit none
-   deallocate(ph_freqs_sq,elph_gkkp,elph_DW)
-   call mem_est("ph_freqs_sq elph_gkkp elph_DW")
+     !
+     use memory_m,  ONLY:mem_est
+     implicit none
+     deallocate(ph_freqs_sq,elph_gkkp,elph_DW)
+     call mem_est("ph_freqs_sq elph_gkkp elph_DW")
    end subroutine
    !
  end module ELPH

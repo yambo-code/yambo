@@ -73,7 +73,7 @@
  use eels_integration,     ONLY : init_reels_integration
 #endif
 #if defined PJ_PH
- use ELPH,                 ONLY : QP_PH_n_G_bands
+ use ELPH,                 ONLY : QP_PH_n_G_bands,PH_damping
 #endif
  !
  implicit none
@@ -165,7 +165,8 @@
  ! El-Ph
  !
 #if defined PJ_PH
- call it(defs,'GphBRnge', '[ELPH] G[W] bands range',QP_PH_n_G_bands)
+ call it(defs,'GphBRnge',  '[ELPH] G[W] bands range',QP_PH_n_G_bands)
+ call it(defs,'PHdamping', '[ELPH] Phonon damping',PH_damping,verb_level=V_qp,unit=E_unit)
 #endif
  ! 
  ! RAS

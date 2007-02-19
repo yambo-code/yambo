@@ -1,3 +1,33 @@
+2007-02-16 16:30:34 r100 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.7_16-02-07
+
+	*  configure spp/spp_i.F spp/k_analyze.F spp/BZ_RIM.F spp/elph_pw_dbs.F include/version.inc config/configure.ac 2wf_and_fft/scatter_Gamp.F 2coulomb/cutoff_box.F 2coulomb/cutoff_driver.F 2coulomb/rim.F 2coulomb/rim_integrate.F 0modules/mod_vec_operate.F 0modules/std_presets.F 0modules/mod_pars.F 0modules/mod_R_lattice.F 0modules/.objects 2io/ioX.F 2io/ioQINDX.F 2io/io_header.F 5X/X_O_longitudinal.F 5X/X_O_transverse.F 5X/O_driver.F 7bse/K_scattering.F 4it/setup.F 4it/init_load.F 4it/.objects 4it/init.F 4it/gops.F 1common/eval_G_minus_G.F 3kop/k_sym2sym.F 3kop/k_lattice.F 3kop/k_reduce.F 3kop/k_expand.F 3kop/bz_samp_indexes.F ChangeLog 3.0.6_12-02-07
+
+	Additions:
+	- Added mod_zeros.F with different definitions of zero point
+	  for k and G points grid.
+
+	Changes:
+	- src/4it/gops.F renamed as src/4it/G_shells_finder.F
+	- Update to version 3.0.7
+	- RL_v_comp_norm removed in favour of k_iku_zero,G_iku_zero,k_rlu_zero (mod_zeros).
+	  NOTE THAT DB.KINDX IS NOT COMPATIBLE ANYMORE AND AUTOMATICALLY RE-DONE
+	  (do manually self -i if you are using a different k-grid for X and SE).
+	- Because of the RL_v_comp_norm removale new definitions of v_is_zero,
+	  rlu_v_is_zero, ... in src/0modules/mod_vec_operate.F
+	- mod_zeros.F elements are initialized in setup.F
+	- Restyling of: spp/k_analyze.F,spp/BZ_RIM.F,spp/elph_pw_dbs.F,
+	                src/2coulomb/cutoff_box.F, src/2coulomb/cutoff_driver.F,
+	                src/2coulomb/rim.F, src/2coulomb/rim_integrate.F,
+	                src/0modules/mod_R_lattice.F, src/2io/ioQINDX.F,
+	                src/5X/O_driver.F,src/4it/setup.F,
+	                src/1common/eval_G_minus_G.F,src/3kop/k_sym2sym.F,
+	                src/3kop/k_reduce.F,src/3kop/k_expand.F,
+	                src/3kop/bz_samp_indexes.F
+
+	Patch sent by: Andrea
+
 2007-02-14 17:53:36 r99 Andrea Marini <marini@roma2.infn.it>
 
 	V 3.0.6_12-02-07

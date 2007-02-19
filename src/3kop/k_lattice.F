@@ -45,7 +45,7 @@
  ! Work Space
  !
  integer  :: i1,i2,i3,iv(3),i_dim_coord(3)
- real(SP) :: v0(3),v1(3)
+ real(SP) :: v0(3),v1(3),v0_ibz_mod
  real(SP),allocatable ::idist(:)
  integer, allocatable ::order(:)
  character(schlen)    ::ch
@@ -84,6 +84,7 @@
  k_grid_b=0.
  do i1=1,Xk%nbz
    v0=Xk%ptbz(order(i1),:)-Xk%ptbz(1,:)
+   v0_ibz_mod=ak2bz(v0)
    if (v_norm(v0)<=1.E-5) cycle
    select case(k_grid_dim)
      case(0)
@@ -165,7 +166,7 @@
    i2=i2+1
  enddo
  if (product(k_grid)<Xk%nbz) then
-   ch='Impossible verify the K-grid dimension'
+   ch='Impossible to verify the K-grid dimension'
    goto 1
  endif
  !

@@ -368,15 +368,23 @@
      l_xxvxc=.false.
 #endif
    endif
-#if defined  PJ_PH
-   if (l_ph_corr) call initactivate(1,'GphBRnge')
-#endif
    call initactivate(1,'BoseCut')
    if (.not.l_life) call initactivate(1,'DysSolver GDamping NewtDchk QPreport')
    if (l_life) call initactivate(1,'LifeTrCG')
-   if (l_life) call initactivate(-1,'GbndRnge GDamping ETStpsXd EMStpsXs')
+   if (l_life) call initactivate(-1,'GbndRnge ETStpsXd EMStpsXs')
    if (trim(QP_solver)=="g") call initactivate(-1,'NewtDchk QPreport GDamping')
    if (trim(QP_solver)=="g") call initactivate(1,'GEnSteps GEnRnge GDmRnge')
+#if defined  PJ_PH
+   if (l_ph_corr) then
+     call initactivate(1,'GphBRnge PHdamping')
+     ! 
+     ! In the Allen Cardona formulation the SE is calculated in 
+     ! the on-mass shell formulation
+     !
+     call initactivate(-1,'GDamping')
+     !
+   endif
+#endif
  endif
  !
  ! Optics + BS based TDDFT (BS fxc is only of q=0 0 0)

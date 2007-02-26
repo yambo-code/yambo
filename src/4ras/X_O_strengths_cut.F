@@ -22,7 +22,7 @@
  subroutine X_O_strengths_cut(Xen, Xk, X, field_dir)
 !====================================
  use pars
- use com,                     ONLY : msg
+ use com,                     ONLY : msg, warning
  use timing,                  ONLY : live_timing
  use electrons,               ONLY : levels, n_spin, n_spinor
  use par_proc_m,              ONLY : pp_redux_wait, pp_indexes, myid, &
@@ -30,7 +30,7 @@
  use par_indexes_m,           ONLY : par_indexes
  use D_lattice,               ONLY : nsym, i_time_rev, alat, dl_sop, sop_inv
  use R_lattice,               ONLY : g_vec, bz_samp
- use X_m,                     ONLY : X_alloc, X_t
+ use X_m,                     ONLY : X_alloc, X_t, long_path
  use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP
  use memory_m,                ONLY : mem_est
  use wave_func,               ONLY : wf, wf_ng, wf_state, wf_load, WF_free
@@ -47,10 +47,10 @@
 
  real(SP)                         :: omega, field_dir_rot(3)
  type(pp_indexes)                 :: px
- real(SP), allocatable            :: kg(:,:)
  complex(SP)                      :: PS(3), spinor_avg(3)
  real(SP), parameter          :: fac = 0.70710678118654752440_SP
  character(schlen)                :: sch ! DEBUG
+ logical                          :: use_trans_gauge
 !functions
  integer,  external               :: ioOSTNTS_cut
 
@@ -61,101 +61,59 @@
  X%ngostnts = wf_ng
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=io_db)
  io_err = ioOSTNTS_cut(X, Xen, io_db)
- if (io_err==0) goto 1
-!
- call pp_indexes_reset(px)
-!
-! WF loading
-!============
-!
- 
- call wf_load(0, 1, X%ib, (/1,Xk%nibz/), space='G', title='-Oscillators/G space')
 
- allocate( kg(3,wf_ng) ) 
-!
-! OptGrad cut allocation
-!====================
- allocate(Xcut_q0grad(3, X%ib(2), Xen%nbm, Xk%nibz, n_spin))
- call mem_est('Xcut_q0grad', (/product( (/3, X%ib(2), Xen%nbm, Xk%nibz, n_spin/) )/) )
- Xcut_q0grad = (0.,0.)
+ if (io_err.ne.0) then
+   !
+   call pp_indexes_reset(px)
+   !
+   ! WF loading (needed in both cases)
+   !============
+   !
+   call wf_load(0, 1, X%ib, (/1,Xk%nibz/), space='G', title='-Oscillators/G space')
 
- call par_indexes(px, (/ Xk%nibz, Xen%nbm /),(/ 1, X%ib(1) /))
+   !
+   ! Set up data needed for cut off routines
+   !============
+   !
+   call setup_gvecaff
+   call nG_limits( Xk%nibz )
+   !
+   ! OptGrad cut allocation
+   !====================
+   allocate(Xcut_q0grad(3, X%ib(2), Xen%nbm, Xk%nibz, n_spin))
+   call mem_est('Xcut_q0grad', (/product( (/3, X%ib(2), Xen%nbm, Xk%nibz, n_spin/) )/) )
+   Xcut_q0grad = (0.,0.)
 
-! ppios%mode='orh';ppios%verbose=1
-! call io(pp,ppios)
-! if (pp%ns/=0) X%Vnl_included=.true.
-! call nlPPalloc(1)
-
- call live_timing('Optical strengths-cut',px%stps(myid+1))
- call pp_redux_wait
-
- call setup_gvecaff
- call nG_limits( Xk%nibz )
-
-
- do ik = 1, Xk%nibz
-
-!--> DEBUG
-!   write(sch,'(a,i4,a,i4)') 'Loop over k oscillators: ',ik,'/',Xk%nibz
-!   call msg('ns',trim(sch))
-!   write(*,*) trim(sch)
-!<-- DEBUG
-
-   do i1 = 1,3
-     kg(i1,:) = ( Xk%pt(ik,i1) + g_vec(1:wf_ng, i1) ) * 2. * pi/alat(i1) ! -i grad Wf
-   enddo
-   call setup_optcut( ik )
-
-   do iv = X%ib(1), Xen%nbm
-     if (.not.px%i2p(ik,iv)) cycle
-     do i_spin   = 1, n_spin
-       ivfft=wf_state(iv,ik,i_spin)
-       do ic = Xen%nbf+1, X%ib(2)
-         omega = Xen%E(iv,ik,i_spin)-Xen%E(ic,ik,i_spin)
-
-         if (associated(Xen%Eo)) omega=Xen%Eo(iv,ik,i_spin)-Xen%Eo(ic,ik,i_spin)
-           if (any((/-omega<X%ehe(1).and.X%ehe(1)>0.,-omega>X%ehe(2).and.X%ehe(2)>0./))) cycle
-         if (abs(omega)<=1.E-5) cycle
-         icfft=wf_state(ic,ik,i_spin)
-
-         call PScut(kg, PS, wf(:,ivfft), wf(:,icfft) )
-
-          Xcut_q0grad(:,ic,iv,ik,i_spin) = PS(:)/omega
-       enddo ! cond. bands
-     enddo     ! spinors
+   use_trans_gauge = .true.
+   if(trim(long_path)/='none') then
      !
-     ! Correct for spinor case
+     ! Use longitudinal gauge, supporting fallback to transverse gauge
      !
-     if(n_spinor.eq.2) then
-       do ic = Xen%nbf+1, X%ib(2)
-         spinor_avg(:) =  ( Xcut_q0grad(:,ic,iv,ik,1) + Xcut_q0grad(:,ic,iv,ik,2) )*fac
-         Xcut_q0grad(:,ic,iv,ik,1) = spinor_avg(:)
-         Xcut_q0grad(:,ic,iv,ik,2) = spinor_avg(:)
-       enddo
-     endif
-     call live_timing(steps=1)
-   enddo   ! valence bands
- enddo       ! k-points
+     call X_O_longitudinal_cut(Xen,Xk,X,field_dir, use_trans_gauge)
+     !
+     if(use_trans_gauge) call warning('Reverting to transverse gauge')
+   endif
+   write(*,*) "DONE long"
+   !
+   if(use_trans_gauge) call X_O_transverse_cut(Xen,Xk,X)
+   write(*,*) "DONE trans"
 
- call live_timing
-!call end_optcut
-!
-! CLEAN
-!
- deallocate(kg)
- call WF_free()
- do i_spin = 1,n_spin
-   call pp_redux_wait(Xcut_q0grad(:,:,:,:,i_spin))
- enddo
-
- if (master_node) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=io_db)
- io_err=ioOSTNTS_cut(X,Xen,io_db)
-
-1 continue
-
+   !
+   ! Free any loaded WFs
+   !
+   call WF_free()
+   !
+   if (master_node) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=io_db)
+   io_err=ioOSTNTS_cut(X,Xen,io_db)
+ endif
+   write(*,*) "DONE ioOSTCUTs"
+ !
+ ! Calculate the q-dependent oscillators (OptOscCut)
+ !
  allocate(Xcut_rhoq0(X%ib(2),Xen%nbm,Xk%nbz,n_spin))
  call mem_est('Xcut_rhoq0',(/ product( (/X%ib(2),Xen%nbm,Xk%nbz,n_spin/) ) /) )
  Xcut_rhoq0=(0.0_SP,0.0_SP)
+
  do i1=1,Xk%nbz
    ik  = Xk%sstar(i1, 1)
    is  = sop_inv(Xk%sstar(i1, 2) )
@@ -163,6 +121,9 @@
    do iv = X%ib(1), Xen%nbm
      do ic = Xen%nbf+1, X%ib(2)
        do i_spin = 1, n_spin
+         !
+         ! X_rhoq0 = i q . < v k | r | c k >
+         !
          Xcut_rhoq0(ic,iv,i1,i_spin) = &
 &          dot_product( field_dir_rot, Xcut_q0grad(:,ic,iv,ik,i_spin) ) 
          if ( is > nsym/(i_time_rev+1) ) Xcut_rhoq0(ic,iv,i1,i_spin) = &
@@ -172,11 +133,12 @@
      Xcut_rhoq0(iv,iv,i1,:)=(1.0_SP,0.0_SP)
    enddo
  enddo
-
  call pp_redux_wait()
-!
-! CLEAN
+ !
+ ! Clean up
+ !
  deallocate(Xcut_q0grad)
  call mem_est('Xcut_q0grad')
+ return
 
- end subroutine
+end subroutine X_O_strengths_cut

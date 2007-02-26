@@ -34,7 +34,7 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
   use par_indexes_m,       only : par_indexes
   use D_lattice,           only : DL_sop, n_atoms,znucl,atom_pos
   use R_lattice,           only : g_vec,bz_samp, bz_samp_duplicate, q0_defmod, bz_samp_reset
-  use X_m,                 only : X_alloc,X_t,X_q0grad, q0mod,  num_long_grid, long_path
+  use X_m,                 only : X_alloc,X_t,X_q0grad, q0mod, long_path
   use IO_m,                only : io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP,OP_RD,&
 &                                 RD_CL,RD,DUMP,NONE, ver_is_gt_or_eq
   use memory_m,            only : mem_est
@@ -46,11 +46,7 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
   logical,       intent(inout) :: use_trans_gauge
   real(SP),      intent(inout) :: field_dir(3)
 !ws
-  integer                      :: ik,i1,icfft,ivfft,ic,iv, ik_grid, iq, ig, ikpq
-  integer                      :: is,ia,il,im,alloc_err,i_spin, err, ifail
-  integer                      :: wf_ng_long
-  integer                      :: grid_offset
-  logical                      :: read_zero_grid
+  integer                      :: ik,icfft,ivfft,ic,iv, ik_grid, iq, ikpq, i_spin, err, ifail, wf_ng_long
   complex(SP), allocatable     :: wf_k(:)
   complex(SP)                  :: rho, spinor_avg
   real(SP)                     :: Ev_m_Ec
@@ -83,17 +79,13 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
   !
   ! Save local copy of ioDB1 (Enk, wf_k)
   !
-  ! The following lines are needed to reload DB1 correctly
-  !
   inpath_save = inpath
   wf_ng_save = wf_ng
   call E_reset(Xen_save) 
-  ! Note (1) : E_reset resets Efermi: not read from DB1
-  ! Note (2) : Memory estimate is wrong!
   call E_duplicate(Xen,Xen_save)   
   call bz_samp_duplicate(Xk, Xk_save) 
   !
-  ! Read longitudinal grids from second ioDB1
+  ! Read longitudinal k-point grids from second ioDB1
   !
   deallocate(g_vec,dl_sop,wf_nc_k,wf_igk)
   call mem_est("g_vec dl_sop wf_nc_k wf_igk")
@@ -112,25 +104,13 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
     return
   endif
   !
-  ! - Determine grid displacement vectors
-  ! - Set up new reference frame (presently disabled)
-  ! - Check compatibility of requested polarization vector (disabled)
+  ! Determine grid displacement (q0mod)
   !
-  call long_grid_setup(ifail)
-! call rotate_oscillator_frame(ifail)
-! call select_field_dir(ifail)
+  call calc_grid_shift(ifail)
   if(ifail>0) then
     call msg('r','Error in new grids.')
     call reset_DB1
     return
-  endif
-  !
-  ! Read the unshifted WFs again if they are included.
-  !
-  if(read_zero_grid) then
-    inpath = long_path
-    call WF_free()
-    call wf_load(0,1,X%ib,(/1,Xk_save%nibz/),space='G',title='-Oscillators/G space') 
   endif
   !
   ! {k} Save local copy of unshifted WF grid. 
@@ -146,8 +126,8 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
   !
   ! Main loop over cartesian directions
   !
-  do iq = 1,num_long_grid
-    ik_grid = (iq-1)*Xk_save%nibz + grid_offset + 1 ! The index of the first k point for each grid
+  do iq = 1, 3
+    ik_grid = (iq-1)*Xk_save%nibz + 1 ! The index of the first k point for each grid
     !
     ! Load WFs {k} + q_iq
     !
@@ -187,7 +167,6 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
 #else
             rho = cdotc( wf_ng_long, wf(1:wf_ng_long,ivfft), 1, wf_local(1:wf_ng_long,icfft),1 ) /q0mod
 #endif
-            ! Terrible stride! Should fix X_q0grad...
             !
             X_q0grad(iq,ic,iv,ik,i_spin) = rho
     
@@ -207,13 +186,7 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
       enddo      ! valence band loop
     enddo        ! k-points
     call live_timing
-  enddo          ! num_long_grid
-  !
-  ! Zero the q0grad that are not calculated
-  !
-  do iq = num_long_grid+1, 3
-    X_q0grad(iq,:,:,:,:) = 0
-  enddo
+  enddo          ! iq
   !
   ! CLEAN
   !
@@ -226,8 +199,6 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
   ! Switch off transverse calculation if successful
   !
   use_trans_gauge = .false.
-
-999 continue
   !
   ! Reset DB1
   !
@@ -255,8 +226,7 @@ contains
     return
   end subroutine reset_DB1
 
-  subroutine long_grid_setup(ifail)
-    use pars,            only : zero_dfl
+  subroutine calc_grid_shift(ifail)
     use stderr,          only : intc
     use vec_operate,     only : v_is_zero, v_norm, c2a
     use X_m,             only : q_long, q0mod ! Remove q0mod from here
@@ -270,46 +240,29 @@ contains
 
     if(ifail>0) return
 
-    if(mod(Xk_shift%nibz,Xk_save%nibz)/=0) then
-      call msg('r','Bad number of k-points in shifted DBs:'//intc(Xk_save%nibz)//intc(Xk_shift%nibz))
-      ifail = ifail + 1
-      return
-    endif
-
-    num_long_grid = Xk_shift%nibz / Xk_save%nibz
-    if(.not.(num_long_grid.ge.1.and.num_long_grid.le.4)) then
-      call msg('r','Bad number of shifted grids (1/2/3).')
+    if( mod(Xk_shift%nibz,Xk_save%nibz)/=0 .or. &
+&           Xk_shift%nibz / Xk_save%nibz.ne.3 ) then
+      call msg('r','Shifted grids are not set up correctly: '&
+&                   //intc(Xk_save%nibz)//intc(Xk_shift%nibz))
       ifail = ifail + 1
       return
     endif
     !
-    ! Simple test if original grid is present.
-    !
-    grid_offset = 0
-    read_zero_grid = .false.
-    q_init(:) = Xk_shift%pt(1,:) - Xk_save%pt(1,:) ! units of [iku]
-    if(v_is_zero( q_init )) then
-      call msg('r','First grid is unshifted grid.')
-      read_zero_grid = .true.
-      grid_offset = Xk_save%nibz
-      num_long_grid = num_long_grid - 1
-    endif
-    !
-    ! Find the displacement vector for each grid
+    ! Find the displacement for each grid
     !
     ! q_long(:,i)   is the shift vector of grid(i) in [iku]
     ! q_mod(i) is the modulus of the grid shift vector (i) in [a.u.] 
     !
     q_mod(1:3) = 0.0_SP
-    do iq = 1, num_long_grid
-      i_grid_k = (iq-1)*Xk_save%nibz + grid_offset
+    do iq = 1, 3
+      i_grid_k = (iq-1)*Xk_save%nibz 
       q_init(:) = Xk_shift%pt(i_grid_k + 1,:) - Xk_save%pt(1,:) ! units of [iku]
       !
       ! Check grid is uniformly shifted
       !
       do ik = 2, Xk_save%nibz
         if(.not.v_is_zero( Xk_shift%pt(i_grid_k+ik,:) - &
-&                          Xk_save%pt(ik,:) - q_init(:) )) then
+&                           Xk_save%pt(ik,:) - q_init(:) )) then
           call msg('r','Long. gauge shifts are not uniform for all {k}.')
           ifail = ifail + 1
           return
@@ -324,167 +277,13 @@ contains
     ! Check the lengths are compatible 
     !
     q0mod = q_mod(1)  ! a.u.
-    q_mod(1:num_long_grid) = q_mod(1:num_long_grid) - q0mod
-    if(.not.all( abs(q_mod).lt.zero_dfl )) then
-      call msg('r','Note: Long. gauge shifts are not uniform for all {k}.')
+    q_mod(1:3) = q_mod(1:3) - q0mod
+    if(.not.all( abs(q_mod).lt.1.0E-5 )) then
+      call msg('r','Long. gauge shifts are not uniform for all grids.')
+      ifail = ifail + 1
     endif
 
-    call msg('nr','Longitudinal grids found: '//intc(num_long_grid))
-
     return
-  end subroutine long_grid_setup
-
-
-  subroutine rotate_oscillator_frame(ifail)
-    !
-    ! Construct the rotated frame (x,y,z) -> (a,b,c) 
-    ! and the rotation matrix R_long: v' = R_long . v
-    !
-    use com,             only : warning
-    use pars,            only : SP,zero_dfl
-    use vec_operate,     only : cross_product, v_is_zero, normalize_v
-    use X_m,             only : q_long, R_long
-    implicit none
-    integer, intent(inout) :: ifail
-    real(SP)                 :: a(3), b(3), c(3)
-    integer                  :: iq, i1
-    logical                  :: bfound = .false.
-    if(ifail>0) return
-    
-    !
-    ! Make the new basis (unit) vectors
-    !
-    select case (num_long_grid)
-    case(3)
-      a(:) = normalize_v( q_long(:,1) )
-      b(:) = normalize_v( q_long(:,2) )
-      c(:) = normalize_v( q_long(:,3) )
-    case(2)
-      a(:) = normalize_v( q_long(:,1) )
-      b(:) = normalize_v( q_long(:,2) )
-      c = cross_product(a,b) 
-    case(1)
-      a(:) = normalize_v( q_long(:,1) )
-      !
-      ! Try to use normal Cartesian axes where possible
-      !
-      b(:) = 0.0_SP
-      do i1 = 1,3 
-        if(abs(a(i1)).lt.zero_dfl) then
-          b(i1) = 1.0_SP
-          bfound = .true.
-          exit
-        endif
-      enddo
-      !
-      ! Otherwise contruct an orthogonal vector
-      !
-      if(.not.bfound) then
-        b(1:2) = a(1:2)
-        b(3) = -(a(1)**2 + a(2)**2)/a(3)
-        b(:) = normalize_v( b )
-      endif
-      c = cross_product(a,b) 
-    end select
-    !
-    ! Check the orthonormality of the new basis vectors
-    !
-    if(.not.all( (/ v_is_zero(cross_product(a,b) - c), & 
-&                   v_is_zero(cross_product(b,c) - a), &
-&                   v_is_zero(cross_product(c,a) - b) /) )) then
-      call msg('r','Basis vectors of new frame:',a(1:3))
-      call msg('r','                           ',b(1:3))
-      call msg('r','                           ',c(1:3))
-      call msg('r','Shifted grids yield a non-orthonormal basis.')
-      ifail = ifail + 1
-      return
-    endif 
-    !
-    ! The rotation matrix is simply formed by the row vectors
-    ! of the new frame wrt the old frame
-    !
-    R_long(1,1:3) = a(1:3)
-    R_long(2,1:3) = b(1:3)
-    R_long(3,1:3) = c(1:3)
-    call msg('r','Rotation matrix of oscillators:',R_long(1,1:3))
-    call msg('r','                               ',R_long(2,1:3))
-    call msg('r','                               ',R_long(3,1:3))
-
-    return
-  end subroutine rotate_oscillator_frame
-
-  subroutine select_field_dir(ifail)
-    !
-    ! Select and check the requested field direction
-    ! Note that field_dir has length q0_defmod ALWAYS
-    !
-    use pars,            only : SP,zero_dfl
-    use X_m,             only : R_long, q_long
-    use vec_operate,     only : v_is_zero, c2a, normalize_v, cross_product, v_norm
-    implicit none
-    integer, intent(inout) :: ifail
-    real(SP)               :: qtemp(3), field_tmp(3), field_dir_norm(3)
-
-    if(ifail>0) return
-    ! Here we need vectors normalized for comparisons
-    field_dir_norm(:) = normalize_v(field_dir)
-
-    select case (num_long_grid)
-    case(3) 
-      !
-      ! 3 grids defined, just rotate field vector to new plane
-      !
-      field_tmp(:) = matmul(R_long,field_dir)
-      call msg('r','Calculated field direction: [a.u., Cartesian frame] ',field_dir_norm)
-      
-    case(2) 
-      !
-      ! 2 grids defined, check field vector in the plane and rotate
-      !
-      if( abs(dot_product(R_long(3,:),field_dir_norm)).gt.zero_dfl ) then
-        call msg('r','Field direction does not lie in plane allowed by grids.')
-        ifail = ifail + 1
-        return ! Don't overwrite field_dir
-      endif 
-      
-      field_tmp(:) = matmul(R_long,field_dir)
-      call msg('r','Calculated field direction: [a.u., Cartesian frame] ',field_dir_norm)
-      
-    case(1)
-      !
-      ! 1 grid defined, set field vector to the only possible value 
-      !
-      ! Convert q_long(:,1) from [iku] to [cc]
-      !
-      call c2a(v_in=q_long(:,1), v_out=qtemp, mode="ki2c") ! 
-      qtemp(:) = normalize_v(qtemp)
-      field_tmp(:) = matmul(R_long, qtemp) * q0_defmod 
-      call msg('r','Calculated field direction: [a.u., Cartesian frame] ',qtemp)
-      !
-      ! Just check that the new field direction is now (trivially) along x'
-      !
-      if( .not.v_is_zero(field_tmp(:)-(/q0_defmod, 0.0_SP, 0.0_SP/) ) ) then
-        call error('Problem with rotated field vector')
-      endif
-      !
-      ! Warn if direction of field is different from that in input (q= -q)
-      !
-      if( abs(v_norm(cross_product(R_long(1,:),field_dir_norm))).gt.zero_dfl ) then
-          call warning(' Overwriting requested field direction with grid defined value')
-      endif
-
-    end select 
-    !
-    ! Only overwrite field_dir if above is successful, so transverse calculation
-    ! will still run
-    !
-    field_dir(:) = field_tmp(:) 
-    !
-    ! Report the new field direction
-    !
-    field_dir_norm(:) = normalize_v(field_dir)
-    call msg('r','Calculated field direction: [a.u. oscillator frame] ',field_dir_norm)
-    return
-  end subroutine select_field_dir
+  end subroutine calc_grid_shift
 
 end subroutine X_O_longitudinal

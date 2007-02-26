@@ -191,10 +191,9 @@ end subroutine init_cutoff
           if(n3.gt.n3limit(n1,n2,2)) n3limit(n1,n2,2) = n3
 !--> DEBUG
 !         write(77,223) n1,n2,n3,ig,igk_k(ig),gvecaff(igtab(n1,n2,n3),xyz(:))
-!         write(77,223) n1,n2,n3,ig,gvecaff(igtab(n1,n2,n3),xyz(:))
-!  223 format(3i4,2x,i7,3i4,2x,3i4)
+          write(77,223) n1,n2,n3,ig,gvecaff(igtab(n1,n2,n3),xyz(:))
+   223 format(3i4,2x,i7,3i4,2x,3i4)
 !<-- DEBUG
-!      endif
     enddo
     
     call check_index
@@ -249,13 +248,16 @@ end subroutine init_cutoff
                 endif
                 icount = icount + 1
                 ig1=igtab(n1,n2,n3)
-                if (ig1.lt.1.or.ig1.gt.wf_ncx) then
+                if (ig1.lt.1.or.ig1.gt.wf_ng) then
+!               if (ig1.lt.1.or.ig1.gt.wf_ncx) then !CHECK THIS
+                 write (*,224) n1,n2,n3,ig1,gvecaff(ig1,xyz(:))
+                 write (*,*) wf_ncx,wf_ng
                    call msg('sr','[ERROR] Bug found in check_index.')
                    stop
                 endif
 !DEBUG>
 !                write (78,224) n1,n2,n3,ig1,gvecaff(ig1,xyz(:))
-!224 format(3i4,2x,i7,3i4,2x,3i4)
+224 format(3i4,2x,i7,3i4,2x,3i4)
 !DEBUG<
              enddo
           endif
@@ -286,31 +288,39 @@ end subroutine init_cutoff
 
 !<-------------------------------------------------------------------->! 
    
-  subroutine PScut(kg,PS,wfv,wfc)
+  subroutine PScut(PS,wfv,wfc,kg)
 !   use wave_func,         ONLY : wf_ng
     implicit none
     complex(SP),   intent(out)   :: PS(3)
-    real(SP),      intent(in)    :: kg(:,:)
+    real(SP), optional, intent(in)    :: kg(:,:)
     complex(SP),   intent(in)    :: wfv(:),wfc(:)
+!   logical,       intent(in)    :: use_trans_gauge
    ! ws
     integer                      :: n3min,n3max,ig1,n1,n2,n3,n3p
     real(SP)                     :: kgxy(3)
     complex(SP)                  :: PSx,PSy,PSz
    
+!write(*,* )"PScut"
     PSx = 0
     PSy = 0
     PSz = 0
+    kgxy = 1.0_SP
     ! Double loop over n1,n2 (i.e. Gx,Gy)
     do n1 = n%min(1),n%max(1)
     do n2 = n%min(2),n%max(2)
+! write(*,* )  "n1 n2 ",n1,n2
        if(gfound(n1,n2)) then ! Avoid cases outside the cutoff
 
           n3min = n3limit(n1,n2,1)
           n3max = n3limit(n1,n2,2) 
 !         Ignore Gz for now. Thus any n3 will do.
-          kgxy(:) = kg(:,igtab(n1,n2,0)) ! crystal frame
+! write(*,* )  "igtab",n3min,n3max
+! write(*,* )  "igtab",igtab(n1,n2,0)
+          if(present(kg)) kgxy(:) = kg(:,igtab(n1,n2,0)) ! crystal frame
           do n3 = n3min,n3max
+! write(*,* )  "n3 ",n3
              ig1 = igtab(n1,n2,n3)
+! write(*,* )  "ig1 ",ig1
              wfc1(n3) = conjg(wfv(ig1))
              wfc2(n3) = wfc(ig1)
           enddo

@@ -59,12 +59,7 @@
  character(schlen)::ch
  logical          ::use_G_RIM
  real(SP)         ::g_sq_F_res(QP_n_states,q%nibz,ph_modes)
- complex(SP), allocatable :: DP_corr(:),Gf_save(:)
- ! DEBUG >
- logical :: skip_DW,skip_FAN 
- call parser('SKIPFAN',skip_FAN)
- call parser('SKIPDW',skip_DW)
- ! DEBUG <
+ complex(SP)      ::DP_corr
  !
  ! Zeroing
  !
@@ -129,7 +124,6 @@
      QP_Sc_steps=Sc_W(iqp)%n(1)
    enddo
  endif
- allocate(DP_corr(Sc_W(1)%n(1)),Gf_save(Sc_W(1)%n(1)))
  !
  call par_indexes(px,(/q%nbz,QP_PH_n_G_bands/))
  call pp_redux_wait
@@ -179,49 +173,28 @@
          !
          if (iq==1) cycle
          !
-         !
-         ! Standard Green's function based formulation
-         !---------------------------------------------
-         !
-         !if (use_G_RIM.and.ob<=BZ_RIM_nbands) then
-         !  call G_RIM_Gf(Sc_W(iqp),en,(/ob,okbz,1/),sqrt(ph_freqs_sq(iq,il)),Gf_save) 
-         !else
-         !  forall (iw=1:Sc_W(iqp)%n(1)) Gf_save(iw)=&
-         !&        Gf(Sc_W(iqp)%p(iw),en,(/ob,ok,1/),sqrt(ph_freqs_sq(iq,il)),1)
-         !endif
-         !
-         !forall (iw=1:Sc_W(iqp)%n(1)) DP_corr(iw)=DP_corr(iw)+Gf_save(iw)/real(q%nbz)/2.*&
-         !&      conjg(elph_gkkp(ikbz,il,ib,ob))*elph_gkkp(ikbz,il,ib,ob)/&
-         !&            sqrt(ph_freqs_sq(iq,il))
-         !
          ! Cardona-Allen formulation
          !---------------------------
          !
-         if (abs(en%E(ib,ik,1)-en%E(ob,ok,1))<1.E-5) cycle
-         !
          ! Fan Term
          !
-         if (.not.skip_FAN) & !DEBUG
-&        g_sq_F_res(iqp,iq,il)= g_sq_F_res(iqp,iq,il)+&
-&                  conjg(elph_gkkp(ikbz,il,ib,ob))*elph_gkkp(ikbz,il,ib,ob)/&
-&                  (en%E(ib,ik,1)-en%E(ob,ok,1))/real(q%nbz)/2./sqrt(ph_freqs_sq(iq,il))
+         g_sq_F_res(iqp,iq,il)= g_sq_F_res(iqp,iq,il)+&
+&                  conjg(elph_gkkp(ikbz,il,ib,ob))*elph_gkkp(ikbz,il,ib,ob)*&
+&                  Gf_real(ib,ik,ob,ok,okbz)/real(q%nbz)/2./sqrt(ph_freqs_sq(iq,il))
          !
          ! Debye Waller Term
          !
          if (abs(en%E(ib,ik,1)-en%E(ob,ik,1))<1.E-5) cycle
          !
-         if (.not.skip_DW) & !DEBUG
-&        g_sq_F_res(iqp,iq,il)= g_sq_F_res(iqp,iq,il)-1./2.*&
-&                  elph_DW(ikbz,il,ib,ob)/&
-&                  (en%E(ib,ik,1)-en%E(ob,ik,1))/real(q%nbz)/2./sqrt(ph_freqs_sq(iq,il))
+         g_sq_F_res(iqp,iq,il)= g_sq_F_res(iqp,iq,il)-1./2.*&
+&                  elph_DW(ikbz,il,ib,ob)*Gf_real(ib,ik,ob,ik,ikbz)/&
+&                  real(q%nbz)/2./sqrt(ph_freqs_sq(iq,il))
          !
        enddo
        !
        call live_timing(steps=1)
        !
      enddo
-     !
-     QP_Sc(iqp,:)=QP_Sc(iqp,:)+DP_corr(:)
      !
    enddo
  enddo
@@ -243,50 +216,57 @@
  !
  ! CLEAN
  !
- deallocate(DP_corr,Gf_save)
  call elph_gkkp_free()
  call pp_indexes_reset(px)
  !
  contains
    !
-   pure function Gf(W,e,vs,E_ph,i_type)
+   pure function Gf_real(i_b,ik_ibz,o_b,ok_ibz,ok_bz)
      !
+     use electrons,   ONLY:BZ_RIM_table,BZ_RIM_nkpt
      implicit none
-     type(levels), intent(in) ::e
-     integer     , intent(in) ::vs(3)
-     complex(SP) , intent(in) ::W
-     real(SP)    , intent(in) ::E_ph
-     integer     , intent(in) ::i_type
-     complex(SP) ::Gf
+     real(SP)            ::Gf_real
+     integer,intent(in)  ::i_b,ik_ibz,o_b,ok_ibz,ok_bz
      !
      ! Work Space
      !
-     complex(SP) ::lW 
-     lW=W
-     if (Finite_Tel) lW=conjg(W)
+     integer      ::i_rand,ok_rand
+     real(SP)     ::delta_E
      !
-     ! ORI
+     Gf_real=0._SP
      !
-     if (i_type==1) &
-       Gf=(&
-&          (2.-e%f(vs(1),vs(2),vs(3))+bose_f(E_ph))/(lW-e%E(vs(1),vs(2),vs(3))-E_ph)+&
-&          (e%f(vs(1),vs(2),vs(3))+bose_f(E_ph))/(conjg(W)-e%E(vs(1),vs(2),vs(3))+E_ph)&
-&         )
-  
-     if (i_type==2)   Gf=2.*( (W-e%E(vs(1),vs(2),vs(3)))*(bose_f(E_ph)+1.)+&
-&         E_ph*(1.-e%f(vs(1),vs(2),vs(3))) )/&
-&       ( (W-e%E(vs(1),vs(2),vs(3)))**2 - E_ph**2 )
+     ! no RIM
      !
-     ! W_ph =0
+     if (.not.use_G_RIM) then
+       delta_E=en%E(i_b,ik_ibz,1)-en%E(o_b,ok_ibz,1)
+       if (abs( delta_E )<1.E-5) return
+       Gf_real=1./delta_E
+       return
+     else
+       !
+       ! RIM
+       !
+       do i_rand=1,BZ_RIM_nkpt(ok_bz)
+         !     
+         ok_rand=BZ_RIM_table(ok_bz,i_rand)
+         !
+         delta_E=en%E(i_b,ik_ibz,1)-en%E_RIM(o_b,ok_rand,1)
+         if (abs( delta_E )<1.E-5) cycle
+         Gf_real=Gf_real+1./delta_E
+         !
+       enddo
+       !
+       Gf_real=Gf_real/real(BZ_RIM_nkpt(ok_bz))
+       !
+     endif
      !
-     if (i_type==3) Gf=2.*( (W-e%E(vs(1),vs(2),vs(3)) )*(bose_f(E_ph)+1.) )/&
-&          ( (W-e%E(vs(1),vs(2),vs(3)))**2 )
      !
    end function
    !
    subroutine Cardona_Allen_report()
      !
-     use functions,  ONLY:Fermi_fnc_derivative,intc,bose_f
+     use functions,  ONLY:Fermi_fnc_derivative,bose_f
+     use stderr,     ONLY:intc
      use com,        ONLY:msg,of_open_close
      !
      integer, parameter ::n_g_sq_freq=1000
@@ -337,7 +317,7 @@
          enddo
        enddo
        !
-       QP_Sc(iqp,:)=QP_Sc(iqp,:)+DP_corr(:)
+       QP_Sc(iqp,:)=QP_Sc(iqp,:)+DP_corr
        !
        if (.not.PH_damping>0.) cycle
        !

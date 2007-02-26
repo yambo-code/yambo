@@ -38,7 +38,6 @@
  ! Work Space
  !
  integer           :: i1,i2,qp_b,qp_k,qp_isp
- real(SP)          :: E_bare
  character(lchlen) :: file_name,G_Sc_name
  type(w_samp)      :: Sc_W
  !
@@ -93,19 +92,16 @@
      qp_isp=1
 #endif
      !
-     E_bare=qp%E_prev(i1) 
-     if (associated(en%Eo)) E_bare=en%Eo(qp_b,qp_k,qp_isp)
-     !
      if (.not.l_life) then
        rstr(2:3)=(/real(QP_Sc(i1,1))*HARTREE,&
-&                 real(QP_Sc(i1,1)+QP_dSc(i1,1)*(qp%E(i1)-E_bare))*HARTREE/)
-       rstr(7:8)=(/real(QP_dSc(i1,1)),real((qp%E(i1)-E_bare)*HARTREE)/)
+&                 real(QP_Sc(i1,1)+QP_dSc(i1,1)*(qp%E(i1)-qp%E_bare(i1)))*HARTREE/)
+       rstr(7:8)=(/real(QP_dSc(i1,1)),real((qp%E(i1)-qp%E_bare(i1))*HARTREE)/)
        if (l_el_corr) then
          rstr(1)=real(QP_Vxc(i1))*HARTREE
          rstr(11)=real(QP_Sx(i1))*HARTREE
        endif
      endif
-     rstr(4:6)=(/E_bare*HARTREE,real(qp%E(i1)*HARTREE),real(qp%Z(i1))/)
+     rstr(4:6)=(/qp%E_bare(i1)*HARTREE,real(qp%E(i1)*HARTREE),real(qp%Z(i1))/)
      rstr(9:10)=(/real(qp_k),real(qp_b)/)
      rstr(12:13)=(/aimag(qp%E(i1)*HARTREE/1.E-3),0.65822/2./aimag(qp%E(i1))/HARTREE/)
      if (aimag(qp%E(i1))==0.) rstr(12:13)=0.

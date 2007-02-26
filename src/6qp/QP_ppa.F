@@ -208,7 +208,7 @@
        call scatterBamp(isc)
        iscp%rhotw=isc%rhotw
        if (any(isc%is/=iscp%is)) call scatterBamp(iscp)
-       forall (i4=1:QP_dSc_steps) E(i4)=en%E(isc%is(1),isc%is(2),isc%is(4))+&
+       forall (i4=1:QP_dSc_steps) E(i4)=qp%E_bare(i1)+&
 &                                       (i4-1)*QP_dSc_delta+cmplx(0.,QP_G_damp,SP)
        !
        ! Taylor expansion

@@ -45,7 +45,7 @@
  !
  integer     :: i1,i2,iter
  real(SP)    :: SC_corr_prev,SC_corr_now
- complex(SP) :: Z(QP_dSc_steps-1),Eqp(QP_dSc_steps-1)
+ complex(SP) :: Z(QP_dSc_steps-1),Eqp(QP_dSc_steps-1),Eqp_prev(QP_n_states)
  real(SP), parameter :: SC_tresh=0.01/HARTREE
  !
  ! Dyson equation: Newton solver 
@@ -56,6 +56,7 @@
  !
  iter=0
  SC_corr_prev=1.
+ Eqp_prev(:)=qp%E_bare(:)
  !
  do while((iter<=GWo_iterations.or.GWo_iterations<0).and..not.GWo_SC_done) 
    !
@@ -80,7 +81,7 @@
        !
        if (.not.l_el_corr) Z(i2)=1.
        !
-       Eqp(i2)=qp%E_prev(i1)+Z(i2)*QP_Sc(i1,1)
+       Eqp(i2)=qp%E_bare(i1)+Z(i2)*QP_Sc(i1,1)
        if (l_el_corr) Eqp(i2)=Eqp(i2)+Z(i2)*(QP_Sx(i1)-QP_Vxc(i1))
        !
      enddo
@@ -90,8 +91,9 @@
      !
    enddo
    !
-   SC_corr_now= maxval(real(qp%E(:)-qp%E_prev(:)))
+   SC_corr_now= maxval(real(qp%E(:)-Eqp_prev(:)))
    GWo_SC_done=abs( SC_corr_prev-SC_corr_now )<SC_tresh.or.iter==GWo_iterations
+   Eqp_prev(:)=qp%E(:)
    !
    if (iter>0) call msg('rs','[SC] Max corrections at prev/current cycle [ev]',&
 &                      (/SC_corr_prev,SC_corr_now/)*HARTREE)
@@ -104,9 +106,6 @@
      !
      if (associated(en%qp_done)) en%qp_done=0
      call QP_apply(QP_n_G_bands,en,k,3,msg_fmt='rs',qp_impose=qp)
-     do i1=1,QP_n_states
-       qp%E_prev(i1)=en%E(QP_table(i1,1),QP_table(i1,3),1)
-     enddo
      !
    endif
    !

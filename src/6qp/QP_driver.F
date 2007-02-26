@@ -124,17 +124,26 @@
  !
  call QP_descriptions(qp,X,Xw)
  !
- allocate(qp%Z(qp%n_states),qp%E(qp%n_states),qp%E_prev(qp%n_states),&
+ allocate(qp%Z(qp%n_states),qp%E(qp%n_states),&
+&         qp%E_bare(qp%n_states),&
 &         qp%k(qp%nk,3),qp%table(qp%n_states,3))
- call mem_est("qp_Z qp_E qp_E_prev qp_K qp_table",&
-&              (/QP_n_states,QP_n_states,QP_n_states,3*QP_n_states,3*QP_n_states/),&
-&              (/2*SP,       2*SP,       2*SP,       SP,           IP/))
+ !
+ call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table",&
+&    (/QP_n_states,QP_n_states,QP_n_states,3*QP_n_states,3*QP_n_states/),&
+&    (/2*SP,       2*SP,       SP,         SP,           IP/))
  !
  qp%table=QP_table
  qp%E=0.
  !
  do i1=1,QP_n_states
-   qp%E_prev(i1)=en%E(QP_table(i1,1),QP_table(i1,3),1)
+   !
+   ! To perform the SC GWo the bare interaction are needed. Those are
+   ! stored in the %E array, or in %Eo array if an initial QP correction
+   ! has been added already
+   !
+   qp%E_bare(i1)=en%E(QP_table(i1,1),QP_table(i1,3),1)
+   if (associated(en%Eo)) qp%E_bare(i1)=en%Eo(QP_table(i1,1),QP_table(i1,3),1)
+   !
    qp%k(QP_table(i1,3),:)=k%pt(QP_table(i1,3),:)
  enddo
  !
@@ -219,8 +228,7 @@
    !
    subroutine QP_energy_report
    !
-   integer  :: qp_k,qp_b,qp_isp
-   real(SP) :: xx_dummy,xc_dummy,E_bare
+   real(SP) :: xx_dummy,xc_dummy
    !
    if (trim(QP_solver)/='g') then
      call section('=','Q(uasi)P(article) properties')
@@ -238,16 +246,6 @@
      do i1=1,QP_n_states
 #endif 
        !
-#if defined PJ_SPIN
-       qp_isp=QP_table(i1,4)
-#else
-       qp_isp=1
-#endif
-       qp_b  =QP_table(i1,1)
-       qp_k  =QP_table(i1,3)
-       E_bare=qp%E_prev(i1) 
-       if (associated(en%Eo)) E_bare=en%Eo(qp_b,qp_k,qp_isp)
-       !
        if (l_el_corr) then
          xx_dummy=real(QP_Sx(i1))*HARTREE
          xc_dummy=real(QP_Vxc(i1))*HARTREE
@@ -260,8 +258,8 @@
          write (ch1,'(a,i4.4,a)') 'K [',i3,'] (iku):'
          call msg('nr',trim(ch1),k%pt(i3,:))
        endif
-       r_numbers=(/E_bare*HARTREE,real(qp%E(i1))*HARTREE,&
-&                  real(qp%E(i1)-E_bare)*HARTREE,real(qp%Z(i1)),&
+       r_numbers=(/qp%E_bare(i1)*HARTREE,real(qp%E(i1))*HARTREE,&
+&                  real(qp%E(i1)-qp%E_bare(i1))*HARTREE,real(qp%Z(i1)),&
 &                  real(QP_Sc(i1,1))*HARTREE,xx_dummy,xc_dummy/)
        ch2=gen_fmt(r_v=r_numbers)
 #if defined PJ_SPIN
@@ -300,9 +298,9 @@
    !
    ! CLEAN
    !
-   deallocate(qp%Z,qp%E,qp%E_prev,qp%k,qp%table,&
+   deallocate(qp%Z,qp%E,qp%E_bare,qp%k,qp%table,&
 &             QP_Sc,QP_table,QP_state)
-   call mem_est("qp_Z qp_E qp_E_prev qp_K qp_table QP_table QP_state QP_Sc")
+   call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table QP_table QP_state QP_Sc")
    if (allocated(QP_dSc)) deallocate(QP_dSc)
    if (allocated(QP_G)) deallocate(QP_G)
    if (allocated(QP_Sx)) deallocate(QP_Sx,QP_Vxc)
@@ -311,9 +309,6 @@
    end subroutine
    !
    subroutine QP_width_report
-   !
-   integer :: qp_b,qp_k,qp_isp
-   real(SP):: E_bare
    !
    call section('=','Q(uasi)P(article) properties')
    call msg(' r','Legend:')
@@ -327,18 +322,9 @@
    !
    do i1=1,QP_n_states,n_spinor
      !
-     r_numbers(:2)=(/aimag(qp%E(i1))*HARTREE/1.E-3,&
-&                    0.65822/2./aimag(qp%E(i1))/HARTREE/)
-     !
-     qp_b  =QP_table(i1,1)
-     qp_k  =QP_table(i1,3)
-#if defined PJ_SPIN
-     qp_isp=QP_table(i1,4)
-#else
-     qp_isp=1
-#endif
-     E_bare=qp%E_prev(i1) 
-     if (associated(en%Eo)) E_bare=en%Eo(qp_b,qp_k,qp_isp)
+     r_numbers(1)=aimag(qp%E(i1))*HARTREE/1.E-3
+     r_numbers(2)=0.
+     if (r_numbers(1)>0.) r_numbers(2)=0.65822/2./aimag(qp%E(i1))/HARTREE
      !
      if (QP_table(i1,3)/=i3) then
        i3=QP_table(i1,3)
@@ -356,9 +342,9 @@
 #endif
      write (ch1,trim(local_fmt)) &
 #if defined PJ_SPIN
-&      trim(ch_spin),'B=',QP_table(i1,1),' Eo=',E_bare*HARTREE,&
+&      trim(ch_spin),'B=',QP_table(i1,1),' Eo=',qp%E_bare(i1)*HARTREE,&
 #else
-&      'B=',QP_table(i1,1),' Eo=',E_bare*HARTREE,&
+&      'B=',QP_table(i1,1),' Eo=',qp%E_bare(i1)*HARTREE,&
 #endif
 &      ' Z=',real(qp%Z(i1)),' Gm=',r_numbers(1),' Gf=',r_numbers(2)
      if (i1< QP_n_states) call msg('r',ch1)
@@ -372,9 +358,9 @@
    !
    ! CLEAN
    !
-   deallocate(qp%Z,qp%E,qp%E_prev,qp%k,qp%table,&
+   deallocate(qp%Z,qp%E,qp%E_bare,qp%k,qp%table,&
 &             QP_dSc,QP_Sc,QP_table,QP_state)
-   call mem_est("qp_Z qp_E qp_E_prev qp_K qp_table QP_table QP_state")
+   call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table QP_table QP_state")
    call mem_est("QP_dSc QP_Sc")
    !
    end subroutine

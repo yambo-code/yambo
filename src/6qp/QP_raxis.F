@@ -20,7 +20,12 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine QP_raxis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
-!==================================================
+ !
+ ! This routine calculates 
+ ! 
+ ! [1] Real axis GW S.E.
+ ! [2] Electronic Lifetimes
+ !
  use pars,          ONLY:SP,schlen,pi,IP,HARTREE
  use stderr,        ONLY:string_pack
  use drivers,       ONLY:l_life
@@ -43,6 +48,7 @@
  use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:qindx_S,bz_samp,nqibz,nqbz
  use wave_func,     ONLY:wf_load,wf_free
+ !
  implicit none
  type(levels) ::en,Xen
  type(bz_samp)::Xk,k,q
@@ -50,8 +56,9 @@
  type(QP_t)   ::qp
  type(w_samp) ::Xw
  integer      ::GW_iter
-!
-! WorkSpace -- GPL_END --
+ !
+ ! WorkSpace -- GPL_END --
+ !
  type(ggwinfo)    ::isc,iscp
  type(pp_indexes) ::px
  type(w_samp)     ::Sc_W(qp%n_states),X_life_W(q%nibz)
@@ -67,10 +74,9 @@
  integer, allocatable::life_W_table(:,:)
  integer, external   ::ioX,QP_state_extract,ioQP,QP_life_transitions,X_em1
  character(schlen)   ::ch,Sc_name
-!
-!---------------------------------------------------------------------
-! Presets
-!
+ !
+ ! Presets
+ !
  call collision_reset(isc)
  call collision_reset(iscp)
  call pp_indexes_reset(px)
@@ -84,33 +90,30 @@
      call W_reset(Sc_W(i1))
    enddo
  endif
-
+ !
  call k_expand(k)
-
-!#################
-!ALLOCATION (W/Sc)
-!################################################################################
+ !
+ ! ALLOCATION (W/Sc)
+ !
  if (.not.l_life) then
    QP_n_W_freqs=Xw%n(1)
    QP_n_W_freqs_redux=Xw%n(1)
    allocate(QP_W(QP_n_states,QP_n_G_bands(2),QP_n_W_freqs),stat=i_err)
    call mem_est("QP_W",(/size(QP_W)/),errors=(/i_err/))
  endif
-!################################################################################
-!
-!Sc Energy points (1 type each QP state !)
-!=========================================
+ !
+ !Sc Energy points (1 type each QP state !)
+ !
  if (trim(QP_solver)=='n') then
    do i1=1,qp%n_states
      Sc_W(i1)%n=QP_dSc_steps
      allocate(Sc_W(i1)%p(Sc_W(i1)%n(1)))
-     forall (i2=1:QP_dSc_steps) Sc_W(i1)%p(i2)=&
-&           en%E(QP_table(i1,1),QP_table(i1,3),1)+(i2-1)*QP_dSc_delta
+     forall (i2=1:QP_dSc_steps) Sc_W(i1)%p(i2)=qp%E_bare(i1)+(i2-1)*QP_dSc_delta
    enddo
  else if (trim(QP_solver)=='g') then
-!
-! I need to put to 0. the G damping embodied in QP_W2Sc
-!
+   !
+   ! I need to put to 0. the G damping embodied in QP_W2Sc
+   !
    QP_G_damp=0.
    do i1=1,qp%n_states
      Sc_W(i1)%n=QP_Sc_steps
@@ -120,18 +123,18 @@
      QP_Sc_steps=Sc_W(i1)%n(1)
    enddo
  endif
-!----------------------------------------------------------------------
-!
+ !
+ !
  if (GW_iter<9) write (Sc_name,'(a,i1.1)') 'G',GW_iter
  if (GW_iter>9) write (Sc_name,'(a,i2.2)') 'G',GW_iter
  ch=trim(string_pack(Sc_name,'W0 on the Real Axis'))
-!===================================================
+ !
  if (GW_iter==0) then
    call section('+',trim(ch))
  else
    call section('=',trim(ch))
  endif
-
+ !
  if (.not.l_life) call msg('r', '[GW] Bands range     :',QP_n_G_bands)
  call msg('r', '[GW] G damping   [ev]:',QP_G_damp*HARTREE)
  call msg('r','')
@@ -141,15 +144,15 @@
    call msg('r',trim(ch))
  enddo
  call msg('r','')
-
-!W DB 
-!=======================
+ !
+ ! W DB 
+ !
  call io_control(ACTION=OP_RD,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=WID)
  io_err=ioQP('W',qp,WID)
-!
+ !
  iq_to_start=1
  if (io_err>0) iq_to_start=io_err
-!
+ !
  if (io_err==0) then
    if (QP_solver=="n".or.QP_solver=="g") then
      QP_Sc=cmplx(0.,0.,SP)
@@ -158,14 +161,14 @@
        if (iqbz< q%nbz) call io_control(ACTION=RD,COM=NONE,SEC=(/2+iqbz/),ID=WID)
        if (iqbz==q%nbz) call io_control(ACTION=RD_CL,COM=NONE,SEC=(/2+iqbz/),ID=WID)
        io_err=ioQP('W',qp,WID)
-!
-! Xw%p is stored in ioX, not in ioW !
-!
+       !
+       ! Xw%p is stored in ioX, not in ioW !
+       !
        Xw%er=QP_W_er
        Xw%dr=QP_W_dr
        Xw%n=QP_n_W_freqs
        call freqs_setup(Xw)
-!
+       ! 
        call QP_W2Sc(iqbz,k,en,Xw,Sc_W)
        call live_timing(steps=1)
      enddo
@@ -174,26 +177,33 @@
      call live_timing()
      return
    endif
+   !
    if (QP_solver=="s") return
+   !
  endif
-!
+ !
+ ! Lifetimes Transitions 
+ !
  if (l_life) then
+   !
    call section('=','Lifetimes Transitions Selector')
-!--------------------------------------------------
+   !
    QP_n_W_freqs=QP_life_transitions(-1,en,k,q,X_life_W(1))
    allocate(life_W_table(q%nibz,QP_n_W_freqs))
    call mem_est("life_W_table",(/size(life_W_table)/),(/IP/))
    life_W_table=0
    QP_n_W_freqs_redux=-1
    do iqibz=1,q%nibz
+     !
      X_life_W(iqibz)%dr=Xw%dr
-
+     !
      i1=QP_life_transitions(iqibz,en,k,q,X_life_W(iqibz))
      life_W_table(iqibz,:size(cg_index_bg))=cg_index_bg(:)
-
+     !
      QP_n_W_freqs_redux=max(QP_n_W_freqs_redux,cg_npts)
      deallocate(cg_index_bg)
      call mem_est("CGi")
+     !
    enddo
    do iqibz=1,q%nibz
      X%iq=iqibz
@@ -201,104 +211,109 @@
      if (i_err==0) exit
    enddo
  endif
-!
-! WFs
-!==================
+ !
+ ! WFs
+ !
  call wf_load(X%ng,maxval(qindx_S(:,:,2)),&
 &            (/QP_n_G_bands(1),max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-Sc')
-!
-!Test the spatial Inversion
-!==========================
+ !
+ ! Test the spatial Inversion
+ !
  call SpaceInvTest(en,Xk)
-!
-!#################
-!ALLOCATION (isc)
-!################################################################################
+ !
+ ! ALLOCATION (isc)
+ !
  call X_alloc('X',(/X%ng,X%ng,QP_n_W_freqs_redux/))
-
+ !
  allocate(isc%gamp(X%ng,X%ng),isc%rhotw(X%ng),iscp%rhotw(X%ng),stat=i_err)
  call mem_est("ISC-GAMP",(/X%ng**2+2*X%ng/),errors=(/i_err/))
-
-!################################################################################
-!
-!MPI index
+ !
+ ! MPI index
  call par_indexes(px,(/QP_n_states,QP_n_G_bands(2)/),low_range=(/1,QP_n_G_bands(1)/))
-!
+ !
  QP_Sc=cmplx(0.,0.,SP)
  isc%ngrho=X%ng
  isc%iqref=0
-!
-!Main Loop
+ !
+ ! Main Loop
+ !===========
+ !
  call pp_redux_wait
  call live_timing(string_pack(Sc_name,'W0'),px%stps(myid+1)*(q%nbz-iq_to_start+1))
-!
+ !
 #if defined PJ_SC 
  open(101,file='o.PJ_SC_1_W')
  open(102,file='o.PJ_SC_2_W')
  write(101,'(a/a/a)') '#','#       E_{nkR}-E_{mpS}    <nkR|W|mpS>    n  k  R  m  p  S','#'
 #endif
-
+ !
  do iqbz=iq_to_start,q%nbz
+   !
    if (.not.l_life) QP_W=(0.,0.)
+   !
    isc%qs(2:)=(/q%sstar(iqbz,1),q%sstar(iqbz,2)/)
    iqibz=isc%qs(2)
-
+   !
    if (iqibz/=isc%iqref) then
      call scatterGamp(isc,'c')
-!
-! X I/O
-!
+     !
+     ! X I/O
+     !
      if (iqbz==iq_to_start) call io_control(ACTION=OP_RD,COM=NONE,&
 &                                SEC=(/1,2,2*iqibz+1/),ID=XID)
      if (iqbz/=iq_to_start) call io_control(ACTION=RD_CL_IF_END,COM=NONE,&
 &                                SEC=(/2*iqibz,2*iqibz+1/),ID=XID)
      if (q%nbz==1) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=XID)
+     !
      if (l_life) then
        io_err=ioX(X,X_life_W(iqibz),XID)
        call X_delta_part(X,X_life_W(iqibz),isc%gamp)
      else
+       !
        io_err=ioX(X,Xw,XID)
-!
-! Xw%er/dr/n are not known here and are not read from ioX so
-! I need to redefine them in terms of Xw%p (read from ioX)
-!
+       !
+       ! Xw%er/dr/n are not known here and are not read from ioX so
+       ! I need to redefine them in terms of Xw%p (read from ioX)
+       !
        Xw%er=(/real(Xw%p(1)),real(Xw%p(Xw%n(1)))/)
        Xw%dr=(/aimag(Xw%p(1)),aimag(Xw%p(Xw%n(1)))/)
        call X_delta_part(X,Xw,isc%gamp)
      endif
-
+     !
      if (l_life) QP_n_W_freqs=0
-
+     !
    endif
-
+   !
    do i1=1,QP_n_states
+     !
      isc%is=(/QP_table(i1,1),QP_table(i1,3),1,1/)
      isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iqbz,1),:),1/)
      iscp%is=(/QP_table(i1,2),QP_table(i1,3),1,1/)
      isc%qs(1)=qindx_S(QP_table(i1,3),iqbz,2)
      iscp%qs=isc%qs
+     !
      do ib=QP_n_G_bands(1),QP_n_G_bands(2)
+       !
        isc%os(1)=ib
        i_or=IOR(e2et(isc%is(:2),isc%os(:2),en,life_Fe),&
-&             h2ht(isc%is(:2),isc%os(:2),en,life_Fh))
+&               h2ht(isc%is(:2),isc%os(:2),en,life_Fh))
        if (l_life) QP_n_W_freqs=QP_n_W_freqs+i_or
-
+       !
        if (.not.px%i2p(i1,ib)) cycle
-
+       !
        iscp%os=isc%os
        call live_timing(steps=1)
- 
+       !
        if (l_life.and.i_or==0) cycle
- 
+       !
        call scatterBamp(isc)
        iscp%rhotw=isc%rhotw
- 
+       !
        if (any(isc%is/=iscp%is)) call scatterBamp(iscp)
- 
+       !
        if (l_life) then
-
+         !
          i2=life_W_table(iqibz,QP_n_W_freqs)
-
          do i3=1,X%ng
 #if defined _DOUBLE
            lrhotw(i3)=zdotu(X%ng,isc%rhotw,1,X_mat(1,i3,i2),1)
@@ -306,84 +321,93 @@
            lrhotw(i3)=cdotu(X%ng,isc%rhotw,1,X_mat(1,i3,i2),1)
 #endif
          enddo
-!       
-! To compensate the Tel/w divergence of the Bose function at finite
-! Tel I multiply the X_mat function by [w/(Tel*Bose_E_cut)]^2
-!
-! Note that the same procedure is applied in QP_W2Sc when S_c is
-! calculated
-! 
+         !       
+         ! To compensate the Tel/w divergence of the Bose function at finite
+         ! Tel I multiply the X_mat function by [w/(Tel*Bose_E_cut)]^2
+         !
+         ! Note that the same procedure is applied in QP_W2Sc when S_c is
+         ! calculated
+         ! 
 #if defined _DOUBLE
-         qp%E(i1)=qp%E(i1)-(0.,2.)*pi*(life_Fe+life_Fh)*bose_decay( real(Xw%p(i2)) )*&
-&                          zdotc(X%ng,iscp%rhotw,1,lrhotw,1)
+         qp%E(i1)=qp%E(i1)-(0.,2.)*pi*(life_Fe+life_Fh)*&
+&                 bose_decay( real(X_life_W(iqibz)%p(i2)) )*&
+&                 zdotc(X%ng,iscp%rhotw,1,lrhotw,1)
 #else
-         qp%E(i1)=qp%E(i1)-(0.,2.)*pi*(life_Fe+life_Fh)*bose_decay( real(Xw%p(i2)) )*&
-&                          cdotc(X%ng,iscp%rhotw,1,lrhotw,1)
+         qp%E(i1)=qp%E(i1)-(0.,2.)*pi*(life_Fe+life_Fh)*&
+&                 bose_decay( real(X_life_W(iqibz)%p(i2)) )*&
+&                 cdotc(X%ng,iscp%rhotw,1,lrhotw,1)
 #endif
-       else
-
+         !
+       else ! .not.l_life
+         !
          do i2=1,QP_n_W_freqs
+           !
            do i3=1,X%ng
 #if defined _DOUBLE
              lrhotw(i3)=zdotu(X%ng,isc%rhotw,1,X_mat(1,i3,i2),1)
 #else
              lrhotw(i3)=cdotu(X%ng,isc%rhotw,1,X_mat(1,i3,i2),1)
 #endif
-          enddo
+           enddo
+           !
 #if defined _DOUBLE
-             QP_W(i1,ib,i2)=-2.*zdotc(X%ng,iscp%rhotw,1,lrhotw,1)
+           QP_W(i1,ib,i2)=-2.*zdotc(X%ng,iscp%rhotw,1,lrhotw,1)
 #else
-             QP_W(i1,ib,i2)=-2.*cdotc(X%ng,iscp%rhotw,1,lrhotw,1)
+           QP_W(i1,ib,i2)=-2.*cdotc(X%ng,iscp%rhotw,1,lrhotw,1)
 #endif
-          enddo
-
+         enddo
+         !
 #if defined PJ_SC 
-          call PJ_SC_report(QP_W(i1,ib,1))
+         call PJ_SC_report(QP_W(i1,ib,1))
 #endif
-
+         !
        endif
      enddo
- 
    enddo
-
+   !
    call pp_redux_wait
    call pp_redux_wait(QP_W)
-!
-! To be written in W
-!
+   !
+   ! To be written in W
+   !
    if (.not.l_life) then
+     !
      QP_W_er=Xw%er
      QP_W_dr=Xw%dr
      QP_n_W_freqs=Xw%n(1)
-!
-! Only if I am doing secant solver of Dyson I store on disk
-! the W m.e. 
-!
-#if !defined PJ_SC
+     !
+     ! Only if I am doing secant solver of Dyson I store on disk
+     ! the W m.e. 
+     !
+#if  !defined PJ_SC
      if (trim(QP_solver)=='n'.or.trim(QP_solver)=='g') then
        call QP_W2Sc(iqbz,k,en,Xw,Sc_W)
      else
 #endif
+       !
        if (iqbz==1) then
          call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=WID)
        else
          call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2+iqbz/),ID=WID)
        endif
        io_err=ioQP('W',qp,WID)
+       !
 #if !defined PJ_SC
      endif
 #endif
-
+   !
    endif
-
- enddo
+   !
+ enddo 
+ !
  call live_timing()
  call pp_redux_wait()
-!
-! CLEAN
-!
+ !
+ ! CLEAN
+ !
  deallocate(isc%gamp,isc%rhotw,iscp%rhotw)
  call mem_est("ISC-GAMP")
+ !
  if (l_life) then
    deallocate(life_W_table)
    call mem_est("life_W_table")
@@ -403,49 +427,46 @@
      call W_reset(Sc_W(i1))
    enddo
  endif
-
+ !
  call X_alloc('X')
  call wf_free()
  call collision_reset(isc)
  call collision_reset(iscp)
  call pp_indexes_reset(px)
  call pp_redux_wait()
-!
+ !
 #if defined PJ_SC
-
+ !
  close(101)
  close(102)
-
+ !
  contains
-
- subroutine PJ_SC_report(W2_report)
-
- use R_lattice, ONLY:rl_sop
- complex(SP) :: W2_report
- real(SP)    :: rkpvec(3),W_constant
- !
- !  is(3)=(ib,ik,is,i_spin) --<--:--<-- os(3)=(ob,ok,os,o_spin)
- !                               :
- !                              /:\ W2_report
- !                               :
- !
- !                 2 to go from Ha to Ry
- !                 |
- W_constant=-4.*pi*2./2.*nqbz
- !
- !
- rkpvec=matmul(rl_sop(:,:,isc%os(3)),k%pt(isc%os(2),:))
-
- write (101,'(2f20.10,6i3)')  en%E(isc%os(1),isc%os(2),1)-en%E(isc%is(1),isc%is(2),1),&
-&                             W_constant*real(W2_report),isc%is(1:3),isc%os(1:3)
-
- write(102,'(2(i4,3f11.6),f17.10)')  isc%is(1),k%pt(isc%is(2),:),  &
-&                                    isc%os(1),rkpvec,W_constant*real(W2_report)
-
- end subroutine
+   !
+   subroutine PJ_SC_report(W2_report)
+     use R_lattice, ONLY:rl_sop
+     complex(SP) :: W2_report
+     real(SP)    :: rkpvec(3),W_constant
+     !
+     !  is(3)=(ib,ik,is,i_spin) --<--:--<-- os(3)=(ob,ok,os,o_spin)
+     !                               :
+     !                              /:\ W2_report
+     !                               :
+     !
+     !                 2 to go from Ha to Ry
+     !                 |
+     W_constant=-4.*pi*2./2.*nqbz
+     !
+     rkpvec=matmul(rl_sop(:,:,isc%os(3)),k%pt(isc%os(2),:))
+     !
+     write (101,'(2f20.10,6i3)')  &
+&          en%E(isc%os(1),isc%os(2),1)-en%E(isc%is(1),isc%is(2),1),&
+&          W_constant*real(W2_report),isc%is(1:3),isc%os(1:3)
+     write(102,'(2(i4,3f11.6),f17.10)')  isc%is(1),k%pt(isc%is(2),:),  &
+&          isc%os(1),rkpvec,W_constant*real(W2_report)
+     !
+   end subroutine
 #endif
-
-! -- GPL_START --
-
+   !
+   ! -- GPL_START --
+   !
  end subroutine
-

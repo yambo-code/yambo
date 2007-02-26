@@ -20,33 +20,31 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
-!===========================================
-!
-!Procedure for non-perturbative solution of Dyson equation.
-!Here it`s solved real part of Dyson Eq. with a fixed
-!shift from real axis
-!
-! E1 = Eo + Sx - Vxc + Re[Sc(E1)] (1)
-! E1 is REAL
-!
-! Re(E) = E1 + Im[Sc(E1)] + Re[Sc(E)]
-! Im(E) = Im[Sc(E)]
-!
-!After convergence is reached Sc(w) is analtically extendend
-!outside real axe using first order Taylor expansion around E1.
-!In this way it`s found the solution of Complex Equation
-!
-! E = E1 + 1/(1-dSc(E1)) Im[Sc(E1)]
-!
-!The procedure for finding root of (1) is divided into two steps:
-!
-! 1. BRACKETING: starting for an initial guess of the
-!    QP-energy [Eqp] (given by E_lda) the routine gives a range
-!    of energy where the solution is expected to be
-!
-! 2. SECANT SOLUTION: see "Numerical Recipes (Fortran version)", Pag. 248
-!
-!-------------------------------------------------------------------------
+ !
+ !Procedure for non-perturbative solution of Dyson equation.
+ !Here it`s solved real part of Dyson Eq. with a fixed
+ !shift from real axis
+ !
+ ! E1 = Eo + Sx - Vxc + Re[Sc(E1)] (1)
+ ! E1 is REAL
+ !
+ ! Re(E) = E1 + Im[Sc(E1)] + Re[Sc(E)]
+ ! Im(E) = Im[Sc(E)]
+ !
+ !After convergence is reached Sc(w) is analtically extendend
+ !outside real axe using first order Taylor expansion around E1.
+ !In this way it`s found the solution of Complex Equation
+ !
+ ! E = E1 + 1/(1-dSc(E1)) Im[Sc(E1)]
+ !
+ !The procedure for finding root of (1) is divided into two steps:
+ !
+ ! 1. BRACKETING: starting for an initial guess of the
+ !    QP-energy [Eqp] (given by E_lda) the routine gives a range
+ !    of energy where the solution is expected to be
+ !
+ ! 2. SECANT SOLUTION: see "Numerical Recipes (Fortran version)", Pag. 248
+ !
  use pars,          ONLY:SP,HARTREE,IP
  use memory_m,      ONLY:mem_est
  use timing,        ONLY:live_timing
@@ -61,91 +59,90 @@
 &                        QP_dSc_test,QP_W_dr,QP_W_er,QP_dSc_delta,&
 &                        QP_W_partially_done
  use IO_m,          ONLY:io_control,NONE,RD,RD_CL,OP_RD
+ !
  implicit none
  type(levels)::en,Xen
  type(bz_samp)::Xk,k,q
  type(X_t):: X
  type(QP_t):: qp
  type(w_samp)::Xw
-!ws ELPH_GPL_END
+ !
+ ! Work Space GPL_END
+ !
  integer      :: i1,i2,ID,io_err,iqbz
  type(w_samp) :: Sc_W(qp%n_states)
- real(SP)     :: Eqp_raxis(qp%n_states,2),Sc_raxis(qp%n_states,2)
+ real(SP)     :: Eqp_raxis(qp%n_states,2),dQP_raxis(qp%n_states,2)
  complex(SP)  :: Z(QP_dSc_steps-1),Eqp(QP_dSc_steps-1)
  real(SP),parameter :: root_acc=0.001/HARTREE
  integer, external  :: ioQP
-!
-!------------------------------------------------------------------
-! Dyson equation: non perturbative secant method
-!================================================
-!
-!I need to store on disk the <W> m. elemnts
-!------------------------------------------
+ !
+ !
+ !I need to store on disk the <W> m. elemnts
+ !
  call QP_raxis(X,Xen,Xk,en,k,q,qp,Xw,0)
-!
-!I prepare the Sc energy type
-!============================
+ !
+ !I prepare the Sc energy type
+ !
  do i1=1,qp%n_states
    call W_reset(Sc_W(i1))
    Sc_W(i1)%n=1
    allocate(Sc_W(i1)%p(1))
  enddo
-!
-!SOLVER STATE
-!=============
-!
-! 1 : updating Eqp_raxis(?,1)
-! 2 : updating Eqp_raxis(?,2)
-!
-! <0: Eqp_raxis(?,iabs(SOLVER_STATE))  converged
-!
-!
+ !
+ !SOLVER STATE
+ !=============
+ !
+ ! 1 : updating Eqp_raxis(?,1)
+ ! 2 : updating Eqp_raxis(?,2)
+ !
+ ! <0: Eqp_raxis(?,iabs(SOLVER_STATE))  converged
+ !
  allocate(QP_solver_state(qp%n_states))
  call mem_est("QP_solver_state",(/qp%n_states/),(/IP/))
-!
-!Brackets
-!========
-
- forall(i1=1:qp%n_states) Eqp_raxis(i1,1)=qp%E_prev(i1)
+ !
+ !Brackets
+ !
+ forall(i1=1:qp%n_states) Eqp_raxis(i1,1)=qp%E_bare(i1)
  forall(i1=1:qp%n_states) Eqp_raxis(i1,2)=Eqp_raxis(i1,1)+1./HARTREE
-!
+ !
  QP_solver_state=1
- call W2Sc_here
-
+ call W2Sc_local_call()
+ !
  QP_solver_state=2
- call W2Sc_here
-
+ call W2Sc_local_call()
+ !
  call live_timing('[SECANT] Brackets',QP_n_states,SERIAL=.true.)
+ !
  do while(any(QP_solver_state/=0))
    do i1=1,qp%n_states
      i2=QP_solver_state(i1)
-     call bracket(Eqp_raxis(i1,1),Sc_raxis(i1,1),&
-&                 Eqp_raxis(i1,2),Sc_raxis(i1,2),QP_solver_state(i1))
+     call bracket(Eqp_raxis(i1,1),dQP_raxis(i1,1),&
+&                 Eqp_raxis(i1,2),dQP_raxis(i1,2),QP_solver_state(i1))
      if (i2/=0.and.QP_solver_state(i1)==0) call live_timing(steps=1)
    enddo
-   call W2Sc_here
+   call W2Sc_local_call()
  enddo
  call live_timing()
  call pp_redux_wait()
-!
-! Root
-!======
+ !
+ ! Root
+ !
  QP_solver_state=1
  call live_timing('[SECANT]  Root(s)',QP_n_states,SERIAL=.true.)
  do while(any(QP_solver_state>=0))
    do i1=1,qp%n_states
      i2=QP_solver_state(i1)
-     call secant(Eqp_raxis(i1,1),Sc_raxis(i1,1),&
-&                Eqp_raxis(i1,2),Sc_raxis(i1,2),QP_solver_state(i1),root_acc)
+     call secant(Eqp_raxis(i1,1),dQP_raxis(i1,1),&
+&                Eqp_raxis(i1,2),dQP_raxis(i1,2),QP_solver_state(i1),root_acc)
      if (i2>0.and.QP_solver_state(i1)<0) call live_timing(steps=1)
    enddo
-   call W2Sc_here
+   call W2Sc_local_call()
  enddo
  call live_timing()
  call pp_redux_wait()
-
-! Analytic continuation 
-!=======================
+ !
+ ! Analytic continuation 
+ !
  call live_timing('[SECANT] Analytic continuation',q%nbz,SERIAL=.true.)
  do i1=1,qp%n_states
    Eqp_raxis(i1,1)=Eqp_raxis(i1,iabs(QP_solver_state(i1)))
@@ -156,9 +153,9 @@
  enddo
  deallocate(QP_solver_state)
  call mem_est("QP_solver_state")
-
- call W2Sc_here
-
+ !
+ call W2Sc_local_call()
+ !
  do i1=1,QP_n_states
    do i2=1,QP_dSc_steps-1
      QP_dSc(i1,i2)=(QP_Sc(i1,i2+1)-QP_Sc(i1,i2))/QP_dSc_delta
@@ -169,53 +166,64 @@
    qp%Z(i1)=Z(1)
  enddo
  call live_timing()
-!
-!CLEAN
-!
+ !
+ !CLEAN
+ !
  do i1=1,QP_n_states
    call W_reset(Sc_W(i1))
  enddo
  deallocate(QP_W)
  call mem_est("QP_W")
  call pp_redux_wait()
-!
+ !
  contains 
-
-!======================
-  subroutine W2Sc_here
-!======================
-
-  if (allocated(QP_solver_state)) then
-    do i1=1,QP_n_states
-      if (QP_solver_state(i1)>0) Sc_W(i1)%p(1)=Eqp_raxis(i1,QP_solver_state(i1))
-    enddo
-  endif
-  QP_Sc=(0._SP,0._SP)
-  do iqbz=1,q%nbz
-
-    if (iqbz==1) call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1,2,3/),ID=ID)
-    if (iqbz> 1.and.iqbz<q%nbz) call io_control(ACTION=RD,COM=NONE,SEC=(/2+iqbz/),ID=ID)
-    if (iqbz==q%nbz) call io_control(ACTION=RD_CL,COM=NONE,SEC=(/2+iqbz/),ID=ID)
-    io_err=ioQP('W',qp,ID)
-
-    Xw%er=QP_W_er
-    Xw%dr=QP_W_dr
-    Xw%n=QP_n_W_freqs
-    call freqs_setup(Xw)
-
-    call QP_W2Sc(iqbz,k,en,Xw,Sc_W)
-    if (.not.allocated(QP_solver_state)) call live_timing(steps=1)
-  enddo
-  if (allocated(QP_solver_state)) then
-    do i1=1,QP_n_states
-      if (QP_solver_state(i1)>0) Sc_raxis(i1,QP_solver_state(i1))=&
-&                                qp%E_prev(i1)-Eqp_raxis(i1,QP_solver_state(i1))+&
-&                                real(QP_Sc(i1,1))+QP_Sx(i1)-QP_Vxc(i1)
-    enddo
-  endif
-
-  end subroutine
-
-! -- GPL_START --
-
+   !
+   subroutine W2Sc_local_call()
+     !
+     ! Here I call the QP_W2Sc to routine to calculate the Sc SE
+     ! corresponding to Eqp_raxis(i1,QP_solver_state(i1)) energies
+     !
+     ! The driver QP_solver_state tells if I am updating the 1st or the 2nd
+     ! approx to the final QP energy.
+     !
+     if (allocated(QP_solver_state)) then
+       do i1=1,QP_n_states
+         if (QP_solver_state(i1)>0) Sc_W(i1)%p(1)=Eqp_raxis(i1,QP_solver_state(i1))
+       enddo
+     endif
+     QP_Sc=(0._SP,0._SP)
+     do iqbz=1,q%nbz
+       !
+       if (iqbz==1) call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1,2,3/),ID=ID)
+       if (iqbz> 1.and.iqbz<q%nbz) call io_control(ACTION=RD,COM=NONE,SEC=(/2+iqbz/),ID=ID)
+       if (iqbz==q%nbz) call io_control(ACTION=RD_CL,COM=NONE,SEC=(/2+iqbz/),ID=ID)
+       io_err=ioQP('W',qp,ID)
+       !
+       Xw%er=QP_W_er
+       Xw%dr=QP_W_dr
+       Xw%n=QP_n_W_freqs
+       call freqs_setup(Xw)
+       !
+       call QP_W2Sc(iqbz,k,en,Xw,Sc_W)
+       if (.not.allocated(QP_solver_state)) call live_timing(steps=1)
+       !
+     enddo
+     if (allocated(QP_solver_state)) then
+       do i1=1,QP_n_states
+         !
+         ! If the Qp energy is not converged, yet, I store in 
+         ! dQP_raxis = Eo+Re[Sc_tot]-Eqp_raxis
+         !
+         ! The convergence criteria is dQP_raxis= 0.
+         !
+         if (QP_solver_state(i1)>0) dQP_raxis(i1,QP_solver_state(i1))=&
+&            ( qp%E_bare(i1)+real(QP_Sc(i1,1))+QP_Sx(i1)-QP_Vxc(i1) )-&
+&            Eqp_raxis(i1,QP_solver_state(i1))
+       enddo
+     endif
+     !
+   end subroutine
+   !
+   ! -- GPL_START --
+   !
  end subroutine

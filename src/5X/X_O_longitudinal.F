@@ -257,7 +257,7 @@ contains
 
   subroutine long_grid_setup(ifail)
     use pars,            only : zero_dfl
-    use functions,       only : intc
+    use stderr,          only : intc
     use vec_operate,     only : v_is_zero, v_norm, c2a
     use X_m,             only : q_long, q0mod ! Remove q0mod from here
     implicit none

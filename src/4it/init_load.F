@@ -267,60 +267,60 @@
  contains 
    !
    subroutine Xload(X,wv)
-   type(X_t):: X
-   type(w_samp):: wv
-   ! 
-   ! Work Space
-   ! 
-   integer           ::i1
-   integer,parameter ::desln=31
-   character(8)      ::nms(14),sfx
-   character(40)     ::des(14)
-   character(schlen) ::lch1,lch2
-   !
-   nms=(/'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
-&        'DrudeW','LongDr','EhEngy','PPAPnt','PPTylT',&
-&        'NGsBlk','QpntsR','BndsRn'/)
-   des(1) ='Green`s function t/c/r/a'
-   des(2) ='Energy range'
-   des(3) ='Damping range'
-   des(4) ='[o/o] Coarse grid controller'
-   des(5) ='Total Energy steps'
-   des(6) ='[o/o] Memory Energy steps'
-   des(7) ='Drude plasmon'
-   des(8) ='[cc] Electric Field'
-   des(9) ='Electron-hole energy range'
-   des(10) ='PPA imaginary energy'
-   des(11)='Taylor terms in PP expansion'
-   des(12)='Response block size'
-   des(13)='Transferred momenta'
-   des(14)='Polarization function bands'
-   !
-   do i1=1,14
-     lch1=des(i1);lch2=nms(i1)
-     if (X%whoami==1) sfx='Xx'
-     if (X%whoami==2) sfx='Xs'
-     if (X%whoami==3) sfx='Xd'
-     if (X%whoami==4) sfx='Xp'
-     write (des(i1),'(4a)')  '[',trim(sfx),'] ',trim(lch1)
-     write (nms(i1),'(2a)')  lch2(1:6),trim(sfx)
-   enddo
-   call it(defs,nms( 1),des( 1),X%ordering,verb_level=V_more)
-   call it(defs,nms( 2),des( 2),wv%er,E_unit,verb_level=0) 
-   call it(defs,nms( 3),des( 3),wv%dr,E_unit,verb_level=0)
-   call it(defs,nms( 4),des( 4),X%cg_percentual,verb_level=V_more)
-   call it(defs,nms( 5),des( 5),wv%n(1),verb_level=0)
-   call it(defs,nms( 6),des( 6),wv%per_memstps,verb_level=1)
-   call it(defs,nms( 7),des( 7),X%Wd,E_unit,verb_level=1) 
-   call it(defs,nms( 8),des( 8),X%q0,verb_level=0)
-   call it(defs,nms( 9),des( 9),X%ehe,E_unit,verb_level=V_more)
-   call it(defs,nms(10),des(10),X%ppaE,E_unit,verb_level=0)
-   call it(defs,nms(11),des(11),pp_taylor_terms,verb_level=V_more)
-   call it(defs,nms(12),des(12),X%ng,G_unit,verb_level=0) 
-   call it(defs,nms(13),des(13),X%iq,verb_level=0)
-   call it(defs,nms(14),des(14),X%ib,verb_level=0)
-   !
+     !
+     type(X_t):: X
+     type(w_samp):: wv
+     ! 
+     ! Work Space
+     ! 
+     integer           ::i1
+     integer,parameter ::desln=31
+     character(8)      ::nms(14),sfx
+     character(40)     ::des(14)
+     character(schlen) ::lch1,lch2
+     !
+     nms=(/'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
+&          'DrudeW','LongDr','EhEngy','PPAPnt','PPTylT',&
+&          'NGsBlk','QpntsR','BndsRn'/)
+     des(1) ='Green`s function t/c/r/a'
+     des(2) ='Energy range'
+     des(3) ='Damping range'
+     des(4) ='[o/o] Coarse grid controller'
+     des(5) ='Total Energy steps'
+     des(6) ='[o/o] Memory Energy steps'
+     des(7) ='Drude plasmon'
+     des(8) ='[cc] Electric Field'
+     des(9) ='Electron-hole energy range'
+     des(10) ='PPA imaginary energy'
+     des(11)='Taylor terms in PP expansion'
+     des(12)='Response block size'
+     des(13)='Transferred momenta'
+     des(14)='Polarization function bands'
+     !
+     do i1=1,14
+       lch1=des(i1);lch2=nms(i1)
+       if (X%whoami==1) sfx='Xx'
+       if (X%whoami==2) sfx='Xs'
+       if (X%whoami==3) sfx='Xd'
+       if (X%whoami==4) sfx='Xp'
+       write (des(i1),'(4a)')  '[',trim(sfx),'] ',trim(lch1)
+       write (nms(i1),'(2a)')  lch2(1:6),trim(sfx)
+     enddo
+     call it(defs,nms( 1),des( 1),X%ordering,verb_level=V_more)
+     call it(defs,nms( 2),des( 2),wv%er,E_unit,verb_level=0) 
+     call it(defs,nms( 3),des( 3),wv%dr,E_unit,verb_level=0)
+     call it(defs,nms( 4),des( 4),X%cg_percentual,verb_level=V_more)
+     call it(defs,nms( 5),des( 5),wv%n(1),verb_level=0)
+     call it(defs,nms( 6),des( 6),wv%per_memstps,verb_level=1)
+     call it(defs,nms( 7),des( 7),X%Wd,E_unit,verb_level=1) 
+     call it(defs,nms( 8),des( 8),X%q0,verb_level=0)
+     call it(defs,nms( 9),des( 9),X%ehe,E_unit,verb_level=V_more)
+     call it(defs,nms(10),des(10),X%ppaE,E_unit,verb_level=0)
+     call it(defs,nms(11),des(11),pp_taylor_terms,verb_level=V_more)
+     call it(defs,nms(12),des(12),X%ng,G_unit,verb_level=0) 
+     call it(defs,nms(13),des(13),X%iq,verb_level=0)
+     call it(defs,nms(14),des(14),X%ib,verb_level=0)
+     !
    end subroutine
    !
  end subroutine
-

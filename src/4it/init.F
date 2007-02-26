@@ -71,8 +71,13 @@
  integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,&
 &                     ioBS_FXC_err,ioQINDX_err
  integer, external :: ioX,ioOSTNTS,ioGROT,ioQINDX,ioRIM,ioE_RIM,&
-&                     ioXXVXC,ioQP,ioBS,ioBS_FXC,ioDB1,ioKB_PP,ioELPH,&
+&                     ioXXVXC,ioQP,ioBS,ioBS_FXC,ioDB1,ioKB_PP,&
 &                     ioCOL_CUT
+#if defined PJ_PH
+ integer           :: ioELPH_err
+ integer, external :: ioELPH
+#endif
+ !
  type(X_t)        ::Xbsk
  type(QP_t)       ::qp
  type(w_samp)     ::Xxcw
@@ -234,11 +239,6 @@
    if (io_X_err(i1)>0) X(i1)%iq(1)=io_X_err(i1)+1
  enddo
  !
- ! elph
- !
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_err=ioELPH(io_ID)
- !
  ! bs
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
@@ -248,6 +248,11 @@
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  ioBS_FXC_err=ioBS_FXC(1,Xxcw,io_ID)
+ !
+#if defined PJ_PH
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ ioELPH_err=ioELPH(io_ID)
+#endif
  !
  if (list_dbs) then
    call msg('s','')
@@ -353,27 +358,44 @@
  ! GW/Life
  !
  if (l_gw0.or.l_life) then
-   if (l_el_corr.or.l_life) then
+   !
+   if (l_el_corr) then
+     !
      call initactivate(1,'XfnQPdb XfnQP_N XfnQP_E XfnQP_W XfnQP_Z')
      call initactivate(1,'GfnQPdb GfnQP_N GfnQP_E GfnQP_W GfnQP_Z')
-     call initactivate(1,'GbndRnge GDamping') 
-     ! -- GPL_END --
-     if (trim(QP_solver)=="n".and.l_el_corr) call initactivate(1,'GWoIter')
-     ! -- GPL_START --
-     if (.not.l_ppa) call Xon('Xd',(/'BndsRn','NGsBlk',&
-&                    'DmRnge','CGrdSp','ETStps','EMStps','DrudeW','EhEngy','LongDr'/)) 
+     call initactivate(1,'BoseCut')
+     !
+     if (l_gw0) then
+       call initactivate(1,'GbndRnge GDamping') 
+       if (.not.l_ppa) call Xon('Xd',(/'BndsRn','NGsBlk',&
+&                      'DmRnge','CGrdSp','ETStps','EMStps',&
+&                      'DrudeW','EhEngy','LongDr'/)) 
+       !
+       call initactivate(1,'DysSolver')
+       if (trim(QP_solver)=="g") then
+         call initactivate(1,'GEnSteps GEnRnge GDmRnge') 
+       else
+         ! -- GPL_END --
+         call initactivate(1,'GWoIter')
+         ! -- GPL_START --
+         call initactivate(1,'GDamping NewtDchk QPreport')
+       endif
+       !
 #if defined PJ_SC
-     call initactivate(-1,'EnRngeXd ETStpsXd CGrdSpXd EMStpsXd XfnQP_E GWoIter')
-     call initactivate(-1,'BoseCut DysSolver NewtDchk QPreport')
-     l_xxvxc=.false.
+       call initactivate(-1,'EnRngeXd ETStpsXd CGrdSpXd EMStpsXd XfnQP_E GWoIter')
+       call initactivate(-1,'BoseCut DysSolver NewtDchk QPreport')
+       l_xxvxc=.false.
 #endif
-   endif
-   call initactivate(1,'BoseCut')
-   if (.not.l_life) call initactivate(1,'DysSolver GDamping NewtDchk QPreport')
-   if (l_life) call initactivate(1,'LifeTrCG')
-   if (l_life) call initactivate(-1,'GbndRnge ETStpsXd EMStpsXs')
-   if (trim(QP_solver)=="g") call initactivate(-1,'NewtDchk QPreport GDamping')
-   if (trim(QP_solver)=="g") call initactivate(1,'GEnSteps GEnRnge GDmRnge')
+     endif
+     !
+     if (l_life) then
+       call initactivate(1,'LifeTrCG')
+       if (l_el_corr) call Xon('Xd',(/'BndsRn','NGsBlk',&
+&                                     'DmRnge','CGrdSp',&
+&                                     'DrudeW','EhEngy','LongDr'/)) 
+     endif
+   endif 
+   !
 #if defined  PJ_PH
    if (l_ph_corr) then
      call initactivate(1,'GphBRnge PHdamping')
@@ -385,6 +407,7 @@
      !
    endif
 #endif
+   !
  endif
  !
  ! Optics + BS based TDDFT (BS fxc is only of q=0 0 0)
@@ -531,306 +554,308 @@
  contains
    !
    subroutine Xon(mode,what)
-   !
-   character(2)::mode
-   character(6)::what(:)
-   !
-   ! Work Space
-   !
-   character(8)::lch
-   integer     ::i1
-   !
-   do i1=1,size(what,1)
-     write (lch,'(2a)') what(i1),mode
-     call initactivate(1,lch)
-   enddo
+     !
+     character(2)::mode
+     character(6)::what(:)
+     !
+     ! Work Space
+     !
+     character(8)::lch
+     integer     ::i1
+     !
+     do i1=1,size(what,1)
+       write (lch,'(2a)') what(i1),mode
+       call initactivate(1,lch)
+     enddo
    end subroutine
    !
    subroutine call_init_load(mode)
-   character(*)::mode
-   if (mode=='load') initmode=0
-   if (mode=='todef') initmode=1
-   if (mode=='Gclose') initmode=2
-   if (mode=='GameOver') initmode=3
-   if (mode=='parserload') initmode=4
-   call init_load(defs,en,q,k,X,Xw)
+     character(*)::mode
+     if (mode=='load') initmode=0
+     if (mode=='todef') initmode=1
+     if (mode=='Gclose') initmode=2
+     if (mode=='GameOver') initmode=3
+     if (mode=='parserload') initmode=4
+     call init_load(defs,en,q,k,X,Xw)
    end subroutine
    !
    subroutine logicalson
-   !
-   !For non uniform grids I have to switch off all logicals that are
-   !not LF/RPA
-   !
-   l_setup=(rstatus(1)/=0)
-   l_optics=(rstatus(2)/=0)
-   l_lr=(rstatus(3)/=0)
-   l_bse=(rstatus(4)/=0)
-   l_rim=(rstatus(5)/=0)
-   l_col_cut=(rstatus(5)/=0)
-   l_xxvxc=(rstatus(6)/=0)
-   l_em1d=(rstatus(7)/=0)
-   l_em1s=(rstatus(8)/=0)
-   l_ppa=(rstatus(9)/=0)
-   l_gw0=(rstatus(10)/=0)
-   l_life=(rstatus(11)/=0)
-   l_bss=(rstatus(12)/=0)
-   l_acfdt=(rstatus(13)/=0)
-   l_bs_fxc=(rstatus(14)/=0)
-   l_alda_fxc=(rstatus(15)/=0)
-   l_lrc_fxc=(rstatus(16)/=0)
+     !
+     !For non uniform grids I have to switch off all logicals that are
+     !not LF/RPA
+     !
+     l_setup=(rstatus(1)/=0)
+     l_optics=(rstatus(2)/=0)
+     l_lr=(rstatus(3)/=0)
+     l_bse=(rstatus(4)/=0)
+     l_rim=(rstatus(5)/=0)
+     l_col_cut=(rstatus(5)/=0)
+     l_xxvxc=(rstatus(6)/=0)
+     l_em1d=(rstatus(7)/=0)
+     l_em1s=(rstatus(8)/=0)
+     l_ppa=(rstatus(9)/=0)
+     l_gw0=(rstatus(10)/=0)
+     l_life=(rstatus(11)/=0)
+     l_bss=(rstatus(12)/=0)
+     l_acfdt=(rstatus(13)/=0)
+     l_bs_fxc=(rstatus(14)/=0)
+     l_alda_fxc=(rstatus(15)/=0)
+     l_lrc_fxc=(rstatus(16)/=0)
 #if defined  PJ_RAS
-   lreels=(rstatus(18)/=0)
-   lras=(rstatus(19)/=0)
+     lreels=(rstatus(18)/=0)
+     lras=(rstatus(19)/=0)
 #endif
 #if defined  PJ_REELS
-   lreels=(rstatus(17)/=0)
+     lreels=(rstatus(17)/=0)
 #endif
 #if defined  PJ_PH
-   l_ph_corr=(rstatus(17)/=0)
-   l_el_corr=(rstatus(18)/=0)
+     l_ph_corr=(rstatus(17)/=0.and.ioELPH_err==0)
+     l_el_corr=(rstatus(18)/=0)
 #else
-   l_el_corr=l_gw0
+     l_el_corr=l_gw0.or.l_life
 #endif
-   if (.not.Xk_grid_is_uniform) then
-     rstatus(4:14)=0
-     l_bse=.false.
-     l_rim=.false.
-     l_col_cut=.false.
-     l_xxvxc=.false.
-     l_em1d=.false.
-     l_em1s=.false.
-     l_ppa=.false.
-     l_gw0=.false.
-     l_life=.false.
-     l_bss=.false.
-     l_acfdt=.false.
-     l_bs_fxc=.false.
-   endif
-   !
-   ! not GPL barriers
-   !
-   if (gpl_version.and.any((/&
-&            l_life,l_acfdt,l_bs_fxc,l_lrc_fxc,&
-&            l_gw0.and..not.l_ppa&
-&           /))) then
-     init=-2
-     return
-   endif
+     if (.not.Xk_grid_is_uniform) then
+       rstatus(4:14)=0
+       l_bse=.false.
+       l_rim=.false.
+       l_col_cut=.false.
+       l_xxvxc=.false.
+       l_em1d=.false.
+       l_em1s=.false.
+       l_ppa=.false.
+       l_gw0=.false.
+       l_life=.false.
+       l_bss=.false.
+       l_acfdt=.false.
+       l_bs_fxc=.false.
+     endif
+     !
+     ! not GPL barriers
+     !
+     if (gpl_version.and.any((/&
+&              l_life,l_acfdt,l_bs_fxc,l_lrc_fxc,&
+&              l_gw0.and..not.l_ppa&
+&             /))) then
+       init=-2
+       return
+     endif
    end subroutine logicalson
    !
    subroutine X_var_setup 
-   !
-   ! Before any X DB/infile reading
-   !
-   call X_duplicate(X(3),X(2))
-   call X_duplicate(X(3),X(1))
-   call X_duplicate(X(3),X(4))
-   call W_duplicate(Xw(3),Xw(2))
-   call W_duplicate(Xw(3),Xw(1))
-   call W_duplicate(Xw(3),Xw(4))
+     !
+     ! Before any X DB/infile reading
+     !
+     call X_duplicate(X(3),X(2))
+     call X_duplicate(X(3),X(1))
+     call X_duplicate(X(3),X(4))
+     call W_duplicate(Xw(3),Xw(2))
+     call W_duplicate(Xw(3),Xw(1))
+     call W_duplicate(Xw(3),Xw(4))
    end subroutine X_var_setup
    !
    subroutine varsetup1 
-   !
-   ! After DB reading/stdin logicals
-   ! I propose here values for the input file
-   !
-   ! If optics with BS FXC I need to dump on X(3) the
-   ! Fxc specs
-   !
-   if (all((/l_bs_fxc,l_optics,l_lr.or.l_bse,ioBS_FXC_err==0/))) then
-     QP_ctl_E(1,:)=QP_ctl_E(2,:)
-     X(3)%ib= BS_bands
-     X(3)%ehe=BS_eh_en
-     X(3)%q0= BSS_q0
-     X(3)%iq= 1
-     call W_duplicate(Xxcw,Xw(3))
-     call initactivate(2,'XfnQP_E')
-   endif
+     !
+     ! After DB reading/stdin logicals
+     ! I propose here values for the input file
+     !
+     ! If optics with BS FXC I need to dump on X(3) the
+     ! Fxc specs
+     !
+     if (all((/l_bs_fxc,l_optics,l_lr.or.l_bse,ioBS_FXC_err==0/))) then
+       QP_ctl_E(1,:)=QP_ctl_E(2,:)
+       X(3)%ib= BS_bands
+       X(3)%ehe=BS_eh_en
+       X(3)%q0= BSS_q0
+       X(3)%iq= 1
+       call W_duplicate(Xxcw,Xw(3))
+       call initactivate(2,'XfnQP_E')
+     endif
 #if defined PJ_RAS
-   X(3)%iq = 1  ! 2 components
+     X(3)%iq = 1  ! 2 components
 #endif
 #if defined PJ_RAS || PJ_REELS
-   X(3)%ordering = 'c'
-   Xw(3)%n = 101 ! 2 components
+     X(3)%ordering = 'c'
+     Xw(3)%n = 101 ! 2 components
 #endif 
 #if defined  PJ_PH
-   if (.not.l_el_corr.and..not.l_ph_corr) l_el_corr=.true.
+     if (.not.l_el_corr.and..not.l_ph_corr) l_el_corr=.true.
 #endif
 #if !defined  PJ_SC
-   if (l_gw0.and.l_el_corr) call initactivate(1,'xxvxc')
+     if (l_gw0.and.l_el_corr) call initactivate(1,'xxvxc')
 #endif
-   if (l_el_corr.and.l_ppa) QP_solver='n'
-   if (l_ppa) call initactivate(1,'em1d')
-   if (l_bss) call initactivate(1,'bse')
-   if (l_bss) call initactivate(1,'l_optics')
-   if (l_bse) then
-     !
-     if (l_alda_fxc) BS_res_mode='x'     
-     !
-     if (io_X_err(2)==0) then
-       if (ioBS_err/=0) BS_n_g_W=X(2)%ng
-     else if (io_X_err(4)==0) then
-       if (ioBS_err/=0) BS_n_g_W=X(4)%ng
-       call X_duplicate(X(4),X(2))
-       call W_duplicate(Xw(4),Xw(2))
+     if (l_el_corr.and.l_ppa) QP_solver='n'
+     if (l_life) call initactivate(-1,'ppa')
+     if (l_ppa)  call initactivate(1,'em1d')
+     if (l_bss)  call initactivate(1,'bse')
+     if (l_bss)  call initactivate(1,'l_optics')
+     if (l_bse) then
+       !
+       if (l_alda_fxc) BS_res_mode='x'     
+       !
+       if (io_X_err(2)==0) then
+         if (ioBS_err/=0) BS_n_g_W=X(2)%ng
+       else if (io_X_err(4)==0) then
+         if (ioBS_err/=0) BS_n_g_W=X(4)%ng
+         call X_duplicate(X(4),X(2))
+         call W_duplicate(Xw(4),Xw(2))
+       endif
+       !
      endif
      !
-   endif
-   !
    end subroutine varsetup1 
    !
    subroutine varsetup2 
-   !
-   ! After infile reading. Immediately before infile writing
-   ! CAREFUL! Any input file value is overwritten here !
-   !
-   Xw(2)%n(2)=Xw(2)%n(1)
-   Xw(4)%n(2)=Xw(4)%n(1)
-   Xw(3)%n(2)=Xw(3)%n(1)
-   Xw(1)%n(2)=Xw(1)%n(1)
-   !
-   ! q0 renormalization
-   !
-   BSS_q0(:)=BSS_q0(:)*q0_defmod/v_norm(BSS_q0)
-   X(1)%q0(:)=X(1)%q0(:)*q0_defmod/v_norm(X(1)%q0)
-   X(2)%q0(:)=X(2)%q0(:)*q0_defmod/v_norm(X(2)%q0)
-   X(3)%q0(:)=X(3)%q0(:)*q0_defmod/v_norm(X(3)%q0)
-   X(4)%q0(:)=X(4)%q0(:)*q0_defmod/v_norm(X(4)%q0)
-   if (l_em1s) Xw(2)%dr=0.001/HARTREE
-   !
-   if (len_trim(BS_cpl_mode)==0) BS_cpl_mode="none"
-   if (len_trim(BS_res_mode)==0) BS_res_mode="none"
-   !
-   ! When running BSE from input file lbse is FALSE in varsetup1.
-   ! In any case I have to overwrite X(2) with PP X(4) only if em1s=F
-   !
-   if (l_bse.and.io_X_err(2)/=0.and.io_X_err(4)==0.and..not.l_em1s) then
-     call X_duplicate(X(4),X(2))
-     call W_duplicate(Xw(4),Xw(2))
-   endif
+     !
+     ! After infile reading. Immediately before infile writing
+     ! CAREFUL! Any input file value is overwritten here !
+     !
+     Xw(2)%n(2)=Xw(2)%n(1)
+     Xw(4)%n(2)=Xw(4)%n(1)
+     Xw(3)%n(2)=Xw(3)%n(1)
+     Xw(1)%n(2)=Xw(1)%n(1)
+     !
+     ! q0 renormalization
+     !
+     BSS_q0(:)=BSS_q0(:)*q0_defmod/v_norm(BSS_q0)
+     X(1)%q0(:)=X(1)%q0(:)*q0_defmod/v_norm(X(1)%q0)
+     X(2)%q0(:)=X(2)%q0(:)*q0_defmod/v_norm(X(2)%q0)
+     X(3)%q0(:)=X(3)%q0(:)*q0_defmod/v_norm(X(3)%q0)
+     X(4)%q0(:)=X(4)%q0(:)*q0_defmod/v_norm(X(4)%q0)
+     if (l_em1s) Xw(2)%dr=0.001/HARTREE
+     !
+     if (len_trim(BS_cpl_mode)==0) BS_cpl_mode="none"
+     if (len_trim(BS_res_mode)==0) BS_res_mode="none"
+     !
+     ! When running BSE from input file lbse is FALSE in varsetup1.
+     ! In any case I have to overwrite X(2) with PP X(4) only if em1s=F
+     !
+     if (l_bse.and.io_X_err(2)/=0.and.io_X_err(4)==0.and..not.l_em1s) then
+       call X_duplicate(X(4),X(2))
+       call W_duplicate(Xw(4),Xw(2))
+     endif
 #if !defined  PJ_PH
-   if (l_gw0) l_el_corr=.true.
+     if (l_gw0) l_el_corr=.true.
 #endif
-   !
+     !
    end subroutine varsetup2
    !
    subroutine initrstr(rstr,init_) 
-   !
-   use stderr, ONLY:string_split
-   implicit none
-   integer     :: init_
-   character(*):: rstr
-   !
-   ! Work Space
-   !
-   integer          ::i1,i2,n_pieces
-   character(schlen)::rstr_piece(2*nrnlvls)
-   !
-   ! Split the string in pieces
-   !
-   call string_split(rstr,rstr_piece)
-   n_pieces=0
-   do i1=1,2*nrnlvls
-     if (len_trim(rstr_piece(i1))>0) n_pieces=n_pieces+1
-   enddo
-   if (n_pieces==0) return
-   !
-   do i1=1,n_pieces
      !
-     if (trim(rstr_piece(i1))=='ifile') cycle
-     if (i1>1) then
-       if(trim(rstr_piece(i1-1))=='ifile') cycle
-     endif
+     use stderr, ONLY:string_split
+     implicit none
+     integer     :: init_
+     character(*):: rstr
      !
-     do i2=1,nrnlvls
-       if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1)) ) infile_editing=.true.
+     ! Work Space
+     !
+     integer          ::i1,i2,n_pieces
+     character(schlen)::rstr_piece(2*nrnlvls)
+     !
+     ! Split the string in pieces
+     !
+     call string_split(rstr,rstr_piece)
+     n_pieces=0
+     do i1=1,2*nrnlvls
+       if (len_trim(rstr_piece(i1))>0) n_pieces=n_pieces+1
+     enddo
+     if (n_pieces==0) return
+     !
+     do i1=1,n_pieces
+       !
+       if (trim(rstr_piece(i1))=='ifile') cycle
+       if (i1>1) then
+         if(trim(rstr_piece(i1-1))=='ifile') cycle
+       endif
+       !
+       do i2=1,nrnlvls
+         if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1)) ) infile_editing=.true.
+       enddo
+       !
+       ! Run Level
+       !
+       call initactivate(1, trim(rstr_piece(i1)) )
+       !
+       ! Verbosity
+       !
+       if ( trim(rstr_piece(i1)) == 'infver' )  read(rstr_piece(i1+1),*) infile_verbosity
+       if (infile_verbosity<0) infile_verbosity=0
+       !
+       ! TDDFT
+       !
+       if ( trim(rstr_piece(i1)) == 'tddft' )  then
+         l_alda_fxc=  trim(rstr_piece(i1+1)) == 'a'
+         l_bs_fxc= trim(rstr_piece(i1+1)) == 'b'
+         l_lrc_fxc= trim(rstr_piece(i1+1)) == 'l'
+         if (.not.l_alda_fxc.and..not.l_bs_fxc.and..not.l_lrc_fxc) l_alda_fxc=.true.
+         if (l_alda_fxc)  call initactivate(1,'alda_fxc')
+         if (l_bs_fxc)  call initactivate(1,'bs_fxc')
+         if (l_lrc_fxc)  call initactivate(1,'lrc_fxc')
+       endif
+       !
+       ! BSE/LLR
+       !
+       if ( trim(rstr_piece(i1)) == 'optics' )  then
+         l_lr=  trim(rstr_piece(i1+1)) == 'l'
+         l_bse= trim(rstr_piece(i1+1)) == 'b'
+         if (.not.l_lr.and..not.l_bse) l_lr=.true.
+         if (l_lr)  call initactivate(1,'linres')
+         if (l_bse) call initactivate(1,'bse')
+       endif
+       !
+       ! BSE Solver
+       !
+       if ( trim(rstr_piece(i1)) == 'bss' )  then
+         BSS_mode=trim(rstr_piece(i1+1))
+         if (index(BSS_mode,'h')==0.and.index(BSS_mode,'d')==0.and.&
+&            index(BSS_mode,'i')==0.and.index(BSS_mode,'t')==0) BSS_mode='h'
+         !
+         ! With and ALDA Fxc the t solver is not permitted
+         !
+         if (l_alda_fxc.and.index(BSS_mode,'t')/=0) BSS_mode='h'
+         !
+       endif
+       !
+       ! Dyson Solver
+       !
+       if ( trim(rstr_piece(i1)) == 'gw0' ) then
+         QP_solver=trim(rstr_piece(i1+1))
+         if (trim(QP_solver)/='n'.and.trim(QP_solver)/='s'.and.&
+&            trim(QP_solver)/='g') QP_solver='n'
+#if !defined  PJ_PH
+         l_el_corr=.true.
+#endif
+       endif
+       !
+       ! RAS
+       !
+#if defined PJ_RAS
+       if ( trim(rstr_piece(i1)) == 'sursp' )  then
+         if ( trim(rstr_piece(i1+1)) == 'r') call initactivate(1,'ras')
+         if ( trim(rstr_piece(i1+1)) == 'e') call initactivate(1,'reels')
+         if ( trim(rstr_piece(i1+1)) == 'b') call initactivate(1,'ras reels')
+       endif
+#endif
+       !
+       ! ELPH
+       !
+#if defined  PJ_PH
+       if ( trim(rstr_piece(i1)) == 'corrtp' ) then
+         if ( trim(rstr_piece(i1+1)) == 'e') l_el_corr=.true.
+         if ( trim(rstr_piece(i1+1)) == 'p') l_ph_corr=.true.
+         if ( trim(rstr_piece(i1+1)) == 'b') then
+           l_el_corr=.true.
+           l_ph_corr=.true.
+         endif
+         if (.not.l_ph_corr.and..not.l_el_corr) l_el_corr=.true.
+         if (l_ph_corr) call initactivate(1,'el_ph')
+         if (l_el_corr) call initactivate(1,'el_el')
+       endif
+#endif
+       !
      enddo
      !
-     ! Run Level
+     if (infile_editing) init_=1
      !
-     call initactivate(1, trim(rstr_piece(i1)) )
-     !
-     ! Verbosity
-     !
-     if ( trim(rstr_piece(i1)) == 'infver' )  read(rstr_piece(i1+1),*) infile_verbosity
-     if (infile_verbosity<0) infile_verbosity=0
-     !
-     ! TDDFT
-     !
-     if ( trim(rstr_piece(i1)) == 'tddft' )  then
-       l_alda_fxc=  trim(rstr_piece(i1+1)) == 'a'
-       l_bs_fxc= trim(rstr_piece(i1+1)) == 'b'
-       l_lrc_fxc= trim(rstr_piece(i1+1)) == 'l'
-       if (.not.l_alda_fxc.and..not.l_bs_fxc.and..not.l_lrc_fxc) l_alda_fxc=.true.
-       if (l_alda_fxc)  call initactivate(1,'alda_fxc')
-       if (l_bs_fxc)  call initactivate(1,'bs_fxc')
-       if (l_lrc_fxc)  call initactivate(1,'lrc_fxc')
-     endif
-     !
-     ! BSE/LLR
-     !
-     if ( trim(rstr_piece(i1)) == 'optics' )  then
-       l_lr=  trim(rstr_piece(i1+1)) == 'l'
-       l_bse= trim(rstr_piece(i1+1)) == 'b'
-       if (.not.l_lr.and..not.l_bse) l_lr=.true.
-       if (l_lr)  call initactivate(1,'linres')
-       if (l_bse) call initactivate(1,'bse')
-     endif
-     !
-     ! BSE Solver
-     !
-     if ( trim(rstr_piece(i1)) == 'bss' )  then
-       BSS_mode=trim(rstr_piece(i1+1))
-       if (index(BSS_mode,'h')==0.and.index(BSS_mode,'d')==0.and.&
-&          index(BSS_mode,'i')==0.and.index(BSS_mode,'t')==0) BSS_mode='h'
-       !
-       ! With and ALDA Fxc the t solver is not permitted
-       !
-       if (l_alda_fxc.and.index(BSS_mode,'t')/=0) BSS_mode='h'
-       !
-     endif
-     !
-     ! Dyson Solver
-     !
-     if ( trim(rstr_piece(i1)) == 'gw0' ) then
-       QP_solver=trim(rstr_piece(i1+1))
-       if (trim(QP_solver)/='n'.and.trim(QP_solver)/='s'.and.&
-&          trim(QP_solver)/='g') QP_solver='n'
-#if !defined  PJ_PH
-       l_el_corr=.true.
-#endif
-     endif
-     !
-     ! RAS
-     !
-#if defined PJ_RAS
-     if ( trim(rstr_piece(i1)) == 'sursp' )  then
-       if ( trim(rstr_piece(i1+1)) == 'r') call initactivate(1,'ras')
-       if ( trim(rstr_piece(i1+1)) == 'e') call initactivate(1,'reels')
-       if ( trim(rstr_piece(i1+1)) == 'b') call initactivate(1,'ras reels')
-     endif
-#endif
-     !
-     ! ELPH
-     !
-#if defined  PJ_PH
-     if ( trim(rstr_piece(i1)) == 'corrtp' ) then
-       if ( trim(rstr_piece(i1+1)) == 'e') l_el_corr=.true.
-       if ( trim(rstr_piece(i1+1)) == 'p') l_ph_corr=.true.
-       if ( trim(rstr_piece(i1+1)) == 'b') then
-         l_el_corr=.true.
-         l_ph_corr=.true.
-       endif
-       if (l_ph_corr) call initactivate(1,'el_ph')
-       if (l_el_corr) call initactivate(1,'el_el')
-     endif
-#endif
-     !
-   enddo
-   !
-   if (infile_editing) init_=1
-   !
    end subroutine
    !
  end function

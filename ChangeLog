@@ -1,3 +1,25 @@
+2007-02-19 18:38:07 r101 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.7_16-02-07
+
+	*  2coulomb/cutoff_box.F 0modules/mod_vec_operate.F 0modules/std_presets.F 0modules/mod_functions.F 0modules/mod_ELPH.F 4it/init_load.F 4it/init.F 6qp/QP_ppa.F 3kop/k_lattice.F 5elph/QP_states_simmetrize.F 5elph/.objects 5elph/QP_elph.F 5elph/G_RIM_Gf.F ChangeLog
+
+	Bugs:
+	- in src/3kop/k_lattice.F (v0_ibz_mod=ak2bz(v0) removed by accident)
+
+	Additions:
+	- degeneration_finder in 0modules/mod_vec_operate.F
+	- ph_damping in src/0modules/std_presets.F,
+	- src/5elph/QP_states_simmetrize.F to simmetrize degenerate QP states
+	- Gap correction report in src/5elph/QP_elph.F
+
+	Changes:
+	- Local v_is_zero procedure to speed up 2coulomb/cutoff_box.F (Daniele)
+	- restyling of src/0modules/mod_functions.F,  src/0modules/mod_ELPH.F,
+	  src/4it/init.F, src/6qp/QP_ppa.F
+
+	Patch sent by: Andrea
+
 2007-02-16 16:30:34 r100 Andrea Marini <marini@roma2.infn.it>
 
 	V 3.0.7_16-02-07

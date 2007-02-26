@@ -65,7 +65,7 @@
      character(schlen)  :: description(max_qp_descs)
      integer,    pointer:: table(:,:)
      real(SP)   ,pointer:: k(:,:)
-     complex(SP),pointer:: E_prev(:)
+     real(SP)   ,pointer:: E_bare(:)
      complex(SP),pointer:: E(:)
      complex(SP),pointer:: Z(:)
      integer  :: n_descs
@@ -98,11 +98,11 @@
   contains
     !
     subroutine QP_reset(qp)
-    type(QP_t)::qp
-    qp%description=' '
-    qp%n_descs=0
-    qp%n_states=0
-    nullify(qp%table,qp%k,qp%E,qp%Z,qp%E_prev)
+      type(QP_t)::qp
+      qp%description=' '
+      qp%n_descs=0
+      qp%n_states=0
+      nullify(qp%table,qp%k,qp%E,qp%Z,qp%E_bare)
     end subroutine
     !
  end module 

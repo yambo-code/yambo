@@ -1,5 +1,5 @@
 #if defined PJ_PH
- objs = QP_states_simmetrize.o G_RIM_Gf.o QP_elph.o
+ objs = QP_states_simmetrize.o QP_elph.o
 #else
  objs =
 #endif

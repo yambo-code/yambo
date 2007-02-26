@@ -167,30 +167,5 @@
      if (ik==1) BZ_index=1
      if (ik>1 ) BZ_index=1+sum(k%nstar(:ik-1))
    end function
-  
-   character(6) function intc(i)
-     !
-     !
-     character(6) temp
-     integer, intent(in) :: i
-     !
-     if(i.lt.10.and.i.ge.0) then
-       write(temp,'(i1)') i
-     else if(i.lt.100.and.i.gt.-10) then
-       write(temp,'(i2)') i
-     else if(i.lt.1000.and.i.gt.-100) then
-       write(temp,'(i3)') i
-     else if(i.lt.10000.and.i.gt.-1000) then
-       write(temp,'(i4)') i
-     else if(i.lt.100000.and.i.gt.-10000) then
-       write(temp,'(i5)') i
-     else if(i.lt.1000000.and.i.gt.-100000) then
-       write(temp,'(i6)') i
-     else
-       write(temp,'(a6)') "******"
-     endif
-     intc = temp
-     !
-   end function intc
-
+   !
  end module

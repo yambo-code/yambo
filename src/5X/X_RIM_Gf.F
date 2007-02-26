@@ -20,12 +20,13 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine X_RIM_Gf(iq,transitions,fr,Xw,Xen,Xk,RIM_Gf,ordering)
-!================================================================
+ !
  use pars,       ONLY:SP,HARTREE
  use electrons,  ONLY:levels,BZ_RIM_table,BZ_RIM_nkpt,spin_occ,&
 &                     BZ_RIM_tot_nkpts
  use R_lattice,  ONLY:qindx_X,nXkbz,bz_samp
  use frequency,  ONLY:w_samp
+ !
  implicit none
  integer      :: iq,transitions(4),fr(2)
  type(w_samp) :: Xw

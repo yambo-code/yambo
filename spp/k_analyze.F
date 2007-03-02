@@ -100,13 +100,15 @@
      GWK_Q%ptbz(GWK_Q%nbz,:)=v(:)-q%ptbz(i2,:)
    enddo
  enddo
- call msg("s","Reducing the extended grid...")
+ call msg("s","Reducing & Expanding the extended grid...")
  call k_reduce(GWK_Q)
+ call k_expand(GWK_Q)
+ !
  call msg("l","done")
  call msg("s","Reduced K-grid points:",GWK_Q%nibz)
  !
  ! the GWK_Q contains the k+(k-q) grids.
- ! Before reporting the points I wanto to sign the 
+ ! Before reporting the points I want to sign the 
  ! position in the final grid of the given QP k-points (read from the input file)
  !
  allocate(int_ctl(GWK_Q%nibz))
@@ -141,8 +143,8 @@
      endif
      if (trim(Kcoo_out)=="cc") call c2a(v_in=GWK_Q%pt(i1,:),mode="ki2c")
      if (trim(Kcoo_out)=="rlu") call c2a(v_in=GWK_Q%pt(i1,:),mode="ki2a")
-     if (int_ctl(i1)==0) write (ch,'(3f14.6)') GWK_Q%pt(i1,:)
-     if (int_ctl(i1)/=0) write (ch,'(3f14.6,i3)') GWK_Q%pt(i1,:),int_ctl(i1)
+     if (int_ctl(i1)==0) write (ch,'(4f14.6)') GWK_Q%pt(i1,:),GWK_Q%weights(i1)
+     if (int_ctl(i1)/=0) write (ch,'(4f14.6,i3)') GWK_Q%pt(i1,:),GWK_Q%weights(i1),int_ctl(i1)
      call msg("s",trim(ch))
    enddo
  enddo

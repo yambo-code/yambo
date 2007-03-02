@@ -25,7 +25,7 @@
  ! following the Allen-Cardona formulation (see for example 
  ! PRB 23, 1495 (1981) )
  !
- use pars,          ONLY:SP,schlen,HARTREE,HA2THZ
+ use pars,          ONLY:SP,DP,schlen,HARTREE,HA2THZ
  use frequency,     ONLY:w_samp,W_reset
  use electrons,     ONLY:levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts
  use timing,        ONLY:live_timing
@@ -43,7 +43,6 @@
  use ELPH,          ONLY:ph_modes,elph_nb,ph_freqs_sq,elph_gkkp,&
 &                        elph_gkkp_free,QP_PH_n_G_bands,max_ph_freq,elph_DW,&
 &                        PH_damping
- use parser_m ! DEBUG
  implicit none
  type(levels)  ::en
  type(bz_samp) ::k,q
@@ -54,7 +53,7 @@
  integer          ::iqbz,iq,iq_ref,iqs,ik,ok,ikbz,okbz,ib,ob,is,os,il,iqp,i2,iw
  type(w_samp)     ::Sc_W(qp%n_states)
  type(pp_indexes) ::px
- integer          ::io_err,ID,iv4(4)
+ integer          ::io_err,ID,iv4(4),nq_found
  integer, external::ioELPH,QP_state_extract
  character(schlen)::ch
  logical          ::use_G_RIM
@@ -129,13 +128,16 @@
  call pp_redux_wait
  !
  iq_ref=0
+ nq_found=0
+ !
  do iqbz=1,q%nbz
    iq =q%sstar(iqbz,1)
    iqs=q%sstar(iqbz,2)
-   if (iq/=iq_ref) then
+   if (iq/=iabs(iq_ref)) then
      call io_control(ACTION=RD_CL_IF_END,SEC=(/iq+1/),ID=ID)
      io_err=ioELPH(ID)
      iq_ref=iq
+     if (io_err<0) iq_ref=-iq
      !
      ! I call live_timing here as in ioELPH the elph_alloc() can 
      ! send a screen message about the allocated memory that can interferee
@@ -144,6 +146,13 @@
      if (iq==1) call live_timing('El-Ph Sc',px%stps(myid+1)*QP_n_states)
      !
    endif
+   !
+   if (iq_ref<0) then
+     call live_timing(steps=QP_n_states)
+     cycle
+   endif
+   !
+   nq_found=nq_found+1
    !
    do iqp=1,QP_n_states
      !
@@ -276,7 +285,7 @@
      !
      call W_reset(g_sq_F_E)
      g_sq_F_E%n=n_g_sq_freq
-     g_sq_F_E%er=(/0.,max_ph_freq*1.1/)
+     g_sq_F_E%er=(/0._SP,max_ph_freq*1.1/)
      g_sq_F_E%dr=PH_damping
      if (PH_damping>0.) call freqs_setup(g_sq_F_E)
      !
@@ -284,6 +293,7 @@
      !
      do iq=1,q%nibz
        do il=1,ph_modes
+         g_sq_F_res(:,iq,il)=g_sq_F_res(:,iq,il)*real(q%nbz)/real(nq_found)
          call QP_states_simmetrize(g_sq_F_res(:,iq,il),en)
        enddo
      enddo

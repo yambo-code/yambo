@@ -30,6 +30,9 @@
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,Kernel_by_V,&
 &                         BS_K_coupling,BSS_write_eig_2_db
  use memory_m,       ONLY:mem_est
+#if defined PJ_SPIN
+ use electrons,      ONLY:spin_occ,n_spin
+#endif
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK,USE_SLK,INV
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:d3k_factor,q_norm
@@ -289,7 +292,12 @@
  call live_timing
  call pp_redux_wait(X_epsilon)
 !
+#if defined PJ_SPIN
+ X_epsilon(2,:)=1.+X_epsilon(2,:)*(spin_occ/(2.*pi)**3.)*d3k_factor*4.*pi/(q_norm(1))**2
+#else
  X_epsilon(2,:)=1.+X_epsilon(2,:)*d3k_factor/pi**2./q_norm(1)**2
+#endif
+
  X_epsilon(1,:)=W%p(:)
  call pp_indexes_reset(px)
 !

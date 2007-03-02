@@ -95,6 +95,7 @@
  alat(1) = maxval(abs(a(1,:)))
  alat(2) = maxval(abs(a(2,:)))
  alat(3) = maxval(abs(a(3,:)))
+ if ( all( (/alat(1)==alat(2),alat(1)==alat(3),alat(2)==alat(3)/) ) ) alat=pwcell%alat
 
 ! Use acopy to avoid passing non-contiguous arrays (just for fun)
  acopy = transpose(a)

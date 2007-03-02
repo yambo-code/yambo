@@ -36,7 +36,7 @@
  !
  !Work Space
  !
- integer                ::iq,im,ik,i1,i2
+ integer                ::iq,im,ik,i1,i2,ierr
  real(SP), allocatable  ::elph_gkkp_disk(:,:,:)
  character(schlen)      ::var_name
  !
@@ -72,7 +72,16 @@
  !
  ! Fragmentation
  !
- call io_fragment(ID,i_pointer=iq)
+ call io_fragment(ID,i_pointer=iq,ierr=ierr)
+ !
+ ! When the DB is fragmented I allow a partial reading checking
+ ! if the fragment exists or not.
+ ! If the fragment does not exist (ierr<0) I return an error code
+ !
+ if (ierr<0.and.read_is_on(ID)) then
+   ioELPH=-1
+   goto 1
+ endif
  !
  ! Allocation
  !

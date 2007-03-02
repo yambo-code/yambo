@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine elph_eliashberg(k,en,q)
- !---------------------------------
+ !
  use pars,                ONLY:SP,schlen,pi,HA2GHZ,HA2THZ
  use com,                 ONLY:msg,of_open_close
  use electrons,           ONLY:levels,n_met_bands,n_full_bands

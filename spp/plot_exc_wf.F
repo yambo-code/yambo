@@ -22,7 +22,7 @@
  subroutine plot_exc_wf(Xk)
 !=======================================
  use FFT_m,       ONLY : fft_size,fft_dim,fft_rot_r
- use pars,        ONLY : SP,HARTREE,IP,pi,lchlen
+ use pars,        ONLY : SP,HARTREE,IP,pi,lchlen,DP
  use D_lattice,   ONLY : a,sop_inv,i_time_rev,nsym,alat
  use wave_func,   ONLY : wf_load,wf_state,wf_ng,wf,WF_free
  use R_lattice,   ONLY : nXkibz,bz_samp
@@ -45,8 +45,8 @@
 !
 !parameters GPL_END
 !-----------
- real(SP), parameter    :: bohr=0.52917721
- complex,  parameter    :: cI=(0.,1.)
+ real(SP),     parameter    :: bohr=0.52917721
+ complex(SP),  parameter    :: cI=(0.,1.)
 !
 !variables needed in the grid
 !--------------------------------
@@ -85,9 +85,9 @@
  integer           ::is,neh
  real(SP)          ::k_pt(3)
  real(SP)          ::r_eh(3)
- complex,  allocatable ::wf_vc(:)
- complex,  allocatable ::wf_eh(:)
- real(SP), allocatable ::wf2d(:,:)
+ complex(SP),  allocatable ::wf_vc(:)
+ complex(SP),  allocatable ::wf_eh(:)
+ real(SP),     allocatable ::wf2d(:,:)
 !
 !Variables needed to the report of eigenvectors
 !-----------------------------------
@@ -339,7 +339,7 @@
 !----------------------------------------------
  implicit none 
  
- complex BS_R(BS_K_dim),BS_E(BS_K_dim)
+ complex(SP) :: BS_R(BS_K_dim),BS_E(BS_K_dim)
 
 !ws
 !--
@@ -817,7 +817,7 @@
   call msg(extension2,local_ch)
   call msg(extension2,'BEGIN_DATAGRID_3D')
   call msg(extension2,'',(/nr1,nr2,nr3/))
-  call msg(extension2,'',(/0.,0.,0./))
+  call msg(extension2,'',(/0._SP,0._SP,0._SP/))
   call msg(extension2,'',ncell(1)*a_angs(1,:))
   call msg(extension2,'',ncell(2)*a_angs(2,:))
   call msg(extension2,'',ncell(3)*a_angs(3,:))

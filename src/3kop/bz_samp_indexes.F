@@ -128,7 +128,6 @@
      q%pt=q_pt
      call msg('rsn','[RL indx] User defined Q-grid.')
      user_defined_qpts=.true.
-     bse_scattering=.true.
    endif
    !
    ! q_ptbz in rlu for qindx_*.
@@ -288,7 +287,7 @@
      do i1=1,q%nibz
        ch(2)=gen_fmt(r_v=q%pt(i1,:))
        ch(3)=gen_fmt(r_v=(/q%weights(i1)/))
-       write (ch(1),'(7a)') '(a,i3.3,a,3(',trim(ch(2)),',1x),a,',trim(ch(3)),',1x)'
+       write (ch(1),'(7a)') '(a,i5.5,a,3(',trim(ch(2)),',1x),a,',trim(ch(3)),',1x)'
        write (ch(2),trim(ch(1)))   'Q [',i1,'] :',q%pt(i1,:),'(iku) * weight ',q%weights(i1)
        call msg('r',trim(ch(2)))
      enddo

@@ -45,7 +45,7 @@
  !I/O
  !
  integer           :: ID,i_err
- integer, external :: ioDB1,ioQINDX,iogrot,self2self
+ integer, external :: ioDB1,ioQINDX,iogrot,self2self,elph_pw_dbs
  !
  ! Presets
  !
@@ -128,8 +128,7 @@
 #if defined SPP_PJ_PH
  !
  if (lelph) then
-   call elph_pw_dbs(k,q)
-   call elph_eliashberg(k,en,q)
+   if ( elph_pw_dbs(k,q) == 0 ) call elph_eliashberg(k,en,q)
  endif
  !
 #endif

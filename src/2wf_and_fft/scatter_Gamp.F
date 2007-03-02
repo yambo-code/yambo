@@ -90,7 +90,7 @@
      l_RIM=all((/ig1<=RIM_ng,ig2<=RIM_ng/))
      if (RIM_is_diagonal.and.l_RIM) l_RIM=(ig1==ig2)
      !
-     if (l_RIM) then
+     if (l_RIM.and..not.l_col_cut) then
        isc%gamp(i1,i2)=RIM_qpg(iq,ig1,ig2)/2.
        cycle
      else

@@ -25,7 +25,11 @@
  use memory_m,     ONLY:mem_est
  use drivers,      ONLY:l_bs_fxc,l_col_cut
  use frequency,    ONLY:w_samp
+#if defined PJ_SPIN
+ use electrons,    ONLY:levels,n_spin,spin_occ
+#else
  use electrons,    ONLY:levels
+#endif
  use FFT_m,        ONLY:fft_size
  use wave_func,    ONLY:wf_load,WF_free
  use functions,    ONLY:K_scatter
@@ -62,7 +66,11 @@
 !
  integer    :: ikk1,ikk2,live_timing_steps,is1xis2
  integer    :: ik1bz,iv1,ic1,ik1,is1,inv_s1,is1p
+#if defined PJ_SPIN
+ integer    :: ik2bz,iv2,ic2,ik2,is2,is2p,isp1,isp2
+#else
  integer    :: ik2bz,iv2,ic2,ik2,is2,is2p
+#endif
  integer    :: icv1,icv2,iOvv,iOcc
  integer    :: i1,i2,i3,iqs,iqibz,ig0
 #if defined _DOUBLE
@@ -342,6 +350,7 @@
    ikk2=sum(BS_blk_dim(:ik2-1))
    if (load_O_X) call K_exchange(.not.l_col_cut,iq,ik2,Xk,O2x,O_x_dim) 
    do ik1=ik2,1,-1
+
 !
      if (any((/ik2<BS_blk_coord(2),ik2==BS_blk_coord(2).and.ik1>BS_blk_coord(1)/))) cycle
 !
@@ -376,6 +385,9 @@
        ik1bz=BS_eh_table(ikk1+icv1,1)
        iv1=BS_eh_table(ikk1+icv1,2)
        ic1=BS_eh_table(ikk1+icv1,3)
+#if defined PJ_SPIN
+       isp1=BS_eh_table(ikk1+icv1,4)
+#endif
        is1=Xk%sstar(ik1bz,2)
 
        is1p=Xk%sstar( qindx_X(iq,ik1bz,1) ,2)
@@ -401,6 +413,9 @@
          ik2bz=BS_eh_table(ikk2+icv2,1)
          iv2=BS_eh_table(ikk2+icv2,2)
          ic2=BS_eh_table(ikk2+icv2,3)
+#if defined PJ_SPIN
+         isp2=BS_eh_table(ikk2+icv2,4)
+#endif
          is2=Xk%sstar(ik2bz,2)
          is2p=Xk%sstar( qindx_X(iq,ik2bz,1) ,2)
          ig0=qindx_B(ik1bz,ik2bz,2)
@@ -461,7 +476,11 @@
            H_res_c=cdotc(BS_n_g_W,Ovv,1,Cc,1)*4.*pi
 #endif
          endif
+#if defined PJ_SPIN
+         BS_mat(icv1,icv2)=H_res_x*real(spin_occ)*Co-H_res_c
+#else
          BS_mat(icv1,icv2)=H_res_x*2.*Co-H_res_c
+#endif
          if (BS_K_coupling) BS_cpl_mat(icv1,icv2)=H_cpl_x*2.*Co-H_cpl_c
 
        enddo

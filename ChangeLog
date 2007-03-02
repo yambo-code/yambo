@@ -1,3 +1,38 @@
+2007-02-27 00:55:41 r103 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	V 3.0.7_26-02-07
+
+	*  2ras_reels_mods/mod_optcut.F 5X/X_O_longitudinal.F 4ras/X_O_transverse_cut.F 4ras/X_O_strengths_cut.F 4ras/.objects 4ras/X_O_longitudinal_cut.F
+
+	Additions:
+	- Real space cutoff function added to longitudinal gauge in RAS project
+	Changes:
+	- Core longitudinal gauge restricted to 3 grids,  other functionalities in RAS project only
+
+	Patch sent by: Conor
+
+2007-02-26 12:44:34 r102 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.7_26-02-07
+
+	*  include/version.inc 0modules/mod_frequency.F 0modules/mod_stderr.F 0modules/mod_functions.F 0modules/mod_QP.F 2io/ioQP.F 5X/X_O_longitudinal.F 5X/X_RIM_Gf.F 4it/init_load.F 4it/init.F 3qp_ctl/QP_apply_interpolate.F 3qp_ctl/QP_apply_fit.F 3qp_ctl/QP_apply_db.F 6qp/QP_driver.F 6qp/QP_life_transitions.F 6qp/QP_secant.F 6qp/QP_W2Sc.F 6qp/QP_ppa.F 6qp/QP_of.F 6qp/QP_raxis.F 6qp/QP_newton.F 1common/k_min_distance.F 1common/.objects 5elph/.objects 5elph/QP_elph.F 5elph/G_RIM_Gf.F ChangeLog 3.0.7_16-02-07
+
+	Bugs:
+	- Again wrong implementation of GWo SC solution of Dyson Eq.
+	  Introduced %E_bare in mod_QP.F (tests needed).
+	  Removed %E_prev in mod_QP.F (now it is a local variable in QP_newton)
+	- QP_apply_interpolate.F when 1 only qp%k was given
+
+	Changes:
+	- intc moved from functions to stderr module
+	- X_RIM_Gf.F and k_min_distance.F removed
+	- Restyling of : mod_frequency.F, mod_stderr.F, ioQP.F, init_load.F, init.F,
+	                 QP_apply_interpolate.F, QP_apply_fit.F, QP_apply_db.F,
+	                 QP_driver.F, QP_life_transitions.F, QP_secant.F,
+	                 QP_W2Sc.F, QP_raxis.F
+
+	Patch sent by: Andrea
+
 2007-02-19 18:38:07 r101 Andrea Marini <marini@roma2.infn.it>
 
 	V 3.0.7_16-02-07

@@ -263,13 +263,13 @@
    
  end function
 
- subroutine io_fragment(ID,i_pointer,j_pointer)
+ subroutine io_fragment(ID,i_pointer,j_pointer,ierr)
 !===========================================================================
  implicit none
  integer           :: ID
- integer, optional :: i_pointer,j_pointer
+ integer, optional :: i_pointer,j_pointer,ierr
 !ws
- integer           :: ierr,i_fragment
+ integer           :: ierr_,i_fragment
  character(schlen) :: subfolder
 
  if (.not.io_fragmented(ID)) return
@@ -286,7 +286,8 @@
  if (present(j_pointer)) then
    write (subfolder,'(2a,i5.5,a,i5.5)') trim(io_extension(ID)),'_',i_fragment,'_',j_pointer
  endif
- ierr=io_connect('fragment',subfolder=subfolder,type=2,ID=ID)
+ ierr_=io_connect('fragment',subfolder=subfolder,type=2,ID=ID)
+ if (present(ierr)) ierr=ierr_
 
  end subroutine
 

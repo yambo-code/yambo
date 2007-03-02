@@ -31,7 +31,11 @@
  use com,            ONLY:msg
  use drivers,        ONLY:l_bs_fxc
  use frequency,      ONLY:w_samp
+#if defined PJ_SPIN
+ use electrons,      ONLY:levels,n_spin
+#else
  use electrons,      ONLY:levels
+#endif
  use R_lattice,      ONLY:d3k_factor,bz_samp,q_norm
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,NONE
  use TDDFT,          ONLY:FXC_description,FXC_n_descs
@@ -42,7 +46,11 @@
  type(w_samp) ::W_bss
  integer      ::iq
 !ws
+#if defined PJ_SPIN
+ integer           ::ik,iv,ic,i1,isp,X_ib_save(2)
+#else
  integer           ::ik,iv,ic,i1,X_ib_save(2)
+#endif
  integer           ::ioBS_err,ID
  integer, external ::ioBS
 !
@@ -94,16 +102,27 @@
      ik=BS_eh_table(i1,1)
      iv=BS_eh_table(i1,2)
      ic=BS_eh_table(i1,3)
+#if defined PJ_SPIN
+     isp=BS_eh_table(i1,4)
+#endif
 !
 ! X_rhoq0(c,v,k) is iq . <v | r |c> while I need 
 !
 !   iq . <c|r|v> = - conjg( iq . <v | r |c> )
 !
+#if defined PJ_SPIN
+     BSS_rhoq0(i1)=-conjg(X_rhoq0(ic,iv,ik,isp))
+#else
      BSS_rhoq0(i1)=-conjg(X_rhoq0(ic,iv,ik,1))
+#endif
 !
 ! minus comes from the occupation factor
 !
+#if defined PJ_SPIN
+     if (BS_K_coupling) BSS_rhoq0(BS_K_dim+i1)=X_rhoq0(ic,iv,ik,isp)
+#else
      if (BS_K_coupling) BSS_rhoq0(BS_K_dim+i1)=X_rhoq0(ic,iv,ik,1)
+#endif
 !
      X_epsilon(3,:)=X_epsilon(3,:)-&
 &                   BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))/(W_bss%p(:)-BS_eh_E(i1))
@@ -112,7 +131,11 @@
 &                     BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))/(conjg(W_bss%p(:))+BS_eh_E(i1))
      endif
    enddo
+#if defined PJ_SPIN
+   X_epsilon(3,:)=X_epsilon(3,:)*d3k_factor/pi**2./q_norm(1)**2./n_spin+1.
+#else
    X_epsilon(3,:)=X_epsilon(3,:)*d3k_factor/pi**2./q_norm(1)**2.+1.
+#endif
  endif
  X%ib=X_ib_save
 

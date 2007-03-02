@@ -21,7 +21,7 @@
 !
  subroutine QP_states_simmetrize(vec_2_sim,en)
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,HARTREE
  use vec_operate,   ONLY:sort,degeneration_finder
  use electrons,     ONLY:levels
  use QP_m,          ONLY:QP_n_states,QP_table
@@ -43,7 +43,7 @@
  forall(i1=1:QP_n_states) Eo_sorted(i1)=en%E(QP_table(i1,1),QP_table(i1,3),1)
  !
  call sort(Eo_sorted,indx=Eo_sorted_index)
- call degeneration_finder(Eo_sorted,QP_n_states,first_el,n_of_el,n_deg_grp,0.)
+ call degeneration_finder(Eo_sorted,QP_n_states,first_el,n_of_el,n_deg_grp,0.0001/HARTREE)
  !
  do i1=1,n_deg_grp
    !

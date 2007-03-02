@@ -398,6 +398,7 @@
    !
 #if defined  PJ_PH
    if (l_ph_corr) then
+     call initactivate(1,'DysSolver')
      call initactivate(1,'GphBRnge PHdamping')
      ! 
      ! In the Allen Cardona formulation the SE is calculated in 

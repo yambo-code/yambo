@@ -274,7 +274,7 @@ main(int argc, char *argv[])
    fprintf(stderr," \n%s\n\n","self: cannot access CORE database (SAVE/*db1 and/or SAVE/*wf)");
   };
   if (pid==0 && iif == -2) {
-   fprintf(stderr," \n%s\n\n","self: invalid command line options");
+   fprintf(stderr," \n%s\n\n","self: invalid command line options and/or build");
   };
 #if defined MPI
   if (np>1) {

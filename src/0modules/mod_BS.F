@@ -20,12 +20,12 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  module BS
-!=========
+  !
   use pars
   implicit none
-!
-!  BS Kernel building
-!
+  !
+  ! BS Kernel building
+  !
   integer :: BS_n_g_exch
   integer :: BS_K_dim
   integer :: BS_bands(2)
@@ -51,23 +51,23 @@
   complex(SP), allocatable :: BS_mat(:,:)
   complex(SP), allocatable :: BS_cpl_mat(:,:)
   real(SP)   , allocatable :: BS_eh_E(:)
-!
-! Oscillators
-!
+  !
+  ! Oscillators
+  !
   integer  :: O_n_cc_scatt
   integer  :: O_n_vv_scatt
   integer  :: O_ng
-  integer,    allocatable :: O_n_c_states(:)
-  integer,    allocatable :: O_n_v_states(:)
-  integer,    allocatable :: O_c_state(:,:)
-  integer,    allocatable :: O_v_state(:,:)
-  integer,    allocatable :: O_phase(:,:)
-  integer,    allocatable :: O_table(:,:,:,:)
+  integer,    allocatable :: O_n_c_states(:,:)
+  integer,    allocatable :: O_n_v_states(:,:)
+  integer,    allocatable :: O_c_state(:,:,:)
+  integer,    allocatable :: O_v_state(:,:,:)
+  integer,    allocatable :: O_phase(:,:,:)
+  integer,    allocatable :: O_table(:,:,:,:,:)
   complex(SP),allocatable :: O_cc(:,:)
   complex(SP),allocatable :: O_vv(:,:)
-!
-! Solvers
-!
+  !
+  ! Solvers
+  !
   character(lchlen):: BSS_description(100)
   character(lchlen):: BSS_file_name
   character(schlen):: BSS_mode
@@ -81,42 +81,39 @@
   real(SP) :: Haydock_v0_mod
   logical  :: BSS_write_eig_2_db
   complex(SP),allocatable :: BSS_rhoq0(:)
-
+  !
   interface 
+    !
     subroutine Kernel_by_V(iq,iter,Vi,Vo)
-!========================================
-    use pars,          ONLY:SP
-    integer               ::iq
-    integer,     optional ::iter
-    complex(SP), optional ::Vi(:),Vo(:)
+      use pars,          ONLY:SP
+      integer               ::iq
+      integer,     optional ::iter
+      complex(SP), optional ::Vi(:),Vo(:)
     end subroutine
   end interface
-
- contains
-
- integer function cumulative_index(ik1,ik2)
-!==========================================
- implicit none
- integer :: ik1,ik2
- cumulative_index=(ik2**2+ik2)/2-ik1+2
- end function
-
- function BS_blocks(I)
-!=====================
- use R_lattice, ONLY:nXkibz
- implicit none
- integer :: BS_blocks(2)
- integer :: I,ik1,ik2
- BS_blocks=0
- do ik1=1,nXkibz
-   do ik2=1,nXkibz
-     if (cumulative_index(ik1,ik2)==I) then
-       BS_blocks=(/ik1,ik2/)
-       return
-     endif
-   enddo
- enddo
-
- end function
-
+  !
+  contains
+    !
+    integer function cumulative_index(ik1,ik2)
+      implicit none
+      integer :: ik1,ik2
+      cumulative_index=(ik2**2+ik2)/2-ik1+2
+    end function
+   
+    function BS_blocks(I)
+      use R_lattice, ONLY:nXkibz
+      implicit none
+      integer :: BS_blocks(2)
+      integer :: I,ik1,ik2
+      BS_blocks=0
+      do ik1=1,nXkibz
+        do ik2=1,nXkibz
+          if (cumulative_index(ik1,ik2)==I) then
+            BS_blocks=(/ik1,ik2/)
+            return
+          endif
+        enddo
+      enddo
+    end function
+    !
  end module BS

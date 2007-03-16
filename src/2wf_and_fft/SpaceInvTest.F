@@ -20,13 +20,12 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine SpaceInvTest(en,Xk)
-!==============================
-!
-! Check if the Inversion is a DL symmetry operation.
-!
-!  ispaceInv=0 (it is not)
-!  ispaceInv=1 (it is)
-!
+ !
+ ! Check if the Inversion is a DL symmetry operation.
+ !
+ !  ispaceInv=0 (it is not)
+ !  ispaceInv=1 (it is)
+ !
  use pars,          ONLY:SP
  use electrons,     ONLY:levels
  use FFT_m,         ONLY:fft_size
@@ -37,23 +36,32 @@
  implicit none
  type(levels)::en
  type(bz_samp)::Xk
-!ws
- integer :: i1
- real(SP),allocatable :: rho_si(:),rho_nsi(:)
- complex(SP),allocatable :: cv(:)
- complex(SP) :: mv(2)
-!
+ !
+ ! Work Space
+ !
+ integer                 ::i1
+ real(SP),allocatable    ::rho_si(:),rho_nsi(:)
+ complex(SP),allocatable ::cv(:)
+ complex(SP)             ::mv(2)
+ !
  if (.not.allocated(wf).or.wf_space/='R') return
  if (i_space_inv>=0) return
+ !
  i_space_inv=0
  if (i_time_rev==0) return
+ !
  allocate(rho_si(fft_size),rho_nsi(fft_size),cv(fft_size))
  call el_density(en,Xk,rho_si,.true.)
  call el_density(en,Xk,rho_nsi,.false.)
+ !
  cv=(0.,0.)
  forall(i1=1:fft_size) cv(i1)=conjg(wf(i1,1))*wf(i1,1)
  mv(1)=sum(rho_nsi(:)*cv(:));mv(2)=sum(rho_si(:)*cv(:))
  if (abs(mv(1)-mv(2))<abs(mv(1))/1.E5) i_space_inv=1
  if (i_space_inv==1) call msg('rs','[FFT] Inversion is a Space operation')
+ !
+ ! CLEAN
+ !
  deallocate(rho_nsi,rho_si,cv)
+ !
  end subroutine

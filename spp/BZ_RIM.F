@@ -28,7 +28,7 @@
  use D_lattice,           ONLY:alat,nsym,default_Tel,a
  use com,                 ONLY:msg,error
  use vec_operate,         ONLY:c2a,ak2bz,v_is_zero,iku_v_norm
- use SPP,                 ONLY:BZ_RIM_nkpts,Kcoo_out,BZ_RIM_path,RIM_G_shells
+ use SPP,                 ONLY:BZ_RIM_nkpts,coo_out,BZ_RIM_path,RIM_G_shells
  use electrons,           ONLY:levels,default_nel,n_bands,&
 &                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
 &                              BZ_RIM_tot_nkpts,n_spin,BZ_RIM_max_filling
@@ -85,8 +85,8 @@
      enddo
      dummy=ak2bz(rand_kpt(i1,:))
      call c2a(v_in=rand_kpt(i1,:),mode="ka2i")
-     if (trim(Kcoo_out)=="cc") call c2a(v_in=rand_kpt(i1,:),mode="ki2c")
-     if (trim(Kcoo_out)=="rlu") call c2a(v_in=rand_kpt(i1,:),mode="ki2a")
+     if (trim(coo_out)=="cc") call c2a(v_in=rand_kpt(i1,:),mode="ki2c")
+     if (trim(coo_out)=="rlu") call c2a(v_in=rand_kpt(i1,:),mode="ki2a")
      call msg("s"," ",rand_kpt(i1,:))
    enddo
    live_timing_is_on=.true.

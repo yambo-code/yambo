@@ -173,7 +173,7 @@
  ! HARTREE-FOCK AND VXC
  !======================
  !
- if (l_xxvxc) call QP_xxvxc(en,k,Xk,q)
+ if (l_xxvxc) call QP_XX_Vxc(en,k,Xk,q)
  !
  ! RAS & REELS
  !=============

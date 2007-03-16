@@ -20,11 +20,11 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  integer function X_ehg(iq,X,Xen,Xk,minmax_ehe)
-!==============================================
+ !
  use pars,          ONLY:SP
  use X_m,           ONLY:X_t,X_poles,X_poles_tab
  use R_lattice,     ONLY:qindx_X,bz_samp
- use electrons,     ONLY:levels,n_spin,spin_occ
+ use electrons,     ONLY:levels,n_sp_pol,spin_occ
  use frequency,     ONLY:rg_index_bg
  implicit none
  type(levels)::Xen 
@@ -32,25 +32,27 @@
  type(X_t):: X
  integer :: iq
  real(SP):: minmax_ehe(2)
-!ws
+ !
+ ! Work Space
+ !
  integer :: i1,i2,ik,ikp,iv,ic,Nb,Nt,is,i_pole
  real(SP):: edf,ff
  real(SP), allocatable :: poles(:)
-
+ !
  Nb=Xen%nbm-X%ib(1)+1
  Nt=X%ib(2)-Xen%nbf
-
- allocate(poles(Xk%nbz*Nb*Nt*n_spin))
-!
-!Note that in metals not all the elements are defined
-!
+ !
+ allocate(poles(Xk%nbz*Nb*Nt*n_sp_pol))
+ !
+ !Note that in metals not all the elements are defined
+ !
  poles=0._SP 
-
+ !
  X_ehg=0
  do i1=1,Xk%nbz
    do iv=X%ib(1),Xen%nbm
      do ic=Xen%nbf+1,X%ib(2)
-       do is=1,n_spin
+       do is=1,n_sp_pol
          i2=qindx_X(iabs(iq),i1,1)
          ik=Xk%sstar(i1,1) 
          ikp=Xk%sstar(i2,1)
@@ -69,9 +71,9 @@
      enddo
    enddo
  enddo
-
+ !
  minmax_ehe=(/max(minval(poles(:X_ehg))-0.1,0.),maxval(poles(:X_ehg))+0.1/)
-
+ !
  if (iq<0) then
    if (.not.allocated(X_poles)) then
      allocate(X_poles(X_ehg))
@@ -79,7 +81,7 @@
    endif
    X_poles=X_poles+poles(:X_ehg)
  endif
-
+ !
  deallocate(poles)
-
+ !
  end function

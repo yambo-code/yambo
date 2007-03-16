@@ -27,11 +27,16 @@
    integer   :: ph_modes
    integer   :: elph_nb
    integer   :: QP_PH_n_G_bands
-   integer   :: elph_nk
+   integer   :: elph_nq
    real(SP)  :: ph_damping
    real(SP)  :: max_ph_freq
+   real(SP)  :: PH_null_E_rgn
+   logical   :: elph_use_q_grid
+   real(SP),    allocatable :: ph_qpt(:,:)
    real(SP),    allocatable :: ph_freqs_sq(:,:)
    real(SP),    allocatable :: elph_DW(:,:,:,:)
+   real(SP),    allocatable :: E_k_plus_q(:,:,:)
+   real(SP),    allocatable :: f_k_plus_q(:,:,:)
    complex(SP), allocatable :: elph_gkkp(:,:,:,:)
    !
  contains
@@ -39,24 +44,50 @@
    subroutine elph_gkkp_alloc()
      !
      use memory_m,  ONLY:mem_est
-     use R_lattice, ONLY:nqibz,nkbz
+     use R_lattice, ONLY:nkbz,nqibz
      implicit none
-     integer     ::alloc_err(3)
+     integer     ::alloc_err(5)
      if (allocated(ph_freqs_sq)) return
-     allocate(ph_freqs_sq(nqibz,ph_modes),stat=alloc_err(1))
+     if (elph_use_q_grid) then
+       allocate(ph_freqs_sq(nqibz,ph_modes),stat=alloc_err(1))
+     else
+       allocate(ph_freqs_sq(elph_nq,ph_modes),stat=alloc_err(1))
+     endif
      allocate(elph_gkkp(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err(2))
      allocate(elph_DW(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err(3))
-     call mem_est("ph_freqs_sq elph_gkkp elph_DW",&
-&                 (/size(ph_freqs_sq),size(elph_gkkp),size(elph_DW)/),&
-&                 (/SP, 2*SP,SP/),errors=alloc_err)
+     allocate(E_k_plus_q(elph_nb,nkbz,1),stat=alloc_err(4))
+     allocate(f_k_plus_q(elph_nb,nkbz,1),stat=alloc_err(5))
+     allocate(ph_qpt(elph_nq,3))
+     call mem_est("ph_freqs_sq elph_gkkp elph_DW E_k_plus_q f_k_plus_q",&
+&                 (/size(ph_freqs_sq),size(elph_gkkp),size(elph_DW),&
+&                   size(E_k_plus_q), size(f_k_plus_q)/),&
+&                 (/SP, 2*SP,SP,SP,SP/),errors=alloc_err)
    end subroutine
    !
    subroutine elph_gkkp_free()
      !
      use memory_m,  ONLY:mem_est
      implicit none
-     deallocate(ph_freqs_sq,elph_gkkp,elph_DW)
-     call mem_est("ph_freqs_sq elph_gkkp elph_DW")
+     deallocate(ph_freqs_sq,elph_gkkp,elph_DW,E_k_plus_q,f_k_plus_q,ph_qpt)
+     call mem_est("ph_freqs_sq elph_gkkp elph_DW E_k_plus_q f_k_plus_q")
+   end subroutine
+   !
+   subroutine setup_k_plus_q_levels(E)
+     !
+     use electrons,  ONLY:spin_occ
+     use D_lattice,  ONLY:Tel
+     use R_lattice,  ONLY:nkbz
+     use functions,  ONLY:Fermi_fnc
+     !
+     real(SP)    ::E
+     integer     ::ib,ik
+     do ib=1,elph_nb
+       do ik=1,nkbz
+         E_k_plus_q(ib,ik,1)=E_k_plus_q(ib,ik,1)-E
+         f_k_plus_q(ib,ik,1)=spin_occ*Fermi_fnc(E_k_plus_q(ib,ik,1)-E,Tel)
+       enddo 
+     enddo
+     !
    end subroutine
    !
  end module ELPH

@@ -20,15 +20,17 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  integer function ioELPH(ID)
- !==========================
  !
  use pars,           ONLY:SP,schlen
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
 &                         io_elemental,io_status,io_bulk,io_header,&
 &                         read_is_on,write_is_on,RD_CL,RD_CL_IF_END,io_action,&
-&                         io_mode,DUMP,io_fragment 
+&                         io_mode,DUMP,io_fragment,io_save_to_try_again,&
+&                         io_restore_to_try_again
  use ELPH,           ONLY:ph_modes,elph_nb,elph_gkkp_alloc,ph_freqs_sq,elph_gkkp,&
-&                         QP_PH_n_G_bands,max_ph_freq,elph_DW
+&                         QP_PH_n_G_bands,max_ph_freq,elph_DW,elph_nq,&
+&                         elph_use_q_grid,E_k_plus_q,ph_qpt
+ use stderr,         ONLY:intc
  use R_lattice,      ONLY:nkbz,nqibz
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  implicit none
@@ -38,9 +40,14 @@
  !
  integer                ::iq,im,ik,i1,i2,ierr
  real(SP), allocatable  ::elph_gkkp_disk(:,:,:)
- character(schlen)      ::var_name
  !
+ call io_save_to_try_again(ID)
  ioELPH=io_connect(desc='elph_gkkp',type=2,ID=ID)
+ if (read_is_on(ID).and.ioELPH/=0) then
+   call io_restore_to_try_again(ID)
+   ioELPH=io_connect(desc='elph_gkkp',type=1,ID=ID)
+ endif
+ !
  if (ioELPH/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
@@ -48,11 +55,15 @@
    ioELPH=io_header(ID)
    if (ioELPH/=0) goto 1
    !
-   call io_elemental(ID,VAR="PARS",VAR_SZ=2,MENU=1)
+   call io_elemental(ID,VAR="PARS",VAR_SZ=4,MENU=1)
    call io_elemental(ID,&
 &       VAR=" Phonon modes           :",I0=ph_modes,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,&
+&       VAR=" Q points               :",I0=elph_nq,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,&
 &       VAR=" El-PH bands            :",I0=elph_nb,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,&
+&       VAR=" Using the Q-grid       :",L0=elph_use_q_grid,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
    if (io_mode(ID)==DUMP.or.write_is_on(ID)) then
@@ -93,16 +104,25 @@
  !
  ! PH frequencies
  !
- write (var_name,'(a,i3.3)') "PH_FREQS",iq
- call io_bulk(ID,VAR=trim(var_name),VAR_SZ=(/ph_modes/))
+ call io_bulk(ID,VAR="PH_FREQS"//trim(intc(iq)),VAR_SZ=(/ph_modes/))
  call io_bulk(ID,R1=ph_freqs_sq(iq,:))
+ ! 
+ ! Ek+q (to be used when  elph_use_q_grid=.FALSE.)
+ !
+ call io_bulk(ID,VAR="E_K_PLUS_Q"//trim(intc(iq)),VAR_SZ=(/elph_nb,nkbz,1/) )
+ call io_bulk(ID,R3=E_k_plus_q)
+ ! 
+ ! Q point coordinates [iku]
+ !
+ call io_bulk(ID,VAR="PH_Q"//trim(intc(iq)),VAR_SZ=(/3/) )
+ call io_bulk(ID,R1=ph_qpt(iq,:))
  ! 
  ! ELPH_gkkp 
  !
  allocate(elph_gkkp_disk(elph_nb*elph_nb,ph_modes,2))
  !
- write (var_name,'(a,i3.3)') "ELPH_GKKP_Q",iq
- call io_bulk(ID,VAR=trim(var_name),VAR_SZ=(/elph_nb*elph_nb,ph_modes,2,nkbz/) )
+ call io_bulk(ID,VAR="ELPH_GKKP_Q"//trim(intc(iq)),&
+&                VAR_SZ=(/elph_nb*elph_nb,ph_modes,2,nkbz/) )
  !
  do ik=1,nkbz
    ! 
@@ -131,8 +151,8 @@
  ! 
  ! ELPH_DW 
  !
- write (var_name,'(a,i3.3)') "ELPH_DW_Q",iq
- call io_bulk(ID,VAR=trim(var_name),VAR_SZ=(/ph_modes,elph_nb,elph_nb,nkbz/))
+ call io_bulk(ID,VAR="ELPH_DW_Q"//trim(intc(iq)),&
+&                VAR_SZ=(/ph_modes,elph_nb,elph_nb,nkbz/))
  !
  do ik=1,nkbz
    ! 

@@ -228,10 +228,10 @@
      ! antiresonant only I use the full expression
      !
      if (l_col_cut.or.(trim(X%ordering)/='a'.and.trim(X%ordering)/='r')) then
-     !
+       !
        X_epsilon(5,fr(1):fr(2))=&
 &              -X_mat(1,1,:)*bare_qpg(iq,1)**2/q_norm(iq)**2/4./pi*eps_2_alpha ! (1)
-     !
+       !
      else
        X_epsilon(5,fr(1):fr(2))=(X_epsilon(2,fr(1):fr(2))-1._SP)*eps_2_alpha/4./pi ! (3)
      endif

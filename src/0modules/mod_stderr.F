@@ -129,7 +129,7 @@
      !
    end subroutine
    !
-   character(schlen) function string_remove(string_in,what)
+   character(lchlen) function string_remove(string_in,what)
      !
      character(*)     :: string_in
      character(*)     :: what
@@ -141,12 +141,11 @@
      string_remove=string_in
      i_pos=index(string_in,what)
      if (i_pos==0) return
-     write (string_remove,'(2a)') string_in(:i_pos-1),string_in(i_pos+1:)
+     write (string_remove,'(2a)') string_in(:i_pos-1),string_in(i_pos+len(what):)
      !
    end function
    !
    character(6) function intc(i)
-     !
      !
      character(6) temp
      integer, intent(in) :: i

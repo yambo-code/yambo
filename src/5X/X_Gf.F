@@ -23,9 +23,9 @@
  !
  use pars, ONLY:SP,pi
  implicit none
- real(SP)    ::pole
- complex(SP) ::W,X_Gf
- character(*)::ordering
+ real(SP)     ::pole
+ complex(SP)  ::W,X_Gf
+ character(*) ::ordering
  !
  if (ordering=="t") X_Gf=1./(W-pole)-1./(conjg(W)+pole)
  if (ordering=="c") X_Gf=1./(W-pole)-1./(W+pole)       

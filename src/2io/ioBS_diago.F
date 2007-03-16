@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  integer function ioBS_diago(iq,BS_H_dim,bsE,bsR,ID)
-!===================================================
+ !
  use pars,          ONLY:SP,schlen,IP
  use BS,            ONLY:BS_identifier,BSS_q0,BSS_write_eig_2_db,&
 &                        BS_eh_table,BS_K_dim,BS_mat
@@ -28,25 +28,27 @@
 &                        io_elemental,io_status,io_bulk,&
 &                        io_header,write_is_on,read_is_on
  implicit none
- integer     :: iq,ID,BS_H_dim
+ integer     :: iq,ID,BS_H_dim,table_dim
  real(SP)    :: bsE(2,BS_H_dim),bsR(2,BS_H_dim)
-!ws
+ !
+ ! Work Space
+ !
  integer          :: i1
  real(SP)         :: BS_mat_disk(2,BS_H_dim)
  character(schlen):: db_name
-
+ !
  write (db_name,'(a,i2.2)') 'BS_diago_Q',iq
-
+ !
  ioBS_diago=io_connect(desc=trim(db_name),type=2,ID=ID)
  if (ioBS_diago/=0) goto 1
-
+ !
  if (any((/io_sec(ID,:)==1/))) then
-!
-! As this DB must respect the BS ideentifier I only need to
-! check the K QP corrections
-!
+   !
+   ! As this DB must respect the BS ideentifier I only need to
+   ! check the K QP corrections
+   !
    ioBS_diago=io_header(ID,QP_ctl_K=.true.)
-
+   !
    call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
    call io_elemental(ID,VAR=&
 &       " BSK Identifier                  :",I0=BS_identifier,CHECK=.TRUE.,OP=(/"=="/))
@@ -55,22 +57,22 @@
    call io_elemental(ID,VAR=&
 &       " Field direction                 :",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
-!
-! header return
-!
+   !
+   ! header return
+   !
    if (ioBS_diago/=0) goto 1
-
+   !
    ioBS_diago=io_status(ID)
    if (ioBS_diago/=0) goto 1
  endif
-!
+ !
  if (any((/io_sec(ID,:)==2/))) then
    call io_bulk(ID,'BS_Energies',VAR_SZ=(/2,BS_H_dim/))
    call io_bulk(ID,R2=bsE)
    call io_bulk(ID,'BS_Residuals',VAR_SZ=(/2,BS_H_dim/))
    call io_bulk(ID,R2=bsR)
  endif
-!
+ !
  if (any((/io_sec(ID,:)==3/))) then
    ! 
    ! If not switched on skip this section
@@ -79,7 +81,11 @@
    !
    ! BS_eh_table
    !
-   call io_bulk(ID,'BS_TABLE',VAR_SZ=(/BS_H_dim,3/))
+   table_dim=3
+#if defined PJ_SPIN
+   table_dim=4
+#endif
+   call io_bulk(ID,'BS_TABLE',VAR_SZ=(/BS_H_dim,table_dim/))
    call io_bulk(ID,I2=BS_eh_table)
    !
    ! Eigenstates (resonant only matrix)
@@ -98,7 +104,7 @@
    enddo
    !
  endif
-!
+ !
 1 call io_disconnect(ID)
-!
+ !
  end function

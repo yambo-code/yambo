@@ -233,7 +233,7 @@
  allocate(QP_state(QP_nb,QP_nk))
  QP_state=.TRUE.
 
- call QP_xxvxc(Xen,Xk,Xk,q) 
+ call QP_XX_Vxc(Xen,Xk,Xk,q) 
 
  ACFDT_EXX=0.
 

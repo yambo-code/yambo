@@ -20,24 +20,25 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine K_eh_setup(iq,Ken,Xk)
+ !================================
  !
  ! Out: 
  !
  !   BS_K_dim
  !   BS_eh_table(BS_K_dim,4)
  !   BS_eh_E(BS_K_dim))
- !   O_v_state(Xk%nbz,maxval(O_n_v_states)
- !   O_c_state(Xk%nbz,maxval(O_n_c_states)
+ !   O_v_state(Xk%nbz,maxval(O_n_v_states),n_sp_pol)
+ !   O_c_state(Xk%nbz,maxval(O_n_c_states),n_sp_pol)
  !
  use pars,         ONLY:SP,IP
  use memory_m,     ONLY:mem_est
  use BS,           ONLY:BS_K_dim,O_v_state,O_c_state,BS_res_K_corr,&
 &                       O_n_v_states,O_n_c_states,BS_eh_E,BS_eh_en,&
 &                       BS_eh_table,BS_bands,BS_blk_dim
- use electrons,    ONLY:levels,n_spin
 #if defined PJ_SPIN 
  use electrons,    ONLY:filled_tresh,spin_occ
 #endif
+ use electrons,    ONLY:levels,n_sp_pol
  use R_lattice,    ONLY:qindx_X,bz_samp
  !
  implicit none
@@ -47,12 +48,8 @@
  !
  ! Work Space
  !
- integer :: ikbz,iv,ic,ik,ikp,isp,table_dim
-#if defined PJ_SPIN
- integer :: Iic(BS_bands(2),n_spin),Iiv(BS_bands(2),n_spin)
-#else
- integer :: Iic(BS_bands(2)),Iiv(BS_bands(2))
-#endif
+ integer :: Iic(BS_bands(2),n_sp_pol),Iiv(BS_bands(2),n_sp_pol)
+ integer :: ikbz,iv,ic,ik,ikp,table_dim,isp
  real(SP):: E_eh
  !
  do while(.TRUE.) 
@@ -70,15 +67,19 @@
        do ic=Ken%nbf+1,BS_bands(2)
          ik=Xk%sstar(ikbz,1)
          ikp=Xk%sstar(qindx_X(iq,ikbz,1),1)
-         do isp=1,n_spin
+         do isp=1,n_sp_pol
+           !
            E_eh=Ken%E(ic,ik,isp)-Ken%E(iv,ikp,isp)
+           !
            if (E_eh<=0.) cycle
            if (any((/E_eh<BS_eh_en(1).and.BS_eh_en(1)>0.,&
 &                    E_eh>BS_eh_en(2).and.BS_eh_en(2)>0./))) cycle
+           !
 #if defined PJ_SPIN
            if (Ken%f(iv,ikp,isp)<=filled_tresh.or.&
 &              abs(spin_occ-Ken%f(ic,ik,isp))<=filled_tresh ) cycle
 #endif
+           !
            BS_K_dim=BS_K_dim+1
            BS_blk_dim(ik)=BS_blk_dim(ik)+1
 #if defined PJ_SPIN
@@ -87,40 +88,31 @@
            if (allocated(BS_eh_table)) BS_eh_table(BS_K_dim,:)=(/ikbz,iv,ic/)
 #endif
            if (allocated(BS_eh_E))     BS_eh_E(BS_K_dim)=E_eh
-#if defined PJ_SPIN
            Iiv(iv,isp)=1
            Iic(ic,isp)=1
-#else
-           Iiv(iv)=1
-           Iic(ic)=1
-#endif
          enddo
        enddo
      enddo
      if (.not.BS_res_K_corr) cycle
      do iv=BS_bands(1),Ken%nbm
-       do isp=1,n_spin
-#if defined PJ_SPIN
+       !
+       do isp=1,n_sp_pol
          if (Iiv(iv,isp)==1) then
-#else
-         if (Iiv(iv)==1) then
-#endif
-           O_n_v_states(ikbz)=O_n_v_states(ikbz)+1
-           if (allocated(O_v_state)) O_v_state(ikbz,O_n_v_states(ikbz))=iv
+           O_n_v_states(ikbz,isp)=O_n_v_states(ikbz,isp)+1
+           if (allocated(O_v_state)) O_v_state(ikbz,O_n_v_states(ikbz,isp),isp)=iv
           endif
        enddo
+       !
      enddo
      do ic=Ken%nbf+1,BS_bands(2)
-      do isp=1,n_spin
-#if defined PJ_SPIN
-        if (Iic(ic,isp)==1) then
-#else
-        if (Iic(ic)==1) then
-#endif
-           O_n_c_states(ikbz)=O_n_c_states(ikbz)+1
-           if (allocated(O_c_state)) O_c_state(ikbz,O_n_c_states(ikbz))=ic
-        endif
-      enddo
+       !
+       do isp=1,n_sp_pol
+         if (Iic(ic,isp)==1) then
+            O_n_c_states(ikbz,isp)=O_n_c_states(ikbz,isp)+1
+            if (allocated(O_c_state)) O_c_state(ikbz,O_n_c_states(ikbz,isp),isp)=ic
+         endif
+       enddo
+       !
      enddo
    enddo
    !
@@ -134,9 +126,8 @@
    call mem_est("BS_eh_table BS_eh_E",(/table_dim*BS_K_dim,BS_K_dim/),(/IP,SP/))
    !
    if (.not.BS_res_K_corr) cycle
-   allocate(O_v_state(Xk%nbz,maxval(O_n_v_states)),&
-&           O_c_state(Xk%nbz,maxval(O_n_c_states)))
-   !
+   allocate(O_v_state(Xk%nbz,maxval(O_n_v_states),n_sp_pol),&
+&           O_c_state(Xk%nbz,maxval(O_n_c_states),n_sp_pol))
    call mem_est("O_v_state O_c_state",(/size(O_v_state),size(O_c_state)/),(/IP,IP/))
    !
  enddo

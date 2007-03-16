@@ -27,11 +27,7 @@
  use stderr,        ONLY:string_pack
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
-#if defined PJ_SPIN
- use electrons,     ONLY:levels,spin_occ,n_spinor
-#else
- use electrons,     ONLY:levels
-#endif
+ use electrons,     ONLY:levels,spin_occ
  use timing,        ONLY:live_timing
  use com,           ONLY:msg
  use drivers,       ONLY:Finite_Tel
@@ -46,6 +42,7 @@
  use parser_m,      ONLY:parser
  use wave_func,     ONLY:wf_load,wf_free
  use R_lattice,     ONLY:qindx_S,bz_samp,nqibz
+ use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv
  !
  implicit none
  type(levels) ::en
@@ -57,10 +54,10 @@
  !
  ! Work Space
  !
- integer :: i1,i2,i3,i4,iqbz,iqibz,ib,ig1,ig2,alloc_err
+ integer :: i1,i2,i3,i4,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs
  real(SP):: PPaPtlr(q%nibz)
  real(SP),    allocatable :: PPaP(:,:),PPaPm(:,:),scconv(:)
- complex(SP), allocatable :: PPaR(:,:,:),PPaM(:),lrhotw(:),lsc(:,:,:),E(:),dc(:)
+ complex(SP), allocatable :: PPaR(:,:,:),PPaM(:),lrhotw(:),lsc(:,:,:),E(:),dc(:),PPaR_ws(:,:)
 #if defined _DOUBLE
  complex(SP):: zdotc,zdotu
 #else
@@ -71,6 +68,7 @@
  integer          ::gfmf,iv4(4),io_err,ID
  integer, external::ioX,QP_state_extract
  character(schlen)::ch,Sc_name
+ logical          ::PPaR_is_TR_rotated
  !
  ! Reset
  !
@@ -114,12 +112,20 @@
  io_err=ioX(X,Xw,ID)
  if (io_err/=0) return
  !
+ ! Test the spatial Inversion
+ !   
+ call SpaceInvTest(en,Xk)
+ !
+ ! Switch off Taylor Expansion when SI is not found
+ !
+ if (i_space_inv==0) pp_taylor_terms=0
+ !
  ! ALLOCATION
  !------------
  call X_alloc('X',(/X%ng,X%ng,2/))
  !
- allocate(PPaP(X%ng,X%ng),PPaR(X%ng,X%ng,max(pp_taylor_terms,1)),stat=alloc_err)
- call mem_est("PPaP",(/size(PPaP)+2*size(PPaR)/),(/SP/),errors=(/alloc_err/))
+ allocate(PPaP(X%ng,X%ng),PPaR_ws(X%ng,X%ng),PPaR(X%ng,X%ng,max(pp_taylor_terms,1)),stat=alloc_err)
+ call mem_est("PPaP",(/size(PPaP)+2*size(PPaR_ws),2*size(PPaR)/),(/SP/),errors=(/alloc_err/))
  !
  allocate(isc%gamp(X%ng,X%ng),isc%rhotw(X%ng),iscp%rhotw(X%ng),stat=alloc_err)
  call mem_est("ISC-GAMP",(/X%ng**2+2*X%ng/),errors=(/alloc_err/))
@@ -151,6 +157,7 @@
    !
    isc%qs(2:)=(/q%sstar(iqbz,1),q%sstar(iqbz,2)/)
    iqibz=isc%qs(2)
+   iqs  =isc%qs(3)
    !
    if (iqibz/=isc%iqref) then
      call scatterGamp(isc,'c')
@@ -181,6 +188,14 @@
        enddo
      endif
      !
+     PPaR_is_TR_rotated=.false.
+     !
+   endif
+   !
+   if (iqs>nsym/(i_time_rev+1) .and. i_space_inv == 0 .and..not.PPaR_is_TR_rotated) then
+     PPaR_is_TR_rotated=.true.
+     forall(i1=1:X%ng,i2=1:X%ng) PPaR_ws(i2,i1)=PPaR(i1,i2,1)
+     PPaR(:,:,1)=PPaR_ws(:,:)
    endif
    !
    do i1=1,QP_n_states
@@ -243,11 +258,7 @@
          do ig1=1,X%ng
            do ig2=1,X%ng
              do i4=1,QP_dSc_steps
-#if defined PJ_SPIN
                dc(i4)=dc(i4)+4./spin_occ*pi*isc%rhotw(ig1)*&
-#else
-               dc(i4)=dc(i4)+2.*pi*isc%rhotw(ig1)*&
-#endif
 &                     PPaR(ig1,ig2,1)*conjg(iscp%rhotw(ig2))*&
 &                     (Gfm(1,E(i4),en,isc%os,PPaP(ig1,ig2))+&
 &                      Gfp(1,E(i4),en,isc%os,PPaP(ig1,ig2)))
@@ -260,17 +271,6 @@
      enddo
    enddo
  enddo
- !
- ! Non collinear spin
- !
-#if defined PJ_SPIN
- do i1=1,QP_n_states,n_spinor
-   if (n_spinor==2) then
-     QP_Sc(i1,:)  = QP_Sc(i1,:)+QP_Sc(i1+1,:)
-     QP_Sc(i1+1,:)= (0.,0.)
-   endif
- enddo
-#endif
  !
  call live_timing()
  !
@@ -299,7 +299,7 @@
  !
  ! CLEAN
  !
- deallocate(PPaP,PPaR,isc%gamp,isc%rhotw,iscp%rhotw,E,dc)
+ deallocate(PPaP,PPaR_ws,PPaR,isc%gamp,isc%rhotw,iscp%rhotw,E,dc)
  if (pp_taylor_terms>0) deallocate(PPaPm,scconv,PPaM,lrhotw,lsc)
  call mem_est("PPaP ISC-GAMP PPA-E PPaPm")
  call X_alloc('X')
@@ -333,12 +333,8 @@
      complex(SP)  ::lW !ws
      lW=W
      if (Finite_Tel) lW=conjg(W)
-#if defined PJ_SPIN
      Gfm=(real(spin_occ)-e%f(vs(1),vs(2),vs(4))+bose_f(Ep))/&
 &        (lW-e%E(vs(1),vs(2),vs(4))-Ep)**n
-#else
-     Gfm=(2.-e%f(vs(1),vs(2),vs(4))+bose_f(Ep))/(lW-e%E(vs(1),vs(2),vs(4))-Ep)**n
-#endif
      !
    end function
    !

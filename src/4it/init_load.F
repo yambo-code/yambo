@@ -73,7 +73,7 @@
  use eels_integration,     ONLY : init_reels_integration
 #endif
 #if defined PJ_PH
- use ELPH,                 ONLY : QP_PH_n_G_bands,PH_damping
+ use ELPH,                 ONLY : QP_PH_n_G_bands,PH_damping,PH_null_E_rgn
 #endif
  !
  implicit none
@@ -130,6 +130,9 @@
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit,verb_level=V_more)
  call it(defs,'OccTresh','Occupation treshold (metallic bands)',filled_tresh,verb_level=V_more)
  call it(defs,'BoseCut', '[BOSE] Finite Tel Bose function cutoff',bose_E_cut,verb_level=V_more)
+#if defined PJ_PH
+ call it('f',defs,'MinusQ',   '[KPT] Use -{q} grid',verb_level=V_more)
+#endif
  !
  ! RIM
  !
@@ -165,8 +168,11 @@
  ! El-Ph
  !
 #if defined PJ_PH
- call it(defs,'GphBRnge',  '[ELPH] G[W] bands range',QP_PH_n_G_bands)
- call it(defs,'PHdamping', '[ELPH] Phonon damping',PH_damping,verb_level=V_qp,unit=E_unit)
+ call it(defs,'GphBRnge',   '[ELPH] G[W] bands range',QP_PH_n_G_bands)
+ call it(defs,'PHdamping',  '[ELPH] Phonon damping',PH_damping,&
+&                           verb_level=V_qp,unit=E_unit)
+ call it(defs,'PHnullErgn', '[ELPH] Null transitions energy window',&
+&                           PH_null_E_rgn,verb_level=V_qp,unit=E_unit)
 #endif
  ! 
  ! RAS

@@ -47,6 +47,7 @@
  use parser_m,      ONLY:parser
  use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:qindx_S,bz_samp,nqibz,nqbz
+ use D_lattice,     ONLY:nsym,i_space_inv,i_time_rev
  use wave_func,     ONLY:wf_load,wf_free
  !
  implicit none
@@ -62,9 +63,9 @@
  type(ggwinfo)    ::isc,iscp
  type(pp_indexes) ::px
  type(w_samp)     ::Sc_W(qp%n_states),X_life_W(q%nibz)
- integer :: i1,i2,i3,i_or,iqbz,iqibz,ib,i_err,iq_to_start,&
+ integer :: i1,i2,i3,i_or,iqbz,iqibz,ib,i_err,iq_to_start,iqs,&
 &           life_hh,life_ee,iv4(4),io_err,XID,WID,QP_n_W_freqs_redux
- complex(SP) :: lrhotw(X%ng)
+ complex(SP) :: lrhotw(X%ng),X_mat_ws(X%ng,X%ng)
 #if defined _DOUBLE
  complex(SP) :: zdotc,zdotu
 #else
@@ -74,6 +75,7 @@
  integer, allocatable::life_W_table(:,:)
  integer, external   ::ioX,QP_state_extract,ioQP,QP_life_transitions,X_em1
  character(schlen)   ::ch,Sc_name
+ logical             ::X_is_TR_rotated
  !
  ! Presets
  !
@@ -253,6 +255,7 @@
    !
    isc%qs(2:)=(/q%sstar(iqbz,1),q%sstar(iqbz,2)/)
    iqibz=isc%qs(2)
+   iqs  =isc%qs(3)
    !
    if (iqibz/=isc%iqref) then
      call scatterGamp(isc,'c')
@@ -282,6 +285,16 @@
      !
      if (l_life) QP_n_W_freqs=0
      !
+     X_is_TR_rotated=.false.
+     !
+   endif
+   !
+   if (iqs>nsym/(i_time_rev+1) .and. i_space_inv == 0 .and..not.X_is_TR_rotated) then
+     X_is_TR_rotated=.true.
+     do i3=1,Xw%n(1)
+       forall(i1=1:X%ng,i2=1:X%ng) X_mat_ws(i2,i1)=X_mat(i1,i2,i3)
+       X_mat(:,:,i3)=X_mat_ws(:,:)
+     enddo
    endif
    !
    do i1=1,QP_n_states

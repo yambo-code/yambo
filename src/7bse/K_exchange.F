@@ -20,59 +20,51 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine K_exchange(divide_by_qpg,iq,ik,Xk,Ox,X_dim)
-!======================================================
+ !
  use pars,           ONLY:SP
  use BS,             ONLY:BS_n_g_exch,BS_eh_table,BS_blk_dim,BS_bands
  use D_lattice,      ONLY:nsym,i_time_rev,sop_inv
  use R_lattice,      ONLY:g_rot,qindx_X,bz_samp,bare_qpg
  use collision,      ONLY:ggwinfo,collision_reset
-#if defined PJ_SPIN
- use electrons,      ONLY:n_spin
-#endif
-
+ use electrons,      ONLY:n_sp_pol
+ !
  implicit none
  type(bz_samp) ::Xk
  integer       :: ik,iq,X_dim
  complex(SP)   :: Ox(BS_n_g_exch,X_dim)
  logical       :: divide_by_qpg
-!ws  
+ !
+ ! Work Space
+ !
  type(ggwinfo)::isc
-#if defined PJ_SPIN
- integer :: i1,i2,i3,ikp,ikpbz,ikbz,iv1,ic1,is,isp,Hi,b_ref,isp1
- integer :: nnst(BS_bands(2)-BS_bands(1)+1,BS_bands(2)-BS_bands(1)+1,nsym,n_spin)
-#else
- integer :: i1,i2,i3,ikp,ikpbz,ikbz,iv1,ic1,is,isp,Hi,b_ref
- integer :: nnst(BS_bands(2)-BS_bands(1)+1,BS_bands(2)-BS_bands(1)+1,nsym)
-#endif
-!
+ integer :: i1,i2,i3,ikp,ikpbz,ikbz,iv1,ic1,is,isp,Hi,b_ref,i_sp
+ integer :: nnst(BS_bands(2)-BS_bands(1)+1,BS_bands(2)-BS_bands(1)+1,nsym,n_sp_pol)
+ !
  call collision_reset(isc)
-!
+ !
  b_ref=BS_bands(1)-1
  isc%ngrho=BS_n_g_exch
  allocate(isc%rhotw(BS_n_g_exch))
-
+ !
  nnst=0
-
+ !
  Hi=sum(BS_blk_dim(:ik-1))
  do i1=1,BS_blk_dim(ik)
    ikbz=BS_eh_table(i1+Hi,1)
    iv1=BS_eh_table(i1+Hi,2)
    ic1=BS_eh_table(i1+Hi,3)
 #if defined PJ_SPIN
-   isp1=BS_eh_table(i1+Hi,4)
+   i_sp=BS_eh_table(i1+Hi,4)
+#else
+   i_sp=1
 #endif
    ikpbz=qindx_X(iq,ikbz,1)
    ik= Xk%sstar(ikbz,1)
    is= Xk%sstar(ikbz,2)
    ikp=Xk%sstar(ikpbz,1)
    isp=Xk%sstar(ikpbz,2)
-#if defined PJ_SPIN
-   isc%is=(/ic1,ik,is,isp1/)
-   isc%os=(/iv1,ikp,isp,isp1/)
-#else
-   isc%is=(/ic1,ik,is,1/)
-   isc%os=(/iv1,ikp,isp,1/)
-#endif
+   isc%is=(/ic1,ik,is,i_sp/)
+   isc%os=(/iv1,ikp,isp,i_sp/)
    isc%qs=(/qindx_X(iq,ikbz,2),iq,1/)
    select case (iq)
      case(1)
@@ -85,19 +77,11 @@
          else
            forall(i2=1:BS_n_g_exch) Ox(i2,i1)=isc%rhotw(i2)
          endif
-#if defined PJ_SPIN
-         nnst(ic1-b_ref,iv1-b_ref,1,isp1)=i1
-#else
-         nnst(ic1-b_ref,iv1-b_ref,1)=i1
-#endif
+         nnst(ic1-b_ref,iv1-b_ref,1,i_sp)=i1
        else
          do i2=1,BS_n_g_exch
            i3=g_rot(sop_inv(is),i2)
-#if defined PJ_SPIN
-           Ox(i2,i1)=Ox(i3,nnst(ic1-b_ref,iv1-b_ref,1,isp1))
-#else
-           Ox(i2,i1)=Ox(i3,nnst(ic1-b_ref,iv1-b_ref,1))
-#endif
+           Ox(i2,i1)=Ox(i3,nnst(ic1-b_ref,iv1-b_ref,1,i_sp))
          enddo
          if (is>nsym/(i_time_rev+1))  Ox(:,i1)=conjg(Ox(:,i1))
        endif
@@ -110,8 +94,7 @@
        endif
    end select
  enddo
-
+ !
  call collision_reset(isc)
-
+ !
  end subroutine
-

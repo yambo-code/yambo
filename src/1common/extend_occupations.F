@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine extend_occupations(Xe,E)
- !==================================
+ !
  !
  ! The occupation of E levels are decided using 
  ! the Fermi "Levels" of Xe.

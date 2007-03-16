@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine K_solvers(iq,Ken,Xk,q,X,W_bss)
-!=========================================
+ !
  use pars,           ONLY:SP,pi
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_t,X_epsilon,X_alloc,X_rhoq0,&
@@ -31,11 +31,7 @@
  use com,            ONLY:msg
  use drivers,        ONLY:l_bs_fxc
  use frequency,      ONLY:w_samp
-#if defined PJ_SPIN
- use electrons,      ONLY:levels,n_spin
-#else
- use electrons,      ONLY:levels
-#endif
+ use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:d3k_factor,bz_samp,q_norm
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,NONE
  use TDDFT,          ONLY:FXC_description,FXC_n_descs
@@ -45,28 +41,24 @@
  type(X_t)    ::X
  type(w_samp) ::W_bss
  integer      ::iq
-!ws
-#if defined PJ_SPIN
- integer           ::ik,iv,ic,i1,isp,X_ib_save(2)
-#else
- integer           ::ik,iv,ic,i1,X_ib_save(2)
-#endif
+ !
+ ! Work Space
+ !
+ integer           ::ik,iv,ic,i1,i_sp,X_ib_save(2)
  integer           ::ioBS_err,ID
  integer, external ::ioBS
-!
+ !
  call section('*','BSE solver(s)')
-!---------------------------------
-!
-!=======
+ !
+ !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)
  ioBS_err=ioBS(iq,X,ID)
  if (ioBS_err/=0) return
-!
-! Titles & Descriptions
-!=======================
-!
-! Polarizability ?
-!------------------
+ !
+ ! Titles & Descriptions
+ !
+ ! Polarizability ?
+ !
  if (trim(alpha_dim)/='adim') then
    call msg('r', 'Optical renormalization   [au]:',eps_2_alpha)
    call msg('rn','Polarizability dimension      :',trim(alpha_dim))
@@ -79,13 +71,14 @@
    BSS_of_title(4:5)=(/'eo/Im','eo/Re'/) 
    if (index(BSS_mode,'h')/=0) BSS_of_title(6:7)=(/'e`/Im','e`/Re'/)
  endif
-!
-! Eps_0
-!========
+ !
+ ! Eps_0
+ !
  allocate(X_epsilon(4,BSS_n_freqs))
  X_epsilon=(0.,0.)
-!
-!Save the X bands 
+ !
+ ! Save the X bands 
+ !
  X_ib_save=X%ib
  X%ib=BS_bands
  if (BS_K_coupling) then
@@ -103,27 +96,21 @@
      iv=BS_eh_table(i1,2)
      ic=BS_eh_table(i1,3)
 #if defined PJ_SPIN
-     isp=BS_eh_table(i1,4)
-#endif
-!
-! X_rhoq0(c,v,k) is iq . <v | r |c> while I need 
-!
-!   iq . <c|r|v> = - conjg( iq . <v | r |c> )
-!
-#if defined PJ_SPIN
-     BSS_rhoq0(i1)=-conjg(X_rhoq0(ic,iv,ik,isp))
+     i_sp=BS_eh_table(i1,4)
 #else
-     BSS_rhoq0(i1)=-conjg(X_rhoq0(ic,iv,ik,1))
+     i_sp=1
 #endif
-!
-! minus comes from the occupation factor
-!
-#if defined PJ_SPIN
-     if (BS_K_coupling) BSS_rhoq0(BS_K_dim+i1)=X_rhoq0(ic,iv,ik,isp)
-#else
-     if (BS_K_coupling) BSS_rhoq0(BS_K_dim+i1)=X_rhoq0(ic,iv,ik,1)
-#endif
-!
+     !
+     ! X_rhoq0(c,v,k) is iq . <v | r |c> while I need 
+     !
+     !   iq . <c|r|v> = - conjg( iq . <v | r |c> )
+     !
+     BSS_rhoq0(i1)=-conjg(X_rhoq0(ic,iv,ik,i_sp))
+     !
+     ! minus comes from the occupation factor
+     !
+     if (BS_K_coupling) BSS_rhoq0(BS_K_dim+i1)=X_rhoq0(ic,iv,ik,i_sp)
+     !
      X_epsilon(3,:)=X_epsilon(3,:)-&
 &                   BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))/(W_bss%p(:)-BS_eh_E(i1))
      if (BS_K_coupling) then
@@ -131,37 +118,33 @@
 &                     BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))/(conjg(W_bss%p(:))+BS_eh_E(i1))
      endif
    enddo
-#if defined PJ_SPIN
-   X_epsilon(3,:)=X_epsilon(3,:)*d3k_factor/pi**2./q_norm(1)**2./n_spin+1.
-#else
-   X_epsilon(3,:)=X_epsilon(3,:)*d3k_factor/pi**2./q_norm(1)**2.+1.
-#endif
+   !
+   X_epsilon(3,:)=X_epsilon(3,:)*(spin_occ/(2.*pi)**3.)*d3k_factor*4.*pi/(q_norm(1))**2
+   !
  endif
  X%ib=X_ib_save
-
-! The TDDFT way 
-!===============
+ !
+ ! The TDDFT way 
+ !
  if (index(BSS_mode,'t')/=0) then
    FXC_description(FXC_n_descs+1:FXC_n_descs+BSS_n_descs-2)=BSS_description(3:BSS_n_descs)
    FXC_n_descs=FXC_n_descs+BSS_n_descs-2
    call tddft_BSK_disk_2_FXC(iq,Xk,W_bss) 
    l_bs_fxc=.true.
  endif
-!
-! Solvers
-!=========
+ !
+ ! Solvers
+ !
  if (index(BSS_mode,'h')/=0) then
    call K_dump_to_o_file(iq,-1)
    call K_Haydock(iq,W_bss)
  endif
  if (index(BSS_mode,'d')/=0) call  K_diagonalization(iq,W_bss)
-! if (index(bss%mode,'i')/=0) 
-!
-! CLEAN
-!=======
-!
+ !
+ ! CLEAN
+ !
  deallocate(BSS_rhoq0,X_epsilon)
  call mem_est("BSS_rhoq0")
  if (iq==1) call X_alloc('OptOsc')
-
+ !
  end subroutine

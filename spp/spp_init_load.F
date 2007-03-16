@@ -40,9 +40,10 @@
  !
  !Kpt analysis
  !
- call it(defs,'KcooIn','K-pts coordinates (in) cc/rlu/iku',Kcoo_in)
- call it(defs,'KcooOut','K-pts coordinates (out) cc/rlu/iku',Kcoo_out)
+ call it(defs,'cooIn','Points coordinates (in) cc/rlu/iku',coo_in)
+ call it(defs,'cooOut','Points coordinates (out) cc/rlu/iku',coo_out)
  call it(defs,'GWKpts','GW K-point grid',Kgw_1)
+ call it(defs,'Qpts',  'Q-point grid',   Kgw_1)
  call it(defs,'KShift1','K-grid shift vector[1] ',qlong(1,:))
  call it(defs,'KShift2','K-grid shift vector[2] ',qlong(2,:))
  call it(defs,'KShift3','K-grid shift vector[3] ',qlong(3,:))

@@ -163,6 +163,7 @@
  read(11) (((asop(i1,i2,i3),i1=1,3),i2=1,3),i3=1,a_nsym)
  read(11) 
  i_time_rev  = 1
+ if (a_nsym==1) i_time_rev  = 0
  !
  ! Search for identity and inversion symmetries.
  !

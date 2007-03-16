@@ -128,7 +128,8 @@
 #if defined SPP_PJ_PH
  !
  if (lelph) then
-   if ( elph_pw_dbs(k,q) == 0 ) call elph_eliashberg(k,en,q)
+   i_err=elph_pw_dbs(k,en,q)
+   call elph_eliashberg(k,en,q)
  endif
  !
 #endif

@@ -1,3 +1,22 @@
+2007-03-02 14:33:12 r104 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.7_01-03-07
+
+	*  3.0.7_26-02-07 spp/plot_exc_wf.F spp/spp_i.F spp/k_analyze.F spp/elph_eliashberg.F spp/elph_pw_dbs.F include/version.inc p2s/p2s_db1.F 2wf_and_fft/scatter_Gamp.F 0modules/mod_IO.F 2io/ioELPH.F 7bse/K_exchange.F 7bse/K_diagonalization.F 7bse/K_eh_setup.F 7bse/K_solvers.F 7bse/K.F 4it/init.F 3kop/bz_samp_indexes.F 5elph/QP_states_simmetrize.F 5elph/QP_elph.F ChangeLog 3.0.7_01-03-07
+
+	Bugs:
+	- RIM + col_cut in 2wf_and_fft/scatter_Gamp.F (Daniele)
+
+	Additions:
+	- Weight report in k pts list given by spp -k
+	- Allowed partial elph q-list in spp/elph_pw_dbs.F
+	- io_fragment (mod_IO) return error message if the fragment file
+	  is not found
+	- SPIN support (EXCHANGE ONLY) in K_exchange.F, K_diagonalization.F,
+	  K_eh_setup.F, K_solvers.F, K.F (Fabrizio)
+
+	Patch sent by: Andrea & Daniele & Frabrizio
+
 2007-02-27 00:55:41 r103 Conor Hogan <conor.hogan@roma2.infn.it>
 
 	V 3.0.7_26-02-07

@@ -28,7 +28,7 @@
  ! init = 2  : DB listing mode
  !
  use drivers
- use electrons,      ONLY:levels,E_reset,n_bands
+ use electrons,      ONLY:levels,E_reset,n_bands,n_spin
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_m,           ONLY:it,initactivate,initdefs,nflines,flines,rstatus,nrnlvls,&
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
@@ -149,6 +149,13 @@
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=io_ID)
  io_err=ioDB1(en,k,io_ID) 
  !
+#if !defined PJ_SPIN
+ if (n_spin==2) then
+   init=-2
+   return
+ endif
+#endif
+ !
  ! wf
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),COM=NONE,MODE=DUMP,ID=io_ID)
@@ -177,7 +184,7 @@
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  ioQINDX_err=ioQINDX(k,q,io_ID) 
- if (ioQINDX_err==0) call initactivate(-1,'IkSigLim IkXLim')
+ if (ioQINDX_err==0) call initactivate(-1,'IkSigLim IkXLim MinusQ')
  !
  ! rim
  !
@@ -299,6 +306,9 @@
  !Setup
  !
  if (l_setup) call initactivate(1,'MaxGvecs IkSigLim IkXLim')
+#if defined  PJ_PH
+ if (l_setup) call initactivate(1,'MinusQ')
+#endif
  !
  !RIM
  !
@@ -399,7 +409,7 @@
 #if defined  PJ_PH
    if (l_ph_corr) then
      call initactivate(1,'DysSolver')
-     call initactivate(1,'GphBRnge PHdamping')
+     call initactivate(1,'GphBRnge PHdamping PHnullErgn')
      ! 
      ! In the Allen Cardona formulation the SE is calculated in 
      ! the on-mass shell formulation
@@ -640,6 +650,18 @@
        init=-2
        return
      endif
+     !
+     ! SPIN PJ barriers
+     !
+#if defined PJ_SPIN
+     if (any((/&
+&              l_life,l_acfdt,l_bs_fxc,l_lrc_fxc,&
+&              l_gw0.and..not.l_ppa&
+&             /))) then
+       init=-2
+       return
+     endif
+#endif
    end subroutine logicalson
    !
    subroutine X_var_setup 

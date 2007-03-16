@@ -19,52 +19,64 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function elph_pw_dbs(k,q)
+ integer function elph_pw_dbs(k,E,q)
  !
  use pars,                ONLY:DP
- use ELPH,                ONLY:ph_freqs_sq,ph_modes,elph_nb,&
-&                              elph_gkkp_free,max_ph_freq
- use com,                 ONLY:msg
- use R_lattice,           ONLY:bz_samp,nqibz,qindx_free
+ use stderr,              ONLY:intc
+ use electrons,           ONLY:levels
+ use ELPH,                ONLY:ph_freqs_sq,ph_modes,elph_nb,elph_use_q_grid,&
+&                              elph_gkkp_free,max_ph_freq,elph_gkkp_alloc,&
+&                              elph_nq,ph_qpt
+ use com,                 ONLY:msg,warning
+ use R_lattice,           ONLY:bz_samp
  use D_lattice,           ONLY:nsym
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,&
-&                              OP_RD_CL,VERIFY
+&                              OP_RD_CL,VERIFY,dbs_fragment
  use timing,              ONLY:live_timing
  implicit none
  type(bz_samp) ::k,q
+ type(levels)  ::E
  !
  !Work Space
  !
  integer,allocatable::ikbz_is_table(:,:)
- integer            ::iq,io_pw_err(nqibz),io_elph_err,ID,X_ng
+ integer            ::iq,idb,io_err,io_elph_err,ID,elph_nk,iq_db(q%nbz)
  integer, external  ::ioELPH 
+ logical            ::dbs_fragment_save
  complex(DP), allocatable :: grad_at_gamma(:,:,:,:,:)
- !
  !
  call section("*","== Electron-Phonon Interface: Databases ==")
  !
  call k_ibz2bz(k,'i',.false.)
- call live_timing('ELPH databases (CHECK)',nqibz)
  !
- io_pw_err=0
+ call msg('s','ELPH databases ...')
+ !
+ io_err=0
  max_ph_freq=0.
+ elph_use_q_grid=.true.
+ elph_nq=0
+ iq_db=0
+ elph_pw_dbs=0
  !
- do iq=1,q%nibz
-   io_pw_err(iq)=elph_pw_dbs_io(-iq)
-   call live_timing(steps=1)
+ do while (.TRUE.)
+   elph_nq=elph_nq+1
+   io_err=elph_pw_dbs_io(-elph_nq)
+   if (io_err==-1) exit
+   if (io_err==-2) then
+     call msg("l","incorrect K-point correspondance")
+     return
+   endif
+   if (io_err>0) iq_db(elph_nq)=io_err
  enddo
- call live_timing()
- !
- if (all((/io_pw_err==-1/))) then
+ elph_nq=elph_nq-1
+ if (elph_nq==0) then
+   call msg("l","not found")
    return
  endif
- if (any((/io_pw_err==-2/))) then
-   call msg("s",":: Database incorrect Q-point")
-   return
- endif
- if (any((/io_pw_err==-1/))) then
-   call msg("s",":: Databases incomplete")
-   call qindx_free()
+ if (elph_use_q_grid) then
+   call msg("l",'found '//trim(intc(elph_nq))//' Q-grid compatible')
+ else
+   call msg("l",'found '//trim(intc(elph_nq))//' NOT Q-grid compatible')
  endif
  !
  ! KBZ + SYM table
@@ -78,59 +90,79 @@
  io_elph_err=ioELPH(ID)
  if (io_elph_err==0) return
  !
- call io_control(ACTION=OP_APP_WR_CL,SEC=(/1/),ID=ID)
- io_elph_err=ioELPH(ID)
+ ! Allocation
  !
- call live_timing('ELPH databases (WRITE)',nqibz)
+ call elph_gkkp_alloc()
  !
- do iq=1,q%nibz
-   io_elph_err=elph_pw_dbs_io(iq)
-   if (io_elph_err==-1) then
+ ! Force DB fragmentation
+ !
+ dbs_fragment_save=dbs_fragment
+ dbs_fragment=.TRUE.
+ !
+ call live_timing('ELPH databases (WRITE)',elph_nq)
+ !
+ do idb=1,elph_nq
+   !
+   iq=idb
+   if (elph_use_q_grid) iq=iq_db(idb)
+   !
+   io_err=elph_pw_dbs_io(idb)
+   !
+   if (io_err==-1) then
      call live_timing(steps=1)
      cycle
    endif
-   if (io_elph_err==-3) then
-     call msg("l"," incorrect K-point correspondance")
-     return
-   endif
    !
-   call io_control(ACTION=OP_APP_WR_CL,SEC=(/iq+1/),ID=ID)
+   if (io_err==-4) call warning("K-grid is not fully q-connected")
+   !
+   if (idb==1) then
+     call io_control(ACTION=OP_APP_WR_CL,SEC=(/1,iq+1/),ID=ID)
+   else
+     call io_control(ACTION=OP_APP_WR_CL,SEC=(/iq+1/),ID=ID)
+   endif
    io_elph_err=ioELPH(ID)
    call live_timing(steps=1)
+   !
  enddo
  call live_timing()
+ !
  call msg("s",':: Modes           :',ph_modes)
  call msg("s",':: Bands range     :',elph_nb)
  !
  call elph_gkkp_free()
+ dbs_fragment=dbs_fragment_save
  !
  contains
    !
-   integer function elph_pw_dbs_io(iq)
-   !----------------------------------
+   integer function elph_pw_dbs_io(idb_)
+   !------------------------------------
    !
    ! s.dbph_ structure
    !
-   !   read (99) ph_modes,elph_nk,IDUM,elph_nb
-   !   read (99) pw_alat,pw_q,pw_kpq
+   !   read (99) ph_modes,elph_nk,elph_nb
+   !   read (99) pw_alat,pw_q,pw_k
    !   read (99) ph_freqs_sq
    !   DO ik=1,nksq
-   !     read (99) elph_gkkp_disk(:,:,:)  (elph_nb,elph_nb,ph_modes)
-   !     read (99) grad_at_gamma (only at Gamma)
+   !     read (99) elph_gkkp_disk
    !     read (99) polarization_vec
+   !     read (99) grad_at_gamma (only at Gamma)
+   !     read (99) Ek
+   !     read (99) Ek_plus_q
    !   ENDDO
    !
    use pars,           ONLY:SP,DP,schlen
    use D_lattice,      ONLY:nsym,sop_inv,alat,n_atoms
+   use R_lattice,      ONLY:nqibz
    use IO_m,           ONLY:io_control,OP_RD,RD_CL,io_connect,io_unit,&
 &                           io_netcdf_support,io_disconnect,io_file
-   use ELPH,           ONLY:ph_modes,elph_nb,elph_nk,&
-&                           ph_freqs_sq,elph_gkkp,elph_gkkp_alloc,elph_DW
+   use ELPH,           ONLY:ph_modes,elph_nb,E_k_plus_q,&
+&                           ph_freqs_sq,elph_gkkp,elph_DW
    use SPP,            ONLY:elph_dbs_path
    use vec_operate,    ONLY:v_is_zero,rlu_v_is_zero,c2a
    use zeros,          ONLY:k_iku_zero,k_rlu_zero
+   use electrons,      ONLY:n_bands
    implicit none
-   integer           :: iq
+   integer           :: idb_
    !
    !Work Space
    !
@@ -143,41 +175,69 @@
    integer           :: ID,io_err
    character(schlen) :: db_name
    real(SP)          :: dVRY2Ha
-   real(DP)          :: pw_kpq(3,k%nbz),pw_alat,pw_q(3)
+   real(DP)          :: pw_k(3,k%nbz),pw_alat,pw_q(3),Ek(n_bands),&
+&                       Ek_p_q(n_bands),pw_E_k_shift
    real(DP),    allocatable :: ph_freqs_sq_disk(:)
    complex(DP), allocatable :: gkkp_disk(:,:,:),pol_vec(:,:,:)
    !
    ! K Table
    !
-   integer           :: i1,ik,k_found(k%nbz),k2k_tab(k%nbz),ikbz_rot
+   integer           :: i1,ik,k_found(k%nbz),k2k_tab(k%nbz),ikbz_rot,iq_check
    integer           :: nsmall,small(nsym)
- 
+   !
    elph_pw_dbs_io=-1
- 
+   !
    call io_control(ACTION=OP_RD,ID=ID)
- 
+   !
    io_netcdf_support(ID)=.FALSE.
- 
-   write (db_name,'(a,i6.6)') 's.dbph_',iabs(iq)
+   !
+   write (db_name,'(a,i6.6)') 's.dbph_',iabs(idb_)
    io_err=io_connect(desc=trim(db_name),subfolder=trim(elph_dbs_path),type=-1,ID=ID)
- 
+   !
    elph_pw_dbs_io=io_err
    if (io_err/=0) return  
    !
    ! HEADER 
    !
-   read (io_unit(ID)) ph_modes,elph_nk,i1,elph_nb
-   read (io_unit(ID)) pw_alat,pw_q,pw_kpq(:,:elph_nk)
+   read (io_unit(ID)) ph_modes,elph_nk,elph_nb
+   read (io_unit(ID)) pw_alat,pw_q,pw_k(:,:elph_nk)
    !
    if (any(alat/=pw_alat)) then
      forall (i1=1:3) pw_q(i1)=pw_q(i1)*alat(i1)/pw_alat
-     forall (i1=1:3) pw_kpq(i1,:)=pw_kpq(i1,:)*alat(i1)/pw_alat
+     forall (i1=1:3) pw_k(i1,:)=pw_k(i1,:)*alat(i1)/pw_alat
    endif
    !
-   if (iq<0) then
-     call c2a(v_in= real(pw_q(:))-q%pt(iabs(iq),:) ,v_out=r_v,mode="ki2a")
-     if (.not.rlu_v_is_zero(r_v,zero_=k_iku_zero)) elph_pw_dbs_io=-2
+   if (idb_<0) then
+     iq_check=0
+     do i1=1,nqibz
+       if (v_is_zero(real(pw_q(:))+q%pt(i1,:),zero_=k_iku_zero)) iq_check=i1
+     enddo
+     if (iq_check==0) elph_use_q_grid=.false.
+     elph_pw_dbs_io=iq_check
+   else
+     ph_qpt(iq,:)=pw_q
    endif
+   !
+   ! Espresso <-> SELF k table correspondance
+   !
+   k2k_tab=0
+   k_found=0
+   do i1=1,elph_nk
+     !
+     ! For non zero phonon q PW grid is composed of (k_1,k_1+q,k_2,k_2+q ...).
+     ! I table the  k1,k2 ...
+     !
+     do ik=1,k%nbz
+       if (k_found(ik)==1) cycle
+       call c2a(v_in=k%ptbz(ik,:)-real(pw_k(:,i1),SP),v_out=r_v,mode="ki2a")
+       if (rlu_v_is_zero(r_v,zero_=k_rlu_zero)) then
+         k2k_tab(i1)=ik
+         k_found(ik)=1
+         exit
+       endif
+     enddo
+     if (k2k_tab(i1)==0) elph_pw_dbs_io=-2
+   enddo
    !
    ! Phonon Frequencies
    !
@@ -193,49 +253,21 @@
      max_ph_freq=max(max_ph_freq,ph_freq)
      !
    enddo
-   if (iq<0) then
+   if (idb_<0) then
      deallocate(ph_freqs_sq_disk)
      goto 1
    endif
    ph_freqs_sq(iq,:)=abs(ph_freqs_sq_disk)/4._DP
    !
-   ! Allocation
-   !
-   if (iq==1) call elph_gkkp_alloc()
-   !
    elph_gkkp=(0._SP,0._SP)
    elph_DW  =(0._SP,0._SP)
-   !
-   ! Espresso <-> SELF k table correspondance
-   !
-   k2k_tab=0
-   k_found=0
-   do i1=1,elph_nk
-     !
-     ! For non zero phonon q PW grid is composed of (k_1,k_1+q,k_2,k_2+q ...).
-     ! I table the  k1+q,k2+q ...
-     !
-     do ik=1,k%nbz
-       if (k_found(ik)==1) cycle
-       call c2a(v_in=k%ptbz(ik,:)-real(pw_kpq(:,i1),SP),v_out=r_v,mode="ki2a")
-       if (rlu_v_is_zero(r_v,zero_=k_iku_zero)) then
-         k2k_tab(i1)=ik
-         k_found(ik)=1
-         exit
-       endif
-     enddo
-     if (k2k_tab(i1)==0) then
-       elph_pw_dbs_io=-3
-       goto 1
-     endif
-   enddo
    ! 
    ! ELPH_gkkp 
    !
    nat=sum(n_atoms)
    !
    allocate(gkkp_disk(elph_nb,elph_nb,ph_modes),pol_vec(ph_modes,nat,3))
-   if (iq==1) allocate(grad_at_gamma(k%nbz,elph_nb,elph_nb,nat,3))
+   if (idb_==1) allocate(grad_at_gamma(k%nbz,elph_nb,elph_nb,nat,3))
    !
    ! Reading
    !
@@ -254,18 +286,26 @@
      !
      !  gkkp_disk(i,j,k,l) = el_ph_mat(i,j,k,I) u(I,l)^* eps_I(q l)/sqrt(M_a)
      !
-     ! On the other hand SELF table the k, k-q transitions and not k+q. So we 
-     ! need to define
+     ! However SELF table describe the k->k-q transitions and not k+q. So we 
+     ! define
      !
-     !  self_gkkp(i,j,k,l) = [gkkp_disk(j,i,k-q,l)]^*
-     ! 
-     ! or equivalently
+     ! g_jik^{qI}|_SELF= g_jik^{-qI}|_PW = <k-q n_i|dV_{SCF}/du^-q_{i a}|k n_j>
      !
-     !  self_gkkp(i,j,k2k_tab(k),l) = [gkkp_disk(j,i,k,l)]^*
-     !                
+     ! where k = k2k_tab(ik). Note that this procedure implies that SELF {q}'s
+     ! are -{q}'s in PW (note the MinusQ flag).
+     !
      read (io_unit(ID)) gkkp_disk
      read (io_unit(ID)) pol_vec
-     if (iq==1) read (io_unit(ID)) grad_at_gamma(k2k_tab(ik),:,:,:,:)
+     if (idb==1) read (io_unit(ID)) grad_at_gamma(k2k_tab(ik),:,:,:,:)
+     read (io_unit(ID)) Ek(:elph_nb)
+     read (io_unit(ID)) Ek_p_q(:elph_nb)
+     !
+     ! To allign correctly the E(k+q) energies I use the shift between
+     ! the ABSOLUTE SELF energy levels at k and the PW ones.
+     !
+     pw_E_k_shift=real(Ek(1)/2._DP)-(E%E(1,k%sstar(k2k_tab(ik),1),1)+E%Efermi(1))
+     !
+     E_k_plus_q(:,k2k_tab(ik),1)=real(Ek_p_q(:elph_nb)/2._DP)-pw_E_k_shift
      !
      do ib1=1,elph_nb
        do ib2=1,elph_nb
@@ -278,7 +318,7 @@
          !
          dVRY2Ha=2._DP**(-3._DP/2._DP)
          !
-         elph_gkkp(k2k_tab(ik),:,ib1,ib2)=conjg( gkkp_disk(ib2,ib1,:) )*dVRY2Ha
+         elph_gkkp(k2k_tab(ik),:,ib1,ib2)=gkkp_disk(ib1,ib2,:)*dVRY2Ha
          !
          ! Debye Waller Term
          !
@@ -293,7 +333,7 @@
                do il=1,ph_modes
                  elph_DW(k2k_tab(ik),il,ib1,ib2)=elph_DW(k2k_tab(ik),il,ib1,ib2)+&
 &                2.*real(&
-&                  F1(i)*conjg(grad_at_gamma(k2k_tab(ik),ib1,ib2,ia,j) )*pol_vec(il,ia,i)*&
+&                  F1(i)*grad_at_gamma(k2k_tab(ik),ib2,ib1,ia,j)*pol_vec(il,ia,i)*&
 &                  conjg(pol_vec(il,ia,j))*dVRY2Ha&
 &                )
                enddo
@@ -310,7 +350,7 @@
    ! 
    call q_small(real(pw_q,SP),small,nsmall)
    !
-   ! The pw_kpq K-grid is reduced using the small group of q. 
+   ! The pw_k K-grid is reduced using the small group of q. 
    ! I need to expand the K-grid to define the missing elements of elph_dV
    !
    do ik=1,k%nbz
@@ -320,20 +360,17 @@
        if (k_found(ikbz_rot)/=0) cycle
        elph_gkkp(ikbz_rot,:,:,:)=elph_gkkp(ik,:,:,:)
        elph_DW(ikbz_rot,:,:,:)=elph_DW(ik,:,:,:)
-       if (iq==1) grad_at_gamma(k2k_tab(ik),:,:,:,:)=grad_at_gamma(k2k_tab(ik),:,:,:,:)
+       E_k_plus_q(:,ikbz_rot,1)=E_k_plus_q(:,ik,1)
        k_found(ikbz_rot)=-1
      enddo
    enddo
    !
-   if (any((/k_found==0/))) then
-     elph_pw_dbs_io=-3
-     goto 1
-   endif
+   if (any((/k_found==0/))) elph_pw_dbs_io=-4
    !
    ! CLEAN
    !
    deallocate(ph_freqs_sq_disk,gkkp_disk,pol_vec)
-   if (iq==nqibz) deallocate(grad_at_gamma)
+   if (idb==elph_nq) deallocate(grad_at_gamma)
  
 1  call io_control(ACTION=RD_CL,ID=ID)
    call io_disconnect(ID)
@@ -347,7 +384,7 @@
    use vec_operate,    ONLY:rlu_v_is_zero,c2a,k2bz
    use D_lattice,      ONLY:nsym
    use R_lattice,      ONLY:rl_sop,nkbz
-   use zeros,          ONLY:k_iku_zero
+   use zeros,          ONLY:k_rlu_zero
    !
    integer  :: nsmall,small(nsym)
    real(SP) :: pw_q(3),r_v(3)
@@ -358,7 +395,7 @@
      r_v=matmul(rl_sop(:,:,is),pw_q) -pw_q
      call k2bz(r_v)
      call c2a (v_in=r_v,mode='ki2a')
-     if (rlu_v_is_zero(r_v,zero_=k_iku_zero)) then
+     if (rlu_v_is_zero(r_v,zero_=k_rlu_zero)) then
        nsmall=nsmall+1
        small(nsmall)=is
      endif

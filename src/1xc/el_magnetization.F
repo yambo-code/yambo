@@ -20,19 +20,19 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine el_magnetization(en,Xk,el_mag)
-!=========================================
-!
-! Electronic Magnetization for electronic Spinors
-!
-!  M = Sum_I (PSI^I)* Sigma_Pauli* PSI^I  I=occupied states
-!
-!  PSI^I = spinor
-!  Sigma_Pauli=the 3 Pauli matrices
-!
+ !
+ !
+ ! Electronic Magnetization for electronic Spinors
+ !
+ !  M = Sum_I (PSI^I)* Sigma_Pauli* PSI^I  I=occupied states
+ !
+ !  PSI^I = spinor
+ !  Sigma_Pauli=the 3 Pauli matrices
+ !
  use pars,          ONLY:SP
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels,n_spin,n_spinor
- use D_lattice,     ONLY:nsym,i_time_rev
+ use D_lattice,     ONLY:nsym
  use FFT_m,         ONLY:fft_size,fft_rot_r
  use wave_func,     ONLY:wf_state,wf
  implicit none
@@ -40,39 +40,41 @@
  type(bz_samp)::Xk
  real(SP)     ::el_mag(fft_size,3)
  !
- ! WorkSpace
+ ! Work Space
  !
- integer :: i1,i2,i1fft,i2fft,amag_syms,zeta,rho_syms
+ integer :: i1,i2,ifft_up,ifft_dn
  real(SP):: cv(fft_size,3)
  !
  el_mag=0.
  cv=0.
  !
+ if (n_spin==1) return
+ !
  do i1=1,en%nbm
    do i2=1,Xk%nibz
-     i1fft=wf_state(i1,i2,1)
-     i2fft=wf_state(i1,i2,2)
-     if (i1fft==0 .or. i2fft==0) cycle
+     ifft_up=wf_state(i1,i2,1)
+     ifft_dn=wf_state(i1,i2,2)
+     if (ifft_up==0 .or. ifft_dn==0) cycle
      if (n_spinor==2) then
        !
        ! mx
        !
        cv(:,1)=cv(:,1)+Xk%weights(i2)*(&
-&      en%f(i1,i2,1)*conjg(wf(:,i1fft))*wf(:,i2fft)&
-&     +en%f(i1,i2,2)*conjg(wf(:,i2fft))*wf(:,i1fft) )
+&      en%f(i1,i2,1)*conjg(wf(:,ifft_up))*wf(:,ifft_dn)&
+&     +en%f(i1,i2,2)*conjg(wf(:,ifft_dn))*wf(:,ifft_up) )
        !
        ! my
        !
        cv(:,2)=cv(:,2)+Xk%weights(i2)*(0.,-1.d0)*(&
-&      en%f(i1,i2,2)*conjg(wf(:,i1fft))*wf(:,i2fft)&
-&     -en%f(i1,i2,1)*conjg(wf(:,i2fft))*wf(:,i1fft) )
+&      en%f(i1,i2,2)*conjg(wf(:,ifft_up))*wf(:,ifft_dn)&
+&     -en%f(i1,i2,1)*conjg(wf(:,ifft_dn))*wf(:,ifft_up) )
      endif
      !
      ! mz
      !
      cv(:,3)=cv(:,3)+Xk%weights(i2)*(&
-&    en%f(i1,i2,2)*conjg(wf(:,i1fft))*wf(:,i1fft)&
-&   -en%f(i1,i2,1)*conjg(wf(:,i2fft))*wf(:,i2fft) )
+&    en%f(i1,i2,2)*conjg(wf(:,ifft_up))*wf(:,ifft_up)&
+&   -en%f(i1,i2,1)*conjg(wf(:,ifft_dn))*wf(:,ifft_dn) )
    enddo
  enddo
  !
@@ -83,4 +85,3 @@
  enddo
  !
  end subroutine
-!

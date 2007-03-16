@@ -20,10 +20,11 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  integer function ioBS(iq,X,ID)
-!==============================
+ !
  use pars,          ONLY:SP,schlen,HARTREE
  use X_m,           ONLY:X_t
  use R_lattice,     ONLY:nXkibz,RIM_ng,RIM_n_rand_pts
+ use stderr,        ONLY:intc
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use BS,            ONLY:BS_mat,BS_identifier,BS_K_dim,BS_bands,&
 &                        BS_K_coupling,BS_res_K_exchange,BS_res_K_corr,&
@@ -40,41 +41,42 @@
  implicit none
  type(X_t):: X 
  integer  :: iq,ID
-!
-!ws
+ !
+ ! Work Space
+ !
  integer             ::ik12(2),i_pointer
  character(schlen)   ::ch,db_name
  real(SP),allocatable::BS_mat_disk(:,:,:)
  logical             ::res_corr_disk,res_exch_disk,db_is_large,cpl_disk,&
 &                      cpl_corr_disk,cpl_exch_disk
-
- write (db_name,'(a,i2.2)') 'BS_Q',iq
-
+ !
+ db_name='BS_Q'//trim(intc(iq))
+ !
  ioBS=io_connect(desc=trim(db_name),type=2,ID=ID)
  if (ioBS/=0) goto 1
  !
  call io_check_restart(trim(db_name),ID)
-!
-! If the DB size > 1.9Gb  I automatically switch on the fragmentation.
-! To do so both dbs_fragment (overall fragmentation) and 
-! io_fragmented(ID) (fragmentation for this DB) must be set true.
-! This is because io_fragmented(ID) is defined in reading but not
-! in writing where it keep the default (dbs_fragment) value.
-!
-! Note that io_connect supports the ENABLE_LARGE_FILE logical when
-! using NETCDF support.
-!
-  if (write_is_on(ID)) then
-    db_is_large=3*BS_K_dim-1>int(1.9_SP*10._SP**9._SP/BS_K_dim/SP)
-    if (BS_K_coupling) db_is_large=3*BS_K_dim-1>int(0.85_SP*10._SP**9._SP/BS_K_dim/SP)
-    if (db_is_large) then
-      dbs_fragment=.true.
-      io_fragmented(ID)=.true.
-    endif
-  endif
-
+ !
+ ! If the DB size > 1.9Gb  I automatically switch on the fragmentation.
+ ! To do so both dbs_fragment (overall fragmentation) and 
+ ! io_fragmented(ID) (fragmentation for this DB) must be set true.
+ ! This is because io_fragmented(ID) is defined in reading but not
+ ! in writing where it keep the default (dbs_fragment) value.
+ !
+ ! Note that io_connect supports the ENABLE_LARGE_FILE logical when
+ ! using NETCDF support.
+ !
+ if (write_is_on(ID)) then
+   db_is_large=3*BS_K_dim-1>int(1.9_SP*10._SP**9._SP/BS_K_dim/SP)
+   if (BS_K_coupling) db_is_large=3*BS_K_dim-1>int(0.85_SP*10._SP**9._SP/BS_K_dim/SP)
+   if (db_is_large) then
+     dbs_fragment=.true.
+     io_fragmented(ID)=.true.
+   endif
+ endif
+ !
  if (any((/io_sec(ID,:)==1/))) then
-
+   !
    ioBS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.)
    if (ioBS/=0) goto 1
    !
@@ -160,42 +162,42 @@
      call io_elemental(ID,I0=RIM_n_rand_pts,&
 &       VAR='    |Random points      [col]:',CHECK=.true.,OP=(/"=="/))
    endif
-
+   !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
-
+   !
    ioBS=io_status(ID)
    if (ioBS/=0) goto 1
-
+   !
  endif
-!
-! Section 1 is used in VERIFY mode.
-! Now that the menu is closed I can return with ioBS/=0 if
-! there is a restart point
-!
-! Cerfull. As io_restart is the restart point it is +1 of the
-! one written in the RESTART directory
-!
+ !
+ ! Section 1 is used in VERIFY mode.
+ ! Now that the menu is closed I can return with ioBS/=0 if
+ ! there is a restart point
+ !
+ ! Cerfull. As io_restart is the restart point it is +1 of the
+ ! one written in the RESTART directory
+ !
  if (io_restart(ID)>0.and.io_mode(ID)==VERIFY) then
    ioBS=io_restart(ID)-1
    BS_blk_coord=BS_blocks(ioBS)
  endif
-
+ !
  i_pointer=maxval(io_sec(ID,:))
  ik12=BS_blocks(i_pointer)
  if (i_pointer==1) goto 1
-!
-! Fragmentation
-!---------------
-! io_fragmented is read in the header. While accessing the fragments
-! io_fragmented is not defined and must be overwritten with BS_DB_is_fragmented
-!
+ !
+ ! Fragmentation
+ !
+ ! io_fragmented is read in the header. While accessing the fragments
+ ! io_fragmented is not defined and must be overwritten with BS_DB_is_fragmented
+ !
  io_fragmented(ID)=BS_DB_is_fragmented
  call io_fragment(ID,i_pointer=ik12(1),j_pointer=ik12(2))
-!
+ !
  allocate(BS_mat_disk(BS_blk_dim(ik12(1)),BS_blk_dim(ik12(2)),2))
-!
-! Resonant I/O
-!--------------
+ !
+ ! Resonant I/O
+ !
  write (ch,'(a,i4.4,a,i4.4)') "BS_RES_KERNEL_BLK_K1_",ik12(1),"_K2_",ik12(2)
  call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/BS_blk_dim(ik12(1)),BS_blk_dim(ik12(2)),2/))
  if (write_is_on(ID)) call mat_c2r(BS_mat(:,:),BS_mat_disk)
@@ -203,9 +205,9 @@
  if (read_is_on(ID)) call mat_r2c(BS_mat_disk,&
 &   BS_mat(BS_blk_coord(1)+1:BS_blk_coord(1)+BS_blk_dim(ik12(1)),&
 &          BS_blk_coord(2)+1:BS_blk_coord(2)+BS_blk_dim(ik12(2))))
-!
-! Coupling I/O
-!--------------
+ !
+ ! Coupling I/O
+ !
  if (BS_K_coupling) then
    write (ch,'(a,i4.4,a,i4.4)') "BS_CPL_KERNEL_BLK_K1_",ik12(1),"_K2_",ik12(2)
    call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/BS_blk_dim(ik12(1)),BS_blk_dim(ik12(2)),2/))
@@ -216,11 +218,10 @@
 &            BS_K_dim+BS_blk_coord(2)+1:BS_K_dim+BS_blk_coord(2)+BS_blk_dim(ik12(2))))
  endif
  deallocate(BS_mat_disk)
-
+ !
  call io_check_restart(trim(db_name),ID,now=i_pointer,todo=cumulative_index(1,nXkibz))
  ioBS=io_restart(ID)
-
+ !
 1 call io_disconnect(ID)
-
-
+ !
  end function

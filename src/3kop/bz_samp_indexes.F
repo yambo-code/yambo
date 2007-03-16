@@ -53,6 +53,7 @@
 &                         q_sstar
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use zeros,          ONLY:G_iku_zero
+ use parser_m,       ONLY:parser
  !
  implicit none
  type(bz_samp)::k,Xk,q
@@ -62,14 +63,19 @@
  integer :: io_db,io_err,ioQINDX
  integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikbz,iqs
  real(SP):: v1(3),k_b_m1(3,3),G_zero(3),local_zero(3)
- logical :: connected_grids,user_defined_qpts,gamma_point_only
+ logical :: connected_grids,user_defined_qpts,gamma_point_only,impose_minus_q
  integer, allocatable :: q_map(:,:,:),q_iptbz(:,:)
  !
  call section('*','Transferred momenta grid')
  !
  user_defined_qpts=.false.
  gamma_point_only=.false.
+ impose_minus_q=.false.
+#if defined  PJ_PH
+ call parser('MinusQ',impose_minus_q)
+#endif
  if (.not.bse_scattering) bse_scattering=l_bse
+ !
  q%description='q'
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3/),MODE=VERIFY,ID=io_db)
@@ -102,7 +108,12 @@
  ! of K-pts
  !
  call m3inv(M=k_b_m1)
+#if defined  PJ_PH
+ if (impose_minus_q)      call define_q_map(-Xk%ptbz(:,:),-Xk%ptbz(1,:))
+ if (.not.impose_minus_q) call define_q_map(Xk%ptbz(:,:),Xk%ptbz(1,:))
+#else
  call define_q_map(Xk%ptbz(:,:),Xk%ptbz(1,:))
+#endif
  !
  ! THE GRID IS UNIFORM IF ALL THE Q_MAP IS FILLED
  !
@@ -117,7 +128,16 @@
    !
    allocate(q%ptbz(q%nbz,3))
    do i1=1,q%nbz
-     call c2a(v_in=Xk%ptbz(i1,:)-Xk%ptbz(1,:),v_out=q%ptbz(i1,:),mode='ka2i')
+     !
+     v1=Xk%ptbz(i1,:)-Xk%ptbz(1,:)
+     !
+#if defined  PJ_PH
+     if (impose_minus_q)      call c2a(v_in=-v1,v_out=q%ptbz(i1,:),mode='ka2i')
+     if (.not.impose_minus_q) call c2a(v_in=v1,v_out=q%ptbz(i1,:),mode='ka2i')
+#else
+     call c2a(v_in=v1,v_out=q%ptbz(i1,:),mode='ka2i')
+#endif
+     !
    enddo
    if (.not.allocated(q_pt)) then
      call k_reduce(q)
@@ -152,6 +172,7 @@
      !
      ! when imposing the G point with a uniform X grid I get
      ! segmentation fault in the BSE. 
+     !
      Xk_grid_is_uniform=.false.
      !
      if (.not.Xk_grid_is_uniform) bse_scattering=.false.
@@ -307,6 +328,7 @@
    end subroutine
    !
    subroutine define_q_map(qpt_map,q_ref)
+     !
      real(SP)::qpt_map(Xk%nbz,3),q_ref(3)
      !
      q_map=0

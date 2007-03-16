@@ -43,16 +43,16 @@
  !
  !o.qp titles
  !
- integer, parameter:: tpar=13
+ integer, parameter:: tpar=14
  integer       :: ntitles,torder(tpar)
- real(SP)      :: rstr(tpar)
+ real(SP)      :: values(tpar)
  character(10) :: titles(tpar)
  character(2)  :: abbrev(tpar)
  !
  data titles/'Vxc','Sc(Eo)','Sc(Eqp)','Eo' ,'Eqp', 'Z', 'Sc`(Eo)', &
-&            'E-Eo','Kpt','Band','Sx','Width[meV]','Width[fs]'/
+&            'E-Eo','Kpt','Band','Sx','Width[meV]','Width[fs]','Spin_Pol'/
  data abbrev/'xc','s0','sq','e0','eq','zf','ds','ee','kp','bn',&
-&            'xx','lm','lf'/
+&            'xx','lm','lf','sp'/
  !
  if (trim(QP_solver)=='n'.or.trim(QP_solver)=='s'.or.l_life) then
    !
@@ -83,7 +83,7 @@
    !
    do i1=1,QP_n_states
      !
-     rstr=0.
+     values=0.
      qp_b  =QP_table(i1,1)
      qp_k  =QP_table(i1,3)
 #if defined PJ_SPIN
@@ -93,19 +93,21 @@
 #endif
      !
      if (.not.l_life) then
-       rstr(2:3)=(/real(QP_Sc(i1,1))*HARTREE,&
+       values(2:3)=(/real(QP_Sc(i1,1))*HARTREE,&
 &                 real(QP_Sc(i1,1)+QP_dSc(i1,1)*(qp%E(i1)-qp%E_bare(i1)))*HARTREE/)
-       rstr(7:8)=(/real(QP_dSc(i1,1)),real((qp%E(i1)-qp%E_bare(i1))*HARTREE)/)
+       values(7:8)=(/real(QP_dSc(i1,1)),real((qp%E(i1)-qp%E_bare(i1))*HARTREE)/)
        if (l_el_corr) then
-         rstr(1)=real(QP_Vxc(i1))*HARTREE
-         rstr(11)=real(QP_Sx(i1))*HARTREE
+         values(1)=real(QP_Vxc(i1))*HARTREE
+         values(11)=real(QP_Sx(i1))*HARTREE
        endif
      endif
-     rstr(4:6)=(/qp%E_bare(i1)*HARTREE,real(qp%E(i1)*HARTREE),real(qp%Z(i1))/)
-     rstr(9:10)=(/real(qp_k),real(qp_b)/)
-     rstr(12:13)=(/aimag(qp%E(i1)*HARTREE/1.E-3),0.65822/2./aimag(qp%E(i1))/HARTREE/)
-     if (aimag(qp%E(i1))==0.) rstr(12:13)=0.
-     call msg('o qp','',rstr(torder(:ntitles)),INDENT=-2,USE_TABS=.TRUE.)
+     values(4:6)=(/qp%E_bare(i1)*HARTREE,real(qp%E(i1)*HARTREE),real(qp%Z(i1))/)
+     values(9:10)=(/real(qp_k),real(qp_b)/)
+     values(12:13)=(/aimag(qp%E(i1)*HARTREE/1.E-3),0.65822/2./aimag(qp%E(i1))/HARTREE/)
+     if (qp_isp==1) values(14)= 1.
+     if (qp_isp==2) values(14)=-1.
+     if (aimag(qp%E(i1))==0.) values(12:13)=0.
+     call msg('o qp','',values(torder(:ntitles)),INDENT=-2,USE_TABS=.TRUE.)
    enddo
    call of_open_close(file_name)
    !
@@ -134,12 +136,12 @@
      call msg('o G_Sc','#',titles(:6),INDENT=0,USE_TABS=.TRUE.)
      call msg('o G_Sc','#')
      do i2=1,QP_Sc_steps
-       rstr=0.
-       rstr(1:3)=(/real(Sc_W%p(i2)),real(QP_G(i1,i2)),aimag(QP_G(i1,i2))/)*HARTREE
-       rstr(4:5)=(/real(QP_Sc(i1,i2)),aimag(QP_Sc(i1,i2))/)*HARTREE
-       rstr(6)=rstr(4)
-       if (l_el_corr) rstr(4)=rstr(4)+real(QP_Sx(i1)-QP_Vxc(i1))*HARTREE
-       call msg('o G_Sc','',rstr(:6),INDENT=-2,USE_TABS=.TRUE.)
+       values=0.
+       values(1:3)=(/real(Sc_W%p(i2)),real(QP_G(i1,i2)),aimag(QP_G(i1,i2))/)*HARTREE
+       values(4:5)=(/real(QP_Sc(i1,i2)),aimag(QP_Sc(i1,i2))/)*HARTREE
+       values(6)=values(4)
+       if (l_el_corr) values(4)=values(4)+real(QP_Sx(i1)-QP_Vxc(i1))*HARTREE
+       call msg('o G_Sc','',values(:6),INDENT=-2,USE_TABS=.TRUE.)
      enddo
      call of_open_close(G_Sc_name)
    enddo

@@ -26,6 +26,7 @@
  use drivers,       ONLY:list_dbs
  use com,           ONLY:code_version,msg,warning
  use D_lattice,     ONLY:Tel
+ use electrons,     ONLY:n_sp_pol,n_spinor
  use R_lattice,     ONLY:nqibz,nqbz,nkibz,nkbz,q_pt
  use wave_func,     ONLY:wf_ng
  use vec_operate,   ONLY:v_is_zero
@@ -44,11 +45,10 @@
  ! Work Space
  !
  integer             :: i1,nqibz_disk,MENU_here,R_LATT_vec(4),&
-&                       R_LATT_vec_disk(4),MODE,MENU,ng_on_db
+&                       R_LATT_vec_disk(4),MODE,MENU,ng_on_db,SPIN_vec_disk(2)
  real(SP),allocatable:: l_qpt(:,:)
  real(SP)            :: local_zero(3)
  logical             :: WARN
- character(schlen)   :: ch
  !
  io_header=0
  !
@@ -67,27 +67,41 @@
  call io_elemental(ID,VAR="FRAGMENTED",VAR_SZ=1,MENU=0)
  call io_elemental(ID,DB_L0=io_fragmented(ID),L0=dbs_fragment)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-
+ !
  call io_elemental(ID,VAR="HEAD_VERSION",VAR_SZ=3,MENU=0)
  call io_elemental(ID,DB_I1=io_code_version(ID,:),I1=code_version)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-
+ !
  call io_elemental(ID,VAR="SERIAL_NUMBER",VAR_SZ=1,MENU=0)
  call io_elemental(ID,DB_I0=io_serial_number(ID),I0=serial_number)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ !
+ if (ver_is_gt_or_eq(ID,(/3,0,8/))) then
+   call io_elemental(ID,VAR="SPIN_VARS",VAR_SZ=2,MENU=0)
+   call io_elemental(ID,DB_I1=SPIN_vec_disk,I1=(/n_sp_pol,n_spinor/))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ endif
  !
  ! Serial Number
  !
  if (io_serial_number(ID)/=serial_number) then
    if (present(IMPOSE_SN)) then 
      io_header=-1
-     write (ch,'(2a)') 'Incompatible serial number for ',trim(io_file(ID))
-     if (io_com(ID)/=NONE) call msg('sr',trim(ch))
+     if (io_com(ID)/=NONE) call msg('sr','Incompatible serial number for '//trim(io_file(ID)))
      goto 1
    endif
    if (io_com(ID)/=NONE) then 
-     write (ch,'(2a)') 'Wrong serial number for ',trim(io_file(ID))
-     call warning(trim(ch))
+     call warning('Wrong serial number for '//trim(io_file(ID)))
+   endif
+ endif
+ !
+ ! SPIN polarizations/spinors
+ !
+ if (ver_is_gt_or_eq(ID,(/3,0,8/))) then
+   if (SPIN_vec_disk(1)/=n_sp_pol.or.SPIN_vec_disk(2)/=n_spinor) then
+     io_header=-1
+     if (io_com(ID)/=NONE) call msg('sr','Incompatible SPIN pol/spinors for '//trim(io_file(ID)))
+     goto 1
    endif
  endif
  !

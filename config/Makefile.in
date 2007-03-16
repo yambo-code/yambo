@@ -194,7 +194,7 @@ define mksrc
  done
 endef
 define mklib
- echo $$LIBS2D0 $$DIR2GO; for ldir in $$LIBS2DO; do \
+ for ldir in $$LIBS2DO; do \
   if test ! -f "$(libdir)/lib$$ldir.a" ; \
   then ./sbin/mkmkfl $$DIR2GO/$$ldir lib$$ldir.a .objects l $(precision) $$ADF ; \
   cd $$DIR2GO/$$ldir ; $(make) VPATH=$$DIR2GO/$$ldir || exit "$$?" ; cd ../../; fi \

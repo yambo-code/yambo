@@ -24,11 +24,7 @@
  use pars,          ONLY:SP,schlen,IP,HARTREE
  use memory_m,      ONLY:mem_est
  use drivers,       ONLY:l_life,l_ppa,l_el_corr,l_ph_corr
-#if defined PJ_SPIN
- use electrons,     ONLY:levels,n_sp_pol,n_spinor
-#else
- use electrons,     ONLY:levels,n_spinor
-#endif
+ use electrons,     ONLY:levels,n_sp_pol
  use stderr,        ONLY:string_pack
  use R_lattice,     ONLY:bz_samp
  use frequency,     ONLY:w_samp
@@ -50,13 +46,7 @@
  ! Work Space
  !
  type(QP_t):: qp
- integer   ::i1,i3,io_err,ID
- real(SP)  ::dscp,r_numbers(7)
-#if defined PJ_SPIN
- character(schlen)::ch1,ch2,local_fmt,ch_spin
-#else
- character(schlen)::ch1,ch2,local_fmt
-#endif
+ integer   ::i1,io_err,ID
  integer, external::ioQP
  !
  ! Parser
@@ -154,7 +144,7 @@
    allocate(QP_Sc(QP_n_states,QP_Sc_steps))
    allocate(QP_G(QP_n_states,QP_Sc_steps))
    call mem_est("QP_G",(/size(QP_G)/))
- else
+ else if (.not.l_life) then
    QP_dSc_steps=2
    if (QP_dSc_test) QP_dSc_steps=3
    allocate(QP_Sc(QP_n_states,QP_dSc_steps),QP_dSc(qp%n_states,QP_dSc_steps-1))
@@ -195,7 +185,7 @@
  if (l_life) then
    call QP_raxis(X,Xen,Xk,en,k,q,qp,Xw,0) 
    qp%Z=1.
-   call QP_width_report
+   call QP_report(.FALSE.,.TRUE.)
    return
  endif
  !
@@ -222,147 +212,130 @@
  !
  ! Reporting
  !
- call QP_energy_report
+ call QP_report(.TRUE.,.FALSE.)
  !
  contains 
    !
-   subroutine QP_energy_report
-   !
-   real(SP) :: xx_dummy,xc_dummy
-   !
-   if (trim(QP_solver)/='g') then
-     call section('=','Q(uasi)P(article) properties')
-     call msg(' r','Legend (energies in eV):')
-     call msg(' r','- B  : Band       - Eo  : bare energy')
-     call msg(' r','- E  : QP energy  - Z   : Renormalization factor')
-     call msg(' r','- So : Sc(Eo)     - S   : Sc(E)')
-     call msg('rn','- xx/Vxc : Sx/Vxc - dSp : Sc derivative precision')
-     i3=QP_table(1,3)
-     write (ch1,'(a,i4.4,a)') 'K [',i3,'] (iku):'
-     call msg('r',trim(ch1),k%pt(i3,:))
-#if defined PJ_SPIN
-     do i1=1,QP_n_states,n_spinor
-#else
-     do i1=1,QP_n_states
-#endif 
+   subroutine QP_report(energies,widths)
+     !
+     use stderr,   ONLY:intc
+     !
+     logical :: energies,widths
+     !
+     integer          ::ik,ib
+     real(SP)         ::xx_dummy,xc_dummy,r_numbers(20),dscp
+     character(schlen)::r_fmt,fmt_,ch1,ch2,ch_spin
+     !
+     if (trim(QP_solver)/='g') then
        !
-       if (l_el_corr) then
-         xx_dummy=real(QP_Sx(i1))*HARTREE
-         xc_dummy=real(QP_Vxc(i1))*HARTREE
-       else
-         xx_dummy=0.
-         xc_dummy=0.
+       !
+       ik=QP_table(1,3)
+       !
+       call section('=','Q(uasi)P(article) properties')
+       call msg(' r','Legend (energies in eV):')
+       call msg(' r','- B  : Band       - Eo  : bare energy')
+       if (energies) then
+         call msg(' r','- E  : QP energy  - Z   : Renormalization factor')
+         call msg(' r','- So : Sc(Eo)     - S   : Sc(E)')
+         call msg('rn','- xx/Vxc : Sx/Vxc - dSp : Sc derivative precision')
+         call msg('nr','QP [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
+       else if (widths) then
+         call msg(' r','- Z  : Renormalization factor')
+         call msg('rn','- Gm : Width [meV] - Gf  : Width [fs]')
+         call msg('nr','Lifetimes @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
        endif
-       if (QP_table(i1,3)/=i3) then
-         i3=QP_table(i1,3)
-         write (ch1,'(a,i4.4,a)') 'K [',i3,'] (iku):'
-         call msg('nr',trim(ch1),k%pt(i3,:))
-       endif
-       r_numbers=(/qp%E_bare(i1)*HARTREE,real(qp%E(i1))*HARTREE,&
-&                  real(qp%E(i1)-qp%E_bare(i1))*HARTREE,real(qp%Z(i1)),&
-&                  real(QP_Sc(i1,1))*HARTREE,xx_dummy,xc_dummy/)
-       ch2=gen_fmt(r_v=r_numbers)
+       !
+       do i1=1,QP_n_states
+         !
+         if (l_el_corr.and.energies) then
+           xx_dummy=real(QP_Sx(i1))*HARTREE
+           xc_dummy=real(QP_Vxc(i1))*HARTREE
+         else
+           xx_dummy=0.
+           xc_dummy=0.
+         endif
+         !
+         ib=QP_table(i1,1)
+         if (QP_table(i1,3)/=ik) then
+           ik=QP_table(i1,3)
+           if (energies) call msg('nr','QP [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
+           if (widths)   call msg('nr','Lifetimes [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
+         endif
+         !
+         if (energies) then
+           r_numbers(:7)=(/qp%E_bare(i1)*HARTREE,real(qp%E(i1))*HARTREE,&
+&                      real(qp%E(i1)-qp%E_bare(i1))*HARTREE,real(qp%Z(i1)),&
+&                      real(QP_Sc(i1,1))*HARTREE,xx_dummy,xc_dummy/)
+           r_fmt=gen_fmt(r_v=r_numbers(:7))
+           fmt_='(3(a,f6.2),a,f4.2,4(a,'//trim(r_fmt)//'))'
+         else if (widths) then
+           r_numbers(:2)=(/qp%E_bare(i1)*HARTREE,real(qp%Z(i1))/)
+           r_numbers(3)=aimag(qp%E(i1))*HARTREE/1.E-3
+           r_numbers(4)=0.
+           if (r_numbers(3)>0.) r_numbers(4)=0.65822/2./aimag(qp%E(i1))/HARTREE
+           r_fmt=gen_fmt(r_v=r_numbers(:4))
+           fmt_='(a,f6.2,1x,3(a,'//trim(r_fmt)//',1x))'
+         endif
+         !
+         ch_spin=' '
 #if defined PJ_SPIN
-       ch_spin=' '
-       if (n_sp_pol==2 .AND. QP_table(i1,4)==1) ch_spin=' [up] ' 
-       if (n_sp_pol==2 .AND. QP_table(i1,4)==2) ch_spin=' [dn] '
-       local_fmt=string_pack('(a,a,i4.4,3(a,f6.2),a,f4.2,4(a,',trim(ch2),'))')
-       write (ch1,trim(local_fmt)) trim(ch_spin), ' B=',QP_table(i1,1),' Eo=',r_numbers(1),&
-#else
-       local_fmt=string_pack('(a,i4.4,3(a,f6.2),a,f4.2,4(a,',trim(ch2),'))')
-       write (ch1,trim(local_fmt)) 'B=',QP_table(i1,1),' Eo=',r_numbers(1),&
+         !
+         if (n_sp_pol==2.and.QP_table(i1,4)==1) ch_spin='[up]'
+         if (n_sp_pol==2.and.QP_table(i1,4)==2) ch_spin='[dn]'
+         !
 #endif
+         !
+         if (energies) then
+           !
+           write (ch1,trim(fmt_)) &
+&            trim(ch_spin)//' B='//trim(intc(ib))//' Eo=',r_numbers(1),&
 &            ' E=',r_numbers(2),' E-Eo=',r_numbers(3),' Z=',r_numbers(4),&
 &            ' So=',r_numbers(5),' xx=',r_numbers(6),' Vxc=',r_numbers(7)
-       if (QP_dSc_steps>2) then
-         dscp=abs(QP_dSc(i1,2)-QP_dSc(i1,1))/abs(QP_dSc(i1,1))
-         ch2=trim(ch1)
-         write (ch1,'(2a,i3.3,a)') trim(ch2),' dSp=',100-int(dscp*100.),'%'
+           !
+           if (QP_dSc_steps>2) then
+             dscp=abs(QP_dSc(i1,2)-QP_dSc(i1,1))/abs(QP_dSc(i1,1))
+             write (ch2,'(a,i3.3,a)') trim(ch1)//' dSp=',100-int(dscp*100.),'%'
+             ch1=trim(ch2)
+           endif
+           !
+         else if (widths) then
+           !
+           write (ch1,trim(fmt_)) &
+&            trim(ch_spin)//' B='//trim(intc(ib))//' Eo=',r_numbers(1),&
+&            'Z=',r_numbers(2),' Gm=',r_numbers(3),' Gf=',r_numbers(4)
+           !
+         endif
+         !
+         if (i1/=QP_n_states) call msg('r',trim(ch1))
+         if (i1==QP_n_states) call msg('rn',trim(ch1))
+         !
+       enddo
+       !
+       ! QP i/o
+       !
+       if (l_el_corr) then
+         call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
+         io_err=ioQP('QP',qp,ID)
        endif
-       if (i1< QP_n_states) call msg('r',ch1)
-       if (i1==QP_n_states) call msg('rn',ch1)
-     enddo
-     !
-     ! QP i/o
-     !
-     if (l_el_corr) then
-       call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
-       io_err=ioQP('QP',qp,ID)
+       !
      endif
      !
-   endif
-   !
-   ! o.qp
-   !
-   call QP_of(k,qp,en)
-   !
-   ! CLEAN
-   !
-   deallocate(qp%Z,qp%E,qp%E_bare,qp%k,qp%table,&
-&             QP_Sc,QP_table,QP_state)
-   call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table QP_table QP_state QP_Sc")
-   if (allocated(QP_dSc)) deallocate(QP_dSc)
-   if (allocated(QP_G)) deallocate(QP_G)
-   if (allocated(QP_Sx)) deallocate(QP_Sx,QP_Vxc)
-   call mem_est("QP_dSc QP_G QP_Sx QP_Vxc")
-   !
-   end subroutine
-   !
-   subroutine QP_width_report
-   !
-   call section('=','Q(uasi)P(article) properties')
-   call msg(' r','Legend:')
-   call msg(' r','- B  : Band        - Eo  : bare energy')
-   call msg(' r','- Z  : Renormalization factor')
-   call msg('rn','- Gm : Width [meV] - Gf  : Width [fs]')
-   !
-   i3=QP_table(1,3)
-   write (ch1,'(a,i4.4,a)') 'K [',i3,'] (iku):'
-   call msg('r',trim(ch1),k%pt(i3,:))
-   !
-   do i1=1,QP_n_states,n_spinor
+     ! o.qp
      !
-     r_numbers(1)=aimag(qp%E(i1))*HARTREE/1.E-3
-     r_numbers(2)=0.
-     if (r_numbers(1)>0.) r_numbers(2)=0.65822/2./aimag(qp%E(i1))/HARTREE
+     if (widths)      QP_rep_string='kpbne0lmlf'
+     if (n_sp_pol==2) QP_rep_string=trim(QP_rep_string)//'sp'
+     call QP_of(k,qp,en)
      !
-     if (QP_table(i1,3)/=i3) then
-       i3=QP_table(i1,3)
-       write (ch1,'(a,i4.4,a)') 'K [',i3,'] (iku):'
-       call msg('nr',trim(ch1),k%pt(i3,:))
-     endif
-     ch2=gen_fmt(r_v=r_numbers(:2))
-#if defined PJ_SPIN
-     ch_spin=' '
-     if (n_sp_pol==2 .AND. QP_table(i1,4)==1) ch_spin=' [up] '
-     if (n_sp_pol==2 .AND. QP_table(i1,4)==2) ch_spin=' [dn] '
-     local_fmt=string_pack('(a,a,i4.4,a,f6.2,a,f4.2,4(a,',trim(ch2),'))')
-#else
-     local_fmt=string_pack('(a,i4.4,a,f6.2,a,f4.2,4(a,',trim(ch2),'))')
-#endif
-     write (ch1,trim(local_fmt)) &
-#if defined PJ_SPIN
-&      trim(ch_spin),'B=',QP_table(i1,1),' Eo=',qp%E_bare(i1)*HARTREE,&
-#else
-&      'B=',QP_table(i1,1),' Eo=',qp%E_bare(i1)*HARTREE,&
-#endif
-&      ' Z=',real(qp%Z(i1)),' Gm=',r_numbers(1),' Gf=',r_numbers(2)
-     if (i1< QP_n_states) call msg('r',ch1)
-     if (i1==QP_n_states) call msg('rn',ch1)
-   enddo
-   !
-   ! o.qp
-   !
-   QP_rep_string='kpbne0lmlf'
-   call QP_of(k,qp,en)
-   !
-   ! CLEAN
-   !
-   deallocate(qp%Z,qp%E,qp%E_bare,qp%k,qp%table,&
-&             QP_dSc,QP_Sc,QP_table,QP_state)
-   call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table QP_table QP_state")
-   call mem_est("QP_dSc QP_Sc")
-   !
+     ! CLEAN
+     !
+     deallocate(qp%Z,qp%E,qp%E_bare,qp%k,qp%table,QP_table,QP_state)
+     if (allocated(QP_Sc))  deallocate(QP_Sc)
+     if (allocated(QP_dSc)) deallocate(QP_dSc)
+     if (allocated(QP_G))   deallocate(QP_G)
+     if (allocated(QP_Sx))  deallocate(QP_Sx,QP_Vxc)
+     call mem_est("QP_Sc QP_dSc QP_G QP_Sx QP_Vxc")
+     call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table QP_table QP_state")
+     !
    end subroutine
    !
  end subroutine

@@ -33,7 +33,8 @@
 &                        io_elemental,io_status,io_bulk,io_restart,&
 &                        read_is_on,write_is_on,io_check_restart,io_header,&
 &                        io_fragment,RD_CL,RD_CL_IF_END,io_action,io_mode,io_unit,&
-&                        ver_is_gt_or_eq,io_serial_number,serial_number
+&                        ver_is_gt_or_eq,io_serial_number,serial_number,&
+&                        io_save_to_try_again,io_restore_to_try_again
  implicit none
  type(X_t)   :: X
  type(w_samp):: Xw
@@ -47,11 +48,6 @@
  real(SP)            ::Wd_disk(2)
  real(SP),allocatable::X_disk(:,:,:),W_disk(:,:),RL_vecs_disk(:,:)
  !
- !Integers for alternative PATH search
- !
- integer             :: io_unit_save,io_action_save,io_mode_save,io_sec_save(10),&
-&                       io_com_save
- !
  ! I assume that he RL ordering used to build X is not different
  ! from the one in DB1
  !
@@ -62,23 +58,14 @@
  if (X%whoami==3) db_desc='em1d'
  if (X%whoami==4) db_desc='pp'
  !
- io_unit_save=io_unit(ID)
- io_action_save=io_action(ID)
- io_mode_save=io_mode(ID)
- io_sec_save=io_sec(ID,:)
- io_com_save=io_com(ID)
- !
+ call io_save_to_try_again(ID)
  ioX=io_connect(desc=trim(db_desc),type=2,ID=ID) 
  !
  ! The em1s DB is searched in the SAVE folder when 
  ! it is not found in the JOBNAME folder
  !
- if (read_is_on(ID).and.X%whoami==2.and.ioX/=0) then
-   io_unit(ID)=io_unit_save 
-   io_action(ID)=io_action_save 
-   io_mode(ID)=io_mode_save 
-   io_sec(ID,:)=io_sec_save 
-   io_com(ID)=io_com_save 
+ if (read_is_on(ID).and.ioX/=0) then
+   call io_restore_to_try_again(ID)
    ioX=io_connect(desc=trim(db_desc),type=1,ID=ID) 
  endif
  if (ioX/=0) goto 1

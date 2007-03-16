@@ -20,14 +20,10 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  integer function ioXXVXC(ID)
-!============================
+ !
  use pars,           ONLY:SP
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts
-#if defined PJ_SPIN 
- use electrons,      ONLY:n_met_bands,n_spin
-#else
- use electrons,      ONLY:n_met_bands
-#endif
+ use electrons,      ONLY:n_met_bands,n_sp_pol
  use QP_m,           ONLY:QP_Sx,QP_ng_Sx,QP_nb,QP_nk,QP_Vxc,QP_n_states,&
 &                         QP_Sx_low_band,QP_table,QP_state,QP_xc_FUNCTIONAL
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
@@ -35,26 +31,25 @@
 &                         write_is_on,io_mode,DUMP
  implicit none
  integer :: ID
-!ws
-#if defined PJ_SPIN
- integer           :: QP_n_states_disk,bands(2),i1,i2,i_found,QP_state_disk(2+n_spin)
-#else
- integer           :: QP_n_states_disk,bands(2),i1,i2,QP_state_disk(3),i_found
-#endif
+ !
+ ! Work Space
+ !
+ integer           :: QP_state_disk(2+n_sp_pol)
+ integer           :: QP_n_states_disk,bands(2),i1,i2,i_found,var_sz
  real(SP)          :: sx(2),vxc(2)
-
+ !
  ioXXVXC=io_connect(desc="xxvxc",type=2,ID=ID)
  if (ioXXVXC/=0) goto 1
-
+ !
  bands=(/QP_Sx_low_band,n_met_bands/)
-
+ !
  if (any((/io_sec(ID,:)==1/))) then
-
+   !
    ioXXVXC=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.)
    if (ioXXVXC/=0) goto 1
-
+   !
    call io_elemental(ID,VAR="PARS",VAR_SZ=8,MENU=0)
-
+   !
    call io_elemental(ID,I0=QP_nb,CHECK=.true.,OP=(/"<="/))
    call io_elemental(ID,I0=QP_nk,CHECK=.true.,OP=(/"<="/))
    call io_elemental(ID,I0=QP_n_states,DB_I0=QP_n_states_disk,&
@@ -68,19 +63,19 @@
    call io_elemental(ID,I0=RIM_n_rand_pts,&
 &       VAR=' RIM random points               :',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-
-! xc Functional
-!
+   !
+   ! xc Functional
+   !
    call io_elemental(ID,VAR='XC_FUNCTIONAL',CH0="",VAR_SZ=1,MENU=0)
    call io_elemental(ID,CH0=QP_xc_FUNCTIONAL,&
 &       VAR=' xc Functional                   :',CHECK=.true.,OP=(/"=="/))
-
+   !
    call io_elemental(ID,VAR="",VAR_SZ=0)
    ioXXVXC=io_status(ID)
    if (ioXXVXC/=0) goto 1
-
+   !
  endif
-
+ !
  i_found=0
  if (any((/io_sec(ID,:)==2/))) then
    if (io_mode(ID)==DUMP) then
@@ -88,12 +83,9 @@
      allocate(QP_state(Qp_nb,QP_nk))
      QP_state=.false.
    endif
-!  
-#if defined PJ_SPIN
-   call io_bulk(ID,VAR="Sx_Vxc",VAR_SZ=(/(6+n_spin)*QP_n_states_disk/))
-#else
-   call io_bulk(ID,VAR="Sx_Vxc",VAR_SZ=(/7*QP_n_states_disk/))
-#endif
+   !  
+   var_sz=(6+n_sp_pol)*QP_n_states_disk
+   call io_bulk(ID,VAR="Sx_Vxc",VAR_SZ=(/var_sz/))
    do i1=1,QP_n_states_disk
      if (write_is_on(ID)) then
        QP_state_disk=QP_table(i1,:)
@@ -118,13 +110,13 @@
        endif
      endif
    enddo
-
+   !
    if (read_is_on(ID).and.i_found/=QP_n_states) io_status(ID)=-1
    ioXXVXC=io_status(ID)
    if (ioXXVXC/=0) goto 1
-
+   !
  endif
-
+ !
 1 call io_disconnect(ID=ID)
-
+ !
  end function

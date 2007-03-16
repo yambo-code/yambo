@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine spp_init(instr,lnstr,FINALIZE)
- !----------------------------------------
+ !
  use pars,           ONLY:HA2THZ
  use it_m,           ONLY:rstatus,initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
@@ -96,8 +96,8 @@
    !
    ! K analyze
    !
-   Kcoo_in="iku"
-   Kcoo_out="rlu"
+   coo_in="iku"
+   coo_out="rlu"
    Kgw_1=0.
 !  qlong= (/0.,0.,0./)
    qlong= 0.0_SP
@@ -140,8 +140,8 @@
  lexcwf=rstatus(2)/=0
  lbzrim=rstatus(3)/=0
  !
- if (lkanalyze) call initactivate(1,"KcooIn KcooOut GWKpts KShift1 KShift2 KShift3")
- if (lbzrim) call initactivate(1,"BZ_RIM_path Srch_G_sh BZ_RIM_Nk KcooOut")
+ if (lkanalyze) call initactivate(1,"cooIn cooOut GWKpts Qpts KShift1 KShift2 KShift3")
+ if (lbzrim) call initactivate(1,"BZ_RIM_path Srch_G_sh BZ_RIM_Nk cooOut")
  if (lexcwf) call initactivate(1,"Action Max_Energy Order State Window Cells &
 &                              Hole Dimension Direction Format")
 #if defined SPP_PJ_PH

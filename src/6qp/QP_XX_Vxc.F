@@ -197,6 +197,8 @@
  sx_fmt =trim( gen_fmt( r_v= reshape(real(QP_Sx)*HARTREE,(/QP_n_states/)) ) )
  vxc_fmt=trim( gen_fmt( r_v= reshape(real(QP_Vxc)*HARTREE,(/QP_n_states/)) ) )
  !
+ fmt_='(a,2'//trim(sx_fmt)//',a,2'//trim(vxc_fmt)//')'
+ !
  do i1=1,QP_n_states
    !
    ib=QP_table(i1,1)
@@ -213,14 +215,15 @@
    if (n_sp_pol==2.and.QP_table(i1,4)==2) ch_spin='(dn)'
    !
 #endif
+   ! 
+   sx_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|S_x|'//trim(intc(ib))&
+&     //trim(ch_spin)//'> ='
+   vxc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|V_xc|'//trim(intc(ib))&
+&     //trim(ch_spin)//'> ='
    !
-   fmt_='(a,2'//trim(sx_fmt)//',a,2'//trim(vxc_fmt)//')'
-   !
-   write (ch,trim(fmt_)) &
-&     '<'//trim(intc(ib))//trim(ch_spin)//'|S_x|'//trim(intc(ib))&
-&     //trim(ch_spin)//'> =', real(QP_Sx(i1)*HARTREE),aimag(QP_Sx(i1)*HARTREE),&
-&     ' <'//trim(intc(ib))//trim(ch_spin)//'|V_xc|'//trim(intc(ib))&
-&     //trim(ch_spin)//'> =', real(QP_Vxc(i1)*HARTREE),aimag(QP_Vxc(i1)*HARTREE)
+   write (ch,trim(fmt_)) trim(sx_fmt),real(QP_Sx(i1)*HARTREE),&
+&    aimag(QP_Sx(i1)*HARTREE),trim(vxc_fmt), real(QP_Vxc(i1)*HARTREE),&
+&    aimag(QP_Vxc(i1)*HARTREE)
    !
    if (i1/=QP_n_states) call msg('r',trim(ch))
    if (i1==QP_n_states) call msg('rn',trim(ch))

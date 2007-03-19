@@ -287,10 +287,12 @@
          !
          if (energies) then
            !
-           write (ch1,trim(fmt_)) &
-&            trim(ch_spin)//' B='//trim(intc(ib))//' Eo=',r_numbers(1),&
+           ch1=trim(ch_spin)//' B='//trim(intc(ib))//' Eo='
+           write (ch2,trim(fmt_)) trim(ch1),r_numbers(1),&
 &            ' E=',r_numbers(2),' E-Eo=',r_numbers(3),' Z=',r_numbers(4),&
 &            ' So=',r_numbers(5),' xx=',r_numbers(6),' Vxc=',r_numbers(7)
+           !
+           ch1=ch2
            !
            if (QP_dSc_steps>2) then
              dscp=abs(QP_dSc(i1,2)-QP_dSc(i1,1))/abs(QP_dSc(i1,1))
@@ -300,9 +302,11 @@
            !
          else if (widths) then
            !
-           write (ch1,trim(fmt_)) &
-&            trim(ch_spin)//' B='//trim(intc(ib))//' Eo=',r_numbers(1),&
+           ch1=trim(ch_spin)//' B='//trim(intc(ib))//' Eo='
+           write (ch2,trim(fmt_)) trim(ch1),r_numbers(1),&
 &            'Z=',r_numbers(2),' Gm=',r_numbers(3),' Gf=',r_numbers(4)
+           !
+           ch1=ch2
            !
          endif
          !

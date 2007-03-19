@@ -1,3 +1,39 @@
+2007-03-16 12:15:22 r106 Andrea Marini <marini@roma2.infn.it>
+
+	DFT_Vxc for n_spin=1 in SPIN PJ
+
+2007-03-16 11:21:12 r105 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.8_16-03-07
+
+	*  3.0.8_16-03-07 configure spp/mod_SPP.F spp/spp_i.F spp/k_analyze.F spp/elph_eliashberg.F spp/BZ_RIM.F spp/spp_init_load.F spp/spp_init.F spp/elph_pw_dbs.F include/version.inc a2s/a2s_db1.F config/Makefile.in config/configure.ac 2wf_and_fft/scatter_Bamp.F 2wf_and_fft/SpaceInvTest.F 0modules/std_presets.F 0modules/mod_stderr.F 0modules/mod_BS.F 0modules/mod_IO.F 0modules/mod_xc_functionals.F 0modules/mod_ELPH.F 2io/ioBS.F 2io/ioBS_diago.F 2io/ioX.F 2io/ioXXVXC.F 2io/io_header.F 2io/ioELPH.F 1xc/.objects 1xc/xc_lda_driver.F 1xc/el_magnetization.F 5X/X_delta_part.F 5X/X_os.F 5X/O_driver.F 5X/X_Gf.F 5X/X_ehg.F 4it/init_load.F 4it/init.F 7bse/K_Haydock.F 7bse/K_exchange.F 7bse/K_scattering.F 7bse/K_driver.F 7bse/K_diagonalization.F 7bse/K_eh_setup.F 7bse/K_solvers.F 7bse/K.F 6qp/QP_driver.F 6qp/DFT_Vxc.F 6qp/QP_XX_Vxc.F 6qp/QP_ppa.F 6qp/QP_xxvxc.F 6qp/.objects 6qp/QP_of.F 6qp/QP_raxis.F 7acfdt/acfdt_tot_energy.F 1common/extend_occupations.F 1common/QP_state_table_setup.F 3kop/k_ibz2bz.F 3kop/bz_samp_indexes.F 5elph/QP_elph.F ChangeLog 3.0.7_01-03-07 driver/self_driver.F driver/driver.c
+
+	Bugs:
+	- Wrong expansion of response function X in the BZ when Time-Reversal (TR) was used
+	  without Spatial Inversion. This bug induced a 0.1 eV difference in the test
+	  done. Note that this bug affectes ONLY the cases where the TR is actually
+	  used to expand the k-points in the BZ. This does not happen in simple FCC/Cubic
+	  bulks.
+
+	Additions:
+	- Collinear spin BSE/Plasmon Pole GW/RPA. NON COLLINEAR SPIN STILL UNDER DEVELOPMENT.
+	  Several arrays (mod_BS.F mainly) now have an additional n_sp_pol dimension.
+	- SPIN polarizations/spinors in the DB headers.
+	- Warning in K.F to notify when the Exchange RL vectors are chnaged to
+	  respect the correlation FFT size.
+	- Started to implement a better use of -J <JOB_STRING> command line option. The idea is
+	  to write in the <JOB_STRING> folder but to read from SAVE if the DB with
+	  the correct properties is found there.
+
+	Changes:
+	- Several subroutines have been "restyled"
+	- ElPH project upodated to handle random q-point grids. Several
+	  additions and changes.
+	- Old QP_xxvxc.F splitted in QP_XX_Vxc.F and DFT_Vxc.F to better handle
+	  spin resolved systems.
+
+	Patch sent by: Andrea & Fabrizio/Maurizia (SPIN)
+
 2007-03-02 14:33:12 r104 Andrea Marini <marini@roma2.infn.it>
 
 	V 3.0.7_01-03-07

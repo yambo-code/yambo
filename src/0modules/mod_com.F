@@ -38,7 +38,7 @@
    character(schlen) :: secnm
 ! 
 !  Output Files/Report File
-   integer,parameter  :: nofs=20,max_open_ofs=10
+   integer,parameter  :: nofs=100,max_open_ofs=100
    character(lchlen)  :: of(nofs),opened_of(max_open_ofs)
    integer            :: of_unit(max_open_ofs)
    logical            :: write_to_of,write_to_report

@@ -27,7 +27,7 @@
  !
  use pars,          ONLY:SP,DP,schlen,HARTREE,HA2THZ
  use frequency,     ONLY:w_samp,W_reset
- use electrons,     ONLY:levels
+ use electrons,     ONLY:levels,spin_occ
  use timing,        ONLY:live_timing
  use com,           ONLY:msg,error
  use drivers,       ONLY:Finite_Tel,l_el_corr
@@ -60,7 +60,8 @@
  integer          ::io_err,ID,iv4(4),nq_to_loop
  integer, external::ioELPH,QP_state_extract
  character(schlen)::ch
- real(SP)         ::q_weight,ph_energy
+ real(SP)         ::q_weight,ph_E,delta_E,delta_E_at_gamma,occupation_factor,&
+&                   E_k_plus_q_at_gamma(elph_nb,k%nbz)
  complex(SP)      ::DP_corr
  real(SP),allocatable :: g_sq_F_res(:,:,:,:)
  !
@@ -159,7 +160,10 @@
      ! send a screen message about the allocated memory that can interferee
      ! with the live_timing hashes
      !
-     if (iq==1) call live_timing('El-Ph Sc [1]',px%stps(myid+1)*QP_n_states)
+     if (iq==1) then
+       call live_timing('El-Ph Sc [1]',px%stps(myid+1)*QP_n_states)
+       if (.not.elph_use_q_grid) E_k_plus_q_at_gamma(:,:)=E_k_plus_q(:,:,1)
+     endif
      !
    endif
    !
@@ -195,32 +199,51 @@
        !
        if (.not.px%i2p(iqbz,ob)) cycle
        !
+       if (elph_use_q_grid) then
+         delta_E=en%E(ib,ik,1)-en%E(ob,ok,1)
+         delta_E_at_gamma=en%E(ib,ik,1)-en%E(ob,ik,1)
+         occupation_factor=(spin_occ-en%f(ob,ok,1))/spin_occ
+       else
+         delta_E=en%E(ib,ik,1)-E_k_plus_q(ob,ikbz,1)
+         delta_E_at_gamma=en%E(ib,ik,1)-E_k_plus_q_at_gamma(ob,ikbz)
+         occupation_factor=(spin_occ-f_k_plus_q(ob,ikbz,1))/spin_occ
+       endif
+       !
        do il=1,ph_modes
          !
          ! Skip Acoustic modes @ Gamma
          !
          if (iq==1.and.il<=3) cycle
          !
-         ph_energy=sqrt(abs(ph_freqs_sq(iq,il)))
+         ph_E=sqrt(abs(ph_freqs_sq(iq,il)))
+         !
+         ! Correction to the Fan-DW term (not in Cardona-Allen paper, possibly
+         ! important for metals).
+         !
+         g_sq_F_res(iqp,iq,il,2)= g_sq_F_res(iqp,iq,il,2)+&
+&                  2.*conjg(elph_gkkp(ikbz,il,ob,ib))*elph_gkkp(ikbz,il,ob,ib)*&
+&                  ph_E*occupation_factor/(delta_E**2.-ph_E**2.)*q_weight/2./ph_E
+         !
          !
          ! Cardona-Allen formulation
          !---------------------------
          !
+         !
+         ! The Gf is and odd function of E-E'. So it should integrate
+         ! to zero for E\simE'. This defines the PH_null_E_rgn treshold
+         !
+         if (abs(delta_E)<PH_null_E_rgn) cycle
+         !
          ! Fan Term
          !
          g_sq_F_res(iqp,iq,il,1)= g_sq_F_res(iqp,iq,il,1)+&
-&                  conjg(elph_gkkp(ikbz,il,ob,ib))*elph_gkkp(ikbz,il,ob,ib)*&
-&                  Gf_real(ib,ik,ikbz,ob,ok,okbz,ph_energy,1)*q_weight/2./ph_energy
-         !
-         g_sq_F_res(iqp,iq,il,2)= g_sq_F_res(iqp,iq,il,2)+&
-&                  conjg(elph_gkkp(ikbz,il,ob,ib))*elph_gkkp(ikbz,il,ob,ib)*&
-&                  Gf_real(ib,ik,ikbz,ob,ok,okbz,ph_energy,2)*q_weight/2./ph_energy
+&                  2.*conjg(elph_gkkp(ikbz,il,ob,ib))*elph_gkkp(ikbz,il,ob,ib)*&
+&                  delta_E/(delta_E**2.-ph_E**2.)*q_weight/2./ph_E
          !
          ! Debye Waller Term
          !
          g_sq_F_res(iqp,iq,il,1)= g_sq_F_res(iqp,iq,il,1)-1./2.*&
-&                  elph_DW(ikbz,il,ob,ib)*Gf_real(ib,ik,ikbz,ob,ik,ikbz,0.,1)*&
-&                  q_weight/ph_energy
+&                  2.*elph_DW(ikbz,il,ib,ob)/delta_E_at_gamma*q_weight/2./ph_E
          !
        enddo
        !
@@ -254,36 +277,6 @@
  deallocate(g_sq_F_res)
  !
  contains
-   !
-   pure function Gf_real(i_b,ik_ibz,ik_bz,o_b,ok_ibz,ok_bz,ph_E,i_typ)
-     !
-     implicit none
-     real(SP)            ::Gf_real
-     real(SP),intent(in) ::ph_E
-     integer, intent(in) ::i_b,ik_ibz,ik_bz,o_b,ok_ibz,ok_bz,i_typ
-     !
-     ! Work Space
-     !
-     integer      ::i_rand,ok_rand
-     real(SP)     ::delta_E,occupation_factor
-     !
-     Gf_real=0._SP
-     !
-     if (elph_use_q_grid)      delta_E=en%E(i_b,ik_ibz,1)-en%E(o_b,ok_ibz,1)
-     if (elph_use_q_grid)      occupation_factor=(2.-en%f(o_b,ok_ibz,1))
-     if (.not.elph_use_q_grid) delta_E=en%E(i_b,ik_ibz,1)-E_k_plus_q(o_b,ik_bz,1)
-     if (.not.elph_use_q_grid) occupation_factor=(2.-f_k_plus_q(o_b,ik_bz,1))/2.
-     if (i_typ==1) Gf_real=delta_E/(delta_E**2.-ph_E**2.)
-     !
-     ! The type 1 Gf is and odd function of E-E'. So it should integrate
-     ! to zero for E\simE'. This defines the PH_null_E_rgn treshold
-     !
-     if (i_typ==1.and.abs(delta_E)<PH_null_E_rgn) Gf_real=0.
-     if (i_typ==2) Gf_real=ph_E*occupation_factor/(delta_E**2.-ph_E**2.)
-     !
-     return
-     !
-   end function
    !
    subroutine Cardona_Allen_report()
      !
@@ -324,7 +317,7 @@
            !
            ! Integrate g^2 F function (QP correction)
            ! 
-           DP_corr=DP_corr+g_sq_F_res(iqp,iq,il,1)*(bose_f(ph_freq)+1.)+g_sq_F_res(iqp,iq,il,2)
+           DP_corr=DP_corr+g_sq_F_res(iqp,iq,il,1)*(bose_f(ph_freq)+1.)/2.+g_sq_F_res(iqp,iq,il,2)
            !
            ! g^2 F function
            !

@@ -19,25 +19,29 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine secant(x1,f1,x2,f2,ires,acc)
-!=======================================
+ integer function secant(x1,f1,x2,f2,acc)
+ !
  use pars, ONLY:SP
+ !
  implicit none
- integer      :: ires
  real(SP)     :: f1,f2,x1,x2,acc
-!ws
+ !
+ ! Work Space
+ !
  real(SP):: Dx
- ires=0
- if (abs(f1)<=acc) ires=-1
- if (abs(f2)<=acc) ires=-2
+ !
+ secant=0
+ if (abs(f1)<=acc) secant=-1
+ if (abs(f2)<=acc) secant=-2
  if (abs(f1)<=acc.or.abs(f2)<=acc) return
  if (abs(f1).lt.abs(f2)) then
-   ires=2
+   secant=2
    Dx=-f2*(x1-x2)/(f1-f2)
    x2=x2+Dx
  else if (abs(f1).gt.abs(f2)) then
-   ires=1
+   secant=1
    Dx=-f1*(x1-x2)/(f1-f2)
    x1=x1+Dx
  endif
- end subroutine
+ !
+ end function

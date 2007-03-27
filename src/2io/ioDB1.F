@@ -25,7 +25,7 @@
  use memory_m,         ONLY:mem_est
  use com,              ONLY:code_version
  use electrons,        ONLY:levels,default_nel,n_spin,n_bands,nel,n_sp_pol,&
-&                           n_spinor,spin_is_collinear
+&                           n_spinor
  use D_lattice,        ONLY:a, alat, nsym, i_time_rev, default_Tel, dl_sop, &
 &                           Tel, n_atoms_max,n_atom_species,n_atoms,atom_pos, &
 &                           znucl
@@ -176,8 +176,6 @@
      ng_closed=ng_vec
      if (.not.ver_is_gt_or_eq(ID,(/3,0,3/))) wf_ng=wf_ncx
      !
-     spin_is_collinear=n_sp_pol==2
-     !
    endif
    !
    ioDB1=io_status(ID)
@@ -189,7 +187,7 @@
  !
  if (read_is_on(ID)) then
    ! 
-   allocate(E%E(E%nb,E%nk,n_spin),E%f(E%nb,E%nk,n_spin),&
+   allocate(E%E(E%nb,E%nk,n_sp_pol),E%f(E%nb,E%nk,n_sp_pol),&
 &           E%W(E%nb,E%nk),E%Z(E%nb,E%nk))
    call mem_est("E-E E-f E-W E-Z",&
 &               (/size(E%E),size(E%f),size(E%W),size(E%Z)/),&

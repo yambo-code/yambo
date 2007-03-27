@@ -26,10 +26,10 @@
  use com,            ONLY:msg
  use memory_m,       ONLY:mem_est
  use stderr,         ONLY:string_remove
- use electrons,      ONLY:levels,E_duplicate,E_reset,n_spin
+ use electrons,      ONLY:levels,E_duplicate,E_reset,n_sp_pol
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t
- use BS,             ONLY:BS_bands,BS_q,BS_blk_dim,BS_eh_table,BS_eh_E,&
+ use BS,             ONLY:BS_bands,BS_q,BS_blk_dim,BS_eh_table,BS_eh_E,BS_eh_f,&
 &                         BS_n_g_exch,BSS_n_freqs,BSS_er,BSS_dr,&
 &                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,&
@@ -137,7 +137,7 @@
    ! If the kernel contains QP corrections I have to equally correct Xen
    !
    if (associated(Ken%qp_done)) then
-     allocate(Xen%qp_done(Xen%nb,Xen%nk),Xen%Eo(Xen%nb,Xen%nk,n_spin))
+     allocate(Xen%qp_done(Xen%nb,Xen%nk),Xen%Eo(Xen%nb,Xen%nk,n_sp_pol))
      call mem_est("E-qp_done E-Eo",(/size(Xen%qp_done),size(Xen%Eo)/),(/IP,SP/))
      Xen%qp_done=Ken%qp_done
      Xen%Eo=Xen%E
@@ -152,7 +152,7 @@
  !
  ! CLEAN
  !
- deallocate(BS_blk_dim,BS_eh_table,BS_eh_E)
- call mem_est("BS_blk_dim BS_eh_table BS_eh_E")
+ deallocate(BS_blk_dim,BS_eh_table,BS_eh_E,BS_eh_f)
+ call mem_est("BS_blk_dim BS_eh_table BS_eh_E BS_eh_f")
  !
  end subroutine

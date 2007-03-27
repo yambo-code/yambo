@@ -29,7 +29,7 @@
  use pars,          ONLY:SP,lchlen,HARTREE,IP
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
- use electrons,     ONLY:levels,n_spin
+ use electrons,     ONLY:levels,n_sp_pol
  use QP_CTL,        ONLY:qp_fit_ctl
  use QP_m,          ONLY:QP_ctl_applied
  implicit none
@@ -67,7 +67,7 @@
 !Backup (only once)
 !------------------
  if (.not.associated(E%Eo)) then
-   allocate(E%Eo(E%nb,E%nk,n_spin))
+   allocate(E%Eo(E%nb,E%nk,n_sp_pol))
    call mem_est("E-Eo",(/size(E%Eo)/),(/SP/))
    E%Eo=E%E
  endif

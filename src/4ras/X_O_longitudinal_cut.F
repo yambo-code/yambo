@@ -23,7 +23,7 @@
 !====================================
    use pars
    use com,                     ONLY : msg, inpath, msg, error, warning
-    use functions,       only : intc
+    use stderr,                 only : intc
    use timing,                  ONLY : live_timing
    use electrons,               ONLY : levels, n_spin, n_spinor, E_reset, E_duplicate
    use par_proc_m,              ONLY : pp_redux_wait, pp_indexes, myid, &
@@ -250,7 +250,7 @@
   end subroutine reset_DB1
 
   subroutine long_grid_setup(ifail)
-    use functions,       only : intc
+    use stderr,          only : intc
     use vec_operate,     only : v_is_zero, v_norm, c2a
     use X_m,             only : q_long, q0mod ! Remove q0mod from here
     implicit none

@@ -33,12 +33,12 @@
  use pars,         ONLY:SP,IP
  use memory_m,     ONLY:mem_est
  use BS,           ONLY:BS_K_dim,O_v_state,O_c_state,BS_res_K_corr,&
-&                       O_n_v_states,O_n_c_states,BS_eh_E,BS_eh_en,&
+&                       O_n_v_states,O_n_c_states,BS_eh_E,BS_eh_f,BS_eh_en,&
 &                       BS_eh_table,BS_bands,BS_blk_dim
 #if defined PJ_SPIN 
- use electrons,    ONLY:filled_tresh,spin_occ
+ use electrons,    ONLY:filled_tresh
 #endif
- use electrons,    ONLY:levels,n_sp_pol
+ use electrons,    ONLY:levels,n_sp_pol,spin_occ
  use R_lattice,    ONLY:qindx_X,bz_samp
  !
  implicit none
@@ -50,7 +50,7 @@
  !
  integer :: Iic(BS_bands(2),n_sp_pol),Iiv(BS_bands(2),n_sp_pol)
  integer :: ikbz,iv,ic,ik,ikp,table_dim,isp
- real(SP):: E_eh
+ real(SP):: E_eh,f_eh
  !
  do while(.TRUE.) 
    !
@@ -70,8 +70,11 @@
          do isp=1,n_sp_pol
            !
            E_eh=Ken%E(ic,ik,isp)-Ken%E(iv,ikp,isp)
+           f_eh=(Ken%f(iv,ikp,isp)-Ken%f(ic,ik,isp))/spin_occ
            !
            if (E_eh<=0.) cycle
+           if (f_eh<epsilon(1._SP)) cycle
+           !
            if (any((/E_eh<BS_eh_en(1).and.BS_eh_en(1)>0.,&
 &                    E_eh>BS_eh_en(2).and.BS_eh_en(2)>0./))) cycle
            !
@@ -87,7 +90,8 @@
 #else
            if (allocated(BS_eh_table)) BS_eh_table(BS_K_dim,:)=(/ikbz,iv,ic/)
 #endif
-           if (allocated(BS_eh_E))     BS_eh_E(BS_K_dim)=E_eh
+           if (allocated(BS_eh_E)) BS_eh_E(BS_K_dim)=E_eh
+           if (allocated(BS_eh_f)) BS_eh_f(BS_K_dim)=f_eh
            Iiv(iv,isp)=1
            Iic(ic,isp)=1
          enddo
@@ -122,8 +126,9 @@
 #if defined PJ_SPIN
    table_dim=4
 #endif
-   allocate(BS_eh_table(BS_K_dim,table_dim),BS_eh_E(BS_K_dim))
-   call mem_est("BS_eh_table BS_eh_E",(/table_dim*BS_K_dim,BS_K_dim/),(/IP,SP/))
+   allocate(BS_eh_table(BS_K_dim,table_dim),BS_eh_E(BS_K_dim),BS_eh_f(BS_K_dim))
+   call mem_est("BS_eh_table BS_eh_E BS_eh_f",&
+&               (/table_dim*BS_K_dim,BS_K_dim,BS_K_dim/),(/IP,SP,SP/))
    !
    if (.not.BS_res_K_corr) cycle
    allocate(O_v_state(Xk%nbz,maxval(O_n_v_states),n_sp_pol),&

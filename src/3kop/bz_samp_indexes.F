@@ -145,6 +145,7 @@
    else
      q%nibz=nqibz
      allocate(q%pt(q%nibz,3))
+     if (impose_minus_q) q_pt=-q_pt
      q%pt=q_pt
      call msg('rsn','[RL indx] User defined Q-grid.')
      user_defined_qpts=.true.

@@ -179,7 +179,10 @@
  n_met_bands=en%nbm
  n_full_bands=en%nbf
  !
+ ! K points report
+ !
  call msg('rn','X BZ K-points :',Xk%nbz)
+ !
  do i1=1,k%nibz
    ch(3)=gen_fmt(r_v=k%pt(i1,:))
    ch(4)=gen_fmt((/wf_nc_k(i1)/))

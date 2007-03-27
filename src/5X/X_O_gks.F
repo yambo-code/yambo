@@ -28,7 +28,7 @@
 ! use par_indexes_m, ONLY:par_indexes
  use X_m,            ONLY:X_q0grad,X_alloc,X_t
  use R_lattice,      ONLY:bz_samp
- use electrons,      ONLY:levels,n_spin
+ use electrons,      ONLY:levels,n_sp_pol
  use DFT,            ONLY:igks
  implicit none
  type(bz_samp), intent(in)    :: Xk
@@ -49,14 +49,14 @@
 !
  idum=shape(X_q0grad)
  bn_aux = idum(2)
- allocate(X_q0grad_aux(3,bn_aux,bn_aux,Xk%nibz,n_spin))
+ allocate(X_q0grad_aux(3,bn_aux,bn_aux,Xk%nibz,n_sp_pol))
  X_q0grad_aux = X_q0grad
  call X_alloc('OptGrad')
  call X_alloc('OptGrad',(/3,X%ib(2),Xen%nbm,Xk%nibz/))  
  X_q0grad=(0.,0.)
  call read_ldacoeff()
  bn_min = min(bn_lda,bn_aux)
- do i_spin = 1, n_spin
+ do i_spin = 1, n_sp_pol
  !  call par_indexes(px,(/Xk%nibz,Xen%nbm/),(/1,X%ib(1)/))
  !  call pp_redux_wait
  !  call live_timing('X_GKS',px%stps(myid+1))

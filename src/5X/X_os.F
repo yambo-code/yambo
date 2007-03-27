@@ -21,7 +21,6 @@
 !
  subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
- ! 
  ! Non interacting X with SPIN support.
  !
  use pars,          ONLY:SP,schlen,HARTREE
@@ -29,7 +28,7 @@
  use collision,     ONLY:ggwinfo,collision_reset
  use timing,        ONLY:live_timing
  use com,           ONLY:msg,gen_fmt
- use stderr,        ONLY:string_pack
+ use stderr,        ONLY:intc
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use frequency,     ONLY:w_samp,bg_npts,cg_pt,cg_npts
  use par_indexes_m, ONLY:par_indexes
@@ -58,12 +57,11 @@
  integer              :: i1,i2,ik,is,ikp,ikbz,ikpbz,i_spin,&
 &                        isp,iv,ic,g1,g2,g2max,iw,iwmax,isave(4)
  integer              :: n_poles
- real(SP)             :: minmax_ehe(2),drude_factor,ffac
+ real(SP)             :: minmax_ehe(2),drude_factor,eh_occ
  type(pp_indexes)     :: px
  type(ggwinfo)        :: isc
  complex(SP)             :: Gf(Xw%n(2)),drude_Gf(Xw%n(2))
  complex(SP),allocatable :: rhotw_save(:),XoR(:,:)
- character(schlen)    :: ch(2)
  integer,    external :: X_ehg
  complex(SP),external :: X_Gf,X_drude
 #if defined PJ_RAS
@@ -102,7 +100,7 @@
    !
    call msg('nrs','[X] Drude contribution @[ev]:',(/real(X%Wd),aimag(X%Wd)/)*HARTREE)
    !
-   ! drude_factor is the ffac factor calculated in the Xo loop
+   ! drude_factor is the eh_occ factor calculated in the Xo loop
    ! evaluated at the fermi state
    !
    drude_factor=Xen%f(Xen%bf,Xen%kf,Xen%sf)*&
@@ -116,10 +114,12 @@
  ! WF load
  !
 #if defined PJ_RAS
- if(.not.( iq==1 .and. X%ng==1 )) &
-&  call wf_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
+ if(.not.( iq==1 .and. X%ng==1 )) then
 #endif
- call wf_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
+   call wf_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
+#if defined PJ_RAS
+ endif
+#endif
  !
  if (iq/=iq_now) then
    !
@@ -170,9 +170,8 @@
  px%i1wts=bg_npts+Xw%n(2)
  call par_indexes(px,(/cg_npts/))
  !
- ch(1)=string_pack('(a,i3.3,',trim(gen_fmt(fr)),',1x,a,',trim(gen_fmt(fr)),')')
- write (ch(2),trim(ch(1))) 'Xo q',iq,fr(1),'-',fr(2)
- call live_timing(trim(ch(2)),px%stps(myid+1))
+ call live_timing(& 
+&   'Xo@q['//trim(intc(iq))//'] '//trim(intc(fr(1)))//'-'//trim(intc(fr(2))),px%stps(myid+1))
  !
  n_poles=0
  !
@@ -212,15 +211,15 @@
        isc%os = (/iv,ik,1,i_spin/)
        isc%qs = (/1,1,1/)
        !
-       ! Note the renormalization of the ffac=f(1-f) factor
+       ! Note the renormalization of the eh_occ=f(1-f) factor
        !
-       !     n_spin n_sp_pol n_spinor  spin_occ ffac
+       !     n_spin n_sp_pol n_spinor  spin_occ eh_occ
        !       1        1        1         2      2
        !       2        1        2         1      1
        !       2        2        1         1      1
        !
-       ffac = Xen%f(iv,ik,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))/&
-&             spin_occ/real(Xk%nbz)/DL_vol
+       eh_occ = Xen%f(iv,ik,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))/&
+&               spin_occ/real(Xk%nbz)/DL_vol
 #if defined PJ_RAS
        if(iq==1 .and. X%ng==1 ) isave=(/iv,ic,ik,i_spin/)
 #endif
@@ -246,14 +245,14 @@
        g2 = 1
   
 #if defined _DOUBLE
-       call zaxpy(g2,Gf(1)*ffac*iscut,conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
+       call zaxpy(g2,Gf(1)*eh_occ*iscut,conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
        do g2=2,X%ng
-         call zaxpy(g2,Gf(1)*ffac*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
+         call zaxpy(g2,Gf(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
        enddo
 #else
-       call caxpy(g2,Gf(1)*ffac*iscut,conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
+       call caxpy(g2,Gf(1)*eh_occ*iscut,conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
        do g2=2,X%ng
-         call caxpy(g2,Gf(1)*ffac*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
+         call caxpy(g2,Gf(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
        enddo
 #endif
        !-----------------------------------------------------------------------------
@@ -263,9 +262,9 @@
        !             ^^^^^
        do g2=1,X%ng
 #if defined _DOUBLE
-         call zaxpy(g2,Gf(1)*ffac*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
+         call zaxpy(g2,Gf(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
 #else
-         call caxpy(g2,Gf(1)*ffac*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
+         call caxpy(g2,Gf(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
 #endif
        enddo
 #endif
@@ -315,14 +314,14 @@
        isc%is=(/ic,ik,is,i_spin/)
        isc%os=(/iv,ikp,isp,i_spin/)
        isc%qs=(/qindx_X(iq,ikbz,2),iq,1/)
-       ffac=Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))/&
+       eh_occ=Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))/&
 &           spin_occ/real(Xk%nbz)/DL_vol
        call scatterBamp(isc)
        do g2=1,X%ng
 #if defined _DOUBLE
-         call zaxpy(g2,Gf(1)*ffac*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
+         call zaxpy(g2,Gf(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
 #else
-         call caxpy(g2,Gf(1)*ffac*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
+         call caxpy(g2,Gf(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
 #endif
        enddo
      enddo

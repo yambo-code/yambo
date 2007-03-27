@@ -30,7 +30,7 @@
  use pars,           ONLY:SP
  use com,            ONLY:warning
 #endif
- use electrons,      ONLY:levels,n_spin
+ use electrons,      ONLY:levels,n_sp_pol
  use par_proc_m,     ONLY:pp_redux_wait,master_node
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp
@@ -79,7 +79,7 @@
      auxpath = 'AUX/' 
      io_rld = ioDB1_reload(en,k,trim(auxpath))
      nb_aux = en%nb
-     allocate(Xen%Eo(Xen%nb,Xen%nk,n_spin))
+     allocate(Xen%Eo(Xen%nb,Xen%nk,n_sp_pol))
      call mem_est("Eo",(/size(Xen%Eo)/),(/SP/)) 
           Xen%Eo=en%E
      call X_alloc('OptGrad',(/3,nb_aux,nb_aux,Xk%nibz/))
@@ -155,7 +155,7 @@
    field_dir_rot = matmul( dl_sop(:,:,is), field_dir )
    do iv = X%ib(1), Xen%nbm
      do ic = Xen%nbf+1, X%ib(2)
-       do i_spin = 1, n_spin
+       do i_spin = 1, n_sp_pol
          !
          ! X_rhoq0 = i q . < v k | r | c k >
          !

@@ -25,7 +25,8 @@
  ! following the Allen-Cardona formulation (see for example 
  ! PRB 23, 1495 (1981) )
  !
- use pars,          ONLY:SP,DP,schlen,HARTREE,HA2THZ
+ use pars,          ONLY:SP,DP,schlen,HARTREE,HA2THZ,pi
+ use drivers,       ONLY:Finite_Tel
  use frequency,     ONLY:w_samp,W_reset
  use electrons,     ONLY:levels,spin_occ
  use timing,        ONLY:live_timing
@@ -35,6 +36,7 @@
  use par_indexes_m, ONLY:par_indexes
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END
+ use memory_m,      ONLY:mem_est
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,QP_solver,QP_dSc_steps,&
 &                        QP_dSc_delta
@@ -44,6 +46,7 @@
 &                        elph_gkkp_free,QP_PH_n_G_bands,max_ph_freq,elph_DW,&
 &                        PH_damping,elph_nq,E_k_plus_q,elph_use_q_grid,&
 &                        setup_k_plus_q_levels,f_k_plus_q,PH_null_E_rgn
+ use functions,     ONLY:Fermi_fnc_derivative
 !DEBUG >
  use parser_m, ONLY:parser
 !DEBUG <
@@ -54,16 +57,17 @@
  !
  ! WorkSpace  -- GPL_END --
  !
- integer          ::iq_db,iqbz,iq,iq_ref,iqs,ik,ok,ikbz,okbz,ib,ob,is,il,iqp,i2,iw
+ integer          ::iq_db,iqbz,iq,iq_ref,iqs,ik,ok,ikbz,okbz,ib,ob,is,il,iqp,i2,iw,&
+&                   time_order_sign
  type(w_samp)     ::Sc_W(qp%n_states)
  type(pp_indexes) ::px
  integer          ::io_err,ID,iv4(4),nq_to_loop
  integer, external::ioELPH,QP_state_extract
  character(schlen)::ch
- real(SP)         ::q_weight,ph_E,delta_E,delta_E_at_gamma,occupation_factor,&
-&                   E_k_plus_q_at_gamma(elph_nb,k%nbz)
- complex(SP)      ::DP_corr
- real(SP),allocatable :: g_sq_F_res(:,:,:,:)
+ real(SP)         ::q_weight,ph_E,delta_E,delta_E_at_gamma,one_minus_2f_occ,f_occ,&
+&                   E_k_plus_q_at_gamma(elph_nb,k%nbz),elph_gkkp_sq
+ real(SP),allocatable :: gsqF_fan(:,:,:),gsqF_dw(:,:,:),gsqF_ca_corr(:,:,:),&
+&                        gsqF_life_bose(:,:,:),gsqF_life_f(:,:,:)
  !
  ! Zeroing
  !
@@ -125,6 +129,9 @@
  !
  iq_ref=0
  !
+ time_order_sign=-1
+ if (Finite_Tel) time_order_sign=1
+ !
  nq_to_loop=q%nbz
  if (.not.elph_use_q_grid) nq_to_loop=elph_nq
 !DEBUG >
@@ -132,8 +139,20 @@
 !DEBUG<
  q_weight=1./real(nq_to_loop)
  !
- allocate(g_sq_F_res(QP_n_states,nq_to_loop,ph_modes,2))
- g_sq_F_res=0.
+ ! g^2F(w) residuals
+ !
+ allocate(gsqF_fan(QP_n_states,nq_to_loop,ph_modes))
+ allocate(gsqF_dw(QP_n_states,nq_to_loop,ph_modes))
+ allocate(gsqF_ca_corr(QP_n_states,nq_to_loop,ph_modes))
+ allocate(gsqF_life_bose(QP_n_states,nq_to_loop,ph_modes))
+ allocate(gsqF_life_f(QP_n_states,nq_to_loop,ph_modes))
+ gsqF_fan=0.
+ gsqF_dw=0.
+ gsqF_ca_corr=0.
+ gsqF_life_bose=0.
+ gsqF_life_f=0.
+ !
+ call mem_est('gsqF_residuals',(/5*size(gsqF_fan)/),(/SP/))
  !
  call par_indexes(px,(/nq_to_loop,QP_PH_n_G_bands/))
  call pp_redux_wait
@@ -192,8 +211,6 @@
        ikbz=ik_is_table(ik,sop_inv(iqs))
        !
      endif
-     !                 
-     DP_corr=cmplx(0.,0.,SP)
      !
      do ob=1,QP_PH_n_G_bands
        !
@@ -202,11 +219,13 @@
        if (elph_use_q_grid) then
          delta_E=en%E(ib,ik,1)-en%E(ob,ok,1)
          delta_E_at_gamma=en%E(ib,ik,1)-en%E(ob,ik,1)
-         occupation_factor=(spin_occ-en%f(ob,ok,1))/spin_occ
+         f_occ=en%f(ob,ok,1)/spin_occ
+         one_minus_2f_occ=(1.-2.*f_occ)
        else
          delta_E=en%E(ib,ik,1)-E_k_plus_q(ob,ikbz,1)
          delta_E_at_gamma=en%E(ib,ik,1)-E_k_plus_q_at_gamma(ob,ikbz)
-         occupation_factor=(spin_occ-f_k_plus_q(ob,ikbz,1))/spin_occ
+         f_occ=f_k_plus_q(ob,ikbz,1)/spin_occ
+         one_minus_2f_occ=(1.-2.*f_occ)
        endif
        !
        do il=1,ph_modes
@@ -216,33 +235,54 @@
          if (iq==1.and.il<=3) cycle
          !
          ph_E=sqrt(abs(ph_freqs_sq(iq,il)))
+         elph_gkkp_sq=conjg(elph_gkkp(ikbz,il,ob,ib))*elph_gkkp(ikbz,il,ob,ib)/2./ph_E
+         !
+         ! Lifetimes
+         !-----------
+         !
+         ! "Bose" Term
+         !
+         gsqF_life_bose(iqp,iq,il)= gsqF_life_bose(iqp,iq,il)+2.*pi*elph_gkkp_sq*q_weight*&
+&          ( Fermi_fnc_derivative(delta_E+ph_E,QP_G_damp) + &
+&            time_order_sign* Fermi_fnc_derivative(delta_E-ph_E,QP_G_damp) )
+         !
+         ! "f" Term
+         !
+         gsqF_life_f(iqp,iq,il)= gsqF_life_f(iqp,iq,il)+pi*elph_gkkp_sq*q_weight*&
+&          ( ( Fermi_fnc_derivative(delta_E+ph_E,QP_G_damp) - &
+&              time_order_sign* Fermi_fnc_derivative(delta_E-ph_E,QP_G_damp) )*f_occ-&
+&            Fermi_fnc_derivative(delta_E+ph_E,QP_G_damp) )
+         !
+         ! QP's energies
+         !--------------
+         !
+         ! Security cycle to avoid divergencies in the denominators
+         !
+         if (abs(delta_E/ph_E)-1.<0.01) cycle
          !
          ! Correction to the Fan-DW term (not in Cardona-Allen paper, possibly
          ! important for metals).
          !
-         g_sq_F_res(iqp,iq,il,2)= g_sq_F_res(iqp,iq,il,2)+&
-&                  2.*conjg(elph_gkkp(ikbz,il,ob,ib))*elph_gkkp(ikbz,il,ob,ib)*&
-&                  ph_E*occupation_factor/(delta_E**2.-ph_E**2.)*q_weight/2./ph_E
-         !
+         if (abs(delta_E)>PH_null_E_rgn) &
+&          gsqF_ca_corr(iqp,iq,il)= gsqF_ca_corr(iqp,iq,il)+elph_gkkp_sq*&
+&                  ph_E*one_minus_2f_occ/(delta_E**2.-ph_E**2.)*q_weight
          !
          ! Cardona-Allen formulation
-         !---------------------------
          !
-         !
-         ! The Gf is and odd function of E-E'. So it should integrate
+         ! The Energy term contributing to gsqF_fan/dw
+         ! is and odd function of E-E'. So it should integrate
          ! to zero for E\simE'. This defines the PH_null_E_rgn treshold
          !
-         if (abs(delta_E)<PH_null_E_rgn) cycle
+         ! (a) Fan Term
          !
-         ! Fan Term
+         if (abs(delta_E)>PH_null_E_rgn) &
+&          gsqF_fan(iqp,iq,il)=gsqF_fan(iqp,iq,il)+2.*elph_gkkp_sq*&
+&                  delta_E/(delta_E**2.-ph_E**2.)*q_weight
          !
-         g_sq_F_res(iqp,iq,il,1)= g_sq_F_res(iqp,iq,il,1)+&
-&                  2.*conjg(elph_gkkp(ikbz,il,ob,ib))*elph_gkkp(ikbz,il,ob,ib)*&
-&                  delta_E/(delta_E**2.-ph_E**2.)*q_weight/2./ph_E
+         ! (b) Debye Waller Term
          !
-         ! Debye Waller Term
-         !
-         g_sq_F_res(iqp,iq,il,1)= g_sq_F_res(iqp,iq,il,1)-1./2.*&
+         if (abs(delta_E_at_gamma)>PH_null_E_rgn) &
+&          gsqF_dw(iqp,iq,il)= gsqF_dw(iqp,iq,il)-1./2.*&
 &                  2.*elph_DW(ikbz,il,ib,ob)/delta_E_at_gamma*q_weight/2./ph_E
          !
        enddo
@@ -263,8 +303,11 @@
  ! All 2 All
  !
  call pp_redux_wait(QP_Sc)
- call pp_redux_wait(g_sq_F_res(:,:,:,1))
- call pp_redux_wait(g_sq_F_res(:,:,:,2))
+ call pp_redux_wait(gsqF_dw(:,:,:))
+ call pp_redux_wait(gsqF_fan(:,:,:))
+ call pp_redux_wait(gsqF_ca_corr(:,:,:))
+ call pp_redux_wait(gsqF_life_bose(:,:,:))
+ call pp_redux_wait(gsqF_life_f(:,:,:))
  !
  ! Cardona-Allen g^2 F function and its integrated value
  !
@@ -274,13 +317,14 @@
  !
  call elph_gkkp_free()
  call pp_indexes_reset(px)
- deallocate(g_sq_F_res)
+ deallocate(gsqF_dw,gsqF_fan,gsqF_ca_corr,gsqF_life_bose,gsqF_life_f)
+ call mem_est('gsqF_residuals')
  !
  contains
    !
    subroutine Cardona_Allen_report()
      !
-     use functions,  ONLY:Fermi_fnc_derivative,bose_f
+     use functions,  ONLY:bose_f
      use stderr,     ONLY:intc
      use com,        ONLY:msg,of_open_close
      !
@@ -288,6 +332,7 @@
      !
      real(SP)     ::g_sq_F(n_g_sq_freq),delta_E,ph_freq
      type(w_samp) ::g_sq_F_E
+     complex(DP)  ::DP_corr
      !
      call W_reset(g_sq_F_E)
      g_sq_F_E%n=n_g_sq_freq
@@ -299,7 +344,11 @@
      !
      do iq=1,nq_to_loop
        do il=1,ph_modes
-         call QP_states_simmetrize(g_sq_F_res(:,iq,il,1),en)
+         call QP_states_simmetrize(gsqF_fan(:,iq,il),en)
+         call QP_states_simmetrize(gsqF_dw(:,iq,il),en)
+         call QP_states_simmetrize(gsqF_ca_corr(:,iq,il),en)
+         call QP_states_simmetrize(gsqF_life_bose(:,iq,il),en)
+         call QP_states_simmetrize(gsqF_life_f(:,iq,il),en)
        enddo
      enddo
      !
@@ -308,16 +357,25 @@
      do iqp=1,QP_n_states  
        !
        g_sq_F=0.
-       DP_corr=0._DP
+       DP_corr=cmplx(0.,0.,DP)
        !
        do iq=1,nq_to_loop
          do il=1,ph_modes
            !
            ph_freq=sqrt(ph_freqs_sq(iq,il))
            !
+           ! QP lifetimes
+           !--------------
+           DP_corr=DP_corr+(0.,1.)*(gsqF_life_bose(iqp,iq,il)*(bose_f(ph_freq)+1.)/2.+&
+&                          gsqF_life_f(iqp,iq,il))
+           !
+           ! QP energies
+           !-------------
+           !
            ! Integrate g^2 F function (QP correction)
            ! 
-           DP_corr=DP_corr+g_sq_F_res(iqp,iq,il,1)*(bose_f(ph_freq)+1.)/2.+g_sq_F_res(iqp,iq,il,2)
+           DP_corr=DP_corr+(gsqF_fan(iqp,iq,il)+gsqF_dw(iqp,iq,il))*(bose_f(ph_freq)+1.)/2.+&
+&                          gsqF_ca_corr(iqp,iq,il)
            !
            ! g^2 F function
            !
@@ -327,7 +385,8 @@
              !
              delta_E=real(g_sq_F_E%p(iw))-ph_freq
              !
-             g_sq_F(iw)=g_sq_F(iw)+(g_sq_F_res(iqp,iq,il,1)+g_sq_F_res(iqp,iq,il,2))*&
+             g_sq_F(iw)=g_sq_F(iw)+&
+&                       (gsqF_fan(iqp,iq,il)+gsqF_dw(iqp,iq,il)+gsqF_ca_corr(iqp,iq,il))*&
 &                       Fermi_fnc_derivative(delta_E,aimag(g_sq_F_E%p(iw)))
              !
            enddo

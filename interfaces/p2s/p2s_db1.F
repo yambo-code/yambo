@@ -290,10 +290,9 @@
 
  call pw_eigenvalues(pwunit)
 
- allocate( en%E(en%nb,k%nibz,n_spin) )
+ allocate( en%E(en%nb,k%nibz,n_sp_pol) )
 ! PW energies in Ry
  en%E(:,:,1) = eig( 1:en%nb, 1:k%nibz )/2.0_DP
- if(n_spinor.eq.2) en%E(:,:,2) = en%E(:,:,1)
  call msg('l','done')
 
  call print_interface_dimensions(en,k)

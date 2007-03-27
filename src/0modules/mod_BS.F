@@ -51,6 +51,7 @@
   complex(SP), allocatable :: BS_mat(:,:)
   complex(SP), allocatable :: BS_cpl_mat(:,:)
   real(SP)   , allocatable :: BS_eh_E(:)
+  real(SP)   , allocatable :: BS_eh_f(:)
   !
   ! Oscillators
   !

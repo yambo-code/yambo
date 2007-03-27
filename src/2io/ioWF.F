@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  integer function ioWF(ID,wf)
-!============================
+ !
  use pars,             ONLY:SP,schlen
  use electrons,        ONLY:n_bands,n_spin
  use R_lattice,        ONLY:nkibz
@@ -31,41 +31,40 @@
  implicit none
  integer,       intent(in) :: ID
  real(SP),optional         :: wf(:,:,:,:)
-!
+ !
  integer :: ik
  character(schlen)         :: VAR_NAME
-
+ !
  ik=maxval(io_sec(ID,:))-1
-
+ !
  ioWF=io_connect(desc="wf",type=0,ID=ID)
  if (ioWF/=0) goto 1
-!
-! S/N
-!
+ !
+ ! S/N
+ !
  if (any((/io_sec(ID,:)==1/))) then
    ioWF=io_header(ID,IMPOSE_SN=.true.)
    if (ioWF/=0) goto 1
  endif
-
+ !
  if (ik==0) goto 1
-!
-! Manage RD_CL_IF_END
-!
+ !
+ ! Manage RD_CL_IF_END
+ !
  if (io_action(ID)==RD_CL_IF_END.and.ik==nkibz) io_action(ID)=RD_CL
-!
-! Fragmentation
-!---------------
-!
+ !
+ ! Fragmentation
+ !
  call io_fragment(ID,i_pointer=ik)
-
+ !
  write (VAR_NAME,'(a,i6.6)') 'WF_IK_RE_',ik
  call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=(/n_bands,wf_ncx,n_spin/))
  call io_bulk(ID,R3=wf(1,:,:,:))
-
+ !
  write (VAR_NAME,'(a,i6.6)') 'WF_IK_IM_',ik
  call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=(/n_bands,wf_ncx,n_spin/))
  call io_bulk(ID,R3=wf(2,:,:,:))
-
+ !
 1 call io_disconnect(ID=ID)
-
+ !
  end function ioWF

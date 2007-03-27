@@ -1,3 +1,15 @@
+2007-03-19 11:47:07 r107 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.8_16-03-07
+
+	*  0modules/mod_com.F 6qp/QP_driver.F 6qp/QP_XX_Vxc.F 5elph/QP_elph.F ChangeLog
+
+	Bugs:
+	- Use of intc function to create format characters was incompatible
+	  with pgi compilers.
+
+	Patch sent by: Andrea
+
 2007-03-16 12:15:22 r106 Andrea Marini <marini@roma2.infn.it>
 
 	DFT_Vxc for n_spin=1 in SPIN PJ

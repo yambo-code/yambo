@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine fermi_level(E,K,test_Tel,mode)
- !========================================
+ !
  !
  ! Mode = 0 
  !  Update the Fermi energy
@@ -39,7 +39,7 @@
  use electrons,     ONLY:levels,nel,n_sp_pol,spin_occ,filled_tresh,&
 &                        BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spinor,n_spin
  use R_lattice,     ONLY:bz_samp
- use com,           ONLY:msg,error,warning
+ use com,           ONLY:msg,error
  use vec_operate,   ONLY:sort
  use functions,     ONLY:Fermi_fnc
  implicit none
@@ -50,11 +50,13 @@
  !
  !Work Space
  !
- integer :: i1,i2,is,ib,ik,i_trials(3),ires,n_b_full_guess
- integer :: index(E%nk*E%nb*n_sp_pol,3),index_s(E%nk*E%nb*n_sp_pol)
- real(SP):: E_s(E%nk*E%nb*n_sp_pol)
- real(SP):: lnel(2),Ef(2),Efdist,neltresh
+ integer :: i1,i2,is,ib,ik,i_trials(2),n_b_full_guess,i_Ef(2),n_total_states
+ integer :: index(E%nk*E%nb*n_sp_pol,3),index_E_sorted(E%nk*E%nb*n_sp_pol)
+ real(SP):: E_sorted(E%nk*E%nb*n_sp_pol)
+ real(SP):: n_of_el_from_zero(2),Ef(2),Efdist
+ logical :: Fermi_is_converged
  real(SP),parameter :: Telstep=0.0001/HARTREE
+ real(SP),parameter :: nel_diff_zero=1.E-5
  !
  !     n_spin n_sp_pol n_spinor  spin_occ 
  !       1        1        1         2      
@@ -63,31 +65,23 @@
  !
  spin_occ=2.0_SP/real(n_spin)
  !
- ! All energies are stored in E_s...
+ ! All energies are stored in E_sorted...
  !
- neltresh=1.E-5
  i1=0
  do ik=1,E%nk
    do ib=1,E%nb
      do is=1,n_sp_pol
        i1=i1+1
        index(i1,:)=(/ib,ik,is/)
-       E_s(i1)=E%E(ib,ik,is)
+       E_sorted(i1)=E%E(ib,ik,is)
      enddo
    enddo
  enddo
+ n_total_states=E%nk*E%nb*n_sp_pol
  !
  ! ... and sorted
  !
- call sort(arrin=E_s,indx=index_s)
- !
- ! Start Loop
- ! 
- i_trials=1
- !
-1 continue
- !
- i_trials(1)=i_trials(1)+1 
+ call sort(arrin=E_sorted,indx=index_E_sorted)
  !
  ! First guess
  !
@@ -106,43 +100,59 @@
    n_b_full_guess=0
  endif
  !
- call ef2nel(test_Tel,Ef(1),lnel(1))
- call ef2nel(test_Tel,Ef(2),lnel(2))
+ ! Start Loop
+ ! 
+ i_trials=1
+ Fermi_is_converged=.false.
  !
- !Bracketing section: to find a lower and upper limit
- !to the Fermi level.
- !
- !Bracketing done when ires=0
- !
- call bracket(Ef(1),lnel(1),Ef(2),lnel(2),ires)
- do while (ires/=0)
-   call ef2nel(test_Tel,Ef(ires),lnel(ires))
-   call bracket(Ef(1),lnel(1),Ef(2),lnel(2),ires)
-   i_trials(2)=i_trials(2)+1
-   if (i_trials(2)>100) call error('Impossible to bracket the Fermi level')
- enddo 
- !
- E%Efermi(1)=(Ef(1)+Ef(2))/2.
- ires=1
- !
- i_trials(3)=1
- !
- do while (ires>0.and.i_trials(3)<=100)
-   call ef2nel(test_Tel,E%Efermi(1),lnel(1))
-   if (lnel(1)>neltresh) Ef(2)=E%Efermi(1)
-   if (lnel(1)<-neltresh) Ef(1)=E%Efermi(1)
-   if (abs(lnel(1))<=neltresh) then
-     ires=-1
-     exit
-   endif
-   E%Efermi(1)=(Ef(1)+Ef(2))/2.
-   i_trials(3)=i_trials(3)+1
- enddo
- !
- if (ires>0) then
+ do while (.not.Fermi_is_converged)
+   !
+   i_Ef=0
+   i_trials(1)=i_trials(1)+1 
+   !
+   do i1=1,n_total_states
+     call ef2nel(test_Tel,E_sorted(i1),n_of_el_from_zero(1))
+     if ( abs(n_of_el_from_zero(1)) < nel_diff_zero) then
+       E%Efermi(1)=E_sorted(i1)
+       Fermi_is_converged=.true.
+       exit
+     endif
+     if (n_of_el_from_zero(1)>0.and.i_Ef(1)==0) then
+       Ef(1)=E_sorted(i1-1)
+       i_Ef(1)=i1-1
+       Ef(2)=E_sorted(i1)
+       i_Ef(2)=i1
+     endif
+   enddo
+   !
+   if (Fermi_is_converged) exit
+   !
+   call ef2nel(test_Tel,Ef(1),n_of_el_from_zero(1))
+   call ef2nel(test_Tel,Ef(2),n_of_el_from_zero(2))
+   !
+   E%Efermi(1)=Ef(1)
+   if (n_of_el_from_zero(2)<-n_of_el_from_zero(1)) E%Efermi(1)=Ef(2)
+   !
+   i_trials(2)=1
+   do while (i_trials(2)<=100)
+     call ef2nel(test_Tel,E%Efermi(1),n_of_el_from_zero(1))
+     if (n_of_el_from_zero(1)<-nel_diff_zero) Ef(1)=E%Efermi(1)
+     if (n_of_el_from_zero(1)> nel_diff_zero) Ef(2)=E%Efermi(1)
+     if (abs(n_of_el_from_zero(1))<=nel_diff_zero) then
+       Fermi_is_converged=.true.
+       exit
+     endif
+     if (abs(Ef(1)-Ef(2))<1.E-8) exit
+     E%Efermi(1)=(Ef(1)+Ef(2))/2.
+     i_trials(2)=i_trials(2)+1
+   enddo
+   !
+   if (Fermi_is_converged) exit
+   !
    test_Tel=test_Tel+Telstep
-   if (i_trials(1)<=100) goto 1
- endif
+   if (i_trials(1)==100) call error('Impossible to converge the Fermi Level')
+   !
+ enddo
  !
  ! Mode = 0. Check only for the Fermi energy
  !
@@ -155,14 +165,13 @@
  !
  if (.not.associated(E%f)) allocate(E%f(E%nb,E%nk,n_spin))
  Efdist=1.E5
- do i1=1,E%nk*E%nb*n_sp_pol
-   ib=index( index_s(i1) , 1)
-   ik=index( index_s(i1) , 2)
-   is=index( index_s(i1) , 3)
-
-   E%f(ib,ik,is)=spin_occ*Fermi_fnc(E_s(i1)-E%Efermi(1),test_Tel)
-   if (n_spinor==2) E%f(ib,ik,2)=E%f(ib,ik,1)
-
+ do i1=1,n_total_states
+   ib=index( index_E_sorted(i1) , 1)
+   ik=index( index_E_sorted(i1) , 2)
+   is=index( index_E_sorted(i1) , 3)
+   !
+   E%f(ib,ik,is)=spin_occ*Fermi_fnc(E_sorted(i1)-E%Efermi(1),test_Tel)
+   !
    if (abs(E%E(ib,ik,is)-E%Efermi(1))<Efdist) then
      if ( E%f(ib,ik,is) < filled_tresh ) cycle
      if ( E%f(ib,ik,is)  ==   spin_occ ) cycle
@@ -171,7 +180,7 @@
      E%sf=is
      Efdist=abs(E%E(ib,ik,is)-E%Efermi(1))
    endif
-
+   !
  enddo
  E%E(:,:,:)=E%E(:,:,:)-E%Efermi(1)
  !
@@ -182,7 +191,6 @@
      do ib=1,BZ_RIM_nbands
        do is=1,n_sp_pol
          E%f_RIM(ib,ik,is)=spin_occ*Fermi_fnc(E%E_RIM(ib,ik,is),test_Tel)
-         if (n_spinor==2) E%f_RIM(ib,ik,2)=E%f_RIM(ib,ik,1)
        enddo
      enddo
    enddo
@@ -200,40 +208,39 @@
 &               (/E%Efermi(1)*HARTREE,test_Tel*HARTREE,test_Tel*Kelvin/))
  call fermi_msg(E,mode)
  if (E%nbf/=E%nbm) then
-   call msg('r','Electrons - <f_met>        :',(/lnel(1)+nel,&
+   call msg('r','Electrons - <f_met>        :',(/n_of_el_from_zero(1)+nel,&
 &               sum(E%f(E%nbf+1:E%nbm,:,:))/real(K%nibz*(E%nbm-E%nbf))/))
  endif
  !
  contains
    !
-   subroutine ef2nel(tTel,Ef,lnel)
-   !
-   implicit none
-   real(SP)::tTel,Ef,lnel
-   !
-   !Work Space
-   !
-   integer  :: i1,ik,ib 
-   real(DP) :: nel_acc
-   !
-   ! For some compilers (like PGI) the summed nel_acc
-   ! is different from nel even for insulators.
-   ! This problem is solved comparing nel_acc with nel_theo
-   ! simlarly summed. Note that nel_theo=nel for metals
-   !
-   real(DP) :: nel_theo
-   nel_acc=0.d0
-   nel_theo=0.d0
-   do i1=1,E%nk*E%nb*n_sp_pol
-     ib=index( index_s(i1) , 1)
-     ik=index( index_s(i1) , 2)
-     is=index( index_s(i1) , 3)
-     if (ib<=n_b_full_guess) nel_theo=nel_theo+spin_occ*K%weights(ik)
-     nel_acc=nel_acc+spin_occ*Fermi_fnc(E_s(i1)-Ef,tTel)*K%weights(ik)
-   enddo
-   if (n_b_full_guess==0) nel_theo=nel
-   lnel=nel_acc-nel_theo
+   subroutine ef2nel(tTel,Ef,N_of_el_diff)
+     !
+     implicit none
+     real(SP)::tTel,Ef,N_of_el_diff
+     !
+     !Work Space
+     !
+     integer  :: i1,ik,ib 
+     real(DP) :: nel_acc
+     !
+     ! For some compilers (like PGI) the summed nel_acc
+     ! is different from nel even for insulators.
+     ! This problem is solved comparing nel_acc with nel_theo
+     ! simlarly summed. Note that nel_theo=nel for metals
+     !
+     real(DP) :: nel_theo
+     nel_acc=0.d0
+     nel_theo=0.d0
+     do i1=1,n_total_states
+       ib=index( index_E_sorted(i1) , 1)
+       ik=index( index_E_sorted(i1) , 2)
+       is=index( index_E_sorted(i1) , 3)
+       if (ib<=n_b_full_guess) nel_theo=nel_theo+spin_occ*K%weights(ik)
+       nel_acc=nel_acc+spin_occ*Fermi_fnc(E_sorted(i1)-Ef,tTel)*K%weights(ik)
+     enddo
+     if (n_b_full_guess==0) nel_theo=nel
+     N_of_el_diff=nel_acc-nel_theo
    end subroutine
    !
  end subroutine
-

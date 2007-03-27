@@ -56,7 +56,6 @@
  character(schlen):: ch,of_name(4)
  logical          :: lnoe0
  !
- ! 
  call section('*','Optics')
  !
  if (trim(alpha_dim)/='adim') then
@@ -102,8 +101,10 @@
    !
    ! ... epsilon ...
    !
-   write (of_name(1),'(a,i3.3,a)') 'eps_q',iq,trim(FXC_type)
-   call of_open_close(of_name(1),'ot')
+   if (trim(alpha_dim)=='adim') then
+     write (of_name(1),'(a,i3.3,a)') 'eps_q',iq,trim(FXC_type)
+     call of_open_close(of_name(1),'ot')
+   endif
    !
    ! ... fxc ...
    !

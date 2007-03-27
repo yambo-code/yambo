@@ -26,7 +26,7 @@
  use QP_m,          ONLY:QP_t
  use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:bz_samp
- use electrons,     ONLY:levels,n_spin
+ use electrons,     ONLY:levels,n_sp_pol
  use com,           ONLY:msg
  use QP_CTL,        ONLY:qp_fit_ctl
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,REP
@@ -154,7 +154,7 @@
  ! Backup bare energies (only once)
  !
  if (.not.associated(en%Eo)) then
-   allocate(en%Eo(en%nb,en%nk,n_spin))
+   allocate(en%Eo(en%nb,en%nk,n_sp_pol))
    call mem_est("E-Eo",(/size(en%Eo)/),(/SP/))
    en%Eo=en%E
  endif

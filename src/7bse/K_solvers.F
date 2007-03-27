@@ -25,7 +25,7 @@
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_t,X_epsilon,X_alloc,X_rhoq0,&
 &                         alpha_dim,eps_2_alpha
- use BS,             ONLY:BSS_n_freqs,BS_K_dim,BSS_rhoq0,&
+ use BS,             ONLY:BSS_n_freqs,BS_K_dim,BSS_rhoq0,BS_eh_f,&
 &                         BS_bands,BSS_q0,BS_eh_table,BSS_mode,BS_eh_E,&
 &                         BSS_n_descs,BSS_description,BSS_of_title,BS_K_coupling
  use com,            ONLY:msg
@@ -105,17 +105,17 @@
      !
      !   iq . <c|r|v> = - conjg( iq . <v | r |c> )
      !
-     BSS_rhoq0(i1)=-conjg(X_rhoq0(ic,iv,ik,i_sp))
+     BSS_rhoq0(i1)=-conjg(X_rhoq0(ic,iv,ik,i_sp))*BS_eh_f(i1)
      !
-     ! minus comes from the occupation factor
+     ! minus comes from the occupation factor as BS_eh_f(i1) is always > 0.
      !
-     if (BS_K_coupling) BSS_rhoq0(BS_K_dim+i1)=X_rhoq0(ic,iv,ik,i_sp)
+     if (BS_K_coupling) BSS_rhoq0(BS_K_dim+i1)=X_rhoq0(ic,iv,ik,i_sp)*BS_eh_f(i1)
      !
-     X_epsilon(3,:)=X_epsilon(3,:)-&
-&                   BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))/(W_bss%p(:)-BS_eh_E(i1))
+     X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))/&
+&                                  (W_bss%p(:)-BS_eh_E(i1))
      if (BS_K_coupling) then
-       X_epsilon(3,:)=X_epsilon(3,:)+&
-&                     BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))/(conjg(W_bss%p(:))+BS_eh_E(i1))
+       X_epsilon(3,:)=X_epsilon(3,:)+BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))/&
+&                                    (conjg(W_bss%p(:))+BS_eh_E(i1))
      endif
    enddo
    !

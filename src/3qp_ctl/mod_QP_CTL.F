@@ -93,7 +93,7 @@
 &                        QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db
  use D_lattice,     ONLY:Tel
  use com,           ONLY:msg,depth
- use electrons,     ONLY:levels,E_reset,n_spin
+ use electrons,     ONLY:levels,E_reset,n_sp_pol
  use R_lattice,     ONLY:bz_samp,nXkibz
  use parser_m,      ONLY:parser
  implicit none
@@ -229,7 +229,7 @@
  if (Eid==3) then
    Fermi_en%nb=en%nb
    Fermi_en%nk=nXkibz
-   allocate(Fermi_en%E(Fermi_en%nb,Fermi_en%nk,n_spin))
+   allocate(Fermi_en%E(Fermi_en%nb,Fermi_en%nk,n_sp_pol))
    Fermi_en%E(:,:,:)=en%E(:,:nXkibz,:)
    call fermi_level(Fermi_en,k,Tel,1)
    call extend_occupations(Fermi_en,en)

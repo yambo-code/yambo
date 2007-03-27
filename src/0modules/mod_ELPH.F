@@ -84,7 +84,7 @@
      do ib=1,elph_nb
        do ik=1,nkbz
          E_k_plus_q(ib,ik,1)=E_k_plus_q(ib,ik,1)-E
-         f_k_plus_q(ib,ik,1)=spin_occ*Fermi_fnc(E_k_plus_q(ib,ik,1)-E,Tel)
+         f_k_plus_q(ib,ik,1)=spin_occ*Fermi_fnc(E_k_plus_q(ib,ik,1),Tel)
        enddo 
      enddo
      !

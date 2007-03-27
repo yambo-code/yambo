@@ -35,7 +35,7 @@
  ! If this is not possible a warning message is reported. 
  !
  use pars,       ONLY:SP,HARTREE
- use electrons,  ONLY:levels,n_spin,spin_occ,BZ_RIM_nbands,&
+ use electrons,  ONLY:levels,n_sp_pol,spin_occ,BZ_RIM_nbands,&
 &                     BZ_RIM_tot_nkpts
  use com,        ONLY:msg,warning
  use D_lattice,  ONLY:Tel
@@ -48,7 +48,7 @@
  real(SP) :: Ef_test
  real(SP),parameter :: Ef_step=0.1/HARTREE
  !
- if (.not.associated(E%f)) allocate(E%f(E%nb,E%nk,n_spin))
+ if (.not.associated(E%f)) allocate(E%f(E%nb,E%nk,n_sp_pol))
  !
  E%Efermi=Xe%Efermi
  call f_build(Xe%Efermi(1))
@@ -92,7 +92,7 @@
    real(SP):: Ef
    do i1=1,E%nb
      do i2=1,E%nk
-       do is=1,n_spin
+       do is=1,n_sp_pol
          E%f(i1,i2,is)=spin_occ*Fermi_fnc(E%E(i1,i2,is)-Ef,Tel)
        enddo
      enddo 
@@ -101,7 +101,7 @@
    if (associated(E%E_RIM)) then
      do i1=1,BZ_RIM_nbands
        do i2=1,BZ_RIM_tot_nkpts
-         do is=1,n_spin
+         do is=1,n_sp_pol
            E%f_RIM(i1,i2,is) =spin_occ*Fermi_fnc(E%E_RIM(i1,i2,is)-Ef,Tel)
            Xe%f_RIM(i1,i2,is)=E%f_RIM(i1,i2,is)
          enddo

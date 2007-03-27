@@ -23,7 +23,7 @@
 !==============================
  use pars,           ONLY:SP,IP
  use electrons,      ONLY:levels,BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_max_filling,&
-&                         BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spin
+&                         BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol
  use R_lattice,      ONLY:nXkbz
  use memory_m,       ONLY:mem_est
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
@@ -43,8 +43,8 @@
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
 
  if (read_is_on(ID)) then
-   allocate(E%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spin))
-   allocate(E%f_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spin))
+   allocate(E%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
+   allocate(E%f_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
    allocate(BZ_RIM_nkpt(nXkbz),BZ_RIM_table(nXkbz,BZ_RIM_max_filling))
    call mem_est("E_RIM f_RIM BZ_RIM_nkpt BZ_RIM_table",&
 &               (/size(E%E_RIM),size(E%f_RIM),size(BZ_RIM_nkpt),&

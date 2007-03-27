@@ -37,7 +37,7 @@
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,&
 &                     cyl_ph_radius,box_length,cyl_length,cut_geometry,CUTOFF_plus_RIM
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_RIM_nbands,BZ_RIM_tot_nkpts,&
-&                     filled_tresh, spin_orbit,spin_is_collinear
+&                     filled_tresh, spin_orbit
  use par_proc_m, ONLY:myid,master_node
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,&
 &                     of_unit,of_unit,write_to_of,write_to_report,max_open_ofs,&
@@ -172,7 +172,6 @@
  n_sp_pol=1
  n_spinor=1
  spin_orbit       = .false.
- spin_is_collinear= .false.
  BZ_RIM_nbands=0
  BZ_RIM_tot_nkpts=0
  filled_tresh=0.00001

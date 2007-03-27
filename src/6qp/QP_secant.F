@@ -74,7 +74,8 @@
  real(SP)     :: Eqp_raxis(qp%n_states,2),dQP_raxis(qp%n_states,2)
  complex(SP)  :: Z(QP_dSc_steps-1),Eqp(QP_dSc_steps-1)
  real(SP),parameter :: root_acc=0.001/HARTREE
- integer, external  :: ioQP
+ !
+ integer, external  :: ioQP,secant,bracket
  !
  !
  !I need to store on disk the <W> m. elemnts
@@ -116,8 +117,8 @@
  do while(any(QP_solver_state/=0))
    do i1=1,qp%n_states
      i2=QP_solver_state(i1)
-     call bracket(Eqp_raxis(i1,1),dQP_raxis(i1,1),&
-&                 Eqp_raxis(i1,2),dQP_raxis(i1,2),QP_solver_state(i1))
+     QP_solver_state(i1)=bracket(Eqp_raxis(i1,1),dQP_raxis(i1,1),&
+&                                Eqp_raxis(i1,2),dQP_raxis(i1,2))
      if (i2/=0.and.QP_solver_state(i1)==0) call live_timing(steps=1)
    enddo
    call W2Sc_local_call()
@@ -132,8 +133,8 @@
  do while(any(QP_solver_state>=0))
    do i1=1,qp%n_states
      i2=QP_solver_state(i1)
-     call secant(Eqp_raxis(i1,1),dQP_raxis(i1,1),&
-&                Eqp_raxis(i1,2),dQP_raxis(i1,2),QP_solver_state(i1),root_acc)
+     QP_solver_state(i1)=secant(Eqp_raxis(i1,1),dQP_raxis(i1,1),&
+&                               Eqp_raxis(i1,2),dQP_raxis(i1,2),root_acc)
      if (i2>0.and.QP_solver_state(i1)<0) call live_timing(steps=1)
    enddo
    call W2Sc_local_call()

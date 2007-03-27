@@ -44,7 +44,6 @@
    integer  :: n_sp_pol
    integer  :: n_spinor
    logical  :: spin_orbit
-   logical  :: spin_is_collinear
    !
    type levels
      integer         :: nb
@@ -95,7 +94,7 @@
      Eo%kf=Ei%kf
      Eo%Efermi=Ei%Efermi
    endif
-   allocate(Eo%E(Eo%nb,Eo%nk,n_spin),Eo%f(Eo%nb,Eo%nk,n_spin),&
+   allocate(Eo%E(Eo%nb,Eo%nk,n_sp_pol),Eo%f(Eo%nb,Eo%nk,n_sp_pol),&
 &           Eo%W(Eo%nb,Eo%nk),Eo%Z(Eo%nb,Eo%nk))
    call mem_est("E-E E-f E-W E-Z",&
 &             (/size(Eo%E),size(Eo%f),size(Eo%W),size(Eo%Z)/),&
@@ -115,8 +114,8 @@
    !E RIM
    !
    if (BZ_RIM_nbands/=0.and.Ei%nk==Eo%nk) then
-     allocate(Eo%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spin))
-     allocate(Eo%f_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spin))
+     allocate(Eo%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
+     allocate(Eo%f_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
      call mem_est("E_RIM f_RIM",(/size(Eo%E_RIM),size(Eo%f_RIM)/),(/SP,SP/))
      Eo%E_RIM=Ei%E_RIM
      Eo%f_RIM=Ei%f_RIM

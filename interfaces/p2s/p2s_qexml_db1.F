@@ -280,17 +280,16 @@
  deallocate(xk_)
 
 !PW energies (3.1) in HARTREE
- allocate( en%E(en%nb, k%nibz, n_spin) )
+ allocate( en%E(en%nb, k%nibz, n_sp_pol) )
  select case(nspinpw)
  case(1)
    en%E(:,:,1) = eig_( 1:en%nb, 1:k%nibz )
    deallocate(eig_)
  case(4)
    en%E(:,:,1) = eig_( 1:en%nb, 1:k%nibz )
-   en%E(:,:,2) = eig_( 1:en%nb, 1:k%nibz )
    deallocate(eig_)
  case(2)
-   en%E(:,:,:) = eig_s_( 1:en%nb, 1:k%nibz, 1:n_spin )
+   en%E(:,:,:) = eig_s_( 1:en%nb, 1:k%nibz, 1:n_sp_pol )
    deallocate(eig_s_)
  end select
 

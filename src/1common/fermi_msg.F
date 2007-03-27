@@ -23,7 +23,7 @@
  !
  use pars,          ONLY:SP,lchlen,HARTREE
  use com,           ONLY:msg
- use electrons,     ONLY:levels,spin_is_collinear
+ use electrons,     ONLY:levels,n_sp_pol,n_spinor
  implicit none
  type(levels)::E
  integer     ::mode
@@ -31,7 +31,7 @@
  ! Work Space
  ! 
  integer :: i1
- real(SP):: r1
+ real(SP):: r_nk
  real(SP),parameter:: tresh=epsilon(1._SP)
  character(lchlen) :: lch
  !
@@ -40,9 +40,15 @@
  E%nbm=0
  E%nbf=0
  do i1=1,E%nb
-   r1=sum(E%f(i1,:,:))/2.
-   if (r1<=tresh) cycle
-   if (abs(r1-real(E%nk,SP))<=tresh) then
+   !
+   ! A single state (n k) weights 2 in the coll. and scalar case (because
+   ! of the two spin channels) and 1 in the non-coll case
+   !
+   r_nk=sum(E%f(i1,:,:))
+   if (n_spinor/=2) r_nk=r_nk/2.
+   !
+   if (r_nk<=tresh) cycle
+   if (abs(r_nk-real(E%nk,SP))<=tresh) then
      E%nbf=i1
      cycle
    endif
@@ -72,7 +78,7 @@
    !
    E%Efermi(2:)=E%Efermi(1)+(/maxval(E%E(E%nbf,:,:)),minval(E%E(E%nbf+1,:,:))/)
    !
-   if (spin_is_collinear) then
+   if (n_sp_pol==2) then
      call msg('r','Indirect Gap [ev][min-max][up]:',(/&
 &             ( minval(E%E(E%nbf+1,:,2))-maxval(E%E(E%nbf,:,2)) )*HARTREE,&
 &             ( maxval(E%E(E%nbf+1,:,2))-minval(E%E(E%nbf,:,2)) )*HARTREE /))

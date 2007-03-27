@@ -409,13 +409,7 @@
 #if defined  PJ_PH
    if (l_ph_corr) then
      call initactivate(1,'DysSolver')
-     call initactivate(1,'GphBRnge PHdamping PHnullErgn')
-     ! 
-     ! In the Allen Cardona formulation the SE is calculated in 
-     ! the on-mass shell formulation
-     !
-     call initactivate(-1,'GDamping')
-     !
+     call initactivate(1,'GphBRnge PHdamping GDamping PHnullErgn QPreport')
    endif
 #endif
    !

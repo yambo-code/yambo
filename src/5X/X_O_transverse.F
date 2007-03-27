@@ -20,15 +20,10 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine X_O_transverse(Xen,Xk,X)
-!===================================
-#if defined PJ_GKS
- use DFT,                 ONLY:lgks,auxpath
- use com,                 ONLY:inpath
- use pars,                ONLY:SP,pi,lchlen
-#endif
+ !
  use pars,                ONLY:SP,pi
  use timing,              ONLY:live_timing
- use electrons,           ONLY:levels,n_spin, n_spinor
+ use electrons,           ONLY:levels,n_spin, n_spinor, n_sp_pol
  use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid,master_node,pp_indexes_reset
  use par_indexes_m,       ONLY:par_indexes
  use D_lattice,           ONLY:alat,pp_kbv_dim,&
@@ -38,19 +33,29 @@
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf,wf_ng,wf_state
+#if defined PJ_GKS
+ use DFT,                 ONLY:lgks,auxpath
+ use com,                 ONLY:inpath
+ use pars,                ONLY:SP,pi,lchlen
+#endif
+ !
  implicit none
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
  type(X_t),     intent(inout) :: X
-!ws
+ !
+ ! Work Space
+ !
  integer                      :: ik,i1,icfft,ivfft,ic,iv
  integer                      :: is,ia,il,im,alloc_err,i_spin
  complex(SP), allocatable     :: wf_xyz(:,:), kbv(:,:,:)
- complex(SP)                  :: rho(3),spinor_avg(3)
+ complex(SP)                  :: rho(3,n_spin)
  real(SP)                     :: Ev_m_Ec
  real(SP), parameter          :: fac = 0.70710678118654752440_SP
  type(pp_indexes)             :: px
-!I/O and external functions
+ !
+ !I/O and external functions
+ !
  integer                      :: ID,io_err,ioKB_err
  integer, external            :: ioKB_PP
 #if defined _DOUBLE
@@ -62,15 +67,16 @@
  integer                      :: v_limits(2),c_limits(2),nb_aux
  character(lchlen) :: save_inpath
 #endif 
-!
-! Check for the KB PP DB 
-!===================================
+ !
+ ! Check for the KB PP DB 
+ !
 #if defined PJ_GKS
  if (lgks) then
    save_inpath = inpath
    inpath = auxpath
  endif 
 #endif 
+ !
  call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
  ioKB_err=ioKB_PP(ID)
  if (ioKB_err==0) then
@@ -88,9 +94,9 @@
    allocate(kbv(wf_ng,pp_kbv_dim,4),stat=alloc_err)
    call mem_est("KBV",(/size(kbv)/),errors=(/alloc_err/))
  endif
-!
-! Set up the parallel environment
-!
+ !
+ ! Set up the parallel environment
+ !
 #if defined PJ_GKS
  if (lgks) then
    nb_aux = size(X_q0grad,2)
@@ -110,15 +116,15 @@
  call live_timing('Optical strengths (T):',px%stps(myid+1))
  call pp_redux_wait
 #endif
+ !
  allocate(wf_xyz(wf_ng,3))
-!
-! Main loop over k in IBZ
-!
-
+ !
+ ! Main loop over k in IBZ
+ !
  do ik=1,Xk%nibz
-!
-! [Vnl,r]
-!
+   !
+   ! [Vnl,r]
+   !
    if (ioKB_err==0) then
      if (ik< Xk%nibz) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
      if (ik==Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
@@ -131,70 +137,80 @@
    do iv=X%ib(1),Xen%nbm
 #endif
      if (.not.px%i2p(ik,iv)) cycle
-
-     do i_spin=1,n_spin
-
-       ivfft=wf_state(iv,ik,i_spin)
-!
-! wf_xyz = -i grad fdo(iv,ik)
-!
-       do i1=1,3
-         wf_xyz(:,i1)=wf(:,ivfft)*(Xk%pt(ik,i1)+g_vec(:wf_ng,i1))*2.0_SP*pi/alat(i1)
-       enddo
+     !
 #if defined PJ_GKS
-       do ic=c_limits(1),c_limits(2)
+     do ic=c_limits(1),c_limits(2)
 #else
-       do ic=Xen%nbf+1,X%ib(2)
+     do ic=Xen%nbf+1,X%ib(2)
 #endif
-         Ev_m_Ec=Xen%E(iv,ik,i_spin)-Xen%E(ic,ik,i_spin)
-         if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,i_spin)-Xen%Eo(ic,ik,i_spin)
+       do i_spin=1,n_spin
+         !
+         if (n_sp_pol==2) then
+           Ev_m_Ec=Xen%E(iv,ik,i_spin)-Xen%E(ic,ik,i_spin)
+           if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,i_spin)-Xen%Eo(ic,ik,i_spin)
+         else  
+           Ev_m_Ec=Xen%E(iv,ik,1)-Xen%E(ic,ik,1)
+           if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,1)-Xen%Eo(ic,ik,1)
+         endif
+         !
          if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,&
 &                  -Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/))) cycle
          if (abs(Ev_m_Ec)<=1.E-5_SP) cycle
+         !
+         ivfft=wf_state(iv,ik,i_spin)
+         !
+         ! wf_xyz = -i grad fdo(iv,ik)
+         !
+         do i1=1,3
+           wf_xyz(:,i1)=wf(:,ivfft)*(Xk%pt(ik,i1)+g_vec(:wf_ng,i1))*2.0_SP*pi/alat(i1)
+         enddo
+         !
          icfft=wf_state(ic,ik,i_spin)
-!
-! rho = wf_xyz^* fdo(ic,ik)= - i < fdo(iv,ik)| grad |  fdo(ic,ik) > =
-!       \sum_G -i u^*_{iv ik}(G) i ( k + G ) u_{ic ik}(G)
-!     = \sum_G u^*_{iv ik}(G) ( k + G ) u_{ic ik}(G)
-!
+         !
+         ! rho = wf_xyz^* fdo(ic,ik)= - i < fdo(iv,ik)| grad |  fdo(ic,ik) > =
+         !       \sum_G -i u^*_{iv ik}(G) i ( k + G ) u_{ic ik}(G)
+         !     = \sum_G u^*_{iv ik}(G) ( k + G ) u_{ic ik}(G)
+         !
 #if defined _DOUBLE
-         rho(1)=zdotc(wf_ng,wf_xyz(:,1),1,wf(:,icfft),1)
-         rho(2)=zdotc(wf_ng,wf_xyz(:,2),1,wf(:,icfft),1)
-         rho(3)=zdotc(wf_ng,wf_xyz(:,3),1,wf(:,icfft),1)
+         rho(1,i_spin)=zdotc(wf_ng,wf_xyz(:,1),1,wf(:,icfft),1)
+         rho(2,i_spin)=zdotc(wf_ng,wf_xyz(:,2),1,wf(:,icfft),1)
+         rho(3,i_spin)=zdotc(wf_ng,wf_xyz(:,3),1,wf(:,icfft),1)
 #else
-         rho(1)=cdotc(wf_ng,wf_xyz(:,1),1,wf(:,icfft),1)
-         rho(2)=cdotc(wf_ng,wf_xyz(:,2),1,wf(:,icfft),1)
-         rho(3)=cdotc(wf_ng,wf_xyz(:,3),1,wf(:,icfft),1)
+         rho(1,i_spin)=cdotc(wf_ng,wf_xyz(:,1),1,wf(:,icfft),1)
+         rho(2,i_spin)=cdotc(wf_ng,wf_xyz(:,2),1,wf(:,icfft),1)
+         rho(3,i_spin)=cdotc(wf_ng,wf_xyz(:,3),1,wf(:,icfft),1)
 #endif
-         if (ioKB_err==0) call X_O_kb_sum(ivfft,icfft,rho,kbv)
-!
-! as [x,p_x]=i we get [x,H] = [x,p^2/2]= i p_x
-!
-!     X_q0grad = i <v|r|c> = i <v|[r,H]|c>/(Ec-Ev) = i <v|i p|c>/(Ec-Ev) =
-!              = - <v | -i grad |c> / (Ec-Ev) = <v|-i grad|c>/(Ev-Ec)
-!
-         X_q0grad(:,ic,iv,ik,i_spin)=rho(:)/Ev_m_Ec
-   
-       enddo  ! conduction band loop
-
-     enddo    ! spin loop
+         if (ioKB_err==0) call X_O_kb_sum(ivfft,icfft,rho(:,i_spin),kbv)
+         !
+         rho(:,i_spin)=rho(:,i_spin)/Ev_m_Ec
+         !
+       enddo    ! spin loop
+       !
+       ! as [x,p_x]=i we get [x,H] = [x,p^2/2]= i p_x
+       !
+       !     X_q0grad = i <v|r|c> = i <v|[r,H]|c>/(Ec-Ev) = i <v|i p|c>/(Ec-Ev) =
+       !              = - <v | -i grad |c> / (Ec-Ev) = <v|-i grad|c>/(Ev-Ec)
+       !
+       if (n_sp_pol==2) then
+         X_q0grad(:,ic,iv,ik,1)=rho(:,1)
+         X_q0grad(:,ic,iv,ik,2)=rho(:,2)
+       else if (n_spinor==2) then
+         X_q0grad(:,ic,iv,ik,1)=(rho(:,1)+rho(:,2))
+       else if (n_spin==1) then
+         X_q0grad(:,ic,iv,ik,1)=rho(:,1)
+       endif
+       !
+     enddo  ! conduction band loop
      !
-     ! Correct for spinor case
-     !
-     if(n_spinor.eq.2) then
-       do ic = Xen%nbf+1, X%ib(2)
-         spinor_avg(:) =  ( X_q0grad(:,ic,iv,ik,1) + X_q0grad(:,ic,iv,ik,2) )*fac
-         X_q0grad(:,ic,iv,ik,1) = spinor_avg(:)
-         X_q0grad(:,ic,iv,ik,2) = spinor_avg(:)
-       enddo
-     endif
      call live_timing(steps=1)
+     !
    enddo      ! valence band loop
  enddo        ! k-points
+ !
  call live_timing
-!
-! CLEAN
-!
+ !
+ ! CLEAN
+ !
 #if defined PJ_GKS
  if (lgks) inpath = save_inpath
 #endif 
@@ -205,8 +221,10 @@
    call mem_est("KBV")
    call PP_free()
  endif 
- do i_spin=1,n_spin
+ !
+ do i_spin=1,n_sp_pol
    call pp_redux_wait(X_q0grad(:,:,:,:,i_spin))
  enddo
+ !
  return
  end subroutine X_O_transverse

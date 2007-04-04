@@ -78,7 +78,7 @@
    endif
  endif
 
- call X_checks(Xen,X)
+ call X_pre_setup(Xen,X)
  !
  ! Build frequency range only if Xw%p was not already allocated
  ! like in LifeTimes calculations

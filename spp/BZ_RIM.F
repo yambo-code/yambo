@@ -69,12 +69,17 @@
  !
  ! DB1 checks
  !
- if (i_err==0.and.any(alat/=alat_save).or.any(a/=a_save))  then
+ if (i_err==0.and.any(a/=a_save))  then
    call msg("s",':: RIM DB1 DL structure does not fit')
+   i_err=-1
+ endif
+ if (any(alat/=alat_save))  then
+   call msg("s",':: RIM DB1 alat does not fit.')
    i_err=-1
  endif
  !
  if (i_err/=0.or.trim(BZ_RIM_path)==".") then
+   !
    call section('*',"== BZ RIM grid generator ==")
    live_timing_is_on=.false.
    call msg("s"," ========== RIM K-grid ==========")

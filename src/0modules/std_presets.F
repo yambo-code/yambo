@@ -23,7 +23,7 @@
  !
  use drivers
  use X_m,        ONLY:iq_now,self_detect_E_range,half_X_mat_ONLY,eps_2_alpha,&
-&                     alpha_dim,use_X_RIM,long_path
+&                     alpha_dim,use_X_RIM,long_path,X_RIM_nkpts
  use QP_m,       ONLY:pp_taylor_terms,QP_rep_string,QP_dSc_steps,QP_n_W_freqs,&
 &                     QP_Sx_low_band,QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_W_er,QP_W_dr,QP_cg_percent,QP_xc_FUNCTIONAL,&
@@ -49,9 +49,9 @@
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim
  use IO_m,       ONLY:io_reset,max_io_units,write_to_dbs,dbs_fragment,serial_number
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
-&                     BS_res_mode,BS_K_dim,BS_cpl_mode,&
+&                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
-&                     BSS_q0,Haydock_treshold,BS_K_is_ALDA
+&                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_RIM
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_SVD_cutoff,&
 &                     FXC_is_causal
@@ -206,6 +206,7 @@
  !X
  !
  iq_now=0
+ X_RIM_nkpts=0
  self_detect_E_range=.false.
  half_X_mat_only=.false.
  use_X_RIM=.false.
@@ -263,7 +264,9 @@
  BSS_er=(/0.,10./)/HARTREE
  BSS_dr=.1/HARTREE
  BSS_q0=(/1.,0.,0./)
+ BSS_uses_RIM=.FALSE.
  BS_K_is_ALDA=.FALSE.
+ BS_not_const_eh_f=.FALSE.
  Haydock_treshold=-0.02
  !
  ! TDDFT

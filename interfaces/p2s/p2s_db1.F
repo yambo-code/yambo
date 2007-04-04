@@ -177,11 +177,15 @@
  if(l_inversion) call msg("s","Inversion ... found")
  if(.not.l_inversion) call msg("s","Inversion ... not found.")
 
- nsym=nsym
- if(n_spinor.eq.1) then
-   i_time_rev = 1  ! Turn time reversal on
-   if (l_inversion) nsym=nsym/2
-   call msg("s","Time reversal being used.")
+ if (n_spinor.eq.1) then
+   if (nsym > 1) then 
+     i_time_rev = 1  ! Turn time reversal on
+     if (l_inversion) nsym=nsym/2
+     call msg("s","Time reversal being used.")
+   else
+     i_time_rev = 0
+     call msg("s","Time reversal not being used: no symmetries found.")
+   endif
  else ! spinor for now: really spin orbit present
    ! Note that pw_export does not write a spin_orbit flag.
    i_time_rev = 0

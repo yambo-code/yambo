@@ -44,6 +44,7 @@
   logical :: BS_cpl_K_corr
   logical :: BS_K_is_ALDA
   logical :: BS_DB_is_fragmented
+  logical :: BS_not_const_eh_f
   character(schlen) :: BS_res_mode
   character(schlen) :: BS_cpl_mode
   integer    , allocatable :: BS_eh_table(:,:)
@@ -81,6 +82,7 @@
   real(SP) :: Haydock_treshold
   real(SP) :: Haydock_v0_mod
   logical  :: BSS_write_eig_2_db
+  logical  :: BSS_uses_RIM
   complex(SP),allocatable :: BSS_rhoq0(:)
   !
   interface 

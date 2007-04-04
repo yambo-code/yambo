@@ -21,6 +21,9 @@
 !
  subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
+ ! BS Kernel: note that the coupling procedure assumes that nsym/2+1 is
+ !            spatial inversion
+ !
  use pars,         ONLY:SP,pi,IP
  use memory_m,     ONLY:mem_est
  use drivers,      ONLY:l_bs_fxc,l_col_cut
@@ -179,7 +182,7 @@
  !
  ! Kernel filling
  !
- E_eh_range=(/minval(BS_eh_E)-1.E-5,maxval(BS_eh_E)/)
+ E_eh_range=(/minval(abs(BS_eh_E))-1.E-5,maxval(abs(BS_eh_E))/)
  S_eh_range=(/BS_eh_win(1)/100.*(E_eh_range(2)-E_eh_range(1)),& 
 &             BS_eh_win(2)/100.*(E_eh_range(2)-E_eh_range(1))/)
  call K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements)
@@ -411,7 +414,7 @@
          !
          ! ::: E/h energy window :::
          !
-         if (.not.K_scatter(BS_eh_E(ikk1+icv1),BS_eh_E(ikk2+icv2),&
+         if (.not.K_scatter(abs(BS_eh_E(ikk1+icv1)),abs(BS_eh_E(ikk2+icv2)),&
 &                           E_eh_range,S_eh_range)) cycle
          !
          ! ::: Parallel Switch :::
@@ -515,8 +518,12 @@
 #else
            H_res_c=cdotc(BS_n_g_W,Ovv,1,Cc,1)*4.*pi
 #endif
-         !
+           !
          endif
+         !
+         ! Impose the kernel to be hermitian
+         !
+         if (ik1==ik2.and.icv1==icv2) H_res_c=real(H_res_c)
          !
          BS_mat(icv1,icv2)=H_res_x*real(spin_occ)*Co-H_res_c
          !

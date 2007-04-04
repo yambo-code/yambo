@@ -24,7 +24,6 @@
  ! Non interacting X with SPIN support.
  !
  use pars,          ONLY:SP,schlen,HARTREE
- use drivers,       ONLY:Finite_Tel
  use collision,     ONLY:ggwinfo,collision_reset
  use timing,        ONLY:live_timing
  use com,           ONLY:msg,gen_fmt
@@ -62,7 +61,7 @@
  type(ggwinfo)        :: isc
  complex(SP)             :: Gf(Xw%n(2)),drude_Gf(Xw%n(2))
  complex(SP),allocatable :: rhotw_save(:),XoR(:,:)
- integer,    external :: X_ehg
+ integer,    external :: X_eh_setup
  complex(SP),external :: X_Gf,X_drude
 #if defined PJ_RAS
  complex(SP)          :: iscut
@@ -123,7 +122,7 @@
  !
  if (iq/=iq_now) then
    !
-   n_poles=X_ehg(-iq,X,Xen,Xk,minmax_ehe)
+   n_poles=X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
    !
    allocate(X_poles_tab(n_poles,4)) 
    call mem_est("X_poles_tab",(/size(X_poles_tab)/))
@@ -131,7 +130,7 @@
    if (.not.use_X_RIM) call coarse_grid('X',X_poles,n_poles,X%cg_percentual)
    if (use_X_RIM)      call coarse_grid('X',X_poles,n_poles,0.)
    !
-   n_poles=X_ehg(iq,X,Xen,Xk,minmax_ehe)
+   n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
    deallocate(X_poles)
    !
    if (self_detect_E_range) Xw%er=minmax_ehe
@@ -159,10 +158,6 @@
  if (half_X_mat_only) g2max=-1
  if (Xw%n(2)==1.and.half_X_mat_only) iwmax=2
  if (iq_now==0.and.half_X_mat_only ) call msg('s','[X] Upper matrix triangle filled')
- !
- ! Finite temperature X MUST be causal
- !
- if (Finite_Tel) X%ordering="c"
  !
  ! Parallel pointers
  !

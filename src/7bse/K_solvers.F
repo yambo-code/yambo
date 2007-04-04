@@ -25,16 +25,18 @@
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_t,X_epsilon,X_alloc,X_rhoq0,&
 &                         alpha_dim,eps_2_alpha
- use BS,             ONLY:BSS_n_freqs,BS_K_dim,BSS_rhoq0,BS_eh_f,&
+ use BS,             ONLY:BSS_n_freqs,BS_K_dim,BSS_rhoq0,BS_eh_f,BS_not_const_eh_f,&
 &                         BS_bands,BSS_q0,BS_eh_table,BSS_mode,BS_eh_E,&
-&                         BSS_n_descs,BSS_description,BSS_of_title,BS_K_coupling
- use com,            ONLY:msg
+&                         BSS_n_descs,BSS_description,BSS_of_title,BS_K_coupling,&
+&                         BSS_write_eig_2_db
+ use com,            ONLY:msg,warning
  use drivers,        ONLY:l_bs_fxc
  use frequency,      ONLY:w_samp
- use electrons,      ONLY:levels,spin_occ
+ use electrons,      ONLY:levels,spin_occ,BZ_RIM_nbands
  use R_lattice,      ONLY:d3k_factor,bz_samp,q_norm
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,NONE
  use TDDFT,          ONLY:FXC_description,FXC_n_descs
+ !
  implicit none
  type(levels) ::Ken
  type(bz_samp)::Xk,q
@@ -46,10 +48,10 @@
  !
  integer           ::ik,iv,ic,i1,i_sp,X_ib_save(2)
  integer           ::ioBS_err,ID
+ logical           ::run_Haydock,run_Diago,add_Pert_inversion
  integer, external ::ioBS
  !
  call section('*','BSE solver(s)')
- !
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)
  ioBS_err=ioBS(iq,X,ID)
@@ -105,21 +107,24 @@
      !
      !   iq . <c|r|v> = - conjg( iq . <v | r |c> )
      !
-     BSS_rhoq0(i1)=-conjg(X_rhoq0(ic,iv,ik,i_sp))*BS_eh_f(i1)
+     BSS_rhoq0(i1)=-conjg(X_rhoq0(ic,iv,ik,i_sp))
      !
-     ! minus comes from the occupation factor as BS_eh_f(i1) is always > 0.
+     ! minus comes from the occupation factor 
      !
-     if (BS_K_coupling) BSS_rhoq0(BS_K_dim+i1)=X_rhoq0(ic,iv,ik,i_sp)*BS_eh_f(i1)
+     if (BS_K_coupling) BSS_rhoq0(BS_K_dim+i1)=X_rhoq0(ic,iv,ik,i_sp)
      !
-     X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))/&
+     X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*BS_eh_f(i1)/&
 &                                  (W_bss%p(:)-BS_eh_E(i1))
      if (BS_K_coupling) then
-       X_epsilon(3,:)=X_epsilon(3,:)+BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))/&
-&                                    (conjg(W_bss%p(:))+BS_eh_E(i1))
+       !
+       ! Note the plus in "+BSS_rhoq0" coming from the BS_eh_f change of sign
+       !
+       X_epsilon(3,:)=X_epsilon(3,:)+BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*BS_eh_f(i1)/&
+&                                    (W_bss%p(:)+BS_eh_E(i1))
      endif
    enddo
    !
-   X_epsilon(3,:)=X_epsilon(3,:)*(spin_occ/(2.*pi)**3.)*d3k_factor*4.*pi/(q_norm(1))**2
+   X_epsilon(3,:)=1.+X_epsilon(3,:)*real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/(q_norm(1))**2
    !
  endif
  X%ib=X_ib_save
@@ -135,11 +140,24 @@
  !
  ! Solvers
  !
- if (index(BSS_mode,'h')/=0) then
-   call K_dump_to_o_file(iq,-1)
-   call K_Haydock(iq,W_bss)
+ run_Haydock         =index(BSS_mode,'h')/=0
+ run_Diago           =index(BSS_mode,'d')/=0
+ add_Pert_inversion  =index(BSS_mode,'i')/=0.and.BS_bands(2)<=BZ_RIM_nbands
+ !
+ if (run_Haydock) then
+   if (BS_K_coupling)     call warning('Non-resonant K still unsupported (Haydock)')
+   if (BS_not_const_eh_f) call warning('Fractional occupations still unsupported (Haydock)')
+   if (.not.BS_K_coupling.and..not.BS_not_const_eh_f) then
+     call K_dump_to_o_file(iq,-1)
+     call K_Haydock(iq,W_bss)
+     BSS_n_descs=BSS_n_descs-3 
+   endif
  endif
- if (index(BSS_mode,'d')/=0) call  K_diagonalization(iq,W_bss)
+ !
+ if (run_Diago.and.add_Pert_inversion) BSS_write_eig_2_db=.TRUE.
+ !
+ if (run_Diago)          call K_diagonalization(iq,W_bss)
+ if (add_Pert_inversion) call K_inversion(iq,W_bss,Ken,Xk)
  !
  ! CLEAN
  !

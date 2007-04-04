@@ -24,10 +24,9 @@
  use pars,          ONLY:SP,schlen,HARTREE
  use memory_m,      ONLY:mem_est
  use stderr,        ONLY:string_pack
- use electrons,     ONLY:BZ_RIM_tot_nkpts
  use R_lattice,     ONLY:nqibz,g_vec
  use matrix_operate,ONLY:mat_c2r,mat_r2c,mat_r2c_ordered
- use X_m,           ONLY:X_t,X_mat,use_X_RIM,X_RLcomp_ig
+ use X_m,           ONLY:X_t,X_mat,use_X_RIM,X_RLcomp_ig,X_RIM_nkpts
  use frequency,     ONLY:w_samp
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_com,&
 &                        io_elemental,io_status,io_bulk,io_restart,&
@@ -131,12 +130,12 @@
 &       VAR=" [r,Vnl] included       :",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/))
    call io_elemental(ID,&
 &       VAR=" Field direction        :",R1=X%q0,CHECK=.true.,OP=(/"==","==","=="/))
-
+   !
    if (ver_is_gt_or_eq(ID,(/3,0,1/))) then
      call io_elemental(ID,&
 &         VAR=" BZ energy Random IM    :",L0=use_X_RIM,WARN=.true.,OP=(/"=="/))
      call io_elemental(ID,&
-&         VAR=" BZ energy RIM points   :",I0=BZ_RIM_tot_nkpts,CHECK=.true.,OP=(/"=="/))
+&         VAR=" BZ energy RIM points   :",I0=X_RIM_nkpts,CHECK=.true.,OP=(/"=="/))
    endif
    !
    ! When the SN is different and I am importing this DB 

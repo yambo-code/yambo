@@ -44,6 +44,7 @@
    complex(SP), allocatable :: X_q0grad(:,:,:,:,:)
    complex(SP), allocatable :: X_mat(:,:,:)
    integer :: iq_now
+   integer :: X_RIM_nkpts
    logical :: half_X_mat_only
    logical :: self_detect_E_range
    logical :: use_X_RIM

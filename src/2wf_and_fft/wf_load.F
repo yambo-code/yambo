@@ -21,7 +21,9 @@
 !
  subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
 &                   spins_to_load,space,title)
-!=============================================================
+ !
+ ! Load and (eventually) FFTs the wavefunctions
+ !
  use pars,          ONLY:SP,DP,schlen
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
@@ -37,11 +39,13 @@
  use timing,        ONLY:live_timing
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END
  implicit none
+ !
  integer               :: iG_in,iGo_max,bands_to_load(2),kpts_to_load(2)
  integer     ,optional :: spins_to_load(2)
  character(*),optional :: space,title
-!
-!ws
+ !
+ ! Work Space
+ !
  type(pp_indexes) ::px
  character(1)     ::wf_space_here
  character(schlen)::wf_title
@@ -50,62 +54,63 @@
  complex(SP)      ::c
  real(SP),    allocatable :: wf_disk(:,:,:,:)
  complex(DP), allocatable :: wf_DP(:)
-!
-!I/O
+ !
+ ! I/O
+ !
  integer ::io_err,ID
-
+ !
  iG_max=iG_in
  if (iG_max==0) iG_max=wf_ng
-
+ !
  wf_space_here='R'
  if (present(space)) wf_space_here=space
- 
+ !
  wf_title=""
  s_2_load=(/1,n_spin/)
  if (present(title)) wf_title=title
  if (present(spins_to_load)) s_2_load=spins_to_load
-!
-! To call with .false. as I need in ANY CASE the table updated with the
-! given iG_max/iGo_max.
-! 
-! So even when conditions below are respected and the routine returns
-! the fft_g_table must be reloaded
-!
+ !
+ ! To call with .false. as I need in ANY CASE the table updated with the
+ ! given iG_max/iGo_max.
+ ! 
+ ! So even when conditions below are respected and the routine returns
+ ! the fft_g_table must be reloaded
+ !
  if (wf_space_here=='R') call fft_setup(iG_max,iGo_max,.false.)
-
+ !
  if (all((/bands_to_load(1)>=wf_b(1),bands_to_load(2)<=wf_b(2),&
 &          kpts_to_load(1)>=wf_k(1),kpts_to_load(2)<=wf_k(2),&
 &          s_2_load(1)>=wf_s(1),s_2_load(2)<=wf_s(2),&
 &          wf_space==wf_space_here/))) then
    if (wf_space=="R".and.all(fft_dim==fft_dim_loaded)) return
  endif
-!
-! First WF_free then fft_setup.
-!
+ !
+ ! First WF_free then fft_setup.
+ !
  call WF_free()
  wf_b=bands_to_load
  wf_k=kpts_to_load
  wf_s=s_2_load
  wf_space=wf_space_here
-!
+ !
  if (wf_space=='R') call fft_setup(iG_max,iGo_max,.false.)
  if (wf_space=="R") fft_dim_loaded=fft_dim
  wf_total_states=WF_alloc()
  if (wf_space=='R') allocate(wf_DP(fft_size))
  if (wf_space=='G') allocate(wf_DP(wf_ng))
  if (wf_space=='C') allocate(wf_DP(wf_ncx))
-
+ !
  wf_title=string_pack('[FFT',trim(wf_title),'] Mesh size:')
  if (wf_space=='R') call msg('rns',trim(wf_title),fft_dim)
-
+ !
  call live_timing('[WF loader] Wfs (re)loading',wf_total_states,SERIAL=.true.)
-
+ !
  allocate(wf_disk(2,n_bands,wf_ncx,n_spin))
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
-
+ !
  call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
  io_err=ioWF(ID,wf_disk)
-
+ !
  wf_total_states=0
  call pp_indexes_reset(px)
  do ikibz=1,nkibz
@@ -143,31 +148,33 @@
    enddo
  enddo
  call live_timing()
-!
-! CLEAN
-!
+ !
+ ! CLEAN
+ !
  deallocate(wf_disk)
  call mem_est("wf_disk")
  deallocate(wf_DP)
  call pp_indexes_reset(px)
-
+ !
  if (.not.wf_norm_test) return
-!
-! Check normalization @ 1st k-point only.
-!
+ !
+ ! Check normalization @ 1st k-point only.
+ !
  mndp=10.
  mxdp=-1.
  do i1=1,min(int(nel)+5,wf_b(2))
    do i2=1,min(int(nel)+5,wf_b(2))
-
+     !
      do is=1,n_sp_pol
-
+       !
+       if (wf_state(i1,1,is)==0.or.wf_state(i2,1,is)==0) cycle
+       !
        c=dot_product(wf(:, wf_state(i1,1,is) ),wf(:, wf_state(i2,1,is) ))
-
+       !
        if (n_spinor==2) then
          c=c+dot_product(wf(:, wf_state(i1,1,2) ),wf(:, wf_state(i2,1,2) ))
        endif
-
+       !
        if (abs(c)>mxdp) mxdp=abs(c)
        if (abs(c)<mndp) mndp=abs(c)
      enddo
@@ -175,5 +182,5 @@
  enddo
  wf_norm_test=.false.
  call msg('rn','[WF loader] Normalization (few states)  min/max  :',(/mndp,mxdp/))
-
+ !
  end subroutine

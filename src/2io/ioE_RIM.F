@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  integer function ioE_RIM(E,ID)
-!==============================
+ !
  use pars,           ONLY:SP,IP
  use electrons,      ONLY:levels,BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_max_filling,&
 &                         BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol
@@ -29,19 +29,20 @@
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
 &                         io_bulk,io_header
  implicit none
+ !
  type(levels) :: E
- integer      :: ID
-
+ integer      :: ID 
+ !
  ioE_RIM=io_connect(desc='E_RIM',type=2,ID=ID)
  if (ioE_RIM/=0) goto 1
-
+ !
  ioE_RIM=io_header(ID)
  call io_elemental(ID,VAR="PARS",VAR_SZ=3,MENU=1)
  call io_elemental(ID,I0=BZ_RIM_nbands,   VAR=' Bands                           :')
  call io_elemental(ID,I0=BZ_RIM_tot_nkpts,VAR=' BZ RIM k-points                 :')
  call io_elemental(ID,I0=BZ_RIM_max_filling,VAR=' BZ Blocks max filling           :')
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
-
+ !
  if (read_is_on(ID)) then
    allocate(E%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
    allocate(E%f_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
@@ -50,23 +51,22 @@
 &               (/size(E%E_RIM),size(E%f_RIM),size(BZ_RIM_nkpt),&
 &                 size(BZ_RIM_table)/),(/SP,SP,IP,IP/))
  endif
-!
-! Eigenvalues
-!
+ !
+ ! Eigenvalues
+ !
  call io_bulk(ID, VAR="RIM_EIGENVALUES", VAR_SZ=shape(E%E_RIM) ) 
  call io_bulk(ID, R3=E%E_RIM )
-!
-! RIM Block filling
-!
+ !
+ ! RIM Block filling
+ !
  call io_bulk(ID, VAR="RIM_BLOCK_FILLING", VAR_SZ=shape(BZ_RIM_nkpt) ) 
  call io_bulk(ID, I1=BZ_RIM_nkpt )
-!
-! RIM Block table
-!
+ !
+ ! RIM Block table
+ !
  call io_bulk(ID, VAR="RIM_BLOCK_TABLE", VAR_SZ=shape(BZ_RIM_table) ) 
  call io_bulk(ID, I2=BZ_RIM_table )
-!
+ !
 1 call io_disconnect(ID=ID)
-!
+ !
  end function
-

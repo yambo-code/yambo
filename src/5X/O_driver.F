@@ -65,7 +65,7 @@
  !
  ! Basical Checks
  !
- call X_checks(Xen,X)
+ call X_pre_setup(Xen,X)
  !
  do iq=X%iq(1),X%iq(2)
    !
@@ -168,8 +168,8 @@
    !
    headings(:3)=(/'E/ev[1]','e/Im[2]','e/Re[3]'/)
    headings(4:5)=(/'eo/Im[4]','eo/Re[5]'/)
-   headings(6:7)=(/'alpha0/Im','alpha0/Re'/)
-   headings(8:9)=(/'alpha/Im','alpha/Re'/)
+   headings(6:7)=(/'alpha/Im','alpha/Re'/)
+   headings(8:9)=(/'alpha0/Im','alpha0/Re'/)
    call msg('o eps eel fxc alpha','#')
    if (.not.lnoe0) call msg('o eps','#',headings(:5),INDENT=0,USE_TABS=.true.)    
    if (lnoe0)      call msg('o eps','#',headings(:3),INDENT=0,USE_TABS=.true.)    
@@ -198,8 +198,14 @@
    do i1=1,wv%n(1),wv%n(2)
      fr=(/i1,i1+wv%n(2)-1/)
      call X_os(X_mat,iq,fr,Xen,Xk,wv,X)     
+     !
+     ! Without LF eps/alpha
+     !
      X_epsilon(1,fr(1):fr(2))=1.0_SP-X_mat(1,1,:)*4.0_SP*pi/q_norm(iq)**2
-     X_epsilon(6,fr(1):fr(2))=-X_mat(1,1,:)*eps_2_alpha/q_norm(iq)**2
+     !
+     ! ... for alpha_0 (2) and (3) coincides
+     !
+     X_epsilon(5,fr(1):fr(2))=(X_epsilon(1,fr(1):fr(2))-1.)/4./pi*eps_2_alpha  !(3)
      !
      ! X Dyson equation solver
      !
@@ -230,27 +236,35 @@
      !
      if (l_col_cut.or.(trim(X%ordering)/='a'.and.trim(X%ordering)/='r')) then
        !
-       X_epsilon(5,fr(1):fr(2))=&
-&              -X_mat(1,1,:)*bare_qpg(iq,1)**2/q_norm(iq)**2/4./pi*eps_2_alpha ! (1)
+       X_epsilon(6,fr(1):fr(2))=(1.-1./X_epsilon(2,fr(1):fr(2)))/4./pi*eps_2_alpha ! (2)
        !
      else
-       X_epsilon(5,fr(1):fr(2))=(X_epsilon(2,fr(1):fr(2))-1._SP)*eps_2_alpha/4./pi ! (3)
+       X_epsilon(6,fr(1):fr(2))=(X_epsilon(2,fr(1):fr(2))-1._SP)*eps_2_alpha/4./pi ! (3)
      endif
      !
      call of_open_close(of_name(1),'oa')
      call of_open_close(of_name(2),'oa')
      call of_open_close(of_name(4),'oa')
      do i2=fr(1),fr(2)
+       !
+       ! Eps
+       !
        od=(/real(wv%p(i2))*HARTREE,aimag(X_epsilon(2,i2)),real(X_epsilon(2,i2)),&
 &           aimag(X_epsilon(1,i2)),real(X_epsilon(1,i2))/)
        if (lnoe0)      call msg('o eps','',od(:3),INDENT=-2,USE_TABS=.true.)
        if (.not.lnoe0) call msg('o eps','',od,INDENT=-2,USE_TABS=.true.)
+       !
+       ! EEL
+       !
        od=(/real(wv%p(i2))*HARTREE,aimag(X_epsilon(4,i2)),real(X_epsilon(4,i2)),&
 &           aimag(X_epsilon(3,i2)),real(X_epsilon(3,i2))/)
        if (lnoe0)      call msg('o eel','',od(:3),INDENT=-2,USE_TABS=.true.)
        if (.not.lnoe0) call msg('o eel','',od,INDENT=-2,USE_TABS=.true.)
-       od=(/real(wv%p(i2))*HARTREE,aimag(X_epsilon(5,i2)),real(X_epsilon(5,i2)),&
-&                                  aimag(X_epsilon(6,i2)),real(X_epsilon(6,i2))/)
+       !
+       ! Alpha
+       !
+       od=(/real(wv%p(i2))*HARTREE,aimag(X_epsilon(6,i2)),real(X_epsilon(6,i2)),&
+&                                  aimag(X_epsilon(5,i2)),real(X_epsilon(5,i2))/)
        if (lnoe0)      call msg('o alpha','',od(:3),INDENT=-2,USE_TABS=.true.)
        if (.not.lnoe0) call msg('o alpha','',od,INDENT=-2,USE_TABS=.true.)
      enddo

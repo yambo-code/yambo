@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine K_dump_to_o_file(iq,mode)
-!====================================
+ !
  use pars,  ONLY:HARTREE,pi,SP
  use BS,    ONLY:BSS_description,BSS_of_title,BSS_file_name,&
 &                BSS_n_descs,BS_K_coupling
@@ -28,18 +28,23 @@
  use com,   ONLY:msg,of_open_close
  implicit none
  integer    :: mode,iq
-!ws
+ !
+ ! Work Space
+ !
  character(5)      :: extension 
  integer           :: i1
  real(SP)          :: od(7)
  complex(SP)       :: alpha
-!
-!Haydock
+ !
+ ! Haydock
  if (iabs(mode)==1)  extension='-bh'
-!
-!Diagonalization
+ !
+ ! Diagonalization
  if (iabs(mode)==2)  extension='-bd'
-
+ !
+ ! Inversion
+ if (iabs(mode)==3)  extension='-bi'
+ !
  if (mode<0) then
    if (trim(alpha_dim)/='adim') then
      write (BSS_file_name,'(a,i3.3,a)') 'alpha_q',iq,trim(extension)
@@ -50,13 +55,15 @@
  else
    call of_open_close(BSS_file_name,'Ot')
  endif 
-
+ !
  if (iabs(mode)==1)  extension='o -bh'
  if (iabs(mode)==2)  extension='o -bd'
+ if (iabs(mode)==3)  extension='o -bi'
+ !
  do i1=1,BSS_n_descs
    call msg(extension,"",trim(BSS_description(i1)),INDENT=0)
  enddo
-!
+ !
  if (mode>0) then
    call msg(extension,'#')
    if (mode==1) call msg(extension,'#',BSS_of_title,INDENT=0,USE_TABS=.TRUE.)
@@ -94,30 +101,37 @@
        ! Now when using the BS kernel includes the coupling I use (2) (instead
        ! of (1) like in O_driver.F)
        !
-       if (BS_K_coupling)      alpha=1.-1./X_epsilon(2,i1)  ! (2)
-       if (.not.BS_K_coupling) alpha=X_epsilon(2,i1)-1.     ! (3)
+       if (BS_K_coupling)      alpha=1.-1./X_epsilon(2,i1)       ! (2)
+       if (.not.BS_K_coupling) alpha=X_epsilon(2,i1)-1.          ! (3)
        !
-       od(2:3)=(/aimag(alpha),real(alpha)-1./)*eps_2_alpha/4./pi
+       od(2:3)=(/aimag(alpha),real(alpha)/)*eps_2_alpha/4./pi
        !
-       alpha=X_epsilon(3,i1)-1.
-       od(4:5)=(/aimag(alpha),real(alpha)-1./)*eps_2_alpha/4./pi
+       ! No LF
+       !
+       alpha=X_epsilon(3,i1)-1.          ! (3)
+       !
+       od(4:5)=(/aimag(alpha),real(alpha)/)*eps_2_alpha/4./pi
        !
      endif
      !
      if (mode==1) then
        od(6)=aimag(X_epsilon(4,i1))
        od(7)=real(X_epsilon(4,i1))
+       !
        if (trim(alpha_dim)/='adim') then
          od(6)=od(6)*eps_2_alpha/4./pi
          od(7)=(od(7)-1.)*eps_2_alpha/4./pi
        endif
+       !
        call msg(extension,'',od,INDENT=-2,USE_TABS=.TRUE.)
-     else if (mode==2) then
+       !
+     else 
        call msg(extension,'',od(:5),INDENT=-2,USE_TABS=.TRUE.)
      endif
-
+     !
    enddo
  endif
+ !
  call of_open_close(BSS_file_name)
+ !
  end subroutine
-!

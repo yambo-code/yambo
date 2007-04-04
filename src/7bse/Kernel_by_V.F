@@ -39,7 +39,7 @@
  use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset 
  use par_indexes_m,  ONLY:par_indexes
  use R_lattice,      ONLY:nXkibz
- use BS,             ONLY:BS_mat,BS_K_dim,BS_blk_dim,BS_blk_coord,BS_eh_E,BS_eh_f,&
+ use BS,             ONLY:BS_mat,BS_K_dim,BS_blk_dim,BS_blk_coord,BS_eh_E,&
 &                         cumulative_index,BS_DB_is_fragmented,BS_K_coupling
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:io_control,OP_RD,RD,NONE,RD_CL,OP_RD_CL
@@ -95,10 +95,10 @@
    do ik2=1,nXkibz
      do ik1=ik2,1,-1
        BS_blk_coord=(/ sum(BS_blk_dim(:ik1-1)),sum(BS_blk_dim(:ik2-1)) /)
-
+       !
        ACTION=RD
        if (ik1==1.and.ik2==nXkibz) ACTION=RD_CL
-
+       !
        if (use_fragments) then
          frag_pointer=BS_blk_coord
          BS_blk_coord=0
@@ -116,8 +116,8 @@
        !
        if (ik1==ik2) then
          !
-         forall(i1=BS_blk_coord(1)+1:BS_blk_coord(1)+BS_blk_dim(ik1))&
-&              BS_mat(i1,i1)=BS_mat(i1,i1)*BS_eh_f(frag_pointer(1)+i1)+BS_eh_E(frag_pointer(1)+i1)
+         forall(i1=BS_blk_coord(1)+1:BS_blk_coord(1)+BS_blk_dim(ik1)) &
+&              BS_mat(i1,i1)=BS_mat(i1,i1)+BS_eh_E(frag_pointer(1)+i1)
          !
          ! On diagonal block simmetrization
          !

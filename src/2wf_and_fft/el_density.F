@@ -43,7 +43,7 @@
  !
  use pars,          ONLY:SP
  use R_lattice,     ONLY:bz_samp
- use electrons,     ONLY:levels,n_spin,n_sp_pol
+ use electrons,     ONLY:levels,n_sp_pol
  use D_lattice,     ONLY:nsym,i_time_rev
  use FFT_m,         ONLY:fft_size,fft_rot_r
  use wave_func,     ONLY:wf_state,wf
@@ -64,7 +64,12 @@
  !
  do i1=1,en%nbm
    do i2=1,Xk%nibz
-     do is=1,n_spin
+     do is=1,n_sp_pol
+       !
+       if (size(wf_state,1)<i1) cycle
+       if (size(wf_state,2)<i2) cycle
+       if (size(wf_state,3)<is) cycle
+       !
        ifft=wf_state(i1,i2,is)
        !
        if (ifft==0) cycle

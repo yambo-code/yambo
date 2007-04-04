@@ -21,29 +21,30 @@
 !
  subroutine QP_apply_stretch(band_range,E,qpfit_rest,qpfit_free,&
 &                            DB_corrected)
-!================================================================
-!
-! Here I apply the strecth for both qpfit_rest (respecting the 
-! qp_done array) and qpfit_free (everywhere)
-!
+ !
+ ! Here I apply the strecth for both qpfit_rest (respecting the 
+ ! qp_done array) and qpfit_free (everywhere)
+ !
  use pars,          ONLY:SP,lchlen,HARTREE,IP
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
- use electrons,     ONLY:levels,n_sp_pol
+ use electrons,     ONLY:levels,n_sp_pol,BZ_RIM_nbands
  use QP_CTL,        ONLY:qp_fit_ctl
  use QP_m,          ONLY:QP_ctl_applied
  implicit none
  type(levels)    ::E
  type(qp_fit_ctl)::qpfit_rest,qpfit_free
  integer         ::band_range(2),DB_corrected(E%nb,E%nk)
-!ws
- integer  ::i1,i2,l_isec(5)
+ !
+ ! Work Space
+ !
+ integer  ::ib,ik,l_isec(5)
  real(SP) ::Eoc,Eov
  character(lchlen) ::ch
  logical           ::QP_apply_done,l_continue
-!
-! Is there anything to do ?
-!---------------------------
+ !
+ ! Is there anything to do ?
+ !
  l_continue=.false.
  if (any(qpfit_rest%E/=(/0.,1.,0.,1./)).or.any(qpfit_free%E/=(/0.,1.,0.,1./))) then
    if (QP_apply_done(band_range,(/1,E%nk/),E,'E')) return
@@ -58,36 +59,36 @@
    l_continue=.true.
  endif
  if (.not.l_continue) return
-!
+ !
  if (.not.QP_ctl_applied) then
    QP_ctl_applied=.true.
    call section('p','QP Corrections extrapolation')
  endif
-
-!Backup (only once)
-!------------------
+ !
+ ! Backup (only once)
+ !
  if (.not.associated(E%Eo)) then
    allocate(E%Eo(E%nb,E%nk,n_sp_pol))
    call mem_est("E-Eo",(/size(E%Eo)/),(/SP/))
    E%Eo=E%E
  endif
-!
-! Band edges
-!------------
+ !
+ ! Band edges
+ !
  Eov=-1.
  Eoc=1.E5
- do i1=1,E%nb
-   do i2=1,E%nk
-     if (E%Eo(i1,i2,1)<=1.E-5) Eov=max(Eov,E%Eo(i1,i2,1))
-     if (E%Eo(i1,i2,1)>1.E-5)  Eoc=min(Eoc,E%Eo(i1,i2,1))
+ do ib=1,E%nb
+   do ik=1,E%nk
+     if (E%Eo(ib,ik,1)<=1.E-5) Eov=max(Eov,E%Eo(ib,ik,1))
+     if (E%Eo(ib,ik,1)>1.E-5)  Eoc=min(Eoc,E%Eo(ib,ik,1))
    enddo
  enddo
-!
+ !
  call do_fit_operation('E',2,qpfit_rest%E,qpfit_free%E)
  call do_fit_operation('W',3,qpfit_rest%W,qpfit_free%W)
  call do_fit_operation('Z',1,(/real(qpfit_rest%Z),aimag(qpfit_rest%Z)/),&
 &                            (/real(qpfit_free%Z),aimag(qpfit_free%Z)/))
-!
+ !
  write (ch,'(4a)') '-- ',trim(qpfit_free%short_descr),&
 &      ' Linear/Quadratic extrapolation ',repeat('-',19)
  call msg('r',trim(ch))
@@ -96,69 +97,87 @@
  call msg('r','=== Additional ===')
  call fit_report(qpfit_free)
  call msg('r',repeat('-',60))
-
+ !
  contains
-  subroutine do_fit_operation(what,nM,Mr,Mf)
-   character(1) :: what
-   integer  :: nM,iref
-   real(SP) :: Mr(2*nM),Mf(2*nM),rref,Ml
-!
-!ws
-!
-   integer  :: i1,i2,i3
-   real(SP) :: delta
-   logical  :: QP_apply_done
-   do i1=band_range(1),band_range(2)
-     do i2=1,E%nk
-       if (QP_apply_done((/i1,i1/),(/i2,i2/),E,what)) cycle
-       if (E%Eo(i1,i2,1)> 1.E-5) iref=0
-       if (E%Eo(i1,i2,1)<=1.E-5) iref=nM
-       if (E%Eo(i1,i2,1)> 1.E-5) rref=Eoc
-       if (E%Eo(i1,i2,1)<=1.E-5) rref=Eov
-       delta=Mf(iref+1)
-       do i3=1,nM-1
-         Ml=Mf(iref+1+i3)
-         if (what=='E') Ml=Ml-1.
-         delta=delta+Ml*(E%Eo(i1,i2,1)-rref)**i3
-       enddo
-       if (what=='Z') E%Z(i1,i2)=Mf(1)+(0.,1.)*Mf(2)
-       if (DB_corrected(i1,i2)/=1) then
-         delta=delta+Mr(iref+1)
+   !
+   subroutine do_fit_operation(what,nM,Mr,Mf)
+     character(1) :: what
+     integer  :: nM,iref
+     real(SP) :: Mr(2*nM),Mf(2*nM),rref,Ml
+     !
+     ! Work Space
+     !
+     integer  :: i3
+     real(SP) :: delta
+     logical  :: QP_apply_done
+     do ib=band_range(1),band_range(2)
+       !
+       do ik=1,E%nk
+         !
+         if (QP_apply_done((/ib,ib/),(/ik,ik/),E,what)) cycle
+         if (E%Eo(ib,ik,1)> 1.E-5) iref=0
+         if (E%Eo(ib,ik,1)<=1.E-5) iref=nM
+         if (E%Eo(ib,ik,1)> 1.E-5) rref=Eoc
+         if (E%Eo(ib,ik,1)<=1.E-5) rref=Eov
+         !
+         delta=Mf(iref+1)
          do i3=1,nM-1
-           Ml=Mr(iref+1+i3)
+           Ml=Mf(iref+1+i3)
            if (what=='E') Ml=Ml-1.
-           delta=delta+Ml*(E%Eo(i1,i2,1)-rref)**i3
+           delta=delta+Ml*(E%Eo(ib,ik,1)-rref)**i3
          enddo
-         if (what=='Z') E%Z(i1,i2)=E%Z(i1,i2)+Mr(1)+(0.,1.)*Mr(2)
-       endif
-       if (what=='E') E%E(i1,i2,1)=E%E(i1,i2,1)+delta
-       if (what=='W') E%W(i1,i2)=E%W(i1,i2)+(0.,1.)*delta
-       if (what=='E') E%qp_done(i1,i2)=E%qp_done(i1,i2)+1
-       if (what=='W') E%qp_done(i1,i2)=E%qp_done(i1,i2)+2
-       if (what=='Z') E%qp_done(i1,i2)=E%qp_done(i1,i2)+4
+         if (what=='Z') E%Z(ib,ik)=Mf(1)+(0.,1.)*Mf(2)
+         if (DB_corrected(ib,ik)/=1) then
+           delta=delta+Mr(iref+1)
+           do i3=1,nM-1
+             Ml=Mr(iref+1+i3)
+             if (what=='E') Ml=Ml-1.
+             delta=delta+Ml*(E%Eo(ib,ik,1)-rref)**i3
+           enddo
+           if (what=='Z') E%Z(ib,ik)=E%Z(ib,ik)+Mr(1)+(0.,1.)*Mr(2)
+         endif
+         !
+         if (what=='E') then
+           E%E(ib,ik,1)=E%E(ib,ik,1)+delta
+           !
+           ! DEBUG >
+           if (associated(E%E_RIM)) then
+             !
+             if (ib>BZ_RIM_nbands) cycle
+             !
+           endif
+           ! DEBUG >
+           !
+         endif
+         !
+         if (what=='W') E%W(ib,ik)=E%W(ib,ik)+(0.,1.)*delta
+         if (what=='E') E%qp_done(ib,ik)=E%qp_done(ib,ik)+1
+         if (what=='W') E%qp_done(ib,ik)=E%qp_done(ib,ik)+2
+         if (what=='Z') E%qp_done(ib,ik)=E%qp_done(ib,ik)+4
+       enddo
      enddo
-   enddo
-  end subroutine
-  subroutine fit_report(qpfit)
-   type(qp_fit_ctl)::qpfit
-   if (qpfit%db_scissor/=0.) &
-&     call msg(' r',' Band edges  DB correction [ev]:',qpfit%db_scissor*HARTREE)
-   if (qpfit%fit_scissor/=0.) &
-&     call msg(' r',' Additional FIT correction [ev]:',qpfit%fit_scissor*HARTREE)
-   if (any(qpfit%E/=(/0.,1.,0.,1./))) then
-    call msg(' r',' Energies 0th order [ev]:',(/qpfit%E(1),qpfit%E(3)/)*HARTREE)
-    call msg(' r',' Energies 1st order     :',(/qpfit%E(2),qpfit%E(4)/))
-    if (any((/qpfit%E_err/=0./))) call msg(' r','                   Error:',qpfit%E_err)
-   endif
-   if (any((/qpfit%W/=0./))) then
-     call msg(' r',' Widths 0th order [ev]:',(/qpfit%W(1),qpfit%W(4)/)*HARTREE)
-     call msg(' r',' Widths 1st order     :',(/qpfit%W(2),qpfit%W(5)/))
-     call msg(' r',' Widths 2st order     :',(/qpfit%W(3),qpfit%W(6)/))
-     if (any((/qpfit%W_err/=0./))) call msg(' r','                   Error:',qpfit%W_err)
-   endif
-   if (qpfit%Z/=(1.,0.)) &
-&     call msg(' r',' Renormalization      :',(/real(qpfit%Z),aimag(qpfit%Z)/))
-
-  end subroutine
-
+   end subroutine
+   !
+   subroutine fit_report(qpfit)
+     type(qp_fit_ctl)::qpfit
+     if (qpfit%db_scissor/=0.) &
+&       call msg(' r',' Band edges  DB correction [ev]:',qpfit%db_scissor*HARTREE)
+     if (qpfit%fit_scissor/=0.) &
+&       call msg(' r',' Additional FIT correction [ev]:',qpfit%fit_scissor*HARTREE)
+     if (any(qpfit%E/=(/0.,1.,0.,1./))) then
+      call msg(' r',' Energies 0th order [ev]:',(/qpfit%E(1),qpfit%E(3)/)*HARTREE)
+      call msg(' r',' Energies 1st order     :',(/qpfit%E(2),qpfit%E(4)/))
+      if (any((/qpfit%E_err/=0./))) call msg(' r','                   Error:',qpfit%E_err)
+     endif
+     if (any((/qpfit%W/=0./))) then
+       call msg(' r',' Widths 0th order [ev]:',(/qpfit%W(1),qpfit%W(4)/)*HARTREE)
+       call msg(' r',' Widths 1st order     :',(/qpfit%W(2),qpfit%W(5)/))
+       call msg(' r',' Widths 2st order     :',(/qpfit%W(3),qpfit%W(6)/))
+       if (any((/qpfit%W_err/=0./))) call msg(' r','                   Error:',qpfit%W_err)
+     endif
+     if (qpfit%Z/=(1.,0.)) &
+&       call msg(' r',' Renormalization      :',(/real(qpfit%Z),aimag(qpfit%Z)/))
+     ! 
+   end subroutine
+   !
  end subroutine

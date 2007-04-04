@@ -77,7 +77,10 @@
    ! 
    ! If not switched on skip this section
    !
-   if (.not.BSS_write_eig_2_db) goto 1
+   if (.not.BSS_write_eig_2_db) then
+     ioBS_diago=-1
+     goto 1
+   endif
    !
    ! BS_eh_table
    !

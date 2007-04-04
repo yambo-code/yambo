@@ -27,7 +27,7 @@
  use pars,           ONLY:SP,DP,pi
  use X_m,            ONLY:X_epsilon
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,Kernel_by_V,&
-&                         BS_K_coupling,BSS_write_eig_2_db
+&                         BS_K_coupling,BSS_write_eig_2_db,BS_eh_f,BS_not_const_eh_f
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:spin_occ
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK,USE_SLK,INV
@@ -42,7 +42,9 @@
  implicit none
  type(w_samp)  :: W
  integer       :: iq
-!ws
+ !
+ ! Work Space
+ !
  type(pp_indexes)     ::px
  integer              ::i1,i2,lib_driver,BS_H_dim,i_of
 #if defined _DOUBLE
@@ -83,14 +85,16 @@
  !
  ! Eigenstates 2 DB ?
  !
- call parser('WRbsWF',BSS_write_eig_2_db)
+ if (.not.BSS_write_eig_2_db) call parser('WRbsWF',BSS_write_eig_2_db)
  !
  ! Allocation & Par Procs
  !
  BS_H_dim=BS_K_dim
+ !
  if (BS_K_coupling) BS_H_dim=2*BS_K_dim
  allocate(BS_R(BS_H_dim),BS_E(BS_H_dim))
- call mem_est("BS_R",(/BS_H_dim,BS_H_dim/))
+ call mem_est("BS_R BS_E",(/BS_H_dim,BS_H_dim/))
+ !
  if (BS_K_coupling) then
    allocate(BS_V_left(BS_H_dim,BS_H_dim),&
 &           BS_V_right(BS_H_dim,BS_H_dim))
@@ -104,33 +108,47 @@
    allocate(BS_E_diago(BS_H_dim))
    call mem_est("BS_E_diago",(/BS_H_dim/),(/SP/))
  endif
-
+ !
  call pp_indexes_reset(px)
  call par_indexes(px,(/BS_H_dim/))
- !
- ! Kernel loading
- !
- call Kernel_by_V(iq)
- !
- ! If Coupling the half lower part of K must be filled
- !
- if (BS_K_coupling) then
-   !
-   ! Anti-resonant
-   !
-   forall(i1=BS_K_dim+1:2*BS_K_dim,i2=BS_K_dim+1:2*BS_K_dim) &
-&        BS_mat(i1,i2)=-conjg(BS_mat(i1-BS_K_dim,i2-BS_K_dim))
-   !
-   ! Anti-coupling
-   !
-   forall(i1=BS_K_dim+1:2*BS_K_dim,i2=1:BS_K_dim) &
-&        BS_mat(i1,i2)=-conjg(BS_mat(i1-BS_K_dim,i2+BS_K_dim))
- endif
  !
  ! Diagonalization DB (IN)
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  io_err=ioBS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+ !
+ if(io_err<0) then
+   !
+   ! Kernel loading
+   !
+   call Kernel_by_V(iq)
+   !
+   ! If Coupling the half lower part of K must be filled
+   !
+   if (BS_K_coupling) then
+     !
+     ! Anti-resonant
+     !
+     forall(i1=BS_K_dim+1:2*BS_K_dim,i2=BS_K_dim+1:2*BS_K_dim) &
+&          BS_mat(i1,i2)=-conjg(BS_mat(i1-BS_K_dim,i2-BS_K_dim))
+     !
+     ! Anti-coupling
+     !
+     forall(i1=BS_K_dim+1:2*BS_K_dim,i2=1:BS_K_dim) &
+&          BS_mat(i1,i2)=-conjg(BS_mat(i1-BS_K_dim,i2+BS_K_dim))
+   endif
+   !
+   if (BS_not_const_eh_f) then
+     !
+     ! In case the f_i(1-f_j) occupation factors are state-dependent
+     ! here I multiply the kernel by BS_eh_f
+     !
+     forall(i1=1:BS_K_dim) BS_mat(i1,:)=BS_mat(i1,:)*BS_eh_f(i1)
+     if (BS_K_coupling) then
+       forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,:)=BS_mat(i1,:)*BS_eh_f(i1-BS_K_dim)
+     endif
+   endif
+ endif
  !
  ! Initialize the output file 
  !
@@ -170,6 +188,7 @@
      !                  =conjg(BSS_rhoq0(j))*BS_V_right(j,i)
      !
      call live_timing('BSK R residuals',px%stps(myid+1))
+     !
      do i1=1,BS_H_dim
        BS_R_right(i1)=cmplx(0.,0.,SP)
        if (.not.px%i1p(i1)) cycle
@@ -184,10 +203,18 @@
      call live_timing
      !
      ! [2] BS_R(i)= <i_K|j><j|q0> 
-     !            = conjg( BS_V_left(k,i))*BSS_rhoq0(k)*sign(k)
+     !            = conjg( BS_V_left(k,i))*BSS_rhoq0(k)*R_k
+     !
+     !     R(j) = f_v - f_c
+     !
+     ! In the right residuals I include the occupation factors
+     ! contribution
+     !
+     BSS_rhoq0(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)*  BS_eh_f(:BS_K_dim)
+     BSS_rhoq0(BS_K_dim+1:)=-BSS_rhoq0(BS_K_dim+1:)*BS_eh_f(:BS_K_dim)
      !
      call live_timing('BSK L residuals',px%stps(myid+1))
-     BSS_rhoq0(BS_K_dim+1:)=-BSS_rhoq0(BS_K_dim+1:)
+     !
      do i1=1,BS_H_dim
        BS_R(i1)=cmplx(0.,0.,SP)
        if (.not.px%i1p(i1)) cycle
@@ -199,7 +226,13 @@
        call live_timing(steps=1)
      enddo
      call pp_redux_wait(BS_R)
-     BSS_rhoq0(BS_K_dim+1:)=-BSS_rhoq0(BS_K_dim+1:)
+     !
+     ! Remove the occupation factors from the oscillators (in case
+     ! other solvers are used)
+     !
+     BSS_rhoq0(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)/  BS_eh_f(:BS_K_dim)
+     BSS_rhoq0(BS_K_dim+1:)=-BSS_rhoq0(BS_K_dim+1:)/BS_eh_f(:BS_K_dim)
+     !
      call live_timing
      !
      ! [3] BS_overlap(i,j)=conjg(BS_V_left(k,i))*BS_V_right(k,j)
@@ -239,15 +272,18 @@
      do i1=1,BS_H_dim
        BS_R(i1)=BS_R_left(i1)*BS_R_right(i1)
      enddo
+     !
    else
      !
-     !Resonant Residuals:
+     !Resonant Residuals
+     !------------------
      !
      ! BS_R(i)=\sum_k <q0|k><k|i> =
      !         \sum_k BS_mat(k,i) x conjg( BSS_rhoq0(k) )
      !
      call live_timing('BSK   residuals',px%stps(myid+1))
      BS_R=(0.,0.)
+     !
      do i1=1,BS_K_dim
        if (.not.px%i1p(i1)) cycle
 #if defined _DOUBLE
@@ -255,17 +291,19 @@
 #else
        BS_R(i1)=cdotc(BS_K_dim,BSS_rhoq0,1,BS_mat(:,i1),1)
 #endif
-       BS_R(i1)=BS_R(i1)*conjg( BS_R(i1) )
        call live_timing(steps=1)
      enddo
-     call pp_redux_wait(BS_R)
      call live_timing
+     !
+     call pp_redux_wait(BS_R)
+     !
    endif
  endif
  !
  !Now I calculate epsilon
  !
- ! eps2(iw)= 1 - Sum BS_R(K)/(w +I eta - E)
+ ! eps2(iw)= 1 - Sum  BS_R(K)/(w +I eta - E)     (coupling)
+ !           1 - Sum |BS_R(K)|^2/(w +I eta - E)  (resonant)
  !
  X_epsilon(1,:)=(0.,0.)
  X_epsilon(2,:)=(0.,0.)
@@ -273,24 +311,22 @@
  call live_timing('BSK res epsilon',px%stps(myid+1))
  do i1=1,BS_H_dim
    if (.not.px%i1p(i1)) cycle
-   if (BS_K_coupling) then
-     if (real(BS_E(i1))>0.) then
-       X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)/(W%p(:)-BS_E(i1))
-     else
-       X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)/(conjg(W%p(:))-BS_E(i1))
-     endif
-   else
-     X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)/(W%p(:)-BS_E(i1))
-   endif
+   !
+   ! Note the use of a causal expression here needed to avoid any
+   ! distinction between the resonant and antiresonant e/h Green's
+   ! functions.
+   !
+   if (BS_K_coupling)      X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)/(W%p(:)-BS_E(i1))
+   if (.not.BS_K_coupling) X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-BS_E(i1))
+   !
    call live_timing(steps=1)
  enddo
  call live_timing
  call pp_redux_wait(X_epsilon)
  !
- X_epsilon(2,:)=1.+X_epsilon(2,:)*(spin_occ/(2.*pi)**3.)*d3k_factor*4.*pi/(q_norm(1))**2
+ X_epsilon(2,:)=1.+X_epsilon(2,:)*real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/(q_norm(1))**2
  !
  X_epsilon(1,:)=W%p(:)
- call pp_indexes_reset(px)
  !
  ! I write the output file 
  !
@@ -306,6 +342,7 @@
  ! CLEAN
  !
  if (allocated(BS_mat)) deallocate(BS_mat)
+ call mem_est("BS_mat")
  deallocate(BS_R,BS_E)
  call mem_est("BS_R BS_E")
  if (BS_K_coupling) then
@@ -315,5 +352,6 @@
    deallocate(BS_E_diago)
    call mem_est("BS_E_diago")
  endif
+ call pp_indexes_reset(px)
  !
  end subroutine

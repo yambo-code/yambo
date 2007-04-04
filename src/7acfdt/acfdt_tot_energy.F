@@ -153,7 +153,7 @@
 
  call section('=','Non-interacting Response Function [Xo]')
 !==========================================================
- call X_checks(Xen,X)
+ call X_pre_setup(Xen,X)
  do iqibz=1,nqibz
    X%iq=iqibz
    X%ordering='c'

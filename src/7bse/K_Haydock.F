@@ -22,7 +22,6 @@
  subroutine K_Haydock(iq,W)
  !
  use pars,           ONLY:SP,pi,schlen
- use com,            ONLY:warning
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_epsilon
  use R_lattice,      ONLY:d3k_factor,q_norm
@@ -30,7 +29,7 @@
  use com,            ONLY:msg,gen_fmt,isec
  use BS,             ONLY:BSS_n_descs,BS_K_dim,BS_mat,Haydock_treshold,&
 &                         BSS_rhoq0,BSS_description,Haydock_v0_mod,&
-&                         BS_DB_is_fragmented,Kernel_by_V,BS_K_coupling
+&                         BS_DB_is_fragmented,Kernel_by_V
  use timing,         ONLY:live_time_msg
  use stderr,         ONLY:cstr,tty_size,string_pack
  use parser_m,       ONLY:parser
@@ -58,13 +57,6 @@
    call section('=','Haydock solver')
  else if (isec(2)==0) then
    call section('+','Haydock solver')
- endif
- !
- !Haydock Method still unsupported with coupling
- !
- if (BS_K_coupling) then
-   call warning('Haydock methid still unsupported for non-resonant K')
-   return
  endif
  !
  !Haydock Coefficients and restart vector on disk
@@ -139,7 +131,7 @@
    !|Vn>   = |Vn+1>
    !
    Vnm1=Vn
-   Vn=Vnp1
+   Vn  =Vnp1
    write (ch(2),'(a,i3.3)') '[Haydock] Iteration ',it
    if (it>2) then
      call Gh(Af(:it),Bf(:it),it)
@@ -175,9 +167,7 @@
  !
  ! CLEAN
  !
- if (allocated(BS_mat)) then
-   deallocate(BS_mat)
- endif
+ if (allocated(BS_mat)) deallocate(BS_mat)
  !
  ! Either if BS_mat is allocated (no fragments) or is not allocated
  ! I need to clean the memory
@@ -188,8 +178,8 @@
    !
    subroutine Gh(Af,Bf,it)
      implicit none
-     integer :: it
-     real(SP):: Bf(it)
+     integer    :: it
+     real(SP)   :: Bf(it)
      complex(SP):: Af(it)
      !
      ! Work Space
@@ -198,7 +188,10 @@
      real(SP):: Co
      complex(SP) :: G(2,it)
      !
-     Co=(spin_occ/(2.*pi)**3.)*d3k_factor*4.*pi/(q_norm(1))**2*Haydock_v0_mod**2.
+     ! Co includes the spin_occ factor because Haydock is expected to work
+     ! only when ALL BS_eh_f == spin_occ
+     !
+     Co=spin_occ/(2.*pi)**3.*d3k_factor*4.*pi/q_norm(1)**2*Haydock_v0_mod**2.
      !
      do iw=1,W%n(1)
        G=(0.,0.)
@@ -217,6 +210,6 @@
        if (Haydock_treshold<0.) reached_treshold=reached_treshold+&
 &         abs(X_epsilon(2,iw)-X_epsilon(4,iw))/abs(X_epsilon(2,iw))/real(W%n(1))
      enddo
-     end subroutine
-     !
+   end subroutine
+   !
  end subroutine

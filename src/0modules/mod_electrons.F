@@ -77,65 +77,67 @@
    integer ,allocatable :: BZ_RIM_table(:,:)
    !
    contains
-   !
-   subroutine E_duplicate(Ei,Eo)
-   !
-   use memory_m,  ONLY:mem_est
-   implicit none
-   type(levels):: Ei,Eo
-   logical :: naive
-   naive=Eo%nk==0
-   Eo%nb=Ei%nb
-   if (naive) then
-     Eo%nk=Ei%nk
-     Eo%nbf=Ei%nbf
-     Eo%nbm=Ei%nbm
-     Eo%bf=Ei%bf
-     Eo%kf=Ei%kf
-     Eo%Efermi=Ei%Efermi
-   endif
-   allocate(Eo%E(Eo%nb,Eo%nk,n_sp_pol),Eo%f(Eo%nb,Eo%nk,n_sp_pol),&
-&           Eo%W(Eo%nb,Eo%nk),Eo%Z(Eo%nb,Eo%nk))
-   call mem_est("E-E E-f E-W E-Z",&
-&             (/size(Eo%E),size(Eo%f),size(Eo%W),size(Eo%Z)/),&
-&             (/SP,        SP,        SP,        2*SP/) )
-   Eo%E=0.
-   Eo%W=0.
-   Eo%f=0.
-   Eo%Z=(0.,0.)
-   if (naive) then
-     Eo%f(:,:,:)=Ei%f(:,:,:)
-     Eo%E(:,:,:)=Ei%E(:,:,:)
-     if (associated(Ei%Eo)) Eo%E(:,:,:)=Ei%Eo(:,:,:)
-   else
-     Eo%E(:,:,:)=Ei%E(:,:Eo%nk,:)
-   endif
-   !
-   !E RIM
-   !
-   if (BZ_RIM_nbands/=0.and.Ei%nk==Eo%nk) then
-     allocate(Eo%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
-     allocate(Eo%f_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
-     call mem_est("E_RIM f_RIM",(/size(Eo%E_RIM),size(Eo%f_RIM)/),(/SP,SP/))
-     Eo%E_RIM=Ei%E_RIM
-     Eo%f_RIM=Ei%f_RIM
-   endif
-   end subroutine
-   !
-   subroutine E_reset(E)
-   !
-   use memory_m, ONLY:mem_est
-   implicit none
-   type(levels)::E
-   E%Efermi=0.
-   E%nb=0
-   E%nk=0
-   E%nbf=0 
-   E%nbm=0
-   E%bf=0
-   E%kf=0 
-   nullify(E%E,E%Eo,E%Z,E%W,E%f,E%qp_done,E%E_RIM,E%f_RIM)
-   call mem_est("E-E E-Eo E-f E-W E-Z E-qp_done E_RIM f_RIM")
-   end subroutine
-   !
+     !
+     subroutine E_duplicate(Ei,Eo)
+       !
+       use memory_m,  ONLY:mem_est
+       implicit none
+       type(levels):: Ei,Eo
+       !
+       logical :: naive
+       !
+       naive=Eo%nk==0
+       Eo%nb=Ei%nb
+       if (naive) then
+         Eo%nk=Ei%nk
+         Eo%nbf=Ei%nbf
+         Eo%nbm=Ei%nbm
+         Eo%bf=Ei%bf
+         Eo%kf=Ei%kf
+         Eo%Efermi=Ei%Efermi
+       endif
+       allocate(Eo%E(Eo%nb,Eo%nk,n_sp_pol),Eo%f(Eo%nb,Eo%nk,n_sp_pol),&
+&               Eo%W(Eo%nb,Eo%nk),Eo%Z(Eo%nb,Eo%nk))
+       call mem_est("E-E E-f E-W E-Z",&
+&                 (/size(Eo%E),size(Eo%f),size(Eo%W),size(Eo%Z)/),&
+&                 (/SP,        SP,        SP,        2*SP/) )
+       Eo%E=0.
+       Eo%W=0.
+       Eo%f=0.
+       Eo%Z=(0.,0.)
+       if (naive) then
+         Eo%f(:,:,:)=Ei%f(:,:,:)
+         Eo%E(:,:,:)=Ei%E(:,:,:)
+         if (associated(Ei%Eo)) Eo%E(:,:,:)=Ei%Eo(:,:,:)
+       else
+         Eo%E(:,:,:)=Ei%E(:,:Eo%nk,:)
+       endif
+       !
+       !E RIM
+       !
+       if (BZ_RIM_nbands/=0.and.Ei%nk==Eo%nk) then
+         allocate(Eo%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
+         allocate(Eo%f_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
+         call mem_est("E_RIM f_RIM",(/size(Eo%E_RIM),size(Eo%f_RIM)/),(/SP,SP/))
+         Eo%E_RIM=Ei%E_RIM
+         Eo%f_RIM=Ei%f_RIM
+       endif
+     end subroutine
+     !
+     subroutine E_reset(E)
+       !
+       use memory_m, ONLY:mem_est
+       implicit none
+       type(levels)::E
+       E%Efermi=0.
+       E%nb=0
+       E%nk=0
+       E%nbf=0 
+       E%nbm=0
+       E%bf=0
+       E%kf=0 
+       nullify(E%E,E%Eo,E%Z,E%W,E%f,E%qp_done,E%E_RIM,E%f_RIM)
+       call mem_est("E-E E-Eo E-f E-W E-Z E-qp_done E_RIM f_RIM")
+     end subroutine
+     !
  end module electrons

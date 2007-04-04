@@ -20,27 +20,30 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine QP_apply_fit(band_range,qp,en,qpfit,what)
-!====================================================
+ !
  use pars,          ONLY:SP,schlen,DP
  use com,           ONLY:warning
  use QP_m,          ONLY:QP_t
  use QP_CTL,        ONLY:qp_fit_ctl
  use electrons,     ONLY:levels
  implicit none
+ !
  type(levels)    ::en
  type(QP_t)      ::qp
  type(qp_fit_ctl)::qpfit
  integer         ::band_range(2)
  character(1)    ::what
-!ws
+ !
+ ! Work Space
+ !
  integer  :: i1,Nqpc,Nqpv,fit_terms
  real(SP) :: Eoc,Eov,Ec,Ev,V_err,C_err
  real(DP) :: EPS,Dy(qp%n_states),Dx(qp%n_states),Tt_def(3)
  real(DP), allocatable :: TCv(:),TCc(:)
  character (schlen)    :: warn_msg
-!
-! fit data setup
-!================
+ !
+ ! fit data setup
+ !
  Eov=-1.E5
  Eoc=1.E5
  Ev=-1.E5
@@ -55,7 +58,7 @@
      Ec=min(Ec,real(qp%E(i1))) 
    endif
  enddo
-!
+ !
  fit_terms=1
  if (what=='W') fit_terms=2
  allocate(TCv(fit_terms+1),TCc(fit_terms+1))
@@ -63,9 +66,9 @@
  if (what=='E') Tt_def(2)=1.
  TCv=Tt_def(:fit_terms+1)
  TCc=Tt_def(:fit_terms+1)
-!
-! E>0 (conduction)
-!==================
+ !
+ ! E>0 (conduction)
+ !
  Nqpc=0
  do i1=1,qp%n_states
    if (qp%table(i1,1)<band_range(1).or.qp%table(i1,1)>band_range(2)) cycle
@@ -88,9 +91,9 @@
    if (what=='E') qpfit%E_err(1)=EPS
    if (what=='W') qpfit%W_err(1)=EPS
  endif
-!
-! E<0 (valence)
-!===============
+ !
+ ! E<0 (valence)
+ !
  Nqpv=0
  do i1=1,qp%n_states
    if (qp%table(i1,1)<band_range(1).or.qp%table(i1,1)>band_range(2)) cycle
@@ -113,13 +116,14 @@
    if (what=='E') qpfit%E_err(2)=EPS
    if (what=='W') qpfit%W_err(2)=EPS
  endif
-!
-! Storing
-!---------
+ !
+ ! Storing
+ !
  qpfit%db_scissor=(Ec-Ev)-(Eoc-Eov)
  if (what=='E') qpfit%fit_scissor=TCc(1)-TCv(1)-qpfit%db_scissor
  if (what=='E') qpfit%E=(/TCc(1),TCc(2),TCv(1),TCv(2)/)
  if (what=='W') qpfit%W=qpfit%W+(/TCc(1),TCc(2),TCc(3),TCv(1),TCv(2),TCv(3)/)
- 
+ !
  deallocate(TCc,TCv)
+ !
  end subroutine

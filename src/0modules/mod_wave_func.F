@@ -20,27 +20,39 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  module wave_func
-   use pars
+   !
+   use pars,           ONLY:SP
+   !
    integer                :: wf_b(2),wf_k(2),wf_s(2)
+   !
    ! Max Num. of COMPONENTS
+   !
    integer                :: wf_ncx
+   !
    ! Max Num. of G-VECTORS (>= wf_ncx)
+   !
    integer                :: wf_ng
    character(1)           :: wf_space
    complex(SP),allocatable:: wf(:,:)
    integer    ,allocatable:: wf_state(:,:,:)
+   !
    ! Num. of COMPONENTS at each k
+   !
    integer    ,allocatable:: wf_nc_k(:)
+   !
    ! Table correspondance G-vec <-> Components: G_ic = wf_igk(ic,ik)
+   !
    integer    ,allocatable:: wf_igk(:,:)
    logical                :: wf_norm_test
-
+   !
    interface
+     !
      integer function ioWF(ID,wf)
        use pars,             ONLY:SP
        integer            :: ID
        real(SP), optional :: wf(:,:,:,:)
      end function 
+     !
      subroutine wf_load(iG_max,iGo_max,bands_to_load,kpts_to_load,&
 &                       spins_to_load,space,title)
        implicit none
@@ -49,51 +61,53 @@
        integer,     optional :: spins_to_load(2)
        character(*),optional :: space,title
      end subroutine
+     !
    end interface 
- contains
-
- integer function WF_alloc()
- use memory_m, ONLY : mem_est
- use FFT_m,    ONLY : fft_size,fftw_plan,fft_dim
- implicit none
- integer :: local_size(2),err
- local_size(2)=(wf_b(2)-wf_b(1)+1)*(wf_k(2)-wf_k(1)+1)*(wf_s(2)-wf_s(1)+1)
- if (wf_space=="R") local_size(1)=fft_size
- if (wf_space=="G") local_size(1)=wf_ng
- allocate(wf(local_size(1),local_size(2)),stat=err)
- if (err==0) allocate(wf_state(wf_b(2),wf_k(2),wf_s(2)),stat=err)
- call mem_est('WF',(/product(local_size)/),errors=(/err/))
- WF_alloc=local_size(2)
- wf=(0.,0.)
- wf_state=0
+   !
+   contains
+   !
+   integer function WF_alloc()
+     use memory_m, ONLY : mem_est
+     use FFT_m,    ONLY : fft_size,fftw_plan,fft_dim
+     implicit none
+     integer :: local_size(2),err
+     local_size(2)=(wf_b(2)-wf_b(1)+1)*(wf_k(2)-wf_k(1)+1)*(wf_s(2)-wf_s(1)+1)
+     if (wf_space=="R") local_size(1)=fft_size
+     if (wf_space=="G") local_size(1)=wf_ng
+     allocate(wf(local_size(1),local_size(2)),stat=err)
+     if (err==0) allocate(wf_state(wf_b(2),wf_k(2),wf_s(2)),stat=err)
+     call mem_est('WF',(/product(local_size)/),errors=(/err/))
+     WF_alloc=local_size(2)
+     wf=(0.,0.)
+     wf_state=0
 #if defined FFTW
- fftw_plan=0
+     fftw_plan=0
 #endif
- end function
-
- subroutine WF_free()
- use memory_m, ONLY : mem_est
- use FFT_m,    ONLY : fft_size,fft_dim,fft_dim_loaded,fft_g_table,&
-&                     fft_rot_r,fftw_plan
- implicit none
- if (.not.allocated(wf)) return
- call mem_est('WF')
- deallocate(wf,wf_state)
- if (wf_space=="R") then
-   fft_size=0
-   fft_dim=0
-   fft_dim_loaded=0
-   deallocate(fft_g_table,fft_rot_r)
-   call mem_est('FFT_g_tab FFT_rot')
+   end function
+   !
+   subroutine WF_free()
+     use memory_m, ONLY : mem_est
+     use FFT_m,    ONLY : fft_size,fft_dim,fft_dim_loaded,fft_g_table,&
+  &                       fft_rot_r,fftw_plan
+     implicit none
+     if (.not.allocated(wf)) return
+     call mem_est('WF')
+     deallocate(wf,wf_state)
+     if (wf_space=="R") then
+       fft_size=0
+       fft_dim=0
+       fft_dim_loaded=0
+       deallocate(fft_g_table,fft_rot_r)
+       call mem_est('FFT_g_tab FFT_rot')
 #if defined FFTW
-   call dfftw_destroy_plan(fftw_plan)
-   fftw_plan=0
+       call dfftw_destroy_plan(fftw_plan)
+       fftw_plan=0
 #endif
- endif
- wf_k=0
- wf_b=0
- wf_s=0
- wf_space=' '
- end subroutine
-
+     endif
+     wf_k=0
+     wf_b=0
+     wf_s=0
+     wf_space=' '
+   end subroutine
+   ! 
  end module

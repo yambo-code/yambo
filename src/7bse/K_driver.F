@@ -56,6 +56,13 @@
  call E_reset(Ken)
  call W_reset(W_bss)
  call E_duplicate(Xen,Ken)
+ !
+ ! In these two lines I ensure the at least all the metallic
+ ! bands are included in the X summation
+ !
+ if (BS_bands(1)>Ken%nbf+1) BS_bands(1)=Ken%nbf+1
+ if (BS_bands(2)<Ken%nbm)   BS_bands(2)=Ken%nbm
+ !
  call QP_apply(BS_bands,Ken,Xk,2,msg_fmt='s')
  !
  ! If the em1s DB has been calculated in the same run

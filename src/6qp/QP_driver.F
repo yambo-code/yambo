@@ -108,7 +108,7 @@
  ! must be correctly written in the QP_description(s)
  !
  if (l_life) then
-   call X_checks(Xen,X)
+   call X_pre_setup(Xen,X)
    if (X%ng_db==0) X%ng_db=X%ng
  endif
  !

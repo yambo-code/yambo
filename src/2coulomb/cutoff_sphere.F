@@ -20,15 +20,17 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine cutoff_sphere()
-!==========================
+ !
  use pars,          ONLY:SP
  use wave_func,     ONLY:wf_ng
  use R_lattice,     ONLY:cyl_ph_radius,bare_qpg,nqibz
  implicit none
-!ws
+ !
+ ! Work Space
+ ! 
  integer ::iq,ig
  real(SP)::dummy
-
+ !
  do ig=1,wf_ng
    do iq=1,nqibz
      dummy=sqrt(1. - cos(bare_qpg(iq,ig)*cyl_ph_radius) )
@@ -37,6 +39,5 @@
    enddo
  enddo
  bare_qpg(1,1)=sqrt(2.0)/cyl_ph_radius
-
+ !
  end subroutine
-!

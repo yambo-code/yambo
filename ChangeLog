@@ -1,3 +1,55 @@
+2007-04-04 16:28:33 r109 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.8_23-03-07
+
+	*  spp/BZ_RIM.F p2s/p2s_db1.F 2wf_and_fft/wf_load.F 2wf_and_fft/el_density.F 0modules/mod_electrons.F 0modules/std_presets.F 0modules/mod_BS.F 0modules/mod_X.F 0modules/mod_wave_func.F 2io/ioBS_diago.F 2io/ioX.F 2io/ioE_RIM.F 5X/X_pre_setup.F 5X/X_eh_setup.F 5X/X_os.F 5X/X_em1.F 5X/O_driver.F 5X/.objects 5X/X_checks.F 5X/X_ehg.F 7bse/K_Haydock.F 7bse/K_dump_to_o_file.F 7bse/K_filling.F 7bse/Kernel_by_V.F 7bse/.objects 7bse/K_driver.F 7bse/K_diagonalization.F 7bse/K_eh_setup.F 7bse/K_inversion.F 7bse/K_solvers.F 7bse/K.F 3qp_ctl/mod_QP_CTL.F 3qp_ctl/QP_apply_stretch.F 3qp_ctl/QP_apply_fit.F 6qp/QP_driver.F 7acfdt/acfdt_tot_energy.F 4ras/rasdriver.F
+
+	Bugs:
+	- In wf_load normalization check fixed for "few" states wf loading
+	- ioBS_diago exits with error when BSS_write_eig_2_db=.FALSE. but
+	  BS_mat is going to be loaded
+	- In O_driver X_epsilon was filled in a wrong way when the
+	  polarizability is calculated
+	- In K.F BW_W is kept complex while the diagonal part of the kernel
+	  is forced real ( H_res_c=real(H_res_c) )
+
+	Additions:
+	- In interfaces (p2s, a2s) i_time_rev = 0 when nsym = 1
+	- X_RIM_nkpts,BSS_uses_RIM,BS_not_const_eh_f
+	- X_checks renamed in X_pre_setup
+	- X_ehg renamed in X_eh_setup
+	- add RIM to diagonalization BS solver (to complete)
+
+	- BSE support for fractional occupations (finite temp. case).
+	  Introduced BS_not_const_eh_f and changed K_eh_setup, K_diagonalization
+
+	Changes:
+	-  Restyling of wf_load, mod_electrons, mod_wave_func, ioE_RIM, K_filling,
+	   K_diagonalization,K_eh_setup
+
+	Patch sent by: Andrea
+
+2007-03-27 16:08:48 r108 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.8_23-03-07
+
+	*  3.0.8_16-03-07 include/version.inc p2s/p2s_qexml_db1.F p2s/p2s_db1.F 2wf_and_fft/el_density.F 2wf_and_fft/scatter_Bamp.F 0modules/mod_electrons.F 0modules/std_presets.F 0modules/mod_BS.F 0modules/mod_X.F 0modules/mod_ELPH.F 2io/ioDB1.F 2io/ioWF.F 2io/ioOSTNTS.F 2io/ioE_RIM.F 5X/X_O_longitudinal.F 5X/X_O_transverse.F 5X/X_os.F 5X/O_driver.F 5X/X_O_strengths.F 5X/X_O_gks.F 5X/X_s.F 7bse/Kernel_by_V.F 7bse/K_driver.F 7bse/K_eh_setup.F 7bse/K_solvers.F 4it/setup.F 4it/init.F 3qp_ctl/mod_QP_CTL.F 3qp_ctl/QP_apply_stretch.F 3qp_ctl/QP_apply_db.F 6qp/QP_secant.F 4ras/X_O_longitudinal_cut.F 1common/extend_occupations.F 1common/fermi_msg.F 1common/bracket.F 1common/secant.F 1common/fermi_level.F 3kop/bz_samp_indexes.F 5elph/QP_elph.F ChangeLog 3.0.8_23-03-07
+
+	Additions:
+	- Finite Temperature BSE: added BS_eh_f array to include fractional
+	  occupations.
+	- NON COLLINEAR SPIN SUPPORT included -> now all energies,
+	  occupations, ... are dimensioned using n_sp_pol (even when n_spinor=2).
+	  => Note the important change in scatter_Bamp.F <=
+	- El-Ph lifetimes support.
+
+	Changes:
+	- Several subroutines restyled
+	- bracket and secant are nor functions.
+	- fermi_level routine algorithm rewritten and optimized.
+
+	Patch sent by: Andrea
+
 2007-03-19 11:47:07 r107 Andrea Marini <marini@roma2.infn.it>
 
 	V 3.0.8_16-03-07

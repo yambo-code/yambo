@@ -64,7 +64,11 @@
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   ioQP=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.)
+   if (what=="W") then
+     ioQP=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.)
+   else
+     ioQP=io_header(ID,T_EL=.true.)
+   endif
    if (ioQP/=0) goto 1
    !
    if (ver_is_gt_or_eq(ID,(/3,0,1/)).and.what/="W") then

@@ -146,7 +146,7 @@
  else if (all((/.not.is_cut(1),.not.is_cut(2),is_cut(3)/)))  then ! BOX Z
    vol_factor=v_norm(a(3,:))
  endif
-
+ !
  forall (iq=1:q%nibz,ig=1:wf_ng) bare_qpg(iq,ig)=sqrt(vol_factor/V_cut(iq,ig))
  !
  call k_ibz2bz(q,'d',.true.)

@@ -196,20 +196,6 @@
  if (trim(QP_solver)=='g'.and.l_el_corr.and.&
 &                                  .not.l_ppa) call QP_raxis(X,Xen,Xk,en,k,q,qp,Xw,0)
  !
-#if defined PJ_PH
- !
- ! El-Phonon
- !
- if (trim(QP_solver)=='g'.and.l_ph_corr) then
-   if (.not.l_el_corr) then
-     QP_Sc=cmplx(0.,0.,SP)
-     QP_G=cmplx(0.,0.,SP)
-   endif
-   call QP_elph(en,k,q,qp)
- endif
- !
-#endif
- !
  ! Reporting
  !
  call QP_report(.TRUE.,.FALSE.)
@@ -225,6 +211,8 @@
      integer          ::ik,ib
      real(SP)         ::xx_dummy,xc_dummy,r_numbers(20),dscp
      character(schlen)::r_fmt,fmt_,ch1,ch2,ch_spin
+     character(4)     ::ch_xx
+     character(5)     ::ch_vxc
      !
      if (trim(QP_solver)/='g') then
        !
@@ -237,7 +225,11 @@
        if (energies) then
          call msg(' r','- E  : QP energy  - Z   : Renormalization factor')
          call msg(' r','- So : Sc(Eo)     - S   : Sc(E)')
-         call msg('rn','- xx/Vxc : Sx/Vxc - dSp : Sc derivative precision')
+         if (l_ph_corr) then
+           call msg('rn','- Gm : Width [meV]- Gf  : Width [fs]')
+         else
+           call msg('rn','- xx/Vxc : Sx/Vxc - dSp : Sc derivative precision')
+         endif
          call msg('nr','QP [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
        else if (widths) then
          call msg(' r','- Z  : Renormalization factor')
@@ -266,6 +258,11 @@
            r_numbers(:7)=(/qp%E_bare(i1)*HARTREE,real(qp%E(i1))*HARTREE,&
 &                      real(qp%E(i1)-qp%E_bare(i1))*HARTREE,real(qp%Z(i1)),&
 &                      real(QP_Sc(i1,1))*HARTREE,xx_dummy,xc_dummy/)
+           if (l_ph_corr) then
+             r_numbers(6)=aimag(qp%E(i1))*HARTREE/1.E-3
+             r_numbers(7)=0.
+             if (r_numbers(6)>0.) r_numbers(7)=0.65822/2./aimag(qp%E(i1))/HARTREE
+           endif
            r_fmt=gen_fmt(r_v=r_numbers(:7))
            fmt_='(3(a,f6.2),a,f4.2,4(a,'//trim(r_fmt)//'))'
          else if (widths) then
@@ -287,10 +284,15 @@
          !
          if (energies) then
            !
+           ch_xx =' xx='
+           ch_vxc=' Vxc='
+           if (l_ph_corr) ch_xx =' Gm='
+           if (l_ph_corr) ch_vxc=' Gf='
+           !
            ch1=trim(ch_spin)//' B='//trim(intc(ib))//' Eo='
            write (ch2,trim(fmt_)) trim(ch1),r_numbers(1),&
 &            ' E=',r_numbers(2),' E-Eo=',r_numbers(3),' Z=',r_numbers(4),&
-&            ' So=',r_numbers(5),' xx=',r_numbers(6),' Vxc=',r_numbers(7)
+&            ' So=',r_numbers(5),ch_xx,r_numbers(6),ch_vxc,r_numbers(7)
            !
            ch1=ch2
            !
@@ -317,7 +319,7 @@
        !
        ! QP i/o
        !
-       if (l_el_corr) then
+       if (energies) then
          call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
          io_err=ioQP('QP',qp,ID)
        endif
@@ -326,6 +328,7 @@
      !
      ! o.qp
      !
+     if (l_ph_corr)   QP_rep_string=trim(QP_rep_string)//'lm'
      if (widths)      QP_rep_string='kpbne0lmlf'
      if (n_sp_pol==2) QP_rep_string=trim(QP_rep_string)//'sp'
      call QP_of(k,qp,en)

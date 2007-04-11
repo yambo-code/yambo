@@ -31,10 +31,11 @@
  type(X_t)    :: X 
  type(levels) ::Xen
  !
- if (X%iq(1)<0) X%iq(1)=1
  if (X%ib(1)<0) X%ib(1)=1
- if (X%iq(2)<0) X%iq(2)=1
  if (X%ib(2)<0) X%ib(2)=1
+ if (X%iq(2)<0.or.X%iq(2)>nqibz) X%iq(2)=nqibz
+ if (X%iq(1)<0) X%iq(1)=1
+ if (X%iq(1)>X%iq(2)) X%iq(1)=X%iq(2)
  !
  ! In these two lines I ensure the at least all the metallic
  ! bands are included in the X summation
@@ -44,8 +45,6 @@
  !
  ! Other checks
  !
- if (X%iq(2)>nqibz)   X%iq(2)=nqibz
- if (X%iq(1)>X%iq(2)) X%iq(1)=X%iq(2)
  if (X%ib(1)<0.or.X%ib(1)>Xen%nbm.or.X%ib(2)<X%ib(1)) X%ib(1)=1
  if (X%ib(2)>Xen%nb.or.X%ib(2)<Xen%nbf)               X%ib(2)=Xen%nb
  !

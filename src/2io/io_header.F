@@ -135,14 +135,14 @@
  ! Q points
  !
  if (present(QPTS)) then
-
+   !
    allocate(l_qpt(nqibz_disk,3))
-
+   !
    if (write_is_on(ID)) l_qpt=q_pt
-
+   !
    call io_bulk(ID,VAR="HEAD_QPT",VAR_SZ=(/nqibz_disk,3/))
    call io_bulk(ID,R2=l_qpt)
-
+   !
    if (read_is_on(ID).and.allocated(q_pt)) then
      !
      call define_zeros(q_pt(:,1),zero_=local_zero(1))
@@ -153,7 +153,7 @@
        if (.not.v_is_zero(q_pt(i1,:)-l_qpt(i1,:),zero_=local_zero)) io_header=-1
      enddo
      if (io_header/=0) then
-       if (WARN) call warning('Wrong Q-points coordinates/order in X database')
+       if (WARN) call warning('Wrong Q-points coordinates/order')
        goto 1
      endif
    endif
@@ -167,9 +167,9 @@
  ! Temperature
  !
  if (present(T_EL).and.ver_is_gt_or_eq(ID,(/3,0,2/)) ) then
-
+   !
    io_mode(ID)=MODE
-
+   !
    call io_elemental(ID,VAR="T_EL",VAR_SZ=1,MENU=MENU)
    MENU=0
    call io_elemental(ID,R0=Tel,&
@@ -182,9 +182,9 @@
  ! Kernel QP corrections
  !
  if (present(QP_ctl_K)) then
-
+   !
    io_mode(ID)=MODE
-
+   !
    call io_elemental(ID,VAR="QP_CTL_K",VAR_SZ=3,MENU=MENU)
    MENU=0
    call io_elemental(ID,R1=QP_ctl_E(2,:),&

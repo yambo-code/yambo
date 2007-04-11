@@ -38,7 +38,7 @@
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END
  use memory_m,      ONLY:mem_est
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
-&                        QP_G_er,QP_G_dr,QP_Sc_steps,QP_solver,QP_dSc_steps,&
+&                        QP_G_er,QP_G_dr,QP_Sc_steps,QP_dSc_steps,&
 &                        QP_dSc_delta
  use D_lattice,     ONLY:sop_inv
  use R_lattice,     ONLY:qindx_S,bz_samp,ik_is_table,q_norm
@@ -89,8 +89,7 @@
  !
  call msg('r', '[GW/El-Ph] Bands range       :',(/1,QP_PH_n_G_bands/))
  call msg('r', '[GW/El-Ph] PH damping   [mev]:',PH_damping*HARTREE*1000.)
- if (trim(QP_solver)/="g") call msg('r', &
-&              '[GW/El-Ph] G damping     [ev]:',QP_G_damp*HARTREE)
+ call msg('r', '[GW/El-Ph] G damping     [ev]:',QP_G_damp*HARTREE)
  call msg('r','')
  !
  iv4=(/1,1,0,0/)
@@ -109,23 +108,13 @@
  !
  !Sc Energy points
  !
- if (trim(QP_solver)=='n') then
-   do iqp=1,qp%n_states
-     Sc_W(iqp)%n=QP_dSc_steps
-     allocate(Sc_W(iqp)%p(Sc_W(iqp)%n(1)))
-     forall (i2=1:QP_dSc_steps) Sc_W(iqp)%p(i2)=&
-&           en%E(QP_table(iqp,1),QP_table(iqp,3),1)+(i2-1)*QP_dSc_delta+&
-&           cmplx(0.,QP_G_damp,SP)
-   enddo
- else if (trim(QP_solver)=='g') then
-   do iqp=1,qp%n_states
-     Sc_W(iqp)%n=QP_Sc_steps
-     Sc_W(iqp)%er=QP_G_er
-     Sc_W(iqp)%dr=QP_G_dr
-     call freqs_setup(Sc_W(iqp))
-     QP_Sc_steps=Sc_W(iqp)%n(1)
-   enddo
- endif
+ do iqp=1,qp%n_states
+   Sc_W(iqp)%n=QP_dSc_steps
+   allocate(Sc_W(iqp)%p(Sc_W(iqp)%n(1)))
+   forall (i2=1:QP_dSc_steps) Sc_W(iqp)%p(i2)=&
+&         en%E(QP_table(iqp,1),QP_table(iqp,3),1)+(i2-1)*QP_dSc_delta+&
+&         cmplx(0.,QP_G_damp,SP)
+ enddo
  !
  iq_ref=0
  !

@@ -19,7 +19,6 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-!================================================================================
 ! DESCRIPTION :
 ! 
 ! the variables generated/read in this series of rotuines are:
@@ -35,24 +34,20 @@
 ! region BZ`.
 !
 ! Now some derivated quantities
-!!
+!
 ! 4 pi / |q+G|^2 = 2 pi DLVol NqBZ qpg(q,G)                                  
 ! |q+G| = Sqrt[ 2 / ( DLVol NqBZ qpg(q,G)) ]                                  
 !
-!================================================================================
-!
  subroutine col_driver(bare_NG,q)
-!================================
-!
-!Here I launch the routine to create/read the 
-!data.qpgint file after some important checks and definitions.
-!	
-!-------------------------------------------------------------
+ !
+ !Here I launch the routine to create/read the 
+ !db.RIM file after some important checks and definitions.
+ !	
  use pars,          ONLY:SP,schlen,pi
  use memory_m,      ONLY:mem_est
  use drivers,       ONLY:l_rim,l_col_cut
  use parser_m,      ONLY:parser
- use stderr,        ONLY:string_pack
+ use stderr,        ONLY:string_pack,intc
  use com,           ONLY:msg,gen_fmt
  use vec_operate,   ONLY:iku_v_norm,sort
  use D_lattice,     ONLY:DL_vol
@@ -64,84 +59,92 @@
  implicit none
  integer       :: bare_NG
  type(bz_samp) :: q
-!ws
- integer          :: i1,i2,iq,q_norm_i(nqibz),ID,io_err
+ !
+ ! Work Space
+ !
+ integer          :: ig,iq,ID,io_err
  integer, external:: ioRIM
- real(SP)         :: r(2),q_norm_s(nqibz)
- character(schlen):: lch1,lch2
-!
-!------------------
-! Bare interaction
-!==================
-!
+ !
+ ! Messagging...
+ !
+ integer          :: q_norm_i(nqibz),i1,i2
+ real(SP)         :: r_dum(2),q_norm_s(nqibz)
+ character(schlen):: ch_dum,fmt_dum,msg_dum(2)
+ !
+ ! Bare interaction
+ !
  allocate(bare_qpg(nqibz,max(bare_NG,wf_ng)))
  call mem_est("bare_qpg",(/size(bare_qpg)/))
  bare_qpg(1,1)=q_norm(1)
- do i1=2,max(bare_NG,wf_ng)
-   bare_qpg(1,i1)=iku_v_norm(g_vec(i1,:))
+ do ig=2,max(bare_NG,wf_ng)
+   bare_qpg(1,ig)=iku_v_norm(g_vec(ig,:))
  enddo
- do i2=2,nqibz
-   do i1=1,max(bare_NG,wf_ng)
-     bare_qpg(i2,i1)=iku_v_norm(q_pt(i2,:)+g_vec(i1,:))
+ do iq=2,nqibz
+   do ig=1,max(bare_NG,wf_ng)
+     bare_qpg(iq,ig)=iku_v_norm(q_pt(iq,:)+g_vec(ig,:))
    enddo
  enddo
-!
-!-------------------------------------------------------------------
-! RIM
-!=====
+ !
+ ! RIM
+ !
  if (l_rim) l_rim=all((/RIM_ng>0,RIM_n_rand_pts>0/))
-!
-! In case I am not using the RIM I need to reset
-! NG and n_rand_pts as they are dumped from the DB and
-! they are not zero even if l_rim=F. This means that the BS DB (for example)
-! is not recalculated if l_rim=F whene there is a precalculated db.RIM
-!
+ !
+ ! In case I am not using the RIM I need to reset
+ ! NG and n_rand_pts as they are dumped from the DB and
+ ! they are not zero even if l_rim=F. This means that the BS DB (for example)
+ ! is not recalculated if l_rim=F whene there is a precalculated db.RIM
+ !
  if (.not.l_rim) then
    RIM_ng=0
    RIM_n_rand_pts=0
  endif
-
+ !
  call parser('QpgFull',RIM_is_diagonal)
  RIM_is_diagonal=.not.RIM_is_diagonal
-
+ !
  if (l_rim) then
-
+   !
    call section('*','Coloumb potential Random Integration (RIM)')
-
+   !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
    io_err=ioRIM(ID)
-
+   !
    if (io_err/=0) then
      call rim()
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
      io_err=ioRIM(ID)
    endif
-
+   !
    call msg('nr','Summary of Coulomb integrals for non-metallic bands |Q|[au] RIM/Bare:')
    call sort(arrin=q_norm,arrout=q_norm_s,indx=q_norm_i)
    do i1=1,nqibz,2
-     lch2=' '
+     !
+     msg_dum=' '
+     !
      do i2=i1,min(i1+1,nqibz)
+       !
        iq=q_norm_i(i2)
-       write (lch1,'(a,i3.3,a)') 'Q [',iq,']:'
-       if (i2/=i1) write (lch1,'(2a,i3.3,a)') trim(lch2),' * Q [',iq,']:'
-       r(1)=q_norm(iq)
-       r(2)=2./(abs(bare_qpg(iq,1))**2.*DL_vol*real(nqbz))
-       if (i2==1) r(2)=2.*7.7956/(2.*pi)**3.*d3q_factor**(1./3.)
-       r(2)=RIM_qpg(iq,1,1)/r(2)
-       write (lch2,trim(string_pack('(a,2(',gen_fmt(r_v=r),'))' ) )) trim(lch1),r
+       ch_dum='Q ['//trim(intc(iq))//']:'
+       if (i1/=i2) ch_dum=' * Q ['//trim(intc(iq))//']:'
+       !
+       r_dum(1)=q_norm(iq)
+       r_dum(2)=2./(abs(bare_qpg(iq,1))**2.*DL_vol*real(nqbz))
+       if (i2==1) r_dum(2)=2.*7.7956/(2.*pi)**3.*d3q_factor**(1./3.)
+       r_dum(2)=RIM_qpg(iq,1,1)/r_dum(2)
+       !
+       fmt_dum='(a,2('//trim(gen_fmt(r_v=r_dum))//'))'
+       write (msg_dum(i2-i1+1),trim(fmt_dum)) trim(ch_dum),r_dum
+       !
      enddo
-     if (i1==1) call msg('nr',trim(lch2))
-     if (i1/=1) call msg('r',trim(lch2))
+     if (i1==1) call msg('nr',trim(string_pack(msg_dum(1),msg_dum(2))))
+     if (i1/=1) call msg(' r',trim(string_pack(msg_dum(1),msg_dum(2))))
    enddo
  endif
-!
-!-------------------------------------------------------------------
-! CUTOFF
-!========
+ !
+ ! CUTOFF
+ !
  if (.not.l_col_cut) return
-
+ !
  call cutoff_driver(q)
-
+ !
  end subroutine
-!

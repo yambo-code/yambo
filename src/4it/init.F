@@ -83,7 +83,7 @@
  type(w_samp)     ::Xxcw
  type(initdefs)   ::defs
  character(lchlen)::jch,rch
- integer          :: i1
+ integer          ::i1
  !
  !Presets (input)
  !

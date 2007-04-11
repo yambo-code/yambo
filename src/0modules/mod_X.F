@@ -144,7 +144,7 @@
        type(X_t)::X
        X%ng=1
        X%ng_db=0 
-       X%iq=(/1,1/)
+       X%iq=(/1,-1/)
        X%whoami=0
        X%Vnl_included=.false.
        if (present(type)) X%whoami=type

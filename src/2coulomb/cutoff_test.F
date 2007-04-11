@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
-!====================================================================
+ !
  use pars,          ONLY:SP,schlen,pi
  use vec_operate,   ONLY:v_norm
  use D_lattice,     ONLY:alat,sop_inv,DL_vol,a
@@ -34,7 +34,9 @@
  implicit none
  type(bz_samp):: q
  logical      :: cut_is_sphere,cut_is_box,cut_is_cyl,is_cut(3)
-!ws
+ !
+ ! Work Space
+ !
  integer, parameter :: n_dl_pts=24 ! NO EVEN NUMBERS HERE !
  real(SP),parameter :: plot_factor=1.2
  character(schlen)  :: ch,of_name(3)
@@ -44,9 +46,9 @@
 &           dummy(3)
  integer :: iqibz,iqbz,ig,ir1,ir2,ip,ig_r,is
  type(pp_indexes) ::px
-!
-! CutOff Test
-!-------------------------------
+ !
+ ! CutOff Test
+ !
  pl_xy_pt=0.
  pl_yz_pt=0.
  pl_xz_pt=0.

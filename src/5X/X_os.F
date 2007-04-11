@@ -238,7 +238,7 @@
          iscut= -conjg( X_rhoq0(ic,iv,ikbz,i_spin) )
        endif
        g2 = 1
-  
+ 
 #if defined _DOUBLE
        call zaxpy(g2,Gf(1)*eh_occ*iscut,conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
        do g2=2,X%ng

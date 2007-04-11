@@ -20,10 +20,9 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
-!======================================================
-! 
-! Calculates and stores on file the dielectric matrix.
-!
+ ! 
+ ! Calculates and stores on file the dielectric matrix.
+ !
  use pars,          ONLY:SP
  use drivers,       ONLY:l_life,l_bs_fxc,l_alda_fxc,l_acfdt,l_gw0
  use X_m,           ONLY:X_t,X_alloc,X_mat,X_poles_tab,self_detect_E_range
@@ -41,22 +40,24 @@
  type(X_t)    ::X
  type(w_samp) ::Xw
  logical      ::APPEND_NO_VERIFY
-!ws
+ !
+ ! Work Space
+ !
  integer :: iq,Xdb,i_err,iq_to_start
  integer, external :: ioX
  character(1)      :: sec_mode
-!---------------------------------------------------------------------
+ !
  self_detect_E_range=.false.
  !
  ! TDDFT SETUP (-1 argument)
- !---------------------------
+ !
  ! X%f_xc is setup when using ALDA, so that 
  ! the comparison in ioX can be done safely
  !
  call tddft_do_X_W_typs(-1,X,Xw)
  ! 
  ! Sectioning
- !------------
+ !
  sec_mode='*'
  if (depth>0) sec_mode='='
  !
@@ -77,7 +78,7 @@
      X%ordering='c'
    endif
  endif
-
+ !
  call X_pre_setup(Xen,X)
  !
  ! Build frequency range only if Xw%p was not already allocated
@@ -98,11 +99,11 @@
  ! Allocation
  !    
  call X_alloc('X',(/X%ng,X%ng,Xw%n(2)/))
-
+ !
  do iq=iq_to_start,X%iq(2)
-!
-! TDDFT setup
-!------------------------------------------------------
+   !
+   ! TDDFT setup
+   !
    call tddft_do_X_W_typs(iq,X,Xw)
    if (l_alda_fxc) call tddft_alda_g_space(Xen,Xk)
    !
@@ -111,7 +112,7 @@
    ! When X%whoami == 1 X is Xo (ACFDT). 
    !
    if (X%whoami/=1) call X_s(iq,(/1,Xw%n(1)/),X,Xw)
-
+   !
    call pp_redux_wait
    if (iq==1) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=Xdb) 
@@ -134,7 +135,7 @@
    if (allocated(rg_index_bg)) deallocate(rg_index_bg)
    deallocate(X_poles_tab,bg_npts,cg_pt,cg_index_bg)
    call mem_est("X_poles_tab RGi BGn CGp CGi")
-
+   !
  enddo
  !
  ! CLEAN (2)
@@ -143,5 +144,5 @@
  call X_alloc('OptOsc')
  if (.not.APPEND_NO_VERIFY.or.X%iq(2)==q%nibz) call WF_free()
  call pp_redux_wait
-
+ !
  end function

@@ -116,12 +116,12 @@
  do ikibz=1,nkibz
    call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ikibz+1/),ID=ID)
    io_err=ioWF(ID,wf_disk)
+   if (any((/ikibz<wf_k(1),ikibz>wf_k(2)/))) cycle
    do i2=1,n_bands
      do is=1,n_spin
-       wf_DP=(0._DP,0._DP)
        if (any((/i2<wf_b(1),i2>wf_b(2),&
-&                ikibz<wf_k(1),ikibz>wf_k(2),&
 &                is<wf_s(1),is>wf_s(2)/))) cycle
+       wf_DP=(0._DP,0._DP)
        wf_total_states=wf_total_states+1
        wf_state(i2,ikibz,is)=wf_total_states
        do ic=1,wf_nc_k(ikibz)

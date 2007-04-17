@@ -346,7 +346,7 @@ end subroutine init_cutoff
     enddo 
     enddo ! end loop n1,n2
    
-   ! Convert to crystal frame
+   ! Convert to crystal frame (i.e the REAL cartesian axes)
     PS(ix) = PSx
     PS(iy) = PSy
     PS(iz) = PSz

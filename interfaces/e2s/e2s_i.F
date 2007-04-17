@@ -27,7 +27,7 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
   use com,                 only : msg,write_to_report,outpath, file_exists
   use par_proc_m,          only : ncpu,myid,p_finalize
   use electrons,           only : levels,E_reset,n_bands,n_spin
-  use D_lattice,           only : n_atoms_max
+  use D_lattice,           only : PP_alloc, PP_free, n_atoms_max
   use R_lattice,           only : bz_samp,bz_samp_reset,nkibz
   use timing,              only : live_timing_is_on
   use wave_func,           only : wf_ncx,ioWF
@@ -57,6 +57,7 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
   integer :: i, dummy
   integer :: ncid
   double precision, allocatable, target :: my_kpt(:,:) 
+  double precision, allocatable :: pp_section(:,:,:) ! also one for wf_section?
 !
 ! Presets
 !=========
@@ -108,7 +109,7 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
   !
   ! Check for KP PP forced creation
   !
-! force_kbpp = .false.
+  force_kbpp = .false.
 ! if(index(instr,'forcepp').ne.0) force_kbpp = .true.
 
   
@@ -137,28 +138,44 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
   !
   ! Run the ETSF library for the PP information
   !
-  lwrite_PP = .false.
-  call e2s_kb_pp(ncid,lwrite_PP)
-  lwrite_PP = lwrite_PP.or.force_kbpp
-  if(.not.lwrite_PP) call msg('s',' == Writing DB2 (wavefunctions) ...')
-  if(lwrite_PP) call msg('s',' == Writing DB2 (wavefunctions) + nlPP ...')
-  if(force_kbpp) call msg('s','[WARNING] KB PP file contains only atomic information...')
+  lwrite_PP = .true.
+! call msg('s',' == Extracting KBPP information ...')
+! call e2s_kb_pp(ncid,lwrite_PP)
+! call msg('l','done ==')
+! lwrite_PP = lwrite_PP.or.force_kbpp
+! if(.not.lwrite_PP) call msg('s',' == Writing DB2 (wavefunctions) ...')
+! if(lwrite_PP) call msg('s',' == Writing DB2 (wavefunctions) + nlPP ...')
+! if(force_kbpp) call msg('s','[WARNING] KB PP file contains only atomic information...')
   !
   ! Local wavefunction storage
   !
   allocate(wf_disk(2,n_bands,wf_ncx,n_spin))
+  allocate(pp_section( dims%max_number_of_coefficients, &
+&                   dims%max_number_of_angular_momenta, &
+&                   dims%number_of_atom_species ) )
+  call PP_alloc()
 
   do ik=1,nkibz
     !
-    ! Run the ETSF library for the WF information
+    ! Run the ETSF library for the WF and PP information
     !
     call e2s_wf(wf_disk,ik,ncid)
-    if (ik==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-    if (ik> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
-    io_err=ioWF(ID,wf=wf_disk)
-    if(lwrite_PP) io_err=ioKB_PP(ID)
+!   call e2s_kb_pp(pp_section,ik,ncid)
+    ! 
+    ! Write to the SELF database
+    ! 
+    do icycle=1,2
+      if (icycle==2.and.n_atoms_max==0) cycle
+      if (ik==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
+      if (ik> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
+      if (icycle==1) io_err=ioWF(ID,wf=wf_disk)
+!     if (icycle==2) io_err=ioKB_PP(ID)
+    enddo
   enddo
+
   deallocate(wf_disk)
+  deallocate(pp_section)
+  call PP_free()
   call msg('ln','done ==')
 !
  ! Close file

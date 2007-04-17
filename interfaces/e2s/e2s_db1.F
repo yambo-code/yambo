@@ -23,6 +23,10 @@ subroutine e2s_db1(en,k,ncid)
   use electrons,            only : levels, n_bands, n_spin,n_sp_pol,n_spinor, spin_orbit
   use R_lattice,            only : bz_samp, ng_vec
   use D_lattice,            only : nsym, n_atom_species
+  use D_lattice,            only : pp_n_l_comp_max
+!  use D_lattice,            only : pp_n_l_comp_max,n_atom_species,n_atoms,pp_n_l_comp,&
+!&                                  n_atoms_max,atom_pos
+
   use interfaces,           only : print_interface_dimensions
   implicit none
   type(levels),   intent(inout) :: en
@@ -30,6 +34,7 @@ subroutine e2s_db1(en,k,ncid)
   integer,        intent(in)    :: ncid
 !ws
   integer                       :: i1, i2, ik, is, ig, ib
+  integer                       :: a_nsym ! this dimension is changed later
 !ETSF library stuff
   logical                       :: lstat ! to get informed on error
   type(etsf_io_low_error)       :: error_data ! to store informations about errors
@@ -44,11 +49,12 @@ subroutine e2s_db1(en,k,ncid)
   !
   en%nb    = dims%max_number_of_states
   k%nibz   = dims%number_of_kpoints 
-  nsym     = dims%number_of_symmetry_operations
+  nsym     = dims%number_of_symmetry_operations ! This is modified later
   ng_vec   = dims%max_number_of_coefficients
   n_spinor = dims%number_of_spinor_components 
   n_sp_pol = dims%number_of_spins
   n_atom_species = dims%number_of_atom_species
+  pp_n_l_comp_max = dims%max_number_of_angular_momenta
   !
   ! Derived SELF dimensions
   !
@@ -73,6 +79,10 @@ subroutine e2s_db1(en,k,ncid)
   ! K-points
   !
   call import_kpoints_group
+  !
+  ! PP/GW 
+  !
+  call import_gwdata_group
   !
   ! G-vectors grids and indices
   !
@@ -120,8 +130,9 @@ contains
 &                                  n_atoms_max,atom_pos, znucl
     implicit none
     type(etsf_geometry)           :: geometry_group
-!   logical                       :: l_identity, l_inversion
-    real(SP)                      :: lsop(3,3), cp(3)
+    logical                       :: l_identity, l_inversion
+    real(SP)                      :: lsop(3,3), cp(3), scaling_factor, a_nsym
+    real(SP), allocatable         :: asop(:,:,:)
     character(3), allocatable     :: atom_species_names(:)
 
     call allocate_geometry_group
@@ -138,9 +149,10 @@ contains
     ! Lattice vectors
     !
     a(:,:) = primitive_vectors_(:,:)
-    alat(1) = 2.0_SP*maxval( abs( a(1,:) ))
-    alat(2) = 2.0_SP*maxval( abs( a(2,:) ))
-    alat(3) = 2.0_SP*maxval( abs( a(3,:) ))
+    scaling_factor = 1.0_SP
+    alat(1) = scaling_factor*maxval( abs( a(1,:) ))
+    alat(2) = scaling_factor*maxval( abs( a(2,:) ))
+    alat(3) = scaling_factor*maxval( abs( a(3,:) ))
 !   call msg('s',':: Lattice factors [a.u.]:',alat)
     cp = cross_product(a(2,:),a(3,:))
     do i1 = 1,3
@@ -178,13 +190,73 @@ contains
       znucl(i1) = atomic_numbers_( i1 )
     enddo
     !
-    ! Symmetry (time rev to be done)
+    ! Symmetry 
+    !
+    allocate( asop(3,3,nsym) )
+    do is=1,nsym
+      asop(:,:,is) = reduced_symmetry_matrices_(:,:,is) 
+    enddo
+    i_time_rev  = 1
+    l_identity=.false.
+    l_inversion=.false.
+    do i1=1,nsym
+      if (asop(1,1,i1)==1.and.asop(1,2,i1)==0.and.asop(1,3,i1)==0.and.&
+&        asop(2,1,i1)==0.and.asop(2,2,i1)==1.and.asop(2,3,i1)==0.and.&
+&        asop(3,1,i1)==0.and.asop(3,2,i1)==0.and.asop(3,3,i1)==1) l_identity=.true.
+      if (asop(1,1,i1)==-1.and.asop(1,2,i1)==0.and.asop(1,3,i1)==0.and.&
+&         asop(2,1,i1)==0.and.asop(2,2,i1)==-1.and.asop(2,3,i1)==0.and.&
+&         asop(3,1,i1)==0.and.asop(3,2,i1)==0.and.asop(3,3,i1)==-1) l_inversion=.true.
+    enddo
+    if (.not.l_identity) call msg("l","[ID not found]...")
+    if (l_identity) call msg("l","[ID found]...")
+    if (l_inversion) then
+      if (l_identity) then
+        !
+        ! Special case where I,-I present: no TR used.
+        !
+        call msg("l","[INV found. Time rev is off]")
+        i_time_rev=0
+      else
+        !
+        ! Identity was stripped in outkss: swap all
+        ! symmetries with their inversions
+        !
+        call msg("l","[INV found]")
+        asop(:,:,:)=-asop(:,:,:)
+      endif
+    else
+      call msg("l","[INV not found]")
+    endif
+    !
+    ! Calculate total number of symmetries, taking into
+    ! account spin_orbit and i_time_reversal
+    !
+    a_nsym = nsym
+    if (spin_orbit) then
+      call msg("s","Spin orbit present: time reversal off.")
+      i_time_rev = 0
+      nsym=a_nsym
+    else
+      if (i_time_rev==1) then
+        call msg("s","Time reversal being used.")
+        nsym=a_nsym*2
+      else
+        call msg("s","Time reversal not being used.")
+        nsym=a_nsym
+      endif
+    endif
+    !
+    ! Now fill the final SELF array of symmetries
     !
     allocate( dl_sop(3,3,nsym) )
-    do is=1,nsym
-      dl_sop(:,:,is) = reduced_symmetry_matrices_(:,:,is) 
+    dl_sop(:,:,:)=0.0_SP
+    do i1=1,a_nsym
+      lsop=matmul(transpose(a),asop(:,:,i1))
+      dl_sop(:,:,i1)=matmul(lsop,b)/2.0_SP/pi
+      if (i_time_rev==1.or.n_spin==2) dl_sop(:,:,i1+a_nsym)=-dl_sop(:,:,i1)
     enddo
-    i_time_rev = 0
+    deallocate(asop)
+    ! XXXXX Why n_spin==2? Spin_orbit?
 !   call msg('s',':: Symmetries   [spatial]:',nsym)
 !   call msg('s','::                [T-rev]:',i_time_rev==1)
 
@@ -212,7 +284,7 @@ contains
 
     call etsf_io_electrons_get(ncid, electrons_group, lstat, error_data)
     default_nel = number_of_electrons_
-    default_nel = -1  ! Until fixed in ETSF file
+    default_nel = -1  ! Until fixed in ETSF file. Is calculated later.
 !   call msg('s',':: Electrons             :',default_nel)
     !
     ! n_spin is inconsistent with n_sp_pol: local copy always needed here.
@@ -252,6 +324,7 @@ contains
     integer                       :: g_lim(6), gtotmax, ig_wf, ig, ix, ik, gmin, gmax
     integer, allocatable          :: g_vec_temp(:,:)
     logical                       :: gfound
+    character(len=15)             :: format1
 
     call allocate_wavedata_group
 
@@ -260,6 +333,13 @@ contains
 
     call etsf_io_wavedata_get(ncid, wavedata_group, lstat, error_data)
     if(.not.lstat) write(*,*) error_data
+
+
+    write(format1,'(a4,i2,a9)') "(i6,",k%nibz,"(2x,3i4))"
+   write(*,*) "forat|",format1,"|"
+    do ig= 1, dims%max_number_of_coefficients
+   write(97,format1) ig,((reduced_coordinates_of_plane_waves_(ix,ig,ik),ix=1,3),ik=1,k%nibz)
+    enddo
 
     !
     ! Directly accessible data
@@ -374,16 +454,48 @@ contains
   end subroutine import_kpoints_group
 
   !
+  ! GW data
+  !===========================================================
+  ! Note that kbpp data is read and converted separately (split) over k-point,
+  ! therefore is not done here. This routine is left here for completeness.
+  !
+  subroutine import_gwdata_group
+ use D_lattice,             ONLY : n_atom_species,pp_n_l_comp_max,&
+&                                  PP_alloc,pp_kbs,pp_kb,pp_kbd
+    implicit none
+    type(etsf_gwdata)            :: gwdata_group
+!    real(DP)                       :: pp_kb_kdb_disk(wf_ncx),&
+!&                                  pp_kbs_disk(n_atom_species,pp_n_l_comp_max)
+
+    call allocate_gwdata_group
+
+    gwdata_group%kb_formfactors%data5d => kb_formfactors_
+    gwdata_group%kb_formfactor_derivative%data5d => kb_formfactor_derivative_
+!   gwdata_group%kb_formfactor_sign%data4d => kb_formfactor_sign_
+
+    call etsf_io_gwdata_get(ncid, gwdata_group, lstat, error_data)
+    !
+    call deallocate_gwdata_group
+    return
+  end subroutine import_gwdata_group
+
+  !
+  ! Miscellaneous data 
+
+  !
   ! Miscellaneous data 
   !===========================================================
   subroutine import_miscellaneous_data
     ! Here read any data not appearing in ETSF specs, or not
     ! yet supported properly
-    use D_lattice,            only : default_Tel
-    use electrons,            only : spin_orbit
+    use D_lattice,            only : default_Tel, n_atom_species, n_atoms
+    use electrons,            only : spin_orbit, default_nel
     use xc_functionals,       only : XC_EXCHANGE_CORRELATION,GS_xc_KIND,GS_xc_FUNCTIONAL,&
 &                                  xc_string,XC_LDA_C_PW,XC_LDA_C_PZ,XC_LDA_C_WIGNER,&
 &                                  XC_LDA_C_HL,XC_LDA_C_XALPHA
+    integer                       :: i1
+
+    !
     ! Temperature (Abinit)
     !
     call etsf_io_low_read_var(ncid, "tphysel", temperature_, lstat)
@@ -392,8 +504,20 @@ contains
     else
       default_Tel = 0.0_SP
     endif
-!   call msg('s',':: Temperature       [ev]:',default_Tel)
-
+!   call msg('s',':: Temperature      [ev] :',default_Tel)
+    !
+    ! Number of electrons (Abinit)
+    !
+    allocate(valence_charges_(n_atom_species))
+    call etsf_io_low_read_var(ncid, "valence_charges", valence_charges_, lstat)
+    if(lstat) then
+      default_nel = 0.
+      do i1 = 1,n_atom_species
+        default_nel = default_nel + n_atoms(i1)*valence_charges_(i1)
+      enddo
+    endif
+    deallocate(valence_charges_)
+!   call msg('s',':: No. of electrons     : ',default_nel)
     !
     ! Spin orbit splitting (Abinit)
     !

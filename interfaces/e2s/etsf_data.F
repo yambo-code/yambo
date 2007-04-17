@@ -121,19 +121,19 @@ contains
   ! gwdata group: take care with max_number_of_projectors, etc.
   !
   subroutine allocate_gwdata_group
-    allocate( kb_formfactor_sign_( max_number_of_projectors_,      &
-&                                  max_number_of_angular_momenta_, &
+    allocate( kb_formfactor_sign_( dims%max_number_of_projectors,      &
+&                                  dims%max_number_of_angular_momenta, &
 &                                  dims%number_of_atom_species ))
     allocate( kb_formfactors_(  dims%max_number_of_coefficients,    &
 &                               dims%number_of_kpoints,            &
-&                               max_number_of_projectors_,      &
-&                               max_number_of_angular_momenta_, &
+&                               dims%max_number_of_projectors,      &
+&                               dims%max_number_of_angular_momenta, &
 &                               dims%number_of_atom_species ))
     allocate( kb_formfactor_derivative_( &
 &                               dims%max_number_of_coefficients,    &
 &                               dims%number_of_kpoints,            &
-&                               max_number_of_projectors_,      &
-&                               max_number_of_angular_momenta_, &
+&                               dims%max_number_of_projectors,      &
+&                               dims%max_number_of_angular_momenta, &
 &                               dims%number_of_atom_species ))
     return
   end subroutine allocate_gwdata_group

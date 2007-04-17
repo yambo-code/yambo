@@ -60,7 +60,7 @@ subroutine e2s_wf(wf_disk,ikibz, ncid)
 ! No high level option to read wavefunction spinor components: the choice
 ! was made to keep high level routines split on nkibz and n_sp_pol
 
-  allocate(wavefunction_section_(dims%real_or_complex, &
+  allocate(wavefunction_section_(dims%real_or_complex_coefficients, &
 &                                dims%max_number_of_coefficients,    &
 &                                dims%max_number_of_states ) )
   !
@@ -90,4 +90,4 @@ subroutine e2s_wf(wf_disk,ikibz, ncid)
   deallocate(wavefunction_section_)
  
   return
-end subroutine
+end subroutine e2s_wf

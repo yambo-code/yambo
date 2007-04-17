@@ -123,12 +123,12 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   !
   ! Check for db.surfeps, and read all eps_i if present
   !
-  call section('=','Check for eps cell database...')
-  call io_control(ACTION=OP_RD_CL, COM=REP, MODE=VERIFY, SEC=(/1,2/), ID=ID)
-  io_err = ioslabeps(eps_i, X, Xk, Xen, wv, q0v, npol, ID)
-  if (io_err.eq.0) then
-    goto 1 ! Skip calculation of X. Nasty Fortran. Check deallocates.
-  endif
+! call section('=','Check for eps cell database...')
+! call io_control(ACTION=OP_RD_CL, COM=REP, MODE=VERIFY, SEC=(/1,2/), ID=ID)
+! io_err = ioslabeps(eps_i, X, Xk, Xen, wv, q0v, npol, ID)
+! if (io_err.eq.0) then
+!   goto 1 ! Skip calculation of X. Nasty Fortran. Check deallocates.
+! endif
   call section('=','Calculating eps cell.')
 
   allocate( X_epsilon(2,nw) ) 
@@ -190,9 +190,9 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   enddo    
   deallocate(X_epsilon)
 
-  call section('=','Write eps surf database: ')
-  call io_control(ACTION=OP_WR_CL, COM=REP, MODE=DUMP, SEC=(/1,2/), ID=ID)
-  io_err = ioslabeps(eps_i, X, Xk, Xen, wv, q0v, npol, ID)
+! call section('=','Write eps surf database: ')
+! call io_control(ACTION=OP_WR_CL, COM=REP, MODE=DUMP, SEC=(/1,2/), ID=ID)
+! io_err = ioslabeps(eps_i, X, Xk, Xen, wv, q0v, npol, ID)
 
 1 continue ! db.slabeps exists; eps_i has been read
   !

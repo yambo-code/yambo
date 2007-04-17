@@ -5663,7 +5663,7 @@ if ! test "$with_etsf" = "" ; then
 echo $ECHO_N "checking $with_etsf for the ETSF I/O library... $ECHO_C" >&6
  if test -r $with_etsf/lib/libetsf_io.a ; then
   compile_e2s="yes"
-  etsf_dir="$with_etsf/include/ifort"
+  etsf_dir="$with_etsf/include/intel"
   echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
   cp "$with_etsf/lib/libetsf_io.a" lib/

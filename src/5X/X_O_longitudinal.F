@@ -34,11 +34,14 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  use par_indexes_m,       only : par_indexes
  use D_lattice,           only : DL_sop, n_atoms,znucl,atom_pos
  use R_lattice,           only : g_vec,bz_samp, bz_samp_duplicate, q0_defmod, bz_samp_reset
- use X_m,                 only : X_alloc,X_t,X_q0grad, q0mod, long_path
+ use X_m,                 only : X_alloc,X_t,X_q0grad, q0mod, long_path, num_long_grid
  use IO_m,                only : io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP,OP_RD,&
 &                                RD_CL,RD,DUMP,NONE, ver_is_gt_or_eq
  use memory_m,            only : mem_est
  use wave_func,           only : wf,wf_ng,wf_state,wf_load,WF_free, wf_igk, wf_nc_k
+#if defined PJ_RAS
+ use ras_long,            only : grid_dir, select_field_dir
+#endif
  implicit none
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
@@ -49,7 +52,7 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  ! Work Space
  !
  integer                      :: ik,icfft,ivfft,ic,iv, ik_grid, iq, ikpq, &
-&                                i_spin, err, ifail, wf_ng_long
+&                                i_spin, err, ifail, wf_ng_long, ir
  complex(SP), allocatable     :: wf_k(:)
  complex(SP)                  :: rho(2)
  real(SP)                     :: Ev_m_Ec
@@ -87,6 +90,7 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  !
  call section('+',' Longitudinal gauge calculation')
  ifail = 0
+ use_trans_gauge=.true.
  !
  ! Save local copy of ioDB1 (Enk, wf_k)
  !
@@ -117,7 +121,10 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  !
  ! Determine grid displacement (q0mod)
  !
- call calc_grid_shift(ifail)
+ call check_shifted_grids( Xk_shift, Xk_save, ifail )
+#if defined PJ_RAS
+ call select_field_dir(ifail, field_dir)
+#endif
  if(ifail>0) then
    call msg('r','Error in new grids.')
    call reset_DB1
@@ -137,14 +144,18 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  !
  ! Main loop over cartesian directions
  !
- do iq = 1, 3
+ do iq = 1, num_long_grid
    ik_grid = (iq-1)*Xk_save%nibz + 1 ! The index of the first k point for each grid
+   ir = iq
+#if defined PJ_RAS
+   ir = grid_dir(iq)
+#endif
    !
    ! Load WFs {k} + q_iq
    !
    inpath = long_path
    call WF_free()
-   call wf_load(0,1,X%ib,(/ik_grid,ik_grid+Xk_save%nibz-1/),space='G',title='-Oscillators/G space') 
+   call wf_load(0,1,(/ X%ib(1), Xen_save%nbm /),(/ik_grid,ik_grid+Xk_save%nibz-1/),space='G',title='-Oscillators/G space') 
    wf_ng_long = min(wf_ng_save,wf_ng)
    !
    ! Set up the parallel environment 
@@ -175,7 +186,7 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
            endif
 
            if (any( (/ -Ev_m_Ec < X%ehe(1) .and. X%ehe(1) > 0.0_SP, &
-                       -Ev_m_Ec > X%ehe(2) .and. X%ehe(2) > 0.0_SP /))) cycle
+&                      -Ev_m_Ec > X%ehe(2) .and. X%ehe(2) > 0.0_SP /))) cycle
            if (abs(Ev_m_Ec)<=1.E-5_SP) cycle
            icfft = wf_state_local(ic,ik,i_spin) 
            !
@@ -192,12 +203,12 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
          enddo    ! spin loop
          !
          if (n_sp_pol==2) then
-           X_q0grad(iq,ic,iv,ik,1)=rho(1)
-           X_q0grad(iq,ic,iv,ik,2)=rho(2)
+           X_q0grad(ir,ic,iv,ik,1)=rho(1)
+           X_q0grad(ir,ic,iv,ik,2)=rho(2)
          else if (n_spinor==2) then
-           X_q0grad(iq,ic,iv,ik,1)=(rho(1)+rho(2))
+           X_q0grad(ir,ic,iv,ik,1)=(rho(1)+rho(2))
          else if (n_spin==1) then
-           X_q0grad(iq,ic,iv,ik,1)=rho(1)
+           X_q0grad(ir,ic,iv,ik,1)=rho(1)
          endif
          !
        enddo  ! conduction band loop
@@ -245,65 +256,87 @@ contains
    wf_ng = wf_ng_save
    return
  end subroutine reset_DB1
-
- subroutine calc_grid_shift(ifail)
-   use stderr,          only : intc
-   use vec_operate,     only : v_is_zero, v_norm, c2a
-   use X_m,             only : q_long, q0mod ! Remove q0mod from here
-   implicit none
-   !
-   ! Find number of shifted grids
-   !
-   real(SP)         :: q_init(3), q_mod(3), q0mod_temp, qtemp(3)
-   integer          :: i_grid_k
-   integer, intent(inout) :: ifail
-
-   if(ifail>0) return
-
-   if( mod(Xk_shift%nibz,Xk_save%nibz)/=0 .or. &
-           Xk_shift%nibz / Xk_save%nibz.ne.3 ) then
-      call msg('r','Shifted grids are not set up correctly: '&
-&                  //intc(Xk_save%nibz)//intc(Xk_shift%nibz))
-     ifail = ifail + 1
-     return
-   endif
-   !
-   ! Find the displacement for each grid
-   !
-   ! q_long(:,i)   is the shift vector of grid(i) in [iku]
-   ! q_mod(i) is the modulus of the grid shift vector (i) in [a.u.] 
-   !
-   q_mod(1:3) = 0.0_SP
-   do iq = 1, 3
-     i_grid_k = (iq-1)*Xk_save%nibz 
-     q_init(:) = Xk_shift%pt(i_grid_k + 1,:) - Xk_save%pt(1,:) ! units of [iku]
-     !
-     ! Check grid is uniformly shifted
-     !
-     do ik = 2, Xk_save%nibz
-       if(.not.v_is_zero( Xk_shift%pt(i_grid_k+ik,:) - &
-&                          Xk_save%pt(ik,:) - q_init(:) )) then
-         call msg('r','Long. gauge shifts are not uniform for all {k}.')
-         ifail = ifail + 1
-         return
-       endif
-     enddo
-     q_long(:,iq) = q_init(:)
-     call c2a(v_in=q_long(:,iq), v_out=qtemp, mode="ki2c")
-     q_mod(iq) = v_norm(qtemp)
-     call msg('r','Grid'//intc(iq)//' has shift [a.u.]:',q_mod(iq))
-   enddo
-   !
-   ! Check the lengths are compatible 
-   !
-   q0mod = q_mod(1)  ! a.u.
-   q_mod(1:3) = q_mod(1:3) - q0mod
-   if(.not.all( abs(q_mod).lt.1.0E-5 )) then
-     call msg('r','Long. gauge shifts are not uniform for all grids.')
-     ifail = ifail + 1
-   endif
-
-   return
- end subroutine calc_grid_shift
-
 end subroutine X_O_longitudinal
+
+subroutine check_shifted_grids( Xk_shift, Xk_save, ifail)
+  use pars,            only : SP
+  use stderr,          only : intc
+  use com,             only : msg
+  use vec_operate,     only : v_is_zero, v_norm, c2a, normalize_v
+  use X_m,             only : q_long, q0mod, num_long_grid ! Remove q0mod from here
+  use R_lattice,       only : bz_samp
+  implicit none
+  !
+  ! Find number of shifted grids
+  !
+  type(bz_samp), intent(in)                :: Xk_shift, Xk_save
+  integer, intent(inout) :: ifail
+  !
+  real(SP)         :: q_init(3), q_mod(3), q0mod_temp, qtemp(3), ca(3,3)
+  real(SP)                 :: a(3), b(3), c(3), x(3), y(3), z(3)
+  integer          :: i_grid_k, iq, ik
+
+  if(ifail>0) return
+
+  if(mod(Xk_shift%nibz,Xk_save%nibz)/=0) then
+    call msg('r','Bad number of k-points in shifted DBs:'//intc(Xk_save%nibz)//intc(Xk_shift%nibz))
+    ifail = ifail + 1
+    return
+  endif
+
+  num_long_grid = Xk_shift%nibz / Xk_save%nibz
+  call msg('nr','Longitudinal grids found: '//intc(num_long_grid))
+
+#if defined PJ_RAS
+  if(.not.(num_long_grid.ge.1.and.num_long_grid.le.4)) then
+    call msg('r','Bad number of shifted grids (1/2/3).')
+    ifail = ifail + 1
+    return
+  endif
+#else
+  if(num_long_grid.ne.3) then
+    call msg('r','Must have 3 shifted grids!')
+    ifail = ifail + 1
+    return
+  endif
+#endif
+  !
+  ! Find the displacement vector for each grid
+  !
+  ! q_long(:,i)   is the shift vector of grid(i) in [iku]
+  ! q_mod(i) is the modulus of the grid shift vector (i) in [a.u.]
+  !
+  q_mod(1:3) = 0.0_SP
+  do iq = 1, num_long_grid
+    i_grid_k = (iq-1)*Xk_save%nibz
+    q_init(:) = Xk_shift%pt(i_grid_k + 1,:) - Xk_save%pt(1,:) ! units of [iku]
+    !
+    ! Check grid is uniformly shifted
+    !
+    do ik = 2, Xk_save%nibz
+      if(.not.v_is_zero( Xk_shift%pt(i_grid_k+ik,:) - &
+&                         Xk_save%pt(ik,:) - q_init(:) )) then
+        call msg('r','Long. gauge shifts are not uniform for all {k}.')
+        ifail = ifail + 1
+        return
+      endif
+    enddo
+    q_long(:,iq) = q_init(:)
+    call c2a(v_in=q_long(:,iq), v_out=qtemp, mode="ki2c")
+    call msg('r','Grid '//trim(intc(iq))//' has shift vector [c.c.]: ',qtemp )
+    q_mod(iq) = v_norm(qtemp)
+    call msg('r','            and modulus [a.u.]: ',q_mod(iq))
+  enddo
+  !
+  ! Check the lengths are compatible (not abolutely required)
+  !
+  q0mod = q_mod(1)  ! a.u.
+  q_mod(1:num_long_grid) = q_mod(1:num_long_grid) - q0mod
+  if(.not.all( abs(q_mod).lt. 1.0e-5_SP )) then
+    call msg('r','Long. gauge shifts are not uniform for all {k}.')
+    ifail = ifail + 1
+  endif
+
+  return
+end subroutine check_shifted_grids
+

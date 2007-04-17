@@ -139,10 +139,11 @@ if ! test "$with_etsf" = "" ; then
  AC_MSG_CHECKING([$with_etsf for the ETSF I/O library])
  if test -r $with_etsf/lib/libetsf_io.a ; then
   compile_e2s="yes"
-  etsf_dir="$with_etsf/include/ifort"
+  etsf_dir="$with_etsf/include/intel"
   AC_MSG_RESULT([yes])
   cp "$with_etsf/lib/libetsf_io.a" lib/
   cp "$with_etsf/lib/libetsf_io_low_level.a" lib/
+  cp "$with_etsf/lib/libetsf_io_utils.a" lib/
  else
   AC_MSG_RESULT([no])
  fi

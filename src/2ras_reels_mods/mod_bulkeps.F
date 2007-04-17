@@ -144,6 +144,13 @@ end subroutine init_bulk
     enddo
     close(un)
 
+!   Check the order of the columns
+    if(any(e2in.lt.0.0_SP)) then
+       errmsg='Bulk epsilon has negative absorption! Check the column order.'
+       lbulkerr = .true.
+       return
+    endif
+
 !   All ok
     write(errmsg,'(a,i5,a)') 'Read and stored ',nline,&
 &     ' records of bulk epsilon data from '//trim(bfile)

@@ -70,7 +70,6 @@
    !============
    !
    call wf_load(0, 1, X%ib, (/1,Xk%nibz/), space='G', title='-Oscillators/G space')
-
    !
    ! Set up data needed for cut off routines
    !============
@@ -93,10 +92,8 @@
      !
      if(use_trans_gauge) call warning('Reverting to transverse gauge')
    endif
-   write(*,*) "DONE long"
    !
    if(use_trans_gauge) call X_O_transverse_cut(Xen,Xk,X)
-   write(*,*) "DONE trans"
 
    !
    ! Free any loaded WFs
@@ -106,7 +103,6 @@
    if (master_node) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=io_db)
    io_err=ioOSTNTS_cut(X,Xen,io_db)
  endif
-   write(*,*) "DONE ioOSTCUTs"
  !
  ! Calculate the q-dependent oscillators (OptOscCut)
  !

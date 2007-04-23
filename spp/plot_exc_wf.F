@@ -794,9 +794,9 @@
    do i1=0,ncell(1)-1
     do i2=0,ncell(2)-1
      do i3=0,ncell(3)-1
-      od(1)=atom_pos(1,natom,ntype)*bohr+i1*a_angs(1,1)+i2*a_angs(1,2)+i3*a_angs(1,3)
-      od(2)=atom_pos(2,natom,ntype)*bohr+i1*a_angs(2,1)+i2*a_angs(2,2)+i3*a_angs(2,3)
-      od(3)=atom_pos(3,natom,ntype)*bohr+i1*a_angs(3,1)+i2*a_angs(3,2)+i3*a_angs(3,3)   
+      od(1)=atom_pos(1,natom,ntype)*bohr+i1*a_angs(1,1)+i2*a_angs(2,1)+i3*a_angs(3,1)
+      od(2)=atom_pos(2,natom,ntype)*bohr+i1*a_angs(1,2)+i2*a_angs(2,2)+i3*a_angs(3,2)
+      od(3)=atom_pos(3,natom,ntype)*bohr+i1*a_angs(1,3)+i2*a_angs(2,3)+i3*a_angs(3,3)   
       write(local_ch,'(i,f,f,f)') znucl(ntype),od(1),od(2),od(3)
       call msg(extension2,'',local_ch,INDENT=0,USE_TABS=.FALSE.)
      enddo

@@ -26,9 +26,12 @@
   {"ifile", "F","XML index file name",0,0,1,0}, 
   {"odir",  "O","Output directory",0,0,1,0}, 
   {"dbfrag","S","DataBases fragmentation",0,0,0,0}, 
-  {"qexml", "Q","Use qexml module [31 (v3.1), 311 (v3.1.1 and later)]",1,0,0,0}, 
-  {"verb",  "V","Verbose wfc I/O reporting",0,0,0,0}, 
-  {"notr",  "X","Force no TR symmetry",0,0,0,0}, 
+  {"alat_f","a","Lattice constants rescaling factor",0,1,0,0},
+  {"notr",  "t","Force no TR symmetry",0,0,0,0}, 
+  {"nosym", "y","Force no symmetries",0,0,0,0}, 
+  {"nowf",  "w","Force no wavefunctions",0,0,0,0},
+  {"qexml", "q","Use qexml module [31 (v3.1), 311 (v3.1.1 and later)]",1,0,0,0}, 
+  {"verb",  "v","Verbose wfc I/O reporting",0,0,0,0}, 
   {NULL,NULL,NULL,0,0,0,0}
  };
  char *tool="p2s";

@@ -19,33 +19,31 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine p2s_qexml_db1(pwunit,verboseIO,force_noTR,en,k)
+ subroutine p2s_qexml_db1(pwunit,verboseIO,en,k)
 !=====================================
  use pars,                  ONLY : SP, PI, lchlen
  use qexml_module
  use qexml_data
  use com,                   ONLY : msg, error
  use electrons,             ONLY : levels, default_nel, n_spin, n_sp_pol, n_spinor, spin_orbit
- use R_lattice,             ONLY : bz_samp, ng_vec, g_vec
- use D_lattice,             ONLY : nsym, i_time_rev, i_space_inv, dl_sop, &
-&                                  DL_vol, a, alat, default_Tel, &
+ use R_lattice,             ONLY : bz_samp, ng_vec, g_vec,b
+ use D_lattice,             ONLY : DL_vol, a, alat, default_Tel, &
 &                                  n_atoms_max,n_atom_species,n_atoms, atom_pos, &
 &                                  znucl
  use wave_func,             ONLY : wf_nc_k, wf_ncx, wf_igk, wf_ng
  use vec_operate,           ONLY : cross_product
  use xc_functionals,        ONLY : GS_xc_KIND,GS_xc_FUNCTIONAL, xc_string
- use interfaces,            ONLY : print_interface_dimensions
+ use interfaces,            ONLY : print_interface_dimensions,symmetries_check_and_load,&
+&                                  alat_mult_factor
  implicit none
  type(levels),     intent(out)  :: en     ! Energies
  type(bz_samp),    intent(out)  :: k      ! K/Q points
  integer,          intent(in)   :: pwunit ! unit of index.dat
- logical,          intent(in)   :: verboseIO, force_noTR
+ logical,          intent(in)   :: verboseIO
 !ws
- real(SP)                       :: lsop(3,3), acopy(3,3),cp(3)
- real(SP)                       :: b(3,3)
+ real(SP)                       :: acopy(3,3),cp(3)
  integer                        :: i1, ik, ierr, isym(3,3,48), nspinpw
  integer, external              :: atomic_number
- logical                        :: l_identity, l_inversion
  character(lchlen)              :: lch
  character(256)                 :: pw_dft
  character(3), allocatable      :: atom_species_names(:)
@@ -84,7 +82,6 @@
    n_spin    = 2
  end select
  spin_orbit = lspinorb_
- nsym   = nsym_
  ng_vec = ngm_
  default_nel = nelec_
  default_Tel = 0.0_SP 
@@ -104,9 +101,9 @@
  a(1,:) = a1_(:) ! assumes always atomic units
  a(2,:) = a2_(:)
  a(3,:) = a3_(:)
- alat(1) = 1.0_SP*maxval(abs(a(1,:)) )
- alat(2) = 1.0_SP*maxval(abs(a(2,:)) )
- alat(3) = 1.0_SP*maxval(abs(a(3,:)) )
+ alat(1) = maxval(abs(a(1,:)) )*alat_mult_factor
+ alat(2) = maxval(abs(a(2,:)) )*alat_mult_factor
+ alat(3) = maxval(abs(a(3,:)) )*alat_mult_factor
 
 ! Use acopy to avoid passing non-contiguous arrays (just for fun)
  acopy = transpose(a)
@@ -159,87 +156,11 @@
  allocate(s_(3,3,nsym_))
  call qexml_read_symmetry(invsym=invsym_, s=s_, ierr=ierr)
  if (ierr.ne.0) call errore('qexml_read_symmetry','IOTK error',ABS(ierr))
-
- do i1 = 1,nsym 
+ do i1 = 1,nsym_
    isym(:,:,i1) = transpose(s_(:,:,i1)) 
  enddo
  deallocate(s_)
- !
- ! Check for identify and inversion symmetry
- !
- l_identity  = .false.
- l_inversion = .false.
- do i1=1,nsym
-   if (isym(1,1,i1)==1.and.isym(1,2,i1)==0.and.isym(1,3,i1)==0.and.&
-&      isym(2,1,i1)==0.and.isym(2,2,i1)==1.and.isym(2,3,i1)==0.and.&
-&      isym(3,1,i1)==0.and.isym(3,2,i1)==0.and.isym(3,3,i1)==1) l_identity=.true.
-   if (isym(1,1,i1)==-1.and.isym(1,2,i1)==0.and.isym(1,3,i1)==0.and.&
-&      isym(2,1,i1)==0.and.isym(2,2,i1)==-1.and.isym(2,3,i1)==0.and.&
-&      isym(3,1,i1)==0.and.isym(3,2,i1)==0.and.isym(3,3,i1)==-1) l_inversion=.true.
- enddo
- if (.not.l_identity) then
-   call msg("l","failed. Identity not found.")
-   stop 
- else
-   call msg("l","done")
- endif
- if(l_inversion) call msg("s","Inversion ... found")
- if(.not.l_inversion) call msg("s","Inversion ... not found.")
-
-! Always turn on time reversal except for following cases:
-! (1) Spin orbit coupling present
-! (2) force_noTR = .true.
- 
- i_time_rev = 1  
- if(spin_orbit.or.force_noTR) then
-   call msg("s","Time reversal not being used.")
-   i_time_rev = 0
- else
-   call msg("s","Time reversal being used.")
-   if(l_inversion) then
-     !
-     ! Remove the inversion symmetries from the list for now.
-     !
-     nsym=nsym/2
-   else 
-     nsym=nsym
-   endif
- endif
- !
- ! PWscf: R is in fact transpose(R) 
- !
- ! Make sure symmetries are constructed correctly:
- !
- allocate(dl_sop(3,3,nsym*(1+i_time_rev)))
- do i1=1,nsym
-   lsop=matmul(transpose(a),isym(:,:,i1))
-   dl_sop(:,:,i1)=matmul(lsop,b)/2.0_SP/PI
-   if (i_time_rev==1) dl_sop(:,:,i1+nsym)=-dl_sop(:,:,i1)
- enddo
- if (i_time_rev==1) nsym=2*nsym
-
-!DEBUG<
-!if (l_inversion) then
-!
-! Now switch off time reversal ( i_time_rev -> 0 )
-! But if any of the nsym/2+1:nsym symmetries are not simply I * the :nsym/2
-! then switch it back on.
-!
-!  i_time_rev = 0
-!  do i1=1,nsym/2
-!    if (.not.all((/isym(:,:,i1)==-isym(:,:,i1+nsym/2)/))) i_time_rev=1
-!  enddo
-!  if (i_time_rev==0) call msg("l","found. Time reversal turned off.")
-!  if (i_time_rev==1) then
-!    call msg("l","not found")
-!    nsym=nsym/2
-!  endif
-!  if(n_spin.eq.4) call msg("s"," Inversion + spin-orbit calculation!")
-!else
-!  call msg("l","not found")
-!endif
-!DEBUG<
-
+ call symmetries_check_and_load(isym(:,:,:nsym_),nsym_)
 
 !---------------------------------------------------------------------*
 !    Read XC functional                                               *
@@ -373,33 +294,9 @@
 
  call msg('l','done')
 
-!---------------------------------------------------------------------*
-!    Print dimensions
-!---------------------------------------------------------------------*
+ call print_interface_dimensions(en,k)
 
-!>>>DEBUG
-!call msg('s',' :: Electrons             :',default_nel)
-!call msg('s',' :: Temperature       [ev]:',default_Tel)
-!call msg('s',' :: Lattice factors [a.u.]:',alat)
-!call msg('s',' :: K-points              :',k%nibz)
-!call msg('s',' :: Bands                 :',en%nb)
-!call msg('s',' :: Spinor components     :',n_spinor)
-!call msg('s',' :: Spin polarizations    :',n_sp_pol)
-!if(i_time_rev==1) call msg('s',' :: Symmmetries  [spatial]:',nsym/2)
-!if(i_time_rev==1) call msg('s',' :: Symmmetries    [T-rev]:',nsym/2*i_time_rev)
-!if(i_time_rev==0) call msg('s',' :: Symmmetries  [spatial]:',nsym)
-!if(i_time_rev==0) call msg('s',' :: Symmmetries    [T-rev]:',nsym*i_time_rev)
-!call msg('s',' :: RL vectors        (WF):',wf_ng)
-!call msg('s',' :: RL vectors    (CHARGE):',ng_vec)
-!call msg('s',' :: XC potential          :',xc_string(GS_xc_KIND,GS_xc_FUNCTIONAL))
-!call msg('s',' :: Atomic species        :',n_atom_species)
-!call msg('s',' :: Max atoms/species     :',n_atoms_max)
-!call msg('s',' ')
-!<<<DEBUG
-
-   call print_interface_dimensions(en,k)
-
-   return
+ return
  
  end subroutine p2s_qexml_db1
 

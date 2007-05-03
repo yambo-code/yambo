@@ -20,11 +20,136 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  module interfaces
+   ! 
+   use pars,      ONLY:SP,PI,lchlen,schlen
+   implicit none
+   !
+   logical :: force_noTR
+   logical :: force_noSYM
+   logical :: force_noWFs
+   !
+   real(SP):: alat_mult_factor
    !
  contains
    !
+   subroutine interface_presets(in_string)
+     !
+     use stderr, ONLY:string_split
+     character(*)   :: in_string
+     !
+     character(schlen)::str_piece(100)
+     integer          ::i1
+     !
+     ! Split the string in pieces
+     !
+     call string_split(in_string,str_piece)
+     !
+     force_noTR =index(in_string,'notr')>0
+     force_noSYM=index(in_string,'nosym')>0
+     force_noWFs=index(in_string,'nowf')>0
+     !
+     alat_mult_factor=1.
+     do i1=1,100
+       if ( trim(str_piece(i1))=='alat_f' )  read(str_piece(i1+1),*) alat_mult_factor
+     enddo
+     !
+   end subroutine
+   !
+   subroutine symmetries_check_and_load(int_sop,nsym_)
+     !
+     use com,       ONLY:msg
+     use electrons, ONLY:spin_orbit
+     use D_lattice, ONLY:nsym,dl_sop,i_time_rev,a
+     use R_lattice, ONLY:b
+     !
+     integer :: nsym_
+     integer :: int_sop(3,3,nsym_) ! Symmetries in RLU
+     !
+     integer :: is
+     logical :: l_identity,l_inversion
+     real(SP):: sop_mat(3,3)
+     !
+     if (force_noSYM) then
+       i_time_rev=0
+       nsym=1
+       allocate(dl_sop(3,3,1))
+       dl_sop(1,:,1)=(/1.,0.,0./)
+       dl_sop(2,:,1)=(/0.,1.,0./)
+       dl_sop(3,:,1)=(/0.,0.,1./)
+       call msg("l","no")
+       return
+     endif
+     !
+     i_time_rev=1
+     nsym=2*nsym_
+     !
+     ! Search for identity and inversion symmetries.
+     !
+     l_identity=.false.
+     l_inversion=.false.
+     do is=1,nsym_
+       if (int_sop(1,1,is)==1.and.int_sop(1,2,is)==0.and.int_sop(1,3,is)==0.and.&
+&          int_sop(2,1,is)==0.and.int_sop(2,2,is)==1.and.int_sop(2,3,is)==0.and.&
+&          int_sop(3,1,is)==0.and.int_sop(3,2,is)==0.and.int_sop(3,3,is)==1) &
+&          l_identity=.true.
+       if (int_sop(1,1,is)==-1.and.int_sop(1,2,is)==0.and.int_sop(1,3,is)==0.and.&
+&          int_sop(2,1,is)==0.and.int_sop(2,2,is)==-1.and.int_sop(2,3,is)==0.and.&
+&          int_sop(3,1,is)==0.and.int_sop(3,2,is)==0.and.int_sop(3,3,is)==-1) &
+&          l_inversion=.true.
+     enddo
+     if (.not.l_identity) call msg("l","[ID no]...")
+     if (l_identity)      call msg("l","[ID yes]...")
+     !
+     ! Special case where I,-I present: no TR used.
+     !
+     if (l_identity.and.l_inversion) i_time_rev=0
+     !
+     ! Identity was stripped in outkss: swap all
+     ! symmetries with their inversions
+     !
+     if (.not.l_identity.and.l_inversion) int_sop=-int_sop
+     !
+     if (.not.l_inversion) call msg("l","[INV no]...")
+     if (l_inversion)      call msg("l","[INV yes]...")
+     !
+     ! TR ?
+     !
+     if (spin_orbit) then 
+       i_time_rev=0
+       call msg("l","[SO yes => TR no]")
+     endif
+     if (force_noTR) then 
+       i_time_rev=0
+       call msg("l","[TR no]")
+     endif
+     if (i_time_rev==1) call msg("l","[TR yes]")
+     if (i_time_rev==0) nsym=nsym_
+     !
+     !From abinit help ...
+     !
+     !The relation between the above symmetry matrices symrel,
+     !expressed in the basis of primitive translations, and the same symmetry
+     !matrices expressed in cartesian coordinates, is as follows.
+     !Denote the matrix whose columns are the primitive
+     !translations as A, and denote the cartesian symmetry matrix as R. Then
+     !R_rlu = A(inverse) * R * A
+     !
+     !In my case A=transpose(a)
+     !
+     !R= transpose(a) R_rlu inverse[transpose(a)]
+     !
+     !but inverse[transpose(a)]= b/2./pi
+     !
+     allocate(dl_sop(3,3,nsym))
+     do is=1,nsym_
+       sop_mat=matmul(transpose(a),int_sop(:,:,is))
+       dl_sop(:,:,is)=matmul(sop_mat,b)/2./pi
+       if (i_time_rev==1) dl_sop(:,:,is+nsym_)=-dl_sop(:,:,is)
+     enddo
+     !
+   end subroutine
+   !
    subroutine print_interface_dimensions(en,k)
-     use pars,                  ONLY : SP, PI, lchlen
      use com,                   ONLY : msg
      use electrons,             ONLY : levels, default_nel, n_spin, n_sp_pol, &
 &                                      n_spinor, spin_orbit

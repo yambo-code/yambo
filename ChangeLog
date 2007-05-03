@@ -1,3 +1,46 @@
+2007-04-23 11:53:56 r113 Andrea Marini <marini@roma2.infn.it>
+
+	Bug in spp excitonic wfc plotting utility (Daniele)
+
+2007-04-20 10:39:56 r112 Andrea Marini <marini@roma2.infn.it>
+
+	BUG removed: TR was removed in a2s_db1 when nsym=1
+
+2007-04-17 16:40:18 r111 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	V 3.0.8_23-03-07
+
+	*  configure e2s/e2s_db1.F e2s/e2s_i.F e2s/e2s_kb_pp.F e2s/e2s_wf.F e2s/etsf_data.F config/configure.ac 2wf_and_fft/wf_load.F 2ras_reels_mods/mod_bulkeps.F 2ras_reels_mods/mod_optcut.F 2ras_reels_mods/.objects 5X/X_O_longitudinal.F 4ras/rasdriver.F 4ras/X_O_strengths_cut.F 4ras/X_O_longitudinal_cut.F
+
+	Bugs:
+	-
+	Additions:
+	- self_ras now works for 2 shifted grids in long gauge
+	Changes:
+	- e2s interface updated for etsf_io v0.7, s.db1 almost complete
+	-
+	Patch sent by: Conor
+
+2007-04-11 10:58:49 r110 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.8_23-03-07
+
+	*  2coulomb/cutoff_sphere.F 2coulomb/cutoff_box.F 2coulomb/cutoff_cylinder.F 2coulomb/cutoff_test.F 2coulomb/col_driver.F 0modules/mod_X.F 2io/ioQP.F 2io/io_header.F 5X/X_pre_setup.F 5X/X_eh_setup.F 5X/X_os.F 5X/X_em1.F 4it/init.F 6qp/QP_driver.F 5elph/QP_elph.F
+
+	Bugs:
+	- When SELF calls X_em1 running from scratch the X%iq(2) was set to 1
+	  in X_pre_setup. Now by defaults X%iq(2) is -1 so that is ALWAYS set to
+	  nqibz in X_pre_setup.
+	- Header of QP db reduced to improve portability.
+
+	Additions:
+	- QP_driver report widths and energies for a el-ph calculation.
+
+	Changes:
+	-  Restyling of : cutoff_sphere, cutoff_cylinder,cutoff_test,col_driver
+
+	Patch sent by: Andrea
+
 2007-04-04 16:28:33 r109 Andrea Marini <marini@roma2.infn.it>
 
 	V 3.0.8_23-03-07

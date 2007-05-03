@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine spp_init_load(defs)
-!==============================
+ !
  use it_m,          ONLY:it,initdefs,E_unit
  use SPP
 #if defined SPP_PJ_RAS
@@ -102,5 +102,5 @@
  call it(defs,'BZ_RIM_Nk','BZ Random Integration points',BZ_RIM_nkpts)
  call it(defs,'Srch_G_sh','Number of RL shells used in the search',RIM_G_shells)
  call it(defs,'BZ_RIM_path','Path to the SAVE folder with the RIM DB1',BZ_RIM_path)
-
+ !
  end subroutine

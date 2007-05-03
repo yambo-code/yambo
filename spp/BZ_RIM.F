@@ -73,7 +73,7 @@
    call msg("s",':: RIM DB1 DL structure does not fit')
    i_err=-1
  endif
- if (any(alat/=alat_save))  then
+ if (i_err==0.and.any(alat/=alat_save))  then
    call msg("s",':: RIM DB1 alat does not fit.')
    i_err=-1
  endif

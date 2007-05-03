@@ -20,13 +20,16 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
  static Ldes opts[] = { /* Int Real Ch (Dummy)*/
-  {"help","h","Short Help",0,0,0,0}, 
-  {"lhelp","H","Long Help",0,0,0,0}, 
-  {"nompi","N","Skip MPI initialization",0,0,0,0},
-  {"ifile","F","Abinit file name/prefix",0,0,1,0}, 
-  {"odir","O","Output directory",0,0,1,0}, 
+  {"help",  "h","Short Help",0,0,0,0}, 
+  {"lhelp", "H","Long Help",0,0,0,0}, 
+  {"nompi", "N","Skip MPI initialization",0,0,0,0},
+  {"ifile", "F","Abinit file name/prefix",0,0,1,0}, 
+  {"odir",  "O","Output directory",0,0,1,0}, 
   {"dbfrag","S","DataBases fragmentation",0,0,0,0},
-  {"bzrim","r","Skip Wavefunctions (BZ RIM)",0,0,0,0},
+  {"alat_f","a","Lattice constants rescaling factor",0,1,0,0},
+  {"notr",  "t","Force no TR symmetry",0,0,0,0},
+  {"nosym", "y","Force no symmetries",0,0,0,0},
+  {"nowf",  "w","Force no wavefunctions",0,0,0,0},
   {NULL,NULL,NULL,0,0,0,0}
  };
  char *tool="a2s";

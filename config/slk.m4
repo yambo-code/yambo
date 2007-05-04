@@ -20,8 +20,8 @@ if test "$mpibuild"  = "yes" && ! test "$with_blacs" = "no" &&
 # BLACS first
 #
  AC_MSG_CHECKING([the BLACS library])
- cinit_lib=`find $with_blacs -name 'blacsCinit*.a'`
- blacs_lib=`find $with_blacs -name 'blacs.a'`
+ cinit_lib=`find $with_blacs -name '*blacsCinit*.a'`
+ blacs_lib=`find $with_blacs -name '*blacs.a'`
  if ! test "$cinit_lib" = "" && ! test "$blacs_lib" = "" ; then
    BLACS_LIBS="$cinit_lib $blacs_lib"
    AC_MSG_RESULT(yes)
@@ -33,7 +33,7 @@ if test "$mpibuild"  = "yes" && ! test "$with_blacs" = "no" &&
 # then SLPK if BLACS has been found
 #
   AC_MSG_CHECKING([the SCALAPACK library])
-  SCALAPACK_LIBS=`find $with_scalapack -name 'scalapack.a'`
+  SCALAPACK_LIBS=`find $with_scalapack -name '*scalapack.a'`
   if ! test "$SCALAPACK_LIBS" = "" ; then
    enable_scalapack="yes"
    AC_MSG_RESULT(yes)

@@ -11423,8 +11423,8 @@ if test "$mpibuild"  = "yes" && ! test "$with_blacs" = "no" &&
 #
  echo "$as_me:$LINENO: checking the BLACS library" >&5
 echo $ECHO_N "checking the BLACS library... $ECHO_C" >&6
- cinit_lib=`find $with_blacs -name 'blacsCinit*.a'`
- blacs_lib=`find $with_blacs -name 'blacs.a'`
+ cinit_lib=`find $with_blacs -name '*blacsCinit*.a'`
+ blacs_lib=`find $with_blacs -name '*blacs.a'`
  if ! test "$cinit_lib" = "" && ! test "$blacs_lib" = "" ; then
    BLACS_LIBS="$cinit_lib $blacs_lib"
    echo "$as_me:$LINENO: result: yes" >&5
@@ -11434,9 +11434,12 @@ echo "${ECHO_T}yes" >&6
 echo "${ECHO_T}no" >&6
  fi
  if ! test "$BLACS_LIBS" = ""; then
+#
+# then SLPK if BLACS has been found
+#
   echo "$as_me:$LINENO: checking the SCALAPACK library" >&5
 echo $ECHO_N "checking the SCALAPACK library... $ECHO_C" >&6
-  SCALAPACK_LIBS=`find $with_scalapack -name 'scalapack.a'`
+  SCALAPACK_LIBS=`find $with_scalapack -name '*scalapack.a'`
   if ! test "$SCALAPACK_LIBS" = "" ; then
    enable_scalapack="yes"
    echo "$as_me:$LINENO: result: yes" >&5

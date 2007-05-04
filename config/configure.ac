@@ -111,7 +111,7 @@ AC_SUBST(dp_cpp)
 
 # ============================================================================
 # check for IOTK library
-AC_ARG_WITH(iotk, AC_HELP_STRING([--with-iotk=<lib>],
+AC_ARG_WITH(iotk, AC_HELP_STRING([--with-iotk=<path>],
  [Path of the IOTK library directory]))
 compile_p2s="no"
 iotk_dir=""
@@ -131,7 +131,7 @@ AC_SUBST(iotk_dir)
 
 # ============================================================================
 # check for ETSF library
-AC_ARG_WITH(etsf, AC_HELP_STRING([--with-etsf=<lib>],
+AC_ARG_WITH(etsf, AC_HELP_STRING([--with-etsf=<path>],
  [Path of the ETSF I/O library directory]))
 compile_e2s="no"
 etsf_io_dir=""

@@ -194,8 +194,9 @@
        ! When using a uniform Q grid I cycle on the q symmetries 
        ! as well. To rotate the gkkp m.e. I use:
        ! 
-       ! <k-Rq n|dV_{SCF}/du^{q nu}|k n'>=
-       ! <(R^-1 k)-q n|dV_{SCF}/du^{q nu}|(R^-1 k) n'>= gkkp(ikbz,nu,n,n' )
+       ! gkkp_{I_need}= <k+Rq n|dV_{SCF}/du^{q nu}|k n'>=
+       !                <(R^-1 k)+q n|dV_{SCF}/du^{q nu}|(R^-1 k) n'>= 
+       !                gkkp(ikbz,nu,n',n)
        !
        ikbz=ik_is_table(ik,sop_inv(iqs))
        !

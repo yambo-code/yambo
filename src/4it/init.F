@@ -326,17 +326,16 @@
  ! Optics(not bse) nor GW (no PP)
  !
  if ((l_optics.and.l_lr).or.(l_em1d.and..not.l_ppa)) then
-   call initactivate(1,'XfnQPdb XfnQP_N XfnQP_E XfnQP_W XfnQP_Z')
+   call initactivate(1,'XfnQPdb XfnQP_N XfnQP_E XfnQP_W XfnQP_Z LongPath')
    call Xon('Xd',(/'QpntsR','BndsRn','NGsBlk',&
 &                  'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
-   call initactivate(1,'LongPath')
  endif
  !
  ! BSE 
  !
  if (l_optics.and.l_bse) then
-   call initactivate(1,'KfnQPdb KfnQP_N KfnQP_E KfnQP_W KfnQP_Z')
+   call initactivate(1,'KfnQPdb KfnQP_N KfnQP_E KfnQP_W KfnQP_Z LongPath')
    call initactivate(1,'BSresKmod BScplKmod BSEQptR BSEBands')
    call initactivate(1,'BSENGBlk BSENGexx BSEEhEny BSEClmns BSehWind')
  endif
@@ -344,7 +343,7 @@
  ! Static screen 
  !
  if (l_em1s) then
-   call initactivate(1,'XfnQPdb XfnQP_E XfnQP_W XfnQP_Z')
+   call initactivate(1,'XfnQPdb XfnQP_E XfnQP_W XfnQP_Z LongPath')
    call Xon('Xs',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy',&
 &                  'LongDr','DrudeW'/))
  endif
@@ -352,7 +351,7 @@
  ! GW (PPA) 
  !
  if (l_em1d.and.l_ppa) then
-   call initactivate(1,'XfnQPdb XfnQP_N XfnQP_E XfnQP_W XfnQP_Z')
+   call initactivate(1,'XfnQPdb XfnQP_N XfnQP_E XfnQP_W XfnQP_Z LongPath')
    call Xon('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
 &                  'EhEngy','LongDr','PPAPnt','PPTylT'/))
  endif
@@ -360,7 +359,7 @@
  ! ACFDT
  !
  if (l_acfdt) then
-   call initactivate(1,'XfnQPdb XfnQP_N XfnQP_E XfnQP_W XfnQP_Z')
+   call initactivate(1,'XfnQPdb XfnQP_N XfnQP_E XfnQP_W XfnQP_Z LongPath')
    call initactivate(1,'EXXRLvcs AC_n_LAM AC_n_FR AC_E_Rng')
    call Xon('Xx',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy','LongDr'/))
  endif
@@ -373,7 +372,7 @@
      !
      call initactivate(1,'XfnQPdb XfnQP_N XfnQP_E XfnQP_W XfnQP_Z')
      call initactivate(1,'GfnQPdb GfnQP_N GfnQP_E GfnQP_W GfnQP_Z')
-     call initactivate(1,'BoseCut')
+     call initactivate(1,'BoseCut LongPath')
      !
      if (l_gw0) then
        call initactivate(1,'GbndRnge GDamping') 

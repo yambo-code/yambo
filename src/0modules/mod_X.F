@@ -30,11 +30,6 @@
    complex(SP), allocatable :: X_fxc(:)
    character(6)             :: alpha_dim ! 'adim' 'area' 'length' 'volume'
    !
-   ! Longitudinal calculation
-   !
-   real(SP)                 :: q0mod, R_long(3,3), q_long(3,3)
-   integer                  :: num_long_grid
-   !
    ! Response function
    !
    real(SP),    allocatable :: X_poles(:)
@@ -60,8 +55,9 @@
      real(SP)   :: q0(3)
      real(SP)   :: cg_percentual
      real(SP)   :: ppaE
-     logical    :: Vnl_included
      complex(SP):: Wd
+     logical          :: Vnl_included
+     logical          :: long_gauge
      character(1)     :: ordering
      character(schlen):: f_xc
    end type
@@ -130,6 +126,7 @@
        Xo%ngostnts=Xi%ngostnts
        Xo%ordering=Xi%ordering
        Xo%Vnl_included=Xi%Vnl_included
+       Xo%long_gauge=Xi%long_gauge
        Xo%ehe=Xi%ehe
        Xo%q0=Xi%q0
        Xo%cg_percentual=Xi%cg_percentual
@@ -147,6 +144,7 @@
        X%iq=(/1,-1/)
        X%whoami=0
        X%Vnl_included=.false.
+       X%long_gauge=.false.
        if (present(type)) X%whoami=type
        X%ehe=(/-1.,-1./)/HARTREE
        X%q0=(/1.,0.,0./)

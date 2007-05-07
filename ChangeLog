@@ -1,3 +1,29 @@
+2007-05-04 11:28:55 r116 Andrea Marini <marini@roma2.infn.it>
+
+	Bug fixed in SLK & BLACS support check in configure script
+
+2007-05-04 11:22:08 r115 Andrea Marini <marini@roma2.infn.it>
+
+	Bug fixed in SLK & BLACS support check in configure script
+
+2007-05-03 12:11:33 r114 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.8_13-04-07
+
+	*  spp/BZ_RIM.F int_modules/mod_interfaces.F p2s/p2s_i.F p2s/p2s_qexml_db1.F p2s/p2s_db1.F a2s/a2s_db1.F a2s/a2s_i.F config/report.in driver/p2s.h driver/a2s.h
+
+	Additions:
+	- Add interface_presets and symmetries_check_and_load routines in
+	  mod_interfaces.F. Both are called in p2s and a2s to standardize
+	  the symmetries setup.
+
+	Changes:
+	- Command line of p2s and a2s. Added flags to skip TR, WF and/or all
+	  symmetries. Added -a option to rescale the lattice constants.
+	- in p2s command line, -Q changed in -q, -V changed in -v.
+
+	Patch sent by: Andrea
+
 2007-04-23 11:53:56 r113 Andrea Marini <marini@roma2.infn.it>
 
 	Bug in spp excitonic wfc plotting utility (Daniele)

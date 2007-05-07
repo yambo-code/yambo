@@ -169,7 +169,8 @@
  call parser('KShift2',qlong(2,:))
  call parser('KShift3',qlong(3,:))
  !
- if(any(abs(qlong).gt.1e-6)) then
+ if(any(abs(qlong)/=0.)) then
+   !
    live_timing_is_on=.false.
    kout(:,:) = Xk%pt(:,:)
    write(ch,'(a,a,a)') " -- Unshifted IBZ K-grid [",trim(coo_out),"] -----"
@@ -185,7 +186,10 @@
    enddo
    i2=0
    do i1=1,3
-     q0(1:3) = qlong(i1,1:3)
+     q0 = qlong(i1,:)
+     !
+     if (v_norm(q0)>1.E-5) q0 = qlong(i1,:)*1.E-5/v_norm(q0)
+     !
      if(v_norm(q0).gt.1e-6) then
        i2 = i2 + 1
        !

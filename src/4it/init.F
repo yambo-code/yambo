@@ -43,7 +43,7 @@
 &                         QP_state,QP_reset,QP_ctl_E,QP_table
  use X_m,            ONLY:X_t,X_duplicate,X_reset
  use stderr,         ONLY:tty_size,logfile
- use R_lattice,      ONLY:ng_closed,ng_vec,n_g_shells,q0_defmod,&
+ use R_lattice,      ONLY:ng_closed,ng_vec,n_g_shells,q0_def_norm,&
 &                         Xk_grid_is_uniform,bz_samp,nqibz,bz_samp_reset,&
 &                         cut_geometry,cyl_ph_radius
  use wave_func,      ONLY:ioWF
@@ -732,11 +732,11 @@
      !
      ! q0 renormalization
      !
-     BSS_q0(:)=BSS_q0(:)*q0_defmod/v_norm(BSS_q0)
-     X(1)%q0(:)=X(1)%q0(:)*q0_defmod/v_norm(X(1)%q0)
-     X(2)%q0(:)=X(2)%q0(:)*q0_defmod/v_norm(X(2)%q0)
-     X(3)%q0(:)=X(3)%q0(:)*q0_defmod/v_norm(X(3)%q0)
-     X(4)%q0(:)=X(4)%q0(:)*q0_defmod/v_norm(X(4)%q0)
+     BSS_q0(:)=BSS_q0(:)*q0_def_norm/v_norm(BSS_q0)
+     X(1)%q0(:)=X(1)%q0(:)*q0_def_norm/v_norm(X(1)%q0)
+     X(2)%q0(:)=X(2)%q0(:)*q0_def_norm/v_norm(X(2)%q0)
+     X(3)%q0(:)=X(3)%q0(:)*q0_def_norm/v_norm(X(3)%q0)
+     X(4)%q0(:)=X(4)%q0(:)*q0_def_norm/v_norm(X(4)%q0)
      if (l_em1s) Xw(2)%dr=0.001/HARTREE
      !
      if (len_trim(BS_cpl_mode)==0) BS_cpl_mode="none"

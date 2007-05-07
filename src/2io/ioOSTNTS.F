@@ -24,11 +24,11 @@
  use pars,          ONLY:SP,HARTREE,schlen
  use X_m,           ONLY:X_t,X_q0grad,X_alloc
  use electrons,     ONLY:levels,n_sp_pol
- use R_lattice,     ONLY:nXkibz
+ use R_lattice,     ONLY:nXkibz,q0_def_norm
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&
-&                        read_is_on,write_is_on,io_header
+&                        read_is_on,write_is_on,io_header,ver_is_gt_or_eq
  !
  implicit none
  type(X_t)::X
@@ -46,6 +46,12 @@
  if (ioOSTNTS/=0) goto 1
  !
  sec_size=8
+ ! 
+ ! In V 3.0.8 q0_def_norm is stored in case a longitudinal
+ ! gauge grid has already redefined the q0 norm
+ !
+ if (ver_is_gt_or_eq(io_db,(/3,0,9/))) sec_size=10
+ !
  if (any((/io_sec(io_db,:)==1/))) then
    !
    ioOSTNTS=io_header(io_db,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.)
@@ -64,6 +70,14 @@
 &       VAR=" RL vectors in the sum  :",I0=X%ngostnts,WARN=.true.,OP=(/"<="/))
    call io_elemental(io_db,&
 &       VAR=" [r,Vnl] included       :",L0=X%Vnl_included,CHECK=.true.,OP=(/"=="/))
+   !
+   if (ver_is_gt_or_eq(io_db,(/3,0,9/))) then
+     call io_elemental(io_db,&
+&       VAR=" Longitudinal Gauge     :",L0=X%long_gauge,CHECK=.true.,OP=(/"=="/))
+     call io_elemental(io_db,&
+&       VAR=" Field momentum norm    :",R0=q0_def_norm,CHECK=.true.,OP=(/"=="/))
+   endif
+   !
    call io_elemental(io_db,VAR="",VAR_SZ=0)
    ioOSTNTS=io_status(io_db)
    if (ioOSTNTS/=0) goto 1
@@ -92,7 +106,6 @@
          !
          if (read_is_on(io_db)) call mat_r2c(X_q0grad_disk,X_q0grad(ixyz,:,:,i1,i_spin))
          !
-
        enddo
        !
      enddo

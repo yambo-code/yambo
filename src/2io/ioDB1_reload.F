@@ -20,13 +20,13 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  integer function ioDB1_reload(E,k,DB1_path)
- !==========================================
- use pars,             ONLY:lchlen
+ !
+ use pars,             ONLY:lchlen,SP
  use memory_m,         ONLY:mem_est
  use electrons,        ONLY:levels,E_reset
  use D_lattice,        ONLY:dl_sop,n_atoms,znucl,atom_pos
  use R_lattice,        ONLY:g_vec,bz_samp,bz_samp_reset
- use wave_func,        ONLY:wf_nc_k,wf_igk
+ use wave_func,        ONLY:wf_nc_k,wf_igk,wf_ng
  use com,              ONLY:inpath
  use IO_m,             ONLY:io_control,OP_RD_CL,NONE,DUMP
  implicit none
@@ -39,6 +39,10 @@
  integer           :: ID
  integer, external :: ioDB1
  character(lchlen) :: inpath_save
+ !
+ ! Saves
+ !
+ inpath_save=inpath
  !
  ! Reset
  !
@@ -53,13 +57,13 @@
  !
  ! Path redirection
  !
- inpath_save=inpath
  inpath=DB1_path
  !
  ! DB1
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
  ioDB1_reload=ioDB1(E,k,ID)
+ !
  inpath=inpath_save
  !
  end function ioDB1_reload

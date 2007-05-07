@@ -23,7 +23,7 @@
  !
  use R_lattice,      ONLY:nqibz,nqbz,qindx_X,qindx_B,qindx_S,&
 &                         bse_scattering,qp_states_k,nXkibz,qindx_alloc,&
-&                         Xk_grid_is_uniform,bz_samp,nxKbz
+&                         Xk_grid_is_uniform,bz_samp,nxKbz,q0_def_norm
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
 &                         io_elemental,io_status,io_bulk,read_is_on,io_header,&
 &                         ver_is_gt_or_eq
@@ -42,10 +42,11 @@
    !
    ! In V. 3.0.7 a real parameter (RL_v_comp_norm) has been removed
    !
-   if (.not.ver_is_gt_or_eq(io_db,(/3,0,7/))) ioQINDX=-1
+   if (.not.ver_is_gt_or_eq(io_db,(/3,0,8/))) ioQINDX=-1
    if (ioQINDX/=0) goto 1
    !
    call io_elemental(io_db,VAR="PARS",VAR_SZ=8)
+   !
    call io_elemental(io_db,I0=nXkbz)
    call io_elemental(io_db,&
 &       VAR=" Polarization last K   :",I0=nXkibz)

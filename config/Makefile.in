@@ -82,11 +82,6 @@ SPPLIBS      = 0external_c 0modules 1xc 1parser 1common 2io \
 
 nothing: 
 	@$(make_message)
-saves:
-	@echo
-	@echo "SELF" @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ saves
-	@echo "save version patchlevel subversion"
-	@echo
 changelog:
 	svn log | perl sbin/svn2cl.pl > ChangeLog
 all: $(EXE)
@@ -183,7 +178,7 @@ define make_message
  for target in $(PROJECTS); do echo " [devel] $$target" ; done;echo;\
 # -- GPL_START --
  for target in $(UTILS); do echo  " [util] $$target" ; done;echo;\
- echo;
+ echo " [saves] save/version/patchlevel/subversion"; echo
 endef
 define mksrc
  for ldir in $$LIBS2DO; do \

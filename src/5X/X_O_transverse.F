@@ -145,6 +145,8 @@
 #endif
        do i_spin=1,n_spin
          !
+         rho(:,i_spin)=(0.,0.)
+         !
          if (n_sp_pol==2) then
            Ev_m_Ec=Xen%E(iv,ik,i_spin)-Xen%E(ic,ik,i_spin)
            if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,i_spin)-Xen%Eo(ic,ik,i_spin)

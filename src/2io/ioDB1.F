@@ -44,7 +44,7 @@
  !
  type(levels)  :: E
  type(bz_samp) :: k
- integer       :: ID
+ integer       :: ID,code_version_local(3)
  !
  ioDB1 =io_connect(desc="db1",type=0,ID=ID)
  if (ioDB1/=0) goto 1
@@ -88,7 +88,8 @@
    ! Code_version here and not in io_header because io_header
    ! writes the serial_number as well.
    !
-   call io_elemental(ID,DB_I1=io_code_version(ID,:),I1=code_version)
+   if (write_is_on(ID)) code_version_local=code_version
+   call io_elemental(ID,DB_I1=io_code_version(ID,:),I1=code_version_local)
    ! 
    call io_elemental(ID,I0=E%nb,CHECK=.true.,OP=(/"=="/),&
 &                    VAR=' Bands                           :')

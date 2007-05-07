@@ -34,7 +34,7 @@
  use D_lattice,  ONLY:i_space_inv,n_atoms_max,n_atom_species,pp_n_l_comp_max,pp_kbv_dim
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
-&                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,&
+&                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
 &                     cyl_ph_radius,box_length,cyl_length,cut_geometry,CUTOFF_plus_RIM
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_RIM_nbands,BZ_RIM_tot_nkpts,&
 &                     filled_tresh, spin_orbit
@@ -135,6 +135,7 @@
  cyl_length=0.
  cut_geometry='sphere'
  CUTOFF_plus_RIM=.false.
+ q0_def_norm=1.E-5
  !
  !D_lattice
  !

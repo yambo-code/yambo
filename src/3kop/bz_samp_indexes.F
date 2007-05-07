@@ -49,7 +49,7 @@
  use R_lattice,      ONLY:b,d3q_factor,RL_vol,g_vec,ng_vec,&
 &                         nqibz,nqbz,qindx_X,qindx_B,qindx_S,qp_states_k,&
 &                         bse_scattering,qindx_alloc,rl_sop,Xk_grid_is_uniform,&
-&                         k_grid,k_grid_b,q_pt,bz_samp,q_norm,q0_defmod,&
+&                         k_grid,k_grid_b,q_pt,bz_samp,q_norm,q0_def_norm,&
 &                         q_sstar
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use zeros,          ONLY:G_iku_zero
@@ -375,7 +375,7 @@
        allocate(q%pt(1,3),q_pt(1,3),q_norm(1),q_sstar(1,2)) 
        q%pt=0.
        q_pt=0.
-       q_norm=q0_defmod
+       q_norm=q0_def_norm
        nqbz=1
        nqibz=1
        q%nibz=1
@@ -396,7 +396,7 @@
        do i1=1,q%nibz
          q_norm(i1)=iku_v_norm(q_pt(i1,:))
        enddo
-       q_norm(1)=q0_defmod
+       q_norm(1)=q0_def_norm
        call mem_est("q_norm",(/q%nibz/),(/SP/))
      endif
      !

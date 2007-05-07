@@ -29,7 +29,7 @@
    use par_proc_m,              ONLY : pp_redux_wait, pp_indexes, myid, &
 &                                    master_node, pp_indexes_reset
    use par_indexes_m,           ONLY : par_indexes
-   use R_lattice,               ONLY : g_vec, bz_samp, bz_samp_duplicate,bz_samp_reset, q0_defmod
+   use R_lattice,               ONLY : g_vec, bz_samp, bz_samp_duplicate,bz_samp_reset, q0_def_norm
    use D_lattice,               ONLY : DL_sop, n_atoms, atom_pos, znucl
    use X_m,                     ONLY : X_alloc, X_t, long_path, q0mod, num_long_grid
    use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP, ver_is_gt_or_eq

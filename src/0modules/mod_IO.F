@@ -549,7 +549,7 @@
        !
      end function
        !
-       logical function ver_is_gt_or_eq(ID,version)
+     logical function ver_is_gt_or_eq(ID,version)
        use com, ONLY:code_version
        integer :: ID,version(3),version2comp(3)
        ver_is_gt_or_eq=.false.

@@ -39,7 +39,7 @@ subroutine calc_eps( iq,  Xen,Xk, X, q, wq, epsm1, ngblk, nw ,iqf )
   use parser_m,              only : parser
   use X_m,                   only : X_t, X_mat, X_epsilon, X_alloc
   use frequency,             only : w_samp
-  use R_lattice,             only : bz_samp, bare_qpg, ng_vec, g_vec, q0_defmod
+  use R_lattice,             only : bz_samp, bare_qpg, ng_vec, g_vec, q0_def_norm
   use electrons,             only : levels
   use eels_qpt
   use eels_gvec
@@ -65,7 +65,7 @@ subroutine calc_eps( iq,  Xen,Xk, X, q, wq, epsm1, ngblk, nw ,iqf )
   call X_alloc('X',(/X%ng,X%ng,wq%n(2)/)) ! X(G,G') matrix
 
   q_mod=bare_qpg(iq,1)
-  if (iq==1) q_mod=q0_defmod ! used for head only
+  if (iq==1) q_mod=q0_def_norm ! used for head only
 
   ist = (nw+1)/2
 

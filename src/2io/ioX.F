@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  integer function ioX(X,Xw,ID)
-!=============================
+ !
  use pars,          ONLY:SP,schlen,HARTREE
  use memory_m,      ONLY:mem_est
  use stderr,        ONLY:string_pack
@@ -121,6 +121,7 @@
    !
    sec_size=6
    if (ver_is_gt_or_eq(ID,(/3,0,1/))) sec_size=8
+   if (ver_is_gt_or_eq(ID,(/3,0,9/))) sec_size=9
    call io_elemental(ID,VAR="PARS_3",VAR_SZ=sec_size,MENU=0)
    call io_elemental(ID,&
 &       VAR=" X poles           [o/o]:",R0=X%cg_percentual,CHECK=.true.,OP=(/"=="/))
@@ -128,6 +129,10 @@
 &       VAR=" Rl vectors in the sum  :",I0=X%ngostnts,WARN=.true.,OP=(/"<="/))
    call io_elemental(ID,&
 &       VAR=" [r,Vnl] included       :",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/))
+   if (ver_is_gt_or_eq(ID,(/3,0,9/))) then
+     call io_elemental(ID,&
+&         VAR=" Longitudinal Gauge     :",L0=X%long_gauge,WARN=.true.,OP=(/"=="/))
+   endif
    call io_elemental(ID,&
 &       VAR=" Field direction        :",R1=X%q0,CHECK=.true.,OP=(/"==","==","=="/))
    !

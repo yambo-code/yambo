@@ -44,7 +44,7 @@
  !
  ! Work Space
  !
- integer             ::ik12(2),i_pointer
+ integer             ::ik12(2),i_pointer,var_size
  character(schlen)   ::ch,db_name
  real(SP),allocatable::BS_mat_disk(:,:,:)
  logical             ::res_corr_disk,res_exch_disk,db_is_large,cpl_disk,&
@@ -80,8 +80,7 @@
    ioBS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.)
    if (ioBS/=0) goto 1
    !
-   ! The inclusion of %f_xc (ver 3.0.5) has broken the 
-   ! database compatibility
+   ! v 3.0.5: Inclusion of %f_xc 
    !
    if (.not.ver_is_gt_or_eq(ID,(/3,0,5/))) then
      ioBS=-1
@@ -98,7 +97,10 @@
    !
    ! PARS1
    !
-   call io_elemental(ID,VAR="PARS1",VAR_SZ=28,MENU=0)
+   var_size=29
+   if (ver_is_gt_or_eq(ID,(/3,0,9/))) var_size=30
+   !
+   call io_elemental(ID,VAR="PARS1",VAR_SZ=var_size,MENU=0)
    call io_elemental(ID,&
 &       VAR=" BSK|Identifier              :",I0=BS_identifier)
    call io_elemental(ID,&
@@ -117,7 +119,7 @@
 &       VAR="    |Correlation        [cpl]:",L0=BS_cpl_K_corr,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,&
 &       VAR="    |ALDA kernel in R-space  :",L0=BS_K_is_ALDA,CHECK=.true.,OP=(/"=="/))
-
+   !
    if (res_exch_disk.or.cpl_exch_disk) &
 &   call io_elemental(ID,&
 &       VAR="    |RL vectors    [exchange]:",I0=BS_n_g_exch,CHECK=.true.,OP=(/"=="/))
@@ -143,6 +145,15 @@
 &         VAR="    |Rl vectors in the sum   :",I0=X%ngostnts,WARN=.true.,OP=(/"<="/))
      call io_elemental(ID,&
 &         VAR="    |[r,Vnl] included        :",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/))
+     !
+     if (ver_is_gt_or_eq(ID,(/3,0,9/))) then
+       !
+       ! v 3.0.8: Inclusion of %long_gauge 
+       !
+       call io_elemental(ID,&
+&           VAR="    |Longitudinal Gauge      :",L0=X%long_gauge,WARN=.true.,OP=(/"=="/))
+     endif
+     !
      call io_elemental(ID,&
 &         VAR="    |Field direction         :",R1=X%q0,CHECK=.true.,OP=(/"==","==","=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)

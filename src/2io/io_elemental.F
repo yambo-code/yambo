@@ -265,6 +265,7 @@
    endif
    io_rec_pos(ID)=io_rec_pos(ID)+size(R1)
  endif
+
  if (present(L0)) then
    i_db(1)=0
    if (L0) i_db(1)=1

@@ -43,8 +43,8 @@
    real(SP) :: d3k_factor
    real(SP) :: d3q_factor
    real(SP) :: b(3,3)
+   real(SP) :: q0_def_norm
    real(SP),allocatable :: q_norm(:)
-   real(SP),  parameter :: q0_defmod=1.E-5
    type bz_samp
      integer           :: nibz,nbz
      integer, pointer  :: nstar(:)

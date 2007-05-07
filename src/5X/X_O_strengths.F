@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine X_O_strengths(Xen,Xk,X,field_dir)
-!============================================
+ !
 #if defined PJ_GKS
  use pars,           ONLY:SP,lchlen
  use com,            ONLY:warning,inpath
@@ -30,20 +30,25 @@
  use pars,           ONLY:SP
  use com,            ONLY:warning
 #endif
+ use drivers,        ONLY:l_col_cut
  use electrons,      ONLY:levels,n_sp_pol
  use par_proc_m,     ONLY:pp_redux_wait,master_node
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
- use R_lattice,      ONLY:bz_samp
+ use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
  use X_m,            ONLY:X_rhoq0,X_alloc,X_t,X_q0grad,long_path
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use memory_m,       ONLY:mem_est
  use wave_func,      ONLY:wf_ng,wf_load,WF_free
+ use vec_operate,    ONLY:v_norm
  implicit none
+ !
  type(bz_samp), intent(inout) :: Xk
  type(levels),  intent(inout) :: Xen
  type(X_t),  intent(inout) :: X
  real(SP),   intent(inout) :: field_dir(3)
-!ws
+ !
+ ! Work Space
+ !
  integer                   :: ik,i1,ic,iv,is,i_spin
  real(SP)                  :: field_dir_rot(3)
  logical                   :: use_trans_gauge
@@ -54,20 +59,26 @@
  type(levels)  :: en
  integer, external:: ioDB1_reload
 #endif
-!
-!I/O
-!
+ !
+ !I/O
+ !
  integer :: ID,io_err
  integer, external :: ioOSTNTS
-!
+ !
  if (allocated(X_rhoq0)) return
-!
-! Check first if ostnts DB is already done
-!
+ !
+ ! Check first if ostnts DB is already done
+ !
  X%ngostnts=wf_ng
+ !
+ ! If I am trying to go from a transverse to a long. gauge
+ ! calculation X%long_gauge will be false here even if a long_path is
+ ! provided
+ !
+ if (.not.X%long_gauge) X%long_gauge=trim(long_path)/='none'
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=ioOSTNTS(X,Xen,ID)
-
+ !
  if (io_err.ne.0) then
    !
    ! OptGrad allocation
@@ -117,7 +128,12 @@
      !
      call X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
      !
-     if(use_trans_gauge) call warning('Reverting to transverse gauge')
+     if(use_trans_gauge) then
+       call warning('Reverting to transverse gauge')
+       X%long_gauge=.false.
+     else
+       X%long_gauge=.true.
+     endif
    endif
    !
    ! Fallback to transverse
@@ -144,6 +160,15 @@
    if (master_node) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=ioOSTNTS(X,Xen,ID)
  end if
+ !
+ ! The field direction and the gamma-point norm must be renormalized here in case the
+ ! oscillator strengths have been calculated using the long. gauge.
+ ! In this case q0_def_norm is not the default one but corresponds
+ ! to the norm of the longitudinal shift.
+ !
+ field_dir=field_dir*q0_def_norm/v_norm(field_dir)
+ q_norm(1)=q0_def_norm
+ if (.not.l_col_cut) bare_qpg(1,1)=q0_def_norm
  !
  ! Calculate the q-dependent oscillators (OptOsc)
  !
@@ -173,5 +198,5 @@
  ! Clean up
  !
  call X_alloc('OptGrad') ! Used in O_transverse/O_longitudinal/ioOSTNTS
- return
+ !
  end subroutine

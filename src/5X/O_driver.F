@@ -28,6 +28,7 @@
  use pars,          ONLY:pi,SP,HARTREE,schlen
  use D_lattice,     ONLY:dl_sop
  use memory_m,      ONLY:mem_est
+ use stderr,        ONLY:intc
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_col_cut
  use frequency,     ONLY:w_samp,rg_index_bg,bg_npts,cg_pt,cg_index_bg
  use electrons,     ONLY:levels,BZ_RIM_tot_nkpts
@@ -127,17 +128,19 @@
      call of_open_close(of_name(4),'ot')
    endif
    !
-   ! Titles & headings
+   ! Titles 
    !
-   write (ch,'(a,i3,a)') '# Absorption @ IQ',iq,' [iku]:'
+   ch = '# Absorption @ IQ '//trim(intc(iq))//' [iku]:'
    if (iq==1) call msg("o eps",trim(ch),X%q0/v_norm(X%q0),INDENT=0)
    if (iq/=1) call msg("o eps",trim(ch),q%pt(iq,:),INDENT=0)
-   write (ch,'(a,i3,a)') '# EELS @ IQ',iq,' [iku]:'
+   ch = '# EELS @ IQ '//trim(intc(iq))//' [iku]:'
    if (iq==1) call msg("o eel",trim(ch),X%q0/v_norm(X%q0),INDENT=0)
    if (iq/=1) call msg("o eel",trim(ch),q%pt(iq,:),INDENT=0)
-   write (ch,'(3a,i3,a)') '# Polarizability ( -<<X>> ) [',&
-&                         trim(alpha_dim),'] @ IQ',iq,' [iku]:'
-   call msg("o alpha",trim(ch),q%pt(iq,:),INDENT=0)
+   ch = '# Polarizability ( -<<X>> ) ['//&
+&       trim(alpha_dim)//'] @ IQ '//trim(intc(iq))//' [iku]:'
+   if (iq==1) call msg("o alpha",trim(ch),X%q0/v_norm(X%q0),INDENT=0)
+   if (iq/=1) call msg("o alpha",trim(ch),q%pt(iq,:),INDENT=0)
+   !
    if (l_bs_fxc) then
      call msg('o eps eel alpha','#')
      do i1=1,FXC_n_descs
@@ -166,26 +169,8 @@
      call msg('o eps eel fxc alpha','# BZ Energy RIM points :',BZ_RIM_tot_nkpts,INDENT=0)
    endif
    !
-   headings(:3)=(/'E/ev[1]','e/Im[2]','e/Re[3]'/)
-   headings(4:5)=(/'eo/Im[4]','eo/Re[5]'/)
-   headings(6:7)=(/'alpha/Im','alpha/Re'/)
-   headings(8:9)=(/'alpha0/Im','alpha0/Re'/)
-   call msg('o eps eel fxc alpha','#')
-   if (.not.lnoe0) call msg('o eps','#',headings(:5),INDENT=0,USE_TABS=.true.)    
-   if (lnoe0)      call msg('o eps','#',headings(:3),INDENT=0,USE_TABS=.true.)    
-   headings(2:3)=(/'EEL/Im[2]','EEL/Re[3]'/)
-   headings(4:5)=(/'EELo/Im[4]','EELo/Re[5]'/)
-   if (.not.lnoe0) call msg('o eel','#',headings(:5),INDENT=0,USE_TABS=.true.)    
-   if (lnoe0)      call msg('o eel','#',headings(:3),INDENT=0,USE_TABS=.true.)    
-   if (lnoe0) then
-     call msg('o alpha','#',(/headings(1),headings(6),headings(7)/),&
-&                             INDENT=0,USE_TABS=.true.)
-   else
-     call msg('o alpha','#',(/headings(1),headings(6),headings(7),&
-&                             headings(8),headings(9)/),INDENT=0,USE_TABS=.true.)
-   endif
-   call msg('o eps eel alpha','#')
    call pp_redux_wait
+   !
    call of_open_close(of_name(1))
    call of_open_close(of_name(2))
    call of_open_close(of_name(3))
@@ -245,6 +230,41 @@
      call of_open_close(of_name(1),'oa')
      call of_open_close(of_name(2),'oa')
      call of_open_close(of_name(4),'oa')
+     !
+     if (i1==1) then
+       !
+       ! Gauges
+       !
+       if (iq==1) then
+         if (X%Vnl_included) ch='- The gauge is transverse + [r,Vnl] -'
+         if (X%long_gauge)   ch='- The gauge is longitudinal -'
+         call msg('o eps eel alpha','#')
+         call msg('o eps eel alpha','# ',trim(ch),INDENT=0)
+       endif
+       !
+       ! Titles 
+       !
+       headings(:3)=(/'E/ev[1]','e/Im[2]','e/Re[3]'/)
+       headings(4:5)=(/'eo/Im[4]','eo/Re[5]'/)
+       headings(6:7)=(/'alpha/Im','alpha/Re'/)
+       headings(8:9)=(/'alpha0/Im','alpha0/Re'/)
+       call msg('o eps eel fxc alpha','#')
+       if (.not.lnoe0) call msg('o eps','#',headings(:5),INDENT=0,USE_TABS=.true.)    
+       if (lnoe0)      call msg('o eps','#',headings(:3),INDENT=0,USE_TABS=.true.)    
+       headings(2:3)=(/'EEL/Im[2]','EEL/Re[3]'/)
+       headings(4:5)=(/'EELo/Im[4]','EELo/Re[5]'/)
+       if (.not.lnoe0) call msg('o eel','#',headings(:5),INDENT=0,USE_TABS=.true.)    
+       if (lnoe0)      call msg('o eel','#',headings(:3),INDENT=0,USE_TABS=.true.)    
+       if (lnoe0) then
+         call msg('o alpha','#',(/headings(1),headings(6),headings(7)/),&
+&                                 INDENT=0,USE_TABS=.true.)
+       else
+         call msg('o alpha','#',(/headings(1),headings(6),headings(7),&
+&                                 headings(8),headings(9)/),INDENT=0,USE_TABS=.true.)
+       endif
+       call msg('o eps eel alpha','#')
+     endif
+     !
      do i2=fr(1),fr(2)
        !
        ! Eps

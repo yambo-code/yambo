@@ -20,34 +20,36 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  module com
-!==========
+   !
    use pars
-!
-! PATHS & JOB_str
-!
+   !
+   ! PATHS & JOB_str
+   !
    character(lchlen)  :: inpath,outpath,jobstr,repfile
-!
+   !
    character(10)::build_date
    integer      ::code_version(3)
-!
+   !
    character(3)      :: terminator(4)
-!
-!  Sectioning
+   !
+   ! Sectioning
+   !
    integer           :: depth,isec(5)
    character(1)      :: previous_secmode
    character(schlen) :: secnm
-! 
-!  Output Files/Report File
+   ! 
+   ! Output Files/Report File
+   !
    integer,parameter  :: nofs=100,max_open_ofs=100
    character(lchlen)  :: of(nofs),opened_of(max_open_ofs)
    integer            :: of_unit(max_open_ofs)
    logical            :: write_to_of,write_to_report
    integer, parameter :: of_tabs(10)=(/2,13,24,35,46,57,68,79,90,101/)
-!
+   !
    interface msg
      module procedure na0msg,na1msg,namsg,ni1msg,nimsg,nr1msg,nrmsg,nl0msg
    end interface
-
+   !
  contains
 
  character(lchlen) function get_name(desc,subfolder,type,TO_RD,TO_WR,NETCDF)

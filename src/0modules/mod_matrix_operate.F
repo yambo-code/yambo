@@ -432,8 +432,8 @@
          ! Filling of the local array distributed in the processor grid
          !
          allocate( lM( iblt%ldrow, iblt%ldcol), lV( iblt%ldrow, iblt%ldcol) )
-         do i_loc=1M_size,
-           do j_loc=1M_size,
+         do i_loc=1,M_size
+           do j_loc=1,M_size
              call pcelset(lM,i_loc,j_loc,iblt%descM,M(i_loc,j_loc))
            enddo
          enddo

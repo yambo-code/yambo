@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine run_summary(en,k)
-!==================================
+ !
  use stderr,         ONLY:logfile
  use com,            ONLY:inpath,outpath,repfile,jobstr,msg
  use it_m,           ONLY:infile
@@ -28,13 +28,14 @@
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  implicit none
+ !
  type(levels)  :: en
  type(bz_samp) :: k
  integer       :: ID,io_err
  integer, external :: ioDB1
-
+ !
  call section('*','Game Summary')
-   
+ ! 
  call msg('r','IN  directory    : ',trim(inpath))
  call msg('r','OUT directory    : ',trim(outpath))
  call msg('r','Input file       : ',trim(infile))
@@ -42,8 +43,8 @@
  if (len_trim(jobstr)>0)  call msg('r','Job string       : ',trim(jobstr))
  if (len_trim(logfile)>0) call msg('r','Log file         : ',trim(jobstr))
  call msg('r','')
-
+ !
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),COM=REP,ID=ID)
  io_err=ioDB1(en,k,ID)
-
+ !
  end subroutine

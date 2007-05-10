@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine p2s_qexml_db1(pwunit,verboseIO,en,k)
-!=====================================
+ !
  use pars,                  ONLY : SP, PI, lchlen
  use qexml_module
  use qexml_data
@@ -40,19 +40,20 @@
  type(bz_samp),    intent(out)  :: k      ! K/Q points
  integer,          intent(in)   :: pwunit ! unit of index.dat
  logical,          intent(in)   :: verboseIO
-!ws
+ !
+ ! Work Space
+ !
  real(SP)                       :: acopy(3,3),cp(3)
  integer                        :: i1, ik, ierr, isym(3,3,48), nspinpw
  integer, external              :: atomic_number
  character(lchlen)              :: lch
  character(256)                 :: pw_dft
  character(3), allocatable      :: atom_species_names(:)
-
-!---------------------------------------------------------------------*
-!    Read dimensions                                                  *
-!---------------------------------------------------------------------*
+ !---------------------------------------------------------------------*
+ !    Read dimensions                                                  *
+ !---------------------------------------------------------------------*
  call msg('s',' Header/K-points/Energies...')
-
+ !
  call qexml_read_bands(nbnd=nbnd_, num_k_points=num_k_points_, &
 &                      nspin=nspinpw, nelec=nelec_, ierr=ierr)
  if (ierr.ne.0) call errore('qexml_read_bands','IOTK error',ABS(ierr))
@@ -64,7 +65,7 @@
  if (ierr.ne.0) call errore('qexml_read_planewaves','IOTK error',ABS(ierr))
  call qexml_read_ions(nat=nat_, nsp=nsp_, ierr=ierr)  
  if (ierr.ne.0) call errore('qexml_read_ions','IOTK error',ABS(ierr))
-
+ !
  en%nb  = nbnd_
  k%nibz = num_k_points_
  select case(nspinpw)
@@ -87,25 +88,25 @@
  default_Tel = 0.0_SP 
  wf_ncx  = npwx_ ! max for writing, allocation
  n_atom_species = nsp_
-
+ !
  call msg("l","done")
-
-!---------------------------------------------------------------------*
-!    Read cell data                                                   *
-!---------------------------------------------------------------------*
-
+ !
+ !---------------------------------------------------------------------*
+ !    Read cell data                                                   *
+ !---------------------------------------------------------------------*
  call msg('s',' Cell data...')
  call qexml_read_cell(alat=alat_, a1=a1_, a2=a2_, a3=a3_,ierr=ierr)
  if (ierr.ne.0) call errore('qexml_read_cell','IOTK error',ABS(ierr))
-
+ !
  a(1,:) = a1_(:) ! assumes always atomic units
  a(2,:) = a2_(:)
  a(3,:) = a3_(:)
  alat(1) = maxval(abs(a(1,:)) )*alat_mult_factor
  alat(2) = maxval(abs(a(2,:)) )*alat_mult_factor
  alat(3) = maxval(abs(a(3,:)) )*alat_mult_factor
-
-! Use acopy to avoid passing non-contiguous arrays (just for fun)
+ !
+ ! Use acopy to avoid passing non-contiguous arrays (just for fun)
+ !
  acopy = transpose(a)
  cp = cross_product(acopy(:,2),acopy(:,3))
  do i1=1,3
@@ -115,15 +116,15 @@
  b(2,:)=cross_product(acopy(:,3),acopy(:,1))*2.*PI/DL_vol
  b(3,:)=cross_product(acopy(:,1),acopy(:,2))*2.*PI/DL_vol
  call msg("l","done")
-
-!---------------------------------------------------------------------*
-!    Read atomic positions (for version > 3.0.4)                      *
-!---------------------------------------------------------------------*
+ !
+ !---------------------------------------------------------------------*
+ !    Read atomic positions (for version > 3.0.4)                      *
+ !---------------------------------------------------------------------*
  call msg('s',' Atomic data...')
  allocate( tau_(3,nat_), ityp_(nat_) )  ! tau is read in cartesian coords
  allocate( atm_(n_atom_species))
  call qexml_read_ions( tau=tau_, ityp=ityp_, atm=atm_, ierr=ierr)
-
+ !
  allocate(n_atoms(n_atom_species))
  n_atoms(:)=0
  do i1 = 1, nat_
@@ -136,23 +137,23 @@
    n_atoms( ityp_(i1) ) = n_atoms( ityp_(i1) ) +1
    atom_pos(:, n_atoms( ityp_(i1) ) , ityp_(i1) ) = tau_(:,i1) 
  enddo
-
+ !
  allocate(atom_species_names(n_atom_species))
  allocate(znucl(n_atom_species))
  do i1 = 1, n_atom_species
    atom_species_names(i1) = atm_(i1)    
    znucl(i1) = atomic_number(atom_species_names(i1))
  enddo
-
+ !
  if (ierr.ne.0) call errore('qexml_read_ions','IOTK error',ABS(ierr))
-
+ !
  call msg("l","done")
-!---------------------------------------------------------------------*
-!    Read symmetries                                                  *
-!---------------------------------------------------------------------*
-
+ !---------------------------------------------------------------------*
+ !    Read symmetries                                                  *
+ !---------------------------------------------------------------------*
+ !
  call msg('s',' Symmetries...')
-
+ !
  allocate(s_(3,3,nsym_))
  call qexml_read_symmetry(invsym=invsym_, s=s_, ierr=ierr)
  if (ierr.ne.0) call errore('qexml_read_symmetry','IOTK error',ABS(ierr))
@@ -161,46 +162,46 @@
  enddo
  deallocate(s_)
  call symmetries_check_and_load(isym(:,:,:nsym_),nsym_)
-
-!---------------------------------------------------------------------*
-!    Read XC functional                                               *
-!---------------------------------------------------------------------*
-
+ !---------------------------------------------------------------------*
+ !    Read XC functional                                               *
+ !---------------------------------------------------------------------*
  call qexml_read_xc(dft=pw_dft, ierr=ierr)
- call msg("s","XC functional found: "//trim(pw_dft))
+ call msg("s"," XC functional found: "//trim(pw_dft))
  call scan_xc(pw_dft,GS_xc_KIND,GS_xc_FUNCTIONAL)
-
-!---------------------------------------------------------------------*
-!    Read band structure                                              *
-!---------------------------------------------------------------------*
-
+ !---------------------------------------------------------------------*
+ !    Read band structure                                              *
+ !---------------------------------------------------------------------*
  call msg('s',' Bandstructure (K-pts, E)...')
  allocate(xk_(3, num_k_points_))
-
+ !
  if(nspinpw.eq.1.or.nspinpw.eq.4) then
-
+   !
    allocate(eig_(nbnd_, num_k_points_))
    call qexml_read_bands(xk=xk_, eig=eig_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_bands','IOTK error',ABS(ierr))
-
+   !
  else if(nspinpw.eq.2) then
-
+   !
    allocate(eig_s_(nbnd_, num_k_points_,n_sp_pol))
    call qexml_read_bands(xk=xk_, eig_s=eig_s_, ierr=ierr)
-
+   !
  endif
-
-! PW k in units of [cart, tpiba] -> units of [cart, 2*pi/alat(:)]
-! PW cart tpiba/cart au/cart alat/RLU units
+ !
+ ! PW k in units of [cart, tpiba] -> units of [cart, 2*pi/alat(:)]
+ ! PW cart tpiba/cart au/cart alat/RLU units
+ !
  allocate(k%pt(k%nibz,3))
  do i1 = 1,k%nibz
-!   These are equivalent:
-!   k%pt(i1,:)=kpt(:,i1) * pwcell%tpiba * alat(:)/2.0_SP/PI
+    !
+    ! These are equivalent:
+    ! k%pt(i1,:)=kpt(:,i1) * pwcell%tpiba * alat(:)/2.0_SP/PI
+    !
     k%pt(i1,:)=xk_(:,i1) * alat(:)/alat_
  enddo
  deallocate(xk_)
-
-!PW energies (3.1) in HARTREE
+ !
+ ! PW energies (3.1) in HARTREE
+ !
  allocate( en%E(en%nb, k%nibz, n_sp_pol) )
  select case(nspinpw)
  case(1)
@@ -213,44 +214,42 @@
    en%E(:,:,:) = eig_s_( 1:en%nb, 1:k%nibz, 1:n_sp_pol )
    deallocate(eig_s_)
  end select
-
+ !
  call msg('l','done')
-
-!---------------------------------------------------------------------*
-!    Read G-vectors                                                   *
-!---------------------------------------------------------------------*
-
+ !---------------------------------------------------------------------*
+ !    Read G-vectors                                                   *
+ !---------------------------------------------------------------------*
  allocate(g_vec(ng_vec,3))
-
+ !
  call msg('s',' RL vectors...')
  allocate(igv_(3,ngm_))
  call qexml_read_planewaves(igv=igv_, ierr=ierr)
  if (ierr.ne.0) call errore('qexml_read_planewaves','IOTK error',ABS(ierr))
-
-! PW integer units of b1/b2/b3    -> 2pi/alat(:) units, cartesian, real
-! b(:,:) is in a.u.
+ !
+ ! PW integer units of b1/b2/b3    -> 2pi/alat(:) units, cartesian, real
+ ! b(:,:) is in a.u.
+ !
  do i1 = 1, ng_vec
     g_vec(i1,:)=matmul(transpose(b),igv_(:,i1))*alat(:)/2./pi ! ok
  enddo
  deallocate(igv_)
  call msg('l','done')
-
-!---------------------------------------------------------------------*
-!    Read wf_ncx and igk arrays                                   *
-!---------------------------------------------------------------------*
-
-! This whole qexml is terribly slow as it reads and rereads the data.xml
-! file searching for tags. A single subroutine "read bandstructure" would
-! be much more efficient such that the BAND_STRUCTURE tag would be searched
-! only once. It would also get around the MAX_NPW 3.1 bug....
-
+ !---------------------------------------------------------------------*
+ !    Read wf_ncx and igk arrays                                   *
+ !---------------------------------------------------------------------*
+ !
+ ! This whole qexml is terribly slow as it reads and rereads the data.xml
+ ! file searching for tags. A single subroutine "read bandstructure" would
+ ! be much more efficient such that the BAND_STRUCTURE tag would be searched
+ ! only once. It would also get around the MAX_NPW 3.1 bug....
  call msg('s',' IGK arrays...')
-
+ !
  allocate( wf_nc_k(k%nibz) )
  allocate( wf_igk(wf_ncx, k%nibz) ) ! in ioDB1: wf_igk(wf_ncx,k%nibz))
  wf_igk(:,:)=-1 ! for checking
-
-!allocate(index_(wf_ncx)) ! avoid in case of v3.1 bug
+ !
+ !allocate(index_(wf_ncx)) ! avoid in case of v3.1 bug
+ !
  allocate(index_(ng_vec))     ! overkill...
  do ik = 1,k%nibz
    !
@@ -291,17 +290,17 @@
     call error('maxval(wf_nc_k).ne.wf_ncx ! Check MAX_NPW ')
  endif
  if(any(wf_nc_k.eq.0)) call error('At least one npw(k) = 0!')
-
+ !
  call msg('l','done')
-
+ !
  call print_interface_dimensions(en,k)
-
- return
- 
+ !
  end subroutine p2s_qexml_db1
-
+ !
  subroutine scan_xc(pw_dft, GS_xc_KIND_,GS_xc_FUNCTIONAL_)
+   !
    ! Default: GS_xc_KIND_ = -1 , GS_xc_FUNCTIONAL_ = -1
+   !
    use xc_functionals,        ONLY : XC_EXCHANGE_CORRELATION, XC_EXCHANGE, &
 &                                  xc_string,XC_LDA_C_PW,XC_LDA_C_PZ,XC_LDA_C_WIGNER,   &
 &                                  XC_LDA_C_HL,XC_LDA_C_XALPHA
@@ -333,7 +332,8 @@
 !    GS_xc_FUNCTIONAL_ = XC_LDA_C_XALPHA
 !    GS_xc_KIND_ = XC_EXCHANGE
    endif
-
+   !
    return
+   !
  end subroutine scan_xc
 

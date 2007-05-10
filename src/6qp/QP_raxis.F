@@ -221,7 +221,7 @@
  !
  ! Test the spatial Inversion
  !
- call SpaceInvTest(en,Xk)
+ call space_inv_by_wf(en,Xk)
  !
  ! ALLOCATION (isc)
  !

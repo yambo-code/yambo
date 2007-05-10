@@ -147,7 +147,7 @@
  !
  ! Time-Rev is Spatial Inv => only half X is eval
  !                            ===================
- call SpaceInvTest(Xen,Xk)
+ call space_inv_by_wf(Xen,Xk)
  !
  half_X_mat_only=i_space_inv==1
  if (.not.half_X_mat_only) then

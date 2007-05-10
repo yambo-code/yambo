@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2005 A. Marini and the SELF team 
+! Copyright (C) 2000-2005 A. Marini & M. Bruno and the SELF team 
 !         http://www.fisica.uniroma2.it/~self
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -161,9 +161,9 @@
      !
      ! ...serial invertion
      !
-     integer :: ifail,lwork
+     integer       :: ifail,lwork
      type(blacs_t) :: iblt
-     integer, allocatable :: ipvt(:)
+     integer, allocatable     :: ipvt(:)
      complex(SP), allocatable :: work(:)
      !
      ! ...additionals for serial diago
@@ -179,7 +179,7 @@
      ! ...parallel inversion
      !
      complex(SP), allocatable :: lM(:,:) 
-     integer      :: i, j, i_loc, j_loc, liwork
+     integer                  :: i, j, i_loc, j_loc, liwork
      !
      ! ...parallel diagonalization
      !

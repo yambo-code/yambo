@@ -24,7 +24,8 @@
  use pars,           ONLY:SP,HARTREE,IP,pi,schlen,zero_dfl
  use electrons,      ONLY:levels,nel,n_met_bands,n_full_bands,E_duplicate,n_sp_pol
  use memory_m,       ONLY:mem_est
- use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,sop_inv,sop_tab
+ use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,sop_inv,&
+&                         sop_tab,atoms_spatial_invertion,i_space_inv
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,nkibz,nkbz,nXkibz,nXkbz,&
 &                         k_grid_b,rl_sop,bz_samp,g_vec
  use wave_func,      ONLY:wf_nc_k
@@ -111,10 +112,16 @@
  !
  select case(i_time_rev)
    case(1)
-    call msg('r','Time-reversal derived K-space symmetries:',(/nsym/2+1,nsym/))
+    call msg('nr','[SYMs] Time-reversal derived K-space symmetries:',(/nsym/2+1,nsym/))
    case(0)
-    call msg('r','K-space Time-reversal not included')
+    call msg('nr','[SYMs] K-space Time-reversal not included')
  end select
+ !
+ ! Space inversion
+ !
+ call atoms_spatial_invertion()
+ if (i_space_inv==1) call msg('r','[SYMs] Inversion symmetry is used')
+ if (i_space_inv==0) call msg('r','[SYMs] Inversion symmetry is NOT used')
  !
  ! Symmetries Multiplication Table
  !
@@ -133,11 +140,11 @@
          if (sop_tab(i1,i2)==1) sop_inv(i1)=i2                
        endif
      enddo
-     if (sop_tab(i1,i2)==0) call error('Error (stab 2): check the input symmetries!')    
+     if (sop_tab(i1,i2)==0) call error('[SYMs] check the input symmetries!')    
    enddo
  enddo
- if (any(sop_inv==0)) call error('Error (sinv): check the input symmetries!')
- call msg('r','Group table built correctly')
+ if (any(sop_inv==0)) call error('[SYMs] check the input symmetries!')
+ call msg('r','[SYMs] Group table built correctly')
  !
  call section('+','K-grid lattice')
  !

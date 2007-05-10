@@ -232,7 +232,7 @@
  ! 
  ! Test the spatial Inversion
  !
- call SpaceInvTest(Ken,Xk)
+ call space_inv_by_wf(Ken,Xk)
  !
  allocate(O_table(BS_bands(2)-BS_bands(1)+1,nsym,&
 &                 BS_bands(2)-BS_bands(1)+1,nsym,n_sp_pol),stat=alloc_err(1))

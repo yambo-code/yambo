@@ -20,45 +20,47 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine p2s_wf(wf_disk,ikibz, pwunit)
-!==============================================
- use pars
- use electrons,             ONLY : n_bands, n_spin
- use D_lattice,             ONLY : n_atom_species,pp_n_l_comp_max,&
-&                                  PP_alloc,pp_kbs,pp_kb,pp_kbd
- use R_lattice,             ONLY : nkibz
- use wave_func,             ONLY : wf_ncx,wf_nc_k
- use defs_datatypes,        ONLY : hdr_type, wffile_type
+ !
+ use pars,                  ONLY:SP
+ use electrons,             ONLY:n_bands, n_spin
+ use D_lattice,             ONLY:n_atom_species,pp_n_l_comp_max,&
+&                                PP_alloc,pp_kbs,pp_kb,pp_kbd
+ use R_lattice,             ONLY:nkibz
+ use wave_func,             ONLY:wf_ncx,wf_nc_k
+ use defs_datatypes,        ONLY:hdr_type, wffile_type
  use pw_interface
+ use interfaces,            ONLY:make_real_wf
  implicit none
- integer,  intent(in)           :: ikibz, pwunit
- real(SP), intent(out)          :: wf_disk(2,n_bands,wf_ncx,n_spin)
-!ws
+ !
+ integer,  intent(in)   :: ikibz, pwunit
+ real(SP), intent(out)  :: wf_disk(2,n_bands,wf_ncx,n_spin)
+ !
+ ! Work Space
+ !
  integer        :: ib, ikeff, ispinor
-!
-! holds the double precision pwscf record
-!
+ !
+ ! holds the double precision pwscf record
+ !
  complex(DP)    :: wf_disk_DP(wf_nc_k(ikibz))
-!
+ !
  wf_disk=(0._SP,0._SP)
-!---------------------------------------------------------------------*
-!    Main data                                                        *
-!---------------------------------------------------------------------*
+ !---------------------------------------------------------------------*
+ !    Main data                                                        *
+ !---------------------------------------------------------------------*
  if (ikibz==1) call pw_wfcstart(pwunit)
-
+ !
  do ispinor=1,n_spin
    ikeff = ikibz + (ispinor-1)*nkibz
    call pw_wfcscan( pwunit, ikeff ) ! scan for this ikibz
    do ib = 1, n_bands       ! loop over bands
-
      call pw_wfcread(pwunit,ib,wf_nc_k(ikibz),wf_disk_DP)
      wf_disk(1,ib,1:wf_nc_k(ikibz),ispinor) =  real( wf_disk_DP(1:wf_nc_k(ikibz)) )
      wf_disk(2,ib,1:wf_nc_k(ikibz),ispinor) = aimag( wf_disk_DP(1:wf_nc_k(ikibz)) )
-
+     !call make_real_wf(ib,i,ikibz,wf_disk(:,ib,:wf_nc_k(ikibz),ispinor),wf_nc_k(ikibz))
    enddo
    call pw_wfcscanend(pwunit,ikeff)
  enddo
-
- if (ikibz==nkibz) then
-   call pw_wfcstop(pwunit)
- endif
+ !
+ if (ikibz==nkibz) call pw_wfcstop(pwunit)
+ !
  end subroutine

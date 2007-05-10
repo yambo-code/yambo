@@ -19,12 +19,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine SpaceInvTest(en,Xk)
+ subroutine space_inv_by_wf(en,Xk)
  !
- ! Check if the Inversion is a DL symmetry operation.
+ ! Check if the Inversion is a DL symmetry operation either
+ ! using the wavefunctions or the atomic positions.
  !
- !  ispaceInv=0 (it is not)
- !  ispaceInv=1 (it is)
+ !  i_space_inv=0 (it is not)
+ !  i_space_inv=1 (it is)
  !
  use pars,          ONLY:SP
  use electrons,     ONLY:levels
@@ -34,34 +35,51 @@
  use D_lattice,     ONLY:i_time_rev,i_space_inv
  use R_lattice,     ONLY:bz_samp
  implicit none
- type(levels)::en
+ !
+ type(levels) ::en
  type(bz_samp)::Xk
  !
  ! Work Space
  !
  integer                 ::i1
- real(SP),allocatable    ::rho_si(:),rho_nsi(:)
+ real(SP),   allocatable ::rho_si(:),rho_nsi(:)
  complex(SP),allocatable ::cv(:)
  complex(SP)             ::mv(2)
  !
- if (.not.allocated(wf).or.wf_space/='R') return
+ ! Already set
+ !
  if (i_space_inv>=0) return
  !
- i_space_inv=0
- if (i_time_rev==0) return
+ ! WF procedure
  !
- allocate(rho_si(fft_size),rho_nsi(fft_size),cv(fft_size))
- call el_density(en,Xk,rho_si,.true.)
- call el_density(en,Xk,rho_nsi,.false.)
+ if (.not.allocated(wf).or.wf_space/='R') return
  !
- cv=(0.,0.)
- forall(i1=1:fft_size) cv(i1)=conjg(wf(i1,1))*wf(i1,1)
- mv(1)=sum(rho_nsi(:)*cv(:));mv(2)=sum(rho_si(:)*cv(:))
- if (abs(mv(1)-mv(2))<abs(mv(1))/1.E5) i_space_inv=1
- if (i_space_inv==1) call msg('rs','[FFT] Inversion is a Space operation')
+ ! When using wf's the space inv is tested using the first
+ ! nsym/(i_time_rev+1) and all the nsym. If there is not
+ ! TR this procedure is not possible.
  !
- ! CLEAN
+ if (i_time_rev==0) then 
+   i_space_inv=0
+ else
+   !
+   allocate(rho_si(fft_size),rho_nsi(fft_size),cv(fft_size))
+   call el_density(en,Xk,rho_si,.true.)
+   call el_density(en,Xk,rho_nsi,.false.)
+   !
+   cv=(0.,0.)
+   forall(i1=1:fft_size) cv(i1)=conjg(wf(i1,1))*wf(i1,1)
+   mv(1)=sum(rho_nsi(:)*cv(:))
+   mv(2)=sum(rho_si(:)*cv(:))
+   if (abs(mv(1)-mv(2))<abs(mv(1))/1.E5) then
+     i_space_inv=1
+   else
+     i_space_inv=0
+   endif
+   !
+   deallocate(rho_nsi,rho_si,cv)
+ endif
  !
- deallocate(rho_nsi,rho_si,cv)
+ if (i_space_inv==1) call msg('r','[SYMs] Inversion symmetry is used')
+ if (i_space_inv==0) call msg('r','[SYMs] Inversion symmetry is NOT used')
  !
  end subroutine

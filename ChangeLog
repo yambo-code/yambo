@@ -1,3 +1,34 @@
+2007-05-07 13:40:41 r119 Andrea Marini <marini@roma2.infn.it>
+
+	Matrix Operations module restyled (small type fixed)
+
+2007-05-07 13:32:55 r118 Andrea Marini <marini@roma2.infn.it>
+
+	Matrix Operations module restyled
+
+2007-05-07 10:24:02 r117 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.9_07-05-07
+
+	*  spp/k_analyze.F 0modules/std_presets.F 0modules/mod_R_lattice.F 0modules/mod_IO.F 0modules/mod_X.F 0modules/mod_com.F 2io/ioBS.F 2io/io_elemental.F 2io/ioDB1.F 2io/ioX.F 2io/ioQINDX.F 2io/ioOSTNTS.F 2io/ioDB1_reload.F 5X/X_O_longitudinal.F 5X/X_O_transverse.F 5X/O_driver.F 5X/X_O_strengths.F 5X/X_drude.F 4reels/epsinv.F 4it/init.F 4ras/X_O_longitudinal_cut.F 3kop/bz_samp_indexes.F
+
+	Bugs:
+	- In the long. gauge calculations the q0_def_mod (now q0_def_norm) were not
+	  properly rescaled.
+	- ioDB1 was able to change the version number. Now this is not possible
+	  anymore.
+
+	Additions:
+	- X_t%long_gauge logical => included now in ioBS, ioX.
+	- q0_def_norm entry in ioOSTNTS.
+
+	Changes:
+	- Longitudinal gauge ruotines revisited.
+	- In O_drived the wriring of o. files headings have been moved to after
+	  the X_s call so to be able to write the gauge used.
+
+	Patch sent by: Andrea
+
 2007-05-04 11:28:55 r116 Andrea Marini <marini@roma2.infn.it>
 
 	Bug fixed in SLK & BLACS support check in configure script

@@ -32,6 +32,42 @@
    !
  contains
    !
+   subroutine make_real_wf(ib,ik,wf_,nc)
+     use stderr,    ONLY:intc
+     use com,       ONLY:warning
+     real (SP)   :: wf_(2,nc)
+     integer     :: ib,ik
+     !
+     integer     :: ic,nc,ic_start
+     real(SP)    :: c1,c2,c_norm_sq,ph_sin,ph_cos,ph_cos_sq(nc)
+     complex(SP) :: phase,wf_c
+     !
+     ic_start=-1
+     do ic=1,nc
+       c1=wf_(1,ic)
+       c2=wf_(2,ic)
+       c_norm_sq=c1**2.+c2**2.
+       if (c_norm_sq>1.E-5) then
+         ph_cos_sq(ic)=1./(1.+(c2/c1)**2.)
+         if (ic_start<0) ic_start=ic
+       else
+         cycle
+       endif
+       if (abs(ph_cos_sq(ic)-ph_cos_sq(ic_start))>0.1) then
+         call warning('No phase @ band '//trim(intc(ib))//' k-point '//trim(intc(ik)))
+         exit
+       endif
+     enddo
+     ph_cos=sqrt(ph_cos_sq(ic_start))
+     ph_sin=sqrt(1.-ph_cos_sq(ic_start))
+     phase=cmplx(ph_cos,ph_sin)
+     do ic=1,nc
+       wf_c=cmplx(wf_(1,ic),wf_(2,ic))
+       wf_(1,ic)=real(phase*wf_c)
+       wf_(2,ic)=0.
+     enddo
+   end subroutine
+   !
    subroutine interface_presets(in_string)
      !
      use stderr, ONLY:string_split
@@ -57,15 +93,16 @@
    !
    subroutine symmetries_check_and_load(int_sop,nsym_)
      !
-     use com,       ONLY:msg
+     use com,       ONLY:msg,error
      use electrons, ONLY:spin_orbit
-     use D_lattice, ONLY:nsym,dl_sop,i_time_rev,a
+     use D_lattice, ONLY:nsym,dl_sop,i_time_rev,a,&
+&                        atoms_spatial_invertion,i_space_inv
      use R_lattice, ONLY:b
      !
      integer :: nsym_
      integer :: int_sop(3,3,nsym_) ! Symmetries in RLU
      !
-     integer :: is
+     integer :: is,is_inv
      logical :: l_identity,l_inversion
      real(SP):: sop_mat(3,3)
      !
@@ -83,6 +120,10 @@
      i_time_rev=1
      nsym=2*nsym_
      !
+     ! Space Invertion (possible only for v >= 3.0.4)
+     !
+     call atoms_spatial_invertion()
+     !
      ! Search for identity and inversion symmetries.
      !
      l_identity=.false.
@@ -94,15 +135,25 @@
 &          l_identity=.true.
        if (int_sop(1,1,is)==-1.and.int_sop(1,2,is)==0.and.int_sop(1,3,is)==0.and.&
 &          int_sop(2,1,is)==0.and.int_sop(2,2,is)==-1.and.int_sop(2,3,is)==0.and.&
-&          int_sop(3,1,is)==0.and.int_sop(3,2,is)==0.and.int_sop(3,3,is)==-1) &
-&          l_inversion=.true.
+&          int_sop(3,1,is)==0.and.int_sop(3,2,is)==0.and.int_sop(3,3,is)==-1) then
+         l_inversion=.true.
+         is_inv=is
+       endif 
      enddo
      if (.not.l_identity) call msg("l","[ID no]...")
      if (l_identity)      call msg("l","[ID yes]...")
      !
      ! Special case where I,-I present: no TR used.
      !
-     if (l_identity.and.l_inversion) i_time_rev=0
+     if (l_identity.and.l_inversion) then
+       !
+       ! If -I is a space inversion I keep both I and -I
+       ! and switch off TR
+       !
+       if (i_space_inv==1) i_time_rev=0
+       if (i_space_inv==0) call &
+&         error('-I is in the symmetries list but it is not a proper operation')
+     endif
      !
      ! Identity was stripped in outkss: swap all
      ! symmetries with their inversions
@@ -122,8 +173,13 @@
        i_time_rev=0
        call msg("l","[TR no]")
      endif
-     if (i_time_rev==1) call msg("l","[TR yes]")
-     if (i_time_rev==0) nsym=nsym_
+     if (i_time_rev==1) call msg("l","[TR yes]...")
+     if (i_time_rev==0) then
+       call msg("l","[TR no]")
+     endif
+     !
+     if (i_space_inv==0) call msg("l","[SI no]")
+     if (i_space_inv==1) call msg("l","[SI yes]")
      !
      !From abinit help ...
      !
@@ -172,7 +228,7 @@
      call msg('s',' :: Spinor components     :',n_spinor)
      call msg('s',' :: Spin polarizations    :',n_sp_pol)
      call msg('s',' :: Spin orbit coupling   : ',spin_orbit)
-     call msg('s',' :: Symmetries   [spatial]:',nsym)
+     call msg('s',' :: Symmetries   [spatial]:',nsym/(i_time_rev+1))
      call msg('s',' ::                [T-rev]: ',i_time_rev==1)
      call msg('s',' :: Max WF components     :',wf_ncx)
      call msg('s',' :: RL vectors        (WF):',wf_ng)

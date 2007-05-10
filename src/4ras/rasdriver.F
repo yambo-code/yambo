@@ -208,7 +208,7 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   !
   allocate( surf_i(nw, npol ) )
   call section('=','Slab symmetries: ')
-  call SpaceInvTest(Xen, Xk) 
+  call space_inv_by_wf(Xen, Xk) 
   call get_slab_symmetry( loptcut) 
   !
   ! Extract surface dielectric function from cutoff/bulk subtraction

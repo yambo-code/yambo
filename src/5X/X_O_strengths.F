@@ -32,7 +32,7 @@
 #endif
  use drivers,        ONLY:l_col_cut
  use electrons,      ONLY:levels,n_sp_pol
- use par_proc_m,     ONLY:pp_redux_wait,master_node
+ use par_proc_m,     ONLY:pp_redux_wait
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
  use X_m,            ONLY:X_rhoq0,X_alloc,X_t,X_q0grad,long_path
@@ -157,7 +157,7 @@
 #endif
    ! Write the q0grad to its database
    !
-   if (master_node) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=ioOSTNTS(X,Xen,ID)
  end if
  !

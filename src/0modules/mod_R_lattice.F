@@ -57,8 +57,9 @@
      character(1)      :: units
    end type bz_samp
    !
-   ! Q sampling shadow tables
+   ! Q/K sampling shadow tables
    !
+   real(SP),allocatable :: k_pt(:,:)
    real(SP),allocatable :: q_pt(:,:)
    integer ,allocatable :: q_sstar(:,:)
    !

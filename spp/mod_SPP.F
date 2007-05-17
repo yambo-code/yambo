@@ -73,7 +73,7 @@
   !
   ! BZ RIM
   !
-  integer  :: BZ_RIM_nkpts,RIM_G_shells
+  integer  :: BZ_RIM_nkpts
   logical  :: lbzrim
   character(lchlen) :: BZ_RIM_path
   !

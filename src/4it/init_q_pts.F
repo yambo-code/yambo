@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine init_q_pts()
-!=======================
+ !
  use pars,      ONLY:SP
  use drivers,   ONLY:infile_editing
  use memory_m,  ONLY:mem_est
@@ -28,9 +28,9 @@
  use R_lattice, ONLY:nqibz,q_pt
  use parser_m,  ONLY:parser
  implicit none
-!ws
- integer :: i1,nflines_save,i_nqibz
-!
+ !
+ integer :: i1,nflines_save,i_nqibz ! Work Space
+ !
  if (infile_editing.and.infile_verbosity==V_more) then
    nflines_save=nflines
    write (flines(nflines+1),'(a,i4,t30,a)') 'nQptIBZ =',nqibz,&
@@ -54,13 +54,13 @@
    call mem_est("q_pt",(/nqibz*3/),(/SP/))  
    return
  endif 
-!
-! Write to input file
-!
+ !
+ ! Write to input file
+ !
  open(unit=12,file=trim(infile),position='append')
  do i1=nflines_save+1,nflines
   write (12,'(a)') trim(flines(i1))
  enddo 
  close(12)
-!
+ !
  end subroutine

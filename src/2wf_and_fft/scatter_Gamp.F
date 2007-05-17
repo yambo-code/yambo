@@ -19,8 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine scatterGamp(isc,mode)
- !===============================
+subroutine scatterGamp(isc,mode)
  !
  ! isc%gamp(G,G') = \int_p (region around q) 1/|p+G|/|p+G'|/(2*pi)**3
  !
@@ -154,4 +153,4 @@
    enddo
  enddo
  !
- end subroutine
+end subroutine

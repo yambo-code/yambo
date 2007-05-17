@@ -26,13 +26,12 @@
  ! PRB 23, 1495 (1981) )
  !
  use pars,          ONLY:SP,DP,schlen,HARTREE,HA2THZ,pi
- use drivers,       ONLY:Finite_Tel
  use frequency,     ONLY:w_samp,W_reset
  use electrons,     ONLY:levels,spin_occ
  use timing,        ONLY:live_timing
  use com,           ONLY:msg,error
  use drivers,       ONLY:Finite_Tel,l_el_corr
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset,master_node
+ use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END
@@ -40,16 +39,14 @@
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,QP_dSc_steps,&
 &                        QP_dSc_delta
- use D_lattice,     ONLY:sop_inv
+ use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
  use R_lattice,     ONLY:qindx_S,bz_samp,ik_is_table,q_norm
  use ELPH,          ONLY:ph_modes,elph_nb,ph_freqs_sq,elph_gkkp,&
 &                        elph_gkkp_free,QP_PH_n_G_bands,max_ph_freq,elph_DW,&
 &                        PH_damping,elph_nq,E_k_plus_q,elph_use_q_grid,&
-&                        setup_k_plus_q_levels,f_k_plus_q,PH_null_E_rgn
+&                        setup_k_plus_q_levels,f_k_plus_q,PH_null_E_rgn,elph_nq_used
  use functions,     ONLY:Fermi_fnc_derivative
-!DEBUG >
- use parser_m, ONLY:parser
-!DEBUG <
+ !
  implicit none
  type(levels)  ::en
  type(bz_samp) ::k,q
@@ -57,11 +54,11 @@
  !
  ! WorkSpace  -- GPL_END --
  !
- integer          ::iq_db,iqbz,iq,iq_ref,iqs,ik,ok,ikbz,okbz,ib,ob,is,il,iqp,i2,iw,&
-&                   time_order_sign
+ integer          ::iq_db,iqbz,iq,iq_ref,iqs,ik,ok,ik_bz,okbz,ib,ob,is,il,iqp,i2,iw,&
+&                   time_order_sign,ik_bz_gkkp,ib_gkkp,ob_gkkp,os
  type(w_samp)     ::Sc_W(qp%n_states)
  type(pp_indexes) ::px
- integer          ::io_err,ID,iv4(4),nq_to_loop
+ integer          ::io_err,ID,iv4(4)
  integer, external::ioELPH,QP_state_extract
  character(schlen)::ch
  real(SP)         ::q_weight,ph_E,delta_E,delta_E_at_gamma,one_minus_2f_occ,f_occ,&
@@ -121,20 +118,16 @@
  time_order_sign=-1
  if (Finite_Tel) time_order_sign=1
  !
- nq_to_loop=q%nbz
- if (.not.elph_use_q_grid) nq_to_loop=elph_nq
-!DEBUG >
- call parser('nq_to_loop',nq_to_loop)
-!DEBUG<
- q_weight=1./real(nq_to_loop)
+ if (elph_use_q_grid) elph_nq_used=q%nbz
+ q_weight=1./real(elph_nq_used)
  !
  ! g^2F(w) residuals
  !
- allocate(gsqF_fan(QP_n_states,nq_to_loop,ph_modes))
- allocate(gsqF_dw(QP_n_states,nq_to_loop,ph_modes))
- allocate(gsqF_ca_corr(QP_n_states,nq_to_loop,ph_modes))
- allocate(gsqF_life_bose(QP_n_states,nq_to_loop,ph_modes))
- allocate(gsqF_life_f(QP_n_states,nq_to_loop,ph_modes))
+ allocate(gsqF_fan(QP_n_states,elph_nq_used,ph_modes))
+ allocate(gsqF_dw(QP_n_states,elph_nq_used,ph_modes))
+ allocate(gsqF_ca_corr(QP_n_states,elph_nq_used,ph_modes))
+ allocate(gsqF_life_bose(QP_n_states,elph_nq_used,ph_modes))
+ allocate(gsqF_life_f(QP_n_states,elph_nq_used,ph_modes))
  gsqF_fan=0.
  gsqF_dw=0.
  gsqF_ca_corr=0.
@@ -143,10 +136,10 @@
  !
  call mem_est('gsqF_residuals',(/5*size(gsqF_fan)/),(/SP/))
  !
- call par_indexes(px,(/nq_to_loop,QP_PH_n_G_bands/))
+ call par_indexes(px,(/elph_nq_used,QP_PH_n_G_bands/))
  call pp_redux_wait
  !
- do iq_db=1,nq_to_loop
+ do iq_db=1,elph_nq_used
    !
    iqbz = iq_db
    iq   = iq_db
@@ -157,6 +150,7 @@
    endif
    !
    if (iq/=iabs(iq_ref)) then
+     !
      call io_control(ACTION=RD_CL_IF_END,SEC=(/iq+1/),ID=ID)
      io_err=ioELPH(ID)
      iq_ref=iq
@@ -182,29 +176,49 @@
    !
    do iqp=1,QP_n_states
      !
-     ib  =QP_table(iqp,1)
-     ik  =QP_table(iqp,3)
-     ikbz=sum(k%nstar(:ik-1))+1
+     ib   =QP_table(iqp,1)
+     ik   =QP_table(iqp,3)
+     ik_bz=sum(k%nstar(:ik-1))+1
      okbz=0
      ok  =0
-     if (elph_use_q_grid) then
-       okbz=qindx_S(ik,iqbz,1)
-       ok=k%sstar(okbz,1)
-       ! 
-       ! When using a uniform Q grid I cycle on the q symmetries 
-       ! as well. To rotate the gkkp m.e. I use:
-       ! 
-       ! gkkp_{I_need}= <k+Rq n|dV_{SCF}/du^{q nu}|k n'>=
-       !                <(R^-1 k)+q n|dV_{SCF}/du^{q nu}|(R^-1 k) n'>= 
-       !                gkkp(ikbz,nu,n',n)
-       !
-       ikbz=ik_is_table(ik,sop_inv(iqs))
-       !
-     endif
      !
      do ob=1,QP_PH_n_G_bands
        !
        if (.not.px%i2p(iqbz,ob)) cycle
+       !
+       ik_bz_gkkp=ik_bz
+       ib_gkkp   =ib
+       ob_gkkp   =ob
+       !
+       if (elph_use_q_grid) then
+         okbz=qindx_S(ik,iqbz,1)
+         ok=k%sstar(okbz,1)
+         os=k%sstar(okbz,2)
+         ! 
+         ! When using a uniform Q grid I cycle on the q symmetries 
+         ! as well. To rotate the gkkp m.e. I use:
+         ! 
+         ! gkkp_{I_need}= <k+Rq n'|dV_{SCF}/du^{Rq nu}|k n>=
+         !                <(R^-1 k)+q n'|dV_{SCF}/du^{q nu}|(R^-1 k) n>= 
+         !                gkkp(ik_bz,nu,n',n)
+         !
+         ik_bz_gkkp=ik_is_table(ik,sop_inv(iqs))
+         ! 
+         ! gkkp_{I_need}= <k+IRq n'|dV_{SCF}/du^{IRq nu}|k n>=
+         !                [<(R^-1 S p)+q n|dV_{SCF}/du^{q nu}|(R^-1 S p) n'>]^*= 
+         !                [gkkp(ik_bz,nu,n,n')]^*
+         ! 
+         ! with k + IRq = Sp 
+         !
+         if (iqs>nsym/(i_time_rev+1)) then
+           ib_gkkp   =ob
+           ob_gkkp   =ib
+           ik_bz_gkkp=ik_is_table(ok,sop_inv(sop_tab(iqs-nsym/2,os)))
+         endif
+         !
+         ! k is in the IBZ and q is the PW_q (=-SELF_q)
+         !
+       endif
        !
        if (elph_use_q_grid) then
          delta_E=en%E(ib,ik,1)-en%E(ob,ok,1)
@@ -212,9 +226,9 @@
          f_occ=en%f(ob,ok,1)/spin_occ
          one_minus_2f_occ=(1.-2.*f_occ)
        else
-         delta_E=en%E(ib,ik,1)-E_k_plus_q(ob,ikbz,1)
-         delta_E_at_gamma=en%E(ib,ik,1)-E_k_plus_q_at_gamma(ob,ikbz)
-         f_occ=f_k_plus_q(ob,ikbz,1)/spin_occ
+         delta_E=en%E(ib,ik,1)-E_k_plus_q(ob,ik_bz,1)
+         delta_E_at_gamma=en%E(ib,ik,1)-E_k_plus_q_at_gamma(ob,ik_bz)
+         f_occ=f_k_plus_q(ob,ik_bz,1)/spin_occ
          one_minus_2f_occ=(1.-2.*f_occ)
        endif
        !
@@ -225,7 +239,16 @@
          if (iq==1.and.il<=3) cycle
          !
          ph_E=sqrt(abs(ph_freqs_sq(iq,il)))
-         elph_gkkp_sq=conjg(elph_gkkp(ikbz,il,ob,ib))*elph_gkkp(ikbz,il,ob,ib)/2./ph_E
+         !
+         ! In the SE expression I have the m.e. 
+         !
+         !  <ib ik|g(q_SELF l r)|ob ik-q_SELF> = [<ob ik+q_PW|g(q_PW l r)|ib ik>]^* = 
+         !                              elph_gkkp(ik_bz_gkkp,il,ob_gkkp,ib_gkkp)^*
+         !
+         ! with q_SELF = - q_PW
+         !
+         elph_gkkp_sq=conjg(elph_gkkp(ik_bz_gkkp,il,ob_gkkp,ib_gkkp))*&
+&                           elph_gkkp(ik_bz_gkkp,il,ob_gkkp,ib_gkkp)/2./ph_E
          !
          ! Lifetimes
          !-----------
@@ -273,7 +296,7 @@
          !
          if (abs(delta_E_at_gamma)>PH_null_E_rgn) &
 &          gsqF_dw(iqp,iq,il)= gsqF_dw(iqp,iq,il)-1./2.*&
-&                  2.*elph_DW(ikbz,il,ib,ob)/delta_E_at_gamma*q_weight/2./ph_E
+&                  2.*elph_DW(ik_bz,il,ib,ob)/delta_E_at_gamma*q_weight/2./ph_E
          !
        enddo
        !
@@ -332,7 +355,7 @@
      !
      ! Degenerate bands average
      !
-     do iq=1,nq_to_loop
+     do iq=1,elph_nq_used
        do il=1,ph_modes
          call QP_states_simmetrize(gsqF_fan(:,iq,il),en)
          call QP_states_simmetrize(gsqF_dw(:,iq,il),en)
@@ -342,14 +365,14 @@
        enddo
      enddo
      !
-     call live_timing('El-Ph Sc [2]',nq_to_loop*QP_n_states)
+     call live_timing('El-Ph Sc [2]',elph_nq_used*QP_n_states)
      !
      do iqp=1,QP_n_states  
        !
        g_sq_F=0.
        DP_corr=cmplx(0.,0.,DP)
        !
-       do iq=1,nq_to_loop
+       do iq=1,elph_nq_used
          do il=1,ph_modes
            !
            ph_freq=sqrt(ph_freqs_sq(iq,il))

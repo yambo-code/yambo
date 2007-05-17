@@ -1,5 +1,6 @@
 #if defined PJ_PH
- objs = QP_states_simmetrize.o QP_elph.o
+ objs = QP_states_simmetrize.o QP_elph.o eval_ELPH_K.o ELPH_K_print.o \
+        static2dyn_ELPH_K.o
 #else
  objs =
 #endif

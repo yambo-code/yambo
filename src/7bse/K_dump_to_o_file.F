@@ -21,29 +21,44 @@
 !
  subroutine K_dump_to_o_file(iq,mode)
  !
- use pars,  ONLY:HARTREE,pi,SP
- use BS,    ONLY:BSS_description,BSS_of_title,BSS_file_name,&
-&                BSS_n_descs,BS_K_coupling
- use X_m,   ONLY:X_epsilon,alpha_dim,eps_2_alpha
- use com,   ONLY:msg,of_open_close
+ use pars,      ONLY:HARTREE,pi,SP
+ use stderr,    ONLY:intc
+ use BS,        ONLY:BSS_description,BSS_of_title,BSS_file_name,&
+&                    BSS_n_descs,BS_K_coupling
+ use X_m,       ONLY:X_epsilon,alpha_dim,eps_2_alpha
+ use com,       ONLY:msg,of_open_close
+ use electrons, ONLY:BZ_RIM_tot_nkpts
  implicit none
  integer    :: mode,iq
  !
  ! Work Space
  !
- character(5)      :: extension 
+ character(10)     :: extension 
  integer           :: i1
  real(SP)          :: od(7)
  complex(SP)       :: alpha
  !
  ! Haydock
+ !
  if (iabs(mode)==1)  extension='-bh'
  !
  ! Diagonalization
+ !
  if (iabs(mode)==2)  extension='-bd'
  !
  ! Inversion
+ !
  if (iabs(mode)==3)  extension='-bi'
+ !
+ ! Inversion+ELPH
+ !
+ if (iabs(mode)==4) extension='-bi_elph'
+ !
+ ! RIM
+ !
+ if (mode==-3.or.mode==-4) then
+   BSS_description(BSS_n_descs)='# BSS|BZ RIM points        :'//intc(BZ_RIM_tot_nkpts)
+ endif
  !
  if (mode<0) then
    if (trim(alpha_dim)/='adim') then
@@ -59,6 +74,7 @@
  if (iabs(mode)==1)  extension='o -bh'
  if (iabs(mode)==2)  extension='o -bd'
  if (iabs(mode)==3)  extension='o -bi'
+ if (iabs(mode)==4)  extension='o -bi_elph'
  !
  do i1=1,BSS_n_descs
    call msg(extension,"",trim(BSS_description(i1)),INDENT=0)
@@ -67,7 +83,7 @@
  if (mode>0) then
    call msg(extension,'#')
    if (mode==1) call msg(extension,'#',BSS_of_title,INDENT=0,USE_TABS=.TRUE.)
-   if (mode==2) call msg(extension,'#',BSS_of_title(:5),INDENT=0,USE_TABS=.TRUE.)
+   if (mode/=2) call msg(extension,'#',BSS_of_title(:5),INDENT=0,USE_TABS=.TRUE.)
    call msg(extension,'#')
    do i1=1,size(X_epsilon(1,:))
      !

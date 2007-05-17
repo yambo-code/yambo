@@ -26,11 +26,9 @@
    implicit none
    integer   :: ph_modes
    integer   :: elph_nb
-   integer   :: QP_PH_n_G_bands
    integer   :: elph_nq
-   real(SP)  :: ph_damping
+   integer   :: elph_nq_used
    real(SP)  :: max_ph_freq
-   real(SP)  :: PH_null_E_rgn
    logical   :: elph_use_q_grid
    real(SP),    allocatable :: ph_qpt(:,:)
    real(SP),    allocatable :: ph_freqs_sq(:,:)
@@ -39,10 +37,21 @@
    real(SP),    allocatable :: f_k_plus_q(:,:,:)
    complex(SP), allocatable :: elph_gkkp(:,:,:,:)
    !
+   ! el-ph Self-Energy
+   !
+   integer   :: QP_PH_n_G_bands
+   real(SP)  :: PH_damping
+   real(SP)  :: PH_null_E_rgn
+   !
+   ! el-ph BSE Kernel
+   !
+   complex(SP), allocatable :: EXCPH_mat(:,:)
+   integer,     allocatable :: Rnd_Qpts_at(:)
+   integer,     allocatable :: Rnd_Qpts_corresp(:)
+   !
  contains
    !
    subroutine elph_gkkp_alloc()
-     !
      use memory_m,  ONLY:mem_est
      use R_lattice, ONLY:nkbz,nqibz
      implicit none
@@ -57,19 +66,21 @@
      allocate(elph_DW(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err(3))
      allocate(E_k_plus_q(elph_nb,nkbz,1),stat=alloc_err(4))
      allocate(f_k_plus_q(elph_nb,nkbz,1),stat=alloc_err(5))
-     allocate(ph_qpt(elph_nq,3))
      call mem_est("ph_freqs_sq elph_gkkp elph_DW E_k_plus_q f_k_plus_q",&
 &                 (/size(ph_freqs_sq),size(elph_gkkp),size(elph_DW),&
 &                   size(E_k_plus_q), size(f_k_plus_q)/),&
 &                 (/SP, 2*SP,SP,SP,SP/),errors=alloc_err)
+     if (.not.allocated(ph_qpt)) then
+       allocate(ph_qpt(elph_nq,3))
+       call mem_est("ph_qpt")
+     endif
    end subroutine
    !
    subroutine elph_gkkp_free()
-     !
      use memory_m,  ONLY:mem_est
      implicit none
      deallocate(ph_freqs_sq,elph_gkkp,elph_DW,E_k_plus_q,f_k_plus_q,ph_qpt)
-     call mem_est("ph_freqs_sq elph_gkkp elph_DW E_k_plus_q f_k_plus_q")
+     call mem_est("ph_freqs_sq elph_gkkp elph_DW E_k_plus_q f_k_plus_q ph_qpt")
    end subroutine
    !
    subroutine setup_k_plus_q_levels(E)

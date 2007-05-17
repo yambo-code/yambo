@@ -22,17 +22,19 @@
  subroutine K_solvers(iq,Ken,Xk,q,X,W_bss)
  !
  use pars,           ONLY:SP,pi
+#if defined PJ_PH
+ use drivers,        ONLY:l_ph_corr
+#endif
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_t,X_epsilon,X_alloc,X_rhoq0,&
 &                         alpha_dim,eps_2_alpha
  use BS,             ONLY:BSS_n_freqs,BS_K_dim,BSS_rhoq0,BS_eh_f,BS_not_const_eh_f,&
 &                         BS_bands,BSS_q0,BS_eh_table,BSS_mode,BS_eh_E,&
-&                         BSS_n_descs,BSS_description,BSS_of_title,BS_K_coupling,&
-&                         BSS_write_eig_2_db
+&                         BSS_n_descs,BSS_description,BSS_of_title,BS_K_coupling
  use com,            ONLY:msg,warning
  use drivers,        ONLY:l_bs_fxc
  use frequency,      ONLY:w_samp
- use electrons,      ONLY:levels,spin_occ,BZ_RIM_nbands
+ use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:d3k_factor,bz_samp,q_norm
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,NONE
  use TDDFT,          ONLY:FXC_description,FXC_n_descs
@@ -48,7 +50,7 @@
  !
  integer           ::ik,iv,ic,i1,i_sp,X_ib_save(2)
  integer           ::ioBS_err,ID
- logical           ::run_Haydock,run_Diago,add_Pert_inversion
+ logical           ::run_Haydock,run_Diago,Pert_inversion
  integer, external ::ioBS
  !
  call section('*','BSE solver(s)')
@@ -142,7 +144,7 @@
  !
  run_Haydock         =index(BSS_mode,'h')/=0
  run_Diago           =index(BSS_mode,'d')/=0
- add_Pert_inversion  =index(BSS_mode,'i')/=0.and.BS_bands(2)<=BZ_RIM_nbands
+ Pert_inversion      =index(BSS_mode,'i')/=0
  !
  if (run_Haydock) then
    if (BS_K_coupling)     call warning('Non-resonant K still unsupported (Haydock)')
@@ -154,10 +156,16 @@
    endif
  endif
  !
- if (run_Diago.and.add_Pert_inversion) BSS_write_eig_2_db=.TRUE.
- !
  if (run_Diago)          call K_diagonalization(iq,W_bss)
- if (add_Pert_inversion) call K_inversion(iq,W_bss,Ken,Xk)
+ if (Pert_inversion)     call K_inversion(iq,W_bss,Ken,Xk,q)
+ !
+#if defined PJ_PH
+ !
+ ! Plot El-Phonon Kernel elements
+ !
+ if (l_ph_corr.and.run_Diago) call ELPH_K_print(Ken,Xk,q)
+ !
+#endif
  !
  ! CLEAN
  !

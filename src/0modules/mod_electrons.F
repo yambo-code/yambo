@@ -79,7 +79,6 @@
    contains
      !
      subroutine E_duplicate(Ei,Eo)
-       !
        use memory_m,  ONLY:mem_est
        implicit none
        type(levels):: Ei,Eo
@@ -125,7 +124,6 @@
      end subroutine
      !
      subroutine E_reset(E)
-       !
        use memory_m, ONLY:mem_est
        implicit none
        type(levels)::E

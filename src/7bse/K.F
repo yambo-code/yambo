@@ -24,6 +24,8 @@
  ! BS Kernel: note that the coupling procedure assumes that nsym/2+1 is
  !            spatial inversion
  !
+ ! K = <2V-W>
+ !
  use pars,         ONLY:SP,pi,IP
  use memory_m,     ONLY:mem_est
  use drivers,      ONLY:l_bs_fxc,l_col_cut

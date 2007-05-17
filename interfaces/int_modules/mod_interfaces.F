@@ -38,34 +38,38 @@
      real (SP)   :: wf_(2,nc)
      integer     :: ib,ik
      !
-     integer     :: ic,nc,ic_start
-     real(SP)    :: c1,c2,c_norm_sq,ph_sin,ph_cos,ph_cos_sq(nc)
-     complex(SP) :: phase,wf_c
+     ! Work Space
      !
+     integer     :: ic,nc,ic_start,ic_check
+     real(SP)    :: c1,c2,c_norm_sq,ph_sin(nc),ph_cos(nc),ph_cos_sq(nc)
+     complex(SP) :: phase,wf_c
      ic_start=-1
+     ic_check=0
      do ic=1,nc
        c1=wf_(1,ic)
        c2=wf_(2,ic)
        c_norm_sq=c1**2.+c2**2.
        if (c_norm_sq>1.E-5) then
+         ic_check=ic_check+1
          ph_cos_sq(ic)=1./(1.+(c2/c1)**2.)
+         ph_cos(ic)=c1/sqrt(c_norm_sq)
+         ph_sin(ic)=c2/sqrt(c_norm_sq)
          if (ic_start<0) ic_start=ic
        else
          cycle
        endif
        if (abs(ph_cos_sq(ic)-ph_cos_sq(ic_start))>0.1) then
          call warning('No phase @ band '//trim(intc(ib))//' k-point '//trim(intc(ik)))
-         exit
        endif
+       if (ic_check>10) exit
      enddo
-     ph_cos=sqrt(ph_cos_sq(ic_start))
-     ph_sin=sqrt(1.-ph_cos_sq(ic_start))
-     phase=cmplx(ph_cos,ph_sin)
+     phase=cmplx(ph_cos(ic_start),-ph_sin(ic_start))
      do ic=1,nc
        wf_c=cmplx(wf_(1,ic),wf_(2,ic))
        wf_(1,ic)=real(phase*wf_c)
-       wf_(2,ic)=0.
+       wf_(2,ic)=aimag(phase*wf_c)
      enddo
+     !
    end subroutine
    !
    subroutine interface_presets(in_string)

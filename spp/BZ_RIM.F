@@ -22,20 +22,16 @@
  subroutine BZ_RIM(Xk,Xen)
  !
  use pars,                ONLY:SP,DP,lchlen
- use R_lattice,           ONLY:bz_samp,g_vec,nkibz,k_grid_b,&
-&                              ng_in_shell,g_vec,n_g_shells
- use wave_func,           ONLY: wf_nc_k,wf_igk
+ use R_lattice,           ONLY:bz_samp,nkibz
  use D_lattice,           ONLY:alat,nsym,default_Tel,a
  use com,                 ONLY:msg,error
- use vec_operate,         ONLY:c2a,ak2bz,v_is_zero,iku_v_norm
- use SPP,                 ONLY:BZ_RIM_nkpts,coo_out,BZ_RIM_path,RIM_G_shells
+ use vec_operate,         ONLY:c2a,ak2bz
+ use SPP,                 ONLY:BZ_RIM_nkpts,coo_out,BZ_RIM_path
  use electrons,           ONLY:levels,default_nel,n_bands,&
 &                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
 &                              BZ_RIM_tot_nkpts,n_spin,BZ_RIM_max_filling
  use timing,              ONLY:live_timing_is_on
  use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP,OP_WR_CL
- use matrix_operate,      ONLY:m3inv
- use zeros,               ONLY:k_iku_zero
  !
  implicit none
  type(bz_samp) :: Xk
@@ -43,10 +39,10 @@
  !
  ! Work Space
  !
- real(SP)     ::dummy,v(3),rand_kpt(BZ_RIM_nkpts+1,3),k_b_m1(3,3),&
-&               iv(3),k_distance,a_save(3,3),alat_save(3)
+ real(SP)     ::dummy,v(3),rand_kpt(BZ_RIM_nkpts+1,3),a_save(3,3),alat_save(3)
  integer      ::i1,i2,ikbz,i3
- integer,  parameter   :: iseed(4) = (/11,123,44,1546/)
+ integer,parameter :: iseed(4) = (/11,123,44,1546/)
+ integer, external :: k_the_nearest
  real(DP)  :: rr
  real(DP),external  :: dlaran
  logical            :: add_X_grid
@@ -122,13 +118,6 @@
  allocate(BZ_RIM_nkpt(Xk%nbz))
  BZ_RIM_nkpt=0
  !
- ! First I transform the k_grid_b from c to iku
- !
- call c2a(v_in=k_grid_b(1,:),v_out=k_b_m1(:,1),mode='kc2i')
- call c2a(v_in=k_grid_b(2,:),v_out=k_b_m1(:,2),mode='kc2i')
- call c2a(v_in=k_grid_b(3,:),v_out=k_b_m1(:,3),mode='kc2i')
- call m3inv(M=k_b_m1)
- !
  do while(.not.allocated(BZ_RIM_table)) 
    if (maxval(BZ_RIM_nkpt)>0) then
      if (add_X_grid)      allocate(BZ_RIM_table(Xk%nbz,maxval(BZ_RIM_nkpt)+1))
@@ -137,22 +126,10 @@
    endif
    BZ_RIM_nkpt=0
    do i1=1,BZ_k%nibz
-     k_distance=1.E5
-     ikbz=0
-     do i2=1,Xk%nbz
-       do i3=1,ng_in_shell(min(n_g_shells,RIM_G_shells) )
-         v=BZ_k%pt(i1,:)-Xk%ptbz(i2,:)-g_vec(i3,:)
-         iv=matmul(k_b_m1,v)
-         iv=real(int(iv),SP)
-         if (.not.v_is_zero(iv,zero_=k_iku_zero)) cycle
-         if (iku_v_norm(v)<k_distance) then
-           k_distance=iku_v_norm(v)
-           ikbz=i2
-         endif
-       enddo
-     enddo
-     if (ikbz==0) call error(' Undefined BZ grid point (try increasing Srch_G_sh)')
+     !
+     ikbz=k_the_nearest(BZ_k%pt(i1,:),Xk%ptbz(:,:),Xk%nbz)
      BZ_RIM_nkpt(ikbz)=BZ_RIM_nkpt(ikbz)+1
+     !
      if (allocated(BZ_RIM_table)) BZ_RIM_table(ikbz,BZ_RIM_nkpt(ikbz))=i1
    enddo
  enddo

@@ -19,8 +19,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine K_descriptions(iq,q,X)
-!=================================
+subroutine K_descriptions(iq,q,X)
+ !
  use pars,          ONLY:SP,HARTREE
  use X_m,           ONLY:X_t,alpha_dim
  use IO_m,          ONLY:ver_is_gt_or_eq
@@ -35,9 +35,11 @@
  integer      ::iq
  type(X_t)    ::X
  type(bz_samp)::q
-!ws
+ ! 
+ ! Work Space
+ !
  real(SP)     ::v(3)
-
+ !
  if (iq==1) v=BSS_q0
  if (iq/=1) v=q%pt(iq,:)
  BSS_n_descs=BSS_n_descs+1
@@ -49,50 +51,49 @@
    write (BSS_description(BSS_n_descs),trim(string_pack(&
 &        '(a,i3,a,3(',gen_fmt(r_v=v),',1x))'))) '# Absorption @ IQ',iq,' : ',v
  endif
-
-!
+ !
  BSS_n_descs=BSS_n_descs+1
  BSS_description(BSS_n_descs)='#'
-!
+ !
  BSS_n_descs=BSS_n_descs+1
  write(BSS_description(BSS_n_descs),'(2a)') '# BSK|Resonant Mode        :',BS_res_mode
-!
+ !
  BSS_n_descs=BSS_n_descs+1
  write(BSS_description(BSS_n_descs),'(2a)') '#    |Coupling Mode        :',BS_cpl_mode
-! 
+ ! 
  BSS_n_descs=BSS_n_descs+1
  write(BSS_description(BSS_n_descs),trim(&
 &      string_pack( '(a,',gen_fmt((/BS_K_dim/)),')' ))) &
 &      '#    |Dimension            :',BS_K_dim
-!
+ !
  BSS_n_descs=BSS_n_descs+1
  write(BSS_description(BSS_n_descs),trim(&
 &      string_pack('(a,2(',gen_fmt(BS_bands),'))'))) '#    |Bands                :',BS_bands
-!
+ !
  if (BS_res_K_corr) then
    BSS_n_descs=BSS_n_descs+1
    write(BSS_description(BSS_n_descs),&
 &        trim(string_pack('(a,',gen_fmt((/BS_n_g_W/)),')'))) &
 &        '#    |RL vecs [correlation]:',BS_n_g_W
  endif
-!
+ !
  if (BS_res_K_exchange) then
    BSS_n_descs=BSS_n_descs+1
    write(BSS_description(BSS_n_descs),&
 &        trim(string_pack('(a,',gen_fmt((/BS_n_g_exch/)),')'))) &
 &        '#    |RL vecs    [exchange]:',BS_n_g_exch
  endif
-!
+ !
  BSS_n_descs=BSS_n_descs+1
  write (BSS_description(BSS_n_descs),trim(&
 &       string_pack('(a,2(',gen_fmt(r_v=BS_eh_en*HARTREE),'))'))) &
 &       '#    |E/h energy range [ev]:',BS_eh_en*HARTREE
-!
+ !
  BSS_n_descs=BSS_n_descs+1
  write (BSS_description(BSS_n_descs),trim(&
 &       string_pack('(a,2(',gen_fmt(r_v=BS_eh_win*HARTREE),'))'))) &
 &       '#    |Coupling range  [o/o]:',BS_eh_win
-!
+ !
  if (BS_res_K_corr) then
    BSS_n_descs=BSS_n_descs+1
    write (BSS_description(BSS_n_descs),trim(&
@@ -122,7 +123,7 @@
      write (BSS_description(BSS_n_descs),'(2a)') &
 &          '#    |xc-Kernel            :',trim(X%f_xc)
    endif 
-
+   !
    if (allocated(RIM_qpg)) then
      BSS_n_descs=BSS_n_descs+1
      write (BSS_description(BSS_n_descs),trim(&
@@ -134,9 +135,8 @@
 &          '#    |Random points   [col]:',RIM_n_rand_pts
    endif
  endif
-
+ !
  BSS_n_descs=BSS_n_descs+1
  BSS_description(BSS_n_descs)='#'
-
- end subroutine
-!
+ !
+end subroutine

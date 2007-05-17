@@ -40,7 +40,7 @@
      ! variables needed to distribute the global array across the grid
      !
      integer :: descM(9), descV(9), ldrow, ldcol, blocking_factor 
-   end type blacs_t
+   end type blacs_t 
    !
  contains
    !

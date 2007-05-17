@@ -32,6 +32,7 @@
 &                         elph_use_q_grid,E_k_plus_q,ph_qpt
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:nkbz,nqibz
+ use memory_m,       ONLY:mem_est
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  implicit none
  integer      ::ID
@@ -52,10 +53,10 @@
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   ioELPH=io_header(ID)
+   ioELPH=io_header(ID,R_LATT=.true.,KPTS=.true.)
    if (ioELPH/=0) goto 1
    !
-   call io_elemental(ID,VAR="PARS",VAR_SZ=4,MENU=1)
+   call io_elemental(ID,VAR="PARS",VAR_SZ=4,MENU=0)
    call io_elemental(ID,&
 &       VAR=" Phonon modes           :",I0=ph_modes,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,&
@@ -75,6 +76,18 @@
    !
    call io_bulk(ID,VAR="MAX_PH_FREQ",VAR_SZ=(/1/))
    call io_bulk(ID,R0=max_ph_freq)
+   !
+   ! Q point coordinates [iku]...
+   !
+   ! ... allocation
+   !
+   if (read_is_on(ID).and..not.allocated(ph_qpt)) then
+     allocate(ph_qpt(elph_nq,3))
+     call mem_est("ph_qpt",(/size(ph_qpt)/),(/SP/))
+   endif
+   !
+   call io_bulk(ID,VAR="PH_Q",VAR_SZ=(/elph_nq,3/) )
+   call io_bulk(ID,R2=ph_qpt(:,:))
    !
  endif
  !
@@ -111,11 +124,6 @@
  !
  call io_bulk(ID,VAR="E_K_PLUS_Q"//trim(intc(iq)),VAR_SZ=(/elph_nb,nkbz,1/) )
  call io_bulk(ID,R3=E_k_plus_q)
- ! 
- ! Q point coordinates [iku]
- !
- call io_bulk(ID,VAR="PH_Q"//trim(intc(iq)),VAR_SZ=(/3/) )
- call io_bulk(ID,R1=ph_qpt(iq,:))
  ! 
  ! ELPH_gkkp 
  !

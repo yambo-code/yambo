@@ -20,14 +20,14 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,&
-&                           T_EL)
+&                           T_EL,KPTS)
  !
  use pars,          ONLY:SP,schlen,HARTREE
  use drivers,       ONLY:list_dbs
  use com,           ONLY:code_version,msg,warning
  use D_lattice,     ONLY:Tel
  use electrons,     ONLY:n_sp_pol,n_spinor
- use R_lattice,     ONLY:nqibz,nqbz,nkibz,nkbz,q_pt
+ use R_lattice,     ONLY:nqibz,nqbz,nkibz,nkbz,q_pt,k_pt
  use wave_func,     ONLY:wf_ng
  use vec_operate,   ONLY:v_is_zero
  use QP_m,          ONLY:QP_ctl_E
@@ -40,13 +40,14 @@
  !
  implicit none
  integer            :: ID
- logical,optional   :: QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,T_EL
+ logical,optional   :: QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,T_EL,KPTS
  !
  ! Work Space
  !
- integer             :: i1,nqibz_disk,MENU_here,R_LATT_vec(4),&
-&                       R_LATT_vec_disk(4),MODE,MENU,ng_on_db,SPIN_vec_disk(2)
- real(SP),allocatable:: l_qpt(:,:)
+ integer             :: i1,nqibz_disk,nkibz_disk,MENU_here,R_LATT_vec(4),&
+&                       R_LATT_vec_disk(4),MODE,MENU,ng_on_db,SPIN_vec_disk(2),&
+&                       n_l_pt
+ real(SP),allocatable:: l_pt(:,:)
  real(SP)            :: local_zero(3)
  logical             :: WARN
  !
@@ -116,6 +117,7 @@
 &       OP=(/"==","==","==","=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    nqibz_disk=R_LATT_vec_disk(1)
+   nkibz_disk=R_LATT_vec_disk(3)
    io_header=io_status(ID)
    if (io_header/=0) goto 1
  endif
@@ -136,12 +138,12 @@
  !
  if (present(QPTS)) then
    !
-   allocate(l_qpt(nqibz_disk,3))
+   allocate(l_pt(nqibz_disk,3))
    !
-   if (write_is_on(ID)) l_qpt=q_pt
+   if (write_is_on(ID)) l_pt=q_pt
    !
    call io_bulk(ID,VAR="HEAD_QPT",VAR_SZ=(/nqibz_disk,3/))
-   call io_bulk(ID,R2=l_qpt)
+   call io_bulk(ID,R2=l_pt)
    !
    if (read_is_on(ID).and.allocated(q_pt)) then
      !
@@ -150,15 +152,44 @@
      call define_zeros(q_pt(:,3),zero_=local_zero(3))
      !
      do i1=1,nqibz
-       if (.not.v_is_zero(q_pt(i1,:)-l_qpt(i1,:),zero_=local_zero)) io_header=-1
+       if (.not.v_is_zero(q_pt(i1,:)-l_pt(i1,:),zero_=local_zero)) io_header=-1
      enddo
      if (io_header/=0) then
        if (WARN) call warning('Wrong Q-points coordinates/order')
        goto 1
      endif
    endif
-
-   deallocate(l_qpt)
+   !
+   deallocate(l_pt)
+ endif
+ !
+ ! K points
+ !
+ if (present(KPTS).and.ver_is_gt_or_eq(ID,(/3,0,9/)) ) then
+   !
+   allocate(l_pt(nkibz_disk,3))
+   !
+   if (write_is_on(ID)) l_pt=k_pt
+   !
+   call io_bulk(ID,VAR="HEAD_KPT",VAR_SZ=(/nkibz_disk,3/))
+   call io_bulk(ID,R2=l_pt)
+   !
+   if (read_is_on(ID).and.allocated(k_pt)) then
+     !
+     call define_zeros(k_pt(:,1),zero_=local_zero(1))
+     call define_zeros(k_pt(:,2),zero_=local_zero(2))
+     call define_zeros(k_pt(:,3),zero_=local_zero(3))
+     !
+     do i1=1,nqibz
+       if (.not.v_is_zero(k_pt(i1,:)-l_pt(i1,:),zero_=local_zero)) io_header=-1
+     enddo
+     if (io_header/=0) then
+       if (WARN) call warning('Wrong K-points coordinates/order')
+       goto 1
+     endif
+   endif
+   !
+   deallocate(l_pt)
  endif
  !
  ! Things that can be dumped

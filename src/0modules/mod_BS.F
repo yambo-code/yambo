@@ -102,7 +102,7 @@
       integer :: ik1,ik2
       cumulative_index=(ik2**2+ik2)/2-ik1+2
     end function
-   
+    !
     function BS_blocks(I)
       use R_lattice, ONLY:nXkibz
       implicit none

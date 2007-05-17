@@ -56,6 +56,9 @@
 #if defined PJ_REELS
  use reels_module,   ONLY:lreels
 #endif
+#if defined  PJ_PH
+ use ELPH,           ONLY:elph_nq,elph_nq_used
+#endif
  !
  implicit none
  type(levels) ::en        
@@ -338,6 +341,9 @@
    call initactivate(1,'KfnQPdb KfnQP_N KfnQP_E KfnQP_W KfnQP_Z LongPath')
    call initactivate(1,'BSresKmod BScplKmod BSEQptR BSEBands')
    call initactivate(1,'BSENGBlk BSENGexx BSEEhEny BSEClmns BSehWind')
+#if defined PJ_PH
+   if (l_ph_corr) call initactivate(1,'ElPhRndNq')
+#endif
  endif
  !
  ! Static screen 
@@ -408,7 +414,7 @@
 #if defined  PJ_PH
    if (l_ph_corr) then
      call initactivate(1,'DysSolver')
-     call initactivate(1,'GphBRnge PHdamping GDamping PHnullErgn QPreport')
+     call initactivate(1,'GphBRnge PHdamping GDamping PHnullErgn QPreport ElPhRndNq')
    endif
 #endif
    !
@@ -695,6 +701,7 @@
 #endif 
 #if defined  PJ_PH
      if (.not.l_el_corr.and..not.l_ph_corr) l_el_corr=.true.
+     elph_nq_used=elph_nq
 #endif
 #if !defined  PJ_SC
      if (l_gw0.and.l_el_corr) call initactivate(1,'xxvxc')

@@ -104,7 +104,6 @@
    !
    !BZ RIM
    !
-   RIM_G_shells=1
    BZ_RIM_path="."
    !
  endif
@@ -141,7 +140,7 @@
  lbzrim=rstatus(3)/=0
  !
  if (lkanalyze) call initactivate(1,"cooIn cooOut GWKpts Qpts KShift1 KShift2 KShift3")
- if (lbzrim) call initactivate(1,"BZ_RIM_path Srch_G_sh BZ_RIM_Nk cooOut")
+ if (lbzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut")
  if (lexcwf) call initactivate(1,"Action Max_Energy Order State Window Cells &
 &                              Hole Dimension Direction Format")
 #if defined SPP_PJ_PH

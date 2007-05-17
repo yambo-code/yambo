@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine X_RIM_Gf(iq,transitions,fr,Xw,Xen,Xk,RIM_Gf,ordering)
+subroutine X_RIM_Gf(iq,transitions,fr,Xw,Xen,Xk,RIM_Gf,ordering)
  !
  use pars,       ONLY:SP,HARTREE
  use electrons,  ONLY:levels,BZ_RIM_table,BZ_RIM_nkpt,spin_occ,&
@@ -115,4 +115,4 @@
    !
  endif
  !
- end subroutine
+end subroutine

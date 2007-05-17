@@ -114,9 +114,9 @@
      end subroutine
      !
      integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,&
-&                               QP_ctl_K,T_EL)
+&                               QP_ctl_K,T_EL,KPTS)
        integer            :: ID
-       logical,optional   :: QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,T_EL
+       logical,optional   :: QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,T_EL,KPTS
      end function
      !
    end interface

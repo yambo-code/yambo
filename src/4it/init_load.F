@@ -73,7 +73,7 @@
  use eels_integration,     ONLY : init_reels_integration
 #endif
 #if defined PJ_PH
- use ELPH,                 ONLY : QP_PH_n_G_bands,PH_damping,PH_null_E_rgn
+ use ELPH,                 ONLY : QP_PH_n_G_bands,PH_damping,PH_null_E_rgn,elph_nq_used
 #endif
  !
  implicit none
@@ -131,7 +131,8 @@
  call it(defs,'OccTresh','Occupation treshold (metallic bands)',filled_tresh,verb_level=V_more)
  call it(defs,'BoseCut', '[BOSE] Finite Tel Bose function cutoff',bose_E_cut,verb_level=V_more)
 #if defined PJ_PH
- call it('f',defs,'MinusQ',   '[KPT] Use -{q} grid',verb_level=V_more)
+ call it('f',defs,'MinusQ', '[KPT] Use -{q} grid',verb_level=V_more)
+ call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nq_used,verb_level=V_more) 
 #endif
  !
  ! RIM

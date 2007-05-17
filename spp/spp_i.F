@@ -21,11 +21,12 @@
 !
  integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
 &                       js,ijs,np,pid)
- !------------------------------------------------------------
+ !
  use drivers,             ONLY:infile_editing
  use par_proc_m,          ONLY:ncpu,myid,p_finalize
  use electrons,           ONLY:levels,E_reset,n_bands,default_nel
- use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,ng_vec,nXkibz,nqibz
+ use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,ng_vec,&
+&                              nXkibz,nqibz,k_pt
  use D_lattice,           ONLY:default_Tel,alat,nsym
  use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP
  use com,                 ONLY:msg,write_to_report
@@ -107,6 +108,11 @@
  call section('*','K-point grid')
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),MODE=DUMP,ID=ID)
  i_err=ioQINDX(k,q,ID)
+ ! 
+ ! Allocate and fill the k_pt array for the DBs header
+ !
+ allocate(k_pt(k%nibz,3))
+ k_pt=k%pt
  !
  if (i_err/=0) goto 1 
  !

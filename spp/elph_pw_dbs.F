@@ -19,9 +19,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function elph_pw_dbs(k,E,q)
+integer function elph_pw_dbs(k,E,q)
  !
- use pars,                ONLY:DP
+ use pars,                ONLY:DP,SP
  use stderr,              ONLY:intc
  use electrons,           ONLY:levels
  use ELPH,                ONLY:ph_freqs_sq,ph_modes,elph_nb,elph_use_q_grid,&
@@ -37,12 +37,23 @@
  type(bz_samp) ::k,q
  type(levels)  ::E
  !
- !Work Space
+ !Work Space...
  !
- integer,allocatable::ikbz_is_table(:,:)
- integer            ::iq,idb,io_err,io_elph_err,ID,elph_nk,iq_db(q%nbz)
+ !... shadows ...
+ !
+ integer, parameter ::max_nq_in_db=10000
+ real(SP)           ::ph_qpt_(max_nq_in_db,3)
+ !
+ !... I/O 
+ !
+ integer            ::idb,io_err,io_elph_err,ID
  integer, external  ::ioELPH 
  logical            ::dbs_fragment_save
+ !
+ !... dummies 
+ !
+ integer,allocatable::ikbz_is_table(:,:)
+ integer            ::iq,elph_nk,iq_db(q%nbz)
  complex(DP), allocatable :: grad_at_gamma(:,:,:,:,:)
  !
  call section("*","== Electron-Phonon Interface: Databases ==")
@@ -90,9 +101,17 @@
  io_elph_err=ioELPH(ID)
  if (io_elph_err==0) return
  !
- ! Allocation
+ ! Allocation...
  !
  call elph_gkkp_alloc()
+ !
+ ! ... rebuilding of ph q-points table
+ !
+ do idb=1,elph_nq
+   iq=idb
+   if (elph_use_q_grid) iq=iq_db(idb)
+   ph_qpt(iq,:)=ph_qpt_(iq,:)
+ enddo
  !
  ! Force DB fragmentation
  !
@@ -203,8 +222,12 @@
    read (io_unit(ID)) pw_alat,pw_q,pw_k(:,:elph_nk)
    !
    if (any(alat/=pw_alat)) then
-     forall (i1=1:3) pw_q(i1)=pw_q(i1)*alat(i1)/pw_alat
-     forall (i1=1:3) pw_k(i1,:)=pw_k(i1,:)*alat(i1)/pw_alat
+     !
+     ! pw_q is in rlu so it is propto 2 pi /pw_alat
+     ! pw_k is in iku so it is propto pw_alat / (2 pi)
+     !
+     forall (i1=1:3) pw_q(i1)=pw_q(i1)*pw_alat/alat(i1)
+     forall (i1=1:3) pw_k(i1,:)=pw_k(i1,:)/pw_alat*alat(i1)
    endif
    !
    if (idb_<0) then
@@ -214,8 +237,14 @@
      enddo
      if (iq_check==0) elph_use_q_grid=.false.
      elph_pw_dbs_io=iq_check
-   else
-     ph_qpt(iq,:)=pw_q
+     !
+     ! When elph_use_q_grid = .false. idb_ is the q-pt counter
+     !
+     if (iq_check==0) iq_check=iabs(idb_)
+     !
+     ph_qpt_(iq_check,:)=pw_q
+     call c2a(v_in=ph_qpt_(iq_check,:),mode="ka2i")
+     !
    endif
    !
    ! Espresso <-> SELF k table correspondance

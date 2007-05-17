@@ -49,7 +49,7 @@
  use R_lattice,      ONLY:b,d3q_factor,RL_vol,g_vec,ng_vec,&
 &                         nqibz,nqbz,qindx_X,qindx_B,qindx_S,qp_states_k,&
 &                         bse_scattering,qindx_alloc,rl_sop,Xk_grid_is_uniform,&
-&                         k_grid,k_grid_b,q_pt,bz_samp,q_norm,q0_def_norm,&
+&                         k_grid,k_grid_b,q_pt,k_pt,bz_samp,q_norm,q0_def_norm,&
 &                         q_sstar
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use zeros,          ONLY:G_iku_zero
@@ -367,14 +367,16 @@
      ! using Gamma point only definition
      !
      if (force_gamma_only) then
+       if (allocated(k_pt)) deallocate(k_pt)
        if (allocated(q_pt)) deallocate(q_pt)
        if (allocated(q_norm)) deallocate(q_norm)
        if (allocated(q_sstar)) deallocate(q_sstar)
        if (associated(q%pt)) nullify(q%pt)
-       call mem_est("q_pt q_norm q_sstar q-pt")
-       allocate(q%pt(1,3),q_pt(1,3),q_norm(1),q_sstar(1,2)) 
+       call mem_est("k_pt q_pt q_norm q_sstar q-pt")
+       allocate(q%pt(1,3),q_pt(1,3),k_pt(1,3),q_norm(1),q_sstar(1,2)) 
        q%pt=0.
        q_pt=0.
+       k_pt=0.
        q_norm=q0_def_norm
        nqbz=1
        nqibz=1
@@ -384,12 +386,14 @@
        return
      endif
      !
-     ! q_pt & q_norm
+     ! q_pt , q_norm & k_pt
      !
      if (.not.allocated(q_pt)) then
        allocate(q_pt(q%nibz,3))
+       allocate(k_pt(k%nibz,3))
        q_pt=q%pt
-       call mem_est("q_pt",(/q%nibz*3/),(/SP/))
+       k_pt=k%pt
+       call mem_est("q_pt k_pt",(/q%nibz*3,k%nibz*3/),(/SP,SP/))
      endif
      if (.not.allocated(q_norm)) then
        allocate(q_norm(q%nibz))

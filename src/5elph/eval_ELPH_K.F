@@ -150,7 +150,7 @@ integer function eval_ELPH_K(E,k,q,residuals_only,frequency)
      ! send a screen message about the allocated memory that can interferee
      ! with the live_timing hashes
      !
-     if (iq_db==1) call live_timing('Q loop',px%stps(myid+1))
+     if (iq_db==1) call live_timing('El-PH loop',px%stps(myid+1))
      !
    endif
    !

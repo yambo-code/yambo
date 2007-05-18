@@ -36,8 +36,7 @@ subroutine static2dyn_ELPH_K(E,k,q,frequency,M)
  !
  type(levels)  ::E
  type(bz_samp) ::k,q
- real(SP)      ::frequency
- complex(SP)   ::M(BS_K_dim,BS_K_dim)
+ complex(SP)   ::frequency,M(BS_K_dim,BS_K_dim)
  !
  ! Work Space ...
  !

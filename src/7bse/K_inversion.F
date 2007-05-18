@@ -119,7 +119,11 @@ subroutine K_inversion(iq,W,E,k,q)
    iv   =BS_eh_table(i1,2)
    ic   =BS_eh_table(i1,3)
    !
-   call X_RIM_Gf(1,(/ik_bz,iv,ic,1/),(/1,W%n(1)/),W,E,k,Lo_RIM(i1,:),"r")
+   if (.not.use_RIM) then
+     Lo_RIM(i1,:)=1./(W%p(:)-BS_eh_E(i1))
+   else
+     call X_RIM_Gf(1,(/ik_bz,iv,ic,1/),(/1,W%n(1)/),W,E,k,Lo_RIM(i1,:),"r")
+   endif
    X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*Lo_RIM(i1,:)*Co
    !
    call live_timing(steps=1)

@@ -223,11 +223,10 @@ integer function elph_pw_dbs(k,E,q)
    !
    if (any(alat/=pw_alat)) then
      !
-     ! pw_q is in rlu so it is propto 2 pi /pw_alat
-     ! pw_k is in iku so it is propto pw_alat / (2 pi)
+     ! pw_k/q are in iku so propto pw_alat / (2 pi)
      !
-     forall (i1=1:3) pw_q(i1)=pw_q(i1)*pw_alat/alat(i1)
-     forall (i1=1:3) pw_k(i1,:)=pw_k(i1,:)/pw_alat*alat(i1)
+     forall (i1=1:3) pw_q(i1)=pw_q(i1)/real(pw_alat)*alat(i1)
+     forall (i1=1:3) pw_k(i1,:)=pw_k(i1,:)/real(pw_alat)*alat(i1)
    endif
    !
    if (idb_<0) then
@@ -243,7 +242,9 @@ integer function elph_pw_dbs(k,E,q)
      if (iq_check==0) iq_check=iabs(idb_)
      !
      ph_qpt_(iq_check,:)=pw_q
-     call c2a(v_in=ph_qpt_(iq_check,:),mode="ka2i")
+     !
+     ! DEBUG (uncomment if pw_q is in rlu)
+     !call c2a(v_in=ph_qpt_(iq_check,:),mode="ka2i")
      !
    endif
    !

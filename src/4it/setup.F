@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine setup(en,Xen,k,Xk)
+subroutine setup(en,Xen,k,Xk)
  !
  use pars,           ONLY:SP,HARTREE,IP,pi,schlen,zero_dfl
  use electrons,      ONLY:levels,nel,n_met_bands,n_full_bands,E_duplicate,n_sp_pol
@@ -194,17 +194,17 @@
    ch(3)=gen_fmt(r_v=k%pt(i1,:))
    ch(4)=gen_fmt((/wf_nc_k(i1)/))
    ch(5)=gen_fmt(r_v=(/0.01_SP/))
-
+   !
    write (ch(1),'(7a)') '(a,i5.5,a,3(',trim(ch(3)),&
 &                       '),1x,a,',trim(ch(4)),',a,',trim(ch(5)),',1x,a)'
    write (ch(2),trim(ch(1))) 'K [',i1,'] :',k%pt(i1,:),'(iku) * Comp.s',wf_nc_k(i1)
-
+   !
    if (i1<=Xk%nibz) then
      write (ch(2),trim(ch(1))) '*X* K [',i1,'] :',&
 &          k%pt(i1,:),'(iku) * Comp.s',wf_nc_k(i1),'* weight ',Xk%weights(i1)
    endif
    call msg('r',trim(ch(2)))
-
+   !
    do is=1,n_sp_pol
      do i2=1,min(en%nb,en%nbf+4*int(nel)),8
        if (n_sp_pol==1) then
@@ -223,4 +223,4 @@
 
  enddo
  !
- end subroutine
+end subroutine

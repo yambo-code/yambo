@@ -180,7 +180,7 @@
      call define_zeros(k_pt(:,2),zero_=local_zero(2))
      call define_zeros(k_pt(:,3),zero_=local_zero(3))
      !
-     do i1=1,nqibz
+     do i1=1,nkibz
        if (.not.v_is_zero(k_pt(i1,:)-l_pt(i1,:),zero_=local_zero)) io_header=-1
      enddo
      if (io_header/=0) then

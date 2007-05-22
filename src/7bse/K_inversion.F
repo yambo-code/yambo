@@ -22,6 +22,7 @@
 subroutine K_inversion(iq,W,E,k,q) 
  !
  use pars,           ONLY:SP,pi
+ use drivers,        ONLY:l_ph_corr
  use X_m,            ONLY:X_epsilon
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_not_const_eh_f,&
 &                         BS_K_coupling,BS_eh_table,BS_eh_E,BS_bands,Kernel_by_V
@@ -77,7 +78,7 @@ subroutine K_inversion(iq,W,E,k,q)
  if (.not.use_RIM) call warning('Inversion solver: only with a RIM database')
  if (BS_not_const_eh_f) call warning('Inversion solver: fractional occupations unsupported')
  if (BS_K_coupling) call warning('Inversion solver: unsupported for non-resonant K')
- if (any((/.not.use_RIM,BS_not_const_eh_f,BS_K_coupling/))) return
+ if (any((/BS_not_const_eh_f,BS_K_coupling/))) return
  !
  !  mem est
  !
@@ -93,11 +94,20 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)-BS_eh_E(i1)
  !
+#if defined PJ_PH
+ !
+ ! SAVE BS_mat & calculaye ELPH_K
+ !
+ WS=BS_mat
+ add_ELPH_K=.false.
+ if (l_ph_corr) add_ELPH_K=eval_ELPH_K(E,k,q,.TRUE.,(0.,0.))==0
+#endif
+ !
  ! Initialize the output file 
  !
  of_mode=3
 #if defined PJ_PH
- of_mode=4
+ if (add_ELPH_K) of_mode=4
 #endif
  call K_dump_to_o_file(iq,-of_mode)
  !
@@ -107,13 +117,9 @@ subroutine K_inversion(iq,W,E,k,q)
  Lo_RIM=(0.,0.)
  Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/(q_norm(1))**2
  !
- call pp_indexes_reset(px)
- call par_indexes(px,(/BS_K_dim/))
- call live_timing('Green`s function',px%stps(myid+1))
+ call live_timing('Green`s function',BS_K_dim)
  !
  do i1=1,BS_K_dim
-   !
-   if (.not.px%i1p(i1)) cycle
    !
    ik_bz=BS_eh_table(i1,1)
    iv   =BS_eh_table(i1,2)
@@ -130,9 +136,6 @@ subroutine K_inversion(iq,W,E,k,q)
    !
  enddo
  call live_timing()
- do iw=1,W%n(1)
-   call pp_redux_wait(Lo_RIM(:,iw))
- enddo
  !
  ! Perturbative Invertion
  !========================
@@ -140,16 +143,10 @@ subroutine K_inversion(iq,W,E,k,q)
  call pp_indexes_reset(px)
  call par_indexes(px,(/W%n(1)/))
  !
-#if defined PJ_PH
- !
- ! SAVE BS_mat & calculaye ELPH_K
- !
- WS=BS_mat
- add_ELPH_K=eval_ELPH_K(E,k,q,.TRUE.,(0.,0.))==0
-#endif
- !
  ! Without starting from excitonic wavefunctions: the kernel is 
  ! used as perturbation
+ !
+ call live_timing('Frequency loop',px%stps(myid+1))
  !
  do iw=1,W%n(1)
    !
@@ -160,8 +157,6 @@ subroutine K_inversion(iq,W,E,k,q)
    endif
 #endif
    !
-   if (iw==1) call live_timing('Frequency loop',px%stps(myid+1))
-   !
    if (.not.px%i1p(iw)) cycle
    !
    i_err=pert_inversion(BS_K_dim,BSS_rhoq0,-1.*Co,X_epsilon(2,iw),&
@@ -170,6 +165,7 @@ subroutine K_inversion(iq,W,E,k,q)
    X_epsilon(2,iw)=1.+X_epsilon(2,iw)
    !
    call live_timing(steps=1)
+   !
  enddo
  !
  call live_timing()

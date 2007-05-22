@@ -122,7 +122,6 @@
      endif
      !
      i_time_rev=1
-     nsym=2*nsym_
      !
      ! Space Invertion (possible only for v >= 3.0.4)
      !
@@ -177,10 +176,16 @@
        i_time_rev=0
        call msg("l","[TR no]")
      endif
-     if (i_time_rev==1) call msg("l","[TR yes]...")
-     if (i_time_rev==0) then
-       call msg("l","[TR no]")
+     if (.not.spin_orbit.and..not.force_noTR) then
+       if (i_time_rev==1) call msg("l","[TR yes]...")
+       if (i_time_rev==0) call msg("l","[TR no]")
      endif
+     !
+     ! Double the simmetries if TR is added
+     !
+     nsym=nsym_
+     if (i_time_rev==1) nsym=2.*nsym_
+     !
      !
      if (i_space_inv==0) call msg("l","[SI no]")
      if (i_space_inv==1) call msg("l","[SI yes]")

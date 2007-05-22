@@ -109,7 +109,11 @@ contains
     !
     ! The RESTART folder is always in the outpath
     !
-    if (type==4) ch(1)=outpath
+    if (type==4 ) ch(1)=outpath
+    !
+    ! No inpath/outpath must pre-appended when an explicit path is given
+    !
+    if (type==-1) ch(1)=' '
     !
     if (len_trim(folder)>0) ch(1)=string_pack(trim(ch(1)),'/',folder)
     if (present(subfolder).and.type>=0) ch(1)=string_pack(trim(ch(1)),'/',subfolder)

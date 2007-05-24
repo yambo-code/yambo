@@ -47,7 +47,7 @@ subroutine K_inversion(iq,W,E,k,q)
  ! Work Space...
  !
  type(pp_indexes) ::px
- integer          ::i1,i2,ik_bz,iv,ic,iw,icv,i_err,of_mode
+ integer          ::i1,i2,ik_bz,iv,ic,iw,icv,i_err,of_mode,i_sp
  logical          ::use_RIM,start_from_diago
  complex(SP)      ::Co
  integer, external::pert_inversion,eval_ELPH_K
@@ -124,11 +124,16 @@ subroutine K_inversion(iq,W,E,k,q)
    ik_bz=BS_eh_table(i1,1)
    iv   =BS_eh_table(i1,2)
    ic   =BS_eh_table(i1,3)
+#if defined PJ_SPIN
+   i_sp=BS_eh_table(i1,4)
+#else
+   i_sp=1
+#endif
    !
    if (.not.use_RIM) then
      Lo_RIM(i1,:)=1./(W%p(:)-BS_eh_E(i1))
    else
-     call X_RIM_Gf(1,(/ik_bz,iv,ic,1/),(/1,W%n(1)/),W,E,k,Lo_RIM(i1,:),"r")
+     call X_RIM_Gf(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo_RIM(i1,:),"r")
    endif
    X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*Lo_RIM(i1,:)*Co
    !

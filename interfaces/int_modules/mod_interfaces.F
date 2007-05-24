@@ -170,15 +170,15 @@
      !
      if (spin_orbit) then 
        i_time_rev=0
-       call msg("l","[SO yes => TR no]")
+       call msg("l","[SO yes => TR no]...")
      endif
      if (force_noTR) then 
        i_time_rev=0
-       call msg("l","[TR no]")
+       call msg("l","[TR no]...")
      endif
      if (.not.spin_orbit.and..not.force_noTR) then
        if (i_time_rev==1) call msg("l","[TR yes]...")
-       if (i_time_rev==0) call msg("l","[TR no]")
+       if (i_time_rev==0) call msg("l","[TR no]...")
      endif
      !
      ! Double the simmetries if TR is added

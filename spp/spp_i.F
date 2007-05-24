@@ -19,8 +19,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
-&                       js,ijs,np,pid)
+integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
+&                      js,ijs,np,pid)
  !
  use drivers,             ONLY:infile_editing
  use par_proc_m,          ONLY:ncpu,myid,p_finalize
@@ -70,26 +70,36 @@
  ! SELF to SELF
  !
  i_err=self2self(instr,en,k,q)
- if (i_err/=0) goto 1
+ if (i_err/=0) then
+   call spp_finalize()
+   return
+ endif
  !
  ! DB1
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
  iinf=ioDB1(en,k,ID)
- if (iinf/=0) goto 1
+ if (iinf/=0) then
+   call spp_finalize()
+   return
+ endif
  !  
  ! G operations table and shells
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
  i_err=iogrot(ID) 
- if (i_err/=0) goto 1
+ if (i_err/=0) then
+   call spp_finalize()
+   return
+ endif
  !
  ! INPUT FILE
  !
  call spp_init(instr,lnstr,.false.)
  if (infile_editing) then
    iinf=1
-   goto 1
+   call spp_finalize()
+   return
  endif
  !
  call section('*','S(elf) P(ost)/(re) P(rocessor)')
@@ -114,7 +124,10 @@
  allocate(k_pt(k%nibz,3))
  k_pt=k%pt
  !
- if (i_err/=0) goto 1 
+ if (i_err/=0) then
+   call spp_finalize()
+   return
+ endif
  !
  call msg('s',':: Q-points   (IBZ):',nqibz)
  call msg('s',':: X K-points (IBZ):',nXkibz)
@@ -129,7 +142,7 @@
  !
  if (lbzrim) call BZ_RIM(Xk,Xen)
  !
- if (lexcwf) call plot_exc_wf(Xk)
+ if (lexcwf) call exc_wf_eval(Xk)
  !
 #if defined SPP_PJ_PH
  !
@@ -150,13 +163,20 @@
  !
  ! END
  !
-1 call spp_init(instr,lnstr,.TRUE.)
- if (.not.infile_editing) then
-   call section('X','Game Over')
-   call msg("nl","")
-   call p_finalize()
- endif
- !
+ call spp_finalize()
  return
  !
- end function
+contains
+  !
+  subroutine spp_finalize()
+    if (.not.infile_editing) then
+      call section('X','Game Over')
+      call spp_init(instr,lnstr,.TRUE.)
+      call msg("nl","")
+      call p_finalize()
+    else
+      call spp_init(instr,lnstr,.TRUE.)
+    endif
+  end subroutine
+  !
+end function

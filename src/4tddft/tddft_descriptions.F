@@ -19,43 +19,43 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine TDDFT_descriptions(W)
-!================================
+subroutine TDDFT_descriptions(W)
+ !
  use pars,          ONLY:HARTREE
  use TDDFT,         ONLY:FXC_n_descs,FXC_description,FXC_n_g_corr,&
 &                        FXC_is_causal
  use stderr,        ONLY:string_pack
  use com,           ONLY:gen_fmt
  use frequency,     ONLY:w_samp
+ !
  implicit none
  type(w_samp)::W
-
+ !
  FXC_n_descs=1
  write(FXC_description(FXC_n_descs),&
 &      trim(string_pack('(a,',gen_fmt((/FXC_n_g_corr/)),')'))) &
 &      '# Fxc|RL components  [disk]:',FXC_n_g_corr
-!
+ !
  FXC_n_descs=FXC_n_descs+1
  if (FXC_is_causal) then
    FXC_description(FXC_n_descs)='#    |Kernel is causal     : yes'
  else
    FXC_description(FXC_n_descs)='#    |Kernel is causal     : no'
  endif
-
+ !
  FXC_n_descs=FXC_n_descs+1
  write (FXC_description(FXC_n_descs),trim(&
 &       string_pack('(a,2(',gen_fmt(r_v=W%er*HARTREE),'))'))) &
 &       '#    |Energy range     [ev]:',W%er*HARTREE
-
+ !
  FXC_n_descs=FXC_n_descs+1
  write (FXC_description(FXC_n_descs),trim(&
 &       string_pack('(a,2(',gen_fmt(r_v=W%dr*HARTREE),'))'))) &
 &       '#    |Damping range    [ev]:',W%dr*HARTREE
-
+ !
  FXC_n_descs=FXC_n_descs+1
  write(FXC_description(FXC_n_descs),&
 &      trim(string_pack('(a,2(',gen_fmt(W%n),'))'))) &
 &      '#    |Energy steps         :',W%n
-
- end subroutine
-!
+ !
+end subroutine

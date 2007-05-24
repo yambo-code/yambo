@@ -19,8 +19,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine tddft_alda_g_space(E,k)
-!==================================
+subroutine tddft_alda_g_space(E,k)
+ !
  use pars,          ONLY:DP,SP
  use memory_m,      ONLY:mem_est
  use TDDFT,         ONLY:FXC_n_g_corr,FXC
@@ -33,40 +33,42 @@
  implicit none
  type(levels) ::E
  type(bz_samp)::k
-!ws
+ ! 
+ ! Work Space
+ !
  integer                  :: i1,i2
  complex(DP), allocatable :: F_xc_DP(:)
  integer, external        :: eval_G_minus_G
-!
+ !
  if (allocated(FXC)) return
-!
-! Fxc RL size setup looking at the max index of G-G'
-!
+ !
+ ! Fxc RL size setup looking at the max index of G-G'
+ !
  if (FXC_n_g_corr/= eval_G_minus_G(FXC_n_g_corr,FXC_n_g_corr) ) then
    call msg('s','[TDDFT] ALDA Fxc size forced by symmetry to be :',FXC_n_g_corr)
  endif
-!
-! WFs
-!
+ !
+ ! WFs
+ !
  call wf_load(0,1,(/1,E%nbm/),(/1,k%nibz/),title='-Rho')
-!
-! ALDA functional
-!
+ !
+ ! ALDA functional
+ !
  allocate(F_xc(fft_size),F_xc_DP(fft_size))
  call xc_lda_driver(E,k,GS_xc_KIND,GS_xc_FUNCTIONAL,2)
  F_xc_DP=F_xc
-!
-! need to reset the plan to do a BACKWARD FFT (R->G)
-!
+ !
+ ! need to reset the plan to do a BACKWARD FFT (R->G)
+ !
  fftw_plan=0
 #if defined FFTW
  call fft_3d(F_xc_DP,fft_dim,-1,fftw_plan)
 #else
  call fft_3d(F_xc_DP,fft_dim,-1)
 #endif
-!
-! Fxc
-!
+ !
+ ! Fxc
+ !
  allocate(FXC(FXC_n_g_corr,FXC_n_g_corr,1))
  call mem_est("FXC",(/size(FXC)/))
  do i1=1,FXC_n_g_corr
@@ -74,11 +76,10 @@
      FXC(i1,i2,1)=F_xc_DP( fft_g_table( G_m_G(i1,i2) ,1) )/real(fft_size,SP)
    enddo
  enddo
-!
-! Clean
-!
+ !
+ ! Clean
+ !
  deallocate(F_xc,F_xc_DP)
  call WF_free()
-
- end subroutine
-!
+ !
+end subroutine

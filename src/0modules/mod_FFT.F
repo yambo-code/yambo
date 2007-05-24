@@ -20,16 +20,16 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  module FFT_m
-   use pars
+   use pars,         ONLY: SP
    real(SP)             :: fft_norm
    integer              :: fft_size
    integer              :: fft_dim(3)
    integer              :: fft_dim_loaded(3)
    integer, allocatable :: fft_g_table(:,:)
    integer, allocatable :: fft_rot_r(:,:)
-!
-!  FFTW support
-!
+   !
+   ! FFTW support
+   !
    integer(8)  :: fftw_plan !(FW) +1 sign: G-space to R-space & oscillators
                             !(BW) -1 sign: R-space to G-space
  end module

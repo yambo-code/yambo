@@ -19,62 +19,62 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- module SPP
-  !
-  use pars,    ONLY:SP,lchlen,schlen,HARTREE
-  implicit none
-  !
-  ! K analysis
-  !
-  logical  :: lkanalyze
-  real(SP) :: Kgw_1(3)
-  real(SP) :: qlong(3,3)
-  character(schlen) :: coo_in
-  character(schlen) :: coo_out
-  !
-  ! Exc WF
-  !
-  logical      :: lexcwf
-  integer      :: lambda       !energy of the exciton
-  integer      :: ncell(3)     !number of repetitions of the cell
-  integer      :: p_dim        !Dimension of the plot 
-  integer      :: ntypat       !Number of different atomic species
-  integer      :: znucl(2)     ! Nuclear charge for each type
-  real(SP)     :: window       !energy window in o/o (1 -> 100)
-  real(SP)     :: max_energy   !max energy to be shown in ordering
-  real(SP)     :: r_hole(3)    !position of the hole 
-  character(1) :: sort_mode    !to decide if sorting by enegies or intensities
-  character(1) :: action_mode  !to decide if sorting or plotting
-  character(1) :: p_format     !Format of the plot
-  character(2)  ::p_dir        !Direction of the plot 
-  !
+module SPP
+ !
+ use pars,    ONLY:SP,lchlen,schlen,BOHR
+ implicit none
+ !
+ ! K analysis
+ !
+ logical  :: lkanalyze
+ real(SP) :: Kgw_1(3)
+ real(SP) :: qlong(3,3)
+ character(schlen) :: coo_in
+ character(schlen) :: coo_out
+ !
+ ! Exc WF
+ !
+ logical      ::lexcwf
+ integer      ::lambda       !energy of the exciton
+ integer      ::ncell(3)     !number of repetitions of the cell
+ real(SP)     ::max_energy   !max energy to be shown in ordering
+ real(SP)     ::r_hole(3)    !position of the hole 
+ character(1) ::sort_mode    !to decide if sorting by energies or intensities
+ character(1) ::action_mode  !to decide if sorting or plotting
+ character(1) ::p_format     !Format of the plot
+ character(3) ::p_dir        !Direction of the plot 
+ ! 
+ integer                  ::nr(3),nr_tot
+ complex(SP), allocatable ::exc_wf(:)
+ real(SP),    allocatable ::wf_2d(:,:)
+ !
 #if defined SPP_PJ_PH
-  !
-  !EL-PH
-  !
-  logical :: lelph
-  integer :: elph_steps
-  real(SP):: elph_gamma_broad
-  real(SP):: elph_broad
-  real(SP):: elph_Ef
-  real(SP):: elph_E_max
-  character(schlen) :: elph_dbs_path
-  !
+ !
+ !EL-PH
+ !
+ logical :: lelph
+ integer :: elph_steps
+ real(SP):: elph_gamma_broad
+ real(SP):: elph_broad
+ real(SP):: elph_Ef
+ real(SP):: elph_E_max
+ character(schlen) :: elph_dbs_path
+ !
 #endif
 #if defined SPP_PJ_RAS
-  !
-  !RAS
-  !
-  logical :: lras
-  character(schlen) :: xdata, ydata
-  character(len=2)  :: xdatacol, ydatacol
-  !
+ !
+ !RAS
+ !
+ logical :: lras
+ character(schlen) :: xdata, ydata
+ character(len=2)  :: xdatacol, ydatacol
+ !
 #endif
-  !
-  ! BZ RIM
-  !
-  integer  :: BZ_RIM_nkpts
-  logical  :: lbzrim
-  character(lchlen) :: BZ_RIM_path
-  !
- end module SPP
+ !
+ ! BZ RIM
+ !
+ integer  :: BZ_RIM_nkpts
+ logical  :: lbzrim
+ character(lchlen) :: BZ_RIM_path
+ !
+end module SPP

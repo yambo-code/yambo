@@ -38,7 +38,7 @@
  use com,            ONLY:msg,repfile,outpath,jobstr,&
 &                         title,file_exists,rename_file,write_to_report,error
  use vec_operate,    ONLY:v_norm
- use timing,         ONLY:live_timing_is_on
+ use timing,         ONLY:live_timing_is_on,what_is_running
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_solver,QP_nb,&
 &                         QP_state,QP_reset,QP_ctl_E,QP_table
  use X_m,            ONLY:X_t,X_duplicate,X_reset
@@ -87,6 +87,25 @@
  type(initdefs)   ::defs
  character(lchlen)::jch,rch
  integer          ::i1
+ !
+ ! What is running ?
+ !
+ what_is_running='SELF'
+#if defined PJ_PH
+ what_is_running='SELF_PH'
+#elif defined PJ_SC
+ what_is_running='SELF_SC'
+#elif defined PJ_RAS
+ what_is_running='SELF_RAS'
+#elif defined PJ_REELS
+ what_is_running='SELF_REELS'
+#elif defined PJ_SPIN
+ what_is_running='SELF_SPIN'
+#elif defined PJ_GKS
+ what_is_running='SELF_GKS'
+#elif defined PJ_CYL_CUT
+ what_is_running='SELF_CYL_CUT'
+#endif
  !
  !Presets (input)
  !
@@ -654,7 +673,7 @@
      !
 #if defined PJ_SPIN
      if (any((/&
-&              l_life,l_acfdt,l_bs_fxc,l_lrc_fxc,&
+&              l_life,l_acfdt,l_lrc_fxc,&
 &              l_gw0.and..not.l_ppa&
 &             /))) then
        init=-2
@@ -791,8 +810,15 @@
        endif
        !
        do i2=1,nrnlvls
-         if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1)) ) infile_editing=.true.
+         if (i1==1) then
+            if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1))) infile_editing=.true.
+         else
+           if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1)).and.&
+&               trim(rstr_piece(i1-1)) /= 'jobstr' ) infile_editing=.true.
+         endif
        enddo
+       !
+       if (i1>1.and.trim(rstr_piece(i1-1)) == 'jobstr') cycle
        !
        ! Run Level
        !
@@ -875,7 +901,7 @@
        endif
 #endif
        !
-     enddo
+     enddo 
      !
      if (infile_editing) init_=1
      !

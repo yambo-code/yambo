@@ -30,6 +30,7 @@
  use stderr,         ONLY:string_split
  use SPP
  use par_proc_m,     ONLY:master_node,pp_redux_wait
+ use timing,         ONLY:what_is_running
 #if defined SPP_PJ_RAS
  use bulkeps,        only : bshift, bbroad, bfile, btype 
  use convolute,      only : gbroad
@@ -45,6 +46,16 @@
  integer          ::i1,i2
  character(schlen)::rstr_piece(50) 
  !
+ !
+ ! What is running ?
+ !
+ what_is_running='SPP'
+#if defined PJ_PH
+ what_is_running='SPP_PH'
+#elif defined PJ_RAS
+ what_is_running='SPP_RAS'
+#endif
+ !
  if (FINALIZE) then
    call call_init_load('GameOver')
    if (master_node) call ofiles_append(defs=defs)
@@ -57,14 +68,12 @@
    !
    ncell = (/1, 1, 1/) 
    r_hole= (/0.,0.,0./)
-   p_dir = 'x'
+   p_dir = '1'
    lambda = 1          
-   window = 1.
    sort_mode = "i"
    action_mode = "s"
    p_format = 'g'
    max_energy = 1.
-   p_dim = 3
    !
 #if defined SPP_PJ_PH
    !
@@ -99,7 +108,6 @@
    coo_in="iku"
    coo_out="rlu"
    Kgw_1=0.
-!  qlong= (/0.,0.,0./)
    qlong= 0.0_SP
    !
    !BZ RIM
@@ -141,7 +149,7 @@
  !
  if (lkanalyze) call initactivate(1,"cooIn cooOut GWKpts Qpts KShift1 KShift2 KShift3")
  if (lbzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut")
- if (lexcwf) call initactivate(1,"Action Max_Energy Order State Window Cells &
+ if (lexcwf) call initactivate(1,"Action Max_Energy Order State Cells &
 &                              Hole Dimension Direction Format")
 #if defined SPP_PJ_PH
  !

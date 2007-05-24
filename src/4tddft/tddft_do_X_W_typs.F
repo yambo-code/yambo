@@ -19,8 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine tddft_do_X_W_typs(iq,X,wv)
-!=====================================
+subroutine tddft_do_X_W_typs(iq,X,wv)
  !
  ! Prepare X and wv types for a TDDFT calculation
  !
@@ -82,7 +81,7 @@
  ! FXC_K_diagonal has been allocated in ioFxc_err
  !
  allocate(FXC(FXC_n_g_corr,FXC_n_g_corr,FXC_n_mem_freqs))
-
+ !
  call mem_est("FXC_K_diagonal FXC",(/BS_K_dim,size(FXC)/),(/SP,2*SP/))
  !
  ! As wv%p is read from DB %n(2) is not setup in freqs_setup.
@@ -104,16 +103,16 @@
  !
  FXC_type='-tddft_bs'
  X%f_xc='BS'
-
+ !
  X%ib= BS_bands
  X%ehe=BS_eh_en
  X%q0= BSS_q0
  X%ordering="c"
  if (.not.FXC_is_causal) X%ordering="r"
-
+ !
  allocate(X_poles(BS_K_dim))
  X_poles=FXC_K_diagonal
-
+ !
  ! -- GPL_START --
-
- end subroutine
+ !
+end subroutine

@@ -50,5 +50,6 @@
    real(SP), parameter :: HA2THZ=HARTREE*241.796_SP
    real(SP), parameter :: HA2CM1=HARTREE*8065.5_SP
    real(SP), parameter :: Kelvin=1.1604*10.**4*HARTREE  ! from ev
+   real(SP), parameter :: BOHR=0.52917721  ! Armostrongs
    !
  end module 

@@ -48,7 +48,7 @@
    interface
      !
      integer function ioWF(ID,wf)
-       use pars,             ONLY:SP
+       use pars,       ONLY: SP
        integer            :: ID
        real(SP), optional :: wf(:,:,:,:)
      end function 

@@ -19,8 +19,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine tddft_BSK_disk_2_FXC(iq,Xk,W)
-!========================================
+subroutine tddft_BSK_disk_2_FXC(iq,Xk,W)
+ !
  use pars,          ONLY:SP,pi
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
@@ -41,8 +41,9 @@
  type(bz_samp) ::Xk
  type(w_samp)  ::W
  integer       ::iq
-!
-!WorkSpace -- GPL_END --
+ !
+ ! WorkSpace -- GPL_END --
+ !
  type(X_t)  :: X
  integer    :: ik1,ik2,O_x_dim,icv1,icv2,alloc_err(2)
  complex(SP):: Co,Hrx
@@ -52,102 +53,102 @@
  complex(SP):: cdotc
 #endif
  complex(SP),allocatable::O1x(:,:),O2x(:,:)
-!
-! I/O
-!
+ !
+ ! I/O
+ !
  integer           ::ioBS_err,ioFxc_err,ID,ACTION
  integer, external ::ioBS,ioBS_Fxc
-!
-!
+ !
  if (isec(2)/=0) then
    call section('=','TDDFT `solver`')
-!=============================================
  else if (isec(2)==0) then
    call section('+','TDDFT `solver`')
  endif
-!
-! Fxc DB
-!========
+ !
+ ! Fxc DB
+ !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
  ioFxc_err=ioBS_Fxc(iq,W,ID)
  if (ioFxc_err==0) return
-!
-! Constants & dimensions
-!========================
+ !
+ ! Constants & dimensions
+ !
  Co=4.*pi/(DL_vol*real(nqbz))
  O_x_dim=maxval(BS_blk_dim)
-!
-! WF loading
-!============
+ !
+ ! WF loading
+ !
  call wf_load(max(BS_n_g_exch,FXC_n_g_corr),1,BS_bands,(/1,nXkibz/),title='-BS/TDDFT')
-!
-! Exchange oscillators
-!----------------------
+ !
+ ! Exchange oscillators
+ !
  allocate(O1x(max(BS_n_g_exch,FXC_n_g_corr),O_x_dim),stat=alloc_err(1))
  allocate(O2x(max(BS_n_g_exch,FXC_n_g_corr),O_x_dim),stat=alloc_err(2))
  call mem_est('O1x O2x',(/size(O1x),size(O2x)/),errors=alloc_err)
-
-! Kernel 2 FXC
-!--------------
+ !
+ ! Kernel 2 FXC
+ !
  allocate(FXC_K_diagonal(BS_K_dim),FXC(FXC_n_g_corr,FXC_n_g_corr,W%n(2)))
  O_x_dim=maxval(BS_blk_dim)
  call mem_est("FXC_K_diagonal FXC",(/BS_K_dim,size(FXC)/),(/SP,2*SP/))
  FXC_K_diagonal=0._SP
  FXC=(0._SP,0._SP)
-!
-! Memory usage estimation  in BS K 2 Fxc procedure
-!=================================================
+ !
+ ! Memory usage estimation  in BS K 2 Fxc procedure
+ !
  call mem_est("BS_K_2_FXC",&
 &             (/2*6*FXC_n_g_corr*O_x_dim+2*FXC_n_g_corr**2+2*O_x_dim/),&
 &             (/SP/))
  call mem_est('BS_mat',(/O_x_dim**2/))
-
+ !
  call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
  ioBS_err=ioBS(iq,X,ID)
-
+ !
  call live_timing('Fxc',(nXkibz**2-nXkibz)/2+nXkibz)
  BS_blk_coord=0
  do ik2=1,nXkibz
+   !
    call K_exchange(.true.,iq,ik2,Xk,O2x,O_x_dim)
-
+   !
    do ik1=ik2,1,-1
-
+     !
      if (ik1/=ik2) call K_exchange(.true.,iq,ik1,Xk,O1x,O_x_dim)
      if (ik1==ik2) O1x=O2x
-
+     !
      allocate(BS_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
- 
+     !
      ACTION=RD
      if (ik1==1.and.ik2==nXkibz) ACTION=RD_CL
      call io_control(ACTION=ACTION,COM=NONE,SEC=(/cumulative_index(ik1,ik2)/),ID=ID)
      ioBS_err=ioBS(iq,X,ID)
-
+     !
      if (BS_res_K_exchange) then
        do icv1=1,BS_blk_dim(ik1)
          do icv2=1,BS_blk_dim(ik2)
            if (ik1==ik2.and.icv2<icv1) cycle
-
+           !
 #if defined _DOUBLE
            Hrx=zdotc(BS_n_g_exch,O2x(1,icv2),1,O1x(1,icv1),1)
 #else
            Hrx=cdotc(BS_n_g_exch,O2x(1,icv2),1,O1x(1,icv1),1)
 #endif
            BS_mat(icv1,icv2)=BS_mat(icv1,icv2)-Hrx*2.*Co
+           !
          enddo
        enddo
      endif
-  
+     !
      call TDDFT_BSK_2_FXC(iq,ik1,ik2,&
 &                         O1x(:FXC_n_g_corr,:),O2x(:FXC_n_g_corr,:),O_x_dim,W)
-
+     !
      call live_timing(steps=1)
      deallocate(BS_mat)
    enddo
  enddo
  call live_timing
-!
-! CLEAN
-!
+ !
+ ! CLEAN
+ !
  call pp_redux_wait
  deallocate(O1x,O2x)
  call mem_est('O1x O2x')
@@ -156,8 +157,7 @@
  call WF_free()
  deallocate(FXC_K_diagonal,FXC)
  call mem_est("FXC_K_diagonal FXC")
-
-! -- GPL_START --
-
- end subroutine
-
+ !
+ ! -- GPL_START --
+ !
+end subroutine

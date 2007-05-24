@@ -1,3 +1,37 @@
+2007-05-22 10:05:49 r123 Andrea Marini <marini@roma2.infn.it>
+
+	Bug in p2s symmetries when TR=.false. fixed
+
+2007-05-18 11:59:26 r122 Andrea Marini <marini@roma2.infn.it>
+
+	PH project upgrade
+
+2007-05-17 18:59:24 r121 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.9_11-05-07
+
+	*  spp/mod_SPP.F spp/plot_exc_wf.F spp/spp_i.F spp/BZ_RIM.F spp/spp_init_load.F spp/spp_init.F spp/elph_pw_dbs.F include/version.inc int_modules/mod_interfaces.F 3.0.9_07-05-07 2wf_and_fft/scatter_Gamp.F 0modules/mod_electrons.F 0modules/mod_par_indexes.F 0modules/mod_BS.F 0modules/mod_par_proc.F 0modules/mod_R_lattice.F 0modules/mod_IO.F 0modules/mod_memory.F 0modules/mod_com.F 0modules/mod_matrix_operate.F 0modules/mod_ELPH.F 2io/io_header.F 2io/ioELPH.F 5X/X_O_strengths.F 5X/X_RIM_Gf.F 7bse/K_dump_to_o_file.F 7bse/K_descriptions.F 7bse/K_inversion.F 7bse/K_solvers.F 7bse/K.F 4it/init_load.F 4it/init.F 4it/init_q_pts.F 1common/pert_inversion.F 1common/.objects 3kop/k_the_nearest.F 3kop/.objects 3kop/bz_samp_indexes.F 5elph/ELPH_K_print.F 5elph/.objects 5elph/static2dyn_ELPH_K.F 5elph/QP_elph.F 5elph/eval_ELPH_K.F 3.0.9_11-05-07
+
+	Bugs:
+	- In X_O_strengths "if (master_node).." directive removed. It was causing
+	  (sometimes) parallel calculations to get stuck when oscillators
+	  strengths database needed to be replaced.
+
+	Additions:
+	- k_pt array in R_lattice shadow of k%pt. Used in io_header (KPTS option)
+	- El-Ph induced DBSE Kernel routines (DEVEL ONLY): ELPH_K_print.F,
+	  static2dyn_ELPH_K.F, eval_ELPH_K.F
+	- K_inversion.F, pert_inversion.F: perturbative inversion of BSE in precence of and Energy RIM
+	  database.
+
+	Changes:
+	- Added "3kop/k_the_nearest.F" to perform general RIM assignments => RIM_G_shells
+	  in spp removed
+	- ioELPH: all ph_qpt available at once.
+	- LOTs of restylings (mod_com, plot_exc_wf ...)
+
+	Patch sent by: Andrea
+
 2007-05-10 12:11:02 r120 Andrea Marini <marini@roma2.infn.it>
 
 	V 3.0.9_07-05-07

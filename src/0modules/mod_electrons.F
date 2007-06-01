@@ -58,8 +58,8 @@
      real(SP),   pointer :: E(:,:,:)
      real(SP),   pointer :: Eo(:,:,:)
      real(SP),   pointer :: f(:,:,:)
-     real(SP),   pointer :: W(:,:)
-     complex(SP),pointer :: Z(:,:)
+     real(SP),   pointer :: W(:,:,:)
+     complex(SP),pointer :: Z(:,:,:)
      ! 
      ! Fine energy grid
      !  
@@ -79,11 +79,13 @@
    contains
      !
      subroutine E_duplicate(Ei,Eo)
+       use com,       ONLY:warning
        use memory_m,  ONLY:mem_est
        implicit none
        type(levels):: Ei,Eo
        !
-       logical :: naive
+       integer :: qp_done_bounds(2)
+       logical :: naive,QP_transfer
        !
        naive=Eo%nk==0
        Eo%nb=Ei%nb
@@ -93,21 +95,38 @@
          Eo%nbm=Ei%nbm
          Eo%bf=Ei%bf
          Eo%kf=Ei%kf
+         Eo%sf=Ei%sf
          Eo%Efermi=Ei%Efermi
        endif
-       allocate(Eo%E(Eo%nb,Eo%nk,n_sp_pol),Eo%f(Eo%nb,Eo%nk,n_sp_pol),&
-&               Eo%W(Eo%nb,Eo%nk),Eo%Z(Eo%nb,Eo%nk))
-       call mem_est("E-E E-f E-W E-Z",&
-&                 (/size(Eo%E),size(Eo%f),size(Eo%W),size(Eo%Z)/),&
-&                 (/SP,        SP,        SP,        2*SP/) )
+       allocate(Eo%E(Eo%nb,Eo%nk,n_sp_pol),Eo%f(Eo%nb,Eo%nk,n_sp_pol))
+       call mem_est("E-E E-f",(/size(Eo%E),size(Eo%f)/),(/SP,SP/))
        Eo%E=0.
-       Eo%W=0.
        Eo%f=0.
-       Eo%Z=(0.,0.)
        if (naive) then
          Eo%f(:,:,:)=Ei%f(:,:,:)
          Eo%E(:,:,:)=Ei%E(:,:,:)
-         if (associated(Ei%Eo)) Eo%E(:,:,:)=Ei%Eo(:,:,:)
+         if (associated(Ei%Eo)) then
+           allocate(Eo%Eo(Eo%nb,Eo%nk,n_sp_pol))
+           call mem_est("E-Eo",(/size(Eo%E)/),(/SP/))
+           Eo%Eo=Ei%Eo
+         endif
+         if (associated(Ei%W)) then
+           allocate(Eo%W(Eo%nb,Eo%nk,n_sp_pol))
+           call mem_est("E-W",(/size(Eo%W)/),(/SP/))
+           Eo%W=Ei%W
+         endif
+         if (associated(Ei%Z)) then
+           allocate(Eo%Z(Eo%nb,Eo%nk,n_sp_pol))
+           call mem_est("E-Z",(/size(Eo%Z)/))
+           Eo%Z=Ei%Z
+         endif
+         if (associated(Ei%qp_done)) then
+           qp_done_bounds=shape(Ei%qp_done)
+           allocate(Eo%qp_done(qp_done_bounds(1),qp_done_bounds(2)))
+           call mem_est("E-qp_done",(/size(Eo%qp_done)/),(/IP/))
+           Eo%qp_done=Ei%qp_done
+           call warning(' QP corrections transferred in energy levels duplication')
+         endif
        else
          Eo%E(:,:,:)=Ei%E(:,:Eo%nk,:)
        endif

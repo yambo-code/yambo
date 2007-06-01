@@ -21,7 +21,7 @@
 !
  subroutine spp_init(instr,lnstr,FINALIZE)
  !
- use pars,           ONLY:HA2THZ
+ use pars,           ONLY:HA2THZ,HARTREE
  use it_m,           ONLY:rstatus,initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
 &                         nrnlvls,rnlvls

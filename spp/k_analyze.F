@@ -77,7 +77,7 @@
        if (trim(coo_in)=="cc")  call c2a(v_in=Xk%ptbz(i1,:),v_out=v,mode="ki2c")
        if (trim(coo_in)=="rlu") call c2a(v_in=Xk%ptbz(i1,:),v_out=v,mode="ki2a")
        if (v_is_zero(v(:)-GWK%pt(GWK%nibz,:),zero_=k_iku_zero)) then
-         call warning('Point already in the grid')
+         call warning(' Point already in the grid')
          exit gw_main_loop
        endif
      enddo
@@ -128,7 +128,7 @@
        if (trim(coo_in)=="cc")  call c2a(v_in=q%ptbz(i1,:),v_out=v,mode="ki2c")
        if (trim(coo_in)=="rlu") call c2a(v_in=q%ptbz(i1,:),v_out=v,mode="ki2a")
        if (v_is_zero(v(:)-Q_user%pt(Q_user%nibz,:),zero_=k_iku_zero)) then
-         call warning('Point already in the grid')
+         call warning(' Point already in the grid')
          exit q_main_loop
        endif
      enddo

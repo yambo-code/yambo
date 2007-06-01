@@ -19,9 +19,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_RIM_Gf(iq,transitions,fr,Xw,Xen,Xk,RIM_Gf,ordering)
+subroutine X_bare_RIM_Gf(iq,transitions,fr,Xw,Xen,Xk,Gf,ordering)
  !
  use pars,       ONLY:SP,HARTREE
+ use X_m,        ONLY:use_X_RIM
  use electrons,  ONLY:levels,BZ_RIM_table,BZ_RIM_nkpt,spin_occ,&
 &                     BZ_RIM_tot_nkpts
  use R_lattice,  ONLY:qindx_X,nXkbz,bz_samp
@@ -32,15 +33,16 @@ subroutine X_RIM_Gf(iq,transitions,fr,Xw,Xen,Xk,RIM_Gf,ordering)
  type(w_samp) :: Xw
  type(levels) :: Xen
  type(bz_samp):: Xk
- complex(SP)  :: RIM_Gf(Xw%n(2))
+ complex(SP)  :: Gf(Xw%n(2))
  character(*) :: ordering
  !
  !Work Space
  !
  integer      ::i1,i2,iw,ikbz,ikpbz,iv,ic,i_spin,ik_rand,ikp_rand,ik,ikp
- real(SP)     ::rand_pole,ffac,f0fac
+ real(SP)     ::ffac,f0fac,W_
+ complex(SP)  ::Z_,pole
  !
- RIM_Gf  = cmplx(0.,0.,SP)
+ Gf  = cmplx(0.,0.,SP)
  !
  ! Transitions
  !
@@ -51,6 +53,28 @@ subroutine X_RIM_Gf(iq,transitions,fr,Xw,Xen,Xk,RIM_Gf,ordering)
  iv     = transitions(2)
  ic     = transitions(3)
  i_spin = transitions(4)
+ !
+ W_=0.
+ Z_=(1.,0.)
+ if (associated(Xen%W)) W_=Xen%W(ic,ik,i_spin)-Xen%W(iv,ikp,i_spin)
+ if (associated(Xen%Z)) Z_=Xen%Z(ic,ik,i_spin)*Xen%Z(iv,ikp,i_spin)
+ !
+ if (.not.use_X_RIM) then
+   !
+   ! Using QP corrected states
+   !
+   pole=Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin)+(0.,1.)*W_
+   !
+   do iw=fr(1),fr(2)
+     if (ordering=="t") Gf(iw-fr(1)+1)=Z_*(1./(Xw%p(iw)-pole)-1./(conjg(Xw%p(iw))+pole))
+     if (ordering=="c") Gf(iw-fr(1)+1)=Z_*(1./(Xw%p(iw)-pole)-1./(Xw%p(iw)+pole))
+     if (ordering=="r") Gf(iw-fr(1)+1)=Z_/(Xw%p(iw)-pole)
+     if (ordering=="a") Gf(iw-fr(1)+1)=           -Z_/(conjg(Xw%p(iw))+pole)
+   enddo
+   !
+   return
+   !
+ endif
  !
  ! In the X_o loop the Gf is multiplied by 
  !
@@ -66,21 +90,21 @@ subroutine X_RIM_Gf(iq,transitions,fr,Xw,Xen,Xk,RIM_Gf,ordering)
      ! 
      ik_rand=BZ_RIM_table(ikbz,i1) 
      !
-     rand_pole=Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ik_rand,i_spin)
+     pole=Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ik_rand,i_spin)+(0.,1.)*W_
      !
-     ffac=Xen%f_RIM(iv,ik_rand,i_spin)*(spin_occ-Xen%f_RIM(ic,ik_rand,i_spin))/&
+     ffac=Z_*Xen%f_RIM(iv,ik_rand,i_spin)*(spin_occ-Xen%f_RIM(ic,ik_rand,i_spin))/&
 &         real(BZ_RIM_nkpt(ikbz))/f0fac
      !
      do iw=fr(1),fr(2)
        !
-       if (ordering=="t") RIM_Gf(iw-fr(1)+1)=RIM_Gf(iw-fr(1)+1)+&
-&                         ffac/(Xw%p(iw)-rand_pole)-ffac/(conjg(Xw%p(iw))+rand_pole)
-       if (ordering=="c") RIM_Gf(iw-fr(1)+1)=RIM_Gf(iw-fr(1)+1)+&
-&                         ffac/(Xw%p(iw)-rand_pole)-ffac/(Xw%p(iw)+rand_pole)
-       if (ordering=="r") RIM_Gf(iw-fr(1)+1)=RIM_Gf(iw-fr(1)+1)+&
-&                         ffac/(Xw%p(iw)-rand_pole)
-       if (ordering=="a") RIM_Gf(iw-fr(1)+1)=RIM_Gf(iw-fr(1)+1)&
-&                                                -ffac/(conjg(Xw%p(iw))+rand_pole)
+       if (ordering=="t") Gf(iw-fr(1)+1)=Gf(iw-fr(1)+1)+&
+&                         ffac/(Xw%p(iw)-pole)-ffac/(conjg(Xw%p(iw))+pole)
+       if (ordering=="c") Gf(iw-fr(1)+1)=Gf(iw-fr(1)+1)+&
+&                         ffac/(Xw%p(iw)-pole)-ffac/(Xw%p(iw)+pole)
+       if (ordering=="r") Gf(iw-fr(1)+1)=Gf(iw-fr(1)+1)+&
+&                         ffac/(Xw%p(iw)-pole)
+       if (ordering=="a") Gf(iw-fr(1)+1)=Gf(iw-fr(1)+1)&
+&                                                -ffac/(conjg(Xw%p(iw))+pole)
      enddo
      !
    enddo
@@ -93,20 +117,20 @@ subroutine X_RIM_Gf(iq,transitions,fr,Xw,Xen,Xk,RIM_Gf,ordering)
      do i2=1,BZ_RIM_nkpt(ikpbz)
        ikp_rand=BZ_RIM_table(ikpbz,i2) 
        !
-       rand_pole=Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ikp_rand,i_spin)
+       pole=Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ikp_rand,i_spin)++(0.,1.)*W_
        !
-       ffac=Xen%f_RIM(iv,ikp_rand,i_spin)*(spin_occ-Xen%f_RIM(ic,ik_rand,i_spin))/&
+       ffac=Z_*Xen%f_RIM(iv,ikp_rand,i_spin)*(spin_occ-Xen%f_RIM(ic,ik_rand,i_spin))/&
 &         real(BZ_RIM_nkpt(ikbz))/real(BZ_RIM_nkpt(ikpbz))/f0fac
        !
        do iw=fr(1),fr(2)
-         if (ordering=="t") RIM_Gf(iw-fr(1)+1)=RIM_Gf(iw-fr(1)+1)+&
-&                           ffac/(Xw%p(iw)-rand_pole)-ffac/(conjg(Xw%p(iw))+rand_pole)
-         if (ordering=="c") RIM_Gf(iw-fr(1)+1)=RIM_Gf(iw-fr(1)+1)+&
-&                           ffac/(Xw%p(iw)-rand_pole)-ffac/(Xw%p(iw)+rand_pole)
-         if (ordering=="r") RIM_Gf(iw-fr(1)+1)=RIM_Gf(iw-fr(1)+1)+&
-&                           ffac/(Xw%p(iw)-rand_pole)
-         if (ordering=="a") RIM_Gf(iw-fr(1)+1)=RIM_Gf(iw-fr(1)+1)&
-&                                                  -ffac/(conjg(Xw%p(iw))+rand_pole)
+         if (ordering=="t") Gf(iw-fr(1)+1)=Gf(iw-fr(1)+1)+&
+&                           ffac/(Xw%p(iw)-pole)-ffac/(conjg(Xw%p(iw))+pole)
+         if (ordering=="c") Gf(iw-fr(1)+1)=Gf(iw-fr(1)+1)+&
+&                           ffac/(Xw%p(iw)-pole)-ffac/(Xw%p(iw)+pole)
+         if (ordering=="r") Gf(iw-fr(1)+1)=Gf(iw-fr(1)+1)+&
+&                           ffac/(Xw%p(iw)-pole)
+         if (ordering=="a") Gf(iw-fr(1)+1)=Gf(iw-fr(1)+1)&
+&                                                  -ffac/(conjg(Xw%p(iw))+pole)
        enddo
        !
      enddo

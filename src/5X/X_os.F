@@ -54,8 +54,8 @@
  ! Work Space
  !
  integer              :: i1,i2,ik,is,ikp,ikbz,ikpbz,i_spin,&
-&                        isp,iv,ic,g1,g2,g2max,iw,iwmax,isave(4)
- integer              :: n_poles
+&                        isp,iv,ic,g1,g2,g2max,iw,iwmax,isave(4),n_poles 
+ logical              :: force_bare_X_G
  real(SP)             :: minmax_ehe(2),drude_factor,eh_occ
  type(pp_indexes)     :: px
  type(ggwinfo)        :: isc
@@ -76,6 +76,8 @@
  XoR = cmplx(0.,0.,SP)
  Gf  = cmplx(0.,0.,SP)
  drude_Gf = cmplx(0.,0.,SP)
+ !
+ force_bare_X_G=associated(Xen%W).or.associated(Xen%Z).or.use_X_RIM
  !
  call mem_est("Xo_WS",(/size(XoR)+2*X%ng/))
  !
@@ -127,8 +129,8 @@
    allocate(X_poles_tab(n_poles,4)) 
    call mem_est("X_poles_tab",(/size(X_poles_tab)/))
    !
-   if (.not.use_X_RIM) call coarse_grid('X',X_poles,n_poles,X%cg_percentual)
-   if (use_X_RIM)      call coarse_grid('X',X_poles,n_poles,0.)
+   if (.not.force_bare_X_G) call coarse_grid('X',X_poles,n_poles,X%cg_percentual)
+   if (force_bare_X_G)      call coarse_grid('X',X_poles,n_poles,0.)
    !
    n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
    deallocate(X_poles)
@@ -191,8 +193,8 @@
      if (cg_pt(i1)==0.) then
        Gf=drude_Gf/real(bg_npts(i1))
      else
-       if (.not.use_X_RIM) Gf(1) = X_Gf(Xw%p(fr(1)),cg_pt(i1),X%ordering)
-       if (use_X_RIM) call X_RIM_Gf(iq,X_poles_tab(i1,:),fr,Xw,Xen,Xk,Gf,X%ordering)
+       if (.not.force_bare_X_G) Gf(1) = X_Gf(Xw%p(fr(1)),cg_pt(i1),X%ordering)
+       if (force_bare_X_G) call X_bare_RIM_Gf(iq,X_poles_tab(i1,:),fr,Xw,Xen,Xk,Gf,X%ordering)
      endif
      do i2 = 1,bg_npts(i1)
        n_poles = n_poles+1
@@ -267,7 +269,7 @@
      !
      do i2=iwmax,Xw%n(2)
        iw=i2+fr(1)-1
-       if (.not.use_X_RIM.and.cg_pt(i1)/=0.) Gf(i2)=X_Gf(Xw%p(iw),cg_pt(i1),X%ordering)
+       if (.not.force_bare_X_G.and.cg_pt(i1)/=0.) Gf(i2)=X_Gf(Xw%p(iw),cg_pt(i1),X%ordering)
        do g2=1,X%ng
 #if defined _DOUBLE
          call zaxpy(g2,Gf(i2)/Gf(1),XoR(:g2,g2),1,Xo(:g2,g2,i2),1)
@@ -293,8 +295,8 @@
      n_poles=sum(bg_npts(1:i1-1))
      if (.not.px%i1p(i1)) cycle
      if (iwmax==1) XoR=(0.,0.)
-     if (.not.use_X_RIM) Gf(1)=X_Gf(Xw%p(fr(1)),cg_pt(i1),X%ordering)
-     if (use_X_RIM) call X_RIM_Gf(iq,X_poles_tab(i1,:),fr,Xw,Xen,Xk,Gf,X%ordering)
+     if (.not.force_bare_X_G) Gf(1)=X_Gf(Xw%p(fr(1)),cg_pt(i1),X%ordering)
+     if (force_bare_X_G) call X_bare_RIM_Gf(iq,X_poles_tab(i1,:),fr,Xw,Xen,Xk,Gf,X%ordering)
      do i2=1,bg_npts(i1)
        n_poles=n_poles+1
        ikbz   = X_poles_tab(n_poles,1)
@@ -322,7 +324,7 @@
      enddo
      do i2=iwmax,Xw%n(2)
        iw=i2+fr(1)-1
-       if (.not.use_X_RIM) Gf(i2)=X_Gf(Xw%p(iw),cg_pt(i1),X%ordering)
+       if (.not.force_bare_X_G) Gf(i2)=X_Gf(Xw%p(iw),cg_pt(i1),X%ordering)
        do g2=1,X%ng
 #if defined _DOUBLE
          call zaxpy(g2,Gf(i2)/Gf(1),XoR(:g2,g2),1,Xo(:g2,g2,i2),1)

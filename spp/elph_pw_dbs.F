@@ -191,9 +191,9 @@ integer function elph_pw_dbs(k,E,q)
    !
    !I/O
    !
-   integer           :: ID,io_err
+   integer           :: ID,io_err,type_
    character(schlen) :: db_name
-   real(SP)          :: dVRY2Ha
+   real(SP)          :: dVRY2Ha,pw_q_iku(3)
    real(DP)          :: pw_k(3,k%nbz),pw_alat,pw_q(3),Ek(n_bands),&
 &                       Ek_p_q(n_bands),pw_E_k_shift
    real(DP),    allocatable :: ph_freqs_sq_disk(:)
@@ -211,7 +211,9 @@ integer function elph_pw_dbs(k,E,q)
    io_netcdf_support(ID)=.FALSE.
    !
    write (db_name,'(a,i6.6)') 's.dbph_',iabs(idb_)
-   io_err=io_connect(desc=trim(db_name),subfolder=trim(elph_dbs_path),type=-1,ID=ID)
+   type_=-1
+   if (trim(elph_dbs_path)=='.') type_=-2
+   io_err=io_connect(desc=trim(db_name),subfolder=trim(elph_dbs_path),type=type_,ID=ID)
    !
    elph_pw_dbs_io=io_err
    if (io_err/=0) return  
@@ -227,12 +229,17 @@ integer function elph_pw_dbs(k,E,q)
      !
      forall (i1=1:3) pw_q(i1)=pw_q(i1)/real(pw_alat)*alat(i1)
      forall (i1=1:3) pw_k(i1,:)=pw_k(i1,:)/real(pw_alat)*alat(i1)
+     !
+     pw_q_iku=pw_q
+     !
+     ! DEBUG (uncomment if pw_q is in rlu)
+     !call c2a(v_in=pw_q_iku,mode="ka2i")
    endif
    !
    if (idb_<0) then
      iq_check=0
      do i1=1,nqibz
-       if (v_is_zero(real(pw_q(:))+q%pt(i1,:),zero_=k_iku_zero)) iq_check=i1
+       if (v_is_zero(pw_q_iku(:)+q%pt(i1,:),zero_=k_iku_zero)) iq_check=i1
      enddo
      if (iq_check==0) elph_use_q_grid=.false.
      elph_pw_dbs_io=iq_check
@@ -241,10 +248,7 @@ integer function elph_pw_dbs(k,E,q)
      !
      if (iq_check==0) iq_check=iabs(idb_)
      !
-     ph_qpt_(iq_check,:)=pw_q
-     !
-     ! DEBUG (uncomment if pw_q is in rlu)
-     !call c2a(v_in=ph_qpt_(iq_check,:),mode="ka2i")
+     ph_qpt_(iq_check,:)=pw_q_iku
      !
    endif
    !

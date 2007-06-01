@@ -27,7 +27,7 @@
  use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels,n_sp_pol
- use com,           ONLY:msg
+ use com,           ONLY:msg,warning
  use QP_CTL,        ONLY:qp_fit_ctl
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,REP
  !
@@ -65,7 +65,7 @@
    !
    ! QP type is filled (defined internally and not read from the DB)
    !
-   l_qp(1)=.true.
+   l_qp(1)=.true. ! Apply QP corrections to energies only
    qpfit%db="none"
    qpfit%interp_neigh=1
  else
@@ -81,17 +81,18 @@
        io_err=ioQP(trim( db_piece(i1+1) ),qp,ID)
        exit
      endif
-     l_qp(1)=any((/trim(db_piece(i1))=="E",trim(db_piece(i1))=="e"/))
-     l_qp(2)=any((/trim(db_piece(i1))=="W",trim(db_piece(i1))=="w"/))
-     l_qp(3)=any((/trim(db_piece(i1))=="Z",trim(db_piece(i1))=="z"/))
-     l_qp(4)=any((/trim(db_piece(i1))=="ui",trim(db_piece(i1))=="uI",&
-&                  trim(db_piece(i1))=="UI",trim(db_piece(i1))=="Ui"/))
+     if (.not.l_qp(1)) l_qp(1)=any((/trim(db_piece(i1))=="E",trim(db_piece(i1))=="e"/))
+     if (.not.l_qp(2)) l_qp(2)=any((/trim(db_piece(i1))=="W",trim(db_piece(i1))=="w"/))
+     if (.not.l_qp(3)) l_qp(3)=any((/trim(db_piece(i1))=="Z",trim(db_piece(i1))=="z"/))
+     if (.not.l_qp(4)) l_qp(4)=any((/trim(db_piece(i1))=="ui",trim(db_piece(i1))=="uI",&
+&                                    trim(db_piece(i1))=="UI",trim(db_piece(i1))=="Ui"/))
    enddo
    !  
    ! No DB
    !
    if (io_err<0) then
      qpfit%db="none"
+     call warning('DB '//trim(qp_db_name)//' not found')
      return
    endif
    !  
@@ -102,7 +103,7 @@
    if (l_qp(3).and.QP_apply_done(band_range,(/1,en%nk/),en,'Z')) l_qp(3)=.false.
    !
    !DEBUG >
-   l_qp(2:3)=.false.
+   l_qp(3)=.false.
    !DEBUG <
    !
    if (.not.any(l_qp)) return
@@ -119,10 +120,14 @@
    if (l_qp(2)) then
      qp_msg(i1:i1)="W"
      i1=i1+1
+     allocate(en%W(en%nb,en%nk,n_sp_pol))
+     call mem_est("E-W",(/size(en%W)/),(/SP/))
    endif
    if (l_qp(3)) then
      qp_msg(i1:i1)="Z"
      i1=i1+1
+     allocate(en%Z(en%nb,en%nk,n_sp_pol))
+     call mem_est("E-Z",(/size(en%Z)/))
    endif
    !
    call CHappend('<',trim(qp_db_name))

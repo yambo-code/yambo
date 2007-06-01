@@ -93,7 +93,7 @@
 &                            QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db
      use D_lattice,     ONLY:Tel
      use com,           ONLY:msg,depth
-     use electrons,     ONLY:levels,E_reset,n_sp_pol
+     use electrons,     ONLY:levels,E_reset,n_sp_pol,BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_nbands
      use R_lattice,     ONLY:bz_samp,nXkibz
      use parser_m,      ONLY:parser
      implicit none
@@ -109,7 +109,7 @@
      type(levels)     ::Fermi_en
      type(QP_t)       ::qp
      type(qp_fit_ctl) ::qpfit_rest,qpfit_free
-     integer          ::DB_corrected(en%nb,en%nk)
+     integer          ::DB_corrected(en%nb,en%nk),ik_bz,ik_ibz,ib,i1,ik_r
      character(schlen)::ch
      logical          ::is_def(2)
      !
@@ -195,7 +195,7 @@
        ! being careful that the scissor must go in qpfit%E(1)
        !
        qpfit_free%E=(/QP_ctl_E(Eid,1)/HARTREE,QP_ctl_E(Eid,2),0._SP,QP_ctl_E(Eid,3)/)
-       qpfit_free%W(3:)=QP_ctl_W(Eid,:) 
+       qpfit_free%W=(/0.,QP_ctl_W(Eid,1),QP_ctl_W(Eid,3),0.,QP_ctl_W(Eid,2),QP_ctl_W(Eid,4)/)
        qpfit_free%Z=QP_ctl_Z(Eid)
        !
      endif
@@ -217,11 +217,29 @@
      !
      call QP_apply_stretch(band_range,en,qpfit_rest,qpfit_free,DB_corrected)
      !
-     if (.not.QP_ctl_applied) return
-     !
      ! X/K -> Fermi Level Update
      !
-     if (Eid<3) call fermi_level(en,k,Tel,1)
+     if (Eid<3) then
+       !
+       if (associated(en%E_RIM).and.associated(en%Eo)) then
+         !
+         do ik_bz=1,k%nbz
+           !
+           ik_ibz=k%sstar(ik_bz,1)
+           !
+           do i1=1,BZ_RIM_nkpt(ik_bz)
+             ik_r=BZ_RIM_table(ik_bz,i1)
+             forall (ib=1:BZ_RIM_nbands) en%E_RIM(ib,ik_r,1)=en%E_RIM(ib,ik_r,1)+&
+&                                        en%E(ib,ik_ibz,1)-en%Eo(ib,ik_ibz,1)
+           enddo
+           !
+         enddo
+         !
+       endif
+       !
+       call fermi_level(en,k,Tel,1)
+       !
+     endif
      !
      ! G -> Fermi Level Update... but using the levels cooresponding to
      ! the K-points of the X grid !
@@ -235,6 +253,8 @@
        call extend_occupations(Fermi_en,en)
        nullify(Fermi_en%E)
      endif
+     !
+     if (.not.QP_ctl_applied) return
      !
      ! Reporting
      !

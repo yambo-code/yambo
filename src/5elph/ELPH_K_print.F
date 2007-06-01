@@ -46,6 +46,9 @@ subroutine ELPH_K_print(E,k,q)
  ! ... dummies
  !
  character(schlen) :: o_file
+ logical           :: in_exc_basis
+ !
+ in_exc_basis=.FALSE.
  !
  ! Static, W=0 ELPH Kernel
  !
@@ -66,22 +69,23 @@ subroutine ELPH_K_print(E,k,q)
    !
    ! <l|X|l'> = <l|k>EXCPH_mat(k,k')<k'|l'>
    !
-   call cgemm('c','n',BS_K_dim,BS_K_dim,BS_K_dim,(1.,0.),&
-&             BS_mat,BS_K_dim,EXCPH_mat,BS_K_dim,(0.,0.),&
-&             WS,BS_K_dim)
-   call cgemm('n','n',BS_K_dim,BS_K_dim,BS_K_dim,(1.,0.),&
-&             WS,BS_K_dim,BS_mat,BS_K_dim,(0.,0.),&
-&             EXCPH_mat,BS_K_dim)
+   if (in_exc_basis) then
+     call cgemm('c','n',BS_K_dim,BS_K_dim,BS_K_dim,(1.,0.),&
+&               BS_mat,BS_K_dim,EXCPH_mat,BS_K_dim,(0.,0.),&
+&               WS,BS_K_dim)
+     call cgemm('n','n',BS_K_dim,BS_K_dim,BS_K_dim,(1.,0.),&
+&               WS,BS_K_dim,BS_mat,BS_K_dim,(0.,0.),&
+&               EXCPH_mat,BS_K_dim)
+   endif
    !
    ! Output file I/O
    !
-   o_file='elph_se_mat'
+   o_file='excph_mat'
    call of_open_close(trim(o_file),'ot')
    do ii1=1,BS_K_dim
      do ii2=1,BS_K_dim
-       call msg('o elph_se_mat','',(/real(ii1),real(ii2),&
-&               real(EXCPH_mat(ii1,ii2)),&
-&               aimag(EXCPH_mat(ii1,ii2))/),INDENT=-2,USE_TABS=.TRUE.)
+       call msg('o excph_mat','',(/real(ii1),real(ii2),&
+&               abs(EXCPH_mat(ii1,ii2))/),INDENT=-2,USE_TABS=.TRUE.)
      enddo
    enddo
    call of_open_close(trim(o_file))

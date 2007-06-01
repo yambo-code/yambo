@@ -27,8 +27,9 @@
  !
  ! l_qp=( E W Z Interp )
  !
- use pars
- use com,           ONLY:msg
+ use pars,          ONLY:SP
+ use drivers,       ONLY:Finite_Tel
+ use com,           ONLY:msg,warning
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use vec_operate,   ONLY:sort
@@ -39,7 +40,7 @@
  type(QP_t)  ::qp
  type(bz_samp)::k
  integer :: n_neigh,band_range(2),DB_corrected(en%nb,en%nk) 
- logical :: l_qp(4)
+ logical :: l_qp(4),wrong_width_sign_warn
  !
  ! Work Space
  !
@@ -52,8 +53,10 @@
  !
  ! Transfer & interpolation
  !
+ wrong_width_sign_warn=.false.
  nk_interpolated=0
  nk_exact=0
+ !
  do i1=1,k%nibz
    k_near=0
    k_dist=1.E5
@@ -105,17 +108,28 @@
      complex(SP):: Zl(band_range(2))
      integer    :: i3,i4,bqp
      logical    :: QP_apply_done
+     !
      Dl=0.
      Wl=0.
      Zl=(0.,0.)
+     !
      do i4=1,n_neigh_
        do i3=1,qp%n_states
          if (qp%table(i3,3)/=ikqp(i4)) cycle
          bqp=qp%table(i3,1)
          if (bqp<band_range(1).or.bqp>band_range(2)) cycle
-         Dl(bqp)=Dl(bqp)+real(qp%E(i3)-qp%E_bare(i3))
-         Wl(bqp)=Wl(bqp)+aimag(qp%E(i3))
-         Zl(bqp)=Zl(bqp)+qp%Z(i3)
+         !
+         if (l_qp(1)) Dl(bqp)=Dl(bqp)+real(qp%E(i3)-qp%E_bare(i3))
+         !
+         if (l_qp(2).and.real(qp%E(i3))>0..and.aimag(qp%E(i3))>0) then
+           if (.not.wrong_width_sign_warn) call warning(' Wrong QP width sign fixed')
+           Wl(bqp)=Wl(bqp)-aimag(qp%E(i3))
+           wrong_width_sign_warn=.true.
+         else
+           Wl(bqp)=Wl(bqp)+aimag(qp%E(i3))
+         endif
+         !
+         if (l_qp(3)) Zl(bqp)=Zl(bqp)+qp%Z(i3)
        enddo
      enddo
      do i3=band_range(1),band_range(2)
@@ -128,13 +142,13 @@
        if (l_qp(2)) then
          if (QP_apply_done((/i3,i3/),(/ik,ik/),en,'W')) cycle
          if (Wl(i3)==0._SP) cycle
-         en%W(i3,ik)=Wl(i3)/real(n_neigh_)
+         en%W(i3,ik,1)=Wl(i3)/real(n_neigh_)
          DB_corrected(i3,ik)=1
        endif
        if (l_qp(3)) then
          if (QP_apply_done((/i3,i3/),(/ik,ik/),en,'Z')) cycle
          if (Zl(i3)==(0._SP,0._SP)) cycle
-         en%Z(i3,ik)=Zl(i3)/real(n_neigh_)
+         en%Z(i3,ik,1)=Zl(i3)/real(n_neigh_)
          DB_corrected(i3,ik)=1
        endif
      enddo

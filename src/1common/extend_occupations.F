@@ -19,16 +19,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine extend_occupations(Xe,E)
- !
+subroutine extend_occupations(Xe,E)
  !
  ! The occupation of E levels are decided using 
  ! the Fermi "Levels" of Xe.
  !
  ! Also the RIM levels/occ.s are shifted/defined accordingly.
  ! Note that to check if the RIM is present the Xe%E_RIM pointer
- ! is chcked. This implies that THE QP INDUCES CHANGE OF THE FERMI
- ! ENERGY IS NOT TRANSLATED IN THE RIM LEVELS (SEE CALL IN 3qp_ctl/mod_QP_CTL.F).
+ ! is checked. 
  !
  ! This s.r. takes care that E keeps the same electronic character
  ! if the Xe grid.
@@ -54,14 +52,19 @@
  call f_build(Xe%Efermi(1))
  call fermi_msg(E,0)
  !
+ ! If Xe and E have same metallic character then
+ ! simply shift E components (Xe have been already shifted
+ ! in the Fermi routine)
+ !
  if (E%nbf==Xe%nbf.and.E%nbm==Xe%nbm) then
    E%E=E%E-E%Efermi(1)
-   if (associated(Xe%E_RIM)) then
-     E%E_RIM =E%E_RIM -E%Efermi(1)
-     Xe%E_RIM=Xe%E_RIM-E%Efermi(1)
-   endif
+   if (associated(E%E_RIM)) E%E_RIM =E%E_RIM -E%Efermi(1)
    return
  endif
+ !
+ ! If Xe and E have not the same metallic character 
+ ! find a range for the Efermi that keeps the
+ ! to grids with the same character
  !
  Ef_test=Xe%Efermi(2)+Ef_step
  do while(Ef_test<Xe%Efermi(3))

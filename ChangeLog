@@ -1,3 +1,26 @@
+2007-05-24 10:42:15 r124 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.9_11-05-07
+
+	*  spp/mod_SPP.F spp/plot_exc_wf.F spp/spp_i.F spp/exc_wf_eval.F spp/.objects spp/exc_wf_gnuplot.F spp/spp_init_load.F spp/exc_wf_plot_driver.F spp/spp_init.F spp/exc_wf_xcrysden.F int_modules/mod_interfaces.F 2wf_and_fft/fft_setup.F 2wf_and_fft/fft_3d.F 0modules/mod_pars.F 0modules/mod_wave_func.F 0modules/mod_FFT.F 0modules/mod_timing.F 4tddft/tddft_descriptions.F 4tddft/tddft_BSK_disk_2_FXC.F 4tddft/tddft_alda_r_space.F 4tddft/tddft_do_X_W_typs.F 4tddft/tddft_BSK_2_FXC.F 4tddft/tddft_alda_g_space.F 4it/init.F 7bse/K_inversion.F 1common/section.F ChangeLog
+
+	Bugs:
+	- In spp_i.F wrong order of calls to close the run fixed (it yielded
+	  wong footer in output files)
+
+	Additions:
+	- BOHR in mod_pars.F
+	- what_is_running string in mod_timing to report the executable name
+	  in the report/output files footers
+
+	Changes:
+	- Excitonic wfc plotting module in spp rewritten:
+	  * window, znucl, ntypat, p_dim variable removed
+	  * plot_exc_wf.F splitted in exc_wf_eval.F, exc_wf_gnuplot.F,
+	                           exc_wf_plot_driver.F, exc_wf_xcrysden.F
+
+	Patch sent by: Andrea
+
 2007-05-22 10:05:49 r123 Andrea Marini <marini@roma2.infn.it>
 
 	Bug in p2s symmetries when TR=.false. fixed

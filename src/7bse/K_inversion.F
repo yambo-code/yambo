@@ -23,7 +23,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  use pars,           ONLY:SP,pi
  use drivers,        ONLY:l_ph_corr
- use X_m,            ONLY:X_epsilon
+ use X_m,            ONLY:X_epsilon,use_X_RIM
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_not_const_eh_f,&
 &                         BS_K_coupling,BS_eh_table,BS_eh_E,BS_bands,Kernel_by_V
  use memory_m,       ONLY:mem_est
@@ -47,11 +47,9 @@ subroutine K_inversion(iq,W,E,k,q)
  ! Work Space...
  !
  type(pp_indexes) ::px
- integer          ::i1,i2,ik_bz,iv,ic,iw,icv,i_err,of_mode,i_sp
- logical          ::use_RIM,start_from_diago
- complex(SP)      ::Co
+ integer          ::i1,i2,ik_bz,iv,ic,iw,icv,i_err,of_mode,i_sp,ik_ibz
  integer, external::pert_inversion,eval_ELPH_K
- complex(SP)      ::Lo_RIM(BS_K_dim,W%n(1))
+ complex(SP)      ::Lo(BS_K_dim,W%n(1)),Co,Z_,W_
  !
 #if defined _DOUBLE
  complex(DP)::zdotu,zdotc
@@ -65,7 +63,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! RIM support ?
  !
- use_RIM=BZ_RIM_nbands>=BS_bands(2)
+ use_X_RIM=BZ_RIM_nbands>=BS_bands(2)
  !
  ! Sectioning
  !
@@ -75,7 +73,6 @@ subroutine K_inversion(iq,W,E,k,q)
    call section('+','Inversion solver')
  endif
  !
- if (.not.use_RIM) call warning('Inversion solver: only with a RIM database')
  if (BS_not_const_eh_f) call warning('Inversion solver: fractional occupations unsupported')
  if (BS_K_coupling) call warning('Inversion solver: unsupported for non-resonant K')
  if (any((/BS_not_const_eh_f,BS_K_coupling/))) return
@@ -83,9 +80,9 @@ subroutine K_inversion(iq,W,E,k,q)
  !  mem est
  !
 #if defined PJ_PH
- call mem_est("Lo_RIM WS",(/size(Lo_RIM),BS_K_dim**2/))
+ call mem_est("Lo WS",(/size(Lo),BS_K_dim**2/))
 #else
- call mem_est("Lo_RIM WS",(/size(Lo_RIM),2*BS_K_dim**2/))
+ call mem_est("Lo WS",(/size(Lo),2*BS_K_dim**2/))
 #endif
  !
  ! Kernel loading
@@ -114,28 +111,33 @@ subroutine K_inversion(iq,W,E,k,q)
  ! Green`s function and non-interacting eps2
  !
  X_epsilon=(0.,0.)
- Lo_RIM=(0.,0.)
+ Lo=(0.,0.)
  Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/(q_norm(1))**2
  !
  call live_timing('Green`s function',BS_K_dim)
  !
  do i1=1,BS_K_dim
    !
-   ik_bz=BS_eh_table(i1,1)
-   iv   =BS_eh_table(i1,2)
-   ic   =BS_eh_table(i1,3)
+   ik_bz =BS_eh_table(i1,1)
+   ik_ibz=k%sstar(ik_bz,1)
+   iv    =BS_eh_table(i1,2)
+   ic    =BS_eh_table(i1,3)
 #if defined PJ_SPIN
    i_sp=BS_eh_table(i1,4)
 #else
    i_sp=1
 #endif
    !
-   if (.not.use_RIM) then
-     Lo_RIM(i1,:)=1./(W%p(:)-BS_eh_E(i1))
+   if (.not.use_X_RIM) then
+     W_=0.
+     Z_=(1.,0.)
+     if (associated(E%W)) W_=E%W(ic,ik_ibz,i_sp)-E%W(iv,ik_ibz,i_sp)
+     if (associated(E%Z)) Z_=E%Z(ic,ik_ibz,i_sp)*E%Z(iv,ik_ibz,i_sp)
+     Lo(i1,:)=Z_/(W%p(:)-BS_eh_E(i1)-(0.,1.)*W_)
    else
-     call X_RIM_Gf(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo_RIM(i1,:),"r")
+     call X_bare_RIM_Gf(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1,:),"r")
    endif
-   X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*Lo_RIM(i1,:)*Co
+   X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*Lo(i1,:)*Co
    !
    call live_timing(steps=1)
    !
@@ -147,9 +149,6 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  call pp_indexes_reset(px)
  call par_indexes(px,(/W%n(1)/))
- !
- ! Without starting from excitonic wavefunctions: the kernel is 
- ! used as perturbation
  !
  call live_timing('Frequency loop',px%stps(myid+1))
  !
@@ -165,7 +164,7 @@ subroutine K_inversion(iq,W,E,k,q)
    if (.not.px%i1p(iw)) cycle
    !
    i_err=pert_inversion(BS_K_dim,BSS_rhoq0,-1.*Co,X_epsilon(2,iw),&
-&                       Lo_RIM(:,iw),BS_mat,.TRUE.)
+&                       Lo(:,iw),BS_mat,.TRUE.)
    !
    X_epsilon(2,iw)=1.+X_epsilon(2,iw)
    !
@@ -185,8 +184,8 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  call pp_indexes_reset(px)
  !
- deallocate(BS_mat)
- call mem_est("BS_mat Lo_RIM WS")
+ deallocate(BS_mat) 
+ call mem_est("BS_mat Lo WS")
 #if defined PJ_PH
  if (allocated(EXCPH_mat)) then
    deallocate(Rnd_Qpts_corresp,Rnd_Qpts_at,EXCPH_mat)

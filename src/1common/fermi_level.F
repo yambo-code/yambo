@@ -187,6 +187,7 @@
  ! If %E_RIM is associated I simply extend the %E occupations to %E_RIM
  !
  if (BZ_RIM_nbands>0) then
+   E%E_RIM(:,:,:)=E%E_RIM(:,:,:)-E%Efermi(1)
    do ik=1,BZ_RIM_tot_nkpts
      do ib=1,BZ_RIM_nbands
        do is=1,n_sp_pol
@@ -194,7 +195,6 @@
        enddo
      enddo
    enddo
-   E%E_RIM(:,:,:)=E%E_RIM(:,:,:)-E%Efermi(1)
  endif
  !
  ! Mode = 1. Define E%f and exits

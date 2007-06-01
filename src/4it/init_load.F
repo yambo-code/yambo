@@ -50,7 +50,7 @@
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,&
 &                        FXC_SVD_cutoff
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
- use QP_m,          ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh
+ use QP_m,          ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_W,QP_ctl_Z
  use com,           ONLY:outpath,inpath
  use functions,     ONLY:bose_E_cut
 #if defined PJ_RAS
@@ -210,20 +210,20 @@
  call it(defs,'XfnQP_N', '[EXTQP Xd] Interpolation neighbours',&
 &                         QP_ctl_interp_neigh(1),verb_level=V_qp)
  call it(defs,'XfnQP_E', '[EXTQP Xd] E parameters (c/v)',QP_ctl_E(1,:),verb_level=V_more)
-! call it(defs,'XfnQP_W','[EXTQP Xd] W parameters (c/v)',QP_ctl_W(1,:),verb_level=V_debug)
-! call it(defs,'XfnQP_Z','[EXTQP Xd] Z parameters',QP_ctl_Z(1),verb_level=V_debug)
+ call it(defs,'XfnQP_W','[EXTQP Xd] W parameters (c/v)',QP_ctl_W(1,:),verb_level=V_more)
+ call it(defs,'XfnQP_Z','[EXTQP Xd] Z parameters',QP_ctl_Z(1),verb_level=V_more)
  call it(defs,'KfnQPdb', '[EXTQP BSK BSS] Database',QP_ctl_db(2),verb_level=V_qp)
  call it(defs,'KfnQP_N', '[EXTQP BSK BSS] Interpolation neighbours',&
 &                         QP_ctl_interp_neigh(2),verb_level=V_qp)
  call it(defs,'KfnQP_E', '[EXTQP BSK BSS] E parameters (c/v)',QP_ctl_E(2,:),verb_level=V_more)
-! call it(defs,'KfnQP_W','[EXTQP BSK BSS] W parameters (c/v)',QP_ctl_W(2,:),verb_level=V_debug)
-! call it(defs,'KfnQP_Z','[EXTQP BSK BSS] Z parameters',QP_ctl_Z(2),verb_level=V_debug)
+ call it(defs,'KfnQP_W','[EXTQP BSK BSS] W parameters (c/v)',QP_ctl_W(2,:),verb_level=V_more)
+ call it(defs,'KfnQP_Z','[EXTQP BSK BSS] Z parameters',QP_ctl_Z(2),verb_level=V_more)
  call it(defs,'GfnQPdb', '[EXTQP G] Database',QP_ctl_db(3),verb_level=V_qp)
  call it(defs,'GfnQP_N', '[EXTQP G] Interpolation neighbours',&
 &                         QP_ctl_interp_neigh(3),verb_level=V_qp)
  call it(defs,'GfnQP_E', '[EXTQP G] E parameters (c/v)',QP_ctl_E(3,:),verb_level=V_more)
-! call it(defs,'GfnQP_W','[EXTQP G] W parameters (c/v)',QP_ctl_W(3,:),verb_level=V_debug)
-! call it(defs,'GfnQP_Z','[EXTQP G] Z parameters',QP_ctl_Z(3),verb_level=V_debug)
+ call it(defs,'GfnQP_W','[EXTQP G] W parameters (c/v)',QP_ctl_W(3,:),verb_level=V_more)
+ call it(defs,'GfnQP_Z','[EXTQP G] Z parameters',QP_ctl_Z(3),verb_level=V_more)
  !
  ! Xs Xp Xd Xx
  !

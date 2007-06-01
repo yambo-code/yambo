@@ -28,7 +28,7 @@
  use pars,          ONLY:SP,lchlen,HARTREE,IP
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
- use electrons,     ONLY:levels,n_sp_pol,BZ_RIM_nbands
+ use electrons,     ONLY:levels,n_sp_pol
  use QP_CTL,        ONLY:qp_fit_ctl
  use QP_m,          ONLY:QP_ctl_applied
  implicit none
@@ -41,24 +41,34 @@
  integer  ::ib,ik,l_isec(5)
  real(SP) ::Eoc,Eov
  character(lchlen) ::ch
- logical           ::QP_apply_done,l_continue
+ logical           ::QP_apply_done,l_qp(3)
  !
  ! Is there anything to do ?
  !
- l_continue=.false.
+ l_qp=.false.
  if (any(qpfit_rest%E/=(/0.,1.,0.,1./)).or.any(qpfit_free%E/=(/0.,1.,0.,1./))) then
    if (QP_apply_done(band_range,(/1,E%nk/),E,'E')) return
-   l_continue=.true.
+   l_qp(1)=.true.
  endif
  if (any((/qpfit_rest%W(:)/=0/)).or.any((/qpfit_free%W(:)/=0/))) then
    if (QP_apply_done(band_range,(/1,E%nk/),E,'W')) return
-   l_continue=.true.
+   l_qp(2)=.true.
+   if (.not.associated(E%W)) then
+     allocate(E%W(E%nb,E%nk,n_sp_pol))
+     call mem_est("E-W",(/size(E%W)/),(/SP/))
+     E%W=0.
+   endif
  endif
  if (qpfit_rest%Z/=(1.,0.).or.qpfit_free%Z/=(1.,0.)) then
    if (QP_apply_done(band_range,(/1,E%nk/),E,'Z')) return
-   l_continue=.true.
+   l_qp(3)=.true.
+   if (.not.associated(E%Z)) then
+     allocate(E%Z(E%nb,E%nk,n_sp_pol))
+     call mem_est("E-Z",(/size(E%Z)/))
+     E%Z=1.
+   endif
  endif
- if (.not.l_continue) return
+ if (.not.any(l_qp)) return
  !
  if (.not.QP_ctl_applied) then
    QP_ctl_applied=.true.
@@ -84,10 +94,10 @@
    enddo
  enddo
  !
- call do_fit_operation('E',2,qpfit_rest%E,qpfit_free%E)
- call do_fit_operation('W',3,qpfit_rest%W,qpfit_free%W)
- call do_fit_operation('Z',1,(/real(qpfit_rest%Z),aimag(qpfit_rest%Z)/),&
-&                            (/real(qpfit_free%Z),aimag(qpfit_free%Z)/))
+ if (l_qp(1)) call do_fit_operation('E',2,qpfit_rest%E,qpfit_free%E)
+ if (l_qp(2)) call do_fit_operation('W',3,qpfit_rest%W,qpfit_free%W)
+ if (l_qp(3)) call do_fit_operation('Z',1,(/real(qpfit_rest%Z),aimag(qpfit_rest%Z)/),&
+&                                         (/real(qpfit_free%Z),aimag(qpfit_free%Z)/))
  !
  write (ch,'(4a)') '-- ',trim(qpfit_free%short_descr),&
 &      ' Linear/Quadratic extrapolation ',repeat('-',19)
@@ -102,23 +112,37 @@
    !
    subroutine do_fit_operation(what,nM,Mr,Mf)
      character(1) :: what
-     integer  :: nM,iref
-     real(SP) :: Mr(2*nM),Mf(2*nM),rref,Ml
+     integer      :: nM
+     real(SP)     :: Mr(2*nM),Mf(2*nM)
      !
      ! Work Space
      !
-     integer  :: i3
-     real(SP) :: delta
+     integer  :: i1,i2,i3,iref,ik_r
+     real(SP) :: delta,rref,Ml
      logical  :: QP_apply_done
+     !
      do ib=band_range(1),band_range(2)
        !
        do ik=1,E%nk
          !
          if (QP_apply_done((/ib,ib/),(/ik,ik/),E,what)) cycle
+         !
          if (E%Eo(ib,ik,1)> 1.E-5) iref=0
          if (E%Eo(ib,ik,1)<=1.E-5) iref=nM
          if (E%Eo(ib,ik,1)> 1.E-5) rref=Eoc
          if (E%Eo(ib,ik,1)<=1.E-5) rref=Eov
+         !
+         if (what=='Z') then
+           E%Z(ib,ik,1)=Mf(1)+(0.,1.)*Mf(2)
+           if (DB_corrected(ib,ik)/=1) then
+             if (Mr(1)/=1.) E%Z(ib,ik,1)=(Mf(1)+Mr(1))/2.+(0.,1.)*(Mf(2)+Mr(2))/2.
+           endif
+           E%qp_done(ib,ik)=E%qp_done(ib,ik)+4
+           cycle
+         endif
+         !
+         ! Calculates the polinomial expansion (delta)
+         ! using Mf and Mr coefficients
          !
          delta=Mf(iref+1)
          do i3=1,nM-1
@@ -126,7 +150,6 @@
            if (what=='E') Ml=Ml-1.
            delta=delta+Ml*(E%Eo(ib,ik,1)-rref)**i3
          enddo
-         if (what=='Z') E%Z(ib,ik)=Mf(1)+(0.,1.)*Mf(2)
          if (DB_corrected(ib,ik)/=1) then
            delta=delta+Mr(iref+1)
            do i3=1,nM-1
@@ -134,26 +157,18 @@
              if (what=='E') Ml=Ml-1.
              delta=delta+Ml*(E%Eo(ib,ik,1)-rref)**i3
            enddo
-           if (what=='Z') E%Z(ib,ik)=E%Z(ib,ik)+Mr(1)+(0.,1.)*Mr(2)
          endif
          !
-         if (what=='E') then
-           E%E(ib,ik,1)=E%E(ib,ik,1)+delta
-           !
-           ! DEBUG >
-           if (associated(E%E_RIM)) then
-             !
-             if (ib>BZ_RIM_nbands) cycle
-             !
-           endif
-           ! DEBUG >
-           !
+         if (what=='E') E%E(ib,ik,1)=E%E(ib,ik,1)+delta
+         !
+         if (what=='W') then
+           if (E%Eo(ib,ik,1)<=1.E-5) E%W(ib,ik,1)=E%W(ib,ik,1)+abs(delta)
+           if (E%Eo(ib,ik,1)> 1.E-5) E%W(ib,ik,1)=E%W(ib,ik,1)-abs(delta)
          endif
          !
-         if (what=='W') E%W(ib,ik)=E%W(ib,ik)+(0.,1.)*delta
          if (what=='E') E%qp_done(ib,ik)=E%qp_done(ib,ik)+1
          if (what=='W') E%qp_done(ib,ik)=E%qp_done(ib,ik)+2
-         if (what=='Z') E%qp_done(ib,ik)=E%qp_done(ib,ik)+4
+         !
        enddo
      enddo
    end subroutine

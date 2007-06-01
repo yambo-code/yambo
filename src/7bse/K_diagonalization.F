@@ -24,7 +24,7 @@
  ! Generic diagonalization method to solve resonant and non resonant
  ! Hamiltonians.
  !
- use pars,           ONLY:SP,DP,pi
+ use pars,           ONLY:SP,DP,pi,schlen
  use X_m,            ONLY:X_epsilon
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,Kernel_by_V,&
 &                         BS_K_coupling,BSS_write_eig_2_db,BS_eh_f,BS_not_const_eh_f
@@ -34,6 +34,9 @@
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:d3k_factor,q_norm
  use com,            ONLY:isec
+#if defined PJ_PH 
+ use com,            ONLY:of_open_close,msg
+#endif
  use timing,         ONLY:live_timing
  use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,ncpu,myid,pp_indexes_reset
  use par_indexes_m,  ONLY:par_indexes
@@ -51,6 +54,9 @@
  complex(DP):: zdotu,zdotc
 #else
  complex(SP):: cdotu,cdotc
+#endif
+#if defined PJ_PH 
+ character(schlen)    ::o_file
 #endif
  !
  ! Residuals & Energies
@@ -148,6 +154,20 @@
        forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,:)=BS_mat(i1,:)*BS_eh_f(i1-BS_K_dim)
      endif
    endif
+   !
+#if defined PJ_PH 
+   o_file='bs_mat'
+   call of_open_close(trim(o_file),'ot')
+   do i1=1,BS_K_dim
+     do i2=1,BS_K_dim
+       if (i1==i2) cycle
+       call msg('o bs_mat','',(/real(i1),real(i2),&
+&               abs(BS_mat(i1,i2))/),INDENT=-2,USE_TABS=.TRUE.)
+     enddo
+   enddo
+   call of_open_close(trim(o_file))
+#endif
+   !
  endif
  !
  ! Initialize the output file 

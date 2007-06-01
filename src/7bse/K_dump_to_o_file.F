@@ -83,7 +83,7 @@
  if (mode>0) then
    call msg(extension,'#')
    if (mode==1) call msg(extension,'#',BSS_of_title,INDENT=0,USE_TABS=.TRUE.)
-   if (mode/=2) call msg(extension,'#',BSS_of_title(:5),INDENT=0,USE_TABS=.TRUE.)
+   if (mode/=1) call msg(extension,'#',BSS_of_title(:5),INDENT=0,USE_TABS=.TRUE.)
    call msg(extension,'#')
    do i1=1,size(X_epsilon(1,:))
      !

@@ -188,14 +188,9 @@
  !
  if (read_is_on(ID)) then
    ! 
-   allocate(E%E(E%nb,E%nk,n_sp_pol),E%f(E%nb,E%nk,n_sp_pol),&
-&           E%W(E%nb,E%nk),E%Z(E%nb,E%nk))
-   call mem_est("E-E E-f E-W E-Z",&
-&               (/size(E%E),size(E%f),size(E%W),size(E%Z)/),&
-&               (/SP,        SP,        SP,        2*SP/) )
+   allocate(E%E(E%nb,E%nk,n_sp_pol),E%f(E%nb,E%nk,n_sp_pol))
+   call mem_est("E-E E-f",(/size(E%E),size(E%f)/),(/SP,SP/))
    E%f=0._SP
-   E%W=0._SP
-   E%Z=(0._SP,0._SP)
    !
    allocate(g_vec(ng_vec,3),k%pt(k%nibz,3))
    allocate(dl_sop(3,3,nsym),wf_nc_k(k%nibz))

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- function X_Gf(W,pole,ordering)
+function X_Gf(W,pole,ordering)
  !
  use pars, ONLY:SP,pi
  implicit none
@@ -32,5 +32,4 @@
  if (ordering=="r") X_Gf=1./(W-pole)                   
  if (ordering=="a") X_Gf=           -1./(conjg(W)+pole)
  !
- end function
-
+end function

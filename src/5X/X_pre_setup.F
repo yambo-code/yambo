@@ -48,8 +48,8 @@
  if (X%ib(1)<0.or.X%ib(1)>Xen%nbm.or.X%ib(2)<X%ib(1)) X%ib(1)=1
  if (X%ib(2)>Xen%nb.or.X%ib(2)<Xen%nbf)               X%ib(2)=Xen%nb
  !
- ! Here  I call the coarse grid generator only if I am not
- ! going to use the X RIM
+ ! Here I set up the RIM flag to (for example) skip the coarse 
+ ! grid generator in the Xo calculation
  !
  use_X_RIM=X%ib(2)<=BZ_RIM_nbands.and.(.not.l_bs_fxc)
  if (use_X_RIM) X_RIM_nkpts=BZ_RIM_tot_nkpts

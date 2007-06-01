@@ -19,21 +19,22 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- logical function QP_apply_done(br,kr,en,what)
-!=============================================
-!
-! (E) qp_done = 1 3 5 7
-! (W) qp_done = 2 3 6 7
-! (Z) qp_done = 4 5 6 7
-!
+logical function QP_apply_done(br,kr,en,what)
+ !
+ ! (E) qp_done = 1 3 5 7
+ ! (W) qp_done = 2 3 6 7
+ ! (Z) qp_done = 4 5 6 7
+ !
  use electrons,     ONLY:levels
  implicit none
  type(levels) ::en
  integer      ::br(2),kr(2)
  character(1) ::what
-!ws
+ ! 
+ ! Work Space
+ !
  integer :: i1,i2,i3,iref(4)
-!
+ !
  QP_apply_done=.true.
  if (what=='E') iref=(/1,3,5,7/)
  if (what=='W') iref=(/2,3,6,7/)
@@ -46,4 +47,5 @@
 &        en%qp_done(i1,i2)/=iref(4)) QP_apply_done=.false.
    enddo
  enddo
- end function
+ !
+end function

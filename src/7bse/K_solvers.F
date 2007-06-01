@@ -146,6 +146,12 @@
  run_Diago           =index(BSS_mode,'d')/=0
  Pert_inversion      =index(BSS_mode,'i')/=0
  !
+ if ((run_Haydock.or.run_Diago).and.associated(Ken%W)) then
+   call warning('K with QP widths supports only the inversion solver')
+   run_Haydock=.false.
+   run_Diago  =.false.
+ endif
+ !
  if (run_Haydock) then
    if (BS_K_coupling)     call warning('Non-resonant K still unsupported (Haydock)')
    if (BS_not_const_eh_f) call warning('Fractional occupations still unsupported (Haydock)')

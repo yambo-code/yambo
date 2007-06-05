@@ -79,7 +79,7 @@
  ! I/O
  !
  integer           ::io_err,ID
- integer, external ::ioBS_diago
+ integer, external ::ioBSS_diago
  !  
  ! Sectioning
  !
@@ -121,7 +121,7 @@
  ! Diagonalization DB (IN)
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- io_err=ioBS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+ io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
  !
  if(io_err<0) then
    !
@@ -356,7 +356,7 @@
  !
  if (io_err/=0) then
    call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
-   io_err=ioBS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+   io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
  endif
  !
  ! CLEAN

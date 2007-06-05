@@ -19,8 +19,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function ioHaydock(ID,it,Af,Bf,reached_treshold,Vnm1,Vn,Vnp1)
-!=====================================================================
+integer function ioBSS_Haydock(ID,it,Af,Bf,reached_treshold,Vnm1,Vn,Vnp1)
+ !
  use pars,          ONLY:SP
  use QP_m,          ONLY:QP_ctl_E
  use BS,            ONLY:BS_identifier,BS_K_dim,BSS_q0
@@ -34,16 +34,18 @@
  real(SP) :: Vnm1(2,BS_K_dim)
  real(SP) :: Vn(2,BS_K_dim)
  real(SP) :: Vnp1(2,BS_K_dim)
-!ws
+ ! 
+ ! Work Space
+ !
  integer  :: it_on_disk
-
- ioHaydock=io_connect(desc='Haydock_restart',type=2,ID=ID)
- if (ioHaydock<0) goto 1
-
+ !
+ ioBSS_Haydock=io_connect(desc='Haydock_restart',type=2,ID=ID)
+ if (ioBSS_Haydock<0) goto 1
+ !
  if (any((/io_sec(ID,:)==1/))) then
-
-   ioHaydock=io_header(ID,QP_ctl_K=.true.)
-
+   !
+   ioBSS_Haydock=io_header(ID,QP_ctl_K=.true.)
+   !
    call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
    call io_elemental(ID,VAR=&
 &       " BSK Identifier                  :",I0=BS_identifier,CHECK=.TRUE.,OP=(/"=="/))
@@ -54,20 +56,20 @@
 &                                            DB_R0=reached_treshold)
    call io_elemental(ID,VAR=&
 &       " Field direction                 :",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/))
-
+   !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
-!
-! ioHaydock due to the header
-!
-   if (ioHaydock<0) goto 1
-
-   ioHaydock=io_status(ID)
-   if (ioHaydock<0) goto 1
-  
-   ioHaydock=it_on_disk
-
+   !
+   ! ioBSS_Haydock due to the header
+   !
+   if (ioBSS_Haydock<0) goto 1
+   !
+   ioBSS_Haydock=io_status(ID)
+   if (ioBSS_Haydock<0) goto 1
+   !
+   ioBSS_Haydock=it_on_disk
+   !
  endif
-
+ !
  if (any((/io_sec(ID,:)==2/))) then
    call io_bulk(ID,'Vnm1',VAR_SZ=(/2,BS_K_dim/))
    call io_bulk(ID,R2=Vnm1)
@@ -80,8 +82,7 @@
    call io_bulk(ID,'B_factors',VAR_SZ=(/it+1/))
    call io_bulk(ID,R1=Bf)
  endif
-
+ !
 1 call io_disconnect(ID=ID)
-
- end function
-
+ !
+end function

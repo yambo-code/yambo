@@ -19,41 +19,39 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine polfit(N,X,Y,order,Tt,Ferr,t_zero)
-!=============================================
+subroutine polfit(N,X,Y,order,Tt,EPS,t_zero)
  use pars, ONLY:DP
  implicit none
+ !
  integer  :: N,order
- real(DP) :: X(N),Y(N),Tt(order+1),Ferr,t_zero
-!ws
+ real(DP) :: X(N),Y(N),Tt(order+1),EPS,t_zero
+ ! 
+ ! Work Space
+ !
  integer  :: NDEG
  real(DP) :: W(N),R(N),IERR,wk(3*N+3*order+3)
-!
- Ferr=0.
+ !
  W(:)=1./sum(Y(:)**2.)
-
-!
+ !
  if (N<=1) then
-   Ferr=-1.
+   EPS=-1._DP
    return
  endif
-!
-! Simple linear fit on 2 points
-!
+ !
+ ! Simple linear fit on 2 points
+ !
  if (N==2.and.order==1) then
    Tt(2) = ( Y(1)-Y(2) ) / ( X(1) - X(2) )
    Tt(1) = Y(1) - Tt(2)*X(1)
    return
  endif
-!
-! General fit on N points
-!
- Ferr=-1.
- call DPOLFT (N,X,Y,W,order,NDEG,Ferr,R,IERR,wk)
- if (NDEG<order) then
-   Ferr=-1.
-   return
- endif
- call DPCOEF (order,t_zero,Tt,wk)
-
- end subroutine
+ !
+ ! General fit on N points
+ !
+ Tt=0.
+ EPS=-1._DP
+ call DPOLFT (N,X,Y,W,order,NDEG,EPS,R,IERR,wk)
+ order=NDEG 
+ call DPCOEF (order,t_zero,Tt(:order+1),wk)
+ !
+end subroutine

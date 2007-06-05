@@ -23,6 +23,7 @@ subroutine QP_apply_fit(band_range,qp,en,qpfit,what)
  !
  use pars,          ONLY:SP,schlen,DP
  use com,           ONLY:warning
+ use stderr,        ONLY:intc
  use QP_m,          ONLY:QP_t
  use QP_CTL,        ONLY:qp_fit_ctl
  use electrons,     ONLY:levels
@@ -36,7 +37,7 @@ subroutine QP_apply_fit(band_range,qp,en,qpfit,what)
  !
  ! Work Space
  !
- integer  :: i1,Nqpc,Nqpv,fit_terms
+ integer  :: i1,Nqpc,Nqpv,fit_order,fit_order_on_fly
  real(SP) :: Eoc,Eov,Ec,Ev,V_err,C_err
  real(DP) :: EPS,Dy(qp%n_states),Dx(qp%n_states),Tt_def(3)
  real(DP), allocatable :: TCv(:),TCc(:)
@@ -59,15 +60,17 @@ subroutine QP_apply_fit(band_range,qp,en,qpfit,what)
    endif
  enddo
  !
- fit_terms=1
- if (what=='W') fit_terms=2
- allocate(TCv(fit_terms+1),TCc(fit_terms+1))
+ fit_order=1
+ if (what=='W') fit_order=2
+ allocate(TCv(fit_order+1),TCc(fit_order+1))
  Tt_def=0.d0
  if (what=='E') Tt_def(2)=1.
- TCv=Tt_def(:fit_terms+1)
- TCc=Tt_def(:fit_terms+1)
+ TCv=Tt_def(:fit_order+1)
+ TCc=Tt_def(:fit_order+1)
  !
  ! E>0 (conduction)
+ !
+ fit_order_on_fly=fit_order
  !
  Nqpc=0
  do i1=1,qp%n_states
@@ -79,20 +82,20 @@ subroutine QP_apply_fit(band_range,qp,en,qpfit,what)
      Dx(Nqpc)=real(qp%E_bare(i1)-Eoc)
    endif
  enddo
- if (Nqpc>fit_terms) then
-   call polfit(Nqpc,Dx(:Nqpc),Dy(:Nqpc),fit_terms,TCc,EPS,0.d0)
-   if (EPS==-1.d0) then
-     write (warn_msg,'(a,i1.1,3a)') 'Order ',&
-&          fit_terms,' fit on ',what,' [c] failed. Fit skipped.'
-     call warning(trim(warn_msg))
-     TCc=Tt_def(:fit_terms+1)
-     EPS=0.d0
+ if (Nqpc>fit_order) then
+   call polfit(Nqpc,Dx(:Nqpc),Dy(:Nqpc),fit_order_on_fly,TCc,EPS,0.d0)
+   if (fit_order_on_fly/=fit_order) then
+     call warning('Fit order on '//trim(what)//' [c] reduced to '//&
+&                  trim(intc(fit_order_on_fly)))
+     TCc(fit_order_on_fly+2:fit_order)=Tt_def(fit_order_on_fly+2:fit_order)
    endif
    if (what=='E') qpfit%E_err(1)=EPS
    if (what=='W') qpfit%W_err(1)=EPS
  endif
  !
  ! E<0 (valence)
+ !
+ fit_order_on_fly=fit_order
  !
  Nqpv=0
  do i1=1,qp%n_states
@@ -104,14 +107,12 @@ subroutine QP_apply_fit(band_range,qp,en,qpfit,what)
      Dx(Nqpv)=real(qp%E_bare(i1)-Eov)
    endif
  enddo
- if (Nqpv>fit_terms) then
-   call polfit(Nqpv,Dx(:Nqpv),Dy(:Nqpv),fit_terms,TCv,EPS,0.d0)
-   if (EPS==-1.d0) then
-     write (warn_msg,'(a,i1.1,3a)') 'Order ',&
-&          fit_terms,' fit on ',what,' [v] failed. Fit skipped.'
-     call warning(trim(warn_msg))
-     TCv=Tt_def(:fit_terms+1)
-     EPS=0.d0
+ if (Nqpv>fit_order) then
+   call polfit(Nqpv,Dx(:Nqpv),Dy(:Nqpv),fit_order_on_fly,TCv,EPS,0.d0)
+   if (fit_order_on_fly/=fit_order) then
+     call warning('Fit order on '//trim(what)//' [v] reduced to '//&
+&                  trim(intc(fit_order_on_fly)))
+     TCv(fit_order_on_fly+2:fit_order)=Tt_def(fit_order_on_fly+2:fit_order)
    endif
    if (what=='E') qpfit%E_err(2)=EPS
    if (what=='W') qpfit%W_err(2)=EPS

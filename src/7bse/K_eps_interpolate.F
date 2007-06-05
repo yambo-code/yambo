@@ -1,0 +1,96 @@
+!
+! Copyright (C) 2000-2005 A. Marini and the SELF team 
+!         http://www.fisica.uniroma2.it/~self
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+subroutine K_eps_interpolate(nW,W,err)
+ !
+ use pars,         ONLY:SP,DP
+ use vec_operate,  ONLY:sort
+ use X_m,          ONLY:X_epsilon
+ implicit none
+ !
+ integer  :: nW,err(nW)
+ real(SP) :: W(nW)
+ !
+ ! Work Space...
+ !
+ integer, parameter :: order_max=3,n_pts_max=5
+ integer    ::iw,iw_fit,n_pts,order,i1
+ real(SP)   ::r_fit_pt(n_pts_max),w_dum,dist(2)
+ real(DP)   ::EPS,Dy(n_pts_max),Dx(n_pts_max),Pol_coeff(order_max+1)
+ !
+ w_loop: do iw=1,nW
+   if (err(iw)/=0) then
+     n_pts=0
+     r_fit_pt=0.
+     do iw_fit=iw-1,1,-1
+       if (err(iw_fit)/=0) cycle
+       n_pts=n_pts+1
+       r_fit_pt(n_pts)=iw_fit
+       if (n_pts==n_pts_max/2) exit
+     enddo
+     do iw_fit=iw+1,nW
+       if (err(iw_fit)/=0) cycle
+       n_pts=n_pts+1
+       r_fit_pt(n_pts)=iw_fit
+       if (n_pts==n_pts_max) exit
+     enddo
+     call sort(r_fit_pt(:n_pts))
+     !
+     do i1=1,2
+       order=order_max
+       if (n_pts<=order_max) order=n_pts-2
+       if (order<=0) cycle w_loop
+       !
+       Dx=0._DP
+       Dy=0._DP
+       Pol_coeff=0._DP
+       do iw_fit=1,n_pts
+         Dx(iw_fit)=W( int(r_fit_pt(iw_fit)) )-W(iw)
+         if (i1==1) Dy(iw_fit)=aimag(X_epsilon(2, int(r_fit_pt(iw_fit)) ))
+         if (i1==2) Dy(iw_fit)=real(X_epsilon(2, int(r_fit_pt(iw_fit)) ))
+       enddo
+       call polfit(n_pts,Dx(:n_pts),Dy(:n_pts),order,Pol_coeff(:order+1),EPS,0.d0)
+       !
+       if (i1==1) X_epsilon(2,iw)=(0.,1.)*pol_eval(0.)
+       if (i1==2) X_epsilon(2,iw)=X_epsilon(2,iw)+pol_eval(0.)
+       !
+     enddo
+     !
+     if (dist(1)<0.01.and.dist(2)<0.01) err(iw)=0
+     !
+   endif
+ enddo w_loop
+ !
+contains
+  !
+  real(SP) function pol_eval(at_w)
+    !
+    real(SP) ::at_w
+    integer  ::ip
+    !
+    pol_eval=0.
+    do ip=1,order+1
+      pol_eval=pol_eval+at_w**(ip-1)*Pol_coeff(ip)
+    enddo
+    !
+  end function
+  !
+end subroutine

@@ -19,22 +19,23 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine freqs_setup(wv)
-!==========================
-!
-! %er %dr %n -> %p
-!
+subroutine freqs_setup(wv)
+ !
+ ! %er %dr %n -> %p
+ !
  use pars,          ONLY:SP
  use frequency,     ONLY:w_samp
  use memory_m,      ONLY:mem_est
  implicit none
  type(w_samp):: wv 
-!ws
+ ! 
+ ! Work Space
+ !
  integer          :: i1
  real(SP),external:: damping
-!
-!If %p is associated and consitent with %er/%dr return
-!
+ !
+ !If %p is associated and consitent with %er/%dr return
+ !
  if (associated(wv%p)) then
    if (size(wv%p)==wv%n(1).and.&
 &      abs(  real(wv%p(1))-wv%er(1) )<1.E-5.and.&
@@ -42,29 +43,25 @@
 &      abs(  real(wv%p(wv%n(1)))-wv%er(2) )<1.E-5.and.&
 &      abs( aimag(wv%p(wv%n(1)))-wv%dr(2) )<1.E-5) return
  endif
-!
+ !
  if (associated(wv%p)) then
    deallocate(wv%p)
    call mem_est("W-p")
  endif
-!
-! First the total/mem steps
-!
+ !
+ ! First the total/mem steps
+ !
  if (wv%er(2)==wv%er(1)) wv%n=1
  wv%n(2)=nint(wv%per_memstps*real(wv%n(1))/100.)
  if (wv%n(1)<wv%n(2)) wv%n(2)=wv%n(1)
-!
-! Redefine n(1) to the closest multiplier of n(2)
-!
+ !
+ ! Redefine n(1) to the closest multiplier of n(2)
+ !
  wv%n(1)=wv%n(1)-mod(wv%n(1),wv%n(2))
-!DEBUG<
-! if (wv%n(1)-wv%n(2)*int(wv%n(1)/wv%n(2)) > 
-! stop
-!DEBUG>
-
+ !
  allocate(wv%p(wv%n(1)))
  call mem_est("W-p",(/wv%n(1)/))
-
+ !
  wv%p(1)=cmplx(wv%er(1),wv%dr(1),SP)
  if (wv%n(1)==1) then
    wv%er(2)=wv%er(1)
@@ -75,5 +72,5 @@
  do i1=1,wv%n(1)
    wv%p(i1)=real(wv%p(i1))+damping(wv%er,wv%dr,real(wv%p(i1)))*cmplx(0.,1.,SP)
  enddo
-
- end subroutine
+ !
+end subroutine

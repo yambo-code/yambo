@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function ioBS_diago(iq,BS_H_dim,bsE,bsR,ID)
+integer function ioBSS_diago(iq,BS_H_dim,bsE,bsR,ID)
  !
  use pars,          ONLY:SP,schlen,IP
  use BS,            ONLY:BS_identifier,BSS_q0,BSS_write_eig_2_db,&
@@ -39,15 +39,15 @@
  !
  write (db_name,'(a,i2.2)') 'BS_diago_Q',iq
  !
- ioBS_diago=io_connect(desc=trim(db_name),type=2,ID=ID)
- if (ioBS_diago/=0) goto 1
+ ioBSS_diago=io_connect(desc=trim(db_name),type=2,ID=ID)
+ if (ioBSS_diago/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
    ! As this DB must respect the BS ideentifier I only need to
    ! check the K QP corrections
    !
-   ioBS_diago=io_header(ID,QP_ctl_K=.true.)
+   ioBSS_diago=io_header(ID,QP_ctl_K=.true.)
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
    call io_elemental(ID,VAR=&
@@ -60,10 +60,10 @@
    !
    ! header return
    !
-   if (ioBS_diago/=0) goto 1
+   if (ioBSS_diago/=0) goto 1
    !
-   ioBS_diago=io_status(ID)
-   if (ioBS_diago/=0) goto 1
+   ioBSS_diago=io_status(ID)
+   if (ioBSS_diago/=0) goto 1
  endif
  !
  if (any((/io_sec(ID,:)==2/))) then
@@ -78,7 +78,7 @@
    ! If not switched on skip this section
    !
    if (.not.BSS_write_eig_2_db) then
-     ioBS_diago=-1
+     ioBSS_diago=-1
      goto 1
    endif
    !
@@ -110,4 +110,4 @@
  !
 1 call io_disconnect(ID)
  !
- end function
+end function

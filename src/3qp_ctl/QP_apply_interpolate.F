@@ -19,8 +19,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
-&                                DB_corrected,n_neigh)
+subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
+&                               DB_corrected,n_neigh)
  !
  ! Using qp% elements (all must be defined) I QP correct
  ! the en type
@@ -85,7 +85,7 @@
  enddo
  call msg('r','[QP] Kpts covered exactly  [o/o]:',&
 &              real(nk_exact)/real(k%nibz)*100._SP)
- if (.not.l_qp(4).and.nk_interpolated>0) then
+ if (l_qp(4).and.nk_interpolated>0) then
    call msg('r','[Interpolate] Nighbours         :',n_neigh)
    call msg('r','[Interpolate] Kpts covered [o/o]:',&
 &               real(nk_interpolated)/real(k%nibz)*100._SP)
@@ -180,4 +180,4 @@
      enddo
    end function
    !
- end subroutine
+end subroutine

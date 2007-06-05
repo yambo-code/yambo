@@ -1,3 +1,28 @@
+2007-06-01 12:22:24 r125 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.9_11-05-07
+
+	*  spp/k_analyze.F spp/spp_init.F spp/elph_pw_dbs.F 0modules/mod_electrons.F 2io/ioDB1.F 5X/X_pre_setup.F 5X/X_eh_setup.F 5X/X_os.F 5X/.objects 5X/X_Gf.F 5X/X_bare_RIM_Gf.F 5X/X_RIM_Gf.F 7bse/K_dump_to_o_file.F 7bse/K_diagonalization.F 7bse/K_inversion.F 7bse/K_solvers.F 4it/init_load.F 3qp_ctl/QP_apply_interpolate.F 3qp_ctl/mod_QP_CTL.F 3qp_ctl/QP_apply_stretch.F 3qp_ctl/QP_apply_fit.F 3qp_ctl/QP_apply_db.F 3qp_ctl/QP_apply_done.F 1common/extend_occupations.F 1common/run_summary.F 1common/coarse_grid.F 1common/fermi_level.F 5elph/ELPH_K_print.F
+
+	Bugs:
+	- spp/elph_pw_dbs.F: path correction while DB reading. Use either type -1 or -2
+	- src/1common/extend_occupations.F: Xe%E_RIM levels shift added twice, in this
+	  routine and in the Fermi routine.
+
+	Additions:
+	- src/5X/X_os.F: support for a calculation with QP Z's and widths (coarse_grid
+	  skipped). X_bare_RIM_Gf.F routine changed and renamed accordingly.
+	-  src/7bse/K_inversion.F: support for a calculation with QP Z's and widths.
+
+	Changes:
+	- src/2io/ioDB1.F: %W and %Z are now allocated when QP corrections are added
+	- mod_electrons.F (E_duplicate): when a level type is duplicated QP
+	  corrections are copied as well only if the destination type is empty (naive)
+	- src/3qp_ctl/*.F: QP widths and Z's support enabled.
+	- src/3qp_ctl/mod_QP_CTL.F: energy corrections on %E_RIM added.
+
+	Patch sent by: Andrea
+
 2007-05-24 10:42:15 r124 Andrea Marini <marini@roma2.infn.it>
 
 	V 3.0.9_11-05-07

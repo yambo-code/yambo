@@ -49,17 +49,80 @@
    !
  contains
    !
-   subroutine W_duplicate(Wi,Wo)
+   subroutine W_merge(W1,Wo,table)
+     use memory_m, ONLY:mem_est
+     type(w_samp):: W1,Wo
+     integer     :: table(W1%n(1)+Wo%n(1))
+     ! 
+     ! Work Space
      !
+     integer     :: nw,iw1,iw2,i1
+     type(w_samp):: Wbase
+     real(SP)    :: r(3)
+     !
+     call W_reset(Wbase)
+     call W_duplicate(Wo,Wbase)
+     call W_reset(Wo)
+     !
+     nw=Wbase%n(1)
+     table=0
+     do i1=1,nw
+       table(i1)=-i1
+     enddo
+     !
+     W1_loop: do iw1=W1%n(1),1,-1
+       do iw2=1,Wbase%n(1)
+         !
+         r=(/real(Wbase%p(iw2)),real(W1%p(iw1)),0./)
+         if (iw2<Wbase%n(1)) r(3)=real(Wbase%p(iw2+1))
+         !
+         if (abs(r(1)-r(2))<1.E-5) then
+           table(iw2)=iw1
+           cycle W1_loop 
+         endif
+         !
+         if ((iw2< Wbase%n(1).and.r(1)<r(2).and.r(2)<r(3)).or.&
+&            (iw2==Wbase%n(1).and.r(1)<r(2)) ) then
+           do i1=W1%n(1)+Wbase%n(1)-1,iw2+1,-1
+             table(i1+1)=table(i1)
+           enddo
+           table(iw2+1)=iw1
+           nw=nw+1
+           cycle W1_loop
+         endif
+         !
+       enddo
+     enddo W1_loop
+     !
+     Wo%n=nw
+     allocate(Wo%p(nw))
+     call mem_est("W-p",(/Wo%n(1)/))
+     do iw1=1,nw
+       if (table(iw1)>0) Wo%p(iw1)=W1%p(table(iw1))
+       if (table(iw1)<0) Wo%p(iw1)=Wbase%p(-table(iw1))
+     enddo
+     Wo%er=(/ minval(real(Wo%p)), maxval(real(Wo%p)) /)
+     Wo%dr=(/ minval(aimag(Wo%p)), maxval(aimag(Wo%p)) /)
+     !
+     call W_reset(Wbase)
+     !
+   end subroutine W_merge
+   !
+   subroutine W_duplicate(Wi,Wo)
+     use memory_m, ONLY:mem_est
      type(w_samp):: Wi,Wo
      Wo%n=Wi%n
      Wo%per_memstps=Wi%per_memstps
      Wo%er=Wi%er
      Wo%dr=Wi%dr
+     if (associated(Wi%p)) then
+       allocate(Wo%p(Wo%n(1)))
+       call mem_est("W-p",(/Wo%n(1)/))
+       Wo%p=Wi%p
+     endif
    end subroutine W_duplicate
    !
    subroutine W_reset(W)
-     !
      use memory_m, ONLY:mem_est
      type(w_samp)::W
      W%n=100

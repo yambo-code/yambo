@@ -51,7 +51,7 @@
  ! I/O
  !
  integer           :: ID,io_err
- integer, external :: ioHaydock
+ integer, external :: ioBSS_Haydock
  !
  if (isec(2)/=0) then
    call section('=','Haydock solver')
@@ -63,11 +63,11 @@
  !
  it_on_disk=0
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
- io_err=ioHaydock(ID,1,Af(1),Bf(1),reached_treshold,Vnm1,Vn,Vnp1)
+ io_err=ioBSS_Haydock(ID,1,Af(1),Bf(1),reached_treshold,Vnm1,Vn,Vnp1)
  if (io_err>0) then
    it_on_disk=io_err
    call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
-   io_err=ioHaydock(ID,it_on_disk,Af(:it_on_disk),Bf(:it_on_disk+1),&
+   io_err=ioBSS_Haydock(ID,it_on_disk,Af(:it_on_disk),Bf(:it_on_disk+1),&
 &                   reached_treshold,Vnm1,Vn,Vnp1)
    call msg('s','[Haydock] Restart DB with accuracy ',reached_treshold)
  endif
@@ -156,7 +156,7 @@
    !Haydock Coefficients and restart vector on disk
    !
    call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),ID=ID)
-   io_err=ioHaydock(ID,it,Af(:it),Bf(:it+1),reached_treshold,Vnm1,Vn,Vnp1)
+   io_err=ioBSS_Haydock(ID,it,Af(:it),Bf(:it+1),reached_treshold,Vnm1,Vn,Vnp1)
    !
    if (reached_treshold>0.and.reached_treshold<abs(Haydock_treshold)) then
      call msg('r','Accuracy (reached)   [o/o]:',reached_treshold)

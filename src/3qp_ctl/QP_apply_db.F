@@ -75,15 +75,17 @@
    call string_split(qpfit%db,db_piece)
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3/),MODE=DUMP,ID=ID)
    io_err=0
+   qp_db_name=' '
    do i1=1,10
      if (trim(db_piece(i1))=="<") then
        qp_db_name=db_piece(i1+1)
        io_err=ioQP(trim( db_piece(i1+1) ),qp,ID)
-       exit
      endif
-     if (.not.l_qp(1)) l_qp(1)=any((/trim(db_piece(i1))=="E",trim(db_piece(i1))=="e"/))
-     if (.not.l_qp(2)) l_qp(2)=any((/trim(db_piece(i1))=="W",trim(db_piece(i1))=="w"/))
-     if (.not.l_qp(3)) l_qp(3)=any((/trim(db_piece(i1))=="Z",trim(db_piece(i1))=="z"/))
+     if (len_trim(qp_db_name)==0) then
+       if (.not.l_qp(1)) l_qp(1)=any((/trim(db_piece(i1))=="E",trim(db_piece(i1))=="e"/))
+       if (.not.l_qp(2)) l_qp(2)=any((/trim(db_piece(i1))=="W",trim(db_piece(i1))=="w"/))
+       if (.not.l_qp(3)) l_qp(3)=any((/trim(db_piece(i1))=="Z",trim(db_piece(i1))=="z"/))
+     endif
      if (.not.l_qp(4)) l_qp(4)=any((/trim(db_piece(i1))=="ui",trim(db_piece(i1))=="uI",&
 &                                    trim(db_piece(i1))=="UI",trim(db_piece(i1))=="Ui"/))
    enddo

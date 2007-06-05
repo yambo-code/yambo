@@ -35,16 +35,17 @@ integer function pert_inversion(N,W,C,f,V,M,use_full_inv)
  ! Work Space
  !
  integer, parameter :: max_it=50
- real(SP),parameter :: treshold=1.E-5
+ real(SP),parameter :: perc_treshold=0.001
  integer     ::it,i1,i2
- complex(SP) ::A_nm1(N),A_n(N),delta_f(max_it),wk(N,N)
+ complex(SP) ::A_nm1(N),A_n(N),delta_f,wk(N,N),fo,f_in
 #if defined _DOUBLE
  complex(SP):: zdotc
 #else
  complex(SP):: cdotc
 #endif
  !
- pert_inversion=1
+ pert_inversion=0
+ f_in=f
  !
  A_nm1(:)=V(:)*W(:)
 #if defined _DOUBLE
@@ -53,39 +54,40 @@ integer function pert_inversion(N,W,C,f,V,M,use_full_inv)
  f=C*cdotc(N,W,1,A_nm1,1)
 #endif
  !
- delta_f=0.
- !
- do while (it<=max_it) 
+ if (.not.use_full_inv) then
    !
+   delta_f=0.
+   fo=f
+   !
+   do while (it<=max_it) 
+     !
 #if defined _DOUBLE
-   call zgemv('n',N,N,(1.,0.),M,N,A_nm1,1,(0.,0.),A_n,1)
+     call zgemv('n',N,N,(1.,0.),M,N,A_nm1,1,(0.,0.),A_n,1)
 #else
-   call cgemv('n',N,N,(1.,0.),M,N,A_nm1,1,(0.,0.),A_n,1)
+     call cgemv('n',N,N,(1.,0.),M,N,A_nm1,1,(0.,0.),A_n,1)
 #endif
-   A_n(:)=V(:)*A_n(:)
+     A_n(:)=V(:)*A_n(:)
 #if defined _DOUBLE
-   delta_f(it)=C*zdotc(N,W,1,A_n,1)
+     delta_f=C*zdotc(N,W,1,A_n,1)
 #else
-   delta_f(it)=C*cdotc(N,W,1,A_n,1)
+     delta_f=C*cdotc(N,W,1,A_n,1)
 #endif
+     !
+     f=f+delta_f
+     !
+     if (abs(real(delta_f))<perc_treshold*abs(real(fo)).and.&
+&        abs(aimag(delta_f))<perc_treshold*abs(aimag(fo))) return
+     !
+     A_nm1(:)=A_n(:)
+     !
+     it=it+1
+     !
+   enddo
    !
-   if (it>1.and.abs(delta_f(it))>abs(delta_f(it-1))) then
-     f=0.
-     pert_inversion=-1
-     exit
-   endif
+   pert_inversion=1
+   f=f_in
    !
-   f=f+delta_f(it)
-   !
-   if (abs(delta_f(it))<treshold) return
-   !
-   A_nm1(:)=A_n(:)
-   !
-   it=it+1
-   !
- enddo
- !
- if (use_full_inv) then
+ else
    wk=(0.,0.)
    do i1=1,N 
      wk(i1,i1)=1./V(i1)
@@ -104,9 +106,7 @@ integer function pert_inversion(N,W,C,f,V,M,use_full_inv)
 #else
    f=C*cdotc(N,W,1,A_n,1)
 #endif
- else
-   pert_inversion=-1
-   f=0.
+   !
  endif
  !
 end function

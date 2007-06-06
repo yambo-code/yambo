@@ -56,7 +56,7 @@ subroutine K_eps_interpolate(nW,W,err)
      !
      do i1=1,2
        order=order_max
-       if (n_pts<=order_max) order=n_pts-2
+       if (n_pts<n_pts_max) order=n_pts-2
        if (order<=0) cycle w_loop
        !
        Dx=0._DP

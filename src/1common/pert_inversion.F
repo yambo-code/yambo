@@ -34,8 +34,8 @@ integer function pert_inversion(N,W,C,f,V,M,use_full_inv)
  !
  ! Work Space
  !
- integer, parameter :: max_it=50
- real(SP),parameter :: perc_treshold=0.001
+ integer, parameter :: max_it=30
+ real(SP),parameter :: perc_treshold=0.01
  integer     ::it,i1,i2
  complex(SP) ::A_nm1(N),A_n(N),delta_f,wk(N,N),fo,f_in
 #if defined _DOUBLE

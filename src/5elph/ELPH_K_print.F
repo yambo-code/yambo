@@ -41,7 +41,7 @@ subroutine ELPH_K_print(E,k,q)
  !
  complex(SP) ::BS_R(BS_K_dim),BS_E(BS_K_dim),WS(BS_K_dim,BS_K_dim)
  integer     ::bsID,ii1,ii2,io_err
- integer, external::ioBS_diago,eval_ELPH_K
+ integer, external::ioBSS_diago,eval_ELPH_K
  !
  ! ... dummies
  !
@@ -61,7 +61,7 @@ subroutine ELPH_K_print(E,k,q)
  !
  BSS_write_eig_2_db=.TRUE.
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=bsID)
- io_err=ioBS_diago(1,BS_K_dim,BS_E,BS_R,bsID)
+ io_err=ioBSS_diago(1,BS_K_dim,BS_E,BS_R,bsID)
  !
  if (io_err==0.and.BS_bands(2)<=elph_nb) then
    !

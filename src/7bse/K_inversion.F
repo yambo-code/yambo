@@ -26,8 +26,9 @@ subroutine K_inversion(iq,W,E,k,q)
  use X_m,            ONLY:X_epsilon
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_not_const_eh_f,&
 &                         BS_K_coupling,BS_eh_table,BS_eh_E,BS_bands,Kernel_by_V,&
-&                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs
+&                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,BSS_skip_full_inv
  use memory_m,       ONLY:mem_est
+ use parser_m,       ONLY:parser
  use electrons,      ONLY:spin_occ,levels,BZ_RIM_nbands
  use frequency,      ONLY:w_samp,W_reset,W_merge
  use R_lattice,      ONLY:d3k_factor,q_norm,bz_samp
@@ -58,7 +59,8 @@ subroutine K_inversion(iq,W,E,k,q)
  ! ... frequencies
  !
  integer,  allocatable ::inv_err(:),iw_full(:),nw_full(:)
- integer    ::full_grp,nw
+ logical,  allocatable ::p_inv_2do(:)
+ integer    ::full_grp,nw,nw_read,nw_conv
  logical    ::full_diago
  !
 #if defined _DOUBLE
@@ -91,9 +93,10 @@ subroutine K_inversion(iq,W,E,k,q)
  if (BS_K_coupling) call warning('Inversion solver: unsupported for non-resonant K')
  if (any((/BS_not_const_eh_f,BS_K_coupling/))) return
  !
- ! RIM support ?
+ ! RIM support ? Full invertion ?
  !
  BSS_uses_RIM=BZ_RIM_nbands>=BS_bands(2)
+ call parser('SkipInv',BSS_skip_full_inv)
  !
  ! I/O
  !
@@ -105,6 +108,7 @@ subroutine K_inversion(iq,W,E,k,q)
  if (io_err==0) then
    allocate(inv_err_disk(W_disk%n(1)),eps_disk(W_disk%n(1)),&
 &           disk_freq_table(W_disk%n(1)+W%n(1)))
+   !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),ID=ID)
    io_err=ioBSS_invert(iq,W_disk%n(1),inv_err_disk,eps_disk,W_disk,ID)
    !
@@ -120,24 +124,30 @@ subroutine K_inversion(iq,W,E,k,q)
    BSS_er=W%er
    BSS_dr=W%dr
    !
-   allocate(X_epsilon(4,BSS_n_freqs))
-   allocate(inv_err(W%n(1)),iw_full(W%n(1)),nw_full(W%n(1)))
+   ALLOCate(X_epsilon(4,BSS_n_freqs))
+   allocate(inv_err(W%n(1)),iw_full(W%n(1)),nw_full(W%n(1)),p_inv_2do(W%n(1)))
+   p_inv_2do=.TRUE.
    X_epsilon=(0.,0.)
    inv_err=1
    !
-   nw=0
+   nw_read=0
+   nw_conv=0
    do iw=1,W%n(1)
      if (disk_freq_table(iw)>0) then
        inv_err(iw)=inv_err_disk(disk_freq_table(iw))
        X_epsilon(2,iw)=eps_disk(disk_freq_table(iw))/real(ncpu,SP)
-       if (inv_err(iw)==0) nw=nw+1
+       nw_read=nw_read+1
+       if (inv_err(iw)==1) p_inv_2do(iw)=.false.
+       if (inv_err(iw)==0) nw_conv=nw_conv+1
      endif
    enddo
-   call msg('rs','[BSE INV] Converged frequency read [o/o]:',real(nw)/real(W%n(1))*100.)
+   call msg('rs','[BSE INV] Frequency read      [o/o]:',real(nw_read)/real(W%n(1))*100.)
+   call msg('rs','[BSE INV] Converged frequency [o/o]:',real(nw_conv)/real(W%n(1))*100.)
    deallocate(inv_err_disk,eps_disk,disk_freq_table)
  else
-   allocate(inv_err(W%n(1)),iw_full(W%n(1)),nw_full(W%n(1)))
+   allocate(inv_err(W%n(1)),iw_full(W%n(1)),nw_full(W%n(1)),p_inv_2do(W%n(1)))
    inv_err=1
+   p_inv_2do=.TRUE.
    X_epsilon=(0.,0.)
  endif
  !
@@ -248,7 +258,7 @@ subroutine K_inversion(iq,W,E,k,q)
    endif
  enddo
  !
- if (full_grp>0) then
+ if (full_grp>0.and..not.BSS_skip_full_inv) then
    !
    call msg('rs','[BSE INV] Non converged frequency groups:',full_grp)
    !
@@ -288,7 +298,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! CLEAN
  !
- deallocate(inv_err)
+ deallocate(inv_err,p_inv_2do)
  call pp_indexes_reset(px)
  deallocate(BS_mat,iw_full,nw_full,Lo)
  call mem_est("BS_mat Lo WS")
@@ -316,7 +326,13 @@ contains
       endif
 #endif
       !
-      if (.not.px%i1p(i2).and..not.full_diago) cycle
+      if(.not.full_diago) then
+        if (.not.px%i1p(i2)) cycle
+        if (.not.p_inv_2do(i2)) then
+          call live_timing(steps=1)
+          cycle
+        endif
+      endif
       !
       if (inv_err(i2+iw_start-1)/=0) &
 &       inv_err(i2+iw_start-1)=pert_inversion(BS_K_dim,BSS_rhoq0,-1.*Co,&

@@ -69,7 +69,7 @@ subroutine exc_wf_eval(Xk)
  !... I/0
  !
  integer           ::io_err,ID,io_ID
- integer, external ::ioBS_diago,ioBS
+ integer, external ::ioBSS_diago,ioBS
  type(X_t)         ::Xbsk
  character(schlen) ::extension,titles(5)
  !
@@ -116,7 +116,7 @@ subroutine exc_wf_eval(Xk)
  ! Here I read energies and residuum
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_err=ioBS_diago(iq,BS_K_dim,BS_E,BS_R,io_ID)
+ io_err=ioBSS_diago(iq,BS_K_dim,BS_E,BS_R,io_ID)
  !
  call section('*','Excitonic Wave Function')
  !
@@ -126,7 +126,7 @@ subroutine exc_wf_eval(Xk)
  !
  if (action_mode == 's' ) then 
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
-   io_err=ioBS_diago(iq,BS_K_dim,BS_E,BS_R,ID)
+   io_err=ioBSS_diago(iq,BS_K_dim,BS_E,BS_R,ID)
    call sort_energies(BS_R,BS_E)
    return
  endif
@@ -142,7 +142,7 @@ subroutine exc_wf_eval(Xk)
  call mem_est('BS_mat',(/BS_K_dim**2/))
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
- io_err=ioBS_diago(iq,BS_K_dim,BS_E,BS_R,ID)
+ io_err=ioBSS_diago(iq,BS_K_dim,BS_E,BS_R,ID)
  ! 
  ! Loading  Wf 
  !

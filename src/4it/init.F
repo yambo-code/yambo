@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
+integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! init =-2  : Unsupported Runlevel(s) combination
  ! init =-1  : Missing CORE DBs
@@ -473,6 +473,7 @@
   call initactivate(1,'BSSmod BEnRange BDmRange BEnSteps BLongDir WRbsWF')
   if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs')
   if (index(BSS_mode,'t')/=0)  call initactivate(1,'FxcGRLc FxcSVDcut FxcMEStps FxcCausal')
+  if (index(BSS_mode,'i')/=0)  call initactivate(1,'SkipInv')
  endif
  !
  ! RAS
@@ -768,7 +769,7 @@
      if (len_trim(BS_cpl_mode)==0) BS_cpl_mode="none"
      if (len_trim(BS_res_mode)==0) BS_res_mode="none"
      !
-     ! When running BSE from input file lbse is FALSE in varsetup1.
+     ! When running BSE from input file l_bse is FALSE in varsetup1.
      ! In any case I have to overwrite X(2) with PP X(4) only if em1s=F
      !
      if (l_bse.and.io_X_err(2)/=0.and.io_X_err(4)==0.and..not.l_em1s) then
@@ -818,7 +819,9 @@
          endif
        enddo
        !
-       if (i1>1.and.trim(rstr_piece(i1-1)) == 'jobstr') cycle
+       if (i1>1) then
+         if (trim(rstr_piece(i1-1)) == 'jobstr') cycle
+       endif
        !
        ! Run Level
        !

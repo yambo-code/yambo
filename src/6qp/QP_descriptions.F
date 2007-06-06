@@ -19,11 +19,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine QP_descriptions(qp,X,Xw)
-!===================================
-! 
-! WARNING ! Changes here must be updated in ioQP as well.
-!
+subroutine QP_descriptions(qp,X,Xw)
+ ! 
+ ! WARNING ! Changes here must be updated in ioQP as well.
+ !
  use pars,          ONLY:HARTREE
  use X_m,           ONLY:X_t,use_X_RIM
  use QP_m,          ONLY:QP_t,QP_ng_Sx,QP_n_G_bands,QP_cg_percent,&
@@ -39,15 +38,18 @@
  use ELPH,          ONLY:QP_PH_n_G_bands
 #endif
  implicit none
+ !
  type(QP_t)::qp
  type(X_t) :: X
  type(w_samp)::Xw
-!ws
+ ! 
+ ! Work Space
+ !
  integer           :: i4(4),n_descs_save
  integer, external :: QP_state_extract
-
+ !
  n_descs_save=qp%n_descs
-
+ !
  if (allocated(RIM_qpg)) then
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),trim(&
@@ -97,7 +99,7 @@
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),'(2a)') ' X xc-Kernel            :',trim(X%f_xc)
  endif
-
+ !
  if (.not.l_ppa) then
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),trim(&
@@ -119,7 +121,7 @@
 &        string_pack('(a,',gen_fmt( (/BZ_RIM_tot_nkpts/) ),')'))) &
 &        ' X BZ RIM points        :',BZ_RIM_tot_nkpts
  endif
-!
+ !
  if (l_life) then
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),trim(&
@@ -139,13 +141,27 @@
 &       string_pack('(a,',gen_fmt( (/QP_ng_Sx /) ),')'))) &
 &       ' Sx RL components       :',QP_ng_Sx
  endif
-!
-! El-Ph
-!=======
+ !
+ ! El-Ph
+ !
 #if defined PJ_PH
  if (ver_is_gt_or_eq(-1,(/3,0,1/))) then
    if (l_el_corr)      qp%n_descs=qp%n_descs+1
-   if (.not.l_el_corr) qp%n_descs=n_descs_save+1
+   if (.not.l_el_corr) then
+     qp%n_descs=n_descs_save+1
+     write (qp%description(qp%n_descs),trim(&
+&          string_pack('(a,',gen_fmt( i_v=(/QP_dSc_steps /) ),')'))) &
+&          ' dS/dw steps            :',QP_dSc_steps
+     qp%n_descs=qp%n_descs+1
+     write (qp%description(qp%n_descs),trim(&
+&          string_pack('(a,',gen_fmt( r_v=(/QP_dSc_delta*HARTREE /) ),')'))) &
+&          ' dS/dw step         [ev]:',QP_dSc_delta*HARTREE
+     qp%n_descs=qp%n_descs+1
+     write (qp%description(qp%n_descs),trim(&
+&         string_pack('(a,',gen_fmt( r_v=(/QP_G_damp*HARTREE /) ),')')))&
+&         ' Sc/G damping       [ev]:',QP_G_damp*HARTREE
+   endif
+   qp%n_descs=qp%n_descs+1
    qp%description(qp%n_descs)=' El-Ph correlation      : no'
    if (l_ph_corr) qp%description(qp%n_descs)=' El-Ph correlation      : yes'
    qp%n_descs=qp%n_descs+1
@@ -154,13 +170,12 @@
 &        ' El-Ph Sc. G bands      :',(/1,QP_PH_n_G_bands/)
  endif
 #endif
-
+ !
  i4=(/1,1,0,0/)
  do while(QP_state_extract(i4)>0)
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),&
 &        '(4(a,i3.3))') ' QP @ K ',i4(1),' - ',i4(2),' : b ',i4(3),' - ',i4(4)
  enddo
-
- end subroutine
-!
+ !
+end subroutine

@@ -259,7 +259,8 @@
  call it(defs,'BSHayTrs','[BSS] [o/o] Haydock treshold. Strict(>0)/Average(<0)',&
 &              Haydock_treshold,verb_level=V_more)
  call it(defs,'BEnSteps','[BSS] Energy steps',BSS_n_freqs)
- call it('f',defs,'WRbsWF', '[TBSS] Write to disk excitonic the FWs',verb_level=V_more)
+ call it('f',defs,'WRbsWF', '[BSS] Write to disk excitonic the FWs',verb_level=V_more)
+ call it('f',defs,'SkipInv', '[BSS] Skip full invertion in perturbative solver',verb_level=V_more)
  !
  ! F_xc
  !

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
+subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  use pars,          ONLY:SP,schlen,IP,HARTREE
  use memory_m,      ONLY:mem_est
@@ -345,4 +345,4 @@
      !
    end subroutine
    !
- end subroutine
+end subroutine

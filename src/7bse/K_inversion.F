@@ -281,6 +281,12 @@ subroutine K_inversion(iq,W,E,k,q)
    call pp_redux_wait(X_epsilon)
  endif
  !
+ nw_conv=0
+ do iw=1,W%n(1)
+   if (inv_err(iw)==0) nw_conv=nw_conv+1
+ enddo
+ call msg('rs','[BSE INV] Converged frequency [o/o]:',real(nw_conv)/real(W%n(1))*100.)
+ !
  ! Try a polinomial interpolation on the null values
  !
  call K_eps_interpolate(W%n(1),real(W%p),inv_err)

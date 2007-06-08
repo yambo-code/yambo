@@ -1,3 +1,35 @@
+2007-06-06 18:32:11 r128 Andrea Marini <marini@roma2.infn.it>
+
+	Minor changes
+
+2007-06-06 16:40:23 r127 Andrea Marini <marini@roma2.infn.it>
+
+	BSS_skip_full_inv flag added and other minor changes
+
+2007-06-05 19:10:09 r126 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.9_11-05-07
+
+	*  0modules/mod_frequency.F 2io/ioBS_diago.F 2io/ioBSS_invert.F 2io/ioHaydock.F 2io/ioBSS_Haydock.F 2io/ioBSS_diago.F 2io/.objects 5X/X_bare_RIM_Gf.F 7bse/K_Haydock.F 7bse/K_eps_interpolate.F 7bse/.objects 7bse/K_diagonalization.F 7bse/K_inversion.F 3qp_ctl/QP_apply_interpolate.F 3qp_ctl/QP_apply_fit.F 3qp_ctl/QP_apply_db.F 1common/pol_fit.F 1common/freqs_setup.F 1common/pert_inversion.F
+
+	Bugs:
+	- in QP_apply_interpolate.F
+
+	Additions:
+	- W_merge in mod_frequency.F
+	- ioBSS_invert.F
+	- K_inversion.F: (perturbative) invertion solver with RIM support.
+	  Added a specific DB (ioBSS_invert.F) to save the calculated frequencies.
+	- K_eps_interpolate.F: support to
+
+	Changes:
+	- ioBS_diago renamed as ioBSS_diago
+	- ioHaydock renamed as ioBSS_Haydock
+	- in QP_apply_fit: now the fit order (2 for widths and 1 for energies)
+	  can be lowered by the polfit routine.
+
+	Patch sent by: Andrea
+
 2007-06-01 12:22:24 r125 Andrea Marini <marini@roma2.infn.it>
 
 	V 3.0.9_11-05-07

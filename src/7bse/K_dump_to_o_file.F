@@ -22,12 +22,10 @@
  subroutine K_dump_to_o_file(iq,mode)
  !
  use pars,      ONLY:HARTREE,pi,SP
- use stderr,    ONLY:intc
  use BS,        ONLY:BSS_description,BSS_of_title,BSS_file_name,&
 &                    BSS_n_descs,BS_K_coupling
  use X_m,       ONLY:X_epsilon,alpha_dim,eps_2_alpha
  use com,       ONLY:msg,of_open_close
- use electrons, ONLY:BZ_RIM_tot_nkpts
  implicit none
  integer    :: mode,iq
  !
@@ -53,12 +51,6 @@
  ! Inversion+ELPH
  !
  if (iabs(mode)==4) extension='-bi_elph'
- !
- ! RIM
- !
- if (mode==-3.or.mode==-4) then
-   BSS_description(BSS_n_descs)='# BSS|BZ RIM points        :'//intc(BZ_RIM_tot_nkpts)
- endif
  !
  if (mode<0) then
    if (trim(alpha_dim)/='adim') then

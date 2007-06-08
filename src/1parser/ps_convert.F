@@ -19,21 +19,24 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine ps_convert(rvar,ivar,v_name)
-!=======================================
+subroutine ps_convert(rvar,ivar,v_name)
  use pars
  use it_m,  ONLY: nflines,flines,ni1v,ni2v,ni3v,nr1v,nr2v,nc1v,&
 &                 nr3v,i1vars,i2vars,i3vars,r1vars,r2vars,r3vars,c1vars
  implicit none
+ !
  real(SP):: rvar
  integer :: ivar
  character(*)::v_name
-!ws
+ ! 
+ ! Work Space
+ !
  integer :: i1,ipos           
  character(lchlen) :: v_line  
  character(schlen) :: v_s_unit
-!
-!First I search for the variable name in the input file 
+ !
+ ! First I search for the variable name in the input file 
+ !
  v_line=' '
  v_s_unit=' '
  do i1=1,nflines
@@ -41,18 +44,21 @@
    if (index(v_line,'%')/=0) v_line=flines(i1+1)
  enddo
  if (len_trim(v_line)==0) return
-!
-!Then the Unit is read and value scaled.
-!At the same time I have to redefine the variable Unit
+ !
+ ! Then the Unit is read and value scaled.
+ ! At the same time I have to redefine the variable Unit
+ !
  ipos=index(trim(v_line),trim(v_name))+len_trim(v_name)+1
  v_line=trim(v_line(ipos:))
-!
-!Get the standard unit (if any)
+ !
+ ! Get the standard unit (if any)
+ !
  call set_itp_unit(v_s_unit,-1)
-!
-!No unit no party
+ !
+ ! No unit no party
+ !
  if (len_trim(v_s_unit)==0) return
-!
+ !
  if (ivar>0) then
    if (index(v_line,'RL')/=0.or.index(v_line,'rl')/=0) then
      call Gclose(ivar,'fRL')
@@ -117,43 +123,46 @@
      call set_itp_unit('GHz',1)
      return
    endif
-!If nothing has been done and the real has a unit I assume it is in eV!
+   !
+   ! If nothing has been done and the real has a unit I assume it is in eV!
+   !
    rvar=rvar/HARTREE
  endif
-!
- contains 
+ !
+contains 
+  !
   subroutine set_itp_unit(unit,im)
-!
-  integer :: im
-  character(*)::unit
-  integer :: i1!ws
-  do i1=1,ni1v
-    if (trim(i1vars(i1,1))==trim(v_name).and.im>0) i1vars(i1,3)=unit
-    if (trim(i1vars(i1,1))==trim(v_name).and.im<0) unit=i1vars(i1,3)
-  enddo
-  do i1=1,ni2v
-    if (trim(i2vars(i1,1))==trim(v_name).and.im>0) i2vars(i1,3)=unit
-    if (trim(i2vars(i1,1))==trim(v_name).and.im<0) unit=i2vars(i1,3)
-  enddo
-  do i1=1,ni3v
-    if (trim(i3vars(i1,1))==trim(v_name).and.im>0) i3vars(i1,3)=unit
-    if (trim(i3vars(i1,1))==trim(v_name).and.im<0) unit=i3vars(i1,3)
-  enddo
-  do i1=1,nr1v
-    if (trim(r1vars(i1,1))==trim(v_name).and.im>0) r1vars(i1,3)=unit
-    if (trim(r1vars(i1,1))==trim(v_name).and.im<0) unit=r1vars(i1,3)
-  enddo
-  do i1=1,nr2v
-    if (trim(r2vars(i1,1))==trim(v_name).and.im>0) r2vars(i1,3)=unit
-    if (trim(r2vars(i1,1))==trim(v_name).and.im<0) unit=r2vars(i1,3)
-  enddo
-  do i1=1,nr3v
-    if (trim(r3vars(i1,1))==trim(v_name).and.im>0) r3vars(i1,3)=unit
-    if (trim(r3vars(i1,1))==trim(v_name).and.im<0) unit=r3vars(i1,3)
-  enddo
-  do i1=1,nc1v
-    if (trim(c1vars(i1,1))==trim(v_name).and.im>0) c1vars(i1,3)=unit
-    if (trim(c1vars(i1,1))==trim(v_name).and.im<0) unit=c1vars(i1,3)
-  enddo
+    integer :: im
+    character(*)::unit
+    integer :: i1!ws
+    do i1=1,ni1v
+      if (trim(i1vars(i1,1))==trim(v_name).and.im>0) i1vars(i1,3)=unit
+      if (trim(i1vars(i1,1))==trim(v_name).and.im<0) unit=i1vars(i1,3)
+    enddo
+    do i1=1,ni2v
+      if (trim(i2vars(i1,1))==trim(v_name).and.im>0) i2vars(i1,3)=unit
+      if (trim(i2vars(i1,1))==trim(v_name).and.im<0) unit=i2vars(i1,3)
+    enddo
+    do i1=1,ni3v
+      if (trim(i3vars(i1,1))==trim(v_name).and.im>0) i3vars(i1,3)=unit
+      if (trim(i3vars(i1,1))==trim(v_name).and.im<0) unit=i3vars(i1,3)
+    enddo
+    do i1=1,nr1v
+      if (trim(r1vars(i1,1))==trim(v_name).and.im>0) r1vars(i1,3)=unit
+      if (trim(r1vars(i1,1))==trim(v_name).and.im<0) unit=r1vars(i1,3)
+    enddo
+    do i1=1,nr2v
+      if (trim(r2vars(i1,1))==trim(v_name).and.im>0) r2vars(i1,3)=unit
+      if (trim(r2vars(i1,1))==trim(v_name).and.im<0) unit=r2vars(i1,3)
+    enddo
+    do i1=1,nr3v
+      if (trim(r3vars(i1,1))==trim(v_name).and.im>0) r3vars(i1,3)=unit
+      if (trim(r3vars(i1,1))==trim(v_name).and.im<0) unit=r3vars(i1,3)
+    enddo
+    do i1=1,nc1v
+      if (trim(c1vars(i1,1))==trim(v_name).and.im>0) c1vars(i1,3)=unit
+      if (trim(c1vars(i1,1))==trim(v_name).and.im<0) unit=c1vars(i1,3)
+    enddo
   end subroutine
- end subroutine
+  !
+end subroutine

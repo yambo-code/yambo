@@ -34,7 +34,7 @@
  use vec_operate,           ONLY : cross_product
  use xc_functionals,        ONLY : GS_xc_KIND,GS_xc_FUNCTIONAL, xc_string
  use interfaces,            ONLY : print_interface_dimensions,symmetries_check_and_load,&
-&                                  alat_mult_factor
+&                                  alat_mult_factor,force_noWFs
  implicit none
  type(levels),     intent(out)  :: en     ! Energies
  type(bz_samp),    intent(out)  :: k      ! K/Q points
@@ -242,6 +242,7 @@
  ! file searching for tags. A single subroutine "read bandstructure" would
  ! be much more efficient such that the BAND_STRUCTURE tag would be searched
  ! only once. It would also get around the MAX_NPW 3.1 bug....
+ !
  call msg('s',' IGK arrays...')
  !
  allocate( wf_nc_k(k%nibz) )
@@ -252,6 +253,11 @@
  !
  allocate(index_(ng_vec))     ! overkill...
  do ik = 1,k%nibz
+   !
+   wf_igk(1:npwk_, ik)= 0
+   wf_nc_k(ik) =0
+   !
+   if (force_noWFs) cycle
    !
    ! Print verbose wfc read message
    !

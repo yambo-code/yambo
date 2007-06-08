@@ -318,7 +318,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !Common
  !
- call initactivate(1,'InDir OutDir StdoHash Nelectro ElecTemp OccTresh')
+ call initactivate(1,'StdoHash Nelectro ElecTemp OccTresh')
  !
  !FFT
  !

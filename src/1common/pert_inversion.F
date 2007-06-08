@@ -34,10 +34,11 @@ integer function pert_inversion(N,W,C,f,V,M,use_full_inv)
  !
  ! Work Space
  !
- integer, parameter :: max_it=30
- real(SP),parameter :: perc_treshold=0.01
+ integer, parameter       :: max_it=30
+ real(SP),parameter       :: perc_treshold=0.01
+ complex(SP), allocatable ::wk(:,:)
  integer     ::it,i1,i2
- complex(SP) ::A_nm1(N),A_n(N),delta_f,wk(N,N),fo,f_in
+ complex(SP) ::A_nm1(N),A_n(N),delta_f,fo
 #if defined _DOUBLE
  complex(SP):: zdotc
 #else
@@ -45,19 +46,19 @@ integer function pert_inversion(N,W,C,f,V,M,use_full_inv)
 #endif
  !
  pert_inversion=0
- f_in=f
  !
  A_nm1(:)=V(:)*W(:)
 #if defined _DOUBLE
- f=C*zdotc(N,W,1,A_nm1,1)
+ fo=C*zdotc(N,W,1,A_nm1,1)
 #else
- f=C*cdotc(N,W,1,A_nm1,1)
+ fo=C*cdotc(N,W,1,A_nm1,1)
 #endif
+ !
+ if (abs(f)==0.) f=fo
  !
  if (.not.use_full_inv) then
    !
    delta_f=0.
-   fo=f
    !
    do while (it<=max_it) 
      !
@@ -85,9 +86,11 @@ integer function pert_inversion(N,W,C,f,V,M,use_full_inv)
    enddo
    !
    pert_inversion=1
-   f=f_in
+   f=(0.,0.)
    !
  else
+   !
+   allocate(wk(N,N))
    wk=(0.,0.)
    do i1=1,N 
      wk(i1,i1)=1./V(i1)
@@ -106,6 +109,7 @@ integer function pert_inversion(N,W,C,f,V,M,use_full_inv)
 #else
    f=C*cdotc(N,W,1,A_n,1)
 #endif
+   deallocate(wk)
    !
  endif
  !

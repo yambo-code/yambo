@@ -118,8 +118,6 @@
  !
  call it(defs,'Nelectro','Electrons number',nel,verb_level=V_more)
  call it(defs,'ElecTemp','Electronic Temperature',Tel,T_unit,verb_level=V_more)
- call it(defs,'OutDir',  '[IO] Output(s) directory',outpath,verb_level=V_io)
- call it(defs,'InDir',   '[IO] Input(s) directory',inpath,verb_level=V_io)
  call it(defs,'QPreport','[GW] QP info. Keys: kp/bn/xx/xc/s0/sq/e0/eq/ee/zf/ds/lm/lf',&
 &                        QP_rep_string)
  call it(defs,'StdoHash','[IO] Live-timing Hashes',nhash,verb_level=V_io)

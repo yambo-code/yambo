@@ -21,15 +21,19 @@
 !
 subroutine K_inversion(iq,W,E,k,q) 
  !
- use pars,           ONLY:SP,pi,HARTREE
+ use pars,           ONLY:SP,pi
+#if defined PJ_PH
  use drivers,        ONLY:l_ph_corr
+#endif
  use X_m,            ONLY:X_epsilon
+ use stderr,         ONLY:intc
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_not_const_eh_f,&
 &                         BS_K_coupling,BS_eh_table,BS_eh_E,BS_bands,Kernel_by_V,&
-&                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,BSS_skip_full_inv
+&                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,BSS_skip_full_inv,&
+&                         BSS_n_descs,BSS_description
  use memory_m,       ONLY:mem_est
  use parser_m,       ONLY:parser
- use electrons,      ONLY:spin_occ,levels,BZ_RIM_nbands
+ use electrons,      ONLY:spin_occ,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts
  use frequency,      ONLY:w_samp,W_reset,W_merge
  use R_lattice,      ONLY:d3k_factor,q_norm,bz_samp
  use com,            ONLY:isec,warning,msg
@@ -53,8 +57,8 @@ subroutine K_inversion(iq,W,E,k,q)
  type(pp_indexes) ::px
  integer          ::i1,i2,ik_bz,iv,ic,iw,icv,of_mode,i_sp,ik_ibz
  integer, external::pert_inversion,eval_ELPH_K
- complex(SP)      ::Co,QP_Z,QP_width
- complex(SP), allocatable  ::Lo(:,:)
+ complex(SP)      ::Co,QP_Z,QP_width,Lo_ws
+ complex(SP), allocatable  ::Lo(:,:),WS(:,:)
  !
  ! ... frequencies
  !
@@ -69,7 +73,6 @@ subroutine K_inversion(iq,W,E,k,q)
  complex(SP)::cdotu,cdotc
 #endif
 #if defined PJ_PH
- complex(SP)::WS(BS_K_dim,BS_K_dim)
  logical    ::add_ELPH_K
 #endif
  !
@@ -79,7 +82,7 @@ subroutine K_inversion(iq,W,E,k,q)
  type(w_samp)      ::W_disk
  integer, external ::ioBSS_invert
  integer, allocatable     ::inv_err_disk(:),disk_freq_table(:)
- complex(SP), allocatable ::eps_disk(:)
+ complex(SP), allocatable ::eps_2start(:)
  !
  ! Sectioning
  !
@@ -106,11 +109,11 @@ subroutine K_inversion(iq,W,E,k,q)
  io_err=ioBSS_invert(iq,1,(/0/),(/(0.,0.)/),W_disk,ID)
  !
  if (io_err==0) then
-   allocate(inv_err_disk(W_disk%n(1)),eps_disk(W_disk%n(1)),&
+   allocate(inv_err_disk(W_disk%n(1)),eps_2start(W_disk%n(1)),&
 &           disk_freq_table(W_disk%n(1)+W%n(1)))
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-   io_err=ioBSS_invert(iq,W_disk%n(1),inv_err_disk,eps_disk,W_disk,ID)
+   io_err=ioBSS_invert(iq,W_disk%n(1),inv_err_disk,eps_2start,W_disk,ID)
    !
    ! Here I create a new energy array that merges the disk 
    ! and present energies. In addition the corresponding inv_err
@@ -135,7 +138,7 @@ subroutine K_inversion(iq,W,E,k,q)
    do iw=1,W%n(1)
      if (disk_freq_table(iw)>0) then
        inv_err(iw)=inv_err_disk(disk_freq_table(iw))
-       X_epsilon(2,iw)=eps_disk(disk_freq_table(iw))/real(ncpu,SP)
+       X_epsilon(2,iw)=eps_2start(disk_freq_table(iw))/real(ncpu,SP)
        nw_read=nw_read+1
        if (inv_err(iw)==1) p_inv_2do(iw)=.false.
        if (inv_err(iw)==0) nw_conv=nw_conv+1
@@ -143,7 +146,7 @@ subroutine K_inversion(iq,W,E,k,q)
    enddo
    call msg('rs','[BSE INV] Frequency read      [o/o]:',real(nw_read)/real(W%n(1))*100.)
    call msg('rs','[BSE INV] Converged frequency [o/o]:',real(nw_conv)/real(W%n(1))*100.)
-   deallocate(inv_err_disk,eps_disk,disk_freq_table)
+   deallocate(inv_err_disk,eps_2start,disk_freq_table)
  else
    allocate(inv_err(W%n(1)),iw_full(W%n(1)),nw_full(W%n(1)),p_inv_2do(W%n(1)))
    inv_err=1
@@ -154,6 +157,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !  mem est
  !
 #if defined PJ_PH
+ allocate(WS(BS_K_dim,BS_K_dim))
  call mem_est("Lo WS",(/BS_K_dim*W%n(1),2*BS_K_dim**2/))
 #else
  call mem_est("Lo WS",(/BS_K_dim*W%n(1),BS_K_dim**2/))
@@ -184,7 +188,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! Green`s function and non-interacting eps2
  !
- Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/(q_norm(1))**2
+ Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/q_norm(1)**2
  !
  allocate(Lo(BS_K_dim,W%n(1)))
  Lo=(0.,0.)
@@ -214,10 +218,19 @@ subroutine K_inversion(iq,W,E,k,q)
    endif
    X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*Lo(i1,:)*Co
    !
+   ! Oth order includes the W diagonal terms
+   !
+   do iw=1,W%n(1)
+     Lo_ws=Lo(i1,iw)
+     Lo(i1,iw)=Lo(i1,iw)/(1.-BS_mat(i1,i1)*Lo(i1,iw))
+   enddo
+   !
+   BS_mat(i1,i1)=(0.,0.)
+   !
    call live_timing(steps=1)
    !
  enddo
- X_epsilon(3,:)=X_epsilon(3,:)/real(ncpu,SP)
+ X_epsilon(3,:)=(1.+X_epsilon(3,:))/real(ncpu,SP)
  call live_timing()
  !
  ! Perturbative Invertion
@@ -227,7 +240,7 @@ subroutine K_inversion(iq,W,E,k,q)
  call pp_indexes_reset(px)
  call par_indexes(px,(/W%n(1)/))
  call live_timing('Freq loop [pert]',px%stps(myid+1))
- call perform_invertion(W%n(1),W%p,1,X_epsilon(2,:))
+ call perform_invertion(1,W%n(1))
  call pp_redux_wait(inv_err,imode=2)
  !
  ! I/O [after pert invertion]
@@ -249,7 +262,7 @@ subroutine K_inversion(iq,W,E,k,q)
  do i1=1,W%n(1)
    if (inv_err(i1)/= 0.and.iw<0) iw=i1
    if (inv_err(i1)/= 0.and.iw>0) nw=nw+1
-   if (inv_err(i1)== 0.and.iw>0) then
+   if ((inv_err(i1)== 0.or.(inv_err(i1)==1.and.i1==W%n(1))).and.iw>0) then
      full_grp=full_grp+1
      iw_full(full_grp)=iw
      nw_full(full_grp)=nw
@@ -273,7 +286,7 @@ subroutine K_inversion(iq,W,E,k,q)
    do i1=1,full_grp
      if (.not.px%i1p(i1)) cycle
      iw=iw_full(i1)+nw_full(i1)/2
-     call perform_invertion(1,W%p(iw),iw,X_epsilon(2,iw))
+     call perform_invertion(iw,1)
      call live_timing(steps=1)
    enddo
    call live_timing()
@@ -285,20 +298,27 @@ subroutine K_inversion(iq,W,E,k,q)
  do iw=1,W%n(1)
    if (inv_err(iw)==0) nw_conv=nw_conv+1
  enddo
- call msg('rs','[BSE INV] Converged frequency [o/o]:',real(nw_conv)/real(W%n(1))*100.)
+ call msg('rs','[BSE INV] Converged frequencies [o/o]:',real(nw_conv)/real(W%n(1))*100.)
+ !
+ ! I/O [after full invertion]
+ !
+ call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
+ io_err=ioBSS_invert(iq,W%n(1),inv_err,X_epsilon(2,:),W,ID)
  !
  ! Try a polinomial interpolation on the null values
  !
  call K_eps_interpolate(W%n(1),real(W%p),inv_err)
  call pp_redux_wait()
  !
- ! I/O [after full invertion & interpolation]
- !
- call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
- io_err=ioBSS_invert(iq,W%n(1),inv_err,X_epsilon(2,:),W,ID)
- !
  X_epsilon(2,:)=1.+X_epsilon(2,:)
  X_epsilon(1,:)=W%p(:)
+ !
+ BSS_description(BSS_n_descs)='#'
+ BSS_n_descs=BSS_n_descs+1
+ BSS_description(BSS_n_descs)='# BSS|BZ RIM points              :'//intc(BZ_RIM_tot_nkpts)
+ BSS_n_descs=BSS_n_descs+1
+ write (BSS_description(BSS_n_descs),'(a,f6.2)') &
+&                             '#    |Converged frequencies [o/o]:',real(nw_conv)/real(W%n(1))*100.
  !
  call K_dump_to_o_file(iq,of_mode)
  !
@@ -309,6 +329,7 @@ subroutine K_inversion(iq,W,E,k,q)
  deallocate(BS_mat,iw_full,nw_full,Lo)
  call mem_est("BS_mat Lo WS")
 #if defined PJ_PH
+ deallocate(WS)
  if (allocated(EXCPH_mat)) then
    deallocate(Rnd_Qpts_corresp,Rnd_Qpts_at,EXCPH_mat)
    call mem_est("EXCPH_mat")
@@ -317,18 +338,17 @@ subroutine K_inversion(iq,W,E,k,q)
  !
 contains
   !
-  subroutine perform_invertion(nW_,W_,iw_start,e2)
-    integer     :: nW_,iw_start
-    complex(SP) :: W_(nW_),e2(nW_)
+  subroutine perform_invertion(iw_2start,iw_2do)
+    integer     :: iw_2start,iw_2do
     !
     integer :: i2
     !
-    do i2=1,nW_
+    do i2=1,iw_2do
       !
 #if defined PJ_PH
       if (add_ELPH_K) then
         BS_mat=WS
-        call static2dyn_ELPH_K(E,k,q,W_(i2),BS_mat)
+        call static2dyn_ELPH_K(E,k,q,W%p(i2),BS_mat)
       endif
 #endif
       !
@@ -338,11 +358,12 @@ contains
           call live_timing(steps=1)
           cycle
         endif
+        !
       endif
       !
-      if (inv_err(i2+iw_start-1)/=0) &
-&       inv_err(i2+iw_start-1)=pert_inversion(BS_K_dim,BSS_rhoq0,-1.*Co,&
-&                              e2(i2),Lo(:,i2+iw_start-1),BS_mat,full_diago)
+      if (inv_err(i2+iw_2start-1)/=0) &
+&       inv_err(i2+iw_2start-1)=pert_inversion(BS_K_dim,BSS_rhoq0,-1.*Co,&
+&              X_epsilon(2,i2+iw_2start-1),Lo(:,i2+iw_2start-1),BS_mat,full_diago)
       !
       if (.not.full_diago) call live_timing(steps=1)
       !

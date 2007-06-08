@@ -697,6 +697,7 @@
 ! 
  subroutine initinfio(defs,ou)
 !=============================
+ use stderr,       ONLY: intc
  use drivers,      ONLY: infile_editing
  use com,          ONLY: gen_fmt,report_file_fix,title
  use par_proc_m,   ONLY: master_node
@@ -704,10 +705,10 @@
  type(initdefs)::defs
  integer       :: ou
 !ws
- integer :: i1,i2,i3,ifpos
+ integer :: i1,i2,i3,ifpos,ch_length
  real(SP):: unit_factor,v(2)
  character(lchlen)::ch(2)  
-!
+ !
  nflines=0
  flines=' '
  do ifpos=1,nifpos
@@ -724,7 +725,11 @@
    if (chst(i2)==ifpos) then
     if (.not.Chverbose_enough(trim(chvars(i2,1)),1,defs%chdef(i2))) cycle
     nflines=nflines+1
-    write (flines(nflines),'(4a,t30,2a)') &
+    !
+    ch_length=max(len_trim(defs%chdef(i2))+len_trim(chvars(i2,1))+6,30)
+    !  
+    ch(1)='(4a,t'//trim(intc(ch_length))//',2a)'
+    write (flines(nflines),trim(ch(1))) &
 &     trim(chvars(i2,1)),'= "',trim(defs%chdef(i2)),'"','# ',trim(chvars(i2,2))
    endif
   enddo

@@ -23,13 +23,17 @@ module par_proc_m
   !
   use pars,       ONLY:SP
   implicit none
-  integer            :: myid,ncpu
-  integer, parameter :: p_sum=1,p_prod=2
+  integer            :: myid
+  integer            :: ncpu
+  integer, parameter :: p_sum=1
+  integer, parameter :: p_prod=2
   logical            :: master_node
   !
   type pp_indexes 
-    logical, pointer :: i1p(:),i2p(:,:)
-    integer, pointer :: stps(:),i1wts(:)
+    logical, pointer :: i1p(:)
+    logical, pointer :: i2p(:,:)
+    integer, pointer :: stps(:)
+    integer, pointer :: i1wts(:)
   end type pp_indexes
   !
   interface pp_redux_wait

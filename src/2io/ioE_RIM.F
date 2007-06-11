@@ -38,8 +38,8 @@
  !
  ioE_RIM=io_header(ID)
  call io_elemental(ID,VAR="PARS",VAR_SZ=3,MENU=1)
- call io_elemental(ID,I0=BZ_RIM_nbands,   VAR=' Bands                           :')
- call io_elemental(ID,I0=BZ_RIM_tot_nkpts,VAR=' BZ RIM k-points                 :')
+ call io_elemental(ID,I0=BZ_RIM_nbands,    VAR=' Bands                           :')
+ call io_elemental(ID,I0=BZ_RIM_tot_nkpts, VAR=' BZ RIM k-points                 :')
  call io_elemental(ID,I0=BZ_RIM_max_filling,VAR=' BZ Blocks max filling           :')
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !

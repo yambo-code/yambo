@@ -103,17 +103,25 @@
  call msg('s',':: Bands                 :',n_bands)
  call msg('s',':: Symmmetries           :',nsym)
  !
- call section('+','BZ RIM K-points Tables setup...')
+ call section('+','BZ RIM K-points expansion ...')
+ !
+ ! Xk (IBZ->BZ)
+ !
+ call k_ibz2bz(Xk,'i',.true.)
+ !
+ ! BZ_k (IBZ->BZ)
+ !
+ call k_ibz2bz(BZ_k,'i',.true.)
+ !
+ call msg('l','done')
+ !
+ call section('=','BZ RIM K-points Tables setup...')
  !
  add_X_grid=.true.
  !
  BZ_RIM_nbands=BZ_E%nb
  BZ_RIM_tot_nkpts=BZ_k%nibz
  if (add_X_grid) BZ_RIM_tot_nkpts=BZ_RIM_tot_nkpts+Xk%nbz
- !
- ! Xk (IBZ->BZ)
- !
- call k_ibz2bz(Xk,'i',.true.)
  !
  allocate(BZ_RIM_nkpt(Xk%nbz))
  BZ_RIM_nkpt=0
@@ -125,14 +133,16 @@
      BZ_RIM_table=0
    endif
    BZ_RIM_nkpt=0
-   do i1=1,BZ_k%nibz
+   do i1=1,BZ_k%nbz
      !
-     ikbz=k_the_nearest(BZ_k%pt(i1,:),Xk%ptbz(:,:),Xk%nbz)
+     ikbz=k_the_nearest(BZ_k%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz)
      BZ_RIM_nkpt(ikbz)=BZ_RIM_nkpt(ikbz)+1
      !
-     if (allocated(BZ_RIM_table)) BZ_RIM_table(ikbz,BZ_RIM_nkpt(ikbz))=i1
+     if (allocated(BZ_RIM_table)) BZ_RIM_table(ikbz,BZ_RIM_nkpt(ikbz))=BZ_k%sstar(i1,1)
+     !
    enddo
  enddo
+ !
  call msg('l','done')
  BZ_RIM_max_filling=maxval(BZ_RIM_nkpt)
  if (add_X_grid) BZ_RIM_max_filling=BZ_RIM_max_filling+1
@@ -160,5 +170,6 @@
  !
  deallocate(BZ_RIM_nkpt,BZ_RIM_table,Xen%E_RIM)
  call k_ibz2bz(Xk,'d',.false.) 
+ call k_ibz2bz(BZ_k,'d',.false.) 
  !
  end subroutine

@@ -93,7 +93,8 @@
 &                            QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db
      use D_lattice,     ONLY:Tel
      use com,           ONLY:msg,depth
-     use electrons,     ONLY:levels,E_reset,n_sp_pol,BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_nbands
+     use electrons,     ONLY:levels,E_reset,n_sp_pol,BZ_RIM_nkpt,BZ_RIM_table,&
+&                            BZ_RIM_nbands,BZ_RIM_tot_nkpts
      use R_lattice,     ONLY:bz_samp,nXkibz
      use parser_m,      ONLY:parser
      implicit none
@@ -112,6 +113,7 @@
      integer          ::DB_corrected(en%nb,en%nk),ik_bz,ik_ibz,ib,i1,ik_r
      character(schlen)::ch
      logical          ::is_def(2)
+     integer, allocatable :: RIM_k_done(:)
      !
      ! Resets
      !
@@ -223,17 +225,26 @@
        !
        if (associated(en%E_RIM).and.associated(en%Eo)) then
          !
+         allocate(RIM_k_done(BZ_RIM_tot_nkpts))
+         RIM_k_done=0
+         !
          do ik_bz=1,k%nbz
            !
            ik_ibz=k%sstar(ik_bz,1)
            !
            do i1=1,BZ_RIM_nkpt(ik_bz)
              ik_r=BZ_RIM_table(ik_bz,i1)
+             !
+             if (RIM_k_done(ik_r)==1) cycle
+             !
              forall (ib=1:BZ_RIM_nbands) en%E_RIM(ib,ik_r,1)=en%E_RIM(ib,ik_r,1)+&
 &                                        en%E(ib,ik_ibz,1)-en%Eo(ib,ik_ibz,1)
+             RIM_k_done(ik_r)=1
            enddo
            !
          enddo
+         !
+         deallocate(RIM_k_done)
          !
        endif
        !

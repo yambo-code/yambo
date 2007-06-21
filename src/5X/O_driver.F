@@ -102,10 +102,8 @@
    !
    ! ... epsilon ...
    !
-   if (trim(alpha_dim)=='adim') then
-     write (of_name(1),'(a,i3.3,a)') 'eps_q',iq,trim(FXC_type)
-     call of_open_close(of_name(1),'ot')
-   endif
+   write (of_name(1),'(a,i3.3,a)') 'eps_q',iq,trim(FXC_type)
+   call of_open_close(of_name(1),'ot')
    !
    ! ... fxc ...
    !

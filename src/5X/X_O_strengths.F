@@ -23,7 +23,7 @@
  !
 #if defined PJ_GKS
  use pars,           ONLY:SP,lchlen
- use com,            ONLY:warning,inpath
+ use com,            ONLY:warning,in_path
  use xc_functionals, ONLY:GS_xc_FUNCTIONAL
  use DFT,            ONLY:lgks,igks,auxpath
 #else
@@ -53,7 +53,7 @@
  real(SP)                  :: field_dir_rot(3)
  logical                   :: use_trans_gauge
 #if defined PJ_GKS
- character(lchlen) :: save_inpath
+ character(lchlen) :: save_in_path
  integer :: io_rld, nb_aux
  type(bz_samp) :: k
  type(levels)  :: en
@@ -107,11 +107,11 @@
    !
 #if  defined PJ_GKS
    if (lgks) then
-     save_inpath = inpath
-     inpath = auxpath
+     save_in_path = in_path
+     in_path = auxpath
      call wf_load(0,1,(/1,nb_aux/),(/1,Xk%nibz/),space='G',&
 &                 title='-Oscillators (AUX)/G space')
-     inpath = save_inpath
+     in_path = save_in_path
    else
      call wf_load(0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
    end if
@@ -151,7 +151,7 @@
    if (lgks) then
      deallocate(Xen%Eo)      
      call X_O_gks(Xen,Xk,X)
-     io_rld = ioDB1_reload(en,k,trim(inpath))
+     io_rld = ioDB1_reload(en,k,trim(in_path))
    end if
    !
 #endif

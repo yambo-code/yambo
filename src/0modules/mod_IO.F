@@ -160,7 +160,7 @@
      integer function io_connect(desc,subfolder,type,ENABLE_LARGE_FILE,ID)
        !
        use stderr,        ONLY:string_pack
-       use com,           ONLY:get_name,jobstr,file_exists,outpath
+       use com,           ONLY:get_name,jobstr,file_exists,out_path
        character(*)           :: desc
        integer                :: type,ID
        character(*), optional :: subfolder
@@ -202,9 +202,9 @@
        ! Create Directories 
        !
        if (len_trim(jobstr)>0) then
-         write (folder,'(3a)') trim(outpath),'/',trim(jobstr)
+         write (folder,'(3a)') trim(out_path),'/',trim(jobstr)
        else
-         write (folder,'(2a)') trim(outpath),'/SAVE'
+         write (folder,'(2a)') trim(out_path),'/SAVE'
        endif
        if (write_is_on(ID).and.(type==2.or.len_trim(jobstr)==0)) then
          call mk_dir(folder)
@@ -378,7 +378,7 @@
        !
        use drivers, ONLY:list_dbs
        use stderr,  ONLY:string_pack
-       use com,     ONLY:code_version,build_date,get_name,file_exists,outpath
+       use com,     ONLY:code_version,build_date,get_name,file_exists,out_path
        use timing,  ONLY:date_and_time_string
        use com,     ONLY:msg
        character(*)::desc
@@ -394,7 +394,7 @@
          !
          restart_file=get_name(desc=desc,type=4,TO_RD=.false.,TO_WR=.true.,NETCDF=.false.)
          !
-         restart_folder = string_pack(trim(outpath),"/RESTART")
+         restart_folder = string_pack(trim(out_path),"/RESTART")
          !
          if (now==todo) then
            call rm_file(restart_file)

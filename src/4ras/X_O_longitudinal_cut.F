@@ -22,7 +22,7 @@
  subroutine X_O_longitudinal_cut(Xen, Xk, X, field_dir, use_trans_gauge)
 !====================================
    use pars
-   use com,                     ONLY : msg, inpath, msg, error, warning
+   use com,                     ONLY : msg, in_path, msg, error, warning
    use stderr,                  ONLY : intc
    use timing,                  ONLY : live_timing
    use electrons,               ONLY : levels, n_spin, n_spinor, E_reset, E_duplicate, n_sp_pol
@@ -60,7 +60,7 @@
   type(levels)                 :: Xen_save
   type(bz_samp)                :: Xk_save
   real(SP), allocatable        :: f_save(:,:,:)
-  character(lchlen)            :: inpath_save
+  character(lchlen)            :: in_path_save
   integer                      :: wf_ng_save, io_ID, ID
 ! ioDB1 shifted grids
   type(levels)                 :: E_shift
@@ -79,7 +79,7 @@
    !
    ! The following lines are needed to reload DB1 correctly
    !
-   inpath_save = inpath
+   in_path_save = in_path
    wf_ng_save = wf_ng
    call E_reset(Xen_save)
    ! Note (1) : E_reset resets Efermi: not read from DB1
@@ -91,7 +91,7 @@
    !
    deallocate(g_vec,dl_sop,wf_nc_k,wf_igk)
    call mem_est("g_vec dl_sop wf_nc_k wf_igk")
-   inpath = long_path
+   in_path = long_path
    call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=REP,MODE=DUMP,ID=io_ID)
    if (ver_is_gt_or_eq(io_ID,(/3,0,4/))) then
      deallocate(n_atoms,znucl,atom_pos)
@@ -135,7 +135,7 @@
      !
      ! Load WFs {k} + q_iq
      !
-     inpath = long_path
+     in_path = long_path
      call WF_free()
      call wf_load(0,1, (/ X%ib(1), Xen_save%nbm /),(/ik_grid,ik_grid+Xk_save%nibz-1/),space='G',title='-Oscillators/G space')
      wf_ng_long = min(wf_ng_save,wf_ng)
@@ -221,7 +221,7 @@
  contains
 
   subroutine reset_DB1
-    inpath = inpath_save
+    in_path = in_path_save
     call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=REP,MODE=DUMP,ID=ID)
     if(allocated(g_vec))  deallocate(g_vec)
     if(allocated(dl_sop)) deallocate(dl_sop)

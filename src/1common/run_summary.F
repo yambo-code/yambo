@@ -22,7 +22,7 @@
 subroutine run_summary(en,k)
  !
  use stderr,         ONLY:logfile
- use com,            ONLY:inpath,outpath,repfile,jobstr,msg
+ use com,            ONLY:in_path,out_path,repfile,jobstr,msg
  use it_m,           ONLY:infile
  use IO_m,           ONLY:io_control,OP_RD_CL,REP
  use R_lattice,      ONLY:bz_samp
@@ -36,8 +36,8 @@ subroutine run_summary(en,k)
  !
  call section('*','Game Summary')
  ! 
- call msg('r','IN  directory    : ',trim(inpath))
- call msg('r','OUT directory    : ',trim(outpath))
+ call msg('r','IN  directory    : ',trim(in_path))
+ call msg('r','OUT directory    : ',trim(out_path))
  call msg('r','Input file       : ',trim(infile))
  call msg('r','Report file      : ',trim(repfile))
  if (len_trim(jobstr)>0)  call msg('r','Job string       : ',trim(jobstr))

@@ -24,7 +24,7 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
   use etsf_io
   use etsf_io_low_level
   use pars,                only : SP,lchlen
-  use com,                 only : msg,write_to_report,outpath, file_exists
+  use com,                 only : msg,write_to_report,out_path, file_exists
   use par_proc_m,          only : ncpu,myid,p_finalize
   use electrons,           only : levels,E_reset,n_bands,n_spin
   use D_lattice,           only : PP_alloc, PP_free, n_atoms_max
@@ -121,7 +121,7 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
 ! 
   call etsf_io_low_open_read(ncid, trim(ETSF_file_name), lstat, error_data = error_data)
   if (.not. lstat) call etsf_long_error(error_data)
-  call msg('s','DBs path set to :',trim(outpath))
+  call msg('s','DBs path set to :',trim(out_path))
 
 ! etsf_io_XXX_def for output netcdf 
   !

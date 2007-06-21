@@ -51,7 +51,7 @@
 &                        FXC_SVD_cutoff
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
  use QP_m,          ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_W,QP_ctl_Z
- use com,           ONLY:outpath,inpath
+ use com,           ONLY:out_path,in_path,db_wr_path
  use functions,     ONLY:bose_E_cut
 #if defined PJ_RAS
  use bulkeps,              ONLY : init_bulk
@@ -113,6 +113,11 @@
  call it('r',defs,'el_ph',   '[R] Electron-Phonon Correlation') ! [17]
  call it('r',defs,'el_el',   '[R] Electron-Electron Correlation') ! [18]
 #endif
+ !
+ ! I/O
+ !
+ call it(defs,'Out_Path', '[IO] Formatted output directory',out_path,verb_level=V_io)
+ call it(defs,'DB_Path',  '[IO] UnFormatted output directory',db_wr_path,verb_level=V_io)
  !
  ! Basics
  !
@@ -259,6 +264,7 @@
  call it(defs,'BEnSteps','[BSS] Energy steps',BSS_n_freqs)
  call it('f',defs,'WRbsWF', '[BSS] Write to disk excitonic the FWs',verb_level=V_more)
  call it('f',defs,'SkipInv', '[BSS] Skip full invertion in perturbative solver',verb_level=V_more)
+ call it('f',defs,'FullInv', '[BSS] Force full invertion in perturbative solver',verb_level=V_more)
  !
  ! F_xc
  !

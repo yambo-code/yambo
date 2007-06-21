@@ -23,7 +23,7 @@
 &                       js,ijs,np,pid)
  !
  use pars,                ONLY:SP,lchlen
- use com,                 ONLY:msg,write_to_report,outpath
+ use com,                 ONLY:msg,write_to_report,out_path
  use par_proc_m,          ONLY:ncpu,myid,p_finalize
  use electrons,           ONLY:levels,E_reset,n_bands,n_spin
  use D_lattice,           ONLY:n_atoms_max
@@ -79,7 +79,7 @@
  endif
  call msg('l',trim(KSS_file_name))
  !
- call msg('s','DBs path set to :',trim(outpath))
+ call msg('s','DBs path set to :',trim(out_path))
  !
  call a2s_db1(en,k,trim(KSS_file_name))
  !

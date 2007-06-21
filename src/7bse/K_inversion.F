@@ -29,7 +29,7 @@ subroutine K_inversion(iq,W,E,k,q)
  use stderr,         ONLY:intc
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_not_const_eh_f,&
 &                         BS_K_coupling,BS_eh_table,BS_eh_E,BS_bands,Kernel_by_V,&
-&                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,BSS_skip_full_inv,&
+&                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,&
 &                         BSS_n_descs,BSS_description
  use memory_m,       ONLY:mem_est
  use parser_m,       ONLY:parser
@@ -42,7 +42,7 @@ subroutine K_inversion(iq,W,E,k,q)
  use par_indexes_m,  ONLY:par_indexes
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,NONE,VERIFY,OP_WR_CL
 #if defined PJ_PH
- use ELPH,           ONLY:Rnd_Qpts_at,Rnd_Qpts_corresp,EXCPH_mat
+ use ELPH,           ONLY:EXCPH_mat
 #endif
  implicit none
  type(w_samp) :: W
@@ -65,7 +65,7 @@ subroutine K_inversion(iq,W,E,k,q)
  integer,  allocatable ::inv_err(:),iw_full(:),nw_full(:)
  logical,  allocatable ::p_inv_2do(:)
  integer    ::full_grp,nw,nw_read,nw_conv
- logical    ::full_diago
+ logical    ::full_diago,skip_full_inv,force_full_inv
  !
 #if defined _DOUBLE
  complex(DP)::zdotu,zdotc
@@ -99,7 +99,10 @@ subroutine K_inversion(iq,W,E,k,q)
  ! RIM support ? Full invertion ?
  !
  BSS_uses_RIM=BZ_RIM_nbands>=BS_bands(2)
- call parser('SkipInv',BSS_skip_full_inv)
+ call parser('SkipInv',skip_full_inv)
+ call parser('FullInv',force_full_inv)
+ !
+ if (force_full_inv) skip_full_inv=.FALSE.
  !
  ! I/O
  !
@@ -254,24 +257,35 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! First I define the group of frequencies not converged
  !
- iw=-1
- nw=0
  iw_full=-1
  nw_full=0
  full_grp=0
- do i1=1,W%n(1)
-   if (inv_err(i1)/= 0.and.iw<0) iw=i1
-   if (inv_err(i1)/= 0.and.iw>0) nw=nw+1
-   if ((inv_err(i1)== 0.or.(inv_err(i1)==1.and.i1==W%n(1))).and.iw>0) then
-     full_grp=full_grp+1
-     iw_full(full_grp)=iw
-     nw_full(full_grp)=nw
-     iw=-1
-     nw=0
-   endif
- enddo
  !
- if (full_grp>0.and..not.BSS_skip_full_inv) then
+ if (force_full_inv) then
+   do i1=1,W%n(1)
+     if (inv_err(i1)/=0) then
+       full_grp=full_grp+1
+       iw_full(full_grp)=i1
+       nw_full(full_grp)=1
+     endif
+   enddo
+ else
+   iw=-1
+   nw=0
+   do i1=1,W%n(1)
+     if (inv_err(i1)/= 0.and.iw<0) iw=i1
+     if (inv_err(i1)/= 0.and.iw>0) nw=nw+1
+     if ((inv_err(i1)== 0.or.(inv_err(i1)==1.and.i1==W%n(1))).and.iw>0) then
+       full_grp=full_grp+1
+       iw_full(full_grp)=iw
+       nw_full(full_grp)=nw
+       iw=-1
+       nw=0
+     endif
+   enddo
+ endif
+ !
+ if (full_grp>0.and..not.skip_full_inv) then
    !
    call msg('rs','[BSE INV] Non converged frequency groups:',full_grp)
    !
@@ -331,7 +345,7 @@ subroutine K_inversion(iq,W,E,k,q)
 #if defined PJ_PH
  deallocate(WS)
  if (allocated(EXCPH_mat)) then
-   deallocate(Rnd_Qpts_corresp,Rnd_Qpts_at,EXCPH_mat)
+   deallocate(EXCPH_mat)
    call mem_est("EXCPH_mat")
  endif
 #endif

@@ -83,7 +83,6 @@
   real(SP) :: Haydock_v0_mod
   logical  :: BSS_write_eig_2_db
   logical  :: BSS_uses_RIM
-  logical  :: BSS_skip_full_inv
   complex(SP),allocatable :: BSS_rhoq0(:)
   !
   interface 

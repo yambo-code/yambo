@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine a2s_wf(wf_disk,ikibz,KSS_file_name)
+subroutine a2s_wf(wf_disk,ikibz,KSS_file_name)
  !
  use pars,                  ONLY:SP,DP
  use electrons,             ONLY:n_bands,n_spin
@@ -84,4 +84,4 @@
  !
  if (ikibz==nkibz) close(11)
  !
- end subroutine
+end subroutine

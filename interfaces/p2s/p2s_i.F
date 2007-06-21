@@ -24,7 +24,7 @@
  !
  use pars,                only : SP,lchlen
  use memory_m,            only : mem_est
- use com,                 only : msg,write_to_report,outpath, error
+ use com,                 only : msg,write_to_report,out_path, error
  use par_proc_m,          only : ncpu,myid,p_finalize
  use electrons,           only : levels,E_reset,n_bands, n_spin, n_sp_pol
  use D_lattice,           only : n_atoms_max
@@ -81,7 +81,7 @@
 !live_timing_is_on=.FALSE.
  !
  call section('*','P(W) 2 S(elf)')
- call msg('s','DBs path set to ',trim(outpath))
+ call msg('s','DBs path set to ',trim(out_path))
  !
  ! pw_export/qexml version
  !

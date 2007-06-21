@@ -27,7 +27,7 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  !  i q.<nk|r|mk> =  \sum_i=1,3 q(i) <u_n(k+q0(i))|u_mk>/q0(i)
  !
  use pars,                ONLY : SP,lchlen
- use com,                 ONLY : warning, inpath, msg, error
+ use com,                 ONLY : warning, in_path, msg, error
  use stderr,              ONLY : intc
  use timing,              ONLY : live_timing
  use electrons,           ONLY : levels,n_spin,  n_spinor,n_sp_pol
@@ -53,7 +53,7 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  ! Saves
  !
  integer           ::wf_ng_save
- character(lchlen) ::inpath_save
+ character(lchlen) ::in_path_save
  !
  ! Work Space
  !
@@ -91,7 +91,7 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  ! saves...
  !
  wf_ng_save=wf_ng
- inpath_save = inpath
+ in_path_save = in_path
  !
  if (wf_ng/=maxval(wf_igk)) &
 &   call warning('All WF G-vectors should be used in the long. gauge')
@@ -141,7 +141,7 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
    !
    ! Load WFs {k} + q_iq
    !
-   inpath = long_path
+   in_path = long_path
    call WF_free()
    call wf_load(0,1,(/ X%ib(1), Xen%nbm /),&
 &                   (/ik_grid,ik_grid+Xk%nibz-1/),&
@@ -231,8 +231,8 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
    ! so that all type components (like occupations) are 
    ! not rewritten.
    !
-   inpath = inpath_save
-   io_err=ioDB1_reload(E_shift,Xk_shift,trim(inpath))
+   in_path = in_path_save
+   io_err=ioDB1_reload(E_shift,Xk_shift,trim(in_path))
    wf_ng=wf_ng_long
    !
  end subroutine

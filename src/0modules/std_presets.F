@@ -41,7 +41,7 @@
  use par_proc_m, ONLY:myid,master_node
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,&
 &                     of_unit,of_unit,write_to_of,write_to_report,max_open_ofs,&
-&                     outpath,inpath,jobstr
+&                     out_path,in_path,jobstr,db_wr_path
  use stderr,     ONLY:win_size,tty_size,write_to_log,logfile
  use timing,     ONLY:log_line_to_dump,log_line,nhash,live_timing_is_on,&
 &                     cput_seg,cput_sec,cput_tot,parallel_timing,ct
@@ -51,8 +51,7 @@
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
-&                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_RIM,&
-&                     BSS_skip_full_inv
+&                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_RIM
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_SVD_cutoff,&
 &                     FXC_is_causal
@@ -76,10 +75,9 @@
  !
  ! PATHS 
  !
- inpath='.'
- outpath='.'
- inpath=IND
- outpath=OD
+ in_path=IND
+ out_path=OD
+ db_wr_path=OD
  jobstr=JS
  !
  ! CALLS
@@ -104,7 +102,7 @@
  !stderr
  !
  write_to_log=master_node
- write (logfile,'(2a)') trim(outpath),'/l_stderr'
+ write (logfile,'(2a)') trim(out_path),'/l_stderr'
  !
  !Timing
  !
@@ -267,7 +265,6 @@
  BSS_dr=.1/HARTREE
  BSS_q0=(/1.,0.,0./)
  BSS_uses_RIM=.FALSE.
- BSS_skip_full_inv=.FALSE.
  BS_K_is_ALDA=.FALSE.
  BS_not_const_eh_f=.FALSE.
  Haydock_treshold=-0.02

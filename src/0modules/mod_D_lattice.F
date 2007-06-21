@@ -22,6 +22,7 @@
  module D_lattice
    !
    use pars, ONLY:SP
+   implicit none
    !
    ! Temperature
    !
@@ -79,38 +80,35 @@
    end subroutine
    !
    subroutine atoms_spatial_invertion()
-     use pars,   ONLY:zero_dfl
+     use pars,           ONLY:zero_dfl
+     use matrix_operate, ONLY:m3inv
      !
      ! Work Space
      !
-     integer  :: ia,iap,is,n_cells,ic1,ic2,ic3
-     real(SP) :: minus_at_pos(3),at_pos(3)
-     !
-     n_cells=1
+     integer  :: ia,iap,is
+     real(SP) :: at_diff(3),a_m1(3,3)
      !
      if (n_atoms_max==0) return
      !
      i_space_inv=1
      !
+     call m3inv(transpose(a),a_m1)
+     !
      do is=1,n_atom_species
        atoms_loop: do ia=1,n_atoms(is)
-         minus_at_pos=-atom_pos(:,ia,is)
          do iap=1,n_atoms(is) 
            !
-           at_pos=atom_pos(:,iap,is)
+           at_diff=matmul(a_m1,-atom_pos(:,ia,is)-atom_pos(:,iap,is))
            !
-           do ic1=-n_cells,n_cells,1
-             do ic2=-n_cells,n_cells,1
-               do ic3=-n_cells,n_cells,1
-                 at_pos=atom_pos(:,iap,is)+ic1*a(1,:)+ic2*a(2,:)+ic3*a(3,:)-minus_at_pos
-                 if (all((/abs(at_pos(1))<=zero_dfl,abs(at_pos(2))<=zero_dfl,&
-&                    abs(at_pos(3))<=zero_dfl/))) cycle atoms_loop
-               enddo
-             enddo
-           enddo
-         enddo
-         i_space_inv=0
-         return
+           at_diff(1)=abs(at_diff(1)-nint(at_diff(1)))     
+           at_diff(2)=abs(at_diff(2)-nint(at_diff(2)))     
+           at_diff(3)=abs(at_diff(3)-nint(at_diff(3)))     
+           !
+           if (all(at_diff<=zero_dfl)) cycle atoms_loop
+           !
+           i_space_inv=0
+           return
+         enddo 
        enddo atoms_loop
      enddo
      !

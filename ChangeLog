@@ -1,3 +1,32 @@
+2007-06-11 13:52:55 r130 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.9_11-05-07
+
+	*  spp/BZ_RIM.F 2io/ioE_RIM.F 3qp_ctl/mod_QP_CTL.F
+
+	Bugs:
+	- RIM grid was not expanded using the simmetryes.
+
+	Patch sent by: Andrea
+
+2007-06-08 15:06:29 r129 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.9_11-05-07
+
+	*  p2s/p2s_qexml_db1.F 0modules/std_presets.F 0modules/mod_par_proc.F 7bse/K_dump_to_o_file.F 7bse/K_inversion.F 4it/init_load.F 4it/init.F 1common/pert_inversion.F 1parser/Gclose.F 1parser/parser_lib.F 1parser/ps_convert.F 1parser/init_convert.F 1parser/mod_itm.F ChangeLog
+
+	Additions:
+	- In p2s_qexml_db1: skip IGK setup when force_noWFs=.TRUE.
+
+	Changes:
+	- K_inversion: diagonal of BS_mat embodied in Lo. Improved speed
+	  and convergence.
+	- OutDir and InDir entries remove from input file. Non standard
+	  paths must be passed trough the command line only.
+	- reformatting of : Gclose.F parser_lib.F ps_convert.F init_convert.F
+
+	Patch sent by: Andrea
+
 2007-06-06 18:32:11 r128 Andrea Marini <marini@roma2.infn.it>
 
 	Minor changes

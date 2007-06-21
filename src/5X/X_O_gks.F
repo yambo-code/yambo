@@ -88,7 +88,7 @@ contains
   subroutine read_ldacoeff()
 !===========================
  use pars, ONLY:SP,lchlen
- use com,  ONLY:inpath,error
+ use com,  ONLY:in_path,error
  use DFT,  ONLY:igks
 !ws
  implicit none

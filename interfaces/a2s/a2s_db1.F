@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine a2s_db1(en,k,KSS_file_name)
+subroutine a2s_db1(en,k,KSS_file_name)
  !
  use pars,                  ONLY : SP, DP, PI, schlen
  use com,                   ONLY : msg
@@ -206,4 +206,4 @@
  !
  deallocate(asop,agvec)
  !
- end subroutine
+end subroutine

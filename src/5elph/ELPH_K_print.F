@@ -30,7 +30,7 @@ subroutine ELPH_K_print(E,k,q)
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP
  use electrons,     ONLY:levels
  use BS,            ONLY:BS_K_dim,BS_eh_table,BS_mat,BS_bands,BSS_write_eig_2_db
- use ELPH,          ONLY:elph_nb,Rnd_Qpts_at,Rnd_Qpts_corresp,EXCPH_mat
+ use ELPH,          ONLY:elph_nb,EXCPH_mat
  use timing,        ONLY:live_timing
  implicit none
  !
@@ -93,7 +93,7 @@ subroutine ELPH_K_print(E,k,q)
  !
  ! CLEAN
  !
- deallocate(Rnd_Qpts_corresp,Rnd_Qpts_at,EXCPH_mat,BS_mat)
+ deallocate(EXCPH_mat,BS_mat)
  call mem_est("EXCPH_mat BS_mat WS")
  !
 end subroutine

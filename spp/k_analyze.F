@@ -57,6 +57,17 @@
  call k_ibz2bz(Xk,'i',.false.)
  call msg("s",'Q-points  (BZ):',q%nbz)
  !
+ call section('*',"== Built-in K-grid ==")
+ !=========================================
+ live_timing_is_on=.false.
+ do i1=1,Xk%nibz
+   if (trim(coo_out)/="iku") then
+     call c2a(v_in=Xk%pt(i1,:),v_out=v,mode="ki2a")
+     call msg('s','      ',v)
+   endif
+ enddo
+ live_timing_is_on=.true.
+ !
  call section('*',"== GW K-grid analyzer ==")
  !===========================================
  !
@@ -280,7 +291,7 @@
      allocate(GWK_table(GWK%nibz))
      !
      live_timing_is_on=.false.
-     call msg("s"," ---------- Reduced K-grid ----------")
+     call msg("s","       ---------- Reduced K-grid ----------")
      GWK_table=0
      do i2=0,GWK%nibz
        do i1=1,K_grid%nibz

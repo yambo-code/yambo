@@ -26,7 +26,11 @@ module com
   !
   ! PATHS & JOB_str
   !
-  character(lchlen)  :: inpath,outpath,jobstr,repfile
+  character(lchlen)  :: in_path
+  character(lchlen)  :: out_path
+  character(lchlen)  :: db_wr_path
+  character(lchlen)  :: jobstr
+  character(lchlen)  :: repfile
   !
   character(10)::build_date
   integer      ::code_version(3)
@@ -41,10 +45,13 @@ module com
   ! 
   ! Output Files/Report File
   !
-  integer,parameter  :: nofs=100,max_open_ofs=100
-  character(lchlen)  :: of(nofs),opened_of(max_open_ofs)
+  integer,parameter  :: nofs=100
+  integer,parameter  :: max_open_ofs=100
+  character(lchlen)  :: of(nofs)
+  character(lchlen)  :: opened_of(max_open_ofs)
   integer            :: of_unit(max_open_ofs)
-  logical            :: write_to_of,write_to_report
+  logical            :: write_to_of
+  logical            :: write_to_report
   integer, parameter :: of_tabs(10)=(/2,13,24,35,46,57,68,79,90,101/)
   !
   interface msg
@@ -79,6 +86,9 @@ contains
     folder="SAVE"
     if (.not.TO_RD.and..not.TO_WR) return
     !
+    if (TO_RD) ch(1)=in_path
+    if (TO_WR) ch(1)=out_path
+    !
     select case(type)
       case(-2)
         get_name=string_pack('./',desc)
@@ -104,12 +114,10 @@ contains
         folder=""
         if (len_trim(jobstr)>0) ch(2)=string_pack('o-',trim(jobstr),'.',desc)
     end select 
-    if (TO_RD) ch(1)=inpath
-    if (TO_WR) ch(1)=outpath
     !
     ! The RESTART folder is always in the outpath
     !
-    if (type==4 ) ch(1)=outpath
+    if (type==4 ) ch(1)=out_path
     !
     ! No inpath/outpath must pre-appended when an explicit path is given
     !

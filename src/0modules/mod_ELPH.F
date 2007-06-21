@@ -46,8 +46,6 @@
    ! el-ph BSE Kernel
    !
    complex(SP), allocatable :: EXCPH_mat(:,:)
-   integer,     allocatable :: Rnd_Qpts_at(:)
-   integer,     allocatable :: Rnd_Qpts_corresp(:)
    !
  contains
    !

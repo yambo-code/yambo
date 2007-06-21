@@ -41,6 +41,7 @@ subroutine static2dyn_ELPH_K(E,k,q,frequency,M)
  ! Work Space ...
  !
  complex(SP)  ::E_diff(2)
+ real(SP)     ::W_(2)
  integer      ::ii1,ii2,ic1,ic2,iv1,iv2,ik1_bz,ik2_bz,ik1_ibz,ik2_ibz
  integer, external::eval_ELPH_K
  !
@@ -61,8 +62,12 @@ subroutine static2dyn_ELPH_K(E,k,q,frequency,M)
      iv2    =BS_eh_table(ii2,2)
      ic2    =BS_eh_table(ii2,3)
      !
-     E_diff(1) = frequency-(E%E(ic1,ik1_ibz,1)-E%E(iv2,ik2_ibz,1))
-     E_diff(2) = frequency-(E%E(ic2,ik2_ibz,1)-E%E(iv1,ik1_ibz,1))
+     W_=0.
+     if (associated(E%W)) W_=(/E%W(ic1,ik1_ibz,1)-E%W(iv2,ik2_ibz,1),&
+&                              E%W(ic2,ik2_ibz,1)-E%W(iv1,ik1_ibz,1)/)
+     !
+     E_diff(1) = frequency-(E%E(ic1,ik1_ibz,1)-E%E(iv2,ik2_ibz,1)+(0.,1.)*W_(1))
+     E_diff(2) = frequency-(E%E(ic2,ik2_ibz,1)-E%E(iv1,ik1_ibz,1)+(0.,1.)*W_(2))
      !
      M(ii1,ii2)=M(ii1,ii2)+EXCPH_mat(ii1,ii2)*(1./E_diff(1)+1./E_diff(2))
      !

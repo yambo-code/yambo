@@ -34,8 +34,8 @@ integer function eval_ELPH_K(E,k,q,residuals_only,frequency)
  use BS,            ONLY:BS_K_dim,BS_eh_table
  use ELPH,          ONLY:ph_modes,elph_nb,elph_nq,elph_use_q_grid,&
 &                        setup_k_plus_q_levels,ph_qpt,elph_gkkp_free,&
-&                        ph_freqs_sq,elph_gkkp,E_k_plus_q,elph_nq_used,&
-&                        Rnd_Qpts_at,Rnd_Qpts_corresp,EXCPH_mat
+&                        ph_freqs_sq,elph_gkkp,E_k_plus_q,&
+&                        EXCPH_mat
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use timing,        ONLY:live_timing
@@ -51,9 +51,8 @@ integer function eval_ELPH_K(E,k,q,residuals_only,frequency)
  !
  ! ... k/q-points ...
  !
- integer :: iq_db,iq_ibz,iq_bz,iq_s,iq_ref,ik1_bz,ik2_bz,&
+ integer :: iq_ibz,iq_bz,iq_s,iq_ref,ik1_bz,ik2_bz,&
 &           ik1_ibz,ik2_ibz,ik1_bz_gkkp,ik1_s,ik2_s
- integer, external    ::k_the_nearest
  complex(SP)          ::E_diff(2)
  ! 
  ! ... I/O
@@ -64,12 +63,15 @@ integer function eval_ELPH_K(E,k,q,residuals_only,frequency)
  ! ... dummies
  !
  integer     :: i1,i2,ii1,ii2,ic1,ic2,iv1,iv2,il_ph
- complex(SP) :: elph_gkkp_sq
+ complex(SP) :: elph_gkkp_sq,frequency_
  real(SP)    :: ph_E
  type(pp_indexes) ::px
  !
  eval_ELPH_K=1
+ frequency_=frequency
+ if (residuals_only) frequency_=(0.,0.)
  if (residuals_only.and.allocated(EXCPH_mat)) return
+ if (.not.elph_use_q_grid) return
  !
  if (isec(2)/=0) then
    call section('=','Electron-Phonon contribution to the DBSE Kernel')
@@ -89,27 +91,7 @@ integer function eval_ELPH_K(E,k,q,residuals_only,frequency)
    return
  endif
  !
- if (elph_use_q_grid) elph_nq_used=q%nbz
- !
- ! Random <-> Uniform grids correspondance
- !
  if (.not.allocated(EXCPH_mat)) then
-   allocate(Rnd_Qpts_corresp(elph_nq_used),Rnd_Qpts_at(q%nbz))
-   forall(i1=1:elph_nq_used) Rnd_Qpts_corresp(i1)=i1
-   Rnd_Qpts_at=0
-   if (.not.elph_use_q_grid) then
-     do i1=1,elph_nq
-       !
-       ! The index iq_bz of the uniform grid nearest to the ph q-pt
-       !
-       iq_bz =k_the_nearest(ph_qpt(i1,:),q%ptbz(:,:),q%nbz)
-       Rnd_Qpts_at(iq_bz)=Rnd_Qpts_at(iq_bz)+1
-       Rnd_Qpts_corresp(i1)=iq_bz
-     enddo
-     if (any(Rnd_Qpts_at==0)) call error('Some Q-pts have empty random region.') 
-   else
-     Rnd_Qpts_at=1
-   endif
    !
    ! El-Ph Matrix
    !
@@ -123,38 +105,29 @@ integer function eval_ELPH_K(E,k,q,residuals_only,frequency)
  EXCPH_mat=(0.,0.)
  !
  call pp_indexes_reset(px)
- call par_indexes(px,(/elph_nq_used/))
+ call par_indexes(px,(/q%nbz/))
  call pp_redux_wait
  !
- do i1=1,elph_nq_used
-   !
-   iq_db=i1
-   iq_bz=i1
-   !
-   if (elph_use_q_grid)      iq_db=q%sstar(i1,1)
-   if (.not.elph_use_q_grid) iq_bz=Rnd_Qpts_corresp(i1)
+ do iq_bz=1,q%nbz
    !
    iq_ibz=q%sstar(iq_bz,1)
    iq_s  =q%sstar(iq_bz,2)
    !
-   if (iq_db/=iabs(iq_ref)) then
+   if (iq_ibz/=iabs(iq_ref)) then
      !
-     call io_control(ACTION=RD_CL_IF_END,SEC=(/iq_db+1/),ID=ID)
+     call io_control(ACTION=RD_CL_IF_END,SEC=(/iq_ibz+1/),ID=ID)
      io_err=ioELPH(ID)
-     iq_ref=iq_db
-     if (io_err<0) iq_ref=-iq_db
-     !
-     if (.not.elph_use_q_grid) call setup_k_plus_q_levels(E%Efermi(1))
+     iq_ref=iq_ibz
      !
      ! I call live_timing here as in ioELPH the elph_alloc() can 
      ! send a screen message about the allocated memory that can interferee
      ! with the live_timing hashes
      !
-     if (iq_db==1) call live_timing('El-PH loop',px%stps(myid+1))
+     if (iq_ibz==1) call live_timing('El-PH loop',px%stps(myid+1))
      !
    endif
    !
-   if (.not.px%i1p(i1)) cycle
+   if (.not.px%i1p(iq_bz)) cycle
    !
    if (iq_ref<0) then
      call live_timing(steps=1)
@@ -174,13 +147,9 @@ integer function eval_ELPH_K(E,k,q,residuals_only,frequency)
      ! When using a uniform Q grid I cycle on the q symmetries
      ! as well. To rotate the gkkp m.e. I use ik1/2_bz_gkkp
      !
-     ik1_bz_gkkp=ik1_bz
-     if (elph_use_q_grid) then
-       !
-       ! WARNING ! When iqs includes TR the rotation is wrong.
-       !
-       ik1_bz_gkkp=ik_is_table(ik1_ibz,sop_tab(sop_inv(iq_s),ik1_s))
-     endif
+     ! WARNING ! When iqs includes TR the rotation is wrong.
+     !
+     ik1_bz_gkkp=ik_is_table(ik1_ibz,sop_tab(sop_inv(iq_s),ik1_s))
      !
      do ii2=1,ii1-1
        ik2_bz=BS_eh_table(ii2,1)
@@ -192,11 +161,8 @@ integer function eval_ELPH_K(E,k,q,residuals_only,frequency)
        iv2   =BS_eh_table(ii2,2)
        ic2   =BS_eh_table(ii2,3)
        !
-       E_diff(1) = frequency-(E%E(ic1,ik1_ibz,1)-E%E(iv2,ik2_ibz,1))
-       E_diff(2) = frequency-(E%E(ic2,ik2_ibz,1)-E%E(iv1,ik1_ibz,1))
-       if (elph_use_q_grid) E_diff=(/&
-&          frequency-(E%E(ic1,ik1_ibz,1)-E_k_plus_q(iv2,ik2_bz,1)),&
-&          frequency-(E_k_plus_q(ic2,ik2_bz,1)-E%E(iv1,ik1_ibz,1))/)
+       E_diff(1) = frequency_-(E%E(ic1,ik1_ibz,1)-E%E(iv2,ik2_ibz,1))
+       E_diff(2) = frequency_-(E%E(ic2,ik2_ibz,1)-E%E(iv1,ik1_ibz,1))
        !
        elph_gkkp_sq=(0.,0.)
        !
@@ -206,12 +172,12 @@ integer function eval_ELPH_K(E,k,q,residuals_only,frequency)
          !
          if (iq_ibz==1.and.il_ph<=3) cycle
          !
-         ph_E=sqrt(abs(ph_freqs_sq(iq_db,il_ph)))
+         ph_E=sqrt(abs(ph_freqs_sq(iq_ibz,il_ph)))
          !
          elph_gkkp_sq=elph_gkkp_sq&
 &                     -conjg(elph_gkkp(ik1_bz_gkkp,il_ph,ic2,ic1))*&
 &                            elph_gkkp(ik1_bz_gkkp,il_ph,iv2,iv1)/2./ph_E*&
-&                      (bose_f(ph_E)+1.)/real(q%nbz)/real(Rnd_Qpts_at(iq_bz))
+&                      (bose_f(ph_E)+1.)/real(q%nbz)
        enddo
        !
        if (residuals_only) then

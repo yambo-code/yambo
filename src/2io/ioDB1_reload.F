@@ -27,7 +27,7 @@
  use D_lattice,        ONLY:dl_sop,n_atoms,znucl,atom_pos
  use R_lattice,        ONLY:g_vec,bz_samp,bz_samp_reset
  use wave_func,        ONLY:wf_nc_k,wf_igk,wf_ng
- use com,              ONLY:inpath
+ use com,              ONLY:in_path
  use IO_m,             ONLY:io_control,OP_RD_CL,NONE,DUMP
  implicit none
  type(levels)  :: E
@@ -38,11 +38,11 @@
  !
  integer           :: ID
  integer, external :: ioDB1
- character(lchlen) :: inpath_save
+ character(lchlen) :: in_path_save
  !
  ! Saves
  !
- inpath_save=inpath
+ in_path_save=in_path
  !
  ! Reset
  !
@@ -57,13 +57,13 @@
  !
  ! Path redirection
  !
- inpath=DB1_path
+ in_path=DB1_path
  !
  ! DB1
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
  ioDB1_reload=ioDB1(E,k,ID)
  !
- inpath=inpath_save
+ in_path=in_path_save
  !
  end function ioDB1_reload

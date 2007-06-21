@@ -35,7 +35,7 @@
  use wave_func,           ONLY:wf,wf_ng,wf_state
 #if defined PJ_GKS
  use DFT,                 ONLY:lgks,auxpath
- use com,                 ONLY:inpath
+ use com,                 ONLY:in_path
  use pars,                ONLY:SP,pi,lchlen
 #endif
  !
@@ -65,15 +65,15 @@
 #endif
 #if defined PJ_GKS
  integer                      :: v_limits(2),c_limits(2),nb_aux
- character(lchlen) :: save_inpath
+ character(lchlen) :: save_in_path
 #endif 
  !
  ! Check for the KB PP DB 
  !
 #if defined PJ_GKS
  if (lgks) then
-   save_inpath = inpath
-   inpath = auxpath
+   save_in_path = in_path
+   in_path = auxpath
  endif 
 #endif 
  !
@@ -214,7 +214,7 @@
  ! CLEAN
  !
 #if defined PJ_GKS
- if (lgks) inpath = save_inpath
+ if (lgks) in_path = save_in_path
 #endif 
  deallocate(wf_xyz)
  call pp_indexes_reset(px)

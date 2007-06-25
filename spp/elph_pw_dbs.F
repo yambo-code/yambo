@@ -223,6 +223,8 @@ integer function elph_pw_dbs(k,E,q)
    read (io_unit(ID)) ph_modes,elph_nk,elph_nb
    read (io_unit(ID)) pw_alat,pw_q,pw_k(:,:elph_nk)
    !
+   pw_q_iku=pw_q
+   !
    if (idb_<0) then
      iq_check=0
      do i1=1,nqibz

@@ -77,12 +77,14 @@
    if (.not.use_fragments) then
      call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
      ioBS_err=ioBS(iq,X,ID)
-     if (BS_K_coupling) then
-       allocate(BS_mat(2*BS_K_dim,2*BS_K_dim))
-       call mem_est('BS_mat',(/2*BS_K_dim**2/))
-     else
-       allocate(BS_mat(BS_K_dim,BS_K_dim))
-       call mem_est('BS_mat',(/BS_K_dim**2/))
+     if (.not.allocated(BS_mat)) then
+       if (BS_K_coupling) then
+         allocate(BS_mat(2*BS_K_dim,2*BS_K_dim))
+         call mem_est('BS_mat',(/2*BS_K_dim**2/))
+       else
+         allocate(BS_mat(BS_K_dim,BS_K_dim))
+         call mem_est('BS_mat',(/BS_K_dim**2/))
+       endif
      endif
    else
      call pp_indexes_reset(Kp)

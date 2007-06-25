@@ -58,7 +58,7 @@ subroutine K_inversion(iq,W,E,k,q)
  integer          ::i1,i2,ik_bz,iv,ic,iw,icv,of_mode,i_sp,ik_ibz
  integer, external::pert_inversion,eval_ELPH_K
  complex(SP)      ::Co,QP_Z,QP_width,Lo_ws
- complex(SP), allocatable  ::Lo(:,:),WS(:,:)
+ complex(SP), allocatable  ::Lo(:,:)
  !
  ! ... frequencies
  !
@@ -167,23 +167,20 @@ subroutine K_inversion(iq,W,E,k,q)
  !  mem est
  !
 #if defined PJ_PH
- allocate(WS(BS_K_dim,BS_K_dim))
- call mem_est("Lo WS",(/BS_K_dim*W%n(1),2*BS_K_dim**2/))
+ call mem_est("Lo",(/BS_K_dim*W%n(1),2*BS_K_dim**2/))
 #else
- call mem_est("Lo WS",(/BS_K_dim*W%n(1),BS_K_dim**2/))
+ call mem_est("Lo",(/BS_K_dim*W%n(1),BS_K_dim**2/))
 #endif
  !
  ! Kernel loading
  !
  call Kernel_by_V(iq)
- !
  forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)-BS_eh_E(i1)
  !
 #if defined PJ_PH
  !
  ! SAVE BS_mat & calculaye ELPH_K
  !
- WS=BS_mat
  add_ELPH_K=.false.
  if (l_ph_corr) add_ELPH_K=eval_ELPH_K(E,k,q,.TRUE.,(0.,0.))==0
 #endif
@@ -348,9 +345,8 @@ subroutine K_inversion(iq,W,E,k,q)
  deallocate(inv_err,p_inv_2do)
  call pp_indexes_reset(px)
  deallocate(BS_mat,iw_full,nw_full,Lo)
- call mem_est("BS_mat Lo WS")
+ call mem_est("BS_mat Lo")
 #if defined PJ_PH
- deallocate(WS)
  if (allocated(EXCPH_mat)) then
    deallocate(EXCPH_mat)
    call mem_est("EXCPH_mat")
@@ -362,13 +358,15 @@ contains
   subroutine perform_invertion(iw_2start,iw_2do)
     integer     :: iw_2start,iw_2do
     !
-    integer :: i2
+    integer :: i2,i3
     !
     do i2=1,iw_2do
       !
 #if defined PJ_PH
       if (add_ELPH_K) then
-        BS_mat=WS
+        BS_mat=(0.,0.)
+        call Kernel_by_V(iq)
+        forall(i3=1:BS_K_dim) BS_mat(i3,i3)=BS_mat(i3,i3)-BS_eh_E(i3)
         call static2dyn_ELPH_K(E,k,q,W%p(i2),BS_mat)
       endif
 #endif

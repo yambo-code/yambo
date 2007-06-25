@@ -24,7 +24,8 @@ integer function ioBSS_invert(iq,n_,inv_err,eps,W_disk,ID)
  use pars,          ONLY:SP,HARTREE
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
- use BS,            ONLY:BS_identifier,BSS_q0,BSS_uses_RIM,BSS_dr
+ use BS,            ONLY:BS_identifier,BSS_q0,BSS_uses_RIM,BSS_dr,&
+&                        BSS_damp_reference
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&
 &                        io_header,read_is_on,write_is_on
@@ -48,7 +49,7 @@ integer function ioBSS_invert(iq,n_,inv_err,eps,W_disk,ID)
    !
    ioBSS_invert=io_header(ID,QP_ctl_K=.true.)
    !
-   call io_elemental(ID,VAR="PARS",VAR_SZ=8,MENU=0)
+   call io_elemental(ID,VAR="PARS",VAR_SZ=11,MENU=0)
    call io_elemental(ID,VAR=&
 &       " BSK Identifier                  :",I0=BS_identifier,CHECK=.TRUE.,OP=(/"=="/))
    call io_elemental(ID,VAR=&
@@ -58,11 +59,18 @@ integer function ioBSS_invert(iq,n_,inv_err,eps,W_disk,ID)
    call io_elemental(ID,VAR=&
 &       " Number of frequencies           :",I0=W_disk%n(1))
    call io_elemental(ID,UNIT=HARTREE,VAR=&
+&       " Energy range                [ev]:",R1=W_disk%er)
+   call io_elemental(ID,UNIT=HARTREE,VAR=&
 &       " Damping range               [ev]:",R1=BSS_dr,CHECK=.true.,OP=(/"==","=="/))
+   call io_elemental(ID,UNIT=HARTREE,VAR=&
+&       " Damping reference energy    [ev]:",R0=BSS_damp_reference,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
    call io_bulk(ID,'N_of_FREQs',VAR_SZ=(/1/))
    call io_bulk(ID,I0=W_disk%n(1))
+   !
+   call io_bulk(ID,'FREQs_RANGE',VAR_SZ=(/2/))
+   call io_bulk(ID,R1=W_disk%er)
    !
    ! header return
    !

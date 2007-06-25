@@ -470,7 +470,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_bss) then
   call initactivate(1,'KfnQPdb KfnQP_N KfnQP_E KfnQP_W KfnQP_Z')
-  call initactivate(1,'BSSmod BEnRange BDmRange BEnSteps BLongDir WRbsWF')
+  call initactivate(1,'BSSmod BEnRange BDmRange BDmERef BEnSteps BLongDir WRbsWF')
   if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs')
   if (index(BSS_mode,'t')/=0)  call initactivate(1,'FxcGRLc FxcSVDcut FxcMEStps FxcCausal')
   if (index(BSS_mode,'i')/=0)  call initactivate(1,'SkipInv FullInv')

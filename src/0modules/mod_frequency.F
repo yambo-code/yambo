@@ -40,10 +40,11 @@
    integer, allocatable :: bg_npts(:)
    !
    type w_samp
-     integer :: n(2)
-     real(SP):: er(2)
-     real(SP):: dr(2)
-     real(SP):: per_memstps
+     integer      :: n(2)
+     real(SP)     :: er(2)
+     real(SP)     :: damp_reference
+     real(SP)     :: dr(2)
+     real(SP)     :: per_memstps
      complex(SP),pointer :: p(:) 
    end type w_samp
    !
@@ -115,6 +116,7 @@
      Wo%per_memstps=Wi%per_memstps
      Wo%er=Wi%er
      Wo%dr=Wi%dr
+     Wo%damp_reference=Wi%damp_reference
      if (associated(Wi%p)) then
        allocate(Wo%p(Wo%n(1)))
        call mem_est("W-p",(/Wo%n(1)/))
@@ -132,6 +134,7 @@
      W%per_memstps=100.
      W%er=(/0.,10./)/HARTREE
      W%dr=(/.1,.1/)/HARTREE
+     W%damp_reference=0.
      nullify(W%p)
      call mem_est("W-p")
    end subroutine W_reset

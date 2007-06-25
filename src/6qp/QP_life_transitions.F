@@ -114,7 +114,7 @@
  allocate(X_life_W%p(cg_npts))
  do i1=1,cg_npts
    ! 
-   X_life_W%p(i1)=cg_pt(i1)+damping(X_life_W%er,X_life_W%dr,cg_pt(i1))*cmplx(0.,1.,SP)
+   X_life_W%p(i1)=cg_pt(i1)+damping(X_life_W,cg_pt(i1))*cmplx(0.,1.,SP)
    !
  enddo
  !

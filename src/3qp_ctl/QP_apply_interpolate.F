@@ -33,19 +33,21 @@ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use vec_operate,   ONLY:sort
- use QP_m,          ONLY:QP_t
+ use QP_m,          ONLY:QP_t,QP_ctl_applied
  !
  implicit none
  type(levels)::en
  type(QP_t)  ::qp
  type(bz_samp)::k
- integer :: n_neigh,band_range(2),DB_corrected(en%nb,en%nk) 
+ integer :: n_neigh,band_range(2),DB_corrected(en%nb,en%nk)
  logical :: l_qp(4),wrong_width_sign_warn
  !
  ! Work Space
  !
- integer  :: i1,i2,ikbz,order(qp%nk),k_near(n_neigh),nk_interpolated,nk_exact
+ integer  :: i1,i2,ikbz,order(qp%nk),k_near(n_neigh),nk_interpolated,nk_exact,i_err
  real(SP) :: idist(qp%nk),odist(qp%nk),v1(3),k_dist(n_neigh)
+ !
+ integer, external :: k_the_nearest
  !
  ! IBZ -> BZ (iku)
  !
@@ -61,6 +63,7 @@ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
    k_near=0
    k_dist=1.E5
    idist=1.E5
+   !
    do i2=1,qp%nk
      do ikbz=1+sum(k%nstar(:i1-1)),sum(k%nstar(:i1))
        idist(i2)=min(idist(i2),kmin_distance(qp%k(i2,:),k%ptbz(ikbz,:)))
@@ -74,15 +77,26 @@ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
      k_near(1)=1
      k_dist(1)=idist(1)
    endif
+   !
+   ! Transfer OR interpolate
+   !
    if (.not.l_qp(4)) then
-     if (abs(k_dist(1))>1.E-5) cycle
-     call qp_transfer(k_near(:1),i1,1)
+     !
+     ! To transfer I need to find the exact correspondance
+     ! between k%pt and qp%k. This exists when i_err==0
+     !
+     k_near(1)=k_the_nearest(k%pt(i1,:),qp%k,qp%nk,.TRUE.,i_err)
+     if (i_err/=0) cycle
+     !
+     call qp_transfer(k_near(1),i1,1)
      nk_exact=nk_exact+1
    else
      call qp_transfer(k_near,i1,n_neigh)
      nk_interpolated=nk_interpolated+1
    endif
+   !
  enddo
+ !
  call msg('r','[QP] Kpts covered exactly  [o/o]:',&
 &              real(nk_exact)/real(k%nibz)*100._SP)
  if (l_qp(4).and.nk_interpolated>0) then
@@ -92,6 +106,8 @@ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
  endif
  !
  if (all(DB_corrected(band_range(1):band_range(2),:)==1)) l_qp(:3)=.false.
+ !
+ QP_ctl_applied=.true.
  !
  ! Clean
  !

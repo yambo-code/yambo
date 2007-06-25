@@ -33,7 +33,8 @@
 &                         BS_n_g_exch,BSS_n_freqs,BSS_er,BSS_dr,&
 &                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,&
-&                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange
+&                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
+&                         BSS_damp_reference
  use TDDFT,          ONLY:FXC,FXC_K_diagonal,FXC_per_memstps,FXC_n_mem_freqs,&
 &                         FXC_is_causal
  use QP_CTL,         ONLY:QP_apply
@@ -114,6 +115,7 @@
  W_bss%n=BSS_n_freqs
  W_bss%er=BSS_er
  W_bss%dr=BSS_dr
+ W_bss%damp_reference=BSS_damp_reference
  !
  ! Note that %n(2) is not used in standard BSE solvers.
  ! Only when we are using the BS derived FXC FXC_per_memstps

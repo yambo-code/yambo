@@ -118,7 +118,7 @@ subroutine X_bare_RIM_Gf(iq,transitions,fr,Xw,Xen,Xk,Gf,ordering)
      do i2=1,BZ_RIM_nkpt(ikpbz)
        ikp_rand=BZ_RIM_table(ikpbz,i2) 
        !
-       pole=Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ikp_rand,i_spin)++(0.,1.)*W_
+       pole=Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ikp_rand,i_spin)+(0.,1.)*W_
        !
        ffac=Z_*Xen%f_RIM(iv,ikp_rand,i_spin)*(spin_occ-Xen%f_RIM(ic,ik_rand,i_spin))/&
 &         real(BZ_RIM_nkpt(ikbz))/real(BZ_RIM_nkpt(ikpbz))/f0fac

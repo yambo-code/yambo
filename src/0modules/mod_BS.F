@@ -78,6 +78,7 @@
   integer  :: BSS_n_freqs
   real(SP) :: BSS_er(2)
   real(SP) :: BSS_dr(2)
+  real(SP) :: BSS_damp_reference
   real(SP) :: BSS_q0(3)
   real(SP) :: Haydock_treshold
   real(SP) :: Haydock_v0_mod

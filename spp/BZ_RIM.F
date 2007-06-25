@@ -19,9 +19,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine BZ_RIM(Xk,Xen)
+subroutine BZ_RIM(Xk,Xen)
  !
- use pars,                ONLY:SP,DP,lchlen
+ use pars,                ONLY:SP,DP,lchlen,HARTREE
  use R_lattice,           ONLY:bz_samp,nkibz
  use D_lattice,           ONLY:alat,nsym,default_Tel,a
  use com,                 ONLY:msg,error
@@ -30,7 +30,7 @@
  use electrons,           ONLY:levels,default_nel,n_bands,&
 &                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
 &                              BZ_RIM_tot_nkpts,n_spin,BZ_RIM_max_filling
- use timing,              ONLY:live_timing_is_on
+ use timing,              ONLY:live_timing_is_on,live_timing
  use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP,OP_WR_CL
  !
  implicit none
@@ -102,6 +102,8 @@
  call msg('s',':: K points              :',nkibz)
  call msg('s',':: Bands                 :',n_bands)
  call msg('s',':: Symmmetries           :',nsym)
+ call msg('s',':: Indirect Gap      [ev]:',&
+&             ( minval(BZ_E%E(Xen%nbf+1,:,1))-maxval(BZ_E%E(Xen%nbf,:,1)) )*HARTREE )
  !
  call section('+','BZ RIM K-points expansion ...')
  !
@@ -115,8 +117,6 @@
  !
  call msg('l','done')
  !
- call section('=','BZ RIM K-points Tables setup...')
- !
  add_X_grid=.true.
  !
  BZ_RIM_nbands=BZ_E%nb
@@ -126,6 +126,7 @@
  allocate(BZ_RIM_nkpt(Xk%nbz))
  BZ_RIM_nkpt=0
  !
+ call live_timing('BZ RIM Tables',BZ_k%nbz*2,SERIAL=.true.)
  do while(.not.allocated(BZ_RIM_table)) 
    if (maxval(BZ_RIM_nkpt)>0) then
      if (add_X_grid)      allocate(BZ_RIM_table(Xk%nbz,maxval(BZ_RIM_nkpt)+1))
@@ -135,15 +136,17 @@
    BZ_RIM_nkpt=0
    do i1=1,BZ_k%nbz
      !
-     ikbz=k_the_nearest(BZ_k%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz)
+     ikbz=k_the_nearest(BZ_k%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz,.FALSE.,i_err)
      BZ_RIM_nkpt(ikbz)=BZ_RIM_nkpt(ikbz)+1
      !
      if (allocated(BZ_RIM_table)) BZ_RIM_table(ikbz,BZ_RIM_nkpt(ikbz))=BZ_k%sstar(i1,1)
+     !      
+     call live_timing(steps=1)
      !
    enddo
  enddo
+ call live_timing()
  !
- call msg('l','done')
  BZ_RIM_max_filling=maxval(BZ_RIM_nkpt)
  if (add_X_grid) BZ_RIM_max_filling=BZ_RIM_max_filling+1
  call msg('s',':: BZ blocks filling     :',(/minval(BZ_RIM_nkpt),BZ_RIM_max_filling/))
@@ -172,4 +175,4 @@
  call k_ibz2bz(Xk,'d',.false.) 
  call k_ibz2bz(BZ_k,'d',.false.) 
  !
- end subroutine
+end subroutine

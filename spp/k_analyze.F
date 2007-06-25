@@ -63,7 +63,8 @@
  do i1=1,Xk%nibz
    if (trim(coo_out)/="iku") then
      call c2a(v_in=Xk%pt(i1,:),v_out=v,mode="ki2a")
-     call msg('s','      ',v)
+     write(ch,'(3(f12.7,1x))') v
+     call msg("s",'      ',trim(ch))
    endif
  enddo
  live_timing_is_on=.true.

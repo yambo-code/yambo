@@ -223,19 +223,6 @@ integer function elph_pw_dbs(k,E,q)
    read (io_unit(ID)) ph_modes,elph_nk,elph_nb
    read (io_unit(ID)) pw_alat,pw_q,pw_k(:,:elph_nk)
    !
-   if (any(alat/=pw_alat)) then
-     !
-     ! pw_k/q are in iku so propto pw_alat / (2 pi)
-     !
-     forall (i1=1:3) pw_q(i1)=pw_q(i1)/real(pw_alat)*alat(i1)
-     forall (i1=1:3) pw_k(i1,:)=pw_k(i1,:)/real(pw_alat)*alat(i1)
-     !
-     pw_q_iku=pw_q
-     !
-     ! DEBUG (uncomment if pw_q is in rlu)
-     !call c2a(v_in=pw_q_iku,mode="ka2i")
-   endif
-   !
    if (idb_<0) then
      iq_check=0
      do i1=1,nqibz

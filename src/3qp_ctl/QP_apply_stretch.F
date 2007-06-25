@@ -180,15 +180,15 @@
      if (qpfit%fit_scissor/=0.) &
 &       call msg(' r',' Additional FIT correction [ev]:',qpfit%fit_scissor*HARTREE)
      if (any(qpfit%E/=(/0.,1.,0.,1./))) then
-      call msg(' r',' Energies 0th order [ev]:',(/qpfit%E(1),qpfit%E(3)/)*HARTREE)
-      call msg(' r',' Energies 1st order     :',(/qpfit%E(2),qpfit%E(4)/))
-      if (any((/qpfit%E_err/=0./))) call msg(' r','                   Error:',qpfit%E_err)
+      call msg(' r',' Energies 0th order c/v [ev]:',(/qpfit%E(1),qpfit%E(3)/)*HARTREE)
+      call msg(' r',' Energies 1st order         :',(/qpfit%E(2),qpfit%E(4)/))
+      if (any((/qpfit%E_err/=0./))) call msg(' r','                       Error:',qpfit%E_err)
      endif
      if (any((/qpfit%W/=0./))) then
-       call msg(' r',' Widths 0th order [ev]:',(/qpfit%W(1),qpfit%W(4)/)*HARTREE)
-       call msg(' r',' Widths 1st order     :',(/qpfit%W(2),qpfit%W(5)/))
-       call msg(' r',' Widths 2st order     :',(/qpfit%W(3),qpfit%W(6)/))
-       if (any((/qpfit%W_err/=0./))) call msg(' r','                   Error:',qpfit%W_err)
+       call msg(' r',' Widths 0th order c/v [ev]:',(/qpfit%W(1),qpfit%W(4)/)*HARTREE)
+       call msg(' r',' Widths 1st order         :',(/qpfit%W(2),qpfit%W(5)/))
+       call msg(' r',' Widths 2st order         :',(/qpfit%W(3),qpfit%W(6)/))
+       if (any((/qpfit%W_err/=0./))) call msg(' r','                       Error:',qpfit%W_err)
      endif
      if (qpfit%Z/=(1.,0.)) &
 &       call msg(' r',' Renormalization      :',(/real(qpfit%Z),aimag(qpfit%Z)/))

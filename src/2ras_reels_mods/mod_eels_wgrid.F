@@ -308,7 +308,7 @@ contains
 
     do i1=1,wv%n(1)
       wv%p(i1)=real(wv%p(i1)) + &
-&              damping(wv%er,wv%dr,real(wv%p(i1)))*cmplx(0.,1.,SP)
+&              damping(wv,real(wv%p(i1)))*cmplx(0.,1.,SP)
     enddo
     return
   end subroutine add_broad

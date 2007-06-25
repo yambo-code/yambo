@@ -1,3 +1,20 @@
+2007-06-21 09:40:54 r131 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.9_11-05-07
+
+	*  spp/k_analyze.F p2s/p2s_i.F a2s/a2s_db1.F a2s/a2s_i.F a2s/a2s_wf.F e2s/e2s_i.F f2s/f2s_i.F 0modules/std_presets.F 0modules/mod_BS.F 0modules/mod_IO.F 0modules/mod_com.F 0modules/.objects 0modules/mod_ELPH.F 0modules/mod_D_lattice.F 2io/ioE_RIM.F 2io/ioDB1_reload.F 5X/X_O_longitudinal.F 5X/X_O_transverse.F 5X/O_driver.F 5X/X_O_strengths.F 5X/X_O_gks.F 7bse/K_inversion.F 4it/init_load.F 4it/init.F 4ras/X_O_longitudinal_cut.F 1common/run_summary.F 5elph/ELPH_K_print.F 5elph/static2dyn_ELPH_K.F 5elph/eval_ELPH_K.F ChangeLog
+
+	Additions:
+	- Built-in K-points are written in output using the "spp -k" option.
+	- Added db_wr_path to be used for distributed calculations (devel)
+
+	Changes:
+	- Renamed : outpath (out_path), inpath (in_path)
+	- subroutine atoms_spatial_invertion changed
+	- db.E_RIM is searched in SAVE folder if not found in JOB folder
+
+	Patch sent by: Andrea
+
 2007-06-11 13:52:55 r130 Andrea Marini <marini@roma2.infn.it>
 
 	V 3.0.9_11-05-07

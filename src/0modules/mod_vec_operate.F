@@ -169,8 +169,7 @@
      !
      ! k is rlu 
      !
-     ! Output is the module the k in the IBZ and
-     ! ak2bz=|k|
+     ! Output is the module the k in the IBZ, ak2bz=|k|
      !
      implicit none
      real(SP) :: k(3)

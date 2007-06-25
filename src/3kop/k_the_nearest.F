@@ -19,37 +19,67 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function k_the_nearest(ko_,k,n_k)
+integer function k_the_nearest(ko_,k,n_k,be_carefull,i_err)
+ !
+ ! On output : - k(k_the_nearest,:) is the nearest to ko
+ !             - k(k_the_nearest,:)==ko when i_err=0
  !
  use com,            ONLY:error
  use pars,           ONLY:SP,zero_dfl
- use vec_operate,    ONLY:k2bz,iku_v_norm
+ use vec_operate,    ONLY:iku_v_norm,c2a
+ use D_lattice,      ONLY:nsym
+ use R_lattice,      ONLY:rl_sop
  implicit none
  !
- integer :: n_k
+ integer :: n_k,i_err
  real(SP):: ko_(3),k(n_k,3)
+ logical :: be_carefull
  !
  ! Work Space
  !
  integer :: i1,i2,is
- real(SP):: v(3),ko(3),k_distance
+ real(SP):: v(3),ko(3,nsym),k_distance
  !
  k_the_nearest=0
- !
- ! As the k array SHOULD BE obtained using the TRUE flag
- ! in k_ibz2bz I can avoid loop on the G-vectors moving the
- ! ko in the BZ 
- !
- call k2bz(ko_,v_out=ko)
- !
+ i_err=-1
  k_distance=10000.
+ !
+ if (.not.be_carefull) then
+   do i1=1,n_k
+     v=ko_-k(i1,:)
+     if (iku_v_norm(v)<k_distance) then
+       k_distance=iku_v_norm(v)
+       k_the_nearest=i1
+     endif
+     if (k_distance<zero_dfl) exit
+   enddo
+   return
+ endif
+ !
+ do is=1,nsym
+   ko(:,is)=matmul(rl_sop(:,:,is),ko_)
+ enddo
+ ! 
  do i1=1,n_k
-   v=ko_-k(i1,:)
-   if (iku_v_norm(v)<k_distance) then
-     k_distance=iku_v_norm(v)
-     k_the_nearest=i1
-   endif
-   if (k_distance<zero_dfl) exit
+   do is=1,nsym
+     v=ko(:,is)-k(i1,:)
+     !
+     call c2a(v_in=v,mode='ki2a')
+     v(1)=abs(v(1)-nint(v(1)))     
+     v(2)=abs(v(2)-nint(v(2)))     
+     v(3)=abs(v(3)-nint(v(3)))   
+     call c2a(v_in=v,mode='ka2i')
+     !
+     if (iku_v_norm(v)<k_distance) then
+       k_distance=iku_v_norm(v)
+       k_the_nearest=i1
+     endif
+     if (k_distance<zero_dfl) then
+       i_err=0
+       exit
+     endif
+     !
+   enddo
  enddo
  !
  if (k_the_nearest==0) call error('in k_the_nearest. Nearest point not found.')

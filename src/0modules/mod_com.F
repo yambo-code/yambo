@@ -268,7 +268,7 @@ contains
   logical function file_exists(name)
     character(*) name
     file_exists=.false.
-    if (trim(name)=='') return
+    if (len_trim(name)==0) return
     inquire(file=name,exist=file_exists)
   end function
   !

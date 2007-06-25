@@ -46,7 +46,7 @@
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry
  use BS,            ONLY:BS_res_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_columns,&
 &                        BS_n_g_W,BS_n_g_exch,BSS_mode,Haydock_treshold,BSS_n_freqs,&
-&                        BSS_dr,BSS_er,BSS_q0,BS_cpl_mode
+&                        BSS_dr,BSS_er,BSS_q0,BS_cpl_mode,BSS_damp_reference
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,&
 &                        FXC_SVD_cutoff
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
@@ -259,6 +259,8 @@
  call it(defs,'BLongDir','[BSS] [cc] Electric Field',BSS_q0)
  call it(defs,'BEnRange','[BSS] Energy range',BSS_er,E_unit)
  call it(defs,'BDmRange','[BSS] Damping range',BSS_dr,E_unit)
+ call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,&
+&                        E_unit,verb_level=V_more)
  call it(defs,'BSHayTrs','[BSS] [o/o] Haydock treshold. Strict(>0)/Average(<0)',&
 &              Haydock_treshold,verb_level=V_more)
  call it(defs,'BEnSteps','[BSS] Energy steps',BSS_n_freqs)
@@ -286,14 +288,14 @@
      ! Work Space
      ! 
      integer           ::i1
-     integer,parameter ::desln=31
-     character(8)      ::nms(14),sfx
-     character(40)     ::des(14)
+     integer,parameter ::n_des=15
+     character(8)      ::nms(n_des),sfx
+     character(40)     ::des(n_des)
      character(schlen) ::lch1,lch2
      !
      nms=(/'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
 &          'DrudeW','LongDr','EhEngy','PPAPnt','PPTylT',&
-&          'NGsBlk','QpntsR','BndsRn'/)
+&          'NGsBlk','QpntsR','BndsRn','DmMode'/)
      des(1) ='Green`s function t/c/r/a'
      des(2) ='Energy range'
      des(3) ='Damping range'
@@ -308,8 +310,9 @@
      des(12)='Response block size'
      des(13)='Transferred momenta'
      des(14)='Polarization function bands'
+     des(15)='Damping reference energy'
      !
-     do i1=1,14
+     do i1=1,n_des
        lch1=des(i1);lch2=nms(i1)
        if (X%whoami==1) sfx='Xx'
        if (X%whoami==2) sfx='Xs'
@@ -318,6 +321,7 @@
        write (des(i1),'(4a)')  '[',trim(sfx),'] ',trim(lch1)
        write (nms(i1),'(2a)')  lch2(1:6),trim(sfx)
      enddo
+     !
      call it(defs,nms( 1),des( 1),X%ordering,verb_level=V_more)
      call it(defs,nms( 2),des( 2),wv%er,E_unit,verb_level=0) 
      call it(defs,nms( 3),des( 3),wv%dr,E_unit,verb_level=0)
@@ -332,6 +336,7 @@
      call it(defs,nms(12),des(12),X%ng,G_unit,verb_level=0) 
      call it(defs,nms(13),des(13),X%iq,verb_level=0)
      call it(defs,nms(14),des(14),X%ib,verb_level=0)
+     call it(defs,nms(15),des(15),wv%damp_reference,E_unit,verb_level=V_more)
      !
    end subroutine
    !

@@ -1,4 +1,4 @@
-objs = eval_G_minus_G.o damping_func.o \
+objs = eval_G_minus_G.o damping.o \
        fermi_level.o fermi_msg.o pol_fit.o \
        coarse_grid.o kk.o bracket.o secant.o freqs_setup.o \
        extend_occupations.o section.o QP_state_extract.o QP_state_table_setup.o \

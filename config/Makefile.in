@@ -50,7 +50,7 @@ TARGETS  = self interfaces spp
 UTILS    = changelog
 PROJECTS = self_ph self_ras self_reels self_gks self_cyl_cut self_spin self_sc \
 	   spp_ph spp_ras
-EXE      = $(TARGETS) $(PROJECTS) a2s f2s p2s
+EXE      = $(TARGETS) $(PROJECTS) a2s f2s p2s_v31 p2s_v32
 # Libraries (ordered for compiling & linking)
 SLIBS        = 0external_c 0modules 1xc 1parser 1common 2io 2wf_and_fft \
                2coulomb 3kop 3qp_ctl \
@@ -128,8 +128,10 @@ interfaces: libs
 	@LIBS2DO="int_modules"; DIR2GO="interfaces" ; $(mklib)
 	@X2DO="a2s" ;XPATH="interfaces/a2s";XLIBS="$(2SLIBS)";$(mkx)
 	@X2DO="f2s" ;XPATH="interfaces/f2s";XLIBS="$(2SLIBS)";$(mkx)
-	@if test "$(do_p2s)" = yes ; then X2DO="p2s" ; XPATH="interfaces/p2s" ; \
+	@if test "$(do_p2s)" = yes ; then X2DO="p2s_v31" ; XPATH="interfaces/p2s" ; \
 	XLIBS="$(2SLIBS)" ; $(mkx) ; fi
+	@if test "$(do_p2s)" = yes ; then X2DO="p2s_v32" ; XPATH="interfaces/p2s" ; \
+	XLIBS="$(2SLIBS)"; ADF="-D_P2S_V32" ; $(mkx) ; fi
 	@if test "$(do_e2s)" = yes ; then X2DO="e2s" ; XPATH="interfaces/e2s" ; \
 	XLIBS="$(2SLIBS)" ; $(mkx) ; fi
 spp: libs

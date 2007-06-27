@@ -80,7 +80,11 @@
  write_to_report=.FALSE.
 !live_timing_is_on=.FALSE.
  !
- call section('*','P(W) 2 S(elf)')
+#if defined _P2S_V32
+ call section('*','P(W) 2 S(elf) Ver. 3.2')
+#else
+ call section('*','P(W) 2 S(elf) Ver(s). 3.1 / 3.1.1')
+#endif
  call msg('s','DBs path set to ',trim(out_path))
  !
  ! pw_export/qexml version

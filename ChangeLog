@@ -1,3 +1,27 @@
+2007-06-27 09:33:24 r134 Andrea Marini <marini@roma2.infn.it>
+
+	Small changes in EL_PH project
+
+2007-06-25 12:52:31 r133 Andrea Marini <marini@roma2.infn.it>
+
+	Small changes in EL_PH project
+
+2007-06-25 09:02:21 r132 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.9_11-05-07
+
+	*  spp/k_analyze.F spp/BZ_RIM.F spp/elph_pw_dbs.F 2ras_reels_mods/mod_eels_wgrid.F 0modules/mod_vec_operate.F 0modules/std_presets.F 0modules/mod_frequency.F 0modules/mod_BS.F 0modules/mod_com.F 2io/ioBSS_invert.F 5X/X_bare_RIM_Gf.F 4it/init_load.F 4it/init.F 7bse/K_driver.F 7bse/K_inversion.F 3qp_ctl/QP_apply_interpolate.F 3qp_ctl/QP_apply_stretch.F 6qp/QP_life_transitions.F 1common/freqs_setup.F 1common/damping.F 1common/.objects 1common/damping_func.F 3kop/k_the_nearest.F ChangeLog
+
+	Additions:
+	- Fermi function like damping in BSE solvers (to add in linear response as well).
+	  Added 'BDmERef' in the input file to define the zero of the Fermi function.
+	- k_the_nearest routine changed to be used in the QP_ctl routines.
+
+	Changes:
+	- Speed up of spp/BZ_RIM.F.
+
+	Patch sent by: Andrea
+
 2007-06-21 09:40:54 r131 Andrea Marini <marini@roma2.infn.it>
 
 	V 3.0.9_11-05-07

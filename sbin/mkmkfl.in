@@ -83,7 +83,7 @@ case $target in
   a2s|f2s)
    llibs="-lint_modules $llibs \$(llapack) \$(lblas) \$(lnetcdf) \$(lfftw) -lm $llmpi"
     ;;
-  p2s)
+  p2s*)
    llibs="-lint_modules $llibs -liotk \$(llapack) \$(lblas) \$(lnetcdf) \$(lfftw) -lm $llmpi"
    linclude="$linclude -I\$(iotk_dir)"
     ;;

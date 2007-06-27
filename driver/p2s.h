@@ -30,8 +30,10 @@
   {"notr",  "t","Force no TR symmetry",0,0,0,0}, 
   {"nosym", "y","Force no symmetries",0,0,0,0}, 
   {"nowf",  "w","Force no wavefunctions",0,0,0,0},
-  {"qexml", "q","Use qexml module [31 (v3.1), 311 (v3.1.1 and later)]",1,0,0,0}, 
   {"verb",  "v","Verbose wfc I/O reporting",0,0,0,0}, 
+#if !defined _P2S_V32
+  {"qexml", "q","Use qexml module [31 (v3.1), 311 (v3.1.1 and later)]",1,0,0,0}, 
+#endif
   {NULL,NULL,NULL,0,0,0,0}
  };
  char *tool="p2s";

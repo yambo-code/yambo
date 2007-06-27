@@ -80,17 +80,14 @@ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
    !
    ! Transfer OR interpolate
    !
-   if (.not.l_qp(4)) then
-     !
-     ! To transfer I need to find the exact correspondance
-     ! between k%pt and qp%k. This exists when i_err==0
-     !
-     k_near(1)=k_the_nearest(k%pt(i1,:),qp%k,qp%nk,.TRUE.,i_err)
-     if (i_err/=0) cycle
-     !
+   ! First I check if there is an exact correposndance
+   ! between k%pt and qp%k. This exists when i_err==0
+   !
+   k_near(1)=k_the_nearest(k%pt(i1,:),qp%k,qp%nk,.TRUE.,i_err)
+   if (i_err==0) then
      call qp_transfer(k_near(1),i1,1)
      nk_exact=nk_exact+1
-   else
+   else if (l_qp(4)) then
      call qp_transfer(k_near,i1,n_neigh)
      nk_interpolated=nk_interpolated+1
    endif

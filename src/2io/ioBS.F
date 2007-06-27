@@ -66,9 +66,13 @@
  ! Note that io_connect supports the ENABLE_LARGE_FILE logical when
  ! using NETCDF support.
  !
+ ! Update [27/6/07]: NETCDF performance increase darammatically
+ ! when using fragmentation. So I lowered the treshold to enable 
+ ! fragmentation to matrices >= 6000x6000
+ !
  if (write_is_on(ID)) then
-   db_is_large=3*BS_K_dim-1>int(1.9_SP*10._SP**9._SP/BS_K_dim/SP)
-   if (BS_K_coupling) db_is_large=3*BS_K_dim-1>int(0.85_SP*10._SP**9._SP/BS_K_dim/SP)
+   db_is_large=BS_K_dim>6000
+   if (BS_K_coupling) db_is_large=BS_K_dim>3000
    if (db_is_large) then
      dbs_fragment=.true.
      io_fragmented(ID)=.true.

@@ -39,7 +39,7 @@
  use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,qindx_X,bz_samp,RIM_qpg,&
 &                       RIM_anisotropy,ik_is_table,nXkibz,bare_qpg
  use par_proc_m,   ONLY:pp_redux_wait,myid,ncpu
- use com,          ONLY:msg,warning
+ use com,          ONLY:msg,warning,error
  use timing,       ONLY:live_timing,nhash
  use X_m,          ONLY:X_alloc,X_t,X_mat
  use BS,           ONLY:BS_bands,BS_eh_E,BS_res_K_corr,BS_W_is_diagonal,&
@@ -124,6 +124,9 @@
  endif
  !
  call K_eh_setup(iq,Ken,Xk)
+ if (any(BS_blk_dim==0)) then
+   call error(' Null BSE kernel block dimension(s) found. Increase e/h range')
+ endif
  !
  ! Descriptions
  !

@@ -55,10 +55,10 @@ subroutine K_inversion(iq,W,E,k,q)
  ! ... dummies
  !
  type(pp_indexes) ::px
- integer          ::i1,i2,ik_bz,iv,ic,iw,icv,of_mode,i_sp,ik_ibz
+ integer          ::i1,i2,ik_bz,iv,ic,iw,icv,of_mode,i_sp,ik_ibz,WS_alloc_err
  integer, external::pert_inversion,eval_ELPH_K
  complex(SP)      ::Co,QP_Z,QP_width,Lo_ws
- complex(SP), allocatable  ::Lo(:,:)
+ complex(SP), allocatable  ::Lo(:,:),WS(:,:)
  !
  ! ... frequencies
  !
@@ -78,7 +78,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! I/O
  !
- integer           ::io_err,ID
+ integer           ::i_err,ID
  type(w_samp)      ::W_disk
  integer, external ::ioBSS_invert
  integer, allocatable     ::inv_err_disk(:),disk_freq_table(:)
@@ -109,21 +109,21 @@ subroutine K_inversion(iq,W,E,k,q)
  call W_reset(W_disk)
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
- io_err=ioBSS_invert(iq,1,(/0/),(/(0.,0.)/),W_disk,ID)
+ i_err=ioBSS_invert(iq,1,(/0/),(/(0.,0.)/),W_disk,ID)
  !
  ! When the damping range is not uniform then changing
  ! the energy borders
  !
  if (W_disk%dr(1)/=W_disk%dr(2).or.W%dr(1)/=W%dr(2)) then
-   if (W%er(1)/=W_disk%er(1).or.W%er(2)/=W_disk%er(2)) io_err=-1
+   if (W%er(1)/=W_disk%er(1).or.W%er(2)/=W_disk%er(2)) i_err=-1
  endif
  !
- if (io_err==0) then
+ if (i_err==0) then
    allocate(inv_err_disk(W_disk%n(1)),eps_2start(W_disk%n(1)),&
 &           disk_freq_table(W_disk%n(1)+W%n(1)))
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-   io_err=ioBSS_invert(iq,W_disk%n(1),inv_err_disk,eps_2start,W_disk,ID)
+   i_err=ioBSS_invert(iq,W_disk%n(1),inv_err_disk,eps_2start,W_disk,ID)
    !
    ! Here I create a new energy array that merges the disk 
    ! and present energies. In addition the corresponding inv_err
@@ -166,11 +166,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  !  mem est
  !
-#if defined PJ_PH
- call mem_est("Lo",(/BS_K_dim*W%n(1),2*BS_K_dim**2/))
-#else
  call mem_est("Lo",(/BS_K_dim*W%n(1),BS_K_dim**2/))
-#endif
  !
  ! Kernel loading
  !
@@ -178,6 +174,14 @@ subroutine K_inversion(iq,W,E,k,q)
  forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)-BS_eh_E(i1)
  !
 #if defined PJ_PH
+ !
+ allocate(WS(BS_K_dim,BS_K_dim),stat=WS_alloc_err)
+ if (WS_alloc_err==0) then
+   call mem_est("WS",(/BS_K_dim**2/))
+   WS=BS_mat
+ else 
+   call warning('[ELPH K] Work Space not allocated')
+ endif
  !
  ! SAVE BS_mat & calculaye ELPH_K
  !
@@ -254,7 +258,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  call pp_redux_wait(X_epsilon)
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
- io_err=ioBSS_invert(iq,W%n(1),inv_err,X_epsilon(2,:),W,ID)
+ i_err=ioBSS_invert(iq,W%n(1),inv_err,X_epsilon(2,:),W,ID)
  !
  ! Full Invertion
  !=================
@@ -321,7 +325,7 @@ subroutine K_inversion(iq,W,E,k,q)
  ! I/O [after full invertion]
  !
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
- io_err=ioBSS_invert(iq,W%n(1),inv_err,X_epsilon(2,:),W,ID)
+ i_err=ioBSS_invert(iq,W%n(1),inv_err,X_epsilon(2,:),W,ID)
  !
  ! Try a polinomial interpolation on the null values
  !
@@ -351,6 +355,10 @@ subroutine K_inversion(iq,W,E,k,q)
    deallocate(EXCPH_mat)
    call mem_est("EXCPH_mat")
  endif
+ if (WS_alloc_err==0) then
+   deallocate(WS)
+   call mem_est("WS")
+ endif
 #endif
  !
 contains
@@ -364,9 +372,13 @@ contains
       !
 #if defined PJ_PH
       if (add_ELPH_K) then
-        BS_mat=(0.,0.)
-        call Kernel_by_V(iq)
-        forall(i3=1:BS_K_dim) BS_mat(i3,i3)=BS_mat(i3,i3)-BS_eh_E(i3)
+        if (WS_alloc_err==0) then
+          BS_mat=WS
+        else
+          BS_mat=(0.,0.)
+          call Kernel_by_V(iq)
+          forall(i3=1:BS_K_dim) BS_mat(i3,i3)=BS_mat(i3,i3)-BS_eh_E(i3)
+        endif
         call static2dyn_ELPH_K(E,k,q,W%p(i2),BS_mat)
       endif
 #endif

@@ -28,6 +28,7 @@ MODULE qexml_module
   REAL(dbl), PARAMETER :: e2 = 2.0_dbl
   !
   ! internal data to be set
+  ! pwversion will distinguish between buggy 3.1 and fixed 3.1.1 formats
   !
   INTEGER          :: iunpun, rhounit, pwversion
   LOGICAL          :: rho_binary
@@ -180,32 +181,32 @@ CONTAINS
     END FUNCTION int_to_char
 
     !------------------------------------------------------------------------
-    SUBROUTINE create_directory( dirname )
-      !------------------------------------------------------------------------
-      !
-      CHARACTER(LEN=*), INTENT(IN) :: dirname
-      !
-      INTEGER                    :: ierr
-      INTEGER, EXTERNAL          :: c_mkdir
-      !
+!   SUBROUTINE create_directory( dirname )
+!     !------------------------------------------------------------------------
+!     !
+!     CHARACTER(LEN=*), INTENT(IN) :: dirname
+!     !
+!     INTEGER                    :: ierr
+!     INTEGER, EXTERNAL          :: c_mkdir
+!     !
 !     ierr = c_mkdir( TRIM( dirname ), LEN_TRIM( dirname ) )
-      !
-      CALL errore( 'create_directory', &
-                   'unable to create directory ' // TRIM( dirname ), ierr )
-      STOP 'no mkdir'
-      !
-      ! ... check whether the scratch directory is writable
-      !
-      OPEN( UNIT = 4, FILE = TRIM( dirname ) // '/test', &
-            STATUS = 'UNKNOWN', IOSTAT = ierr )
-      CLOSE( UNIT = 4, STATUS = 'DELETE' )
-      !
-      CALL errore( 'create_directory:', &
-                   TRIM( dirname ) // ' non existent or non writable', ierr )
-      !
-      RETURN
-      !
-    END SUBROUTINE create_directory
+!     !
+!     CALL errore( 'create_directory', &
+!                  'unable to create directory ' // TRIM( dirname ), ierr )
+!     STOP 'no mkdir'
+!     !
+!     ! ... check whether the scratch directory is writable
+!     !
+!     OPEN( UNIT = 4, FILE = TRIM( dirname ) // '/test', &
+!           STATUS = 'UNKNOWN', IOSTAT = ierr )
+!     CLOSE( UNIT = 4, STATUS = 'DELETE' )
+!     !
+!     CALL errore( 'create_directory:', &
+!                  TRIM( dirname ) // ' non existent or non writable', ierr )
+!     !
+!     RETURN
+!     !
+!   END SUBROUTINE create_directory
     !
     !------------------------------------------------------------------------
     FUNCTION kpoint_dir( basedir, ik )
@@ -1563,7 +1564,7 @@ CONTAINS
       INTEGER,      OPTIONAL, INTENT(OUT) :: igk(:,:), index(:)
       INTEGER,                INTENT(OUT) :: ierr
       !
-      INTEGER :: npwk_
+      INTEGER :: npwk_, npwkx_
 
       ierr = 0
       !
@@ -1574,7 +1575,8 @@ CONTAINS
           CALL iotk_scan_begin( iunpun, "PLANE_WAVES", IERR=ierr )
           IF (ierr/=0) RETURN
           !
-          CALL iotk_scan_dat( iunpun, "MAX_NPW", npwkx, IERR=ierr )
+!...buggy in parallel 3.1
+          CALL iotk_scan_dat( iunpun, "MAX_NPW", npwkx_, IERR=ierr )
           IF (ierr/=0) RETURN
           !
           CALL iotk_scan_end( iunpun, "PLANE_WAVES", IERR=ierr )
@@ -1588,9 +1590,19 @@ CONTAINS
       !
       CALL iotk_scan_begin( iunpun, "EIGENVALUES_AND_EIGENVECTORS", IERR=ierr )
       IF (ierr/=0) RETURN
+!
+! temp swictched off
+!
+!      CALL iotk_scan_dat( iunpun, "MAX_NPW", npwkx_, IERR=ierr )
+!      IF (ierr/=0) RETURN
       !
       CALL iotk_scan_begin( iunpun, "K-POINT" //TRIM(iotk_index(ik)), IERR=ierr )
       IF (ierr/=0) RETURN
+      !
+      if(pwversion.eq.311) then
+        CALL iotk_scan_dat( iunpun, "NUMBER_OF_GK-VECTORS", npwk_, IERR=ierr )
+        IF (ierr/=0) RETURN
+      endif
       !
       CALL iotk_scan_begin( iunpun, "GK-VECTORS", IERR=ierr )
       IF (ierr/=0) RETURN
@@ -1598,7 +1610,8 @@ CONTAINS
       CALL iotk_scan_begin( iunpun, "K-POINT" //TRIM(iotk_index(ik)), IERR=ierr )
       IF (ierr/=0) RETURN
       !
-      IF ( PRESENT( npwk ) .OR. PRESENT( index ) .OR. PRESENT( igk ) )  THEN
+      if(pwversion.eq.31) then
+        IF ( PRESENT( npwk ) .OR. PRESENT( index ) .OR. PRESENT( igk ) )  THEN
           !
           CALL iotk_scan_begin( iunpun, "INDEX", ATTR=attr , IERR=ierr )
           IF (ierr/=0) RETURN
@@ -1609,7 +1622,10 @@ CONTAINS
           CALL iotk_scan_end( iunpun, "INDEX", IERR=ierr )
           IF (ierr/=0) RETURN
           !
-      ENDIF
+        ENDIF
+      endif
+      !
+      ! In v 3.1, this tag is reread! (slow...)
       !
       IF ( PRESENT( index )  )  THEN
           !
@@ -1643,6 +1659,7 @@ CONTAINS
       !
       !
       IF ( PRESENT( npwk) )     npwk = npwk_
+      IF ( PRESENT( npwkx) )    npwkx = npwkx_
       !
     END SUBROUTINE qexml_read_gk
 
@@ -2014,32 +2031,36 @@ CONTAINS
       CHARACTER(*), OPTIONAL, INTENT(OUT) :: energy_units, k_units
       INTEGER,                INTENT(OUT) :: ierr
       !
-      INTEGER        :: nbnd_, num_k_points_, nspin_, natomwfc_
+      INTEGER        :: nbnd_, num_k_points_, nspin_, natomwfc_, nsppol
       REAL(dbl)      :: ef_, nelec_ 
       CHARACTER(256) :: energy_units_, k_units_
-      INTEGER        :: ik, ispin
+      INTEGER        :: ik, ispin, spin_dimen
       REAL(dbl), ALLOCATABLE :: xk_(:,:), wk_(:), occ_s_(:,:,:), eig_s_(:,:,:)
       !
       
       ierr = 0
       !
-      !
-      ! first read kpt num from a different section
-      !
-      CALL iotk_scan_begin( iunpun, "BRILLOUIN_ZONE", IERR=ierr )
-      IF (ierr/=0) RETURN
-      !
-      CALL iotk_scan_dat( iunpun, "NUMBER_OF_K-POINTS", num_k_points_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      !
-      CALL iotk_scan_end( iunpun, "BRILLOUIN_ZONE", IERR=ierr )
-      IF (ierr/=0) RETURN
-
+      if(pwversion.eq.31) then
+        !
+        ! first read kpt num from a different section
+        !
+        CALL iotk_scan_begin( iunpun, "BRILLOUIN_ZONE", IERR=ierr )
+        IF (ierr/=0) RETURN
+        !
+        CALL iotk_scan_dat( iunpun, "NUMBER_OF_K-POINTS", num_k_points_, IERR=ierr )
+        IF (ierr/=0) RETURN
+        !
+        CALL iotk_scan_end( iunpun, "BRILLOUIN_ZONE", IERR=ierr )
+        IF (ierr/=0) RETURN
+        !
+      endif
       !
       ! now open the main section
       !
+!     write(*,*) "Scan BS"
       CALL iotk_scan_begin( iunpun, "BAND_STRUCTURE", IERR=ierr )
       IF (ierr/=0) RETURN
+!     write(*,*) "Scan BS done"
       !
       CALL iotk_scan_dat( iunpun, "NUMBER_OF_ELECTRONS", nelec_, IERR=ierr )
       IF (ierr/=0) RETURN
@@ -2050,28 +2071,42 @@ CONTAINS
       CALL iotk_scan_dat( iunpun, "NUMBER_OF_BANDS", nbnd_, IERR=ierr )
       IF (ierr/=0) RETURN
       !
+      if(pwversion.eq.311) then
+!       write(*,*) "Scan Kponts"
+        CALL iotk_scan_dat( iunpun, "NUMBER_OF_K-POINTS", num_k_points_, IERR=ierr )
+        IF (ierr/=0) RETURN
+!       write(*,*) "Scan Kponts done"
+      endif
+      !
       CALL iotk_scan_dat( iunpun, "FERMI_ENERGY", ef_, ATTR=attr, IERR=ierr )
       IF (ierr/=0) RETURN
       CALL iotk_scan_attr( attr, "UNITS", energy_units_, IERR=ierr )
       IF (ierr/=0) RETURN
       !
       CALL iotk_scan_dat( iunpun, "NUMBER_OF_SPIN_COMPONENTS", nspin_, IERR=ierr )
+! this can be 1,2,4: it refers to the density, not the wfc
+      IF (ierr/=0) RETURN
+      
+      if(num_k_points_.eq.0) ierr = -2
+      IF (ierr/=0) RETURN
+      if(nspin_.eq.0) ierr = -3
       IF (ierr/=0) RETURN
 
-      !
+      nsppol = 1
+      if(nspin_.eq.2) nsppol = 2
       !
       ! Allocations
       !
       ALLOCATE(  xk_    (3, num_k_points_ ) )
       ALLOCATE(  wk_    (   num_k_points_ ) )
-      ALLOCATE(  eig_s_ ( nbnd_, num_k_points_, nspin_ ) )
-      ALLOCATE(  occ_s_ ( nbnd_, num_k_points_, nspin_ ) )
+      ALLOCATE(  eig_s_ ( nbnd_, num_k_points_, nsppol ) )
+      ALLOCATE(  occ_s_ ( nbnd_, num_k_points_, nsppol ) )
       !
       CALL iotk_scan_begin( iunpun, "EIGENVALUES_AND_EIGENVECTORS", IERR=ierr )
       IF (ierr/=0) RETURN
       !
       DO ik = 1, num_k_points_
-          !
+!         !
           CALL iotk_scan_begin( iunpun, "K-POINT" // TRIM(iotk_index( ik )), IERR=ierr )
           IF (ierr/=0) RETURN
           !
@@ -2083,7 +2118,7 @@ CONTAINS
           CALL iotk_scan_dat( iunpun, "WEIGHT", wk_(ik), IERR=ierr )
           IF (ierr/=0) RETURN
           !
-          DO ispin = 1, nspin_
+          DO ispin = 1, nsppol ! to be tested
               !
               CALL iotk_scan_dat( iunpun, "ET" // TRIM( iotk_index( ispin ) ), &
                                   eig_s_(:,ik,ispin), IERR=ierr )
@@ -2118,9 +2153,9 @@ CONTAINS
       IF ( PRESENT( xk ) )               xk(1:3, 1:num_k_points_)  = xk_(:,:)
       IF ( PRESENT( wk ) )               wk(     1:num_k_points_)  = wk_(:)
       IF ( PRESENT( occ ) )              occ  (1:nbnd_, 1:num_k_points_ )           = occ_s_(:,:,1)
-      IF ( PRESENT( occ_s ) )            occ_s(1:nbnd_, 1:num_k_points_, 1:nspin_ ) = occ_s_(:,:,:)
+      IF ( PRESENT( occ_s ) )            occ_s(1:nbnd_, 1:num_k_points_, 1:nsppol ) = occ_s_(:,:,:)
       IF ( PRESENT( eig ) )              eig  (1:nbnd_, 1:num_k_points_ )           = eig_s_(:,:,1)
-      IF ( PRESENT( eig_s ) )            eig_s(1:nbnd_, 1:num_k_points_, 1:nspin_ ) = eig_s_(:,:,:)
+      IF ( PRESENT( eig_s ) )            eig_s(1:nbnd_, 1:num_k_points_, 1:nsppol ) = eig_s_(:,:,:)
       !
       DEALLOCATE( xk_)
       DEALLOCATE( wk_)
@@ -2166,6 +2201,7 @@ CONTAINS
       !
       !
       ! to be fixed in the fmt (fixed in 3.1.1)
+      ! ispin=2 refers to both spin polarized and spinor cases.
       !
       IF ( ispin == 2 .and. pwversion.eq.31 ) THEN
           !
@@ -2225,7 +2261,8 @@ CONTAINS
               
               DO ig = 1, npwk
                   !
-                  wf( ig, ib ) = wf_( igk( ig )  )
+!                 wf( ig, ib ) = wf_( igk( ig )  )
+                  wf( ig, ib-ibnds+1 ) = wf_( igk( ig )  )
                   !
               ENDDO
               !

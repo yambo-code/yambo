@@ -19,10 +19,10 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Self, 3.0.9, self@roma2.infn.it)
+AC_INIT(Self, 3.0.10, self@roma2.infn.it)
 SVERSION="3"
 SPATCHLEVEL="0"
-SSUBLEVEL="9"
+SSUBLEVEL="10"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -110,7 +110,8 @@ AC_SUBST(enable_dp)
 AC_SUBST(dp_cpp)
 
 # ============================================================================
-# check for IOTK library
+# check for IOTK library 
+#
 AC_ARG_WITH(iotk, AC_HELP_STRING([--with-iotk=<path>],
  [Path of the IOTK library directory]))
 compile_p2s="no"
@@ -128,6 +129,31 @@ if ! test "$with_iotk" = "" ; then
 fi
 AC_SUBST(compile_p2s)
 AC_SUBST(iotk_dir)
+
+# ============================================================================
+# check for p2s versions
+#
+AC_ARG_WITH(p2s, AC_HELP_STRING([--with-p2s=<mode>],
+ [Interface mode in PW 2 SELF : <export> <3.1> <3.2>]))
+
+PW_VER="3.2"
+PW_CPP="3.2"
+if test "$compile_p2s" = "yes"; then
+ if test "$with_p2s" = "export"; then
+  PW_VER="export"
+  PW_CPP="_P2S_EXPORT"
+ fi
+ if test "$with_p2s" = "3.1"; then
+  PW_VER="3.1"
+  PW_CPP="_P2S_V31"
+ fi
+ if test "$with_p2s" = "pw_export"; then
+  PW_VER="3.2"
+  PW_CPP="_P2S_V32"
+ fi
+fi
+AC_SUBST(PW_VER)
+AC_SUBST(PW_CPP)
 
 # ============================================================================
 # check for ETSF library

@@ -40,7 +40,7 @@ MODULE qexml_module
   !
   ! end of declarations
   !
-  PUBLIC :: fmt_name, fmt_version
+  PUBLIC :: fmt_name, fmt_version, dbl
   PUBLIC :: iunpun, rhounit, rho_binary
   !
   PUBLIC :: qexml_init,  qexml_openfile, qexml_closefile
@@ -194,9 +194,9 @@ CONTAINS
       CHARACTER(LEN=*), INTENT(IN) :: dirname
       !
       INTEGER                    :: ierr
-      INTEGER, EXTERNAL          :: c_mkdir
+!     INTEGER, EXTERNAL          :: c_mkdir
       !
-      ierr = c_mkdir( TRIM( dirname ), LEN_TRIM( dirname ) )
+!     ierr = c_mkdir( TRIM( dirname ), LEN_TRIM( dirname ) )
       !
       CALL errore( 'create_directory', &
                    'unable to create directory ' // TRIM( dirname ), ierr )

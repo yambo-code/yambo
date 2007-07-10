@@ -22,6 +22,7 @@
  integer function p2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
 &                       js,ijs,np,pid)
  !
+ use P2S,                 only : pw_init, pw_close, verboseIO
  use pars,                only : SP,lchlen
  use memory_m,            only : mem_est
  use com,                 only : msg,write_to_report,out_path, error
@@ -36,8 +37,11 @@
  !
  ! PW MODULES
  !
- use pw_interface,        only : pw_openindex, pw_closeindex
+#if defined _P2S_EXPORT
+!use pw_export,        only : pw_openindex, pw_closeindex
+#else
  use qexml_module
+#endif
  !
  implicit none
  type(levels)                 :: en
@@ -59,7 +63,7 @@
  !
  integer           :: pwunit, isec, ispinor
  integer           :: rhounit_, qexml_err
- logical           :: use_qexml, use_pwexport, deffile, lexist, verboseIO
+ logical           :: use_qexml, use_pwexport, deffile, lexist
  !
  ! Presets
  !
@@ -80,76 +84,36 @@
  write_to_report=.FALSE.
 !live_timing_is_on=.FALSE.
  !
-#if defined _P2S_V32
+#if defined _P2S_EXPORT
+ call section('*','P(W) 2 S(elf) - pw_export.x version')
+#elif defined _P2S_V31
+ call section('*','P(W) 2 S(elf) Ver(s). 3.1 / 3.1.1')
+#elif defined _P2S_V32
  call section('*','P(W) 2 S(elf) Ver. 3.2')
 #else
- call section('*','P(W) 2 S(elf) Ver(s). 3.1 / 3.1.1')
+ call error('Unknown version of P2S. Stopping.')
 #endif
  call msg('s','DBs path set to ',trim(out_path))
- !
- ! pw_export/qexml version
- !
- use_pwexport = .true.
- if(index(instr,'qexml').ne.0) use_pwexport = .false.
- use_qexml = .not.use_pwexport
- if(index(instr,'31').ne.0) pwversion = 31
- if(index(instr,'311').ne.0) pwversion = 311
  !
  ! Verbose I/O
  !
  verboseIO = .false.
  if(index(instr,'verb').ne.0) verboseIO = .true.
  !
- ! Check input filenames (p2s.in is default)
- !
- deffile = .false.
- index_filename = trim(inf)
- if(index(index_filename,'p2s.in').ne.0) deffile = .true.
- if(deffile.and.use_pwexport) index_filename = 'index.xml'
- if(deffile.and.use_qexml)    index_filename = 'data-file.xml'
- call msg('s','Index file set to ',trim(index_filename))
- inquire(file=trim(index_filename),exist=lexist) 
- if(.not.lexist) then
-   call msg('s','Index file not found! Perhaps you need -q <ver>...?')
-   stop ' '
- endif
- !
  ! Open XML index files and units
  !
- if(use_pwexport) then
-   ! 
-   call msg('s','== Reading pw_export generated data ...')
-   pwunit = 10
-   !
-   call pw_openindex(pwunit,index_filename) ! open index.xml file
-   !
- else if(use_qexml) then
-   !
-   write(lch,'(a,i3,a)') '== Reading PWscf v.',pwversion,' generated data ...'
-   call msg('s',trim(lch))
-   pwunit = 10
-   rhounit_ = 12
-   call qexml_init(pwunit,rhounit_,.true.) ! sets unit numbers
-   call qexml_openfile( index_filename, "read", .false., qexml_err)
-   !
-   !  qexml_init(_,_,.true.)               : rho file is binary
-   !  qexml_openfile(_,"read"/"write",_,_) : read only from existing files
-   !  qexml_openfile(_,_,.false.,_)        : data-file.xml is not binary
-   !
- endif
+ call pw_init(instr,inf)
  !
  ! Make db1 database                                              *
  !
- if(use_pwexport) call p2s_db1(pwunit,en,k)
- if(use_qexml)    call p2s_qexml_db1(pwunit,verboseIO,en,k)
+ call p2s_db1(en,k)
  !
  call msg('s','== Writing DB1 ...')
  !
  call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
  io_err=ioDB1(en,k,ID)
  !
- call msg('l','done ==')
-  if (force_noWFs) then 
+ if (force_noWFs) then 
    call msg('ln','done ==')
    call p_finalize
    return
@@ -177,8 +141,7 @@
    !
    ! Read a single wfc component from disk
    !
-   if(use_pwexport) call p2s_wf(wf_disk,ik, pwunit)
-   if(use_qexml)    call p2s_qexml_wf(wf_disk,ik,pwunit)
+   call p2s_wf(wf_disk,ik)
    !
    ! Write the standard wf header
    !
@@ -191,21 +154,13 @@
    !
    isec = isec + 1 ! check
    call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
-   ! call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/isec/),ID=ID)
-   ! if(n_spin.eq.1) io_err=ioWF(ID,wf_disk)
-   ! if(n_spin.eq.4) io_err=ioWF(ID,wf_disk,ispinor)
    io_err=ioWF(ID,wf_disk)
    !
  enddo
  !
  deallocate(wf_disk)
  !
- if(use_pwexport) then
-   call pw_closeindex(pwunit) ! close index.xml file
- endif
- if(use_qexml) then
-   call qexml_closefile("read",qexml_err) ! close index.xml file
- endif
+ call pw_close
  if(verboseIO) then
    call msg('s','== DB2 (wavefunctions) ... done ==')
  else
@@ -214,19 +169,4 @@
  !
  call p_finalize
  !
- end function
- !
- ! Error routine called inside pw_interface and qexml_module
- !
- subroutine errore(subname,msgin,ierr)
-   use com,      ONLY : error
-   implicit none
-   character*(*), intent(in) :: subname,msgin
-   integer,       intent(in) :: ierr
-   character(3)              :: merr
-   !
-   write(merr,'(i3)') ierr 
-   call error('Error in '//trim(subname)//' '//trim(msgin)//' ierr:'//trim(merr))
-   stop ' ' ! not called  
-   !
- end subroutine errore
+ end function p2s_i

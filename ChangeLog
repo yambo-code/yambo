@@ -1,3 +1,19 @@
+2007-06-27 16:39:13 r136 Andrea Marini <marini@roma2.infn.it>
+
+	Small bug in QP_apply_interpolate fixed
+
+2007-06-27 09:48:05 r135 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.9_11-05-07
+
+	*  p2s/p2s_i.F config/Makefile.in ChangeLog driver/p2s.h driver/driver.c sbin/mkmkfl.in
+
+	Additions:
+	- p2s interfaces is now splitted in p2s_v31 and p2s_v32 (_P2S_V32 C preprocessor
+	  flag)
+
+	Patch sent by: Andrea
+
 2007-06-27 09:33:24 r134 Andrea Marini <marini@roma2.infn.it>
 
 	Small changes in EL_PH project

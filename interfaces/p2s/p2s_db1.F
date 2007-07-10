@@ -19,122 +19,44 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine p2s_db1(pwunit,en,k)
+subroutine p2s_db1(en,k)
  !
- use pw_interface
- use com,                   ONLY : msg,error
- use electrons,             ONLY : levels, default_nel, n_spin, n_sp_pol, n_spinor
- use R_lattice,             ONLY : bz_samp, ng_vec, g_vec,b
- use D_lattice,             ONLY : DL_vol, a, alat, default_Tel,          &
-&                                  n_atoms_max,n_atom_species,n_atoms,    &
-&                                  atom_pos, znucl
+ use P2S
+ use pars,                  ONLY : SP,schlen,pi
+ use com,                   ONLY : msg
+ use electrons,             ONLY : default_nel, n_sp_pol
+ use R_lattice,             ONLY : g_vec, ng_vec
  use wave_func,             ONLY : wf_nc_k, wf_ncx, wf_igk,wf_ng
- use vec_operate,           ONLY : cross_product
- use interfaces,            ONLY : print_interface_dimensions,symmetries_check_and_load,&
-&                                  alat_mult_factor
+ use interfaces,            ONLY : print_interface_dimensions
  implicit none
  type(levels),     intent(out)  :: en     ! Energies
  type(bz_samp),    intent(out)  :: k      ! K/Q points
- integer,          intent(in)   :: pwunit ! unit of index.dat
- !
- ! Work Space
- !
- real(SP)                       :: acopy(3,3),cp(3)
- integer                        :: i1, ik, nspinpw, i2
- integer, allocatable           :: ityp_(:)
- integer, external              :: atomic_number
- character(schlen)              :: lch
+
  !---------------------------------------------------------------------*
  !    Read dimensions                                                  *
  !---------------------------------------------------------------------*
  call msg('s','Header/K-points/Energies...')
- call pw_dimensions(pwunit)
  !
- ng_vec  = pwdim%ngvec
- en%nb  = pwdim%nbnd
- nspinpw = pwdim%nspin
- select case(nspinpw)
- case(1)
-   n_sp_pol  = 1
-   n_spinor  = 1
-   n_spin    = 1
-! -- GPL_END --
- case(2)
-   n_sp_pol  = 2
-   n_spinor  = 1
-   n_spin    = 2
- case(4)
-   n_sp_pol  = 1
-   n_spinor  = 2
-   n_spin    = 2
-! -- GPL_START --
- end select
- k%nibz = pwdim%nktot
- !
- default_Tel = 0.d0  
+ call get_dimensions(en,k)
  call msg("l","done")
  !
- !---------------------------------------------------------------------*
- !    i/o allocations                                                  *
- !---------------------------------------------------------------------*
- call pw_alloc
  !---------------------------------------------------------------------*
  !    Read cell data                                                   *
  !---------------------------------------------------------------------*
+ !
  call msg('s','Cell data...')
  !
- call pw_cell(pwunit)
- a(1,:) = pwcell%at(1,:)
- a(2,:) = pwcell%at(2,:)
- a(3,:) = pwcell%at(3,:)
- alat(1) = maxval(abs(a(1,:)))*alat_mult_factor
- alat(2) = maxval(abs(a(2,:)))*alat_mult_factor
- alat(3) = maxval(abs(a(3,:)))*alat_mult_factor
- !
- ! Use acopy to avoid passing non-contiguous arrays (just for fun)
- !
- acopy = transpose(a)
- cp = cross_product(acopy(:,2),acopy(:,3))
- do i1=1,3
-   DL_vol= DL_vol+a(1,i1)*cp(i1)
- enddo
- b(1,:)=cross_product(acopy(:,2),acopy(:,3))*2.*pi/DL_vol
- b(2,:)=cross_product(acopy(:,3),acopy(:,1))*2.*pi/DL_vol
- b(3,:)=cross_product(acopy(:,1),acopy(:,2))*2.*pi/DL_vol
+ call get_cell
  call msg("l","done")
+ !
  !---------------------------------------------------------------------*
  !    Read atomic data                                                 *
  !---------------------------------------------------------------------*
+ !
  call msg('s','Atomic data...')
- call pw_atoms(pwunit)
- n_atom_species = nspecies
- allocate(ityp_(pwdim%natoms) )
- do i1=1, pwdim%natoms
-   ityp_(i1) = -1
-   do i2=1,n_atom_species
-     if(trim(atom_type(i1))==trim(species_type(i2))) then
-       ityp_(i1) = i2
-     endif
-   enddo
- enddo
  !
- allocate(n_atoms(n_atom_species))
- n_atoms(:)=0
- do i1 = 1, pwdim%natoms
-   n_atoms( ityp_(i1) ) = n_atoms( ityp_(i1) ) +1
- enddo
- n_atoms_max = maxval(n_atoms)
- allocate(atom_pos(3,n_atoms_max,n_atom_species))
- n_atoms(:)=0
- do i1 = 1, pwdim%natoms
-   n_atoms( ityp_(i1) ) = n_atoms( ityp_(i1) ) +1
-   atom_pos(:, n_atoms( ityp_(i1) ) , ityp_(i1) ) = atom_positions(:,i1)*pwcell%alat
- enddo
- !
- allocate(znucl(n_atom_species))
- do i1 = 1, n_atom_species
-   znucl(i1) = atomic_number(species_type(i1))
- enddo
+ call get_atoms
+ call msg("l","done")
  !
  !---------------------------------------------------------------------*
  !    Read symmetries                                                  *
@@ -142,69 +64,48 @@
  !
  call msg('s','Symmetries...')
  !
- call pw_symmetry(pwunit)
+ call get_symmetries
  !
- ! pw_export gives the transpose of the matrix
+ !---------------------------------------------------------------------*
+ !    Read XC functional                                               *
+ !---------------------------------------------------------------------*
  !
- do i1 = 1,pwdim%nsym 
-   isym(:,:,i1) = transpose(isym(:,:,i1)) 
- enddo
- call symmetries_check_and_load(isym,pwdim%nsym)
+ call msg('s','XC functional...')
+ !
+ call get_xc
+ !
  !
  !---------------------------------------------------------------------*
  !    Read k-point mesh                                                *
  !---------------------------------------------------------------------*
  !
- ! k-points
- !
  call msg('s','K-points mesh...')
- call pw_kpoints(pwunit)
  !
- ! PW k in units of [cart, tpiba] -> units of [cart, 2*pi/alat(:)]
- ! PW cart tpiba/cart au/cart alat/RLU units
+ call get_k_points(k)
  !
- allocate(k%pt(k%nibz,3))
- do i1=1,k%nibz
-    k%pt(i1,:)=kpt(:,i1) * pwcell%tpiba * alat(:)/2.0_DP/PI
- enddo
  call msg('l','done')
  !
  !---------------------------------------------------------------------*
- !    Read electrons                                                   *
+ !    Read miscellaneous data                                          *
  !---------------------------------------------------------------------*
  !
- ! Electrons
+ call get_more
  !
- call pw_other(pwunit)
- default_nel = nelec ! check 
  !---------------------------------------------------------------------*
  !    Read G-vectors                                                   *
  !---------------------------------------------------------------------*
- allocate(wf_nc_k(k%nibz),g_vec(ng_vec,3))
  !
  call msg('s','RL vectors...')
- call pw_gvectors(pwunit)
- call pw_igkindex(pwunit)
  !
- ! PW integer units of b1/b2/b3    -> 2pi/alat(:) units, cartesian, real
- ! b(:,:) is in a.u.
- do i1 = 1, ng_vec
-    g_vec(i1,:)=matmul(transpose(b),igvec(:,i1))*alat(:)/2./pi ! ok
- enddo
+ call get_R_vectors
+ !
  call msg('l','done')
  !---------------------------------------------------------------------*
  !    Read igk arrays                                                  *
  !---------------------------------------------------------------------*
  call msg('s','IGK arrays...')
- wf_nc_k(:) = pw_npwk(:)
- wf_ncx     = maxval(wf_nc_k) ! max for writing, allocation
- allocate(wf_igk(wf_ncx,k%nibz))
- forall(i1=1:wf_ncx) wf_igk(i1,:)=i1
  !
- do i1 = 1,k%nibz
-   wf_igk(1:wf_nc_k(i1),i1)= pw_igk(1:wf_nc_k(i1),i1) ! same as f2s
- enddo
- wf_ng   = maxval(wf_igk)
+ call get_IGK(k)
  !
  call msg('l','done')
  !---------------------------------------------------------------------*
@@ -213,15 +114,13 @@
  !
  call msg('s','Energies...')
  !
- call pw_eigenvalues(pwunit)
+ call get_energies(en,k)
  !
- allocate( en%E(en%nb,k%nibz,n_sp_pol) )
- !
- ! PW energies in Ry
- !
- en%E(:,:,1) = eig( 1:en%nb, 1:k%nibz )/2.0_DP
  call msg('l','done')
  !
+ !---------------------------------------------------------------------*
+ !    Report                                                           *
+ !---------------------------------------------------------------------*
  call print_interface_dimensions(en,k)
  !
- end subroutine
+end subroutine p2s_db1

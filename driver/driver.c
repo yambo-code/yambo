@@ -58,7 +58,7 @@ typedef struct
 #if defined f2s
  #include "f2s.h"
 #endif
-#if defined p2s_v31 || p2s_v32
+#if defined p2s
  #include "p2s.h"
 #endif
 #if defined e2s
@@ -227,7 +227,7 @@ main(int argc, char *argv[])
  F90_FUNC(a2s_i,A2S_I)(
           rnstr2,&lni,inf,&iif,id,&iid,od,&iod,js,&ijs,&np,&pid);
 #endif
-#if defined p2s_v31 || p2s_v32
+#if defined p2s
  /* 
    Running the Fortran P2S driver 
  ===========================================================================

@@ -19,21 +19,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-! pw_export XML format and subroutine output format:
-! --------------------------------------------------
-! alat             : au                           
-! a1(3)/b1(3)      : au, cartesian                
-! symmop(3,3,nsym) : units of a1/a2/a3, transposed
-! kpt(3,nktot)     : 2pi/a units, cartesian, real 
-! igvec(3,ngvec)   : integer units of b1/b2/b3    
-! en(nbnd,nktot)   : Rydberg
-! igk(npwx,nktot)
-!
-! Output units are kept consistent with PW units (pw_export units)
-! Otherwise might have problem with scaling with a parameter which 
-! hasn't been read yet (like alat)
-!
-module pw_interface
+module pw_export
+  use pw_data
   use pars
   use iotk_module
   implicit none
@@ -41,55 +28,14 @@ module pw_interface
 
   integer, parameter, private:: nstrx = 300
 
-  type iotk_dim
-     integer :: nbnd, nktot, nspin, ngvec, npwx, nsym, natoms
-  end type iotk_dim
-
-  type iotk_cell
-     real(SP) :: alat, tpiba, at(3,3), bg(3,3)
-  end type iotk_cell
-
-  type(iotk_cell)         :: pwcell
-  type(iotk_dim)          :: pwdim
-
-!   PWSCF data
-  logical                 :: invsym
-  real(SP),   allocatable :: kpt(:,:)
-  real(SP),   allocatable :: wk(:)
-  integer,     allocatable:: igvec(:,:)
-  real(SP),   allocatable :: eig(:,:)
-  integer,     allocatable:: pw_npwk(:)
-  integer,     allocatable:: pw_igk(:,:)
+! PWSCF data
   complex(SP),allocatable :: pw_evec(:,:) ! check 
-  integer,  allocatable   :: isym(:,:,:)
-  real(SP)                :: nelec, pw_Tel
-  integer                 :: nspecies
-  real(SP),  allocatable   :: atom_positions(:,:)
-  character(len=2), allocatable   :: atom_type(:), species_type(:)
-
-  type pw_string
-     character(nstrx)          :: attr
-     character(nstrx)          :: units
-  end type pw_string
-
-  public                  :: invsym
-  public                  :: kpt,wk,igvec,eig,pw_npwk,pw_igk,isym
-  public                  :: nelec, pw_Tel
   public                  :: pw_evec
 
-  public :: pw_openindex
-  public :: pw_closeindex
-  public :: pw_dimensions
-  public :: pw_cell
-  public :: pw_symmetry
-  public :: pw_gvectors
-  public :: pw_igkindex
-  public :: pw_eigenvalues
-  public :: pw_kpoints
-  public :: pw_other
-  public :: pw_wfcstart
-  public :: pw_wfcstop
-  public :: pw_wfck
+  public :: pw_openindex, pw_closeindex, pw_dimensions
+  public :: pw_cell, pw_symmetry, pw_kpoints, pw_other
+  public :: pw_gvectors, pw_igkindex, pw_eigenvalues
+  public :: pw_wfcstart, pw_wfcstop, pw_wfck
 
 contains 
 
@@ -127,31 +73,31 @@ contains
         if (ierr/=0) call errore('pw_dimensions','Unable to find tag Dimensions',ABS(ierr))
     call iotk_scan_empty(pwunit,'Kpoints',ATTR=attr,ierr=ierr)
         if (ierr/=0) call errore('pw_dimensions','Unable to find Kpoints',ABS(ierr))
-    call iotk_scan_attr(attr,'nktot',pwdim%nktot,ierr=ierr)
+    call iotk_scan_attr(attr,'nktot',num_k_points_,ierr=ierr)
         if (ierr/=0) call errore('pw_dimensions','Unable to find nktot',ABS(ierr))
-    call iotk_scan_attr(attr,'nspin',pwdim%nspin,ierr=ierr)
+    call iotk_scan_attr(attr,'nspin',n_spin_pw_,ierr=ierr)
         if (ierr/=0) call errore('pw_dimensions','Unable to find nspin',ABS(ierr))
     call iotk_scan_empty(pwunit,'Bands',ATTR=attr,ierr=ierr)
         if (ierr/=0) call errore('pw_dimensions','Unable to find Bands',ABS(ierr))
-    call iotk_scan_attr(attr,'nbnd',pwdim%nbnd,ierr=ierr)
+    call iotk_scan_attr(attr,'nbnd',nbnd_,ierr=ierr)
         if (ierr/=0) call errore('pw_dimensions','Unable to find nbnd',ABS(ierr))
     call iotk_scan_empty(pwunit,'Main_grid',ATTR=attr,ierr=ierr)
         if (ierr/=0) call errore('pw_dimensions','Unable to find Main_grid',ABS(ierr))
-    call iotk_scan_attr(attr,'npw',pwdim%ngvec,ierr=ierr)
+    call iotk_scan_attr(attr,'npw',ngm_,ierr=ierr)
         if (ierr/=0) call errore('pw_dimensions','Unable to find npw',ABS(ierr))
     call iotk_scan_empty(pwunit,'Wfc_grid',ATTR=attr,ierr=ierr)
         if (ierr/=0) call errore('pw_dimensions','Unable to find Wfc_grid',ABS(ierr))
-    call iotk_scan_attr(attr,'npwx',pwdim%npwx,ierr=ierr)
+    call iotk_scan_attr(attr,'npwx',npwx_,ierr=ierr)
         if (ierr/=0) call errore('pw_dimensions','Unable to find npwx',ABS(ierr))
 
     call iotk_scan_empty(pwunit,'Atoms',ATTR=attr,ierr=ierr)
         if (ierr/=0) call errore('pw_dimensions','Unable to find Atoms',ABS(ierr))
-    call iotk_scan_attr(attr,'natoms',pwdim%natoms,ierr=ierr)
+    call iotk_scan_attr(attr,'natoms',nat_,ierr=ierr)
         if (ierr/=0) call errore('pw_dimensions','Unable to find natoms',ABS(ierr))
 
     call iotk_scan_empty(pwunit,'Symmops',ATTR=attr,ierr=ierr)
         if (ierr/=0) call errore('pw_dimensions','Unable to find Symmops',ABS(ierr))
-    call iotk_scan_attr(attr,'nsym',pwdim%nsym,ierr=ierr)
+    call iotk_scan_attr(attr,'nsym',nsym_,ierr=ierr)
         if (ierr/=0) call errore('pw_dimensions','Unable to find nsym',ABS(ierr))
     call iotk_scan_end(pwunit,'Dimensions',ierr=ierr)
         if (ierr/=0) call errore('pw_dimensions','Unable to end tag Dimensions',ABS(ierr))
@@ -168,7 +114,7 @@ contains
         if (ierr/=0) call errore('pw_other','Unable to find tag Other_p',ABS(ierr))
     call iotk_scan_empty(pwunit,'Charge',ATTR=attr,IERR=ierr)
         if (ierr/=0) call errore('pw_cell','Unable to find Charge',ABS(ierr))
-    call iotk_scan_attr(attr,'nelec',nelec,IERR=ierr)
+    call iotk_scan_attr(attr,'nelec',nelec_,IERR=ierr)
         if (ierr/=0) call errore('pw_cell','Unable to find nelec',ABS(ierr))
     call iotk_scan_end(pwunit,'Other_parameters',ierr=ierr)
         if (ierr/=0) call errore('pw_other','Unable to end tag Other_p',ABS(ierr))
@@ -186,25 +132,26 @@ contains
     call iotk_scan_empty(pwunit,'Data',ATTR=attr,IERR=ierr)
         if (ierr/=0) call errore('pw_atoms','Unable to find Data',ABS(ierr))
     call iotk_scan_attr(attr,'natoms',natoms,IERR=ierr)
-    call iotk_scan_attr(attr,'nspecies',nspecies,IERR=ierr)
+
+    call iotk_scan_attr(attr,'nspecies',nsp_,IERR=ierr)
         if (ierr/=0) call errore('pw_atoms','Unable to find nspecies',ABS(ierr))
 
     call iotk_scan_begin(pwunit,'Positions',IERR=ierr)
     do iat = 1, natoms
       call iotk_scan_empty(pwunit,'atom'//TRIM(iotk_index(iat)),ATTR=attr,IERR=ierr)
       if (ierr/=0) call errore('pw_atoms','Unable to find atom'//TRIM(iotk_index(iat)),ABS(ierr))
-      call iotk_scan_attr(attr,'type',atom_type(iat),IERR=ierr)
+      call iotk_scan_attr(attr,'type',atom_type_(iat),IERR=ierr)
       if (ierr/=0) call errore('pw_atoms','Unable to find type',ABS(ierr))
-      call iotk_scan_attr(attr,'xyz',atom_positions(:,iat),IERR=ierr)
+      call iotk_scan_attr(attr,'xyz',tau_(:,iat),IERR=ierr)
       if (ierr/=0) call errore('pw_atoms','Unable to find xyz',ABS(ierr))
     enddo
     call iotk_scan_end(pwunit,'Positions',IERR=ierr)
 
     call iotk_scan_begin(pwunit,'Types',IERR=ierr)
-    do iat = 1, nspecies
+    do iat = 1, nsp_
       call iotk_scan_empty(pwunit,'specie'//TRIM(iotk_index(iat)),ATTR=attr,IERR=ierr)
       if (ierr/=0) call errore('pw_atoms','Unable to find atom'//TRIM(iotk_index(iat)),ABS(ierr))
-      call iotk_scan_attr(attr,'type',species_type(iat),IERR=ierr)
+      call iotk_scan_attr(attr,'type',species_type_(iat),IERR=ierr)
       if (ierr/=0) call errore('pw_atoms','Unable to find type',ABS(ierr))
     enddo
     call iotk_scan_end(pwunit,'Types',IERR=ierr)
@@ -220,39 +167,40 @@ contains
     implicit none
     integer :: ierr
     integer, intent(in) :: pwunit  
+     real(SP) :: tpiba, bg(3,3)
     CHARACTER(nstrx)    :: attr    
 
     call iotk_scan_begin(pwunit,'Cell',IERR=ierr)
         if (ierr/=0) call errore('pw_cell','Unable to find tag Cell',ABS(ierr))
     call iotk_scan_empty(pwunit,'Data',ATTR=attr,IERR=ierr)
         if (ierr/=0) call errore('pw_cell','Unable to find Data',ABS(ierr))
-    call iotk_scan_attr(attr,'alat',pwcell%alat,IERR=ierr)
+    call iotk_scan_attr(attr,'alat', alat_,IERR=ierr)
         if (ierr/=0) call errore('pw_cell','Unable to find alat',ABS(ierr))
-    call iotk_scan_attr(attr,'tpiba',pwcell%tpiba,IERR=ierr)
+    call iotk_scan_attr(attr,'tpiba',tpiba,IERR=ierr)
         if (ierr/=0) call errore('pw_cell','Unable to find tpiba',ABS(ierr))
     call iotk_scan_empty(pwunit,'a1',ATTR=attr,IERR=ierr)
         if (ierr/=0) call errore('pw_cell','Unable to find a1',ABS(ierr))
-    call iotk_scan_attr(attr,'xyz',pwcell%at(1,:),IERR=ierr)
+    call iotk_scan_attr(attr,'xyz', a1_(:),IERR=ierr)
         if (ierr/=0) call errore('pw_cell','Unable to find xyz',ABS(ierr))
     call iotk_scan_empty(pwunit,'a2',ATTR=attr,IERR=ierr)
         if (ierr/=0) call errore('pw_cell','Unable to find a2',ABS(ierr))
-    call iotk_scan_attr(attr,'xyz',pwcell%at(2,:),IERR=ierr)
+    call iotk_scan_attr(attr,'xyz', a2_(:),IERR=ierr)
         if (ierr/=0) call errore('pw_cell','Unable to find xyz',ABS(ierr))
     call iotk_scan_empty(pwunit,'a3',ATTR=attr,IERR=ierr)
         if (ierr/=0) call errore('pw_cell','Unable to find a3',ABS(ierr))
-    call iotk_scan_attr(attr,'xyz',pwcell%at(3,:),IERR=ierr)
+    call iotk_scan_attr(attr,'xyz', a3_(:),IERR=ierr)
         if (ierr/=0) call errore('pw_cell','Unable to find xyz',ABS(ierr))
     call iotk_scan_empty(pwunit,'b1',ATTR=attr,IERR=ierr)
         if (ierr/=0) call errore('pw_cell','Unable to find b1',ABS(ierr))
-    call iotk_scan_attr(attr,'xyz',pwcell%bg(1,:),IERR=ierr)
+    call iotk_scan_attr(attr,'xyz',bg(1,:),IERR=ierr)
         if (ierr/=0) call errore('pw_cell','Unable to find xyz',ABS(ierr))
     call iotk_scan_empty(pwunit,'b2',ATTR=attr,IERR=ierr)
         if (ierr/=0) call errore('pw_cell','Unable to find b2',ABS(ierr))
-    call iotk_scan_attr(attr,'xyz',pwcell%bg(2,:),IERR=ierr)
+    call iotk_scan_attr(attr,'xyz',bg(2,:),IERR=ierr)
         if (ierr/=0) call errore('pw_cell','Unable to find xyz',ABS(ierr))
     call iotk_scan_empty(pwunit,'b3',ATTR=attr,IERR=ierr)
         if (ierr/=0) call errore('pw_cell','Unable to find b3',ABS(ierr))
-    call iotk_scan_attr(attr,'xyz',pwcell%bg(3,:),IERR=ierr)
+    call iotk_scan_attr(attr,'xyz',bg(3,:),IERR=ierr)
         if (ierr/=0) call errore('pw_cell','Unable to find xyz',ABS(ierr))
     call iotk_scan_end(pwunit,'Cell',IERR=ierr)
         if (ierr/=0) call errore('pw_cell','Unable to end tag Cell',ABS(ierr))
@@ -266,19 +214,15 @@ contains
     integer, intent(in) :: pwunit  
     CHARACTER(nstrx)    :: attr    
 
-    if(.not.allocated(isym)) then
-       call errore('pw_symmetry','isym not allocated',0)
-    endif
-
     call iotk_scan_begin(pwunit,'Symmetry',IERR=ierr)
     if (ierr/=0) call errore('pw_symmetry','Unable to find tag Symmop',ABS(ierr))
     call iotk_scan_empty(pwunit,'symmops',ATTR=attr,ierr=ierr)
-    call iotk_scan_attr(attr,'nsym',pwdim%nsym,ierr=ierr)
-    call iotk_scan_attr(attr,'invsym',invsym,ierr=ierr)
+    call iotk_scan_attr(attr,'nsym',nsym_,ierr=ierr)
+    call iotk_scan_attr(attr,'invsym',invsym_,ierr=ierr)
 
-    DO is = 1, pwdim%nsym
+    DO is = 1, nsym_
 
-       call iotk_scan_dat(pwunit,"sym"//TRIM(iotk_index(is)),isym(1:3,1:3,is),ierr=ierr)
+       call iotk_scan_dat(pwunit,"sym"//TRIM(iotk_index(is)),isym_(1:3,1:3,is),ierr=ierr)
        IF (ierr/=0) call errore('pw_symmetry','Unable to read sym'//TRIM(iotk_index(is)),ABS(ierr))
     ENDDO
 
@@ -293,13 +237,9 @@ contains
     integer, intent(in) :: pwunit  
     CHARACTER(nstrx)    :: attr    
 
-    if(.not.allocated(igvec)) then
-       call errore('pw_gvectors','igvec not allocated',0)
-    endif
-
     call iotk_scan_begin(pwunit,'Main_grid',IERR=ierr)
     if (ierr/=0) call errore('pw_gvectors','Unable to find tag Main_grid',ABS(ierr))
-    call iotk_scan_dat(pwunit,'g',igvec(:,:),IERR=ierr)
+    call iotk_scan_dat(pwunit,'g',igv_(:,:),IERR=ierr)
     if (ierr/=0) call errore('pw_gvectors','Unable to find g',ABS(ierr))
     call iotk_scan_end(pwunit,'Main_grid',IERR=ierr)
     if (ierr/=0) call errore('pw_gvectors','Unable to find tag Main_grid',ABS(ierr))
@@ -314,7 +254,7 @@ contains
     CHARACTER(nstrx)    :: attr    
     CHARACTER(nstrx)    :: units    
 
-    if(.not.allocated(eig)) then
+    if(.not.allocated(eig_)) then
        call errore('pw_eigenvalues','eig not allocated',0)
     endif
 
@@ -323,8 +263,8 @@ contains
     call iotk_scan_attr(attr,'units',units,IERR=ierr)
         if (ierr /= 0) call errore('pw_eigenvalues','Unable to find Units',ABS(ierr))
     if(units.ne.'Rydberg') call errore('pw_eigenvalues','Units are not Rydberg.',ABS(ierr))
-    do ik=1,pwdim%nktot
-       call iotk_scan_dat(pwunit,"e"//iotk_index(ik),eig(:,ik),IERR=ierr)
+    do ik=1,num_k_points_
+       call iotk_scan_dat(pwunit,"e"//iotk_index(ik),eig_(:,ik),IERR=ierr)
          if (ierr /= 0) call  errore('pw_eigenvalues','Wrong format in e.dat',ABS(ierr))
     enddo
 
@@ -338,42 +278,10 @@ contains
     integer :: dimwinx
     integer :: ierr
 
-    allocate(pw_evec(pwdim%npwx,dimwinx),stat=ierr) 
+    allocate(pw_evec(npwx_,dimwinx),stat=ierr) 
 
     return 
   end subroutine pw_allocwfc
-
-  subroutine pw_alloc
-    implicit none
-    integer :: ierr
-
-    allocate(kpt     (          3, pwdim%nktot ),stat=ierr)
-    allocate(wk      ( pwdim%nktot ),stat=ierr)
-    allocate(igvec   (          3, pwdim%ngvec ),stat=ierr)
-    allocate(eig     ( pwdim%nbnd, pwdim%nktot ),stat=ierr)
-    allocate(pw_igk  ( pwdim%npwx, pwdim%nktot ),stat=ierr) 
-    allocate(pw_npwk ( pwdim%nktot ),stat=ierr)
-    allocate(isym    ( 3, 3, pwdim%nsym),stat=ierr)
-    allocate(atom_positions  ( 3, pwdim%natoms), stat=ierr)
-    allocate(atom_type  ( pwdim%natoms), stat=ierr)
-    allocate(species_type  ( pwdim%natoms), stat=ierr)
-
-!   allocate(pw_igk  ( pwdim%ngvec,pwdim%nktot ),stat=ierr) 
-    return 
-  end subroutine pw_alloc
-  subroutine pw_dealloc
-    implicit none
-    integer :: ierr
-
-    deallocate(kpt,wk)
-    deallocate(igvec)
-    deallocate(eig)
-    deallocate(pw_igk) 
-    deallocate(pw_npwk)
-    deallocate(isym)
-
-    return 
-  end subroutine pw_dealloc
 
   subroutine pw_igkindex(pwunit)
     implicit none
@@ -385,27 +293,27 @@ contains
     call iotk_scan_begin(pwunit,'Wfc_grids',IERR=ierr)
     if (ierr/=0) call errore('pw_igkindex','Unable to find tag WFC_grids',ABS(ierr))
 
-    if(.not.allocated(pw_igk)) then
+    if(.not.allocated(pw_igk_)) then
        call errore('pw_igkindex','pw_igk not allocated',0)
     endif
-    if(.not.allocated(pw_npwk)) then
+    if(.not.allocated(pw_npwk_)) then
        call errore('pw_igkindex','npwk not allocated',0)
     endif
 
-    do ik=1,pwdim%nktot
+    do ik=1,num_k_points_
        call iotk_scan_begin(pwunit,"Kpoint"//TRIM(iotk_index(ik)),ATTR=attr,IERR=ierr)
        if ( ierr/= 0) call errore("Unable to find tag Kpoint"//TRIM(iotk_index(ik)),"read_kgrid",ABS(ierr))
        call iotk_scan_attr(attr,"npw",npw,IERR=ierr)
        if ( ierr/= 0) call errore("Wrong input format in NPW","read_kgrid",ABS(ierr) )
-       pw_npwk(ik) = npw
+       pw_npwk_(ik) = npw
 !DEBUG
-!      write(*,*) "CDH:",ik,pw_npwk(ik)
+!      write(*,*) "CDH:",ik,pw_npwk_(ik)
 !END DEBUG
        allocate( kindex(npw), STAT=ierr )
        if ( ierr/=0 ) call errore('pw_igkindex','Unable allocate kindex',ABS(ierr))
        call iotk_scan_dat(pwunit,'index',kindex(:),IERR=ierr)
        if ( ierr/= 0) call errore("Wrong input format in INDEX","read_kgrid",ABS(ierr) )
-       pw_igk(1:npw,ik) = kindex(:) 
+       pw_igk_(1:npw,ik) = kindex(:) 
        deallocate(kindex)
        call iotk_scan_end(pwunit,"Kpoint"//TRIM(iotk_index(ik)),IERR=ierr)
        if ( ierr/= 0) call errore("end tag Kpoint"//TRIM(iotk_index(ik)), &
@@ -451,7 +359,7 @@ contains
     if (ierr/=0)  call errore('pw_wfcscan','Unable to find Info',ik)
     call iotk_scan_attr(attr,'nbnd',idum,IERR=ierr)
     if (ierr/=0)  call errore('pw_wfcscan','Unable to find nbnd',ik)
-    if ( idum /= pwdim%nbnd ) call errore('pw_wfck','Invalid nbnd',6) ! Check nbnd is consistent with header (dimensions).
+    if ( idum /= nbnd_ ) call errore('pw_wfck','Invalid nbnd',6) ! Check nbnd is consistent with header (dimensions).
 
     return
   end subroutine pw_wfcscan
@@ -502,7 +410,7 @@ contains
     if (ierr/=0)  call errore('pw_wfck','Unable to find Info',ik)
     call iotk_scan_attr(attr,'nbnd',idum,IERR=ierr)
     if (ierr/=0)  call errore('pw_wfck','Unable to find nbnd',ik)
-    if ( idum /= pwdim%nbnd ) call errore('pw_wfck','Invalid nbnd',6) ! Check nbnd is consistent with header (dimensions).
+    if ( idum /= nbnd_ ) call errore('pw_wfck','Invalid nbnd',6) ! Check nbnd is consistent with header (dimensions).
 
     if(.not.allocated(pw_evec)) then
         write(*,*) "evec not allocated!"
@@ -518,7 +426,7 @@ contains
           wtmp(1:npw),IERR=ierr)
        if (ierr/=0)  call errore('pw_wfck','Unable to find Wfc',ABS(ierr))
        pw_evec( 1:npw,index) = wtmp( 1:npw )
-       pw_evec( npw+1:pwdim%npwx, index) = CZERO
+       pw_evec( npw+1:npwx_, index) = CZERO
     ENDDO
 
     call iotk_scan_end(pwunit,'Kpoint'//TRIM(iotk_index(ik)),IERR=ierr)
@@ -536,23 +444,36 @@ contains
     integer, intent(in) :: pwunit  
     CHARACTER(nstrx)    :: attr    
 
-    if(.not.allocated(kpt)) then
-       call errore('pw_kpoints','kpt not allocated',0)
-    endif
-    if(.not.allocated(wk)) then
-       call errore('pw_kpoints','wk not allocated',0)
-    endif
+!   if(.not.allocated(kpt)) then
+!      call errore('pw_kpoints','kpt not allocated',0)
+!   endif
+!   if(.not.allocated(wk)) then
+!      call errore('pw_kpoints','wk not allocated',0)
+!   endif
 !     
     call iotk_scan_begin(pwunit,'Kmesh',ierr=ierr)
     if (ierr/=0) call errore('pw_kpoints','Unable to find tag Kmesh',ABS(ierr))
-    call iotk_scan_dat(pwunit,'weights',wk(:),ierr=ierr)
-    if (ierr/=0) call errore('pw_kpoints','Unable to find k',ABS(ierr))
-    call iotk_scan_dat(pwunit,'k',kpt(:,:),ierr=ierr)
-    if (ierr/=0) call errore('pw_kpoints','Unable to find k',ABS(ierr))
+!   call iotk_scan_dat(pwunit,'weights',wk(:),ierr=ierr)
+!   if (ierr/=0) call errore('pw_kpoints','Unable to find weights',ABS(ierr))
+    call iotk_scan_dat(pwunit,'k',xk_(:,:),ierr=ierr)
+    if (ierr/=0) call errore('pw_kpoints','Unable to find kpt',ABS(ierr))
     call iotk_scan_end(pwunit,'Kmesh',ierr=ierr)
     if (ierr/=0) call errore('pw_kpoints','Unable to end tag Kmesh',ABS(ierr))
 
     return
   end subroutine pw_kpoints
 
-end module pw_interface
+end module pw_export
+! pw_export XML format and subroutine output format:
+! --------------------------------------------------
+! alat             : au                           
+! a1(3)/b1(3)      : au, cartesian                
+! symmop(3,3,nsym) : units of a1/a2/a3, transposed
+! kpt(3,nktot)     : 2pi/a units, cartesian, real 
+! igv(3,ngvec)   : integer units of b1/b2/b3    
+! en(nbnd,nktot)   : Rydberg
+! igk(npwx,nktot)
+!
+! Output units are kept consistent with PW units (pw_export units)
+! Otherwise might have problem with scaling with a parameter which 
+! hasn't been read yet (like alat)

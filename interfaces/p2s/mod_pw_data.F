@@ -19,24 +19,24 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !   
-module qexml_data
-  use qexml_module,      ONLY : dbl
-  private                    :: dbl 
+module pw_data
+  use pars,              only : DP
   save
   public
   
 ! Cell
-  real(dbl)                  :: alat_, a1_(3), a2_(3), a3_(3)
+  real(DP)                  :: alat_, a1_(3), a2_(3), a3_(3)
 
 ! Atoms
   integer                    :: nat_, nsp_
-  real(dbl), allocatable     :: tau_(:,:)
+  real(DP), allocatable     :: tau_(:,:)
   integer, allocatable       :: ityp_(:)
   character(3), allocatable  :: atm_(:)
+  character(len=2), allocatable   :: atom_type_(:), species_type_(:)
 
 ! Symmetry
   integer, allocatable       :: s_(:,:,:)
-  integer                    :: nsym_
+  integer                    :: nsym_, isym_(3,3,48)
   logical                    :: invsym_
 
 ! Planewaves
@@ -45,18 +45,23 @@ module qexml_data
 
 ! Spin
   logical                    :: lspinorb_
+  integer                    :: n_spin_pw_
 
 ! Bandstructure
   integer                    :: nbnd_, num_k_points_, nspin_
-  real(dbl)                  :: nelec_
-  real(dbl), allocatable     :: eig_s_(:,:,:), eig_(:,:)
-  real(dbl), allocatable     :: xk_(:,:)
+  real(DP)                  :: nelec_
+  real(DP), allocatable     :: eig_s_(:,:,:), eig_(:,:), eigb_(:)
+  real(DP), allocatable     :: xk_(:,:)
 
 ! igk grids
   integer                    :: npwk_
-  integer, allocatable       :: index_(:), igk_(:,:)
+  integer, allocatable       :: index_(:), igk_(:,:), pw_npwk_(:)
+  integer, allocatable       :: pw_igk_(:,:)
 
 ! Wavefunctions
-  complex(dbl), allocatable  :: wf_kindip_(:,:)
+  complex(DP), allocatable  :: wf_kindip_(:,:)
 
-end module qexml_data
+! XC
+   character(256)            :: pw_dft
+
+end module pw_data

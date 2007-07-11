@@ -147,7 +147,7 @@ if test "$compile_p2s" = "yes"; then
   PW_VER="3.1"
   PW_CPP="_P2S_V31"
  fi
- if test "$with_p2s" = "pw_export"; then
+ if test "$with_p2s" = "3.2"; then
   PW_VER="3.2"
   PW_CPP="_P2S_V32"
  fi

@@ -76,7 +76,7 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
   wfull%n(1) = nfull; wfull%per_memstps = 100; wfull%er = wv%er
   call freqs_setup(wfull)     ! Define wfull%n(), alloc and fill wq%p 
 
-  call X_checks(Xen,X)     ! Some checks/reset on X%ib() and X%iq() 
+  call X_pre_setup(Xen,X)     ! Some checks/reset on X%ib() and X%iq() 
   !
   ! nw    = number of points epsm1 is calculated on (i.e., wq%n(1) from input)
   ! nwsec = number of points lossq is calculated at for each section:

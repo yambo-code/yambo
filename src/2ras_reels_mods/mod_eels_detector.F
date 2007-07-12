@@ -78,7 +78,7 @@ end subroutine init_detector
   subroutine check_eels_det(lfail)
     use com,   ONLY:msg
     implicit none
-    real(SP), parameter    :: zero = 1.0_SP
+    real(SP), parameter    :: zero = 1.0e-4_SP
     character(lchlen)      :: errlist(10)
     integer                :: nerr, i
     logical, intent(out)   :: lfail
@@ -93,6 +93,7 @@ end subroutine init_detector
     if( (detint.eq."av".or.detint.eq."pr".or.&
 &        detint.eq."an".or.detint.eq."fu").and.abs(thetadet).lt.zero) then
        nerr = nerr + 1
+       write(*,*) "check eels det:",detint,thetadet,zero
        errlist(nerr) = 'Detector size (DetAngle) must be nonzero when'//&
 &                      ' integrating over detector (DetIntMd='//detint//')'
     endif
@@ -121,9 +122,9 @@ end subroutine init_detector
     endif
     if(nerr.ne.0) then
       lfail = .true.
- call msg('nrs','WARNING: Detector integration setup failed for the following reason(s):')
+      call msg('nrs','WARNING: Detector integration setup failed for the following reason(s):')
       do i=1,nerr
- call msg('rs',errlist(i))
+         call msg('rs',errlist(i))
       enddo
     endif
 

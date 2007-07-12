@@ -246,8 +246,11 @@ end subroutine init_kinematics
  
   real(SP) function kpmagf( hw )
     real(SP),intent(in) :: hw
+    real(SP)            :: arg
  
-    kpmagf = kmag * sqrt(1.0_SP - hw/E0) 
+    arg = 1.0_SP - hw/E0
+    if(arg.lt.0.0_SP) arg = 0.0
+    kpmagf = kmag * sqrt(arg) 
   
   end function kpmagf
 

@@ -74,9 +74,15 @@ contains
     ! NB: isinv != isi + nsym/(itr+1)+1 -- that is I^-1 R !
     isinv = sop_inv(isi) ! This is the inverse operator.   
     write(lch1,'(a10,i2,a)') "R     (is=",isi,") "
-    call msg('nr',trim(lch1),reshape(dl_sop(:,:,isi),(/9/)))   
+!   call msg('nr',trim(lch1),reshape(dl_sop(:,:,isi),(/9/)))   
+    call msg('nr',trim(lch1),dl_sop(1,:,isi))   
+    call msg('r',trim(lch1),dl_sop(2,:,isi))   
+    call msg('r',trim(lch1),dl_sop(3,:,isi))   
     write(lch1,'(a10,i2,a)') "R^{-1}(is=",isinv,") "
-    call msg('r',trim(lch1),reshape(dl_sop(:,:,isinv),(/9/)))   
+!   call msg('r',trim(lch1),reshape(dl_sop(:,:,isinv),(/9/)))   
+    call msg('nr',trim(lch1),dl_sop(1,:,isinv))   
+    call msg('r',trim(lch1),dl_sop(2,:,isinv))   
+    call msg('r',trim(lch1),dl_sop(3,:,isinv))   
 
     iGzrotindx(:) = 0
 ! NEED to check that enough Gs are used...

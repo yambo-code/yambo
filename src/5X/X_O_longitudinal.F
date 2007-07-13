@@ -109,9 +109,9 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  ! Determine grid displacement
  !
  ifail = 0
- call check_shifted_grids( Xk_shift, Xk, ifail ,num_long_grid)
+ call check_shifted_grids( Xk_shift, Xk, ifail, num_long_grid)
 #if defined PJ_RAS
- call select_field_dir(ifail, field_dir)
+ call select_field_dir(ifail, field_dir, num_long_grid)
 #endif
  if(ifail>0) then
    call warning('Error in new grids. Switch to transverse.')
@@ -239,13 +239,16 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  !
 end subroutine X_O_longitudinal
 
-subroutine check_shifted_grids( Xk_shift, Xk, ifail,num_long_grid)
+subroutine check_shifted_grids( Xk_shift, Xk, ifail, num_long_grid )
  !
  use pars,            ONLY : SP
  use stderr,          ONLY : intc
  use com,             ONLY : msg,warning
  use vec_operate,     ONLY : v_is_zero, v_norm, c2a, normalize_v
  use R_lattice,       ONLY : bz_samp,q0_def_norm
+#if defined PJ_RAS
+ use ras_long,        ONLY : q_long
+#endif
  implicit none
  !
  ! Find number of shifted grids
@@ -254,7 +257,7 @@ subroutine check_shifted_grids( Xk_shift, Xk, ifail,num_long_grid)
  integer,       intent(inout) :: ifail,num_long_grid
  !
  real(SP)         :: q_init(3), q_mod(3), qtemp(3), ca(3,3)
- real(SP)         :: a(3), b(3), c(3), x(3), y(3), z(3), q_long(3,3)
+ real(SP)         :: a(3), b(3), c(3), x(3), y(3), z(3), q_long_tmp(3,3)
  integer          :: i_grid_k, iq, ik
  !
  if(ifail>0) return
@@ -285,7 +288,7 @@ subroutine check_shifted_grids( Xk_shift, Xk, ifail,num_long_grid)
  !
  ! Find the displacement vector for each grid
  !
- ! q_long(:,i)   is the shift vector of grid(i) in [iku]
+ ! q_long_tmp(:,i)   is the shift vector of grid(i) in [iku]
  ! q_mod(i) is the modulus of the grid shift vector (i) in [a.u.]
  !
  q_mod(1:3) = 0.0_SP
@@ -304,8 +307,8 @@ subroutine check_shifted_grids( Xk_shift, Xk, ifail,num_long_grid)
        return
      endif
    enddo
-   q_long(:,iq) = q_init(:)
-   call c2a(v_in=q_long(:,iq), v_out=qtemp, mode="ki2c")
+   q_long_tmp(:,iq) = q_init(:)
+   call c2a(v_in=q_long_tmp(:,iq), v_out=qtemp, mode="ki2c")
    call msg('r','Grid '//trim(intc(iq))//' has shift vector [c.c.]: ',qtemp )
    q_mod(iq) = v_norm(qtemp)
    call msg('r','            and modulus [a.u.]: ',q_mod(iq))
@@ -321,4 +324,8 @@ subroutine check_shifted_grids( Xk_shift, Xk, ifail,num_long_grid)
    ifail = ifail + 1
  endif
  !
+#if defined PJ_RAS
+    q_long = q_long_tmp
+#endif
+  return
  end subroutine check_shifted_grids

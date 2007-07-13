@@ -256,8 +256,8 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   call WF_free()
   call ras_clean
 
-  deallocate(Xen%qp_done)
-  call mem_est("en-qp_done")
+! deallocate(Xen%qp_done)
+! call mem_est("en-qp_done")
 
   call pp_redux_wait
 

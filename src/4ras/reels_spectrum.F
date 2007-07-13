@@ -40,7 +40,7 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
   real(SP)                 :: costakk, kpmag, qpard_(nw)
   real(SP)                 :: qparm, qtot2, qpar(2)
   real(SP)                 :: Akk, loss_qpar(2)
-! real(SP)                 :: tmpImg, tmpImg2   ! debug
+  real(SP)                 :: tmpImg, tmpImg2   ! debug
   complex(SP)              :: eps_s(3)
   !
   ! Energy independent stuff. Other input in calling routine
@@ -51,6 +51,7 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
 
   do iw = 1, nw
     kpmag = kpmagf( hw(iw) )
+    write(40,*) hw(iw)*HARTREE,kpmag
 
     loss_qpar(:) = 0
     !
@@ -61,6 +62,7 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
       ! Get Q_|| for this set of angles.
       !
       call get_qpar_det(qpar, kpmag, idet )
+!   write(40,*) hw(iw)*HARTREE,kpmag,idet,qpar
       !
       ! Reset trig factors for this detector setting
       !
@@ -80,14 +82,15 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
       ! Loss function for q || q_x
       !
       eps_s(:) = (/ surf_i(iw,1), surf_i(iw,2), surf_i(iw,3) /)
-!     tmpImg = model_Img(lossfm, eps_b(iw),qpar=qpar, esurf = eps_s, dsurf = d_surf, dvac = bimp)
+      tmpImg = model_Img(lossfm, eps_b(iw),qpar=qpar, esurf = eps_s, dsurf = d_surf, dvac = bimp)
       loss_qpar(1) = loss_qpar(1) + Akk * w_det(idet) * &
 &         model_Img(lossfm, eps_b(iw), qpar=qpar,esurf=eps_s,dsurf=d_surf,dvac=bimp)
+!     write(38,*) loss_qpar(1),Akk,w_det(idet),
       !
       ! Loss function for q || q_y
       !
       eps_s(:) = (/ surf_i(iw,2), surf_i(iw,1), surf_i(iw,3) /)
-!     tmpImg2 = model_Img(lossfm,eps_b(iw), qpar=qpar, esurf = eps_s, dsurf = d_surf, dvac = bimp)
+      tmpImg2 = model_Img(lossfm,eps_b(iw), qpar=qpar, esurf = eps_s, dsurf = d_surf, dvac = bimp)
       loss_qpar(2) = loss_qpar(2) + Akk * w_det(idet) * & 
 &         model_Img(lossfm,eps_b(iw),qpar=qpar,esurf=eps_s,dsurf=d_surf,dvac=bimp)
       !
@@ -97,8 +100,9 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
 
 !<-- DEBUG
 !    write(88,107) hw(iw)*HARTREE,qparm,kpmag,qtot2,Akk,tmpImg,tmpImg2,lossf(iw,1),lossf(iw,2),real(surf_i(iw,1)),real(surf_i(iw,2)),aimag(surf_i(iw,1)),aimag(surf_i(iw,2)),qpar(1),qpar(2)
-!   write(23,107) hw(iw)*HARTREE, qpard_(iw), lossf(iw,1), lossf(iw,2), Akk, tmp,qparm,qtot2,qpar,kpmag
-!107 format(f8.3,20e16.7)
+!   write(23,107) hw(iw)*HARTREE, qpard_(iw), lossf(iw,1), lossf(iw,2), Akk, qparm,qtot2,qpar,kpmag
+    write(24,107) hw(iw)*HARTREE, lossf(iw,1), lossf(iw,2), Akk, qparm,qtot2,qpar,kpmag
+107 format(f8.3,20e16.7)
 !--> DEBUG
   enddo
 

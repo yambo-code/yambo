@@ -31,7 +31,7 @@
    use par_indexes_m,           ONLY : par_indexes
    use R_lattice,               ONLY : g_vec, bz_samp, bz_samp_duplicate,bz_samp_reset, q0_def_norm
    use D_lattice,               ONLY : DL_sop, n_atoms, atom_pos, znucl
-   use X_m,                     ONLY : X_alloc, X_t, long_path, q0mod, num_long_grid
+   use X_m,                     ONLY : X_alloc, X_t, long_path
    use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP, ver_is_gt_or_eq
    use memory_m,                ONLY : mem_est
    use wave_func,               ONLY : wf, wf_ng, wf_state, wf_load, WF_free, wf_nc_k, wf_igk
@@ -46,7 +46,7 @@
    logical,        intent(inout)  :: use_trans_gauge
 !ws
      integer                      :: wf_ng_long
-  integer                      :: ikpq, ik_grid, ir
+  integer                      :: ikpq, ik_grid, ir, num_long_grid
   logical                      :: read_zero_grid
   complex(SP)                  :: xy1,xy2
    integer                          :: ik, i1, icfft, ivfft, ic, iv, is, i_spin, ifail, iq, err, io_err
@@ -109,8 +109,11 @@
    ! - Determine grid displacement vectors
    ! - Check compatibility of requested polarization vector
    !
-   call check_shifted_grids( Xk_shift, Xk_save, ifail)
-   call select_field_dir(ifail, field_dir)
+   call check_shifted_grids( Xk_shift, Xk, ifail, num_long_grid)
+   call select_field_dir(ifail, field_dir, num_long_grid)
+
+!  call check_shifted_grids( Xk_shift, Xk_save, ifail, num_long_grid)
+!  call select_field_dir(ifail, field_dir)
    if(ifail>0) then
      call msg('r','Error in new grids.')
      call reset_DB1
@@ -179,7 +182,7 @@
              ! X_q0grad = < v,k+q | T(z) e^i(q.r)| c,k >/q
              !
              call PScut(PS, wf(1:wf_ng_long,ivfft), wf_local(1:wf_ng_long,icfft))
-             rho(i_spin,:) = PS(:)/q0mod
+             rho(i_spin,:) = PS(:)/q0_def_norm
            enddo   ! spin loop
            if (n_sp_pol==2) then
              Xcut_q0grad(ir,ic,iv,ik,1)=rho(1,ir)

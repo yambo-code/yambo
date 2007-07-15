@@ -83,7 +83,17 @@ subroutine exc_wf_gnuplot(use_1d,use_2d,plot_dim,eval_only)
        call live_timing(steps=1)
      enddo
      wf_max=maxval(wf_2d(:,1))
-     wf_2d=wf_2d/wf_max
+     ! 
+     ! Daniele [15/7/2007]
+     ! Questo e' corretto, e' la normalizzazione. Io in una versione precedente
+     ! di questa subroutine, la parte 1d di gnuplot non la avevo normalizzata
+     ! a proposito. Siccome e' il plot piu' veloce, lo usavo per vedere il
+     ! valore assoluto. Quando si mette la hole, magari un po' casaccio, cosi'
+     ! vedi se stai pescando valori della wf, oppure no. Appunto nel caso che
+     ! uno mette la hole in un punto con poca densita'.
+     !
+     !wf_2d=wf_2d/wf_max 
+     !
      do i1=0,nr2plot(1)-1
        call msg('o exc','',(/exc_wf_projection(i1,dir2plot(1)),&
 &                            wf_2d(i1+1,1)/),INDENT=-2,USE_TABS=.true.)
@@ -145,8 +155,8 @@ subroutine exc_wf_gnuplot(use_1d,use_2d,plot_dim,eval_only)
      integer :: I,dir
      real(SP):: rv(3)
      !
-     rv(:)=I*a(dir,:)/fft_dim(dir)-r_hole(:)
-     exc_wf_projection=v_norm(rv)*BOHR
+     rv(:)=I*a(dir,:)/fft_dim(dir)
+     exc_wf_projection=(v_norm(rv)-r_hole(dir))*BOHR
      !
    end function
    !

@@ -98,7 +98,7 @@
        atoms_loop: do ia=1,n_atoms(is)
          do iap=1,n_atoms(is) 
            !
-           at_diff=matmul(a_m1,-atom_pos(:,ia,is)-atom_pos(:,iap,is))
+           at_diff=matmul(a_m1,atom_pos(:,ia,is)+atom_pos(:,iap,is))
            !
            at_diff(1)=abs(at_diff(1)-nint(at_diff(1)))     
            at_diff(2)=abs(at_diff(2)-nint(at_diff(2)))     
@@ -106,9 +106,11 @@
            !
            if (all(at_diff<=zero_dfl)) cycle atoms_loop
            !
-           i_space_inv=0
-           return
          enddo 
+         !
+         i_space_inv=0
+         return
+         !
        enddo atoms_loop
      enddo
      !

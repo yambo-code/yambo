@@ -37,6 +37,7 @@ m4_include([config/netcdf_f90.m4])
 m4_include([config/fftw.m4])
 m4_include([config/slk.m4])
 m4_include([config/acx_report.m4])
+m4_include([config/acx_get_fc_version.m4])
 
 AC_PREFIX_DEFAULT($PWD)
 
@@ -204,7 +205,8 @@ esac
 AC_SUBST(F90SUFFIX)
 FCFLAGS="${acx_save_fcflags}"
 acx_save_fcflags="$FCFLAGS"
-ACX_FCSETUP
+ACX_GET_FC_VERSION()
+ACX_FCSETUP()
 acx_save_fcflags="$FCFLAGS"
 FCFLAGS="$acx_save_fcflags $F90EXTFLAGS"
 ACX_EXTUS

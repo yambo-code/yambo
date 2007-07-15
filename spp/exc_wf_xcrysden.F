@@ -121,7 +121,7 @@ subroutine exc_wf_xcrysden(use_2d,plot_dim)
      if (use_2d(1))call msg('o exc','',ncell(2)*a_angs(2,:))
      if (use_2d(2).or.use_2d(3)) call msg('o exc','',ncell(3)*a_angs(3,:))
      !
-     do i2=1,nr2plot(1) 
+     do i2=1,nr2plot(2) 
        do i1=1,nr2plot(1)
          call msg('o exc','',wf_2d(i1,i2))
        enddo

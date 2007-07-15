@@ -1548,6 +1548,29 @@ ac_configure="$SHELL $ac_aux_dir/configure" # This should be Cygnus configure.
 #
 
 
+#
+# Copyright (C) 2000-2005 A. Marini and the SELF team
+#         http://www.fisica.uniroma2.it/~self
+#
+# This file is distributed under the terms of the GNU
+# General Public License. You can redistribute it and/or
+# modify it under the terms of the GNU General Public
+# License as published by the Free Software Foundation;
+# either version 2, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will
+# be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public
+# License along with this program; if not, write to the Free
+# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+#
+
+
 
 
 
@@ -5804,7 +5827,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:5807:" \
+echo "$as_me:5830:" \
      "checking for Fortran compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version >&5\"") >&5
@@ -6195,6 +6218,41 @@ esac
 FCFLAGS="${acx_save_fcflags}"
 acx_save_fcflags="$FCFLAGS"
 
+FCVERSION="unknown"
+case "${FC}" in
+    *pgf90*)
+      ;;
+    *abf90*)
+      ;;
+    *ifc*)
+      ;;
+    *g95*)
+      ;;
+    *ifort*)
+      $FC -v >& ver_
+      VER_8=`grep 8. ver_   | wc -l`
+      VER_9=`grep 9. ver_   | wc -l`
+      VER_10=`grep 10. ver_ | wc -l`
+      if ! test "$VER_8" = "0"; then
+       FCVERSION="8"
+      fi
+      if ! test "$VER_9" = "0"; then
+       FCVERSION="9"
+      fi
+      if ! test "$VER_10" = "0"; then
+       FCVERSION="10"
+      fi
+      rm -f ver_
+      ;;
+    *)
+esac
+echo "$as_me:$LINENO: checking for $FC version" >&5
+echo $ECHO_N "checking for $FC version... $ECHO_C" >&6
+echo "$as_me:$LINENO: result: $FCVERSION" >&5
+echo "${ECHO_T}$FCVERSION" >&6
+
+
+
 
 
 if test -z "${CFLAGS}"; then CFLAGS="-O2"; fi
@@ -6221,8 +6279,17 @@ if test -z "${FCFLAGS}"; then
       FCMFLAG=""
       ;;
     *ifort*)
-      FCFLAGS="-assume bscc -O3 -tpp7"
-      UFFLAGS="-assume bscc -O0 -tpp7"
+      CPU_FLAG=""
+      case "${FCVERSION}" in
+        *10*)
+         CPU_FLAG="-xT"
+         ;;
+        *)
+         CPU_FLAG="-tpp7"
+         ;;
+      esac
+      FCFLAGS="-assume bscc -O3 $CPU_FLAG"
+      UFFLAGS="-assume bscc -O0 $CPU_FLAG"
       FCMFLAG="-nofor_main"
     ;;
     *)
@@ -6356,7 +6423,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FCFLAGS
 FCFLAGS="$FCFLAGS $ac_verb"
-(eval echo $as_me:6359: \"$ac_link\") >&5
+(eval echo $as_me:6426: \"$ac_link\") >&5
 ac_fc_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_fc_v_output" >&5
 FCFLAGS=$ac_save_FFLAGS
@@ -6440,7 +6507,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FCFLAGS
 FCFLAGS="$FCFLAGS $ac_cv_prog_fc_v"
-(eval echo $as_me:6443: \"$ac_link\") >&5
+(eval echo $as_me:6510: \"$ac_link\") >&5
 ac_fc_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_fc_v_output" >&5
 FCFLAGS=$ac_save_FFLAGS
@@ -7543,7 +7610,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:7546:" \
+echo "$as_me:7613:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version >&5\"") >&5
@@ -7796,7 +7863,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FFLAGS
 FFLAGS="$FFLAGS $ac_verb"
-(eval echo $as_me:7799: \"$ac_link\") >&5
+(eval echo $as_me:7866: \"$ac_link\") >&5
 ac_f77_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_f77_v_output" >&5
 FFLAGS=$ac_save_FFLAGS
@@ -7880,7 +7947,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FFLAGS
 FFLAGS="$FFLAGS $ac_cv_prog_f77_v"
-(eval echo $as_me:7883: \"$ac_link\") >&5
+(eval echo $as_me:7950: \"$ac_link\") >&5
 ac_f77_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_f77_v_output" >&5
 FFLAGS=$ac_save_FFLAGS

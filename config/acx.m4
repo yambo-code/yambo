@@ -166,8 +166,17 @@ if test -z "${FCFLAGS}"; then
       FCMFLAG=""
       ;;
     *ifort*)
-      FCFLAGS="-assume bscc -O3 -tpp7"
-      UFFLAGS="-assume bscc -O0 -tpp7"
+      CPU_FLAG=""
+      case "${FCVERSION}" in
+        *10*)
+         CPU_FLAG="-xT"
+         ;;
+        *)
+         CPU_FLAG="-tpp7"
+         ;;
+      esac
+      FCFLAGS="-assume bscc -O3 $CPU_FLAG"
+      UFFLAGS="-assume bscc -O0 $CPU_FLAG"
       FCMFLAG="-nofor_main"
     ;;
     *)

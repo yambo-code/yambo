@@ -34,7 +34,7 @@ subroutine exc_wf_eval(Xk)
  use BS,          ONLY : BS_K_dim,BS_bands,BS_q,BSS_n_descs,BSS_description,&
 &                        BS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
 &                        BS_cpl_K_exchange,BS_cpl_K_corr
- use com,         ONLY: msg,of_open_close,error
+ use com,         ONLY: msg,of_open_close,error,warning
  use X_m,         ONLY: X_t
  use memory_m,    ONLY: mem_est
  use timing,      ONLY: live_timing

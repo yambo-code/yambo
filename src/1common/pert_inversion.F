@@ -38,7 +38,7 @@ integer function pert_inversion(N,W,C,f,V,M,use_full_inv)
  real(SP),parameter       :: perc_treshold=0.01
  complex(SP), allocatable ::wk(:,:)
  integer     ::it,i1,i2
- complex(SP) ::A_nm1(N),A_n(N),delta_f,fo
+ complex(SP) ::A_nm1(N),A_n(N),delta_f,fo,V_diago_summed(N)
 #if defined _DOUBLE
  complex(SP):: zdotc
 #else
@@ -55,6 +55,8 @@ integer function pert_inversion(N,W,C,f,V,M,use_full_inv)
 #endif
  !
  if (abs(f)==0.) f=fo
+ !
+ it=0
  !
  if (.not.use_full_inv) then
    !

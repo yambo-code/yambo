@@ -57,7 +57,7 @@ subroutine K_inversion(iq,W,E,k,q)
  type(pp_indexes) ::px
  integer          ::i1,i2,ik_bz,iv,ic,iw,icv,of_mode,i_sp,ik_ibz,WS_alloc_err
  integer, external::pert_inversion,eval_ELPH_K
- complex(SP)      ::Co,QP_Z,QP_width,Lo_ws
+ complex(SP)      ::Co,QP_Z,QP_width
  complex(SP), allocatable  ::Lo(:,:),WS(:,:)
  !
  ! ... frequencies
@@ -146,7 +146,12 @@ subroutine K_inversion(iq,W,E,k,q)
    nw_read=0
    nw_conv=0
    do iw=1,W%n(1)
-     if (disk_freq_table(iw)>0) then
+     !
+     ! Read only converged frequencies
+     !
+     if (disk_freq_table(iw)>0.and.&
+&        inv_err_disk(disk_freq_table(iw))==0) then
+       !
        inv_err(iw)=inv_err_disk(disk_freq_table(iw))
        X_epsilon(2,iw)=eps_2start(disk_freq_table(iw))/real(ncpu,SP)
        nw_read=nw_read+1
@@ -229,20 +234,24 @@ subroutine K_inversion(iq,W,E,k,q)
    endif
    X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*Lo(i1,:)*Co
    !
-   ! Oth order includes the W diagonal terms
-   !
-   do iw=1,W%n(1)
-     Lo_ws=Lo(i1,iw)
-     Lo(i1,iw)=Lo(i1,iw)/(1.-BS_mat(i1,i1)*Lo(i1,iw))
-   enddo
-   !
-   BS_mat(i1,i1)=(0.,0.)
-   !
    call live_timing(steps=1)
    !
  enddo
  X_epsilon(3,:)=(1.+X_epsilon(3,:))/real(ncpu,SP)
  call live_timing()
+ !
+ ! Sum the Kernel diagonal
+ !=========================
+ !
+ do i1=1,BS_K_dim
+   do iw=1,W%n(1)
+     Lo(i1,iw)=Lo(i1,iw)/(1.-BS_mat(i1,i1)*Lo(i1,iw))
+   enddo
+   BS_mat(i1,i1)=(0.,0.)
+#if defined PJ_PH
+   if (WS_alloc_err==0) WS(i1,i1)=(0.,0.)
+#endif
+ enddo
  !
  ! Perturbative Invertion
  !========================
@@ -377,13 +386,14 @@ contains
         else
           BS_mat=(0.,0.)
           call Kernel_by_V(iq)
-          forall(i3=1:BS_K_dim) BS_mat(i3,i3)=BS_mat(i3,i3)-BS_eh_E(i3)
+          forall(i3=1:BS_K_dim) BS_mat(i3,i3)=0.
         endif
         call static2dyn_ELPH_K(E,k,q,W%p(i2),BS_mat)
       endif
 #endif
       !
       if(.not.full_diago) then
+        !
         if (.not.px%i1p(i2)) cycle
         if (.not.p_inv_2do(i2)) then
           call live_timing(steps=1)

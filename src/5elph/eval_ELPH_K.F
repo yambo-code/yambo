@@ -113,7 +113,7 @@ integer function eval_ELPH_K(E,k,q,residuals_only,frequency)
    iq_ibz=q%sstar(iq_bz,1)
    iq_s  =q%sstar(iq_bz,2)
    !
-   if (iq_ibz/=iabs(iq_ref)) then
+   if (iq_ibz/=iq_ref) then
      !
      call io_control(ACTION=RD_CL_IF_END,SEC=(/iq_ibz+1/),ID=ID)
      io_err=ioELPH(ID)
@@ -128,11 +128,6 @@ integer function eval_ELPH_K(E,k,q,residuals_only,frequency)
    endif
    !
    if (.not.px%i1p(iq_bz)) cycle
-   !
-   if (iq_ref<0) then
-     call live_timing(steps=1)
-     cycle
-   endif
    !
    ! Now I loop the BSE indexes matching the  elements corresponding to
    ! the iq_bz transition

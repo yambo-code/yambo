@@ -34,7 +34,7 @@ subroutine K_inversion(iq,W,E,k,q)
  use memory_m,       ONLY:mem_est
  use parser_m,       ONLY:parser
  use electrons,      ONLY:spin_occ,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts
- use frequency,      ONLY:w_samp,W_reset,W_merge
+ use frequency,      ONLY:w_samp,W_reset,W_merge,W_duplicate
  use R_lattice,      ONLY:d3k_factor,q_norm,bz_samp
  use com,            ONLY:isec,warning,msg
  use timing,         ONLY:live_timing
@@ -55,6 +55,7 @@ subroutine K_inversion(iq,W,E,k,q)
  ! ... dummies
  !
  type(pp_indexes) ::px
+ type(w_samp)     ::W_shifted
  integer          ::i1,i2,ik_bz,iv,ic,iw,icv,of_mode,i_sp,ik_ibz,WS_alloc_err
  integer, external::pert_inversion,eval_ELPH_K
  complex(SP)      ::Co,QP_Z,QP_width
@@ -63,8 +64,7 @@ subroutine K_inversion(iq,W,E,k,q)
  ! ... frequencies
  !
  integer,  allocatable ::inv_err(:),iw_full(:),nw_full(:)
- logical,  allocatable ::p_inv_2do(:)
- integer    ::full_grp,nw,nw_read,nw_conv
+ integer    ::full_grp,nw,nw_conv
  logical    ::full_diago,skip_full_inv,force_full_inv
  !
 #if defined _DOUBLE
@@ -138,12 +138,10 @@ subroutine K_inversion(iq,W,E,k,q)
    BSS_dr=W%dr
    !
    ALLOCate(X_epsilon(4,BSS_n_freqs))
-   allocate(inv_err(W%n(1)),iw_full(W%n(1)),nw_full(W%n(1)),p_inv_2do(W%n(1)))
-   p_inv_2do=.TRUE.
+   allocate(inv_err(W%n(1)),iw_full(W%n(1)),nw_full(W%n(1)))
    X_epsilon=(0.,0.)
    inv_err=1
    !
-   nw_read=0
    nw_conv=0
    do iw=1,W%n(1)
      !
@@ -154,18 +152,14 @@ subroutine K_inversion(iq,W,E,k,q)
        !
        inv_err(iw)=inv_err_disk(disk_freq_table(iw))
        X_epsilon(2,iw)=eps_2start(disk_freq_table(iw))/real(ncpu,SP)
-       nw_read=nw_read+1
-       if (inv_err(iw)==1) p_inv_2do(iw)=.false.
-       if (inv_err(iw)==0) nw_conv=nw_conv+1
+       nw_conv=nw_conv+1
      endif
    enddo
-   call msg('rs','[BSE INV] Frequency read      [o/o]:',real(nw_read)/real(W%n(1))*100.)
-   call msg('rs','[BSE INV] Converged frequency [o/o]:',real(nw_conv)/real(W%n(1))*100.)
+   call msg('rs','[BSE INV] Frequency read      [o/o]:',real(nw_conv)/real(W%n(1))*100.)
    deallocate(inv_err_disk,eps_2start,disk_freq_table)
  else
-   allocate(inv_err(W%n(1)),iw_full(W%n(1)),nw_full(W%n(1)),p_inv_2do(W%n(1)))
+   allocate(inv_err(W%n(1)),iw_full(W%n(1)),nw_full(W%n(1)))
    inv_err=1
-   p_inv_2do=.TRUE.
    X_epsilon=(0.,0.)
  endif
  !
@@ -208,6 +202,8 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  allocate(Lo(BS_K_dim,W%n(1)))
  Lo=(0.,0.)
+ call W_reset(W_shifted)
+ call W_duplicate(W,W_shifted)
  !
  call live_timing('Green`s function',BS_K_dim)
  !
@@ -234,24 +230,27 @@ subroutine K_inversion(iq,W,E,k,q)
    endif
    X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*Lo(i1,:)*Co
    !
+   ! Include the Kernel diagonal as a rigid shift
+   !==============================================
+   !
+   if (BSS_uses_RIM) then
+     forall(iw=1:W%n(1)) W_shifted%p(iw)=W%p(iw)-BS_mat(i1,i1)
+#if defined PJ_PH
+     if (add_ELPH_K) forall(iw=1:W%n(1)) W_shifted%p(iw)=W_shifted%p(iw)-EXCPH_mat(i1,i1)
+#endif
+     call X_bare_RIM_Gf(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W_shifted,E,k,Lo(i1,:),"r")
+     BS_mat(i1,i1)=(0.,0.)
+#if defined PJ_PH
+     if (add_ELPH_K) EXCPH_mat(i1,i1)=(0.,0.)
+     if (WS_alloc_err==0) WS(i1,i1)=(0.,0.)
+#endif
+   endif
+   !
    call live_timing(steps=1)
    !
  enddo
  X_epsilon(3,:)=(1.+X_epsilon(3,:))/real(ncpu,SP)
  call live_timing()
- !
- ! Sum the Kernel diagonal
- !=========================
- !
- do i1=1,BS_K_dim
-   do iw=1,W%n(1)
-     Lo(i1,iw)=Lo(i1,iw)/(1.-BS_mat(i1,i1)*Lo(i1,iw))
-   enddo
-   BS_mat(i1,i1)=(0.,0.)
-#if defined PJ_PH
-   if (WS_alloc_err==0) WS(i1,i1)=(0.,0.)
-#endif
- enddo
  !
  ! Perturbative Invertion
  !========================
@@ -355,7 +354,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! CLEAN
  !
- deallocate(inv_err,p_inv_2do)
+ deallocate(inv_err)
  call pp_indexes_reset(px)
  deallocate(BS_mat,iw_full,nw_full,Lo)
  call mem_est("BS_mat Lo")
@@ -395,10 +394,6 @@ contains
       if(.not.full_diago) then
         !
         if (.not.px%i1p(i2)) cycle
-        if (.not.p_inv_2do(i2)) then
-          call live_timing(steps=1)
-          cycle
-        endif
         !
       endif
       !

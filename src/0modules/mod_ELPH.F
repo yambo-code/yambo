@@ -46,6 +46,7 @@
    ! el-ph BSE Kernel
    !
    complex(SP), allocatable :: EXCPH_mat(:,:)
+   logical                  :: add_ELPH_K
    !
  contains
    !

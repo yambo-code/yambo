@@ -42,7 +42,7 @@ subroutine K_inversion(iq,W,E,k,q)
  use par_indexes_m,  ONLY:par_indexes
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,NONE,VERIFY,OP_WR_CL
 #if defined PJ_PH
- use ELPH,           ONLY:EXCPH_mat
+ use ELPH,           ONLY:EXCPH_mat,add_ELPH_K
 #endif
  implicit none
  type(w_samp) :: W
@@ -71,9 +71,6 @@ subroutine K_inversion(iq,W,E,k,q)
  complex(DP)::zdotu,zdotc
 #else
  complex(SP)::cdotu,cdotc
-#endif
-#if defined PJ_PH
- logical    ::add_ELPH_K
 #endif
  !
  ! I/O
@@ -155,7 +152,7 @@ subroutine K_inversion(iq,W,E,k,q)
        nw_conv=nw_conv+1
      endif
    enddo
-   call msg('rs','[BSE INV] Frequency read      [o/o]:',real(nw_conv)/real(W%n(1))*100.)
+   call msg('rs','[BSE INV] Frequencies read    [o/o]:',real(nw_conv)/real(W%n(1))*100.)
    deallocate(inv_err_disk,eps_2start,disk_freq_table)
  else
    allocate(inv_err(W%n(1)),iw_full(W%n(1)),nw_full(W%n(1)))
@@ -265,7 +262,7 @@ subroutine K_inversion(iq,W,E,k,q)
  ! I/O [after pert invertion]
  !
  call pp_redux_wait(X_epsilon)
- call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
+ call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
  i_err=ioBSS_invert(iq,W%n(1),inv_err,X_epsilon(2,:),W,ID)
  !
  ! Full Invertion
@@ -328,7 +325,7 @@ subroutine K_inversion(iq,W,E,k,q)
  do iw=1,W%n(1)
    if (inv_err(iw)==0) nw_conv=nw_conv+1
  enddo
- call msg('rs','[BSE INV] Converged frequencies [o/o]:',real(nw_conv)/real(W%n(1))*100.)
+ call msg('rs','[BSE INV] Converged frequencies (after full inv) [o/o]:',real(nw_conv)/real(W%n(1))*100.)
  !
  ! I/O [after full invertion]
  !
@@ -343,6 +340,13 @@ subroutine K_inversion(iq,W,E,k,q)
  X_epsilon(2,:)=1.+X_epsilon(2,:)
  X_epsilon(1,:)=W%p(:)
  !
+#if defined PJ_PH
+ BSS_description(BSS_n_descs)='#'
+ BSS_n_descs=BSS_n_descs+1
+ BSS_description(BSS_n_descs)='#    |Phononic Kernel      : no'
+ if (add_ELPH_K) BSS_description(BSS_n_descs)='#    |Phononic Kernel      : yes'
+#endif
+ BSS_n_descs=BSS_n_descs+1
  BSS_description(BSS_n_descs)='#'
  BSS_n_descs=BSS_n_descs+1
  BSS_description(BSS_n_descs)='# BSS|BZ RIM points              :'//intc(BZ_RIM_tot_nkpts)

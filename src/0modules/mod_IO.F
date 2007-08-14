@@ -27,12 +27,17 @@
 #endif
    implicit none
    !
+   ! World known variables
+   !
+   real(SP):: db_alat(3)
+   !
    ! The serial number is assigned by the SELF interfaces.
    ! It defines uniquely the db1/wf/kb_pp databases.
    !
    integer :: serial_number
    !
-   logical :: write_to_dbs,dbs_fragment
+   logical :: write_to_dbs
+   logical :: dbs_fragment
    !
    ! Actions
    !
@@ -114,9 +119,9 @@
      end subroutine
      !
      integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,&
-&                               QP_ctl_K,T_EL,KPTS)
+&                               QP_ctl_K,T_EL,KPTS,D_LATT)
        integer            :: ID
-       logical,optional   :: QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,T_EL,KPTS
+       logical,optional   :: QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,T_EL,KPTS,D_LATT
      end function
      !
    end interface

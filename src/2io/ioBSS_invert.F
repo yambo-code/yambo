@@ -39,7 +39,12 @@ integer function ioBSS_invert(iq,n_,inv_err,eps,W_disk,ID)
  integer     :: ID
  real(SP), allocatable :: W(:,:)
  !
+#if defined PJ_PH
+ ioBSS_invert=io_connect(desc='BS_ELPH_invert_Q'//trim(intc(iq)),type=2,ID=ID)
+#else
  ioBSS_invert=io_connect(desc='BS_invert_Q'//trim(intc(iq)),type=2,ID=ID)
+#endif
+ !
  if (ioBSS_invert/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then

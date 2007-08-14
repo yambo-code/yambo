@@ -61,11 +61,13 @@
  !=========================================
  live_timing_is_on=.false.
  do i1=1,Xk%nibz
-   if (trim(coo_out)/="iku") then
+   if (trim(coo_out)=="rlu") then
      call c2a(v_in=Xk%pt(i1,:),v_out=v,mode="ki2a")
-     write(ch,'(3(f12.7,1x))') v
-     call msg("s",'      ',trim(ch))
+   else if (trim(coo_out)=="iku") then
+     v=Xk%pt(i1,:)
    endif
+   write(ch,'(3(f12.7,1x))') v
+   call msg("s",'      ',trim(ch))
  enddo
  live_timing_is_on=.true.
  !

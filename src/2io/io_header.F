@@ -20,12 +20,12 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,&
-&                           T_EL,KPTS)
+&                           T_EL,KPTS,D_LATT)
  !
  use pars,          ONLY:SP,schlen,HARTREE
  use drivers,       ONLY:list_dbs
  use com,           ONLY:code_version,msg,warning
- use D_lattice,     ONLY:Tel
+ use D_lattice,     ONLY:Tel,a,alat
  use electrons,     ONLY:n_sp_pol,n_spinor
  use R_lattice,     ONLY:nqibz,nqbz,nkibz,nkbz,q_pt,k_pt
  use wave_func,     ONLY:wf_ng
@@ -35,12 +35,12 @@
 &                        read_is_on,write_is_on,serial_number,&
 &                        io_serial_number,io_file,io_com,io_mode,&
 &                        DUMP,VERIFY,NONE,io_fragmented,dbs_fragment,&
-&                        ver_is_gt_or_eq
+&                        ver_is_gt_or_eq,db_alat
  use zeros,         ONLY:define_zeros
  !
  implicit none
  integer            :: ID
- logical,optional   :: QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,T_EL,KPTS
+ logical,optional   :: QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,T_EL,KPTS,D_LATT
  !
  ! Work Space
  !
@@ -48,7 +48,7 @@
 &                       R_LATT_vec_disk(4),MODE,MENU,ng_on_db,SPIN_vec_disk(2),&
 &                       n_l_pt
  real(SP),allocatable:: l_pt(:,:)
- real(SP)            :: local_zero(3)
+ real(SP)            :: local_zero(3),D_LATT_vec_disk(3),D_LATT_vec(3)
  logical             :: WARN
  !
  io_header=0
@@ -104,6 +104,21 @@
      if (io_com(ID)/=NONE) call msg('sr','Incompatible SPIN pol/spinors for '//trim(io_file(ID)))
      goto 1
    endif
+ endif
+ !
+ ! DL lattice
+ !
+ db_alat=alat
+ !
+ if (present(D_LATT).and.ver_is_gt_or_eq(ID,(/3,0,11/))) then
+   D_LATT_vec=alat
+   call io_elemental(ID,VAR="HEAD_D_LATT",VAR_SZ=3,MENU=MENU)
+   MENU=0
+   call io_elemental(ID,DB_R1=D_LATT_vec_disk,R1=D_LATT_vec,&
+&       VAR=' Lattice constants                :',WARN=WARN,&
+&       OP=(/"==","==","=="/))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   db_alat=D_LATT_vec_disk
  endif
  !
  ! RL lattice

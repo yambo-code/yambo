@@ -22,6 +22,7 @@
  integer function ioQP(what,qp,ID)
  !
  use pars,           ONLY:SP,schlen
+ use D_lattice,      ONLY:alat
  use R_lattice,      ONLY:nqbz
  use par_proc_m,     ONLY:myid
  use memory_m,       ONLY:mem_est
@@ -34,7 +35,7 @@
 &                         io_elemental,io_status,io_bulk,read_is_on,&
 &                         write_is_on,io_mode,DUMP,VERIFY,&
 &                         io_fragment,io_check_restart,io_restart,&
-&                         io_netcdf_support,ver_is_gt_or_eq
+&                         io_netcdf_support,ver_is_gt_or_eq,db_alat
  !
  implicit none
  type(QP_t)  ::qp
@@ -65,9 +66,9 @@
  if (any((/io_sec(ID,:)==1/))) then
    !
    if (what=="W") then
-     ioQP=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.)
+     ioQP=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,D_LATT=.true.)
    else
-     ioQP=io_header(ID,T_EL=.true.)
+     ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.)
    endif
    if (ioQP/=0) goto 1
    !
@@ -218,17 +219,22 @@
    !
    if (.not.associated(qp%k)) allocate(qp%k(qp%nk,3))
    call io_bulk(ID,R2=qp%k)
+   if (read_is_on(ID)) then
+     do i1=1,qp%nk
+       qp%k(i1,:)=qp%k(i1,:)/db_alat(:)*alat(:)
+     enddo
+   endif
    !
    allocate(qp_E_Eo_Z_disk(3,qp%n_states,2))
    !  
    if (write_is_on(ID)) then
      do i1=1,qp%n_states
-      qp_E_Eo_Z_disk(1,i1,1)=real(qp%E(i1))
-      qp_E_Eo_Z_disk(1,i1,2)=aimag(qp%E(i1))
-      qp_E_Eo_Z_disk(2,i1,1)=qp%E_bare(i1)
-      qp_E_Eo_Z_disk(2,i1,2)=0.
-      qp_E_Eo_Z_disk(3,i1,1)=real(qp%Z(i1))
-      qp_E_Eo_Z_disk(3,i1,2)=aimag(qp%Z(i1))
+       qp_E_Eo_Z_disk(1,i1,1)=real(qp%E(i1))
+       qp_E_Eo_Z_disk(1,i1,2)=aimag(qp%E(i1))
+       qp_E_Eo_Z_disk(2,i1,1)=qp%E_bare(i1)
+       qp_E_Eo_Z_disk(2,i1,2)=0.
+       qp_E_Eo_Z_disk(3,i1,1)=real(qp%Z(i1))
+       qp_E_Eo_Z_disk(3,i1,2)=aimag(qp%Z(i1))
      enddo
    endif
    !

@@ -234,9 +234,9 @@
        !
        do il=1,ph_modes
          !
-         ! Skip Acoustic modes @ Gamma
+         ! Skip modes @ Gamma
          !
-         if (iq==1.and.il<=3) cycle
+         if (iq==1) cycle
          !
          ph_E=sqrt(abs(ph_freqs_sq(iq,il)))
          !
@@ -375,7 +375,8 @@
        do iq=1,elph_nq_used
          do il=1,ph_modes
            !
-           ph_freq=sqrt(ph_freqs_sq(iq,il))
+           if (.not.elph_use_q_grid) ph_freq=sqrt(ph_freqs_sq(iq,il))
+           if (     elph_use_q_grid) ph_freq=sqrt(ph_freqs_sq( q%sstar(iq,1) ,il))
            !
            ! QP lifetimes
            !--------------

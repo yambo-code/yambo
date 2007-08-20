@@ -128,10 +128,12 @@
    !
    ! Titles 
    !
-   ch = '# Absorption @ IQ '//trim(intc(iq))//' [iku]:'
+   ch = '# Absorption @ IQ '//trim(intc(iq))//' [iku]:' 
+   if (iq==1) ch = '# Absorption @ IQ '//trim(intc(iq))//' [q->0 dir]:'
    if (iq==1) call msg("o eps",trim(ch),X%q0/v_norm(X%q0),INDENT=0)
    if (iq/=1) call msg("o eps",trim(ch),q%pt(iq,:),INDENT=0)
    ch = '# EELS @ IQ '//trim(intc(iq))//' [iku]:'
+   if (iq==1) ch = '# EELS @ IQ '//trim(intc(iq))//' [q->0 dir]:'
    if (iq==1) call msg("o eel",trim(ch),X%q0/v_norm(X%q0),INDENT=0)
    if (iq/=1) call msg("o eel",trim(ch),q%pt(iq,:),INDENT=0)
    ch = '# Polarizability ( -<<X>> ) ['//&
@@ -236,6 +238,7 @@
        if (iq==1) then
          if (X%Vnl_included) ch='- The gauge is transverse + [r,Vnl] -'
          if (X%long_gauge)   ch='- The gauge is longitudinal -'
+         ch='- The gauge is transverse -'
          call msg('o eps eel alpha','#')
          call msg('o eps eel alpha','# ',trim(ch),INDENT=0)
        endif

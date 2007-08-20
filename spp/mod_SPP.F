@@ -59,6 +59,7 @@ module SPP
  real(SP):: elph_Ef
  real(SP):: elph_E_max
  character(schlen) :: elph_dbs_path
+ character(schlen) :: ph_freqs_file
  !
 #endif
 #if defined SPP_PJ_RAS

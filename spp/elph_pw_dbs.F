@@ -27,9 +27,10 @@ integer function elph_pw_dbs(k,E,q)
  use ELPH,                ONLY:ph_freqs_sq,ph_modes,elph_nb,elph_use_q_grid,&
 &                              elph_gkkp_free,max_ph_freq,elph_gkkp_alloc,&
 &                              elph_nq,ph_qpt
- use com,                 ONLY:msg,warning
+ use com,                 ONLY:msg,warning,file_exists,error
  use R_lattice,           ONLY:bz_samp
  use D_lattice,           ONLY:nsym
+ use SPP,                 ONLY:ph_freqs_file
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,&
 &                              OP_RD_CL,VERIFY,dbs_fragment
  use timing,              ONLY:live_timing
@@ -48,7 +49,7 @@ integer function elph_pw_dbs(k,E,q)
  !
  integer            ::idb,io_err,io_elph_err,ID
  integer, external  ::ioELPH 
- logical            ::dbs_fragment_save
+ logical            ::dbs_fragment_save,use_ext_ph_freqs
  !
  !... dummies 
  !
@@ -118,6 +119,18 @@ integer function elph_pw_dbs(k,E,q)
  dbs_fragment_save=dbs_fragment
  dbs_fragment=.TRUE.
  !
+ ! With the external ph_freqs_file PW file I can overwrite the 
+ ! phonon frequencies read from the s.dbph* files. In this way I can, for example, 
+ ! use ph freqs obtained via interpolation (q2r, matdyn ...).
+ ! 
+ use_ext_ph_freqs=.false.
+ if (file_exists(trim(ph_freqs_file))) then
+   call msg('s',"Phonon frequencies (re)read from: "//trim(ph_freqs_file))
+   use_ext_ph_freqs=.true.
+   open(unit=99,file=trim(ph_freqs_file))
+   read(99,*)
+ endif
+ !
  call live_timing('ELPH databases (WRITE)',elph_nq)
  !
  do idb=1,elph_nq
@@ -132,7 +145,7 @@ integer function elph_pw_dbs(k,E,q)
      cycle
    endif
    !
-   if (io_err==-4) call warning("K-grid is not fully q-connected")
+   if (io_err==-4) call warning("K-grid is not fully q-connected @ Q"//trim(intc(iq)))
    !
    if (idb==1) then
      call io_control(ACTION=OP_APP_WR_CL,SEC=(/1,iq+1/),ID=ID)
@@ -144,6 +157,8 @@ integer function elph_pw_dbs(k,E,q)
    !
  enddo
  call live_timing()
+ !
+ if (use_ext_ph_freqs) close(99)
  !
  call msg("s",':: Modes           :',ph_modes)
  call msg("s",':: Bands range     :',elph_nb)
@@ -169,7 +184,7 @@ integer function elph_pw_dbs(k,E,q)
    !     read (99) Ek_plus_q
    !   ENDDO
    !
-   use pars,           ONLY:SP,DP,schlen
+   use pars,           ONLY:SP,DP,schlen,HA2CM1
    use D_lattice,      ONLY:nsym,sop_inv,alat,n_atoms
    use R_lattice,      ONLY:nqibz
    use IO_m,           ONLY:io_control,OP_RD,RD_CL,io_connect,io_unit,&
@@ -193,7 +208,7 @@ integer function elph_pw_dbs(k,E,q)
    !
    integer           :: ID,io_err,type_
    character(schlen) :: db_name
-   real(SP)          :: dVRY2Ha,pw_q_iku(3)
+   real(SP)          :: dVRY2Ha,pw_q_iku(3),ph_q(3)
    real(DP)          :: pw_k(3,k%nbz),pw_alat,pw_q(3),Ek(n_bands),&
 &                       Ek_p_q(n_bands),pw_E_k_shift
    real(DP),    allocatable :: ph_freqs_sq_disk(:)
@@ -282,7 +297,16 @@ integer function elph_pw_dbs(k,E,q)
      deallocate(ph_freqs_sq_disk)
      goto 1
    endif
-   ph_freqs_sq(iq,:)=abs(ph_freqs_sq_disk)/4._DP
+   if (use_ext_ph_freqs) then
+     read(99,*) ph_q 
+     if (.not.v_is_zero(ph_q(:)-real(pw_q(:)),zero_=k_iku_zero)) call error("Incorrect q-point in "//trim(ph_freqs_file))
+     do i1=1,ph_modes,6
+       read(99,*) ph_freqs_sq(iq,i1:min(i1+5,ph_modes))
+     enddo
+     ph_freqs_sq(iq,:)=(abs(ph_freqs_sq(iq,:))/HA2CM1)**2.
+   else
+     ph_freqs_sq(iq,:)=abs(ph_freqs_sq_disk)/4._DP
+   endif
    !
    elph_gkkp=(0._SP,0._SP)
    elph_DW  =(0._SP,0._SP)
@@ -373,7 +397,7 @@ integer function elph_pw_dbs(k,E,q)
    !
    ! The small group of q
    ! 
-   call q_small(real(pw_q,SP),small,nsmall)
+   call q_small(real(pw_q_iku,SP),small,nsmall)
    !
    ! The pw_k K-grid is reduced using the small group of q. 
    ! I need to expand the K-grid to define the missing elements of elph_dV
@@ -402,8 +426,8 @@ integer function elph_pw_dbs(k,E,q)
  
    end function
    !
-   subroutine q_small(pw_q,small,nsmall)
-   !------------------------------------
+   subroutine q_small(q_,small,nsmall)
+   !----------------------------------
    !
    use pars,           ONLY:SP
    use vec_operate,    ONLY:rlu_v_is_zero,c2a,k2bz
@@ -412,12 +436,12 @@ integer function elph_pw_dbs(k,E,q)
    use zeros,          ONLY:k_rlu_zero
    !
    integer  :: nsmall,small(nsym)
-   real(SP) :: pw_q(3),r_v(3)
+   real(SP) :: q_(3),r_v(3)
    integer  :: is
    small=0
    nsmall=0
    do is=1,nsym
-     r_v=matmul(rl_sop(:,:,is),pw_q) -pw_q
+     r_v=matmul(rl_sop(:,:,is),q_) -q_
      call k2bz(r_v)
      call c2a (v_in=r_v,mode='ki2a')
      if (rlu_v_is_zero(r_v,zero_=k_rlu_zero)) then

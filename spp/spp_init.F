@@ -84,6 +84,7 @@
    elph_gamma_broad=0.0
    elph_Ef=0.
    elph_dbs_path='.'
+   ph_freqs_file='none'
    !
 #endif
    !
@@ -154,10 +155,7 @@
 #if defined SPP_PJ_PH
  !
  lelph=rstatus(4)/=0
- if (lelph) then
-   call initactivate(1,"DBsPATH EEfermi EfGbroad ElPhBroad ElPhStps")
-   call initactivate(1,"UseDV")
- endif
+ if (lelph) call initactivate(1,"DBsPATH PHfreqF EEfermi EfGbroad ElPhBroad ElPhStps")
  !
 #endif
 

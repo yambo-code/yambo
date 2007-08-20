@@ -1,5 +1,27 @@
+!
+! Copyright (C) 2000-2005 C. Hogan and the SELF team
+!         http://www.fisica.uniroma2.it/~self
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
+! for more details.
+!
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
 module etsf_data
   !
+  ! Compatible with version 0.8 of ETSF_io
   ! Local copy of targets for reading *higher* level etsf_io libs.
   ! Variables are (1) targets: which might hurt performance inside main code,
   !               (2) double precision: since SELF uses SP in some calculations.
@@ -8,7 +30,7 @@ module etsf_data
   ! this is not critical.
   ! Variable names are those of ETSF specs, with an appended underscore.
   !
-  ! Add ierr after allocates
+  ! To do: add ierr after allocates
   !
   use etsf_io,            only : etsf_charlen, etsf_dims, etsf_chemlen
   !
@@ -42,7 +64,7 @@ module etsf_data
   !
   character(len=etsf_charlen),   target :: basis_set_ 
   integer,          allocatable, target :: number_of_coefficients_(:) 
-  integer,          allocatable, target :: reduced_coordinates_of_plane_waves_(:,:,:)
+  integer,          allocatable, target :: reduced_coordinates_of_plane_waves_(:,:)
   !
   ! Wave function coefficients
   !
@@ -54,7 +76,7 @@ module etsf_data
   integer                               :: max_number_of_angular_momenta_
   double precision, allocatable, target :: kb_formfactor_derivative_(:,:,:,:,:)
   double precision, allocatable, target :: kb_formfactors_(:,:,:,:,:)
-  double precision, allocatable, target :: kb_formfactor_sign_(:,:,:)
+  integer, allocatable, target          :: kb_formfactor_sign_(:,:,:)
   !
   ! Miscellaneous data, not in ETSF specs, that might appear in ETSF file.
   !
@@ -144,24 +166,32 @@ contains
     if(allocated( kb_formfactor_derivative_ ))  deallocate( kb_formfactor_derivative_ )
     return
   end subroutine deallocate_gwdata_group
+!
+! subroutine allocate_basisdata_group  ! FOR K DEPENDENT
+!>  integer,          allocatable, target :: reduced_coordinates_of_plane_waves_(:,:,:) <
+!   allocate(reduced_coordinates_of_plane_waves_(dims%number_of_reduced_dimensions, &
+!&                                               dims%max_number_of_coefficients,   &
+!&                                               dims%number_of_kpoints ))
+!    allocate(number_of_coefficients_(dims%number_of_kpoints))
+!    return
+!  end subroutine allocate_basisdata_group
   !
-  ! wavedata group
+  ! basisdata group
   !
-  subroutine allocate_wavedata_group
+  subroutine allocate_basisdata_group
     allocate(reduced_coordinates_of_plane_waves_(dims%number_of_reduced_dimensions, &
-&                                                dims%max_number_of_coefficients,   &
-&                                                dims%number_of_kpoints ))
+&                                                dims%max_number_of_coefficients))
     allocate(number_of_coefficients_(dims%number_of_kpoints))
     return
-  end subroutine allocate_wavedata_group
+  end subroutine allocate_basisdata_group
 
-  subroutine deallocate_wavedata_group
+  subroutine deallocate_basisdata_group
     if(allocated(reduced_coordinates_of_plane_waves_)) &
 &                deallocate( reduced_coordinates_of_plane_waves_)
     if(allocated(number_of_coefficients_)) &
 &                deallocate( number_of_coefficients_ )
     return
-  end subroutine deallocate_wavedata_group
+  end subroutine deallocate_basisdata_group
 
 end module etsf_data
 

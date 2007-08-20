@@ -42,7 +42,7 @@ contains
   !
   subroutine mem_est(what,elements_size,elements_kind,errors,quiet,overall_report)
     use drivers,      ONLY:infile_editing
-    use com,          ONLY:msg,error
+    use com,          ONLY:msg,error,warning
     use par_proc_m,   ONLY:master_node
     implicit none
     character(*)         :: what
@@ -81,7 +81,7 @@ contains
         mem_element(i2)=trim(input_name(i1))
         local_kind=preset_kind
         if (present(elements_kind)) local_kind=elements_kind(i1)
-        mem_element_size(i2)=mem_element_size(i2)+real(elements_size(i1)*local_kind)/1.E9
+        mem_element_size(i2)=mem_element_size(i2)+real(elements_size(i1))*real(local_kind)/1.E9
         if (present(errors)) then
           if (errors(i1)/=0) then
             write (ch(1),'(3a,f10.5,a)') 'Mem All. failed. Element ',trim(mem_element(i2)),&
@@ -124,6 +124,10 @@ contains
         call msg("r",trim(ch(1)))
       enddo
     endif
+    !
+    if(mem_moved.lt.0.0_SP.or.mem_sum.lt.0.0_SP) &
+&      call warning( " Memory management of array "&
+&      //trim(ch(1))//" failed.")
     !
     stdout_report=master_node.and.mem_moved>mem_tresh.and.&
 &                 .not.present(quiet).and..not.infile_editing

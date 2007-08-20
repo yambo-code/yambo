@@ -1,10 +1,31 @@
+!
+! Copyright (C) 2000-2005 C. Hogan and the SELF team
+!         http://www.fisica.uniroma2.it/~self
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
+! for more details.
+!
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
 subroutine e2s_db1(en,k,ncid)
 !
-! For version 0.6 of ETSF library
+! For version 0.8 of ETSF library
 !
 ! Note: Current version returns only double precision 
 ! reals, hence local copies are required. Later version
-! will also return reals generated on the fly by netCDF.
+! may return reals generated on the fly by netCDF.
 ! The ETSF specs specify double precision storage in the -etsf.nc file.
 ! --------------------------------------------------
 ! Note:
@@ -15,31 +36,28 @@ subroutine e2s_db1(en,k,ncid)
 ! electrons_group%eigenvalues%spin_splitted = .false.
 ! electrons_group%eigenvalues%k_id =
 ! electrons_group%eigenvalues%spin_id = 
+!
   use etsf_io
   use etsf_io_low_level
   use etsf_data
   use pars,                 only : SP, DP, PI, schlen
   use com,                  only : msg, error
   use electrons,            only : levels, n_bands, n_spin,n_sp_pol,n_spinor, spin_orbit
-  use R_lattice,            only : bz_samp, ng_vec
+  use wave_func,            only : wf_ncx
+  use R_lattice,            only : bz_samp
   use D_lattice,            only : nsym, n_atom_species
-  use D_lattice,            only : pp_n_l_comp_max
-!  use D_lattice,            only : pp_n_l_comp_max,n_atom_species,n_atoms,pp_n_l_comp,&
-!&                                  n_atoms_max,atom_pos
-
   use interfaces,           only : print_interface_dimensions
   implicit none
   type(levels),   intent(inout) :: en
   type(bz_samp),  intent(inout) :: k
   integer,        intent(in)    :: ncid
-!ws
-  integer                       :: i1, i2, ik, is, ig, ib
-  integer                       :: a_nsym ! this dimension is changed later
+! ws
+  integer                       :: i1,i2,ik,ib,is
 !ETSF library stuff
   logical                       :: lstat ! to get informed on error
   type(etsf_io_low_error)       :: error_data ! to store informations about errors
 
-  call msg('s','Dimensions...')
+  call msg('s','Header/K-points/Energies...')
   !
   ! Dimensions
   !
@@ -49,44 +67,51 @@ subroutine e2s_db1(en,k,ncid)
   !
   en%nb    = dims%max_number_of_states
   k%nibz   = dims%number_of_kpoints 
-  nsym     = dims%number_of_symmetry_operations ! This is modified later
-  ng_vec   = dims%max_number_of_coefficients
+  wf_ncx   = dims%max_number_of_coefficients
   n_spinor = dims%number_of_spinor_components 
   n_sp_pol = dims%number_of_spins
   n_atom_species = dims%number_of_atom_species
-  pp_n_l_comp_max = dims%max_number_of_angular_momenta
   !
   ! Derived SELF dimensions
   !
   n_spin = max(n_spinor, n_sp_pol)
+  call msg("l","done")
 
 !>>>DEBUG
 ! call msg('s',':: K-points              :',k%nibz)
 ! call msg('s',':: Bands                 :',en%nb)
 ! call msg('s',':: Spin  [components/pol]:',(/n_spinor,n_sp_pol/))
-! call msg('s',':: (Charge) RL vectors   :',ng_vec) ! ?
+! call msg('s',':: Max WF components     :',wf_ncx) 
 ! call msg('s',':: Atomic species        :',n_atom_species)
 !<<<DEBUG
   !
-  ! Geometry (must be first)
+  ! Geometry (must appear first, in order to define alat)
   !
+  call msg('s','Cell data...')
   call import_geometry_group
+  call msg("l","done")
   !
   ! Electrons
   !
+  call msg('s','Eigenvalues data...')
   call import_electrons_group
+  call msg("l","done")
   !
   ! K-points
   !
+  call msg('s','K-points mesh...')
   call import_kpoints_group
+  call msg('l','done')
   !
-  ! PP/GW 
+  ! PP 
   !
   call import_gwdata_group
   !
   ! G-vectors grids and indices
   !
-  call import_wavedata_group
+  call msg('s','RL vectors...')
+  call import_basisdata_group
+  call msg('l','done')
   !
   ! All other data
   !
@@ -128,11 +153,13 @@ contains
 &                                  DL_vol, a, alat, &
 &                                  n_atom_species,n_atoms,&
 &                                  n_atoms_max,atom_pos, znucl
+    use interfaces,           only : symmetries_check_and_load, alat_mult_factor
     implicit none
     type(etsf_geometry)           :: geometry_group
     logical                       :: l_identity, l_inversion
-    real(SP)                      :: lsop(3,3), cp(3), scaling_factor, a_nsym
-    real(SP), allocatable         :: asop(:,:,:)
+    real(SP)                      :: lsop(3,3), cp(3)
+    integer                       :: a_nsym
+    integer, allocatable          :: asop(:,:,:)
     character(3), allocatable     :: atom_species_names(:)
 
     call allocate_geometry_group
@@ -149,10 +176,9 @@ contains
     ! Lattice vectors
     !
     a(:,:) = primitive_vectors_(:,:)
-    scaling_factor = 1.0_SP
-    alat(1) = scaling_factor*maxval( abs( a(1,:) ))
-    alat(2) = scaling_factor*maxval( abs( a(2,:) ))
-    alat(3) = scaling_factor*maxval( abs( a(3,:) ))
+    alat(1) = alat_mult_factor*maxval( abs( a(1,:) ))
+    alat(2) = alat_mult_factor*maxval( abs( a(2,:) ))
+    alat(3) = alat_mult_factor*maxval( abs( a(3,:) ))
 !   call msg('s',':: Lattice factors [a.u.]:',alat)
     cp = cross_product(a(2,:),a(3,:))
     do i1 = 1,3
@@ -170,12 +196,18 @@ contains
     ! atom_pos        the positions
     !
     allocate( n_atoms(n_atom_species) )
+    !
+    ! Determine n_atoms_max
+    !
     n_atoms(:) = 0 
     do i1 = 1, dims%number_of_atoms
       n_atoms( atom_species_(i1) ) = n_atoms( atom_species_(i1) ) + 1
     enddo
     n_atoms_max = maxval(n_atoms)
-    n_atoms(:) = 0 ! reset and fill it again (above just determines n_atoms_max)
+    !
+    ! Reset n_atoms, and fill _natoms and  atom_pos arrays
+    !
+    n_atoms(:) = 0 
     allocate( atom_pos(3, n_atoms_max, n_atom_species) )
     do i1 = 1, dims%number_of_atoms
       n_atoms( atom_species_(i1) ) = n_atoms( atom_species_(i1) ) + 1
@@ -192,239 +224,79 @@ contains
     !
     ! Symmetry 
     !
-    allocate( asop(3,3,nsym) )
-    do is=1,nsym
+    a_nsym   = dims%number_of_symmetry_operations
+    allocate( asop(3,3,a_nsym) )
+    do is=1,a_nsym
       asop(:,:,is) = reduced_symmetry_matrices_(:,:,is) 
     enddo
-    i_time_rev  = 1
-    l_identity=.false.
-    l_inversion=.false.
-    do i1=1,nsym
-      if (asop(1,1,i1)==1.and.asop(1,2,i1)==0.and.asop(1,3,i1)==0.and.&
-&        asop(2,1,i1)==0.and.asop(2,2,i1)==1.and.asop(2,3,i1)==0.and.&
-&        asop(3,1,i1)==0.and.asop(3,2,i1)==0.and.asop(3,3,i1)==1) l_identity=.true.
-      if (asop(1,1,i1)==-1.and.asop(1,2,i1)==0.and.asop(1,3,i1)==0.and.&
-&         asop(2,1,i1)==0.and.asop(2,2,i1)==-1.and.asop(2,3,i1)==0.and.&
-&         asop(3,1,i1)==0.and.asop(3,2,i1)==0.and.asop(3,3,i1)==-1) l_inversion=.true.
-    enddo
-    if (.not.l_identity) call msg("l","[ID not found]...")
-    if (l_identity) call msg("l","[ID found]...")
-    if (l_inversion) then
-      if (l_identity) then
-        !
-        ! Special case where I,-I present: no TR used.
-        !
-        call msg("l","[INV found. Time rev is off]")
-        i_time_rev=0
-      else
-        !
-        ! Identity was stripped in outkss: swap all
-        ! symmetries with their inversions
-        !
-        call msg("l","[INV found]")
-        asop(:,:,:)=-asop(:,:,:)
-      endif
-    else
-      call msg("l","[INV not found]")
-    endif
-    !
-    ! Calculate total number of symmetries, taking into
-    ! account spin_orbit and i_time_reversal
-    !
-    a_nsym = nsym
-    if (spin_orbit) then
-      call msg("s","Spin orbit present: time reversal off.")
-      i_time_rev = 0
-      nsym=a_nsym
-    else
-      if (i_time_rev==1) then
-        call msg("s","Time reversal being used.")
-        nsym=a_nsym*2
-      else
-        call msg("s","Time reversal not being used.")
-        nsym=a_nsym
-      endif
-    endif
-    !
-    ! Now fill the final SELF array of symmetries
-    !
-    allocate( dl_sop(3,3,nsym) )
-    dl_sop(:,:,:)=0.0_SP
-    do i1=1,a_nsym
-      lsop=matmul(transpose(a),asop(:,:,i1))
-      dl_sop(:,:,i1)=matmul(lsop,b)/2.0_SP/pi
-      if (i_time_rev==1.or.n_spin==2) dl_sop(:,:,i1+a_nsym)=-dl_sop(:,:,i1)
-    enddo
-    deallocate(asop)
-    ! XXXXX Why n_spin==2? Spin_orbit?
-!   call msg('s',':: Symmetries   [spatial]:',nsym)
-!   call msg('s','::                [T-rev]:',i_time_rev==1)
+    call symmetries_check_and_load(asop,a_nsym)
 
     call deallocate_geometry_group
     return
   end subroutine import_geometry_group
 
+
   subroutine import_electrons_group
     use electrons,            only : default_nel
-    use xc_functionals,       only : XC_EXCHANGE_CORRELATION,GS_xc_KIND,GS_xc_FUNCTIONAL,&
-&                                  xc_string,XC_LDA_C_PW,XC_LDA_C_PZ,XC_LDA_C_WIGNER,&
-&                                  XC_LDA_C_HL,XC_LDA_C_XALPHA
-    
     implicit none
-    integer(2)                    :: e2s_functional_(2)
     type(etsf_electrons)          :: electrons_group
 
     call allocate_electrons_group
     electrons_group%number_of_electrons      => number_of_electrons_
-    electrons_group%exchange_functional      => exchange_functional_
-    electrons_group%correlation_functional   => correlation_functional_
-
     electrons_group%eigenvalues%data3d => eigenvalues_ 
-    allocate( en%E(en%nb, k%nibz, n_spin) )
 
     call etsf_io_electrons_get(ncid, electrons_group, lstat, error_data)
+    if (.not. lstat) call etsf_long_error(error_data)
     default_nel = number_of_electrons_
     default_nel = -1  ! Until fixed in ETSF file. Is calculated later.
-!   call msg('s',':: Electrons             :',default_nel)
     !
     ! n_spin is inconsistent with n_sp_pol: local copy always needed here.
     !
+    allocate( en%E(en%nb, k%nibz, n_spin) )
     en%E(:,:,1:n_sp_pol) = eigenvalues_(:,:,1:n_sp_pol)     ! Type conversion
     if(n_spinor==2) en%E(:,:,2) = en%E(:,:,1)
-    !
-    ! Convert ETSF functional name to SELF variable
-    !
-    e2s_functional_(1:2) = e2s_functional(exchange_functional_, correlation_functional_)
-    GS_xc_KIND       = e2s_functional_(1)
-    GS_xc_FUNCTIONAL = e2s_functional_(2)
-    ! For the moment, thesevalues are overwritten by "ixc" in miscellaneous data
 
     call deallocate_electrons_group
+    ! Note that functional information is read in 'miscellaneous' section
     return
   end subroutine import_electrons_group
   !
-  ! This has to be fixed, and should be moved to module.
-  !
-  function e2s_functional(exc,corr)
-    integer :: e2s_functional(2)
-    character(len=*) :: exc, corr
-    e2s_functional(1) = -1
-    e2s_functional(2) = -1
-  end function  e2s_functional
-
-  !
-  ! Wavefunction grids 
+  ! Wavefunction grids: assumes k-dependent = no 
   !===========================================================
-  subroutine import_wavedata_group
-    use R_lattice,            only : g_vec, b
+  subroutine import_basisdata_group
+    use R_lattice,            only : g_vec, b, ng_vec
     use D_lattice,            only : alat
     use wave_func,            only : wf_nc_k, wf_igk,wf_ncx,wf_ng
     implicit none
-    type(etsf_wavedata)           :: wavedata_group
+    type(etsf_basisdata)           :: basisdata_group
     integer                       :: g_lim(6), gtotmax, ig_wf, ig, ix, ik, gmin, gmax
     integer, allocatable          :: g_vec_temp(:,:)
     logical                       :: gfound
     character(len=15)             :: format1
 
-    call allocate_wavedata_group
+    call allocate_basisdata_group
 
-    wavedata_group%reduced_coordinates_of_plane_waves%data3d => reduced_coordinates_of_plane_waves_ 
-    wavedata_group%number_of_coefficients                    => number_of_coefficients_
+    basisdata_group%reduced_coordinates_of_plane_waves%data2d => reduced_coordinates_of_plane_waves_ 
+    basisdata_group%number_of_coefficients                    => number_of_coefficients_
 
-    call etsf_io_wavedata_get(ncid, wavedata_group, lstat, error_data)
-    if(.not.lstat) write(*,*) error_data
+    call etsf_io_basisdata_get(ncid, basisdata_group, lstat, error_data)
+    !
+    ! NB: the following are true because the igk array is trivial for k-dep=no
+    !
+    ng_vec  = wf_ncx
+    wf_ng   = wf_ncx
+    allocate( wf_nc_k(k%nibz), g_vec(ng_vec,3), wf_igk(wf_ncx,k%nibz) )
 
-
-    write(format1,'(a4,i2,a9)') "(i6,",k%nibz,"(2x,3i4))"
-   write(*,*) "forat|",format1,"|"
-    do ig= 1, dims%max_number_of_coefficients
-   write(97,format1) ig,((reduced_coordinates_of_plane_waves_(ix,ig,ik),ix=1,3),ik=1,k%nibz)
+    wf_nc_k = ng_vec
+    do i1=1,ng_vec
+      g_vec(i1,:)=matmul(transpose(b),reduced_coordinates_of_plane_waves_(:,i1))*alat(:)/2.0_SP/pi
     enddo
+    forall(i1=1:ng_vec) wf_igk(i1,:)=i1
 
-    !
-    ! Directly accessible data
-    !
-    allocate(wf_nc_k(k%nibz))
-    forall( ik=1:k%nibz) wf_nc_k(ik) = number_of_coefficients_(ik)
-    wf_ncx = maxval( wf_nc_k(:) )
-    allocate(wf_igk(wf_ncx,k%nibz))
-    wf_igk = -1
-    !
-    ! Here we construct the igk table from the G-vector lists provided for 
-    ! each k explicitly, which refers to a single table.
-    !
-    ! Make the igk table: find the max G-vector possible
-    ! g_lim(1) = minval( reduced_coordinates_of_plane_waves_(1,:,:) ) has
-    ! some problems...
-    !                                                     (x,G,k)
-    do ix = 1,3
-      g_lim(2*ix-1) = minval( reduced_coordinates_of_plane_waves_(ix,1:wf_nc_k(1),1) )
-      g_lim(2*ix)   = maxval( reduced_coordinates_of_plane_waves_(ix,1:wf_nc_k(1),1) )
-    enddo
-    do ix = 1,3
-      do ik = 2, k%nibz
-        gmin = minval( reduced_coordinates_of_plane_waves_(ix,1:wf_nc_k(ik),ik) )
-        gmax = maxval( reduced_coordinates_of_plane_waves_(ix,1:wf_nc_k(ik),ik) )
-        if( gmin.lt.g_lim(2*ix-1) ) g_lim(2*ix-1) = gmin
-        if( gmax.gt.g_lim(2*ix  ) ) g_lim(2*ix  ) = gmax
-      enddo
-    enddo
-
-    gtotmax = (g_lim(2)-g_lim(1)+1)*(g_lim(4)-g_lim(3)+1)*(g_lim(6)-g_lim(5)+1)
-    allocate( g_vec_temp(3, gtotmax) )
-    !
-    ! Copy the first k-point data   
-    !    
-    wf_nc_k(1) = number_of_coefficients_(1)
-    forall( i1=1:3, ig=1:wf_nc_k(1)) g_vec_temp(i1, ig ) = reduced_coordinates_of_plane_waves_(i1, ig ,1)
-    forall( i1 = 1:wf_nc_k(1)  ) wf_igk(i1,1)=i1
-    ng_vec = wf_nc_k(1)
-    !    
-    ! Scan the remaining k-points for additional G-vectors
-    !    
-    do ik = 2, k%nibz
-      do ig_wf = 1, wf_nc_k(ik)  ! Loop over G's in a new k shell
-        gfound = .false.
-        do ig = 1, ng_vec        ! Scan all G's in main G-vector (k-independent) table
-                                 ! This could be made more efficient by cycling around list?
-                                 ! do ig = min(ig_wf,ng_vec), ng_vec
-                                 ! do ig = 1, min(ig_wf,ng_vec) etc
-           if(reduced_coordinates_of_plane_waves_(1,ig_wf,ik).eq.g_vec_temp(1,ig).and. &
-&             reduced_coordinates_of_plane_waves_(2,ig_wf,ik).eq.g_vec_temp(2,ig).and. &
-&             reduced_coordinates_of_plane_waves_(3,ig_wf,ik).eq.g_vec_temp(3,ig)) then
-              gfound = .true.
-              wf_igk(ig_wf,ik)=ig
-              exit
-           endif
-        enddo
-        if(.not.gfound) then     ! Add new G-vector to main table
-           ng_vec = ng_vec + 1 
-           g_vec_temp( :, ng_vec ) = reduced_coordinates_of_plane_waves_(:, ig_wf ,ik)
-           wf_igk(ig_wf,ik) = ng_vec
-        endif
-      enddo 
-    enddo
-    wf_ng  = maxval( wf_igk(:,:) )
-    if(wf_ng.ne.ng_vec) call error('Error in calculating igk table.')
-    !
-    ! Convert G-vector table to SELF format
-    !
-    allocate(g_vec(ng_vec,3))
-    do ig=1,ng_vec
-      g_vec(ig,:)=matmul(transpose(b),g_vec_temp(:,ig))*alat(:)/2.0_SP/pi
-    enddo
-!DEBUG>
-!    do ig=1,wf_ncx
-!      write(*,101) ig,g_vec_temp(:,wf_igk(ig,1)),g_vec_temp(:,wf_igk(ig,2)),g_vec_temp(:,wf_igk(ig,3)),g_vec_temp(:,wf_igk(ig,4))
-!    enddo
-!101 format(i6,4(3i3,1x))
-!DEBUG<
-    deallocate(g_vec_temp)
-
-    call deallocate_wavedata_group
+    call deallocate_basisdata_group
     return
-  end subroutine import_wavedata_group
 
+  end subroutine import_basisdata_group
   !
   ! K-points (convert to new units)
   !===========================================================
@@ -457,44 +329,45 @@ contains
   ! GW data
   !===========================================================
   ! Note that kbpp data is read and converted separately (split) over k-point,
-  ! therefore is not done here. This routine is left here for completeness.
+  ! therefore is not done here. Use of pointers is left here for completeness.
+  ! This routine must be called, however, to set pp_n_l_comp array.
   !
   subroutine import_gwdata_group
- use D_lattice,             ONLY : n_atom_species,pp_n_l_comp_max,&
-&                                  PP_alloc,pp_kbs,pp_kb,pp_kbd
+    use D_lattice,             only : n_atom_species,pp_n_l_comp_max,&
+&                                  pp_n_l_comp, pp_kbs,pp_kb,pp_kbd
     implicit none
     type(etsf_gwdata)            :: gwdata_group
-!    real(DP)                       :: pp_kb_kdb_disk(wf_ncx),&
-!&                                  pp_kbs_disk(n_atom_species,pp_n_l_comp_max)
 
-    call allocate_gwdata_group
+    pp_n_l_comp_max = dims%max_number_of_angular_momenta
 
-    gwdata_group%kb_formfactors%data5d => kb_formfactors_
-    gwdata_group%kb_formfactor_derivative%data5d => kb_formfactor_derivative_
-!   gwdata_group%kb_formfactor_sign%data4d => kb_formfactor_sign_
+!   call allocate_gwdata_group
 
-    call etsf_io_gwdata_get(ncid, gwdata_group, lstat, error_data)
+!   gwdata_group%kb_formfactors%data5d => kb_formfactors_
+!   gwdata_group%kb_formfactor_derivative%data5d => kb_formfactor_derivative_
+!   gwdata_group%kb_formfactor_sign%data3d => kb_formfactor_sign_
+
+!   call etsf_io_gwdata_get(ncid, gwdata_group, lstat, error_data)
+
+    allocate(pp_n_l_comp(n_atom_species))
+    pp_n_l_comp = pp_n_l_comp_max
     !
     call deallocate_gwdata_group
     return
   end subroutine import_gwdata_group
-
-  !
-  ! Miscellaneous data 
-
   !
   ! Miscellaneous data 
   !===========================================================
   subroutine import_miscellaneous_data
+    !
     ! Here read any data not appearing in ETSF specs, or not
     ! yet supported properly
+    !
     use D_lattice,            only : default_Tel, n_atom_species, n_atoms
     use electrons,            only : spin_orbit, default_nel
     use xc_functionals,       only : XC_EXCHANGE_CORRELATION,GS_xc_KIND,GS_xc_FUNCTIONAL,&
 &                                  xc_string,XC_LDA_C_PW,XC_LDA_C_PZ,XC_LDA_C_WIGNER,&
 &                                  XC_LDA_C_HL,XC_LDA_C_XALPHA
     integer                       :: i1
-
     !
     ! Temperature (Abinit)
     !
@@ -504,7 +377,6 @@ contains
     else
       default_Tel = 0.0_SP
     endif
-!   call msg('s',':: Temperature      [ev] :',default_Tel)
     !
     ! Number of electrons (Abinit)
     !
@@ -517,7 +389,6 @@ contains
       enddo
     endif
     deallocate(valence_charges_)
-!   call msg('s',':: No. of electrons     : ',default_nel)
     !
     ! Spin orbit splitting (Abinit)
     !
@@ -531,9 +402,7 @@ contains
     else
       spin_orbit = .false.
     endif
-!   call msg('s',':: Spin orbit splitting: ',spin_orbit)
     deallocate(spin_orbit_atom_)
-
     !
     ! XC functional (Abinit)
     !
@@ -566,7 +435,6 @@ contains
       GS_xc_FUNCTIONAL=-1
       GS_xc_KIND=-1
     endif
-!   call msg('s',':: XC potential          :',xc_string(GS_xc_KIND,GS_xc_FUNCTIONAL))
 
     return
   end subroutine import_miscellaneous_data

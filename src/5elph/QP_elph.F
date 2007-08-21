@@ -343,9 +343,10 @@
      !
      integer, parameter ::n_g_sq_freq=500
      !
-     real(SP)     ::g_sq_F(n_g_sq_freq),delta_E,ph_freq
+     real(SP)     ::g_sq_F(n_g_sq_freq,3),delta_E,ph_freq
      type(w_samp) ::g_sq_F_E
      complex(DP)  ::DP_corr
+     logical      ::state_is_2do(QP_n_states)
      !
      call W_reset(g_sq_F_E)
      g_sq_F_E%n=n_g_sq_freq
@@ -357,11 +358,11 @@
      !
      do iq=1,elph_nq_used
        do il=1,ph_modes
-         call QP_states_simmetrize(gsqF_fan(:,iq,il),en)
-         call QP_states_simmetrize(gsqF_dw(:,iq,il),en)
-         call QP_states_simmetrize(gsqF_ca_corr(:,iq,il),en)
-         call QP_states_simmetrize(gsqF_life_bose(:,iq,il),en)
-         call QP_states_simmetrize(gsqF_life_f(:,iq,il),en)
+         call QP_states_simmetrize(gsqF_fan(:,iq,il),en,state_is_2do)
+         call QP_states_simmetrize(gsqF_dw(:,iq,il),en,state_is_2do)
+         call QP_states_simmetrize(gsqF_ca_corr(:,iq,il),en,state_is_2do)
+         call QP_states_simmetrize(gsqF_life_bose(:,iq,il),en,state_is_2do)
+         call QP_states_simmetrize(gsqF_life_f(:,iq,il),en,state_is_2do)
        enddo
      enddo
      !
@@ -391,7 +392,7 @@
            DP_corr=DP_corr+(gsqF_fan(iqp,iq,il)+gsqF_dw(iqp,iq,il))*(bose_f(ph_freq)+1.)/2.+&
 &                          gsqF_ca_corr(iqp,iq,il)
            !
-           ! g^2 F function
+           ! g^2 F function(s)
            !
            if (.not.PH_damping>0.) cycle
            !
@@ -399,8 +400,11 @@
              !
              delta_E=real(g_sq_F_E%p(iw))-ph_freq
              !
-             g_sq_F(iw)=g_sq_F(iw)+&
-&                       (gsqF_fan(iqp,iq,il)+gsqF_dw(iqp,iq,il)+gsqF_ca_corr(iqp,iq,il))*&
+             g_sq_F(iw,1)=g_sq_F(iw,1)+gsqF_fan(iqp,iq,il)*&
+&                       Fermi_fnc_derivative(delta_E,aimag(g_sq_F_E%p(iw)))
+             g_sq_F(iw,2)=g_sq_F(iw,2)+gsqF_dw(iqp,iq,il)*&
+&                       Fermi_fnc_derivative(delta_E,aimag(g_sq_F_E%p(iw)))
+             g_sq_F(iw,3)=g_sq_F(iw,3)+gsqF_ca_corr(iqp,iq,il)*&
 &                       Fermi_fnc_derivative(delta_E,aimag(g_sq_F_E%p(iw)))
              !
            enddo
@@ -413,15 +417,19 @@
        QP_Sc(iqp,:)=QP_Sc(iqp,:)+DP_corr
        !
        if (.not.PH_damping>0.) cycle
+       if (.not.state_is_2do(iqp)) cycle
        !
        ch='g_sq_F_b_'//trim(intc(QP_table(iqp,1)))//'_k_'//trim(intc(QP_table(iqp,3)))
        call of_open_close(trim(ch),'ot')
-       call msg('o g_sq','#',(/'E  [meV]','g^2 F(E)'/),INDENT=0,USE_TABS=.true.)
+       call msg('o g_sq','#',(/'E  [meV]','gF^2 sum','gF^2 Fan','gF^2  DW',&
+&                              'gF^2 Cor'/),INDENT=0,USE_TABS=.true.)
        call msg('o g_sq','#')
        !
        do iw=1,n_g_sq_freq
          call msg('o g_sq','',&
-&                (/real(g_sq_F_E%p(iw))*HARTREE*1000.,g_sq_F(iw)/),&
+&                (/real(g_sq_F_E%p(iw))*HARTREE*1000.,&
+&                  g_sq_F(iw,1)+g_sq_F(iw,2)+g_sq_F(iw,3),&
+&                  g_sq_F(iw,1),g_sq_F(iw,2),g_sq_F(iw,3)/),&
 &                INDENT=-2,USE_TABS=.TRUE.)
        enddo
        call of_open_close(trim(ch))

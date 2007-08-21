@@ -138,7 +138,7 @@ AC_ARG_WITH(p2s, AC_HELP_STRING([--with-p2s=<mode>],
  [Interface mode in PW 2 SELF : <export> <3.1> <3.2>]))
 
 PW_VER="3.2"
-PW_CPP="3.2"
+PW_CPP="_P2S_3.2"
 if test "$compile_p2s" = "yes"; then
  if test "$with_p2s" = "export"; then
   PW_VER="export"

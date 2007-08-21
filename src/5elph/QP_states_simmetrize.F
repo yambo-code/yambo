@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine QP_states_simmetrize(vec_2_sim,en)
+subroutine QP_states_simmetrize(vec_2_sim,en,state_is_2do)
  !
  use pars,          ONLY:SP,HARTREE
  use vec_operate,   ONLY:sort,degeneration_finder
@@ -28,6 +28,7 @@
  !
  implicit none
  real(SP)     ::vec_2_sim(QP_n_states)
+ logical      ::state_is_2do(QP_n_states)
  type(levels) ::en
  !
  ! Work Space
@@ -45,6 +46,8 @@
  call sort(Eo_sorted,indx=Eo_sorted_index)
  call degeneration_finder(Eo_sorted,QP_n_states,first_el,n_of_el,n_deg_grp,0.0001/HARTREE)
  !
+ state_is_2do=.TRUE.
+ !
  do i1=1,n_deg_grp
    !
    sym_value=0.
@@ -52,6 +55,8 @@
    do i2=first_el(i1),first_el(i1)+n_of_el(i1)-1
      !
      inx   =Eo_sorted_index(i2)
+     !
+     if (i2>first_el(i1)) state_is_2do(i2)=.FALSE.
      !
      sym_value=sym_value+vec_2_sim(inx)/real( n_of_el(i1) )
      !

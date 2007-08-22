@@ -21,7 +21,7 @@
 !
 subroutine e2s_kb_pp( ikibz, ncid )
   !
-  ! Structure of ETSF library data:
+  ! Structure of ETSF library data: (fortran order, opp to netcdf order)
   !   allocate( kb_formfactors_(    dims%max_number_of_coefficients,    &
   !   &                             dims%number_of_kpoints,            &
   !   &                             dims%max_number_of_projectors,      &
@@ -48,48 +48,48 @@ subroutine e2s_kb_pp( ikibz, ncid )
   integer,        intent(in)    :: ncid, ikibz
 !ws
   integer                       :: ig, ib, ip, ia
-  double precision              :: pp_kbs_(n_atom_species,pp_n_l_comp_max)
+  integer                       :: pp_kbs_( &
+&           dims%max_number_of_angular_momenta,  dims%number_of_atom_species )
   double precision              :: pp_section(dims%max_number_of_coefficients, &
 &           dims%max_number_of_angular_momenta, dims%number_of_atom_species )
 !ETSF library stuff
   logical                       :: lstat      ! to get informed on error
   type(etsf_io_low_error)       :: error_data ! to store informations about errors
-  integer                       :: start(6), count(6), ncvarid
+  integer                       :: start(5), count(5), ncvarid ! must be size of netcdf array!
 
   !
   ! Initialize the mapping: read for one k point (and one projector)
+  ! k is the *second* dimension of the netcdf variable in *Fortran* order
+  ! From Abinit: dims%max_number_of_projectors = 1 always
   !
   start(:) = 1     ; count(:) = 0
   start(2) = ikibz ; count(2) = 1   ! Split on k always
   !
-  ! From Abinit: dims%max_number_of_projectors = 1 always
-  !
-  start(3) = 1     ; count(3) = 1   
-
-  !
-  ! Form factors (note order of indices)
+  ! Form factors 
   !
   call etsf_io_low_read_var(ncid, "kb_formfactors", &
-                            & pp_section, lstat,          &
-                            & error_data = error_data, start = start, count = count)
+                            & pp_section, lstat, error_data = error_data, &
+&                             start = start, count =  count )
   forall( ig=1:wf_nc_k(ikibz), ia=1:n_atom_species, ip=1:pp_n_l_comp_max ) &
 &          pp_kb(ig,ia,ip) = pp_section(ig,ip,ia)
   !
-  ! Form factor derivatives (note order of indices)
+  ! Form factor derivatives 
   !
   call etsf_io_low_read_var(ncid, "kb_formfactor_derivative", &
-                            & pp_section, lstat,          &
-                            & error_data = error_data, start = start, count = count)
+                            & pp_section, lstat, error_data = error_data, &
+&                             start = start, count = count)
   forall( ig=1:wf_nc_k(ikibz), ia=1:n_atom_species, ip=1:pp_n_l_comp_max ) &
 &          pp_kbd(ig,ia,ip) = pp_section(ig,ip,ia)
   !
   ! Form factor signs
   !
+  if(ikibz.gt.1) return
   call etsf_io_low_read_var(ncid, "kb_formfactor_sign", &
                             & pp_kbs_, lstat,          &
-                            & error_data = error_data, start = start, count = count)
+                            & error_data = error_data)
+
   forall( ia=1:n_atom_species, ip=1:pp_n_l_comp_max ) &
-&          pp_kbs(ia,ip) = pp_kbs_(ia,ip)
+&          pp_kbs(ia,ip) = pp_kbs_(ip,ia)
 
   return
 end subroutine e2s_kb_pp

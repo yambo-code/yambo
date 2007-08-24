@@ -5684,7 +5684,7 @@ if test "${with_p2s+set}" = set; then
 fi;
 
 PW_VER="3.2"
-PW_CPP="_P2S_3.2"
+PW_CPP="_P2S_V32"
 if test "$compile_p2s" = "yes"; then
  if test "$with_p2s" = "export"; then
   PW_VER="export"

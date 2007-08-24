@@ -78,6 +78,8 @@ contains
 
 #endif
 
+   if (len_trim(inf)>0) index_filename = inf
+
    call msg('s','Index file set to ',trim(index_filename))
    inquire(file=trim(index_filename),exist=lexist)
    if(.not.lexist) then

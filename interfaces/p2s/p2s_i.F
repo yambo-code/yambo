@@ -82,7 +82,7 @@
  ! Switch off report file support
  !
  write_to_report=.FALSE.
-!live_timing_is_on=.FALSE.
+ !live_timing_is_on=.FALSE.
  !
 #if defined _P2S_EXPORT
  call section('*','P(W) 2 S(elf) - pw_export.x version')

@@ -22,74 +22,100 @@
  subroutine fermi_msg(E,mode)
  !
  use pars,          ONLY:SP,lchlen,HARTREE
- use com,           ONLY:msg
- use electrons,     ONLY:levels,n_sp_pol,n_spinor
+ use com,           ONLY:msg,warning
+ use electrons,     ONLY:levels,n_sp_pol,n_spin
  implicit none
  type(levels)::E
  integer     ::mode
  ! 
  ! Work Space
  ! 
- integer :: i1
+ integer :: i1,nbm_(n_sp_pol),nbf_(n_sp_pol),i_s_pol
  real(SP):: r_nk
  real(SP),parameter:: tresh=epsilon(1._SP)
- character(lchlen) :: lch
+ character(lchlen) :: ch_
+ character(27)     :: prefix_
  !
  ! Evaluate Metallic/Filled bands
  !
- E%nbm=0
- E%nbf=0
- do i1=1,E%nb
-   !
-   ! A single state (n k) weights 2 in the coll. and scalar case (because
-   ! of the two spin channels) and 1 in the non-coll case
-   !
-   r_nk=sum(E%f(i1,:,:))
-   if (n_spinor/=2) r_nk=r_nk/2.
-   !
-   if (r_nk<=tresh) cycle
-   if (abs(r_nk-real(E%nk,SP))<=tresh) then
-     E%nbf=i1
-     cycle
-   endif
-   E%nbm=i1
+ nbm_=0
+ nbf_=0
+ do i_s_pol=1,n_sp_pol
+   do i1=1,E%nb
+     !
+     ! A single state (n k) weights 2 only when there is no spin
+     ! components 
+     !
+     r_nk=sum(E%f(i1,:,i_s_pol))
+     !
+     if (n_spin==1) r_nk=r_nk/2.
+     !
+     if (r_nk<=tresh) cycle
+     if (abs(r_nk-real(E%nk,SP))<=tresh) then
+       nbf_(i_s_pol)=i1
+       cycle
+     endif
+     nbm_(i_s_pol)=i1
+   enddo
+   if (nbm_(i_s_pol)==0) nbm_(i_s_pol)=nbf_(i_s_pol)
  enddo
- if (E%nbm==0) E%nbm=E%nbf
  !
- ! Report
+ E%nbf=minval(nbf_)
+ E%nbm=maxval(nbm_)
+ !
+ ! No Report
  !
  if (mode<=1) return
- i1=1
- if (E%nbf==0) i1=0
- if (E%nbf/=E%nbm) then
-   E%Efermi(2:)=0.
-   call msg('r','States summary             : Full        Metallic    Empty')
-   write (lch,'(29x,3(i4.4,a,i4.4,3x))') i1,'-',E%nbf,&
-&                                       E%nbf+1,'-',E%nbm,E%nbm+1,'-',E%nb
-   call msg('r',trim(lch))
- else
-   call msg('r','States summary             : Full        Empty')
-   write (lch,'(29x,3(i4.4,a,i4.4,3x))') i1,'-',E%nbf,E%nbm+1,'-',E%nb
-   call msg('r',trim(lch))
+ !
+ ! Report ...
+ !
+ ! E%Efermi(1) = Fermi Level
+ ! E%Efermi(2) = VB max (with resepect to Efermi(1) )
+ ! E%Efermi(3) = CB min (with resepect to Efermi(1) )
+ !
+ E%Efermi(2:)=E%Efermi(1)+(/maxval(E%E(E%nbf,:,:)),minval(E%E(E%nbf+1,:,:))/)
+ if (E%nbf/=E%nbm) E%Efermi(2:)=0.
+ !
+ call msg('r','States summary             : Full        Metallic    Empty')
+ !
+ ! [1] States occupations
+ !
+ do i_s_pol=1,n_sp_pol
+   i1=1
    !
-   ! E%Efermi(1) = Fermi Level
-   ! E%Efermi(2) = VB max (with resepect to Efermi(1) )
-   ! E%Efermi(3) = CB min (with resepect to Efermi(1) )
+   prefix_=''
+   if (n_sp_pol>1.and.i_s_pol==1) prefix_='                 [spin dn]'
+   if (n_sp_pol>1.and.i_s_pol==2) prefix_='                      [up]'
    !
-   E%Efermi(2:)=E%Efermi(1)+(/maxval(E%E(E%nbf,:,:)),minval(E%E(E%nbf+1,:,:))/)
-   !
-   if (n_sp_pol==2) then
-     call msg('r','Indirect Gap [ev][min-max][up]:',(/&
-&             ( minval(E%E(E%nbf+1,:,2))-maxval(E%E(E%nbf,:,2)) )*HARTREE,&
-&             ( maxval(E%E(E%nbf+1,:,2))-minval(E%E(E%nbf,:,2)) )*HARTREE /))
-     call msg('r','                          [dn]:',(/&
-&             ( minval(E%E(E%nbf+1,:,1))-maxval(E%E(E%nbf,:,1)) )*HARTREE,&
-&             ( maxval(E%E(E%nbf+1,:,1))-minval(E%E(E%nbf,:,1)) )*HARTREE /))
+   if (nbf_(i_s_pol)==0) i1=0
+   if (nbf_(i_s_pol)/=nbm_(i_s_pol)) then
+     write (ch_,'(3(i4.4,a,i4.4,3x))') &
+&          i1,'-',nbf_(i_s_pol),&
+&          nbf_(i_s_pol)+1,'-',nbm_(i_s_pol),nbm_(i_s_pol)+1,'-',E%nb
+     call msg('r',prefix_//' '//trim(ch_))
    else
-     call msg('r','Indirect Gap  [ev][min-max]:',(/&
-&             ( minval(E%E(E%nbf+1,:,1))-maxval(E%E(E%nbf,:,1)) )*HARTREE,&
-&             ( maxval(E%E(E%nbf+1,:,1))-minval(E%E(E%nbf,:,1)) )*HARTREE /))
+     write (ch_,'(2(i4.4,a,i4.4,15x))') i1,'-',nbf_(i_s_pol),nbf_(i_s_pol)+1,'-',E%nb
+     call msg('r',prefix_//' '//trim(ch_))
    endif
+ enddo
+ !
+ ! [2] Indirect Gaps (min/max)
+ !
+ do i_s_pol=1,n_sp_pol
+   prefix_='Indirect Gaps          [ev]:'
+   if (n_sp_pol>1.and.i_s_pol==1) prefix_='Indirect Gaps [ev] spin dn'
+   if (n_sp_pol>1.and.i_s_pol==2) prefix_='                        up'
+   call msg('r',prefix_//':',(/&
+&          ( minval(E%E(nbf_(i_s_pol)+1,:,i_s_pol))-&
+&            maxval(E%E(nbf_(i_s_pol),:,i_s_pol)) )*HARTREE,&
+&          ( maxval(E%E(nbf_(i_s_pol)+1,:,i_s_pol))-&
+&            minval(E%E(nbf_(i_s_pol),:,i_s_pol)) )*HARTREE /))
+ enddo
+ !
+ ! [3] Report if the system is treated as a metal
+ !
+ if (E%nbf/=E%nbm.and..not.any(nbf_/=nbm_)) then
+   call warning('Merged spin levels are metallic')
  endif
  !
  end subroutine

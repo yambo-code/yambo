@@ -26,10 +26,11 @@
  ! PRB 23, 1495 (1981) )
  !
  use pars,          ONLY:SP,DP,schlen,HARTREE,HA2THZ,pi
+ use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp,W_reset
  use electrons,     ONLY:levels,spin_occ
  use timing,        ONLY:live_timing
- use com,           ONLY:msg,error
+ use com,           ONLY:msg,error,warning
  use drivers,       ONLY:Finite_Tel,l_el_corr
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
@@ -55,7 +56,7 @@
  ! WorkSpace  -- GPL_END --
  !
  integer          ::iq_db,iqbz,iq,iq_ref,iqs,ik,ok,ik_bz,okbz,ib,ob,is,il,iqp,i2,iw,&
-&                   time_order_sign,ik_bz_gkkp,ib_gkkp,ob_gkkp,os
+&                   time_order_sign,ik_bz_gkkp,ib_gkkp,ob_gkkp,os,incomplete_Q_grid
  type(w_samp)     ::Sc_W(qp%n_states)
  type(pp_indexes) ::px
  integer          ::io_err,ID,iv4(4)
@@ -133,6 +134,7 @@
  gsqF_ca_corr=0.
  gsqF_life_bose=0.
  gsqF_life_f=0.
+ incomplete_Q_grid=0
  !
  call mem_est('gsqF_residuals',(/5*size(gsqF_fan)/),(/SP/))
  !
@@ -170,7 +172,8 @@
    endif
    !
    if (iq_ref<0) then
-     call live_timing(steps=QP_n_states)
+     call live_timing(steps=QP_n_states*QP_PH_n_G_bands)
+     if (incomplete_Q_grid==0) incomplete_Q_grid=iabs(iq_ref)
      cycle
    endif
    !
@@ -309,6 +312,11 @@
  !
  call live_timing()
  !
+ ! If any Q point was missing give a warning
+ !
+ if (incomplete_Q_grid/=0) call &
+&    warning('Incomplete Q grid ! DBs @ IQ '//trim(intc(incomplete_Q_grid))//' missing')
+ !
  ! Debye energy
  !
  call msg('nr','[Ph] Debye energy [ev/ThZ]:',(/max_ph_freq*HARTREE,max_ph_freq*HA2THZ/))
@@ -338,7 +346,6 @@
    subroutine Cardona_Allen_report()
      !
      use functions,  ONLY:bose_f
-     use stderr,     ONLY:intc
      use com,        ONLY:msg,of_open_close
      !
      integer, parameter ::n_g_sq_freq=500

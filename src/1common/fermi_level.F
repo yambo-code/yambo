@@ -92,13 +92,18 @@
  Ef(1)=maxval(E%E(n_b_full_guess,:,:))
  Ef(2)=minval(E%E(n_b_full_guess+1,:,:))
  !
- ! n_b_full_guess is metallic
+ ! n_b_full_guess not set when it is metallic 
  ! 
  if (Ef(2)<Ef(1).or.Ef(1)==Ef(2)) then
    Ef(1)=minval(E%E(n_b_full_guess,:,:))
    Ef(2)=maxval(E%E(n_b_full_guess,:,:))
    n_b_full_guess=0
  endif
+ !
+ ! n_b_full_guess not set when there is an odd number of electrons
+ ! and the system is not metallic (n_sp_pol>1)
+ ! 
+ if (n_sp_pol>1) n_b_full_guess=0
  !
  ! Start Loop
  ! 

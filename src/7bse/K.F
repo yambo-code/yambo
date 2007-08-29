@@ -382,7 +382,7 @@
      !
      if (BS_res_K_corr) call K_scattering(iq,ik1,ik2,Xk,q)  
      !
-     if (load_O_X)
+     if (load_O_X) then
        !
        if (ik1/=ik2) call K_exchange(.not.l_col_cut,iq,ik1,Xk,O1x,O_x_dim)  
        if (ik1==ik2) O1x=O2x

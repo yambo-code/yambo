@@ -27,7 +27,8 @@
  use pars,           ONLY:SP,DP,pi,schlen
  use X_m,            ONLY:X_epsilon
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,Kernel_by_V,&
-&                         BS_K_coupling,BSS_write_eig_2_db,BS_eh_f,BS_not_const_eh_f
+&                         BS_K_coupling,BSS_write_eig_2_db,BS_eh_f,BS_not_const_eh_f,&
+&                         BS_eh_W
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:spin_occ
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK,USE_SLK,INV
@@ -50,6 +51,7 @@
  !
  type(pp_indexes)     ::px
  integer              ::i1,i2,lib_driver,BS_H_dim,i_of
+ logical              ::K_is_not_hermitian
 #if defined _DOUBLE
  complex(DP):: zdotu,zdotc
 #else
@@ -66,7 +68,7 @@
  !
  ! Resonant K
  !
- real(SP),    allocatable ::BS_E_diago(:)
+ real(SP),    allocatable ::BS_E_real(:)
  !
  ! Coupling
  !
@@ -95,13 +97,15 @@
  !
  ! Allocation & Par Procs
  !
- BS_H_dim=BS_K_dim
+ K_is_not_hermitian=BS_K_coupling.or.allocated(BS_eh_W)
  !
+ BS_H_dim=BS_K_dim
  if (BS_K_coupling) BS_H_dim=2*BS_K_dim
+ !
  allocate(BS_R(BS_H_dim),BS_E(BS_H_dim))
  call mem_est("BS_R BS_E",(/BS_H_dim,BS_H_dim/))
  !
- if (BS_K_coupling) then
+ if (K_is_not_hermitian) then
    allocate(BS_V_left(BS_H_dim,BS_H_dim),&
 &           BS_V_right(BS_H_dim,BS_H_dim))
    call mem_est("BS_V_left BS_V_right",&
@@ -111,8 +115,8 @@
    call mem_est("BS_R_left BS_R_right BS_overlap",&
 &              (/BS_H_dim,BS_H_dim,size(BS_overlap)/))
  else
-   allocate(BS_E_diago(BS_H_dim))
-   call mem_est("BS_E_diago",(/BS_H_dim/),(/SP/))
+   allocate(BS_E_real(BS_H_dim))
+   call mem_est("BS_E_real",(/BS_H_dim/),(/SP/))
  endif
  !
  call pp_indexes_reset(px)
@@ -128,6 +132,12 @@
    ! Kernel loading
    !
    call Kernel_by_V(iq)
+   !
+   ! eh damping 
+   !
+   if (allocated(BS_eh_W)) &
+&     forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)+(0.,1.)*BS_eh_W(i1)
+   !
    !
    ! If Coupling the half lower part of K must be filled
    !
@@ -150,7 +160,7 @@
      ! here I multiply the kernel by BS_eh_f
      !
      forall(i1=1:BS_K_dim) BS_mat(i1,:)=BS_mat(i1,:)*BS_eh_f(i1)
-     if (BS_K_coupling) then
+     if (K_is_not_hermitian) then
        forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,:)=BS_mat(i1,:)*BS_eh_f(i1-BS_K_dim)
      endif
    endif
@@ -181,17 +191,17 @@
    lib_driver=USE_LK
    if (ncpu>1) lib_driver=USE_SLK
    call live_timing('BSK diagonalize',1)
-   if (BS_K_coupling) then
+   if (K_is_not_hermitian) then
      call mat_dia_inv(DIAGO,lib_driver,BS_mat,E_cmpl=BS_E,&
 &                     V_left=BS_V_left,V_right=BS_V_right)
    else
-     call mat_dia_inv(DIAGO,lib_driver,BS_mat,E_real=BS_E_diago)
-     BS_E=BS_E_diago
+     call mat_dia_inv(DIAGO,lib_driver,BS_mat,E_real=BS_E_real)
+     BS_E=BS_E_real
    endif
    call live_timing(steps=1)
    call live_timing
    !
-   if (BS_K_coupling) then
+   if (K_is_not_hermitian) then
      !
      !   The right eigenvector v(j) of A satisfies
      !                   A * v(j) = lambda(j) * v(j)
@@ -336,15 +346,18 @@
    ! distinction between the resonant and antiresonant e/h Green's
    ! functions.
    !
-   if (BS_K_coupling)      X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)/(W%p(:)-BS_E(i1))
-   if (.not.BS_K_coupling) X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-BS_E(i1))
+   if (K_is_not_hermitian)      X_epsilon(2,:)=&
+&                               X_epsilon(2,:)-BS_R(i1)/(W%p(:)-BS_E(i1))
+   if (.not.K_is_not_hermitian) X_epsilon(2,:)=&
+&                               X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-BS_E(i1))
    !
    call live_timing(steps=1)
  enddo
  call live_timing
  call pp_redux_wait(X_epsilon)
  !
- X_epsilon(2,:)=1.+X_epsilon(2,:)*real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/(q_norm(1))**2
+ X_epsilon(2,:)=1.+X_epsilon(2,:)*&
+&                  real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/(q_norm(1))**2
  !
  X_epsilon(1,:)=W%p(:)
  !
@@ -365,12 +378,12 @@
  call mem_est("BS_mat")
  deallocate(BS_R,BS_E)
  call mem_est("BS_R BS_E")
- if (BS_K_coupling) then
+ if (K_is_not_hermitian) then
    deallocate(BS_V_left,BS_V_right,BS_R_left,BS_R_right)
    call mem_est("BS_V_left BS_V_right BS_R_left BS_R_right")
  else
-   deallocate(BS_E_diago)
-   call mem_est("BS_E_diago")
+   deallocate(BS_E_real)
+   call mem_est("BS_E_real")
  endif
  call pp_indexes_reset(px)
  !

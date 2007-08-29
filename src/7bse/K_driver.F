@@ -34,10 +34,11 @@
 &                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,&
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
-&                         BSS_damp_reference
+&                         BSS_damp_reference,BS_eh_Z,BS_eh_W
  use TDDFT,          ONLY:FXC,FXC_K_diagonal,FXC_per_memstps,FXC_n_mem_freqs,&
 &                         FXC_is_causal
  use QP_CTL,         ONLY:QP_apply
+ use QP_m
  use drivers,        ONLY:l_bss,l_bs_fxc,l_alda_fxc
  use par_proc_m,     ONLY:pp_redux_wait
  use R_lattice,      ONLY:bz_samp,qindx_B
@@ -162,6 +163,8 @@
  ! CLEAN
  !
  deallocate(BS_blk_dim,BS_eh_table,BS_eh_E,BS_eh_f)
- call mem_est("BS_blk_dim BS_eh_table BS_eh_E BS_eh_f")
+ if (allocated(BS_eh_W)) deallocate(BS_eh_W)
+ if (allocated(BS_eh_Z)) deallocate(BS_eh_Z)
+ call mem_est("BS_blk_dim BS_eh_table BS_eh_E BS_eh_f BS_eh_W BS_eh_Z")
  !
  end subroutine

@@ -90,7 +90,8 @@
      !
      use memory_m,      ONLY:mem_est
      use QP_m,          ONLY:QP_t,QP_reset,QP_ctl_E,QP_ctl_W,QP_ctl_Z,&
-&                            QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db
+&                            QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db,&
+&                            QP_ctl_short_descr
      use D_lattice,     ONLY:Tel
      use com,           ONLY:msg,depth
      use electrons,     ONLY:levels,E_reset,n_sp_pol,BZ_RIM_nkpt,BZ_RIM_table,&
@@ -191,7 +192,9 @@
      if (.not.present(qp_impose).and..not.present(qpfit_impose)) then
        qpfit_rest%db=QP_ctl_db(Eid)
        call QP_apply_db(band_range,en,k,qp,qpfit_rest,msg_fmt,DB_corrected)
-       if (trim(qpfit_rest%db)=="none") QP_ctl_db(Eid)=trim(qpfit_rest%db)
+       !
+       QP_ctl_db(Eid)=trim(qpfit_rest%db)
+       QP_ctl_short_descr(Eid)=trim(qpfit_rest%short_descr)
        !
        ! Now I have to include the input file QP parameters in qpfit_free
        ! being careful that the scissor must go in qpfit%E(1)

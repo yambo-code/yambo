@@ -368,7 +368,9 @@
  call pp_redux_wait
  do ik2=1,BS_columns
    ikk2=sum(BS_blk_dim(:ik2-1))
+   !
    if (load_O_X) call K_exchange(.not.l_col_cut,iq,ik2,Xk,O2x,O_x_dim) 
+   !
    do ik1=ik2,1,-1
      !
      if (any((/ik2<BS_blk_coord(2),ik2==BS_blk_coord(2).and.ik1>BS_blk_coord(1)/))) cycle
@@ -380,25 +382,31 @@
      !
      if (BS_res_K_corr) call K_scattering(iq,ik1,ik2,Xk,q)  
      !
-     if (load_O_X.and.ik1/=ik2) call K_exchange(.not.l_col_cut,iq,ik1,Xk,O1x,O_x_dim)  
-     if (load_O_X.and.ik1==ik2) O1x=O2x
-     !
-     ! When a cutoffed coulomb interaction is used bare_qpg(:,:) elements
-     ! may be complex. In this case I cannot multiply both O1x and O2x by
-     ! 1./bare_qpg as O2x is conjugated in the cdotc call.
-     !
-     if(l_col_cut) then 
-       do i1=1,BS_blk_dim(ik1)
-         do i2=1,BS_n_g_exch
-           O1x(i2,i1)=O1x(i2,i1)/bare_qpg(iq,i2)**2
+     if (load_O_X)
+       !
+       if (ik1/=ik2) call K_exchange(.not.l_col_cut,iq,ik1,Xk,O1x,O_x_dim)  
+       if (ik1==ik2) O1x=O2x
+       !
+       ! When a cutoffed coulomb interaction is used bare_qpg(:,:) elements
+       ! may be complex. In this case I cannot multiply both O1x and O2x by
+       ! 1./bare_qpg as O2x is conjugated in the cdotc call.
+       !
+       if(l_col_cut) then 
+         do i1=1,BS_blk_dim(ik1)
+           do i2=1,BS_n_g_exch
+             O1x(i2,i1)=O1x(i2,i1)/bare_qpg(iq,i2)**2
+             enddo
          enddo
-       enddo
-     endif 
+       endif 
+       !
+       O1x(1,:)=(0.,0.)
+       O2x(1,:)=(0.,0.)
+       !
+     endif
      !
-     O1x(1,:)=(0.,0.)
-     O2x(1,:)=(0.,0.)
      BS_mat=(0.,0.)
      if (BS_K_coupling) BS_cpl_mat=(0.,0.)
+     !
      call pp_redux_wait
      do icv1=1,BS_blk_dim(ik1)
        ik1bz=BS_eh_table(ikk1+icv1,1)

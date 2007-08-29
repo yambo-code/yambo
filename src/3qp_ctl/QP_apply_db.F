@@ -43,8 +43,8 @@
  !
  character(schlen)::ch,db_piece(10)
  character(lchlen)::qp_msg,qp_db_name
- integer    :: i1,iXg(3),iXb(4),iGb(4),db_name_pos(2)
  logical    :: QP_apply_done
+ integer    :: i1
  !
  logical :: l_qp(4) ! = ( E W Z INTERPOLATION )
  !
@@ -53,11 +53,23 @@
  integer           ::io_err,ID
  integer, external ::ioQP
  !
+ ! Comments extracted from the QP descriptions
+ !
+ integer, parameter :: n_fields=4
+ integer            :: if,c_pos
+ character(lchlen)  :: field(n_fields,2)
+ !
+ field(1,1)="X G`s            [used]"
+ field(1,2)="XG"
+ field(2,1)="X bands"
+ field(2,2)="Xb"
+ field(3,1)="Sc/G bands"
+ field(3,2)="Scb"
+ field(4,1)="Sc. G bands"
+ field(4,2)="Sphb"
+ !
  ! Presets
  !
- iXg=0
- iXb=0
- iGb=0
  l_qp=.false.
  qp_msg=' '
  !
@@ -67,6 +79,7 @@
    !
    l_qp(1)=.true. ! Apply QP corrections to energies only
    qpfit%db="none"
+   qpfit%short_descr="none"
    qpfit%interp_neigh=1
  else
    !
@@ -94,6 +107,7 @@
    !
    if (io_err<0) then
      qpfit%db="none"
+     qpfit%short_descr="none"
      call warning('DB '//trim(qp_db_name)//' not found')
      return
    endif
@@ -132,30 +146,24 @@
      call mem_est("E-Z",(/size(en%Z)/))
    endif
    !
-   call CHappend('<',trim(qp_db_name))
+   qp_msg=trim(qp_msg)//'<'//trim(qp_db_name)//'['
    !
    do i1=1,qp%n_descs
-     if (index(qp%description(i1),"X G`s")/=0) &
-&       iXg(:2)=(/i1,index(qp%description(i1),":")+1/)
-     if (index(qp%description(i1),"X bands")/=0) &
-&       iXb(:2)=(/i1,index(qp%description(i1),":")+1/)
-     if (index(qp%description(i1),"Sc/G bands")/=0)&
-&       iGb(:2)=(/i1,index(qp%description(i1),":")+1/)
-     if (index(qp%description(i1),"PPA")/=0) call CHappend('[','PPA')
+     do if=1,n_fields
+       if (index(qp%description(i1),trim(field(if,1)))/=0) then
+         c_pos=index(qp%description(i1),":")+1
+         qp_msg=trim(qp_msg)//' '//trim(field(if,2))//':'
+         call CHappend(qp%description(i1)(c_pos:))
+       endif
+     enddo
+     if (index(qp%description(i1),"PPA")/=0) qp_msg=trim(qp_msg)//' PPA '
    enddo
    !
-   if (index(qp_msg,'PPA')==0) call CHappend('[','RA')
-   if (iXg(1)/=0) read (qp%description(iXg(1))(iXg(2):),*) iXg(3)
-   if (iXg(1)/=0) call Iappend("(2a,i3.3)"," G",iXg(3))
-   if (iXb(1)/=0) read (qp%description(iXb(1))(iXb(2):),*) iXb(3:)
-   if (iXb(1)/=0) call Iappend("(2a,i3.3)"," Xb",iXb(4))
-   if (iGb(1)/=0) read (qp%description(iGb(1))(iGb(2):),*) iGb(3:)
-   if (iGb(1)/=0) call Iappend("(2a,i3.3)"," Gb",iGb(4))
-   call CHappend(']','')
+   qp_msg=trim(qp_msg)//']'
    !  
-   qpfit%db=qp_msg
+   qpfit%short_descr=trim(qpfit%short_descr)//trim(qp_msg)
    !
-   call msg(msg_fmt,trim(qpfit%short_descr),trim(qp_msg))
+   call msg(msg_fmt,trim(qpfit%short_descr))
  endif
  !
  ! Backup bare energies (only once)
@@ -179,17 +187,19 @@
  !
  contains 
    !
-   subroutine Iappend(fmt,chapp,val)
-     character(*)::chapp,fmt
-     integer     ::val
-     ch=qp_msg
-     write (qp_msg,fmt) trim(ch),chapp,val
-   end subroutine
-   !
-   subroutine CHappend(c1,c2)
-     character(*)::c1,c2
-     ch=qp_msg
-     write (qp_msg,'(3a)') trim(ch),c1,c2
+   subroutine CHappend(c)
+     character(*)::c
+     integer     ::ic,ic_start,ic_end
+     !
+     ic_start=-1    
+     ic_end=-1    
+     do ic=1,len(c)
+       if (c(ic:ic)/=' '.and.ic_start<0) ic_start=ic
+       if (c(ic:ic)==' '.and.ic_start>0) ic_end=ic
+     enddo
+     !
+     qp_msg=trim(qp_msg)//c(ic_start:ic_end)
+     !
    end subroutine
    !
  end subroutine

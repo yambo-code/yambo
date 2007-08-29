@@ -25,7 +25,9 @@ subroutine K_eh_setup(iq,Ken,Xk)
  !
  !   BS_K_dim
  !   BS_eh_table(BS_K_dim,4)
- !   BS_eh_E(BS_K_dim))
+ !   BS_eh_E(BS_K_dim)
+ !   BS_eh_W(BS_K_dim)
+ !   BS_eh_Z(BS_K_dim)
  !   O_v_state(Xk%nbz,maxval(O_n_v_states),n_sp_pol)
  !   O_c_state(Xk%nbz,maxval(O_n_c_states),n_sp_pol)
  !
@@ -35,7 +37,7 @@ subroutine K_eh_setup(iq,Ken,Xk)
  use BS,           ONLY:BS_K_dim,O_v_state,O_c_state,BS_res_K_corr,&
 &                       O_n_v_states,O_n_c_states,BS_eh_E,BS_eh_f,BS_eh_en,&
 &                       BS_eh_table,BS_bands,BS_blk_dim,BS_K_coupling,&
-&                       BS_not_const_eh_f
+&                       BS_not_const_eh_f,BS_eh_W,BS_eh_Z
 #if defined PJ_SPIN 
  use electrons,    ONLY:filled_tresh
 #endif
@@ -106,6 +108,9 @@ subroutine K_eh_setup(iq,Ken,Xk)
 #endif
            if (allocated(BS_eh_E)) BS_eh_E(BS_K_dim)=E_eh
            if (allocated(BS_eh_f)) BS_eh_f(BS_K_dim)=f_eh
+           if (allocated(BS_eh_W)) BS_eh_W(BS_K_dim)=Ken%W(ic,ik,i_sp)-Ken%W(iv,ikp,i_sp)
+           if (allocated(BS_eh_Z)) BS_eh_Z(BS_K_dim)=Ken%Z(ic,ik,i_sp)*Ken%Z(iv,ikp,i_sp)
+           !
            Iiv(iv,i_sp)=1
            Iic(ic,i_sp)=1
          enddo
@@ -141,6 +146,8 @@ subroutine K_eh_setup(iq,Ken,Xk)
    !
    if (allocated(BS_eh_table)) return
    !
+   ! Allocations
+   !
    table_dim=3
 #if defined PJ_SPIN
    table_dim=4
@@ -148,6 +155,15 @@ subroutine K_eh_setup(iq,Ken,Xk)
    allocate(BS_eh_table(BS_K_dim,table_dim),BS_eh_E(BS_K_dim),BS_eh_f(BS_K_dim))
    call mem_est("BS_eh_table BS_eh_E BS_eh_f",&
 &               (/table_dim*BS_K_dim,BS_K_dim,BS_K_dim/),(/IP,SP,SP/))
+   !
+   if (associated(Ken%W)) then
+     allocate(BS_eh_W(BS_K_dim))
+     call mem_est("BS_eh_W",(/BS_K_dim/),(/SP/))
+   endif
+   if (associated(Ken%Z)) then
+     allocate(BS_eh_Z(BS_K_dim))
+     call mem_est("BS_eh_Z",(/BS_K_dim/),(/SP/))
+   endif
    !
    if (.not.BS_res_K_corr) cycle
    allocate(O_v_state(Xk%nbz,maxval(O_n_v_states),n_sp_pol),&

@@ -345,8 +345,8 @@ subroutine exc_wf_eval(Xk)
      integer               :: j1,j2
      integer,  allocatable :: indx(:)
      real(SP), allocatable :: R(:)         !square residuals R
-     real(SP), allocatable :: Rs(:),Rs2(:) !sorted square residuals Rs
      real(SP)              :: Rmax         !maximum value of the residuals
+     real(SP), allocatable :: v2sort(:)
      !
      call section('+','Sorting Energies and Strengths')
      !
@@ -367,43 +367,38 @@ subroutine exc_wf_eval(Xk)
      call msg('o sort','#','',INDENT=0)
      !
      titles(1)='E [ev]'
-     titles(2)='Strength'
-     titles(3)='Index'
+     titles(2)='Width [meV]'
+     titles(3)='Strength'
+     titles(4)='Index'
      !
-     call msg('o sort','#',titles(:3),INDENT=0,USE_TABS=.true.)
+     call msg('o sort','#',titles(:4),INDENT=0,USE_TABS=.true.)
      call msg('o sort','#','',INDENT=0)
      !
      Rmax=0
-     allocate( R(BS_K_dim), Rs(BS_K_dim),Rs2(BS_K_dim))
+     allocate( R(BS_K_dim), v2sort(BS_K_dim),indx(BS_K_dim))
      R(:) = BS_R(:)*conjg(BS_R(:))
      Rmax = maxval(R)
-     Rs(:) = R(:)/Rmax
+     R(:) = R(:)/Rmax
      !
-     if (sort_mode == 'e') then
+     if (sort_mode == 'e') v2sort=real(BS_E)
+     if (sort_mode == 'i') v2sort=R
+     !
+     call sort(arrin=v2sort,indx=indx)
+     !
+     do j1=BS_K_dim,1,-1
        !
-       do j1=1,BS_K_dim
-         if (real(BS_E(j1))<=max_energy) then 
-           call msg('o sort','',&
-&                   (/real(BS_E(j1))*HARTREE,Rs(j1),real(j1)/),INDENT=-2,USE_TABS=.TRUE.)
-         endif
-       enddo
+       j2=indx(j1)
+       if (sort_mode == 'e') j2=indx(-j1+BS_K_dim+1)
        !
-     else if (sort_mode == 'i') then
+       if (real(BS_E(j2))>max_energy.or.real(BS_E(j2))<0.) cycle 
+       call msg('o sort','',&
+&               (/real(BS_E(j2))*HARTREE,abs(aimag(BS_E(j2)))*HARTREE*1000.,&
+&                 R(j2),real(j2)/),INDENT=-2,USE_TABS=.TRUE.)
        !
-       allocate (indx(BS_K_dim))
-       call sort( Rs,Rs2,indx)
-       do j1=1,BS_K_dim
-         j2=BS_K_dim-j1+1
-         if (real(BS_E(indx(j2)))>=0.and.real(BS_E(indx(j2)))<=max_energy) then
-           call msg('o sort','',&
-&                   (/real(BS_E(indx(j2)))*HARTREE,Rs2(j2),real(indx(j2))/),INDENT=-2,USE_TABS=.TRUE.)
-         endif
-       enddo 
-     endif
+     enddo
      ! 
      call of_open_close('exc_sort'//trim(extension))
-     deallocate(R, Rs,Rs2)
-     if (allocated(indx)) deallocate(indx)
+     deallocate(R,v2sort,indx)
      !
    end subroutine
    !

@@ -31,7 +31,7 @@
  ! Work Space
  ! 
  integer :: i1,nbm_(n_sp_pol),nbf_(n_sp_pol),i_s_pol
- real(SP):: r_nk
+ real(SP):: r_nk,ind_gaps(2),dir_gaps(2)
  real(SP),parameter:: tresh=epsilon(1._SP)
  character(lchlen) :: ch_
  character(27)     :: prefix_
@@ -102,14 +102,36 @@
  ! [2] Indirect Gaps (min/max)
  !
  do i_s_pol=1,n_sp_pol
+   !
+   if (nbf_(i_s_pol)/=nbm_(i_s_pol)) cycle
+   !
    prefix_='Indirect Gaps          [ev]:'
    if (n_sp_pol>1.and.i_s_pol==1) prefix_='Indirect Gaps [ev] spin dn'
    if (n_sp_pol>1.and.i_s_pol==2) prefix_='                        up'
-   call msg('r',prefix_//':',(/&
-&          ( minval(E%E(nbf_(i_s_pol)+1,:,i_s_pol))-&
-&            maxval(E%E(nbf_(i_s_pol),:,i_s_pol)) )*HARTREE,&
-&          ( maxval(E%E(nbf_(i_s_pol)+1,:,i_s_pol))-&
-&            minval(E%E(nbf_(i_s_pol),:,i_s_pol)) )*HARTREE /))
+   ind_gaps(1)=minval(E%E(nbf_(i_s_pol)+1,:,i_s_pol))-maxval(E%E(nbf_(i_s_pol),:,i_s_pol))
+   ind_gaps(2)=maxval(E%E(nbf_(i_s_pol)+1,:,i_s_pol))-maxval(E%E(nbf_(i_s_pol),:,i_s_pol))
+   call msg('r',prefix_//':',ind_gaps*HARTREE)
+   !
+ enddo
+ !
+ ! [3] Direct Gaps (min/max)
+ !
+ do i_s_pol=1,n_sp_pol
+   !
+   if (nbf_(i_s_pol)/=nbm_(i_s_pol)) cycle
+   !
+   prefix_='Direct Gaps            [ev]:'
+   if (n_sp_pol>1.and.i_s_pol==1) prefix_='Direct Gaps   [ev] spin dn'
+   if (n_sp_pol>1.and.i_s_pol==2) prefix_='                        up'
+   dir_gaps=(/100.,-100./)
+   do i1=1,E%nk
+     dir_gaps(1)=min(dir_gaps(1),&
+&                    E%E(nbf_(i_s_pol)+1,i1,i_s_pol)-E%E(nbf_(i_s_pol),i1,i_s_pol) )
+     dir_gaps(2)=max(dir_gaps(2),&
+&                    E%E(nbf_(i_s_pol)+1,i1,i_s_pol)-E%E(nbf_(i_s_pol),i1,i_s_pol) )
+   enddo
+   call msg('r',prefix_//':',dir_gaps*HARTREE)
+   !
  enddo
  !
  ! [3] Report if the system is treated as a metal

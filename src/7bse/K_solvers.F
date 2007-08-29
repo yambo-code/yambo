@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine K_solvers(iq,Ken,Xk,q,X,W_bss)
+subroutine K_solvers(iq,Ken,Xk,q,X,W_bss)
  !
  use pars,           ONLY:SP,pi
 #if defined PJ_PH
@@ -146,10 +146,9 @@
  run_Diago           =index(BSS_mode,'d')/=0
  Pert_inversion      =index(BSS_mode,'i')/=0
  !
- if ((run_Haydock.or.run_Diago).and.associated(Ken%W)) then
-   call warning('K with QP widths supports only the inversion solver')
+ if (run_Haydock.and.associated(Ken%W)) then
+   call warning('K with QP widths not supported in the Haydock solver')
    run_Haydock=.false.
-   run_Diago  =.false.
  endif
  !
  if (run_Haydock) then
@@ -179,4 +178,4 @@
  call mem_est("BSS_rhoq0")
  if (iq==1) call X_alloc('OptOsc')
  !
- end subroutine
+end subroutine

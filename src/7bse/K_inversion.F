@@ -30,7 +30,7 @@ subroutine K_inversion(iq,W,E,k,q)
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_not_const_eh_f,&
 &                         BS_K_coupling,BS_eh_table,BS_eh_E,BS_bands,Kernel_by_V,&
 &                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,&
-&                         BSS_n_descs,BSS_description
+&                         BSS_n_descs,BSS_description,BS_eh_W,BS_eh_Z
  use memory_m,       ONLY:mem_est
  use parser_m,       ONLY:parser
  use electrons,      ONLY:spin_occ,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts
@@ -219,8 +219,8 @@ subroutine K_inversion(iq,W,E,k,q)
    if (.not.BSS_uses_RIM) then
      QP_width=0.
      QP_Z=(1.,0.)
-     if (associated(E%W)) QP_width=E%W(ic,ik_ibz,i_sp)-E%W(iv,ik_ibz,i_sp)
-     if (associated(E%Z)) QP_Z=E%Z(ic,ik_ibz,i_sp)*E%Z(iv,ik_ibz,i_sp)
+     if (allocated(BS_eh_W)) QP_width=BS_eh_W(i1)
+     if (allocated(BS_eh_Z)) QP_Z=BS_eh_Z(i1)
      Lo(i1,:)=QP_Z/(W%p(:)-BS_eh_E(i1)-(0.,1.)*QP_width)
    else
      call X_bare_RIM_Gf(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1,:),"r")

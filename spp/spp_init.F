@@ -96,11 +96,15 @@
    ydata = 'none'
    xdatacol = 'ir'
    ydatacol = 'ir'
-   bshift  = 0.0_SP       ! shift
+   bshift  = 0.0_SP       ! bulk shift
    bbroad  = 0.0_SP       ! bulk broadening
    bfile = "bulk.dat"     ! file of bulk
    btype = "3ir"
    gbroad  = 0.0          ! gaussian convolution, FWHM
+   sshift = 0.0           ! surface shift
+!  sscale  = 1.0_SP       ! surface epsilon scaling factor/not used
+   surftype = 'e'
+   d_cellin = 1.0
    !
 #endif
    !
@@ -164,7 +168,7 @@
  lras=rstatus(5)/=0
  if (lras) then
    call initactivate(1,"XData XDataCol YData YDataCol "//&
-&       " BulkFile BulkForm BlkShift BlkBroad GausConv")
+&       " BulkFile BulkForm BlkShift BlkBroad DataType SrfShift d_cell GausConv")
  endif
  !
 #endif

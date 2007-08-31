@@ -69,6 +69,10 @@ module SPP
  logical :: lras
  character(schlen) :: xdata, ydata
  character(len=2)  :: xdatacol, ydatacol
+ character(len=1)  :: surftype
+ real(SP)          :: sshift
+!real(SP)          :: sscale
+ real(SP)          :: d_cellin
  !
 #endif
  !

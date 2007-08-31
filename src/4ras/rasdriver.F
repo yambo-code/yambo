@@ -21,13 +21,13 @@
 !
 subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
     
-  use pars,                    only : SP, PI, schlen, lchlen
+  use pars,                    only : SP, PI, schlen, lchlen, HARTREE
   use com,                     only : msg
   use memory_m,                only : mem_est
   use parser_m,                only : parser
   use optcut,                  only : loptcut, setup_cutoff, print_cutoff
   use electrons,               only : levels
-  use R_lattice,               only : bz_samp, bare_qpg
+  use R_lattice,               only : bz_samp, bare_qpg,q_norm
   use IO_m,                    only : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP
   use X_m,                     only : X_t, X_epsilon, X_mat, X_alloc
   use frequency,               only : w_samp 
@@ -37,7 +37,6 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   use wave_func,               only : WF_free
   use ras_module
   use surface_geometry
-! use surface_geometry,       only : d_surf
   use bulkeps,                 only : lbulkerr, GetBulkEps
   use eels_kinematics
   use eels_detector
@@ -122,6 +121,7 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
 &   'quantities requiring the bulk epsilon will not be computed.')
   !
   ! Check for db.surfeps, and read all eps_i if present
+  ! Commented out until really needed.
   !
 ! call section('=','Check for eps cell database...')
 ! call io_control(ACTION=OP_RD_CL, COM=REP, MODE=VERIFY, SEC=(/1,2/), ID=ID)
@@ -166,8 +166,7 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
        
       call X_os(X_mat,iq,fr,Xen,Xk,wv,X)
        
-      X_epsilon(1, fr(1):fr(2)) = 1.0_SP - X_mat(1,1,:)*4.0_SP*pi/ &
-&                                 bare_qpg(iq,1) / bare_qpg(iq,1)
+      X_epsilon(1,fr(1):fr(2))=1.0_SP-X_mat(1,1,:)*4.0_SP*pi/q_norm(iq)**2
        
       call X_s(iq,fr,X,wv) 
        
@@ -201,14 +200,10 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   call section('=','Write eps cell for plotting:')
   call write_eps_tensor( q0v, eps_i, real(wv % p), nw, npol, 'cell' ) 
   !
-  ! Clean up a bit
-  !
-  !
   ! Find slab symmetries
   !
   allocate( surf_i(nw, npol ) )
   call section('=','Slab symmetries: ')
-  call space_inv_by_wf(Xen, Xk) 
   call get_slab_symmetry( loptcut) 
   !
   ! Extract surface dielectric function from cutoff/bulk subtraction

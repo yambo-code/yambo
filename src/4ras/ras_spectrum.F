@@ -22,7 +22,6 @@
 subroutine CalcRAS(hw, eps_x, eps_y, eps_b, nw, d_surf)
   use pars,                   ONLY : schlen, SP, HARTREE
   use com,                    ONLY : msg, of_open_close
-! use surface_geometry,       only : d_surf
   implicit none
   integer,             intent(in) :: nw
   real(SP),            intent(in) :: hw(nw), d_surf
@@ -32,28 +31,29 @@ subroutine CalcRAS(hw, eps_x, eps_y, eps_b, nw, d_surf)
   real(SP)                        :: Rdelta(nw), Idelta(nw)
   real(SP)                        :: RAS(nw)
   real(SP)                        :: denom, od(8), cost
-! real(SP)                        :: deltax,deltay,delta ! <- DEBUG
+  real(SP)                        :: deltax,deltay,delta ! <- DEBUG
   integer                         :: i
   character(schlen)               :: of_name
   character(10)                   :: headings(8)
   
   
-  cost = 4.0_SP/137.03604_SP
 
 !--> DEBUG
-!     open(unit=50,file="oldras.dat")
-!     do i = 1, nw
-!        deltax = cost *  hw(i) * AIMAG(eps_x(i) / (eps_b(i)-1 ))
-!        deltay = cost *  hw(i) * AIMAG(eps_y(i) / (eps_b(i)-1 ))
-!        delta = deltax - deltay
-!        write(50,1010) hw(i)*HARTREE, delta, eps_x(i), eps_y(i),eps_b(i)
-!     enddo
-!        write(50,*) 
-!        write(50,*) 
+!    cost = 4.0_SP/137.03604_SP*d_surf
+!    open(unit=50,file="oldras.dat")
+!    do i = 1, nw
+!       deltax = cost *  hw(i) * AIMAG(eps_x(i) / (eps_b(i)-1 ))
+!       deltay = cost *  hw(i) * AIMAG(eps_y(i) / (eps_b(i)-1 ))
+!       delta = deltax - deltay
+!       write(50,1010) hw(i)*HARTREE, delta, eps_x(i), eps_y(i),eps_b(i)
+!    enddo
+!       write(50,*) 
+!       write(50,*) 
 !1010  format(f8.3,e14.5,6f8.3)
 !1011  format(f8.3,e14.5)
 !<-- DEBUG
 
+  cost = 4.0_SP/137.03604_SP ! 4/c in au
   do i = 1, nw
      denom     = (1.0_SP - real( eps_b(i) ) )**2 + (AIMAG( eps_b(i)) )**2
      Aw(i)      = ( real( eps_b(i) ) - 1.0_SP ) / denom

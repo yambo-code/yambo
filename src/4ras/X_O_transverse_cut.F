@@ -62,9 +62,9 @@
    do ik = 1, Xk%nibz
 
 !--> DEBUG
-     write(sch,'(a,i4,a,i4)') 'Loop over k oscillators: ',ik,'/',Xk%nibz
-     call msg('ns',trim(sch))
-     write(*,*) trim(sch)
+!    write(sch,'(a,i4,a,i4)') 'Loop over k oscillators: ',ik,'/',Xk%nibz
+!    call msg('ns',trim(sch))
+!    write(*,*) trim(sch)
 !<-- DEBUG
 
      do i1 = 1,3
@@ -73,7 +73,6 @@
      call setup_optcut( ik )
 
      do iv = X%ib(1), Xen%nbm
-        write(*,*) "loop iv",iv,X%ib(1), Xen%nbm
        if (.not.px%i2p(ik,iv)) cycle
        do i_spin   = 1, n_spin
          ivfft=wf_state(iv,ik,i_spin)

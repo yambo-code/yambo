@@ -25,10 +25,9 @@ module ras_module
 
 contains
 
-subroutine CalcRAS2(hw, eps_x, eps_y, eps_b, nw, d_surf)
+subroutine CalcRAS(hw, eps_x, eps_y, eps_b, nw, d_surf)
   use pars,                   ONLY : schlen, SP, HARTREE
   use com,                    ONLY : msg, of_open_close
-! use surface_geometry,       only : d_surf
   implicit none
   integer,             intent(in) :: nw
   real(SP),            intent(in) :: hw(nw), d_surf
@@ -90,7 +89,7 @@ subroutine CalcRAS2(hw, eps_x, eps_y, eps_b, nw, d_surf)
   call of_open_close(of_name)
 
   return
-end subroutine CalcRAS2
+end subroutine CalcRAS
 
 
 end module ras_module

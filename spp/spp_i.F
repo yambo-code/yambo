@@ -47,6 +47,7 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  integer           :: ID,i_err
  integer, external :: ioDB1,ioQINDX,iogrot,self2self,elph_pw_dbs
+
  !
  ! Presets
  !
@@ -62,6 +63,10 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  call E_reset(en)
  call E_reset(Xen)
  call it_reset(1)
+
+!#if defined SPP_PJ_RAS
+! goto 100 ! Presently, RAS does not need SAVE databases
+!#endif
  !
  ! Switch off report file support
  !
@@ -155,6 +160,7 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
 #if defined SPP_PJ_RAS
  !
+100 continue
  if (lras) then
    call ras_spp
  endif

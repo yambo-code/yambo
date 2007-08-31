@@ -19,14 +19,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine extract_eps_surf(surf_i, slab_i, npol, eps_b, nw, lbulkerr, lsurferr)
+subroutine extract_eps_surf(surf_i, cell_i, npol, eps_b, nw, lbulkerr, lsurferr)
   use pars,                   ONLY : lchlen, schlen, SP, HARTREE
   use surface_geometry,       only : d_surf, az, nlcell, nlslab, nlbulk, lsymslab, d_vac
   use optcut,                 ONLY : loptcut, dc
   use com,                    ONLY : msg
   implicit none
   integer,            intent(in)  :: nw, npol
-  complex(SP),        intent(in)  :: slab_i(nw,npol) ! 
+  complex(SP),        intent(in)  :: cell_i(nw,npol) ! 
   complex(SP),        intent(in)  :: eps_b(nw)
   logical,            intent(in)  :: lbulkerr
   complex(SP),        intent(out) :: surf_i(nw,npol)
@@ -37,7 +37,8 @@ subroutine extract_eps_surf(surf_i, slab_i, npol, eps_b, nw, lbulkerr, lsurferr)
   integer                         :: ie, ipol
   character(lchlen)               :: lch1
   !
-  ! Note: slab_i * az throughout.  
+  ! Note: cell_i appears throughout as
+  ! cell_i * d_cell which is equiv to slab_i * d_slab
   ! => produces slab polarizability 4 * pi * alpha * d_surf 
   !
   lsurferr = .false.
@@ -52,7 +53,6 @@ subroutine extract_eps_surf(surf_i, slab_i, npol, eps_b, nw, lbulkerr, lsurferr)
   ! Need some checks on divide by zero.
   if(abs(az).lt.0.001.or.abs(real(nlcell)).lt.0.001) then
     call msg('nrs','Error extracting surface epsilon.')
-    write(*,*) az,nlcell
     lsurferr = .true.
     return
   endif
@@ -67,19 +67,20 @@ subroutine extract_eps_surf(surf_i, slab_i, npol, eps_b, nw, lbulkerr, lsurferr)
   ! Cutoff used => eps_surf already obtained. Ignore nlbulk.
   !
 
-  ! Note: X gives slab_i normalized to cell volume.
+  ! Note: X gives cell_i normalized to cell volume.
   ! This always needs to be rescaled by az (d_cell)
-  ! Also, there is an extra factor of 2 
+  ! Also, there is an extra factor of 2  (FROM WHERE?)
   !
   if(loptcut) then
     d_surf = dc
     do ipol = 1, npol
-      surf_i(:,ipol) = slab_i(:,ipol)*d_cell/d_surf*2.0_SP
+!     surf_i(:,ipol) = cell_i(:,ipol)*d_cell/d_surf*2.0_SP
+      surf_i(:,ipol) = cell_i(:,ipol)*d_cell/d_surf
     enddo
     nlsurf = dc/d_layer
     call msg('nrs','Surface layer width defined by cutoff parameter.')
     if(lsymslab) call msg('nrs','Note: slab symmetry ignored!')
-    call write_slab_info
+    call write_cell_info
     return
   endif
   !
@@ -88,21 +89,26 @@ subroutine extract_eps_surf(surf_i, slab_i, npol, eps_b, nw, lbulkerr, lsurferr)
   if(nlbulk.le.0.001) then
     if(lsymslab) then
       call msg('rs',&
-&     'RAS/REELS will use dielectric function of -half- slab.')
+&     'Surface dielectric function defined over -half- slab.')
       d_surf = d_slab * 0.5_SP
       nlsurf = nlslab * 0.5_SP
+      do ipol = 1, npol
+        surf_i(:,ipol) = cell_i(:,ipol)*d_cell/(d_surf*2.0_SP)
+      enddo
     else
       call msg('nrs',&
-&     'RAS/REELS will use dielectric function of -full- slab.')
+&     'Surface dielectric function defined over -full- slab.')
       d_surf = d_slab
       nlsurf = nlslab
+      do ipol = 1, npol
+        surf_i(:,ipol) = cell_i(:,ipol)*d_cell/d_surf
+      enddo
     endif
     do ipol = 1, npol
-      surf_i(:,ipol) = slab_i(:,ipol)*d_cell/d_surf
       if(aimag(surf_i(1,ipol)).lt.0.001) &
 &          surf_i(1,ipol) = cmplx( real(surf_i(1,ipol)),0.0_SP,SP)
     enddo
-    call write_slab_info
+    call write_cell_info
     return
   endif
   !
@@ -120,11 +126,10 @@ subroutine extract_eps_surf(surf_i, slab_i, npol, eps_b, nw, lbulkerr, lsurferr)
   !
   if(lsymslab) then
     nlsurf = (nlslab - nlbulk )/2.0_SP
-    d_surf = (d_slab - d_bulk )/2.0_SP 
-    write(*,*) "d_cell",d_cell, d_bulk,d_surf
+    d_surf = (d_slab - d_bulk )/2.0_SP  ! width of single surface
     do ie=1, nw
       do ipol = 1, npol
-        surf_i(ie,ipol)=(d_cell*slab_i(ie,ipol)- d_bulk*eps_b(ie))/d_surf
+        surf_i(ie,ipol)=(d_cell*cell_i(ie,ipol)- d_bulk*eps_b(ie))/(d_surf*2.0_SP)
       enddo
     enddo
     call msg('nrs',&
@@ -137,19 +142,19 @@ subroutine extract_eps_surf(surf_i, slab_i, npol, eps_b, nw, lbulkerr, lsurferr)
     d_surf =  d_slab - d_bulk 
     do ie=1, nw
       do ipol = 1, npol
-        surf_i(ie,ipol)=(d_cell*slab_i(ie,ipol)- d_bulk*eps_b(ie))/(d_surf*1.0_SP)
+        surf_i(ie,ipol)=(d_cell*cell_i(ie,ipol)- d_bulk*eps_b(ie))/(d_surf*1.0_SP)
       enddo
     enddo
     call msg('nrs','Non symmetric slab without cutoff:'// &
 &      ' bulk dielectric function subtracted. Result is unphysical!.')
   endif
-  call write_slab_info
+  call write_cell_info
 
   return
 
 contains
 
-  subroutine write_slab_info
+  subroutine write_cell_info
     implicit none
     write(lch1,'(a14,1x,5a9,a10)') &
 &   "Supercell:","Layer","Cell","Vacuum","Slab","Bulk","Surf"
@@ -163,5 +168,5 @@ contains
 &               d_layer,d_cell, d_vac, d_slab, d_bulk, d_surf
  call msg('rs',lch1)
     return
-  end subroutine write_slab_info
+  end subroutine write_cell_info
 end subroutine extract_eps_surf

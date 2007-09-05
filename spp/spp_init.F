@@ -94,8 +94,8 @@
    !
    xdata = 'o.eps-rpa_00'
    ydata = 'none'
-   xdatacol = 'ir'
-   ydatacol = 'ir'
+!  xdatacol = 'ir'
+!  ydatacol = 'ir'
    bshift  = 0.0_SP       ! bulk shift
    bbroad  = 0.0_SP       ! bulk broadening
    bfile = "bulk.dat"     ! file of bulk
@@ -103,7 +103,7 @@
    gbroad  = 0.0          ! gaussian convolution, FWHM
    sshift = 0.0           ! surface shift
 !  sscale  = 1.0_SP       ! surface epsilon scaling factor/not used
-   surftype = 'e'
+   datatype = 'e23'
    d_cellin = 1.0
    !
 #endif
@@ -167,7 +167,7 @@
  !
  lras=rstatus(5)/=0
  if (lras) then
-   call initactivate(1,"XData XDataCol YData YDataCol "//&
+   call initactivate(1,"XData YData "//&
 &       " BulkFile BulkForm BlkShift BlkBroad DataType SrfShift d_cell GausConv")
  endif
  !

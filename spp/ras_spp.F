@@ -62,15 +62,23 @@
  complex(SP), allocatable   :: eps_x(:),eps_y(:),eps_b(:)
  real(SP),    allocatable   :: hw(:)
 
- if( trim(surftype).eq."e" ) epsilon_data = .true.
- if( trim(surftype).eq."a" ) epsilon_data = .false.
+ call section('*',"== RAS postprocessor ==")
+ call msg('nrs','Note: symmetries are not used.')
+ if( index(datatype,"e").eq.1 ) epsilon_data = .true.
+ if( index(datatype,"a").eq.1 ) epsilon_data = .false.
+!if( trim(datatype).eq."a" ) epsilon_data = .false.
+ call msg('nrs','Cell thickness d_cell (au): ',d_cellin)
  if(epsilon_data) then
    sscale = 1.0_SP
+   call msg('rs','Processing epsilon data: no scaling.')
  else ! alpha
    sscale = 4.0_SP*PI/d_cellin
+   call msg('rs','Processing alpha data: scaling by 4*pi/d_cell')
  endif
+ if( index(datatype,"23").eq.2 ) call msg('rs','Imag/Real data extracted from columns 2,3')
+ if( index(datatype,"45").eq.2 ) call msg('rs','Imag/Real data extracted from columns 4,5')
 
- call read_spectral_data(xdata,xdatacol,nw,lfail)
+ call read_spectral_data(xdata,datatype,nw,lfail)
  allocate(eps_x(nw),hw(nw))
  eps_x(1:nw) = f(1:nw)
  forall(i=1:nw) eps_x(i) = eps_x(i)*sscale
@@ -78,7 +86,7 @@
 
  if(ydata.eq.'none') do_ras = .false.
  if(do_ras) then
-   call read_spectral_data(ydata,ydatacol,nwy,lfail)
+   call read_spectral_data(ydata,datatype,nwy,lfail)
    if(nwy.ne.nw) call error('X/Y datafiles have inconsistent data')
    allocate(eps_y(nw), eps_b(nw))
    eps_y(1:nw) = f(1:nw)
@@ -103,7 +111,7 @@
      character*(*), intent(in) :: filename
      logical, intent(inout)    :: lfail
      integer, intent(out)      :: nw
-     character(2), intent(in)  :: col
+     character(3), intent(in)  :: col
      character(lchlen)         :: cline
      integer, parameter        :: un = 60
      real(SP)                  :: rimag,rreal,rdum
@@ -122,12 +130,14 @@
        backspace(un)
        nw = nw + 1
        if(nw.gt.maxlines) goto 1000
-       if(epsilon_data) then
-         if(col.eq.'ir') read(un,*,err=999) freq(nw),rimag,rreal
-         if(col.eq.'ri') read(un,*,err=999) freq(nw),rreal,rimag
+       if( index(col,"23").eq.2 ) then
+         read(un,*,err=999) freq(nw),rimag,rreal
+       else if( index(col,"45").eq.2 ) then
+         read(un,*,err=999) freq(nw),rdum,rdum,rimag,rreal
        else
-         if(col.eq.'ir') read(un,*,err=999) freq(nw),rdum,rdum,rimag,rreal
-         if(col.eq.'ri') read(un,*,err=999) freq(nw),rdum,rdum,rreal,rimag
+         errmsg='Unable read data with datatype: '//trim(datatype)
+         lfail = .true.
+         return
        endif
        f(nw) = cmplx(rreal,rimag)
      enddo

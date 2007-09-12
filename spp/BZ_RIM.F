@@ -39,7 +39,8 @@ subroutine BZ_RIM(Xk,Xen)
  !
  ! Work Space
  !
- real(SP)     ::dummy,v(3),rand_kpt(BZ_RIM_nkpts+1,3),a_save(3,3),alat_save(3)
+ real(SP)     ::dummy,v(3),rand_kpt(BZ_RIM_nkpts+1,3),a_save(3,3),alat_save(3),&
+&               gap(2)
  integer      ::i1,i2,ikbz,i3
  integer,parameter :: iseed(4) = (/11,123,44,1546/)
  integer, external :: k_the_nearest
@@ -96,14 +97,24 @@ subroutine BZ_RIM(Xk,Xen)
  !
  call section('*','BZ RIM DB')
  !
+ gap(1)=minval(BZ_E%E(Xen%nbf+1,:,1))-maxval(BZ_E%E(Xen%nbf,:,1)) 
+ gap(2)=10000.
+ do i1=1,nkibz
+    if (BZ_E%E(Xen%nbf+1,i1,1)-BZ_E%E(Xen%nbf,i1,1)<gap(2)) then
+      gap(2)=BZ_E%E(Xen%nbf+1,i1,1)-BZ_E%E(Xen%nbf,i1,1)
+    endif
+ enddo
+ !
  call msg('s',':: Electrons             :',default_nel)
  call msg('s',':: Temperature       [ev]:',default_Tel)
  call msg('s',':: Lattice factors [a.u.]:',alat)
  call msg('s',':: K points              :',nkibz)
  call msg('s',':: Bands                 :',n_bands)
  call msg('s',':: Symmmetries           :',nsym)
- call msg('s',':: Indirect Gap      [ev]:',&
-&             ( minval(BZ_E%E(Xen%nbf+1,:,1))-maxval(BZ_E%E(Xen%nbf,:,1)) )*HARTREE )
+ if (Xen%nbf==Xen%nbm) then
+   call msg('s',':: Gap direct        [ev]:',gap(1)*HARTREE)
+   call msg('s','::     indirect      [ev]:',gap(2)*HARTREE)
+ endif
  !
  call section('+','BZ RIM K-points expansion ...')
  !

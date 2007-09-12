@@ -43,7 +43,7 @@
  use com,            ONLY:msg,gen_fmt,error
  use par_proc_m,     ONLY:pp_redux_wait
  use timing,         ONLY:live_timing
- use matrix_operate, ONLY:m3inv
+ use matrix_operate, ONLY:m3inv,m3det
  use vec_operate,    ONLY:v_is_zero,c2a
  use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:b,d3q_factor,RL_vol,g_vec,ng_vec,&
@@ -107,17 +107,21 @@
  ! As first step I define the map with respect to Q defined as difference
  ! of K-pts
  !
- call m3inv(M=k_b_m1)
+ if (m3det(k_b_m1)>1.E-7) then
+   call m3inv(M=k_b_m1)
 #if defined  PJ_PH
- if (impose_minus_q)      call define_q_map(-Xk%ptbz(:,:),-Xk%ptbz(1,:))
- if (.not.impose_minus_q) call define_q_map(Xk%ptbz(:,:),Xk%ptbz(1,:))
+   if (impose_minus_q)      call define_q_map(-Xk%ptbz(:,:),-Xk%ptbz(1,:))
+   if (.not.impose_minus_q) call define_q_map(Xk%ptbz(:,:),Xk%ptbz(1,:))
 #else
- call define_q_map(Xk%ptbz(:,:),Xk%ptbz(1,:))
+   call define_q_map(Xk%ptbz(:,:),Xk%ptbz(1,:))
 #endif
- !
- ! THE GRID IS UNIFORM IF ALL THE Q_MAP IS FILLED
- !
- Xk_grid_is_uniform=all(q_map/=0)
+   !
+   ! THE GRID IS UNIFORM IF ALL THE Q_MAP IS FILLED
+   !
+   Xk_grid_is_uniform=all(q_map/=0)
+ else
+   Xk_grid_is_uniform=.false.
+ endif
  !
  if (Xk_grid_is_uniform) then
  !---------------------------

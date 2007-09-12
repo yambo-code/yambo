@@ -63,9 +63,12 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! ... frequencies
  !
- integer,  allocatable ::inv_err(:),iw_full(:),nw_full(:)
- integer    ::full_grp,nw,nw_conv
- logical    ::full_diago,skip_full_inv,force_full_inv
+ integer, parameter :: max_freqs_full_inv_ratio=10
+ integer,  allocatable ::inv_err(:),iw_full(:)
+ integer    ::full_inf_freqs,nw,nw_conv,&
+&             min_dist_non_conv_freqs ! Every W%n(1)/min_dist_non_conv_freqs
+                                      ! I perform a full inversion
+ logical    ::full_diago,skip_full_inv,force_full_inv,full_inf_freqs_found
  !
 #if defined _DOUBLE
  complex(DP)::zdotu,zdotc
@@ -135,28 +138,28 @@ subroutine K_inversion(iq,W,E,k,q)
    BSS_dr=W%dr
    !
    ALLOCate(X_epsilon(4,BSS_n_freqs))
-   allocate(inv_err(W%n(1)),iw_full(W%n(1)),nw_full(W%n(1)))
+   allocate(inv_err(W%n(1)),iw_full(W%n(1)))
    X_epsilon=(0.,0.)
-   inv_err=1
+   inv_err=-1
    !
    nw_conv=0
    do iw=1,W%n(1)
      !
-     ! Read only converged frequencies
+     ! Load eps only for converged frequencies
      !
-     if (disk_freq_table(iw)>0.and.&
-&        inv_err_disk(disk_freq_table(iw))==0) then
-       !
+     if (disk_freq_table(iw)>0) then
        inv_err(iw)=inv_err_disk(disk_freq_table(iw))
-       X_epsilon(2,iw)=eps_2start(disk_freq_table(iw))/real(ncpu,SP)
-       nw_conv=nw_conv+1
+       if (inv_err(iw)==0) then
+         X_epsilon(2,iw)=eps_2start(disk_freq_table(iw))/real(ncpu,SP)
+         nw_conv=nw_conv+1
+       endif
      endif
    enddo
    call msg('rs','[BSE INV] Frequencies read    [o/o]:',real(nw_conv)/real(W%n(1))*100.)
    deallocate(inv_err_disk,eps_2start,disk_freq_table)
  else
-   allocate(inv_err(W%n(1)),iw_full(W%n(1)),nw_full(W%n(1)))
-   inv_err=1
+   allocate(inv_err(W%n(1)),iw_full(W%n(1)))
+   inv_err=-1
    X_epsilon=(0.,0.)
  endif
  !
@@ -270,49 +273,63 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! First I define the group of frequencies not converged
  !
- iw_full=-1
- nw_full=0
- full_grp=0
- !
  if (force_full_inv) then
+   full_inf_freqs=0
    do i1=1,W%n(1)
      if (inv_err(i1)/=0) then
-       full_grp=full_grp+1
-       iw_full(full_grp)=i1
-       nw_full(full_grp)=1
+       full_inf_freqs=full_inf_freqs+1
+       iw_full(full_inf_freqs)=i1
      endif
    enddo
  else
-   iw=-1
-   nw=0
-   do i1=1,W%n(1)
-     if (inv_err(i1)/= 0.and.iw<0) iw=i1
-     if (inv_err(i1)/= 0.and.iw>0) nw=nw+1
-     if ((inv_err(i1)== 0.or.(inv_err(i1)==1.and.i1==W%n(1))).and.iw>0) then
-       full_grp=full_grp+1
-       iw_full(full_grp)=iw
-       nw_full(full_grp)=nw
-       iw=-1
-       nw=0
-     endif
+   !
+   min_dist_non_conv_freqs=W%n(1)
+   full_inf_freqs_found=.FALSE.
+   !
+   do while (.not.full_inf_freqs_found) 
+     !
+     full_inf_freqs=0
+     !
+     iw=-1
+     nw=0
+     do i1=1,W%n(1)
+       if (inv_err(i1)/= 0.and.iw<0) iw=i1
+       if (inv_err(i1)/= 0.and.iw>0) nw=nw+1
+       if ((inv_err(i1)== 0.or.(inv_err(i1)==1.and.i1==W%n(1))).and.iw>0) then
+         !
+         if (nw>=min_dist_non_conv_freqs) then
+           !
+           do i2=iw,iw+nw-1,min_dist_non_conv_freqs
+             full_inf_freqs=full_inf_freqs+1
+             iw_full(full_inf_freqs)=i2
+           enddo
+           !
+         endif
+         iw=-1
+         nw=0
+       endif
+     enddo
+     min_dist_non_conv_freqs=min_dist_non_conv_freqs-1
+     if (min_dist_non_conv_freqs==0) full_inf_freqs_found=.TRUE.
+     if (full_inf_freqs>=W%n(1)/max_freqs_full_inv_ratio) full_inf_freqs_found=.TRUE.
    enddo
  endif
  !
- if (full_grp>0.and..not.skip_full_inv) then
+ if (full_inf_freqs>0.and..not.skip_full_inv) then
    !
-   call msg('rs','[BSE INV] Non converged frequency groups:',full_grp)
+   call msg('rs','[BSE INV] Non converged frequencies :',full_inf_freqs)
    !
    X_epsilon(2:3,:)=X_epsilon(2:3,:)/real(ncpu,SP)
    !
    ! Then loop on the groups performing full inversion
    !
    call pp_indexes_reset(px)
-   call par_indexes(px,(/full_grp/))
+   call par_indexes(px,(/full_inf_freqs/))
    call live_timing('Freq loop [full]',px%stps(myid+1))
    full_diago=.true.
-   do i1=1,full_grp
+   do i1=1,full_inf_freqs
      if (.not.px%i1p(i1)) cycle
-     iw=iw_full(i1)+nw_full(i1)/2
+     iw=iw_full(i1)
      call perform_invertion(iw,1)
      call live_timing(steps=1)
    enddo
@@ -360,7 +377,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  deallocate(inv_err)
  call pp_indexes_reset(px)
- deallocate(BS_mat,iw_full,nw_full,Lo)
+ deallocate(BS_mat,iw_full,Lo)
  call mem_est("BS_mat Lo")
 #if defined PJ_PH
  if (allocated(EXCPH_mat)) then
@@ -379,6 +396,7 @@ contains
     integer     :: iw_2start,iw_2do
     !
     integer :: i2,i3
+    logical :: perform_inv
     !
     do i2=1,iw_2do
       !
@@ -401,7 +419,10 @@ contains
         !
       endif
       !
-      if (inv_err(i2+iw_2start-1)/=0) &
+      if (full_diago) perform_inv=inv_err(i2+iw_2start-1)/=0
+      if (.not.full_diago) perform_inv=inv_err(i2+iw_2start-1)==-1
+      !
+      if (perform_inv) &
 &       inv_err(i2+iw_2start-1)=pert_inversion(BS_K_dim,BSS_rhoq0,-1.*Co,&
 &              X_epsilon(2,i2+iw_2start-1),Lo(:,i2+iw_2start-1),BS_mat,full_diago)
       !

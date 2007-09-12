@@ -194,6 +194,9 @@
    if (K_is_not_hermitian) then
      call mat_dia_inv(DIAGO,lib_driver,BS_mat,E_cmpl=BS_E,&
 &                     V_left=BS_V_left,V_right=BS_V_right)
+     !
+     if (BSS_write_eig_2_db) BS_mat=BS_V_right
+     !
    else
      call mat_dia_inv(DIAGO,lib_driver,BS_mat,E_real=BS_E_real)
      BS_E=BS_E_real

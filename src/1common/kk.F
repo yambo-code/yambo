@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine kk(fi,wi,ni,fo,wo,no,y0)
+subroutine kk(fi,wi,ni,fo,wo,no,y0)
  !----------------------------------
  !
  ! Calculates Kramers-Kronig transformation:
@@ -57,4 +57,4 @@
    enddo
  enddo
  !
- end subroutine
+end subroutine

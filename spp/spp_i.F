@@ -64,9 +64,6 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  call E_reset(Xen)
  call it_reset(1)
 
-!#if defined SPP_PJ_RAS
-! goto 100 ! Presently, RAS does not need SAVE databases
-!#endif
  !
  ! Switch off report file support
  !

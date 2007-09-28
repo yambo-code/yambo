@@ -82,11 +82,8 @@
  !
  call it(defs,'XData',     'Filename of q[x] data',xdata)
  call it(defs,'YData',     'Filename of q[y] data',ydata)
-!call it(defs,'XDataCol',  'Column of q[x] data',xdatacol)
-!call it(defs,'YDataCol',  'Column of q[y] data',ydatacol)
  call it(defs,'SrfShift',  'Shift of surface spectra',sshift,E_unit)
-!call it(defs,'SrfScale',  'Scaling factor of surface spectra',sscale) ! defunct
- call it(defs,'DataType',  'Epsilon/alpha data, (i,r) columns [e23/e45/a23/a45]',datatype)
+ call it(defs,'DataType',  'Form of epsilon/alpha data on input [eps/a_t/a_r+23/45]',datatype)
  call it(defs,'d_cell',    'Perpendicular component of cell',d_cellin)
  call init_bulk(defs)
  call init_convolute(defs)

@@ -76,7 +76,7 @@
  enddo
  if (ikibz==nkibz) call pw_wfcstop(pw_unit)
 
-#elif defined _P2S_V31 
+#elif defined _P2S_V31  || defined _P2S_V311
 
  do ispin=1,n_spin
 

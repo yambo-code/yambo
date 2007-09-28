@@ -1,3 +1,245 @@
+2007-09-12 16:39:51 r157 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.10_29-08-07
+
+	*  spp/BZ_RIM.F 7bse/K_inversion.F 7bse/K_diagonalization.F 1common/kk.F 3kop/bz_samp_indexes.F
+
+	Bugs:
+	- Error in bz_samp_indexes.F for grids that are parts of uniform grids.
+
+	Additions:
+	- Direct and indirect gaps are reported in spp (RIM) procedure.
+	- Option to write RIGHT (only) eigenvectors after diagonalization
+	  with non hermitian kernels.
+
+	Changes:
+	- K_inversion procedure to sample non converged frequencies after the
+	  perturbative inversion improved.
+
+	Patch sent by: Andrea
+
+2007-09-05 15:29:20 r156 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	V 3.0.10_29-08-07
+
+	*  spp/mod_SPP.F spp/ras_spp.F spp/spp_init_load.F spp/spp_init.F
+
+	Changes:
+	- Improved input processing for spp_ras
+
+2007-08-31 19:19:35 r155 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	V 3.0.10_29-08-07
+
+	*  spp/mod_SPP.F spp/ras_spp.F spp/spp_i.F spp/spp_init_load.F spp/spp_init.F 2ras_reels_mods/mod_ras.F 4ras/X_O_transverse_cut.F 4ras/extract_eps_surf.F 4ras/rasdriver.F 4ras/.objects 4ras/ras_spectrum.F
+
+	Additions:
+	- SPP for RAS now supports reading output of BSS calculation.
+	Changes:
+	- Some changes in the definition of the surface dielectric function.
+
+	Patch sent by: Conor
+
+2007-08-29 11:43:01 r154 Andrea Marini <marini@roma2.infn.it>
+
+	Oops in K.F [andrea]
+
+2007-08-29 11:41:08 r153 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.10_29-08-07
+
+	*  spp/exc_wf_eval.F spp/elph_pw_dbs.F 3.0.10_29-08-07 include/version.inc config/Makefile.in 0modules/mod_BS.F 2io/ioBS_FXC.F 2io/io_header.F 7bse/K_driver.F 7bse/K_solvers.F 7bse/K_diagonalization.F 7bse/K_eh_setup.F 7bse/K_inversion.F 7bse/K.F 3qp_ctl/mod_QP_CTL.F 3qp_ctl/QP_apply_db.F 1common/fermi_msg.F 3.0.10_11-07-07
+
+	Bugs:
+	- exc_wf_eval was not sorting energies in 'e' mode.
+	- Bug in K.F when calculating correlation only kernels. [reported by M. Palummo]
+
+	Additions:
+	- exc_wf_eval not reports excitonic widths as well.
+	- io_header: added QP_ctl_short_descr string in K QP corrections
+	  section
+	- BS_eh_W and BS_eh_Z arrays to store e/h widths and Z's
+	- K_diagonalization now switches to the non-hermiatian case
+	  when QP widths are used in the BSE.
+
+	Changes:
+	- The section in QP_apply_db that takes care of extracting a short
+	  description of the QP databse properties has been rewritten to
+	  accept a more general format.
+	- fermi_msg now reports for both spin channels the direct/indirect gap
+	  and metallic/full/empty bands.
+
+	Patch sent by: Andrea
+
+2007-08-24 12:37:25 r152 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.10_11-07-07
+
+	*  configure p2s/p2s_i.F p2s/mod_p2s.F config/Makefile.in config/configure.ac 1common/fermi_msg.F 1common/fermi_level.F 5elph/QP_elph.F
+
+	Bugs:
+	- Wrong CPP option in configure to compile p2s with 3.2
+	  support.
+	- Wrong treatment of collinear spin resolved systems with
+	  odd number of electrons [reported by Claudio Attaccalite].
+	- p2s was unable to load input file names that include paths
+	  (e.g. p2s -F PATH/index.xml)
+
+	Patch sent by: Andrea
+
+2007-08-22 18:54:57 r151 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	V 3.0.10_11-07-07
+
+	*  e2s/e2s_kb_pp.F
+
+	Bugs:
+	- Bugs during conversion of KBPP factors in e2s fixed.
+	Changes:
+	- e2s now fully functional with etsf_io_1.0-rc2
+	Patch sent by: Conor
+
+2007-08-21 16:42:30 r150 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.10_11-07-07
+
+	*  configure config/configure.ac 5elph/QP_states_simmetrize.F 5elph/QP_elph.F
+
+	Bugs:
+	- configure gave wrong CPP directive for P2S_V3.2
+
+	Additions:
+	- [PJ_ELPH] Now the eliashberg functions are splitted in DW, FAN, Correlation
+	  part
+
+	Patch sent by: Andrea
+
+2007-08-20 17:08:24 r149 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.10_11-07-07
+
+	*  spp/mod_SPP.F spp/spp_init_load.F spp/spp_init.F spp/elph_pw_dbs.F 5X/O_driver.F 5elph/QP_elph.F
+
+	Bugs:
+	- In elph_pw_dbs.F when finding the small group os symmetries at a
+	  given Q for non cubic DL cells [ELPH project].
+	- Gauge string in O_driver.F was wrong when using the transverse
+	  gauge with no commutator.
+	- In O_driver.F at gamma point only it is now specified that the
+	  q->0 direction is written in the output file.
+	- Small bug in QP_elph for uniform Q grids [ELPH project].
+
+	Additions:
+	- ph_freqs_file in mod_SPP.F [ELPH project] to re(read)
+	  PW interpolated phonon frequencies. spp_init_load.F , spp_init.F
+	  elph_pw_dbs.F changed as well.
+
+	Patch sent by: Andrea
+
+2007-08-20 16:07:00 r148 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	V 3.0.10_11-07-07
+
+	*  e2s/e2s_db1.F e2s/e2s_i.F e2s/e2s_kb_pp.F e2s/etsf_data.F 0modules/mod_memory.F
+
+	Bugs:
+	- Memory management fixed for very large memory used
+	Changes:
+	- e2s updated for etsf_io 1.0-rc2, k_independent=.false. outkss output;
+	  kb_pp and wfc files added, some tests needed
+
+	Patch sent by: Conor
+
+2007-08-14 18:50:13 r147 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.10_11-07-07
+
+	*  spp/k_analyze.F 0modules/mod_IO.F 0modules/mod_ELPH.F 2io/ioBSS_invert.F 2io/ioQP.F 2io/io_header.F 4it/init_load.F 7bse/K_inversion.F
+
+	Bugs:
+	- When QP corrections where calculated with different alat SELF
+	  was unable to identify correctly the k-points in the QP DB.
+	  Fixed adding alat(3) to the DB's header.
+
+	Additions:
+	- Alat(3) nos saved in DB headers (mode_IO, ioQP, io_header)
+
+	Changes:
+	- ELPH specific DB name for saving BS invertion points (ioBSS_invert)
+
+	Patch sent by: Andrea
+
+2007-07-25 15:12:33 r146 Andrea Marini <marini@roma2.infn.it>
+
+	Update in ELPH project
+
+2007-07-25 12:06:04 r145 Andrea Marini <marini@roma2.infn.it>
+
+	Bug fixed in ELPH project
+
+2007-07-19 15:24:16 r144 Andrea Marini <marini@roma2.infn.it>
+
+	Small bugs fixed
+
+2007-07-16 11:59:57 r143 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	V 3.0.10_11-07-07
+
+	*  2ras_reels_mods/mod_long.F
+
+	Bugs:
+	- File missing in distro for RAS. Oops.
+
+	Patch sent by: Conor
+
+2007-07-15 17:27:11 r142 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.10_11-07-07
+
+	*  configure spp/exc_wf_eval.F spp/exc_wf_gnuplot.F spp/exc_wf_xcrysden.F config/acx.m4 config/configure.ac config/acx_get_fc_version.m4 0modules/mod_D_lattice.F
+
+	Bugs:
+	- In spp/exc_wf_eval.F spp/exc_wf_xcrysden.F  [Daniele]
+	- 0modules/mod_D_lattice.F bug in atoms_spatial_invertion (reported by Conor) [Andrea]
+	Additions:
+	- config/acx_get_fc_version.m4 to get compiler (only ifort at the moment) versions.
+	  The variable FCVERSION is then used to set ad-hoc compiler options in config/acx.m4  [Andrea]
+
+	Patch sent by: Andrea & Daniele
+
+2007-07-13 15:14:23 r141 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	V 3.0.10_11-07-07
+
+	*  2ras_reels_mods/.objects 5X/X_O_longitudinal.F 4ras/reels_spectrum.F 4ras/rasdriver.F 4ras/X_O_longitudinal_cut.F
+
+	Changes:
+	- Removed compilation errors in RAS routines.
+
+	Patch sent by: Conor
+
+2007-07-12 19:29:48 r140 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	V 3.0.10_11-07-07
+
+	*  2ras_reels_mods/mod_eels_gvec.F 2ras_reels_mods/mod_eels_kinematics.F 2ras_reels_mods/mod_eels_detector.F 4reels/reelsdriver.F ChangeLog
+
+	Changes:
+	- Some REELS routines brought up to date
+
+	Patch sent by: Conor
+
+2007-07-11 10:59:08 r139 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	V 3.0.10_11-07-07
+
+	*  configure config/configure.ac
+
+	Bugs:
+	- Fixed a small bug for configuring 3.2
+
+	Patch sent by: Conor
+
 2007-07-11 00:18:41 r138 Andrea Marini <marini@roma2.infn.it>
 
 	Files update

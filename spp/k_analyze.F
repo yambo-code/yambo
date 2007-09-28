@@ -40,10 +40,12 @@
  !
  type(bz_samp)::GWK,Final_K,Q_user
  real(SP)     ::real_ctl,v(3),ka(3),q0(3)
- integer      ::i1,i2,is,ik
+ integer      ::i1,i2,is,ik, j1
  real(SP):: kout(Xk%nibz,3)
  integer,  allocatable :: int_ctl(:)
  character(schlen)     :: ch
+ character(len=35)     :: fm
+ integer               :: fac(3)
  !
  call bz_samp_reset(GWK)
  call bz_samp_reset(Q_user)
@@ -182,6 +184,7 @@
  call parser('KShift1',qlong(1,:))
  call parser('KShift2',qlong(2,:))
  call parser('KShift3',qlong(3,:))
+
  !
  if(any(abs(qlong)/=0.)) then
    !
@@ -202,9 +205,10 @@
    do i1=1,3
      q0 = qlong(i1,:)
      !
-     if (v_norm(q0)>1.E-5) q0 = qlong(i1,:)*1.E-5/v_norm(q0)
+     if (v_norm(q0)>1.E-4) q0 = qlong(i1,:)*1.E-4/v_norm(q0)
      !
      if(v_norm(q0).gt.1e-6) then
+      
        i2 = i2 + 1
        !
        ! Convert input q0 to iku
@@ -219,14 +223,24 @@
        !
        ! Print shift vector in new basis
        !
-       write(ch,'(a,i1,a,3(f8.5,a),2a)') " -- Shifted K-grid[",i2,&
+       write(ch,'(a,i1,a,3(f10.7,a),2a)') " -- Shifted K-grid[",i2,&
 &      "]: {K} + (",q0(1),",",q0(2),",",q0(3),") [",trim(coo_out),"]"
        call msg("s",trim(ch))
        !
        ! Print the shifted mesh
        !
        do ik=1,Xk%nibz
-         write(ch,'(3f12.7)') kout(ik,:)+q0(:)
+         !
+         ! Ensure 7 *significant figures*, otherwise round off errors may
+         ! occur later
+         !
+         fac = 1 ! fall back for q=0
+         where(abs(kout).lt.1e-7) kout = 0.0_SP ! remove SP error k points
+         where(abs(kout(ik,:)+q0(:)).gt.0.0_SP) &
+&           fac(:) = -floor(log10( abs(kout(ik,:)+q0(:)) )+0.001)
+         write(fm,'(a,3(a,i2,a,i2,a),a)') &
+&                 "(",("f",12+fac(j1),".",6+fac(j1),",",j1=1,3),"a)"
+         write(ch,fm) kout(ik,:)+q0(:), " WK" ! WK is useful for replacing with weights when needed
          call msg("s",trim(ch))
        enddo
      endif

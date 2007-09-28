@@ -93,8 +93,8 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  wf_ng_save=wf_ng
  in_path_save = in_path
  !
- if (wf_ng/=maxval(wf_igk)) &
-&   call warning('All WF G-vectors should be used in the long. gauge')
+ if (wf_ng.lt.0.8_SP*maxval(wf_igk)) &
+&   call warning('All/most WF G-vectors should be used in the long. gauge')
  !
  ! Read longitudinal k-point grids from second ioDB1
  !
@@ -297,6 +297,11 @@ subroutine check_shifted_grids( Xk_shift, Xk, ifail, num_long_grid )
    i_grid_k = (iq-1)*Xk%nibz
    q_init(:) = Xk_shift%pt(i_grid_k + 1,:) - Xk%pt(1,:) ! units of [iku]
    !
+   ! This is a dirty fix to solve problems arising with small shifts 
+   ! close to the limit of single precision
+   !
+   where(abs(q_init).lt.abs(Xk%pt(1,:)*1e-6)) q_init = 0.0_SP
+   !
    ! Check grid is uniformly shifted
    !
    do ik = 2, Xk%nibz
@@ -316,8 +321,9 @@ subroutine check_shifted_grids( Xk_shift, Xk, ifail, num_long_grid )
  enddo
  !
  ! Check the lengths are compatible (not abolutely required)
+ ! CDH 270907 This is not clear...
  !
- q0_def_norm = q_mod(1)  ! a.u.
+ q0_def_norm = q_mod(1)  ! a.u. 
  q_mod(1:num_long_grid) = q_mod(1:num_long_grid) - q0_def_norm
  if(.not.all( abs(q_mod).lt. 1.0e-5_SP )) then
    call msg('r','Long. gauge shifts are not uniform for all {k}.')

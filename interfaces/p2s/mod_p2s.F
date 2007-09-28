@@ -66,9 +66,13 @@ contains
 #elif defined _P2S_V31
 
    index_filename = 'data-file.xml'
-   pwversion = 311 ! default
-   if(index(instr,'31').ne.0)  pwversion = 31
-   if(index(instr,'311').ne.0) pwversion = 311
+   pwversion = 31 
+   write(lch,'(a,i3,a)') '== PWscf v.',pwversion,' generated data =='
+
+#elif defined _P2S_V311
+
+   index_filename = 'data-file.xml'
+   pwversion = 311
    write(lch,'(a,i3,a)') '== PWscf v.',pwversion,' generated data =='
 
 #elif defined _P2S_V32
@@ -78,7 +82,7 @@ contains
 
 #endif
 
-   if (len_trim(inf)>0) index_filename = inf
+   if (trim(inf).ne."p2s.in") index_filename = inf
 
    call msg('s','Index file set to ',trim(index_filename))
    inquire(file=trim(index_filename),exist=lexist)
@@ -95,7 +99,7 @@ contains
    call msg('s','== pw_export generated data ==')
    call pw_openindex(pw_unit,index_filename) ! open index.xml file
     
-#elif defined _P2S_V31 
+#elif defined _P2S_V31  || defined _P2S_V311
 
    call msg('s',trim(lch))
    rhounit_ = 12
@@ -126,7 +130,7 @@ contains
 
    call pw_closeindex(pw_unit) ! close index.xml file
 
-#elif defined _P2S_V31 || defined _P2S_V32
+#elif defined _P2S_V31 || defined _P2S_V32 || defined _P2S_V311
 
    call qexml_closefile("read",ierr) ! close index.xml file
 
@@ -156,7 +160,7 @@ contains
 
    call pw_dimensions(pw_unit)
     
-#elif defined _P2S_V31
+#elif defined _P2S_V31 || defined _P2S_V311
 
    call qexml_read_bands(nbnd=nbnd_, num_k_points=num_k_points_, &
 &                        nspin=n_spin_pw_, nelec=nelec_, ierr=ierr)
@@ -171,11 +175,11 @@ contains
    if (ierr.ne.0) then
      call msg('s','Error reading data: most likely you are using an incompatible')
      call msg('s','version of p2s with your data (3.1/3.1.1/3.2).')
-     call msg('s','Try -q 31, or compile a compatible version of p2s.')
+     call msg('s','Action: Compile a compatible version of p2s.')
      call errore('qexml_read_bands.','IOTK error:',ABS(ierr)) 
    endif
 
-#if defined _P2S_V31 || _P2S_V32
+#if defined _P2S_V31 || _P2S_V32 || defined _P2S_V311
 
    call qexml_read_symmetry(nsym=nsym_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_symmetry','IOTK error',ABS(ierr))
@@ -260,7 +264,7 @@ contains
 
    deallocate(atom_type_,species_type_)
 
-#elif defined _P2S_V31 || _P2S_V32
+#elif defined _P2S_V31 || defined _P2S_V32 || defined _P2S_V311
 
    tau_units = 1.0_DP
    allocate( atm_(n_atom_species))
@@ -307,7 +311,7 @@ contains
 
    call pw_cell(pw_unit)
 
-#elif defined _P2S_V31 || _P2S_V32
+#elif defined _P2S_V31 || defined _P2S_V32 || defined _P2S_V311
 
    call qexml_read_cell(alat=alat_, a1=a1_, a2=a2_, a3=a3_,ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_cell','IOTK error',ABS(ierr))
@@ -345,7 +349,7 @@ contains
 
    call pw_symmetry(pw_unit)
 
-#elif defined _P2S_V31 || defined _P2S_V32
+#elif defined _P2S_V31 || defined _P2S_V32 || defined _P2S_V311
 
    call qexml_read_symmetry(invsym=invsym_, s=isym_(:,:,1:nsym_), ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_symmetry','IOTK error',ABS(ierr))
@@ -376,7 +380,7 @@ contains
 
    call pw_kpoints(pw_unit)
 
-#elif defined _P2S_V31 || _P2S_V32
+#elif defined _P2S_V31 || defined _P2S_V32 || defined _P2S_V311
 
    call qexml_read_bz(xk=xk_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_bands','IOTK error',ABS(ierr))
@@ -425,7 +429,7 @@ contains
 
    call pw_gvectors(pw_unit)
 
-#elif defined _P2S_V31 || _P2S_V32
+#elif defined _P2S_V31 || defined _P2S_V32 || defined _P2S_V311
 
    call qexml_read_planewaves(igv=igv_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_planewaves','IOTK error',ABS(ierr))
@@ -465,7 +469,7 @@ contains
    wf_nc_k(:) = pw_npwk_(:)
    deallocate(pw_npwk_)
 
-#elif defined _P2S_V31  
+#elif defined _P2S_V31  || defined _P2S_V311
 
    allocate( pw_igk_(ng_vec, k%nibz))
    allocate(index_(ng_vec))     ! avoid allocate(index_(wf_ncx)) in case of v3.1 bug
@@ -553,7 +557,7 @@ contains
     
    en%E(:,:,1) = eig_( 1:en%nb, 1:k%nibz )/2.0_DP ! pw_export in Hartree
     
-#elif defined _P2S_V31
+#elif defined _P2S_V31 || defined _P2S_V311
 
    select case(n_sp_pol)
    case(1)
@@ -603,7 +607,7 @@ contains
    use xc_functionals,        ONLY : GS_xc_KIND,GS_xc_FUNCTIONAL
    implicit none
 
-#if defined _P2S_V31 || _P2S_V32
+#if defined _P2S_V31 || defined _P2S_V32 || defined _P2S_V311
    call qexml_read_xc(dft=pw_dft, ierr=ierr)
    call scan_xc(pw_dft,GS_xc_KIND,GS_xc_FUNCTIONAL)
 #endif

@@ -27,9 +27,6 @@ contains
     integer                :: ix,iq, itmp(1), is
 
     call msg('r','Check consistency of q-vector with longitudinal grids:')
-!   write(*,*)
-!   write(*,*) "Select field long"
-!   write(*,*)
     ca=reshape((/1.,0.,0.,0.,1.,0.,0.,0.,1./),(/3,3/))
 
     if(ifail>0) return
@@ -38,7 +35,7 @@ contains
     !
     do iq = 1,num_long_grid
       call c2a(v_in=q_long(:,iq), v_out=qtemp, mode="ki2c")
-      q_long_norm(:,iq) = normalize_v(qtemp)
+      q_long_norm(:,iq) = qtemp/v_norm(qtemp)
     enddo
 
     field_tmp = field_dir
@@ -63,13 +60,11 @@ contains
       enddo
       itmp = maxloc( q_long_norm(:,3) )
       grid_dir(3) = itmp(1)
-!     write(*,*) " grid_dir(3) = ", grid_dir(3)
       !
       ! Check that field_dir never leaves the plane of the two shifted grids
       !
       do is=1,nsym
         field_dir_rot = matmul( dl_sop(:,:,is), field_dir ) / q0_def_norm
-!       write(*,*) " field_dir_rot ",is,"=",  field_dir_rot
 
         if(abs(field_dir_rot(grid_dir(3))).gt.zero) then
           call msg('r','Symmetries do not allow this q-vector with these grids.')

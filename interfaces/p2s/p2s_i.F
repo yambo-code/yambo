@@ -87,7 +87,9 @@
 #if defined _P2S_EXPORT
  call section('*','P(W) 2 S(elf) - pw_export.x version')
 #elif defined _P2S_V31
- call section('*','P(W) 2 S(elf) Ver(s). 3.1 / 3.1.1')
+ call section('*','P(W) 2 S(elf) Ver(s). 3.1 ')
+#elif defined _P2S_V311
+ call section('*','P(W) 2 S(elf) Ver(s). 3.1.1')
 #elif defined _P2S_V32
  call section('*','P(W) 2 S(elf) Ver. 3.2')
 #else

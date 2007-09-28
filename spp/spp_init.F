@@ -93,17 +93,14 @@
    ! RAS
    !
    xdata = 'o.eps-rpa_00'
-   ydata = 'none'
-!  xdatacol = 'ir'
-!  ydatacol = 'ir'
+   ydata = 'o.eps-rpa_00'
    bshift  = 0.0_SP       ! bulk shift
    bbroad  = 0.0_SP       ! bulk broadening
    bfile = "bulk.dat"     ! file of bulk
    btype = "3ir"
    gbroad  = 0.0          ! gaussian convolution, FWHM
    sshift = 0.0           ! surface shift
-!  sscale  = 1.0_SP       ! surface epsilon scaling factor/not used
-   datatype = 'e23'
+   datatype = 'eps23'
    d_cellin = 1.0
    !
 #endif

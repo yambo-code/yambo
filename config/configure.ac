@@ -135,7 +135,7 @@ AC_SUBST(iotk_dir)
 # check for p2s versions
 #
 AC_ARG_WITH(p2s, AC_HELP_STRING([--with-p2s=<mode>],
- [Interface mode in PW 2 SELF : <export> <3.1> <3.2>]))
+ [Interface mode in PW 2 SELF : <export> <3.1> <3.1.1> <3.2>]))
 
 PW_VER="3.2"
 PW_CPP="_P2S_V32"
@@ -147,6 +147,10 @@ if test "$compile_p2s" = "yes"; then
  if test "$with_p2s" = "3.1"; then
   PW_VER="3.1"
   PW_CPP="_P2S_V31"
+ fi
+ if test "$with_p2s" = "3.1.1"; then
+  PW_VER="3.1.1"
+  PW_CPP="_P2S_V311"
  fi
  if test "$with_p2s" = "3.2"; then
   PW_VER="3.2"

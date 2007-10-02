@@ -68,14 +68,6 @@ done
 llibs="$lib_path $llibs"
 linclude="-I\$(includedir)"
 case $target in
-  self_ras)
-   llibs="$llibs \$(llapack) \$(lscalapack) \$(lblacs) \$(lblas)"
-   llibs="$llibs \$(lnetcdf) -lslatec \$(lfftw) -lm $llmpi"
-    ;;
-  self_reels)
-   llibs="$llibs \$(llapack) \$(lscalapack) \$(lblacs) \$(lblas)"
-   llibs="$llibs \$(lnetcdf) -lslatec \$(lfftw) -lm $llmpi"
-    ;;
   self*)
    llibs="$llibs \$(llapack) \$(lscalapack) \$(lblacs) \$(lblas)"
    llibs="$llibs \$(lnetcdf) -lslatec \$(lfftw) -lm $llmpi"

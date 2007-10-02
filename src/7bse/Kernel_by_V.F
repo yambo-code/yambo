@@ -68,7 +68,7 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
  !
  if (present(iter)) then
    use_fragments=BS_DB_is_fragmented
-   db_load= use_fragments.or.(iter==1.and..not.allocated(BS_mat))
+   db_load= use_fragments.or.(iter>=0.and..not.allocated(BS_mat))
  else
    use_fragments=.false.
    db_load=.not.allocated(BS_mat)
@@ -79,15 +79,11 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
    if (.not.use_fragments) then
      call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
      ioBS_err=ioBS(iq,X,ID)
-     if (.not.allocated(BS_mat)) then
-       if (BS_K_coupling) then
-         allocate(BS_mat(2*BS_K_dim,2*BS_K_dim))
-         call mem_est('BS_mat',(/2*BS_K_dim**2/))
-       else
-         allocate(BS_mat(BS_K_dim,BS_K_dim))
-         call mem_est('BS_mat',(/BS_K_dim**2/))
-       endif
-     endif
+     !
+     if (BS_K_coupling)      allocate(BS_mat(2*BS_K_dim,2*BS_K_dim))
+     if (.not.BS_K_coupling) allocate(BS_mat(BS_K_dim,BS_K_dim))
+     call mem_est('BS_mat',(/2*size(BS_mat)/))
+     !
    else
      call pp_indexes_reset(Kp)
      call par_indexes(Kp,(/cumulative_index(1,nXkibz)-1/))
@@ -194,17 +190,23 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
    enddo
  endif
  !
+ ! No need to do any matrix X vector multiplication
+ !
  if (.not.present(iter)) return
  !
  if (.not.use_fragments) then
+   !
 #if defined _DOUBLE
    call zgemv('n',BS_K_dim,BS_K_dim,(1.,0.),BS_mat,BS_K_dim,Vi,1,(0.,0.),Vo,1)
 #else
    call cgemv('n',BS_K_dim,BS_K_dim,(1.,0.),BS_mat,BS_K_dim,Vi,1,(0.,0.),Vo,1)
 #endif
+   !
  else
+   !
    call pp_redux_wait(Vo)
    call pp_indexes_reset(Kp)
+   !
  endif
  !
 end subroutine

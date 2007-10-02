@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioBSS_Haydock(ID,it,Af,Bf,reached_treshold,Vnm1,Vn,Vnp1)
+integer function ioBSS_Haydock(ID,it,Af,Bf,reached_treshold,Vnm1,Vn)
  !
  use pars,          ONLY:SP
  use QP_m,          ONLY:QP_ctl_E
@@ -33,7 +33,6 @@ integer function ioBSS_Haydock(ID,it,Af,Bf,reached_treshold,Vnm1,Vn,Vnp1)
  real(SP) :: Bf(it+1)
  real(SP) :: Vnm1(2,BS_K_dim)
  real(SP) :: Vn(2,BS_K_dim)
- real(SP) :: Vnp1(2,BS_K_dim)
  ! 
  ! Work Space
  !
@@ -75,8 +74,6 @@ integer function ioBSS_Haydock(ID,it,Af,Bf,reached_treshold,Vnm1,Vn,Vnp1)
    call io_bulk(ID,R2=Vnm1)
    call io_bulk(ID,'Vn',VAR_SZ=(/2,BS_K_dim/))
    call io_bulk(ID,R2=Vn)
-   call io_bulk(ID,'Vnp1',VAR_SZ=(/2,BS_K_dim/))
-   call io_bulk(ID,R2=Vnp1)
    call io_bulk(ID,'A_factors',VAR_SZ=(/2,it/))
    call io_bulk(ID,R2=Af)
    call io_bulk(ID,'B_factors',VAR_SZ=(/it+1/))

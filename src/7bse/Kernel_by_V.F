@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine Kernel_by_V(iq,iter,Vi,Vo)
+subroutine Kernel_by_V(iq,iter,Vi,Vo)
  !
  !
  ! Here I fill the upper half of the kernel (coupling included):
@@ -66,11 +66,13 @@
  ! an  Haydock cycle. Otherwise the fragments must  be
  ! used to fill BS_mat (like in diago/invert solvers)
  !
- use_fragments=.false.
- if (present(iter)) use_fragments=BS_DB_is_fragmented
- !
- db_load=.not.present(iter).or.use_fragments
- if (.not.db_load.and.present(iter)) db_load=iter==1
+ if (present(iter)) then
+   use_fragments=BS_DB_is_fragmented
+   db_load= use_fragments.or.(iter==1.and..not.allocated(BS_mat))
+ else
+   use_fragments=.false.
+   db_load=.not.allocated(BS_mat)
+ endif
  !
  if (db_load) then
    !
@@ -205,4 +207,4 @@
    call pp_indexes_reset(Kp)
  endif
  !
- end subroutine
+end subroutine

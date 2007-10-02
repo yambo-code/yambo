@@ -107,7 +107,7 @@
  ! As first step I define the map with respect to Q defined as difference
  ! of K-pts
  !
- if (m3det(k_b_m1)>1.E-7) then
+ if (abs(m3det(k_b_m1))>1.E-7) then
    call m3inv(M=k_b_m1)
 #if defined  PJ_PH
    if (impose_minus_q)      call define_q_map(-Xk%ptbz(:,:),-Xk%ptbz(1,:))

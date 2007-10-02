@@ -214,9 +214,9 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W)
      !
      if (FXC_is_causal) then 
        forall(i1=1:BS_blk_dim(ik1)) wk1(i1,:)=right_R(i1,:)*(&
-&            1._SP/(W%p(iw)-blk_Eo(1,i1))+1._SP/(conjg(W%p(iw))+blk_Eo(1,i1)) )
+&            1._SP/(W%p(iw)-blk_Eo(1,i1))+1._SP/(-W%p(iw)-blk_Eo(1,i1)) )
        forall(i2=1:BS_blk_dim(ik2)) wk2(:,i2)= left_R(:,i2)*(&
-&            1._SP/(W%p(iw)-blk_Eo(2,i2))+1._SP/(conjg(W%p(iw))+blk_Eo(2,i2)) )
+&            1._SP/(W%p(iw)-blk_Eo(2,i2))+1._SP/(-W%p(iw)-blk_Eo(2,i2)) )
      else
        forall(i1=1:BS_blk_dim(ik1)) wk1(i1,:)=right_R(i1,:)/(W%p(iw)-blk_Eo(1,i1))
        forall(i2=1:BS_blk_dim(ik2)) wk2(:,i2)= left_R(:,i2)/(W%p(iw)-blk_Eo(2,i2))
@@ -230,9 +230,9 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W)
      if (ik1/=ik2) then
        if (FXC_is_causal) then 
          forall(i1=1:BS_blk_dim(ik1)) wk1(i1,:)=right_R(i1,:)*(&
-&            1._SP/(conjg(W%p(iw))-blk_Eo(1,i1))+1._SP/(W%p(iw)+blk_Eo(1,i1)) )
+&            1._SP/(-conjg(W%p(iw))-blk_Eo(1,i1))+1._SP/(conjg(W%p(iw))-blk_Eo(1,i1)) )
          forall(i2=1:BS_blk_dim(ik2)) wk2(:,i2)= left_R(:,i2)*(&
-&            1._SP/(conjg(W%p(iw))-blk_Eo(2,i2))+1._SP/(W%p(iw)+blk_Eo(2,i2)) )
+&            1._SP/(-conjg(W%p(iw))-blk_Eo(2,i2))+1._SP/(conjg(W%p(iw))-blk_Eo(2,i2)) )
        else
          forall(i1=1:BS_blk_dim(ik1)) wk1(i1,:)=right_R(i1,:)/(conjg(W%p(iw))-blk_Eo(1,i1))
          forall(i2=1:BS_blk_dim(ik2)) wk2(:,i2)= left_R(:,i2)/(conjg(W%p(iw))-blk_Eo(2,i2))

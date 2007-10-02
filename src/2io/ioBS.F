@@ -23,7 +23,7 @@
  !
  use pars,          ONLY:SP,schlen,HARTREE
  use X_m,           ONLY:X_t
- use R_lattice,     ONLY:nXkibz,RIM_ng,RIM_n_rand_pts
+ use R_lattice,     ONLY:nXkibz,RIM_ng,RIM_n_rand_pts,cut_geometry
  use stderr,        ONLY:intc
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use BS,            ONLY:BS_mat,BS_identifier,BS_K_dim,BS_bands,&
@@ -161,6 +161,16 @@
      call io_elemental(ID,&
 &         VAR="    |Field direction         :",R1=X%q0,CHECK=.true.,OP=(/"==","==","=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     !
+     if (ver_is_gt_or_eq(ID,(/3,0,11/))) then
+       !
+       ! v 3.0.11: Inclusion of cut_geometry
+       !
+       call io_elemental(ID,VAR="W_Cutoff",VAR_SZ=1,CH0="",MENU=0)
+       call io_elemental(ID,&
+&           VAR="    |Columbian Cutoff        :",CH0=cut_geometry,CHECK=.true.,OP=(/"=="/))
+       call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     endif
      !
      ! W_TDDFT_KERNEL
      !

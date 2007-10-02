@@ -35,7 +35,7 @@
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
-&                     cyl_ph_radius,box_length,cyl_length,cut_geometry,CUTOFF_plus_RIM
+&                     cutoff_presets
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_RIM_nbands,BZ_RIM_tot_nkpts,&
 &                     filled_tresh, spin_orbit
  use par_proc_m, ONLY:myid,master_node
@@ -123,18 +123,19 @@
  ng_closed=0
  bse_scattering=.false.
  Xk_grid_is_uniform=.true.
+ q0_def_norm=1.E-5
+ !
+ ! RIM
+ !
  RIM_id_epsm1_reference=0
  RIM_epsm1=0.
  RIM_anisotropy=0.
  RIM_ng=0
  RIM_n_rand_pts=0
- Box_length=0.
- cyl_ph_radius=0.
- box_length=0.
- cyl_length=0.
- cut_geometry='sphere'
- CUTOFF_plus_RIM=.false.
- q0_def_norm=1.E-5
+ !
+ ! CUTOFF
+ !
+ call cutoff_presets()
  !
  !D_lattice
  !

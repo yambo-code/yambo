@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine cutoff_driver(q)
+subroutine cutoff_driver(q)
  !     
  ! In this subroutine I calculate the FT of a cutoffed coulomb
  ! interaction, zeroed outside a given cylinder/box/sphere geometry.
@@ -46,7 +46,7 @@
  use com,           ONLY:msg
  use R_lattice,     ONLY:cyl_ph_radius,box_length,cyl_length,cut_geometry,bz_samp
  use stderr,        ONLY:string_split,string_pack
- use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY
+ use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY,NONE
  use parser_m,      ONLY:parser
  use drivers,       ONLY:l_col_cut
  implicit none
@@ -69,6 +69,17 @@
  !
  integer ::ID,io_err
  integer, external :: ioCOL_CUT
+ !
+ ! First check if the cutoff written on disk is consistent
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
+ io_err=ioCOL_CUT(ID)
+ if (io_err==0) then
+   call section('*','Coloumb potential CutOff :'//trim(cut_geometry))
+   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
+   io_err=ioCOL_CUT(ID)
+   return
+ endif
  !
  ! Real-Space Test 
  !
@@ -250,4 +261,4 @@ if (.not.cut_is_sphere) cyl_ph_radius=0.
      !
    end function
    !
- end subroutine
+end subroutine

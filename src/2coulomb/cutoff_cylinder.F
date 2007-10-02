@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine cutoff_cylinder(q,is_cut)
+subroutine cutoff_cylinder(q,is_cut)
  !
  use pars,          ONLY:SP,pi
  use wave_func,     ONLY:wf_ng
@@ -168,7 +168,7 @@
  !
  forall (iq=1:q%nibz,ig=1:wf_ng) bare_qpg(iq,ig)=sqrt(1./V_cut(iq,ig))
  !
- end subroutine
+end subroutine
  !
  function F1(s)
    !

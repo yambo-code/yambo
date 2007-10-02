@@ -149,11 +149,10 @@
  !
  ! CUTOFF
  !
- call it(defs,'CUTGeo','[CUT] Coulomb Cutoff geometry: box/cylinder/sphere',cut_geometry,&
-&                         verb_level=V_more)
- call it(defs,'CUTBox','[CUT] [au] Box sides',box_length,verb_level=V_more)
- call it(defs,'CUTRadius','[CUT] [au] Sphere/Cylinder radius',cyl_ph_radius,verb_level=V_more)
- call it(defs,'CUTCylLen','[CUT] [au] Cylinder length',cyl_length,verb_level=V_more)
+ call it(defs,'CUTGeo','[CUT] Coulomb Cutoff geometry: box/cylinder/sphere',cut_geometry)
+ call it(defs,'CUTBox','[CUT] [au] Box sides',box_length)
+ call it(defs,'CUTRadius','[CUT] [au] Sphere/Cylinder radius',cyl_ph_radius)
+ call it(defs,'CUTCylLen','[CUT] [au] Cylinder length',cyl_length)
  call it('f',defs,'CUTCol_test','[CUT] Perform a cutoff test in R-space',verb_level=V_more)
  !
  ! S_xc

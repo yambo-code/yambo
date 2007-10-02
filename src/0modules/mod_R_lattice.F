@@ -168,4 +168,14 @@
    return
    end subroutine bz_samp_duplicate
    !
+   subroutine cutoff_presets()
+     implicit none
+     Box_length=0.
+     cyl_ph_radius=0.
+     box_length=0.
+     cyl_length=0.
+     cut_geometry='none'
+     CUTOFF_plus_RIM=.false.
+   end subroutine
+   !
  end module R_lattice

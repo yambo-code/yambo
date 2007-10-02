@@ -92,7 +92,7 @@ subroutine exc_wf_gnuplot(use_1d,use_2d,plot_dim,eval_only)
      ! vedi se stai pescando valori della wf, oppure no. Appunto nel caso che
      ! uno mette la hole in un punto con poca densita'.
      !
-     !wf_2d=wf_2d/wf_max 
+     wf_2d=wf_2d/wf_max 
      !
      do i1=0,nr2plot(1)-1
        call msg('o exc','',(/exc_wf_projection(i1,dir2plot(1)),&

@@ -186,6 +186,7 @@ subroutine exc_wf_eval(Xk)
    !r_hole_rlu(j1)=r_hole_rlu(j1)+nr(j1)/2
    !
    r_hole_rlu(j1)=r_hole_rlu(j1)+fft_dim(j1)*(ncell(j1)-1)/2
+   !
  enddo
  ir_hole=1+r_hole_rlu(1)+ r_hole_rlu(2)*nr(1)+ r_hole_rlu(3)*nr(1)*nr(2)
  r_hole=rvecbig(:,ir_hole)
@@ -300,6 +301,7 @@ subroutine exc_wf_eval(Xk)
        if (ncell(j1)<=0) ncell(j1)=1
        !
        ! Comment at (***)
+       !
        if (ncell(j1)/=1) then
          if (warning_) call warning('Forced even number of cell replicas')
          warning_=.FALSE.

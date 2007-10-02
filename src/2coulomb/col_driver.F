@@ -53,7 +53,7 @@
  use D_lattice,     ONLY:DL_vol
  use R_lattice,     ONLY:d3q_factor,RIM_is_diagonal,RIM_qpg,bare_qpg,&
 &                        nqibz,g_vec,q_pt,nqbz,RIM_ng,RIM_n_rand_pts,&
-&                        bz_samp,q_norm
+&                        bz_samp,q_norm,cutoff_presets
  use wave_func,     ONLY:wf_ng
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY
  implicit none
@@ -143,7 +143,10 @@
  !
  ! CUTOFF
  !
- if (.not.l_col_cut) return
+ if (.not.l_col_cut) then
+   call cutoff_presets()
+   return
+ endif
  !
  call cutoff_driver(q)
  !

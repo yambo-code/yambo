@@ -53,7 +53,7 @@
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
 &                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_RIM,BSS_damp_reference
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
-&                     FXC_per_memstps,FXC_LRC_alpha,FXC_SVD_cutoff,&
+&                     FXC_per_memstps,FXC_LRC_alpha,FXC_SVD_digits,&
 &                     FXC_is_causal
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
  use ELPH,       ONLY:ph_modes,elph_nb,ph_damping,PH_null_E_rgn
@@ -279,7 +279,7 @@
  FXC_n_g_corr=1
  FXC_per_memstps=100.
  FXC_LRC_alpha=0.
- FXC_SVD_cutoff=0.
+ FXC_SVD_digits=0
  FXC_is_causal=.false.
  !
  ! ACFDT

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine K_driver(Xen,Xk,q,X,Xw)
+ subroutine K_driver(Xen,Xk,q,X_static,Xw)
  !
  use pars,           ONLY:SP,IP
  use parser_m,       ONLY:parser
@@ -28,7 +28,7 @@
  use stderr,         ONLY:string_remove
  use electrons,      ONLY:levels,E_duplicate,E_reset,n_sp_pol
  use frequency,      ONLY:w_samp,W_reset
- use X_m,            ONLY:X_t
+ use X_m,            ONLY:X_t,X_duplicate,X_reset
  use BS,             ONLY:BS_bands,BS_q,BS_blk_dim,BS_eh_table,BS_eh_E,BS_eh_f,&
 &                         BS_n_g_exch,BSS_n_freqs,BSS_er,BSS_dr,&
 &                         BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
@@ -46,16 +46,18 @@
  implicit none
  type(levels)  ::Xen
  type(bz_samp) ::Xk,q
- type(X_t)     ::X 
+ type(X_t)     ::X_static
  type(w_samp)  ::Xw,W_bss 
  !
  ! Work Space
  !
  integer     :: iq
  type(levels):: Ken
+ type(X_t)   :: X_tddft
  integer, external :: eval_G_minus_G
  !
  call E_reset(Ken)
+ call X_reset(X_tddft)
  call W_reset(W_bss)
  call E_duplicate(Xen,Ken)
  !
@@ -134,15 +136,20 @@
  !
  iq=BS_q(1)
  !
- call K(iq,Ken,Xk,q,X,Xw,W_bss)
+ call K(iq,Ken,Xk,q,X_static,Xw,W_bss)
  !
  ! SOLVER
  !
- if (l_bss) call K_solvers(iq,Ken,Xk,q,X,W_bss)
+ if (l_bss) call K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! `TDDFT` SOLVER
  !
  if (l_bs_fxc) then
+   !
+   call X_duplicate(X_static,X_tddft) ! initialize X_tddft to X_static
+   !
+   X_tddft%ordering='r'
+   if (FXC_is_causal) X_tddft%ordering='c'
    !
    ! If the kernel contains QP corrections I have to equally correct Xen
    !
@@ -155,9 +162,10 @@
    endif
    !
    call pp_redux_wait
-   X%iq=iq
-   X%ng=BS_n_g_exch
-   call O_driver(Xen,Xk,q,W_bss,X) 
+   X_tddft%iq=iq
+   X_tddft%ng=BS_n_g_exch
+   call O_driver(Xen,Xk,q,W_bss,X_tddft) 
+   !
  endif
  !
  ! CLEAN

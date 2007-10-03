@@ -19,20 +19,21 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- module TDDFT
-  use pars
-
+module TDDFT
+  !
+  use pars,     ONLY:SP,lchlen
+  !
   character(lchlen):: FXC_description(100)
   character(10)    :: FXC_type
   integer          :: FXC_n_descs
   integer          :: FXC_n_g_corr
   integer          :: FXC_n_mem_freqs
+  integer          :: FXC_SVD_digits
   real(SP)         :: FXC_per_memstps
   real(SP)         :: FXC_LRC_alpha
-  real(SP)         :: FXC_SVD_cutoff
   logical          :: FXC_is_causal
+  !
   real(SP),    allocatable :: FXC_K_diagonal(:)
   complex(SP), allocatable :: FXC(:,:,:)
-
- end module
-
+  !
+end module

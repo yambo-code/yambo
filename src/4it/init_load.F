@@ -48,7 +48,7 @@
 &                        BS_n_g_W,BS_n_g_exch,BSS_mode,Haydock_treshold,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BS_cpl_mode,BSS_damp_reference
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,&
-&                        FXC_SVD_cutoff
+&                        FXC_SVD_digits
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
  use QP_m,          ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_W,QP_ctl_Z
  use com,           ONLY:out_path,in_path,db_wr_path
@@ -273,8 +273,8 @@
  call it(defs,'FxcMEStps','[TDDFT] [o/o] Memory energy steps',&
 &                         FXC_per_memstps,verb_level=V_more)
  call it(defs,'LRC_alpha','[TDDFT] LRC alpha factor',FXC_LRC_alpha)
- call it(defs,'FxcSVDcut','[TDDFT] Uses an SVD cutoff to invert Xo',&
-&                         FXC_SVD_cutoff,verb_level=V_more)
+ call it(defs,'FxcSVdig','[TDDFT] Keep SV that are within FxcSVdig digits',&
+&                         FXC_SVD_digits,verb_level=V_more)
  call it('f',defs,'FxcCausal', '[TDDFT] Causal TDDFT kernel',verb_level=V_more)
  !
  contains 

@@ -143,7 +143,7 @@
    end function
    !
    subroutine mat_dia_inv(idriver,lib_in,M,blt,V_left,V_right,&
-&                       E_real,E_cmpl,SVD_cutoff,fill)
+&                       E_real,E_cmpl,SVD_digits,fill)
      !
      use pars,        ONLY:SP
      use par_proc_m,  ONLY:pp_redux_wait,ncpu,myid
@@ -152,11 +152,12 @@
      complex(SP)            :: M(:,:)
      complex(SP),  optional :: V_left(:,:),V_right(:,:),E_cmpl(:)
      type(blacs_t),optional :: blt
-     real(SP),     optional :: E_real(:),SVD_cutoff
-     integer,      optional :: fill
+     real(SP),     optional :: E_real(:)
+     integer,      optional :: fill,SVD_digits 
      !
      !Work Spaces ...
      !
+     real(SP):: SV_min
      integer :: M_size,i1,i2,lib_in_use
      !
      ! ...serial invertion
@@ -224,8 +225,10 @@
        !
        if(ifail/=0) call report_diago_error('GESVD (SVD)','failed')
        !
+       SV_min=1./10**(SVD_digits-1)
+       !
        do i1=1,M_size
-         if (SV(i1)<SVD_cutoff) then
+         if (abs(SV(i1))<SV_min) then
            VH(i1,:)=cmplx(0.,0.,SP) 
          else
            VH(i1,:)=VH(i1,:)/SV(i1)

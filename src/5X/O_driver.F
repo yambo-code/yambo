@@ -224,7 +224,9 @@
        X_epsilon(6,fr(1):fr(2))=(1.-1./X_epsilon(2,fr(1):fr(2)))/4./pi*eps_2_alpha ! (2)
        !
      else
+       !
        X_epsilon(6,fr(1):fr(2))=(X_epsilon(2,fr(1):fr(2))-1._SP)*eps_2_alpha/4./pi ! (3)
+       !
      endif
      !
      call of_open_close(of_name(1),'oa')
@@ -233,13 +235,21 @@
      !
      if (i1==1) then
        !
+       ! T-ordering
+       !
+       ch='- The Green`s function is T-ordered -'
+       if (trim(X%ordering)=='a') ch='- The Green`s function is antiresonant -'
+       if (trim(X%ordering)=='r') ch='- The Green`s function is resonant -'
+       if (trim(X%ordering)=='c') ch='- The Green`s function is causal -'
+       call msg('o eps eel alpha','#')
+       call msg('o eps eel alpha','# ',trim(ch),INDENT=0)
+       !
        ! Gauges
        !
        if (iq==1) then
+         ch='- The gauge is transverse -'
          if (X%Vnl_included) ch='- The gauge is transverse + [r,Vnl] -'
          if (X%long_gauge)   ch='- The gauge is longitudinal -'
-         ch='- The gauge is transverse -'
-         call msg('o eps eel alpha','#')
          call msg('o eps eel alpha','# ',trim(ch),INDENT=0)
        endif
        !

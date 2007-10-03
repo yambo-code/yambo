@@ -173,8 +173,8 @@ subroutine K_Haydock(iq,W)
 &          '#        |Accuracy (reached)   [o/o]:',reached_treshold
      BSS_description(BSS_n_descs)='#        |Iteration                 :'//trim(intc(it))
      call K_dump_to_o_file(iq,1)
-     write (dumb_ch,'(a,f8.5,a,f8.5)') &
-&          '[Haydock] Iteration '//trim(intc(it))//' Accuracy :',&
+     dumb_ch='[Haydock] Iteration '//trim(intc(it))//' Accuracy :'
+     write (dumb_ch,'(a,f8.5,a,f8.5)') trim(dumb_ch),&
 &          reached_treshold,'|',abs(Haydock_treshold)
      if (tty_size>0.and.it_on_disk==0) call live_time_msg("r",dumb_ch,"","%s")
      if (tty_size>0.and.it_on_disk> 0) call live_time_msg("n",dumb_ch,"","%s")

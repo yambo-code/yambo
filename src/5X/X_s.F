@@ -34,7 +34,7 @@
  use X_m,           ONLY:X_t,X_mat,X_fxc
  use matrix_operate,ONLY:mat_dia_inv,INV,USE_LK,USE_SLK,USE_SVD
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_n_mem_freqs,&
-&                        FXC_LRC_alpha,FXC_SVD_cutoff
+&                        FXC_LRC_alpha,FXC_SVD_digits
  use IO_m,          ONLY:io_control,OP_RD_CL,NONE
  !
  implicit none
@@ -89,7 +89,7 @@
    ! If the freqs remaining are not anough for all the cpu's or
    ! Fxc needs the SVD procedure use the SLK
    !
-   if (iw>nw_max_par.or.FXC_SVD_cutoff>0.) INV_MODE=USE_SLK
+   if (iw>nw_max_par.or.FXC_SVD_digits>0) INV_MODE=USE_SLK
    !
    ! TDDFT Kernel. Differente procedure depending on the kernel 
    !  kind: BS,ALDA,LRC.
@@ -111,10 +111,10 @@
      if (.not.px%i1p(iw)) cycle
      Xom1=Xo(:FXC_n_g_corr,:FXC_n_g_corr)
      !
-     ! Use SVD to invert Xo if FXC_SVD_cutoff > 0.
+     ! Use SVD to invert Xo if FXC_SVD_digits > 0
      !
-     if (FXC_SVD_cutoff>0.) then
-       call mat_dia_inv(USE_SVD,USE_SLK,Xom1,SVD_cutoff=FXC_SVD_cutoff)
+     if (FXC_SVD_digits>0) then
+       call mat_dia_inv(USE_SVD,USE_SLK,Xom1,SVD_digits=FXC_SVD_digits)
      else
        call mat_dia_inv(INV,INV_MODE,Xom1)
      endif

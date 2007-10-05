@@ -147,11 +147,11 @@
        ch=FXC_description(i1)
        call msg('o eps eel fxc alpha','#',trim(ch(2:)),INDENT=0)    
      enddo
-     write (ch,'(a,i3)') ' TDDFT|Fxc size             :',FXC_n_g_corr
+     ch=' TDDFT|Fxc size             :'//trim(intc(FXC_n_g_corr))
      call msg('o eps eel alpha','#',trim(ch),INDENT=0)    
-     write (ch,'(a,i3)') '      |Hartree size         :',X%ng
+     ch='      |Hartree size         :'//trim(intc(X%ng))
      call msg('o eps eel alpha','#',trim(ch),INDENT=0)    
-     write (ch,'(2a)')   '      |Ordering             :',X%ordering
+     ch='      |Ordering             :'//trim(X%ordering)
      call msg('o eps eel alpha','#',trim(ch),INDENT=0)    
      !
      ! Fxc file titles
@@ -159,6 +159,7 @@
      headings(1)  ='E/ev[1]'
      headings(2:3)=(/'q^2*Fxc/Re','q^2*Fxc/Im'/)
      call msg('o fxc','#',headings(:3),INDENT=0,USE_TABS=.true.)    
+     call msg('o fxc','#')
      !
    endif
    !

@@ -195,11 +195,27 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
  if (.not.present(iter)) return
  !
  if (.not.use_fragments) then
-   !
+!
+#if defined PJ_NO_HERM
+   if (BS_K_coupling) then
 #if defined _DOUBLE
-   call zgemv('n',BS_K_dim,BS_K_dim,(1.,0.),BS_mat,BS_K_dim,Vi,1,(0.,0.),Vo,1)
+     call zgemv('n',2*BS_K_dim,2*BS_K_dim,(1.,0.),BS_mat,2*BS_K_dim,Vi,1,(0.,0.),Vo,1)
 #else
-   call cgemv('n',BS_K_dim,BS_K_dim,(1.,0.),BS_mat,BS_K_dim,Vi,1,(0.,0.),Vo,1)
+     call cgemv('n',2*BS_K_dim,2*BS_K_dim,(1.,0.),BS_mat,2*BS_K_dim,Vi,1,(0.,0.),Vo,1)
+#endif
+   endif
+#endif
+!
+#if defined PJ_NO_HERM
+   if (.not.BS_K_coupling) then
+#endif
+#if defined _DOUBLE
+     call zgemv('n',BS_K_dim,BS_K_dim,(1.,0.),BS_mat,BS_K_dim,Vi,1,(0.,0.),Vo,1)
+#else
+     call cgemv('n',BS_K_dim,BS_K_dim,(1.,0.),BS_mat,BS_K_dim,Vi,1,(0.,0.),Vo,1)
+#endif
+#if defined PJ_NO_HERM
+   endif
 #endif
    !
  else

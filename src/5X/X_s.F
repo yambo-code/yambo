@@ -109,6 +109,7 @@
      endif
      ! 
      if (.not.px%i1p(iw)) cycle
+     ! 
      Xom1=Xo(:FXC_n_g_corr,:FXC_n_g_corr)
      !
      ! Use SVD to invert Xo if FXC_SVD_digits > 0
@@ -126,6 +127,11 @@
      ! Fxc to be written to the o file
      !
      X_fxc(fr(1)+iw-1-FXC_w_ref)=FXC(1,1,fr(1)+iw-1-FXC_w_ref)
+     !
+     ! When all CPU's are doing this frequency point X_fxc must be rescaled
+     ! because of the call pp_redux_wait(X_fxc) in O_driver.
+     !
+     if (iw>nw_max_par) X_fxc(fr(1)+iw-1-FXC_w_ref)=X_fxc(fr(1)+iw-1-FXC_w_ref)/real(ncpu)
      !
      ! -- GPL_START --
      !

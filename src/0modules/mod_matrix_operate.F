@@ -225,7 +225,7 @@
        !
        if(ifail/=0) call report_diago_error('GESVD (SVD)','failed')
        !
-       SV_min=1./10**(SVD_digits-1)
+       SV_min=1./10.**SVD_digits
        !
        do i1=1,M_size
          if (abs(SV(i1))<SV_min) then

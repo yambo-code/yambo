@@ -152,9 +152,18 @@ subroutine K_solvers(iq,Ken,Xk,q,X,W_bss)
  endif
  !
  if (run_Haydock) then
+#if defined PJ_NO_HERM
+   if (BS_K_coupling)     call warning(' Non-resonant + Haydock still in test phase')
+#else
    if (BS_K_coupling)     call warning('Non-resonant K still unsupported (Haydock)')
+#endif
    if (BS_not_const_eh_f) call warning('Fractional occupations still unsupported (Haydock)')
+   !
+#if defined PJ_NO_HERM
+   if (.not.BS_not_const_eh_f) then
+#else
    if (.not.BS_K_coupling.and..not.BS_not_const_eh_f) then
+#endif
      call K_dump_to_o_file(iq,-1)
      call K_Haydock(iq,W_bss)
      BSS_n_descs=BSS_n_descs-3 

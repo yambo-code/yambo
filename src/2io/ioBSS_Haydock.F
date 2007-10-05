@@ -19,7 +19,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#if defined PJ_NO_HERM
+integer function ioBSS_Haydock(ID,it,Af,Bf,reached_treshold,Vnm1,Vn,Cf,Wnm1,Wn,Vnp1)  
+#else
 integer function ioBSS_Haydock(ID,it,Af,Bf,reached_treshold,Vnm1,Vn)
+#endif
  !
  use pars,          ONLY:SP
  use QP_m,          ONLY:QP_ctl_E
@@ -33,6 +37,12 @@ integer function ioBSS_Haydock(ID,it,Af,Bf,reached_treshold,Vnm1,Vn)
  real(SP) :: Bf(it+1)
  real(SP) :: Vnm1(2,BS_K_dim)
  real(SP) :: Vn(2,BS_K_dim)
+#if defined PJ_NO_HERM
+ real(SP),intent(inout),optional :: Cf(it+1)
+ real(SP),intent(inout),optional :: Wnm1(2,BS_K_dim)
+ real(SP),intent(inout),optional :: Wn (2,BS_K_dim)
+ real(SP),intent(inout),optional :: Vnp1(2,2*BS_K_dim)
+#endif
  ! 
  ! Work Space
  !
@@ -78,6 +88,18 @@ integer function ioBSS_Haydock(ID,it,Af,Bf,reached_treshold,Vnm1,Vn)
    call io_bulk(ID,R2=Af)
    call io_bulk(ID,'B_factors',VAR_SZ=(/it+1/))
    call io_bulk(ID,R1=Bf)
+#if defined PJ_NO_HERM
+!    if (present(Cf).and.present(Wnm1).and.present(Wn).and.present(Vnp1)) then 
+!      call io_bulk(ID,'C_factors',VAR_SZ=(/it+1/))
+!      call io_bulk(ID,R1=Cf)
+!      call io_bulk(ID,'Wnm1',VAR_SZ=(/2,BS_K_dim/))
+!      call io_bulk(ID,R2=Wnm1)
+!      call io_bulk(ID,'Wn',VAR_SZ=(/2,BS_K_dim/))
+!      call io_bulk(ID,R2=Wn)
+!      call io_bulk(ID,'Vnp1',VAR_SZ=(/2,2*BS_K_dim/))
+!      call io_bulk(ID,R2=Vnp1)
+!    end if
+#endif
  endif
  !
 1 call io_disconnect(ID=ID)

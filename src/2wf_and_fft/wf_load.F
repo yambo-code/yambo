@@ -46,7 +46,6 @@
  !
  ! Work Space
  !
- type(pp_indexes) ::px
  character(1)     ::wf_space_here
  character(schlen)::wf_title
  integer          ::i1,ikibz,i2,ic,is,wf_total_states,ig,igfft,s_2_load(2),iG_max
@@ -112,11 +111,16 @@
  io_err=ioWF(ID,wf_disk)
  !
  wf_total_states=0
- call pp_indexes_reset(px)
  do ikibz=1,nkibz
+   !
+!   if (io_fragmented(ID).or.io_netcdf_support(ID)) then
+!     if (any((/ikibz<wf_k(1),ikibz>wf_k(2)/))) cycle
+!   endif
+   !
    call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ikibz+1/),ID=ID)
    io_err=ioWF(ID,wf_disk)
    if (any((/ikibz<wf_k(1),ikibz>wf_k(2)/))) cycle
+   !
    do i2=1,n_bands
      do is=1,n_spin
        if (any((/i2<wf_b(1),i2>wf_b(2),&
@@ -154,7 +158,6 @@
  deallocate(wf_disk)
  call mem_est("wf_disk")
  deallocate(wf_DP)
- call pp_indexes_reset(px)
  !
  if (.not.wf_norm_test) return
  !

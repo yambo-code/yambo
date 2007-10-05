@@ -103,8 +103,6 @@
 #endif
    X_q0grad=(0.,0.)
    !
-   ! Wavefunctions need to be read in both cases
-   !
 #if  defined PJ_GKS
    if (lgks) then
      save_in_path = in_path

@@ -441,7 +441,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Optics + BS based TDDFT (BS fxc is only of q=0 0 0)
  !
- if (l_bs_fxc.and.l_optics.and.l_lr) call initactivate(1,'FxcGRLc FxcSVDcut FxcCausal')
+ if (l_bs_fxc.and.l_optics.and.l_lr) call initactivate(1,'FxcGRLc FxcSVdig FxcCausal')
  !
  ! ALDA/LRC Tddft
  !
@@ -456,7 +456,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_bs_fxc.and.l_bse) then
    call initactivate(1,'BLongDir BEnRange BDmRange BEnSteps')
-   call initactivate(1,'FxcGRLc FxcSVDcut FxcCausal FxcMEStps')
+   call initactivate(1,'FxcGRLc FxcSVdig FxcCausal FxcMEStps')
    call initactivate(-1,'BScplKmod')
  endif
  !
@@ -472,7 +472,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
   call initactivate(1,'KfnQPdb KfnQP_N KfnQP_E KfnQP_W KfnQP_Z')
   call initactivate(1,'BSSmod BEnRange BDmRange BDmERef BEnSteps BLongDir WRbsWF')
   if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs')
-  if (index(BSS_mode,'t')/=0)  call initactivate(1,'FxcGRLc FxcSVDcut FxcMEStps FxcCausal')
+  if (index(BSS_mode,'t')/=0)  call initactivate(1,'FxcGRLc FxcSVdig FxcMEStps FxcCausal')
   if (index(BSS_mode,'i')/=0)  call initactivate(1,'SkipInv FullInv')
  endif
  !

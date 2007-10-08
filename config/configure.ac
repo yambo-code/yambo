@@ -19,13 +19,15 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Self, 3.0.11, self@roma2.infn.it)
+AC_INIT(Self, 3.0.11 r.162 , self@roma2.infn.it)
 SVERSION="3"
 SPATCHLEVEL="0"
 SSUBLEVEL="11"
+SREVISION="162"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
+AC_SUBST(SREVISION)
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_SRCDIR([driver/driver.c])
 m4_include([config/acx_lapack.m4])
@@ -314,7 +316,7 @@ ACX_REPORT()
 # ============================================================================
 AC_CONFIG_FILES([config/setup config/Makefile config/report
                  src/2wf_and_fft/sgfft.F
-                 sbin/mkmkfl sbin/ss
+                 sbin/make_makefile.sh sbin/self_save.sh
                  driver/codever.h src/0external_c/.objects])
 AC_OUTPUT
 chmod u+x sbin/*

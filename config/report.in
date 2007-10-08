@@ -1,6 +1,6 @@
 
 #
-# [VER] @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@
+# [VER] @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ r.@SREVISION@
 # 
 # [SYS] @build_os@@@build_cpu@
 # [SRC] @srcdir_path@

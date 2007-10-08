@@ -44,7 +44,7 @@ libdir      = @libdir@
 includedir  = @includedir@
 
 CFGFILES = config/setup config/Makefile config/report \
-  	   sbin/mkmkfl driver/codever.h src/2wf_and_fft/sgfft.F  \
+  	   sbin/make_makefile.sh driver/codever.h src/2wf_and_fft/sgfft.F  \
 	   src/0external_c/.objects Makefile driver/version.h
 TARGETS  = all self interfaces spp 
 UTILS    = changelog
@@ -142,20 +142,20 @@ spp: libs
 	@X2DO="spp" ;XPATH="spp";XLIBS="$(SPPLIBS)";$(mkx)
 save: 
 	@$(oclean);$(confclean);$(amdclean);$(xclean)
-	@./sbin/ss none
-	@rm -f ./sbin/ss
+	@./sbin/self_save.sh none
+	@rm -f ./sbin/self_save.sh
 version: 
 	@$(oclean);$(confclean);$(amdclean);$(xclean)
-	@./sbin/ss version
-	@rm -f ./sbin/ss
+	@./sbin/self_save.sh version
+	@rm -f ./sbin/self_save.sh
 patchlevel: 
 	@$(oclean);$(confclean);$(amdclean);$(xclean)
-	@./sbin/ss patchlevel
-	@rm -f ./sbin/ss
+	@./sbin/self_save.sh patchlevel
+	@rm -f ./sbin/self_save.sh
 subversion: 
 	@$(oclean);$(confclean);$(amdclean);$(xclean)
-	@./sbin/ss subversion
-	@rm -f ./sbin/ss
+	@./sbin/self_save.sh subversion
+	@rm -f ./sbin/self_save.sh
 clean:
 	@echo "modes: clean_[o/a/m/am/oam/oamx] distclean cclean"
 clean_a: 
@@ -189,14 +189,14 @@ define mksrc
  for ldir in $$LIBS2DO; do \
   if test ! -f "$(libdir)/lib$$ldir.a" || test "$(debug)" = yes  ; \
   then rm -f "$(libdir)/lib$$ldir.a" ; \
-  ./sbin/mkmkfl src/$$ldir lib$$ldir.a .objects l $(xcpp) $$ADF ; \
+  ./sbin/make_makefile.sh src/$$ldir lib$$ldir.a .objects l $(xcpp) $$ADF ; \
   cd src/$$ldir ; $(make) VPATH=src/$$ldir || exit "$$?" ; cd ../../; fi \
  done
 endef
 define mklib
  for ldir in $$LIBS2DO; do \
   if test ! -f "$(libdir)/lib$$ldir.a" ; \
-  then ./sbin/mkmkfl $$DIR2GO/$$ldir lib$$ldir.a .objects l $(precision) $$ADF ; \
+  then ./sbin/make_makefile.sh $$DIR2GO/$$ldir lib$$ldir.a .objects l $(precision) $$ADF ; \
   cd $$DIR2GO/$$ldir ; $(make) VPATH=$$DIR2GO/$$ldir || exit "$$?" ; cd ../../; fi \
  done
 endef
@@ -204,7 +204,7 @@ define mkx
  LLIBS="";for exe in $$XLIBS; do LLIBS="$$LLIBS -l$$exe" ; done ; \
  for exe in $$X2DO; do \
   if test ! -f "$(bindir)/$$exe" || test "$(debug)" = yes  ; \
-  then ./sbin/mkmkfl $$XPATH $$exe .objects x $$LLIBS $(xcpp) $$ADF ; \
+  then ./sbin/make_makefile.sh $$XPATH $$exe .objects x $$LLIBS $(xcpp) $$ADF ; \
   cd $$XPATH ; $(make) VPATH=$$XPATH || exit "$$?" ; fi ; \
  done
 endef
@@ -234,7 +234,7 @@ define amdclean
 endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
- if test "$@" = "distclean"  ; then rm -f ./sbin/ss ; fi
+ if test "$@" = "distclean"  ; then rm -f ./sbin/self_save.sh ; fi
  echo "[targets] cleaned"
 endef
 define confclean

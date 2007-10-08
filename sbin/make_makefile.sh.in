@@ -126,7 +126,7 @@ locks:
 	find . \( -name '*.o' -o -name '*.mod' -o -name '__*' \) | xargs rm -f ; \
 	touch \$(lock_file); fi
 	@if test "\$(debug)" = "yes"; \
-	then "\$(srcdir)"/sbin/ohandle \$(lock_file); fi
+	then "\$(srcdir)"/sbin/objects_debug.sh \$(lock_file); fi
 arcreate:
 	@\$(ar) \$(arflags) \$(target) \$(objs)
 	@mv \$(target) \$(libdir) ; chmod u+x \$(libdir)/\$(target)

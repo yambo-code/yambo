@@ -34,6 +34,7 @@ module com
   !
   character(10)::build_date
   integer      ::code_version(3)
+  integer      ::code_revision
   !
   character(3)      :: terminator(4)
   !

@@ -1,3 +1,96 @@
+2007-10-05 12:28:53 r162 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.11_01-10-07
+
+	*  2wf_and_fft/wf_load.F 0modules/mod_matrix_operate.F 2io/ioBSS_Haydock.F 5X/O_driver.F 5X/X_O_strengths.F 5X/X_s.F 4it/init.F 7bse/K_Haydock.F 7bse/Kernel_by_V.F 7bse/K_solvers.F
+
+	Bugs:
+	- Unsufficient i format in O_driver.F (andrea)
+	- In X_s fxc was filled by all cpus and then reduced
+	  in some cases (andrea)
+
+	Changes:
+	- FxcSVDcut replaced with FxcSVdig (digits instead of absolute values)
+	- In PJ_NO_HERM Project: ioBSS_Haydock.F, K_Haydock.F, Kernel_by_V.F, K_solvers.F
+
+	Patch sent by: Andrea & Myrta
+
+2007-10-03 18:13:27 r161 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.11_01-10-07
+
+	*  0modules/std_presets.F 0modules/mod_TDDFT.F 0modules/mod_matrix_operate.F 5X/O_driver.F 5X/X_s.F 7bse/K_Haydock.F 7bse/K_driver.F 4it/init_load.F
+
+	Bugs:
+	- Wrong report of gauge in output files in O_driver.F
+
+	Changes:
+	- SVD accuracy noe controlled by the number of digits
+	- Added a X_tddft type in K_driver to replace the double use
+	  of X_static (and to avoid confusions)
+
+	Patch sent by: Andrea
+
+2007-10-02 13:28:53 r160 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.11_01-10-07
+
+	*  config/Makefile.in 2io/ioBSS_Haydock.F 7bse/K_Haydock.F 7bse/Kernel_by_V.F driver/driver.c sbin/mkmkfl.in
+
+	Additions:
+	- Added PJ_NO_HERM_LIBS project (self_no_herm) for Myrta in K_Haydock.F
+	- Small modifications in Kernel_by_V.F. Now it loads K also when
+	  it=0
+
+	Changes:
+	- Removed Vnp1 entry from ioBSS_Haydock (was not used)
+
+	Patch sent by: Andrea
+
+2007-10-02 11:03:16 r159 Andrea Marini <marini@roma2.infn.it>
+
+	V 3.0.11_01-10-07
+
+	*  configure spp/exc_wf_eval.F spp/exc_wf_gnuplot.F 3.0.10_29-08-07 3.0.11_01-10-07 include/version.inc config/configure.ac 2coulomb/cutoff_cylinder.F 2coulomb/cutoff_driver.F 2coulomb/col_driver.F 0modules/std_presets.F 0modules/mod_R_lattice.F 2io/ioBS.F 2io/ioCOL_CUT.F 4tddft/tddft_BSK_2_FXC.F 7bse/Kernel_by_V.F 4it/init_load.F 3kop/bz_samp_indexes.F
+
+	Bugs:
+	- In causal Fxc (tddft_BSK_2_FXC.F)
+	- In bz_samp_indexes with negative m3det(k_b_m1).
+
+	Additions:
+	- cutoff_driver now checks if there is already a db.cutoff before
+	  entering the cutoff routine.
+	- Added std_presets for the cutoff (to be used in col_driver
+	  to resete the cut_geometry when l_col_cut =. FALSE. )
+	- io_BS added cut_geometry
+
+	Changes:
+	- ioCOL_CUT reformatted
+	- Kernel_by_V.F: changed logical setups at the beginning
+	- In init_load removed verbosity from cutoff variables
+
+	Patch sent by: Andrea
+
+2007-09-28 10:39:39 r158 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	V 3.0.10_29-08-07
+
+	*  configure spp/mod_SPP.F spp/ras_spp.F spp/spp_i.F spp/k_analyze.F spp/spp_init_load.F spp/spp_init.F p2s/p2s_i.F p2s/p2s_wf.F p2s/.objects p2s/mod_p2s.F config/configure.ac 2ras_reels_mods/mod_long.F 5X/X_O_longitudinal.F ChangeLog
+
+	Bugs:
+	- Support for p2s 311 had been removed. p2s version now uses preprocessing
+	  commands for all pwscf data:
+	          with-p2s= export 3.1 3.1.1 3.2
+	Additions:
+	- spp_ras postprocessing for both eps and alpha, resonant/non-resonant
+
+	Changes:
+	- Long. gauge revisited again. Magnitude of shift increased by 10.
+	  Output of k-point list from spp -k modified to contain 7 significant figures.
+	  Some other problems related to single precision were made more robust.
+
+	Patch sent by: Conor
+
 2007-09-12 16:39:51 r157 Andrea Marini <marini@roma2.infn.it>
 
 	V 3.0.10_29-08-07

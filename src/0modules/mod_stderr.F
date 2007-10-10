@@ -169,4 +169,72 @@
      !
    end function intc
    !
- end module stderr
+   character(3) function log2ch(i)
+     !
+     logical, intent(in) :: i
+     !
+     log2ch='no '
+     if (i) log2ch='yes'
+     !
+   end function log2ch
+   !
+   character(schlen) function real2ch(r)
+     !
+     real(SP), intent(in) :: r
+     character(schlen)    :: fmt_
+     !
+     fmt_=gen_fmt(r_v=(/r/))
+     write(real2ch,'('//trim(fmt_)//')') r
+     !
+   end function real2ch
+   !
+   character(schlen) function gen_fmt(i_v,r_v)
+     integer ,optional :: i_v(:)
+     real(SP),optional :: r_v(:)
+     !
+     ! Work Space
+     !
+     integer  :: MXexp,MNexp,MDexp,iexp,MXval,i1
+     real(SP) :: MX,MN,abs_r_v
+     integer, parameter :: f_length=9,g_length=9
+     !
+     if (present(i_v)) then
+       MXval=max(maxval(i_v),-minval(i_v))
+       iexp=1
+       if (MXval/=0) iexp=nint(log10(real(MXval)))+2
+       write (gen_fmt,'(a,i2.2)')  'i',iexp
+     endif
+     !
+     if (present(r_v)) then
+       MN=huge(SP)
+       MX=-huge(SP)
+       do i1=1,size(r_v)
+         abs_r_v=abs(r_v(i1))
+         if (abs_r_v<MN.and.abs_r_v>0.) MN=abs_r_v
+         if (abs_r_v>MX.and.abs_r_v>0.) MX=abs_r_v
+       enddo
+       MXexp=int(log10(MX))
+       MNexp=int(log10(MN))
+       iexp=max(iabs(MXexp),iabs(MNexp))
+       MDexp=int(log10(MX/MN))
+       if (size(r_v)==1.and.r_v(1)==0.) then
+         iexp=0
+         MDexp=0
+       endif
+       if (iexp<=2.and.MDexp<=2) then
+         !
+         !  f_length-3-iexp:  3 for '-','.' + 1 as iexp(10)=1/iexp(100)=2
+         !
+         write (gen_fmt,'(2(a,i2.2))')  'F',f_length,'.',f_length-3-iexp
+       else
+         !
+         !  g_length-6: 6 because of '-1.','E00'
+         !
+         if (iexp<10) write (gen_fmt,'(2(a,i2.2),a)')  'G',g_length,'.',g_length-5,'E1'
+         if (iexp> 9) write (gen_fmt,'(2(a,i2.2),a)')  'G',g_length,'.',g_length-6,'E2'
+       endif
+     endif
+     !
+  end function
+  !
+end module stderr

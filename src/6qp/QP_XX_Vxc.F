@@ -25,9 +25,9 @@
  !
  use pars,          ONLY:SP,schlen,DP,pi,HARTREE
  use memory_m,      ONLY:mem_est
- use com,           ONLY:msg,depth,gen_fmt
+ use com,           ONLY:msg,depth
  use timing,        ONLY:live_timing
- use stderr,        ONLY:intc
+ use stderr,        ONLY:intc,gen_fmt 
  use electrons,     ONLY:levels,spin_occ,n_sp_pol
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes

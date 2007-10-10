@@ -40,7 +40,8 @@
  use pars,           ONLY:SP,lchlen,IP
  use drivers,        ONLY:l_bse
  use memory_m,       ONLY:mem_est
- use com,            ONLY:msg,gen_fmt,error
+ use stderr,         ONLY:gen_fmt
+ use com,            ONLY:msg,error
  use par_proc_m,     ONLY:pp_redux_wait
  use timing,         ONLY:live_timing
  use matrix_operate, ONLY:m3inv,m3det

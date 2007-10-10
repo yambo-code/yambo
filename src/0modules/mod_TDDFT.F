@@ -36,4 +36,16 @@ module TDDFT
   real(SP),    allocatable :: FXC_K_diagonal(:)
   complex(SP), allocatable :: FXC(:,:,:)
   !
+  interface 
+    !
+    integer function ioBS_Fxc(iq,W,ID,X)
+      use frequency,  ONLY:w_samp
+      use X_m,        ONLY:X_t
+      integer            ::ID,iq
+      type(w_samp)       ::W
+      type(X_t), optional::X
+    end function
+    !
+  end interface
+  !
 end module

@@ -31,7 +31,7 @@
  use memory_m,       ONLY:mem_est
  use vec_operate,    ONLY:v_norm,v_is_zero,cross_product,&
 &                         c2a,sort,ak2bz
- use com,            ONLY:msg,gen_fmt,error
+ use com,            ONLY:msg,error
  use matrix_operate, ONLY:m3inv,m3det
  use D_lattice,      ONLY:DL_vol,a
  use R_lattice,      ONLY:b,k_grid_b,k_grid_dim,k_grid,RL_vol,&

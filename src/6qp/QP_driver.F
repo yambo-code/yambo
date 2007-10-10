@@ -25,10 +25,10 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use memory_m,      ONLY:mem_est
  use drivers,       ONLY:l_life,l_ppa,l_el_corr,l_ph_corr
  use electrons,     ONLY:levels,n_sp_pol
- use stderr,        ONLY:string_pack
+ use stderr,        ONLY:string_pack,gen_fmt  
  use R_lattice,     ONLY:bz_samp
  use frequency,     ONLY:w_samp
- use com,           ONLY:msg,gen_fmt
+ use com,           ONLY:msg
  use X_m,           ONLY:X_t
  use parser_m,      ONLY:parser
  use QP_m,          ONLY:QP_t,QP_dSc,QP_dSc_steps,QP_Vxc,QP_Sc,QP_solver,QP_table,&

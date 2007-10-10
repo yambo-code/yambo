@@ -19,42 +19,47 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
-&                        DB_R0,R0,R1,DB_R1,CH0,CH1,L0,DB_L0,UNIT,MENU)
-!=======================================================================
+subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
+&                       DB_R0,R0,R1,DB_R1,CH0,CH1,L0,DB_L0,UNIT,MENU,&
+&                       DESCRIPTION)
+ !
  use pars,    ONLY:SP,schlen,lchlen
 #if defined NC
  use netcdf
 #endif
  use drivers, ONLY:list_dbs
  use com,     ONLY:msg
- use stderr,  ONLY:string_pack
+ use stderr,  ONLY:string_pack,intc,real2ch
  use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,&
 &                  netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
 &                  io_status,DUMP,REP,LOG,io_com,io_file,io_netcdf_support,&
 &                  io_code_version,io_serial_number
  implicit none
- integer      :: ID
+ integer               :: ID
+ integer,parameter     :: MAX_DB_ELEMENTS=100
  character(*),optional :: VAR,OP(:)
- integer,     optional :: VAR_SZ,MENU ! MENU = 1 (on) 0 (off)
+ integer,     optional :: VAR_SZ,MENU
+                               ! MENU = 1 (on) 0 (off)
  integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
  real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
  logical,     optional :: L0,DB_L0,CHECK,WARN
  character(*),optional :: CH0,CH1(:)
-!
- integer,parameter :: MAX_DB_ELEMENTS=100
+ character(lchlen),optional :: DESCRIPTION
+ !
+ ! Work Space
+ !
  character(lchlen) :: ch
  character(1)      :: msg_where
  integer :: i_db(MAX_DB_ELEMENTS),i_err
  real(SP):: r_db(MAX_DB_ELEMENTS),local_unit
  character(schlen) :: db_ch(MAX_DB_ELEMENTS)
-
+ !
  local_unit=1.
  if (present(UNIT)) local_unit=UNIT
  msg_where=""
  if (io_com(ID)==REP) msg_where="r"
  if (io_com(ID)==LOG.or.list_dbs) msg_where="s"
-
+ !
  if (present(VAR).and.present(VAR_SZ)) then
    io_rec_pos(ID)=1
    if (VAR_SZ>0) then
@@ -99,7 +104,7 @@
    endif
    return
  endif
-
+ !
  if (present(I0)) then
    if (write_is_on(ID)) then
      if (io_netcdf_support(ID)) then
@@ -139,8 +144,17 @@
        call msg(msg_where,VAR,i_db(1))
      endif
    endif
+   !
+   ! DESCRIPTION
+   !
+   if (present(DESCRIPTION)) then
+     DESCRIPTION=VAR//intc(I0)
+   endif
+   !
    io_rec_pos(ID)=io_rec_pos(ID)+1
+   !
  endif
+ !
  if (present(I1)) then
    if (write_is_on(ID)) then
      if (io_netcdf_support(ID)) then
@@ -180,8 +194,17 @@
        call msg(msg_where,VAR,i_db(:size(I1)))
      endif
    endif
+   !
+   ! DESCRIPTION
+   !
+   if (present(DESCRIPTION)) then
+     DESCRIPTION=VAR//trim(intc(I1(1)))
+     if (size(I1)==2) DESCRIPTION=VAR//trim(intc(I1(1)))//' - '//trim(intc(I1(2)))
+   endif
+   !
    io_rec_pos(ID)=io_rec_pos(ID)+size(I1)
  endif
+ !
  if (present(R0)) then
    if (write_is_on(ID)) then
      if (io_netcdf_support(ID)) then
@@ -221,8 +244,17 @@
        call msg(msg_where,VAR,r_db(1)*local_unit)
      endif
    endif
+   !
+   ! DESCRIPTION
+   !
+   if (present(DESCRIPTION)) then
+     DESCRIPTION=VAR//trim(real2ch(R0*local_unit))
+   endif
+   !
    io_rec_pos(ID)=io_rec_pos(ID)+1
+   !
  endif
+ !
  if (present(R1)) then
    if (write_is_on(ID)) then
      if (io_netcdf_support(ID)) then
@@ -248,7 +280,6 @@
      if (present(DB_R1)) DB_R1=r_db(:size(R1))
      ch=""
      if (io_mode(ID)==VERIFY.and.present(OP)) then
-
        i_err=r_verify(R1,r_db(:size(R1)))
        if (present(CHECK)) then
          if (io_status(ID)==0) io_status(ID)=i_err
@@ -263,9 +294,21 @@
        call msg(msg_where,VAR,r_db(:size(R1))*local_unit)
      endif
    endif
+   !
+   ! DESCRIPTION
+   !
+   if (present(DESCRIPTION)) then
+     DESCRIPTION=VAR//trim(real2ch(R1(1)*local_unit))
+     if (size(R1)==2) DESCRIPTION=VAR//trim(real2ch(R1(1)*local_unit))//&
+&                                 ' - '//trim(real2ch(R1(2)*local_unit))
+     if (size(R1)==3) DESCRIPTION=VAR//trim(real2ch(R1(1)*local_unit))//&
+&                                 ' '//trim(real2ch(R1(2)*local_unit))//&
+&                                 ' '//trim(real2ch(R1(3)*local_unit))
+   endif
+   !
    io_rec_pos(ID)=io_rec_pos(ID)+size(R1)
  endif
-
+ !
  if (present(L0)) then
    i_db(1)=0
    if (L0) i_db(1)=1
@@ -307,9 +350,17 @@
        call msg(msg_where,VAR,i_db(2)==1)
      endif
    endif
+   !
+   ! DESCRIPTION
+   !
+   if (present(DESCRIPTION)) then
+     DESCRIPTION=VAR//' no'
+     if (L0) DESCRIPTION=VAR//' yes'
+   endif
+   !
    io_rec_pos(ID)=io_rec_pos(ID)+1
  endif
-
+ !
  if (present(CH0)) then
    if (write_is_on(ID)) then
      db_ch(1)=CH0
@@ -349,12 +400,19 @@
        call msg(msg_where,VAR,trim(db_ch(1)))
      endif
    endif
+   !
+   ! DESCRIPTION
+   !
+   if (present(DESCRIPTION)) then
+     DESCRIPTION=VAR//trim(db_ch(1))
+   endif
+   !
    io_rec_pos(ID)=io_rec_pos(ID)+len(db_ch(1))
  endif
-
- contains
-
-   integer function i_verify(iv1,iv2)
+ !
+contains
+ !
+ integer function i_verify(iv1,iv2)
    integer :: iv1(:),iv2(:),i1
    i_verify=0
    do i1=1,size(iv1)
@@ -375,22 +433,22 @@
      endif
      if (i_verify/=0) return
    enddo
-   end function
-
-   integer function r_verify(rv1,rv2)
+ end function
+ !
+ integer function r_verify(rv1,rv2)
    integer  :: i1
    real(SP) :: rv1(:),rv2(:),eq_accuracy,acc_fraction
    r_verify   =0
    eq_accuracy=1.E-5_SP
    acc_fraction=0.001_SP
-!
-! Define the accuracy of the comparison
-!
+   !
+   ! Define the accuracy of the comparison
+   !
    do i1=1,size(rv1)
      if ( abs(rv1(i1))>0._SP) eq_accuracy=min( eq_accuracy , abs(rv1(i1))*acc_fraction )
      if ( abs(rv2(i1))>0._SP) eq_accuracy=min( eq_accuracy , abs(rv2(i1))*acc_fraction )
    enddo
-
+   !
    do i1=1,size(rv1)
      if (OP(i1)=="==") then 
        if (abs(rv1(i1)-rv2(i1))>eq_accuracy) r_verify=-1
@@ -409,7 +467,6 @@
      endif
      if (r_verify/=0) return
    enddo
-   end function
-
- end subroutine
-
+ end function
+ !
+end subroutine

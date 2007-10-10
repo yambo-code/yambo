@@ -29,7 +29,8 @@ subroutine setup(en,Xen,k,Xk)
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,nkibz,nkbz,nXkibz,nXkbz,&
 &                         k_grid_b,rl_sop,bz_samp,g_vec
  use wave_func,      ONLY:wf_nc_k
- use com,            ONLY:msg,gen_fmt,error
+ use stderr,         ONLY:gen_fmt
+ use com,            ONLY:msg,error
  use vec_operate,    ONLY:iku_v_norm,cross_product,c2a
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
  !

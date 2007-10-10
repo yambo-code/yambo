@@ -30,11 +30,11 @@
  use frequency,     ONLY:w_samp
  use par_indexes_m, ONLY:par_indexes
  use stderr,        ONLY:intc
- use com,           ONLY:msg,gen_fmt
+ use com,           ONLY:msg
  use X_m,           ONLY:X_t,X_mat,X_fxc
  use matrix_operate,ONLY:mat_dia_inv,INV,USE_LK,USE_SLK,USE_SVD
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_n_mem_freqs,&
-&                        FXC_LRC_alpha,FXC_SVD_digits
+&                        FXC_LRC_alpha,FXC_SVD_digits,ioBS_Fxc
  use IO_m,          ONLY:io_control,OP_RD_CL,NONE
  !
  implicit none
@@ -51,7 +51,6 @@
  ! Fxc I/O (for the BS based kernel)
  !
  integer           ::ioFxc_err,ID,FXC_w_ref
- integer, external ::ioBS_Fxc
  !
  ! Setup 
  !

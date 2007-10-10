@@ -43,7 +43,7 @@ bindir      = @bindir@
 libdir      = @libdir@
 includedir  = @includedir@
 
-CFGFILES = config/setup config/Makefile config/report \
+CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
   	   sbin/make_makefile.sh driver/codever.h src/2wf_and_fft/sgfft.F  \
 	   src/0external_c/.objects Makefile driver/version.h
 TARGETS  = all self interfaces spp 

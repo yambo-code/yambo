@@ -73,7 +73,7 @@
   ! Solvers
   !
   character(lchlen):: BSS_description(100)
-  character(lchlen):: BSS_file_name
+  character(lchlen):: BSS_file_name(2)
   character(schlen):: BSS_mode
   character(schlen):: BSS_of_title(7)
   integer  :: BSS_n_descs
@@ -96,6 +96,16 @@
       integer,     optional ::iter
       complex(SP), optional ::Vi(:),Vo(:)
     end subroutine
+    !
+    integer function variables_BS(ID,local_description,DB,X)
+      use pars,       ONLY:lchlen
+      use X_m,        ONLY:X_t
+      integer            ::ID
+      character(lchlen)  ::local_description(100)
+      character(*)       ::DB
+      type(X_t), optional::X
+    end function
+    !
   end interface
   !
   contains

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine tddft_BSK_disk_2_FXC(iq,Xk,W)
+subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
  !
  use pars,          ONLY:SP,pi
  use memory_m,      ONLY:mem_est
@@ -36,15 +36,15 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W)
  use wave_func,     ONLY:wf_load,wf_free
  use X_m,           ONLY:X_t
  use IO_m,          ONLY:io_control,OP_RD,RD,NONE,RD_CL,VERIFY,OP_RD_CL,REP
- use TDDFT,         ONLY:FXC,FXC_n_g_corr,FXC_K_diagonal
+ use TDDFT,         ONLY:FXC,FXC_n_g_corr,FXC_K_diagonal,ioBS_Fxc
  implicit none
  type(bz_samp) ::Xk
  type(w_samp)  ::W
  integer       ::iq
+ type(X_t)     ::X_static
  !
  ! WorkSpace -- GPL_END --
  !
- type(X_t)  :: X
  integer    :: ik1,ik2,O_x_dim,icv1,icv2,alloc_err(2)
  complex(SP):: Co,Hrx
 #if defined _DOUBLE
@@ -57,7 +57,7 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W)
  ! I/O
  !
  integer           ::ioBS_err,ioFxc_err,ID,ACTION
- integer, external ::ioBS,ioBS_Fxc
+ integer, external ::ioBS
  !
  if (isec(2)/=0) then
    call section('=','TDDFT `solver`')
@@ -68,7 +68,7 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W)
  ! Fxc DB
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
- ioFxc_err=ioBS_Fxc(iq,W,ID)
+ ioFxc_err=ioBS_Fxc(iq,W,ID,X=X_static)
  if (ioFxc_err==0) return
  !
  ! Constants & dimensions
@@ -102,7 +102,7 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W)
  call mem_est('BS_mat',(/O_x_dim**2/))
  !
  call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
- ioBS_err=ioBS(iq,X,ID)
+ ioBS_err=ioBS(iq,X_static,ID)
  !
  call live_timing('Fxc',(nXkibz**2-nXkibz)/2+nXkibz)
  BS_blk_coord=0
@@ -120,7 +120,7 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W)
      ACTION=RD
      if (ik1==1.and.ik2==nXkibz) ACTION=RD_CL
      call io_control(ACTION=ACTION,COM=NONE,SEC=(/cumulative_index(ik1,ik2)/),ID=ID)
-     ioBS_err=ioBS(iq,X,ID)
+     ioBS_err=ioBS(iq,X_static,ID)
      !
      if (BS_res_K_exchange) then
        do icv1=1,BS_blk_dim(ik1)
@@ -138,8 +138,8 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W)
        enddo
      endif
      !
-     call TDDFT_BSK_2_FXC(iq,ik1,ik2,&
-&                         O1x(:FXC_n_g_corr,:),O2x(:FXC_n_g_corr,:),O_x_dim,W)
+     call TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x(:FXC_n_g_corr,:),&
+&                         O2x(:FXC_n_g_corr,:),O_x_dim,W,X_static)
      !
      call live_timing(steps=1)
      deallocate(BS_mat)

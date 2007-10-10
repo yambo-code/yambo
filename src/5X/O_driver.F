@@ -144,9 +144,9 @@
    if (l_bs_fxc) then
      call msg('o eps eel alpha','#')
      do i1=1,FXC_n_descs
-       ch=FXC_description(i1)
-       call msg('o eps eel fxc alpha','#',trim(ch(2:)),INDENT=0)    
+       call msg('o eps eel fxc alpha','# ',trim(FXC_description(i1)),INDENT=0)    
      enddo
+     call msg('o eps eel alpha fxc','#')
      ch=' TDDFT|Fxc size             :'//trim(intc(FXC_n_g_corr))
      call msg('o eps eel alpha','#',trim(ch),INDENT=0)    
      ch='      |Hartree size         :'//trim(intc(X%ng))

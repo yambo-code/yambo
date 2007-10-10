@@ -26,7 +26,7 @@ subroutine K_inversion(iq,W,E,k,q)
  use drivers,        ONLY:l_ph_corr
 #endif
  use X_m,            ONLY:X_epsilon
- use stderr,         ONLY:intc
+ use stderr,         ONLY:intc,real2ch
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_not_const_eh_f,&
 &                         BS_K_coupling,BS_eh_table,BS_eh_E,BS_bands,Kernel_by_V,&
 &                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,&
@@ -358,18 +358,16 @@ subroutine K_inversion(iq,W,E,k,q)
  X_epsilon(1,:)=W%p(:)
  !
 #if defined PJ_PH
- BSS_description(BSS_n_descs)='#'
  BSS_n_descs=BSS_n_descs+1
- BSS_description(BSS_n_descs)='#    |Phononic Kernel      : no'
- if (add_ELPH_K) BSS_description(BSS_n_descs)='#    |Phononic Kernel      : yes'
+ BSS_description(BSS_n_descs)='    |Phononic Kernel      : no'
+ if (add_ELPH_K) BSS_description(BSS_n_descs)='    |Phononic Kernel      : yes'
 #endif
+ BSS_n_descs=BSS_n_descs+2
+ BSS_description(BSS_n_descs-1)=' '
+ BSS_description(BSS_n_descs)=' BSS|BZ RIM points              :'//intc(BZ_RIM_tot_nkpts)
  BSS_n_descs=BSS_n_descs+1
- BSS_description(BSS_n_descs)='#'
- BSS_n_descs=BSS_n_descs+1
- BSS_description(BSS_n_descs)='# BSS|BZ RIM points              :'//intc(BZ_RIM_tot_nkpts)
- BSS_n_descs=BSS_n_descs+1
- write (BSS_description(BSS_n_descs),'(a,f6.2)') &
-&                             '#    |Converged frequencies [o/o]:',real(nw_conv)/real(W%n(1))*100.
+ BSS_description(BSS_n_descs)='    |Converged frequencies [o/o]:'//&
+&                             trim(real2ch(real(nw_conv)/real(W%n(1))*100.))
  !
  call K_dump_to_o_file(iq,of_mode)
  !

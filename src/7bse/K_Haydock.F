@@ -26,12 +26,12 @@ subroutine K_Haydock(iq,W)
  use X_m,            ONLY:X_epsilon
  use R_lattice,      ONLY:d3k_factor,q_norm
  use frequency,      ONLY:w_samp
- use com,            ONLY:msg,gen_fmt,isec,warning
+ use com,            ONLY:msg,isec,warning
  use BS,             ONLY:BSS_n_descs,BS_K_dim,BS_mat,Haydock_treshold,&
 &                         BSS_rhoq0,BSS_description,Haydock_v0_mod,&
 &                         BS_DB_is_fragmented,Kernel_by_V,BS_K_coupling
  use timing,         ONLY:live_time_msg
- use stderr,         ONLY:cstr,tty_size,string_pack,intc
+ use stderr,         ONLY:cstr,tty_size,string_pack,intc,real2ch
  use parser_m,       ONLY:parser
  use it_m,           ONLY:it_reset
  use electrons,      ONLY:spin_occ
@@ -115,15 +115,15 @@ subroutine K_Haydock(iq,W)
  !
  ! Update Descriptions
  !
+ BSS_n_descs=BSS_n_descs+2
+ BSS_description(BSS_n_descs-1)=' '
+ BSS_description(BSS_n_descs)=' Haydock|Accuracy (requested) [o/o]:'//&
+&                             trim(real2ch(Haydock_treshold))
  BSS_n_descs=BSS_n_descs+1
- dumb_ch=string_pack('(a,',trim(gen_fmt(r_v=(/Haydock_treshold/))),')')
- write (BSS_description(BSS_n_descs),trim(dumb_ch)) &
-&      '# Haydock|Accuracy (requested) [o/o]:',Haydock_treshold
+ BSS_description(BSS_n_descs)='        |Accuracy (reached)   [o/o]:'//&
+&                             trim(real2ch(0.))
  BSS_n_descs=BSS_n_descs+1
- write (BSS_description(BSS_n_descs),trim(dumb_ch)) &
-&      '#        |Accuracy (reached)   [o/o]:',0.
- BSS_n_descs=BSS_n_descs+1
- BSS_description(BSS_n_descs)='#        |Iteration            [o/o]: 0'
+ BSS_description(BSS_n_descs)='        |Iteration            [o/o]: 0'
  !
 #if defined PJ_NO_HERM
  if ((BS_DB_is_fragmented).and.(K_is_not_hermitian)) &
@@ -282,10 +282,10 @@ subroutine K_Haydock(iq,W)
      call build_L_and_check_convergence(Af(:it),Bf(:it),it)
 #endif
      !
-     dumb_ch=string_pack('(a,',trim(gen_fmt(r_v=(/reached_treshold/))),')')
-     write (BSS_description(BSS_n_descs-1),trim(dumb_ch)) &
-&          '#        |Accuracy (reached)   [o/o]:',reached_treshold
-     BSS_description(BSS_n_descs)='#        |Iteration                 :'//trim(intc(it))
+     BSS_description(BSS_n_descs-1)='        |Accuracy (reached)   [o/o]:'//&
+&                                  trim(real2ch(reached_treshold))
+     BSS_description(BSS_n_descs)='        |Iteration                 :'//trim(intc(it))
+     !
      call K_dump_to_o_file(iq,1)
      dumb_ch='[Haydock] Iteration '//trim(intc(it))//' Accuracy :'
      write (dumb_ch,'(a,f8.5,a,f8.5)') trim(dumb_ch),&

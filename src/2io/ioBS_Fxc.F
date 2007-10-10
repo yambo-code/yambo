@@ -19,99 +19,116 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioBS_Fxc(iq,FXC_W,ID)
+integer function ioBS_Fxc(iq,FXC_W,ID,X)
  !
- use pars,           ONLY:SP,schlen,HARTREE
+ use pars,           ONLY:SP,schlen,HARTREE,lchlen
  use memory_m,       ONLY:mem_est
- use BS,             ONLY:BS_identifier,BSS_q0,BS_W_is_diagonal,&
-&                         BS_eh_en,BS_bands,BS_K_dim
+ use stderr,         ONLY:intc
+ use BS,             ONLY:BSS_q0,BS_W_is_diagonal,&
+&                         BS_eh_en,BS_bands,BS_K_dim,variables_BS
  use TDDFT,          ONLY:FXC_n_g_corr,FXC_n_descs,FXC_description,&
 &                         FXC_K_diagonal,FXC_n_mem_freqs,FXC,FXC_is_causal
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use frequency,      ONLY:w_samp
+ use X_m,            ONLY:X_t
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
-&                         io_elemental,io_status,io_bulk,&
-&                         read_is_on,write_is_on,io_header
+&                         io_elemental,io_status,io_bulk,io_mode,&
+&                         read_is_on,write_is_on,io_header,ver_is_gt_or_eq,DUMP
  implicit none
- type(w_samp):: FXC_W
- integer     :: ID,iq
+ type(w_samp)        ::FXC_W
+ integer             ::ID,iq
+ type(X_t), optional ::X 
  ! 
  ! Work Space
  !
- integer             ::i1,FXC_n_g_db,w_group,&
-&                      BS_identifier_disk,FXC_n_descs_disk
+ integer             ::i1,FXC_n_g_db,w_group,FXC_n_descs_disk
  character (schlen)  ::db_name,ch
+ character (lchlen)  ::local_description(100)
  real(SP),allocatable::FXC_disk(:,:,:),W_disk(:,:)
+ type(X_t)           ::X_dummy
  !
  w_group=1
  if (maxval(io_sec(ID,:))>2.and.FXC_W%n(1)>1) then
    w_group=maxval(io_sec(ID,:)-2)/FXC_n_mem_freqs+1
  endif
  !
- write (db_name,'(2(a,i2.2))') 'BS_FXC_Q',iq,'_W_group_',w_group
+ db_name='BS_FXC_Q'//trim(intc(iq))//'_W_group_'//trim(intc(w_group))
  !
  ioBS_Fxc=io_connect(desc=trim(db_name),type=2,ID=ID)
  !
  if (ioBS_Fxc/=0) goto 1
  !
+ ! v 3.0.5: Inclusion of %f_xc
+ !
+ if (.not.ver_is_gt_or_eq(ID,(/3,0,12/))) then
+   ioBS_Fxc=-1
+   goto 1
+ endif
+ !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   ! As this DB must respect the BS ideentifier I only need to
+   ! As this DB must respect the BS identifier I only need to
    ! check the K QP corrections
    !
    ioBS_Fxc=io_header(ID,QP_ctl_K=.true.)
-   !
-   call io_elemental(ID,VAR="PARS",VAR_SZ=19,MENU=0)
-   !
-   BS_identifier_disk=BS_identifier
-   call io_elemental(ID,&
-&       VAR=" BSK|Identifier              :",I0=BS_identifier,CHECK=.true.,OP=(/"=="/))
-   !
-   ! I cannot overwrite the BS_identifier here as this is strictly 
-   ! allowed only in ioBS.
-   !
-   if (BS_identifier_disk/=0) BS_identifier=BS_identifier_disk
-   !
-   call io_elemental(ID,&
-&       VAR="    |Dimension               :",I0=BS_K_dim,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,&
-&       VAR="    |Bands                   :",I1=BS_bands,CHECK=.true.,OP=(/"==","=="/))
-   call io_elemental(ID,UNIT=HARTREE,&
-&       VAR="    |E/h energy range    [ev]:",R1=BS_eh_en,CHECK=.true.,OP=(/"==","=="/))
-   call io_elemental(ID,&
-&       VAR="    |Kernel W is diagonal    :",L0=BS_W_is_diagonal,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,DB_I0=FXC_n_g_db,&
-&       VAR=" FXC|Matrix size             :",I0=FXC_n_g_corr,CHECK=.true.,OP=(/"<="/))
-   call io_elemental(ID,&
-&       VAR="    |Kernel is causal        :",L0=FXC_is_causal,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,UNIT=HARTREE,&
-&       VAR="    |Energy range        [ev]:",R1=FXC_W%er,CHECK=.true.,OP=(/"==","=="/))
-   call io_elemental(ID,UNIT=HARTREE,&
-&       VAR="    |Damping range       [ev]:",R1=FXC_W%dr,CHECK=.true.,OP=(/"==","=="/))
-   call io_elemental(ID,&
-&       VAR="    |Total Energy steps      :",I0=FXC_W%n(1),CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,&
-&       VAR="    |Memory Energy steps     :",I0=FXC_n_mem_freqs,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,&
-&       VAR="    |Field direction         :",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/))
-   call io_elemental(ID,I0=FXC_n_descs,DB_I0=FXC_n_descs_disk)
-   !
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
    ! Exit if header is wrong
    !
    if (ioBS_Fxc/=0) goto 1
    !
-   if (read_is_on(ID)) FXC_n_descs=FXC_n_descs_disk
-   do i1=1,FXC_n_descs_disk
-     write (ch,'(a,i3.3)') 'DESC_strings_',i1
-     call io_elemental(ID,VAR=trim(ch),CH0="",VAR_SZ=1,MENU=0)
-     call io_elemental(ID,CH0=FXC_description(i1))
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   call io_elemental(ID,VAR="FXC_parameters",VAR_SZ=11,MENU=0)
+   !
+   call io_elemental(ID,DB_I0=FXC_n_g_db,&
+&       VAR=" FXC|Matrix size             :",I0=FXC_n_g_corr,CHECK=.true.,OP=(/"<="/),&
+&       DESCRIPTION=FXC_description(1))
+   call io_elemental(ID,&
+&       VAR="    |Kernel is causal        :",L0=FXC_is_causal,CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=FXC_description(2))
+   call io_elemental(ID,UNIT=HARTREE,&
+&       VAR="    |Energy range        [ev]:",R1=FXC_W%er,CHECK=.true.,OP=(/"==","=="/),&
+&       DESCRIPTION=FXC_description(3))
+   call io_elemental(ID,UNIT=HARTREE,&
+&       VAR="    |Damping range       [ev]:",R1=FXC_W%dr,CHECK=.true.,OP=(/"==","=="/),&
+&       DESCRIPTION=FXC_description(4))
+   call io_elemental(ID,&
+&       VAR="    |Total Energy steps      :",I0=FXC_W%n(1),CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=FXC_description(5))
+   call io_elemental(ID,&
+&       VAR="    |Memory Energy steps     :",I0=FXC_n_mem_freqs,CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=FXC_description(6))
+   call io_elemental(ID,&
+&       VAR="    |Field direction         :",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/),&
+&       DESCRIPTION=FXC_description(7))
+   !
+   FXC_n_descs=7
+   !
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   ioBS_Fxc=io_status(ID)
+   !
+   ! Addd BS variables
+   !
+   if (present(X).and.ioBS_Fxc==0) then
+     ioBS_Fxc=variables_BS(ID,local_description,'Fxc',X=X) 
+   else if (ioBS_Fxc==0) then
+     i1=io_mode(ID)
+     io_mode(ID)=DUMP
+     ioBS_Fxc=variables_BS(ID,local_description,'Fxc',X=X_dummy) 
+     io_mode(ID)=i1
+   endif
+   !
+   ! Create FXC description fields
+   !
+   do i1=1,100
+     if (len_trim(local_description(i1))>0) then
+       FXC_n_descs=FXC_n_descs+1
+       FXC_description(FXC_n_descs)=local_description(i1)
+     endif
    enddo
    !
-   ioBS_Fxc=io_status(ID)
-   if (ioBS_Fxc/=0.or.maxval(io_sec(ID,:))==1) goto 1
+   if (ioBS_Fxc/=0.or.maxval(io_sec(ID,:))==1) then
+      if (ioBS_Fxc/=0) FXC_n_descs=0
+      goto 1
+   endif
    !
  endif
  !

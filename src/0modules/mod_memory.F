@@ -125,9 +125,9 @@ contains
       enddo
     endif
     !
-    if(mem_moved.lt.0.0_SP.or.mem_sum.lt.0.0_SP) &
-&      call warning( " Memory management of array "&
-&      //trim(ch(1))//" failed.")
+    if(mem_moved.lt.0.0_SP.or.mem_sum.lt.0.0_SP) then
+      call warning( " Memory management of array "//trim(ch(1))//" failed.")
+    endif
     !
     stdout_report=master_node.and.mem_moved>mem_tresh.and.&
 &                 .not.present(quiet).and..not.infile_editing

@@ -22,6 +22,7 @@
 module com
   !
   use pars,       ONLY:lchlen,SP,schlen
+  use stderr,     ONLY:gen_fmt
   implicit none
   !
   ! PATHS & JOB_str
@@ -32,7 +33,6 @@ module com
   character(lchlen)  :: jobstr
   character(lchlen)  :: repfile
   !
-  character(10)::build_date
   integer      ::code_version(3)
   integer      ::code_revision
   !
@@ -213,7 +213,7 @@ contains
     ! 
     ! Work Space
     !
-    character(schlen)::ch,lfmt
+    character(lchlen)::ch,lfmt
     integer          ::isp
     include 'version.inc'
     if (trim(cmnt)=='') isp=10
@@ -232,13 +232,12 @@ contains
 #else
         write (ou,trim(lfmt)) trim(cmnt),'  \\___  \\  |  ___)  | |     |  _____)'
 #endif
-        write (ou,trim(lfmt))  trim(cmnt),'  ____)  ) | (____  | |___  | |'
-        write (ch,'(a,i1.1,a,i1.1,a,i2.2)') ' (______/  |______) |_____) |_|',&
+        write (ch,'(a,i1.1,a,i1.1,a,i2.2)') '  ____)  ) | (____  | |___  | |',&
 &             code_version(1),'.',code_version(2),'.',code_version(3)
         write (ou,trim(lfmt)) trim(cmnt),trim(ch)
-        write (ou,trim(lfmt)) trim(cmnt)
-        write (ou,trim(lfmt)) trim(cmnt),'           Build ',trim(build_date)
-        write (ou,trim(lfmt)) trim(cmnt),' http://www.fisica.uniroma2.it/~self'
+        write (ch,'(a,i3.3)') ' (______/  |______) |_____) |_|r. ',code_revision
+        write (ou,trim(lfmt)) trim(cmnt),trim(ch)
+        write (ou,trim(lfmt)) trim(cmnt),'  http://www.fisica.uniroma2.it/~self'
         write (ou,trim(lfmt)) trim(cmnt)
       case (6)
         call live_time_msg("n",&
@@ -254,16 +253,15 @@ contains
         call live_time_msg("n",&
 &         "  \\___  \\  |  ___)  | |     |  _____)","","%s",NO_CPUT=.true.)
 #endif
-        call live_time_msg("n",&
-&         "  ____)  ) | (____  | |___  | |","","%s",NO_CPUT=.true.)
         write (ch,'(a,i1.1,a,i1.1,a,i2.2)') &
-&         ' (______/  |______) |_____) |_|',&
+&         '  ____)  ) | (____  | |___  | |',&
 &         code_version(1),'.',code_version(2),'.',code_version(3)
         call live_time_msg("n",trim(ch),"","%s",NO_CPUT=.true.)
-        write (ch,'(2a)') ' Build ',trim(build_date)
-        call live_time_msg("n",trim(ch),"n","%s",NO_CPUT=.true.)
+        write (ch,'(a,i3.3)') &
+&         ' (______/  |______) |_____) |_|r. ',code_revision
+        call live_time_msg("n",trim(ch),"","%s",NO_CPUT=.true.)
+        call live_time_msg("n"," ","","%s",NO_CPUT=.true.)
     end select
-    !
   end subroutine
   !
   logical function file_exists(name)
@@ -499,55 +497,6 @@ contains
 &        trim(terminator(1)),'a,',n,'(',basic_fmt,',1x)',trim(terminator(2))
     endif
     if (n<0) write (composed_fmt,'(a,i3.2,3a)') '(a,',iabs(n),'(',basic_fmt,',1x))'
-  end function
-  !
-  character(schlen) function gen_fmt(i_v,r_v)
-    integer ,optional :: i_v(:)
-    real(SP),optional :: r_v(:)
-    ! 
-    ! Work Space
-    !
-    integer  :: MXexp,MNexp,MDexp,iexp,MXval,i1
-    real(SP) :: MX,MN,abs_r_v
-    integer, parameter :: f_length=9,g_length=9
-    !
-    if (present(i_v)) then
-      MXval=max(maxval(i_v),-minval(i_v))
-      iexp=1
-      if (MXval/=0) iexp=nint(log10(real(MXval)))+2
-      write (gen_fmt,'(a,i2.2)')  'i',iexp
-    endif
-    !
-    if (present(r_v)) then
-      MN=huge(SP)
-      MX=-huge(SP)
-      do i1=1,size(r_v)
-        abs_r_v=abs(r_v(i1))
-        if (abs_r_v<MN.and.abs_r_v>0.) MN=abs_r_v
-        if (abs_r_v>MX.and.abs_r_v>0.) MX=abs_r_v
-      enddo
-      MXexp=int(log10(MX))
-      MNexp=int(log10(MN))
-      iexp=max(iabs(MXexp),iabs(MNexp))
-      MDexp=int(log10(MX/MN))
-      if (size(r_v)==1.and.r_v(1)==0.) then
-        iexp=0
-        MDexp=0
-      endif
-      if (iexp<=2.and.MDexp<=2) then
-        !
-        !  f_length-3-iexp:  3 for '-','.' + 1 as iexp(10)=1/iexp(100)=2
-        !
-        write (gen_fmt,'(2(a,i2.2))')  'F',f_length,'.',f_length-3-iexp
-      else
-        !
-        !  g_length-6: 6 because of '-1.','E00'
-        !
-        if (iexp<10) write (gen_fmt,'(2(a,i2.2),a)')  'G',g_length,'.',g_length-5,'E1'
-        if (iexp> 9) write (gen_fmt,'(2(a,i2.2),a)')  'G',g_length,'.',g_length-6,'E2'
-      endif
-    endif
-    !
   end function
   !
   subroutine msg_manager(how)

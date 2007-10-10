@@ -21,7 +21,7 @@
 !
 integer function ioCOL_CUT(ID)
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP
  use wave_func,      ONLY:wf_ng
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts,CUTOFF_plus_RIM,&

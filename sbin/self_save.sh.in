@@ -71,7 +71,6 @@ $xecho 'code_version(1)='$ver >  include/version.inc
 $xecho 'code_version(2)='$pat >> include/version.inc
 $xecho 'code_version(3)='$sub >> include/version.inc
 $xecho 'code_revision  ='$rev >> include/version.inc
-$xecho 'build_date="'$fname_date'"' >> include/version.inc
 #
 # Prepare new configure script
 cat << EOF > ss.awk

@@ -47,8 +47,8 @@
  use memory_m,      ONLY:mem_est
  use drivers,       ONLY:l_rim,l_col_cut
  use parser_m,      ONLY:parser
- use stderr,        ONLY:string_pack,intc
- use com,           ONLY:msg,gen_fmt
+ use stderr,        ONLY:string_pack,intc,gen_fmt
+ use com,           ONLY:msg
  use vec_operate,   ONLY:iku_v_norm,sort
  use D_lattice,     ONLY:DL_vol
  use R_lattice,     ONLY:d3q_factor,RIM_is_diagonal,RIM_qpg,bare_qpg,&

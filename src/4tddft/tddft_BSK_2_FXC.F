@@ -19,14 +19,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W)
+subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  use pars,          ONLY:SP
  use electrons,     ONLY:spin_occ
- use X_m,           ONLY:X_rhoq0
+ use X_m,           ONLY:X_rhoq0,X_t
  use BS,            ONLY:BS_blk_dim,BS_eh_table,BS_mat,BS_eh_E
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_K_diagonal,FXC,&
-&                        FXC_is_causal
+&                        FXC_is_causal,ioBS_Fxc
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use D_lattice,     ONLY:DL_vol
@@ -35,9 +35,10 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W)
 &                        NONE,OP_WR_CL,REP,VERIFY
  use frequency,     ONLY:w_samp
  implicit none
- type(w_samp) :: W
- integer      :: ik1,ik2,O_x_dim,iq
- complex(SP)  :: O1x(FXC_n_g_corr,O_x_dim),O2x(FXC_n_g_corr,O_x_dim)
+ type(w_samp) ::W
+ integer      ::ik1,ik2,O_x_dim,iq
+ complex(SP)  ::O1x(FXC_n_g_corr,O_x_dim),O2x(FXC_n_g_corr,O_x_dim)
+ type(X_t)    ::X_static
  !
  ! WorkSpace -- GPL_END --
  !
@@ -62,7 +63,6 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W)
  ! I/O
  !
  integer           ::ioFxc_err,ID,COM_MODE
- integer, external ::ioBS_Fxc
  !
  ! Constants and coordinates
  !
@@ -73,7 +73,7 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W)
  !
  call pp_redux_wait()
  call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- ioFxc_err=ioBS_Fxc(iq,W,ID)
+ ioFxc_err=ioBS_Fxc(iq,W,ID,X=X_static)
  !
  ! Exchange Oscillators Renormalization
  !
@@ -194,11 +194,11 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W)
    if (iw_blk==1) then
      if (ioFxc_err==0) then
        call io_control(ACTION=RD_CL,COM=NONE,SEC=(/iw_blk+2/),ID=ID)
-       ioFxc_err=ioBS_Fxc(iq,W,ID)
+       ioFxc_err=ioBS_Fxc(iq,W,ID,X=X_static)
      endif
    else
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/iw_blk+2/),ID=ID)
-     ioFxc_err=ioBS_Fxc(iq,W,ID)
+     ioFxc_err=ioBS_Fxc(iq,W,ID,X=X_static)
    endif
    !
    if (ioFxc_err/=0) FXC=(0._SP,0._SP)
@@ -254,7 +254,7 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W)
    !
    if (iw_blk==1) call io_control(ACTION=OP_WR_CL,COM=COM_MODE,SEC=(/1,2,iw_blk+2/),ID=ID)
    if (iw_blk> 1) call io_control(ACTION=OP_WR_CL,COM=COM_MODE,SEC=(/iw_blk+2/),ID=ID)
-   ioFxc_err=ioBS_Fxc(iq,W,ID)
+   ioFxc_err=ioBS_Fxc(iq,W,ID,X=X_static)
    !
  enddo
  !

@@ -699,7 +699,8 @@
 !=============================
  use stderr,       ONLY: intc
  use drivers,      ONLY: infile_editing
- use com,          ONLY: gen_fmt,report_file_fix,title
+ use stderr,       ONLY: gen_fmt
+ use com,          ONLY: report_file_fix,title
  use par_proc_m,   ONLY: master_node
  implicit none
  type(initdefs)::defs

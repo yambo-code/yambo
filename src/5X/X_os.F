@@ -26,7 +26,7 @@
  use pars,          ONLY:SP,schlen,HARTREE
  use collision,     ONLY:ggwinfo,collision_reset
  use timing,        ONLY:live_timing
- use com,           ONLY:msg,gen_fmt
+ use com,           ONLY:msg
  use stderr,        ONLY:intc
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use frequency,     ONLY:w_samp,bg_npts,cg_pt,cg_npts

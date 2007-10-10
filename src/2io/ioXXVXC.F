@@ -36,7 +36,7 @@
  !
  integer           :: QP_state_disk(2+n_sp_pol)
  integer           :: QP_n_states_disk,bands(2),i1,i2,i_found,var_sz
- real(SP)          :: sx(2),vxc(2)
+ real(SP)          :: Sx(2),Vxc(2)
  !
  ioXXVXC=io_connect(desc="xxvxc",type=2,ID=ID)
  if (ioXXVXC/=0) goto 1

@@ -31,7 +31,7 @@ subroutine tddft_do_X_W_typs(iq,X,wv)
  use BS,            ONLY:BS_bands,BS_eh_en,BSS_q0,BS_K_dim
  use TDDFT,         ONLY:FXC_type,FXC_K_diagonal,FXC,FXC_n_g_corr,&
 &                        FXC_per_memstps,FXC_n_mem_freqs,FXC_is_causal,&
-&                        FXC_LRC_alpha
+&                        FXC_LRC_alpha,ioBS_Fxc
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP
  implicit none
  type(X_t)   :: X
@@ -41,7 +41,6 @@ subroutine tddft_do_X_W_typs(iq,X,wv)
  ! Fxc I/O
  !
  integer           ::ioFxc_err,ID
- integer, external ::ioBS_Fxc
  !
  ! Reset X%f_xc as it is dumped when reading the DB during
  ! the initilization

@@ -37,7 +37,7 @@
  use functions,    ONLY:K_scatter
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv
  use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,qindx_X,bz_samp,RIM_qpg,&
-&                       RIM_anisotropy,ik_is_table,nXkibz,bare_qpg
+&                       RIM_anisotropy,ik_is_table,bare_qpg
  use par_proc_m,   ONLY:pp_redux_wait,myid,ncpu
  use com,          ONLY:msg,warning,error
  use timing,       ONLY:live_timing,nhash
@@ -50,12 +50,11 @@
 &                       BS_n_g_exch,BS_identifier,BS_K_coupling,O_n_v_states,&
 &                       BS_K_dim,BS_eh_win,BS_blk_coord,BSS_n_descs,&
 &                       BSS_description,cumulative_index,BS_K_is_ALDA,BS_cpl_mat,&
-&                       BS_cpl_K_exchange,BS_cpl_K_corr,BSS_q0
+&                       BS_cpl_K_exchange,BSS_q0
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,RD_CL,OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END
- use TDDFT,        ONLY:FXC_K_diagonal,FXC,FXC_n_descs,FXC_description,&
-&                       FXC_n_g_corr
+ use TDDFT,        ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,ioBS_Fxc
  use xc_functionals, ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL,F_xc
  implicit none
  type(levels)  ::Ken 
@@ -97,8 +96,8 @@
  !
  ! I/O
  !
- integer           ::ioX_err,ioPP_err,ioBS_FXC_err,XID,ID
- integer, external ::ioX,ioBS,ioBS_Fxc
+ integer           ::ioX_err,ioPP_err,ioBS_Fxc_err,XID,ID
+ integer, external ::ioX,ioBS
  !
  Co=4._SP*pi/DL_vol/real(q%nbz,SP)
  !
@@ -128,21 +127,21 @@
    call error(' Null BSE kernel block dimension(s) found. Increase e/h range')
  endif
  !
- ! Descriptions
- !
- call K_descriptions(iq,q,X)
- !
  ! BS/FXC DB
  !
  if (l_bs_fxc) then
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
-   ioBS_Fxc_err=ioBS_Fxc(iq,W_bss,ID)
+   !
+   ioBS_Fxc_err=ioBS_Fxc(iq,W_bss,ID,X=X)
+   !
  else
+   !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
-   ioBS_FXC_err=ioBS(iq,X,ID)
+   ioBS_Fxc_err=ioBS(iq,X,ID)
+   !
  endif
  !
- if (ioBS_FXC_err==0) then
+ if (ioBS_Fxc_err==0) then
    if (BS_res_K_corr) then
      deallocate(O_v_state,O_c_state,O_n_c_states,O_n_v_states)
      call mem_est("O_v_state O_c_state O_n_c_states O_n_v_states")
@@ -204,14 +203,8 @@
    !
    allocate(FXC_K_diagonal(BS_K_dim),FXC(FXC_n_g_corr,FXC_n_g_corr,W_bss%n(2)))
    call mem_est("FXC_K_diagonal FXC",(/BS_K_dim,size(FXC)/),(/SP,2*SP/))
-   call mem_est("BS_K_2_FXC",&
-&               (/2*6*FXC_n_g_corr*O_x_dim+2*FXC_n_g_corr**2+2*O_x_dim/),&
-&               (/SP/))
    FXC_K_diagonal=0._SP
    FXC=(0._SP,0._SP)
-   !
-   FXC_description(FXC_n_descs+1:FXC_n_descs+BSS_n_descs-2)=BSS_description(3:BSS_n_descs)
-   FXC_n_descs=FXC_n_descs+BSS_n_descs-2
  endif
  !
  ! Oscillators Setup
@@ -257,6 +250,9 @@
      O_vv_dim=max(O_vv_dim,O_n_vv_scatt)
    enddo
  enddo
+ if (l_bs_fxc) call mem_est("BS_K_2_FXC",&
+&                          (/2*6*FXC_n_g_corr*O_x_dim+2*FXC_n_g_corr**2+2*O_x_dim/),&
+&                          (/SP/))
  !
  ! ALDA
  !
@@ -459,8 +455,6 @@
          iq_W=q%sstar( qindx_B(ik1bz,ik2bz,1) ,1)
          iqs =q%sstar( qindx_B(ik1bz,ik2bz,1) ,2)
          !
-         if (iqs>nsym/(i_time_rev+1) .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
-         !
          H_res_x=(0.,0.)
          H_res_c=(0.,0.)
          H_cpl_x=(0.,0.)
@@ -515,8 +509,14 @@
            !
            if (is1>nsym/(i_time_rev+1)) Ovv=conjg(Ovv)
            if (is1>nsym/(i_time_rev+1)) Occ=conjg(Occ)
-           if (BS_W_is_diagonal) forall(i1=1:BS_n_g_W) Cc(i1)=Occ(i1)*BS_W(i1,1,iq_W)
-           if (.not.BS_W_is_diagonal) then
+           if (BS_W_is_diagonal) then
+             !
+             forall(i1=1:BS_n_g_W) Cc(i1)=Occ(i1)*BS_W(i1,1,iq_W)
+             !
+           else
+             !
+             if (iqs>nsym/(i_time_rev+1) .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
+             !
              do i1=1,BS_n_g_W 
 #if defined _DOUBLE
                Cc(i1)=zdotu(BS_n_g_W,Occ,1,BS_W(1,i1,iq_W),1)
@@ -549,7 +549,7 @@
      !
      if (l_bs_fxc) then
        call TDDFT_BSK_2_FXC(iq,ik1,ik2,&
-&                           O1x(:FXC_n_g_corr,:),O2x(:FXC_n_g_corr,:),O_x_dim,W_bss)
+&                           O1x(:FXC_n_g_corr,:),O2x(:FXC_n_g_corr,:),O_x_dim,W_bss,X)
        !
      else
        if (ik2==1.and.ik1==1) then
@@ -557,7 +557,7 @@
        else
          call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/cumulative_index(ik1,ik2)/),ID=ID)
        endif
-       ioBS_FXC_err=ioBS(iq,X,ID)
+       ioBS_Fxc_err=ioBS(iq,X,ID)
      endif
      !
      deallocate(BS_mat)

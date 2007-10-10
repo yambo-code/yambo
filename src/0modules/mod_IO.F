@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- module IO_m
+module IO_m
    !
    use pars
 #if defined NC
@@ -93,7 +93,8 @@
    interface 
      !
      subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
-&                            DB_R0,R0,R1,DB_R1,CH0,CH1,L0,DB_L0,UNIT,MENU)
+&                            DB_R0,R0,R1,DB_R1,CH0,CH1,L0,DB_L0,UNIT,MENU,&
+&                            DESCRIPTION)
        !
        use pars
        integer      :: ID
@@ -103,6 +104,7 @@
        real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
        logical     ,optional :: L0,DB_L0,CHECK,WARN
        character(*),optional :: CH0,CH1(:)
+       character(lchlen),optional :: DESCRIPTION
        !
      end subroutine
      !
@@ -383,7 +385,7 @@
        !
        use drivers, ONLY:list_dbs
        use stderr,  ONLY:string_pack
-       use com,     ONLY:code_version,build_date,get_name,file_exists,out_path
+       use com,     ONLY:code_version,code_revision,get_name,file_exists,out_path
        use timing,  ONLY:date_and_time_string
        use com,     ONLY:msg
        character(*)::desc
@@ -410,9 +412,10 @@
          if (.not.file_exists(trim(restart_folder))) call mk_dir(restart_folder)
          !
          open(unit=81,file=trim(restart_file))
-         write (81,'(/2x,a,3(i2.2,a),a)') 'Restart file for SELF ',code_version(1),&
-&                                     '.',code_version(2),'.',code_version(3),' -- ',&
-&                                      build_date
+         write (81,'(/2x,a,3(i2.2,a),a,i3.3)') &
+&              'Restart file for SELF ',code_version(1),&
+&              '.',code_version(2),'.',code_version(3),' -- ',&
+&              'revision ',code_revision
          ch=date_and_time_string()
          write (81,'(/2x,a)') trim(ch)
          write (81,'(/2x,2(a,i6,1x))') 'Section Completed ',now,'. To reach ',todo
@@ -596,4 +599,4 @@
 #      endif
      end function
      !
- end module IO_m
+end module IO_m

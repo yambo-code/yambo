@@ -53,30 +53,30 @@
  if (iabs(mode)==4) extension='-bi_elph'
  !
  if (mode<0) then
-   if (trim(alpha_dim)/='adim') then
-     write (BSS_file_name,'(a,i3.3,a)') 'alpha_q',iq,trim(extension)
-   else
-     write (BSS_file_name,'(a,i3.3,a)') 'eps_q',iq,trim(extension)
-   endif
-   call of_open_close(BSS_file_name,'ot')
+   write (BSS_file_name(1),'(a,i3.3,a)') 'eps_q',iq,trim(extension)
+   write (BSS_file_name(2),'(a,i3.3,a)') 'alpha_q',iq,trim(extension)
+   !
+   call of_open_close(BSS_file_name(1),'ot')
+   if (trim(alpha_dim)/='adim') call of_open_close(BSS_file_name(2),'ot')
  else
-   call of_open_close(BSS_file_name,'Ot')
- endif 
+   call of_open_close(BSS_file_name(1),'Ot')
+   if (trim(alpha_dim)/='adim') call of_open_close(BSS_file_name(2),'Ot')
+ endif
  !
- if (iabs(mode)==1)  extension='o -bh'
- if (iabs(mode)==2)  extension='o -bd'
- if (iabs(mode)==3)  extension='o -bi'
- if (iabs(mode)==4)  extension='o -bi_elph'
+! if (iabs(mode)==1)  extension='o -bh'
+! if (iabs(mode)==2)  extension='o -bd'
+! if (iabs(mode)==3)  extension='o -bi'
+! if (iabs(mode)==4)  extension='o -bi_elph'
  !
  do i1=1,BSS_n_descs
-   call msg(extension,"",trim(BSS_description(i1)),INDENT=0)
+   call msg("o eps alpha","#",trim(BSS_description(i1)),INDENT=0)
  enddo
+ call msg("o eps alpha",'#')
  !
  if (mode>0) then
-   call msg(extension,'#')
-   if (mode==1) call msg(extension,'#',BSS_of_title,INDENT=0,USE_TABS=.TRUE.)
-   if (mode/=1) call msg(extension,'#',BSS_of_title(:5),INDENT=0,USE_TABS=.TRUE.)
-   call msg(extension,'#')
+   if (mode==1) call msg("o eps alpha",'#',BSS_of_title,INDENT=0,USE_TABS=.TRUE.)
+   if (mode/=1) call msg("o eps alpha",'#',BSS_of_title(:5),INDENT=0,USE_TABS=.TRUE.)
+   call msg("o eps alpha",'#')
    do i1=1,size(X_epsilon(1,:))
      !
      od(1)=real(X_epsilon(1,i1))*HARTREE
@@ -84,6 +84,21 @@
      od(3)=real(X_epsilon(2,i1))
      od(4)=aimag(X_epsilon(3,i1))
      od(5)=real(X_epsilon(3,i1))
+     !
+     ! Hayodock n-1 iteration
+     !
+     if (mode==1) then
+       od(6)=aimag(X_epsilon(4,i1))
+       od(7)=real(X_epsilon(4,i1))
+     endif
+     !
+     ! ABSORPTION
+     !------------
+     if (mode==1) then
+       call msg("o eps",'',od(:7),INDENT=-2,USE_TABS=.TRUE.)
+     else
+       call msg("o eps",'',od(:5),INDENT=-2,USE_TABS=.TRUE.)
+     endif
      !
      if (trim(alpha_dim)/='adim') then
        !
@@ -120,26 +135,24 @@
        !
        od(4:5)=(/aimag(alpha),real(alpha)/)*eps_2_alpha/4./pi
        !
+       if (mode==1) then
+         if (BS_K_coupling)      alpha=1.-1./X_epsilon(4,i1) 
+         if (.not.BS_K_coupling) alpha=X_epsilon(4,i1)-1.     
+         od(6:7)=(/aimag(alpha),real(alpha)/)*eps_2_alpha/4./pi
+       endif
+       !
      endif
      !
      if (mode==1) then
-       od(6)=aimag(X_epsilon(4,i1))
-       od(7)=real(X_epsilon(4,i1))
-       !
-       if (trim(alpha_dim)/='adim') then
-         od(6)=od(6)*eps_2_alpha/4./pi
-         od(7)=(od(7)-1.)*eps_2_alpha/4./pi
-       endif
-       !
-       call msg(extension,'',od,INDENT=-2,USE_TABS=.TRUE.)
-       !
-     else 
-       call msg(extension,'',od(:5),INDENT=-2,USE_TABS=.TRUE.)
+       call msg("o alpha",'',od(:7),INDENT=-2,USE_TABS=.TRUE.)
+     else
+       call msg("o alpha",'',od(:5),INDENT=-2,USE_TABS=.TRUE.)
      endif
      !
    enddo
  endif
  !
- call of_open_close(BSS_file_name)
+ call of_open_close(BSS_file_name(1))
+ call of_open_close(BSS_file_name(2))
  !
  end subroutine

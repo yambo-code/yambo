@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine K_driver(Xen,Xk,q,X_static,Xw)
+subroutine K_driver(Xen,Xk,q,X_static,Xw)
  !
  use pars,           ONLY:SP,IP
  use parser_m,       ONLY:parser
@@ -35,10 +35,9 @@
 &                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,&
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
 &                         BSS_damp_reference,BS_eh_Z,BS_eh_W
- use TDDFT,          ONLY:FXC,FXC_K_diagonal,FXC_per_memstps,FXC_n_mem_freqs,&
+ use TDDFT,          ONLY:FXC,FXC_per_memstps,FXC_n_mem_freqs,&
 &                         FXC_is_causal
  use QP_CTL,         ONLY:QP_apply
- use QP_m
  use drivers,        ONLY:l_bss,l_bs_fxc,l_alda_fxc
  use par_proc_m,     ONLY:pp_redux_wait
  use R_lattice,      ONLY:bz_samp,qindx_B
@@ -128,10 +127,6 @@
  call freqs_setup(W_bss)
  FXC_n_mem_freqs=W_bss%n(2)
  !
- ! TDDFT Descriptions (done here as needed both in K and in K_solvers)
- !
- if (l_bs_fxc.or.index(BSS_mode,'t')/=0) call tddft_descriptions(W_bss)
- !
  ! KERNEL
  !
  iq=BS_q(1)
@@ -175,4 +170,4 @@
  if (allocated(BS_eh_Z)) deallocate(BS_eh_Z)
  call mem_est("BS_blk_dim BS_eh_table BS_eh_E BS_eh_f BS_eh_W BS_eh_Z")
  !
- end subroutine
+end subroutine

@@ -1,7 +1,8 @@
 objs = ioRIM.o        ioGROT.o     ioELPH.o \
        ioOSTNTS.o     ioQINDX.o    ioQP.o      ioX.o \
        ioDB1.o        ioWF.o       ioKB_PP.o   ioXXVXC.o \
-       ioBS.o         ioBS_FXC.o  \
+       ioBS.o         ioBS_Fxc.o  \
        ioBSS_diago.o  ioBSS_Haydock.o ioBSS_invert.o \
        io_elemental.o io_bulk.o    io_header.o ioE_RIM.o \
-       ioCOL_CUT.o    ioDB1_reload.o
+       ioCOL_CUT.o    ioDB1_reload.o \
+       variables_BS.o

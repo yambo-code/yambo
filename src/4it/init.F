@@ -48,6 +48,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         cut_geometry,cyl_ph_radius
  use wave_func,      ONLY:ioWF
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,REP
+ use TDDFT,          ONLY:ioBS_Fxc
  use BS,             ONLY:BS_bands,BS_n_g_exch,BS_n_g_W,BSS_mode,BSS_q0,&
 &                         BS_eh_en,BS_res_mode,BS_cpl_mode
 #if defined PJ_RAS
@@ -72,9 +73,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Work Space
  !
  integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,&
-&                     ioBS_FXC_err,ioQINDX_err
+&                     ioBS_Fxc_err,ioQINDX_err
  integer, external :: ioX,ioOSTNTS,ioGROT,ioQINDX,ioRIM,ioE_RIM,&
-&                     ioXXVXC,ioQP,ioBS,ioBS_FXC,ioDB1,ioKB_PP,&
+&                     ioXXVXC,ioQP,ioBS,ioDB1,ioKB_PP,&
 &                     ioCOL_CUT
 #if defined PJ_PH
  integer           :: ioELPH_err
@@ -276,7 +277,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! bs_fxc
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- ioBS_FXC_err=ioBS_FXC(1,Xxcw,io_ID)
+ ioBS_Fxc_err=ioBS_Fxc(1,Xxcw,io_ID,X=Xbsk)
  !
 #if defined PJ_PH
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
@@ -703,7 +704,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      ! If optics with BS FXC I need to dump on X(3) the
      ! Fxc specs
      !
-     if (all((/l_bs_fxc,l_optics,l_lr.or.l_bse,ioBS_FXC_err==0/))) then
+     if (all((/l_bs_fxc,l_optics,l_lr.or.l_bse,ioBS_Fxc_err==0/))) then
        QP_ctl_E(1,:)=QP_ctl_E(2,:)
        X(3)%ib= BS_bands
        X(3)%ehe=BS_eh_en

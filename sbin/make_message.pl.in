@@ -40,18 +40,11 @@ $changedfiles =~ s/src\///g;
 $changedfiles =~ s/interfaces\///g;
 print "Identified modified files: $changedfiles\n";
 #
-# Grab the version number
-#
-$svncommand = "ls 3.0* |";
-open(SVN, $svncommand);
-$version = <SVN>;
-close(SVN);
-#
 # Write the commit message
 #
 open(MSGFILE,">","commit.msg") or die "The file commit.msg could " .
    "not be opened.\n";
-print MSGFILE "V $version \n";
+print MSGFILE "Version @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ \n\n";
 print MSGFILE "* $changedfiles\n\n";
 print MSGFILE "Bugs:\n";
 print MSGFILE "- \n";

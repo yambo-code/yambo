@@ -19,36 +19,33 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function ioBS(iq,X,ID)
+integer function ioBS(iq,X,ID)
  !
- use pars,          ONLY:SP,schlen,HARTREE
+ use pars,          ONLY:SP,schlen,lchlen
  use X_m,           ONLY:X_t
- use R_lattice,     ONLY:nXkibz,RIM_ng,RIM_n_rand_pts,cut_geometry
+ use R_lattice,     ONLY:nXkibz
  use stderr,        ONLY:intc
  use matrix_operate,ONLY:mat_c2r,mat_r2c
- use BS,            ONLY:BS_mat,BS_identifier,BS_K_dim,BS_bands,&
-&                        BS_K_coupling,BS_res_K_exchange,BS_res_K_corr,&
-&                        BS_n_g_exch,BS_n_g_W,BS_eh_en,BS_eh_win,BS_W_is_diagonal,&
+ use BS,            ONLY:BS_mat,BS_K_dim,BS_K_coupling,&
 &                        BS_blk_dim,BS_blk_coord,BS_res_mode,cumulative_index,BS_blocks,&
-&                        BS_DB_is_fragmented,BS_K_is_ALDA,BS_cpl_K_exchange,&
-&                        BS_cpl_K_corr,BS_cpl_mat
+&                        BS_DB_is_fragmented,&
+&                        BS_cpl_mat,BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
-&                        io_elemental,io_status,io_bulk,io_restart,&
+&                        io_elemental,io_bulk,io_restart,&
 &                        read_is_on,write_is_on,io_check_restart,io_header,io_mode,&
 &                        VERIFY,io_fragment,io_fragmented,dbs_fragment,&
 &                        ver_is_gt_or_eq
- use TDDFT,         ONLY:FXC_n_g_corr
  implicit none
  type(X_t):: X 
  integer  :: iq,ID
  !
  ! Work Space
  !
- integer             ::ik12(2),i_pointer,var_size
+ integer             ::ik12(2),i_pointer,i1
  character(schlen)   ::ch,db_name
+ character(lchlen)   ::local_description(100)
  real(SP),allocatable::BS_mat_disk(:,:,:)
- logical             ::res_corr_disk,res_exch_disk,db_is_large,cpl_disk,&
-&                      cpl_corr_disk,cpl_exch_disk
+ logical             ::db_is_large
  !
  db_name='BS_Q'//trim(intc(iq))
  !
@@ -95,103 +92,33 @@
    !
    ! MODE
    !
-   call io_elemental(ID,VAR="MODE",VAR_SZ=1,CH0="",MENU=0)
-   call io_elemental(ID,CH0=BS_res_mode)
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   !
-   ! PARS1
-   !
-   var_size=29
-   if (ver_is_gt_or_eq(ID,(/3,0,9/))) var_size=30
-   !
-   call io_elemental(ID,VAR="PARS1",VAR_SZ=var_size,MENU=0)
-   call io_elemental(ID,&
-&       VAR=" BSK|Identifier              :",I0=BS_identifier)
-   call io_elemental(ID,&
-&       VAR="    |Dimension               :",I0=BS_K_dim,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,&
-&       VAR="    |Bands                   :",I1=BS_bands,CHECK=.true.,OP=(/"==","=="/))
-   call io_elemental(ID,DB_L0=res_exch_disk,&
-&       VAR="    |Exchange           [res]:",L0=BS_res_K_exchange,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,DB_L0=res_corr_disk,&
-&       VAR="    |Correlation        [res]:",L0=BS_res_K_corr,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,DB_L0=cpl_disk,&
-&       VAR="    |Kernel`s coupling       :",L0=BS_K_coupling,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,DB_L0=cpl_exch_disk,&
-&       VAR="    |Exchange           [cpl]:",L0=BS_cpl_K_exchange,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,DB_L0=cpl_corr_disk,&
-&       VAR="    |Correlation        [cpl]:",L0=BS_cpl_K_corr,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,&
-&       VAR="    |ALDA kernel in R-space  :",L0=BS_K_is_ALDA,CHECK=.true.,OP=(/"=="/))
-   !
-   if (res_exch_disk.or.cpl_exch_disk) &
-&   call io_elemental(ID,&
-&       VAR="    |RL vectors    [exchange]:",I0=BS_n_g_exch,CHECK=.true.,OP=(/"=="/))
-   if (res_corr_disk.or.cpl_corr_disk) &
-&    call io_elemental(ID,&
-&       VAR="    |RL vectors [correlation]:",I0=BS_n_g_W,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,UNIT=HARTREE,&
-&       VAR="    |E/h energy range    [ev]:",R1=BS_eh_en,CHECK=.true.,OP=(/"==","=="/))
-   call io_elemental(ID,&
-&       VAR="    |Coupling range     [o/o]:",R1=BS_eh_win,CHECK=.true.,OP=(/"==","=="/))
-   if (res_corr_disk.or.cpl_corr_disk) then
-     call io_elemental(ID,&
-&         VAR="  W |Interaction is diagonal :",L0=BS_W_is_diagonal,CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,&
-&         VAR="    |Matrix size             :",I0=X%ng,WARN=.true.,OP=(/"=="/))
-     call io_elemental(ID,&
-&         VAR="    |Bands                   :",I1=X%ib,CHECK=.true.,OP=(/"==","=="/))
-     call io_elemental(ID,UNIT=HARTREE,&
-&         VAR="    |e/h energy range    [ev]:",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/))
-     call io_elemental(ID,&
-&         VAR="    |Poles              [o/o]:",R0=X%cg_percentual,CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,&
-&         VAR="    |Rl vectors in the sum   :",I0=X%ngostnts,WARN=.true.,OP=(/"<="/))
-     call io_elemental(ID,&
-&         VAR="    |[r,Vnl] included        :",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/))
-     !
-     if (ver_is_gt_or_eq(ID,(/3,0,9/))) then
-       !
-       ! v 3.0.8: Inclusion of %long_gauge 
-       !
-       call io_elemental(ID,&
-&           VAR="    |Longitudinal Gauge      :",L0=X%long_gauge,WARN=.true.,OP=(/"=="/))
-     endif
-     !
-     call io_elemental(ID,&
-&         VAR="    |Field direction         :",R1=X%q0,CHECK=.true.,OP=(/"==","==","=="/))
+   if (.not.ver_is_gt_or_eq(ID,(/3,0,12/))) then
+     call io_elemental(ID,VAR="MODE",VAR_SZ=1,CH0="",MENU=0)
+     call io_elemental(ID,CH0=BS_res_mode)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-     !
-     if (ver_is_gt_or_eq(ID,(/3,0,11/))) then
-       !
-       ! v 3.0.11: Inclusion of cut_geometry
-       !
-       call io_elemental(ID,VAR="W_Cutoff",VAR_SZ=1,CH0="",MENU=0)
-       call io_elemental(ID,&
-&           VAR="    |Columbian Cutoff        :",CH0=cut_geometry,CHECK=.true.,OP=(/"=="/))
-       call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-     endif
-     !
-     ! W_TDDFT_KERNEL
-     !
-     call io_elemental(ID,VAR="W_TDDFT_KERNEL",VAR_SZ=1,CH0="",MENU=0)
-     call io_elemental(ID,&
-&       VAR='    |xc-Kernel               :',CH0=X%f_xc,CHECK=.true.)
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-     !
-     ! W_RIM
-     !
-     call io_elemental(ID,VAR="W_RIM",VAR_SZ=2,MENU=0)
-     call io_elemental(ID,I0=RIM_ng,&
-&       VAR=' RIM|RL components      [col]:',CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,I0=RIM_n_rand_pts,&
-&       VAR='    |Random points      [col]:',CHECK=.true.,OP=(/"=="/))
    endif
    !
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
+   ioBS=variables_BS(ID,local_description,'BSK',X=X)
    !
-   ioBS=io_status(ID)
-   if (ioBS/=0) goto 1
+   if (ioBS/=0) then
+     !
+     ! reset the descriptions...
+     !
+     BSS_n_descs=0
+     !
+     goto 1
+   endif
+   !
+   ! Descriptions transfer
+   !
+   if (BSS_n_descs==0) then
+     do i1=1,100
+       if (len_trim(local_description(i1))>0) then
+         BSS_n_descs=BSS_n_descs+1
+         BSS_description(BSS_n_descs)=local_description(i1)
+       endif
+     enddo
+   endif
    !
  endif
  !
@@ -249,4 +176,4 @@
  !
 1 call io_disconnect(ID)
  !
- end function
+end function

@@ -26,7 +26,7 @@
  use R_lattice,        ONLY:nkibz
  use wave_func,        ONLY:wf_ncx
  use IO_m,             ONLY:io_connect, io_disconnect, io_sec, &
-&                           io_status, io_bulk,io_header,&
+&                           io_bulk,io_header,&
 &                           io_fragment,RD_CL_IF_END,RD_CL,io_action
  implicit none
  integer,       intent(in) :: ID

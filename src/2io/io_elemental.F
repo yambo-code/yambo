@@ -33,7 +33,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,&
 &                  netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
 &                  io_status,DUMP,REP,LOG,io_com,io_file,io_netcdf_support,&
-&                  io_code_version,io_serial_number
+&                  io_code_version,io_serial_number,io_code_revision
  implicit none
  integer               :: ID
  integer,parameter     :: MAX_DB_ELEMENTS=100
@@ -94,9 +94,9 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
        if (MENU==1) call msg(msg_where,trim(ch))
      endif
    else
-     write (ch,'(a,i6.6,2a,3(a,i2.2),a)')  '- S/N ',io_serial_number(ID),' ',&
-&          repeat('-',33),'- v.',io_code_version(ID,1),'.',io_code_version(ID,2),&
-&          '.',io_code_version(ID,3),' -'
+     write (ch,'(a,i6.6,2a,3(a,i2.2),a,i3.3,a)')  '- S/N ',io_serial_number(ID),' ',&
+&          repeat('-',27),'- v.',io_code_version(ID,1),'.',io_code_version(ID,2),&
+&          '.',io_code_version(ID,3),' r.',io_code_revision(ID),' -'
      if (.not.present(MENU)) call msg(msg_where,trim(ch))
      if (present(MENU)) then
        if (MENU==1) call msg(msg_where,trim(ch))

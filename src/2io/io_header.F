@@ -24,7 +24,7 @@
  !
  use pars,          ONLY:SP,schlen,HARTREE
  use drivers,       ONLY:list_dbs
- use com,           ONLY:code_version,msg,warning
+ use com,           ONLY:code_version,msg,warning,code_revision
  use D_lattice,     ONLY:Tel,a,alat,input_Tel_fixed
  use electrons,     ONLY:n_sp_pol,n_spinor
  use R_lattice,     ONLY:nqibz,nqbz,nkibz,nkbz,q_pt,k_pt
@@ -35,7 +35,7 @@
 &                        read_is_on,write_is_on,serial_number,&
 &                        io_serial_number,io_file,io_com,io_mode,&
 &                        DUMP,VERIFY,NONE,io_fragmented,dbs_fragment,&
-&                        ver_is_gt_or_eq,db_alat
+&                        ver_is_gt_or_eq,db_alat,io_code_revision
  use zeros,         ONLY:define_zeros
  !
  implicit none
@@ -72,6 +72,14 @@
  call io_elemental(ID,VAR="HEAD_VERSION",VAR_SZ=3,MENU=0)
  call io_elemental(ID,DB_I1=io_code_version(ID,:),I1=code_version)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ !
+ if (ver_is_gt_or_eq(ID,(/3,0,12/))) then
+   call io_elemental(ID,VAR="HEAD_REVISION",VAR_SZ=1,MENU=0)
+   call io_elemental(ID,DB_I0=io_code_revision(ID),I0=code_revision)
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ else
+   io_code_revision(ID)=0
+ endif
  !
  call io_elemental(ID,VAR="SERIAL_NUMBER",VAR_SZ=1,MENU=0)
  call io_elemental(ID,DB_I0=io_serial_number(ID),I0=serial_number)
@@ -236,16 +244,24 @@
    !
    io_mode(ID)=MODE
    !
-   call io_elemental(ID,VAR="QP_CTL_K_E",VAR_SZ=3,MENU=MENU)
+   if (ver_is_gt_or_eq(ID,(/3,0,11/))) then
+     call io_elemental(ID,VAR="QP_CTL_K_E",VAR_SZ=3,MENU=MENU)
+   else
+     call io_elemental(ID,VAR="QP_CTL_K",VAR_SZ=3,MENU=MENU)
+   endif
    MENU=0
    call io_elemental(ID,R1=QP_ctl_E(2,:),&
 &       VAR=' QPs (scissor) :',CHECK=WARN,OP=(/"==","==","=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   call io_elemental(ID,VAR='QP_CTL_K_db_desc',CH0="",VAR_SZ=1,MENU=0)
-   call io_elemental(ID,CH0=QP_ctl_short_descr(2),VAR=' QPs (db)      :',&
-&                    CHECK=WARN,OP=(/"==","==","=="/))
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   if (ver_is_gt_or_eq(ID,(/3,0,11/))) then
+     !
+     call io_elemental(ID,VAR='QP_CTL_K_db_desc',CH0="",VAR_SZ=1,MENU=0)
+     call io_elemental(ID,CH0=QP_ctl_short_descr(2),VAR=' QPs (db)      :',&
+&                      CHECK=WARN,OP=(/"==","==","=="/))
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     !
+   endif
    !
    io_header=io_status(ID)
    if (io_header/=0) goto 1

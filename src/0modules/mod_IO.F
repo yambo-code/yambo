@@ -69,6 +69,7 @@ module IO_m
    integer :: io_unit(max_io_units)
    integer :: io_restart(max_io_units)
    integer :: io_code_version(max_io_units,3)
+   integer :: io_code_revision(max_io_units)
    integer :: io_serial_number(max_io_units)
    integer :: io_netcdf_var(max_io_units)
    logical :: io_fragmented(max_io_units)
@@ -488,7 +489,7 @@ module IO_m
      !
      subroutine io_reset(ID)
        !
-       use com, ONLY:code_version
+       use com, ONLY:code_version,code_revision
        integer :: ID
        io_status(ID)=0
        io_unit(ID)=0
@@ -500,6 +501,7 @@ module IO_m
        io_rec_pos(ID)=1
        io_restart(ID)=1
        io_code_version(ID,:)=code_version
+       io_code_revision(ID)=code_revision
        io_serial_number(ID)=serial_number
        io_netcdf_support(ID)=.false.
 #if defined NC

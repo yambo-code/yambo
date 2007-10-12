@@ -109,10 +109,6 @@ subroutine exc_wf_eval(Xk)
  call mem_est('BS_R_E',(/2*BS_K_dim/))
  iq=BS_q(1)
  !
- !Description of the BS Kernel
- !
- call K_descriptions(iq,q,Xbsk)
- !
  ! Here I read energies and residuum
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
@@ -243,9 +239,10 @@ subroutine exc_wf_eval(Xk)
  !
  extension='weights_at_'//trim(intc(lambda))
  call of_open_close(trim(extension),'ot')
- do j1=3,BSS_n_descs
-   call msg('o weight',"",trim(BSS_description(j1)),INDENT=0)
+ do j1=1,BSS_n_descs
+   call msg('o weight',"#",trim(BSS_description(j1)),INDENT=0)
  enddo
+ call msg('o weight',"#")
  call msg('o weight',&
 & '# Electron-Hole pairs that contributes to Excitonic State '//trim(intc(lambda))//' more than 5%')
  call msg('o weight','#')
@@ -357,9 +354,10 @@ subroutine exc_wf_eval(Xk)
      if (sort_mode == 'i')   extension='-i'
      call of_open_close('exc_sort'//trim(extension),'ot')
      !
-     do j1=3,BSS_n_descs
-       call msg('o sort',"",trim(BSS_description(j1)),INDENT=0)
+     do j1=1,BSS_n_descs
+       call msg('o sort',"#",trim(BSS_description(j1)),INDENT=0)
      enddo
+     call msg('o sort',"#")
      do is=1,n_atom_species
        do ia=1,n_atoms(is)
          call msg('o sort',"# Atom "//trim(intc(ia))//" with Z "//trim(intc(znucl(is)))//" [cc]:",&

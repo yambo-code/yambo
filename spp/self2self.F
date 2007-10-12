@@ -32,7 +32,7 @@ integer function self2self(instr,en,k,q)
  use R_lattice,        ONLY:g_vec,bz_samp,nkibz,nqibz,nkbz,nXkbz,q_pt,&
 &                           qindx_free,bz_samp_reset
  use wave_func,        ONLY:wf_nc_k,wf_igk,wf_ncx,wf_ng,ioWF
- use com,              ONLY:code_version,msg,error
+ use com,              ONLY:code_version,msg,error,code_revision
  use X_m,              ONLY:X_t,X_reset,X_mat
  use frequency,        ONLY:w_samp,W_reset
  use par_proc_m,       ONLY:pp_redux_wait,pp_indexes,ncpu,pp_indexes_reset,master_node

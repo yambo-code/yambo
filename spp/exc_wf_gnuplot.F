@@ -51,9 +51,10 @@ subroutine exc_wf_gnuplot(use_1d,use_2d,plot_dim,eval_only)
    ! Open the output file
    !
    call of_open_close('exc_wf_gnu_'//trim(intc(lambda))//'_'//trim(p_dir),'ot')
-   do i1=3,BSS_n_descs
-     call msg('o exc',"",trim(BSS_description(i1)),INDENT=0)
+   do i1=1,BSS_n_descs
+     call msg('o exc',"#",trim(BSS_description(i1)),INDENT=0)
    enddo
+   call msg('o exc',"#")
  endif
  !
  ! DIMENSIONs

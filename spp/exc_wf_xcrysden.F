@@ -42,9 +42,10 @@ subroutine exc_wf_xcrysden(use_2d,plot_dim)
  ! Open the output file
  !
  call of_open_close('exc_wf_'//trim(intc(plot_dim))//'d_'//trim(intc(lambda))//'.xsf','ot')
- do i1=3,BSS_n_descs
-   call msg('o exc',"",trim(BSS_description(i1)),INDENT=0)
+ do i1=1,BSS_n_descs
+   call msg('o exc',"#",trim(BSS_description(i1)),INDENT=0)
  enddo
+ call msg('o exc',"#")
  !
  n_atoms_tot=0
  do is=1,n_atom_species

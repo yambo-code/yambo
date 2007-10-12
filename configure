@@ -6316,6 +6316,7 @@ echo "${ECHO_T}$FCVERSION" >&6
 
 
 if test -z "${CFLAGS}"; then CFLAGS="-O2"; fi
+
 if test -z "${FCFLAGS}"; then
   case "${host}" in
   i?86*linux*)
@@ -6329,8 +6330,8 @@ if test -z "${FCFLAGS}"; then
       FCFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
       ;;
     *ifc*)
-      FCFLAGS="-O3 -w -mtune=pentium4"
-      UFFLAGS="-O0 -w -mtune=pentium4"
+      FCFLAGS="-O3 -w -tpp7"
+      UFFLAGS="-O0 -w -tpp7"
       FCMFLAG=""
       ;;
     *g95*)
@@ -6345,7 +6346,7 @@ if test -z "${FCFLAGS}"; then
          CPU_FLAG="-xT"
          ;;
         *)
-         CPU_FLAG="-mtune=pentium4"
+         CPU_FLAG="-tpp7"
          ;;
       esac
       FCFLAGS="-assume bscc -O3 $CPU_FLAG"
@@ -6362,6 +6363,20 @@ if test -z "${FCFLAGS}"; then
       FCFLAGS="-O3 -fno-second-underscore -mtune=pentium4"
       UFFLAGS="-O0 -fno-second-underscore"
       FCMFLAG=""
+      ;;
+    *ifort*)
+      CPU_FLAG=""
+      case "${FCVERSION}" in
+        *10*)
+         CPU_FLAG="-mtune=pentium4"
+         ;;
+        *)
+         CPU_FLAG="-mtune=pentium4"
+         ;;
+      esac
+      FCFLAGS="-assume bscc -O3 $CPU_FLAG"
+      UFFLAGS="-assume bscc -O0 $CPU_FLAG"
+      FCMFLAG="-nofor_main"
       ;;
     *)
       FCFLAGS="-O"
@@ -6381,8 +6396,8 @@ if test -z "${FCFLAGS}"; then
       UFFLAGS="-O0 -w -tpp2"
       ;;
     *ifort*)
-      FCFLAGS="-assume bscc -O3 -mtune=pentium4"
-      UFFLAGS="-assume bscc -O0 -mtune=pentium4"
+      FCFLAGS="-assume bscc -O3 -tpp7"
+      UFFLAGS="-assume bscc -O0 -tpp7"
       FCMFLAG="-nofor_main"
       ;;
     *)
@@ -6396,7 +6411,6 @@ if test -z "${FCFLAGS}"; then
     ;;
   powerpc64*linux* )
     CFLAGS="-q64 -O2"
-    #FCFLAGS="-q64 -O3 -qnostrict -qarch=ppc970 -qtune=ppc970 -qdpc -Q -qalias=nointptr"
     FCFLAGS="-q64 -O3 -qnostrict -qarch=ppc970 -qtune=ppc970"
     UFFLAGS="-q64 -O0"
     ;;
@@ -6494,7 +6508,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FCFLAGS
 FCFLAGS="$FCFLAGS $ac_verb"
-(eval echo $as_me:6497: \"$ac_link\") >&5
+(eval echo $as_me:6511: \"$ac_link\") >&5
 ac_fc_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_fc_v_output" >&5
 FCFLAGS=$ac_save_FFLAGS
@@ -6578,7 +6592,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FCFLAGS
 FCFLAGS="$FCFLAGS $ac_cv_prog_fc_v"
-(eval echo $as_me:6581: \"$ac_link\") >&5
+(eval echo $as_me:6595: \"$ac_link\") >&5
 ac_fc_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_fc_v_output" >&5
 FCFLAGS=$ac_save_FFLAGS
@@ -7681,7 +7695,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:7684:" \
+echo "$as_me:7698:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version >&5\"") >&5
@@ -7934,7 +7948,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FFLAGS
 FFLAGS="$FFLAGS $ac_verb"
-(eval echo $as_me:7937: \"$ac_link\") >&5
+(eval echo $as_me:7951: \"$ac_link\") >&5
 ac_f77_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_f77_v_output" >&5
 FFLAGS=$ac_save_FFLAGS
@@ -8018,7 +8032,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FFLAGS
 FFLAGS="$FFLAGS $ac_cv_prog_f77_v"
-(eval echo $as_me:8021: \"$ac_link\") >&5
+(eval echo $as_me:8035: \"$ac_link\") >&5
 ac_f77_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_f77_v_output" >&5
 FFLAGS=$ac_save_FFLAGS

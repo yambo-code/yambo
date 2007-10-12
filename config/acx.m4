@@ -143,6 +143,7 @@ AC_DEFUN([ACX_FCSETUP],
 AC_REQUIRE([AC_CANONICAL_HOST])
 
 if test -z "${CFLAGS}"; then CFLAGS="-O2"; fi
+
 if test -z "${FCFLAGS}"; then
   case "${host}" in
   i?86*linux*)
@@ -156,8 +157,8 @@ if test -z "${FCFLAGS}"; then
       FCFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
       ;;
     *ifc*)
-      FCFLAGS="-O3 -w -mtune=pentium4"
-      UFFLAGS="-O0 -w -mtune=pentium4"
+      FCFLAGS="-O3 -w -tpp7"
+      UFFLAGS="-O0 -w -tpp7"
       FCMFLAG=""
       ;;
     *g95*)
@@ -172,7 +173,7 @@ if test -z "${FCFLAGS}"; then
          CPU_FLAG="-xT"
          ;;
         *)
-         CPU_FLAG="-mtune=pentium4"
+         CPU_FLAG="-tpp7"
          ;;
       esac
       FCFLAGS="-assume bscc -O3 $CPU_FLAG"
@@ -189,6 +190,20 @@ if test -z "${FCFLAGS}"; then
       FCFLAGS="-O3 -fno-second-underscore -mtune=pentium4"
       UFFLAGS="-O0 -fno-second-underscore"
       FCMFLAG=""
+      ;;
+    *ifort*)
+      CPU_FLAG=""
+      case "${FCVERSION}" in
+        *10*)
+         CPU_FLAG="-mtune=pentium4"
+         ;;
+        *)
+         CPU_FLAG="-mtune=pentium4"
+         ;;
+      esac
+      FCFLAGS="-assume bscc -O3 $CPU_FLAG"
+      UFFLAGS="-assume bscc -O0 $CPU_FLAG"
+      FCMFLAG="-nofor_main"
       ;;
     *)
       FCFLAGS="-O"
@@ -208,8 +223,8 @@ if test -z "${FCFLAGS}"; then
       UFFLAGS="-O0 -w -tpp2"
       ;;
     *ifort*)
-      FCFLAGS="-assume bscc -O3 -mtune=pentium4"
-      UFFLAGS="-assume bscc -O0 -mtune=pentium4"
+      FCFLAGS="-assume bscc -O3 -tpp7"
+      UFFLAGS="-assume bscc -O0 -tpp7"
       FCMFLAG="-nofor_main"
       ;;
     *)
@@ -223,7 +238,6 @@ if test -z "${FCFLAGS}"; then
     ;;
   powerpc64*linux* )
     CFLAGS="-q64 -O2"
-    #FCFLAGS="-q64 -O3 -qnostrict -qarch=ppc970 -qtune=ppc970 -qdpc -Q -qalias=nointptr"
     FCFLAGS="-q64 -O3 -qnostrict -qarch=ppc970 -qtune=ppc970"
     UFFLAGS="-q64 -O0"
     ;;

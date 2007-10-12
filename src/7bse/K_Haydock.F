@@ -47,11 +47,11 @@ subroutine K_Haydock(iq,W)
 #if defined PJ_NO_HERM
  complex(SP)        :: Af(Max_iterations)
  complex(SP),allocatable :: Vn(:),Vnm1(:),Vnp1(:)
- real(SP),allocatable :: Cf(:) 
+ complex(SP),allocatable :: Cf(:) 
 #else
  complex(SP)        ::Vn(BS_K_dim),Vnm1(BS_K_dim),Vnp1(BS_K_dim),Af(Max_iterations)
 #endif
- real(SP)           ::Bf(Max_iterations),reached_treshold
+ real(SP)           ::reached_treshold, Bf(Max_iterations)
  character(schlen)  ::dumb_ch
  logical            ::K_is_not_hermitian
  !
@@ -70,7 +70,7 @@ subroutine K_Haydock(iq,W)
   if (BS_K_coupling) K_is_not_hermitian=.true.
 !
   if (K_is_not_hermitian) then
-    allocate(Cf(Max_iterations),Vn(2*BS_K_dim),Vnm1(2*BS_K_dim),Vnp1(2*BS_K_dim))
+    allocate(Cf(Max_iterations+1),Vn(2*BS_K_dim),Vnm1(2*BS_K_dim),Vnp1(2*BS_K_dim))
   else
     allocate(Vn(BS_K_dim),Vnm1(BS_K_dim),Vnp1(BS_K_dim))
   end if
@@ -146,7 +146,6 @@ subroutine K_Haydock(iq,W)
  ! 
 #if defined PJ_NO_HERM
  if (K_is_not_hermitian) then
-   allocate(Cf(Max_iterations),Vn(2*BS_K_dim),Vnm1(2*BS_K_dim),Vnp1(2*BS_K_dim))
  !
  ! Before starting iterate one needs
  !
@@ -154,7 +153,7 @@ subroutine K_Haydock(iq,W)
  ! | Vnp1 > = H |V1>
  !
    if (it_on_disk==0) then
-     Cf=(0.,0.)
+     Cf= (0.,0.)
      forall(i1=1:2*BS_K_dim) Vn(i1)= BSS_rhoq0(i1)
      call Kernel_by_V(iq,iter=it_on_disk,Vi=Vn,Vo=Vnp1)
      Haydock_v0_mod=sqrt(fdot_product(Vn,Vnp1))
@@ -163,7 +162,7 @@ subroutine K_Haydock(iq,W)
      Cf(1) = dot_product(BSS_rhoq0,Vn)
    else 
      Haydock_v0_mod = Bf(1) 
-     Bf(1) = 0
+     Bf(1) = 0.
    endif     
    !
  else
@@ -268,15 +267,16 @@ subroutine K_Haydock(iq,W)
      forall(i1=1:2*BS_K_dim) Vnp1(i1)=Vnp1(i1)/Bf(it+1)
      Cf(it+1)=dot_product(BSS_rhoq0,Vn)
    endif
+   !
 #endif
    !
    if (it>2) then
      !
 #if defined  PJ_NO_HERM
      if (K_is_not_Hermitian) then 
-       call build_L_and_check_convergence(Af(:it),Bf(:it),it, Cf(it))
+       call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,Cf(:it))
      else
-       call build_L_and_check_convergence(Af(:it),Bf(:it),it)
+       call build_L_and_check_convergence(Af(:it),Bf(:it+1),it)
      end if
 #else     
      call build_L_and_check_convergence(Af(:it),Bf(:it),it)
@@ -307,8 +307,8 @@ subroutine K_Haydock(iq,W)
    call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),ID=ID)
 #if defined  PJ_NO_HERM
    if (K_is_not_hermitian) then
-     Bf(1) = Haydock_v0_mod 
-     ! I need to store it otherwise I have to calculate it at each restart 
+!     Bf(1) = Haydock_v0_mod (when do it take care, for the moment commented out) 
+! I need to store it otherwise I have to calculate it at each restart 
      io_err=ioBSS_Haydock(ID,it,Af(:it),Bf(:it+1),reached_treshold,   &
 &       Vnm1(:BS_K_dim),Vn(:BS_K_dim),Cf(:it+1),&
 &       Vnm1(BS_K_dim+1:),Vn(BS_K_dim+1:),Vnp1)
@@ -358,10 +358,13 @@ subroutine K_Haydock(iq,W)
 #endif
      implicit none
      integer    :: it
+#if !defined PJ_NO_HERM
      real(SP)   :: Bf(it)
+#endif
      complex(SP):: Af(it)
 #if defined PJ_NO_HERM
-     real(SP),intent(in),optional :: Cf(it)
+     complex(SP),intent(in),optional :: Cf(it)
+     real(SP)   :: Bf(it+1)
 #endif
      !
      ! Work Space
@@ -370,7 +373,8 @@ subroutine K_Haydock(iq,W)
      real(SP):: Co
      complex(SP) :: G(2,it)
 #if defined PJ_NO_HERM
-     complex(SP) :: G_aux(2)
+     complex(SP) :: G_aux(2),terminator, Afm
+     real(SP)   :: Bfm
 #endif
      !
      ! Co includes the spin_occ factor because Haydock is expected to work
@@ -380,10 +384,16 @@ subroutine K_Haydock(iq,W)
 #if defined PJ_NO_HERM
      if (K_is_not_hermitian) Co=spin_occ/(2.*pi)**3.*d3k_factor*4.*pi/q_norm(1)**2*Haydock_v0_mod
 #endif
-     !
      do iw=1,W%n(1)
        G=(0.,0.)
+#if defined PJ_NO_HERM
+       Afm = sum(Af(:it))/it
+       Bfm = sum(Bf(:it))/it
+       terminator = .5 * Afm*(1.+sqrt(1.-(2.*Bfm/Afm)**2.))
+       G(:,it)=1./((W%p(iw)-Af(it)) - Bf(i1+1)**2./terminator)
+#else
        G(:,it)=1./(W%p(iw)-Af(it))
+#endif
        do i1=it-1,1,-1
          G(1,i1)=1./(W%p(iw)-Af(i1)-Bf(i1+1)**2.*G(1,i1+1))
        enddo
@@ -394,12 +404,14 @@ subroutine K_Haydock(iq,W)
        if (K_is_not_hermitian) then
          G(:,2:) = (0.,0.)
          G(:,2) = (1. + (W%p(iw) - Af(1))*G(:,1) )/Bf(2)
+         G_aux(:) = G(:,1)*Cf(1) +  G(:,2)*Cf(2) 
          do i1= 3, it
            G(:,i1)= (-Bf(i1-1)*G(:,i1-2) + (W%p(iw) - Af(i1-1))*G(:,i1-1) )/Bf(i1) 
-         enddo
-         G_aux(1) = dot_product(cmplx(Cf),G(1,:))
-         G_aux(2) = dot_product(cmplx(Cf(:it-1)),G(2,:it-1))
-         G(:,1) = G_aux(:)
+           G_aux(1) = G_aux(1) + Cf(i1)* G(1,i1)
+           if (it > 3) G_aux(2) = G_aux(2) + Cf(i1-1)*G(2,i1-1)
+         end do
+         G(1,1) = G_aux(1)          
+         G(2,1) = G_aux(2) 
        endif
 #endif
        X_epsilon(1,iw)=W%p(iw)
@@ -412,12 +424,10 @@ subroutine K_Haydock(iq,W)
      enddo
    end subroutine
 #if defined PJ_NO_HERM
-  real function fdot_product(v,w)
+  complex function fdot_product(v,w)
     complex ::v(2*BS_K_dim),w(2*BS_K_dim)
-    real :: temp
   fdot_product = dot_product(v(1:BS_K_dim),w(1:BS_K_dim))&
 &      -dot_product(v(BS_K_dim+1:2*BS_K_dim),w(BS_K_dim+1:2*BS_K_dim))
-  print*, fdot_product
   end function fdot_product
 #endif
   !

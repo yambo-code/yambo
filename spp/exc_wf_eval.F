@@ -98,6 +98,7 @@ subroutine exc_wf_eval(Xk)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_err=ioBS(1,Xbsk,io_ID)
+ if (io_err/=0) return
  if (BS_cpl_K_exchange) BS_cpl_mode='x'
  if (BS_cpl_K_corr) BS_cpl_mode='c'
  if (BS_cpl_K_exchange.and.BS_cpl_K_corr) BS_cpl_mode='xc'
@@ -113,6 +114,7 @@ subroutine exc_wf_eval(Xk)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_err=ioBSS_diago(iq,BS_K_dim,BS_E,BS_R,io_ID)
+ if (io_err/=0) return
  !
  call section('*','Excitonic Wave Function')
  !

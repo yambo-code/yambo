@@ -88,7 +88,7 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
      call pp_indexes_reset(Kp)
      call par_indexes(Kp,(/cumulative_index(1,nXkibz)-1/))
      if (present(iter)) then
-       if (iter==1) call mem_est('BS_mat',(/maxval(BS_blk_dim)**2/))
+       if (iter==1) call mem_est('BS_mat',(/maxval(BS_blk_dim)**2/)) 
      endif
    endif
    !
@@ -198,6 +198,19 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
 !
 #if defined PJ_NO_HERM
    if (BS_K_coupling) then
+     !
+     ! If Coupling the half lower part of K must be filled
+     !
+     ! Anti-resonant
+     !
+     forall(i1=BS_K_dim+1:2*BS_K_dim,i2=BS_K_dim+1:2*BS_K_dim) &
+&          BS_mat(i1,i2)=-conjg(BS_mat(i1-BS_K_dim,i2-BS_K_dim))
+     !
+     ! Anti-coupling
+     !
+     forall(i1=BS_K_dim+1:2*BS_K_dim,i2=1:BS_K_dim) &
+&          BS_mat(i1,i2)=-conjg(BS_mat(i1-BS_K_dim,i2+BS_K_dim))
+     !
 #if defined _DOUBLE
      call zgemv('n',2*BS_K_dim,2*BS_K_dim,(1.,0.),BS_mat,2*BS_K_dim,Vi,1,(0.,0.),Vo,1)
 #else

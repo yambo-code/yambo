@@ -5421,7 +5421,14 @@ echo "${ECHO_T}no" >&6
 fi
 
 
-nlines=`$TCSH -fc 'echo "a\nb" |wc -l'`
+case "${host}" in
+*86*apple*)
+  nlines=`$TCSH -fc 'printf "a\nb\n" |wc -l'`
+;;
+*)
+  nlines=`$TCSH -fc 'echo "a\nb" |wc -l'`
+esac
+
 if test "$nlines" -eq "2" ; then
  cmd_found="yes"
  MYECHO="echo"
@@ -5432,7 +5439,52 @@ echo "$as_me:$LINENO: result: $cmd_found" >&5
 echo "${ECHO_T}$cmd_found" >&6
 
 if test "$cmd_found" = "no"; then
- # Extract the first word of "echo", so it can be a program name with args.
+  case "${host}" in
+  *86*apple*)
+     # Extract the first word of "printf", so it can be a program name with args.
+set dummy printf; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_save_MYECHO+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $save_MYECHO in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_save_MYECHO="$save_MYECHO" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_save_MYECHO="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_save_MYECHO" && ac_cv_path_save_MYECHO=":"
+  ;;
+esac
+fi
+save_MYECHO=$ac_cv_path_save_MYECHO
+
+if test -n "$save_MYECHO"; then
+  echo "$as_me:$LINENO: result: $save_MYECHO" >&5
+echo "${ECHO_T}$save_MYECHO" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+     nlines=`$TCSH -fc 'set MYECHO='$save_MYECHO' ; $MYECHO "a\nb\n" |wc -l'`
+  ;;
+  *)
+     # Extract the first word of "echo", so it can be a program name with args.
 set dummy echo; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
@@ -5472,7 +5524,8 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
- nlines=`$TCSH -fc 'set MYECHO='$save_MYECHO' ; $MYECHO "a\nb" |wc -l'`
+     nlines=`$TCSH -fc 'set MYECHO='$save_MYECHO' ; $MYECHO "a\nb" |wc -l'`
+  esac
  if test "$nlines" -eq "2" ; then cmd_found="yes" MYECHO="$save_MYECHO" ; fi
  echo "$as_me:$LINENO: checking for $save_MYECHO to accept newline sequence" >&5
 echo $ECHO_N "checking for $save_MYECHO to accept newline sequence... $ECHO_C" >&6
@@ -5834,7 +5887,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:5837:" \
+echo "$as_me:5890:" \
      "checking for Fortran compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version >&5\"") >&5
@@ -5989,7 +6042,7 @@ echo "$as_me:$LINENO: checking if the current OS is supported" >&5
 echo $ECHO_N "checking if the current OS is supported... $ECHO_C" >&6
 TIMER="ct_cclock.o"
 case "${host}" in
- i?86*linux* | ia64*linux* | *x86*64* )
+ i?86*linux* | ia64*linux* | *x86*64* | *86*apple*)
    build_os="linux"
    TIMER="ct_etime.o"
    if test -z "$F90SUFFIX"; then F90SUFFIX=".f90"; fi
@@ -6276,8 +6329,8 @@ if test -z "${FCFLAGS}"; then
       FCFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
       ;;
     *ifc*)
-      FCFLAGS="-O3 -w -tpp7"
-      UFFLAGS="-O0 -w -tpp7"
+      FCFLAGS="-O3 -w -mtune=pentium4"
+      UFFLAGS="-O0 -w -mtune=pentium4"
       FCMFLAG=""
       ;;
     *g95*)
@@ -6292,13 +6345,24 @@ if test -z "${FCFLAGS}"; then
          CPU_FLAG="-xT"
          ;;
         *)
-         CPU_FLAG="-tpp7"
+         CPU_FLAG="-mtune=pentium4"
          ;;
       esac
       FCFLAGS="-assume bscc -O3 $CPU_FLAG"
       UFFLAGS="-assume bscc -O0 $CPU_FLAG"
       FCMFLAG="-nofor_main"
     ;;
+    *)
+      FCFLAGS="-O"
+    esac
+   ;;
+  *86*apple* )
+    case "${FC}" in
+    *g95*)
+      FCFLAGS="-O3 -fno-second-underscore -mtune=pentium4"
+      UFFLAGS="-O0 -fno-second-underscore"
+      FCMFLAG=""
+      ;;
     *)
       FCFLAGS="-O"
     esac
@@ -6317,8 +6381,8 @@ if test -z "${FCFLAGS}"; then
       UFFLAGS="-O0 -w -tpp2"
       ;;
     *ifort*)
-      FCFLAGS="-assume bscc -O3 -tpp7"
-      UFFLAGS="-assume bscc -O0 -tpp7"
+      FCFLAGS="-assume bscc -O3 -mtune=pentium4"
+      UFFLAGS="-assume bscc -O0 -mtune=pentium4"
       FCMFLAG="-nofor_main"
       ;;
     *)
@@ -6430,7 +6494,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FCFLAGS
 FCFLAGS="$FCFLAGS $ac_verb"
-(eval echo $as_me:6433: \"$ac_link\") >&5
+(eval echo $as_me:6497: \"$ac_link\") >&5
 ac_fc_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_fc_v_output" >&5
 FCFLAGS=$ac_save_FFLAGS
@@ -6514,7 +6578,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FCFLAGS
 FCFLAGS="$FCFLAGS $ac_cv_prog_fc_v"
-(eval echo $as_me:6517: \"$ac_link\") >&5
+(eval echo $as_me:6581: \"$ac_link\") >&5
 ac_fc_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_fc_v_output" >&5
 FCFLAGS=$ac_save_FFLAGS
@@ -7617,7 +7681,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:7620:" \
+echo "$as_me:7684:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version >&5\"") >&5
@@ -7870,7 +7934,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FFLAGS
 FFLAGS="$FFLAGS $ac_verb"
-(eval echo $as_me:7873: \"$ac_link\") >&5
+(eval echo $as_me:7937: \"$ac_link\") >&5
 ac_f77_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_f77_v_output" >&5
 FFLAGS=$ac_save_FFLAGS
@@ -7954,7 +8018,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FFLAGS
 FFLAGS="$FFLAGS $ac_cv_prog_f77_v"
-(eval echo $as_me:7957: \"$ac_link\") >&5
+(eval echo $as_me:8021: \"$ac_link\") >&5
 ac_f77_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_f77_v_output" >&5
 FFLAGS=$ac_save_FFLAGS

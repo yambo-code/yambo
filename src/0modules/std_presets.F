@@ -31,7 +31,8 @@
 &                     QP_ctl_short_descr,QP_Sc_steps,QP_G_er,QP_G_dr,&
 &                     QP_W_partially_done,GWo_SC_done,GWo_iterations
  use functions,  ONLY:bose_E_cut
- use D_lattice,  ONLY:i_space_inv,n_atoms_max,n_atom_species,pp_n_l_comp_max,pp_kbv_dim
+ use D_lattice,  ONLY:i_space_inv,n_atoms_max,n_atom_species,pp_n_l_comp_max,&
+&                     pp_kbv_dim,input_Tel_fixed
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
@@ -115,6 +116,10 @@
  !functions
  !
  bose_E_cut=0.1
+ !
+ !D_lattice
+ !
+ input_Tel_fixed=.false.
  !
  !R_lattice
  !

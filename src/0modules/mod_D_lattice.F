@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- module D_lattice
+module D_lattice
    !
    use pars, ONLY:SP
    implicit none
@@ -28,6 +28,7 @@
    !
    real(SP) :: Tel
    real(SP) :: default_Tel
+   logical  :: input_Tel_fixed
    !
    ! SYMs
    !
@@ -116,5 +117,4 @@
      !
    end subroutine
    !
- end module D_lattice
-
+end module D_lattice

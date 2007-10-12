@@ -75,7 +75,7 @@ AC_REQUIRE([AC_CANONICAL_HOST])
 AC_MSG_CHECKING([if the current OS is supported])
 TIMER="ct_cclock.o"
 case "${host}" in
- i?86*linux* | ia64*linux* | *x86*64* )
+ i?86*linux* | ia64*linux* | *x86*64* | *86*apple*)
    build_os="linux"
    TIMER="ct_etime.o"
    if test -z "$F90SUFFIX"; then F90SUFFIX=".f90"; fi
@@ -156,8 +156,8 @@ if test -z "${FCFLAGS}"; then
       FCFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
       ;;
     *ifc*)
-      FCFLAGS="-O3 -w -tpp7"
-      UFFLAGS="-O0 -w -tpp7"
+      FCFLAGS="-O3 -w -mtune=pentium4"
+      UFFLAGS="-O0 -w -mtune=pentium4"
       FCMFLAG=""
       ;;
     *g95*)
@@ -172,13 +172,24 @@ if test -z "${FCFLAGS}"; then
          CPU_FLAG="-xT"
          ;;
         *)
-         CPU_FLAG="-tpp7"
+         CPU_FLAG="-mtune=pentium4"
          ;;
       esac
       FCFLAGS="-assume bscc -O3 $CPU_FLAG"
       UFFLAGS="-assume bscc -O0 $CPU_FLAG"
       FCMFLAG="-nofor_main"
     ;;
+    *)
+      FCFLAGS="-O"
+    esac
+   ;;
+  *86*apple* )
+    case "${FC}" in
+    *g95*)
+      FCFLAGS="-O3 -fno-second-underscore -mtune=pentium4"
+      UFFLAGS="-O0 -fno-second-underscore"
+      FCMFLAG=""
+      ;;
     *)
       FCFLAGS="-O"
     esac
@@ -197,8 +208,8 @@ if test -z "${FCFLAGS}"; then
       UFFLAGS="-O0 -w -tpp2"
       ;;
     *ifort*)
-      FCFLAGS="-assume bscc -O3 -tpp7"
-      UFFLAGS="-assume bscc -O0 -tpp7"
+      FCFLAGS="-assume bscc -O3 -mtune=pentium4"
+      UFFLAGS="-assume bscc -O0 -mtune=pentium4"
       FCMFLAG="-nofor_main"
       ;;
     *)
@@ -260,7 +271,14 @@ AC_DEFUN([ACX_MYECHO],
 cmd_found=no
 AC_PATH_PROG(TCSH, tcsh, :)
 
-nlines=`$TCSH -fc 'echo "a\nb" |wc -l'`
+case "${host}" in
+*86*apple*)
+  nlines=`$TCSH -fc 'printf "a\nb\n" |wc -l'` 
+;;
+*)
+  nlines=`$TCSH -fc 'echo "a\nb" |wc -l'`  
+esac
+
 if test "$nlines" -eq "2" ; then 
  cmd_found="yes"
  MYECHO="echo"
@@ -269,8 +287,15 @@ AC_MSG_CHECKING([for built-in echo to accept newline sequence])
 AC_MSG_RESULT([$cmd_found])
 
 if test "$cmd_found" = "no"; then
- AC_PATH_PROG(save_MYECHO, echo, :)
- nlines=`$TCSH -fc 'set MYECHO='$save_MYECHO' ; $MYECHO "a\nb" |wc -l'`
+  case "${host}" in
+  *86*apple*)
+     AC_PATH_PROG(save_MYECHO, printf, :)
+     nlines=`$TCSH -fc 'set MYECHO='$save_MYECHO' ; $MYECHO "a\nb\n" |wc -l'`
+  ;;
+  *)
+     AC_PATH_PROG(save_MYECHO, echo, :)
+     nlines=`$TCSH -fc 'set MYECHO='$save_MYECHO' ; $MYECHO "a\nb" |wc -l'`
+  esac
  if test "$nlines" -eq "2" ; then cmd_found="yes" MYECHO="$save_MYECHO" ; fi
  AC_MSG_CHECKING([for $save_MYECHO to accept newline sequence])
  AC_MSG_RESULT([$cmd_found])

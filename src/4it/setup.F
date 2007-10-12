@@ -25,7 +25,7 @@ subroutine setup(en,Xen,k,Xk)
  use electrons,      ONLY:levels,nel,n_met_bands,n_full_bands,E_duplicate,n_sp_pol
  use memory_m,       ONLY:mem_est
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,sop_inv,&
-&                         sop_tab,atoms_spatial_invertion,i_space_inv
+&                         sop_tab,atoms_spatial_invertion,i_space_inv,input_Tel_fixed
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,nkibz,nkbz,nXkibz,nXkbz,&
 &                         k_grid_b,rl_sop,bz_samp,g_vec
  use wave_func,      ONLY:wf_nc_k
@@ -180,6 +180,13 @@ subroutine setup(en,Xen,k,Xk)
  !
  Xen%nk=Xk%nibz
  call E_duplicate(en,Xen)
+ !
+ ! Negative Temperature indicates that such Temperature is held
+ ! fixed in the calculation (not overwritten in io_header.F, for
+ ! example).
+ !
+ input_Tel_fixed=Tel<0.
+ Tel=abs(Tel)
  !
  call fermi_level(Xen,Xk,Tel,2)
  call extend_occupations(Xen,en)

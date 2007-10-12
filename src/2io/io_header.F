@@ -25,7 +25,7 @@
  use pars,          ONLY:SP,schlen,HARTREE
  use drivers,       ONLY:list_dbs
  use com,           ONLY:code_version,msg,warning
- use D_lattice,     ONLY:Tel,a,alat
+ use D_lattice,     ONLY:Tel,a,alat,input_Tel_fixed
  use electrons,     ONLY:n_sp_pol,n_spinor
  use R_lattice,     ONLY:nqibz,nqbz,nkibz,nkbz,q_pt,k_pt
  use wave_func,     ONLY:wf_ng
@@ -48,7 +48,7 @@
 &                       R_LATT_vec_disk(4),MODE,MENU,ng_on_db,SPIN_vec_disk(2),&
 &                       n_l_pt
  real(SP),allocatable:: l_pt(:,:)
- real(SP)            :: local_zero(3),D_LATT_vec_disk(3),D_LATT_vec(3)
+ real(SP)            :: local_zero(3),D_LATT_vec_disk(3),D_LATT_vec(3),save_Tel
  logical             :: WARN
  !
  io_header=0
@@ -218,11 +218,16 @@
    !
    call io_elemental(ID,VAR="T_EL",VAR_SZ=1,MENU=MENU)
    MENU=0
+   save_Tel=Tel
    call io_elemental(ID,R0=Tel,&
 &       VAR=' Electronic Temperature       [ev]:',UNIT=HARTREE,WARN=WARN,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   !
+   if (input_Tel_fixed) Tel=save_Tel
+   !
    io_header=io_status(ID)
    if (io_header/=0) goto 1
+   !
  endif
  !
  ! Kernel QP corrections

@@ -61,7 +61,7 @@ module com
   !
 contains
   !
-  character(lchlen) function get_name(desc,subfolder,type,TO_RD,TO_WR,NETCDF)
+  character(lchlen) function get_name(desc,subfolder,type,USE_INPATH,USE_OUTPATH,NETCDF)
     !
     ! -2 ----------------  -> desc (NETCDF as OUTPUT)
     ! -1 ----------------  -> subfolder/(n)desc
@@ -75,7 +75,7 @@ contains
     use stderr,         ONLY:string_pack
     character(*)           ::desc
     integer                ::type,ID
-    logical                ::TO_RD,TO_WR,NETCDF
+    logical                ::USE_INPATH,USE_OUTPATH,NETCDF
     character(*), optional ::subfolder
     ! 
     ! Work Space
@@ -85,10 +85,10 @@ contains
     !
     get_name=""
     folder="SAVE"
-    if (.not.TO_RD.and..not.TO_WR) return
+    if (.not.USE_INPATH.and..not.USE_OUTPATH) return
     !
-    if (TO_RD) ch(1)=in_path
-    if (TO_WR) ch(1)=out_path
+    if (USE_INPATH) ch(1)=in_path
+    if (USE_OUTPATH) ch(1)=out_path
     !
     select case(type)
       case(-2)
@@ -153,8 +153,8 @@ contains
       !
       local_file_name=of_name
       if (index(mode,'a')==0.and.index(mode,'O')==0) then
-        local_file_name=get_name(desc=of_name,type=3,TO_RD=.false.,&
-&                                TO_WR=.true.,NETCDF=.false.)
+        local_file_name=get_name(desc=of_name,type=3,USE_INPATH=.false.,&
+&                                USE_OUTPATH=.true.,NETCDF=.false.)
         call rename_file(local_file_name)
       endif
       !

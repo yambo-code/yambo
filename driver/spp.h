@@ -20,21 +20,25 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
  static Ldes opts[] = { /* Int Real Ch (Dummy)*/
+  {"ifile",  "F","Input file",0,0,1,0},              /* 4 */
+
   {"help","h","Short Help",0,0,0,0}, /* 0 */
   {"lhelp","H","Long Help",0,0,0,0}, /* 1 */
   {"jobstr","J","Job string identifier",0,0,1,0},   /* 2 */
   {"ifile",  "F","Input file",0,0,1,0},              /* 3 */
-  {"nompi", "N","Skip MPI initialization",0,0,0,0}, /* 4 */
-  {"dbfrag","S","DataBases fragmentation",0,0,0,0}, /* 5 */
-  {"s2s","s","SELF ver. 2 databases translator",0,0,0,0}, /* 6,0 */
-  {"kpt","k","K-grid generator",0,0,0,0}, /* 7,1 */
-  {"excwf","e","Excitonic Wavefunction plot",0,0,0,0}, /* 8,2 */
-  {"bzrim","r","BZ energy RIM analyzer",0,0,0,0}, /* 9,3 */
+  {"idir",   "I","Input directory",0,0,1,0},         /* 4 */
+  {"odir",   "O","Output directory",0,0,1,0},        /* 5 */
+  {"nompi", "N","Skip MPI initialization",0,0,0,0}, /* 6 */
+  {"dbfrag","S","DataBases fragmentation",0,0,0,0}, /* 7 */
+  {"s2s","s","SELF ver. 2 databases translator",0,0,0,0}, /* 8 */
+  {"kpt","k","K-grid generator",0,0,0,0}, /* 9,1 */
+  {"excwf","e","Excitonic Wavefunction plot",0,0,0,0}, /* 10,2 */
+  {"bzrim","r","BZ energy RIM analyzer",0,0,0,0}, /* 11,3 */
 #if defined SPP_PJ_PH
-  {"elph", "p","Electron-Phonon DBs preprocessing",0,0,0,0}, /* 10,4 */
+  {"elph", "p","Electron-Phonon DBs preprocessing",0,0,0,0}, /* 12,4 */
 #endif
 #if defined SPP_PJ_RAS
-  {"ras", "a","Surface Anisotropy postprocessor",0,0,0,0}, /* 10,4 */
+  {"ras", "a","Surface Anisotropy postprocessor",0,0,0,0}, /* 13,4 */
 #endif
   {NULL,NULL,NULL,0,0,0,0}
  };

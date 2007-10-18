@@ -177,7 +177,7 @@ module IO_m
        ! Work Space
        !
        integer          ::CREATE_MODE
-       character(lchlen)::alternative_file,folder
+       character(lchlen)::alternative_file(3),folder
        !
        io_connect=0
        if (write_is_on(ID).and..not.write_to_dbs) then
@@ -201,9 +201,14 @@ module IO_m
          io_file(ID)=get_name(desc,subfolder,type,open_is_on(ID),&
 &                             write_is_on(ID),io_netcdf_support(ID))
          alternative_file=" "
-         if (type/=-2)  alternative_file=&
-&                       get_name(desc,subfolder,type,open_is_on(ID),&
-&                                write_is_on(ID),.not.io_netcdf_support(ID))
+         if (type/=-2) then
+            alternative_file(1)=get_name(desc,subfolder,type,open_is_on(ID),&
+&                                        write_is_on(ID),.not.io_netcdf_support(ID))
+            if (read_is_on(ID)) alternative_file(2)=get_name(desc,subfolder,type,.FALSE.,&
+&                                                            .TRUE.,io_netcdf_support(ID))
+            if (read_is_on(ID)) alternative_file(3)=get_name(desc,subfolder,type,.FALSE.,&
+&                                                            .TRUE.,.not.io_netcdf_support(ID))
+         endif
          !
        endif
        !
@@ -281,8 +286,13 @@ module IO_m
        if (open_is_on(ID).and.read_is_on(ID)) then
          !
          if (.not.file_exists(trim(io_file(ID)))) then
-           if (file_exists(trim(alternative_file))) then
-             io_file(ID)=alternative_file
+           if (file_exists(trim(alternative_file(1)))) then
+             io_file(ID)=alternative_file(1)
+             io_netcdf_support(ID)=.not.io_netcdf_support(ID)
+           else if (file_exists(trim(alternative_file(2)))) then
+             io_file(ID)=alternative_file(2)
+           else if (file_exists(trim(alternative_file(3)))) then
+             io_file(ID)=alternative_file(3)
              io_netcdf_support(ID)=.not.io_netcdf_support(ID)
            else
              io_connect=-1
@@ -400,7 +410,7 @@ module IO_m
          !
          if (.not.write_is_on(ID)) return
          !
-         restart_file=get_name(desc=desc,type=4,TO_RD=.false.,TO_WR=.true.,NETCDF=.false.)
+         restart_file=get_name(desc=desc,type=4,USE_INPATH=.false.,USE_OUTPATH=.true.,NETCDF=.false.)
          !
          restart_folder = string_pack(trim(out_path),"/RESTART")
          !
@@ -426,7 +436,7 @@ module IO_m
          !
          if (io_mode(ID)/=VERIFY.and.io_mode(ID)/=DUMP) return
          !
-         restart_file=get_name(desc=desc,type=4,TO_RD=.false.,TO_WR=.true.,NETCDF=.false.)
+         restart_file=get_name(desc=desc,type=4,USE_INPATH=.false.,USE_OUTPATH=.true.,NETCDF=.false.)
          if (.not.file_exists(trim(restart_file))) return
       
          open(unit=81,file=trim(restart_file))

@@ -84,7 +84,7 @@ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
    ! between k%pt and qp%k. This exists when i_err==0
    !
    k_near(1)=k_the_nearest(k%pt(i1,:),qp%k,qp%nk,.TRUE.,i_err)
-   if (i_err==0) then
+   if (i_err==0.and.n_neigh==1) then
      call qp_transfer(k_near(1),i1,1)
      nk_exact=nk_exact+1
    else if (l_qp(4)) then

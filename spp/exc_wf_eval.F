@@ -22,7 +22,7 @@
 subroutine exc_wf_eval(Xk)
  !
  use pars,        ONLY : SP,HARTREE,IP,pi,lchlen,DP,schlen
- use stderr,      ONLY : intc
+ use stderr,      ONLY : intc,real2ch
  use FFT_m,       ONLY : fft_rot_r,fft_dim
  use D_lattice,   ONLY : a,sop_inv,i_time_rev,nsym,alat,&
 &                        n_atom_species,n_atoms,atom_pos,znucl,n_atoms_max
@@ -38,7 +38,7 @@ subroutine exc_wf_eval(Xk)
  use X_m,         ONLY: X_t
  use memory_m,    ONLY: mem_est
  use timing,      ONLY: live_timing
- use vec_operate, ONLY: c2a
+ use vec_operate, ONLY: c2a,sort
  !
  implicit none
  type(bz_samp) ::Xk
@@ -87,6 +87,8 @@ subroutine exc_wf_eval(Xk)
  !
  !... Variables needed to the report of eigenvectors
  !
+ real(SP)          ::K_weight(Xk%nibz)
+ integer,  allocatable ::A_indx(:)
  real(SP), allocatable ::A_weight(:)
  !
  ! ... Outputs
@@ -197,7 +199,7 @@ subroutine exc_wf_eval(Xk)
  !
  ! Allocation
  !
- allocate(wf_vc(BS_K_dim),exc_wf(nr_tot),A_weight(BS_K_dim))
+ allocate(wf_vc(BS_K_dim),exc_wf(nr_tot),A_weight(BS_K_dim),A_indx(BS_K_dim))
  call mem_est('wf_vc exc_wf A_weight',(/BS_K_dim,nr_tot,BS_K_dim/))
  call k_ibz2bz(Xk,'i',.false.)
  !
@@ -236,8 +238,12 @@ subroutine exc_wf_eval(Xk)
  !
  call live_timing
  !
- ! report on file of the weights A_cvk of excitonic wf
+ ! Sort the weights
  !
+ A_weight=A_weight/maxval(A_weight)
+ call sort(arrin=A_weight,indx=A_indx)
+ !
+ ! report on file of the weights A_cvk of excitonic wf
  !
  extension='weights_at_'//trim(intc(lambda))
  call of_open_close(trim(extension),'ot')
@@ -248,19 +254,39 @@ subroutine exc_wf_eval(Xk)
  call msg('o weight',&
 & '# Electron-Hole pairs that contributes to Excitonic State '//trim(intc(lambda))//' more than 5%')
  call msg('o weight','#')
+ !
+ ! First summarize the total weight vs K-points
+ !
+ K_weight=0.
+ do neh = 1,BS_K_dim
+   ikbz = BS_eh_table(A_indx(neh),1)
+   ikibz = Xk%sstar(ikbz,1)
+   K_weight(ikibz)=K_weight(ikibz)+A_weight(neh)
+ enddo
+ K_weight=K_weight/maxval(K_weight)
+ titles(1:4)=(/'','K-point [iku]','','Weight       '/)
+ call msg('o weight','#',titles(:4),INDENT=0,USE_TABS=.true.)
+ do ikibz=1,Xk%nibz
+   if (K_weight(ikibz)>0.05) then
+     call msg('o weight','# ',(/Xk%pt(ikibz,:),K_weight(ikibz)/),INDENT=0,USE_TABS=.true.)
+   endif
+ enddo
+ !
+ ! Then report the detailed list of transitions
+ !
  titles(1:4)=(/'Band_V','Band_C','K  ibz','Symm. '/)
  titles(5)='Weight'
- !
+ call msg('o weight','#','',INDENT=0,USE_TABS=.true.)
  call msg('o weight','#',titles(:5),INDENT=0,USE_TABS=.true.)
  call msg('o weight','#','',INDENT=0,USE_TABS=.true.)
  !
- do neh = 1,BS_K_dim
-     ikbz = BS_eh_table(neh,1)
-     iv = BS_eh_table(neh,2)
-     ic = BS_eh_table(neh,3)
+ do neh = BS_K_dim,1,-1
+   if (A_weight(neh)>=0.05) then
+     ikbz = BS_eh_table(A_indx(neh),1)
+     iv = BS_eh_table(A_indx(neh),2)
+     ic = BS_eh_table(A_indx(neh),3)
      ikibz = Xk%sstar(ikbz,1)
      is = Xk%sstar(ikbz,2)
-   if (A_weight(neh)>=5e-2) then
      call msg('o weight','',(/real(iv),real(ic),real(ikibz),real(is),A_weight(neh)/),&
 &            INDENT=-2,USE_TABS=.FALSE.)
    endif
@@ -269,7 +295,7 @@ subroutine exc_wf_eval(Xk)
  !
  ! CLEAN
  !
- deallocate(BS_eh_table,BS_mat,wf_vc,A_weight)
+ deallocate(BS_eh_table,BS_mat,wf_vc,A_weight,A_indx)
  call mem_est('BS_eh_table BS_mat wf_vc A_weight')
  !
  ! PLOT
@@ -336,15 +362,13 @@ subroutine exc_wf_eval(Xk)
    !
    subroutine sort_energies(BS_R,BS_E)
      !
-     use vec_operate, ONLY:sort
-     !
      implicit none 
      complex(SP) :: BS_R(BS_K_dim),BS_E(BS_K_dim)
      !
      ! Work Space
      !
      integer               :: j1,j2
-     integer,  allocatable :: indx(:)
+     integer,  allocatable :: E_indx(:)
      real(SP), allocatable :: R(:)         !square residuals R
      real(SP)              :: Rmax         !maximum value of the residuals
      real(SP), allocatable :: v2sort(:)
@@ -377,7 +401,7 @@ subroutine exc_wf_eval(Xk)
      call msg('o sort','#','',INDENT=0)
      !
      Rmax=0
-     allocate( R(BS_K_dim), v2sort(BS_K_dim),indx(BS_K_dim))
+     allocate( R(BS_K_dim), v2sort(BS_K_dim),E_indx(BS_K_dim))
      R(:) = BS_R(:)*conjg(BS_R(:))
      Rmax = maxval(R)
      R(:) = R(:)/Rmax
@@ -385,12 +409,12 @@ subroutine exc_wf_eval(Xk)
      if (sort_mode == 'e') v2sort=real(BS_E)
      if (sort_mode == 'i') v2sort=R
      !
-     call sort(arrin=v2sort,indx=indx)
+     call sort(arrin=v2sort,indx=E_indx)
      !
      do j1=BS_K_dim,1,-1
        !
-       j2=indx(j1)
-       if (sort_mode == 'e') j2=indx(-j1+BS_K_dim+1)
+       j2=E_indx(j1)
+       if (sort_mode == 'e') j2=E_indx(-j1+BS_K_dim+1)
        !
        if (real(BS_E(j2))>max_energy.or.real(BS_E(j2))<0.) cycle 
        call msg('o sort','',&
@@ -400,7 +424,7 @@ subroutine exc_wf_eval(Xk)
      enddo
      ! 
      call of_open_close('exc_sort'//trim(extension))
-     deallocate(R,v2sort,indx)
+     deallocate(R,v2sort,E_indx)
      !
    end subroutine
    !

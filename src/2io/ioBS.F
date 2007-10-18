@@ -34,7 +34,8 @@ integer function ioBS(iq,X,ID)
 &                        io_elemental,io_bulk,io_restart,&
 &                        read_is_on,write_is_on,io_check_restart,io_header,io_mode,&
 &                        VERIFY,io_fragment,io_fragmented,dbs_fragment,&
-&                        ver_is_gt_or_eq
+&                        ver_is_gt_or_eq,&
+&                        io_save_to_try_again,io_restore_to_try_again
  implicit none
  type(X_t):: X 
  integer  :: iq,ID
@@ -49,7 +50,16 @@ integer function ioBS(iq,X,ID)
  !
  db_name='BS_Q'//trim(intc(iq))
  !
+ call io_save_to_try_again(ID)
  ioBS=io_connect(desc=trim(db_name),type=2,ID=ID)
+ !
+ ! The BS DB is searched in the SAVE folder when 
+ ! it is not found in the JOBNAME folder
+ !
+ if (read_is_on(ID).and.ioBS/=0) then
+   call io_restore_to_try_again(ID)
+   ioBS=io_connect(desc=trim(db_name),type=1,ID=ID)
+ endif 
  if (ioBS/=0) goto 1
  !
  call io_check_restart(trim(db_name),ID)

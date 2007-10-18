@@ -47,7 +47,6 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  integer           :: ID,i_err
  integer, external :: ioDB1,ioQINDX,iogrot,self2self,elph_pw_dbs
-
  !
  ! Presets
  !
@@ -63,7 +62,6 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  call E_reset(en)
  call E_reset(Xen)
  call it_reset(1)
-
  !
  ! Switch off report file support
  !

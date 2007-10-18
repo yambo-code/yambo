@@ -46,7 +46,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! Work Space
  !
  type(QP_t):: qp
- integer   ::i1,io_err,ID
+ integer   ::i1,io_err,ID,i_spin
  integer, external::ioQP
  !
  ! Parser
@@ -127,12 +127,18 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  do i1=1,QP_n_states
    !
+#if defined PJ_SPIN
+     i_spin=QP_table(i1,4)
+#else 
+     i_spin=1
+#endif
+   !
    ! To perform the SC GWo the bare interaction are needed. Those are
    ! stored in the %E array, or in %Eo array if an initial QP correction
    ! has been added already
    !
-   qp%E_bare(i1)=en%E(QP_table(i1,1),QP_table(i1,3),1)
-   if (associated(en%Eo)) qp%E_bare(i1)=en%Eo(QP_table(i1,1),QP_table(i1,3),1)
+   qp%E_bare(i1)=en%E(QP_table(i1,1),QP_table(i1,3),i_spin)
+   if (associated(en%Eo)) qp%E_bare(i1)=en%Eo(QP_table(i1,1),QP_table(i1,3),i_spin)
    !
    qp%k(QP_table(i1,3),:)=k%pt(QP_table(i1,3),:)
  enddo

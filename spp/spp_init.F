@@ -103,6 +103,18 @@
    datatype = 'eps23'
    d_cellin = 1.0
    !
+   ! Localization
+   !
+   normdir = 3
+   lowerlim = 0
+   upperlim = 1
+   ngloc = 0
+   ! 
+   ! Transition analysis
+   ! 
+   Ecv_min = 0.0
+   Ecv_max = -1.0/HARTREE
+   !
 #endif
    !
    ! K analyze
@@ -162,10 +174,16 @@
 
 #if defined SPP_PJ_RAS
  !
- lras=rstatus(5)/=0
- if (lras) then
-   call initactivate(1,"XData YData "//&
-&       " BulkFile BulkForm BlkShift BlkBroad DataType SrfShift d_cell GausConv")
+ lsurf=rstatus(5)/=0
+ lras=rstatus(6)/=0
+ lloc=rstatus(7)/=0
+ ltrans=rstatus(8)/=0
+ if(lsurf) then
+   if (lras) call initactivate(1,"XData YData "//&
+&       " BulkFile BulkForm BlkShift BlkBroad "//&
+&       " DataType SrfShift d_cell GausConv")
+   if(lloc) call initactivate(1,"NormDir LowerLim UpperLim NGLoc")
+   if(ltrans) call initactivate(1,"EcvMin EcvMax ")
  endif
  !
 #endif

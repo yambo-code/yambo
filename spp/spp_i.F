@@ -155,10 +155,9 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
 #if defined SPP_PJ_RAS
  !
-100 continue
- if (lras) then
-   call ras_spp
- endif
+ if (lras) call ras_spp
+ if (lloc) call loc_spp
+ if (ltrans) call trans_spp
  !
 #endif
  !

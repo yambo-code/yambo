@@ -478,8 +478,6 @@ contains
      pw_igk_(1:ng_vec, ik)= 0
      wf_nc_k(ik) =0
      !
-     if (force_noWFs) cycle
-     !
      ! Print verbose wfc read message
      !
      if(verboseIO.and.(any( (/1,2,k%nibz/)-ik.eq.0 ) &
@@ -505,13 +503,11 @@ contains
    deallocate(index_)
    wf_ncx = maxval(wf_nc_k)  ! correct definition of wf_ncx 
 
-#elif defined _P2S_V32
+#elif defined _P2S_V32 
 
    allocate( pw_igk_(wf_ncx, k%nibz))
    allocate( index_(wf_ncx) )     ! avoid allocate(index_(wf_ncx)) in case of v3.1 bug
    do ik = 1, k%nibz
-     if (force_noWFs) cycle
-     wf_nc_k(ik) =0
      call qexml_read_gk(ik, npwk=npwk_, index=index_, ierr=ierr)
      if (ierr.ne.0) call errore('qexml_read_gk','IOTK error',ABS(ierr))
      pw_igk_(1:npwk_, ik)= index_(1:npwk_) 

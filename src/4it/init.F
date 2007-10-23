@@ -491,7 +491,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  endif
  if (lras) then
     call initactivate(1,&
-&     ' PkAnlyse')               ! Analyse
+&     ' LocLimit LocType')               ! Analyse
  endif
  if (lreels) then
     call initactivate(1,&

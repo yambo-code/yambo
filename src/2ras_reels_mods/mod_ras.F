@@ -20,8 +20,17 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 module ras_module
+  use pars,                   ONLY : SP
   implicit none
-  logical                       :: lras, lreels
+  
+  logical                         :: lras, lreels, ltrans
+  !
+  ! Variables for the Localization routine
+  !
+  logical                         :: lloc
+  character(len=2)                :: loctype
+  logical, allocatable            :: transloc(:,:,:)
+  real(SP)                        :: locfac, upperlim, lowerlim
 
 contains
 

@@ -38,7 +38,7 @@
   {"elph", "p","Electron-Phonon DBs preprocessing",0,0,0,0}, /* 12,4 */
 #endif
 #if defined SPP_PJ_RAS
-  {"ras", "a","Surface Anisotropy postprocessor",0,0,0,0}, /* 13,4 */
+  {"surf", "a","Surface spectroscopy postprocessor",0,0,1,0}, /* 13,4 */
 #endif
   {NULL,NULL,NULL,0,0,0,0}
  };

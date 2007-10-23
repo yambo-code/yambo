@@ -36,7 +36,10 @@
  call it('r',defs,'excwf','[R] Excitonic Wavefunction plot')  ! [2]
  call it('r',defs,'bzrim','[R] BZ energy RIM analyzer')  ! [3]
  call it('r',defs,'elph', '[R] Electron-Phonon DBs preprocessing')  ! [4]
- call it('r',defs,'ras',  '[R] Surface Anisotropy postprocessor')  ! [5]
+ call it('r',defs,'surf', '[R] Surface spectroscopy postprocessor')  ! [5]
+ call it('r',defs,'ras',  '[R] RAS spectra generator')  ! [6]
+ call it('r',defs,'loc',  '[R] State localizer')  ! [6]
+ call it('r',defs,'trans','[R] Transition analyzer')  ! [7]
  !
  !Kpt analysis
  !
@@ -87,6 +90,14 @@
  call it(defs,'d_cell',    'Perpendicular component of cell',d_cellin)
  call init_bulk(defs)
  call init_convolute(defs)
+ !
+ call it(defs,'NormDir',   'Index of surface normal (1/2/3)',normdir)
+ call it(defs,'LowerLim',  'Lower limit of localization box (frac)',lowerlim)
+ call it(defs,'UpperLim',  'Upper limit of localization box (frac)',upperlim)
+ call it(defs,'NGLoc',     'G-vectors for localization sum',ngloc)
+ !
+ call it(defs,'EcvMin',  'Lower limit of transition window',Ecv_min,E_unit)
+ call it(defs,'EcvMax',  'Upper limit of transition window',Ecv_max,E_unit)
  !
 #endif
  !

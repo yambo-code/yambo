@@ -43,11 +43,8 @@ module optcut
   integer, allocatable      :: igtab(:,:,:)
   complex, allocatable      :: wfc1(:),wfc2(:)
   complex, allocatable      :: Fzg(:,:)
+  complex, allocatable      :: Fzgp(:,:)
 
-! No spin
-! complex(SP), allocatable  :: Xcut_q0grad(:,:,:,:)
-! complex(SP), allocatable  :: Xcut_rhoq0(:,:,:)
-! Spinor
   complex(SP), allocatable  :: Xcut_q0grad(:,:,:,:,:)
   complex(SP), allocatable  :: Xcut_rhoq0(:,:,:,:)
 
@@ -157,6 +154,7 @@ end subroutine init_cutoff
     allocate( n3limit(nxx%min(1):nxx%max(1), nxx%min(2):nxx%max(2), 2) )
     allocate( gfound (nxx%min(1):nxx%max(1), nxx%min(2):nxx%max(2)) )
     allocate( Fzg    (nxx%min(3):nxx%max(3), nxx%min(3):nxx%max(3)) )
+    allocate( Fzgp   (nxx%min(3):nxx%max(3), nxx%min(3):nxx%max(3)) )
     allocate( wfc1   (nxx%min(3):nxx%max(3)) )
     allocate( wfc2   (nxx%min(3):nxx%max(3)) )
 
@@ -190,9 +188,8 @@ end subroutine init_cutoff
           if(n3.lt.n3limit(n1,n2,1)) n3limit(n1,n2,1) = n3
           if(n3.gt.n3limit(n1,n2,2)) n3limit(n1,n2,2) = n3
 !--> DEBUG
-!         write(77,223) n1,n2,n3,ig,igk_k(ig),gvecaff(igtab(n1,n2,n3),xyz(:))
-          write(77,223) n1,n2,n3,ig,gvecaff(igtab(n1,n2,n3),xyz(:))
-   223 format(3i4,2x,i7,3i4,2x,3i4)
+!         write(77,223) n1,n2,n3,ig,gvecaff(igtab(n1,n2,n3),xyz(:))
+!  223 format(3i4,2x,i7,3i4,2x,3i4)
 !<-- DEBUG
     enddo
     
@@ -220,13 +217,16 @@ end subroutine init_cutoff
        twopi = 2.d0*pi
        do n3 = n%min(3),n%max(3)
           Fzg(n3,n3) = dcf ! Gz.eq.Gz'
+          Fzgp(n3,n3) = 0 ! Gz.eq.Gz'
           do n3p = n3+1,n%max(3) ! for all Gz,Gz', Gz.ne.Gz'
              Fzg(n3,n3p) = -ci/twopi/(n3p-n3) * &
 &                  exp(ci*(n3p-n3)*twopi*z0f) * (exp(ci*(n3p-n3)*twopi*dcf)-1)
+             Fzgp(n3,n3p) =  Fzg(n3,n3p)*(n3-n3p)*twopi/az ! -1*gz
           enddo
           do n3p = n%min(3),n3-1
              Fzg(n3,n3p) = -ci/twopi/(n3p-n3) * &
 &                  exp(ci*(n3p-n3)*twopi*z0f) * (exp(ci*(n3p-n3)*twopi*dcf)-1)
+             Fzgp(n3,n3p) =  Fzg(n3,n3p)*(n3-n3p)*twopi/az ! -1*gz
           enddo
        enddo
    
@@ -280,6 +280,7 @@ end subroutine init_cutoff
     if(allocated(gfound)) deallocate(gfound)
     if(allocated(n3limit)) deallocate(n3limit)
     if(allocated(Fzg)) deallocate(Fzg)
+    if(allocated(Fzgp)) deallocate(Fzgp)
     if(allocated(wfc1)) deallocate(wfc1)
     if(allocated(wfc2)) deallocate(wfc2)
     if(allocated(nxk)) deallocate(nxk)
@@ -289,7 +290,6 @@ end subroutine init_cutoff
 !<-------------------------------------------------------------------->! 
    
   subroutine PScut(PS,wfv,wfc,kg)
-!   use wave_func,         ONLY : wf_ng
     implicit none
     complex(SP),   intent(out)   :: PS(3)
     real(SP), optional, intent(in)    :: kg(:,:)
@@ -300,7 +300,6 @@ end subroutine init_cutoff
     real(SP)                     :: kgxy(3)
     complex(SP)                  :: PSx,PSy,PSz
    
-!write(*,* )"PScut"
     PSx = 0
     PSy = 0
     PSz = 0
@@ -308,19 +307,15 @@ end subroutine init_cutoff
     ! Double loop over n1,n2 (i.e. Gx,Gy)
     do n1 = n%min(1),n%max(1)
     do n2 = n%min(2),n%max(2)
-! write(*,* )  "n1 n2 ",n1,n2
        if(gfound(n1,n2)) then ! Avoid cases outside the cutoff
 
           n3min = n3limit(n1,n2,1)
           n3max = n3limit(n1,n2,2) 
 !         Ignore Gz for now. Thus any n3 will do.
-! write(*,* )  "igtab",n3min,n3max
-! write(*,* )  "igtab",igtab(n1,n2,0)
-          if(present(kg)) kgxy(:) = kg(:,igtab(n1,n2,0)) ! crystal frame
+          if(present(kg)) kgxy(ix) = kg(ix,igtab(n1,n2,0)) ! crystal frame
+          if(present(kg)) kgxy(iy) = kg(iy,igtab(n1,n2,0)) ! crystal frame
           do n3 = n3min,n3max
-! write(*,* )  "n3 ",n3
              ig1 = igtab(n1,n2,n3)
-! write(*,* )  "ig1 ",ig1
              wfc1(n3) = conjg(wfv(ig1))
              wfc2(n3) = wfc(ig1)
           enddo
@@ -336,7 +331,11 @@ end subroutine init_cutoff
 ! DEBUG
 ! PSz = PSz + wfc1(n3) * wfc2(n3p) * kg(iz)* Fzg(n3,n3p) ! surface frame, iz incorrect
 ! end DEBUG
-             PSz = 0 ! if want this, need to code kg(n3p)
+!            PSz = 0 ! if want this, need to code kg(n3p)
+             if(present(kg)) kgxy(iz) = kg(iz,igtab(n1,n2,n3p)) ! crystal frame
+!         PSz = PSz + wfc1(n3) * wfc2(n3p) * kgxy(iz)* Fzg(n3,n3p) 
+          PSz = PSz + wfc1(n3) * wfc2(n3p) * kgxy(iz)* Fzg(n3,n3p) + &
+ &                  0.5 * wfc1(n3) * wfc2(n3p) * Fzgp(n3,n3p)
 ! DEBUG
 !   write(*,*) "In pscut:",n1,n2,n3,PSx,PSy,wfc1(n3),wfc2(n3p),kgxy(ix),Fzg(n3,n3p)," XXX"
 ! end DEBUG

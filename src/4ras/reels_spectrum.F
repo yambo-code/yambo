@@ -51,7 +51,6 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
 
   do iw = 1, nw
     kpmag = kpmagf( hw(iw) )
-    write(40,*) hw(iw)*HARTREE,kpmag
 
     loss_qpar(:) = 0
     !
@@ -99,10 +98,8 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
     lossf(iw,:) = loss_qpar(:) ! other factors?
 
 !<-- DEBUG
-!    write(88,107) hw(iw)*HARTREE,qparm,kpmag,qtot2,Akk,tmpImg,tmpImg2,lossf(iw,1),lossf(iw,2),real(surf_i(iw,1)),real(surf_i(iw,2)),aimag(surf_i(iw,1)),aimag(surf_i(iw,2)),qpar(1),qpar(2)
-!   write(23,107) hw(iw)*HARTREE, qpard_(iw), lossf(iw,1), lossf(iw,2), Akk, qparm,qtot2,qpar,kpmag
-    write(24,107) hw(iw)*HARTREE, lossf(iw,1), lossf(iw,2), Akk, qparm,qtot2,qpar,kpmag
-107 format(f8.3,20e16.7)
+!   write(24,107) hw(iw)*HARTREE, lossf(iw,1), lossf(iw,2), Akk, qparm,qtot2,qpar,kpmag
+!107 format(f8.3,20e16.7)
 !--> DEBUG
   enddo
 

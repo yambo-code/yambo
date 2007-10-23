@@ -37,10 +37,6 @@ subroutine extract_eps_surf(surf_i, cell_i, npol, eps_b, nw, lbulkerr, lsurferr)
   integer                         :: ie, ipol
   character(lchlen)               :: lch1
   !
-  ! Note: cell_i appears throughout as
-  ! cell_i * d_cell which is equiv to slab_i * d_slab
-  ! => produces slab polarizability 4 * pi * alpha * d_surf 
-  !
   lsurferr = .false.
   d_surf = -1 ! for checks
   !
@@ -65,17 +61,12 @@ subroutine extract_eps_surf(surf_i, cell_i, npol, eps_b, nw, lbulkerr, lsurferr)
   d_bulk  = nlbulk * d_layer
   !
   ! Cutoff used => eps_surf already obtained. Ignore nlbulk.
-  !
-
-  ! Note: X gives cell_i normalized to cell volume.
-  ! This always needs to be rescaled by az (d_cell)
-  ! Also, there is an extra factor of 2  (FROM WHERE?)
+  ! Renormalization done previously.
   !
   if(loptcut) then
     d_surf = dc
     do ipol = 1, npol
-!     surf_i(:,ipol) = cell_i(:,ipol)*d_cell/d_surf*2.0_SP
-      surf_i(:,ipol) = cell_i(:,ipol)*d_cell/d_surf
+      surf_i(:,ipol) = cell_i(:,ipol)
     enddo
     nlsurf = dc/d_layer
     call msg('nrs','Surface layer width defined by cutoff parameter.')
@@ -96,6 +87,7 @@ subroutine extract_eps_surf(surf_i, cell_i, npol, eps_b, nw, lbulkerr, lsurferr)
         surf_i(:,ipol) = cell_i(:,ipol)*d_cell/(d_surf*2.0_SP)
       enddo
     else
+      ! This does not yield anything physically useful.
       call msg('nrs',&
 &     'Surface dielectric function defined over -full- slab.')
       d_surf = d_slab

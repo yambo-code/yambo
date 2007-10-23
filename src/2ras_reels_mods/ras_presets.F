@@ -29,6 +29,7 @@
    use eels_detector,         only : thetadet, detint, detintm
    use model_loss_function,   only : model
    use optcut,                only : z0f, dcf, loptcut
+   use ras_module,            only : locfac, loctype
    implicit none
    !
    ! mod_surface_geometry
@@ -76,9 +77,10 @@
    dcf  = 1.0         ! width of cut
    loptcut = .false.    ! cutoff on/off
    !
+   ! mod_ras
    !
-   !
-
+   loctype = "no"
+   locfac = 0.0
    !
    !
    !

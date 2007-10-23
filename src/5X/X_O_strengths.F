@@ -30,6 +30,9 @@
  use pars,           ONLY:SP
  use com,            ONLY:warning
 #endif
+#if defined PJ_RAS
+ use ras_module,     ONLY:transloc 
+#endif
  use drivers,        ONLY:l_col_cut
  use electrons,      ONLY:levels,n_sp_pol
  use par_proc_m,     ONLY:pp_redux_wait
@@ -178,6 +181,9 @@
    field_dir_rot = matmul( dl_sop(:,:,is), field_dir )
    do iv = X%ib(1), Xen%nbm
      do ic = Xen%nbf+1, X%ib(2)
+#if defined PJ_RAS
+   if(.not.transloc(ic,iv,ik)) cycle
+#endif
        do i_spin = 1, n_sp_pol
          !
          ! X_rhoq0 = i q . < v k | r | c k >

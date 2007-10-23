@@ -7,11 +7,12 @@ subroutine write_reelsdiff(lossf, hw, nw )
   real(SP),     intent(in)        :: hw(nw), lossf(nw,2)
 ! Local
   integer                         :: iw
-  real(SP)                        :: od(5), lossx, lossy, diff, rdiff, avg
+  real(SP)                        :: od(9), lossx, lossy, diff, rdiff, avg
   real(SP), parameter             :: small = 1.0e-5, zero = 1.0e-5
-  real(SP)                        :: lossg(nw,2)
+  real(SP)                        :: lossg(nw,2),d2x(nw), d2y(nw),avgd2loss
+  real(SP)                        :: hwev(nw),tmp(nw)
   character(schlen)               :: of_name
-  character(10)                   :: headings(5)
+  character(10)                   :: headings(9)
   !
   ! Set up REELS difference output (add extra tag to distinguish three-layer or full)
   !
@@ -21,16 +22,22 @@ subroutine write_reelsdiff(lossf, hw, nw )
   !
   ! Output file titles
   !
-  headings(1:5) = (/' 1',' 2',' 3',' 4',' 5' /)
-  call msg('o reels','#',headings(1:5),INDENT=0,USE_TABS=.true.)
-  headings(1:5) = (/'hw (eV) ','REELS(x)','REELS(y)','  Diff  ','Rel Diff' /)
-  call msg('o reels','#',headings(1:5),INDENT=0,USE_TABS=.true.)
+  headings(1:9) = (/' 1',' 2',' 3',' 4',' 5',' 6',' 7',' 8',' 9' /)
+  call msg('o reels','#',headings(1:9),INDENT=0,USE_TABS=.true.)
+  headings(1:9) = (/'hw (eV) ','REELS(x)','REELS(y)','   Avg  ', &
+&  '  Diff  ','Rel Diff','-2drv(x)','-2drv(y)','-Avg2Drv' /)
+  call msg('o reels','#',headings(1:9),INDENT=0,USE_TABS=.true.)
   !
   ! Add gaussian broadening if necessary
   !
   lossg = lossf
   call convolute_gaussian(lossg(:,1), hw, nw)
   call convolute_gaussian(lossg(:,2), hw, nw)
+  !
+  ! Calculate derivative spectra
+  forall(iw=1:nw) hwev(iw) = hw(iw)*HARTREE
+  call second_derivative(d2x,lossg(:,1),hwev,nw) 
+  call second_derivative(d2y,lossg(:,2),hwev,nw) 
   !
   ! Write data to file
   !
@@ -43,7 +50,9 @@ subroutine write_reelsdiff(lossf, hw, nw )
     avg   = ( lossx + lossy ) * 0.5_SP
     if(abs(avg).le.small) avg = small
     rdiff = ( lossx - lossy ) / avg
-    od = (/ hw(iw)*HARTREE, lossx, lossy, diff, rdiff /)
+    avgd2loss  = ( d2x(iw) + d2y(iw) ) * 0.5_SP
+    od = (/ hwev(iw), lossx, lossy, avg , diff, rdiff , &
+&           -d2x(iw), -d2y(iw), -avgd2loss /)
     call msg('o reels','',od, INDENT=0, USE_TABS=.true.)
   enddo
   !
@@ -52,3 +61,23 @@ subroutine write_reelsdiff(lossf, hw, nw )
   return
 end subroutine write_reelsdiff
 
+subroutine second_derivative(d2f,f,x,n)
+  use pars,       only : SP
+  implicit none
+  integer, intent(in)  :: n
+  real(SP),intent(in)  :: f(n),x(n)
+  real(SP),intent(out) :: d2f(n)
+  integer              :: iw
+
+  if(n.lt.3) then
+    d2f = 0.0_SP
+    return
+  endif
+  do iw=2,n-1
+    d2f(iw) = (f(iw+1) + f(iw-1) -2.0_SP*f(iw) ) &
+&          / ( x(iw+1)-x(iw) ) / ( x(iw)-x(iw-1) )
+  enddo
+  d2f(1) = d2f(2)
+  d2f(n) = d2f(n-1)
+  return
+end subroutine second_derivative

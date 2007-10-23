@@ -66,11 +66,22 @@ module SPP
  !
  !RAS
  !
- logical :: lras
+ logical           :: lras, lsurf
  character(schlen) :: xdata, ydata
  character(len=5)  :: datatype
  real(SP)          :: sshift
  real(SP)          :: d_cellin
+ !
+ ! Localization
+ !
+ logical           :: lloc
+ real(SP)          :: lowerlim, upperlim
+ integer           :: normdir, ngloc
+ !
+ ! Transition Analysis
+ !
+ logical           :: ltrans
+ real(SP)          :: Ecv_min, Ecv_max
  !
 #endif
  !

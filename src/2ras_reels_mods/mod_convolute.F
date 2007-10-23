@@ -55,8 +55,6 @@ subroutine init_convolute(defs)
   call it(defs,'GausConv', '[REELS] Gaussian convolution (FWHM)',gbroad, E_unit )
 #endif
   
-  gbroad = gbroad/HARTREE 
-
   return
 end subroutine init_convolute
 

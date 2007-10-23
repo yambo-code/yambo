@@ -7,7 +7,7 @@ objs = mod_SPP.o     spp_i.o   spp_init.o spp_init_load.o k_analyze.o \
 #elif defined SPP_PJ_RAS
 objs = mod_SPP.o     spp_i.o   spp_init.o spp_init_load.o k_analyze.o \
        exc_wf_eval.o exc_wf_plot_driver.o exc_wf_gnuplot.o exc_wf_xcrysden.o \
-       ras_spp.o \
+       ras_spp.o loc_spp.o trans_spp.o \
        self2self.o   BZ_RIM.o \
        ioDB1_ver_2.o ioWF_ver_2.o      ioKB_PP_ver_2.o ioX_ver_2.o
 #else

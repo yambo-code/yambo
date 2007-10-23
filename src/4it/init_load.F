@@ -62,6 +62,7 @@
  use analyse_peaks,        ONLY : init_analyse_peaks
  use model_loss_function,  ONLY : init_loss_function
  use convolute,            ONLY : init_convolute
+ use ras_module,           ONLY : locfac, loctype
 #endif
 #if defined PJ_REELS
  use bulkeps,              ONLY : init_bulk
@@ -189,6 +190,8 @@
  call init_loss_function(defs)
  call init_detector(defs)
  call init_convolute(defs)
+ call it(defs,'LocType','[RAS] Transition filter (ss/sb/bs/bb|no)',loctype,verb_level=V_more)
+ call it(defs,'LocLimit','[RAS] Factor defining state localization',locfac,verb_level=V_more)
 #endif
  ! 
  ! REELS

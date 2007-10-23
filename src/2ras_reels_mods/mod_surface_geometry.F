@@ -97,7 +97,7 @@ end subroutine init_surface
     !
     ! Layers: run some basic checks
     !
-    if(nlcell.le.nlslab.or.nlbulk.gt.nlslab.or.nlbulk.ge.nlcell) &
+    if(nlcell.lt.nlslab.or.nlbulk.gt.nlslab.or.nlbulk.ge.nlcell) &
 &   call msg('nrs','Warning: error in numbers of layers.') 
 
     return

@@ -36,6 +36,9 @@
  use wave_func,               ONLY : wf, wf_ng, wf_state, wf_load, WF_free
  use optcut,                  ONLY : Xcut_q0grad, Xcut_rhoq0, ng_limits, setup_optcut, pscut
  use surface_geometry,        ONLY : setup_gvecaff
+#if defined PJ_RAS
+ use ras_module,     ONLY:transloc
+#endif
  implicit none
  type(bz_samp),  intent(in)       :: Xk
  type(levels),   intent(in)       :: Xen
@@ -116,6 +119,9 @@
    field_dir_rot = matmul( dl_sop(:,:,is), field_dir )
    do iv = X%ib(1), Xen%nbm
      do ic = Xen%nbf+1, X%ib(2)
+#if defined PJ_RAS
+   if(.not.transloc(ic,iv,ik)) cycle
+#endif
        do i_spin = 1, n_spin
          !
          ! X_rhoq0 = i q . < v k | r | c k >

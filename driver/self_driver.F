@@ -151,7 +151,7 @@
         lreels.or.&
 #endif
 #if defined PJ_RAS
-        lras.or.&
+        lras.or.lreels.or.&
 #endif
         (l_gw0.and..not.l_ppa.and.l_el_corr).or.l_life
  if (apply_QP)  call QP_apply(X(3)%ib,Xen,Xk,1,msg_fmt='s')

@@ -25,7 +25,7 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   use com,                     only : msg
   use memory_m,                only : mem_est
   use parser_m,                only : parser
-  use optcut,                  only : loptcut, setup_cutoff, print_cutoff
+  use optcut,                  only : loptcut, setup_cutoff, print_cutoff, dc
   use electrons,               only : levels
   use R_lattice,               only : bz_samp, bare_qpg,q_norm
   use IO_m,                    only : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP
@@ -81,6 +81,7 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   call setup_cutoff( lfail )
   call print_cutoff
   call print_analyse_peaks
+  call setup_loc(X%ib(1), Xen%nbm, Xen%nbf+1, X%ib(2), Xk%nibz)
   !
   ! REELS input parameters
   !
@@ -120,15 +121,16 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   if(lbulkerr) call msg('nrs','Calculation will continue, but '//&
 &   'quantities requiring the bulk epsilon will not be computed.')
   !
-  ! Check for db.surfeps, and read all eps_i if present
-  ! Commented out until really needed.
+  ! Check for db.celleps, and read all eps_i if present
+  ! This is generally only useful for REELS.
   !
-! call section('=','Check for eps cell database...')
-! call io_control(ACTION=OP_RD_CL, COM=REP, MODE=VERIFY, SEC=(/1,2/), ID=ID)
-! io_err = ioslabeps(eps_i, X, Xk, Xen, wv, q0v, npol, ID)
-! if (io_err.eq.0) then
-!   goto 1 ! Skip calculation of X. Nasty Fortran. Check deallocates.
-! endif
+  if (lreels) then 
+    call section('=','Check for eps cell database...')
+    call io_control(ACTION=OP_RD_CL, COM=REP, MODE=VERIFY, SEC=(/1,2/), ID=ID)
+    io_err = ioslabeps(eps_i, X, Xk, Xen, wv, q0v, npol, ID)
+    if (io_err.eq.0) goto 1 ! Skip calculation of X. Nasty!
+  endif
+
   call section('=','Calculating eps cell.')
 
   allocate( X_epsilon(2,nw) ) 
@@ -166,11 +168,13 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
        
       call X_os(X_mat,iq,fr,Xen,Xk,wv,X)
        
+      if(loptcut) X_mat(1,1,:) = X_mat(1,1,:)*az/dc ! Scale if cutoff present
       X_epsilon(1,fr(1):fr(2))=1.0_SP-X_mat(1,1,:)*4.0_SP*pi/q_norm(iq)**2
        
-      call X_s(iq,fr,X,wv) 
-       
-      X_epsilon(2,fr(1):fr(2))=1./(X_mat(1,1,:)+1.)   ! LFEs included, if no cutoff
+!     RAS/REELS valid just for head at present.
+!     call X_s(iq,fr,X,wv)
+!     X_epsilon(2,fr(1):fr(2))=1./(X_mat(1,1,:)*bare_qpg(iq,1)**2/q_norm(iq)**2+1.)
+!     X_epsilon(2,fr(1):fr(2))=1./(X_mat(1,1,:)+1.)   ! LFEs included, if no cutoff
        
     enddo 
     !
@@ -181,7 +185,7 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
     ! Copy to slab eps. array
     !
     do iw = 1, nw
-      eps_i(iw,ipol) = cmplx( real(X_epsilon(2,iw)), aimag(X_epsilon(2,iw)), SP )
+      eps_i(iw,ipol) = X_epsilon(1,iw)
     enddo
     call X_alloc('OptOsc')  ! X_rhoq0
     if(loptcut) deallocate(Xcut_rhoq0)
@@ -189,11 +193,11 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   enddo    
   deallocate(X_epsilon)
 
-! call section('=','Write eps surf database: ')
-! call io_control(ACTION=OP_WR_CL, COM=REP, MODE=DUMP, SEC=(/1,2/), ID=ID)
-! io_err = ioslabeps(eps_i, X, Xk, Xen, wv, q0v, npol, ID)
+  call section('=','Write eps cell database: ')
+  call io_control(ACTION=OP_WR_CL, COM=REP, MODE=DUMP, SEC=(/1,2/), ID=ID)
+  io_err = ioslabeps(eps_i, X, Xk, Xen, wv, q0v, npol, ID)
 
-1 continue ! db.slabeps exists; eps_i has been read
+1 continue ! db.celleps exists; eps_i has been read
   !
   ! Dump the eps_i (cell) to file for plotting
   !
@@ -321,3 +325,44 @@ subroutine print_eels_general( npol )
 &   'Triple q-polarization calculation selected [RAS, HREELS diff].')
   return
 end subroutine print_eels_general
+
+subroutine setup_loc(iv1,iv2,ic1,ic2)
+  use com, only : msg
+  use pars,                    only : SP
+  use IO_m,                    only : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP
+  use ras_module,              only : loctype, locfac, transloc, upperlim, lowerlim
+  use electrons,               only : n_bands
+  use R_lattice,               only : nkibz
+  implicit none
+  integer, external :: io_loc
+  integer :: ID_loc, io_err, ik, iv, ic
+  integer, intent (in) :: iv1, iv2, ic1, ic2
+  real(SP)                        :: loc(n_bands, nkibz)
+
+  allocate(transloc(iv2,ic2, nkibz))
+  transloc = .true.
+  if(loctype.eq."no") return
+  call io_control(ACTION=OP_RD_CL, COM=REP, SEC=(/1/), ID=ID_loc)
+  io_err = io_loc(loc,upperlim, lowerlim,ID_loc)
+  if(io_err.ne.0) return
+
+  call msg('rs','Restricting transitions to type: ',loctype)
+  do ik = 1, nkibz
+    do iv = iv1, iv2
+      do ic = ic1, ic2
+        if(loctype.eq."ss") transloc(ic,iv,ik) = &
+&                           (loc(iv,ik) >= locfac).and.(loc(ic,ik) >= locfac)
+        if(loctype.eq."sb") transloc(ic,iv,ik) = &
+&                           (loc(iv,ik) >= locfac).and.(loc(ic,ik) <  locfac)
+        if(loctype.eq."bs") transloc(ic,iv,ik) = &
+&                           (loc(iv,ik) <  locfac).and.(loc(ic,ik) >= locfac)
+        if(loctype.eq."bb") transloc(ic,iv,ik) = &
+&                           (loc(iv,ik) <  locfac).and.(loc(ic,ik) <  locfac)
+!----> DEBUG
+!write(88,'(3i4,l2,2f7.3,1x,f7.3)') ik,iv,ic,transloc(ic,iv,ik),loc(iv,ik),loc(ic,ik),locfac
+!<---- DEBUG
+      enddo
+    enddo
+  enddo
+  return
+end subroutine setup_loc

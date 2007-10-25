@@ -1,3 +1,102 @@
+2007-10-23 14:23:07 r170 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.0.12
+
+	*  spp/loc_spp.F spp/mod_SPP.F spp/trans_spp.F spp/spp_i.F spp/.objects spp/spp_init_load.F spp/spp_init.F p2s/mod_p2s.F 2ras_reels_mods/mod_surface_geometry.F 2ras_reels_mods/io_loc.F 2ras_reels_mods/mod_convolute.F 2ras_reels_mods/mod_optcut.F 2ras_reels_mods/.objects 2ras_reels_mods/mod_ras.F 2ras_reels_mods/ras_presets.F 5X/X_O_strengths.F 4it/init_load.F 4it/init.F 4ras/reels_spectrum.F 4ras/write_reelsdiff.F 4ras/extract_eps_surf.F 4ras/rasdriver.F 4ras/X_O_strengths_cut.F driver/self_driver.F driver/spp.h
+
+	Bugs:
+	- Fixed force_noWFs bug in p2s 3.1.1/3.2
+	Additions:
+	- [PJ_RAS] Basic second derivative output added to REELS.
+	- [PJ_RAS] QP corrections now allowed for REELS.
+	- [PJ_RAS/PJ_SPP_RAS] Localization of states routines added vi spp_ras.
+	Changes:
+	- [PJ_RAS] Real space cutoff in perpendicular direction implemented (for REELS use).
+	- [PJ_RAS] Surface/slab dielectric functions with real space cutoff improved.
+
+	Patch sent by: Conor
+
+2007-10-18 14:58:18 r169 Andrea Marini <marini@roma2.infn.it>
+
+	Version 3.0.12
+
+	*  configure spp/spp_i.F spp/exc_wf_eval.F include/version.inc config/configure.ac 0modules/mod_IO.F 0modules/mod_com.F 2io/ioBS.F 3qp_ctl/QP_apply_interpolate.F 6qp/QP_driver.F driver/spp.h driver/driver.c
+
+	Bugs:
+	- Wrong spin resolved indexes in QP_driver (thanks to Claudio).
+
+	Additions:
+	- in exc_wf_eval  now the distribution of the excitonic weight
+	  in the k-points is reportes.
+	- Restored -I and -O options in spp.
+
+	Changes:
+	- In basic IO procedures existing files are searched in INPATH/SAVE and
+	  OUTPATH/SAVE-JOB folders (before was only in INPATH). This is to be able to read
+	  a BS kernel (for example) in the same run it was generated (with inpath/=outpath).
+	- ioBS searches in SAVE if not found in JOB folder.
+
+	Patch sent by: Andrea
+
+2007-10-12 15:46:49 r168 Andrea Marini <marini@roma2.infn.it>
+
+	Myrta's patch for self_no_herm project
+
+2007-10-12 15:30:51 r167 Andrea Marini <marini@roma2.infn.it>
+
+	Added revision in header. Fixed compatibility issues
+
+2007-10-12 14:41:07 r166 Andrea Marini <marini@roma2.infn.it>
+
+	Bug in configure
+
+2007-10-12 12:18:10 r165 Andrea Marini <marini@roma2.infn.it>
+
+	Version 3.0.12
+
+	*  configure config/acx.m4 0modules/std_presets.F 0modules/mod_D_lattice.F 2io/io_header.F 4it/setup.F
+
+	Bugs:
+	-
+	Additions:
+	- A negative temperature now fixes the job temperature independently
+	  on the database temepartures (added input_Tel_fixed in mod_D_lattice.F) (andrea)
+
+	Changes:
+	- configure changed for MacOsX & latest ifort (claudio)
+
+	Patch sent by: Andrea & Claudio
+
+2007-10-10 19:18:16 r164 Andrea Marini <marini@roma2.infn.it>
+
+	Version 3.0.12
+
+	*  configure spp/self2self.F include/version.inc config/Makefile.in config/configure.ac 2coulomb/col_driver.F 0modules/mod_stderr.F 0modules/mod_BS.F 0modules/mod_TDDFT.F 0modules/mod_IO.F 0modules/mod_memory.F 0modules/mod_com.F 4tddft/tddft_descriptions.F 4tddft/tddft_BSK_disk_2_FXC.F 4tddft/.objects 4tddft/tddft_do_X_W_typs.F 4tddft/tddft_BSK_2_FXC.F 2io/variables_BS.F 2io/ioBS.F 2io/ioBS_FXC.F 2io/ioBS_Fxc.F 2io/io_elemental.F 2io/ioWF.F 2io/ioXXVXC.F 2io/ioCOL_CUT.F 2io/.objects 5X/X_os.F 5X/O_driver.F 5X/X_s.F 4it/setup.F 4it/init.F 7bse/K_Haydock.F 7bse/K_dump_to_o_file.F 7bse/K_driver.F 7bse/K_solvers.F 7bse/K_descriptions.F 7bse/.objects 7bse/K_inversion.F 7bse/K.F 6qp/QP_driver.F 6qp/QP_XX_Vxc.F 6qp/QP_descriptions.F 3kop/k_lattice.F 3kop/bz_samp_indexes.F 1parser/mod_itm.F sbin/self_save.sh.in sbin/make_message.pl
+
+	Bugs:
+	- in K.F: resonant mode "d" (diagonal interaction was not working)
+
+	Additions:
+	- Added revision number in "include/version.inc", and in report/log/o* files.
+	  Remove empty string in root directory.
+	- mod_stderr.F: added functions log2ch, real2ch (similar to intc). gen_fmt moved in.
+
+	Changes:
+	- Renamed files in ./sbin/
+	- Complete change of BSS_description and FXC_description procedure: new
+	  interface (and file) variables_BS.F. ioBS_Fxc is now an interface.
+	  Removed tddft_descriptions.F/K_descriptions.F.
+	  NOTE: now io_elemental can create "descriptions" (strings) corresponding
+	  to the variable field (see src/2io/variables_BS.F as example).
+	- K_dump_to_o_file.F now writes both eps and alpha.
+	- Added X_oscillators type in K_solvers.F to avoid confusion.
+
+	Patch sent by: Andrea
+
+2007-10-08 15:21:32 r163 Andrea Marini <marini@roma2.infn.it>
+
+	Added revision number in version report
+
 2007-10-05 12:28:53 r162 Andrea Marini <marini@roma2.infn.it>
 
 	V 3.0.11_01-10-07

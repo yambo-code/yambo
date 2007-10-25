@@ -87,12 +87,16 @@
  !
  ! real(nel)/2.0_SP*real(n_spinor) is last occupied state
  !
+ ! n_b_full_guess is used to avoid spurious oscillations
+ ! in the Fermi Level search for system with a gap.
+ ! In general those oscillations appear when the gap is small.
+ !
  n_b_full_guess= nint( real(nel)/2.0_SP*real(n_spinor)+.1)
  !
  Ef(1)=maxval(E%E(n_b_full_guess,:,:))
  Ef(2)=minval(E%E(n_b_full_guess+1,:,:))
  !
- ! n_b_full_guess not set when it is metallic 
+ ! n_b_full_guess not set when the system is metallic ...
  ! 
  if (Ef(2)<Ef(1).or.Ef(1)==Ef(2)) then
    Ef(1)=minval(E%E(n_b_full_guess,:,:))
@@ -100,10 +104,10 @@
    n_b_full_guess=0
  endif
  !
- ! n_b_full_guess not set when there is an odd number of electrons
- ! and the system is not metallic (n_sp_pol>1)
+ ! ... or when there is a odd number of electrons (when n_sp_pol>1
+ ! the system can be semiconductive in the two channels).
  ! 
- if (n_sp_pol>1) n_b_full_guess=0
+ if (mod(nel,2.)/=0.) n_b_full_guess=0
  !
  ! Start Loop
  ! 

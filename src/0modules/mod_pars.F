@@ -45,11 +45,11 @@
    !
    ! UNITs CONVERSION
    !
-   real(SP), parameter :: HARTREE=27.2113834_SP         ! from ev
+   real(SP), parameter :: HARTREE=27.2113834_SP         ! ev
    real(SP), parameter :: HA2GHZ=HARTREE*241796_SP
    real(SP), parameter :: HA2THZ=HARTREE*241.796_SP
    real(SP), parameter :: HA2CM1=HARTREE*8065.5_SP
-   real(SP), parameter :: Kelvin=1.1604*10.**4*HARTREE  ! from ev
+   real(SP), parameter :: Kelvin=1.1604*10.**4*HARTREE  ! ev
    real(SP), parameter :: BOHR=0.52917721  ! Armostrongs
    !
  end module 

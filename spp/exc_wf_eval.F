@@ -404,7 +404,7 @@ subroutine exc_wf_eval(Xk)
      allocate( R(BS_K_dim), v2sort(BS_K_dim),E_indx(BS_K_dim))
      R(:) = BS_R(:)*conjg(BS_R(:))
      Rmax = maxval(R)
-     R(:) = R(:)/Rmax
+     R(:) = R(:)/sum(R)
      !
      if (sort_mode == 'e') v2sort=real(BS_E)
      if (sort_mode == 'i') v2sort=R

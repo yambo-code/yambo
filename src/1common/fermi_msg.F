@@ -92,10 +92,10 @@
      write (ch_,'(3(i4.4,a,i4.4,3x))') &
 &          i1,'-',nbf_(i_s_pol),&
 &          nbf_(i_s_pol)+1,'-',nbm_(i_s_pol),nbm_(i_s_pol)+1,'-',E%nb
-     call msg('r',prefix_//' '//trim(ch_))
+     call msg('r',prefix_//'  '//trim(ch_))
    else
      write (ch_,'(2(i4.4,a,i4.4,15x))') i1,'-',nbf_(i_s_pol),nbf_(i_s_pol)+1,'-',E%nb
-     call msg('r',prefix_//' '//trim(ch_))
+     call msg('r',prefix_//'  '//trim(ch_))
    endif
  enddo
  !

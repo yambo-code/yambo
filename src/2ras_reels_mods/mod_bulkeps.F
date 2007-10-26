@@ -448,7 +448,7 @@ end subroutine init_bulk
 !         i1 = i1-1
 !      endif
        if( i2 .gt. n_in ) then
-          fout(i) = fin(n_out)
+          fout(i) = fin(n_in)
        else if( abs( xin(i2) - xin(i1) ) <= 0.00001 ) then ! buggy
           fout(i) = fin(i1)
        else

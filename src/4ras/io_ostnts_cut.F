@@ -43,7 +43,6 @@
 
  write(lch,'(a,f5.3,a,f5.3)') "ostnts_z",z0f,"_d",dcf
  ioOSTNTS_cut = io_connect(desc=trim(lch),type=1,ID=io_db)
-!if (ioOSTNTS_cut/=0) return
  if (ioOSTNTS_cut/=0) goto 1
 
  sec_size=11

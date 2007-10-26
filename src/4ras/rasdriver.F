@@ -31,7 +31,7 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   use IO_m,                    only : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP
   use X_m,                     only : X_t, X_epsilon, X_mat, X_alloc
   use frequency,               only : w_samp 
-  use optcut,                  only : loptcut, Xcut_rhoq0 ! just for dealloc
+  use optcut,                  only : loptcut, Xcut_rhoq0, setup_cutmat 
   use vec_operate,             only : v_norm
   use par_proc_m,              only : pp_redux_wait
   use wave_func,               only : WF_free
@@ -80,6 +80,10 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   call print_surface_geometry
   call setup_cutoff( lfail )
   call print_cutoff
+  if(loptcut) then
+    call setup_gvecaff 
+    call setup_cutmat
+  endif
   call print_analyse_peaks
   call setup_loc(X%ib(1), Xen%nbm, Xen%nbf+1, X%ib(2), Xk%nibz)
   !
@@ -339,7 +343,7 @@ subroutine setup_loc(iv1,iv2,ic1,ic2)
   integer, intent (in) :: iv1, iv2, ic1, ic2
   real(SP)                        :: loc(n_bands, nkibz)
 
-  allocate(transloc(iv2,ic2, nkibz))
+  allocate(transloc(ic2,iv2, nkibz))
   transloc = .true.
   if(loctype.eq."no") return
   call io_control(ACTION=OP_RD_CL, COM=REP, SEC=(/1/), ID=ID_loc)

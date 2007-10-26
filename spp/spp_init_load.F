@@ -98,6 +98,7 @@
  !
  call it(defs,'EcvMin',  'Lower limit of transition window',Ecv_min,E_unit)
  call it(defs,'EcvMax',  'Upper limit of transition window',Ecv_max,E_unit)
+ call it(defs,'PolDir',  'Index of polarization direction',idir)
  !
 #endif
  !

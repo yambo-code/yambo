@@ -35,7 +35,6 @@
  use memory_m,                ONLY : mem_est
  use wave_func,               ONLY : wf, wf_ng, wf_state, wf_load, WF_free
  use optcut,                  ONLY : Xcut_q0grad, Xcut_rhoq0, ng_limits, setup_optcut, pscut
- use surface_geometry,        ONLY : setup_gvecaff
 #if defined PJ_RAS
  use ras_module,     ONLY:transloc
 #endif
@@ -77,7 +76,6 @@
    ! Set up data needed for cut off routines
    !============
    !
-   call setup_gvecaff
    call nG_limits( Xk%nibz )
    !
    ! OptGrad cut allocation

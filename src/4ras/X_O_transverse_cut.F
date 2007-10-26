@@ -33,7 +33,8 @@
    use X_m,                     ONLY : X_t
    use memory_m,                ONLY : mem_est
    use wave_func,               ONLY : wf, wf_ng, wf_state
-   use optcut,                  ONLY : Xcut_q0grad, ng_limits, setup_optcut, pscut
+   use optcut,                  ONLY : Xcut_q0grad, ng_limits, setup_optcut, &
+&                                      PScut, PScut_slow, PScut_better
    use surface_geometry,        ONLY : setup_gvecaff
    implicit none
    type(bz_samp),  intent(in)       :: Xk
@@ -84,8 +85,11 @@
            if (abs(omega)<=1.E-5) cycle
            icfft=wf_state(ic,ik,i_spin)
 
-!          call PScut(kg, PS, wf(:,ivfft), wf(:,icfft), use_trans_gauge )
            call PScut(PS, wf(:,ivfft), wf(:,icfft), kg = kg )
+!<--- DEBUG
+!          call PScut_slow(PS, wf(:,ivfft), wf(:,icfft), kg )
+!          call PScut_better(PS, wf(:,ivfft), wf(:,icfft), kg )
+!---> DEBUG
 
            Xcut_q0grad(:,ic,iv,ik,i_spin) = PS(:)/omega
          enddo ! cond. bands

@@ -114,6 +114,7 @@
    ! 
    Ecv_min = 0.0
    Ecv_max = -1.0/HARTREE
+   idir = 1
    !
 #endif
    !
@@ -183,7 +184,7 @@
 &       " BulkFile BulkForm BlkShift BlkBroad "//&
 &       " DataType SrfShift d_cell GausConv")
    if(lloc) call initactivate(1,"NormDir LowerLim UpperLim NGLoc")
-   if(ltrans) call initactivate(1,"EcvMin EcvMax ")
+   if(ltrans) call initactivate(1,"EcvMin EcvMax PolDir")
  endif
  !
 #endif

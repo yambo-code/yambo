@@ -157,7 +157,7 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  if (lras) call ras_spp
  if (lloc) call loc_spp
- if (ltrans) call trans_spp
+ if (ltrans) call trans_spp(en,k)
  !
 #endif
  !

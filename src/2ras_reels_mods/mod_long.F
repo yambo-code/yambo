@@ -22,7 +22,7 @@ contains
     real(SP), intent(inout) :: field_dir(3)
     real(SP)               :: field_tmp(3), field_dir_norm(3), ca(3,3), field_dir_rot(3)
     real(SP)         :: q_long_norm(3,3), qtemp(3)
-    real(SP)          ::  zero = 1.0E-5
+    real(SP)          ::  zero = 1.0E-4
     character(len=1), parameter, dimension (3) :: cx = (/ 'x','y','z' /)
     integer                :: ix,iq, itmp(1), is
 

@@ -47,6 +47,7 @@ module optcut
 
   complex(SP), allocatable  :: Xcut_q0grad(:,:,:,:,:)
   complex(SP), allocatable  :: Xcut_rhoq0(:,:,:,:)
+  complex(SP), allocatable  :: cutmat(:,:)
 
   real(SP)                  :: dcf,dc ! fractional/cartesian cut length
   real(SP)                  :: z0f,z0 ! fractional/cartesian zero of cut box
@@ -57,7 +58,7 @@ module optcut
   public  :: init_cutoff
   public  :: loptcut, dc  
   public  :: Xcut_q0grad, Xcut_rhoq0
-  public  :: setup_gvecaff, nG_limits, setup_optcut, PScut 
+  public  :: setup_gvecaff, nG_limits, setup_optcut, PScut , PScut_slow, PScut_better, setup_cutmat
   public  :: end_optcut, setup_cutoff, print_cutoff, z0f, dcf
 
 contains 
@@ -85,9 +86,35 @@ end subroutine init_cutoff
     lfail = .false.
     z0   = z0f*az  ! az is in a.u.
     dc   = dcf*az
-
     return
   end subroutine setup_cutoff
+
+  subroutine setup_cutmat
+    use wave_func,         ONLY : wf_ng
+    implicit none
+    complex(SP), parameter          :: ci = (0.0_SP,1.0_SP)
+    real(SP)                        :: gz
+    integer                         :: ig1, ig2, ngz
+
+! SLOW
+    write(*,*) "wf_ng = ",wf_ng
+    allocate(cutmat(wf_ng,wf_ng))
+    do ig1 = 1, wf_ng
+      do ig2 = 1, wf_ng
+        if(gvecaff(ig1,ix).ne.gvecaff(ig2,ix).or. &
+&          gvecaff(ig1,iy).ne.gvecaff(ig2,iy)) cycle
+        ngz = gvecaff(ig2,iz) - gvecaff(ig1,iz)
+        if(ngz.eq.0) then
+          cutmat(ig1,ig2) = dcf
+        else
+          gz = real(ngz)*2.0_SP*pi
+          cutmat(ig1,ig2) = -ci/gz * (exp(ci*gz*dcf) - 1.0_SP) * exp(ci*z0f)
+        endif
+      enddo
+    enddo
+! SLOW
+    return
+  end subroutine setup_cutmat
 
   subroutine print_cutoff
     implicit none
@@ -170,6 +197,7 @@ end subroutine init_cutoff
     integer, intent (in)       :: ik
 !ws
     integer                    :: ig,ngw_k,n1,n2,n3
+
     
     ngw_k = wf_ng
     n = nxk(ik) 
@@ -288,6 +316,73 @@ end subroutine init_cutoff
   end subroutine end_optcut
 
 !<-------------------------------------------------------------------->! 
+  subroutine PScut_better(PS,wfv,wfc,kg)
+    use wave_func,         ONLY : wf_ng, wf_ncx
+    implicit none
+    complex(SP),   intent(out)   :: PS(3)
+    integer                         :: ig1,ig2
+    complex(SP),   intent(in)       :: wfv(:),wfc(:)
+    real(SP),      intent(in)       :: kg(:,:)
+    complex(SP)                     :: PSx,PSy,PSz,cc
+    complex(SP), parameter          :: ci = (0.0_SP,1.0_SP)
+
+    PSx = 0
+    PSy = 0
+    PSz = 0
+    do ig2 = 1, wf_ng
+      do ig1 = 1, wf_ng
+        if(gvecaff(ig1,ix).ne.gvecaff(ig2,ix).or. &
+&          gvecaff(ig1,iy).ne.gvecaff(ig2,iy)) cycle
+        cc = conjg(wfv(ig1)) * wfc(ig2)
+        PSx = PSx + cc * kg(ix,ig2) * cutmat(ig1,ig2)
+        PSy = PSy + cc * kg(iy,ig2) * cutmat(ig1,ig2)
+      enddo
+    enddo
+    ! Convert to crystal frame (i.e the REAL cartesian axes)
+    PS(ix) = PSx
+    PS(iy) = PSy
+    PS(iz) = PSz
+    return
+  end subroutine PScut_better
+
+  subroutine PScut_slow(PS,wfv,wfc,kg)
+    use wave_func,         ONLY : wf_ng, wf_ncx
+    implicit none
+    complex(SP),   intent(out)   :: PS(3)
+    integer                         :: ig1,ig2, ngz
+    complex(SP),   intent(in)       :: wfv(:),wfc(:)
+    real(SP),      intent(in)       :: kg(:,:)
+    complex(SP)                     :: PSx,PSy,PSz,cc
+    complex(SP), parameter          :: ci = (0.0_SP,1.0_SP)
+    real(SP)                        :: gz
+
+    PSx = 0
+    PSy = 0
+    PSz = 0
+    do ig1 = 1, wf_ng
+      do ig2 = 1, wf_ng
+        if(gvecaff(ig1,ix).ne.gvecaff(ig2,ix).or. &
+&          gvecaff(ig1,iy).ne.gvecaff(ig2,iy)) cycle
+        ngz = gvecaff(ig2,iz) - gvecaff(ig1,iz)
+        cc = conjg(wfv(ig1)) * wfc(ig2)
+        if(ngz.eq.0) then
+          PSx = PSx + cc * kg(ix,ig2) * dcf
+          PSy = PSy + cc * kg(iy,ig2) * dcf
+        else
+          gz = real(ngz)*2.0_SP*pi
+          PSx = PSx + cc * kg(ix,ig2) * &
+&               -ci/gz * (exp(ci*gz*dcf) - 1.0_SP) * exp(ci*z0f)
+          PSy = PSy + cc * kg(iy,ig2) * &
+&               -ci/gz * (exp(ci*gz*dcf) - 1.0_SP) * exp(ci*z0f)
+        endif
+      enddo
+    enddo
+    ! Convert to crystal frame (i.e the REAL cartesian axes)
+    PS(ix) = PSx
+    PS(iy) = PSy
+    PS(iz) = PSz
+    return
+  end subroutine PScut_slow
    
   subroutine PScut(PS,wfv,wfc,kg)
     implicit none

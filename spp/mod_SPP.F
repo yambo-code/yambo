@@ -82,6 +82,7 @@ module SPP
  !
  logical           :: ltrans
  real(SP)          :: Ecv_min, Ecv_max
+ integer           :: idir
  !
 #endif
  !

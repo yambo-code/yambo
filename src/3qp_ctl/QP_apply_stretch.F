@@ -147,15 +147,21 @@
          delta=Mf(iref+1)
          do i3=1,nM-1
            Ml=Mf(iref+1+i3)
-           if (what=='E') Ml=Ml-1.
-           delta=delta+Ml*(E%Eo(ib,ik,1)-rref)**i3
+           if (what=='E') then
+             Ml=Ml-1.
+             delta=delta+Ml*(E%Eo(ib,ik,1)-rref)**i3
+           endif
+           if (what=='W') delta=delta+Ml*(E%Eo(ib,ik,1)-rref)**(i3+1)
          enddo
          if (DB_corrected(ib,ik)/=1) then
            delta=delta+Mr(iref+1)
            do i3=1,nM-1
              Ml=Mr(iref+1+i3)
-             if (what=='E') Ml=Ml-1.
-             delta=delta+Ml*(E%Eo(ib,ik,1)-rref)**i3
+             if (what=='E') then
+               Ml=Ml-1.
+               delta=delta+Ml*(E%Eo(ib,ik,1)-rref)**i3
+             endif
+             if (what=='W') delta=delta+Ml*(E%Eo(ib,ik,1)-rref)**(i3+1)
            enddo
          endif
          !

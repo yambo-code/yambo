@@ -185,26 +185,29 @@ end subroutine init_surface
     use pars,              ONLY : SP, PI, schlen
     use com,               ONLY : msg
     use R_lattice,         ONLY : ng_vec, g_vec, b
+    use matrix_operate,       ONLY : m3inv
     implicit none
-    real(SP)                   :: bmod(3)
+    real(SP)                   :: bmod(3),Amat(3,3),Bmat(3)
     character(schlen)          :: sch
-
 ! local
     integer                    :: ig, od(6), i
 
     allocate( gvecaff(ng_vec,3) ) ! this is faster order for ix index searching
     call msg('r','Oblique G-vector array:')
-    forall (i=1:3) bmod(i) = 2.0_SP*PI/alat(i)/b(i,i)
+    call m3inv(transpose(b),Amat) ! Amat = (b^T)^(-1)
+
     do ig = 1, ng_vec
-       gvecaff(ig,:) = nint(g_vec(ig,:)*bmod(:))
-       write(sch,'(i7,3i4)') ig,gvecaff(ig,:)
-       if(ig.lt.7) call msg('r','First G-vectors:'//trim(sch))
+       Bmat = g_vec(ig,:)*2.0_SP*PI/alat(:) ! Convert to a.u.
+       Bmat = matmul(Amat,Bmat)             ! n = (b^T)^(-1) G
+       gvecaff(ig,:) = nint(Bmat(:))
+       write(sch,100) ig,gvecaff(ig,:), g_vec(ig,:)*2.0_SP*PI/alat(:)
+       if(ig.lt.10) call msg('r','First G-vectors:'//trim(sch))
        if(ig.gt.ng_vec-3) call msg('r','Last  G-vectors:'//trim(sch))
     enddo
-
-    od(1:6) = (/ minval(gvecaff(:,ix)), maxval(gvecaff(:,ix)), &
-&                minval(gvecaff(:,iy)), maxval(gvecaff(:,iy)), &
-&                minval(gvecaff(:,iz)), maxval(gvecaff(:,iz)) /)
+100 format(i8,3i4,2x,3f7.3) 
+    od(1:6) = (/ minval(gvecaff(:,1)), maxval(gvecaff(:,1)), &
+&                minval(gvecaff(:,2)), maxval(gvecaff(:,2)), &
+&                minval(gvecaff(:,3)), maxval(gvecaff(:,3)) /)
 
     call msg('nr','Charge nG limits: ',od(1:6) )
 

@@ -31,7 +31,7 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   use IO_m,                    only : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP
   use X_m,                     only : X_t, X_epsilon, X_mat, X_alloc
   use frequency,               only : w_samp 
-  use optcut,                  only : loptcut, Xcut_rhoq0, setup_cutmat 
+  use optcut,                  only : loptcut, Xcut_rhoq0, setup_cutmat ! just for dealloc
   use vec_operate,             only : v_norm
   use par_proc_m,              only : pp_redux_wait
   use wave_func,               only : WF_free
@@ -81,7 +81,7 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   call setup_cutoff( lfail )
   call print_cutoff
   if(loptcut) then
-    call setup_gvecaff 
+    call setup_gvecaff
     call setup_cutmat
   endif
   call print_analyse_peaks

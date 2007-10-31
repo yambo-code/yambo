@@ -58,7 +58,7 @@ module optcut
   public  :: init_cutoff
   public  :: loptcut, dc  
   public  :: Xcut_q0grad, Xcut_rhoq0
-  public  :: setup_gvecaff, nG_limits, setup_optcut, PScut , PScut_slow, PScut_better, setup_cutmat
+  public  :: setup_gvecaff, nG_limits, setup_optcut, PScut , PScut_slow, setup_cutmat
   public  :: end_optcut, setup_cutoff, print_cutoff, z0f, dcf
 
 contains 
@@ -86,18 +86,19 @@ end subroutine init_cutoff
     lfail = .false.
     z0   = z0f*az  ! az is in a.u.
     dc   = dcf*az
+
     return
   end subroutine setup_cutoff
+
 
   subroutine setup_cutmat
     use wave_func,         ONLY : wf_ng
     implicit none
     complex(SP), parameter          :: ci = (0.0_SP,1.0_SP)
-    real(SP)                        :: gz
+    real(SP)                        :: gz 
     integer                         :: ig1, ig2, ngz
-
+    
 ! SLOW
-    write(*,*) "wf_ng = ",wf_ng
     allocate(cutmat(wf_ng,wf_ng))
     do ig1 = 1, wf_ng
       do ig2 = 1, wf_ng
@@ -115,6 +116,7 @@ end subroutine init_cutoff
 ! SLOW
     return
   end subroutine setup_cutmat
+
 
   subroutine print_cutoff
     implicit none
@@ -197,7 +199,6 @@ end subroutine init_cutoff
     integer, intent (in)       :: ik
 !ws
     integer                    :: ig,ngw_k,n1,n2,n3
-
     
     ngw_k = wf_ng
     n = nxk(ik) 
@@ -316,6 +317,7 @@ end subroutine init_cutoff
   end subroutine end_optcut
 
 !<-------------------------------------------------------------------->! 
+!<-------------------------------------------------------------------->! 
   subroutine PScut_better(PS,wfv,wfc,kg)
     use wave_func,         ONLY : wf_ng, wf_ncx
     implicit none
@@ -344,6 +346,10 @@ end subroutine init_cutoff
     PS(iz) = PSz
     return
   end subroutine PScut_better
+
+
+
+
 
   subroutine PScut_slow(PS,wfv,wfc,kg)
     use wave_func,         ONLY : wf_ng, wf_ncx

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function ioQP(what,qp,ID)
+integer function ioQP(what,qp,ID)
  !
  use pars,           ONLY:SP,schlen
  use D_lattice,      ONLY:alat
@@ -46,11 +46,16 @@
  ! Work Space
  !
  integer              ::i1,i2,iqbz,QP_n_G_bands_disk(2),i_found,&
-&                       QP_nk_disk,QP_nb_disk,QP_n_states_disk,n_descs_disk
+&                       QP_nk_disk,QP_nb_disk,QP_n_states_disk,n_descs_disk,spin_dim
  real(SP),allocatable ::qp_E_Eo_Z_disk(:,:,:),QP_W_disk(:,:,:)
  integer ,allocatable ::qp_table_disk(:,:)
  character(schlen)    ::ch
  character(2)         ::OP(1)
+ !
+ spin_dim=3
+#if defined PJ_SPIN
+ spin_dim=4
+#endif
  !
  if (what=="QP".or.what=="W") then
    ioQP=io_connect(desc=what,type=2,ID=ID)
@@ -151,11 +156,11 @@
    !
    ! So to be here in VERIFY mode you MUST have allocated and defined the qp%table 
    !
-   allocate(qp_table_disk(qp_n_states_disk,3))
+   allocate(qp_table_disk(qp_n_states_disk,spin_dim))
    !
    if (write_is_on(ID)) qp_table_disk=qp%table
    !
-   call io_bulk(ID,VAR="QP_table",VAR_SZ=(/qp_n_states_disk,3/))
+   call io_bulk(ID,VAR="QP_table",VAR_SZ=(/qp_n_states_disk,spin_dim/))
    call io_bulk(ID,I2=qp_table_disk)
    !
    if (io_mode(ID)==VERIFY.and.associated(qp%table)) then
@@ -185,7 +190,7 @@
          QP_state(qp_table_disk(i1,1),qp_table_disk(i1,3))=.true.
        enddo
      else
-       allocate(qp%table(qp_n_states_disk,3))
+       allocate(qp%table(qp_n_states_disk,spin_dim))
        qp%table=qp_table_disk
      endif
    endif
@@ -309,4 +314,4 @@
  !
 1 call io_disconnect(ID=ID)
  !
- end function
+end function

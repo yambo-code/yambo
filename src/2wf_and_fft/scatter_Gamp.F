@@ -143,14 +143,15 @@ subroutine scatterGamp(isc,mode)
      !
      if (ig1==1.and.ig2==1) then
        isc%gamp(i1,i2)=reg_q_m2
-       !
-       ! Anisotropy correction 
-       !
-       if (all((/RIM_ng>0,mode=='c',RIM_anisotropy/=0./))) isc%gamp(1,1)=RIM_anisotropy/2.
-       !
      endif
      !
    enddo
  enddo
+ !
+ ! Anisotropy correction
+ !
+ if (.not.l_col_cut) then
+   if (all((/iq==1,RIM_ng>0,mode=='c',RIM_anisotropy/=0./))) isc%gamp(1,1)=RIM_anisotropy/2.
+ endif
  !
 end subroutine

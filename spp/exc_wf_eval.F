@@ -19,21 +19,22 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine exc_wf_eval(Xk)
+subroutine exc_wf_eval(Xk,Xen)
  !
- use pars,        ONLY : SP,HARTREE,IP,pi,lchlen,DP,schlen
- use stderr,      ONLY : intc,real2ch
- use FFT_m,       ONLY : fft_rot_r,fft_dim
- use D_lattice,   ONLY : a,sop_inv,i_time_rev,nsym,alat,&
-&                        n_atom_species,n_atoms,atom_pos,znucl,n_atoms_max
- use wave_func,   ONLY : wf_load,wf_state,wf,WF_free
- use R_lattice,   ONLY : nXkibz,bz_samp,ng_vec
- use SPP,         ONLY : action_mode,ncell,lambda,r_hole,sort_mode,&
-&                        max_energy,nr,exc_wf,nr_tot
- use IO_m,        ONLY : io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
- use BS,          ONLY : BS_K_dim,BS_bands,BS_q,BSS_n_descs,BSS_description,&
-&                        BS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
-&                        BS_cpl_K_exchange,BS_cpl_K_corr
+ use pars,        ONLY:SP,HARTREE,IP,pi,lchlen,DP,schlen
+ use stderr,      ONLY:intc,real2ch
+ use FFT_m,       ONLY:fft_rot_r,fft_dim
+ use D_lattice,   ONLY:a,sop_inv,i_time_rev,nsym,alat,&
+&                      n_atom_species,n_atoms,atom_pos,znucl,n_atoms_max
+ use wave_func,   ONLY:wf_load,wf_state,wf,WF_free
+ use R_lattice,   ONLY:nXkibz,bz_samp,ng_vec
+ use SPP,         ONLY:action_mode,ncell,lambda,r_hole,sort_mode,&
+&                      max_energy,nr,exc_wf,nr_tot
+ use IO_m,        ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
+ use BS,          ONLY:BS_K_dim,BS_bands,BS_q,BSS_n_descs,BSS_description,&
+&                      BS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
+&                      BS_cpl_K_exchange,BS_cpl_K_corr
+ use electrons,   ONLY:levels
  use com,         ONLY: msg,of_open_close,error,warning
  use X_m,         ONLY: X_t
  use memory_m,    ONLY: mem_est
@@ -42,6 +43,7 @@ subroutine exc_wf_eval(Xk)
  !
  implicit none
  type(bz_samp) ::Xk
+ type(levels)  :: Xen
  !
  ! Work Space
  !
@@ -52,12 +54,20 @@ subroutine exc_wf_eval(Xk)
  ! ... variables needed in the grid
  !
  integer               :: ir,ir_hole,j1
- integer, allocatable  :: rindex(:)
+ integer,  allocatable :: rindex(:)
  real(SP), allocatable :: rvecbig(:,:)
+ !
+ ! Excitonc amplitude
+ !
+ integer, parameter :: amp_steps=1000
+ integer      :: amp_n_trans
+ real(SP)     :: amp_range(2),amp_damping,amp_I
+ real(SP),allocatable :: amp_trans(:,:)
+ complex(SP)          :: amp_E
  !
  !... Dummy arguments 
  !
- integer      :: iq,ia
+ integer      :: iq,ia,i1,i2
  real(SP)     :: kr,r_hole_rlu(3)
 #if defined _DOUBLE
  complex(DP)  :: zdotu
@@ -71,7 +81,7 @@ subroutine exc_wf_eval(Xk)
  integer           ::io_err,ID,io_ID
  integer, external ::ioBSS_diago,ioBS
  type(X_t)         ::Xbsk
- character(schlen) ::extension,titles(5)
+ character(schlen) ::extension(2),titles(5)
  !
  !... Energies and Residulas
  !
@@ -108,7 +118,7 @@ subroutine exc_wf_eval(Xk)
  !
  ! Allocation of energies and residuum, then also eigenvector
  !
- allocate(BS_R(BS_K_dim),BS_E(BS_K_dim))
+ allocate(BS_R(BS_K_dim),BS_E(BS_K_dim),amp_trans(BS_K_dim,2))
  call mem_est('BS_R_E',(/2*BS_K_dim/))
  iq=BS_q(1)
  !
@@ -243,17 +253,23 @@ subroutine exc_wf_eval(Xk)
  A_weight=A_weight/maxval(A_weight)
  call sort(arrin=A_weight,indx=A_indx)
  !
- ! report on file of the weights A_cvk of excitonic wf
+ ! report on file the weights and the amplitude 
+ ! of the excitonic state...
  !
- extension='weights_at_'//trim(intc(lambda))
- call of_open_close(trim(extension),'ot')
+ ! ... first open the file.
+ !
+ extension(1)='weights_at_'//trim(intc(lambda))
+ extension(2)='amplitude_at_'//trim(intc(lambda))
+ call of_open_close(trim(extension(1)),'ot')
+ call of_open_close(trim(extension(2)),'ot')
+ !
  do j1=1,BSS_n_descs
-   call msg('o weight',"#",trim(BSS_description(j1)),INDENT=0)
+   call msg('o weight amp',"#",trim(BSS_description(j1)),INDENT=0)
  enddo
- call msg('o weight',"#")
- call msg('o weight',&
+ call msg('o weight amp',"#")
+ call msg('o weight amp',&
 & '# Electron-Hole pairs that contributes to Excitonic State '//trim(intc(lambda))//' more than 5%')
- call msg('o weight','#')
+ call msg('o weight amp','#')
  !
  ! First summarize the total weight vs K-points
  !
@@ -272,30 +288,60 @@ subroutine exc_wf_eval(Xk)
    endif
  enddo
  !
- ! Then report the detailed list of transitions
+ ! Then report the detailed list of transitions & calculate the amplitude
  !
+ call msg('o weight','#','',INDENT=0,USE_TABS=.true.)
  titles(1:4)=(/'Band_V','Band_C','K  ibz','Symm. '/)
  titles(5)='Weight'
- call msg('o weight','#','',INDENT=0,USE_TABS=.true.)
  call msg('o weight','#',titles(:5),INDENT=0,USE_TABS=.true.)
- call msg('o weight','#','',INDENT=0,USE_TABS=.true.)
+ titles(1:2)=(/'E    [eV]','Amplitude  '/)
+ call msg('o amp','#',titles(:2),INDENT=0,USE_TABS=.true.)
+ call msg('o weight amp','#','',INDENT=0,USE_TABS=.true.)
+ !
+ amp_n_trans=0
+ amp_trans=0.
  !
  do neh = BS_K_dim,1,-1
-   if (A_weight(neh)>=0.05) then
-     ikbz = BS_eh_table(A_indx(neh),1)
-     iv = BS_eh_table(A_indx(neh),2)
-     ic = BS_eh_table(A_indx(neh),3)
-     ikibz = Xk%sstar(ikbz,1)
-     is = Xk%sstar(ikbz,2)
-     call msg('o weight','',(/real(iv),real(ic),real(ikibz),real(is),A_weight(neh)/),&
-&            INDENT=-2,USE_TABS=.FALSE.)
-   endif
+   !
+   if (A_weight(neh)<0.02) cycle
+   !
+   ikbz = BS_eh_table(A_indx(neh),1)
+   iv = BS_eh_table(A_indx(neh),2)
+   ic = BS_eh_table(A_indx(neh),3)
+   ikibz = Xk%sstar(ikbz,1)
+   is = Xk%sstar(ikbz,2)
+   !
+   amp_n_trans=amp_n_trans+1
+   amp_trans(amp_n_trans,1)=Xen%E(ic,ikibz,1)-Xen%E(iv,ikibz,1)
+   amp_trans(amp_n_trans,2)=A_weight(neh)
+   !
+   if (A_weight(neh)<0.05) cycle
+   !
+   call msg('o weight','',(/real(iv),real(ic),real(ikibz),real(is),A_weight(neh)/),&
+&          INDENT=-2,USE_TABS=.FALSE.)
  enddo
- call of_open_close(trim(extension)) 
+ !
+ ! Excitonic Amplitude
+ ! 
+ amp_range=(/minval(amp_trans(:amp_n_trans,1))-0.5/HARTREE,&
+&            maxval(amp_trans(:amp_n_trans,1))+0.5/HARTREE/)
+ amp_damping=(amp_range(2)-amp_range(1))/50.
+ do i2=1,amp_steps
+   amp_E=amp_range(1)+(i2-1)*(amp_range(2)-amp_range(1))/real(amp_steps)+&
+&        (0.,1.)*amp_damping
+   amp_I=0.
+   do i1=1,amp_n_trans
+     amp_I=amp_I-aimag(amp_trans(i1,2)/(amp_E-amp_trans(i1,1)))
+   enddo
+   call msg('o amp','',(/real(amp_E)*HARTREE,amp_I/),INDENT=-2,USE_TABS=.FALSE.)
+ enddo
  !
  ! CLEAN
  !
- deallocate(BS_eh_table,BS_mat,wf_vc,A_weight,A_indx)
+ call of_open_close(trim(extension(1))) 
+ call of_open_close(trim(extension(2))) 
+ !
+ deallocate(BS_eh_table,BS_mat,wf_vc,A_weight,A_indx,amp_trans)
  call mem_est('BS_eh_table BS_mat wf_vc A_weight')
  !
  ! PLOT
@@ -376,9 +422,9 @@ subroutine exc_wf_eval(Xk)
      call section('+','Sorting Energies and Strengths')
      !
      if (sort_mode /= 'e'.and.sort_mode/='i') sort_mode='e'
-     if (sort_mode == 'e')   extension='-e'
-     if (sort_mode == 'i')   extension='-i'
-     call of_open_close('exc_sort'//trim(extension),'ot')
+     if (sort_mode == 'e')   extension(1)='-e'
+     if (sort_mode == 'i')   extension(1)='-i'
+     call of_open_close('exc_sort'//trim(extension(1)),'ot')
      !
      do j1=1,BSS_n_descs
        call msg('o sort',"#",trim(BSS_description(j1)),INDENT=0)
@@ -423,7 +469,7 @@ subroutine exc_wf_eval(Xk)
        !
      enddo
      ! 
-     call of_open_close('exc_sort'//trim(extension))
+     call of_open_close('exc_sort'//trim(extension(1)))
      deallocate(R,v2sort,E_indx)
      !
    end subroutine

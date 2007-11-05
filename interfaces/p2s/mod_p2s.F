@@ -179,7 +179,7 @@ contains
      call errore('qexml_read_bands.','IOTK error:',ABS(ierr)) 
    endif
 
-#if defined _P2S_V31 || _P2S_V32 || defined _P2S_V311
+#if defined _P2S_V31 || defined _P2S_V32 || defined _P2S_V311
 
    call qexml_read_symmetry(nsym=nsym_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_symmetry','IOTK error',ABS(ierr))

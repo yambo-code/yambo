@@ -45,9 +45,14 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  ! Work Space
  !
- type(QP_t):: qp
- integer   ::i1,io_err,ID,i_spin
- integer, external::ioQP
+ type(QP_t)        ::qp
+ integer           ::i1,io_err,ID,i_spin,spin_dim
+ integer, external ::ioQP
+ !
+ spin_dim=3
+#if defined PJ_SPIN
+ spin_dim=4
+#endif
  !
  ! Parser
  !
@@ -116,10 +121,10 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  allocate(qp%Z(qp%n_states),qp%E(qp%n_states),&
 &         qp%E_bare(qp%n_states),&
-&         qp%k(qp%nk,3),qp%table(qp%n_states,3))
+&         qp%k(qp%nk,3),qp%table(qp%n_states,spin_dim))
  !
  call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table",&
-&    (/QP_n_states,QP_n_states,QP_n_states,3*QP_n_states,3*QP_n_states/),&
+&    (/QP_n_states,QP_n_states,QP_n_states,3*qp%nk,spin_dim*QP_n_states/),&
 &    (/2*SP,       2*SP,       SP,         SP,           IP/))
  !
  qp%table=QP_table

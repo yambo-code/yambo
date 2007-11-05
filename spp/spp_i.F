@@ -142,7 +142,7 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  if (lbzrim) call BZ_RIM(Xk,Xen)
  !
- if (lexcwf) call exc_wf_eval(Xk)
+ if (lexcwf) call exc_wf_eval(Xk,Xen)
  !
 #if defined SPP_PJ_PH
  !

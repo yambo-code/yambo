@@ -24,7 +24,7 @@
    use pars
    use com,                     ONLY : msg ! DEBUG
    use timing,                  ONLY : live_timing
-   use electrons,               ONLY : levels, n_spin, n_spinor
+   use electrons,               ONLY : levels, n_spin, n_spinor, n_sp_pol
    use par_proc_m,              ONLY : pp_redux_wait, pp_indexes, myid, &
 &                                      pp_indexes_reset
    use par_indexes_m,           ONLY : par_indexes
@@ -107,5 +107,15 @@
    call live_timing
 !  call end_optcut
    deallocate(kg)
+!  if (ioKB_err==0) then
+!    deallocate(kbv)
+!    call mem_est("KBV")
+!    call PP_free()
+!  endif
+   !
+   do i_spin=1,n_sp_pol
+     call pp_redux_wait(Xcut_q0grad(:,:,:,:,i_spin))
+   enddo
+   !
    return
  end subroutine X_O_transverse_cut

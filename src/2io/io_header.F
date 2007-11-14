@@ -96,7 +96,8 @@
  if (io_serial_number(ID)/=serial_number) then
    if (present(IMPOSE_SN)) then 
      io_header=-1
-     if (io_com(ID)/=NONE) call msg('sr','Incompatible serial number for '//trim(io_file(ID)))
+     if (io_com(ID)/=NONE) &
+&      call msg('sr','Incompatible serial number for '//trim(io_file(ID)))
      goto 1
    endif
    if (io_com(ID)/=NONE) then 
@@ -109,7 +110,8 @@
  if (ver_is_gt_or_eq(ID,(/3,0,8/))) then
    if (SPIN_vec_disk(1)/=n_sp_pol.or.SPIN_vec_disk(2)/=n_spinor) then
      io_header=-1
-     if (io_com(ID)/=NONE) call msg('sr','Incompatible SPIN pol/spinors for '//trim(io_file(ID)))
+     if (io_com(ID)/=NONE) &
+&      call msg('sr','Incompatible SPIN pol/spinors for '//trim(io_file(ID)))
      goto 1
    endif
  endif

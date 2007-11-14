@@ -112,8 +112,8 @@ subroutine BZ_RIM(Xk,Xen)
  call msg('s',':: Bands                 :',n_bands)
  call msg('s',':: Symmmetries           :',nsym)
  if (Xen%nbf==Xen%nbm) then
-   call msg('s',':: Gap direct        [ev]:',gap(1)*HARTREE)
-   call msg('s','::     indirect      [ev]:',gap(2)*HARTREE)
+   call msg('s',':: Gap indirect      [ev]:',gap(1)*HARTREE)
+   call msg('s','::     direct        [ev]:',gap(2)*HARTREE)
  endif
  !
  call section('+','BZ RIM K-points expansion ...')

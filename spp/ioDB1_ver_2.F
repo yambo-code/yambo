@@ -19,8 +19,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function ioDB1_ver_2(en,k,ID)
-!=====================================
+integer function ioDB1_ver_2(en,k,ID)
+ !
  use pars,             ONLY:SP
  use electrons,        ONLY:levels,default_nel,n_spin,n_sp_pol
  use D_lattice,        ONLY:a, alat, nsym, i_time_rev, default_Tel, dl_sop,Tel
@@ -33,30 +33,29 @@
  type(levels)  :: en
  type(bz_samp) :: k
  integer       :: ID
-!
-!WS on disk
-!
- integer  :: i1
+ !
+ ! Work Space
+ !
  integer,    external :: rand_identifier
  integer, allocatable :: I_on_disk(:)
  real(SP),allocatable :: R_on_disk(:)
-
+ !
  ioDB1_ver_2 =io_connect(desc="s.db1",type=-1,ID=ID)
  if (ioDB1_ver_2/=0) goto 1
-!
-! Serial Number
-!
+ !
+ ! Serial Number
+ !
  serial_number=rand_identifier()
-!
-! H_versionID 
-!
+ !
+ ! H_versionID 
+ !
  allocate(I_on_disk(4))
  call io_bulk(ID,VAR="H_versionID",VAR_SZ=(/4/))
  call io_bulk(ID,I1=I_on_disk)
  deallocate(I_on_disk)
-!
-! HID 
-!
+ !
+ ! HID 
+ !
  allocate(I_on_disk(6))
  call io_bulk(ID,VAR="HID",VAR_SZ=(/6/))
  call io_bulk(ID,I1=I_on_disk)
@@ -69,9 +68,9 @@
  i_time_rev= I_on_disk(5)
  wf_ncx= I_on_disk(6)
  deallocate(I_on_disk)
-!
-! HRD 
-!
+ !
+ ! HRD 
+ !
  allocate(R_on_disk(14))
  call io_bulk(ID,VAR="HRD",VAR_SZ=(/14/))
  call io_bulk(ID,R1=R_on_disk)
@@ -87,20 +86,20 @@
    allocate(en%E(en%nb,k%nibz,n_spin),g_vec(ng_vec,3),k%pt(k%nibz,3),&
 &           dl_sop(3,3,nsym*(i_time_rev+1)),wf_nc_k(k%nibz))
  endif
-!
-! Sym-GsID 
-!
+ !
+ ! Sym-GsID 
+ !
  allocate(I_on_disk(k%nibz))
  call io_bulk(ID,VAR="Sym-GsID",VAR_SZ=(/k%nibz/))
  call io_bulk(ID,I1=I_on_disk)
  wf_nc_k=I_on_disk
  wf_ncx=maxval(wf_nc_k)
  deallocate(I_on_disk)
-!
+ !
  if (read_is_on(ID)) allocate(wf_igk(wf_ncx,k%nibz))
-!
-! Sym-GsRD 
-!
+ !
+ ! Sym-GsRD 
+ !
  allocate(R_on_disk(9*nsym+3*ng_vec))
  call io_bulk(ID,VAR="Sym-GsRD",VAR_SZ=(/9*nsym+3*ng_vec/))
  call io_bulk(ID,R1=R_on_disk)
@@ -119,9 +118,9 @@
    allocate(I_on_disk(k%nibz*wf_ncx))
    call io_bulk(ID,VAR="En-IgkID",VAR_SZ=(/k%nibz*wf_ncx/))
    call io_bulk(ID,I1=I_on_disk)
-!
-! En-IgkRD 
-!
+   !
+   ! En-IgkRD 
+   !
    allocate(R_on_disk((3+en%nb)*k%nibz))
    call io_bulk(ID,VAR="En-IgkRD",VAR_SZ=(/ (3+en%nb)*k%nibz /) )
    call io_bulk(ID,R1=R_on_disk)
@@ -149,4 +148,4 @@
 
 1 call io_disconnect(ID=ID)
 
- end function ioDB1_ver_2
+end function ioDB1_ver_2

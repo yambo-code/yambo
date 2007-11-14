@@ -49,14 +49,13 @@ CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
 TARGETS  = all self interfaces spp 
 UTILS    = changelog
 PROJECTS = self_ph self_ras self_reels self_cyl_cut self_spin self_sc \
-	   spp_ph spp_ras self_no_herm
-# Frozen Projects: self_gks
+	   spp_ph spp_ras self_no_herm self_dft
 EXE      = $(TARGETS) $(PROJECTS) 
 # Libraries (ordered for compiling & linking)
 SLIBS        = 0external_c 0modules 1xc 1parser 1common 2io 2wf_and_fft \
                2coulomb 3kop 3qp_ctl \
                4it 4tddft 5X 6qp 7acfdt 7bse
-# -- GPL_END --
+#
 PJ_RASLIBS   = 0external_c 0modules 1xc 1parser 1common 2io 2wf_and_fft \
                2ras_reels_mods 2coulomb \
                3kop 3qp_ctl \
@@ -72,12 +71,12 @@ PJ_REELSLIBS = 0external_c 0modules 1xc 1parser 1common 2io 2wf_and_fft \
 PJ_PHLIBS    = 0external_c 0modules 1xc 1parser 1common 2io 2wf_and_fft \
                2coulomb 3kop 3qp_ctl \
                4it 4tddft 5elph 5X 6qp 7acfdt 7bse
-PJ_GKSLIBS      = $(SLIBS)
+PJ_DFTLIBS      = $(SLIBS)
 PJ_CYL_CUTLIBS  = $(SLIBS)
 PJ_SCLIBS       = $(SLIBS)
 PJ_SPINLIBS     = $(SLIBS)
 PJ_NO_HERM_LIBS = $(SLIBS)
-# -- GPL_START --
+#
 2SLIBS       = 0external_c 0modules 1parser 1common 2io 
 SPPLIBS      = 0external_c 0modules 1xc 1parser 1common 2io \
                2wf_and_fft 3kop 3qp_ctl 4it 7bse
@@ -96,7 +95,7 @@ libs:
 self: libs
 	@LIBS2DO="$(SLIBS)" ; $(mksrc)
 	@X2DO="self"; XPATH="driver";XLIBS="$(SLIBS)";$(mkx)
-# PROJECTS # -- GPL_END --
+# PROJECTS #
 self_sc: libs
 	@LIBS2DO="$(PJ_SCLIBS)";ADF="-DPJ_SC"; $(mksrc)
 	@X2DO="self_sc"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-DPJ_SC";$(mkx)
@@ -106,9 +105,9 @@ self_spin: libs
 self_cyl_cut: libs
 	@LIBS2DO="$(PJ_CYL_CUTLIBS)";ADF="-DPJ_CYL_CUT"; $(mksrc)
 	@X2DO="self_cyl_cut"; XPATH="driver";XLIBS="$(PJ_CYL_CUTLIBS)";ADF="-DPJ_CYL_CUT";$(mkx)
-self_gks: libs
-	@LIBS2DO="$(PJ_GKSLIBS)";ADF="-DPJ_GKS"; $(mksrc)
-	@X2DO="self_gks"; XPATH="driver";XLIBS="$(PJ_GKSLIBS)";ADF="-DPJ_GKS";$(mkx)
+self_dft: libs
+	@LIBS2DO="$(PJ_DFTLIBS)";ADF="-DPJ_DFT"; $(mksrc)
+	@X2DO="self_dft"; XPATH="driver";XLIBS="$(PJ_DFTLIBS)";ADF="-DPJ_DFT";$(mkx)
 self_no_herm: libs
 	@LIBS2DO="$(PJ_NO_HERM_LIBS)";ADF="-DPJ_NO_HERM"; $(mksrc)
 	@X2DO="self_no_herm"; XPATH="driver";XLIBS="$(PJ_NO_HERM_LIBS)";ADF="-DPJ_NO_HERM";$(mkx)
@@ -127,7 +126,7 @@ spp_ph: libs
 spp_ras: libs
 	@LIBS2DO="$(SPPRASLIBS)" ; $(mksrc)
 	@X2DO="spp_ras" ;XPATH="spp";XLIBS="$(SPPRASLIBS)"; ADF="-DSPP_PJ_RAS";$(mkx)
-# -- GPL_START --
+#
 interfaces: libs
 	@LIBS2DO="$(2SLIBS)" ; $(mksrc)
 	@LIBS2DO="int_modules"; DIR2GO="interfaces" ; $(mklib)

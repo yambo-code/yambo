@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function ioWF(ID,wf)
+integer function ioWF(ID,wf)
  !
  use pars,             ONLY:SP,schlen
  use electrons,        ONLY:n_bands,n_spin
@@ -67,4 +67,4 @@
  !
 1 call io_disconnect(ID=ID)
  !
- end function ioWF
+end function ioWF

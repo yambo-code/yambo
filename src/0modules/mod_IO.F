@@ -202,12 +202,20 @@ module IO_m
 &                             write_is_on(ID),io_netcdf_support(ID))
          alternative_file=" "
          if (type/=-2) then
-            alternative_file(1)=get_name(desc,subfolder,type,open_is_on(ID),&
-&                                        write_is_on(ID),.not.io_netcdf_support(ID))
-            if (read_is_on(ID)) alternative_file(2)=get_name(desc,subfolder,type,.FALSE.,&
-&                                                            .TRUE.,io_netcdf_support(ID))
-            if (read_is_on(ID)) alternative_file(3)=get_name(desc,subfolder,type,.FALSE.,&
-&                                                            .TRUE.,.not.io_netcdf_support(ID))
+           !
+           ! First alternative is same DB with(/out) NETCDF support
+           !
+           alternative_file(1)=get_name(desc,subfolder,type,open_is_on(ID),&
+&                                       write_is_on(ID),.not.io_netcdf_support(ID))
+           if (type/=0.and.read_is_on(ID)) then
+             !
+             ! 2nd/3rd alternatives are  DBs with(/out) NETCDF support in SAVE folder
+             !
+             alternative_file(2)=get_name(desc,subfolder,type,.FALSE.,&
+&                                         .TRUE.,io_netcdf_support(ID))
+             alternative_file(3)=get_name(desc,subfolder,type,.FALSE.,&
+&                                         .TRUE.,.not.io_netcdf_support(ID))
+           endif
          endif
          !
        endif

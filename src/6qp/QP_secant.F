@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
+subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  !
  !Procedure for non-perturbative solution of Dyson equation.
  !Here it`s solved real part of Dyson Eq. with a fixed
@@ -67,7 +67,7 @@
  type(QP_t):: qp
  type(w_samp)::Xw
  !
- ! Work Space GPL_END
+ ! Work Space 
  !
  integer      :: i1,i2,ID,io_err,iqbz
  type(w_samp) :: Sc_W(qp%n_states)
@@ -225,6 +225,4 @@
      !
    end subroutine
    !
-   ! -- GPL_START --
-   !
- end subroutine
+end subroutine

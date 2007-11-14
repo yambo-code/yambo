@@ -34,7 +34,9 @@
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
  type(X_t),     intent(inout) :: X
-!ws
+ ! 
+ ! Work Space
+ !
 ! type(pp_indexes) ::px
  complex(DP) :: zsum(3)
  complex(SP), allocatable :: lda_coeff(:,:,:), X_q0grad_aux(:,:,:,:,:)

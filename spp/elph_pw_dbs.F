@@ -492,6 +492,4 @@ integer function elph_pw_dbs(k,E,q)
  
    end subroutine
    !
-   ! GPL_START
-   !
- end function
+end function

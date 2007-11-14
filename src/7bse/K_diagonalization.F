@@ -152,6 +152,7 @@
      !
      forall(i1=BS_K_dim+1:2*BS_K_dim,i2=1:BS_K_dim) &
 &          BS_mat(i1,i2)=-conjg(BS_mat(i1-BS_K_dim,i2+BS_K_dim))
+     !
    endif
    !
    if (BS_not_const_eh_f) then
@@ -243,7 +244,7 @@
      ! In the right residuals I include the occupation factors
      ! contribution
      !
-     BSS_rhoq0(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)*  BS_eh_f(:BS_K_dim)
+     BSS_rhoq0(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)  *BS_eh_f(:BS_K_dim)
      BSS_rhoq0(BS_K_dim+1:)=-BSS_rhoq0(BS_K_dim+1:)*BS_eh_f(:BS_K_dim)
      !
      call live_timing('BSK L residuals',px%stps(myid+1))

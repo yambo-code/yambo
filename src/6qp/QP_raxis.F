@@ -58,7 +58,7 @@
  type(w_samp) ::Xw
  integer      ::GW_iter
  !
- ! WorkSpace -- GPL_END --
+ ! WorkSpace
  !
  type(ggwinfo)    ::isc,iscp
  type(pp_indexes) ::px
@@ -479,7 +479,5 @@
      !
    end subroutine
 #endif
-   !
-   ! -- GPL_START --
    !
  end subroutine

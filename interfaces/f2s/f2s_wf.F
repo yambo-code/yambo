@@ -33,7 +33,9 @@
  real(SP)       :: wf_disk(2,n_bands,wf_ncx,n_spin)
  type(finp_type),  intent(in)   :: fhi_inp
  type(fwvf_type)                :: fhi_wvf
-!ws
+ ! 
+ ! Work Space
+ !
  integer                        :: ib, ik, npw, i1, i2, ig
 ! type(iospecs)                  :: ioswf, iospp
 ! type(iolines)                  :: dlwf

@@ -19,9 +19,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine X_O_strengths(Xen,Xk,X,field_dir)
+subroutine X_O_strengths(Xen,Xk,X,field_dir)
  !
-#if defined PJ_GKS
+#if defined PJ_DFT
  use pars,           ONLY:SP,lchlen
  use com,            ONLY:warning,in_path
  use xc_functionals, ONLY:GS_xc_FUNCTIONAL
@@ -55,7 +55,7 @@
  integer                   :: ik,i1,ic,iv,is,i_spin
  real(SP)                  :: field_dir_rot(3)
  logical                   :: use_trans_gauge
-#if defined PJ_GKS
+#if defined PJ_DFT
  character(lchlen) :: save_in_path
  integer :: io_rld, nb_aux
  type(bz_samp) :: k
@@ -86,7 +86,7 @@
    !
    ! OptGrad allocation
    !
-#if  defined PJ_GKS
+#if  defined PJ_DFT
    if (GS_xc_FUNCTIONAL > 400) then
      lgks = .true.
      igks = GS_xc_FUNCTIONAL
@@ -106,7 +106,7 @@
 #endif
    X_q0grad=(0.,0.)
    !
-#if  defined PJ_GKS
+#if  defined PJ_DFT
    if (lgks) then
      save_in_path = in_path
      in_path = auxpath
@@ -145,7 +145,7 @@
    !
    call WF_free()
    !
-#if defined PJ_GKS
+#if defined PJ_DFT
    ! 
    ! When using xc non-local approximation Vnl add the contribution [r,Vnl]
    ! 
@@ -203,4 +203,4 @@
  !
  call X_alloc('OptGrad') ! Used in O_transverse/O_longitudinal/ioOSTNTS
  !
- end subroutine
+end subroutine

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
+integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! 
  ! Calculates and stores on file the dielectric matrix.
  !
@@ -145,4 +145,4 @@
  if (.not.APPEND_NO_VERIFY.or.X%iq(2)==q%nibz) call WF_free()
  call pp_redux_wait
  !
- end function
+end function

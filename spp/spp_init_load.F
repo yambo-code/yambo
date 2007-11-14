@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine spp_init_load(defs)
+subroutine spp_init_load(defs)
  !
  use it_m,          ONLY:it,initdefs,E_unit
  use SPP
@@ -107,4 +107,4 @@
  call it(defs,'BZ_RIM_Nk','BZ Random Integration points',BZ_RIM_nkpts)
  call it(defs,'BZ_RIM_path','Path to the SAVE folder with the RIM DB1',BZ_RIM_path)
  !
- end subroutine
+end subroutine

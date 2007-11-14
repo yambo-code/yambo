@@ -30,6 +30,9 @@
    use IO_m,                    only : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP, NONE
    use electrons,               ONLY : n_bands,n_spin,n_spinor,n_sp_pol
    implicit none
+   ! 
+   ! Work Space
+   !
 !  type(bz_samp),  intent(in) :: Xk
    real(SP)                 :: loc(n_bands,nkibz)
    real(SP)                 :: kg(wf_ng)
@@ -39,7 +42,6 @@
    integer, external        :: io_loc
    complex(SP)              :: rhoint, int, gz
    complex(SP), parameter   :: ci=cmplx(0.0_SP,1.0_SP)
-
    !
    ! Define ix,iy, iz = normal
    ! 

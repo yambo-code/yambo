@@ -102,7 +102,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  what_is_running='SELF_REELS'
 #elif defined PJ_SPIN
  what_is_running='SELF_SPIN'
-#elif defined PJ_GKS
+#elif defined PJ_DFT
  what_is_running='SELF_GKS'
 #elif defined PJ_CYL_CUT
  what_is_running='SELF_CYL_CUT'
@@ -665,6 +665,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      if (gpl_version.and.any((/&
 &              l_life,l_acfdt,l_bs_fxc,l_lrc_fxc,&
+#if defined PJ_RAS
+&              lras,lreels,&&
+#endif
 &              l_gw0.and..not.l_ppa&
 &             /))) then
        init=-2

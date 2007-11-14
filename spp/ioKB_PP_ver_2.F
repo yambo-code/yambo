@@ -19,9 +19,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function ioKB_PP_ver_2(ID)
-!==================================
-!
+integer function ioKB_PP_ver_2(ID)
+ !
  use pars,             ONLY:schlen,IP,SP
  use D_lattice,        ONLY:n_atoms_max,n_atom_species,n_atoms,&
 &                           atom_pos,pp_n_l_comp_max,&
@@ -34,8 +33,9 @@
  implicit none
  integer,       intent(in) :: ID
  character(schlen)         :: VAR_NAME
-!
- integer :: ik,i1,i2
+ !
+ ! Work Space
+ !
  integer, allocatable :: I_on_disk(:)
  real(SP),allocatable :: R_on_disk(:)
 
@@ -45,16 +45,16 @@
  if (ioKB_PP_ver_2/=0) goto 1
 
  if (any ((/io_sec(ID,:)==1/)) ) then
-!
-! H_versionID
-!
+   !
+   ! H_versionID
+   !
    allocate(I_on_disk(4))
    call io_bulk(ID,VAR="H_versionID",VAR_SZ=(/4/))
    call io_bulk(ID,I1=I_on_disk)
    deallocate(I_on_disk)
-!
-! H1ID 
-!
+   !
+   ! H1ID 
+   !
    allocate(I_on_disk(5))
    call io_bulk(ID,VAR="H1ID",VAR_SZ=(/size(I_on_disk)/))
    call io_bulk(ID,I1=I_on_disk)
@@ -62,39 +62,39 @@
    n_atoms_max=I_on_disk(2)
    pp_n_l_comp_max=I_on_disk(3)
    deallocate(I_on_disk)
-!
+   !
    if (read_is_on(ID).and..not.allocated(n_atoms)) then
      allocate(n_atoms(n_atom_species),pp_n_l_comp(n_atom_species))
      allocate(atom_pos(3,n_atoms_max,n_atom_species))
    endif
-!
-! H2ID
-!
+   !
+   ! H2ID
+   !
    allocate(I_on_disk(2*n_atom_species))
    call io_bulk(ID,VAR="H2ID",VAR_SZ=(/size(I_on_disk)/))
    call io_bulk(ID,I1=I_on_disk)
    n_atoms=I_on_disk(:n_atom_species)
    pp_n_l_comp=I_on_disk(n_atom_species+1:)
    deallocate(I_on_disk)
-!
-! H2RD
-!
+   !
+   ! H2RD
+   !
    allocate(R_on_disk(3*n_atom_species*n_atoms_max))
    call io_bulk(ID,VAR="H2RD",VAR_SZ=(/size(R_on_disk)/))
    call io_bulk(ID,R1=R_on_disk)
    atom_pos=reshape(R_on_disk,(/3,n_atoms_max,n_atom_species/))
    deallocate(R_on_disk)
-
+   !
  endif
-
+ !
  if (ik==0) goto 1
-
+ !
  if (ik==1) call PP_alloc()
-!
+ !
  allocate(R_on_disk(2*wf_ng+1))
  write (VAR_NAME,'(a,i5.5,a)') 'Components-',ik,'RD'
  call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=(/n_atom_species*pp_n_l_comp_max/))
-
+ !
  do i1=1,n_atom_species
    do i2=1,pp_n_l_comp(i1)
      call io_bulk(ID,R1=R_on_disk) 
@@ -104,7 +104,7 @@
    enddo
  enddo
  deallocate(R_on_disk)
-!
+ !
 1 call io_disconnect(ID=ID)
-
- end function ioKB_PP_ver_2
+ !
+end function ioKB_PP_ver_2

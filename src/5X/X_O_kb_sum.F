@@ -21,15 +21,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine X_O_kb_sum(ivfft,icfft,rho,kbv)
-!==========================================
+subroutine X_O_kb_sum(ivfft,icfft,rho,kbv)
+ !
  use pars,          ONLY:SP,DP
  use wave_func,     ONLY:wf,wf_ng
  use D_lattice,     ONLY:pp_kbv_dim
  implicit none
  integer    :: ivfft,icfft
  complex(SP):: rho(3),kbv(wf_ng,pp_kbv_dim,4)
-!ws
+ ! 
+ ! Work Space
+ !
  integer :: i1,i2
 #if defined _DOUBLE
  complex(DP):: zdotc,zdotu
@@ -37,9 +39,10 @@
  complex(SP):: cdotc,cdotu
 #endif
  complex(SP) :: Cv,Cc,Kc(wf_ng,3),Kv(wf_ng,3),drho(3)
-
+ !
  Kc=(0.,0.)
  Kv=(0.,0.)
+ !
  do i1=1,pp_kbv_dim
 #if defined _DOUBLE
    Cv=zdotu(wf_ng,wf(:,ivfft),1,kbv(:,i1,1),1)
@@ -59,6 +62,7 @@
 #endif
    enddo
  enddo
+ !
  do i1=1,3
 #if defined _DOUBLE
    drho(i1)=zdotc(wf_ng,wf(:,ivfft),1,Kc(1,i1),1)+&
@@ -68,6 +72,7 @@
 &           cdotu(wf_ng,wf(:,icfft),1,Kv(1,i1),1)
 #endif
  enddo
+ !
  rho=rho+drho
-
- end subroutine
+ !
+end subroutine

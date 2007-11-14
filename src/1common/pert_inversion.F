@@ -65,9 +65,9 @@ integer function pert_inversion(N,W,C,f,V,M,use_full_inv)
    do while (it<=max_it) 
      !
 #if defined _DOUBLE
-     call zgemv('n',N,N,(1.,0.),M,N,A_nm1,1,(0.,0.),A_n,1)
+     call zgemv('n',N,N,(1._SP,0._SP),M,N,A_nm1,1,(0._SP,0._SP),A_n,1)
 #else
-     call cgemv('n',N,N,(1.,0.),M,N,A_nm1,1,(0.,0.),A_n,1)
+     call cgemv('n',N,N,(1._SP,0._SP),M,N,A_nm1,1,(0._SP,0._SP),A_n,1)
 #endif
      A_n(:)=V(:)*A_n(:)
 #if defined _DOUBLE
@@ -102,9 +102,9 @@ integer function pert_inversion(N,W,C,f,V,M,use_full_inv)
    enddo
    call mat_dia_inv(INV,USE_LK,wk)
 #if defined _DOUBLE
-   call zgemv('n',N,N,(1.,0.),wk,N,W,1,(0.,0.),A_n,1)
+   call zgemv('n',N,N,(1._SP,0._SP),wk,N,W,1,(0._SP,0._SP),A_n,1)
 #else
-   call cgemv('n',N,N,(1.,0.),wk,N,W,1,(0.,0.),A_n,1)
+   call cgemv('n',N,N,(1._SP,0._SP),wk,N,W,1,(0._SP,0._SP),A_n,1)
 #endif
 #if defined _DOUBLE
    f=C*zdotc(N,W,1,A_n,1)

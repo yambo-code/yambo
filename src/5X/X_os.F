@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
+subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  ! Non interacting X with SPIN support.
  !
@@ -377,4 +377,4 @@
  !
  iq_now=iq
  !
- end subroutine
+end subroutine

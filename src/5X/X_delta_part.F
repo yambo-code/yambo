@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine X_delta_part(X,Xw,Gamp)
+subroutine X_delta_part(X,Xw,Gamp)
  !
  ! The goal of this routine is to construct the "delta-like" part
  ! of the inverse dielectric matrix.
@@ -89,4 +89,4 @@
    enddo
  endif
  !
- end subroutine
+end subroutine

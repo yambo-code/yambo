@@ -36,7 +36,9 @@ subroutine e2s_wf(wf_disk,ikibz, ncid)
   double precision, allocatable  :: wavefunction_section_(:,:,:)
   logical                        :: lstat
   type(etsf_io_low_error)        :: error_data 
-!ws
+  ! 
+  ! Work Space
+  !
   integer        :: ib, ierr, npwk, ik, ig, ispin, ireal
   integer        :: start(6), count(6), ncvarid
 !

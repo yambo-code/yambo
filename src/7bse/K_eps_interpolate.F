@@ -69,8 +69,8 @@ subroutine K_eps_interpolate(nW,W,err)
        enddo
        call polfit(n_pts,Dx(:n_pts),Dy(:n_pts),order,Pol_coeff(:order+1),EPS,0.d0)
        !
-       if (i1==1) X_epsilon(2,iw)=(0.,1.)*pol_eval(0.)
-       if (i1==2) X_epsilon(2,iw)=X_epsilon(2,iw)+pol_eval(0.)
+       if (i1==1) X_epsilon(2,iw)=(0.,1.)*pol_eval(0._SP)
+       if (i1==2) X_epsilon(2,iw)=X_epsilon(2,iw)+pol_eval(0._SP)
        !
      enddo
      !

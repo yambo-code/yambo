@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
+integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  !
  use pars,          ONLY:SP
  use memory_m,      ONLY:mem_est
@@ -60,8 +60,6 @@
  ! [2] E(ib,ik)-E(ob,ok)<0 & f(ok,ob)+bose(E(ok,ob)-E(ik,ib))>0
  !
  QP_life_transitions=0
- !
- ! -- GPL_END --
  !
  do i1=1,2
    !
@@ -123,6 +121,4 @@
  deallocate(bg_npts,cg_pt,rg_index_bg)
  call mem_est("BGn CGp RGi")
  !
- ! -- GPL_START --
- !
- end function
+end function

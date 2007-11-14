@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine spp_init(instr,lnstr,FINALIZE)
+subroutine spp_init(instr,lnstr,FINALIZE)
  !
  use pars,           ONLY:HA2THZ,HARTREE
  use it_m,           ONLY:rstatus,initdefs,initmode,ofiles_append,&
@@ -200,15 +200,15 @@
  contains
  !
  subroutine call_init_load(mode) 
- character(*)::mode
- !
- if (mode=='load') initmode=0
- if (mode=='todef') initmode=1
- if (mode=='Gclose') initmode=2
- if (mode=='GameOver') initmode=3
- if (mode=='parserload') initmode=4
- call spp_init_load(defs)
- !
+   character(*)::mode
+   !
+   if (mode=='load') initmode=0
+   if (mode=='todef') initmode=1
+   if (mode=='Gclose') initmode=2
+   if (mode=='GameOver') initmode=3
+   if (mode=='parserload') initmode=4
+   call spp_init_load(defs)
+   !
  end subroutine
  !
- end subroutine
+end subroutine

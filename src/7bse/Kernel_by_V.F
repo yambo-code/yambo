@@ -139,12 +139,12 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
          !
          if (use_fragments) then
 #if defined _DOUBLE
-           call zgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik1),(1.,0.),&
-&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1.,0.),&
+           call zgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik1),(1._SP,0._SP),&
+&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1._SP,0._SP),&
 &                     Vo(frag_pointer(1)+1),1)
 #else
-           call cgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik1),(1.,0.),&
-&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1.,0.),&
+           call cgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik1),(1._SP,0._SP),&
+&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1._SP,0._SP),&
 &                     Vo(frag_pointer(1)+1),1)
 #endif
          endif
@@ -167,18 +167,18 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
          else
            !
 #if defined _DOUBLE
-           call zgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik2),(1.,0.),&
-&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(2)+1),1,(1.,0.),&
+           call zgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik2),(1._SP,0._SP),&
+&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(2)+1),1,(1._SP,0._SP),&
 &                     Vo(frag_pointer(1)+1),1)
-           call zgemv('c',BS_blk_dim(ik1),BS_blk_dim(ik2),(1.,0.),&
-&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1.,0.),&
+           call zgemv('c',BS_blk_dim(ik1),BS_blk_dim(ik2),(1._SP,0._SP),&
+&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1._SP,0._SP),&
 &                     Vo(frag_pointer(2)+1),1)
 #else
-           call cgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik2),(1.,0.),&
-&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(2)+1),1,(1.,0.),&
+           call cgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik2),(1._SP,0._SP),&
+&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(2)+1),1,(1._SP,0._SP),&
 &                     Vo(frag_pointer(1)+1),1)
-           call cgemv('c',BS_blk_dim(ik1),BS_blk_dim(ik2),(1.,0.),&
-&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1.,0.),&
+           call cgemv('c',BS_blk_dim(ik1),BS_blk_dim(ik2),(1._SP,0._SP),&
+&                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1._SP,0._SP),&
 &                     Vo(frag_pointer(2)+1),1)
 #endif
          endif
@@ -195,39 +195,50 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
  if (.not.present(iter)) return
  !
  if (.not.use_fragments) then
-!
+   !
 #if defined PJ_NO_HERM
    if (BS_K_coupling) then
      !
-     ! If Coupling the half lower part of K must be filled
-     !
-     ! Anti-resonant
-     !
-     forall(i1=BS_K_dim+1:2*BS_K_dim,i2=BS_K_dim+1:2*BS_K_dim) &
-&          BS_mat(i1,i2)=-conjg(BS_mat(i1-BS_K_dim,i2-BS_K_dim))
-     !
-     ! Anti-coupling
-     !
-     forall(i1=BS_K_dim+1:2*BS_K_dim,i2=1:BS_K_dim) &
-&          BS_mat(i1,i2)=-conjg(BS_mat(i1-BS_K_dim,i2+BS_K_dim))
+     if (db_load) then
+       !
+       ! If Coupling the half lower part of K must be filled
+       !
+       ! Anti-resonant
+       !
+       forall(i1=BS_K_dim+1:2*BS_K_dim,i2=BS_K_dim+1:2*BS_K_dim) &
+&            BS_mat(i1,i2)=-conjg(BS_mat(i1-BS_K_dim,i2-BS_K_dim))
+       !
+       ! Anti-coupling
+       !
+       forall(i1=BS_K_dim+1:2*BS_K_dim,i2=1:BS_K_dim) &
+&            BS_mat(i1,i2)=-conjg(BS_mat(i1-BS_K_dim,i2+BS_K_dim))
+       !
+     endif
      !
 #if defined _DOUBLE
-     call zgemv('n',2*BS_K_dim,2*BS_K_dim,(1.,0.),BS_mat,2*BS_K_dim,Vi,1,(0.,0.),Vo,1)
+     call zgemv('n',2*BS_K_dim,2*BS_K_dim,(1._SP,0._SP),&
+&               BS_mat,2*BS_K_dim,Vi,1,(0._SP,0._SP),Vo,1)
 #else
-     call cgemv('n',2*BS_K_dim,2*BS_K_dim,(1.,0.),BS_mat,2*BS_K_dim,Vi,1,(0.,0.),Vo,1)
+     call cgemv('n',2*BS_K_dim,2*BS_K_dim,(1._SP,0._SP),&
+&               BS_mat,2*BS_K_dim,Vi,1,(0._SP,0._SP),Vo,1)
 #endif
+     !
    endif
 #endif
-!
+   !
 #if defined PJ_NO_HERM
    if (.not.BS_K_coupling) then
+     !
 #endif
 #if defined _DOUBLE
-     call zgemv('n',BS_K_dim,BS_K_dim,(1.,0.),BS_mat,BS_K_dim,Vi,1,(0.,0.),Vo,1)
+     call zgemv('n',BS_K_dim,BS_K_dim,(1._SP,0._SP),&
+&               BS_mat,BS_K_dim,Vi,1,(0._SP,0._SP),Vo,1)
 #else
-     call cgemv('n',BS_K_dim,BS_K_dim,(1.,0.),BS_mat,BS_K_dim,Vi,1,(0.,0.),Vo,1)
+     call cgemv('n',BS_K_dim,BS_K_dim,(1._SP,0._SP),&
+&               BS_mat,BS_K_dim,Vi,1,(0._SP,0._SP),Vo,1)
 #endif
 #if defined PJ_NO_HERM
+     !
    endif
 #endif
    !

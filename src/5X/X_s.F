@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine X_s(iq,fr,X,wv)
+subroutine X_s(iq,fr,X,wv)
  !
  use pars,          ONLY:SP,HARTREE,schlen,pi
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
@@ -184,4 +184,4 @@
  endif
  call mem_est("X_WS")
  !
- end subroutine
+end subroutine

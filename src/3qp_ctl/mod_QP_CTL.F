@@ -204,8 +204,8 @@
        ! Note the QP_ctl_W(Eid,1/3) is in ev^{-1} while QP_ctl_W(Eid,2/4) is in
        !  ev^{-2}
        !
-       qpfit_free%W=(/0.,QP_ctl_W(Eid,1)/HARTREE,QP_ctl_W(Eid,2)/HARTREE**2.,&
-&                     0.,QP_ctl_W(Eid,3)/HARTREE,QP_ctl_W(Eid,4)/HARTREE**2./)
+       qpfit_free%W=(/0._SP,QP_ctl_W(Eid,1)/HARTREE,QP_ctl_W(Eid,2)/HARTREE**2.,&
+&                     0._SP,QP_ctl_W(Eid,3)/HARTREE,QP_ctl_W(Eid,4)/HARTREE**2./)
        qpfit_free%Z=QP_ctl_Z(Eid)
        !
      endif

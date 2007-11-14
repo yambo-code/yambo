@@ -49,7 +49,9 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  integer,     external        :: ioDB1,rand_identifier, ioKB_PP
  real(SP), allocatable        :: wf_disk(:,:,:,:)
  logical                      :: letsf_file, lwrite_PP, force_kbpp
-
+ ! 
+ ! Work Space
+ !
  ! The local variables to handle ETSF data.
  type(etsf_dims)             :: dims  ! The dimensions of our system
  logical                     :: lstat ! to get informed on error

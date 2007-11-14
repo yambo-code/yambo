@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- function X_drude(W,Wd,q0_norm)
+function X_drude(W,Wd,q0_norm)
  !
  !Jellium Xo propagator with a given plasma frequency
  !The propagator is T-ordered. 
@@ -49,4 +49,4 @@
 &          fac/(3.*rxi**2.)-fac/(3.*rxi**2.))
  endif
  !
- end function
+end function

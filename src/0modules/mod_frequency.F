@@ -74,7 +74,7 @@
      W1_loop: do iw1=W1%n(1),1,-1
        do iw2=1,Wbase%n(1)
          !
-         r=(/real(Wbase%p(iw2)),real(W1%p(iw1)),0./)
+         r=(/real(Wbase%p(iw2)),real(W1%p(iw1)),0._SP/)
          if (iw2<Wbase%n(1)) r(3)=real(Wbase%p(iw2+1))
          !
          if (abs(r(1)-r(2))<1.E-5) then

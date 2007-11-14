@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  module DFT
-#if defined PJ_GKS
+#if defined PJ_DFT
  use pars,          ONLY:SP,lchlen
  implicit none
  logical :: lgks

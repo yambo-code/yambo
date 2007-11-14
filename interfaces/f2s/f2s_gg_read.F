@@ -31,7 +31,9 @@
 
  integer:: ii
  character(schlen)              :: filename
-
+ ! 
+ ! Work Space
+ !
  open(71,file=filename,form='unformatted',status='unknown')
  read(71) fhi_gg%ngwx,fhi_gg%ngx
  read(71) fhi_gg%nr11,fhi_gg%nr22,fhi_gg%nr33

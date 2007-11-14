@@ -27,7 +27,9 @@
  type(finp_type)::fhi_inp
  type(fgg_type)::fhi_gg
  type(fwvf_type)::fhi_wvf
-!ws
+ ! 
+ ! Work Space
+ !
  integer:: ii,ik,ig,is,ia,jj,kk
  logical::tdouble
  character(1):: cspin

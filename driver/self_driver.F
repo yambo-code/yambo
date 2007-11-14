@@ -19,8 +19,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function self_driver(instr,lnstr,inf,iinf,ind,&
-&                             iind,od,iod,js,ijs,np,pid)
+integer function self_driver(instr,lnstr,inf,iinf,ind,&
+&                            iind,od,iod,js,ijs,np,pid)
  !           ______   ______   _       _______
  !          /  ____) |  ____) | |     |  _____)
  !         (  (___   | (___   | |     | (_____
@@ -232,7 +232,9 @@
  ! ACFDT
  !=======
  !
+ ! -- GPL_END --
  if (l_acfdt) call acfdt_tot_energy(Xen,Xk,q,X(1))
+ ! -- GPL_START --
  !
  ! GAME OVER :(
  !==============
@@ -247,4 +249,5 @@
  !
  call it_reset(-1)
  call p_finalize
- end function
+ !
+end function

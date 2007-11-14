@@ -43,7 +43,9 @@
  type(finp_type),  intent(out)  :: fhi_inp
  type(fwvf_type),  intent(out)  :: fhi_wvf
  type(fgg_type)                 :: fhi_gg
-!ws
+ ! 
+ ! Work Space
+ !
  real(SP)                       :: lsop(3,3), b(3,3),cp(3)
  integer                        :: i1, ik, i2, i3, inel, ii
  logical                        :: l_identity, l_inversion

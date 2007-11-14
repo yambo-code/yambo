@@ -21,8 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine X_O_kb_pp_comp(ik,Xk,kbv)
-!===================================
+subroutine X_O_kb_pp_comp(ik,Xk,kbv)
+ !
  use pars,          ONLY:SP,pi
  use vec_operate,   ONLY:iku_v_norm,v_norm,c2a
  use R_lattice,     ONLY:b,g_vec,bz_samp
@@ -33,7 +33,9 @@
  type(bz_samp) :: Xk
  complex(SP)   :: kbv(wf_ng,pp_kbv_dim,4)
  integer       :: ik
-!ws
+ ! 
+ ! Work Space
+ !
  integer     :: ig,igm,i1,is,ia,il,im
  complex(SP) :: Ylm(pp_n_l_comp_max,2*pp_n_l_comp_max+1),&
 &               dYlm(2,pp_n_l_comp_max,2*pp_n_l_comp_max+1),c1(n_atom_species),c2(4)
@@ -67,5 +69,5 @@
      enddo
    enddo
  enddo
-
- end subroutine
+ !
+end subroutine

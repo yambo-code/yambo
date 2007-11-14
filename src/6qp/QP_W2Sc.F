@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
+subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
  !
  ! Performs the complex Hilber transofrmation corresponding to
  !
@@ -44,7 +44,7 @@
  type(w_samp) ::Xw,Sc_W(QP_n_states)
  integer      ::iqbz
  !
- ! WorkSpace -- GPL_END --
+ ! WorkSpace
  !
  integer         :: i1,i2,ib,is(2),os(2)
  type(pp_indexes):: px
@@ -134,6 +134,4 @@
    enddo
  endif
  !
- ! -- GPL_START --
- !
- end subroutine
+end subroutine

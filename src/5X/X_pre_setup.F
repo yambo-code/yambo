@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine X_pre_setup(Xen,X)
+subroutine X_pre_setup(Xen,X)
  !
  use X_m,           ONLY:X_t,use_X_RIM,X_RIM_nkpts
  use electrons,     ONLY:levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts
@@ -72,4 +72,4 @@
  !
  if (Finite_Tel) X%ordering="c"
  !
- end subroutine
+end subroutine

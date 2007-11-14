@@ -26,7 +26,9 @@
  implicit none
  character(*)              :: inf
  character(lchlen)         :: file_name
-!ws
+ ! 
+ ! Work Space
+ !
  integer                   :: i1
  logical                   :: sfile
  character(lchlen)         ::fname,msgt

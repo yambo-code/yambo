@@ -21,7 +21,7 @@
 !
 subroutine K_inversion(iq,W,E,k,q) 
  !
- use pars,           ONLY:SP,pi
+ use pars,           ONLY:SP,pi,DP
 #if defined PJ_PH
  use drivers,        ONLY:l_ph_corr
 #endif
@@ -155,7 +155,7 @@ subroutine K_inversion(iq,W,E,k,q)
        endif
      endif
    enddo
-   call msg('rs','[BSE INV] Frequencies read    [o/o]:',real(nw_conv)/real(W%n(1))*100.)
+   call msg('rs','[BSE INV] Frequencies read    [o/o]:',real(nw_conv)/real(W%n(1))*100._SP)
    deallocate(inv_err_disk,eps_2start,disk_freq_table)
  else
    allocate(inv_err(W%n(1)),iw_full(W%n(1)))
@@ -281,6 +281,7 @@ subroutine K_inversion(iq,W,E,k,q)
        iw_full(full_inf_freqs)=i1
      endif
    enddo
+   !
  else
    !
    min_dist_non_conv_freqs=W%n(1)
@@ -342,7 +343,7 @@ subroutine K_inversion(iq,W,E,k,q)
  do iw=1,W%n(1)
    if (inv_err(iw)==0) nw_conv=nw_conv+1
  enddo
- call msg('rs','[BSE INV] Converged frequencies (after full inv) [o/o]:',real(nw_conv)/real(W%n(1))*100.)
+ call msg('rs','[BSE INV] Converged frequencies (after full inv) [o/o]:',real(nw_conv)/real(W%n(1))*100._SP)
  !
  ! I/O [after full invertion]
  !
@@ -367,7 +368,7 @@ subroutine K_inversion(iq,W,E,k,q)
  BSS_description(BSS_n_descs)=' BSS|BZ RIM points              :'//intc(BZ_RIM_tot_nkpts)
  BSS_n_descs=BSS_n_descs+1
  BSS_description(BSS_n_descs)='    |Converged frequencies [o/o]:'//&
-&                             trim(real2ch(real(nw_conv)/real(W%n(1))*100.))
+&                             trim(real2ch(real(nw_conv)/real(W%n(1))*100._SP))
  !
  call K_dump_to_o_file(iq,of_mode)
  !

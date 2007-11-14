@@ -25,7 +25,9 @@
  use f2s_datatypes
  implicit none
  type(finp_type)::fhi_inp
-!ws
+ ! 
+ ! Work Space
+ !
  integer::ia,ii,ik,is,jj
 
  open(unit=11,file=trim(fhi_inp%file),form='formatted')

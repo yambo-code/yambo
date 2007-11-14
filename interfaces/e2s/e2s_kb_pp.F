@@ -46,7 +46,9 @@ subroutine e2s_kb_pp( ikibz, ncid )
   use wave_func,            only : wf_ncx,wf_nc_k
   implicit none
   integer,        intent(in)    :: ncid, ikibz
-!ws
+  ! 
+  ! Work Space
+  !
   integer                       :: ig, ib, ip, ia
   integer                       :: pp_kbs_( &
 &           dims%max_number_of_angular_momenta,  dims%number_of_atom_species )

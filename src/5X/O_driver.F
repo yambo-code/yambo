@@ -334,13 +334,9 @@
  call WF_free()
  call pp_redux_wait
  !
- ! -- GPL_END -- 
- !
- if (l_bs_fxc) then
+ if (l_bs_fxc.and.allocated(FXC)) then
    deallocate(FXC,FXC_K_diagonal)
    call mem_est("FXC FXC_K_diagonal")
  endif
- !
- ! -- GPL_START --
  !
  end subroutine

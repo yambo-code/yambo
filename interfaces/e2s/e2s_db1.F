@@ -51,7 +51,9 @@ subroutine e2s_db1(en,k,ncid)
   type(levels),   intent(inout) :: en
   type(bz_samp),  intent(inout) :: k
   integer,        intent(in)    :: ncid
-! ws
+  ! 
+  ! Work Space
+  !
   integer                       :: i1,i2,ik,ib,is
 !ETSF library stuff
   logical                       :: lstat ! to get informed on error

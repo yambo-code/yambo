@@ -21,8 +21,13 @@
 !
 module par_proc_m
   !
-  use pars,       ONLY:SP
+  use pars,       ONLY:SP,DP
   implicit none
+  !
+#if defined MPI
+  include 'mpif.h'
+#endif
+  !
   integer            :: myid
   integer            :: ncpu
   integer, parameter :: p_sum=1
@@ -35,6 +40,8 @@ module par_proc_m
     integer, pointer :: stps(:)
     integer, pointer :: i1wts(:)
   end type pp_indexes
+  !
+  integer, private :: local_type
   !
   interface pp_redux_wait
     module procedure i1share,i18share,i2share,i3share,r0share,&
@@ -52,7 +59,6 @@ contains
   subroutine p_finalize
     implicit none
 #if defined MPI
-    include 'mpif.h'
     integer :: ierr
     if (ncpu>1) then
       call mpi_barrier(mpi_comm_world,ierr)
@@ -64,7 +70,6 @@ contains
   !
   subroutine pwait
 #if defined MPI
-    include 'mpif.h'
     integer :: ierr
     if (ncpu==1) return
     call mpi_barrier(mpi_comm_world,ierr)
@@ -75,8 +80,7 @@ contains
     integer:: array(:)
     integer, optional :: imode
 #if defined MPI
-    include 'mpif.h'
-    integer :: ierr,omode
+    integer ::ierr,omode
     integer ::dimensions(1),dimension ! Work Space
     integer,allocatable::larray(:)   ! Work Space
     if (ncpu==1) return
@@ -103,7 +107,6 @@ contains
     integer(8)        :: array(:)
     integer, optional :: imode
 #if defined MPI
-    include 'mpif.h'
     integer :: ierr,omode
     integer::dimensions(1),dimension !Work Space
     integer(8),allocatable::larray(:) !Work Space
@@ -131,7 +134,6 @@ contains
     integer :: array(:,:)
     integer, optional :: mode
 #if defined MPI
-    include 'mpif.h'
     integer :: ierr
     integer::dimensions(2),dimension  ! Work Space
     integer,allocatable::larray(:)  ! Work Space
@@ -153,7 +155,6 @@ contains
     integer:: array(:,:,:)
     integer, optional :: mode
 #if defined MPI
-    include 'mpif.h'
     integer :: ierr
     integer::dimensions(3),dimension  ! Work Space
     integer,allocatable::larray(:) ! Work Space
@@ -175,10 +176,13 @@ contains
     real(SP)          :: rval
     integer, optional :: imode
 #if defined MPI
-    include 'mpif.h'
     integer :: ierr,omode  ! Work Space
     real(SP):: local_rval  ! Work Space
     if (ncpu==1) return
+    !
+    local_type=MPI_REAL
+    if (SP==DP) local_type=MPI_DOUBLE_PRECISION
+    !
     call mpi_barrier(mpi_comm_world,ierr)
     if (present(imode)) then
       if (imode==1) omode=mpi_sum
@@ -188,7 +192,7 @@ contains
     endif
     local_rval=0.
     call mpi_allreduce(rval,local_rval,1,&
-&        mpi_real,omode,mpi_comm_world,ierr)
+&        local_type,omode,mpi_comm_world,ierr)
     rval=local_rval
     call mpi_barrier(mpi_comm_world,ierr)
 #endif
@@ -198,18 +202,21 @@ contains
     real(SP) :: array(:)
     integer, optional :: mode
 #if defined MPI
-    include 'mpif.h'
     integer :: ierr
     integer::dimensions(1),dimension ! Work Space
     real(SP),allocatable::larray(:)  ! Work Space
     if (ncpu==1) return
+    !
+    local_type=MPI_REAL
+    if (SP==DP) local_type=MPI_DOUBLE_PRECISION
+    !
     call mpi_barrier(mpi_comm_world,ierr)
     dimensions=shape(array)
     dimension=product(dimensions)
     allocate(larray(dimension))
     larray=0.
     call mpi_allreduce(array(1),larray,dimension,&
-&        mpi_real,mpi_sum,mpi_comm_world,ierr)
+&        local_type,mpi_sum,mpi_comm_world,ierr)
     array=reshape(larray,dimensions)
     deallocate(larray)
     call mpi_barrier(mpi_comm_world,ierr)
@@ -220,18 +227,21 @@ contains
     real(SP) :: array(:,:)
     integer, optional :: mode
 #if defined MPI
-    include 'mpif.h'
     integer :: ierr
     integer::dimensions(2),dimension  ! Work Space
     real(SP),allocatable::larray(:)  ! Work Space
     if (ncpu==1) return
+    !
+    local_type=MPI_REAL
+    if (SP==DP) local_type=MPI_DOUBLE_PRECISION
+    !
     call mpi_barrier(mpi_comm_world,ierr)
     dimensions=shape(array)
     dimension=product(dimensions)
     allocate(larray(dimension))
     larray=0.
     call mpi_allreduce(array(1,1),larray,dimension,&
-&        mpi_real,mpi_sum,mpi_comm_world,ierr)
+&        local_type,mpi_sum,mpi_comm_world,ierr)
     array=reshape(larray,dimensions)
     deallocate(larray)
     call mpi_barrier(mpi_comm_world,ierr)
@@ -242,18 +252,21 @@ contains
     real(SP):: array(:,:,:)
     integer, optional :: mode
 #if defined MPI
-    include 'mpif.h'
     integer :: ierr
     integer::dimensions(3),dimension  ! Work Space
     real(SP),allocatable::larray(:)  ! Work Space
     if (ncpu==1) return
+    !
+    local_type=MPI_REAL
+    if (SP==DP) local_type=MPI_DOUBLE_PRECISION
+    !
     call mpi_barrier(mpi_comm_world,ierr)
     dimensions=shape(array)
     dimension=product(dimensions)
     allocate(larray(dimension))
     larray=0.
     call mpi_allreduce(array(1,1,1),larray,dimension,&
-&        mpi_real,mpi_sum,mpi_comm_world,ierr)
+&        local_type,mpi_sum,mpi_comm_world,ierr)
     array=reshape(larray,dimensions)
     deallocate(larray)
     call mpi_barrier(mpi_comm_world,ierr)
@@ -264,15 +277,18 @@ contains
     complex(SP):: array(:)
     integer, optional :: mode
 #if defined MPI
-    include 'mpif.h'
     integer :: ierr
     complex(SP),allocatable::larray(:)  ! Work Space
     if (ncpu==1) return
+    !
+    local_type=MPI_COMPLEX
+    if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
+    !
     call mpi_barrier(mpi_comm_world,ierr)
     allocate(larray(size(array)))
     larray=0.
     call mpi_allreduce(array(1),larray,size(array),&
-&        mpi_complex,mpi_sum,mpi_comm_world,ierr)
+&        local_type,mpi_sum,mpi_comm_world,ierr)
     array=larray
     deallocate(larray)
     call mpi_barrier(mpi_comm_world,ierr)
@@ -283,18 +299,21 @@ contains
     complex(SP):: array(:,:)
     integer, optional :: mode
 #if defined MPI
-    include 'mpif.h'
     integer :: ierr
     integer::dimensions(2),dimension  ! Work Space
     complex(SP),allocatable::larray(:)  ! Work Space
     if (ncpu==1) return
+    !
+    local_type=MPI_COMPLEX
+    if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
+    !
     call mpi_barrier(mpi_comm_world,ierr)
     dimensions=shape(array)
     dimension=product(dimensions)
     allocate(larray(dimension))
     larray=(0.,0.)
     call mpi_allreduce(array(1,1),larray,dimension,&
-&        mpi_complex,mpi_sum,mpi_comm_world,ierr)
+&        local_type,mpi_sum,mpi_comm_world,ierr)
     array=reshape(larray,dimensions)
     deallocate(larray)
     call mpi_barrier(mpi_comm_world,ierr)
@@ -305,18 +324,21 @@ contains
     complex(SP):: array(:,:,:)
     integer, optional :: mode
 #if defined MPI
-    include 'mpif.h'
     integer :: ierr
     integer::dimensions(3),dimension  ! Work Space
     complex(SP),allocatable::larray(:)  ! Work Space
     if (ncpu==1) return
+    !
+    local_type=MPI_COMPLEX
+    if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
+    !
     call mpi_barrier(mpi_comm_world,ierr)
     dimensions=shape(array)
     dimension=product(dimensions)
     allocate(larray(dimension))
     larray=0.
     call mpi_allreduce(array(1,1,1),larray,dimension,&
-&        mpi_complex,mpi_sum,mpi_comm_world,ierr)
+&        local_type,mpi_sum,mpi_comm_world,ierr)
     array=reshape(larray,dimensions)
     deallocate(larray)
     call mpi_barrier(mpi_comm_world,ierr)
@@ -327,18 +349,21 @@ contains
     complex(SP):: array(:,:,:,:)
     integer, optional :: mode
 #if defined MPI
-    include 'mpif.h'
     integer :: ierr
     integer::dimensions(4),dimension  ! Work Space
     complex(SP),allocatable::larray(:)  ! Work Space
     if (ncpu==1) return
+    !
+    local_type=MPI_COMPLEX
+    if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
+    !
     call mpi_barrier(mpi_comm_world,ierr)
     dimensions=shape(array)
     dimension=product(dimensions)
     allocate(larray(dimension))
     larray=0.
     call mpi_allreduce(array(1,1,1,1),larray,dimension,&
-&        mpi_complex,mpi_sum,mpi_comm_world,ierr)
+&        local_type,mpi_sum,mpi_comm_world,ierr)
     array=reshape(larray,dimensions)
     deallocate(larray)
     call mpi_barrier(mpi_comm_world,ierr)

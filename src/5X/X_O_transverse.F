@@ -33,7 +33,7 @@
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf,wf_ng,wf_state
-#if defined PJ_GKS
+#if defined PJ_DFT
  use DFT,                 ONLY:lgks,auxpath
  use com,                 ONLY:in_path
  use pars,                ONLY:SP,pi,lchlen
@@ -63,14 +63,14 @@
 #else 
  complex(SP)                  :: cdotc
 #endif
-#if defined PJ_GKS
+#if defined PJ_DFT
  integer                      :: v_limits(2),c_limits(2),nb_aux
  character(lchlen) :: save_in_path
 #endif 
  !
  ! Check for the KB PP DB 
  !
-#if defined PJ_GKS
+#if defined PJ_DFT
  if (lgks) then
    save_in_path = in_path
    in_path = auxpath
@@ -97,7 +97,7 @@
  !
  ! Set up the parallel environment
  !
-#if defined PJ_GKS
+#if defined PJ_DFT
  if (lgks) then
    nb_aux = size(X_q0grad,2)
    v_limits =(/1,nb_aux/) 
@@ -131,14 +131,14 @@
      io_err=ioKB_PP(ID)
      call X_O_kb_pp_comp(ik,Xk,kbv)
    endif
-#if defined PJ_GKS
+#if defined PJ_DFT
    do iv=v_limits(1),v_limits(2)
 #else
    do iv=X%ib(1),Xen%nbm
 #endif
      if (.not.px%i2p(ik,iv)) cycle
      !
-#if defined PJ_GKS
+#if defined PJ_DFT
      do ic=c_limits(1),c_limits(2)
 #else
      do ic=Xen%nbf+1,X%ib(2)
@@ -213,7 +213,7 @@
  !
  ! CLEAN
  !
-#if defined PJ_GKS
+#if defined PJ_DFT
  if (lgks) in_path = save_in_path
 #endif 
  deallocate(wf_xyz)

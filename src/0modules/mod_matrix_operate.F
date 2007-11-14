@@ -143,7 +143,7 @@
    end function
    !
    subroutine mat_dia_inv(idriver,lib_in,M,blt,V_left,V_right,&
-&                       E_real,E_cmpl,SVD_digits,fill)
+&                         E_real,E_cmpl,SVD_digits,fill)
      !
      use pars,        ONLY:SP
      use par_proc_m,  ONLY:pp_redux_wait,ncpu,myid

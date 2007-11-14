@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function ioE_RIM(E,ID)
+integer function ioE_RIM(E,ID)
  !
  use pars,           ONLY:SP,IP
  use electrons,      ONLY:levels,BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_max_filling,&
@@ -33,6 +33,8 @@
  !
  type(levels) :: E
  integer      :: ID 
+ !
+ ! GPL_END
  !
  call io_save_to_try_again(ID)
  ioE_RIM=io_connect(desc='E_RIM',type=2,ID=ID)
@@ -79,4 +81,6 @@
  !
 1 call io_disconnect(ID=ID)
  !
- end function
+ ! GPL_START
+ !
+end function

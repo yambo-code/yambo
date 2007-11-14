@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine elph_eliashberg(k,en,q)
+subroutine elph_eliashberg(k,en,q)
  !
  use pars,                ONLY:SP,schlen,pi,HA2GHZ,HA2THZ,HARTREE
  use com,                 ONLY:msg,of_open_close
@@ -39,7 +39,7 @@
  type(levels) ::en
  type(bz_samp)::k,q
  !
- ! Work Space GPL_END
+ ! Work Space 
  !
  integer           ::i1,i2,im,iq,nq_todo
  real(SP)          ::dos_ef,Ef_diff,E,q_weight,&
@@ -266,6 +266,4 @@
    !
    end subroutine
    !
-   ! GPL_START
-   !
- end subroutine
+end subroutine

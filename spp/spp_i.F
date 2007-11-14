@@ -42,8 +42,8 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  character(iind),  intent(in) :: ind
  character(iod),   intent(in) :: od
  character(ijs),   intent(in) :: js
- !
- !I/O
+ ! 
+ ! I/O 
  !
  integer           :: ID,i_err
  integer, external :: ioDB1,ioQINDX,iogrot,self2self,elph_pw_dbs

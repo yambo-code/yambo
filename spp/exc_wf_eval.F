@@ -27,19 +27,19 @@ subroutine exc_wf_eval(Xk,Xen)
  use D_lattice,   ONLY:a,sop_inv,i_time_rev,nsym,alat,&
 &                      n_atom_species,n_atoms,atom_pos,znucl,n_atoms_max
  use wave_func,   ONLY:wf_load,wf_state,wf,WF_free
- use R_lattice,   ONLY:nXkibz,bz_samp,ng_vec
+ use R_lattice,   ONLY:nXkibz,bz_samp,ng_vec,q0_def_norm,d3k_factor
  use SPP,         ONLY:action_mode,ncell,lambda,r_hole,sort_mode,&
 &                      max_energy,nr,exc_wf,nr_tot
  use IO_m,        ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
  use BS,          ONLY:BS_K_dim,BS_bands,BS_q,BSS_n_descs,BSS_description,&
 &                      BS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
-&                      BS_cpl_K_exchange,BS_cpl_K_corr
- use electrons,   ONLY:levels
- use com,         ONLY: msg,of_open_close,error,warning
- use X_m,         ONLY: X_t
- use memory_m,    ONLY: mem_est
- use timing,      ONLY: live_timing
- use vec_operate, ONLY: c2a,sort
+&                      BS_cpl_K_exchange,BS_cpl_K_corr,BSS_q0
+ use electrons,   ONLY:levels,spin_occ
+ use com,         ONLY:msg,of_open_close,error,warning
+ use X_m,         ONLY:X_t
+ use memory_m,    ONLY:mem_est
+ use timing,      ONLY:live_timing
+ use vec_operate, ONLY:c2a,sort
  !
  implicit none
  type(bz_samp) ::Xk
@@ -47,7 +47,7 @@ subroutine exc_wf_eval(Xk,Xen)
  !
  ! Work Space
  !
- ! ... parameters GPL_END
+ ! ... parameters
  !
  complex(SP),  parameter    :: cI=(0.,1.)
  !
@@ -439,18 +439,18 @@ subroutine exc_wf_eval(Xk,Xen)
      call msg('o sort','#','',INDENT=0)
      !
      titles(1)='E [ev]'
-     titles(2)='Width [meV]'
+     titles(2)='W [meV]'
      titles(3)='Strength'
      titles(4)='Index'
      !
      call msg('o sort','#',titles(:4),INDENT=0,USE_TABS=.true.)
      call msg('o sort','#','',INDENT=0)
      !
-     Rmax=0
      allocate( R(BS_K_dim), v2sort(BS_K_dim),E_indx(BS_K_dim))
      R(:) = BS_R(:)*conjg(BS_R(:))
+     R(:) = R(:)*real(spin_occ)/(2.*pi)**3.*&
+&           d3k_factor*4.*pi/q0_def_norm**2*HARTREE*1000.
      Rmax = maxval(R)
-     R(:) = R(:)/sum(R)
      !
      if (sort_mode == 'e') v2sort=real(BS_E)
      if (sort_mode == 'i') v2sort=R

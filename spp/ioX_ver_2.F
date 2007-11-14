@@ -19,8 +19,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function ioX_ver_2(X,Xw,ID)
-!===================================
+integer function ioX_ver_2(X,Xw,ID)
+ !
  use pars,             ONLY:SP,schlen
  use IO_m,             ONLY:io_connect, io_disconnect, io_netcdf_support, &
 &                           io_elemental, read_is_on,io_sec,io_bulk
@@ -30,9 +30,9 @@
  integer     :: ID
  type(X_t)   :: X
  type(w_samp):: Xw
-!
-!WS on disk
-!
+ !
+ ! Work Space
+ !
  integer  :: iq,i1,i2,i3
  integer,    allocatable :: I_on_disk(:)
  real(SP),   allocatable :: R_on_disk(:)
@@ -45,37 +45,37 @@
  if (ioX_ver_2/=0) goto 1
 
  if (any ((/io_sec(ID,:)==1/)) ) then
-!
-! H_versionID 
-!
+   !
+   ! H_versionID 
+   !
    allocate(I_on_disk(4))
    call io_elemental(ID,VAR="H_versionID",VAR_SZ=size(I_on_disk))
    call io_elemental(ID,I1=I_on_disk)
    deallocate(I_on_disk)
-!
-! H_BZID 
-!
+   !
+   ! H_BZID 
+   !
    allocate(I_on_disk(2))
    call io_elemental(ID,VAR="H_BZID",VAR_SZ=size(I_on_disk))
    call io_elemental(ID,I1=I_on_disk)
    deallocate(I_on_disk)
-!
-! H_temperatureID 
-!
+   !
+   ! H_temperatureID 
+   !
    allocate(I_on_disk(2))
    call io_elemental(ID,VAR="H_temperatureID",VAR_SZ=size(I_on_disk))
    call io_elemental(ID,I1=I_on_disk)
    deallocate(I_on_disk)
-!
-! H_temperatureRD 
-!
+   !
+   ! H_temperatureRD 
+   !
    allocate(R_on_disk(2))
    call io_elemental(ID,VAR="H_temperatureID",VAR_SZ=size(R_on_disk))
    call io_elemental(ID,R1=R_on_disk)
    deallocate(R_on_disk)
-!
-! H_fftID 
-!
+   !
+   ! H_fftID 
+   !
    allocate(I_on_disk(4))
    call io_elemental(ID,VAR="H_fftID",VAR_SZ=size(I_on_disk))
    call io_elemental(ID,I1=I_on_disk)
@@ -192,4 +192,4 @@
 
 1 call io_disconnect(ID=ID)
 
- end function ioX_ver_2
+end function ioX_ver_2

@@ -21,7 +21,7 @@
 !
 subroutine K_Haydock(iq,W)
  !
- use pars,           ONLY:SP,pi,schlen
+ use pars,           ONLY:SP,pi,schlen,HARTREE
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_epsilon
  use R_lattice,      ONLY:d3k_factor,q_norm
@@ -46,7 +46,7 @@ subroutine K_Haydock(iq,W)
  integer, parameter ::Max_iterations=1000
 #if defined PJ_NO_HERM
  complex(SP)        :: Af(Max_iterations)
- complex(SP),allocatable :: Vn(:),Vnm1(:),Vnp1(:)
+ complex(SP),allocatable :: Vn(:),Vnm1(:),Vnp1(:), V1(:)
  complex(SP),allocatable :: Cf(:) 
 #else
  complex(SP)        ::Vn(BS_K_dim),Vnm1(BS_K_dim),Vnp1(BS_K_dim),Af(Max_iterations)
@@ -66,33 +66,44 @@ subroutine K_Haydock(iq,W)
    call section('+','Haydock solver')
  endif
 #if defined PJ_NO_HERM 
-  K_is_not_hermitian=.false.
-  if (BS_K_coupling) K_is_not_hermitian=.true.
-!
-  if (K_is_not_hermitian) then
-    allocate(Cf(Max_iterations+1),Vn(2*BS_K_dim),Vnm1(2*BS_K_dim),Vnp1(2*BS_K_dim))
-  else
-    allocate(Vn(BS_K_dim),Vnm1(BS_K_dim),Vnp1(BS_K_dim))
-  end if
-#endif
  !
+ K_is_not_hermitian=.false.
+ if (BS_K_coupling) K_is_not_hermitian=.true.
+ !
+ if (K_is_not_hermitian) then
+   allocate(Cf(Max_iterations+1),Vn(2*BS_K_dim),Vnm1(2*BS_K_dim),&
+&           Vnp1(2*BS_K_dim),V1(2*BS_K_dim))
+ else
+   allocate(Vn(BS_K_dim),Vnm1(BS_K_dim),Vnp1(BS_K_dim))
+ end if
+ !
+#endif
  !
  !Haydock Coefficients and restart vector on disk
  !
  it_on_disk=0
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
+ !
 #if defined  PJ_NO_HERM
  if (K_is_not_hermitian) then 
+   !
    call warning (' Restart not working with Haydock+Coupling')
+   !
 !   io_err=ioBSS_Haydock(ID,1,Af(1),Bf(1),reached_treshold,Vnm1(:BS_K_dim),&
 !&  Vn(:BS_K_dim),Cf(1),Vnm1(BS_K_dim+1:),Vn(BS_K_dim+1:),Vnp1)   
+   !
  else
+   !
    io_err=ioBSS_Haydock(ID,1,Af(1),Bf(1),reached_treshold,Vnm1,Vn)
+   !
  endif
+ !
 #else
-   io_err=ioBSS_Haydock(ID,1,Af(1),Bf(1),reached_treshold,Vnm1,Vn) 
+ io_err=ioBSS_Haydock(ID,1,Af(1),Bf(1),reached_treshold,Vnm1,Vn) 
 #endif
+ !
  if (io_err>0) then 
+   !
    it_on_disk=io_err 
    call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
 #if defined  PJ_NO_HERM
@@ -111,6 +122,7 @@ subroutine K_Haydock(iq,W)
 &                   reached_treshold,Vnm1,Vn)
    call msg('s','[Haydock] Restart DB with accuracy ',reached_treshold)
 #endif
+   !
  endif
  !
  ! Update Descriptions
@@ -121,7 +133,7 @@ subroutine K_Haydock(iq,W)
 &                             trim(real2ch(Haydock_treshold))
  BSS_n_descs=BSS_n_descs+1
  BSS_description(BSS_n_descs)='        |Accuracy (reached)   [o/o]:'//&
-&                             trim(real2ch(0.))
+&                             trim(real2ch(0._SP))
  BSS_n_descs=BSS_n_descs+1
  BSS_description(BSS_n_descs)='        |Iteration            [o/o]: 0'
  !
@@ -146,12 +158,12 @@ subroutine K_Haydock(iq,W)
  ! 
 #if defined PJ_NO_HERM
  if (K_is_not_hermitian) then
- !
- ! Before starting iterate one needs
- !
- ! | V1 > =     |q->0>/(<q->0| F (H |q->0>))
- ! | Vnp1 > = H |V1>
- !
+   !
+   ! Before starting iterate one needs
+   !
+   ! | V1 > =     |q->0>/(<q->0| F (H |q->0>))
+   ! | Vnp1 > = H |V1>
+   !
    if (it_on_disk==0) then
      Cf= (0.,0.)
      forall(i1=1:2*BS_K_dim) Vn(i1)= BSS_rhoq0(i1)
@@ -159,27 +171,28 @@ subroutine K_Haydock(iq,W)
      Haydock_v0_mod=sqrt(fdot_product(Vn,Vnp1))
      forall(i1=1:2*BS_K_dim) Vnp1(i1) = Vnp1(i1)/Haydock_v0_mod
      forall(i1=1:2*BS_K_dim) Vn(i1) = Vn(i1)/Haydock_v0_mod
-     Cf(1) = dot_product(BSS_rhoq0,Vn)
-   else 
-     Haydock_v0_mod = Bf(1) 
-     Bf(1) = 0.
+     V1 = Vn
+     Cf(1) = dot_product(V1,Vn)
    endif     
    !
  else
- !
- ! [***] Initialization Hermitian case
- !
- !
- !it=1:|V1>=|q->0>/(<q->0|q->0>)^(1/2)
- !
+   !
+   ! [***] Initialization Hermitian case
+   !
+   !
+   !it=1:|V1>=|q->0>/(<q->0|q->0>)^(1/2)
+   !
    Haydock_v0_mod=sqrt(dot_product(BSS_rhoq0,BSS_rhoq0))
    if (it_on_disk==0) forall(i1=1:BS_K_dim) Vn(i1)=BSS_rhoq0(i1)/Haydock_v0_mod
+   !
  endif
+ !
 #else
+ !
  Haydock_v0_mod=sqrt(dot_product(BSS_rhoq0,BSS_rhoq0))
  if (it_on_disk==0) forall(i1=1:BS_K_dim) Vn(i1)=BSS_rhoq0(i1)/Haydock_v0_mod
+ !
 #endif
-
  !
  ! [***] Loop ...
  !
@@ -187,7 +200,7 @@ subroutine K_Haydock(iq,W)
    !
    call it_reset(0)
    call parser('BSHayTrs',Haydock_treshold)
-   reached_treshold=0.
+   if (it_on_disk==0) reached_treshold=0.
    !
    ! Hermitian case: 
    !
@@ -207,10 +220,10 @@ subroutine K_Haydock(iq,W)
      !
 #if defined _DOUBLE
      call zaxpy(BS_K_dim,-Af(it),Vn,1,Vnp1,1)
-     call zaxpy(BS_K_dim,-cmplx(Bf(it)),Vnm1,1,Vnp1,1)
+     call zaxpy(BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,1,Vnp1,1)
 #else
      call caxpy(BS_K_dim,-Af(it),Vn,1,Vnp1,1)
-     call caxpy(BS_K_dim,-cmplx(Bf(it)),Vnm1,1,Vnp1,1)
+     call caxpy(BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,1,Vnp1,1)
 #endif
      !
      ! B(n+1)= <Vn+1|Vn+1>^(1/2)
@@ -224,6 +237,7 @@ subroutine K_Haydock(iq,W)
      !|Vn> =|Vn+1> / B(n+1)
      !
      forall(i1=1:BS_K_dim) Vn(i1)=Vnp1(i1)/Bf(it+1)
+     !
 #if defined PJ_NO_HERM
    endif
 #endif
@@ -241,10 +255,10 @@ subroutine K_Haydock(iq,W)
      !
 #if defined _DOUBLE
      call zaxpy(2*BS_K_dim,-Af(it),Vn,1,Vnp1,1)
-     call zaxpy(2*BS_K_dim,-cmplx(Bf(it)),Vnm1,1,Vnp1,1)
+     call zaxpy(2*BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,1,Vnp1,1)
 #else
      call caxpy(2*BS_K_dim,-Af(it),Vn,1,Vnp1,1)
-     call caxpy(2*BS_K_dim,-cmplx(Bf(it)),Vnm1,1,Vnp1,1) 
+     call caxpy(2*BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,1,Vnp1,1) 
 #endif
      !
      ! |Vn-1> = |Vn> 
@@ -265,7 +279,7 @@ subroutine K_Haydock(iq,W)
      !
      forall(i1=1:2*BS_K_dim) Vn(i1)=Vn(i1)/Bf(it+1)
      forall(i1=1:2*BS_K_dim) Vnp1(i1)=Vnp1(i1)/Bf(it+1)
-     Cf(it+1)=dot_product(BSS_rhoq0,Vn)
+     Cf(it+1)=dot_product(V1,Vn)
    endif
    !
 #endif
@@ -283,13 +297,12 @@ subroutine K_Haydock(iq,W)
 #endif
      !
      BSS_description(BSS_n_descs-1)='        |Accuracy (reached)   [o/o]:'//&
-&                                  trim(real2ch(reached_treshold))
+&                                    trim(real2ch(reached_treshold))
      BSS_description(BSS_n_descs)='        |Iteration                 :'//trim(intc(it))
      !
      call K_dump_to_o_file(iq,1)
-     dumb_ch='[Haydock] Iteration '//trim(intc(it))//' Accuracy :'
-     write (dumb_ch,'(a,f8.5,a,f8.5)') trim(dumb_ch),&
-&          reached_treshold,'|',abs(Haydock_treshold)
+     dumb_ch='[Haydock] Iteration '//trim(intc(it))//' Accuracy :'//&
+&            trim(real2ch(reached_treshold))//'|'//trim(real2ch(Haydock_treshold))
      if (tty_size>0.and.it_on_disk==0) call live_time_msg("r",dumb_ch,"","%s")
      if (tty_size>0.and.it_on_disk> 0) call live_time_msg("n",dumb_ch,"","%s")
      if (tty_size<0) call live_time_msg("n",dumb_ch,"","%s")
@@ -324,24 +337,20 @@ subroutine K_Haydock(iq,W)
      call msg('r','Iterations                :',it)
      exit
    endif
-   !
-#if defined PJ_NO_HERM
-   if (K_is_not_hermitian) then
-     !
-     !|Vn+1> = H |Vn>
-     !
-     call Kernel_by_V(iq,iter=it-it_on_disk,Vi=Vn,Vo=Vnp1)
-   endif
-#endif
-   !
+   ! DEBUGGING: PRINTING OUT
+!    open(unit=240,file='coeff_out')
+!    do i1 = 1,it
+!      write (240,'(i3,10f15.10)') i1, real(Af(i1)), Bf(i1),real(Cf(i1)), aimag(Af(i1)),  aimag(Cf(i1))  
+!    enddo
+!    close(240)
+   ! END DEBUGGING
  enddo
  !
  ! CLEAN
  !
  if (allocated(BS_mat)) deallocate(BS_mat)
 #if defined PJ_NO_HERM
- if (allocated(Cf)) deallocate(Cf)
- deallocate(Vn,Vnm1,Vnp1)
+ if (K_is_not_hermitian) deallocate(Cf,Vn,Vnm1,Vnp1,V1)
 #endif
  !
  ! Either if BS_mat is allocated (no fragments) or is not allocated
@@ -365,70 +374,71 @@ subroutine K_Haydock(iq,W)
 #if defined PJ_NO_HERM
      complex(SP),intent(in),optional :: Cf(it)
      real(SP)   :: Bf(it+1)
+     !debug
+     character*(50) nomef
 #endif
      !
      ! Work Space
      !
-     integer :: i1,iw
-     real(SP):: Co
-     complex(SP) :: G(2,it)
+     integer     :: i1,iw
+     real(SP)    :: Co
+     complex(SP) :: X_o(2,it)
 #if defined PJ_NO_HERM
-     complex(SP) :: G_aux(2),terminator, Afm
-     real(SP)   :: Bfm
+     complex(SP) :: X_i(2,it), YbyX(2)
 #endif
      !
      ! Co includes the spin_occ factor because Haydock is expected to work
      ! only when ALL BS_eh_f == spin_occ
      !
      Co=spin_occ/(2.*pi)**3.*d3k_factor*4.*pi/q_norm(1)**2*Haydock_v0_mod**2.
-#if defined PJ_NO_HERM
-     if (K_is_not_hermitian) Co=spin_occ/(2.*pi)**3.*d3k_factor*4.*pi/q_norm(1)**2*Haydock_v0_mod
-#endif
+!    
+!     write (nomef,'(a,i4.4)') 'greens_',it !open debugging output
+!     open(unit=240,file=trim(nomef))       !open debugging output
      do iw=1,W%n(1)
-       G=(0.,0.)
-#if defined PJ_NO_HERM
-       Afm = sum(Af(:it))/it
-       Bfm = sum(Bf(:it))/it
-       terminator = .5 * Afm*(1.+sqrt(1.-(2.*Bfm/Afm)**2.))
-       G(:,it)=1./((W%p(iw)-Af(it)) - Bf(i1+1)**2./terminator)
-#else
-       G(:,it)=1./(W%p(iw)-Af(it))
-#endif
+       X_o=(0._SP,0._SP)
+       X_o(:,it)=1./(W%p(iw)-Af(it))
        do i1=it-1,1,-1
-         G(1,i1)=1./(W%p(iw)-Af(i1)-Bf(i1+1)**2.*G(1,i1+1))
+         X_o(1,i1)=1./(W%p(iw)-Af(i1)-Bf(i1+1)**2.*X_o(1,i1+1))
        enddo
        do i1=it-2,1,-1
-         G(2,i1)=1./(W%p(iw)-Af(i1)-Bf(i1+1)**2.*G(2,i1+1))
+         X_o(2,i1)=1./(W%p(iw)-Af(i1)-Bf(i1+1)**2.*X_o(2,i1+1))
        enddo
 #if defined PJ_NO_HERM
        if (K_is_not_hermitian) then
-         G(:,2:) = (0.,0.)
-         G(:,2) = (1. + (W%p(iw) - Af(1))*G(:,1) )/Bf(2)
-         G_aux(:) = G(:,1)*Cf(1) +  G(:,2)*Cf(2) 
-         do i1= 3, it
-           G(:,i1)= (-Bf(i1-1)*G(:,i1-2) + (W%p(iw) - Af(i1-1))*G(:,i1-1) )/Bf(i1) 
-           G_aux(1) = G_aux(1) + Cf(i1)* G(1,i1)
-           if (it > 3) G_aux(2) = G_aux(2) + Cf(i1-1)*G(2,i1-1)
+         X_i(:,1) = X_o(:,1)
+         YbyX(:) = X_i(:,1)*Cf(1)
+         do i1 = 1,it-1
+           X_i(1,i1+1) = -Bf(i1+1)*X_o(1,i1+1)*X_i(1,i1)
+           YbyX(1) = YbyX(1) + Cf(i1+1)*X_i(1,i1+1)
          end do
-         G(1,1) = G_aux(1)          
-         G(2,1) = G_aux(2) 
+         do i1 = 1,it-2
+           X_i(2,i1+1) = -Bf(i1+1)*X_o(2,i1+1)*X_i(2,i1)
+           YbyX(2) = YbyX(2) + Cf(i1+1)*X_i(2,i1+1)
+         end do
+         X_o(:,1) = YbyX(:)
        endif
 #endif
        X_epsilon(1,iw)=W%p(iw)
-       X_epsilon(2,iw)=-G(1,1)*Co+1.
-       X_epsilon(4,iw)=-G(2,1)*Co+1.
-       if (Haydock_treshold>0.) reached_treshold=max(reached_treshold,&
+       X_epsilon(2,iw)=-X_o(1,1)*Co+1.
+       X_epsilon(4,iw)=-X_o(2,1)*Co+1.
+       if (Haydock_treshold>0._SP) reached_treshold=max(reached_treshold,&
 &         abs(X_epsilon(2,iw)-X_epsilon(4,iw))/abs(X_epsilon(2,iw)))
-       if (Haydock_treshold<0.) reached_treshold=reached_treshold+&
+       if (Haydock_treshold<0._SP) reached_treshold=reached_treshold+&
 &         abs(X_epsilon(2,iw)-X_epsilon(4,iw))/abs(X_epsilon(2,iw))/real(W%n(1))
      enddo
+!     close(240) !close debugging output
+
    end subroutine
+   !
 #if defined PJ_NO_HERM
-  complex function fdot_product(v,w)
-    complex ::v(2*BS_K_dim),w(2*BS_K_dim)
-  fdot_product = dot_product(v(1:BS_K_dim),w(1:BS_K_dim))&
-&      -dot_product(v(BS_K_dim+1:2*BS_K_dim),w(BS_K_dim+1:2*BS_K_dim))
-  end function fdot_product
+   function fdot_product(v,w)
+     !
+     complex(SP) ::fdot_product,v(2*BS_K_dim),w(2*BS_K_dim)
+     !
+     fdot_product = dot_product(v(1:BS_K_dim),w(1:BS_K_dim))&
+&                  -dot_product(v(BS_K_dim+1:2*BS_K_dim),w(BS_K_dim+1:2*BS_K_dim))
+     !
+   end function fdot_product
 #endif
-  !
+   !
 end subroutine

@@ -42,9 +42,9 @@
  character(iind),  intent(in) :: ind
  character(iod),   intent(in) :: od
  character(ijs),   intent(in) :: js
-
-!ws
- logical                      :: sdir
+ ! 
+ ! Work Space
+ !
  character(lchlen)            :: file_name
 !
  integer           :: ID,io_err,ioPP_err,ik,icycle

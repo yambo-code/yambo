@@ -35,7 +35,6 @@
  use timing,              ONLY:live_timing_is_on
 
    implicit none
-   integer               :: ID_ost,ID_cut
    real(SP),allocatable :: X_q0grad_disk(:,:,:),Xcut_q0grad_disk(:,:,:)
    real(SP),allocatable :: window(:,:)
    real(SP) :: k_int(nkibz), kv(3)
@@ -43,7 +42,9 @@
    type(X_t)   :: X
    type(bz_samp)   :: k
    type(levels),   intent(in)       :: en
-   integer,  external               :: ioOSTNTS_cut, ioOSTNTS
+   ! 
+   ! Work Space
+   !
 integer :: db_nbm,db_nbf,db_nb(2),nb(2), nbm, ixyz, i_spin, ib, i1, nbf
    logical                          :: lspp, lusecut
    integer                          :: ik,iv,ic,io_err,io_db,sec_size, io_cut

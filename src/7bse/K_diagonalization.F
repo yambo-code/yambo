@@ -138,23 +138,6 @@
    if (allocated(BS_eh_W)) &
 &     forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)+(0.,1.)*BS_eh_W(i1)
    !
-   !
-   ! If Coupling the half lower part of K must be filled
-   !
-   if (BS_K_coupling) then
-     !
-     ! Anti-resonant
-     !
-     forall(i1=BS_K_dim+1:2*BS_K_dim,i2=BS_K_dim+1:2*BS_K_dim) &
-&          BS_mat(i1,i2)=-conjg(BS_mat(i1-BS_K_dim,i2-BS_K_dim))
-     !
-     ! Anti-coupling
-     !
-     forall(i1=BS_K_dim+1:2*BS_K_dim,i2=1:BS_K_dim) &
-&          BS_mat(i1,i2)=-conjg(BS_mat(i1-BS_K_dim,i2+BS_K_dim))
-     !
-   endif
-   !
    if (BS_not_const_eh_f) then
      !
      ! In case the f_i(1-f_j) occupation factors are state-dependent

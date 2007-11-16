@@ -19,34 +19,24 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-#if defined PJ_NO_HERM
-integer function ioBSS_Haydock(ID,it,Af,Bf,reached_treshold,Vnm1,Vn,Cf,Wnm1,Wn,Vnp1)  
-#else
-integer function ioBSS_Haydock(ID,it,Af,Bf,reached_treshold,Vnm1,Vn)
-#endif
+integer function ioBSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf)  
  !
  use pars,          ONLY:SP
  use QP_m,          ONLY:QP_ctl_E
- use BS,            ONLY:BS_identifier,BS_K_dim,BSS_q0
+ use BS,            ONLY:BS_identifier,BSS_q0
  use IO_m,          ONLY:io_connect,io_disconnect,io_elemental,&
-&                        io_bulk,io_status,io_sec,io_mode,VERIFY,io_header
+&                        io_bulk,io_status,io_sec,io_mode,VERIFY,io_header,&
+&                        read_is_on,write_is_on
  implicit none
- integer  :: ID,it
- real(SP) :: reached_treshold
- real(SP) :: Af(2,it)
- real(SP) :: Bf(it+1)
- real(SP) :: Vnm1(2,BS_K_dim)
- real(SP) :: Vn(2,BS_K_dim)
-#if defined PJ_NO_HERM
- real(SP),intent(inout),optional :: Cf(it+1)
- real(SP),intent(inout),optional :: Wnm1(2,BS_K_dim)
- real(SP),intent(inout),optional :: Wn (2,BS_K_dim)
- real(SP),intent(inout),optional :: Vnp1(2,2*BS_K_dim)
-#endif
- ! 
+ integer             :: ID,it,BS_H_dim
+ real(SP)            :: reached_treshold,Bf(it+1),Af(it)
+ complex(SP)         :: Vnm1(BS_H_dim),Vn(BS_H_dim)
+ complex(SP),optional:: Cf(it+1),Vnp1(BS_H_dim)
+ !
  ! Work Space
  !
  integer  :: it_on_disk
+ real(SP) :: V_dummy(BS_H_dim,2), Cf_dummy(it+1,2)
  !
  ioBSS_Haydock=io_connect(desc='Haydock_restart',type=2,ID=ID)
  if (ioBSS_Haydock<0) goto 1
@@ -80,27 +70,51 @@ integer function ioBSS_Haydock(ID,it,Af,Bf,reached_treshold,Vnm1,Vn)
  endif
  !
  if (any((/io_sec(ID,:)==2/))) then
-   call io_bulk(ID,'Vnm1',VAR_SZ=(/2,BS_K_dim/))
-   call io_bulk(ID,R2=Vnm1)
-   call io_bulk(ID,'Vn',VAR_SZ=(/2,BS_K_dim/))
-   call io_bulk(ID,R2=Vn)
-   call io_bulk(ID,'A_factors',VAR_SZ=(/2,it/))
-   call io_bulk(ID,R2=Af)
+   !
+   ! Vnm1
+   !
+   if (write_is_on(ID)) V_dummy(:,1)=real(Vnm1)
+   if (write_is_on(ID)) V_dummy(:,2)=aimag(Vnm1)
+   call io_bulk(ID,'Vnm1',VAR_SZ=(/BS_H_dim,2/))
+   call io_bulk(ID,R2=V_dummy)
+   if (read_is_on(ID)) Vnm1(:)=V_dummy(:,1)+(0._SP,1._SP)*V_dummy(:,2)
+   !
+   ! Vn 
+   !
+   if (write_is_on(ID)) V_dummy(:,1)=real(Vn)
+   if (write_is_on(ID)) V_dummy(:,2)=aimag(Vn)
+   call io_bulk(ID,'Vn',VAR_SZ=(/BS_H_dim,2/))
+   call io_bulk(ID,R2=V_dummy)
+   if (read_is_on(ID)) Vn(:)=V_dummy(:,1)+(0._SP,1._SP)*V_dummy(:,2)
+   !
+   ! Af,Bf
+   !
+   call io_bulk(ID,'A_factors',VAR_SZ=(/it/))
+   call io_bulk(ID,R1=Af)
    call io_bulk(ID,'B_factors',VAR_SZ=(/it+1/))
    call io_bulk(ID,R1=Bf)
-#if defined PJ_NO_HERM
-!    if (present(Cf).and.present(Wnm1).and.present(Wn).and.present(Vnp1)) then 
-!      call io_bulk(ID,'C_factors',VAR_SZ=(/it+1/))
-!      call io_bulk(ID,R1=Cf)
-!      call io_bulk(ID,'Wnm1',VAR_SZ=(/2,BS_K_dim/))
-!      call io_bulk(ID,R2=Wnm1)
-!      call io_bulk(ID,'Wn',VAR_SZ=(/2,BS_K_dim/))
-!      call io_bulk(ID,R2=Wn)
-!      call io_bulk(ID,'Vnp1',VAR_SZ=(/2,2*BS_K_dim/))
-!      call io_bulk(ID,R2=Vnp1)
-!    end if
-#endif
- endif
+   !
+   ! Cf optional
+   !
+   if (present(Cf)) then 
+     if (write_is_on(ID)) Cf_dummy(:,1)=real(Cf)
+     if (write_is_on(ID)) Cf_dummy(:,2)=aimag(Cf)
+     call io_bulk(ID,'C_factors',VAR_SZ=(/it+1,2/))
+     call io_bulk(ID,R2=Cf_dummy)
+     if (read_is_on(ID)) Cf(:)=Cf_dummy(:,1)+(0._SP,1._SP)*Cf_dummy(:,2)
+    endif
+   !
+   ! Vnp1 - optional
+   !
+    if (present(Vnp1)) then
+      if (write_is_on(ID)) V_dummy(:,1)=real(Vnp1)
+      if (write_is_on(ID)) V_dummy(:,2)=aimag(Vnp1) 
+      call io_bulk(ID,'Vnp1',VAR_SZ=(/BS_H_dim,2/))
+      call io_bulk(ID,R2=V_dummy)
+      if (read_is_on(ID)) Vnp1(:)=V_dummy(:,1)+(0._SP,1._SP)*V_dummy(:,2)
+    endif
+    !
+  end if
  !
 1 call io_disconnect(ID=ID)
  !

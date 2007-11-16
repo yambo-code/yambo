@@ -50,7 +50,7 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
  !
  ! Work Space
  !
- integer         ::ik1,ik2,i1,i2,frag_pointer(2)
+ integer         ::ik1,ik2,i1,i2,frag_pointer(2),BS_H_dim
  type(X_t)       ::X
  type(pp_indexes)::Kp
  ! 
@@ -74,14 +74,16 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
    db_load=.not.allocated(BS_mat)
  endif
  !
+ BS_H_dim=BS_K_dim
+ if (BS_K_coupling) BS_H_dim=2*BS_K_dim
+ !
  if (db_load) then
    !
    if (.not.use_fragments) then
      call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
      ioBS_err=ioBS(iq,X,ID)
      !
-     if (BS_K_coupling)      allocate(BS_mat(2*BS_K_dim,2*BS_K_dim))
-     if (.not.BS_K_coupling) allocate(BS_mat(BS_K_dim,BS_K_dim))
+     allocate(BS_mat(BS_H_dim,BS_H_dim))
      call mem_est('BS_mat',(/2*size(BS_mat)/))
      !
    else
@@ -190,56 +192,36 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
    enddo
  endif
  !
+ ! Filling the anti-resonant and anti-coupling parts
+ !
+ if (BS_K_coupling.and..not.use_fragments.and.db_load) then
+   !
+   ! If Coupling the half lower part of K must be filled
+   !
+   ! Anti-resonant
+   !
+   forall(i1=BS_K_dim+1:BS_H_dim,i2=BS_K_dim+1:BS_H_dim) &
+&        BS_mat(i1,i2)=-conjg(BS_mat(i1-BS_K_dim,i2-BS_K_dim))
+   !
+   ! Anti-coupling
+   !
+   forall(i1=BS_K_dim+1:BS_H_dim,i2=1:BS_K_dim) &
+&        BS_mat(i1,i2)=-conjg(BS_mat(i1-BS_K_dim,i2+BS_K_dim))
+   !
+ endif
+ !
  ! No need to do any matrix X vector multiplication
  !
  if (.not.present(iter)) return
  !
  if (.not.use_fragments) then
    !
-#if defined PJ_NO_HERM
-   if (BS_K_coupling) then
-     !
-     if (db_load) then
-       !
-       ! If Coupling the half lower part of K must be filled
-       !
-       ! Anti-resonant
-       !
-       forall(i1=BS_K_dim+1:2*BS_K_dim,i2=BS_K_dim+1:2*BS_K_dim) &
-&            BS_mat(i1,i2)=-conjg(BS_mat(i1-BS_K_dim,i2-BS_K_dim))
-       !
-       ! Anti-coupling
-       !
-       forall(i1=BS_K_dim+1:2*BS_K_dim,i2=1:BS_K_dim) &
-&            BS_mat(i1,i2)=-conjg(BS_mat(i1-BS_K_dim,i2+BS_K_dim))
-       !
-     endif
-     !
 #if defined _DOUBLE
-     call zgemv('n',2*BS_K_dim,2*BS_K_dim,(1._SP,0._SP),&
-&               BS_mat,2*BS_K_dim,Vi,1,(0._SP,0._SP),Vo,1)
+   call zgemv('n',BS_H_dim,BS_H_dim,(1._SP,0._SP),&
+&             BS_mat,BS_H_dim,Vi,1,(0._SP,0._SP),Vo,1)
 #else
-     call cgemv('n',2*BS_K_dim,2*BS_K_dim,(1._SP,0._SP),&
-&               BS_mat,2*BS_K_dim,Vi,1,(0._SP,0._SP),Vo,1)
-#endif
-     !
-   endif
-#endif
-   !
-#if defined PJ_NO_HERM
-   if (.not.BS_K_coupling) then
-     !
-#endif
-#if defined _DOUBLE
-     call zgemv('n',BS_K_dim,BS_K_dim,(1._SP,0._SP),&
-&               BS_mat,BS_K_dim,Vi,1,(0._SP,0._SP),Vo,1)
-#else
-     call cgemv('n',BS_K_dim,BS_K_dim,(1._SP,0._SP),&
-&               BS_mat,BS_K_dim,Vi,1,(0._SP,0._SP),Vo,1)
-#endif
-#if defined PJ_NO_HERM
-     !
-   endif
+   call cgemv('n',BS_H_dim,BS_H_dim,(1._SP,0._SP),&
+&             BS_mat,BS_H_dim,Vi,1,(0._SP,0._SP),Vo,1)
 #endif
    !
  else

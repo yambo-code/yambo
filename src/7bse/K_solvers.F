@@ -21,7 +21,7 @@
 !
 subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
- use pars,           ONLY:SP,pi
+ use pars,           ONLY:SP,pi,schlen
 #if defined PJ_PH
  use drivers,        ONLY:l_ph_corr
 #endif
@@ -53,6 +53,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  logical           ::run_Haydock,run_Diago,Pert_inversion
  integer, external ::ioBS
  type(X_t)         ::X_oscillators
+ character(schlen) ::ch
  !
  call section('*','BSE solver(s)')
  !
@@ -147,14 +148,11 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  enddo
  BSS_n_descs=BSS_n_descs+4
  !
- if (trim(alpha_dim)/='adim') then
-   write (BSS_description(1),'(a,3('//gen_fmt(r_v=v)//',1x))') &
-&        ' Polarization (-<<X>>) ['//trim(alpha_dim)//'] @ IQ '//&
-&        trim(intc(iq))//' : ',v
- else
-   write (BSS_description(1),'(a,3('//gen_fmt(r_v=v)//',1x))') &
-&        ' Absorption @ IQ '//trim(intc(iq))//' : ',v
- endif
+ ch=' Absorption @ IQ '//trim(intc(iq))//' : '
+ if (trim(alpha_dim)/='adim') ch=' Polarization (-<<X>>) ['//&
+&                                trim(alpha_dim)//'] @ IQ '//trim(intc(iq))//' : '
+ write (BSS_description(1),'(a,3('//gen_fmt(r_v=v)//',1x))') trim(ch),v
+ !
  BSS_description(2)=' '
  BSS_description(3)=' - The gauge is transverse -'
  if (X_oscillators%Vnl_included) BSS_description(3)=' - The gauge is transverse + [r,Vnl] -'
@@ -173,18 +171,10 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  endif
  !
  if (run_Haydock) then
-#if defined PJ_NO_HERM
-   if (BS_K_coupling)     call warning(' Non-resonant + Haydock still in test phase')
-#else
-   if (BS_K_coupling)     call warning('Non-resonant K still unsupported (Haydock)')
-#endif
+   !
    if (BS_not_const_eh_f) call warning('Fractional occupations still unsupported (Haydock)')
    !
-#if defined PJ_NO_HERM
    if (.not.BS_not_const_eh_f) then
-#else
-   if (.not.BS_K_coupling.and..not.BS_not_const_eh_f) then
-#endif
      call K_dump_to_o_file(iq,-1)
      call K_Haydock(iq,W_bss)
      BSS_n_descs=BSS_n_descs-4 

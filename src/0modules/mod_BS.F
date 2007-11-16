@@ -106,6 +106,15 @@
       type(X_t), optional::X
     end function
     !
+    integer function ioBSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf)
+      use pars,          ONLY:SP
+      implicit none
+      integer             :: ID,it,BS_H_dim
+      real(SP)            :: reached_treshold,Bf(it+1),Af(it)
+      complex(SP)         :: Vnm1(BS_H_dim),Vn(BS_H_dim)
+      complex(SP),optional:: Cf(it+1),Vnp1(BS_H_dim)
+    end function
+    !
   end interface
   !
   contains

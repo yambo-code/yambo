@@ -73,7 +73,7 @@ integer function ioBS(iq,X,ID)
  ! Note that io_connect supports the ENABLE_LARGE_FILE logical when
  ! using NETCDF support.
  !
- ! Update [27/6/07]: NETCDF performance increase darammatically
+ ! Update [27/6/07]: NETCDF performance increase drammatically
  ! when using fragmentation. So I lowered the treshold to enable 
  ! fragmentation to matrices >= 6000x6000
  !
@@ -173,12 +173,20 @@ integer function ioBS(iq,X,ID)
  if (BS_K_coupling) then
    write (ch,'(a,i4.4,a,i4.4)') "BS_CPL_KERNEL_BLK_K1_",ik12(1),"_K2_",ik12(2)
    call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/BS_blk_dim(ik12(1)),BS_blk_dim(ik12(2)),2/))
-   if (write_is_on(ID)) call mat_c2r(BS_cpl_mat(:,:),BS_mat_disk)
+   !
+   if (write_is_on(ID)) call mat_c2r(BS_cpl_mat,BS_mat_disk)
+   !
    call io_bulk(ID,R3=BS_mat_disk)
-   if (read_is_on(ID)) call mat_r2c(BS_mat_disk,&
+   !
+   if (read_is_on(ID)) then
+     if (BS_DB_is_fragmented)      call mat_r2c(BS_mat_disk,BS_cpl_mat)
+     if (.not.BS_DB_is_fragmented) call mat_r2c(BS_mat_disk,&
 &     BS_mat(BS_blk_coord(1)+1:BS_blk_coord(1)+BS_blk_dim(ik12(1)),&
 &            BS_K_dim+BS_blk_coord(2)+1:BS_K_dim+BS_blk_coord(2)+BS_blk_dim(ik12(2))))
- endif
+   endif
+   !
+ end if
+ !
  deallocate(BS_mat_disk)
  !
  call io_check_restart(trim(db_name),ID,now=i_pointer,todo=cumulative_index(1,nXkibz))

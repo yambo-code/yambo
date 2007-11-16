@@ -40,7 +40,8 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
  use par_indexes_m,  ONLY:par_indexes
  use R_lattice,      ONLY:nXkibz
  use BS,             ONLY:BS_mat,BS_K_dim,BS_blk_dim,BS_blk_coord,BS_eh_E,&
-&                         cumulative_index,BS_DB_is_fragmented,BS_K_coupling
+&                         cumulative_index,BS_DB_is_fragmented,BS_K_coupling,&
+&                         BS_cpl_mat 
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:io_control,OP_RD,RD,NONE,RD_CL,OP_RD_CL
  implicit none
@@ -106,6 +107,7 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
          BS_blk_coord=0
          if (.not.Kp%i1p(cumulative_index(ik1,ik2)-1)) cycle
          allocate(BS_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
+         if (BS_K_coupling) allocate(BS_cpl_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
          ACTION=OP_RD_CL
        else
          frag_pointer=0
@@ -135,7 +137,15 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
          do i1=BS_blk_coord(1)+1,BS_blk_coord(1)+BS_blk_dim(ik1)
            do i2=1,i1-1
              BS_mat(i1,i2)=conjg(BS_mat(i2,i1))
-             if (BS_K_coupling) BS_mat(i1,BS_K_dim+i2)=BS_mat(i2,BS_K_dim+i1)
+             !
+             if (BS_K_coupling) then 
+               if (use_fragments) then
+                 BS_cpl_mat(i1,i2)=BS_cpl_mat(i2,i1)
+               else
+                 BS_mat(i1,BS_K_dim+i2)=BS_mat(i2,BS_K_dim+i1)
+               end if
+             end if
+             !
            enddo
          enddo
          !
@@ -149,7 +159,36 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
 &                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1._SP,0._SP),&
 &                     Vo(frag_pointer(1)+1),1)
 #endif
-         endif
+           !
+           if (BS_K_coupling) then
+             !
+             ! Calculate respectively: the diagonal anti-resonant, coupling, anti-coupling part
+             !
+#if defined _DOUBLE
+             call zgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik1),(-1._SP,0._SP),&
+&                     conjg(BS_mat),BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+BS_K_dim+1),1)
+             call zgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik1),(1._SP,0._SP),&
+&                     BS_cpl_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+1),1)
+             call zgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik1),(-1._SP,0._SP),&
+&                     conjg(BS_cpl_mat),BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+BS_K_dim+1),1)
+#else
+             call cgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik1),(-1._SP,0._SP),&
+&                     conjg(BS_mat),BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+BS_K_dim+1),1)
+             call cgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik1),(1._SP,0._SP),&
+&                     BS_cpl_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+1),1)
+             call cgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik1),(-1._SP,0._SP),&
+&                     conjg(BS_cpl_mat),BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+BS_K_dim+1),1)
+#endif       
+           end if
+           !
+         end if
+         !
        else
          !
          ! Off diagonal block simmetrization
@@ -183,10 +222,58 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
 &                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1._SP,0._SP),&
 &                     Vo(frag_pointer(2)+1),1)
 #endif
+           !
+           if (BS_K_coupling) then
+             !
+             ! Calculate respectively: the off-diagonal anti-resonant, coupling, anti-coupling part
+             !
+#if defined _DOUBLE
+             call zgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik2),(-1._SP,0._SP),&
+&                     conjg(BS_mat),BS_blk_dim(ik1),Vi(frag_pointer(2)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+BS_K_dim+1),1)
+             call zgemv('c',BS_blk_dim(ik1),BS_blk_dim(ik2),(-1._SP,0._SP),&
+&                     conjg(BS_mat),BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(2)+BS_K_dim+1),1)
+             call zgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik2),(1._SP,0._SP),&
+&                     BS_cpl_mat,BS_blk_dim(ik1),Vi(frag_pointer(2)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+1),1)
+             call zgemv('t',BS_blk_dim(ik1),BS_blk_dim(ik2),(1._SP,0._SP),&
+&                     BS_cpl_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(2)+1),1)
+             call zgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik2),(-1._SP,0._SP),&
+&                     conjg(BS_cpl_mat),BS_blk_dim(ik1),Vi(frag_pointer(2)+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+BS_K_dim+1),1)
+             call zgemv('t',BS_blk_dim(ik1),BS_blk_dim(ik2),(-1._SP,0._SP),&
+&                     conjg(BS_cpl_mat),BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(2)+BS_K_dim+1),1)
+#else
+             call cgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik2),(-1._SP,0._SP),&
+&                     conjg(BS_mat),BS_blk_dim(ik1),Vi(frag_pointer(2)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+BS_K_dim+1),1)
+             call cgemv('c',BS_blk_dim(ik1),BS_blk_dim(ik2),(-1._SP,0._SP),&
+&                     conjg(BS_mat),BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(2)+BS_K_dim+1),1)
+             call cgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik2),(1._SP,0._SP),&
+&                     BS_cpl_mat,BS_blk_dim(ik1),Vi(frag_pointer(2)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+1),1)
+             call cgemv('t',BS_blk_dim(ik1),BS_blk_dim(ik2),(1._SP,0._SP),&
+&                     BS_cpl_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+BS_K_dim+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(2)+1),1)
+             call cgemv('n',BS_blk_dim(ik1),BS_blk_dim(ik2),(-1._SP,0._SP),&
+&                     conjg(BS_cpl_mat),BS_blk_dim(ik1),Vi(frag_pointer(2)+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(1)+BS_K_dim+1),1)
+             call cgemv('t',BS_blk_dim(ik1),BS_blk_dim(ik2),(-1._SP,0._SP),&
+&                     conjg(BS_cpl_mat),BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1._SP,0._SP),&
+&                     Vo(frag_pointer(2)+BS_K_dim+1),1)
+#endif       
+           endif
+           !
          endif
+         !
        endif
        !
        if (use_fragments) deallocate(BS_mat)
+       if (use_fragments.and.BS_K_coupling) deallocate(BS_cpl_mat)
        !
      enddo
    enddo

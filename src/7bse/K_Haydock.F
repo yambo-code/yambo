@@ -111,9 +111,6 @@ subroutine K_Haydock(iq,W)
  BSS_n_descs=BSS_n_descs+1
  BSS_description(BSS_n_descs)='        |Iteration            [o/o]: 0'
  !
- if ((BS_DB_is_fragmented).and.(BS_K_Coupling)) &
-&    call warning('Database fragmentation not supported in Haydock+Coupling mode')
- !
  call msg('r','Use Database fragments    :',BS_DB_is_fragmented)
  if (BS_DB_is_fragmented) call msg('s','[Haydock] Use Database fragments')
  call msg('r','Accuracy (requested) [o/o]:',Haydock_treshold)

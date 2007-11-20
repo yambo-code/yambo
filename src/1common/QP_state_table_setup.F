@@ -35,7 +35,8 @@
  !
  use pars,          ONLY:SP,HARTREE,IP
  use memory_m,      ONLY:mem_est
- use QP_m,          ONLY:QP_nk,QP_nb,QP_state,QP_n_states,QP_table
+ use QP_m,          ONLY:QP_nk,QP_nb,QP_state,QP_n_states,QP_table,&
+&                        QP_bands_mixed,QP_band_mixing
  use electrons,     ONLY:levels
 #if defined PJ_SPIN
  use electrons,     ONLY:n_sp_pol
@@ -46,7 +47,7 @@
  !
  ! Work Space
  !
- integer :: e_rng_lines,k_rng_lines,icheck,ik,ib,i1,i2,&
+ integer :: e_rng_lines,k_rng_lines,icheck,ik,ib,i1,i2,i3,&
 &           QP_k_nk,QP_e_nk,QP_k_nb,QP_e_nb,dim_2nd,i_sp
  real(SP):: rcheck
  integer,    allocatable:: QP_i_limits(:,:)
@@ -148,18 +149,29 @@
    !
  endif
  !
- QP_n_states=product(shape(pack(QP_state,QP_state)))
+ ! Band Mixing
+ !
+ QP_bands_mixed=1
+ if (any(.not.QP_state(1,:)).or.any(.not.QP_state(QP_nb,:))) QP_band_mixing=0.
+ if (QP_band_mixing<0..or.QP_band_mixing>100.) QP_band_mixing=0.
+ if (QP_band_mixing>0.) QP_bands_mixed=QP_nb*QP_band_mixing/100.
+ !
+ ! QP_table allocation
+ !
+ QP_n_states=product(shape(pack(QP_state,QP_state)))*(2*QP_bands_mixed-1)
  dim_2nd=3
 #if defined PJ_SPIN
  QP_n_states=QP_n_states*n_sp_pol
  dim_2nd=4
 #endif
+ !
  if (.not.allocated(QP_table)) then
    allocate(QP_table(QP_n_states,dim_2nd))
    call mem_est("QP_table",(/QP_n_states*dim_2nd/),(/IP/))
  endif
  !
  QP_n_states=0
+ !
  do i1=1,QP_nk
    do i2=1,QP_nb
      if (.not.QP_state(i2,i1)) cycle
@@ -168,11 +180,19 @@
 #else
        i_sp=1
 #endif
-       QP_n_states=QP_n_states+1
-       QP_table(QP_n_states,1:2)=i2
-       QP_table(QP_n_states,3)=i1
+       do i3=-QP_bands_mixed+1,QP_bands_mixed-1
+         !
+         if (i2+i3>QP_nb.or.i2+i3<1) cycle
+         !
+         QP_n_states=QP_n_states+1
+         QP_table(QP_n_states,1)=i2
+         QP_table(QP_n_states,2)=i2+i3
+         QP_table(QP_n_states,3)=i1
 #if defined PJ_SPIN
-       QP_table(QP_n_states,4)=i_sp
+         QP_table(QP_n_states,4)=i_sp
+#endif
+       enddo
+#if defined PJ_SPIN
      enddo
 #endif
    enddo

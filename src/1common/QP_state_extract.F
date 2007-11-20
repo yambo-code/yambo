@@ -19,27 +19,27 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function QP_state_extract(state)
-!========================================
-!
-! Parser of the QP_state logical array
-!
+integer function QP_state_extract(state)
+ !
+ ! Parser of the QP_state logical array
+ !
  use QP_m,      ONLY:QP_state,QP_nb,QP_nk
  implicit none
  integer           :: state(4)
-!ws
+ ! 
+ ! Work Space
+ !
  integer :: i1,i2,i3,ik1,ik2,ib1,ib2,proposed_state(4)
  logical :: flag
-
+ !
  QP_state_extract=1
-
-! state(1) = ik1
-! state(2) = ik2
-! state(3) = ib1
-! state(4) = ib2
-
+ !
+ ! state(1) = ik1
+ ! state(2) = ik2
+ ! state(3) = ib1
+ ! state(4) = ib2
 3 continue
-
+ !
  do i1=state(1),QP_nk
    i3=1
    if (i1==state(1)) i3=state(4)+1
@@ -48,22 +48,23 @@
    enddo
  enddo
  QP_state_extract=-1
+ !
  return
- 
+ !
 1 ik1=i1 
-  ib1=i2
-
+ ib1=i2
+ !
  if (ib1==state(4).and.ik1==state(1)) then
    QP_state_extract=-1
    return
  endif
-
+ !
  do i1=ib1,QP_nb
    if (.not.QP_state(i1,ik1)) goto 2
  enddo
-
+ !
 2 ib2=i1-1
-
+ !
  ik2=ik1
  do i1=ik1+1,QP_nk
    flag=all((/QP_state(ib1:ib2,i1)/))
@@ -71,9 +72,9 @@
    if (flag.and.ib2/=QP_nb) flag=.not.QP_state(ib2+1,i1)
    if (flag) ik2=i1
  enddo
-
+ !
  proposed_state=(/ik1,ik2,ib1,ib2/)
-
+ !
  do i1=ik1-1,1,-1
    flag=all((/QP_state(ib1:ib2,i1)/))
    if (flag.and.ib1/=1) flag=.not.QP_state(ib1-1,i1)
@@ -83,12 +84,11 @@
      goto 3
    endif
  enddo
-
+ !
  if (all((/state==proposed_state/))) then
    QP_state_extract=-1
  else
    state=proposed_state
  endif
-
- end function
-
+ !
+end function

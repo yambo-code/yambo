@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine X_O_gks(Xen,Xk,X)
+ subroutine X_O_nl_potential(Xen,Xk,X)
 !============================
  use pars,          ONLY:SP,DP
  use timing,        ONLY:live_timing
@@ -175,4 +175,4 @@ integer function translate_xc(xctyp,xcapprx)
   if (trim(xctyp)=='lda') translate_xc = 8
 end function translate_xc
 !
-end subroutine X_O_gks
+end subroutine X_O_nl_potential

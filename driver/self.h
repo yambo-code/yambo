@@ -43,6 +43,9 @@
   {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0},                  /* 19 */
   {"bss",    "y","BSE solver [opt=h/d/i/t]",0,0,1,0},                      /* 20 */
   {"acfdt",  "a","ACFDT Total Energy",0,0,0,0},                            /* 21 */
+#if defined PJ_DFT 
+  {"dft",    "v","DFT potentials",0,0,0,0}, /* 22 */
+#endif
 #if defined PJ_RAS 
   {"sursp",  "s","Surface Spectroscopy [opt=r(as)/e(el)/b(oth)]",0,0,1,0}, /* 22 */
 #endif

@@ -19,14 +19,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine scatterBamp(isc)
+subroutine scatterBamp(isc)
  !
  ! rhotw(G)=<ib ik_is i_sp| e^[I(Rs(G-G0)).r] | ob ok_os o_sp>   
  !
  !  is(3)=(ib,ik,is,i_sp) --<--:--<-- os(3)=(ob,ok,os,o_sp)
- !                               :
- !                              /:\ iqs=(ig0,iq,qs)
- !                               :
+ !                             :
+ !                            /:\ iqs=(ig0,iq,qs)
+ !                             :
  !
  !                     \:/
  ! REMEMBER that     ->-:->-  =  conjg [-<-:-<-]
@@ -98,14 +98,16 @@
  enddo
  !
  isc%rhotw(1:isc%ngrho)=  rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo),1)
+#if defined PJ_SPIN
  if (n_spinor==2) then
    isc%rhotw(1:isc%ngrho)=isc%rhotw(1:isc%ngrho)+&
 &                         rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo),2)
  endif
+#endif
  ! 
  ! q=0, G=0 case
  !
  if (all((/isc%qs(2)==1,ib==ob/))) isc%rhotw(1)=(1.,0.)
  if (all((/isc%qs(2)==1,ib/=ob/))) isc%rhotw(1)=(0.,0.)
  !
- end subroutine
+end subroutine

@@ -52,6 +52,10 @@
    !
    logical :: l_bse,l_bss
    !
+   ! DFT
+   !
+   logical :: l_dft
+   !
    ! TDDFT
    !
    logical :: l_alda_fxc,l_bs_fxc,l_lrc_fxc

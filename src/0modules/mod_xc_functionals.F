@@ -21,81 +21,81 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- module xc_functionals
-
-  use pars,      ONLY:SP,lchlen
-  implicit none
-
-  integer     , public :: GS_xc_KIND,GS_xc_FUNCTIONAL
-  real(SP), public, allocatable:: el_mag(:,:)
-  real(SP), public, allocatable:: V_xc(:,:)
-  real(SP), public, allocatable:: E_xc(:)
-  real(SP), public, allocatable:: F_xc(:)
-
-  integer, public, parameter :: &
-     XC_UNPOLARIZED       =  1, &  ! Spin unpolarized
-     XC_POLARIZED         =  2     ! Spin polarized
-  
-  integer, public, parameter :: &
-     XC_NON_RELATIVISTIC  =  0, &  ! Functional includes or not realtivistic
-     XC_RELATIVISTIC      =  1     ! corrections. Only available in some functionals.
-  
-  ! Kinds
-  integer, public, parameter :: &
-     XC_EXCHANGE             = 1,  &
-     XC_CORRELATION          = 2,  &
-     XC_EXCHANGE_CORRELATION = 3 
-
-  ! the LDAs
-  integer, public, parameter :: &
-     XC_LDA_X             =  1,  &  ! Exchange                  
-     XC_LDA_C_WIGNER      =  2,  &  ! Wigner parametrization    
-     XC_LDA_C_RPA         =  3,  &  ! Random Phase Approximation
-     XC_LDA_C_HL          =  4,  &  ! Hedin & Lundqvist         
-     XC_LDA_C_GL          =  5,  &  ! Gunnarson & Lundqvist     
-     XC_LDA_C_XALPHA      =  6,  &  ! Slaters Xalpha           
-     XC_LDA_C_VWN         =  7,  &  ! Vosko, Wilk, & Nussair    
-     XC_LDA_C_PZ          =  8,  &  ! Perdew & Zunger           
-     XC_LDA_C_OB_PZ       =  9,  &  ! Ortiz & Ballone (PZ)      
-     XC_LDA_C_PW          = 10,  &  ! Perdew & Wang             
-     XC_LDA_C_OB_PW       = 11,  &  ! Ortiz & Ballone (PW)      
-     XC_LDA_C_LYP         = 12,  &  ! Lee, Yang, & Parr LDA     
-     XC_LDA_C_AMGB        = 13,  &  ! Attacalite et al
-     XC_LDA_C_KP          = 14      ! Kurth & Perdew
-
-  ! the GGAs
-  integer, public, parameter :: &
-     XC_GGA_X_PBE         = 101, &  ! Perdew, Burke & Ernzerhof exchange
-     XC_GGA_C_PBE         = 102, &  ! Perdew, Burke & Ernzerhof correlation
-     XC_GGA_XC_LB         = 103     ! van Leeuwen & Baerends
-
-  ! the meta-GGAs
-  integer, public, parameter :: &
-     XC_MGGA_X_TPSS       = 201, &  ! Perdew, Tao, Staroverov & Scuseria exchange
-     XC_MGGA_C_TPSS       = 202     ! Perdew, Tao, Staroverov & Scuseria correlation
-
+module xc_functionals
+ !
+ use pars,      ONLY:SP,lchlen
+ implicit none
+ !
+ integer     , public :: GS_xc_KIND,GS_xc_FUNCTIONAL
+ real(SP), public, allocatable:: el_mag(:,:)
+ real(SP), public, allocatable:: V_xc(:,:)
+ real(SP), public, allocatable:: E_xc(:)
+ real(SP), public, allocatable:: F_xc(:)
+ !
+ integer, public, parameter :: &
+    XC_UNPOLARIZED       =  1, &  ! Spin unpolarized
+    XC_POLARIZED         =  2     ! Spin polarized
+ !
+ integer, public, parameter :: &
+    XC_NON_RELATIVISTIC  =  0, &  ! Functional includes or not realtivistic
+    XC_RELATIVISTIC      =  1     ! corrections. Only available in some functionals.
+ !
+ ! Kinds
+ integer, public, parameter :: &
+    XC_EXCHANGE             = 1,  &
+    XC_CORRELATION          = 2,  &
+    XC_EXCHANGE_CORRELATION = 3 
+ !
+ ! the LDAs
+ integer, public, parameter :: &
+    XC_LDA_X             =  1,  &  ! Exchange                  
+    XC_LDA_C_WIGNER      =  2,  &  ! Wigner parametrization    
+    XC_LDA_C_RPA         =  3,  &  ! Random Phase Approximation
+    XC_LDA_C_HL          =  4,  &  ! Hedin & Lundqvist         
+    XC_LDA_C_GL          =  5,  &  ! Gunnarson & Lundqvist     
+    XC_LDA_C_XALPHA      =  6,  &  ! Slaters Xalpha           
+    XC_LDA_C_VWN         =  7,  &  ! Vosko, Wilk, & Nussair    
+    XC_LDA_C_PZ          =  8,  &  ! Perdew & Zunger           
+    XC_LDA_C_OB_PZ       =  9,  &  ! Ortiz & Ballone (PZ)      
+    XC_LDA_C_PW          = 10,  &  ! Perdew & Wang             
+    XC_LDA_C_OB_PW       = 11,  &  ! Ortiz & Ballone (PW)      
+    XC_LDA_C_LYP         = 12,  &  ! Lee, Yang, & Parr LDA     
+    XC_LDA_C_AMGB        = 13,  &  ! Attacalite et al
+    XC_LDA_C_KP          = 14      ! Kurth & Perdew
+ !
+ ! the GGAs
+ integer, public, parameter :: &
+    XC_GGA_X_PBE         = 101, &  ! Perdew, Burke & Ernzerhof exchange
+    XC_GGA_C_PBE         = 102, &  ! Perdew, Burke & Ernzerhof correlation
+    XC_GGA_XC_LB         = 103     ! van Leeuwen & Baerends
+ !
+ ! the meta-GGAs
+ integer, public, parameter :: &
+    XC_MGGA_X_TPSS       = 201, &  ! Perdew, Tao, Staroverov & Scuseria exchange
+    XC_MGGA_C_TPSS       = 202     ! Perdew, Tao, Staroverov & Scuseria correlation
+ !
 #if defined PJ_DFT
-  ! the OEP/KLI/CEDA
-  integer, public, parameter :: &
-    XC_OEP_EXX           = 301    ! OEP-EXX
-
-  ! the GKS
-  integer, public, parameter :: &
-    XC_GKS_HF            = 401, &  ! Hartree-Fock
-    XC_GKS_SX            = 402, &  ! Screened-eXchange
-    XC_GKS_SXLDA         = 403, &  ! Kleinman-Bylander Screened-Exchange LDA
-    XC_GKS_CHSX          = 404     ! Coulomb-Hole Screened-eXchange
+ ! the OEP/KLI/CEDA
+ integer, public, parameter :: &
+   XC_OEP_EXX           = 301    ! OEP-EXX
+ !
+ ! the GKS
+ integer, public, parameter :: &
+   XC_GKS_HF            = 401, &  ! Hartree-Fock
+   XC_GKS_SX            = 402, &  ! Screened-eXchange
+   XC_GKS_SXLDA         = 403, &  ! Kleinman-Bylander Screened-Exchange LDA
+   XC_GKS_CHSX          = 404     ! Coulomb-Hole Screened-eXchange
 #endif
-
-  contains
-
-  character(lchlen) function xc_string(kind,functional)
-
+ !
+ contains
+ !
+ character(lchlen) function xc_string(kind,functional)
+   !
    use stderr, ONLY:string_pack
    implicit none
    integer        :: kind,functional
    character(4)   :: ch_kind
-
+   !
    select case (kind)
      case(-1)
       ch_kind=' '
@@ -106,7 +106,7 @@
      case(XC_EXCHANGE_CORRELATION)
       ch_kind='(xc)'
    end select
-   
+   !
    select case (functional)
      case(-1,3,5,7,9)
       xc_string=string_pack('Unknown ',ch_kind)
@@ -135,7 +135,7 @@
       xc_string=string_pack('Coulomb-Hole Screened-eXchange (nonlocal) ',ch_kind)
 #endif
    end select
-   
-  end function
-!
- end module xc_functionals
+   !
+ end function
+ !
+end module xc_functionals

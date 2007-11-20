@@ -34,6 +34,7 @@ integer function ioWF_ver_2(ID,wf)
  !
  ! Work Space
  !
+ integer :: I_on_disk(2),ik,ib
  character(schlen) :: VAR_NAME
  real(SP)          :: wf_on_disk(2,n_bands*wf_ncx)
  !

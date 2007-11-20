@@ -39,6 +39,9 @@
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_G_bands
  use BS,               ONLY:BS_bands
  use xc_functionals,   ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL 
+#if defined PJ_DFT
+ use DFT,              ONLY:DFT_bands
+#endif
  !
  implicit none
  !
@@ -170,6 +173,9 @@
      QP_nb=E%nb
      QP_n_G_bands=(/1,E%nb/)
      BS_bands=(/1,E%nb/)
+#if defined PJ_DFT
+     DFT_bands=E%nb
+#endif
      !
      Tel=default_Tel
      nel=default_nel

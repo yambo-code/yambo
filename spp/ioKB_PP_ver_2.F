@@ -36,6 +36,7 @@ integer function ioKB_PP_ver_2(ID)
  !
  ! Work Space
  !
+ integer :: ik,i1,i2
  integer, allocatable :: I_on_disk(:)
  real(SP),allocatable :: R_on_disk(:)
 

@@ -61,6 +61,11 @@
    integer,    allocatable:: QP_table(:,:)
    logical,    allocatable:: QP_state(:,:)
    !
+   ! Mixing for non perturbative calculations
+   !
+   integer           :: QP_bands_mixed
+   real(SP)          :: QP_band_mixing
+   !
    type QP_t
      character(schlen)  :: description(max_qp_descs)
      integer,    pointer:: table(:,:)

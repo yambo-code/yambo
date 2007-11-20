@@ -103,7 +103,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #elif defined PJ_SPIN
  what_is_running='SELF_SPIN'
 #elif defined PJ_DFT
- what_is_running='SELF_GKS'
+ what_is_running='SELF_DFT'
 #elif defined PJ_CYL_CUT
  what_is_running='SELF_CYL_CUT'
 #endif
@@ -477,6 +477,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
   if (index(BSS_mode,'i')/=0)  call initactivate(1,'SkipInv FullInv')
  endif
  !
+ ! DFT
+ !
+#if defined PJ_DFT
+ if (l_dft) call initactivate(1,'FFTGvecs DFTScMode DFTiter DFTBands BandMix')
+#endif
+ !
  ! RAS
  !
 #if defined PJ_RAS
@@ -632,6 +638,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      l_bs_fxc=(rstatus(14)/=0)
      l_alda_fxc=(rstatus(15)/=0)
      l_lrc_fxc=(rstatus(16)/=0)
+#if defined  PJ_DFT
+     l_dft=(rstatus(17)/=0)
+#endif
 #if defined  PJ_RAS
      lreels=(rstatus(18)/=0)
      lras=(rstatus(19)/=0)
@@ -661,8 +670,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_bs_fxc=.false.
      endif
      !
-     ! not GPL barriers
-     !
      if (gpl_version.and.any((/&
 &              l_life,l_acfdt,l_bs_fxc,l_lrc_fxc,&
 #if defined PJ_RAS
@@ -678,7 +685,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
 #if defined PJ_SPIN
      if (any((/&
-&              l_life,l_acfdt,l_lrc_fxc,&
+&              l_life,l_acfdt,l_lrc_fxc,l_dft,&
 &              l_gw0.and..not.l_ppa&
 &             /))) then
        init=-2

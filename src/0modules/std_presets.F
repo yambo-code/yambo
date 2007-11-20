@@ -61,6 +61,10 @@
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND
+#if defined PJ_DFT
+ use QP_m,       ONLY:QP_band_mixing
+ use DFT,        ONLY:DFT_SC
+#endif
  !
  implicit none
  !
@@ -170,6 +174,8 @@
  l_acfdt=.false.
  l_el_corr=.false.
  l_ph_corr=.false.
+ l_dft=.false.
+ !
  gpl_version=.false.
  !
  !electrons
@@ -304,5 +310,10 @@
  elph_nb=0
  PH_damping=0.
  PH_null_E_rgn=0.1/HARTREE
+ !
+#if defined PJ_DFT
+ QP_band_mixing=0.
+ DFT_SC="nsc"
+#endif
  !
  end subroutine

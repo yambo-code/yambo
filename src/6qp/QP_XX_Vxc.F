@@ -19,17 +19,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine QP_XX_Vxc(E,k,Xk,q)
+subroutine QP_XX_Vxc(E,k,Xk,q,be_verbose,perform_io)
  !
  ! Hartree S_x self-energy + call to V_xc 
  !
  use pars,          ONLY:SP,schlen,DP,pi,HARTREE
  use memory_m,      ONLY:mem_est
- use com,           ONLY:msg,depth
+ use com,           ONLY:msg,depth,write_to_report
  use timing,        ONLY:live_timing
  use stderr,        ONLY:intc,gen_fmt 
  use electrons,     ONLY:levels,spin_occ,n_sp_pol
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
+ use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset,master_node
  use par_indexes_m, ONLY:par_indexes
  use collision,     ONLY:ggwinfo,collision_reset
  use QP_m,          ONLY:QP_Sx,QP_ng_Sx,QP_table,QP_nb,QP_n_states,QP_Sx_low_band,QP_Vxc
@@ -40,12 +40,13 @@
  implicit none
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
+ logical      ::be_verbose,perform_io
  !
  !Work Space
  !
  type(ggwinfo)    ::isc,iscp
  type(pp_indexes) ::px
- integer                 ::i1,i2,iq,ib,ik
+ integer                 ::i1,i2,iq,ib,ik,ibp
 #if defined _DOUBLE
  complex(DP)             ::zdotc,zdotu
 #else 
@@ -71,6 +72,10 @@
  call collision_reset(iscp) 
  call pp_indexes_reset(px)
  !
+ ! Silent run (like in SCF cycles)
+ !
+ write_to_report=be_verbose
+ !
  ! title
  !
  if (depth>0) then
@@ -84,15 +89,24 @@
  !
  ! Allocation
  !
- allocate(QP_Sx(QP_n_states),QP_Vxc(QP_n_states))
- call mem_est("QP_Sx QP_Vxc",(/QP_n_states,QP_n_states/))
+ if (.not.allocated(QP_Sx)) then
+   allocate(QP_Sx(QP_n_states))
+   call mem_est("QP_Sx",(/QP_n_states/))
+ endif
+ if (.not.allocated(QP_Vxc)) then
+   allocate(QP_Vxc(QP_n_states))
+   call mem_est("QP_Vxc",(/QP_n_states/))
+ endif
  QP_Sx=(0.,0.)
  QP_Vxc=(0.,0.)
  !
  ! I/O
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
- io_err=ioXXVXC(ID)
+ io_err=-1
+ if (perform_io) then
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
+   io_err=ioXXVXC(ID)
+ endif
  !
  if (io_err/=0) then
    !
@@ -118,8 +132,9 @@
    !
    allocate(isc%gamp(QP_ng_Sx,1),isc%rhotw(QP_ng_Sx),iscp%rhotw(QP_ng_Sx),&
 &           local_rhotw(QP_ng_Sx))
-   isc%qs   =1
-   isc%ngrho=QP_ng_Sx
+   isc%qs    =1
+   isc%ngrho =QP_ng_Sx
+   iscp%ngrho=QP_ng_Sx
    !
    call scatterGamp(isc,'x')
    !
@@ -135,6 +150,17 @@
      if (isc%qs(2)/=isc%iqref) call scatterGamp(isc,'x')
      !
      do i1=1,QP_n_states
+       !
+       !  (n,k,sp_n).     
+       !              |
+       !              | (m,p,r,sp_m)
+       !              |
+       !              |
+       !  (m,k,sp_m).     
+       !
+       ! n   =QP_table(i1,1)
+       ! m   =QP_table(i1,2)
+       ! k   =QP_table(i1,3)
        !
 #if defined PJ_SPIN
        isc%is=(/QP_table(i1,1),QP_table(i1,3),1,QP_table(i1,4)/)
@@ -154,9 +180,11 @@
          isc%os(1)=ib
          iscp%os=isc%os
          call live_timing(steps=1)
+         !
          call scatterBamp(isc)
+         !
          iscp%rhotw=isc%rhotw
-         if (any(isc%is/=iscp%is)) call scatterBamp(iscp)
+         if (isc%is(1)/=iscp%is(1)) call scatterBamp(iscp)
          !
          local_rhotw=-4./spin_occ*pi*isc%rhotw*conjg(iscp%rhotw)*E%f(ib,isc%os(2),isc%os(4))
          !
@@ -197,11 +225,12 @@
  sx_fmt =trim( gen_fmt( r_v= reshape(real(QP_Sx)*HARTREE,(/QP_n_states/)) ) )
  vxc_fmt=trim( gen_fmt( r_v= reshape(real(QP_Vxc)*HARTREE,(/QP_n_states/)) ) )
  !
- fmt_='(a,2'//trim(sx_fmt)//',a,2'//trim(vxc_fmt)//')'
+ fmt_='(a,2'//trim(sx_fmt)//',1x,a,2'//trim(vxc_fmt)//')'
  !
  do i1=1,QP_n_states
    !
-   ib=QP_table(i1,1)
+   ib =QP_table(i1,1)
+   ibp=QP_table(i1,2)
    if (QP_table(i1,3)/=ik) then
      ik=QP_table(i1,3)
      call msg('nr','S_x/V_xc [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
@@ -216,9 +245,9 @@
    !
 #endif
    ! 
-   sx_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|S_x|'//trim(intc(ib))&
+   sx_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|S_x|'//trim(intc(ibp))&
 &     //trim(ch_spin)//'> ='
-   vxc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|V_xc|'//trim(intc(ib))&
+   vxc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|V_xc|'//trim(intc(ibp))&
 &     //trim(ch_spin)//'> ='
    !
    write (ch,trim(fmt_)) trim(sx_fmt),real(QP_Sx(i1)*HARTREE),&
@@ -232,7 +261,7 @@
  !
  ! I/O
  !
- if (io_err/=0) then
+ if (io_err/=0.and.perform_io) then
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=ioXXVXC(ID)
  endif
@@ -241,4 +270,8 @@
  !
  call pp_redux_wait
  !
- end subroutine
+ ! Restore messagging
+ !
+ write_to_report=master_node
+ !
+end subroutine

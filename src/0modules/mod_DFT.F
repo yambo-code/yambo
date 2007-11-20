@@ -19,13 +19,21 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- module DFT
+module DFT
+ !
 #if defined PJ_DFT
- use pars,          ONLY:SP,lchlen
+ !
+ use pars,      ONLY:SP,schlen
  implicit none
- logical :: lgks
- integer :: igks
- character(lchlen) :: auxpath
+ !
+ integer           :: DFT_bands
+ integer           :: DFT_iterations
+ character(schlen) :: DFT_SC
+ !
+! implicit none
+! logical :: lgks
+! integer :: igks
+! character(lchlen) :: auxpath
 #endif
-
- end module
+ !
+end module

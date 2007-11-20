@@ -53,6 +53,10 @@
  use QP_m,          ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_W,QP_ctl_Z
  use com,           ONLY:out_path,in_path,db_wr_path
  use functions,     ONLY:bose_E_cut
+#if defined PJ_DFT
+ use QP_m,          ONLY:QP_band_mixing
+ use DFT,           ONLY:DFT_bands,DFT_SC,DFT_iterations
+#endif
 #if defined PJ_RAS
  use bulkeps,              ONLY : init_bulk
  use eels_kinematics,      ONLY : init_kinematics
@@ -102,6 +106,9 @@
  call it('r',defs,'bs_fxc',  '[R TDDFT] The BSE TDDFT kernel') ! [14]
  call it('r',defs,'alda_fxc','[R TDDFT] The ALDA TDDFT kernel') ! [15]
  call it('r',defs,'lrc_fxc', '[R TDDFT] The LRC TDDFT kernel') ! [16]
+#if defined PJ_DFT
+ call it('r',defs,'dft',  '[R] DFT potentials') ! [17]
+#endif
 #if defined PJ_RAS
  call it('r',defs,'sursp',  '[R] Surface Spectroscopy ') ! [17]
  call it('r',defs,'reels',  '[R] Reflection EELS (3-layer model) ') ! [18]
@@ -150,33 +157,42 @@
  !
  ! CUTOFF
  !
- call it(defs,'CUTGeo','[CUT] Coulomb Cutoff geometry: box/cylinder/sphere',cut_geometry)
- call it(defs,'CUTBox','[CUT] [au] Box sides',box_length)
+ call it(defs,'CUTGeo',   '[CUT] Coulomb Cutoff geometry: box/cylinder/sphere',cut_geometry)
+ call it(defs,'CUTBox',   '[CUT] [au] Box sides',box_length)
  call it(defs,'CUTRadius','[CUT] [au] Sphere/Cylinder radius',cyl_ph_radius)
  call it(defs,'CUTCylLen','[CUT] [au] Cylinder length',cyl_length)
  call it('f',defs,'CUTCol_test','[CUT] Perform a cutoff test in R-space',verb_level=V_more)
  !
  ! S_xc
  !
- call it(defs,'EXXRLvcs','[XX] Exchange RL components',QP_ng_Sx,G_unit)
- call it(defs,'SxLowBnd','[XX] Exchange summation low band',QP_Sx_low_band,verb_level=V_more)
- call it(defs,'GbndRnge','[GW] G[W] bands range',QP_n_G_bands)
- call it(defs,'GDamping','[GW] G[W] damping',QP_G_damp,E_unit)
- call it(defs,'LifeTrCG','[GW] [o/o] Lifetime transitions reduction',QP_cg_percent)
+ call it(defs,'EXXRLvcs', '[XX] Exchange RL components',QP_ng_Sx,G_unit)
+ call it(defs,'SxLowBnd', '[XX] Exchange summation low band',QP_Sx_low_band,verb_level=V_more)
+ call it(defs,'GbndRnge', '[GW] G[W] bands range',QP_n_G_bands)
+ call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
+ call it(defs,'LifeTrCG', '[GW] [o/o] Lifetime transitions reduction',QP_cg_percent)
  call it(defs,'DysSolver','[GW] Dyson Equation solver (`n`,`s`,`g`)',QP_solver)
- call it(defs,'GEnSteps','[GW] G_gw energy steps',QP_Sc_steps)
- call it(defs,'GEnRnge','[GW] G_gw energy range',QP_G_er,E_unit)
- call it(defs,'GDmRnge','[GW] G_gw damping range',QP_G_dr,E_unit)
- call it(defs,'GWoIter','[GW] GWo SC iterations',GWo_iterations,verb_level=V_more)
+ call it(defs,'GEnSteps', '[GW] G_gw energy steps',QP_Sc_steps)
+ call it(defs,'GEnRnge',  '[GW] G_gw energy range',QP_G_er,E_unit)
+ call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
+ call it(defs,'GWoIter',  '[GW] GWo SC iterations',GWo_iterations,verb_level=V_more)
  !
  ! El-Ph
  !
 #if defined PJ_PH
- call it(defs,'GphBRnge',   '[ELPH] G[W] bands range',QP_PH_n_G_bands)
- call it(defs,'PHdamping',  '[ELPH] Phonon damping',PH_damping,&
-&                           verb_level=V_qp,unit=E_unit)
- call it(defs,'PHnullErgn', '[ELPH] Null transitions energy window',&
-&                           PH_null_E_rgn,verb_level=V_qp,unit=E_unit)
+ call it(defs,'GphBRnge',  '[ELPH] G[W] bands range',QP_PH_n_G_bands)
+ call it(defs,'PHdamping', '[ELPH] Phonon damping',PH_damping,&
+&                          verb_level=V_qp,unit=E_unit)
+ call it(defs,'PHnullErgn','[ELPH] Null transitions energy window',&
+&                          PH_null_E_rgn,verb_level=V_qp,unit=E_unit)
+#endif
+ ! 
+ ! DFT
+ !
+#if defined PJ_DFT
+ call it(defs,'DFTScMode',  '[DFT] Self-Consistency',DFT_SC)
+ call it(defs,'DFTBands',   '[DFT] Bands',DFT_bands)
+ call it(defs,'BandMix',  '[DFT] Band mixing',QP_band_mixing)
+ call it(defs,'DFTIter',    '[DFT] SC Iterations',DFT_iterations)
 #endif
  ! 
  ! RAS

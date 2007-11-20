@@ -173,7 +173,7 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
  ! HARTREE-FOCK AND VXC
  !======================
  !
- if (l_xxvxc) call QP_XX_Vxc(en,k,Xk,q)
+ if (l_xxvxc) call QP_XX_Vxc(en,k,Xk,q,.TRUE.,.TRUE.)
  !
  ! RAS & REELS
  !=============
@@ -235,6 +235,13 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
  ! -- GPL_END --
  if (l_acfdt) call acfdt_tot_energy(Xen,Xk,q,X(1))
  ! -- GPL_START --
+ !
+#if defined PJ_DFT
+ ! DFT
+ !=====
+ !
+ if (l_dft) call DFT_driver(en,k,q)
+#endif
  !
  ! GAME OVER :(
  !==============

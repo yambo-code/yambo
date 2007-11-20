@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine DFT_Vxc(E,Xk)
+subroutine DFT_Vxc(E,Xk)
  !
  ! V_xc
  !
@@ -36,7 +36,7 @@
  !
  !Work Space
  !
- integer                 ::i1,ifft,ifft_sp1,ifft_sp2,ib,ik,i_sp1,i_sp2
+ integer                 ::i1,ifft,ifftp,ifft_sp1,ifft_sp2,ib,ibp,ik,i_sp1,i_sp2
 #if defined _DOUBLE
  complex(DP)             ::zdotc,zdotu
 #else 
@@ -61,11 +61,15 @@
    ! 
    do i1=1,QP_n_states
      !
-     ib=QP_table(i1,1)
-     ik=QP_table(i1,3)
+     ib =QP_table(i1,1)
+     ibp=QP_table(i1,2)
+     ik =QP_table(i1,3)
      !
-     ifft=wf_state(ib,ik,1)
-     c_ws(:,1)=wf(:,ifft)*V_xc(:,1)
+     ! <ifft|V_xc|ifftp>
+     !
+     ifft =wf_state(ib,ik,1)
+     ifftp=wf_state(ibp,ik,1)
+     c_ws(:,1)=V_xc(:,1)*wf(:,ifftp)
      !
 #if defined _DOUBLE
      QP_Vxc(i1)=zdotc(fft_size,wf(:,ifft),1,c_ws(:,1),1)
@@ -160,4 +164,4 @@
  !
  deallocate(V_xc,el_mag)
  !
- end subroutine
+end subroutine

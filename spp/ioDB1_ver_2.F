@@ -37,6 +37,7 @@ integer function ioDB1_ver_2(en,k,ID)
  ! Work Space
  !
  integer,    external :: rand_identifier
+ integer              :: j1
  integer, allocatable :: I_on_disk(:)
  real(SP),allocatable :: R_on_disk(:)
  !
@@ -106,8 +107,8 @@ integer function ioDB1_ver_2(en,k,ID)
  dl_sop(:,:,:nsym)=reshape(R_on_disk(:9*nsym),(/3,3,nsym/))
  g_vec(:,:)=reshape(R_on_disk(9*nsym+1:),(/ng_vec,3/))
  deallocate(R_on_disk)
- do i1=1,nsym
-   if (i_time_rev==1) dl_sop(:,:,i1+nsym)=-dl_sop(:,:,i1)
+ do j1=1,nsym
+   if (i_time_rev==1) dl_sop(:,:,j1+nsym)=-dl_sop(:,:,j1)
  enddo
  if (i_time_rev==1) nsym=2*nsym
 
@@ -125,22 +126,22 @@ integer function ioDB1_ver_2(en,k,ID)
    call io_bulk(ID,VAR="En-IgkRD",VAR_SZ=(/ (3+en%nb)*k%nibz /) )
    call io_bulk(ID,R1=R_on_disk)
 
-   do i1=1,k%nibz
-     k%pt(i1,:)=R_on_disk((3+en%nb)*(i1-1)+1:(3+en%nb)*(i1-1)+3)
-     en%E(:,i1,1)=R_on_disk((3+en%nb)*(i1-1)+4:(3+en%nb)*i1)
-     wf_igk(:,i1)=I_on_disk(wf_ncx*(i1-1)+1:wf_ncx*i1)
+   do j1=1,k%nibz
+     k%pt(j1,:)=R_on_disk((3+en%nb)*(j1-1)+1:(3+en%nb)*(j1-1)+3)
+     en%E(:,j1,1)=R_on_disk((3+en%nb)*(j1-1)+4:(3+en%nb)*j1)
+     wf_igk(:,j1)=I_on_disk(wf_ncx*(j1-1)+1:wf_ncx*j1)
    enddo
    deallocate(I_on_disk)
    deallocate(R_on_disk)
  else
    allocate(I_on_disk(wf_ncx))
    allocate(R_on_disk(3+en%nb))
-   do i1=1,k%nibz
+   do j1=1,k%nibz
      call io_bulk(ID,I1=I_on_disk)
      call io_bulk(ID,R1=R_on_disk)
-     k%pt(i1,:)=R_on_disk(1:3)
-     en%E(:,i1,1)=R_on_disk(4:)
-     wf_igk(:,i1)=I_on_disk
+     k%pt(j1,:)=R_on_disk(1:3)
+     en%E(:,j1,1)=R_on_disk(4:)
+     wf_igk(:,j1)=I_on_disk
    enddo
    deallocate(I_on_disk)
    deallocate(R_on_disk)

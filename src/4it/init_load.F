@@ -50,11 +50,11 @@
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,&
 &                        FXC_SVD_digits
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
- use QP_m,          ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_W,QP_ctl_Z
+ use QP_m,          ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_W,QP_ctl_Z,&
+&                        QP_band_mixing
  use com,           ONLY:out_path,in_path,db_wr_path
  use functions,     ONLY:bose_E_cut
 #if defined PJ_DFT
- use QP_m,          ONLY:QP_band_mixing
  use DFT,           ONLY:DFT_bands,DFT_SC,DFT_iterations
 #endif
 #if defined PJ_RAS
@@ -191,9 +191,12 @@
 #if defined PJ_DFT
  call it(defs,'DFTScMode',  '[DFT] Self-Consistency',DFT_SC)
  call it(defs,'DFTBands',   '[DFT] Bands',DFT_bands)
- call it(defs,'BandMix',  '[DFT] Band mixing',QP_band_mixing)
  call it(defs,'DFTIter',    '[DFT] SC Iterations',DFT_iterations)
 #endif
+ !
+ ! Non-Perturbative
+ !
+ call it(defs,'BandMix',    '[NP] Band mixing',QP_band_mixing)
  ! 
  ! RAS
  !

@@ -54,7 +54,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  do while(.true.)
    !
    do i1=1,min(max(iG_max,wf_ng),ng_vec)
-      do i2=1,iGo_max
+     do i2=1,iGo_max
        call c2a(b,g_vec(i1,:)-g_vec(i2,:),v1,'ki2a')
        iv=nint(v1)
        if (i2==1.or.i1<=iG_max) forall(i3=1:3) ln(i3)=max(ln(i3),iv(i3))

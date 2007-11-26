@@ -23,11 +23,12 @@ subroutine DFT_driver(X,E,k,q)
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
- use R_lattice,      ONLY:bz_samp
+ use R_lattice,      ONLY:bz_samp,qindx_S
  use D_lattice,      ONLY:DL_vol
- use QP_m,           ONLY:QP_state,QP_nb,QP_nk,QP_Vxc,QP_n_states,QP_table
+ use QP_m,           ONLY:QP_state,QP_nb,QP_nk,QP_Vxc,QP_n_states,QP_table,&
+&                         QP_ng_Sx
  use DFT,            ONLY:DFT_SC,DFT_bands, DFT_iterations,DFT_threshold
- use wave_func,      ONLY:wf_load, wf, wf_ncx, wf_state,wf_free
+ use wave_func,      ONLY:wf_load, wf, wf_state
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
@@ -44,7 +45,7 @@ subroutine DFT_driver(X,E,k,q)
  real(SP)                 :: test_convergence
  complex(SP)              :: Vh
  real(SP), allocatable    :: rho_nm1(:),rho(:),vhr(:),vxc(:)
- complex(SP), allocatable :: Ho(:,:,:), Hsc(:,:), wf_nm1(:,:),Htmp(:,:), c_ws(:)
+ complex(SP), allocatable :: Ho(:,:,:), Hsc(:,:), wf_tmp(:,:),Ho_tmp(:,:), c_ws(:)
 #if defined _DOUBLE
  complex(DP)             ::zdotc,zdotu
 #else 
@@ -69,9 +70,8 @@ subroutine DFT_driver(X,E,k,q)
  !
  ! WF
  !
- call wf_load(0,1,(/1,DFT_bands/),(/1,k%nibz/),title=' ')
- allocate(wf_nm1(fft_size,QP_nb*QP_nk))
- wf_nm1 = wf
+ call wf_load(max(QP_ng_Sx,X%ng),maxval(qindx_S(:,:,2)),&
+&             (/1,max(DFT_bands,X%ib(2))/),(/1,k%nibz/),title=' ')
  !
  ! Vxc[rho_0] and Vh[rho_0]
  !
@@ -123,18 +123,13 @@ subroutine DFT_driver(X,E,k,q)
  ! SCF cycle
  !
  allocate(Hsc(QP_nb,QP_nb),rho_nm1(fft_size),vxc(fft_size))
- print*, '0, 1', (E%E(i1,1,1),i1=1,7)  
- print*, '0, 2', (E%E(i1,2,1),i1=1,7)  
+ !
  do it = it_on_disk, DFT_iterations
-   wf = (0.,0.)
    do ik = 1, QP_nk ! Loop on k_points
      !
      ! New Vxc
      !
-     !vxc = 0.
-     !call Test_Vx(rho,vxc)
-     !
-     call V_exx(X,E,k,Vxc)
+     call V_exx(X,E,k,q,vxc)
      !
      Hsc = (0.,0.)
      !
@@ -147,12 +142,12 @@ subroutine DFT_driver(X,E,k,q)
        !
        ifft =wf_state(ib,ik,1)
        ifftp=wf_state(ibp,ik,1)
-       c_ws(:)=(vhr(:)+vxc(:))*wf_nm1(:,ifftp)
+       c_ws(:)=(vhr(:)+vxc(:))*wf(:,ifftp)
        !
 #if defined _DOUBLE
-       Hsc(ib,ibp) = zdotc(fft_size,wf_nm1(:,ifft),1,c_ws(:),1)
+       Hsc(ib,ibp) = zdotc(fft_size,wf(:,ifft),1,c_ws(:),1)
 #else 
-       Hsc(ib,ibp) = cdotc(fft_size,wf_nm1(:,ifft),1,c_ws(:),1)
+       Hsc(ib,ibp) = cdotc(fft_size,wf(:,ifft),1,c_ws(:),1)
 #endif
        !
      end do
@@ -161,39 +156,43 @@ subroutine DFT_driver(X,E,k,q)
      ! Diagonalize the H matrix
      !
      call mat_dia_inv(DIAGO,USE_LK,Hsc,E_real=E%E(:,ik,1))
-     ! debug write (messaging needed)
+     !
+     ! write energies (HERE messaging needed)
      !
      print*, ik, (E%E(i1,ik,1),i1 = 1,7)
+     !
      ! New wave functions (Here blas cdotc?) 
      !
+     allocate(wf_tmp(fft_size,QP_nb))
+     wf_tmp = (0.,0.)
      do i1 = 1,QP_nb
        do i2 = 1,QP_nb
-         ifft = wf_state(i1,ik,1)
+         ifft = wf_state(i1,1,1)
          ifftp = wf_state(i2,ik,1)
-         wf(:,ifft)= wf(:,ifft) + wf_nm1(:,ifftp)*Hsc(i2,i1)
+         wf_tmp(:,ifft)= wf_tmp(:,ifft) + wf(:,ifftp)*Hsc(i2,i1)
        end do
      end do 
+     forall(i1 = 1:QP_nb) wf(:,wf_state(i1,ik,1))= wf_tmp(:,wf_state(i1,1,1))  
+     deallocate(wf_tmp)  
      !
      !  Transform Ho in the new basis 
      !
-     allocate(Htmp(QP_nb,QP_nb))
+     allocate(Ho_tmp(QP_nb,QP_nb))
 #if defined _DOUBLE
-       call zgemm('n','n',QP_nb,QP_nb,QP_nb,(1._SP,0._SP),Ho(:,:,ik),QP_nb,Hsc,QP_nb,(0._SP,0._SP),Htmp,QP_nb)
+       call zgemm('n','n',QP_nb,QP_nb,QP_nb,(1._SP,0._SP),Ho(:,:,ik),QP_nb,Hsc,QP_nb,(0._SP,0._SP),Ho_tmp,QP_nb)
 #else
-       call cgemm('n','n',QP_nb,QP_nb,QP_nb,(1._SP,0._SP),Ho(:,:,ik),QP_nb,Hsc,QP_nb,(0._SP,0._SP),Htmp,QP_nb)
+       call cgemm('n','n',QP_nb,QP_nb,QP_nb,(1._SP,0._SP),Ho(:,:,ik),QP_nb,Hsc,QP_nb,(0._SP,0._SP),Ho_tmp,QP_nb)
 #endif
-       Ho(:,:,ik) = Htmp(:,:)
+       Ho(:,:,ik) = Ho_tmp(:,:)
 #if defined _DOUBLE
-       call zgemm('c','n',QP_nb,QP_nb,QP_nb,(1._SP,0._SP),Hsc,QP_nb,Ho(:,:,ik),QP_nb,(0._SP,0._SP),Htmp,QP_nb)
+       call zgemm('c','n',QP_nb,QP_nb,QP_nb,(1._SP,0._SP),Hsc,QP_nb,Ho(:,:,ik),QP_nb,(0._SP,0._SP),Ho_tmp,QP_nb)
 #else
-       call cgemm('c','n',QP_nb,QP_nb,QP_nb,(1._SP,0._SP),Hsc,QP_nb,Ho(:,:,ik),QP_nb,(0._SP,0._SP),Htmp,QP_nb)
+       call cgemm('c','n',QP_nb,QP_nb,QP_nb,(1._SP,0._SP),Hsc,QP_nb,Ho(:,:,ik),QP_nb,(0._SP,0._SP),Ho_tmp,QP_nb)
 #endif
-       Ho(:,:,ik) = Htmp(:,:)
-       deallocate(Htmp)
+       Ho(:,:,ik) = Ho_tmp(:,:)
+       deallocate(Ho_tmp)
        !
      end do !Exit loop on kpoints
-     !
-     wf_nm1 = wf
      !
      ! New density 
      !
@@ -206,7 +205,9 @@ subroutine DFT_driver(X,E,k,q)
      do ir=1,fft_size
        test_convergence = test_convergence + abs(rho(ir)-rho_nm1(ir))/DL_vol
      enddo
-     ! debug write (messaging needed)
+     !
+     ! write scf status (HERE messaging needed)
+     !
      print*, it, test_convergence   
      !
      if (test_convergence.lt.DFT_threshold) then
@@ -227,30 +228,7 @@ subroutine DFT_driver(X,E,k,q)
    !
    ! exit SCF cycle
    !
-   deallocate(Ho,Hsc,wf_nm1)
-   !
-   !
-   !
-   contains !temporary test subroutine
-     subroutine Test_Vx(rho_sp,vx_sp)
-       !
-       use pars,  ONLY: pi,SP,DP
-       use FFT_m, ONLY: fft_size
-       use D_lattice, ONLY: DL_vol
-       !
-       implicit none
-       real(SP) :: rho_sp(fft_size),vx_sp(fft_size)
-       real(DP) :: rho(fft_size),dvx(fft_size), &
-&              vx(fft_size),ex(fft_size),rspts(fft_size)
-       !
-       ex = 0_DP
-       vx = 0_DP
-       dvx = 0_DP
-       rho=rho_sp*real(fft_size,DP)/real(DL_vol,DP)
-       forall (i1=1:fft_size) rspts(i1)=(3._DP/4._DP/pi/rho(i1))**(1._DP/3._DP)
-       call xcxalp(1._DP,ex,fft_size,1,rspts,vx,dvx)
-       vx_sp = vx
-     end subroutine Test_Vx
+   deallocate(Ho,Hsc)
      !
  end subroutine DFT_driver
  !

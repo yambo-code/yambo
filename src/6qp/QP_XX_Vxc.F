@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_XX_Vxc(E,k,Xk,q,be_verbose,io_and_wf_clean)
+subroutine QP_XX_Vxc(E,k,Xk,q,be_verbose,run_for_SC)
  !
  ! Hartree S_x self-energy + call to V_xc 
  !
@@ -40,7 +40,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q,be_verbose,io_and_wf_clean)
  implicit none
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
- logical      ::be_verbose,io_and_wf_clean
+ logical      ::be_verbose,run_for_SC
  !
  !Work Space
  !
@@ -103,7 +103,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q,be_verbose,io_and_wf_clean)
  ! I/O
  !
  io_err=-1
- if (io_and_wf_clean) then
+ if (run_for_SC) then
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
    io_err=ioXXVXC(ID)
  endif
@@ -162,6 +162,13 @@ subroutine QP_XX_Vxc(E,k,Xk,q,be_verbose,io_and_wf_clean)
        ! m   =QP_table(i1,2)
        ! k   =QP_table(i1,3)
        !
+       if (run_for_SC) then
+         ib =QP_table(i1,1)
+         ibp=QP_table(i1,2)
+         if (ib  >E%nbf) cycle
+         if (ibp<=E%nbf) cycle
+       endif
+       !
 #if defined PJ_SPIN
        isc%is=(/QP_table(i1,1),QP_table(i1,3),1,QP_table(i1,4)/)
        isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iq,1),:),QP_table(i1,4)/)
@@ -211,9 +218,9 @@ subroutine QP_XX_Vxc(E,k,Xk,q,be_verbose,io_and_wf_clean)
    !
    ! Vxc
    !
-   call DFT_Vxc(E,Xk)
+   if (run_for_SC) call DFT_Vxc(E,Xk)
    !
-   if (io_and_wf_clean) call WF_free()
+   if (run_for_SC) call WF_free()
    !
  endif
  !
@@ -261,7 +268,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q,be_verbose,io_and_wf_clean)
  !
  ! I/O
  !
- if (io_err/=0.and.io_and_wf_clean) then
+ if (io_err/=0.and.run_for_SC) then
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=ioXXVXC(ID)
  endif

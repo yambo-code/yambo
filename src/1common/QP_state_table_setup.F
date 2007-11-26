@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine QP_state_table_setup(en)
+subroutine QP_state_table_setup(en)
  !
  ! There are 2 objects that command the QP corrections
  ! indexes: QP_state & QP_table.
@@ -180,7 +180,7 @@
 #else
        i_sp=1
 #endif
-       do i3=-QP_bands_mixed+1,QP_bands_mixed-1
+       do i3=0,QP_bands_mixed
          !
          if (i2+i3>QP_nb.or.i2+i3<1) cycle
          !
@@ -207,5 +207,4 @@
      if (k_i(1)>k_i(2)) k_i(1)=1
    end subroutine
    !
- end subroutine
-!
+end subroutine

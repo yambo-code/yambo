@@ -345,6 +345,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_xxvxc) call initactivate(1,&
 &                  'EXXRLvcs SxLowBnd GfnQPdb GfnQP_N GfnQP_E GfnQP_W GfnQP_Z')
+#if defined PJ_DFT
+ if (l_xxvxc) call initactivate(1,'BandMix')
+#endif
  !
  ! Optics(not bse) nor GW (no PP)
  !
@@ -481,7 +484,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined PJ_DFT
  if (l_dft) then
-   call initactivate(1,'FFTGvecs DFTScMode DFTiter DFTBands BandMix')
+   call initactivate(1,'FFTGvecs DFTScMode DFTiter DFTBands BandMix EXXRLvcs')
    call Xon('Xx',(/'BndsRn','NGsBlk'/))
  endif
 #endif

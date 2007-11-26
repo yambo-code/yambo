@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine V_exx(X,E,k,Vexx)
+subroutine V_exx(X,E,k,q,Vexx)
   !
   !  Exact exchange potential (vexx in direct space)
   !
@@ -27,18 +27,21 @@ subroutine V_exx(X,E,k,Vexx)
   !  vexx_RL(G) = Xo^{-1}(G,G')rho_{xc}(G)
   !  
   !  where: 
-  !  rho_xc(G) = int_k sum_{c,v} ( rho_{v,c}(k,G)   SigmaX_{v,c}(k)   +  
-  !                           + rho^*_{v,c}(k,G) SigmaX^*_{v,c}(k))\
-  !                           (E_{vk} - E_{ck})
+  !  rho_x(G) = int_k sum_{c,v} ( rho_{v,c}(k,G)   SigmaX_{v,c}(k)   +  
+  !                            + rho^*_{v,c}(k,G) SigmaX^*_{v,c}(k))\
+  !                            (E_{vk} - E_{ck})
   !
-  use pars,            ONLY: pi,SP,DP
-  use D_lattice,       ONLY: DL_vol
-  use X_m,             ONLY: X_t, X_reset, X_alloc, X_mat
-  use electrons,       ONLY:levels
-  use R_lattice,       ONLY:bz_samp
-  use FFT_m,           ONLY:fft_size
-  use frequency,       ONLY: w_samp,W_reset
+  use pars,            ONLY:pi,SP,DP
+  use D_lattice,       ONLY:DL_vol,i_time_rev,sop_inv,nsym
+  use X_m,             ONLY:X_t, X_reset,X_alloc,X_mat,X_rhoq0
+  use electrons,       ONLY:levels, n_full_bands
+  use R_lattice,       ONLY:bz_samp,g_rot,nkibz,nkbz,ng_vec
+  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan
+  use frequency,       ONLY:w_samp,W_reset
   use matrix_operate,  ONLY:mat_dia_inv,INV,USE_LK
+  use collision,       ONLY:ggwinfo,collision_reset
+  use QP_m,            ONLY:QP_Sx,QP_n_states,QP_table
+  use memory_m,        ONLY:mem_est
   !
   ! I/O
   !
@@ -46,18 +49,22 @@ subroutine V_exx(X,E,k,Vexx)
   real(SP) :: Vexx(fft_size)
   type(X_t)    :: X
   type(levels) :: E
-  type(bz_samp):: k
+  type(bz_samp):: k,q
   !
   ! Workspace:
   !
-  integer                  :: i1,i2 
-  complex(SP), allocatable :: Xo_inverse(:,:)
+  integer                  :: i1,ik,ik1,ic,iv,isym,g1,g2
+  complex(SP), allocatable :: Xo_inverse(:,:), SigmaX(:,:),rhotw_save(:),&
+&                             rho_w(:),rho_x(:),Vexx_RL(:)
+  complex(DP), allocatable :: Vx_dp(:)
   type(w_samp)             :: Xw
+  type(ggwinfo)            :: isc
   !
-  ! Calculate Xo^{-1}(G,G'): 1- initialize vars/dim
-  !                          2- calculate Xo, 
-  !                          3- delete wings,   
-  !                          4- invert
+  ! Calculate Xo^{-1}(G,G') => 1 - initialize vars/dim
+  !                            2 - calculate Xo, 
+  !                            3 - delete wings,   
+  !                            4 - invert
+  ! -----------------------------------------------
   ! 1:
   call W_reset(Xw)
   Xw%n = 1
@@ -65,28 +72,101 @@ subroutine V_exx(X,E,k,Vexx)
   ! 2:
   call X_alloc('X',(/X%ng,X%ng,Xw%n(2)/))
   call X_os(X_mat,1,(/1,Xw%n(1)/),E,k,Xw,X)
-  !print*, k%sstar
-  print*,fft_size
-  print*, X_mat
-  stop
   ! 3:
   allocate(Xo_inverse(X%ng-1,X%ng-1))
   forall(i1 = 2:X%ng)  Xo_inverse(i1-1,1:X%ng-1) =&
 &                      X_mat(i1,2:X%ng,1)
-  !
   call X_alloc('X')
   ! 4:
   call mat_dia_inv(INV,USE_LK,Xo_inverse)
   !
-  ! Calculate rho_xc(G)
+  ! Calculate rho_x(G) => 1 - calculate SigmaX_{v,c}(k)
+  !                        2 - initialize vars/dim
+  !                        for each k in IBZ:
+  !                        3 - retabulate SigmaX elements
+  !                        for each c,v: 
+  !                        4 - calculate  rho_w (G) = sum{R_k} rho_{c,v}(R_k,G)
+  !                        5 - accumulate rho_x (I use TR!)
+  ! -----------------------------------------------
+  ! NB: a. it does not work for metallic systems
+  !     b. it does not work for systems without TR (check out what happen with SI!)
+  ! -----------------------------------------------
+  ! 1:
+  allocate(QP_Sx(QP_n_states))
+  call mem_est("QP_Sx",(/QP_n_states/))
+  call QP_XX_Vxc(E,k,k,q,.FALSE.,.FALSE.) 
+  ! 2:
+  call collision_reset(isc)
+  isc%ngrho=X%ng
+  allocate(isc%rhotw(X%ng),rhotw_save(X%ng),rho_w(X%ng),rho_x(X%ng))
+  allocate(SigmaX(n_full_bands,X%ib(2)))
+  ! 3:
+  rho_x = (0.,0.)
+  do ik = 1, nkibz
+    SigmaX = (0.,0.)
+    do i1 = 1,QP_n_states
+      iv = QP_table(i1,1)
+      ic = QP_table(i1,2)
+      if (iv.le.n_full_bands) SigmaX(iv,ic) = QP_Sx(i1)
+    end do
+    ! 4:
+    do ic = n_full_bands+1, X%ib(2)
+      do iv = 1 ,n_full_bands
+        isc%is = (/iv,ik,1,1/)
+        isc%os = (/ic,ik,1,1/)
+        isc%qs = (/1,1,1/)
+        call scatterBamp(isc)
+        rhotw_save=isc%rhotw
+        rho_w = (0.,0.)
+        do ik1 = 1,k%nstar(ik)
+          isym = k%star(ik,ik1)
+          do g1=1,X%ng
+            g2 = g_rot(sop_inv(isym),g1)
+            isc%rhotw(g1) = rhotw_save(g2)
+          enddo
+          if (isym>nsym/(i_time_rev+1)) then
+            rho_w(2:)= rho_w(2:)+isc%rhotw
+          else
+            rho_w(2:)= rho_w(2:)+conjg(isc%rhotw)
+          end if
+          rho_w(1) =  rho_w(1) + conjg(X_rhoq0(ic,iv,ik1,1))
+          ! 5:
+          rho_x(:) =  rho_x(:) + (E%f(iv,ik,1)*(2.-E%f(ic,ik,1))*&
+               & rho_w(:)* SigmaX(ic,iv))/(E%E(iv,ik,1)-E%E(ic,ik,1))    
+        end do
+      end do
+    end do
+  end do 
+  deallocate(isc%rhotw,rhotw_save,rho_w,SigmaX)
+  call X_alloc('OptOsc')
+  if (allocated(QP_Sx))  deallocate(QP_Sx)
   !
-  
+  ! Calculate Vexx_RL
   !
-  ! Calculate vexx_RL
+  allocate(Vexx_RL(X%ng))
+   Vexx_RL = (0.,0.)
+  do g1= 2, X%ng
+    Vexx_RL(2:X%ng)=Vexx_RL(2:X%ng)+Xo_inverse(1:X%ng-1,g1-1)*rho_x(g1)
+  end do
   !
-
+  deallocate(rho_x)
   !
-  ! Calculate vexx_DL
+  ! Calculate Vexx (DL)
   !
+  allocate(Vx_dp(fft_size))
+  Vx_dp = (0.,0.)
+  Vx_dp(fft_g_table(1:X%ng,1))= Vexx_RL(1:X%ng)/(DL_vol*float(nkbz)) 
+#if defined FFTW
+  fftw_plan = 0
+  call fft_3d(Vx_dp,fft_dim,1,fftw_plan)
+  fftw_plan = 0
+#else
+  call fft_3d(Vx_dp,fft_dim,1)
+#endif
+  !
+!  Vexx = real(Vx_dp)
+  !
+  deallocate(Vexx_RL,Vx_dp)
+  STOP
 end subroutine V_exx
 

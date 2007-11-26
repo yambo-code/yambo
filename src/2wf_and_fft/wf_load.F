@@ -81,7 +81,7 @@ subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
 &          kpts_to_load(1)>=wf_k(1),kpts_to_load(2)<=wf_k(2),&
 &          s_2_load(1)>=wf_s(1),s_2_load(2)<=wf_s(2),&
 &          wf_space==wf_space_here/))) then
-   if (wf_space=="R".and.all(fft_dim==fft_dim_loaded)) return
+   if (wf_space=="R".and.all(fft_dim<=fft_dim_loaded)) return
  endif
  !
  ! First WF_free then fft_setup.

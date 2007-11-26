@@ -34,8 +34,12 @@ module SPP
  !
  ! Exc WF
  !
+ integer, parameter :: max_lambda_deg=100
+ !
  logical      ::lexcwf
  integer      ::lambda       !energy of the exciton
+ integer      ::n_lambda_deg 
+ integer      ::lambda_deg(max_lambda_deg)
  integer      ::ncell(3)     !number of repetitions of the cell
  real(SP)     ::max_energy   !max energy to be shown in ordering
  real(SP)     ::r_hole(3)    !position of the hole 
@@ -43,6 +47,7 @@ module SPP
  character(1) ::action_mode  !to decide if sorting or plotting
  character(1) ::p_format     !Format of the plot
  character(3) ::p_dir        !Direction of the plot 
+ character(3) ::R_normalize 
  ! 
  integer                  ::nr(3),nr_tot
  complex(SP), allocatable ::exc_wf(:)
@@ -55,7 +60,7 @@ module SPP
  logical :: lelph
  integer :: elph_steps
  real(SP):: elph_gamma_broad
- real(SP):: elph_broad
+ real(SP):: ph_broad
  real(SP):: elph_Ef
  real(SP):: elph_E_max
  character(schlen) :: elph_dbs_path

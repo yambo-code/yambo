@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine QP_elph(en,k,q,qp)
+subroutine QP_elph(en,k,q,qp)
  !
  ! This routine calculates the QP shifts due to el-ph intercation
  ! following the Allen-Cardona formulation (see for example 
@@ -350,7 +350,7 @@
      !
      integer, parameter ::n_g_sq_freq=500
      !
-     real(SP)     ::g_sq_F(n_g_sq_freq,3),delta_E,ph_freq
+     real(SP)     ::g_sq_F(n_g_sq_freq,5),delta_E,ph_freq
      type(w_samp) ::g_sq_F_E
      complex(DP)  ::DP_corr
      logical      ::state_is_2do(QP_n_states)
@@ -413,6 +413,10 @@
 &                       Fermi_fnc_derivative(delta_E,aimag(g_sq_F_E%p(iw)))
              g_sq_F(iw,3)=g_sq_F(iw,3)+gsqF_ca_corr(iqp,iq,il)*&
 &                       Fermi_fnc_derivative(delta_E,aimag(g_sq_F_E%p(iw)))
+             g_sq_F(iw,4)=g_sq_F(iw,4)+gsqF_life_bose(iqp,iq,il)*&
+&                       Fermi_fnc_derivative(delta_E,aimag(g_sq_F_E%p(iw)))
+             g_sq_F(iw,5)=g_sq_F(iw,5)+gsqF_life_f(iqp,iq,il)*&
+&                       Fermi_fnc_derivative(delta_E,aimag(g_sq_F_E%p(iw)))
              !
            enddo
          enddo
@@ -424,19 +428,25 @@
        QP_Sc(iqp,:)=QP_Sc(iqp,:)+DP_corr
        !
        if (.not.PH_damping>0.) cycle
-       if (.not.state_is_2do(iqp)) cycle
+       !
+       ! Commented to print all ELiashberg functions
+       !
+!       if (.not.state_is_2do(iqp)) cycle
        !
        ch='g_sq_F_b_'//trim(intc(QP_table(iqp,1)))//'_k_'//trim(intc(QP_table(iqp,3)))
        call of_open_close(trim(ch),'ot')
        call msg('o g_sq','#',(/'E  [meV]','gF^2 sum','gF^2 Fan','gF^2  DW',&
-&                              'gF^2 Cor'/),INDENT=0,USE_TABS=.true.)
+&                              'gF^2 Cor','Gamma(G)','G   Bose','G F     '/),&
+&                            INDENT=0,USE_TABS=.true.)
        call msg('o g_sq','#')
        !
        do iw=1,n_g_sq_freq
          call msg('o g_sq','',&
 &                (/real(g_sq_F_E%p(iw))*HARTREE*1000.,&
 &                  g_sq_F(iw,1)+g_sq_F(iw,2)+g_sq_F(iw,3),&
-&                  g_sq_F(iw,1),g_sq_F(iw,2),g_sq_F(iw,3)/),&
+&                  g_sq_F(iw,1),g_sq_F(iw,2),g_sq_F(iw,3),&
+&                  g_sq_F(iw,4)+g_sq_F(iw,5),&
+&                  g_sq_F(iw,5),g_sq_F(iw,5)/),&
 &                INDENT=-2,USE_TABS=.TRUE.)
        enddo
        call of_open_close(trim(ch))
@@ -453,4 +463,4 @@
    !
    ! -- GPL_START --
    !
- end subroutine
+end subroutine

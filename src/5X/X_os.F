@@ -204,6 +204,12 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
        i_spin = X_poles_tab(n_poles,4)
        ik = Xk%sstar(ikbz,1)
        is = Xk%sstar(ikbz,2)
+       !
+       ! Spatial part of is to be used to rotate rhotw
+       !
+       isp=is
+       if (is>nsym/(i_time_rev+1)) isp=is-nsym/(i_time_rev+1)
+       !
        isc%is = (/ic,ik,1,i_spin/)
        isc%os = (/iv,ik,1,i_spin/)
        isc%qs = (/1,1,1/)
@@ -226,7 +232,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
          isave=(/iv,ic,ik,i_spin/)
        endif
        do g1=1,X%ng
-         g2=g_rot(sop_inv(is),g1)
+         g2=g_rot(sop_inv(isp),g1)
          isc%rhotw(g1)=rhotw_save(g2)
        enddo
        if (is>nsym/(i_time_rev+1)) isc%rhotw=conjg(isc%rhotw)

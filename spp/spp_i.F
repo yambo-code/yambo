@@ -148,7 +148,7 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  if (lelph) then
    i_err=elph_pw_dbs(k,en,q)
-   call elph_eliashberg(k,en,q)
+   call elph_eliashberg_dos(k,en,q)
  endif
  !
 #endif

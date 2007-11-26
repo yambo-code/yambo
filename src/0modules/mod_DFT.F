@@ -28,6 +28,7 @@ module DFT
  !
  integer           :: DFT_bands
  integer           :: DFT_iterations
+ real              :: DFT_threshold
  character(schlen) :: DFT_SC
  !
 ! implicit none

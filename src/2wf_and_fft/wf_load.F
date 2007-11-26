@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
+subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
 &                   spins_to_load,space,title)
  !
  ! Load and (eventually) FFTs the wavefunctions
@@ -186,4 +186,4 @@
  wf_norm_test=.false.
  call msg('rn','[WF loader] Normalization (few states)  min/max  :',(/mndp,mxdp/))
  !
- end subroutine
+end subroutine

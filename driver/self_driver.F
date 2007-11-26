@@ -240,7 +240,7 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
  ! DFT
  !=====
  !
- if (l_dft) call DFT_driver(en,k,q)
+ if (l_dft) call DFT_driver(X(1),en,k,q)
 #endif
  !
  ! GAME OVER :(

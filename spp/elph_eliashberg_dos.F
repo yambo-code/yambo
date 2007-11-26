@@ -19,18 +19,18 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine elph_eliashberg(k,en,q)
+subroutine elph_eliashberg_dos(k,en,q)
  !
  use pars,                ONLY:SP,schlen,pi,HA2GHZ,HA2THZ,HARTREE
  use com,                 ONLY:msg,of_open_close
- use electrons,           ONLY:levels
+ use electrons,           ONLY:levels,n_met_bands,n_full_bands
  use R_lattice,           ONLY:bz_samp
  use SPP,                 ONLY:elph_steps,elph_Ef,elph_gamma_broad,&
-&                              elph_broad
+&                              ph_broad
  use ELPH,                ONLY:ph_modes,elph_nb,elph_gkkp,ph_freqs_sq,&
 &                              max_ph_freq,elph_nq,elph_use_q_grid,&
-&                              E_k_plus_q,setup_k_plus_q_levels
- use IO_m,                ONLY:io_control,OP_RD,VERIFY,RD_CL_IF_END,DUMP
+&                              E_k_plus_q,setup_k_plus_q_levels,elph_gkkp_free
+ use IO_m,                ONLY:io_control,OP_RD,VERIFY,RD_CL_IF_END,DUMP,RD_CL
  use timing,              ONLY:live_timing
  use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m,       ONLY:par_indexes
@@ -42,10 +42,12 @@ subroutine elph_eliashberg(k,en,q)
  ! Work Space 
  !
  integer           ::i1,i2,im,iq,nq_todo
- real(SP)          ::dos_ef,Ef_diff,E,q_weight,&
-&                    aF(elph_steps),aF_energy(elph_steps),omega,e_step
+ real(SP)          ::dos_ef,Ef_diff,E,q_weight,aF(elph_steps),&
+&                    ph_dos(elph_steps),ph_energy(elph_steps),omega,e_step
+ complex(SP)       ::d_elias_dos
  character(schlen) ::o_file_name,ch
  type(pp_indexes)  ::px
+ logical           ::l_elias,l_dos
  real(SP), allocatable :: gamma(:,:)
  !
  !I/O
@@ -53,9 +55,16 @@ subroutine elph_eliashberg(k,en,q)
  integer           ::io_err,ID
  integer, external ::ioELPH
  !
- if (elph_gamma_broad<1.E-8) return
+ l_elias=elph_gamma_broad>1.E-8.and.n_met_bands/=n_full_bands
+ l_dos  =ph_broad>1.E-8
  !
- call section("*","== Electron-Phonon Interface: Eliashberg Function ==")
+ if (l_elias.and.l_dos) then
+   call section("*","== Electron-Phonon Interface: phonon DOS & Eliashberg Function ==")
+ else if (l_dos) then
+   call section("*","== Electron-Phonon Interface: phonon DOS ==")
+ else
+   return
+ endif
  !-----------------------------------------------------------------------
  !
  Ef_diff=0.
@@ -74,17 +83,6 @@ subroutine elph_eliashberg(k,en,q)
    enddo
  enddo
  !
- ! zeroing
- !
- aF=0.
- !
- ! Energy range
- !
- e_step=max_ph_freq*1.10/(elph_steps-1)
- do i2=1,elph_steps
-   aF_energy(i2)=(i2-1)*e_step
- enddo
- !
  call io_control(ACTION=OP_RD,SEC=(/1/),MODE=DUMP,ID=ID)
  io_err=ioELPH(ID)
  !
@@ -95,15 +93,31 @@ subroutine elph_eliashberg(k,en,q)
  endif
  call msg('l','sane')
  !
- ! Eliashberg Function
+ ! Energy range
+ !
+ e_step=max_ph_freq*1.10/(elph_steps-1)
+ do i2=1,elph_steps
+   ph_energy(i2)=(i2-1)*e_step
+ enddo
  !
  nq_todo=elph_nq
  if (elph_use_q_grid) nq_todo=q%nibz
- allocate(gamma(nq_todo,ph_modes))
- gamma=0.
+ !
+ ! Eliashberg Function & DOS function
+ !====================================
+ !
+ aF=0.
+ ph_dos=0.
+ !
+ if (l_elias) then
+   allocate(gamma(nq_todo,ph_modes))
+   gamma=0.
+ endif
  !
  call par_indexes(px,(/nq_todo/))
- call live_timing('Eliashberg',px%stps(myid+1))
+ if (l_elias.and..not.l_dos) call live_timing('Eliashberg',px%stps(myid+1))
+ if (.not.l_elias.and.l_dos) call live_timing('ph DOS',px%stps(myid+1))
+ if (l_dos.and.l_elias)      call live_timing('Eliashberg & DOS',px%stps(myid+1))
  !
  ! calculate q%weights
  !
@@ -116,7 +130,7 @@ subroutine elph_eliashberg(k,en,q)
    call io_control(ACTION=RD_CL_IF_END,SEC=(/iq+1/),ID=ID)
    io_err=ioELPH(ID)  
    !
-   if (.not.elph_use_q_grid) call setup_k_plus_q_levels(en%Efermi(1))
+   if (.not.elph_use_q_grid.and.l_elias) call setup_k_plus_q_levels(en%Efermi(1))
    !
    ! Q weight
    !
@@ -130,50 +144,78 @@ subroutine elph_eliashberg(k,en,q)
      cycle
    endif
    !
-   ! Gamma Factors
-   !
-   call elph_gamma(iq)
+   if (l_elias) then
+     !
+     ! Gamma Factors
+     !
+     call elph_gamma(iq)
+     !
+   endif
    !
    do im=1,ph_modes
      omega = sqrt( MAX( ph_freqs_sq(iq,im),0. ) )
      if (omega<1.E-10) cycle
      do i2=1,elph_steps
-       aF(i2)=aF(i2)+gamma(iq,im)*q_weight*&
-&             Fermi_fnc_derivative(aF_energy(i2)-omega,elph_broad)/omega/dos_ef
+       !
+       d_elias_dos=q_weight*Fermi_fnc_derivative(ph_energy(i2)-omega,ph_broad)
+       !
+       if (l_elias) aF(i2)=aF(i2)+gamma(iq,im)*d_elias_dos/omega/dos_ef
+       if (l_dos)   ph_dos(i2)=ph_dos(i2)+d_elias_dos
+       !
      enddo
    enddo
+   !
    call live_timing(steps=1)
    !
  enddo
  !
  call live_timing()
- call pp_redux_wait(gamma)
- call pp_redux_wait(aF)
+ if (l_elias) then
+   call pp_redux_wait(gamma)
+   call pp_redux_wait(aF)
+ endif
+ if (l_dos) call pp_redux_wait(ph_dos)
  !
  ! Output file
  !
- o_file_name='eliashberg'
- call of_open_close(o_file_name,'ot')
- call msg('o eli','#',' Eliashberg Function & Gamma factors',INDENT=0)
- call msg('o eli','#','',INDENT=0)
- call msg('o eli',         '#  Bands              :',elph_nb,INDENT=0)
- call msg('o eli','#','',INDENT=0)
- do iq=1,nq_todo
-   write (ch,'(a,i6.6,a)') '# Gamma (',iq,') [GHz]:'
-   call msg('o eli',trim(ch),(/gamma(iq,:)*HA2GHZ/) ,INDENT=0)
- enddo
- call msg('o eli','#','',INDENT=0)
- call msg('o eli','#',(/'E(THz)','a_F(w)'/),USE_TABS=.true.)
- call msg('o eli','#','',INDENT=0)
- do i1=1,elph_steps
-   aF(i1)=aF(i1)/pi
-   call msg('o eli','',(/aF_energy(i1)*HA2THZ,aF(i1)/),USE_TABS=.true.)
- enddo
- call of_open_close(o_file_name)
+ if (l_elias) then
+   o_file_name='eliashberg'
+   call of_open_close(o_file_name,'ot')
+   call msg('o eli','#',' Eliashberg Function & Gamma factors',INDENT=0)
+   call msg('o eli','#','',INDENT=0)
+   call msg('o eli',         '#  Bands              :',elph_nb,INDENT=0)
+   call msg('o eli','#','',INDENT=0)
+   do iq=1,nq_todo
+     write (ch,'(a,i6.6,a)') '# Gamma (',iq,') [GHz]:'
+     call msg('o eli',trim(ch),(/gamma(iq,:)*HA2GHZ/) ,INDENT=0)
+   enddo
+   call msg('o eli','#','',INDENT=0)
+   call msg('o eli','#',(/'E(THz)','a_F(w)'/),USE_TABS=.true.)
+   call msg('o eli','#','',INDENT=0)
+   do i1=1,elph_steps
+     aF(i1)=aF(i1)/pi
+     call msg('o eli','',(/ph_energy(i1)*HA2THZ,aF(i1)/),USE_TABS=.true.)
+   enddo
+   call of_open_close(o_file_name)
+ endif
+ if (l_dos) then
+   o_file_name='ph_dos'
+   call of_open_close(o_file_name,'ot')
+   call msg('o dos','#',' Phonon DOS function',INDENT=0)
+   call msg('o dos','#','',INDENT=0)
+   call msg('o dos','#',(/'E(meV)','DOS(w)'/),USE_TABS=.true.)
+   call msg('o dos','#','',INDENT=0)
+   do i1=1,elph_steps
+     ph_dos(i1)=ph_dos(i1)/pi
+     call msg('o dos','',(/ph_energy(i1)*HARTREE*1000.,ph_dos(i1)/),USE_TABS=.true.)
+   enddo
+   call of_open_close(o_file_name)
+ endif
  !
  !CLEAN
  !
- deallocate(gamma)
+ if (l_elias) deallocate(gamma)
+ call elph_gkkp_free()
  !
  contains
    !

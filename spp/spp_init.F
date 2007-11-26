@@ -70,6 +70,9 @@ subroutine spp_init(instr,lnstr,FINALIZE)
    r_hole= (/0.,0.,0./)
    p_dir = '1'
    lambda = 1          
+   n_lambda_deg = 1          
+   lambda_deg = 0          
+   R_normalize= "yes"
    sort_mode = "i"
    action_mode = "s"
    p_format = 'g'
@@ -80,7 +83,7 @@ subroutine spp_init(instr,lnstr,FINALIZE)
    ! ELPH
    !
    elph_steps=200
-   elph_broad=0.1/HARTREE
+   ph_broad=0.01/HARTREE
    elph_gamma_broad=0.0
    elph_Ef=0.
    elph_dbs_path='.'
@@ -164,12 +167,12 @@ subroutine spp_init(instr,lnstr,FINALIZE)
  !
  if (lkanalyze) call initactivate(1,"cooIn cooOut GWKpts Qpts KShift1 KShift2 KShift3")
  if (lbzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut")
- if (lexcwf) call initactivate(1,"Action Max_Energy Order State Cells &
+ if (lexcwf) call initactivate(1,"Action Max_Energy Order RNorm State Cells &
 &                              Hole Dimension Direction Format")
 #if defined SPP_PJ_PH
  !
  lelph=rstatus(4)/=0
- if (lelph) call initactivate(1,"DBsPATH PHfreqF EEfermi EfGbroad ElPhBroad ElPhStps")
+ if (lelph) call initactivate(1,"DBsPATH PHfreqF EEfermi EfGbroad PhBroad PhStps")
  !
 #endif
 

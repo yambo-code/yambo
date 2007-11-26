@@ -1,1 +1,1 @@
-objs =	DFT_driver.o 
+objs =	DFT_driver.o V_Hartree.o V_exx.o

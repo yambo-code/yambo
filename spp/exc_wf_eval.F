@@ -29,11 +29,12 @@ subroutine exc_wf_eval(Xk,Xen)
  use wave_func,   ONLY:wf_load,wf_state,wf,WF_free
  use R_lattice,   ONLY:nXkibz,bz_samp,ng_vec,q0_def_norm,d3k_factor
  use SPP,         ONLY:action_mode,ncell,lambda,r_hole,sort_mode,&
-&                      max_energy,nr,exc_wf,nr_tot
+&                      max_energy,nr,exc_wf,nr_tot,n_lambda_deg,lambda_deg,&
+&                      R_normalize
  use IO_m,        ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
  use BS,          ONLY:BS_K_dim,BS_bands,BS_q,BSS_n_descs,BSS_description,&
 &                      BS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
-&                      BS_cpl_K_exchange,BS_cpl_K_corr,BSS_q0
+&                      BS_cpl_K_exchange,BS_cpl_K_corr,BSS_q0,BSS_write_eig_2_db
  use electrons,   ONLY:levels,spin_occ
  use com,         ONLY:msg,of_open_close,error,warning
  use X_m,         ONLY:X_t
@@ -67,7 +68,7 @@ subroutine exc_wf_eval(Xk,Xen)
  !
  !... Dummy arguments 
  !
- integer      :: iq,ia,i1,i2
+ integer      :: iq,ia,i1,i2,i_l
  real(SP)     :: kr,r_hole_rlu(3)
 #if defined _DOUBLE
  complex(DP)  :: zdotu
@@ -137,7 +138,7 @@ subroutine exc_wf_eval(Xk,Xen)
  if (action_mode == 's' ) then 
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
    io_err=ioBSS_diago(iq,BS_K_dim,BS_E,BS_R,ID)
-   call sort_energies(BS_R,BS_E)
+   call sort_energies(BS_R,BS_E,.true.)
    return
  endif
  !
@@ -153,6 +154,12 @@ subroutine exc_wf_eval(Xk,Xen)
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
  io_err=ioBSS_diago(iq,BS_K_dim,BS_E,BS_R,ID)
+ !
+ if (.not.BSS_write_eig_2_db) call error('Diago database does not conatind excitonic wfs')
+ !
+ ! Sort energies to find degenerate states
+ !
+ call sort_energies(BS_R,BS_E,.false.)
  ! 
  ! Loading  Wf 
  !
@@ -215,6 +222,10 @@ subroutine exc_wf_eval(Xk,Xen)
  !
  call live_timing('Exc-Wfs',nr_tot)  
  !
+ A_weight=0._SP
+ exc_wf  =(0._SP,0._SP)
+ wf_vc   =(0._SP,0._SP)
+ !
  do ir=1,nr_tot
    r_eh(:)=rvecbig(:,ir)-r_hole(:)
    do neh = 1,BS_K_dim
@@ -229,7 +240,12 @@ subroutine exc_wf_eval(Xk,Xen)
      iv_fft = wf_state(iv,ikibz,1)
      ic_fft = wf_state(ic,ikibz,1)
      !
-     if (ir==1) A_weight(neh)=(BS_mat(neh,lambda)*conjg(BS_mat(neh,lambda)))
+     if (ir==1) then
+       do i_l=1,n_lambda_deg
+         A_weight(neh)=A_weight(neh)+BS_mat(neh,lambda_deg(i_l))*&
+&                              conjg(BS_mat(neh,lambda_deg(i_l)))
+       enddo
+     endif
      !
      wf_vc(neh) = wf(fft_rot_r(sop_inv(is),rindex(ir)), ic_fft)*&
 &          conjg( wf(fft_rot_r(sop_inv(is),rindex(ir_hole)), iv_fft) )
@@ -238,19 +254,23 @@ subroutine exc_wf_eval(Xk,Xen)
      !
    enddo  !Matrix elements
    !
+   do i_l=1,n_lambda_deg
 #if defined _DOUBLE
-   exc_wf(ir) = zdotu(BS_K_dim,BS_mat(1,lambda),1,wf_vc,1)
+     exc_wf(ir) = exc_wf(ir)+zdotu(BS_K_dim,BS_mat(1,lambda_deg(i_l)),1,wf_vc,1)
 #else
-   exc_wf(ir) = cdotu(BS_K_dim,BS_mat(1,lambda),1,wf_vc,1)
+     exc_wf(ir) = exc_wf(ir)+cdotu(BS_K_dim,BS_mat(1,lambda_deg(i_l)),1,wf_vc,1)
 #endif
+   enddo
+   !
    call live_timing(steps=1)
+   !
  enddo   !grid points
  !
  call live_timing
  !
  ! Sort the weights
  !
- A_weight=A_weight/maxval(A_weight)
+ if (trim(R_normalize)=='yes') A_weight=A_weight/maxval(A_weight)
  call sort(arrin=A_weight,indx=A_indx)
  !
  ! report on file the weights and the amplitude 
@@ -406,18 +426,49 @@ subroutine exc_wf_eval(Xk,Xen)
      !
    end subroutine
    !
-   subroutine sort_energies(BS_R,BS_E)
+   subroutine sort_energies(BS_R,BS_E,full_run)
      !
      implicit none 
      complex(SP) :: BS_R(BS_K_dim),BS_E(BS_K_dim)
      !
      ! Work Space
      !
-     integer               :: j1,j2
-     integer,  allocatable :: E_indx(:)
-     real(SP), allocatable :: R(:)         !square residuals R
-     real(SP)              :: Rmax         !maximum value of the residuals
-     real(SP), allocatable :: v2sort(:)
+     integer               ::j1,j2
+     integer,  allocatable ::E_indx(:)
+     real(SP), allocatable ::R(:)         !square residuals R
+     real(SP)              ::Rmax         !maximum value of the residuals
+     real(SP), allocatable ::v2sort(:)
+     logical               ::full_run
+     character(schlen)     ::ch_dummy
+     !
+     ! Perform perliminar sort of energies
+     !
+     if (.not.full_run) then
+       !
+       ! Search for degenerate states
+       !
+       lambda_deg(1)=lambda
+       !
+       do j1=1,BS_K_dim
+         !
+         if (j1==lambda) cycle
+         !
+         if ( abs( real(BS_E(j1))-real(BS_E(lambda)) )<1.E-5) then
+           n_lambda_deg=n_lambda_deg+1
+           lambda_deg(n_lambda_deg)=j1
+         endif
+       enddo
+       !
+1      if (n_lambda_deg>1) then
+         ch_dummy=' '
+         do j1=2,n_lambda_deg
+           ch_dummy=trim(ch_dummy)//' '//trim(intc(lambda_deg(j1)))
+         enddo
+         call msg('s',':: Mergering with '//trim(intc(n_lambda_deg-1))//' state(s) :'//&
+&                     trim(ch_dummy))
+       endif
+       return
+     endif
      !
      call section('+','Sorting Energies and Strengths')
      !
@@ -446,31 +497,39 @@ subroutine exc_wf_eval(Xk,Xen)
      call msg('o sort','#',titles(:4),INDENT=0,USE_TABS=.true.)
      call msg('o sort','#','',INDENT=0)
      !
-     allocate( R(BS_K_dim), v2sort(BS_K_dim),E_indx(BS_K_dim))
+     allocate(R(BS_K_dim))
      R(:) = BS_R(:)*conjg(BS_R(:))
      R(:) = R(:)*real(spin_occ)/(2.*pi)**3.*&
 &           d3k_factor*4.*pi/q0_def_norm**2*HARTREE*1000.
      Rmax = maxval(R)
      !
-     if (sort_mode == 'e') v2sort=real(BS_E)
-     if (sort_mode == 'i') v2sort=R
+     if (trim(R_normalize)=='yes') R=R/Rmax
      !
-     call sort(arrin=v2sort,indx=E_indx)
+     if (sort_mode == 'i') then
+       !
+       allocate(E_indx(BS_K_dim),v2sort(BS_K_dim))
+       v2sort=R
+       call sort(arrin=v2sort,indx=E_indx)
+       !
+     endif
      !
      do j1=BS_K_dim,1,-1
        !
-       j2=E_indx(j1)
-       if (sort_mode == 'e') j2=E_indx(-j1+BS_K_dim+1)
+       j2=j1
+       if (sort_mode == 'i') j2=E_indx(j1)
        !
        if (real(BS_E(j2))>max_energy.or.real(BS_E(j2))<0.) cycle 
+       !
        call msg('o sort','',&
 &               (/real(BS_E(j2))*HARTREE,abs(aimag(BS_E(j2)))*HARTREE*1000.,&
 &                 R(j2),real(j2)/),INDENT=-2,USE_TABS=.TRUE.)
        !
      enddo
      ! 
+     if (sort_mode == 'i') deallocate(v2sort,E_indx)
+     deallocate(R)
+     !
      call of_open_close('exc_sort'//trim(extension(1)))
-     deallocate(R,v2sort,E_indx)
      !
    end subroutine
    !

@@ -56,7 +56,7 @@ subroutine QP_states_simmetrize(vec_2_sim,en,state_is_2do)
      !
      inx   =Eo_sorted_index(i2)
      !
-     if (i2>first_el(i1)) state_is_2do(i2)=.FALSE.
+     if (i2>first_el(i1)) state_is_2do(inx)=.FALSE.
      !
      sym_value=sym_value+vec_2_sim(inx)/real( n_of_el(i1) )
      !

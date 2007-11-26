@@ -79,6 +79,8 @@ subroutine DFT_Vxc(E,Xk)
      !
    enddo
    !
+   return
+   !
  endif
  !
 #if defined PJ_SPIN

@@ -480,7 +480,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! DFT
  !
 #if defined PJ_DFT
- if (l_dft) call initactivate(1,'FFTGvecs DFTScMode DFTiter DFTBands BandMix')
+ if (l_dft) then
+   call initactivate(1,'FFTGvecs DFTScMode DFTiter DFTBands BandMix')
+   call Xon('Xx',(/'BndsRn','NGsBlk'/))
+ endif
 #endif
  !
  ! RAS

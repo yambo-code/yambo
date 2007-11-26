@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_XX_Vxc(E,k,Xk,q,be_verbose,perform_io)
+subroutine QP_XX_Vxc(E,k,Xk,q,be_verbose,io_and_wf_clean)
  !
  ! Hartree S_x self-energy + call to V_xc 
  !
@@ -40,7 +40,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q,be_verbose,perform_io)
  implicit none
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
- logical      ::be_verbose,perform_io
+ logical      ::be_verbose,io_and_wf_clean
  !
  !Work Space
  !
@@ -103,7 +103,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q,be_verbose,perform_io)
  ! I/O
  !
  io_err=-1
- if (perform_io) then
+ if (io_and_wf_clean) then
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
    io_err=ioXXVXC(ID)
  endif
@@ -213,7 +213,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q,be_verbose,perform_io)
    !
    call DFT_Vxc(E,Xk)
    !
-   call WF_free()
+   if (io_and_wf_clean) call WF_free()
    !
  endif
  !
@@ -261,7 +261,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q,be_verbose,perform_io)
  !
  ! I/O
  !
- if (io_err/=0.and.perform_io) then
+ if (io_err/=0.and.io_and_wf_clean) then
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=ioXXVXC(ID)
  endif

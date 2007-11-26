@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
+subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
  use pars,          ONLY:SP,DP,pi
  use R_lattice,     ONLY:bz_samp
@@ -149,4 +149,4 @@
      F_xc=dvxc(:,1)
  end select
  !
- end subroutine
+end subroutine

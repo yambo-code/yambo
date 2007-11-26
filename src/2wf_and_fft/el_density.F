@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine el_density(en,Xk,rho,use_si)
+subroutine el_density(en,Xk,rho,use_si)
  !
  !Electronic density.
  !
@@ -92,4 +92,4 @@
  !
  if (.not.use_si) rho=rho*(1+i_time_rev)
  !
- end subroutine
+end subroutine

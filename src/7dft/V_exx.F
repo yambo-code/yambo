@@ -31,10 +31,10 @@ subroutine V_exx(X,E,k,q,Vexx)
   !                            + rho^*_{v,c}(k,G) SigmaX^*_{v,c}(k))\
   !                            (E_{vk} - E_{ck})
   !
-  use pars,            ONLY:pi,SP,DP
+  use pars,            ONLY:pi,SP,DP,HARTREE
   use D_lattice,       ONLY:DL_vol,i_time_rev,sop_inv,nsym
   use X_m,             ONLY:X_t, X_reset,X_alloc,X_mat,X_rhoq0
-  use electrons,       ONLY:levels, n_full_bands
+  use electrons,       ONLY:levels
   use R_lattice,       ONLY:bz_samp,g_rot,nkibz,nkbz,ng_vec
   use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan
   use frequency,       ONLY:w_samp,W_reset
@@ -55,7 +55,7 @@ subroutine V_exx(X,E,k,q,Vexx)
   !
   integer                  :: i1,ik,ik1,ic,iv,isym,g1,g2
   complex(SP), allocatable :: Xo_inverse(:,:), SigmaX(:,:),rhotw_save(:),&
-&                             rho_w(:),rho_x(:),Vexx_RL(:)
+&                             rho_w(:,:),rho_x(:),Vexx_RL(:)
   complex(DP), allocatable :: Vx_dp(:)
   type(w_samp)             :: Xw
   type(ggwinfo)            :: isc
@@ -80,7 +80,7 @@ subroutine V_exx(X,E,k,q,Vexx)
   ! 4:
   call mat_dia_inv(INV,USE_LK,Xo_inverse)
   !
-  ! Calculate rho_x(G) => 1 - calculate SigmaX_{v,c}(k)
+  ! Calculate rho_x(G) =>  1 - calculate SigmaX_{v,c}(k)
   !                        2 - initialize vars/dim
   !                        for each k in IBZ:
   !                        3 - retabulate SigmaX elements
@@ -94,12 +94,12 @@ subroutine V_exx(X,E,k,q,Vexx)
   ! 1:
   allocate(QP_Sx(QP_n_states))
   call mem_est("QP_Sx",(/QP_n_states/))
-  call QP_XX_Vxc(E,k,k,q,.FALSE.,.FALSE.) 
+  call QP_XX_Vxc(E,k,k,q,.FALSE.,.TRUE.) 
   ! 2:
   call collision_reset(isc)
   isc%ngrho=X%ng
-  allocate(isc%rhotw(X%ng),rhotw_save(X%ng),rho_w(X%ng),rho_x(X%ng))
-  allocate(SigmaX(n_full_bands,X%ib(2)))
+  allocate(isc%rhotw(X%ng),rhotw_save(X%ng),rho_w(X%ng,2),rho_x(X%ng))
+  allocate(SigmaX(E%nbf,X%ib(2)))
   ! 3:
   rho_x = (0.,0.)
   do ik = 1, nkibz
@@ -107,16 +107,20 @@ subroutine V_exx(X,E,k,q,Vexx)
     do i1 = 1,QP_n_states
       iv = QP_table(i1,1)
       ic = QP_table(i1,2)
-      if (iv.le.n_full_bands) SigmaX(iv,ic) = QP_Sx(i1)
+      if (QP_table(i1,3).ne.ik) cycle
+      if (iv >  E%nbf) cycle 
+      if (ic <= E%nbf) cycle
+      SigmaX(iv,ic) = QP_Sx(i1)
+      print*, iv, ic, ik, SigmaX(iv,ic)*hartree 
     end do
     ! 4:
-    do ic = n_full_bands+1, X%ib(2)
-      do iv = 1 ,n_full_bands
+    do ic = E%nbf+1, X%ib(2)
+      do iv = 1 ,E%nbf
         isc%is = (/iv,ik,1,1/)
         isc%os = (/ic,ik,1,1/)
         isc%qs = (/1,1,1/)
         call scatterBamp(isc)
-        rhotw_save=isc%rhotw
+        rhotw_save = isc%rhotw
         rho_w = (0.,0.)
         do ik1 = 1,k%nstar(ik)
           isym = k%star(ik,ik1)
@@ -124,16 +128,18 @@ subroutine V_exx(X,E,k,q,Vexx)
             g2 = g_rot(sop_inv(isym),g1)
             isc%rhotw(g1) = rhotw_save(g2)
           enddo
+          isc%rhotw(1) = X_rhoq0(ic,iv,ik1,1)
           if (isym>nsym/(i_time_rev+1)) then
-            rho_w(2:)= rho_w(2:)+isc%rhotw
+            rho_w(2:,2)= rho_w(2:,2) + isc%rhotw(2:)
+            rho_w(1,2) = rho_w(1,2) + conjg(isc%rhotw(1)) 
           else
-            rho_w(2:)= rho_w(2:)+conjg(isc%rhotw)
+            rho_w(:,1)= rho_w(:,1)+ conjg(isc%rhotw(:))
           end if
-          rho_w(1) =  rho_w(1) + conjg(X_rhoq0(ic,iv,ik1,1))
-          ! 5:
-          rho_x(:) =  rho_x(:) + (E%f(iv,ik,1)*(2.-E%f(ic,ik,1))*&
-               & rho_w(:)* SigmaX(ic,iv))/(E%E(iv,ik,1)-E%E(ic,ik,1))    
         end do
+        ! 5:
+        rho_x(:) =  rho_x(:) + E%f(iv,ik,1)*(2.-E%f(ic,ik,1))*&
+               & (rho_w(:,1)* SigmaX(iv,ic)+rho_w(:,2)* conjg(SigmaX(iv,ic)))&
+               &/(E%E(iv,ik,1)-E%E(ic,ik,1))    
       end do
     end do
   end do 
@@ -164,9 +170,9 @@ subroutine V_exx(X,E,k,q,Vexx)
   call fft_3d(Vx_dp,fft_dim,1)
 #endif
   !
-!  Vexx = real(Vx_dp)
+  Vexx = real(Vx_dp)
   !
   deallocate(Vexx_RL,Vx_dp)
-  STOP
+  !
 end subroutine V_exx
 

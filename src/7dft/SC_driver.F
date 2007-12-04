@@ -19,15 +19,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DFT_driver(X,E,k,q)
+subroutine SC_driver(X,E,k,q)
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP, HARTREE
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp,qindx_S
  use D_lattice,      ONLY:DL_vol
  use QP_m,           ONLY:QP_state,QP_nb,QP_nk,QP_Vxc,QP_n_states,QP_table,&
 &                         QP_ng_Sx
- use DFT,            ONLY:DFT_SC,DFT_bands, DFT_iterations,DFT_threshold
+ use SC,             ONLY:SC_bands, SC_iterations,SC_threshold
  use wave_func,      ONLY:wf_load, wf, wf_state
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
@@ -44,7 +44,7 @@ subroutine DFT_driver(X,E,k,q)
  integer                  :: it_on_disk,ir,i1,i2,it,ik,ifft,ifftp,ib,ibp
  real(SP)                 :: test_convergence
  complex(SP)              :: Vh
- real(SP), allocatable    :: rho_nm1(:),rho(:),vhr(:),vxc(:)
+ real(SP), allocatable    :: rho_nm1(:),rho(:),vhr(:),vxc(:),vxc_nm1(:)
  complex(SP), allocatable :: Ho(:,:,:), Hsc(:,:), wf_tmp(:,:),Ho_tmp(:,:), c_ws(:)
 #if defined _DOUBLE
  complex(DP)             ::zdotc,zdotu
@@ -53,14 +53,14 @@ subroutine DFT_driver(X,E,k,q)
 #endif
  !
  it_on_disk = 1
- DFT_threshold = 1.e-4
- DFT_iterations = 100
+ SC_threshold = 1.e-4
+ SC_iterations = 10
  !
- call section('*','DFT '//trim(DFT_SC)//' potentials')
+ call section('*','Self-Consistenty')
  !
  ! Table for QP indexes
  !
- QP_nb=DFT_bands
+ QP_nb=SC_bands
  QP_nk=k%nibz
  if (allocated(QP_state)) deallocate(QP_state)
  allocate(QP_state(QP_nb,QP_nk))
@@ -71,7 +71,7 @@ subroutine DFT_driver(X,E,k,q)
  ! WF
  !
  call wf_load(max(QP_ng_Sx,X%ng),maxval(qindx_S(:,:,2)),&
-&             (/1,max(DFT_bands,X%ib(2))/),(/1,k%nibz/),title=' ')
+&             (/1,max(SC_bands,X%ib(2))/),(/1,k%nibz/),title=' ')
  !
  ! Vxc[rho_0] and Vh[rho_0]
  !
@@ -122,14 +122,24 @@ subroutine DFT_driver(X,E,k,q)
  !
  ! SCF cycle
  !
- allocate(Hsc(QP_nb,QP_nb),rho_nm1(fft_size),vxc(fft_size))
+ allocate(Hsc(QP_nb,QP_nb),rho_nm1(fft_size),vxc(fft_size),vxc_nm1(fft_size))
  !
- do it = it_on_disk, DFT_iterations
-   do ik = 1, QP_nk ! Loop on k_points
-     !
-     ! New Vxc
-     !
-     call V_exx(X,E,k,q,vxc)
+ do it = it_on_disk, SC_iterations
+   !
+   ! New Vxc
+   !
+   vxc_nm1 = vxc
+   call V_exx(X,E,k,q,vxc)
+   !
+   if (it>1) vxc = .3* vxc + .7*vxc_nm1 !linear mixing
+   !
+   ! Hartree potential
+   !
+   call V_Hartree(rho,vhr)
+   !
+   ! Loop on k_points
+   !
+   do ik = 1, QP_nk 
      !
      Hsc = (0.,0.)
      !
@@ -151,7 +161,7 @@ subroutine DFT_driver(X,E,k,q)
 #endif
        !
      end do
-     Hsc(:,:) = Ho(:,:,ik)  + Hsc(:,:)
+     Hsc(:,:) = Ho(:,:,ik)  + Hsc(:,:)   
      !
      ! Diagonalize the H matrix
      !
@@ -159,7 +169,7 @@ subroutine DFT_driver(X,E,k,q)
      !
      ! write energies (HERE messaging needed)
      !
-     print*, ik, (E%E(i1,ik,1),i1 = 1,7)
+     print*, ik, (E%E(i1,ik,1)*HARTREE,i1 = 1,7)
      !
      ! New wave functions (Here blas cdotc?) 
      !
@@ -173,66 +183,57 @@ subroutine DFT_driver(X,E,k,q)
        end do
      end do 
      forall(i1 = 1:QP_nb) wf(:,wf_state(i1,ik,1))= wf_tmp(:,wf_state(i1,1,1))  
-     deallocate(wf_tmp)  
+     deallocate(wf_tmp)
      !
      !  Transform Ho in the new basis 
      !
      allocate(Ho_tmp(QP_nb,QP_nb))
 #if defined _DOUBLE
-       call zgemm('n','n',QP_nb,QP_nb,QP_nb,(1._SP,0._SP),Ho(:,:,ik),QP_nb,Hsc,QP_nb,(0._SP,0._SP),Ho_tmp,QP_nb)
+     call zgemm('n','n',QP_nb,QP_nb,QP_nb,(1._SP,0._SP),Ho(:,:,ik),QP_nb,Hsc,QP_nb,(0._SP,0._SP),Ho_tmp,QP_nb)
 #else
-       call cgemm('n','n',QP_nb,QP_nb,QP_nb,(1._SP,0._SP),Ho(:,:,ik),QP_nb,Hsc,QP_nb,(0._SP,0._SP),Ho_tmp,QP_nb)
+     call cgemm('n','n',QP_nb,QP_nb,QP_nb,(1._SP,0._SP),Ho(:,:,ik),QP_nb,Hsc,QP_nb,(0._SP,0._SP),Ho_tmp,QP_nb)
 #endif
-       Ho(:,:,ik) = Ho_tmp(:,:)
+     Ho(:,:,ik) = Ho_tmp(:,:)
 #if defined _DOUBLE
-       call zgemm('c','n',QP_nb,QP_nb,QP_nb,(1._SP,0._SP),Hsc,QP_nb,Ho(:,:,ik),QP_nb,(0._SP,0._SP),Ho_tmp,QP_nb)
+     call zgemm('c','n',QP_nb,QP_nb,QP_nb,(1._SP,0._SP),Hsc,QP_nb,Ho(:,:,ik),QP_nb,(0._SP,0._SP),Ho_tmp,QP_nb)
 #else
-       call cgemm('c','n',QP_nb,QP_nb,QP_nb,(1._SP,0._SP),Hsc,QP_nb,Ho(:,:,ik),QP_nb,(0._SP,0._SP),Ho_tmp,QP_nb)
+     call cgemm('c','n',QP_nb,QP_nb,QP_nb,(1._SP,0._SP),Hsc,QP_nb,Ho(:,:,ik),QP_nb,(0._SP,0._SP),Ho_tmp,QP_nb)
 #endif
-       Ho(:,:,ik) = Ho_tmp(:,:)
-       deallocate(Ho_tmp)
-       !
-     end do !Exit loop on kpoints
+     Ho(:,:,ik) = Ho_tmp(:,:)
+     deallocate(Ho_tmp)
      !
-     ! New density 
-     !
-     rho_nm1 = rho 
-     call el_density(E,k,rho,.FALSE.)
-     !
-     ! Test convergence
-     !
-     test_convergence = 0.
-     do ir=1,fft_size
-       test_convergence = test_convergence + abs(rho(ir)-rho_nm1(ir))/DL_vol
-     enddo
-     !
-     ! write scf status (HERE messaging needed)
-     !
-     print*, it, test_convergence   
-     !
-     if (test_convergence.lt.DFT_threshold) then
-       call msg('r','Accuracy (reached)  :',test_convergence)
-       call msg('r','Iterations          :',it)
-       exit
-     endif
-     !
-     ! Linear mixing
-     !
-     if (it>1) rho = 0.3 * rho + 0.7 * rho_nm1 
-     !
-     ! Hartree potential
-     !
-     call V_Hartree(rho,vhr)     
-     !
-   end do
+   end do !Exit loop on kpoints
    !
-   ! exit SCF cycle
+   ! New density 
    !
-   deallocate(Ho,Hsc)
-     !
- end subroutine DFT_driver
+   rho_nm1 = rho 
+   call el_density(E,k,rho,.FALSE.)
+   !
+   ! Test convergence
+   !
+   test_convergence = 0.
+   do ir=1,fft_size
+     test_convergence = test_convergence + abs(rho(ir)-rho_nm1(ir))/DL_vol
+   enddo
+   !
+   ! write scf status (HERE messaging needed)
+   !
+   print*, it, test_convergence   
+   !
+   if (test_convergence.lt.SC_threshold) then
+     call msg('r','Accuracy (reached)  :',test_convergence)
+     call msg('r','Iterations          :',it)
+     exit
+   endif
+   !
+   ! Linear mixing
+   !
+   rho = 0.3 * rho + 0.7 * rho_nm1 
+   !
+ end do
  !
- ! Sigma_x
+ ! exit SCF cycle
  !
- !call QP_XX_Vxc(E,k,k,q,.FALSE.,.FALSE.) 
-
+ deallocate(Ho,Hsc)
+ !
+end subroutine SC_driver

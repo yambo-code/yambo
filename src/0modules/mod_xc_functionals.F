@@ -74,7 +74,7 @@ module xc_functionals
     XC_MGGA_X_TPSS       = 201, &  ! Perdew, Tao, Staroverov & Scuseria exchange
     XC_MGGA_C_TPSS       = 202     ! Perdew, Tao, Staroverov & Scuseria correlation
  !
-#if defined PJ_DFT
+#if defined PJ_SC
  ! the OEP/KLI/CEDA
  integer, public, parameter :: &
    XC_OEP_EXX           = 301    ! OEP-EXX
@@ -124,7 +124,7 @@ module xc_functionals
       xc_string=string_pack('Perdew & Wang ',ch_kind)
      case(XC_LDA_C_KP)
       xc_string=string_pack('Kurth & Perdew ',ch_kind)
-#if defined PJ_DFT
+#if defined PJ_SC
      case(XC_OEP_EXX)
       xc_string=string_pack('Exact-Exchange (OEP) ',ch_kind)
      case(XC_GKS_HF)

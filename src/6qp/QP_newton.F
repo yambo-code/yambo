@@ -19,11 +19,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
+subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  !
  use pars,          ONLY:SP,HARTREE
  use memory_m,      ONLY:mem_est
- use drivers,       ONLY:l_ppa,l_el_corr,l_ph_corr
+ use drivers,       ONLY:l_ppa,l_el_corr,l_ph_corr,l_chosex
  use com,           ONLY:msg
  use X_m,           ONLY:X_t
  use parser_m,      ONLY:parser
@@ -50,8 +50,20 @@
  !
  ! Dyson equation: Newton solver 
  !
- call msg('r', '[Newton] Sc step   [ev]:',QP_dSc_delta*HARTREE)
- call msg('r', '[Newton] Sc steps      :',QP_dSc_steps)
+ ! ... no energy dependence in GW CHOSEX
+ !
+ if (l_chosex) then
+   !
+   QP_dSc_steps=1
+   !QP_n_G_bands=(/1,en%nbm/)
+   !
+ else
+   !
+   call msg('r', '[Newton] Sc step   [ev]:',QP_dSc_delta*HARTREE)
+   call msg('r', '[Newton] Sc steps      :',QP_dSc_steps)
+   !
+ endif
+ !
  call msg('rn','[Newton] SC iterations :',GWo_iterations)
  !
  iter=0
@@ -61,11 +73,11 @@
  do while((iter<=GWo_iterations.or.GWo_iterations<0).and..not.GWo_SC_done) 
    !
    if (l_el_corr) then
-     if (.not.l_ppa) call QP_raxis(X,Xen,Xk,en,k,q,qp,Xw,iter)
-     if (l_ppa)      call   QP_ppa(X,Xk,en,k,q,qp,Xw,iter)
-#if defined PJ_SC
-     return
-#endif
+     if (l_ppa.or.l_chosex) then
+       call QP_ppa_chosex(X,Xk,en,k,q,qp,Xw,iter,.TRUE.)
+     else
+       call QP_raxis(X,Xen,Xk,en,k,q,qp,Xw,iter)
+     endif
    else
      QP_Sc=cmplx(0.,0.,SP)
    endif
@@ -85,6 +97,14 @@
        if (l_el_corr) Eqp(i2)=Eqp(i2)+Z(i2)*(QP_Sx(i1)-QP_Vxc(i1))
        !
      enddo
+     !
+     ! CHOSEX: no energy dependence
+     !
+     if (l_chosex) then
+       Eqp(1)=qp%E_bare(i1)+(QP_Sc(i1,1)+QP_Sx(i1)-QP_Vxc(i1))
+       Z(1)=1.
+     endif
+     !
      !
      qp%E(i1)=Eqp(1)
      qp%Z(i1)=Z(1)
@@ -119,4 +139,4 @@
  !
  if (GWo_iterations<0) GWo_iterations=iter
  !
- end subroutine
+end subroutine

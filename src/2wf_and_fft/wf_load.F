@@ -48,9 +48,11 @@ subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
  !
  character(1)     ::wf_space_here
  character(schlen)::wf_title
- integer          ::i1,ikibz,i2,ic,is,wf_total_states,ig,igfft,s_2_load(2),iG_max
+ integer          ::i1,ikibz,i2,ic,is,wf_total_states,ig,igfft,&
+&                   s_2_load(2),iG_max,fft_dim_now,iG_bounds_loaded(2)
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
+ logical          ::loaded_bounds_ok
  real(SP),    allocatable :: wf_disk(:,:,:,:)
  complex(DP), allocatable :: wf_DP(:)
  !
@@ -69,19 +71,35 @@ subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
  if (present(title)) wf_title=title
  if (present(spins_to_load)) s_2_load=spins_to_load
  !
- ! To call with .false. as I need in ANY CASE the table updated with the
- ! given iG_max/iGo_max.
- ! 
- ! So even when conditions below are respected and the routine returns
- ! the fft_g_table must be reloaded
+ ! [1]: check that loaded bounds are larger(equal) then bounds 
+ !      asked now
  !
- if (wf_space_here=='R') call fft_setup(iG_max,iGo_max,.false.)
+ loaded_bounds_ok=all((/bands_to_load(1)>=wf_b(1),bands_to_load(2)<=wf_b(2),&
+&                       kpts_to_load(1)>=wf_k(1),kpts_to_load(2)<=wf_k(2),&
+&                       s_2_load(1)>=wf_s(1),s_2_load(2)<=wf_s(2),&
+&                       wf_space==wf_space_here/))
  !
- if (all((/bands_to_load(1)>=wf_b(1),bands_to_load(2)<=wf_b(2),&
-&          kpts_to_load(1)>=wf_k(1),kpts_to_load(2)<=wf_k(2),&
-&          s_2_load(1)>=wf_s(1),s_2_load(2)<=wf_s(2),&
-&          wf_space==wf_space_here/))) then
-   if (wf_space=="R".and.all(fft_dim<=fft_dim_loaded)) return
+ ! [2]: Check FFT size
+ !
+ if (loaded_bounds_ok) then
+   !
+   if (wf_space=="G") return
+   !
+   call fft_setup(iG_max,iGo_max,.true.)
+   !
+   if (all(fft_dim<=fft_dim_loaded)) then
+     iG_bounds_loaded=shape(fft_g_table)
+     if (iG_bounds_loaded(1)>=iG_max.and.&
+&        iG_bounds_loaded(2)>=iGo_max) then
+       !
+       ! Reset dimensions to fft dim loaded 
+       !
+       fft_dim=fft_dim_loaded
+       fft_size=product(fft_dim)
+       return
+     endif
+   endif
+   !
  endif
  !
  ! First WF_free then fft_setup.

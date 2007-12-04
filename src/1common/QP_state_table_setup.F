@@ -180,7 +180,7 @@ subroutine QP_state_table_setup(en)
 #else
        i_sp=1
 #endif
-       do i3=0,QP_bands_mixed
+       do i3=0,QP_bands_mixed-1
          !
          if (i2+i3>QP_nb.or.i2+i3<1) cycle
          !

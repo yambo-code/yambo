@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine X_O_transverse(Xen,Xk,X)
+subroutine X_O_transverse(Xen,Xk,X)
  !
  use pars,                ONLY:SP,pi
  use timing,              ONLY:live_timing
@@ -33,11 +33,6 @@
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf,wf_ng,wf_state
-#if defined PJ_DFT
-! use DFT,                 ONLY:lgks,auxpath
-! use com,                 ONLY:in_path
-! use pars,                ONLY:SP,pi,lchlen
-#endif
  !
  implicit none
  type(bz_samp), intent(in)    :: Xk
@@ -63,19 +58,8 @@
 #else 
  complex(SP)                  :: cdotc
 #endif
-#if defined PJ_DFT
-! integer                      :: v_limits(2),c_limits(2),nb_aux
-! character(lchlen) :: save_in_path
-#endif 
  !
  ! Check for the KB PP DB 
- !
-#if defined PJ_DFT
-! if (lgks) then
-!   save_in_path = in_path
-!   in_path = auxpath
-! endif 
-#endif 
  !
  call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
  ioKB_err=ioKB_PP(ID)
@@ -97,25 +81,10 @@
  !
  ! Set up the parallel environment
  !
-#if defined PJ_DFT
-! if (lgks) then
-!   nb_aux = size(X_q0grad,2)
-!   v_limits =(/1,nb_aux/) 
-!   c_limits =(/1,nb_aux/) 
-! else
-!   v_limits =(/X%ib(1),Xen%nbm/) 
-!   c_limits =(/Xen%nbf+1,X%ib(2)/)
-! end if 
-! call pp_indexes_reset(px)
-! call par_indexes(px,(/Xk%nibz,v_limits(2)/),(/1,v_limits(1)/))
-! call live_timing('Optical strengths (T):',px%stps(myid+1))
-! call pp_redux_wait
-#else
  call pp_indexes_reset(px)
  call par_indexes(px,(/Xk%nibz,Xen%nbm/),(/1,X%ib(1)/))
  call live_timing('Optical strengths (T):',px%stps(myid+1))
  call pp_redux_wait
-#endif
  !
  allocate(wf_xyz(wf_ng,3))
  !
@@ -131,18 +100,10 @@
      io_err=ioKB_PP(ID)
      call X_O_kb_pp_comp(ik,Xk,kbv)
    endif
-!#if defined PJ_DFT
-!   do iv=v_limits(1),v_limits(2)
-!#else
    do iv=X%ib(1),Xen%nbm
-!#endif
      if (.not.px%i2p(ik,iv)) cycle
      !
-!#if defined PJ_DFT
-!     do ic=c_limits(1),c_limits(2)
-!#else
      do ic=Xen%nbf+1,X%ib(2)
-!#endif
        do i_spin=1,n_spin
          !
          rho(:,i_spin)=(0.,0.)
@@ -213,9 +174,6 @@
  !
  ! CLEAN
  !
-#if defined PJ_DFT
-! if (lgks) in_path = save_in_path
-#endif 
  deallocate(wf_xyz)
  call pp_indexes_reset(px)
  if (ioKB_err==0) then
@@ -229,4 +187,4 @@
  enddo
  !
  return
- end subroutine X_O_transverse
+end subroutine X_O_transverse

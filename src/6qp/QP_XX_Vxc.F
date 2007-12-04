@@ -19,28 +19,31 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_XX_Vxc(E,k,Xk,q,be_verbose,run_for_SC)
+subroutine QP_XX_Vxc(E,k,Xk,q)
  !
  ! Hartree S_x self-energy + call to V_xc 
  !
  use pars,          ONLY:SP,schlen,DP,pi,HARTREE
+ use drivers,       ONLY:l_sc_pot
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg,depth,write_to_report
  use timing,        ONLY:live_timing
- use stderr,        ONLY:intc,gen_fmt 
+ use stderr,        ONLY:intc,real2ch
  use electrons,     ONLY:levels,spin_occ,n_sp_pol
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset,master_node
  use par_indexes_m, ONLY:par_indexes
  use collision,     ONLY:ggwinfo,collision_reset
  use QP_m,          ONLY:QP_Sx,QP_ng_Sx,QP_table,QP_nb,QP_n_states,QP_Sx_low_band,QP_Vxc
  use R_lattice,     ONLY:qindx_S,bz_samp
- use FFT_m,         ONLY:fft_size
- use wave_func,     ONLY:wf,wf_state,wf_load,wf_ng,WF_free
+ use wave_func,     ONLY:wf,wf_load,wf_ng,WF_free
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
+#if defined PJ_SC
+ use SC,            ONLY:SC_potential
+#endif
+ !
  implicit none
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
- logical      ::be_verbose,run_for_SC
  !
  !Work Space
  !
@@ -54,7 +57,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q,be_verbose,run_for_SC)
 #endif
  complex(DP)             ::DP_Sx
  complex(SP),allocatable ::local_rhotw(:)
- character(schlen)       ::ch,ch_spin,sx_fmt,vxc_fmt,fmt_
+ character(schlen)       ::ch,ch_spin,sx_fmt,vxc_fmt
  !
  !QP list
  !
@@ -74,7 +77,9 @@ subroutine QP_XX_Vxc(E,k,Xk,q,be_verbose,run_for_SC)
  !
  ! Silent run (like in SCF cycles)
  !
- write_to_report=be_verbose
+#if defined PJ_SC
+ write_to_report=.not.l_sc_pot
+#endif
  !
  ! title
  !
@@ -103,10 +108,8 @@ subroutine QP_XX_Vxc(E,k,Xk,q,be_verbose,run_for_SC)
  ! I/O
  !
  io_err=-1
- if (run_for_SC) then
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
-   io_err=ioXXVXC(ID)
- endif
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
+ io_err=ioXXVXC(ID)
  !
  if (io_err/=0) then
    !
@@ -162,12 +165,16 @@ subroutine QP_XX_Vxc(E,k,Xk,q,be_verbose,run_for_SC)
        ! m   =QP_table(i1,2)
        ! k   =QP_table(i1,3)
        !
-       if (run_for_SC) then
-         ib =QP_table(i1,1)
-         ibp=QP_table(i1,2)
-         if (ib  >E%nbf) cycle
-         if (ibp<=E%nbf) cycle
+       ib =QP_table(i1,1)
+       ibp=QP_table(i1,2)
+#if defined PJ_SC
+       if (l_sc_pot.and.trim(SC_potential)=='EXX') then
+         if (ib  >E%nbf.or.ibp<=E%nbf) then
+           call live_timing(steps=E%nbm-QP_Sx_low_band+1)
+           cycle
+         endif
        endif
+#endif
        !
 #if defined PJ_SPIN
        isc%is=(/QP_table(i1,1),QP_table(i1,3),1,QP_table(i1,4)/)
@@ -218,9 +225,9 @@ subroutine QP_XX_Vxc(E,k,Xk,q,be_verbose,run_for_SC)
    !
    ! Vxc
    !
-   if (run_for_SC) call DFT_Vxc(E,Xk)
+   if (.not.l_sc_pot) call DFT_Vxc(E,Xk)
    !
-   if (run_for_SC) call WF_free()
+   if (.not.l_sc_pot) call WF_free()
    !
  endif
  !
@@ -228,11 +235,6 @@ subroutine QP_XX_Vxc(E,k,Xk,q,be_verbose,run_for_SC)
  !
  ik=QP_table(1,3)
  call msg('nr','S_x/V_xc [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
- !
- sx_fmt =trim( gen_fmt( r_v= reshape(real(QP_Sx)*HARTREE,(/QP_n_states/)) ) )
- vxc_fmt=trim( gen_fmt( r_v= reshape(real(QP_Vxc)*HARTREE,(/QP_n_states/)) ) )
- !
- fmt_='(a,2'//trim(sx_fmt)//',1x,a,2'//trim(vxc_fmt)//')'
  !
  do i1=1,QP_n_states
    !
@@ -257,9 +259,12 @@ subroutine QP_XX_Vxc(E,k,Xk,q,be_verbose,run_for_SC)
    vxc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|V_xc|'//trim(intc(ibp))&
 &     //trim(ch_spin)//'> ='
    !
-   write (ch,trim(fmt_)) trim(sx_fmt),real(QP_Sx(i1)*HARTREE),&
-&    aimag(QP_Sx(i1)*HARTREE),trim(vxc_fmt), real(QP_Vxc(i1)*HARTREE),&
-&    aimag(QP_Vxc(i1)*HARTREE)
+   write (ch,'(6(a,1x))') trim(sx_fmt),&
+&    trim(real2ch(real(QP_Sx(i1)*HARTREE))),&
+&    trim(real2ch(aimag(QP_Sx(i1)*HARTREE))),&
+&    trim(vxc_fmt),&
+&    trim(real2ch(real(QP_Vxc(i1)*HARTREE))),&
+&    trim(real2ch(aimag(QP_Vxc(i1)*HARTREE)))
    !
    if (i1/=QP_n_states) call msg('r',trim(ch))
    if (i1==QP_n_states) call msg('rn',trim(ch))
@@ -268,10 +273,8 @@ subroutine QP_XX_Vxc(E,k,Xk,q,be_verbose,run_for_SC)
  !
  ! I/O
  !
- if (io_err/=0.and.run_for_SC) then
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
-   io_err=ioXXVXC(ID)
- endif
+ call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
+ io_err=ioXXVXC(ID)
  !
  ! MPI barrier
  !

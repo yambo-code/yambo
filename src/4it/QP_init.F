@@ -19,29 +19,30 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine QP_init()
-!====================
-!
-! QP_state -> input file
-!
+subroutine QP_init()
+ !
+ ! QP_state -> input file
+ !
  use QP_m,      ONLY : QP_nk,QP_nb,QP_state
  use drivers,   ONLY : infile_editing
  use it_m,      ONLY : nflines,flines,infile
  use parser_m,  ONLY : parser
  implicit none
-!ws
+ ! 
+ ! Work Space
+ !
  integer :: i1,state(4)
  logical :: l_lines_in_input(2)
  integer :: nflines_save
  integer, external :: QP_state_extract
-
+ !
  call parser('QPkrange',l_lines_in_input(1))
  call parser('QPerange',l_lines_in_input(2))
-!
-!If there are already the QP lines or there's not the input file todo return
-!
+ !
+ !If there are already the QP lines or there's not the input file todo return
+ !
  if (any(l_lines_in_input).and..not.infile_editing) return 
- 
+  !
  nflines_save=nflines
  write (flines(nflines+1),'(a,t30,a)') '%QPkrange',&
 &                                      '# [GW] QP generalized K(points) indices'
@@ -58,18 +59,19 @@
  endif
  flines(nflines+1)='%'
  nflines=nflines+1
-
+ !
  write (flines(nflines+1),'(a,t30,a)') '%QPerange',&
 &      '# [GW] QP generalized E(energy) indices'
  write (flines(nflines+2),'(2(i3,a),2(f4.1,a))') 1,'|',QP_nk,'|',0.,'|',-1.,'|'
  flines(nflines+3)='%'
  nflines=nflines+3
-!
-! Write to input file
+ !
+ ! Write to input file
+ !
  open(unit=12,file=trim(infile),position='append')
  do i1=nflines_save+1,nflines
-  write (12,'(a)') trim(flines(i1))
+   write (12,'(a)') trim(flines(i1))
  enddo 
  close(12)
-
- end subroutine
+ !
+end subroutine

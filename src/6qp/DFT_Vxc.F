@@ -79,6 +79,7 @@ subroutine DFT_Vxc(E,Xk)
      !
    enddo
    !
+   deallocate(el_mag)
    return
    !
  endif

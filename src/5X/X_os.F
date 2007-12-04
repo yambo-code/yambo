@@ -23,7 +23,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  ! Non interacting X with SPIN support.
  !
- use pars,          ONLY:SP,schlen,HARTREE
+ use pars,          ONLY:SP,HARTREE
  use collision,     ONLY:ggwinfo,collision_reset
  use timing,        ONLY:live_timing
  use com,           ONLY:msg
@@ -153,7 +153,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  half_X_mat_only=i_space_inv==1
  if (.not.half_X_mat_only) then
-   half_X_mat_only=.not.(any(aimag(Xw%p(:))>1.E-4).and.any(real(Xw%p(:))>1.E-4))
+   half_X_mat_only= all( aimag(Xw%p(:))<1.E-4 ).and. all( real(Xw%p(:))<1.E-4 )
  endif
  g2max=X%ng
  iwmax=1
@@ -205,11 +205,6 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
        ik = Xk%sstar(ikbz,1)
        is = Xk%sstar(ikbz,2)
        !
-       ! Spatial part of is to be used to rotate rhotw
-       !
-       isp=is
-       if (is>nsym/(i_time_rev+1)) isp=is-nsym/(i_time_rev+1)
-       !
        isc%is = (/ic,ik,1,i_spin/)
        isc%os = (/iv,ik,1,i_spin/)
        isc%qs = (/1,1,1/)
@@ -232,7 +227,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
          isave=(/iv,ic,ik,i_spin/)
        endif
        do g1=1,X%ng
-         g2=g_rot(sop_inv(isp),g1)
+         g2=g_rot(sop_inv(is),g1)
          isc%rhotw(g1)=rhotw_save(g2)
        enddo
        if (is>nsym/(i_time_rev+1)) isc%rhotw=conjg(isc%rhotw)

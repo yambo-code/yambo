@@ -37,6 +37,7 @@ module IO_m
    integer :: serial_number
    !
    logical :: write_to_dbs
+   logical :: read_dbs
    logical :: dbs_fragment
    !
    ! Actions
@@ -180,7 +181,8 @@ module IO_m
        character(lchlen)::alternative_file(3),folder
        !
        io_connect=0
-       if (write_is_on(ID).and..not.write_to_dbs) then
+       if ( (read_is_on(ID).and..not.read_dbs).or.&
+&           (write_is_on(ID).and..not.write_to_dbs) ) then
          io_connect=-1
          call io_reset(ID)
          return

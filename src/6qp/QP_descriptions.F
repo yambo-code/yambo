@@ -28,7 +28,7 @@ subroutine QP_descriptions(qp,X,Xw)
  use QP_m,          ONLY:QP_t,QP_ng_Sx,QP_n_G_bands,QP_cg_percent,&
 &                        QP_dSc_delta,QP_G_damp,QP_dSc_steps,GWo_iterations
  use stderr,        ONLY:string_pack,gen_fmt
- use drivers,       ONLY:l_life,l_ppa,l_gw0,l_ph_corr,l_el_corr
+ use drivers,       ONLY:l_life,l_ppa,l_gw0,l_ph_corr,l_el_corr,l_chosex
  use R_lattice,     ONLY:RIM_qpg,RIM_n_rand_pts,RIM_ng
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:BZ_RIM_tot_nkpts
@@ -59,20 +59,25 @@ subroutine QP_descriptions(qp,X,Xw)
 &        string_pack('(a,',gen_fmt( (/RIM_n_rand_pts /) ),')'))) &
 &        ' RIM random pts         :',RIM_n_rand_pts
  endif
+ !
  if (.not.l_life) then
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),trim(&
 &        string_pack('(a,',gen_fmt( i_v=(/GWo_iterations /) ),')'))) &
 &        ' GW SC iterations       :',GWo_iterations
-   qp%n_descs=qp%n_descs+1
-   write (qp%description(qp%n_descs),trim(&
-&        string_pack('(a,',gen_fmt( i_v=(/QP_dSc_steps /) ),')'))) &
-&        ' dS/dw steps            :',QP_dSc_steps
-   qp%n_descs=qp%n_descs+1
-   write (qp%description(qp%n_descs),trim(&
-&        string_pack('(a,',gen_fmt( r_v=(/QP_dSc_delta*HARTREE /) ),')'))) &
-&        ' dS/dw step         [ev]:',QP_dSc_delta*HARTREE
+   !
+   if (.not.l_chosex) then
+     qp%n_descs=qp%n_descs+1
+     write (qp%description(qp%n_descs),trim(&
+&          string_pack('(a,',gen_fmt( i_v=(/QP_dSc_steps /) ),')'))) &
+&          ' dS/dw steps            :',QP_dSc_steps
+     qp%n_descs=qp%n_descs+1
+     write (qp%description(qp%n_descs),trim(&
+&          string_pack('(a,',gen_fmt( r_v=(/QP_dSc_delta*HARTREE /) ),')'))) &
+&          ' dS/dw step         [ev]:',QP_dSc_delta*HARTREE
+   endif
  endif
+ !
  qp%n_descs=qp%n_descs+1
  write (qp%description(qp%n_descs),trim(&
 &      string_pack('(a,',gen_fmt( (/X%ng /) ),')'))) &
@@ -99,7 +104,7 @@ subroutine QP_descriptions(qp,X,Xw)
    write (qp%description(qp%n_descs),'(2a)') ' X xc-Kernel            :',trim(X%f_xc)
  endif
  !
- if (.not.l_ppa) then
+ if (.not.l_ppa.and..not.l_chosex) then
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),trim(&
 &        string_pack('(a,2(',gen_fmt( r_v = Xw%dr*HARTREE ),',1x))')))&
@@ -131,10 +136,13 @@ subroutine QP_descriptions(qp,X,Xw)
    write (qp%description(qp%n_descs),trim(&
 &       string_pack('(a,2(',gen_fmt( QP_n_G_bands ),',1x))')))&
 &       ' Sc/G bands             :',QP_n_G_bands
-   qp%n_descs=qp%n_descs+1
-   write (qp%description(qp%n_descs),trim(&
-&       string_pack('(a,',gen_fmt( r_v=(/QP_G_damp*HARTREE /) ),')')))&
-&       ' Sc/G damping       [ev]:',QP_G_damp*HARTREE
+   if (.not.l_chosex) then
+     qp%n_descs=qp%n_descs+1
+     write (qp%description(qp%n_descs),trim(&
+&         string_pack('(a,',gen_fmt( r_v=(/QP_G_damp*HARTREE /) ),')')))&
+&         ' Sc/G damping       [ev]:',QP_G_damp*HARTREE
+   endif
+   !
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),trim(&
 &       string_pack('(a,',gen_fmt( (/QP_ng_Sx /) ),')'))) &

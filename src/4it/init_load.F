@@ -36,7 +36,7 @@
 &                        V_qp,V_io,V_debug,rstatus,initmode
  use X_m,           ONLY:X_t, long_path
  use QP_m,          ONLY:QP_rep_string,QP_cg_percent,QP_G_damp,QP_solver,&
-&                        pp_taylor_terms,QP_n_G_bands,QP_ng_Sx,QP_Sx_low_band,&
+&                        QP_n_G_bands,QP_ng_Sx,QP_Sx_low_band,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations
  use timing,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
@@ -54,8 +54,8 @@
 &                        QP_band_mixing
  use com,           ONLY:out_path,in_path,db_wr_path
  use functions,     ONLY:bose_E_cut
-#if defined PJ_DFT
- use DFT,           ONLY:DFT_bands,DFT_SC,DFT_iterations
+#if defined PJ_SC
+ use SC,            ONLY:SC_bands,SC_iterations,SC_potential
 #endif
 #if defined PJ_RAS
  use bulkeps,              ONLY : init_bulk
@@ -106,20 +106,21 @@
  call it('r',defs,'bs_fxc',  '[R TDDFT] The BSE TDDFT kernel') ! [14]
  call it('r',defs,'alda_fxc','[R TDDFT] The ALDA TDDFT kernel') ! [15]
  call it('r',defs,'lrc_fxc', '[R TDDFT] The LRC TDDFT kernel') ! [16]
-#if defined PJ_DFT
- call it('r',defs,'dft',  '[R] DFT potentials') ! [17]
+ call it('r',defs,'chosex',  '[R Xp] COlumb Hole Screened EXchange') ! [17]
+#if defined PJ_SC
+ call it('r',defs,'scpot',   '[R] Self-Consistently') ! [18]
 #endif
 #if defined PJ_RAS
- call it('r',defs,'sursp',  '[R] Surface Spectroscopy ') ! [17]
- call it('r',defs,'reels',  '[R] Reflection EELS (3-layer model) ') ! [18]
- call it('r',defs,'ras',    '[R] Reflectance anisotropy spectroscopy (RAS)')   ! [19]
+ call it('r',defs,'sursp',  '[R] Surface Spectroscopy ') ! [18]
+ call it('r',defs,'reels',  '[R] Reflection EELS (3-layer model) ') ! [19]
+ call it('r',defs,'ras',    '[R] Reflectance anisotropy spectroscopy (RAS)')   ! [20]
 #endif
 #if defined PJ_REELS
- call it('r',defs,'reels',  '[R] Surface Spectroscopy (REELS)') ! [17]
+ call it('r',defs,'reels',  '[R] Surface Spectroscopy (REELS)') ! [18]
 #endif
 #if defined PJ_PH
- call it('r',defs,'el_ph',   '[R] Electron-Phonon Correlation') ! [17]
- call it('r',defs,'el_el',   '[R] Electron-Electron Correlation') ! [18]
+ call it('r',defs,'el_ph',   '[R] Electron-Phonon Correlation') ! [18]
+ call it('r',defs,'el_el',   '[R] Electron-Electron Correlation') ! [19]
 #endif
  !
  ! I/O
@@ -186,12 +187,12 @@
 &                          PH_null_E_rgn,verb_level=V_qp,unit=E_unit)
 #endif
  ! 
- ! DFT
+ ! SC
  !
-#if defined PJ_DFT
- call it(defs,'DFTScMode',  '[DFT] Self-Consistency',DFT_SC)
- call it(defs,'DFTBands',   '[DFT] Bands',DFT_bands)
- call it(defs,'DFTIter',    '[DFT] SC Iterations',DFT_iterations)
+#if defined PJ_SC
+ call it(defs,'SCBands',   '[SC] Bands',SC_bands)
+ call it(defs,'SCIter',    '[SC] SC Iterations',SC_iterations)
+ call it(defs,'SCPot',     '[SC] SC Potential',SC_potential)
 #endif
  !
  ! Non-Perturbative
@@ -309,13 +310,13 @@
      ! Work Space
      ! 
      integer           ::i1
-     integer,parameter ::n_des=15
+     integer,parameter ::n_des=14
      character(8)      ::nms(n_des),sfx
      character(40)     ::des(n_des)
      character(schlen) ::lch1,lch2
      !
      nms=(/'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
-&          'DrudeW','LongDr','EhEngy','PPAPnt','PPTylT',&
+&          'DrudeW','LongDr','EhEngy','PPAPnt',&
 &          'NGsBlk','QpntsR','BndsRn','DmMode'/)
      des(1) ='Green`s function t/c/r/a'
      des(2) ='Energy range'
@@ -327,11 +328,10 @@
      des(8) ='[cc] Electric Field'
      des(9) ='Electron-hole energy range'
      des(10) ='PPA imaginary energy'
-     des(11)='Taylor terms in PP expansion'
-     des(12)='Response block size'
-     des(13)='Transferred momenta'
-     des(14)='Polarization function bands'
-     des(15)='Damping reference energy'
+     des(11)='Response block size'
+     des(12)='Transferred momenta'
+     des(13)='Polarization function bands'
+     des(14)='Damping reference energy'
      !
      do i1=1,n_des
        lch1=des(i1);lch2=nms(i1)
@@ -353,11 +353,10 @@
      call it(defs,nms( 8),des( 8),X%q0,verb_level=0)
      call it(defs,nms( 9),des( 9),X%ehe,E_unit,verb_level=V_more)
      call it(defs,nms(10),des(10),X%ppaE,E_unit,verb_level=0)
-     call it(defs,nms(11),des(11),pp_taylor_terms,verb_level=V_more)
-     call it(defs,nms(12),des(12),X%ng,G_unit,verb_level=0) 
-     call it(defs,nms(13),des(13),X%iq,verb_level=0)
-     call it(defs,nms(14),des(14),X%ib,verb_level=0)
-     call it(defs,nms(15),des(15),wv%damp_reference,E_unit,verb_level=V_more)
+     call it(defs,nms(11),des(11),X%ng,G_unit,verb_level=0) 
+     call it(defs,nms(12),des(12),X%iq,verb_level=0)
+     call it(defs,nms(13),des(13),X%ib,verb_level=0)
+     call it(defs,nms(14),des(14),wv%damp_reference,E_unit,verb_level=V_more)
      !
    end subroutine
    !

@@ -94,16 +94,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  what_is_running='SELF'
 #if defined PJ_PH
  what_is_running='SELF_PH'
-#elif defined PJ_SC
- what_is_running='SELF_SC'
 #elif defined PJ_RAS
  what_is_running='SELF_RAS'
 #elif defined PJ_REELS
  what_is_running='SELF_REELS'
 #elif defined PJ_SPIN
  what_is_running='SELF_SPIN'
-#elif defined PJ_DFT
- what_is_running='SELF_DFT'
+#elif defined PJ_SC
+ what_is_running='SELF_SC'
 #elif defined PJ_CYL_CUT
  what_is_running='SELF_CYL_CUT'
 #endif
@@ -345,9 +343,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_xxvxc) call initactivate(1,&
 &                  'EXXRLvcs SxLowBnd GfnQPdb GfnQP_N GfnQP_E GfnQP_W GfnQP_Z')
-#if defined PJ_DFT
- if (l_xxvxc) call initactivate(1,'BandMix')
-#endif
  !
  ! Optics(not bse) nor GW (no PP)
  !
@@ -377,12 +372,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                  'LongDr','DrudeW'/))
  endif
  !
- ! GW (PPA) 
+ ! GW (PPA & CHOSEX) 
  !
- if (l_em1d.and.l_ppa) then
+ if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_chosex)) then
    call initactivate(1,'XfnQPdb XfnQP_N XfnQP_E XfnQP_W XfnQP_Z LongPath')
-   call Xon('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
-&                  'EhEngy','LongDr','PPAPnt','PPTylT'/))
+   if (l_ppa) call Xon('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
+&                      'EhEngy','LongDr','PPAPnt'/))
+   if (l_chosex) call Xon('Xs',(/'QpntsR','BndsRn','NGsBlk',&
+&                         'EhEngy','LongDr'/))
  endif
  !
  ! ACFDT
@@ -404,26 +401,22 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call initactivate(1,'BoseCut LongPath')
      !
      if (l_gw0) then
-       call initactivate(1,'GbndRnge GDamping') 
-       if (.not.l_ppa) call Xon('Xd',(/'BndsRn','NGsBlk',&
+       call initactivate(1,'GbndRnge') 
+       if (.not.l_chosex) call initactivate(1,'GDamping') 
+       if (.not.l_ppa.and..not.l_chosex) call Xon('Xd',(/'BndsRn','NGsBlk',&
 &                      'DmRnge','CGrdSp','ETStps','EMStps',&
 &                      'DrudeW','EhEngy','LongDr'/)) 
        !
-       call initactivate(1,'DysSolver')
+       if (.not.l_chosex) call initactivate(1,'DysSolver')
        if (trim(QP_solver)=="g") then
          call initactivate(1,'GEnSteps GEnRnge GDmRnge') 
        else
          ! -- GPL_END --
          call initactivate(1,'GWoIter')
          ! -- GPL_START --
-         call initactivate(1,'GDamping NewtDchk QPreport')
+         if (.not.l_chosex) call initactivate(1,'NewtDchk QPreport')
        endif
        !
-#if defined PJ_SC
-       call initactivate(-1,'EnRngeXd ETStpsXd CGrdSpXd EMStpsXd XfnQP_E GWoIter')
-       call initactivate(-1,'BoseCut DysSolver NewtDchk QPreport')
-       l_xxvxc=.false.
-#endif
      endif
      !
      if (l_life) then
@@ -450,10 +443,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! ALDA/LRC Tddft
  !
  if (l_alda_fxc.and.&
-&    any((/l_optics.and.l_lr,l_em1s,l_em1d,l_acfdt,l_ppa,l_gw0/))) &
+&    any((/l_optics.and.l_lr,l_em1s,l_em1d,l_acfdt,l_ppa,l_chosex,l_gw0/))) &
 &    call initactivate(1,'FxcGRLc')
  if (l_lrc_fxc.and.&
-&    any((/l_optics.and.l_lr,l_em1s,l_em1d,l_acfdt,l_ppa,l_gw0/))) &
+&    any((/l_optics.and.l_lr,l_em1s,l_em1d,l_acfdt,l_ppa,l_chosex,l_gw0/))) &
 &    call initactivate(1,'LRC_alpha')
  !
  ! BSE + TDDFT = no BS db, Fxc + LF on-fly
@@ -482,9 +475,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! DFT
  !
-#if defined PJ_DFT
- if (l_dft) then
-   call initactivate(1,'FFTGvecs DFTScMode DFTiter DFTBands BandMix EXXRLvcs')
+#if defined PJ_SC
+ if (l_sc_pot) then
+   call initactivate(1,'FFTGvecs SCPot SCIter SCBands BandMix EXXRLvcs')
    call Xon('Xx',(/'BndsRn','NGsBlk'/))
  endif
 #endif
@@ -644,22 +637,24 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      l_bs_fxc=(rstatus(14)/=0)
      l_alda_fxc=(rstatus(15)/=0)
      l_lrc_fxc=(rstatus(16)/=0)
-#if defined  PJ_DFT
-     l_dft=(rstatus(17)/=0)
+     l_chosex=(rstatus(17)/=0)
+#if defined  PJ_SC
+     l_sc_pot=(rstatus(18)/=0)
 #endif
 #if defined  PJ_RAS
-     lreels=(rstatus(18)/=0)
-     lras=(rstatus(19)/=0)
+     lreels=(rstatus(19)/=0)
+     lras=(rstatus(20)/=0)
 #endif
 #if defined  PJ_REELS
-     lreels=(rstatus(17)/=0)
+     lreels=(rstatus(18)/=0)
 #endif
 #if defined  PJ_PH
-     l_ph_corr=(rstatus(17)/=0.and.ioELPH_err==0)
-     l_el_corr=(rstatus(18)/=0)
+     l_ph_corr=(rstatus(18)/=0.and.ioELPH_err==0)
+     l_el_corr=(rstatus(19)/=0)
 #else
      l_el_corr=l_gw0.or.l_life
 #endif
+     !
      if (.not.Xk_grid_is_uniform) then
        rstatus(4:14)=0
        l_bse=.false.
@@ -691,7 +686,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
 #if defined PJ_SPIN
      if (any((/&
-&              l_life,l_acfdt,l_lrc_fxc,l_dft,&
+&              l_life,l_acfdt,l_lrc_fxc,l_sc_pot,&
 &              l_gw0.and..not.l_ppa&
 &             /))) then
        init=-2
@@ -740,12 +735,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (.not.l_el_corr.and..not.l_ph_corr) l_el_corr=.true.
      elph_nq_used=elph_nq
 #endif
-#if !defined  PJ_SC
      if (l_gw0.and.l_el_corr) call initactivate(1,'xxvxc')
-#endif
-     if (l_el_corr.and.l_ppa) QP_solver='n'
+     if (l_el_corr.and.(l_ppa.or.l_chosex)) QP_solver='n'
      if (l_life) call initactivate(-1,'ppa')
-     if (l_ppa)  call initactivate(1,'em1d')
+     if (l_ppa)    call initactivate(1,'em1d')
+     if (l_chosex) call initactivate(1,'em1s')
      if (l_bss)  call initactivate(1,'bse')
      if (l_bss)  call initactivate(1,'l_optics')
      if (l_bse) then
@@ -796,6 +790,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if !defined  PJ_PH
      if (l_gw0) l_el_corr=.true.
 #endif
+     !
+     if (l_el_corr.and.(l_ppa.or.l_chosex)) QP_solver='n'
      !
    end subroutine varsetup2
    !
@@ -893,6 +889,18 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if !defined  PJ_PH
          l_el_corr=.true.
 #endif
+       endif
+       !
+       ! GW approximation 
+       !
+       if ( trim(rstr_piece(i1)) == 'gwapprx' ) then
+         if (trim(rstr_piece(i1+1))=='p') then
+           infile_editing=.true.
+           call initactivate(1,'ppa gw0')
+         else if (trim(rstr_piece(i1+1))=='c') then
+           infile_editing=.true.
+           call initactivate(1,'chosex gw0') 
+         endif
        endif
        !
        ! RAS

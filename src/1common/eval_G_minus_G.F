@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function eval_G_minus_G(iG,iGo)
+integer function eval_G_minus_G(iG,iGo)
  !
  ! Evaluates the  G-G' table :
  !
@@ -83,4 +83,4 @@
    enddo
  enddo 
  !
- end function
+end function

@@ -53,8 +53,6 @@ subroutine SC_driver(X,E,k,q)
 #endif
  !
  it_on_disk = 1
- SC_threshold = 1.e-4
- SC_iterations = 10
  !
  call section('*','Self-Consistenty')
  !

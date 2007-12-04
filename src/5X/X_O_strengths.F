@@ -21,15 +21,8 @@
 !
 subroutine X_O_strengths(Xen,Xk,X,field_dir)
  !
-!#if defined PJ_DFT
-! use pars,           ONLY:SP,lchlen
-! use com,            ONLY:warning,in_path
-! use xc_functionals, ONLY:GS_xc_FUNCTIONAL
-! use DFT,            ONLY:lgks,igks,auxpath
-!#else
  use pars,           ONLY:SP
  use com,            ONLY:warning
-!#endif
 #if defined PJ_RAS
  use ras_module,     ONLY:transloc 
 #endif
@@ -55,13 +48,6 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
  integer                   :: ik,i1,ic,iv,is,i_spin
  real(SP)                  :: field_dir_rot(3)
  logical                   :: use_trans_gauge
-#if defined PJ_DFT
-! character(lchlen) :: save_in_path
-! integer :: io_rld, nb_aux
-! type(bz_samp) :: k
-! type(levels)  :: en
-! integer, external:: ioDB1_reload
-#endif
  !
  !I/O
  !
@@ -86,39 +72,10 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
    !
    ! OptGrad allocation
    !
-#if  defined PJ_DFT
-!   if (GS_xc_FUNCTIONAL > 400) then
-!     lgks = .true.
-!     igks = GS_xc_FUNCTIONAL
-!     auxpath = 'AUX/' 
-!     io_rld = ioDB1_reload(en,k,trim(auxpath))
-!     nb_aux = en%nb
-!     allocate(Xen%Eo(Xen%nb,Xen%nk,n_sp_pol))
-!     call mem_est("Eo",(/size(Xen%Eo)/),(/SP/)) 
-!          Xen%Eo=en%E
-!     call X_alloc('OptGrad',(/3,nb_aux,nb_aux,Xk%nibz/))
-!   else           
-!    lgks = .false.
-!     call X_alloc('OptGrad',(/3,X%ib(2),Xen%nbm,Xk%nibz/))
-!   endif
-#else
    call X_alloc('OptGrad',(/3,X%ib(2),Xen%nbm,Xk%nibz/))
-#endif
    X_q0grad=(0.,0.)
    !
-#if  defined PJ_DFT
-!   if (lgks) then
-!     save_in_path = in_path
-!     in_path = auxpath
-!     call wf_load(0,1,(/1,nb_aux/),(/1,Xk%nibz/),space='G',&
-!&                 title='-Oscillators (AUX)/G space')
-!     in_path = save_in_path
-!   else
-!     call wf_load(0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
-!   end if
-#else
    call wf_load(0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
-#endif
    !
    ! Attempt calculation within longitudinal gauge if requested
    !
@@ -145,17 +102,6 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
    !
    call WF_free()
    !
-#if defined PJ_DFT
-!   ! 
-!   ! When using xc non-local approximation Vnl add the contribution [r,Vnl]
-!   ! 
-!   if (lgks) then
-!     deallocate(Xen%Eo)      
-!     call X_O_nl_potential(Xen,Xk,X)
-!     io_rld = ioDB1_reload(en,k,trim(in_path))
-!   end if
-!   !
-#endif
    ! Write the q0grad to its database
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)

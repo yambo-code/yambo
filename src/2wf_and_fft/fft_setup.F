@@ -37,11 +37,11 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  integer  :: i1,i2,i3,i4,iv(3),ln(3),is
  real(SP) :: v1(3),v2(3),M1(3,3),M2(3,3)
  !
- if (allocated(fft_g_table)) then
-   call mem_est('FFT_g_tab')
-   deallocate(fft_g_table)
- endif
  if (.not.ONLY_SIZE) then
+   if (allocated(fft_g_table)) then
+     call mem_est('FFT_g_tab')
+     deallocate(fft_g_table)
+   endif
    allocate(fft_g_table(max(iG_max,wf_ng),iGo_max))
    call mem_est('FFT_g_tab',(/product(fft_g_table)/),(/IP/))
  endif

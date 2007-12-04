@@ -24,12 +24,13 @@
  use drivers
  use X_m,        ONLY:iq_now,self_detect_E_range,half_X_mat_ONLY,eps_2_alpha,&
 &                     alpha_dim,use_X_RIM,long_path,X_RIM_nkpts
- use QP_m,       ONLY:pp_taylor_terms,QP_rep_string,QP_dSc_steps,QP_n_W_freqs,&
+ use QP_m,       ONLY:QP_rep_string,QP_dSc_steps,QP_n_W_freqs,&
 &                     QP_Sx_low_band,QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_W_er,QP_W_dr,QP_cg_percent,QP_xc_FUNCTIONAL,&
 &                     QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_E,QP_ctl_W,QP_ctl_Z,&
 &                     QP_ctl_short_descr,QP_Sc_steps,QP_G_er,QP_G_dr,&
-&                     QP_W_partially_done,GWo_SC_done,GWo_iterations
+&                     QP_W_partially_done,GWo_SC_done,GWo_iterations,&
+&                     QP_band_mixing
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,n_atoms_max,n_atom_species,pp_n_l_comp_max,&
 &                     pp_kbv_dim,input_Tel_fixed
@@ -48,7 +49,7 @@
 &                     cput_seg,cput_sec,cput_tot,parallel_timing,ct
  use wave_func,  ONLY:wf_b,wf_k,wf_ng,wf_space,wf_norm_test
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim
- use IO_m,       ONLY:io_reset,max_io_units,write_to_dbs,dbs_fragment,serial_number
+ use IO_m,       ONLY:io_reset,max_io_units,write_to_dbs,dbs_fragment,serial_number,read_dbs
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
@@ -61,9 +62,8 @@
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND
-#if defined PJ_DFT
- use QP_m,       ONLY:QP_band_mixing
- use DFT,        ONLY:DFT_SC
+#if defined PJ_SC
+ use SC,         ONLY:SC_iterations,SC_threshold,SC_potential
 #endif
  !
  implicit none
@@ -166,6 +166,7 @@
  l_em1d=.false.
  l_em1s=.false.
  l_ppa=.false.
+ l_chosex=.false.
  l_gw0=.false.
  l_bse=.false.
  l_lr=.false.
@@ -174,7 +175,7 @@
  l_acfdt=.false.
  l_el_corr=.false.
  l_ph_corr=.false.
- l_dft=.false.
+ l_sc_pot=.false.
  !
  gpl_version=.false.
  !
@@ -210,6 +211,7 @@
  !
  serial_number=0
  write_to_dbs=master_node
+ read_dbs=.true.
  dbs_fragment=index(INSTR,'dbfrag')>0
  do i1=1,max_io_units
    call io_reset(i1)
@@ -228,7 +230,6 @@
  !
  !QPm
  !
- pp_taylor_terms=0
  QP_rep_string='kpbne0ees0'
  QP_dSc_steps=2
  QP_Sc_steps=100
@@ -236,9 +237,6 @@
  QP_Sx_low_band=1
  QP_dSc_test=.false.
  QP_solver=' '
-#if defined PJ_SC
- QP_solver='n'
-#endif
  QP_G_damp=0.1/HARTREE
  QP_dSc_delta=0.1/HARTREE
  QP_W_er=0.
@@ -250,6 +248,7 @@
  QP_xc_FUNCTIONAL=' '
  GWo_iterations=0
  GWo_SC_done=.false.
+ QP_band_mixing=0.
  !
  QP_ctl_db="none"
  QP_ctl_interp_neigh=1
@@ -311,9 +310,12 @@
  PH_damping=0.
  PH_null_E_rgn=0.1/HARTREE
  !
-#if defined PJ_DFT
- QP_band_mixing=0.
- DFT_SC="nsc"
+ ! SC
+ !
+#if defined PJ_SC
+ SC_iterations=10
+ SC_threshold=1.E-5
+ SC_potential='none'
 #endif
  !
  end subroutine

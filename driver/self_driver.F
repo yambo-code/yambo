@@ -158,7 +158,7 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
  !
  ! - Static X -
  !
- apply_QP=l_em1s.or.(l_optics.and.l_bse).or.l_bss
+ apply_QP=l_em1s.or.(l_optics.and.l_bse).or.l_bss.or.(l_em1d.and.l_chosex)
  if (apply_QP)  call QP_apply(X(2)%ib,Xen,Xk,1,msg_fmt='s')
  !
  ! - Plasmon Pole X -
@@ -173,7 +173,7 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
  ! HARTREE-FOCK AND VXC
  !======================
  !
- if (l_xxvxc) call QP_XX_Vxc(en,k,Xk,q,.TRUE.,.TRUE.)
+ if (l_xxvxc) call QP_XX_Vxc(en,k,Xk,q)
  !
  ! RAS & REELS
  !=============
@@ -208,21 +208,38 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
    ! Dynamical 
    !
    ! -- GPL_END --
-   if (.not.l_ppa)                      ierr=X_em1(Xen,Xk,q,X(3),Xw(3),.false.)
+   if (.not.l_ppa.and..not.l_chosex)    ierr=X_em1(Xen,Xk,q,X(3),Xw(3),.false.)
    ! -- GPL_START --
  endif
  !
- ! Real Axis GW
- !==============
- !
- ! -- GPL_END --
- if ((l_gw0.and..not.l_ppa).or.l_life) call QP_driver(X(3),Xen,Xk,en,k,q,Xw(3))
- ! -- GPL_START --
- !
- ! PPA GW
- !========
- !
- if (l_gw0.and.l_ppa)                  call QP_driver(X(4),Xen,Xk,en,k,q,Xw(4))
+ if (l_gw0) then
+   !
+   if (l_chosex) then
+     !
+     ! CHOSEX 
+     !========
+     !
+     call QP_driver(X(2),Xen,Xk,en,k,q,Xw(2))
+     !
+   else if (l_ppa) then
+     !
+     ! PPA 
+     !=====
+     !
+     call QP_driver(X(4),Xen,Xk,en,k,q,Xw(4))
+     !
+   else 
+     !
+     !
+     ! Real Axis 
+     !============
+     !
+     ! -- GPL_END --
+     call QP_driver(X(3),Xen,Xk,en,k,q,Xw(3))
+     ! -- GPL_START --
+   endif
+   !
+ endif
  !
  ! BETHE-SALPETER
  !================
@@ -236,11 +253,11 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
  if (l_acfdt) call acfdt_tot_energy(Xen,Xk,q,X(1))
  ! -- GPL_START --
  !
-#if defined PJ_DFT
- ! DFT
- !=====
+#if defined PJ_SC
+ ! SC
+ !====
  !
- if (l_dft) call DFT_driver(X(1),en,k,q)
+ if (l_sc_pot) call SC_driver(X(1),en,k,q)
 #endif
  !
  ! GAME OVER :(

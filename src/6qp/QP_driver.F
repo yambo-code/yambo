@@ -23,16 +23,16 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  use pars,          ONLY:SP,schlen,IP,HARTREE
  use memory_m,      ONLY:mem_est
- use drivers,       ONLY:l_life,l_ppa,l_el_corr,l_ph_corr
+ use drivers,       ONLY:l_life,l_ppa,l_el_corr,l_ph_corr,l_chosex
  use electrons,     ONLY:levels,n_sp_pol
- use stderr,        ONLY:string_pack,gen_fmt  
+ use stderr,        ONLY:string_pack,gen_fmt,real2ch
  use R_lattice,     ONLY:bz_samp
  use frequency,     ONLY:w_samp
  use com,           ONLY:msg
  use X_m,           ONLY:X_t
  use parser_m,      ONLY:parser
  use QP_m,          ONLY:QP_t,QP_dSc,QP_dSc_steps,QP_Vxc,QP_Sc,QP_solver,QP_table,&
-&                        QP_Sx,pp_taylor_terms,QP_n_states,QP_nb,&
+&                        QP_Sx,QP_n_states,QP_nb,&
 &                        QP_nk,QP_rep_string,QP_state,QP_dSc_test,QP_reset,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_G,QP_W_partially_done,&
 &                        GWo_iterations
@@ -61,14 +61,13 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! S_x/Vxc are always need if not l_life or el. correlations is
  ! skipped
  !
-#if !defined PJ_SC
  if (.not.allocated(QP_Sx).and..not.allocated(QP_Vxc).and.l_el_corr.and.&
      .not.l_life) return
-#endif
  !
  ! Head message
  !
  call QP_reset(qp)
+ !
  qp%n_descs=1
  if (trim(QP_solver)=='n') then
    write (qp%description(1),'(a)') ' GW solver              : Newton'
@@ -86,10 +85,14 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    return
  endif
  qp%n_descs=2
- if (l_ppa) write (qp%description(2),trim(&
-&   string_pack('(a,',gen_fmt(r_v=(/X%ppaE*HARTREE/)),',a,i2)') )) &
-&   ' PPA imaginary pt   [ev]:',X%ppaE*HARTREE,' * Taylor Terms ',pp_taylor_terms
- if (.not.l_ppa) qp%description(2)=' == Real Axis GW =='
+ if (l_ppa) then
+   write (qp%description(2),'(2a)') &
+&        ' PPA imaginary pt   [ev]:',trim(real2ch(X%ppaE*HARTREE))
+ else if (l_chosex) then
+   qp%description(2)=' == CHOSEX GW =='
+ else
+   qp%description(2)=' == Real Axis GW =='
+ endif
  !
  ! Basic defs
  !============
@@ -182,9 +185,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    ! calculated on-fly 
    !
    if (QP_W_partially_done) return
-#if defined PJ_SC
-   return
-#endif
  endif
  ! 
  ! SECANT
@@ -205,7 +205,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! Electronic
  !
  if (trim(QP_solver)=='g'.and.l_el_corr.and.&
-&                                  .not.l_ppa) call QP_raxis(X,Xen,Xk,en,k,q,qp,Xw,0)
+&             (.not.l_ppa.and..not.l_chosex)) call QP_raxis(X,Xen,Xk,en,k,q,qp,Xw,0)
  !
  ! Reporting
  !

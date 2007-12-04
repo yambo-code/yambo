@@ -94,7 +94,9 @@ subroutine V_exx(X,E,k,q,Vexx)
   ! 1:
   allocate(QP_Sx(QP_n_states))
   call mem_est("QP_Sx",(/QP_n_states/))
-  call QP_XX_Vxc(E,k,k,q,.FALSE.,.TRUE.) 
+  call SC_mute("report io_in io_out") 
+  call QP_XX_Vxc(E,k,k,q)
+  call SC_mute(" ")
   ! 2:
   call collision_reset(isc)
   isc%ngrho=X%ng

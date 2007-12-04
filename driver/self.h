@@ -38,13 +38,13 @@
   {"xxvxc",  "x","Exact Exchange Self-energy and Vxc",0,0,0,0},      /* 14 */
   {"em1d",   "d","Dynamical Inverse Dielectric Matrix",0,0,0,0},     /* 15 */
   {"em1s",   "b","Static Inverse Dielectric Matrix",0,0,0,0},        /* 15 */
-  {"ppa",    "p","Plasmon Pole Approximation",0,0,0,0},              /* 17 */
+  {"gwapprx","p","GW approximations: (p)PA/c(HOSEX)",0,0,1,0},              /* 17 */
   {"gw0",    "g","Dyson Equation solver [n(ewton)/s(ecant)/g(reen)]",0,0,1,0}, /* 18 */
   {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0},                  /* 19 */
   {"bss",    "y","BSE solver [opt=h/d/i/t]",0,0,1,0},                      /* 20 */
   {"acfdt",  "a","ACFDT Total Energy",0,0,0,0},                            /* 21 */
-#if defined PJ_DFT 
-  {"dft",    "v","DFT potentials",0,0,0,0}, /* 22 */
+#if defined PJ_SC 
+  {"scpot",  "v","Self-Consistently",0,0,0,0}, /* 22 */
 #endif
 #if defined PJ_RAS 
   {"sursp",  "s","Surface Spectroscopy [opt=r(as)/e(el)/b(oth)]",0,0,1,0}, /* 22 */

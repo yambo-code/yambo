@@ -131,7 +131,7 @@ integer function elph_pw_dbs(k,E,q)
    read(99,*)
  endif
  !
- call live_timing('ELPH databases (WRITE)',elph_nq)
+ call live_timing('ELPH databases (WRITE)',elph_nq,SERIAL=.true.)
  !
  do idb=1,elph_nq
    !

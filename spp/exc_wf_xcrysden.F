@@ -24,7 +24,7 @@ subroutine exc_wf_xcrysden(use_2d,plot_dim)
  use pars,        ONLY:BOHR,SP,schlen
  use com,         ONLY:of_open_close,msg,code_version
  use BS,          ONLY:BSS_description,BSS_n_descs
- use SPP,         ONLY:nr,nr_tot,exc_wf,p_dir,exc_wf,lambda,ncell,wf_2d
+ use SPP,         ONLY:nr,exc_wf_sq,lambda,ncell,wf_2d
  use D_lattice,   ONLY:n_atom_species,n_atoms,a,atom_pos,znucl
  use stderr,      ONLY:intc
  !
@@ -146,13 +146,12 @@ subroutine exc_wf_xcrysden(use_2d,plot_dim)
      call msg('o exc','',ncell(3)*a_angs(3,:))
      !
      ir = 0
-     forall(ir=1:nr_tot) exc_wf(ir)=exc_wf(ir)*conjg(exc_wf(ir))
-     wf_max=maxval(real(exc_wf))
+     wf_max=maxval(exc_wf_sq)
      do i3 = 0, nr(3)-1
        do i2 = 0, nr(2)-1
          do i1 = 0, nr(1)-1
            ir = 1 + i1 + i2*nr(1) + i3*nr(1)*nr(2)
-           call msg('o exc','',real(exc_wf(ir))/wf_max)
+           call msg('o exc','',exc_wf_sq(ir)/wf_max)
          enddo
        enddo
      enddo

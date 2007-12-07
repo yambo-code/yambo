@@ -26,7 +26,7 @@ subroutine exc_wf_gnuplot(use_1d,use_2d,plot_dim,eval_only)
  use FFT_m,       ONLY:fft_dim
  use D_lattice,   ONLY:a
  use stderr,      ONLY:intc
- use SPP,         ONLY:nr,nr_tot,exc_wf,p_dir,exc_wf,r_hole,lambda,wf_2d
+ use SPP,         ONLY:nr,p_dir,exc_wf_sq,r_hole,lambda,wf_2d
  use BS,          ONLY:BSS_description,BSS_n_descs
  use timing,      ONLY:live_timing
  !
@@ -41,9 +41,9 @@ subroutine exc_wf_gnuplot(use_1d,use_2d,plot_dim,eval_only)
  real(SP)          :: wf_max
  !
  if (eval_only) then
-   call live_timing('2D WF',nr(1))
+   call live_timing('2D WF',nr(1),SERIAL=.true.)
  else
-   call live_timing('GnuPlot',nr(1))
+   call live_timing('GnuPlot',nr(1),SERIAL=.true.)
    !
    titles(:3)=(/'||a1 [A]','||a2 [A]','||a3 [A]'/)
    titles(4) = '|wf|^2 [1 at max]'
@@ -76,9 +76,9 @@ subroutine exc_wf_gnuplot(use_1d,use_2d,plot_dim,eval_only)
        do i2 = 0,nr(2)-1
          do i3 = 0,nr(3)-1
            ir = 1 + i1 + i2*nr(1) + i3*nr(1)*nr(2)
-           if (use_1d(1)) wf_2d(i1+1,1)=wf_2d(i1+1,1)+abs(exc_wf(ir))**2
-           if (use_1d(2)) wf_2d(i2+1,1)=wf_2d(i2+1,1)+abs(exc_wf(ir))**2
-           if (use_1d(3)) wf_2d(i3+1,1)=wf_2d(i3+1,1)+abs(exc_wf(ir))**2
+           if (use_1d(1)) wf_2d(i1+1,1)=wf_2d(i1+1,1)+exc_wf_sq(ir)
+           if (use_1d(2)) wf_2d(i2+1,1)=wf_2d(i2+1,1)+exc_wf_sq(ir)
+           if (use_1d(3)) wf_2d(i3+1,1)=wf_2d(i3+1,1)+exc_wf_sq(ir)
          enddo
        enddo
        call live_timing(steps=1)
@@ -117,9 +117,9 @@ subroutine exc_wf_gnuplot(use_1d,use_2d,plot_dim,eval_only)
        do i2 = 0,nr(2)-1
          do i3 = 0,nr(3)-1
            ir = 1 + i1 + i2*nr(1) + i3*nr(1)*nr(2)
-           if (use_2d(1)) wf_2d(i1+1,i2+1)=wf_2d(i1+1,i2+1)+abs(exc_wf(ir))**2
-           if (use_2d(2)) wf_2d(i1+1,i3+1)=wf_2d(i1+1,i3+1)+abs(exc_wf(ir))**2
-           if (use_2d(3)) wf_2d(i2+1,i3+1)=wf_2d(i2+1,i3+1)+abs(exc_wf(ir))**2
+           if (use_2d(1)) wf_2d(i1+1,i2+1)=wf_2d(i1+1,i2+1)+exc_wf_sq(ir)
+           if (use_2d(2)) wf_2d(i1+1,i3+1)=wf_2d(i1+1,i3+1)+exc_wf_sq(ir)
+           if (use_2d(3)) wf_2d(i2+1,i3+1)=wf_2d(i2+1,i3+1)+exc_wf_sq(ir)
          enddo
        enddo
        call live_timing(steps=1)
@@ -143,6 +143,8 @@ subroutine exc_wf_gnuplot(use_1d,use_2d,plot_dim,eval_only)
      endif
      !
  end select
+ !
+ call live_timing()
  !
  if (.not.eval_only) &
 &   call of_open_close('exc_wf_gnu_'//trim(intc(lambda))//'_'//trim(p_dir))

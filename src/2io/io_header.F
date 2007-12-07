@@ -246,7 +246,7 @@
    !
    io_mode(ID)=MODE
    !
-   if (ver_is_gt_or_eq(ID,(/3,0,11/))) then
+   if (ver_is_gt_or_eq(ID,(/3,0,10/))) then
      call io_elemental(ID,VAR="QP_CTL_K_E",VAR_SZ=3,MENU=MENU)
    else
      call io_elemental(ID,VAR="QP_CTL_K",VAR_SZ=3,MENU=MENU)
@@ -256,7 +256,7 @@
 &       VAR=' QPs (scissor) :',CHECK=WARN,OP=(/"==","==","=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   if (ver_is_gt_or_eq(ID,(/3,0,11/))) then
+   if (ver_is_gt_or_eq(ID,(/3,0,10/))) then
      !
      call io_elemental(ID,VAR='QP_CTL_K_db_desc',CH0="",VAR_SZ=1,MENU=0)
      call io_elemental(ID,CH0=QP_ctl_short_descr(2),VAR=' QPs (db)      :',&

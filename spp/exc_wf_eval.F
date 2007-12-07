@@ -21,26 +21,28 @@
 !
 subroutine exc_wf_eval(Xk,Xen)
  !
- use pars,        ONLY:SP,HARTREE,IP,pi,lchlen,DP,schlen
- use stderr,      ONLY:intc,real2ch
- use FFT_m,       ONLY:fft_rot_r,fft_dim
- use D_lattice,   ONLY:a,sop_inv,i_time_rev,nsym,alat,&
-&                      n_atom_species,n_atoms,atom_pos,znucl,n_atoms_max
- use wave_func,   ONLY:wf_load,wf_state,wf,WF_free
- use R_lattice,   ONLY:nXkibz,bz_samp,ng_vec,q0_def_norm,d3k_factor
- use SPP,         ONLY:action_mode,ncell,lambda,r_hole,sort_mode,&
-&                      max_energy,nr,exc_wf,nr_tot,n_lambda_deg,lambda_deg,&
-&                      R_normalize
- use IO_m,        ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
- use BS,          ONLY:BS_K_dim,BS_bands,BS_q,BSS_n_descs,BSS_description,&
-&                      BS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
-&                      BS_cpl_K_exchange,BS_cpl_K_corr,BSS_q0,BSS_write_eig_2_db
- use electrons,   ONLY:levels,spin_occ
- use com,         ONLY:msg,of_open_close,error,warning
- use X_m,         ONLY:X_t
- use memory_m,    ONLY:mem_est
- use timing,      ONLY:live_timing
- use vec_operate, ONLY:c2a,sort
+ use pars,          ONLY:SP,HARTREE,IP,pi,lchlen,DP,schlen,BOHR
+ use stderr,        ONLY:intc
+ use FFT_m,         ONLY:fft_rot_r,fft_dim
+ use D_lattice,     ONLY:a,i_time_rev,nsym,alat,&
+&                        n_atom_species,n_atoms,atom_pos,znucl
+ use wave_func,     ONLY:wf_load,wf_state,wf,WF_free
+ use R_lattice,     ONLY:nXkibz,bz_samp,ng_vec,q0_def_norm,d3k_factor
+ use SPP,           ONLY:action_mode,ncell,lambda,r_hole,sort_mode,&
+&                        max_energy,nr,exc_wf_sq,nr_tot,n_lambda_deg,lambda_deg,&
+&                        R_normalize
+ use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
+ use BS,            ONLY:BS_K_dim,BS_bands,BS_q,BSS_n_descs,BSS_description,&
+&                        BS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
+&                        BS_cpl_K_exchange,BS_cpl_K_corr,BSS_write_eig_2_db
+ use electrons,     ONLY:levels,spin_occ
+ use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
+ use par_indexes_m, ONLY:par_indexes
+ use com,           ONLY:msg,of_open_close,error,warning
+ use X_m,           ONLY:X_t
+ use memory_m,      ONLY:mem_est
+ use timing,        ONLY:live_timing
+ use vec_operate,   ONLY:c2a,sort
  !
  implicit none
  type(bz_samp) ::Xk
@@ -56,7 +58,7 @@ subroutine exc_wf_eval(Xk,Xen)
  !
  integer               :: ir,ir_hole,j1
  integer,  allocatable :: rindex(:)
- real(SP), allocatable :: rvecbig(:,:)
+ real(SP), allocatable :: r_big_cell_cc(:,:)
  !
  ! Excitonc amplitude
  !
@@ -69,13 +71,14 @@ subroutine exc_wf_eval(Xk,Xen)
  !... Dummy arguments 
  !
  integer      :: iq,ia,i1,i2,i_l
- real(SP)     :: kr,r_hole_rlu(3)
+ real(SP)     :: k_dot_r,r_hole_rlu(3)
 #if defined _DOUBLE
  complex(DP)  :: zdotu
 #else
  complex(SP)  :: cdotu
 #endif
- type(bz_samp):: q
+ type(bz_samp)    ::q
+ type(pp_indexes) ::px
  !
  !... I/0
  !
@@ -92,13 +95,13 @@ subroutine exc_wf_eval(Xk,Xen)
  !... Variables needed to plot the exc-wf
  !
  integer           ::iv,ic,iv_fft,ic_fft,ikbz,ikibz,is,neh
- real(SP)          ::k_pt(3)
  real(SP)          ::r_eh(3)
+ complex(SP)       ::wf_sq
  complex(SP),  allocatable ::wf_vc(:)
  !
  !... Variables needed to the report of eigenvectors
  !
- real(SP)          ::K_weight(Xk%nibz)
+ real(SP)              ::K_weight(Xk%nibz)
  integer,  allocatable ::A_indx(:)
  real(SP), allocatable ::A_weight(:)
  !
@@ -186,7 +189,7 @@ subroutine exc_wf_eval(Xk,Xen)
  call c2a(b_in=a,v_in=r_hole,v_out=r_hole_rlu,mode='kc2a')
  r_hole_rlu(:)=nint(r_hole_rlu(:)*fft_dim(:))
  ir_hole=1+r_hole_rlu(1)+ r_hole_rlu(2)*nr(1)+ r_hole_rlu(3)*nr(1)*nr(2)
- call msg('s','::      position in the FFT grid [cc]:',rvecbig(:,ir_hole))
+ call msg('s','::      position in the FFT grid [cc]:',r_big_cell_cc(:,ir_hole))
  !
  ! [3] Translation in the center of the Big grid
  !
@@ -200,15 +203,14 @@ subroutine exc_wf_eval(Xk,Xen)
    ! li dov'e' ma traslata in un cella ripetuta che si trova nel mezzo
    ! della griglia grande.
    !
-   !r_hole_rlu(j1)=r_hole_rlu(j1)+nr(j1)/2
-   !
-   r_hole_rlu(j1)=r_hole_rlu(j1)+fft_dim(j1)*(ncell(j1)-1)/2
+   r_hole_rlu(j1)=r_hole_rlu(j1)+nr(j1)/2
    !
  enddo
  ir_hole=1+r_hole_rlu(1)+ r_hole_rlu(2)*nr(1)+ r_hole_rlu(3)*nr(1)*nr(2)
- r_hole=rvecbig(:,ir_hole)
+ r_hole=r_big_cell_cc(:,ir_hole)
  !
  call msg('s','::      translated position      [cc]:',r_hole)
+ call msg('s','::                             [bohr]:',r_hole*BOHR)
  !
  ! Construction of the Exc-Wf
  !
@@ -216,27 +218,36 @@ subroutine exc_wf_eval(Xk,Xen)
  !
  ! Allocation
  !
- allocate(wf_vc(BS_K_dim),exc_wf(nr_tot),A_weight(BS_K_dim),A_indx(BS_K_dim))
- call mem_est('wf_vc exc_wf A_weight',(/BS_K_dim,nr_tot,BS_K_dim/))
+ allocate(wf_vc(BS_K_dim),exc_wf_sq(nr_tot),A_weight(BS_K_dim),A_indx(BS_K_dim))
+ call mem_est('wf_vc exc_wf_sq A_weight',(/2*BS_K_dim,nr_tot,BS_K_dim/),(/SP,SP,SP/))
  call k_ibz2bz(Xk,'i',.false.)
  !
- call live_timing('Exc-Wfs',nr_tot)  
+ ! Par Proc
  !
- A_weight=0._SP
- exc_wf  =(0._SP,0._SP)
- wf_vc   =(0._SP,0._SP)
+ call pp_indexes_reset(px)
+ call par_indexes(px,(/nr_tot/))
+ call pp_redux_wait
+ !
+ call live_timing('Exc-Wfs',px%stps(myid+1))  
+ !
+ A_weight   =0._SP
+ exc_wf_sq  =0._SP
+ wf_vc      =(0._SP,0._SP)
  !
  do ir=1,nr_tot
-   r_eh(:)=rvecbig(:,ir)-r_hole(:)
+   !
+   if (.not.px%i1p(ir)) cycle
+   !
+   r_eh(:)=r_big_cell_cc(:,ir)-r_hole(:)
    do neh = 1,BS_K_dim
      ikbz = BS_eh_table(neh,1)
      iv = BS_eh_table(neh,2)
      ic = BS_eh_table(neh,3)
      ikibz = Xk%sstar(ikbz,1)
      is = Xk%sstar(ikbz,2)
-     k_pt(:) = Xk%ptbz(ikbz,:)
-     k_pt(:)=k_pt(:)/alat(:)
-     kr = dot_product(r_eh,k_pt)
+     !
+     k_dot_r = dot_product(r_eh,Xk%ptbz(ikbz,:)/alat(:))*2.*pi
+     !
      iv_fft = wf_state(iv,ikibz,1)
      ic_fft = wf_state(ic,ikibz,1)
      !
@@ -247,26 +258,32 @@ subroutine exc_wf_eval(Xk,Xen)
        enddo
      endif
      !
-     wf_vc(neh) = wf(fft_rot_r(sop_inv(is),rindex(ir)), ic_fft)*&
-&          conjg( wf(fft_rot_r(sop_inv(is),rindex(ir_hole)), iv_fft) )
+     wf_vc(neh) = wf(fft_rot_r(is,rindex(ir)), ic_fft)*&
+&          conjg( wf(fft_rot_r(is,rindex(ir_hole)), iv_fft) )
+     !
      if (is > nsym/(i_time_rev+1)) wf_vc(neh) = conjg(wf_vc(neh))
-     wf_vc(neh) = exp(cI*kr*2*pi)*wf_vc(neh)
+     !
+     wf_vc(neh) = exp(cI*k_dot_r)*wf_vc(neh)
      !
    enddo  !Matrix elements
    !
    do i_l=1,n_lambda_deg
 #if defined _DOUBLE
-     exc_wf(ir) = exc_wf(ir)+zdotu(BS_K_dim,BS_mat(1,lambda_deg(i_l)),1,wf_vc,1)
+     wf_sq = zdotu(BS_K_dim,BS_mat(1,lambda_deg(i_l)),1,wf_vc,1)
 #else
-     exc_wf(ir) = exc_wf(ir)+cdotu(BS_K_dim,BS_mat(1,lambda_deg(i_l)),1,wf_vc,1)
+     wf_sq = cdotu(BS_K_dim,BS_mat(1,lambda_deg(i_l)),1,wf_vc,1)
 #endif
+     exc_wf_sq(ir) = exc_wf_sq(ir)+abs(wf_sq)**2.
    enddo
    !
    call live_timing(steps=1)
    !
  enddo   !grid points
  !
- call live_timing
+ call live_timing()
+ !
+ call pp_redux_wait(exc_wf_sq)
+ call pp_indexes_reset(px)
  !
  ! Sort the weights
  !
@@ -370,8 +387,8 @@ subroutine exc_wf_eval(Xk,Xen)
  !
  ! More CLEAN
  !
- deallocate(rvecbig,rindex,exc_wf,BS_R,BS_E)
- call mem_est('exc_wf BS_R_E')
+ deallocate(r_big_cell_cc,rindex,exc_wf_sq,BS_R,BS_E)
+ call mem_est('exc_wf_sq BS_R_E')
  call WF_free()
  !
  contains
@@ -402,7 +419,7 @@ subroutine exc_wf_eval(Xk,Xen)
      enddo
      !
      nr_tot = fft_size*ncell(1)*ncell(2)*ncell(3)
-     allocate ( rvecbig(3,nr_tot), rindex(nr_tot) )
+     allocate ( r_big_cell_cc(3,nr_tot), rindex(nr_tot) )
      !
      nr=(/ncell(1)*fft_dim(1),ncell(2)*fft_dim(2),ncell(3)*fft_dim(3)/)
      call msg('s',':: Extended grid :',nr)
@@ -419,7 +436,7 @@ subroutine exc_wf_eval(Xk,Xen)
            j2=ir2/fft_dim(2)
            j3=ir3/fft_dim(3)
            rindex(ir)=i1+fft_dim(1)*i2+fft_dim(1)*fft_dim(2)*i3+1
-           rvecbig(:,ir) = ir1*a(1,:)/fft_dim(1) + ir2*a(2,:)/fft_dim(2) + ir3*a(3,:)/fft_dim(3)
+           r_big_cell_cc(:,ir) = ir1*a(1,:)/fft_dim(1) + ir2*a(2,:)/fft_dim(2) + ir3*a(3,:)/fft_dim(3)
          end do
        end do
      end do
@@ -515,7 +532,7 @@ subroutine exc_wf_eval(Xk,Xen)
      !
      do j1=BS_K_dim,1,-1
        !
-       j2=j1
+       j2=BS_K_dim-j1+1
        if (sort_mode == 'i') j2=E_indx(j1)
        !
        if (real(BS_E(j2))>max_energy.or.real(BS_E(j2))<0.) cycle 

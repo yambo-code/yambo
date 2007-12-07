@@ -94,12 +94,6 @@ subroutine exc_wf_plot_driver(check_only)
  if (plot_dim==1.and.use_xcrysden) switch_to_gnuplot=.true.
  if (plot_dim==3.and.use_gnuplot)  switch_to_xcrysden=.true.
  !
- if (use_gnuplot.and..not.v_is_zero(dp)) then
-   call warning('Non cubic cell. GnuPlot uses cc axis')
-   p_dir='123'
-   switch_to_xcrysden=.true.
- endif
- !
  if (switch_to_xcrysden.and.check_only) call warning('Switching to XCrySDen')
  if (switch_to_gnuplot.and.check_only)  call warning('Switching to GnuPlot')
  !

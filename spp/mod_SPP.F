@@ -49,9 +49,10 @@ module SPP
  character(3) ::p_dir        !Direction of the plot 
  character(3) ::R_normalize 
  ! 
- integer                  ::nr(3),nr_tot
- complex(SP), allocatable ::exc_wf(:)
- real(SP),    allocatable ::wf_2d(:,:)
+ integer               ::nr(3)
+ integer               ::nr_tot
+ real(SP), allocatable ::exc_wf_sq(:)
+ real(SP), allocatable ::wf_2d(:,:)
  !
 #if defined SPP_PJ_PH
  !

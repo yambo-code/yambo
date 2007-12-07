@@ -49,7 +49,7 @@ CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
 TARGETS  = all self interfaces spp 
 UTILS    = changelog
 PROJECTS = self_ph self_ras self_reels self_cyl_cut self_spin self_sc \
-	   spp_ph spp_ras 
+	   spp_ph spp_ras self_bigsys self_ras_big
 EXE      = $(TARGETS) $(PROJECTS) 
 # Libraries (ordered for compiling & linking)
 SLIBS        = 0external_c 0modules 1xc 1parser 1common 2io 2wf_and_fft \
@@ -74,6 +74,7 @@ PJ_PHLIBS    = 0external_c 0modules 1xc 1parser 1common 2io 2wf_and_fft \
 PJ_SCLIBS       = $(SLIBS) 7sc
 PJ_CYL_CUTLIBS  = $(SLIBS)
 PJ_SPINLIBS     = $(SLIBS)
+PJ_BIGSYSLIBS   = $(SLIBS)
 #
 2SLIBS       = 0external_c 0modules 1parser 1common 2io 
 SPPLIBS      = 0external_c 0modules 1xc 1parser 1common 2io \
@@ -103,12 +104,18 @@ self_spin: libs
 self_cyl_cut: libs
 	@LIBS2DO="$(PJ_CYL_CUTLIBS)";ADF="-DPJ_CYL_CUT"; $(mksrc)
 	@X2DO="self_cyl_cut"; XPATH="driver";XLIBS="$(PJ_CYL_CUTLIBS)";ADF="-DPJ_CYL_CUT";$(mkx)
+self_bigsys: libs
+	@LIBS2DO="$(PJ_BIGSYSLIBS)";ADF="-DPJ_BIGSYS"; $(mksrc)
+	@X2DO="self_bigsys"; XPATH="driver";XLIBS="$(PJ_BIGSYSLIBS)";ADF="-DPJ_BIGSYS";$(mkx)
 self_ph: libs
 	@LIBS2DO="$(PJ_PHLIBS)";ADF="-DPJ_PH"; $(mksrc)
 	@X2DO="self_ph"; XPATH="driver";XLIBS="$(PJ_PHLIBS)";ADF="-DPJ_PH";$(mkx)
 self_ras: libs
 	@LIBS2DO="$(PJ_RASLIBS)";ADF="-DPJ_RAS"; $(mksrc)
 	@X2DO="self_ras"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-DPJ_RAS";$(mkx)
+self_ras_big: libs
+	@LIBS2DO="$(PJ_RASLIBS)";ADF="-DPJ_RAS -DPJ_BIGSYS"; $(mksrc)
+	@X2DO="self_ras_bigsys"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-DPJ_RAS -DPJ_BIGSYS";$(mkx)
 self_reels: libs
 	@LIBS2DO="$(PJ_REELSLIBS)";ADF="-DPJ_REELS"; $(mksrc)
 	@X2DO="self_reels"; XPATH="driver";XLIBS="$(PJ_REELSLIBS)";ADF="-DPJ_REELS";$(mkx)

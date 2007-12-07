@@ -25,11 +25,11 @@ module model_loss_function
   !
   use pars,                   ONLY : SP
   character(2), public            :: model
-  integer, parameter              :: nlossform = 11
+  integer, parameter              :: nlossform = 12
   integer                         :: lossfm
   character(2)                    :: lossformsh(nlossform)
   character(70)                   :: lossformlg(nlossform)
-  data lossformsh/'1b','2b','2e','aq','az','ar','ig','iq','id','ip','ap'/
+  data lossformsh/'1b','2b','2e','aq','az','ar','ig','iq','id','ip','ap','is'/
   data lossformlg/&
 & 'isotropic bulk continuum',                       & ! 1  1b
 & 'semi-infinite continuum',                        & ! 2  2b
@@ -41,7 +41,8 @@ module model_loss_function
 & 'isotropic form of 3-layer, in q.d -> 0 limit',   & ! 8  iq
 & 'isotropic form of 3-layer, dielectric theory',   & ! 9  id
 & 'isotropic form of 3-layer, parallel trajectory', & ! 10 ip
-& 'anisotropic form of 3-layer, parallel trajectory'/ ! 11 ap
+& 'anisotropic form of 3-layer, parallel trajectory',&! 11 ap
+& 'isotropic bulk loss in a surface layer'/           ! 12 is
 
 contains
 
@@ -52,7 +53,7 @@ subroutine init_loss_function(defs) ! REELS exclusive to 3LM
   integer, parameter             :: V_more=1, V_qp=2, V_io=3, V_debug=4
   type(initdefs), intent(inout)  :: defs
 
-  call it(defs,'LossForm', '[REELS] Functional form of loss (1b/2b/2e/aq/az/ar/ig/iq/id/ip/ap)', model )
+  call it(defs,'LossForm', '[REELS] Functional form of loss (1b/2b/2e/aq/az/ar/ig/iq/id/ip/ap/is)', model )
 ! 
   lossfm=index_eels_form(model)
 
@@ -211,6 +212,13 @@ end subroutine init_loss_function
       model_Img = fac2 * &
 &     aimag( ( cfac1*cfac2 + cfac3*cfac4*fac1 ) / &
 &            ( cfac1*cfac4 + cfac3*cfac2*fac1 ) )
+      !
+    case(12)
+      !
+      ! Bulk losses in a surface layer
+      !
+      esavg = ( esurf(1) + esurf(2) + esurf(3) )/ 3.0_SP
+      model_Img = aimag(-1.0_SP/esavg)
       !
     end select 
     return 

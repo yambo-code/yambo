@@ -24,7 +24,7 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
  use pars,           ONLY:SP
  use com,            ONLY:warning
 #if defined PJ_RAS
- use ras_module,     ONLY:transloc 
+ use ras_module,     ONLY:transloc, lras
 #endif
  use drivers,        ONLY:l_col_cut
  use electrons,      ONLY:levels,n_sp_pol
@@ -75,7 +75,11 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
    call X_alloc('OptGrad',(/3,X%ib(2),Xen%nbm,Xk%nibz/))
    X_q0grad=(0.,0.)
    !
+
+#if !defined PJ_BIGSYS
    call wf_load(0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
+
+#endif
    !
    ! Attempt calculation within longitudinal gauge if requested
    !
@@ -128,7 +132,9 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
    do iv = X%ib(1), Xen%nbm
      do ic = Xen%nbf+1, X%ib(2)
 #if defined PJ_RAS
-       if(.not.transloc(ic,iv,ik)) cycle
+       if(lras) then
+         if(.not.transloc(ic,iv,ik)) cycle
+       endif
 #endif
        do i_spin = 1, n_sp_pol
          !

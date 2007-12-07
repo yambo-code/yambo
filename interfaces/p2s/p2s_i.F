@@ -127,6 +127,10 @@
  !
  call msg('s','== DB2 (wavefunctions) ... ')
  !
+ ! Wavefunction blocks
+ !
+!call wf_disk_split
+ !
  allocate(wf_disk(2,n_bands,wf_ncx,n_spin))
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
  !
@@ -172,3 +176,53 @@
  call p_finalize
  !
  end function p2s_i
+
+ subroutine wf_disk_split
+   use stderr,              only : intc
+   use pars,                only : SP,DP, schlen
+   use electrons,           only : n_bands
+   use wave_func,           only : wf_ncx
+   use com,                 only : msg
+   use interfaces,          only : n_band_block,blocks, maxband
+   use memory_m,            only : mem_est
+   real(SP),parameter    :: max_array = 400.0_SP ! Mb limit
+   real(SP),parameter    :: kb = 1024.0_SP
+   integer               :: i
+   character(schlen)     :: sch
+
+   n_band_block = 1
+   array_sz = DP*n_bands*real(wf_ncx)/kb/kb ! wf_disk_DP
+   !
+   ! No memory problems: no blocks
+   !
+   if(array_sz.lt.max_array) then
+     n_band_block = 1
+     allocate(blocks(2,n_band_block))
+     blocks(:,1) = (/ 1, n_bands /)
+     maxband = n_bands
+   else
+   !
+   ! Split the WFs read from disk into blocks
+   !
+     n_band_block = array_sz/max_array + 1
+     maxband = n_bands/real(n_band_block)  ! rough size of each block
+     allocate(blocks(2,n_band_block))
+     do i=1,n_band_block-1
+       blocks(1,i) = (i-1)*maxband+1
+       blocks(2,i) = blocks(1,i)+maxband-1
+     enddo
+     blocks(1,n_band_block) = blocks(2,n_band_block-1) + 1
+     blocks(2,n_band_block) = n_bands
+
+     do i=1,n_band_block
+       write(sch,'(a,i2,a,i4,a,i4,a)') &
+&      "  Block ",i," bands: [",blocks(1,i),":",blocks(2,i),"]"
+       call msg('s',trim(sch))
+     enddo
+
+     maxband = 1+maxval(blocks(2,:)-blocks(1,:)) ! The maximum block size
+
+   endif
+
+   return
+ end subroutine wf_disk_split

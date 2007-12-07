@@ -377,9 +377,9 @@ end subroutine init_cutoff
         else
           gz = real(ngz)*2.0_SP*pi
           PSx = PSx + cc * kg(ix,ig2) * &
-&               -ci/gz * (exp(ci*gz*dcf) - 1.0_SP) * exp(ci*z0f)
+&               ci/gz * ( 1.0_SP - exp(ci*gz*dcf)) * exp(ci*z0f)
           PSy = PSy + cc * kg(iy,ig2) * &
-&               -ci/gz * (exp(ci*gz*dcf) - 1.0_SP) * exp(ci*z0f)
+&               ci/gz * ( 1.0_SP - exp(ci*gz*dcf)) * exp(ci*z0f)
         endif
       enddo
     enddo

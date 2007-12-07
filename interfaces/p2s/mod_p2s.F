@@ -27,7 +27,7 @@ module P2S
  use qexml_module
 #endif
  use pw_data
- use pars,                  ONLY : lchlen,SP
+ use pars,                  ONLY : lchlen,SP, DP
  use electrons,             ONLY : levels
  use R_lattice,             ONLY : bz_samp
  ! 
@@ -38,6 +38,11 @@ module P2S
  !
  integer, public :: pw_unit 
  integer, private :: i1,ierr
+ !
+ ! Memory saving tools
+ !
+ integer, parameter       :: max_blocksize = 9
+ integer                  :: blocksize(max_blocksize)
  !
 contains
  !

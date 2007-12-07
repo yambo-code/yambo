@@ -37,7 +37,8 @@ subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
  use wave_func,     ONLY:wf_nc_k,wf_igk,WF_alloc,wf_b,wf_k,wf_space,wf,wf_s,&
 &                        wf_state,wf_ng,wf_norm_test,wf_free,wf_ncx,ioWF
  use timing,        ONLY:live_timing
- use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END
+ use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,&
+&                        io_fragmented, io_netcdf_support, RD_CL
  implicit none
  !
  integer               :: iG_in,iGo_max,bands_to_load(2),kpts_to_load(2)
@@ -120,10 +121,16 @@ subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
  wf_title=string_pack('[FFT',trim(wf_title),'] Mesh size:')
  if (wf_space=='R') call msg('rns',trim(wf_title),fft_dim)
  !
+#if !defined PJ_BIGSYS
  call live_timing('[WF loader] Wfs (re)loading',wf_total_states,SERIAL=.true.)
+#endif
  !
  allocate(wf_disk(2,n_bands,wf_ncx,n_spin))
+#if defined PJ_BIGSYS
+ call mem_est("wf_disk",(/size(wf_disk)/),(/SP/),quiet=.true.)
+#else
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
+#endif
  !
  call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
  io_err=ioWF(ID,wf_disk)
@@ -131,11 +138,15 @@ subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
  wf_total_states=0
  do ikibz=1,nkibz
    !
-!   if (io_fragmented(ID).or.io_netcdf_support(ID)) then
-!     if (any((/ikibz<wf_k(1),ikibz>wf_k(2)/))) cycle
-!   endif
+   if (io_fragmented(ID).or.io_netcdf_support(ID)) then
+     if (any((/ikibz<wf_k(1),ikibz>wf_k(2)/))) cycle
+   endif
    !
+#if defined PJ_BIGSYS
+   call io_control(ACTION=RD_CL,COM=NONE,SEC=(/ikibz+1/),ID=ID)
+#else
    call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ikibz+1/),ID=ID)
+#endif
    io_err=ioWF(ID,wf_disk)
    if (any((/ikibz<wf_k(1),ikibz>wf_k(2)/))) cycle
    !
@@ -156,7 +167,9 @@ subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
        enddo
        if (wf_space=='G'.or.wf_space=='C') then
          wf(:,wf_total_states)=wf_DP(:)
+#if !defined PJ_BIGSYS
          call live_timing(steps=1)
+#endif
          cycle
        endif
 #if defined FFTW
@@ -169,12 +182,18 @@ subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
      enddo
    enddo
  enddo
+#if !defined PJ_BIGSYS
  call live_timing()
+#endif
  !
  ! CLEAN
  !
  deallocate(wf_disk)
+#if defined PJ_BIGSYS
+ call mem_est("wf_disk",quiet=.true.)
+#else
  call mem_est("wf_disk")
+#endif
  deallocate(wf_DP)
  !
  if (.not.wf_norm_test) return

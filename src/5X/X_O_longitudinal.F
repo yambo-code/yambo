@@ -34,12 +34,12 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  use par_proc_m,          ONLY : pp_redux_wait,pp_indexes,myid,master_node,&
 &                                pp_indexes_reset
  use par_indexes_m,       ONLY : par_indexes
- use R_lattice,           ONLY : bz_samp,q0_def_norm
+ use R_lattice,           ONLY : bz_samp,q0_def_norm,nkibz
  use X_m,                 ONLY : X_alloc,X_t,X_q0grad, long_path 
  use IO_m,                ONLY : io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP,OP_RD,&
 &                                RD_CL,RD,DUMP,NONE
  use memory_m,            ONLY : mem_est
- use wave_func,           ONLY : wf,wf_ng,wf_igk,wf_state,wf_load,WF_free 
+ use wave_func,           ONLY : wf,wf_ng,wf_igk,wf_state,wf_load,WF_free , wf_ncx
 #if defined PJ_RAS
  use ras_long,            ONLY : grid_dir, select_field_dir
 #endif
@@ -52,14 +52,15 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  !
  ! Saves
  !
- integer           ::wf_ng_save
- character(lchlen) ::in_path_save
+ integer                      :: wf_ng_save
+ character(lchlen)            :: in_path_save
+ integer                      :: nkibz_save, wf_ncx_save, wf_ncx_long, nkibz_long
+ integer                      :: wf_ng_eff, wf_ng_long
  !
  ! Work Space
  !
- integer                      :: ik,icfft,ivfft,ic,iv, ik_grid, iq, ikpq, &
-&                                i_spin, err, ifail, wf_ng_long, ir,num_long_grid
- complex(SP), allocatable     :: wf_k(:)
+ integer                      :: ik,icfft,ivfft,ic,iv, ik_grid, iq, ikpq
+ integer                      :: i_spin, err, ifail, ir, num_long_grid
  complex(SP)                  :: rho(2)
  real(SP)                     :: Ev_m_Ec
  real(SP), parameter          :: fac = 0.70710678118654752440_SP
@@ -90,8 +91,7 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  !
  ! saves...
  !
- wf_ng_save=wf_ng
- in_path_save = in_path
+ call set_parms(grid='  local', command=' define')
  !
  if (wf_ng.lt.0.8_SP*maxval(wf_igk)) &
 &   call warning('All/most WF G-vectors should be used in the long. gauge')
@@ -99,6 +99,7 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  ! Read longitudinal k-point grids from second ioDB1
  !
  io_err=ioDB1_reload(E_shift,Xk_shift,trim(long_path))
+ call set_parms(grid='shifted', command=' define')
  !
  if(io_err/=0) then
    call warning('Reading of shifted DB1 failed. Switch to transverse.')
@@ -118,6 +119,17 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
    call DB1_reset()
    return
  endif
+
+ wf_ng_eff = min(wf_ng_save,wf_ng_long)
+
+#if defined PJ_BIGSYS
+ !
+ ! {k} Allocate k-dependent local copies of unshifted WF grid. 
+ !
+ allocate(wf_state_local( X%ib(2), nkibz_save, n_spin ), stat=err )
+ allocate(wf_local( wf_ng_eff, (X%ib(2)-X%ib(1)+1)*1*n_spin ), stat=err ) 
+
+#else
  !
  ! {k} Save local copy of unshifted WF grid. 
  !
@@ -127,8 +139,7 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  call mem_est('WFstate0',(/ size(wf,1), size(wf,2) /), errors=(/err/))
  wf_local(:,:)         = wf(:,:)
  wf_state_local(:,:,:) = wf_state(:,:,:)
- !
- allocate(wf_k(wf_ng))
+#endif
  !
  ! Main loop over cartesian directions
  !
@@ -138,6 +149,8 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
 #if defined PJ_RAS
    ir = grid_dir(iq)
 #endif
+
+#if !defined PJ_BIGSYS
    !
    ! Load WFs {k} + q_iq
    !
@@ -146,7 +159,9 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
    call wf_load(0,1,(/ X%ib(1), Xen%nbm /),&
 &                   (/ik_grid,ik_grid+Xk%nibz-1/),&
 &                   space='G',title='-Oscillators/G space') 
-   wf_ng_long = min(wf_ng_save,wf_ng)
+!  wf_ng_eff = min(wf_ng_save,wf_ng_long)
+#endif
+
    !
    ! Set up the parallel environment 
    !
@@ -157,6 +172,25 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
    !
    do ik = 1, Xk%nibz   ! Loop over k's in IBZ [1:nkibz]
      ikpq = ik_grid + ik - 1 ! Corresponding k in set of shifted grids
+
+#if defined PJ_BIGSYS
+     !
+     ! Load WFs {k} 
+     !
+     call set_parms(grid='  local',command='  reset')
+     call WF_free()
+     call wf_load(wf_ng_eff,1,X%ib,(/ik,ik/),space='G',title='-Oscillators/G space')
+     wf_local(:,:)         = wf(:,:)
+     wf_state_local(:,1:ik,:) = wf_state(:,:,:)
+     !
+     ! Load WFs {k} + q_iq
+     !
+     call set_parms(grid=' shifted',command='  reset')
+     call WF_free()
+     call wf_load(wf_ng_eff,1,(/X%ib(1), Xen%nbm /),&
+&                   (/ikpq,ikpq/),space='G',title='-Oscillators/G space')
+#endif
+
      do iv = X%ib(1),Xen%nbm
        if (.not.px%i2p(ik,iv)) cycle
        do ic = Xen%nbf+1, X%ib(2)
@@ -184,11 +218,11 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
            ! X_q0grad = < v,k+q | c,k >/q
            !
 #if defined _DOUBLE
-           rho(i_spin) = zdotc( wf_ng_long, wf(1:wf_ng_long,ivfft), &
-&                               1, wf_local(1:wf_ng_long,icfft),1 ) /q0_def_norm
+           rho(i_spin) = zdotc( wf_ng_eff, wf(1:wf_ng_eff,ivfft), &
+&                               1, wf_local(1:wf_ng_eff,icfft),1 ) /q0_def_norm
 #else
-           rho(i_spin) = cdotc( wf_ng_long, wf(1:wf_ng_long,ivfft), &
-&                               1, wf_local(1:wf_ng_long,icfft),1 ) /q0_def_norm
+           rho(i_spin) = cdotc( wf_ng_eff, wf(1:wf_ng_eff,ivfft), &
+&                               1, wf_local(1:wf_ng_eff,icfft),1 ) /q0_def_norm
 #endif
            !
          enddo    ! spin loop
@@ -212,7 +246,6 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  !
  ! CLEAN
  !
- deallocate(wf_k)
  call WF_free()
  do i_spin=1,n_spin
    call pp_redux_wait(X_q0grad(:,:,:,:,i_spin))
@@ -224,17 +257,44 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  use_trans_gauge = .false.
  !
  contains
- !
- subroutine DB1_reset()
    !
-   ! Reload g_vec, dl_sop ... from db1 using _shift types
-   ! so that all type components (like occupations) are 
-   ! not rewritten.
-   !
-   in_path = in_path_save
-   io_err=ioDB1_reload(E_shift,Xk_shift,trim(in_path))
-   wf_ng=wf_ng_long
-   !
- end subroutine
+   subroutine DB1_reset()
+     !
+     ! Reload g_vec, dl_sop ... from db1 using _shift types
+     ! so that all type components (like occupations) are 
+     ! not rewritten.
+     !
+     in_path = in_path_save
+     io_err=ioDB1_reload(E_shift,Xk_shift,trim(in_path))
+     wf_ng=wf_ng_long
+     !
+   end subroutine
+
+   subroutine set_parms(grid,command)
+     implicit none
+     character(len=7), intent(in), optional :: grid, command
+
+     if(      grid.eq.'  local'.and. command.eq.' define') then
+       nkibz_save   = nkibz
+       wf_ncx_save  = wf_ncx
+       wf_ng_save   = wf_ng
+       in_path_save = in_path
+     else if( grid.eq.'shifted'.and. command.eq.' define') then
+       nkibz_long  = nkibz
+       wf_ncx_long = wf_ncx
+       wf_ng_long  = wf_ng
+     else if( grid.eq.'  local'.and. command.eq.'  reset') then
+       in_path = in_path_save
+       nkibz   = nkibz_save
+       wf_ncx  = wf_ncx_save
+       wf_ng   = wf_ng_save
+     else if( grid.eq.'shifted'.and. command.eq.'  reset') then
+       in_path = long_path
+       nkibz   = nkibz_long
+       wf_ncx  = wf_ncx_long
+       wf_ng   = wf_ng_long
+     endif
+     return
+   end subroutine set_parms
  !
 end subroutine X_O_longitudinal

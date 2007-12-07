@@ -44,7 +44,7 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   use model_loss_function,     only : lossformlg, lossfm, print_eels_form
   implicit none
   type(levels),       intent(in) :: Xen    ! Energies
-  type(bz_samp),      intent(in) :: Xk, q     ! K points
+  type(bz_samp),   intent(inout) :: Xk, q     ! K points
   type(X_t),       intent(inout) :: X      ! Polarization
   type(w_samp)                   :: wv     ! Energy ranges
 !ws

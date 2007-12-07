@@ -674,7 +674,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (gpl_version.and.any((/&
 &              l_life,l_acfdt,l_bs_fxc,l_lrc_fxc,&
 #if defined PJ_RAS
-&              lras,lreels,&&
+&              lras,lreels,&
 #endif
 &              l_gw0.and..not.l_ppa&
 &             /))) then

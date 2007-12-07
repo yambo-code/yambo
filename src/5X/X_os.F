@@ -78,6 +78,9 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  drude_Gf = cmplx(0.,0.,SP)
  !
  force_bare_X_G=associated(Xen%W).or.associated(Xen%Z).or.use_X_RIM
+#if defined PJ_BIGSYS
+ if(iq.ne.1) force_bare_X_G=.true.
+#endif
  !
  call mem_est("Xo_WS",(/size(XoR)+2*X%ng/))
  !
@@ -114,11 +117,11 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  ! WF load
  !
-#if defined PJ_RAS
+#if defined PJ_RAS || PJ_BIGSYS
  if(.not.( iq==1 .and. X%ng==1 )) then
 #endif
    call wf_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
-#if defined PJ_RAS
+#if defined PJ_RAS || PJ_BIGSYS
  endif
 #endif
  !

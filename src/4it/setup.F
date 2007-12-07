@@ -161,7 +161,7 @@ subroutine setup(en,Xen,k,Xk)
  do i1=n_g_shells,max(n_g_shells-27,1),-5
    ch(1)=' '
    do i2=i1,max(i1-4,1),-1
-     write (ch(2),'(a,1x,a,i4.4,a,i6)') trim(ch(1)),'[S',i2,']:',ng_in_shell(i2)
+     write (ch(2),'(a,1x,a,i5.5,a,i6)') trim(ch(1)),'[S',i2,']:',ng_in_shell(i2)
      ch(1)=ch(2)
    enddo
    call msg('r',trim(ch(2)))

@@ -76,7 +76,11 @@
      if (wf_space=="G") local_size(1)=wf_ng
      allocate(wf(local_size(1),local_size(2)),stat=err)
      if (err==0) allocate(wf_state(wf_b(2),wf_k(2),wf_s(2)),stat=err)
+#if defined PJ_BIGSYS
+     call mem_est('WF',(/product(local_size)/), quiet=.true. , errors=(/err/))
+#else
      call mem_est('WF',(/product(local_size)/),errors=(/err/))
+#endif
      WF_alloc=local_size(2)
      wf=(0.,0.)
      wf_state=0
@@ -91,7 +95,11 @@
   &                       fft_rot_r,fftw_plan
      implicit none
      if (.not.allocated(wf)) return
+#if defined PJ_BIGSYS
+     call mem_est('WF',quiet=.true.)
+#else
      call mem_est('WF')
+#endif
      deallocate(wf,wf_state)
      if (wf_space=="R") then
        fft_size=0

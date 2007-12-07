@@ -69,17 +69,17 @@
    call pp_indexes_reset(px)
    !
    ! WF loading (needed in both cases)
-   !============
    !
+#if !defined PJ_BIGSYS
    call wf_load(0, 1, X%ib, (/1,Xk%nibz/), space='G', title='-Oscillators/G space')
+#endif
    !
    ! Set up data needed for cut off routines
-   !============
    !
    call nG_limits( Xk%nibz )
    !
    ! OptGrad cut allocation
-   !====================
+   !
    allocate(Xcut_q0grad(3, X%ib(2), Xen%nbm, Xk%nibz, n_spin))
    call mem_est('Xcut_q0grad', (/product( (/3, X%ib(2), Xen%nbm, Xk%nibz, n_spin/) )/) )
    Xcut_q0grad = (0.,0.)

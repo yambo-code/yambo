@@ -21,7 +21,7 @@
 !
  module interfaces
    ! 
-   use pars,      ONLY:SP,PI,lchlen,schlen
+   use pars,      ONLY:SP,PI,lchlen,schlen,DP
    implicit none
    !
    logical :: force_noTR
@@ -29,6 +29,9 @@
    logical :: force_noWFs
    !
    real(SP):: alat_mult_factor
+   !
+   integer               :: n_band_block, maxband
+   integer, allocatable  :: blocks(:,:)
    !
  contains
    !

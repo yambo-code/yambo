@@ -32,7 +32,7 @@ subroutine X_O_transverse(Xen,Xk,X)
  use X_m,                 ONLY:X_alloc,X_t,X_q0grad
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD
  use memory_m,            ONLY:mem_est
- use wave_func,           ONLY:wf,wf_ng,wf_state
+ use wave_func,           ONLY:wf,wf_ng,wf_state, wf_load
  !
  implicit none
  type(bz_samp), intent(in)    :: Xk
@@ -91,6 +91,9 @@ subroutine X_O_transverse(Xen,Xk,X)
  ! Main loop over k in IBZ
  !
  do ik=1,Xk%nibz
+#if defined PJ_BIGSYS
+   call wf_load(0,1,X%ib,(/ik,ik/),space='G',title='-Oscillators/G space')
+#endif
    !
    ! [Vnl,r]
    !

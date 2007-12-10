@@ -43,6 +43,7 @@ module SPP
  integer      ::ncell(3)     !number of repetitions of the cell
  real(SP)     ::max_energy   !max energy to be shown in ordering
  real(SP)     ::r_hole(3)    !position of the hole 
+ real(SP)     ::deg_energy   
  character(1) ::sort_mode    !to decide if sorting by energies or intensities
  character(1) ::action_mode  !to decide if sorting or plotting
  character(1) ::p_format     !Format of the plot

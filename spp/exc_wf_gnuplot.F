@@ -133,6 +133,7 @@ subroutine exc_wf_gnuplot(use_1d,use_2d,plot_dim,eval_only)
 &                             (/titles(1),titles(3),titles(4)/),INDENT=0,USE_TABS=.true.)
        if (use_2d(3)) call msg('o exc',"#",&
 &                             (/titles(2),titles(3),titles(4)/),INDENT=0,USE_TABS=.true.)
+       call msg('o exc',"#")
        do i1=0,nr2plot(1)-1
          do i2=0,nr2plot(2)-1
            call msg('o exc','',(/exc_wf_projection(i1,dir2plot(1)),&
@@ -158,8 +159,8 @@ subroutine exc_wf_gnuplot(use_1d,use_2d,plot_dim,eval_only)
      integer :: I,dir
      real(SP):: rv(3)
      !
-     rv(:)=I*a(dir,:)/fft_dim(dir)
-     exc_wf_projection=(v_norm(rv)-r_hole(dir))*BOHR
+     rv(:)=I*a(dir,:)/fft_dim(dir)-r_hole(:)
+     exc_wf_projection=dot_product(rv,a(dir,:))/v_norm(a(dir,:))*BOHR
      !
    end function
    !

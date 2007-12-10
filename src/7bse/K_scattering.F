@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine K_scattering(iq,ik1,ik2,Xk,q)
+subroutine K_scattering(iq,ik1,ik2,Xk,q)
  !
  use pars,          ONLY:SP,IP
  use memory_m,      ONLY:mem_est
@@ -217,4 +217,4 @@
   enddo
  enddo
  !
- end subroutine
+end subroutine

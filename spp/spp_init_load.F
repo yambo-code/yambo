@@ -55,6 +55,8 @@ subroutine spp_init_load(defs)
  !
  call it(defs,'Action','Sort energies or plot WF [(s)ort/(p)lot]', action_mode)
  call it(defs,'Max_Energy','Max value energy to be shown', max_energy,E_unit)
+ call it(defs,'Degen_Step', 'Maximum energy separation of two degenerate states',&
+&                           deg_energy,E_unit)
  call it(defs,'Order','Energies order `mode` [(e)nergy/(i)ntensity]', sort_mode)
  call it(defs,'RNorm','Normalize residuals [yes/no]', R_normalize)
  call it(defs,'State','Ordered Index of the BS state',lambda)

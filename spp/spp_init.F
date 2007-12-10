@@ -72,6 +72,7 @@ subroutine spp_init(instr,lnstr,FINALIZE)
    lambda = 1          
    n_lambda_deg = 1          
    lambda_deg = 0          
+   deg_energy = 0.01/HARTREE
    R_normalize= "yes"
    sort_mode = "i"
    action_mode = "s"
@@ -167,7 +168,7 @@ subroutine spp_init(instr,lnstr,FINALIZE)
  !
  if (lkanalyze) call initactivate(1,"cooIn cooOut GWKpts Qpts KShift1 KShift2 KShift3")
  if (lbzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut")
- if (lexcwf) call initactivate(1,"Action Max_Energy Order RNorm State Cells &
+ if (lexcwf) call initactivate(1,"Action Max_Energy Degen_Step Order RNorm State Cells &
 &                              Hole Dimension Direction Format")
 #if defined SPP_PJ_PH
  !

@@ -1,3 +1,211 @@
+2007-12-07 16:35:35 r188 Andrea Marini <marini@roma2.infn.it>
+
+	include/version.inc update
+
+2007-12-07 16:34:39 r187 Andrea Marini <marini@roma2.infn.it>
+
+	Version 3.0.12
+
+	*  spp/mod_SPP.F spp/exc_wf_eval.F spp/exc_wf_gnuplot.F spp/exc_wf_plot_driver.F spp/elph_pw_dbs.F spp/exc_wf_xcrysden.F 2io/io_header.F
+
+	Bugs:
+	- IMPORTANT BUG IN EXCITONIC WAVEFUNCTION PLOTTING (in spp).
+	  Some excitonic wfs did not show proper symmetries because of this bug.
+	  The bug was due to the use of sop_inv in spp/exc_wf_eval.F.
+	  Moreover now all degenerate states contribute to the wavefunction.
+
+	Patch sent by: Andrea
+
+2007-12-07 15:14:42 r186 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.0.12
+
+	*  int_modules/mod_interfaces.F p2s/p2s_i.F p2s/mod_p2s.F config/Makefile.in 2wf_and_fft/wf_load.F 2ras_reels_mods/mod_model_loss_function.F 2ras_reels_mods/mod_optcut.F 0modules/mod_wave_func.F 5X/X_O_longitudinal.F 5X/X_O_transverse.F 5X/X_os.F 5X/X_O_strengths.F 4it/setup.F 4it/init.F 4ras/X_O_transverse_cut.F 4ras/rasdriver.F 4ras/X_O_strengths_cut.F 4ras/X_O_longitudinal_cut.F driver/driver.c
+
+	Bugs:
+	- [PJ_RAS] Wrong intent for Xk in rasdriver, fixed
+	- [PJ_RAS] xlf90 on CeSViMa complained about some long expressions, fixed
+
+	Additions:
+	- [PJ_BIGSYS] Opened new project for treating large systems with memory issues
+	- [PJ_BIGSYS] Cycling over k-points in wf_load. Many related changes in calculating transverse and longitudinal oscillators.
+	- X_O_longitudinal tidied up. [PJ_RAS] long_cut needs to be tidied
+	- Some routines for wf_disk splitting by band in p2s added
+	- [PJ_RAS] Loss function for bulk loss in surface layer
+
+	Changes:
+	- Some minor format changes in reporting G-vectors, shells, etc. for large systems
+
+	Patch sent by: Conor
+
+2007-12-04 17:27:06 r185 Andrea Marini <marini@roma2.infn.it>
+
+	Version 3.0.12
+
+	*  configure include/version.inc config/Makefile.in config/configure.ac 2wf_and_fft/wf_load.F 2wf_and_fft/fft_setup.F 0modules/mod_frequency.F 0modules/mod_drivers.F 0modules/mod_xc_functionals.F 0modules/std_presets.F 0modules/mod_SC.F 0modules/mod_IO.F 0modules/mod_DFT.F 0modules/mod_QP.F 0modules/.objects 2io/ioDB1.F 5X/X_O_transverse.F 5X/X_delta_part.F 5X/X_os.F 5X/X_O_strengths.F 7sc 7sc/V_Hartree.F 7sc/SC_mute.F 7sc/SC_driver.F 7sc/.objects 7sc/V_exx.F 4it/init_load.F 4it/QP_init.F 4it/init.F 7dft 7dft/V_Hartree.F 7dft/SC_driver.F 7dft/.objects 7dft/V_exx.F 6qp/QP_driver.F 6qp/DFT_Vxc.F 6qp/QP_XX_Vxc.F 6qp/QP_ppa.F 6qp/.objects 6qp/QP_descriptions.F 6qp/QP_raxis.F 6qp/QP_ppa_chosex.F 6qp/QP_newton.F 7acfdt/acfdt_tot_energy.F 1common/QP_state_table_setup.F 1common/eval_G_minus_G.F driver/self.h driver/self_driver.F driver/driver.c
+
+	Bugs:
+	- [X_os]: Half matrix now is calculated only when SPINV=.false. and
+	  at very low energy. Previous bounds induced small errors.
+
+	Additions:
+	- [mod_drivers, CHOSEX approximation (self -p c). Now PPA runs when called with
+	  (self -p p). Off-diagonal terms now availables in PPA also.
+	- [mod_xc_functionals,7sc dir,init*] Self-Consistency driver and
+	  modules added for DFT potentials and (optionally) HF, CHOSEX, PPA
+	  SC calculations.
+	- [QP_XX_Vxc,DFT_Vxc]: Off-diagonal terms added.
+	- [mod_IO]: new logical read_dbs to switch off the IO reading.
+
+	Changes:
+	- [wf_load,fft_setup]: checks about loaded wf's changed.
+	  Replaced with a more careful test of FFT size and fft_g_table.
+	- Old PJ_SC removed and replaced with PJ_DFT (now PJ_SC)
+
+	Patch sent by: Andrea & Myrta
+
+2007-12-04 15:35:52 r184 Andrea Marini <marini@roma2.infn.it>
+
+	7dft subfolder update
+
+2007-11-26 19:00:53 r183 Andrea Marini <marini@roma2.infn.it>
+
+	DFT project update
+
+2007-11-26 16:26:30 r182 Andrea Marini <marini@roma2.infn.it>
+
+	Version 3.0.12
+
+	*  configure spp/mod_SPP.F spp/spp_i.F spp/elph_eliashberg.F spp/elph_eliashberg_dos.F spp/exc_wf_eval.F spp/.objects spp/spp_init_load.F spp/exc_wf_plot_driver.F spp/spp_init.F include/version.inc config/configure.ac 2wf_and_fft/wf_load.F 2wf_and_fft/el_density.F 0modules/mod_DFT.F 1xc/xc_lda_driver.F 1xc/el_magnetization.F 5X/X_os.F 4it/init.F 7dft/V_Hartree.F 7dft/.objects 7dft/ORI 7dft/ORI/mbvxc.F 7dft/ORI/self-runlvls 7dft/DFT_driver.F 7dft/V_exx.F 6qp/DFT_Vxc.F 5elph/QP_states_simmetrize.F 5elph/QP_elph.F driver/self_driver.F
+
+	Bugs:
+	- Possible wrong rotation of oscillators in Xo [A]
+	- in QP_states_simmetrize [A]
+
+	Additions:
+	- Phonon DOS in spp [A]
+	- In excitonic WF plot now all degenerate states are summed [A]
+	- New input variables for DFT project [M]
+
+	Changes:
+	- DFT_driver modified. V_exx (EXX potential) added  [M]
+	- QP_XX_Vxc.F I/O and Wf_free logical in input [A,M]
+
+	Patch sent by: Andrea & Myrta
+
+2007-11-20 15:06:06 r181 Andrea Marini <marini@roma2.infn.it>
+
+	DFT project opened: first small changes
+
+2007-11-16 18:23:14 r180 Andrea Marini <marini@roma2.infn.it>
+
+	Version 3.0.12
+
+	*  configure include/version.inc config/configure.ac 2io/ioBS.F 7bse/K_Haydock.F 7bse/Kernel_by_V.F
+
+	Additions:
+	- Non-resonant Zimmermann Haydock method extended to fragmented databases
+
+	Patch sent by: Myrta
+
+2007-11-16 13:16:40 r179 Andrea Marini <marini@roma2.infn.it>
+
+	Version 3.0.12
+
+	*  configure include/version.inc config/Makefile.in config/configure.ac 0modules/mod_BS.F 2io/ioBSS_Haydock.F 7bse/K_Haydock.F 7bse/Kernel_by_V.F 7bse/K_diagonalization.F 7bse/K_solvers.F driver/driver.c
+
+	Additions:
+	- Haydock using Zimmermann decomposition of full (resonant+coupling) BS
+	  kernel implemented and working.
+
+	Patch sent by: Myrta
+
+2007-11-14 17:57:01 r178 Andrea Marini <marini@roma2.infn.it>
+
+	Version 3.0.12
+
+	*  configure spp/ioDB1_ver_2.F spp/ioX_ver_2.F spp/loc_spp.F spp/ioWF_ver_2.F spp/trans_spp.F spp/spp_i.F spp/elph_eliashberg.F spp/k_analyze.F spp/ioKB_PP_ver_2.F spp/exc_wf_eval.F spp/BZ_RIM.F spp/spp_init_load.F spp/spp_init.F spp/elph_pw_dbs.F include/version.inc e2s/e2s_db1.F e2s/e2s_i.F e2s/e2s_kb_pp.F e2s/e2s_wf.F f2s/f2s_db1.F f2s/f2s_gg_read.F f2s/f2s_i.F f2s/f2s_wf.F f2s/f2s_read_wvf.F f2s/f2s_file_name.F f2s/f2s_read_inp_ini.F config/Makefile.in config/configure.ac 0modules/mod_frequency.F 0modules/mod_par_proc.F 0modules/mod_IO.F 0modules/mod_DFT.F 0modules/mod_xc_functionals.F 0modules/mod_matrix_operate.F 2io/ioWF.F 2io/io_header.F 2io/ioE_RIM.F 5X/X_pre_setup.F 5X/X_O_longitudinal.F 5X/X_O_transverse.F 5X/X_delta_part.F 5X/X_os.F 5X/X_em1.F 5X/O_driver.F 5X/X_O_kb_pp_comp.F 5X/X_O_check_shifted_grids.F 5X/X_O_kb_Ylm.F 5X/X_bare_RIM_Gf.F 5X/.objects 5X/X_O_kb_sum.F 5X/X_O_strengths.F 5X/X_s.F 5X/X_O_gks.F 5X/X_drude.F 7bse/K_Haydock.F 7bse/Kernel_by_V.F 7bse/K_inversion.F 7bse/K_diagonalization.F 7bse/K_eps_interpolate.F 4it/init.F 3qp_ctl/mod_QP_CTL.F 6qp/QP_life_transitions.F 6qp/QP_secant.F 6qp/QP_W2Sc.F 6qp/QP_raxis.F 1common/pert_inversion.F driver/codever.h.in driver/self_driver.F driver/driver.c
+
+	Bugs:
+	- mod_par_proc.F now works also in double-precision
+	- BS solvers now works also in double-precision
+	- mod_IO searching for DB's limited
+
+	Additions:
+	- New file (old routine) : X_O_check_shifted_grids.F
+
+	Changes:
+	- Several format changes to be gpl script compliant
+	- self_gks now renamed in self_dft
+	- Haydock for H with coupling: Myrta's project update
+
+	Patch sent by: Andrea
+
+2007-11-05 16:00:44 r177 Andrea Marini <marini@roma2.infn.it>
+
+	Version 3.0.12
+
+	*  configure spp/spp_i.F spp/exc_wf_eval.F include/version.inc p2s/mod_p2s.F config/configure.ac 2wf_and_fft/scatter_Gamp.F 2io/ioQP.F 3qp_ctl/QP_apply_interpolate.F 6qp/QP_driver.F
+
+	Bugs:
+	- Anisotropy correction in scatter_Gamp.F [Maurizia]
+	- Wrong %table second dimension for collinear spin calculations [Claudio]
+	  (ioQP.F QP_apply_interpolate.F QP_driver.F)
+
+	Additions:
+	- Excitonic spectral function now written by spp [Andrea]
+
+	Patch sent by: Andrea, Claudio & Maurizia
+
+2007-11-05 12:10:20 r176 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.0.12
+
+	*  4ras/X_O_transverse_cut.F
+
+	Bugs:
+	- [RAS] Fixed bug in real space cutoff in parallel.
+
+	Patch sent by: Conor
+
+2007-10-31 19:20:06 r175 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.0.12
+
+	*  2ras_reels_mods/mod_surface_geometry.F 2ras_reels_mods/mod_optcut.F 4ras/X_O_transverse_cut.F 4ras/rasdriver.F
+
+	Bugs:
+	- [RAS] Corrected gvecaff for oblique cells.
+	Additions:
+	- [RAS] New simplified routine for real space cutoff.
+
+	Patch sent by: Conor
+
+2007-10-29 11:31:37 r174 Andrea Marini <marini@roma2.infn.it>
+
+	Oops. I forgot the Version files. Here they are
+
+2007-10-29 11:29:45 r173 Andrea Marini <marini@roma2.infn.it>
+
+	Bug in external QP lifetimes parameters fixed
+
+2007-10-26 22:39:44 r172 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.0.12
+
+	*  spp/mod_SPP.F spp/trans_spp.F spp/spp_i.F spp/spp_init_load.F spp/spp_init.F 2ras_reels_mods/mod_long.F 2ras_reels_mods/mod_bulkeps.F 2ras_reels_mods/mod_optcut.F 2ras_reels_mods/.objects 4ras/io_ostnts_cut.F 4ras/X_O_transverse_cut.F 4ras/rasdriver.F 4ras/X_O_strengths_cut.F
+
+	Bugs:
+	- [PJ_RAS] Fixed small bug in bulkeps
+	Additions:
+	- [PJ_RAS] Added peak/transition analyser in spp_ras. Use spp_ras -a trans.
+
+	Patch sent by: Conor
+
+2007-10-25 15:01:20 r171 Andrea Marini <marini@roma2.infn.it>
+
+	Minor changes. Fixed n_b_full_guess definition for spin resolved systems
+
 2007-10-23 14:23:07 r170 Conor Hogan <conor.hogan@roma2.infn.it>
 
 	Version 3.0.12

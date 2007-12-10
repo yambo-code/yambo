@@ -24,7 +24,7 @@ subroutine exc_wf_xcrysden(use_2d,plot_dim)
  use pars,        ONLY:BOHR,SP,schlen
  use com,         ONLY:of_open_close,msg,code_version
  use BS,          ONLY:BSS_description,BSS_n_descs
- use SPP,         ONLY:nr,exc_wf_sq,lambda,ncell,wf_2d
+ use SPP,         ONLY:nr,exc_wf_sq,lambda,ncell,wf_2d,r_hole
  use D_lattice,   ONLY:n_atom_species,n_atoms,a,atom_pos,znucl
  use stderr,      ONLY:intc
  !
@@ -67,17 +67,22 @@ subroutine exc_wf_xcrysden(use_2d,plot_dim)
  call msg('o exc','PRIMCOORD')
  call msg('o exc','',(/n_atoms_tot*ncell(1)*ncell(2)*ncell(3),1/))
  !
+ ! write Hole position
+ ! 
+ write(ch,'(i,f,f,f)') -1,r_hole*BOHR
+ call msg('o exc','',ch,INDENT=0,USE_TABS=.FALSE.)
+ !
  ! write the translated atoms of the cell
  ! 
  do is=1,n_atom_species
-  do ia=1,n_atoms(is)
-    do i1=0,ncell(1)-1
-      do i2=0,ncell(2)-1
-        do i3=0,ncell(3)-1
+   do ia=1,n_atoms(is)
+     do i1=0,ncell(1)-1
+       do i2=0,ncell(2)-1
+         do i3=0,ncell(3)-1
            rv(1)=atom_pos(1,ia,is)*BOHR+i1*a_angs(1,1)+i2*a_angs(2,1)+i3*a_angs(3,1)
            rv(2)=atom_pos(2,ia,is)*BOHR+i1*a_angs(1,2)+i2*a_angs(2,2)+i3*a_angs(3,2)
            rv(3)=atom_pos(3,ia,is)*BOHR+i1*a_angs(1,3)+i2*a_angs(2,3)+i3*a_angs(3,3)   
-           write(ch,'(i,f,f,f)') znucl(is),rv(1),rv(2),rv(3)
+           write(ch,'(i,3f)') znucl(is),rv(:)
            call msg('o exc','',ch,INDENT=0,USE_TABS=.FALSE.)
          enddo
        enddo

@@ -30,7 +30,7 @@ subroutine exc_wf_eval(Xk,Xen)
  use R_lattice,     ONLY:nXkibz,bz_samp,ng_vec,q0_def_norm,d3k_factor
  use SPP,           ONLY:action_mode,ncell,lambda,r_hole,sort_mode,&
 &                        max_energy,nr,exc_wf_sq,nr_tot,n_lambda_deg,lambda_deg,&
-&                        R_normalize
+&                        R_normalize,deg_energy
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
  use BS,            ONLY:BS_K_dim,BS_bands,BS_q,BSS_n_descs,BSS_description,&
 &                        BS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
@@ -79,6 +79,7 @@ subroutine exc_wf_eval(Xk,Xen)
 #endif
  type(bz_samp)    ::q
  type(pp_indexes) ::px
+ logical          ::TR_apply
  !
  !... I/0
  !
@@ -196,14 +197,12 @@ subroutine exc_wf_eval(Xk,Xen)
  do j1=1,3
    if (ncell(j1)==1) cycle
    !
-   ! (***) Daniele 15/7/07:
-   ! questo cambio l'ho fatto perche' generalemente (almeno come faccio io)
-   ! quando si ripete la cella lo si fa un numero dispari di volte.
-   ! In questo modo la hole che hai piazzato nella tua unit cell rimane
-   ! li dov'e' ma traslata in un cella ripetuta che si trova nel mezzo
-   ! della griglia grande.
+   ! (***) Daniele 15/7/07 rev Andrea 12/07:
+   ! 
+   ! The number of cells are always odd so that the hole can
+   ! be placed in the middle.
    !
-   r_hole_rlu(j1)=r_hole_rlu(j1)+nr(j1)/2
+   r_hole_rlu(j1)=r_hole_rlu(j1)+ncell(j1)/2*fft_dim(j1)
    !
  enddo
  ir_hole=1+r_hole_rlu(1)+ r_hole_rlu(2)*nr(1)+ r_hole_rlu(3)*nr(1)*nr(2)
@@ -245,6 +244,8 @@ subroutine exc_wf_eval(Xk,Xen)
      ic = BS_eh_table(neh,3)
      ikibz = Xk%sstar(ikbz,1)
      is = Xk%sstar(ikbz,2)
+     if (is > nsym/(i_time_rev+1)) is=is-nsym/(i_time_rev+1) 
+     TR_apply=is/=Xk%sstar(ikbz,2)
      !
      k_dot_r = dot_product(r_eh,Xk%ptbz(ikbz,:)/alat(:))*2.*pi
      !
@@ -261,7 +262,7 @@ subroutine exc_wf_eval(Xk,Xen)
      wf_vc(neh) = wf(fft_rot_r(is,rindex(ir)), ic_fft)*&
 &          conjg( wf(fft_rot_r(is,rindex(ir_hole)), iv_fft) )
      !
-     if (is > nsym/(i_time_rev+1)) wf_vc(neh) = conjg(wf_vc(neh))
+     if (TR_apply) wf_vc(neh) = conjg(wf_vc(neh))
      !
      wf_vc(neh) = exp(cI*k_dot_r)*wf_vc(neh)
      !
@@ -410,10 +411,10 @@ subroutine exc_wf_eval(Xk,Xen)
        !
        ! Comment at (***)
        !
-       if (ncell(j1)/=1) then
-         if (warning_) call warning('Forced even number of cell replicas')
+       if ( int(real(ncell(j1))/2.)*2== ncell(j1) ) then
+         if (warning_) call warning('Forced odd number of cell replicas')
          warning_=.FALSE.
-         ncell(j1)=int( real(ncell(j1))/real(2.) ) * 2
+         ncell(j1)=int( real(ncell(j1))/2. )*2+1
        endif
        !
      enddo
@@ -436,7 +437,9 @@ subroutine exc_wf_eval(Xk,Xen)
            j2=ir2/fft_dim(2)
            j3=ir3/fft_dim(3)
            rindex(ir)=i1+fft_dim(1)*i2+fft_dim(1)*fft_dim(2)*i3+1
-           r_big_cell_cc(:,ir) = ir1*a(1,:)/fft_dim(1) + ir2*a(2,:)/fft_dim(2) + ir3*a(3,:)/fft_dim(3)
+           r_big_cell_cc(:,ir) = ir1*a(1,:)/fft_dim(1) +&
+&                                ir2*a(2,:)/fft_dim(2) +&
+&                                ir3*a(3,:)/fft_dim(3)
          end do
        end do
      end do
@@ -470,13 +473,13 @@ subroutine exc_wf_eval(Xk,Xen)
          !
          if (j1==lambda) cycle
          !
-         if ( abs( real(BS_E(j1))-real(BS_E(lambda)) )<1.E-5) then
+         if ( abs( real(BS_E(j1))-real(BS_E(lambda)) )<deg_energy) then
            n_lambda_deg=n_lambda_deg+1
            lambda_deg(n_lambda_deg)=j1
          endif
        enddo
        !
-1      if (n_lambda_deg>1) then
+       if (n_lambda_deg>1) then
          ch_dummy=' '
          do j1=2,n_lambda_deg
            ch_dummy=trim(ch_dummy)//' '//trim(intc(lambda_deg(j1)))

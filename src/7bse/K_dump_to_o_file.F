@@ -23,7 +23,7 @@
  !
  use pars,      ONLY:HARTREE,pi,SP
  use BS,        ONLY:BSS_description,BSS_of_title,BSS_file_name,&
-&                    BSS_n_descs,BS_K_coupling
+&                    BSS_n_descs,BS_K_coupling,BS_K_is_ALDA
  use X_m,       ONLY:X_epsilon,alpha_dim,eps_2_alpha
  use com,       ONLY:msg,of_open_close
  implicit none
@@ -31,7 +31,7 @@
  !
  ! Work Space
  !
- character(10)     :: extension 
+ character(10)     :: extension,ch
  integer           :: i1
  real(SP)          :: od(7)
  complex(SP)       :: alpha
@@ -52,6 +52,13 @@
  !
  if (iabs(mode)==4) extension='-bi_elph'
  !
+ ! ALDA
+ !
+ if (BS_K_is_ALDA) then
+   ch=extension
+   extension=trim(ch)//'_alda'
+ endif
+ !
  if (mode<0) then
    write (BSS_file_name(1),'(a,i3.3,a)') 'eps_q',iq,trim(extension)
    write (BSS_file_name(2),'(a,i3.3,a)') 'alpha_q',iq,trim(extension)
@@ -62,11 +69,6 @@
    call of_open_close(BSS_file_name(1),'Ot')
    if (trim(alpha_dim)/='adim') call of_open_close(BSS_file_name(2),'Ot')
  endif
- !
-! if (iabs(mode)==1)  extension='o -bh'
-! if (iabs(mode)==2)  extension='o -bd'
-! if (iabs(mode)==3)  extension='o -bi'
-! if (iabs(mode)==4)  extension='o -bi_elph'
  !
  do i1=1,BSS_n_descs
    call msg("o eps alpha","#",trim(BSS_description(i1)),INDENT=0)

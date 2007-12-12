@@ -66,6 +66,11 @@ subroutine K_driver(Xen,Xk,q,X_static,Xw)
  if (BS_bands(1)>Ken%nbf+1) BS_bands(1)=Ken%nbf+1
  if (BS_bands(2)<Ken%nbm)   BS_bands(2)=Ken%nbm
  !
+ ! If using ALDA enough bands must be loaded to
+ ! be able to calculate the density
+ !
+ if (l_alda_fxc) BS_bands(1)=1
+ !
  call QP_apply(BS_bands,Ken,Xk,2,msg_fmt='s')
  !
  ! If the em1s DB has been calculated in the same run
@@ -96,6 +101,7 @@ subroutine K_driver(Xen,Xk,q,X_static,Xw)
    !
    BS_res_mode=trim( string_remove(BS_res_mode,'c') )
    BS_cpl_mode=trim( string_remove(BS_cpl_mode,'c') )
+   !
  endif
  !
  ! correlation still unsupported in coupling

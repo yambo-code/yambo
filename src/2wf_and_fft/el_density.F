@@ -42,6 +42,7 @@ subroutine el_density(en,Xk,rho,use_si)
  !
  !
  use pars,          ONLY:SP
+ use com,           ONLY:warning
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels,n_sp_pol
  use D_lattice,     ONLY:nsym,i_time_rev
@@ -58,9 +59,11 @@ subroutine el_density(en,Xk,rho,use_si)
  !
  integer :: i1,i2,is,ifft,rho_syms
  real(SP):: rho_no_sym(fft_size),f_occ
+ logical :: warn_done
  !
  rho=0.
  rho_no_sym=0.
+ warn_done=.false.
  !
  do i1=1,en%nbm
    do i2=1,Xk%nibz
@@ -72,7 +75,11 @@ subroutine el_density(en,Xk,rho,use_si)
        !
        ifft=wf_state(i1,i2,is)
        !
-       if (ifft==0) cycle
+       if (ifft==0) then
+         if (.not.warn_done) call warning('Not enough states to calculate rho')
+         warn_done=.true.
+         cycle
+       endif
        !
        f_occ=en%f(i1,i2,1)
        if (n_sp_pol==2) f_occ=en%f(i1,i2,is)

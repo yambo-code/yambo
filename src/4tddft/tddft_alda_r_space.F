@@ -93,7 +93,6 @@ function tddft_alda_r_space(iq,ic,ik,iv,is_in,mode)
  !
  if (iq==1) then
    rhotwr1(:)=conjg(wf(fft_rot_r(is(1),:),ic1fft))*wf(fft_rot_r(is(1),:),iv1fft)
-
    if (l_s_tr(2)) then
      rhotwr2(:)=F_xc(:)*&
 &               conjg( wf(fft_rot_r(is(2),:),i2fft) )*wf(fft_rot_r(is(2),:),j2fft)

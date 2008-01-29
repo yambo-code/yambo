@@ -24,12 +24,12 @@ subroutine X_O_transverse(Xen,Xk,X)
  use pars,                ONLY:SP,pi
  use timing,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spin, n_spinor, n_sp_pol
- use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid,master_node,pp_indexes_reset
+ use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m,       ONLY:par_indexes
  use D_lattice,           ONLY:alat,pp_kbv_dim,&
 &                              n_atom_species,n_atoms,pp_n_l_comp,PP_free
  use R_lattice,           ONLY:g_vec,bz_samp
- use X_m,                 ONLY:X_alloc,X_t,X_q0grad
+ use X_m,                 ONLY:X_t,X_q0grad
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf,wf_ng,wf_state, wf_load
@@ -46,7 +46,6 @@ subroutine X_O_transverse(Xen,Xk,X)
  complex(SP), allocatable     :: wf_xyz(:,:), kbv(:,:,:)
  complex(SP)                  :: rho(3,n_spin)
  real(SP)                     :: Ev_m_Ec
- real(SP), parameter          :: fac = 0.70710678118654752440_SP
  type(pp_indexes)             :: px
  !
  !I/O and external functions

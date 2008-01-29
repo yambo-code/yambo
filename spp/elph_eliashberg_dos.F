@@ -30,9 +30,9 @@ subroutine elph_eliashberg_dos(k,en,q)
  use ELPH,                ONLY:ph_modes,elph_nb,elph_gkkp,ph_freqs_sq,&
 &                              max_ph_freq,elph_nq,elph_use_q_grid,&
 &                              E_k_plus_q,setup_k_plus_q_levels,elph_gkkp_free
- use IO_m,                ONLY:io_control,OP_RD,VERIFY,RD_CL_IF_END,DUMP,RD_CL
+ use IO_m,                ONLY:io_control,OP_RD,RD_CL_IF_END,DUMP,RD_CL
  use timing,              ONLY:live_timing
- use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
+ use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid
  use par_indexes_m,       ONLY:par_indexes
  use functions,           ONLY:Fermi_fnc_derivative
  implicit none

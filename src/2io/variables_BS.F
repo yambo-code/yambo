@@ -21,10 +21,10 @@
 !
 integer function variables_BS(ID,local_description,DB,X)
  !
- use pars,          ONLY:SP,schlen,HARTREE,lchlen
+ use pars,          ONLY:HARTREE,lchlen
  use X_m,           ONLY:X_t
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts,cut_geometry
- use BS,            ONLY:BS_mat,BS_identifier,BS_K_dim,BS_bands,&
+ use BS,            ONLY:BS_identifier,BS_K_dim,BS_bands,&
 &                        BS_K_coupling,BS_res_K_exchange,BS_res_K_corr,&
 &                        BS_n_g_exch,BS_n_g_W,BS_eh_en,BS_eh_win,BS_W_is_diagonal,&
 &                        BS_K_is_ALDA,BS_cpl_K_exchange,&

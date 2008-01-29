@@ -65,7 +65,7 @@ subroutine exc_wf_xcrysden(use_2d,plot_dim)
  call msg('o exc','',ncell(2)*a_angs(2,:))
  call msg('o exc','',ncell(3)*a_angs(3,:))
  call msg('o exc','PRIMCOORD')
- call msg('o exc','',(/n_atoms_tot*ncell(1)*ncell(2)*ncell(3),1/))
+ call msg('o exc','',(/n_atoms_tot*ncell(1)*ncell(2)*ncell(3)+1,1/))
  !
  ! write Hole position
  ! 

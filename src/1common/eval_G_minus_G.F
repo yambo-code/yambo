@@ -29,7 +29,6 @@ integer function eval_G_minus_G(iG,iGo)
  ! in such a way that G_m_G(iG,j) exists for all j
  !
  use pars,         ONLY:SP,IP
- use com,          ONLY:error
  use memory_m,     ONLY:mem_est
  use vec_operate,  ONLY:v_is_zero
  use R_lattice,    ONLY:G_m_G,g_vec,ng_closed,ng_in_shell,n_g_shells

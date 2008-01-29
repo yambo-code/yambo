@@ -21,17 +21,17 @@
 !
 subroutine BZ_RIM(Xk,Xen)
  !
- use pars,                ONLY:SP,DP,lchlen,HARTREE
+ use pars,                ONLY:SP,DP,HARTREE
  use R_lattice,           ONLY:bz_samp,nkibz
  use D_lattice,           ONLY:alat,nsym,default_Tel,a
- use com,                 ONLY:msg,error
+ use com,                 ONLY:msg
  use vec_operate,         ONLY:c2a,ak2bz
  use SPP,                 ONLY:BZ_RIM_nkpts,coo_out,BZ_RIM_path
  use electrons,           ONLY:levels,default_nel,n_bands,&
 &                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
 &                              BZ_RIM_tot_nkpts,n_spin,BZ_RIM_max_filling
  use timing,              ONLY:live_timing_is_on,live_timing
- use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP,OP_WR_CL
+ use IO_m,                ONLY:io_control,NONE,OP_WR_CL
  !
  implicit none
  type(bz_samp) :: Xk
@@ -41,12 +41,10 @@ subroutine BZ_RIM(Xk,Xen)
  !
  real(SP)     ::dummy,v(3),rand_kpt(BZ_RIM_nkpts+1,3),a_save(3,3),alat_save(3),&
 &               gap(2)
- integer      ::i1,i2,ikbz,i3
- integer,parameter :: iseed(4) = (/11,123,44,1546/)
+ integer      ::i1,i2,ikbz
  integer, external :: k_the_nearest
- real(DP)  :: rr
- real(DP),external  :: dlaran
- logical            :: add_X_grid
+ real(DP)     :: rr
+ logical      :: add_X_grid
  !
  ! BZ DB1 I/O
  !

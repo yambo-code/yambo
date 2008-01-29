@@ -19,33 +19,32 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- module collision
-!================
-  use pars
-  implicit none
-   type ggwinfo
-!
-!  is(3)=(ib,ik,is,isp) --<--:--<-- os(3)=(ob,ok,os,osp)
-!                            :
-!                           /:\ iqs=(ig0,iq,is)
-!                            :
-!  iq_is = bz(ik_is-ok_os)+Go
-!
-     integer :: is(4) 
-     integer :: os(4)
-     integer :: qs(3)
-     integer :: ngrho,iqref
-     complex(SP), pointer :: gamp(:,:)
-     complex(SP), pointer :: rhotw(:)
-   end type ggwinfo
-
+module collision
+ !
+ use pars, ONLY :SP
+ implicit none
+ !
+ type ggwinfo
+   !
+   !  is(3)=(ib,ik,is,isp) --<--:--<-- os(3)=(ob,ok,os,osp)
+   !                             :
+   !                           /:\ iqs=(ig0,iq,is)
+   !                            :
+   !  iq_is = bz(ik_is-ok_os)+Go
+   !
+   integer :: is(4) 
+   integer :: os(4)
+   integer :: qs(3)
+   integer :: ngrho,iqref
+   complex(SP), pointer :: gamp(:,:)
+   complex(SP), pointer :: rhotw(:)
+ end type ggwinfo
+ !
  contains
-
- subroutine collision_reset(ggw)
-!===============================
- type(ggwinfo)::ggw
- nullify(ggw%gamp,ggw%rhotw)
- end subroutine
-
- end module collision
-
+   !
+   subroutine collision_reset(ggw)
+     type(ggwinfo)::ggw
+     nullify(ggw%gamp,ggw%rhotw)
+   end subroutine
+   !
+end module collision

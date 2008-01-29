@@ -30,12 +30,10 @@ subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
  use stderr,        ONLY:string_pack
  use electrons,     ONLY:n_bands,nel,n_spin,n_spinor,n_sp_pol
  use R_lattice,     ONLY:nkibz
- use par_indexes_m, ONLY:par_indexes
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,&
 &                        fftw_plan,fft_g_table,fft_size
  use wave_func,     ONLY:wf_nc_k,wf_igk,WF_alloc,wf_b,wf_k,wf_space,wf,wf_s,&
-&                        wf_state,wf_ng,wf_norm_test,wf_free,wf_ncx,ioWF
+&                        wf_state,wf_ng,wf_norm_test,wf_ncx,ioWF,WF_free
  use timing,        ONLY:live_timing
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,&
 &                        io_fragmented, io_netcdf_support, RD_CL
@@ -50,7 +48,7 @@ subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
  character(1)     ::wf_space_here
  character(schlen)::wf_title
  integer          ::i1,ikibz,i2,ic,is,wf_total_states,ig,igfft,&
-&                   s_2_load(2),iG_max,fft_dim_now,iG_bounds_loaded(2)
+&                   s_2_load(2),iG_max,iG_bounds_loaded(2)
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
  logical          ::loaded_bounds_ok

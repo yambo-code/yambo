@@ -24,8 +24,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use pars,          ONLY:SP,schlen,IP,HARTREE
  use memory_m,      ONLY:mem_est
  use drivers,       ONLY:l_life,l_ppa,l_el_corr,l_ph_corr,l_chosex
- use electrons,     ONLY:levels,n_sp_pol
- use stderr,        ONLY:string_pack,gen_fmt,real2ch
+ use electrons,     ONLY:levels,n_sp_pol,spin
+ use stderr,        ONLY:gen_fmt,real2ch
  use R_lattice,     ONLY:bz_samp
  use frequency,     ONLY:w_samp
  use com,           ONLY:msg
@@ -46,13 +46,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! Work Space
  !
  type(QP_t)        ::qp
- integer           ::i1,io_err,ID,i_spin,spin_dim
+ integer           ::i1,io_err,ID,i_spin
  integer, external ::ioQP
- !
- spin_dim=3
-#if defined PJ_SPIN
- spin_dim=4
-#endif
  !
  ! Parser
  !
@@ -124,10 +119,10 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  allocate(qp%Z(qp%n_states),qp%E(qp%n_states),&
 &         qp%E_bare(qp%n_states),&
-&         qp%k(qp%nk,3),qp%table(qp%n_states,spin_dim))
+&         qp%k(qp%nk,3),qp%table(qp%n_states,3+n_sp_pol-1))
  !
  call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table",&
-&    (/QP_n_states,QP_n_states,QP_n_states,3*qp%nk,spin_dim*QP_n_states/),&
+&    (/QP_n_states,QP_n_states,QP_n_states,3*qp%nk,QP_n_states*(3+n_sp_pol-1)/),&
 &    (/2*SP,       2*SP,       SP,         SP,           IP/))
  !
  qp%table=QP_table
@@ -135,11 +130,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  do i1=1,QP_n_states
    !
-#if defined PJ_SPIN
-     i_spin=QP_table(i1,4)
-#else 
-     i_spin=1
-#endif
+   i_spin=spin(QP_table(i1,:))
    !
    ! To perform the SC GWo the bare interaction are needed. Those are
    ! stored in the %E array, or in %Eo array if an initial QP correction
@@ -227,7 +218,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
      !
      if (trim(QP_solver)/='g') then
        !
-       !
        ik=QP_table(1,3)
        !
        call section('=','Q(uasi)P(article) properties')
@@ -286,12 +276,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
          endif
          !
          ch_spin=' '
-#if defined PJ_SPIN
          !
-         if (n_sp_pol==2.and.QP_table(i1,4)==1) ch_spin='[up]'
-         if (n_sp_pol==2.and.QP_table(i1,4)==2) ch_spin='[dn]'
-         !
-#endif
+         if (n_sp_pol==2.and.spin(QP_table(i1,:))==1) ch_spin='[up]'
+         if (n_sp_pol==2.and.spin(QP_table(i1,:))==2) ch_spin='[dn]'
          !
          if (energies) then
            !

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine k_sym2sym(k,mode)
+subroutine k_sym2sym(k,mode)
  !
  ! Output:
  !
@@ -75,4 +75,4 @@
  !
  call k_ibz2bz(k,'d',.false.)
  !
- end subroutine
+end subroutine

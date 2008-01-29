@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine QP_apply_db(band_range,en,k,qp,qpfit,msg_fmt,DB_corrected)
+subroutine QP_apply_db(band_range,en,k,qp,qpfit,msg_fmt,DB_corrected)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use stderr,        ONLY:string_split
@@ -202,4 +202,4 @@
      !
    end subroutine
    !
- end subroutine
+end subroutine

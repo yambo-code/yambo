@@ -19,14 +19,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function ioDB1_reload(E,k,DB1_path)
+integer function ioDB1_reload(E,k,DB1_path)
  !
- use pars,             ONLY:lchlen,SP
+ use pars,             ONLY:lchlen
  use memory_m,         ONLY:mem_est
  use electrons,        ONLY:levels,E_reset
  use D_lattice,        ONLY:dl_sop,n_atoms,znucl,atom_pos
  use R_lattice,        ONLY:g_vec,bz_samp,bz_samp_reset
- use wave_func,        ONLY:wf_nc_k,wf_igk,wf_ng
+ use wave_func,        ONLY:wf_nc_k,wf_igk
  use com,              ONLY:in_path
  use IO_m,             ONLY:io_control,OP_RD_CL,NONE,DUMP
  implicit none
@@ -66,4 +66,4 @@
  !
  in_path=in_path_save
  !
- end function ioDB1_reload
+end function ioDB1_reload

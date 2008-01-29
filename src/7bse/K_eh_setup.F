@@ -38,10 +38,7 @@ subroutine K_eh_setup(iq,Ken,Xk)
 &                       O_n_v_states,O_n_c_states,BS_eh_E,BS_eh_f,BS_eh_en,&
 &                       BS_eh_table,BS_bands,BS_blk_dim,BS_K_coupling,&
 &                       BS_not_const_eh_f,BS_eh_W,BS_eh_Z
-#if defined PJ_SPIN 
- use electrons,    ONLY:filled_tresh
-#endif
- use electrons,    ONLY:levels,n_sp_pol,spin_occ
+ use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,n_spin
  use R_lattice,    ONLY:qindx_X,bz_samp
  !
  implicit none
@@ -52,7 +49,7 @@ subroutine K_eh_setup(iq,Ken,Xk)
  ! Work Space
  !
  integer :: Iic(BS_bands(2),n_sp_pol),Iiv(BS_bands(2),n_sp_pol)
- integer :: ikbz,iv,ic,ik,ikp,table_dim,i_sp
+ integer :: ikbz,iv,ic,ik,ikp,i_sp
  real(SP):: E_eh,f_eh
  !
  do while(.TRUE.) 
@@ -82,11 +79,12 @@ subroutine K_eh_setup(iq,Ken,Xk)
            f_eh=Ken%f(iv,ikp,i_sp)*(spin_occ-Ken%f(ic,ik,i_sp))
            if (abs(f_eh)<epsilon(1._SP)) cycle
            f_eh=f_eh/spin_occ/spin_occ          
-#if defined PJ_SPIN
            !
-           if (Ken%f(iv,ikp,i_sp)<=filled_tresh.or.&
-&              abs(spin_occ-Ken%f(ic,ik,i_sp))<=filled_tresh ) cycle
-#endif
+           ! Additional (?) condition for spin-resolved calculations
+           !
+           if (n_spin==2.and. &
+&              (Ken%f(iv,ikp,i_sp)<=filled_tresh.or.&
+&               abs(spin_occ-Ken%f(ic,ik,i_sp))<=filled_tresh) ) cycle
            !
            ! A 5% fractional occupation swiches on the particular
            ! treatment of finite temp. BSE 
@@ -101,11 +99,12 @@ subroutine K_eh_setup(iq,Ken,Xk)
            !
            BS_K_dim=BS_K_dim+1
            BS_blk_dim(ik)=BS_blk_dim(ik)+1
-#if defined PJ_SPIN
-           if (allocated(BS_eh_table)) BS_eh_table(BS_K_dim,:)=(/ikbz,iv,ic,i_sp/)
-#else
-           if (allocated(BS_eh_table)) BS_eh_table(BS_K_dim,:)=(/ikbz,iv,ic/)
-#endif
+           !
+           if (allocated(BS_eh_table)) then
+             if (n_sp_pol==2) BS_eh_table(BS_K_dim,:)=(/ikbz,iv,ic,i_sp/)
+             if (n_sp_pol==1) BS_eh_table(BS_K_dim,:)=(/ikbz,iv,ic/)
+           endif
+           !
            if (allocated(BS_eh_E)) BS_eh_E(BS_K_dim)=E_eh
            if (allocated(BS_eh_f)) BS_eh_f(BS_K_dim)=f_eh
            if (allocated(BS_eh_W)) BS_eh_W(BS_K_dim)=Ken%W(ic,ik,i_sp)-Ken%W(iv,ikp,i_sp)
@@ -148,13 +147,9 @@ subroutine K_eh_setup(iq,Ken,Xk)
    !
    ! Allocations
    !
-   table_dim=3
-#if defined PJ_SPIN
-   table_dim=4
-#endif
-   allocate(BS_eh_table(BS_K_dim,table_dim),BS_eh_E(BS_K_dim),BS_eh_f(BS_K_dim))
+   allocate(BS_eh_table(BS_K_dim,3+n_sp_pol-1),BS_eh_E(BS_K_dim),BS_eh_f(BS_K_dim))
    call mem_est("BS_eh_table BS_eh_E BS_eh_f",&
-&               (/table_dim*BS_K_dim,BS_K_dim,BS_K_dim/),(/IP,SP,SP/))
+&               (/(3+n_sp_pol-1)*BS_K_dim,BS_K_dim,BS_K_dim/),(/IP,SP,SP/))
    !
    if (associated(Ken%W)) then
      allocate(BS_eh_W(BS_K_dim))

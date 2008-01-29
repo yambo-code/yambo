@@ -42,7 +42,7 @@ subroutine cutoff_driver(q)
  ! F(v,w)=8 \prod_i sin[(v_i-w_i)L_i/2]/(v_i-w_i)
  !
  use pars,          ONLY:SP,schlen,lchlen
- use vec_operate,   ONLY:v_is_zero,v_norm
+ use vec_operate,   ONLY:v_is_zero
  use com,           ONLY:msg
  use R_lattice,     ONLY:cyl_ph_radius,box_length,cyl_length,cut_geometry,bz_samp
  use stderr,        ONLY:string_split,string_pack
@@ -110,19 +110,13 @@ subroutine cutoff_driver(q)
  !
  ! Cylinder
  !
-#if defined PJ_CYL_CUT
  if (cut_is_cyl.or..not.is_cut(1)) is_cut(2)=index(str_piece(2),'y')/=0
  if (cut_is_cyl.or.(.not.is_cut(1).and..not.is_cut(2))) &
 &   is_cut(3)=index(str_piece(2),'z')/=0
-#endif
  !
  if (.not.cut_is_box) box_length=0.
-#if defined PJ_CYL_CUT
  if (.not.cut_is_sphere.and..not.cut_is_cyl) cyl_ph_radius=0.
  if (.not.cut_is_cyl) cyl_length=0.
-#else
-if (.not.cut_is_sphere) cyl_ph_radius=0.
-#endif
  !
  ! Return conditions
  !
@@ -174,7 +168,6 @@ if (.not.cut_is_sphere) cyl_ph_radius=0.
    if (is_cut(3)) i1=i1+1
    if (is_cut(3)) length(i1)=box_length(3)
    call msg('r','Box sides        [au]:',length(:i1))
-#if defined PJ_CYL_CUT
  else if (cut_is_cyl) then
    if (cyl_length > 0.) then
      call msg('r','Cyl. length      [au]:',cyl_length)
@@ -182,7 +175,6 @@ if (.not.cut_is_sphere) cyl_ph_radius=0.
      call msg('r','Cyl. length          : infinite')
    endif
    call msg('r',  'Cyl. radius      [au]:',cyl_ph_radius)
-#endif
  endif
  !
  ! Checking geometry symmetry
@@ -224,9 +216,7 @@ if (.not.cut_is_sphere) cyl_ph_radius=0.
  if (io_err/=0) then
    if (cut_is_sphere) call cutoff_sphere()
    if (cut_is_box)    call cutoff_box(q,is_cut)
-#if defined PJ_CYL_CUT
    if (cut_is_cyl)    call cutoff_cylinder(q,is_cut)
-#endif
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=ioCOL_CUT(ID)

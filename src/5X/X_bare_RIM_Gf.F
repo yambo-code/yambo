@@ -21,12 +21,11 @@
 !
 subroutine X_bare_RIM_Gf(iq,transitions,fr,Xw,Xen,Xk,Gf,ordering)
  !
- use pars,       ONLY:SP,HARTREE
+ use pars,       ONLY:SP
  use X_m,        ONLY:use_X_RIM
  use BS,         ONLY:BSS_uses_RIM
- use electrons,  ONLY:levels,BZ_RIM_table,BZ_RIM_nkpt,spin_occ,&
-&                     BZ_RIM_tot_nkpts
- use R_lattice,  ONLY:qindx_X,nXkbz,bz_samp
+ use electrons,  ONLY:levels,BZ_RIM_table,BZ_RIM_nkpt,spin_occ
+ use R_lattice,  ONLY:qindx_X,bz_samp
  use frequency,  ONLY:w_samp
  !
  implicit none

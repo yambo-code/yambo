@@ -28,7 +28,7 @@ subroutine QP_descriptions(qp,X,Xw)
  use QP_m,          ONLY:QP_t,QP_ng_Sx,QP_n_G_bands,QP_cg_percent,&
 &                        QP_dSc_delta,QP_G_damp,QP_dSc_steps,GWo_iterations
  use stderr,        ONLY:string_pack,gen_fmt
- use drivers,       ONLY:l_life,l_ppa,l_gw0,l_ph_corr,l_el_corr,l_chosex
+ use drivers,       ONLY:l_life,l_ppa,l_ph_corr,l_el_corr,l_chosex
  use R_lattice,     ONLY:RIM_qpg,RIM_n_rand_pts,RIM_ng
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:BZ_RIM_tot_nkpts

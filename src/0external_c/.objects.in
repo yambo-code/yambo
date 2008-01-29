@@ -1,1 +1,1 @@
-objs = @TIMER@ c_printing.o io.o
+objs = @TIMER@ c_printing.o io.o stack.o

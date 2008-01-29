@@ -88,54 +88,54 @@ module xc_functionals
 #endif
  !
  contains
- !
- character(lchlen) function xc_string(kind,functional)
    !
-   use stderr, ONLY:string_pack
-   implicit none
-   integer        :: kind,functional
-   character(4)   :: ch_kind
-   !
-   select case (kind)
-     case(-1)
-      ch_kind=' '
-     case(XC_EXCHANGE)
-      ch_kind='(x)'
-     case(XC_CORRELATION)
-      ch_kind='(c)'
-     case(XC_EXCHANGE_CORRELATION)
-      ch_kind='(xc)'
-   end select
-   !
-   select case (functional)
-     case(-1,3,5,7,9)
-      xc_string=string_pack('Unknown ',ch_kind)
-     case(XC_LDA_X)
-      xc_string=string_pack('Exchange only ',ch_kind)
-     case(XC_LDA_C_WIGNER)
-      xc_string=string_pack('Wigner ',ch_kind)
-     case(XC_LDA_C_HL)
-      xc_string=string_pack('Hedin & Lundqvist ',ch_kind)
-     case(XC_LDA_C_XALPHA)
-      xc_string=string_pack('Slaters Xalpha ',ch_kind)
-     case(XC_LDA_C_PZ)
-      xc_string=string_pack('Perdew & Zunger ',ch_kind)
-     case(XC_LDA_C_PW)
-      xc_string=string_pack('Perdew & Wang ',ch_kind)
-     case(XC_LDA_C_KP)
-      xc_string=string_pack('Kurth & Perdew ',ch_kind)
+   character(lchlen) function xc_string(kind,functional)
+     !
+     use stderr, ONLY:string_pack
+     implicit none
+     integer        :: kind,functional
+     character(4)   :: ch_kind
+     !
+     select case (kind)
+       case(-1)
+        ch_kind=' '
+       case(XC_EXCHANGE)
+        ch_kind='(x)'
+       case(XC_CORRELATION)
+        ch_kind='(c)'
+       case(XC_EXCHANGE_CORRELATION)
+        ch_kind='(xc)'
+     end select
+     !
+     select case (functional)
+       case(-1,3,5,7,9)
+        xc_string=string_pack('Unknown ',ch_kind)
+       case(XC_LDA_X)
+        xc_string=string_pack('Exchange only ',ch_kind)
+       case(XC_LDA_C_WIGNER)
+        xc_string=string_pack('Wigner ',ch_kind)
+       case(XC_LDA_C_HL)
+        xc_string=string_pack('Hedin & Lundqvist ',ch_kind)
+       case(XC_LDA_C_XALPHA)
+        xc_string=string_pack('Slaters Xalpha ',ch_kind)
+       case(XC_LDA_C_PZ)
+        xc_string=string_pack('Perdew & Zunger ',ch_kind)
+       case(XC_LDA_C_PW)
+        xc_string=string_pack('Perdew & Wang ',ch_kind)
+       case(XC_LDA_C_KP)
+        xc_string=string_pack('Kurth & Perdew ',ch_kind)
 #if defined PJ_SC
-     case(XC_OEP_EXX)
-      xc_string=string_pack('Exact-Exchange (OEP) ',ch_kind)
-     case(XC_GKS_HF)
-      xc_string=string_pack('Hartree-Fock (nonlocal) ',ch_kind)
-     case(XC_GKS_SXLDA)  
-      xc_string=string_pack('Screened-eXchange LDA (nonlocal) ',ch_kind)
-     case(XC_GKS_CHSX)  
-      xc_string=string_pack('Coulomb-Hole Screened-eXchange (nonlocal) ',ch_kind)
+       case(XC_OEP_EXX)
+        xc_string=string_pack('Exact-Exchange (OEP) ',ch_kind)
+       case(XC_GKS_HF)
+        xc_string=string_pack('Hartree-Fock (nonlocal) ',ch_kind)
+       case(XC_GKS_SXLDA)  
+        xc_string=string_pack('Screened-eXchange LDA (nonlocal) ',ch_kind)
+       case(XC_GKS_CHSX)  
+        xc_string=string_pack('Coulomb-Hole Screened-eXchange (nonlocal) ',ch_kind)
 #endif
-   end select
+     end select
+     !
+   end function
    !
- end function
- !
 end module xc_functionals

@@ -21,18 +21,18 @@
 !
 subroutine K_Haydock(iq,W)
  !
- use pars,           ONLY:SP,pi,schlen,HARTREE
+ use pars,           ONLY:SP,pi,schlen
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_epsilon
  use R_lattice,      ONLY:d3k_factor,q_norm
  use frequency,      ONLY:w_samp
- use com,            ONLY:msg,isec,warning
+ use com,            ONLY:msg,isec
  use BS,             ONLY:BSS_n_descs,BS_K_dim,BS_mat,Haydock_treshold,&
 &                         BSS_rhoq0,BSS_description,Haydock_v0_mod,&
-&                         BS_DB_is_fragmented,Kernel_by_V,BS_K_coupling,&
-&                         BS_eh_f,ioBSS_Haydock
+&                         BS_DB_is_fragmented,Kernel_by_V,&
+&                         BS_eh_f,ioBSS_Haydock,BS_K_Coupling
  use timing,         ONLY:live_time_msg
- use stderr,         ONLY:cstr,tty_size,string_pack,intc,real2ch
+ use stderr,         ONLY:tty_size,intc,real2ch
  use parser_m,       ONLY:parser
  use it_m,           ONLY:it_reset
  use electrons,      ONLY:spin_occ
@@ -365,4 +365,3 @@ subroutine K_Haydock(iq,W)
    end function fdot_product
    !
 end subroutine
- 

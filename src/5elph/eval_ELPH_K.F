@@ -28,14 +28,12 @@ integer function eval_ELPH_K(E,k,q,residuals_only,frequency)
  use memory_m,      ONLY:mem_est
  use D_lattice,     ONLY:sop_inv,sop_tab
  use R_lattice,     ONLY:bz_samp,qindx_B,ik_is_table
- use com,           ONLY:warning,error,isec
+ use com,           ONLY:warning,isec
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END
  use electrons,     ONLY:levels
  use BS,            ONLY:BS_K_dim,BS_eh_table
- use ELPH,          ONLY:ph_modes,elph_nb,elph_nq,elph_use_q_grid,&
-&                        setup_k_plus_q_levels,ph_qpt,elph_gkkp_free,&
-&                        ph_freqs_sq,elph_gkkp,E_k_plus_q,&
-&                        EXCPH_mat
+ use ELPH,          ONLY:ph_modes,elph_use_q_grid,&
+&                        elph_gkkp_free,ph_freqs_sq,elph_gkkp,EXCPH_mat
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use timing,        ONLY:live_timing

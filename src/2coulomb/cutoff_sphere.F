@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine cutoff_sphere()
+subroutine cutoff_sphere()
  !
  use pars,          ONLY:SP
  use wave_func,     ONLY:wf_ng
@@ -40,4 +40,4 @@
  enddo
  bare_qpg(1,1)=sqrt(2.0)/cyl_ph_radius
  !
- end subroutine
+end subroutine

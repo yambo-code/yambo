@@ -35,7 +35,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use drivers,        ONLY:l_bs_fxc
  use stderr,         ONLY:intc,gen_fmt
  use frequency,      ONLY:w_samp
- use electrons,      ONLY:levels,spin_occ
+ use electrons,      ONLY:levels,spin_occ,spin
  use R_lattice,      ONLY:d3k_factor,bz_samp,q_norm
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,NONE
  !
@@ -97,14 +97,10 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    X_oscillators%q0=BSS_q0
    call X_O_strengths(Ken,Xk,X_oscillators,BSS_q0)
    do i1=1,BS_K_dim
-     ik=BS_eh_table(i1,1)
-     iv=BS_eh_table(i1,2)
-     ic=BS_eh_table(i1,3)
-#if defined PJ_SPIN
-     i_sp=BS_eh_table(i1,4)
-#else
-     i_sp=1
-#endif
+     ik  =BS_eh_table(i1,1)
+     iv  =BS_eh_table(i1,2)
+     ic  =BS_eh_table(i1,3)
+     i_sp=spin(BS_eh_table(i1,:))
      !
      ! X_rhoq0(c,v,k) is iq . <v | r |c> while I need 
      !

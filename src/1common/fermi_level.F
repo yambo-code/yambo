@@ -19,8 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine fermi_level(E,K,test_Tel,mode)
- !
+subroutine fermi_level(E,K,test_Tel,mode)
  !
  ! Mode = 0 
  !  Update the Fermi energy
@@ -48,7 +47,7 @@
  integer :: mode
  real(SP):: test_Tel
  !
- !Work Space
+ ! Work Space
  !
  integer :: i1,i2,is,ib,ik,i_trials(2),n_b_full_guess,i_Ef(2),n_total_states
  integer :: index(E%nk*E%nb*n_sp_pol,3),index_E_sorted(E%nk*E%nb*n_sp_pol)
@@ -252,4 +251,4 @@
      N_of_el_diff=nel_acc-nel_theo
    end subroutine
    !
- end subroutine
+end subroutine

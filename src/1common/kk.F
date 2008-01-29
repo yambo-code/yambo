@@ -20,7 +20,6 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine kk(fi,wi,ni,fo,wo,no,y0)
- !----------------------------------
  !
  ! Calculates Kramers-Kronig transformation:
  !

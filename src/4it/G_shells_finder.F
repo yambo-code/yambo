@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine G_shells_finder()
+subroutine G_shells_finder()
  !
  ! Output: g_rot(nsym,ng_closed)
  !
@@ -28,7 +28,7 @@
  use pars,         ONLY:SP,IP
  use timing,       ONLY:live_timing
  use memory_m,     ONLY:mem_est
- use D_lattice,    ONLY:nsym,alat,sop_inv
+ use D_lattice,    ONLY:nsym
  use R_lattice,    ONLY:n_g_shells,ng_in_shell,ng_closed,&
 &                       g_vec,g_rot,E_of_shell,rl_sop
  use vec_operate,  ONLY:iku_v_norm,v_is_zero
@@ -148,4 +148,4 @@
  call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),ID=ID)
  io_err=ioGROT(ID)
  !
- end subroutine
+end subroutine

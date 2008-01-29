@@ -33,7 +33,7 @@ integer function ioX_ver_2(X,Xw,ID)
  !
  ! Work Space
  !
- integer  :: iq,i1,i2,i3
+ integer  :: iq,i1,i2
  integer,    allocatable :: I_on_disk(:)
  real(SP),   allocatable :: R_on_disk(:)
  complex(SP),allocatable :: C_on_disk(:)

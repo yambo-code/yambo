@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine K_diagonalization(iq,W) 
+subroutine K_diagonalization(iq,W) 
  !
  ! Generic diagonalization method to solve resonant and non resonant
  ! Hamiltonians.
@@ -374,4 +374,4 @@
  endif
  call pp_indexes_reset(px)
  !
- end subroutine
+end subroutine

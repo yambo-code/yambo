@@ -38,10 +38,9 @@ subroutine QP_apply_fit(band_range,qp,en,qpfit,what)
  ! Work Space
  !
  integer  :: i1,Nqpc,Nqpv,fit_order,fit_order_on_fly
- real(SP) :: Eoc,Eov,Ec,Ev,V_err,C_err
+ real(SP) :: Eoc,Eov,Ec,Ev
  real(DP) :: EPS,Dy(qp%n_states),Dx(qp%n_states),Tt_def(3)
  real(DP), allocatable :: TCv(:),TCc(:)
- character (schlen)    :: warn_msg
  !
  ! fit data setup
  !

@@ -28,7 +28,6 @@ subroutine section(mode,name)
  !
  use pars
  use it_m,       ONLY:ofiles_append
- use memory_m,   ONLY:mem_est
  use stderr,     ONLY:string_pack
  use timing,     ONLY:time_string,ct,date_time_at_start,cput_tot,cput_sec,&
 &                     live_time_msg,date_and_time_string
@@ -100,9 +99,6 @@ subroutine section(mode,name)
  !
  ! Write out the Section header (in secnm)
  !
- ! MEM DEBUG
- ! call mem_est(trim(name),overall_report=.true.)
- !
  isec(depth+1)=isec(depth+1)+1
  write (secnm,'(a,i2.2)') '[',isec(1)
  do i1=2,5
@@ -161,4 +157,4 @@ subroutine section(mode,name)
  !
  call pp_redux_wait
  !
- end subroutine
+end subroutine

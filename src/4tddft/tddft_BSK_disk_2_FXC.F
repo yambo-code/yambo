@@ -25,15 +25,14 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:nqbz,bz_samp,nXkibz
- use electrons,     ONLY:levels
  use BS,            ONLY:BS_mat,BS_res_K_exchange,BS_n_g_exch,&
 &                        BS_bands,BS_blk_dim,BS_K_dim,BS_blk_coord,&
 &                        cumulative_index
- use com,           ONLY:msg,isec
+ use com,           ONLY:isec
  use timing,        ONLY:live_timing
  use par_proc_m,    ONLY:pp_redux_wait
  use D_lattice,     ONLY:DL_vol
- use wave_func,     ONLY:wf_load,wf_free
+ use wave_func,     ONLY:wf_load,WF_free
  use X_m,           ONLY:X_t
  use IO_m,          ONLY:io_control,OP_RD,RD,NONE,RD_CL,VERIFY,OP_RD_CL,REP
  use TDDFT,         ONLY:FXC,FXC_n_g_corr,FXC_K_diagonal,ioBS_Fxc
@@ -43,7 +42,7 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
  integer       ::iq
  type(X_t)     ::X_static
  !
- ! WorkSpace -- GPL_END --
+ ! WorkSpace 
  !
  integer    :: ik1,ik2,O_x_dim,icv1,icv2,alloc_err(2)
  complex(SP):: Co,Hrx
@@ -157,7 +156,5 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
  call WF_free()
  deallocate(FXC_K_diagonal,FXC)
  call mem_est("FXC_K_diagonal FXC")
- !
- ! -- GPL_START --
  !
 end subroutine

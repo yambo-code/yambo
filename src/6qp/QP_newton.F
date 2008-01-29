@@ -22,14 +22,12 @@
 subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  !
  use pars,          ONLY:SP,HARTREE
- use memory_m,      ONLY:mem_est
  use drivers,       ONLY:l_ppa,l_el_corr,l_ph_corr,l_chosex
  use com,           ONLY:msg
  use X_m,           ONLY:X_t
- use parser_m,      ONLY:parser
  use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Sx,QP_Vxc,QP_Sc,&
 &                        QP_n_states,QP_dSc,QP_dSc_delta,QP_n_G_bands,&
-&                        GWo_SC_done,GWo_iterations,QP_table
+&                        GWo_SC_done,GWo_iterations
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp

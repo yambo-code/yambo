@@ -19,10 +19,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine std_presets(INSTR,IND,OD,JS)
+subroutine std_presets(INSTR,IND,OD,JS)
  !
  use drivers
- use X_m,        ONLY:iq_now,self_detect_E_range,half_X_mat_ONLY,eps_2_alpha,&
+ use pars,       ONLY:SP,HARTREE
+ use X_m,        ONLY:iq_now,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                     alpha_dim,use_X_RIM,long_path,X_RIM_nkpts
  use QP_m,       ONLY:QP_rep_string,QP_dSc_steps,QP_n_W_freqs,&
 &                     QP_Sx_low_band,QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
@@ -46,7 +47,7 @@
 &                     out_path,in_path,jobstr,db_wr_path
  use stderr,     ONLY:win_size,tty_size,write_to_log,logfile
  use timing,     ONLY:log_line_to_dump,log_line,nhash,live_timing_is_on,&
-&                     cput_seg,cput_sec,cput_tot,parallel_timing,ct
+&                     parallel_timing,ct
  use wave_func,  ONLY:wf_b,wf_k,wf_ng,wf_space,wf_norm_test
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim
  use IO_m,       ONLY:io_reset,max_io_units,write_to_dbs,dbs_fragment,serial_number,read_dbs
@@ -58,7 +59,7 @@
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_SVD_digits,&
 &                     FXC_is_causal
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
- use ELPH,       ONLY:ph_modes,elph_nb,ph_damping,PH_null_E_rgn
+ use ELPH,       ONLY:ph_modes,elph_nb,PH_null_E_rgn,ph_damping
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND
@@ -70,6 +71,10 @@
  !
  character(*) :: INSTR,IND,OD,JS
  integer      :: i1
+ !
+ ! Stack Size 
+ !
+ call remove_stack_limit()
  !
  ! ZEROs 
  !
@@ -307,8 +312,8 @@
  !
  ph_modes=0
  elph_nb=0
- PH_damping=0.
- PH_null_E_rgn=0.1/HARTREE
+ ph_damping=0.
+ ph_null_E_rgn=0.1/HARTREE
  !
  ! SC
  !
@@ -318,4 +323,4 @@
  SC_potential='none'
 #endif
  !
- end subroutine
+end subroutine

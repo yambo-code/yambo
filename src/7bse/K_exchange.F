@@ -19,14 +19,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine K_exchange(divide_by_qpg,iq,ik,Xk,Ox,X_dim)
+subroutine K_exchange(divide_by_qpg,iq,ik,Xk,Ox,X_dim)
  !
  use pars,           ONLY:SP
  use BS,             ONLY:BS_n_g_exch,BS_eh_table,BS_blk_dim,BS_bands
  use D_lattice,      ONLY:nsym,i_time_rev,sop_inv
  use R_lattice,      ONLY:g_rot,qindx_X,bz_samp,bare_qpg
  use collision,      ONLY:ggwinfo,collision_reset
- use electrons,      ONLY:n_sp_pol
+ use electrons,      ONLY:n_sp_pol,spin
  !
  implicit none
  type(bz_samp) ::Xk
@@ -53,11 +53,7 @@
    ikbz=BS_eh_table(i1+Hi,1)
    iv1=BS_eh_table(i1+Hi,2)
    ic1=BS_eh_table(i1+Hi,3)
-#if defined PJ_SPIN
-   i_sp=BS_eh_table(i1+Hi,4)
-#else
-   i_sp=1
-#endif
+   i_sp=spin(BS_eh_table(i1+Hi,:))
    ikpbz=qindx_X(iq,ikbz,1)
    ik= Xk%sstar(ikbz,1)
    is= Xk%sstar(ikbz,2)
@@ -97,4 +93,4 @@
  !
  call collision_reset(isc)
  !
- end subroutine
+end subroutine

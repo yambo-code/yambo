@@ -19,10 +19,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,&
-&                           T_EL,KPTS,D_LATT)
+integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,&
+&                          T_EL,KPTS,D_LATT)
  !
- use pars,          ONLY:SP,schlen,HARTREE
+ use pars,          ONLY:SP,HARTREE
  use drivers,       ONLY:list_dbs
  use com,           ONLY:code_version,msg,warning,code_revision
  use D_lattice,     ONLY:Tel,a,alat,input_Tel_fixed
@@ -44,9 +44,8 @@
  !
  ! Work Space
  !
- integer             :: i1,nqibz_disk,nkibz_disk,MENU_here,R_LATT_vec(4),&
-&                       R_LATT_vec_disk(4),MODE,MENU,ng_on_db,SPIN_vec_disk(2),&
-&                       n_l_pt
+ integer             :: i1,nqibz_disk,nkibz_disk,R_LATT_vec(4),&
+&                       R_LATT_vec_disk(4),MODE,MENU,SPIN_vec_disk(2)
  real(SP),allocatable:: l_pt(:,:)
  real(SP)            :: local_zero(3),D_LATT_vec_disk(3),D_LATT_vec(3),save_Tel
  logical             :: WARN
@@ -271,4 +270,4 @@
  !
 1 io_mode(ID)=MODE
  !
- end function
+end function

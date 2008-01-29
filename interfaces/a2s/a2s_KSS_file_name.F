@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function a2s_KSS_file_name(inf,KSS_file_name)
+integer function a2s_KSS_file_name(inf,KSS_file_name)
  !
  use pars,             ONLY:lchlen,schlen
  use com,              ONLY:file_exists 
@@ -65,4 +65,4 @@
  !
  a2s_KSS_file_name=-1
  !
- end function
+end function

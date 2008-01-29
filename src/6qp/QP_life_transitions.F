@@ -23,10 +23,9 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  !
  use pars,          ONLY:SP
  use memory_m,      ONLY:mem_est
- use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_n_states,QP_table,QP_W_dr,&
+ use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_n_states,QP_table,&
 &                        QP_cg_percent
  use functions,     ONLY:bose_f,h2ht,e2et
- use vec_operate,   ONLY:sort
  use com,           ONLY:error
  use frequency,     ONLY:w_samp,bg_npts,cg_npts,cg_pt,rg_index_bg
  use electrons,     ONLY:levels

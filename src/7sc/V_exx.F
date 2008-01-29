@@ -31,11 +31,11 @@ subroutine V_exx(X,E,k,q,Vexx)
   !                            + rho^*_{v,c}(k,G) SigmaX^*_{v,c}(k))\
   !                            (E_{vk} - E_{ck})
   !
-  use pars,            ONLY:pi,SP,DP,HARTREE
+  use pars,            ONLY:SP,DP,HARTREE
   use D_lattice,       ONLY:DL_vol,i_time_rev,sop_inv,nsym
-  use X_m,             ONLY:X_t, X_reset,X_alloc,X_mat,X_rhoq0
+  use X_m,             ONLY:X_t, X_alloc,X_mat,X_rhoq0
   use electrons,       ONLY:levels
-  use R_lattice,       ONLY:bz_samp,g_rot,nkibz,nkbz,ng_vec
+  use R_lattice,       ONLY:bz_samp,g_rot,nkibz,nkbz
   use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan
   use frequency,       ONLY:w_samp,W_reset
   use matrix_operate,  ONLY:mat_dia_inv,INV,USE_LK
@@ -51,7 +51,7 @@ subroutine V_exx(X,E,k,q,Vexx)
   type(levels) :: E
   type(bz_samp):: k,q
   !
-  ! Workspace:
+  ! Work Space
   !
   integer                  :: i1,ik,ik1,ic,iv,isym,g1,g2
   complex(SP), allocatable :: Xo_inverse(:,:), SigmaX(:,:),rhotw_save(:),&
@@ -113,7 +113,7 @@ subroutine V_exx(X,E,k,q,Vexx)
       if (iv >  E%nbf) cycle 
       if (ic <= E%nbf) cycle
       SigmaX(iv,ic) = QP_Sx(i1)
-      print*, iv, ic, ik, SigmaX(iv,ic)*hartree 
+      print*, iv, ic, ik, SigmaX(iv,ic)*HARTREE 
     end do
     ! 4:
     do ic = E%nbf+1, X%ib(2)

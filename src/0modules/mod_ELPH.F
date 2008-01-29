@@ -19,35 +19,35 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- module ELPH
-   !
-   use pars, ONLY:SP
-   !
-   implicit none
-   integer   :: ph_modes
-   integer   :: elph_nb
-   integer   :: elph_nq
-   integer   :: elph_nq_used
-   real(SP)  :: max_ph_freq
-   logical   :: elph_use_q_grid
-   real(SP),    allocatable :: ph_qpt(:,:)
-   real(SP),    allocatable :: ph_freqs_sq(:,:)
-   real(SP),    allocatable :: elph_DW(:,:,:,:)
-   real(SP),    allocatable :: E_k_plus_q(:,:,:)
-   real(SP),    allocatable :: f_k_plus_q(:,:,:)
-   complex(SP), allocatable :: elph_gkkp(:,:,:,:)
-   !
-   ! el-ph Self-Energy
-   !
-   integer   :: QP_PH_n_G_bands
-   real(SP)  :: PH_damping
-   real(SP)  :: PH_null_E_rgn
-   !
-   ! el-ph BSE Kernel
-   !
-   complex(SP), allocatable :: EXCPH_mat(:,:)
-   logical                  :: add_ELPH_K
-   !
+module ELPH
+ !
+ use pars, ONLY:SP
+ !
+ implicit none
+ integer   :: ph_modes
+ integer   :: elph_nb
+ integer   :: elph_nq
+ integer   :: elph_nq_used
+ real(SP)  :: max_ph_freq
+ logical   :: elph_use_q_grid
+ real(SP),    allocatable :: ph_qpt(:,:)
+ real(SP),    allocatable :: ph_freqs_sq(:,:)
+ real(SP),    allocatable :: elph_DW(:,:,:,:)
+ real(SP),    allocatable :: E_k_plus_q(:,:,:)
+ real(SP),    allocatable :: f_k_plus_q(:,:,:)
+ complex(SP), allocatable :: elph_gkkp(:,:,:,:)
+ !
+ ! el-ph Self-Energy
+ !
+ integer   :: QP_PH_n_G_bands
+ real(SP)  :: PH_damping
+ real(SP)  :: PH_null_E_rgn
+ !
+ ! el-ph BSE Kernel
+ !
+ complex(SP), allocatable :: EXCPH_mat(:,:)
+ logical                  :: add_ELPH_K
+ !
  contains
    !
    subroutine elph_gkkp_alloc()
@@ -100,4 +100,4 @@
      !
    end subroutine
    !
- end module ELPH
+end module ELPH

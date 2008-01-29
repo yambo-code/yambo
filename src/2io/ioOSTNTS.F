@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function ioOSTNTS(X,Xen,io_db)
+integer function ioOSTNTS(X,Xen,io_db)
  !
  use pars,          ONLY:SP,HARTREE,schlen
  use X_m,           ONLY:X_t,X_q0grad,X_alloc
@@ -118,4 +118,4 @@
  !
 1 call io_disconnect(ID=io_db)
  !
- end function
+end function

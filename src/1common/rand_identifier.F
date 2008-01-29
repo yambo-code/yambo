@@ -19,15 +19,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function rand_identifier()
-!==================================
+integer function rand_identifier()
+ !
  use pars,  ONLY:DP
  real(DP)      :: dlaran
  character(12) :: ch(3)
  integer       :: iseed(8)
-
+ !
  call date_and_time(ch(1),ch(2),ch(3),iseed)
  iseed=iabs(iseed)
  rand_identifier=int(dlaran(iseed(4:))*10000.)
-
- end function
+ !
+end function

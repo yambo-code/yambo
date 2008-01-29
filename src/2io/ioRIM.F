@@ -19,8 +19,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function ioRIM(ID)
-!==========================
+integer function ioRIM(ID)
+ !
  use pars,           ONLY:SP,schlen
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts,RIM_is_diagonal,RL_vol,RIM_RL_vol,&
@@ -30,24 +30,27 @@
 &                         io_elemental,io_status,io_bulk,read_is_on,write_is_on
  implicit none
  integer :: ID
-!
-!ws
+ ! 
+ ! Work Space
+ !
  real(SP)            ::RL_vol_disk
  real(SP),allocatable::RIM_qpg_disk(:,:)
  integer             ::RIM_ng_disk,i1
  character(schlen)   ::VAR_name
-
+ !
  ioRIM=io_connect(desc="RIM",type=1,ID=ID)
-
+ !
+ ! GPL_END
+ !
  if (ioRIM/=0) goto 1
-
+ !
  if (any((/io_sec(ID,:)==1/))) then
-
+   !
    ioRIM=io_header(ID,QPTS=.true.,R_LATT=.true.,IMPOSE_SN=.true.)
    if (ioRIM/=0) goto 1   
-
+   !
    RL_vol_disk=RL_vol
-
+   !
    call io_elemental(ID,VAR="PARS",VAR_SZ=10,MENU=0)
 
    call io_elemental(ID,I0=RIM_ng,DB_I0=RIM_ng_disk,&
@@ -66,37 +69,39 @@
 &       VAR=' Eps^-1 components                :',CHECK=.true.,OP=(/"==","==","=="/))
    call io_elemental(ID,R0=RIM_anisotropy,&
 &       VAR=' RIM anysotropy factor            :')
-
+   !
    call io_elemental(ID,VAR="",VAR_SZ=0)
    ioRIM=io_status(ID)
    if (ioRIM/=0) goto 1
  endif
-
+ !
  if (any((/io_sec(ID,:)==2/))) then
- 
+   !
    allocate(RIM_qpg_disk(RIM_ng_disk,RIM_ng_disk))
- 
+   !
    if (read_is_on(ID)) then
      allocate(RIM_qpg(nqibz,RIM_ng,RIM_ng))
      call mem_est("RIM_qpg",(/size(RIM_qpg)/),(/SP/))
    endif
-
+   !
    do i1=1,nqibz 
-
+     !
      if (write_is_on(ID)) RIM_qpg_disk=RIM_qpg(i1,:,:)
-
+     !
      write (VAR_name,'(a,i4.4)') 'RIM_q_',i1
      call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(RIM_qpg_disk))
      call io_bulk(ID,R2=RIM_qpg_disk)
-   
+     !
      if (read_is_on(ID)) RIM_qpg(i1,:,:)=RIM_qpg_disk(:RIM_ng,:RIM_ng)
-   
+     !
    enddo
-
+   !
    deallocate(RIM_qpg_disk)
-
+   !
  endif
-
+ !
 1 call io_disconnect(ID=ID)
-
- end function
+ !
+ ! GPL_START
+ !
+end function

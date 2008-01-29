@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements)
+subroutine K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements)
  !
  use pars,         ONLY:SP,schlen
  use com,          ONLY:msg
@@ -92,4 +92,4 @@
    call msg('rs',trim(ch),real(n_K_elements(i_cpu))/real(tot_n_K_elements)*100._SP)
  enddo
  !
- end subroutine
+end subroutine

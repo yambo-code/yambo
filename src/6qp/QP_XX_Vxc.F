@@ -29,7 +29,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  use com,           ONLY:msg,depth,write_to_report
  use timing,        ONLY:live_timing
  use stderr,        ONLY:intc,real2ch
- use electrons,     ONLY:levels,spin_occ,n_sp_pol
+ use electrons,     ONLY:levels,spin_occ,n_sp_pol,spin
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset,master_node
  use par_indexes_m, ONLY:par_indexes
  use collision,     ONLY:ggwinfo,collision_reset
@@ -167,6 +167,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
        !
        ib =QP_table(i1,1)
        ibp=QP_table(i1,2)
+       !
 #if defined PJ_SC
        if (l_sc_pot.and.trim(SC_potential)=='EXX') then
          if (ib  >E%nbf.or.ibp<=E%nbf) then
@@ -176,15 +177,9 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
        endif
 #endif
        !
-#if defined PJ_SPIN
-       isc%is=(/QP_table(i1,1),QP_table(i1,3),1,QP_table(i1,4)/)
-       isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iq,1),:),QP_table(i1,4)/)
-       iscp%is=(/QP_table(i1,2),QP_table(i1,3),1,QP_table(i1,4)/)
-#else
-       isc%is=(/QP_table(i1,1),QP_table(i1,3),1,1/)
-       isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iq,1),:),1/)
-       iscp%is=(/QP_table(i1,2),QP_table(i1,3),1,1/)
-#endif
+       isc%is=(/QP_table(i1,1),QP_table(i1,3),1,spin(QP_table(i1,:))/)
+       isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iq,1),:),spin(QP_table(i1,:))/)
+       iscp%is=(/QP_table(i1,2),QP_table(i1,3),1,spin(QP_table(i1,:))/)
        !
        isc%qs(1)=qindx_S(QP_table(i1,3),iq,2)
        iscp%qs=isc%qs
@@ -247,12 +242,8 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
    !
    ch_spin=' '
    !
-#if defined PJ_SPIN
-   !
-   if (n_sp_pol==2.and.QP_table(i1,4)==1) ch_spin='(up)'
-   if (n_sp_pol==2.and.QP_table(i1,4)==2) ch_spin='(dn)'
-   !
-#endif
+   if (n_sp_pol==2.and.spin(QP_table(i1,:))==1) ch_spin='(up)'
+   if (n_sp_pol==2.and.spin(QP_table(i1,:))==2) ch_spin='(dn)'
    ! 
    sx_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|S_x|'//trim(intc(ibp))&
 &     //trim(ch_spin)//'> ='

@@ -20,32 +20,32 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 module TDDFT
-  !
-  use pars,     ONLY:SP,lchlen
-  !
-  character(lchlen):: FXC_description(100)
-  character(10)    :: FXC_type
-  integer          :: FXC_n_descs
-  integer          :: FXC_n_g_corr
-  integer          :: FXC_n_mem_freqs
-  integer          :: FXC_SVD_digits
-  real(SP)         :: FXC_per_memstps
-  real(SP)         :: FXC_LRC_alpha
-  logical          :: FXC_is_causal
-  !
-  real(SP),    allocatable :: FXC_K_diagonal(:)
-  complex(SP), allocatable :: FXC(:,:,:)
-  !
-  interface 
-    !
-    integer function ioBS_Fxc(iq,W,ID,X)
-      use frequency,  ONLY:w_samp
-      use X_m,        ONLY:X_t
-      integer            ::ID,iq
-      type(w_samp)       ::W
-      type(X_t), optional::X
-    end function
-    !
-  end interface
-  !
+ !
+ use pars,     ONLY:SP,lchlen
+ !
+ character(lchlen):: FXC_description(100)
+ character(10)    :: FXC_type
+ integer          :: FXC_n_descs
+ integer          :: FXC_n_g_corr
+ integer          :: FXC_n_mem_freqs
+ integer          :: FXC_SVD_digits
+ real(SP)         :: FXC_per_memstps
+ real(SP)         :: FXC_LRC_alpha
+ logical          :: FXC_is_causal
+ !
+ real(SP),    allocatable :: FXC_K_diagonal(:)
+ complex(SP), allocatable :: FXC(:,:,:)
+ !
+ interface 
+   !
+   integer function ioBS_Fxc(iq,W,ID,X)
+     use frequency,  ONLY:w_samp
+     use X_m,        ONLY:X_t
+     integer            ::ID,iq
+     type(w_samp)       ::W
+     type(X_t), optional::X
+   end function
+   !
+ end interface
+ !
 end module

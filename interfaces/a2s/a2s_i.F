@@ -19,8 +19,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function a2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
-&                       js,ijs,np,pid)
+integer function a2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
+&                      js,ijs,np,pid)
  !
  use pars,                ONLY:SP,lchlen
  use com,                 ONLY:msg,write_to_report,out_path
@@ -117,4 +117,4 @@
  !
  call p_finalize
  !
- end function
+end function

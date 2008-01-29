@@ -19,8 +19,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii)
-!==================================================================
+subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii)
+ !
  use pars,          ONLY:SP,pi
  use vec_operate,   ONLY:iku_v_norm
  use R_lattice,     ONLY:g_vec,RIM_n_rand_pts,k_grid_uc_vol,RIM_qpg,&
@@ -29,18 +29,20 @@
  implicit none
  integer  :: iq,N_out,N_out_G
  real(SP) :: qr(RIM_n_rand_pts,3),em1_anis(3),G_sph_radii
-!ws
+ ! 
+ ! Work Space
+ !
  integer  :: i1,i1min,i2,i2max,i3
  real(SP) :: r1,rfac,v1(3),v2(3)
-!------------------------------------------------------------------------
+ !
  rfac=8.*k_grid_uc_vol/real(N_out)/(2.*pi)**3.
-!     ----------------
-!     MonteCarlo volume
-
+ !     ----------------
+ !     MonteCarlo volume
+ !
  RIM_qpg(iq,:,:)=0.
-
-! All points
-!======================
+ !
+ ! All points
+ !
  i1min=1
  if (iq==1) i1min=2
  do i1=i1min,RIM_ng 
@@ -57,14 +59,13 @@
    enddo
  enddo
  if (iq>1) return
-
-! Gamma point (1,I) elements
-!===========================
-
+ !
+ ! Gamma point (1,I) elements
+ !
  G_sph_radii=(3.*.2/(4.*pi)*k_grid_uc_vol)**(1./3.)
  RIM_qpg(iq,1,1)=2.*4.*pi*G_sph_radii/(2.*pi)**3.
  RIM_anisotropy=2.*4.*pi/3.*G_sph_radii/(2.*pi)**3.*sum(em1_anis)
-
+ !
  N_out_G=0
  i2max=RIM_ng 
  if (RIM_is_diagonal) i2max=1
@@ -82,9 +83,9 @@
      enddo
    endif
  enddo
-!
+ !
  do i1=2,i2max
    RIM_qpg(1,i1,1)=RIM_qpg(1,1,i1)
  enddo
-
- end subroutine
+ !
+end subroutine

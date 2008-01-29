@@ -25,9 +25,8 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
  use memory_m,      ONLY:mem_est
  use wave_func,     ONLY:wf_state,wf
  use FFT_m,         ONLY:fft_rot_r
- use com,           ONLY:msg
  use D_lattice,     ONLY:nsym,sop_inv,sop_tab
- use R_lattice,     ONLY:b,qindx_B,qindx_X,rl_sop,bz_samp,ik_is_table
+ use R_lattice,     ONLY:b,qindx_B,bz_samp,ik_is_table
  use BS,            ONLY:O_n_cc_scatt,O_table,O_phase,O_cc,O_vv,&
 &                        O_n_vv_scatt,O_n_c_states,O_c_state,&
 &                        O_n_v_states,O_v_state,O_ng,BS_bands,BS_res_K_corr
@@ -48,7 +47,7 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
  integer     :: cc_stat(BS_bands(2)-BS_bands(1)+1,BS_bands(2)-BS_bands(1)+1,nsym,n_sp_pol)
  integer     :: vv_stat(BS_bands(2)-BS_bands(1)+1,BS_bands(2)-BS_bands(1)+1,nsym,n_sp_pol)
  real(SP)    :: v(3)
- complex(SP) :: wf1,wf2,wf_cmp
+ complex(SP) :: wf_cmp
  logical     :: eval_collision
  !
  if (.not.BS_res_K_corr) return 
@@ -60,8 +59,6 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
  ! K/S Table
  !
  call k_sym2sym(Xk,'s')
- !
- !================================
  !
  b_ref=BS_bands(1)-1
  if (.not.allocated(O_phase)) then

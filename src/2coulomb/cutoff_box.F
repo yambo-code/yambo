@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine cutoff_box(q,is_cut)
+subroutine cutoff_box(q,is_cut)
  !
  ! Vc(q,G)=1/(Vdl Nq)\sum_{q' G'} V(q'+G') F(q'+G',q+G) [3D BOX] 
  !
@@ -169,4 +169,4 @@
      enddo
    end function
    !
- end subroutine
+end subroutine

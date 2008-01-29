@@ -22,35 +22,37 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- module xc_constants
-!===================
-   use pars,     ONLY:DP
-   implicit none
-
-!Real constants
-   real(DP), parameter :: zero=0._DP
-   real(DP), parameter :: one=1._DP
-   real(DP), parameter :: two=2._DP
-   real(DP), parameter :: three=3._DP
-   real(DP), parameter :: four=4._DP
-   real(DP), parameter :: five=5._DP 
-   real(DP), parameter :: six=6._DP
-   real(DP), parameter :: seven=7._DP
-   real(DP), parameter :: eight=8._DP
-   real(DP), parameter :: nine=9._DP
-   real(DP), parameter :: ten=10._DP
-
-!Fractionary real constants
-   real(DP), parameter :: half=0.50_DP
-   real(DP), parameter :: third=one/three
-   real(DP), parameter :: quarter=0.25_DP
-   real(DP), parameter :: fifth=0.20_DP
-   real(DP), parameter :: sixth=one/six
-   real(DP), parameter :: seventh=one/seven
-   real(DP), parameter :: eighth=0.125_DP
-   real(DP), parameter :: ninth=one/nine
-   real(DP), parameter :: two_thirds=two*third
-   real(DP), parameter :: four_thirds=four*third
-   real(DP), parameter :: three_quarters=0.75_DP
-
- end module 
+module xc_constants
+ !
+ use pars,     ONLY:DP
+ implicit none
+ !
+ ! Real constants
+ !
+ real(DP), parameter :: zero=0._DP
+ real(DP), parameter :: one=1._DP
+ real(DP), parameter :: two=2._DP
+ real(DP), parameter :: three=3._DP
+ real(DP), parameter :: four=4._DP
+ real(DP), parameter :: five=5._DP 
+ real(DP), parameter :: six=6._DP
+ real(DP), parameter :: seven=7._DP
+ real(DP), parameter :: eight=8._DP
+ real(DP), parameter :: nine=9._DP
+ real(DP), parameter :: ten=10._DP
+ !
+ ! Fractionary real constants
+ !
+ real(DP), parameter :: half=0.50_DP
+ real(DP), parameter :: third=one/three
+ real(DP), parameter :: quarter=0.25_DP
+ real(DP), parameter :: fifth=0.20_DP
+ real(DP), parameter :: sixth=one/six
+ real(DP), parameter :: seventh=one/seven
+ real(DP), parameter :: eighth=0.125_DP
+ real(DP), parameter :: ninth=one/nine
+ real(DP), parameter :: two_thirds=two*third
+ real(DP), parameter :: four_thirds=four*third
+ real(DP), parameter :: three_quarters=0.75_DP
+ !
+end module 

@@ -21,7 +21,7 @@
 !
 subroutine X_s(iq,fr,X,wv)
  !
- use pars,          ONLY:SP,HARTREE,schlen,pi
+ use pars,          ONLY:SP,pi
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use timing,        ONLY:live_timing
  use memory_m,      ONLY:mem_est
@@ -30,7 +30,6 @@ subroutine X_s(iq,fr,X,wv)
  use frequency,     ONLY:w_samp
  use par_indexes_m, ONLY:par_indexes
  use stderr,        ONLY:intc
- use com,           ONLY:msg
  use X_m,           ONLY:X_t,X_mat,X_fxc
  use matrix_operate,ONLY:mat_dia_inv,INV,USE_LK,USE_SLK,USE_SVD
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_n_mem_freqs,&

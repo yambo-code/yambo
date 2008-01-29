@@ -19,9 +19,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,&
-&                   C1,IPOS)
-!==============================================================
+subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,&
+&                  C1,IPOS)
+ !
  use pars,    ONLY:SP,lchlen
 #if defined NC
  use netcdf
@@ -35,16 +35,18 @@
  integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:)
  real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:)
  complex(SP), optional :: C1(:)
-!
+ ! 
+ ! Work Space
+ !
  character(lchlen) :: ch
  integer :: var_dim(10),j1
-
+ !
  if (.not.io_netcdf_support(ID)) goto 1
-
-!==========================================================================
-!== NETCDF I/O ============================================================
-!==========================================================================
-
+ !
+ !====================
+ !== NETCDF I/O ======
+ !====================
+ !
 #if defined NC
  if (present(VAR).and.present(VAR_SZ)) then
    if (write_is_on(ID)) then
@@ -61,7 +63,7 @@
    endif
    io_rec_pos(ID)=1
  endif
-
+ !
  if (present(I0)) then
    if (write_is_on(ID)) then
      call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
@@ -72,6 +74,7 @@
    endif
    io_rec_pos(ID)=io_rec_pos(ID)+1
  endif
+ !
  if (present(I1)) then
    if (write_is_on(ID)) then
      call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
@@ -82,6 +85,7 @@
    endif
    io_rec_pos(ID)=io_rec_pos(ID)+size(I1)
  endif
+ !
  if (present(I2)) then
    if (write_is_on(ID)) then
    call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
@@ -102,7 +106,7 @@
    endif
    io_rec_pos(ID)=io_rec_pos(ID)+size(I3)
  endif
-
+ !
  if (present(R0)) then
    if (write_is_on(ID)) then
      call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
@@ -113,6 +117,7 @@
    endif
    io_rec_pos(ID)=io_rec_pos(ID)+1
  endif
+ !
  if (present(R1)) then
    if (write_is_on(ID)) then
      call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
@@ -123,6 +128,7 @@
    endif
    io_rec_pos(ID)=io_rec_pos(ID)+size(R1)
  endif
+ !
  if (present(R2)) then
    if (write_is_on(ID)) then
      if (present(IPOS)) then
@@ -141,6 +147,7 @@
    endif
    io_rec_pos(ID)=io_rec_pos(ID)+size(R2)
  endif
+ !
  if (present(R3)) then
    if (write_is_on(ID)) then
      if (present(IPOS)) then
@@ -160,14 +167,14 @@
    io_rec_pos(ID)=io_rec_pos(ID)+size(R3)
  endif
 #endif
-
+ !
  return
-
-!==========================================================================
-!== FOTRAN ================================================================
-!==========================================================================
+ !
+ !==============
+ !== FOTRAN ====
+ !==============
 1 continue
-
+ !
  if (present(I0)) then
    if (write_is_on(ID)) then
      write(io_unit(ID)) I0
@@ -175,6 +182,7 @@
      read(io_unit(ID)) I0
    endif
  endif
+ !
  if (present(I1)) then
    if (write_is_on(ID)) then
      write(io_unit(ID)) I1
@@ -182,6 +190,7 @@
      read(io_unit(ID)) I1
    endif
  endif
+ !
  if (present(I2)) then
    if (write_is_on(ID)) then
      write(io_unit(ID)) I2
@@ -189,6 +198,7 @@
      read(io_unit(ID)) I2
    endif
  endif
+ !
  if (present(I3)) then
    if (write_is_on(ID)) then
      write(io_unit(ID)) I3
@@ -196,7 +206,7 @@
      read(io_unit(ID)) I3
    endif
  endif
-
+ !
  if (present(R0)) then
    if (write_is_on(ID)) then
      write(io_unit(ID)) R0
@@ -204,6 +214,7 @@
      read(io_unit(ID)) R0
    endif
  endif
+ !
  if (present(R1)) then
    if (write_is_on(ID)) then
      write(io_unit(ID)) R1
@@ -211,6 +222,7 @@
      read(io_unit(ID)) R1
    endif
  endif
+ !
  if (present(R2)) then
    if (write_is_on(ID)) then
      write(io_unit(ID)) R2
@@ -218,6 +230,7 @@
      read(io_unit(ID)) R2
    endif
  endif
+ !
  if (present(R3)) then
    if (write_is_on(ID)) then
      write(io_unit(ID)) R3
@@ -225,7 +238,7 @@
      read(io_unit(ID)) R3
    endif
  endif
-
+ !
  if (present(C1)) then
    if (write_is_on(ID)) then
      write(io_unit(ID)) C1
@@ -233,6 +246,5 @@
      read(io_unit(ID)) C1
    endif
  endif
-
- end subroutine
-
+ !
+end subroutine

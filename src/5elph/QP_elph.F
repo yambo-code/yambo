@@ -38,10 +38,9 @@ subroutine QP_elph(en,k,q,qp)
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END
  use memory_m,      ONLY:mem_est
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
-&                        QP_G_er,QP_G_dr,QP_Sc_steps,QP_dSc_steps,&
-&                        QP_dSc_delta
+&                        QP_dSc_steps,QP_dSc_delta
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
- use R_lattice,     ONLY:qindx_S,bz_samp,ik_is_table,q_norm
+ use R_lattice,     ONLY:qindx_S,bz_samp,ik_is_table
  use ELPH,          ONLY:ph_modes,elph_nb,ph_freqs_sq,elph_gkkp,&
 &                        elph_gkkp_free,QP_PH_n_G_bands,max_ph_freq,elph_DW,&
 &                        PH_damping,elph_nq,E_k_plus_q,elph_use_q_grid,&
@@ -53,7 +52,7 @@ subroutine QP_elph(en,k,q,qp)
  type(bz_samp) ::k,q
  type(QP_t)    ::qp
  !
- ! WorkSpace  -- GPL_END --
+ ! WorkSpace  
  !
  integer          ::iq_db,iqbz,iq,iq_ref,iqs,ik,ok,ik_bz,okbz,ib,ob,is,il,iqp,i2,iw,&
 &                   time_order_sign,ik_bz_gkkp,ib_gkkp,ob_gkkp,os,incomplete_Q_grid
@@ -460,7 +459,5 @@ subroutine QP_elph(en,k,q,qp)
      if (PH_damping>0.) call W_reset(g_sq_F_E)
      !
    end subroutine
-   !
-   ! -- GPL_START --
    !
 end subroutine

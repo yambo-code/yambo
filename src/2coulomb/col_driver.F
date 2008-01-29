@@ -38,7 +38,7 @@
 ! 4 pi / |q+G|^2 = 2 pi DLVol NqBZ qpg(q,G)                                  
 ! |q+G| = Sqrt[ 2 / ( DLVol NqBZ qpg(q,G)) ]                                  
 !
- subroutine col_driver(bare_NG,q)
+subroutine col_driver(bare_NG,q)
  !
  !Here I launch the routine to create/read the 
  !db.RIM file after some important checks and definitions.
@@ -85,7 +85,7 @@
    enddo
  enddo
  !
- ! RIM
+ ! RIM GPL_END
  !
  if (l_rim) l_rim=all((/RIM_ng>0,RIM_n_rand_pts>0/))
  !
@@ -150,4 +150,6 @@
  !
  call cutoff_driver(q)
  !
- end subroutine
+ ! GPL_START
+ !
+end subroutine

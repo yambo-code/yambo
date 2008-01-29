@@ -24,7 +24,7 @@ subroutine X_pre_setup(Xen,X)
  use X_m,           ONLY:X_t,use_X_RIM,X_RIM_nkpts
  use electrons,     ONLY:levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts
  use drivers,       ONLY:l_bs_fxc,l_col_cut,Finite_Tel
- use R_lattice,     ONLY:bz_samp,nqibz
+ use R_lattice,     ONLY:nqibz
  use TDDFT,         ONLY:FXC_n_g_corr
  implicit none
  !

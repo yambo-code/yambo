@@ -24,8 +24,7 @@ integer function ioBS_Fxc(iq,FXC_W,ID,X)
  use pars,           ONLY:SP,schlen,HARTREE,lchlen
  use memory_m,       ONLY:mem_est
  use stderr,         ONLY:intc
- use BS,             ONLY:BSS_q0,BS_W_is_diagonal,&
-&                         BS_eh_en,BS_bands,BS_K_dim,variables_BS
+ use BS,             ONLY:BSS_q0,BS_K_dim,variables_BS
  use TDDFT,          ONLY:FXC_n_g_corr,FXC_n_descs,FXC_description,&
 &                         FXC_K_diagonal,FXC_n_mem_freqs,FXC,FXC_is_causal
  use matrix_operate, ONLY:mat_c2r,mat_r2c
@@ -41,7 +40,7 @@ integer function ioBS_Fxc(iq,FXC_W,ID,X)
  ! 
  ! Work Space
  !
- integer             ::i1,FXC_n_g_db,w_group,FXC_n_descs_disk
+ integer             ::i1,FXC_n_g_db,w_group
  character (schlen)  ::db_name,ch
  character (lchlen)  ::local_description(100)
  real(SP),allocatable::FXC_disk(:,:,:),W_disk(:,:)
@@ -55,6 +54,8 @@ integer function ioBS_Fxc(iq,FXC_W,ID,X)
  db_name='BS_FXC_Q'//trim(intc(iq))//'_W_group_'//trim(intc(w_group))
  !
  ioBS_Fxc=io_connect(desc=trim(db_name),type=2,ID=ID)
+ !
+ ! GPL_END
  !
  if (ioBS_Fxc/=0) goto 1
  !
@@ -188,5 +189,7 @@ integer function ioBS_Fxc(iq,FXC_W,ID,X)
  deallocate(FXC_disk)
  !
 1 call io_disconnect(ID)
+ !
+ ! GPL_START
  !
 end function

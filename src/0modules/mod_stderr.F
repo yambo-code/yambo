@@ -19,25 +19,25 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- module stderr
+module stderr
+ !
+ use pars
+ !
+ integer          :: tty_size
+ logical          :: write_to_log
+ character(lchlen):: logfile
+ !
+ interface  
    !
-   use pars
+   subroutine win_size(wdim)
+     integer :: wdim
+   end subroutine
    !
-   integer          :: tty_size
-   logical          :: write_to_log
-   character(lchlen):: logfile
+   subroutine c_fprintf(lfmt,msg,rfmt,sfmt)
+     character(*) :: lfmt,rfmt,msg,sfmt
+   end subroutine
    !
-   interface  
-     !
-     subroutine win_size(wdim)
-       integer :: wdim
-     end subroutine
-     !
-     subroutine c_fprintf(lfmt,msg,rfmt,sfmt)
-       character(*) :: lfmt,rfmt,msg,sfmt
-     end subroutine
-     !
-   end interface
+ end interface
  !
  contains
    !

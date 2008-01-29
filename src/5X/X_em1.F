@@ -24,15 +24,15 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! Calculates and stores on file the dielectric matrix.
  !
  use pars,          ONLY:SP
- use drivers,       ONLY:l_life,l_bs_fxc,l_alda_fxc,l_acfdt,l_gw0
+ use drivers,       ONLY:l_alda_fxc,l_gw0
  use X_m,           ONLY:X_t,X_alloc,X_mat,X_poles_tab,self_detect_E_range
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp,rg_index_bg,bg_npts,cg_pt,cg_index_bg
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels
- use par_proc_m,    ONLY:pp_redux_wait,master_node
+ use par_proc_m,    ONLY:pp_redux_wait
  use wave_func,     ONLY:WF_free
- use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,OP_WR_CL,VERIFY,REP,NONE
+ use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,OP_WR_CL,VERIFY,REP
  use com,           ONLY:depth
  implicit none
  type(levels) ::Xen 

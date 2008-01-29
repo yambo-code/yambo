@@ -34,8 +34,6 @@ integer function ioE_RIM(E,ID)
  type(levels) :: E
  integer      :: ID 
  !
- ! GPL_END
- !
  call io_save_to_try_again(ID)
  ioE_RIM=io_connect(desc='E_RIM',type=2,ID=ID)
  ! 
@@ -46,6 +44,9 @@ integer function ioE_RIM(E,ID)
    call io_restore_to_try_again(ID)
    ioE_RIM=io_connect(desc='E_RIM',type=1,ID=ID)
  endif
+ !
+ ! GPL_END
+ !
  if (ioE_RIM/=0) goto 1
  !
  ioE_RIM=io_header(ID)

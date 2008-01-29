@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine bz_samp_indexes(k,Xk,q)
+subroutine bz_samp_indexes(k,Xk,q)
  !
  ! ikbz=(ik,is) --<--:--<-- okbz=(ok,os) = (IK-Q)
  !                   :
@@ -46,10 +46,9 @@
  use timing,         ONLY:live_timing
  use matrix_operate, ONLY:m3inv,m3det
  use vec_operate,    ONLY:v_is_zero,c2a
- use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:b,d3q_factor,RL_vol,g_vec,ng_vec,&
 &                         nqibz,nqbz,qindx_X,qindx_B,qindx_S,qp_states_k,&
-&                         bse_scattering,qindx_alloc,rl_sop,Xk_grid_is_uniform,&
+&                         bse_scattering,qindx_alloc,Xk_grid_is_uniform,&
 &                         k_grid,k_grid_b,q_pt,k_pt,bz_samp,q_norm,q0_def_norm,&
 &                         q_sstar
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
@@ -63,7 +62,7 @@
  !
  integer :: io_db,io_err,ioQINDX
  integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikbz,iqs
- real(SP):: v1(3),k_b_m1(3,3),G_zero(3),local_zero(3)
+ real(SP):: v1(3),k_b_m1(3,3),local_zero(3)
  logical :: connected_grids,user_defined_qpts,gamma_point_only,impose_minus_q
  integer, allocatable :: q_map(:,:,:),q_iptbz(:,:)
  !
@@ -418,4 +417,4 @@
      endif
    end subroutine
    !
- end subroutine
+end subroutine

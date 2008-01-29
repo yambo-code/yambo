@@ -20,6 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine ps_convert(rvar,ivar,v_name)
+ !
  use pars
  use it_m,  ONLY: nflines,flines,ni1v,ni2v,ni3v,nr1v,nr2v,nc1v,&
 &                 nr3v,i1vars,i2vars,i3vars,r1vars,r2vars,r3vars,c1vars
@@ -129,40 +130,40 @@ subroutine ps_convert(rvar,ivar,v_name)
    rvar=rvar/HARTREE
  endif
  !
-contains 
-  !
-  subroutine set_itp_unit(unit,im)
-    integer :: im
-    character(*)::unit
-    integer :: i1!ws
-    do i1=1,ni1v
-      if (trim(i1vars(i1,1))==trim(v_name).and.im>0) i1vars(i1,3)=unit
-      if (trim(i1vars(i1,1))==trim(v_name).and.im<0) unit=i1vars(i1,3)
-    enddo
-    do i1=1,ni2v
-      if (trim(i2vars(i1,1))==trim(v_name).and.im>0) i2vars(i1,3)=unit
-      if (trim(i2vars(i1,1))==trim(v_name).and.im<0) unit=i2vars(i1,3)
-    enddo
-    do i1=1,ni3v
-      if (trim(i3vars(i1,1))==trim(v_name).and.im>0) i3vars(i1,3)=unit
-      if (trim(i3vars(i1,1))==trim(v_name).and.im<0) unit=i3vars(i1,3)
-    enddo
-    do i1=1,nr1v
-      if (trim(r1vars(i1,1))==trim(v_name).and.im>0) r1vars(i1,3)=unit
-      if (trim(r1vars(i1,1))==trim(v_name).and.im<0) unit=r1vars(i1,3)
-    enddo
-    do i1=1,nr2v
-      if (trim(r2vars(i1,1))==trim(v_name).and.im>0) r2vars(i1,3)=unit
-      if (trim(r2vars(i1,1))==trim(v_name).and.im<0) unit=r2vars(i1,3)
-    enddo
-    do i1=1,nr3v
-      if (trim(r3vars(i1,1))==trim(v_name).and.im>0) r3vars(i1,3)=unit
-      if (trim(r3vars(i1,1))==trim(v_name).and.im<0) unit=r3vars(i1,3)
-    enddo
-    do i1=1,nc1v
-      if (trim(c1vars(i1,1))==trim(v_name).and.im>0) c1vars(i1,3)=unit
-      if (trim(c1vars(i1,1))==trim(v_name).and.im<0) unit=c1vars(i1,3)
-    enddo
-  end subroutine
-  !
+ contains 
+   !
+   subroutine set_itp_unit(unit,im)
+     integer :: im
+     character(*)::unit
+     integer :: i1!ws
+     do i1=1,ni1v
+       if (trim(i1vars(i1,1))==trim(v_name).and.im>0) i1vars(i1,3)=unit
+       if (trim(i1vars(i1,1))==trim(v_name).and.im<0) unit=i1vars(i1,3)
+     enddo
+     do i1=1,ni2v
+       if (trim(i2vars(i1,1))==trim(v_name).and.im>0) i2vars(i1,3)=unit
+       if (trim(i2vars(i1,1))==trim(v_name).and.im<0) unit=i2vars(i1,3)
+     enddo
+     do i1=1,ni3v
+       if (trim(i3vars(i1,1))==trim(v_name).and.im>0) i3vars(i1,3)=unit
+       if (trim(i3vars(i1,1))==trim(v_name).and.im<0) unit=i3vars(i1,3)
+     enddo
+     do i1=1,nr1v
+       if (trim(r1vars(i1,1))==trim(v_name).and.im>0) r1vars(i1,3)=unit
+       if (trim(r1vars(i1,1))==trim(v_name).and.im<0) unit=r1vars(i1,3)
+     enddo
+     do i1=1,nr2v
+       if (trim(r2vars(i1,1))==trim(v_name).and.im>0) r2vars(i1,3)=unit
+       if (trim(r2vars(i1,1))==trim(v_name).and.im<0) unit=r2vars(i1,3)
+     enddo
+     do i1=1,nr3v
+       if (trim(r3vars(i1,1))==trim(v_name).and.im>0) r3vars(i1,3)=unit
+       if (trim(r3vars(i1,1))==trim(v_name).and.im<0) unit=r3vars(i1,3)
+     enddo
+     do i1=1,nc1v
+       if (trim(c1vars(i1,1))==trim(v_name).and.im>0) c1vars(i1,3)=unit
+       if (trim(c1vars(i1,1))==trim(v_name).and.im<0) unit=c1vars(i1,3)
+     enddo
+   end subroutine
+   !
 end subroutine

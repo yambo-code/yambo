@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine init_load(defs,en,q,k,X,Xw)
+subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! VERBOSITY
  ! 
@@ -29,19 +29,19 @@
  ! 3 (I/O)
  ! 4 (debug)
  !
- use pars,          ONLY:SP,schlen
+ use pars,          ONLY:schlen
  use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,V_more,&
-&                        V_qp,V_io,V_debug,rstatus,initmode
- use X_m,           ONLY:X_t, long_path
+&                        V_qp,V_io
+ use X_m,           ONLY:X_t,long_path
  use QP_m,          ONLY:QP_rep_string,QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,QP_Sx_low_band,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations
  use timing,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel
- use R_lattice,     ONLY:n_g_shells,ng_closed,QP_states_k,nXkibz,&
+ use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry
  use BS,            ONLY:BS_res_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_columns,&
@@ -52,7 +52,7 @@
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
  use QP_m,          ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_W,QP_ctl_Z,&
 &                        QP_band_mixing
- use com,           ONLY:out_path,in_path,db_wr_path
+ use com,           ONLY:out_path,db_wr_path
  use functions,     ONLY:bose_E_cut
 #if defined PJ_SC
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential
@@ -360,4 +360,4 @@
      !
    end subroutine
    !
- end subroutine
+end subroutine

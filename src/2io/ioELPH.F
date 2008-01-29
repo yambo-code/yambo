@@ -19,9 +19,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function ioELPH(ID)
+integer function ioELPH(ID)
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
 &                         io_elemental,io_status,io_bulk,io_header,&
 &                         read_is_on,write_is_on,RD_CL,RD_CL_IF_END,io_action,&
@@ -33,7 +33,6 @@
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:nkbz,nqibz
  use memory_m,       ONLY:mem_est
- use matrix_operate, ONLY:mat_c2r,mat_r2c
  implicit none
  integer      ::ID
  !
@@ -48,6 +47,8 @@
    call io_restore_to_try_again(ID)
    ioELPH=io_connect(desc='elph_gkkp',type=1,ID=ID)
  endif
+ !
+ ! GPL_END
  !
  if (ioELPH/=0) goto 1
  !
@@ -170,4 +171,6 @@
  !
 1 call io_disconnect(ID=ID)
  !
- end function
+ ! GPL_START
+ !
+end function

@@ -48,16 +48,14 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  use pars,          ONLY:SP,HARTREE,IP
  use memory_m,      ONLY:mem_est
  use timing,        ONLY:live_timing
- use com,           ONLY:msg
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use frequency,     ONLY:w_samp,W_reset
  use X_m,           ONLY:X_t
  use par_proc_m,    ONLY:pp_redux_wait
  use QP_m,          ONLY:QP_t,QP_Vxc,QP_Sx,QP_Sc,QP_n_W_freqs,QP_W,QP_n_states,&
-&                        QP_solver_state,QP_dSc_steps,QP_dSc,QP_n_G_bands,&
-&                        QP_dSc_test,QP_W_dr,QP_W_er,QP_dSc_delta,&
-&                        QP_W_partially_done
+&                        QP_solver_state,QP_dSc_steps,QP_dSc,&
+&                        QP_W_dr,QP_W_er,QP_dSc_delta
  use IO_m,          ONLY:io_control,NONE,RD,RD_CL,OP_RD
  !
  implicit none

@@ -35,7 +35,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  ! Work Space
  !
  integer  :: i1,i2,i3,i4,iv(3),ln(3),is
- real(SP) :: v1(3),v2(3),M1(3,3),M2(3,3)
+ real(SP) :: v1(3),M1(3,3),M2(3,3)
  !
  if (.not.ONLY_SIZE) then
    if (allocated(fft_g_table)) then
@@ -115,73 +115,73 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    i4=1
  enddo
  !
-contains
- !
- integer function modx(i,j)
+ contains
    !
-   !  Calculate a function similar to MOD:
-   !  modx(i,j) = mod (i,j) i>=0
-   !          = mod ( mod(i,j)+j , j) i<0
-   !  Thus 
-   !   modx(3,2)=1 
-   !   modx(-1,2)=1.
-   !  This is different from MOD for i negative.
+   integer function modx(i,j)
+     !
+     !  Calculate a function similar to MOD:
+     !  modx(i,j) = mod (i,j) i>=0
+     !          = mod ( mod(i,j)+j , j) i<0
+     !  Thus 
+     !   modx(3,2)=1 
+     !   modx(-1,2)=1.
+     !  This is different from MOD for i negative.
+     !
+     implicit none
+     integer i,j
+     if (i>=0) then
+       modx = mod(i,j)
+     else
+       modx = mod( mod(i,j) + j , j)
+     endif
+     !
+   end function
    !
-   implicit none
-   integer i,j
-   if (i>=0) then
-     modx = mod(i,j)
-   else
-     modx = mod( mod(i,j) + j , j)
-   endif
-   !
- end function
- !
- subroutine fft_best_size(test_fft_size)
-   !
-   implicit none
-   integer :: test_fft_size(3)
-   ! 
-   ! Work Space
-   !
-   integer, parameter :: nn=82
-   integer :: i1,i2,nallwd(nn)
-   data nallwd/& ! taken from CTRIG
-&    3,   4,   5,   6,   8,   9,  12,  15,  16,  18,&
-&   20,  24,  25,  27,  30,  32,  36,  40,  45,  48,&
-&   54,  60,  64,  72,  75,  80,  81,  90,  96, 100,&
-&  108, 120, 125, 128, 135, 144, 150, 160, 162, 180,&
-&  192, 200, 216, 225, 240, 243, 256, 270, 288, 300,&
-&  320, 324, 360, 375, 384, 400, 405, 432, 450, 480,&
-&  486, 500, 512, 540, 576, 600, 625, 640, 648, 675,&
-&  720, 729, 750, 768, 800, 810, 864, 900, 960, 972,&
-&  1000,1024/
-   !
-   ! The size is calculated on the components of the RL vectors
-   ! that are positive and negative. Thus I need 2N+1 elements
-   !
-   test_fft_size=2*test_fft_size+1
-   !
+   subroutine fft_best_size(test_fft_size)
+     !
+     implicit none
+     integer :: test_fft_size(3)
+     ! 
+     ! Work Space
+     !
+     integer, parameter :: nn=82
+     integer :: i1,i2,nallwd(nn)
+     data nallwd/& ! taken from CTRIG
+&      3,   4,   5,   6,   8,   9,  12,  15,  16,  18,&
+&     20,  24,  25,  27,  30,  32,  36,  40,  45,  48,&
+&     54,  60,  64,  72,  75,  80,  81,  90,  96, 100,&
+&    108, 120, 125, 128, 135, 144, 150, 160, 162, 180,&
+&    192, 200, 216, 225, 240, 243, 256, 270, 288, 300,&
+&    320, 324, 360, 375, 384, 400, 405, 432, 450, 480,&
+&    486, 500, 512, 540, 576, 600, 625, 640, 648, 675,&
+&    720, 729, 750, 768, 800, 810, 864, 900, 960, 972,&
+&    1000,1024/
+     !
+     ! The size is calculated on the components of the RL vectors
+     ! that are positive and negative. Thus I need 2N+1 elements
+     !
+     test_fft_size=2*test_fft_size+1
+     !
 #if defined FFTW
-   ! the standard FFTW distribution works most efficiently for arrays
-   ! whose size can be factored into small primes (2, 3, 5, and 7),
-   ! and otherwise it uses a slower general-purpose routine
-   do i1=1,3
-     if (any((/mod(test_fft_size(i1),2),mod(test_fft_size(i1),3),&
-&              mod(test_fft_size(i1),5),mod(test_fft_size(i1),7)/)==0)) cycle
-     test_fft_size(i1)=test_fft_size(i1)+mod(test_fft_size(i1),2)
-   enddo
-#else
-   do i1=1,3
-     do i2=1,nn
-       if (nallwd(i2)>=test_fft_size(i1)) then
-         test_fft_size(i1)=nallwd(i2)
-         exit
-       endif
+     ! the standard FFTW distribution works most efficiently for arrays
+     ! whose size can be factored into small primes (2, 3, 5, and 7),
+     ! and otherwise it uses a slower general-purpose routine
+     do i1=1,3
+       if (any((/mod(test_fft_size(i1),2),mod(test_fft_size(i1),3),&
+&                mod(test_fft_size(i1),5),mod(test_fft_size(i1),7)/)==0)) cycle
+       test_fft_size(i1)=test_fft_size(i1)+mod(test_fft_size(i1),2)
      enddo
-    if (test_fft_size(i1)>nallwd(nn)) test_fft_size(i1)=nallwd(nn)
-   enddo
+#else
+     do i1=1,3
+       do i2=1,nn
+         if (nallwd(i2)>=test_fft_size(i1)) then
+           test_fft_size(i1)=nallwd(i2)
+           exit
+         endif
+       enddo
+      if (test_fft_size(i1)>nallwd(nn)) test_fft_size(i1)=nallwd(nn)
+     enddo
 #endif
- end subroutine
- !
+   end subroutine
+   !
 end subroutine

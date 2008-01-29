@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
+subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! BS Kernel: note that the coupling procedure assumes that nsym/2+1 is
  !            spatial inversion
@@ -30,7 +30,7 @@
  use memory_m,     ONLY:mem_est
  use drivers,      ONLY:l_bs_fxc,l_col_cut
  use frequency,    ONLY:w_samp
- use electrons,    ONLY:levels,n_sp_pol,spin_occ
+ use electrons,    ONLY:levels,n_sp_pol,spin_occ,spin
  use FFT_m,        ONLY:fft_size
  use stderr,       ONLY:intc
  use wave_func,    ONLY:wf_load,WF_free
@@ -48,8 +48,8 @@
 &                       BS_n_g_W,O_cc,O_vv,BS_blk_dim,O_table,BS_mat,&
 &                       O_phase,O_c_state,O_v_state,O_ng,BS_eh_table,BS_columns,&
 &                       BS_n_g_exch,BS_identifier,BS_K_coupling,O_n_v_states,&
-&                       BS_K_dim,BS_eh_win,BS_blk_coord,BSS_n_descs,&
-&                       BSS_description,cumulative_index,BS_K_is_ALDA,BS_cpl_mat,&
+&                       BS_K_dim,BS_eh_win,BS_blk_coord,&
+&                       cumulative_index,BS_K_is_ALDA,BS_cpl_mat,&
 &                       BS_cpl_K_exchange,BSS_q0
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
@@ -408,11 +408,7 @@
        ik1bz=BS_eh_table(ikk1+icv1,1)
        iv1=BS_eh_table(ikk1+icv1,2)
        ic1=BS_eh_table(ikk1+icv1,3)
-#if defined PJ_SPIN
-       i_sp1=BS_eh_table(ikk1+icv1,4)
-#else
-       i_sp1=1
-#endif
+       i_sp1=spin(BS_eh_table(ikk1+icv1,:))
        is1=Xk%sstar(ik1bz,2)
        !
        is1p=Xk%sstar( qindx_X(iq,ik1bz,1) ,2)
@@ -444,11 +440,7 @@
          ik2bz=BS_eh_table(ikk2+icv2,1)
          iv2=BS_eh_table(ikk2+icv2,2)
          ic2=BS_eh_table(ikk2+icv2,3)
-#if defined PJ_SPIN
-         i_sp2=BS_eh_table(ikk2+icv2,4)
-#else
-         i_sp2=1
-#endif
+         i_sp2=spin(BS_eh_table(ikk2+icv2,:))
          is2 =Xk%sstar(ik2bz,2)
          is2p=Xk%sstar( qindx_X(iq,ik2bz,1) ,2)
          ig0 =qindx_B(ik1bz,ik2bz,2)
@@ -492,11 +484,7 @@
          !
          ! :::Correlation (resonant):::
          !
-#if defined PJ_SPIN
          if (BS_res_K_corr.and.i_sp1==i_sp2) then
-#else
-         if (BS_res_K_corr) then
-#endif
            iOcc=O_table(ic1-BS_bands(1)+1,is1, ic2-BS_bands(1)+1,is2,i_sp1)
            iOvv=O_table(iv1-BS_bands(1)+1,is1p,iv2-BS_bands(1)+1,is2p,i_sp2)
            inv_s1=sop_inv(is1)
@@ -602,4 +590,4 @@
    deallocate(F_xc)
  endif
  !
- end subroutine
+end subroutine

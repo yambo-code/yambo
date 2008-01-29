@@ -28,26 +28,26 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! init = 2  : DB listing mode
  !
  use drivers
- use electrons,      ONLY:levels,E_reset,n_bands,n_spin
+ use pars,           ONLY:schlen,lchlen,HARTREE
+ use electrons,      ONLY:levels,E_reset,n_spin
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
- use it_m,           ONLY:it,initactivate,initdefs,nflines,flines,rstatus,nrnlvls,&
+ use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
 &                         infile,infile_dump,ofiles_append
  use parser_m,       ONLY:parser
  use par_proc_m,     ONLY:pp_redux_wait,master_node
  use com,            ONLY:msg,repfile,out_path,jobstr,&
-&                         title,file_exists,rename_file,write_to_report,error
+&                         title,file_exists,rename_file,write_to_report
  use vec_operate,    ONLY:v_norm
  use timing,         ONLY:live_timing_is_on,what_is_running
- use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_solver,QP_nb,&
+ use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_solver,&
 &                         QP_state,QP_reset,QP_ctl_E,QP_table
  use X_m,            ONLY:X_t,X_duplicate,X_reset
  use stderr,         ONLY:tty_size,logfile
- use R_lattice,      ONLY:ng_closed,ng_vec,n_g_shells,q0_def_norm,&
-&                         Xk_grid_is_uniform,bz_samp,nqibz,bz_samp_reset,&
-&                         cut_geometry,cyl_ph_radius
+ use R_lattice,      ONLY:ng_closed,q0_def_norm,&
+&                         Xk_grid_is_uniform,bz_samp,nqibz,bz_samp_reset
  use wave_func,      ONLY:ioWF
- use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,REP
+ use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE
  use TDDFT,          ONLY:ioBS_Fxc
  use BS,             ONLY:BS_bands,BS_n_g_exch,BS_n_g_W,BSS_mode,BSS_q0,&
 &                         BS_eh_en,BS_res_mode,BS_cpl_mode
@@ -98,12 +98,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  what_is_running='SELF_RAS'
 #elif defined PJ_REELS
  what_is_running='SELF_REELS'
-#elif defined PJ_SPIN
- what_is_running='SELF_SPIN'
 #elif defined PJ_SC
  what_is_running='SELF_SC'
-#elif defined PJ_CYL_CUT
- what_is_running='SELF_CYL_CUT'
 #endif
  !
  !Presets (input)
@@ -169,13 +165,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=io_ID)
  io_err=ioDB1(en,k,io_ID) 
- !
-#if !defined PJ_SPIN
- if (n_spin==2) then
-   init=-2
-   return
- endif
-#endif
  !
  ! wf
  !
@@ -411,9 +400,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        if (trim(QP_solver)=="g") then
          call initactivate(1,'GEnSteps GEnRnge GDmRnge') 
        else
-         ! -- GPL_END --
          call initactivate(1,'GWoIter')
-         ! -- GPL_START --
          if (.not.l_chosex) call initactivate(1,'NewtDchk QPreport')
        endif
        !
@@ -682,17 +669,15 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        return
      endif
      !
-     ! SPIN PJ barriers
+     ! SPIN barriers
      !
-#if defined PJ_SPIN
-     if (any((/&
+     if (n_spin==2.and.any((/&
 &              l_life,l_acfdt,l_lrc_fxc,l_sc_pot,&
-&              l_gw0.and..not.l_ppa&
+&              l_gw0.and..not.l_ppa,l_ph_corr&
 &             /))) then
        init=-2
        return
      endif
-#endif
    end subroutine logicalson
    !
    subroutine X_var_setup 
@@ -935,4 +920,4 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
    end subroutine
    !
- end function
+end function

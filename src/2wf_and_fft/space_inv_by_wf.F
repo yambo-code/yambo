@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine space_inv_by_wf(en,Xk)
+subroutine space_inv_by_wf(en,Xk)
  !
  ! Check if the Inversion is a DL symmetry operation either
  ! using the wavefunctions or the atomic positions.
@@ -82,4 +82,4 @@
  if (i_space_inv==1) call msg('r','[SYMs] Inversion symmetry is used')
  if (i_space_inv==0) call msg('r','[SYMs] Inversion symmetry is NOT used')
  !
- end subroutine
+end subroutine

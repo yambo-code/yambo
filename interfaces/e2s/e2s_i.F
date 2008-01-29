@@ -57,9 +57,9 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  logical                     :: lstat ! to get informed on error
  type(etsf_io_low_error)     :: error_data ! to store informations about errors
  integer                     :: ncid
-!
-! Presets
-!=========
+ !
+ ! Presets
+ !=========
  e2s_i = 0
  ncpu  = np
  myid  = pid
@@ -67,16 +67,15 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en)
-!
-! S/N
-!======
+ !
+ ! S/N
+ !======
  serial_number=rand_identifier()
-!
-! Switch off report file support
-!================================
+ !
+ ! Switch off report file support
+ !================================
  write_to_report=.FALSE.
-! live_timing_is_on=.FALSE.
-
+ !
  call section('*','E(TSF) 2 S(elf)')
  !
  ! Check input filenames 
@@ -142,11 +141,12 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  call PP_free()
 
  call msg('ln','done ==')
-!
-! Close file
+ !
+ ! Close file
+ !
  call etsf_io_low_close(ncid, lstat, error_data = error_data)
  call p_finalize
-
+ !
 end function
 
  subroutine etsf_long_error(error_data)

@@ -19,39 +19,39 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- module QP_CTL
+module QP_CTL
+ !
+ use pars,  ONLY:SP,schlen,IP,HARTREE
+ !
+ ! QP Pars
+ !
+ !?fnQP_db= "EWZ<db-pp.qp"     # [?] QP database.
+ !% ?fnQP_E
+ !  0 |  0 | 0 |               # [?] QP parameters (E).
+ !% 
+ !% ?fnQP_W
+ !  0 |  0 | 0 | 0 |           # [?] QP parameters (W).
+ !%
+ !?fbQP_Z= (  0.00000 ,  0.00000 )  eV  # [?] QP parameters (Z).
+ !  
+ ! 1(X) 2(K) 3(G) 
+ !
+ type qp_fit_ctl
    !
-   use pars,  ONLY:SP,schlen,IP,HARTREE
+   ! Convention is first c then v
    !
-   ! QP Pars
-   !
-   !?fnQP_db= "EWZ<db-pp.qp"     # [?] QP database.
-   !% ?fnQP_E
-   !  0 |  0 | 0 |               # [?] QP parameters (E).
-   !% 
-   !% ?fnQP_W
-   !  0 |  0 | 0 | 0 |           # [?] QP parameters (W).
-   !%
-   !?fbQP_Z= (  0.00000 ,  0.00000 )  eV  # [?] QP parameters (Z).
-   !  
-   ! 1(X) 2(K) 3(G) 
-   !
-   type qp_fit_ctl
-     !
-     ! Convention is first c then v
-     !
-     integer    :: interp_neigh
-     real(SP)   :: db_scissor
-     real(SP)   :: fit_scissor
-     real(SP)   :: E(4)
-     real(SP)   :: W(6)
-     real(SP)   :: E_err(2)
-     real(SP)   :: W_err(2)
-     complex(SP):: Z
-     character(schlen):: db
-     character(schlen):: short_descr
-   end type
-   !
+   integer    :: interp_neigh
+   real(SP)   :: db_scissor
+   real(SP)   :: fit_scissor
+   real(SP)   :: E(4)
+   real(SP)   :: W(6)
+   real(SP)   :: E_err(2)
+   real(SP)   :: W_err(2)
+   complex(SP):: Z
+   character(schlen):: db
+   character(schlen):: short_descr
+ end type
+ !
  contains
    !
    subroutine reset_qp_fit(qp_fit)
@@ -287,4 +287,4 @@
      !
      end subroutine
      !
- end module
+end module

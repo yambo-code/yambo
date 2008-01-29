@@ -19,11 +19,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function ioQINDX(Xk,q,io_db)
+integer function ioQINDX(Xk,q,io_db)
  !
  use R_lattice,      ONLY:nqibz,nqbz,qindx_X,qindx_B,qindx_S,&
 &                         bse_scattering,qp_states_k,nXkibz,qindx_alloc,&
-&                         Xk_grid_is_uniform,bz_samp,nxKbz,q0_def_norm
+&                         Xk_grid_is_uniform,bz_samp,nXkbz
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
 &                         io_elemental,io_status,io_bulk,read_is_on,io_header,&
 &                         ver_is_gt_or_eq
@@ -92,4 +92,4 @@
  !
 1 call io_disconnect(ID=io_db)
  !
- end function
+end function

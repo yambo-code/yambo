@@ -19,11 +19,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- module ACFDT
-!============
-  use pars
-  implicit none
-  integer :: ACFDT_n_lambda
-  integer :: ACFDT_n_freqs
-  real(SP):: ACFDT_E_range(2)
- end module 
+module ACFDT
+ use pars, ONLY:SP
+ implicit none
+ integer :: ACFDT_n_lambda
+ integer :: ACFDT_n_freqs
+ real(SP):: ACFDT_E_range(2)
+end module 

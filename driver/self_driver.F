@@ -178,14 +178,12 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
  ! RAS & REELS
  !=============
  !
- ! -- GPL_END --
 #if defined PJ_RAS
  if (lras.or.lreels) call rasdriver(Xen,Xk,q,Xw(3),X(3))
 #endif
 #if defined PJ_REELS
  if (lreels)         call reelsdriver(Xen,Xk,q,Xw(3),X(3))
 #endif
- ! -- GPL_START --
  !
  ! OPTICS
  !========
@@ -207,9 +205,7 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
    ! 
    ! Dynamical 
    !
-   ! -- GPL_END --
    if (.not.l_ppa.and..not.l_chosex)    ierr=X_em1(Xen,Xk,q,X(3),Xw(3),.false.)
-   ! -- GPL_START --
  endif
  !
  if (l_gw0) then
@@ -234,9 +230,7 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
      ! Real Axis 
      !============
      !
-     ! -- GPL_END --
      call QP_driver(X(3),Xen,Xk,en,k,q,Xw(3))
-     ! -- GPL_START --
    endif
    !
  endif
@@ -249,9 +243,7 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
  ! ACFDT
  !=======
  !
- ! -- GPL_END --
  if (l_acfdt) call acfdt_tot_energy(Xen,Xk,q,X(1))
- ! -- GPL_START --
  !
 #if defined PJ_SC
  ! SC

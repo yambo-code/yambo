@@ -49,7 +49,7 @@ subroutine scatterBamp(isc)
  !
  integer :: ib,ik,is,i_sp,ifft
  integer :: ob,ok,os,o_sp,offt
- integer :: qs,iGo,i_spr
+ integer :: qs,iGo,i_spr,i_spinor
  logical :: litr,lotr
  !
  ! <ib ik_is i_sp| 
@@ -98,12 +98,15 @@ subroutine scatterBamp(isc)
  enddo
  !
  isc%rhotw(1:isc%ngrho)=  rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo),1)
-#if defined PJ_SPIN
- if (n_spinor==2) then
+ !
+ ! GPL_END
+ !
+ do i_spinor=1,n_spinor
    isc%rhotw(1:isc%ngrho)=isc%rhotw(1:isc%ngrho)+&
-&                         rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo),2)
- endif
-#endif
+&                         rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo),i_spinor)
+ enddo
+ !
+ ! GPL_START
  ! 
  ! q=0, G=0 case
  !

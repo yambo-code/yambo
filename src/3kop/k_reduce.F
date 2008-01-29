@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine k_reduce(k)
+subroutine k_reduce(k)
  !
  ! Input:
  !
@@ -62,4 +62,4 @@
  allocate(k%pt(k%nibz,3))
  k%pt(:k%nibz,:)=k_ibz(:k%nibz,:)
  !
- end subroutine
+end subroutine

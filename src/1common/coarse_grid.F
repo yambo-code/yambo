@@ -158,5 +158,4 @@ subroutine coarse_grid(title,bg_pt,npts,cg_percentual)
  !
  deallocate(bg_diffs,bg_sorted,bg_sorted_x)
  !
- end subroutine
-!
+end subroutine

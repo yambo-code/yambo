@@ -21,15 +21,13 @@
 !
 integer function ioKB_PP_ver_2(ID)
  !
- use pars,             ONLY:schlen,IP,SP
+ use pars,             ONLY:schlen,SP
  use D_lattice,        ONLY:n_atoms_max,n_atom_species,n_atoms,&
 &                           atom_pos,pp_n_l_comp_max,&
 &                           pp_n_l_comp,pp_kbs,pp_kb,PP_alloc,pp_kbd
- use memory_m,         ONLY:mem_est
- use wave_func,        ONLY:wf_igk,wf_nc_k,wf_ng
+ use wave_func,        ONLY:wf_ng
  use IO_m,             ONLY:io_connect, io_disconnect, io_sec, &
-&                           io_bulk, io_status, io_bulk,io_header,&
-&                           read_is_on,write_is_on
+&                           io_bulk, io_bulk, read_is_on
  implicit none
  integer,       intent(in) :: ID
  character(schlen)         :: VAR_NAME

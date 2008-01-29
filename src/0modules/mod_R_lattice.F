@@ -19,97 +19,95 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- module R_lattice
-   !
-   use pars, ONLY:SP,schlen, IP
-   !
-   ! K lattice
-   !
-   integer  :: k_grid(3)
-   integer  :: k_grid_dim
-   real(SP) :: k_grid_uc_vol
-   real(SP) :: k_grid_b(3,3)
-   logical  :: Xk_grid_is_uniform
-   !
-   ! Q/K-sampling
-   !
-   integer  :: nqbz
-   integer  :: nqibz
-   integer  :: nkbz
-   integer  :: nkibz
-   integer  :: nXkbz
-   integer  :: nXkibz
-   real(SP) :: RL_vol
-   real(SP) :: d3k_factor
-   real(SP) :: d3q_factor
-   real(SP) :: b(3,3)
-   real(SP) :: q0_def_norm
-   real(SP),allocatable :: q_norm(:)
-   type bz_samp
-     integer           :: nibz,nbz
-     integer, pointer  :: nstar(:)
-     integer, pointer  :: star(:,:)
-     integer, pointer  :: sstar(:,:)
-     real(SP), pointer :: pt(:,:)
-     real(SP), pointer :: ptbz(:,:)
-     real(SP), pointer :: weights(:)
-     character(6)      :: description
-     character(1)      :: units
-   end type bz_samp
-   !
-   ! Q/K sampling shadow tables
-   !
-   real(SP),allocatable :: k_pt(:,:)
-   real(SP),allocatable :: q_pt(:,:)
-   integer ,allocatable :: q_sstar(:,:)
-   !
-   ! Q/K-tables (scattering geometry)
-   !
-   integer  :: qp_states_k(2)
-   logical  :: bse_scattering
-   integer, allocatable :: qindx_X(:,:,:)
-   integer, allocatable :: qindx_B(:,:,:)
-   integer, allocatable :: qindx_S(:,:,:)
-   integer, allocatable :: ik_is_table(:,:)
-   !
-   ! SYMs
-   !
-   real(SP),allocatable :: rl_sop(:,:,:)
-   !
-   ! RL lattice
-   !
-   integer              :: n_g_shells,ng_vec,ng_closed
-   integer ,allocatable :: ng_in_shell(:)
-   integer ,allocatable :: g_rot(:,:)
-   integer ,allocatable :: G_m_G(:,:)
-   real(SP),allocatable :: g_vec(:,:)
-   real(SP),allocatable :: E_of_shell(:)
-   !
-   ! RIM
-   !
-   integer :: RIM_ng
-   integer :: RIM_id_epsm1_reference
-   integer :: RIM_n_rand_pts
-   logical :: RIM_is_diagonal
-   real(SP):: RIM_RL_vol
-   real(SP):: RIM_epsm1(3)
-   real(SP):: RIM_anisotropy
-   real(SP),   allocatable :: RIM_qpg(:,:,:)
-   !
-   ! Coulomb (including Cutoff)
-   !
-   real(SP)                :: cyl_ph_radius
-   real(SP)                :: cyl_length
-   real(SP)                :: box_length(3)
-   real(SP)                :: cyl_cut
-   character(schlen)       :: cut_geometry
-   complex(SP),allocatable :: bare_qpg(:,:)
-   logical                 :: CUTOFF_plus_RIM
-#if defined PJ_CYL_CUT
-   real(SP)                :: cyl_vr_save
-   real(SP)                :: cyl_vz_save
-   real(SP)                :: cyl_zz_save
-#endif
+module R_lattice
+ !
+ use pars, ONLY:SP,schlen, IP
+ !
+ ! K lattice
+ !
+ integer  :: k_grid(3)
+ integer  :: k_grid_dim
+ real(SP) :: k_grid_uc_vol
+ real(SP) :: k_grid_b(3,3)
+ logical  :: Xk_grid_is_uniform
+ !
+ ! Q/K-sampling
+ !
+ integer  :: nqbz
+ integer  :: nqibz
+ integer  :: nkbz
+ integer  :: nkibz
+ integer  :: nXkbz
+ integer  :: nXkibz
+ real(SP) :: RL_vol
+ real(SP) :: d3k_factor
+ real(SP) :: d3q_factor
+ real(SP) :: b(3,3)
+ real(SP) :: q0_def_norm
+ real(SP),allocatable :: q_norm(:)
+ type bz_samp
+   integer           :: nibz,nbz
+   integer, pointer  :: nstar(:)
+   integer, pointer  :: star(:,:)
+   integer, pointer  :: sstar(:,:)
+   real(SP), pointer :: pt(:,:)
+   real(SP), pointer :: ptbz(:,:)
+   real(SP), pointer :: weights(:)
+   character(6)      :: description
+   character(1)      :: units
+ end type bz_samp
+ !
+ ! Q/K sampling shadow tables
+ !
+ real(SP),allocatable :: k_pt(:,:)
+ real(SP),allocatable :: q_pt(:,:)
+ integer ,allocatable :: q_sstar(:,:)
+ !
+ ! Q/K-tables (scattering geometry)
+ !
+ integer  :: qp_states_k(2)
+ logical  :: bse_scattering
+ integer, allocatable :: qindx_X(:,:,:)
+ integer, allocatable :: qindx_B(:,:,:)
+ integer, allocatable :: qindx_S(:,:,:)
+ integer, allocatable :: ik_is_table(:,:)
+ !
+ ! SYMs
+ !
+ real(SP),allocatable :: rl_sop(:,:,:)
+ !
+ ! RL lattice
+ !
+ integer              :: n_g_shells,ng_vec,ng_closed
+ integer ,allocatable :: ng_in_shell(:)
+ integer ,allocatable :: g_rot(:,:)
+ integer ,allocatable :: G_m_G(:,:)
+ real(SP),allocatable :: g_vec(:,:)
+ real(SP),allocatable :: E_of_shell(:)
+ !
+ ! RIM
+ !
+ integer :: RIM_ng
+ integer :: RIM_id_epsm1_reference
+ integer :: RIM_n_rand_pts
+ logical :: RIM_is_diagonal
+ real(SP):: RIM_RL_vol
+ real(SP):: RIM_epsm1(3)
+ real(SP):: RIM_anisotropy
+ real(SP),   allocatable :: RIM_qpg(:,:,:)
+ !
+ ! Coulomb (including Cutoff)
+ !
+ real(SP)                :: cyl_ph_radius
+ real(SP)                :: cyl_length
+ real(SP)                :: box_length(3)
+ real(SP)                :: cyl_cut
+ character(schlen)       :: cut_geometry
+ complex(SP),allocatable :: bare_qpg(:,:)
+ logical                 :: CUTOFF_plus_RIM
+ real(SP)                :: cyl_vr_save
+ real(SP)                :: cyl_vz_save
+ real(SP)                :: cyl_zz_save
  !
  contains
    !
@@ -178,4 +176,4 @@
      CUTOFF_plus_RIM=.false.
    end subroutine
    !
- end module R_lattice
+end module R_lattice

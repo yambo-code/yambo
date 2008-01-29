@@ -41,8 +41,7 @@ function tddft_alda_r_space(iq,ic,ik,iv,is_in,mode)
  use FFT_m,          ONLY:fft_size,fft_rot_r
  use wave_func,      ONLY:wf,wf_state
  use xc_functionals, ONLY:F_xc
- use D_lattice,      ONLY:nsym,i_time_rev,DL_vol
- use R_lattice,      ONLY:nqbz
+ use D_lattice,      ONLY:nsym,i_time_rev
  implicit none
  integer     :: iq,ic(2),iv(2),ik(4),is_in(4),mode
  complex(SP) :: tddft_alda_r_space

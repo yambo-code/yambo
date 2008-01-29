@@ -19,29 +19,29 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- module matrix_operate
+module matrix_operate
+ !
+ integer, parameter :: USE_LK=1
+ integer, parameter :: USE_SLK=2
+ integer, parameter :: ALREADY_FILLED=3
+ integer, parameter :: DIAGO=4
+ integer, parameter :: INV=5
+ integer, parameter :: PDIAGO=6
+ integer, parameter :: USE_SVD=7
+ !
+ integer, parameter :: min_cpu_block_size=100
+ !
+ type blacs_t
    !
-   integer, parameter :: USE_LK=1
-   integer, parameter :: USE_SLK=2
-   integer, parameter :: ALREADY_FILLED=3
-   integer, parameter :: DIAGO=4
-   integer, parameter :: INV=5
-   integer, parameter :: PDIAGO=6
-   integer, parameter :: USE_SVD=7
+   ! variables for blacs initialization and processor grid creation
    !
-   integer, parameter :: min_cpu_block_size=100
+   integer :: ictxt, nprow, npcol, myrow, mycol
    !
-   type blacs_t
-     !
-     ! variables for blacs initialization and processor grid creation
-     !
-     integer :: ictxt, nprow, npcol, myrow, mycol
-     !
-     ! variables needed to distribute the global array across the grid
-     !
-     integer :: descM(9), descV(9), ldrow, ldcol, blocking_factor 
-   end type blacs_t 
+   ! variables needed to distribute the global array across the grid
    !
+   integer :: descM(9), descV(9), ldrow, ldcol, blocking_factor 
+ end type blacs_t 
+ !
  contains
    !
    subroutine mat_r2c_ordered(mr,mc,m_order) 
@@ -514,4 +514,4 @@
        !
     end subroutine
     !
- end module
+end module

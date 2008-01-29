@@ -22,10 +22,9 @@
 integer function ioBSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf)  
  !
  use pars,          ONLY:SP
- use QP_m,          ONLY:QP_ctl_E
  use BS,            ONLY:BS_identifier,BSS_q0
  use IO_m,          ONLY:io_connect,io_disconnect,io_elemental,&
-&                        io_bulk,io_status,io_sec,io_mode,VERIFY,io_header,&
+&                        io_bulk,io_status,io_sec,io_header,&
 &                        read_is_on,write_is_on
  implicit none
  integer             :: ID,it,BS_H_dim
@@ -39,6 +38,9 @@ integer function ioBSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp
  real(SP) :: V_dummy(BS_H_dim,2), Cf_dummy(it+1,2)
  !
  ioBSS_Haydock=io_connect(desc='Haydock_restart',type=2,ID=ID)
+ !
+ ! GPL_END
+ !
  if (ioBSS_Haydock<0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
@@ -117,5 +119,7 @@ integer function ioBSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp
   end if
  !
 1 call io_disconnect(ID=ID)
+ !
+ ! GPL_START
  !
 end function

@@ -22,7 +22,7 @@
 subroutine Gclose(ng,what)
  !
  use pars
- use R_lattice ,  ONLY :n_g_shells,E_of_shell,ng_in_shell
+ use R_lattice,   ONLY:n_g_shells,E_of_shell,ng_in_shell
  implicit none
  integer :: ng
  ! 

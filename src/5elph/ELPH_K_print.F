@@ -29,9 +29,8 @@ subroutine ELPH_K_print(E,k,q)
  use com,           ONLY:msg,of_open_close
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP
  use electrons,     ONLY:levels
- use BS,            ONLY:BS_K_dim,BS_eh_table,BS_mat,BS_bands,BSS_write_eig_2_db
+ use BS,            ONLY:BS_K_dim,BS_mat,BS_bands,BSS_write_eig_2_db
  use ELPH,          ONLY:elph_nb,EXCPH_mat
- use timing,        ONLY:live_timing
  implicit none
  !
  type(levels)  ::E

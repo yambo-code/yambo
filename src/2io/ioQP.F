@@ -24,11 +24,11 @@ integer function ioQP(what,qp,ID)
  use pars,           ONLY:SP,schlen
  use D_lattice,      ONLY:alat
  use R_lattice,      ONLY:nqbz
- use par_proc_m,     ONLY:myid
  use memory_m,       ONLY:mem_est
+ use electrons,      ONLY:n_sp_pol
  use matrix_operate, ONLY:mat_c2r,mat_r2c
- use QP_m,           ONLY:QP_t,QP_state,QP_nk,QP_nb,QP_dSc_steps,&
-&                         QP_n_G_bands,QP_cg_percent,QP_n_states,QP_W,&
+ use QP_m,           ONLY:QP_t,QP_state,QP_nk,QP_nb,&
+&                         QP_n_G_bands,QP_n_states,QP_W,&
 &                         QP_n_W_freqs,QP_W_dr,QP_W_er,QP_W_partially_done,&
 &                         GWo_iterations
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
@@ -46,16 +46,11 @@ integer function ioQP(what,qp,ID)
  ! Work Space
  !
  integer              ::i1,i2,iqbz,QP_n_G_bands_disk(2),i_found,&
-&                       QP_nk_disk,QP_nb_disk,QP_n_states_disk,n_descs_disk,spin_dim
+&                       QP_nk_disk,QP_nb_disk,QP_n_states_disk,n_descs_disk
  real(SP),allocatable ::qp_E_Eo_Z_disk(:,:,:),QP_W_disk(:,:,:)
  integer ,allocatable ::qp_table_disk(:,:)
  character(schlen)    ::ch
  character(2)         ::OP(1)
- !
- spin_dim=3
-#if defined PJ_SPIN
- spin_dim=4
-#endif
  !
  if (what=="QP".or.what=="W") then
    ioQP=io_connect(desc=what,type=2,ID=ID)
@@ -156,11 +151,11 @@ integer function ioQP(what,qp,ID)
    !
    ! So to be here in VERIFY mode you MUST have allocated and defined the qp%table 
    !
-   allocate(qp_table_disk(qp_n_states_disk,spin_dim))
+   allocate(qp_table_disk(qp_n_states_disk,3+n_sp_pol-1))
    !
    if (write_is_on(ID)) qp_table_disk=qp%table
    !
-   call io_bulk(ID,VAR="QP_table",VAR_SZ=(/qp_n_states_disk,spin_dim/))
+   call io_bulk(ID,VAR="QP_table",VAR_SZ=(/qp_n_states_disk,3+n_sp_pol-1/))
    call io_bulk(ID,I2=qp_table_disk)
    !
    if (io_mode(ID)==VERIFY.and.associated(qp%table)) then
@@ -190,7 +185,7 @@ integer function ioQP(what,qp,ID)
          QP_state(qp_table_disk(i1,1),qp_table_disk(i1,3))=.true.
        enddo
      else
-       allocate(qp%table(qp_n_states_disk,spin_dim))
+       allocate(qp%table(qp_n_states_disk,3+n_sp_pol-1))
        qp%table=qp_table_disk
      endif
    endif

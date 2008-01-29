@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine k_ibz2bz(k,units,FORCE_BZ)
+subroutine k_ibz2bz(k,units,FORCE_BZ)
  !
  ! Output
  !
@@ -77,4 +77,4 @@
  !
  call mem_est(trim(ch),(/k%nbz*3/),(/SP/))
  !
- end subroutine
+end subroutine

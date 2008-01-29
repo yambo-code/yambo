@@ -24,7 +24,7 @@ subroutine X_O_check_shifted_grids( Xk_shift, Xk, ifail, num_long_grid )
  use pars,            ONLY : SP
  use stderr,          ONLY : intc
  use com,             ONLY : msg,warning
- use vec_operate,     ONLY : v_is_zero, v_norm, c2a, normalize_v
+ use vec_operate,     ONLY : v_is_zero, v_norm, c2a
  use R_lattice,       ONLY : bz_samp,q0_def_norm
 #if defined PJ_RAS
  use ras_long,        ONLY : q_long

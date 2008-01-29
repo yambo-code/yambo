@@ -27,17 +27,15 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  !  i q.<nk|r|mk> =  \sum_i=1,3 q(i) <u_n(k+q0(i))|u_mk>/q0(i)
  !
  use pars,                ONLY : SP,lchlen
- use com,                 ONLY : warning, in_path, msg, error
+ use com,                 ONLY : warning, in_path, error
  use stderr,              ONLY : intc
  use timing,              ONLY : live_timing
  use electrons,           ONLY : levels,n_spin,  n_spinor,n_sp_pol
- use par_proc_m,          ONLY : pp_redux_wait,pp_indexes,myid,master_node,&
+ use par_proc_m,          ONLY : pp_redux_wait,pp_indexes,myid,&
 &                                pp_indexes_reset
  use par_indexes_m,       ONLY : par_indexes
  use R_lattice,           ONLY : bz_samp,q0_def_norm,nkibz
- use X_m,                 ONLY : X_alloc,X_t,X_q0grad, long_path 
- use IO_m,                ONLY : io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP,OP_RD,&
-&                                RD_CL,RD,DUMP,NONE
+ use X_m,                 ONLY : X_t,X_q0grad, long_path 
  use memory_m,            ONLY : mem_est
  use wave_func,           ONLY : wf,wf_ng,wf_igk,wf_state,wf_load,WF_free , wf_ncx
 #if defined PJ_RAS
@@ -269,11 +267,11 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
      wf_ng=wf_ng_long
      !
    end subroutine
-
+   !
    subroutine set_parms(grid,command)
      implicit none
      character(len=7), intent(in), optional :: grid, command
-
+     !
      if(      grid.eq.'  local'.and. command.eq.' define') then
        nkibz_save   = nkibz
        wf_ncx_save  = wf_ncx
@@ -296,5 +294,5 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
      endif
      return
    end subroutine set_parms
- !
+   !
 end subroutine X_O_longitudinal

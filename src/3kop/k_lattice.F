@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine k_lattice(k,Xk)
+subroutine k_lattice(k,Xk)
  !
  ! Output(s)
  !
@@ -32,7 +32,7 @@
  use vec_operate,    ONLY:v_norm,v_is_zero,cross_product,&
 &                         c2a,sort,ak2bz
  use com,            ONLY:msg,error
- use matrix_operate, ONLY:m3inv,m3det
+ use matrix_operate, ONLY:m3det
  use D_lattice,      ONLY:DL_vol,a
  use R_lattice,      ONLY:b,k_grid_b,k_grid_dim,k_grid,RL_vol,&
 &                         k_grid_uc_vol,nkibz,nkbz,nXkibz,nXkbz,d3k_factor,&
@@ -243,4 +243,4 @@
    proj=dot_product(v1,v2)/v_norm(v2)**2.
    end function
    !
- end subroutine
+end subroutine

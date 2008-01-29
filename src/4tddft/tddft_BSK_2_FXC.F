@@ -22,7 +22,7 @@
 subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  use pars,          ONLY:SP
- use electrons,     ONLY:spin_occ
+ use electrons,     ONLY:spin_occ,spin
  use X_m,           ONLY:X_rhoq0,X_t
  use BS,            ONLY:BS_blk_dim,BS_eh_table,BS_mat,BS_eh_E
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_K_diagonal,FXC,&
@@ -40,7 +40,7 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  complex(SP)  ::O1x(FXC_n_g_corr,O_x_dim),O2x(FXC_n_g_corr,O_x_dim)
  type(X_t)    ::X_static
  !
- ! WorkSpace -- GPL_END --
+ ! WorkSpace 
  !
  integer      :: blk_pos(2),ik,ic,iv,i1,i2,iw,iw_blk,i_sp
  complex(SP)  :: Co
@@ -82,11 +82,7 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
      ik=BS_eh_table(i1,1)
      iv=BS_eh_table(i1,2)
      ic=BS_eh_table(i1,3)
-#if defined PJ_SPIN
-     i_sp=BS_eh_table(i1,4)
-#else
-     i_sp=1
-#endif
+     i_sp=spin(BS_eh_table(i1,:))
      O1x(1,i1-blk_pos(1))=-conjg(X_rhoq0(ic,iv,ik,i_sp))/bare_qpg(iq,1)
    enddo
    if (ik1/=ik2) then
@@ -94,11 +90,7 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
        ik=BS_eh_table(i1,1)
        iv=BS_eh_table(i1,2)
        ic=BS_eh_table(i1,3)
-#if defined PJ_SPIN
-       i_sp=BS_eh_table(i1,4)
-#else
-       i_sp=1
-#endif
+       i_sp=spin(BS_eh_table(i1,:))
        O2x(1,i1-blk_pos(2))=-conjg(X_rhoq0(ic,iv,ik,i_sp))/bare_qpg(iq,1)
      enddo
    else
@@ -264,24 +256,22 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  deallocate(conjg_O1x_qpg,O2x_qpg,blk_Eo,left_R,right_R,wk1,wk2,FXC_temp)
  ! 
-contains
-  !
-  pure function Fb2x1(E1,E2,T)
-    implicit none
-    real(SP), intent(in):: E1,E2,T
-    real(SP)            :: Fb2x1
-    if (abs(E1-E2)<T) Fb2x1=1./2./T
-    if (abs(E1-E2)>T) Fb2x1=1./(E1-E2)
-  end function
-  !
-  pure function Fb2x2(E1,E2,T)
-    implicit none
-    real(SP), intent(in):: E1,E2,T
-    real(SP)            :: Fb2x2
-    Fb2x2=0.
-    if (abs(E1-E2)<T) Fb2x2=1.
-  end function
-  !
-  ! -- GPL_START --
-  !
+ contains
+   !
+   pure function Fb2x1(E1,E2,T)
+     implicit none
+     real(SP), intent(in):: E1,E2,T
+     real(SP)            :: Fb2x1
+     if (abs(E1-E2)<T) Fb2x1=1./2./T
+     if (abs(E1-E2)>T) Fb2x1=1./(E1-E2)
+   end function
+   !
+   pure function Fb2x2(E1,E2,T)
+     implicit none
+     real(SP), intent(in):: E1,E2,T
+     real(SP)            :: Fb2x2
+     Fb2x2=0.
+     if (abs(E1-E2)<T) Fb2x2=1.
+   end function
+   !
 end subroutine

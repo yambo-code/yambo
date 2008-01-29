@@ -31,7 +31,7 @@ integer function elph_pw_dbs(k,E,q)
  use R_lattice,           ONLY:bz_samp
  use D_lattice,           ONLY:nsym
  use SPP,                 ONLY:ph_freqs_file
- use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,&
+ use IO_m,                ONLY:io_control,OP_APP_WR_CL,&
 &                              OP_RD_CL,VERIFY,dbs_fragment
  use timing,              ONLY:live_timing
  implicit none

@@ -19,13 +19,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine QP_of(kp,qp,en)
+subroutine QP_of(kp,qp,en)
  !
  use pars,      ONLY:HARTREE,SP,lchlen
  use drivers,   ONLY:l_life,l_el_corr
  use com,       ONLY:msg,of_open_close
  use R_lattice, ONLY:bz_samp
- use electrons, ONLY:levels
+ use electrons, ONLY:levels,spin
  use QP_m,      ONLY:QP_t,QP_Vxc,QP_Sc,QP_dSc,QP_Sx,QP_table,&
 &                    QP_rep_string,QP_solver,QP_n_states,&
 &                    QP_G,QP_G_er,QP_G_dr,QP_Sc_steps
@@ -86,11 +86,7 @@
      values=0.
      qp_b  =QP_table(i1,1)
      qp_k  =QP_table(i1,3)
-#if defined PJ_SPIN
-     qp_isp=QP_table(i1,4)
-#else
-     qp_isp=1
-#endif
+     qp_isp=spin(QP_table(i1,:))
      !
      if (.not.l_life) then
        values(2:3)=(/real(QP_Sc(i1,1))*HARTREE,&
@@ -149,4 +145,4 @@
    !
  endif
  !
- end subroutine
+end subroutine

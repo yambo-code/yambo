@@ -26,8 +26,8 @@ subroutine exc_wf_eval(Xk,Xen)
  use FFT_m,         ONLY:fft_rot_r,fft_dim
  use D_lattice,     ONLY:a,i_time_rev,nsym,alat,&
 &                        n_atom_species,n_atoms,atom_pos,znucl
- use wave_func,     ONLY:wf_load,wf_state,wf,WF_free
- use R_lattice,     ONLY:nXkibz,bz_samp,ng_vec,q0_def_norm,d3k_factor
+ use wave_func,     ONLY:wf_load,wf_state,wf,WF_free,wf_ng
+ use R_lattice,     ONLY:nXkibz,bz_samp,q0_def_norm,d3k_factor
  use SPP,           ONLY:action_mode,ncell,lambda,r_hole,sort_mode,&
 &                        max_energy,nr,exc_wf_sq,nr_tot,n_lambda_deg,lambda_deg,&
 &                        R_normalize,deg_energy
@@ -35,7 +35,7 @@ subroutine exc_wf_eval(Xk,Xen)
  use BS,            ONLY:BS_K_dim,BS_bands,BS_q,BSS_n_descs,BSS_description,&
 &                        BS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
 &                        BS_cpl_K_exchange,BS_cpl_K_corr,BSS_write_eig_2_db
- use electrons,     ONLY:levels,spin_occ
+ use electrons,     ONLY:levels,spin_occ,n_sp_pol,spin
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use com,           ONLY:msg,of_open_close,error,warning
@@ -70,7 +70,7 @@ subroutine exc_wf_eval(Xk,Xen)
  !
  !... Dummy arguments 
  !
- integer      :: iq,ia,i1,i2,i_l
+ integer      :: iq,ia,i1,i2,i_l,i_spin
  real(SP)     :: k_dot_r,r_hole_rlu(3)
 #if defined _DOUBLE
  complex(DP)  :: zdotu
@@ -152,14 +152,14 @@ subroutine exc_wf_eval(Xk,Xen)
  !
  ! Loading tables and eigenvectors
  !
- allocate (BS_eh_table(BS_K_dim,3),BS_mat(BS_K_dim,BS_K_dim))
- call mem_est("BS_eh_table",(/3*BS_K_dim/),(/IP/))
+ allocate (BS_eh_table(BS_K_dim,3+n_sp_pol-1),BS_mat(BS_K_dim,BS_K_dim))
+ call mem_est("BS_eh_table",(/(3+n_sp_pol-1)*BS_K_dim/),(/IP/))
  call mem_est('BS_mat',(/BS_K_dim**2/))
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
  io_err=ioBSS_diago(iq,BS_K_dim,BS_E,BS_R,ID)
  !
- if (.not.BSS_write_eig_2_db) call error('Diago database does not conatind excitonic wfs')
+ if (.not.BSS_write_eig_2_db) call error('Diago database does not contain excitonic wfs')
  !
  ! Sort energies to find degenerate states
  !
@@ -167,7 +167,7 @@ subroutine exc_wf_eval(Xk,Xen)
  ! 
  ! Loading  Wf 
  !
- call wf_load(ng_vec,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
+ call wf_load(wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
  !
  ! Constructing Grid 
  !
@@ -239,18 +239,21 @@ subroutine exc_wf_eval(Xk,Xen)
    !
    r_eh(:)=r_big_cell_cc(:,ir)-r_hole(:)
    do neh = 1,BS_K_dim
-     ikbz = BS_eh_table(neh,1)
-     iv = BS_eh_table(neh,2)
-     ic = BS_eh_table(neh,3)
+     !
+     ikbz  = BS_eh_table(neh,1)
+     iv    = BS_eh_table(neh,2)
+     ic    = BS_eh_table(neh,3)
+     i_spin= spin(BS_eh_table(neh,:))
+     !
      ikibz = Xk%sstar(ikbz,1)
-     is = Xk%sstar(ikbz,2)
+     is    = Xk%sstar(ikbz,2)
      if (is > nsym/(i_time_rev+1)) is=is-nsym/(i_time_rev+1) 
      TR_apply=is/=Xk%sstar(ikbz,2)
      !
      k_dot_r = dot_product(r_eh,Xk%ptbz(ikbz,:)/alat(:))*2.*pi
      !
-     iv_fft = wf_state(iv,ikibz,1)
-     ic_fft = wf_state(ic,ikibz,1)
+     iv_fft = wf_state(iv,ikibz,i_spin)
+     ic_fft = wf_state(ic,ikibz,i_spin)
      !
      if (ir==1) then
        do i_l=1,n_lambda_deg

@@ -410,63 +410,63 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
    io_rec_pos(ID)=io_rec_pos(ID)+len(db_ch(1))
  endif
  !
-contains
- !
- integer function i_verify(iv1,iv2)
-   integer :: iv1(:),iv2(:),i1
-   i_verify=0
-   do i1=1,size(iv1)
-     if (OP(i1)=="==") then 
-       if (iv1(i1)/=iv2(i1)) i_verify=-1
-     endif
-     if (OP(i1)=="<") then 
-       if (iv1(i1)>=iv2(i1)) i_verify=-1
-     endif
-     if (OP(i1)=="<=") then 
-       if (iv1(i1)>iv2(i1)) i_verify=-1
-     endif
-     if (OP(i1)==">") then 
-       if (iv1(i1)<=iv2(i1)) i_verify=-1
-     endif
-     if (OP(i1)==">=") then 
-       if (iv1(i1)<iv2(i1)) i_verify=-1
-     endif
-     if (i_verify/=0) return
-   enddo
- end function
- !
- integer function r_verify(rv1,rv2)
-   integer  :: i1
-   real(SP) :: rv1(:),rv2(:),eq_accuracy,acc_fraction
-   r_verify   =0
-   eq_accuracy=1.E-5_SP
-   acc_fraction=0.001_SP
+ contains
    !
-   ! Define the accuracy of the comparison
+   integer function i_verify(iv1,iv2)
+     integer :: iv1(:),iv2(:),i1
+     i_verify=0
+     do i1=1,size(iv1)
+       if (OP(i1)=="==") then 
+         if (iv1(i1)/=iv2(i1)) i_verify=-1
+       endif
+       if (OP(i1)=="<") then 
+         if (iv1(i1)>=iv2(i1)) i_verify=-1
+       endif
+       if (OP(i1)=="<=") then 
+         if (iv1(i1)>iv2(i1)) i_verify=-1
+       endif
+       if (OP(i1)==">") then 
+         if (iv1(i1)<=iv2(i1)) i_verify=-1
+       endif
+       if (OP(i1)==">=") then 
+         if (iv1(i1)<iv2(i1)) i_verify=-1
+       endif
+       if (i_verify/=0) return
+     enddo
+   end function
    !
-   do i1=1,size(rv1)
-     if ( abs(rv1(i1))>0._SP) eq_accuracy=min( eq_accuracy , abs(rv1(i1))*acc_fraction )
-     if ( abs(rv2(i1))>0._SP) eq_accuracy=min( eq_accuracy , abs(rv2(i1))*acc_fraction )
-   enddo
+   integer function r_verify(rv1,rv2)
+     integer  :: i1
+     real(SP) :: rv1(:),rv2(:),eq_accuracy,acc_fraction
+     r_verify   =0
+     eq_accuracy=1.E-5_SP
+     acc_fraction=0.001_SP
+     !
+     ! Define the accuracy of the comparison
+     !
+     do i1=1,size(rv1)
+       if ( abs(rv1(i1))>0._SP) eq_accuracy=min( eq_accuracy , abs(rv1(i1))*acc_fraction )
+       if ( abs(rv2(i1))>0._SP) eq_accuracy=min( eq_accuracy , abs(rv2(i1))*acc_fraction )
+     enddo
+     !
+     do i1=1,size(rv1)
+       if (OP(i1)=="==") then 
+         if (abs(rv1(i1)-rv2(i1))>eq_accuracy) r_verify=-1
+       endif
+       if (OP(i1)=="<") then 
+         if (rv1(i1)>=rv2(i1)) r_verify=-1
+       endif
+       if (OP(i1)=="<=") then 
+         if (rv1(i1)>rv2(i1)) r_verify=-1
+       endif
+       if (OP(i1)==">") then 
+         if (rv1(i1)<=rv2(i1)) r_verify=-1
+       endif
+       if (OP(i1)==">=") then 
+         if (rv1(i1)<rv2(i1)) r_verify=-1
+       endif
+       if (r_verify/=0) return
+     enddo
+   end function
    !
-   do i1=1,size(rv1)
-     if (OP(i1)=="==") then 
-       if (abs(rv1(i1)-rv2(i1))>eq_accuracy) r_verify=-1
-     endif
-     if (OP(i1)=="<") then 
-       if (rv1(i1)>=rv2(i1)) r_verify=-1
-     endif
-     if (OP(i1)=="<=") then 
-       if (rv1(i1)>rv2(i1)) r_verify=-1
-     endif
-     if (OP(i1)==">") then 
-       if (rv1(i1)<=rv2(i1)) r_verify=-1
-     endif
-     if (OP(i1)==">=") then 
-       if (rv1(i1)<rv2(i1)) r_verify=-1
-     endif
-     if (r_verify/=0) return
-   enddo
- end function
- !
 end subroutine

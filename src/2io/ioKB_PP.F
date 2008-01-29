@@ -19,35 +19,37 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function ioKB_PP(ID)
-!============================
+integer function ioKB_PP(ID)
+ !
  use pars,             ONLY:schlen,IP,SP
  use D_lattice,        ONLY:n_atoms_max,n_atom_species,n_atoms,&
 &                           atom_pos,pp_n_l_comp_max,&
 &                           pp_n_l_comp,pp_kbs,pp_kb,PP_alloc,pp_kbd
  use memory_m,         ONLY:mem_est
  use wave_func,        ONLY:wf_ncx,wf_igk,wf_nc_k,wf_ng
- use IO_m,             ONLY:io_connect, io_disconnect, io_sec, &
-&                           io_elemental, io_status, io_bulk,io_header,&
+ use IO_m,             ONLY:io_connect,io_disconnect,io_sec, &
+&                           io_elemental,io_bulk,io_header,&
 &                           read_is_on,write_is_on
  implicit none
  integer,       intent(in) :: ID
  character(schlen)         :: VAR_NAME
  real(SP),      allocatable:: pp_disk(:,:,:)
-!
+ ! 
+ ! Work Space
+ !
  integer :: ik,i1
  ik=maxval(io_sec(ID,:))-1
-
+ !
  ioKB_PP=io_connect(desc="kb_pp",type=0,ID=ID)
  if (ioKB_PP/=0) goto 1
-!
-! Dimensions
-!
+ !
+ ! Dimensions
+ !
  if (any((/io_sec(ID,:)==1/))) then
- 
+   !
    ioKB_PP=io_header(ID,IMPOSE_SN=.true.)
    if (ioKB_PP/=0) goto 1
-
+   !
    call io_elemental(ID,VAR="PARS",VAR_SZ=3,MENU=0)
    !
    ! n_atoms_max and n_atom_species are redundant as they are
@@ -60,9 +62,9 @@
    !
    call io_elemental(ID,I0=pp_n_l_comp_max)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-
+   !
    if (read_is_on(ID)) then
-
+     ! 
      if (.not.allocated(n_atoms)) then
        allocate(n_atoms(n_atom_species))
        allocate(atom_pos(3,n_atoms_max,n_atom_species))
@@ -73,36 +75,36 @@
        allocate(pp_n_l_comp(n_atom_species))
        call mem_est("pp_n_l_comp",(/n_atom_species/),(/IP/))
      endif
-
+     !
    endif
-
+   !
    call io_bulk(ID,VAR="N_ATOMS",VAR_SZ=(/n_atom_species/))
    call io_bulk(ID,I1=n_atoms)
    call io_bulk(ID,VAR="ATOM_L_COMP",VAR_SZ=(/n_atom_species/))
    call io_bulk(ID,I1=pp_n_l_comp)
    call io_bulk(ID,VAR="ATOM_POS",VAR_SZ=shape(atom_pos))
    call io_bulk(ID,R3=atom_pos)
-
+   !
    if (ioKB_PP/=0) goto 1
+   !
  endif
-
+ !
  if (ik==0) goto 1
-
+ !
  if (ik==1) then
    if (read_is_on(ID)) call PP_alloc()
    call io_bulk(ID,VAR="PP_KBS",VAR_SZ=shape(pp_kbs))
    call io_bulk(ID,R2=pp_kbs)
  endif
-!
-
+ !
  allocate(pp_disk(wf_ncx,n_atom_species,pp_n_l_comp_max))
-
+ !
  if (write_is_on(ID)) pp_disk=pp_kb
-
+ !
  write (VAR_NAME,'(a,i4.4)') 'PP_KB_IK',ik
  call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=shape(pp_disk))
  call io_bulk(ID,R3=pp_disk)
-
+ !
  if (read_is_on(ID)) then
    pp_kb=0._SP
    do i1=1,wf_nc_k(ik)
@@ -110,13 +112,13 @@
      pp_kb( wf_igk(i1,ik) ,:,:) = pp_disk(i1,:,:)
    enddo
  endif
-
+ !
  if (write_is_on(ID)) pp_disk=pp_kbd
-
+ !
  write (VAR_NAME,'(a,i4.4)') 'PP_KBD_IK',ik
  call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=shape(pp_disk))
  call io_bulk(ID,R3=pp_disk)
-
+ !
  if (read_is_on(ID)) then
    pp_kbd=0._SP
    do i1=1,wf_nc_k(ik)
@@ -124,9 +126,9 @@
      pp_kbd( wf_igk(i1,ik) ,:,:) = pp_disk(i1,:,:)
    enddo
  endif
-
+ !
  deallocate(pp_disk)
-
+ !
 1 call io_disconnect(ID=ID)
-
- end function ioKB_PP
+ !
+end function ioKB_PP

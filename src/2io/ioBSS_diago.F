@@ -23,12 +23,13 @@ integer function ioBSS_diago(iq,BS_H_dim,bsE,bsR,ID)
  !
  use pars,          ONLY:SP,schlen,IP
  use BS,            ONLY:BS_identifier,BSS_q0,BSS_write_eig_2_db,&
-&                        BS_eh_table,BS_K_dim,BS_mat
+&                        BS_eh_table,BS_mat
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&
 &                        io_header,write_is_on,read_is_on
+ use electrons,     ONLY:n_sp_pol
  implicit none
- integer     :: iq,ID,BS_H_dim,table_dim
+ integer     :: iq,ID,BS_H_dim
  real(SP)    :: bsE(2,BS_H_dim),bsR(2,BS_H_dim)
  !
  ! Work Space
@@ -84,11 +85,7 @@ integer function ioBSS_diago(iq,BS_H_dim,bsE,bsR,ID)
    !
    ! BS_eh_table
    !
-   table_dim=3
-#if defined PJ_SPIN
-   table_dim=4
-#endif
-   call io_bulk(ID,'BS_TABLE',VAR_SZ=(/BS_H_dim,table_dim/))
+   call io_bulk(ID,'BS_TABLE',VAR_SZ=(/BS_H_dim,3+n_sp_pol-1/))
    call io_bulk(ID,I2=BS_eh_table)
    !
    ! Eigenstates (resonant only matrix)

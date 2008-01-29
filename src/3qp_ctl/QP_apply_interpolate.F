@@ -28,8 +28,7 @@ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
  ! l_qp=( E W Z Interp )
  !
  use pars,          ONLY:SP
- use electrons,     ONLY:n_sp_pol
- use drivers,       ONLY:Finite_Tel
+ use electrons,     ONLY:n_sp_pol,spin
  use com,           ONLY:msg,warning
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
@@ -46,7 +45,7 @@ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
  ! Work Space
  !
  integer  :: i1,i2,i_spin,ikbz,order(qp%nk),k_near(n_neigh),nk_interpolated,nk_exact,i_err
- real(SP) :: idist(qp%nk),odist(qp%nk),v1(3),k_dist(n_neigh)
+ real(SP) :: idist(qp%nk),odist(qp%nk),k_dist(n_neigh)
  !
  integer, external :: k_the_nearest
  !
@@ -132,10 +131,8 @@ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
          if (qp%table(i3,3)/=ikqp(i4)) cycle
          bqp=qp%table(i3,1)
          !
-         i_spin=1
-#if defined PJ_SPIN
-         i_spin=qp%table(i3,4)
-#endif
+         i_spin=spin(qp%table(i3,:))
+         !
          if (bqp<band_range(1).or.bqp>band_range(2)) cycle
          !
          if (l_qp(1)) Dl(bqp,i_spin)=Dl(bqp,i_spin)+real(qp%E(i3)-qp%E_bare(i3))

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function ioDB1(E,k,ID)
+integer function ioDB1(E,k,ID)
  !
  use pars,             ONLY:HARTREE,SP,IP
  use memory_m,         ONLY:mem_est
@@ -34,7 +34,7 @@
  use wave_func,        ONLY:wf_ncx, wf_nc_k, wf_igk,wf_ng
  use IO_m,             ONLY:io_connect, io_disconnect, io_sec, &
 &                           io_elemental, io_status, io_bulk,read_is_on,&
-&                           serial_number,io_header,io_serial_number,&
+&                           serial_number,io_serial_number,&
 &                           DUMP,io_mode,write_is_on,io_code_version,ver_is_gt_or_eq
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_G_bands
  use BS,               ONLY:BS_bands
@@ -266,4 +266,4 @@
  !
 1 call io_disconnect(ID=ID)
  !
- end function ioDB1
+end function ioDB1

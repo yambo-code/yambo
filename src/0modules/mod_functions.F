@@ -19,11 +19,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- module functions
-   !
-   use pars, ONLY: SP
-   real(SP)     :: bose_E_cut
-   !
+module functions
+ !
+ use pars, ONLY: SP
+ real(SP)     :: bose_E_cut
+ !
  contains
    !
    ! Fermi functions
@@ -168,4 +168,4 @@
      if (ik>1 ) BZ_index=1+sum(k%nstar(:ik-1))
    end function
    !
- end module
+end module

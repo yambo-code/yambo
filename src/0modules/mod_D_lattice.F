@@ -20,45 +20,45 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 module D_lattice
-   !
-   use pars, ONLY:SP
-   implicit none
-   !
-   ! Temperature
-   !
-   real(SP) :: Tel
-   real(SP) :: default_Tel
-   logical  :: input_Tel_fixed
-   !
-   ! SYMs
-   !
-   integer :: nsym
-   integer :: i_time_rev
-   integer :: i_space_inv
-   real(SP),allocatable :: dl_sop(:,:,:)
-   integer, allocatable :: sop_tab(:,:)
-   integer, allocatable :: sop_inv(:)
-   !
-   ! Cell
-   !
-   integer  :: n_atoms_max
-   integer  :: n_atom_species
-   real(SP) :: DL_vol
-   real(SP) :: a(3,3)
-   real(SP) :: alat(3)
-   integer,  allocatable :: n_atoms(:)
-   integer,  allocatable :: znucl(:)
-   real(SP), allocatable :: atom_pos(:,:,:)
-   !
-   ! KB Pseudo
-   !
-   integer :: pp_n_l_comp_max
-   integer :: pp_kbv_dim
-   integer,  allocatable:: pp_n_l_comp(:)
-   real(SP), allocatable:: pp_kbs(:,:)
-   real(SP), allocatable:: pp_kb(:,:,:)
-   real(SP), allocatable:: pp_kbd(:,:,:)
-   !
+ !
+ use pars, ONLY:SP
+ implicit none
+ !
+ ! Temperature
+ !
+ real(SP) :: Tel
+ real(SP) :: default_Tel
+ logical  :: input_Tel_fixed
+ !
+ ! SYMs
+ !
+ integer :: nsym
+ integer :: i_time_rev
+ integer :: i_space_inv
+ real(SP),allocatable :: dl_sop(:,:,:)
+ integer, allocatable :: sop_tab(:,:)
+ integer, allocatable :: sop_inv(:)
+ !
+ ! Cell
+ !
+ integer  :: n_atoms_max
+ integer  :: n_atom_species
+ real(SP) :: DL_vol
+ real(SP) :: a(3,3)
+ real(SP) :: alat(3)
+ integer,  allocatable :: n_atoms(:)
+ integer,  allocatable :: znucl(:)
+ real(SP), allocatable :: atom_pos(:,:,:)
+ !
+ ! KB Pseudo
+ !
+ integer :: pp_n_l_comp_max
+ integer :: pp_kbv_dim
+ integer,  allocatable:: pp_n_l_comp(:)
+ real(SP), allocatable:: pp_kbs(:,:)
+ real(SP), allocatable:: pp_kb(:,:,:)
+ real(SP), allocatable:: pp_kbd(:,:,:)
+ !
  contains
    !
    subroutine PP_alloc()

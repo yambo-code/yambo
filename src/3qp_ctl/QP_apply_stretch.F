@@ -19,13 +19,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine QP_apply_stretch(band_range,E,qpfit_rest,qpfit_free,&
-&                            DB_corrected)
+subroutine QP_apply_stretch(band_range,E,qpfit_rest,qpfit_free,&
+&                           DB_corrected)
  !
  ! Here I apply the strecth for both qpfit_rest (respecting the 
  ! qp_done array) and qpfit_free (everywhere)
  !
- use pars,          ONLY:SP,lchlen,HARTREE,IP
+ use pars,          ONLY:SP,lchlen,HARTREE
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
  use electrons,     ONLY:levels,n_sp_pol
@@ -38,7 +38,7 @@
  !
  ! Work Space
  !
- integer  ::ib,ik,l_isec(5)
+ integer  ::ib,ik
  real(SP) ::Eoc,Eov
  character(lchlen) ::ch
  logical           ::QP_apply_done,l_qp(3)
@@ -201,4 +201,4 @@
      ! 
    end subroutine
    !
- end subroutine
+end subroutine

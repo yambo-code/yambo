@@ -20,110 +20,109 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine e2s_db1(en,k,ncid)
-!
-! For version 0.8 of ETSF library
-!
-! Note: Current version returns only double precision 
-! reals, hence local copies are required. Later version
-! may return reals generated on the fly by netCDF.
-! The ETSF specs specify double precision storage in the -etsf.nc file.
-! --------------------------------------------------
-! Note:
-! electrons_group%eigenvalues%data3d => en%E ! Not allowed due to type mismatch
-! forall(ib=1:en%nb,ik=1:k%nibz,is=1:n_sp_pol) en%E(ib,ik,is) = eigenvalues_(ib,ik,is)
-! For splitting (verion 0.5)
-! electrons_group%eigenvalues%k_splitted = .false.
-! electrons_group%eigenvalues%spin_splitted = .false.
-! electrons_group%eigenvalues%k_id =
-! electrons_group%eigenvalues%spin_id = 
-!
-  use etsf_io
-  use etsf_io_low_level
-  use etsf_data
-  use pars,                 only : SP, DP, PI, schlen
-  use com,                  only : msg, error
-  use electrons,            only : levels, n_bands, n_spin,n_sp_pol,n_spinor, spin_orbit
-  use wave_func,            only : wf_ncx
-  use R_lattice,            only : bz_samp
-  use D_lattice,            only : nsym, n_atom_species
-  use interfaces,           only : print_interface_dimensions
-  implicit none
-  type(levels),   intent(inout) :: en
-  type(bz_samp),  intent(inout) :: k
-  integer,        intent(in)    :: ncid
-  ! 
-  ! Work Space
-  !
-  integer                       :: i1,i2,ik,ib,is
-!ETSF library stuff
-  logical                       :: lstat ! to get informed on error
-  type(etsf_io_low_error)       :: error_data ! to store informations about errors
+ !
+ ! For version 0.8 of ETSF library
+ !
+ ! Note: Current version returns only double precision 
+ ! reals, hence local copies are required. Later version
+ ! may return reals generated on the fly by netCDF.
+ ! The ETSF specs specify double precision storage in the -etsf.nc file.
+ ! --------------------------------------------------
+ ! Note:
+ ! electrons_group%eigenvalues%data3d => en%E ! Not allowed due to type mismatch
+ ! forall(ib=1:en%nb,ik=1:k%nibz,is=1:n_sp_pol) en%E(ib,ik,is) = eigenvalues_(ib,ik,is)
+ ! For splitting (verion 0.5)
+ ! electrons_group%eigenvalues%k_splitted = .false.
+ ! electrons_group%eigenvalues%spin_splitted = .false.
+ ! electrons_group%eigenvalues%k_id =
+ ! electrons_group%eigenvalues%spin_id = 
+ !
+ use etsf_io
+ use etsf_io_low_level
+ use etsf_data
+ use pars,                 only : SP, DP, PI, schlen
+ use com,                  only : msg, error
+ use electrons,            only : levels, n_bands, n_spin,n_sp_pol,n_spinor, spin_orbit
+ use wave_func,            only : wf_ncx
+ use R_lattice,            only : bz_samp
+ use D_lattice,            only : nsym, n_atom_species
+ use interfaces,           only : print_interface_dimensions
+ implicit none
+ type(levels),   intent(inout) :: en
+ type(bz_samp),  intent(inout) :: k
+ integer,        intent(in)    :: ncid
+ ! 
+ ! Work Space
+ !
+ integer                       :: i1,i2,ik,ib,is
+ !ETSF library stuff
+ logical                       :: lstat ! to get informed on error
+ type(etsf_io_low_error)       :: error_data ! to store informations about errors
 
-  call msg('s','Header/K-points/Energies...')
-  !
-  ! Dimensions
-  !
-  call etsf_io_dims_get(ncid, dims, lstat, error_data)
-  !
-  ! Directly read dimensions
-  !
-  en%nb    = dims%max_number_of_states
-  k%nibz   = dims%number_of_kpoints 
-  wf_ncx   = dims%max_number_of_coefficients
-  n_spinor = dims%number_of_spinor_components 
-  n_sp_pol = dims%number_of_spins
-  n_atom_species = dims%number_of_atom_species
-  !
-  ! Derived SELF dimensions
-  !
-  n_spin = max(n_spinor, n_sp_pol)
-  call msg("l","done")
+ call msg('s','Header/K-points/Energies...')
+ !
+ ! Dimensions
+ !
+ call etsf_io_dims_get(ncid, dims, lstat, error_data)
+ !
+ ! Directly read dimensions
+ !
+ en%nb    = dims%max_number_of_states
+ k%nibz   = dims%number_of_kpoints 
+ wf_ncx   = dims%max_number_of_coefficients
+ n_spinor = dims%number_of_spinor_components 
+ n_sp_pol = dims%number_of_spins
+ n_atom_species = dims%number_of_atom_species
+ !
+ ! Derived SELF dimensions
+ !
+ n_spin = max(n_spinor, n_sp_pol)
+ call msg("l","done")
+ !>>>DEBUG
+ ! call msg('s',':: K-points              :',k%nibz)
+ ! call msg('s',':: Bands                 :',en%nb)
+ ! call msg('s',':: Spin  [components/pol]:',(/n_spinor,n_sp_pol/))
+ ! call msg('s',':: Max WF components     :',wf_ncx) 
+ ! call msg('s',':: Atomic species        :',n_atom_species)
+ !<<<DEBUG
+ !
+ ! Geometry (must appear first, in order to define alat)
+ !
+ call msg('s','Cell data...')
+ call import_geometry_group
+ call msg("l","done")
+ !
+ ! Electrons
+ !
+ call msg('s','Eigenvalues data...')
+ call import_electrons_group
+ call msg("l","done")
+ !
+ ! K-points
+ !
+ call msg('s','K-points mesh...')
+ call import_kpoints_group
+ call msg('l','done')
+ !
+ ! PP 
+ !
+ call import_gwdata_group
+ !
+ ! G-vectors grids and indices
+ !
+ call msg('s','RL vectors...')
+ call import_basisdata_group
+ call msg('l','done')
+ !
+ ! All other data
+ !
+ call import_miscellaneous_data
+ !
+ ! Report
+ !
+ call print_interface_dimensions(en,k)
 
-!>>>DEBUG
-! call msg('s',':: K-points              :',k%nibz)
-! call msg('s',':: Bands                 :',en%nb)
-! call msg('s',':: Spin  [components/pol]:',(/n_spinor,n_sp_pol/))
-! call msg('s',':: Max WF components     :',wf_ncx) 
-! call msg('s',':: Atomic species        :',n_atom_species)
-!<<<DEBUG
-  !
-  ! Geometry (must appear first, in order to define alat)
-  !
-  call msg('s','Cell data...')
-  call import_geometry_group
-  call msg("l","done")
-  !
-  ! Electrons
-  !
-  call msg('s','Eigenvalues data...')
-  call import_electrons_group
-  call msg("l","done")
-  !
-  ! K-points
-  !
-  call msg('s','K-points mesh...')
-  call import_kpoints_group
-  call msg('l','done')
-  !
-  ! PP 
-  !
-  call import_gwdata_group
-  !
-  ! G-vectors grids and indices
-  !
-  call msg('s','RL vectors...')
-  call import_basisdata_group
-  call msg('l','done')
-  !
-  ! All other data
-  !
-  call import_miscellaneous_data
-  !
-  ! Report
-  !
-  call print_interface_dimensions(en,k)
-
-  return
+ return
 
 contains
  

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine fermi_msg(E,mode)
+subroutine fermi_msg(E,mode)
  !
  use pars,          ONLY:SP,lchlen,HARTREE
  use com,           ONLY:msg,warning
@@ -140,4 +140,4 @@
    call warning('Merged spin levels are metallic')
  endif
  !
- end subroutine
+end subroutine

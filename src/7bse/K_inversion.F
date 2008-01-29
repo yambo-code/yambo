@@ -33,7 +33,7 @@ subroutine K_inversion(iq,W,E,k,q)
 &                         BSS_n_descs,BSS_description,BS_eh_W,BS_eh_Z
  use memory_m,       ONLY:mem_est
  use parser_m,       ONLY:parser
- use electrons,      ONLY:spin_occ,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts
+ use electrons,      ONLY:spin_occ,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,spin
  use frequency,      ONLY:w_samp,W_reset,W_merge,W_duplicate
  use R_lattice,      ONLY:d3k_factor,q_norm,bz_samp
  use com,            ONLY:isec,warning,msg
@@ -213,11 +213,7 @@ subroutine K_inversion(iq,W,E,k,q)
    ik_ibz=k%sstar(ik_bz,1)
    iv    =BS_eh_table(i1,2)
    ic    =BS_eh_table(i1,3)
-#if defined PJ_SPIN
-   i_sp=BS_eh_table(i1,4)
-#else
-   i_sp=1
-#endif
+   i_sp  =spin(BS_eh_table(i1,:))
    !
    if (.not.BSS_uses_RIM) then
      QP_width=0.
@@ -389,47 +385,47 @@ subroutine K_inversion(iq,W,E,k,q)
  endif
 #endif
  !
-contains
-  !
-  subroutine perform_invertion(iw_2start,iw_2do)
-    integer     :: iw_2start,iw_2do
-    !
-    integer :: i2,i3
-    logical :: perform_inv
-    !
-    do i2=1,iw_2do
-      !
+ contains
+   !
+   subroutine perform_invertion(iw_2start,iw_2do)
+     integer     :: iw_2start,iw_2do
+     !
+     integer :: i2,i3
+     logical :: perform_inv
+     !
+     do i2=1,iw_2do
+       !
 #if defined PJ_PH
-      if (add_ELPH_K) then
-        if (WS_alloc_err==0) then
-          BS_mat=WS
-        else
-          BS_mat=(0.,0.)
-          call Kernel_by_V(iq)
-          forall(i3=1:BS_K_dim) BS_mat(i3,i3)=0.
-        endif
-        call static2dyn_ELPH_K(E,k,q,W%p(i2),BS_mat)
-      endif
+       if (add_ELPH_K) then
+         if (WS_alloc_err==0) then
+           BS_mat=WS
+         else
+           BS_mat=(0.,0.)
+           call Kernel_by_V(iq)
+           forall(i3=1:BS_K_dim) BS_mat(i3,i3)=0.
+         endif
+         call static2dyn_ELPH_K(E,k,q,W%p(i2),BS_mat)
+       endif
 #endif
-      !
-      if(.not.full_diago) then
-        !
-        if (.not.px%i1p(i2)) cycle
-        !
-      endif
-      !
-      if (full_diago) perform_inv=inv_err(i2+iw_2start-1)/=0
-      if (.not.full_diago) perform_inv=inv_err(i2+iw_2start-1)==-1
-      !
-      if (perform_inv) &
-&       inv_err(i2+iw_2start-1)=pert_inversion(BS_K_dim,BSS_rhoq0,-1.*Co,&
-&              X_epsilon(2,i2+iw_2start-1),Lo(:,i2+iw_2start-1),BS_mat,full_diago)
-      !
-      if (.not.full_diago) call live_timing(steps=1)
-      !
-    enddo
-    if (.not.full_diago) call live_timing()
-    !
-  end subroutine
-  !
+       !
+       if(.not.full_diago) then
+         !
+         if (.not.px%i1p(i2)) cycle
+         !
+       endif
+       !
+       if (full_diago) perform_inv=inv_err(i2+iw_2start-1)/=0
+       if (.not.full_diago) perform_inv=inv_err(i2+iw_2start-1)==-1
+       !
+       if (perform_inv) &
+&        inv_err(i2+iw_2start-1)=pert_inversion(BS_K_dim,BSS_rhoq0,-1.*Co,&
+&               X_epsilon(2,i2+iw_2start-1),Lo(:,i2+iw_2start-1),BS_mat,full_diago)
+       !
+       if (.not.full_diago) call live_timing(steps=1)
+       !
+     enddo
+     if (.not.full_diago) call live_timing()
+     !
+   end subroutine
+   !
 end subroutine

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function bracket(x1,f1,x2,f2)
+integer function bracket(x1,f1,x2,f2)
  !
  use pars,ONLY: SP
  !
@@ -40,4 +40,4 @@
    bracket=2
  endif
  !
- end function
+end function

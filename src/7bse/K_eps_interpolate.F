@@ -33,7 +33,7 @@ subroutine K_eps_interpolate(nW,W,err)
  !
  integer, parameter :: order_max=3,n_pts_max=5
  integer    ::iw,iw_fit,n_pts,order,i1
- real(SP)   ::r_fit_pt(n_pts_max),w_dum
+ real(SP)   ::r_fit_pt(n_pts_max)
  real(DP)   ::EPS,Dy(n_pts_max),Dx(n_pts_max),Pol_coeff(order_max+1)
  !
  w_loop: do iw=1,nW
@@ -77,18 +77,18 @@ subroutine K_eps_interpolate(nW,W,err)
    endif
  enddo w_loop
  !
-contains
-  !
-  real(SP) function pol_eval(at_w)
-    !
-    real(SP) ::at_w
-    integer  ::ip
-    !
-    pol_eval=0.
-    do ip=1,order+1
-      pol_eval=pol_eval+at_w**(ip-1)*Pol_coeff(ip)
-    enddo
-    !
-  end function
-  !
+ contains
+   !
+   real(SP) function pol_eval(at_w)
+     !
+     real(SP) ::at_w
+     integer  ::ip
+     !
+     pol_eval=0.
+     do ip=1,order+1
+       pol_eval=pol_eval+at_w**(ip-1)*Pol_coeff(ip)
+     enddo
+     !
+   end function
+   !
 end subroutine

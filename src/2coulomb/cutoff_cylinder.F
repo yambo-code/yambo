@@ -25,14 +25,15 @@ subroutine cutoff_cylinder(q,is_cut)
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:cyl_ph_radius,bare_qpg,cyl_length,cyl_cut,g_vec,&
-&                        bz_samp,ng_closed,cyl_vr_save,cyl_vz_save,cyl_zz_save
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
+&                        bz_samp,cyl_vr_save,cyl_vz_save,cyl_zz_save
+ use par_proc_m,    ONLY:pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use timing,        ONLY:live_timing
  use com,           ONLY:msg,error
  
  implicit none
  type(bz_samp) ::q
+ logical       ::is_cut(3)
  !
  ! Work Space
  !
@@ -42,13 +43,11 @@ subroutine cutoff_cylinder(q,is_cut)
  real(SP)      ::BESJ1 
  real(SP)      ::abserr,epsabs
  real(SP)      ::z
- real(SP),  external ::F1,F2,F3,F4,F5,F6
  complex(SP)   ::V_cut(q%nibz,wf_ng)
  real(SP),  allocatable ::work(:),work2(:)
  integer,   allocatable ::iwork(:),iwork2(:)
  type(pp_indexes) ::px
  logical       ::infcyl
- logical       ::is_cut(3)
  !
  call pp_indexes_reset(px)
  !
@@ -168,88 +167,80 @@ subroutine cutoff_cylinder(q,is_cut)
  !
  forall (iq=1:q%nibz,ig=1:wf_ng) bare_qpg(iq,ig)=sqrt(1./V_cut(iq,ig))
  !
+ contains
+   !
+   function F1(s)
+     use pars,          ONLY:SP
+     use R_lattice,     ONLY:cyl_vr_save,cyl_vz_save,cyl_zz_save
+     real(SP) s,arg,BESJ0,F1
+     arg=cyl_vr_save*s
+     if(cyl_zz_save==0) then
+      F1=BESJ0(arg)
+     else
+      F1=BESJ0(arg)*s/sqrt(s**2+cyl_zz_save**2)
+     endif
+   end function F1
+   !
+   function F2(z)
+     use pars,          ONLY:SP
+     use R_lattice,     ONLY:cyl_vr_save,cyl_vz_save,cyl_zz_save,cyl_ph_radius
+     real(SP) z,G
+     real(SP)      :: abserr,F2
+     integer       :: neval,ier,last,iwork(3)
+     real(SP)      :: work(12) 
+     cyl_zz_save=z
+     call qag(F1,0,cyl_ph_radius,8.e-1,0.,4,G,abserr,neval,ier, &
+&             3,12,last,iwork,work)
+     F2=G
+   end function F2
+   !
+   function F3(z)
+     use pars,          ONLY:SP 
+     use R_lattice,     ONLY:cyl_vr_save,cyl_vz_save,cyl_zz_save,cyl_ph_radius
+     real(SP) z,F3
+     F3=z/sqrt(cyl_ph_radius**2+z**2)
+   end function F3
+   !
+   function F4(z)
+     use pars,          ONLY:SP
+     use R_lattice,     ONLY:cyl_vr_save,cyl_vz_save,cyl_zz_save,cyl_cut
+     real(SP) z,arg,BESJ0,F4
+     if (z==0) then
+      F4=0.
+     else 
+      arg=cyl_vr_save*z
+      F4=BESJ0(arg)*z*log((cyl_cut+sqrt(cyl_cut**2+z**2))/z)
+     endif
+   end function F4
+   !
+   function F5(z)
+     use pars,          ONLY:SP
+     use R_lattice,     ONLY:cyl_vr_save,cyl_vz_save,cyl_zz_save
+     real(SP) z,arg,BESJ0,F5
+     if (z==0) then
+      F5=0.
+     else 
+      arg=cyl_vr_save*z
+      F5=BESJ0(arg)*z*log(z)
+     endif
+   end function F5
+   !
+   function F6(x,y)
+     use pars,          ONLY:SP
+     use R_lattice,     ONLY:cyl_ph_radius
+     real(SP) x,y,arg1,arg2,BESJ0,BESJ1,BESK0,BESK1
+     real(SP) bk0,bk1,F6
+     arg1=x*cyl_ph_radius
+     arg2=y*cyl_ph_radius
+     if (arg2 > 80) then
+       bk0=0.
+       bk1=0.
+     else
+       bk0=BESK0(arg2)
+       bk1=BESK1(arg2)
+     endif
+     F6=arg1*BESJ1(arg1)*bk0-arg2*BESJ0(arg1)*bk1
+     F6=F6+1
+   end function F6
+   !
 end subroutine
- !
- function F1(s)
-   !
-   use pars,          ONLY:SP
-   use R_lattice,     ONLY:cyl_vr_save,cyl_vz_save,cyl_zz_save
-   real(SP) s,arg,BESJ0
-   arg=cyl_vr_save*s
-   if(cyl_zz_save==0) then
-    F1=BESJ0(arg)
-   else
-    F1=BESJ0(arg)*s/sqrt(s**2+cyl_zz_save**2)
-   endif
- end function F1
- !
- function F2(z)
-   !
-   use pars,          ONLY:SP
-   use R_lattice,     ONLY:cyl_vr_save,cyl_vz_save,cyl_zz_save,cyl_ph_radius
-   real(SP) z,G
-   real(SP),  external ::F1
-   real(SP)      :: abserr
-   integer       :: neval,ier,last,iwork(3)
-   real(SP)      :: work(12) 
-   cyl_zz_save=z
-  
-   call qag(F1,0,cyl_ph_radius,8.e-1,0.,4,G,abserr,neval,ier, &
-&           3,12,last,iwork,work)
-   F2=G
- end function F2
- !
- function F3(z)
-   !
-   use pars,          ONLY:SP 
-   use R_lattice,     ONLY:cyl_vr_save,cyl_vz_save,cyl_zz_save,cyl_ph_radius
-   real(SP) z
-   F3=z/sqrt(cyl_ph_radius**2+z**2)
- end function F3
- !
- function F4(z)
-   !
-   use pars,          ONLY:SP
-   use R_lattice,     ONLY:cyl_vr_save,cyl_vz_save,cyl_zz_save,cyl_cut
-   real(SP) z,arg,BESJ0
-   if (z==0) then
-    F4=0.
-   else 
-    arg=cyl_vr_save*z
-    F4=BESJ0(arg)*z*log((cyl_cut+sqrt(cyl_cut**2+z**2))/z)
-   endif
- end function F4
- !
- function F5(z)
-   !
-   use pars,          ONLY:SP
-   use R_lattice,     ONLY:cyl_vr_save,cyl_vz_save,cyl_zz_save
-   real(SP) z,arg,BESJ0
-   if (z==0) then
-    F5=0.
-   else 
-    arg=cyl_vr_save*z
-    F5=BESJ0(arg)*z*log(z)
-   endif
- end function F5
- !
- function F6(x,y)
-   ! 
-   use pars,          ONLY:SP
-   use R_lattice,     ONLY:cyl_ph_radius
-   real(SP) x,y,arg1,arg2,BESJ0,BESJ1,BESK0,BESK1
-   real(SP) bk0,bk1
-   arg1=x*cyl_ph_radius
-   arg2=y*cyl_ph_radius
-   !
-   if (arg2 > 80) then
-     bk0=0.
-     bk1=0.
-   else
-     bk0=BESK0(arg2)
-     bk1=BESK1(arg2)
-   endif
-   F6=arg1*BESJ1(arg1)*bk0-arg2*BESJ0(arg1)*bk1
-   F6=F6+1
- end function F6
- !

@@ -19,29 +19,30 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine gauss_leg_grid(x1,x2,x,w,n)
-!-----------------------------------------------------------------
-! Setup of a Gauss-Legendre grid (taken from Numerical Recipees)
-! Inputs:
-!        x1: lower limit of the grid (real)
-!        x2: upper limit of the grid (real)
-!         n: number of grid points   (integer)
-! Outputs:
-!        x(n):GL grid (real)
-!        w(n):GL integration weigths (real)
-!
-! NOTE:  w(n) includes the factor 1/(2*pi)
-!-----------------------------------------------------------------
+subroutine gauss_leg_grid(x1,x2,x,w,n)
+ !-----------------------------------------------------------------
+ ! Setup of a Gauss-Legendre grid (taken from Numerical Recipees)
+ ! Inputs:
+ !        x1: lower limit of the grid (real)
+ !        x2: upper limit of the grid (real)
+ !         n: number of grid points   (integer)
+ ! Outputs:
+ !        x(n):GL grid (real)
+ !        w(n):GL integration weigths (real)
+ !
+ ! NOTE:  w(n) includes the factor 1/(2*pi)
+ !-----------------------------------------------------------------
  use pars
  implicit none
  integer:: n
  real(SP):: x1,x2,x(n),w(n)
-!
-!WorkSpace  -- GPL_END --
+ ! 
+ ! Work Space
+ !
  real(DP),parameter:: eps=3.d-14
  integer ::i,j,m
  real(DP)::p1,p2,p3,pp,xl,xm,z,z1
-
+ !
  m=(n+1)/2
  xm=0.5d0*(x2+x1)
  xl=0.5d0*(x2-x1)
@@ -64,8 +65,5 @@
    w(i)=xl/((1.d0-z*z)*pp*pp*pi)
    w(n+1-i)=w(i)
  end do
-
-! -- GPL_START --
-
- end subroutine
-
+ !
+end subroutine

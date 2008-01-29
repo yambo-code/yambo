@@ -19,52 +19,52 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- module wave_func
+module wave_func
+ !
+ use pars,           ONLY:SP
+ !
+ integer                :: wf_b(2),wf_k(2),wf_s(2)
+ !
+ ! Max Num. of COMPONENTS
+ !
+ integer                :: wf_ncx
+ !
+ ! Max Num. of G-VECTORS (>= wf_ncx)
+ !
+ integer                :: wf_ng
+ character(1)           :: wf_space
+ complex(SP),allocatable:: wf(:,:)
+ integer    ,allocatable:: wf_state(:,:,:)
+ !
+ ! Num. of COMPONENTS at each k
+ !
+ integer    ,allocatable:: wf_nc_k(:)
+ !
+ ! Table correspondance G-vec <-> Components: G_ic = wf_igk(ic,ik)
+ !
+ integer    ,allocatable:: wf_igk(:,:)
+ logical                :: wf_norm_test
+ !
+ interface
    !
-   use pars,           ONLY:SP
+   integer function ioWF(ID,wf)
+     use pars,       ONLY: SP
+     integer            :: ID
+     real(SP), optional :: wf(:,:,:,:)
+   end function 
    !
-   integer                :: wf_b(2),wf_k(2),wf_s(2)
+   subroutine wf_load(iG_max,iGo_max,bands_to_load,kpts_to_load,&
+&                     spins_to_load,space,title)
+     implicit none
+     integer :: iG_max,iGo_max,bands_to_load(2),&
+&               kpts_to_load(2)
+     integer,     optional :: spins_to_load(2)
+     character(*),optional :: space,title
+   end subroutine
    !
-   ! Max Num. of COMPONENTS
-   !
-   integer                :: wf_ncx
-   !
-   ! Max Num. of G-VECTORS (>= wf_ncx)
-   !
-   integer                :: wf_ng
-   character(1)           :: wf_space
-   complex(SP),allocatable:: wf(:,:)
-   integer    ,allocatable:: wf_state(:,:,:)
-   !
-   ! Num. of COMPONENTS at each k
-   !
-   integer    ,allocatable:: wf_nc_k(:)
-   !
-   ! Table correspondance G-vec <-> Components: G_ic = wf_igk(ic,ik)
-   !
-   integer    ,allocatable:: wf_igk(:,:)
-   logical                :: wf_norm_test
-   !
-   interface
-     !
-     integer function ioWF(ID,wf)
-       use pars,       ONLY: SP
-       integer            :: ID
-       real(SP), optional :: wf(:,:,:,:)
-     end function 
-     !
-     subroutine wf_load(iG_max,iGo_max,bands_to_load,kpts_to_load,&
-&                       spins_to_load,space,title)
-       implicit none
-       integer :: iG_max,iGo_max,bands_to_load(2),&
-&                 kpts_to_load(2)
-       integer,     optional :: spins_to_load(2)
-       character(*),optional :: space,title
-     end subroutine
-     !
-   end interface 
-   !
-   contains
+ end interface 
+ !
+ contains
    !
    integer function WF_alloc()
      use memory_m, ONLY : mem_est
@@ -118,4 +118,4 @@
      wf_space=' '
    end subroutine
    ! 
- end module
+end module

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine K_dump_to_o_file(iq,mode)
+subroutine K_dump_to_o_file(iq,mode)
  !
  use pars,      ONLY:HARTREE,pi,SP
  use BS,        ONLY:BSS_description,BSS_of_title,BSS_file_name,&
@@ -157,4 +157,4 @@
  call of_open_close(BSS_file_name(1))
  call of_open_close(BSS_file_name(2))
  !
- end subroutine
+end subroutine

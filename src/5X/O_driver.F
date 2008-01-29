@@ -19,14 +19,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine O_driver(Xen,Xk,q,wv,X)
+subroutine O_driver(Xen,Xk,q,wv,X)
  ! 
  ! Optics driver.
  !
  ! Calculates dielectric function for a generic q vector.
  ! 
  use pars,          ONLY:pi,SP,HARTREE,schlen
- use D_lattice,     ONLY:dl_sop
  use memory_m,      ONLY:mem_est
  use stderr,        ONLY:intc
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_col_cut
@@ -34,10 +33,9 @@
  use electrons,     ONLY:levels,BZ_RIM_tot_nkpts
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
- use vec_operate,   ONLY:v_norm,iku_v_norm
+ use vec_operate,   ONLY:v_norm
  use X_m,           ONLY:X_t,X_epsilon,X_mat,X_alloc,X_poles_tab,X_fxc,&
 &                        alpha_dim,eps_2_alpha,use_X_RIM
- use parser_m,      ONLY:parser
  use par_proc_m,    ONLY:pp_redux_wait
  use wave_func,     ONLY:WF_free
  use TDDFT,         ONLY:FXC_n_descs,FXC_description,FXC_type,&
@@ -339,4 +337,4 @@
    call mem_est("FXC FXC_K_diagonal")
  endif
  !
- end subroutine
+end subroutine

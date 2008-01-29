@@ -19,12 +19,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine rim()
+subroutine rim()
  !
  use pars,          ONLY:SP,pi,DP
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,master_node,pp_indexes_reset
+ use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use timing,        ONLY:live_timing
  use vec_operate,   ONLY:c2a
@@ -40,9 +40,8 @@
  integer   :: i1,i2,i3,i4,i5,N_out,N_out_G,rep_factor
  real(SP)  :: v1(3),v2(3),r1,r2,qr(RIM_n_rand_pts,3),em1_anis(3),&
 &             G_sph_radii,anisotropy
- real(DP)  :: dlaran,rr
+ real(DP)  :: rr
  integer, parameter :: ni = 2
- integer, parameter :: iseed(4) = (/11,123,44,1546/)
  !
  call pp_indexes_reset(px)
  !
@@ -76,9 +75,6 @@
      !
      call random_number(rr)
      v2(i2)=(2.*rr-1.)
-     !
-     ! lapack
-     !    v2(i2)=(2.*dlaran(iseed)-1.)
      !
    enddo
    N_out=N_out+1
@@ -141,4 +137,4 @@
  !
  call pp_indexes_reset(px)
  !
- end subroutine
+end subroutine

@@ -21,7 +21,9 @@
 !
 subroutine spp_init(instr,lnstr,FINALIZE)
  !
- use pars,           ONLY:HA2THZ,HARTREE
+ use pars,           ONLY:HARTREE
+ use wave_func,      ONLY:wf_ng 
+ use R_lattice,      ONLY:ng_vec
  use it_m,           ONLY:rstatus,initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
 &                         nrnlvls,rnlvls
@@ -78,6 +80,7 @@ subroutine spp_init(instr,lnstr,FINALIZE)
    action_mode = "s"
    p_format = 'g'
    max_energy = 1.
+   wf_ng = ng_vec
    !
 #if defined SPP_PJ_PH
    !
@@ -168,8 +171,8 @@ subroutine spp_init(instr,lnstr,FINALIZE)
  !
  if (lkanalyze) call initactivate(1,"cooIn cooOut GWKpts Qpts KShift1 KShift2 KShift3")
  if (lbzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut")
- if (lexcwf) call initactivate(1,"Action Max_Energy Degen_Step Order RNorm State Cells &
-&                              Hole Dimension Direction Format")
+ if (lexcwf) call initactivate(1,"Action Max_Energy FFTGvecs Degen_Step Order RNorm &
+&                                 State Cells Hole Dimension Direction Format")
 #if defined SPP_PJ_PH
  !
  lelph=rstatus(4)/=0

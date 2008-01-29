@@ -43,7 +43,7 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
  ! XC routines arrays
  !
- real(SP) :: rho_sp(fft_size),difvxc
+ real(SP) :: rho_sp(fft_size)
  real(DP) :: rspts(fft_size),zeta(fft_size),rho(fft_size)
  !
  ! note that multidimensional dvxc & vxc is allowed only in xcspol

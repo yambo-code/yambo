@@ -19,19 +19,18 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function ioX(X,Xw,ID)
+integer function ioX(X,Xw,ID)
  !
  use pars,          ONLY:SP,schlen,HARTREE
  use memory_m,      ONLY:mem_est
- use stderr,        ONLY:string_pack
  use R_lattice,     ONLY:nqibz,g_vec
  use matrix_operate,ONLY:mat_c2r,mat_r2c,mat_r2c_ordered
  use X_m,           ONLY:X_t,X_mat,use_X_RIM,X_RLcomp_ig,X_RIM_nkpts
  use frequency,     ONLY:w_samp
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_com,&
+ use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,io_restart,&
 &                        read_is_on,write_is_on,io_check_restart,io_header,&
-&                        io_fragment,RD_CL,RD_CL_IF_END,io_action,io_mode,io_unit,&
+&                        io_fragment,RD_CL,RD_CL_IF_END,io_action,&
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
 &                        io_save_to_try_again,io_restore_to_try_again
  implicit none
@@ -287,52 +286,52 @@
  !
  !
  contains
- !
- integer function X_RLcomp_table()
- !--------------------------------
- !
- ! X has been written using a different RL vectors ordering.
- ! X_RLcomp_ig is defined in such a way that
- !
- ! X_( X_RLcomp_ig(i), X_RLcomp_ig(j) ) = X_on_disk_(i,j)
- !
- use vec_operate,   ONLY:v_is_zero
- use R_lattice,     ONLY:ng_in_shell,n_g_shells
- use zeros,         ONLY:define_zeros
- !
- integer :: is,ig1,ig2,g_limits(2)
- real(SP):: v(3),local_zero(3)
- !
- X_RLcomp_table=0
- X_RLcomp_ig=0
- !
- do is=1,n_g_shells
-  if (ng_in_shell(is) > X%ng) then
-    if (any(X_RLcomp_ig==0)) X_RLcomp_table=-1
-    return
-  endif
-  !
-  g_limits=1
-  if (is > 1 ) g_limits = (/ ng_in_shell(is-1), ng_in_shell(is) /)
-  !
-  call define_zeros(g_vec(:X%ng,1),zero_=local_zero(1))
-  call define_zeros(g_vec(:X%ng,2),zero_=local_zero(2))
-  call define_zeros(g_vec(:X%ng,3),zero_=local_zero(3))
-  !
-  g_loop: do ig1=g_limits(1),g_limits(2)
-    do ig2=g_limits(1),g_limits(2)
-      !
-      v=RL_vecs_disk(ig1,:)-g_vec(ig2,:)
-      !
-      if (v_is_zero(v,zero_=local_zero)) then
-        X_RLcomp_ig(ig1)=ig2
-        cycle g_loop
-      endif
-      !
-    enddo
-  enddo g_loop
- enddo
- !
- end function
-
- end function
+   !
+   integer function X_RLcomp_table()
+   !--------------------------------
+   !
+   ! X has been written using a different RL vectors ordering.
+   ! X_RLcomp_ig is defined in such a way that
+   !
+   ! X_( X_RLcomp_ig(i), X_RLcomp_ig(j) ) = X_on_disk_(i,j)
+   !
+   use vec_operate,   ONLY:v_is_zero
+   use R_lattice,     ONLY:ng_in_shell,n_g_shells
+   use zeros,         ONLY:define_zeros
+   !
+   integer :: is,ig1,ig2,g_limits(2)
+   real(SP):: v(3),local_zero(3)
+   !
+   X_RLcomp_table=0
+   X_RLcomp_ig=0
+   !
+   do is=1,n_g_shells
+    if (ng_in_shell(is) > X%ng) then
+      if (any(X_RLcomp_ig==0)) X_RLcomp_table=-1
+      return
+    endif
+    !
+    g_limits=1
+    if (is > 1 ) g_limits = (/ ng_in_shell(is-1), ng_in_shell(is) /)
+    !
+    call define_zeros(g_vec(:X%ng,1),zero_=local_zero(1))
+    call define_zeros(g_vec(:X%ng,2),zero_=local_zero(2))
+    call define_zeros(g_vec(:X%ng,3),zero_=local_zero(3))
+    !
+    g_loop: do ig1=g_limits(1),g_limits(2)
+      do ig2=g_limits(1),g_limits(2)
+        !
+        v=RL_vecs_disk(ig1,:)-g_vec(ig2,:)
+        !
+        if (v_is_zero(v,zero_=local_zero)) then
+          X_RLcomp_ig(ig1)=ig2
+          cycle g_loop
+        endif
+        !
+      enddo
+    enddo g_loop
+   enddo
+   !
+   end function
+   !
+end function

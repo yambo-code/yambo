@@ -19,10 +19,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- module vec_operate
-   !
-   use pars,      ONLY:SP,pi,zero_dfl
-   !
+module vec_operate
+ !
+ use pars,      ONLY:SP,pi,zero_dfl
+ !
  contains
    ! 
    function normalize_v(v,zero_norm_)
@@ -311,4 +311,4 @@
      !
    end subroutine
    !
- end module vec_operate
+end module vec_operate

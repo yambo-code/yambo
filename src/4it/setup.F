@@ -21,17 +21,17 @@
 !
 subroutine setup(en,Xen,k,Xk)
  !
- use pars,           ONLY:SP,HARTREE,IP,pi,schlen,zero_dfl
+ use pars,           ONLY:SP,HARTREE,IP,pi,schlen
  use electrons,      ONLY:levels,nel,n_met_bands,n_full_bands,E_duplicate,n_sp_pol
  use memory_m,       ONLY:mem_est
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,sop_inv,&
 &                         sop_tab,atoms_spatial_invertion,i_space_inv,input_Tel_fixed
- use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,nkibz,nkbz,nXkibz,nXkbz,&
-&                         k_grid_b,rl_sop,bz_samp,g_vec
+ use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,&
+&                         rl_sop,bz_samp,g_vec
  use wave_func,      ONLY:wf_nc_k
  use stderr,         ONLY:gen_fmt
  use com,            ONLY:msg,error
- use vec_operate,    ONLY:iku_v_norm,cross_product,c2a
+ use vec_operate,    ONLY:cross_product,c2a
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
  !
  implicit none

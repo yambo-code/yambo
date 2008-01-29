@@ -23,8 +23,8 @@ subroutine DFT_Vxc(E,Xk)
  !
  ! V_xc
  !
- use pars,          ONLY:SP,schlen,DP,pi,HARTREE
- use electrons,     ONLY:levels,n_spin,n_spinor,n_sp_pol
+ use pars,          ONLY:SP,DP,pi
+ use electrons,     ONLY:levels,n_spin,n_spinor,n_sp_pol,spin
  use QP_m,          ONLY:QP_Vxc,QP_n_states,QP_table,QP_xc_FUNCTIONAL
  use R_lattice,     ONLY:bz_samp
  use FFT_m,         ONLY:fft_size
@@ -34,19 +34,20 @@ subroutine DFT_Vxc(E,Xk)
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
  !
- !Work Space
+ ! Work Space
  !
- integer                 ::i1,ifft,ifftp,ifft_sp1,ifft_sp2,ib,ibp,ik,i_sp1,i_sp2
+ integer                 ::i1,ifft,ifftp,ifft_sp1,ifft_sp2,ib,ibp,ik,i_sp1
 #if defined _DOUBLE
  complex(DP)             ::zdotc,zdotu
 #else 
  complex(SP)             ::cdotc,cdotu
 #endif
  complex(SP) :: c_ws(fft_size,n_spin)
-#if defined PJ_SPIN
+ !
+ ! Spin support (collinear and not collinear)
+ !
  real(SP)    :: mod_mag,vxc_plus(fft_size),vxc_minus(fft_size)
  complex(SP) :: V_xc_mat(fft_size,n_spin,n_spin)
-#endif
  !
  ! Allocation 
  !
@@ -84,7 +85,7 @@ subroutine DFT_Vxc(E,Xk)
    !
  endif
  !
-#if defined PJ_SPIN
+ ! GPL_END
  !
  if (n_spin==2) then
    !
@@ -128,7 +129,7 @@ subroutine DFT_Vxc(E,Xk)
      !
      if (n_sp_pol==2) then
        !
-       i_sp1=QP_table(i1,4)
+       i_sp1=spin(QP_table(i1,:))
        ifft_sp1=wf_state(ib,ik,i_sp1)
        !
        c_ws(:,1)=wf(:,ifft_sp1)*V_xc_mat(:,i_sp1,i_sp1)
@@ -161,10 +162,10 @@ subroutine DFT_Vxc(E,Xk)
    !
  endif
  !
-#endif
- !
  ! Clean
  !
  deallocate(V_xc,el_mag)
+ ! 
+ ! GPL_START
  !
 end subroutine

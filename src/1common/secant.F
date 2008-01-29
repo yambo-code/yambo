@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function secant(x1,f1,x2,f2,acc)
+integer function secant(x1,f1,x2,f2,acc)
  !
  use pars, ONLY:SP
  !
@@ -44,4 +44,4 @@
    x1=x1+Dx
  endif
  !
- end function
+end function

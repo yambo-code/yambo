@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine QP_raxis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
+subroutine QP_raxis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  ! This routine calculates 
  ! 
@@ -29,7 +29,7 @@
  use pars,          ONLY:SP,schlen,pi,IP,HARTREE
  use stderr,        ONLY:string_pack
  use drivers,       ONLY:l_life
- use electrons,     ONLY:levels
+ use electrons,     ONLY:levels,spin
  use frequency,     ONLY:w_samp,cg_index_bg,cg_npts,W_reset
  use timing,        ONLY:live_timing
  use com,           ONLY:msg
@@ -44,9 +44,8 @@
 &                        QP_G_er,QP_G_dr,QP_Sc_steps
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use functions,     ONLY:e2et,h2ht,bose_decay
- use parser_m,      ONLY:parser
  use memory_m,      ONLY:mem_est
- use R_lattice,     ONLY:qindx_S,bz_samp,nqibz,nqbz
+ use R_lattice,     ONLY:qindx_S,bz_samp
  use D_lattice,     ONLY:nsym,i_space_inv,i_time_rev
  use wave_func,     ONLY:wf_load,wf_free
  !
@@ -64,7 +63,7 @@
  type(pp_indexes) ::px
  type(w_samp)     ::Sc_W(qp%n_states),X_life_W(q%nibz)
  integer :: i1,i2,i3,i_or,iqbz,iqibz,ib,i_err,iq_to_start,iqs,&
-&           life_hh,life_ee,iv4(4),io_err,XID,WID,QP_n_W_freqs_redux
+&           iv4(4),io_err,XID,WID,QP_n_W_freqs_redux
  complex(SP) :: lrhotw(X%ng),X_mat_ws(X%ng,X%ng)
 #if defined _DOUBLE
  complex(SP) :: zdotc,zdotu
@@ -293,9 +292,10 @@
    !
    do i1=1,QP_n_states
      !
-     isc%is=(/QP_table(i1,1),QP_table(i1,3),1,1/)
-     isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iqbz,1),:),1/)
-     iscp%is=(/QP_table(i1,2),QP_table(i1,3),1,1/)
+     isc%is=(/QP_table(i1,1),QP_table(i1,3),1,spin(QP_table(i1,:))/)
+     isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iqbz,1),:),spin(QP_table(i1,:))/)
+     iscp%is=(/QP_table(i1,2),QP_table(i1,3),1,spin(QP_table(i1,:))/)
+     !
      isc%qs(1)=qindx_S(QP_table(i1,3),iqbz,2)
      iscp%qs=isc%qs
      !

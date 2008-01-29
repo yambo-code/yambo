@@ -27,7 +27,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter,be_verbose)
  use stderr,        ONLY:string_pack
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
- use electrons,     ONLY:levels,spin_occ
+ use electrons,     ONLY:levels,spin_occ,spin
  use timing,        ONLY:live_timing
  use com,           ONLY:msg
  use drivers,       ONLY:Finite_Tel,l_ppa,l_chosex
@@ -193,15 +193,10 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter,be_verbose)
    !
    do i1=1,QP_n_states
      !
-#if defined PJ_SPIN
-     isc%is=(/QP_table(i1,1),QP_table(i1,3),1,QP_table(i1,4)/)
-     isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iqbz,1),:),QP_table(i1,4)/)
-     iscp%is=(/QP_table(i1,2),QP_table(i1,3),1,QP_table(i1,4)/)
-#else
-     isc%is=(/QP_table(i1,1),QP_table(i1,3),1,1/)
-     isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iqbz,1),:),1/)
-     iscp%is=(/QP_table(i1,2),QP_table(i1,3),1,1/)
-#endif
+     isc%is=(/QP_table(i1,1),QP_table(i1,3),1,spin(QP_table(i1,:))/)
+     isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iqbz,1),:),spin(QP_table(i1,:))/)
+     iscp%is=(/QP_table(i1,2),QP_table(i1,3),1,spin(QP_table(i1,:))/)
+     !
      isc%qs(1)=qindx_S(QP_table(i1,3),iqbz,2)
      iscp%qs=isc%qs
      !

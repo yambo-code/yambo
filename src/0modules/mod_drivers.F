@@ -21,8 +21,6 @@
 !
 module drivers
  !
- use pars
- !
  ! Generic  Drivers
  !
  logical :: list_dbs

@@ -33,7 +33,7 @@ logical function QP_apply_done(br,kr,en,what)
  ! 
  ! Work Space
  !
- integer :: i1,i2,i3,iref(4)
+ integer :: i1,i2,iref(4)
  !
  QP_apply_done=.true.
  if (what=='E') iref=(/1,3,5,7/)

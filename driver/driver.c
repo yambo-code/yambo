@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#if defined MPI 
+#if defined _MPI 
  #include <mpi.h>
 #endif
 typedef struct 
@@ -38,7 +38,7 @@ typedef struct
         int   nc;
         int   st;
 } Ldes;
-#if defined extfus
+#if defined _FORTRAN_US
  #define F90_FUNC(name,NAME) name ## _
  #define F90_FUNC_(name,NAME) name ## _
 #else
@@ -46,22 +46,22 @@ typedef struct
  #define F90_FUNC_(name,NAME) name
 #endif
 #include "codever.h"
-#if defined self  || PJ_RAS || PJ_REELS || PJ_PH || PJ_SC || PJ_BIGSYS
+#if defined _self  || _RAS || _REELS || _ELPH || _SC || _BIGSYS
  #include "self_cpp.h"
 #endif
-#if defined spp  || SPP_PJ_PH || SPP_PJ_RAS
+#if defined _spp  || _SPP_ELPH || _SPP_RAS
  #include "spp_cpp.h"
 #endif
-#if defined a2s
+#if defined _a2s
  #include "a2s.h"
 #endif
-#if defined f2s
+#if defined _f2s
  #include "f2s.h"
 #endif
-#if defined p2s
+#if defined _p2s
  #include "p2s.h"
 #endif
-#if defined e2s
+#if defined _e2s
  #include "e2s.h"
 #endif
 static void usage(int verbose);
@@ -122,10 +122,10 @@ main(int argc, char *argv[])
 /* 
  Switch off MPI_init as I have options used to create the input file...
 */
-#if defined self  || PJ_RAS || PJ_REELS || PJ_PH || PJ_SC || PJ_BIGSYS
+#if defined _self  || _RAS || _REELS || _ELPH || _SC || _BIGSYS
      if (j> 9) {mpi_init=-1;};
 #endif
-#if defined spp || SPP_PJ_PH || SPP_PJ_RAS
+#if defined _spp || _SPP_ELPH || _SPP_RAS
      if (j> 6) {mpi_init=-1;};
 #endif
 /* 
@@ -196,14 +196,14 @@ main(int argc, char *argv[])
    MPI
  ===========================================================================
  */
-#if defined MPI
+#if defined _MPI
  if (mpi_init==0) {
    MPI_Init(&argc,&argv);               /* starts MPI */
    MPI_Comm_rank(MPI_COMM_WORLD, &pid); /* get current process id */
    MPI_Comm_size(MPI_COMM_WORLD, &np);  /* get number of processes */
  };
 #endif
-#if defined self  || PJ_RAS || PJ_REELS || PJ_PH || PJ_SC || PJ_BIGSYS
+#if defined _self  || _RAS || _REELS || _ELPH || _SC || _BIGSYS
  /* 
    Running the Fortran SELF driver 
  ===========================================================================
@@ -211,7 +211,7 @@ main(int argc, char *argv[])
  F90_FUNC(self_driver,SELF_DRIVER)(
           rnstr2,&lni,inf,&iif,id,&iid,od,&iod,js,&ijs,&np,&pid);
 #endif
-#if defined spp  || SPP_PJ_PH || SPP_PJ_RAS
+#if defined _spp || _SPP_ELPH || _SPP_RAS
  /* 
    Running the Fortran SPP driver
  ===========================================================================
@@ -219,7 +219,7 @@ main(int argc, char *argv[])
  F90_FUNC(spp_i,SPP_I)(
           rnstr2,&lni,inf,&iif,id,&iid,od,&iod,js,&ijs,&np,&pid);
 #endif
-#if defined a2s 
+#if defined _a2s 
  /* 
    Running the Fortran A2S driver
  ===========================================================================
@@ -227,7 +227,7 @@ main(int argc, char *argv[])
  F90_FUNC(a2s_i,A2S_I)(
           rnstr2,&lni,inf,&iif,id,&iid,od,&iod,js,&ijs,&np,&pid);
 #endif
-#if defined p2s
+#if defined _p2s
  /* 
    Running the Fortran P2S driver 
  ===========================================================================
@@ -235,7 +235,7 @@ main(int argc, char *argv[])
  F90_FUNC(p2s_i,P2S_I)(
           rnstr2,&lni,inf,&iif,id,&iid,od,&iod,js,&ijs,&np,&pid);
 #endif
-#if defined e2s 
+#if defined _e2s 
  /* 
    Running the Fortran P2S driver 
  ===========================================================================
@@ -243,7 +243,7 @@ main(int argc, char *argv[])
  F90_FUNC(e2s_i,E2S_I)(
           rnstr2,&lni,inf,&iif,id,&iid,od,&iod,js,&ijs,&np,&pid);
 #endif
-#if defined f2s 
+#if defined _f2s 
  /* 
    Running the Fortran F2S driver 
  ===========================================================================
@@ -257,7 +257,7 @@ main(int argc, char *argv[])
  */
  strcpy(edit_line,"vi ");
  strncat(edit_line,inf,strlen(inf));
-#if defined self  || PJ_RAS || PJ_REELS || spp || PJ_PH || PJ_SC || SPP_PJ_PH || SPP_PJ_RAS  || PJ_BIGSYS
+#if defined _self || _RAS || _REELS || _spp || _ELPH || _SC || _SPP_ELPH || _SPP_RAS  || _BIGSYS
  if (iif == 1 && ttd>0 ) 
  {
   system(edit_line);
@@ -276,7 +276,7 @@ main(int argc, char *argv[])
   if (pid==0 && iif == -2) {
    fprintf(stderr," \n%s\n\n","self: invalid command line options and/or build");
   };
-#if defined MPI
+#if defined _MPI
   if (np>1) {
    MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();

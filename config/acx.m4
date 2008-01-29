@@ -336,7 +336,7 @@ AC_COMPILE_IFELSE(
  save="$LIBS"
  LIBS="ftest.$ac_objext"
  AC_LINK_IFELSE([AC_LANG_CALL([], [ftest])],
-                 [c_success="yes"; msg="test_"; save="$CFLAGS"; CFLAGS="$save -Dextcus"])
+                 [c_success="yes"; msg="test_"; save="$CFLAGS"; CFLAGS="$save -D_C_US"])
  LIBS="$save"
  AC_LANG_POP(Fortran)
  rm -f ftest.$ac_objext],[])
@@ -364,7 +364,7 @@ case $ac_cv_fc_mangling in
  "lower case, underscore, no extra underscore")
     f_success="yes" 
     save="$CFLAGS"
-    CFLAGS="$save -Dextfus" ;;
+    CFLAGS="$save -D_FORTRAN_US" ;;
  "lower case, underscore, extra underscore")
     f_success="no" ;;
  "lower case, no underscore, no extra underscore")
@@ -372,11 +372,11 @@ case $ac_cv_fc_mangling in
  "lower case, no underscore, extra underscore")
     f_success="yes"
     save="$CFLAGS"
-    CFLAGS="$save -Dextfus" ;;
+    CFLAGS="$save -D_FORTRAN_US" ;;
  "upper case, underscore, no extra underscore")
     f_success="yes"
     save="$CFLAGS"
-    CFLAGS="$save -Dextfus" ;;
+    CFLAGS="$save -D_FORTRAN_US" ;;
  "upper case, underscore, extra underscore")
     f_success="no" ;;
  "upper case, no underscore, no extra underscore")
@@ -384,7 +384,7 @@ case $ac_cv_fc_mangling in
  "upper case, no underscore, extra underscore")
     f_success="yes"
     save="$CFLAGS"
-    CFLAGS="$save -Dextfus" ;;
+    CFLAGS="$save -D_FORTRAN_US" ;;
 esac
 AC_LANG_POP(C)
 if test "$c_success" = "no" || test "$f_success" = "no" ; then 

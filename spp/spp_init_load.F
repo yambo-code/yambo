@@ -23,7 +23,7 @@ subroutine spp_init_load(defs)
  !
  use it_m,          ONLY:it,initdefs,E_unit
  use SPP
-#if defined SPP_PJ_RAS
+#if defined _SPP_RAS
  use bulkeps,              ONLY : init_bulk
  use convolute,            ONLY : init_convolute
 #endif
@@ -70,7 +70,7 @@ subroutine spp_init_load(defs)
  call it(defs,'Format', 'Output format [(g)nuplot/(x)crysden]',p_format)
  call it(defs,'Direction', '[rlu] [1/2/3] for 1d or [12/13/23] for 2d [123] for 3D',p_dir)
  !
-#if defined SPP_PJ_PH
+#if defined _SPP_ELPH
  !
  !EL-PH
  !
@@ -82,7 +82,7 @@ subroutine spp_init_load(defs)
  call it(defs,'PhStps', 'Energy steps',elph_steps)
  !
 #endif
-#if defined SPP_PJ_RAS
+#if defined _SPP_RAS
  !
  ! RAS
  !

@@ -29,7 +29,7 @@ if ! test -z "$NC_PREFIX" && ! test "$with_netcdf" = "no"; then
     if test "x$netcdf" = xyes; then
      AC_MSG_RESULT([yes])
      NCLIBS="-lnetcdf"
-     dnetcdf="-DNC"
+     dnetcdf="-D_NETCDF_IO"
      break
     fi
  done

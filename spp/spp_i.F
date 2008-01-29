@@ -144,7 +144,7 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  if (lexcwf) call exc_wf_eval(Xk,Xen)
  !
-#if defined SPP_PJ_PH
+#if defined _SPP_ELPH
  !
  if (lelph) then
    i_err=elph_pw_dbs(k,en,q)
@@ -153,7 +153,7 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
 #endif
  !
-#if defined SPP_PJ_RAS
+#if defined _SPP_RAS
  !
  if (lras) call ras_spp
  if (lloc) call loc_spp

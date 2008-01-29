@@ -55,7 +55,7 @@ module SPP
  real(SP), allocatable ::exc_wf_sq(:)
  real(SP), allocatable ::wf_2d(:,:)
  !
-#if defined SPP_PJ_PH
+#if defined _SPP_ELPH
  !
  !EL-PH
  !
@@ -69,7 +69,7 @@ module SPP
  character(schlen) :: ph_freqs_file
  !
 #endif
-#if defined SPP_PJ_RAS
+#if defined _SPP_RAS
  !
  !RAS
  !

@@ -39,10 +39,10 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
  use electrons,     ONLY:levels,E_reset,n_bands
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use frequency,     ONLY:w_samp
-#if defined PJ_RAS 
+#if defined _RAS 
  use ras_module,    ONLY:lras, lreels
 #endif
-#if defined PJ_REELS 
+#if defined _REELS 
  use reels_module,  ONLY:lreels
 #endif
  !
@@ -76,10 +76,10 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
  infile=inf
  !
  call std_presets(instr,ind,od,js)
-#ifdef PJ_RAS
+#ifdef _RAS
  call ras_presets()
 #endif
-#ifdef PJ_REELS
+#ifdef _REELS
  call reels_presets()
 #endif
  call it_reset(1)
@@ -147,10 +147,10 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
  ! - Dynamical X -
  !
  apply_QP=(l_optics.and.l_lr).or.(l_em1d.and..not.l_ppa).or.&
-#if defined PJ_REELS
+#if defined _REELS
         lreels.or.&
 #endif
-#if defined PJ_RAS
+#if defined _RAS
         lras.or.lreels.or.&
 #endif
         (l_gw0.and..not.l_ppa.and.l_el_corr).or.l_life
@@ -178,10 +178,10 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
  ! RAS & REELS
  !=============
  !
-#if defined PJ_RAS
+#if defined _RAS
  if (lras.or.lreels) call rasdriver(Xen,Xk,q,Xw(3),X(3))
 #endif
-#if defined PJ_REELS
+#if defined _REELS
  if (lreels)         call reelsdriver(Xen,Xk,q,Xw(3),X(3))
 #endif
  !
@@ -245,7 +245,7 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
  !
  if (l_acfdt) call acfdt_tot_energy(Xen,Xk,q,X(1))
  !
-#if defined PJ_SC
+#if defined _SC
  ! SC
  !====
  !

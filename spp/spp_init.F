@@ -33,7 +33,7 @@ subroutine spp_init(instr,lnstr,FINALIZE)
  use SPP
  use par_proc_m,     ONLY:master_node,pp_redux_wait
  use timing,         ONLY:what_is_running
-#if defined SPP_PJ_RAS
+#if defined _SPP_RAS
  use bulkeps,        only : bshift, bbroad, bfile, btype 
  use convolute,      only : gbroad
 #endif
@@ -52,9 +52,9 @@ subroutine spp_init(instr,lnstr,FINALIZE)
  ! What is running ?
  !
  what_is_running='SPP'
-#if defined PJ_PH
+#if defined _ELPH
  what_is_running='SPP_PH'
-#elif defined PJ_RAS
+#elif defined _RAS
  what_is_running='SPP_RAS'
 #endif
  !
@@ -82,7 +82,7 @@ subroutine spp_init(instr,lnstr,FINALIZE)
    max_energy = 1.
    wf_ng = ng_vec
    !
-#if defined SPP_PJ_PH
+#if defined _SPP_ELPH
    !
    ! ELPH
    !
@@ -95,7 +95,7 @@ subroutine spp_init(instr,lnstr,FINALIZE)
    !
 #endif
    !
-#if defined SPP_PJ_RAS
+#if defined _SPP_RAS
    !
    ! RAS
    !
@@ -173,14 +173,14 @@ subroutine spp_init(instr,lnstr,FINALIZE)
  if (lbzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut")
  if (lexcwf) call initactivate(1,"Action Max_Energy FFTGvecs Degen_Step Order RNorm &
 &                                 State Cells Hole Dimension Direction Format")
-#if defined SPP_PJ_PH
+#if defined _SPP_ELPH
  !
  lelph=rstatus(4)/=0
  if (lelph) call initactivate(1,"DBsPATH PHfreqF EEfermi EfGbroad PhBroad PhStps")
  !
 #endif
 
-#if defined SPP_PJ_RAS
+#if defined _SPP_RAS
  !
  lsurf=rstatus(5)/=0
  lras=rstatus(6)/=0

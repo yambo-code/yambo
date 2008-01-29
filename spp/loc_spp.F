@@ -58,13 +58,13 @@
    call setup_gvecaff
 
    wf_norm_test = .true.
-#if !defined PJ_BIGSYS
+#if !defined _BIGSYS
    call wf_load(ngloc,1,(/1,n_bands/),(/1,nkibz/),space='G',&
 &               title='-Localization/G space')
 #endif
 
    do ik=1,nkibz
-#if defined PJ_BIGSYS
+#if defined _BIGSYS
      call wf_load(ngloc,1,(/1,n_bands/),(/ik,ik/),space='G',&
 &                 title='-Localization/G space')
 #endif

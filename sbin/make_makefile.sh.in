@@ -44,17 +44,17 @@ llibs=""
 lock_file="__lock"
 for arg in $@; do
  case $arg in
-  -DMPI)
+  -D_MPI)
    dmpi="yes" ;
    dopts="$dopts $arg";
    fc="\$(pf90)" ;
    fcflags="\$(pf90flags)"
    llmpi="\$(lmpi)"
    ;;
-  -DNC)
+  -D_NETCDF_IO)
    dopts="$dopts $arg";
    ;;
-  -D*) 
+  -D_*) 
    dopts="$dopts $arg"
    a=`echo $arg  | sed "s/-/_/"`
    lock_file="$lock_file$a"
@@ -97,9 +97,9 @@ echo "linclude=$linclude" >> $cdir/Makefile
 echo "mfiles=find . -name '*.mod'" >> $cdir/Makefile
 echo "target=$target" >> $cdir/Makefile
 echo "dmpi=$dmpi" >> $cdir/Makefile
-echo "dopts=$dopts -D\$(os)" >> $cdir/Makefile
+echo "dopts=$dopts -D_\$(os)" >> $cdir/Makefile
 echo "lock_file=$lock_file" >> $cdir/Makefile
-$cpp $cppflags $dopts -D$os $cdir/$ofile >> $cdir/Makefile
+$cpp $cppflags $dopts -D_$os $cdir/$ofile >> $cdir/Makefile
 
 if [ "$mode" = "x" ] ; then 
 cat << EOF >> $cdir/Makefile
@@ -140,9 +140,9 @@ define driver
                    \$(srcdir)/driver/spp.h > \$(srcdir)/driver/spp_cpp.h; fi
  \$(cc) \$(cflags) -c \$(srcdir)/driver/getopt.c
  @if test "\$(dmpi)" = ""; \
-  then \$(cc) \$(cflags) \$(dopts) -D\$@ -c \$(srcdir)/driver/driver.c; fi
+  then \$(cc) \$(cflags) \$(dopts) -D_\$@ -c \$(srcdir)/driver/driver.c; fi
  @if test ! "\$(dmpi)" = ""; \
-  then \$(pcc) \$(pccflags) \$(dopts) -D\$@ -c \$(srcdir)/driver/driver.c; fi
+  then \$(pcc) \$(pccflags) \$(dopts) -D_\$@ -c \$(srcdir)/driver/driver.c; fi
  @rm -f \$(srcdir)/driver/self_cpp.h \$(srcdir)/driver/spp_cpp.h
 endef
 define link

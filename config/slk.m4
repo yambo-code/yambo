@@ -46,7 +46,7 @@ if test "$mpibuild"  = "yes" && ! test "$with_blacs" = "no" &&
 fi
 
 dscalapack=""
-if test "$enable_scalapack" = "yes" ; then dscalapack="-DSLK";fi
+if test "$enable_scalapack" = "yes" ; then dscalapack="-D_SCALAPACK";fi
 
 AC_SUBST(BLACS_LIBS)
 AC_SUBST(SCALAPACK_LIBS)

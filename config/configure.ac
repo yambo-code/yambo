@@ -280,7 +280,7 @@ if test "$mpibuild" = "yes"; then
 # MPIF90
 #
  PFCFLAGS=""
- mpi_cpp="-DMPI"
+ mpi_cpp="-D_MPI"
  AC_LANG_PUSH(Fortran)
  ACX_MPI([], 
   AC_MSG_WARN([could not compile a FORTRAN mpi test program. SELF serial only.]))
@@ -315,9 +315,9 @@ KH_PATH_NETCDF_F90
 ACX_REPORT()
 # ============================================================================
 AC_CONFIG_FILES([config/setup config/Makefile config/report
-                 src/2wf_and_fft/sgfft.F
+                 src/wf_and_fft/sgfft.F
                  sbin/make_makefile.sh sbin/self_save.sh sbin/make_message.pl
-                 driver/codever.h src/0external_c/.objects])
+                 driver/codever.h src/external_c/.objects])
 AC_OUTPUT
 chmod u+x sbin/*
 cp config/Makefile .

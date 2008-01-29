@@ -43,16 +43,16 @@
   {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0},                  /* 19 */
   {"bss",    "y","BSE solver [opt=h/d/i/t]",0,0,1,0},                      /* 20 */
   {"acfdt",  "a","ACFDT Total Energy",0,0,0,0},                            /* 21 */
-#if defined PJ_SC 
+#if defined _SC 
   {"scpot",  "v","Self-Consistently",0,0,0,0}, /* 22 */
 #endif
-#if defined PJ_RAS 
+#if defined _RAS 
   {"sursp",  "s","Surface Spectroscopy [opt=r(as)/e(el)/b(oth)]",0,0,1,0}, /* 22 */
 #endif
-#if defined PJ_REELS
+#if defined _REELS
   {"reels",  "r","Surface Spectroscopy (REELS)",0,0,0,0},                  /* 22 */
 #endif
-#if defined PJ_PH
+#if defined _ELPH
   {"corrtp", "s","Correlation [e(lectrons)/p(honons)/b(oth)]",0,0,1,0},    /* 22 */
 #endif
   {NULL,NULL,NULL,0,0,0,0}

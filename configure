@@ -7268,7 +7268,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  c_success="yes"; msg="test_"; save="$CFLAGS"; CFLAGS="$save -Dextcus"
+  c_success="yes"; msg="test_"; save="$CFLAGS"; CFLAGS="$save -D_C_US"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
@@ -7478,7 +7478,7 @@ case $ac_cv_fc_mangling in
  "lower case, underscore, no extra underscore")
     f_success="yes"
     save="$CFLAGS"
-    CFLAGS="$save -Dextfus" ;;
+    CFLAGS="$save -D_FORTRAN_US" ;;
  "lower case, underscore, extra underscore")
     f_success="no" ;;
  "lower case, no underscore, no extra underscore")
@@ -7486,11 +7486,11 @@ case $ac_cv_fc_mangling in
  "lower case, no underscore, extra underscore")
     f_success="yes"
     save="$CFLAGS"
-    CFLAGS="$save -Dextfus" ;;
+    CFLAGS="$save -D_FORTRAN_US" ;;
  "upper case, underscore, no extra underscore")
     f_success="yes"
     save="$CFLAGS"
-    CFLAGS="$save -Dextfus" ;;
+    CFLAGS="$save -D_FORTRAN_US" ;;
  "upper case, underscore, extra underscore")
     f_success="no" ;;
  "upper case, no underscore, no extra underscore")
@@ -7498,7 +7498,7 @@ case $ac_cv_fc_mangling in
  "upper case, no underscore, extra underscore")
     f_success="yes"
     save="$CFLAGS"
-    CFLAGS="$save -Dextfus" ;;
+    CFLAGS="$save -D_FORTRAN_US" ;;
 esac
 ac_ext=${ac_fc_srcext-f}
 ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
@@ -10637,7 +10637,7 @@ if test "$mpibuild" = "yes"; then
 # MPIF90
 #
  PFCFLAGS=""
- mpi_cpp="-DMPI"
+ mpi_cpp="-D_MPI"
  ac_ext=${ac_fc_srcext-f}
 ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
 ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
@@ -11540,7 +11540,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  HAVE_FFTW="yes"; FFT_CPP="-DFFTW";
+  HAVE_FFTW="yes"; FFT_CPP="-D_FFTW";
  FFT_DESCRIPTION="FFTW Fast Fourier transform";LDFLAGS="$FFTW_PATH"
 else
   echo "$as_me: failed program was:" >&5
@@ -11637,7 +11637,7 @@ echo "${ECHO_T}no" >&6
 fi
 
 dscalapack=""
-if test "$enable_scalapack" = "yes" ; then dscalapack="-DSLK";fi
+if test "$enable_scalapack" = "yes" ; then dscalapack="-D_SCALAPACK";fi
 
 
 
@@ -11725,7 +11725,7 @@ rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
      echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
      NCLIBS="-lnetcdf"
-     dnetcdf="-DNC"
+     dnetcdf="-D_NETCDF_IO"
      break
     fi
  done
@@ -11787,7 +11787,7 @@ if test "$enable_scalapack" = "yes" ; then SLK_str="X"; fi
 
 
 # ============================================================================
-                                                                                          ac_config_files="$ac_config_files config/setup config/Makefile config/report src/2wf_and_fft/sgfft.F sbin/make_makefile.sh sbin/self_save.sh sbin/make_message.pl driver/codever.h src/0external_c/.objects"
+                                                                                          ac_config_files="$ac_config_files config/setup config/Makefile config/report src/wf_and_fft/sgfft.F sbin/make_makefile.sh sbin/self_save.sh sbin/make_message.pl driver/codever.h src/external_c/.objects"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -12342,12 +12342,12 @@ do
   "config/setup" ) CONFIG_FILES="$CONFIG_FILES config/setup" ;;
   "config/Makefile" ) CONFIG_FILES="$CONFIG_FILES config/Makefile" ;;
   "config/report" ) CONFIG_FILES="$CONFIG_FILES config/report" ;;
-  "src/2wf_and_fft/sgfft.F" ) CONFIG_FILES="$CONFIG_FILES src/2wf_and_fft/sgfft.F" ;;
+  "src/wf_and_fft/sgfft.F" ) CONFIG_FILES="$CONFIG_FILES src/wf_and_fft/sgfft.F" ;;
   "sbin/make_makefile.sh" ) CONFIG_FILES="$CONFIG_FILES sbin/make_makefile.sh" ;;
   "sbin/self_save.sh" ) CONFIG_FILES="$CONFIG_FILES sbin/self_save.sh" ;;
   "sbin/make_message.pl" ) CONFIG_FILES="$CONFIG_FILES sbin/make_message.pl" ;;
   "driver/codever.h" ) CONFIG_FILES="$CONFIG_FILES driver/codever.h" ;;
-  "src/0external_c/.objects" ) CONFIG_FILES="$CONFIG_FILES src/0external_c/.objects" ;;
+  "src/external_c/.objects" ) CONFIG_FILES="$CONFIG_FILES src/external_c/.objects" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;

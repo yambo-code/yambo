@@ -37,7 +37,7 @@ esac
 save_ldflags="$LDFLAGS"
 AS_IF([test "$FFTW_LIBS"], [LIBS="${FFTW_PATH} ${FFTW_LIBS}"])
 AC_LINK_IFELSE([AC_LANG_CALL([], [dfftw_destroy_plan(1)])],
- [HAVE_FFTW="yes"; FFT_CPP="-DFFTW";
+ [HAVE_FFTW="yes"; FFT_CPP="-D_FFTW";
  FFT_DESCRIPTION="FFTW Fast Fourier transform";LDFLAGS="$FFTW_PATH"],
  [HAVE_FFTW="no"; FFT_CPP=""; FFTW_LIBS="";LDFLAGS="$save_ldflags"])
 AC_MSG_RESULT($HAVE_FFTW)

@@ -34,10 +34,10 @@
   {"kpt","k","K-grid generator",0,0,0,0}, /* 9,1 */
   {"excwf","e","Excitonic Wavefunction plot",0,0,0,0}, /* 10,2 */
   {"bzrim","r","BZ energy RIM analyzer",0,0,0,0}, /* 11,3 */
-#if defined SPP_PJ_PH
+#if defined _SPP_ELPH
   {"elph", "p","Electron-Phonon DBs preprocessing",0,0,0,0}, /* 12,4 */
 #endif
-#if defined SPP_PJ_RAS
+#if defined _SPP_RAS
   {"surf", "a","Surface spectroscopy postprocessor",0,0,1,0}, /* 13,4 */
 #endif
   {NULL,NULL,NULL,0,0,0,0}

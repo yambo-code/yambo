@@ -39,11 +39,7 @@ integer function ioBSS_invert(iq,n_,inv_err,eps,W_disk,ID)
  integer     :: ID
  real(SP), allocatable :: W(:,:)
  !
-#if defined PJ_PH
- ioBSS_invert=io_connect(desc='BS_ELPH_invert_Q'//trim(intc(iq)),type=2,ID=ID)
-#else
  ioBSS_invert=io_connect(desc='BS_invert_Q'//trim(intc(iq)),type=2,ID=ID)
-#endif
  !
  ! GPL_END
  !

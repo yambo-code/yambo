@@ -22,9 +22,6 @@
 subroutine K_inversion(iq,W,E,k,q) 
  !
  use pars,           ONLY:SP,pi,DP
-#if defined PJ_PH
- use drivers,        ONLY:l_ph_corr
-#endif
  use X_m,            ONLY:X_epsilon
  use stderr,         ONLY:intc,real2ch
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_not_const_eh_f,&
@@ -41,9 +38,6 @@ subroutine K_inversion(iq,W,E,k,q)
  use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset,ncpu
  use par_indexes_m,  ONLY:par_indexes
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,NONE,VERIFY,OP_WR_CL
-#if defined PJ_PH
- use ELPH,           ONLY:EXCPH_mat,add_ELPH_K
-#endif
  implicit none
  type(w_samp) :: W
  integer      :: iq
@@ -56,8 +50,8 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  type(pp_indexes) ::px
  type(w_samp)     ::W_shifted
- integer          ::i1,i2,ik_bz,iv,ic,iw,icv,of_mode,i_sp,ik_ibz,WS_alloc_err
- integer, external::pert_inversion,eval_ELPH_K
+ integer          ::i1,i2,ik_bz,iv,ic,iw,of_mode,i_sp,ik_ibz
+ integer, external::pert_inversion
  complex(SP)      ::Co,QP_Z,QP_width
  complex(SP), allocatable  ::Lo(:,:),WS(:,:)
  !
@@ -172,28 +166,9 @@ subroutine K_inversion(iq,W,E,k,q)
  call Kernel_by_V(iq)
  forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)-BS_eh_E(i1)
  !
-#if defined PJ_PH
- !
- allocate(WS(BS_K_dim,BS_K_dim),stat=WS_alloc_err)
- if (WS_alloc_err==0) then
-   call mem_est("WS",(/BS_K_dim**2/))
-   WS=BS_mat
- else 
-   call warning('[ELPH K] Work Space not allocated')
- endif
- !
- ! SAVE BS_mat & calculaye ELPH_K
- !
- add_ELPH_K=.false.
- if (l_ph_corr) add_ELPH_K=eval_ELPH_K(E,k,q,.TRUE.,(0.,0.))==0
-#endif
- !
  ! Initialize the output file 
  !
  of_mode=3
-#if defined PJ_PH
- if (add_ELPH_K) of_mode=4
-#endif
  call K_dump_to_o_file(iq,-of_mode)
  !
  ! Green`s function and non-interacting eps2
@@ -231,15 +206,8 @@ subroutine K_inversion(iq,W,E,k,q)
    !
    if (BSS_uses_RIM) then
      forall(iw=1:W%n(1)) W_shifted%p(iw)=W%p(iw)-BS_mat(i1,i1)
-#if defined PJ_PH
-     if (add_ELPH_K) forall(iw=1:W%n(1)) W_shifted%p(iw)=W_shifted%p(iw)-EXCPH_mat(i1,i1)
-#endif
      call X_bare_RIM_Gf(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W_shifted,E,k,Lo(i1,:),"r")
      BS_mat(i1,i1)=(0.,0.)
-#if defined PJ_PH
-     if (add_ELPH_K) EXCPH_mat(i1,i1)=(0.,0.)
-     if (WS_alloc_err==0) WS(i1,i1)=(0.,0.)
-#endif
    endif
    !
    call live_timing(steps=1)
@@ -354,11 +322,6 @@ subroutine K_inversion(iq,W,E,k,q)
  X_epsilon(2,:)=1.+X_epsilon(2,:)
  X_epsilon(1,:)=W%p(:)
  !
-#if defined PJ_PH
- BSS_n_descs=BSS_n_descs+1
- BSS_description(BSS_n_descs)='    |Phononic Kernel      : no'
- if (add_ELPH_K) BSS_description(BSS_n_descs)='    |Phononic Kernel      : yes'
-#endif
  BSS_n_descs=BSS_n_descs+2
  BSS_description(BSS_n_descs-1)=' '
  BSS_description(BSS_n_descs)=' BSS|BZ RIM points              :'//intc(BZ_RIM_tot_nkpts)
@@ -374,16 +337,6 @@ subroutine K_inversion(iq,W,E,k,q)
  call pp_indexes_reset(px)
  deallocate(BS_mat,iw_full,Lo)
  call mem_est("BS_mat Lo")
-#if defined PJ_PH
- if (allocated(EXCPH_mat)) then
-   deallocate(EXCPH_mat)
-   call mem_est("EXCPH_mat")
- endif
- if (WS_alloc_err==0) then
-   deallocate(WS)
-   call mem_est("WS")
- endif
-#endif
  !
  contains
    !
@@ -394,19 +347,6 @@ subroutine K_inversion(iq,W,E,k,q)
      logical :: perform_inv
      !
      do i2=1,iw_2do
-       !
-#if defined PJ_PH
-       if (add_ELPH_K) then
-         if (WS_alloc_err==0) then
-           BS_mat=WS
-         else
-           BS_mat=(0.,0.)
-           call Kernel_by_V(iq)
-           forall(i3=1:BS_K_dim) BS_mat(i3,i3)=0.
-         endif
-         call static2dyn_ELPH_K(E,k,q,W%p(i2),BS_mat)
-       endif
-#endif
        !
        if(.not.full_diago) then
          !

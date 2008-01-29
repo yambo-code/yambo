@@ -79,9 +79,8 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
    else
      QP_Sc=cmplx(0.,0.,SP)
    endif
-#if defined PJ_PH
+   !
    if (l_ph_corr)    call QP_elph(en,k,q,qp)
-#endif
    !
    do i1=1,QP_n_states
      !

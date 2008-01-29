@@ -119,7 +119,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('r',defs,'reels',  '[R] Surface Spectroscopy (REELS)') ! [18]
 #endif
 #if defined PJ_PH
- call it('r',defs,'el_ph',   '[R] Electron-Phonon Correlation') ! [18]
+ call it('r',defs,'el_ph',   '[R] Electron-Phonon Correlation')   ! [18]
  call it('r',defs,'el_el',   '[R] Electron-Electron Correlation') ! [19]
 #endif
  !

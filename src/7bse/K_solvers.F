@@ -22,9 +22,6 @@
 subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  use pars,           ONLY:SP,pi,schlen
-#if defined PJ_PH
- use drivers,        ONLY:l_ph_corr
-#endif
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_t,X_epsilon,X_alloc,X_rhoq0,&
 &                         alpha_dim,eps_2_alpha,X_duplicate
@@ -179,14 +176,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  if (run_Diago)          call K_diagonalization(iq,W_bss)
  if (Pert_inversion)     call K_inversion(iq,W_bss,Ken,Xk,q)
- !
-#if defined PJ_PH
- !
- ! Plot El-Phonon Kernel elements
- !
- if (l_ph_corr.and.run_Diago) call ELPH_K_print(Ken,Xk,q)
- !
-#endif
  !
  ! CLEAN
  !

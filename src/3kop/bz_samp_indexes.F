@@ -70,10 +70,9 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  user_defined_qpts=.false.
  gamma_point_only=.false.
- impose_minus_q=.false.
-#if defined  PJ_PH
+ !
  call parser('MinusQ',impose_minus_q)
-#endif
+ !
  if (.not.bse_scattering) bse_scattering=l_bse
  !
  q%description='q'
@@ -109,12 +108,9 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  if (abs(m3det(k_b_m1))>1.E-7) then
    call m3inv(M=k_b_m1)
-#if defined  PJ_PH
+   !
    if (impose_minus_q)      call define_q_map(-Xk%ptbz(:,:),-Xk%ptbz(1,:))
    if (.not.impose_minus_q) call define_q_map(Xk%ptbz(:,:),Xk%ptbz(1,:))
-#else
-   call define_q_map(Xk%ptbz(:,:),Xk%ptbz(1,:))
-#endif
    !
    ! THE GRID IS UNIFORM IF ALL THE Q_MAP IS FILLED
    !
@@ -135,12 +131,8 @@ subroutine bz_samp_indexes(k,Xk,q)
      !
      v1=Xk%ptbz(i1,:)-Xk%ptbz(1,:)
      !
-#if defined  PJ_PH
      if (impose_minus_q)      call c2a(v_in=-v1,v_out=q%ptbz(i1,:),mode='ka2i')
      if (.not.impose_minus_q) call c2a(v_in=v1,v_out=q%ptbz(i1,:),mode='ka2i')
-#else
-     call c2a(v_in=v1,v_out=q%ptbz(i1,:),mode='ka2i')
-#endif
      !
    enddo
    if (.not.allocated(q_pt)) then

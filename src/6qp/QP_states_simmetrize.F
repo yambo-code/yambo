@@ -72,4 +72,4 @@ subroutine QP_states_simmetrize(vec_2_sim,en,state_is_2do)
    !
  enddo
  !
- end subroutine
+end subroutine

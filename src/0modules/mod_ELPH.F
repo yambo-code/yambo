@@ -43,11 +43,6 @@ module ELPH
  real(SP)  :: PH_damping
  real(SP)  :: PH_null_E_rgn
  !
- ! el-ph BSE Kernel
- !
- complex(SP), allocatable :: EXCPH_mat(:,:)
- logical                  :: add_ELPH_K
- !
  contains
    !
    subroutine elph_gkkp_alloc()

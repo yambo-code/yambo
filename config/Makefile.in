@@ -54,7 +54,7 @@ EXE      = $(TARGETS) $(PROJECTS)
 #
 # Libraries (ordered for compiling & linking)
 #
-BASIC_LIBS   = external_c modules xc_functionals parser common io wf_and_fft 
+BASIC_LIBS   = external_c modules xc_functionals parser communicate common io wf_and_fft 
 
 MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl interface \
                tddft pol_function qp acfdt bse
@@ -71,7 +71,7 @@ PJ_PHLIBS       = $(MAIN_LIBS)
 #
 # Interfaces
 #
-2SLIBS       = external_c modules parser common io 
+2SLIBS       = external_c modules parser communicate common io 
 #
 # SPP
 #

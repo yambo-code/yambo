@@ -1,3 +1,3 @@
 objs = col_driver.o rim.o rim_integrate.o \
-       cutoff_driver.o cutoff_sphere.o cutoff_box.o cutoff_test.o \
-       cutoff_cylinder.o
+       bessel_J0.o cutoff_driver.o cutoff_sphere.o cutoff_box.o \
+       cutoff_test.o cutoff_cylinder.o

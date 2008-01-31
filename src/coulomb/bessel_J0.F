@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2005 A. Marini and the SELF team 
+! Copyright (C) 2000-2005 D. Varsano and the SELF team 
 !         http://www.fisica.uniroma2.it/~self
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -19,43 +19,21 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module drivers
+function bessel_J0(s)
+ use pars,          ONLY:SP
+ use R_lattice,     ONLY:cyl_vr_save,cyl_zz_save
+ implicit none
  !
- ! Generic  Drivers
+ real(SP) ::bessel_J0
+ ! 
+ ! Work Space
  !
- logical :: list_dbs
- logical :: infile_editing
- logical :: Finite_Tel
- logical :: gpl_version
+ real(SP) ::  s,arg,BESJ0
  !
- ! Runlevels
- !
- logical :: l_setup,l_rim,l_col_cut,l_acfdt
- !
- ! Specific runlevels drivers...
- !
- ! Correlation
- !
- logical :: l_el_corr,l_ph_corr
- !
- ! QP
- !
- logical :: l_xxvxc,l_ppa,l_gw0,l_life,l_chosex
- !
- ! LR
- !
- logical :: l_optics,l_lr,l_em1d,l_em1s
- !
- ! BSE
- !
- logical :: l_bse,l_bss
- !
- ! SC
- !
- logical :: l_sc_run,l_sc_hartree,l_sc_xx
- !
- ! TDDFT
- !
- logical :: l_alda_fxc,l_bs_fxc,l_lrc_fxc
- !
-end module drivers
+ arg=cyl_vr_save*s
+ if(cyl_zz_save==0) then
+   bessel_J0=BESJ0(arg)
+ else
+   bessel_J0=BESJ0(arg)*s/sqrt(s**2+cyl_zz_save**2)
+ endif
+end function

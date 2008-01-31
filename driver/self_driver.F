@@ -249,7 +249,7 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
  ! SC
  !====
  !
- if (l_sc_pot) call SC_driver(X(1),en,k,q)
+ if (l_sc_run) call SC_driver(X(1),en,k,q)
 #endif
  !
  ! GAME OVER :(

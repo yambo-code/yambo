@@ -25,6 +25,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  use drivers,       ONLY:l_ppa,l_el_corr,l_ph_corr,l_chosex
  use com,           ONLY:msg
  use X_m,           ONLY:X_t
+ use SC,            ONLY:SC_E_threshold
  use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Sx,QP_Vxc,QP_Sc,&
 &                        QP_n_states,QP_dSc,QP_dSc_delta,QP_n_G_bands,&
 &                        GWo_SC_done,GWo_iterations
@@ -44,7 +45,6 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  integer     :: i1,i2,iter
  real(SP)    :: SC_corr_prev,SC_corr_now
  complex(SP) :: Z(QP_dSc_steps-1),Eqp(QP_dSc_steps-1),Eqp_prev(QP_n_states)
- real(SP), parameter :: SC_tresh=0.01/HARTREE
  !
  ! Dyson equation: Newton solver 
  !
@@ -109,7 +109,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
    enddo
    !
    SC_corr_now= maxval(real(qp%E(:)-Eqp_prev(:)))
-   GWo_SC_done=abs( SC_corr_prev-SC_corr_now )<SC_tresh.or.iter==GWo_iterations
+   GWo_SC_done=abs( SC_corr_prev-SC_corr_now )<SC_E_threshold.or.iter==GWo_iterations
    Eqp_prev(:)=qp%E(:)
    !
    if (iter>0) call msg('rs','[SC] Max corrections at prev/current cycle [ev]',&

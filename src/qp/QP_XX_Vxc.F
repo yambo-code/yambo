@@ -24,7 +24,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  ! Hartree S_x self-energy + call to V_xc 
  !
  use pars,          ONLY:SP,schlen,DP,pi,HARTREE
- use drivers,       ONLY:l_sc_pot
+ use drivers,       ONLY:l_sc_run
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg,depth,write_to_report
  use timing,        ONLY:live_timing
@@ -78,7 +78,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  ! Silent run (like in SCF cycles)
  !
 #if defined _SC
- write_to_report=.not.l_sc_pot
+ write_to_report=.not.l_sc_run
 #endif
  !
  ! title
@@ -169,7 +169,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
        ibp=QP_table(i1,2)
        !
 #if defined _SC
-       if (l_sc_pot.and.trim(SC_potential)=='EXX') then
+       if (l_sc_run.and.trim(SC_potential)=='EXX') then
          if (ib  >E%nbf.or.ibp<=E%nbf) then
            call live_timing(steps=E%nbm-QP_Sx_low_band+1)
            cycle
@@ -220,9 +220,9 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
    !
    ! Vxc
    !
-   if (.not.l_sc_pot) call DFT_Vxc(E,Xk)
+   if (.not.l_sc_run) call DFT_Vxc(E,Xk)
    !
-   if (.not.l_sc_pot) call WF_free()
+   if (.not.l_sc_run) call WF_free()
    !
  endif
  !
@@ -250,11 +250,11 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
    vxc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|V_xc|'//trim(intc(ibp))&
 &     //trim(ch_spin)//'> ='
    !
-   write (ch,'(6(a,1x))') trim(sx_fmt),&
-&    trim(real2ch(real(QP_Sx(i1)*HARTREE))),&
-&    trim(real2ch(aimag(QP_Sx(i1)*HARTREE))),&
-&    trim(vxc_fmt),&
-&    trim(real2ch(real(QP_Vxc(i1)*HARTREE))),&
+   ch=trim(sx_fmt)//' '//&
+&    trim(real2ch(real(QP_Sx(i1)*HARTREE)))//&
+&    trim(real2ch(aimag(QP_Sx(i1)*HARTREE)))//&
+&    trim(vxc_fmt)//&
+&    trim(real2ch(real(QP_Vxc(i1)*HARTREE)))//&
 &    trim(real2ch(aimag(QP_Vxc(i1)*HARTREE)))
    !
    if (i1/=QP_n_states) call msg('r',trim(ch))

@@ -60,6 +60,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined  _ELPH
  use ELPH,           ONLY:elph_nq,elph_nq_used
 #endif
+#if defined _SC
+ use SC,             ONLY:SC_potential
+#endif
  !
  implicit none
  type(levels) ::en        
@@ -463,10 +466,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! DFT
  !
 #if defined _SC
- if (l_sc_pot) then
-   call initactivate(1,'FFTGvecs SCPot SCIter SCBands BandMix EXXRLvcs')
-   call Xon('Xx',(/'BndsRn','NGsBlk'/))
- endif
+ if (l_sc_run) call initactivate(1,'SCPot FFTGvecs SCIter SCBands BandMix')
 #endif
  !
  ! RAS
@@ -526,7 +526,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !If qp limits are requested they are added at the end of the input file
  !
- if ( any((/l_xxvxc,l_gw0,l_life/)) ) then
+ if ( any((/l_xxvxc,l_gw0,l_life/)).and..not.l_sc_run ) then
    !
    ! The QP_state is read from ioxxvxc in DUMP mode.
    ! If it is not allocated I define it on the basis 
@@ -626,7 +626,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      l_lrc_fxc=(rstatus(16)/=0)
      l_chosex=(rstatus(17)/=0)
 #if defined  _SC
-     l_sc_pot=(rstatus(18)/=0)
+     l_sc_run=(rstatus(18)/=0)
 #endif
 #if defined  _RAS
      lreels=(rstatus(19)/=0)
@@ -672,7 +672,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      ! SPIN barriers
      !
      if (n_spin==2.and.any((/&
-&              l_life,l_acfdt,l_lrc_fxc,l_sc_pot,&
+&              l_life,l_acfdt,l_lrc_fxc,l_sc_run,&
 &              l_gw0.and..not.l_ppa,l_ph_corr&
 &             /))) then
        init=-2
@@ -895,6 +895,24 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          if ( trim(rstr_piece(i1+1)) == 'r') call initactivate(1,'ras')
          if ( trim(rstr_piece(i1+1)) == 'e') call initactivate(1,'reels')
          if ( trim(rstr_piece(i1+1)) == 'b') call initactivate(1,'ras reels')
+       endif
+#endif
+       !
+       ! Sc
+       !
+#if defined _SC
+       if ( trim(rstr_piece(i1)) == 'scpot' )  then
+         if ( trim(rstr_piece(i1+1)) == 'x' ) then
+           SC_potential='XX'
+         else if ( trim(rstr_piece(i1+1)) == 'c' ) then
+           SC_potential='CHOSEX'
+           call initactivate(1,'chosex gw0')
+         else if ( trim(rstr_piece(i1+1)) == 'h' ) then
+           SC_potential='Hartree'
+         else if ( trim(rstr_piece(i1+1)) == 'hf') then
+           SC_potential='Hartree-Fock'
+           call initactivate(1,'xxvxc')
+         endif
        endif
 #endif
        !

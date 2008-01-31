@@ -108,7 +108,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('r',defs,'lrc_fxc', '[R TDDFT] The LRC TDDFT kernel') ! [16]
  call it('r',defs,'chosex',  '[R Xp] COlumb Hole Screened EXchange') ! [17]
 #if defined _SC
- call it('r',defs,'scpot',   '[R] Self-Consistently') ! [18]
+ call it('r',defs,'scpot',   '[R] Self-Consistent run') ! [18]
 #endif
 #if defined _RAS
  call it('r',defs,'sursp',  '[R] Surface Spectroscopy ') ! [18]

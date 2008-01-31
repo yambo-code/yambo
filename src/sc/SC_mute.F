@@ -35,20 +35,19 @@ subroutine SC_mute(what)
  integer          ::ich
  character(schlen)::ch_piece(10)
  !
+ write_to_log=.true.
+ write_to_report=.true.
+ write_to_dbs=master_node
+ read_dbs=.true.
+ !
  if (len_trim(what)>0) then
    call string_split(what,ch_piece)
-   !
    do ich=1,10
      if (trim(ch_piece(ich))=="report") write_to_report=.false.
      if (trim(ch_piece(ich))=="log")    write_to_log=.false.
      if (trim(ch_piece(ich))=="io_in")  read_dbs=.false.
      if (trim(ch_piece(ich))=="io_out") write_to_dbs=.false.
    enddo
- else
-   write_to_log=.true.
-   write_to_report=.true.
-   write_to_dbs=master_node
-   read_dbs=.true.
  endif
  !
 end subroutine SC_mute

@@ -148,6 +148,10 @@ subroutine QP_state_table_setup(en)
  !
  ! Band Mixing
  !
+ ! Note: only upper triangle of the table is filled. 
+ !       This corresponds to assume symmetric/hermitian 
+ !       matrixes
+ !
  QP_bands_mixed=1
  if (any(.not.QP_state(1,:)).or.any(.not.QP_state(QP_nb,:))) QP_band_mixing=0.
  if (QP_band_mixing<0..or.QP_band_mixing>100.) QP_band_mixing=0.

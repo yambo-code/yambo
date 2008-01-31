@@ -21,17 +21,14 @@
 !
 module SC
  !
-#if defined _SC
- !
  use pars,      ONLY:SP,schlen
  implicit none
  !
  integer           :: SC_bands
  integer           :: SC_iterations
- real              :: SC_threshold
+ real(SP)          :: SC_rho_threshold
+ real(SP)          :: SC_E_threshold
  !
  character(schlen) :: SC_potential
- !
-#endif
  !
 end module

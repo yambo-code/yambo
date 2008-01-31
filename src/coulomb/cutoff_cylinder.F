@@ -169,27 +169,15 @@ subroutine cutoff_cylinder(q,is_cut)
  !
  contains
    !
-   function F1(s)
-     use pars,          ONLY:SP
-     use R_lattice,     ONLY:cyl_vr_save,cyl_vz_save,cyl_zz_save
-     real(SP) s,arg,BESJ0,F1
-     arg=cyl_vr_save*s
-     if(cyl_zz_save==0) then
-      F1=BESJ0(arg)
-     else
-      F1=BESJ0(arg)*s/sqrt(s**2+cyl_zz_save**2)
-     endif
-   end function F1
-   !
    function F2(z)
      use pars,          ONLY:SP
      use R_lattice,     ONLY:cyl_vr_save,cyl_vz_save,cyl_zz_save,cyl_ph_radius
      real(SP) z,G
-     real(SP)      :: abserr,F2
+     real(SP)      :: abserr,F2,bessel_J0
      integer       :: neval,ier,last,iwork(3)
      real(SP)      :: work(12) 
      cyl_zz_save=z
-     call qag(F1,0,cyl_ph_radius,8.e-1,0.,4,G,abserr,neval,ier, &
+     call qag(bessel_J0,0,cyl_ph_radius,8.e-1,0.,4,G,abserr,neval,ier, &
 &             3,12,last,iwork,work)
      F2=G
    end function F2
@@ -206,10 +194,10 @@ subroutine cutoff_cylinder(q,is_cut)
      use R_lattice,     ONLY:cyl_vr_save,cyl_vz_save,cyl_zz_save,cyl_cut
      real(SP) z,arg,BESJ0,F4
      if (z==0) then
-      F4=0.
+       F4=0.
      else 
-      arg=cyl_vr_save*z
-      F4=BESJ0(arg)*z*log((cyl_cut+sqrt(cyl_cut**2+z**2))/z)
+       arg=cyl_vr_save*z
+       F4=BESJ0(arg)*z*log((cyl_cut+sqrt(cyl_cut**2+z**2))/z)
      endif
    end function F4
    !
@@ -218,10 +206,10 @@ subroutine cutoff_cylinder(q,is_cut)
      use R_lattice,     ONLY:cyl_vr_save,cyl_vz_save,cyl_zz_save
      real(SP) z,arg,BESJ0,F5
      if (z==0) then
-      F5=0.
+       F5=0.
      else 
-      arg=cyl_vr_save*z
-      F5=BESJ0(arg)*z*log(z)
+       arg=cyl_vr_save*z
+       F5=BESJ0(arg)*z*log(z)
      endif
    end function F5
    !

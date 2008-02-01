@@ -1,8 +1,89 @@
-2007-12-07 16:35:35 r188 Andrea Marini <marini@roma2.infn.it>
+2008-01-31 09:55:10 r197 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.0.13 r.197
+
+	*  configure include/version.inc config/Makefile.in config/configure.ac qp/QP_XX_Vxc.F qp/QP_newton.F common/section.F common/QP_state_table_setup.F common/fermi_msg.F common/run_summary.F common/.objects interface/setup.F interface/init_load.F interface/init.F coulomb/cutoff_cylinder.F coulomb/.objects coulomb/bessel_J0.F communicate communicate/report_energies.F + communicate/.objects + + sc/V_to_H.F sc/SC_mute.F sc/SC_driver.F sc/.objects modules/std_presets.F modules/mod_SC.F modules/mod_drivers.F driver/self.h driver/self_driver.F
+
+	Bugs:
+	- internal write to string fixed (PGI error in compilation)
+	- bessel function F1 moved to external subroutine (PGI error in compilation)
+
+	Additions:
+	- communicate folder in src/
+	- external report_energies routine (to be called from setup.F and
+	  SC_driver.F)
+
+	Changes:
+	- l_sc_pot changed in l_sc_run
+	- Several changes in SC routines
+
+	Patch sent by: Andrea
+
+2008-01-29 14:51:28 r196 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Revision Synchronization
+
+2008-01-29 14:45:19 r195 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	-D options and folder names changed
+
+2008-01-29 11:59:31 r194 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	PJ_PH project cleaned
+
+2008-01-29 10:12:57 r193 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.0.13 r.193
+
+	*  configure spp/ioX_ver_2.F spp/ioKB_PP_ver_2.F spp/exc_wf_eval.F spp/BZ_RIM.F spp/elph_eliashberg_dos.F spp/spp_init.F spp/elph_pw_dbs.F spp/exc_wf_xcrysden.F include/version.inc a2s/a2s_i.F a2s/a2s_KSS_file_name.F e2s/e2s_db1.F e2s/e2s_i.F config/Makefile.in config/configure.ac 2wf_and_fft/wf_load.F 2wf_and_fft/space_inv_by_wf.F 2wf_and_fft/fft_setup.F 2wf_and_fft/scatter_Bamp.F 2coulomb/cutoff_sphere.F 2coulomb/cutoff_box.F 2coulomb/cutoff_cylinder.F 2coulomb/cutoff_driver.F 2coulomb/.objects 2coulomb/cutoff_test.F 2coulomb/rim.F 2coulomb/col_driver.F 2coulomb/rim_integrate.F 0modules/mod_vec_operate.F 0modules/mod_electrons.F 0modules/std_presets.F 0modules/mod_par_indexes.F 0modules/mod_zeros.F 0modules/mod_stderr.F 0modules/mod_BS.F 0modules/mod_TDDFT.F 0modules/mod_pars.F 0modules/mod_par_proc.F 0modules/mod_R_lattice.F 0modules/mod_IO.F 0modules/mod_X.F 0modules/mod_functions.F 0modules/mod_memory.F 0modules/mod_wave_func.F 0modules/mod_drivers.F 0modules/mod_com.F 0modules/mod_xc_functionals.F 0modules/mod_FFT.F 0modules/mod_QP.F 0modules/mod_ACFDT.F 0modules/mod_matrix_operate.F 0modules/mod_timing.F 0modules/mod_D_lattice.F 0modules/mod_ELPH.F 0modules/mod_collision.F 4tddft/tddft_BSK_disk_2_FXC.F 4tddft/tddft_alda_r_space.F 4tddft/tddft_BSK_2_FXC.F 2io/ioBS_Fxc.F 2io/variables_BS.F 2io/io_elemental.F 2io/ioDB1.F 2io/ioX.F 2io/ioGROT.F 2io/ioBSS_invert.F 2io/ioQP.F 2io/ioXXVXC.F 2io/ioQINDX.F 2io/ioRIM.F 2io/io_header.F 2io/ioCOL_CUT.F 2io/ioELPH.F 2io/ioBSS_Haydock.F 2io/ioOSTNTS.F 2io/ioBSS_diago.F 2io/ioKB_PP.F 2io/ioE_RIM.F 2io/io_bulk.F 2io/ioDB1_reload.F 1xc/xc_lda_driver.F 1xc/xc_rpa_kp.F 1xc/mod_xc_costants.F 7sc/V_Hartree.F 7sc/V_exx.F 5X/X_pre_setup.F 5X/X_O_nl_potential.F 5X/X_O_longitudinal.F 5X/X_O_transverse.F 5X/X_em1.F 5X/O_driver.F 5X/X_O_check_shifted_grids.F 5X/X_bare_RIM_Gf.F 5X/X_Gf.F 5X/.objects 5X/X_s.F 4it/setup.F 4it/init_load.F 4it/init.F 4it/G_shells_finder.F 4it/init_q_pts.F 7bse/K_exchange.F 7bse/K_Haydock.F 7bse/K_scattering.F 7bse/K_filling.F 7bse/K_dump_to_o_file.F 7bse/K_inversion.F 7bse/K_eh_setup.F 7bse/K_diagonalization.F 7bse/K_eps_interpolate.F 7bse/K_solvers.F 7bse/K.F 0external_c/stack.c 0external_c/.objects.in 3qp_ctl/QP_apply_interpolate.F 3qp_ctl/mod_QP_CTL.F 3qp_ctl/QP_apply_stretch.F 3qp_ctl/QP_apply_fit.F 3qp_ctl/QP_apply_db.F 3qp_ctl/QP_apply_done.F 6qp/QP_driver.F 6qp/QP_life_transitions.F 6qp/QP_secant.F 6qp/DFT_Vxc.F 6qp/QP_W2Sc.F 6qp/QP_XX_Vxc.F 6qp/QP_of.F 6qp/QP_descriptions.F 6qp/QP_raxis.F 6qp/QP_ppa_chosex.F 6qp/QP_newton.F 7acfdt/gauss_leg_grid.F 1common/extend_occupations.F 1common/section.F 1common/kk.F 1common/QP_state_table_setup.F 1common/fermi_msg.F 1common/bracket.F 1common/secant.F 1common/eval_G_minus_G.F 1common/coarse_grid.F 1common/rand_identifier.F 1common/fermi_level.F 3kop/k_ibz2bz.F 3kop/k_sym2sym.F 3kop/k_lattice.F 3kop/k_reduce.F 3kop/k_expand.F 3kop/bz_samp_indexes.F 1parser/Gclose.F 1parser/parser_lib.F 1parser/ps_convert.F 1parser/mod_parser_m.F 1parser/mod_itm.F 5elph/ELPH_K_print.F 5elph/QP_elph.F 5elph/eval_ELPH_K.F driver/self_driver.F driver/driver.c
+
+	Changes:
+
+	- BIG FORMAT UPDATE. Source formatting reviewed.
+	- Unused but declared variables removed.
+	- SPIN and CYL_CUT projects merged in the core.
+
+	Additions:
+
+	- stack.c C routine (thanks to Claudio) added.
+	  This should prevent self from crashing when
+	  the stacksize is not large enough.
+
+	Patch sent by: Andrea
+
+2007-12-12 22:12:25 r192 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version syncronized
+
+2007-12-12 22:10:43 r191 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version syncronized
+
+2007-12-12 22:09:38 r190 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	ALDA in r-space bands range bug fixed
+
+2007-12-10 17:30:12 r189 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.0.12
+
+	*  configure spp/mod_SPP.F spp/exc_wf_eval.F spp/exc_wf_gnuplot.F spp/spp_init_load.F spp/spp_init.F spp/exc_wf_xcrysden.F include/version.inc config/configure.ac 7bse/K_scattering.F ChangeLog
+
+	Bugs:
+	- Second part of spp bug in excitonic wf plotting.
+	  Added Energy window for summing "degenerate" or almost
+	  "degenerate" excitonic states. This window can be choosen
+	  to restore wf symmetry.
+	  Added time-reversal flag to properly use TR when spatial
+	  inversion is not present.
+
+	Patch sent by: Andrea
+
+2007-12-07 16:35:35 r188 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	include/version.inc update
 
-2007-12-07 16:34:39 r187 Andrea Marini <marini@roma2.infn.it>
+2007-12-07 16:34:39 r187 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Version 3.0.12
 
@@ -38,7 +119,7 @@
 
 	Patch sent by: Conor
 
-2007-12-04 17:27:06 r185 Andrea Marini <marini@roma2.infn.it>
+2007-12-04 17:27:06 r185 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Version 3.0.12
 
@@ -64,15 +145,15 @@
 
 	Patch sent by: Andrea & Myrta
 
-2007-12-04 15:35:52 r184 Andrea Marini <marini@roma2.infn.it>
+2007-12-04 15:35:52 r184 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	7dft subfolder update
 
-2007-11-26 19:00:53 r183 Andrea Marini <marini@roma2.infn.it>
+2007-11-26 19:00:53 r183 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	DFT project update
 
-2007-11-26 16:26:30 r182 Andrea Marini <marini@roma2.infn.it>
+2007-11-26 16:26:30 r182 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Version 3.0.12
 
@@ -93,11 +174,11 @@
 
 	Patch sent by: Andrea & Myrta
 
-2007-11-20 15:06:06 r181 Andrea Marini <marini@roma2.infn.it>
+2007-11-20 15:06:06 r181 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	DFT project opened: first small changes
 
-2007-11-16 18:23:14 r180 Andrea Marini <marini@roma2.infn.it>
+2007-11-16 18:23:14 r180 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Version 3.0.12
 
@@ -108,7 +189,7 @@
 
 	Patch sent by: Myrta
 
-2007-11-16 13:16:40 r179 Andrea Marini <marini@roma2.infn.it>
+2007-11-16 13:16:40 r179 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Version 3.0.12
 
@@ -120,7 +201,7 @@
 
 	Patch sent by: Myrta
 
-2007-11-14 17:57:01 r178 Andrea Marini <marini@roma2.infn.it>
+2007-11-14 17:57:01 r178 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Version 3.0.12
 
@@ -141,7 +222,7 @@
 
 	Patch sent by: Andrea
 
-2007-11-05 16:00:44 r177 Andrea Marini <marini@roma2.infn.it>
+2007-11-05 16:00:44 r177 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Version 3.0.12
 
@@ -181,11 +262,11 @@
 
 	Patch sent by: Conor
 
-2007-10-29 11:31:37 r174 Andrea Marini <marini@roma2.infn.it>
+2007-10-29 11:31:37 r174 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Oops. I forgot the Version files. Here they are
 
-2007-10-29 11:29:45 r173 Andrea Marini <marini@roma2.infn.it>
+2007-10-29 11:29:45 r173 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Bug in external QP lifetimes parameters fixed
 
@@ -202,7 +283,7 @@
 
 	Patch sent by: Conor
 
-2007-10-25 15:01:20 r171 Andrea Marini <marini@roma2.infn.it>
+2007-10-25 15:01:20 r171 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Minor changes. Fixed n_b_full_guess definition for spin resolved systems
 
@@ -224,7 +305,7 @@
 
 	Patch sent by: Conor
 
-2007-10-18 14:58:18 r169 Andrea Marini <marini@roma2.infn.it>
+2007-10-18 14:58:18 r169 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Version 3.0.12
 
@@ -246,19 +327,19 @@
 
 	Patch sent by: Andrea
 
-2007-10-12 15:46:49 r168 Andrea Marini <marini@roma2.infn.it>
+2007-10-12 15:46:49 r168 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Myrta's patch for self_no_herm project
 
-2007-10-12 15:30:51 r167 Andrea Marini <marini@roma2.infn.it>
+2007-10-12 15:30:51 r167 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Added revision in header. Fixed compatibility issues
 
-2007-10-12 14:41:07 r166 Andrea Marini <marini@roma2.infn.it>
+2007-10-12 14:41:07 r166 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Bug in configure
 
-2007-10-12 12:18:10 r165 Andrea Marini <marini@roma2.infn.it>
+2007-10-12 12:18:10 r165 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Version 3.0.12
 
@@ -275,7 +356,7 @@
 
 	Patch sent by: Andrea & Claudio
 
-2007-10-10 19:18:16 r164 Andrea Marini <marini@roma2.infn.it>
+2007-10-10 19:18:16 r164 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Version 3.0.12
 
@@ -301,11 +382,11 @@
 
 	Patch sent by: Andrea
 
-2007-10-08 15:21:32 r163 Andrea Marini <marini@roma2.infn.it>
+2007-10-08 15:21:32 r163 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Added revision number in version report
 
-2007-10-05 12:28:53 r162 Andrea Marini <marini@roma2.infn.it>
+2007-10-05 12:28:53 r162 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.11_01-10-07
 
@@ -322,7 +403,7 @@
 
 	Patch sent by: Andrea & Myrta
 
-2007-10-03 18:13:27 r161 Andrea Marini <marini@roma2.infn.it>
+2007-10-03 18:13:27 r161 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.11_01-10-07
 
@@ -338,7 +419,7 @@
 
 	Patch sent by: Andrea
 
-2007-10-02 13:28:53 r160 Andrea Marini <marini@roma2.infn.it>
+2007-10-02 13:28:53 r160 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.11_01-10-07
 
@@ -354,7 +435,7 @@
 
 	Patch sent by: Andrea
 
-2007-10-02 11:03:16 r159 Andrea Marini <marini@roma2.infn.it>
+2007-10-02 11:03:16 r159 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.11_01-10-07
 
@@ -398,7 +479,7 @@
 
 	Patch sent by: Conor
 
-2007-09-12 16:39:51 r157 Andrea Marini <marini@roma2.infn.it>
+2007-09-12 16:39:51 r157 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.10_29-08-07
 
@@ -440,11 +521,11 @@
 
 	Patch sent by: Conor
 
-2007-08-29 11:43:01 r154 Andrea Marini <marini@roma2.infn.it>
+2007-08-29 11:43:01 r154 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Oops in K.F [andrea]
 
-2007-08-29 11:41:08 r153 Andrea Marini <marini@roma2.infn.it>
+2007-08-29 11:41:08 r153 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.10_29-08-07
 
@@ -471,7 +552,7 @@
 
 	Patch sent by: Andrea
 
-2007-08-24 12:37:25 r152 Andrea Marini <marini@roma2.infn.it>
+2007-08-24 12:37:25 r152 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.10_11-07-07
 
@@ -499,7 +580,7 @@
 	- e2s now fully functional with etsf_io_1.0-rc2
 	Patch sent by: Conor
 
-2007-08-21 16:42:30 r150 Andrea Marini <marini@roma2.infn.it>
+2007-08-21 16:42:30 r150 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.10_11-07-07
 
@@ -514,7 +595,7 @@
 
 	Patch sent by: Andrea
 
-2007-08-20 17:08:24 r149 Andrea Marini <marini@roma2.infn.it>
+2007-08-20 17:08:24 r149 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.10_11-07-07
 
@@ -550,7 +631,7 @@
 
 	Patch sent by: Conor
 
-2007-08-14 18:50:13 r147 Andrea Marini <marini@roma2.infn.it>
+2007-08-14 18:50:13 r147 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.10_11-07-07
 
@@ -569,15 +650,15 @@
 
 	Patch sent by: Andrea
 
-2007-07-25 15:12:33 r146 Andrea Marini <marini@roma2.infn.it>
+2007-07-25 15:12:33 r146 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Update in ELPH project
 
-2007-07-25 12:06:04 r145 Andrea Marini <marini@roma2.infn.it>
+2007-07-25 12:06:04 r145 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Bug fixed in ELPH project
 
-2007-07-19 15:24:16 r144 Andrea Marini <marini@roma2.infn.it>
+2007-07-19 15:24:16 r144 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Small bugs fixed
 
@@ -592,7 +673,7 @@
 
 	Patch sent by: Conor
 
-2007-07-15 17:27:11 r142 Andrea Marini <marini@roma2.infn.it>
+2007-07-15 17:27:11 r142 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.10_11-07-07
 
@@ -640,11 +721,11 @@
 
 	Patch sent by: Conor
 
-2007-07-11 00:18:41 r138 Andrea Marini <marini@roma2.infn.it>
+2007-07-11 00:18:41 r138 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Files update
 
-2007-07-11 00:16:27 r137 Andrea Marini <marini@roma2.infn.it>
+2007-07-11 00:16:27 r137 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.10_11-07-07
 
@@ -663,11 +744,11 @@
 
 	Patch sent by: Andrea & Conor
 
-2007-06-27 16:39:13 r136 Andrea Marini <marini@roma2.infn.it>
+2007-06-27 16:39:13 r136 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Small bug in QP_apply_interpolate fixed
 
-2007-06-27 09:48:05 r135 Andrea Marini <marini@roma2.infn.it>
+2007-06-27 09:48:05 r135 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.9_11-05-07
 
@@ -679,15 +760,15 @@
 
 	Patch sent by: Andrea
 
-2007-06-27 09:33:24 r134 Andrea Marini <marini@roma2.infn.it>
+2007-06-27 09:33:24 r134 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Small changes in EL_PH project
 
-2007-06-25 12:52:31 r133 Andrea Marini <marini@roma2.infn.it>
+2007-06-25 12:52:31 r133 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Small changes in EL_PH project
 
-2007-06-25 09:02:21 r132 Andrea Marini <marini@roma2.infn.it>
+2007-06-25 09:02:21 r132 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.9_11-05-07
 
@@ -703,7 +784,7 @@
 
 	Patch sent by: Andrea
 
-2007-06-21 09:40:54 r131 Andrea Marini <marini@roma2.infn.it>
+2007-06-21 09:40:54 r131 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.9_11-05-07
 
@@ -720,7 +801,7 @@
 
 	Patch sent by: Andrea
 
-2007-06-11 13:52:55 r130 Andrea Marini <marini@roma2.infn.it>
+2007-06-11 13:52:55 r130 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.9_11-05-07
 
@@ -731,7 +812,7 @@
 
 	Patch sent by: Andrea
 
-2007-06-08 15:06:29 r129 Andrea Marini <marini@roma2.infn.it>
+2007-06-08 15:06:29 r129 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.9_11-05-07
 
@@ -749,15 +830,15 @@
 
 	Patch sent by: Andrea
 
-2007-06-06 18:32:11 r128 Andrea Marini <marini@roma2.infn.it>
+2007-06-06 18:32:11 r128 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Minor changes
 
-2007-06-06 16:40:23 r127 Andrea Marini <marini@roma2.infn.it>
+2007-06-06 16:40:23 r127 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	BSS_skip_full_inv flag added and other minor changes
 
-2007-06-05 19:10:09 r126 Andrea Marini <marini@roma2.infn.it>
+2007-06-05 19:10:09 r126 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.9_11-05-07
 
@@ -781,7 +862,7 @@
 
 	Patch sent by: Andrea
 
-2007-06-01 12:22:24 r125 Andrea Marini <marini@roma2.infn.it>
+2007-06-01 12:22:24 r125 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.9_11-05-07
 
@@ -806,7 +887,7 @@
 
 	Patch sent by: Andrea
 
-2007-05-24 10:42:15 r124 Andrea Marini <marini@roma2.infn.it>
+2007-05-24 10:42:15 r124 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.9_11-05-07
 
@@ -829,15 +910,15 @@
 
 	Patch sent by: Andrea
 
-2007-05-22 10:05:49 r123 Andrea Marini <marini@roma2.infn.it>
+2007-05-22 10:05:49 r123 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Bug in p2s symmetries when TR=.false. fixed
 
-2007-05-18 11:59:26 r122 Andrea Marini <marini@roma2.infn.it>
+2007-05-18 11:59:26 r122 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	PH project upgrade
 
-2007-05-17 18:59:24 r121 Andrea Marini <marini@roma2.infn.it>
+2007-05-17 18:59:24 r121 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.9_11-05-07
 
@@ -863,7 +944,7 @@
 
 	Patch sent by: Andrea
 
-2007-05-10 12:11:02 r120 Andrea Marini <marini@roma2.infn.it>
+2007-05-10 12:11:02 r120 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.9_07-05-07
 
@@ -881,15 +962,15 @@
 
 	Patch sent by: Andrea
 
-2007-05-07 13:40:41 r119 Andrea Marini <marini@roma2.infn.it>
+2007-05-07 13:40:41 r119 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Matrix Operations module restyled (small type fixed)
 
-2007-05-07 13:32:55 r118 Andrea Marini <marini@roma2.infn.it>
+2007-05-07 13:32:55 r118 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Matrix Operations module restyled
 
-2007-05-07 10:24:02 r117 Andrea Marini <marini@roma2.infn.it>
+2007-05-07 10:24:02 r117 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.9_07-05-07
 
@@ -912,15 +993,15 @@
 
 	Patch sent by: Andrea
 
-2007-05-04 11:28:55 r116 Andrea Marini <marini@roma2.infn.it>
+2007-05-04 11:28:55 r116 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Bug fixed in SLK & BLACS support check in configure script
 
-2007-05-04 11:22:08 r115 Andrea Marini <marini@roma2.infn.it>
+2007-05-04 11:22:08 r115 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Bug fixed in SLK & BLACS support check in configure script
 
-2007-05-03 12:11:33 r114 Andrea Marini <marini@roma2.infn.it>
+2007-05-03 12:11:33 r114 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.8_13-04-07
 
@@ -938,11 +1019,11 @@
 
 	Patch sent by: Andrea
 
-2007-04-23 11:53:56 r113 Andrea Marini <marini@roma2.infn.it>
+2007-04-23 11:53:56 r113 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Bug in spp excitonic wfc plotting utility (Daniele)
 
-2007-04-20 10:39:56 r112 Andrea Marini <marini@roma2.infn.it>
+2007-04-20 10:39:56 r112 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	BUG removed: TR was removed in a2s_db1 when nsym=1
 
@@ -961,7 +1042,7 @@
 	-
 	Patch sent by: Conor
 
-2007-04-11 10:58:49 r110 Andrea Marini <marini@roma2.infn.it>
+2007-04-11 10:58:49 r110 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.8_23-03-07
 
@@ -981,7 +1062,7 @@
 
 	Patch sent by: Andrea
 
-2007-04-04 16:28:33 r109 Andrea Marini <marini@roma2.infn.it>
+2007-04-04 16:28:33 r109 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.8_23-03-07
 
@@ -1012,7 +1093,7 @@
 
 	Patch sent by: Andrea
 
-2007-03-27 16:08:48 r108 Andrea Marini <marini@roma2.infn.it>
+2007-03-27 16:08:48 r108 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.8_23-03-07
 
@@ -1033,7 +1114,7 @@
 
 	Patch sent by: Andrea
 
-2007-03-19 11:47:07 r107 Andrea Marini <marini@roma2.infn.it>
+2007-03-19 11:47:07 r107 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.8_16-03-07
 
@@ -1045,11 +1126,11 @@
 
 	Patch sent by: Andrea
 
-2007-03-16 12:15:22 r106 Andrea Marini <marini@roma2.infn.it>
+2007-03-16 12:15:22 r106 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	DFT_Vxc for n_spin=1 in SPIN PJ
 
-2007-03-16 11:21:12 r105 Andrea Marini <marini@roma2.infn.it>
+2007-03-16 11:21:12 r105 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.8_16-03-07
 
@@ -1081,7 +1162,7 @@
 
 	Patch sent by: Andrea & Fabrizio/Maurizia (SPIN)
 
-2007-03-02 14:33:12 r104 Andrea Marini <marini@roma2.infn.it>
+2007-03-02 14:33:12 r104 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.7_01-03-07
 
@@ -1113,7 +1194,7 @@
 
 	Patch sent by: Conor
 
-2007-02-26 12:44:34 r102 Andrea Marini <marini@roma2.infn.it>
+2007-02-26 12:44:34 r102 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.7_26-02-07
 
@@ -1135,7 +1216,7 @@
 
 	Patch sent by: Andrea
 
-2007-02-19 18:38:07 r101 Andrea Marini <marini@roma2.infn.it>
+2007-02-19 18:38:07 r101 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.7_16-02-07
 
@@ -1157,7 +1238,7 @@
 
 	Patch sent by: Andrea
 
-2007-02-16 16:30:34 r100 Andrea Marini <marini@roma2.infn.it>
+2007-02-16 16:30:34 r100 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.7_16-02-07
 
@@ -1187,7 +1268,7 @@
 
 	Patch sent by: Andrea
 
-2007-02-14 17:53:36 r99 Andrea Marini <marini@roma2.infn.it>
+2007-02-14 17:53:36 r99 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.6_12-02-07
 
@@ -1203,7 +1284,7 @@
 
 	Patch sent by: Andrea
 
-2007-02-14 15:40:31 r98 Andrea Marini <marini@roma2.infn.it>
+2007-02-14 15:40:31 r98 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.6_12-02-07
 
@@ -1218,7 +1299,7 @@
 
 	Patch sent by: Andrea
 
-2007-02-12 18:00:18 r97 Andrea Marini <marini@roma2.infn.it>
+2007-02-12 18:00:18 r97 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.6_12-02-07
 
@@ -1254,7 +1335,7 @@
 
 	Patch sent by: Conor
 
-2007-02-09 10:03:06 r94 Andrea Marini <marini@roma2.infn.it>
+2007-02-09 10:03:06 r94 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.6_08-02-07
 
@@ -1266,7 +1347,7 @@
 
 	Patch sent by: Andrea & Daniele
 
-2007-02-08 18:07:33 r93 Andrea Marini <marini@roma2.infn.it>
+2007-02-08 18:07:33 r93 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.6_08-02-07
 
@@ -1284,7 +1365,7 @@
 
 	Patch sent by: Andrea
 
-2007-02-06 11:40:29 r92 Andrea Marini <marini@roma2.infn.it>
+2007-02-06 11:40:29 r92 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.6_30-01-07
 
@@ -1296,7 +1377,7 @@
 
 	Patch sent by: Andrea
 
-2007-02-02 12:28:43 r91 Andrea Marini <marini@roma2.infn.it>
+2007-02-02 12:28:43 r91 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.6_30-01-07
 
@@ -1308,7 +1389,7 @@
 
 	Patch sent by: Andrea
 
-2007-01-30 18:09:26 r90 Andrea Marini <marini@roma2.infn.it>
+2007-01-30 18:09:26 r90 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.6_19-01-07
 
@@ -1339,7 +1420,7 @@
 	- Bug found in calculation of oscillators using spinors, all gauges.
 	  NOTE: previous versions likely yielded erroneous results.
 
-2007-01-29 15:16:17 r88 Andrea Marini <marini@roma2.infn.it>
+2007-01-29 15:16:17 r88 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.6_19-01-07
 
@@ -1392,11 +1473,11 @@
 
 	Patch sent by: Conor
 
-2007-01-19 14:46:05 r84 Andrea Marini <marini@roma2.infn.it>
+2007-01-19 14:46:05 r84 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Missing module elements in k_expand causing compilation problems
 
-2007-01-19 13:48:59 r83 Andrea Marini <marini@roma2.infn.it>
+2007-01-19 13:48:59 r83 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.6_19-01-07
 
@@ -1417,7 +1498,7 @@
 
 	Patch sent by: Andrea
 
-2007-01-15 15:03:11 r82 Andrea Marini <marini@roma2.infn.it>
+2007-01-15 15:03:11 r82 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.5_11-01-07
 
@@ -1433,7 +1514,7 @@
 
 	Patch sent by: Andrea
 
-2007-01-12 12:51:10 r81 Andrea Marini <marini@roma2.infn.it>
+2007-01-12 12:51:10 r81 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.5_11-01-07
 
@@ -1446,7 +1527,7 @@
 
 	Patch sent by: Andrea
 
-2007-01-11 15:28:54 r80 Andrea Marini <marini@roma2.infn.it>
+2007-01-11 15:28:54 r80 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.5_11-01-07
 
@@ -1470,7 +1551,7 @@
 
 	Patch sent by: Andrea
 
-2007-01-10 15:40:38 r79 Andrea Marini <marini@roma2.infn.it>
+2007-01-10 15:40:38 r79 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.4_04-01-07
 
@@ -1496,7 +1577,7 @@
 
 	Bugs: IP was being used without being declared, small error in messaging of qindx resulted.
 
-2007-01-08 18:34:03 r74 Andrea Marini <marini@roma2.infn.it>
+2007-01-08 18:34:03 r74 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.4_04-01-07
 
@@ -1512,7 +1593,7 @@
 
 	Patch sent by: Daniele & Andrea
 
-2006-12-29 17:22:31 r73 Andrea Marini <marini@roma2.infn.it>
+2006-12-29 17:22:31 r73 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.4_29-12-06
 
@@ -1528,7 +1609,7 @@
 
 	Patch sent by: Andrea
 
-2006-12-22 17:42:46 r72 Andrea Marini <marini@roma2.infn.it>
+2006-12-22 17:42:46 r72 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.4_13-12-06
 
@@ -1541,7 +1622,7 @@
 
 	Patch sent by: Fabrizio
 
-2006-12-20 15:56:19 r71 Andrea Marini <marini@roma2.infn.it>
+2006-12-20 15:56:19 r71 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.4_13-12-06
 
@@ -1556,7 +1637,7 @@
 	  calculation is forced (Andrea)
 	- Completely new scatter_Gamp.F routine (Andrea)
 
-2006-12-13 15:54:25 r70 Andrea Marini <marini@roma2.infn.it>
+2006-12-13 15:54:25 r70 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.4_05-12-06
 
@@ -1570,7 +1651,7 @@
 	Changes:
 	- Still fighting with ELPH (Andrea)
 
-2006-12-07 14:47:19 r67 Andrea Marini <marini@roma2.infn.it>
+2006-12-07 14:47:19 r67 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	V 3.0.4_05-12-06
 
@@ -1600,11 +1681,11 @@
 	Adds
 	- Atomic data to p2s direct method (pw_export)
 
-2006-12-05 19:27:11 r63 Andrea Marini <marini@roma2.infn.it>
+2006-12-05 19:27:11 r63 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Fixed KB_PP allocation when n_atom is read from DB1. Added z_nucl to a2s
 
-2006-12-05 19:11:46 r62 Andrea Marini <marini@roma2.infn.it>
+2006-12-05 19:11:46 r62 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	 V. 3.0.4_05-12-06
 
@@ -1616,11 +1697,11 @@
 	   the ChangeLog using:
 	   > svn log | perl sbin/svn2cl.pl > ChangeLog
 
-2006-12-05 16:12:49 r61 Andrea Marini <marini@roma2.infn.it>
+2006-12-05 16:12:49 r61 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Added PJ_SC project: calculation of the statically screend m.e. of W_RPA (collaboration with A. Floris and A. Sanna)
 
-2006-12-05 12:34:09 r60 Andrea Marini <marini@roma2.infn.it>
+2006-12-05 12:34:09 r60 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	 BUGS
 	 - Fixed call q_shadows() in bz_samp_indexes for the case
@@ -1632,7 +1713,7 @@
 	 - Removed the optimization of the parser module to avoid
 	   loop stack during input file parsing
 
-2006-12-05 10:08:30 r59 Andrea Marini <marini@roma2.infn.it>
+2006-12-05 10:08:30 r59 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Patch for GKS project (Myrta)
 
@@ -1644,11 +1725,11 @@
 
 	Updated e2s for etsf_io 0.5: wf, kb, db1
 
-2006-12-04 11:21:17 r56 Andrea Marini <marini@roma2.infn.it>
+2006-12-04 11:21:17 r56 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Plot of EXC wf updated (Daniele). Changes in various spp files. Slatec lib added.
 
-2006-12-04 10:12:13 r55 Andrea Marini <marini@roma2.infn.it>
+2006-12-04 10:12:13 r55 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	 V. 3.0.3_03-12-06
 
@@ -1660,7 +1741,7 @@
 
 	Added first e2s attempt, for use with etsf_io-0.5
 
-2006-11-29 15:13:44 r53 Andrea Marini <marini@roma2.infn.it>
+2006-11-29 15:13:44 r53 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	 V. 3.0.3_27-11-06
 
@@ -1669,7 +1750,7 @@
 	 - Added shadow q%sstar (q_sstar). In a near future type(bz_samp) q
 	   should be removed completely.
 
-2006-11-27 13:46:52 r52 Andrea Marini <marini@roma2.infn.it>
+2006-11-27 13:46:52 r52 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	 Changes
 	 - File belonging to PJ_CYL_CUT updated (Daniele's patch)
@@ -1684,12 +1765,12 @@
 	 BUGS
 	 - mat_c2r and mat_r2c bugs fixed in mod_matrix_operate
 
-2006-11-27 09:27:11 r51 Andrea Marini <marini@roma2.infn.it>
+2006-11-27 09:27:11 r51 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	 Changes
 	 - File belonging to PJ_GKS updated (Myrta's patch)
 
-2006-11-24 14:48:23 r50 Andrea Marini <marini@roma2.infn.it>
+2006-11-24 14:48:23 r50 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	 V. 3.0.3_24-11-06
 
@@ -1703,7 +1784,7 @@
 	   Note that this causes all DB1 created from PW  to
 	   give wrong wf components for high RL vectors.
 
-2006-11-23 17:00:38 r49 Andrea Marini <marini@roma2.infn.it>
+2006-11-23 17:00:38 r49 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	 Changes:
 	 - wf_ng_k for wf_ng (to distinguish from ng_wf)
@@ -1718,7 +1799,7 @@
 
 	Added spin-polarization case to p2s
 
-2006-11-22 16:49:55 r46 Andrea Marini <marini@roma2.infn.it>
+2006-11-22 16:49:55 r46 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	 Changes:
 	 - 5X/*kb*         : KB needed [r,H] commutator renamed
@@ -1727,11 +1808,11 @@
 	 Adds:
 	 - 0modules/mod_DFT.F to handle PJ_GKS variables
 
-2006-11-22 14:50:59 r45 Andrea Marini <marini@roma2.infn.it>
+2006-11-22 14:50:59 r45 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Debug line removed from el_density
 
-2006-11-22 14:43:26 r44 Andrea Marini <marini@roma2.infn.it>
+2006-11-22 14:43:26 r44 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	 Version 3.0.2_22-11-06
 
@@ -1742,11 +1823,11 @@
 	 - 6qp/QP_xxvxc.F  : Sigma_x (only) in the spin case (V_xc TODO)
 	 - 1common/QP_state_table_setup.F : Added fourth dimension to handle spin
 
-2006-11-21 14:32:46 r42 Andrea Marini <marini@roma2.infn.it>
+2006-11-21 14:32:46 r42 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Deep change in Non-Collinear Spin occupations (from 1/2 to 1)
 
-2006-11-21 10:35:18 r41 Andrea Marini <marini@roma2.infn.it>
+2006-11-21 10:35:18 r41 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Added missing module in scatter_Gamp preventing compilation
 
@@ -1754,11 +1835,11 @@
 
 	Added XC reading to p2s
 
-2006-11-20 19:19:56 r39 Andrea Marini <marini@roma2.infn.it>
+2006-11-20 19:19:56 r39 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	LDA X_alpha and use of cutoff in scatter_Gamp fixed.
 
-2006-11-20 16:33:22 r38 Andrea Marini <marini@roma2.infn.it>
+2006-11-20 16:33:22 r38 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	 Version 3.0.2_13-11-06
 
@@ -1771,11 +1852,11 @@
 	 Changes:
 	 - cyl_ph_radius instead of ph_radius
 
-2006-11-17 17:26:14 r36 Andrea Marini <marini@roma2.infn.it>
+2006-11-17 17:26:14 r36 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Added PJ_GKS: GKS project (myrta)
 
-2006-11-16 18:40:55 r33 Andrea Marini <marini@roma2.infn.it>
+2006-11-16 18:40:55 r33 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	 Version 3.0.2_13-11-06
 
@@ -1793,19 +1874,19 @@
 	 Version 3.0.2_13-11-06
 	 Adds: spp -k shifted grids for longitudinal calc
 
-2006-11-14 15:52:37 r28 Andrea Marini <marini@roma2.infn.it>
+2006-11-14 15:52:37 r28 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Bug fixed in reading QP corrections from DB specified in the input file (3)
 
-2006-11-14 14:31:27 r27 Andrea Marini <marini@roma2.infn.it>
+2006-11-14 14:31:27 r27 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Bug fixed in reading QP corrections from DB specified in the input file (2)
 
-2006-11-14 12:33:09 r26 Andrea Marini <marini@roma2.infn.it>
+2006-11-14 12:33:09 r26 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Bug fixed in reading QP corrections from DB specified in the input file
 
-2006-11-13 15:47:19 r25 Andrea Marini <marini@roma2.infn.it>
+2006-11-13 15:47:19 r25 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	3.0.2_13-11-06 saved
 
@@ -1813,11 +1894,11 @@
 
 	REELS wgrid mixing completed
 
-2006-11-10 17:24:35 r23 Andrea Marini <marini@roma2.infn.it>
+2006-11-10 17:24:35 r23 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Bug in O_driver when using Cutoffed bare_qpg
 
-2006-11-10 13:04:13 r22 Andrea Marini <marini@roma2.infn.it>
+2006-11-10 13:04:13 r22 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	 Version 3.0.2_07-11-06
 
@@ -1826,7 +1907,7 @@
 	 Adds:
 	 - gpl_version logical and GPL barrieris in init.F
 
-2006-11-10 10:56:23 r21 Andrea Marini <marini@roma2.infn.it>
+2006-11-10 10:56:23 r21 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	 Version 3.0.2_07-11-06
 
@@ -1841,7 +1922,7 @@
 
 	Bug fix in spp/k_analyze.F
 
-2006-11-07 09:37:54 r19 Andrea Marini <marini@roma2.infn.it>
+2006-11-07 09:37:54 r19 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	 Version 3.0.2_03-11-06
 
@@ -1849,7 +1930,7 @@
 	 - src/5X/X_em1.F line 121
 	 - spp/spp_init.F line 87
 
-2006-11-03 19:23:07 r18 Andrea Marini <marini@roma2.infn.it>
+2006-11-03 19:23:07 r18 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	small bugs fixed in X_RIM_Gf fermi_msg QP_elph
 
@@ -1857,11 +1938,11 @@
 
 	REELS development: began implementation of lepsmix grids. Added if not define to avoid freqs_setup call in X_os in PJ_REELS.
 
-2006-11-03 15:14:24 r16 Andrea Marini <marini@roma2.infn.it>
+2006-11-03 15:14:24 r16 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Bug fixed in QP_xxvxc.F
 
-2006-11-03 15:09:09 r15 Andrea Marini <marini@roma2.infn.it>
+2006-11-03 15:09:09 r15 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	 Version 3.0.2_01-11-06
 
@@ -1869,7 +1950,7 @@
 	  - In src/3kop/bz_samp_indexes.F call to mem_est
 	  - Fixed the use of n_sp_pol/n_spinor
 
-2006-11-01 16:00:04 r14 Andrea Marini <marini@roma2.infn.it>
+2006-11-01 16:00:04 r14 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	 Version 3.0.2_01-11-06
 	 Adds
@@ -1891,7 +1972,7 @@
 
 	REELS development: epsm1 integration begun
 
-2006-10-20 13:19:56 r12 Andrea Marini <marini@roma2.infn.it>
+2006-10-20 13:19:56 r12 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	3.0.1_20-10-06. i5.5 format in W fragments. Added occupation tresh OccTresh (T>0). Bug fixed in W fragmentation.
 
@@ -1903,7 +1984,7 @@
 
 	REELS development: reels_driver split, q->0 epsm1 fixed.
 
-2006-10-13 17:31:14 r9 Andrea Marini <marini@roma2.infn.it>
+2006-10-13 17:31:14 r9 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Bug fix hdr_io.F mod_timing.F driver.c (Claudio). Bugs in Green func. evaluation. Added W fragmentation
 
@@ -1911,7 +1992,7 @@
 
 	Fixed wfc read in p2s, updated REELS
 
-2006-10-12 12:21:12 r7 Andrea Marini <marini@roma2.infn.it>
+2006-10-12 12:21:12 r7 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Temperature added to header of ioX ioQP ioXXVXC ioOSTNTS. Several bugs fixed for finite T GW.
 

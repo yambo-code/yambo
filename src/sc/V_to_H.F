@@ -19,17 +19,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine V_to_H(ik,V,H)
+subroutine V_to_H(ik,V,H,wf)
  !
  use pars,           ONLY:SP
  use FFT_m,          ONLY:fft_size
  use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
- use wave_func,      ONLY:wf,wf_state
+ use wave_func,      ONLY:wf_state
  implicit none
  !
  integer     :: ik
  real(SP)    :: V(fft_size)
- complex(SP) :: H(QP_nb,QP_nb)
+ complex(SP) :: H(QP_nb,QP_nb),wf(fft_size,200)
  !
  ! Work Space
  !
@@ -67,6 +67,7 @@ subroutine V_to_H(ik,V,H)
  ! ... and symmetrize
  !
  do ib=1,QP_nb
+   H(ib,ib)=real(H(ib,ib))
    do ibp=1,ib-1
      H(ib,ibp)=conjg(H(ibp,ib))
    enddo

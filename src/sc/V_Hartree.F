@@ -36,11 +36,11 @@ subroutine V_Hartree(rho,vhr)
  ! Work Space
  !
  complex(DP) :: rhog(fft_size), vhtmp(fft_size) 
- complex  :: vhg(ng_vec)
+ complex     :: vhg(ng_vec)
  !
- vhg  = (0.,0.)
- vhtmp  = (0.,0.)
- rhog = rho
+ vhg   = (0.,0.)
+ vhtmp = (0.,0.)
+ rhog  = rho
  !
  ! FFT call: rho in reciprocal space
  !

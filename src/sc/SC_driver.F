@@ -31,7 +31,7 @@ subroutine SC_driver(X,E,k,q)
 &                         SC_rho_threshold,SC_potential
  use wave_func,      ONLY:wf_load, wf, wf_state
  use memory_m,       ONLY:mem_est
- use FFT_m,          ONLY:fft_size
+ use FFT_m,          ONLY:fft_size,fft_size
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
  use com,            ONLY:msg
  use X_m,            ONLY:X_t
@@ -51,18 +51,14 @@ subroutine SC_driver(X,E,k,q)
  real(SP)                 :: rho_convergence,E_convergence,E_save(SC_bands,k%nibz),&
 &                            E_previous(SC_bands,k%nibz),dE(SC_bands,k%nibz)
  real(SP),    allocatable :: rho_nm1(:),rho_n(:),V_xc_n(:),V_xc_nm1(:),V_hr(:)
- complex(SP), allocatable :: WS_wf(:,:),WS_Ho(:,:),H_sc(:,:)
+ complex(SP), allocatable :: WFo(:,:)
  ! 
  ! Work Space
  !
- integer                  :: ir,i1,i2,ik,ifft,ifftp,ib,ibp
- complex(SP), allocatable :: Ho(:,:,:)
+ integer                  :: ir,i1,ik,ifft,ifftp,ib,ibp,n_fft_states
+ complex(SP)              :: H_sc(SC_bands,SC_bands),Ho(SC_bands,SC_bands,k%nibz),&
+&                            Ho_to_Hsc(SC_bands,SC_bands)
  character(schlen)        :: dumb_ch
-#if defined _DOUBLE
- complex(DP)             ::zdotc
-#else 
- complex(SP)             ::cdotc
-#endif
  !
  it_on_disk = 1
  !
@@ -92,20 +88,23 @@ subroutine SC_driver(X,E,k,q)
  !
  ! WF
  !
- call wf_load(max(QP_ng_Sx,X%ng),maxval(qindx_S(:,:,2)),&
+!DEBUG>
+! call wf_load(max(QP_ng_Sx,X%ng),maxval(qindx_S(:,:,2)),&
+!&             (/1,max(SC_bands,X%ib(2))/),(/1,k%nibz/),title=' ')
+ call wf_load(0,1,&
 &             (/1,max(SC_bands,X%ib(2))/),(/1,k%nibz/),title=' ')
+!DEBUG<
  !
  ! Allocation(s)...
- !
- allocate(H_sc(QP_nb,QP_nb),Ho(QP_nb,QP_nb,QP_nk))
- call mem_est("Hs",(/QP_nb**2+QP_nb**2*QP_nk/))
  !
  allocate(rho_n(fft_size),rho_nm1(fft_size),&
 &         V_xc_n(fft_size),V_xc_nm1(fft_size),V_hr(fft_size))
  call mem_est("Potentials",(/5*fft_size/),(/SP/))
  !
- allocate(WS_Ho(QP_nb,QP_nb),WS_wf(fft_size,QP_nb))
- call mem_est("WS",(/QP_nb**2+fft_size*QP_nb/))
+ n_fft_states=size(wf,2)
+ allocate(WFo(fft_size,n_fft_states))
+ call mem_est("WF_save",(/fft_size*n_fft_states/))
+ WFo=wf
  !
  allocate(QP_Vxc(QP_n_states))
  call mem_est("QP_Vxc",(/QP_n_states/))
@@ -131,7 +130,7 @@ subroutine SC_driver(X,E,k,q)
  !
  Ho=(0.,0.)
  do ik=1,QP_nk
-   call V_to_H(ik,-V_hr,Ho(:,:,ik))
+   call V_to_H(ik,-V_hr,Ho(:,:,ik),wf,n_fft_states)
  enddo
  !
  ! ... then remoce Vxc[rho_0] also
@@ -146,6 +145,8 @@ subroutine SC_driver(X,E,k,q)
    !
    Ho(ib,ibp,ik) = Ho(ib,ibp,ik) - QP_Vxc(i1)
    !
+   if (ib==ibp) Ho(ib,ibp,ik) = real(Ho(ib,ibp,ik))
+   !
  end do
  deallocate(QP_Vxc)
  call mem_est("QP_Vxc")
@@ -153,12 +154,16 @@ subroutine SC_driver(X,E,k,q)
  ! SCF cycle
  !===========
  !
- V_xc_n  =(0.,0.)
- V_xc_nm1=(0.,0.)
+ V_xc_n   =(0.,0.)
+ V_xc_nm1 =(0.,0.)
+ Ho_to_Hsc=(0.,0.)
  !
  E_save=E%E(:SC_bands,:,1)
  !
  do it = it_on_disk, SC_iterations
+
+!DEBUG
+if (it==3) stop
    !
    E_previous=E%E(:SC_bands,:,1)
    !
@@ -166,8 +171,6 @@ subroutine SC_driver(X,E,k,q)
    !
    if (it >  1 )call SC_mute("report log io_in io_out")
    if (it == 1 )call SC_mute("report io_in io_out")
-   !
-   V_xc_nm1=V_xc_n
    !
    ! TEST xc potential
    !===================
@@ -193,7 +196,7 @@ subroutine SC_driver(X,E,k,q)
    !  XC_LDA_C_AMGB        = 13,  &  ! Attacalite et al
    !  XC_LDA_C_KP          = 14      ! Kurth & Perdew
    !
-   !call xc_lda_driver(E,k,3,2,1)
+   !call xc_lda_driver(E,k,3,1,1)
    !V_xc_n=V_xc(:,1)
    !
    ! XX 
@@ -201,15 +204,24 @@ subroutine SC_driver(X,E,k,q)
    !
    if (l_sc_xx) call V_exx(X,E,k,q,V_xc_n)
    !
-   ! Mixing 
-   !========
-   !
-   if (it>1) V_xc_n = .3* V_xc_n + .7*V_xc_nm1 !linear mixing
-   !
-   ! Hartree potential
-   !===================
-   !
-   if (it>1) call V_Hartree(rho_n,V_hr)
+   if (it>2) then
+     !
+     ! Mixing 
+     !========
+     !
+     V_xc_nm1=V_xc_n
+     !
+     V_xc_n = 0.3* V_xc_n + 0.7*V_xc_nm1 
+     rho_n  = 0.3* rho_n  + 0.7*rho_nm1 
+     !
+     ! Hartree potential
+     !===================
+     !
+     call V_Hartree(rho_n,V_hr)
+     !
+   endif
+
+  write (100*it+90,*) V_hr
    !
    do ik = 1, QP_nk 
      !
@@ -218,12 +230,41 @@ subroutine SC_driver(X,E,k,q)
      ! Build H_sc
      !============
      !
-     call V_to_H(ik,V_hr+V_xc_n,H_sc)
+     call V_to_H(ik,V_hr+V_xc_n,H_sc,WFo,n_fft_states)
      !
      ! Diagonalize H_sc 
      !==================
      !
-     call mat_dia_inv(DIAGO,USE_LK,H_sc,E_real=E%E(:,ik,1))
+     !if (it==2) call rotate_H(Ho_to_Hsc,H_sc,SC_bands,-1)
+
+   write (100*it+1,*) H_sc(:,1)
+   write (100*it+1,*) 
+   write (100*it+1,*) H_sc(:,2)
+   write (100*it+1,*) 
+   write (100*it+1,*) H_sc(:,3)
+   write (100*it+1,*) 
+   write (100*it+1,*) H_sc(:,4)
+   write (100*it+1,*) 
+   write (100*it+1,*) H_sc(:,5)
+   write (100*it+1,*) 
+
+     call mat_dia_inv(DIAGO,USE_LK,H_sc,E_real=E%E(:SC_bands,ik,1))
+
+   write (100*it+2,*) H_sc(:,1)
+   write (100*it+2,*) 
+   write (100*it+2,*) H_sc(:,2)
+   write (100*it+2,*) 
+   write (100*it+2,*) H_sc(:,3)
+   write (100*it+2,*) 
+   write (100*it+2,*) H_sc(:,4)
+   write (100*it+2,*) 
+   write (100*it+2,*) H_sc(:,5)
+   write (100*it+2,*) 
+
+write (*,*)
+write (*,*) ik,it,'Energies',E%E(:SC_bands,ik,1)
+write (*,*)
+
      !
      ! New wave functions 
      !====================
@@ -232,51 +273,23 @@ subroutine SC_driver(X,E,k,q)
      !
      ! with <:|n'>=H_sc(:,n')
      !
-     ! WS_wf(:,n')= sum_m wf(:,m) H_sc(m,n')
+     ! wf(:,n')= sum_m WFo(:,m) H_sc(m,n')
      !
-     WS_wf = (0.,0.)
+     wf = (0.,0.)
      !
      do ib  = 1,QP_nb
        ifft = wf_state(ib,ik,1)
        do ibp = 1,QP_nb
          ifftp = wf_state(ibp,ik,1)
          !
-         call caxpy(fft_size,H_sc(ibp,ib),wf(:,ifftp),1,WS_wf(:,ib),1)
+         call caxpy(fft_size,H_sc(ibp,ib),WFo(:,ifftp),1,wf(:,ifft),1)
          !
        end do
      end do 
      !
-     forall(ib = 1:QP_nb) wf(:,wf_state(ib,ik,1))= WS_wf(:,ib)
+     ! Rotate Ho in the new basis
      !
-     !  Transform Ho in the new basis 
-     !
-     !  <n'|H_o|k'>=sum_{m,p} <n'|m> H_o(m,p) <p|k'>
-     !    
-     !   (H_o)' = (H_sc^{\dagger}) H_o H_sc
-     !
-     ! [1] WS_Ho = (H_sc^{\dagger}) H_o 
-     !     H_o   = WS_Ho
-     !
-#if defined _DOUBLE
-     call zgemm('c',       'n',       QP_nb,QP_nb,QP_nb,(1._SP,0._SP),&
-&               H_sc,QP_nb,Ho(:,:,ik),QP_nb,(0._SP,0._SP),WS_Ho,QP_nb)
-#else
-     call cgemm('c',       'n',       QP_nb,QP_nb,QP_nb,(1._SP,0._SP),&
-&               H_sc,QP_nb,Ho(:,:,ik),QP_nb,(0._SP,0._SP),WS_Ho,QP_nb)
-#endif
-     Ho(:,:,ik) = WS_Ho(:,:)
-     !
-     ! [2] WS_Ho = H_o H_sc
-     !     H_o   = WS_Ho
-     !
-#if defined _DOUBLE
-     call zgemm('n',             'n',       QP_nb,QP_nb,QP_nb,(1._SP,0._SP),&
-&               Ho(:,:,ik),QP_nb,H_sc,QP_nb,(0._SP,0._SP),WS_Ho,QP_nb)
-#else
-     call cgemm('n',             'n',       QP_nb,QP_nb,QP_nb,(1._SP,0._SP),&
-&               Ho(:,:,ik),QP_nb,H_sc,QP_nb,(0._SP,0._SP),WS_Ho,QP_nb)
-#endif
-     Ho(:,:,ik) = WS_Ho(:,:)
+     !call rotate_H(H_sc,Ho(:,:,ik),SC_bands,1)
      !
    end do !Exit loop on kpoints
    !
@@ -286,6 +299,11 @@ subroutine SC_driver(X,E,k,q)
    !
    rho_nm1 = rho_n 
    call el_density(E,k,rho_n,.FALSE.)
+   !
+   ! Rotation from the original basis to this basis
+   !
+   if (it==1) Ho_to_Hsc=H_sc
+   if (it> 1) Ho_to_Hsc=matmul(Ho_to_Hsc,H_sc)
    !
    ! Convergences
    !
@@ -312,10 +330,6 @@ subroutine SC_driver(X,E,k,q)
    !
    if (E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold) exit
    !
-   ! Linear mixing
-   !
-   rho_n = 0.3 * rho_n + 0.7 * rho_nm1 
-   !
  end do
  !
  ! exit SCF cycle and report
@@ -333,7 +347,7 @@ subroutine SC_driver(X,E,k,q)
    call report_energies(dE-dE(1,1),k,SC_bands,(/ik,ik/),'d_E',.FALSE.)
  enddo
  !
- deallocate(H_sc,Ho,rho_n,rho_nm1,V_xc_n,V_xc_nm1,V_hr,WS_Ho,WS_wf)
- call mem_est("Hs Potentials WS")
+ deallocate(rho_n,rho_nm1,V_xc_n,V_xc_nm1,V_hr,WFo)
+ call mem_est("Hs Potentials WF_save")
  !
 end subroutine SC_driver

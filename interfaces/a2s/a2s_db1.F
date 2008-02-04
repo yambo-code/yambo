@@ -34,7 +34,8 @@ subroutine a2s_db1(en,k,KSS_file_name)
  use defs_datatypes,        ONLY : hdr_type, wffile_type
  use xc_functionals,        ONLY : XC_EXCHANGE_CORRELATION,GS_xc_KIND,GS_xc_FUNCTIONAL,&
 &                                  xc_string,XC_LDA_C_PW,XC_LDA_C_PZ,XC_LDA_C_WIGNER,&
-&                                  XC_LDA_C_HL,XC_LDA_C_XALPHA
+&                                  XC_LDA_C_HL,XC_LDA_C_XALPHA,NONE,XC_LDA_X,&
+&                                  XC_EXCHANGE
  use interfaces,            ONLY : print_interface_dimensions,symmetries_check_and_load,&
 &                                  alat_mult_factor
  implicit none
@@ -69,6 +70,9 @@ subroutine a2s_db1(en,k,KSS_file_name)
  ! XC KIND/FUNCTIONAL
  !
  select case (ahdr%ixc)
+  case (0)
+   GS_xc_FUNCTIONAL=NONE
+   GS_xc_KIND=NONE
   case (1,7)
    GS_xc_FUNCTIONAL=XC_LDA_C_PW
    GS_xc_KIND=XC_EXCHANGE_CORRELATION
@@ -87,6 +91,9 @@ subroutine a2s_db1(en,k,KSS_file_name)
   case (6)
    GS_xc_FUNCTIONAL=XC_LDA_C_XALPHA
    GS_xc_KIND=XC_EXCHANGE_CORRELATION
+  case (8)
+   GS_xc_FUNCTIONAL=XC_EXCHANGE
+   GS_xc_KIND=XC_LDA_X
  end select
 
  read(11)

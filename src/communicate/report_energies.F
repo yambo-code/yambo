@@ -49,8 +49,11 @@ subroutine report_energies(E,k,n_bands_,k_range,what,header)
    !
    if (header) then
      if (ik> 1    ) call msg('r','')
-     if (ik<=nXkbz) call msg('r',trim(dumb_ch)//' * weight '//trim(real2ch(k%weights(ik))))
-     if (ik> nXkbz) call msg('r','*X* '//trim(dumb_ch)) 
+     if (ik<=nXkbz) then
+       call msg('r','*X* '//trim(dumb_ch)//' * weight '//trim(real2ch(k%weights(ik))))
+     else
+       call msg('r',trim(dumb_ch)) 
+     endif
    endif
    !
    E_(:,:)=E(:,ik,:)*HARTREE

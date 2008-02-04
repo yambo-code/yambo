@@ -24,12 +24,12 @@ subroutine V_to_H(ik,V,H,wf)
  use pars,           ONLY:SP
  use FFT_m,          ONLY:fft_size
  use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
- use wave_func,      ONLY:wf_state
+ use wave_func,      ONLY:wf_state,wf_n_states
  implicit none
  !
  integer     :: ik
  real(SP)    :: V(fft_size)
- complex(SP) :: H(QP_nb,QP_nb),wf(fft_size,200)
+ complex(SP) :: H(QP_nb,QP_nb),wf(fft_size,wf_n_states)
  !
  ! Work Space
  !

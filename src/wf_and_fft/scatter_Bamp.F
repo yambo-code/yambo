@@ -101,7 +101,7 @@ subroutine scatterBamp(isc)
  !
  ! GPL_END
  !
- do i_spinor=1,n_spinor
+ do i_spinor=2,n_spinor,1
    isc%rhotw(1:isc%ngrho)=isc%rhotw(1:isc%ngrho)+&
 &                         rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo),i_spinor)
  enddo

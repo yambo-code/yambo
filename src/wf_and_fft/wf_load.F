@@ -33,7 +33,8 @@ subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
  use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,&
 &                        fftw_plan,fft_g_table,fft_size
  use wave_func,     ONLY:wf_nc_k,wf_igk,WF_alloc,wf_b,wf_k,wf_space,wf,wf_s,&
-&                        wf_state,wf_ng,wf_norm_test,wf_ncx,ioWF,WF_free
+&                        wf_state,wf_ng,wf_norm_test,wf_ncx,ioWF,WF_free,&
+&                        wf_n_states
  use timing,        ONLY:live_timing
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,&
 &                        io_fragmented, io_netcdf_support, RD_CL
@@ -47,7 +48,7 @@ subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
  !
  character(1)     ::wf_space_here
  character(schlen)::wf_title
- integer          ::i1,ikibz,i2,ic,is,wf_total_states,ig,igfft,&
+ integer          ::i1,ikibz,i2,ic,is,ig,igfft,&
 &                   s_2_load(2),iG_max,iG_bounds_loaded(2)
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
@@ -111,7 +112,9 @@ subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
  !
  if (wf_space=='R') call fft_setup(iG_max,iGo_max,.false.)
  if (wf_space=="R") fft_dim_loaded=fft_dim
- wf_total_states=WF_alloc()
+ !
+ call WF_alloc()
+ !
  if (wf_space=='R') allocate(wf_DP(fft_size))
  if (wf_space=='G') allocate(wf_DP(wf_ng))
  if (wf_space=='C') allocate(wf_DP(wf_ncx))
@@ -120,7 +123,7 @@ subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
  if (wf_space=='R') call msg('rns',trim(wf_title),fft_dim)
  !
 #if !defined _BIGSYS
- call live_timing('[WF loader] Wfs (re)loading',wf_total_states,SERIAL=.true.)
+ call live_timing('[WF loader] Wfs (re)loading',wf_n_states,SERIAL=.true.)
 #endif
  !
  allocate(wf_disk(2,n_bands,wf_ncx,n_spin))
@@ -133,7 +136,7 @@ subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
  call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
  io_err=ioWF(ID,wf_disk)
  !
- wf_total_states=0
+ wf_n_states=0
  do ikibz=1,nkibz
    !
    if (io_fragmented(ID).or.io_netcdf_support(ID)) then
@@ -153,8 +156,8 @@ subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
        if (any((/i2<wf_b(1),i2>wf_b(2),&
 &                is<wf_s(1),is>wf_s(2)/))) cycle
        wf_DP=(0._DP,0._DP)
-       wf_total_states=wf_total_states+1
-       wf_state(i2,ikibz,is)=wf_total_states
+       wf_n_states=wf_n_states+1
+       wf_state(i2,ikibz,is)=wf_n_states
        do ic=1,wf_nc_k(ikibz)
          ig=wf_igk(ic,ikibz)
          if (ig>wf_ng) cycle
@@ -164,7 +167,7 @@ subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
          wf_DP(igfft)=cmplx(wf_disk(1,i2,ic,is),wf_disk(2,i2,ic,is),DP)
        enddo
        if (wf_space=='G'.or.wf_space=='C') then
-         wf(:,wf_total_states)=wf_DP(:)
+         wf(:,wf_n_states)=wf_DP(:)
 #if !defined _BIGSYS
          call live_timing(steps=1)
 #endif
@@ -175,7 +178,7 @@ subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
 #else
        call fft_3d(wf_DP,fft_dim,+1)
 #endif
-       wf(:,wf_total_states)=wf_DP(:)*fft_norm
+       wf(:,wf_n_states)=wf_DP(:)*fft_norm
        call live_timing(steps=1)
      enddo
    enddo

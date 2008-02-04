@@ -52,7 +52,7 @@ module drivers
  !
  ! SC
  !
- logical :: l_sc_run,l_sc_hartree,l_sc_xx
+ logical :: l_sc_run,l_sc_hartree,l_sc_xx,l_sc_hf,l_sc_chosex,l_sc_pz,l_sc_lda_x
  !
  ! TDDFT
  !

@@ -24,9 +24,9 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  ! Hartree S_x self-energy + call to V_xc 
  !
  use pars,          ONLY:SP,schlen,DP,pi,HARTREE
- use drivers,       ONLY:l_sc_run
+ use drivers,       ONLY:l_sc_xx,l_sc_hf
  use memory_m,      ONLY:mem_est
- use com,           ONLY:msg,depth,write_to_report
+ use com,           ONLY:msg,depth
  use timing,        ONLY:live_timing
  use stderr,        ONLY:intc,real2ch
  use electrons,     ONLY:levels,spin_occ,n_sp_pol,spin
@@ -37,9 +37,6 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  use R_lattice,     ONLY:qindx_S,bz_samp
  use wave_func,     ONLY:wf,wf_load,wf_ng,WF_free
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
-#if defined _SC
- use SC,            ONLY:SC_potential
-#endif
  !
  implicit none
  type(levels) ::E       
@@ -74,12 +71,6 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  call collision_reset(isc)
  call collision_reset(iscp) 
  call pp_indexes_reset(px)
- !
- ! Silent run (like in SCF cycles)
- !
-#if defined _SC
- write_to_report=.not.l_sc_run
-#endif
  !
  ! title
  !
@@ -169,11 +160,13 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
        ibp=QP_table(i1,2)
        !
 #if defined _SC
-       if (l_sc_run.and.trim(SC_potential)=='EXX') then
-         if (ib  >E%nbf.or.ibp<=E%nbf) then
-           call live_timing(steps=E%nbm-QP_Sx_low_band+1)
-           cycle
-         endif
+       !
+       ! In Exact-Exchange only cc' and vv' matrix
+       ! elements are needed
+       !
+       if (l_sc_xx.and.(ib  >E%nbf.or.ibp<=E%nbf)) then
+         call live_timing(steps=E%nbm-QP_Sx_low_band+1)
+         cycle
        endif
 #endif
        !
@@ -220,9 +213,10 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
    !
    ! Vxc
    !
-   if (.not.l_sc_run) call DFT_Vxc(E,Xk)
-   !
-   if (.not.l_sc_run) call WF_free()
+   if (.not.l_sc_xx.and..not.l_sc_hf) then
+     call DFT_Vxc(E,Xk)
+     call WF_free()
+   endif
    !
  endif
  !
@@ -251,10 +245,10 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
 &     //trim(ch_spin)//'> ='
    !
    ch=trim(sx_fmt)//' '//&
-&    trim(real2ch(real(QP_Sx(i1)*HARTREE)))//&
-&    trim(real2ch(aimag(QP_Sx(i1)*HARTREE)))//&
-&    trim(vxc_fmt)//&
-&    trim(real2ch(real(QP_Vxc(i1)*HARTREE)))//&
+&    trim(real2ch(real(QP_Sx(i1)*HARTREE)))//' '//&
+&    trim(real2ch(aimag(QP_Sx(i1)*HARTREE)))//' '//&
+&    trim(vxc_fmt)//' '//&
+&    trim(real2ch(real(QP_Vxc(i1)*HARTREE)))//' '//&
 &    trim(real2ch(aimag(QP_Vxc(i1)*HARTREE)))
    !
    if (i1/=QP_n_states) call msg('r',trim(ch))
@@ -270,9 +264,5 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  ! MPI barrier
  !
  call pp_redux_wait
- !
- ! Restore messagging
- !
- write_to_report=master_node
  !
 end subroutine

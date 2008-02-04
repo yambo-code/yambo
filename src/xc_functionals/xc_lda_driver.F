@@ -31,7 +31,7 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
 &                        E_xc,F_xc,V_xc,XC_LDA_X,&
 &                        XC_LDA_C_PW,xc_string,XC_LDA_C_PZ,&
 &                        XC_LDA_C_WIGNER,XC_LDA_C_HL,XC_LDA_C_XALPHA,&
-&                        XC_LDA_C_KP,el_mag
+&                        XC_LDA_C_KP,el_mag,NONE
  implicit none
  type(levels) ::en
  type(bz_samp)::Xk
@@ -63,9 +63,9 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
  ! COM
  !
- if (KIND>=0.and.FUNCTIONAL>=0) then
+ if (KIND>0.and.FUNCTIONAL>0) then
    call msg('rsn','[xc] Functional ',xc_string(KIND,FUNCTIONAL))
- else 
+ else if (KIND<0.or.FUNCTIONAL<0) then
    KIND=XC_EXCHANGE_CORRELATION
    FUNCTIONAL=XC_LDA_C_PW
    call msg('rsn','[xc] Functional unknown. Used ',xc_string(KIND,FUNCTIONAL))
@@ -85,6 +85,15 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
    !
    zeta(:)=sqrt(el_mag(:,1)**2+el_mag(:,2)**2+el_mag(:,3)**2)/rho_sp
    !
+ endif
+ !
+ ! Hartree
+ !
+ if (KIND==NONE) then
+   if (order==0) E_xc=0.
+   if (order==1) V_xc=0.
+   if (order==2) F_xc=0.
+   return
  endif
  !
  ! EXX = X_alpha when alpha=3/4

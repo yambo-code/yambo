@@ -22,8 +22,12 @@
 module wave_func
  !
  use pars,           ONLY:SP
+ implicit none
  !
- integer                :: wf_b(2),wf_k(2),wf_s(2)
+ integer                :: wf_b(2)
+ integer                :: wf_k(2)
+ integer                :: wf_s(2)
+ integer                :: wf_n_states
  !
  ! Max Num. of COMPONENTS
  !
@@ -55,7 +59,6 @@ module wave_func
    !
    subroutine wf_load(iG_max,iGo_max,bands_to_load,kpts_to_load,&
 &                     spins_to_load,space,title)
-     implicit none
      integer :: iG_max,iGo_max,bands_to_load(2),&
 &               kpts_to_load(2)
      integer,     optional :: spins_to_load(2)
@@ -66,34 +69,34 @@ module wave_func
  !
  contains
    !
-   integer function WF_alloc()
+   subroutine WF_alloc()
      use memory_m, ONLY : mem_est
      use FFT_m,    ONLY : fft_size,fftw_plan,fft_dim
-     implicit none
-     integer :: local_size(2),err
-     local_size(2)=(wf_b(2)-wf_b(1)+1)*(wf_k(2)-wf_k(1)+1)*(wf_s(2)-wf_s(1)+1)
-     if (wf_space=="R") local_size(1)=fft_size
-     if (wf_space=="G") local_size(1)=wf_ng
-     allocate(wf(local_size(1),local_size(2)),stat=err)
+     integer :: err
+     !
+     wf_n_states=(wf_b(2)-wf_b(1)+1)*(wf_k(2)-wf_k(1)+1)*(wf_s(2)-wf_s(1)+1)
+     !
+     if (wf_space=="R") allocate(wf(fft_size,wf_n_states),stat=err)
+     if (wf_space=="G") allocate(wf(wf_ng,wf_n_states),stat=err)
+     !
      if (err==0) allocate(wf_state(wf_b(2),wf_k(2),wf_s(2)),stat=err)
+     !
 #if defined _BIGSYS
-     call mem_est('WF',(/product(local_size)/), quiet=.true. , errors=(/err/))
+     call mem_est('WF',(/size(wf)/),quiet=.true.,errors=(/err/))
 #else
-     call mem_est('WF',(/product(local_size)/),errors=(/err/))
+     call mem_est('WF',(/size(wf)/),errors=(/err/))
 #endif
-     WF_alloc=local_size(2)
      wf=(0.,0.)
      wf_state=0
 #if defined _FFTW
      fftw_plan=0
 #endif
-   end function
+   end subroutine
    !
    subroutine WF_free()
      use memory_m, ONLY : mem_est
      use FFT_m,    ONLY : fft_size,fft_dim,fft_dim_loaded,fft_g_table,&
   &                       fft_rot_r,fftw_plan
-     implicit none
      if (.not.allocated(wf)) return
 #if defined _BIGSYS
      call mem_est('WF',quiet=.true.)
@@ -116,6 +119,44 @@ module wave_func
      wf_b=0
      wf_s=0
      wf_space=' '
+   end subroutine
+   !
+   subroutine WF_rotate(ik,n_bands,R,wf_in,wf_out)
+     !
+     ! <r|n'>= <m|n'><r|m>
+     !
+     ! with <:|n'>=H_sc(:,n')
+     !
+     ! wf(:,n')= sum_m WFo(:,m) H_sc(m,n')
+     use FFT_m,    ONLY : fft_size
+     !
+     integer     :: ik,n_bands
+     complex(SP) :: R(n_bands,n_bands),wf_in(fft_size,wf_n_states)
+     complex(SP), optional :: wf_out(fft_size,wf_n_states)
+     !
+     ! Work Space
+     !
+     integer     :: ib,ibp,ifft,ifftp
+     complex(SP) :: WS_wf(fft_size,n_bands)
+     !
+     WS_wf=(0.,0.)
+     !
+     do ib  = 1,n_bands
+       ifft = wf_state(ib,ik,1)
+       do ibp = 1,n_bands
+         ifftp = wf_state(ibp,ik,1)
+         call caxpy(fft_size,R(ibp,ib),wf_in(:,ifftp),1,WS_wf(:,ib),1)
+       end do
+     end do
+     !
+     do ib=1,n_bands
+       if (present(wf_out)) then
+         wf_out(:,wf_state(ib,ik,1))=WS_wf(:,ib)
+       else
+         wf_in(:,wf_state(ib,ik,1))=WS_wf(:,ib)
+       endif
+     enddo
+     !
    end subroutine
    ! 
 end module

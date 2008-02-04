@@ -28,13 +28,13 @@ subroutine rotate_H(R,H,N,direction)
  !
  ! R(i,j)=<i|j'>
  !
- ! direction = +1 => <n'|H_o|k'>=sum_{m,p} <n'|m> H_o(m,p) <p|k'> =
- !                               sum_{m,p} R_(m,n')^* H_o(m,p) R(p,k) = 
- !                               sum_{m,p} R^+_(n',m) H_o(m,p) R(p,k)
+ ! direction = +1 => <n'|H|k'>=sum_{m,p} <n'|m> H(m,p) <p|k'> =
+ !                               sum_{m,p} R_(m,n')^* H(m,p) R(p,k) = 
+ !                               sum_{m,p} R^+_(n',m) H(m,p) R(p,k)
  !
- ! direction = -1 => <n|H_o|k>=sum_{m,p} <n|m'> H_o(m',p') <p'|k> =
- !                               sum_{m,p} R_(n,m) H_o(m',p') R^*(k,p) = 
- !                               sum_{m,p} R_(n,m) H_o(m',p') R^+(p,k)
+ ! direction = -1 => <n|H|k>=sum_{m,p} <n|m'> H(m',p') <p'|k> =
+ !                               sum_{m,p} R_(n,m) H(m',p') R^*(k,p) = 
+ !                               sum_{m,p} R_(n,m) H(m',p') R^+(p,k)
  !
  use pars,           ONLY:SP
  implicit none

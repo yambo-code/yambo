@@ -44,7 +44,7 @@
   {"bss",    "y","BSE solver [opt=h/d/i/t]",0,0,1,0},                      /* 20 */
   {"acfdt",  "a","ACFDT Total Energy",0,0,0,0},                            /* 21 */
 #if defined _SC 
-  {"scpot",  "v","Self-Consistent (h)artree,(hf),(c)hosex,(x)x",0,0,1,0}, /* 22 */
+  {"scpot",  "v","Self-Consistent (hf),(c)hosex,(x)x",0,0,1,0}, /* 22 */
 #endif
 #if defined _RAS 
   {"sursp",  "s","Surface Spectroscopy [opt=r(as)/e(el)/b(oth)]",0,0,1,0}, /* 22 */

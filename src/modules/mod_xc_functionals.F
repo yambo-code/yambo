@@ -42,6 +42,7 @@ module xc_functionals
  !
  ! Kinds
  integer, public, parameter :: &
+    NONE                    = 0,  &
     XC_EXCHANGE             = 1,  &
     XC_CORRELATION          = 2,  &
     XC_EXCHANGE_CORRELATION = 3 
@@ -97,7 +98,7 @@ module xc_functionals
      character(4)   :: ch_kind
      !
      select case (kind)
-       case(-1)
+       case(-1,NONE)
         ch_kind=' '
        case(XC_EXCHANGE)
         ch_kind='(x)'
@@ -110,6 +111,8 @@ module xc_functionals
      select case (functional)
        case(-1,3,5,7,9)
         xc_string=string_pack('Unknown ',ch_kind)
+       case(NONE)
+        xc_string='none (Hartree)'
        case(XC_LDA_X)
         xc_string=string_pack('Exchange only ',ch_kind)
        case(XC_LDA_C_WIGNER)

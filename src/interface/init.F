@@ -907,10 +907,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          else if ( trim(rstr_piece(i1+1)) == 'c' ) then
            SC_potential='CHOSEX'
            call initactivate(1,'chosex gw0')
-         else if ( trim(rstr_piece(i1+1)) == 'h' ) then
-           SC_potential='Hartree'
          else if ( trim(rstr_piece(i1+1)) == 'hf') then
-           SC_potential='Hartree-Fock'
+           SC_potential='HARTREE-FOCK'
            call initactivate(1,'xxvxc')
          endif
        endif

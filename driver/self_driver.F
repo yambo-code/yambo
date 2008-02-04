@@ -173,7 +173,7 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
  ! HARTREE-FOCK AND VXC
  !======================
  !
- if (l_xxvxc) call QP_XX_Vxc(en,k,Xk,q)
+ if (l_xxvxc.and..not.l_sc_run) call QP_XX_Vxc(en,k,Xk,q)
  !
  ! RAS & REELS
  !=============

@@ -39,17 +39,23 @@ integer function eval_G_minus_G(iG,iGo)
  !
  ! Work Space
  !
- integer :: i1,i2,i3,iG_shell
+ integer :: i1,i2,i3,iG_shell,iG_,iGo_
  real(SP):: v1(3)
  !
  ! Init
  !
  eval_G_minus_G=iG
+ iG_=iG
+ iGo_=iGo
+ if (iGo==0) iGo_=iG
  !
  ! Allocation
  !
- if (allocated(G_m_G)) return
- allocate(G_m_G(iG,iGo))
+ if (allocated(G_m_G)) then
+   eval_G_minus_G=size(G_m_G,1)
+   return
+ endif
+ allocate(G_m_G(iG_,iGo_))
  call mem_est("G_m_G",(/shape(G_m_G)/),(/IP/))
  !
  ! Loop
@@ -59,11 +65,11 @@ integer function eval_G_minus_G(iG,iGo)
  ! Find the shell corresponding to iG
  !
  do i1=1,n_g_shells
-   if (ng_in_shell(i1)==iG) iG_shell=i1
+   if (ng_in_shell(i1)==iG_) iG_shell=i1
  enddo
  !
- do i1=1,iG
-   do i2=1,iGo
+ do i1=1,iG_
+   do i2=1,iGo_
      v1=g_vec(i1,:)-g_vec(i2,:)
      do i3=1,ng_closed
        if (v_is_zero(v1-g_vec(i3,:),zero_=G_iku_zero)) then
@@ -73,9 +79,11 @@ integer function eval_G_minus_G(iG,iGo)
      enddo
      if (G_m_G(i1,i2)==0) then
        iG_shell=iG_shell-1
-       iG=ng_in_shell(iG_shell)
+       iG_=ng_in_shell(iG_shell)
+       eval_G_minus_G=iG_
+       if (iGo==0) iGo_=iG_
        deallocate(G_m_G)
-       allocate(G_m_G(iG,iGo))
+       allocate(G_m_G(iG_,iGo_))
        call mem_est("G_m_G",(/shape(G_m_G)/),(/IP/))
        goto 1
      endif

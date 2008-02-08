@@ -24,7 +24,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  ! Hartree S_x self-energy + call to V_xc 
  !
  use pars,          ONLY:SP,schlen,DP,pi,HARTREE
- use drivers,       ONLY:l_sc_xx,l_sc_hf
+ use drivers,       ONLY:l_sc_xx,l_sc_hf,l_sc_run
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg,depth
  use timing,        ONLY:live_timing
@@ -37,6 +37,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  use R_lattice,     ONLY:qindx_S,bz_samp
  use wave_func,     ONLY:wf,wf_load,wf_ng,WF_free
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
+ use SC,            ONLY:it_now
  !
  implicit none
  type(levels) ::E       
@@ -74,10 +75,12 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  !
  ! title
  !
- if (depth>0) then
-   call section('=','EX(change)S(elf-energy) and Vxc potential')
- else
-   call section('*','EX(change)S(elf-energy) and Vxc potential')
+ if (.not.l_sc_run) then
+   if (depth>0) then
+     call section('=','EX(change)S(elf-energy) and Vxc potential')
+   else
+     call section('*','EX(change)S(elf-energy) and Vxc potential')
+   endif
  endif
  if (QP_ng_Sx==0) QP_ng_Sx=wf_ng
  !
@@ -136,7 +139,11 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
    !
    call par_indexes(px,(/q%nbz,E%nbm/),(/1,QP_Sx_low_band/))
    call pp_redux_wait
-   call live_timing('EXS',px%stps(myid+1)*QP_n_states)
+   !
+   ch='EXS'
+   if (l_sc_run) ch='EXS@it'//trim(intc(it_now))
+   !
+   call live_timing(trim(ch),px%stps(myid+1)*QP_n_states)
    !
    do iq=1,q%nbz
      !

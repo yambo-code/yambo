@@ -30,7 +30,7 @@ subroutine SC_driver(X,E,k,q)
  use QP_m,           ONLY:QP_state,QP_nb,QP_nk,QP_Vxc,QP_n_states,QP_table,&
 &                         QP_ng_Sx,QP_bands_mixed,QP_Sx
  use SC,             ONLY:SC_bands, SC_iterations,SC_E_threshold,&
-&                         SC_rho_threshold,SC_potential
+&                         SC_rho_threshold,SC_potential,it_now
  use wave_func,      ONLY:wf_load,wf,WF_rotate,wf_n_states
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size,fft_size
@@ -40,6 +40,7 @@ subroutine SC_driver(X,E,k,q)
  use timing,         ONLY:live_time_msg
  use stderr,         ONLY:tty_size,intc,real2ch
  use xc_functionals, ONLY:V_xc
+ use par_proc_m,     ONLY:master_node
  !
  implicit none
  type(levels) ::E
@@ -48,9 +49,10 @@ subroutine SC_driver(X,E,k,q)
  !
  ! Iterations
  !
- integer                  :: it_on_disk,it,it_done
+ integer                  :: it_on_disk,it
  real(SP)                 :: rho_convergence,E_convergence,E_save(SC_bands,k%nibz),&
-&                            E_previous(SC_bands,k%nibz),dE(SC_bands,k%nibz)
+&                            E_previous(SC_bands,k%nibz),dE(SC_bands,k%nibz),&
+&                            n_weight
  real(SP),    allocatable :: rho_nm1(:),rho_n(:),V_xc_n(:),V_xc_nm1(:),V_hr(:)
  complex(SP), allocatable :: WFo(:,:)
  ! 
@@ -171,10 +173,15 @@ subroutine SC_driver(X,E,k,q)
    !
    E_previous=E%E(:SC_bands,:,1)
    !
+   it_now=it
+   !
+   n_weight=.3
+   if (it>=10) n_weight=.2
+   if (it>=50) n_weight=.1
+   !
    ! Stop all messagging
    !
-   if (it >  1 ) call SC_mute("report log io_in io_out")
-   if (it == 1 ) call SC_mute("report io_in io_out")
+   call SC_mute("report io_in io_out")
    !
    if (local_V) then
      !
@@ -193,7 +200,7 @@ subroutine SC_driver(X,E,k,q)
        !
        V_xc_nm1=V_xc_n
        !
-       V_xc_n = 0.3* V_xc_n + 0.7*V_xc_nm1 
+       V_xc_n = n_weight*V_xc_n + (1.-n_weight)*V_xc_nm1 
        !
      endif
      !
@@ -210,7 +217,7 @@ subroutine SC_driver(X,E,k,q)
    !
    if (it>1) then
      !
-     rho_n  = 0.3* rho_n  + 0.7*rho_nm1 
+     rho_n = n_weight*rho_n + (1.-n_weight)*rho_nm1
      !
      call V_Hartree(rho_n,V_hr)
      !
@@ -227,6 +234,8 @@ subroutine SC_driver(X,E,k,q)
      else
        H_sc=(0.,0.)
        !
+       ! Add Sigma_x
+       !
        do i1 = 1, QP_n_states
          if (QP_table(i1,3)/=ik) cycle
          H_sc(QP_table(i1,1),QP_table(i1,2)) =  QP_Sx(i1)
@@ -234,6 +243,10 @@ subroutine SC_driver(X,E,k,q)
        !
        if (it>1) call rotate_H(R(:,:,ik),H_sc,SC_bands,-1)
        H_sc = H_sc + Ho(:,:,ik)
+       !
+       ! Add V_Hartree
+       !
+       call V_to_H(ik,V_hr,H_sc,WFo)
        !
      endif
      !
@@ -252,8 +265,6 @@ subroutine SC_driver(X,E,k,q)
      call WF_rotate(ik,SC_bands,R(:,:,ik),WFo,wf_out=wf)
      !
    end do
-   !
-   it_done=it
    !
    ! New density 
    !=============
@@ -279,10 +290,19 @@ subroutine SC_driver(X,E,k,q)
    !
    call SC_mute("report io_in io_out")
    !
-   dumb_ch='[SC] Iteration '//trim(intc(it))//' Accuracies rho*E :'//&
-&          trim(real2ch(rho_convergence))//'*'//trim(real2ch(E_convergence*HARTREE))
-   if (tty_size<0) call live_time_msg("n",dumb_ch,"","%s")
-   if (tty_size>0) call live_time_msg("r",dumb_ch,"","%s")
+   dumb_ch='[SC] Iteration '//trim(intc(it))//' Accuracies rho % E(ev) :'//&
+&          trim(real2ch(rho_convergence))//' % '//trim(real2ch(E_convergence*HARTREE))
+   !
+   if (tty_size>0.or.it==1) then
+     call live_time_msg("n",dumb_ch,"","%s")
+   else
+     if (local_V) then
+       if (tty_size>0) call live_time_msg("r",dumb_ch,"","%s")
+       if (tty_size<0) call live_time_msg("n",dumb_ch,"","%s")
+     else
+       call live_time_msg("n",dumb_ch,"","%s")
+     endif
+   endif
    !
    if (E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold) exit
    !
@@ -291,7 +311,7 @@ subroutine SC_driver(X,E,k,q)
  ! exit SCF cycle and report
  !
  call SC_mute("")
- call msg('nr','[SC] Iterations                     :',it_done)
+ call msg('nr','[SC] Iterations                     :',it_now)
  call msg('r' ,'[SC] Accuracy on density      :',rho_convergence)
  call msg('rn','[SC]          on energies [ev]:',E_convergence*HARTREE)
  !

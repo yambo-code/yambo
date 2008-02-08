@@ -23,13 +23,17 @@ subroutine X_pre_setup(Xen,X)
  !
  use X_m,           ONLY:X_t,use_X_RIM,X_RIM_nkpts
  use electrons,     ONLY:levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts
- use drivers,       ONLY:l_bs_fxc,l_col_cut,Finite_Tel
+ use drivers,       ONLY:l_bs_fxc,l_col_cut,Finite_Tel,l_gw0,l_chosex
  use R_lattice,     ONLY:nqibz
  use TDDFT,         ONLY:FXC_n_g_corr
  implicit none
  !
  type(X_t)    :: X 
  type(levels) ::Xen
+ ! 
+ ! Work Space
+ !
+ integer, external :: eval_G_minus_G
  !
  if (X%ib(1)<0) X%ib(1)=1
  if (X%ib(2)<0) X%ib(2)=1
@@ -53,6 +57,10 @@ subroutine X_pre_setup(Xen,X)
  !
  use_X_RIM=X%ib(2)<=BZ_RIM_nbands.and.(.not.l_bs_fxc)
  if (use_X_RIM) X_RIM_nkpts=BZ_RIM_tot_nkpts
+ !
+ ! CHO checks
+ !
+ if (l_gw0.and.l_chosex) X%ng=eval_G_minus_G(X%ng,0)
  !
  ! Fxc Checks
  !

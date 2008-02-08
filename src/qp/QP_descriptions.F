@@ -26,7 +26,8 @@ subroutine QP_descriptions(qp,X,Xw)
  use pars,          ONLY:HARTREE
  use X_m,           ONLY:X_t,use_X_RIM
  use QP_m,          ONLY:QP_t,QP_ng_Sx,QP_n_G_bands,QP_cg_percent,&
-&                        QP_dSc_delta,QP_G_damp,QP_dSc_steps,GWo_iterations
+&                        QP_dSc_delta,QP_G_damp,QP_dSc_steps,GWo_iterations,&
+&                        CHOSEX_use_empties
  use stderr,        ONLY:string_pack,gen_fmt
  use drivers,       ONLY:l_life,l_ppa,l_ph_corr,l_el_corr,l_chosex
  use R_lattice,     ONLY:RIM_qpg,RIM_n_rand_pts,RIM_ng
@@ -130,10 +131,12 @@ subroutine QP_descriptions(qp,X,Xw)
 &        string_pack('(a,',gen_fmt( r_v=(/QP_cg_percent /) ),')'))) &
 &        ' Transitions       [o/o]:',QP_cg_percent
  else
-   qp%n_descs=qp%n_descs+1
-   write (qp%description(qp%n_descs),trim(&
-&       string_pack('(a,2(',gen_fmt( QP_n_G_bands ),',1x))')))&
-&       ' Sc/G bands             :',QP_n_G_bands
+   if ( (.not.l_chosex) .or. (l_chosex.and.CHOSEX_use_empties) ) then
+     qp%n_descs=qp%n_descs+1
+     write (qp%description(qp%n_descs),trim(&
+&         string_pack('(a,2(',gen_fmt( QP_n_G_bands ),',1x))')))&
+&         ' Sc/G bands             :',QP_n_G_bands
+   endif
    if (.not.l_chosex) then
      qp%n_descs=qp%n_descs+1
      write (qp%description(qp%n_descs),trim(&
@@ -150,8 +153,6 @@ subroutine QP_descriptions(qp,X,Xw)
  ! El-Ph
  !
  if (ver_is_gt_or_eq(-1,(/3,0,1/))) then
-   !
-   if (l_el_corr)      qp%n_descs=qp%n_descs+1
    !
    if (l_ph_corr) then
      if (.not.l_el_corr) then

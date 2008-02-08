@@ -55,7 +55,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use com,           ONLY:out_path,db_wr_path
  use functions,     ONLY:bose_E_cut
 #if defined _SC
- use SC,            ONLY:SC_bands,SC_iterations,SC_potential
+ use SC,            ONLY:SC_bands,SC_iterations,SC_potential,&
+&                        SC_E_threshold,SC_rho_threshold
 #endif
 #if defined _RAS
  use bulkeps,              ONLY : init_bulk
@@ -92,7 +93,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  call it('r',defs,'setup',   '[R INI] Initialization')  ! [1]
  call it('r',defs,'optics',  '[R OPT] Optics') ! [2]
- call it('r',defs,'linres',  '[R LR] Linear Response.') ! [3]
+ call it('r',defs,'chi',     '[R CHI] Dyson equation for Chi.') ! [3]
  call it('r',defs,'bse',     '[R BSK] Bethe Salpeter Equation.') ! [4]
  call it('r',defs,'rim_cut', '[R RIM CUT] Coulomb interaction') ! [5]
  call it('r',defs,'xxvxc',   '[R XX] Exact Exchange Self-energy and Vxc') ! [6]
@@ -176,6 +177,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'GEnRnge',  '[GW] G_gw energy range',QP_G_er,E_unit)
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
  call it(defs,'GWoIter',  '[GW] GWo SC iterations',GWo_iterations,verb_level=V_more)
+ call it('f',defs,'UseEbands', '[GW] Force CHOSEX to use empty bands',verb_level=V_more)
  !
  ! El-Ph
  !
@@ -193,6 +195,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  call it(defs,'SCIter',    '[SC] SC Iterations',SC_iterations)
  call it(defs,'SCPot',     '[SC] SC Potential',SC_potential)
+ call it(defs,'SCEtresh',  '[SC] Energy convergence threshold',SC_E_threshold,unit=E_unit)
+ call it(defs,'SCRhoTresh','[SC] Rho convergence threshold',SC_rho_threshold)
 #endif
  !
  ! Non-Perturbative

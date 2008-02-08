@@ -1,3 +1,28 @@
+2008-02-04 12:25:15 r199 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.0.13 r.199
+
+	*  configure include/version.inc a2s/a2s_db1.F config/configure.ac xc_functionals/xc_lda_driver.F qp/QP_XX_Vxc.F wf_and_fft/wf_load.F wf_and_fft/scatter_Bamp.F interface/init.F communicate/report_energies.F sc/V_to_H.F sc/V_Hartree.F sc/SC_driver.F sc/rotate_H.F modules/mod_wave_func.F modules/mod_drivers.F modules/mod_xc_functionals.F driver/self.h driver/self_driver.F
+
+	Bugs:
+	- [IMPORTANT!] In scatter_Bamp.F. This bug was introduced
+	  when the SPIN project was merged in the core (r. 197)
+
+	Additions:
+	- Added Hartree case in a2s functionals and in xc_lda_driver.F
+	- Added wf_n_states in wf module. WF_load changed accordingly
+	- wf_rotate in WF module
+
+	Changes:
+	- [Self-Consistency] changes in
+	  init.F,report_energies.F,V_to_H.F,V_Hartree.F,SC_driver.F
+
+	Patch sent by: Andrea
+
+2008-02-01 18:50:19 r198 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	SC project update (Andrea)
+
 2008-01-31 09:55:10 r197 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Version 3.0.13 r.197

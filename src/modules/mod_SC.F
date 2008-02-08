@@ -25,6 +25,7 @@ module SC
  implicit none
  !
  integer           :: SC_bands
+ integer           :: it_now
  integer           :: SC_iterations
  real(SP)          :: SC_rho_threshold
  real(SP)          :: SC_E_threshold

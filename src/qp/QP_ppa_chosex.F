@@ -27,7 +27,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter,be_verbose)
  use stderr,        ONLY:string_pack
  use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
- use electrons,     ONLY:levels,spin_occ,spin
+ use electrons,     ONLY:levels,spin_occ,spin,n_met_bands
  use timing,        ONLY:live_timing
  use com,           ONLY:msg
  use drivers,       ONLY:Finite_Tel,l_ppa,l_chosex
@@ -37,10 +37,11 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter,be_verbose)
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_dSc_steps,&
-&                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta
+&                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
+&                        CHOSEX_use_empties
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use wave_func,     ONLY:wf_load,wf_free
- use R_lattice,     ONLY:qindx_S,bz_samp
+ use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv
  !
  implicit none
@@ -54,7 +55,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter,be_verbose)
  !
  ! Work Space
  !
- integer :: i1,i2,i4,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs
+ integer :: i1,i2,i4,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4)
  real(SP),    allocatable :: PPaP(:,:)
  complex(SP), allocatable :: PPaR(:,:),E_(:),dc(:),PPaR_ws(:,:)
 #if defined _DOUBLE
@@ -74,6 +75,10 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter,be_verbose)
  call collision_reset(isc)
  call collision_reset(iscp)
  call pp_indexes_reset(px)
+ !
+ ! CHOSEX: bands setup
+ !
+ if (.not.CHOSEX_use_empties) QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),n_met_bands)
  !
  ! Section
  !
@@ -105,9 +110,16 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter,be_verbose)
  !
  call k_expand(k)
  !
+ ! Dimensions...
+ !
+ isc%iqref=0
+ isc%ngrho=X%ng
+ if (l_chosex.and..not.CHOSEX_use_empties) isc%ngrho=maxval(G_m_G)
+ iscp%ngrho=isc%ngrho
+ !
  ! WFs
  !
- call wf_load(X%ng,maxval(qindx_S(:,:,2)),&
+ call wf_load(isc%ngrho,maxval(qindx_S(:,:,2)),&
 &             (/1,max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-Sc')
  !
  ! Plasmon-Pole/Static interaction DB I/O
@@ -135,14 +147,10 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter,be_verbose)
 &               (/SP/),errors=(/alloc_err/))
  endif
  !
- !
- allocate(isc%gamp(X%ng,X%ng),isc%rhotw(X%ng),iscp%rhotw(X%ng),stat=alloc_err)
- call mem_est("ISC-GAMP",(/X%ng**2+2*X%ng/),errors=(/alloc_err/))
+ allocate(isc%gamp(X%ng,X%ng),isc%rhotw(isc%ngrho),iscp%rhotw(isc%ngrho),stat=alloc_err)
+ call mem_est("ISC-GAMP",(/X%ng**2+2*isc%ngrho/),errors=(/alloc_err/))
  !
  QP_Sc=cmplx(0.,0.,SP)
- !
- isc%ngrho=X%ng
- isc%iqref=0
  !
  call par_indexes(px,(/q%nbz,QP_n_G_bands(2)/),(/1,QP_n_G_bands(1)/))
  call pp_redux_wait
@@ -202,6 +210,26 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter,be_verbose)
      !
      dc=cmplx(0.,0.,SP)
      !
+     ! CHO (using completeness relation)
+     !
+     if (l_chosex.and..not.CHOSEX_use_empties) then
+       iscs_save(1,: )=isc%os
+       iscs_save(2,:3)=isc%qs
+       isc%os=isc%is
+       isc%qs=(/1,1,1/)
+       call scatterBamp(isc)
+       do ig1=1,X%ng
+         do ig2=1,X%ng
+           dc(1)=dc(1)+2.*pi*isc%rhotw(G_m_G(ig1,ig2))*PPaR(ig1,ig2)
+         enddo
+       enddo
+       !
+       QP_Sc(i1,:)=QP_Sc(i1,:)+dc(1)
+       dc=cmplx(0.,0.,SP)
+       isc%os=iscs_save(1,: )
+       isc%qs=iscs_save(2,:3)
+     endif
+     !
      do ib=QP_n_G_bands(1),QP_n_G_bands(2)
        !
        if (.not.px%i2p(iqbz,ib)) cycle
@@ -237,11 +265,20 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter,be_verbose)
          !
          do ig1=1,X%ng
            do ig2=1,X%ng
+             !
+             ! SEX
+             !
              dc(1)=dc(1)-4./spin_occ*pi*isc%rhotw(ig1)*&
 &                   PPaR(ig1,ig2)*conjg(iscp%rhotw(ig2))*e%f(isc%os(1),isc%os(2),1)
+             !
+             ! CHO
+             !
              dc(2)=dc(2)+2.*pi*isc%rhotw(ig1)*PPaR(ig1,ig2)*conjg(iscp%rhotw(ig2))
+             !
            enddo
          enddo
+         !
+         if (.not.CHOSEX_use_empties) dc(2)=(0._SP,0._SP)
          !
          QP_Sc(i1,:)=QP_Sc(i1,:)+dc(1)+dc(2)
          !

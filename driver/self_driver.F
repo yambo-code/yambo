@@ -146,7 +146,7 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
  !
  ! - Dynamical X -
  !
- apply_QP=(l_optics.and.l_lr).or.(l_em1d.and..not.l_ppa).or.&
+ apply_QP=(l_optics.and.l_chi).or.(l_em1d.and..not.l_ppa).or.&
 #if defined _REELS
         lreels.or.&
 #endif
@@ -188,7 +188,7 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
  ! OPTICS
  !========
  !
- if (l_optics.and.l_lr) call O_driver(Xen,Xk,q,Xw(3),X(3))
+ if (l_optics.and.l_chi) call O_driver(Xen,Xk,q,Xw(3),X(3))
  ! 
  ! INVERSE DIELECTRIC FUNCTIONS
  !===============================

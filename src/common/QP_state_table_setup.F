@@ -182,6 +182,7 @@ subroutine QP_state_table_setup(en)
          QP_table(QP_n_states,2)=i2+i3
          QP_table(QP_n_states,3)=i1
          if (n_sp_pol==2) QP_table(QP_n_states,4)=i_sp
+         !
        enddo
      enddo
    enddo

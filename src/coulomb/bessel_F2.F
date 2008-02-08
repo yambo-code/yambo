@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2005 A. Marini and the SELF team
+! Copyright (C) 2000-2005 D. Varsano and the SELF team
 !         http://www.fisica.uniroma2.it/~self
 !
 ! This file is distributed under the terms of the GNU
@@ -19,35 +19,19 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SC_mute(what)
- !
- use pars,           ONLY:schlen
- use IO_m,           ONLY:write_to_dbs,read_dbs
- use com,            ONLY:write_to_report
- use par_proc_m,     ONLY:master_node
- use stderr,         ONLY:string_split,write_to_log
+function bessel_F2(z)
+ use pars,          ONLY:SP
+ use R_lattice,     ONLY:cyl_zz_save,cyl_ph_radius
  implicit none
- !
- character(*) :: what
- !
+ real(SP) :: z
+ ! 
  ! Work Space
  !
- integer          ::ich
- character(schlen)::ch_piece(10)
- !
- write_to_log=master_node
- write_to_report=master_node
- write_to_dbs=master_node
- read_dbs=.true.
- !
- if (len_trim(what)>0) then
-   call string_split(what,ch_piece)
-   do ich=1,10
-     if (trim(ch_piece(ich))=="report") write_to_report=.false.
-     if (trim(ch_piece(ich))=="log")    write_to_log=.false.
-     if (trim(ch_piece(ich))=="io_in")  read_dbs=.false.
-     if (trim(ch_piece(ich))=="io_out") write_to_dbs=.false.
-   enddo
- endif
- !
-end subroutine SC_mute
+ integer       :: neval,ier,last,iwork(3)
+ real(SP)      :: abserr,G,work(12),bessel_F2
+ real(SP), external :: bessel_J0
+ cyl_zz_save=z
+ call qag(bessel_J0,0,cyl_ph_radius,8.e-1,0.,4,G,abserr,neval,ier, &
+&         3,12,last,iwork,work)
+ bessel_F2=G
+end function 

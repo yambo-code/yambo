@@ -313,7 +313,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !FFT
  !
- if (any((/(l_optics.and.l_lr),(l_optics.and.l_bse),l_em1d,&
+ if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse),l_em1d,&
 &          l_em1s,l_acfdt,l_xxvxc,l_col_cut/))) call initactivate(1,'FFTGvecs')
  !
  !Setup
@@ -338,7 +338,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Optics(not bse) nor GW (no PP)
  !
- if ((l_optics.and.l_lr).or.(l_em1d.and..not.l_ppa)) then
+ if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_ppa)) then
    call initactivate(1,'XfnQPdb XfnQP_N XfnQP_E XfnQP_W XfnQP_Z LongPath')
    call Xon('Xd',(/'QpntsR','BndsRn','NGsBlk',&
 &                  'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
@@ -400,6 +400,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                      'DrudeW','EhEngy','LongDr'/)) 
        !
        if (.not.l_chosex) call initactivate(1,'DysSolver')
+       if (     l_chosex) call initactivate(1,'UseEbands')
        if (trim(QP_solver)=="g") then
          call initactivate(1,'GEnSteps GEnRnge GDmRnge') 
        else
@@ -428,15 +429,15 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Optics + BS based TDDFT (BS fxc is only of q=0 0 0)
  !
- if (l_bs_fxc.and.l_optics.and.l_lr) call initactivate(1,'FxcGRLc FxcSVdig FxcCausal')
+ if (l_bs_fxc.and.l_optics.and.l_chi) call initactivate(1,'FxcGRLc FxcSVdig FxcCausal')
  !
  ! ALDA/LRC Tddft
  !
  if (l_alda_fxc.and.&
-&    any((/l_optics.and.l_lr,l_em1s,l_em1d,l_acfdt,l_ppa,l_chosex,l_gw0/))) &
+&    any((/l_optics.and.l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,l_chosex,l_gw0/))) &
 &    call initactivate(1,'FxcGRLc')
  if (l_lrc_fxc.and.&
-&    any((/l_optics.and.l_lr,l_em1s,l_em1d,l_acfdt,l_ppa,l_chosex,l_gw0/))) &
+&    any((/l_optics.and.l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,l_chosex,l_gw0/))) &
 &    call initactivate(1,'LRC_alpha')
  !
  ! BSE + TDDFT = no BS db, Fxc + LF on-fly
@@ -466,7 +467,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! DFT
  !
 #if defined _SC
- if (l_sc_run) call initactivate(1,'SCPot FFTGvecs SCIter SCBands BandMix')
+ if (l_sc_run) call initactivate(1,'SCPot FFTGvecs SCEtresh SCRhoTresh SCIter SCBands BandMix')
 #endif
  !
  ! RAS
@@ -609,7 +610,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      l_setup=(rstatus(1)/=0)
      l_optics=(rstatus(2)/=0)
-     l_lr=(rstatus(3)/=0)
+     l_chi=(rstatus(3)/=0)
      l_bse=(rstatus(4)/=0)
      l_rim=(rstatus(5)/=0)
      l_col_cut=(rstatus(5)/=0)
@@ -700,7 +701,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      ! If optics with BS FXC I need to dump on X(3) the
      ! Fxc specs
      !
-     if (all((/l_bs_fxc,l_optics,l_lr.or.l_bse,ioBS_Fxc_err==0/))) then
+     if (all((/l_bs_fxc,l_optics,l_chi.or.l_bse,ioBS_Fxc_err==0/))) then
        QP_ctl_E(1,:)=QP_ctl_E(2,:)
        X(3)%ib= BS_bands
        X(3)%ehe=BS_eh_en
@@ -845,10 +846,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! BSE/LLR
        !
        if ( trim(rstr_piece(i1)) == 'optics' )  then
-         l_lr=  trim(rstr_piece(i1+1)) == 'l'
+         l_chi= trim(rstr_piece(i1+1)) == 'c'
          l_bse= trim(rstr_piece(i1+1)) == 'b'
-         if (.not.l_lr.and..not.l_bse) l_lr=.true.
-         if (l_lr)  call initactivate(1,'linres')
+         if (.not.l_chi.and..not.l_bse) l_chi=.true.
+         if (l_chi) call initactivate(1,'chi')
          if (l_bse) call initactivate(1,'bse')
        endif
        !

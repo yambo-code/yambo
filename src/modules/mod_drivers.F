@@ -44,7 +44,7 @@ module drivers
  !
  ! LR
  !
- logical :: l_optics,l_lr,l_em1d,l_em1s
+ logical :: l_optics,l_chi,l_em1d,l_em1s
  !
  ! BSE
  !

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2005 A. Marini and the SELF team
+! Copyright (C) 2000-2005 D. Varsano and the SELF team
 !         http://www.fisica.uniroma2.it/~self
 !
 ! This file is distributed under the terms of the GNU
@@ -19,35 +19,26 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SC_mute(what)
- !
- use pars,           ONLY:schlen
- use IO_m,           ONLY:write_to_dbs,read_dbs
- use com,            ONLY:write_to_report
- use par_proc_m,     ONLY:master_node
- use stderr,         ONLY:string_split,write_to_log
+function bessel_F6(x,y)
+ use pars,          ONLY:SP
+ use R_lattice,     ONLY:cyl_ph_radius
  implicit none
- !
- character(*) :: what
- !
+ real(SP) :: x,y
+ ! 
  ! Work Space
  !
- integer          ::ich
- character(schlen)::ch_piece(10)
+ real(SP) :: arg1,arg2,bk0,bk1,bessel_F6
+ real(SP), external :: BESJ0,BESJ1,BESK0,BESK1
  !
- write_to_log=master_node
- write_to_report=master_node
- write_to_dbs=master_node
- read_dbs=.true.
- !
- if (len_trim(what)>0) then
-   call string_split(what,ch_piece)
-   do ich=1,10
-     if (trim(ch_piece(ich))=="report") write_to_report=.false.
-     if (trim(ch_piece(ich))=="log")    write_to_log=.false.
-     if (trim(ch_piece(ich))=="io_in")  read_dbs=.false.
-     if (trim(ch_piece(ich))=="io_out") write_to_dbs=.false.
-   enddo
+ arg1=x*cyl_ph_radius
+ arg2=y*cyl_ph_radius
+ if (arg2 > 80) then
+   bk0=0.
+   bk1=0.
+ else
+   bk0=BESK0(arg2)
+   bk1=BESK1(arg2)
  endif
- !
-end subroutine SC_mute
+ bessel_F6=arg1*BESJ1(arg1)*bk0-arg2*BESJ0(arg1)*bk1
+ bessel_F6=bessel_F6+1
+end function

@@ -31,7 +31,7 @@ subroutine std_presets(INSTR,IND,OD,JS)
 &                     QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_E,QP_ctl_W,QP_ctl_Z,&
 &                     QP_ctl_short_descr,QP_Sc_steps,QP_G_er,QP_G_dr,&
 &                     QP_W_partially_done,GWo_SC_done,GWo_iterations,&
-&                     QP_band_mixing
+&                     QP_band_mixing,CHOSEX_use_empties
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,n_atoms_max,n_atom_species,pp_n_l_comp_max,&
 &                     pp_kbv_dim,input_Tel_fixed
@@ -172,7 +172,7 @@ subroutine std_presets(INSTR,IND,OD,JS)
  l_chosex=.false.
  l_gw0=.false.
  l_bse=.false.
- l_lr=.false.
+ l_chi=.false.
  l_bss=.false.
  l_bs_fxc=.false.
  l_acfdt=.false.
@@ -252,6 +252,7 @@ subroutine std_presets(INSTR,IND,OD,JS)
  GWo_iterations=0
  GWo_SC_done=.false.
  QP_band_mixing=0.
+ CHOSEX_use_empties=.false.
  !
  QP_ctl_db="none"
  QP_ctl_interp_neigh=1
@@ -315,7 +316,7 @@ subroutine std_presets(INSTR,IND,OD,JS)
  !
  ! SC
  !
- SC_iterations=10
+ SC_iterations=100
  SC_rho_threshold=1.E-5
  SC_E_threshold=0.01/HARTREE
  SC_potential='none'

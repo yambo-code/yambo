@@ -44,7 +44,8 @@ subroutine tddft_alda_g_space(E,k)
  !
  ! Fxc RL size setup looking at the max index of G-G'
  !
- if (FXC_n_g_corr/= eval_G_minus_G(FXC_n_g_corr,FXC_n_g_corr) ) then
+ if (FXC_n_g_corr/= eval_G_minus_G(FXC_n_g_corr,0) ) then
+   FXC_n_g_corr   = eval_G_minus_G(FXC_n_g_corr,0)
    call msg('s','[TDDFT] ALDA Fxc size forced by symmetry to be :',FXC_n_g_corr)
  endif
  !

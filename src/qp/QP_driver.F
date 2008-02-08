@@ -35,7 +35,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
 &                        QP_Sx,QP_n_states,QP_nb,&
 &                        QP_nk,QP_rep_string,QP_state,QP_dSc_test,QP_reset,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_G,QP_W_partially_done,&
-&                        GWo_iterations
+&                        GWo_iterations,CHOSEX_use_empties
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  implicit none
  type(levels) ::en,Xen
@@ -52,6 +52,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! Parser
  !
  call parser('NewtDchk',QP_dSc_test)
+ call parser('UseEbands',CHOSEX_use_empties)
  !
  ! S_x/Vxc are always need if not l_life or el. correlations is
  ! skipped

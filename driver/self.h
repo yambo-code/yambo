@@ -32,19 +32,19 @@
   {"dbpr",   "D","DataBases properties",0,0,0,0},    /* 8 */
   {"dbfrag", "S","DataBases fragmentation",0,0,0,0}, /* 9 */
   {"setup",  "i","Initialization",0,0,0,0},          /* 10 */
-  {"optics", "o","Optics [opt=l(inear response)/b(se)]",0,0,1,0},    /* 11 */
-  {"tddft",  "t","The TDDFT way (a)ALDA (b)SE (l)RC",0,0,1,0},     /* 12 */
+  {"optics", "o","Optics [opt=(c)hi/(b)se]",0,0,1,0},    /* 11 */
+  {"tddft",  "t","The TDDFTs [opt=(a)LDA/(b)SE/(l)RC]",0,0,1,0},     /* 12 */
   {"rim_cut","c","Coulomb interaction",0,0,0,0},  /* 13 */
   {"xxvxc",  "x","Exact Exchange Self-energy and Vxc",0,0,0,0},      /* 14 */
   {"em1d",   "d","Dynamical Inverse Dielectric Matrix",0,0,0,0},     /* 15 */
   {"em1s",   "b","Static Inverse Dielectric Matrix",0,0,0,0},        /* 15 */
-  {"gwapprx","p","GW approximations: (p)PA/c(HOSEX)",0,0,1,0},              /* 17 */
-  {"gw0",    "g","Dyson Equation solver [n(ewton)/s(ecant)/g(reen)]",0,0,1,0}, /* 18 */
+  {"gwapprx","p","GW approximations [opt=(p)PA/c(HOSEX)]",0,0,1,0},              /* 17 */
+  {"gw0",    "g","Dyson Equation solver [opt=n(ewton)/s(ecant)/g(reen)]",0,0,1,0}, /* 18 */
   {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0},                  /* 19 */
   {"bss",    "y","BSE solver [opt=h/d/i/t]",0,0,1,0},                      /* 20 */
   {"acfdt",  "a","ACFDT Total Energy",0,0,0,0},                            /* 21 */
 #if defined _SC 
-  {"scpot",  "v","Self-Consistent (hf),(c)hosex,(x)x",0,0,1,0}, /* 22 */
+  {"scpot",  "v","Self-Consistent [opt=(hf),(c)hosex,(x)x]",0,0,1,0}, /* 22 */
 #endif
 #if defined _RAS 
   {"sursp",  "s","Surface Spectroscopy [opt=r(as)/e(el)/b(oth)]",0,0,1,0}, /* 22 */
@@ -53,7 +53,7 @@
   {"reels",  "r","Surface Spectroscopy (REELS)",0,0,0,0},                  /* 22 */
 #endif
 #if defined _ELPH
-  {"corrtp", "s","Correlation [e(lectrons)/p(honons)/b(oth)]",0,0,1,0},    /* 22 */
+  {"corrtp", "s","Correlation [opt=e(lectrons)/p(honons)/b(oth)]",0,0,1,0},    /* 22 */
 #endif
   {NULL,NULL,NULL,0,0,0,0}
  };

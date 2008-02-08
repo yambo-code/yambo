@@ -65,7 +65,7 @@ subroutine exc_wf_eval(Xk,Xen)
  integer, parameter :: amp_steps=1000
  integer      :: amp_n_trans
  real(SP)     :: amp_range(2),amp_damping,amp_I
- real(SP),allocatable :: amp_trans(:,:)
+ real(SP),allocatable :: amp_trans(:,:),S_sq(:),S_z(:)
  complex(SP)          :: amp_E
  !
  !... Dummy arguments 
@@ -164,6 +164,10 @@ subroutine exc_wf_eval(Xk,Xen)
  ! Sort energies to find degenerate states
  !
  call sort_energies(BS_R,BS_E,.false.)
+ !
+ ! Exciton's spin
+ !
+ !call exc_wf_spin()
  ! 
  ! Loading  Wf 
  !
@@ -238,6 +242,7 @@ subroutine exc_wf_eval(Xk,Xen)
    if (.not.px%i1p(ir)) cycle
    !
    r_eh(:)=r_big_cell_cc(:,ir)-r_hole(:)
+   !
    do neh = 1,BS_K_dim
      !
      ikbz  = BS_eh_table(neh,1)

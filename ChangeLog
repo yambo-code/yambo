@@ -1,3 +1,28 @@
+2008-02-08 19:02:33 r200 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.0.13 r.200
+
+	*  configure spp/exc_wf_eval.F include/version.inc config/configure.ac qp/QP_driver.F qp/QP_XX_Vxc.F qp/QP_descriptions.F qp/QP_ppa_chosex.F common/QP_state_table_setup.F common/eval_G_minus_G.F pol_function/X_pre_setup.F interface/init_load.F interface/init.F coulomb/bessel_F2.F coulomb/bessel_F3.F coulomb/bessel_F4.F coulomb/bessel_F5.F coulomb/bessel_F6.F coulomb/cutoff_cylinder.F coulomb/.objects tddft/tddft_alda_g_space.F sc/SC_mute.F sc/SC_driver.F modules/std_presets.F modules/mod_SC.F modules/mod_drivers.F modules/mod_QP.F ChangeLog driver/self.h driver/self_driver.F
+
+	Bugs:
+	- Argument redefinition (like in old wf_load bug) in eval_G_minus_G
+	  routine (dangerous for possible memory leaks).
+
+	Additions:
+	- CHOSEX self-energy implemented. It can use only occupied bands
+	  or it can be used for convergence purposes using the UseEbands
+	  flag.
+	- Added bessel function in src/coulomb/ as separate routines for
+	  compatibility with SP and PGf90 compilers.
+
+	Changes:
+	- Self-Consistensy: Now all local potential works (positice comparison
+	  with abinit results). XX, HF and CHOSEX under testing.
+
+	- !!! NOTE !!! Command line options for "-o l"  changed in "-o c"
+
+	Patch sent by: Andrea
+
 2008-02-04 12:25:15 r199 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Version 3.0.13 r.199

@@ -22,9 +22,9 @@
 subroutine section(mode,name)
  !
  ! mode = * 	: keep level
- !      = +      : increase level
- !      = -      : decrease level
- !      = p      : increase level only in this section
+ !      = +     : increase level
+ !      = -     : decrease level
+ !      = p     : increase level only in this section
  !
  use pars
  use it_m,       ONLY:ofiles_append

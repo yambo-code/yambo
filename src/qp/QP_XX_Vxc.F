@@ -24,7 +24,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  ! Hartree S_x self-energy + call to V_xc 
  !
  use pars,          ONLY:SP,schlen,DP,pi,HARTREE
- use drivers,       ONLY:l_sc_xx,l_sc_hf,l_sc_run
+ use drivers,       ONLY:l_sc_xx,l_sc_hf,l_sc_run,l_acfdt
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg,depth
  use timing,        ONLY:live_timing
@@ -73,14 +73,12 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  call collision_reset(iscp) 
  call pp_indexes_reset(px)
  !
- ! title
+ ! Section
  !
- if (.not.l_sc_run) then
-   if (depth>0) then
-     call section('=','EX(change)S(elf-energy) and Vxc potential')
-   else
-     call section('*','EX(change)S(elf-energy) and Vxc potential')
-   endif
+ if (l_acfdt) then
+   call section('p','EX(change)S(elf-energy) and Vxc potential')
+ else if (.not.l_sc_run) then
+   call section('*','EX(change)S(elf-energy) and Vxc potential')
  endif
  if (QP_ng_Sx==0) QP_ng_Sx=wf_ng
  !

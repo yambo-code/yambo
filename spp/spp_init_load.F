@@ -33,13 +33,19 @@ subroutine spp_init_load(defs)
  !RunLevels
  !
  call it('r',defs,'kpt',  '[R] K-grid analysis')  ! [1]
- call it('r',defs,'excwf','[R] Excitonic Wavefunction plot')  ! [2]
- call it('r',defs,'bzrim','[R] BZ energy RIM analyzer')  ! [3]
- call it('r',defs,'elph', '[R] Electron-Phonon DBs preprocessing')  ! [4]
- call it('r',defs,'surf', '[R] Surface spectroscopy postprocessor')  ! [5]
- call it('r',defs,'ras',  '[R] RAS spectra generator')  ! [6]
- call it('r',defs,'loc',  '[R] State localizer')  ! [6]
- call it('r',defs,'trans','[R] Transition analyzer')  ! [7]
+ call it('r',defs,'excp', '[R] Excitonic Properties')  ! [2]
+ !
+ ! Additional Runlevels for excitonic properties 
+ !
+ call it('r',defs,'exc_wf',   '[R] Excitonic Wavefunction')  ! [3]
+ call it('r',defs,'exc_spin', '[R] Excitonic Spin')  ! [4]
+ !
+ call it('r',defs,'bzrim','[R] BZ energy RIM analyzer')  ! [5]
+ call it('r',defs,'elph', '[R] Electron-Phonon DBs preprocessing')  ! [6]
+ call it('r',defs,'surf', '[R] Surface spectroscopy postprocessor')  ! [7]
+ call it('r',defs,'ras',  '[R] RAS spectra generator')  ! [8]
+ call it('r',defs,'loc',  '[R] State localizer')  ! [9]
+ call it('r',defs,'trans','[R] Transition analyzer')  ! [10]
  !
  !Kpt analysis
  !
@@ -53,13 +59,10 @@ subroutine spp_init_load(defs)
  !
  !EXC WF
  !
- call it(defs,'Action','Sort energies or plot WF [(s)ort/(p)lot]', action_mode)
- call it(defs,'Max_Energy','Max value energy to be shown', max_energy,E_unit)
  call it(defs,'Degen_Step', 'Maximum energy separation of two degenerate states',&
 &                           deg_energy,E_unit)
- call it(defs,'Order','Energies order `mode` [(e)nergy/(i)ntensity]', sort_mode)
  call it(defs,'RNorm','Normalize residuals [yes/no]', R_normalize)
- call it(defs,'State','Ordered Index of the BS state',lambda)
+ call it(defs,'States','Index of the BS state(s)',state_ctl)
  call it(defs,'Cells', 'Number of cell repetitions (even or 1)',ncell)
  call it(defs,'Hole', '[cc] Hole position in unit cell',r_hole)
  !

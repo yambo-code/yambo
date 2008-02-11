@@ -33,6 +33,7 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  use it_m,                ONLY:it_reset,infile
  use SPP
  implicit none
+ !
  type(levels)                 :: en,Xen
  type(bz_samp)                :: k,Xk,q
  integer,          intent(in) :: lnstr,iind,iod,ijs,np,pid
@@ -142,7 +143,7 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  if (lbzrim) call BZ_RIM(Xk,Xen)
  !
- if (lexcwf) call exc_wf_eval(Xk,Xen)
+ if (l_exc_props) call exc_properties(Xk,Xen)
  !
 #if defined _SPP_ELPH
  !

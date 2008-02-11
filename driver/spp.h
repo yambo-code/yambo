@@ -21,7 +21,6 @@
 */
  static Ldes opts[] = { /* Int Real Ch (Dummy)*/
   {"ifile",  "F","Input file",0,0,1,0},              /* 4 */
-
   {"help","h","Short Help",0,0,0,0}, /* 0 */
   {"lhelp","H","Long Help",0,0,0,0}, /* 1 */
   {"jobstr","J","Job string identifier",0,0,1,0},   /* 2 */
@@ -32,7 +31,7 @@
   {"dbfrag","S","DataBases fragmentation",0,0,0,0}, /* 7 */
   {"s2s","s","SELF ver. 2 databases translator",0,0,0,0}, /* 8 */
   {"kpt","k","K-grid generator",0,0,0,0}, /* 9,1 */
-  {"excwf","e","Excitonic Wavefunction plot",0,0,0,0}, /* 10,2 */
+  {"excp","e","Excitonic properties [(s)ort,sp(in),(p)lot]",0,0,1,0}, /* 10,2 */
   {"bzrim","r","BZ energy RIM analyzer",0,0,0,0}, /* 11,3 */
 #if defined _SPP_ELPH
   {"elph", "p","Electron-Phonon DBs preprocessing",0,0,0,0}, /* 12,4 */

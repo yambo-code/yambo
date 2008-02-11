@@ -1,0 +1,280 @@
+!
+! Copyright (C) 2000-2005 D. Varsano, A. Marini and the SELF team
+!         http://www.fisica.uniroma2.it/~self
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
+! for more details.
+!
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+subroutine exc_wf_sort_and_report(Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
+ !
+ use pars,          ONLY:SP,schlen,pi,HARTREE
+ use electrons,     ONLY:spin_occ,levels
+ use stderr,        ONLY:intc
+ use BS,            ONLY:BS_K_dim,BSS_description,BSS_n_descs,BS_eh_table
+ use com,           ONLY:msg,of_open_close
+ use SPP,           ONLY:R_normalize,deg_energy,lambda
+ use R_lattice,     ONLY:d3k_factor,q0_def_norm,bz_samp
+ use D_lattice,     ONLY:n_atom_species,n_atoms,atom_pos,znucl
+ use vec_operate,   ONLY:sort
+ implicit none 
+ !
+ complex(SP)        ::BS_R(BS_K_dim),BS_E(BS_K_dim)
+ type(bz_samp)      ::Xk
+ type(levels)       ::E
+ real(SP),optional  ::A_weight(BS_K_dim)
+ real(SP),optional  ::S_z(BS_K_dim)
+ real(SP),optional  ::S_sq(BS_K_dim)
+ integer, optional  ::BS_E_degs(BS_K_dim)
+ !
+ ! Work Space
+ !
+ integer               ::j1,j2,ia,is,i_mode,neh,ikbz,ikibz,iv,ic
+ integer,  allocatable ::S_indx(:)
+ real(SP), allocatable ::R(:),v2sort(:)
+ real(SP)              ::Rmax,rv(10),K_weight(Xk%nibz)
+ character(schlen) ::titles(5),ch_dummy(2)
+ logical           ::write_widths,write_spin
+ !
+ ! Excitonc amplitude
+ !
+ integer, parameter :: amp_steps=1000
+ integer      :: amp_n_trans
+ real(SP)     :: amp_range(2),amp_damping,amp_I
+ real(SP),allocatable :: amp_trans(:,:)
+ complex(SP)          :: amp_E
+ !
+ if (present(BS_E_degs)) then  
+   !
+   call msg('s',':: Sorting energies')
+   !==================================
+   !
+   BS_E_degs=0
+   !
+   do j1=1,BS_K_dim
+     !
+     if (BS_E_degs(j1)>0) cycle
+     !
+     BS_E_degs(j1)=j1
+     !
+     do j2=j1+1,BS_K_dim
+       if ( abs( real(BS_E(j1))-real(BS_E(j2)) )>deg_energy) exit
+       BS_E_degs(j2)=j1
+     enddo
+     !
+   enddo
+   !
+   return
+   !
+ endif
+ !
+ if (present(A_weight)) then  
+   call section('=','Reporting amplitude and weights')
+   !==================================================
+   !
+   allocate(S_indx(BS_K_dim),amp_trans(BS_K_dim,2))
+   !
+   ! Sort the weights
+   ! 
+   if (trim(R_normalize)=='yes') A_weight=A_weight/maxval(A_weight)
+   call sort(arrin=A_weight,indx=S_indx)
+   !
+   ! report on file the weights and the amplitude
+   ! of the excitonic state...
+   ! 
+   ! ... first open the file.
+   ! 
+   ch_dummy(1)='exc_weights_at_'//trim(intc(lambda))
+   ch_dummy(2)='exc_amplitude_at_'//trim(intc(lambda))
+   call of_open_close(ch_dummy(1),'ot')
+   call of_open_close(ch_dummy(2),'ot')
+   !
+   do j1=1,BSS_n_descs
+     call msg('o weight amp',"#",trim(BSS_description(j1)),INDENT=0)
+   enddo
+   call msg('o weight amp',"#")
+   call msg('o weight amp',&
+&   '# Electron-Hole pairs that contributes to Excitonic State '//&
+&   trim(intc(lambda))//' more than 5%')
+   call msg('o weight amp','#')
+   !
+   ! First summarize the total weight vs K-points
+   !
+   K_weight=0.
+   do neh = 1,BS_K_dim
+     ikbz = BS_eh_table(S_indx(neh),1)
+     ikibz = Xk%sstar(ikbz,1)
+     K_weight(ikibz)=K_weight(ikibz)+A_weight(neh)
+   enddo
+   K_weight=K_weight/maxval(K_weight)
+   titles(1:4)=(/'','K-point [iku]','','Weight       '/)
+   call msg('o weight','#',titles(:4),INDENT=0,USE_TABS=.true.)
+   do ikibz=1,Xk%nibz
+     if (K_weight(ikibz)>0.05) then
+       call msg('o weight','# ',(/Xk%pt(ikibz,:),K_weight(ikibz)/),INDENT=0,USE_TABS=.true.)
+     endif
+   enddo
+   !
+   ! Then report the detailed list of transitions & calculate the amplitude
+   !
+   call msg('o weight','#','',INDENT=0,USE_TABS=.true.)
+   titles(1:4)=(/'Band_V','Band_C','K  ibz','Symm. '/)
+   titles(5)='Weight'
+   call msg('o weight','#',titles(:5),INDENT=0,USE_TABS=.true.)
+   titles(1:2)=(/'E    [eV]','Amplitude  '/)
+   call msg('o amp','#',titles(:2),INDENT=0,USE_TABS=.true.)
+   call msg('o weight amp','#','',INDENT=0,USE_TABS=.true.)
+   !
+   amp_n_trans=0
+   amp_trans=0.
+   !
+   do neh = BS_K_dim,1,-1
+     !
+     if (A_weight(neh)<0.02) cycle
+     !
+     ikbz = BS_eh_table(S_indx(neh),1)
+     iv = BS_eh_table(S_indx(neh),2)
+     ic = BS_eh_table(S_indx(neh),3)
+     ikibz = Xk%sstar(ikbz,1)
+     is = Xk%sstar(ikbz,2)
+     !
+     amp_n_trans=amp_n_trans+1
+     amp_trans(amp_n_trans,1)=E%E(ic,ikibz,1)-E%E(iv,ikibz,1)
+     amp_trans(amp_n_trans,2)=A_weight(neh)
+     !
+     if (A_weight(neh)<0.05) cycle
+     !
+     call msg('o weight','',(/real(iv),real(ic),real(ikibz),real(is),A_weight(neh)/),&
+&            INDENT=-2,USE_TABS=.FALSE.)
+   enddo
+   !
+   ! Excitonic Amplitude
+   !
+   amp_range=(/minval(amp_trans(:amp_n_trans,1))-0.5/HARTREE,&
+&              maxval(amp_trans(:amp_n_trans,1))+0.5/HARTREE/)
+   amp_damping=(amp_range(2)-amp_range(1))/50.
+   do j2=1,amp_steps
+     amp_E=amp_range(1)+(j2-1)*(amp_range(2)-amp_range(1))/real(amp_steps)+&
+&          (0.,1.)*amp_damping
+     amp_I=0.
+     do j1=1,amp_n_trans
+       amp_I=amp_I-aimag(amp_trans(j1,2)/(amp_E-amp_trans(j1,1)))
+     enddo
+     call msg('o amp','',(/real(amp_E)*HARTREE,amp_I/),INDENT=-2,USE_TABS=.FALSE.)
+   enddo
+   !
+   call of_open_close(ch_dummy(1))
+   call of_open_close(ch_dummy(2))
+   !
+   deallocate(S_indx,amp_trans)
+   !
+   return
+   !
+ endif
+ !
+ write_spin=present(S_sq)
+ write_widths=any(abs(aimag(BS_E))>1.E-5)
+ !
+ if (write_spin) then
+   call section('=','Reporting sorted Energies, Strengths and Spins')
+ else if (write_widths) then
+   call section('=','Reporting sorted Energies, Strengths and widths')
+ else
+   call section('=','Reporting sorted Energies and Strengths')
+ endif
+ !==========================================================
+ !
+ allocate(R(BS_K_dim),S_indx(BS_K_dim),v2sort(BS_K_dim))
+ !
+ do i_mode=1,2
+   !
+   if (i_mode==1) ch_dummy(1)='exc_E_sorted'
+   if (i_mode==2) ch_dummy(1)='exc_I_sorted'
+   if (write_spin) then
+     if (i_mode==1) ch_dummy(1)='exc_E+spin_sorted'
+     if (i_mode==2) ch_dummy(1)='exc_I+spin_sorted'
+   endif
+   !
+   call of_open_close(ch_dummy(1),'ot')
+   !
+   do j1=1,BSS_n_descs
+     call msg('o sort',"#",trim(BSS_description(j1)),INDENT=0)
+   enddo
+   call msg('o sort',"#")
+   do is=1,n_atom_species
+     do ia=1,n_atoms(is)
+       call msg('o sort',"# Atom "//trim(intc(ia))//&
+&                        " with Z "//trim(intc(znucl(is)))//" [cc]:",&
+&               atom_pos(:,ia,is),INDENT=0)
+     enddo
+   enddo
+   call msg('o sort','#','',INDENT=0) 
+   !
+   titles(1)='E [ev]'
+   titles(2)='Strength'
+   titles(3)='Index'
+   if (write_widths) then
+     titles(4)='W [meV]'
+     call msg('o sort','#',titles(:4),INDENT=0,USE_TABS=.true.)
+   else if (write_spin) then
+     titles(4)='S_square'
+     titles(5)='S_z'
+     call msg('o sort','#',titles(:5),INDENT=0,USE_TABS=.true.)
+   else
+     call msg('o sort','#',titles(:3),INDENT=0,USE_TABS=.true.)
+   endif
+   call msg('o sort','#','',INDENT=0)
+   !
+   R(:) = BS_R(:)*conjg(BS_R(:))
+   R(:) = R(:)*real(spin_occ)/(2.*pi)**3.*&
+&         d3k_factor*4.*pi/q0_def_norm**2*HARTREE*1000.
+   Rmax = maxval(R)
+   !
+   if (trim(R_normalize)=='yes') R=R/Rmax
+   !
+   if (i_mode==2) then
+     !
+     v2sort=R
+     call sort(arrin=v2sort,indx=S_indx)
+     !
+   endif
+   !
+   do j1=BS_K_dim,1,-1
+     !
+     j2=BS_K_dim-j1+1
+     if (i_mode == 2) j2=S_indx(j1)
+     !
+     rv(:3)=(/real(BS_E(j2))*HARTREE,R(j2),real(j2)/)
+     !
+     if (write_widths) then
+       rv(4)=abs(aimag(BS_E(j2)))*HARTREE*1000.
+       call msg('o sort','',rv(:4),INDENT=-2,USE_TABS=.TRUE.)
+     else if (write_spin) then
+       rv(4:5)=(/S_z(j2),S_sq(j2)/)
+       call msg('o sort','',rv(:5),INDENT=-2,USE_TABS=.TRUE.)
+     else
+       call msg('o sort','',rv(:3),INDENT=-2,USE_TABS=.TRUE.)
+     endif
+     !
+   enddo
+   !
+   call of_open_close(ch_dummy(1))
+   !
+ enddo
+ ! 
+ deallocate(v2sort,S_indx,R)
+ !
+end subroutine

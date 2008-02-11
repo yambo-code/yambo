@@ -1,3 +1,7 @@
+2008-02-11 10:45:17 r201 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	ACFDT tot energy can run with no call to X_em1
+
 2008-02-08 19:02:33 r200 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Version 3.0.13 r.200

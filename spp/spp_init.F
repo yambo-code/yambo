@@ -31,6 +31,7 @@ subroutine spp_init(instr,lnstr,FINALIZE)
  use com,            ONLY:file_exists
  use stderr,         ONLY:string_split
  use SPP
+ use electrons,      ONLY:n_spin
  use par_proc_m,     ONLY:master_node,pp_redux_wait
  use timing,         ONLY:what_is_running
 #if defined _SPP_RAS
@@ -68,19 +69,18 @@ subroutine spp_init(instr,lnstr,FINALIZE)
    !
    ! EXC WF
    !
+   l_wf=.false.
+   l_spin=.false.
+   l_sort=.false.
    ncell = (/1, 1, 1/) 
    r_hole= (/0.,0.,0./)
    p_dir = '1'
    lambda = 1          
-   n_lambda_deg = 1          
-   lambda_deg = 0          
-   deg_energy = 0.01/HARTREE
-   R_normalize= "yes"
-   sort_mode = "i"
-   action_mode = "s"
-   p_format = 'g'
-   max_energy = 1.
-   wf_ng = ng_vec
+   state_ctl = '1 - 1'
+   deg_energy =0.01/HARTREE
+   R_normalize="yes"
+   p_format   ='g'
+   wf_ng      =ng_vec
    !
 #if defined _SPP_ELPH
    !
@@ -159,33 +159,47 @@ subroutine spp_init(instr,lnstr,FINALIZE)
        infile_editing=.true.
        call initactivate(1,trim(rnlvls(i2,1)))
      endif
+     if ( trim(rstr_piece(i1)) == 'excp') then
+       l_wf    =trim(rstr_piece(i1+1))=='p'
+       l_spin  =trim(rstr_piece(i1+1))=='sp'
+       l_sort  =trim(rstr_piece(i1+1))=='s'
+       if  (l_wf)   call initactivate(1,trim(rnlvls(3,1)))
+       if  (l_spin) call initactivate(1,trim(rnlvls(4,1)))
+       if  (l_sort) infile_editing=.false.
+       if  (l_sort) rstatus(2)=1
+     endif
    enddo
  enddo
  !
- !
  call call_init_load('parserload')
  !
- lkanalyze=rstatus(1)/=0
- lexcwf=rstatus(2)/=0
- lbzrim=rstatus(3)/=0
+ lkanalyze  =rstatus(1)/=0
+ l_exc_props=rstatus(2)/=0
+ l_wf       =rstatus(3)/=0
+ l_spin     =rstatus(4)/=0
+ lbzrim     =rstatus(5)/=0
  !
  if (lkanalyze) call initactivate(1,"cooIn cooOut GWKpts Qpts KShift1 KShift2 KShift3")
  if (lbzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut")
- if (lexcwf) call initactivate(1,"Action Max_Energy FFTGvecs Degen_Step Order RNorm &
-&                                 State Cells Hole Dimension Direction Format")
+ if (l_exc_props) then
+   if (l_wf) call initactivate(1,"States Format Direction FFTGvecs Degen_Step RNorm &
+&                                 Cells Hole Dimension")
+   if (l_spin) call initactivate(1,"States Degen_Step")
+ endif
+ !
 #if defined _SPP_ELPH
  !
- lelph=rstatus(4)/=0
+ lelph=rstatus(6)/=0
  if (lelph) call initactivate(1,"DBsPATH PHfreqF EEfermi EfGbroad PhBroad PhStps")
  !
 #endif
 
 #if defined _SPP_RAS
  !
- lsurf=rstatus(5)/=0
- lras=rstatus(6)/=0
- lloc=rstatus(7)/=0
- ltrans=rstatus(8)/=0
+ lsurf =rstatus(7)/=0
+ lras  =rstatus(8)/=0
+ lloc  =rstatus(9)/=0
+ ltrans=rstatus(10)/=0
  if(lsurf) then
    if (lras) call initactivate(1,"XData YData "//&
 &       " BulkFile BulkForm BlkShift BlkBroad "//&

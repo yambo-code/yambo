@@ -187,9 +187,10 @@ module it_m
      use com,           ONLY: nofs,of
      character(*),optional  :: line
      type(initdefs),optional::defs
-     do i1=1,nofs
-       if (len_trim(of(i1))==0) cycle
-       open(20,file=trim(of(i1)),position='append')
+     integer :: i2
+     do i2=1,nofs
+       if (len_trim(of(i2))==0) cycle
+       open(20,file=trim(of(i2)),position='append')
        if (present(defs)) call initinfio(defs,20)
        if (present(line)) write (20,'(2a)') '# ',line
        close(20)
@@ -865,15 +866,15 @@ module it_m
      !
      if (.not.infile_editing.and.ou==12) return
      if (master_node) then
-      if (ou==12) call title(ou,'#')
-      if (ou==11) write (ou,'(2a)') ' .-Input file : ',trim(infile)
-      if (ou/=11.and.ou/=12) write (ou,'(a/2a)') '#','# .-Input file : ',trim(infile)
-      do i1=1,nflines
-       if (ou==12) write (ou,'(a)') trim(flines(i1))
-       if (ou==11) write (ou,'(2a)') ' | ',trim(flines(i1))
-       if (ou/=11.and.ou/=12) write (ou,'(2a)') '# | ',trim(flines(i1))
-      enddo
-      if (ou==11) call report_file_fix
+       if (ou==12) call title(ou,'#')
+       if (ou==11) write (ou,'(2a)') ' .-Input file : ',trim(infile)
+       if (ou/=11.and.ou/=12) write (ou,'(a/2a)') '#','# .-Input file : ',trim(infile)
+       do i1=1,nflines
+         if (ou==12) write (ou,'(a)') trim(flines(i1))
+         if (ou==11) write (ou,'(2a)') ' | ',trim(flines(i1))
+         if (ou/=11.and.ou/=12) write (ou,'(2a)') '# | ',trim(flines(i1))
+       enddo
+       if (ou==11) call report_file_fix
      endif
    end subroutine
    !

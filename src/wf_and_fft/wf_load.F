@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
+subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                   spins_to_load,space,title)
  !
  ! Load and (eventually) FFTs the wavefunctions
@@ -40,7 +40,7 @@ subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
 &                        io_fragmented, io_netcdf_support, RD_CL
  implicit none
  !
- integer               :: iG_in,iGo_max,bands_to_load(2),kpts_to_load(2)
+ integer               :: iG_in,iGo_max_in,bands_to_load(2),kpts_to_load(2)
  integer     ,optional :: spins_to_load(2)
  character(*),optional :: space,title
  !
@@ -49,7 +49,7 @@ subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
  character(1)     ::wf_space_here
  character(schlen)::wf_title
  integer          ::i1,ikibz,i2,ic,is,ig,igfft,&
-&                   s_2_load(2),iG_max,iG_bounds_loaded(2)
+&                   s_2_load(2),iG_max,iG_bounds_loaded(2),iGo_max
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
  logical          ::loaded_bounds_ok
@@ -60,8 +60,15 @@ subroutine wf_load(iG_in,iGo_max,bands_to_load,kpts_to_load,&
  !
  integer ::io_err,ID
  !
+ ! Close iG/iGo_max to the nearest shell
+ !
  iG_max=iG_in
  if (iG_max==0) iG_max=wf_ng
+ !
+ iGo_max=iGo_max_in
+ !
+ call Gclose(iG_max,'tRL')
+ call Gclose(iGo_max,'tRL')
  !
  wf_space_here='R'
  if (present(space)) wf_space_here=space

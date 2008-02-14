@@ -78,7 +78,8 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter,be_verbose)
  !
  ! CHOSEX: bands setup
  !
- if (.not.CHOSEX_use_empties) QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),n_met_bands)
+ if (l_chosex.and.(.not.CHOSEX_use_empties)) &
+&   QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),n_met_bands)
  !
  ! Section
  !

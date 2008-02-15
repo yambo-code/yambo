@@ -173,9 +173,9 @@ subroutine exc_properties(Xk,Xen)
  ! Exciton's spin (collinear case)
  !================================
  !
- if (n_sp_pol==2.and.l_spin) then
+ if (l_spin) then
    allocate(S_z(BS_K_dim),S_sq(BS_K_dim))
-   call exc_collinear_spin(BS_E_degs,S_z,S_sq)
+   if (n_sp_pol==2)  call exc_collinear_spin(BS_E_degs,S_z,S_sq)
    call exc_wf_sort_and_report(Xk,Xen,BS_R,BS_E,S_sq=S_sq,S_z=S_z)
    deallocate(S_z,S_sq)
    return

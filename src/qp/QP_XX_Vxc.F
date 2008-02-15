@@ -37,7 +37,9 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  use R_lattice,     ONLY:qindx_S,bz_samp
  use wave_func,     ONLY:wf,wf_load,wf_ng,WF_free
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
+#if defined _SC
  use SC,            ONLY:it_now
+#endif
  !
  implicit none
  type(levels) ::E       
@@ -139,7 +141,9 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
    call pp_redux_wait
    !
    ch='EXS'
+#if defined _SC
    if (l_sc_run) ch='EXS@it'//trim(intc(it_now))
+#endif
    !
    call live_timing(trim(ch),px%stps(myid+1)*QP_n_states)
    !

@@ -33,8 +33,6 @@ subroutine K_Haydock(iq,W)
 &                         BS_eh_f,ioBSS_Haydock,BS_K_Coupling
  use timing,         ONLY:live_time_msg
  use stderr,         ONLY:tty_size,intc,real2ch
- use parser_m,       ONLY:parser
- use it_m,           ONLY:it_reset
  use electrons,      ONLY:spin_occ
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  implicit none
@@ -49,6 +47,7 @@ subroutine K_Haydock(iq,W)
  complex(SP),allocatable :: Cf(:) 
  real(SP)           ::reached_treshold, Bf(Max_iterations),Af(Max_iterations)
  character(schlen)  ::dumb_ch
+ logical, external  ::stop_now
  !
  ! I/O
  !
@@ -163,8 +162,6 @@ subroutine K_Haydock(iq,W)
  !
  do it=it_on_disk+1,Max_iterations
    !
-   call it_reset(0)
-   call parser('BSHayTrs',Haydock_treshold)
    reached_treshold=0.
    !
    ! Hermitian case: 
@@ -278,7 +275,9 @@ subroutine K_Haydock(iq,W)
    else
      io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_treshold,Af(:it),Bf(:it+1),Vnm1,Vn)
    end if
-   if (reached_treshold>0.and.reached_treshold<abs(Haydock_treshold)) then
+   !
+   if ( (reached_treshold>0.and.reached_treshold<abs(Haydock_treshold)) .or. &
+&       stop_now(.FALSE.)) then
      call msg('r','Accuracy (reached)   [o/o]:',reached_treshold)
      call msg('r','Iterations                :',it)
      exit

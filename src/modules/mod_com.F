@@ -294,19 +294,24 @@ module com
    end subroutine
    !
    subroutine error(mesg)
-     use timing,     ONLY :live_time_msg,live_timing_is_on
-     use stderr,     ONLY :string_pack
-     use par_proc_m, ONLY :p_finalize
-     character(*) mesg
+     use timing,     ONLY:live_time_msg,live_timing_is_on
+     use stderr,     ONLY:string_pack
+     use par_proc_m, ONLY:p_finalize
+     character(*)    :: mesg
+     !
      if (file_exists(repfile) ) call report_file_fix
+     !
      live_timing_is_on=.FALSE.
+     !
      call msg('nr',string_pack('[ERROR] STOP signal received while in :',trim(secnm)))
      call live_time_msg("nn",&
 &         string_pack('[ERROR] STOP signal received while in :',trim(secnm)),"","%s")
      call msg('nr',string_pack('[ERROR] ',trim(mesg)))
      call live_time_msg("n",string_pack('[ERROR] ',trim(mesg)),"","%s")
      call live_time_msg("n","","","%s")
+     !
      call p_finalize
+     !
      stop
    end subroutine
    !

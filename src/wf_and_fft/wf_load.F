@@ -34,10 +34,13 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                        fftw_plan,fft_g_table,fft_size
  use wave_func,     ONLY:wf_nc_k,wf_igk,WF_alloc,wf_b,wf_k,wf_space,wf,wf_s,&
 &                        wf_state,wf_ng,wf_norm_test,wf_ncx,ioWF,WF_free,&
-&                        wf_n_states
+&                        wf_n_states,WF_rotate
  use timing,        ONLY:live_timing
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,&
-&                        io_fragmented, io_netcdf_support, RD_CL
+&                        io_fragmented, io_netcdf_support, RD_CL,DUMP
+#if defined _SC
+ use SC,            ONLY:using_SC_basis,SC_R,load_SC_components
+#endif
  implicit none
  !
  integer               :: iG_in,iGo_max_in,bands_to_load(2),kpts_to_load(2)
@@ -48,7 +51,7 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  character(1)     ::wf_space_here
  character(schlen)::wf_title
- integer          ::i1,ikibz,i2,ic,is,ig,igfft,&
+ integer          ::i1,ikibz,i2,ic,is,ig,igfft,wf_size,&
 &                   s_2_load(2),iG_max,iG_bounds_loaded(2),iGo_max
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
@@ -203,6 +206,22 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  call mem_est("wf_disk")
 #endif
  deallocate(wf_DP)
+ !
+ ! Rotate in the SC basis
+ !========================
+#if defined _SC
+ !
+ call load_SC_components('WF',COM_=NONE,MODE_=DUMP)
+ if (using_SC_basis) then
+   if (wf_space=='R') wf_size=fft_size
+   if (wf_space=='G') wf_size=wf_ng
+   do ikibz=1,nkibz
+     call WF_rotate(ikibz,bands_to_load(2),wf_size,&
+&                   SC_R(:bands_to_load(2),:bands_to_load(2),ikibz),wf)
+   enddo
+ endif
+ call load_SC_components('WF_clean',COM_=0,MODE_=0)
+#endif
  !
  if (.not.wf_norm_test) return
  !

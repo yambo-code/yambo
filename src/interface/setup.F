@@ -30,8 +30,12 @@ subroutine setup(en,Xen,k,Xk)
 &                         rl_sop,bz_samp,g_vec
  use com,            ONLY:msg,error
  use stderr,         ONLY:intc
+ use IO_m,           ONLY:REP,DUMP
  use vec_operate,    ONLY:cross_product,c2a
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
+#if defined _SC
+ use SC,             ONLY:load_SC_components
+#endif
  !
  implicit none
  type(levels)    ::en,Xen
@@ -44,6 +48,7 @@ subroutine setup(en,Xen,k,Xk)
  character(schlen) :: dumb_ch1,dumb_ch2
  !
  call section('*','Input variables setup') 
+ !========================================
  !
  call msg('r','Unit cell scaling factors [a.u.]:',alat)
  call msg('nr','Direct Lattice(DL) unit cell [iru]')
@@ -146,12 +151,12 @@ subroutine setup(en,Xen,k,Xk)
  call msg('r','[SYMs] Group table built correctly')
  !
  call section('+','K-grid lattice')
+ !=================================
  !
  call k_lattice(k,Xk) 
  !
- ! RL shells
- !
  call section('=','RL shells')
+ !============================
  !
  call G_shells_finder()
  call msg('rn','Shells, format: [Snn] G`s')
@@ -175,8 +180,16 @@ subroutine setup(en,Xen,k,Xk)
  enddo
  !
  call section('=','Input (E)nergies[ev] & Occupations')
+ !=====================================================
  !
  Xen%nk=Xk%nibz
+ !
+ ! SC Energies 
+ !-------------
+#if defined _SC
+ call load_SC_components('E',E=en,COM_=REP,MODE_=DUMP)
+#endif
+ ! 
  call E_duplicate(en,Xen)
  !
  ! Negative Temperature indicates that such Temperature is held

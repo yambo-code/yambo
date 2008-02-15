@@ -194,7 +194,7 @@ integer function ioX(X,Xw,ID)
  !
  if (any((/io_sec(ID,:)==2*iq/))) then
    sec_size=6
-
+   !
    if (X%whoami==4) sec_size=1
    write (ch,'(a,i3.3)') "FREQ_PARS_sec_iq",iq
    if (io_sec(ID,1)==1) call io_elemental(ID,VAR=trim(ch),VAR_SZ=sec_size,MENU=0)
@@ -213,11 +213,11 @@ integer function ioX(X,Xw,ID)
      call io_elemental(ID,&
 &           VAR=" :: Number of frequencies  :",I0=Xw%n(1),CHECK=.true.,OP=(/"=="/))
    endif
-
+   !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    ioX=io_status(ID)
    if (ioX/=0) goto 1
-
+   !
  endif
  !
  ! Sections 1 & 2 are used in VERIFY mode. 

@@ -30,7 +30,7 @@ integer function ioWF(ID,wf)
 &                           io_fragment,RD_CL_IF_END,RD_CL,io_action
  implicit none
  integer,       intent(in) :: ID
- real(SP),optional         :: wf(:,:,:,:)
+ real(SP),      optional   :: wf(:,:,:,:)
  !
  integer :: ik
  character(schlen)         :: VAR_NAME

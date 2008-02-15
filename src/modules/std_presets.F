@@ -63,7 +63,10 @@ subroutine std_presets(INSTR,IND,OD,JS)
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND
- use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,SC_E_threshold
+#if defined _SC
+ use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,SC_E_threshold,&
+&                     using_SC_basis
+#endif
  !
  implicit none
  !
@@ -314,11 +317,15 @@ subroutine std_presets(INSTR,IND,OD,JS)
  ph_damping=0.
  ph_null_E_rgn=0.1/HARTREE
  !
+#if defined _SC
  ! SC
  !
  SC_iterations=100
  SC_rho_threshold=1.E-5
  SC_E_threshold=0.01/HARTREE
  SC_potential='none'
+ using_SC_basis=.FALSE.
+ !
+#endif
  !
 end subroutine

@@ -1,3 +1,29 @@
+2008-02-14 09:25:55 r203 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug fixes: (1) unclosed shell in wf_load. (2) Wrong band loading in PPA (thanks to Myrta)
+
+2008-02-11 18:12:58 r202 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.0.13 r.202
+
+	*  configure spp/exc_properties.F spp/exc_wf_sort_and_report.F spp/exc_collinear_spin.F spp/mod_SPP.F spp/spp_i.F spp/exc_wf_eval.F spp/.objects spp/spp_init_load.F spp/spp_init.F include/version.inc config/configure.ac parser/mod_itm.F ChangeLog driver/spp.h
+
+	Bugs:
+	- in parser/mod_itm.F same integer (i1) was used for several
+	  subrotuine. Bug induced in case of cross calls. [Andrea]
+
+	Additions:
+	- spp/exc_collinear_spin.F [Fabrizio]
+
+	Changes:
+	- spp/exc_properties.F replaces spp/exc_wf_eval.F [Andrea]
+	- spp -e now requires an option. 3 options are available
+	  now: s(ort), p(lot) and sp(in)
+	  When using with -e s not infile editing is done anymore, spp
+	  simply runs and report sorted energies and residuals [Andrea]
+
+	Patch sent by: Andrea & Fabrizio
+
 2008-02-11 10:45:17 r201 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	ACFDT tot energy can run with no call to X_em1

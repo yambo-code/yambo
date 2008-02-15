@@ -26,6 +26,9 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
 #if defined _RAS
  use ras_module,     ONLY:transloc, lras
 #endif
+#if defined _SC
+ use SC,             ONLY:using_SC_basis,SC_bands
+#endif
  use drivers,        ONLY:l_col_cut
  use electrons,      ONLY:levels,n_sp_pol
  use par_proc_m,     ONLY:pp_redux_wait
@@ -70,15 +73,24 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
  !
  if (io_err.ne.0) then
    !
-   ! OptGrad allocation
+   ! OptGrad allocation...
    !
-   call X_alloc('OptGrad',(/3,X%ib(2),Xen%nbm,Xk%nibz/))
+   ! When using interanl SC potentials oscilators must be rotated
+   ! in the new basis. So all transitions are needed
+   !
+#if defined _SC
+   if (.not.using_SC_basis) then
+#endif
+     call X_alloc('OptGrad',(/3,X%ib(2),Xen%nbm,Xk%nibz/))
+#if defined _SC
+   else
+     call X_alloc('OptGrad',(/3,max(X%ib(2),SC_bands),max(X%ib(2),SC_bands),Xk%nibz/))
+   endif
+#endif
    X_q0grad=(0.,0.)
    !
-
 #if !defined _BIGSYS
    call wf_load(0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
-
 #endif
    !
    ! Attempt calculation within longitudinal gauge if requested
@@ -112,6 +124,14 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
    io_err=ioOSTNTS(X,Xen,ID)
  end if
  !
+#if defined _SC
+ !
+ ! Rotate the oscillators in the SC basis
+ !
+ if (using_SC_basis) call X_O_rotate(X%ib(2))
+ !
+#endif
+ !
  ! The field direction and the gamma-point norm must be renormalized here in case the
  ! oscillator strengths have been calculated using the long. gauge.
  ! In this case q0_def_norm is not the default one but corresponds
@@ -126,11 +146,15 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
  call X_alloc('OptOsc',(/X%ib(2),Xen%nbm,Xk%nbz/))
  X_rhoq0 = (0.0_SP,0.0_SP)
  do i1 = 1,Xk%nbz
+   !
    ik = Xk%sstar(i1,1)
    is = sop_inv(Xk%sstar(i1,2))
    field_dir_rot = matmul( dl_sop(:,:,is), field_dir )
+   !
    do iv = X%ib(1), Xen%nbm
+     !
      do ic = Xen%nbf+1, X%ib(2)
+     !
 #if defined _RAS
        if(lras) then
          if(.not.transloc(ic,iv,ik)) cycle
@@ -144,6 +168,7 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
 &          dot_product( field_dir_rot, X_q0grad(:,ic,iv,ik,i_spin) )
          if ( is > nsym/(i_time_rev+1) ) X_rhoq0(ic,iv,i1,i_spin) = &
 &          dot_product( X_q0grad(:,ic,iv,ik,i_spin), field_dir_rot ) 
+
        enddo
      enddo
      X_rhoq0(iv,iv,i1,:) = (1.0_SP,0.0_SP)

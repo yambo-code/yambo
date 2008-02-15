@@ -121,23 +121,22 @@ module wave_func
      wf_space=' '
    end subroutine
    !
-   subroutine WF_rotate(ik,n_bands,R,wf_in,wf_out)
+   subroutine WF_rotate(ik,n_bands,wf_size,R,wf_in,wf_out)
      !
      ! <r|n'>= <m|n'><r|m>
      !
      ! with <:|n'>=H_sc(:,n')
      !
      ! wf(:,n')= sum_m WFo(:,m) H_sc(m,n')
-     use FFT_m,    ONLY : fft_size
      !
-     integer     :: ik,n_bands
-     complex(SP) :: R(n_bands,n_bands),wf_in(fft_size,wf_n_states)
-     complex(SP), optional :: wf_out(fft_size,wf_n_states)
+     integer     :: ik,n_bands,wf_size
+     complex(SP) :: R(n_bands,n_bands),wf_in(wf_size,wf_n_states)
+     complex(SP), optional :: wf_out(wf_size,wf_n_states)
      !
      ! Work Space
      !
      integer     :: ib,ibp,ifft,ifftp
-     complex(SP) :: WS_wf(fft_size,n_bands)
+     complex(SP) :: WS_wf(wf_size,n_bands)
      !
      WS_wf=(0.,0.)
      !
@@ -145,7 +144,10 @@ module wave_func
        ifft = wf_state(ib,ik,1)
        do ibp = 1,n_bands
          ifftp = wf_state(ibp,ik,1)
-         call caxpy(fft_size,R(ibp,ib),wf_in(:,ifftp),1,WS_wf(:,ib),1)
+         !
+         if (ifft==0.or.ifftp==0) cycle
+         !
+         call caxpy(wf_size,R(ibp,ib),wf_in(:,ifftp),1,WS_wf(:,ib),1)
        end do
      end do
      !

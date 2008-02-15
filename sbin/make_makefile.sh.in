@@ -103,7 +103,7 @@ $cpp $cppflags $dopts -D_$os $cdir/$ofile >> $cdir/Makefile
 
 if [ "$mode" = "x" ] ; then 
 cat << EOF >> $cdir/Makefile
-\$(target): locks \$(objs)
+\$(target): locks \$(objs) 
 	\$(driver)\$
 	\$(link)\$
 	\$(modmove)\$ 

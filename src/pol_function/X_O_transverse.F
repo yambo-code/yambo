@@ -33,6 +33,9 @@ subroutine X_O_transverse(Xen,Xk,X)
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf,wf_ng,wf_state, wf_load
+#if defined _SC
+ use SC,                  ONLY:using_SC_basis,E_of_WFo
+#endif
  !
  implicit none
  type(bz_samp), intent(in)    :: Xk
@@ -41,8 +44,8 @@ subroutine X_O_transverse(Xen,Xk,X)
  !
  ! Work Space
  !
- integer                      :: ik,i1,icfft,ivfft,ic,iv
- integer                      :: is,ia,il,im,alloc_err,i_spin
+ integer                      :: ik,i1,icfft,ivfft,ic,iv,iv_max,ic_min
+ integer                      :: is,ia,il,im,alloc_err,i_spin,E_i_spin
  complex(SP), allocatable     :: wf_xyz(:,:), kbv(:,:,:)
  complex(SP)                  :: rho(3,n_spin)
  real(SP)                     :: Ev_m_Ec
@@ -78,11 +81,23 @@ subroutine X_O_transverse(Xen,Xk,X)
    call mem_est("KBV",(/size(kbv)/),errors=(/alloc_err/))
  endif
  !
+ ! Set up band limits
+ !
+ iv_max=Xen%nbm
+ ic_min=Xen%nbf+1
+ !
+#if defined _SC
+ if (using_SC_basis) then
+   iv_max=X%ib(2)
+   ic_min=X%ib(1)
+ endif
+#endif
+ !
  ! Set up the parallel environment
  !
  call pp_indexes_reset(px)
- call par_indexes(px,(/Xk%nibz,Xen%nbm/),(/1,X%ib(1)/))
- call live_timing('Optical strengths (T):',px%stps(myid+1))
+ call par_indexes(px,(/Xk%nibz,iv_max/),(/1,X%ib(1)/))
+ call live_timing('Dipole (T):',px%stps(myid+1))
  call pp_redux_wait
  !
  allocate(wf_xyz(wf_ng,3))
@@ -102,21 +117,23 @@ subroutine X_O_transverse(Xen,Xk,X)
      io_err=ioKB_PP(ID)
      call X_O_kb_pp_comp(ik,Xk,kbv)
    endif
-   do iv=X%ib(1),Xen%nbm
+   do iv=X%ib(1),iv_max 
+     !
      if (.not.px%i2p(ik,iv)) cycle
      !
-     do ic=Xen%nbf+1,X%ib(2)
+     do ic=ic_min,X%ib(2)
        do i_spin=1,n_spin
          !
          rho(:,i_spin)=(0.,0.)
          !
-         if (n_sp_pol==2) then
-           Ev_m_Ec=Xen%E(iv,ik,i_spin)-Xen%E(ic,ik,i_spin)
-           if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,i_spin)-Xen%Eo(ic,ik,i_spin)
-         else  
-           Ev_m_Ec=Xen%E(iv,ik,1)-Xen%E(ic,ik,1)
-           if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,1)-Xen%Eo(ic,ik,1)
-         endif
+         E_i_spin=i_spin
+         if (n_sp_pol/=2) E_i_spin=1
+         !
+         Ev_m_Ec=Xen%E(iv,ik,E_i_spin)-Xen%E(ic,ik,E_i_spin)
+         if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,E_i_spin)-Xen%Eo(ic,ik,E_i_spin)
+#if defined _SC
+!         if (using_SC_basis)     Ev_m_Ec=E_of_WFo(iv,ik,E_i_spin)-E_of_WFo(ic,ik,E_i_spin)
+#endif
          !
          if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,&
 &                  -Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/))) cycle

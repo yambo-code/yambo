@@ -76,16 +76,15 @@ module xc_functionals
     XC_MGGA_C_TPSS       = 202     ! Perdew, Tao, Staroverov & Scuseria correlation
  !
 #if defined _SC
- ! the OEP/KLI/CEDA
+ ! the OEP
  integer, public, parameter :: &
    XC_OEP_EXX           = 301    ! OEP-EXX
  !
  ! the GKS
  integer, public, parameter :: &
    XC_GKS_HF            = 401, &  ! Hartree-Fock
-   XC_GKS_SX            = 402, &  ! Screened-eXchange
-   XC_GKS_SXLDA         = 403, &  ! Kleinman-Bylander Screened-Exchange LDA
-   XC_GKS_CHSX          = 404     ! Coulomb-Hole Screened-eXchange
+   XC_GKS_CHOSEX        = 402     ! Coulomb-Hole Screened-eXchange
+ !
 #endif
  !
  contains
@@ -132,9 +131,7 @@ module xc_functionals
         xc_string=string_pack('Exact-Exchange (OEP) ',ch_kind)
        case(XC_GKS_HF)
         xc_string=string_pack('Hartree-Fock (nonlocal) ',ch_kind)
-       case(XC_GKS_SXLDA)  
-        xc_string=string_pack('Screened-eXchange LDA (nonlocal) ',ch_kind)
-       case(XC_GKS_CHSX)  
+       case(XC_GKS_CHOSEX)  
         xc_string=string_pack('Coulomb-Hole Screened-eXchange (nonlocal) ',ch_kind)
 #endif
      end select

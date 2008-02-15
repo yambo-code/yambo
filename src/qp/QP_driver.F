@@ -82,8 +82,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  endif
  qp%n_descs=2
  if (l_ppa) then
-   write (qp%description(2),'(2a)') &
-&        ' PPA imaginary pt   [ev]:',trim(real2ch(X%ppaE*HARTREE))
+   qp%description(2)=' PPA imaginary pt   [ev]:'//trim(real2ch(X%ppaE*HARTREE))
  else if (l_chosex) then
    qp%description(2)=' == CHOSEX GW =='
  else

@@ -45,10 +45,8 @@ module IO_m
  ! 0<= ACTION <=3  CLOSE
  ! 1<= ACTION <=6  OPEN
  !
- ! RD_CL_IF_END if implemented in selected io 
- !
  integer, parameter:: RD_CL=1,OP_RD_CL=2,OP_WR_CL=3,OP_APP_WR_CL=4,OP_RD=5,OP_APP=6,&
-&                     OP_WR=7,RD=8,WR=9,RD_CL_IF_END=10
+&                     OP_WR=7,RD=8,WR=9,RD_CL_IF_END=10,WR_CL=11,WR_CL_IF_END=12
  !
  ! Modes
  !
@@ -147,7 +145,8 @@ module IO_m
      !
      integer :: ID
      close_is_on=any((/io_action(ID)==RD_CL,io_action(ID)==OP_RD_CL,&
-&                      io_action(ID)==OP_WR_CL,io_action(ID)==OP_APP_WR_CL/))
+&                      io_action(ID)==OP_WR_CL,io_action(ID)==OP_APP_WR_CL,&
+&                      io_action(ID)==WR_CL/))
    end function
    !
    logical function read_is_on(ID)
@@ -163,7 +162,8 @@ module IO_m
      integer :: ID
      write_is_on=any((/io_action(ID)==OP_WR_CL,io_action(ID)==OP_APP_WR_CL,&
 &                      io_action(ID)==WR      ,io_action(ID)==OP_APP,&
-&                      io_action(ID)==OP_WR/))
+&                      io_action(ID)==OP_WR   ,io_action(ID)==WR_CL,&
+&                      io_action(ID)==WR_CL_IF_END/))
    end function
    !
    integer function io_connect(desc,subfolder,type,ENABLE_LARGE_FILE,ID)
@@ -504,6 +504,19 @@ module IO_m
 #if defined _NETCDF_IO
      if (present(NETCDF)) io_netcdf_support(ID)=NETCDF
 #endif
+     !
+   end subroutine
+   !
+   subroutine manage_RD_WR_CL_IF_END(ID,start_,end_)
+     !
+     integer :: ID
+     integer :: start_,end_
+     !
+     if (read_is_on(ID)) then
+       if (io_action(ID)==RD_CL_IF_END.and.start_==end_) io_action(ID)=RD_CL
+     else  if (write_is_on(ID)) then
+       if (io_action(ID)==WR_CL_IF_END.and.start_==end_) io_action(ID)=WR_CL
+     endif
      !
    end subroutine
    !

@@ -19,11 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Self, 3.0.13 r.202 , self@roma2.infn.it)
+AC_INIT(Self, 3.0.14 r.204 , self@roma2.infn.it)
 SVERSION="3"
 SPATCHLEVEL="0"
-SSUBLEVEL="13"
-SREVISION="202"
+SSUBLEVEL="14"
+SREVISION="204"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)

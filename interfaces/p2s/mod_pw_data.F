@@ -42,6 +42,7 @@ module pw_data
 ! Planewaves
   integer                    :: ngm_, npwx_
   integer, allocatable       :: igv_(:,:)
+  logical                    :: gamma_only_
 
 ! Spin
   logical                    :: lspinorb_

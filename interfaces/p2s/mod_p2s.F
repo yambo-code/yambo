@@ -37,7 +37,7 @@ module P2S
  character(lchlen) :: index_filename
  !
  integer, public :: pw_unit 
- integer, private :: i1,ierr
+ integer, private :: i1,i2,ierr
  !
  ! Memory saving tools
  !
@@ -161,6 +161,7 @@ contains
    !
    ! Call the version dependent routines
    !
+   gamma_only_ = .false.
 #if defined _P2S_EXPORT
 
    call pw_dimensions(pw_unit)
@@ -190,7 +191,7 @@ contains
    if (ierr.ne.0) call errore('qexml_read_symmetry','IOTK error',ABS(ierr))
    call qexml_read_spin(lspinorb=lspinorb_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_spin','IOTK error',ABS(ierr))
-   call qexml_read_planewaves(npwx=npwx_,ngm=ngm_, ierr=ierr)
+   call qexml_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,ngm=ngm_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_planewaves','IOTK error',ABS(ierr))
    call qexml_read_ions(nat=nat_, nsp=nsp_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_ions','IOTK error',ABS(ierr))
@@ -202,8 +203,18 @@ contains
 
    k%nibz      = num_k_points_
    en%nb       = nbnd_
-   ng_vec      = ngm_
-   wf_ncx      = npwx_ 
+   !
+   ! SELF presently does not make use of GAMMA_ONLY option, hence
+   ! the wfc's and G's must be doubled in this case.
+   ! Note: the quantities in the PW files are still dimensioned ngm_ and npwx_
+   !
+   if(gamma_only_) then
+     ng_vec      = 2*(ngm_ -1) + 1
+     wf_ncx      = 2*(npwx_-1) + 1
+   else
+     ng_vec      = ngm_
+     wf_ncx      = npwx_ 
+   endif
    !
    ! Set miscellanous SELF data: dimensions
    !
@@ -400,6 +411,15 @@ contains
      k%pt(i1,:)=xk_(:,i1) * alat(:)/alat_ 
    enddo
    deallocate(xk_)
+
+#if defined _P2S_EXPORT
+ 
+   if(k%nibz==1.and.v_is_zero(k%pt(1,:))) then
+     call warning(' GAMMA_ONLY calculations are not supported in pw_export. ')
+   endif
+   
+#endif
+
    !
    return
  end subroutine get_k_points
@@ -428,14 +448,16 @@ contains
    use R_lattice,   ONLY:b, ng_vec, g_vec
    use D_lattice,   ONLY:alat
    !
-   allocate(g_vec(ng_vec,3))
-   allocate(igv_(3,ng_vec))
+   allocate(g_vec(ng_vec,3)) ! The SELF array
+
 #if defined _P2S_EXPORT
 
+   allocate(igv_(3,ng_vec))    
    call pw_gvectors(pw_unit)
 
 #elif defined _P2S_V31 || defined _P2S_V32 || defined _P2S_V311
 
+   allocate(igv_(3,ngm_))    ! The PWscf array (ngm = ng_vec if not gamma_only)
    call qexml_read_planewaves(igv=igv_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_planewaves','IOTK error',ABS(ierr))
 
@@ -444,9 +466,22 @@ contains
    ! PW integer units of b1/b2/b3    -> 2pi/alat(:) units, cartesian, real
    ! b(:,:) is in a.u.
    !
-   do i1 = 1, ng_vec
-     g_vec(i1,:)=matmul(transpose(b),igv_(:,i1))*alat(:)/2./pi ! ok
-   enddo
+   if(gamma_only_) then
+     !
+     g_vec(1,:)=matmul(transpose(b),igv_(:,1))*alat(:)/2.0_SP/pi
+     do i1 = 2,ngm_
+        g_vec(2*i1-2,:)  = matmul(transpose(b),igv_(:,i1))*alat(:)/2.0_SP/pi
+        g_vec(2*i1-1,:)  =-matmul(transpose(b),igv_(:,i1))*alat(:)/2.0_SP/pi
+     enddo
+     !
+   else
+     !
+     do i1 = 1, ng_vec
+       g_vec(i1,:)=matmul(transpose(b),igv_(:,i1))*alat(:)/2.0_SP/pi ! ok
+     enddo
+     !
+   endif
+
    deallocate(igv_)
    !
  end subroutine get_R_vectors
@@ -476,11 +511,11 @@ contains
 
 #elif defined _P2S_V31  || defined _P2S_V311
 
-   allocate( pw_igk_(ng_vec, k%nibz))
-   allocate(index_(ng_vec))     ! avoid allocate(index_(wf_ncx)) in case of v3.1 bug
+   allocate( pw_igk_(ngm_, k%nibz))
+   allocate(index_(ngm_))     ! avoid allocate(index_(wf_ncx)) in case of v3.1 bug
    do ik = 1, k%nibz
      !
-     pw_igk_(1:ng_vec, ik)= 0
+     pw_igk_(1:ngm_, ik)= 0
      wf_nc_k(ik) =0
      !
      ! Print verbose wfc read message
@@ -506,12 +541,15 @@ contains
      wf_nc_k(ik) = npwk_
    enddo
    deallocate(index_)
-   wf_ncx = maxval(wf_nc_k)  ! correct definition of wf_ncx 
+!
+! This is a correct definition of wf_ncx only if gamma_only = .false.
+!
+!  wf_ncx = maxval(wf_nc_k)  
 
 #elif defined _P2S_V32 
 
-   allocate( pw_igk_(wf_ncx, k%nibz))
-   allocate( index_(wf_ncx) )     ! avoid allocate(index_(wf_ncx)) in case of v3.1 bug
+   allocate( pw_igk_(npwx_, k%nibz))
+   allocate( index_(npwx_) )     
    do ik = 1, k%nibz
      call qexml_read_gk(ik, npwk=npwk_, index=index_, ierr=ierr)
      if (ierr.ne.0) call errore('qexml_read_gk','IOTK error',ABS(ierr))
@@ -524,14 +562,32 @@ contains
 
    allocate( wf_igk(wf_ncx, k%nibz) )  ! this will be incorrect for parallel 3.1
    wf_igk(:,:)=-1 ! for checking
-   do i1 = 1,k%nibz
-     wf_igk(1:wf_nc_k(i1),i1)= pw_igk_(1:wf_nc_k(i1),i1) 
-   enddo   
+
+   if(gamma_only_) then
+     do i1 = 1,k%nibz
+        wf_igk(1,i1)=pw_igk_(1,i1)
+        do i2=2,wf_nc_k(i1)
+           wf_igk(2*i2-2,i1)=pw_igk_(i2,i1)*2-2
+           wf_igk(2*i2-1,i1)=pw_igk_(i2,i1)*2-1
+        enddo
+        !
+        ! NB: Extension of wf_nc_k array also done here.
+        !
+        wf_nc_k(i1)=2*(wf_nc_k(i1)-1)+1
+     enddo
+   else
+     do i1 = 1,k%nibz
+       wf_igk(1:wf_nc_k(i1),i1)= pw_igk_(1:wf_nc_k(i1),i1) 
+     enddo   
+   endif
    deallocate(pw_igk_)
 
    wf_ng = maxval(wf_igk)
+   !
+   ! Inportant check on wf_ncx.
+   !
    if(maxval(wf_nc_k).ne.wf_ncx) then
-     call error('maxval(wf_nc_k).ne.wf_ncx ! Check MAX_NPW ')
+     call error('maxval(wf_nc_k).ne.wf_ncx ! Check MAX_NPW/MAX_NUMBER_GK_VECTORS ')
    endif
    if(any(wf_nc_k.eq.0)) call error('At least one npw(k) = 0!')
     

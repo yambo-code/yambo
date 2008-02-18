@@ -34,7 +34,7 @@
 #else
  use qexml_module
 #endif
- use pw_data,               only: n_spin_pw_
+ use pw_data,               only: n_spin_pw_, gamma_only_
  use interfaces,            ONLY:make_real_wf
  implicit none
  !
@@ -43,7 +43,7 @@
  !
  ! Work Space
  !
- integer        :: ib, ikeff, ispin, npwk, ierr
+ integer        :: ib, ikeff, ispin, npwk, ierr, ig
  !
  ! holds the double precision pwscf record
  !
@@ -59,6 +59,7 @@
  !    Main data                                                        *
  !---------------------------------------------------------------------*
  npwk = wf_nc_k(ikibz)
+ if(gamma_only_) npwk=(npwk-1)/2+1 ! PWs actually read from file
 
 #if defined _P2S_EXPORT
 
@@ -83,16 +84,9 @@
    call qexml_read_wfc(ibnds=1, ibnde=n_bands, ik=ikibz, ispin=ispin, &
 &       npwk=npwk, igk = wf_igk(1:npwk,ikibz), wf = wf_disk_DP, ierr=ierr)
    if(ierr.ne.0) call errore('qexml_read_wfc','Check version of PW data!',ierr)
-   !
-   wf_disk_DP_T=transpose(wf_disk_DP)
-   !
-   wf_disk(1,1:n_bands,1:npwk,ispin) =  real( wf_disk_DP_T(:,:) )
-   wf_disk(2,1:n_bands,1:npwk,ispin) = aimag( wf_disk_DP_T(:,:) )
-   !
-   !do ib=1,n_bands
-   !  call make_real_wf(ib,ikibz,wf_disk(:,ib,:wf_nc_k(ikibz),ispin),wf_nc_k(ikibz))
-   !enddo
-   !
+
+   call sort_wf_disk
+ 
  enddo
 
 #elif defined _P2S_V32
@@ -114,16 +108,37 @@
      if(ierr.ne.0) call errore('qexml_read_wfc',' Check ispin/PWscf version!',ierr)
    end select
    !
-   wf_disk_DP_T=transpose(wf_disk_DP)
-   wf_disk(1,1:n_bands,1:npwk,ispin) =  real( wf_disk_DP_T(:,:) )
-   wf_disk(2,1:n_bands,1:npwk,ispin) = aimag( wf_disk_DP_T(:,:) )
-   !
-   !do ib=1,n_bands
-   !  call make_real_wf(ib,ikibz,wf_disk(:,ib,:wf_nc_k(ikibz),ispin),wf_nc_k(ikibz))
-   !enddo
+   call sort_wf_disk
    !
  enddo
 
 #endif
- !
+
+ contains
+
+   subroutine sort_wf_disk
+    
+     if(gamma_only_) then
+       wf_disk(1,1:n_bands,1,ispin) =  real( wf_disk_DP(1,1:n_bands))
+       wf_disk(2,1:n_bands,1,ispin) = aimag( wf_disk_DP(1,1:n_bands))
+       do ig=2,npwk
+         wf_disk(1,1:n_bands,2*ig-2,ispin) =  real(wf_disk_DP(ig,1:n_bands))
+         wf_disk(2,1:n_bands,2*ig-2,ispin) = aimag(wf_disk_DP(ig,1:n_bands))
+         wf_disk(1,1:n_bands,2*ig-1,ispin) =  real(wf_disk_DP(ig,1:n_bands))
+         wf_disk(2,1:n_bands,2*ig-1,ispin) = -aimag(wf_disk_DP(ig,1:n_bands))
+       enddo
+     else
+       wf_disk_DP_T=transpose(wf_disk_DP)
+       wf_disk(1,1:n_bands,1:npwk,ispin) =  real( wf_disk_DP_T(:,:) )
+       wf_disk(2,1:n_bands,1:npwk,ispin) = aimag( wf_disk_DP_T(:,:) )
+     endif
+     !
+     !   Lines relating to workaround for something or other
+     !
+     !do ib=1,n_bands
+     !  call make_real_wf(ib,ikibz,wf_disk(:,ib,:wf_nc_k(ikibz),ispin),wf_nc_k(ikibz))
+     !enddo
+     !
+   end subroutine sort_wf_disk
+
  end subroutine p2s_wf

@@ -129,7 +129,7 @@
  !
  ! Wavefunction blocks
  !
-!call wf_disk_split
+ call wf_disk_split
  !
  allocate(wf_disk(2,n_bands,wf_ncx,n_spin))
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
@@ -185,17 +185,25 @@
    use com,                 only : msg
    use interfaces,          only : n_band_block,blocks, maxband
    use memory_m,            only : mem_est
-   real(SP),parameter    :: max_array = 400.0_SP ! Mb limit
+!  real(SP),parameter    :: max_array = 400.0_SP ! Mb limit for single WF array in memory
+   real(SP),parameter    :: max_array = 0.01_SP ! Mb limit, for testing small systems
    real(SP),parameter    :: kb = 1024.0_SP
    integer               :: i
    character(schlen)     :: sch
+
 
    n_band_block = 1
    array_sz = DP*n_bands*real(wf_ncx)/kb/kb ! wf_disk_DP
    !
    ! No memory problems: no blocks
    !
-   if(array_sz.lt.max_array) then
+   if(array_sz.lt.max_array &
+#if !defined _BIGSYS
+      .or. .true. &   ! Switch off variable blocks unless _BIGSYS flag enabled at compilation
+#endif
+&    ) then
+!    call msg('s','Wavefunctions fully stored in memory.')
+
      n_band_block = 1
      allocate(blocks(2,n_band_block))
      blocks(:,1) = (/ 1, n_bands /)

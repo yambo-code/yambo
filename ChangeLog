@@ -1,3 +1,37 @@
+2008-02-18 15:43:48 r205 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.0.14 r.204
+
+	*  p2s/mod_pw_data.F p2s/p2s_wf.F p2s/mod_p2s.F
+
+	Additions:
+	- p2s now supports output from a PWscf (K_POINTS {gamma}) run,
+	  at least for versions later than 3.1.1.
+
+	Patch sent by: Claudio (small modifications by Conor)
+
+2008-02-15 18:03:27 r204 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.0.14 r.204
+
+	*  configure spp/exc_properties.F include/version.inc config/configure.ac qp/QP_driver.F qp/QP_XX_Vxc.F parser/Gclose.F wf_and_fft/wf_load.F pol_function/X_O_transverse.F pol_function/X_O_rotate.F pol_function/.objects pol_function/X_O_strengths.F interface/setup.F interface/.objects interface/stop_now.F sc/SC_driver.F sc/.objects sc/rotate_H.F io/ioX.F io/io_SC_components.F io/ioWF.F io/load_SC_components.F io/.objects modules/std_presets.F modules/mod_SC.F modules/mod_IO.F modules/mod_wave_func.F modules/mod_com.F modules/mod_xc_functionals.F bse/K_Haydock.F ChangeLog sbin/make_makefile.sh.in
+
+	Bugs:
+	- [QP_driver] Again string to string write fixed (pgf90)
+
+	Additions:
+	- stop_nor rotuine added. It can be used to detect a STOP_NOW
+	  string in input file. the routine che either stop the job
+	  there or return a .true. value.
+
+	Changes:
+	- [SPP] collinear exciton spin calculation added.
+	- Big update of SC project. Still unstable: local potential
+	  optics ok, wfs rotation implemented. Still to do non-local
+	  potentials.
+
+	Patch sent by: Andrea
+
 2008-02-14 09:25:55 r203 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Bug fixes: (1) unclosed shell in wf_load. (2) Wrong band loading in PPA (thanks to Myrta)

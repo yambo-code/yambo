@@ -156,7 +156,7 @@ end subroutine init_surface
         plane = reshape( (/ merge(-1,1,iz.eq.1), 0, 0, &
 &                         0, merge(-1,1,iz.eq.2), 0, &
 &                         0, 0, merge(-1,1,iz.eq.3) /), (/ 3,3 /) )
-        do is = 1, nsym ! should be over real syms
+        do is = 1, nsym/(1+i_time_rev) ! Over real syms only
           forall(i=1:3,j=1:3) sym1(i,j) = abs(dl_sop(i,j,is)-plane(i,j))
           if(all(sym1.lt.0.001)) then
             lsymslab = .true.

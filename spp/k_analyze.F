@@ -206,6 +206,7 @@ subroutine k_analize(en,k,Xk,q)
      q0 = qlong(i1,:)
      !
      if (v_norm(q0)>1.E-4) q0 = qlong(i1,:)*1.E-4/v_norm(q0)
+     call msg("s","Renormalize long shift to :",q0)
      !
      if(v_norm(q0).gt.1e-6) then
       
@@ -215,6 +216,9 @@ subroutine k_analize(en,k,Xk,q)
        !
        if (trim(coo_in)=="cc")  call c2a(v_in=q0(:),mode="kc2i")
        if (trim(coo_in)=="rlu") call c2a(v_in=q0(:),mode="ka2i")
+!       write(ch,'(a,i1,a,3(f13.10,a),2a)') " -- Shifted K-grid[",i2,&
+!&      "]: {K} + (",q0(1),",",q0(2),",",q0(3),") [","ikuAA","]"
+!       call msg("s",trim(ch))
        !
        ! Convert q0[iku] to coo_out
        !
@@ -223,7 +227,7 @@ subroutine k_analize(en,k,Xk,q)
        !
        ! Print shift vector in new basis
        !
-       write(ch,'(a,i1,a,3(f10.7,a),2a)') " -- Shifted K-grid[",i2,&
+       write(ch,'(a,i1,a,3(f13.10,a),2a)') " -- Shifted K-grid[",i2,&
 &      "]: {K} + (",q0(1),",",q0(2),",",q0(3),") [",trim(coo_out),"]"
        call msg("s",trim(ch))
        !

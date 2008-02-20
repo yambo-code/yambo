@@ -156,7 +156,7 @@
      io_err=ioWF(ID)
    endif
    !
-   ! Section title (SEC = ik+1). NB use of ispinor in ioWF
+   ! Section title (SEC = ik+1). 
    !
    isec = isec + 1 ! check
    call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
@@ -185,8 +185,8 @@
    use com,                 only : msg
    use interfaces,          only : n_band_block,blocks, maxband
    use memory_m,            only : mem_est
-!  real(SP),parameter    :: max_array = 400.0_SP ! Mb limit for single WF array in memory
-   real(SP),parameter    :: max_array = 0.01_SP ! Mb limit, for testing small systems
+   real(SP),parameter    :: max_array = 400.0_SP ! Mb limit for single WF array in memory
+!  real(SP),parameter    :: max_array = 0.01_SP ! Mb limit, for testing small systems
    real(SP),parameter    :: kb = 1024.0_SP
    integer               :: i
    character(schlen)     :: sch

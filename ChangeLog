@@ -1,3 +1,24 @@
+2008-02-19 13:17:54 r207 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.0.14 r.204
+
+	*  ras_reels_mods/mod_surface_geometry.F
+
+	Bugs:
+	- [RAS] Tests on spatial slab symmetries did not exclude TR symmetries, fixed.
+
+2008-02-19 12:22:39 r206 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.0.14 r.204
+
+	*  p2s/p2s_i.F p2s/p2s_wf.F ChangeLog
+
+	Additions:
+	- p2s now supports large WF i/o by splitting WF reads into blocks where needed.
+	  Needs -D_BIGSYS when compiling p2s: add to config/setup (cppflags) for now.
+
+	Patch sent by: Conor
+
 2008-02-18 15:43:48 r205 Conor Hogan <conor.hogan@roma2.infn.it>
 
 	Version 3.0.14 r.204

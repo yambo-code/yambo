@@ -141,6 +141,11 @@
 
 #endif
 
+#if !defined _P2S_EXPORT
+ deallocate(wf_disk_DP)
+ call mem_est("wf_disk_DP")
+#endif
+
  contains
 
    subroutine set_band_block

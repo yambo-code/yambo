@@ -81,6 +81,7 @@ end subroutine init_bulk
   end subroutine clean_bulkeps
 
   subroutine scan_bulkeps(errmsg)
+    use com,           ONLY:warning
     !
     ! Read and store bulk file data.
     !
@@ -146,9 +147,9 @@ end subroutine init_bulk
 
 !   Check the order of the columns
     if(any(e2in.lt.0.0_SP)) then
-       errmsg='Bulk epsilon has negative absorption! Check the column order.'
-       lbulkerr = .true.
-       return
+!      lbulkerr = .true.
+       call warning('Bulk epsilon has negative absorption! '//&
+&                   'Check the column order/metallicity.')
     endif
 
 !   All ok

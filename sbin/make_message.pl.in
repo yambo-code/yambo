@@ -44,7 +44,7 @@ print "Identified modified files: $changedfiles\n";
 #
 open(MSGFILE,">","commit.msg") or die "The file commit.msg could " .
    "not be opened.\n";
-print MSGFILE "Version @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ r.@SREVISION@ \n\n";
+print MSGFILE "Version @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ \n\n";
 print MSGFILE "* $changedfiles\n\n";
 print MSGFILE "Bugs:\n";
 print MSGFILE "- \n";

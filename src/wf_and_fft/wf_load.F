@@ -40,6 +40,8 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                        io_fragmented, io_netcdf_support, RD_CL,DUMP
 #if defined _SC
  use SC,            ONLY:using_SC_basis,SC_R,load_SC_components
+ use global_XC,     ONLY:WF_kind,WF_xc_functional,&
+&                        setup_global_XC,MORE_NONE
 #endif
  implicit none
  !
@@ -211,16 +213,22 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !========================
 #if defined _SC
  !
- call load_SC_components('WF',COM_=NONE,MODE_=DUMP)
+ ! First check if there are enough bands
+ !
+ call load_SC_components('check_bands',n_bands=bands_to_load(2))
+ !
  if (using_SC_basis) then
+   call load_SC_components('WF',COM_=NONE,MODE_=DUMP,ik=0,&
+&                          kind=WF_kind,xc_functional=WF_xc_functional)
    if (wf_space=='R') wf_size=fft_size
    if (wf_space=='G') wf_size=wf_ng
    do ikibz=1,nkibz
      call WF_rotate(ikibz,bands_to_load(2),wf_size,&
 &                   SC_R(:bands_to_load(2),:bands_to_load(2),ikibz),wf)
    enddo
+   call load_SC_components('WF_clean',COM_=0,MODE_=0,ik=0)
+   call setup_global_XC('WF',WF_kind,MORE_NONE,WF_xc_functional)
  endif
- call load_SC_components('WF_clean',COM_=0,MODE_=0)
 #endif
  !
  if (.not.wf_norm_test) return

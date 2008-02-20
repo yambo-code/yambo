@@ -44,18 +44,23 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use X_m,          ONLY:X_alloc,X_t,X_mat
  use BS,           ONLY:BS_bands,BS_eh_E,BS_res_K_corr,BS_W_is_diagonal,&
 &                       BS_res_K_exchange,O_n_c_states,&
-&                       O_n_cc_scatt,O_n_vv_scatt,&
-&                       BS_n_g_W,O_cc,O_vv,BS_blk_dim,O_table,BS_mat,&
+&                       BS_n_g_W,BS_blk_dim,O_table,BS_mat,&
 &                       O_phase,O_c_state,O_v_state,O_ng,BS_eh_table,BS_columns,&
 &                       BS_n_g_exch,BS_identifier,BS_K_coupling,O_n_v_states,&
 &                       BS_K_dim,BS_eh_win,BS_blk_coord,&
 &                       cumulative_index,BS_K_is_ALDA,BS_cpl_mat,&
 &                       BS_cpl_K_exchange,BSS_q0
+#if defined _BS_CPL
+ use BS,           ONLY:O_n_scatt,BS_O,BS_cpl_K_corr
+#else
+ use BS,           ONLY:O_n_cc_scatt,O_n_vv_scatt,O_cc,O_vv
+#endif
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,RD_CL,OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END
  use TDDFT,        ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,ioBS_Fxc
- use xc_functionals, ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL,F_xc
+ use xc_functionals, ONLY:F_xc
+ use global_XC,    ONLY:WF_kind,WF_xc_functional
  implicit none
  type(levels)  ::Ken 
  type(bz_samp) ::Xk,q
@@ -65,12 +70,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Kernel loop
  !
- integer    :: ikk1,ikk2,live_timing_steps,is1xis2
- integer    :: ik1bz,iv1,ic1,ik1,is1,inv_s1,is1p
- integer    :: i_sp1,i_sp2
- integer    :: ik2bz,iv2,ic2,ik2,is2,is2p
- integer    :: icv1,icv2,iOvv,iOcc
- integer    :: i1,i2,i3,iqs,iq_W,ig0
+ integer    :: ikk1,ikk2,live_timing_steps,is1xis2,ik1bz,iv1,ic1,ik1,is1,inv_s1,is1p,&
+&              i_sp1,i_sp2,ik2bz,iv2,ic2,ik2,is2,is2p,&
+&              icv1,icv2,iOvv,iOcc,i1,i2,i3,iqs,iq_W,ig0
 #if defined _DOUBLE
  complex(SP):: zdotc,zdotu
 #else
@@ -89,9 +91,17 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Oscillators
  !
- integer    :: O_cc_dim,O_vv_dim,O_x_dim,alloc_err(2),x_fft_size,c_fft_size
+#if defined _BS_CPL
+ integer    :: O_dim
+#else
+ integer    :: O_cc_dim,O_vv_dim
+#endif
+ integer    :: O_x_dim,alloc_err(2),x_fft_size,c_fft_size
  logical    :: load_O_X
  complex(SP),allocatable::Ovv(:),Occ(:),Cc(:),O1x(:,:),O2x(:,:)
+#if defined _BS_CPL
+ complex(SP),allocatable::Ovc(:),Ocv(:)
+#endif
  type(ggwinfo)          ::isc
  !
  ! I/O
@@ -237,8 +247,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call mem_est('O_table',(/size(O_table)/),elements_kind=(/SP/),errors=(/alloc_err(1)/))
  !
+#if defined _BS_CPL
+ O_dim=-1
+#else
  O_cc_dim=-1
  O_vv_dim=-1
+#endif
  O_x_dim=maxval(BS_blk_dim)
  do ik2=1,BS_columns
    do ik1=ik2,1,-1
@@ -246,8 +260,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      if (any((/ik2<BS_blk_coord(2),ik2==BS_blk_coord(2).and.ik1>BS_blk_coord(1)/))) cycle
      !
      call K_scattering(iq,ik1,ik2,Xk,q)  
+#if defined _BS_CPL
+     O_dim=max(O_dim,O_n_scatt)
+#else
      O_cc_dim=max(O_cc_dim,O_n_cc_scatt)
      O_vv_dim=max(O_vv_dim,O_n_vv_scatt)
+#endif
+     !
    enddo
  enddo
  if (l_bs_fxc) call mem_est("BS_K_2_FXC",&
@@ -258,7 +277,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (BS_K_is_ALDA) then
    allocate(F_xc(fft_size))
-   call xc_lda_driver(Ken,Xk,GS_xc_KIND,GS_xc_FUNCTIONAL,2)
+   call xc_lda_driver(Ken,Xk,WF_KIND,WF_xc_FUNCTIONAL,2)
  endif
  !
  if (BS_res_K_corr) then
@@ -336,12 +355,23 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  !allocations
  !***********
- if (BS_res_K_corr) then
+ if (BS_res_K_corr&
+#if defined _BS_CPL
+     .or.BS_cpl_K_corr&
+#endif
+&   ) then
+#if defined _BS_CPL
+   allocate(BS_O(O_ng,O_dim),stat=alloc_err(1))
+   call mem_est('BS_O',(/size(BS_O)/),errors=(/alloc_err(1)/))
+   allocate(Ovv(BS_n_g_W),Occ(BS_n_g_W),Cc(BS_n_g_W),Ovc(BS_n_g_W),Ocv(BS_n_g_W))
+   call mem_est('O_RES_WS',(/5*BS_n_g_W/))
+#else
    allocate(O_cc(O_ng,O_cc_dim),stat=alloc_err(1))
    allocate(O_vv(O_ng,O_vv_dim),stat=alloc_err(2))
    call mem_est('O_cc O_vv',(/size(O_vv),size(O_cc)/),errors=alloc_err(:2))
    allocate(Ovv(BS_n_g_W),Occ(BS_n_g_W),Cc(BS_n_g_W))
-   call mem_est('O_temp',(/3*BS_n_g_W/))
+   call mem_est('O_RES_WS',(/3*BS_n_g_W/))
+#endif
  endif
  !
  if (load_O_X) then
@@ -490,10 +520,17 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            inv_s1=sop_inv(is1)
            is1xis2=sop_tab(sop_inv(is1),is2)
            !
+#if defined _BS_CPL
+           forall(i1=1:BS_n_g_W) Occ(i1)=&
+&                BS_O(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOcc)*O_phase(is1xis2,ic2,i_sp1)
+           forall(i1=1:BS_n_g_W) Ovv(i1)=&
+&                BS_O(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOvv)*O_phase(is1xis2,iv2,i_sp2)
+#else
            forall(i1=1:BS_n_g_W) Occ(i1)=&
 &                O_cc(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOcc)*O_phase(is1xis2,ic2,i_sp1)
            forall(i1=1:BS_n_g_W) Ovv(i1)=&
 &                O_vv(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOvv)*O_phase(is1xis2,iv2,i_sp2)
+#endif
            !
            if (is1>nsym/(i_time_rev+1)) Ovv=conjg(Ovv)
            if (is1>nsym/(i_time_rev+1)) Occ=conjg(Occ)
@@ -521,6 +558,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 #endif
            !
          endif
+         !
+#if defined _BS_CPL
+         ! :::Correlation (coupling):::
+         !
+         if (BS_cpl_K_corr.and.i_sp1==i_sp2) then
+           !
+         endif
+#endif
          !
          ! Impose the kernel to be hermitian
          !
@@ -566,15 +611,30 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call mem_est("O_table")
  !
  call WF_free()
+ call mem_est("BS_mat")
  !
- if (BS_res_K_corr) then
+ if (BS_res_K_corr&
+#if defined _BS_CPL
+     .or.BS_cpl_K_corr&
+#endif
+&   ) then
    deallocate(O_v_state,O_c_state,O_n_c_states,O_n_v_states)
-   deallocate(BS_W,O_cc,O_vv,Ovv,Occ,Cc,O_phase,ik_is_table)
-   call mem_est("O_v_state O_c_state")
-   call mem_est("O_n_c_states O_n_v_states")
-   call mem_est("BS_mat")
-   call mem_est("O_cc O_vv O_temp O_phase")
-   call mem_est("BS_W ik_is_table")
+   call mem_est("O_v_state O_c_state O_n_c_states O_n_v_states")
+   deallocate(BS_W,O_phase,ik_is_table)
+   call mem_est("BS_W O_phase ik_is_table")
+   deallocate(Ovv,Occ,Cc)
+   call mem_est("O_RES_WS")
+#if defined _BS_CPL
+   deallocate(BS_O)
+   call mem_est("BS_O")
+   if (BS_cpl_K_corr) then
+     deallocate(Ovc,Ocv)
+     call mem_est("O_CPL_WS")
+   endif
+#else
+   deallocate(O_cc,O_vv)
+   call mem_est("O_cc O_vv")
+#endif
  endif
  !
  if (load_O_X) then

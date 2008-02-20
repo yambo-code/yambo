@@ -42,9 +42,6 @@ module IO_m
  !
  ! Actions
  !
- ! 0<= ACTION <=3  CLOSE
- ! 1<= ACTION <=6  OPEN
- !
  integer, parameter:: RD_CL=1,OP_RD_CL=2,OP_WR_CL=3,OP_APP_WR_CL=4,OP_RD=5,OP_APP=6,&
 &                     OP_WR=7,RD=8,WR=9,RD_CL_IF_END=10,WR_CL=11,WR_CL_IF_END=12
  !
@@ -58,7 +55,8 @@ module IO_m
  !
  ! Units
  !
- integer, parameter:: max_io_units=10,max_active_sections=10
+ integer, parameter:: max_io_units=10
+ integer, parameter:: max_active_sections=10
  integer :: io_action(max_io_units)
  integer :: io_com(max_io_units)
  integer :: io_mode(max_io_units)
@@ -121,9 +119,10 @@ module IO_m
    end subroutine
    !
    integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,&
-&                             QP_ctl_K,T_EL,KPTS,D_LATT)
-     integer            :: ID
-     logical,optional   :: QPTS,R_LATT,WF,IMPOSE_SN,QP_ctl_K,T_EL,KPTS,D_LATT
+&                             T_EL,KPTS,D_LATT,XC_KIND)
+     integer               :: ID
+     logical,optional      :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT
+     character(*),optional :: XC_KIND
    end function
    !
  end interface

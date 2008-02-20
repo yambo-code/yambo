@@ -23,7 +23,7 @@ subroutine X_O_rotate(X_bands)
  !
  use pars,           ONLY:SP
  use R_lattice,      ONLY:nXkibz
- use SC,             ONLY:SC_bands,SC_R,load_SC_components
+ use SC,             ONLY:SC_bands,SC_R,load_SC_components,H_nl_sc,H_rotate
  use X_m,            ONLY:X_q0grad
  use IO_m,           ONLY:NONE,DUMP
  use memory_m,       ONLY:mem_est
@@ -31,43 +31,58 @@ subroutine X_O_rotate(X_bands)
  !
  ! Work Space
  !
- integer     :: X_bands,ik,i_cart,i1,i2,i3,i4
- complex(SP) :: grad_WS(X_bands,X_bands)
+ integer     :: X_bands,ik,i_cart,i1,i2,i3,i4,i_ter
+ complex(SP) :: grad_WS_n(X_bands,X_bands),grad_WS_nm1(X_bands,X_bands)
  !
  ! First I read the rotation matrices
  !                  -----------------
- return
+ call load_SC_components('WF',COM_=NONE,MODE_=DUMP,ik=0)
  !
- call load_SC_components('WF',COM_=NONE,MODE_=DUMP)
+ ! and the header of the H_sc
+ !
+ call load_SC_components('Hsc',COM_=NONE,MODE_=DUMP,ik=0)
  !
  do ik=1,nXkibz
    !
+   call load_SC_components('Hsc',COM_=NONE,MODE_=DUMP,ik=ik)
+   !
+   call H_rotate(SC_R(:,:,ik),H_nl_sc,SC_bands,1)
+   !
    do i_cart=1,3
      !
-     grad_WS(:,:)=X_q0grad(i_cart,:X_bands,:X_bands,ik,1)
+     grad_WS_nm1(:,:)=X_q0grad(i_cart,:X_bands,:X_bands,ik,1)
      !
-     X_q0grad(i_cart,:X_bands,:X_bands,ik,1)=(0.,0.)
+     do i_ter=1,100
+       !
+       grad_WS_n(:,:)=X_q0grad(i_cart,:X_bands,:X_bands,ik,1)
+
+!     !
+!     X_q0grad(i_cart,:X_bands,:X_bands,ik,1)=(0.,0.)
+!     !
+!     ! X_q0grad (I1,I2) = i <I2|r|I1> = \sum_i3 i4
+!     !                    <I2|i3> i <i3|r|i4> <i4|I1> =
+!     !                    \sum_i3 i4 SC_R(i3,I2)^*  X_q0grad (i4,i3) SC_R(i4,I1)
+!     !
+!     do I1=1,X_bands
+!       do I2=1,X_bands
+!         do i3=1,X_bands
+!           do i4=1,X_bands
+!             X_q0grad(i_cart,I1,I2,ik,1)=X_q0grad(i_cart,I1,I2,ik,1)+&
+!&            conjg(SC_R(i3,I2,ik))*grad_WS(i4,i3)*SC_R(i4,I1,ik)
+!           enddo
+!         enddo
+!       enddo
+!     enddo
      !
-     ! X_q0grad (I1,I2) = i <I2|r|I1> = \sum_i3 i4
-     !                    <I2|i3> i <i3|r|i4> <i4|I1> =
-     !                    \sum_i3 i4 SC_R(i3,I2)^*  X_q0grad (i4,i3) SC_R(i4,I1)
-     !
-     do I1=1,X_bands
-       do I2=1,X_bands
-         do i3=1,X_bands
-           do i4=1,X_bands
-             X_q0grad(i_cart,I1,I2,ik,1)=X_q0grad(i_cart,I1,I2,ik,1)+&
-&            conjg(SC_R(i3,I2,ik))*grad_WS(i4,i3)*SC_R(i4,I1,ik)
-           enddo
-         enddo
-       enddo
-     enddo
+     enddo ! i_ter
      !
    enddo
    !
  enddo
  !
- deallocate(SC_R)
- call mem_est("SC_R")
+ call load_SC_components('WF_clean', COM_=NONE,MODE_=DUMP,ik=0)
+ call load_SC_components('Hsc_clean',COM_=NONE,MODE_=DUMP,ik=0)
+ !
+ stop
  !
 end subroutine

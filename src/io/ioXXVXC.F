@@ -21,22 +21,23 @@
 !
 integer function ioXXVXC(ID)
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,schlen
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts
  use electrons,      ONLY:n_met_bands,n_sp_pol
  use QP_m,           ONLY:QP_Sx,QP_ng_Sx,QP_nb,QP_nk,QP_Vxc,QP_n_states,&
-&                         QP_Sx_low_band,QP_table,QP_state,QP_xc_FUNCTIONAL
+&                         QP_Sx_low_band,QP_table,QP_state
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
-&                         write_is_on,io_mode,DUMP
+&                         write_is_on,io_mode,DUMP,ver_is_gt_or_eq
  implicit none
  integer :: ID
  !
  ! Work Space
  !
- integer           :: QP_state_disk(2+n_sp_pol)
- integer           :: QP_n_states_disk,bands(2),i1,i2,i_found,var_sz
+ integer           :: QP_state_disk(2+n_sp_pol),&
+&                     QP_n_states_disk,bands(2),i1,i2,i_found,var_sz
  real(SP)          :: Sx(2),Vxc(2)
+ character(schlen) :: QP_xc_FUNCTIONAL
  !
  ioXXVXC=io_connect(desc="xxvxc",type=2,ID=ID)
  if (ioXXVXC/=0) goto 1
@@ -45,7 +46,7 @@ integer function ioXXVXC(ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   ioXXVXC=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.)
+   ioXXVXC=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,XC_KIND="G_WF force")
    if (ioXXVXC/=0) goto 1
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=8,MENU=0)
@@ -62,15 +63,21 @@ integer function ioXXVXC(ID)
 &       VAR=' RIM RL components               :',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,I0=RIM_n_rand_pts,&
 &       VAR=' RIM random points               :',CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   ! xc Functional
+   if (ver_is_gt_or_eq(ID,(/3,0,15/))) then
+     call io_elemental(ID,VAR="",VAR_SZ=0)
+   else
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     !
+     ! xc Functional
+     !
+     call io_elemental(ID,VAR='XC_FUNCTIONAL',CH0="",VAR_SZ=1,MENU=0)
+     call io_elemental(ID,CH0=QP_xc_FUNCTIONAL,&
+&         VAR=' xc Functional                   :',CHECK=.true.,OP=(/"=="/))
+     !
+     call io_elemental(ID,VAR="",VAR_SZ=0)
+   endif
    !
-   call io_elemental(ID,VAR='XC_FUNCTIONAL',CH0="",VAR_SZ=1,MENU=0)
-   call io_elemental(ID,CH0=QP_xc_FUNCTIONAL,&
-&       VAR=' xc Functional                   :',CHECK=.true.,OP=(/"=="/))
-   !
-   call io_elemental(ID,VAR="",VAR_SZ=0)
    ioXXVXC=io_status(ID)
    if (ioXXVXC/=0) goto 1
    !

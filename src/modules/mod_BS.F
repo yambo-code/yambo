@@ -56,19 +56,30 @@ module BS
  real(SP)   , allocatable :: BS_eh_Z(:)
  real(SP)   , allocatable :: BS_eh_W(:)
  !
- ! Oscillators
+ ! Oscillators ...
  !
- integer  :: O_n_cc_scatt
- integer  :: O_n_vv_scatt
  integer  :: O_ng
+ integer,    allocatable :: O_phase(:,:,:)
+ integer,    allocatable :: O_table(:,:,:,:,:)
+ !
+ ! ... first table of possible c/v states
+ !
  integer,    allocatable :: O_n_c_states(:,:)
  integer,    allocatable :: O_n_v_states(:,:)
  integer,    allocatable :: O_c_state(:,:,:)
  integer,    allocatable :: O_v_state(:,:,:)
- integer,    allocatable :: O_phase(:,:,:)
- integer,    allocatable :: O_table(:,:,:,:,:)
+ !
+ ! ... then table of possible cv->nm transitions
+ !
+#if defined _BS_CPL
+ integer  :: O_n_scatt
+ complex(SP),allocatable :: BS_O(:,:)
+#else
+ integer  :: O_n_cc_scatt
+ integer  :: O_n_vv_scatt
  complex(SP),allocatable :: O_cc(:,:)
  complex(SP),allocatable :: O_vv(:,:)
+#endif
  !
  ! Solvers
  !

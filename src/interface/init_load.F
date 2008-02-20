@@ -50,14 +50,14 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,&
 &                        FXC_SVD_digits
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
- use QP_m,          ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_W,QP_ctl_Z,&
-&                        QP_band_mixing
+ use QP_m,          ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_W,QP_ctl_Z
  use com,           ONLY:out_path,db_wr_path
  use functions,     ONLY:bose_E_cut
 #if defined _SC
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential,&
 &                        SC_E_threshold,SC_rho_threshold
 #endif
+ use SC,            ONLY:SC_band_mixing
 #if defined _RAS
  use bulkeps,              ONLY : init_bulk
  use eels_kinematics,      ONLY : init_kinematics
@@ -194,14 +194,11 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _SC
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  call it(defs,'SCIter',    '[SC] SC Iterations',SC_iterations)
+ call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)
  call it(defs,'SCPot',     '[SC] SC Potential',SC_potential)
  call it(defs,'SCEtresh',  '[SC] Energy convergence threshold',SC_E_threshold,unit=E_unit)
  call it(defs,'SCRhoTresh','[SC] Rho convergence threshold',SC_rho_threshold)
 #endif
- !
- ! Non-Perturbative
- !
- call it(defs,'BandMix',    '[NP] Band mixing',QP_band_mixing)
  ! 
  ! RAS
  !

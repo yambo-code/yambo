@@ -164,6 +164,7 @@
 
    subroutine sort_wf_disk
     
+#if !defined _P2S_EXPORT
      if(gamma_only_) then
        do ib=ib1,ib2
          wf_disk(1,ib,1,ispin) = real( wf_disk_DP(1,ib-ib1+1) )
@@ -203,6 +204,7 @@
      !  call make_real_wf(ib,ikibz,wf_disk(:,ib,:wf_nc_k(ikibz),ispin),wf_nc_k(ikibz))
      !enddo
      !
+#endif
    end subroutine sort_wf_disk
 
  end subroutine p2s_wf

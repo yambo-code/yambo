@@ -29,13 +29,10 @@ subroutine X_O_transverse(Xen,Xk,X)
  use D_lattice,           ONLY:alat,pp_kbv_dim,&
 &                              n_atom_species,n_atoms,pp_n_l_comp,PP_free
  use R_lattice,           ONLY:g_vec,bz_samp
- use X_m,                 ONLY:X_t,X_q0grad
+ use X_m,                 ONLY:X_t,X_q0grad,P_bands_ordered
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf,wf_ng,wf_state, wf_load
-#if defined _SC
- use SC,                  ONLY:using_SC_basis,E_of_WFo
-#endif
  !
  implicit none
  type(bz_samp), intent(in)    :: Xk
@@ -83,15 +80,13 @@ subroutine X_O_transverse(Xen,Xk,X)
  !
  ! Set up band limits
  !
- iv_max=Xen%nbm
- ic_min=Xen%nbf+1
- !
-#if defined _SC
- if (using_SC_basis) then
+ if (P_bands_ordered) then
+   iv_max=Xen%nbm
+   ic_min=Xen%nbf+1
+ else
    iv_max=X%ib(2)
    ic_min=X%ib(1)
  endif
-#endif
  !
  ! Set up the parallel environment
  !
@@ -131,9 +126,6 @@ subroutine X_O_transverse(Xen,Xk,X)
          !
          Ev_m_Ec=Xen%E(iv,ik,E_i_spin)-Xen%E(ic,ik,E_i_spin)
          if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,E_i_spin)-Xen%Eo(ic,ik,E_i_spin)
-#if defined _SC
-!         if (using_SC_basis)     Ev_m_Ec=E_of_WFo(iv,ik,E_i_spin)-E_of_WFo(ic,ik,E_i_spin)
-#endif
          !
          if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,&
 &                  -Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/))) cycle

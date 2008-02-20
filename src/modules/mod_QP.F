@@ -42,7 +42,6 @@ module QP_m
  logical           :: CHOSEX_use_empties
  character(schlen) :: QP_rep_string
  character(schlen) :: QP_solver
- character(schlen) :: QP_xc_FUNCTIONAL
  real(SP)          :: QP_G_damp
  real(SP)          :: QP_dSc_delta
  real(SP)          :: QP_W_er(2)
@@ -59,11 +58,6 @@ module QP_m
  integer,    allocatable:: QP_solver_state(:)
  integer,    allocatable:: QP_table(:,:)
  logical,    allocatable:: QP_state(:,:)
- !
- ! Mixing for non perturbative calculations
- !
- integer           :: QP_bands_mixed
- real(SP)          :: QP_band_mixing
  !
  type QP_t
    character(schlen)  :: description(max_qp_descs)
@@ -97,7 +91,6 @@ module QP_m
  real(SP)   :: QP_ctl_W(3,4)
  complex(SP):: QP_ctl_Z(3)
  logical    :: QP_ctl_applied
- character(schlen):: QP_ctl_short_descr(3)
  !
  contains
    !

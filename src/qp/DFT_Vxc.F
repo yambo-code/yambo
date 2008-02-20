@@ -25,11 +25,12 @@ subroutine DFT_Vxc(E,Xk)
  !
  use pars,          ONLY:SP,DP,pi
  use electrons,     ONLY:levels,n_spin,n_spinor,n_sp_pol,spin
- use QP_m,          ONLY:QP_Vxc,QP_n_states,QP_table,QP_xc_FUNCTIONAL
+ use QP_m,          ONLY:QP_Vxc,QP_n_states,QP_table
  use R_lattice,     ONLY:bz_samp
  use FFT_m,         ONLY:fft_size
  use wave_func,     ONLY:wf,wf_state
- use xc_functionals,ONLY:V_xc,xc_string,GS_xc_KIND,GS_xc_FUNCTIONAL,el_mag
+ use xc_functionals,ONLY:V_xc,xc_string,el_mag
+ use global_XC,     ONLY:WF_kind,WF_xc_functional
  implicit none
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
@@ -55,8 +56,7 @@ subroutine DFT_Vxc(E,Xk)
  !
  ! ...LDA (and more) Vxc
  !
- call xc_lda_driver(E,Xk,GS_xc_KIND,GS_xc_FUNCTIONAL,1)
- QP_xc_FUNCTIONAL=trim(xc_string(GS_xc_KIND,GS_xc_FUNCTIONAL))
+ call xc_lda_driver(E,Xk,WF_KIND,WF_xc_FUNCTIONAL,1)
  !
  if (n_spin==1) then
    ! 

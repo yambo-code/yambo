@@ -40,7 +40,8 @@ subroutine acfdt_tot_energy(Xen,Xk,q,X)
  use matrix_operate, ONLY:mat_dia_inv,INV,USE_LK
  use IO_m,           ONLY:io_control,RD_CL_IF_END,OP_RD
  use xc_functionals, ONLY:E_xc,XC_EXCHANGE_CORRELATION,XC_LDA_C_KP,XC_EXCHANGE,&
-&                         XC_LDA_X,GS_xc_FUNCTIONAL,XC_CORRELATION
+&                         XC_LDA_X,XC_CORRELATION
+ use global_XC,      ONLY:WF_xc_functional
  implicit none
  type(levels) ::Xen 
  type(bz_samp)::Xk,q
@@ -108,7 +109,7 @@ subroutine acfdt_tot_energy(Xen,Xk,q,X)
  Ex_LDA=sdot(fft_size,rho,1,E_xc,1)
 #endif
  !
- call xc_lda_driver(Xen,Xk,XC_CORRELATION,GS_xc_FUNCTIONAL,0)
+ call xc_lda_driver(Xen,Xk,XC_CORRELATION,WF_xc_FUNCTIONAL,0)
 #if defined _DOUBLE
  Ec_LDA=ddot(fft_size,rho,1,E_xc,1)
 #else 

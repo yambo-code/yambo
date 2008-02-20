@@ -71,7 +71,7 @@ integer function ioBS_Fxc(iq,FXC_W,ID,X)
    ! As this DB must respect the BS identifier I only need to
    ! check the K QP corrections
    !
-   ioBS_Fxc=io_header(ID,QP_ctl_K=.true.)
+   ioBS_Fxc=io_header(ID,XC_KIND="K_E force")
    !
    ! Exit if header is wrong
    !

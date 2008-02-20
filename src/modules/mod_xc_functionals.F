@@ -26,7 +26,8 @@ module xc_functionals
  use pars,      ONLY:SP,lchlen
  implicit none
  !
- integer     , public :: GS_xc_KIND,GS_xc_FUNCTIONAL
+ integer     , public :: GS_xc_KIND
+ integer     , public :: GS_xc_FUNCTIONAL
  real(SP), public, allocatable:: el_mag(:,:)
  real(SP), public, allocatable:: V_xc(:,:)
  real(SP), public, allocatable:: E_xc(:)
@@ -75,65 +76,43 @@ module xc_functionals
     XC_MGGA_X_TPSS       = 201, &  ! Perdew, Tao, Staroverov & Scuseria exchange
     XC_MGGA_C_TPSS       = 202     ! Perdew, Tao, Staroverov & Scuseria correlation
  !
-#if defined _SC
- ! the OEP
- integer, public, parameter :: &
-   XC_OEP_EXX           = 301    ! OEP-EXX
- !
- ! the GKS
- integer, public, parameter :: &
-   XC_GKS_HF            = 401, &  ! Hartree-Fock
-   XC_GKS_CHOSEX        = 402     ! Coulomb-Hole Screened-eXchange
- !
-#endif
- !
  contains
    !
    character(lchlen) function xc_string(kind,functional)
      !
-     use stderr, ONLY:string_pack
-     implicit none
      integer        :: kind,functional
      character(4)   :: ch_kind
      !
      select case (kind)
        case(-1,NONE)
-        ch_kind=' '
+         ch_kind=' '
        case(XC_EXCHANGE)
-        ch_kind='(x)'
+         ch_kind='(x)'
        case(XC_CORRELATION)
-        ch_kind='(c)'
+         ch_kind='(c)'
        case(XC_EXCHANGE_CORRELATION)
-        ch_kind='(xc)'
+         ch_kind='(xc)'
      end select
      !
      select case (functional)
        case(-1,3,5,7,9)
-        xc_string=string_pack('Unknown ',ch_kind)
+         xc_string='Unknown '//trim(ch_kind)
        case(NONE)
-        xc_string='none (Hartree)'
+         xc_string='none'
        case(XC_LDA_X)
-        xc_string=string_pack('Exchange only ',ch_kind)
+         xc_string='Exchange only '//trim(ch_kind)
        case(XC_LDA_C_WIGNER)
-        xc_string=string_pack('Wigner ',ch_kind)
+         xc_string='Wigner '//trim(ch_kind)
        case(XC_LDA_C_HL)
-        xc_string=string_pack('Hedin & Lundqvist ',ch_kind)
+         xc_string='Hedin & Lundqvist '//trim(ch_kind)
        case(XC_LDA_C_XALPHA)
-        xc_string=string_pack('Slaters Xalpha ',ch_kind)
+         xc_string='Slaters Xalpha '//trim(ch_kind)
        case(XC_LDA_C_PZ)
-        xc_string=string_pack('Perdew & Zunger ',ch_kind)
+         xc_string='Perdew & Zunger '//trim(ch_kind)
        case(XC_LDA_C_PW)
-        xc_string=string_pack('Perdew & Wang ',ch_kind)
+         xc_string='Perdew & Wang '//trim(ch_kind)
        case(XC_LDA_C_KP)
-        xc_string=string_pack('Kurth & Perdew ',ch_kind)
-#if defined _SC
-       case(XC_OEP_EXX)
-        xc_string=string_pack('Exact-Exchange (OEP) ',ch_kind)
-       case(XC_GKS_HF)
-        xc_string=string_pack('Hartree-Fock (nonlocal) ',ch_kind)
-       case(XC_GKS_CHOSEX)  
-        xc_string=string_pack('Coulomb-Hole Screened-eXchange (nonlocal) ',ch_kind)
-#endif
+         xc_string='Kurth & Perdew '//trim(ch_kind)
      end select
      !
    end function

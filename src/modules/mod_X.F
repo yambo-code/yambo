@@ -43,6 +43,7 @@ module X_m
  logical :: half_X_mat_only
  logical :: self_detect_E_range
  logical :: use_X_RIM
+ logical :: P_bands_ordered
  character(lchlen) :: long_path
  type X_t
    integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp

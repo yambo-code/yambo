@@ -22,6 +22,7 @@
 integer function ioQP(what,qp,ID)
  !
  use pars,           ONLY:SP,schlen
+ use drivers,        ONLY:l_ppa,l_chosex
  use D_lattice,      ONLY:alat
  use R_lattice,      ONLY:nqbz
  use memory_m,       ONLY:mem_est
@@ -36,6 +37,7 @@ integer function ioQP(what,qp,ID)
 &                         write_is_on,io_mode,DUMP,VERIFY,&
 &                         io_fragment,io_check_restart,io_restart,&
 &                         io_netcdf_support,ver_is_gt_or_eq,db_alat
+ use global_XC,      ONLY:QP_DB_kind,SE_GoWo,SE_GWo,SE_GoWo_PPA,SE_GWo_PPA,SE_CHOSEX
  !
  implicit none
  type(QP_t)  ::qp
@@ -46,7 +48,7 @@ integer function ioQP(what,qp,ID)
  ! Work Space
  !
  integer              ::i1,i2,iqbz,QP_n_G_bands_disk(2),i_found,&
-&                       QP_nk_disk,QP_nb_disk,QP_n_states_disk,n_descs_disk
+&                       QP_nk_disk,QP_nb_disk,QP_n_states_disk,n_descs_disk,var_size
  real(SP),allocatable ::qp_E_Eo_Z_disk(:,:,:),QP_W_disk(:,:,:)
  integer ,allocatable ::qp_table_disk(:,:)
  character(schlen)    ::ch
@@ -65,18 +67,31 @@ integer function ioQP(what,qp,ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
+   if (ver_is_gt_or_eq(ID,(/3,0,15/)).and.what/="W") then
+     call io_elemental(ID,VAR="QP_DB_kind",VAR_SZ=1,MENU=0)
+     call io_elemental(ID,I0=QP_DB_kind)
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   endif
+   !
    if (what=="W") then
-     ioQP=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,D_LATT=.true.)
+     ioQP=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,D_LATT=.true.,XC_KIND="Xd")
    else
-     ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.)
+     select case (QP_DB_KIND)
+       case(SE_CHOSEX)
+         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G_WF Xs")
+       case(SE_GoWo_PPA,SE_GWo_PPA)
+         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xp")
+       case(SE_GoWo,SE_GWo)
+         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xd")
+     end select
    endif
    if (ioQP/=0) goto 1
    !
-   if (ver_is_gt_or_eq(ID,(/3,0,1/)).and.what/="W") then
-     call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
-   else
-     call io_elemental(ID,VAR="PARS",VAR_SZ=4,MENU=0)
+   var_size=4
+   if (what/="W") then
+     if (ver_is_gt_or_eq(ID,(/3,0,1/))) var_size=5
    endif
+   call io_elemental(ID,VAR="PARS",VAR_SZ=var_size,MENU=0)
    !
    if (what/="W") OP="<="
    if (what=="W" ) OP="=="

@@ -40,6 +40,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use wave_func,     ONLY:WF_free
  use TDDFT,         ONLY:FXC_n_descs,FXC_description,FXC_type,&
 &                        FXC,FXC_K_diagonal,FXC_n_g_corr
+ use global_XC,     ONLY:X_WF_xc_string,X_E_xc_string
  !
  implicit none
  type(levels)::Xen
@@ -236,11 +237,14 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        !
        ! T-ordering
        !
+       !
+       call msg('o eps eel alpha','#')
+       call msg('o eps eel alpha','# ','- Energies      are '//trim(X_E_xc_string(4)),INDENT=0)
+       call msg('o eps eel alpha','# ','- Wavefunctions are '//trim(X_WF_xc_string(4)),INDENT=0)
        ch='- The Green`s function is T-ordered -'
        if (trim(X%ordering)=='a') ch='- The Green`s function is antiresonant -'
        if (trim(X%ordering)=='r') ch='- The Green`s function is resonant -'
        if (trim(X%ordering)=='c') ch='- The Green`s function is causal -'
-       call msg('o eps eel alpha','#')
        call msg('o eps eel alpha','# ',trim(ch),INDENT=0)
        !
        ! Gauges

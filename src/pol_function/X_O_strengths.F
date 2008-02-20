@@ -27,14 +27,16 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
  use ras_module,     ONLY:transloc, lras
 #endif
 #if defined _SC
- use SC,             ONLY:using_SC_basis,SC_bands
+ use SC,             ONLY:using_SC_basis,SC_bands,local_V,&
+&                         load_SC_components
+ use global_XC,      ONLY:WF_kind,WF_xc_functional,MORE_NONE,setup_global_XC
 #endif
  use drivers,        ONLY:l_col_cut
  use electrons,      ONLY:levels,n_sp_pol
  use par_proc_m,     ONLY:pp_redux_wait
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
- use X_m,            ONLY:X_rhoq0,X_alloc,X_t,X_q0grad,long_path
+ use X_m,            ONLY:X_rhoq0,X_alloc,X_t,X_q0grad,long_path,P_bands_ordered
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use memory_m,       ONLY:mem_est
  use wave_func,      ONLY:wf_ng,wf_load,WF_free
@@ -59,6 +61,21 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
  !
  if (allocated(X_rhoq0)) return
  !
+#if defined _SC
+ ! Check first the kind of the wavefunctions 
+ ! 
+ call load_SC_components('check_bands',n_bands=X%ib(2),&
+&                        kind=WF_kind,xc_functional=WF_xc_functional)
+ call setup_global_XC('WF',WF_kind,MORE_NONE,WF_xc_functional)
+#endif
+ !
+ ! Transitions ordering
+ !
+ P_bands_ordered=.true.
+#if defined _SC
+ P_bands_ordered=.not.using_SC_basis.or.(using_SC_basis.and.local_V)
+#endif
+ !
  ! Check first if ostnts DB is already done
  !
  X%ngostnts=wf_ng
@@ -78,15 +95,11 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
    ! When using interanl SC potentials oscilators must be rotated
    ! in the new basis. So all transitions are needed
    !
-#if defined _SC
-   if (.not.using_SC_basis) then
-#endif
-     call X_alloc('OptGrad',(/3,X%ib(2),Xen%nbm,Xk%nibz/))
-#if defined _SC
+   if (P_bands_ordered) then
+     call X_alloc('OptGrad',(/3,X%ib(2),X%ib(2),Xk%nibz/))
    else
-     call X_alloc('OptGrad',(/3,max(X%ib(2),SC_bands),max(X%ib(2),SC_bands),Xk%nibz/))
+     call X_alloc('OptGrad',(/3,X%ib(2),Xen%nbm,Xk%nibz/))
    endif
-#endif
    X_q0grad=(0.,0.)
    !
 #if !defined _BIGSYS
@@ -128,7 +141,7 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
  !
  ! Rotate the oscillators in the SC basis
  !
- if (using_SC_basis) call X_O_rotate(X%ib(2))
+ if (using_SC_basis.and..not.local_V) call X_O_rotate(X%ib(2))
  !
 #endif
  !

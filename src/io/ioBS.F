@@ -88,7 +88,7 @@ integer function ioBS(iq,X,ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   ioBS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.)
+   ioBS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs")
    if (ioBS/=0) goto 1
    !
    ! v 3.0.5: Inclusion of %f_xc 

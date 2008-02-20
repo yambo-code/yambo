@@ -42,6 +42,11 @@ subroutine K_driver(Xen,Xk,q,X_static,Xw)
  use par_proc_m,     ONLY:pp_redux_wait
  use R_lattice,      ONLY:bz_samp,qindx_B
  use parser_m,       ONLY:parser
+#if defined _SC
+ use IO_m,           ONLY:NONE,DUMP
+ use SC,             ONLY:load_SC_components
+ use global_XC,      ONLY:setup_global_XC,MORE_NONE,K_kind,K_xc_functional
+#endif
  implicit none
  type(levels)  ::Xen
  type(bz_samp) ::Xk,q
@@ -58,7 +63,21 @@ subroutine K_driver(Xen,Xk,q,X_static,Xw)
  call E_reset(Ken)
  call X_reset(X_tddft)
  call W_reset(W_bss)
+ !
+ ! As I do not want to transfer to Ken any QP correction
+ ! embodied in Xen I define
+ !
+ Ken%nk=Xen%nk
+ !
  call E_duplicate(Xen,Ken)
+#if defined _SC
+ !
+ ! Load the SC energies
+ !
+ call load_SC_components('E',E=Ken,COM_=NONE,MODE_=DUMP,ik=0,&
+&                         kind=K_kind,xc_functional=K_xc_functional)
+ call setup_global_XC('K',K_kind,MORE_NONE,K_xc_functional)
+#endif
  !
  ! In these two lines I ensure the at least all the metallic
  ! bands are included in the X summation

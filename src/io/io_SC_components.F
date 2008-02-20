@@ -26,9 +26,8 @@ integer function io_SC_components(what,E_sc,ID)
  use pars,           ONLY:SP,HARTREE
  use R_lattice,      ONLY:nkibz
  use stderr,         ONLY:intc
- use QP_m,           ONLY:QP_band_mixing
  use SC,             ONLY:SC_bands,it_now,rho_convergence,E_convergence,SC_potential,&
-&                         SC_R,V_xc_sc,local_V,H_nl_sc
+&                         SC_R,V_xc_sc,local_V,H_nl_sc,SC_band_mixing,SC_kind,SC_xc_functional
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,io_fragment,read_is_on,write_is_on,&
 &                         manage_RD_WR_CL_IF_END
@@ -43,7 +42,7 @@ integer function io_SC_components(what,E_sc,ID)
  !
  ! Work Space
  !
- real(SP), allocatable :: R_H_disk(:,:,:)
+ real(SP), allocatable :: R_H_disk(:,:,:),E_disk(:,:,:)
  integer               :: ik
  logical               :: l_wf,l_V,l_E
  !
@@ -69,14 +68,19 @@ integer function io_SC_components(what,E_sc,ID)
 &       VAR=' xc Functional                   :',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
+   call io_elemental(ID,VAR="XC_KIND",VAR_SZ=2,MENU=0)
+   call io_elemental(ID,I0=SC_kind)
+   call io_elemental(ID,I0=SC_xc_functional)
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   !
    call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
    call io_elemental(ID,L0=Local_V,&
 &       VAR=' The potential is local          :')
    call io_elemental(ID,I0=it_now,DB_I0=it_now,&
 &       VAR=' Iteration                       :')
    call io_elemental(ID,I0=SC_bands,&
-&       VAR=' Total number of bands           :',CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,R0=QP_band_mixing,&
+&       VAR=' Total number of bands           :',CHECK=.true.,OP=(/"<="/))
+   call io_elemental(ID,R0=SC_band_mixing,&
 &       VAR=' Bands mixing                    :',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,R0=rho_convergence)
    call io_elemental(ID,R0=E_convergence)
@@ -105,7 +109,14 @@ integer function io_SC_components(what,E_sc,ID)
    !==========
    !
    call io_bulk(ID,VAR="E_sc",VAR_SZ=(/SC_bands,nkibz,n_sp_pol/))
-   call io_bulk(ID,R3=E_sc%E(:SC_bands,:,:))
+   if (write_is_on(ID)) then
+     call io_bulk(ID,R3=E_sc%E(:SC_bands,:,:))
+   else
+     allocate(E_disk(SC_bands,nkibz,n_sp_pol))
+     call io_bulk(ID,R3=E_disk)
+     E_sc%E(:,:,:)=E_disk(:size(E_sc%E,1),:,:)
+     deallocate(E_disk)
+   endif
    !
  endif
  !

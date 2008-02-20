@@ -50,7 +50,7 @@ integer function ioBSS_invert(iq,n_,inv_err,eps,W_disk,ID)
    ! As this DB must respect the BS ideentifier I only need to
    ! check the K QP corrections
    !
-   ioBSS_invert=io_header(ID,QP_ctl_K=.true.)
+   ioBSS_invert=io_header(ID,XC_KIND="K_E force")
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=11,MENU=0)
    call io_elemental(ID,VAR=&

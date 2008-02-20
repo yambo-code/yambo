@@ -30,11 +30,13 @@ subroutine setup(en,Xen,k,Xk)
 &                         rl_sop,bz_samp,g_vec
  use com,            ONLY:msg,error
  use stderr,         ONLY:intc
- use IO_m,           ONLY:REP,DUMP
+ use IO_m,           ONLY:REP,DUMP,NONE
  use vec_operate,    ONLY:cross_product,c2a
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
 #if defined _SC
  use SC,             ONLY:load_SC_components
+ use global_XC,      ONLY:G_kind,G_xc_functional,X_kind,&
+&                         X_xc_functional,setup_global_XC,MORE_NONE
 #endif
  !
  implicit none
@@ -183,14 +185,22 @@ subroutine setup(en,Xen,k,Xk)
  !=====================================================
  !
  Xen%nk=Xk%nibz
+ ! 
+ call E_duplicate(en,Xen)
  !
  ! SC Energies 
  !-------------
 #if defined _SC
- call load_SC_components('E',E=en,COM_=REP,MODE_=DUMP)
+ !
+ ! First check if it possible to load the SC energies
+ !
+ call load_SC_components('E',E=en,COM_=REP,MODE_=DUMP,ik=0,&
+&                         kind=G_kind,xc_functional=G_xc_functional)
+ call setup_global_XC('G',G_kind,MORE_NONE,G_xc_functional)
+ call load_SC_components('E',E=Xen,COM_=NONE,MODE_=DUMP,ik=0,&
+&                         kind=X_kind,xc_functional=X_xc_functional)
+ call setup_global_XC('X',X_kind,MORE_NONE,X_xc_functional)
 #endif
- ! 
- call E_duplicate(en,Xen)
  !
  ! Negative Temperature indicates that such Temperature is held
  ! fixed in the calculation (not overwritten in io_header.F, for

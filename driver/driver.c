@@ -46,7 +46,7 @@ typedef struct
  #define F90_FUNC_(name,NAME) name
 #endif
 #include "codever.h"
-#if defined _self  || _RAS || _REELS || _ELPH || _SC || _BIGSYS
+#if defined _self  || _RAS || _REELS || _ELPH || _SC || _BIGSYS || _BS_CPL
  #include "self_cpp.h"
 #endif
 #if defined _spp  || _SPP_ELPH || _SPP_RAS
@@ -122,7 +122,7 @@ main(int argc, char *argv[])
 /* 
  Switch off MPI_init as I have options used to create the input file...
 */
-#if defined _self  || _RAS || _REELS || _ELPH || _SC || _BIGSYS
+#if defined _self  || _RAS || _REELS || _ELPH || _SC || _BIGSYS || _BS_CPL
      if (j> 9) {mpi_init=-1;};
 #endif
 #if defined _spp || _SPP_ELPH || _SPP_RAS
@@ -203,7 +203,7 @@ main(int argc, char *argv[])
    MPI_Comm_size(MPI_COMM_WORLD, &np);  /* get number of processes */
  };
 #endif
-#if defined _self  || _RAS || _REELS || _ELPH || _SC || _BIGSYS
+#if defined _self  || _RAS || _REELS || _ELPH || _SC || _BIGSYS || _BS_CPL
  /* 
    Running the Fortran SELF driver 
  ===========================================================================
@@ -257,7 +257,7 @@ main(int argc, char *argv[])
  */
  strcpy(edit_line,"vi ");
  strncat(edit_line,inf,strlen(inf));
-#if defined _self || _RAS || _REELS || _spp || _ELPH || _SC || _SPP_ELPH || _SPP_RAS  || _BIGSYS
+#if defined _self || _RAS || _REELS || _spp || _ELPH || _SC || _SPP_ELPH || _SPP_RAS  || _BIGSYS || _BS_CPL
  if (iif == 1 && ttd>0 ) 
  {
   system(edit_line);

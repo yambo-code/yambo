@@ -1,6 +1,6 @@
 !
 ! Copyright (C) 2000-2005 M. Gruening and the SELF team
-!         http://www.fisica.uniroma2.it/~self
+!        http://www.fisica.uniroma2.it/~self
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or

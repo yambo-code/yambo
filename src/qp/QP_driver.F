@@ -37,6 +37,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_G,QP_W_partially_done,&
 &                        GWo_iterations,CHOSEX_use_empties
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
+ use global_XC,     ONLY:QP_DB_kind,SE_CHOSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo   
  implicit none
  type(levels) ::en,Xen
  type(bz_samp)::Xk,k,q
@@ -69,6 +70,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    write (qp%description(1),'(a)') ' GW solver              : Newton'
    call section('*','Dyson equation: Newton solver')
  else if (trim(QP_solver)=='s') then
+   !
+   ! When using secant no SC available
+   !
+   GWo_iterations=0
+   !
    write (qp%description(1),'(a)') ' GW solver              : Secant'
    call section('*','Dyson equation: non perturbative secant method')
  else if (trim(QP_solver)=='g') then
@@ -83,18 +89,24 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  qp%n_descs=2
  if (l_ppa) then
    qp%description(2)=' PPA imaginary pt   [ev]:'//trim(real2ch(X%ppaE*HARTREE))
+   QP_DB_kind=SE_GoWo_PPA
+   if ( GWo_iterations > 0 ) QP_DB_kind=SE_GWo_PPA
  else if (l_chosex) then
+   !
+   ! in CHOSEX no SC possible
+   !
+   GWo_iterations=0
+   !
    qp%description(2)=' == CHOSEX GW =='
+   QP_DB_kind=SE_CHOSEX
  else
    qp%description(2)=' == Real Axis GW =='
+   QP_DB_kind=SE_GoWo_PPA
+   if ( GWo_iterations > 0 ) QP_DB_kind=SE_GWo_PPA
  endif
  !
  ! Basic defs
  !============
- !
- ! When using secant no SC available
- !
- if (trim(QP_solver)=='s') GWo_iterations=0
  !
  call QP_state_table_setup(en)
  !

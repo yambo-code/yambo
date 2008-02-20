@@ -48,7 +48,7 @@ integer function ioBSS_diago(iq,BS_H_dim,bsE,bsR,ID)
    ! As this DB must respect the BS ideentifier I only need to
    ! check the K QP corrections
    !
-   ioBSS_diago=io_header(ID,QP_ctl_K=.true.)
+   ioBSS_diago=io_header(ID,XC_KIND="K_E force")
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
    call io_elemental(ID,VAR=&

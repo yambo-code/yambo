@@ -90,14 +90,16 @@ module QP_CTL
      !
      use memory_m,      ONLY:mem_est
      use QP_m,          ONLY:QP_t,QP_reset,QP_ctl_E,QP_ctl_W,QP_ctl_Z,&
-&                            QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db,&
-&                            QP_ctl_short_descr
+&                            QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db
      use D_lattice,     ONLY:Tel
      use com,           ONLY:msg,depth
      use electrons,     ONLY:levels,E_reset,n_sp_pol,BZ_RIM_nkpt,BZ_RIM_table,&
 &                            BZ_RIM_nbands,BZ_RIM_tot_nkpts
      use R_lattice,     ONLY:bz_samp,nXkibz
      use parser_m,      ONLY:parser
+     use global_XC,     ONLY:setup_global_XC,MORE_SCISSOR,MORE_SCIS_AND_STRE,MORE_STRETCH,&
+&                            K_kind,K_xc_functional,MORE_NONE,G_kind,G_xc_functional,&
+&                            X_kind,X_xc_functional,QP_DB_kind,SE_NONE
      implicit none
      integer       ::Eid,band_range(2)
      type(levels)  ::en
@@ -111,8 +113,9 @@ module QP_CTL
      type(levels)     ::Fermi_en
      type(QP_t)       ::qp
      type(qp_fit_ctl) ::qpfit_rest,qpfit_free
-     integer          ::DB_corrected(en%nb,en%nk),ik_bz,ik_ibz,ib,i1,ik_r
+     integer          ::DB_corrected(en%nb,en%nk),ik_bz,ik_ibz,ib,i1,ik_r,SE_MORE
      character(schlen)::ch
+     character(1)     ::what
      logical          ::is_def(2)
      integer, allocatable :: RIM_k_done(:)
      !
@@ -131,12 +134,15 @@ module QP_CTL
          case(1)
            call parser('XfnQP_E',is_def(1))
            call parser('XfnQPdb',is_def(2))
+           what='X'
          case(2)
            call parser('KfnQP_E',is_def(1))
            call parser('KfnQPdb',is_def(2))
+           what='K'
          case(3)
            call parser('GfnQP_E',is_def(1))
            call parser('GfnQPdb',is_def(2))
+           what='G'
        end select
        if (.not.any((/is_def/))) return
      endif
@@ -193,13 +199,31 @@ module QP_CTL
        qpfit_rest%db=QP_ctl_db(Eid)
        call QP_apply_db(band_range,en,k,qp,qpfit_rest,msg_fmt,DB_corrected)
        !
-       QP_ctl_db(Eid)=trim(qpfit_rest%db)
-       QP_ctl_short_descr(Eid)=trim(qpfit_rest%short_descr)
+       ! Update QP db kind in the global_XC kinds 
+       !
+       if (QP_DB_kind/=SE_NONE) then
+         if (Eid==1) X_kind=QP_DB_kind
+         if (Eid==2) K_kind=QP_DB_kind
+         if (Eid==3) G_kind=QP_DB_kind
+       endif
        !
        ! Now I have to include the input file QP parameters in qpfit_free
        ! being careful that the scissor must go in qpfit%E(1)
        !
        qpfit_free%E=(/QP_ctl_E(Eid,1)/HARTREE,QP_ctl_E(Eid,2),0._SP,QP_ctl_E(Eid,3)/)
+       !
+       ! Then update scissor & stretching in the global_XC kinds 
+       !
+       SE_MORE=MORE_NONE
+       if (QP_ctl_E(Eid,1)/=0.) SE_MORE=MORE_SCISSOR
+       if (any(QP_ctl_E(Eid,2:3)/=1.)) SE_MORE=MORE_STRETCH
+       if (QP_ctl_E(Eid,1)/=0..and.any(QP_ctl_E(Eid,2:3)/=1.)) SE_MORE=MORE_SCIS_AND_STRE
+       !
+       if (SE_MORE>0.and.Eid==1) call setup_global_XC(what,X_kind,SE_MORE,X_xc_functional)
+       if (SE_MORE>0.and.Eid==2) call setup_global_XC(what,K_kind,SE_MORE,K_xc_functional)
+       if (SE_MORE>0.and.Eid==3) call setup_global_XC(what,G_kind,SE_MORE,G_xc_functional)
+       !
+       QP_ctl_db(Eid)=trim(qpfit_rest%db)
        !
        ! Note the QP_ctl_W(Eid,1/3) is in ev^{-1} while QP_ctl_W(Eid,2/4) is in
        !  ev^{-2}

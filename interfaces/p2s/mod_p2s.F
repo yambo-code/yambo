@@ -389,6 +389,8 @@ contains
    !
    use R_lattice,   ONLY:bz_samp
    use D_lattice,   ONLY:alat
+   use vec_operate, ONLY:v_is_zero
+   use com,         ONLY:warning
    type(bz_samp) :: k
    !
    allocate(xk_(3, k%nibz))

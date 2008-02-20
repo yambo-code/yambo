@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2005 A. Marini, M. Gruning and the SELF team 
+! Copyright (C) 2000-2005 A. Marini, M. Gruening and the SELF team 
 !         http://www.fisica.uniroma2.it/~self
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -28,10 +28,10 @@ subroutine SC_driver(X,E,k,q)
  use R_lattice,      ONLY:bz_samp,qindx_S
  use D_lattice,      ONLY:Tel
  use QP_m,           ONLY:QP_state,QP_nb,QP_nk,QP_Vxc,QP_n_states,QP_table,&
-&                         QP_ng_Sx,QP_bands_mixed,QP_Sx
- use SC,             ONLY:SC_bands, SC_iterations,SC_E_threshold,&
+&                         QP_ng_Sx,QP_Sx
+ use SC,             ONLY:SC_bands,SC_iterations,SC_E_threshold,SC_kind,SC_xc_functional,&
 &                         SC_rho_threshold,SC_potential,it_now,E_convergence,&
-&                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate
+&                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,SC_bands_mixed 
  use wave_func,      ONLY:wf_load,wf,WF_rotate,wf_n_states
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size,fft_size
@@ -40,9 +40,10 @@ subroutine SC_driver(X,E,k,q)
  use X_m,            ONLY:X_t
  use timing,         ONLY:live_time_msg
  use stderr,         ONLY:tty_size,intc,real2ch
- use xc_functionals, ONLY:V_xc
+ use xc_functionals, ONLY:V_xc,XC_LDA_X,XC_LDA_C_PZ,XC_EXCHANGE_CORRELATION,XC_EXCHANGE
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,&
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL
+ use global_XC,      ONLY:SC_EXX,SC_HF,SC_CHOSEX
  !
  implicit none
  type(levels) ::E
@@ -66,12 +67,32 @@ subroutine SC_driver(X,E,k,q)
  integer, external        :: io_SC_components
  logical, external        :: stop_now
  !
- l_sc_hartree =trim(SC_potential)=='HARTREE'
- l_sc_hf      =trim(SC_potential)=='HARTREE-FOCK'
- l_sc_xx      =trim(SC_potential)=='XX'
- l_sc_chosex  =trim(SC_potential)=='CHOSEX'
- l_sc_lda_x   =trim(SC_potential)=='LDA_X'
- l_sc_pz      =trim(SC_potential)=='PZ'
+ select case (trim(SC_potential))
+   case('HARTREE')
+     l_sc_hartree=.true.
+     SC_kind=0
+     SC_xc_functional=0
+   case('HARTREE-FOCK')
+     l_sc_hf=.true.
+     SC_kind=SC_HF
+     SC_xc_functional=0
+   case('XX')
+     l_sc_xx=.true.
+     SC_kind=SC_EXX
+     SC_xc_functional=0
+   case('CHOSEX')
+     l_sc_chosex=.true.
+     SC_kind=SC_CHOSEX
+     SC_xc_functional=0
+   case('LDA_X')
+     l_sc_lda_x=.true.
+     SC_kind=XC_EXCHANGE
+     SC_xc_functional=XC_LDA_X
+   case('PZ')
+     l_sc_pz=.true.
+     SC_kind=XC_EXCHANGE_CORRELATION
+     SC_xc_functional=XC_LDA_C_PZ
+ end select
  !
  if (.not.any((/l_sc_hartree,l_sc_hf,l_sc_xx,l_sc_chosex,l_sc_lda_x,l_sc_pz/))) return
  !
@@ -90,7 +111,7 @@ subroutine SC_driver(X,E,k,q)
  call QP_state_table_setup(E)
  !
  call msg('r' ,'[SC] Bands                    :',SC_bands)
- call msg('r' ,'[SC] Mixed bands              :',QP_bands_mixed)
+ call msg('r' ,'[SC] Mixed bands              :',SC_bands_mixed)
  call msg('r' ,'[SC] Treshold on density      :',SC_rho_threshold)
  call msg('rn','[SC]          on energies [ev]:',SC_E_threshold*HARTREE)
  !
@@ -229,9 +250,13 @@ subroutine SC_driver(X,E,k,q)
      !
      if (l_sc_hartree) V_xc_sc=(0.,0.)
      !
+     call SC_mute("report log io_in io_out")
+     !
      if (l_sc_lda_x) call xc_lda_driver(E,k,1,1,1)
      if (l_sc_pz)    call xc_lda_driver(E,k,3,8,1)
      if (l_sc_pz.or.l_sc_lda_x) V_xc_sc=V_xc(:,1)
+     !
+     call SC_mute(" ")
      !
      ! Mixing 
      !========

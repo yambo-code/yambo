@@ -29,7 +29,8 @@ subroutine tddft_alda_g_space(E,k)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,G_m_G
  use wave_func,     ONLY:wf_load,WF_free
- use xc_functionals,ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL,F_xc
+ use xc_functionals,ONLY:F_xc
+ use global_XC,     ONLY:WF_kind,WF_xc_functional
  implicit none
  type(levels) ::E
  type(bz_samp)::k
@@ -56,7 +57,7 @@ subroutine tddft_alda_g_space(E,k)
  ! ALDA functional
  !
  allocate(F_xc(fft_size),F_xc_DP(fft_size))
- call xc_lda_driver(E,k,GS_xc_KIND,GS_xc_FUNCTIONAL,2)
+ call xc_lda_driver(E,k,WF_KIND,WF_xc_FUNCTIONAL,2)
  F_xc_DP=F_xc
  !
  ! need to reset the plan to do a BACKWARD FFT (R->G)

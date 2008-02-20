@@ -39,6 +39,7 @@ integer function ioDB1(E,k,ID)
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_G_bands
  use BS,               ONLY:BS_bands
  use xc_functionals,   ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL 
+ use global_XC,        ONLY:setup_global_XC
 #if defined _SC
  use SC,               ONLY:SC_bands
 #endif
@@ -72,7 +73,7 @@ integer function ioDB1(E,k,ID)
    ! 12 Spins                   n_sp_pol
    ! 13 Temperature             default_Tel
    ! 14 Electrons               default_nel
-   ! !5 XC kind                 GS_xc_KIND
+   ! 15 XC kind                 GS_xc_KIND
    ! 16 XC functional           GS_xc_FUNCTIONAL 
    !
    ! Added dimensions: (still in SEC=1)
@@ -182,6 +183,8 @@ integer function ioDB1(E,k,ID)
      !
      ng_closed=ng_vec
      if (.not.ver_is_gt_or_eq(ID,(/3,0,3/))) wf_ng=wf_ncx
+     !
+     call setup_global_XC('preset',GS_xc_KIND,xc_functional=GS_xc_functional)
      !
    endif
    !

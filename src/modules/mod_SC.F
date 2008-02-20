@@ -1,6 +1,6 @@
 !
-! Copyright (C) 2000-2005 M. Gruening and the SELF team 
-!         http://www.fisica.uniroma2.it/~self
+! Copyright (C) 2000-2005 A. Marini, M. Gruening and the SELF team 
+!             http://www.fisica.uniroma2.it/~self
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -24,11 +24,18 @@ module SC
  use pars,      ONLY:SP,schlen
  implicit none
  !
+ ! Mixing for non perturbative calculations
+ !
+ integer           :: SC_bands_mixed
+ real(SP)          :: SC_band_mixing
+ !
  real(SP)          :: SC_E_threshold
 #if defined _SC
  integer           :: SC_bands
  integer           :: it_now
  integer           :: SC_iterations
+ integer           :: SC_kind
+ integer           :: SC_xc_functional
  real(SP)          :: rho_convergence
  real(SP)          :: E_convergence
  real(SP)          :: SC_rho_threshold
@@ -46,18 +53,14 @@ module SC
  !
  complex(SP), allocatable :: H_nl_sc(:,:)
  !
- ! Bare energies
- !
- real(SP),    allocatable :: E_of_WFo(:,:,:)
- !
  interface
    !
-   subroutine load_SC_components(what,E,COM_,MODE_)
+   subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,xc_functional)
      use electrons, ONLY:levels
      implicit none
      character(*)           :: what
-     integer                :: COM_,MODE_
      type(levels), optional :: E
+     integer,      optional :: COM_,MODE_,ik,n_bands,kind,xc_functional
    end subroutine  
  end interface  
  !

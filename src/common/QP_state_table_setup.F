@@ -35,8 +35,8 @@ subroutine QP_state_table_setup(en)
  !
  use pars,          ONLY:SP,HARTREE,IP
  use memory_m,      ONLY:mem_est
- use QP_m,          ONLY:QP_nk,QP_nb,QP_state,QP_n_states,QP_table,&
-&                        QP_bands_mixed,QP_band_mixing
+ use QP_m,          ONLY:QP_nk,QP_nb,QP_state,QP_n_states,QP_table
+ use SC,            ONLY:SC_bands_mixed,SC_band_mixing
  use electrons,     ONLY:levels,n_sp_pol
  use parser_m,      ONLY:parser
  implicit none
@@ -152,14 +152,14 @@ subroutine QP_state_table_setup(en)
  !       This corresponds to assume symmetric/hermitian 
  !       matrixes
  !
- QP_bands_mixed=1
- if (any(.not.QP_state(1,:)).or.any(.not.QP_state(QP_nb,:))) QP_band_mixing=0.
- if (QP_band_mixing<0..or.QP_band_mixing>100.) QP_band_mixing=0.
- if (QP_band_mixing>0.) QP_bands_mixed=QP_nb*QP_band_mixing/100.
+ SC_bands_mixed=1
+ if (any(.not.QP_state(1,:)).or.any(.not.QP_state(QP_nb,:))) SC_band_mixing=0.
+ if (SC_band_mixing<0..or.SC_band_mixing>100.) SC_band_mixing=0.
+ if (SC_band_mixing>0.) SC_bands_mixed=QP_nb*SC_band_mixing/100.
  !
  ! QP_table allocation
  !
- QP_n_states=product(shape(pack(QP_state,QP_state)))*(2*QP_bands_mixed-1)
+ QP_n_states=product(shape(pack(QP_state,QP_state)))*(2*SC_bands_mixed-1)
  QP_n_states=QP_n_states*n_sp_pol
  !
  if (.not.allocated(QP_table)) then
@@ -173,7 +173,7 @@ subroutine QP_state_table_setup(en)
    do i2=1,QP_nb
      if (.not.QP_state(i2,i1)) cycle
      do i_sp=1,n_sp_pol
-       do i3=0,QP_bands_mixed-1
+       do i3=0,SC_bands_mixed-1
          !
          if (i2+i3>QP_nb.or.i2+i3<1) cycle
          !

@@ -76,7 +76,10 @@ integer function ioX(X,Xw,ID)
    !
    ! Header
    !
-   ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.)
+   if (X%whoami==1) ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND="Xx")
+   if (X%whoami==2) ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND="Xs")
+   if (X%whoami==3) ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND="Xd")
+   if (X%whoami==4) ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND="Xp")
    if (ioX/=0) goto 1
    !
    ! PARS_1

@@ -24,14 +24,14 @@ subroutine std_presets(INSTR,IND,OD,JS)
  use drivers
  use pars,       ONLY:SP,HARTREE
  use X_m,        ONLY:iq_now,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
-&                     alpha_dim,use_X_RIM,long_path,X_RIM_nkpts
+&                     alpha_dim,use_X_RIM,long_path,X_RIM_nkpts,P_bands_ordered
  use QP_m,       ONLY:QP_rep_string,QP_dSc_steps,QP_n_W_freqs,&
 &                     QP_Sx_low_band,QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
-&                     QP_W_er,QP_W_dr,QP_cg_percent,QP_xc_FUNCTIONAL,&
+&                     QP_W_er,QP_W_dr,QP_cg_percent,&
 &                     QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_E,QP_ctl_W,QP_ctl_Z,&
-&                     QP_ctl_short_descr,QP_Sc_steps,QP_G_er,QP_G_dr,&
+&                     QP_Sc_steps,QP_G_er,QP_G_dr,&
 &                     QP_W_partially_done,GWo_SC_done,GWo_iterations,&
-&                     QP_band_mixing,CHOSEX_use_empties
+&                     CHOSEX_use_empties
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,n_atoms_max,n_atom_species,pp_n_l_comp_max,&
 &                     pp_kbv_dim,input_Tel_fixed
@@ -67,6 +67,7 @@ subroutine std_presets(INSTR,IND,OD,JS)
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,SC_E_threshold,&
 &                     using_SC_basis
 #endif
+ use SC,         ONLY:SC_band_mixing
  !
  implicit none
  !
@@ -182,6 +183,12 @@ subroutine std_presets(INSTR,IND,OD,JS)
  l_el_corr=.false.
  l_ph_corr=.false.
  l_sc_run=.false.
+ l_sc_hartree=.false.
+ l_sc_hf=.false.
+ l_sc_xx=.false.
+ l_sc_chosex=.false.
+ l_sc_lda_x=.false.
+ l_sc_pz=.false.
  !
  gpl_version=.false.
  !
@@ -229,6 +236,7 @@ subroutine std_presets(INSTR,IND,OD,JS)
  X_RIM_nkpts=0
  self_detect_E_range=.false.
  half_X_mat_only=.false.
+ P_bands_ordered=.true.
  use_X_RIM=.false.
  eps_2_alpha=1._SP
  alpha_dim='adim'
@@ -251,10 +259,8 @@ subroutine std_presets(INSTR,IND,OD,JS)
  QP_G_er=(/0._SP,10._SP/HARTREE/)
  QP_G_dr=0.1/HARTREE
  QP_cg_percent=100.
- QP_xc_FUNCTIONAL=' '
  GWo_iterations=0
  GWo_SC_done=.false.
- QP_band_mixing=0.
  CHOSEX_use_empties=.false.
  !
  QP_ctl_db="none"
@@ -264,7 +270,6 @@ subroutine std_presets(INSTR,IND,OD,JS)
  QP_ctl_E(3,:)=(/0.,1.,1./)
  QP_ctl_W=0.
  QP_ctl_Z=(1.,0.)
- QP_ctl_short_descr=' '
  !
  ! BS/BSS
  !
@@ -327,5 +332,6 @@ subroutine std_presets(INSTR,IND,OD,JS)
  using_SC_basis=.FALSE.
  !
 #endif
+ SC_band_mixing=0.
  !
 end subroutine

@@ -25,6 +25,7 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
   use eels_kinematics
   use eels_detector
   use model_loss_function
+  use timing,              ONLY:live_timing
   implicit none
   integer,      intent(in) :: nw
   real(SP),     intent(in) :: hw(nw)
@@ -40,7 +41,7 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
   real(SP)                 :: costakk, kpmag, qpard_(nw)
   real(SP)                 :: qparm, qtot2, qpar(2)
   real(SP)                 :: Akk, loss_qpar(2)
-  real(SP)                 :: tmpImg, tmpImg2   ! debug
+  real(SP)                 :: Img_x, Img_y 
   complex(SP)              :: eps_s(3)
   !
   ! Energy independent stuff. Other input in calling routine
@@ -49,6 +50,7 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
   !
   costakk=2.0_SP/PI/PI/costheta0
 
+  call live_timing('Energy loss:',nw, SERIAL=.true.)
   do iw = 1, nw
     kpmag = kpmagf( hw(iw) )
 
@@ -56,23 +58,23 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
     !
     ! Integrate scattering cross section over detector window
     !
-    do idet = 1, ndetpt
+    do idet = 1, n_det_pt
+      
       !
       ! Get Q_|| for this set of angles.
       !
       call get_qpar_det(qpar, kpmag, idet )
-!   write(40,*) hw(iw)*HARTREE,kpmag,idet,qpar
       !
       ! Reset trig factors for this detector setting
       !
-      call reset_trig_det( theta_det(idet), 0.0_SP )
+      call reset_trig_det( theta_det(idet), phi_det(idet) )
       !
       ! Kinematic prefactor
       !
       qparm  = sqrt( qpar(1)**2 + qpar(2)**2 )
       if(idet.eq.1) qpard_(iw) = qparm*d_surf
       qtot2 = kmag**2 + kpmag**2 - 2.0_SP * kmag * kpmag * costhetad
-      Akk = costakk*(kpmag/kmag)*(qparm/qtot2**2) * w_det(idet)
+      Akk = costakk*(kpmag/kmag)*(qparm/qtot2**2) 
       !
       ! Parallel case 
       !
@@ -81,27 +83,28 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
       ! Loss function for q || q_x
       !
       eps_s(:) = (/ surf_i(iw,1), surf_i(iw,2), surf_i(iw,3) /)
-      tmpImg = model_Img(lossfm, eps_b(iw),qpar=qpar, esurf = eps_s, dsurf = d_surf, dvac = bimp)
-      loss_qpar(1) = loss_qpar(1) + Akk * w_det(idet) * &
-&         model_Img(lossfm, eps_b(iw), qpar=qpar,esurf=eps_s,dsurf=d_surf,dvac=bimp)
-!     write(38,*) loss_qpar(1),Akk,w_det(idet),
+      Img_x = model_Img(lossfm, eps_b(iw),qpar=qpar, esurf = eps_s, dsurf = d_surf, dvac = bimp)
+      loss_qpar(1) = loss_qpar(1) + Akk * Img_x * w_det(idet)
       !
       ! Loss function for q || q_y
       !
       eps_s(:) = (/ surf_i(iw,2), surf_i(iw,1), surf_i(iw,3) /)
-      tmpImg2 = model_Img(lossfm,eps_b(iw), qpar=qpar, esurf = eps_s, dsurf = d_surf, dvac = bimp)
-      loss_qpar(2) = loss_qpar(2) + Akk * w_det(idet) * & 
-&         model_Img(lossfm,eps_b(iw),qpar=qpar,esurf=eps_s,dsurf=d_surf,dvac=bimp)
+      Img_y = model_Img(lossfm,eps_b(iw), qpar=qpar, esurf = eps_s, dsurf = d_surf, dvac = bimp)
+      loss_qpar(2) = loss_qpar(2) + Akk * Img_y * w_det(idet)
       !
     enddo
 
     lossf(iw,:) = loss_qpar(:) ! other factors?
 
 !<-- DEBUG
-!   write(24,107) hw(iw)*HARTREE, lossf(iw,1), lossf(iw,2), Akk, qparm,qtot2,qpar,kpmag
+!    if(iw.eq.1) write(24,108) "hw","lossx","lossy","Akk","|qpar|","|Q|^2","Q_||(2)","|k'|"
+!    write(24,107) hw(iw)*HARTREE, lossf(iw,1), lossf(iw,2), Akk, qparm,qtot2,qpar,kpmag
 !107 format(f8.3,20e16.7)
+!108 format(a8,20a16)
 !--> DEBUG
+    call live_timing(steps=1)
   enddo
+  call live_timing
 
   qpard(1) = minval(qpard_(:))
   qpard(2) = maxval(qpard_(:))

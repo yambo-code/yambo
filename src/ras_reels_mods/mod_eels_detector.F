@@ -26,8 +26,8 @@ module eels_detector
   use pars,                   ONLY : schlen, SP, pi, lchlen
   use eels_kinematics
 
-  integer                          :: detintm, ndet, ndetpt
-  character(len=2)                 :: detint  ! av(erage)/no(ne)/fu(ll)
+  integer                          :: det_int_typem, n_det_pt
+  character(len=2)                 :: det_int_type  ! av(erage)/no(ne)/nu(merical)
   real(SP), allocatable            :: theta_det(:), phi_det(:), w_det(:)
   real(SP)                         :: thetadet
   real(SP)                  :: costhetad, sinthetad
@@ -36,9 +36,9 @@ module eels_detector
   save
   private
 
-  public :: thetadet, detint, detintm
+  public :: thetadet, det_int_type, det_int_typem
   public :: init_detector
-  public :: ldetector, ndetpt, theta_det, ndet, phi_det
+  public :: ldetector, n_det_pt, theta_det, phi_det
   public :: costhetad, w_det
   public :: setup_eels_det, print_eels_det, check_eels_det, setup_det
   public :: get_qpar_det, reset_trig_det, q_det
@@ -52,8 +52,8 @@ subroutine init_detector(defs)
   type(initdefs), intent(inout)  :: defs
 
   call it(defs,'DetAngle', '[REELS] Detector window  (deg)', thetadet )
-  call it(defs,'DetIntMd', '[REELS] Detector integration (`av`,`nu`,`no`,`an`)', detint )
-  call it(defs,'NumIntPt', '[REELS] Number of points for integral', detintm, verb_level=V_more )
+  call it(defs,'DetIntMd', '[REELS] Detector integration (`av`,`no`,`nu`)', det_int_type )
+  call it(defs,'NumIntPt', '[REELS] Number of points for integral', n_det_pt, verb_level=V_more )
 
 ! check here...
 
@@ -61,16 +61,15 @@ subroutine init_detector(defs)
 end subroutine init_detector
 
   subroutine setup_eels_det( lfail )
+    use pars,                only  : radian
     implicit none
     logical, intent(out)           :: lfail
 
     lfail = .false.
 
-    thetadet = thetadet*pi/180.0_SP
-    ndet = (2*detintm)+1
-    ndetpt = (ndet-1)**2 + 1
-    if(detint.eq."av") ndetpt = 1
-    if(detint.eq."no") ndetpt = 1
+    thetadet = thetadet*radian
+    if(det_int_type.eq."av") n_det_pt = 1
+    if(det_int_type.eq."no") n_det_pt = 1
 
     return
   end subroutine setup_eels_det
@@ -88,38 +87,32 @@ end subroutine init_detector
     lfail=.false.
     nerr = 0
     !
-    ! 1 if av/pr/an then thetadet > 0 
+    ! 1 if av/nu then thetadet > 0 
     !
-    if( (detint.eq."av".or.detint.eq."pr".or.&
-&        detint.eq."an".or.detint.eq."fu").and.abs(thetadet).lt.zero) then
+    if( (det_int_type.eq."av".or.det_int_type.eq."nu").and.abs(thetadet).lt.zero) then
        nerr = nerr + 1
-       write(*,*) "check eels det:",detint,thetadet,zero
        errlist(nerr) = 'Detector size (DetAngle) must be nonzero when'//&
-&                      ' integrating over detector (DetIntMd='//detint//')'
+&                      ' integrating over detector (DetIntMd='//det_int_type//')'
     endif
     !
-    ! 2 if av then thetap = 0 (specular) - to be extended for general case
+    ! 2 if av then phi = 0 (planar only)
     !
-    if( detint.eq."av".and.abs(thetap).gt.zero) then
+    if( det_int_type.eq."av".and.abs(phi).gt.zero) then
        nerr = nerr + 1
-       errlist(nerr) = 'Detector averaging (DetIntMd="av") only allowed with specular scattering.'
+       errlist(nerr) = 'Detector averaging (DetIntMd="av") only allowed with planar scattering.'
     endif
     !
     ! 3 if no then thetap > 0 (else kinematic -> inf!)
     !
-    if( detint.eq."no".and.abs(thetap).lt.zero) then
+    if( det_int_type.eq."no".and.abs(thetap).lt.zero) then
        nerr = nerr + 1
        errlist(nerr) = 'Deflection angle (Thetap) must be nonzero if detector size is ignored.'
     endif
     !
+    ! Accounted for:
     ! if thetap = 0 and thetadet = 0 then fail (already accounted for)
+    ! if thetap = 0 and nu and ndet = 1 then fail (kinematic -> inf)
     !
-    ! 4 if thetap = 0 and fu and ndet = 1 then fail (kinematic -> inf)
-    !
-    if( abs(thetap).lt.zero.and.detint.eq."fu".and.ndetpt.eq.1) then
-       nerr = nerr + 1
-       errlist(nerr) = 'More points needed (NumIntPt>1) for full integration with specular scattering.'
-    endif
     if(nerr.ne.0) then
       lfail = .true.
       call msg('nrs','WARNING: Detector integration setup failed for the following reason(s):')
@@ -132,27 +125,23 @@ end subroutine init_detector
   
   subroutine print_eels_det
     use com,   ONLY:msg
+    use pars,  only : radian
     implicit none
 
     ldetector = .false.
     call msg('nr','Detector integration factors:')
-    call msg('r','Detector   angle (deg) :',thetadet*180.0_SP/pi )
-    if(detint.eq."av") call msg('r','Simple averaging over detector window.' )
-    if(detint.eq."no") call msg('r','No integration over detector window.' )
-    if(detint.eq."fu") then 
+    call msg('r','Detector   angle (deg) :',thetadet/radian )
+    if(det_int_type.eq."av") call msg('r','Simple averaging over detector window.' )
+    if(det_int_type.eq."no") call msg('r','No integration over detector window.' )
+    if(det_int_type.eq."nu") then 
        call msg('r','Numerical integration over detector window.' )
-       call msg('r','Number of integration shells :',detintm )
+       call msg('r','Number of integration points :',n_det_pt )
        ldetector = .true.
     endif
-    if(detint.eq."pr") then 
-       call msg('r','Numerical integration over detector window (prefactors only).' )
-       call msg('r','Number of integration shells :',detintm )
-       ldetector = .true.
-    endif
-    if(detint.eq."an") then 
-       call msg('r','Analytical integration over detector window (prefactors only).' )
-       call msg('r','Circular geometry assumed.' )
-    endif
+!   if(det_int_type.eq."an") then 
+!      call msg('r','Analytical integration over detector window (prefactors only).' )
+!      call msg('r','Circular geometry assumed.' )
+!   endif
     return
   end subroutine print_eels_det
 
@@ -196,51 +185,82 @@ end subroutine init_detector
   end subroutine reset_trig_det
 
   subroutine setup_det
+    use pars,                   only :  radian
     implicit none
     integer                         :: i, j, ii
+    !
+    ! Random integration parameters
+    !
+    integer                         :: n_rand
+    real(SP)                        :: x,y,r,a,b, Rdet, phi_tmp, area
     
-    allocate(theta_det(ndetpt), phi_det(ndetpt), w_det(ndetpt) )
-    if(detint.eq."av".or.detint.eq."no") then
+    allocate(theta_det(n_det_pt), phi_det(n_det_pt), w_det(n_det_pt) )
+    !
+    ! The default values
+    !
+    theta_det(1) = 0.0_SP
+    phi_det(1)   = 0.0_SP
+    w_det(1)     = 1.0_SP
+
+    if(det_int_type.eq."av".or.det_int_type.eq."no") then
       !
       ! Set to detector *angular aperture* angle. 
       ! If "no", theta/phi det are not used.
       ! If "av", phi_det not used (integrated over).
       !
       theta_det(1) = thetadet  
-      phi_det(1)   = 0.0_SP 
-      w_det(1)     = 1.0_SP
-    else if(detint.eq."fu".or.detint.eq."pr") then
+
+    else if(det_int_type.eq."nu") then
       !
       ! Set up numerical integration points
       !
-      if(ndetpt.ne.1) then
-        ii = 0
-        do i = 1, ndet
-        do j = 1, ndet-1
-          ii = ii + 1
-          theta_det(ii) = -thetadet+(2.0_SP*thetadet)/real(ndet-1)*real(i-1) 
-          phi_det(ii)    = 0.0_SP+pi/real(ndet-1)*real(j-1) ! phid [0:pi]
-          w_det(ii) = 1.0_SP/real(ndetpt)
-!--> DEBUG
-!         write(*,100) ii,i,j,theta_det(ii)*180.d0/pi,phi_det(ii)*180.d0/pi
-!100 format(3i3,f8.3,f8.3)
+      call random_seed
+      Rdet = kmag * sin(thetadet)
+      area = pi*(kmag*sin(thetadet))**2
+      n_rand = 0
+      do while(.true.)
+        call random_number(a)
+        call random_number(b)
+        x = -Rdet + 2.0*Rdet*a
+        y = -Rdet + 2.0*Rdet*b
+        r = sqrt(x**2 + y**2)
+        if(r.gt.Rdet) cycle
+        n_rand = n_rand + 1
+        call cart_to_polar(x,y,phi_tmp)
+        !
+        ! |r| = |k'| sin(thetap)
+        !
+        theta_det(n_rand) = asin(r/kmag) ! [0:thetad]
+        phi_det(n_rand)   = phi_tmp
+        w_det(n_rand)     = 1.0_SP/real(n_det_pt)
+
 !<-- DEBUG
-          if(i.eq.(ndet+1)/2) exit
-        enddo
-        enddo
-      else
-        theta_det(1) = 0.0_SP
-        phi_det(1) = 0.0_SP
-      endif
-    else if(detint.eq."no") then
-      !
-      ! Set up numerical integration points
-      !
-      theta_det(1) = 0.0_SP
-      phi_det(1) = 0.0_SP
+!       write(30,100) n_rand, x,y,r, phi_det(n_rand)/radian, theta_det(n_rand)/radian
+100 format(i4,2f7.3,3x,f6.3,f9.3,f9.3)
+!<-- DEBUG
+        if(n_rand.eq.n_det_pt) exit
+      enddo
+
     endif
     return
   end subroutine setup_det
+
+  subroutine cart_to_polar(x,y,phi)
+    implicit none
+    real(SP), intent(in) :: x,y ! radians!
+    real(SP), intent(out) :: phi
+
+    phi = atan(-x/y)
+    if(phi.lt.0) phi = phi+2.0*pi
+    if(y.ge.0) return
+    if(x.ge.0) then
+      phi = phi + pi
+    else if(x.lt.0) then
+      phi = phi - pi
+    endif
+
+    return
+  end subroutine cart_to_polar
 
 !=--------------------------------------------------------------------=
   real(SP) function qy_av(kpmag)
@@ -275,7 +295,7 @@ end subroutine init_detector
     real(SP), intent(out)              :: qpar(2)
     real(SP)                           :: qpax, qpay, qtmp(3), phid, thetad
 
-    if(detint=="av") then
+    if(det_int_type=="av") then
       !
       ! Take single average value of Q_|| 
       !
@@ -283,7 +303,7 @@ end subroutine init_detector
       qpay = qy_av( kpmag )
       qpar = (/ qpax, qpay /)
       !
-    else if(detint=="no") then 
+    else if(det_int_type=="no") then 
       !
       ! Select single exact Q_|| inside detector 
       ! 

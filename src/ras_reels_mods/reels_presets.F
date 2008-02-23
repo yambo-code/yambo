@@ -52,7 +52,7 @@
    !
    thetadet  =  1.0      ! detector angle (angular aperture)
    detint = "av"         ! Det. int. method no(ne),av(erage),fu(ll)
-   detintm  = 1          ! Number of points for detector integration
+   ndetint  = 1000          ! Number of points for detector integration
    !
    ! mod_eels_integrate
    !

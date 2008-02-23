@@ -51,5 +51,6 @@ module pars
  real(SP), parameter :: HA2CM1=HARTREE*8065.5_SP
  real(SP), parameter :: Kelvin=1.1604*10.**4*HARTREE  ! ev
  real(SP), parameter :: BOHR=0.52917721  ! Armostrongs
+ real(SP), parameter :: radian=pi/180.0_SP  
  !
 end module 

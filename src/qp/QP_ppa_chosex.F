@@ -19,18 +19,18 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter,be_verbose)
+subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Plasomon Pole Correlation Self-Energy
  !
  use pars,          ONLY:SP,pi,HARTREE,schlen
- use stderr,        ONLY:string_pack
  use memory_m,      ONLY:mem_est
+ use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands
  use timing,        ONLY:live_timing
  use com,           ONLY:msg
- use drivers,       ONLY:Finite_Tel,l_ppa,l_chosex
+ use drivers,       ONLY:Finite_Tel,l_ppa,l_chosex,l_sc_run
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use collision,     ONLY:ggwinfo,collision_reset
@@ -51,7 +51,6 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter,be_verbose)
  type(QP_t)   ::qp
  type(w_samp) ::Xw
  integer      ::GW_iter
- logical      ::be_verbose
  !
  ! Work Space
  !
@@ -78,20 +77,19 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter,be_verbose)
  !
  ! CHOSEX: bands setup
  !
- if (l_chosex.and.(.not.CHOSEX_use_empties)) &
-&   QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),n_met_bands)
+ if (l_chosex.and.(.not.CHOSEX_use_empties)) QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),n_met_bands)
  !
  ! Section
  !
- if (GW_iter<9) write (Sc_name,'(a,i1.1)') 'G',GW_iter
- if (GW_iter>9) write (Sc_name,'(a,i2.2)') 'G',GW_iter
+ Sc_name='G'//trim(intc(GW_iter))
+ if (l_sc_run) Sc_name='CHOSEX@it'//trim(intc(-GW_iter))
  !
- ch=trim(string_pack(Sc_name,'W0 : the P(lasmon) P(ole) A(pproximation)'))
- if (l_chosex)  ch=trim(string_pack(Sc_name,'W0 : CHOSEX'))
+ ch=trim(Sc_name)//'W0 : the P(lasmon) P(ole) A(pproximation)'
+ if (l_chosex)  ch=trim(Sc_name)//'W0 : CHOSEX'
  !
  if (GW_iter==0) then
    call section('+',trim(ch))
- else
+ else if (GW_iter>0) then
    call section('=',trim(ch))
  endif
  !
@@ -118,10 +116,13 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter,be_verbose)
  if (l_chosex.and..not.CHOSEX_use_empties) isc%ngrho=maxval(G_m_G)
  iscp%ngrho=isc%ngrho
  !
- ! WFs
- !
- call wf_load(isc%ngrho,maxval(qindx_S(:,:,2)),&
-&             (/1,max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-Sc')
+ if (.not.l_sc_run) then
+   !
+   ! WFs
+   !
+   call wf_load(isc%ngrho,maxval(qindx_S(:,:,2)),&
+&               (/1,max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-Sc')
+ endif
  !
  ! Plasmon-Pole/Static interaction DB I/O
  !
@@ -157,9 +158,11 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter,be_verbose)
  call pp_redux_wait
  !
  if (l_ppa) then
-   call live_timing(trim(string_pack(Sc_name,'W0 PPA')),px%stps(myid+1)*QP_n_states) 
+   call live_timing(trim(Sc_name)//'W0 PPA',px%stps(myid+1)*QP_n_states) 
+ else if (.not.l_sc_run) then
+   call live_timing(trim(Sc_name)//'W0 CHOSEX',px%stps(myid+1)*QP_n_states) 
  else
-   call live_timing(trim(string_pack(Sc_name,'W0 CHOSEX')),px%stps(myid+1)*QP_n_states) 
+   call live_timing(trim(Sc_name),px%stps(myid+1)*QP_n_states) 
  endif
  !
  do iqbz=1,q%nbz 

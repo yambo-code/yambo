@@ -43,7 +43,7 @@ integer function io_SC_components(what,E_sc,ID)
  ! Work Space
  !
  real(SP), allocatable :: R_H_disk(:,:,:),E_disk(:,:,:)
- integer               :: ik
+ integer               :: ik,bands_to_load,ib
  logical               :: l_wf,l_V,l_E
  !
  l_E =what=="E"
@@ -114,7 +114,22 @@ integer function io_SC_components(what,E_sc,ID)
    else
      allocate(E_disk(SC_bands,nkibz,n_sp_pol))
      call io_bulk(ID,R3=E_disk)
-     E_sc%E(:,:,:)=E_disk(:size(E_sc%E,1),:,:)
+     !
+     bands_to_load=size(E_sc%E,1)
+     !
+     if (bands_to_load>SC_bands) then
+       !
+       ! For either the H_sc and WFs I first check to 
+       ! have enough bands (in wf_load and X_O_strengths).
+       ! For the energies instead I need to shift the levels > SC_bands (if any).
+       !
+       forall (ib=SC_bands+1:bands_to_load) E_sc%E(ib,:,:)=E_sc%E(ib,:,:)-E_sc%E(SC_bands,:,:)
+       E_sc%E(:SC_bands,:,:)=E_disk(:SC_bands,:,:)
+       forall (ib=SC_bands+1:bands_to_load) E_sc%E(ib,:,:)=E_sc%E(ib,:,:)+E_sc%E(SC_bands,:,:)
+       !
+     else
+       E_sc%E(:bands_to_load,:,:)=E_disk(:bands_to_load,:,:)
+     endif
      deallocate(E_disk)
    endif
    !

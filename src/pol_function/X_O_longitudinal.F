@@ -159,7 +159,6 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
 &                   space='G',title='-Oscillators/G space') 
 !  wf_ng_eff = min(wf_ng_save,wf_ng_long)
 #endif
-
    !
    ! Set up the parallel environment 
    !

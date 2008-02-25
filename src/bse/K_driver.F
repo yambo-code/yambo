@@ -19,14 +19,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_driver(Xen,Xk,q,X_static,Xw)
+subroutine K_driver(Xen,Ken,Xk,q,X_static,Xw)
  !
  use pars,           ONLY:SP,IP
  use parser_m,       ONLY:parser
  use com,            ONLY:msg
  use memory_m,       ONLY:mem_est
  use stderr,         ONLY:string_remove
- use electrons,      ONLY:levels,E_duplicate,E_reset,n_sp_pol
+ use electrons,      ONLY:levels,n_sp_pol
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset
  use BS,             ONLY:BS_bands,BS_q,BS_blk_dim,BS_eh_table,BS_eh_E,BS_eh_f,&
@@ -42,13 +42,8 @@ subroutine K_driver(Xen,Xk,q,X_static,Xw)
  use par_proc_m,     ONLY:pp_redux_wait
  use R_lattice,      ONLY:bz_samp,qindx_B
  use parser_m,       ONLY:parser
-#if defined _SC
- use IO_m,           ONLY:NONE,DUMP
- use SC,             ONLY:load_SC_components
- use global_XC,      ONLY:setup_global_XC,MORE_NONE,K_kind,K_xc_functional
-#endif
  implicit none
- type(levels)  ::Xen
+ type(levels)  ::Xen,Ken
  type(bz_samp) ::Xk,q
  type(X_t)     ::X_static
  type(w_samp)  ::Xw,W_bss 
@@ -56,28 +51,11 @@ subroutine K_driver(Xen,Xk,q,X_static,Xw)
  ! Work Space
  !
  integer     :: iq
- type(levels):: Ken
  type(X_t)   :: X_tddft
  integer, external :: eval_G_minus_G
  !
- call E_reset(Ken)
  call X_reset(X_tddft)
  call W_reset(W_bss)
- !
- ! As I do not want to transfer to Ken any QP correction
- ! embodied in Xen I define
- !
- Ken%nk=Xen%nk
- !
- call E_duplicate(Xen,Ken)
-#if defined _SC
- !
- ! Load the SC energies
- !
- call load_SC_components('E',E=Ken,COM_=NONE,MODE_=DUMP,ik=0,&
-&                         kind=K_kind,xc_functional=K_xc_functional)
- call setup_global_XC('K',K_kind,MORE_NONE,K_xc_functional)
-#endif
  !
  ! In these two lines I ensure the at least all the metallic
  ! bands are included in the X summation
@@ -89,6 +67,8 @@ subroutine K_driver(Xen,Xk,q,X_static,Xw)
  ! be able to calculate the density
  !
  if (l_alda_fxc) BS_bands(1)=1
+ !
+ ! ... and the QP corrections
  !
  call QP_apply(BS_bands,Ken,Xk,2,msg_fmt='s')
  !

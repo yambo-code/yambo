@@ -19,16 +19,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SC_driver(X,E,k,q)
+subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  use pars,           ONLY:SP,HARTREE,schlen
  use drivers,        ONLY:l_sc_xx,l_sc_chosex,l_sc_hartree,l_sc_pz,l_sc_lda_x,&
 &                         l_sc_hf
  use electrons,      ONLY:levels,nel
- use R_lattice,      ONLY:bz_samp,qindx_S
+ use R_lattice,      ONLY:bz_samp,qindx_S,G_m_G
  use D_lattice,      ONLY:Tel
  use QP_m,           ONLY:QP_state,QP_nb,QP_nk,QP_Vxc,QP_n_states,QP_table,&
-&                         QP_ng_Sx,QP_Sx
+&                         QP_ng_Sx,QP_Sx,QP_t,QP_reset,CHOSEX_use_empties,QP_sc
  use SC,             ONLY:SC_bands,SC_iterations,SC_E_threshold,SC_kind,SC_xc_functional,&
 &                         SC_rho_threshold,SC_potential,it_now,E_convergence,&
 &                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,SC_bands_mixed 
@@ -41,14 +41,17 @@ subroutine SC_driver(X,E,k,q)
  use timing,         ONLY:live_time_msg
  use stderr,         ONLY:tty_size,intc,real2ch
  use xc_functionals, ONLY:V_xc,XC_LDA_X,XC_LDA_C_PZ,XC_EXCHANGE_CORRELATION,XC_EXCHANGE
+ use frequency,      ONLY:w_samp
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,&
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL
  use global_XC,      ONLY:SC_EXX,SC_HF,SC_CHOSEX
+ use vec_operate,    ONLY:sort,degeneration_finder
  !
  implicit none
  type(levels) ::E
- type(bz_samp)::k,q
- type(X_t)    ::X
+ type(bz_samp)::k,q,Xk
+ type(X_t)    ::X(2)  ! Xx Em1s
+ type(w_samp) ::Xw(2)
  !
  ! Iterations
  !
@@ -61,11 +64,19 @@ subroutine SC_driver(X,E,k,q)
  ! 
  ! Work Space
  !
- integer                  :: ir,i1,ik,ib,ibp,WF_G_max,WF_Go_indx,ID(3),io_err(3)
+ integer                  :: ir,i1,i2,ik,ib,ibp,WF_G_max,WF_Go_indx,ID(3),io_err(3)
  complex(SP)              :: Ho(SC_bands,SC_bands,k%nibz)
  character(schlen)        :: dumb_ch
- integer, external        :: io_SC_components
+ integer, external        :: io_SC_components,eval_G_minus_G
  logical, external        :: stop_now
+ type(QP_t)               :: qp_dummy
+ !
+ ! ws for states spread evaluation
+ !
+ real(SP)                 :: sym_value,WS_spread(SC_bands)
+ integer                  :: first_el(SC_bands),n_of_el(SC_bands),n_deg_grp
+ !
+ call QP_reset(qp_dummy)
  !
  select case (trim(SC_potential))
    case('HARTREE')
@@ -84,6 +95,7 @@ subroutine SC_driver(X,E,k,q)
      l_sc_chosex=.true.
      SC_kind=SC_CHOSEX
      SC_xc_functional=0
+     CHOSEX_use_empties=.FALSE.
    case('LDA_X')
      l_sc_lda_x=.true.
      SC_kind=XC_EXCHANGE
@@ -117,12 +129,18 @@ subroutine SC_driver(X,E,k,q)
  !
  ! WF
  !
+ ! x Local potentials (not including EXX)
+ !
+ WF_G_max=0
+ WF_Go_indx=1
+ !
  if (l_sc_hf.or.l_sc_xx.or.l_sc_chosex) then
-   WF_G_max=max(QP_ng_Sx,X%ng)
-   WF_Go_indx=maxval(qindx_S(:,:,2))
- else
-   WF_G_max=0
-   WF_Go_indx=1
+   WF_Go_indx=maxval(qindx_S(:,:,2)) ! Sigma_x/c
+   if (l_sc_chosex) then
+     X(2)%ng=eval_G_minus_G(X(2)%ng,0)
+     WF_G_max=max(QP_ng_Sx,maxval(G_m_G))
+   endif
+   if (l_sc_xx)     WF_G_max=max(QP_ng_Sx,X(1)%ng)
  endif
  call wf_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),title=' ')
  !
@@ -273,7 +291,13 @@ subroutine SC_driver(X,E,k,q)
      !
      ! Hartee-Fock
      !
-     if (l_sc_hf) call QP_XX_Vxc(E,k,k,q)
+     if (l_sc_hf.or.l_sc_chosex) call QP_XX_Vxc(E,k,k,q)
+     !
+     call SC_mute("report io_out")
+     !
+     ! CHOSEX
+     !
+     if (l_sc_chosex) call QP_ppa_chosex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1)
      !
      call SC_mute(" ")
      !
@@ -314,12 +338,17 @@ subroutine SC_driver(X,E,k,q)
        !
        H_nl_sc=(0.,0.)
        !
-       ! Add Sigma_x
+       ! Add Sigma_x and, eventually, Sigma_c (CHOSEX)
        !
        do i1 = 1, QP_n_states
          if (QP_table(i1,3)/=ik) cycle
-         H_nl_sc(QP_table(i1,1),QP_table(i1,2)) =  QP_Sx(i1)
+         ib =QP_table(i1,1)
+         ibp=QP_table(i1,2)
+         H_nl_sc(ib,ibp) =  QP_Sx(i1)
+         if (l_sc_chosex) H_nl_sc(ib,ibp) = H_nl_sc(ib,ibp) + QP_Sc(i1,1)
        end do
+       !
+       ! Rotate H_nl_sc in the WFo basis.
        !
        if (it_now>1) call H_rotate(SC_R(:,:,ik),H_nl_sc,SC_bands,-1)
        !
@@ -385,8 +414,8 @@ subroutine SC_driver(X,E,k,q)
      rho_convergence = rho_convergence + abs(rho_n(ir)-rho_nm1(ir))/nel
    enddo
    !
-   dumb_ch='[SC] Iteration '//trim(intc(it_now))//' Accuracies rho % E(ev) :'//&
-&          trim(real2ch(rho_convergence))//' % '//trim(real2ch(E_convergence*HARTREE))
+   dumb_ch='[SC] Iteration '//trim(intc(it_now))//' Accuracies rho(%) - E(ev) :'//&
+&          trim(real2ch(rho_convergence))//'% - '//trim(real2ch(E_convergence*HARTREE))
    !
    if (tty_size>0.or.it_now==1) then
      call live_time_msg("n",dumb_ch,"","%s")
@@ -412,12 +441,46 @@ subroutine SC_driver(X,E,k,q)
  !
  call fermi_level(E,k,Tel,1)
  !
- forall (ik=1:k%nibz,ib=1:SC_bands) dE(ib,ik)=E%E(ib,ik,1)-E_save(ib,ik)
- !
  do ik=1,k%nibz
    !
-   forall (ib=1:SC_bands) spread(ib,ik)=abs(SC_R(ib,ib,ik))*100./HARTREE
+   ! Check for degenrate bands in the bare energies
    !
+   call degeneration_finder(E_save(:,ik),SC_bands,first_el,n_of_el,n_deg_grp,0.0001/HARTREE)
+   !
+   ! define and simmetrize the spreads summing over all possible degenerate
+   ! bands
+   !
+   forall (ib=1:SC_bands) spread(ib,ik)=abs(SC_R(ib,ib,ik))**2.*100./HARTREE
+   !
+   do ib=1,SC_bands
+     forall (ibp=1:SC_bands) WS_spread(ibp)=abs(SC_R(ibp,ib,ik))**2.*100./HARTREE
+     spread(ib,ik)=WS_spread(ib)
+     do i1=1,n_deg_grp
+       if (ib>=first_el(i1).and.ib<=first_el(i1)+n_of_el(i1)-1) then
+         spread(ib,ik)=0.
+         do i2=first_el(i1),first_el(i1)+n_of_el(i1)-1
+           spread(ib,ik)=spread(ib,ik)+WS_spread(i2)
+         enddo
+       endif
+     enddo
+   enddo
+   !
+   ! ... and the SC energies
+   !
+   do i1=1,n_deg_grp
+     sym_value=0.
+     do i2=first_el(i1),first_el(i1)+n_of_el(i1)-1
+       sym_value=sym_value+E%E(i2,ik,1)/real( n_of_el(i1) )
+     enddo
+     do i2=first_el(i1),first_el(i1)+n_of_el(i1)-1
+       E%E(i2,ik,1)=sym_value
+     enddo
+   enddo
+   !
+   dE(:,ik)=E%E(:SC_bands,ik,1)-E_save(:,ik)
+ enddo
+ !
+ do ik=1,k%nibz
    call report_energies(E%E(:SC_bands,:,:),k,SC_bands,(/ik,ik/),'E  ',.TRUE.)
    call report_energies(E_save,k,SC_bands,(/ik,ik/),'E_o',.FALSE.)
    call report_energies(dE,k,SC_bands,(/ik,ik/),'d_E',.FALSE.)

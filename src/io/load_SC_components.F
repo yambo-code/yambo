@@ -28,7 +28,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,xc_functional)
  use R_lattice, ONLY:nkibz
  use memory_m,  ONLY:mem_est
  use IO_m,      ONLY:io_control,OP_RD_CL,RD_CL_IF_END,OP_RD,RD_CL,&
-&                    VERIFY,DUMP,OP_RD_CL,NONE
+&                    VERIFY,DUMP,OP_RD_CL,NONE,io_unit
  implicit none
  !
  character(*)           :: what
@@ -44,15 +44,12 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,xc_functional)
  if (l_sc_run) using_SC_basis=.false.
  if (l_sc_run) return
  ! 
- ! Energies
- !----------
- !
- ! keep backup of bare energies to be used in
- ! optical oscillators
- !
- if (what=="WF".or.what=="Hsc") then
+ if (what=="WF") then
    call io_control(ACTION=OP_RD,COM=COM_,SEC=(/1/),MODE=MODE_,ID=ID)
- else
+ else if (what=="Hsc") then
+   if (ik> 0) call io_control(ACTION=OP_RD,COM=COM_,SEC=(/1/),MODE=MODE_,ID=ID)
+   if (ik==0) call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=MODE_,ID=ID)
+ else if (what=="E".or.what=="V") then
    call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=MODE_,ID=ID)
  endif
  !

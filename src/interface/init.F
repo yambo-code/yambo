@@ -76,10 +76,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Work Space
  !
  integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,&
-&                     ioBS_Fxc_err,ioQINDX_err
+&                     ioBS_Fxc_err,ioQINDX_err,io_SC_err
  integer, external :: ioX,ioOSTNTS,ioGROT,ioQINDX,ioRIM,ioE_RIM,&
 &                     ioXXVXC,ioQP,ioBS,ioDB1,ioKB_PP,&
-&                     ioCOL_CUT
+&                     ioCOL_CUT,io_SC_components
 #if defined _ELPH
  integer           :: ioELPH_err
  integer, external :: ioELPH
@@ -103,6 +103,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  what_is_running='SELF_REELS'
 #elif defined _SC
  what_is_running='SELF_SC'
+#elif defined _BS_CPL
+ what_is_running='SELF_BS_CPL'
 #endif
  !
  !Presets (input)
@@ -269,9 +271,18 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  ioBS_Fxc_err=ioBS_Fxc(1,Xxcw,io_ID,X=Xbsk)
  !
+ ! ELPH 
+ !
 #if defined _ELPH
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  ioELPH_err=ioELPH(io_ID)
+#endif
+ !
+ ! SC 
+ !
+#if defined _SC
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_SC_err=io_SC_components('E',en,io_ID)
 #endif
  !
  if (list_dbs) then
@@ -907,7 +918,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            SC_potential='XX'
          else if ( trim(rstr_piece(i1+1)) == 'c' ) then
            SC_potential='CHOSEX'
-           call initactivate(1,'chosex gw0')
+           call initactivate(1,'chosex xxvxc')
          else if ( trim(rstr_piece(i1+1)) == 'hf') then
            SC_potential='HARTREE-FOCK'
            call initactivate(1,'xxvxc')

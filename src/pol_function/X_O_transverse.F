@@ -162,8 +162,8 @@ subroutine X_O_transverse(Xen,Xk,X)
        !
        ! as [x,p_x]=i we get [x,H] = [x,p^2/2]= i p_x
        !
-       !     X_q0grad = i <v|r|c> = i <v|[r,H]|c>/(Ec-Ev) = i <v|i p|c>/(Ec-Ev) =
-       !              = - <v | -i grad |c> / (Ec-Ev) = <v|-i grad|c>/(Ev-Ec)
+       !     X_q0grad(c,v) = i <v|r|c> = i <v|[r,H]|c>/(Ec-Ev) = i <v|i p|c>/(Ec-Ev) =
+       !                   = - <v | -i grad |c> / (Ec-Ev) = <v|-i grad|c>/(Ev-Ec)
        !
        if (n_sp_pol==2) then
          X_q0grad(:,ic,iv,ik,1)=rho(:,1)

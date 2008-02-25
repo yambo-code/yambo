@@ -92,13 +92,13 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
    !
    ! OptGrad allocation...
    !
-   ! When using interanl SC potentials oscilators must be rotated
+   ! When using internal SC potentials oscilators must be rotated
    ! in the new basis. So all transitions are needed
    !
    if (P_bands_ordered) then
-     call X_alloc('OptGrad',(/3,X%ib(2),X%ib(2),Xk%nibz/))
-   else
      call X_alloc('OptGrad',(/3,X%ib(2),Xen%nbm,Xk%nibz/))
+   else
+     call X_alloc('OptGrad',(/3,X%ib(2),X%ib(2),Xk%nibz/))
    endif
    X_q0grad=(0.,0.)
    !
@@ -130,20 +130,20 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
    ! Free any loaded WFs
    !
    call WF_free()
+#if defined _SC
+   !
+   ! Rotate the oscillators in the SC basis
+   !
+   if (using_SC_basis.and..not.local_V) call X_O_rotate(X%ib(2),use_trans_gauge,Xen)
+   !
+#endif
    !
    ! Write the q0grad to its database
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=ioOSTNTS(X,Xen,ID)
+   !
  end if
- !
-#if defined _SC
- !
- ! Rotate the oscillators in the SC basis
- !
- if (using_SC_basis.and..not.local_V) call X_O_rotate(X%ib(2))
- !
-#endif
  !
  ! The field direction and the gamma-point norm must be renormalized here in case the
  ! oscillator strengths have been calculated using the long. gauge.

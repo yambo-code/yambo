@@ -34,7 +34,7 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  use SPP
  implicit none
  !
- type(levels)                 :: en,Xen
+ type(levels)                 :: en,Xen,Ken
  type(bz_samp)                :: k,Xk,q
  integer,          intent(in) :: lnstr,iind,iod,ijs,np,pid
  integer,       intent(inout) :: iinf
@@ -62,6 +62,7 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  call bz_samp_reset(Xk)
  call E_reset(en)
  call E_reset(Xen)
+ call E_reset(Ken)
  call it_reset(1)
  !
  ! Switch off report file support
@@ -135,7 +136,7 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  ! Main SETUP
  !
- call setup(en,Xen,k,Xk)
+ call setup(en,Xen,Ken,k,Xk)
  !
  ! Specific SECTIONS
  !

@@ -44,6 +44,11 @@ integer function eval_G_minus_G(iG,iGo)
  !
  ! Init
  !
+ if (allocated(G_m_G)) then
+   eval_G_minus_G=size(G_m_G,1)
+   return
+ endif
+ !
  eval_G_minus_G=iG
  iG_=iG
  iGo_=iGo
@@ -51,10 +56,6 @@ integer function eval_G_minus_G(iG,iGo)
  !
  ! Allocation
  !
- if (allocated(G_m_G)) then
-   eval_G_minus_G=size(G_m_G,1)
-   return
- endif
  allocate(G_m_G(iG_,iGo_))
  call mem_est("G_m_G",(/shape(G_m_G)/),(/IP/))
  !

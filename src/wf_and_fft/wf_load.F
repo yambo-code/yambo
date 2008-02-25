@@ -218,17 +218,23 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  call load_SC_components('check_bands',n_bands=bands_to_load(2))
  !
  if (using_SC_basis) then
-   call load_SC_components('WF',COM_=NONE,MODE_=DUMP,ik=0,&
-&                          kind=WF_kind,xc_functional=WF_xc_functional)
+   call load_SC_components('WF',COM_=NONE,MODE_=DUMP,kind=WF_kind,xc_functional=WF_xc_functional)
    if (wf_space=='R') wf_size=fft_size
    if (wf_space=='G') wf_size=wf_ng
    do ikibz=1,nkibz
      call WF_rotate(ikibz,bands_to_load(2),wf_size,&
 &                   SC_R(:bands_to_load(2),:bands_to_load(2),ikibz),wf)
    enddo
-   call load_SC_components('WF_clean',COM_=0,MODE_=0,ik=0)
-   call setup_global_XC('WF',WF_kind,MORE_NONE,WF_xc_functional)
+   call load_SC_components('WF_clean')
  endif
+ !
+ ! Call setup of WF xc here so to syncronize the WF_global_xc_string 
+ ! to the actual values of WF_kind and WF_xc_functional.
+ ! This is needed as, for example, WF_global_xc_string may be dumped
+ ! from ostnts database.
+ !
+ call setup_global_XC('WF',WF_kind,MORE_NONE,WF_xc_functional)
+ !
 #endif
  !
  if (.not.wf_norm_test) return

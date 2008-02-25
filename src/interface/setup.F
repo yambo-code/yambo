@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine setup(en,Xen,k,Xk)
+subroutine setup(en,Xen,Ken,k,Xk)
  !
  use pars,           ONLY:SP,IP,pi,schlen
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate
@@ -36,11 +36,11 @@ subroutine setup(en,Xen,k,Xk)
 #if defined _SC
  use SC,             ONLY:load_SC_components
  use global_XC,      ONLY:G_kind,G_xc_functional,X_kind,&
-&                         X_xc_functional,setup_global_XC,MORE_NONE
+&                         X_xc_functional,setup_global_XC,MORE_NONE,K_kind,K_xc_functional
 #endif
  !
  implicit none
- type(levels)    ::en,Xen
+ type(levels)    ::en,Xen,Ken
  type(bz_samp)   ::k,Xk
  !
  !Work Space
@@ -220,5 +220,14 @@ subroutine setup(en,Xen,k,Xk)
  call msg('rn','X BZ K-points :',Xk%nbz)
  !
  call report_energies(en%E,k,en%nb,(/1,k%nibz/),'E',.TRUE.)
+ !
+ ! Once the occupations have been evaluated I dump Xen in Ken
+ !
+ call E_duplicate(Xen,Ken)
+#if defined _SC
+ K_kind=X_kind
+ K_xc_functional=X_xc_functional
+ call setup_global_XC('K',K_kind,MORE_NONE,K_xc_functional)
+#endif
  !
 end subroutine

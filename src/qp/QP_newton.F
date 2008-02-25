@@ -72,7 +72,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
    !
    if (l_el_corr) then
      if (l_ppa.or.l_chosex) then
-       call QP_ppa_chosex(X,Xk,en,k,q,qp,Xw,iter,.TRUE.)
+       call QP_ppa_chosex(X,Xk,en,k,q,qp,Xw,iter)
      else
        call QP_raxis(X,Xen,Xk,en,k,q,qp,Xw,iter)
      endif

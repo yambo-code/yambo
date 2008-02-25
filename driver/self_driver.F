@@ -47,7 +47,7 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
 #endif
  !
  implicit none
- type(levels) ::en,Xen
+ type(levels) ::en,Xen,Ken
  type(bz_samp)::q,k,Xk
  ! 
  ! 4 response function & energies types: x s d p
@@ -88,6 +88,7 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
  !
  call bz_samp_reset(Xk)  
  call E_reset(Xen) 
+ call E_reset(Ken) 
  !
  ! INPUT FILE PARSING
  !====================
@@ -118,7 +119,7 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
  !
  ! Basical 
  !
- call setup(en,Xen,k,Xk)
+ call setup(en,Xen,Ken,k,Xk)
  !
  ! Update the default variables
  !
@@ -238,7 +239,7 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
  ! BETHE-SALPETER
  !================
  !
- if ((l_optics.and.l_bse).or.l_bss) call K_driver(Xen,Xk,q,X(2),Xw(2))
+ if ((l_optics.and.l_bse).or.l_bss) call K_driver(Xen,Ken,Xk,q,X(2),Xw(2))
  !
  ! ACFDT
  !=======
@@ -249,7 +250,7 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
  ! SC
  !====
  !
- if (l_sc_run) call SC_driver(X(1),en,k,q)
+ if (l_sc_run) call SC_driver(X(:2),Xw(:2),Xk,en,k,q)
 #endif
  !
  ! GAME OVER :(

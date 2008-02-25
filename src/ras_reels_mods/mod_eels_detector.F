@@ -267,6 +267,7 @@ end subroutine init_detector
     !
     !   Used for calculating the average, in a specular scattering case
     !   Note: XZ is plane of incidence, not YZ (earlier codes, Del Sole paper)
+    !   Check this is ok also for a PLANAR case. (should be)
     !
     real(SP),intent(in)  :: kpmag
     real(SP)             :: qy2

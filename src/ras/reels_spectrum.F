@@ -61,13 +61,13 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
     do idet = 1, n_det_pt
       
       !
-      ! Get Q_|| for this set of angles.
-      !
-      call get_qpar_det(qpar, kpmag, idet )
-      !
       ! Reset trig factors for this detector setting
       !
       call reset_trig_det( theta_det(idet), phi_det(idet) )
+      !
+      ! Get Q_|| for this set of angles.
+      !
+      call get_qpar_det(qpar, kpmag, idet )
       !
       ! Kinematic prefactor
       !
@@ -97,8 +97,9 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
     lossf(iw,:) = loss_qpar(:) ! other factors?
 
 !<-- DEBUG
-!    if(iw.eq.1) write(24,108) "hw","lossx","lossy","Akk","|qpar|","|Q|^2","Q_||(2)","|k'|"
-!    write(24,107) hw(iw)*HARTREE, lossf(iw,1), lossf(iw,2), Akk, qparm,qtot2,qpar,kpmag
+!    if(iw.eq.1) write(24,108) "####hw  ","lossx","lossy","Akk","|qpar|","|Q|^2","Q_||(x)","Q_||(y)",&
+!&   "|k'|","Img_x","Img_y"
+!    write(24,107) hw(iw)*HARTREE, lossf(iw,1), lossf(iw,2), Akk, qparm,qtot2,qpar,kpmag,Img_x,Img_y
 !107 format(f8.3,20e16.7)
 !108 format(a8,20a16)
 !--> DEBUG

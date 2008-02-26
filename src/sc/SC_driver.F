@@ -56,7 +56,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! Iterations
  !
  integer                  :: it
- real(SP)                 :: E_save(SC_bands,k%nibz),spread(SC_bands,k%nibz),&
+ real(SP)                 :: E_bare(SC_bands,k%nibz),spread(SC_bands,k%nibz),&
 &                            E_previous(SC_bands,k%nibz),dE(SC_bands,k%nibz),&
 &                            n_weight
  real(SP),    allocatable :: rho_n(:),V_xc_nm1(:),V_hr(:),rho_nm1(:)
@@ -65,16 +65,19 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! Work Space
  !
  integer                  :: ir,i1,i2,ik,ib,ibp,WF_G_max,WF_Go_indx,ID(3),io_err(3)
+ real(SP)                 :: max_proj
  complex(SP)              :: Ho(SC_bands,SC_bands,k%nibz)
  character(schlen)        :: dumb_ch
  integer, external        :: io_SC_components,eval_G_minus_G
  logical, external        :: stop_now
+ logical                  :: SC_cycle
  type(QP_t)               :: qp_dummy
  !
  ! ws for states spread evaluation
  !
- real(SP)                 :: sym_value,WS_spread(SC_bands)
- integer                  :: first_el(SC_bands),n_of_el(SC_bands),n_deg_grp
+ real(SP)                 :: WS_spread(SC_bands)
+ integer                  :: first_el(SC_bands),n_of_el(SC_bands),n_deg_grp,&
+&                            b_of_max_proj(SC_bands,k%nibz)
  !
  call QP_reset(qp_dummy)
  !
@@ -120,12 +123,58 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  allocate(QP_state(QP_nb,QP_nk))
  QP_state=.TRUE.
  !
+ ! Reference energies
+ !
+ E_bare=E%E(:SC_bands,:,1)
+ !
  call QP_state_table_setup(E)
  !
- call msg('r' ,'[SC] Bands                    :',SC_bands)
- call msg('r' ,'[SC] Mixed bands              :',SC_bands_mixed)
- call msg('r' ,'[SC] Treshold on density      :',SC_rho_threshold)
- call msg('rn','[SC]          on energies [ev]:',SC_E_threshold*HARTREE)
+ call msg('r' ,'[SC] Bands                            :',SC_bands)
+ call msg('r' ,'[SC] Mixed bands                      :',SC_bands_mixed)
+ call msg('r' ,'[SC] Imposed accuracy on density      :',SC_rho_threshold)
+ call msg('rn','[SC]                  on energies [ev]:',SC_E_threshold*HARTREE)
+ !
+ ! Perform a first I/O to check if other SC loops are needed
+ !
+ SC_cycle=.true.
+ !
+ ! Energies
+ !----------
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID(1))
+ io_err(1)=io_SC_components('E' ,E,ID(1))
+ if (io_err(1)==0) then
+   call msg('nr','[SC] Found   accuracy on density      :',rho_convergence)
+   call msg('rn','[SC]                  on energies [ev]:',E_convergence*HARTREE)
+   SC_cycle=.not.(E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold)
+   !
+   ! Even if the accuracy on DB is not small enough with 0 iterations
+   ! I can skeep the SC cycle
+   !
+   if (SC_cycle) SC_cycle=SC_iterations>0
+   !
+ endif
+ !
+ if (.not.SC_cycle.and.io_err(1)==0) then
+   !
+   ! load SC_R rotation matrices
+   !-----------------------------
+   allocate(SC_R(SC_bands,SC_bands,k%nibz))
+   call mem_est("SC_R ",(/size(SC_R)/))
+   call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID(2))
+   io_err(2)=io_SC_components('WF',E,ID(2))
+   if (io_err(2)==0) then
+     do ik=1,QP_nk
+       call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(2))
+       io_err(2)=io_SC_components('WF',E,ID(2))
+     enddo
+     call msg('r',' ')
+   else
+     return
+   endif
+   !
+   goto 1
+   !
+ endif
  !
  ! WF
  !
@@ -201,9 +250,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  deallocate(QP_Vxc)
  call mem_est("QP_Vxc")
  !
- ! Reference energies and wavefunctions
+ ! Reference wavefunctions
  !
- E_save=E%E(:SC_bands,:,1)
  WFo   =wf
  !
  ! I/O 
@@ -314,12 +362,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
    endif
    !
-   ! IO [header and V_xc]
-   !=====================
+   ! IO [V_xc]: this is the only DB that must be written on-fly
+   !            Both WFs and Energies are written ay the end of the loop
+   !===========
    !
-   if (it==1) call io_control(ACTION=OP_WR,COM=REP,SEC=(/1/),ID=ID(2))
-   if (it> 1) call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(2))
-   io_err(2)=io_SC_components('WF',E,ID(2))
    if (     local_V) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(3))
    if (.not.local_V) call io_control(ACTION=OP_WR,   COM=NONE,SEC=(/1/),ID=ID(3))
    io_err(3)=io_SC_components('V' ,E,ID(3))
@@ -375,24 +421,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      SC_R(:,:,ik)=H_nl_sc
      !
-     ! IO [SC_R]
-     !===========
-     !
-     call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(2))
-     io_err(2)=io_SC_components('WF',E,ID(2))
-     !
      ! New wave functions 
      !====================
      !
      call WF_rotate(ik,SC_bands,fft_size,SC_R(:,:,ik),WFo,wf_out=wf)
      !
    end do
-   !
-   ! IO [Energies]
-   !===============
-   !
-   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(1))
-   io_err(1)=io_SC_components('E' ,E,ID(1))
    !
    ! New density 
    !=============
@@ -428,6 +462,24 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      endif
    endif
    !
+   ! IO [Energies]
+   !===============
+   !
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(1))
+   io_err(1)=io_SC_components('E' ,E,ID(1))
+   !
+   !
+   ! IO [SC_R]
+   !===========
+   !
+   if (it==1) call io_control(ACTION=OP_WR,COM=REP, SEC=(/1/),ID=ID(2))
+   if (it> 1) call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(2))
+   io_err(2)=io_SC_components('WF',E,ID(2))
+   do ik = 1, QP_nk 
+     call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(2))
+     io_err(2)=io_SC_components('WF',E,ID(2))
+   enddo
+   !
    if ( (E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold) .or.&
 &       stop_now(.FALSE.)) exit
    !
@@ -439,24 +491,38 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  call msg('r' ,'[SC] Accuracy on density      :',rho_convergence)
  call msg('rn','[SC]          on energies [ev]:',E_convergence*HARTREE)
  !
+1 continue
+ !
  call fermi_level(E,k,Tel,1)
  !
  do ik=1,k%nibz
    !
    ! Check for degenrate bands in the bare energies
    !
-   call degeneration_finder(E_save(:,ik),SC_bands,first_el,n_of_el,n_deg_grp,0.0001/HARTREE)
-   !
-   ! define and simmetrize the spreads summing over all possible degenerate
-   ! bands
-   !
-   forall (ib=1:SC_bands) spread(ib,ik)=abs(SC_R(ib,ib,ik))**2.*100./HARTREE
+   call degeneration_finder(E_bare(:,ik),SC_bands,first_el,n_of_el,n_deg_grp,0.0001/HARTREE)
    !
    do ib=1,SC_bands
+     !
+     ! Then search for the max projection   
+     ! 
+     max_proj=-1.
+     do i1=1,SC_bands
+       if (abs(SC_R(i1,ib,ik))**2.>max_proj) then
+         b_of_max_proj(ib,ik)=i1
+         max_proj=abs(SC_R(i1,ib,ik))**2.
+       endif
+     enddo
+     ! 
+     ! simmetrize the spreads summing over all possible degenerate
+     ! bands
+     !
      forall (ibp=1:SC_bands) WS_spread(ibp)=abs(SC_R(ibp,ib,ik))**2.*100./HARTREE
-     spread(ib,ik)=WS_spread(ib)
+     !
+     ibp=b_of_max_proj(ib,ik)
+     spread(ib,ik)=WS_spread( ibp )
+     !
      do i1=1,n_deg_grp
-       if (ib>=first_el(i1).and.ib<=first_el(i1)+n_of_el(i1)-1) then
+       if (ibp>=first_el(i1).and.ibp<=first_el(i1)+n_of_el(i1)-1) then
          spread(ib,ik)=0.
          do i2=first_el(i1),first_el(i1)+n_of_el(i1)-1
            spread(ib,ik)=spread(ib,ik)+WS_spread(i2)
@@ -465,29 +531,23 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      enddo
    enddo
    !
-   ! ... and the SC energies
+   dE(:,ik)=E%E(:SC_bands,ik,1)-E_bare(:,ik)
    !
-   do i1=1,n_deg_grp
-     sym_value=0.
-     do i2=first_el(i1),first_el(i1)+n_of_el(i1)-1
-       sym_value=sym_value+E%E(i2,ik,1)/real( n_of_el(i1) )
-     enddo
-     do i2=first_el(i1),first_el(i1)+n_of_el(i1)-1
-       E%E(i2,ik,1)=sym_value
-     enddo
-   enddo
-   !
-   dE(:,ik)=E%E(:SC_bands,ik,1)-E_save(:,ik)
  enddo
  !
  do ik=1,k%nibz
    call report_energies(E%E(:SC_bands,:,:),k,SC_bands,(/ik,ik/),'E  ',.TRUE.)
-   call report_energies(E_save,k,SC_bands,(/ik,ik/),'E_o',.FALSE.)
+   call report_energies(E_bare,k,SC_bands,(/ik,ik/),'E_o',.FALSE.)
    call report_energies(dE,k,SC_bands,(/ik,ik/),'d_E',.FALSE.)
    call report_energies(spread,k,SC_bands,(/ik,ik/),'Spr',.FALSE.)
+   call report_energies(real(b_of_max_proj)/HARTREE,k,SC_bands,(/ik,ik/),'Bnd',.FALSE.)
  enddo
  !
- deallocate(rho_n,rho_nm1,V_xc_sc,V_xc_nm1,V_hr,WFo,SC_R,H_nl_sc)
- call mem_est("Hs Potentials WF_save SC_R H_nl_sc")
+ deallocate(SC_R)
+ call mem_est("SC_R")
+ if (SC_cycle) then
+   deallocate(rho_n,rho_nm1,V_xc_sc,V_xc_nm1,V_hr,WFo,H_nl_sc)
+   call mem_est("Hs Potentials WF_save H_nl_sc")
+ endif
  !
 end subroutine SC_driver

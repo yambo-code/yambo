@@ -40,7 +40,7 @@ subroutine X_O_rotate(X_bands,use_trans_gauge,E)
  real(SP)    :: delta_E(X_bands,X_bands)
  complex(SP) :: grad_WS_n(3,X_bands,X_bands),grad_WS_nm1(3,X_bands,X_bands)
  !
- ! First I read the rotation matrices
+ ! irst I read the rotation matrices
  !                  -----------------
  !
  call load_SC_components('WF',COM_=NONE,MODE_=DUMP)

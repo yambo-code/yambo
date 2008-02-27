@@ -45,14 +45,14 @@
    real(SP),          intent(inout) :: field_dir(3)
    integer                      :: nkibz_save, wf_ncx_save, wf_ncx_long, nkibz_long
    logical,        intent(inout)  :: use_trans_gauge
-!ws
-     integer                      :: wf_ng_long
+!  Work Space
+     integer                      :: wf_ng_long, E_i_spin
   integer                      :: ikpq, ik_grid, ir, num_long_grid
   logical                      :: read_zero_grid
   complex(SP)                  :: xy1,xy2
    integer                          :: ik, i1, icfft, ivfft, ic, iv, is, i_spin, ifail, iq, err, io_err
    type(pp_indexes)                 :: px
-   complex(SP)                      :: PS(3), rho(n_spin,3)
+   complex(SP)                      :: PS(3), rho(3,n_spin)
    real(SP), parameter          :: fac = 0.70710678118654752440_SP, zero = 1.0E-5
    real(SP)          :: Ev_m_Ec
    character(schlen)                :: sch ! DEBUG
@@ -156,7 +156,7 @@
      !
      call pp_indexes_reset(px)
      call par_indexes(px,(/Xk%nibz,Xen%nbm/),(/1,X%ib(1)/))
-     call live_timing('Optical strengths (L/cut/'//trim(intc(iq))//'):',px%stps(myid+1))
+     call live_timing('Dipole (L/cut/'//trim(intc(iq))//'):',px%stps(myid+1))
      call pp_redux_wait
 
      do ik = 1, Xk%nibz   ! Loop over k's in IBZ [1:nkibz]
@@ -197,34 +197,34 @@
 
          do ic = Xen%nbf+1, X%ib(2)
            do i_spin = 1,n_spin
-
-             ivfft   = wf_state(iv,ikpq,i_spin)
-
-             if (n_sp_pol==2) then
-               Ev_m_Ec=Xen%E(iv,ik,i_spin)-Xen%E(ic,ik,i_spin)
-               if (associated(Xen_save%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,i_spin)-Xen%Eo(ic,ik,i_spin)
-             else 
-               Ev_m_Ec=Xen%E(iv,ik,1)-Xen%E(ic,ik,1)
-               if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,1)-Xen%Eo(ic,ik,1)
-             endif
+             !
+             rho(:,i_spin)=(0.,0.)
+             !
+             E_i_spin=i_spin
+             if (n_sp_pol/=2) E_i_spin=1
+             !
+             Ev_m_Ec=Xen%E(iv,ik,E_i_spin)-Xen%E(ic,ik,E_i_spin)
+             if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,E_i_spin)-Xen%Eo(ic,ik,E_i_spin)
 
              if (any( (/ -Ev_m_Ec < X%ehe(1) .and. X%ehe(1) > 0.0_SP, &
                          -Ev_m_Ec > X%ehe(2) .and. X%ehe(2) > 0.0_SP /))) cycle
              if (abs(Ev_m_Ec)<=1.E-5_SP) cycle
+
+             ivfft   = wf_state(iv,ikpq,i_spin)
              icfft = wf_state_local(ic,ik,i_spin)
              !
              ! X_q0grad = < v,k+q | T(z) e^i(q.r)| c,k >/q
              !
              call PScut(PS, wf(1:wf_ng_long,ivfft), wf_local(1:wf_ng_long,icfft))
-             rho(i_spin,:) = PS(:)/q0_def_norm
+             rho(:,i_spin) = PS(:)/q0_def_norm
            enddo   ! spin loop
            if (n_sp_pol==2) then
-             Xcut_q0grad(ir,ic,iv,ik,1)=rho(1,ir)
-             Xcut_q0grad(ir,ic,iv,ik,2)=rho(2,ir)
+             Xcut_q0grad(ir,ic,iv,ik,1)=rho(ir,1)
+             Xcut_q0grad(ir,ic,iv,ik,2)=rho(ir,2)
            else if (n_spinor==2) then
-             Xcut_q0grad(ir,ic,iv,ik,1)=(rho(1,ir)+rho(2,ir))
+             Xcut_q0grad(ir,ic,iv,ik,1)=(rho(ir,1)+rho(ir,2))
            else if (n_spin==1) then
-             Xcut_q0grad(ir,ic,iv,ik,1)=rho(1,ir)
+             Xcut_q0grad(ir,ic,iv,ik,1)=rho(ir,1)
            endif
 
          enddo ! cond. bands

@@ -24,20 +24,22 @@
  use pars
  use com,                     ONLY : msg, warning
  use timing,                  ONLY : live_timing
- use electrons,               ONLY : levels, n_spin, n_spinor
+ use electrons,               ONLY : levels, n_spin, n_spinor, n_sp_pol
  use par_proc_m,              ONLY : pp_redux_wait, pp_indexes, myid, &
 &                                    master_node, pp_indexes_reset
  use par_indexes_m,           ONLY : par_indexes
  use D_lattice,               ONLY : nsym, i_time_rev, alat, dl_sop, sop_inv
- use R_lattice,               ONLY : g_vec, bz_samp
+ use R_lattice,               ONLY : g_vec, bz_samp, q0_def_norm,q_norm,bare_qpg
  use X_m,                     ONLY : X_alloc, X_t, long_path
  use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP
  use memory_m,                ONLY : mem_est
  use wave_func,               ONLY : wf, wf_ng, wf_state, wf_load, WF_free
  use optcut,                  ONLY : Xcut_q0grad, Xcut_rhoq0, ng_limits, setup_optcut, pscut
+ use drivers,                 ONLY : l_col_cut
 #if defined _RAS
- use ras_module,     ONLY:transloc
+ use ras_module,              ONLY : transloc, lras
 #endif
+  use vec_operate,    ONLY:v_norm
  implicit none
  type(bz_samp),  intent(in)       :: Xk
  type(levels),   intent(in)       :: Xen
@@ -105,6 +107,18 @@
    io_err=ioOSTNTS_cut(X,Xen,io_db)
  endif
  !
+ ! The field direction and the gamma-point norm must be renormalized here in case the
+ ! oscillator strengths have been calculated using the long. gauge.
+ ! In this case q0_def_norm is not the default one but corresponds
+ ! to the norm of the longitudinal shift.
+ !
+
+! THIS MUST BE CHECKED FOR LONG GAUGE + CUT
+
+ field_dir=field_dir*q0_def_norm/v_norm(field_dir)
+ q_norm(1)=q0_def_norm
+ if (.not.l_col_cut) bare_qpg(1,1)=q0_def_norm
+ !
  ! Calculate the q-dependent oscillators (OptOscCut)
  !
  allocate(Xcut_rhoq0(X%ib(2),Xen%nbm,Xk%nbz,n_spin))
@@ -112,15 +126,20 @@
  Xcut_rhoq0=(0.0_SP,0.0_SP)
 
  do i1=1,Xk%nbz
+   !
    ik  = Xk%sstar(i1, 1)
    is  = sop_inv(Xk%sstar(i1, 2) )
    field_dir_rot = matmul( dl_sop(:,:,is), field_dir )
+   !
    do iv = X%ib(1), Xen%nbm
      do ic = Xen%nbf+1, X%ib(2)
+     !
 #if defined _RAS
-   if(.not.transloc(ic,iv,ik)) cycle
+       if(lras) then
+         if(.not.transloc(ic,iv,ik)) cycle
+       endif
 #endif
-       do i_spin = 1, n_spin
+       do i_spin = 1, n_sp_pol
          !
          ! X_rhoq0 = i q . < v k | r | c k >
          !

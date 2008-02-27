@@ -39,14 +39,16 @@
    type(bz_samp),  intent(in)       :: Xk
    type(levels),   intent(in)       :: Xen
    type(X_t)                        :: X
-!ws
-   integer                          :: ik, i1, icfft, ivfft, ic, iv, is, i_spin
-   real(SP)                         :: omega, field_dir_rot(3)
+   !
+   ! Work Space
+   !
+   integer                          :: ik, i1, icfft, ivfft, ic, iv, is, i_spin, E_i_spin
+   real(SP)                         :: Ev_m_Ec, field_dir_rot(3)
    type(pp_indexes)                 :: px
    real(SP), allocatable            :: kg(:,:)
-   complex(SP)                      :: PS(3), spinor_avg(3)
-   real(SP), parameter          :: fac = 0.70710678118654752440_SP
+   complex(SP)                      :: PS(3), spinor_avg(3), rho(3,n_spin)
    character(schlen)                :: sch ! DEBUG
+!  real(SP), parameter          :: fac = 0.70710678118654752440_SP
 
 !    call setup_gvecaff
 !    call nG_limits( Xk%nibz )
@@ -56,7 +58,7 @@
 
    call pp_indexes_reset(px)
    call par_indexes(px, (/ Xk%nibz, Xen%nbm /),(/ 1, X%ib(1) /))
-   call live_timing('Optical strengths-cut (T):',px%stps(myid+1))
+   call live_timing('Dipole, cut (T):',px%stps(myid+1))
    call pp_redux_wait
 
    do ik = 1, Xk%nibz
@@ -78,32 +80,43 @@
 
      do iv = X%ib(1), Xen%nbm
        if (.not.px%i2p(ik,iv)) cycle
-       do i_spin   = 1, n_spin
-         ivfft=wf_state(iv,ik,i_spin)
-         do ic = Xen%nbf+1, X%ib(2)
-           omega = Xen%E(iv,ik,i_spin)-Xen%E(ic,ik,i_spin)
+       do ic = Xen%nbf+1, X%ib(2)
+         do i_spin   = 1, n_spin
+           !
+           rho(:,i_spin)=(0.,0.)
+           !
+           E_i_spin=i_spin
+           if (n_sp_pol/=2) E_i_spin=1
+           Ev_m_Ec = Xen%E(iv,ik,E_i_spin)-Xen%E(ic,ik,E_i_spin)
 
-           if (associated(Xen%Eo)) omega=Xen%Eo(iv,ik,i_spin)-Xen%Eo(ic,ik,i_spin)
-           if (any((/-omega<X%ehe(1).and.X%ehe(1)>0.,-omega>X%ehe(2).and.X%ehe(2)>0./))) cycle
-           if (abs(omega)<=1.E-5) cycle
+           if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,E_i_spin)-Xen%Eo(ic,ik,E_i_spin)
+           if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.,-Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0./))) cycle
+           if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,&
+&                    -Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/))) cycle
+           if (abs(Ev_m_Ec)<=1.E-5) cycle
+
+           ivfft=wf_state(iv,ik,i_spin)
            icfft=wf_state(ic,ik,i_spin)
 
            call PScut(PS, wf(:,ivfft), wf(:,icfft), kg = kg )
 !          call PScut_slow(PS, wf(:,ivfft), wf(:,icfft), kg )
 
-           Xcut_q0grad(:,ic,iv,ik,i_spin) = PS(:)/omega
-         enddo ! cond. bands
-       enddo   ! spinors
-       !
-       ! Correct for spinor case
-       !
-       if(n_spinor.eq.2) then
-         do ic = Xen%nbf+1, X%ib(2)
-           spinor_avg(:) =  ( Xcut_q0grad(:,ic,iv,ik,1) + Xcut_q0grad(:,ic,iv,ik,2) )*fac
-           Xcut_q0grad(:,ic,iv,ik,1) = spinor_avg(:)
-           Xcut_q0grad(:,ic,iv,ik,2) = spinor_avg(:)
-         enddo
-       endif
+!          Xcut_q0grad(:,ic,iv,ik,i_spin) = PS(:)/Ev_m_Ec
+           rho(:,i_spin) = PS(:)/Ev_m_Ec
+         enddo   ! spin
+         !
+         ! Correct for spin case
+         !
+         if (n_sp_pol==2) then
+           Xcut_q0grad(:,ic,iv,ik,1)=rho(:,1)
+           Xcut_q0grad(:,ic,iv,ik,2)=rho(:,2)
+         else if (n_spinor==2) then
+           Xcut_q0grad(:,ic,iv,ik,1)=(rho(:,1)+rho(:,2))
+         else if (n_spin==1) then
+           Xcut_q0grad(:,ic,iv,ik,1)=rho(:,1)
+         endif
+
+       enddo ! cond. bands
        call live_timing(steps=1)
      enddo   ! valence bands
    enddo     ! k-points

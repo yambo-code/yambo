@@ -31,7 +31,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                         QP_ng_Sx,QP_Sx,QP_t,QP_reset,CHOSEX_use_empties,QP_sc
  use SC,             ONLY:SC_bands,SC_iterations,SC_E_threshold,SC_kind,SC_xc_functional,&
 &                         SC_rho_threshold,SC_potential,it_now,E_convergence,&
-&                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,SC_bands_mixed 
+&                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,SC_bands_mixed,&
+&                         SC_cycle_mixing
  use wave_func,      ONLY:wf_load,wf,WF_rotate,wf_n_states
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size,fft_size
@@ -57,10 +58,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  integer                  :: it
  real(SP)                 :: E_bare(SC_bands,k%nibz),spread(SC_bands,k%nibz),&
-&                            E_previous(SC_bands,k%nibz),dE(SC_bands,k%nibz),&
-&                            n_weight
+&                            E_previous(SC_bands,k%nibz),dE(SC_bands,k%nibz)
  real(SP),    allocatable :: rho_n(:),V_xc_nm1(:),V_hr(:),rho_nm1(:)
- complex(SP), allocatable :: WFo(:,:)
+ complex(SP), allocatable :: WFo(:,:),QP_Sxc_nm1(:)
  ! 
  ! Work Space
  !
@@ -131,6 +131,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  call msg('r' ,'[SC] Bands                            :',SC_bands)
  call msg('r' ,'[SC] Mixed bands                      :',SC_bands_mixed)
+ call msg('r' ,'[SC] N (N-1) order mixing             :',SC_cycle_mixing)
  call msg('r' ,'[SC] Imposed accuracy on density      :',SC_rho_threshold)
  call msg('rn','[SC]                  on energies [ev]:',SC_E_threshold*HARTREE)
  !
@@ -208,6 +209,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  allocate(SC_R(SC_bands,SC_bands,k%nibz),H_nl_sc(SC_bands,SC_bands))
  call mem_est("SC_R H_nl_sc",(/size(SC_R),size(H_nl_sc)/))
  !
+ if (.not.local_V) then
+   allocate(QP_Sxc_nm1(QP_n_states))
+   call mem_est("QP_Sxc_nm1",(/QP_n_states/))
+ endif
+ !
  !  Vxc[rho_0] and Vh[rho_0]
  !===========================
  !
@@ -240,7 +246,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    ibp=QP_table(i1,2)
    ik =QP_table(i1,3)
    !
-   if (ib==ibp) Ho(ib,ibp,ik) = Ho(ib,ibp,ik) + E%E(ib,ik,1)
+   if (ib==ibp) Ho(ib,ibp,ik) = Ho(ib,ibp,ik) + E_bare(ib,ik)
    !
    Ho(ib,ibp,ik) = Ho(ib,ibp,ik) - QP_Vxc(i1)
    !
@@ -306,10 +312,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    it_now=it_now+1
    !
-   n_weight=.3
-   if (it_now>=10) n_weight=.2
-   if (it_now>=50) n_weight=.1
-   !
    if (local_V) then
      !
      if (l_sc_xx) call V_exx(X,E,k,q,V_xc_sc)
@@ -327,7 +329,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      ! Mixing 
      !========
      !
-     if (it>1) V_xc_sc = n_weight*V_xc_sc + (1.-n_weight)*V_xc_nm1 
+     if (it>1) V_xc_sc = SC_cycle_mixing*V_xc_sc + (1.-SC_cycle_mixing)*V_xc_nm1 
      !
      V_xc_nm1=V_xc_sc
      !
@@ -339,7 +341,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      ! Hartee-Fock
      !
-     if (l_sc_hf.or.l_sc_chosex) call QP_XX_Vxc(E,k,k,q)
+     call QP_XX_Vxc(E,k,k,q)
      !
      call SC_mute("report io_out")
      !
@@ -349,6 +351,24 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      call SC_mute(" ")
      !
+     ! Mixing 
+     !========
+     !
+     if (it>1) then
+       if (l_sc_chosex) then
+         forall (i1=1:QP_n_states)  QP_Sx(i1)=SC_cycle_mixing*QP_Sx(i1)+&
+&                                             (1.-SC_cycle_mixing)/2.*QP_Sxc_nm1(i1)
+         forall (i1=1:QP_n_states)  QP_Sc(i1,1)=SC_cycle_mixing*QP_Sc(i1,1)+&
+&                                               (1.-SC_cycle_mixing)/2.*QP_Sxc_nm1(i1)
+       else
+         forall (i1=1:QP_n_states)  QP_Sx(i1)=SC_cycle_mixing*QP_Sx(i1)+&
+&                                             (1.-SC_cycle_mixing)*QP_Sxc_nm1(i1)
+       endif
+     endif
+     !
+     forall (i1=1:QP_n_states)                  QP_Sxc_nm1(i1)= QP_Sx(i1)
+     if (l_sc_chosex) forall (i1=1:QP_n_states) QP_Sxc_nm1(i1)= QP_Sxc_nm1(i1)+QP_sc(i1,1)
+     !
    endif
    !
    ! Hartree potential
@@ -356,7 +376,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    if (it>1) then
      !
-     rho_n = n_weight*rho_n + (1.-n_weight)*rho_nm1
+     rho_n = SC_cycle_mixing*rho_n + (1.-SC_cycle_mixing)*rho_nm1
      !
      call V_Hartree(rho_n,V_hr)
      !
@@ -392,6 +412,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
          ibp=QP_table(i1,2)
          H_nl_sc(ib,ibp) =  QP_Sx(i1)
          if (l_sc_chosex) H_nl_sc(ib,ibp) = H_nl_sc(ib,ibp) + QP_Sc(i1,1)
+         !
+         ! Force to be Hermitian
+         !
+         if (ib/=ibp) H_nl_sc(ibp,ib) = conjg(H_nl_sc(ib,ibp))
+         !
        end do
        !
        ! Rotate H_nl_sc in the WFo basis.
@@ -548,6 +573,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  if (SC_cycle) then
    deallocate(rho_n,rho_nm1,V_xc_sc,V_xc_nm1,V_hr,WFo,H_nl_sc)
    call mem_est("Hs Potentials WF_save H_nl_sc")
+   if (.not.local_V) then
+     deallocate(QP_Sxc_nm1)
+     call mem_est("QP_Sxc_nm1")
+   endif
  endif
  !
 end subroutine SC_driver

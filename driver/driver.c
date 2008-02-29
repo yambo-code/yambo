@@ -255,7 +255,7 @@ main(int argc, char *argv[])
    INPUT FILE
  ===========================================================================
  */
- strcpy(edit_line,"vi ");
+ strcpy(edit_line,"vim ");
  strncat(edit_line,inf,strlen(inf));
 #if defined _self || _RAS || _REELS || _spp || _ELPH || _SC || _SPP_ELPH || _SPP_RAS  || _BIGSYS || _BS_CPL
  if (iif == 1 && ttd>0 ) 

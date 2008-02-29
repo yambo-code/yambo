@@ -322,6 +322,11 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    ! CLEAN (each q)
    !
    call X_alloc('X')
+   !
+#if defined _SC
+   call f_sum_rule(wv)
+#endif
+   !
    deallocate(X_epsilon,wv%p)
    call mem_est("W-p")
    if (allocated(X_fxc)) deallocate(X_fxc)

@@ -37,8 +37,8 @@ subroutine X_O_rotate(X_bands,use_trans_gauge,E)
  ! Work Space
  !
  integer     :: ik,ic,it,ib,ibp
- real(SP)    :: delta_E(X_bands,X_bands)
- complex(SP) :: grad_WS_n(3,X_bands,X_bands),grad_WS_nm1(3,X_bands,X_bands)
+ real(SP)    :: delta_E(X_bands,X_bands),delta_E_tilde(X_bands,X_bands)
+ complex(SP) :: D_WS_n(X_bands,X_bands),D_WS_nm1(X_bands,X_bands)
  !
  ! irst I read the rotation matrices
  !                  -----------------
@@ -57,45 +57,55 @@ subroutine X_O_rotate(X_bands,use_trans_gauge,E)
    !
    call H_rotate(SC_R(:,:,ik),H_nl_sc,SC_bands,1)
    !
-   grad_WS_nm1(:,:,:)=(0.,0.)
-   !
    do ib=1,X_bands
      do ibp=1,X_bands
        !
        delta_E(ib,ibp)=E%E(ib,ik,1)-E%E(ibp,ik,1)
        if (associated(E%Eo)) delta_E(ib,ibp)=E%Eo(ib,ik,1)-E%Eo(ibp,ik,1)
        !
-       if (abs(delta_E(ib,ibp))<=1.E-5_SP) cycle
+       delta_E_tilde(ib,ibp)=delta_E(ib,ibp)+H_nl_sc(ibp,ibp)-H_nl_sc(ib,ib)
+       !
+       if (abs(delta_E(ib,ibp))<=1.E-5_SP) then
+         delta_E(ib,ibp)=1.
+         delta_E_tilde(ib,ibp)=1.
+       endif
        !
      enddo
      !
    enddo
    !
-   ! Remember that X_q0grad(n,n') = i <n'|r|n>
-   ! 
-   forall (ic=1:3,ib=1:X_bands,ibp=1:X_bands) grad_WS_nm1(ic,ib,ibp)=&
-&          X_q0grad(ic,ibp,ib,ik,1)*delta_E(ib,ibp)/(delta_E(ib,ibp)+H_nl_sc(ibp,ibp)-H_nl_sc(ib,ib))
+   ! Zero the diagonal of the H_sc
    !
-   ! Zero the diagonal of the H_sc and move it in delta_E
-   !
-   forall (ib=1:X_bands) H_nl_sc(ib,ib)=(0.,0.)
-   forall (ib=1:X_bands,ibp=1:X_bands) delta_E(ib,ibp)=delta_E(ib,ibp)+H_nl_sc(ibp,ibp)-H_nl_sc(ib,ib)
+   !forall (ib=1:X_bands) H_nl_sc(ib,ib)=(0.,0.)
    !
    do ic=1,3
      !
-     do it=1,0
+     ! Remember that X_q0grad(n,n') = i <n'|r|n>
+     ! 
+     forall (ib=1:X_bands,ibp=1:X_bands) D_WS_nm1(ib,ibp)=&
+&           X_q0grad(ic,ibp,ib,ik,1)
+!*delta_E(ib,ibp)/delta_E_tilde(ib,ibp)
+     !
+     do it=1,50
        !
-       !  i <i|r|j>_n = (<i|p|j> - i <i|r|k>_n-1 \tilde{H}_kl + i \tilde{H}_ik <k|r|j>_n-1 )/(D_ij+H_ii-H_jj)
+       !  i <i|r|j>_n = (<i|p|j> - i <i|r|k>_n-1 \tilde{H}_kl + 
+       !                           i \tilde{H}_ik <k|r|j>_n-1 )/(D_ij-H_ii+H_jj)
        !
-       ! where \tilde{H} has zero diagonal
+       ! where \tilde{H} has zero diagonal terms
        !
-       grad_WS_n(ic,:,:)=-matmul(grad_WS_nm1(ic,:,:),H_nl_sc(:X_bands,:X_bands))+matmul(H_nl_sc(:X_bands,:X_bands),grad_WS_nm1(ic,:,:))
+       D_WS_n(:,:)=-matmul(D_WS_nm1(:,:),H_nl_sc(:X_bands,:X_bands))+&
+&                   matmul(H_nl_sc(:X_bands,:X_bands),D_WS_nm1(:,:))
+
        !
-       forall (ib=1:X_bands,ibp=1:X_bands) grad_WS_n(ic,ib,ibp)=grad_WS_n(ic,ib,ibp)/delta_E(ib,ibp)+grad_WS_nm1(ic,ib,ibp)
+       forall (ib=1:X_bands,ibp=1:X_bands) D_WS_n(ib,ibp)=&
+&             X_q0grad(ic,ibp,ib,ik,1)*delta_E(ib,ibp)/delta_E_tilde(ib,ibp)+&
+&             D_WS_n(ib,ibp)/delta_E_tilde(ib,ibp)
+       !
+       D_WS_nm1=D_WS_n
        !
      enddo 
      !
-     forall (ib=1:X_bands,ibp=1:X_bands) X_q0grad(ic,ib,ibp,ik,1)=grad_WS_nm1(ic,ibp,ib)
+     forall (ib=1:X_bands,ibp=1:X_bands) X_q0grad(ic,ib,ibp,ik,1)=D_WS_n(ibp,ib)
      !
    enddo
    !

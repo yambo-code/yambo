@@ -30,7 +30,6 @@ module SC
  real(SP)          :: SC_band_mixing
  !
  real(SP)          :: SC_E_threshold
-#if defined _SC
  integer           :: SC_bands
  integer           :: it_now
  integer           :: SC_iterations
@@ -39,6 +38,7 @@ module SC
  real(SP)          :: rho_convergence
  real(SP)          :: E_convergence
  real(SP)          :: SC_rho_threshold
+ real(SP)          :: SC_cycle_mixing
  !
  character(schlen) :: SC_potential
  logical           :: local_V
@@ -116,6 +116,4 @@ module SC
      !
    end subroutine 
    !
-#endif
- !
 end module

@@ -478,7 +478,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! DFT
  !
 #if defined _SC
- if (l_sc_run) call initactivate(1,'SCPot FFTGvecs SCEtresh SCRhoTresh SCIter SCBands BandMix')
+ if (l_sc_run) call initactivate(1,'SCPot FFTGvecs SCEtresh SCRhoTresh SCIter SCmixing SCBands BandMix')
 #endif
  !
  ! RAS

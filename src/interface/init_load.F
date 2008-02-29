@@ -55,7 +55,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use functions,     ONLY:bose_E_cut
 #if defined _SC
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential,&
-&                        SC_E_threshold,SC_rho_threshold
+&                        SC_E_threshold,SC_rho_threshold,SC_cycle_mixing
 #endif
  use SC,            ONLY:SC_band_mixing
 #if defined _RAS
@@ -194,6 +194,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _SC
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  call it(defs,'SCIter',    '[SC] SC Iterations',SC_iterations)
+ call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_more)
  call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)
  call it(defs,'SCPot',     '[SC] SC Potential',SC_potential)
  call it(defs,'SCEtresh',  '[SC] Energy convergence threshold',SC_E_threshold,unit=E_unit)

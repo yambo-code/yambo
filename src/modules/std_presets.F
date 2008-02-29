@@ -65,7 +65,7 @@ subroutine std_presets(INSTR,IND,OD,JS)
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND
 #if defined _SC
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,SC_E_threshold,&
-&                     using_SC_basis
+&                     using_SC_basis,SC_cycle_mixing
 #endif
  use SC,         ONLY:SC_band_mixing
  !
@@ -326,6 +326,7 @@ subroutine std_presets(INSTR,IND,OD,JS)
  ! SC
  !
  SC_iterations=100
+ SC_cycle_mixing=0.5
  SC_rho_threshold=1.E-5
  SC_E_threshold=0.01/HARTREE
  SC_potential='none'

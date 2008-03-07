@@ -38,8 +38,8 @@
    subroutine make_real_wf(ib,ik,wf_,nc)
      use stderr,    ONLY:intc
      use com,       ONLY:warning
+     integer     :: ib,ik,nc
      real (SP)   :: wf_(2,nc)
-     integer     :: ib,ik
      !
      ! Work Space
      !

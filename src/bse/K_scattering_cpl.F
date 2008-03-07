@@ -156,7 +156,7 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
            !
            if (.not.BS_cpl_K_corr.and. (&
 &              (i3> O_n_v_states(ik1bz,i_sp1).and.i4<=O_n_v_states(ik2bz,i_sp1)).or.&
-&              (i3<=O_n_v_states(ik1bz,i_sp1).and.ib2> O_n_v_states(ik2bz,i_sp1)))) cycle
+&              (i3<=O_n_v_states(ik1bz,i_sp1).and.i4> O_n_v_states(ik2bz,i_sp1)))) cycle
            !
            is_coll=iss_tab
            !
@@ -173,7 +173,7 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
              isc%is=(/ib1,ik1,1,i_sp1/)
              isc%os=(/ib2,ik2,is_coll,i_sp1/)
              call scatterBamp(isc)
-             BS_O(:,O_n_scatt)=isc%rhotw
+             BS_O(:,O_n_scatt)=isc%rhotw 
              !
            else
              !

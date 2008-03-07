@@ -33,8 +33,10 @@ module D_lattice
  ! SYMs
  !
  integer :: nsym
- integer :: i_time_rev
- integer :: i_space_inv
+ integer :: i_time_rev  ! =1 yes TR , =0 no TR
+ integer :: i_space_inv ! =1 yes SI,  =0 no SI
+ integer :: inv_index ! Index of the symmetry corresponding to -I (independently 
+                      ! on the value of i_time_rev and i_space_inv
  real(SP),allocatable :: dl_sop(:,:,:)
  integer, allocatable :: sop_tab(:,:)
  integer, allocatable :: sop_inv(:)

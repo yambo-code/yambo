@@ -38,6 +38,10 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  use memory_m,      ONLY:mem_est
  use X_m,           ONLY:X_t,X_poles,X_rhoq0,iq_now,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_RIM
+#if defined _SC
+ use drivers,       ONLY:l_sc_run
+ use SC,            ONLY:it_now
+#endif
 #if defined _RAS
  use optcut,                ONLY : loptcut, Xcut_rhoq0
  use analyse_peaks,         ONLY : lAnalysePeaks
@@ -170,8 +174,17 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  px%i1wts=bg_npts+Xw%n(2)
  call par_indexes(px,(/cg_npts/))
  !
- call live_timing(& 
-&   'Xo@q['//trim(intc(iq))//'] '//trim(intc(fr(1)))//'-'//trim(intc(fr(2))),px%stps(myid+1))
+#if defined _SC
+ if (l_sc_run) then
+   call live_timing('Xo @it'//trim(intc(it_now)),px%stps(myid+1))
+ else
+   call live_timing('Xo@q['//trim(intc(iq))//'] '//&
+&                    trim(intc(fr(1)))//'-'//trim(intc(fr(2))),px%stps(myid+1))
+ endif
+#else
+ call live_timing('Xo@q['//trim(intc(iq))//'] '//&
+&                  trim(intc(fr(1)))//'-'//trim(intc(fr(2))),px%stps(myid+1))
+#endif
  !
  n_poles=0
  !

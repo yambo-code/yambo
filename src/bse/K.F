@@ -21,9 +21,6 @@
 !
 subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
- ! BS Kernel: note that the coupling procedure assumes that nsym/2+1 is
- !            spatial inversion
- !
  ! K = <2V-W>
  !
  use pars,         ONLY:SP,pi,IP
@@ -35,7 +32,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use stderr,       ONLY:intc
  use wave_func,    ONLY:wf_load,WF_free
  use functions,    ONLY:K_scatter
- use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv
+ use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv,inv_index
  use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,qindx_X,bz_samp,RIM_qpg,&
 &                       RIM_anisotropy,ik_is_table,bare_qpg
  use par_proc_m,   ONLY:pp_redux_wait,myid,ncpu
@@ -50,6 +47,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_K_dim,BS_eh_win,BS_blk_coord,&
 &                       cumulative_index,BS_K_is_ALDA,BS_cpl_mat,&
 &                       BS_cpl_K_exchange,BSS_q0
+#if defined _SC
+ use BS,             ONLY:BS_bare_W
+#endif
 #if defined _BS_CPL
  use BS,           ONLY:O_n_scatt,BS_O,BS_cpl_K_corr
 #else
@@ -73,6 +73,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  integer    :: ikk1,ikk2,live_timing_steps,is1xis2,ik1bz,iv1,ic1,ik1,is1,inv_s1,is1p,&
 &              i_sp1,i_sp2,ik2bz,iv2,ic2,ik2,is2,is2p,&
 &              icv1,icv2,iOvv,iOcc,i1,i2,i3,iqs,iq_W,ig0
+#if defined _BS_CPL
+ integer    :: iOcv, iOvc
+#endif
 #if defined _DOUBLE
  complex(SP):: zdotc,zdotu
 #else
@@ -172,7 +175,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! PP/Epsm1S DBs
  !
- if (BS_res_K_corr) then
+ if (BS_res_K_corr&
+#if defined _SC
+&    .and..not.BS_bare_W&
+#endif
+    ) then
    call section('+','Screneed interaction header I/O')
    !
    ! X%ng are the G's in the X DB while BS_n_g_W the G's I want to read.
@@ -309,17 +316,32 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    allocate(isc%gamp(i1,BS_n_g_W))
    !
+#if defined _SC
+   if (.not.BS_bare_W) then
+     call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
+     ioX_err=ioX(X,Xw,XID)
+   endif
+#else
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
    ioX_err=ioX(X,Xw,XID)
+#endif
    !
    do iq_W=1,q%nibz
      !
      isc%qs(2)=iq_W
      call scatterGamp(isc,'c')
      !
+#if defined _SC
+     if (BS_bare_W) then
+       X_mat=(0.,0.)
+     else
+       call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
+       ioX_err=ioX(X,Xw,XID)
+     endif
+#else
      call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
-     !
      ioX_err=ioX(X,Xw,XID)
+#endif
      !
      forall(i2=1:BS_n_g_W) X_mat(i2,i2,1)=X_mat(i2,i2,1)+1.
      do i2=1,BS_n_g_W
@@ -494,10 +516,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
 #if defined _DOUBLE
          if (BS_cpl_K_exchange) H_cpl_x=zdotu(BS_n_g_exch,&
-&                               O2x( g_rot(nsym/2+1,1:BS_n_g_exch),icv2),1,O1x(1,icv1),1)
+&                               O2x( g_rot(inv_index,1:BS_n_g_exch),icv2),1,O1x(1,icv1),1)
 #else
          if (BS_cpl_K_exchange) H_cpl_x=cdotu(BS_n_g_exch,&
-&                               O2x( g_rot(nsym/2+1,1:BS_n_g_exch),icv2),1,O1x(1,icv1),1)
+&                               O2x( g_rot(inv_index,1:BS_n_g_exch),icv2),1,O1x(1,icv1),1)
 #endif
          !
          ! :::ALDA        (resonant):::
@@ -563,6 +585,41 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          ! :::Correlation (coupling):::
          !
          if (BS_cpl_K_corr.and.i_sp1==i_sp2) then
+           !
+           iOcv=O_table(ic1-BS_bands(1)+1,is1, iv2-BS_bands(1)+1,is2,i_sp1)
+           iOvc=O_table(iv1-BS_bands(1)+1,is1p,ic2-BS_bands(1)+1,is2p,i_sp2)
+           inv_s1=sop_inv(is1)
+           is1xis2=sop_tab(sop_inv(is1),is2)
+           !
+           forall(i1=1:BS_n_g_W) Ocv(i1)=&
+ &         BS_O(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOcv)*O_phase(is1xis2,iv2,i_sp1)
+           forall(i1=1:BS_n_g_W) Ovc(i1)=&
+ &         BS_O(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOvc)*O_phase(is1xis2,ic2,i_sp2)
+           !
+           if (is1>nsym/(i_time_rev+1)) Ocv=conjg(Ocv)
+           if (is1>nsym/(i_time_rev+1)) Ovc=conjg(Ovc)
+           if (BS_W_is_diagonal) then
+             !
+             forall(i1=1:BS_n_g_W) Cc(i1)=Ocv(i1)*BS_W(i1,1,iq_W)
+             !
+           else
+             !
+             if (iqs>nsym/(i_time_rev+1) .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
+             !
+             do i1=1,BS_n_g_W
+#if defined _DOUBLE
+               Cc(i1)=zdotu(BS_n_g_W,Ocv,1,BS_W(1,i1,iq_W),1)
+#else
+               Cc(i1)=cdotu(BS_n_g_W,Ocv,1,BS_W(1,i1,iq_W),1)
+#endif
+             enddo
+           endif
+           !
+#if defined _DOUBLE
+            H_cpl_c=zdotc(BS_n_g_W,Ovc,1,Cc,1)*4.*pi
+#else
+            H_cpl_c=cdotc(BS_n_g_W,Ovc,1,Cc,1)*4.*pi
+#endif
            !
          endif
 #endif

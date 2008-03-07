@@ -1,3 +1,72 @@
+2008-02-29 16:27:56 r215 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.0.15
+
+	*  configure include/version.inc config/configure.ac pol_function/f_sum_rule.F pol_function/X_O_rotate.F pol_function/O_driver.F pol_function/.objects interface/init_load.F interface/init.F sc/SC_driver.F modules/std_presets.F modules/mod_SC.F driver/driver.c
+
+	Additions:
+	- src/pol_function/f_sum_rule.F: called in SC run to test
+	  f sum rule
+	- SC_cycle_mixing: iteration mixing controller
+
+	Changes:
+	- SC: in SC_driver corrected the restart option introducing
+	  a E_bare array.
+	- replaced vi with vim in dricer.c
+
+	Patch sent by: Andrea
+
+2008-02-27 17:01:37 r214 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.0.15
+
+	*  ras/X_O_transverse_cut.F ras/X_O_strengths_cut.F ras/X_O_longitudinal_cut.F
+
+	Bugs:
+	- [RAS] Fixed some bugs related to real-space cutoff when n_spin > 1
+
+	Patch sent by: Conor
+
+2008-02-26 12:47:21 r213 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	SC update
+
+2008-02-25 15:59:17 r212 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.0.15
+
+	*  ras/reels_spectrum.F ras_reels_mods/mod_eels_detector.F
+
+	Bugs:
+	- [RAS] Fixed small bug occurring in REELS calc at normal incidence.
+
+	Patch sent by: Conor
+
+2008-02-25 15:08:38 r211 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.0.15
+
+	*  configure spp/spp_i.F include/version.inc config/configure.ac qp/QP_ppa_chosex.F qp/QP_newton.F common/eval_G_minus_G.F wf_and_fft/wf_load.F pol_function/X_O_longitudinal.F pol_function/X_O_transverse.F pol_function/X_O_rotate.F pol_function/X_O_strengths.F interface/setup.F interface/init.F sc/SC_driver.F io/io_SC_components.F io/load_SC_components.F io/ioOSTNTS.F bse/K_driver.F ChangeLog driver/self_driver.F
+
+	Bugs:
+	-
+	Additions:
+	- io_SC_components call in init.F
+	- db.ostnts can be now saved in other folders that is not SAVE
+	  (like db.Xo ...)
+
+	Changes:
+	- BS energies type (Ken) is now defined in the self_driver
+	  and passed to setup. This is to syncronize Ken and Xen
+	  when Self-Consistent energies are used.
+	- QP_ppa_chosex adapated to be called by SC_driver
+	- Still changes in X_O_rotate (under development)
+	- setup.F now calculates energies and occupation
+	  for all energy types (including SC corrections).
+	  QP corrections are, then, added in self_driver, K_driver ...
+
+	Patch sent by: Andrea
+
 2008-02-23 02:46:03 r210 Conor Hogan <conor.hogan@roma2.infn.it>
 
 	Version 3.0.15

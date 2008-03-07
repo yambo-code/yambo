@@ -34,7 +34,7 @@ subroutine exc_properties(Xk,Xen)
  use BS,            ONLY:BS_K_dim,BS_bands,BS_q,&
 &                        BS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
 &                        BS_cpl_K_exchange,BS_cpl_K_corr,BSS_write_eig_2_db
- use electrons,     ONLY:levels,n_sp_pol,spin
+ use electrons,     ONLY:levels,n_sp_pol,spin,n_spinor
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use com,           ONLY:msg,error,warning
@@ -115,7 +115,8 @@ subroutine exc_properties(Xk,Xen)
  if (BS_cpl_K_corr) BS_cpl_mode='c'
  if (BS_cpl_K_exchange.and.BS_cpl_K_corr) BS_cpl_mode='xc'
  if (BS_K_coupling) BS_K_dim=2*BS_K_dim
- !
+ 
+!
  ! Get state indexes
  !
  n_lambda = get_lambda()
@@ -130,6 +131,7 @@ subroutine exc_properties(Xk,Xen)
  !
  ! Here I read energies and residuum
  !
+
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_err=ioBSS_diago(iq,BS_K_dim,BS_E,BS_R,io_ID)
  if (io_err/=0) return
@@ -173,7 +175,7 @@ subroutine exc_properties(Xk,Xen)
  ! Exciton's spin (collinear case)
  !================================
  !
- if (l_spin) then
+ if (l_spin.and.n_spinor==1) then
    allocate(S_z(BS_K_dim),S_sq(BS_K_dim))
    if (n_sp_pol==2)  call exc_collinear_spin(BS_E_degs,S_z,S_sq)
    call exc_wf_sort_and_report(Xk,Xen,BS_R,BS_E,S_sq=S_sq,S_z=S_z)
@@ -184,6 +186,25 @@ subroutine exc_properties(Xk,Xen)
  ! Loading  Wf 
  !
  call wf_load(wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
+ !
+ ! Exciton's spin (not collinear case)
+ !================================
+ !
+ if (l_spin.and.n_spinor==2) then
+   !
+   allocate(S_z(BS_K_dim),S_sq(BS_K_dim))
+   allocate (lambda_s(n_lambda)) 
+   !
+   n_lambda = get_lambda()
+   ! 
+   call exc_non_collinear_spin(Xk,lambda_s,n_lambda,S_z,S_sq)
+   call exc_wf_sort_and_report(Xk,Xen,BS_R,BS_E,S_sq=S_sq,S_z=S_z)
+   !
+   deallocate(lambda_s)
+   deallocate(S_z,S_sq)
+   !
+   return
+ endif
  !
  ! Constructing Grid 
  !

@@ -25,7 +25,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate
  use memory_m,       ONLY:mem_est
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,sop_inv,&
-&                         sop_tab,atoms_spatial_invertion,i_space_inv,input_Tel_fixed
+&                         sop_tab,atoms_spatial_invertion,i_space_inv,input_Tel_fixed,inv_index
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,&
 &                         rl_sop,bz_samp,g_vec
  use com,            ONLY:msg,error
@@ -108,26 +108,33 @@ subroutine setup(en,Xen,Ken,k,Xk)
  call msg('r','DL (S)ymmetries [cc]')
  !
  allocate(rl_sop(3,3,nsym))
- do i1=1,nsym
-   forall (i2=1:3,i3=1:3) rl_sop(i2,i3,i1)=dl_sop(i2,i3,i1)*alat(i2)/alat(i3)
-   if (i_time_rev==1.and.i1>nsym/2) cycle
-   call msg('r','[S'//trim(intc(i1))//']',reshape(dl_sop(:,:,i1),(/9/)))  
+ do is=1,nsym
+   forall (i2=1:3,i3=1:3) rl_sop(i2,i3,is)=dl_sop(i2,i3,is)*alat(i2)/alat(i3)
+   if (i_time_rev==1.and.is>nsym/2) cycle
+   call msg('r','[S'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))  
  enddo
  !
  ! Time Reversal
  !
+ inv_index=-1
  select case(i_time_rev)
    case(1)
-    call msg('nr','[SYMs] Time-reversal derived K-space symmetries:',(/nsym/2+1,nsym/))
+     call msg('nr','[SYMs] Time-reversal derived K-space symmetries:',(/nsym/2+1,nsym/))
+     inv_index=nsym/2+1
    case(0)
-    call msg('nr','[SYMs] K-space Time-reversal not included')
+     call msg('nr','[SYMs] K-space Time-reversal not included')
+     do is=1,nsym
+        if ( all(reshape(dl_sop(:,:,is),(/9/))==(/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./)) ) inv_index=is
+     enddo
  end select
  !
  ! Space inversion
  !
  call atoms_spatial_invertion()
- if (i_space_inv==1) call msg('r','[SYMs] Inversion symmetry is used')
- if (i_space_inv==0) call msg('r','[SYMs] Inversion symmetry is NOT used')
+ if (inv_index>0) then
+   if (i_space_inv==1) call msg('r','[SYMs] Spatial inversion '//trim(intc(inv_index))//' is a symmetry')
+   if (i_space_inv==0) call msg('r','[SYMs] Spatial inversion '//trim(intc(inv_index))//' is NOT a symmetry')
+ endif
  !
  ! Symmetries Multiplication Table
  !

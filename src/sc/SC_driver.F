@@ -22,9 +22,9 @@
 subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  use pars,           ONLY:SP,HARTREE,schlen
- use drivers,        ONLY:l_sc_xx,l_sc_chosex,l_sc_hartree,l_sc_pz,l_sc_lda_x,&
-&                         l_sc_hf
- use electrons,      ONLY:levels,nel
+ use drivers,        ONLY:l_sc_exx,l_sc_chosex,l_sc_hartree,l_sc_pz,l_sc_lda_x,&
+&                         l_sc_hf,l_sc_exxc
+ use electrons,      ONLY:levels,nel,n_full_bands,n_met_bands
  use R_lattice,      ONLY:bz_samp,qindx_S,G_m_G
  use D_lattice,      ONLY:Tel
  use QP_m,           ONLY:QP_state,QP_nb,QP_nk,QP_Vxc,QP_n_states,QP_table,&
@@ -45,8 +45,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use frequency,      ONLY:w_samp
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,&
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL
- use global_XC,      ONLY:SC_EXX,SC_HF,SC_CHOSEX
- use vec_operate,    ONLY:sort,degeneration_finder
+ use global_XC,      ONLY:SC_EXX,SC_HF,SC_CHOSEX,SC_EXXC
+ use vec_operate,    ONLY:degeneration_finder
  !
  implicit none
  type(levels) ::E
@@ -64,7 +64,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! 
  ! Work Space
  !
- integer                  :: ir,i1,i2,ik,ib,ibp,WF_G_max,WF_Go_indx,ID(3),io_err(3)
+ integer                  :: ir,i1,i2,ik,ib,ibp,WF_G_max,WF_Go_indx,ID(3),io_err(3),WF_bands
  real(SP)                 :: max_proj
  complex(SP)              :: Ho(SC_bands,SC_bands,k%nibz)
  character(schlen)        :: dumb_ch
@@ -90,10 +90,16 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      l_sc_hf=.true.
      SC_kind=SC_HF
      SC_xc_functional=0
-   case('XX')
-     l_sc_xx=.true.
+   case('EXX')
+     l_sc_exx=.true.
      SC_kind=SC_EXX
      SC_xc_functional=0
+     if (n_full_bands/=n_met_bands) return
+   case('EXXC')
+     l_sc_exxc=.true.
+     SC_kind=SC_EXXC
+     SC_xc_functional=XC_LDA_C_PZ
+     if (n_full_bands/=n_met_bands) return
    case('CHOSEX')
      l_sc_chosex=.true.
      SC_kind=SC_CHOSEX
@@ -109,9 +115,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      SC_xc_functional=XC_LDA_C_PZ
  end select
  !
- if (.not.any((/l_sc_hartree,l_sc_hf,l_sc_xx,l_sc_chosex,l_sc_lda_x,l_sc_pz/))) return
+ if (.not.any((/l_sc_hartree,l_sc_hf,l_sc_exx,l_sc_exxc,l_sc_chosex,l_sc_lda_x,l_sc_pz/))) return
  !
- local_V=l_sc_xx.or.l_sc_hartree.or.l_sc_lda_x.or.l_sc_pz
+ local_V=l_sc_exx.or.l_sc_exxc.or.l_sc_hartree.or.l_sc_lda_x.or.l_sc_pz
  !
  call section('*','Self-Consistent '//trim(SC_potential))
  !
@@ -177,22 +183,39 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
  endif
  !
+ ! before loading the WF in R-space I check and/or calculate
+ ! the optical oscillators that are done in G-space and would
+ ! force the reloading of the WFs
+ !
+ if (l_sc_exx.or.l_sc_exxc) then
+   X(1)%ib(2)=SC_bands
+   X(1)%ng=QP_ng_Sx
+   call X_O_strengths(E, Xk, X(1), X(1)%q0)
+ endif
+ !
  ! WF
  !
  ! x Local potentials (not including EXX)
  !
  WF_G_max=0
  WF_Go_indx=1
+ WF_bands=SC_bands
  !
- if (l_sc_hf.or.l_sc_xx.or.l_sc_chosex) then
+ if (l_sc_hf.or.l_sc_exx.or.l_sc_exxc.or.l_sc_chosex) then
    WF_Go_indx=maxval(qindx_S(:,:,2)) ! Sigma_x/c
    if (l_sc_chosex) then
      X(2)%ng=eval_G_minus_G(X(2)%ng,0)
      WF_G_max=max(QP_ng_Sx,maxval(G_m_G))
    endif
-   if (l_sc_xx)     WF_G_max=max(QP_ng_Sx,X(1)%ng)
+   if (l_sc_exx.or.l_sc_exxc)  then
+     WF_G_max=max(QP_ng_Sx,X(1)%ng)
+     WF_bands=max(SC_bands,X(1)%ib(2))
+   else if (l_sc_chosex)  then
+     WF_G_max=max(QP_ng_Sx,X(2)%ng)
+     WF_bands=max(SC_bands,X(2)%ib(2))
+   endif
  endif
- call wf_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),title=' ')
+ call wf_load(WF_G_max,WF_Go_indx,(/1,WF_bands/),(/1,k%nibz/),title=' ')
  !
  ! Allocation(s)...
  !
@@ -212,6 +235,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  if (.not.local_V) then
    allocate(QP_Sxc_nm1(QP_n_states))
    call mem_est("QP_Sxc_nm1",(/QP_n_states/))
+ endif
+ !
+ if (l_sc_chosex) then
+   allocate(QP_Sc(QP_n_states,1))
+   call mem_est("QP_Sc",(/QP_n_states/))
  endif
  !
  !  Vxc[rho_0] and Vh[rho_0]
@@ -314,15 +342,16 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    if (local_V) then
      !
-     if (l_sc_xx) call V_exx(X,E,k,q,V_xc_sc)
+     if (l_sc_exx.or.l_sc_exxc) call V_exx(X,E,k,q,V_xc_sc)
      !
      if (l_sc_hartree) V_xc_sc=(0.,0.)
      !
      call SC_mute("report log io_in io_out")
      !
-     if (l_sc_lda_x) call xc_lda_driver(E,k,1,1,1)
-     if (l_sc_pz)    call xc_lda_driver(E,k,3,8,1)
+     if (l_sc_lda_x)            call xc_lda_driver(E,k,1,1,1)
+     if (l_sc_pz.or.l_sc_exxc)  call xc_lda_driver(E,k,3,8,1)
      if (l_sc_pz.or.l_sc_lda_x) V_xc_sc=V_xc(:,1)
+     if (l_sc_exxc) V_xc_sc=V_xc_sc+V_xc(:,1)
      !
      call SC_mute(" ")
      !
@@ -576,6 +605,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    if (.not.local_V) then
      deallocate(QP_Sxc_nm1)
      call mem_est("QP_Sxc_nm1")
+   endif
+   if (l_sc_chosex) then
+     deallocate(QP_Sc)
+     call mem_est("QP_Sc")
    endif
  endif
  !

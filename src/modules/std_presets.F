@@ -43,7 +43,7 @@ subroutine std_presets(INSTR,IND,OD,JS)
 &                     filled_tresh, spin_orbit
  use par_proc_m, ONLY:myid,master_node
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,&
-&                     of_unit,of_unit,write_to_of,write_to_report,max_open_ofs,&
+&                     of_unit,write_to_of,write_to_report,max_open_ofs,&
 &                     out_path,in_path,jobstr,db_wr_path
  use stderr,     ONLY:win_size,tty_size,write_to_log,logfile
  use timing,     ONLY:log_line_to_dump,log_line,nhash,live_timing_is_on,&
@@ -185,8 +185,9 @@ subroutine std_presets(INSTR,IND,OD,JS)
  l_sc_run=.false.
  l_sc_hartree=.false.
  l_sc_hf=.false.
- l_sc_xx=.false.
  l_sc_chosex=.false.
+ l_sc_exx=.false.
+ l_sc_exxc=.false.
  l_sc_lda_x=.false.
  l_sc_pz=.false.
  !

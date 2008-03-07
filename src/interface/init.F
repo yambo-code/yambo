@@ -29,7 +29,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  use drivers
  use pars,           ONLY:schlen,lchlen,HARTREE
- use electrons,      ONLY:levels,E_reset,n_spin
+ use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
@@ -79,7 +79,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                     ioBS_Fxc_err,ioQINDX_err,io_SC_err
  integer, external :: ioX,ioOSTNTS,ioGROT,ioQINDX,ioRIM,ioE_RIM,&
 &                     ioXXVXC,ioQP,ioBS,ioDB1,ioKB_PP,&
-&                     ioCOL_CUT,io_SC_components
+&                     ioCOL_CUT,io_SC_components,barriers
 #if defined _ELPH
  integer           :: ioELPH_err
  integer, external :: ioELPH
@@ -105,6 +105,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  what_is_running='SELF_SC'
 #elif defined _BS_CPL
  what_is_running='SELF_BS_CPL'
+#elif defined _BIGSYS
+#if defined _RAS
+ what_is_running='SELF_RAS_BIGSYS'
+#else
+ what_is_running='SELF_BIGSYS'
+#endif
 #endif
  !
  !Presets (input)
@@ -478,7 +484,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! DFT
  !
 #if defined _SC
- if (l_sc_run) call initactivate(1,'SCPot FFTGvecs SCEtresh SCRhoTresh SCIter SCmixing SCBands BandMix')
+ if (l_sc_run) then
+   call initactivate(1,'SCPot FFTGvecs SCEtresh SCRhoTresh SCIter SCmixing SCBands BandMix')
+ endif
 #endif
  !
  ! RAS
@@ -670,26 +678,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_bs_fxc=.false.
      endif
      !
-     if (gpl_version.and.any((/&
-&              l_life,l_acfdt,l_bs_fxc,l_lrc_fxc,&
-#if defined _RAS
-&              lras,lreels,&
-#endif
-&              l_gw0.and..not.l_ppa&
-&             /))) then
+     ! Check if this runlevel is allowed in the 
+     ! present configuration
+     !
+     if (barriers()/=0) then
        init=-2
        return
      endif
      !
-     ! SPIN barriers
-     !
-     if (n_spin==2.and.any((/&
-&              l_life,l_acfdt,l_lrc_fxc,l_sc_run,&
-&              l_gw0.and..not.l_ppa,l_ph_corr&
-&             /))) then
-       init=-2
-       return
-     endif
    end subroutine logicalson
    !
    subroutine X_var_setup 
@@ -914,8 +910,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
 #if defined _SC
        if ( trim(rstr_piece(i1)) == 'scpot' )  then
-         if ( trim(rstr_piece(i1+1)) == 'x' ) then
-           SC_potential='XX'
+         if ( trim(rstr_piece(i1+1)) == 'exx' ) then
+           SC_potential='EXX'
+           call initactivate(1,'xxvxc')
+         else if ( trim(rstr_piece(i1+1)) == 'exxc' ) then
+           SC_potential='EXXC'
+           call initactivate(1,'xxvxc')
          else if ( trim(rstr_piece(i1+1)) == 'c' ) then
            SC_potential='CHOSEX'
            call initactivate(1,'chosex xxvxc')

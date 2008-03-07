@@ -43,6 +43,8 @@ subroutine X_O_rotate(X_bands,use_trans_gauge,E)
  ! irst I read the rotation matrices
  !                  -----------------
  !
+ return
+ !
  call load_SC_components('WF',COM_=NONE,MODE_=DUMP)
  !
  ! and the header of the H_sc
@@ -76,17 +78,17 @@ subroutine X_O_rotate(X_bands,use_trans_gauge,E)
    !
    ! Zero the diagonal of the H_sc
    !
-   !forall (ib=1:X_bands) H_nl_sc(ib,ib)=(0.,0.)
+   forall (ib=1:X_bands) H_nl_sc(ib,ib)=(0.,0.)
    !
    do ic=1,3
      !
      ! Remember that X_q0grad(n,n') = i <n'|r|n>
      ! 
      forall (ib=1:X_bands,ibp=1:X_bands) D_WS_nm1(ib,ibp)=&
-&           X_q0grad(ic,ibp,ib,ik,1)
-!*delta_E(ib,ibp)/delta_E_tilde(ib,ibp)
+&           X_q0grad(ic,ibp,ib,ik,1)*delta_E(ib,ibp)/delta_E_tilde(ib,ibp) 
+     D_WS_n=D_WS_nm1
      !
-     do it=1,50
+     do it=1,0
        !
        !  i <i|r|j>_n = (<i|p|j> - i <i|r|k>_n-1 \tilde{H}_kl + 
        !                           i \tilde{H}_ik <k|r|j>_n-1 )/(D_ij-H_ii+H_jj)

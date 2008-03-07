@@ -156,6 +156,11 @@ subroutine QP_state_table_setup(en)
  if (any(.not.QP_state(1,:)).or.any(.not.QP_state(QP_nb,:))) SC_band_mixing=0.
  if (SC_band_mixing<0..or.SC_band_mixing>100.) SC_band_mixing=0.
  if (SC_band_mixing>0.) SC_bands_mixed=QP_nb*SC_band_mixing/100.
+ if (SC_bands_mixed==0) SC_bands_mixed=1
+ !
+ ! Recalculated SC_band_mixing
+ !
+ SC_band_mixing=float(SC_bands_mixed)*100./float(QP_nb)
  !
  ! QP_table allocation
  !

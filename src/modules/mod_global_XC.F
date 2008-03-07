@@ -54,11 +54,14 @@ module global_XC
  !
  character(lchlen) , public :: WF_global_xc_string  ! ... set in wf_load after rotation
  !
+ ! SC's and Self Energies are KINDS
+ !
  ! SC's
  integer, public, parameter :: &
    SC_EXX        = 301, &  ! OEP-EXX
    SC_HF         = 302, &  ! Hartree-Fock
-   SC_CHOSEX     = 303     ! Coulomb-Hole Screened-eXchange
+   SC_CHOSEX     = 303, &  ! Coulomb-Hole Screened-eXchange
+   SC_EXXC       = 304     ! OEP-EXX + LDA correlation
  !
  ! Self Energies
  integer, public, parameter :: &
@@ -94,7 +97,7 @@ module global_XC
      if (present(se_more)) local_se_more=se_more
      if (present(xc_functional)) local_xc_functional=xc_functional
      !
-     if (what=='E'.or.what=='preset') then
+     if (what=='E'.or.what=='preset'.or.what=='G') then
        G_kind=kind
        G_SE_more=local_se_more
        G_xc_functional=local_xc_functional
@@ -130,7 +133,7 @@ module global_XC
    !
    character(lchlen) function global_XC_string(kind,se_more,xc_functional)
      !
-     use xc_functionals,  ONLY:xc_string
+     use xc_functionals,  ONLY:xc_string,XC_CORRELATION
      !
      integer           :: kind          ! <300 (LDA's GGa's ...) >300 See above
      integer           :: se_more       ! scissor's and more
@@ -147,6 +150,8 @@ module global_XC
          global_XC_string=trim(xc_string(kind,xc_functional))
        case(SC_EXX)
          global_XC_string='SC Exact Exchange'
+       case(SC_EXXC)
+         global_XC_string='SC Exact Exchange +'//trim(xc_string(XC_CORRELATION,xc_functional))
        case(SC_HF)
          global_XC_string='SC Hartee Fock'
        case(SC_CHOSEX)

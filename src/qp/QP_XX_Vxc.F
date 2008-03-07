@@ -24,7 +24,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  ! Hartree S_x self-energy + call to V_xc 
  !
  use pars,          ONLY:SP,schlen,DP,pi,HARTREE
- use drivers,       ONLY:l_sc_xx,l_sc_hf,l_sc_run,l_acfdt
+ use drivers,       ONLY:l_sc_run,l_acfdt,l_sc_exx,l_sc_exxc
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg,depth
  use timing,        ONLY:live_timing
@@ -170,10 +170,10 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
        !
 #if defined _SC
        !
-       ! In Exact-Exchange only cc' and vv' matrix
-       ! elements are needed
-       !
-       if (l_sc_xx.and.(ib  >E%nbf.or.ibp<=E%nbf)) then
+       ! In Exact-Exchange only vc matrix elements so ... no cc' no vv' 
+       ! (cv is not permitted by the order in QP_table)
+       !                   (c)         (v)
+       if (l_sc_exx.and.(ib>E%nbf.or.ibp<=E%nbf)) then
          call live_timing(steps=E%nbm-QP_Sx_low_band+1)
          cycle
        endif
@@ -222,7 +222,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
    !
    ! Vxc
    !
-   if (.not.l_sc_xx.and..not.l_sc_hf) then
+   if (.not.l_sc_run) then
      call DFT_Vxc(E,Xk)
      call WF_free()
    endif

@@ -31,6 +31,10 @@ subroutine DFT_Vxc(E,Xk)
  use wave_func,     ONLY:wf,wf_state
  use xc_functionals,ONLY:V_xc,xc_string,el_mag
  use global_XC,     ONLY:WF_kind,WF_xc_functional
+#if defined _SC
+ use IO_m,          ONLY:REP,DUMP
+ use SC,            ONLY:load_SC_components,V_xc_sc
+#endif
  implicit none
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
@@ -54,9 +58,21 @@ subroutine DFT_Vxc(E,Xk)
  !
  allocate(V_xc(fft_size,n_spin),el_mag(fft_size,3))
  !
- ! ...LDA (and more) Vxc
- !
- call xc_lda_driver(E,Xk,WF_KIND,WF_xc_FUNCTIONAL,1)
+#if defined _SC
+ if (WF_KIND< 300 ) then
+   !
+   ! ...LDA (and more) Vxc
+   !
+#endif
+   call xc_lda_driver(E,Xk,WF_KIND,WF_xc_FUNCTIONAL,1)
+#if defined _SC
+ else
+   allocate(V_xc_sc(fft_size))
+   call load_SC_components('V',COM_=REP,MODE_=DUMP)
+   V_xc(:,1)=V_xc_sc
+   deallocate(V_xc_sc)
+ endif
+#endif
  !
  if (n_spin==1) then
    ! 

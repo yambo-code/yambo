@@ -19,43 +19,47 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module drivers
+integer function barriers()
  !
- ! Generic  Drivers
+ ! SPIN => no  GW real axis, LIFETIMES, ACFDT, EL-PH
  !
- logical :: list_dbs
- logical :: infile_editing
- logical :: Finite_Tel
- logical :: gpl_version
  !
- ! Runlevels
  !
- logical :: l_setup,l_rim,l_col_cut,l_acfdt
  !
- ! Specific runlevels drivers...
  !
- ! Correlation
  !
- logical :: l_el_corr,l_ph_corr
+ use drivers
+ use electrons,  ONLY:n_spin
+ implicit none
  !
- ! QP
+ barriers=0
  !
- logical :: l_xxvxc,l_ppa,l_gw0,l_life,l_chosex
+ ! SELF-CONSISTENT 
+ ! - no spin support
  !
- ! LR
+ if (l_sc_run) then
+   if (n_spin/=1) barriers=-1
+ endif
  !
- logical :: l_optics,l_chi,l_em1d,l_em1s
+ ! GPL barriers
  !
- ! BSE
+ if (gpl_version.and.any((/&
+&          l_life,l_acfdt,l_bs_fxc,l_lrc_fxc,&
+#if defined _RAS
+&          lras,lreels,&
+#endif
+&          l_gw0.and..not.l_ppa&
+&         /))) then
+   barriers=-1
+ endif
  !
- logical :: l_bse,l_bss
+ ! SPIN barriers
  !
- ! SC
+ if (n_spin==2.and.any((/&
+&          l_life,l_acfdt,l_lrc_fxc,l_sc_run,&
+&          l_gw0.and..not.l_ppa,l_ph_corr&
+&         /))) then
+   barriers=-1
+ endif
  !
- logical :: l_sc_run,l_sc_hartree,l_sc_exx,l_sc_exxc,l_sc_hf,l_sc_chosex,l_sc_pz,l_sc_lda_x
- !
- ! TDDFT
- !
- logical :: l_alda_fxc,l_bs_fxc,l_lrc_fxc
- !
-end module drivers
+end function

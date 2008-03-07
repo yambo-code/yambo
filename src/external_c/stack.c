@@ -21,7 +21,8 @@ void F90_FUNC_(remove_stack_limit,REMOVE_STACK_LIMIT) (void) {
   struct rlimit rlim = { RLIM_INFINITY, RLIM_INFINITY };
 
   if ( setrlimit(RLIMIT_STACK, &rlim) == -1 ) {
-    perror("Cannot set stack size to infinity");
-    /* exit(1); */
+    /* perror("Cannot set stack size to infinity");
+       exit(1); */
   }
+
 }

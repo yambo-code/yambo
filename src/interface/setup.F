@@ -25,7 +25,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate
  use memory_m,       ONLY:mem_est
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,sop_inv,&
-&                         sop_tab,atoms_spatial_invertion,i_space_inv,input_Tel_fixed,inv_index
+&                         sop_tab,atoms_spatial_invertion,i_space_inv,input_Tel_fixed,&
+&                         inv_index,atoms_string,load_PT_elements,n_atoms,znucl,&
+&                         n_atom_species,PT_elements
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,&
 &                         rl_sop,bz_samp,g_vec
  use com,            ONLY:msg,error
@@ -43,14 +45,24 @@ subroutine setup(en,Xen,Ken,k,Xk)
  type(levels)    ::en,Xen,Ken
  type(bz_samp)   ::k,Xk
  !
- !Work Space
+ ! Work Space
  !
  real(SP)          :: rv(3),m(3,3),k_rlu(k%nibz,3)
- integer           :: i1,i2,i3,is
+ integer           :: i1,i2,i3,is,ia
  character(schlen) :: dumb_ch1,dumb_ch2
  !
  call section('*','Input variables setup') 
  !========================================
+ !
+ call load_PT_elements()
+ atoms_string=' '
+ if (allocated(znucl)) then
+   do is=1,n_atom_species
+     dumb_ch1=trim(intc(n_atoms(is)))//PT_elements(znucl(is))
+     atoms_string=trim(atoms_string)//trim(dumb_ch1)
+   enddo
+   call msg('rn','Unit cell contains '//trim(atoms_string)//' atoms')
+ endif
  !
  call msg('r','Unit cell scaling factors [a.u.]:',alat)
  call msg('nr','Direct Lattice(DL) unit cell [iru]')

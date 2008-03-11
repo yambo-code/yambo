@@ -25,16 +25,19 @@ integer function io_SC_components(what,E_sc,ID)
  !
  use pars,           ONLY:SP,HARTREE
  use R_lattice,      ONLY:nkibz
+ use D_lattice,      ONLY:atoms_string
  use stderr,         ONLY:intc
  use QP_m,           ONLY:QP_ng_Sx
  use SC,             ONLY:SC_bands,it_now,rho_convergence,E_convergence,SC_potential,&
-&                         SC_R,V_xc_sc,local_V,H_nl_sc,SC_band_mixing,SC_kind,SC_xc_functional
+&                         SC_R,V_xc_sc,local_V,H_nl_sc,SC_band_mixing,SC_kind,&
+&                         SC_xc_functional,V_hartree_sc,NSC_shot
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,io_fragment,read_is_on,write_is_on,&
 &                         manage_RD_WR_CL_IF_END
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use electrons,      ONLY:levels,n_sp_pol
  use FFT_m,          ONLY:fft_size
+ use global_XC,      ONLY:SC_EXX,SC_HF,SC_CHOSEX,SC_EXXC
  implicit none
  !
  integer               :: ID
@@ -44,8 +47,8 @@ integer function io_SC_components(what,E_sc,ID)
  ! Work Space
  !
  real(SP), allocatable :: R_H_disk(:,:,:),E_disk(:,:,:)
- integer               :: ik,bands_to_load,ib,SC_kind_disk
- logical               :: l_wf,l_V,l_E
+ integer               :: ik,bands_to_load,ib,SC_kind_disk,io_status_save
+ logical               :: l_wf,l_V,l_E,l_IMPOSE_SN
  !
  l_E =what=="E"
  l_wf=what=="WF"
@@ -61,10 +64,18 @@ integer function io_SC_components(what,E_sc,ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   io_SC_components=io_header(ID,IMPOSE_SN=.true.)
+   l_IMPOSE_SN=.not.l_V
+   !
+   io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN)
+   !
    if (io_SC_components/=0) goto 1
    !
-   call io_elemental(ID,VAR='XC_FUNCTIONAL',CH0="",VAR_SZ=1)
+   call io_elemental(ID,VAR='ATOMS_STRING',CH0="",VAR_SZ=1)
+   call io_elemental(ID,CH0=atoms_string,&
+&       VAR=' Unit cell atoms                 :',CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   !
+   call io_elemental(ID,VAR='XC_FUNCTIONAL',CH0="",VAR_SZ=1,MENU=0)
    call io_elemental(ID,CH0=SC_potential,&
 &       VAR=' xc Functional                   :',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
@@ -74,12 +85,12 @@ integer function io_SC_components(what,E_sc,ID)
    call io_elemental(ID,I0=SC_xc_functional)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   if (SC_kind_disk>300) then
-     call io_elemental(ID,VAR="PARS",VAR_SZ=7,MENU=0) 
-   else
-     call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0) 
-   endif
+   ! When the db.scV is used for single non-SC shot the number
+   ! of bands and SC_mixing can be not respcted. To do this
+   ! io_status is returned with a -2 error
    !
+   io_status_save=io_status(ID)
+   call io_elemental(ID,VAR="LOCAL_ITER_BANDS_MIX",VAR_SZ=4,MENU=0) 
    call io_elemental(ID,L0=Local_V,&
 &       VAR=' The potential is local          :')
    call io_elemental(ID,I0=it_now,DB_I0=it_now,&
@@ -88,10 +99,29 @@ integer function io_SC_components(what,E_sc,ID)
 &       VAR=' Total number of bands           :',CHECK=.true.,OP=(/"<="/))
    call io_elemental(ID,R0=SC_band_mixing,&
 &       VAR=' Bands mixing                    :',CHECK=.true.,OP=(/"=="/))
-   if (SC_kind_disk>300) then
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   !
+   if (io_status_save==0.and.io_status(ID)<0) then
+     io_status(ID)=-2
+     if (NSC_shot) io_status(ID)=0
+   endif
+   !
+   if (any((/SC_kind_disk==SC_EXX,SC_kind_disk==SC_EXXC,SC_kind_disk==SC_HF,&
+&            SC_kind_disk==SC_CHOSEX/))) then
+     call io_elemental(ID,VAR="SIGMAx_G",VAR_SZ=1,MENU=0) 
      call io_elemental(ID,I0=QP_ng_Sx,&
 &         VAR=' Sx RL components                :',CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif
+   !
+   if (all((/SC_kind_disk/=SC_HF,SC_kind_disk/=SC_CHOSEX/))) then
+     call io_elemental(ID,VAR="FFT_SIZE",VAR_SZ=1,MENU=0) 
+     call io_elemental(ID,I0=fft_size,&
+&         VAR=' FFT mesh points                 :',CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   endif
+   !
+   call io_elemental(ID,VAR="RHOCONV_ECONV",VAR_SZ=2,MENU=0) 
    call io_elemental(ID,R0=rho_convergence)
    call io_elemental(ID,R0=E_convergence)
    call io_elemental(ID,VAR="",VAR_SZ=0)
@@ -106,10 +136,13 @@ integer function io_SC_components(what,E_sc,ID)
  ! Potential
  !===========
  !
- if (l_V.and.local_V.and.ik==0) then
+ if (l_V.and.local_V.and.ik==0.and.allocated(V_xc_sc)) then
    !
    call io_bulk(ID,VAR="V_xc_sc",VAR_SZ=(/fft_size/))
    call io_bulk(ID,R1=V_xc_sc)
+   !
+   call io_bulk(ID,VAR="V_hartree",VAR_SZ=(/fft_size/))
+   call io_bulk(ID,R1=V_hartree_sc)
    !
  endif
  !

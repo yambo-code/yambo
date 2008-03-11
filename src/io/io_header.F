@@ -98,10 +98,12 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
  !
  if (io_serial_number(ID)/=serial_number) then
    if (present(IMPOSE_SN)) then 
-     io_header=-1
-     if (io_com(ID)/=NONE) &
-&      call msg('sr','Incompatible serial number for '//trim(io_file(ID)))
-     goto 1
+     if (IMPOSE_SN) then
+       io_header=-1
+       if (io_com(ID)/=NONE) &
+&        call msg('sr','Incompatible serial number for '//trim(io_file(ID)))
+       goto 1
+     endif
    endif
    if (io_com(ID)/=NONE) then 
      call warning('Wrong serial number for '//trim(io_file(ID)))

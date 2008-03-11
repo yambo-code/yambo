@@ -2,19 +2,19 @@
 
 objs = pw_errore.o mod_pw_data.o mod_pw_export.o \
        mod_p2s.o \
-       p2s_db1.o p2s_wf.o p2s_i.o atomic_number.o 
+       p2s_db1.o p2s_wf.o p2s_i.o 
 
 #elif defined _P2S_V31 || defined _P2S_V311
 
 objs = pw_errore.o mod_pw_data.o qexml_v3.1.o  \
        mod_p2s.o \
-       p2s_db1.o p2s_wf.o p2s_i.o atomic_number.o 
+       p2s_db1.o p2s_wf.o p2s_i.o
 
 #elif defined _P2S_V32
 
 objs = pw_errore.o mod_pw_data.o qexml_v3.2.o \
        mod_p2s.o \
-       p2s_db1.o p2s_wf.o p2s_i.o atomic_number.o 
+       p2s_db1.o p2s_wf.o p2s_i.o
 
 #endif
 

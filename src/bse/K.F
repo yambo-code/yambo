@@ -604,8 +604,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
              !
            else
              !
-             if (iqs>nsym/(i_time_rev+1) .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
-             !
              do i1=1,BS_n_g_W
 #if defined _DOUBLE
                Cc(i1)=zdotu(BS_n_g_W,Ocv,1,BS_W(1,i1,iq_W),1)

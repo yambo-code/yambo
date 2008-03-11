@@ -246,12 +246,11 @@ contains
  !
  subroutine get_atoms
    use D_lattice,   ONLY:n_atoms_max,n_atom_species,n_atoms, &
-&                        atom_pos, znucl
+&                        atom_pos, znucl,atomic_number
    !
    ! Work Space
    !
    integer, allocatable           :: ityp_(:)
-   integer, external              :: atomic_number
    real(DP)                       :: tau_units
    integer                        :: i1,i2
 

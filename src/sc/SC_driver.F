@@ -32,12 +32,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use SC,             ONLY:SC_bands,SC_iterations,SC_E_threshold,SC_kind,SC_xc_functional,&
 &                         SC_rho_threshold,SC_potential,it_now,E_convergence,&
 &                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,SC_bands_mixed,&
-&                         SC_cycle_mixing
+&                         SC_cycle_mixing,V_hartree_sc,NSC_shot
  use wave_func,      ONLY:wf_load,wf,WF_rotate,wf_n_states
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size,fft_size
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
- use com,            ONLY:msg
+ use com,            ONLY:msg,warning
  use X_m,            ONLY:X_t
  use timing,         ONLY:live_time_msg
  use stderr,         ONLY:tty_size,intc,real2ch
@@ -59,18 +59,18 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  integer                  :: it
  real(SP)                 :: E_bare(SC_bands,k%nibz),spread(SC_bands,k%nibz),&
 &                            E_previous(SC_bands,k%nibz),dE(SC_bands,k%nibz)
- real(SP),    allocatable :: rho_n(:),V_xc_nm1(:),V_hr(:),rho_nm1(:)
+ real(SP),    allocatable :: rho_n(:),V_xc_nm1(:),rho_nm1(:)
  complex(SP), allocatable :: WFo(:,:),QP_Sxc_nm1(:)
  ! 
  ! Work Space
  !
- integer                  :: ir,i1,i2,ik,ib,ibp,WF_G_max,WF_Go_indx,ID(3),io_err(3),WF_bands
+ integer                  :: ir,i1,i2,ik,ib,ibp,WF_G_max,WF_Go_indx,ID(3),io_E,io_V,io_WF,WF_bands
  real(SP)                 :: max_proj
  complex(SP)              :: Ho(SC_bands,SC_bands,k%nibz)
  character(schlen)        :: dumb_ch
  integer, external        :: io_SC_components,eval_G_minus_G
  logical, external        :: stop_now
- logical                  :: SC_cycle
+ logical                  :: SC_cycle,RESTART
  type(QP_t)               :: qp_dummy
  !
  ! ws for states spread evaluation
@@ -135,21 +135,26 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  call QP_state_table_setup(E)
  !
- call msg('r' ,'[SC] Bands                            :',SC_bands)
- call msg('r' ,'[SC] Mixed bands                      :',SC_bands_mixed)
- call msg('r' ,'[SC] N (N-1) order mixing             :',SC_cycle_mixing)
- call msg('r' ,'[SC] Imposed accuracy on density      :',SC_rho_threshold)
- call msg('rn','[SC]                  on energies [ev]:',SC_E_threshold*HARTREE)
+ ! Perform a first I/O to check which DBs are present.
  !
- ! Perform a first I/O to check if other SC loops are needed
+ SC_cycle=SC_iterations> 0
+ RESTART=.false.
  !
- SC_cycle=.true.
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(1)) ! Energies
+ io_E=io_SC_components('E' ,E,ID(1))
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2))  ! WFs
+ io_WF=io_SC_components('WF',E,ID(2))
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID(3)) ! Local potential
+ io_V=io_SC_components('V' ,E,ID(3))
  !
- ! Energies
- !----------
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID(1))
- io_err(1)=io_SC_components('E' ,E,ID(1))
- if (io_err(1)==0) then
+ RESTART=all((/io_E==0,io_WF==0,io_V==0/))
+ NSC_shot=SC_iterations==1.and.all((/io_E/=0,io_WF/=0,io_V==0.or.io_V==-2/)).and.local_V
+ if (NSC_shot) SC_cycle=.false.
+ !
+ ! Self-Consistent run, Non-SC shot ot nothing ?
+ !-----------------------------------------------
+ !
+ if (io_E==0.and.RESTART) then
    call msg('nr','[SC] Found   accuracy on density      :',rho_convergence)
    call msg('rn','[SC]                  on energies [ev]:',E_convergence*HARTREE)
    SC_cycle=.not.(E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold)
@@ -161,18 +166,20 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
  endif
  !
- if (.not.SC_cycle.and.io_err(1)==0) then
+ if (.not.SC_cycle.and.RESTART) then
+   !
+   NSC_shot=.false.
    !
    ! load SC_R rotation matrices
    !-----------------------------
    allocate(SC_R(SC_bands,SC_bands,k%nibz))
    call mem_est("SC_R ",(/size(SC_R)/))
-   call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID(2))
-   io_err(2)=io_SC_components('WF',E,ID(2))
-   if (io_err(2)==0) then
+   call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2))
+   io_WF=io_SC_components('WF',E,ID(2))
+   if (io_WF==0) then
      do ik=1,QP_nk
        call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(2))
-       io_err(2)=io_SC_components('WF',E,ID(2))
+       io_WF=io_SC_components('WF',E,ID(2))
      enddo
      call msg('r',' ')
    else
@@ -183,11 +190,24 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
  endif
  !
+ if (.not.any((/RESTART,SC_cycle,NSC_shot/))) return
+ !
+ call msg('nr','[SC] Self-Consistency (SC)            :',SC_cycle)
+ call msg('r' ,'[SC] Restart + SC                     :',RESTART)
+ call msg('r' ,'[SC] Non SC single shot               :',NSC_shot)
+ call msg('r' ,'[SC] Bands                            :',SC_bands)
+ call msg('r' ,'[SC] Mixed bands                      :',SC_bands_mixed)
+ if (SC_cycle) then
+   call msg('r' ,'[SC] N (N-1) order mixing             :',SC_cycle_mixing)
+   call msg('r' ,'[SC] Imposed accuracy on density      :',SC_rho_threshold)
+   call msg('rn','[SC]                  on energies [ev]:',SC_E_threshold*HARTREE)
+ endif
+ !
  ! before loading the WF in R-space I check and/or calculate
  ! the optical oscillators that are done in G-space and would
  ! force the reloading of the WFs
  !
- if (l_sc_exx.or.l_sc_exxc) then
+ if ((l_sc_exx.or.l_sc_exxc).and.SC_cycle) then
    X(1)%ib(2)=SC_bands
    X(1)%ng=QP_ng_Sx
    call X_O_strengths(E, Xk, X(1), X(1)%q0)
@@ -201,7 +221,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  WF_Go_indx=1
  WF_bands=SC_bands
  !
- if (l_sc_hf.or.l_sc_exx.or.l_sc_exxc.or.l_sc_chosex) then
+ if (SC_cycle.and.(l_sc_hf.or.l_sc_exx.or.l_sc_exxc.or.l_sc_chosex)) then
    WF_Go_indx=maxval(qindx_S(:,:,2)) ! Sigma_x/c
    if (l_sc_chosex) then
      X(2)%ng=eval_G_minus_G(X(2)%ng,0)
@@ -220,7 +240,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! Allocation(s)...
  !
  allocate(rho_n(fft_size),rho_nm1(fft_size),&
-&         V_xc_sc(fft_size),V_xc_nm1(fft_size),V_hr(fft_size))
+&         V_xc_sc(fft_size),V_xc_nm1(fft_size),V_hartree_sc(fft_size))
  call mem_est("Potentials",(/5*fft_size/),(/SP/))
  !
  allocate(WFo(fft_size,wf_n_states))
@@ -247,7 +267,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  call DFT_Vxc(E,k)
  call el_density(E,k,rho_n,.FALSE.)
- call V_Hartree(rho_n,V_hr)
+ call V_Hartree(rho_n,V_hartree_sc)
  !
  ! The Ho = -nabla**2. + V_ext is deduced from the input energies en0:
  !
@@ -263,7 +283,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  Ho=(0.,0.)
  do ik=1,QP_nk
-   call V_to_H(ik,-V_hr,Ho(:,:,ik),wf)
+   call V_to_H(ik,-V_hartree_sc,Ho(:,:,ik),wf)
  enddo
  !
  ! ... then remove Vxc[rho_0] also
@@ -288,39 +308,39 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  WFo   =wf
  !
- ! I/O 
- !
- ! Energies
- !----------
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(1))
- io_err(1)=io_SC_components('E' ,E,ID(1))
- !
- ! Local potential
- !-----------------
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(3))
- io_err(3)=io_SC_components('V' ,E,ID(3))
- !
- if (.not.local_V) V_xc_sc=0.
+ ! Start-Up setup.  Eventually restart setup.
  !
  ! WFs
  !-----
- call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID(2))
- io_err(2)=io_SC_components('WF',E,ID(2))
+ call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2))
+ io_WF=io_SC_components('WF',E,ID(2))
  !
- if (all(io_err==0)) then
+ if (RESTART) then
+   !
+   ! RESTART
+   !
    do ik=1,QP_nk
      call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(2))
-     io_err(2)=io_SC_components('WF',E,ID(2))
+     io_WF=io_SC_components('WF',E,ID(2))
      call WF_rotate(ik,SC_bands,fft_size,SC_R(:,:,ik),WFo,wf_out=wf)
    enddo
    !
-   ! ... rho_n and V_hr
+   ! ... rho_n and V_hartree_sc
    !
    call el_density(E,k,rho_n,.FALSE.)
-   call V_Hartree(rho_n,V_hr)
+   call V_Hartree(rho_n,V_hartree_sc)
    !
    V_xc_nm1 = V_xc_sc
    rho_nm1  = rho_n
+   !
+ else if (NSC_shot) then
+   !
+   ! Non-SC shot
+   !
+   it_now=0
+   ! ... reload again the scV DB to update the Hartree potential
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(3)) 
+   io_V=io_SC_components('V' ,E,ID(3))
    !
  else
    !
@@ -331,8 +351,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
  endif
  !
- ! SCF cycle
- !===========
+ ! SCF cycle & NSC shot
+ !=====================
  !
  do it = 1, SC_iterations
    !
@@ -340,7 +360,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    it_now=it_now+1
    !
-   if (local_V) then
+   if (local_V.and.SC_cycle) then
      !
      if (l_sc_exx.or.l_sc_exxc) call V_exx(X,E,k,q,V_xc_sc)
      !
@@ -362,7 +382,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      V_xc_nm1=V_xc_sc
      !
-   else
+   else if (SC_cycle) then
      !
      ! Stop all messagging
      !
@@ -407,7 +427,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      rho_n = SC_cycle_mixing*rho_n + (1.-SC_cycle_mixing)*rho_nm1
      !
-     call V_Hartree(rho_n,V_hr)
+     call V_Hartree(rho_n,V_hartree_sc)
      !
    endif
    !
@@ -417,7 +437,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    if (     local_V) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(3))
    if (.not.local_V) call io_control(ACTION=OP_WR,   COM=NONE,SEC=(/1/),ID=ID(3))
-   io_err(3)=io_SC_components('V' ,E,ID(3))
+   io_V=io_SC_components('V' ,E,ID(3))
    !
    do ik = 1, QP_nk 
      !
@@ -427,7 +447,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      if (local_V) then
        !
        H_nl_sc = Ho(:,:,ik)
-       call V_to_H(ik,V_hr+V_xc_sc,H_nl_sc,WFo)
+       call V_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WFo)
        !
      else
        !
@@ -456,13 +476,13 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !==============
        !
        call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(3))
-       io_err(3)=io_SC_components('V',E,ID(3))
+       io_V=io_SC_components('V',E,ID(3))
        !
        H_nl_sc = H_nl_sc + Ho(:,:,ik)
        !
        ! Add V_Hartree
        !
-       call V_to_H(ik,V_hr,H_nl_sc,WFo)
+       call V_to_H(ik,V_hartree_sc,H_nl_sc,WFo)
        !
      endif
      !
@@ -482,45 +502,49 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
    end do
    !
-   ! New density 
-   !=============
-   !
-   rho_nm1 = rho_n 
-   call el_density(E,k,rho_n,.FALSE.)
-   !
-   ! Convergences
-   !
-   E_convergence=0.
-   do ik=1,k%nibz
-     E_convergence = max( E_convergence,&
-&                         maxval(abs(E%E(:SC_bands,ik,1)-E_previous(:,ik)-&
-&                                    E%E(1,ik,1)+E_previous(1,ik)       )))
-   enddo
-   !
-   rho_convergence = 0.
-   do ir=1,fft_size
-     rho_convergence = rho_convergence + abs(rho_n(ir)-rho_nm1(ir))/nel
-   enddo
-   !
-   dumb_ch='[SC] Iteration '//trim(intc(it_now))//' Accuracies rho(%) - E(ev) :'//&
-&          trim(real2ch(rho_convergence))//'% - '//trim(real2ch(E_convergence*HARTREE))
-   !
-   if (tty_size>0.or.it_now==1) then
-     call live_time_msg("n",dumb_ch,"","%s")
-   else
-     if (local_V) then
-       if (tty_size>0) call live_time_msg("r",dumb_ch,"","%s")
-       if (tty_size<0) call live_time_msg("n",dumb_ch,"","%s")
-     else
+   if (SC_cycle) then
+     !
+     ! New density 
+     !=============
+     !
+     rho_nm1 = rho_n 
+     call el_density(E,k,rho_n,.FALSE.)
+     !
+     ! Convergences
+     !
+     E_convergence=0.
+     do ik=1,k%nibz
+       E_convergence = max( E_convergence,&
+&                           maxval(abs(E%E(:SC_bands,ik,1)-E_previous(:,ik)-&
+&                                      E%E(1,ik,1)+E_previous(1,ik)       )))
+     enddo
+     !
+     rho_convergence = 0.
+     do ir=1,fft_size
+       rho_convergence = rho_convergence + abs(rho_n(ir)-rho_nm1(ir))/nel
+     enddo
+     !
+     dumb_ch='[SC] Iteration '//trim(intc(it_now))//' Accuracies rho(%) - E(ev) :'//&
+&            trim(real2ch(rho_convergence))//'% - '//trim(real2ch(E_convergence*HARTREE))
+     !
+     if (tty_size>0.or.it_now==1) then
        call live_time_msg("n",dumb_ch,"","%s")
+     else
+       if (local_V) then
+         if (tty_size>0) call live_time_msg("r",dumb_ch,"","%s")
+         if (tty_size<0) call live_time_msg("n",dumb_ch,"","%s")
+       else
+         call live_time_msg("n",dumb_ch,"","%s")
+       endif
      endif
+     !
    endif
    !
    ! IO [Energies]
    !===============
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(1))
-   io_err(1)=io_SC_components('E' ,E,ID(1))
+   io_E=io_SC_components('E' ,E,ID(1))
    !
    !
    ! IO [SC_R]
@@ -528,22 +552,27 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    if (it==1) call io_control(ACTION=OP_WR,COM=REP, SEC=(/1/),ID=ID(2))
    if (it> 1) call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(2))
-   io_err(2)=io_SC_components('WF',E,ID(2))
+   io_WF=io_SC_components('WF',E,ID(2))
    do ik = 1, QP_nk 
      call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(2))
-     io_err(2)=io_SC_components('WF',E,ID(2))
+     io_WF=io_SC_components('WF',E,ID(2))
    enddo
    !
    if ( (E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold) .or.&
-&       stop_now(.FALSE.)) exit
+&       stop_now(.FALSE.) ) exit
    !
  end do
  !
- ! exit SCF cycle and report
- !
- call msg('nr','[SC] Iterations                     :',it_now)
- call msg('r' ,'[SC] Accuracy on density      :',rho_convergence)
- call msg('rn','[SC]          on energies [ev]:',E_convergence*HARTREE)
+ if (SC_cycle) then
+   !
+   ! exit SCF cycle and report
+   !
+   call msg('nr','[SC] Iterations               :',it_now)
+   call msg('r' ,'[SC] Accuracy on density      :',rho_convergence)
+   call msg('rn','[SC]          on energies [ev]:',E_convergence*HARTREE)
+ else
+   call msg('r','')
+ endif
  !
 1 continue
  !
@@ -599,8 +628,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  deallocate(SC_R)
  call mem_est("SC_R")
- if (SC_cycle) then
-   deallocate(rho_n,rho_nm1,V_xc_sc,V_xc_nm1,V_hr,WFo,H_nl_sc)
+ if (SC_cycle.or.NSC_shot) then
+   deallocate(rho_n,rho_nm1,V_xc_sc,V_xc_nm1,V_hartree_sc,WFo,H_nl_sc)
    call mem_est("Hs Potentials WF_save H_nl_sc")
    if (.not.local_V) then
      deallocate(QP_Sxc_nm1)

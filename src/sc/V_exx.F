@@ -33,11 +33,11 @@ subroutine V_exx(X,E,k,q,Vexx)
  !
  use pars,            ONLY:SP,DP
  use D_lattice,       ONLY:DL_vol,i_time_rev,sop_inv,nsym,i_space_inv
- use X_m,             ONLY:X_t, X_alloc,X_mat
+ use X_m,             ONLY:X_t, X_alloc,X_mat,X_poles_tab,iq_now 
  use electrons,       ONLY:levels
  use R_lattice,       ONLY:bz_samp,g_rot,nkibz,nkbz
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan
- use frequency,       ONLY:w_samp,W_reset
+ use frequency,       ONLY:w_samp,W_reset,bg_npts,cg_pt,cg_index_bg,rg_index_bg
  use matrix_operate,  ONLY:mat_dia_inv,INV,USE_LK
  use collision,       ONLY:ggwinfo,collision_reset
  use QP_m,            ONLY:QP_Sx,QP_n_states,QP_table
@@ -70,9 +70,13 @@ subroutine V_exx(X,E,k,q,Vexx)
  call W_reset(Xw)
  Xw%n = 1
  call freqs_setup(Xw)
+ Xw%p(1)=real(Xw%p(1))+(0.,1.)*epsilon(1._SP)
+ !
  ! 2:
  call X_alloc('X',(/X%ng,X%ng,Xw%n(2)/))
+ call SC_mute("report") 
  call X_os(X_mat,1,(/1,Xw%n(1)/),E,k,Xw,X)
+ call SC_mute("") 
  ! 3:
  allocate(Xo_inverse(X%ng-1,X%ng-1))
  Xo_inverse(:X%ng-1,:X%ng-1) =  X_mat(2:X%ng,2:X%ng,1) 
@@ -164,10 +168,10 @@ subroutine V_exx(X,E,k,q,Vexx)
  else if (i_space_inv/=0) then
    rho_x=rho_x+conjg(rho_x)
  endif
+ allocate(Vexx_RL(X%ng-1))
  !
  ! Calculate Vexx_RL
  !
- allocate(Vexx_RL(X%ng-1))
  Vexx_RL=matmul(Xo_inverse,rho_x)
  deallocate(rho_x)
  !
@@ -188,6 +192,17 @@ subroutine V_exx(X,E,k,q,Vexx)
  !
  Vexx = real(Vx_dp)
  !
+ ! CLEAN
+ !
  deallocate(Vexx_RL,Vx_dp)
+ call collision_reset(isc)
+ call W_reset(Xw)
+ !
+ ! Reset coarse-grid arrays used in X_os
+ !
+ if (allocated(rg_index_bg)) deallocate(rg_index_bg)
+ deallocate(X_poles_tab,bg_npts,cg_pt,cg_index_bg)
+ call mem_est("X_poles_tab RGi BGn CGp CGi")
+ iq_now=0
  !
 end subroutine V_exx

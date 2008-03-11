@@ -41,13 +41,15 @@ module SC
  real(SP)          :: SC_cycle_mixing
  !
  character(schlen) :: SC_potential
- logical           :: local_V
  logical           :: using_SC_basis
+ logical           :: local_V
+ logical           :: NSC_shot
  !
  ! Rotation matrices and xc potential
  !
  complex(SP), allocatable :: SC_R(:,:,:)
  real(SP),    allocatable :: V_xc_sc(:)
+ real(SP),    allocatable :: V_hartree_sc(:)
  !
  ! Non-Local part (sigma_x, sigma_chosex)
  !

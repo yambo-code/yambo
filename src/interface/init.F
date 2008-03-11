@@ -288,7 +288,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _SC
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_SC_err=io_SC_components('WF',en,io_ID)
+ io_SC_err=io_SC_components('V',en,io_ID)
 #endif
  !
  if (list_dbs) then

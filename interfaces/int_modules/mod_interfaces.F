@@ -43,7 +43,7 @@
      !
      ! Work Space
      !
-     integer     :: ic,nc,ic_start,ic_check
+     integer     :: ic,ic_start,ic_check
      real(SP)    :: c1,c2,c_norm_sq,ph_sin(nc),ph_cos(nc),ph_cos_sq(nc)
      complex(SP) :: phase,wf_c
      ic_start=-1

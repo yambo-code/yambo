@@ -21,7 +21,7 @@
 !
 module D_lattice
  !
- use pars, ONLY:SP
+ use pars, ONLY:SP,lchlen
  implicit none
  !
  ! Temperature
@@ -41,7 +41,7 @@ module D_lattice
  integer, allocatable :: sop_tab(:,:)
  integer, allocatable :: sop_inv(:)
  !
- ! Cell
+ ! Cell & atoms
  !
  integer  :: n_atoms_max
  integer  :: n_atom_species
@@ -51,6 +51,10 @@ module D_lattice
  integer,  allocatable :: n_atoms(:)
  integer,  allocatable :: znucl(:)
  real(SP), allocatable :: atom_pos(:,:,:)
+ character(lchlen)     :: atoms_string
+ !
+ ! Periodic Table
+ character(len=2)      :: PT_elements(103)
  !
  ! KB Pseudo
  !
@@ -117,6 +121,37 @@ module D_lattice
        enddo atoms_loop
      enddo
      !
+   end subroutine
+   !
+   integer function atomic_number(atom_name)
+     character(len=2) :: atom_name
+     integer  :: ia ! Work Space
+     call load_PT_elements()
+     do ia = 1, 103
+      if ( trim(atom_name) == trim(PT_elements(ia)) ) then
+        atomic_number = ia
+        return
+      end if
+     end do
+   end function
+   !
+   subroutine load_PT_elements()
+     PT_elements(1:2)  =(/'H ',                              'He'/)
+     PT_elements(3:10) =(/'Li','Be','B ','C ','N ','O ','F ','Ne'/)
+     PT_elements(11:18)=(/'Na','Mg','Al','Si','P ','S ','Cl','Ar'/)
+     PT_elements(19:25)=(/'K ','Ca','Sc','Ti','V ','Cr','Mn'/)
+     PT_elements(26:30)=(/'Fe','Co','Ni','Cu','Zn'/)
+     PT_elements(31:36)=(/'Ga','Ge','As','Se','Br','Kr'/)
+     PT_elements(37:43)=(/'Rb','Sr','Y ','Zr','Nb','Mo','Tc'/)
+     PT_elements(44:48)=(/'Ru','Rh','Pd','Ag','Cd'/)
+     PT_elements(49:54)=(/'In','Sn','Sb','Te','I ','Xe'/)
+     PT_elements(55:63)=(/'Cs','Ba','La','Ce','Pr','Nd','Pm','Sm','Eu'/)
+     PT_elements(64:71)=(/'Gd','Tb','Dy','Ho','Er','Tm','Yb','Lu'/)
+     PT_elements(72:76)=(/'Hf','Ta','W ','Re','Os'/)
+     PT_elements(77:80)=(/'Ir','Pt','Au','Hg'/)
+     PT_elements(81:86)=(/'Tl','Pb','Bi','Po','At','Rn'/)
+     PT_elements(87:94)=(/'Fr','Ra','Ac','Th','Pa','U ','Np','Pu'/)
+     PT_elements(95:103)=(/'Am','Cm','Bk','Cf','Es','Fm','Md','No', 'Lr'/)
    end subroutine
    !
 end module D_lattice

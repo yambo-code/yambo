@@ -1,1 +1,1 @@
-objs = fermi_msg.o section.o run_summary.o report_energies.o
+objs = fermi_msg.o section.o job_setup.o report_energies.o

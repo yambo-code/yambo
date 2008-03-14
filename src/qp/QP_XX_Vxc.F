@@ -30,7 +30,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  use timing,        ONLY:live_timing
  use stderr,        ONLY:intc,real2ch
  use electrons,     ONLY:levels,spin_occ,n_sp_pol,spin
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset,master_node
+ use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset,master_cpu
  use par_indexes_m, ONLY:par_indexes
  use collision,     ONLY:ggwinfo,collision_reset
  use QP_m,          ONLY:QP_Sx,QP_ng_Sx,QP_table,QP_nb,QP_n_states,QP_Sx_low_band,QP_Vxc

@@ -32,7 +32,7 @@ subroutine spp_init(instr,lnstr,FINALIZE)
  use stderr,         ONLY:string_split
  use SPP
  use electrons,      ONLY:n_spin
- use par_proc_m,     ONLY:master_node,pp_redux_wait
+ use par_proc_m,     ONLY:master_cpu,pp_redux_wait
  use timing,         ONLY:what_is_running
 #if defined _SPP_RAS
  use bulkeps,        only : bshift, bbroad, bfile, btype 
@@ -61,7 +61,7 @@ subroutine spp_init(instr,lnstr,FINALIZE)
  !
  if (FINALIZE) then
    call call_init_load('GameOver')
-   if (master_node) call ofiles_append(defs=defs)
+   if (master_cpu) call ofiles_append(defs=defs)
    return
  else
    !

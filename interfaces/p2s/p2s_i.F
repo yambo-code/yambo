@@ -20,12 +20,12 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  integer function p2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
-&                       js,ijs,np,pid)
+&                       com_dir,icd,js,ijs,np,pid)
  !
  use P2S,                 only : pw_init, pw_close, verboseIO
  use pars,                only : SP,lchlen
  use memory_m,            only : mem_est
- use com,                 only : msg,write_to_report,out_path, error
+ use com,                 only : msg,write_to_report,more_io_path, error
  use par_proc_m,          only : ncpu,myid,p_finalize
  use electrons,           only : levels,E_reset,n_bands, n_spin, n_sp_pol
  use D_lattice,           only : n_atoms_max
@@ -46,13 +46,14 @@
  implicit none
  type(levels)                 :: en
  type(bz_samp)                :: k
- integer,          intent(in) :: lnstr,iind,iod,ijs,np,pid
+ integer,          intent(in) :: lnstr,iind,iod,ijs,np,pid,icd
  integer,          intent(in) :: iinf
  character(lnstr), intent(in) :: instr
  character(iinf),  intent(in) :: inf
  character(iind),  intent(in) :: ind
  character(iod),   intent(in) :: od
  character(ijs),   intent(in) :: js
+ character(icd),   intent(in) :: com_dir   
  !
  character(lchlen) :: index_filename, lch
  integer           :: ID,io_err,ioPP_err,ik,icycle
@@ -70,7 +71,7 @@
  p2s_i =0
  ncpu  =np
  myid  =pid
- call std_presets(instr,ind,od,'')
+ call std_presets(instr,ind,od,'','')
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en)
@@ -95,7 +96,7 @@
 #else
  call error('Unknown version of P2S. Stopping.')
 #endif
- call msg('s','DBs path set to ',trim(out_path))
+ call msg('s','DBs path set to ',trim(more_io_path))
  !
  ! Verbose I/O
  !

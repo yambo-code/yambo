@@ -689,7 +689,7 @@ module it_m
      use drivers,      ONLY: infile_editing
      use stderr,       ONLY: gen_fmt
      use com,          ONLY: report_file_fix,title
-     use par_proc_m,   ONLY: master_node
+     use par_proc_m,   ONLY: master_cpu
      type(initdefs)::defs
      integer       :: ou
      ! 
@@ -865,7 +865,7 @@ module it_m
      enddo
      !
      if (.not.infile_editing.and.ou==12) return
-     if (master_node) then
+     if (master_cpu) then
        if (ou==12) call title(ou,'#')
        if (ou==11) write (ou,'(2a)') ' .-Input file : ',trim(infile)
        if (ou/=11.and.ou/=12) write (ou,'(a/2a)') '#','# .-Input file : ',trim(infile)
@@ -887,8 +887,7 @@ module it_m
        if (it_verbose_Ilevel(i1)==0) cycle
        if (trim(it_verbose_Ivars(i1))==trim(var_name))then
          if(all(var_val==it_verbose_Idefs(i1,:nvar)).and.&
-&           infile_verbosity/=it_verbose_Ilevel(i1).and.&
-&           infile_verbosity/=99) return
+&           infile_verbosity< it_verbose_Ilevel(i1)) return
        endif
      enddo
      Iverbose_enough=.true.
@@ -906,8 +905,7 @@ module it_m
        if (it_verbose_Rlevel(i1)==0) cycle
        if (trim(it_verbose_Rvars(i1))==trim(var_name))then
          if(all(var_val==it_verbose_Rdefs(i1,:nvar)).and.&
-&               infile_verbosity/=it_verbose_Rlevel(i1).and.&
-&               infile_verbosity/=99) return
+&               infile_verbosity< it_verbose_Rlevel(i1)) return
        endif
      enddo
      Rverbose_enough=.true.
@@ -925,8 +923,7 @@ module it_m
        if (it_verbose_Clevel(i1)==0) cycle
        if (trim(it_verbose_Cvars(i1))==trim(var_name))then
          if(var_val(1)==it_verbose_Cdefs(i1).and.&
-&           infile_verbosity/=it_verbose_Clevel(i1).and.&
-&           infile_verbosity/=99) return
+&           infile_verbosity< it_verbose_Clevel(i1)) return
        endif
      enddo
      Cverbose_enough=.true.
@@ -940,8 +937,7 @@ module it_m
        if (it_verbose_Chlevel(i1)==0) cycle
        if (trim(it_verbose_Chvars(i1))==trim(var_name))then
          if(var_val(1)==it_verbose_Chdefs(i1).and.&
-&           infile_verbosity/=it_verbose_Chlevel(i1).and.&
-&           infile_verbosity/=99) return
+&           infile_verbosity< it_verbose_Chlevel(i1)) return
        endif
      enddo
      Chverbose_enough=.true.
@@ -958,8 +954,7 @@ module it_m
       if (it_verbose_Flevel(i1)==0) cycle
       if (trim(it_verbose_Fvars(i1))==trim(var_name))then
         if(fstatus(ivar)>0.and.&
-&          infile_verbosity/=it_verbose_Flevel(i1).and.&
-&          infile_verbosity/=99) return
+&          infile_verbosity< it_verbose_Flevel(i1)) return
        endif
      enddo
      Fverbose_enough=.true.

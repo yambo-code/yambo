@@ -35,8 +35,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
 &                         infile,infile_dump,ofiles_append
  use parser_m,       ONLY:parser
- use par_proc_m,     ONLY:pp_redux_wait,master_node
- use com,            ONLY:msg,repfile,out_path,jobstr,&
+ use par_proc_m,     ONLY:pp_redux_wait,master_cpu
+ use com,            ONLY:msg,repfile,com_path,jobstr,&
 &                         title,file_exists,rename_file,write_to_report
  use vec_operate,    ONLY:v_norm
  use timing,         ONLY:live_timing_is_on,what_is_running
@@ -140,7 +140,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (FINALIZE) then
    call call_init_load('GameOver')
    call initinfio(defs,11)
-   if (master_node) call ofiles_append(defs=defs)
+   if (master_cpu) call ofiles_append(defs=defs)
    return
  endif
  if (CLOSE_Gs) then
@@ -158,7 +158,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (index(instr,'dbpr')>0) then
    list_dbs=.true.
    init = 2
-   if (tty_size<0) write (logfile,'(2a)') trim(out_path),'/l_dbs'
+   if (tty_size<0) write (logfile,'(2a)') trim(com_path),'/l_dbs'
    live_timing_is_on=.false.
    write_to_report=.false.
    call msg('s','Data Files details')
@@ -326,7 +326,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !Common
  !
- call initactivate(1,'StdoHash Nelectro ElecTemp OccTresh Out_Path DB_Path')
+ call initactivate(1,'StdoHash Nelectro ElecTemp OccTresh More_IO_Path Com_Path')
  !
  !FFT
  !
@@ -570,21 +570,21 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Report/Log Files
  !
- if (trim(jobstr)=='') write (repfile,'(2a)') trim(out_path),'/r'
- if (trim(jobstr)/='') write (repfile,'(4a)') trim(out_path),'/','r-',trim(jobstr)
+ if (trim(jobstr)=='') write (repfile,'(2a)') trim(com_path),'/r'
+ if (trim(jobstr)/='') write (repfile,'(4a)') trim(com_path),'/','r-',trim(jobstr)
  if (tty_size<0) then
-  if (trim(jobstr)=='') write (logfile,'(2a)') trim(out_path),'/l'
-  if (trim(jobstr)/='') write (logfile,'(4a)') trim(out_path),'/','l-',trim(jobstr)
+  if (trim(jobstr)=='') write (logfile,'(2a)') trim(com_path),'/l'
+  if (trim(jobstr)/='') write (logfile,'(4a)') trim(com_path),'/','l-',trim(jobstr)
  endif
  do i1=1,nrnlvls
-  rch=repfile
-  if (rstatus(i1)/=0) write (rch,'(3a)') trim(repfile),'_',trim(rnlvls(i1,1))
-  repfile=rch
-  if (tty_size<0) then
-   jch=logfile
-   if (rstatus(i1)/=0) write (jch,'(3a)') trim(logfile),'_',trim(rnlvls(i1,1))
-   logfile=jch
-  endif
+   rch=repfile
+   if (rstatus(i1)/=0) write (rch,'(3a)') trim(repfile),'_',trim(rnlvls(i1,1))
+   repfile=rch
+   if (tty_size<0) then
+     jch=logfile
+     if (rstatus(i1)/=0) write (jch,'(3a)') trim(logfile),'_',trim(rnlvls(i1,1))
+     logfile=jch
+   endif
  enddo
  !
  ! Finalize
@@ -592,7 +592,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (tty_size<0) call rename_file(logfile)
  call rename_file(repfile)
  call pp_redux_wait
- if (master_node) open(unit=11,file=trim(repfile))
+ if (master_cpu) open(unit=11,file=trim(repfile))
  call title(11,' ')
  !
  contains

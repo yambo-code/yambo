@@ -34,9 +34,9 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
  !
  ! Parallel shared matrix multiplication implemented
  !
- use pars
+ use pars,           ONLY:SP
  use memory_m,       ONLY:mem_est
- use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset 
+ use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
  use par_indexes_m,  ONLY:par_indexes
  use R_lattice,      ONLY:nXkibz
  use BS,             ONLY:BS_mat,BS_K_dim,BS_blk_dim,BS_blk_coord,BS_eh_E,&

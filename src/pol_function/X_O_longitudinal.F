@@ -27,7 +27,7 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  !  i q.<nk|r|mk> =  \sum_i=1,3 q(i) <u_n(k+q0(i))|u_mk>/q0(i)
  !
  use pars,                ONLY : SP,lchlen
- use com,                 ONLY : warning, in_path, error
+ use com,                 ONLY : warning, core_io_path, error
  use stderr,              ONLY : intc
  use timing,              ONLY : live_timing
  use electrons,           ONLY : levels,n_spin,  n_spinor,n_sp_pol
@@ -51,7 +51,7 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  ! Saves
  !
  integer                      :: wf_ng_save
- character(lchlen)            :: in_path_save
+ character(lchlen)            :: core_io_path_save
  integer                      :: nkibz_save, wf_ncx_save, wf_ncx_long, nkibz_long
  integer                      :: wf_ng_eff, wf_ng_long
  !
@@ -152,7 +152,7 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
    !
    ! Load WFs {k} + q_iq
    !
-   in_path = long_path
+   core_io_path = long_path
    call WF_free()
    call wf_load(0,1,(/ X%ib(1), Xen%nbm /),&
 &                   (/ik_grid,ik_grid+Xk%nibz-1/),&
@@ -261,8 +261,8 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
      ! so that all type components (like occupations) are 
      ! not rewritten.
      !
-     in_path = in_path_save
-     io_err=ioDB1_reload(E_shift,Xk_shift,trim(in_path))
+     core_io_path = core_io_path_save
+     io_err=ioDB1_reload(E_shift,Xk_shift,trim(core_io_path))
      wf_ng=wf_ng_long
      !
    end subroutine
@@ -275,18 +275,18 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
        nkibz_save   = nkibz
        wf_ncx_save  = wf_ncx
        wf_ng_save   = wf_ng
-       in_path_save = in_path
+       core_io_path_save = core_io_path
      else if( grid.eq.'shifted'.and. command.eq.' define') then
        nkibz_long  = nkibz
        wf_ncx_long = wf_ncx
        wf_ng_long  = wf_ng
      else if( grid.eq.'  local'.and. command.eq.'  reset') then
-       in_path = in_path_save
+       core_io_path = core_io_path_save
        nkibz   = nkibz_save
        wf_ncx  = wf_ncx_save
        wf_ng   = wf_ng_save
      else if( grid.eq.'shifted'.and. command.eq.'  reset') then
-       in_path = long_path
+       core_io_path = long_path
        nkibz   = nkibz_long
        wf_ncx  = wf_ncx_long
        wf_ng   = wf_ng_long

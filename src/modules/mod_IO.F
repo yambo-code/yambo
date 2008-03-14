@@ -21,7 +21,7 @@
 !
 module IO_m
  !
- use pars
+ use pars, ONLY:SP,lchlen,schlen
 #if defined _NETCDF_IO
  use netcdf
 #endif
@@ -36,8 +36,8 @@ module IO_m
  !
  integer :: serial_number
  !
- logical :: write_to_dbs
- logical :: read_dbs
+ logical :: IO_write
+ logical :: IO_read
  logical :: dbs_fragment
  !
  ! Actions
@@ -168,7 +168,7 @@ module IO_m
    integer function io_connect(desc,subfolder,type,ENABLE_LARGE_FILE,ID)
      !
      use stderr,        ONLY:string_pack
-     use com,           ONLY:get_name,jobstr,file_exists,out_path
+     use com,           ONLY:get_name,jobstr,file_exists,more_io_path
      character(*)           :: desc
      integer                :: type,ID
      character(*), optional :: subfolder
@@ -180,8 +180,8 @@ module IO_m
      character(lchlen)::alternative_file(3),folder
      !
      io_connect=0
-     if ( (read_is_on(ID).and..not.read_dbs).or.&
-&         (write_is_on(ID).and..not.write_to_dbs) ) then
+     if ( (read_is_on(ID).and..not.IO_read).or.&
+&         (write_is_on(ID).and..not.IO_write) ) then
        io_connect=-1
        call io_reset(ID)
        return
@@ -200,22 +200,22 @@ module IO_m
      if (len_trim(io_file(ID))==0) then
        !
        io_file(ID)=get_name(desc,subfolder,type,open_is_on(ID),&
-&                           write_is_on(ID),io_netcdf_support(ID))
+&                           write_is_on(ID),.FALSE.,io_netcdf_support(ID))
        alternative_file=" "
        if (type/=-2) then
          !
          ! First alternative is same DB with(/out) NETCDF support
          !
          alternative_file(1)=get_name(desc,subfolder,type,open_is_on(ID),&
-&                                     write_is_on(ID),.not.io_netcdf_support(ID))
+&                                     write_is_on(ID),.FALSE.,.not.io_netcdf_support(ID))
          if (type/=0.and.read_is_on(ID)) then
            !
            ! 2nd/3rd alternatives are  DBs with(/out) NETCDF support in SAVE folder
            !
            alternative_file(2)=get_name(desc,subfolder,type,.FALSE.,&
-&                                       .TRUE.,io_netcdf_support(ID))
+&                                       .TRUE.,.FALSE.,io_netcdf_support(ID))
            alternative_file(3)=get_name(desc,subfolder,type,.FALSE.,&
-&                                       .TRUE.,.not.io_netcdf_support(ID))
+&                                       .TRUE.,.FALSE.,.not.io_netcdf_support(ID))
          endif
        endif
        !
@@ -224,9 +224,9 @@ module IO_m
      ! Create Directories 
      !
      if (len_trim(jobstr)>0) then
-       write (folder,'(3a)') trim(out_path),'/',trim(jobstr)
+       write (folder,'(3a)') trim(more_io_path),'/',trim(jobstr)
      else
-       write (folder,'(2a)') trim(out_path),'/SAVE'
+       write (folder,'(2a)') trim(more_io_path),'/SAVE'
      endif
      if (write_is_on(ID).and.(type==2.or.len_trim(jobstr)==0)) then
        call mk_dir(folder)
@@ -405,7 +405,7 @@ module IO_m
      !
      use drivers, ONLY:list_dbs
      use stderr,  ONLY:string_pack
-     use com,     ONLY:code_version,code_revision,get_name,file_exists,out_path
+     use com,     ONLY:code_version,code_revision,get_name,file_exists,more_io_path
      use timing,  ONLY:date_and_time_string
      use com,     ONLY:msg
      character(*)::desc
@@ -419,9 +419,9 @@ module IO_m
        !
        if (.not.write_is_on(ID)) return
        !
-       restart_file=get_name(desc=desc,type=4,USE_INPATH=.false.,USE_OUTPATH=.true.,NETCDF=.false.)
+       restart_file=get_name(desc=desc,type=4,CORE_IO=.false.,MORE_IO=.true.,COM_IO=.FALSE.,NETCDF=.false.)
        !
-       restart_folder = string_pack(trim(out_path),"/RESTART")
+       restart_folder = string_pack(trim(more_io_path),"/RESTART")
        !
        if (now==todo) then
          call rm_file(restart_file)
@@ -445,7 +445,7 @@ module IO_m
        !
        if (io_mode(ID)/=VERIFY.and.io_mode(ID)/=DUMP) return
        !
-       restart_file=get_name(desc=desc,type=4,USE_INPATH=.false.,USE_OUTPATH=.true.,NETCDF=.false.)
+       restart_file=get_name(desc=desc,type=4,CORE_IO=.false.,MORE_IO=.true.,COM_IO=.FALSE.,NETCDF=.false.)
        if (.not.file_exists(trim(restart_file))) return
     
        open(unit=81,file=trim(restart_file))
@@ -542,7 +542,6 @@ module IO_m
    end subroutine
    !
    subroutine mk_dir(dirname)
-     !
      use pars
      use stderr,         ONLY:cstr
      implicit none
@@ -552,7 +551,6 @@ module IO_m
    end subroutine
    !
    subroutine rm_file(filename)
-     !
      use stderr,         ONLY:cstr
      implicit none
      character(*)      :: filename
@@ -561,7 +559,6 @@ module IO_m
    end subroutine
    !
    subroutine rename_file(filename_old,filename_new)
-     !
      use stderr,    ONLY:cstr
      implicit none
      character(*)      :: filename_old,filename_new

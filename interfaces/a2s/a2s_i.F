@@ -20,10 +20,10 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function a2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
-&                      js,ijs,np,pid)
+&                      com_dir,icd,js,ijs,np,pid)
  !
  use pars,                ONLY:SP,lchlen
- use com,                 ONLY:msg,write_to_report,out_path
+ use com,                 ONLY:msg,write_to_report,more_io_path
  use par_proc_m,          ONLY:ncpu,myid,p_finalize
  use electrons,           ONLY:levels,E_reset,n_bands,n_spin
  use D_lattice,           ONLY:n_atoms_max
@@ -36,13 +36,14 @@ integer function a2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  implicit none
  type(levels)                 :: en 
  type(bz_samp)                :: k 
- integer,          intent(in) :: lnstr,iind,iod,ijs,np,pid
+ integer,          intent(in) :: lnstr,iind,iod,ijs,np,pid,icd
  integer,          intent(in) :: iinf
  character(lnstr), intent(in) :: instr
  character(iinf),  intent(in) :: inf
  character(iind),  intent(in) :: ind
  character(iod),   intent(in) :: od
  character(ijs),   intent(in) :: js
+ character(icd),   intent(in) :: com_dir   
  !
  character(lchlen) :: KSS_file_name
  integer           :: ID,io_err,ioPP_err,ik,icycle
@@ -54,7 +55,7 @@ integer function a2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  a2s_i =0
  ncpu  =np
  myid  =pid
- call std_presets(instr,ind,od,'')
+ call std_presets(instr,ind,od,'','')
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en) 
@@ -79,7 +80,7 @@ integer function a2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  endif
  call msg('l',trim(KSS_file_name))
  !
- call msg('s','DBs path set to :',trim(out_path))
+ call msg('s','DBs path set to :',trim(more_io_path))
  !
  call a2s_db1(en,k,trim(KSS_file_name))
  !

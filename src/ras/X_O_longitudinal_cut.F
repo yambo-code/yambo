@@ -22,12 +22,12 @@
  subroutine X_O_longitudinal_cut(Xen, Xk, X, field_dir, use_trans_gauge)
 !====================================
    use pars
-   use com,                     ONLY : msg, in_path, msg, error, warning
+   use com,                     ONLY : msg, core_io_path, msg, error, warning
    use stderr,                  ONLY : intc
    use timing,                  ONLY : live_timing
    use electrons,               ONLY : levels, n_spin, n_spinor, E_reset, E_duplicate, n_sp_pol
    use par_proc_m,              ONLY : pp_redux_wait, pp_indexes, myid, &
-&                                    master_node, pp_indexes_reset
+&                                    master_cpu, pp_indexes_reset
    use par_indexes_m,           ONLY : par_indexes
    use R_lattice,               ONLY : g_vec, bz_samp, bz_samp_duplicate,bz_samp_reset, q0_def_norm, nkibz
    use D_lattice,               ONLY : DL_sop, n_atoms, atom_pos, znucl
@@ -61,7 +61,7 @@
   type(levels)                 :: Xen_save
   type(bz_samp)                :: Xk_save
   real(SP), allocatable        :: f_save(:,:,:)
-  character(lchlen)            :: in_path_save
+  character(lchlen)            :: core_io_path_save
   integer                      :: wf_ng_save, io_ID, ID
 ! ioDB1 shifted grids
   type(levels)                 :: E_shift
@@ -81,7 +81,7 @@
    nkibz_save  = nkibz
    wf_ncx_save = wf_ncx
    wf_ng_save  = wf_ng
-   in_path_save = in_path
+   core_io_path_save = core_io_path
    !
    if (wf_ng.lt.0.8_SP*maxval(wf_igk)) &
 &   call warning('All/most WF G-vectors should be used in the long. gauge')
@@ -144,7 +144,7 @@
    !
    ! Load WFs {k} + q_iq
    !
-   in_path = long_path
+   core_io_path = long_path
    call WF_free()
    call wf_load(0,1,(/ X%ib(1), Xen%nbm /),&
 &                   (/ik_grid,ik_grid+Xk%nibz-1/),&
@@ -166,7 +166,7 @@
      !
      ! Load WFs {k}
      !
-     in_path = in_path_save
+     core_io_path = core_io_path_save
      nkibz = nkibz_save
      wf_ncx = wf_ncx_save
      wf_ng = wf_ng_save
@@ -177,7 +177,7 @@
      !
      ! Load WFs {k} + q_iq
      !
-     in_path = long_path
+     core_io_path = long_path
      nkibz = nkibz_long
      wf_ncx = wf_ncx_long
      wf_ng = wf_ng_save
@@ -259,14 +259,14 @@
    ! so that all type components (like occupations) are
    ! not rewritten.
    !
-   in_path = in_path_save
-   io_err=ioDB1_reload(E_shift,Xk_shift,trim(in_path))
+   core_io_path = core_io_path_save
+   io_err=ioDB1_reload(E_shift,Xk_shift,trim(core_io_path))
    wf_ng=wf_ng_long
    !
  end subroutine
 
   subroutine reset_DB1
-    in_path = in_path_save
+    core_io_path = core_io_path_save
     call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=REP,MODE=DUMP,ID=ID)
     if(allocated(g_vec))  deallocate(g_vec)
     if(allocated(dl_sop)) deallocate(dl_sop)

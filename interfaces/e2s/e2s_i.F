@@ -20,11 +20,11 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
-&                       js,ijs,np,pid)
+&                      com_dir,icd,js,ijs,np,pid)
  use etsf_io
  use etsf_io_low_level
  use pars,                only : SP,lchlen
- use com,                 only : msg,write_to_report,out_path, file_exists
+ use com,                 only : msg,write_to_report,more_io_path, file_exists
  use par_proc_m,          only : ncpu,myid,p_finalize
  use electrons,           only : levels,E_reset,n_bands,n_spin
  use D_lattice,           only : PP_alloc, PP_free, n_atoms_max
@@ -34,14 +34,15 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  use IO_m,                only : io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
  use interfaces,          only : interface_presets, force_noWFs
  implicit none
- integer,          intent(in) :: lnstr,iind,iod,ijs,np,pid
+ integer,          intent(in) :: lnstr,iind,iod,ijs,np,pid,icd
  integer,          intent(in) :: iinf
  character(lnstr), intent(in) :: instr
  character(iinf),  intent(in) :: inf
  character(iind),  intent(in) :: ind
  character(iod),   intent(in) :: od
  character(ijs),   intent(in) :: js
-
+ character(icd),   intent(in) :: com_dir   
+ !
  type(levels)                 :: en
  type(bz_samp)                :: k
  character(lchlen)            :: ETSF_file_name
@@ -63,7 +64,7 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  e2s_i = 0
  ncpu  = np
  myid  = pid
- call std_presets(instr,ind,od,'')
+ call std_presets(instr,ind,od,'','')
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en)
@@ -94,7 +95,7 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  call etsf_io_low_open_read(ncid, trim(ETSF_file_name), lstat, error_data = error_data)
  if (.not. lstat) call etsf_long_error(error_data)
- call msg('s','DBs path set to :',trim(out_path))
+ call msg('s','DBs path set to :',trim(more_io_path))
  !
  ! DB1
  !==========================================

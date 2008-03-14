@@ -43,7 +43,7 @@ module memory_m
    subroutine mem_est(what,elements_size,elements_kind,errors,quiet,overall_report)
      use drivers,      ONLY:infile_editing
      use com,          ONLY:msg,error,warning
-     use par_proc_m,   ONLY:master_node
+     use par_proc_m,   ONLY:master_cpu
      implicit none
      character(*)         :: what
      integer,optional     :: elements_size(:)
@@ -129,7 +129,7 @@ module memory_m
        call warning( " Memory management of array "//trim(ch(1))//" failed.")
      endif
      !
-     stdout_report=master_node.and.mem_moved>mem_tresh.and.&
+     stdout_report=master_cpu.and.mem_moved>mem_tresh.and.&
 &                  .not.present(quiet).and..not.infile_editing
      if (.not.stdout_report) return
      !

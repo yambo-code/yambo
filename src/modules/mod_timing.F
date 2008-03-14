@@ -152,7 +152,7 @@ module timing
      ! sfmt    =Message formatting
      !
      use stderr,     ONLY : c_print,logfile,tty_size,write_to_log
-     use par_proc_m, ONLY : myid,ncpu,master_node
+     use par_proc_m, ONLY : myid,ncpu,master_cpu
      implicit none
      character(*)      :: lfmt,message,rfmt,sfmt
      logical, optional :: NO_CPUT
@@ -208,8 +208,8 @@ module timing
      if (index(trim(lfmt),"n")>0) then
        open(unit=13,file=trim(logfile),position='append')
        if (trim(lfmt)=="nn") write (13,'(a/)') ""
-       if (master_node) write (13,'(a)') trim(log_line)
-       if (.not.master_node.and.len_trim(log_line)>0) write (13,'(a)') trim(log_line)
+       if (master_cpu) write (13,'(a)') trim(log_line)
+       if (.not.master_cpu.and.len_trim(log_line)>0) write (13,'(a)') trim(log_line)
        log_line=trim(message_composed) 
        if (trim(rfmt)=="n".or.trim(rfmt)=="nn") log_line=""
        if (trim(rfmt)=="nn") write (13,'(a/)') ""
@@ -224,8 +224,8 @@ module timing
      log_line=lch
      if (index(trim(rfmt),"n")>0) then
        open(unit=13,file=trim(logfile),position='append')
-       if (master_node) write (13,'(a)') trim(log_line)
-       if (.not.master_node.and.len_trim(log_line)>0) write (13,'(a)') trim(log_line)
+       if (master_cpu) write (13,'(a)') trim(log_line)
+       if (.not.master_cpu.and.len_trim(log_line)>0) write (13,'(a)') trim(log_line)
        if (trim(rfmt)=="nn") write (13,'(a/)') ""
        close(13)
        log_line=""
@@ -259,7 +259,7 @@ module timing
    end subroutine
    !
    subroutine live_timing_add(steps)
-     use par_proc_m, ONLY : myid,master_node
+     use par_proc_m, ONLY : myid,master_cpu
      implicit none
      integer :: steps
      ! 
@@ -280,21 +280,21 @@ module timing
      etch=time_string(cput_seg(myid+1,1)) 
      if (len_trim(etch)==0) etch='--'
      time_report=cput_seg(myid+1,1)-cput_save>=rts+p_delay*myid
-     if (.not.time_report) time_report=all((/master_node,steps_done==time_steps/))
+     if (.not.time_report) time_report=all((/master_cpu,steps_done==time_steps/))
      if (time_report) cput_save=cput_seg(myid+1,1)
      !
      if (time_report) then
        lts=cput_seg(myid+1,1)*real(time_steps)/real(steps_done)
        xtch=time_string(lts)
        if (len_trim(xtch)==0) xtch='--'
-       if (trim(xtch)/='--'.or.master_node) call live_timing_update(trim(xtch),trim(etch))
+       if (trim(xtch)/='--'.or.master_cpu) call live_timing_update(trim(xtch),trim(etch))
      endif
      !
    end subroutine
    !
    subroutine live_timing_update(xch,ech)
      use stderr,     ONLY : tty_size
-     use par_proc_m, ONLY : master_node
+     use par_proc_m, ONLY : master_cpu
      implicit none
      character(*)::xch,ech
      ! 
@@ -304,7 +304,7 @@ module timing
      character(schlen):: lch,lfmt,lmsg,tctt
      !
      if (hashes_now==hashes_done.and.steps_done/=0) return
-     if (steps_done==0.and..not.master_node) return
+     if (steps_done==0.and..not.master_cpu) return
      !
      ! Write the descriptor 
      !
@@ -331,10 +331,10 @@ module timing
    !
    subroutine live_timing_finalize
      use stderr,     ONLY : write_to_log
-     use par_proc_m, ONLY : master_node
+     use par_proc_m, ONLY : master_cpu
      implicit none
      parallel_timing=.false.
-     write_to_log=master_node
+     write_to_log=master_cpu
    end subroutine
    !
    ! COPYRIGHT

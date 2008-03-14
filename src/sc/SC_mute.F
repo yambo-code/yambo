@@ -22,9 +22,9 @@
 subroutine SC_mute(what)
  !
  use pars,           ONLY:schlen
- use IO_m,           ONLY:write_to_dbs,read_dbs
+ use IO_m,           ONLY:IO_write,IO_read
  use com,            ONLY:write_to_report
- use par_proc_m,     ONLY:master_node
+ use par_proc_m,     ONLY:master_cpu
  use stderr,         ONLY:string_split,write_to_log
  implicit none
  !
@@ -35,18 +35,18 @@ subroutine SC_mute(what)
  integer          ::ich
  character(schlen)::ch_piece(10)
  !
- write_to_log=master_node
- write_to_report=master_node
- write_to_dbs=master_node
- read_dbs=.true.
+ write_to_log=master_cpu
+ write_to_report=master_cpu
+ IO_write=master_cpu
+ IO_read=.true.
  !
  if (len_trim(what)>0) then
    call string_split(what,ch_piece)
    do ich=1,10
      if (trim(ch_piece(ich))=="report") write_to_report=.false.
      if (trim(ch_piece(ich))=="log")    write_to_log=.false.
-     if (trim(ch_piece(ich))=="io_in")  read_dbs=.false.
-     if (trim(ch_piece(ich))=="io_out") write_to_dbs=.false.
+     if (trim(ch_piece(ich))=="io_in")  IO_read=.false.
+     if (trim(ch_piece(ich))=="io_out") IO_write=.false.
    enddo
  endif
  !

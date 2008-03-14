@@ -30,9 +30,10 @@ module par_proc_m
  !
  integer            :: myid
  integer            :: ncpu
+ integer            :: n_nodes
  integer, parameter :: p_sum=1
  integer, parameter :: p_prod=2
- logical            :: master_node
+ logical            :: master_cpu
  !
  type pp_indexes 
    logical, pointer :: i1p(:)
@@ -50,7 +51,55 @@ module par_proc_m
  end interface pp_redux_wait
  !
  contains
-   ! 
+   !
+   subroutine check_for_a_redundant_IO(path_,cpu_seen_by_me,cpu_seen_by_any)
+     !
+     ! In this routine I check if all cpu
+     ! can access the same path_. If not only distinct
+     ! cpu's are allowed to write
+     !
+     use pars,    ONLY:lchlen
+     use stderr,  ONLY:cstr,intc
+     implicit none
+     character(*)    ::path_
+     !
+     ! Work Space
+     !
+     character(lchlen) ::file_name(ncpu)
+     integer           ::ic,ierr
+     integer(8)        ::cpu_seen_by_me(ncpu),cpu_seen_by_any(ncpu)
+     logical           ::file_exists
+     do ic=1,ncpu
+       file_name(ic)=path_//'/access_cpu_'//trim(intc(ic))
+     enddo
+     do ic=1,ncpu
+       if (myid/=ic-1) cycle
+       open(unit=20,name=trim(file_name(ic)))
+       close(20)
+     enddo
+#if defined _MPI
+     call mpi_barrier(mpi_comm_world,ierr)
+#endif
+     cpu_seen_by_me=0
+     do ic=1,ncpu
+       inquire(file=trim(file_name(ic)),exist=file_exists)
+       if (file_exists) cpu_seen_by_me(ic)=1
+     enddo
+#if defined _MPI
+     call mpi_barrier(mpi_comm_world,ierr)
+#endif
+     do ic=1,ncpu
+       if (myid/=ic-1) cycle
+       call iremove( cstr(trim(file_name(ic))) )
+     enddo
+#if defined _MPI
+     call mpi_barrier(mpi_comm_world,ierr)
+     call mpi_allreduce(cpu_seen_by_me,cpu_seen_by_any,ncpu,&
+&         mpi_integer8,mpi_sum,mpi_comm_world,ierr)
+#endif
+     !
+   end subroutine
+   !
    subroutine pp_indexes_reset(ip)
      type(pp_indexes)::ip
      nullify(ip%i1p,ip%i2p,ip%stps,ip%i1wts)

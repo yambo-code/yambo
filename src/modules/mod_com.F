@@ -27,9 +27,9 @@ module com
  !
  ! PATHS & JOB_str
  !
- character(lchlen)  :: in_path
- character(lchlen)  :: out_path
- character(lchlen)  :: db_wr_path
+ character(lchlen)  :: core_io_path
+ character(lchlen)  :: more_io_path
+ character(lchlen)  :: com_path
  character(lchlen)  :: jobstr
  character(lchlen)  :: repfile
  !
@@ -61,21 +61,21 @@ module com
  !
  contains
    !
-   character(lchlen) function get_name(desc,subfolder,type,USE_INPATH,USE_OUTPATH,NETCDF)
+   character(lchlen) function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,NETCDF)
      !
      ! -2 ----------------  -> desc (NETCDF as OUTPUT)
      ! -1 ----------------  -> subfolder/(n)desc
-     !  0 Stable s.         -> INPATH/SAVE/subfolder/(n)s.desc
-     !  1 Stable db.        -> INPATH/SAVE/subfolder/(n)db.desc
-     !  2 Job dependent db. -> OUTPATH/JOBSTR/subfolder/(n)db.desc
-     !  3 Job dependent o.  -> OUTPATH/o.desc-JOBSTR
-     !  4 ----------------  -> OUTPATH/RESTART/(n)db.desc_FOLDER
+     !  0 Stable s.         -> CORE_IO_PATH/SAVE/subfolder/(n)s.desc
+     !  1 Stable db.        -> CORE_IO_PATH/SAVE/subfolder/(n)db.desc
+     !  2 Job dependent db. -> MORE_IO_PATH/JOBSTR/subfolder/(n)db.desc
+     !  3 Job dependent o.  -> MORE_IO_PATH/o.desc-JOBSTR
+     !  4 ----------------  -> MORE_IO_PATH/RESTART/(n)db.desc_FOLDER
      !                                                    |
      !                                                    JOBSTR, or  SAVE if no JOBSTR 
      use stderr,         ONLY:string_pack
      character(*)           ::desc
      integer                ::type,ID
-     logical                ::USE_INPATH,USE_OUTPATH,NETCDF
+     logical                ::CORE_IO,MORE_IO,NETCDF,COM_IO
      character(*), optional ::subfolder
      ! 
      ! Work Space
@@ -85,10 +85,11 @@ module com
      !
      get_name=""
      folder="SAVE"
-     if (.not.USE_INPATH.and..not.USE_OUTPATH) return
+     if (.not.CORE_IO.and..not.MORE_IO.and..not.COM_IO) return
      !
-     if (USE_INPATH) ch(1)=in_path
-     if (USE_OUTPATH) ch(1)=out_path
+     if (CORE_IO) ch(1)=core_io_path
+     if (MORE_IO) ch(1)=more_io_path
+     if ( COM_IO) ch(1)=com_path
      !
      select case(type)
        case(-2)
@@ -118,7 +119,7 @@ module com
      !
      ! The RESTART folder is always in the outpath
      !
-     if (type==4 ) ch(1)=out_path
+     if (type==4 ) ch(1)=more_io_path
      !
      ! No inpath/outpath must pre-appended when an explicit path is given
      !
@@ -153,8 +154,8 @@ module com
        !
        local_file_name=of_name
        if (index(mode,'a')==0.and.index(mode,'O')==0) then
-         local_file_name=get_name(desc=of_name,type=3,USE_INPATH=.false.,&
-&                                 USE_OUTPATH=.true.,NETCDF=.false.)
+         local_file_name=get_name(desc=of_name,type=3,CORE_IO=.false.,&
+&                                 MORE_IO=.false.,COM_IO=.true.,NETCDF=.false.)
          call rename_file(local_file_name)
        endif
        !
@@ -207,7 +208,7 @@ module com
    !
    subroutine title(ou,cmnt)
      use timing,       ONLY:live_time_msg
-     use par_proc_m,   ONLY:master_node
+     use par_proc_m,   ONLY:master_cpu
      integer     ::ou
      character(1)::cmnt
      ! 
@@ -218,7 +219,7 @@ module com
      include 'version.inc'
      if (trim(cmnt)=='') isp=10
      if (trim(cmnt)=='#') isp=1
-     if (.not.master_node) return
+     if (.not.master_cpu) return
      if (ou<0) return
      select case(ou)
        case (:5,7:)

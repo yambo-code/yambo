@@ -51,7 +51,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        FXC_SVD_digits
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
  use QP_m,          ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_W,QP_ctl_Z
- use com,           ONLY:out_path,db_wr_path
+ use com,           ONLY:more_io_path,com_path
  use functions,     ONLY:bose_E_cut
 #if defined _SC
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential,&
@@ -126,8 +126,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! I/O
  !
- call it(defs,'Out_Path', '[IO] Formatted output directory',out_path,verb_level=V_io)
- call it(defs,'DB_Path',  '[IO] UnFormatted output directory',db_wr_path,verb_level=V_io)
+ call it(defs,'More_IO_Path', '[IO] Additional I/O directory',more_io_path,verb_level=V_io)
+ call it(defs,'Com_Path',     '[IO] Communication directory',com_path,verb_level=V_io)
  !
  ! Basics
  !

@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
-&                      js,ijs,np,pid)
+&                      com_dir,icd,js,ijs,np,pid)
  !
  use drivers,             ONLY:infile_editing
  use par_proc_m,          ONLY:ncpu,myid,p_finalize
@@ -36,13 +36,14 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  type(levels)                 :: en,Xen,Ken
  type(bz_samp)                :: k,Xk,q
- integer,          intent(in) :: lnstr,iind,iod,ijs,np,pid
+ integer,          intent(in) :: lnstr,iind,iod,ijs,np,pid,icd
  integer,       intent(inout) :: iinf
  character(lnstr), intent(in) :: instr
  character(iinf),  intent(in) :: inf
  character(iind),  intent(in) :: ind
  character(iod),   intent(in) :: od
  character(ijs),   intent(in) :: js
+ character(icd),   intent(in) :: com_dir
  ! 
  ! I/O 
  !
@@ -56,7 +57,7 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  ncpu  =np
  myid  =pid
  infile=inf
- call std_presets(instr,ind,od,js)
+ call std_presets(instr,ind,od,js,com_dir)
  call bz_samp_reset(k)
  call bz_samp_reset(q)
  call bz_samp_reset(Xk)

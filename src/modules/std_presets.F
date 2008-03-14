@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine std_presets(INSTR,IND,OD,JS)
+subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  use drivers
  use pars,       ONLY:SP,HARTREE
@@ -41,16 +41,16 @@ subroutine std_presets(INSTR,IND,OD,JS)
 &                     cutoff_presets
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_RIM_nbands,BZ_RIM_tot_nkpts,&
 &                     filled_tresh, spin_orbit
- use par_proc_m, ONLY:myid,master_node
+ use par_proc_m, ONLY:myid,master_cpu,ncpu,n_nodes
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,&
 &                     of_unit,write_to_of,write_to_report,max_open_ofs,&
-&                     out_path,in_path,jobstr,db_wr_path
+&                     more_io_path,core_io_path,jobstr,com_path
  use stderr,     ONLY:win_size,tty_size,write_to_log,logfile
  use timing,     ONLY:log_line_to_dump,log_line,nhash,live_timing_is_on,&
 &                     parallel_timing,ct
  use wave_func,  ONLY:wf_b,wf_k,wf_ng,wf_space,wf_norm_test
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim
- use IO_m,       ONLY:io_reset,max_io_units,write_to_dbs,dbs_fragment,serial_number,read_dbs
+ use IO_m,       ONLY:io_reset,max_io_units,IO_write,dbs_fragment,serial_number,IO_read
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
@@ -71,7 +71,7 @@ subroutine std_presets(INSTR,IND,OD,JS)
  !
  implicit none
  !
- character(*) :: INSTR,IND,OD,JS
+ character(*) :: INSTR,IND,OD,JS,COM_DIR
  integer      :: i1
  !
  ! Stack Size 
@@ -87,14 +87,17 @@ subroutine std_presets(INSTR,IND,OD,JS)
  !
  ! PATHS 
  !
- in_path=IND
- out_path=OD
- db_wr_path=OD
+ core_io_path=IND
+ more_io_path=OD
+ com_path=COM_DIR
  jobstr=JS
  !
- ! CALLS
+ ! PAR PROC Setup
  !
- master_node=myid==0
+ master_cpu=myid==0
+ !
+ ! TTY size 
+ !
  call win_size(tty_size)
  call ct(INIT=.TRUE.)
  !
@@ -108,13 +111,13 @@ subroutine std_presets(INSTR,IND,OD,JS)
  opened_of=' '
  of_unit=0
  of_unit(max_open_ofs)=-11
- write_to_of=master_node
- write_to_report=master_node
+ write_to_of=master_cpu
+ write_to_report=master_cpu
  !
  !stderr
  !
- write_to_log=master_node
- write (logfile,'(2a)') trim(out_path),'/l_stderr'
+ write_to_log=master_cpu
+ write (logfile,'(2a)') trim(more_io_path),'/l_stderr'
  !
  !Timing
  !
@@ -224,8 +227,10 @@ subroutine std_presets(INSTR,IND,OD,JS)
  !IO
  !
  serial_number=0
- write_to_dbs=master_node
- read_dbs=.true.
+ IO_read=.true.
+ IO_write=master_cpu
+ n_nodes=1
+ !
  dbs_fragment=index(INSTR,'dbfrag')>0
  do i1=1,max_io_units
    call io_reset(i1)

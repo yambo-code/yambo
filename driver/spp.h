@@ -25,8 +25,8 @@
   {"lhelp","H","Long Help",0,0,0,0}, /* 1 */
   {"jobstr","J","Job string identifier",0,0,1,0},   /* 2 */
   {"ifile",  "F","Input file",0,0,1,0},              /* 3 */
-  {"idir",   "I","Input directory",0,0,1,0},         /* 4 */
-  {"odir",   "O","Output directory",0,0,1,0},        /* 5 */
+  {"idir",   "I","Core I/O directory",0,0,1,0},         /* 4 */
+  {"odir",   "O","Additional I/O directory",0,0,1,0},        /* 5 */
   {"nompi", "N","Skip MPI initialization",0,0,0,0}, /* 6 */
   {"dbfrag","S","DataBases fragmentation",0,0,0,0}, /* 7 */
   {"kpt","k","K-grid generator",0,0,0,0}, /* 8,1 */

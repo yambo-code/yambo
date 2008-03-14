@@ -26,7 +26,7 @@
  use timing,                  ONLY : live_timing
  use electrons,               ONLY : levels, n_spin, n_spinor, n_sp_pol
  use par_proc_m,              ONLY : pp_redux_wait, pp_indexes, myid, &
-&                                    master_node, pp_indexes_reset
+&                                    master_cpu, pp_indexes_reset
  use par_indexes_m,           ONLY : par_indexes
  use D_lattice,               ONLY : nsym, i_time_rev, alat, dl_sop, sop_inv
  use R_lattice,               ONLY : g_vec, bz_samp, q0_def_norm,q_norm,bare_qpg
@@ -103,7 +103,7 @@
    !
    call WF_free()
    !
-   if (master_node) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=io_db)
+   if (master_cpu) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=io_db)
    io_err=ioOSTNTS_cut(X,Xen,io_db)
  endif
  !

@@ -69,7 +69,7 @@ static void title(FILE *file_name,char *cmnt);
 main(int argc, char *argv[])
 {
  int io,i,c,j,k,nf,lni,lnr,lnc,ttd,
-     iif=0,iid=1,iod=1,nr=0,ijs=0,np=1,pid=0;
+     iif=0,iid=1,iod=1,icd=1,nr=0,ijs=0,np=1,pid=0;
 /* 
  By default MPI_init is on. It is swiched off during the options scanning
 */
@@ -77,7 +77,7 @@ main(int argc, char *argv[])
  int iv[4];
  double rv[4];
  char *cv[4];
- char *fmt=NULL,*inf=NULL,*od=NULL,*id=NULL,*js=NULL,*db=NULL;
+ char *fmt=NULL,*inf=NULL,*od=NULL,*id=NULL,*js=NULL,*db=NULL,*com_dir=NULL;
  extern int optind, optopt;
  extern int guess_winsize();
  char rnstr1[500]={'\0'},rnstr2[500]={'\0'},edit_line[100]={'\0'};
@@ -92,6 +92,7 @@ main(int argc, char *argv[])
  iif=strlen(inf);
  id  = (char *) malloc(2);strcpy(id,".");
  od  = (char *) malloc(2);strcpy(od,".");
+ com_dir  = (char *) malloc(2);strcpy(com_dir,".");
  js  = (char *) malloc(2);strcpy(js," ");
 
  ttd=guess_winsize();
@@ -123,7 +124,7 @@ main(int argc, char *argv[])
  Switch off MPI_init as I have options used to create the input file...
 */
 #if defined _self  || _RAS || _REELS || _ELPH || _SC || _BIGSYS || _BS_CPL
-     if (j> 9) {mpi_init=-1;};
+     if (j> 10) {mpi_init=-1;};
 #endif
 #if defined _spp || _SPP_ELPH || _SPP_RAS
      if (j> 6) {mpi_init=-1;};
@@ -170,6 +171,12 @@ main(int argc, char *argv[])
        strcpy(od,cv[1]);
        iod=strlen(od);
      };
+     if (strcmp(opts[j].ln,"cdir")==0) {
+       free(com_dir);
+       com_dir = (char *) malloc(strlen(cv[1]));
+       strcpy(com_dir,cv[1]);
+       icd=strlen(com_dir);
+     };
      if (strcmp(opts[j].ln,"jobstr")==0) {
        free(js);
        js = (char *) malloc(strlen(cv[1]));
@@ -187,11 +194,12 @@ main(int argc, char *argv[])
    };
  };
 /* 
- If id/od are not found switch to the deafult i/o directory 
+ If id/od/com_dir are not found switch to the deafult i/o directory 
 */
  lni=strlen(rnstr2);
  if (stat(id, &buf) != 0) {strcpy(id,".");iid=1;};
  if (stat(od, &buf) != 0) {strcpy(od,".");iod=1;};
+ if (stat(com_dir, &buf) != 0) {strcpy(com_dir,".");icd=1;};
  /* 
    MPI
  ===========================================================================
@@ -209,7 +217,7 @@ main(int argc, char *argv[])
  ===========================================================================
  */
  F90_FUNC(self_driver,SELF_DRIVER)(
-          rnstr2,&lni,inf,&iif,id,&iid,od,&iod,js,&ijs,&np,&pid);
+          rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
 #endif
 #if defined _spp || _SPP_ELPH || _SPP_RAS
  /* 
@@ -217,7 +225,7 @@ main(int argc, char *argv[])
  ===========================================================================
  */
  F90_FUNC(spp_i,SPP_I)(
-          rnstr2,&lni,inf,&iif,id,&iid,od,&iod,js,&ijs,&np,&pid);
+          rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
 #endif
 #if defined _a2s 
  /* 
@@ -225,7 +233,7 @@ main(int argc, char *argv[])
  ===========================================================================
  */
  F90_FUNC(a2s_i,A2S_I)(
-          rnstr2,&lni,inf,&iif,id,&iid,od,&iod,js,&ijs,&np,&pid);
+          rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
 #endif
 #if defined _p2s
  /* 
@@ -233,7 +241,7 @@ main(int argc, char *argv[])
  ===========================================================================
  */
  F90_FUNC(p2s_i,P2S_I)(
-          rnstr2,&lni,inf,&iif,id,&iid,od,&iod,js,&ijs,&np,&pid);
+          rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
 #endif
 #if defined _e2s 
  /* 
@@ -241,7 +249,7 @@ main(int argc, char *argv[])
  ===========================================================================
  */
  F90_FUNC(e2s_i,E2S_I)(
-          rnstr2,&lni,inf,&iif,id,&iid,od,&iod,js,&ijs,&np,&pid);
+          rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
 #endif
 #if defined _f2s 
  /* 
@@ -249,7 +257,7 @@ main(int argc, char *argv[])
  ===========================================================================
  */
  F90_FUNC(f2s_i,F2S_I)(
-          rnstr2,&lni,inf,&iif,id,&iid,od,&iod,js,&ijs,&np,&pid);
+          rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
 #endif
  /* 
    INPUT FILE

@@ -19,12 +19,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,xc_functional)
+subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,xc_functional,io_err_)
  !
  use drivers,   ONLY:l_sc_run
  use SC,        ONLY:using_SC_basis,SC_R,SC_bands,H_nl_sc,SC_kind,&
 &                    SC_xc_functional
- use electrons, ONLY:levels
+ use electrons, ONLY:levels,E_reset
  use R_lattice, ONLY:nkibz
  use memory_m,  ONLY:mem_est
  use IO_m,      ONLY:io_control,OP_RD_CL,RD_CL_IF_END,OP_RD,RD_CL,&
@@ -33,7 +33,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,xc_functional)
  !
  character(*)           :: what
  type(levels), optional :: E
- integer,      optional :: COM_,MODE_,ik,n_bands,kind,xc_functional
+ integer,      optional :: COM_,MODE_,ik,n_bands,kind,xc_functional,io_err_
  ! 
  ! Work Space
  !
@@ -43,6 +43,8 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,xc_functional)
  !
  if (l_sc_run) using_SC_basis=.false.
  if (l_sc_run) return
+ !
+ call E_reset(E_dummy)
  ! 
  if (what=="WF") then
    call io_control(ACTION=OP_RD,COM=COM_,SEC=(/1/),MODE=MODE_,ID=ID)
@@ -119,6 +121,8 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,xc_functional)
    kind=SC_kind
    xc_functional=SC_xc_functional
  endif
+ !
+ if (present(io_err_)) io_err_=io_err
  !
  using_SC_basis=io_err==0
  !

@@ -32,8 +32,9 @@ subroutine DFT_Vxc(E,Xk)
  use xc_functionals,ONLY:V_xc,xc_string,el_mag
  use global_XC,     ONLY:WF_kind,WF_xc_functional
 #if defined _SC
- use IO_m,          ONLY:REP,DUMP
- use SC,            ONLY:load_SC_components,V_xc_sc
+ use com,           ONLY:error
+ use IO_m,          ONLY:REP,VERIFY
+ use SC,            ONLY:load_SC_components,V_xc_sc,V_hartree_sc,SC_fft_size
 #endif
  implicit none
  type(levels) ::E       
@@ -41,13 +42,13 @@ subroutine DFT_Vxc(E,Xk)
  !
  ! Work Space
  !
- integer                 ::i1,ifft,ifftp,ifft_sp1,ifft_sp2,ib,ibp,ik,i_sp1
+ integer     ::i1,ifft,ifftp,ifft_sp1,ifft_sp2,ib,ibp,ik,i_sp1,io_err
 #if defined _DOUBLE
- complex(DP)             ::zdotc,zdotu
+ complex(DP) ::zdotc,zdotu
 #else 
- complex(SP)             ::cdotc,cdotu
+ complex(SP) ::cdotc,cdotu
 #endif
- complex(SP) :: c_ws(fft_size,n_spin)
+ complex(SP) ::c_ws(fft_size,n_spin)
  !
  ! Spin support (collinear and not collinear)
  !
@@ -67,10 +68,17 @@ subroutine DFT_Vxc(E,Xk)
    call xc_lda_driver(E,Xk,WF_KIND,WF_xc_FUNCTIONAL,1)
 #if defined _SC
  else
-   allocate(V_xc_sc(fft_size))
-   call load_SC_components('V',COM_=REP,MODE_=DUMP)
+   !
+   ! ...SC EXX and EXX+LDA_C
+   !
+   allocate(V_xc_sc(fft_size),V_hartree_sc(fft_size))
+   SC_fft_size=fft_size
+   call load_SC_components('V',COM_=REP,MODE_=VERIFY,io_err_=io_err)
+   !
+   if (io_err/=0) call error('SC potential FFT size is wrong')
+   !
    V_xc(:,1)=V_xc_sc
-   deallocate(V_xc_sc)
+   deallocate(V_xc_sc,V_hartree_sc)
  endif
 #endif
  !

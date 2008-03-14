@@ -32,8 +32,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use SC,             ONLY:SC_bands,SC_iterations,SC_E_threshold,SC_kind,SC_xc_functional,&
 &                         SC_rho_threshold,SC_potential,it_now,E_convergence,&
 &                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,SC_bands_mixed,&
-&                         SC_cycle_mixing,V_hartree_sc,NSC_shot
- use wave_func,      ONLY:wf_load,wf,WF_rotate,wf_n_states
+&                         SC_cycle_mixing,V_hartree_sc,NSC_shot,SC_fft_size,&
+&                         SC_ng_Sx,SC_X_bands,SC_X_size
+ use wave_func,      ONLY:wf_load,wf,wf_n_states,WF_free
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size,fft_size
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
@@ -47,6 +48,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL
  use global_XC,      ONLY:SC_EXX,SC_HF,SC_CHOSEX,SC_EXXC
  use vec_operate,    ONLY:degeneration_finder
+ use timing,         ONLY:live_timing
  !
  implicit none
  type(levels) ::E
@@ -64,8 +66,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! 
  ! Work Space
  !
- integer                  :: ir,i1,i2,ik,ib,ibp,WF_G_max,WF_Go_indx,ID(3),io_E,io_V,io_WF,WF_bands
- real(SP)                 :: max_proj
+ integer                  :: ir,i1,i2,ik,ib,ibp,WF_G_max,WF_Go_indx,ID(3),io_E,io_V,io_WF
+ real(SP)                 :: max_proj,V_xc_sc_shift
  complex(SP)              :: Ho(SC_bands,SC_bands,k%nibz)
  character(schlen)        :: dumb_ch
  integer, external        :: io_SC_components,eval_G_minus_G
@@ -78,6 +80,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  real(SP)                 :: WS_spread(SC_bands)
  integer                  :: first_el(SC_bands),n_of_el(SC_bands),n_deg_grp,&
 &                            b_of_max_proj(SC_bands,k%nibz)
+ !
+ ! Define SC internal variables
+ !
+ SC_ng_Sx  =QP_ng_Sx
+ SC_X_bands=X(2)%ib
+ SC_X_size =X(2)%ng
  !
  call QP_reset(qp_dummy)
  !
@@ -135,16 +143,18 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  call QP_state_table_setup(E)
  !
- ! Perform a first I/O to check which DBs are present.
+ ! Perform a first I/O to check which DBs are present. In this VERIFY call
+ ! even if the fft_size is not set it is verified anyway as it is defined
+ ! by the Sigma_x/Chi RL vectors.
  !
  SC_cycle=SC_iterations> 0
  RESTART=.false.
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(1)) ! Energies
  io_E=io_SC_components('E' ,E,ID(1))
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2))  ! WFs
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2)) ! WFs
  io_WF=io_SC_components('WF',E,ID(2))
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID(3)) ! Local potential
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID(3))  ! Local potential
  io_V=io_SC_components('V' ,E,ID(3))
  !
  RESTART=all((/io_E==0,io_WF==0,io_V==0/))
@@ -219,7 +229,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  WF_G_max=0
  WF_Go_indx=1
- WF_bands=SC_bands
  !
  if (SC_cycle.and.(l_sc_hf.or.l_sc_exx.or.l_sc_exxc.or.l_sc_chosex)) then
    WF_Go_indx=maxval(qindx_S(:,:,2)) ! Sigma_x/c
@@ -229,13 +238,19 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    endif
    if (l_sc_exx.or.l_sc_exxc)  then
      WF_G_max=max(QP_ng_Sx,X(1)%ng)
-     WF_bands=max(SC_bands,X(1)%ib(2))
    else if (l_sc_chosex)  then
      WF_G_max=max(QP_ng_Sx,X(2)%ng)
-     WF_bands=max(SC_bands,X(2)%ib(2))
    endif
  endif
- call wf_load(WF_G_max,WF_Go_indx,(/1,WF_bands/),(/1,k%nibz/),title=' ')
+ call wf_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),title=' ')
+ !
+ if (NSC_shot.and.SC_fft_size/=fft_size) then
+   call warning(' FFT size of V_xc does not fit. Skipping NSC run')
+   call WF_free()
+   return
+ endif
+ !
+ SC_fft_size=fft_size
  !
  ! Allocation(s)...
  !
@@ -322,7 +337,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    do ik=1,QP_nk
      call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(2))
      io_WF=io_SC_components('WF',E,ID(2))
-     call WF_rotate(ik,SC_bands,fft_size,SC_R(:,:,ik),WFo,wf_out=wf)
+     call WF_rotate(ik,WFo,fft_size)
    enddo
    !
    ! ... rho_n and V_hartree_sc
@@ -353,6 +368,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  ! SCF cycle & NSC shot
  !=====================
+ ! 
+ if (NSC_shot) call live_timing('[NSC] Single shot loop',QP_nk,SERIAL=.true.)
  !
  do it = 1, SC_iterations
    !
@@ -498,7 +515,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      ! New wave functions 
      !====================
      !
-     call WF_rotate(ik,SC_bands,fft_size,SC_R(:,:,ik),WFo,wf_out=wf)
+     call WF_rotate(ik,WFo,fft_size)
+     !
+     if (NSC_shot) call live_timing(steps=1)
      !
    end do
    !
@@ -570,11 +589,25 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    call msg('nr','[SC] Iterations               :',it_now)
    call msg('r' ,'[SC] Accuracy on density      :',rho_convergence)
    call msg('rn','[SC]          on energies [ev]:',E_convergence*HARTREE)
+   !
  else
    call msg('r','')
  endif
  !
+ if (NSC_shot) call live_timing(steps=1)
+ !
 1 continue
+ !
+ ! Before all the DFT energies are shifted the V_xc_sc
+ ! must be shifted of max(Ev)-max(E_bare_v)
+ ! for more details see A. Fleszar PRB 64, 245204
+ !
+ V_xc_sc_shift= maxval(E_bare(:n_met_bands,:))-maxval(E%E(:n_met_bands,:,:)) 
+ if (local_V) then
+   V_xc_sc=V_xc_sc+V_xc_sc_shift
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(3))
+   io_V=io_SC_components('V' ,E,ID(3))
+ endif
  !
  call fermi_level(E,k,Tel,1)
  !
@@ -628,6 +661,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  deallocate(SC_R)
  call mem_est("SC_R")
+ call WF_free()
  if (SC_cycle.or.NSC_shot) then
    deallocate(rho_n,rho_nm1,V_xc_sc,V_xc_nm1,V_hartree_sc,WFo,H_nl_sc)
    call mem_est("Hs Potentials WF_save H_nl_sc")

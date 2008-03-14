@@ -29,7 +29,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands
  use timing,        ONLY:live_timing
- use com,           ONLY:msg
+ use com,           ONLY:msg,error
  use drivers,       ONLY:Finite_Tel,l_ppa,l_chosex,l_sc_run
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
@@ -128,7 +128,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=ioX(X,Xw,ID)
- if (io_err/=0) return
+ if (io_err/=0) call error('Incomplete and/or broken PPA/Static diel. fun. database')
  !
  ! Test the spatial Inversion
  !   

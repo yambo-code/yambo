@@ -47,7 +47,7 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  ! I/O 
  !
  integer           :: ID,i_err
- integer, external :: ioDB1,ioQINDX,iogrot,self2self,elph_pw_dbs
+ integer, external :: ioDB1,ioQINDX,iogrot,elph_pw_dbs
  !
  ! Presets
  !
@@ -68,14 +68,6 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  ! Switch off report file support
  !
  write_to_report=.FALSE.
- !
- ! SELF to SELF
- !
- i_err=self2self(instr,en,k,q)
- if (i_err/=0) then
-   call spp_finalize()
-   return
- endif
  !
  ! DB1
  !

@@ -19,11 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Self, 3.0.15 r.217 , self@roma2.infn.it)
+AC_INIT(Self, 3.0.15 r.218 , self@roma2.infn.it)
 SVERSION="3"
 SPATCHLEVEL="0"
 SSUBLEVEL="15"
-SREVISION="217"
+SREVISION="218"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -55,18 +55,10 @@ AC_FUNC_STAT
 AC_PROG_MAKE_SET
 
 # ============================================================================
-#TCSH 
-AC_PATH_PROG(TCSH, tcsh, :)
-AC_SUBST(TCSH)
-
-# ============================================================================
 # Checks for programs.
-AC_PROG_AWK
 AC_PROG_CC
 AC_CANONICAL_HOST
 hostname=`uname -n`
-ACX_MYECHO
-AC_SUBST(MYECHO)
 AC_SUBST(hostname)
 
 # ============================================================================
@@ -316,7 +308,7 @@ ACX_REPORT()
 # ============================================================================
 AC_CONFIG_FILES([config/setup config/Makefile config/report
                  src/wf_and_fft/sgfft.F
-                 sbin/make_makefile.sh sbin/self_save.sh sbin/make_message.pl
+                 sbin/make_makefile.sh sbin/make_message.pl sbin/objects_debug.sh
                  driver/codever.h src/external_c/.objects])
 AC_OUTPUT
 chmod u+x sbin/*

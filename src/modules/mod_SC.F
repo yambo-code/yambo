@@ -35,6 +35,10 @@ module SC
  integer           :: SC_iterations
  integer           :: SC_kind
  integer           :: SC_xc_functional
+ integer           :: SC_fft_size
+ integer           :: SC_ng_Sx
+ integer           :: SC_X_bands(2)
+ integer           :: SC_X_size
  real(SP)          :: rho_convergence
  real(SP)          :: E_convergence
  real(SP)          :: SC_rho_threshold
@@ -57,12 +61,12 @@ module SC
  !
  interface
    !
-   subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,xc_functional)
+   subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,xc_functional,io_err_)
      use electrons, ONLY:levels
      implicit none
      character(*)           :: what
      type(levels), optional :: E
-     integer,      optional :: COM_,MODE_,ik,n_bands,kind,xc_functional
+     integer,      optional :: COM_,MODE_,ik,n_bands,kind,xc_functional,io_err_
    end subroutine  
  end interface  
  !

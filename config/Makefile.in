@@ -33,9 +33,7 @@ do_lapack   = @compile_lapack@
 do_p2s      = @compile_p2s@
 do_e2s      = @compile_e2s@
 shell       = @SHELL@
-tcsh        = @TCSH@
 make        = @MAKE@
-xecho       = @MYECHO@
 package_bugreport = @PACKAGE_BUGREPORT@
 prefix      = @prefix@
 exec_prefix = @exec_prefix@
@@ -45,7 +43,8 @@ includedir  = @includedir@
 
 CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
   	   sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
-	   src/external_c/.objects Makefile driver/version.h
+	   src/external_c/.objects Makefile driver/version.h \
+       sbin/objects_debug.sh
 TARGETS  = all self interfaces spp 
 UTILS    = changelog
 PROJECTS = self_ph self_sc spp_ph self_ras self_reels self_cpl \
@@ -134,22 +133,6 @@ interfaces: libs
 spp: libs
 	@LIBS2DO="$(SPPLIBS)" ; $(mksrc)
 	@X2DO="spp" ;XPATH="spp";XLIBS="$(SPPLIBS)";$(mkx)
-save: 
-	@$(oclean);$(confclean);$(amdclean);$(xclean)
-	@./sbin/self_save.sh none
-	@rm -f ./sbin/self_save.sh
-version: 
-	@$(oclean);$(confclean);$(amdclean);$(xclean)
-	@./sbin/self_save.sh version
-	@rm -f ./sbin/self_save.sh
-patchlevel: 
-	@$(oclean);$(confclean);$(amdclean);$(xclean)
-	@./sbin/self_save.sh patchlevel
-	@rm -f ./sbin/self_save.sh
-subversion: 
-	@$(oclean);$(confclean);$(amdclean);$(xclean)
-	@./sbin/self_save.sh subversion
-	@rm -f ./sbin/self_save.sh
 clean:
 	@echo "modes: clean_[o/a/m/am/oam/oamx] distclean cclean"
 clean_a: 
@@ -176,10 +159,7 @@ define make_message
 # -- GPL_END --
  for target in $(PROJECTS); do echo " [devel] $$target" ; done;echo;\
 # -- GPL_START --
- for target in $(UTILS); do echo  " [util] $$target" ; done;echo;\
-# -- GPL_END --
- echo " [saves] save/version/patchlevel/subversion"; echo
-# -- GPL_START --
+ for target in $(UTILS); do echo  " [util] $$target" ; done;echo
 endef
 define mksrc
  for ldir in $$LIBS2DO; do \
@@ -230,7 +210,6 @@ define amdclean
 endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
- if test "$@" = "distclean"  ; then rm -f ./sbin/self_save.sh ; fi
  echo "[targets] cleaned"
 endef
 define confclean

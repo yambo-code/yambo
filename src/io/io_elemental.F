@@ -53,6 +53,13 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  integer :: i_db(MAX_DB_ELEMENTS),i_err
  real(SP):: r_db(MAX_DB_ELEMENTS),local_unit
  character(schlen) :: db_ch(MAX_DB_ELEMENTS)
+ logical :: CHECK_
+ !
+ if  (present(CHECK)) then
+   CHECK_=CHECK
+ else
+   CHECK_=.FALSE.
+ endif
  !
  local_unit=1.
  if (present(UNIT)) local_unit=UNIT
@@ -131,7 +138,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      ch=""
      if (io_mode(ID)==VERIFY.and.present(OP)) then
        i_err=i_verify((/I0/),(/i_db(1)/))
-       if (present(CHECK)) then
+       if (CHECK_) then
          if (io_status(ID)==0) io_status(ID)=i_err
          if (i_err/=0.and.present(VAR)) ch=string_pack("*ERR* ",VAR)
        else if (present(WARN)) then
@@ -181,7 +188,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      ch=""
      if (io_mode(ID)==VERIFY.and.present(OP)) then
        i_err=i_verify(I1,i_db(:size(I1)))
-       if (present(CHECK)) then
+       if (CHECK_) then
          if (io_status(ID)==0) io_status(ID)=i_err
          if (i_err/=0.and.present(VAR)) ch=string_pack("*ERR* ",VAR)
        else if (present(WARN)) then
@@ -231,7 +238,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      ch=""
      if (io_mode(ID)==VERIFY.and.present(OP)) then
        i_err=r_verify((/R0/),(/r_db(1)/))
-       if (present(CHECK)) then
+       if (CHECK_) then
          if (io_status(ID)==0) io_status(ID)=i_err
          if (i_err/=0.and.present(VAR)) ch=string_pack("*ERR* ",VAR)
        else if (present(WARN)) then
@@ -281,7 +288,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      ch=""
      if (io_mode(ID)==VERIFY.and.present(OP)) then
        i_err=r_verify(R1,r_db(:size(R1)))
-       if (present(CHECK)) then
+       if (CHECK_) then
          if (io_status(ID)==0) io_status(ID)=i_err
          if (i_err/=0.and.present(VAR)) ch=string_pack("*ERR* ",VAR)
        else if (present(WARN)) then
@@ -337,7 +344,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      if (io_mode(ID)==DUMP) L0=i_db(2)==1
      if (io_mode(ID)==VERIFY.and.present(OP)) then
        i_err=i_verify((/i_db(1)/),(/i_db(2)/))
-       if (present(CHECK)) then
+       if (CHECK_) then
          if (io_status(ID)==0) io_status(ID)=i_err
          if (i_err/=0.and.present(VAR)) ch=string_pack("*ERR* ",VAR)
        else if (present(WARN)) then
@@ -387,7 +394,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      if (io_mode(ID)==VERIFY) then
        i_err=0
        if (trim(db_ch(1))/=CH0) i_err=-1
-       if (present(CHECK)) then
+       if (CHECK_) then
          if (io_status(ID)==0) io_status(ID)=i_err
          if (i_err/=0.and.present(VAR)) ch=string_pack("*ERR* ",VAR)
        else if (present(WARN)) then

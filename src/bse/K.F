@@ -614,9 +614,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            endif
            !
 #if defined _DOUBLE
-            H_cpl_c=zdotc(BS_n_g_W,Ovc,1,Cc,1)*4.*pi
+           H_cpl_c=zdotc(BS_n_g_W,Ovc,1,Cc,1)*4.*pi
 #else
-            H_cpl_c=cdotc(BS_n_g_W,Ovc,1,Cc,1)*4.*pi
+           H_cpl_c=cdotc(BS_n_g_W,Ovc,1,Cc,1)*4.*pi
 #endif
            !
          endif

@@ -3,20 +3,17 @@ objs = mod_SPP.o     spp_i.o   spp_init.o spp_init_load.o k_analyze.o \
        exc_properties.o exc_wf_plot_driver.o exc_wf_gnuplot.o exc_wf_xcrysden.o \
        exc_wf_sort_and_report.o exc_collinear_spin.o \
        elph_pw_dbs.o elph_eliashberg_dos.o \
-       self2self.o   BZ_RIM.o \
-       ioDB1_ver_2.o ioWF_ver_2.o      ioKB_PP_ver_2.o ioX_ver_2.o
+       BZ_RIM.o 
 #elif defined _SPP_RAS
 objs = mod_SPP.o     spp_i.o   spp_init.o spp_init_load.o k_analyze.o \
        exc_properties.o exc_wf_plot_driver.o exc_wf_gnuplot.o exc_wf_xcrysden.o \
        exc_wf_sort_and_report.o exc_collinear_spin.o \
        ras_spp.o loc_spp.o trans_spp.o \
-       self2self.o   BZ_RIM.o \
-       ioDB1_ver_2.o ioWF_ver_2.o      ioKB_PP_ver_2.o ioX_ver_2.o
+       BZ_RIM.o 
 #else
 objs = mod_SPP.o     spp_i.o   spp_init.o spp_init_load.o k_analyze.o \
        exc_properties.o exc_wf_plot_driver.o exc_wf_gnuplot.o exc_wf_xcrysden.o \
        exc_wf_sort_and_report.o exc_collinear_spin.o exc_non_collinear_spin.o \
-       self2self.o   BZ_RIM.o \
-       ioDB1_ver_2.o ioWF_ver_2.o      ioKB_PP_ver_2.o ioX_ver_2.o
+       BZ_RIM.o 
 #endif
 

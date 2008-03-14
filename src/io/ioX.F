@@ -27,12 +27,12 @@ integer function ioX(X,Xw,ID)
  use matrix_operate,ONLY:mat_c2r,mat_r2c,mat_r2c_ordered
  use X_m,           ONLY:X_t,X_mat,use_X_RIM,X_RLcomp_ig,X_RIM_nkpts
  use frequency,     ONLY:w_samp
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
+ use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_com,&
 &                        io_elemental,io_status,io_bulk,io_restart,&
 &                        read_is_on,write_is_on,io_check_restart,io_header,&
 &                        io_fragment,RD_CL,RD_CL_IF_END,io_action,&
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
-&                        io_save_to_try_again,io_restore_to_try_again
+&                        io_save_to_try_again,io_restore_to_try_again,NONE
  implicit none
  type(X_t)   :: X
  type(w_samp):: Xw
@@ -40,7 +40,7 @@ integer function ioX(X,Xw,ID)
  !
  !Work Space
  !
- integer             ::sec_size,i1,iq,i_err
+ integer             ::sec_size,i1,iq,i_err,io_com_save
  logical             ::different_db_RL_order
  character (schlen)  ::ch,db_desc
  real(SP)            ::Wd_disk(2)
@@ -200,8 +200,13 @@ integer function ioX(X,Xw,ID)
    !
    if (X%whoami==4) sec_size=1
    write (ch,'(a,i3.3)') "FREQ_PARS_sec_iq",iq
+   !
+   io_com_save=io_com(ID)
+   if (io_sec(ID,1)/=1) io_com(ID)=NONE
+   !
    if (io_sec(ID,1)==1) call io_elemental(ID,VAR=trim(ch),VAR_SZ=sec_size,MENU=0)
    if (io_sec(ID,1)/=1) call io_elemental(ID,VAR=trim(ch),VAR_SZ=sec_size,MENU=1)
+   !
    if (X%whoami==4) then
      call io_elemental(ID,UNIT=HARTREE,&
 &         VAR=" PPA Im  energy     [ev]:",R0=Xw%dr(2),CHECK=.true.,OP=(/"=="/))
@@ -219,6 +224,9 @@ integer function ioX(X,Xw,ID)
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    ioX=io_status(ID)
+   !
+   io_com(ID)=io_com_save
+   !
    if (ioX/=0) goto 1
    !
  endif

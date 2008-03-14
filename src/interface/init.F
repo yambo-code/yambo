@@ -61,7 +61,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use ELPH,           ONLY:elph_nq,elph_nq_used
 #endif
 #if defined _SC
- use SC,             ONLY:SC_potential
+ use SC,             ONLY:SC_potential,SC_ng_Sx,SC_X_bands,SC_X_size
 #endif
  !
  implicit none
@@ -486,6 +486,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SC
  if (l_sc_run) then
    call initactivate(1,'SCPot FFTGvecs SCEtresh SCRhoTresh SCIter SCmixing SCBands BandMix')
+   call initactivate(-1,'QpntsRXs')
  endif
 #endif
  !
@@ -748,6 +749,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        endif
        !
      endif
+     !
+#if defined _SC
+     if (l_sc_run) then
+       QP_ng_Sx=SC_ng_Sx
+       X(2)%ib=SC_X_bands
+       X(2)%ng=SC_X_size
+     endif
+#endif
      !
    end subroutine varsetup1 
    !

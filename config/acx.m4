@@ -278,48 +278,6 @@ AC_SUBST(FCMFLAG)
 ])
 
 ################################################
-# Get MYECHO
-# ----------------------------------
-AC_DEFUN([ACX_MYECHO],
-[
-cmd_found=no
-AC_PATH_PROG(TCSH, tcsh, :)
-
-case "${host}" in
-*86*apple*)
-  nlines=`$TCSH -fc 'printf "a\nb\n" |wc -l'` 
-;;
-*)
-  nlines=`$TCSH -fc 'echo "a\nb" |wc -l'`  
-esac
-
-if test "$nlines" -eq "2" ; then 
- cmd_found="yes"
- MYECHO="echo"
-fi
-AC_MSG_CHECKING([for built-in echo to accept newline sequence])
-AC_MSG_RESULT([$cmd_found])
-
-if test "$cmd_found" = "no"; then
-  case "${host}" in
-  *86*apple*)
-     AC_PATH_PROG(save_MYECHO, printf, :)
-     nlines=`$TCSH -fc 'set MYECHO='$save_MYECHO' ; $MYECHO "a\nb\n" |wc -l'`
-  ;;
-  *)
-     AC_PATH_PROG(save_MYECHO, echo, :)
-     nlines=`$TCSH -fc 'set MYECHO='$save_MYECHO' ; $MYECHO "a\nb" |wc -l'`
-  esac
- if test "$nlines" -eq "2" ; then cmd_found="yes" MYECHO="$save_MYECHO" ; fi
- AC_MSG_CHECKING([for $save_MYECHO to accept newline sequence])
- AC_MSG_RESULT([$cmd_found])
-fi
-if test "$cmd_found" = "no"; then
- AC_MSG_ERROR(Echo command compatible with newline sequence not found)
-fi
-])
-
-################################################
 # Get External C routines naming scheme
 # ----------------------------------
 AC_DEFUN([ACX_EXTUS],

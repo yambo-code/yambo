@@ -34,7 +34,7 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                        fftw_plan,fft_g_table,fft_size
  use wave_func,     ONLY:wf_nc_k,wf_igk,WF_alloc,wf_b,wf_k,wf_space,wf,wf_s,&
 &                        wf_state,wf_ng,wf_norm_test,wf_ncx,ioWF,WF_free,&
-&                        wf_n_states,WF_rotate
+&                        wf_n_states
  use timing,        ONLY:live_timing
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,&
 &                        io_fragmented, io_netcdf_support, RD_CL,DUMP
@@ -222,8 +222,7 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    if (wf_space=='R') wf_size=fft_size
    if (wf_space=='G') wf_size=wf_ng
    do ikibz=1,nkibz
-     call WF_rotate(ikibz,bands_to_load(2),wf_size,&
-&                   SC_R(:bands_to_load(2),:bands_to_load(2),ikibz),wf)
+     call WF_rotate(ikibz,wf,wf_size)
    enddo
    call load_SC_components('WF_clean')
  endif

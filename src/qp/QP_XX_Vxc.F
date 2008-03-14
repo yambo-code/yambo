@@ -49,7 +49,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  !
  type(ggwinfo)    ::isc,iscp
  type(pp_indexes) ::px
- integer                 ::i1,i2,iq,ib,ik,ibp
+ integer                 ::i1,i2,iq,ib,ik,ibp,jb
 #if defined _DOUBLE
  complex(DP)             ::zdotc,zdotu
 #else 
@@ -168,16 +168,6 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
        ib =QP_table(i1,1)
        ibp=QP_table(i1,2)
        !
-#if defined _SC
-       !
-       ! In Exact-Exchange only vc matrix elements so ... no cc' no vv' 
-       ! (cv is not permitted by the order in QP_table)
-       !                   (c)         (v)
-       if (l_sc_exx.and.(ib>E%nbf.or.ibp<=E%nbf)) then
-         call live_timing(steps=E%nbm-QP_Sx_low_band+1)
-         cycle
-       endif
-#endif
        !
        isc%is=(/QP_table(i1,1),QP_table(i1,3),1,spin(QP_table(i1,:))/)
        isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iq,1),:),spin(QP_table(i1,:))/)
@@ -186,18 +176,25 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
        isc%qs(1)=qindx_S(QP_table(i1,3),iq,2)
        iscp%qs=isc%qs
        !
-       do ib=QP_Sx_low_band,E%nbm
-         if (.not.px%i2p(iq,ib)) cycle
-         isc%os(1)=ib
+       do jb=QP_Sx_low_band,E%nbm
+         if (.not.px%i2p(iq,jb)) cycle
+         isc%os(1)=jb
          iscp%os=isc%os
          call live_timing(steps=1)
+#if defined _SC
+         !
+         ! In Exact-Exchange only vc matrix elements so ... no cc' no vv' 
+         ! (cv is not permitted by the order in QP_table)
+         !                   (c)         (v)
+         if (l_sc_exx.and.(ib>E%nbf.or.ibp<=E%nbf)) cycle
+#endif
          !
          call scatterBamp(isc)
          !
          iscp%rhotw=isc%rhotw
          if (isc%is(1)/=iscp%is(1)) call scatterBamp(iscp)
          !
-         local_rhotw=-4./spin_occ*pi*isc%rhotw*conjg(iscp%rhotw)*E%f(ib,isc%os(2),isc%os(4))
+         local_rhotw=-4./spin_occ*pi*isc%rhotw*conjg(iscp%rhotw)*E%f(jb,isc%os(2),isc%os(4))
          !
          DP_Sx=(0.d0,0.d0)
 #if defined _DOUBLE

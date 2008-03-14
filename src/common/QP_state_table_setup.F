@@ -34,6 +34,7 @@ subroutine QP_state_table_setup(en)
  !       QP_state
  !
  use pars,          ONLY:SP,HARTREE,IP
+ use drivers,       ONLY:l_sc_run
  use memory_m,      ONLY:mem_est
  use QP_m,          ONLY:QP_nk,QP_nb,QP_state,QP_n_states,QP_table
  use SC,            ONLY:SC_bands_mixed,SC_band_mixing
@@ -45,7 +46,7 @@ subroutine QP_state_table_setup(en)
  ! Work Space
  !
  integer :: e_rng_lines,k_rng_lines,icheck,ik,ib,i1,i2,i3,&
-&           QP_k_nk,QP_e_nk,QP_k_nb,QP_e_nb,i_sp
+&           QP_k_nk,QP_e_nk,QP_k_nb,QP_e_nb,i_sp,bands_mixed
  real(SP):: rcheck
  integer,    allocatable:: QP_i_limits(:,:)
  real(SP)   ,allocatable:: QP_r_limits(:,:)
@@ -147,29 +148,39 @@ subroutine QP_state_table_setup(en)
  endif
  !
  ! Band Mixing
+ !=============
  !
  ! Note: only upper triangle of the table is filled. 
  !       This corresponds to assume symmetric/hermitian 
  !       matrixes
  !
- SC_bands_mixed=1
- if (any(.not.QP_state(1,:)).or.any(.not.QP_state(QP_nb,:))) SC_band_mixing=0.
- if (SC_band_mixing<0..or.SC_band_mixing>100.) SC_band_mixing=0.
- if (SC_band_mixing>0.) SC_bands_mixed=nint(QP_nb*SC_band_mixing/100.)
- if (SC_bands_mixed==0) SC_bands_mixed=1
+ ! Note (2) : a non zero mixing is allowed only in a SC calculation
  !
- ! Recalculated SC_band_mixing
- !
- SC_band_mixing=float(SC_bands_mixed)*100./float(QP_nb)
+ if (l_sc_run) then
+   !
+   SC_bands_mixed=1
+   if (any(.not.QP_state(1,:)).or.any(.not.QP_state(QP_nb,:))) SC_band_mixing=0.
+   if (SC_band_mixing<0..or.SC_band_mixing>100.) SC_band_mixing=0.
+   if (SC_band_mixing>0.) SC_bands_mixed=nint(QP_nb*SC_band_mixing/100.)
+   if (SC_bands_mixed==0) SC_bands_mixed=1
+   !
+   ! Recalculated SC_band_mixing
+   !
+   SC_band_mixing=float(SC_bands_mixed)*100./float(QP_nb)
+   bands_mixed=SC_bands_mixed
+ else
+   bands_mixed=1
+ endif
  !
  ! QP_table allocation
  !
- QP_n_states=product(shape(pack(QP_state,QP_state)))*(2*SC_bands_mixed-1)
+ QP_n_states=product(shape(pack(QP_state,QP_state)))*(2*bands_mixed-1)
  QP_n_states=QP_n_states*n_sp_pol
  !
  if (.not.allocated(QP_table)) then
    allocate(QP_table(QP_n_states,3+n_sp_pol-1))
    call mem_est("QP_table",(/QP_n_states*(3+n_sp_pol-1)/),(/IP/))
+   QP_table=0
  endif
  !
  QP_n_states=0
@@ -178,7 +189,7 @@ subroutine QP_state_table_setup(en)
    do i2=1,QP_nb
      if (.not.QP_state(i2,i1)) cycle
      do i_sp=1,n_sp_pol
-       do i3=0,SC_bands_mixed-1
+       do i3=0,bands_mixed-1
          !
          if (i2+i3>QP_nb.or.i2+i3<1) cycle
          !

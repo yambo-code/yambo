@@ -29,15 +29,14 @@
   {"odir",   "O","Output directory",0,0,1,0},        /* 5 */
   {"nompi", "N","Skip MPI initialization",0,0,0,0}, /* 6 */
   {"dbfrag","S","DataBases fragmentation",0,0,0,0}, /* 7 */
-  {"s2s","s","SELF ver. 2 databases translator",0,0,0,0}, /* 8 */
-  {"kpt","k","K-grid generator",0,0,0,0}, /* 9,1 */
-  {"excp","e","Excitonic properties [(s)ort,sp(in),(p)lot]",0,0,1,0}, /* 10,2 */
-  {"bzrim","r","BZ energy RIM analyzer",0,0,0,0}, /* 11,3 */
+  {"kpt","k","K-grid generator",0,0,0,0}, /* 8,1 */
+  {"excp","e","Excitonic properties [(s)ort,sp(in),(p)lot]",0,0,1,0}, /* 9,2 */
+  {"bzrim","r","BZ energy RIM analyzer",0,0,0,0}, /* 10,3 */
 #if defined _SPP_ELPH
-  {"elph", "p","Electron-Phonon DBs preprocessing",0,0,0,0}, /* 12,4 */
+  {"elph", "p","Electron-Phonon DBs preprocessing",0,0,0,0}, /* 11,4 */
 #endif
 #if defined _SPP_RAS
-  {"surf", "a","Surface spectroscopy postprocessor",0,0,1,0}, /* 13,4 */
+  {"surf", "a","Surface spectroscopy postprocessor",0,0,1,0}, /* 12,4 */
 #endif
   {NULL,NULL,NULL,0,0,0,0}
  };

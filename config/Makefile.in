@@ -105,7 +105,7 @@ self_ph: libs
 self_ras: libs
 	@LIBS2DO="$(PJ_RASLIBS)";ADF="-D_RAS"; $(mksrc)
 	@X2DO="self_ras"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS";$(mkx)
-self_ras_big: libs
+self_ras_bigsys: libs
 	@LIBS2DO="$(PJ_RASLIBS)";ADF="-D_RAS -D_BIGSYS"; $(mksrc)
 	@X2DO="self_ras_bigsys"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS -D_BIGSYS";$(mkx)
 self_reels: libs

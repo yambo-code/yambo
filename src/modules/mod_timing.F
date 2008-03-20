@@ -301,7 +301,7 @@ module timing
      ! Work Space
      !
      integer          :: perc,i1
-     character(schlen):: lch,lfmt,lmsg,tctt
+     character(schlen):: lch,lfmt,lmsg
      !
      if (hashes_now==hashes_done.and.steps_done/=0) return
      if (steps_done==0.and..not.master_cpu) return

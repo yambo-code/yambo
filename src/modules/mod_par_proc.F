@@ -74,7 +74,7 @@ module par_proc_m
      enddo
      do ic=1,ncpu
        if (myid/=ic-1) cycle
-       open(unit=20,name=trim(file_name(ic)))
+       open(unit=20,file=trim(file_name(ic)))
        close(20)
      enddo
 #if defined _MPI

@@ -315,9 +315,9 @@ contains
 
   subroutine select_wgrid(wq, iq)
     implicit none
-    type(w_samp), intent(out) :: wq
-    integer,       intent(in) :: iq
-    complex(SP)               :: ctemp(size(real(wq%p(:))))
+    type(w_samp), intent(inout) :: wq
+    integer,       intent(in)   :: iq
+    complex(SP)                 :: ctemp(size(real(wq%p(:))))
 
     ctemp(:) = cmplx(hwqgrid(:,iq),aimag(wq%p(:)) )
     wq%p(:) = ctemp(:)

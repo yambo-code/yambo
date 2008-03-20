@@ -22,8 +22,8 @@
 subroutine errore(subname,msgin,ierr)
   use com,      ONLY : error
   implicit none
-  character*(*), intent(in) :: subname,msgin
-  integer,       intent(in) :: ierr
+  character(*), intent(in) :: subname,msgin
+  integer,      intent(in) :: ierr
   character(3)              :: merr
   !
   write(merr,'(i3)') ierr

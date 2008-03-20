@@ -53,7 +53,7 @@ module memory_m
      ! 
      ! Work Space
      !
-     integer :: i1,i2,local_kind,i_pos(2)
+     integer :: i1,i2,local_kind
      logical :: loading,stdout_report
      real(SP):: mem_moved
      real(SP),parameter :: mem_tresh=0.01  ! ( in Gb. CAREFUL! mem_tresh must be >0)

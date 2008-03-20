@@ -70,7 +70,6 @@ module X_m
      use electrons, ONLY:n_sp_pol
      use memory_m,  ONLY:mem_est
      implicit none
-     type(X_t):: X
      character(*)      :: what
      integer, optional :: d(:)
      !

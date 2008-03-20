@@ -70,7 +70,7 @@ subroutine exc_wf_xcrysden(use_2d,plot_dim)
  !
  ! write Hole position
  ! 
- write(ch,'(i,f,f,f)') -1,r_hole*BOHR
+ write(ch,'(i1,f10.5,f10.5,f10.5)') -1,r_hole*BOHR
  call msg('o exc','',ch,INDENT=0,USE_TABS=.FALSE.)
  !
  ! write the translated atoms of the cell
@@ -83,7 +83,7 @@ subroutine exc_wf_xcrysden(use_2d,plot_dim)
            rv(1)=atom_pos(1,ia,is)*BOHR+i1*a_angs(1,1)+i2*a_angs(2,1)+i3*a_angs(3,1)
            rv(2)=atom_pos(2,ia,is)*BOHR+i1*a_angs(1,2)+i2*a_angs(2,2)+i3*a_angs(3,2)
            rv(3)=atom_pos(3,ia,is)*BOHR+i1*a_angs(1,3)+i2*a_angs(2,3)+i3*a_angs(3,3)   
-           write(ch,'(i,3f)') znucl(is),rv(:)
+           write(ch,'(i5,3f10.5)') znucl(is),rv(:)
            call msg('o exc','',ch,INDENT=0,USE_TABS=.FALSE.)
          enddo
        enddo

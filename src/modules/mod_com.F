@@ -71,7 +71,7 @@ module com
      !                                                    JOBSTR, or  SAVE if no JOBSTR 
      use stderr,         ONLY:string_pack
      character(*)           ::desc
-     integer                ::type,ID
+     integer                ::type
      logical                ::CORE_IO,MORE_IO,NETCDF,COM_IO
      character(*), optional ::subfolder
      ! 
@@ -139,7 +139,7 @@ module com
      ! 
      ! Work Space
      !
-     integer          :: n_files,i1,i2,i3,file_index
+     integer          :: i2,i3,file_index
      character(lchlen):: local_file_name
      !
      if (len_trim(of_name)==0) return
@@ -453,7 +453,7 @@ module com
      ! 
      ! Work Space
      !
-     integer           :: i1,len_mesg
+     integer           :: i1
      character(lchlen) :: lch
      !
      if (USE_TABS) then

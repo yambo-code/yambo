@@ -85,7 +85,7 @@ module electrons
      type(levels):: Ei,Eo
      !
      integer :: qp_done_bounds(2)
-     logical :: naive,QP_transfer
+     logical :: naive
      !
      naive=Eo%nk==0
      Eo%nb=Ei%nb

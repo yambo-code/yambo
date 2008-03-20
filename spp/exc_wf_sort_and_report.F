@@ -120,7 +120,7 @@ subroutine exc_wf_sort_and_report(Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
      K_weight(ikibz)=K_weight(ikibz)+A_weight(neh)
    enddo
    K_weight=K_weight/maxval(K_weight)
-   titles(1:4)=(/'','K-point [iku]','','Weight       '/)
+   titles(1:4)=(/'             ','K-point [iku]','             ','Weight       '/)
    call msg('o weight','#',titles(:4),INDENT=0,USE_TABS=.true.)
    do ikibz=1,Xk%nibz
      if (K_weight(ikibz)>0.05) then
@@ -134,7 +134,7 @@ subroutine exc_wf_sort_and_report(Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
    titles(1:4)=(/'Band_V','Band_C','K  ibz','Symm. '/)
    titles(5)='Weight'
    call msg('o weight','#',titles(:5),INDENT=0,USE_TABS=.true.)
-   titles(1:2)=(/'E    [eV]','Amplitude  '/)
+   titles(1:2)=(/'E    [eV]','Amplitude'/)
    call msg('o amp','#',titles(:2),INDENT=0,USE_TABS=.true.)
    call msg('o weight amp','#','',INDENT=0,USE_TABS=.true.)
    !

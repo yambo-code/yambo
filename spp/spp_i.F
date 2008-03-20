@@ -48,7 +48,10 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  ! I/O 
  !
  integer           :: ID,i_err
- integer, external :: ioDB1,ioQINDX,iogrot,elph_pw_dbs
+ integer, external :: ioDB1,ioQINDX,iogrot
+#if defined _SPP_ELPH
+ integer, external :: elph_pw_dbs
+#endif
  !
  ! Presets
  !

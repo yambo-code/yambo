@@ -26,7 +26,7 @@ module eels_inveps
   use pars,                   ONLY : schlen, SP, pi, lchlen
 
 ! logical                   :: linveps
-  complex(SP), allocatable,  save :: epsm1_avA(:,:,:)
+  complex(SP), allocatable        :: epsm1_avA(:,:,:)
   save
   private
 
@@ -162,7 +162,7 @@ contains
 
     return
 10 format(3i3,"|",8(f10.5,"|"),"|",f10.5,"|")
-9 format(10x,8(x,3i3,"|"),"|",(x,3i3,"|"))
+9 format(10x,8(1x,3i3,"|"),"|",(1x,3i3,"|"))
 100 format(1x,30("-"))
   end subroutine print_eps
 

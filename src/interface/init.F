@@ -78,7 +78,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                     ioBS_Fxc_err,ioQINDX_err,io_SC_err
  integer, external :: ioX,ioOSTNTS,ioGROT,ioQINDX,ioRIM,ioE_RIM,&
 &                     ioXXVXC,ioQP,ioBS,ioDB1,ioKB_PP,&
-&                     ioCOL_CUT,io_SC_components,barriers
+&                     ioCOL_CUT
+#if defined _SC
+ integer, external :: io_SC_components 
+#endif
 #if defined _ELPH
  integer           :: ioELPH_err
  integer, external :: ioELPH

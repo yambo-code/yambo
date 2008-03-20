@@ -249,7 +249,7 @@ module IO_m
          ! http://www.unidata.ucar.edu/software/netcdf/faq-lfs.html
          !
          CREATE_MODE=nf90_share
-         if ( present(ENABLE_LARGE_FILE)) CREATE_MODE=or(nf90_share,nf90_64bit_offset)
+         if ( present(ENABLE_LARGE_FILE)) CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
          !
          if ( (io_action(ID)==OP_APP_WR_CL.or.io_action(ID)==OP_APP) ) then
            !

@@ -47,9 +47,10 @@ CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
        sbin/objects_debug.sh
 TARGETS  = all self interfaces spp 
 UTILS    = changelog
-PROJECTS = self_ph self_sc spp_ph self_ras self_reels self_cpl \
-	   spp_ras self_bigsys self_ras_big
+PROJECTS = self_ph self_sc spp_ph self_ras self_reels \
+	       spp_ras self_bigsys self_ras_bigsys
 EXE      = $(TARGETS) $(PROJECTS) 
+INTERFCS = a2s p2s e2s f2s
 #
 # Libraries (ordered for compiling & linking)
 #
@@ -65,7 +66,6 @@ PJ_REELSLIBS = $(BASIC_LIBS) ras_reels_mods coulomb bz_ops qp_ctl reels \
                interface tddft pol_function qp acfdt bse
 
 PJ_SCLIBS       = $(MAIN_LIBS) sc
-PJ_CPLLIBS      = $(MAIN_LIBS)
 PJ_BIGSYSLIBS   = $(MAIN_LIBS)
 PJ_PHLIBS       = $(MAIN_LIBS)
 #
@@ -111,9 +111,6 @@ self_ras_big: libs
 self_reels: libs
 	@LIBS2DO="$(PJ_REELSLIBS)";ADF="-D_REELS"; $(mksrc)
 	@X2DO="self_reels"; XPATH="driver";XLIBS="$(PJ_REELSLIBS)";ADF="-D_REELS";$(mkx)
-self_cpl: libs
-	@LIBS2DO="$(PJ_CPLLIBS)";ADF="-D_BS_CPL"; $(mksrc)
-	@X2DO="self_cpl"; XPATH="driver";XLIBS="$(PJ_CPLLIBS)";ADF="-D_BS_CPL";$(mkx)
 spp_ph: libs
 	@LIBS2DO="$(SPPLIBS)" ; $(mksrc)
 	@X2DO="spp_ph" ;XPATH="spp";XLIBS="$(SPPLIBS)"; ADF="-D_SPP_ELPH";$(mkx)
@@ -210,6 +207,7 @@ define amdclean
 endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
+ for exe in $(INTERFCS); do rm -f $(bindir)/$$exe; done
  echo "[targets] cleaned"
 endef
 define confclean

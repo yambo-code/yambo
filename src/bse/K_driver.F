@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_driver(Xen,Ken,Xk,q,X_static,Xw)
+subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  use pars,           ONLY:SP,IP
  use parser_m,       ONLY:parser
@@ -40,7 +40,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static,Xw)
 #endif
  use TDDFT,          ONLY:FXC,FXC_per_memstps,FXC_n_mem_freqs,&
 &                         FXC_is_causal
- use QP_CTL,         ONLY:QP_apply
+ use QP_CTL_m,       ONLY:QP_apply
  use drivers,        ONLY:l_bss,l_bs_fxc,l_alda_fxc
  use par_proc_m,     ONLY:pp_redux_wait
  use R_lattice,      ONLY:bz_samp,qindx_B
@@ -48,7 +48,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static,Xw)
  implicit none
  type(levels)  ::Xen,Ken
  type(bz_samp) ::Xk,q
- type(X_t)     ::X_static
+ type(X_t)     ::X_static_pp
  type(w_samp)  ::Xw,W_bss 
  !
  ! Work Space
@@ -75,12 +75,16 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static,Xw)
  !
  call QP_apply(BS_bands,Ken,Xk,2,msg_fmt='s')
  !
+ ! GPL_EXCLUDE_START
+ !
  ! If the em1s DB has been calculated in the same run
  ! of a BS-Fxc kernel construction that l_bs_fxc is set .FALSE.
  ! in tddft_do_X_W_typs. So here we need to check again if
  ! l_bs_fxc has been provided
  !
  if (.not.l_bs_fxc) call parser('bs_fxc',l_bs_fxc)
+ !
+ ! GPL_EXCLUDE_END
  !
  ! W RL size setup looking at the max index of G-G' 
  !
@@ -90,12 +94,16 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static,Xw)
  !
  if (l_bs_fxc.or.index(BSS_mode,'t')/=0) then
    !  
+   ! GPL_EXCLUDE_START  
+   !  
    ! Remove the exchange from the BS_mode
    ! if TDDFT Fxc is obtained from K
    !
    if (index(BSS_mode,'t')==0) BS_res_mode=trim( string_remove(BS_res_mode,'x') )
    BS_cpl_mode=" "
    call parser('FxcCausal',FXC_is_causal)
+   !
+   ! GPL_EXCLUDE_END
    !
  else if (l_alda_fxc) then
    !  
@@ -105,13 +113,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static,Xw)
    BS_cpl_mode=trim( string_remove(BS_cpl_mode,'c') )
    !
  endif
- !
-#if !defined _BS_CPL
- ! correlation still unsupported in coupling
- !
- BS_cpl_mode=trim( string_remove(BS_cpl_mode,'c') )
- !
-#endif
  !
  ! Logicals (Drivers)
  !
@@ -150,17 +151,19 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static,Xw)
  !
  iq=BS_q(1)
  !
- call K(iq,Ken,Xk,q,X_static,Xw,W_bss)
+ call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
  !
  ! SOLVER
  !
- if (l_bss) call K_solvers(iq,Ken,Xk,q,X_static,W_bss)
+ if (l_bss) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
+ !
+ ! GPL_EXCLUDE_START
  !
  ! `TDDFT` SOLVER
  !
  if (l_bs_fxc) then
    !
-   call X_duplicate(X_static,X_tddft) ! initialize X_tddft to X_static
+   call X_duplicate(X_static_pp,X_tddft) ! initialize X_tddft to X_static_pp
    !
    X_tddft%ordering='r'
    if (FXC_is_causal) X_tddft%ordering='c'
@@ -181,6 +184,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static,Xw)
    call O_driver(Xen,Xk,q,W_bss,X_tddft) 
    !
  endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! CLEAN
  !

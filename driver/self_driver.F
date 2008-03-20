@@ -34,7 +34,7 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
  use par_proc_m,    ONLY:myid,ncpu,p_finalize
  use it_m,          ONLY:it_reset,infile
  use QP_m,          ONLY:QP_ng_Sx
- use QP_CTL,        ONLY:QP_apply
+ use QP_CTL_m,      ONLY:QP_apply
  use wave_func,     ONLY:wf_ng
  use electrons,     ONLY:levels,E_reset,n_bands
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
@@ -142,9 +142,13 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
  ! RESPONSE FUNCTIONS  QP CORRECTIONS (FROM INPUT FILE)
  !======================================================
  !
+ ! GPL_EXCLUDE_START
+ !
  ! - Xo -
  !
  if (l_acfdt)   call QP_apply(X(1)%ib,Xen,Xk,1,msg_fmt='s')
+ !
+ ! GPL_EXCLUDE_END
  !
  ! - Dynamical X -
  !
@@ -205,12 +209,19 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
    !
    if (l_ppa)                           ierr=X_em1(Xen,Xk,q,X(4),Xw(4),.false.)
    ! 
+   ! GPL_EXCLUDE_START 
+   ! 
    ! Dynamical 
    !
    if (.not.l_ppa.and..not.l_chosex)    ierr=X_em1(Xen,Xk,q,X(3),Xw(3),.false.)
+   !
+   ! GPL_EXCLUDE_END
+   !
  endif
  !
  if (l_gw0) then
+   !
+   ! GPL_EXCLUDE_START
    !
    if (l_chosex) then
      !
@@ -221,10 +232,14 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
      !
    else if (l_ppa) then
      !
+     ! GPL_EXCLUDE_END
+     !
      ! PPA 
      !=====
      !
      call QP_driver(X(4),Xen,Xk,en,k,q,Xw(4))
+     !
+     ! GPL_EXCLUDE_START
      !
    else 
      !
@@ -235,17 +250,26 @@ integer function self_driver(instr,lnstr,inf,iinf,ind,&
      call QP_driver(X(3),Xen,Xk,en,k,q,Xw(3))
    endif
    !
+   ! GPL_EXCLUDE_END
+   !
  endif
  !
  ! BETHE-SALPETER
  !================
  !
- if ((l_optics.and.l_bse).or.l_bss) call K_driver(Xen,Ken,Xk,q,X(2),Xw(2))
+ if ((l_optics.and.l_bse).or.l_bss) then
+   if (l_ppa)      call K_driver(Xen,Ken,Xk,q,X(4),Xw(4))
+   if (.not.l_ppa) call K_driver(Xen,Ken,Xk,q,X(2),Xw(2))
+ endif
+ !
+ ! GPL_EXCLUDE_START
  !
  ! ACFDT
  !=======
  !
  if (l_acfdt) call acfdt_tot_energy(Xen,Xk,q,X(1))
+ !
+ ! GPL_EXCLUDE_END
  !
 #if defined _SC
  ! SC

@@ -30,22 +30,23 @@ subroutine spp_init_load(defs)
  implicit none
  type(initdefs)::defs
  !
- !RunLevels
+ ! RunLevels
  !
- call it('r',defs,'kpt',  '[R] K-grid analysis')  ! [1]
- call it('r',defs,'excp', '[R] Excitonic Properties')  ! [2]
+ call it('r',defs,'kpt',     '[R] K-grid analysis') 
+ call it('r',defs,'excp',    '[R] Excitonic Properties')
+ call it('r',defs,'exc_wf',  '[R] Excitonic Wavefunction')
  !
- ! Additional Runlevels for excitonic properties 
+ ! GPL_EXCLUDE_START
  !
- call it('r',defs,'exc_wf',   '[R] Excitonic Wavefunction')  ! [3]
- call it('r',defs,'exc_spin', '[R] Excitonic Spin')  ! [4]
+ call it('r',defs,'exc_spin','[R] Excitonic Spin')
+ call it('r',defs,'bzrim',   '[R] BZ energy RIM analyzer')
+ call it('r',defs,'elph',    '[R] Electron-Phonon DBs preprocessing')
+ call it('r',defs,'surf',    '[R] Surface spectroscopy postprocessor')
+ call it('r',defs,'ras',     '[R] RAS spectra generator')
+ call it('r',defs,'loc',     '[R] State localizer')
+ call it('r',defs,'trans',   '[R] Transition analyzer')
  !
- call it('r',defs,'bzrim','[R] BZ energy RIM analyzer')  ! [5]
- call it('r',defs,'elph', '[R] Electron-Phonon DBs preprocessing')  ! [6]
- call it('r',defs,'surf', '[R] Surface spectroscopy postprocessor')  ! [7]
- call it('r',defs,'ras',  '[R] RAS spectra generator')  ! [8]
- call it('r',defs,'loc',  '[R] State localizer')  ! [9]
- call it('r',defs,'trans','[R] Transition analyzer')  ! [10]
+ ! GPL_EXCLUDE_END
  !
  !Kpt analysis
  !
@@ -108,9 +109,13 @@ subroutine spp_init_load(defs)
  !
 #endif
  !
+ ! GPL_EXCLUDE_START
+ !
  !BZ E RIM
  !
  call it(defs,'BZ_RIM_Nk','BZ Random Integration points',BZ_RIM_nkpts)
  call it(defs,'BZ_RIM_path','Path to the SAVE folder with the RIM DB1',BZ_RIM_path)
+ !
+ ! GPL_EXCLUDE_END
  !
 end subroutine

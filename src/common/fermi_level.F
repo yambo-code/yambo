@@ -164,7 +164,12 @@ subroutine fermi_level(E,K,test_Tel,mode)
  !
  ! Mode = 0. Check only for the Fermi energy
  !
+ ! GPL_EXCLUDE_START
+ !
  Finite_Tel=(Tel>=1.E-5)
+ !
+ ! GPL_EXCLUDE_END
+ !
  if (mode==0) return
  !
  ! build the occupations ...

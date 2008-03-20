@@ -23,6 +23,7 @@
 &                       com_dir,icd,js,ijs,np,pid)
  !
  use P2S,                 only : pw_init, pw_close, verboseIO
+ use LOGO,                only : pickup_a_random
  use pars,                only : SP,lchlen
  use memory_m,            only : mem_est
  use com,                 only : msg,write_to_report,more_io_path, error
@@ -57,7 +58,7 @@
  !
  character(lchlen) :: index_filename, lch
  integer           :: ID,io_err,ioPP_err,ik,icycle
- integer, external :: ioDB1,ioKB_PP,rand_identifier
+ integer, external :: ioDB1,ioKB_PP
  real(SP), allocatable :: wf_disk(:,:,:,:)
  !
  !PW WS
@@ -78,7 +79,7 @@
  !
  ! S/N
  !
- serial_number=rand_identifier()
+ serial_number=pickup_a_random(10000.)
  !
  ! Switch off report file support
  !

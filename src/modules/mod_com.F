@@ -33,9 +33,6 @@ module com
  character(lchlen)  :: jobstr
  character(lchlen)  :: repfile
  !
- integer      ::code_version(3)
- integer      ::code_revision
- !
  character(3)      :: terminator(4)
  !
  ! Sectioning
@@ -180,7 +177,7 @@ module com
        if (index(mode,'a')==0) open(of_unit(file_index),file=trim(opened_of(file_index)))
        if (index(mode,'a')/=0) open(of_unit(file_index),file=trim(opened_of(file_index)),&
 &                                   position='append')
-       if (index(mode,"t")>0) call title(of_unit(file_index),'#')
+       if (index(mode,"t")>0) call write_the_logo(of_unit(file_index),'#')
     
        of_unit(file_index)=-of_unit(file_index)
        !
@@ -206,63 +203,36 @@ module com
      !
    end subroutine
    !
-   subroutine title(ou,cmnt)
+   subroutine write_the_logo(unit_,comment_)
      use timing,       ONLY:live_time_msg
      use par_proc_m,   ONLY:master_cpu
-     integer     ::ou
-     character(1)::cmnt
-     ! 
-     ! Work Space
+     use LOGO,         ONLY:pickup_a_logo,logo_line,n_logo_lines
+     integer     ::unit_
+     character(1)::comment_
+     character(schlen)::space_,ch ! Work Space
+     integer          ::i1        !
      !
-     character(lchlen)::ch,lfmt
-     integer          ::isp
-     include 'version.inc'
-     if (trim(cmnt)=='') isp=10
-     if (trim(cmnt)=='#') isp=1
-     if (.not.master_cpu) return
-     if (ou<0) return
-     select case(ou)
-       case (:5,7:)
-         write (lfmt,'(a,i2.2,a)') '(t',isp,',3a)'
-         write (ou,trim(lfmt)) trim(cmnt)
-         write (ou,trim(lfmt)) trim(cmnt),'   ______   ______   _       _______'
-         write (ou,trim(lfmt)) trim(cmnt),'  /  ____) |  ____) | |     |  _____)'
-         write (ou,trim(lfmt)) trim(cmnt),' (  (___   | (___   | |     | (_____'
-#if defined irix
-         write (ou,trim(lfmt)) trim(cmnt),'  \___  \  |  ___)  | |     |  _____)'
-#else
-         write (ou,trim(lfmt)) trim(cmnt),'  \\___  \\  |  ___)  | |     |  _____)'
-#endif
-         write (ch,'(a,i1.1,a,i1.1,a,i2.2)') '  ____)  ) | (____  | |___  | |',&
-&              code_version(1),'.',code_version(2),'.',code_version(3)
-         write (ou,trim(lfmt)) trim(cmnt),trim(ch)
-         write (ch,'(a,i3.3)') ' (______/  |______) |_____) |_|r. ',code_revision
-         write (ou,trim(lfmt)) trim(cmnt),trim(ch)
-         write (ou,trim(lfmt)) trim(cmnt),'  http://www.fisica.uniroma2.it/~self'
-         write (ou,trim(lfmt)) trim(cmnt)
-       case (6)
-         call live_time_msg("n",&
-&          "   ______   ______   _       _______ ","","%s",NO_CPUT=.true.)
-         call live_time_msg("n",&
-&          "  /  ____) |  ____) | |     |  _____)","","%s",NO_CPUT=.true.)
-         call live_time_msg("n",&
-&          " (  (___   | (___   | |     | (_____ ","","%s",NO_CPUT=.true.)
-#if defined irix
-         call live_time_msg("n",&
-&          "  \___  \  |  ___)  | |     |  _____)","","%s",NO_CPUT=.true.)
-#else
-         call live_time_msg("n",&
-&          "  \\___  \\  |  ___)  | |     |  _____)","","%s",NO_CPUT=.true.)
-#endif
-         write (ch,'(a,i1.1,a,i1.1,a,i2.2)') &
-&          '  ____)  ) | (____  | |___  | |',&
-&          code_version(1),'.',code_version(2),'.',code_version(3)
-         call live_time_msg("n",trim(ch),"","%s",NO_CPUT=.true.)
-         write (ch,'(a,i3.3)') &
-&          ' (______/  |______) |_____) |_|r. ',code_revision
-         call live_time_msg("n",trim(ch),"","%s",NO_CPUT=.true.)
-         call live_time_msg("n"," ","","%s",NO_CPUT=.true.)
-     end select
+     call pickup_a_logo(unit_)
+     !
+     if (.not.master_cpu.or.unit_<0) return
+     !
+     if (trim(comment_)=='')  space_='(t5,3a)'
+     if (trim(comment_)=='#') then
+       space_='(t1,3a)'
+       do i1=1,n_logo_lines
+          ch='# '//logo_line(i1)
+          logo_line(i1)=trim(ch)
+       enddo
+     endif
+     !
+     do i1=1,n_logo_lines
+       if (unit_/=6) write (unit_,trim(space_)) logo_line(i1)
+       if (unit_==6.and.i1>=n_logo_lines-1) cycle
+       if (unit_==6) call live_time_msg("n",logo_line(i1),"","%s",NO_CPUT=.true.)
+     enddo
+     if (unit_/=6.and.trim(comment_)=='')  write (unit_,trim(space_)) ' '
+     if (unit_/=6.and.trim(comment_)=='#')  write (unit_,trim(space_)) '#'
+     !
    end subroutine
    !
    logical function file_exists(name)

@@ -22,7 +22,8 @@
 subroutine exc_wf_xcrysden(use_2d,plot_dim)
  !
  use pars,        ONLY:BOHR,SP,schlen
- use com,         ONLY:of_open_close,msg,code_version
+ use LOGO,        ONLY:code_version
+ use com,         ONLY:of_open_close,msg
  use BS,          ONLY:BSS_description,BSS_n_descs
  use SPP,         ONLY:nr,exc_wf_sq,lambda,ncell,wf_2d,r_hole
  use D_lattice,   ONLY:n_atom_species,n_atoms,a,atom_pos,znucl

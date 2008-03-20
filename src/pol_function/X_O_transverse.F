@@ -165,14 +165,24 @@ subroutine X_O_transverse(Xen,Xk,X)
        !     X_q0grad(c,v) = i <v|r|c> = i <v|[r,H]|c>/(Ec-Ev) = i <v|i p|c>/(Ec-Ev) =
        !                   = - <v | -i grad |c> / (Ec-Ev) = <v|-i grad|c>/(Ev-Ec)
        !
+       ! GPL_EXCLUDE_START
+       !
        if (n_sp_pol==2) then
          X_q0grad(:,ic,iv,ik,1)=rho(:,1)
          X_q0grad(:,ic,iv,ik,2)=rho(:,2)
        else if (n_spinor==2) then
          X_q0grad(:,ic,iv,ik,1)=(rho(:,1)+rho(:,2))
        else if (n_spin==1) then
+         !
+         ! GPL_EXCLUDE_END
+         !
          X_q0grad(:,ic,iv,ik,1)=rho(:,1)
+         !
+         ! GPL_EXCLUDE_START
+         !
        endif
+       !
+       ! GPL_EXCLUDE_END
        !
      enddo  ! conduction band loop
      !

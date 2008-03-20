@@ -40,8 +40,6 @@ integer function ioRIM(ID)
  !
  ioRIM=io_connect(desc="RIM",type=1,ID=ID)
  !
- ! GPL_END
- !
  if (ioRIM/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
@@ -101,7 +99,5 @@ integer function ioRIM(ID)
  endif
  !
 1 call io_disconnect(ID=ID)
- !
- ! GPL_START
  !
 end function

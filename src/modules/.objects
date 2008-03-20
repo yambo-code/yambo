@@ -1,6 +1,6 @@
 objs = mod_pars.o  mod_stderr.o  mod_par_proc.o \
        mod_collision.o mod_drivers.o  mod_FFT.o \
-       mod_timing.o \
+       mod_timing.o  mod_logo.o \
        mod_com.o mod_memory.o  mod_electrons.o mod_R_lattice.o  \
        mod_par_indexes.o mod_wave_func.o \
        mod_matrix_operate.o mod_D_lattice.o mod_frequency.o mod_X.o \

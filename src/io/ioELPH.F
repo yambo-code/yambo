@@ -48,8 +48,6 @@ integer function ioELPH(ID)
    ioELPH=io_connect(desc='elph_gkkp',type=1,ID=ID)
  endif
  !
- ! GPL_END
- !
  if (ioELPH/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
@@ -170,7 +168,5 @@ integer function ioELPH(ID)
  enddo
  !
 1 call io_disconnect(ID=ID)
- !
- ! GPL_START
  !
 end function

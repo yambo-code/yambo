@@ -131,7 +131,7 @@ module electrons
        Eo%E(:,:,:)=Ei%E(:,:Eo%nk,:)
      endif
      !
-     !E RIM
+     ! E RIM
      !
      if (BZ_RIM_nbands/=0.and.Ei%nk==Eo%nk) then
        allocate(Eo%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
@@ -140,6 +140,7 @@ module electrons
        Eo%E_RIM=Ei%E_RIM
        Eo%f_RIM=Ei%f_RIM
      endif
+     !
    end subroutine
    !
    subroutine E_reset(E)
@@ -153,14 +154,25 @@ module electrons
      E%nbm=0
      E%bf=0
      E%kf=0 
-     nullify(E%E,E%Eo,E%Z,E%W,E%f,E%qp_done,E%E_RIM,E%f_RIM)
-     call mem_est("E-E E-Eo E-f E-W E-Z E-qp_done E_RIM f_RIM")
+     nullify(E%E,E%Eo,E%Z,E%W,E%f,E%qp_done)
+     call mem_est("E-E E-Eo E-f E-W E-Z E-qp_done")
+     !
+     nullify(E%E_RIM,E%f_RIM)
+     call mem_est("E_RIM f_RIM")
+     !
    end subroutine
    !
    integer function spin(v)
      integer :: v(:)
+     !
      spin=1
+     !
+     ! GPL_EXCLUDE_START
+     !
      if (n_sp_pol==2) spin=v(4)
+     !
+     ! GPL_EXCLUDE_END
+     !
    end function
    !
 end module electrons

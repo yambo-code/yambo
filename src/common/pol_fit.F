@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine polfit(N,X,Y,order,Tt,EPS,t_zero)
+subroutine pol_fit(N,X,Y,order,Tt,EPS,t_zero)
  use pars, ONLY:DP
  implicit none
  !

@@ -23,7 +23,8 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
  !
  use pars,          ONLY:SP,HARTREE,schlen,lchlen
  use drivers,       ONLY:list_dbs
- use com,           ONLY:code_version,msg,warning,code_revision
+ use LOGO,          ONLY:code_version,code_revision
+ use com,           ONLY:msg,warning
  use stderr,        ONLY:string_split
  use D_lattice,     ONLY:Tel,a,alat,input_Tel_fixed
  use electrons,     ONLY:n_sp_pol,n_spinor

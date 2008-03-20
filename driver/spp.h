@@ -20,23 +20,23 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
  static Ldes opts[] = { /* Int Real Ch (Dummy)*/
-  {"ifile",  "F","Input file",0,0,1,0},              /* 4 */
-  {"help","h","Short Help",0,0,0,0}, /* 0 */
-  {"lhelp","H","Long Help",0,0,0,0}, /* 1 */
-  {"jobstr","J","Job string identifier",0,0,1,0},   /* 2 */
-  {"ifile",  "F","Input file",0,0,1,0},              /* 3 */
-  {"idir",   "I","Core I/O directory",0,0,1,0},         /* 4 */
-  {"odir",   "O","Additional I/O directory",0,0,1,0},        /* 5 */
-  {"nompi", "N","Skip MPI initialization",0,0,0,0}, /* 6 */
-  {"dbfrag","S","DataBases fragmentation",0,0,0,0}, /* 7 */
-  {"kpt","k","K-grid generator",0,0,0,0}, /* 8,1 */
-  {"excp","e","Excitonic properties [(s)ort,sp(in),(p)lot]",0,0,1,0}, /* 9,2 */
-  {"bzrim","r","BZ energy RIM analyzer",0,0,0,0}, /* 10,3 */
+  {"ifile",  "F","Input file",0,0,1,0},              
+  {"help","h","Short Help",0,0,0,0}, 
+  {"lhelp","H","Long Help",0,0,0,0}, 
+  {"jobstr","J","Job string identifier",0,0,1,0},   
+  {"ifile",  "F","Input file",0,0,1,0},              
+  {"idir",   "I","Core I/O directory",0,0,1,0},         
+  {"odir",   "O","Additional I/O directory",0,0,1,0},        
+  {"nompi", "N","Skip MPI initialization",0,0,0,0}, 
+  {"dbfrag","S","DataBases fragmentation",0,0,0,0}, 
+  {"kpt","k","K-grid generator",0,0,0,0}, 
+  {"excp","e","Excitonic properties [(s)ort,sp(in),(p)lot]",0,0,1,0}, 
+  {"bzrim","r","BZ energy RIM analyzer",0,0,0,0}, 
 #if defined _SPP_ELPH
-  {"elph", "p","Electron-Phonon DBs preprocessing",0,0,0,0}, /* 11,4 */
+  {"elph", "p","Electron-Phonon DBs preprocessing",0,0,0,0}, 
 #endif
 #if defined _SPP_RAS
-  {"surf", "a","Surface spectroscopy postprocessor",0,0,1,0}, /* 12,4 */
+  {"surf", "a","Surface spectroscopy postprocessor",0,0,1,0}, 
 #endif
   {NULL,NULL,NULL,0,0,0,0}
  };

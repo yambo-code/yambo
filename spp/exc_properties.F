@@ -115,8 +115,7 @@ subroutine exc_properties(Xk,Xen)
  if (BS_cpl_K_corr) BS_cpl_mode='c'
  if (BS_cpl_K_exchange.and.BS_cpl_K_corr) BS_cpl_mode='xc'
  if (BS_K_coupling) BS_K_dim=2*BS_K_dim
- 
-!
+ !
  ! Get state indexes
  !
  n_lambda = get_lambda()
@@ -172,6 +171,8 @@ subroutine exc_properties(Xk,Xen)
  !
  call exc_wf_sort_and_report(Xk,Xen,BS_R,BS_E,BS_E_degs=BS_E_degs)
  !
+ ! GPL_EXCLUDE_START
+ !
  ! Exciton's spin (collinear case)
  !================================
  !
@@ -183,12 +184,16 @@ subroutine exc_properties(Xk,Xen)
    return
  endif
  ! 
+ ! GPL_EXCLUDE_END 
+ ! 
  ! Loading  Wf 
  !
  call wf_load(wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
  !
+ ! GPL_EXCLUDE_START
+ !
  ! Exciton's spin (not collinear case)
- !================================
+ !=====================================
  !
  if (l_spin.and.n_spinor==2) then
    !
@@ -205,6 +210,8 @@ subroutine exc_properties(Xk,Xen)
    !
    return
  endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Constructing Grid 
  !
@@ -297,7 +304,15 @@ subroutine exc_properties(Xk,Xen)
        ikbz  = BS_eh_table(neh,1)
        iv    = BS_eh_table(neh,2)
        ic    = BS_eh_table(neh,3)
+       !
+       ! GPL_EXCLUDE_START
+       !
        i_spin= spin(BS_eh_table(neh,:))
+       !
+       ! GPL_EXCLUDE_END
+       ! GPL_INCLUDE_START
+       !i_spin = 1
+       ! GPL_INCLUDE_END
        !
        ikibz = Xk%sstar(ikbz,1)
        is    = Xk%sstar(ikbz,2)

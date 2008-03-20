@@ -23,7 +23,7 @@ integer function ioDB1(E,k,ID)
  !
  use pars,             ONLY:HARTREE,SP,IP
  use memory_m,         ONLY:mem_est
- use com,              ONLY:code_version
+ use LOGO,             ONLY:code_version,code_revision
  use electrons,        ONLY:levels,default_nel,n_spin,n_bands,nel,n_sp_pol,&
 &                           n_spinor
  use D_lattice,        ONLY:a, alat, nsym, i_time_rev, default_Tel, dl_sop, &
@@ -34,7 +34,7 @@ integer function ioDB1(E,k,ID)
  use wave_func,        ONLY:wf_ncx, wf_nc_k, wf_igk,wf_ng
  use IO_m,             ONLY:io_connect, io_disconnect, io_sec, &
 &                           io_elemental, io_status, io_bulk,read_is_on,&
-&                           serial_number,io_serial_number,&
+&                           serial_number,io_serial_number,io_code_revision,&
 &                           DUMP,io_mode,write_is_on,io_code_version,ver_is_gt_or_eq
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_G_bands
  use BS,               ONLY:BS_bands
@@ -48,7 +48,7 @@ integer function ioDB1(E,k,ID)
  !
  type(levels)  :: E
  type(bz_samp) :: k
- integer       :: ID,code_version_local(3)
+ integer       :: ID,code_version_local(3),code_revision_local
  !
  ioDB1 =io_connect(desc="db1",type=0,ID=ID)
  if (ioDB1/=0) goto 1
@@ -57,7 +57,7 @@ integer function ioDB1(E,k,ID)
    !
    ! Dimensions
    !
-   call io_elemental(ID, VAR="DIMENSIONS",VAR_SZ=16)
+   call io_elemental(ID, VAR="DIMENSIONS",VAR_SZ=17)
    !
    ! Meaning of DIMENSIONS tag in ioDB1 file:
    !
@@ -89,11 +89,16 @@ integer function ioDB1(E,k,ID)
    call io_elemental(ID,I0=serial_number,DB_I0=serial_number)
    io_serial_number(ID)=serial_number
    !
-   ! Code_version here and not in io_header because io_header
+   ! Code_version/code_version here and not in io_header because io_header
    ! writes the serial_number as well.
    !
    if (write_is_on(ID)) code_version_local=code_version
    call io_elemental(ID,DB_I1=io_code_version(ID,:),I1=code_version_local)
+   !
+   if (ver_is_gt_or_eq(ID,(/3,0,16/))) then
+     if (write_is_on(ID)) code_revision_local=code_revision
+     call io_elemental(ID,DB_I0=io_code_revision(ID),I0=code_revision_local)
+   endif
    ! 
    call io_elemental(ID,I0=E%nb,CHECK=.true.,OP=(/"=="/),&
 &                    VAR=' Bands                           :')
@@ -144,7 +149,7 @@ integer function ioDB1(E,k,ID)
      !
      call io_elemental(ID, VAR="WF_G_COMPONENTS",VAR_SZ=1,MENU=0)
      call io_elemental(ID,I0=wf_ng,CHECK=.true.,OP=(/"=="/),&
-&                      VAR=' WF G-vectors        (ver.>3.0.3):')
+&                      VAR=' WF G-vectors                    :')
    endif
    !
    ! Atomic data
@@ -152,11 +157,11 @@ integer function ioDB1(E,k,ID)
    if (ver_is_gt_or_eq(ID,(/3,0,4/))) then 
      call io_elemental(ID, VAR="MAX_ATOMS",VAR_SZ=1,MENU=0)
      call io_elemental(ID,I0=n_atoms_max,   CHECK=.true.,OP=(/"=="/),&
-&                      VAR=' Max atoms/species   (ver.>3.0.4):')
+&                      VAR=' Max atoms/species               :')
      !
      call io_elemental(ID, VAR="number_of_atom_species",VAR_SZ=1,MENU=0)
      call io_elemental(ID,I0=n_atom_species,CHECK=.true.,OP=(/"=="/),&
-&                      VAR=' No. of atom species (ver.>3.0.4):')
+&                      VAR=' No. of atom species             :')
    endif
    call io_elemental(ID, VAR="",VAR_SZ=0)
    !

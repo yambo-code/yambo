@@ -24,6 +24,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! K = <2V-W>
  !
  use pars,         ONLY:SP,pi,IP
+ use LOGO,         ONLY:pickup_a_random
  use memory_m,     ONLY:mem_est
  use drivers,      ONLY:l_bs_fxc,l_col_cut
  use frequency,    ONLY:w_samp
@@ -46,14 +47,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_n_g_exch,BS_identifier,BS_K_coupling,O_n_v_states,&
 &                       BS_K_dim,BS_eh_win,BS_blk_coord,&
 &                       cumulative_index,BS_K_is_ALDA,BS_cpl_mat,&
-&                       BS_cpl_K_exchange,BSS_q0
+&                       BS_cpl_K_exchange,BSS_q0,&
+&                       O_n_scatt,BS_O,BS_cpl_K_corr
 #if defined _SC
  use BS,             ONLY:BS_bare_W
-#endif
-#if defined _BS_CPL
- use BS,           ONLY:O_n_scatt,BS_O,BS_cpl_K_corr
-#else
- use BS,           ONLY:O_n_cc_scatt,O_n_vv_scatt,O_cc,O_vv
 #endif
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
@@ -73,9 +70,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  integer    :: ikk1,ikk2,live_timing_steps,is1xis2,ik1bz,iv1,ic1,ik1,is1,inv_s1,is1p,&
 &              i_sp1,i_sp2,ik2bz,iv2,ic2,ik2,is2,is2p,&
 &              icv1,icv2,iOvv,iOcc,i1,i2,i3,iqs,iq_W,ig0
-#if defined _BS_CPL
  integer    :: iOcv, iOvc
-#endif
 #if defined _DOUBLE
  complex(SP):: zdotc,zdotu
 #else
@@ -89,33 +84,32 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  real(SP)   :: E_eh_range(2),S_eh_range(2)
  real(SP)   :: filling
  complex(SP),allocatable ::BS_W(:,:,:)
- integer,       external ::rand_identifier
  complex(SP),   external ::tddft_alda_r_space
+ logical    :: W_is_em1s,W_is_pp
  !
  ! Oscillators
  !
-#if defined _BS_CPL
  integer    :: O_dim
-#else
- integer    :: O_cc_dim,O_vv_dim
-#endif
  integer    :: O_x_dim,alloc_err(2),x_fft_size,c_fft_size
  logical    :: load_O_X
  complex(SP),allocatable::Ovv(:),Occ(:),Cc(:),O1x(:,:),O2x(:,:)
-#if defined _BS_CPL
  complex(SP),allocatable::Ovc(:),Ocv(:)
-#endif
  type(ggwinfo)          ::isc
  !
  ! I/O
  !
- integer           ::ioX_err,ioPP_err,ioBS_Fxc_err,XID,ID
+ integer           ::ioX_err,ioBS_Fxc_err,XID,ID
  integer, external ::ioX,ioBS
  !
  Co=4._SP*pi/DL_vol/real(q%nbz,SP)
  !
  if (.not.l_bs_fxc) call section('*','Bethe-Salpeter Kernel')
+ !
+ ! GPL_EXCLUDE_START
+ !
  if (l_bs_fxc)      call section('*','Bethe-Salpeter Kernel -> xc-kernel')
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Setups
  !
@@ -140,6 +134,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call error(' Null BSE kernel block dimension(s) found. Increase e/h range')
  endif
  !
+ ! GPL_EXCLUDE_START
+ !
  ! BS/FXC DB
  !
  if (l_bs_fxc) then
@@ -149,10 +145,16 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  else
    !
+   ! GPL_EXCLUDE_END
+   !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
    ioBS_Fxc_err=ioBS(iq,X,ID)
    !
+   ! GPL_EXCLUDE_START
+   !
  endif
+ !
+ ! GPL_EXCLUDE_END
  !
  if (ioBS_Fxc_err==0) then
    if (BS_res_K_corr) then
@@ -175,6 +177,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! PP/Epsm1S DBs
  !
+ W_is_em1s=X%whoami==2
+ W_is_pp  =X%whoami==4
+ !
  if (BS_res_K_corr&
 #if defined _SC
 &    .and..not.BS_bare_W&
@@ -188,17 +193,16 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    X%ng=BS_n_g_W
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=XID)
    ioX_err=ioX(X,Xw,XID) 
-   ioPP_err=-1
-   if (ioX_err/=0) then
-     X%whoami=4
-     X%ordering='c'
-     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=XID)
-     ioPP_err=ioX(X,Xw,XID)
-     if (ioPP_err/=0) call warning('BS section skipped. PP/Em1s DB does not fit/exist')
-   endif
-   X%whoami=2
+   !
+   if (ioX_err/=0) call warning('BS section skipped. PP/Em1s DB does not fit/exist')
+   !
+   ! X%ng is set to BS_n_g_W to VERIFY if there wnough bands.
+   ! From now on it is used to keep track of the actual sixe of W in the DB
+   !
    X%ng=X%ng_db
-   if (ioPP_err/=0.and.ioX_err/=0) return
+   !
+   if (ioX_err/=0) return
+   !
  endif
  !
  ! Kernel filling
@@ -238,28 +242,33 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  endif
  !
  if (l_bs_fxc) then
+   !
+   ! GPL_EXCLUDE_START
+   !
    call wf_load(max(O_ng,BS_n_g_exch),1,BS_bands,(/1,BS_columns/),&
 &               space='R',title='-BSK->Fxc')
+   !
+   ! GPL_EXCLUDE_END
+   !
  else
    call wf_load(max(O_ng,BS_n_g_exch),1,BS_bands,(/1,BS_columns/),&
 &               space='R',title='-BSK')
  endif
  ! 
+ ! GPL_EXCLUDE_START 
+ ! 
  ! Test the spatial Inversion
  !
  call space_inv_by_wf(Ken,Xk)
+ !
+ ! GPL_EXCLUDE_END
  !
  allocate(O_table(BS_bands(2)-BS_bands(1)+1,nsym,&
 &                 BS_bands(2)-BS_bands(1)+1,nsym,n_sp_pol),stat=alloc_err(1))
  !
  call mem_est('O_table',(/size(O_table)/),elements_kind=(/SP/),errors=(/alloc_err(1)/))
  !
-#if defined _BS_CPL
  O_dim=-1
-#else
- O_cc_dim=-1
- O_vv_dim=-1
-#endif
  O_x_dim=maxval(BS_blk_dim)
  do ik2=1,BS_columns
    do ik1=ik2,1,-1
@@ -267,18 +276,18 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      if (any((/ik2<BS_blk_coord(2),ik2==BS_blk_coord(2).and.ik1>BS_blk_coord(1)/))) cycle
      !
      call K_scattering(iq,ik1,ik2,Xk,q)  
-#if defined _BS_CPL
      O_dim=max(O_dim,O_n_scatt)
-#else
-     O_cc_dim=max(O_cc_dim,O_n_cc_scatt)
-     O_vv_dim=max(O_vv_dim,O_n_vv_scatt)
-#endif
      !
    enddo
  enddo
+ !
+ ! GPL_EXCLUDE_START
+ !
  if (l_bs_fxc) call mem_est("BS_K_2_FXC",&
 &                          (/2*6*FXC_n_g_corr*O_x_dim+2*FXC_n_g_corr**2+2*O_x_dim/),&
 &                          (/SP/))
+ !
+ ! GPL_EXCLUDE_END
  !
  ! ALDA
  !
@@ -293,14 +302,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Screneed interaction
    !
    X%ng=BS_n_g_W
-   if (ioPP_err==0) then
-     Xw%n=2
-     X%whoami=4
-     X%ordering='c'
-     call X_alloc('X',(/BS_n_g_W,BS_n_g_W,2/))
-   else
-      call X_alloc('X',(/BS_n_g_W,BS_n_g_W,1/))
-   endif
+   if (W_is_em1s) call X_alloc('X',(/BS_n_g_W,BS_n_g_W,1/))
+   if (W_is_pp)   call X_alloc('X',(/BS_n_g_W,BS_n_g_W,2/))
+   !
    i1=BS_n_g_W
    if (BS_W_is_diagonal) i1=1
    !
@@ -363,37 +367,28 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    deallocate(isc%gamp)
    call X_alloc('X')
-   Xw%n=1
-   X%whoami=2
+   !
    X%ng=X%ng_db
    call collision_reset(isc)
  endif
  !
  ! DB identifier 
  !
- BS_identifier=rand_identifier()
+ BS_identifier=pickup_a_random(10000.)
  !
  call section('=','Main loop')
  !
  !allocations
  !***********
- if (BS_res_K_corr&
-#if defined _BS_CPL
-     .or.BS_cpl_K_corr&
-#endif
-&   ) then
-#if defined _BS_CPL
+ if (BS_res_K_corr.or.BS_cpl_K_corr) then
    allocate(BS_O(O_ng,O_dim),stat=alloc_err(1))
    call mem_est('BS_O',(/size(BS_O)/),errors=(/alloc_err(1)/))
-   allocate(Ovv(BS_n_g_W),Occ(BS_n_g_W),Cc(BS_n_g_W),Ovc(BS_n_g_W),Ocv(BS_n_g_W))
-   call mem_est('O_RES_WS',(/5*BS_n_g_W/))
-#else
-   allocate(O_cc(O_ng,O_cc_dim),stat=alloc_err(1))
-   allocate(O_vv(O_ng,O_vv_dim),stat=alloc_err(2))
-   call mem_est('O_cc O_vv',(/size(O_vv),size(O_cc)/),errors=alloc_err(:2))
    allocate(Ovv(BS_n_g_W),Occ(BS_n_g_W),Cc(BS_n_g_W))
    call mem_est('O_RES_WS',(/3*BS_n_g_W/))
-#endif
+   if (BS_cpl_K_corr) then
+     allocate(Ovc(BS_n_g_W),Ocv(BS_n_g_W))
+     call mem_est('O_CPL_WS',(/2*BS_n_g_W/))
+   endif
  endif
  !
  if (load_O_X) then
@@ -512,6 +507,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          if (BS_res_K_exchange) H_res_x=cdotc(BS_n_g_exch,O2x(1,icv2),1,O1x(1,icv1),1)
 #endif
          !
+         ! GPL_EXCLUDE_START
+         !
          ! :::Exchange    (coupling):::
          !
 #if defined _DOUBLE
@@ -522,17 +519,23 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                               O2x( g_rot(inv_index,1:BS_n_g_exch),icv2),1,O1x(1,icv1),1)
 #endif
          !
+         ! GPL_EXCLUDE_END
+         !
          ! :::ALDA        (resonant):::
          !
          if (BS_K_is_ALDA) H_res_x=H_res_x+&
 &                          tddft_alda_R_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
 &                                                (/iv1,iv2/),(/is1,is2,is1,is2/),1)
          !
+         ! GPL_EXCLUDE_START
+         !
          ! :::ALDA        (coupling):::
          !
          if (BS_K_is_ALDA) H_cpl_x=H_cpl_x+&
 &                          tddft_alda_R_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
 &                                                (/iv1,iv2/),(/is1,is2,is1,is2/),2)
+         !
+         ! GPL_EXCLUDE_END
          !
          ! :::Correlation (resonant):::
          !
@@ -542,17 +545,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            inv_s1=sop_inv(is1)
            is1xis2=sop_tab(sop_inv(is1),is2)
            !
-#if defined _BS_CPL
            forall(i1=1:BS_n_g_W) Occ(i1)=&
 &                BS_O(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOcc)*O_phase(is1xis2,ic2,i_sp1)
            forall(i1=1:BS_n_g_W) Ovv(i1)=&
 &                BS_O(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOvv)*O_phase(is1xis2,iv2,i_sp2)
-#else
-           forall(i1=1:BS_n_g_W) Occ(i1)=&
-&                O_cc(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOcc)*O_phase(is1xis2,ic2,i_sp1)
-           forall(i1=1:BS_n_g_W) Ovv(i1)=&
-&                O_vv(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOvv)*O_phase(is1xis2,iv2,i_sp2)
-#endif
            !
            if (is1>nsym/(i_time_rev+1)) Ovv=conjg(Ovv)
            if (is1>nsym/(i_time_rev+1)) Occ=conjg(Occ)
@@ -581,7 +577,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            !
          endif
          !
-#if defined _BS_CPL
+         ! GPL_EXCLUDE_START
+         !
          ! :::Correlation (coupling):::
          !
          if (BS_cpl_K_corr.and.i_sp1==i_sp2) then
@@ -620,7 +617,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 #endif
            !
          endif
-#endif
+         !
+         ! GPL_EXCLUDE_END
          !
          ! Impose the kernel to be hermitian
          !
@@ -628,7 +626,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
          BS_mat(icv1,icv2)=H_res_x*real(spin_occ)*Co-H_res_c
          !
+         ! GPL_EXCLUDE_START
+         !
          if (BS_K_coupling) BS_cpl_mat(icv1,icv2)=H_cpl_x*real(spin_occ)*Co-H_cpl_c
+         !
+         ! GPL_EXCLUDE_END
          !
        enddo
      enddo
@@ -636,8 +638,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      if (BS_K_coupling) call pp_redux_wait(BS_cpl_mat)
      !
      if (l_bs_fxc) then
+       !
+       ! GPL_EXCLUDE_START
+       !
        call TDDFT_BSK_2_FXC(iq,ik1,ik2,&
 &                           O1x(:FXC_n_g_corr,:),O2x(:FXC_n_g_corr,:),O_x_dim,W_bss,X)
+       !
+       ! GPL_EXCLUDE_END
        !
      else
        if (ik2==1.and.ik1==1) then
@@ -668,28 +675,25 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call WF_free()
  call mem_est("BS_mat")
  !
- if (BS_res_K_corr&
-#if defined _BS_CPL
-     .or.BS_cpl_K_corr&
-#endif
-&   ) then
+ if (BS_res_K_corr.or.BS_cpl_K_corr) then
    deallocate(O_v_state,O_c_state,O_n_c_states,O_n_v_states)
    call mem_est("O_v_state O_c_state O_n_c_states O_n_v_states")
    deallocate(BS_W,O_phase,ik_is_table)
    call mem_est("BS_W O_phase ik_is_table")
    deallocate(Ovv,Occ,Cc)
    call mem_est("O_RES_WS")
-#if defined _BS_CPL
    deallocate(BS_O)
    call mem_est("BS_O")
+   !
+   ! GPL_EXCLUDE_START
+   !
    if (BS_cpl_K_corr) then
      deallocate(Ovc,Ocv)
      call mem_est("O_CPL_WS")
    endif
-#else
-   deallocate(O_cc,O_vv)
-   call mem_est("O_cc O_vv")
-#endif
+   !
+   ! GPL_EXCLUDE_END
+   !
  endif
  !
  if (load_O_X) then
@@ -698,9 +702,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  endif
  !
  if (l_bs_fxc) then
+   !
+   ! GPL_EXCLUDE_START
+   !
    deallocate(FXC_K_diagonal,FXC)
    call mem_est("FXC_K_diagonal FXC")
    call mem_est("BS_K_2_FXC")
+   !
+   ! GPL_EXCLUDE_END
+   !
  else if (BS_K_is_ALDA) then
    deallocate(F_xc)
  endif

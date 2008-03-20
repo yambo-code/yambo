@@ -41,8 +41,6 @@ integer function ioBSS_invert(iq,n_,inv_err,eps,W_disk,ID)
  !
  ioBSS_invert=io_connect(desc='BS_invert_Q'//trim(intc(iq)),type=2,ID=ID)
  !
- ! GPL_END
- !
  if (ioBSS_invert/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
@@ -111,7 +109,5 @@ integer function ioBSS_invert(iq,n_,inv_err,eps,W_disk,ID)
  endif
  !
 1 call io_disconnect(ID)
- !
- ! GPL_START
  !
 end function

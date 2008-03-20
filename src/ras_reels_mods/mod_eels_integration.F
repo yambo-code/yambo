@@ -187,20 +187,20 @@ end subroutine init_reels_integration
 
     !   Select detector integration
 
-    if(detint.eq."no") then      ! exact
+    if(det_int_type.eq."no") then      ! exact
 
       qparm = qparm_w(iw)      
       bpar  = bpar_w(iw)      
       call calc_Img_qpar( lossg, iq0Gz, qparm, bpar, epsm1_w, ngblk )
 
-    else if(detint.eq."av") then ! average
+    else if(det_int_type.eq."av") then ! average
 
       qparm = qparm_w(iw)      
       bpar  = bpar_w(iw)      
       call calc_Img_qpar( lossg, iq0Gz, qparm, bpar, epsm1_w, ngblk )
 
 !DISABLED
-!   else if(detint.eq."pr") then ! exact + integration over kinematic factor?
+!   else if(det_int_type.eq."pr") then ! exact + integration over kinematic factor?
 ! Integration over kinematic factor could be numerical or analytical
 
 !     qparm = qparm_w(iw)      
@@ -212,7 +212,7 @@ end subroutine init_reels_integration
 !     enddo
 
 !DISABLED
-!   else if(detint.eq."fu") then ! full numerical integration
+!   else if(det_int_type.eq."fu") then ! full numerical integration
 
 !     ! Numerically integrate over spherical surface region
 !     do idet = 1, ndet 

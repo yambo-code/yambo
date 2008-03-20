@@ -21,7 +21,8 @@
 !
 module IO_m
  !
- use pars, ONLY:SP,lchlen,schlen
+ use pars,    ONLY:SP,lchlen,schlen
+ use LOGO,    ONLY:code_version,code_revision
 #if defined _NETCDF_IO
  use netcdf
 #endif
@@ -405,7 +406,7 @@ module IO_m
      !
      use drivers, ONLY:list_dbs
      use stderr,  ONLY:string_pack
-     use com,     ONLY:code_version,code_revision,get_name,file_exists,more_io_path
+     use com,     ONLY:get_name,file_exists,more_io_path
      use timing,  ONLY:date_and_time_string
      use com,     ONLY:msg
      character(*)::desc
@@ -520,8 +521,6 @@ module IO_m
    end subroutine
    !
    subroutine io_reset(ID)
-     !
-     use com, ONLY:code_version,code_revision
      integer :: ID
      io_status(ID)=0
      io_unit(ID)=0
@@ -567,7 +566,6 @@ module IO_m
    end subroutine
    !
    logical function file_is_open(filename,ID)
-     !
      character(*)      :: filename
      integer, optional :: ID
      integer :: NC_ERR
@@ -589,7 +587,6 @@ module IO_m
    end function
      !
    logical function ver_is_gt_or_eq(ID,version)
-     use com, ONLY:code_version
      integer :: ID,version(3),version2comp(3)
      ver_is_gt_or_eq=.false.
      !
@@ -604,7 +601,6 @@ module IO_m
    end function
    !
    subroutine netcdf_call(status)
-     !
      use com,           ONLY:error
      integer, intent ( in) :: status
 #if defined _NETCDF_IO
@@ -617,7 +613,6 @@ module IO_m
    end subroutine
    !
    integer function netcdf_dim(ID,DIM)
-     !
      integer, intent ( in) :: ID,DIM
      integer       :: dim_found
      character(12) :: dim_strng
@@ -627,6 +622,17 @@ module IO_m
      dim_found=nf90_inq_dimid(io_unit(ID),dim_strng,netcdf_dim)
      if (dim_found/=nf90_noerr) call netcdf_call(&
 &                               nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim))
+#endif
+   end function
+   !
+   integer function variable_is_found(ID,var_name)
+     integer,      intent ( in) :: ID
+     character(*), intent ( in) :: var_name
+     integer :: var_ID ! Work Space
+     variable_is_found=-1
+#if defined _NETCDF_IO
+     if (nf90_inq_varid(io_unit(ID),var_name,var_ID)==nf90_NoErr) variable_is_found=1  
+     if (nf90_inq_varid(io_unit(ID),var_name,var_ID)/=nf90_NoErr) variable_is_found=0  
 #endif
    end function
    !

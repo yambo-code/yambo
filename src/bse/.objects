@@ -1,13 +1,5 @@
-#if defined _BS_CPL
-objs =	K_driver.o K_eh_setup.o \
-        K.o K_scattering_cpl.o K_exchange.o \
-        K_solvers.o K_Haydock.o K_diagonalization.o K_inversion.o K_eps_interpolate.o \
-        K_dump_to_o_file.o Kernel_by_V.o \
-        K_filling.o
-#else
 objs =	K_driver.o K_eh_setup.o \
         K.o K_scattering.o K_exchange.o \
         K_solvers.o K_Haydock.o K_diagonalization.o K_inversion.o K_eps_interpolate.o \
         K_dump_to_o_file.o Kernel_by_V.o \
         K_filling.o
-#endif

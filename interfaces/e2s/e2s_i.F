@@ -24,6 +24,7 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  use etsf_io
  use etsf_io_low_level
  use pars,                only : SP,lchlen
+ use LOGO,                only : pickup_a_random
  use com,                 only : msg,write_to_report,more_io_path, file_exists
  use par_proc_m,          only : ncpu,myid,p_finalize
  use electrons,           only : levels,E_reset,n_bands,n_spin
@@ -47,7 +48,7 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  type(bz_samp)                :: k
  character(lchlen)            :: ETSF_file_name
  integer                      :: ID,io_err,ik,icycle
- integer,     external        :: ioDB1,rand_identifier, ioKB_PP
+ integer,     external        :: ioDB1, ioKB_PP
  real(SP), allocatable        :: wf_disk(:,:,:,:)
  logical                      :: letsf_file, lwrite_PP, force_kbpp
  ! 
@@ -71,7 +72,7 @@ integer function e2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  ! S/N
  !======
- serial_number=rand_identifier()
+ serial_number=pickup_a_random(10000.)
  !
  ! Switch off report file support
  !================================

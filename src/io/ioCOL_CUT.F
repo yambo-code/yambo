@@ -39,8 +39,6 @@ integer function ioCOL_CUT(ID)
  !
  ioCOL_CUT=io_connect(desc="cutoff",type=1,ID=ID)
  !
- ! GPL_END
- !
  if (ioCOL_CUT/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
@@ -98,7 +96,5 @@ integer function ioCOL_CUT(ID)
  endif
  !
 1 call io_disconnect(ID=ID)
- !
- ! GPL_START
  !
 end function

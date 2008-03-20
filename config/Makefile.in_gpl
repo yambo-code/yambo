@@ -1,0 +1,175 @@
+#
+# Copyright (C) 2000-2005 A. Marini and the SELF team
+#         http://www.fisica.uniroma2.it/~self
+#
+# This file is distributed under the terms of the GNU
+# General Public License. You can redistribute it and/or
+# modify it under the terms of the GNU General Public
+# License as published by the Free Software Foundation;
+# either version 2, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will
+# be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public
+# License along with this program; if not, write to the Free
+# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+#
+cpu         = @build_cpu@
+os          = @build_os@
+mpi         = @mpi_cpp@
+netcdf      = @dnetcdf@
+scalapack   = @dscalapack@
+precision   = @dp_cpp@
+fft         = @FFT_CPP@
+xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@
+debug       = @enable_debug@
+do_blas     = @compile_blas@
+do_lapack   = @compile_lapack@
+do_p2s      = @compile_p2s@
+do_e2s      = @compile_e2s@
+shell       = @SHELL@
+make        = @MAKE@
+package_bugreport = @PACKAGE_BUGREPORT@
+prefix      = @prefix@
+exec_prefix = @exec_prefix@
+bindir      = @bindir@
+libdir      = @libdir@
+includedir  = @includedir@
+
+CFGFILES = config/setup config/Makefile config/report  \
+  	   sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
+	   src/external_c/.objects Makefile driver/version.h \
+       sbin/objects_debug.sh
+TARGETS  = all self interfaces spp 
+EXE      = $(TARGETS)
+INTERFCS = a2s p2s e2s
+#
+# Libraries (ordered for compiling & linking)
+#
+BASIC_LIBS   = external_c modules xc_functionals parser communicate common io wf_and_fft 
+
+MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl interface \
+               tddft pol_function qp bse
+#
+# Interfaces
+#
+2SLIBS       = external_c modules parser communicate common io 
+#
+# SPP
+#
+SPPLIBS      = $(BASIC_LIBS) bz_ops qp_ctl interface bse
+
+nothing: 
+	@$(make_message)
+changelog:
+	svn log | perl sbin/svn2cl.pl > ChangeLog
+all: $(EXE)
+libs:
+	@LIBS2DO="slatec"; DIR2GO="lib" ; $(mklib)
+	@if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; \
+	DIR2GO="lib" ; $(mklib); fi
+	@if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; \
+	DIR2GO="lib" ; $(mklib); fi
+self: libs
+	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)
+	@X2DO="self"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
+#
+interfaces: libs
+	@LIBS2DO="$(2SLIBS)" ; $(mksrc)
+	@LIBS2DO="int_modules"; DIR2GO="interfaces" ; $(mklib)
+	@X2DO="a2s" ;XPATH="interfaces/a2s";XLIBS="$(2SLIBS)";$(mkx)
+	@if test "$(do_p2s)" = yes ; then X2DO="p2s" ; XPATH="interfaces/p2s" ; \
+	XLIBS="$(2SLIBS)"; ADF="-D@PW_CPP@"; $(mkx) ; fi
+	@if test "$(do_e2s)" = yes ; then X2DO="e2s" ; XPATH="interfaces/e2s" ; \
+	XLIBS="$(2SLIBS)" ; $(mkx) ; fi
+spp: libs
+	@LIBS2DO="$(SPPLIBS)" ; $(mksrc)
+	@X2DO="spp" ;XPATH="spp";XLIBS="$(SPPLIBS)";$(mkx)
+clean:
+	@echo "modes: clean_[o/a/m/am/oam/oamx] distclean cclean"
+clean_a: 
+	@$(aclean)
+clean_m: 
+	@$(mclean)
+clean_o: 
+	@$(oclean)
+clean_am: 
+	@$(aclean);$(mclean)
+clean_oam: 
+	@$(oclean);$(aclean);$(mclean)
+clean_oamx: 
+	@$(oclean);$(aclean);$(mclean);$(xclean)
+distclean: 
+	@$(oclean);$(amdclean);$(xclean);$(confclean)
+cclean:
+	@$(confclean)
+
+# Functions
+define make_message
+ echo;echo "SELF" @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ r.@SREVISION@ targets;echo;\
+ for target in $(TARGETS); do echo  " [stable] $$target" ; done;echo;\
+ for target in $(UTILS); do echo  " [util] $$target" ; done;echo
+endef
+define mksrc
+ for ldir in $$LIBS2DO; do \
+  if test ! -f "$(libdir)/lib$$ldir.a" || test "$(debug)" = yes  ; \
+  then rm -f "$(libdir)/lib$$ldir.a" ; \
+  ./sbin/make_makefile.sh src/$$ldir lib$$ldir.a .objects l $(xcpp) $$ADF ; \
+  cd src/$$ldir ; $(make) VPATH=src/$$ldir || exit "$$?" ; cd ../../; fi \
+ done
+endef
+define mklib
+ for ldir in $$LIBS2DO; do \
+  if test ! -f "$(libdir)/lib$$ldir.a" ; \
+  then ./sbin/make_makefile.sh $$DIR2GO/$$ldir lib$$ldir.a .objects l $(precision) $$ADF ; \
+  cd $$DIR2GO/$$ldir ; $(make) VPATH=$$DIR2GO/$$ldir || exit "$$?" ; cd ../../; fi \
+ done
+endef
+define mkx
+ LLIBS="";for exe in $$XLIBS; do LLIBS="$$LLIBS -l$$exe" ; done ; \
+ for exe in $$X2DO; do \
+  if test ! -f "$(bindir)/$$exe" || test "$(debug)" = yes  ; \
+  then ./sbin/make_makefile.sh $$XPATH $$exe .objects x $$LLIBS $(xcpp) $$ADF ; \
+  cd $$XPATH ; $(make) VPATH=$$XPATH || exit "$$?" ; fi ; \
+ done
+endef
+define oclean
+ find . \( -name '*.o' -o -name 'Makefile' -o -name '*.f90' \
+        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' \) \
+        -type f -print | grep -v '\.\/Makefile' | xargs rm -f
+ echo "[.o .f90 _cpp ifc Makefiles locks] cleaned" 
+ if test "$(debug)" = yes ; then \
+ find . -name '.debug*' | xargs rm -fr ; \
+ echo "[debug subdirectories] cleaned" ; fi
+endef
+define aclean
+ find . \( -name '*.a' \) \
+   -type f -print | grep -v netcdf | grep -v iotk | xargs rm -f
+ echo "[.a] cleaned" 
+endef
+define mclean
+ find . \( -name '*.mod' \) \
+   -type f -print | grep -v netcdf | grep -v iotk | xargs rm -f
+ echo "[.mod <soft>] cleaned" 
+endef
+define amdclean
+ find . \( -name '*.a' -o -name '*.mod' -o -name 'netcdf*h' \
+           -o -name 'netcdf*inc' \) -type f -print | xargs rm -f
+ echo "[.a .mod netcdf <deep>] cleaned" 
+endef
+define xclean
+ for exe in $(EXE); do rm -f $(bindir)/$$exe; done
+ for exe in $(INTERFCS); do rm -f $(bindir)/$$exe; done
+ echo "[targets] cleaned"
+endef
+define confclean
+ rm -f $(CFGFILES)
+ rm -f config.status config.log
+ rm -fr autom4te.cache
+ echo "[autoconf files] cleaned"
+endef

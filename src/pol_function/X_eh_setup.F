@@ -44,15 +44,25 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  !
  allocate(poles(Xk%nbz*Nb*Nt*n_sp_pol))
  !
- !Note that in metals not all the elements are defined
+ ! Note that in metals not all the elements are defined
  !
  poles=0._SP 
+ !
+ ! GPL_INCLUDE_START
+ !i_sp=1
+ ! GPL_INCLUDE_END
  !
  X_eh_setup=0
  do i1=1,Xk%nbz
    do iv=X%ib(1),Xen%nbm
      do ic=Xen%nbf+1,X%ib(2)
+       !
+       ! GPL_EXCLUDE_START
+       !
        do i_sp=1,n_sp_pol
+         !
+         ! GPL_EXCLUDE_END
+         !
          i2=qindx_X(iabs(iq),i1,1)
          ik=Xk%sstar(i1,1) 
          ikp=Xk%sstar(i2,1)
@@ -97,7 +107,12 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
          if (allocated(rg_index_bg)) i_pole=rg_index_bg(X_eh_setup)
          if (iq>0) X_poles_tab(i_pole,:)=(/i1,iv,ic,i_sp/)
          !
+         ! GPL_EXCLUDE_START
+         !
        enddo
+       !
+       ! GPL_EXCLUDE_END
+       !
      enddo
    enddo
  enddo

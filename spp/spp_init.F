@@ -24,9 +24,9 @@ subroutine spp_init(instr,lnstr,FINALIZE)
  use pars,           ONLY:HARTREE
  use wave_func,      ONLY:wf_ng 
  use R_lattice,      ONLY:ng_vec
- use it_m,           ONLY:rstatus,initdefs,initmode,ofiles_append,&
+ use it_m,           ONLY:initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
-&                         nrnlvls,rnlvls
+&                         nrnlvls,rnlvls,runlevel_is_on,switch_off_runlevel
  use drivers,        ONLY:infile_editing
  use com,            ONLY:file_exists
  use stderr,         ONLY:string_split
@@ -132,9 +132,13 @@ subroutine spp_init(instr,lnstr,FINALIZE)
    Kgw_1=0.
    qlong= 0.0_SP
    !
+   ! GPL_EXCLUDE_START
+   !
    !BZ RIM
    !
    BZ_RIM_path="."
+   !
+   ! GPL_EXCLUDE_END
    !
  endif
  !
@@ -161,26 +165,49 @@ subroutine spp_init(instr,lnstr,FINALIZE)
      endif
      if ( trim(rstr_piece(i1)) == 'excp') then
        l_wf    =trim(rstr_piece(i1+1))=='p'
+       !
+       ! GPL_EXCLUDE_START
+       !
        l_spin  =trim(rstr_piece(i1+1))=='sp'
+       !
+       ! GPL_EXCLUDE_END
+       !
        l_sort  =trim(rstr_piece(i1+1))=='s'
-       if  (l_wf)   call initactivate(1,trim(rnlvls(3,1)))
-       if  (l_spin) call initactivate(1,trim(rnlvls(4,1)))
+       if  (l_wf)   call initactivate(1,'exc_wf')
+       !
+       ! GPL_EXCLUDE_START
+       !
+       if  (l_spin) call initactivate(1,'exc_spin')
+       !
+       ! GPL_EXCLUDE_END
+       !
        if  (l_sort) infile_editing=.false.
-       if  (l_sort) rstatus(2)=1
+       !
      endif
    enddo
  enddo
  !
- call call_init_load('parserload')
+ if (.not.l_sort) call call_init_load('parserload')
  !
- lkanalyze  =rstatus(1)/=0
- l_exc_props=rstatus(2)/=0
- l_wf       =rstatus(3)/=0
- l_spin     =rstatus(4)/=0
- lbzrim     =rstatus(5)/=0
+ lkanalyze  =runlevel_is_on('kpt')
+ l_exc_props=runlevel_is_on('excp')
+ l_wf       =runlevel_is_on('exc_wf')
+ !
+ ! GPL_EXCLUDE_START
+ !
+ l_spin     =runlevel_is_on('exc_spin')
+ lbzrim     =runlevel_is_on('bzrim')
+ !
+ ! GPL_EXCLUDE_END
  !
  if (lkanalyze) call initactivate(1,"cooIn cooOut GWKpts Qpts KShift1 KShift2 KShift3")
+ !
+ ! GPL_EXCLUDE_START
+ !
  if (lbzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut")
+ !
+ ! GPL_EXCLUDE_END
+ !
  if (l_exc_props) then
    if (l_wf) call initactivate(1,"States Format Direction FFTGvecs Degen_Step RNorm &
 &                                 Cells Hole Dimension")
@@ -189,17 +216,17 @@ subroutine spp_init(instr,lnstr,FINALIZE)
  !
 #if defined _SPP_ELPH
  !
- lelph=rstatus(6)/=0
+ lelph=runlevel_is_on('elph')
  if (lelph) call initactivate(1,"DBsPATH PHfreqF EEfermi EfGbroad PhBroad PhStps")
  !
 #endif
 
 #if defined _SPP_RAS
  !
- lsurf =rstatus(7)/=0
- lras  =rstatus(8)/=0
- lloc  =rstatus(9)/=0
- ltrans=rstatus(10)/=0
+ lsurf =runlevel_is_on('surf')
+ lras  =runlevel_is_on('ras')
+ lloc  =runlevel_is_on('loc')
+ ltrans=runlevel_is_on('trans')
  if(lsurf) then
    if (lras) call initactivate(1,"XData YData "//&
 &       " BulkFile BulkForm BlkShift BlkBroad "//&

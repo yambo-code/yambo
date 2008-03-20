@@ -1,7 +1,7 @@
 #if defined _FFTW
-objs = fft_setup.o fft_3d.o el_density.o \
+objs = fft_setup.o fft_3d.o  \
        scatter_Bamp.o scatter_Gamp.o space_inv_by_wf.o wf_load.o WF_rotate.o
 #else
-objs = fft_setup.o fft_3d.o sgfft.o el_density.o \
+objs = fft_setup.o fft_3d.o sgfft.o  \
        scatter_Bamp.o scatter_Gamp.o space_inv_by_wf.o wf_load.o WF_rotate.o
 #endif

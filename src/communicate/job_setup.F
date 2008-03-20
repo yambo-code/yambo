@@ -42,6 +42,8 @@ subroutine job_setup(en,k)
  !
  call section('*','Job Setup') 
  !
+ ! GPL_EXCLUDE_START
+ !
  ! CPU's structure
  !
  if (ncpu>1.and.more_IO_path/=core_IO_path) then
@@ -66,6 +68,8 @@ subroutine job_setup(en,k)
    endif
    !
  endif
+ ! 
+ ! GPL_EXCLUDE_END 
  ! 
  call msg('r','CORE databases in ',trim(core_io_path))
  call msg('r','Additional I/O in ',trim(more_io_path))

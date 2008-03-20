@@ -45,9 +45,7 @@ module BS
  logical :: BS_K_is_ALDA
  logical :: BS_DB_is_fragmented
  logical :: BS_not_const_eh_f
-#if defined _SC
  logical :: BS_bare_W
-#endif
  character(schlen) :: BS_res_mode
  character(schlen) :: BS_cpl_mode
  integer    , allocatable :: BS_eh_table(:,:)
@@ -74,15 +72,8 @@ module BS
  !
  ! ... then table of possible cv->nm transitions
  !
-#if defined _BS_CPL
  integer  :: O_n_scatt
  complex(SP),allocatable :: BS_O(:,:)
-#else
- integer  :: O_n_cc_scatt
- integer  :: O_n_vv_scatt
- complex(SP),allocatable :: O_cc(:,:)
- complex(SP),allocatable :: O_vv(:,:)
-#endif
  !
  ! Solvers
  !

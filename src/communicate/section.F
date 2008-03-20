@@ -33,7 +33,7 @@ subroutine section(mode,name)
 &                     live_time_msg,date_and_time_string
  use par_proc_m, ONLY:pp_redux_wait,ncpu
  use com,        ONLY:msg,depth,previous_secmode,isec,secnm,&
-&                     write_to_report,title
+&                     write_to_report,write_the_logo
  implicit none
  character(1)::mode
  character(*)::name
@@ -55,7 +55,7 @@ subroutine section(mode,name)
  if (depth==-1) then
    ch=date_and_time_string(dt_out=date_time_at_start)
    if (write_to_report) write (11,'(1x,a)') trim(ch)
-   call title(6,' ')
+   call write_the_logo(6,' ')
    previous_secmode=' '
  endif
  !

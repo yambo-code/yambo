@@ -196,6 +196,34 @@ module it_m
        close(20)
      enddo
    end subroutine
+   !
+   logical function runlevel_is_on(runlevel_name)
+     character(*) :: runlevel_name
+     integer :: i2
+     runlevel_is_on=.false.
+     do i2=1,nrnlvls
+       if (trim(rnlvls(i2,1))==runlevel_name) runlevel_is_on=rstatus(i2)/=0
+     enddo
+   end function
+   !
+   subroutine switch_off_runlevel(off_name,on_name)
+     use stderr,    ONLY:string_split
+     character(*)     :: off_name,on_name
+     !
+     ! Work Space
+     !
+     character(schlen):: on_names(maxrnlvls)
+     integer          :: i2,i3
+     call string_split(on_name,on_names)
+     ext_loop: do i2=1,nrnlvls
+       if (rstatus(i2)==0) cycle
+       do i3=1,maxrnlvls
+         if (len_trim(on_names(i3))==0) cycle
+         if (trim(rnlvls(i2,1))==trim(on_names(i3))) cycle ext_loop
+       enddo
+       if (trim(rnlvls(i2,1))==off_name.or.off_name=='all') rstatus(i2)=0
+     enddo ext_loop
+   end subroutine
    ! 
    !@@@@@@@@@@@@@@
    ! INTERFACE IT
@@ -214,7 +242,7 @@ module it_m
    !                          are overwritten with the input file values
    !
    subroutine loadrnlvlflag(what,defs,name,description,verb_level)
-     use drivers,      ONLY: infile_editing
+     use drivers,      ONLY:infile_editing
      use parser_m,     ONLY:parser
      character(1)::what
      character(*)::name,description
@@ -544,6 +572,7 @@ module it_m
              if (trim(name)=='InDir'.and.trim(defs%chdef(i1))/='.') cycle
              if (trim(name)=='BSSmod'.and.trim(defs%chdef(i1))/='') cycle
              if (trim(name)=='DysSolver'.and.trim(defs%chdef(i1))/='') cycle
+             if (trim(name)=='SCPot'.and.trim(defs%chdef(i1))/='') cycle
              call parser(trim(name),defs%chdef(i1))
            endif
            if (initmode<=3) defs%chdef(i1)=defval
@@ -688,7 +717,7 @@ module it_m
      use stderr,       ONLY: intc
      use drivers,      ONLY: infile_editing
      use stderr,       ONLY: gen_fmt
-     use com,          ONLY: report_file_fix,title
+     use com,          ONLY: report_file_fix,write_the_logo
      use par_proc_m,   ONLY: master_cpu
      type(initdefs)::defs
      integer       :: ou
@@ -866,7 +895,7 @@ module it_m
      !
      if (.not.infile_editing.and.ou==12) return
      if (master_cpu) then
-       if (ou==12) call title(ou,'#')
+       if (ou==12) call write_the_logo(ou,'#')
        if (ou==11) write (ou,'(2a)') ' .-Input file : ',trim(infile)
        if (ou/=11.and.ou/=12) write (ou,'(a/2a)') '#','# .-Input file : ',trim(infile)
        do i1=1,nflines

@@ -32,7 +32,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
- use QP_CTL,        ONLY:QP_apply
+ use QP_CTL_m,      ONLY:QP_apply
  implicit none
  type(levels) ::en,Xen
  type(bz_samp)::Xk,k,q
@@ -50,17 +50,24 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  !
  ! ... no energy dependence in GW CHOSEX
  !
+ ! GPL_EXCLUDE_START
+ !
  if (l_chosex) then
    !
    QP_dSc_steps=1
-   !QP_n_G_bands=(/1,en%nbm/)
    !
  else
+   !
+   ! GPL_EXCLUDE_END
    !
    call msg('r', '[Newton] Sc step   [ev]:',QP_dSc_delta*HARTREE)
    call msg('r', '[Newton] Sc steps      :',QP_dSc_steps)
    !
+   ! GPL_EXCLUDE_START
+   !
  endif
+ !
+ ! GPL_EXCLUDE_END
  !
  call msg('rn','[Newton] SC iterations :',GWo_iterations)
  !
@@ -68,19 +75,33 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  SC_corr_prev=1.
  Eqp_prev(:)=qp%E_bare(:)
  !
+ ! GPL_EXCLUDE_START
+ !
  do while((iter<=GWo_iterations.or.GWo_iterations<0).and..not.GWo_SC_done) 
+   !
+   ! GPL_EXCLUDE_END
    !
    if (l_el_corr) then
      if (l_ppa.or.l_chosex) then
        call QP_ppa_chosex(X,Xk,en,k,q,qp,Xw,iter)
      else
+       !
+       ! GPL_EXCLUDE_START
+       !
        call QP_raxis(X,Xen,Xk,en,k,q,qp,Xw,iter)
+       !
+       ! GPL_EXCLUDE_END
+       !
      endif
    else
      QP_Sc=cmplx(0.,0.,SP)
    endif
    !
+   ! GPL_EXCLUDE_START
+   !
    if (l_ph_corr)    call QP_elph(en,k,q,qp)
+   !
+   ! GPL_EXCLUDE_END
    !
    do i1=1,QP_n_states
      !
@@ -112,6 +133,8 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
    GWo_SC_done=abs( SC_corr_prev-SC_corr_now )<SC_E_threshold.or.iter==GWo_iterations
    Eqp_prev(:)=qp%E(:)
    !
+   ! GPL_EXCLUDE_START
+   !
    if (iter>0) call msg('rs','[SC] Max corrections at prev/current cycle [ev]',&
 &                      (/SC_corr_prev,SC_corr_now/)*HARTREE)
    SC_corr_prev=SC_corr_now
@@ -131,6 +154,8 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
    iter=iter+1
    !
  enddo
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Update GWo_iterations
  !

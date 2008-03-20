@@ -60,8 +60,14 @@ subroutine K_Haydock(iq,W)
  endif
  !
  if (BS_K_Coupling) then
+   !
+   ! GPL_EXCLUDE_START
+   !
    allocate(Cf(Max_iterations+1),Vn(2*BS_K_dim),Vnm1(2*BS_K_dim),&
 &           Vnp1(2*BS_K_dim))
+   !
+   ! GPL_EXCLUDE_END
+   !
  else
    allocate(Vn(BS_K_dim),Vnm1(BS_K_dim),Vnp1(BS_K_dim))
  end if
@@ -73,9 +79,13 @@ subroutine K_Haydock(iq,W)
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
  !
  if (BS_K_Coupling) then 
-
+   !
+   ! GPL_EXCLUDE_START
+   !
    io_err=ioBSS_Haydock(ID,1,2*BS_K_dim,reached_treshold,Af(1),Bf(1),&
 &  Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1))   
+   !
+   ! GPL_EXCLUDE_END
    !
  else
    io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),Vnm1,Vn)
@@ -88,8 +98,13 @@ subroutine K_Haydock(iq,W)
    call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
    if (BS_K_Coupling) then 
      !
+     ! GPL_EXCLUDE_START
+     !
      io_err=ioBSS_Haydock(ID,it_on_disk,2*BS_K_dim,reached_treshold,Af(:it_on_disk),&
 &            Bf(:it_on_disk+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1))
+     !
+     ! GPL_EXCLUDE_END
+     !
    else
      io_err=ioBSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),&
 &            Bf(:it_on_disk+1),Vnm1,Vn)
@@ -127,6 +142,8 @@ subroutine K_Haydock(iq,W)
  ! 
  if (BS_K_Coupling) then
    !
+   ! GPL_EXCLUDE_START
+   !
    ! Before starting iterate one needs
    !
    ! | Vn > =     |q->0>/(<q->0| F (H |q->0>))
@@ -145,6 +162,8 @@ subroutine K_Haydock(iq,W)
      Haydock_v0_mod = Bf(1)
      Bf(1) = 0.
    endif     
+   !
+   ! GPL_EXCLUDE_END
    !
  else
    !
@@ -202,6 +221,8 @@ subroutine K_Haydock(iq,W)
      !
    else 
      !
+     ! GPL_EXCLUDE_START
+     !
      ! A(n) = <Vn+1|F|Vn+1> (that is <Vn|HFH|Vn>)
      !
      Af(it)=fdot_product(Vnp1,Vnp1)
@@ -235,12 +256,21 @@ subroutine K_Haydock(iq,W)
      forall(i1=1:2*BS_K_dim) Vn(i1)=Vn(i1)/Bf(it+1)
      forall(i1=1:2*BS_K_dim) Vnp1(i1)=Vnp1(i1)/Bf(it+1)
      Cf(it+1)= dot_product(BSS_rhoq0,Vn)/Haydock_v0_mod
+     !
+     ! GPL_EXCLUDE_END
+     !
    endif
    !
    if (it>2) then
      !
      if (BS_K_Coupling) then 
+       !
+       ! GPL_EXCLUDE_START
+       !
        call build_L_and_check_convergence(Af(:it),Bf(:it),it,Cf(:it))
+       !
+       ! GPL_EXCLUDE_END
+       !
      else
        call build_L_and_check_convergence(Af(:it),Bf(:it),it)
      end if
@@ -268,10 +298,16 @@ subroutine K_Haydock(iq,W)
    !
    call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),ID=ID)
    if (BS_K_Coupling) then
+     !
+     ! GPL_EXCLUDE_START
+     !
      Bf(1) = Haydock_v0_mod 
      io_err=ioBSS_Haydock(ID,it,2*BS_K_dim,reached_treshold,Af(:it),Bf(:it+1),   &
 &       Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it+1))
      Bf(1) = 0.
+     !
+     ! GPL_EXCLUDE_END
+     !
    else
      io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_treshold,Af(:it),Bf(:it+1),Vnm1,Vn)
    end if
@@ -288,7 +324,13 @@ subroutine K_Haydock(iq,W)
  ! CLEAN
  !
  if (allocated(BS_mat)) deallocate(BS_mat)
+ !
+ ! GPL_EXCLUDE_START
+ !
  if (BS_K_Coupling) deallocate(Cf)
+ !
+ ! GPL_EXCLUDE_END
+ !
  deallocate(Vn,Vnm1,Vnp1) 
  !
  ! Either if BS_mat is allocated (no fragments) or is not allocated
@@ -316,7 +358,12 @@ subroutine K_Haydock(iq,W)
      !
      Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/q_norm(1)**2.*Haydock_v0_mod**2.
      !
+     ! GPL_EXCLUDE_START
+     !
      if (BS_K_Coupling) allocate(X_i(2,it))
+     !
+     ! GPL_EXCLUDE_END
+     !
      do iw=1,W%n(1)
        X_o=(0._SP,0._SP)
        X_o(:,it)=1./(W%p(iw)-Af(it))
@@ -326,6 +373,9 @@ subroutine K_Haydock(iq,W)
        do i1=it-2,1,-1
          X_o(2,i1)=1./(W%p(iw)-Af(i1)-Bf(i1+1)**2.*X_o(2,i1+1))
        enddo
+       !
+       ! GPL_EXCLUDE_START
+       !
        if (BS_K_Coupling) then
          X_i(:,1) = X_o(:,1)
          X_i(:,2) = Bf(2)*X_o(:,2)*X_i(:,1)
@@ -340,6 +390,9 @@ subroutine K_Haydock(iq,W)
          end do
          X_o(:,1) = YbyX(:)
        endif
+       !
+       ! GPL_EXCLUDE_END
+       !
        X_epsilon(1,iw)=W%p(iw)
        X_epsilon(2,iw)=-X_o(1,1)*Co+1.
        X_epsilon(4,iw)=-X_o(2,1)*Co+1.
@@ -348,7 +401,12 @@ subroutine K_Haydock(iq,W)
        if (Haydock_treshold<0._SP) reached_treshold=reached_treshold+&
 &         abs(X_epsilon(2,iw)-X_epsilon(4,iw))/abs(X_epsilon(2,iw))/real(W%n(1))
      enddo
+     !
+     ! GPL_EXCLUDE_START
+     !
      if (BS_K_Coupling) deallocate(X_i)
+     !
+     ! GPL_EXCLUDE_END
      !
    end subroutine
    !

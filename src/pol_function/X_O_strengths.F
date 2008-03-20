@@ -80,11 +80,16 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
  !
  X%ngostnts=wf_ng
  !
+ ! GPL_EXCLUDE_START
+ !
  ! If I am trying to go from a transverse to a long. gauge
  ! calculation X%long_gauge will be false here even if a long_path is
  ! provided
  !
  if (.not.X%long_gauge) X%long_gauge=trim(long_path)/='none'
+ !
+ ! GPL_EXCLUDE_END
+ !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=ioOSTNTS(X,Xen,ID)
  !
@@ -106,9 +111,12 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
    call wf_load(0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
 #endif
    !
+   use_trans_gauge = .true.
+   !
+   ! GPL_EXCLUDE_START
+   !
    ! Attempt calculation within longitudinal gauge if requested
    !
-   use_trans_gauge = .true.
    if(trim(long_path)/='none') then
      !
      ! Use longitudinal gauge, supporting fallback to transverse gauge
@@ -124,6 +132,8 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
    endif
    !
    ! Fallback to transverse
+   !
+   ! GPL_EXCLUDE_END
    !
    if (use_trans_gauge) call X_O_transverse(Xen,Xk,X)
    !

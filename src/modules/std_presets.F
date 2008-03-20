@@ -23,6 +23,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  use drivers
  use pars,       ONLY:SP,HARTREE
+ use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:iq_now,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                     alpha_dim,use_X_RIM,long_path,X_RIM_nkpts,P_bands_ordered
  use QP_m,       ONLY:QP_rep_string,QP_dSc_steps,QP_n_W_freqs,&
@@ -114,6 +115,11 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  write_to_of=master_cpu
  write_to_report=master_cpu
  !
+ !LOGO
+ !
+ ID_logo=-1
+ ID_logo_stderr=-1
+ !
  !stderr
  !
  write_to_log=master_cpu
@@ -193,8 +199,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_sc_exxc=.false.
  l_sc_lda_x=.false.
  l_sc_pz=.false.
- !
- gpl_version=.false.
  !
  !electrons
  !

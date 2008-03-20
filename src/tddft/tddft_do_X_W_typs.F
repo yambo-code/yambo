@@ -67,7 +67,9 @@ subroutine tddft_do_X_W_typs(iq,X,wv)
  !
  if (iq<0) return
  !
- ! Fxc DB -- GPL_END --
+ ! GPL_EXCLUDE_START
+ !
+ ! Fxc DB
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  ioFxc_err=ioBS_Fxc(iq,wv,ID)
@@ -112,6 +114,6 @@ subroutine tddft_do_X_W_typs(iq,X,wv)
  allocate(X_poles(BS_K_dim))
  X_poles=FXC_K_diagonal
  !
- ! -- GPL_START --
+ ! GPL_EXCLUDE_END
  !
 end subroutine

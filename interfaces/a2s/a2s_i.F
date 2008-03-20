@@ -23,6 +23,7 @@ integer function a2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
 &                      com_dir,icd,js,ijs,np,pid)
  !
  use pars,                ONLY:SP,lchlen
+ use LOGO,                ONLY:pickup_a_random
  use com,                 ONLY:msg,write_to_report,more_io_path
  use par_proc_m,          ONLY:ncpu,myid,p_finalize
  use electrons,           ONLY:levels,E_reset,n_bands,n_spin
@@ -47,7 +48,7 @@ integer function a2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  character(lchlen) :: KSS_file_name
  integer           :: ID,io_err,ioPP_err,ik,icycle
- integer,     external :: a2s_KSS_file_name,ioDB1,ioKB_PP,rand_identifier
+ integer,     external :: a2s_KSS_file_name,ioDB1,ioKB_PP
  real(SP), allocatable :: wf_disk(:,:,:,:)
  !
  ! Presets
@@ -62,7 +63,7 @@ integer function a2s_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  ! S/N
  !
- serial_number=rand_identifier()
+ serial_number=pickup_a_random(10000.)
  !
  ! Switch off report file support
  !

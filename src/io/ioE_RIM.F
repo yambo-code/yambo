@@ -45,8 +45,6 @@ integer function ioE_RIM(E,ID)
    ioE_RIM=io_connect(desc='E_RIM',type=1,ID=ID)
  endif
  !
- ! GPL_END
- !
  if (ioE_RIM/=0) goto 1
  !
  ioE_RIM=io_header(ID)
@@ -81,7 +79,5 @@ integer function ioE_RIM(E,ID)
  call io_bulk(ID, I2=BZ_RIM_table )
  !
 1 call io_disconnect(ID=ID)
- !
- ! GPL_START
  !
 end function

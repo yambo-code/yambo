@@ -218,12 +218,19 @@ contains
    !
    ! Set miscellanous SELF data: dimensions
    !
+   ! GPL_EXCLUDE_START
+   !
    select case(n_spin_pw_)
    case(1)
+     !
+     ! GPL_EXCLUDE_END
+     !
      n_sp_pol  = 1
      n_spinor  = 1
      n_spin    = 1
-! -- GPL_END --
+     !
+     ! GPL_EXCLUDE_START
+     !
    case(2)
      n_sp_pol  = 2
      n_spinor  = 1
@@ -232,10 +239,11 @@ contains
      n_sp_pol  = 1
      n_spinor  = 2
      n_spin    = 2
-! -- GPL_START --
    end select
+   !
+   ! GPL_EXCLUDE_END
+   !
    default_Tel = 0.d0
-
    !
    return
  end subroutine get_dimensions

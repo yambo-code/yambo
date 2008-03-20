@@ -20,7 +20,6 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function ioQP(what,qp,ID)
- !
  use pars,           ONLY:SP,schlen
  use drivers,        ONLY:l_ppa,l_chosex
  use D_lattice,      ONLY:alat
@@ -36,8 +35,10 @@ integer function ioQP(what,qp,ID)
 &                         io_elemental,io_status,io_bulk,read_is_on,&
 &                         write_is_on,io_mode,DUMP,VERIFY,&
 &                         io_fragment,io_check_restart,io_restart,&
-&                         io_netcdf_support,ver_is_gt_or_eq,db_alat
+&                         io_netcdf_support,ver_is_gt_or_eq,&
+&                         db_alat,variable_is_found
  use global_XC,      ONLY:QP_DB_kind,SE_GoWo,SE_GWo,SE_GoWo_PPA,SE_GWo_PPA,SE_CHOSEX
+ use com,            ONLY:warning
  !
  implicit none
  type(QP_t)  ::qp
@@ -66,17 +67,26 @@ integer function ioQP(what,qp,ID)
  if (what=="W") call io_check_restart("W",ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
-   !
-   if (ver_is_gt_or_eq(ID,(/3,0,15/)).and.what/="W") then
-     call io_elemental(ID,VAR="QP_DB_kind",VAR_SZ=1,MENU=0)
-     call io_elemental(ID,I0=QP_DB_kind)
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   ! 
+   if (what/="W") then
+     if (variable_is_found(ID,"QP_DB_kind")==1.or.write_is_on(ID)) then
+       call io_elemental(ID,VAR="QP_DB_kind",VAR_SZ=1,MENU=0)
+       call io_elemental(ID,I0=QP_DB_kind)
+       call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     else if (variable_is_found(ID,"QP_DB_kind")< 0.and.read_is_on(ID)) then
+       QP_DB_kind=0
+       ioQP=-1
+       return
+     endif
    endif
    !
    if (what=="W") then
-     ioQP=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,D_LATT=.true.,XC_KIND="Xd")
+     ioQP=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,&
+&                   D_LATT=.true.,XC_KIND="Xd")
    else
      select case (QP_DB_KIND)
+       case(0)
+         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.)
        case(SE_CHOSEX)
          ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G_WF Xs")
        case(SE_GoWo_PPA,SE_GWo_PPA)
@@ -88,9 +98,8 @@ integer function ioQP(what,qp,ID)
    if (ioQP/=0) goto 1
    !
    var_size=4
-   if (what/="W") then
-     if (ver_is_gt_or_eq(ID,(/3,0,1/))) var_size=5
-   endif
+   if (what/="W".and.ver_is_gt_or_eq(ID,(/3,0,1/))) var_size=5 
+   !
    call io_elemental(ID,VAR="PARS",VAR_SZ=var_size,MENU=0)
    !
    if (what/="W") OP="<="

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_apply_db(band_range,en,k,qp,qpfit,msg_fmt,DB_corrected)
+subroutine QP_apply_db(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,DB_corrected)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use stderr,        ONLY:string_split
@@ -28,13 +28,13 @@ subroutine QP_apply_db(band_range,en,k,qp,qpfit,msg_fmt,DB_corrected)
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels,n_sp_pol
  use com,           ONLY:msg,warning
- use QP_CTL,        ONLY:qp_fit_ctl
+ use QP_CTL_m,      ONLY:QP_ctl_t
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,REP
  !
  implicit none
  type(levels)    ::en
  type(QP_t)      ::qp
- type(qp_fit_ctl)::qpfit
+ type(QP_ctl_t)  ::QP_ctl_from_DB
  type(bz_samp)   ::k
  integer         ::band_range(2),DB_corrected(en%nb,en%nk)
  character(*)    ::msg_fmt
@@ -78,14 +78,14 @@ subroutine QP_apply_db(band_range,en,k,qp,qpfit,msg_fmt,DB_corrected)
    ! QP type is filled (defined internally and not read from the DB)
    !
    l_qp(1)=.true. ! Apply QP corrections to energies only
-   qpfit%db="none"
-   qpfit%short_descr="none"
-   qpfit%interp_neigh=1
+   QP_ctl_from_DB%db="none"
+   QP_ctl_from_DB%short_descr="none"
+   QP_ctl_from_DB%interp_neigh=1
  else
    !
    ! DB.QP
    !
-   call string_split(qpfit%db,db_piece)
+   call string_split(QP_ctl_from_DB%db,db_piece)
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3/),MODE=DUMP,ID=ID)
    io_err=0
    qp_db_name=' '
@@ -106,8 +106,8 @@ subroutine QP_apply_db(band_range,en,k,qp,qpfit,msg_fmt,DB_corrected)
    ! No DB
    !
    if (io_err<0) then
-     qpfit%db="none"
-     qpfit%short_descr="none"
+     QP_ctl_from_DB%db="none"
+     QP_ctl_from_DB%short_descr="none"
      call warning('DB '//trim(qp_db_name)//' not found')
      return
    endif
@@ -161,9 +161,9 @@ subroutine QP_apply_db(band_range,en,k,qp,qpfit,msg_fmt,DB_corrected)
    !
    qp_msg=trim(qp_msg)//']'
    !  
-   qpfit%short_descr=trim(qpfit%short_descr)//trim(qp_msg)
+   QP_ctl_from_DB%short_descr=trim(QP_ctl_from_DB%short_descr)//trim(qp_msg)
    !
-   call msg(msg_fmt,trim(qpfit%short_descr))
+   call msg(msg_fmt,trim(QP_ctl_from_DB%short_descr))
  endif
  !
  ! Backup bare energies (only once)
@@ -176,14 +176,14 @@ subroutine QP_apply_db(band_range,en,k,qp,qpfit,msg_fmt,DB_corrected)
  !
  ! Interpolation & Transfer
  !
- if (qpfit%interp_neigh<=0) qpfit%interp_neigh=1
- call QP_apply_interpolate(band_range,qp,en,k,l_qp,DB_corrected,qpfit%interp_neigh)
+ if (QP_ctl_from_DB%interp_neigh<=0) QP_ctl_from_DB%interp_neigh=1
+ call QP_apply_interpolate(band_range,qp,en,k,l_qp,DB_corrected,QP_ctl_from_DB%interp_neigh)
  !
  ! FIT
  !
- if (l_qp(1)) call QP_apply_fit(band_range,qp,en,qpfit,'E')
- if (l_qp(2)) call QP_apply_fit(band_range,qp,en,qpfit,'W')
- if (l_qp(3)) qpfit%Z=sum(qp%Z(:))/qp%n_states
+ if (l_qp(1)) call QP_apply_fit(band_range,qp,en,QP_ctl_from_DB,'E')
+ if (l_qp(2)) call QP_apply_fit(band_range,qp,en,QP_ctl_from_DB,'W')
+ if (l_qp(3)) QP_ctl_from_DB%Z=sum(qp%Z(:))/qp%n_states
  !
  contains 
    !

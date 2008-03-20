@@ -1,5 +1,5 @@
 objs = eval_G_minus_G.o damping.o \
        fermi_level.o pol_fit.o \
-       coarse_grid.o kk.o bracket.o secant.o freqs_setup.o \
+       coarse_grid.o kk.o freqs_setup.o \
        extend_occupations.o QP_state_extract.o QP_state_table_setup.o \
-       rand_identifier.o pert_inversion.o
+       pert_inversion.o

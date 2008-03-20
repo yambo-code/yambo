@@ -55,8 +55,6 @@ integer function ioBS_Fxc(iq,FXC_W,ID,X)
  !
  ioBS_Fxc=io_connect(desc=trim(db_name),type=2,ID=ID)
  !
- ! GPL_END
- !
  if (ioBS_Fxc/=0) goto 1
  !
  ! v 3.0.5: Inclusion of %f_xc
@@ -189,7 +187,5 @@ integer function ioBS_Fxc(iq,FXC_W,ID,X)
  deallocate(FXC_disk)
  !
 1 call io_disconnect(ID)
- !
- ! GPL_START
  !
 end function

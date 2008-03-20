@@ -33,19 +33,18 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
-&                         infile,infile_dump,ofiles_append
+&                         infile,infile_dump,ofiles_append,runlevel_is_on
  use parser_m,       ONLY:parser
  use par_proc_m,     ONLY:pp_redux_wait,master_cpu
  use com,            ONLY:msg,repfile,com_path,jobstr,&
-&                         title,file_exists,rename_file,write_to_report
+&                         write_the_logo,file_exists,rename_file,write_to_report
  use vec_operate,    ONLY:v_norm
  use timing,         ONLY:live_timing_is_on,what_is_running
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_solver,&
 &                         QP_state,QP_reset,QP_ctl_E,QP_table
  use X_m,            ONLY:X_t,X_duplicate,X_reset
  use stderr,         ONLY:tty_size,logfile
- use R_lattice,      ONLY:ng_closed,q0_def_norm,&
-&                         Xk_grid_is_uniform,bz_samp,nqibz,bz_samp_reset
+ use R_lattice,      ONLY:ng_closed,q0_def_norm,bz_samp,nqibz,bz_samp_reset 
  use wave_func,      ONLY:ioWF
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE
  use TDDFT,          ONLY:ioBS_Fxc
@@ -103,8 +102,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  what_is_running='SELF_REELS'
 #elif defined _SC
  what_is_running='SELF_SC'
-#elif defined _BS_CPL
- what_is_running='SELF_BS_CPL'
 #elif defined _BIGSYS
 #if defined _RAS
  what_is_running='SELF_RAS_BIGSYS'
@@ -145,6 +142,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  endif
  if (CLOSE_Gs) then
    call call_init_load('Gclose')
+   call barriers( )
+   call logicalson
    return
  endif
  !
@@ -154,16 +153,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! DB props listing mode ?
  !
- call initrstr(instr,init)
+ call read_command_line(instr,init)
  if (index(instr,'dbpr')>0) then
    list_dbs=.true.
    init = 2
    if (tty_size<0) write (logfile,'(2a)') trim(com_path),'/l_dbs'
    live_timing_is_on=.false.
    write_to_report=.false.
-   call msg('s','Data Files details')
-   call msg('s','==================')
-   call msg('s','')
  endif
  !
  !Dump the input file
@@ -207,6 +203,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ioQINDX_err=ioQINDX(k,q,io_ID) 
  if (ioQINDX_err==0) call initactivate(-1,'IkSigLim IkXLim MinusQ')
  !
+ ! GPL_EXCLUDE_START
+ !
  ! rim
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
@@ -221,6 +219,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_err=ioE_RIM(en,io_ID) 
+ !
+ ! GPL_EXCLUDE_END
  !
  ! xxvxc
  !
@@ -237,10 +237,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (associated(qp%table)) nullify(qp%table)
  !
+ ! GPL_EXCLUDE_START
+ !
  ! W
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
  io_err=ioQP('W',qp,io_ID) 
+ !
+ ! GPL_EXCLUDE_END
  !
  ! ostnts
  !
@@ -272,10 +276,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  ioBS_err=ioBS(1,Xbsk,io_ID)
  !
+ ! GPL_EXCLUDE_START
+ !
  ! bs_fxc
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  ioBS_Fxc_err=ioBS_Fxc(1,Xxcw,io_ID,X=Xbsk)
+ !
+ ! GPL_EXCLUDE_END
  !
  ! ELPH 
  !
@@ -350,8 +358,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !XX
  !
- if (l_xxvxc) call initactivate(1,&
-&                  'EXXRLvcs SxLowBnd GfnQPdb GfnQP_N GfnQP_E GfnQP_W GfnQP_Z')
+ if (l_xxvxc) call initactivate(1,'EXXRLvcs SxLowBnd') 
  !
  ! Optics(not bse) nor GW (no PP)
  !
@@ -593,7 +600,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  call rename_file(repfile)
  call pp_redux_wait
  if (master_cpu) open(unit=11,file=trim(repfile))
- call title(11,' ')
+ call write_the_logo(11,' ')
  !
  contains
    !
@@ -625,67 +632,50 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    subroutine logicalson
      !
-     !For non uniform grids I have to switch off all logicals that are
-     !not LF/RPA
+     integer     ::i1
      !
-     l_setup=(rstatus(1)/=0)
-     l_optics=(rstatus(2)/=0)
-     l_chi=(rstatus(3)/=0)
-     l_bse=(rstatus(4)/=0)
-     l_rim=(rstatus(5)/=0)
-     l_col_cut=(rstatus(5)/=0)
-     l_xxvxc=(rstatus(6)/=0)
-     l_em1d=(rstatus(7)/=0)
-     l_em1s=(rstatus(8)/=0)
-     l_ppa=(rstatus(9)/=0)
-     l_gw0=(rstatus(10)/=0)
-     l_life=(rstatus(11)/=0)
-     l_bss=(rstatus(12)/=0)
-     l_acfdt=(rstatus(13)/=0)
-     l_bs_fxc=(rstatus(14)/=0)
-     l_alda_fxc=(rstatus(15)/=0)
-     l_lrc_fxc=(rstatus(16)/=0)
-     l_chosex=(rstatus(17)/=0)
+     do i1=1,2
+       l_setup=runlevel_is_on('setup')
+       l_optics=runlevel_is_on('optics')
+       l_chi=runlevel_is_on('chi')
+       l_bse=runlevel_is_on('bse')
+       l_rim=runlevel_is_on('rim_cut')
+       l_col_cut=runlevel_is_on('rim_cut')
+       l_xxvxc=runlevel_is_on('xxvxc')
+       l_em1d=runlevel_is_on('em1d')
+       l_em1s=runlevel_is_on('em1s')
+       l_ppa=runlevel_is_on('ppa')
+       l_gw0=runlevel_is_on('gw0')
+       l_life=runlevel_is_on('life')
+       l_bss=runlevel_is_on('bss')
+       l_acfdt=runlevel_is_on('acfdt')
+       l_bs_fxc=runlevel_is_on('bs_fxc')
+       l_alda_fxc=runlevel_is_on('alda_fxc')
+       l_lrc_fxc=runlevel_is_on('lrc_fxc')
+       l_chosex=runlevel_is_on('chosex')
 #if defined  _SC
-     l_sc_run=(rstatus(18)/=0)
+       l_sc_run=runlevel_is_on('scpot')
 #endif
 #if defined  _RAS
-     lreels=(rstatus(19)/=0)
-     lras=(rstatus(20)/=0)
+       lreels=runlevel_is_on('reels')
+       lras=runlevel_is_on('ras')
 #endif
 #if defined  _REELS
-     lreels=(rstatus(18)/=0)
+       lreels=runlevel_is_on('reels')
 #endif
 #if defined  _ELPH
-     l_ph_corr=(rstatus(18)/=0.and.ioELPH_err==0)
-     l_el_corr=(rstatus(19)/=0)
+       l_ph_corr=(runlevel_is_on('el_ph').and.ioELPH_err==0) 
+       l_el_corr=runlevel_is_on('el_el')
 #else
-     l_el_corr=l_gw0.or.l_life
+       l_el_corr=l_gw0.or.l_life
 #endif
-     !
-     if (.not.Xk_grid_is_uniform) then
-       rstatus(4:14)=0
-       l_bse=.false.
-       l_rim=.false.
-       l_col_cut=.false.
-       l_xxvxc=.false.
-       l_em1d=.false.
-       l_em1s=.false.
-       l_ppa=.false.
-       l_gw0=.false.
-       l_life=.false.
-       l_bss=.false.
-       l_acfdt=.false.
-       l_bs_fxc=.false.
-     endif
-     !
-     ! Check if this runlevel is allowed in the 
-     ! present configuration
-     !
-     if (barriers()/=0) then
-       init=-2
-       return
-     endif
+       !
+       ! Check if this runlevel is allowed in the 
+       ! present configuration
+       !
+       if (i1==1) call barriers( )
+       !
+     enddo
      !
    end subroutine logicalson
    !
@@ -730,12 +720,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      elph_nq_used=elph_nq
 #endif
      if (l_gw0.and.l_el_corr) call initactivate(1,'xxvxc')
-     if (l_el_corr.and.(l_ppa.or.l_chosex)) QP_solver='n'
-     if (l_life) call initactivate(-1,'ppa')
      if (l_ppa)    call initactivate(1,'em1d')
      if (l_chosex) call initactivate(1,'em1s')
-     if (l_bss)  call initactivate(1,'bse')
-     if (l_bss)  call initactivate(1,'l_optics')
+     if (l_bss)    call initactivate(1,'bse')
+     if (l_bss)    call initactivate(1,'l_optics')
      if (l_bse) then
        !
        if (l_alda_fxc) BS_res_mode='x'     
@@ -793,11 +781,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_gw0) l_el_corr=.true.
 #endif
      !
-     if (l_el_corr.and.(l_ppa.or.l_chosex)) QP_solver='n'
-     !
    end subroutine varsetup2
    !
-   subroutine initrstr(rstr,init_) 
+   subroutine read_command_line(rstr,init_) 
      !
      use stderr, ONLY:string_split
      implicit none
@@ -851,12 +837,25 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
        if ( trim(rstr_piece(i1)) == 'tddft' )  then
          l_alda_fxc=  trim(rstr_piece(i1+1)) == 'a'
+         !
+         ! GPL_EXCLUDE_START
+         !
          l_bs_fxc= trim(rstr_piece(i1+1)) == 'b'
+         !
+         ! GPL_EXCLUDE_END
+         !
          l_lrc_fxc= trim(rstr_piece(i1+1)) == 'l'
          if (.not.l_alda_fxc.and..not.l_bs_fxc.and..not.l_lrc_fxc) l_alda_fxc=.true.
-         if (l_alda_fxc)  call initactivate(1,'alda_fxc')
-         if (l_bs_fxc)  call initactivate(1,'bs_fxc')
-         if (l_lrc_fxc)  call initactivate(1,'lrc_fxc')
+         if (l_alda_fxc)  call initactivate(1,'alda_fxc bse bss optics')
+         if (l_lrc_fxc)  call initactivate(1,'lrc_fxc chi optics')
+         !
+         ! GPL_EXCLUDE_START
+         !
+         if (l_bs_fxc)  call initactivate(1,'bs_fxc optics')
+         !
+         ! GPL_EXCLUDE_END
+         !
+         infile_editing=.true.
        endif
        !
        ! BSE/LLR
@@ -898,10 +897,16 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        if ( trim(rstr_piece(i1)) == 'gwapprx' ) then
          if (trim(rstr_piece(i1+1))=='p') then
            infile_editing=.true.
-           call initactivate(1,'ppa gw0')
+           call initactivate(1,'ppa')
+           !
+           ! GPL_EXCLUDE_START
+           !
          else if (trim(rstr_piece(i1+1))=='c') then
            infile_editing=.true.
            call initactivate(1,'chosex gw0') 
+           !
+           ! GPL_EXCLUDE_END
+           !
          endif
        endif
        !

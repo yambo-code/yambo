@@ -91,11 +91,15 @@ module SPP
  !
 #endif
  !
+ ! GPL_EXCLUDE_START
+ !
  ! BZ RIM
  !
  integer  :: BZ_RIM_nkpts
  logical  :: lbzrim
  character(lchlen) :: BZ_RIM_path
+ !
+ ! GPL_EXCLUDE_END
  !
  interface
    !
@@ -113,6 +117,7 @@ module SPP
      real(SP),optional  :: S_sq(BS_K_dim)
      integer, optional  :: BS_E_degs(BS_K_dim)
    end subroutine
+   !
  end interface
  !
 end module SPP

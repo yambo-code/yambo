@@ -71,6 +71,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    call section('*','Dyson equation: Newton solver')
  else if (trim(QP_solver)=='s') then
    !
+   ! GPL_EXCLUDE_START
+   !
    ! When using secant no SC available
    !
    GWo_iterations=0
@@ -85,11 +87,17 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    call msg('r', '[Green] Sc damping range [ev]:',QP_G_dr*HARTREE)
  else if (.not.l_life) then
    return
+   !
+   ! GPL_EXCLUDE_END
+   !
  endif
  qp%n_descs=2
  if (l_ppa) then
    qp%description(2)=' PPA imaginary pt   [ev]:'//trim(real2ch(X%ppaE*HARTREE))
    QP_DB_kind=SE_GoWo_PPA
+   !
+   ! GPL_EXCLUDE_START
+   !
    if ( GWo_iterations > 0 ) QP_DB_kind=SE_GWo_PPA
  else if (l_chosex) then
    !
@@ -103,6 +111,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    qp%description(2)=' == Real Axis GW =='
    QP_DB_kind=SE_GoWo_PPA
    if ( GWo_iterations > 0 ) QP_DB_kind=SE_GWo_PPA
+   !
+   ! GPL_EXCLUDE_END
+   !
  endif
  !
  ! Basic defs
@@ -118,6 +129,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  qp%nb=QP_nb
  qp%n_states=QP_n_states
  !
+ ! GPL_EXCLUDE_START
+ !
  ! In lifetimes calculations  the X db may be not
  ! present. So I need to define some variables that 
  ! must be correctly written in the QP_description(s)
@@ -126,6 +139,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    call X_pre_setup(Xen,X)
    if (X%ng_db==0) X%ng_db=X%ng
  endif
+ !
+ ! GPL_EXCLUDE_END
  !
  call QP_descriptions(qp,X,Xw)
  !
@@ -190,6 +205,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    if (QP_W_partially_done) return
  endif
  ! 
+ ! GPL_EXCLUDE_START 
+ ! 
  ! SECANT
  ! 
  if (trim(QP_solver)=='s') call QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
@@ -209,6 +226,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  if (trim(QP_solver)=='g'.and.l_el_corr.and.&
 &             (.not.l_ppa.and..not.l_chosex)) call QP_raxis(X,Xen,Xk,en,k,q,qp,Xw,0)
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Reporting
  !
@@ -278,6 +297,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
            endif
            r_fmt=gen_fmt(r_v=r_numbers(:7))
            fmt_='(3(a,f6.2),a,f4.2,4(a,'//trim(r_fmt)//'))'
+           !
+           ! GPL_EXCLUDE_START
+           !
          else if (widths) then
            r_numbers(:2)=(/qp%E_bare(i1)*HARTREE,real(qp%Z(i1))/)
            r_numbers(3)=aimag(qp%E(i1))*HARTREE/1.E-3
@@ -285,6 +307,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
            if (r_numbers(3)>0.) r_numbers(4)=0.65822/2./aimag(qp%E(i1))/HARTREE
            r_fmt=gen_fmt(r_v=r_numbers(:4))
            fmt_='(a,f6.2,1x,3(a,'//trim(r_fmt)//',1x))'
+           !
+           ! GPL_EXCLUDE_END
+           !
          endif
          !
          ch_spin=' '
@@ -312,6 +337,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
              ch1=trim(ch2)
            endif
            !
+           ! GPL_EXCLUDE_START
+           !
          else if (widths) then
            !
            ch1=trim(ch_spin)//' B='//trim(intc(ib))//' Eo='
@@ -319,6 +346,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
 &            'Z=',r_numbers(2),' Gm=',r_numbers(3),' Gf=',r_numbers(4)
            !
            ch1=ch2
+           !
+           ! GPL_EXCLUDE_END
            !
          endif
          !

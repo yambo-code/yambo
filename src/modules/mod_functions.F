@@ -36,7 +36,13 @@ module functions
      real(SP)::E,T,Fermi_fnc
      Fermi_fnc=1.
      if (T==0..and.E>0.) Fermi_fnc=0.
+     !
+     ! GPL_EXCLUDE_START
+     !
      if (T/=0.) Fermi_fnc=1./(1.+exp(E/T))
+     !
+     ! GPL_EXCLUDE_END
+     !
      if (Fermi_fnc<filled_tresh)  Fermi_fnc=0.
      !
    end function
@@ -70,14 +76,19 @@ module functions
      if (Eb<0.) bose_f=-2.
      if (.not.Finite_Tel) return
      !
+     ! GPL_EXCLUDE_START
+     !
      if (abs(Eb)>epsilon(1.)) then
        if (abs(Eb)<=bose_E_cut*Tel) bose_f=2.*Tel/Eb
        if (abs(Eb)> bose_E_cut*Tel) bose_f=2./(exp(Eb/Tel)-1.)
      else
        bose_f=2.*Tel/epsilon(1.)
      endif
-     end function
      !
+     ! GPL_EXCLUDE_END
+     !
+   end function
+   !
    pure function bose_decay(E)
    !
    use drivers,   ONLY:Finite_Tel
@@ -87,10 +98,17 @@ module functions
      real(SP), intent(in):: E
      real(SP)            :: bose_decay
      bose_decay=1.
+     !
+     ! GPL_EXCLUDE_START
+     !
      if (.not.Finite_Tel) return
      if (abs(E)<=bose_E_cut*Tel) bose_decay=E**2./(Tel*bose_E_cut)**2.
      !
+     ! GPL_EXCLUDE_END
+     !
    end function
+   !
+   ! GPL_EXCLUDE_START
    !
    ! Lifetime functions e2et/h2ht
    !------------------------------
@@ -121,7 +139,7 @@ module functions
      if (dE>0..and.abs(F)>epsilon(1.)) e2et=1
      if (e2et==0) F=0.
    end function
-  
+   !
    function h2ht(is,os,E,F)
      !
      use electrons, ONLY:levels
@@ -145,7 +163,9 @@ module functions
      if (dE>0..and.abs(F)>epsilon(1.)) h2ht=1
      if (h2ht==0) F=0.
    end function
-  
+   !
+   ! GPL_EXCLUDE_END
+   !
    logical function K_scatter(E,Ep,Er,Dr)
      !
      implicit none
@@ -155,7 +175,7 @@ module functions
      D=max(D,0.)
      K_scatter=abs(E-Ep)<=D
    end function
-  
+   !
    integer function BZ_index(ik,k)
      !
      ! Returns the BZ index of a given ik in the IBZ

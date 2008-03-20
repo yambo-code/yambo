@@ -135,7 +135,11 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  if (lkanalyze) call k_analize(en,k,Xk,q)
  !
+ ! GPL_EXCLUDE_START
+ !
  if (lbzrim) call BZ_RIM(Xk,Xen)
+ !
+ ! GPL_EXCLUDE_END
  !
  if (l_exc_props) call exc_properties(Xk,Xen)
  !

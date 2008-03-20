@@ -25,7 +25,7 @@
    use eels_kinematics,       only : E0, theta0_in, thetap_in, phi_in, bimp
    use bulkeps,               only : bshift, bbroad, bfile, btype
    use convolute,             only : gbroad
-   use eels_detector,         only : thetadet, detint, detintm
+   use eels_detector,         only : thetadet, det_int_type, det_int_typem,n_det_pt
    use eels_integration,      only : inttype, limits
    use model_loss_function,   only : model
    use reels_module,          only : lepsmix, npol, nfull
@@ -51,8 +51,8 @@
    ! mod_eels_detector
    !
    thetadet  =  1.0      ! detector angle (angular aperture)
-   detint = "av"         ! Det. int. method no(ne),av(erage),fu(ll)
-   ndetint  = 1000          ! Number of points for detector integration
+   det_int_type = "av"   ! Det. int. method no(ne),av(erage),fu(ll)
+   n_det_pt  = 1000      ! Number of points for detector integration
    !
    ! mod_eels_integrate
    !

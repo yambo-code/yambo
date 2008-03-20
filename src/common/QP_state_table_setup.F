@@ -147,6 +147,8 @@ subroutine QP_state_table_setup(en)
    !
  endif
  !
+ ! GPL_EXCLUDE_START
+ !
  ! Band Mixing
  !=============
  !
@@ -172,6 +174,11 @@ subroutine QP_state_table_setup(en)
    bands_mixed=1
  endif
  !
+ ! GPL_EXCLUDE_END
+ ! GPL_INCLUDE_START
+ !bands_mixed=1
+ ! GPL_INCLUDE_END
+ !
  ! QP_table allocation
  !
  QP_n_states=product(shape(pack(QP_state,QP_state)))*(2*bands_mixed-1)
@@ -185,10 +192,20 @@ subroutine QP_state_table_setup(en)
  !
  QP_n_states=0
  !
+ ! GPL_INCLUDE_START
+ !i_sp = 1
+ ! GPL_INCLUDE_END
+ !
  do i1=1,QP_nk
    do i2=1,QP_nb
      if (.not.QP_state(i2,i1)) cycle
+     !
+     ! GPL_EXCLUDE_START
+     !
      do i_sp=1,n_sp_pol
+       !
+       ! GPL_EXCLUDE_END
+       !
        do i3=0,bands_mixed-1
          !
          if (i2+i3>QP_nb.or.i2+i3<1) cycle
@@ -200,7 +217,13 @@ subroutine QP_state_table_setup(en)
          if (n_sp_pol==2) QP_table(QP_n_states,4)=i_sp
          !
        enddo
+       !
+       ! GPL_EXCLUDE_START
+       !
      enddo
+     !
+     ! GPL_EXCLUDE_END
+     !
    enddo
  enddo
  !

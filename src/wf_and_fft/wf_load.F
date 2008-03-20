@@ -148,6 +148,10 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
  io_err=ioWF(ID,wf_disk)
  !
+ ! GPL_INCLUDE_START
+ !is =1
+ ! GPL_INCLUDE_END
+ !
  wf_n_states=0
  do ikibz=1,nkibz
    !
@@ -164,7 +168,13 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    if (any((/ikibz<wf_k(1),ikibz>wf_k(2)/))) cycle
    !
    do i2=1,n_bands
+     !
+     ! GPL_EXCLUDE_START
+     !
      do is=1,n_spin
+       !
+       ! GPL_EXCLUDE_END
+       !
        if (any((/i2<wf_b(1),i2>wf_b(2),&
 &                is<wf_s(1),is>wf_s(2)/))) cycle
        wf_DP=(0._DP,0._DP)
@@ -192,7 +202,13 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 #endif
        wf(:,wf_n_states)=wf_DP(:)*fft_norm
        call live_timing(steps=1)
+       !
+       ! GPL_EXCLUDE_START
+       !
      enddo
+     !
+     ! GPL_EXCLUDE_END
+     !
    enddo
  enddo
 #if !defined _BIGSYS
@@ -245,7 +261,11 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  do i1=1,min(int(nel)+5,wf_b(2))
    do i2=1,min(int(nel)+5,wf_b(2))
      !
+     ! GPL_EXCLUDE_START
+     !
      do is=1,n_sp_pol
+       !
+       ! GPL_EXCLUDE_END
        !
        if (wf_state(i1,1,is)==0.or.wf_state(i2,1,is)==0) cycle
        !
@@ -257,7 +277,13 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
        !
        if (abs(c)>mxdp) mxdp=abs(c)
        if (abs(c)<mndp) mndp=abs(c)
+       !
+       ! GPL_EXCLUDE_START
+       !
      enddo
+     !
+     ! GPL_EXCLUDE_END
+     !
    enddo
  enddo
  wf_norm_test=.false.

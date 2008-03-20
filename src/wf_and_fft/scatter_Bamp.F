@@ -52,6 +52,12 @@ subroutine scatterBamp(isc)
  integer :: qs,iGo,i_spr,i_spinor
  logical :: litr,lotr
  !
+ ! GPL_INCLUDE_START
+ !i_sp =1
+ !o_sp =1
+ !i_spr=1
+ ! GPL_INCLUDE_END
+ !
  ! <ib ik_is i_sp| 
  !
  ib=isc%is(1)
@@ -77,7 +83,11 @@ subroutine scatterBamp(isc)
  !
  ! \tilde{\rho} in Real Space
  !
+ ! GPL_EXCLUDE_START
+ !
  do i_spr=1,n_spinor
+   !
+   ! GPL_EXCLUDE_END
    !
    ifft=wf_state(ib,ik,i_sp+i_spr-1)
    offt=wf_state(ob,ok,o_sp+i_spr-1)
@@ -95,18 +105,22 @@ subroutine scatterBamp(isc)
    call fft_3d(rho_tw_rs(:,i_spr),fft_dim,+1)
 #endif
    !
+   ! GPL_EXCLUDE_START
+   !
  enddo
+ !
+ ! GPL_EXCLUDE_END
  !
  isc%rhotw(1:isc%ngrho)=  rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo),1)
  !
- ! GPL_END
+ ! GPL_EXCLUDE_START
  !
  do i_spinor=2,n_spinor,1
    isc%rhotw(1:isc%ngrho)=isc%rhotw(1:isc%ngrho)+&
 &                         rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo),i_spinor)
  enddo
  !
- ! GPL_START
+ ! GPL_EXCLUDE_END
  ! 
  ! q=0, G=0 case
  !

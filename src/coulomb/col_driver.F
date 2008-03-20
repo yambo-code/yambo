@@ -85,7 +85,7 @@ subroutine col_driver(bare_NG,q)
    enddo
  enddo
  !
- ! RIM GPL_END
+ ! GPL_EXCLUDE_START
  !
  if (l_rim) l_rim=all((/RIM_ng>0,RIM_n_rand_pts>0/))
  !
@@ -150,6 +150,6 @@ subroutine col_driver(bare_NG,q)
  !
  call cutoff_driver(q)
  !
- ! GPL_START
+ ! GPL_EXCLUDE_END
  !
 end subroutine

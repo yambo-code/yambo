@@ -46,7 +46,7 @@ typedef struct
  #define F90_FUNC_(name,NAME) name
 #endif
 #include "codever.h"
-#if defined _self  || _RAS || _REELS || _ELPH || _SC || _BIGSYS || _BS_CPL
+#if defined _self  || _RAS || _REELS || _ELPH || _SC || _BIGSYS 
  #include "self_cpp.h"
 #endif
 #if defined _spp  || _SPP_ELPH || _SPP_RAS
@@ -123,7 +123,7 @@ main(int argc, char *argv[])
 /* 
  Switch off MPI_init as I have options used to create the input file...
 */
-#if defined _self  || _RAS || _REELS || _ELPH || _SC || _BIGSYS || _BS_CPL
+#if defined _self  || _RAS || _REELS || _ELPH || _SC || _BIGSYS 
      if (j> 10) {mpi_init=-1;};
 #endif
 #if defined _spp || _SPP_ELPH || _SPP_RAS
@@ -211,7 +211,7 @@ main(int argc, char *argv[])
    MPI_Comm_size(MPI_COMM_WORLD, &np);  /* get number of processes */
  };
 #endif
-#if defined _self  || _RAS || _REELS || _ELPH || _SC || _BIGSYS || _BS_CPL
+#if defined _self  || _RAS || _REELS || _ELPH || _SC || _BIGSYS 
  /* 
    Running the Fortran SELF driver 
  ===========================================================================
@@ -265,7 +265,7 @@ main(int argc, char *argv[])
  */
  strcpy(edit_line,"vim ");
  strncat(edit_line,inf,strlen(inf));
-#if defined _self || _RAS || _REELS || _spp || _ELPH || _SC || _SPP_ELPH || _SPP_RAS  || _BIGSYS || _BS_CPL
+#if defined _self || _RAS || _REELS || _spp || _ELPH || _SC || _SPP_ELPH || _SPP_RAS  || _BIGSYS
  if (iif == 1 && ttd>0 ) 
  {
   system(edit_line);
@@ -328,18 +328,19 @@ static void usage(int verbose)
    fprintf(stderr,"\t:%s\n",opts[j].d);
   };
   fprintf(stderr,"\n");
-  fprintf(stderr,"%s\t%s\n\t%s\n\n","By","SELF developers group",
+  fprintf(stderr,"%s\t%s\n\t%s\n\n","By","YAMBO developers group",
          "http://www.fisica.uniroma2.it/~self");
  };
 };
 static void title(FILE *file_name,char *cmnt)
 {
- fprintf(file_name,"%s%s\n",cmnt,  "   ______   ______   _       _______ ");
- fprintf(file_name,"%s%s\n",cmnt,  "  /  ____) |  ____) | |     |  _____)");
- fprintf(file_name,"%s%s\n",cmnt,  " (  (___   | (___   | |     | (_____ ");
- fprintf(file_name,"%s%s\n",cmnt,  "  \\___  \\  |  ___)  | |     |  _____)");
- fprintf(file_name,"%s%s\n",cmnt,  "  ____)  ) | (____  | |___  | |");
- fprintf(file_name,"%s%s%s\n",cmnt," (______/  |______) |_____) |_|",codever);
- fprintf(file_name,"%s\n%s Tool: %s\n",cmnt,cmnt,tool);
- fprintf(file_name,"%s Description: %s\n\n",cmnt,tdesc);
+ fprintf(file_name,"%s%s\n",cmnt,  " ___ __  _____  __ __  _____   _____ ");
+ fprintf(file_name,"%s%s\n",cmnt,  "|   Y  ||  _  ||  Y  ||  _  \\ |  _  |");
+ fprintf(file_name,"%s%s\n",cmnt,  "|   |  ||. |  ||.    ||. |  / |. |  |");
+ fprintf(file_name,"%s%s\n",cmnt,  " \\   _/ |. _  ||.\\ / ||. _  \\ |. |  |");
+ fprintf(file_name,"%s%s\n",cmnt,  "  |: |  |: |  ||: |  ||: |   \\|: |  |");
+ fprintf(file_name,"%s%s\n",cmnt,  "  |::|  |:.|:.||:.|:.||::.   /|::.  |");
+ fprintf(file_name,"%s%s\n",cmnt,  "  `--\"  `-- --\"`-- --\"`-----\" `-----\"");
+ fprintf(file_name,"%s\n%s Tool: %s %s\n",cmnt,cmnt,tool,codever);
+ fprintf(file_name,"%s Description: %s \n\n",cmnt,tdesc);
 };

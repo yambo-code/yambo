@@ -26,7 +26,6 @@ module drivers
  logical :: list_dbs
  logical :: infile_editing
  logical :: Finite_Tel
- logical :: gpl_version
  !
  ! Runlevels
  !

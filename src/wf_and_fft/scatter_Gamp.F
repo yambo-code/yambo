@@ -141,9 +141,7 @@ subroutine scatterGamp(isc,mode)
      !
      ! head component.
      !
-     if (ig1==1.and.ig2==1) then
-       isc%gamp(i1,i2)=reg_q_m2
-     endif
+     if (ig1==1.and.ig2==1) isc%gamp(i1,i2)=reg_q_m2
      !
    enddo
  enddo

@@ -19,21 +19,21 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_apply_stretch(band_range,E,qpfit_rest,qpfit_free,&
+subroutine QP_apply_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
 &                           DB_corrected)
  !
- ! Here I apply the strecth for both qpfit_rest (respecting the 
- ! qp_done array) and qpfit_free (everywhere)
+ ! Here I apply the strecth for both QP_ctl_from_DB (respecting the 
+ ! qp_done array) and QP_ctl_add (everywhere)
  !
  use pars,          ONLY:SP,lchlen,HARTREE
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
  use electrons,     ONLY:levels,n_sp_pol
- use QP_CTL,        ONLY:qp_fit_ctl
+ use QP_CTL_m,      ONLY:QP_ctl_t
  use QP_m,          ONLY:QP_ctl_applied
  implicit none
  type(levels)    ::E
- type(qp_fit_ctl)::qpfit_rest,qpfit_free
+ type(QP_ctl_t)  ::QP_ctl_from_DB,QP_ctl_add
  integer         ::band_range(2),DB_corrected(E%nb,E%nk)
  !
  ! Work Space
@@ -41,34 +41,37 @@ subroutine QP_apply_stretch(band_range,E,qpfit_rest,qpfit_free,&
  integer  ::ib,ik
  real(SP) ::Eoc,Eov
  character(lchlen) ::ch
- logical           ::QP_apply_done,l_qp(3)
+ logical           ::QP_apply_done,do_E,do_W,do_Z
  !
  ! Is there anything to do ?
  !
- l_qp=.false.
- if (any(qpfit_rest%E/=(/0.,1.,0.,1./)).or.any(qpfit_free%E/=(/0.,1.,0.,1./))) then
+ do_E=.false.
+ do_W=.false.
+ do_Z=.false.
+ !
+ if (any(QP_ctl_from_DB%E/=(/0.,1.,0.,1./)).or.any(QP_ctl_add%E/=(/0.,1.,0.,1./))) then
    if (QP_apply_done(band_range,(/1,E%nk/),E,'E')) return
-   l_qp(1)=.true.
+   do_E=.true.
  endif
- if (any((/qpfit_rest%W(:)/=0/)).or.any((/qpfit_free%W(:)/=0/))) then
+ if (any((/QP_ctl_from_DB%W(:)/=0/)).or.any((/QP_ctl_add%W(:)/=0/))) then
    if (QP_apply_done(band_range,(/1,E%nk/),E,'W')) return
-   l_qp(2)=.true.
+   do_W=.true.
    if (.not.associated(E%W)) then
      allocate(E%W(E%nb,E%nk,n_sp_pol))
      call mem_est("E-W",(/size(E%W)/),(/SP/))
      E%W=0.
    endif
  endif
- if (qpfit_rest%Z/=(1.,0.).or.qpfit_free%Z/=(1.,0.)) then
+ if (QP_ctl_from_DB%Z/=(1.,0.).or.QP_ctl_add%Z/=(1.,0.)) then
    if (QP_apply_done(band_range,(/1,E%nk/),E,'Z')) return
-   l_qp(3)=.true.
+   do_Z=.true.
    if (.not.associated(E%Z)) then
      allocate(E%Z(E%nb,E%nk,n_sp_pol))
      call mem_est("E-Z",(/size(E%Z)/))
      E%Z=1.
    endif
  endif
- if (.not.any(l_qp)) return
+ if (.not.any((/do_E,do_W,do_Z/))) return
  !
  if (.not.QP_ctl_applied) then
    QP_ctl_applied=.true.
@@ -94,18 +97,18 @@ subroutine QP_apply_stretch(band_range,E,qpfit_rest,qpfit_free,&
    enddo
  enddo
  !
- if (l_qp(1)) call do_fit_operation('E',2,qpfit_rest%E,qpfit_free%E)
- if (l_qp(2)) call do_fit_operation('W',3,qpfit_rest%W,qpfit_free%W)
- if (l_qp(3)) call do_fit_operation('Z',1,(/real(qpfit_rest%Z),aimag(qpfit_rest%Z)/),&
-&                                         (/real(qpfit_free%Z),aimag(qpfit_free%Z)/))
+ if (do_E) call do_fit_operation('E',2,QP_ctl_from_DB%E,QP_ctl_add%E)
+ if (do_W) call do_fit_operation('W',3,QP_ctl_from_DB%W,QP_ctl_add%W)
+ if (do_Z) call do_fit_operation('Z',1,(/real(QP_ctl_from_DB%Z),aimag(QP_ctl_from_DB%Z)/),&
+&                                      (/real(QP_ctl_add%Z),aimag(QP_ctl_add%Z)/))
  !
- write (ch,'(4a)') '-- ',trim(qpfit_free%short_descr),&
+ write (ch,'(4a)') '-- ',trim(QP_ctl_add%short_descr),&
 &      ' Linear/Quadratic extrapolation ',repeat('-',19)
  call msg('r',trim(ch))
  call msg('r','=== QP/DB derived ===')
- call fit_report(qpfit_rest)
+ call fit_report(QP_ctl_from_DB)
  call msg('r','=== Additional ===')
- call fit_report(qpfit_free)
+ call fit_report(QP_ctl_add)
  call msg('r',repeat('-',60))
  !
  contains
@@ -133,12 +136,14 @@ subroutine QP_apply_stretch(band_range,E,qpfit_rest,qpfit_free,&
          if (E%Eo(ib,ik,1)<=1.E-5) rref=Eov
          !
          if (what=='Z') then
+           !
            E%Z(ib,ik,1)=Mf(1)+(0.,1.)*Mf(2)
            if (DB_corrected(ib,ik)/=1) then
              if (Mr(1)/=1.) E%Z(ib,ik,1)=(Mf(1)+Mr(1))/2.+(0.,1.)*(Mf(2)+Mr(2))/2.
            endif
            E%qp_done(ib,ik)=E%qp_done(ib,ik)+4
            cycle
+           !
          endif
          !
          ! Calculates the polinomial expansion (delta)
@@ -180,7 +185,7 @@ subroutine QP_apply_stretch(band_range,E,qpfit_rest,qpfit_free,&
    end subroutine
    !
    subroutine fit_report(qpfit)
-     type(qp_fit_ctl)::qpfit
+     type(QP_ctl_t)::qpfit
      if (qpfit%db_scissor/=0.) &
 &       call msg(' r',' Band edges  DB correction [ev]:',qpfit%db_scissor*HARTREE)
      if (qpfit%fit_scissor/=0.) &

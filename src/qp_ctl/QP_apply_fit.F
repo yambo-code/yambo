@@ -19,19 +19,19 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_apply_fit(band_range,qp,en,qpfit,what)
+subroutine QP_apply_fit(band_range,qp,en,QP_ctl,what)
  !
  use pars,          ONLY:SP,schlen,DP
  use com,           ONLY:warning
  use stderr,        ONLY:intc
  use QP_m,          ONLY:QP_t
- use QP_CTL,        ONLY:qp_fit_ctl
+ use QP_CTL_m,      ONLY:QP_ctl_t
  use electrons,     ONLY:levels
  implicit none
  !
  type(levels)    ::en
  type(QP_t)      ::qp
- type(qp_fit_ctl)::qpfit
+ type(QP_ctl_t)  ::QP_ctl
  integer         ::band_range(2)
  character(1)    ::what
  !
@@ -82,14 +82,14 @@ subroutine QP_apply_fit(band_range,qp,en,qpfit,what)
    endif
  enddo
  if (Nqpc>fit_order) then
-   call polfit(Nqpc,Dx(:Nqpc),Dy(:Nqpc),fit_order_on_fly,TCc,EPS,0.d0)
+   call pol_fit(Nqpc,Dx(:Nqpc),Dy(:Nqpc),fit_order_on_fly,TCc,EPS,0.d0)
    if (fit_order_on_fly/=fit_order) then
      call warning('Fit order on '//trim(what)//' [c] reduced to '//&
 &                  trim(intc(fit_order_on_fly)))
      TCc(fit_order_on_fly+2:fit_order)=Tt_def(fit_order_on_fly+2:fit_order)
    endif
-   if (what=='E') qpfit%E_err(1)=EPS
-   if (what=='W') qpfit%W_err(1)=EPS
+   if (what=='E') QP_ctl%E_err(1)=EPS
+   if (what=='W') QP_ctl%W_err(1)=EPS
  endif
  !
  ! E<0 (valence)
@@ -107,22 +107,22 @@ subroutine QP_apply_fit(band_range,qp,en,qpfit,what)
    endif
  enddo
  if (Nqpv>fit_order) then
-   call polfit(Nqpv,Dx(:Nqpv),Dy(:Nqpv),fit_order_on_fly,TCv,EPS,0.d0)
+   call pol_fit(Nqpv,Dx(:Nqpv),Dy(:Nqpv),fit_order_on_fly,TCv,EPS,0.d0)
    if (fit_order_on_fly/=fit_order) then
      call warning('Fit order on '//trim(what)//' [v] reduced to '//&
 &                  trim(intc(fit_order_on_fly)))
      TCv(fit_order_on_fly+2:fit_order)=Tt_def(fit_order_on_fly+2:fit_order)
    endif
-   if (what=='E') qpfit%E_err(2)=EPS
-   if (what=='W') qpfit%W_err(2)=EPS
+   if (what=='E') QP_ctl%E_err(2)=EPS
+   if (what=='W') QP_ctl%W_err(2)=EPS
  endif
  !
  ! Storing
  !
- qpfit%db_scissor=(Ec-Ev)-(Eoc-Eov)
- if (what=='E') qpfit%fit_scissor=TCc(1)-TCv(1)-qpfit%db_scissor
- if (what=='E') qpfit%E=(/TCc(1),TCc(2),TCv(1),TCv(2)/)
- if (what=='W') qpfit%W=qpfit%W+(/TCc(1),TCc(2),TCc(3),TCv(1),TCv(2),TCv(3)/)
+ QP_ctl%db_scissor=(Ec-Ev)-(Eoc-Eov)
+ if (what=='E') QP_ctl%fit_scissor=TCc(1)-TCv(1)-QP_ctl%db_scissor
+ if (what=='E') QP_ctl%E=(/TCc(1),TCc(2),TCv(1),TCv(2)/)
+ if (what=='W') QP_ctl%W=QP_ctl%W+(/TCc(1),TCc(2),TCc(3),TCv(1),TCv(2),TCv(3)/)
  !
  deallocate(TCc,TCv)
  !

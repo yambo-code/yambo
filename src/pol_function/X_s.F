@@ -94,7 +94,9 @@ subroutine X_s(iq,fr,X,wv)
    !
    if (l_bs_fxc) then
      !
-     ! BS Fxc -- GPL_END --
+     ! GPL_EXCLUDE_START
+     !
+     ! BS Fxc
      !
      if ( mod(fr(1)+iw-1,FXC_n_mem_freqs)==1.or.wv%n(1)==1) then
        FXC_w_ref=fr(1)+iw-2
@@ -131,7 +133,7 @@ subroutine X_s(iq,fr,X,wv)
      !
      if (iw>nw_max_par) X_fxc(fr(1)+iw-1-FXC_w_ref)=X_fxc(fr(1)+iw-1-FXC_w_ref)/real(ncpu)
      !
-     ! -- GPL_START --
+     ! GPL_EXCLUDE_END
      !
    else if (l_lrc_fxc) then
      !

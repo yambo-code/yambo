@@ -76,7 +76,7 @@ subroutine X_bare_RIM_Gf(iq,transitions,fr,Xw,Xen,Xk,Gf,ordering)
    !
  endif
  !
- ! GPL_END
+ ! GPL_EXCLUDE_START
  !
  ! In the X_o loop the Gf is multiplied by 
  !
@@ -141,6 +141,6 @@ subroutine X_bare_RIM_Gf(iq,transitions,fr,Xw,Xen,Xk,Gf,ordering)
    !
  endif
  !
- ! GPL_START
+ ! GPL_EXCLUDE_END
  !
 end subroutine

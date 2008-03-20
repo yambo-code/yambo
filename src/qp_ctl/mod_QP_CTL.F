@@ -19,24 +19,24 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module QP_CTL
+module QP_CTL_m
  !
  use pars,  ONLY:SP,schlen,IP,HARTREE
  !
  ! QP Pars
  !
- !?fnQP_db= "EWZ<db-pp.qp"     # [?] QP database.
+ !?fnQP_db= " E W Z < db-pp.qp "     # [?] QP database.
  !% ?fnQP_E
  !  0 |  0 | 0 |               # [?] QP parameters (E).
  !% 
  !% ?fnQP_W
  !  0 |  0 | 0 | 0 |           # [?] QP parameters (W).
  !%
- !?fbQP_Z= (  0.00000 ,  0.00000 )  eV  # [?] QP parameters (Z).
+ !?fbQP_Z= (  0.00000 ,  0.00000 )  # [?] QP parameters (Z).
  !  
  ! 1(X) 2(K) 3(G) 
  !
- type qp_fit_ctl
+ type QP_ctl_t
    !
    ! Convention is first c then v
    !
@@ -54,20 +54,20 @@ module QP_CTL
  !
  contains
    !
-   subroutine reset_qp_fit(qp_fit)
+   subroutine reset_QP_ctl(QP_ctl)
      implicit none
-     type(qp_fit_ctl)::qp_fit
-     qp_fit%db="none"
-     qp_fit%E=(/0.,1.,0.,1./)
-     qp_fit%W=0.
-     qp_fit%Z=(1.,0.)
-     qp_fit%E_err=0.
-     qp_fit%W_err=0.
-     qp_fit%db_scissor=0.
-     qp_fit%fit_scissor=0.
+     type(QP_ctl_t)::QP_ctl
+     QP_ctl%db="none"
+     QP_ctl%E=(/0.,1.,0.,1./)
+     QP_ctl%W=0.
+     QP_ctl%Z=(1.,0.)
+     QP_ctl%E_err=0.
+     QP_ctl%W_err=0.
+     QP_ctl%db_scissor=0.
+     QP_ctl%fit_scissor=0.
    end subroutine
    !
-   subroutine QP_apply(band_range,en,k,Eid,msg_fmt,qp_impose,qpfit_impose)
+   subroutine QP_apply(band_range,en,k,Eid,msg_fmt,qp_impose,QP_ctl_impose)
      !
      ! This routine manages the external qp corrections.
      ! The task is tricky, as SELF has three different energy
@@ -93,8 +93,8 @@ module QP_CTL
 &                            QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db
      use D_lattice,     ONLY:Tel
      use com,           ONLY:msg,depth
-     use electrons,     ONLY:levels,E_reset,n_sp_pol,BZ_RIM_nkpt,BZ_RIM_table,&
-&                            BZ_RIM_nbands,BZ_RIM_tot_nkpts
+     use electrons,     ONLY:levels,E_reset,n_sp_pol,&
+&                            BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_nbands,BZ_RIM_tot_nkpts
      use R_lattice,     ONLY:bz_samp,nXkibz
      use parser_m,      ONLY:parser
      use global_XC,     ONLY:setup_global_XC,MORE_SCISSOR,MORE_SCIS_AND_STRE,MORE_STRETCH,&
@@ -106,13 +106,13 @@ module QP_CTL
      type(bz_samp) ::k
      character(*)  ::msg_fmt
      type(QP_t),       optional::qp_impose
-     type(qp_fit_ctl), optional::qpfit_impose
+     type(QP_ctl_t),   optional::QP_ctl_impose
      !
      ! Work Space
      !
      type(levels)     ::Fermi_en
      type(QP_t)       ::qp
-     type(qp_fit_ctl) ::qpfit_rest,qpfit_free
+     type(QP_ctl_t)   ::QP_ctl_from_DB,QP_ctl_input_or_impose
      integer          ::DB_corrected(en%nb,en%nk),ik_bz,ik_ibz,ib,i1,ik_r,SE_MORE
      character(schlen)::ch
      character(1)     ::what
@@ -122,14 +122,14 @@ module QP_CTL
      ! Resets
      !
      call QP_reset(qp)
-     call reset_qp_fit(qpfit_rest)
-     call reset_qp_fit(qpfit_free)
+     call reset_QP_ctl(QP_ctl_from_DB)
+     call reset_QP_ctl(QP_ctl_input_or_impose)
      call E_Reset(Fermi_en)
      !
-     ! If I'm not imposing a fit (qpfit_impose) of QP (qp_impose)
+     ! If I'm not imposing a fit (QP_ctl_impose) of QP (qp_impose)
      ! return if the field are not present in the input file
      !
-     if (.not.present(qpfit_impose).and..not.present(qp_impose)) then
+     if (.not.present(QP_ctl_impose).and..not.present(qp_impose)) then
        select case(Eid)
          case(1)
            call parser('XfnQP_E',is_def(1))
@@ -162,18 +162,18 @@ module QP_CTL
      ! Description initialization
      !
      if (Eid==1) then
-       qpfit_rest%short_descr='[QP@X]'
-       qpfit_free%short_descr='[QP@X]'
+       QP_ctl_from_DB%short_descr='[QP@X]'
+       QP_ctl_input_or_impose%short_descr='[QP@X]'
        ch='External QP corrections (X)'
      endif
      if (Eid==2) then
-       qpfit_rest%short_descr='[QP@K]'
-       qpfit_free%short_descr='[QP@K]'
+       QP_ctl_from_DB%short_descr='[QP@K]'
+       QP_ctl_input_or_impose%short_descr='[QP@K]'
        ch='External QP corrections (K)'
      endif
      if (Eid==3) then
-       qpfit_rest%short_descr='[QP@G]'
-       qpfit_free%short_descr='[QP@G]'
+       QP_ctl_from_DB%short_descr='[QP@G]'
+       QP_ctl_input_or_impose%short_descr='[QP@G]'
        ch='External QP corrections (G)'
        if (present(qp_impose)) ch='Internal QP corrections (G)'
      endif
@@ -188,16 +188,21 @@ module QP_CTL
      !
      ! Interpolation neighbours is always input file controlled
      !
-     qpfit_free%interp_neigh=QP_ctl_interp_neigh(Eid)
-     qpfit_rest%interp_neigh=QP_ctl_interp_neigh(Eid)
+     QP_ctl_input_or_impose%interp_neigh=QP_ctl_interp_neigh(Eid)
+     QP_ctl_from_DB%interp_neigh=QP_ctl_interp_neigh(Eid)
      !
      ! NOW I HAVE DIFFERENT OPTIONS ... 
      !
      ! 1] I am using the input file QP parameters
      !
-     if (.not.present(qp_impose).and..not.present(qpfit_impose)) then
-       qpfit_rest%db=QP_ctl_db(Eid)
-       call QP_apply_db(band_range,en,k,qp,qpfit_rest,msg_fmt,DB_corrected)
+     if (.not.present(qp_impose).and..not.present(QP_ctl_impose)) then
+       !
+       ! GPL_EXCLUDE_START
+       !
+       QP_ctl_from_DB%db=QP_ctl_db(Eid)
+       call QP_apply_db(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,DB_corrected)
+       !
+       ! GPL_EXCLUDE_END
        !
        ! Update QP db kind in the global_XC kinds 
        !
@@ -207,10 +212,10 @@ module QP_CTL
          if (Eid==3) G_kind=QP_DB_kind
        endif
        !
-       ! Now I have to include the input file QP parameters in qpfit_free
-       ! being careful that the scissor must go in qpfit%E(1)
+       ! Now I have to include the input file QP parameters in QP_ctl
+       ! being careful that the scissor must go in QP_ctl_input_or_impose%E(1)
        !
-       qpfit_free%E=(/QP_ctl_E(Eid,1)/HARTREE,QP_ctl_E(Eid,2),0._SP,QP_ctl_E(Eid,3)/)
+       QP_ctl_input_or_impose%E=(/QP_ctl_E(Eid,1)/HARTREE,QP_ctl_E(Eid,2),0._SP,QP_ctl_E(Eid,3)/)
        !
        ! Then update scissor & stretching in the global_XC kinds 
        !
@@ -223,37 +228,43 @@ module QP_CTL
        if (SE_MORE>0.and.Eid==2) call setup_global_XC(what,K_kind,SE_MORE,K_xc_functional)
        if (SE_MORE>0.and.Eid==3) call setup_global_XC(what,G_kind,SE_MORE,G_xc_functional)
        !
-       QP_ctl_db(Eid)=trim(qpfit_rest%db)
+       QP_ctl_db(Eid)=trim(QP_ctl_from_DB%db)
        !
        ! Note the QP_ctl_W(Eid,1/3) is in ev^{-1} while QP_ctl_W(Eid,2/4) is in
        !  ev^{-2}
        !
-       qpfit_free%W=(/0._SP,QP_ctl_W(Eid,1)/HARTREE,QP_ctl_W(Eid,2)/HARTREE**2.,&
+       QP_ctl_input_or_impose%W=(/0._SP,QP_ctl_W(Eid,1)/HARTREE,QP_ctl_W(Eid,2)/HARTREE**2.,&
 &                     0._SP,QP_ctl_W(Eid,3)/HARTREE,QP_ctl_W(Eid,4)/HARTREE**2./)
-       qpfit_free%Z=QP_ctl_Z(Eid)
+       QP_ctl_input_or_impose%Z=QP_ctl_Z(Eid)
        !
      endif
      !
+     ! GPL_EXCLUDE_START
+     !
      ! 2] I am imposing a qp_impose that contains qp corrections
      !
-     if (present(qp_impose)) call &
-&       QP_apply_db(band_range,en,k,qp_impose,qpfit_rest,msg_fmt,DB_corrected)
+     if (present(qp_impose)) call QP_apply_db(band_range,en,k,qp_impose,&
+&                                             QP_ctl_from_DB,msg_fmt,DB_corrected)
+     !
+     ! GPL_EXCLUDE_END
      !
      ! 3] I am using an externally defined FIT parameters
      !
-     if (present(qpfit_impose)) then
-       qpfit_free%E=qpfit_impose%E
-       qpfit_free%W=qpfit_impose%W
-       qpfit_free%Z=qpfit_impose%Z
+     if (present(QP_ctl_impose)) then
+       QP_ctl_input_or_impose%E=QP_ctl_impose%E
+       QP_ctl_input_or_impose%W=QP_ctl_impose%W
+       QP_ctl_input_or_impose%Z=QP_ctl_impose%Z
      endif
      !
      ! Finally I apply the generalized stretch
      !
-     call QP_apply_stretch(band_range,en,qpfit_rest,qpfit_free,DB_corrected)
+     call QP_apply_stretch(band_range,en,QP_ctl_from_DB,QP_ctl_input_or_impose,DB_corrected)
      !
      ! X/K -> Fermi Level Update
      !
      if (Eid<3) then
+       !
+       ! GPL_EXCLUDE_START
        !
        if (associated(en%E_RIM).and.associated(en%Eo)) then
          !
@@ -279,6 +290,8 @@ module QP_CTL
          deallocate(RIM_k_done)
          !
        endif
+       !
+       ! GPL_EXCLUDE_END
        !
        call fermi_level(en,k,Tel,1)
        !

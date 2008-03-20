@@ -39,8 +39,6 @@ integer function ioBSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp
  !
  ioBSS_Haydock=io_connect(desc='Haydock_restart',type=2,ID=ID)
  !
- ! GPL_END
- !
  if (ioBSS_Haydock<0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
@@ -119,7 +117,5 @@ integer function ioBSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp
   end if
  !
 1 call io_disconnect(ID=ID)
- !
- ! GPL_START
  !
 end function

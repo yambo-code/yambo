@@ -1,3 +1,105 @@
+2008-03-14 17:29:36 r219 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.0.16
+
+	*  configure spp/spp_i.F spp/spp_init.F include/version.inc p2s/p2s_i.F a2s/a2s_i.F e2s/e2s_i.F f2s/f2s_i.F config/configure.ac qp/QP_XX_Vxc.F ras/X_O_strengths_cut.F ras/X_O_longitudinal_cut.F parser/mod_itm.F pol_function/X_O_longitudinal.F interface/init_load.F interface/init.F communicate/run_summary.F communicate/.objects communicate/job_setup.F sc/SC_mute.F io/ioDB1_reload.F modules/mod_memory.F modules/mod_timing.F modules/std_presets.F modules/mod_par_proc.F modules/mod_IO.F modules/mod_com.F bse/Kernel_by_V.F driver/self.h driver/self_driver.F driver/spp.h driver/driver.c
+
+	Additions:
+	- "-C" argument of c_driver to define a path for report files
+	- com_path to define a path for report and output files
+	- Support for distributed calculations on clusters. This
+	  option is activated only when ncpu>1 and core_IO_path/=more_IO_path
+	- routine  check_for_a_redundant_IO in mod_par_proc.F
+
+	Changes:
+	- master_cpu replaces master_node
+	- core_IO_path replaces in_path
+	- more_IO_path replaces out_path
+	- Verbosity is now incremental. Higher is the value of the -V
+	  option more variables are showed.
+	- job_setup replaces run_summary
+
+	Patch sent by: Andrea
+
+2008-03-14 13:17:26 r218 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.0.15
+
+	*  configure spp/ioX_ver_2.F spp/ioWF_ver_2.F spp/spp_i.F spp/ioKB_PP_ver_2.F spp/.objects spp/self2self.F include/version.inc config/Makefile.in config/acx.m4 config/configure.ac config/setup.in qp/DFT_Vxc.F qp/QP_XX_Vxc.F qp/QP_ppa_chosex.F common/QP_state_table_setup.F wf_and_fft/wf_load.F wf_and_fft/.objects wf_and_fft/WF_rotate.F interface/init.F sc/SC_driver.F io/io_elemental.F io/ioX.F io/io_SC_components.F io/load_SC_components.F modules/mod_wave_func.F modules/std_presets.F modules/mod_SC.F bse/K.F driver/spp.h sbin/self_save.sh.in sbin/make_makefile.sh.in sbin/objects_debug.sh sbin/objects_debug.sh.in
+
+	Bugs:
+	- QP_XX_Vxc whan called from SC_Driver wrong accumulation
+	  of live_timing counter
+	- QP_state_table_setup allows bands mixing only in a SC run
+	- io io_elemental : now it performs CHECKS if CHECK is present
+	  *and* .true.
+
+	Additions:
+	- DFT_Vxc can now read SC potentials. Now it is possible to perform
+	  EXX+GW calculations.
+	- QP_ppa_chosex now stops if incomplete em1s/pp DB is found
+	- Added @SHELL@ statement in .sh scripts
+
+	Changes:
+	- Removed self2self (ver. 2 database convertor) in spp
+	- Removed self_save script
+	- Removed check of TCSH, MYECHO and AWK in configure
+	- WF_rotate moved out of module and changed in order to
+	  reduce arrau duplication
+	- In SC run created ad-hoc variables (see init.F)
+
+	Patch sent by: Andrea
+
+2008-03-11 18:14:53 r217 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.0.15
+
+	*  configure include/version.inc int_modules/mod_interfaces.F p2s/mod_p2s.F p2s/.objects p2s/atomic_number.F config/configure.ac common/QP_state_table_setup.F interface/setup.F interface/init.F sc/SC_driver.F sc/V_exx.F io/io_SC_components.F io/io_header.F modules/mod_SC.F modules/mod_D_lattice.F bse/K.F
+
+	Bugs:
+	- In V_exx. Repeted calls of X_os used same X_poles
+	  and coarse-grid arrays. Fixed.  (Andrea)
+	- in io_header. Wrong use of IMPOSE_SN=.false. (Andrea)
+	- In _CPL project (K.F) (Maurizia)
+
+	Additions:
+	- SC_driver: added restart and non-SC run options.
+	  Added FFT mesh size and more in io_SC_components.
+
+	Changes:
+	- routine atomic_number moved in mod_D_lattice. Now it
+	  is used to create a atoms_string string used
+	  in the exchange of db.scV SC potentials between
+	  for non-SC runs. (Andrea)
+	- Called io of scV instead of scWF in init.F
+
+	Patch sent by: Andrea
+
+2008-03-07 18:27:58 r216 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.0.15
+
+	*  configure spp/exc_properties.F spp/exc_non_collinear_spin.F spp/.objects include/version.inc int_modules/mod_interfaces.F config/configure.ac qp/DFT_Vxc.F qp/QP_XX_Vxc.F qp/QP_ppa_chosex.F external_c/stack.c common/QP_state_table_setup.F pol_function/X_O_rotate.F pol_function/X_os.F interface/setup.F interface/.objects interface/init.F interface/barriers.F sc/SC_driver.F sc/V_exx.F io/io_SC_components.F modules/mod_BS.F modules/mod_drivers.F modules/std_presets.F modules/mod_D_lattice.F modules/mod_global_XC.F bse/K_driver.F bse/K_solvers.F bse/K_scattering_cpl.F bse/K.F driver/self.h
+
+	Bugs:
+	- Small bugs reported by Myrta.
+
+	Additions:
+	- Calculation of non collinear spin in spp [Fabrizio]
+	- Self consistent local potentials + GS [Andrea, beta version]
+	- Small changes in QP_ppa_chosex and QP_XX_Vxc to be called
+	  by SC_driver [Andrea]
+	- inv_index is the index of the inversion symmetry.
+	  It is used instead of nsym/2+1 to do BS coupling
+	  even without time-reversal [Andrea]
+	- barrier.F in interface. It will contain the barriers
+	  to specific runlevels, for example with n_spin=2 ACFDT
+	  total energy calculation are not implemented. [Andrea]
+	- Added possibility to do TDHF in K.F (in the _SC project) [Andrea]
+	- in _CPL project [Maurizia, beta version]
+
+	Patch sent by: Andrea, Maurizia, Fabrizio & Myrta
+
 2008-02-29 16:27:56 r215 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Version 3.0.15

@@ -105,12 +105,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  what_is_running='YAMBO_REELS'
 #elif defined _SC
  what_is_running='YAMBO_SC'
-#elif defined _BIGSYS
-#if defined _RAS
+#elif defined _BIGSYS || _RAS
  what_is_running='YAMBO_RAS_BIGSYS'
-#else
+#elif defined _BIGSYS 
  what_is_running='YAMBO_BIGSYS'
-#endif
 #endif
  !
  !Presets (input)

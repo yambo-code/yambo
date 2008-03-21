@@ -1,3 +1,0 @@
-objs = mod_SPP.o     spp_i.o   spp_init.o spp_init_load.o k_analyze.o \
-       exc_properties.o exc_wf_plot_driver.o exc_wf_gnuplot.o exc_wf_xcrysden.o \
-       exc_wf_sort_and_report.o

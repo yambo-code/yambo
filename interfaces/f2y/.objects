@@ -1,0 +1,3 @@
+objs = f2y_datatypes.o f2y_i.o f2y_file_name.o f2y_gg_read.o \
+       f2y_db1.o f2y_wf.o \
+       f2y_read_inp_ini.o f2y_read_wvf.o

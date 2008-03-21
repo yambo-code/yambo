@@ -1,6 +1,6 @@
 !
-! Copyright (C) 2000-2005 A. Marini and the SELF team
-!         http://www.fisica.uniroma2.it/~self
+! Copyright (C) 2000-2008 A. Marini and the YAMBO team
+!              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -19,20 +19,20 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- module interfaces
-   ! 
-   use pars,      ONLY:SP,PI,lchlen,schlen,DP
-   implicit none
-   !
-   logical :: force_noTR
-   logical :: force_noSYM
-   logical :: force_noWFs
-   !
-   real(SP):: alat_mult_factor
-   !
-   integer               :: n_band_block, maxband
-   integer, allocatable  :: blocks(:,:)
-   !
+module interfaces
+ ! 
+ use pars,      ONLY:SP,PI,lchlen,schlen,DP
+ implicit none
+ !
+ logical :: force_noTR
+ logical :: force_noSYM
+ logical :: force_noWFs
+ !
+ real(SP):: alat_mult_factor
+ !
+ integer               :: n_band_block, maxband
+ integer, allocatable  :: blocks(:,:)
+ !
  contains
    !
    subroutine make_real_wf(ib,ik,wf_,nc)
@@ -253,4 +253,4 @@
      !
    end subroutine print_interface_dimensions
    !
- end module
+end module

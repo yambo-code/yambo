@@ -1,6 +1,6 @@
 /*
-  Copyright (C) 2000-2005 A. Marini and the SELF team 
-          http://www.fisica.uniroma2.it/~self
+  Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+               http://www.yambo-code.org
   
   This file is distributed under the terms of the GNU 
   General Public License. You can redistribute it and/or 
@@ -46,23 +46,23 @@ typedef struct
  #define F90_FUNC_(name,NAME) name
 #endif
 #include "codever.h"
-#if defined _self  || _RAS || _REELS || _ELPH || _SC || _BIGSYS 
- #include "self_cpp.h"
+#if defined _yambo  || _RAS || _REELS || _ELPH || _SC || _BIGSYS 
+ #include "yambo_cpp.h"
 #endif
-#if defined _spp  || _SPP_ELPH || _SPP_RAS
- #include "spp_cpp.h"
+#if defined _ypp  || _YPP_ELPH || _YPP_RAS
+ #include "ypp_cpp.h"
 #endif
-#if defined _a2s
- #include "a2s.h"
+#if defined _a2y
+ #include "a2y.h"
 #endif
-#if defined _f2s
- #include "f2s.h"
+#if defined _f2y
+ #include "f2y.h"
 #endif
-#if defined _p2s
- #include "p2s.h"
+#if defined _p2y
+ #include "p2y.h"
 #endif
-#if defined _e2s
- #include "e2s.h"
+#if defined _e2y
+ #include "e2y.h"
 #endif
 static void usage(int verbose);
 static void title(FILE *file_name,char *cmnt);
@@ -123,10 +123,10 @@ main(int argc, char *argv[])
 /* 
  Switch off MPI_init as I have options used to create the input file...
 */
-#if defined _self  || _RAS || _REELS || _ELPH || _SC || _BIGSYS 
+#if defined _yambo  || _RAS || _REELS || _ELPH || _SC || _BIGSYS 
      if (j> 10) {mpi_init=-1;};
 #endif
-#if defined _spp || _SPP_ELPH || _SPP_RAS
+#if defined _ypp || _YPP_ELPH || _YPP_RAS
      if (j> 6) {mpi_init=-1;};
 #endif
 /* 
@@ -211,52 +211,52 @@ main(int argc, char *argv[])
    MPI_Comm_size(MPI_COMM_WORLD, &np);  /* get number of processes */
  };
 #endif
-#if defined _self  || _RAS || _REELS || _ELPH || _SC || _BIGSYS 
+#if defined _yambo  || _RAS || _REELS || _ELPH || _SC || _BIGSYS 
  /* 
-   Running the Fortran SELF driver 
+   Running the Fortran YAMBO driver 
  ===========================================================================
  */
- F90_FUNC(self_driver,SELF_DRIVER)(
+ F90_FUNC(yambo_driver,YAMBO_DRIVER)(
           rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
 #endif
-#if defined _spp || _SPP_ELPH || _SPP_RAS
+#if defined _ypp || _YPP_ELPH || _YPP_RAS
  /* 
-   Running the Fortran SPP driver
+   Running the Fortran YPP driver
  ===========================================================================
  */
- F90_FUNC(spp_i,SPP_I)(
+ F90_FUNC(ypp_i,YPP_I)(
           rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
 #endif
-#if defined _a2s 
+#if defined _a2y 
  /* 
-   Running the Fortran A2S driver
+   Running the Fortran a2y driver
  ===========================================================================
  */
- F90_FUNC(a2s_i,A2S_I)(
+ F90_FUNC(a2y_i,A2Y_I)(
           rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
 #endif
-#if defined _p2s
+#if defined _p2y
  /* 
-   Running the Fortran P2S driver 
+   Running the Fortran p2y driver 
  ===========================================================================
  */
- F90_FUNC(p2s_i,P2S_I)(
+ F90_FUNC(p2y_i,P2Y_I)(
           rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
 #endif
-#if defined _e2s 
+#if defined _e2y 
  /* 
-   Running the Fortran P2S driver 
+   Running the Fortran p2y driver 
  ===========================================================================
  */
- F90_FUNC(e2s_i,E2S_I)(
+ F90_FUNC(e2y_i,E2Y_I)(
           rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
 #endif
-#if defined _f2s 
+#if defined _f2y 
  /* 
-   Running the Fortran F2S driver 
+   Running the Fortran f2y driver 
  ===========================================================================
  */
- F90_FUNC(f2s_i,F2S_I)(
+ F90_FUNC(f2y_i,F2Y_I)(
           rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
 #endif
  /* 
@@ -265,7 +265,7 @@ main(int argc, char *argv[])
  */
  strcpy(edit_line,"vim ");
  strncat(edit_line,inf,strlen(inf));
-#if defined _self || _RAS || _REELS || _spp || _ELPH || _SC || _SPP_ELPH || _SPP_RAS  || _BIGSYS
+#if defined _yambo || _RAS || _REELS || _ypp || _ELPH || _SC || _YPP_ELPH || _YPP_RAS  || _BIGSYS
  if (iif == 1 && ttd>0 ) 
  {
   system(edit_line);
@@ -279,10 +279,10 @@ main(int argc, char *argv[])
  if ( iif < 0 ) 
  {
   if (pid==0 && iif == -1) {
-   fprintf(stderr," \n%s\n\n","self: cannot access CORE database (SAVE/*db1 and/or SAVE/*wf)");
+   fprintf(stderr," \n%s\n\n","yambo: cannot access CORE database (SAVE/*db1 and/or SAVE/*wf)");
   };
   if (pid==0 && iif == -2) {
-   fprintf(stderr," \n%s\n\n","self: invalid command line options and/or build");
+   fprintf(stderr," \n%s\n\n","yambo: invalid command line options and/or build");
   };
 #if defined _MPI
   if (np>1) {
@@ -329,7 +329,7 @@ static void usage(int verbose)
   };
   fprintf(stderr,"\n");
   fprintf(stderr,"%s\t%s\n\t%s\n\n","By","YAMBO developers group",
-         "http://www.fisica.uniroma2.it/~self");
+                 "http://www.yambo-code.org");
  };
 };
 static void title(FILE *file_name,char *cmnt)

@@ -1,6 +1,6 @@
 !
-! Copyright (C) 2000-2005 A. Marini and the SELF team 
-!         http://www.fisica.uniroma2.it/~self
+! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+!              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -75,7 +75,7 @@ module LOGO
 !&                '.'//trim(intc(code_version(3)))//' Revision '//trim(intc(code_revision))
      ! GPL_INCLUDE_END
      !
-     comment(2)='http://www.fisica.uniroma2.it/~self'
+     comment(2)='http://www.yambo-code.org'
      !
      if (ID_logo<0) then
        ID_logo=pickup_a_random(10.)

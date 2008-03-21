@@ -1,6 +1,6 @@
 !
-! Copyright (C) 2000-2005 A. Marini and the SELF team 
-!         http://www.fisica.uniroma2.it/~self
+! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+!              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -57,7 +57,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
  !
  io_header=0
  !
- ! If I am scanning the DBs (self -D) not print warnings
+ ! If I am scanning the DBs (yambo -D) not print warnings
  !
  WARN=.true.
  if (list_dbs) WARN=.false.

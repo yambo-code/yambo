@@ -1,6 +1,6 @@
 !
-! Copyright (C) 2000-2005 A. Marini and the SELF team 
-!         http://www.fisica.uniroma2.it/~self
+! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+!              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -70,7 +70,7 @@ module QP_CTL_m
    subroutine QP_apply(band_range,en,k,Eid,msg_fmt,qp_impose,QP_ctl_impose)
      !
      ! This routine manages the external qp corrections.
-     ! The task is tricky, as SELF has three different energy
+     ! The task is tricky, as YAMBO has three different energy
      ! types. Moreover the Fermi level is decided on the basis
      ! of the X energies (supposed to be uniformly spread).
      !

@@ -1,6 +1,6 @@
 #
-# Copyright (C) 2000-2005 A. Marini and the SELF team
-#         http://www.fisica.uniroma2.it/~self       
+# Copyright (C) 2000-2008 A. Marini and the YAMBO team
+#              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -39,10 +39,10 @@ NETCDF_LF_str=" "
 if test "$enable_largedb" = "yes" ; then NETCDF_LF_str="X"; fi
 
 PW_str=" "
-if test "$compile_p2s" = "yes" ; then PW_str="X"; fi
+if test "$compile_p2y" = "yes" ; then PW_str="X"; fi
 
 ETSF_str=" "
-if test "$compile_e2s" = "yes" ; then ETSF_str="X"; fi
+if test "$compile_e2y" = "yes" ; then ETSF_str="X"; fi
 
 BLAS_str=" "
 if test "$compile_blas" = "yes" ; then BLAS_str="X"; fi

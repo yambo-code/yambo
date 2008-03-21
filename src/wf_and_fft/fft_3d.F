@@ -1,6 +1,6 @@
 !
-! Copyright (C) 2000-2005 A. Marini and the SELF team 
-!         http://www.fisica.uniroma2.it/~self
+! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+!              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -25,7 +25,7 @@
 ! fft_sign = +1  : G-space to R-space, output = \sum_G f(G)exp(+iG*R) (FW)
 ! fft_sign = -1  : R-space to G-space, output = \int_R f(R)exp(-iG*R) (BW)
 !
-! Note that as the SELF convention for the oscillators is
+! Note that as the YAMBO convention for the oscillators is
 ! 
 !  <n k | e ^{iq.r} | n' k-q> 
 !

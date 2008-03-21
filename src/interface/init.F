@@ -1,6 +1,6 @@
 !
-! Copyright (C) 2000-2005 A. Marini and the SELF team 
-!         http://www.fisica.uniroma2.it/~self
+! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+!              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -96,20 +96,20 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! What is running ?
  !
- what_is_running='SELF'
+ what_is_running='YAMBO'
 #if defined _ELPH
- what_is_running='SELF_PH'
+ what_is_running='YAMBO_PH'
 #elif defined _RAS
- what_is_running='SELF_RAS'
+ what_is_running='YAMBO_RAS'
 #elif defined _REELS
- what_is_running='SELF_REELS'
+ what_is_running='YAMBO_REELS'
 #elif defined _SC
- what_is_running='SELF_SC'
+ what_is_running='YAMBO_SC'
 #elif defined _BIGSYS
 #if defined _RAS
- what_is_running='SELF_RAS_BIGSYS'
+ what_is_running='YAMBO_RAS_BIGSYS'
 #else
- what_is_running='SELF_BIGSYS'
+ what_is_running='YAMBO_BIGSYS'
 #endif
 #endif
  !

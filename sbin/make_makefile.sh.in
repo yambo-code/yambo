@@ -1,7 +1,7 @@
 #! @SHELL@
 #
-# Copyright (C) 2000-2005 A. Marini and the SELF team 
-#         http://www.fisica.uniroma2.it/~self
+# Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+#              http://www.yambo-code.org
 # 
 # This file is distributed under the terms of the GNU 
 # General Public License. You can redistribute it and/or 
@@ -68,7 +68,7 @@ done
 llibs="$lib_path $llibs"
 linclude="-I\$(includedir)"
 case $target in
-  self*)
+  yambo*)
    llibs="$llibs \$(llapack) \$(lscalapack) \$(lblacs) \$(lblas)"
    llibs="$llibs \$(lnetcdf) -lslatec \$(lfftw) -lm $llmpi"
     ;;
@@ -134,8 +134,8 @@ arcreate:
 # Functions
 #
 define driver
- @if test -f \$(srcdir)/driver/self.h; then \$(cpp) \$(cppflags) \$(dopts) \
-                    \$(srcdir)/driver/self.h > \$(srcdir)/driver/self_cpp.h; fi
+ @if test -f \$(srcdir)/driver/yambo.h; then \$(cpp) \$(cppflags) \$(dopts) \
+                    \$(srcdir)/driver/yambo.h > \$(srcdir)/driver/yambo_cpp.h; fi
  @if test -f \$(srcdir)/driver/spp.h; then \$(cpp) \$(cppflags) \$(dopts) \
                    \$(srcdir)/driver/spp.h > \$(srcdir)/driver/spp_cpp.h; fi
  \$(cc) \$(cflags) -c \$(srcdir)/driver/getopt.c
@@ -143,7 +143,7 @@ define driver
   then \$(cc) \$(cflags) \$(dopts) -D_\$@ -c \$(srcdir)/driver/driver.c; fi
  @if test ! "\$(dmpi)" = ""; \
   then \$(pcc) \$(pccflags) \$(dopts) -D_\$@ -c \$(srcdir)/driver/driver.c; fi
- @rm -f \$(srcdir)/driver/self_cpp.h \$(srcdir)/driver/spp_cpp.h
+ @rm -f \$(srcdir)/driver/yambo_cpp.h \$(srcdir)/driver/spp_cpp.h
 endef
 define link
  \$(fc) \$(fcflags) \$(linclude) -o \$@ driver.o getopt.o \$(objs) \$(llibs)

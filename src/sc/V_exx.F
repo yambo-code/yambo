@@ -1,6 +1,6 @@
 !
-! Copyright (C) 2000-2005 M. Gruening and the SELF team
-!         http://www.fisica.uniroma2.it/~self
+! Copyright (C) 2000-2008 M. Gruening and the YAMBO team
+!              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or

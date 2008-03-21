@@ -1,6 +1,6 @@
 !
-! Copyright (C) 2000-2005 A. Marini and the SELF team
-!         http://www.fisica.uniroma2.it/~self
+! Copyright (C) 2000-2008 A. Marini and the YAMBO team
+!              http://www.yambo-code.org
 !
 ! Copyright (C) 2002 M. Marques, A. Castro, A. Rubio, G. Bertsch
 !

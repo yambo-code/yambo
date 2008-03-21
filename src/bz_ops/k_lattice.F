@@ -1,6 +1,6 @@
 !
-! Copyright (C) 2000-2005 A. Marini and the SELF team 
-!         http://www.fisica.uniroma2.it/~self
+! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+!              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -133,7 +133,7 @@ subroutine k_lattice(k,Xk)
      if (abs(v1(1))<=1.E-5) then
        i3=i3+1
        if (i3+k_grid_dim>3) then
-         ch='The grid is not 3D but SELF cannot find the _|_ vector(s)'
+         ch='The grid is not 3D but YAMBO cannot find the _|_ vector(s)'
          goto 1
        endif
        !

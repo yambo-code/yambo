@@ -1,6 +1,6 @@
 #
-# Copyright (C) 2000-2005 A. Marini and the SELF team
-#         http://www.fisica.uniroma2.it/~self
+# Copyright (C) 2000-2008 A. Marini and the YAMBO team
+#              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -30,8 +30,8 @@ xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@
 debug       = @enable_debug@
 do_blas     = @compile_blas@
 do_lapack   = @compile_lapack@
-do_p2s      = @compile_p2s@
-do_e2s      = @compile_e2s@
+do_p2y      = @compile_p2y@
+do_e2y      = @compile_e2y@
 shell       = @SHELL@
 make        = @MAKE@
 package_bugreport = @PACKAGE_BUGREPORT@
@@ -45,12 +45,12 @@ CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
   	   sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
 	   src/external_c/.objects Makefile driver/version.h \
        sbin/objects_debug.sh
-TARGETS  = all self interfaces spp 
+TARGETS  = all yambo interfaces ypp 
 UTILS    = changelog
-PROJECTS = self_ph self_sc spp_ph self_ras self_reels \
-	       spp_ras self_bigsys self_ras_bigsys
+PROJECTS = yambo_ph yambo_sc ypp_ph yambo_ras yambo_reels \
+	       ypp_ras yambo_bigsys yambo_ras_bigsys
 EXE      = $(TARGETS) $(PROJECTS) 
-INTERFCS = a2s p2s e2s f2s
+INTERFCS = a2y p2y e2y f2y
 #
 # Libraries (ordered for compiling & linking)
 #
@@ -73,10 +73,10 @@ PJ_PHLIBS       = $(MAIN_LIBS)
 #
 2SLIBS       = external_c modules parser communicate common io 
 #
-# SPP
+# YPP
 #
-SPPLIBS      = $(BASIC_LIBS) bz_ops qp_ctl interface bse
-SPPRASLIBS   = $(BASIC_LIBS) ras_reels_mods bz_ops qp_ctl interface bse
+YPPLIBS      = $(BASIC_LIBS) bz_ops qp_ctl interface bse
+YPPRASLIBS   = $(BASIC_LIBS) ras_reels_mods bz_ops qp_ctl interface bse
 
 nothing: 
 	@$(make_message)
@@ -89,47 +89,47 @@ libs:
 	DIR2GO="lib" ; $(mklib); fi
 	@if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; \
 	DIR2GO="lib" ; $(mklib); fi
-self: libs
+yambo: libs
 	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)
-	@X2DO="self"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
+	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
 # PROJECTS #
-self_sc: libs
+yambo_sc: libs
 	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_SC"; $(mksrc)
-	@X2DO="self_sc"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_SC";$(mkx)
-self_bigsys: libs
+	@X2DO="yambo_sc"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_SC";$(mkx)
+yambo_bigsys: libs
 	@LIBS2DO="$(PJ_BIGSYSLIBS)";ADF="-D_BIGSYS"; $(mksrc)
-	@X2DO="self_bigsys"; XPATH="driver";XLIBS="$(PJ_BIGSYSLIBS)";ADF="-D_BIGSYS";$(mkx)
-self_ph: libs
+	@X2DO="yambo_bigsys"; XPATH="driver";XLIBS="$(PJ_BIGSYSLIBS)";ADF="-D_BIGSYS";$(mkx)
+yambo_ph: libs
 	@LIBS2DO="$(PJ_PHLIBS)";ADF="-D_ELPH"; $(mksrc)
-	@X2DO="self_ph"; XPATH="driver";XLIBS="$(PJ_PHLIBS)";ADF="-D_ELPH";$(mkx)
-self_ras: libs
+	@X2DO="yambo_ph"; XPATH="driver";XLIBS="$(PJ_PHLIBS)";ADF="-D_ELPH";$(mkx)
+yambo_ras: libs
 	@LIBS2DO="$(PJ_RASLIBS)";ADF="-D_RAS"; $(mksrc)
-	@X2DO="self_ras"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS";$(mkx)
-self_ras_bigsys: libs
+	@X2DO="yambo_ras"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS";$(mkx)
+yambo_ras_bigsys: libs
 	@LIBS2DO="$(PJ_RASLIBS)";ADF="-D_RAS -D_BIGSYS"; $(mksrc)
-	@X2DO="self_ras_bigsys"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS -D_BIGSYS";$(mkx)
-self_reels: libs
+	@X2DO="yambo_ras_bigsys"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS -D_BIGSYS";$(mkx)
+yambo_reels: libs
 	@LIBS2DO="$(PJ_REELSLIBS)";ADF="-D_REELS"; $(mksrc)
-	@X2DO="self_reels"; XPATH="driver";XLIBS="$(PJ_REELSLIBS)";ADF="-D_REELS";$(mkx)
-spp_ph: libs
-	@LIBS2DO="$(SPPLIBS)" ; $(mksrc)
-	@X2DO="spp_ph" ;XPATH="spp";XLIBS="$(SPPLIBS)"; ADF="-D_SPP_ELPH";$(mkx)
-spp_ras: libs
-	@LIBS2DO="$(SPPRASLIBS)" ; $(mksrc)
-	@X2DO="spp_ras" ;XPATH="spp";XLIBS="$(SPPRASLIBS)"; ADF="-D_SPP_RAS";$(mkx)
+	@X2DO="yambo_reels"; XPATH="driver";XLIBS="$(PJ_REELSLIBS)";ADF="-D_REELS";$(mkx)
+ypp_ph: libs
+	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
+	@X2DO="Ypp_ph" ;XPATH="Ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_ELPH";$(mkx)
+ypp_ras: libs
+	@LIBS2DO="$(YPPRASLIBS)" ; $(mksrc)
+	@X2DO="ypp_ras" ;XPATH="ypp";XLIBS="$(YPPRASLIBS)"; ADF="-D_YPP_RAS";$(mkx)
 #
 interfaces: libs
 	@LIBS2DO="$(2SLIBS)" ; $(mksrc)
 	@LIBS2DO="int_modules"; DIR2GO="interfaces" ; $(mklib)
-	@X2DO="a2s" ;XPATH="interfaces/a2s";XLIBS="$(2SLIBS)";$(mkx)
-	@X2DO="f2s" ;XPATH="interfaces/f2s";XLIBS="$(2SLIBS)";$(mkx)
-	@if test "$(do_p2s)" = yes ; then X2DO="p2s" ; XPATH="interfaces/p2s" ; \
+	@X2DO="a2y" ;XPATH="interfaces/a2y";XLIBS="$(2SLIBS)";$(mkx)
+	@X2DO="f2y" ;XPATH="interfaces/f2y";XLIBS="$(2SLIBS)";$(mkx)
+	@if test "$(do_p2y)" = yes ; then X2DO="p2y" ; XPATH="interfaces/p2y" ; \
 	XLIBS="$(2SLIBS)"; ADF="-D@PW_CPP@"; $(mkx) ; fi
-	@if test "$(do_e2s)" = yes ; then X2DO="e2s" ; XPATH="interfaces/e2s" ; \
+	@if test "$(do_e2y)" = yes ; then X2DO="e2y" ; XPATH="interfaces/e2y" ; \
 	XLIBS="$(2SLIBS)" ; $(mkx) ; fi
-spp: libs
-	@LIBS2DO="$(SPPLIBS)" ; $(mksrc)
-	@X2DO="spp" ;XPATH="spp";XLIBS="$(SPPLIBS)";$(mkx)
+ypp: libs
+	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
+	@X2DO="ypp" ;XPATH="ypp";XLIBS="$(YPPLIBS)";$(mkx)
 clean:
 	@echo "modes: clean_[o/a/m/am/oam/oamx] distclean cclean"
 clean_a: 
@@ -151,7 +151,7 @@ cclean:
 
 # Functions
 define make_message
- echo;echo "SELF" @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ r.@SREVISION@ targets;echo;\
+ echo;echo "YAMBO" @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ r.@SREVISION@ targets;echo;\
  for target in $(TARGETS); do echo  " [stable] $$target" ; done;echo;\
 # -- GPL_END --
  for target in $(PROJECTS); do echo " [devel] $$target" ; done;echo;\

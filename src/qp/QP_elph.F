@@ -1,6 +1,6 @@
 !
-! Copyright (C) 2000-2005 A. Marini and the SELF team 
-!         http://www.fisica.uniroma2.it/~self
+! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+!              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -218,7 +218,7 @@ subroutine QP_elph(en,k,q,qp)
            ik_bz_gkkp=ik_is_table(ok,sop_inv(sop_tab(iqs-nsym/2,os)))
          endif
          !
-         ! k is in the IBZ and q is the PW_q (=-SELF_q)
+         ! k is in the IBZ and q is the PW_q (=-YAMBO_q)
          !
        endif
        !
@@ -244,10 +244,10 @@ subroutine QP_elph(en,k,q,qp)
          !
          ! In the SE expression I have the m.e. 
          !
-         !  <ib ik|g(q_SELF l r)|ob ik-q_SELF> = [<ob ik+q_PW|g(q_PW l r)|ib ik>]^* = 
+         !  <ib ik|g(q_YAMBO l r)|ob ik-q_YAMBO> = [<ob ik+q_PW|g(q_PW l r)|ib ik>]^* = 
          !                              elph_gkkp(ik_bz_gkkp,il,ob_gkkp,ib_gkkp)^*
          !
-         ! with q_SELF = - q_PW
+         ! with q_YAMBO = - q_PW
          !
          elph_gkkp_sq=conjg(elph_gkkp(ik_bz_gkkp,il,ob_gkkp,ib_gkkp))*&
 &                           elph_gkkp(ik_bz_gkkp,il,ob_gkkp,ib_gkkp)/2./ph_E

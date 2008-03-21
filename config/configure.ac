@@ -1,6 +1,6 @@
 #
-# Copyright (C) 2000-2005 A. Marini and the SELF team
-#         http://www.fisica.uniroma2.it/~self
+# Copyright (C) 2000-2008 A. Marini and the YAMBO team
+#              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -19,11 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Self, 3.0.16 r.221 , self@roma2.infn.it)
+AC_INIT(Yambo, 3.1.0 r.222 , yambo@yambo-code.org)
 SVERSION="3"
-SPATCHLEVEL="0"
-SSUBLEVEL="16"
-SREVISION="221"
+SPATCHLEVEL="1"
+SSUBLEVEL="0"
+SREVISION="222"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -109,12 +109,12 @@ AC_SUBST(dp_cpp)
 #
 AC_ARG_WITH(iotk, AC_HELP_STRING([--with-iotk=<path>],
  [Path of the IOTK library directory]))
-compile_p2s="no"
+compile_p2y="no"
 iotk_dir=""
 if ! test "$with_iotk" = "" ; then
  AC_MSG_CHECKING([$with_iotk IOTK library])
  if test -r $with_iotk/src/libiotk.a ; then
-  compile_p2s="yes"
+  compile_p2y="yes"
   iotk_dir="$with_iotk/src"
   AC_MSG_RESULT([yes])
   cp "$with_iotk/src/libiotk.a" lib/
@@ -122,33 +122,33 @@ if ! test "$with_iotk" = "" ; then
   AC_MSG_RESULT([no])
  fi
 fi
-AC_SUBST(compile_p2s)
+AC_SUBST(compile_p2y)
 AC_SUBST(iotk_dir)
 
 # ============================================================================
-# check for p2s versions
+# check for p2y versions
 #
-AC_ARG_WITH(p2s, AC_HELP_STRING([--with-p2s=<mode>],
- [Interface mode in PW 2 SELF : <export> <3.1> <3.1.1> <3.2>]))
+AC_ARG_WITH(p2y, AC_HELP_STRING([--with-p2y=<mode>],
+ [Interface mode in PW 2 YAMBO : <export> <3.1> <3.1.1> <3.2>]))
 
 PW_VER="3.2"
-PW_CPP="_P2S_V32"
-if test "$compile_p2s" = "yes"; then
- if test "$with_p2s" = "export"; then
+PW_CPP="_P2Y_V32"
+if test "$compile_p2y" = "yes"; then
+ if test "$with_p2y" = "export"; then
   PW_VER="export"
-  PW_CPP="_P2S_EXPORT"
+  PW_CPP="_P2Y_EXPORT"
  fi
- if test "$with_p2s" = "3.1"; then
+ if test "$with_p2y" = "3.1"; then
   PW_VER="3.1"
-  PW_CPP="_P2S_V31"
+  PW_CPP="_P2Y_V31"
  fi
- if test "$with_p2s" = "3.1.1"; then
+ if test "$with_p2y" = "3.1.1"; then
   PW_VER="3.1.1"
-  PW_CPP="_P2S_V311"
+  PW_CPP="_P2Y_V311"
  fi
- if test "$with_p2s" = "3.2"; then
+ if test "$with_p2y" = "3.2"; then
   PW_VER="3.2"
-  PW_CPP="_P2S_V32"
+  PW_CPP="_P2Y_V32"
  fi
 fi
 AC_SUBST(PW_VER)
@@ -158,12 +158,12 @@ AC_SUBST(PW_CPP)
 # check for ETSF library
 AC_ARG_WITH(etsf, AC_HELP_STRING([--with-etsf=<path>],
  [Path of the ETSF I/O library directory]))
-compile_e2s="no"
+compile_e2y="no"
 etsf_io_dir=""
 if ! test "$with_etsf" = "" ; then
  AC_MSG_CHECKING([$with_etsf for the ETSF I/O library])
  if test -r $with_etsf/lib/libetsf_io.a ; then
-  compile_e2s="yes"
+  compile_e2y="yes"
   etsf_dir="$with_etsf/include/intel"
   AC_MSG_RESULT([yes])
   cp "$with_etsf/lib/libetsf_io.a" lib/
@@ -173,7 +173,7 @@ if ! test "$with_etsf" = "" ; then
   AC_MSG_RESULT([no])
  fi
 fi
-AC_SUBST(compile_e2s)
+AC_SUBST(compile_e2y)
 AC_SUBST(etsf_dir)
 
 # ============================================================================
@@ -275,7 +275,7 @@ if test "$mpibuild" = "yes"; then
  mpi_cpp="-D_MPI"
  AC_LANG_PUSH(Fortran)
  ACX_MPI([], 
-  AC_MSG_WARN([could not compile a FORTRAN mpi test program. SELF serial only.]))
+  AC_MSG_WARN([could not compile a FORTRAN mpi test program. YAMBO serial only.]))
  AC_LANG_POP(Fortran)
 #
 # MPICC
@@ -283,7 +283,7 @@ if test "$mpibuild" = "yes"; then
  if test "$mpibuild" = "yes" ; then
   AC_LANG_PUSH(C)
   ACX_MPI([], 
-   AC_MSG_WARN([could not compile a C mpi test program. SELF serial only.]))
+   AC_MSG_WARN([could not compile a C mpi test program. YAMBO serial only.]))
  fi
  if test "$mpibuild" = "no" ; then mpi_cpp=""; fi
  AC_SUBST(mpi_cpp)

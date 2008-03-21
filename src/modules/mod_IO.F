@@ -1,6 +1,6 @@
 !
-! Copyright (C) 2000-2005 A. Marini and the SELF team 
-!         http://www.fisica.uniroma2.it/~self
+! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+!              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -32,7 +32,7 @@ module IO_m
  !
  real(SP):: db_alat(3)
  !
- ! The serial number is assigned by the SELF interfaces.
+ ! The serial number is assigned by the YAMBO interfaces.
  ! It defines uniquely the db1/wf/kb_pp databases.
  !
  integer :: serial_number
@@ -434,7 +434,7 @@ module IO_m
        !
        open(unit=81,file=trim(restart_file))
        write (81,'(/2x,a,3(i2.2,a),a,i3.3)') &
-&            'Restart file for SELF ',code_version(1),&
+&            'Restart file for YAMBO ',code_version(1),&
 &            '.',code_version(2),'.',code_version(3),' -- ',&
 &            'revision ',code_revision
        ch=date_and_time_string()

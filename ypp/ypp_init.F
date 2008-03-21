@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine spp_init(instr,lnstr,FINALIZE)
+subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  use pars,           ONLY:HARTREE
  use wave_func,      ONLY:wf_ng 
@@ -30,11 +30,11 @@ subroutine spp_init(instr,lnstr,FINALIZE)
  use drivers,        ONLY:infile_editing
  use com,            ONLY:file_exists
  use stderr,         ONLY:string_split
- use SPP
+ use YPP
  use electrons,      ONLY:n_spin
  use par_proc_m,     ONLY:master_cpu,pp_redux_wait
  use timing,         ONLY:what_is_running
-#if defined _SPP_RAS
+#if defined _YPP_RAS
  use bulkeps,        only : bshift, bbroad, bfile, btype 
  use convolute,      only : gbroad
 #endif
@@ -52,11 +52,11 @@ subroutine spp_init(instr,lnstr,FINALIZE)
  !
  ! What is running ?
  !
- what_is_running='SPP'
+ what_is_running='YPP'
 #if defined _ELPH
- what_is_running='SPP_PH'
+ what_is_running='YPP_PH'
 #elif defined _RAS
- what_is_running='SPP_RAS'
+ what_is_running='YPP_RAS'
 #endif
  !
  if (FINALIZE) then
@@ -82,7 +82,7 @@ subroutine spp_init(instr,lnstr,FINALIZE)
    p_format   ='g'
    wf_ng      =ng_vec
    !
-#if defined _SPP_ELPH
+#if defined _YPP_ELPH
    !
    ! ELPH
    !
@@ -95,7 +95,7 @@ subroutine spp_init(instr,lnstr,FINALIZE)
    !
 #endif
    !
-#if defined _SPP_RAS
+#if defined _YPP_RAS
    !
    ! RAS
    !
@@ -214,14 +214,14 @@ subroutine spp_init(instr,lnstr,FINALIZE)
    if (l_spin) call initactivate(1,"States Degen_Step")
  endif
  !
-#if defined _SPP_ELPH
+#if defined _YPP_ELPH
  !
  lelph=runlevel_is_on('elph')
  if (lelph) call initactivate(1,"DBsPATH PHfreqF EEfermi EfGbroad PhBroad PhStps")
  !
 #endif
 
-#if defined _SPP_RAS
+#if defined _YPP_RAS
  !
  lsurf =runlevel_is_on('surf')
  lras  =runlevel_is_on('ras')
@@ -255,7 +255,7 @@ subroutine spp_init(instr,lnstr,FINALIZE)
    if (mode=='Gclose') initmode=2
    if (mode=='GameOver') initmode=3
    if (mode=='parserload') initmode=4
-   call spp_init_load(defs)
+   call ypp_init_load(defs)
    !
  end subroutine
  !

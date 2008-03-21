@@ -25,7 +25,7 @@ subroutine exc_wf_xcrysden(use_2d,plot_dim)
  use LOGO,        ONLY:code_version
  use com,         ONLY:of_open_close,msg
  use BS,          ONLY:BSS_description,BSS_n_descs
- use SPP,         ONLY:nr,exc_wf_sq,lambda,ncell,wf_2d,r_hole
+ use YPP,         ONLY:nr,exc_wf_sq,lambda,ncell,wf_2d,r_hole
  use D_lattice,   ONLY:n_atom_species,n_atoms,a,atom_pos,znucl
  use stderr,      ONLY:intc
  !
@@ -104,7 +104,7 @@ subroutine exc_wf_xcrysden(use_2d,plot_dim)
      if (use_2d(3)) dir2plot=(/2,3/)
      !
      call msg('o exc','BEGIN_BLOCK_DATAGRID_2D')
-     call msg('o exc','Generated with SPP',code_version)
+     call msg('o exc','Generated with YPP',code_version)
      call msg('o exc','BEGIN_DATAGRID_2D')
      !
      ! here it depends on the plane
@@ -142,7 +142,7 @@ subroutine exc_wf_xcrysden(use_2d,plot_dim)
    case(3)
      !
      call msg('o exc','BEGIN_BLOCK_DATAGRID_3D')
-     call msg('o exc','Generated with SPP',code_version)
+     call msg('o exc','Generated with YPP',code_version)
      call msg('o exc','BEGIN_DATAGRID_3D')
      !
      call msg('o exc','',nr)

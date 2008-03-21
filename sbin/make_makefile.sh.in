@@ -72,18 +72,18 @@ case $target in
    llibs="$llibs \$(llapack) \$(lscalapack) \$(lblacs) \$(lblas)"
    llibs="$llibs \$(lnetcdf) -lslatec \$(lfftw) -lm $llmpi"
     ;;
-  a2s|f2s)
+  a2y|f2y)
    llibs="-lint_modules $llibs \$(llapack) \$(lblas) \$(lnetcdf) \$(lfftw) -lm $llmpi"
     ;;
-  p2s*)
+  p2y*)
    llibs="-lint_modules $llibs -liotk \$(llapack) \$(lblas) \$(lnetcdf) \$(lfftw) -lm $llmpi"
    linclude="$linclude -I\$(iotk_dir)"
     ;;
-  e2s)
+  e2y)
    llibs="-lint_modules $llibs -letsf_io \$(llapack) \$(lblas) \$(lnetcdf) \$(lfftw) -lm $llmpi"
    linclude="$linclude -I\$(etsf_dir)"
     ;;
-  spp*)
+  ypp*)
    llibs="$llibs \$(llapack) \$(lblas) \$(lnetcdf) \$(lfftw) -lm $llmpi"
     ;;
 esac
@@ -136,14 +136,14 @@ arcreate:
 define driver
  @if test -f \$(srcdir)/driver/yambo.h; then \$(cpp) \$(cppflags) \$(dopts) \
                     \$(srcdir)/driver/yambo.h > \$(srcdir)/driver/yambo_cpp.h; fi
- @if test -f \$(srcdir)/driver/spp.h; then \$(cpp) \$(cppflags) \$(dopts) \
-                   \$(srcdir)/driver/spp.h > \$(srcdir)/driver/spp_cpp.h; fi
+ @if test -f \$(srcdir)/driver/ypp.h; then \$(cpp) \$(cppflags) \$(dopts) \
+                   \$(srcdir)/driver/ypp.h > \$(srcdir)/driver/ypp_cpp.h; fi
  \$(cc) \$(cflags) -c \$(srcdir)/driver/getopt.c
  @if test "\$(dmpi)" = ""; \
   then \$(cc) \$(cflags) \$(dopts) -D_\$@ -c \$(srcdir)/driver/driver.c; fi
  @if test ! "\$(dmpi)" = ""; \
   then \$(pcc) \$(pccflags) \$(dopts) -D_\$@ -c \$(srcdir)/driver/driver.c; fi
- @rm -f \$(srcdir)/driver/yambo_cpp.h \$(srcdir)/driver/spp_cpp.h
+ @rm -f \$(srcdir)/driver/yambo_cpp.h \$(srcdir)/driver/ypp_cpp.h
 endef
 define link
  \$(fc) \$(fcflags) \$(linclude) -o \$@ driver.o getopt.o \$(objs) \$(llibs)

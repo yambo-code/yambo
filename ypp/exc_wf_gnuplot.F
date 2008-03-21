@@ -26,7 +26,7 @@ subroutine exc_wf_gnuplot(use_1d,use_2d,plot_dim,eval_only)
  use FFT_m,       ONLY:fft_dim
  use D_lattice,   ONLY:a
  use stderr,      ONLY:intc
- use SPP,         ONLY:nr,p_dir,exc_wf_sq,r_hole,lambda,wf_2d
+ use YPP,         ONLY:nr,p_dir,exc_wf_sq,r_hole,lambda,wf_2d
  use BS,          ONLY:BSS_description,BSS_n_descs
  use timing,      ONLY:live_timing
  !

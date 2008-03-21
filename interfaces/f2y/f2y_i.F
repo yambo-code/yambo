@@ -74,7 +74,7 @@
  write_to_report=.FALSE.
 ! live_timing_is_on=.FALSE.
 
- call section('*','FHI(96SPIN) 2 S(elf)')
+ call section('*','FHI(96SPIN) 2 Y(ambo)')
 
  call msg('s','Checking input file ...')
 !=======================================

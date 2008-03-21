@@ -27,7 +27,7 @@ subroutine exc_properties(Xk,Xen)
  use D_lattice,     ONLY:a,i_time_rev,nsym,alat
  use wave_func,     ONLY:wf_load,wf_state,wf,WF_free,wf_ng
  use R_lattice,     ONLY:nXkibz,bz_samp
- use SPP,           ONLY:l_sort,l_wf,l_spin,ncell,lambda,r_hole,&
+ use YPP,           ONLY:l_sort,l_wf,l_spin,ncell,lambda,r_hole,&
 &                        nr,exc_wf_sq,nr_tot,state_ctl,&
 &                        exc_wf_sort_and_report
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY

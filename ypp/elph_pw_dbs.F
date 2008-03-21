@@ -30,7 +30,7 @@ integer function elph_pw_dbs(k,E,q)
  use com,                 ONLY:msg,warning,file_exists,error
  use R_lattice,           ONLY:bz_samp
  use D_lattice,           ONLY:nsym
- use SPP,                 ONLY:ph_freqs_file
+ use YPP,                 ONLY:ph_freqs_file
  use IO_m,                ONLY:io_control,OP_APP_WR_CL,&
 &                              OP_RD_CL,VERIFY,dbs_fragment
  use timing,              ONLY:live_timing
@@ -191,7 +191,7 @@ integer function elph_pw_dbs(k,E,q)
 &                           io_netcdf_support,io_disconnect,io_file
    use ELPH,           ONLY:ph_modes,elph_nb,E_k_plus_q,&
 &                           ph_freqs_sq,elph_gkkp,elph_DW
-   use SPP,            ONLY:elph_dbs_path
+   use YPP,            ONLY:elph_dbs_path
    use vec_operate,    ONLY:v_is_zero,rlu_v_is_zero,c2a
    use zeros,          ONLY:k_iku_zero,k_rlu_zero
    use electrons,      ONLY:n_bands

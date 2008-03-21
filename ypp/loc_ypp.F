@@ -19,8 +19,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine loc_spp
-   use SPP
+ subroutine loc_ypp
+   use YPP
    use com,                     ONLY : error
    use pars,                    ONLY : SP, pi
    use surface_geometry,        ONLY : setup_gvecaff, gvecaff
@@ -101,4 +101,4 @@
    if(io_err/=0) call error('Failed to write localization DB.')
 
    return
- end subroutine loc_spp
+ end subroutine loc_ypp

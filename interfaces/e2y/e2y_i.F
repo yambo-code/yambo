@@ -78,7 +78,7 @@ integer function e2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !================================
  write_to_report=.FALSE.
  !
- call section('*','E(TSF) 2 S(elf)')
+ call section('*','E(TSF) 2 Y(ambo)')
  !
  ! Check input filenames 
  !

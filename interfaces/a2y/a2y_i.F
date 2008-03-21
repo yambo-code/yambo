@@ -70,7 +70,7 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  write_to_report=.FALSE.
  ! live_timing_is_on=.FALSE.
  !
- call section('*','A(binit) 2 S(elf)')
+ call section('*','A(binit) 2 Y(ambo)')
  !
  call msg('s','Checking input file ...')
  !

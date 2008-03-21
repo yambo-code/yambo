@@ -19,9 +19,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine trans_spp(en,k)
+ subroutine trans_ypp(en,k)
    use pars                    
-   use SPP
+   use YPP
    use com,                     ONLY : error, msg
    use stderr,       ONLY: intc
    use electrons,               ONLY : levels, n_sp_pol
@@ -46,7 +46,7 @@
    ! Work Space
    !
 integer :: db_nbm,db_nbf,db_nb(2),nb(2), nbm, ixyz, i_spin, ib, i1, nbf
-   logical                          :: lspp, lusecut
+   logical                          :: lypp, lusecut
    integer                          :: ik,iv,ic,io_err,io_db,sec_size, io_cut
    real(SP)                         :: ehe(2), Ec_m_Ev, PP, tot
    complex(SP)                       :: P1,P2
@@ -198,4 +198,4 @@ integer :: db_nbm,db_nbf,db_nb(2),nb(2), nbm, ixyz, i_spin, ib, i1, nbf
      return
    end subroutine get_q0grad
 
- end subroutine trans_spp
+ end subroutine trans_ypp

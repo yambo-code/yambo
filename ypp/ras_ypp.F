@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine ras_spp
+ subroutine ras_ypp
  !--------------------------
  ! RAS in 3 layer model:
  ! \frac{\delta R}{R} = \frac{4\omega\d_surf}{c} \times
@@ -46,7 +46,7 @@
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,&
 &                              OP_RD_CL,VERIFY
  use timing,              ONLY:live_timing
- use SPP
+ use YPP
  use bulkeps,             only : lbulkerr, GetBulkEps
  use ras_module,          only : CalcRAS
  implicit none
@@ -176,4 +176,4 @@
      
    end subroutine read_spectral_data
    
- end subroutine ras_spp
+ end subroutine ras_ypp

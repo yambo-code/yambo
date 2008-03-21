@@ -26,7 +26,7 @@ subroutine exc_wf_sort_and_report(Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
  use stderr,        ONLY:intc
  use BS,            ONLY:BS_K_dim,BSS_description,BSS_n_descs,BS_eh_table
  use com,           ONLY:msg,of_open_close
- use SPP,           ONLY:R_normalize,deg_energy,lambda
+ use YPP,           ONLY:R_normalize,deg_energy,lambda
  use R_lattice,     ONLY:d3k_factor,q0_def_norm,bz_samp
  use D_lattice,     ONLY:n_atom_species,n_atoms,atom_pos,znucl
  use vec_operate,   ONLY:sort

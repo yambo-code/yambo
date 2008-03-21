@@ -28,7 +28,7 @@ subroutine k_analize(en,k,Xk,q)
  use com,                 ONLY:msg,warning
  use parser_m,            ONLY:parser
  use vec_operate,         ONLY:c2a,rlu_v_is_zero,v_is_zero,v_norm
- use SPP,                 ONLY:coo_in,coo_out,qlong
+ use YPP,                 ONLY:coo_in,coo_out,qlong
  use timing,              ONLY:live_timing_is_on
  use zeros,               ONLY:k_iku_zero,k_rlu_zero
  !

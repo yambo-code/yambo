@@ -29,7 +29,7 @@ subroutine exc_non_collinear_spin(Xk,lambda_s,n_lambda,S_sq,S_z)
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:i_time_rev,nsym
  use wave_func,     ONLY:wf_state,wf
- use SPP,           ONLY:lambda
+ use YPP,           ONLY:lambda
  use memory_m,      ONLY:mem_est
  use timing,        ONLY:live_timing
  use com,           ONLY:msg,error,warning

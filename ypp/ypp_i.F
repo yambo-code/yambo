@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
+integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
 &                      com_dir,icd,js,ijs,np,pid)
  !
  use drivers,             ONLY:infile_editing
@@ -31,7 +31,7 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP
  use com,                 ONLY:msg,write_to_report
  use it_m,                ONLY:it_reset,infile
- use SPP
+ use YPP
  implicit none
  !
  type(levels)                 :: en,Xen,Ken
@@ -49,14 +49,14 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  integer           :: ID,i_err
  integer, external :: ioDB1,ioQINDX,iogrot
-#if defined _SPP_ELPH
+#if defined _YPP_ELPH
  integer, external :: elph_pw_dbs
 #endif
  !
  ! Presets
  !
  iinf  =0
- spp_i =0
+ ypp_i =0
  ncpu  =np
  myid  =pid
  infile=inf
@@ -78,7 +78,7 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
  iinf=ioDB1(en,k,ID)
  if (iinf/=0) then
-   call spp_finalize()
+   call ypp_finalize()
    return
  endif
  !  
@@ -87,16 +87,16 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
  i_err=iogrot(ID) 
  if (i_err/=0) then
-   call spp_finalize()
+   call ypp_finalize()
    return
  endif
  !
  ! INPUT FILE
  !
- call spp_init(instr,lnstr,.false.)
+ call ypp_init(instr,lnstr,.false.)
  if (infile_editing) then
    iinf=1
-   call spp_finalize()
+   call ypp_finalize()
    return
  endif
  !
@@ -123,7 +123,7 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  k_pt=k%pt
  !
  if (i_err/=0) then
-   call spp_finalize()
+   call ypp_finalize()
    return
  endif
  !
@@ -146,7 +146,7 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  if (l_exc_props) call exc_properties(Xk,Xen)
  !
-#if defined _SPP_ELPH
+#if defined _YPP_ELPH
  !
  if (lelph) then
    i_err=elph_pw_dbs(k,en,q)
@@ -155,29 +155,29 @@ integer function spp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
 #endif
  !
-#if defined _SPP_RAS
+#if defined _YPP_RAS
  !
- if (lras) call ras_spp
- if (lloc) call loc_spp
- if (ltrans) call trans_spp(en,k)
+ if (lras) call ras_ypp
+ if (lloc) call loc_ypp
+ if (ltrans) call trans_ypp(en,k)
  !
 #endif
  !
  ! END
  !
- call spp_finalize()
+ call ypp_finalize()
  return
  !
 contains
   !
-  subroutine spp_finalize()
+  subroutine ypp_finalize()
     if (.not.infile_editing) then
       call section('X','Game Over')
-      call spp_init(instr,lnstr,.TRUE.)
+      call ypp_init(instr,lnstr,.TRUE.)
       call msg("nl","")
       call p_finalize()
     else
-      call spp_init(instr,lnstr,.TRUE.)
+      call ypp_init(instr,lnstr,.TRUE.)
     endif
   end subroutine
   !

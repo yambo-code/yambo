@@ -19,11 +19,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine spp_init_load(defs)
+subroutine ypp_init_load(defs)
  !
  use it_m,          ONLY:it,initdefs,E_unit
- use SPP
-#if defined _SPP_RAS
+ use YPP
+#if defined _YPP_RAS
  use bulkeps,              ONLY : init_bulk
  use convolute,            ONLY : init_convolute
 #endif
@@ -74,7 +74,7 @@ subroutine spp_init_load(defs)
  call it(defs,'Format', 'Output format [(g)nuplot/(x)crysden]',p_format)
  call it(defs,'Direction', '[rlu] [1/2/3] for 1d or [12/13/23] for 2d [123] for 3D',p_dir)
  !
-#if defined _SPP_ELPH
+#if defined _YPP_ELPH
  !
  !EL-PH
  !
@@ -86,7 +86,7 @@ subroutine spp_init_load(defs)
  call it(defs,'PhStps', 'Energy steps',elph_steps)
  !
 #endif
-#if defined _SPP_RAS
+#if defined _YPP_RAS
  !
  ! RAS
  !

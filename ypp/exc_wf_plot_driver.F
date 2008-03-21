@@ -22,7 +22,7 @@
 subroutine exc_wf_plot_driver(check_only)
  !
  use pars,        ONLY:SP
- use SPP,         ONLY:p_format,p_dir
+ use YPP,         ONLY:p_format,p_dir
  use com,         ONLY:warning
  use D_lattice,   ONLY:a
  use vec_operate, ONLY:v_is_zero

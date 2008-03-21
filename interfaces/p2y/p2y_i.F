@@ -87,13 +87,13 @@
  !live_timing_is_on=.FALSE.
  !
 #if defined _P2Y_EXPORT
- call section('*','P(W) 2 S(elf) - pw_export.x version')
+ call section('*','P(W) 2 Y(ambo) - pw_export.x version')
 #elif defined _P2Y_V31
- call section('*','P(W) 2 S(elf) Ver(s). 3.1 ')
+ call section('*','P(W) 2 Y(ambo) Ver(s). 3.1 ')
 #elif defined _P2Y_V311
- call section('*','P(W) 2 S(elf) Ver(s). 3.1.1')
+ call section('*','P(W) 2 Y(ambo) Ver(s). 3.1.1')
 #elif defined _P2Y_V32
- call section('*','P(W) 2 S(elf) Ver. 3.2')
+ call section('*','P(W) 2 Y(ambo) Ver. 3.2')
 #else
  call error('Unknown version of P2Y. Stopping.')
 #endif

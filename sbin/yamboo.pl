@@ -104,6 +104,7 @@ foreach $directory_name (@directories_list) {
       #
       if($#gpl_only_source_files+1 == 0) {
          push(@directories_for_deletion,$directory_name);
+         push (@delete_list, $directory_name);
          print "... Directory marked for deletion\n"; 
          next;
       }
@@ -120,7 +121,7 @@ foreach $directory_name (@directories_list) {
          unless ($found) { 
             print "... Deleting non-GPL file: $file_name\n";
             unlink ($directory_name.$file_name); 
-#           push (@delete_list, $directory_name.$file_name);
+            push (@delete_list, $directory_name.$file_name);
 #           unlink (@delete_list); 
          }
       }
@@ -128,6 +129,7 @@ foreach $directory_name (@directories_list) {
       # Move the .objects_gpl to .objects
       #
       rename($directory_name.$GPL_OBJECTS_FILE,$directory_name.$OBJECTS_FILE);
+      push (@delete_list, $directory_name.$GPL_OBJECTS_FILE);
    }
 
    @local_filenames = &get_filenames_in_directory($directory_name);
@@ -154,6 +156,7 @@ FILE_GPL: foreach $file_name (@local_filenames) {
          $new_file_name = $file_name;
          $new_file_name =~ s/$GPL_FILE_SUFFIX//;
          rename($directory_name.$file_name,$directory_name.$new_file_name);
+         push (@delete_list, $directory_name.$file_name);
          next;
       }
       #
@@ -314,6 +317,13 @@ foreach $directory (@directories_for_deletion) {
 foreach $special_file (@special_files) {
    print " ---> Manually preprocess file $special_file \n";
 }
+
+
+      open(BATCH, ">", "svndelete.batch") 
+         or die "Error opening \n";
+      print BATCH join("\n svn delete ",@delete_list);
+close(BATCH);
+
 exit;
 
 ##########################################################

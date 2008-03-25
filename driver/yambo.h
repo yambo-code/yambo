@@ -18,7 +18,6 @@
   License along with this program; if not, write to the Free 
   Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-  "quiet", "q","Quiet mode",0,0,0,0
 */
  static Ldes opts[] = { /* Int Real Ch (Dummy)*/
   {"help",   "h","Short Help",0,0,0,0},              

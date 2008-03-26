@@ -1,0 +1,28 @@
+
+(3/26/2008)
+
+Here there are the actions to be taken to submit
+a bug fix in the trunk followed by a mergering
+with the gpl branch.
+
+In the next it is assumed that the trunk is in revision
+225 before the commitment and 228 afterword
+
+A. IN THE TRUNK
+
+A1. Apply bug fixes in trunk
+A2. Run
+    >./sbin/yambo_save.tcsh r 
+    to increase the revision counter in the source
+A3. svn commit
+A4. svn up
+
+B. IN THE BRANCH
+
+B1. svn merge -r 225:228 svn://anomaly.roma2.infn.it/self-3.0/trunk
+B2. Run
+    >./sbin/yambo_save.tcsh r 
+    to increase the revision counter in the source
+B3. svn commit
+B4. svn up
+ 

@@ -57,5 +57,5 @@
 #endif
   {NULL,NULL,NULL,0,0,0,0}
  };
- char *tool="Yambo";
+ char *tool="yambo";
  char *tdesc="A shiny pot of fun and happiness [C.D.Hogan]";

@@ -149,7 +149,7 @@ if test -z "${FCFLAGS}"; then
   i?86*linux*)
     case "${FC}" in
     *pgf90*)
-      FCFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign"
+      FCFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
       UFFLAGS="-O0"
       FCMFLAG="-Mnomain"
       ;;
@@ -212,7 +212,7 @@ if test -z "${FCFLAGS}"; then
   ia64*linux* | *x86*64* )
     case "${FC}" in
     *pgf90*)
-      FCFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign"
+      FCFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
       FCMFLAG="-Mnomain"
       ;;
     *abf90*)

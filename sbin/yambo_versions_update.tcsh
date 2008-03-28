@@ -30,7 +30,7 @@ if ( $#argv > 1 ) goto HELP
 # Get current version & revision
 #
 set dummy=`svn info -r HEAD | grep 'Revision'`
-set revision_old=`echo $dummy | $awk '{gsub("Revision: ","");print $0}'`
+set revision_HEAD=`echo $dummy | $awk '{gsub("Revision: ","");print $0}'`
 #
 set dummy=`cat include/version.inc | grep 'code_version(1)'`
 set version_old=`echo $dummy | $awk '{gsub("code_version\\(1\\)=","");print $0}'`
@@ -38,13 +38,15 @@ set dummy=`cat include/version.inc | grep 'code_version(2)'`
 set patch_old=`echo $dummy | $awk '{gsub("code_version\\(2\\)=","");print $0}'`
 set dummy=`cat include/version.inc | grep 'code_version(3)'`
 set sub_old=`echo $dummy | $awk '{gsub("code_version\\(3\\)=","");print $0}'`
+set dummy=`cat include/version.inc | grep 'code_revision'`
+set revision_old=`echo $dummy | $awk '{gsub("code_revision=","");print $0}'`
 #
 # Increase counters
 #
 set version_new = $version_old
 set patch_new = $patch_old
 set sub_new = $sub_old
-set revision_new = $revision_old
+set revision_new = $revision_HEAD
 #
 if ( "$argv[1]" == "v" ) @ version_new ++
 if ( "$argv[1]" == "v" ) @ patch_new = 0
@@ -74,7 +76,7 @@ echo
 echo 'code_version(1)='$version_new  >  include/version.inc
 echo 'code_version(2)='$patch_new    >> include/version.inc
 echo 'code_version(3)='$sub_new      >> include/version.inc
-echo 'code_revision  ='$revision_new >> include/version.inc
+echo 'code_revision='$revision_new >> include/version.inc
 #
 # Prepare new configure script
 #

@@ -102,15 +102,15 @@ subroutine barriers()
  ! GPL_EXCLUDE_START
  !
  if (l_sc_run) then
-   call switch_off_runlevel('all',on_name='scpot xxvxc'//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='scpot xxvxc '//trim(always_runlevels))
    goto 1
  endif
  if (l_acfdt) then
-   call switch_off_runlevel('all',on_name='acfdt xxvxc'//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='acfdt xxvxc '//trim(always_runlevels))
    goto 1
  endif
  if (l_life) then
-   call switch_off_runlevel('all',on_name='life em1d'//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='life em1d '//trim(always_runlevels))
    goto 1
  endif
  if (gw0_chosex) then

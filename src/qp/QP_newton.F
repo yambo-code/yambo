@@ -123,7 +123,6 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
        Z(1)=1.
      endif
      !
-     !
      qp%E(i1)=Eqp(1)
      qp%Z(i1)=Z(1)
      !

@@ -21,7 +21,8 @@
 !
 subroutine ypp_init_load(defs)
  !
- use it_m,          ONLY:it,initdefs,E_unit
+ use it_m,          ONLY:it,initdefs,E_unit,G_unit
+ use wave_func,     ONLY:wf_ng
  use YPP
 #if defined _YPP_RAS
  use bulkeps,              ONLY : init_bulk
@@ -60,6 +61,7 @@ subroutine ypp_init_load(defs)
  !
  !EXC WF
  !
+ call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit)
  call it(defs,'Degen_Step', 'Maximum energy separation of two degenerate states',&
 &                           deg_energy,E_unit)
  call it(defs,'RNorm','Normalize residuals [yes/no]', R_normalize)

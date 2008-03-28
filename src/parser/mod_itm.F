@@ -309,7 +309,7 @@ module it_m
        do i1=1,ni1v
          if (trim(i1vars(i1,1))==trim(name)) then
            if (initmode==4) call parser(trim(name),defs%i1def(i1))
-           if (initmode==2) call init_convert(0.,defval,i1vars(i1,3))
+           if (initmode==2) call init_convert(0.,defval,i1vars(i1,3),.TRUE.)
            if (initmode<=3) defs%i1def(i1)=defval
            defval=defs%i1def(i1)
            v_id=i1
@@ -362,7 +362,7 @@ module it_m
              if (initmode==4) call parser(trim(name),defs%i2def(i1,:))
              if (initmode==2) then
                do i2=1,dim
-                 call init_convert(0.,defval(i2),i2vars(i1,3))
+                 call init_convert(0.,defval(i2),i2vars(i1,3),.TRUE.)
                enddo
              endif
              if (initmode<=3) defs%i2def(i1,:)=defval
@@ -377,7 +377,7 @@ module it_m
              if (initmode==4) call parser(trim(name),defs%i3def(i1,:))
              if (initmode==2) then
                do i2=1,dim
-                 call init_convert(0.,defval(i2),i3vars(i1,3))
+                 call init_convert(0.,defval(i2),i3vars(i1,3),.TRUE.)
                enddo
              endif
              if (initmode<=3) defs%i3def(i1,:)=defval
@@ -756,7 +756,7 @@ module it_m
          if (i1st(i2)==ifpos) then
            if (.not.Iverbose_enough(trim(i1vars(i2,1)),1,defs%i1def(i2))) cycle
            nflines=nflines+1
-           if (ou/=20) call init_convert(0.,defs%i1def(i2),i1vars(i2,3))
+           if (ou/=20) call init_convert(0.,defs%i1def(i2),i1vars(i2,3),.FALSE.)
            ch(2)=gen_fmt((/defs%i1def(i2)/))
            write (ch(1),'(3a)') '(2a,',trim(ch(2)),',t26,a,t30,2a)'
            write (flines(nflines),trim(ch(1))) trim(i1vars(i2,1)),'=',&
@@ -766,8 +766,8 @@ module it_m
        do i2=1,ni2v
          if (i2st(i2)==ifpos) then
            if (.not.Iverbose_enough(trim(i2vars(i2,1)),2,defs%i2def(i2,:))) cycle
-           if (ou/=20) call init_convert(0.,defs%i2def(i2,1),i2vars(i2,3))
-           if (ou/=20) call init_convert(0.,defs%i2def(i2,2),i2vars(i2,3))
+           if (ou/=20) call init_convert(0.,defs%i2def(i2,1),i2vars(i2,3),.FALSE.)
+           if (ou/=20) call init_convert(0.,defs%i2def(i2,2),i2vars(i2,3),.FALSE.)
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(i2vars(i2,1))
            ch(2)=gen_fmt(defs%i2def(i2,:))
@@ -783,9 +783,9 @@ module it_m
        do i2=1,ni3v
          if (i3st(i2)==ifpos) then
            if (.not.Iverbose_enough(trim(i3vars(i2,1)),3,defs%i3def(i2,:))) cycle
-           if (ou/=20) call init_convert(0.,defs%i3def(i2,1),i3vars(i2,3))
-           if (ou/=20) call init_convert(0.,defs%i3def(i2,2),i3vars(i2,3))
-           if (ou/=20) call init_convert(0.,defs%i3def(i2,3),i3vars(i2,3))
+           if (ou/=20) call init_convert(0.,defs%i3def(i2,1),i3vars(i2,3),.FALSE.)
+           if (ou/=20) call init_convert(0.,defs%i3def(i2,2),i3vars(i2,3),.FALSE.)
+           if (ou/=20) call init_convert(0.,defs%i3def(i2,3),i3vars(i2,3),.FALSE.)
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(i3vars(i2,1))
            ch(2)=gen_fmt(defs%i3def(i2,:))
@@ -802,7 +802,7 @@ module it_m
          if (c1st(i2)==ifpos) then
            if (.not.Cverbose_enough(trim(c1vars(i2,1)),1,defs%c1def(i2))) cycle
            unit_factor=1.
-           call init_convert(unit_factor,0,c1vars(i2,3))
+           call init_convert(unit_factor,0,c1vars(i2,3),.FALSE.)
            nflines=nflines+1
            v(1)=real(defs%c1def(i2))*unit_factor
            v(2)=aimag(defs%c1def(i2))*unit_factor
@@ -818,7 +818,7 @@ module it_m
          if (r1st(i2)==ifpos) then
            if (.not.Rverbose_enough(trim(r1vars(i2,1)),1,defs%r1def(i2))) cycle
            unit_factor=1.
-           call init_convert(unit_factor,0,r1vars(i2,3))
+           call init_convert(unit_factor,0,r1vars(i2,3),.FALSE.)
            nflines=nflines+1
            ch(2)=gen_fmt(r_v=(/defs%r1def(i2)*unit_factor/))
            write (ch(1),'(3a)') '(2a,',trim(ch(2)),',t26,a,t30,2a)'
@@ -831,7 +831,7 @@ module it_m
          if (r2st(i2)==ifpos) then
            if (.not.Rverbose_enough(trim(r2vars(i2,1)),2,defs%r2def(i2,:))) cycle
            unit_factor=1.
-           call init_convert(unit_factor,0,r2vars(i2,3))
+           call init_convert(unit_factor,0,r2vars(i2,3),.FALSE.)
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(r2vars(i2,1))
            ch(2)=gen_fmt(r_v=defs%r2def(i2,:)*unit_factor)
@@ -848,7 +848,7 @@ module it_m
          if (r3st(i2)==ifpos) then
            if (.not.Rverbose_enough(trim(r3vars(i2,1)),3,defs%r3def(i2,:))) cycle
            unit_factor=1.
-           call init_convert(unit_factor,0,r3vars(i2,3))
+           call init_convert(unit_factor,0,r3vars(i2,3),.FALSE.)
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(r3vars(i2,1))
            ch(2)=gen_fmt(r_v=defs%r3def(i2,:)*unit_factor)
@@ -866,7 +866,7 @@ module it_m
          if (r4st(i2)==ifpos) then
            if (.not.Rverbose_enough(trim(r4vars(i2,1)),4,defs%r4def(i2,:))) cycle
            unit_factor=1.
-           call init_convert(unit_factor,0,r4vars(i2,3))
+           call init_convert(unit_factor,0,r4vars(i2,3),.FALSE.)
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(r4vars(i2,1))
            ch(2)=gen_fmt(r_v=defs%r4def(i2,:)*unit_factor)

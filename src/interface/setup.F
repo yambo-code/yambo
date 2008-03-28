@@ -29,9 +29,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         inv_index,atoms_string,load_PT_elements,n_atoms,znucl,&
 &                         n_atom_species,PT_elements
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,&
-&                         rl_sop,bz_samp,g_vec
+&                         rl_sop,bz_samp,g_vec,E_of_shell
  use com,            ONLY:msg,error
- use stderr,         ONLY:intc
+ use stderr,         ONLY:intc,real2ch
  use IO_m,           ONLY:REP,DUMP,NONE
  use vec_operate,    ONLY:cross_product,c2a
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
@@ -180,21 +180,23 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !============================
  !
  call G_shells_finder()
- call msg('rn','Shells, format: [Snn] G`s')
+ call msg('rn','Shells, format: [S#] G_RL(mHa)')
  !
- do i1=n_g_shells,max(n_g_shells-27,1),-5
+ do i1=n_g_shells,max(n_g_shells-27,1),-4
    dumb_ch1=' '
-   do i2=i1,max(i1-4,1),-1
-     write (dumb_ch2,'(a,1x,a,i4.4,a,i6)') trim(dumb_ch1),'[S',i2,']:',ng_in_shell(i2)
+   do i2=i1,max(i1-3,1),-1
+     dumb_ch2=trim(dumb_ch1)//' [S'//trim(intc(i2))//']:'//trim(intc(ng_in_shell(i2)))//&
+&             '('//trim(real2ch(E_of_shell(i2)*1000.))//')'
      dumb_ch1=dumb_ch2
    enddo
    call msg('r',trim(dumb_ch2))
  enddo
  call msg('r',' ...')
- do i1=min(12,n_g_shells),1,-6
+ do i1=min(12,n_g_shells),1,-4
    dumb_ch1=' '
-   do i2=i1,max(i1-5,1),-1
-     write (dumb_ch2,'(a,1x,a,i3.3,a,i4)') trim(dumb_ch1),'[S',i2,']:',ng_in_shell(i2)
+   do i2=i1,max(i1-3,1),-1
+     dumb_ch2=trim(dumb_ch1)//' [S'//trim(intc(i2))//']:'//trim(intc(ng_in_shell(i2)))//&
+&             '('//trim(real2ch(E_of_shell(i2)*1000.))//')'
      dumb_ch1=dumb_ch2
    enddo
    call msg('r',trim(dumb_ch2))

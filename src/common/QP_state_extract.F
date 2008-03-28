@@ -38,6 +38,7 @@ integer function QP_state_extract(state)
  ! state(2) = ik2
  ! state(3) = ib1
  ! state(4) = ib2
+ !
 3 continue
  !
  do i1=state(1),QP_nk
@@ -65,19 +66,23 @@ integer function QP_state_extract(state)
  !
 2 ib2=i1-1
  !
+ ! Check FORWARD for a set of contiguous K-points with same bands range
+ !
  ik2=ik1
  do i1=ik1+1,QP_nk
-   flag=all((/QP_state(ib1:ib2,i1)/))
-   if (flag.and.ib1/=1) flag=.not.QP_state(ib1-1,i1)
+   flag=all((/QP_state(ib1:ib2,ik1+1:i1)/))
+   if (flag.and.ib1/=1    ) flag=.not.QP_state(ib1-1,i1)
    if (flag.and.ib2/=QP_nb) flag=.not.QP_state(ib2+1,i1)
    if (flag) ik2=i1
  enddo
  !
  proposed_state=(/ik1,ik2,ib1,ib2/)
  !
+ ! Check BACKWARD if ALL K-points have same bands range
+ !
  do i1=ik1-1,1,-1
-   flag=all((/QP_state(ib1:ib2,i1)/))
-   if (flag.and.ib1/=1) flag=.not.QP_state(ib1-1,i1)
+   flag=all((/QP_state(ib1:ib2,i1:ik1-1)/))
+   if (flag.and.ib1/=1    ) flag=.not.QP_state(ib1-1,i1)
    if (flag.and.ib2/=QP_nb) flag=.not.QP_state(ib2+1,i1)
    if (flag) then
      state=proposed_state

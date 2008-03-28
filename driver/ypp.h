@@ -40,5 +40,5 @@
 #endif
   {NULL,NULL,NULL,0,0,0,0}
  };
- char *tool="Ypp";
+ char *tool="ypp";
  char *tdesc="Y(ambo) P(ost) P(rocessor)";

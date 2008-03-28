@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine init_convert(rfac,ivar,v_descr)
+subroutine init_convert(rfac,ivar,v_descr,force_RL)
  !
  use pars
  implicit none
@@ -27,18 +27,23 @@ subroutine init_convert(rfac,ivar,v_descr)
  real(SP):: rfac
  integer :: ivar
  character(*)::v_descr
+ logical     ::force_RL
  !
  if (ivar/=0) then
    if (index(v_descr,'RL')/=0) then
      call Gclose(ivar,'tRL')
    else if (index(v_descr,'mHa')/=0) then
-     call Gclose(ivar,'tmHa')
+     if (force_RL     ) call Gclose(ivar,'tRL')
+     if (.not.force_RL) call Gclose(ivar,'tmHa')
    else if (index(v_descr,'Ha')/=0) then
-     call Gclose(ivar,'tHa')
+     if (force_RL     ) call Gclose(ivar,'tRL')
+     if (.not.force_RL) call Gclose(ivar,'tHa')
    else if (index(v_descr,'mRy')/=0) then
-     call Gclose(ivar,'tmRy')
+     if (force_RL     ) call Gclose(ivar,'tRL')
+     if (.not.force_RL) call Gclose(ivar,'tmRy')
    else if (index(v_descr,'Ry')/=0) then
-     call Gclose(ivar,'tRy')
+     if (force_RL     ) call Gclose(ivar,'tRL')
+     if (.not.force_RL) call Gclose(ivar,'tRy')
    endif
    return
  endif

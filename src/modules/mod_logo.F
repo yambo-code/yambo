@@ -248,7 +248,11 @@ module LOGO
        ch=logo_line(i1)
        do while (index(ch,'S')/=0) 
          iA=index(ch,'S')
+#if defined _aix
+         ch(iA:iA)="\\"
+#else
          ch(iA:iA)="\"
+#endif
        enddo
        logo_line(i1)=ch
      enddo

@@ -230,8 +230,8 @@ module com
        if (unit_==6.and.i1>=n_logo_lines-1) cycle
        if (unit_==6) call live_time_msg("n",logo_line(i1),"","%s",NO_CPUT=.true.)
      enddo
-     if (unit_/=6.and.trim(comment_)=='')  write (unit_,trim(space_)) ' '
-     if (unit_/=6.and.trim(comment_)=='#')  write (unit_,trim(space_)) '#'
+     if (unit_/=6.and.trim(comment_)=='')  write (unit_,'(a)') ' '
+     if (unit_/=6.and.trim(comment_)=='#')  write (unit_,'(a)') '#'
      !
    end subroutine
    !

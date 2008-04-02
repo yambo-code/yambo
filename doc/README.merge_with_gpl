@@ -11,19 +11,21 @@ In the next it is assumed that the trunk is in revision
 A. IN THE TRUNK
 
 A1. Apply bug fixes in trunk
-A2. Run
-    >./sbin/yambo_save.tcsh r 
-    to increase the revision counter in the source
 A3. svn commit
 A4. svn up
 
 B. IN THE BRANCH
 
 B1. svn merge -r 225:228 svn://anomaly.roma2.infn.it/trunk
-B2. Run
-    >./sbin/yambo_save.tcsh r 
-    to increase the revision counter in the source
 B3. svn commit
 B4. svn up
- 
-#test commit
+
+C. IN THE BRANCH & IN THE TRUNK
+
+A2. Run
+    >$PATH_TO_THE_TRUNK/sbin/yambo_save.tcsh r 
+    to increase the revision counter in the source
+
+D. IN THE REPOSITORY (UP OF TRUNK)
+
+D1. svn commit -m "Revision syncronization"

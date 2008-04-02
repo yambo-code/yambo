@@ -365,16 +365,16 @@ module timing
    subroutine cti(tcpu)
      implicit none
      real(DP) tcpu
-#if defined irix
+#if defined _irix
      external cclock
      call cclock(tcpu)      
 #endif 
-#if defined linux 
+#if defined _linux 
      real(SP) tmp(2) 
      real(DP) etime
      tcpu=etime(tmp)
 #endif
-#if defined ibm || defined aix || defined ppc_linux
+#if defined _ibm || defined _aix || defined _ppc_linux
      integer :: mclock
      tcpu = mclock()*0.01d0
 #endif

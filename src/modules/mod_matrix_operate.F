@@ -197,7 +197,7 @@ module matrix_operate
      ! Decide which to use among LK or SLK
      !
      if (ncpu==1.or.M_size/ncpu<min_cpu_block_size) lib_in_use=USE_LK 
-#if ! defined SLK
+#if ! defined _SLK
      lib_in_use=USE_LK
 #endif
      !
@@ -346,7 +346,7 @@ module matrix_operate
        return
      endif
      !
-#if defined SLK
+#if defined _SLK
      !
      ! =============== PARALLEL SECTION ===============
      !

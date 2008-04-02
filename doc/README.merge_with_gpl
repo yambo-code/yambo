@@ -19,7 +19,7 @@ A4. svn up
 
 B. IN THE BRANCH
 
-B1. svn merge -r 225:228 svn://anomaly.roma2.infn.it/self-3.0/trunk
+B1. svn merge -r 225:228 svn://anomaly.roma2.infn.it/trunk
 B2. Run
     >./sbin/yambo_save.tcsh r 
     to increase the revision counter in the source

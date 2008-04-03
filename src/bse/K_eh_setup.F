@@ -196,6 +196,7 @@ subroutine K_eh_setup(iq,Ken,Xk)
    endif
    !
    if (.not.BS_res_K_corr) cycle
+   !
    allocate(O_v_state(Xk%nbz,maxval(O_n_v_states),n_sp_pol),&
 &           O_c_state(Xk%nbz,maxval(O_n_c_states),n_sp_pol))
    call mem_est("O_v_state O_c_state",(/size(O_v_state),size(O_c_state)/),(/IP,IP/))

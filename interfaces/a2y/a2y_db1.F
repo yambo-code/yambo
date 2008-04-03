@@ -100,7 +100,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  read(11) 
  read(11) a_nsym, en%nb, ng_vec, ishm, pp_n_l_comp_max
  n_bands= en%nb
-!
+ !
  n_spin=1
  n_spinor=1
  n_sp_pol=1

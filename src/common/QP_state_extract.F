@@ -70,7 +70,12 @@ integer function QP_state_extract(state)
  !
  ik2=ik1
  do i1=ik1+1,QP_nk
-   flag=all((/QP_state(ib1:ib2,ik1+1:i1)/))
+   flag=.true.
+   do i2=ib1,ib2
+     do i3=ik1+1,i1
+       if (.not.QP_state(i2,i3)) flag=.false.
+     enddo
+   enddo
    if (flag.and.ib1/=1    ) flag=.not.QP_state(ib1-1,i1)
    if (flag.and.ib2/=QP_nb) flag=.not.QP_state(ib2+1,i1)
    if (flag) ik2=i1
@@ -81,7 +86,12 @@ integer function QP_state_extract(state)
  ! Check BACKWARD if ALL K-points have same bands range
  !
  do i1=ik1-1,1,-1
-   flag=all((/QP_state(ib1:ib2,i1:ik1-1)/))
+   flag=.true.
+   do i2=ib1,ib2
+     do i3=i1,ik1-1
+       if (.not.QP_state(i2,i3)) flag=.false.
+     enddo
+   enddo
    if (flag.and.ib1/=1    ) flag=.not.QP_state(ib1-1,i1)
    if (flag.and.ib2/=QP_nb) flag=.not.QP_state(ib2+1,i1)
    if (flag) then

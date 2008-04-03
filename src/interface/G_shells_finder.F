@@ -63,6 +63,7 @@ subroutine G_shells_finder()
  ! Init
  !
  allocate(g_rot(nsym,ng_closed))
+ !
  g_rot=0
  ng_in_shell_TMP=0
  E_of_shell_TMP=0.
@@ -75,7 +76,7 @@ subroutine G_shells_finder()
  ng_in_shell_TMP(1)=1
  i_G_shell=1
  !
- call live_timing('Shells finder',ng_closed-1)
+ if (ng_closed>1) call live_timing('Shells finder',ng_closed-1)
  !
  do i1=2,ng_closed
    i_G_below=0
@@ -117,18 +118,18 @@ subroutine G_shells_finder()
    endif
    !
  enddo
- call live_timing()
+ if (ng_closed>1) call live_timing()
  !
  !Check for holes
  !
  n_g_shells_no_holes=n_g_shells
  do i1=n_g_shells,2,-1
- 
+   !
    if ( all(g_rot(:,:ng_in_shell_TMP(i1))/=0) ) then
      n_g_shells_no_holes=i1
      exit 
    endif
- 
+   !
  enddo
  n_g_shells=n_g_shells_no_holes
  !

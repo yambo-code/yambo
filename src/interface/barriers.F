@@ -122,6 +122,10 @@ subroutine barriers()
    goto 1
  endif
  !
+#if defined _TB
+ call switch_off_runlevel('all',on_name='chi optics setup')
+#endif
+ !
  ! GPL_EXCLUDE_END
  !
  if (gw0_ppa) then

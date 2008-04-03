@@ -16,8 +16,8 @@ A4. svn up
 
 B. IN THE BRANCH
 
-B1. svn merge -r 225:228 svn://anomaly.roma2.infn.it/trunk
-B3. svn commit
+B1. svn merge -r 225:228 svn://anomaly.roma2.infn.it/yambo/trunk
+B3. svn commit -m "merge from trunk 225:228"
 B4. svn up
 
 C. IN THE BRANCH & IN THE TRUNK

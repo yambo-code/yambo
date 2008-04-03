@@ -71,6 +71,14 @@ subroutine bz_samp_indexes(k,Xk,q)
  user_defined_qpts=.false.
  gamma_point_only=.false.
  !
+#if defined _TB
+ gamma_point_only=.TRUE.
+ if (allocated(q_pt)) deallocate(q_pt)
+ allocate(q_pt(1,3))
+ q_pt=0.
+ nqibz=1
+#endif
+ !
  call parser('MinusQ',impose_minus_q)
  !
  if (.not.bse_scattering) bse_scattering=l_bse

@@ -1,1 +1,5 @@
+#if defined _SC
+objs =	SC_driver.o V_Hartree.o V_exx.o SC_mute.o V_to_H.o
+#else
 objs =
+#endif

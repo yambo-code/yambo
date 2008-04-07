@@ -1,1 +1,5 @@
+#if defined _REELS
+objs = reelsdriver.o epsinv.o loss_bulk.o average_epsm1_q.o calc_loss_function.o write_output.o
+#else
 objs =
+#endif

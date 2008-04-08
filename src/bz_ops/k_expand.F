@@ -23,7 +23,7 @@ subroutine k_expand(k)
  !
  ! Outputs:
  ! 
- !   k%star k%nstar k%weights k%nbz
+ !   k%star k%sstar k%nstar k%weights k%nbz
  !
  !Given the kpoints and the simmetry operations
  !this sub. calculates weights (and rangs of the point

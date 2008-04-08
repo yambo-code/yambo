@@ -72,7 +72,11 @@ subroutine K_eh_setup(iq,Ken,Xk)
        do ic=Ken%nbf+1,BS_bands(2)
          !
          ik =Xk%sstar(ikbz,1)
+#if defined _TB
+         ikp=ik
+#else
          ikp=Xk%sstar(qindx_X(iq,ikbz,1),1)
+#endif
          !
          ! GPL_EXCLUDE_START
          !

@@ -123,7 +123,7 @@ subroutine barriers()
  endif
  !
 #if defined _TB
- call switch_off_runlevel('all',on_name='chi optics setup')
+ call switch_off_runlevel('all',on_name='chi optics setup bse bss')
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -150,6 +150,8 @@ subroutine barriers()
  ! ENVIROMENTS
  !=============
  !
+#if !defined _TB
+ !
  if (.not.Xk_grid_is_uniform) then
    !
    ! For non uniform grids I have to switch off all logicals that are
@@ -157,6 +159,8 @@ subroutine barriers()
    !
    call switch_off_runlevel('all',on_name='chi optics '//trim(always_runlevels))
  endif 
+ !
+#endif
  !
  ! GPL_EXCLUDE_START
  !

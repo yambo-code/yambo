@@ -156,9 +156,7 @@ cclean:
 define make_message
  echo;echo "YAMBO" @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ r.@SREVISION@ targets;echo;\
  for target in $(TARGETS); do echo  " [stable] $$target" ; done;echo;\
-# -- GPL_END --
  for target in $(PROJECTS); do echo " [devel] $$target" ; done;echo;\
-# -- GPL_START --
  for target in $(UTILS); do echo  " [util] $$target" ; done;echo
 endef
 define mksrc

@@ -46,7 +46,6 @@ CFGFILES = config/setup config/Makefile config/report  \
 	   src/external_c/.objects Makefile driver/version.h \
        sbin/objects_debug.sh
 TARGETS  = all yambo interfaces ypp 
-EXE      = $(TARGETS)
 INTERFCS = a2y p2y e2y
 #
 # Libraries (ordered for compiling & linking)
@@ -63,6 +62,37 @@ MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl interface \
 # YPP
 #
 YPPLIBS      = $(BASIC_LIBS) bz_ops qp_ctl interface bse
+#
+# PROJECTS
+#
+#if defined _BIGSYS
+PROJECTS = yambo_bigsys 
+PJ_BIGSYSLIBS       = $(MAIN_LIBS) 
+#endif
+#if defined _TB
+PROJECTS = yambo_tb
+#endif
+#if defined _RAS
+PROJECTS = yambo_ras yambo_ras_bigsys ypp_ras
+PJ_RASLIBS   = $(BASIC_LIBS) ras_reels_mods coulomb bz_ops qp_ctl ras \
+               interface tddft pol_function qp acfdt bse
+YPPRASLIBS   = $(BASIC_LIBS) ras_reels_mods bz_ops qp_ctl interface bse
+#endif
+#if defined _REELS
+PROJECTS = yambo_reels
+PJ_REELSLIBS = $(BASIC_LIBS) ras_reels_mods coulomb bz_ops qp_ctl reels \
+               interface tddft pol_function qp acfdt bse
+#endif
+#if defined _SC
+PROJECTS = yambo_sc
+PJ_SCLIBS       = $(MAIN_LIBS) sc
+#endif
+#if defined _PH
+PROJECTS = yambo_ph ypp_ph
+PJ_PHLIBS       = $(MAIN_LIBS) 
+#endif
+EXE      = $(TARGETS) $(PROJECTS)
+
 
 nothing: 
 	@$(make_message)
@@ -78,7 +108,45 @@ libs:
 yambo: libs
 	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)
 	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
-#
+#if defined _BIGSYS
+yambo_bigsys: libs
+	@LIBS2DO="$(PJ_BIGSYSLIBS)";ADF="-D_BIGSYS"; $(mksrc)
+	@X2DO="yambo_bigsys"; XPATH="driver";XLIBS="$(PJ_BIGSYSLIBS)";ADF="-D_BIGSYS";$(mkx)
+#endif
+#if defined _TB
+yambo_tb: libs
+	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_TB"; $(mksrc)
+	@X2DO="yambo_tb"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_TB";$(mkx)
+#endif
+#if defined _RAS
+yambo_ras: libs
+	@LIBS2DO="$(PJ_RASLIBS)";ADF="-D_RAS"; $(mksrc)
+	@X2DO="yambo_ras"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS";$(mkx)
+yambo_ras_bigsys: libs
+	@LIBS2DO="$(PJ_RASLIBS)";ADF="-D_RAS -D_BIGSYS"; $(mksrc)
+	@X2DO="yambo_ras_bigsys"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS -D_BIGSYS";$(mkx)
+ypp_ras: libs
+	@LIBS2DO="$(YPPRASLIBS)" ; $(mksrc)
+	@X2DO="ypp_ras" ;XPATH="ypp";XLIBS="$(YPPRASLIBS)"; ADF="-D_YPP_RAS";$(mkx)
+#endif
+#if defined _REELS
+yambo_reels: libs
+	@LIBS2DO="$(PJ_REELSLIBS)";ADF="-D_REELS"; $(mksrc)
+	@X2DO="yambo_reels"; XPATH="driver";XLIBS="$(PJ_REELSLIBS)";ADF="-D_REELS";$(mkx)
+#endif
+#if defined _SC
+yambo_sc: libs
+	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_SC"; $(mksrc)
+	@X2DO="yambo_sc"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_SC";$(mkx)
+#endif
+#if defined _PH
+yambo_ph: libs
+	@LIBS2DO="$(PJ_PHLIBS)";ADF="-D_ELPH"; $(mksrc)
+	@X2DO="yambo_ph"; XPATH="driver";XLIBS="$(PJ_PHLIBS)";ADF="-D_ELPH";$(mkx)
+ypp_ph: libs
+	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
+	@X2DO="Ypp_ph" ;XPATH="Ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_ELPH";$(mkx)
+#endif
 interfaces: libs
 	@LIBS2DO="$(2SLIBS)" ; $(mksrc)
 	@LIBS2DO="int_modules"; DIR2GO="interfaces" ; $(mklib)
@@ -113,6 +181,7 @@ cclean:
 define make_message
  echo;echo "YAMBO" @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ r.@SREVISION@ targets;echo;\
  for target in $(TARGETS); do echo  " [stable] $$target" ; done;echo;\
+ for target in $(PROJECTS); do echo " [devel] $$target" ; done;echo;\
  for target in $(UTILS); do echo  " [util] $$target" ; done;echo
 endef
 define mksrc

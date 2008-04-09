@@ -5,7 +5,7 @@
 # Usage:
 # perl mergexml.pl -p="PROJECT"
 # C. Hogan, 2008
-# Version 1.7
+# Version 1.8
 #
 #
 # Status
@@ -25,15 +25,16 @@ use File::Find;
 #
 $manual_preprocess_files = "X_os.F ";
 $exclude_files = "yamboo.pl ";
-@core_projects = ('_yambo','_ypp','_p2y','_a2y','_f2y','_e2y');
-@user_projects = ('_RAS','_REELS','_BIGSYS','_ELPH','_SC','_BS_CPL','_YPP_ELPH','_YPP_RAS','_PH','_TB');
-$user_projects_string = join(" ",@user_projects);
+@core_projects = ('yambo','ypp','p2y','a2y','f2y','e2y');
+@user_projects = ('RAS','REELS','BIGSYS','ELPH','SC','BS_CPL','YPP_ELPH','YPP_RAS','PH','TB');
+$user_projects_string = join(" ",@user_projects); # Append a space
 $files_to_skip = $manual_preprocess_files.$exclude_files;
 #
-# Exclude #defines like _SC_KERNEL by adding a space or newline character
+# Exclude matches to #defines like _SC_KERNEL by adding a space or newline character
+# CARE: Do not use @user_projects after this point.
 #
-@tmp1 = map { $_." " } @user_projects;
-@tmp2 = map { $_."\n" } @user_projects;
+@tmp1 = map { "_".$_." " } @user_projects;
+@tmp2 = map { "_".$_."\n" } @user_projects;
 @available_projects = (@tmp1,@tmp2);
 #
 # User interface
@@ -42,11 +43,28 @@ if($help or not $selected_project){
    print "\nSyntax: yamboo.pl -p=\"GPL\" \n   or   yamboo.pl -p=\"PROJECT\" \n  where PROJECT is one of: $user_projects_string\n" and exit;
 }
 
-print "\nProcessing yambo for $selected_project ...\n\n";
-unless($user_projects_string =~ m/$selected_project/ or $selected_project eq "GPL"){
-  print "Project $selected_project not available. Select one of: $user_projects_string.\n";
-  exit; 
+#
+# Check for exact match
+#
+$selected_project_found = 0;
+foreach $project (@user_projects) {
+   if($project eq $selected_project or $project eq "GPL"){ $selected_project_found = 1};
 }
+if($selected_project_found){
+  #
+  # Open the log file for writing
+  #
+  open(LOG, ">yamboo.log") or die "Error opening log\n";
+  &io("\nProcessing source for project $selected_project \n\n");
+  &io("Protected files: $files_to_skip \n");
+}
+else {
+  print "\nProject $selected_project not available. Select one of: $user_projects_string.\n" and exit;
+}
+#
+# Special tag which flags GPL tags to be ignored.
+#
+$PROJECT_IGNORE_TAG = "$selected_project"."_IGNORE";
 #
 # Hard wired tags
 #
@@ -58,11 +76,6 @@ $SVN_DIR = ".svn";
 $GPL_OBJECTS_FILE = ".objects_gpl";
 $OBJECTS_FILE = ".objects";
 $GPL_FILE_SUFFIX = "_gpl";
-#
-# Open the log file for writing
-#
-open(LOG, ">yamboo.log") or die "Error opening log\n";
-&io("Protected files: $files_to_skip \n");
 #
 # Get list of all directories, recursively
 #
@@ -78,6 +91,7 @@ find sub {
 #######################################################################
 
 #@directories_list = ();
+#push(@directories_list,"src/ras_reels_mods/");
 #push(@directories_list,"config/");
 #push(@directories_list,"driver/");
 #push(@directories_list,"ypp/");
@@ -90,8 +104,6 @@ DIRECTORY_LOOP: foreach $directory_name (@directories_list) {
    # Get all filenames in directory, excluding subdirectories and binaries
    #
    @local_filenames = &get_filenames_in_directory($directory_name);
-
-#  print LOG "... Files: ".join("\t",@local_filenames)."\n"; 
 
    #==================================================================#
    # GPL_OBJECT present: preprocess .objects_gpl file,                #
@@ -152,13 +164,13 @@ DIRECTORY_LOOP: foreach $directory_name (@directories_list) {
       #
       # Move the .objects_gpl to .objects
       #
+      &io("... Reverting GPL only $GPL_OBJECTS_FILE file\n");
       rename($directory_name.$GPL_OBJECTS_FILE,$directory_name.$OBJECTS_FILE);
       push (@delete_list, $directory_name.$GPL_OBJECTS_FILE);
    }
 
    @local_filenames = &get_filenames_in_directory($directory_name);
 #  print LOG "REMAINING: ".join("\t",@local_filenames)."\n"; 
-#  print "REMAINING: ".join("\t",@local_filenames)."\n"; 
 
    #==================================================================#
    # Preprocess OTHER _gpl files                                      #
@@ -214,20 +226,29 @@ DIRECTORY_LOOP: foreach $directory_name (@directories_list) {
       #
       $gpl_test = grep(/$START_INCLUDE_TAG|$START_EXCLUDE_TAG/,@source_contents);
       if(not $gpl_test) { next }
-      &io("... Processing GPL tagged file $file_name\n");
+      &io("... Processing GPL tagged file $file_name \n");
+#     elsif($found_exc) {&io("... EXCLUDE tags\n")}
       #
       # Strip non GPL lines
       #
       open(MODIFIED_FILE, ">", $directory_name.$file_name."-stripped") 
          or die "Error opening $directory_name.$file_name -stripped\n";
-      $exclude_status = 0;
-      $include_status = 0;
+      $exclude_status = 0; 
+      $include_status = 0; 
       while($line = shift(@source_contents)) {
+         #
+         # Check that the GPL flags have not been overridden by PROJECT_IGNORE tags
+         #
+         if($line =~ m/$PROJECT_IGNORE_TAG/) { next }; # skip this line only
+#        if($line =~ m/$PROJECT_IGNORE_TAG/ and 
+#             ($line =~ m/[$START_EXCLUDE_TAG|$END_EXCLUDE_TAG]/)) { next }; # skip this line only
+#        if($line =~ m/$PROJECT_IGNORE_TAG/ and 
+#             ($line =~ m/[$START_INCLUDE_TAG|$END_INCLUDE_TAG]/)) { next }; # skip this line only
          #
          # Test to see if we are inside a GPL loop
          #
-         if($line =~ m/$START_EXCLUDE_TAG/) { $exclude_status = 1};
-         if($line =~ m/$START_INCLUDE_TAG/) { $include_status = 1; next };
+         if($line =~ m/$START_EXCLUDE_TAG/) { $exclude_status = 1; };
+         if($line =~ m/$START_INCLUDE_TAG/) { $include_status = 1;  next };
          if($line =~ m/$END_INCLUDE_TAG/) { $include_status = 0; next};
 
 # WRONG _ need to check that ! is first character in line
@@ -254,7 +275,7 @@ DIRECTORY_LOOP: foreach $directory_name (@directories_list) {
       #
       # Skip the special or exclude files (already GPL processed?)
       #
-      if("$exclude_files.$manual_preprocess_files" =~ m/$file_name/) {
+      if("$exclude_files.$manual_preprocess_files.$OBJECTS_FILE" =~ m/$file_name/) {
             &io("... Skipping preprocess of $file_name\n"); next FILE_PREPROCESS;
       }
       #

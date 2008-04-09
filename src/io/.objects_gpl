@@ -1,4 +1,4 @@
-#if defined _SC
+#if defined _SC || defined _RAS
 objs = ioRIM.o        ioGROT.o     ioELPH.o \
        ioOSTNTS.o     ioQINDX.o    ioQP.o      ioX.o \
        ioDB1.o        ioWF.o       ioKB_PP.o   ioXXVXC.o \

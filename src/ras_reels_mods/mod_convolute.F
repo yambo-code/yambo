@@ -48,7 +48,6 @@ subroutine init_convolute(defs)
   use it_m,                  ONLY : it, initdefs, E_unit,G_unit,T_unit, V_more
   implicit none
   type(initdefs), intent(inout)  :: defs
-!! #if defined SPP_PJ_RAS
 #if defined _REELS
   call it(defs,'GausConv', '[REELS] Gaussian convolution (FWHM)',gbroad, E_unit, verb_level=V_more )
 #else

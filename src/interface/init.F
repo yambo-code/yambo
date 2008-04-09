@@ -99,15 +99,20 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  what_is_running='YAMBO'
 #if defined _ELPH
  what_is_running='YAMBO_PH'
-#elif defined _RAS
+#endif
+#if defined _RAS
  what_is_running='YAMBO_RAS'
-#elif defined _REELS
+#endif
+#if defined _REELS
  what_is_running='YAMBO_REELS'
-#elif defined _SC
+#endif
+#if defined _SC
  what_is_running='YAMBO_SC'
-#elif defined _BIGSYS || _RAS
+#endif
+#if defined _BIGSYS || _RAS
  what_is_running='YAMBO_RAS_BIGSYS'
-#elif defined _BIGSYS 
+#endif
+#if defined _BIGSYS 
  what_is_running='YAMBO_BIGSYS'
 #endif
  !

@@ -5545,12 +5545,12 @@ fi
 # Fortran 90
 #
 acx_save_fcflags="$FCFLAGS"
-ac_ext=${FC_SRCEXT-f}
-ac_compile='$FC -c $FCFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext $LIBS >&5'
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 if test -n "$ac_tool_prefix"; then
-  for ac_prog in f90 xlf90 pgf90 epcf90 f95 fort xlf95 ifc efc pgf95 lf95 gfortran
+  for ac_prog in f90 xlf90 pgf90 pghpf epcf90 f95 fort xlf95 ifort ifc efc pgf95 lf95 gfortran ftn
   do
     # Extract the first word of "$ac_tool_prefix$ac_prog", so it can be a program name with args.
 set dummy $ac_tool_prefix$ac_prog; ac_word=$2
@@ -5592,7 +5592,7 @@ fi
 fi
 if test -z "$FC"; then
   ac_ct_FC=$FC
-  for ac_prog in f90 xlf90 pgf90 epcf90 f95 fort xlf95 ifc efc pgf95 lf95 gfortran
+  for ac_prog in f90 xlf90 pgf90 pghpf epcf90 f95 fort xlf95 ifort ifc efc pgf95 lf95 gfortran ftn
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -5640,18 +5640,18 @@ fi
 echo "$as_me:5640:" \
      "checking for Fortran compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
-{ (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
-  (eval $ac_compiler --version </dev/null >&5) 2>&5
+{ (eval echo "$as_me:$LINENO: \"$ac_compiler --version >&5\"") >&5
+  (eval $ac_compiler --version >&5) 2>&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }
-{ (eval echo "$as_me:$LINENO: \"$ac_compiler -v </dev/null >&5\"") >&5
-  (eval $ac_compiler -v </dev/null >&5) 2>&5
+{ (eval echo "$as_me:$LINENO: \"$ac_compiler -v >&5\"") >&5
+  (eval $ac_compiler -v >&5) 2>&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }
-{ (eval echo "$as_me:$LINENO: \"$ac_compiler -V </dev/null >&5\"") >&5
-  (eval $ac_compiler -V </dev/null >&5) 2>&5
+{ (eval echo "$as_me:$LINENO: \"$ac_compiler -V >&5\"") >&5
+  (eval $ac_compiler -V >&5) 2>&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }
@@ -5864,9 +5864,9 @@ echo "$as_me: WIDESETUP: using FCPPFLAGS=\"$FCPPFLAGS\"" >&6;}
 
 
 
-ac_ext=${FC_SRCEXT-f}
-ac_compile='$FC -c $FCFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext $LIBS >&5'
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 #
@@ -5888,11 +5888,11 @@ if test "${ac_cv_fc_srcext_f90+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_ext=f90
-ac_fc_srcext_FCFLAGS_SRCEXT_save=$FCFLAGS_SRCEXT
-FCFLAGS_SRCEXT=""
+ac_fcflags_srcext_save=$ac_fcflags_srcext
+ac_fcflags_srcext=
 ac_cv_fc_srcext_f90=unknown
 for ac_flag in none -qsuffix=f=f90 -Tf; do
-  test "x$ac_flag" != xnone && FCFLAGS_SRCEXT="$ac_flag"
+  test "x$ac_flag" != xnone && ac_fcflags_srcext="$ac_flag"
   cat >conftest.$ac_ext <<_ACEOF
       program main
 
@@ -5929,7 +5929,7 @@ fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 done
 rm -f conftest.$ac_objext conftest.f90
-FCFLAGS_SRCEXT=$ac_fc_srcext_FCFLAGS_SRCEXT_save
+ac_fcflags_srcext=$ac_fcflags_srcext_save
 
 fi
 echo "$as_me:$LINENO: result: $ac_cv_fc_srcext_f90" >&5
@@ -5939,12 +5939,12 @@ if test "x$ac_cv_fc_srcext_f90" = xunknown; then
 echo "$as_me: error: Fortran could not compile .f90 files" >&2;}
    { (exit 1); exit 1; }; }
 else
-  FC_SRCEXT=f90
+  ac_fc_srcext=f90
   if test "x$ac_cv_fc_srcext_f90" = xnone; then
-    FCFLAGS_SRCEXT=""
+    ac_fcflags_srcext=""
     FCFLAGS_f90=""
   else
-    FCFLAGS_SRCEXT=$ac_cv_fc_srcext_f90
+    ac_fcflags_srcext=$ac_cv_fc_srcext_f90
     FCFLAGS_f90=$ac_cv_fc_srcext_f90
   fi
 
@@ -5959,11 +5959,11 @@ if test "${ac_cv_fc_srcext_f+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_ext=f
-ac_fc_srcext_FCFLAGS_SRCEXT_save=$FCFLAGS_SRCEXT
-FCFLAGS_SRCEXT=""
+ac_fcflags_srcext_save=$ac_fcflags_srcext
+ac_fcflags_srcext=
 ac_cv_fc_srcext_f=unknown
 for ac_flag in none -qsuffix=f=f -Tf; do
-  test "x$ac_flag" != xnone && FCFLAGS_SRCEXT="$ac_flag"
+  test "x$ac_flag" != xnone && ac_fcflags_srcext="$ac_flag"
   cat >conftest.$ac_ext <<_ACEOF
       program main
 
@@ -6000,7 +6000,7 @@ fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 done
 rm -f conftest.$ac_objext conftest.f
-FCFLAGS_SRCEXT=$ac_fc_srcext_FCFLAGS_SRCEXT_save
+ac_fcflags_srcext=$ac_fcflags_srcext_save
 
 fi
 echo "$as_me:$LINENO: result: $ac_cv_fc_srcext_f" >&5
@@ -6010,12 +6010,12 @@ if test "x$ac_cv_fc_srcext_f" = xunknown; then
 echo "$as_me: error: Fortran could not compile .f files" >&2;}
    { (exit 1); exit 1; }; }
 else
-  FC_SRCEXT=f
+  ac_fc_srcext=f
   if test "x$ac_cv_fc_srcext_f" = xnone; then
-    FCFLAGS_SRCEXT=""
+    ac_fcflags_srcext=""
     FCFLAGS_f=""
   else
-    FCFLAGS_SRCEXT=$ac_cv_fc_srcext_f
+    ac_fcflags_srcext=$ac_cv_fc_srcext_f
     FCFLAGS_f=$ac_cv_fc_srcext_f
   fi
 
@@ -6207,9 +6207,9 @@ FCUFLAGS=$UFFLAGS
 
 acx_save_fcflags="$FCFLAGS"
 FCFLAGS="$acx_save_fcflags $F90EXTFLAGS"
-ac_ext=${FC_SRCEXT-f}
-ac_compile='$FC -c $FCFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext $LIBS >&5'
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 echo "$as_me:$LINENO: checking how to get verbose linking output from $FC" >&5
 echo $ECHO_N "checking how to get verbose linking output from $FC... $ECHO_C" >&6
@@ -6272,6 +6272,9 @@ ac_fc_v_output="`echo $ac_fc_v_output |
 	grep 'LPATH is:' |
 	sed 's,.*LPATH is\(: *[^ ]*\).*,\1,;s,: */, -L/,g'` $ac_fc_v_output"
 
+# FIXME: we keep getting bitten by quoted arguments; a more general fix
+#        that detects unbalanced quotes in FLIBS should be implemented
+#        and (ugh) tested at some point.
 case $ac_fc_v_output in
   # If we are using xlf then replace all the commas with spaces.
   *xlfentry*)
@@ -6280,13 +6283,16 @@ case $ac_fc_v_output in
   # With Intel ifc, ignore the quoted -mGLOB_options_string stuff (quoted
   # $LIBS confuse us, and the libraries appear later in the output anyway).
   *mGLOB_options_string*)
-    ac_fc_v_output=`echo $ac_fc_v_output | sed 's/\"-mGLOB[^\"]*\"/ /g'` ;;
+    ac_fc_v_output=`echo $ac_fc_v_output | sed 's/"-mGLOB[^"]*"/ /g'` ;;
+
+  # Portland Group compiler has quoted -cmdline argument
+  *-cmdline*)
+    ac_fc_v_output=`echo $ac_fc_v_output | sed 's/-cmdline  *"[^"]*"/ /g'` ;;
 
   # If we are using Cray Fortran then delete quotes.
   # Use "\"" instead of '"' for font-lock-mode.
-  # FIXME: a more general fix for quoted arguments with spaces?
   *cft90*)
-    ac_fc_v_output=`echo $ac_fc_v_output | sed "s/\"//g"` ;;
+    ac_fc_v_output=`echo $ac_fc_v_output | sed 's/"//g'` ;;
 esac
 
 
@@ -6336,7 +6342,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FCFLAGS
 FCFLAGS="$FCFLAGS $ac_cv_prog_fc_v"
-(eval echo $as_me:6339: \"$ac_link\") >&5
+(eval echo $as_me:6345: \"$ac_link\") >&5
 ac_fc_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_fc_v_output" >&5
 FCFLAGS=$ac_save_FFLAGS
@@ -6350,6 +6356,9 @@ ac_fc_v_output="`echo $ac_fc_v_output |
 	grep 'LPATH is:' |
 	sed 's,.*LPATH is\(: *[^ ]*\).*,\1,;s,: */, -L/,g'` $ac_fc_v_output"
 
+# FIXME: we keep getting bitten by quoted arguments; a more general fix
+#        that detects unbalanced quotes in FLIBS should be implemented
+#        and (ugh) tested at some point.
 case $ac_fc_v_output in
   # If we are using xlf then replace all the commas with spaces.
   *xlfentry*)
@@ -6358,13 +6367,16 @@ case $ac_fc_v_output in
   # With Intel ifc, ignore the quoted -mGLOB_options_string stuff (quoted
   # $LIBS confuse us, and the libraries appear later in the output anyway).
   *mGLOB_options_string*)
-    ac_fc_v_output=`echo $ac_fc_v_output | sed 's/\"-mGLOB[^\"]*\"/ /g'` ;;
+    ac_fc_v_output=`echo $ac_fc_v_output | sed 's/"-mGLOB[^"]*"/ /g'` ;;
+
+  # Portland Group compiler has quoted -cmdline argument
+  *-cmdline*)
+    ac_fc_v_output=`echo $ac_fc_v_output | sed 's/-cmdline  *"[^"]*"/ /g'` ;;
 
   # If we are using Cray Fortran then delete quotes.
   # Use "\"" instead of '"' for font-lock-mode.
-  # FIXME: a more general fix for quoted arguments with spaces?
   *cft90*)
-    ac_fc_v_output=`echo $ac_fc_v_output | sed "s/\"//g"` ;;
+    ac_fc_v_output=`echo $ac_fc_v_output | sed 's/"//g'` ;;
 esac
 
 
@@ -6418,12 +6430,12 @@ fi
 
           ;;
           # Ignore these flags.
-        -lang* | -lcrt[01].o | -lcrtbegin.o | -lc | -lgcc | -libmil | -LANG:=*)
+        -lang* | -lcrt*.o | -lc | -lgcc | -libmil | -LANG:=*)
           ;;
         -lkernel32)
           test x"$CYGWIN" != xyes && ac_cv_fc_libs="$ac_cv_fc_libs $ac_arg"
           ;;
-        -[LRuY])
+        -[LRuYz])
           # These flags, when seen by themselves, take an argument.
           # We remove the space between option and argument and re-iterate
           # unless we find an empty arg or a new option (starting with -)
@@ -6471,6 +6483,9 @@ else
 fi
 
           ;;
+	-zallextract*| -zdefaultextract)
+	  ac_cv_fc_libs="$ac_cv_fc_libs $ac_arg"
+	  ;;
           # Ignore everything else.
   esac
 done
@@ -6508,9 +6523,9 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-ac_ext=${FC_SRCEXT-f}
-ac_compile='$FC -c $FCFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext $LIBS >&5'
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 echo "$as_me:$LINENO: checking for dummy main to link with Fortran libraries" >&5
@@ -6640,9 +6655,9 @@ rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
    done
  fi
- ac_ext=${FC_SRCEXT-f}
-ac_compile='$FC -c $FCFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext $LIBS >&5'
+ ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
  ac_cv_fc_dummy_main=$ac_cv_fortran_dummy_main
  rm -f conftest*
@@ -6682,9 +6697,9 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-ac_ext=${FC_SRCEXT-f}
-ac_compile='$FC -c $FCFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext $LIBS >&5'
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 echo "$as_me:$LINENO: checking for Fortran name-mangling scheme" >&5
 echo $ECHO_N "checking for Fortran name-mangling scheme... $ECHO_C" >&6
@@ -6797,9 +6812,9 @@ rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
     done
   done
-  ac_ext=${FC_SRCEXT-f}
-ac_compile='$FC -c $FCFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext $LIBS >&5'
+  ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
   if test "$ac_success" = "yes"; then
@@ -6883,9 +6898,9 @@ fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
      done
-     ac_ext=${FC_SRCEXT-f}
-ac_compile='$FC -c $FCFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext $LIBS >&5'
+     ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
      if test "$ac_success_extra" = "yes"; then
@@ -6969,9 +6984,9 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (exit $ac_status); }; }; then
 
  mv conftest.$ac_objext ftest.$ac_objext
- ac_ext=${FC_SRCEXT-f}
-ac_compile='$FC -c $FCFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext $LIBS >&5'
+ ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
  save="$LIBS"
@@ -7055,9 +7070,9 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (exit $ac_status); }; }; then
 
   mv conftest.$ac_objext ftest.$ac_objext
-  ac_ext=${FC_SRCEXT-f}
-ac_compile='$FC -c $FCFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext $LIBS >&5'
+  ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
   save="$LIBS"
@@ -7117,9 +7132,9 @@ echo $ECHO_N "checking for external C routine (test) naming scheme... $ECHO_C" >
 echo "$as_me:$LINENO: result: $msg" >&5
 echo "${ECHO_T}$msg" >&6
 
-ac_ext=${FC_SRCEXT-f}
-ac_compile='$FC -c $FCFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext $LIBS >&5'
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 
@@ -7235,9 +7250,9 @@ case $ac_cv_fc_mangling in
     save="$CFLAGS"
     CFLAGS="$save -D_FORTRAN_US" ;;
 esac
-ac_ext=${FC_SRCEXT-f}
-ac_compile='$FC -c $FCFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext $LIBS >&5'
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 if test "$c_success" = "no" || test "$f_success" = "no" ; then
@@ -7343,7 +7358,7 @@ ac_compile='$F77 -c $FFLAGS conftest.$ac_ext >&5'
 ac_link='$F77 -o conftest$ac_exeext $FFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_f77_compiler_gnu
 if test -n "$ac_tool_prefix"; then
-  for ac_prog in g77 f77 xlf frt pgf77 fort77 fl32 af77 f90 xlf90 pgf90 epcf90 f95 fort xlf95 ifc efc pgf95 lf95 gfortran
+  for ac_prog in g77 f77 xlf frt pgf77 cf77 fort77 fl32 af77 f90 xlf90 pgf90 pghpf epcf90 f95 fort xlf95 ifort ifc efc pgf95 lf95 gfortran ftn
   do
     # Extract the first word of "$ac_tool_prefix$ac_prog", so it can be a program name with args.
 set dummy $ac_tool_prefix$ac_prog; ac_word=$2
@@ -7385,7 +7400,7 @@ fi
 fi
 if test -z "$F77"; then
   ac_ct_F77=$F77
-  for ac_prog in g77 f77 xlf frt pgf77 fort77 fl32 af77 f90 xlf90 pgf90 epcf90 f95 fort xlf95 ifc efc pgf95 lf95 gfortran
+  for ac_prog in g77 f77 xlf frt pgf77 cf77 fort77 fl32 af77 f90 xlf90 pgf90 pghpf epcf90 f95 fort xlf95 ifort ifc efc pgf95 lf95 gfortran ftn
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -7430,21 +7445,21 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:7433:" \
+echo "$as_me:7448:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
-{ (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
-  (eval $ac_compiler --version </dev/null >&5) 2>&5
+{ (eval echo "$as_me:$LINENO: \"$ac_compiler --version >&5\"") >&5
+  (eval $ac_compiler --version >&5) 2>&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }
-{ (eval echo "$as_me:$LINENO: \"$ac_compiler -v </dev/null >&5\"") >&5
-  (eval $ac_compiler -v </dev/null >&5) 2>&5
+{ (eval echo "$as_me:$LINENO: \"$ac_compiler -v >&5\"") >&5
+  (eval $ac_compiler -v >&5) 2>&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }
-{ (eval echo "$as_me:$LINENO: \"$ac_compiler -V </dev/null >&5\"") >&5
-  (eval $ac_compiler -V </dev/null >&5) 2>&5
+{ (eval echo "$as_me:$LINENO: \"$ac_compiler -V >&5\"") >&5
+  (eval $ac_compiler -V >&5) 2>&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }
@@ -7683,7 +7698,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FFLAGS
 FFLAGS="$FFLAGS $ac_verb"
-(eval echo $as_me:7686: \"$ac_link\") >&5
+(eval echo $as_me:7701: \"$ac_link\") >&5
 ac_f77_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_f77_v_output" >&5
 FFLAGS=$ac_save_FFLAGS
@@ -7697,6 +7712,9 @@ ac_f77_v_output="`echo $ac_f77_v_output |
 	grep 'LPATH is:' |
 	sed 's,.*LPATH is\(: *[^ ]*\).*,\1,;s,: */, -L/,g'` $ac_f77_v_output"
 
+# FIXME: we keep getting bitten by quoted arguments; a more general fix
+#        that detects unbalanced quotes in FLIBS should be implemented
+#        and (ugh) tested at some point.
 case $ac_f77_v_output in
   # If we are using xlf then replace all the commas with spaces.
   *xlfentry*)
@@ -7705,13 +7723,16 @@ case $ac_f77_v_output in
   # With Intel ifc, ignore the quoted -mGLOB_options_string stuff (quoted
   # $LIBS confuse us, and the libraries appear later in the output anyway).
   *mGLOB_options_string*)
-    ac_f77_v_output=`echo $ac_f77_v_output | sed 's/\"-mGLOB[^\"]*\"/ /g'` ;;
+    ac_f77_v_output=`echo $ac_f77_v_output | sed 's/"-mGLOB[^"]*"/ /g'` ;;
+
+  # Portland Group compiler has quoted -cmdline argument
+  *-cmdline*)
+    ac_f77_v_output=`echo $ac_f77_v_output | sed 's/-cmdline  *"[^"]*"/ /g'` ;;
 
   # If we are using Cray Fortran then delete quotes.
   # Use "\"" instead of '"' for font-lock-mode.
-  # FIXME: a more general fix for quoted arguments with spaces?
   *cft90*)
-    ac_f77_v_output=`echo $ac_f77_v_output | sed "s/\"//g"` ;;
+    ac_f77_v_output=`echo $ac_f77_v_output | sed 's/"//g'` ;;
 esac
 
 
@@ -7761,7 +7782,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FFLAGS
 FFLAGS="$FFLAGS $ac_cv_prog_f77_v"
-(eval echo $as_me:7764: \"$ac_link\") >&5
+(eval echo $as_me:7785: \"$ac_link\") >&5
 ac_f77_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_f77_v_output" >&5
 FFLAGS=$ac_save_FFLAGS
@@ -7775,6 +7796,9 @@ ac_f77_v_output="`echo $ac_f77_v_output |
 	grep 'LPATH is:' |
 	sed 's,.*LPATH is\(: *[^ ]*\).*,\1,;s,: */, -L/,g'` $ac_f77_v_output"
 
+# FIXME: we keep getting bitten by quoted arguments; a more general fix
+#        that detects unbalanced quotes in FLIBS should be implemented
+#        and (ugh) tested at some point.
 case $ac_f77_v_output in
   # If we are using xlf then replace all the commas with spaces.
   *xlfentry*)
@@ -7783,13 +7807,16 @@ case $ac_f77_v_output in
   # With Intel ifc, ignore the quoted -mGLOB_options_string stuff (quoted
   # $LIBS confuse us, and the libraries appear later in the output anyway).
   *mGLOB_options_string*)
-    ac_f77_v_output=`echo $ac_f77_v_output | sed 's/\"-mGLOB[^\"]*\"/ /g'` ;;
+    ac_f77_v_output=`echo $ac_f77_v_output | sed 's/"-mGLOB[^"]*"/ /g'` ;;
+
+  # Portland Group compiler has quoted -cmdline argument
+  *-cmdline*)
+    ac_f77_v_output=`echo $ac_f77_v_output | sed 's/-cmdline  *"[^"]*"/ /g'` ;;
 
   # If we are using Cray Fortran then delete quotes.
   # Use "\"" instead of '"' for font-lock-mode.
-  # FIXME: a more general fix for quoted arguments with spaces?
   *cft90*)
-    ac_f77_v_output=`echo $ac_f77_v_output | sed "s/\"//g"` ;;
+    ac_f77_v_output=`echo $ac_f77_v_output | sed 's/"//g'` ;;
 esac
 
 
@@ -7843,12 +7870,12 @@ fi
 
           ;;
           # Ignore these flags.
-        -lang* | -lcrt[01].o | -lcrtbegin.o | -lc | -lgcc | -libmil | -LANG:=*)
+        -lang* | -lcrt*.o | -lc | -lgcc | -libmil | -LANG:=*)
           ;;
         -lkernel32)
           test x"$CYGWIN" != xyes && ac_cv_f77_libs="$ac_cv_f77_libs $ac_arg"
           ;;
-        -[LRuY])
+        -[LRuYz])
           # These flags, when seen by themselves, take an argument.
           # We remove the space between option and argument and re-iterate
           # unless we find an empty arg or a new option (starting with -)
@@ -7896,6 +7923,9 @@ else
 fi
 
           ;;
+	-zallextract*| -zdefaultextract)
+	  ac_cv_f77_libs="$ac_cv_f77_libs $ac_arg"
+	  ;;
           # Ignore everything else.
   esac
 done
@@ -10358,9 +10388,9 @@ if test "$mpibuild" = "yes"; then
 #
  PFCFLAGS=""
  mpi_cpp="-D_MPI"
- ac_ext=${FC_SRCEXT-f}
-ac_compile='$FC -c $FCFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext $LIBS >&5'
+ ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 
@@ -11204,9 +11234,9 @@ fi
 fi
 # ============================================================================
 # FFT
-ac_ext=${FC_SRCEXT-f}
-ac_compile='$FC -c $FCFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext $LIBS >&5'
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 echo "$as_me:$LINENO: checking whether the FFTW library is installed" >&5
@@ -11390,9 +11420,9 @@ NCLIBS=""
 echo "$as_me:$LINENO: checking whether the NetCDF library is installed" >&5
 echo $ECHO_N "checking whether the NetCDF library is installed... $ECHO_C" >&6
 if ! test -z "$NC_PREFIX" && ! test "$with_netcdf" = "no"; then
- ac_ext=${FC_SRCEXT-f}
-ac_compile='$FC -c $FCFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $FCFLAGS_SRCEXT conftest.$ac_ext $LIBS >&5'
+ ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
  save_fcflags="$FCFLAGS"

@@ -38,6 +38,7 @@ module YPP
  logical      ::l_exc_props
  logical      ::l_wf
  logical      ::l_sort
+ logical      ::l_amplitude
  logical      ::l_spin
  integer      ::lambda
  integer      ::ncell(3)     

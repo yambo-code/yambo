@@ -35,6 +35,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 &                         BS_W_is_diagonal,BS_res_mode,BSS_mode,BS_n_g_W,&
 &                         BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
 &                         BSS_damp_reference,BS_eh_Z,BS_eh_W
+#if defined _ELPH
+ use BS,             ONLY:BS_eh_Eo
+#endif
 #if defined _SC
  use BS,             ONLY:BS_bare_W
 #endif
@@ -193,5 +196,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  if (allocated(BS_eh_W)) deallocate(BS_eh_W)
  if (allocated(BS_eh_Z)) deallocate(BS_eh_Z)
  call mem_est("BS_blk_dim BS_eh_table BS_eh_E BS_eh_f BS_eh_W BS_eh_Z")
+#if defined _ELPH
+ if (allocated(BS_eh_Eo)) deallocate(BS_eh_Eo)
+ call mem_est("BS_eh_Eo")
+#endif
  !
 end subroutine

@@ -72,6 +72,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    l_wf=.false.
    l_spin=.false.
    l_sort=.false.
+   l_amplitude=.false.
    ncell = (/1, 1, 1/) 
    r_hole= (/0.,0.,0./)
    p_dir = '1'
@@ -172,8 +173,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        !
        ! GPL_EXCLUDE_END
        !
-       l_sort  =trim(rstr_piece(i1+1))=='s'
-       if  (l_wf)   call initactivate(1,'exc_wf')
+       l_sort       =trim(rstr_piece(i1+1))=='s'
+       l_amplitude  =trim(rstr_piece(i1+1))=='a'
+       if  (l_amplitude)   call initactivate(1,'exc_amp')
+       if  (l_wf)          call initactivate(1,'exc_wf')
        !
        ! GPL_EXCLUDE_START
        !
@@ -191,6 +194,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  lkanalyze  =runlevel_is_on('kpt')
  l_exc_props=runlevel_is_on('excp')
+ l_amplitude=runlevel_is_on('exc_amp')
  l_wf       =runlevel_is_on('exc_wf')
  !
  ! GPL_EXCLUDE_START
@@ -209,9 +213,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  ! GPL_EXCLUDE_END
  !
  if (l_exc_props) then
-   if (l_wf) call initactivate(1,"States Format Direction FFTGvecs Degen_Step RNorm &
+   call initactivate(1,"States")
+   if (l_wf) call initactivate(1,"Format Direction FFTGvecs Degen_Step RNorm &
 &                                 Cells Hole Dimension")
-   if (l_spin) call initactivate(1,"States Degen_Step")
+   if (l_spin) call initactivate(1,"Degen_Step")
  endif
  !
 #if defined _YPP_ELPH

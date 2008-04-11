@@ -53,6 +53,9 @@ module BS
  complex(SP), allocatable :: BS_mat(:,:)
  complex(SP), allocatable :: BS_cpl_mat(:,:)
  real(SP)   , allocatable :: BS_eh_E(:)
+#if defined _ELPH
+ real(SP)   , allocatable :: BS_eh_Eo(:)
+#endif
  real(SP)   , allocatable :: BS_eh_f(:)
  real(SP)   , allocatable :: BS_eh_Z(:)
  real(SP)   , allocatable :: BS_eh_W(:)

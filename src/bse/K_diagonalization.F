@@ -29,6 +29,9 @@ subroutine K_diagonalization(iq,W)
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,Kernel_by_V,&
 &                         BS_K_coupling,BSS_write_eig_2_db,BS_eh_f,BS_not_const_eh_f,&
 &                         BS_eh_W
+#if defined _ELPH
+ use BS,             ONLY:BS_eh_Eo,BS_eh_E
+#endif
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:spin_occ
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK,USE_SLK,INV
@@ -118,8 +121,18 @@ subroutine K_diagonalization(iq,W)
  !
  ! Diagonalization DB (IN)
  !
+#if defined _ELPH
+ !
+ allocate(BS_mat(BS_H_dim,BS_H_dim))
+ call mem_est('BS_mat',(/2*size(BS_mat)/))
+ !
+ call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
+ io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+ !
+#else
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+#endif
  !
  if(io_err<0) then
    !
@@ -300,7 +313,7 @@ subroutine K_diagonalization(iq,W)
  !
  !Now I calculate epsilon
  !
- ! eps2(iw)= 1 - Sum  BS_R(K)/(w +I eta - E)     (coupling)
+ ! eps2(iw)= 1 - Sum  BS_R(K)/(w +I eta - E)     (coupling or non-hermitian)
  !           1 - Sum |BS_R(K)|^2/(w +I eta - E)  (resonant)
  !
  X_epsilon(1,:)=(0.,0.)
@@ -340,6 +353,10 @@ subroutine K_diagonalization(iq,W)
    io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
  endif
  !
+#if defined _ELPH
+ call eval_IP_contrib_to_E_lambda(BS_mat)
+#endif
+ !
  ! CLEAN
  !
  if (allocated(BS_mat)) deallocate(BS_mat)
@@ -355,4 +372,87 @@ subroutine K_diagonalization(iq,W)
  endif
  call pp_indexes_reset(px)
  !
+#if defined _ELPH
+ contains 
+   !
+   subroutine eval_IP_contrib_to_E_lambda(Eigen_V)
+     use D_lattice, ONLY:Tel
+     use pars,      ONLY:KELVIN,HARTREE
+     complex(SP) :: Eigen_V(BS_K_dim,BS_K_dim)
+     complex(SP) :: Eigen_V_sq(BS_K_dim),dE_lambda(BS_K_dim),dE_o(BS_K_dim)
+     integer     :: il,i2
+     integer     :: Lambda_T_table(7,1000)
+     real(SP)    :: BS_Eo(7)
+     ! 
+     Lambda_T_table( : ,:)=0
+     BS_Eo=0.
+     !
+     ! Silicon
+     !
+     !BS_Eo=(/2.65271 , 3.41360 , 2.45073 , 3.61531 , 4.23670/)/HARTREE
+     !Lambda_T_table(:,   15)=(/   44,  159,   38,  171,  222/)
+     !Lambda_T_table(:,   30)=(/   46,  158,   29,  172,  222/)
+     !Lambda_T_table(:,   50)=(/   32,   88,   28,  122,  223/)
+     !Lambda_T_table(:,   75)=(/   32,   88,   24,  147,  225/)
+     !Lambda_T_table(:,  100)=(/   33,   88,   22,  158,  223/)
+     !Lambda_T_table(:,  150)=(/   44,  150,   31,  166,  221/)
+     !Lambda_T_table(:,  200)=(/   32,   87,   28,  158,  232/)
+     !Lambda_T_table(:,  243)=(/   46,  160,   39,  172,  236/)
+     !Lambda_T_table(:,  297)=(/   34,   87,   25,  158,  222/)
+     !Lambda_T_table(:,  350)=(/   32,  135,   23,  149,  229/)
+     !Lambda_T_table(:,  465)=(/   33,  118,   26,  149,  236/)
+     !Lambda_T_table(:,  500)=(/   34,  120,   22,  160,  243/)
+     !Lambda_T_table(:,  600)=(/   46,  159,   39,  169,  245/)
+     !Lambda_T_table(:,  676)=(/   45,   86,   28,  160,  243/)
+     !Lambda_T_table(:,  793)=(/   32,  160,   26,  171,  243/)
+     !Lambda_T_table(:,  874)=(/   44,  159,   36,  170,  243/)
+     !Lambda_T_table(:,  972)=(/   46,  160,   39,  170,  244/)
+
+     Lambda_T_table(:,   5)=(/    75,    81,    88,   371,   397,   406,   444/)
+     Lambda_T_table(:,  20)=(/    75,    81,    88,   372,   397,   405,   445/)
+     Lambda_T_table(:,  50)=(/    75,    81,    87,   372,   398,   417,   451/)
+     Lambda_T_table(:, 100)=(/    75,    81,    88,   371,   397,   417,   444/)
+     Lambda_T_table(:, 150)=(/    75,    81,    88,   160,   397,   422,   440/)
+     Lambda_T_table(:, 200)=(/    63,    69,    88,   220,   389,   402,   434/)
+     Lambda_T_table(:, 250)=(/    75,    81,   184,   384,   389,   404,   440/)
+     Lambda_T_table(:, 300)=(/    63,    69,    83,   165,   177,   184,   222/)
+     Lambda_T_table(:, 350)=(/    69,    75,    83,   163,   171,   178,   431/)
+     Lambda_T_table(:, 400)=(/    69,    75,    83,   164,   395,   416,   440/)
+     Lambda_T_table(:, 425)=(/    69,    75,    83,   352,   389,   396,   440/)
+     Lambda_T_table(:, 450)=(/    69,    75,    83,   351,   396,   420,   439/)
+     Lambda_T_table(:, 475)=(/    69,    75,    84,   163,   391,   410,   440/)
+     Lambda_T_table(:, 500)=(/    69,    75,    84,   381,   398,   416,   441/)
+     Lambda_T_table(:, 525)=(/    69,    75,    82,   388,   403,   420,   469/)
+     Lambda_T_table(:, 550)=(/    69,    75,    84,   352,   412,   416,   432/)
+     Lambda_T_table(:, 575)=(/    69,    75,    80,   224,   259,   279,   292/)
+     Lambda_T_table(:, 600)=(/    69,    75,    79,   248,   296,   305,   342/)
+     Lambda_T_table(:, 620)=(/    63,    75,    79,   223,   249,   303,   315/)
+     Lambda_T_table(:, 640)=(/    70,    76,    78,   343,   366,   375,   387/)
+     Lambda_T_table(:, 660)=(/    70,   139,   136,   352,   376,   385,   461/)
+     Lambda_T_table(:, 680)=(/   130,   139,   134,   418,   443,   449,   461/)
+     Lambda_T_table(:, 700)=(/    64,    73,    68,   345,   371,   379,   389/)
+     Lambda_T_table(:, 720)=(/    70,    80,    74,   352,   379,   387,   399/)
+     Lambda_T_table(:, 740)=(/    70,    81,    74,   352,   379,   384,   398/)
+     Lambda_T_table(:, 760)=(/    70,   141,   134,   352,   386,   378,   461/)
+     Lambda_T_table(:, 780)=(/    70,    81,    74,   345,   380,   372,   396/)
+     Lambda_T_table(:, 800)=(/    64,    81,    68,   343,   382,   369,   388/)
+     !
+     forall(i1=1:BS_K_dim) dE_o(i1)=BS_eh_E(i1)-BS_eh_Eo(i1)+(0.,1.)*BS_eh_W(i1)
+     !
+     do i2=1,7
+       il=Lambda_T_table(i2,nint(Tel*KELVIN))
+       forall(i1=1:BS_K_dim) Eigen_V_sq(i1)=Eigen_V(i1,il)*conjg(Eigen_V(i1,il))
+       dE_lambda(il)=cdotu(BS_K_dim,Eigen_V_sq,1,dE_o,1)
+       if (i2==1) write (100,'(a,i10)') "T =",nint(Tel*KELVIN)
+!       write (100,'(a,i3,1x,3(a,f7.3,1x))') 'INDX:',il,'Eo:',real(BS_Eo(i2))*HARTREE,&
+!&                      'DeltaE/IPcontrib:',real(BS_E(il)-BS_Eo(i2))/real(dE_lambda(il))*100.,&
+!&                      'DeltaG/IPcontrib:',aimag(BS_E(il))/aimag(dE_lambda(il))*100.
+       write (100,'(a,i3,1x,4(a,f10.3,1x))') 'INDX:',il,'E:',real(BS_E(il))*HARTREE,&
+&                      'dE:',real(dE_lambda(il))*HARTREE,&
+&                      'Eo:',real(BS_E(il)-dE_lambda(il))*HARTREE,&
+&                      'Go:',aimag(BS_E(il))*HARTREE*1000.
+     enddo
+   end subroutine
+   !
+#endif
 end subroutine

@@ -29,7 +29,7 @@ subroutine exc_properties(Xk,Xen)
  use R_lattice,     ONLY:nXkibz,bz_samp
  use YPP,           ONLY:l_sort,l_wf,l_spin,ncell,lambda,r_hole,&
 &                        nr,exc_wf_sq,nr_tot,state_ctl,&
-&                        exc_wf_sort_and_report
+&                        exc_wf_sort_and_report,l_amplitude
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
  use BS,            ONLY:BS_K_dim,BS_bands,BS_q,&
 &                        BS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
@@ -120,7 +120,7 @@ subroutine exc_properties(Xk,Xen)
  !
  n_lambda = get_lambda()
  !
- if (.not.any((/l_sort,(l_wf.and.n_lambda>0),l_spin/))) return
+ if (.not.any((/l_sort,(l_wf.and.n_lambda>0),(l_amplitude.and.n_lambda>0),l_spin/))) return
  !
  ! Allocation of energies and residuum, then also eigenvector
  !
@@ -130,7 +130,6 @@ subroutine exc_properties(Xk,Xen)
  !
  ! Here I read energies and residuum
  !
-
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_err=ioBSS_diago(iq,BS_K_dim,BS_E,BS_R,io_ID)
  if (io_err/=0) return
@@ -188,7 +187,7 @@ subroutine exc_properties(Xk,Xen)
  ! 
  ! Loading  Wf 
  !
- call wf_load(wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
+ if (l_wf) call wf_load(wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
  !
  ! GPL_EXCLUDE_START
  !
@@ -213,48 +212,53 @@ subroutine exc_properties(Xk,Xen)
  !
  ! GPL_EXCLUDE_END
  !
- ! Constructing Grid 
- !
- call section('+','Expanding grid')
- call expand_grid()
- !
- ! Translation & location in the big grid of the hole...
- !======================================================
- ! 
- ! [1] Bare position pushed in the smallest cell 
- ! 
- call c2a(b_in=a,v_in=r_hole,v_out=r_hole_rlu,mode='kc2a')
- do j1=1,3
-   r_hole_rlu(j1)=r_hole_rlu(j1)-int(r_hole_rlu(j1))
- enddo
- call c2a(b_in=a,v_in=r_hole_rlu,v_out=r_hole,mode='ka2c')
- call msg('s',':: Hole position in the DL cell  [cc]:',r_hole)
- !
- ! [2] Bare position in the FFT grid
- !
- call c2a(b_in=a,v_in=r_hole,v_out=r_hole_rlu,mode='kc2a')
- r_hole_rlu(:)=nint(r_hole_rlu(:)*fft_dim(:))
- ir_hole=1+r_hole_rlu(1)+ r_hole_rlu(2)*nr(1)+ r_hole_rlu(3)*nr(1)*nr(2)
- call msg('s','::      position in the FFT grid [cc]:',r_big_cell_cc(:,ir_hole))
- !
- ! [3] Translation in the center of the Big grid
- !
- do j1=1,3
-   if (ncell(j1)==1) cycle
+ if  (l_wf) then
    !
-   ! (***) Daniele 15/7/07 rev Andrea 12/07:
+   ! Constructing Grid 
+   !
+   call section('+','Expanding grid')
+   call expand_grid()
+   !
+   ! Translation & location in the big grid of the hole...
+   !======================================================
    ! 
-   ! The number of cells are always odd so that the hole can
-   ! be placed in the middle.
+   ! [1] Bare position pushed in the smallest cell 
+   ! 
+   call c2a(b_in=a,v_in=r_hole,v_out=r_hole_rlu,mode='kc2a')
+   do j1=1,3
+     r_hole_rlu(j1)=r_hole_rlu(j1)-int(r_hole_rlu(j1))
+   enddo
+   call c2a(b_in=a,v_in=r_hole_rlu,v_out=r_hole,mode='ka2c')
+   call msg('s',':: Hole position in the DL cell  [cc]:',r_hole)
    !
-   r_hole_rlu(j1)=r_hole_rlu(j1)+ncell(j1)/2*fft_dim(j1)
+   ! [2] Bare position in the FFT grid
    !
- enddo
- ir_hole=1+r_hole_rlu(1)+ r_hole_rlu(2)*nr(1)+ r_hole_rlu(3)*nr(1)*nr(2)
- r_hole=r_big_cell_cc(:,ir_hole)
- !
- call msg('s','::      translated position      [cc]:',r_hole)
- call msg('s','::                             [bohr]:',r_hole*BOHR)
+   call c2a(b_in=a,v_in=r_hole,v_out=r_hole_rlu,mode='kc2a')
+   r_hole_rlu(:)=nint(r_hole_rlu(:)*fft_dim(:))
+   ir_hole=1+r_hole_rlu(1)+ r_hole_rlu(2)*nr(1)+ r_hole_rlu(3)*nr(1)*nr(2)
+   call msg('s','::      position in the FFT grid [cc]:',r_big_cell_cc(:,ir_hole))
+   !
+   ! [3] Translation in the center of the Big grid
+   !
+   do j1=1,3
+     if (ncell(j1)==1) cycle
+     !
+     ! (***) Daniele 15/7/07 rev Andrea 12/07:
+     ! 
+     ! The number of cells are always odd so that the hole can
+     ! be placed in the middle.
+     !
+     r_hole_rlu(j1)=r_hole_rlu(j1)+ncell(j1)/2*fft_dim(j1)
+     !
+   enddo
+   ir_hole=1+r_hole_rlu(1)+ r_hole_rlu(2)*nr(1)+ r_hole_rlu(3)*nr(1)*nr(2)
+   r_hole=r_big_cell_cc(:,ir_hole)
+   !
+   call msg('s','::      translated position      [cc]:',r_hole)
+   call msg('s','::                             [bohr]:',r_hole*BOHR)
+ else
+   nr_tot=1
+ endif
  !
  ! Allocation
  !
@@ -287,7 +291,7 @@ subroutine exc_properties(Xk,Xen)
 &                                   trim(intc(BS_E_degs(lambda)))//' -> '//&
 &                                   trim(intc(BS_E_degs(lambda)+n_lambda_deg-1)))
    !
-   call live_timing('ExcWF@'//trim(intc(lambda)),px%stps(myid+1))  
+   call live_timing('ExcPROPs@'//trim(intc(lambda)),px%stps(myid+1))  
    !
    A_weight   =0._SP
    exc_wf_sq  =0._SP
@@ -297,7 +301,7 @@ subroutine exc_properties(Xk,Xen)
      !
      if (.not.px%i1p(ir)) cycle
      !
-     r_eh(:)=r_big_cell_cc(:,ir)-r_hole(:)
+     if (l_wf) r_eh(:)=r_big_cell_cc(:,ir)-r_hole(:)
      !
      do neh = 1,BS_K_dim
        !
@@ -319,17 +323,19 @@ subroutine exc_properties(Xk,Xen)
        if (is > nsym/(i_time_rev+1)) is=is-nsym/(i_time_rev+1) 
        TR_apply=is/=Xk%sstar(ikbz,2)
        !
-       k_dot_r = dot_product(r_eh,Xk%ptbz(ikbz,:)/alat(:))*2.*pi
-       !
-       iv_fft = wf_state(iv,ikibz,i_spin)
-       ic_fft = wf_state(ic,ikibz,i_spin)
-       !
        if (ir==1) then
          do i_l=BS_E_degs(lambda),BS_E_degs(lambda)+n_lambda_deg-1
            A_weight(neh)=A_weight(neh)+BS_mat(neh,i_l)*&
 &                                conjg(BS_mat(neh,i_l))
          enddo
        endif
+       !
+       if (.not.l_wf) cycle
+       !
+       k_dot_r = dot_product(r_eh,Xk%ptbz(ikbz,:)/alat(:))*2.*pi
+       !
+       iv_fft = wf_state(iv,ikibz,i_spin)
+       ic_fft = wf_state(ic,ikibz,i_spin)
        !
        wf_vc(neh) = wf(fft_rot_r(is,rindex(ir)), ic_fft)*&
 &            conjg( wf(fft_rot_r(is,rindex(ir_hole)), iv_fft) )
@@ -355,16 +361,16 @@ subroutine exc_properties(Xk,Xen)
    !
    call live_timing()
    !
-   call pp_redux_wait(exc_wf_sq)
+   if (l_wf) call pp_redux_wait(exc_wf_sq)
    !
    ! Report weights and amplitude for this point
    !=============================================
    !
-   call exc_wf_sort_and_report(Xk,Xen,BS_R,BS_E,A_weight=A_weight)
+   if (l_amplitude) call exc_wf_sort_and_report(Xk,Xen,BS_R,BS_E,A_weight=A_weight)
    !
    ! PLOT
    !
-   call exc_wf_plot_driver(.false.)
+   if (l_wf) call exc_wf_plot_driver(.false.)
    !
  enddo
  !
@@ -372,7 +378,8 @@ subroutine exc_properties(Xk,Xen)
  !
  ! More CLEAN
  !
- deallocate(r_big_cell_cc,rindex,exc_wf_sq,BS_R,BS_E,lambda_s)
+ if (l_wf) deallocate(r_big_cell_cc,rindex)
+ deallocate(exc_wf_sq,BS_R,BS_E,lambda_s)
  call mem_est('exc_wf_sq BS_R_E')
  deallocate(BS_eh_table,BS_mat,wf_vc,A_weight)
  call mem_est('BS_eh_table BS_mat wf_vc A_weight')

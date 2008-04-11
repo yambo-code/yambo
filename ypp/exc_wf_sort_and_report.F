@@ -89,7 +89,6 @@ subroutine exc_wf_sort_and_report(Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
    !
    ! Sort the weights
    ! 
-   if (trim(R_normalize)=='yes') A_weight=A_weight/maxval(A_weight)
    call sort(arrin=A_weight,indx=S_indx)
    !
    ! report on file the weights and the amplitude
@@ -165,13 +164,13 @@ subroutine exc_wf_sort_and_report(Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
    !
    amp_range=(/minval(amp_trans(:amp_n_trans,1))-0.5/HARTREE,&
 &              maxval(amp_trans(:amp_n_trans,1))+0.5/HARTREE/)
-   amp_damping=(amp_range(2)-amp_range(1))/50.
+   amp_damping=(amp_range(2)-amp_range(1))/50. 
    do j2=1,amp_steps
      amp_E=amp_range(1)+(j2-1)*(amp_range(2)-amp_range(1))/real(amp_steps)+&
 &          (0.,1.)*amp_damping
      amp_I=0.
      do j1=1,amp_n_trans
-       amp_I=amp_I-aimag(amp_trans(j1,2)/(amp_E-amp_trans(j1,1)))
+       amp_I=amp_I+amp_damping/pi*amp_trans(j1,2)/( (real(amp_E)-amp_trans(j1,1))**2.+amp_damping**2.)
      enddo
      call msg('o amp','',(/real(amp_E)*HARTREE,amp_I/),INDENT=-2,USE_TABS=.FALSE.)
    enddo
@@ -239,22 +238,21 @@ subroutine exc_wf_sort_and_report(Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
    call msg('o sort','#','',INDENT=0)
    !
    R(:) = BS_R(:)*conjg(BS_R(:))
+   if (write_widths)  R(:) = abs(BS_R(:))
    R(:) = R(:)*real(spin_occ)/(2.*pi)**3.*&
-&         d3k_factor*4.*pi/q0_def_norm**2*HARTREE*1000.
+&         d3k_factor*4.*pi/q0_def_norm**2*HARTREE
    Rmax = maxval(R)
    !
-   if (trim(R_normalize)=='yes') R=R/Rmax
+   !if (trim(R_normalize)=='yes') R=R/Rmax
    !
-   if (i_mode==2) then
-     !
-     v2sort=R
-     call sort(arrin=v2sort,indx=S_indx)
-     !
-   endif
+   if (i_mode==1) v2sort=real(BS_E)
+   if (i_mode==2) v2sort=R
+   !
+   call sort(arrin=v2sort,indx=S_indx)
    !
    do j1=BS_K_dim,1,-1
      !
-     j2=BS_K_dim-j1+1
+     if (i_mode == 1) j2=S_indx(BS_K_dim-j1+1)
      if (i_mode == 2) j2=S_indx(j1)
      !
      rv(:3)=(/real(BS_E(j2))*HARTREE,R(j2),real(j2)/)

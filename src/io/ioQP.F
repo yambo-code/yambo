@@ -37,7 +37,7 @@ integer function ioQP(what,qp,ID)
 &                         io_fragment,io_check_restart,io_restart,&
 &                         io_netcdf_support,ver_is_gt_or_eq,&
 &                         db_alat,variable_is_found
- use global_XC,      ONLY:QP_DB_kind,SE_GoWo,SE_GWo,SE_GoWo_PPA,SE_GWo_PPA,SE_CHOSEX
+ use global_XC,      ONLY:QP_DB_kind,SE_GoWo,SE_GWo,SE_GoWo_PPA,SE_GWo_PPA,SE_CHOSEX,SE_NONE
  use com,            ONLY:warning
  !
  implicit none
@@ -85,7 +85,7 @@ integer function ioQP(what,qp,ID)
 &                   D_LATT=.true.,XC_KIND="Xd")
    else
      select case (QP_DB_KIND)
-       case(0)
+       case(0,SE_NONE)
          ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.)
        case(SE_CHOSEX)
          ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G_WF Xs")

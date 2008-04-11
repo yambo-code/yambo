@@ -88,7 +88,7 @@ cat << EOF > ss.awk
  gsub("SPATCHLEVEL=\"$patch_old\"","SPATCHLEVEL=\"$patch_new\"",\$0)
  gsub("SSUBLEVEL=\"$sub_old\"","SSUBLEVEL=\"$sub_new\"",\$0)
  gsub("SREVISION=\"$revision_old\"","SREVISION=\"$revision_new\"",\$0)
- print \$0 > "configure.ac.new"
+ print \$0 > "NEW"
 }
 EOF
 #
@@ -96,14 +96,10 @@ EOF
 #
 #
 if ( "$argv[1]" != "save" ) then
-  mv config/configure.ac .
-  $awk -f ss.awk configure.ac
-  mv configure.ac.new configure.ac
-  echo -n " Autoconf ..."
-  autoconf
-  echo " done"
-  mv configure.ac config/
-  rm -fr autom4te.cache/
+  $awk -f ss.awk ./config/configure.ac
+  mv NEW ./config/configure.ac
+  $awk -f ss.awk configure
+  mv NEW configure
 endif
 rm -fr ss.awk
 #

@@ -37,6 +37,7 @@ module YPP
  !
  logical      ::l_exc_props
  logical      ::l_wf
+ logical      ::l_fixed_hole
  logical      ::l_sort
  logical      ::l_amplitude
  logical      ::l_spin

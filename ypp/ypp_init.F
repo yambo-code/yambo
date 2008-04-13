@@ -194,8 +194,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  lkanalyze  =runlevel_is_on('kpt')
  l_exc_props=runlevel_is_on('excp')
+ l_fixed_hole=runlevel_is_on('fixhole')
  l_amplitude=runlevel_is_on('exc_amp')
  l_wf       =runlevel_is_on('exc_wf')
+ if (.not.l_wf) l_fixed_hole=.false.
  !
  ! GPL_EXCLUDE_START
  !
@@ -214,8 +216,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (l_exc_props) then
    call initactivate(1,"States")
-   if (l_wf) call initactivate(1,"Format Direction FFTGvecs Degen_Step RNorm &
-&                                 Cells Hole Dimension")
+   if (l_wf) call initactivate(1,"Format Direction FFTGvecs Degen_Step RNorm")
+   if (l_fixed_hole) call initactivate(1,"Cells Hole Dimension") 
    if (l_spin) call initactivate(1,"Degen_Step")
  endif
  !

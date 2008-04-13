@@ -169,7 +169,7 @@ subroutine barriers()
  !
  if (n_spin>1) then
    call switch_off_runlevel('all',on_name=&
-&       'chi optics xxvxc em1s em1d ppa gw0 bss alda_fxc bs_fxc chosex '//trim(always_runlevels))
+&       'chi optics xxvxc bse em1s em1d ppa gw0 bss alda_fxc bs_fxc chosex '//trim(always_runlevels))
    if (gw0_raxis) call switch_off_runlevel('all',on_name=' ')
  endif 
  !

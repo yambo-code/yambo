@@ -53,29 +53,36 @@ subroutine exc_wf_sort_and_report(Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
  !
  integer, parameter :: amp_steps=1000
  integer      :: amp_n_trans
- real(SP)     :: amp_range(2),amp_damping,amp_I
+ real(SP)     :: amp_range(2),amp_damping,amp_I(amp_steps)
  real(SP),allocatable :: amp_trans(:,:)
- complex(SP)          :: amp_E
+ complex(SP)          :: amp_E(amp_steps)
  !
  if (present(BS_E_degs)) then  
    !
    call msg('s',':: Sorting energies')
    !==================================
    !
+   allocate(v2sort(BS_K_dim),S_indx(BS_K_dim))
+   !
+   v2sort=real(BS_E)
+   call sort(arrin=v2sort,indx=S_indx)
+   !
    BS_E_degs=0
    !
    do j1=1,BS_K_dim
      !
-     if (BS_E_degs(j1)>0) cycle
+     if (BS_E_degs(S_indx(j1))>0) cycle
      !
-     BS_E_degs(j1)=j1
+     BS_E_degs(S_indx(j1))=S_indx(j1)
      !
      do j2=j1+1,BS_K_dim
-       if ( abs( real(BS_E(j1))-real(BS_E(j2)) )>deg_energy) exit
-       BS_E_degs(j2)=j1
+       if ( abs( real(BS_E(S_indx(j1)))-real(BS_E(S_indx(j2))) )>deg_energy) exit
+       BS_E_degs(S_indx(j2))=S_indx(j1)
      enddo
      !
    enddo
+   !
+   deallocate(v2sort,S_indx)
    !
    return
    !
@@ -142,7 +149,7 @@ subroutine exc_wf_sort_and_report(Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
    !
    do neh = BS_K_dim,1,-1
      !
-     if (A_weight(neh)<0.02) cycle
+     if (A_weight(neh)/maxval(A_weight)<0.01) cycle
      !
      ikbz = BS_eh_table(S_indx(neh),1)
      iv = BS_eh_table(S_indx(neh),2)
@@ -165,14 +172,17 @@ subroutine exc_wf_sort_and_report(Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
    amp_range=(/minval(amp_trans(:amp_n_trans,1))-0.5/HARTREE,&
 &              maxval(amp_trans(:amp_n_trans,1))+0.5/HARTREE/)
    amp_damping=(amp_range(2)-amp_range(1))/50. 
+   amp_I=0.
    do j2=1,amp_steps
-     amp_E=amp_range(1)+(j2-1)*(amp_range(2)-amp_range(1))/real(amp_steps)+&
-&          (0.,1.)*amp_damping
-     amp_I=0.
+     amp_E(j2)=amp_range(1)+(j2-1)*(amp_range(2)-amp_range(1))/real(amp_steps)+&
+&              (0.,1.)*amp_damping
      do j1=1,amp_n_trans
-       amp_I=amp_I+amp_damping/pi*amp_trans(j1,2)/( (real(amp_E)-amp_trans(j1,1))**2.+amp_damping**2.)
+       amp_I(j2)=amp_I(j2)+amp_damping/pi*amp_trans(j1,2)/( (real(amp_E(j2))-amp_trans(j1,1))**2.+amp_damping**2.)
      enddo
-     call msg('o amp','',(/real(amp_E)*HARTREE,amp_I/),INDENT=-2,USE_TABS=.FALSE.)
+   enddo
+   amp_I=amp_I/maxval(amp_I)
+   do j1=1,amp_steps
+     call msg('o amp','',(/real(amp_E(j1))*HARTREE,amp_I(j1)/),INDENT=-2,USE_TABS=.FALSE.)
    enddo
    !
    call of_open_close(ch_dummy(1))

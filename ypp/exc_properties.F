@@ -29,7 +29,7 @@ subroutine exc_properties(Xk,Xen)
  use R_lattice,     ONLY:nXkibz,bz_samp
  use YPP,           ONLY:l_sort,l_wf,l_spin,ncell,lambda,r_hole,&
 &                        nr,exc_wf_sq,nr_tot,state_ctl,&
-&                        exc_wf_sort_and_report,l_amplitude
+&                        exc_wf_sort_and_report,l_amplitude,l_fixed_hole
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
  use BS,            ONLY:BS_K_dim,BS_bands,BS_q,&
 &                        BS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
@@ -60,7 +60,7 @@ subroutine exc_properties(Xk,Xen)
  !
  integer               :: ir,ir_hole,j1
  integer,  allocatable :: rindex(:)
- real(SP), allocatable :: r_big_cell_cc(:,:)
+ real(SP), allocatable :: r_cell_cc(:,:)
  !
  ! Degenerations
  !
@@ -145,12 +145,6 @@ subroutine exc_properties(Xk,Xen)
    return
  endif
  !
- call section('+','Wave Function')
- !
- ! Check that directions are OK
- !
- call exc_wf_plot_driver(.true.)
- !
  if (BS_K_coupling) call error('When coupling is present only sort mode works')
  !
  ! Loading tables and eigenvectors
@@ -212,12 +206,78 @@ subroutine exc_properties(Xk,Xen)
  !
  ! GPL_EXCLUDE_END
  !
- if  (l_wf) then
+ call k_ibz2bz(Xk,'i',.false.)
+ !
+ ! Exciton's Amplitude
+ !=====================================
+ !
+ if (l_amplitude) then
    !
-   ! Constructing Grid 
+   allocate (lambda_s(n_lambda)) 
    !
-   call section('+','Expanding grid')
-   call expand_grid()
+   n_lambda = get_lambda()
+   !
+   call section('+','Excitonic Amplitude')
+   !
+   call msg('s','Processing '//trim(intc(n_lambda))//' states')
+   !
+   allocate(A_weight(BS_K_dim))
+   call mem_est('A_weight',(/BS_K_dim/),(/SP/))
+   !
+   do i_lambda=1,n_lambda
+     !
+     A_weight   =0._SP
+     !
+     lambda=lambda_s(i_lambda)
+     !
+     n_lambda_deg=count(BS_E_degs==BS_E_degs(lambda))
+     !
+     if (n_lambda_deg>0) call msg('s',':: State '//trim(intc(lambda))//' Merged with states '//&
+&                                     trim(intc(BS_E_degs(lambda)))//' -> '//&
+&                                     trim(intc(BS_E_degs(lambda)+n_lambda_deg-1)))
+     do neh = 1,BS_K_dim
+       !
+       do i_l=BS_E_degs(lambda),BS_E_degs(lambda)+n_lambda_deg-1
+         A_weight(neh)=A_weight(neh)+BS_mat(neh,i_l)*conjg(BS_mat(neh,i_l))
+       enddo
+       !
+     enddo
+     !
+     call exc_wf_sort_and_report(Xk,Xen,BS_R,BS_E,A_weight=A_weight)
+     !
+   enddo
+   !
+   ! CLEAN
+   !
+   deallocate(BS_R,BS_E,lambda_s)
+   call mem_est('BS_R_E')
+   deallocate(BS_eh_table,BS_mat,A_weight)
+   call mem_est('BS_eh_table BS_mat A_weight')
+   !
+   return
+   !
+ endif
+ !
+ !############################################################################
+ ! EXCITONIC WF SECTION
+ !############################################################################
+ !
+ if (.not.l_wf) return
+ !
+ call section('+','Excitonic Wave Function')
+ !
+ ! Check that directions are OK
+ !
+ call exc_wf_plot_driver(.true.)
+ !
+ ! Constructing Grid 
+ !
+ call section('+','Real-Space grid setup')
+ !
+ if (.not.l_fixed_hole) ncell=1
+ call expand_grid()
+ !
+ if (l_fixed_hole) then
    !
    ! Translation & location in the big grid of the hole...
    !======================================================
@@ -236,7 +296,7 @@ subroutine exc_properties(Xk,Xen)
    call c2a(b_in=a,v_in=r_hole,v_out=r_hole_rlu,mode='kc2a')
    r_hole_rlu(:)=nint(r_hole_rlu(:)*fft_dim(:))
    ir_hole=1+r_hole_rlu(1)+ r_hole_rlu(2)*nr(1)+ r_hole_rlu(3)*nr(1)*nr(2)
-   call msg('s','::      position in the FFT grid [cc]:',r_big_cell_cc(:,ir_hole))
+   call msg('s','::      position in the FFT grid [cc]:',r_cell_cc(:,ir_hole))
    !
    ! [3] Translation in the center of the Big grid
    !
@@ -252,19 +312,17 @@ subroutine exc_properties(Xk,Xen)
      !
    enddo
    ir_hole=1+r_hole_rlu(1)+ r_hole_rlu(2)*nr(1)+ r_hole_rlu(3)*nr(1)*nr(2)
-   r_hole=r_big_cell_cc(:,ir_hole)
+   r_hole=r_cell_cc(:,ir_hole)
    !
    call msg('s','::      translated position      [cc]:',r_hole)
    call msg('s','::                             [bohr]:',r_hole*BOHR)
- else
-   nr_tot=1
+   !
  endif
  !
  ! Allocation
  !
- allocate(wf_vc(BS_K_dim),exc_wf_sq(nr_tot),A_weight(BS_K_dim))
- call mem_est('wf_vc exc_wf_sq A_weight',(/2*BS_K_dim,nr_tot,BS_K_dim/),(/SP,SP,SP/))
- call k_ibz2bz(Xk,'i',.false.)
+ allocate(wf_vc(BS_K_dim),exc_wf_sq(nr_tot))
+ call mem_est('wf_vc exc_wf_sq ',(/2*BS_K_dim,nr_tot/),(/SP,SP/))
  !
  ! Par Proc
  !
@@ -291,9 +349,8 @@ subroutine exc_properties(Xk,Xen)
 &                                   trim(intc(BS_E_degs(lambda)))//' -> '//&
 &                                   trim(intc(BS_E_degs(lambda)+n_lambda_deg-1)))
    !
-   call live_timing('ExcPROPs@'//trim(intc(lambda)),px%stps(myid+1))  
+   call live_timing('ExcWF@'//trim(intc(lambda)),px%stps(myid+1))  
    !
-   A_weight   =0._SP
    exc_wf_sq  =0._SP
    wf_vc      =(0._SP,0._SP)
    !
@@ -301,7 +358,12 @@ subroutine exc_properties(Xk,Xen)
      !
      if (.not.px%i1p(ir)) cycle
      !
-     if (l_wf) r_eh(:)=r_big_cell_cc(:,ir)-r_hole(:)
+     if (l_fixed_hole) then
+       r_eh(:)=r_cell_cc(:,ir)-r_hole(:)
+     else
+       r_eh(:)=0.
+       ir_hole=ir
+     endif
      !
      do neh = 1,BS_K_dim
        !
@@ -322,15 +384,6 @@ subroutine exc_properties(Xk,Xen)
        is    = Xk%sstar(ikbz,2)
        if (is > nsym/(i_time_rev+1)) is=is-nsym/(i_time_rev+1) 
        TR_apply=is/=Xk%sstar(ikbz,2)
-       !
-       if (ir==1) then
-         do i_l=BS_E_degs(lambda),BS_E_degs(lambda)+n_lambda_deg-1
-           A_weight(neh)=A_weight(neh)+BS_mat(neh,i_l)*&
-&                                conjg(BS_mat(neh,i_l))
-         enddo
-       endif
-       !
-       if (.not.l_wf) cycle
        !
        k_dot_r = dot_product(r_eh,Xk%ptbz(ikbz,:)/alat(:))*2.*pi
        !
@@ -361,28 +414,23 @@ subroutine exc_properties(Xk,Xen)
    !
    call live_timing()
    !
-   if (l_wf) call pp_redux_wait(exc_wf_sq)
-   !
-   ! Report weights and amplitude for this point
-   !=============================================
-   !
-   if (l_amplitude) call exc_wf_sort_and_report(Xk,Xen,BS_R,BS_E,A_weight=A_weight)
+   call pp_redux_wait(exc_wf_sq)
    !
    ! PLOT
    !
-   if (l_wf) call exc_wf_plot_driver(.false.)
+   call exc_wf_plot_driver(.false.)
    !
  enddo
  !
  call pp_indexes_reset(px)
  !
- ! More CLEAN
+ ! CLEAN
  !
- if (l_wf) deallocate(r_big_cell_cc,rindex)
+ deallocate(r_cell_cc,rindex)
  deallocate(exc_wf_sq,BS_R,BS_E,lambda_s)
  call mem_est('exc_wf_sq BS_R_E')
- deallocate(BS_eh_table,BS_mat,wf_vc,A_weight)
- call mem_est('BS_eh_table BS_mat wf_vc A_weight')
+ deallocate(BS_eh_table,BS_mat,wf_vc)
+ call mem_est('BS_eh_table BS_mat wf_vc')
  call WF_free()
  !
  contains
@@ -413,7 +461,7 @@ subroutine exc_properties(Xk,Xen)
      enddo
      !
      nr_tot = fft_size*ncell(1)*ncell(2)*ncell(3)
-     allocate ( r_big_cell_cc(3,nr_tot), rindex(nr_tot) )
+     allocate ( r_cell_cc(3,nr_tot), rindex(nr_tot) )
      !
      nr=(/ncell(1)*fft_dim(1),ncell(2)*fft_dim(2),ncell(3)*fft_dim(3)/)
      call msg('s',':: Extended grid :',nr)
@@ -430,9 +478,9 @@ subroutine exc_properties(Xk,Xen)
            j2=ir2/fft_dim(2)
            j3=ir3/fft_dim(3)
            rindex(ir)=i1+fft_dim(1)*i2+fft_dim(1)*fft_dim(2)*i3+1
-           r_big_cell_cc(:,ir) = ir1*a(1,:)/fft_dim(1) +&
-&                                ir2*a(2,:)/fft_dim(2) +&
-&                                ir3*a(3,:)/fft_dim(3)
+           r_cell_cc(:,ir) = ir1*a(1,:)/fft_dim(1) +&
+&                            ir2*a(2,:)/fft_dim(2) +&
+&                            ir3*a(3,:)/fft_dim(3)
          end do
        end do
      end do

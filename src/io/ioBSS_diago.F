@@ -26,7 +26,7 @@ integer function ioBSS_diago(iq,BS_H_dim,bsE,bsR,ID)
 &                        BS_eh_table,BS_mat
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&
-&                        io_header,write_is_on,read_is_on
+&                        io_header,write_is_on,read_is_on,ver_is_gt_or_eq
  use electrons,     ONLY:n_sp_pol
  implicit none
  integer     :: iq,ID,BS_H_dim
@@ -50,7 +50,12 @@ integer function ioBSS_diago(iq,BS_H_dim,bsE,bsR,ID)
    !
    ioBSS_diago=io_header(ID,XC_KIND="K_E force")
    !
-   call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
+   if (ver_is_gt_or_eq(ID,(/3,0,15/))) then
+     call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
+   else
+     call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=1)
+   endif
+   !
    call io_elemental(ID,VAR=&
 &       " BSK Identifier                  :",I0=BS_identifier,CHECK=.TRUE.,OP=(/"=="/))
    call io_elemental(ID,VAR=&

@@ -36,6 +36,7 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'kpt',     '[R] K-grid analysis') 
  call it('r',defs,'excp',    '[R] Excitonic Properties')
  call it('r',defs,'exc_wf',  '[R] Excitonic Wavefunction')
+ call it('r',defs,'fixhole', '[R] Hole position fixed')
  call it('r',defs,'exc_amp', '[R] Excitonic Amplitudes')
  !
  ! GPL_EXCLUDE_START

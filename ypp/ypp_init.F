@@ -79,9 +79,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    lambda = 1          
    state_ctl = '1 - 1'
    deg_energy =0.01/HARTREE
-   R_normalize="yes"
    p_format   ='g'
    wf_ng      =ng_vec
+   WF_multiplier=1.
    !
 #if defined _YPP_ELPH
    !
@@ -194,10 +194,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  lkanalyze  =runlevel_is_on('kpt')
  l_exc_props=runlevel_is_on('excp')
- l_fixed_hole=runlevel_is_on('fixhole')
+ l_free_hole=runlevel_is_on('freehole')
  l_amplitude=runlevel_is_on('exc_amp')
  l_wf       =runlevel_is_on('exc_wf')
- if (.not.l_wf) l_fixed_hole=.false.
+ if (.not.l_wf) l_free_hole=.false.
  !
  ! GPL_EXCLUDE_START
  !
@@ -216,8 +216,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (l_exc_props) then
    call initactivate(1,"States")
-   if (l_wf) call initactivate(1,"Format Direction FFTGvecs Degen_Step RNorm")
-   if (l_fixed_hole) call initactivate(1,"Cells Hole Dimension") 
+   if (l_wf) call initactivate(1,"Format Direction FFTGvecs Degen_Step")
+   if (l_wf.and..not.l_free_hole) call initactivate(1,"Cells Hole Dimension") 
+   if (l_wf.and.l_free_hole) call initactivate(1,"WFMult") 
    if (l_spin) call initactivate(1,"Degen_Step")
  endif
  !

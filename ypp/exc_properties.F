@@ -28,8 +28,8 @@ subroutine exc_properties(Xk,Xen)
  use wave_func,     ONLY:wf_load,wf_state,wf,WF_free,wf_ng
  use R_lattice,     ONLY:nXkibz,bz_samp
  use YPP,           ONLY:l_sort,l_wf,l_spin,ncell,lambda,r_hole,&
-&                        nr,exc_wf_sq,nr_tot,state_ctl,&
-&                        exc_wf_sort_and_report,l_amplitude,l_fixed_hole
+&                        nr,exc_wf,nr_tot,state_ctl,&
+&                        exc_wf_sort_and_report,l_amplitude,l_free_hole
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
  use BS,            ONLY:BS_K_dim,BS_bands,BS_q,&
 &                        BS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
@@ -99,7 +99,7 @@ subroutine exc_properties(Xk,Xen)
  !
  integer           ::iv,ic,iv_fft,ic_fft,ikbz,ikibz,is,neh
  real(SP)          ::r_eh(3)
- complex(SP)       ::wf_sq
+ complex(SP)       ::wf_
  complex(SP),  allocatable ::wf_vc(:)
  !
  !... Variables needed to the report of eigenvectors
@@ -274,10 +274,10 @@ subroutine exc_properties(Xk,Xen)
  !
  call section('+','Real-Space grid setup')
  !
- if (.not.l_fixed_hole) ncell=1
+ if (l_free_hole) ncell=1
  call expand_grid()
  !
- if (l_fixed_hole) then
+ if (.not.l_free_hole) then
    !
    ! Translation & location in the big grid of the hole...
    !======================================================
@@ -321,8 +321,8 @@ subroutine exc_properties(Xk,Xen)
  !
  ! Allocation
  !
- allocate(wf_vc(BS_K_dim),exc_wf_sq(nr_tot))
- call mem_est('wf_vc exc_wf_sq ',(/2*BS_K_dim,nr_tot/),(/SP,SP/))
+ allocate(wf_vc(BS_K_dim),exc_wf(nr_tot))
+ call mem_est('wf_vc exc_wf ',(/2*BS_K_dim,nr_tot/),(/SP,SP/))
  !
  ! Par Proc
  !
@@ -351,18 +351,18 @@ subroutine exc_properties(Xk,Xen)
    !
    call live_timing('ExcWF@'//trim(intc(lambda)),px%stps(myid+1))  
    !
-   exc_wf_sq  =0._SP
-   wf_vc      =(0._SP,0._SP)
+   exc_wf  =0._SP
+   wf_vc   =(0._SP,0._SP)
    !
    do ir=1,nr_tot
      !
      if (.not.px%i1p(ir)) cycle
      !
-     if (l_fixed_hole) then
-       r_eh(:)=r_cell_cc(:,ir)-r_hole(:)
-     else
+     if (l_free_hole) then
        r_eh(:)=0.
        ir_hole=ir
+     else
+       r_eh(:)=r_cell_cc(:,ir)-r_hole(:)
      endif
      !
      do neh = 1,BS_K_dim
@@ -382,6 +382,7 @@ subroutine exc_properties(Xk,Xen)
        !
        ikibz = Xk%sstar(ikbz,1)
        is    = Xk%sstar(ikbz,2)
+       !
        if (is > nsym/(i_time_rev+1)) is=is-nsym/(i_time_rev+1) 
        TR_apply=is/=Xk%sstar(ikbz,2)
        !
@@ -401,11 +402,14 @@ subroutine exc_properties(Xk,Xen)
      !
      do i_l=BS_E_degs(lambda),BS_E_degs(lambda)+n_lambda_deg-1
 #if defined _DOUBLE
-       wf_sq = zdotu(BS_K_dim,BS_mat(1,i_l),1,wf_vc,1)
+       wf_ = zdotu(BS_K_dim,BS_mat(1,i_l),1,wf_vc,1)
 #else
-       wf_sq = cdotu(BS_K_dim,BS_mat(1,i_l),1,wf_vc,1)
+       wf_ = cdotu(BS_K_dim,BS_mat(1,i_l),1,wf_vc,1)
 #endif
-       exc_wf_sq(ir) = exc_wf_sq(ir)+abs(wf_sq)**2.
+       !
+       if (.not.l_free_hole) exc_wf(ir) = exc_wf(ir)+abs(wf_)**2.  
+       if (l_free_hole)      exc_wf(ir) = exc_wf(ir)+aimag(wf_)+real(wf_)
+       !
      enddo
      !
      call live_timing(steps=1)
@@ -414,7 +418,7 @@ subroutine exc_properties(Xk,Xen)
    !
    call live_timing()
    !
-   call pp_redux_wait(exc_wf_sq)
+   call pp_redux_wait(exc_wf)
    !
    ! PLOT
    !
@@ -427,8 +431,8 @@ subroutine exc_properties(Xk,Xen)
  ! CLEAN
  !
  deallocate(r_cell_cc,rindex)
- deallocate(exc_wf_sq,BS_R,BS_E,lambda_s)
- call mem_est('exc_wf_sq BS_R_E')
+ deallocate(exc_wf,BS_R,BS_E,lambda_s)
+ call mem_est('exc_wf BS_R_E')
  deallocate(BS_eh_table,BS_mat,wf_vc)
  call mem_est('BS_eh_table BS_mat wf_vc')
  call WF_free()
@@ -442,7 +446,7 @@ subroutine exc_properties(Xk,Xen)
      ! 
      ! Work Space
      !
-     integer :: ir1, ir2, ir3, i1, i2, i3, j1, j2, j3
+     integer :: ir1, ir2, ir3, i3, j1, j2, j3
      logical :: warning_
      !
      warning_=.TRUE. 
@@ -491,7 +495,7 @@ subroutine exc_properties(Xk,Xen)
      use pars,   ONLY:schlen
      use stderr, ONLY:string_split
      !
-     integer          ::i_str,i_start,i_end,i_st
+     integer          ::i_start,i_end,i_str,i_st
      character(schlen)::str_piece(50)
      !
      call string_split(state_ctl,str_piece)
@@ -499,35 +503,39 @@ subroutine exc_properties(Xk,Xen)
      get_lambda=0
      if (allocated(lambda_s)) lambda_s=0
      !
-     do i_str=1,50
-       if (trim(str_piece(i_str))=="-") then
-         !
-         if (len_trim(str_piece(i_str-1))==0) cycle
-         if (len_trim(str_piece(i_str+1))==0) cycle
-         !
-         read(str_piece(i_str-1),*) i_start
-         read(str_piece(i_str+1),*) i_end
-         !
-         if (i_start<=0)        i_start=1
-         if (i_end  > BS_K_dim) i_end=BS_K_dim
-         !
-         do i_st=i_start,i_end
-           !
-           if (allocated(BS_E_degs)) then
-             if (i_st>i_start.and.BS_E_degs(i_st)/=i_st) cycle
-           endif
-           !
-           if (allocated(lambda_s)) then
-             if (.not.any(lambda_s==i_st)) then
-               get_lambda=get_lambda+1
-               lambda_s(get_lambda)=i_st
-             endif
-           else
-             get_lambda=get_lambda+1
-           endif
-         enddo
+     i_str=1
+     !
+     do while (i_str<50)
+       !
+       if (len_trim(str_piece(i_str))==0) exit
+       !
+       if (trim(str_piece(i_str+1))=="-") then
+         read(str_piece(i_str  ),*) i_start
+         read(str_piece(i_str+2),*) i_end
+         i_str=i_str+3
+       else
+         read(str_piece(i_str),*) i_start
+         i_end=i_start
+         i_str=i_str+1
        endif
+       !
+       do i_st=i_start,i_end
+         !
+         if (allocated(BS_E_degs)) then
+           if (i_st>i_start.and.BS_E_degs(i_st)/=i_st) cycle
+         endif
+         !
+         if (allocated(lambda_s)) then
+           if (.not.any(lambda_s==i_st)) then
+             get_lambda=get_lambda+1
+             lambda_s(get_lambda)=i_st
+           endif
+         else
+           get_lambda=get_lambda+1
+         endif
+       enddo
      enddo
+     !
    end function
    !
 end subroutine

@@ -26,7 +26,7 @@ subroutine exc_wf_gnuplot(use_1d,use_2d,plot_dim,eval_only)
  use FFT_m,       ONLY:fft_dim
  use D_lattice,   ONLY:a
  use stderr,      ONLY:intc
- use YPP,         ONLY:nr,p_dir,exc_wf_sq,r_hole,lambda,wf_2d
+ use YPP,         ONLY:nr,p_dir,exc_wf,r_hole,lambda,wf_2d,l_free_hole,WF_multiplier
  use BS,          ONLY:BSS_description,BSS_n_descs
  use timing,      ONLY:live_timing
  !
@@ -76,9 +76,9 @@ subroutine exc_wf_gnuplot(use_1d,use_2d,plot_dim,eval_only)
        do i2 = 0,nr(2)-1
          do i3 = 0,nr(3)-1
            ir = 1 + i1 + i2*nr(1) + i3*nr(1)*nr(2)
-           if (use_1d(1)) wf_2d(i1+1,1)=wf_2d(i1+1,1)+exc_wf_sq(ir)
-           if (use_1d(2)) wf_2d(i2+1,1)=wf_2d(i2+1,1)+exc_wf_sq(ir)
-           if (use_1d(3)) wf_2d(i3+1,1)=wf_2d(i3+1,1)+exc_wf_sq(ir)
+           if (use_1d(1)) wf_2d(i1+1,1)=wf_2d(i1+1,1)+exc_wf(ir)
+           if (use_1d(2)) wf_2d(i2+1,1)=wf_2d(i2+1,1)+exc_wf(ir)
+           if (use_1d(3)) wf_2d(i3+1,1)=wf_2d(i3+1,1)+exc_wf(ir)
          enddo
        enddo
        call live_timing(steps=1)
@@ -93,7 +93,8 @@ subroutine exc_wf_gnuplot(use_1d,use_2d,plot_dim,eval_only)
      ! vedi se stai pescando valori della wf, oppure no. Appunto nel caso che
      ! uno mette la hole in un punto con poca densita'.
      !
-     wf_2d=wf_2d/wf_max 
+     if (.not.l_free_hole) wf_2d=wf_2d/wf_max  
+     if (l_free_hole)      wf_2d=wf_2d*WF_multiplier
      !
      do i1=0,nr2plot(1)-1
        call msg('o exc','',(/exc_wf_projection(i1,dir2plot(1)),&
@@ -117,15 +118,19 @@ subroutine exc_wf_gnuplot(use_1d,use_2d,plot_dim,eval_only)
        do i2 = 0,nr(2)-1
          do i3 = 0,nr(3)-1
            ir = 1 + i1 + i2*nr(1) + i3*nr(1)*nr(2)
-           if (use_2d(1)) wf_2d(i1+1,i2+1)=wf_2d(i1+1,i2+1)+exc_wf_sq(ir)
-           if (use_2d(2)) wf_2d(i1+1,i3+1)=wf_2d(i1+1,i3+1)+exc_wf_sq(ir)
-           if (use_2d(3)) wf_2d(i2+1,i3+1)=wf_2d(i2+1,i3+1)+exc_wf_sq(ir)
+           if (use_2d(1)) wf_2d(i1+1,i2+1)=wf_2d(i1+1,i2+1)+exc_wf(ir)
+           if (use_2d(2)) wf_2d(i1+1,i3+1)=wf_2d(i1+1,i3+1)+exc_wf(ir)
+           if (use_2d(3)) wf_2d(i2+1,i3+1)=wf_2d(i2+1,i3+1)+exc_wf(ir)
          enddo
        enddo
        call live_timing(steps=1)
      enddo
+     !
      wf_max=maxval(wf_2d(:,:))
-     wf_2d=wf_2d/wf_max
+     if (.not.l_free_hole) wf_2d=wf_2d/wf_max  
+     if (l_free_hole)      wf_2d=wf_2d*WF_multiplier
+     !wf_2d=wf_2d/wf_max 
+     !
      if (.not.eval_only) then
        if (use_2d(1)) call msg('o exc',"#",&
 &                             (/titles(1),titles(2),titles(4)/),INDENT=0,USE_TABS=.true.)

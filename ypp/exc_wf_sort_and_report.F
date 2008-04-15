@@ -26,7 +26,7 @@ subroutine exc_wf_sort_and_report(Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
  use stderr,        ONLY:intc
  use BS,            ONLY:BS_K_dim,BSS_description,BSS_n_descs,BS_eh_table
  use com,           ONLY:msg,of_open_close
- use YPP,           ONLY:R_normalize,deg_energy,lambda
+ use YPP,           ONLY:deg_energy,lambda
  use R_lattice,     ONLY:d3k_factor,q0_def_norm,bz_samp
  use D_lattice,     ONLY:n_atom_species,n_atoms,atom_pos,znucl
  use vec_operate,   ONLY:sort
@@ -51,7 +51,8 @@ subroutine exc_wf_sort_and_report(Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
  !
  ! Excitonc amplitude
  !
- integer, parameter :: amp_steps=1000
+ character(3), parameter:: R_normalize="yes"
+ integer,      parameter:: amp_steps=1000
  integer      :: amp_n_trans
  real(SP)     :: amp_range(2),amp_damping,amp_I(amp_steps)
  real(SP),allocatable :: amp_trans(:,:)
@@ -253,7 +254,7 @@ subroutine exc_wf_sort_and_report(Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
 &         d3k_factor*4.*pi/q0_def_norm**2*HARTREE
    Rmax = maxval(R)
    !
-   !if (trim(R_normalize)=='yes') R=R/Rmax
+   if (trim(R_normalize)=='yes') R=R/Rmax
    !
    if (i_mode==1) v2sort=real(BS_E)
    if (i_mode==2) v2sort=R

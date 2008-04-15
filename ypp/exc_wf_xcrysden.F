@@ -25,7 +25,7 @@ subroutine exc_wf_xcrysden(use_2d,plot_dim)
  use LOGO,        ONLY:code_version
  use com,         ONLY:of_open_close,msg
  use BS,          ONLY:BSS_description,BSS_n_descs
- use YPP,         ONLY:nr,exc_wf_sq,lambda,ncell,wf_2d,r_hole
+ use YPP,         ONLY:nr,exc_wf,lambda,ncell,wf_2d,r_hole
  use D_lattice,   ONLY:n_atom_species,n_atoms,a,atom_pos,znucl
  use stderr,      ONLY:intc
  !
@@ -70,7 +70,7 @@ subroutine exc_wf_xcrysden(use_2d,plot_dim)
  !
  ! write Hole position
  ! 
- write(ch,'(i1,f10.5,f10.5,f10.5)') -1,r_hole*BOHR
+ write(ch,'(i2,f10.5,f10.5,f10.5)') -1,r_hole*BOHR
  call msg('o exc','',ch,INDENT=0,USE_TABS=.FALSE.)
  !
  ! write the translated atoms of the cell
@@ -152,12 +152,12 @@ subroutine exc_wf_xcrysden(use_2d,plot_dim)
      call msg('o exc','',ncell(3)*a_angs(3,:))
      !
      ir = 0
-     wf_max=maxval(exc_wf_sq)
+     wf_max=maxval(exc_wf)
      do i3 = 0, nr(3)-1
        do i2 = 0, nr(2)-1
          do i1 = 0, nr(1)-1
            ir = 1 + i1 + i2*nr(1) + i3*nr(1)*nr(2)
-           call msg('o exc','',exc_wf_sq(ir)/wf_max)
+           call msg('o exc','',exc_wf(ir)/wf_max)
          enddo
        enddo
      enddo

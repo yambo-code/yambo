@@ -36,7 +36,7 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'kpt',     '[R] K-grid analysis') 
  call it('r',defs,'excp',    '[R] Excitonic Properties')
  call it('r',defs,'exc_wf',  '[R] Excitonic Wavefunction')
- call it('r',defs,'fixhole', '[R] Hole position fixed')
+ call it('r',defs,'freehole', '[R] Free hole position')
  call it('r',defs,'exc_amp', '[R] Excitonic Amplitudes')
  !
  ! GPL_EXCLUDE_START
@@ -66,10 +66,10 @@ subroutine ypp_init_load(defs)
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit)
  call it(defs,'Degen_Step', 'Maximum energy separation of two degenerate states',&
 &                           deg_energy,E_unit)
- call it(defs,'RNorm','Normalize residuals [yes/no]', R_normalize)
  call it(defs,'States','Index of the BS state(s)',state_ctl)
  call it(defs,'Cells', 'Number of cell repetitions (even or 1)',ncell)
  call it(defs,'Hole', '[cc] Hole position in unit cell',r_hole)
+ call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier)
  !
  ! p_dir: plot cut in the a1,a2,a3 basis
  ! 

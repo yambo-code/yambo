@@ -37,7 +37,7 @@ module YPP
  !
  logical      ::l_exc_props
  logical      ::l_wf
- logical      ::l_fixed_hole
+ logical      ::l_free_hole
  logical      ::l_sort
  logical      ::l_amplitude
  logical      ::l_spin
@@ -45,14 +45,14 @@ module YPP
  integer      ::ncell(3)     
  real(SP)     ::r_hole(3)    
  real(SP)     ::deg_energy   
+ real(SP)     ::WF_multiplier   
  character(1) ::p_format     
  character(3) ::p_dir        
- character(3) ::R_normalize 
  character(schlen) ::state_ctl 
  ! 
  integer               ::nr(3)
  integer               ::nr_tot
- real(SP), allocatable ::exc_wf_sq(:)
+ real(SP), allocatable ::exc_wf(:)
  real(SP), allocatable ::wf_2d(:,:)
  !
 #if defined _YPP_ELPH

@@ -191,7 +191,7 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
 &          dot_product( field_dir_rot, X_q0grad(:,ic,iv,ik,i_spin) )
          if ( is > nsym/(i_time_rev+1) ) X_rhoq0(ic,iv,i1,i_spin) = &
 &          dot_product( X_q0grad(:,ic,iv,ik,i_spin), field_dir_rot ) 
-
+         !
        enddo
      enddo
      X_rhoq0(iv,iv,i1,:) = (1.0_SP,0.0_SP)

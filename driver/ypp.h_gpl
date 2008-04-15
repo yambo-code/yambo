@@ -31,7 +31,7 @@
   {"dbfrag","S","DataBases fragmentation",0,0,0,0}, 
   {"kpt","k","K-grid generator",0,0,0,0}, 
   {"excp","e","Excitonic properties [(s)ort,(p)lot,(a)mplitude]",0,0,1,0}, 
-  {"fixhole","f","Fixed hole position [excitonic plot]",0,0,0,0},
+  {"freehole","f","Free hole position [excitonic plot]",0,0,0,0},
   {NULL,NULL,NULL,0,0,0,0}
  };
  char *tool="ypp";

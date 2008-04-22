@@ -50,7 +50,7 @@ UTILS    = changelog
 PROJECTS = yambo_ph yambo_sc ypp_ph yambo_ras yambo_reels \
 	       ypp_ras yambo_manyk yambo_ras_manyk yambo_tb yambo_gamma
 EXE      = $(TARGETS) $(PROJECTS) 
-INTERFCS = a2y p2y e2y f2y
+INTERFCS = a2y p2y e2y 
 #
 # Libraries (ordered for compiling & linking)
 #
@@ -128,7 +128,6 @@ interfaces: libs
 	@LIBS2DO="$(2SLIBS)" ; $(mksrc)
 	@LIBS2DO="int_modules"; DIR2GO="interfaces" ; $(mklib)
 	@X2DO="a2y" ;XPATH="interfaces/a2y";XLIBS="$(2SLIBS)";$(mkx)
-	@X2DO="f2y" ;XPATH="interfaces/f2y";XLIBS="$(2SLIBS)";$(mkx)
 	@if test "$(do_p2y)" = yes ; then X2DO="p2y" ; XPATH="interfaces/p2y" ; \
 	XLIBS="$(2SLIBS)"; ADF="-D@PW_CPP@"; $(mkx) ; fi
 	@if test "$(do_e2y)" = yes ; then X2DO="e2y" ; XPATH="interfaces/e2y" ; \

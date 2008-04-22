@@ -82,7 +82,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  drude_Gf = cmplx(0.,0.,SP)
  !
  force_bare_X_G=associated(Xen%W).or.associated(Xen%Z).or.use_X_RIM
-#if defined _BIGSYS
+#if defined _MANYK
  if(iq.ne.1) force_bare_X_G=.true.
 #endif
  !
@@ -121,11 +121,11 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  ! WF load
  !
-#if defined _RAS || _BIGSYS
+#if defined _RAS || _MANYK
  if(.not.( iq==1 .and. X%ng==1 )) then
 #endif
    call wf_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
-#if defined _RAS || _BIGSYS
+#if defined _RAS || _MANYK
  endif
 #endif
  !

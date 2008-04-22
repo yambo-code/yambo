@@ -28,6 +28,12 @@ module wave_func
  integer                :: wf_k(2)
  integer                :: wf_s(2)
  integer                :: wf_n_states
+ logical                :: real_wavefunctions
+ !
+ ! Bands block size
+ !
+ integer                :: wf_nb_io
+ integer                :: wf_nb_io_groups
  !
  ! Max Num. of COMPONENTS
  !
@@ -37,7 +43,11 @@ module wave_func
  !
  integer                :: wf_ng
  character(1)           :: wf_space
+#if defined _GAMMA
+ real(SP)   ,allocatable:: wf(:,:)
+#else
  complex(SP),allocatable:: wf(:,:)
+#endif
  integer    ,allocatable:: wf_state(:,:,:)
  !
  ! Num. of COMPONENTS at each k
@@ -48,6 +58,8 @@ module wave_func
  !
  integer    ,allocatable:: wf_igk(:,:)
  logical                :: wf_norm_test
+ !
+ logical, private       :: QUIET_
  !
  interface
    !
@@ -81,11 +93,13 @@ module wave_func
      !
      if (err==0) allocate(wf_state(wf_b(2),wf_k(2),wf_s(2)),stat=err)
      !
-#if defined _BIGSYS
-     call mem_est('WF',(/size(wf)/),quiet=.true.,errors=(/err/))
-#else
-     call mem_est('WF',(/size(wf)/),errors=(/err/))
+     QUIET_=.false.
+#if defined _MANYK
+     QUIET_=.true.
 #endif
+     !
+     call mem_est('WF',(/size(wf)/),quiet=QUIET_,errors=(/err/))
+     !
      wf=(0.,0.)
      wf_state=0
 #if defined _FFTW
@@ -98,11 +112,13 @@ module wave_func
      use FFT_m,    ONLY : fft_size,fft_dim,fft_dim_loaded,fft_g_table,&
   &                       fft_rot_r,fftw_plan
      if (.not.allocated(wf)) return
-#if defined _BIGSYS
-     call mem_est('WF',quiet=.true.)
-#else
-     call mem_est('WF')
+     QUIET_=.false.
+#if defined _MANYK
+     QUIET_=.true.
 #endif
+     !
+     call mem_est('WF',quiet=QUIET_)
+     !
      deallocate(wf,wf_state)
      if (wf_space=="R") then
        fft_size=0

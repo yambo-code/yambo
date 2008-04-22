@@ -120,7 +120,7 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
 
  wf_ng_eff = min(wf_ng_save,wf_ng_long)
 
-#if defined _BIGSYS
+#if defined _MANYK
  !
  ! {k} Allocate k-dependent local copies of unshifted WF grid. 
  !
@@ -148,7 +148,7 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
    ir = grid_dir(iq)
 #endif
 
-#if !defined _BIGSYS
+#if !defined _MANYK
    !
    ! Load WFs {k} + q_iq
    !
@@ -170,7 +170,7 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
    do ik = 1, Xk%nibz   ! Loop over k's in IBZ [1:nkibz]
      ikpq = ik_grid + ik - 1 ! Corresponding k in set of shifted grids
 
-#if defined _BIGSYS
+#if defined _MANYK
      !
      ! Load WFs {k} 
      !

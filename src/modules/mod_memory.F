@@ -129,8 +129,8 @@ module memory_m
        call warning( " Memory management of array "//trim(ch(1))//" failed.")
      endif
      !
-     stdout_report=master_cpu.and.mem_moved>mem_tresh.and.&
-&                  .not.present(quiet).and..not.infile_editing
+     stdout_report=master_cpu.and.mem_moved>mem_tresh.and..not.infile_editing
+     if (stdout_report.and.present(quiet)) stdout_report=.not.quiet
      if (.not.stdout_report) return
      !
      write (ch(2),'(a,f5.3,4a,f5.3,a)') "[M ",mem_sum," Gb] ",trim(action),&

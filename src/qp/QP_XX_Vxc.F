@@ -264,8 +264,10 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  !
  ! I/O
  !
- call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
- io_err=ioXXVXC(ID)
+ if (io_err/=0) then
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
+   io_err=ioXXVXC(ID)
+ endif
  !
  ! MPI barrier
  !

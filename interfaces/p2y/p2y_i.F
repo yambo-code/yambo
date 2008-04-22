@@ -32,17 +32,10 @@
  use D_lattice,           only : n_atoms_max
  use R_lattice,           only : bz_samp,bz_samp_reset,nkibz
  use timing,              only : live_timing_is_on
- use wave_func,           only : wf_ncx,ioWF
+ use wave_func,           only : wf_ncx,ioWF, wf_nb_io_groups,wf_nb_io
  use IO_m,                only : io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
- use interfaces,          only : interface_presets,force_noWFs
- !
- ! PW MODULES
- !
-#if defined _P2Y_EXPORT
-!use pw_export,        only : pw_openindex, pw_closeindex
-#else
- use qexml_module
-#endif
+ use mod_com2y,           only : interface_presets,force_noWFs
+ use mod_wf2y,            only : wf_splitter
  !
  implicit none
  type(levels)                 :: en
@@ -57,15 +50,9 @@
  character(icd),   intent(in) :: com_dir   
  !
  character(lchlen) :: index_filename, lch
- integer           :: ID,io_err,ioPP_err,ik,icycle
+ integer           :: ID,io_err,ioPP_err,ik,icycle, ib_grp
  integer, external :: ioDB1,ioKB_PP
  real(SP), allocatable :: wf_disk(:,:,:,:)
- !
- !PW WS
- !
- integer           :: pwunit, isec, ispinor
- integer           :: rhounit_, qexml_err
- logical           :: use_qexml, use_pwexport, deffile, lexist
  !
  ! Presets
  !
@@ -131,12 +118,15 @@
  !
  ! Wavefunction blocks
  !
- call wf_disk_split
+ wf_nb_io_groups=1
+ wf_nb_io=n_bands
+#if !defined _P2Y_EXPORT
+ call wf_splitter
+#endif
  !
- allocate(wf_disk(2,n_bands,wf_ncx,n_spin))
+ allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
  !
- isec = 1
  do ik=1,nkibz
    !
    ! Print verbose wfc read message
@@ -146,23 +136,19 @@
      write(lch,'(" :: K-point:",i5,"/",i5," Spinors ",i1)') ik,nkibz,n_spin
      call msg('s',trim(lch))
    endif
-   !
-   ! Read a single wfc component from disk
-   !
-   call p2y_wf(wf_disk,ik)
-   !
-   ! Write the standard wf header
-   !
-   if (ik==1) then
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
-     io_err=ioWF(ID)
-   endif
-   !
-   ! Section title (SEC = ik+1). 
-   !
-   isec = isec + 1 ! check
-   call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
-   io_err=ioWF(ID,wf_disk)
+   
+   do ib_grp=1,wf_nb_io_groups
+      !
+      ! Read a single wfc component from disk
+      !
+      call p2y_wf(wf_disk,ik,ib_grp)
+      !
+      ! Write the standard wf header
+      !
+      if (ik==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
+      if (ik> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
+      io_err=ioWF(ID,wf=wf_disk)
+   enddo
    !
  enddo
  !
@@ -179,60 +165,3 @@
  !
  end function p2y_i
 
- subroutine wf_disk_split
-   use stderr,              only : intc
-   use pars,                only : SP,DP, schlen
-   use electrons,           only : n_bands
-   use wave_func,           only : wf_ncx
-   use com,                 only : msg
-   use interfaces,          only : n_band_block,blocks, maxband
-   use memory_m,            only : mem_est
-   real(SP),parameter    :: max_array = 400.0_SP ! Mb limit for single WF array in memory
-!  real(SP),parameter    :: max_array = 0.01_SP ! Mb limit, for testing small systems
-   real(SP),parameter    :: kb = 1024.0_SP
-   integer               :: i
-   character(schlen)     :: sch
-
-
-   n_band_block = 1
-   array_sz = DP*n_bands*real(wf_ncx)/kb/kb ! wf_disk_DP
-   !
-   ! No memory problems: no blocks
-   !
-   if(array_sz.lt.max_array &
-#if !defined _BIGSYS
-      .or. .true. &   ! Switch off variable blocks unless _BIGSYS flag enabled at compilation
-#endif
-&    ) then
-!    call msg('s','Wavefunctions fully stored in memory.')
-
-     n_band_block = 1
-     allocate(blocks(2,n_band_block))
-     blocks(:,1) = (/ 1, n_bands /)
-     maxband = n_bands
-   else
-   !
-   ! Split the WFs read from disk into blocks
-   !
-     n_band_block = array_sz/max_array + 1
-     maxband = n_bands/real(n_band_block)  ! rough size of each block
-     allocate(blocks(2,n_band_block))
-     do i=1,n_band_block-1
-       blocks(1,i) = (i-1)*maxband+1
-       blocks(2,i) = blocks(1,i)+maxband-1
-     enddo
-     blocks(1,n_band_block) = blocks(2,n_band_block-1) + 1
-     blocks(2,n_band_block) = n_bands
-
-     do i=1,n_band_block
-       write(sch,'(a,i2,a,i4,a,i4,a)') &
-&      "  Block ",i," bands: [",blocks(1,i),":",blocks(2,i),"]"
-       call msg('s',trim(sch))
-     enddo
-
-     maxband = 1+maxval(blocks(2,:)-blocks(1,:)) ! The maximum block size
-
-   endif
-
-   return
- end subroutine wf_disk_split

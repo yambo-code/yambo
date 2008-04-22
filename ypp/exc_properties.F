@@ -407,8 +407,10 @@ subroutine exc_properties(Xk,Xen)
        wf_ = cdotu(BS_K_dim,BS_mat(1,i_l),1,wf_vc,1)
 #endif
        !
-       if (.not.l_free_hole) exc_wf(ir) = exc_wf(ir)+abs(wf_)**2.  
-       if (l_free_hole)      exc_wf(ir) = exc_wf(ir)+aimag(wf_)+real(wf_)
+       !if (.not.l_free_hole) exc_wf(ir) = exc_wf(ir)+abs(wf_)**2.  
+       !if (l_free_hole)      exc_wf(ir) = exc_wf(ir)+aimag(wf_)+real(wf_)
+       !
+       exc_wf(ir) = exc_wf(ir)+abs(wf_)**2.  
        !
      enddo
      !

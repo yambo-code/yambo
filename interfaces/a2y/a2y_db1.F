@@ -36,7 +36,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
 &                                  xc_string,XC_LDA_C_PW,XC_LDA_C_PZ,XC_LDA_C_WIGNER,&
 &                                  XC_LDA_C_HL,XC_LDA_C_XALPHA,NONE,XC_LDA_X,&
 &                                  XC_EXCHANGE
- use interfaces,            ONLY : print_interface_dimensions,symmetries_check_and_load,&
+ use mod_com2y,            ONLY : print_interface_dimensions,symmetries_check_and_load,&
 &                                  alat_mult_factor
  implicit none
  character(*)                   :: KSS_file_name

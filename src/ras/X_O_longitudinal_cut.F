@@ -113,7 +113,7 @@
      return
    endif
 
-#if defined _BIGSYS
+#if defined _MANYK
  !
  ! {k} Allocate k-dependent local copies of unshifted WF grid.
  !
@@ -140,7 +140,7 @@
      ik_grid = (iq-1)*Xk%nibz + 1 ! The index of the first k point for each grid
      ir = grid_dir(iq)
 
-#if !defined _BIGSYS
+#if !defined _MANYK
    !
    ! Load WFs {k} + q_iq
    !
@@ -162,7 +162,7 @@
      do ik = 1, Xk%nibz   ! Loop over k's in IBZ [1:nkibz]
        ikpq = ik_grid + ik - 1 ! Corresponding k in set of shifted grids
 
-#if defined _BIGSYS
+#if defined _MANYK
      !
      ! Load WFs {k}
      !

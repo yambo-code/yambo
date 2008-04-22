@@ -49,7 +49,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use stderr,     ONLY:win_size,tty_size,write_to_log,logfile
  use timing,     ONLY:log_line_to_dump,log_line,nhash,live_timing_is_on,&
 &                     parallel_timing,ct
- use wave_func,  ONLY:wf_b,wf_k,wf_ng,wf_space,wf_norm_test
+ use wave_func,  ONLY:wf_b,wf_k,wf_ng,wf_space,wf_norm_test,wf_nb_io,wf_nb_io_groups
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim
  use IO_m,       ONLY:io_reset,max_io_units,IO_write,dbs_fragment,serial_number,IO_read
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
@@ -221,6 +221,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  wf_ng=0
  wf_space=' '
  wf_norm_test=.true.
+ wf_nb_io=0
+ wf_nb_io_groups=1
  !
  !FFT
  !

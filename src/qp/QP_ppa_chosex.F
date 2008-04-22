@@ -213,6 +213,15 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
    endif
    !
+   ! This additional rotation of the PP residuals arised from the particular
+   ! case when TR is present but not the spatial inversion.
+   ! In this case, indeed, 
+   !
+   !   X(-q,G,G') = X(q,-G',-G')
+   !
+   ! While the -1 is introduced th the oscillators the reflection of the
+   ! matrix must be done here.
+   !
    if (iqs>nsym/(i_time_rev+1) .and. i_space_inv == 0 .and..not.PPaR_is_TR_rotated) then
      PPaR_is_TR_rotated=.true.
      forall(i1=1:X%ng,i2=1:X%ng) PPaR_ws(i2,i1)=PPaR(i1,i2)

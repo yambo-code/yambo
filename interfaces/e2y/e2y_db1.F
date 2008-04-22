@@ -46,7 +46,7 @@ subroutine e2y_db1(en,k,ncid)
  use wave_func,            only : wf_ncx
  use R_lattice,            only : bz_samp
  use D_lattice,            only : nsym, n_atom_species
- use interfaces,           only : print_interface_dimensions
+ use mod_com2y,           only : print_interface_dimensions
  implicit none
  type(levels),   intent(inout) :: en
  type(bz_samp),  intent(inout) :: k
@@ -154,7 +154,7 @@ contains
 &                                  DL_vol, a, alat, &
 &                                  n_atom_species,n_atoms,&
 &                                  n_atoms_max,atom_pos, znucl
-    use interfaces,           only : symmetries_check_and_load, alat_mult_factor
+    use mod_com2y,           only : symmetries_check_and_load, alat_mult_factor
     implicit none
     type(etsf_geometry)           :: geometry_group
     logical                       :: l_identity, l_inversion

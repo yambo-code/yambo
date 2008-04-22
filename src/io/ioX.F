@@ -209,7 +209,7 @@ integer function ioX(X,Xw,ID)
    !
    if (X%whoami==4) then
      call io_elemental(ID,UNIT=HARTREE,&
-&         VAR=" PPA Im  energy     [ev]:",R0=Xw%dr(2),CHECK=.true.,OP=(/"=="/))
+&         VAR=" PPA Im  energy     [ev]:",R0=X%ppaE,CHECK=.true.,OP=(/"=="/))
    endif
    if (X%whoami/=4) then
      call io_elemental(ID,&
@@ -237,21 +237,21 @@ integer function ioX(X,Xw,ID)
  !
  ioX=io_restart(ID)
  if (ioX/=0) goto 1
-
+ !
  if (any((/io_sec(ID,:)==2*iq+1/))) then
    allocate(X_disk(X%ng_db,X%ng_db,2))
-
+   !
    write (ch,'(a,i3.3)') "FREQ_sec_iq",iq
    call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/Xw%n(1),2/))
    allocate(W_disk(Xw%n(1),2))
-
+   !
    if (write_is_on(ID)) then
      W_disk(:,1)=real(Xw%p(:))
      W_disk(:,2)=aimag(Xw%p(:))
    endif
-
+   !
    call io_bulk(ID,R2=W_disk)
-
+   !
    if (read_is_on(ID)) then
      if (associated(Xw%p)) then
        deallocate(Xw%p)
@@ -261,13 +261,13 @@ integer function ioX(X,Xw,ID)
      call mem_est("W-p",(/Xw%n(1)/))
      Xw%p(:)=cmplx(W_disk(:,1),W_disk(:,2))
    endif
-
+   !
    deallocate(W_disk)
-
+   !
    write (ch,'(a,i3.3)') "X_Q_",iq
-
+   !
    call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/X%ng_db,X%ng_db,2,Xw%n(1)/))
-
+   !
    do i1=1,Xw%n(1)
      !
      if (write_is_on(ID)) call mat_c2r(X_mat(:,:,i1),X_disk)
@@ -283,7 +283,7 @@ integer function ioX(X,Xw,ID)
      endif
      !
    enddo
-
+   !
    deallocate(X_disk)
  endif
 

@@ -72,7 +72,7 @@
    !
    ! WF loading (needed in both cases)
    !
-#if !defined _BIGSYS
+#if !defined _MANYK
    call wf_load(0, 1, X%ib, (/1,Xk%nibz/), space='G', title='-Oscillators/G space')
 #endif
    !

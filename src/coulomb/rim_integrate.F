@@ -36,8 +36,8 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii)
  real(SP) :: r1,rfac,v1(3),v2(3)
  !
  rfac=8.*k_grid_uc_vol/real(N_out)/(2.*pi)**3.
- !     ----------------
- !     MonteCarlo volume
+ !    ----------------
+ !    MonteCarlo volume
  !
  RIM_qpg(iq,:,:)=0.
  !

@@ -48,7 +48,7 @@ CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
 TARGETS  = all yambo interfaces ypp 
 UTILS    = changelog
 PROJECTS = yambo_ph yambo_sc ypp_ph yambo_ras yambo_reels \
-	       ypp_ras yambo_bigsys yambo_ras_bigsys yambo_tb
+	       ypp_ras yambo_manyk yambo_ras_manyk yambo_tb yambo_gamma
 EXE      = $(TARGETS) $(PROJECTS) 
 INTERFCS = a2y p2y e2y f2y
 #
@@ -66,7 +66,7 @@ PJ_REELSLIBS = $(BASIC_LIBS) ras_reels_mods coulomb bz_ops qp_ctl reels \
                interface tddft pol_function qp acfdt bse
 
 PJ_SCLIBS       = $(MAIN_LIBS) sc
-PJ_BIGSYSLIBS   = $(MAIN_LIBS)
+PJ_MANYKLIBS    = $(MAIN_LIBS)
 PJ_PHLIBS       = $(MAIN_LIBS)
 #
 # Interfaces
@@ -93,24 +93,27 @@ yambo: libs
 	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)
 	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
 # PROJECTS #
+yambo_gamma: libs
+	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_GAMMA"; $(mksrc)
+	@X2DO="yambo_gamma"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_GAMMA";$(mkx)
 yambo_tb: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_TB"; $(mksrc)
 	@X2DO="yambo_tb"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_TB";$(mkx)
 yambo_sc: libs
 	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_SC"; $(mksrc)
 	@X2DO="yambo_sc"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_SC";$(mkx)
-yambo_bigsys: libs
-	@LIBS2DO="$(PJ_BIGSYSLIBS)";ADF="-D_BIGSYS"; $(mksrc)
-	@X2DO="yambo_bigsys"; XPATH="driver";XLIBS="$(PJ_BIGSYSLIBS)";ADF="-D_BIGSYS";$(mkx)
+yambo_manyk: libs
+	@LIBS2DO="$(PJ_MANYKLIBS)";ADF="-D_MANYK"; $(mksrc)
+	@X2DO="yambo_manyk"; XPATH="driver";XLIBS="$(PJ_MANYKLIBS)";ADF="-D_MANYK";$(mkx)
 yambo_ph: libs
 	@LIBS2DO="$(PJ_PHLIBS)";ADF="-D_ELPH"; $(mksrc)
 	@X2DO="yambo_ph"; XPATH="driver";XLIBS="$(PJ_PHLIBS)";ADF="-D_ELPH";$(mkx)
 yambo_ras: libs
 	@LIBS2DO="$(PJ_RASLIBS)";ADF="-D_RAS"; $(mksrc)
 	@X2DO="yambo_ras"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS";$(mkx)
-yambo_ras_bigsys: libs
-	@LIBS2DO="$(PJ_RASLIBS)";ADF="-D_RAS -D_BIGSYS"; $(mksrc)
-	@X2DO="yambo_ras_bigsys"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS -D_BIGSYS";$(mkx)
+yambo_ras_manyk: libs
+	@LIBS2DO="$(PJ_RASLIBS)";ADF="-D_RAS -D_MANYK"; $(mksrc)
+	@X2DO="yambo_ras_manyk"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS -D_MANYK";$(mkx)
 yambo_reels: libs
 	@LIBS2DO="$(PJ_REELSLIBS)";ADF="-D_REELS"; $(mksrc)
 	@X2DO="yambo_reels"; XPATH="driver";XLIBS="$(PJ_REELSLIBS)";ADF="-D_REELS";$(mkx)

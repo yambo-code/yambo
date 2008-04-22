@@ -107,7 +107,7 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
    endif
    X_q0grad=(0.,0.)
    !
-#if !defined _BIGSYS
+#if !defined _MANYK
    call wf_load(0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
 #endif
    !

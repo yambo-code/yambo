@@ -19,7 +19,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine p2y_wf(wf_disk,ikibz)
+ subroutine p2y_wf(wf_disk,ikibz, ib_grp)
+ !
+ ! Reads the WFs for single k-point ikibz and group of bands
+ ! associated with group ib_grp
  !
  use P2Y,                   only: pw_unit, verboseIO
  use pars,                  ONLY:SP,DP
@@ -27,57 +30,57 @@
  use D_lattice,             ONLY:n_atom_species,pp_n_l_comp_max,&
 &                                PP_alloc,pp_kbs,pp_kb,pp_kbd
  use R_lattice,             ONLY:nkibz
- use wave_func,             ONLY:wf_ncx,wf_nc_k, wf_igk
+ use wave_func,             ONLY:wf_ncx,wf_nc_k, wf_igk, wf_nb_io,wf_nb_io_groups
 #if defined _P2Y_EXPORT
  use pw_export
 #else
  use qexml_module
 #endif
  use pw_data,               only: n_spin_pw_, gamma_only_
- use interfaces,            ONLY:make_real_wf, n_band_block, blocks, maxband
+ 
  use memory_m,              ONLY: mem_est
  implicit none
  !
- integer,  intent(in)   :: ikibz
- real(SP), intent(out)  :: wf_disk(2,n_bands,wf_ncx,n_spin)
+ integer,  intent(in)   :: ikibz, ib_grp
+ real(SP), intent(out)  :: wf_disk(2,wf_nb_io,wf_ncx,n_spin)
  !
  ! Work Space
  !
  integer        :: ib, ikeff, ispin, npwk, ierr, ig
- integer        :: ic, ib1, ib2, iblock, n_b
+ integer        :: ic, ib1, ib2, n_b
  !
  ! holds the double precision pwscf record
  !
 #if defined _P2Y_EXPORT
  complex(DP)    :: wf_disk_DP(wf_nc_k(ikibz))
 #else
-!complex(DP)   :: wf_disk_DP(wf_nc_k(ikibz), n_bands) 
-!complex(DP)   :: wf_disk_DP_T(n_bands,wf_nc_k(ikibz)) 
- complex(DP), allocatable   :: wf_disk_DP(:,:)
+ complex(DP)   :: wf_disk_DP(wf_ncx, wf_nb_io)
 #endif
 
  !---------------------------------------------------------------------*
  !    Set up main data
  !---------------------------------------------------------------------*
 
-#if !defined _P2Y_EXPORT
- allocate(wf_disk_DP(wf_ncx,maxband))
- call mem_est("wf_disk_DP",(/size(wf_disk_DP)/),(/DP/))
-#endif
  npwk = wf_nc_k(ikibz)
  if(gamma_only_) npwk=(npwk-1)/2+1 ! PWs actually read from file
  wf_disk=(0._SP,0._SP)
+ !
+ ! Set the range of bands to be read from disk (ib1, ib2, n_b)
+ !
+ call set_band_block
 
  !---------------------------------------------------------------------*
  !    P2Y_EXPORT
  !---------------------------------------------------------------------*
 #if defined _P2Y_EXPORT
-
+ !
+ ! Note that EXPORT does not support block splitting
+ !
  if (ikibz==1) call pw_wfcstart(pw_unit)
  do ispin=1,n_spin
    ikeff = ikibz + (ispin-1)*nkibz
    call pw_wfcscan( pw_unit, ikeff ) ! scan for this ikibz
-   do ib = 1, n_bands       ! loop over bands
+   do ib = 1, n_bands
      call pw_wfcread(pw_unit,ib,npwk,wf_disk_DP)
      wf_disk(1,ib,1:npwk,ispin) =  real( wf_disk_DP(1:npwk) )
      wf_disk(2,ib,1:npwk,ispin) = aimag( wf_disk_DP(1:npwk) )
@@ -93,19 +96,12 @@
 #elif defined _P2Y_V31  || defined _P2Y_V311
 
  do ispin = 1, n_spin
-   do iblock = 1, n_band_block
-     call set_band_block
      call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, ispin=ispin, &
 &       npwk=npwk, igk = wf_igk(1:npwk,ikibz), wf = wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
-!
-! The original form without blocks
-!
-!   call qexml_read_wfc(ibnds=1, ibnde=n_bands, ik=ikibz, ispin=ispin, &
-!&       npwk=npwk, igk = wf_igk(1:npwk,ikibz), wf = wf_disk_DP, ierr=ierr)
      if(ierr.ne.0) call errore('qexml_read_wfc','Check version of PW data!',ierr)
+     !
      call sort_wf_disk
-   enddo
- 
+     !
  enddo
 
  !---------------------------------------------------------------------*
@@ -114,9 +110,6 @@
 #elif defined _P2Y_V32
 
  do ispin = 1, n_spin
-   do iblock = 1, n_band_block
-
-     call set_band_block
 
      select case(n_spin_pw_)
      case(1)
@@ -135,29 +128,24 @@
      !
      call sort_wf_disk
      !
-   enddo
-   !
  enddo
 
-#endif
-
-#if !defined _P2Y_EXPORT
- deallocate(wf_disk_DP)
- call mem_est("wf_disk_DP")
 #endif
 
  contains
 
    subroutine set_band_block
-     use pars,                  ONLY:schlen
+     use pars,                ONLY:schlen
      use com,                 only : msg
      character(schlen)       :: sch
-     ib1 = blocks(1,iblock)
-     ib2 = blocks(2,iblock)
+
+     ib1 = (ib_grp-1)*wf_nb_io + 1 
+     ib2 = min(ib_grp*wf_nb_io,n_bands)
      n_b = ib2-ib1+1
+
      if(verboseIO) then
        write(sch,'(a,i2,a,i4,a,i4,a)') &
-&      "  Filling block ",iblock," bands: [",ib1,":",ib2,"]"
+&      "  Filling block ",ib_grp," bands: [",ib1,":",ib2,"]"
        call msg('s',trim(sch))
      endif
    end subroutine set_band_block
@@ -166,36 +154,25 @@
     
 #if !defined _P2Y_EXPORT
      if(gamma_only_) then
-       do ib=ib1,ib2
-         wf_disk(1,ib,1,ispin) = real( wf_disk_DP(1,ib-ib1+1) )
-         wf_disk(2,ib,1,ispin) =aimag( wf_disk_DP(1,ib-ib1+1) )
+
+       do ib=1, n_b
+         wf_disk(1,ib,1,ispin) = real( wf_disk_DP(1,ib) )
+         wf_disk(2,ib,1,ispin) =aimag( wf_disk_DP(1,ib) )
          do ic=2,npwk
-           wf_disk(1,ib,2*ic-2,ispin) =   real(wf_disk_DP(ic,ib-ib1+1))
-           wf_disk(2,ib,2*ic-2,ispin) =  aimag(wf_disk_DP(ic,ib-ib1+1))
-           wf_disk(1,ib,2*ic-1,ispin) =   real(wf_disk_DP(ic,ib-ib1+1))
-           wf_disk(2,ib,2*ic-1,ispin) = -aimag(wf_disk_DP(ic,ib-ib1+1))
+           wf_disk(1,ib,2*ic-2,ispin) =   real(wf_disk_DP(ic,ib))
+           wf_disk(2,ib,2*ic-2,ispin) =  aimag(wf_disk_DP(ic,ib))
+           wf_disk(1,ib,2*ic-1,ispin) =   real(wf_disk_DP(ic,ib))
+           wf_disk(2,ib,2*ic-1,ispin) = -aimag(wf_disk_DP(ic,ib))
          enddo
        enddo
-!
-! Original lines without blocks
-!
-!      wf_disk(1,1:n_bands,1,ispin) =  real( wf_disk_DP(1,1:n_bands))
-!      wf_disk(2,1:n_bands,1,ispin) = aimag( wf_disk_DP(1,1:n_bands))
-!      do ig=2,npwk
-!        wf_disk(1,1:n_bands,2*ig-2,ispin) =  real(wf_disk_DP(ig,1:n_bands))
-!        wf_disk(2,1:n_bands,2*ig-2,ispin) = aimag(wf_disk_DP(ig,1:n_bands))
-!        wf_disk(1,1:n_bands,2*ig-1,ispin) =  real(wf_disk_DP(ig,1:n_bands))
-!        wf_disk(2,1:n_bands,2*ig-1,ispin) = -aimag(wf_disk_DP(ig,1:n_bands))
-!      enddo
 
      else
-!      wf_disk_DP_T=transpose(wf_disk_DP)
-!      wf_disk(1,1:n_bands,1:npwk,ispin) =  real( wf_disk_DP_T(:,:) )
-!      wf_disk(2,1:n_bands,1:npwk,ispin) = aimag( wf_disk_DP_T(:,:) )
-       do ib=ib1,ib2
-         forall(ic=1:npwk) wf_disk(1,ib,ic,ispin) = real( wf_disk_DP(ic,ib-ib1+1) )
-         forall(ic=1:npwk) wf_disk(2,ib,ic,ispin) =aimag( wf_disk_DP(ic,ib-ib1+1) )
+
+       do ib=1,n_b
+         forall(ic=1:npwk) wf_disk(1,ib,ic,ispin) = real( wf_disk_DP(ic,ib) )
+         forall(ic=1:npwk) wf_disk(2,ib,ic,ispin) =aimag( wf_disk_DP(ic,ib) )
        enddo
+
      endif
      !
      !   Lines relating to real WF workaround

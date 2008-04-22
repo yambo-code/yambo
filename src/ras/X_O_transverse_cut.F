@@ -69,7 +69,7 @@
 !    write(*,*) trim(sch)
 !<-- DEBUG
 
-#if defined _BIGSYS
+#if defined _MANYK
      call wf_load(0,1,X%ib,(/ik,ik/),space='G',title='-Oscillators/G space')
 #endif
 

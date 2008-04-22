@@ -33,7 +33,7 @@ integer function e2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  use timing,              only : live_timing_is_on
  use wave_func,           only : wf_ncx,ioWF
  use IO_m,                only : io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
- use interfaces,          only : interface_presets, force_noWFs
+ use mod_com2y,          only : interface_presets, force_noWFs
  implicit none
  integer,          intent(in) :: lnstr,iind,iod,ijs,np,pid,icd
  integer,          intent(in) :: iinf

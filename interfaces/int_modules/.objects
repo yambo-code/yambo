@@ -1,1 +1,1 @@
-objs = mod_interfaces.o
+objs = mod_com2y.o mod_wf2y.o

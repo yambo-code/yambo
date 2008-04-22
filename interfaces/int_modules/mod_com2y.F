@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module interfaces
+module mod_com2y
  ! 
  use pars,      ONLY:SP,PI,lchlen,schlen,DP
  implicit none
@@ -30,50 +30,7 @@ module interfaces
  !
  real(SP):: alat_mult_factor
  !
- integer               :: n_band_block, maxband
- integer, allocatable  :: blocks(:,:)
- !
  contains
-   !
-   subroutine make_real_wf(ib,ik,wf_,nc)
-     use stderr,    ONLY:intc
-     use com,       ONLY:warning
-     integer     :: ib,ik,nc
-     real (SP)   :: wf_(2,nc)
-     !
-     ! Work Space
-     !
-     integer     :: ic,ic_start,ic_check
-     real(SP)    :: c1,c2,c_norm_sq,ph_sin(nc),ph_cos(nc),ph_cos_sq(nc)
-     complex(SP) :: phase,wf_c
-     ic_start=-1
-     ic_check=0
-     do ic=1,nc
-       c1=wf_(1,ic)
-       c2=wf_(2,ic)
-       c_norm_sq=c1**2.+c2**2.
-       if (c_norm_sq>1.E-5) then
-         ic_check=ic_check+1
-         ph_cos_sq(ic)=1./(1.+(c2/c1)**2.)
-         ph_cos(ic)=c1/sqrt(c_norm_sq)
-         ph_sin(ic)=c2/sqrt(c_norm_sq)
-         if (ic_start<0) ic_start=ic
-       else
-         cycle
-       endif
-       if (abs(ph_cos_sq(ic)-ph_cos_sq(ic_start))>0.1) then
-         call warning('No phase @ band '//trim(intc(ib))//' k-point '//trim(intc(ik)))
-       endif
-       if (ic_check>10) exit
-     enddo
-     phase=cmplx(ph_cos(ic_start),-ph_sin(ic_start))
-     do ic=1,nc
-       wf_c=cmplx(wf_(1,ic),wf_(2,ic))
-       wf_(1,ic)=real(phase*wf_c)
-       wf_(2,ic)=aimag(phase*wf_c)
-     enddo
-     !
-   end subroutine
    !
    subroutine interface_presets(in_string)
      !
@@ -226,8 +183,9 @@ module interfaces
 &                                      DL_vol, a, alat, default_Tel, &
 &                                      n_atoms_max,n_atom_species,n_atoms, atom_pos, &
 &                                      znucl
-     use wave_func,             ONLY : wf_nc_k, wf_ncx, wf_igk, wf_ng
+     use wave_func,             ONLY : wf_nc_k, wf_ncx, wf_igk, wf_ng,real_wavefunctions
      use xc_functionals,        ONLY : GS_xc_KIND,GS_xc_FUNCTIONAL, xc_string
+     use vec_operate,           ONLY : v_is_zero
      implicit none
      type(levels),     intent(in)   :: en     ! Energies
      type(bz_samp),    intent(in)   :: k      ! K/Q points
@@ -248,6 +206,10 @@ module interfaces
      call msg('s',' :: XC potential          : ',xc_string(GS_xc_KIND,GS_xc_FUNCTIONAL))
      call msg('s',' :: Atomic species        :',n_atom_species)
      call msg('s',' :: Max atoms/species     :',n_atoms_max)
+     !
+     ! Check if real wavefunction are possible (gamma point only).
+     !
+     real_wavefunctions=k%nibz==1.and.v_is_zero(k%pt(1,:))
      !
      return
      !

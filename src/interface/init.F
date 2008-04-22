@@ -109,11 +109,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SC
  what_is_running='YAMBO_SC'
 #endif
-#if defined _BIGSYS || _RAS
- what_is_running='YAMBO_RAS_BIGSYS'
+#if defined _MANYK || _RAS
+ what_is_running='YAMBO_RAS_MANYK'
 #endif
-#if defined _BIGSYS 
- what_is_running='YAMBO_BIGSYS'
+#if defined _MANYK 
+ what_is_running='YAMBO_MANYK'
 #endif
  !
  !Presets (input)
@@ -738,8 +738,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          if (ioBS_err/=0) BS_n_g_W=X(2)%ng
        else if (io_X_err(4)==0) then
          if (ioBS_err/=0) BS_n_g_W=X(4)%ng
-         call X_duplicate(X(4),X(2))
-         call W_duplicate(Xw(4),Xw(2))
+         call initactivate(1,'em1d ppa')
        endif
        !
      endif

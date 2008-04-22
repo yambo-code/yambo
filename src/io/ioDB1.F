@@ -31,7 +31,7 @@ integer function ioDB1(E,k,ID)
 &                           znucl
  use R_lattice,        ONLY:ng_vec, g_vec, bz_samp,nkibz,&
 &                           qp_states_k,nXkibz,ng_closed
- use wave_func,        ONLY:wf_ncx, wf_nc_k, wf_igk,wf_ng
+ use wave_func,        ONLY:wf_ncx, wf_nc_k, wf_igk,wf_ng,wf_nb_io
  use IO_m,             ONLY:io_connect, io_disconnect, io_sec, &
 &                           io_elemental, io_status, io_bulk,read_is_on,&
 &                           serial_number,io_serial_number,io_code_revision,&
@@ -176,6 +176,7 @@ integer function ioDB1(E,k,ID)
      qp_states_k=(/1,k%nibz/)
      !
      n_bands=E%nb
+     wf_nb_io=E%nb
      QP_nb=E%nb
      QP_n_G_bands=(/1,E%nb/)
      BS_bands=(/1,E%nb/)

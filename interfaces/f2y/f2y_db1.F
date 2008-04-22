@@ -34,7 +34,7 @@
 &                                  xc_string,XC_LDA_C_PW,XC_LDA_C_PZ,XC_LDA_C_WIGNER,&
 &                                  XC_LDA_C_HL,XC_LDA_C_XALPHA
  use f2y_datatypes
- use interfaces,            ONLY : print_interface_dimensions
+ use mod_com2y,            ONLY : print_interface_dimensions
  implicit none
  character(*)                   :: file_name
  type(levels),     intent(out)  :: en     ! Energies

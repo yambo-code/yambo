@@ -325,9 +325,7 @@ integer function ioX(X,Xw,ID)
     g_limits=1
     if (is > 1 ) g_limits = (/ ng_in_shell(is-1), ng_in_shell(is) /)
     !
-    call define_zeros(g_vec(:X%ng,1),zero_=local_zero(1))
-    call define_zeros(g_vec(:X%ng,2),zero_=local_zero(2))
-    call define_zeros(g_vec(:X%ng,3),zero_=local_zero(3))
+    call define_zeros(vector_=g_vec,zero_=local_zero)
     !
     g_loop: do ig1=g_limits(1),g_limits(2)
       do ig2=g_limits(1),g_limits(2)

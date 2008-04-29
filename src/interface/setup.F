@@ -47,7 +47,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! Work Space
  !
- real(SP)          :: rv(3),m(3,3),k_rlu(k%nibz,3)
+ real(SP)          :: rv(3),m(3,3)
  integer           :: i1,i2,i3,is,ia
  character(schlen) :: dumb_ch1,dumb_ch2
  !
@@ -96,23 +96,10 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! ZERO's SETUP
  !
- call define_zeros(g_vec(:,1),zero_=G_iku_zero(1))
- call define_zeros(g_vec(:,2),zero_=G_iku_zero(2))
- call define_zeros(g_vec(:,3),zero_=G_iku_zero(3))
+ call define_zeros(vector_=g_vec,zero_=G_iku_zero)
+ call define_zeros(vector_=k%pt, zero_=k_iku_zero)
+ call define_zeros(vector_=k%pt, zero_=k_rlu_zero,RLU=.TRUE.)
  !
- call define_zeros(k%pt(:,1),zero_=k_iku_zero(1))
- call define_zeros(k%pt(:,2),zero_=k_iku_zero(2))
- call define_zeros(k%pt(:,3),zero_=k_iku_zero(3))
- k_iku_zero=minval(k_iku_zero)
- !
- do i1=1,k%nibz
-   call c2a(v_in=k%pt(i1,:),v_out=k_rlu(i1,:),mode='ki2a')
- enddo
- call define_zeros(k_rlu(:,1),zero_=k_rlu_zero(1))
- call define_zeros(k_rlu(:,2),zero_=k_rlu_zero(2))
- call define_zeros(k_rlu(:,3),zero_=k_rlu_zero(3))
- k_rlu_zero=minval(k_rlu_zero)
- ! 
  ! Symmetries and moltiplication table:
  !
  !  R_i*R_j=R_stab(i,j)

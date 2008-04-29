@@ -178,9 +178,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
    !
    if (read_is_on(ID).and.allocated(q_pt)) then
      !
-     call define_zeros(q_pt(:,1),zero_=local_zero(1))
-     call define_zeros(q_pt(:,2),zero_=local_zero(2))
-     call define_zeros(q_pt(:,3),zero_=local_zero(3))
+     call define_zeros(vector_=q_pt,zero_=local_zero)
      !
      do i1=1,nqibz
        if (.not.v_is_zero(q_pt(i1,:)-l_pt(i1,:),zero_=local_zero)) io_header=-1
@@ -207,9 +205,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
    !
    if (read_is_on(ID).and.allocated(k_pt)) then
      !
-     call define_zeros(k_pt(:,1),zero_=local_zero(1))
-     call define_zeros(k_pt(:,2),zero_=local_zero(2))
-     call define_zeros(k_pt(:,3),zero_=local_zero(3))
+     call define_zeros(vector_=k_pt,zero_=local_zero)
      !
      do i1=1,nkibz
        if (.not.v_is_zero(k_pt(i1,:)-l_pt(i1,:),zero_=local_zero)) io_header=-1

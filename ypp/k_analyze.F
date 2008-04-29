@@ -127,7 +127,7 @@ subroutine k_analize(en,k,Xk,q)
  call section('*',"== Q-grid analyzer ==")
  !========================================
  !
- !Input file parsing
+ ! Input file parsing
  !
  real_ctl=0.
  Q_user%nibz=1
@@ -265,14 +265,21 @@ subroutine k_analize(en,k,Xk,q)
    !
    subroutine reduce_and_print(K_grid,GW_grid)
      !
-     type(bz_samp)::K_grid
-     logical      ::GW_grid
+     use zeros,   ONLY:k_rlu_zero,define_zeros
+     use stderr,  ONLY:intc
+     type(bz_samp)   ::K_grid
+     logical         ::GW_grid
      !
      ! Work Space
      !
      real(SP), allocatable :: GWK_table(:)
      !
-     call msg("s","Reducing & Expanding the extended grid...")
+     ! Before doing any operation I need to redefine the zeros module
+     ! components. This is beacuse K_grid contains additional points (the GW ones, for example)
+     !
+     call define_zeros(vector_=K_grid%ptbz,zero_=k_rlu_zero,RLU=.TRUE.)
+     !
+     call msg("s","Reducing & Expanding the "//trim(intc(K_grid%nbz))//" k-points ...")
      call k_reduce(K_grid)
      call k_expand(K_grid)
      !
@@ -297,7 +304,7 @@ subroutine k_analize(en,k,Xk,q)
          do i2=1,GWK%nibz
            do is=1,nsym
              call c2a(v_in= matmul(rl_sop(:,:,is),GWK%pt(i2,:)) ,v_out=ka,mode='ki2a')
-             if (rlu_v_is_zero(v(:)-ka(:),zero_=k_rlu_zero)) then
+             if (rlu_v_is_zero(v(:)-ka(:))) then
                if (int_ctl(i1)/=0) cycle
                int_ctl(i1)=i2
                exit

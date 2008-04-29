@@ -33,43 +33,65 @@ module zeros
  !
  contains 
    !
-   subroutine define_zeros(vector_,ref_value,zero_) 
-   !
-   use vec_operate, ONLY: sort
-   !
-   real(SP)          ::  zero_
-   real(SP), optional::  vector_(:)
-   real(SP), optional::  ref_value
-   !
-   ! Work Space
-   !
-   integer              :: i1
-   real(SP)             :: r1
-   real(SP), allocatable:: tmp_arr(:)
-   !
-   if (present(ref_value)) then
-     zero_=ref_value    
-     return
-   endif
-   !
-   if (present(vector_)) then
-     allocate(tmp_arr(size(vector_)))
-     forall(i1=1:size(vector_)) tmp_arr(i1)=abs(vector_(i1))
-     call sort(tmp_arr)
-     zero_=zero_dfl
-     do i1=1,size(vector_)-1
-       r1=(tmp_arr(i1+1)-tmp_arr(i1))/10._SP
-       if (r1>zero_dfl) then
-         zero_=r1
-         exit
+   subroutine define_zeros(vector_,ref_value,zero_,RLU) 
+     !
+     use vec_operate, ONLY: sort,c2a
+     !
+     real(SP)          ::  zero_(3)
+     real(SP), optional::  vector_(:,:)
+     real(SP), optional::  ref_value(3)
+     logical , optional::  RLU
+     !
+     ! Work Space
+     !
+     integer              :: i1,ic,nv
+     real(SP)             :: r1
+     real(SP), allocatable:: tmp_arr(:),vector_rlu(:,:)
+     !
+     if (present(ref_value)) then
+       zero_=ref_value    
+       return
+     endif
+     !
+     if (present(vector_)) nv=size(vector_,1)
+     !
+     if (present(RLU)) then
+       if (RLU) then
+         allocate(vector_rlu(nv,3))
+         do i1=1,nv
+           call c2a(v_in=vector_(i1,:),v_out=vector_rlu(i1,:),mode='ki2a')
+         enddo
        endif
-     enddo
-     deallocate(tmp_arr)
-     return
-   endif
-   !
-   zero_=zero_dfl
-   !
+     endif
+     !
+     if (present(vector_)) then
+       allocate(tmp_arr(size(vector_,1)))
+       do ic=1,3
+         if (allocated(vector_rlu)) then
+           forall(i1=1:nv) tmp_arr(i1)=abs(vector_rlu(i1,ic))
+         else
+           forall(i1=1:nv) tmp_arr(i1)=abs(vector_(i1,ic))
+         endif
+         call sort(tmp_arr)
+         zero_(ic)=zero_dfl
+         do i1=1,nv-1
+           r1=(tmp_arr(i1+1)-tmp_arr(i1))/10._SP
+           if (r1>zero_dfl) then
+             zero_(ic)=r1
+             exit
+           endif
+         enddo
+       enddo
+       !
+       zero_=minval(zero_)
+       !
+       deallocate(tmp_arr)
+       if (allocated(vector_rlu)) deallocate(vector_rlu)
+       return
+     endif
+     !
+     zero_=zero_dfl
+     !
    end subroutine
    !
 end module 

@@ -227,7 +227,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  call msg('rn','X BZ K-points :',Xk%nbz)
  !
- call report_energies(en%E,k,en%nb,(/1,k%nibz/),'E',.TRUE.)
+ call report_energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'E',.TRUE.)
  !
  ! Once the occupations have been evaluated I dump Xen in Ken
  !

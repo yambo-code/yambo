@@ -100,6 +100,7 @@ if ( "$argv[1]" != "save" ) then
   mv NEW ./config/configure.ac
   $awk -f ss.awk configure
   mv NEW configure
+  chmod a+x configure
 endif
 rm -fr ss.awk
 #

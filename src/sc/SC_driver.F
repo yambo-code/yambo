@@ -652,11 +652,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  enddo
  !
  do ik=1,k%nibz
-   call report_energies(E%E(:SC_bands,:,:),k,SC_bands,(/ik,ik/),'E  ',.TRUE.)
-   call report_energies(E_bare,k,SC_bands,(/ik,ik/),'E_o',.FALSE.)
-   call report_energies(dE,k,SC_bands,(/ik,ik/),'d_E',.FALSE.)
-   call report_energies(spread,k,SC_bands,(/ik,ik/),'Spr',.FALSE.)
-   call report_energies(real(b_of_max_proj)/HARTREE,k,SC_bands,(/ik,ik/),'Bnd',.FALSE.)
+   call report_energies(E%E(:SC_bands,:,:),k,Xk,SC_bands,(/ik,ik/),'E  ',.TRUE.)
+   call report_energies(E_bare,k,Xk,SC_bands,(/ik,ik/),'E_o',.FALSE.)
+   call report_energies(dE,k,Xk,SC_bands,(/ik,ik/),'d_E',.FALSE.)
+   call report_energies(spread,k,Xk,SC_bands,(/ik,ik/),'Spr',.FALSE.)
+   call report_energies(real(b_of_max_proj)/HARTREE,k,Xk,SC_bands,(/ik,ik/),'Bnd',.FALSE.)
  enddo
  !
  deallocate(SC_R)

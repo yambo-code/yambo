@@ -27,7 +27,8 @@ subroutine rim()
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use timing,        ONLY:live_timing
- use vec_operate,   ONLY:c2a
+ use vec_operate,   ONLY:c2a,v_norm
+ use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:RL_vol,k_grid_uc_vol,k_grid_b,bz_samp,nqbz,&
 &                        nqibz,RIM_epsm1,RIM_is_diagonal,RIM_RL_vol,&
 &                        RIM_n_rand_pts,RIM_ng,RIM_qpg,&
@@ -37,11 +38,18 @@ subroutine rim()
  ! Work Space
  !
  type(pp_indexes)::px
- integer   :: i1,i2,i3,i4,i5,N_out,N_out_G,rep_factor
- real(SP)  :: v1(3),v2(3),r1,r2,qr(RIM_n_rand_pts,3),em1_anis(3),&
-&             G_sph_radii,anisotropy
+ integer   :: iq
+ real(SP)  :: em1_anis(3),G_sph_radii,anisotropy 
+ !
+ ! Random generator
+ !
+ real(SP)  :: first_neighbour(26,3)
+ integer   :: N_out,N_in,N_out_G,rep_factor,inn1,inn2,inn3,ic
+ real(SP)  :: v1(3),v2(3),qr(RIM_n_rand_pts,3),v1_norm(2)
  real(DP)  :: rr
- integer, parameter :: ni = 2
+ character(12)      :: ch(3)
+ integer            :: iseed(8)
+ real(DP), external :: dlaran
  !
  call pp_indexes_reset(px)
  !
@@ -57,6 +65,7 @@ subroutine rim()
  if (RIM_id_epsm1_reference>0 ) em1_anis=em1_anis/em1_anis(RIM_id_epsm1_reference)
  !
  ! Filling the small BZ with the random grid
+ !===========================================
  !
  call section('+','RIM initialization')
  if (RIM_is_diagonal) call msg('r','* Diagonal components only detected *')
@@ -64,35 +73,52 @@ subroutine rim()
  call msg('nr','8 x (sBL volume)    [au]:',8.*k_grid_uc_vol)
  call msg('r', 'sBZ random points       :',RIM_n_rand_pts)
  !
- i1=1
- N_out=0
- rep_factor=1000
- if (RIM_n_rand_pts<=1000) rep_factor=RIM_n_rand_pts/10
- if (rep_factor==0) rep_factor=1
- call live_timing('Random points',RIM_n_rand_pts/rep_factor,SERIAL=.true.)
- loop: do while(.not.i1==RIM_n_rand_pts+1)
-   do i2=1,3
-     !
-     call random_number(rr)
-     v2(i2)=(2.*rr-1.)
-     !
-   enddo
-   N_out=N_out+1
-   v1=matmul(transpose(k_grid_b),v2) ! cartesian
-   r1=sqrt(dot_product(v1,v1))
-   do i3=-ni,ni
-     do i4=-ni,ni
-       do i5=-ni,ni
-         v1=matmul(transpose(k_grid_b),v2-(/i3,i4,i5/))
-         r2=sqrt(dot_product(v1,v1))
-         if (r2<r1-1.E-5) cycle loop
-       enddo
+ ! Random generator seed
+ !
+ call date_and_time(ch(1),ch(2),ch(3),iseed)
+ iseed=iabs(iseed)
+ ! iseed(4) must be odd
+ iseed(4)=2*(iseed(4)/2)+1
+ !
+ ! First neighbours of the gamma point in the k_grid_b units
+ !
+ ic=0
+ do inn1=-1,1
+   do inn2=-1,1
+    do inn3=-1,1
+      if (all((/inn1,inn2,inn3/)==0)) cycle
+      ic=ic+1
+      first_neighbour(ic,:)=matmul(transpose(k_grid_b),(/inn1,inn2,inn3/))
      enddo
    enddo
-   v1=matmul(transpose(k_grid_b),v2)
-   call c2a(k_grid_b,v1,qr(i1,:),'kc2i')
-   i1=i1+1
-   if (mod(i1,rep_factor)==0) call live_timing(steps=1)
+ enddo
+ !
+ ! Loop setup
+ !
+ N_in=1
+ N_out=0
+ rep_factor=RIM_n_rand_pts/100
+ if (rep_factor==0) rep_factor=1
+ !
+ call live_timing('Random points',RIM_n_rand_pts/rep_factor,SERIAL=.true.)
+ loop: do while(.not.N_in==RIM_n_rand_pts+1)
+   !
+   do ic=1,3
+     v2(ic)=2.*dlaran(iseed(4:))-1
+   enddo
+   N_out=N_out+1
+   !
+   ! From rlu in the k_grid_b units (v2) to Cartesian (v1)
+   !
+   v1=matmul(transpose(k_grid_b),v2) 
+   v1_norm(1)=v_norm(v1)
+   do inn1=1,26
+     v1_norm(2)=v_norm(v1-first_neighbour(inn1,:))
+     if (v1_norm(2)<v1_norm(1)-1.E-5) cycle loop
+   enddo
+   qr(N_in,:)=v1*alat(:)/2./pi
+   N_in=N_in+1
+   if (mod(N_in,rep_factor)==0) call live_timing(steps=1)
  enddo loop
  call live_timing()
  call msg('r','Points outside the sBZ  :',N_out)
@@ -111,20 +137,20 @@ subroutine rim()
  !
  call par_indexes(px,(/nqibz/))
  call live_timing('Momenta loop',px%stps(myid+1))
- do i1=1,nqibz
-   if (.not.px%i1p(i1)) cycle
+ do iq=1,nqibz
+   if (.not.px%i1p(iq)) cycle
    !
-   call rim_integrate(i1,qr,em1_anis,N_out,N_out_G,G_sph_radii)
+   call rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii)
    !
-   if (i1==1) then
+   if (iq==1) then
      call msg('r','Gamma point sphere radius         [au]:',G_sph_radii)
      call msg('r','Points outside the sphere             :',n_out_G)
      call msg('r','[Int_sBZ(q=0) 1/q^2]*(Vol_sBZ)^(-1/3) =',&
 &                     4.*pi**3.*RIM_qpg(1,1,1)*k_grid_uc_vol**(-1./3.))
      call msg('r','                               should be <',7.7956_SP)
-     r1=(RIM_anisotropy-RIM_qpg(i1,1,1))/RIM_qpg(i1,1,1)*100.
      if (RIM_id_epsm1_reference/=0) call &
-&         msg('r','Anisotropy correction            [o/o]:',r1)
+&         msg('r','Anisotropy correction            [o/o]:',&
+&                 (RIM_anisotropy-RIM_qpg(iq,1,1))/RIM_qpg(iq,1,1)*100.)
    endif
    call live_timing(steps=1)
  enddo

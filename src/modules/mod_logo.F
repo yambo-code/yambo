@@ -23,8 +23,8 @@ module LOGO
  ! 
  implicit none
  !
- integer      ::code_version(3)
- integer      ::code_revision
+ integer      :: code_version(3)
+ integer      :: code_revision
  !
  integer                     :: n_logo_lines
  integer                     :: ID_logo
@@ -37,11 +37,19 @@ module LOGO
    integer function pickup_a_random(rand_range)
      use pars,  ONLY:DP,SP
      real(SP) :: rand_range
-     character(12) :: ch(3)       !
-     integer       :: iseed(8)    ! Work Space
-     real(DP), external :: dlaran !
+     !
+     ! Work Space
+     !
+     character(12)      :: ch(3)
+     integer            :: iseed(8)
+     real(DP), external :: dlaran
      call date_and_time(ch(1),ch(2),ch(3),iseed)
      iseed=iabs(iseed)
+     !
+     ! iseed(4) must be odd
+     !
+     iseed(4)=2*(iseed(4)/2)+1
+     !
      pickup_a_random=int(dlaran(iseed(4:))*rand_range)
    end function
    !

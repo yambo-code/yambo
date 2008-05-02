@@ -19,17 +19,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine report_energies(E,k,n_bands_,k_range,what,header)
+subroutine report_energies(E,k,Xk,n_bands_,k_range,what,header)
  !
  use pars,           ONLY:schlen,HARTREE,SP
- use R_lattice,      ONLY:bz_samp,nXkbz
+ use R_lattice,      ONLY:bz_samp,nXkibz
  use electrons,      ONLY:n_sp_pol,nel,n_full_bands
  use stderr,         ONLY:intc,real2ch
  use wave_func,      ONLY:wf_nc_k
  use com,            ONLY:msg
  implicit none
  !
- type(bz_samp) :: k
+ type(bz_samp) :: k,Xk
  integer       :: n_bands_,k_range(2)
  real(SP)      :: E(n_bands_,k%nibz,n_sp_pol)
  logical       :: header
@@ -49,8 +49,8 @@ subroutine report_energies(E,k,n_bands_,k_range,what,header)
    !
    if (header) then
      if (ik> 1    ) call msg('r','')
-     if (ik<=nXkbz) then
-       call msg('r','*X* '//trim(dumb_ch)//' * weight '//trim(real2ch(k%weights(ik))))
+     if (ik<=nXkibz) then
+       call msg('r','*X* '//trim(dumb_ch)//' * weight '//trim(real2ch(Xk%weights(ik))))
      else
        call msg('r',trim(dumb_ch)) 
      endif

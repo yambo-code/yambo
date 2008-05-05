@@ -26,7 +26,7 @@ use File::Find;
 $manual_preprocess_files = "X_os.F ";
 $exclude_files = "yamboo.pl ";
 @core_projects = ('yambo','ypp','p2y','a2y','f2y','e2y');
-@user_projects = ('RAS','REELS','BIGSYS','ELPH','SC','BS_CPL','YPP_ELPH','YPP_RAS','PH','TB');
+@user_projects = ('RAS','REELS','MANYK','ELPH','SC','BS_CPL','YPP_ELPH','YPP_RAS','PH','TB','GAMMA','SPIN');
 $user_projects_string = join(" ",@user_projects); # Append a space
 $files_to_skip = $manual_preprocess_files.$exclude_files;
 #
@@ -48,7 +48,7 @@ if($help or not $selected_project){
 #
 $selected_project_found = 0;
 foreach $project (@user_projects) {
-   if($project eq $selected_project or $project eq "GPL"){ $selected_project_found = 1};
+   if($project eq $selected_project or $selected_project eq "GPL"){ $selected_project_found = 1};
 }
 if($selected_project_found){
   #
@@ -301,7 +301,6 @@ DIRECTORY_LOOP: foreach $directory_name (@directories_list) {
       close(MODIFIED_FILE);
       rename($directory_name.$file_name."-stripped",$directory_name.$file_name);
    }
-
 } # directory loop
 &io("\n yambo GPL created successfully.\n");
 #
@@ -317,7 +316,12 @@ foreach $directory (@directories_for_deletion) {
 # Create a batchfile for deleting svn entries for deleting files.
 #
 open(BATCH, ">", "svndelete.batch") or die "Error opening batch\n";
+print BATCH (" svn delete ");
 print BATCH join("\n svn delete ",@delete_list);
+close(BATCH);
+open(BATCH, ">", "delete.batch") or die "Error opening batch\n";
+print BATCH (" rm -fr ");
+print BATCH join("\n rm -fr ",@delete_list);
 close(BATCH);
 
 exit;
@@ -393,8 +397,9 @@ sub io{
 sub check_for_project_preprocess_flags{
     my @source_contents = @_;
     my $match_project = 0;
-    my @match = grep(/\sdefined|ifdef/,@source_contents);
+    my @match = grep(/\sdefined|ifdef|\!defined/,@source_contents);
     if($#match+1 == 0) { return $match_project };  # No #define present at all
+
 
     $match_project = grep(/$selected_project/,@match);  
     if($match_project gt 0) { 

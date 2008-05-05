@@ -129,7 +129,7 @@ AC_SUBST(iotk_dir)
 # check for p2y versions
 #
 AC_ARG_WITH(p2y, AC_HELP_STRING([--with-p2y=<mode>],
- [Interface mode in PW 2 YAMBO : <export> <3.1> <3.1.1> <3.2>]))
+ [Interface mode in PW 2 YAMBO : <export> <3.1> <3.1.1> <3.2> <4.0>]))
 
 PW_VER="3.2"
 PW_CPP="_P2Y_V32"
@@ -149,6 +149,9 @@ if test "$compile_p2y" = "yes"; then
  if test "$with_p2y" = "3.2"; then
   PW_VER="3.2"
   PW_CPP="_P2Y_V32"
+ if test "$with_p2y" = "4.0"; then
+  PW_VER="4.0"
+  PW_CPP="_P2Y_V40"
  fi
 fi
 AC_SUBST(PW_VER)

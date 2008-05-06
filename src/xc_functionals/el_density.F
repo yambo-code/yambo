@@ -67,7 +67,12 @@ subroutine el_density(en,Xk,rho,use_si)
  !
  do i1=1,en%nbm
    do i2=1,Xk%nibz
+     !
+     ! GPL_EXCLUDE_START SPIN_IGNORE
+     !
      do is=1,n_sp_pol
+       !
+       ! GPL_EXCLUDE_END SPIN_IGNORE
        !
        if (size(wf_state,1)<i1) cycle
        if (size(wf_state,2)<i2) cycle
@@ -82,10 +87,21 @@ subroutine el_density(en,Xk,rho,use_si)
        endif
        !
        f_occ=en%f(i1,i2,1)
+       !
+       ! GPL_EXCLUDE_START SPIN_IGNORE
+       !
        if (n_sp_pol==2) f_occ=en%f(i1,i2,is)
        !
+       ! GPL_EXCLUDE_END SPIN_IGNORE
+       !
        rho_no_sym(:)=rho_no_sym(:)+f_occ*Xk%weights(i2)*abs(wf(:,ifft))**2.
+       !
+       ! GPL_EXCLUDE_START SPIN_IGNORE
+       !
      enddo
+     !
+     ! GPL_EXCLUDE_END SPIN_IGNORE
+     !
    enddo
  enddo
  !

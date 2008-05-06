@@ -192,19 +192,19 @@ subroutine QP_state_table_setup(en)
  !
  QP_n_states=0
  !
- ! GPL_INCLUDE_START
+ ! GPL_INCLUDE_START SPIN_IGNORE
  !i_sp = 1
- ! GPL_INCLUDE_END
+ ! GPL_INCLUDE_END SPIN_IGNORE
  !
  do i1=1,QP_nk
    do i2=1,QP_nb
      if (.not.QP_state(i2,i1)) cycle
      !
-     ! GPL_EXCLUDE_START
+     ! GPL_EXCLUDE_START SPIN_IGNORE
      !
      do i_sp=1,n_sp_pol
        !
-       ! GPL_EXCLUDE_END
+       ! GPL_EXCLUDE_END SPIN_IGNORE
        !
        do i3=0,bands_mixed-1
          !
@@ -218,11 +218,11 @@ subroutine QP_state_table_setup(en)
          !
        enddo
        !
-       ! GPL_EXCLUDE_START
+       ! GPL_EXCLUDE_START SPIN_IGNORE
        !
      enddo
      !
-     ! GPL_EXCLUDE_END
+     ! GPL_EXCLUDE_END SPIN_IGNORE
      !
    enddo
  enddo

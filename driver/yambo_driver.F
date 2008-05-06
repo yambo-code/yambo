@@ -268,7 +268,7 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  ! ACFDT
  !=======
  !
- if (l_acfdt) call acfdt_tot_energy(Xen,Xk,q,X(1))
+ if (l_acfdt) call acfdt_tot_energy(Xen,Xk,En,k,q,X(1))
  !
  ! GPL_EXCLUDE_END
  !

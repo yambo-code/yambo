@@ -109,7 +109,7 @@ subroutine DFT_Vxc(E,Xk)
    !
  endif
  !
- ! GPL_EXCLUDE_START
+ ! GPL_EXCLUDE_START  SPIN_IGNORE
  !
  if (n_spin==2) then
    !
@@ -190,6 +190,6 @@ subroutine DFT_Vxc(E,Xk)
  !
  deallocate(V_xc,el_mag)
  ! 
- ! GPL_EXCLUDE_END 
+ ! GPL_EXCLUDE_END SPIN_IGNORE
  !
 end subroutine

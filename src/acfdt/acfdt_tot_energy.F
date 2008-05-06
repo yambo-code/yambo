@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine acfdt_tot_energy(Xen,Xk,q,X)
+subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  !
  use pars,           ONLY:SP,schlen,HARTREE,pi,DP
  use ACFDT,          ONLY:ACFDT_n_freqs,ACFDT_n_lambda,ACFDT_E_range
@@ -43,8 +43,8 @@ subroutine acfdt_tot_energy(Xen,Xk,q,X)
 &                         XC_LDA_X,XC_CORRELATION
  use global_XC,      ONLY:WF_xc_functional
  implicit none
- type(levels) ::Xen 
- type(bz_samp)::Xk,q
+ type(levels) ::Xen,En
+ type(bz_samp)::Xk,q,k
  type(X_t)    ::X
  ! 
  ! Work Space
@@ -240,20 +240,20 @@ subroutine acfdt_tot_energy(Xen,Xk,q,X)
  !
  ! Exchange Energy (EXX)
  !
- QP_nb=Xen%nbm
- QP_nk=Xk%nibz
+ QP_nb=En%nbm
+ QP_nk=k%nibz
  if (allocated(QP_state)) deallocate(QP_state)
  allocate(QP_state(QP_nb,QP_nk))
  QP_state=.TRUE.
  !
- call QP_XX_Vxc(Xen,Xk,Xk,q)
+ call QP_XX_Vxc(En,k,Xk,q)
  !
  ACFDT_EXX=0.
  !
  do i1=1,QP_n_states
    ib=QP_table(i1,1)
    ik=QP_table(i1,3)
-   ACFDT_EXX=ACFDT_EXX+Xen%f(ib,ik,1)*Xk%weights(ik)*QP_Sx(i1)
+   ACFDT_EXX=ACFDT_EXX+En%f(ib,ik,1)*k%weights(ik)*QP_Sx(i1)
  enddo
  ACFDT_EXX=ACFDT_EXX/DL_vol/2._SP
  !

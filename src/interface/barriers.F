@@ -162,7 +162,7 @@ subroutine barriers()
  !
 #endif
  !
- ! GPL_EXCLUDE_START
+ ! GPL_EXCLUDE_START SPIN_EXCLUDE
  !
  ! SPIN
  !=============
@@ -173,7 +173,7 @@ subroutine barriers()
    if (gw0_raxis) call switch_off_runlevel('all',on_name=' ')
  endif 
  !
- ! GPL_EXCLUDE_END
+ ! GPL_EXCLUDE_END SPIN_EXCLUDE
  !
  ! MORE
  !======

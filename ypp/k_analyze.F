@@ -23,7 +23,7 @@ subroutine k_analize(en,k,Xk,q)
  !
  use pars,                ONLY:SP,schlen
  use electrons,           ONLY:levels
- use R_lattice,           ONLY:bz_samp,bz_samp_reset,rl_sop,nXkibz
+ use R_lattice,           ONLY:bz_samp,bz_samp_reset,nXkibz
  use D_lattice,           ONLY:nsym
  use com,                 ONLY:msg,warning
  use parser_m,            ONLY:parser
@@ -38,7 +38,7 @@ subroutine k_analize(en,k,Xk,q)
  !
  ! Work Space
  !
- type(bz_samp)::GWK,Final_K,Q_user
+ type(bz_samp)::USER_K,Final_K,Q_user
  real(SP)     ::real_ctl,v(3),ka(3),q0(3)
  integer      ::i1,i2,is,ik, j1
  real(SP):: kout(Xk%nibz,3)
@@ -47,7 +47,7 @@ subroutine k_analize(en,k,Xk,q)
  character(len=35)     :: fm
  integer               :: fac(3)
  !
- call bz_samp_reset(GWK)
+ call bz_samp_reset(USER_K)
  call bz_samp_reset(Q_user)
  call bz_samp_reset(Final_K)
  !
@@ -79,48 +79,49 @@ subroutine k_analize(en,k,Xk,q)
  !Input file parsing
  !
  real_ctl=0.
- GWK%nibz=1
+ USER_K%nibz=1
  gw_main_loop: do while(real_ctl/=999.)
-   if (associated(GWK%pt)) deallocate(GWK%pt)
-   allocate(GWK%pt(GWK%nibz,3))
-   GWK%pt(GWK%nibz,:)=(/0.,0.,999./)
-   call parser('GWKpts',GWK%pt)
-   real_ctl=GWK%pt(GWK%nibz,3)
+   if (associated(USER_K%pt)) deallocate(USER_K%pt)
+   allocate(USER_K%pt(USER_K%nibz,3))
+   USER_K%pt(USER_K%nibz,:)=(/0.,0.,999./)
+   call parser('GWKpts',USER_K%pt)
+   real_ctl=USER_K%pt(USER_K%nibz,3)
+   !
+   ! Transform the user_k_points in iku
+   !
+   if (trim(coo_in)=="cc")  call c2a(v_in=USER_K%pt(USER_K%nibz,:),v_out=v,mode="ki2c")
+   if (trim(coo_in)=="rlu") call c2a(v_in=USER_K%pt(USER_K%nibz,:),v_out=v,mode="ki2a")
+   USER_K%pt(USER_K%nibz,:)=v
+   !
    if (real_ctl/=999.) then
      !
      do i1=1,Xk%nbz
-       v=Xk%ptbz(i1,:)
-       if (trim(coo_in)=="cc")  call c2a(v_in=Xk%ptbz(i1,:),v_out=v,mode="ki2c")
-       if (trim(coo_in)=="rlu") call c2a(v_in=Xk%ptbz(i1,:),v_out=v,mode="ki2a")
-       if (v_is_zero(v(:)-GWK%pt(GWK%nibz,:),zero_=k_iku_zero)) then
+       if (v_is_zero(Xk%ptbz(i1,:)-USER_K%pt(USER_K%nibz,:),zero_=k_iku_zero)) then
          call warning(' Point already in the grid')
          exit gw_main_loop
        endif
      enddo
      !
-     GWK%nibz=GWK%nibz+1
+     USER_K%nibz=USER_K%nibz+1
      !
    endif
  enddo gw_main_loop
- GWK%nibz=GWK%nibz-1
- call msg("s",'User K-points :',GWK%nibz)
+ USER_K%nibz=USER_K%nibz-1
+ call msg("s",'User K-points :',USER_K%nibz)
  !
  ! Extended grid
  !
- allocate(Final_K%ptbz(Xk%nibz+GWK%nibz*q%nbz,3))
+ allocate(Final_K%ptbz(Xk%nibz+USER_K%nibz*q%nbz,3))
  Final_K%ptbz(:Xk%nibz,:)=k%pt(:Xk%nibz,:)
  Final_K%nbz=Xk%nibz
- do i1=1,GWK%nibz
-   v=GWK%pt(i1,:)
-   if (trim(coo_in)=="cc")  call c2a(v_in=GWK%pt(i1,:),v_out=v,mode="kc2i")
-   if (trim(coo_in)=="rlu") call c2a(v_in=GWK%pt(i1,:),v_out=v,mode="ka2i")
+ do i1=1,USER_K%nibz
    do i2=1,q%nbz
      Final_K%nbz=Final_K%nbz+1
-     Final_K%ptbz(Final_K%nbz,:)=v(:)-q%ptbz(i2,:)
+     Final_K%ptbz(Final_K%nbz,:)=USER_K%pt(i1,:)-q%ptbz(i2,:)
    enddo
  enddo
  !
- if (GWK%nibz>0) call reduce_and_print(Final_K,.TRUE.)
+ if (USER_K%nibz>0) call reduce_and_print(Final_K,.TRUE.)
  !
  call bz_samp_reset(Final_K)
  !
@@ -139,6 +140,8 @@ subroutine k_analize(en,k,Xk,q)
    real_ctl=Q_user%pt(Q_user%nibz,3)
    if (real_ctl/=999.) then
      !
+     if (Q_user%nibz==1.and.v_is_zero(Q_user%pt(1,:))) goto 1
+     !
      do i1=1,q%nbz
        v=q%ptbz(i1,:)
        if (trim(coo_in)=="cc")  call c2a(v_in=q%ptbz(i1,:),v_out=v,mode="ki2c")
@@ -155,7 +158,7 @@ subroutine k_analize(en,k,Xk,q)
  enddo q_main_loop
  Q_user%nibz=Q_user%nibz-1
  !
- call msg("s",'User Q-points :',Q_user%nibz)
+ if (Q_user%nibz>=1) call msg("s",'User Q-points :',Q_user%nibz)
  !
  ! Extended grid
  !
@@ -184,7 +187,6 @@ subroutine k_analize(en,k,Xk,q)
  call parser('KShift1',qlong(1,:))
  call parser('KShift2',qlong(2,:))
  call parser('KShift3',qlong(3,:))
-
  !
  if(any(abs(qlong)/=0.)) then
    !
@@ -209,16 +211,13 @@ subroutine k_analize(en,k,Xk,q)
      call msg("s","Renormalize long shift to :",q0)
      !
      if(v_norm(q0).gt.1e-6) then
-      
+       !
        i2 = i2 + 1
        !
        ! Convert input q0 to iku
        !
        if (trim(coo_in)=="cc")  call c2a(v_in=q0(:),mode="kc2i")
        if (trim(coo_in)=="rlu") call c2a(v_in=q0(:),mode="ka2i")
-!       write(ch,'(a,i1,a,3(f13.10,a),2a)') " -- Shifted K-grid[",i2,&
-!&      "]: {K} + (",q0(1),",",q0(2),",",q0(3),") [","ikuAA","]"
-!       call msg("s",trim(ch))
        !
        ! Convert q0[iku] to coo_out
        !
@@ -253,9 +252,10 @@ subroutine k_analize(en,k,Xk,q)
  endif
  live_timing_is_on=.true.
  !
+1 continue
  ! CLEAN
  !
- call bz_samp_reset(GWK)
+ call bz_samp_reset(USER_K)
  call bz_samp_reset(Q_user)
  call k_ibz2bz(q,'d',.false.)
  call k_ibz2bz(Xk,'d',.false.)
@@ -300,10 +300,10 @@ subroutine k_analize(en,k,Xk,q)
      !
      if (GW_grid) then
        do i1=1,K_grid%nibz
-         call c2a(v_in=K_grid%pt(i1,:),v_out=v,mode='ki2a')
-         do i2=1,GWK%nibz
+         call c2a(v_in=K_grid%pt(i1,:),v_out=ka,mode='ki2a')
+         do i2=1,USER_K%nibz
+           call c2a(v_in=USER_K%pt(i2,:),v_out=v,mode="ki2a")
            do is=1,nsym
-             call c2a(v_in= matmul(rl_sop(:,:,is),GWK%pt(i2,:)) ,v_out=ka,mode='ki2a')
              if (rlu_v_is_zero(v(:)-ka(:))) then
                if (int_ctl(i1)/=0) cycle
                int_ctl(i1)=i2
@@ -316,12 +316,12 @@ subroutine k_analize(en,k,Xk,q)
        int_ctl=0
      endif
      !
-     allocate(GWK_table(GWK%nibz))
+     allocate(GWK_table(USER_K%nibz))
      !
      live_timing_is_on=.false.
      call msg("s","       ---------- Reduced K-grid ----------")
      GWK_table=0
-     do i2=0,GWK%nibz
+     do i2=0,USER_K%nibz
        do i1=1,K_grid%nibz
          if (int_ctl(i1)/=i2.and..not.( i2==0.and.int_ctl(i1)/=0.and.i1<nXkibz )) cycle
          if (int_ctl(i1)/=0) then

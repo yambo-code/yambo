@@ -50,6 +50,8 @@ subroutine el_magnetization(en,Xk,el_mag)
  !
  if (n_spin==1) return
  !
+ ! GPL_EXCLUDE_START SPIN_EXCLUDE
+ !
  do i1=1,en%nbm
    do i2=1,Xk%nibz
      ifft_up=wf_state(i1,i2,1)
@@ -83,5 +85,7 @@ subroutine el_magnetization(en,Xk,el_mag)
      el_mag(:,i2)=el_mag(:,i2)+real(cv(fft_rot_r(i1,:),i2)/real(nsym))
    end do
  enddo
+ !
+ ! GPL_EXCLUDE_END SPIN_EXCLUDE
  !
 end subroutine

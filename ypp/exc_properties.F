@@ -164,7 +164,7 @@ subroutine exc_properties(Xk,Xen)
  !
  call exc_wf_sort_and_report(Xk,Xen,BS_R,BS_E,BS_E_degs=BS_E_degs)
  !
- ! GPL_EXCLUDE_START
+ ! GPL_EXCLUDE_START SPIN_IGNORE
  !
  ! Exciton's spin (collinear case)
  !================================
@@ -177,13 +177,13 @@ subroutine exc_properties(Xk,Xen)
    return
  endif
  ! 
- ! GPL_EXCLUDE_END 
+ ! GPL_EXCLUDE_END  SPIN_IGNORE
  ! 
  ! Loading  Wf 
  !
  if (l_wf) call wf_load(wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
  !
- ! GPL_EXCLUDE_START
+ ! GPL_EXCLUDE_START SPIN_IGNORE
  !
  ! Exciton's spin (not collinear case)
  !=====================================
@@ -204,7 +204,7 @@ subroutine exc_properties(Xk,Xen)
    return
  endif
  !
- ! GPL_EXCLUDE_END
+ ! GPL_EXCLUDE_END SPIN_IGNORE
  !
  call k_ibz2bz(Xk,'i',.false.)
  !
@@ -371,14 +371,14 @@ subroutine exc_properties(Xk,Xen)
        iv    = BS_eh_table(neh,2)
        ic    = BS_eh_table(neh,3)
        !
-       ! GPL_EXCLUDE_START
+       ! GPL_EXCLUDE_START SPIN_IGNORE
        !
        i_spin= spin(BS_eh_table(neh,:))
        !
-       ! GPL_EXCLUDE_END
-       ! GPL_INCLUDE_START
+       ! GPL_EXCLUDE_END SPIN_IGNORE
+       ! GPL_INCLUDE_START SPIN_IGNORE
        !i_spin = 1
-       ! GPL_INCLUDE_END
+       ! GPL_INCLUDE_END SPIN_IGNORE
        !
        ikibz = Xk%sstar(ikbz,1)
        is    = Xk%sstar(ikbz,2)

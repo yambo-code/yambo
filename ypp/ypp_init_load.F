@@ -39,11 +39,11 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'freehole', '[R] Free hole position')
  call it('r',defs,'exc_amp', '[R] Excitonic Amplitudes')
  !
- ! GPL_EXCLUDE_START SPIN_EXCLUDE
+ ! GPL_EXCLUDE_START SPIN_IGNORE
  !
  call it('r',defs,'exc_spin','[R] Excitonic Spin')
  !
- ! GPL_EXCLUDE_END SPIN_EXCLUDE
+ ! GPL_EXCLUDE_END SPIN_IGNORE
  !
  !
  ! GPL_EXCLUDE_START 

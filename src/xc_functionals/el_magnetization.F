@@ -50,7 +50,7 @@ subroutine el_magnetization(en,Xk,el_mag)
  !
  if (n_spin==1) return
  !
- ! GPL_EXCLUDE_START SPIN_EXCLUDE
+ ! GPL_EXCLUDE_START SPIN_IGNORE
  !
  do i1=1,en%nbm
    do i2=1,Xk%nibz
@@ -86,6 +86,6 @@ subroutine el_magnetization(en,Xk,el_mag)
    end do
  enddo
  !
- ! GPL_EXCLUDE_END SPIN_EXCLUDE
+ ! GPL_EXCLUDE_END SPIN_IGNORE
  !
 end subroutine

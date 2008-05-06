@@ -218,18 +218,18 @@ contains
    !
    ! Set miscellanous YAMBO data: dimensions
    !
-   ! GPL_EXCLUDE_START SPIN_EXCLUDE
+   ! GPL_EXCLUDE_START SPIN_IGNORE
    !
    select case(n_spin_pw_)
    case(1)
      !
-     ! GPL_EXCLUDE_END SPIN_EXCLUDE
+     ! GPL_EXCLUDE_END SPIN_IGNORE
      !
      n_sp_pol  = 1
      n_spinor  = 1
      n_spin    = 1
      !
-     ! GPL_EXCLUDE_START SPIN_EXCLUDE
+     ! GPL_EXCLUDE_START SPIN_IGNORE
      !
    case(2)
      n_sp_pol  = 2
@@ -241,7 +241,7 @@ contains
      n_spin    = 2
    end select
    !
-   ! GPL_EXCLUDE_END SPIN_EXCLUDE
+   ! GPL_EXCLUDE_END SPIN_IGNORE
    !
    default_Tel = 0.d0
    !

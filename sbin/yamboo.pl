@@ -316,8 +316,8 @@ foreach $directory (@directories_for_deletion) {
 # Create a batchfile for deleting svn entries for deleting files.
 #
 open(BATCH, ">", "svndelete.batch") or die "Error opening batch\n";
-print BATCH (" svn delete ");
-print BATCH join("\n svn delete ",@delete_list);
+print BATCH (" svn delete --force ");
+print BATCH join("\n svn delete --force ",@delete_list);
 close(BATCH);
 open(BATCH, ">", "delete.batch") or die "Error opening batch\n";
 print BATCH (" rm -fr ");

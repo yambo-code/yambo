@@ -162,10 +162,15 @@ subroutine barriers()
  !
 #endif
  !
- ! GPL_EXCLUDE_START SPIN_IGNORE
- !
  ! SPIN
  !=============
+ !
+ ! GPL_INCLUDE_START SPIN_IGNORE
+ !
+ !if (n_spin>1) call switch_off_runlevel('all',on_name=' ')
+ !
+ ! GPL_INCLUDE_START SPIN_IGNORE
+ ! GPL_EXCLUDE_START 
  !
  if (n_spin>1) then
    call switch_off_runlevel('all',on_name=&
@@ -173,7 +178,7 @@ subroutine barriers()
    if (gw0_raxis) call switch_off_runlevel('all',on_name=' ')
  endif 
  !
- ! GPL_EXCLUDE_END SPIN_IGNORE
+ ! GPL_EXCLUDE_END 
  !
  ! MORE
  !======

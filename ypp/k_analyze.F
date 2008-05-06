@@ -89,6 +89,7 @@ subroutine k_analize(en,k,Xk,q)
    !
    ! Transform the user_k_points in iku
    !
+   v=USER_K%pt(USER_K%nibz,:)
    if (trim(coo_in)=="cc")  call c2a(v_in=USER_K%pt(USER_K%nibz,:),v_out=v,mode="ki2c")
    if (trim(coo_in)=="rlu") call c2a(v_in=USER_K%pt(USER_K%nibz,:),v_out=v,mode="ki2a")
    USER_K%pt(USER_K%nibz,:)=v

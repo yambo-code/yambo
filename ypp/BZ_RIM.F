@@ -43,7 +43,13 @@ subroutine BZ_RIM(Xk,Xen)
 &               gap(2)
  integer      ::i1,i2,ikbz
  integer, external :: k_the_nearest
- real(DP)     :: rr
+ !
+ ! Random Generator
+ !
+ character(12)      :: ch(3)
+ integer            :: iseed(8)
+ real(DP), external :: dlaran
+ !
  logical      :: add_X_grid
  !
  ! BZ DB1 I/O
@@ -52,6 +58,7 @@ subroutine BZ_RIM(Xk,Xen)
  type(bz_samp)     :: BZ_k
  integer           :: ID,i_err
  integer, external :: ioDB1_reload,ioE_RIM
+
  !
  ! Saves 2 check
  !
@@ -75,13 +82,17 @@ subroutine BZ_RIM(Xk,Xen)
  !
  if (i_err/=0.or.trim(BZ_RIM_path)==".") then
    !
+   call date_and_time(ch(1),ch(2),ch(3),iseed)
+   iseed=iabs(iseed)
+   ! iseed(4) must be odd
+   iseed(4)=2*(iseed(4)/2)+1
+   !
    call section('*',"== BZ RIM grid generator ==")
    live_timing_is_on=.false.
    call msg("s"," ========== RIM K-grid ==========")
    do i1=1,BZ_RIM_nkpts
      do i2=1,3
-       call random_number(rr)
-       rand_kpt(i1,i2)=(2.*rr-1.)
+       rand_kpt(i1,i2)=(2.*dlaran(iseed(4:))-1.)
      enddo
      dummy=ak2bz(rand_kpt(i1,:))
      call c2a(v_in=rand_kpt(i1,:),mode="ka2i")

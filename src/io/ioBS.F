@@ -46,7 +46,7 @@ integer function ioBS(iq,X,ID)
  character(schlen)   ::ch,db_name
  character(lchlen)   ::local_description(100)
  real(SP),allocatable::BS_mat_disk(:,:,:)
- logical             ::db_is_large
+ logical             ::db_is_large,load_db_once_for_all
  !
  db_name='BS_Q'//trim(intc(iq))
  !
@@ -171,6 +171,9 @@ integer function ioBS(iq,X,ID)
  ! Coupling I/O
  !
  if (BS_K_coupling) then
+   !
+   load_DB_once_for_all=.not.allocated(BS_cpl_mat)
+   !
    write (ch,'(a,i4.4,a,i4.4)') "BS_CPL_KERNEL_BLK_K1_",ik12(1),"_K2_",ik12(2)
    call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/BS_blk_dim(ik12(1)),BS_blk_dim(ik12(2)),2/))
    !
@@ -179,8 +182,8 @@ integer function ioBS(iq,X,ID)
    call io_bulk(ID,R3=BS_mat_disk)
    !
    if (read_is_on(ID)) then
-     if (BS_DB_is_fragmented)      call mat_r2c(BS_mat_disk,BS_cpl_mat)
-     if (.not.BS_DB_is_fragmented) call mat_r2c(BS_mat_disk,&
+     if (.not.load_DB_once_for_all) call mat_r2c(BS_mat_disk,BS_cpl_mat)
+     if (load_DB_once_for_all)      call mat_r2c(BS_mat_disk,&
 &     BS_mat(BS_blk_coord(1)+1:BS_blk_coord(1)+BS_blk_dim(ik12(1)),&
 &            BS_K_dim+BS_blk_coord(2)+1:BS_K_dim+BS_blk_coord(2)+BS_blk_dim(ik12(2))))
    endif

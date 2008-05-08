@@ -71,6 +71,7 @@ module IO_m
  integer :: io_serial_number(max_io_units)
  integer :: io_netcdf_var(max_io_units)
  logical :: io_fragmented(max_io_units)
+ logical :: io_resetable(max_io_units)
  logical :: io_netcdf_support(max_io_units)
  character(lchlen)          :: io_file(max_io_units)
  !
@@ -353,6 +354,15 @@ module IO_m
    !
    subroutine io_fragment(ID,i_pointer,j_pointer,ierr)
      !
+     ! This routine checks if the DB is fragmented. If it is
+     ! it closes the DB and opens the fragment corresponding
+     ! to the i_pointer (j_pointer) pointers.
+     !
+     ! Note that, as io_disconnect is called with a negative
+     ! argument io_reset is no called. This is needed to save
+     ! the prperties of the DB that have been read previously 
+     ! (like io_nectdf_support or io_code_version/revision).
+     !
      implicit none
      integer           :: ID
      integer, optional :: i_pointer,j_pointer,ierr
@@ -361,8 +371,11 @@ module IO_m
      !
      integer           :: ierr_,i_fragment
      character(schlen) :: subfolder
+     logical           :: close_is_on_save
      !
      if (.not.io_fragmented(ID)) return
+     !
+     close_is_on_save=close_is_on(ID)
      !
      if (read_is_on(ID))  io_action(ID)=OP_RD_CL
      if (write_is_on(ID)) io_action(ID)=OP_WR_CL
@@ -370,8 +383,16 @@ module IO_m
      if (present(i_pointer)) i_fragment=i_pointer
      if (.not.present(i_pointer)) i_fragment=maxval(io_sec(ID,:))
      !
-     call io_disconnect(-ID)
+     ! Disconnect without calling io_reset
+     !
+     io_resetable(ID)=.false.
+     !
+     call io_disconnect(ID)
+     !
+     ! io_file is redefined by io_connect
+     !
      io_file(ID)=' '
+     !
      write (subfolder,'(2a,i5.5)') trim(io_extension(ID)),'_',i_fragment
      if (present(j_pointer)) write (subfolder,'(2a,i5.5,a,i5.5)') &
 &                            trim(io_extension(ID)),'_',i_fragment,'_',j_pointer
@@ -381,24 +402,30 @@ module IO_m
      ierr_=io_connect('fragment',subfolder=subfolder,type=io_type(ID),ID=ID)
      if (present(ierr)) ierr=ierr_
      !
+     ! io_action must be saved otherwise any io_disconnect call would
+     ! call io_reset (like in ioWF) 
+     !
+     if (close_is_on_save) io_resetable(ID)=.true.
+     !
    end subroutine
    !
    subroutine io_disconnect(ID)
      !
      integer :: ID
      !
-     if (.not.close_is_on(iabs(ID)).and.io_status(iabs(ID))>=0) return
+     if (.not.close_is_on(ID).and.io_status(ID)>=0) return
      !
-     if (file_is_open(io_file(iabs(ID)),iabs(ID))) then
-       if (io_netcdf_support(iabs(ID))) then
+     if (file_is_open(io_file(ID),ID)) then
+       if (io_netcdf_support(ID)) then
 #if defined _NETCDF_IO
-         call netcdf_call(nf90_close(io_unit(iabs(ID))))
+         call netcdf_call(nf90_close(io_unit(ID)))
 #endif
        else
-         close(unit=io_unit(iabs(ID)))
+         close(unit=io_unit(ID))
        endif
      endif
-     if (ID>0) call io_reset(iabs(ID))
+     !
+     if (io_resetable(ID)) call io_reset(ID)
      !
    end subroutine
    !
@@ -448,7 +475,7 @@ module IO_m
        !
        restart_file=get_name(desc=desc,type=4,CORE_IO=.false.,MORE_IO=.true.,COM_IO=.FALSE.,NETCDF=.false.)
        if (.not.file_exists(trim(restart_file))) return
-    
+       !
        open(unit=81,file=trim(restart_file))
        read (81,1) ch(:18),io_restart(ID)
        close(81)
@@ -467,7 +494,7 @@ module IO_m
 1    format(/////2x,a,i6)
      !
    end subroutine
-  
+   !
    subroutine io_control(ACTION,MODE,COM,SEC,ID,NETCDF)
      !
      integer :: ACTION,ID
@@ -534,6 +561,7 @@ module IO_m
      io_code_version(ID,:)=code_version
      io_code_revision(ID)=code_revision
      io_serial_number(ID)=serial_number
+     io_resetable(ID)=.true.
      io_netcdf_support(ID)=.false.
 #if defined _NETCDF_IO
      io_netcdf_support(ID)=.true.

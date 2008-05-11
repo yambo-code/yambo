@@ -30,7 +30,8 @@
   {"nompi", "N","Skip MPI initialization",0,0,0,0}, 
   {"dbfrag","S","DataBases fragmentation",0,0,0,0}, 
   {"kpt","k","K-grid generator",0,0,0,0}, 
-  {"excp","e","Excitonic properties [(s)ort,sp(in),(p)lot,(a)mplitude]",0,0,1,0}, 
+  {"excp","e","Excitons [(s)ort,(sp)in,(a)mplitude]",0,0,1,0}, 
+  {"plot","p","Plot [(e)xciton,(m)agnetization,(em),(d)ensity,(w)ave]",0,0,1,0}, 
   {"freehole","f","Free hole position [excitonic plot]",0,0,0,0}, 
   {"bzrim","r","BZ energy RIM analyzer",0,0,0,0}, 
 #if defined _SPP_ELPH

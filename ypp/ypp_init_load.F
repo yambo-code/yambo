@@ -36,7 +36,7 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'kpt',     '[R] K-grid analysis') 
  call it('r',defs,'excp',    '[R] Excitonic Properties')
  call it('r',defs,'exc_wf',  '[R] Excitonic Wavefunction')
- call it('r',defs,'freehole', '[R] Free hole position')
+ call it('r',defs,'freehole','[R] Free hole position')
  call it('r',defs,'exc_amp', '[R] Excitonic Amplitudes')
  !
  ! GPL_EXCLUDE_START SPIN_IGNORE
@@ -44,10 +44,12 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'exc_spin','[R] Excitonic Spin')
  !
  ! GPL_EXCLUDE_END SPIN_IGNORE
- !
- !
  ! GPL_EXCLUDE_START 
  !
+ call it('r',defs,'plot',         '[R] Plot')
+ call it('r',defs,'density',      '[R] Density')
+ call it('r',defs,'magnetization','[R] Magnetization')
+ call it('r',defs,'wavefunction', '[R] Wavefunction')
  call it('r',defs,'bzrim',   '[R] BZ energy RIM analyzer')
  call it('r',defs,'elph',    '[R] Electron-Phonon DBs preprocessing')
  call it('r',defs,'surf',    '[R] Surface spectroscopy postprocessor')

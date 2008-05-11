@@ -67,20 +67,29 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    !
    ! DEFAULTS
    !
+   ! PLOT
+   !
+   p_dir      ='1'
+   p_format   ='g'
+   wf_ng      =ng_vec
+   l_exc_wf=.false.
+   l_density=.false.
+   l_mag=.false.
+   l_sp_wf=.false.
+   l_merge=.true.
+   l_norm_to_one=.true.
+   output_fname=' '
+   !
    ! EXC WF
    !
-   l_wf=.false.
    l_spin=.false.
    l_sort=.false.
    l_amplitude=.false.
    ncell = (/1, 1, 1/) 
    r_hole= (/0.,0.,0./)
-   p_dir = '1'
    lambda = 1          
    state_ctl = '1 - 1'
    deg_energy =0.01/HARTREE
-   p_format   ='g'
-   wf_ng      =ng_vec
    WF_multiplier=1.
    !
 #if defined _YPP_ELPH
@@ -164,8 +173,31 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        infile_editing=.true.
        call initactivate(1,trim(rnlvls(i2,1)))
      endif
+     if ( trim(rstr_piece(i1)) == 'plot') then
+       l_exc_wf    =trim(rstr_piece(i1+1))=='e'
+       !
+       ! GPL_EXCLUDE_START
+       !
+       l_density =trim(rstr_piece(i1+1))=='d'
+       l_mag     =trim(rstr_piece(i1+1))=='m'
+       l_sp_wf   =trim(rstr_piece(i1+1))=='w'
+       !
+       if (trim(rstr_piece(i1+1))=='em') then
+         call initactivate(1,'excp')
+         l_mag=.true.
+         l_free_hole=.true.
+       endif
+       !
+       if  (l_exc_wf)  call initactivate(1,'exc_wf')
+       if  (l_exc_wf)  call initactivate(1,'excp')
+       if  (l_density) call initactivate(1,'density')
+       if  (l_mag)     call initactivate(1,'magnetization')
+       if  (l_sp_wf)   call initactivate(1,'wavefunction')
+       !
+       ! GPL_EXCLUDE_END
+       !
+     endif
      if ( trim(rstr_piece(i1)) == 'excp') then
-       l_wf    =trim(rstr_piece(i1+1))=='p'
        !
        ! GPL_EXCLUDE_START
        !
@@ -176,7 +208,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        l_sort       =trim(rstr_piece(i1+1))=='s'
        l_amplitude  =trim(rstr_piece(i1+1))=='a'
        if  (l_amplitude)   call initactivate(1,'exc_amp')
-       if  (l_wf)          call initactivate(1,'exc_wf')
        !
        ! GPL_EXCLUDE_START
        !
@@ -196,8 +227,12 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_exc_props=runlevel_is_on('excp')
  l_free_hole=runlevel_is_on('freehole')
  l_amplitude=runlevel_is_on('exc_amp')
- l_wf       =runlevel_is_on('exc_wf')
- if (.not.l_wf) l_free_hole=.false.
+ l_exc_wf   =runlevel_is_on('exc_wf')
+ l_density  =runlevel_is_on('density')
+ l_mag      =runlevel_is_on('magnetization')
+ l_sp_wf    =runlevel_is_on('wavefunction')
+ l_plot     =runlevel_is_on('plot')
+ if (.not.l_exc_wf) l_free_hole=.false.
  !
  ! GPL_EXCLUDE_START
  !
@@ -214,11 +249,13 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_END
  !
+ if (l_plot) call initactivate(1,"Format Direction FFTGvecs") 
+ !
  if (l_exc_props) then
    call initactivate(1,"States")
-   if (l_wf) call initactivate(1,"Format Direction FFTGvecs Degen_Step")
-   if (l_wf.and..not.l_free_hole) call initactivate(1,"Cells Hole Dimension") 
-   if (l_wf.and.l_free_hole) call initactivate(1,"WFMult") 
+   if (l_exc_wf) call initactivate(1,"Degen_Step")
+   if (l_exc_wf.and..not.l_free_hole) call initactivate(1,"Cells Hole Dimension") 
+   if (l_exc_wf.and.l_free_hole) call initactivate(1,"WFMult") 
    if (l_spin) call initactivate(1,"Degen_Step")
  endif
  !

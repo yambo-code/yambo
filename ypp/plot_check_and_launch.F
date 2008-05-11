@@ -19,10 +19,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine exc_wf_plot_driver(check_only)
+subroutine plot_check_and_launch(check_only)
  !
  use pars,        ONLY:SP
- use YPP,         ONLY:p_format,p_dir
+ use YPP,         ONLY:p_format,p_dir,plot_dim,use_gnuplot,use_xcrysden 
  use com,         ONLY:warning
  use D_lattice,   ONLY:a
  use vec_operate, ONLY:v_is_zero
@@ -32,9 +32,8 @@ subroutine exc_wf_plot_driver(check_only)
  !
  ! Work Space
  !
- integer :: plot_dim
  real(SP):: dp(3)
- logical :: use_gnuplot,use_xcrysden,use_1d(3),use_2d(3),use_3d,&
+ logical :: use_1d(3),use_2d(3),use_3d,&
 &           switch_to_gnuplot,switch_to_xcrysden
  !
  ! Dot products to check orthogonality issues
@@ -102,10 +101,10 @@ subroutine exc_wf_plot_driver(check_only)
  !
  if (check_only) return
  !
- if (use_gnuplot)  call exc_wf_gnuplot(use_1d,use_2d,plot_dim,.FALSE.)
+ if (use_gnuplot)  call plot_gnuplot(use_1d,use_2d,.FALSE.)
  if (use_xcrysden) then
-   if (plot_dim==2) call exc_wf_gnuplot(use_1d,use_2d,plot_dim,.TRUE.)
-   call exc_wf_xcrysden(use_2d,plot_dim)
+   if (plot_dim==2) call plot_gnuplot(use_1d,use_2d,.TRUE.)
+   call plot_xcrysden(use_2d)
  endif
  !
 end subroutine

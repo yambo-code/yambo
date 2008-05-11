@@ -19,35 +19,25 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine exc_wf_xcrysden(use_2d,plot_dim)
+subroutine plot_xcrysden(use_2d)
  !
  use pars,        ONLY:BOHR,SP,schlen
  use LOGO,        ONLY:code_version
- use com,         ONLY:of_open_close,msg
- use BS,          ONLY:BSS_description,BSS_n_descs
- use YPP,         ONLY:nr,exc_wf,lambda,ncell,wf_2d,r_hole
+ use com,         ONLY:msg
+ use YPP,         ONLY:nr,v2plot,ncell,v2plot2D,r_hole,plot_dim,l_free_hole,&
+&                      l_norm_to_one,WF_multiplier,l_exc_wf
  use D_lattice,   ONLY:n_atom_species,n_atoms,a,atom_pos,znucl
- use stderr,      ONLY:intc
  !
  implicit none
- integer  :: plot_dim
  logical  :: use_2d(3)
  !
  ! Work Space...
  !
  integer  :: i1,i2,i3,ir,is,ia,n_atoms_tot,dir2plot(2),nr2plot(2)
  real(SP) :: a_angs(3,3)    !lattice vectors in Angstrom
- real(SP) :: rv(3),wf_max
+ real(SP) :: rv(3),max_
  character(schlen) :: ch
  ! 
- ! Open the output file
- !
- call of_open_close('exc_wf_'//trim(intc(plot_dim))//'d_'//trim(intc(lambda))//'.xsf','ot')
- do i1=1,BSS_n_descs
-   call msg('o exc',"#",trim(BSS_description(i1)),INDENT=0)
- enddo
- call msg('o exc',"#")
- !
  n_atoms_tot=0
  do is=1,n_atom_species
    n_atoms_tot=n_atoms_tot+n_atoms(is)
@@ -60,18 +50,20 @@ subroutine exc_wf_xcrysden(use_2d,plot_dim)
  !
  !This is the output file common at both grids
  !
- call msg('o exc','CRYSTAL')
- call msg('o exc','PRIMVEC')
- call msg('o exc','',ncell(1)*a_angs(1,:))
- call msg('o exc','',ncell(2)*a_angs(2,:))
- call msg('o exc','',ncell(3)*a_angs(3,:))
- call msg('o exc','PRIMCOORD')
- call msg('o exc','',(/n_atoms_tot*ncell(1)*ncell(2)*ncell(3)+1,1/))
+ call msg('o exc den mag wf','CRYSTAL')
+ call msg('o exc den mag wf','PRIMVEC')
+ call msg('o exc den mag wf','',ncell(1)*a_angs(1,:))
+ call msg('o exc den mag wf','',ncell(2)*a_angs(2,:))
+ call msg('o exc den mag wf','',ncell(3)*a_angs(3,:))
+ call msg('o exc den mag wf','PRIMCOORD')
+ call msg('o exc den mag wf','',(/n_atoms_tot*ncell(1)*ncell(2)*ncell(3)+1,1/))
  !
  ! write Hole position
  ! 
- write(ch,'(i2,f10.5,f10.5,f10.5)') -1,r_hole*BOHR
- call msg('o exc','',ch,INDENT=0,USE_TABS=.FALSE.)
+ if (.not.l_free_hole.and.l_exc_wf) then
+   write(ch,'(i2,f10.5,f10.5,f10.5)') -1,r_hole*BOHR
+   call msg('o exc den mag wf','',ch,INDENT=0,USE_TABS=.FALSE.)
+ endif
  !
  ! write the translated atoms of the cell
  ! 
@@ -84,7 +76,7 @@ subroutine exc_wf_xcrysden(use_2d,plot_dim)
            rv(2)=atom_pos(2,ia,is)*BOHR+i1*a_angs(1,2)+i2*a_angs(2,2)+i3*a_angs(3,2)
            rv(3)=atom_pos(3,ia,is)*BOHR+i1*a_angs(1,3)+i2*a_angs(2,3)+i3*a_angs(3,3)   
            write(ch,'(i5,3f10.5)') znucl(is),rv(:)
-           call msg('o exc','',ch,INDENT=0,USE_TABS=.FALSE.)
+           call msg('o exc den mag wf','',ch,INDENT=0,USE_TABS=.FALSE.)
          enddo
        enddo
      enddo
@@ -103,70 +95,70 @@ subroutine exc_wf_xcrysden(use_2d,plot_dim)
      if (use_2d(2)) dir2plot=(/1,3/)
      if (use_2d(3)) dir2plot=(/2,3/)
      !
-     call msg('o exc','BEGIN_BLOCK_DATAGRID_2D')
-     call msg('o exc','Generated with YPP',code_version)
-     call msg('o exc','BEGIN_DATAGRID_2D')
+     call msg('o exc den mag wf','BEGIN_BLOCK_DATAGRID_2D')
+     call msg('o exc den mag wf','Generated with YPP',code_version)
+     call msg('o exc den mag wf','BEGIN_DATAGRID_2D')
      !
      ! here it depends on the plane
      ! number of data-points in each direction 
      !
-     call msg('o exc','',nr2plot) 
+     call msg('o exc den mag wf','',nr2plot) 
      !
      ! Origin of the datagrid
      !
-     if (use_2d(1)) call msg('o exc','',ncell(3)*a_angs(3,:)/2)
-     if (use_2d(2)) call msg('o exc','',ncell(2)*a_angs(2,:)/2) 
-     if (use_2d(3)) call msg('o exc','',ncell(1)*a_angs(1,:)/2)
+     if (use_2d(1)) call msg('o exc den mag wf','',ncell(3)*a_angs(3,:)/2)
+     if (use_2d(2)) call msg('o exc den mag wf','',ncell(2)*a_angs(2,:)/2) 
+     if (use_2d(3)) call msg('o exc den mag wf','',ncell(1)*a_angs(1,:)/2)
      !
      ! First spanning vector of the datagrid
      !
-     if (use_2d(1).or.use_2d(2)) call msg('o exc','',ncell(1)*a_angs(1,:))
-     if (use_2d(3)) call msg('o exc','',ncell(2)*a_angs(2,:))
+     if (use_2d(1).or.use_2d(2)) call msg('o exc den mag wf','',ncell(1)*a_angs(1,:))
+     if (use_2d(3)) call msg('o exc den mag wf','',ncell(2)*a_angs(2,:))
      !
      !second spanning vector of the datagrid
      !
-     if (use_2d(1))call msg('o exc','',ncell(2)*a_angs(2,:))
-     if (use_2d(2).or.use_2d(3)) call msg('o exc','',ncell(3)*a_angs(3,:))
+     if (use_2d(1))call msg('o exc den mag wf','',ncell(2)*a_angs(2,:))
+     if (use_2d(2).or.use_2d(3)) call msg('o exc den mag wf','',ncell(3)*a_angs(3,:))
      !
      do i2=1,nr2plot(2) 
        do i1=1,nr2plot(1)
-         call msg('o exc','',wf_2d(i1,i2))
+         call msg('o exc den mag wf','',v2plot2D(i1,i2))
        enddo
      enddo  
      !
-     call msg('o exc','','END_DATAGRID_2D')
-     call msg('o exc','','END_BLOCK_DATAGRID_2D')
+     call msg('o exc den mag wf','','END_DATAGRID_2D')
+     call msg('o exc den mag wf','','END_BLOCK_DATAGRID_2D')
      !
-     deallocate(wf_2d)
+     deallocate(v2plot2D)
      !
    case(3)
      !
-     call msg('o exc','BEGIN_BLOCK_DATAGRID_3D')
-     call msg('o exc','Generated with YPP',code_version)
-     call msg('o exc','BEGIN_DATAGRID_3D')
+     call msg('o exc den mag wf','BEGIN_BLOCK_DATAGRID_3D')
+     call msg('o exc den mag wf','Generated with YPP',code_version)
+     call msg('o exc den mag wf','BEGIN_DATAGRID_3D')
      !
-     call msg('o exc','',nr)
-     call msg('o exc','',(/0._SP,0._SP,0._SP/))
-     call msg('o exc','',ncell(1)*a_angs(1,:))
-     call msg('o exc','',ncell(2)*a_angs(2,:))
-     call msg('o exc','',ncell(3)*a_angs(3,:))
+     call msg('o exc den mag wf','',nr)
+     call msg('o exc den mag wf','',(/0._SP,0._SP,0._SP/))
+     call msg('o exc den mag wf','',ncell(1)*a_angs(1,:))
+     call msg('o exc den mag wf','',ncell(2)*a_angs(2,:))
+     call msg('o exc den mag wf','',ncell(3)*a_angs(3,:))
      !
      ir = 0
-     wf_max=maxval(exc_wf)
+     max_=maxval(v2plot)
+     if (.not.l_norm_to_one) max_=1.
+     !
      do i3 = 0, nr(3)-1
        do i2 = 0, nr(2)-1
          do i1 = 0, nr(1)-1
            ir = 1 + i1 + i2*nr(1) + i3*nr(1)*nr(2)
-           call msg('o exc','',exc_wf(ir)/wf_max)
+           call msg('o exc den mag wf','',v2plot(ir)/max_*WF_multiplier)
          enddo
        enddo
      enddo
      !
-     call msg('o exc','','END_DATAGRID_3D')
-     call msg('o exc','','END_BLOCK_DATAGRID_3D')
+     call msg('o exc den mag wf','','END_DATAGRID_3D')
+     call msg('o exc den mag wf','','END_BLOCK_DATAGRID_3D')
      !
  end select
- !
- call of_open_close('exc_wf_'//trim(intc(plot_dim))//'d_'//trim(intc(lambda))//'.xsf')
  !
 end subroutine

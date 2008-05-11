@@ -27,17 +27,19 @@ subroutine exc_properties(Xk,Xen)
  use D_lattice,     ONLY:a,i_time_rev,nsym,alat
  use wave_func,     ONLY:wf_load,wf_state,wf,WF_free,wf_ng
  use R_lattice,     ONLY:nXkibz,bz_samp
- use YPP,           ONLY:l_sort,l_wf,l_spin,ncell,lambda,r_hole,&
-&                        nr,exc_wf,nr_tot,state_ctl,&
-&                        exc_wf_sort_and_report,l_amplitude,l_free_hole
+ use YPP,           ONLY:l_sort,l_exc_wf,l_spin,ncell,lambda,r_hole,&
+&                        nr,v2plot,nr_tot,state_ctl,&
+&                        exc_wf_sort_and_report,l_amplitude,l_free_hole,&
+&                        output_fname,use_xcrysden,use_gnuplot,plot_dim,l_norm_to_one
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
  use BS,            ONLY:BS_K_dim,BS_bands,BS_q,&
 &                        BS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
-&                        BS_cpl_K_exchange,BS_cpl_K_corr,BSS_write_eig_2_db
+&                        BS_cpl_K_exchange,BS_cpl_K_corr,BSS_write_eig_2_db,&
+&                        BSS_n_descs,BSS_description
  use electrons,     ONLY:levels,n_sp_pol,spin,n_spinor
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
- use com,           ONLY:msg,error,warning
+ use com,           ONLY:msg,error,warning,of_open_close
  use X_m,           ONLY:X_t
  use memory_m,      ONLY:mem_est
  use timing,        ONLY:live_timing
@@ -120,7 +122,7 @@ subroutine exc_properties(Xk,Xen)
  !
  n_lambda = get_lambda()
  !
- if (.not.any((/l_sort,(l_wf.and.n_lambda>0),(l_amplitude.and.n_lambda>0),l_spin/))) return
+ if (.not.any((/l_sort,(l_exc_wf.and.n_lambda>0),(l_amplitude.and.n_lambda>0),l_spin/))) return
  !
  ! Allocation of energies and residuum, then also eigenvector
  !
@@ -181,7 +183,7 @@ subroutine exc_properties(Xk,Xen)
  ! 
  ! Loading  Wf 
  !
- if (l_wf) call wf_load(wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
+ if (l_exc_wf) call wf_load(wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
  !
  ! GPL_EXCLUDE_START SPIN_IGNORE
  !
@@ -262,19 +264,21 @@ subroutine exc_properties(Xk,Xen)
  ! EXCITONIC WF SECTION
  !############################################################################
  !
- if (.not.l_wf) return
+ if (.not.l_exc_wf) return
  !
  call section('+','Excitonic Wave Function')
  !
  ! Check that directions are OK
  !
- call exc_wf_plot_driver(.true.)
+ call plot_check_and_launch(.true.)
  !
  ! Constructing Grid 
  !
  call section('+','Real-Space grid setup')
  !
  if (l_free_hole) ncell=1
+ if (l_free_hole) l_norm_to_one=.false.
+ !
  call expand_grid()
  !
  if (.not.l_free_hole) then
@@ -321,8 +325,8 @@ subroutine exc_properties(Xk,Xen)
  !
  ! Allocation
  !
- allocate(wf_vc(BS_K_dim),exc_wf(nr_tot))
- call mem_est('wf_vc exc_wf ',(/2*BS_K_dim,nr_tot/),(/SP,SP/))
+ allocate(wf_vc(BS_K_dim),v2plot(nr_tot))
+ call mem_est('wf_vc v2plot ',(/2*BS_K_dim,nr_tot/),(/SP,SP/))
  !
  ! Par Proc
  !
@@ -351,7 +355,7 @@ subroutine exc_properties(Xk,Xen)
    !
    call live_timing('ExcWF@'//trim(intc(lambda)),px%stps(myid+1))  
    !
-   exc_wf  =0._SP
+   v2plot  =0._SP
    wf_vc   =(0._SP,0._SP)
    !
    do ir=1,nr_tot
@@ -407,7 +411,7 @@ subroutine exc_properties(Xk,Xen)
        wf_ = cdotu(BS_K_dim,BS_mat(1,i_l),1,wf_vc,1)
 #endif
        !
-       exc_wf(ir) = exc_wf(ir)+abs(wf_)**2.  
+       v2plot(ir) = v2plot(ir)+abs(wf_)**2.  
        !
      enddo
      !
@@ -417,11 +421,22 @@ subroutine exc_properties(Xk,Xen)
    !
    call live_timing()
    !
-   call pp_redux_wait(exc_wf)
+   call pp_redux_wait(v2plot)
    !
    ! PLOT
    !
-   call exc_wf_plot_driver(.false.)
+   if (use_xcrysden) output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(lambda))//'.xsf'
+   if (use_gnuplot)  output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(lambda))
+   !
+   call of_open_close(trim(output_fname),'ot')
+   do i1=1,BSS_n_descs
+     call msg('o exc',"#",trim(BSS_description(i1)),INDENT=0)
+   enddo
+   call msg('o exc',"#")
+   !
+   call plot_check_and_launch(.false.)
+   !
+   call of_open_close(trim(output_fname))
    !
  enddo
  !
@@ -430,8 +445,8 @@ subroutine exc_properties(Xk,Xen)
  ! CLEAN
  !
  deallocate(r_cell_cc,rindex)
- deallocate(exc_wf,BS_R,BS_E,lambda_s)
- call mem_est('exc_wf BS_R_E')
+ deallocate(v2plot,BS_R,BS_E,lambda_s)
+ call mem_est('v2plot BS_R_E')
  deallocate(BS_eh_table,BS_mat,wf_vc)
  call mem_est('BS_eh_table BS_mat wf_vc')
  call WF_free()

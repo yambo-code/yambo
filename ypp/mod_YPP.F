@@ -32,28 +32,39 @@ module YPP
  character(schlen) :: coo_in
  character(schlen) :: coo_out
  !
- ! Exc WF
+ ! PLOT
  !
+ logical      ::l_plot
+ logical      ::l_exc_wf
+ logical      ::l_sp_wf
+ logical      ::l_density
+ logical      ::l_mag
+ logical      ::l_merge
+ logical      ::l_norm_to_one
+ logical      ::use_gnuplot
+ logical      ::use_xcrysden
+ character(1) ::p_format     
+ character(3) ::p_dir        
+ character(lchlen) ::output_fname 
+ integer               ::nr(3)
+ integer               ::nr_tot
+ integer               ::plot_dim
+ real(SP), allocatable ::v2plot(:)
+ real(SP), allocatable ::v2plot2D(:,:)
+ !
+ ! Exc Properties
  !
  logical      ::l_exc_props
- logical      ::l_wf
- logical      ::l_free_hole
  logical      ::l_sort
  logical      ::l_amplitude
  logical      ::l_spin
+ logical      ::l_free_hole
  integer      ::lambda
  integer      ::ncell(3)     
  real(SP)     ::r_hole(3)    
  real(SP)     ::deg_energy   
  real(SP)     ::WF_multiplier   
- character(1) ::p_format     
- character(3) ::p_dir        
  character(schlen) ::state_ctl 
- ! 
- integer               ::nr(3)
- integer               ::nr_tot
- real(SP), allocatable ::exc_wf(:)
- real(SP), allocatable ::wf_2d(:,:)
  !
 #if defined _YPP_ELPH
  !

@@ -21,7 +21,6 @@
 !
 subroutine el_magnetization(en,Xk,el_mag)
  !
- !
  ! Electronic Magnetization for electronic Spinors
  !
  !  M = Sum_I (PSI^I)* Sigma_Pauli* PSI^I  I=occupied states

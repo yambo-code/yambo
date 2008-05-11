@@ -19,42 +19,32 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine exc_wf_gnuplot(use_1d,use_2d,plot_dim,eval_only)
+subroutine plot_gnuplot(use_1d,use_2d,eval_only)
  !
  use pars,        ONLY:SP,schlen,BOHR
- use com,         ONLY:of_open_close,msg
+ use com,         ONLY:msg
  use FFT_m,       ONLY:fft_dim
  use D_lattice,   ONLY:a
- use stderr,      ONLY:intc
- use YPP,         ONLY:nr,p_dir,exc_wf,r_hole,lambda,wf_2d,l_free_hole,WF_multiplier
- use BS,          ONLY:BSS_description,BSS_n_descs
+ use YPP,         ONLY:nr,v2plot,r_hole,v2plot2D,l_norm_to_one,WF_multiplier,plot_dim
  use timing,      ONLY:live_timing
  !
  implicit none
- integer    :: plot_dim
  logical    :: use_1d(3),use_2d(3),eval_only
  ! 
  ! Work Space...
  !
  integer           :: i1,i2,i3,ir,nr2plot(2),dir2plot(2)
  character(schlen) :: titles(4)
- real(SP)          :: wf_max
+ real(SP)          :: v_max
  !
  if (eval_only) then
-   call live_timing('2D WF',nr(1),SERIAL=.true.)
+   call live_timing('2D eval',nr(1),SERIAL=.true.)
  else
    call live_timing('GnuPlot',nr(1),SERIAL=.true.)
    !
    titles(:3)=(/'||a1 [A]','||a2 [A]','||a3 [A]'/)
    titles(4) = '|wf|^2 [1 at max]'
    !
-   ! Open the output file
-   !
-   call of_open_close('exc_wf_gnu_'//trim(intc(lambda))//'_'//trim(p_dir),'ot')
-   do i1=1,BSS_n_descs
-     call msg('o exc',"#",trim(BSS_description(i1)),INDENT=0)
-   enddo
-   call msg('o exc',"#")
  endif
  !
  ! DIMENSIONs
@@ -66,24 +56,24 @@ subroutine exc_wf_gnuplot(use_1d,use_2d,plot_dim,eval_only)
      do i1=1,3 
        if (use_1d(i1)) nr2plot=nr(i1)
        if (use_1d(i1)) dir2plot=i1
-       if (use_1d(i1)) call msg('o exc',"#",(/titles(1),titles(4)/),INDENT=0,USE_TABS=.true.)
+       if (use_1d(i1)) call msg('o exc den mag wf',"#",(/titles(1),titles(4)/),INDENT=0,USE_TABS=.true.)
      enddo
-     call msg('o exc','#')
-     allocate(wf_2d(nr2plot(1),1))
-     wf_2d=0.
+     call msg('o exc den mag wf','#')
+     allocate(v2plot2D(nr2plot(1),1))
+     v2plot2D=0.
      ir=0
      do i1 = 0,nr(1)-1
        do i2 = 0,nr(2)-1
          do i3 = 0,nr(3)-1
            ir = 1 + i1 + i2*nr(1) + i3*nr(1)*nr(2)
-           if (use_1d(1)) wf_2d(i1+1,1)=wf_2d(i1+1,1)+exc_wf(ir)
-           if (use_1d(2)) wf_2d(i2+1,1)=wf_2d(i2+1,1)+exc_wf(ir)
-           if (use_1d(3)) wf_2d(i3+1,1)=wf_2d(i3+1,1)+exc_wf(ir)
+           if (use_1d(1)) v2plot2D(i1+1,1)=v2plot2D(i1+1,1)+v2plot(ir)
+           if (use_1d(2)) v2plot2D(i2+1,1)=v2plot2D(i2+1,1)+v2plot(ir)
+           if (use_1d(3)) v2plot2D(i3+1,1)=v2plot2D(i3+1,1)+v2plot(ir)
          enddo
        enddo
        call live_timing(steps=1)
      enddo
-     wf_max=maxval(wf_2d(:,1))
+     v_max=maxval(v2plot2D(:,1))
      ! 
      ! Daniele [15/7/2007]
      ! Questo e' corretto, e' la normalizzazione. Io in una versione precedente
@@ -93,15 +83,15 @@ subroutine exc_wf_gnuplot(use_1d,use_2d,plot_dim,eval_only)
      ! vedi se stai pescando valori della wf, oppure no. Appunto nel caso che
      ! uno mette la hole in un punto con poca densita'.
      !
-     if (.not.l_free_hole) wf_2d=wf_2d/wf_max  
-     if (l_free_hole)      wf_2d=wf_2d*WF_multiplier
+     if (l_norm_to_one) v2plot2D=v2plot2D/v_max  
+     v2plot2D=v2plot2D*WF_multiplier
      !
      do i1=0,nr2plot(1)-1
-       call msg('o exc','',(/exc_wf_projection(i1,dir2plot(1)),&
-&                            wf_2d(i1+1,1)/),INDENT=-2,USE_TABS=.true.)
+       call msg('o exc den mag wf','',(/projection_(i1,dir2plot(1)),&
+&                            v2plot2D(i1+1,1)/),INDENT=-2,USE_TABS=.true.)
      enddo
      !
-     deallocate(wf_2d)
+     deallocate(v2plot2D)
      !
    case(2)
      !
@@ -111,38 +101,37 @@ subroutine exc_wf_gnuplot(use_1d,use_2d,plot_dim,eval_only)
      if (use_2d(1)) dir2plot=(/1,2/)
      if (use_2d(2)) dir2plot=(/1,3/)
      if (use_2d(3)) dir2plot=(/2,3/)
-     allocate(wf_2d(nr2plot(1),nr2plot(2)))
-     wf_2d=0.
+     allocate(v2plot2D(nr2plot(1),nr2plot(2)))
+     v2plot2D=0.
      ir=0
      do i1 = 0,nr(1)-1
        do i2 = 0,nr(2)-1
          do i3 = 0,nr(3)-1
            ir = 1 + i1 + i2*nr(1) + i3*nr(1)*nr(2)
-           if (use_2d(1)) wf_2d(i1+1,i2+1)=wf_2d(i1+1,i2+1)+exc_wf(ir)
-           if (use_2d(2)) wf_2d(i1+1,i3+1)=wf_2d(i1+1,i3+1)+exc_wf(ir)
-           if (use_2d(3)) wf_2d(i2+1,i3+1)=wf_2d(i2+1,i3+1)+exc_wf(ir)
+           if (use_2d(1)) v2plot2D(i1+1,i2+1)=v2plot2D(i1+1,i2+1)+v2plot(ir)
+           if (use_2d(2)) v2plot2D(i1+1,i3+1)=v2plot2D(i1+1,i3+1)+v2plot(ir)
+           if (use_2d(3)) v2plot2D(i2+1,i3+1)=v2plot2D(i2+1,i3+1)+v2plot(ir)
          enddo
        enddo
        call live_timing(steps=1)
      enddo
      !
-     wf_max=maxval(wf_2d(:,:))
-     if (.not.l_free_hole) wf_2d=wf_2d/wf_max  
-     if (l_free_hole)      wf_2d=wf_2d*WF_multiplier
-     !wf_2d=wf_2d/wf_max 
+     v_max=maxval(v2plot2D(:,:))
+     if (l_norm_to_one) v2plot2D=v2plot2D/v_max  
+     v2plot2D=v2plot2D*WF_multiplier
      !
      if (.not.eval_only) then
-       if (use_2d(1)) call msg('o exc',"#",&
+       if (use_2d(1)) call msg('o exc den mag wf',"#",&
 &                             (/titles(1),titles(2),titles(4)/),INDENT=0,USE_TABS=.true.)
-       if (use_2d(2)) call msg('o exc',"#",&
+       if (use_2d(2)) call msg('o exc den mag wf',"#",&
 &                             (/titles(1),titles(3),titles(4)/),INDENT=0,USE_TABS=.true.)
-       if (use_2d(3)) call msg('o exc',"#",&
+       if (use_2d(3)) call msg('o exc den mag wf',"#",&
 &                             (/titles(2),titles(3),titles(4)/),INDENT=0,USE_TABS=.true.)
-       call msg('o exc',"#")
+       call msg('o exc den mag wf',"#")
        do i1=0,nr2plot(1)-1
          do i2=0,nr2plot(2)-1
-           call msg('o exc','',(/exc_wf_projection(i1,dir2plot(1)),&
-&                   exc_wf_projection(i2,dir2plot(2)),wf_2d(i1+1,i2+1)/),&
+           call msg('o exc den mag wf','',(/projection_(i1,dir2plot(1)),&
+&                   projection_(i2,dir2plot(2)),v2plot2D(i1+1,i2+1)/),&
 &                   INDENT=-2,USE_TABS=.true.)
          enddo
        enddo
@@ -152,12 +141,9 @@ subroutine exc_wf_gnuplot(use_1d,use_2d,plot_dim,eval_only)
  !
  call live_timing()
  !
- if (.not.eval_only) &
-&   call of_open_close('exc_wf_gnu_'//trim(intc(lambda))//'_'//trim(p_dir))
- !
  contains
    !
-   real(SP) function exc_wf_projection(I,dir)
+   real(SP) function projection_(I,dir)
      use D_lattice,   ONLY:a  
      use FFT_m,       ONLY:fft_dim
      use vec_operate, ONLY:v_norm
@@ -165,7 +151,7 @@ subroutine exc_wf_gnuplot(use_1d,use_2d,plot_dim,eval_only)
      real(SP):: rv(3)
      !
      rv(:)=I*a(dir,:)/fft_dim(dir)-r_hole(:)
-     exc_wf_projection=dot_product(rv,a(dir,:))/v_norm(a(dir,:))*BOHR
+     projection_=dot_product(rv,a(dir,:))/v_norm(a(dir,:))*BOHR
      !
    end function
    !

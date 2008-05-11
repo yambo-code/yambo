@@ -131,24 +131,33 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  call msg('s',':: X K-points (IBZ):',nXkibz)
  !
  ! Main SETUP
+ !============
  !
  call setup(en,Xen,Ken,k,Xk)
  !
  ! Specific SECTIONS
+ !===================
  !
  if (lkanalyze) call k_analize(en,k,Xk,q)
+ !   =========
  !
  ! GPL_EXCLUDE_START
  !
  if (lbzrim) call BZ_RIM(Xk,Xen)
+ !   ======
  !
  ! GPL_EXCLUDE_END
  !
  if (l_exc_props) call exc_properties(Xk,Xen)
+ !   ===========
+ !
+ if (l_plot.and..not.l_exc_props) call plot_driver(Xk,Xen)
+ !   ======
  !
 #if defined _YPP_ELPH
  !
  if (lelph) then
+ !   =====
    i_err=elph_pw_dbs(k,en,q)
    call elph_eliashberg_dos(k,en,q)
  endif

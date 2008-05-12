@@ -70,6 +70,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    ! PLOT
    !
    p_dir      ='1'
+   mag_dir    ='X'
    p_format   ='g'
    wf_ng      =ng_vec
    l_exc_wf=.false.
@@ -176,11 +177,14 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
      if ( trim(rstr_piece(i1)) == 'plot') then
        l_exc_wf    =trim(rstr_piece(i1+1))=='e'
        !
-       ! GPL_EXCLUDE_START
-       !
        l_density =trim(rstr_piece(i1+1))=='d'
-       l_mag     =trim(rstr_piece(i1+1))=='m'
        l_sp_wf   =trim(rstr_piece(i1+1))=='w'
+       !
+       ! GPL_EXCLUDE_START SPIN_IGNORE
+       !
+       l_mag     =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
+       !
+       ! GPL_EXCLUDE_END SPIN_IGNORE
        !
        if (trim(rstr_piece(i1+1))=='em') then
          call initactivate(1,'excp')
@@ -194,26 +198,24 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        if  (l_mag)     call initactivate(1,'magnetization')
        if  (l_sp_wf)   call initactivate(1,'wavefunction')
        !
-       ! GPL_EXCLUDE_END
-       !
      endif
      if ( trim(rstr_piece(i1)) == 'excp') then
        !
-       ! GPL_EXCLUDE_START
+       ! GPL_EXCLUDE_START SPIN_IGNORE
        !
-       l_spin  =trim(rstr_piece(i1+1))=='sp'
+       l_spin  =trim(rstr_piece(i1+1))=='sp'.and.n_spin>1
        !
-       ! GPL_EXCLUDE_END
+       ! GPL_EXCLUDE_END SPIN_IGNORE
        !
        l_sort       =trim(rstr_piece(i1+1))=='s'
        l_amplitude  =trim(rstr_piece(i1+1))=='a'
        if  (l_amplitude)   call initactivate(1,'exc_amp')
        !
-       ! GPL_EXCLUDE_START
+       ! GPL_EXCLUDE_START SPIN_IGNORE
        !
        if  (l_spin) call initactivate(1,'exc_spin')
        !
-       ! GPL_EXCLUDE_END
+       ! GPL_EXCLUDE_END SPIN_IGNORE
        !
        if  (l_sort) infile_editing=.false.
        !
@@ -234,9 +236,14 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_plot     =runlevel_is_on('plot')
  if (.not.l_exc_wf) l_free_hole=.false.
  !
- ! GPL_EXCLUDE_START
+ ! GPL_EXCLUDE_START SPIN_IGNORE
  !
  l_spin     =runlevel_is_on('exc_spin')
+ !
+ ! GPL_EXCLUDE_END SPIN_IGNORE 
+ !
+ ! GPL_EXCLUDE_START 
+ !
  lbzrim     =runlevel_is_on('bzrim')
  !
  ! GPL_EXCLUDE_END
@@ -249,7 +256,11 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_END
  !
- if (l_plot) call initactivate(1,"Format Direction FFTGvecs") 
+ if (l_plot) then
+   call initactivate(1,"Format Direction FFTGvecs") 
+   if (l_sp_wf) call initactivate(1,"Degen_Step")  
+   if (l_mag)   call initactivate(1,"MagDir") 
+ endif
  !
  if (l_exc_props) then
    call initactivate(1,"States")
@@ -282,13 +293,14 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
 #endif
  !
- !
  if (infile_editing) then
    open(unit=12,file=trim(infile))
    call initinfio(defs,12)
    close(12)
    call pp_redux_wait
  endif
+ !
+ if (l_plot.and.l_sp_wf) call QP_init(.FALSE.,.FALSE.)
  !
  contains
  !

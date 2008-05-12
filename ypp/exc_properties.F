@@ -277,7 +277,7 @@ subroutine exc_properties(Xk,Xen)
  call section('+','Real-Space grid setup')
  !
  if (l_free_hole) ncell=1
- if (l_free_hole) l_norm_to_one=.false.
+ !if (l_free_hole) l_norm_to_one=.false.
  !
  call expand_grid()
  !

@@ -570,7 +570,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    ! I use it to propose the value in the input file ...
    !
-   call QP_init()
+   call QP_init(.TRUE.,.TRUE.)
    !
    ! ... but afterword I must deallocate it to use user defined values
    !

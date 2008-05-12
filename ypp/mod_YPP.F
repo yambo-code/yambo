@@ -44,6 +44,7 @@ module YPP
  logical      ::use_gnuplot
  logical      ::use_xcrysden
  character(1) ::p_format     
+ character(1) ::mag_dir     
  character(3) ::p_dir        
  character(lchlen) ::output_fname 
  integer               ::nr(3)

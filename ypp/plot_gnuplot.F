@@ -37,10 +37,9 @@ subroutine plot_gnuplot(use_1d,use_2d,eval_only)
  character(schlen) :: titles(4)
  real(SP)          :: v_max
  !
- if (eval_only) then
-   call live_timing('2D eval',nr(1),SERIAL=.true.)
- else
-   call live_timing('GnuPlot',nr(1),SERIAL=.true.)
+ call live_timing('3D Merge',nr(1),SERIAL=.true.)
+ !
+ if (.not.eval_only) then
    !
    titles(:3)=(/'||a1 [A]','||a2 [A]','||a3 [A]'/)
    titles(4) = '|wf|^2 [1 at max]'

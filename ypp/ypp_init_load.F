@@ -59,7 +59,7 @@ subroutine ypp_init_load(defs)
  !
  ! GPL_EXCLUDE_END
  !
- !Kpt analysis
+ ! Kpt analysis
  !
  call it(defs,'cooIn','Points coordinates (in) cc/rlu/iku',coo_in)
  call it(defs,'cooOut','Points coordinates (out) cc/rlu/iku',coo_out)
@@ -69,7 +69,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'KShift2','K-grid shift vector[2] ',qlong(2,:))
  call it(defs,'KShift3','K-grid shift vector[3] ',qlong(3,:))
  !
- !EXC WF
+ ! EXC WF
  !
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit)
  call it(defs,'Degen_Step', 'Maximum energy separation of two degenerate states',&
@@ -79,12 +79,20 @@ subroutine ypp_init_load(defs)
  call it(defs,'Hole', '[cc] Hole position in unit cell',r_hole)
  call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier)
  !
+ ! PLOT
+ !
  ! p_dir: plot cut in the a1,a2,a3 basis
  ! 
  ! p_format: (g)nuplot/(x)crysden
  !
  call it(defs,'Format', 'Output format [(g)nuplot/(x)crysden]',p_format)
  call it(defs,'Direction', '[rlu] [1/2/3] for 1d or [12/13/23] for 2d [123] for 3D',p_dir)
+ !
+ ! GPL_EXCLUDE_START SPIN_IGNORE
+ !
+ call it(defs,'MagDir', '[cc] Magnetization direction',mag_dir)
+ !
+ ! GPL_EXCLUDE_END SPIN_IGNORE
  !
 #if defined _YPP_ELPH
  !

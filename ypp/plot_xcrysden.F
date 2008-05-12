@@ -27,6 +27,7 @@ subroutine plot_xcrysden(use_2d)
  use YPP,         ONLY:nr,v2plot,ncell,v2plot2D,r_hole,plot_dim,l_free_hole,&
 &                      l_norm_to_one,WF_multiplier,l_exc_wf
  use D_lattice,   ONLY:n_atom_species,n_atoms,a,atom_pos,znucl
+ use timing,      ONLY:live_timing
  !
  implicit none
  logical  :: use_2d(3)
@@ -56,13 +57,15 @@ subroutine plot_xcrysden(use_2d)
  call msg('o exc den mag wf','',ncell(2)*a_angs(2,:))
  call msg('o exc den mag wf','',ncell(3)*a_angs(3,:))
  call msg('o exc den mag wf','PRIMCOORD')
- call msg('o exc den mag wf','',(/n_atoms_tot*ncell(1)*ncell(2)*ncell(3)+1,1/))
- !
- ! write Hole position
- ! 
  if (.not.l_free_hole.and.l_exc_wf) then
+   call msg('o exc','',(/n_atoms_tot*ncell(1)*ncell(2)*ncell(3)+1,1/))
+   !
+   ! write Hole position
+   ! 
    write(ch,'(i2,f10.5,f10.5,f10.5)') -1,r_hole*BOHR
    call msg('o exc den mag wf','',ch,INDENT=0,USE_TABS=.FALSE.)
+ else
+   call msg('o exc den mag wf','',(/n_atoms_tot*ncell(1)*ncell(2)*ncell(3),1/))
  endif
  !
  ! write the translated atoms of the cell
@@ -147,6 +150,8 @@ subroutine plot_xcrysden(use_2d)
      max_=maxval(v2plot)
      if (.not.l_norm_to_one) max_=1.
      !
+     call live_timing('3D Plot',nr(3),SERIAL=.true.)
+     !
      do i3 = 0, nr(3)-1
        do i2 = 0, nr(2)-1
          do i1 = 0, nr(1)-1
@@ -154,7 +159,12 @@ subroutine plot_xcrysden(use_2d)
            call msg('o exc den mag wf','',v2plot(ir)/max_*WF_multiplier)
          enddo
        enddo
+       !
+       call live_timing(steps=1)
+       !
      enddo
+     !
+     call live_timing()
      !
      call msg('o exc den mag wf','','END_DATAGRID_3D')
      call msg('o exc den mag wf','','END_BLOCK_DATAGRID_3D')

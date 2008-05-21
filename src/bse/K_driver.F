@@ -56,7 +56,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! Work Space
  !
- integer     :: iq
+ integer     :: iq,bands_to_correct(2)
  type(X_t)   :: X_tddft
  integer, external :: eval_G_minus_G
  !
@@ -72,11 +72,12 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! If using ALDA enough bands must be loaded to
  ! be able to calculate the density
  !
- if (l_alda_fxc) BS_bands(1)=1
+ bands_to_correct=BS_bands
+ if (l_alda_fxc) bands_to_correct=(/1,BS_bands(2)/)
  !
  ! ... and the QP corrections
  !
- call QP_apply(BS_bands,Ken,Xk,2,msg_fmt='s')
+ call QP_apply(bands_to_correct,Ken,Xk,2,msg_fmt='s')
  !
  ! GPL_EXCLUDE_START
  !

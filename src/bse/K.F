@@ -69,7 +69,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer    :: ikk1,ikk2,live_timing_steps,is1xis2,ik1bz,iv1,ic1,ik1,is1,inv_s1,is1p,&
 &              i_sp1,i_sp2,ik2bz,iv2,ic2,ik2,is2,is2p,&
-&              icv1,icv2,iOvv,iOcc,i1,i2,i3,iqs,iq_W,ig0
+&              icv1,icv2,iOvv,iOcc,i1,i2,i3,iqs,iq_W,ig0,bands_to_load(2)
  integer    :: iOcv, iOvc
 #if defined _DOUBLE
  complex(SP):: zdotc,zdotu
@@ -251,8 +251,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! GPL_EXCLUDE_END
    !
  else
-   call wf_load(max(O_ng,BS_n_g_exch),1,BS_bands,(/1,BS_columns/),&
+   !
+   bands_to_load=BS_bands
+   if (BS_K_is_ALDA) bands_to_load=(/1,BS_bands(2)/)
+   !
+   call wf_load(max(O_ng,BS_n_g_exch),1,bands_to_load,(/1,BS_columns/),&
 &               space='R',title='-BSK')
+   !
  endif
  ! 
  ! GPL_EXCLUDE_START 

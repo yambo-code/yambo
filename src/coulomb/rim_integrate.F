@@ -26,6 +26,7 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii)
  use R_lattice,     ONLY:g_vec,RIM_n_rand_pts,k_grid_uc_vol,RIM_qpg,&
 &                        RIM_is_diagonal,RIM_ng,q_pt,RIM_anisotropy
  use D_lattice,     ONLY:alat
+ !
  implicit none
  integer  :: iq,N_out,N_out_G
  real(SP) :: qr(RIM_n_rand_pts,3),em1_anis(3),G_sph_radii
@@ -37,6 +38,7 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii)
  real(DP) :: r1,rfac,RIM_acc(RIM_ng),RIM_acc_anis
  !
  rfac=8.*k_grid_uc_vol/real(N_out)/(2.*pi)**3.
+ !
  !    ----------------
  !    MonteCarlo volume
  !
@@ -68,8 +70,8 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii)
  RIM_acc=0._DP
  !
  G_sph_radii=(3.*.2/(4.*pi)*k_grid_uc_vol)**(1./3.)
- RIM_acc(1)=2._DP*4._DP*pi*G_sph_radii/(2._DP*pi)**3._DP
- RIM_anisotropy=2.*4.*pi/3.*G_sph_radii/(2.*pi)**3.*sum(em1_anis)
+ RIM_acc(1)  =2._DP*4._DP*pi*G_sph_radii/(2._DP*pi)**3._DP
+ RIM_acc_anis=2._DP*4._DP*pi/3._DP*G_sph_radii/(2._DP*pi)**3._DP*sum(em1_anis)
  !
  N_out_G=0
  i2max=RIM_ng 

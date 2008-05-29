@@ -41,7 +41,7 @@ bindir      = @bindir@
 libdir      = @libdir@
 includedir  = @includedir@
 
-CFGFILES = config/setup config/Makefile config/report  \
+CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
   	   sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
 	   src/external_c/.objects Makefile driver/version.h \
        sbin/objects_debug.sh

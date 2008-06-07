@@ -157,7 +157,7 @@ subroutine barriers()
    ! For non uniform grids I have to switch off all logicals that are
    ! not LF/RPA
    !
-   call switch_off_runlevel('all',on_name='chi optics '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='chi optics sursp ras reels '//trim(always_runlevels))
  endif 
  !
 #endif

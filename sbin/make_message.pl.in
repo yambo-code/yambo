@@ -30,7 +30,7 @@ use Getopt::Long;
 #
 # Collect the files marked by svn status
 #
-$svncommand = "svn status | grep -v ? | awk \'{printf\" %s \",\$2 }\' |";
+$svncommand = "svn status | grep -v \"?\" | awk \'{printf\" %s \",\$2 }\' |";
 open(SVN, $svncommand);
 $changedfiles = <SVN>;
 close(SVN);

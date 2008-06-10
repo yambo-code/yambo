@@ -165,7 +165,7 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  !
  ! - Static X -
  !
- apply_QP=l_em1s.or.(l_optics.and.l_bse).or.l_bss.or.(l_em1d.and.l_chosex)
+ apply_QP=l_em1s.or.(l_optics.and.l_bse.and..not.l_ppa).or.l_bss.or.(l_em1d.and.l_chosex)
  if (apply_QP)  call QP_apply(X(2)%ib,Xen,Xk,1,msg_fmt='s')
  !
  ! - Plasmon Pole X -

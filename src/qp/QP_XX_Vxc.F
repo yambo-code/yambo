@@ -168,7 +168,6 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
        ib =QP_table(i1,1)
        ibp=QP_table(i1,2)
        !
-       !
        isc%is=(/QP_table(i1,1),QP_table(i1,3),1,spin(QP_table(i1,:))/)
        isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iq,1),:),spin(QP_table(i1,:))/)
        iscp%is=(/QP_table(i1,2),QP_table(i1,3),1,spin(QP_table(i1,:))/)

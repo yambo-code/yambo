@@ -44,7 +44,7 @@ subroutine el_density(en,Xk,rho,use_si)
  use pars,          ONLY:SP
  use com,           ONLY:warning
  use R_lattice,     ONLY:bz_samp
- use electrons,     ONLY:levels,n_sp_pol
+ use electrons,     ONLY:levels,n_sp_pol,n_spinor
  use D_lattice,     ONLY:nsym,i_time_rev
  use FFT_m,         ONLY:fft_size,fft_rot_r
  use wave_func,     ONLY:wf_state,wf
@@ -70,7 +70,7 @@ subroutine el_density(en,Xk,rho,use_si)
      !
      ! GPL_EXCLUDE_START SPIN_IGNORE
      !
-     do is=1,n_sp_pol
+     do is=1,n_spinor
        !
        ! GPL_EXCLUDE_END SPIN_IGNORE
        !

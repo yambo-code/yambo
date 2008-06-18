@@ -297,7 +297,8 @@ module com
    !#######################
    !
    subroutine na0msg(how,mesg)
-     character(*)     :: mesg,how
+     character(*)     :: mesg
+     character(*)     :: how
      character        :: crap(1)
      integer          :: INDENT
      crap(1)=" "
@@ -311,7 +312,8 @@ module com
    end subroutine
    !
    subroutine nl0msg(how,mesg,val,USE_TABS,INDENT)
-     character(*)     :: mesg,how
+     character(*)     :: mesg
+     character(*)     :: how
      logical          :: val
      integer,optional :: INDENT
      logical,optional :: USE_TABS
@@ -320,14 +322,17 @@ module com
    end subroutine
    !
    subroutine na1msg(how,mesg,val,USE_TABS,INDENT)
-     character(*)     :: mesg,how,val
+     character(*)     :: mesg
+     character(*)     :: how
+     character(*)     :: val
      integer,optional :: INDENT
      logical,optional :: USE_TABS
      call namsg(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT)
    end subroutine
    !
    subroutine ni1msg(how,mesg,val,USE_TABS,INDENT)
-     character(*)     :: mesg,how
+     character(*)     :: mesg
+     character(*)     :: how
      integer          :: val
      integer,optional :: INDENT
      logical,optional :: USE_TABS
@@ -335,7 +340,8 @@ module com
    end subroutine
    !
    subroutine nr1msg(how,mesg,val,USE_TABS,INDENT)
-     character(*)     :: mesg,how
+     character(*)     :: mesg
+     character(*)     :: how
      real(SP)         :: val
      integer,optional :: INDENT
      logical,optional :: USE_TABS
@@ -345,7 +351,9 @@ module com
    subroutine namsg(how,mesg,val,USE_TABS,INDENT)
      use stderr,   ONLY: c_print,write_to_log,tty_size
      use timing,   ONLY: live_time_msg
-     character(*)     :: mesg,how,val(:)
+     character(*)     :: mesg
+     character(*)     :: how
+     character(*)     :: val(:)
      integer,optional :: INDENT
      logical,optional :: USE_TABS
      ! 
@@ -379,7 +387,8 @@ module com
    subroutine nimsg(how,mesg,val,USE_TABS,INDENT)
      use stderr,   ONLY: c_print,write_to_log,tty_size
      use timing,   ONLY: live_time_msg
-     character(*)     :: mesg,how
+     character(*)     :: mesg
+     character(*)     :: how
      integer          :: val(:)
      integer,optional :: INDENT
      logical,optional :: USE_TABS
@@ -414,7 +423,8 @@ module com
    subroutine nrmsg(how,mesg,val,USE_TABS,INDENT)
      use stderr,   ONLY: c_print,write_to_log,tty_size
      use timing,   ONLY: live_time_msg
-     character(*)     :: mesg,how
+     character(*)     :: mesg
+     character(*)     :: how
      real(SP)         :: val(:)
      integer,optional :: INDENT
      logical,optional :: USE_TABS

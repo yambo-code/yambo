@@ -851,7 +851,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          l_lrc_fxc= trim(rstr_piece(i1+1)) == 'l'
          if (.not.l_alda_fxc.and..not.l_bs_fxc.and..not.l_lrc_fxc) l_alda_fxc=.true.
-         if (l_alda_fxc)  call initactivate(1,'alda_fxc bse bss optics')
+         if (l_alda_fxc)  call initactivate(1,'alda_fxc optics')
          if (l_lrc_fxc)  call initactivate(1,'lrc_fxc chi optics')
          !
          ! GPL_EXCLUDE_START

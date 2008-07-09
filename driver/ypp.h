@@ -34,10 +34,10 @@
   {"plot","p","Plot [(e)xciton,(m)agnetization,(em),(d)ensity,(w)ave]",0,0,1,0}, 
   {"freehole","f","Free hole position [excitonic plot]",0,0,0,0}, 
   {"bzrim","r","BZ energy RIM analyzer",0,0,0,0}, 
-#if defined _SPP_ELPH
+#if defined _YPP_ELPH
   {"elph", "p","Electron-Phonon DBs preprocessing",0,0,0,0}, 
 #endif
-#if defined _SPP_RAS
+#if defined _YPP_RAS
   {"surf", "a","Surface spectroscopy postprocessor",0,0,1,0}, 
 #endif
   {NULL,NULL,NULL,0,0,0,0}

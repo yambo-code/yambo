@@ -31,7 +31,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use timing,        ONLY:live_timing
  use com,           ONLY:msg,error
  use drivers,       ONLY:Finite_Tel,l_ppa,l_chosex,l_sc_run
- use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
+ use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset,master_cpu
  use par_indexes_m, ONLY:par_indexes
  use collision,     ONLY:ggwinfo,collision_reset
  use functions,     ONLY:bose_f
@@ -244,6 +244,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
      ! GPL_EXCLUDE_START
      !
      if (l_chosex.and..not.CHOSEX_use_empties) then
+       !
        iscs_save(1,: )=isc%os
        iscs_save(2,:3)=isc%qs
        isc%os=isc%is
@@ -255,10 +256,11 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
          enddo
        enddo
        !
-       QP_Sc(i1,:)=QP_Sc(i1,:)+dc(1)
+       if (master_cpu) QP_Sc(i1,:)=QP_Sc(i1,:)+dc(1)
        dc=cmplx(0.,0.,SP)
        isc%os=iscs_save(1,: )
        isc%qs=iscs_save(2,:3)
+       !
      endif
      !
      ! GPL_EXCLUDE_END

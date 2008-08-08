@@ -398,6 +398,8 @@ subroutine exc_properties(Xk,Xen)
        wf_vc(neh) = wf(fft_rot_r(is,rindex(ir)), ic_fft)*&
 &            conjg( wf(fft_rot_r(is,rindex(ir_hole)), iv_fft) )
        !
+       ! GPL_EXCLUDE_START  SPIN_IGNORE
+       ! 
        if (n_spinor==2) then
          !
          iv_fft = wf_state(iv,ikibz,2)
@@ -407,6 +409,8 @@ subroutine exc_properties(Xk,Xen)
 &              conjg( wf(fft_rot_r(is,rindex(ir_hole)), iv_fft) )
          !
        endif
+       !
+       ! GPL_EXCLUDE_END  SPIN_IGNORE
        !
        if (TR_apply) wf_vc(neh) = conjg(wf_vc(neh))
        !

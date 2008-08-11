@@ -89,7 +89,6 @@ subroutine barriers()
  !
  ! GPL_INCLUDE_START
  !call switch_off_runlevel('rim_cut',on_name=' ')
- !call switch_off_runlevel('em1d',on_name=' ')
  !call switch_off_runlevel('life',on_name=' ')
  !call switch_off_runlevel('acfdt',on_name=' ')
  !call switch_off_runlevel('bs_fxc',on_name=' ')
@@ -169,7 +168,7 @@ subroutine barriers()
  !
  !if (n_spin>1) call switch_off_runlevel('all',on_name=' ')
  !
- ! GPL_INCLUDE_START SPIN_IGNORE
+ ! GPL_INCLUDE_END SPIN_IGNORE
  !
  ! GPL_EXCLUDE_START SPIN_INGORE
  !

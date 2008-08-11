@@ -144,22 +144,22 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
      !
      case (XC_LDA_C_PW)
        call xcspol(dvxc,exc,fft_size,n_spin,ORDER,rspts,vxc,zeta)
-     !
+       !
      case (XC_LDA_C_PZ)
        call xcpzca(dvxc(:,1),exc,fft_size,ORDER,rho,rspts,vxc(:,1))
-     !
+       !
      case (XC_LDA_C_WIGNER)
        call xcwign(dvxc(:,1),exc,fft_size,ORDER,rho,rspts,vxc(:,1))
-     !
+       !
      case (XC_LDA_C_HL)
        call xchelu(dvxc(:,1),exc,fft_size,ORDER,rspts,vxc(:,1))
-     !
+       !
      case (XC_LDA_C_XALPHA)
        call xcxalp(3._DP/2._DP,exc,fft_size,ORDER,rspts,vxc(:,1),dvxc(:,1))
-     !
+       !
      case (XC_LDA_C_KP)
        call xc_rpa_kp(rspts,exc)
-     !
+       !
    end select
    !
  endif

@@ -68,15 +68,18 @@ subroutine el_density(en,Xk,rho,use_si)
  do i1=1,en%nbm
    do i2=1,Xk%nibz
      !
+     is=1
+     !
      ! GPL_EXCLUDE_START SPIN_IGNORE
      !
      do is=1,n_spinor
+       !
+       if (size(wf_state,3)<is) cycle
        !
        ! GPL_EXCLUDE_END SPIN_IGNORE
        !
        if (size(wf_state,1)<i1) cycle
        if (size(wf_state,2)<i2) cycle
-       if (size(wf_state,3)<is) cycle
        !
        ifft=wf_state(i1,i2,is)
        !

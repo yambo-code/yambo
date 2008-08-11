@@ -895,24 +895,32 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if !defined  _ELPH
          l_el_corr=.true.
 #endif
+         !
+         ! GPL_INCLUDE_START
+         !
+         !infile_editing=.true.
+         !call initactivate(1,'ppa')
+         !
+         ! GPL_INCLUDE_END
+         !
        endif
        !
        ! GW approximation 
        !
        if ( trim(rstr_piece(i1)) == 'gwapprx' ) then
+         !
+         ! GPL_EXCLUDE_START
+         !
          if (trim(rstr_piece(i1+1))=='p') then
            infile_editing=.true.
            call initactivate(1,'ppa')
-           !
-           ! GPL_EXCLUDE_START
-           !
          else if (trim(rstr_piece(i1+1))=='c') then
            infile_editing=.true.
            call initactivate(1,'chosex gw0') 
-           !
-           ! GPL_EXCLUDE_END
-           !
          endif
+         !
+         ! GPL_EXCLUDE_END
+         !
        endif
        !
        ! RAS

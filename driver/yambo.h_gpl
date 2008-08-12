@@ -18,7 +18,6 @@
   License along with this program; if not, write to the Free 
   Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-  "quiet", "q","Quiet mode",0,0,0,0
 */
  static Ldes opts[] = { /* Int Real Ch (Dummy)*/
   {"help",   "h","Short Help",0,0,0,0},              
@@ -26,6 +25,9 @@
   {"jobstr", "J","Job string identifier",0,0,1,0},   
   {"infver", "V","Input file verbosity",1,0,0,0},    
   {"ifile",  "F","Input file",0,0,1,0},              
+  {"idir",   "I","Core I/O directory",0,0,1,0},
+  {"odir",   "O","Additional I/O directory",0,0,1,0},
+  {"cdir",   "C","Communications I/O directory",0,0,1,0},
   {"nompi",  "N","Skip MPI initialization",0,0,0,0}, 
   {"dbpr",   "D","DataBases properties",0,0,0,0},    
   {"dbfrag", "S","DataBases fragmentation",0,0,0,0}, 

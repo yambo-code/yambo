@@ -27,6 +27,7 @@
   {"ifile",  "F","Input file",0,0,1,0},              
   {"idir",   "I","Core I/O directory",0,0,1,0},         
   {"odir",   "O","Additional I/O directory",0,0,1,0},        
+  {"cdir",   "C","Communications I/O directory",0,0,1,0},
   {"nompi", "N","Skip MPI initialization",0,0,0,0}, 
   {"dbfrag","S","DataBases fragmentation",0,0,0,0}, 
   {"kpt","k","K-grid generator",0,0,0,0}, 

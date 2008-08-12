@@ -742,7 +742,7 @@ module it_m
        !
        do i2=1,nchv
          if (chst(i2)==ifpos) then
-           if (.not.Chverbose_enough(trim(chvars(i2,1)),1,defs%chdef(i2))) cycle
+           if (.not.Chverbose_enough(trim(chvars(i2,1)),defs%chdef(i2))) cycle
            nflines=nflines+1
            !
            ch_length=max(len_trim(defs%chdef(i2))+len_trim(chvars(i2,1))+6,30)
@@ -958,14 +958,15 @@ module it_m
      Cverbose_enough=.true.
    end function
    !
-   logical function Chverbose_enough(var_name,nvar,var_val)
+   logical function Chverbose_enough(var_name,var_val)
      integer :: nvar
-     character(*)::var_name,var_val(nvar)
+     character(*)::var_name
+     character(*)::var_val
      Chverbose_enough=.false.
      do i1=1,n_verbose_Chvars
        if (it_verbose_Chlevel(i1)==0) cycle
        if (trim(it_verbose_Chvars(i1))==trim(var_name))then
-         if(var_val(1)==it_verbose_Chdefs(i1).and.&
+         if(var_val==it_verbose_Chdefs(i1).and.&
 &           infile_verbosity< it_verbose_Chlevel(i1)) return
        endif
      enddo

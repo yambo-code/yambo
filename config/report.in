@@ -25,5 +25,6 @@
 # [Cmain] @FCMFLAG@
 # [NoOpt] @UFFLAGS@
 #
-# [MAKE ] @MAKE@
+# [ MAKE ] @MAKE@
+# [EDITOR] @EDITOR@
 #

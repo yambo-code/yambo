@@ -99,7 +99,11 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
    !
    ! GPL_EXCLUDE_START
    !
+# if defined _ELPH
+   !
    if (l_ph_corr)    call QP_elph(en,k,q,qp)
+   !
+#endif
    !
    ! GPL_EXCLUDE_END
    !

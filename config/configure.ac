@@ -62,6 +62,12 @@ hostname=`uname -n`
 AC_SUBST(hostname)
 
 # ============================================================================
+# EDITOR
+AC_ARG_WITH(EDITOR, AC_HELP_STRING([--with-editor=<exe>],[User-defined editor])) 
+AC_CHECK_PROGS(EDITOR,[$with_editor vim vi pico],["none"])
+AC_SUBST(EDITOR)
+
+# ============================================================================
 # GNU Make
 MAKE="make"
 CHECK_GNU_MAKE()
@@ -149,6 +155,7 @@ if test "$compile_p2y" = "yes"; then
  if test "$with_p2y" = "3.2"; then
   PW_VER="3.2"
   PW_CPP="_P2Y_V32"
+ fi
  if test "$with_p2y" = "4.0"; then
   PW_VER="4.0"
   PW_CPP="_P2Y_V40"
@@ -312,7 +319,7 @@ ACX_REPORT()
 AC_CONFIG_FILES([config/setup config/Makefile config/report
                  src/wf_and_fft/sgfft.F
                  sbin/make_makefile.sh sbin/make_message.pl sbin/objects_debug.sh
-                 driver/codever.h src/external_c/.objects])
+                 driver/codever.h driver/editor.h src/external_c/.objects])
 AC_OUTPUT
 chmod u+x sbin/*
 cp config/Makefile .

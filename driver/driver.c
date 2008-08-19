@@ -45,6 +45,7 @@ typedef struct
  #define F90_FUNC(name,NAME) name
  #define F90_FUNC_(name,NAME) name
 #endif
+#include "editor.h"
 #include "codever.h"
 #if defined _yambo  || _RAS || _REELS || _ELPH || _SC || _MANYK || _TB
  #include "yambo_cpp.h"
@@ -263,13 +264,16 @@ main(int argc, char *argv[])
    INPUT FILE
  ===========================================================================
  */
- strcpy(edit_line,"vim ");
+ strcpy(edit_line,editor);
  strncat(edit_line,inf,strlen(inf));
 #if defined _yambo || _RAS || _REELS || _ypp || _ELPH || _SC || _YPP_ELPH || _YPP_RAS  || _MANYK|| _TB
- if (iif == 1 && ttd>0 ) 
+ if (iif == 1 && ttd>0)
  {
-  system(edit_line);
-  exit (0);
+  if(strstr(editor,"none ")==0) { system(edit_line); };
+  if(strstr(editor,"none ")!=0) { 
+   fprintf(stderr," \n%s %s %s\n\n","yambo: input file",inf,"created");
+   exit (0);
+  }
  };
 #endif
  /* 

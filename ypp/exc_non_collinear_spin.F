@@ -23,13 +23,13 @@ subroutine exc_non_collinear_spin(Xk,lambda_s,n_lambda,S_sq,S_z)
  !
  use pars,          ONLY:SP
  use stderr,        ONLY:intc
- use BS,            ONLY:BS_K_dim,BS_mat,BS_eh_table
+ use BS,            ONLY:BS_mat,BS_eh_table
  use com,           ONLY:msg,of_open_close,error,warning
  use FFT_m,         ONLY:fft_size,fft_rot_r,fft_dim
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:i_time_rev,nsym
  use wave_func,     ONLY:wf_state,wf
- use YPP,           ONLY:lambda
+ use YPP,           ONLY:lambda,BS_H_dim
  use memory_m,      ONLY:mem_est
  use timing,        ONLY:live_timing
  use com,           ONLY:msg,error,warning
@@ -38,7 +38,7 @@ subroutine exc_non_collinear_spin(Xk,lambda_s,n_lambda,S_sq,S_z)
  type(bz_samp)          ::Xk
  !
  logical                ::TR_apply
- real(SP)               :: S_sq(BS_K_dim),S_z(BS_K_dim)
+ real(SP)               :: S_sq(BS_H_dim),S_z(BS_H_dim)
  ! 
  ! Work Space
  !
@@ -62,9 +62,9 @@ subroutine exc_non_collinear_spin(Xk,lambda_s,n_lambda,S_sq,S_z)
  S_z(:)=0.
  !
  !
- call live_timing('Exc_spin@'//trim(intc(lambda)),BS_K_dim) 
+ call live_timing('Exc_spin@'//trim(intc(lambda)),BS_H_dim) 
  !
- do neh = 1,BS_K_dim
+ do neh = 1,BS_H_dim
   !
   ikbz  = BS_eh_table(neh,1)
   iv    = BS_eh_table(neh,2)
@@ -72,7 +72,7 @@ subroutine exc_non_collinear_spin(Xk,lambda_s,n_lambda,S_sq,S_z)
   ikibz = Xk%sstar(ikbz,1)
   is    = Xk%sstar(ikbz,2)
   !
-    do neh1 = 1,BS_K_dim
+    do neh1 = 1,BS_H_dim
       !
       ikbz1  = BS_eh_table(neh1,1)
       iv1    = BS_eh_table(neh1,2)

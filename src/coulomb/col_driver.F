@@ -85,8 +85,6 @@ subroutine col_driver(bare_NG,q)
    enddo
  enddo
  !
- ! GPL_EXCLUDE_START
- !
  if (l_rim) l_rim=all((/RIM_ng>0,RIM_n_rand_pts>0/))
  !
  ! In case I am not using the RIM I need to reset
@@ -149,7 +147,5 @@ subroutine col_driver(bare_NG,q)
  endif
  !
  call cutoff_driver(q)
- !
- ! GPL_EXCLUDE_END
  !
 end subroutine

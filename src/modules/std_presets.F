@@ -50,7 +50,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use timing,     ONLY:log_line_to_dump,log_line,nhash,live_timing_is_on,&
 &                     parallel_timing,ct
  use wave_func,  ONLY:wf_b,wf_k,wf_ng,wf_space,wf_norm_test,wf_nb_io,wf_nb_io_groups
- use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim
+ use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,IO_write,dbs_fragment,serial_number,IO_read
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,&
@@ -229,6 +229,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  fft_dim_loaded=0
  fft_size=0
  fft_dim=0
+ fft_multiplier=(/1,1,1/)
  !
  !IO
  !

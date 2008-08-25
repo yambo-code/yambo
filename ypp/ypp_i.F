@@ -100,7 +100,7 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
    return
  endif
  !
- call section('*','S(elf) P(ost)/(re) P(rocessor)')
+ call section('*','Y(ambo) P(ost)/(re) P(rocessor)')
  !
  call section('*','Core DB')
  call msg('s',':: Electrons             :',default_nel)

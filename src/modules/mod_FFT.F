@@ -24,6 +24,7 @@ module FFT_m
  real(SP)             :: fft_norm
  integer              :: fft_size
  integer              :: fft_dim(3)
+ integer              :: fft_multiplier(3)
  integer              :: fft_dim_loaded(3)
  integer, allocatable :: fft_g_table(:,:)
  integer, allocatable :: fft_rot_r(:,:)

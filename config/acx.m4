@@ -61,7 +61,7 @@ m4_define([AC_LANG_FUNC_LINK_TRY(Fortran)],
 # ---------------------------
 m4_define([AC_LANG_PREPROC(Fortran)],[
   # this should not be hardwired
-  if test -z "$FCCPP"; then FCCPP="/lib/cpp"; fi
+  if test -z "$FCCPP"; then FCCPP="/usr/bin/cpp"; fi
   AC_SUBST(FCCPP)
 ])
 

@@ -26,7 +26,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use vec_operate,    ONLY:c2a
  use D_lattice,      ONLY:a,nsym,dl_sop,sop_inv
  use R_lattice,      ONLY:b,g_vec,ng_vec
- use FFT_m,          ONLY:fft_dim,fft_size,fft_rot_r,fft_norm,fft_g_table
+ use FFT_m,          ONLY:fft_dim,fft_size,fft_rot_r,fft_norm,fft_g_table,fft_multiplier
  use wave_func,      ONLY:wf_ng
  implicit none
  integer :: iG_max,iGo_max
@@ -63,6 +63,9 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
 &                                   modx(iv(3),fft_dim(3))*fft_dim(1)*fft_dim(2)
      enddo
    enddo
+   !
+   ln=ln*fft_multiplier
+   !
    call fft_best_size(ln)
    if (i4>0) return
    fft_dim=ln

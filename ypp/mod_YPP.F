@@ -61,6 +61,7 @@ module YPP
  logical      ::l_spin
  logical      ::l_free_hole
  integer      ::lambda
+ integer      ::BS_H_dim
  integer      ::ncell(3)     
  real(SP)     ::r_hole(3)    
  real(SP)     ::deg_energy   
@@ -117,19 +118,19 @@ module YPP
  !
  interface
    !
-   subroutine exc_wf_sort_and_report(Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
+   subroutine exc_wf_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
      use pars,          ONLY:SP
-     use BS,            ONLY:BS_K_dim
      use R_lattice,     ONLY:bz_samp
      use electrons,     ONLY:levels
      implicit none
-     complex(SP)        :: BS_R(BS_K_dim),BS_E(BS_K_dim)
+     integer            :: BS_H_dim
+     complex(SP)        :: BS_R(BS_H_dim),BS_E(BS_H_dim)
      type(bz_samp)      :: Xk
      type(levels)       :: E
-     real(SP),optional  :: A_weight(BS_K_dim)
-     real(SP),optional  :: S_z(BS_K_dim)
-     real(SP),optional  :: S_sq(BS_K_dim)
-     integer, optional  :: BS_E_degs(BS_K_dim)
+     real(SP),optional  :: A_weight(BS_H_dim)
+     real(SP),optional  :: S_z(BS_H_dim)
+     real(SP),optional  :: S_sq(BS_H_dim)
+     integer, optional  :: BS_E_degs(BS_H_dim)
    end subroutine
    !
  end interface

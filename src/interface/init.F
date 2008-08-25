@@ -209,8 +209,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ioQINDX_err=ioQINDX(k,q,io_ID) 
  if (ioQINDX_err==0) call initactivate(-1,'IkSigLim IkXLim MinusQ')
  !
- ! GPL_EXCLUDE_START
- !
  ! rim
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
@@ -220,6 +218,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_err=ioCOL_CUT(io_ID) 
+ !
+ ! GPL_EXCLUDE_START
  !
  ! e_rim
  !

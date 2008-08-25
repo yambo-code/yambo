@@ -110,7 +110,7 @@ module wave_func
    subroutine WF_free()
      use memory_m, ONLY : mem_est
      use FFT_m,    ONLY : fft_size,fft_dim,fft_dim_loaded,fft_g_table,&
-  &                       fft_rot_r,fftw_plan
+  &                       fft_rot_r,fftw_plan,fft_multiplier
      if (.not.allocated(wf)) return
      QUIET_=.false.
 #if defined _MANYK
@@ -124,6 +124,7 @@ module wave_func
        fft_size=0
        fft_dim=0
        fft_dim_loaded=0
+       fft_multiplier=1
        deallocate(fft_g_table,fft_rot_r)
        call mem_est('FFT_g_tab FFT_rot')
 #if defined _FFTW

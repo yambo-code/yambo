@@ -19,12 +19,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine exc_wf_sort_and_report(Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
+subroutine exc_wf_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
  !
  use pars,          ONLY:SP,schlen,pi,HARTREE
- use electrons,     ONLY:spin_occ,levels
+ use electrons,     ONLY:spin_occ,levels,spin
  use stderr,        ONLY:intc
- use BS,            ONLY:BS_K_dim,BSS_description,BSS_n_descs,BS_eh_table
+ use BS,            ONLY:BSS_description,BSS_n_descs,BS_eh_table
  use com,           ONLY:msg,of_open_close
  use YPP,           ONLY:deg_energy,lambda
  use R_lattice,     ONLY:d3k_factor,q0_def_norm,bz_samp
@@ -32,21 +32,22 @@ subroutine exc_wf_sort_and_report(Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
  use vec_operate,   ONLY:sort
  implicit none 
  !
- complex(SP)        ::BS_R(BS_K_dim),BS_E(BS_K_dim)
+ integer            ::BS_H_dim
+ complex(SP)        ::BS_R(BS_H_dim),BS_E(BS_H_dim)
  type(bz_samp)      ::Xk
  type(levels)       ::E
- real(SP),optional  ::A_weight(BS_K_dim)
- real(SP),optional  ::S_z(BS_K_dim)
- real(SP),optional  ::S_sq(BS_K_dim)
- integer, optional  ::BS_E_degs(BS_K_dim)
+ real(SP),optional  ::A_weight(BS_H_dim)
+ real(SP),optional  ::S_z(BS_H_dim)
+ real(SP),optional  ::S_sq(BS_H_dim)
+ integer, optional  ::BS_E_degs(BS_H_dim)
  !
  ! Work Space
  !
- integer               ::j1,j2,ia,is,i_mode,neh,ikbz,ikibz,iv,ic
+ integer               ::j1,j2,ia,is,i_mode,ikbz,ikibz,iv,ic,neh,i_spin
  integer,  allocatable ::S_indx(:)
  real(SP), allocatable ::R(:),v2sort(:)
  real(SP)              ::Rmax,rv(10),K_weight(Xk%nibz)
- character(schlen) ::titles(5),ch_dummy(2)
+ character(schlen) ::titles(6),ch_dummy(2)
  logical           ::write_widths,write_spin
  !
  ! Excitonc amplitude
@@ -63,20 +64,20 @@ subroutine exc_wf_sort_and_report(Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
    call msg('s',':: Sorting energies')
    !==================================
    !
-   allocate(v2sort(BS_K_dim),S_indx(BS_K_dim))
+   allocate(v2sort(BS_H_dim),S_indx(BS_H_dim))
    !
    v2sort=real(BS_E)
    call sort(arrin=v2sort,indx=S_indx)
    !
    BS_E_degs=0
    !
-   do j1=1,BS_K_dim
+   do j1=1,BS_H_dim
      !
      if (BS_E_degs(S_indx(j1))>0) cycle
      !
      BS_E_degs(S_indx(j1))=S_indx(j1)
      !
-     do j2=j1+1,BS_K_dim
+     do j2=j1+1,BS_H_dim
        if ( abs( real(BS_E(S_indx(j1)))-real(BS_E(S_indx(j2))) )>deg_energy) exit
        BS_E_degs(S_indx(j2))=S_indx(j1)
      enddo
@@ -93,7 +94,7 @@ subroutine exc_wf_sort_and_report(Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
    call section('=','Reporting amplitude and weights')
    !==================================================
    !
-   allocate(S_indx(BS_K_dim),amp_trans(BS_K_dim,2))
+   allocate(S_indx(BS_H_dim),amp_trans(BS_H_dim,2))
    !
    ! Sort the weights
    ! 
@@ -121,8 +122,8 @@ subroutine exc_wf_sort_and_report(Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
    ! First summarize the total weight vs K-points
    !
    K_weight=0.
-   do neh = 1,BS_K_dim
-     ikbz = BS_eh_table(S_indx(neh),1)
+   do neh = 1,BS_H_dim
+     ikbz  = BS_eh_table(S_indx(neh),1)
      ikibz = Xk%sstar(ikbz,1)
      K_weight(ikibz)=K_weight(ikibz)+A_weight(neh)
    enddo
@@ -139,8 +140,8 @@ subroutine exc_wf_sort_and_report(Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
    !
    call msg('o weight','#','',INDENT=0,USE_TABS=.true.)
    titles(1:4)=(/'Band_V','Band_C','K  ibz','Symm. '/)
-   titles(5)='Weight'
-   call msg('o weight','#',titles(:5),INDENT=0,USE_TABS=.true.)
+   titles(5:6)=(/'Weight','Energy'/)
+   call msg('o weight','#',titles(:6),INDENT=0,USE_TABS=.true.)
    titles(1:2)=(/'E    [eV]','Amplitude'/)
    call msg('o amp','#',titles(:2),INDENT=0,USE_TABS=.true.)
    call msg('o weight amp','#','',INDENT=0,USE_TABS=.true.)
@@ -148,23 +149,33 @@ subroutine exc_wf_sort_and_report(Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
    amp_n_trans=0
    amp_trans=0.
    !
-   do neh = BS_K_dim,1,-1
+   do neh = BS_H_dim,1,-1
      !
      if (A_weight(neh)/maxval(A_weight)<0.01) cycle
      !
      ikbz = BS_eh_table(S_indx(neh),1)
      iv = BS_eh_table(S_indx(neh),2)
      ic = BS_eh_table(S_indx(neh),3)
+     ! GPL_EXCLUDE_START SPIN_IGNORE
+     !
+     i_spin= spin(BS_eh_table(neh,:))
+     !
+     ! GPL_EXCLUDE_END SPIN_IGNORE
+     ! GPL_INCLUDE_START SPIN_IGNORE
+     !i_spin = 1
+     ! GPL_INCLUDE_END SPIN_IGNORE
+     !
      ikibz = Xk%sstar(ikbz,1)
      is = Xk%sstar(ikbz,2)
      !
      amp_n_trans=amp_n_trans+1
-     amp_trans(amp_n_trans,1)=E%E(ic,ikibz,1)-E%E(iv,ikibz,1)
+     amp_trans(amp_n_trans,1)=E%E(ic,ikibz,i_spin)-E%E(iv,ikibz,i_spin)
      amp_trans(amp_n_trans,2)=A_weight(neh)
      !
      if (A_weight(neh)<0.05) cycle
      !
-     call msg('o weight','',(/real(iv),real(ic),real(ikibz),real(is),A_weight(neh)/),&
+     call msg('o weight','',(/real(iv),real(ic),real(ikibz),real(is),&
+&                             A_weight(neh),amp_trans(amp_n_trans,1)/),&
 &            INDENT=-2,USE_TABS=.FALSE.)
    enddo
    !
@@ -207,7 +218,7 @@ subroutine exc_wf_sort_and_report(Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
  endif
  !==========================================================
  !
- allocate(R(BS_K_dim),S_indx(BS_K_dim),v2sort(BS_K_dim))
+ allocate(R(BS_H_dim),S_indx(BS_H_dim),v2sort(BS_H_dim))
  !
  do i_mode=1,2
    !
@@ -261,9 +272,9 @@ subroutine exc_wf_sort_and_report(Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
    !
    call sort(arrin=v2sort,indx=S_indx)
    !
-   do j1=BS_K_dim,1,-1
+   do j1=BS_H_dim,1,-1
      !
-     if (i_mode == 1) j2=S_indx(BS_K_dim-j1+1)
+     if (i_mode == 1) j2=S_indx(BS_H_dim-j1+1)
      if (i_mode == 2) j2=S_indx(j1)
      !
      rv(:3)=(/real(BS_E(j2))*HARTREE,R(j2),real(j2)/)

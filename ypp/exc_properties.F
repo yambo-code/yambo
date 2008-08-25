@@ -28,7 +28,7 @@ subroutine exc_properties(Xk,Xen)
  use wave_func,     ONLY:wf_load,wf_state,wf,WF_free,wf_ng
  use R_lattice,     ONLY:nXkibz,bz_samp
  use YPP,           ONLY:l_sort,l_exc_wf,l_spin,ncell,lambda,r_hole,&
-&                        nr,v2plot,nr_tot,state_ctl,&
+&                        nr,v2plot,nr_tot,state_ctl,BS_H_dim,&
 &                        exc_wf_sort_and_report,l_amplitude,l_free_hole,&
 &                        output_fname,use_xcrysden,use_gnuplot,plot_dim,l_norm_to_one
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
@@ -116,7 +116,9 @@ subroutine exc_properties(Xk,Xen)
  if (BS_cpl_K_exchange) BS_cpl_mode='x'
  if (BS_cpl_K_corr) BS_cpl_mode='c'
  if (BS_cpl_K_exchange.and.BS_cpl_K_corr) BS_cpl_mode='xc'
- if (BS_K_coupling) BS_K_dim=2*BS_K_dim
+ !
+ BS_H_dim=BS_K_dim
+ if (BS_K_coupling) BS_H_dim=2*BS_K_dim
  !
  ! Get state indexes
  !
@@ -126,45 +128,60 @@ subroutine exc_properties(Xk,Xen)
  !
  ! Allocation of energies and residuum, then also eigenvector
  !
- allocate(BS_R(BS_K_dim),BS_E(BS_K_dim))
- call mem_est('BS_R_E',(/2*BS_K_dim/))
+ allocate(BS_R(BS_H_dim),BS_E(BS_H_dim))
+ call mem_est('BS_R_E',(/2*BS_H_dim/))
  iq=BS_q(1)
  !
  ! Here I read energies and residuum
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_err=ioBSS_diago(iq,BS_K_dim,BS_E,BS_R,io_ID)
+ io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,io_ID)
  if (io_err/=0) return
  !
  call section('*','Excitonic Properties')
  !
  if (l_sort) then
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
-   io_err=ioBSS_diago(iq,BS_K_dim,BS_E,BS_R,ID)
-   call exc_wf_sort_and_report(Xk,Xen,BS_R,BS_E)
+   io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+   call exc_wf_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E)
    deallocate(BS_R,BS_E)
    call mem_est('BS_R_E')
    return
  endif
  !
- if (BS_K_coupling) call error('When coupling is present only sort mode works')
- !
  ! Loading tables and eigenvectors
  !
- allocate(BS_eh_table(BS_K_dim,3+n_sp_pol-1),BS_mat(BS_K_dim,BS_K_dim),&
-          BS_E_degs(BS_K_dim))
- call mem_est("BS_eh_table",(/(3+n_sp_pol-1)*BS_K_dim/),(/IP/))
- call mem_est('BS_mat',(/BS_K_dim**2/))
+ allocate(BS_eh_table(BS_H_dim,3+n_sp_pol-1),BS_mat(BS_H_dim,BS_H_dim),&
+          BS_E_degs(BS_H_dim))
+ call mem_est("BS_eh_table",(/(3+n_sp_pol-1)*BS_H_dim/),(/IP/))
+ call mem_est('BS_mat',(/BS_H_dim**2/))
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
- io_err=ioBSS_diago(iq,BS_K_dim,BS_E,BS_R,ID)
+ io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+ !
+ ! Create the anti-resonant part of the eh_table
+ !
+ ! GPL_EXCLUDE_START
+ !
+ if (BS_K_coupling) then
+   do neh=BS_K_dim+1,BS_H_dim
+     BS_eh_table(neh,:)=BS_eh_table(neh-BS_K_dim,1)
+     !
+     ! invert conduction <-> valence order
+     !
+     BS_eh_table(neh,2)=BS_eh_table(neh-BS_K_dim,3)
+     BS_eh_table(neh,3)=BS_eh_table(neh-BS_K_dim,2)
+   enddo
+ endif
+ !
+ ! GPL_EXCLUDE_END
  !
  if (.not.BSS_write_eig_2_db) call error('Diago database does not contain excitonic wfs')
  !
  ! Sort energies to find degenerate states
  !========================================
  !
- call exc_wf_sort_and_report(Xk,Xen,BS_R,BS_E,BS_E_degs=BS_E_degs)
+ call exc_wf_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,BS_E_degs=BS_E_degs)
  !
  ! GPL_EXCLUDE_START SPIN_IGNORE
  !
@@ -172,9 +189,9 @@ subroutine exc_properties(Xk,Xen)
  !================================
  !
  if (l_spin.and.n_spinor==1) then
-   allocate(S_z(BS_K_dim),S_sq(BS_K_dim))
+   allocate(S_z(BS_H_dim),S_sq(BS_H_dim))
    if (n_sp_pol==2)  call exc_collinear_spin(BS_E_degs,S_z,S_sq)
-   call exc_wf_sort_and_report(Xk,Xen,BS_R,BS_E,S_sq=S_sq,S_z=S_z)
+   call exc_wf_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,S_sq=S_sq,S_z=S_z)
    deallocate(S_z,S_sq)
    return
  endif
@@ -192,13 +209,13 @@ subroutine exc_properties(Xk,Xen)
  !
  if (l_spin.and.n_spinor==2) then
    !
-   allocate(S_z(BS_K_dim),S_sq(BS_K_dim))
+   allocate(S_z(BS_H_dim),S_sq(BS_H_dim))
    allocate (lambda_s(n_lambda)) 
    !
    n_lambda = get_lambda()
    ! 
    call exc_non_collinear_spin(Xk,lambda_s,n_lambda,S_z,S_sq)
-   call exc_wf_sort_and_report(Xk,Xen,BS_R,BS_E,S_sq=S_sq,S_z=S_z)
+   call exc_wf_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,S_sq=S_sq,S_z=S_z)
    !
    deallocate(lambda_s)
    deallocate(S_z,S_sq)
@@ -223,8 +240,8 @@ subroutine exc_properties(Xk,Xen)
    !
    call msg('s','Processing '//trim(intc(n_lambda))//' states')
    !
-   allocate(A_weight(BS_K_dim))
-   call mem_est('A_weight',(/BS_K_dim/),(/SP/))
+   allocate(A_weight(BS_H_dim))
+   call mem_est('A_weight',(/BS_H_dim/),(/SP/))
    !
    do i_lambda=1,n_lambda
      !
@@ -237,7 +254,7 @@ subroutine exc_properties(Xk,Xen)
      if (n_lambda_deg>0) call msg('s',':: State '//trim(intc(lambda))//' Merged with states '//&
 &                                     trim(intc(BS_E_degs(lambda)))//' -> '//&
 &                                     trim(intc(BS_E_degs(lambda)+n_lambda_deg-1)))
-     do neh = 1,BS_K_dim
+     do neh = 1,BS_H_dim
        !
        do i_l=BS_E_degs(lambda),BS_E_degs(lambda)+n_lambda_deg-1
          A_weight(neh)=A_weight(neh)+BS_mat(neh,i_l)*conjg(BS_mat(neh,i_l))
@@ -245,7 +262,7 @@ subroutine exc_properties(Xk,Xen)
        !
      enddo
      !
-     call exc_wf_sort_and_report(Xk,Xen,BS_R,BS_E,A_weight=A_weight)
+     call exc_wf_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,A_weight=A_weight)
      !
    enddo
    !
@@ -325,8 +342,8 @@ subroutine exc_properties(Xk,Xen)
  !
  ! Allocation
  !
- allocate(wf_vc(BS_K_dim),v2plot(nr_tot))
- call mem_est('wf_vc v2plot ',(/2*BS_K_dim,nr_tot/),(/SP,SP/))
+ allocate(wf_vc(BS_H_dim),v2plot(nr_tot))
+ call mem_est('wf_vc v2plot ',(/2*BS_H_dim,nr_tot/),(/SP,SP/))
  !
  ! Par Proc
  !
@@ -369,7 +386,7 @@ subroutine exc_properties(Xk,Xen)
        r_eh(:)=r_cell_cc(:,ir)-r_hole(:)
      endif
      !
-     do neh = 1,BS_K_dim
+     do neh = 1,BS_H_dim
        !
        ikbz  = BS_eh_table(neh,1)
        iv    = BS_eh_table(neh,2)
@@ -420,9 +437,9 @@ subroutine exc_properties(Xk,Xen)
      !
      do i_l=BS_E_degs(lambda),BS_E_degs(lambda)+n_lambda_deg-1
 #if defined _DOUBLE
-       wf_ = zdotu(BS_K_dim,BS_mat(1,i_l),1,wf_vc,1)
+       wf_ = zdotu(BS_H_dim,BS_mat(1,i_l),1,wf_vc,1)
 #else
-       wf_ = cdotu(BS_K_dim,BS_mat(1,i_l),1,wf_vc,1)
+       wf_ = cdotu(BS_H_dim,BS_mat(1,i_l),1,wf_vc,1)
 #endif
        !
        v2plot(ir) = v2plot(ir)+abs(wf_)**2.  

@@ -23,7 +23,7 @@ integer function ioBSS_diago(iq,BS_H_dim,bsE,bsR,ID)
  !
  use pars,          ONLY:SP,schlen,IP
  use BS,            ONLY:BS_identifier,BSS_q0,BSS_write_eig_2_db,&
-&                        BS_eh_table,BS_mat
+&                        BS_eh_table,BS_mat,BS_K_dim
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&
 &                        io_header,write_is_on,read_is_on,ver_is_gt_or_eq
@@ -90,8 +90,8 @@ integer function ioBSS_diago(iq,BS_H_dim,bsE,bsR,ID)
    !
    ! BS_eh_table
    !
-   call io_bulk(ID,'BS_TABLE',VAR_SZ=(/BS_H_dim,3+n_sp_pol-1/))
-   call io_bulk(ID,I2=BS_eh_table)
+   call io_bulk(ID,'BS_TABLE',VAR_SZ=(/BS_K_dim,3+n_sp_pol-1/))
+   call io_bulk(ID,I2=BS_eh_table(:BS_K_dim,:))
    !
    ! Eigenstates (resonant only matrix)
    !

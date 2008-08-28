@@ -88,7 +88,6 @@ subroutine barriers()
  !====================================================================
  !
  ! GPL_INCLUDE_START
- !call switch_off_runlevel('rim_cut',on_name=' ')
  !call switch_off_runlevel('life',on_name=' ')
  !call switch_off_runlevel('acfdt',on_name=' ')
  !call switch_off_runlevel('bs_fxc',on_name=' ')

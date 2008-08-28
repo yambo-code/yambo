@@ -104,13 +104,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('r',defs,'bss',     '[R BSS] Bethe Salpeter Equation solver')
  call it('r',defs,'alda_fxc','[R TDDFT] The ALDA TDDFT kernel')
  call it('r',defs,'lrc_fxc', '[R TDDFT] The LRC TDDFT kernel')
+ call it('r',defs,'rim_cut', '[R RIM CUT] Coulomb interaction')
  !
  ! GPL_EXCLUDE_START
  !
  !===================
  ! NON GPL RUNLEVELS
  !===================
- call it('r',defs,'rim_cut', '[R RIM CUT] Coulomb interaction')
  call it('r',defs,'life',    '[R GW] GoWo Quasiparticle lifetimes')
  call it('r',defs,'acfdt',   '[R ETOT] ACFDT Total Energy')
  call it('r',defs,'bs_fxc',  '[R TDDFT] The BSE TDDFT kernel')
@@ -186,6 +186,24 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call Xload(X(3),Xw(3))
  call Xload(X(4),Xw(4))
  !
+ ! RIM
+ !
+ call it(defs,'Em1Anys', '[RIM] X Y Z Static Inverse dielectric matrix',&
+&                         RIM_epsm1,verb_level=V_more)
+ call it(defs,'IDEm1Ref','[RIM] Dielectric matrix reference component 1(x)/2(y)/3(z)',&
+&                         RIM_id_epsm1_reference,verb_level=V_more)
+ call it(defs,'RandQpts','[RIM] Number of random q-points in the BZ',RIM_n_rand_pts)
+ call it(defs,'RandGvec','[RIM] Coulomb interaction RS components',RIM_ng,G_unit)
+ call it('f',defs,'QpgFull', '[F RIM] Coulomb interaction: Full matrix',verb_level=V_more)
+ !
+ ! CUTOFF
+ !
+ call it(defs,'CUTGeo',   '[CUT] Coulomb Cutoff geometry: box/cylinder/sphere',cut_geometry)
+ call it(defs,'CUTBox',   '[CUT] [au] Box sides',box_length)
+ call it(defs,'CUTRadius','[CUT] [au] Sphere/Cylinder radius',cyl_ph_radius)
+ call it(defs,'CUTCylLen','[CUT] [au] Cylinder length',cyl_length)
+ call it('f',defs,'CUTCol_test','[CUT] Perform a cutoff test in R-space',verb_level=V_more)
+ !
  ! GPL_EXCLUDE_START
  !
  !===================
@@ -238,24 +256,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                         QP_ctl_interp_neigh(3),verb_level=V_qp)
  call it(defs,'GfnQP_W','[EXTQP G] W parameters (c/v)',QP_ctl_W(3,:),verb_level=V_qp)
  call it(defs,'GfnQP_Z','[EXTQP G] Z parameters',QP_ctl_Z(3),verb_level=V_qp)
- !
- ! RIM
- !
- call it(defs,'Em1Anys', '[RIM] X Y Z Static Inverse dielectric matrix',&
-&                         RIM_epsm1,verb_level=V_more)
- call it(defs,'IDEm1Ref','[RIM] Dielectric matrix reference component 1(x)/2(y)/3(z)',&
-&                         RIM_id_epsm1_reference,verb_level=V_more)
- call it(defs,'RandQpts','[RIM] Number of random q-points in the BZ',RIM_n_rand_pts)
- call it(defs,'RandGvec','[RIM] Coulomb interaction RS components',RIM_ng,G_unit)
- call it('f',defs,'QpgFull', '[F RIM] Coulomb interaction: Full matrix',verb_level=V_more)
- !
- ! CUTOFF
- !
- call it(defs,'CUTGeo',   '[CUT] Coulomb Cutoff geometry: box/cylinder/sphere',cut_geometry)
- call it(defs,'CUTBox',   '[CUT] [au] Box sides',box_length)
- call it(defs,'CUTRadius','[CUT] [au] Sphere/Cylinder radius',cyl_ph_radius)
- call it(defs,'CUTCylLen','[CUT] [au] Cylinder length',cyl_length)
- call it('f',defs,'CUTCol_test','[CUT] Perform a cutoff test in R-space',verb_level=V_more)
  !
  ! F_xc
  !

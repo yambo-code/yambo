@@ -1,6 +1,5 @@
 !
 ! Copyright (C) 1998-2005 ABINIT group (DCA, XG, GMR)
-! For the initials of contributors, see ~ABINIT/Infos/contributors
 !
 ! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org

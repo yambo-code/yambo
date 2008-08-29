@@ -2,7 +2,9 @@
 ! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 !
-! Copyright (C) 1999-2004 ABINIT group
+! Copyright (C) 1992-2005, Lucia Reining, Valerio Olevano,
+!   Francesco Sottile, Stefan Albrecht, Giovanni Onida,
+!                    Fabien Bruneval
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 

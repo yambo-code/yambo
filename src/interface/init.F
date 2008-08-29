@@ -424,7 +424,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      if (l_gw0) then
        call initactivate(1,'GbndRnge') 
-       if (.not.l_chosex) call initactivate(1,'GDamping') 
+       if (.not.l_chosex.and.trim(QP_solver)/='g') call initactivate(1,'GDamping') 
        if (.not.l_ppa.and..not.l_chosex) call Xon('Xd',(/'BndsRn','NGsBlk',&
 &                      'DmRnge','CGrdSp','ETStps','EMStps',&
 &                      'DrudeW','EhEngy','LongDr'/)) 

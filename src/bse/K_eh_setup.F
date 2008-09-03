@@ -63,8 +63,11 @@ subroutine K_eh_setup(iq,Ken,Xk)
    !
    BS_K_dim=0
    !
-   O_n_v_states=0
-   O_n_c_states=0
+   if (BS_res_K_corr) then
+     O_n_v_states=0
+     O_n_c_states=0
+   endif
+   !
    BS_blk_dim=0
    !
    do ikbz=1,Xk%nbz
@@ -144,6 +147,7 @@ subroutine K_eh_setup(iq,Ken,Xk)
      if (.not.BS_K_coupling.and.BS_not_const_eh_f) then
        call error('Fractional e/h occupations found. BS coupling forced.')
      endif
+     !
      if (.not.BS_res_K_corr) cycle
      !
      do iv=BS_bands(1),Ken%nbm

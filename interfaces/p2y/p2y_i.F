@@ -81,6 +81,8 @@
  call section('*','P(W) 2 Y(ambo) Ver(s). 3.1.1')
 #elif defined _P2Y_V32
  call section('*','P(W) 2 Y(ambo) Ver. 3.2')
+#elif defined _P2Y_V40
+ call section('*','P(W) 2 Y(ambo) Ver. 4.0')
 #else
  call error('Unknown version of P2Y. Stopping.')
 #endif

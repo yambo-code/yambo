@@ -85,6 +85,11 @@ contains
    index_filename = 'data-file.xml'
    write(lch,'(a,i3,a)') '== PWscf v.3.2 generated data =='
 
+#elif defined _P2Y_V40
+
+   index_filename = 'data-file.xml'
+   write(lch,'(a,i3,a)') '== PWscf v.4.0 generated data =='
+
 #endif
 
    if (trim(inf).ne."p2y.in") index_filename = inf
@@ -117,6 +122,12 @@ contains
    call qexml_init(pw_unit,"./", rhounit_,.true.) ! sets unit numbers
    call qexml_openfile( index_filename, "read", .false., ierr)
     
+#elif defined _P2Y_V40
+
+   rhounit_ = 12
+   call qexml_init(pw_unit) 
+   call qexml_openfile( index_filename, "read", .false., ierr)
+    
 #endif
    !
    !  qexml_init(_,_,.true.)               : rho file is binary
@@ -135,7 +146,7 @@ contains
 
    call pw_closeindex(pw_unit) ! close index.xml file
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311
+#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
 
    call qexml_closefile("read",ierr) ! close index.xml file
 
@@ -176,6 +187,11 @@ contains
    call qexml_read_bands_info(nbnd=nbnd_, num_k_points=num_k_points_, &
 &                        nspin=n_spin_pw_, nelec=nelec_, ierr=ierr)
 
+#elif defined _P2Y_V40
+
+   call qexml_read_bands_info(nbnd=nbnd_, num_k_points=num_k_points_, &
+&                        nspin=n_spin_pw_, nelec=nelec_, ierr=ierr)
+
 #endif
 
    if (ierr.ne.0) then
@@ -185,7 +201,7 @@ contains
      call errore('qexml_read_bands.','IOTK error:',ABS(ierr)) 
    endif
 
-#if defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311
+#if defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
 
    call qexml_read_symmetry(nsym=nsym_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_symmetry','IOTK error',ABS(ierr))
@@ -287,7 +303,7 @@ contains
 
    deallocate(atom_type_,species_type_)
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311
+#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
 
    tau_units = 1.0_DP
    allocate( atm_(n_atom_species))
@@ -334,7 +350,7 @@ contains
 
    call pw_cell(pw_unit)
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311
+#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
 
    call qexml_read_cell(alat=alat_, a1=a1_, a2=a2_, a3=a3_,ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_cell','IOTK error',ABS(ierr))
@@ -372,7 +388,7 @@ contains
 
    call pw_symmetry(pw_unit)
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311
+#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
 
    call qexml_read_symmetry(invsym=invsym_, s=isym_(:,:,1:nsym_), ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_symmetry','IOTK error',ABS(ierr))
@@ -405,7 +421,7 @@ contains
 
    call pw_kpoints(pw_unit)
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311
+#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
 
    call qexml_read_bz(xk=xk_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_bands','IOTK error',ABS(ierr))
@@ -464,7 +480,7 @@ contains
    allocate(igv_(3,ng_vec))    
    call pw_gvectors(pw_unit)
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311
+#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
 
    allocate(igv_(3,ngm_))    ! The PWscf array (ngm = ng_vec if not gamma_only)
    call qexml_read_planewaves(igv=igv_, ierr=ierr)
@@ -518,7 +534,7 @@ contains
    wf_nc_k(:) = pw_npwk_(:)
    deallocate(pw_npwk_)
 
-#elif defined _P2Y_V31  || defined _P2Y_V311
+#elif defined _P2Y_V31  || defined _P2Y_V311 
 
    allocate( pw_igk_(ngm_, k%nibz))
    allocate(index_(ngm_))     ! avoid allocate(index_(wf_ncx)) in case of v3.1 bug
@@ -555,7 +571,7 @@ contains
 !
 !  wf_ncx = maxval(wf_nc_k)  
 
-#elif defined _P2Y_V32 
+#elif defined _P2Y_V32 || defined _P2Y_V40
 
    allocate( pw_igk_(npwx_, k%nibz))
    allocate( index_(npwx_) )     
@@ -640,7 +656,7 @@ contains
      deallocate(eig_s_)
    end select
 
-#elif defined _P2Y_V32
+#elif defined _P2Y_V32  || defined _P2Y_V40
 
    allocate(eigb_(en%nb))
    select case(n_sp_pol)
@@ -673,7 +689,7 @@ contains
    use xc_functionals,        ONLY : GS_xc_KIND,GS_xc_FUNCTIONAL
    implicit none
 
-#if defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311
+#if defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
    call qexml_read_xc(dft=pw_dft, ierr=ierr)
    call scan_xc(pw_dft,GS_xc_KIND,GS_xc_FUNCTIONAL)
 #endif

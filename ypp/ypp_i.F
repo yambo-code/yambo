@@ -48,7 +48,7 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  ! I/O 
  !
  integer           :: ID,i_err
- integer, external :: ioDB1,ioQINDX,iogrot
+ integer, external :: ioDB1,ioQINDX,iogrot,ioWF
 #if defined _YPP_ELPH
  integer, external :: elph_pw_dbs
 #endif
@@ -77,6 +77,15 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
  iinf=ioDB1(en,k,ID)
+ if (iinf/=0) then
+   call ypp_finalize()
+   return
+ endif
+ !
+ ! WF
+ !
+ call io_control(ACTION=OP_RD_CL,SEC=(/1/),COM=NONE,MODE=DUMP,ID=ID)
+ iinf=ioWF(ID) 
  if (iinf/=0) then
    call ypp_finalize()
    return

@@ -912,7 +912,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          !infile_editing=.true.
          !call initactivate(1,'ppa')
-         !QP_solver='n'
          !
          ! GPL_INCLUDE_END
          !

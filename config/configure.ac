@@ -19,11 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 3.1.2 r.307 , yambo@yambo-code.org)
+AC_INIT(Yambo, 3.1.2 r.308 , yambo@yambo-code.org)
 SVERSION="3"
 SPATCHLEVEL="1"
 SSUBLEVEL="2"
-SREVISION="307"
+SREVISION="308"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -218,7 +218,8 @@ ACX_FCSETUP()
 acx_save_fcflags="$FCFLAGS"
 FCFLAGS="$acx_save_fcflags $F90EXTFLAGS"
 ACX_EXTUS
-AC_LANG_PREPROC
+# Look for the default C preprocessor
+AC_PROG_CPP
 AC_FC_FREEFORM
 F90=$FC
 AC_SUBST(F90)

@@ -16,7 +16,7 @@
 # [@NETCDF_str@@NETCDF_LF_str@] NETCDF/Large Files 
 # [@BLAS_str@@LAPACK_str@] Built-in BLAS/LAPACK
 #
-# [ CPP ] @FCCPP@ @FCPPFLAGS@
+# [ CPP ] @CPP@ @CPPFLAGS@
 # [  C  ] @CC@ @CFLAGS@
 # [MPIC ] @MPICC@ @PCFLAGS@
 # [ F90 ] @F90@ @FCFLAGS@

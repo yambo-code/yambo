@@ -127,6 +127,11 @@ module IO_m
      character(*),optional :: XC_KIND
    end function
    !
+   logical function ver_is_gt_or_eq(ID,version,revision)
+     integer          :: ID
+     integer,optional :: version(3),revision
+   end function
+   !
  end interface
  !
  contains
@@ -612,20 +617,6 @@ module IO_m
        inquire(file=filename,opened=file_is_open)
      endif
      !
-   end function
-     !
-   logical function ver_is_gt_or_eq(ID,version)
-     integer :: ID,version(3),version2comp(3)
-     ver_is_gt_or_eq=.false.
-     !
-     if (ID>0) version2comp=io_code_version(ID,:)
-     if (ID<0) version2comp=code_version
-     !
-     if (version2comp(1)<version(1)) return
-     if (version2comp(1)==version(1).and.version2comp(2)<version(2)) return
-     if (version2comp(1)==version(1).and.version2comp(2)==version(2)&
-&        .and.version2comp(3)<version(3)) return
-     ver_is_gt_or_eq=.true.
    end function
    !
    subroutine netcdf_call(status)

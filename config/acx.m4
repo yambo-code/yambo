@@ -63,7 +63,7 @@ AC_DEFUN([ACX_WIDESETUP],
 [
 AC_REQUIRE([AC_CANONICAL_HOST])
 
-if test -z "$CPPFLAGS"; then CPPFLAGS="-P"; fi
+C_AS_CPP_FLAGS="-P"
 
 AC_MSG_CHECKING([if the current OS is supported])
 TIMER="ct_cclock.o"
@@ -72,6 +72,11 @@ case "${host}" in
    build_os="linux"
    TIMER="ct_etime.o"
    if test -z "$F90SUFFIX"; then F90SUFFIX=".f90"; fi
+   ;;
+ powerpc64*linux* )
+   build_os="linux"
+   TIMER="ct_etime.o"
+   if test -z "$F90SUFFIX"; then F90SUFFIX=".f"; fi
    ;;
  powerpc-ibm* )
    build_os="aix"  
@@ -86,7 +91,6 @@ case "${host}" in
  alphaev*)
    build_os="tru64"  
    if test -z "$F90SUFFIX"; then F90SUFFIX=".f90"; fi
-   if test -z "$CPPFLAGS"; then CPPFLAGS="-P -C"; fi
    ;;
   *)
    AC_MSG_RESULT([no])
@@ -104,12 +108,12 @@ AC_MSG_NOTICE([WIDESETUP: using build_os="$build_os"])
 AC_MSG_NOTICE([WIDESETUP: using F90SUFFIX="$F90SUFFIX"])
 AC_MSG_NOTICE([WIDESETUP: using AR="$AR"])
 AC_MSG_NOTICE([WIDESETUP: using AR_FLAGS="$AR_FLAGS"])
-AC_MSG_NOTICE([WIDESETUP: using CPPFLAGS="$CPPFLAGS"])
+AC_MSG_NOTICE([WIDESETUP: using C_AS_CPP_FLAGS="$C_AS_CPP_FLAGS"])
 AC_SUBST(F90SUFFIX)
 AC_SUBST(TIMER)
 AC_SUBST(AR)
 AC_SUBST(AR_FLAGS)
-AC_SUBST(CPPFLAGS)
+AC_SUBST(C_AS_CPP_FLAGS)
 ])
 
 ################################################

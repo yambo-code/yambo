@@ -38,7 +38,7 @@ subroutine fermi_level(E,K,test_Tel,mode)
  use electrons,     ONLY:levels,nel,n_sp_pol,spin_occ,filled_tresh,&
 &                        BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spinor,n_spin
  use R_lattice,     ONLY:bz_samp
- use com,           ONLY:msg,error
+ use com,           ONLY:msg,error,warning
  use vec_operate,   ONLY:sort
  use functions,     ONLY:Fermi_fnc
  implicit none
@@ -164,11 +164,13 @@ subroutine fermi_level(E,K,test_Tel,mode)
  !
  ! Mode = 0. Check only for the Fermi energy
  !
- ! GPL_EXCLUDE_START
- !
  Finite_Tel=(Tel>=1.E-5)
  !
- ! GPL_EXCLUDE_END
+ ! GPL_INCLUDE_START
+ !
+ ! if (Finite_Tel) call warning('Non zero Temp. is still unsupported in this version')
+ !
+ ! GPL_INCLUDE_END
  !
  if (mode==0) return
  !

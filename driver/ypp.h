@@ -20,7 +20,6 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
  static Ldes opts[] = { /* Int Real Ch (Dummy)*/
-  {"ifile", "F","Input file",0,0,1,0},              
   {"help",  "h","Short Help",0,0,0,0}, 
   {"lhelp", "H","Long Help",0,0,0,0}, 
   {"jobstr","J","Job string identifier",0,0,1,0},   

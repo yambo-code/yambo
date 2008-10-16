@@ -63,8 +63,6 @@ AC_DEFUN([ACX_WIDESETUP],
 [
 AC_REQUIRE([AC_CANONICAL_HOST])
 
-C_AS_CPP_FLAGS="-P"
-
 AC_MSG_CHECKING([if the current OS is supported])
 TIMER="ct_cclock.o"
 case "${host}" in
@@ -103,6 +101,8 @@ case "${host}" in
  *)
 esac
 AC_MSG_RESULT([yes])
+
+C_AS_CPP_FLAGS="-P"
 
 AC_MSG_NOTICE([WIDESETUP: using build_os="$build_os"])
 AC_MSG_NOTICE([WIDESETUP: using F90SUFFIX="$F90SUFFIX"])
@@ -204,8 +204,17 @@ if test -z "${FCFLAGS}"; then
       UFFLAGS="-O0 -w -tpp2"
       ;;
     *ifort*)
-      FCFLAGS="-assume bscc -O3 -tpp7"
-      UFFLAGS="-assume bscc -O0 -tpp7"
+      CPU_FLAG=""
+      case "${FCVERSION}" in
+        *10*)
+         CPU_FLAG="-xT"
+         ;;
+        *)
+         CPU_FLAG="-tpp7"
+         ;;
+      esac
+      FCFLAGS="-assume bscc -O3 $CPU_FLAG"
+      UFFLAGS="-assume bscc -O0 $CPU_FLAG"
       FCMFLAG="-nofor_main"
       ;;
     *)

@@ -139,7 +139,7 @@ subroutine barriers()
    goto 1
  endif
  if (l_bss.or.l_bse) then
-   call switch_off_runlevel('all',on_name='bse bss em1s em1d ppa optics '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='bs_fxc bse bss em1s em1d ppa optics '//trim(always_runlevels))
    goto 1
  endif
  !

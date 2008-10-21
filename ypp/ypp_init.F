@@ -55,7 +55,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  what_is_running='YPP'
 #if defined _ELPH
  what_is_running='YPP_PH'
-#elif defined _RAS
+#endif
+#if defined _YPP_RAS
  what_is_running='YPP_RAS'
 #endif
  !

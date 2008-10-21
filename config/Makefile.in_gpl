@@ -73,15 +73,15 @@ PJ_MANYKLIBS       = $(MAIN_LIBS)
 PROJECTS = yambo_tb
 #endif
 #if defined _RAS
-PROJECTS = yambo_ras yambo_ras_bigsys ypp_ras
+PROJECTS = yambo_ras yambo_ras_manyk ypp_ras
 PJ_RASLIBS   = $(BASIC_LIBS) ras_reels_mods coulomb bz_ops qp_ctl ras \
-               interface tddft pol_function qp acfdt bse
+               interface tddft pol_function qp bse
 YPPRASLIBS   = $(BASIC_LIBS) ras_reels_mods bz_ops qp_ctl interface bse
 #endif
 #if defined _REELS
 PROJECTS = yambo_reels
 PJ_REELSLIBS = $(BASIC_LIBS) ras_reels_mods coulomb bz_ops qp_ctl reels \
-               interface tddft pol_function qp acfdt bse
+               interface tddft pol_function qp bse
 #endif
 #if defined _SC
 PROJECTS = yambo_sc
@@ -109,9 +109,9 @@ yambo: libs
 	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)
 	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
 #if defined _MANYK
-yambo_bigsys: libs
+yambo_manyk: libs
 	@LIBS2DO="$(PJ_MANYKLIBS)";ADF="-D_MANYK"; $(mksrc)
-	@X2DO="yambo_bigsys"; XPATH="driver";XLIBS="$(PJ_MANYKLIBS)";ADF="-D_MANYK";$(mkx)
+	@X2DO="yambo_manyk"; XPATH="driver";XLIBS="$(PJ_MANYKLIBS)";ADF="-D_MANYK";$(mkx)
 #endif
 #if defined _TB
 yambo_tb: libs
@@ -124,7 +124,7 @@ yambo_ras: libs
 	@X2DO="yambo_ras"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS";$(mkx)
 yambo_ras_manyk: libs
 	@LIBS2DO="$(PJ_RASLIBS)";ADF="-D_RAS -D_MANYK"; $(mksrc)
-	@X2DO="yambo_ras_bigsys"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS -D_MANYK";$(mkx)
+	@X2DO="yambo_ras_manyk"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS -D_MANYK";$(mkx)
 ypp_ras: libs
 	@LIBS2DO="$(YPPRASLIBS)" ; $(mksrc)
 	@X2DO="ypp_ras" ;XPATH="ypp";XLIBS="$(YPPRASLIBS)"; ADF="-D_YPP_RAS";$(mkx)

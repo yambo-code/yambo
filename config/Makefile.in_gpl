@@ -73,7 +73,8 @@ PJ_MANYKLIBS       = $(MAIN_LIBS)
 PROJECTS = yambo_tb
 #endif
 #if defined _RAS
-PROJECTS = yambo_ras yambo_ras_manyk ypp_ras
+TARGETS  = all interfaces 
+PROJECTS = yambo_ras ypp_ras
 PJ_RASLIBS   = $(BASIC_LIBS) ras_reels_mods coulomb bz_ops qp_ctl ras \
                interface tddft pol_function qp bse
 YPPRASLIBS   = $(BASIC_LIBS) ras_reels_mods bz_ops qp_ctl interface bse
@@ -122,9 +123,6 @@ yambo_tb: libs
 yambo_ras: libs
 	@LIBS2DO="$(PJ_RASLIBS)";ADF="-D_RAS"; $(mksrc)
 	@X2DO="yambo_ras"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS";$(mkx)
-yambo_ras_manyk: libs
-	@LIBS2DO="$(PJ_RASLIBS)";ADF="-D_RAS -D_MANYK"; $(mksrc)
-	@X2DO="yambo_ras_manyk"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS -D_MANYK";$(mkx)
 ypp_ras: libs
 	@LIBS2DO="$(YPPRASLIBS)" ; $(mksrc)
 	@X2DO="ypp_ras" ;XPATH="ypp";XLIBS="$(YPPRASLIBS)"; ADF="-D_YPP_RAS";$(mkx)

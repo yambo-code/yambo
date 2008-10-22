@@ -124,7 +124,7 @@ yambo_ras: libs
 	@LIBS2DO="$(PJ_RASLIBS)";ADF="-D_RAS"; $(mksrc)
 	@X2DO="yambo_ras"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS";$(mkx)
 ypp_ras: libs
-	@LIBS2DO="$(YPPRASLIBS)" ; $(mksrc)
+	@LIBS2DO="$(YPPRASLIBS)";ADF="-D_RAS"; $(mksrc)
 	@X2DO="ypp_ras" ;XPATH="ypp";XLIBS="$(YPPRASLIBS)"; ADF="-D_YPP_RAS";$(mkx)
 #endif
 #if defined _REELS

@@ -106,7 +106,7 @@ module YPP
  !
 #endif
  !
- ! GPL_EXCLUDE_START
+ ! GPL_EXCLUDE_START RAS_IGNORE
  !
  ! BZ RIM
  !
@@ -114,7 +114,7 @@ module YPP
  logical  :: lbzrim
  character(lchlen) :: BZ_RIM_path
  !
- ! GPL_EXCLUDE_END
+ ! GPL_EXCLUDE_END RAS_IGNORE
  !
  interface
    !

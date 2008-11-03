@@ -53,8 +53,11 @@ subroutine init_detector(defs)
 
   call it(defs,'DetAngle', '[REELS] Detector window  (deg)', thetadet )
   call it(defs,'DetIntMd', '[REELS] Detector integration (`av`,`no`,`nu`)', det_int_type )
+#if defined _YPP_RAS 
+  call it(defs,'NumIntPt', '[REELS] Number of points for integral', n_det_pt )
+#else
   call it(defs,'NumIntPt', '[REELS] Number of points for integral', n_det_pt, verb_level=V_more )
-
+#endif
 ! check here...
 
   return

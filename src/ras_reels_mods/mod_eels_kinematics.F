@@ -56,8 +56,13 @@ subroutine init_kinematics(defs) ! only those common to RAS and REELS runlevels
   call it(defs,'E0'      , '[REELS] Incident energy', E0, E_unit )
   call it(defs,'Theta0'  , '[REELS] Incident angle   (deg)', theta0_in )
   call it(defs,'Thetap'  , '[REELS] Deflection angle (deg)', thetap_in )
+#if defined _YPP_RAS
+  call it(defs,'Phi'     , '[REELS] Azimuthal angle  (deg)', phi_in )
+  call it(defs,'ImpactFt', '[REELS] Impact Factor (a.u.)', bimp )
+#else
   call it(defs,'Phi'     , '[REELS] Azimuthal angle  (deg)', phi_in, verb_level=V_more )
   call it(defs,'ImpactFt', '[REELS] Impact Factor (a.u.)', bimp,verb_level=V_more )
+#endif
 
   return
 end subroutine init_kinematics

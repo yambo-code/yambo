@@ -151,7 +151,7 @@ if test -z "${FCFLAGS}"; then
       CPU_FLAG=""
       case "${FCVERSION}" in
         *10*)
-         CPU_FLAG="-xT"
+         CPU_FLAG="-xW"
          ;;
         *)
          CPU_FLAG="-tpp7"
@@ -207,7 +207,7 @@ if test -z "${FCFLAGS}"; then
       CPU_FLAG=""
       case "${FCVERSION}" in
         *10*)
-         CPU_FLAG="-xT"
+         CPU_FLAG="-xW"
          ;;
         *)
          CPU_FLAG="-tpp7"

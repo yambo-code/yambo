@@ -44,6 +44,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! Work Space
  !
  integer :: iq,Xdb,i_err,iq_to_start
+ real(SP):: minmax_ehe(2)
  integer, external :: ioX
  character(1)      :: sec_mode
  !
@@ -81,8 +82,23 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  call X_pre_setup(Xen,X)
  !
+ ! GPL_EXCLUDE START
+ !
+ ! In the next lines Yambo will VERIFY the em1d database
+ ! to check if this iq has been alrady done. 
+ ! When self_detect_E_range=.TRUE. however the Xw%er setup is
+ ! done only in X_os and the VERIFY fails. This is why the procedure
+ ! must be repeated here (Andrea fixed Bug by C. Attaccalite on October 2008)
+ !
+ if (self_detect_E_range) then
+   call X_eh_setup(-X%iq(1),X,Xen,Xk,minmax_ehe)
+   Xw%er=minmax_ehe
+ endif
+ !
  ! Build frequency range only if Xw%p was not already allocated
- ! like in LifeTimes calculations
+ ! like in LifeTimes calculations or when self_detect_E_range=.TRUE. (real axis GW)
+ !
+ ! GPL_EXCLUDE END
  !
  call freqs_setup(Xw)
  !

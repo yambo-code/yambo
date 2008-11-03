@@ -24,10 +24,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! VERBOSITY
  ! 
  ! 0 (default)
- ! 1 (More)
- ! 2 (QP)
- ! 3 (I/O)
- ! 4 (debug)
+ ! 1 (More) V_more
+ ! 2 (QP)   V_qp
+ ! 3 (I/O)  V_io
  !
  use pars,          ONLY:schlen
  use electrons,     ONLY:levels,nel,filled_tresh
@@ -35,6 +34,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,V_more,&
 &                        V_qp,V_io
  use X_m,           ONLY:X_t,long_path
+#if defined _MAGNON
+ use X_m,           ONLY:q_plus_G_direction,q_plus_G_shell
+#endif
  use QP_m,          ONLY:QP_rep_string,QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,QP_Sx_low_band,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations
@@ -282,13 +284,21 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! Xx
  !
  call Xload(X(1),Xw(1))
- call it(defs,'LongPath','[Xd] Longitudinal gauge path',long_path,verb_level=V_more)
  !
  ! ACFDT
  !
  call it(defs,'AC_n_LAM', '[ACFDT] Coupling Costant GL-grid points',ACFDT_n_lambda)
  call it(defs,'AC_n_FR',  '[ACFDT] Integration frequency points',ACFDT_n_freqs)
  call it(defs,'AC_E_Rng', '[ACFDT] Imaginary axis 2nd & 3rd energy points',ACFDT_E_range,E_unit)
+ !
+ ! Optics
+ !
+#if defined _MAGNON
+ call it(defs,'QplusGDir',   '[Xd] Transferred momentum shift direction',q_plus_G_direction,verb_level=V_more)
+ call it(defs,'QplusGShell', '[Xd] Shell index of the shift',q_plus_G_shell,verb_level=V_more)
+#endif
+ call it(defs,'LongPath',    '[Xd] Longitudinal gauge path',long_path,verb_level=V_more)
+
  !
  ! GPL_EXCLUDE_END
  !

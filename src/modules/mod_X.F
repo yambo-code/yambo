@@ -29,6 +29,10 @@ module X_m
  complex(SP), allocatable :: X_epsilon(:,:)
  complex(SP), allocatable :: X_fxc(:)
  character(6)             :: alpha_dim ! 'adim' 'area' 'length' 'volume'
+#if defined _MAGNON
+ real(SP)                 :: q_plus_G_direction(3)
+ integer                  :: q_plus_G_shell
+#endif
  !
  ! Response function
  !

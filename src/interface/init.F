@@ -211,7 +211,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! If the GOPS/KINDX DBs are not present, reset to setup run
  !
- if (io_err==-1.or.ioQINDX_err==-1) then
+ if ((io_err==-1.or.ioQINDX_err==-1).and.infile_editing) then
    !
    ! switch off all logicals loaded in read_command_line
    call switch_off_runlevel('all',on_name="")
@@ -219,6 +219,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    ! force a setup run
    instr="setup"
    call read_command_line(instr,init)
+   !
  endif
  !
  ! rim
@@ -385,6 +386,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call Xon('Xd',(/'QpntsR','BndsRn','NGsBlk',&
 &                  'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
+#if defined _MAGNON
+   if (l_optics) call initactivate(1,'QplusGDir QplusGShell')
+#endif
  endif
  !
  ! BSE 

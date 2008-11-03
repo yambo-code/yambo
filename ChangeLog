@@ -1,3 +1,694 @@
+2008-10-17 10:55:59 r314 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Modified barriers.F to remove wrong barrier to bs_fxc on-fly kernel
+
+2008-10-16 22:41:21 r313 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Revision synchronisation
+
+2008-10-16 22:32:22 r312 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.1.2
+
+	*  e2y/e2y_wf.F e2y/e2y_i.F
+
+	Changes:
+	- e2y updated for etsf 1.0.0 (stable) and splitting over bands.
+	  Tested with Abinit 5.5.4.
+
+	Patch sent by: Conor
+
+2008-10-16 15:36:42 r311 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.1.2
+
+	*  trunk/configure trunk/include/version.inc trunk/config/acx.m4 trunk/config/configure.ac branches/gpl/configure branches/gpl/include/version.inc branches/gpl/p2y/qexml_v4.0.F branches/gpl/config/acx.m4 branches/gpl/config/configure.ac branches/gpl/driver/ypp.h
+
+	Additions:
+	- Optimization of ifort 10 on x86_64 platforms
+	- qexml_v4.0.F added
+	- Removed -ifile option to ypp (appeared twice)
+
+	Patch sent by: Andrea
+
+2008-10-14 10:59:20 r310 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.1.2
+
+	*  trunk/configure trunk/include/version.inc trunk/config/configure.ac trunk/doc/sample/bulk_silicon/experiment.dat trunk/common/fermi_level.F trunk/driver/ypp.h trunk/driver/ypp.h_gpl branches/gpl/configure branches/gpl/include/version.inc branches/gpl/config/configure.ac branches/gpl/doc/sample/bulk_silicon/experiment.dat branches/gpl/common/fermi_level.F branches/gpl/driver/ypp.h
+
+	Additions:
+	- doc/sample/bulk_silicon/experiment.dat
+
+	Changes:
+	- In GPL release, fermi level search permitted using a
+	  finite temperature.
+	- Remove spurious option in ypp.h/ypp.h_gpl
+
+	Patch sent by: Andrea
+
+2008-10-02 12:55:49 r309 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.1.2
+
+	*  trunk/configure trunk/include/version.inc trunk/config/report.in trunk/config/acx.m4 trunk/config/acx_mpi.m4 trunk/config/configure.ac trunk/config/setup.in trunk/io/ioX.F trunk/io/ver_is_gt_or_eq.F trunk/io/.objects trunk/io/.objects_gpl trunk/modules/mod_IO.F branches/gpl/configure branches/gpl/include/version.inc branches/gpl/config/report.in branches/gpl/config/acx.m4 branches/gpl/config/acx_mpi.m4 branches/gpl/config/configure.ac branches/gpl/config/setup.in branches/gpl/io/ioX.F branches/gpl/io/ver_is_gt_or_eq.F branches/gpl/io/.objects branches/gpl/modules/mod_IO.F
+
+	Bugs:
+	- Wrong use of CPPFLAGS in configure fixed. This bug was preventing
+	  the revision 308 to compile with MPI support.
+
+	Additions:
+	- ver_is_gt_or_eq function moved out of mod_IO so to add
+	  optional revision argument.
+
+	Changes:
+	- Cleaned the acx.m4,acx_mpi.m4 and configure.ac. Removed call
+	  to preprocessor inquire, as it is already detected at the beginning.
+	- Changed tags in ioX.F to permit calculations above 999 Q-points.
+
+	Patch sent by: Andrea (ioX.F change proposed by C. Attaccalite)
+
+2008-09-26 13:09:37 r308 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.1.2
+
+	*  trunk/configure trunk/include/version.inc trunk/config/report.in trunk/config/acx.m4 trunk/config/configure.ac trunk/config/setup.in trunk/doc/QuickGuidedTour.pdf trunk/doc/sample trunk/doc/sample/bulk_silicon trunk/doc/sample/bulk_silicon/README trunk/doc/sample/bulk_silicon/SAVE trunk/doc/sample/bulk_silicon/SAVE/database_DB1_NETCDF_format.gz trunk/doc/sample/bulk_silicon/SAVE/database_WF_NETCDF_format.gz trunk/sbin/make_makefile.sh.in branches/gpl/configure branches/gpl/include/version.inc branches/gpl/config/report.in branches/gpl/config/acx.m4 branches/gpl/config/configure.ac branches/gpl/config/setup.in branches/gpl/doc branches/gpl/doc/QuickGuidedTour.pdf branches/gpl/doc/sample branches/gpl/doc/sample/bulk_silicon branches/gpl/doc/sample/bulk_silicon/README branches/gpl/doc/sample/bulk_silicon/SAVE branches/gpl/doc/sample/bulk_silicon/SAVE/database_DB1_NETCDF_format.gz branches/gpl/doc/sample/bulk_silicon/SAVE/database_WF_NETCDF_format.gz + branches/gpl/sbin/make_makefile.sh.in branches/gpl/README
+
+	Additions:
+	- doc/ dir in GPL branch.
+	- the QuickGuidedTour.pdf  in the doc/ dir.
+	- Added the sample core databases of
+	  silicon used on the CPC paper and in the QuickGuidedTour.pdf
+	- Support for cygwin in Makefile (still to test)
+
+	Changes:
+	- CPP replaced with "gcc -E" . This to avoid compatibility problems
+	  with cpp.
+
+	Patch sent by: Andrea
+
+2008-09-17 15:51:28 r307 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.1.2
+
+	*  configure include/version.inc config/configure.ac qp/QP_driver.F interface/init.F
+
+	Bugs:
+	- In QP_driver QP_solver defined "by hand" to initialize the Dyson solver
+
+	Patch sent by: Andrea
+
+2008-09-17 10:20:22 r306 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Revision syncronization
+
+2008-09-17 10:18:11 r304 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.1.2
+
+	*  interface/init.F
+
+	Bugs:
+	- In GPL procedure to initialize the Dyson solver
+
+	Additions:
+	- No other runlevel than setup is now permitted when
+	  either G-shells or K-pts DBs are not present.
+
+	Patch sent by: Andrea
+
+2008-09-12 16:48:57 r303 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.1.2
+
+	*  trunk/configure trunk/include/version.inc trunk/config/configure.ac branches/gpl/configure branches/gpl/include/version.inc branches/gpl/p2y/p2y_i.F branches/gpl/p2y/p2y_wf.F branches/gpl/p2y/mod_p2y.F branches/gpl/config/configure.ac branches/gpl/interface/init.F branches/gpl/bse/K_eh_setup.F branches/gpl/ypp/ypp_i.F
+
+	Bugs:
+	- Preload of WF DB in ypp. Fragmentation parameters were not read at the
+	  start-up => NETCDF I/O error in ypp for bands-fragmented DBs.
+
+	Additions:
+	- Support for PWscf 4.0 in p2y
+
+	*Revision Synchronization*
+
+	Patch sent by: Andrea & Conor
+
+2008-09-12 16:32:55 r302 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug fix in ypp: added DUMP mode I/O of WF file at start
+
+2008-09-05 19:20:42 r301 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.1.2
+
+	*  p2y/p2y_i.F p2y/p2y_wf.F p2y/mod_p2y.F
+
+	Additions:
+	- p2y for PWscf 4.0.1 added. Passes basic tests.
+
+	Patch sent by: Conor
+
+2008-09-03 14:52:14 r300 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug fix in ALDA real space. Detected using gfortran
+
+2008-08-29 16:05:58 r299 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	GPL headers update.
+
+2008-08-28 18:32:34 r298 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	RIM+CUTOFF bug fix in GPL + syncronization
+
+2008-08-25 09:43:58 r297 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Revision syncronization
+
+2008-08-25 09:41:21 r295 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Updated GPL I/O objects for RIM/CUTOFF
+
+2008-08-25 09:35:10 r294 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Added RIM/CUTOFF option in gpl command-line
+
+2008-08-25 09:26:59 r293 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.1.2
+
+	*  config/acx.m4 wf_and_fft/fft_setup.F interface/init.F coulomb/.objects_gpl coulomb/col_driver.F io/ioBSS_diago.F modules/mod_wave_func.F modules/std_presets.F modules/mod_FFT.F ypp/exc_properties.F ypp/exc_wf_sort_and_report.F ypp/exc_collinear_spin.F ypp/mod_YPP.F ypp/exc_non_collinear_spin.F ypp/ypp_i.F
+
+	Additions:
+	- Added fft_multiplier in mod_FFT to allow for multiplication
+	  of FFT grid. Still not passed to the input file.
+	- RIM and CUTOFF added to GPL version
+	- YPP is now able to plot excitonic/TDALDA wfs in the case
+	  where the coupling part of the Hamiltonian is used.
+
+	Changes:
+	- Path to cpp in acx.m4
+
+	Patch sent by: Andrea
+
+2008-08-19 11:40:12 r292 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Revision syncronization
+
+2008-08-19 11:21:25 r289 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	--with-editor option added to the configure script. By default several editors are checked. Use --with-editor=none to skip the automatic editing
+
+2008-08-12 13:56:03 r288 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	GPL ypp/yambo options added. Gfortran bug-fix
+
+2008-08-11 17:48:54 r287 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.1.2
+
+	*  configure include/version.inc config/configure.ac xc_functionals/el_density.F xc_functionals/xc_lda_driver.F interface/init_load.F interface/init.F interface/barriers.F ypp/ypp_init_load.F
+
+	Bugs:
+	- el_density: wrong spin index in GPL excluded section.
+
+	Additions:
+	- Added "em1d" runlevels in GPL section for compatibility reasons
+	  (yambo and ypp).
+
+	Changes:
+	- PPA forced in GPL version.
+
+	Patch sent by: Andrea
+
+2008-08-08 12:02:33 r286 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	GPL merge from trunk :286 and revision syncronization
+
+2008-07-09 19:35:37 r285 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.1.1
+
+	*  driver/ypp.h
+
+	Bugs:
+	- SPP changed to YPP
+
+2008-06-18 22:58:23 r284 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.1.1
+
+	*  interface/init.F modules/mod_com.F
+
+	Bugs:
+	- in init.F a preload combination of runlevels prevented the -o c -t a options
+	  to work.
+	- in mod_com wrong use of chracter(*) detected by gfortran
+
+	Patch sent by: Andrea
+
+2008-06-10 17:37:19 r283 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Revision syncronization
+
+2008-06-10 17:36:35 r282 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.1.1
+
+	*  configure include/version.inc config/configure.ac xc_functionals/el_density.F qp/QP_XX_Vxc.F interface/barriers.F ypp/exc_properties.F driver/yambo_driver.F
+
+	Bugs:
+	- Wrong loop on spinor components in el_density, exc_properties.
+
+	Patch sent by: Andrea
+
+2008-06-07 22:19:31 r279 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.1.1
+
+	*  interface/barriers.F sbin/make_message.pl.in
+
+	Bugs:
+	- RAS was being switched off if non uniform k grid
+	- perl script small bug fixed
+
+2008-05-29 11:55:02 r277 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	GPL and GPL+SPIN syncronization with TRUNK r. 276
+
+2008-05-29 11:11:22 r276 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug in accumulation of RIM_anis (rim_integrate.F). Revision update
+
+2008-05-21 11:30:57 r275 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Fixed BUG in RIM (q=0 term) and added option to to ALDA via BSE using a restricted number of bands
+
+2008-05-13 23:57:06 r274 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug in barriers.F. Incomplete input file for SC chosex fixed.
+
+2008-05-12 18:31:22 r273 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.1.1
+
+	*  lib/slatec/r1mach.f interface/QP_init.F interface/init.F ypp/ypp_init.F ypp/exc_properties.F ypp/plot_xcrysden.F ypp/mod_YPP.F ypp/plot_gnuplot.F ypp/plot_driver.F ypp/ypp_init_load.F
+
+	IMPORTANT UPGRADE OF YPP
+
+	Additions:
+	- ypp modified to plot the electronic density, magnetization
+	  and wavefunctions.
+	  Note that now to plot the excitonc wavefunction you need to use
+	  ypp -p e.
+	- routines exc_wf_gnuplot, exc_wf_plot_driver, exc_wf_xcrysden renamed in
+	  plot_gnuplot, plot_check_and_launch, and plot_xcrysden.
+	- routine plot_driver added
+
+	Changes:
+	- QP_init modifed to be called by ypp
+	- In slatec lib rotuine r1mach changed with the original
+	  from netlib
+
+	Patch sent by: Andrea
+
+2008-05-11 23:25:23 r272 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Upgrading YPP. Work in progress...
+
+2008-05-08 15:36:44 r271 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.1.1
+
+	*  io/ioBS.F modules/mod_IO.F
+
+	Bugs:
+	- mod_IO: fixed a conflict between ver_is_gt_or_eq function and
+	  fragmentation that caused the integer io_code_revision(ID) to be
+	  lost during loop on fragmnents.
+	- ioBS: in diagonalization with coupling the (unallocated) BS_cpl_mat
+	  was filled as well.
+
+	Patch sent by: Andrea
+
+2008-05-06 12:15:21 r270 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Revisions syncronization
+
+2008-05-06 12:04:37 r267 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	SPIN flags udpate
+
+2008-05-06 11:37:05 r266 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Small bug in k_analize fixed
+
+2008-05-06 11:21:48 r265 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Wrong SPIN flags fixed
+
+2008-05-06 11:03:29 r264 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.1.1
+
+	*  configure include/version.inc p2y/mod_p2y.F config/configure.ac xc_functionals/el_density.F xc_functionals/el_magnetization.F qp/DFT_Vxc.F acfdt/acfdt_tot_energy.F common/QP_state_table_setup.F wf_and_fft/wf_load.F wf_and_fft/scatter_Bamp.F pol_function/X_O_transverse.F pol_function/X_eh_setup.F interface/barriers.F modules/mod_electrons.F bse/K_eh_setup.F ypp/exc_properties.F ypp/k_analyze.F ypp/ypp_init_load.F driver/yambo_driver.F
+
+	Bugs:
+	- k_analyze: input GWKpts changed in USER_K and transformed in iku.
+	  Before GWKpts was left in the input format and the indexing  of the User
+	  defined points was wrong.
+
+	Additions:
+	- SPIN_IGNORE flags for GPL+SPIN branch
+
+	Changes:
+	- in acfdt_tot_energy.F: now it is possible to use both the Xk and k
+	  grids to calculate correlation and exchange
+
+	Patch sent by: Andrea
+
+2008-05-05 12:53:17 r263 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Revision syncronization
+
+2008-05-05 12:47:56 r261 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Small changes to syncronize with GPL
+
+2008-05-02 14:08:59 r260 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.1.1
+
+	*  configure include/version.inc config/configure.ac coulomb/rim.F coulomb/rim_integrate.F interface/setup.F communicate/report_energies.F sc/SC_driver.F modules/mod_logo.F sbin/yambo_versions_update.tcsh
+
+	Bugs:
+	- SP precision in rim_integrate accumulation was leading to
+	  numerical noise when a large number of random points
+	  were used
+	- Xk type passed to report_energies routine to distinguish
+	  between reponse function and self-energy k-points
+	- iseed(4) has to be odd in dlaran call (mod_logo,rim)
+
+	Changes:
+	- Improved and faster algorithm in RIM random number generator (Andrea)
+
+	Patch sent by: Andrea
+
+2008-04-29 14:39:00 r259 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug-fix in ypp -k. Now k_rlu_zero is redefined. Changed define_zeros routine as well
+
+2008-04-22 18:19:54 r258 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	F2Y temporarily removed
+
+2008-04-22 18:16:10 r257 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.1.1
+
+	*  configure include/version.inc e2y/e2y_db1.F e2y/e2y_i.F f2y/f2y_db1.F int_modules/mod_interfaces.F int_modules/.objects int_modules/mod_wf2y.F int_modules/mod_com2y.F p2y/qexml_v4.0.F p2y/p2y_db1.F p2y/p2y_i.F p2y/.objects p2y/p2y_wf.F p2y/mod_p2y.F a2y/a2y_db1.F a2y/a2y_i.F a2y/a2y_wf.F config/Makefile.in config/configure.ac qp/QP_XX_Vxc.F qp/QP_ppa_chosex.F ras/X_O_transverse_cut.F ras/X_O_strengths_cut.F ras/X_O_longitudinal_cut.F wf_and_fft/wf_load.F pol_function/X_O_longitudinal.F pol_function/X_O_transverse.F pol_function/X_os.F pol_function/X_O_strengths.F interface/init.F coulomb/rim_integrate.F io/ioDB1.F io/ioX.F io/ioWF.F modules/mod_memory.F modules/mod_wave_func.F modules/std_presets.F ypp/exc_properties.F ypp/loc_ypp.F
+
+	Bugs:
+	- In QP_XX_Vxc the db was rewritten in any case.
+
+	Additions:
+	- mod_memory now value of option variable "quiet" is checked.
+
+	Changes:
+	- Changed structure of (n)s.wf. Now if wf block size is larger then
+	  400 Mb the wavefunction are splitted in blocks.
+	- Loop on band blocks added in wf_load.F and ioWF.F.
+	- module interfaces splitted in mod_com2y and mod_wf2y.
+	- _BIGSYS project renamed in _MANYK
+	- Opened _GAMMA project
+
+	Patch sent by: Andrea
+
+2008-04-15 10:32:47 r256 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Revision syncronization
+
+2008-04-15 09:46:17 r254 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.1.0
+
+	*  pol_function/X_O_strengths.F ypp/ypp_init.F ypp/exc_properties.F ypp/exc_wf_sort_and_report.F ypp/mod_YPP.F ypp/exc_wf_gnuplot.F ypp/exc_wf_xcrysden.F ypp/ypp_init_load.F driver/ypp.h_gpl driver/ypp.h
+
+	Additions:
+	- In ypp added the possibility of reading more complex state strings
+	  in excitonic plot. Now a string "1 2-4 20" is parsed as well.
+
+	Changes:
+	- For back compatibility  changed the -f flag in ypp from "fixed hole" to
+	  "free hole". Now the "ypp -e p" creates the input for a standard
+	  excitonic wf. To have the periodic expression introduced in previous
+	  revisions use "ypp -e p -f"
+
+	Patch sent by: Andrea
+
+2008-04-13 13:42:38 r253 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.1.0
+
+	*  interface/barriers.F io/ioBSS_diago.F ypp/exc_properties.F ypp/ypp_init.F ypp/exc_wf_sort_and_report.F ypp/mod_YPP.F ypp/ypp_init_load.F driver/ypp.h_gpl driver/ypp.h
+
+	Bugs:
+	- In barriers.F. With spin support bse runlevel was switched off
+
+	Additions:
+	- In ypp. Added the "fixed hole" option to perform a standard plot of the
+	  excitonic wf. Without "fixed hole" option now the hole and electron
+	  are imposed to have the same position (the wf is, then periodic)
+
+	Patch sent by: Andrea
+
+2008-04-11 15:18:09 r252 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	sbin/yambo_versions_update.tcsh changed. Use gawk instead of autoconf
+
+2008-04-11 14:53:36 r251 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.1.0
+
+	*  io/ioQP.F modules/mod_BS.F bse/K_driver.F bse/K_eh_setup.F bse/K_diagonalization.F ypp/ypp_init.F ypp/exc_properties.F ypp/exc_wf_sort_and_report.F ypp/mod_YPP.F ypp/ypp_init_load.F driver/ypp.h
+
+	Additions:
+	- Temporary additions in _ELPH project
+	- Added "-e a" option to ypp to perform excitonic amplitudes calculations
+	  without plotting the wf.
+
+	Patch sent by: Andrea
+
+2008-04-10 18:55:33 r250 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug fix in configure to use ifort
+
+2008-04-09 15:51:46 r249 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.1.0
+
+	*  configure include/version.inc config/configure.ac pol_function/X_O_strengths.F interface/init.F ras_reels_mods/mod_convolute.F io/.objects_gpl sbin/yamboo.pl
+
+	Changes:
+	- Some more changes for the GPL+PROJECT script. PROJECT_IGNORE flags accepted.
+
+2008-04-08 18:32:19 r248 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.1.0
+
+	*  configure include/version.inc config/Makefile.in config/Makefile.in_gpl config/configure.ac doc/README.merge_with_gpl ras/.objects ras/.objects_gpl sbin/yamboo.pl
+
+	Changes:
+	- Some modifications to _gpl files for use with yamboo Perl script
+	- yamboo.pl updated for GPL+projects
+
+2008-04-08 09:43:09 r247 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.1.0
+
+	*  configure include/version.inc config/configure.ac bz_ops/k_expand.F interface/barriers.F bse/K_eh_setup.F
+
+	Additions:
+
+	- _TB project (x Ludger). yambo_tb is now able to read
+	  externally defined s.db1/wf db.ostnts/BS_Q1 to perform
+	  non-interacting and BS calculations.
+	  In particular the above DBs can be filled using a TB
+	  code.
+
+	Patch sent by: Andrea
+
+2008-04-07 17:51:20 r246 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.1.0
+
+	*  configure include/version.inc config/configure.ac ras/.objects_gpl pol_function/.objects_gpl ras_reels_mods/.objects_gpl sc/.objects_gpl io/.objects_gpl reels/.objects_gpl ypp/.objects_gpl
+
+	Changes:
+	- Modified .objects_gpl files in preparation for project source creation
+
+2008-04-03 18:05:42 r245 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Revision syncronization
+
+2008-04-03 17:38:20 r244 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Tight-Binding project opened (_TB)
+
+2008-04-03 14:14:45 r242 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	BUG fixed in QP_state_extract when using PGI compiler (Myrta)
+
+2008-04-02 17:28:27 r241 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Revision syncronization
+
+2008-04-02 17:26:13 r239 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug Fixes for SP
+
+2008-04-02 13:40:04 r238 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Revision syncronization
+
+2008-04-02 11:30:30 r236 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	IBM AIX Bug in mod_logo fixed
+
+2008-04-02 11:30:08 r235 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Update of README.merge_with_gpl
+
+2008-03-28 13:17:37 r233 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.1.0
+
+	*  configure include/version.inc config/configure.ac qp/QP_newton.F common/QP_state_extract.F parser/init_convert.F parser/mod_itm.F interface/setup.F ypp/ypp_init_load.F driver/ypp.h
+
+	Bugs:
+	- In QP_state_extract in the case of non-contiguous k-points
+	  with the same bands range.
+	- In mod_itm when using Energy units for RL variables.
+
+	Additions:
+	- In setup.F shells energies are reported as well
+	- Added FFTGvecs variable in ypp -e p runlevel
+
+	Changes:
+	- In ypp.h *tool="ypp" and not "Ypp"
+
+	Patch sent by: Andrea
+
+2008-03-28 10:43:22 r232 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Small bugs in _sc project (barriers and mod_itm). Now yambo_versions_update checks for the actual revision of the source *and* of the HEAD
+
+2008-03-27 03:08:05 r231 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Just a test of svnserve
+
+2008-03-26 17:05:34 r230 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.1.0
+
+	*  include/version.inc doc doc/README.merge_with_gpl interface/barriers.F driver/yambo_driver.F driver/yambo.h sbin/yambo_versions_update.tcsh
+
+	Bugs:
+	- Added "em1d" on_name of switch_off_runlevel call in barriers.F
+	  to switch on ppa when n_spin/=1
+
+	Additions:
+	- doc/ and doc/README.merge_with_gpl
+	- sbin/yambo_versions_update.tcsh
+
+	Patch sent by: Andrea
+
+2008-03-26 15:09:29 r228 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug-fix in FC options for PGI (backslash)
+
+2008-03-25 17:09:04 r225 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	yambo.h and yamboo.pl
+
+2008-03-21 18:26:23 r224 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.1.0
+
+	*  interface/init.F sbin/yamboo.pl
+
+	Additions:
+	- Perl script for creating GPL source from full source without using the preprocessor.
+	  Run it from the trunk directory without arguments.
+	Changes:
+	- A preprocessing flag in init.F was causing problems with the script.
+
+	Patch sent by: Conor
+
+2008-03-21 12:05:13 r223 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.1.0
+
+	SELF project ends today :( replaced by the
+	glorious (?) YAMBO 3.1.0 project.
+
+	I have just registered the www.yambo-code.org and
+	created the mail address yambo@yambo-code.org.
+
+	At the moment www.yambo-code.org is forwarded to the SELF
+	web-page. I will change it today.
+
+	Regarding the names:
+
+	self -> yambo
+	*2s (a2s, p2s ...) -> *2y (a2y, p2y ....)
+	spp -> ypp
+
+	Patch sent by: Andrea
+
+2008-03-21 11:41:56 r222 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Moving to YAMBO. Partially working revision. Do not use it.
+
+2008-03-20 18:04:01 r221 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Fixed some F95 syntax errors (found with g95 -std=f95 and ifort -stand f95
+
+2008-03-20 17:05:33 r220 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.0.16
+
+	*  configure spp/ioDB1_ver_2.F spp/exc_properties.F spp/mod_SPP.F spp/spp_i.F spp/.objects spp/spp_init_load.F spp/spp_init.F spp/.objects_gpl spp/exc_wf_xcrysden.F include/version.inc p2s/p2s_i.F p2s/mod_p2s.F a2s/a2s_i.F e2s/e2s_i.F f2s/FHI96SPIN-src f2s/FHI96SPIN-main.f f2s/FHI96SPIN-wr_wvf_n_cell.f f2s/f2s_i.F f2s/.objects_gpl f2s/README config/Makefile.in config/Makefile.in_gpl config/configure.ac + xc_functionals/.objects xc_functionals/xc_lda_driver.F xc_functionals/README qp/QP_driver.F qp/DFT_Vxc.F qp/QP_newton.F + + qp/.objects qp/.objects_gpl qp/QP_ppa_chosex.F acfdt/.objects_gpl qp_ctl/mod_QP_CTL.F qp_ctl/QP_apply_stretch.F qp_ctl/.objects_gpl qp_ctl/QP_apply_fit.F qp_ctl/QP_apply_db.F ras/.objects_gpl common/pol_fit.F common/QP_state_table_setup.F common/bracket.F common/secant.F common/.objects common/.objects_gpl common/rand_identifier.F common/fermi_level.F parser/mod_itm.F wf_and_fft/wf_load.F wf_and_fft/el_density.F wf_and_fft/.objects wf_and_fft/scatter_Bamp.F wf_and_fft/.objects_gpl wf_and_fft/scatter_Gamp.F pol_function/X_O_transverse.F pol_function/X_eh_setup.F pol_function/X_os.F pol_function/X_bare_RIM_Gf.F pol_function/.objects_gpl pol_function/X_O_strengths.F pol_function/X_s.F interface/init_load.F interface/init.F interface/barriers.F coulomb/.objects_gpl coulomb/col_driver.F ras_reels_mods/reels_presets.F ras_reels_mods/.objects_gpl ras_reels_mods/mod_eels_integration.F communicate/section.F communicate/job_setup.F tddft/tddft_do_X_W_typs.F tddft/.objects_gpl sc/.objects_gpl io/ioBS_Fxc.F io/ioDB1.F io/ioBSS_invert.F io/ioQP.F io/ioRIM.F io/io_header.F io/ioCOL_CUT.F io/ioELPH.F io/ioBSS_Haydock.F io/ioE_RIM.F io/.objects_gpl modules/mod_electrons.F modules/mod_logo.F modules/mod_BS.F modules/mod_functions.F modules/mod_drivers.F modules/std_presets.F modules/mod_IO.F modules/mod_com.F modules/.objects bse/K_Haydock.F bse/Kernel_by_V.F bse/K_driver.F bse/K_eps_interpolate.F bse/K_solvers.F bse/K_scattering_cpl.F bse/K_scattering.F bse/.objects bse/.objects_gpl bse/K_eh_setup.F bse/K.F reels/.objects_gpl ChangeLog driver/self.h driver/self.h_gpl driver/self_driver.F driver/spp.h_gpl driver/driver.c
+
+	Bugs:
+	- In ioQP. Recently added gloabl_XC kinds casued a I/O
+	  error in db.QP older than 3.0.15. Fixed.
+
+	Additions:
+	- GPL Tags. _gpl .objects, Makefile
+	- mod_logo: it chooses a random yambo logo
+	- barriers routine to avoid  the use of simultaneous
+	  (possibly dangerous) runlevels
+
+	Changes:
+	- Removed self2self support in spp.
+	- runlevel_is_on logical function in mod_itm to replace rstatus integers
+	  to define an active runlevel
+	- Removed rand_identifier, replaced by pickup_a_random in mod_logo
+	- Removed FHI96SPIN-src/ (f2s as well ?)
+	- module QP_CTL renamed in QP_CTL_m, QP_fit_ctl in QP_ctl_t
+	- _CPL project merged in the core. Coupling support in BSE
+	  now active.
+	- In K.F the I/O of epsm1/PP. Now with only -o b option
+	  the db.em1s ONLY is used. To read the dp.pp a -p p option
+	  must be used in the command line.
+
+	WARNING: BIG UPDATE! Moving towards YAMBO. This is the last
+	         revision of SELF. Next will be the first of YAMBO.
+	         Stay tuned.
+
+	Patch sent by: Andrea
+
 2008-03-14 17:29:36 r219 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Version 3.0.16

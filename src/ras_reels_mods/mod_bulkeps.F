@@ -54,7 +54,7 @@ contains
 subroutine init_bulk(defs)
   use it_m,                  ONLY : it, initdefs, E_unit,G_unit,T_unit
   implicit none
-  integer, parameter             :: V_more=1, V_qp=2, V_io=3, V_debug=4
+  integer, parameter             :: V_more=1, V_qp=2, V_io=3
   type(initdefs), intent(inout)  :: defs
 
   call it(defs,'BulkFile', '[RAS] File containing bulk', bfile )

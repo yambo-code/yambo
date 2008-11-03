@@ -26,6 +26,9 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:iq_now,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                     alpha_dim,use_X_RIM,long_path,X_RIM_nkpts,P_bands_ordered
+#if defined _MAGNON
+ use X_m,             q_plus_G_direction,q_plus_G_shell
+#endif
  use QP_m,       ONLY:QP_rep_string,QP_dSc_steps,QP_n_W_freqs,&
 &                     QP_Sx_low_band,QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_W_er,QP_W_dr,QP_cg_percent,&
@@ -254,6 +257,10 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  eps_2_alpha=1._SP
  alpha_dim='adim'
  long_path='none'
+#if defined _MAGNON
+ q_plus_G_direction=0.
+ q_plus_G_shell=0
+#endif
  !
  !QPm
  !

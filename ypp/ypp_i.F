@@ -176,6 +176,8 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
 #if defined _YPP_RAS
  !
  if (lras) call ras_ypp
+ if (lreels) call reels_ypp
+ if (lcelleps) call generate_epsdb(en,k)
  if (lloc) call loc_ypp
  if (ltrans) call trans_ypp(en,k)
  !

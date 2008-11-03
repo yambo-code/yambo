@@ -86,11 +86,14 @@ module YPP
  !
  !RAS
  !
- logical           :: lras, lsurf
- character(schlen) :: xdata, ydata
+ logical           :: lras, lsurf, lreels, lcelleps
+ character(schlen) :: xdata, ydata, zdata
  character(len=5)  :: datatype
  real(SP)          :: sshift
  real(SP)          :: d_cellin
+ !
+ ! REELS
+ !
  !
  ! Localization
  !

@@ -10,8 +10,10 @@ objs = mod_numerical_integration.o mod_convolute.o mod_reels.o mod_intchar.o \
        mod_eels_gvec.o mod_eels_wgrid.o mod_eels_detector.o \
        mod_eels_scattering.o mod_eels_integration.o mod_eels_inveps.o \
        reels_presets.o
-#elif defined _SPP_RAS
-objs = mod_convolute.o mod_bulkeps.o mod_surface_geometry.o
+#elif defined _YPP_RAS
+objs = mod_numerical_integration.o mod_convolute.o mod_bulkeps.o mod_surface_geometry.o \
+       mod_model_loss_function.o mod_eels_kinematics.o mod_eels_detector.o  \
+       mod_ras.o mod_analyse_peaks.o mod_surface_geometry.o io_loc.o mod_optcut.o ras_presets.o 
 #else
 objs = mod_numerical_integration.o mod_convolute.o mod_bulkeps.o  \
        mod_ras.o mod_surface_geometry.o io_loc.o mod_optcut.o

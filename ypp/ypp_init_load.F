@@ -27,6 +27,10 @@ subroutine ypp_init_load(defs)
 #if defined _YPP_RAS
  use bulkeps,              ONLY : init_bulk
  use convolute,            ONLY : init_convolute
+ use eels_kinematics,      ONLY : init_kinematics
+ use model_loss_function,  ONLY : init_loss_function
+ use surface_geometry,     ONLY : init_surface
+ use eels_detector,        ONLY : init_detector
 #endif
  implicit none
  type(initdefs)::defs
@@ -54,6 +58,7 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'elph',    '[R] Electron-Phonon DBs preprocessing')
  call it('r',defs,'surf',    '[R] Surface spectroscopy postprocessor')
  call it('r',defs,'ras',     '[R] RAS spectra generator')
+ call it('r',defs,'reels',   '[R] REELS spectra generator')
  call it('r',defs,'loc',     '[R] State localizer')
  call it('r',defs,'trans',   '[R] Transition analyzer')
  !
@@ -112,6 +117,7 @@ subroutine ypp_init_load(defs)
  !
  call it(defs,'XData',     'Filename of q[x] data',xdata)
  call it(defs,'YData',     'Filename of q[y] data',ydata)
+ call it(defs,'ZData',     'Filename of q[z] data',zdata)
  call it(defs,'SrfShift',  'Shift of surface spectra',sshift,E_unit)
  call it(defs,'DataType',  'Form of epsilon/alpha data on input [eps/a_t/a_r+23/45]',datatype)
  call it(defs,'d_cell',    'Perpendicular component of cell',d_cellin)
@@ -126,6 +132,10 @@ subroutine ypp_init_load(defs)
  call it(defs,'EcvMin',  'Lower limit of transition window',Ecv_min,E_unit)
  call it(defs,'EcvMax',  'Upper limit of transition window',Ecv_max,E_unit)
  call it(defs,'PolDir',  'Index of polarization direction',idir)
+ call init_kinematics(defs) 
+ call init_loss_function(defs)
+ call init_surface(defs)
+ call init_detector(defs)
  !
 #endif
  !

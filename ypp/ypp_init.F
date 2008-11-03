@@ -37,6 +37,11 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #if defined _YPP_RAS
  use bulkeps,        only : bshift, bbroad, bfile, btype 
  use convolute,      only : gbroad
+ use eels_kinematics,      ONLY : bimp, E0, theta0_in, thetap_in, phi_in
+ use model_loss_function,  ONLY : model
+ use surface_geometry,     ONLY : nlayers
+ use eels_detector,        ONLY : thetadet, det_int_type, n_det_pt
+
 #endif
  implicit none
  integer          ::lnstr
@@ -109,15 +114,12 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    !
 #if defined _YPP_RAS
    !
-   ! RAS
+   ! RAS & REELS
    !
-   xdata = 'o.eps-rpa_00'
-   ydata = 'o.eps-rpa_00'
-   bshift  = 0.0_SP       ! bulk shift
-   bbroad  = 0.0_SP       ! bulk broadening
-   bfile = "bulk.dat"     ! file of bulk
-   btype = "3ir"
-   gbroad  = 0.0          ! gaussian convolution, FWHM
+   call ras_presets
+   xdata = 'o.eps_q001-rpa_00'
+   ydata = 'o.eps_q001-rpa_00'
+   zdata = 'o.eps_q001-rpa_00'
    sshift = 0.0           ! surface shift
    datatype = 'eps23'
    d_cellin = 1.0
@@ -282,12 +284,19 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  lsurf =runlevel_is_on('surf')
  lras  =runlevel_is_on('ras')
+ lreels=runlevel_is_on('reels')
  lloc  =runlevel_is_on('loc')
  ltrans=runlevel_is_on('trans')
  if(lsurf) then
    if (lras) call initactivate(1,"XData YData "//&
 &       " BulkFile BulkForm BlkShift BlkBroad "//&
 &       " DataType SrfShift d_cell GausConv")
+   if (lreels) call initactivate(1,"XData YData ZData"//&
+&       " q0x q0y"//& 
+&       " BulkFile BulkForm BlkShift BlkBroad Layers"//&
+&       " DataType SrfShift d_cell "//&
+&       " E0 Theta0 Thetap Phi DetAngle "//&
+&       " LossForm ImpactFt DetIntMd NumIntPt GausConv")
    if(lloc) call initactivate(1,"NormDir LowerLim UpperLim NGLoc")
    if(ltrans) call initactivate(1,"EcvMin EcvMax PolDir")
  endif

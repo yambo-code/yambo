@@ -76,7 +76,7 @@ PJ_PHLIBS       = $(MAIN_LIBS)
 # YPP
 #
 YPPLIBS      = $(BASIC_LIBS) bz_ops qp_ctl interface bse
-YPPRASLIBS   = $(BASIC_LIBS) ras_reels_mods bz_ops qp_ctl interface bse
+YPPRASLIBS   = $(BASIC_LIBS) ras_reels_mods bz_ops qp_ctl interface ras bse
 
 nothing: 
 	@$(make_message)
@@ -121,7 +121,7 @@ ypp_ph: libs
 	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
 	@X2DO="Ypp_ph" ;XPATH="Ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_ELPH";$(mkx)
 ypp_ras: libs
-	@LIBS2DO="$(YPPRASLIBS)" ; $(mksrc)
+	@LIBS2DO="$(YPPRASLIBS)" ; ADF="-D_YPP_RAS";$(mksrc)
 	@X2DO="ypp_ras" ;XPATH="ypp";XLIBS="$(YPPRASLIBS)"; ADF="-D_YPP_RAS";$(mkx)
 #
 interfaces: libs

@@ -75,8 +75,6 @@ fi
 
 # We have to use AC_TRY_COMPILE and not AC_CHECK_HEADER because the
 # latter uses $CPP, not $CC (which may be mpicc).
-# In any case I had to rename CPPFLAGS in C_AS_CPP_FLAGS as
-# non empty CPPFLAGS are passed to $PCC 
 AC_LANG_CASE([C], [if test x != x"$MPILIBS"; then
         AC_MSG_CHECKING([for a working mpi.h])
         AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], 

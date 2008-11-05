@@ -39,6 +39,7 @@ libpath     = -L@srcdir_path@/lib @LDFLAGS@
 includedir  = @srcdir_path@/include
 lblas       = @BLAS_LIBS@
 llapack     = @LAPACK_LIBS@
+llocal      = @LOCAL_LIBS@
 lblacs      = @BLACS_LIBS@
 lscalapack  = @SCALAPACK_LIBS@
 lmpi        = @MPILIBS@

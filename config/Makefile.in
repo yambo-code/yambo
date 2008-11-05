@@ -30,6 +30,7 @@ xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@
 debug       = @enable_debug@
 do_blas     = @compile_blas@
 do_lapack   = @compile_lapack@
+do_local    = @compile_local@
 do_p2y      = @compile_p2y@
 do_e2y      = @compile_e2y@
 shell       = @SHELL@
@@ -88,6 +89,8 @@ libs:
 	@if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; \
 	DIR2GO="lib" ; $(mklib); fi
 	@if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; \
+	DIR2GO="lib" ; $(mklib); fi
+	@if test "$(do_local)" = yes ; then LIBS2DO="local" ; \
 	DIR2GO="lib" ; $(mklib); fi
 yambo: libs
 	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)

@@ -2,26 +2,49 @@
 # autoconf macro for detecting NetCDF module file
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
+# Copyright (C) 2000-2008 A. Marini and the YAMBO team
+#              http://www.yambo-code.org
+#
+# This file is distributed under the terms of the GNU
+# General Public License. You can redistribute it and/or
+# modify it under the terms of the GNU General Public
+# License as published by the Free Software Foundation;
+# either version 2, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will
+# be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public
+# License along with this program; if not, write to the Free
+# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+#
 AC_DEFUN([KH_PATH_NETCDF_F90],[
-AC_ARG_WITH(netcdf,AC_HELP_STRING([--with-netcdf=<path>],
-                                  [Path of the NetCDF installation directory]),
-  [NC_PREFIX="$withval"], [NC_PREFIX="/usr/local/"] )
+AC_ARG_WITH(netcdf,AC_HELP_STRING([--with-netcdf-include=<path>],
+                                  [Path of the NetCDF include directory]),
+  [NETCDF_INCLUDE="$withval"], [NETCDF_INCLUDE="/usr/local/include"] )
+AC_ARG_WITH(netcdf,AC_HELP_STRING([--with-netcdf-lib=<path>],
+                                  [Path of the NetCDF lib directory]),
+  [NETCDF_LIB="$withval"], [NETCDF_LIB="/usr/local/lib"] )
 
 netcdf="no"
 dnetcdf=""
 NCLIBS=""
 AC_MSG_CHECKING([whether the NetCDF library is installed])
-if ! test -z "$NC_PREFIX" && ! test "$with_netcdf" = "no"; then
+if ! test -z "$NETCDF_INCLUDE" && ! test "$with_netcdf" = "no"; then
  AC_LANG([Fortran])
  save_fcflags="$FCFLAGS"
  for flag in "-I" "-M" "-p"; do
-    FCFLAGS="$flag$NC_PREFIX/include $save_fcflags"
+    FCFLAGS="$flag$NETCDF_INCLUDE $save_fcflags"
     AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], [use netcdf]),
      [netcdf=yes 
-      for file in `find $NC_PREFIX/include/ \( -name '*netcdf*' -o -name '*typesizes*' \) `; do
+      for file in `find $NETCDF_INCLUDE \( -name '*netcdf*' -o -name '*typesizes*' \) `; do
        cp $file include/ 
       done
-      for file in `find $NC_PREFIX/lib/ -name '*netcdf*.a'`; do
+      for file in `find $NETCDF_LIB -name '*netcdf*.a'`; do
        cp $file lib/ 
       done
      ], [netcdf=no])

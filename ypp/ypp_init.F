@@ -26,7 +26,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  use R_lattice,      ONLY:ng_vec
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
-&                         nrnlvls,rnlvls,runlevel_is_on,switch_off_runlevel
+&                         nrnlvls,rnlvls,runlevel_is_on,switch_off_runlevel,&
+&                         infile_verbosity
  use drivers,        ONLY:infile_editing
  use com,            ONLY:file_exists
  use stderr,         ONLY:string_split
@@ -172,6 +173,12 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    if ( i1>1) then
      if (trim(rstr_piece(i1-1))=="jobstr" ) cycle
    endif
+   !
+   ! Verbosity
+   !
+   if ( trim(rstr_piece(i1)) == 'infver' )  read(rstr_piece(i1+1),*) infile_verbosity
+   if (infile_verbosity<0) infile_verbosity=0
+   !
    do i2=1,nrnlvls
      if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1)) ) then
        infile_editing=.true.

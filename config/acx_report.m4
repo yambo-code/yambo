@@ -50,6 +50,9 @@ if test "$compile_blas" = "yes" ; then BLAS_str="X"; fi
 LAPACK_str=" "
 if test "$compile_lapack" = "yes" ; then LAPACK_str="X"; fi
 
+LOCAL_str=" "
+if test "$compile_local" = "yes" ; then LOCAL_str="X"; fi
+
 SLK_str=" "
 if test "$enable_scalapack" = "yes" ; then SLK_str="X"; fi
 
@@ -63,6 +66,7 @@ AC_SUBST(ETSF_str)
 AC_SUBST(PW_str)
 AC_SUBST(BLAS_str)
 AC_SUBST(LAPACK_str)
+AC_SUBST(LOCAL_str)
 AC_SUBST(SLK_str)
 
 ])

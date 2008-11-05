@@ -1,3 +1,105 @@
+2008-11-03 17:30:24 r324 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.0
+
+	*  trunk/configure trunk/include/version.inc trunk/config/Makefile.in trunk/config/acx.m4 trunk/config/configure.ac trunk/parser/mod_itm.F trunk/pol_function/X_os.F trunk/pol_function/X_em1.F trunk/pol_function/O_driver.F trunk/interface/init_load.F trunk/interface/init.F trunk/ras_reels_mods/mod_bulkeps.F trunk/ras_reels_mods/mod_model_loss_function.F trunk/ras_reels_mods/mod_optcut.F trunk/modules/std_presets.F trunk/modules/mod_X.F trunk/ChangeLog trunk/driver/driver.c trunk/sbin/yamboo.pl branches/gpl/configure branches/gpl/include/version.inc branches/gpl/int_modules/mod_interfaces.F branches/gpl/config/acx.m4 branches/gpl/config/configure.ac branches/gpl/parser/mod_itm.F branches/gpl/pol_function/X_em1.F branches/gpl/pol_function/O_driver.F branches/gpl/interface/init_load.F branches/gpl/interface/init.F branches/gpl/interface/barriers.F branches/gpl/driver/driver.c
+
+	Bugs:
+	- [TRUNK]: Bug fix in self-evaluation of the X energy range (pointed out
+	  by Claudio)
+
+	Additions:
+	- [TRUNK]: Opened _MAGNON project
+	- [TRUNK]: In the _MAGNON project added option to calculate
+	           optical quantites at q+G momentum (to be moved in the core
+	           once tested)
+
+	Changes:
+	- [GPL/TRUNK]: "-xT" Intel compiler option replaced with "-xW"
+	- [GPL/TRUNK]: removed V_debug intger from mod_itm
+	- [GPL]: removed old interfaces/int_modules/mod_interfaces.F file
+
+	Patch sent by: Andrea
+
+2008-11-03 14:27:10 r323 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.0
+
+	*  ras_reels_mods/mod_eels_kinematics.F ras_reels_mods/mod_eels_detector.F
+
+	Bugs:
+	- [RAS] some ypp_ras input flags were missing, due to verbosity settings
+
+	Patch sent by: Conor
+
+2008-11-03 03:45:48 r322 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.0
+
+	*  config/Makefile.in
+
+	Bugs:
+	- [RAS] Compilation of some libraries were missing for ypp_ras
+
+	Patch sent by: Conor
+
+2008-11-03 02:28:19 r321 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.0
+
+	*  ras/.objects ras_reels_mods/.objects ypp/ypp_init.F ypp/reels_ypp.F ypp/mod_YPP.F ypp/generate_epsdb.F ypp/ypp_i.F ypp/.objects ypp/ypp_init_load.F
+
+	Additions:
+	- [RAS] Post processor ypp_ras now does reels from pre-calculated epsilon(x,y,z) files (in particular, from BSE calculations).
+
+	Patch sent by: Conor
+
+2008-10-22 14:57:43 r319 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.0
+
+	*  config/Makefile.in_gpl ras_reels_mods/.objects_gpl ypp/.objects_gpl
+
+	Bugs:
+	- [RAS] Fixed inconsistencies in configuring ypp_ras
+
+	Patch sent by: Conor
+
+2008-10-22 12:57:55 r318 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.0
+
+	*  ypp/mod_YPP.F
+
+	Bugs:
+	- [RAS] RAS_IGNORE added to BZ_RIM exclude
+
+2008-10-22 12:43:02 r317 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.0
+
+	*  config/Makefile.in_gpl
+
+	Changes:
+	- [RAS] Project gpl+ras+manyk temporarily removed. Options to make standard executables removed from RAS.
+
+	Patch sent by: Conor
+
+2008-10-21 19:43:00 r316 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.1.2
+
+	*  config/Makefile.in_gpl io/.objects_gpl ypp/ypp_init.F
+
+	Bugs:
+	- [RAS] Fixed some bugs related to generation of gpl+ras source
+
+	Patch sent by: Conor
+
+2008-10-17 10:58:43 r315 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.0 to be submitted to CPC
+
 2008-10-17 10:55:59 r314 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Modified barriers.F to remove wrong barrier to bs_fxc on-fly kernel

@@ -19,11 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 3.2.0 r.324 , yambo@yambo-code.org)
+AC_INIT(Yambo, 3.2.0 r.325 , yambo@yambo-code.org)
 SVERSION="3"
 SPATCHLEVEL="2"
 SSUBLEVEL="0"
-SREVISION="324"
+SREVISION="325"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -40,6 +40,7 @@ m4_include([config/fftw.m4])
 m4_include([config/slk.m4])
 m4_include([config/acx_report.m4])
 m4_include([config/acx_get_fc_version.m4])
+m4_include([config/acx_cpp.m4])
 
 AC_PREFIX_DEFAULT($PWD)
 
@@ -58,14 +59,9 @@ AC_PROG_MAKE_SET
 # Checks for programs.
 AC_PROG_CC
 #
-# AS CPPFLAGS are used (dunno why) in the MPI check of MPICC
-# we need to rename the CPP precompiler in C_AS_CPP
-C_AS_CPP=$CPP
-#
 AC_CANONICAL_HOST
 hostname=`uname -n`
 AC_SUBST(hostname)
-AC_SUBST(C_AS_CPP)
 # ============================================================================
 # EDITOR
 AC_ARG_WITH(EDITOR, AC_HELP_STRING([--with-editor=<exe>],[User-defined editor])) 
@@ -232,6 +228,10 @@ AC_SUBST(AR_FLAGS)
 AC_LANG_POP(Fortran)
 #
 # ============================================================================
+# CPP check & flags
+ACX_CPP
+#
+# ============================================================================
 # Fortran 77: test if the FC works as F77 as well
 #
 AC_LANG_PUSH(Fortran 77)
@@ -267,6 +267,17 @@ else
 fi
 AC_SUBST(compile_blas)
 AC_SUBST(compile_lapack)
+# ============================================================================
+# check for local libs needed
+# 
+compile_local=no
+LOCAL_LIBS=""
+if test x"$acx_dlaran_ok" = xno; then
+ compile_local=yes
+ LOCAL_LIBS="-llocal"
+fi
+AC_SUBST(compile_local)
+AC_SUBST(LOCAL_LIBS)
 #
 # ============================================================================
 # MPI

@@ -21,7 +21,7 @@
 !
 subroutine ypp_init_load(defs)
  !
- use it_m,          ONLY:it,initdefs,E_unit,G_unit
+ use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_more
  use wave_func,     ONLY:wf_ng
  use YPP
 #if defined _YPP_RAS
@@ -82,7 +82,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'States','Index of the BS state(s)',state_ctl)
  call it(defs,'Cells', 'Number of cell repetitions (even or 1)',ncell)
  call it(defs,'Hole', '[cc] Hole position in unit cell',r_hole)
- call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier)
+ call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier,verb_level=V_more)
  !
  ! PLOT
  !

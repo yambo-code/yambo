@@ -102,18 +102,14 @@ case "${host}" in
 esac
 AC_MSG_RESULT([yes])
 
-C_AS_CPP_FLAGS="-P"
-
 AC_MSG_NOTICE([WIDESETUP: using build_os="$build_os"])
 AC_MSG_NOTICE([WIDESETUP: using F90SUFFIX="$F90SUFFIX"])
 AC_MSG_NOTICE([WIDESETUP: using AR="$AR"])
 AC_MSG_NOTICE([WIDESETUP: using AR_FLAGS="$AR_FLAGS"])
-AC_MSG_NOTICE([WIDESETUP: using C_AS_CPP_FLAGS="$C_AS_CPP_FLAGS"])
 AC_SUBST(F90SUFFIX)
 AC_SUBST(TIMER)
 AC_SUBST(AR)
 AC_SUBST(AR_FLAGS)
-AC_SUBST(C_AS_CPP_FLAGS)
 ])
 
 ################################################
@@ -228,7 +224,7 @@ if test -z "${FCFLAGS}"; then
     ;;
   powerpc64*linux* )
     CFLAGS="-q64 -O2"
-    FCFLAGS="-q64 -O3 -qnostrict -qarch=ppc970 -qtune=ppc970"
+    FCFLAGS="-q64 -O3 -qnoescape -qnostrict -qarch=ppc970 -qtune=ppc970"
     UFFLAGS="-q64 -O0"
     ;;
   powerpc-ibm* )

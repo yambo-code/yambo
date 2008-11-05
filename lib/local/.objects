@@ -1,0 +1,5 @@
+#if defined _DOUBLE
+objs = dlaran.o
+#else
+objs = dlaran.o
+#endif

@@ -147,7 +147,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
      ! Now I need to transfer the calculated QP corrections to the "en" type
      ! and to the qp%Eo array
      !
-     if (associated(en%qp_done)) en%qp_done=0
+     if (associated(en%QP_corrected)) en%QP_corrected=0
      call QP_apply(QP_n_G_bands,en,k,3,msg_fmt='rs',qp_impose=qp)
      !
    endif

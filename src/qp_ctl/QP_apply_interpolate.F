@@ -150,7 +150,7 @@ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
      enddo
      do i3=band_range(1),band_range(2)
        if (l_qp(1)) then
-         if (QP_apply_done((/i3,i3/),(/ik,ik/),en,'E')) cycle
+         if (QP_apply_done((/i3,i3/),(/ik,ik/),(/i_spin,i_spin/),en,'E')) cycle
          !
          if (any(Dl(i3,:)==0._SP)) cycle
          !
@@ -163,7 +163,7 @@ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
        endif
        if (l_qp(2)) then
          !
-         if (QP_apply_done((/i3,i3/),(/ik,ik/),en,'W')) cycle
+         if (QP_apply_done((/i3,i3/),(/ik,ik/),(/i_spin,i_spin/),en,'W')) cycle
          !
          if (any(Wl(i3,:)==0._SP)) cycle
          !
@@ -176,7 +176,7 @@ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
        endif
        if (l_qp(3)) then
          !
-         if (QP_apply_done((/i3,i3/),(/ik,ik/),en,'Z')) cycle
+         if (QP_apply_done((/i3,i3/),(/ik,ik/),(/i_spin,i_spin/),en,'Z')) cycle
          !
          if (any(Zl(i3,:)==(0._SP,0._SP))) cycle
          !

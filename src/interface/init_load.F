@@ -27,12 +27,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! 1 (More) V_more
  ! 2 (QP)   V_qp
  ! 3 (I/O)  V_io
+ ! 4 (testing)  V_testing
  !
  use pars,          ONLY:schlen
  use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,V_more,&
-&                        V_qp,V_io
+&                        V_qp,V_io,V_testing
  use X_m,           ONLY:X_t,long_path
 #if defined _MAGNON
  use X_m,           ONLY:q_plus_G_direction,q_plus_G_shell
@@ -52,7 +53,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,&
 &                        FXC_SVD_digits
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
- use QP_m,          ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_W,QP_ctl_Z
  use com,           ONLY:more_io_path,com_path
  use functions,     ONLY:bose_E_cut
 #if defined _SC
@@ -156,12 +156,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
  !
- ! QP ctl
- !
- call it(defs,'XfnQP_E', '[EXTQP Xd] E parameters (c/v)',QP_ctl_E(1,:),verb_level=V_qp)
- call it(defs,'KfnQP_E', '[EXTQP BSK BSS] E parameters (c/v)',QP_ctl_E(2,:),verb_level=V_qp)
- call it(defs,'GfnQP_E', '[EXTQP G] E parameters (c/v)',QP_ctl_E(3,:),verb_level=V_qp)
- !
  ! BSE
  !
  call it(defs,'BSresKmod',  '[BSK] Resonant Kernel mode. (`x`;`c`;`d`)',BS_res_mode)
@@ -241,23 +235,15 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'UseEbands', '[GW] Force CHOSEX to use empty bands',verb_level=V_more)
  call it('f',defs,'NewtDchk','[F GW] Test dSc/dw convergence',verb_level=V_more)
  !
- ! QP ctl
+ ! GPL_EXCLUDE_END
  !
- call it(defs,'XfnQPdb', '[EXTQP Xd] Database',QP_ctl_db(1),verb_level=V_qp)
- call it(defs,'XfnQP_N', '[EXTQP Xd] Interpolation neighbours',&
-&                         QP_ctl_interp_neigh(1),verb_level=V_qp)
- call it(defs,'XfnQP_W','[EXTQP Xd] W parameters (c/v)',QP_ctl_W(1,:),verb_level=V_qp)
- call it(defs,'XfnQP_Z','[EXTQP Xd] Z parameters',QP_ctl_Z(1),verb_level=V_qp)
- call it(defs,'KfnQPdb', '[EXTQP BSK BSS] Database',QP_ctl_db(2),verb_level=V_qp)
- call it(defs,'KfnQP_N', '[EXTQP BSK BSS] Interpolation neighbours',&
-&                         QP_ctl_interp_neigh(2),verb_level=V_qp)
- call it(defs,'KfnQP_W','[EXTQP BSK BSS] W parameters (c/v)',QP_ctl_W(2,:),verb_level=V_qp)
- call it(defs,'KfnQP_Z','[EXTQP BSK BSS] Z parameters',QP_ctl_Z(2),verb_level=V_qp)
- call it(defs,'GfnQPdb', '[EXTQP G] Database',QP_ctl_db(3),verb_level=V_qp)
- call it(defs,'GfnQP_N', '[EXTQP G] Interpolation neighbours',&
-&                         QP_ctl_interp_neigh(3),verb_level=V_qp)
- call it(defs,'GfnQP_W','[EXTQP G] W parameters (c/v)',QP_ctl_W(3,:),verb_level=V_qp)
- call it(defs,'GfnQP_Z','[EXTQP G] Z parameters',QP_ctl_Z(3),verb_level=V_qp)
+ ! QP ctl 
+ !
+ call QP_ctl_load(1)
+ call QP_ctl_load(2)
+ call QP_ctl_load(3)
+ !
+ ! GPL_EXCLUDE_START
  !
  ! F_xc
  !
@@ -294,11 +280,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! Optics
  !
 #if defined _MAGNON
- call it(defs,'QplusGDir',   '[Xd] Transferred momentum shift direction',q_plus_G_direction,verb_level=V_more)
+ call it(defs,'QplusGDir',   '[Xd] [iku] Transferred momentum shift direction',q_plus_G_direction,verb_level=V_more)
  call it(defs,'QplusGShell', '[Xd] Shell index of the shift',q_plus_G_shell,verb_level=V_more)
 #endif
  call it(defs,'LongPath',    '[Xd] Longitudinal gauge path',long_path,verb_level=V_more)
-
  !
  ! GPL_EXCLUDE_END
  !
@@ -408,6 +393,72 @@ subroutine init_load(defs,en,q,k,X,Xw)
      call it(defs,nms(12),des(12),X%iq,verb_level=0)
      call it(defs,nms(13),des(13),X%ib,verb_level=0)
      call it(defs,nms(14),des(14),wv%damp_reference,E_unit,verb_level=V_more)
+     !
+   end subroutine
+   !
+   subroutine QP_ctl_load(i_type)
+     !
+     ! Note that this routine is called in 'load' mode BEFORE
+     ! the DB1 is read, so before n_sp_pol is set to the correct value.
+     ! 
+     ! Thus we must call it on the the no spin, spin + and spin - cases 
+     ! because the code does not know if there is
+     ! spin unless the DB1 is read. 
+     !
+     use electrons,     ONLY:n_sp_pol
+     use it_m,          ONLY:initmode
+     use QP_m,          ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_W,QP_ctl_Z
+     integer           ::i_type
+     ! 
+     ! Work Space
+     ! 
+     integer           ::i_spin,i1,i1_range(2)
+     character(1)      ::prefix(3)
+     character(3)      ::spin_ch(3)
+     character(7)      ::description_ch(3)
+     character(9)      ::spin_description_ch(3)
+     !
+     spin_ch=(/'','_dn','_up'/)
+     spin_description_ch=(/'','spin down','spin up'/)
+     prefix=(/'X','K','G'/)
+     description_ch=(/'Xd','BSK BSS','G'/)
+     !
+     if (initmode==0) i1_range=(/1,3/)
+     if (initmode/=0.and.n_sp_pol==1) i1_range=1
+     if (initmode/=0.and.n_sp_pol==2) i1_range=(/2,3/)
+     !
+     do i1=i1_range(1),i1_range(2)
+       ! 
+       if (i1==1) i_spin=1
+       if (i1> 1) i_spin=i1-1
+       !
+       call it(defs,&
+&              prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_E',&
+&              '[EXTQP '//trim(description_ch(i_type))//'] E parameters '//&
+&              trim(spin_description_ch(i1))//' (c/v)',&
+&              QP_ctl_E(i_type,:,i_spin),verb_level=V_qp)
+       !
+       call it(defs,&
+&              prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_W',&
+&              '[EXTQP '//trim(description_ch(i_type))//'] W parameters '//&
+&              trim(spin_description_ch(i1))//' (c/v)',&
+&              QP_ctl_W(i_type,:,i_spin),verb_level=V_testing)
+       !
+       call it(defs,&
+&              prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Z',&
+&              '[EXTQP '//trim(description_ch(i_type))//'] Z factor '//&
+&              trim(spin_description_ch(i1))//' (c/v)',&
+&              QP_ctl_Z(i_type,i_spin),verb_level=V_testing)
+       !
+     enddo
+     !
+     call it(defs,prefix(i_type)//'fnQPdb',&
+&            '[EXTQP '//trim(description_ch(i_type))//'] Database',&
+&            QP_ctl_db(i_type),verb_level=V_qp)
+     !
+     call it(defs,prefix(i_type)//'fnQP_N',&
+&            '[EXTQP '//trim(description_ch(i_type))//'] Interpolation neighbours',&
+&            QP_ctl_interp_neigh(i_type),verb_level=V_qp)
      !
    end subroutine
    !

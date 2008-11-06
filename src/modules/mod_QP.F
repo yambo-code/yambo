@@ -21,10 +21,10 @@
 !
 module QP_m
  !
- use pars
+ use pars,      ONLY:SP,schlen
  implicit none
  !
- integer, parameter :: max_qp_descs=100
+ integer, parameter:: max_qp_descs=100
  !
  integer           :: QP_dSc_steps
  integer           :: QP_Sc_steps
@@ -85,12 +85,18 @@ module QP_m
  !  
  ! 1(X) 2(K) 3(G) 
  !
- character(schlen):: QP_ctl_db(3)
- integer    :: QP_ctl_interp_neigh(3)
- real(SP)   :: QP_ctl_E(3,3)
- real(SP)   :: QP_ctl_W(3,4)
- complex(SP):: QP_ctl_Z(3)
- logical    :: QP_ctl_applied
+ character(schlen)       :: QP_ctl_db(3)
+ integer                 :: QP_ctl_interp_neigh(3)
+ !
+ ! Note that QP_ctl_E/W/Z are dimensioned *,2)
+ ! to describe spin polarized systems.
+ ! The second element of the last argument 
+ ! is not used in non-collinear or scalar cases 
+ !
+ real(SP)                :: QP_ctl_E(3,3,2)
+ real(SP)                :: QP_ctl_W(3,4,2)
+ complex(SP)             :: QP_ctl_Z(3,2)
+ logical                 :: QP_ctl_applied
  !
  contains
    !

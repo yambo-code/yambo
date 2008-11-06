@@ -174,10 +174,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    !
    ! If the kernel contains QP corrections I have to equally correct Xen
    !
-   if (associated(Ken%qp_done)) then
-     allocate(Xen%qp_done(Xen%nb,Xen%nk),Xen%Eo(Xen%nb,Xen%nk,n_sp_pol))
-     call mem_est("E-qp_done E-Eo",(/size(Xen%qp_done),size(Xen%Eo)/),(/IP,SP/))
-     Xen%qp_done=Ken%qp_done
+   if (associated(Ken%QP_corrected)) then
+     allocate(Xen%QP_corrected(Xen%nb,Xen%nk,n_sp_pol),Xen%Eo(Xen%nb,Xen%nk,n_sp_pol))
+     call mem_est("E-QP_corrected E-Eo",(/size(Xen%QP_corrected),size(Xen%Eo)/),(/IP,SP/))
+     Xen%QP_corrected=Ken%QP_corrected
      Xen%Eo=Xen%E
      Xen%E =Ken%E
    endif

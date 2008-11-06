@@ -27,15 +27,15 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use X_m,        ONLY:iq_now,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                     alpha_dim,use_X_RIM,long_path,X_RIM_nkpts,P_bands_ordered
 #if defined _MAGNON
- use X_m,             q_plus_G_direction,q_plus_G_shell
+ use X_m,        ONLY:q_plus_G_direction,q_plus_G_shell
 #endif
  use QP_m,       ONLY:QP_rep_string,QP_dSc_steps,QP_n_W_freqs,&
 &                     QP_Sx_low_band,QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_W_er,QP_W_dr,QP_cg_percent,&
-&                     QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_E,QP_ctl_W,QP_ctl_Z,&
+&                     QP_ctl_db,QP_ctl_interp_neigh,&
 &                     QP_Sc_steps,QP_G_er,QP_G_dr,&
 &                     QP_W_partially_done,GWo_SC_done,GWo_iterations,&
-&                     CHOSEX_use_empties
+&                     CHOSEX_use_empties,QP_ctl_E,QP_ctl_W,QP_ctl_Z
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,n_atoms_max,n_atom_species,pp_n_l_comp_max,&
 &                     pp_kbv_dim,input_Tel_fixed
@@ -76,7 +76,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  implicit none
  !
  character(*) :: INSTR,IND,OD,JS,COM_DIR
- integer      :: i1
+ integer      :: i1,i2
  !
  ! Stack Size 
  !
@@ -283,13 +283,13 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  GWo_SC_done=.false.
  CHOSEX_use_empties=.false.
  !
+ ! QP_ctl control
+ !
  QP_ctl_db="none"
  QP_ctl_interp_neigh=1
- QP_ctl_E(1,:)=(/0.,1.,1./)
- QP_ctl_E(2,:)=(/0.,1.,1./)
- QP_ctl_E(3,:)=(/0.,1.,1./)
- QP_ctl_W=0.
- QP_ctl_Z=(1.,0.)
+ forall (i1=1:3,i2=1:2) QP_ctl_E(i1,:,i2)=(/0.,1.,1./)
+ forall (i1=1:3,i2=1:2) QP_ctl_W(i1,:,i2)=0.
+ forall (i1=1:3,i2=1:2) QP_ctl_Z(i1,i2)=(1.,0.)
  !
  ! BS/BSS
  !

@@ -32,7 +32,7 @@ module it_m
  ! 
  ! Verbosity
  !
- integer, parameter :: V_more=1,V_qp=2,V_io=3
+ integer, parameter :: V_more=1,V_qp=2,V_io=3,V_testing=4
  !
  integer, parameter :: maxrnlvls=30
  integer, parameter :: maxflags =20

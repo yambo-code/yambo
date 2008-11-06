@@ -134,7 +134,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call X_reset(X(4),type=4)
  endif
  !
- !Presets (local)
+ ! Presets (local)
  !
  call QP_reset(qp)
  call W_reset(Xxcw)
@@ -168,7 +168,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    write_to_report=.false.
  endif
  !
- !Dump the input file
+ ! Dump the input file
  !
  if (file_exists(trim(infile))) call infile_dump()
  !
@@ -187,6 +187,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    init =-1
    return
  endif
+ !
+ X(3)%ib=(/1,en%nb/)
  !
  ! Exporting DB1 informations to variables to be
  ! proposed in the input file.
@@ -382,7 +384,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Optics(not bse) nor GW (no PP)
  !
  if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_ppa)) then
-   call initactivate(1,'XfnQPdb XfnQP_N XfnQP_E XfnQP_W XfnQP_Z LongPath')
+   call QP_ctl_switch('X')
+   call initactivate(1,'LongPath')
    call Xon('Xd',(/'QpntsR','BndsRn','NGsBlk',&
 &                  'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
@@ -394,7 +397,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! BSE 
  !
  if (l_optics.and.l_bse) then
-   call initactivate(1,'KfnQPdb KfnQP_N KfnQP_E KfnQP_W KfnQP_Z LongPath')
+   call QP_ctl_switch('K')
+   call initactivate(1,'LongPath')
    call initactivate(1,'BSresKmod BScplKmod BSEQptR BSEBands')
    call initactivate(1,'BSENGBlk BSENGexx BSEEhEny BSEClmns BSehWind')
 #if defined _ELPH
@@ -405,7 +409,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Static screen 
  !
  if (l_em1s) then
-   call initactivate(1,'XfnQPdb XfnQP_E XfnQP_W XfnQP_Z LongPath')
+   call QP_ctl_switch('X')
+   call initactivate(1,'LongPath')
    call Xon('Xs',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy',&
 &                  'LongDr','DrudeW'/))
  endif
@@ -413,7 +418,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! GW (PPA & CHOSEX) 
  !
  if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_chosex)) then
-   call initactivate(1,'XfnQPdb XfnQP_N XfnQP_E XfnQP_W XfnQP_Z LongPath')
+   call QP_ctl_switch('X')
+   call initactivate(1,'LongPath')
    if (l_ppa) call Xon('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
 &                      'EhEngy','LongDr','PPAPnt'/))
    if (l_chosex) call Xon('Xs',(/'QpntsR','BndsRn','NGsBlk',&
@@ -423,7 +429,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! ACFDT
  !
  if (l_acfdt) then
-   call initactivate(1,'XfnQPdb XfnQP_N XfnQP_E XfnQP_W XfnQP_Z LongPath')
+   call QP_ctl_switch('X')
+   call initactivate(1,'LongPath')
    call initactivate(1,'EXXRLvcs AC_n_LAM AC_n_FR AC_E_Rng')
    call Xon('Xx',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy','LongDr'/))
  endif
@@ -434,8 +441,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    if (l_el_corr) then
      !
-     call initactivate(1,'XfnQPdb XfnQP_N XfnQP_E XfnQP_W XfnQP_Z')
-     call initactivate(1,'GfnQPdb GfnQP_N GfnQP_E GfnQP_W GfnQP_Z')
+     call QP_ctl_switch('X')
+     call QP_ctl_switch('G')
      call initactivate(1,'BoseCut LongPath')
      !
      if (l_gw0) then
@@ -503,7 +510,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! BSE solver
  !
  if (l_bss) then
-  call initactivate(1,'KfnQPdb KfnQP_N KfnQP_E KfnQP_W KfnQP_Z')
+  call QP_ctl_switch('K')
+  call initactivate(1,'BoseCut LongPath')
   call initactivate(1,'BSSmod BEnRange BDmRange BDmERef BEnSteps BLongDir WRbsWF')
   if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs')
   if (index(BSS_mode,'t')/=0)  call initactivate(1,'FxcGRLc FxcSVdig FxcMEStps FxcCausal')
@@ -626,6 +634,25 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  contains
    !
+   subroutine QP_ctl_switch(what)
+     !
+     use electrons,  ONLY:n_sp_pol
+     !
+     character(1)::what
+     !
+     ! Work Space
+     !
+     call initactivate(1,what//'fnQPdb '//what//'fnQP_N ')
+     if (n_sp_pol==1) then
+       call initactivate(1,what//'fnQP_E '//what//'fnQP_W '//what//'fnQP_Z') 
+     else
+       call initactivate(1,what//'fnQP_up_E '//what//'fnQP_up_W '//what//'fnQP_up_Z') 
+       call initactivate(1,what//'fnQP_dn_E '//what//'fnQP_dn_W '//what//'fnQP_dn_Z') 
+     endif
+     !
+   end subroutine
+   !
+   !
    subroutine Xon(mode,what)
      !
      character(2)::mode
@@ -722,7 +749,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      ! Fxc specs
      !
      if (all((/l_bs_fxc,l_optics,l_chi.or.l_bse,ioBS_Fxc_err==0/))) then
-       QP_ctl_E(1,:)=QP_ctl_E(2,:)
+       QP_ctl_E(1,:,:)=QP_ctl_E(2,:,:) 
        X(3)%ib= BS_bands
        X(3)%ehe=BS_eh_en
        X(3)%q0= BSS_q0

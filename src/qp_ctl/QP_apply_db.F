@@ -34,9 +34,9 @@ subroutine QP_apply_db(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,DB_corrected)
  implicit none
  type(levels)    ::en
  type(QP_t)      ::qp
- type(QP_ctl_t)  ::QP_ctl_from_DB
+ type(QP_ctl_t)  ::QP_ctl_from_DB(n_sp_pol)
  type(bz_samp)   ::k
- integer         ::band_range(2),DB_corrected(en%nb,en%nk)
+ integer         ::band_range(2),DB_corrected(en%nb,en%nk,n_sp_pol)
  character(*)    ::msg_fmt
  !
  ! Work Space
@@ -44,7 +44,7 @@ subroutine QP_apply_db(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,DB_corrected)
  character(schlen)::ch,db_piece(10)
  character(lchlen)::qp_msg,qp_db_name
  logical    :: QP_apply_done
- integer    :: i1
+ integer    :: i1,i_sp
  !
  logical :: l_qp(4) ! = ( E W Z INTERPOLATION )
  !
@@ -78,14 +78,14 @@ subroutine QP_apply_db(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,DB_corrected)
    ! QP type is filled (defined internally and not read from the DB)
    !
    l_qp(1)=.true. ! Apply QP corrections to energies only
-   QP_ctl_from_DB%db="none"
-   QP_ctl_from_DB%short_descr="none"
-   QP_ctl_from_DB%interp_neigh=1
+   QP_ctl_from_DB(:)%db="none"
+   QP_ctl_from_DB(:)%short_descr="none"
+   QP_ctl_from_DB(:)%interp_neigh=1
  else
    !
    ! DB.QP
    !
-   call string_split(QP_ctl_from_DB%db,db_piece)
+   call string_split(QP_ctl_from_DB(1)%db,db_piece)
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3/),MODE=DUMP,ID=ID)
    io_err=0
    qp_db_name=' '
@@ -106,17 +106,17 @@ subroutine QP_apply_db(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,DB_corrected)
    ! No DB
    !
    if (io_err<0) then
-     QP_ctl_from_DB%db="none"
-     QP_ctl_from_DB%short_descr="none"
+     QP_ctl_from_DB(:)%db="none"
+     QP_ctl_from_DB(:)%short_descr="none"
      call warning('DB '//trim(qp_db_name)//' not found')
      return
    endif
    !  
    ! Is there anything to do ?
    !
-   if (l_qp(1).and.QP_apply_done(band_range,(/1,en%nk/),en,'E')) l_qp(1)=.false.
-   if (l_qp(2).and.QP_apply_done(band_range,(/1,en%nk/),en,'W')) l_qp(2)=.false.
-   if (l_qp(3).and.QP_apply_done(band_range,(/1,en%nk/),en,'Z')) l_qp(3)=.false.
+   if (l_qp(1).and.QP_apply_done(band_range,(/1,en%nk/),(/1,n_sp_pol/),en,'E')) l_qp(1)=.false.
+   if (l_qp(2).and.QP_apply_done(band_range,(/1,en%nk/),(/1,n_sp_pol/),en,'W')) l_qp(2)=.false.
+   if (l_qp(3).and.QP_apply_done(band_range,(/1,en%nk/),(/1,n_sp_pol/),en,'Z')) l_qp(3)=.false.
    !
    !DEBUG >
    l_qp(3)=.false.
@@ -161,9 +161,11 @@ subroutine QP_apply_db(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,DB_corrected)
    !
    qp_msg=trim(qp_msg)//']'
    !  
-   QP_ctl_from_DB%short_descr=trim(QP_ctl_from_DB%short_descr)//trim(qp_msg)
+   do i_sp=1,n_sp_pol
+     QP_ctl_from_DB(i_sp)%short_descr=trim(QP_ctl_from_DB(i_sp)%short_descr)//trim(qp_msg)
+     call msg(msg_fmt,trim(QP_ctl_from_DB(i_sp)%short_descr))
+   enddo
    !
-   call msg(msg_fmt,trim(QP_ctl_from_DB%short_descr))
  endif
  !
  ! Backup bare energies (only once)
@@ -176,7 +178,7 @@ subroutine QP_apply_db(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,DB_corrected)
  !
  ! Interpolation & Transfer
  !
- if (QP_ctl_from_DB%interp_neigh<=0) QP_ctl_from_DB%interp_neigh=1
+ if (QP_ctl_from_DB(1)%interp_neigh<=0) QP_ctl_from_DB(:)%interp_neigh=1
  call QP_apply_interpolate(band_range,qp,en,k,l_qp,DB_corrected,QP_ctl_from_DB%interp_neigh)
  !
  ! FIT

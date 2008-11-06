@@ -33,152 +33,172 @@ subroutine QP_apply_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
  use QP_m,          ONLY:QP_ctl_applied
  implicit none
  type(levels)    ::E
- type(QP_ctl_t)  ::QP_ctl_from_DB,QP_ctl_add
- integer         ::band_range(2),DB_corrected(E%nb,E%nk)
+ type(QP_ctl_t)  ::QP_ctl_from_DB(n_sp_pol),QP_ctl_add(n_sp_pol)
+ integer         ::band_range(2),DB_corrected(E%nb,E%nk,n_sp_pol)
  !
  ! Work Space
  !
- integer  ::ib,ik
- real(SP) ::Eoc,Eov
+ integer  ::ib,ik,i_sp,n_of_coeff,i_spin
+ real(SP) ::Eoc,Eov,M_factors_base(6),M_factors_free(6)
  character(lchlen) ::ch
  logical           ::QP_apply_done,do_E,do_W,do_Z
  !
- ! Is there anything to do ?
+ ! Loop on spins
  !
- do_E=.false.
- do_W=.false.
- do_Z=.false.
- !
- if (any(QP_ctl_from_DB%E/=(/0.,1.,0.,1./)).or.any(QP_ctl_add%E/=(/0.,1.,0.,1./))) then
-   if (QP_apply_done(band_range,(/1,E%nk/),E,'E')) return
-   do_E=.true.
- endif
- if (any((/QP_ctl_from_DB%W(:)/=0/)).or.any((/QP_ctl_add%W(:)/=0/))) then
-   if (QP_apply_done(band_range,(/1,E%nk/),E,'W')) return
-   do_W=.true.
-   if (.not.associated(E%W)) then
-     allocate(E%W(E%nb,E%nk,n_sp_pol))
-     call mem_est("E-W",(/size(E%W)/),(/SP/))
-     E%W=0.
+ do i_sp= 1,n_sp_pol
+   !
+   ! Is there anything to do ?
+   !
+   do_E=.false.
+   do_W=.false.
+   do_Z=.false.
+   !
+   if (any(QP_ctl_from_DB(i_sp)%E/=(/0.,1.,0.,1./)).or.any(QP_ctl_add(i_sp)%E/=(/0.,1.,0.,1./))) then
+     if (QP_apply_done(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'E')) return
+     do_E=.true.
    endif
- endif
- if (QP_ctl_from_DB%Z/=(1.,0.).or.QP_ctl_add%Z/=(1.,0.)) then
-   if (QP_apply_done(band_range,(/1,E%nk/),E,'Z')) return
-   do_Z=.true.
-   if (.not.associated(E%Z)) then
-     allocate(E%Z(E%nb,E%nk,n_sp_pol))
-     call mem_est("E-Z",(/size(E%Z)/))
-     E%Z=1.
+   if (any((/QP_ctl_from_DB(i_sp)%W(:)/=0/)).or.any((/QP_ctl_add(i_sp)%W(:)/=0/))) then
+     if (QP_apply_done(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'W')) return
+     do_W=.true.
+     if (.not.associated(E%W)) then
+       allocate(E%W(E%nb,E%nk,n_sp_pol))
+       call mem_est("E-W",(/size(E%W)/),(/SP/))
+       E%W=0.
+     endif
    endif
- endif
- if (.not.any((/do_E,do_W,do_Z/))) return
- !
- if (.not.QP_ctl_applied) then
-   QP_ctl_applied=.true.
-   call section('p','QP Corrections extrapolation')
- endif
- !
- ! Backup (only once)
- !
- if (.not.associated(E%Eo)) then
-   allocate(E%Eo(E%nb,E%nk,n_sp_pol))
-   call mem_est("E-Eo",(/size(E%Eo)/),(/SP/))
-   E%Eo=E%E
- endif
- !
- ! Band edges
- !
- Eov=-1.
- Eoc=1.E5
- do ib=1,E%nb
-   do ik=1,E%nk
-     if (E%Eo(ib,ik,1)<=1.E-5) Eov=max(Eov,E%Eo(ib,ik,1))
-     if (E%Eo(ib,ik,1)>1.E-5)  Eoc=min(Eoc,E%Eo(ib,ik,1))
+   if (QP_ctl_from_DB(i_sp)%Z/=(1.,0.).or.QP_ctl_add(i_sp)%Z/=(1.,0.)) then
+     if (QP_apply_done(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'Z')) return
+     do_Z=.true.
+     if (.not.associated(E%Z)) then
+       allocate(E%Z(E%nb,E%nk,n_sp_pol))
+       call mem_est("E-Z",(/size(E%Z)/))
+       E%Z=1.
+     endif
+   endif
+   if (.not.any((/do_E,do_W,do_Z/))) return
+   !
+   if (.not.QP_ctl_applied) then
+     QP_ctl_applied=.true.
+     call section('p','QP Corrections extrapolation')
+   endif
+   !
+   ! Backup (only once)
+   !
+   if (.not.associated(E%Eo)) then
+     allocate(E%Eo(E%nb,E%nk,n_sp_pol))
+     call mem_est("E-Eo",(/size(E%Eo)/),(/SP/))
+     E%Eo=E%E
+   endif
+   !
+   ! Band edges
+   !
+   Eov=-1.
+   Eoc=1.E5
+   do ib=1,E%nb
+     do ik=1,E%nk
+       if (E%Eo(ib,ik,i_sp)<=1.E-5) Eov=max(Eov,E%Eo(ib,ik,i_sp))
+       if (E%Eo(ib,ik,i_sp)>1.E-5)  Eoc=min(Eoc,E%Eo(ib,ik,i_sp))
+     enddo
    enddo
+   !
+   i_spin=i_sp
+   if (do_E) then
+     n_of_coeff=2
+     M_factors_base(:4)=QP_ctl_from_DB(i_sp)%E
+     M_factors_free(:4)=QP_ctl_add(i_sp)%E
+     call do_fit_operation('E')
+   endif
+   if (do_W) then
+     n_of_coeff=3
+     M_factors_base(:6)=QP_ctl_from_DB(i_sp)%W
+     M_factors_free(:6)=QP_ctl_add(i_sp)%W
+     call do_fit_operation('W')
+   endif
+   if (do_Z) then
+     n_of_coeff=1
+     M_factors_base(:2)=(/real(QP_ctl_from_DB(i_sp)%Z),aimag(QP_ctl_from_DB(i_sp)%Z)/)
+     M_factors_free(:2)=(/real(QP_ctl_add(i_sp)%Z),aimag(QP_ctl_add(i_sp)%Z)/)
+     call do_fit_operation('Z')
+   endif
+   !
+   write (ch,'(4a)') '-- ',trim(QP_ctl_add(i_sp)%short_descr),&
+&        ' Linear/Quadratic extrapolation ',repeat('-',19)
+   call msg('r',trim(ch))
+   call msg('r','=== QP/DB derived ===')
+   call fit_report(QP_ctl_from_DB(i_sp))
+   call msg('r','=== Additional ===')
+   call fit_report(QP_ctl_add(i_sp))
+   call msg('r',repeat('-',60))
+   !
  enddo
- !
- if (do_E) call do_fit_operation('E',2,QP_ctl_from_DB%E,QP_ctl_add%E)
- if (do_W) call do_fit_operation('W',3,QP_ctl_from_DB%W,QP_ctl_add%W)
- if (do_Z) call do_fit_operation('Z',1,(/real(QP_ctl_from_DB%Z),aimag(QP_ctl_from_DB%Z)/),&
-&                                      (/real(QP_ctl_add%Z),aimag(QP_ctl_add%Z)/))
- !
- write (ch,'(4a)') '-- ',trim(QP_ctl_add%short_descr),&
-&      ' Linear/Quadratic extrapolation ',repeat('-',19)
- call msg('r',trim(ch))
- call msg('r','=== QP/DB derived ===')
- call fit_report(QP_ctl_from_DB)
- call msg('r','=== Additional ===')
- call fit_report(QP_ctl_add)
- call msg('r',repeat('-',60))
  !
  contains
    !
-   subroutine do_fit_operation(what,nM,Mr,Mf)
+   subroutine do_fit_operation(what)
      character(1) :: what
-     integer      :: nM
-     real(SP)     :: Mr(2*nM),Mf(2*nM)
      !
      ! Work Space
      !
      integer  :: i1,i2,i3,iref,ik_r
-     real(SP) :: delta,rref,Ml
+     real(SP) :: delta,rref,M_factor_local
      logical  :: QP_apply_done
      !
      do ib=band_range(1),band_range(2)
        !
        do ik=1,E%nk
          !
-         if (QP_apply_done((/ib,ib/),(/ik,ik/),E,what)) cycle
+         if (QP_apply_done((/ib,ib/),(/ik,ik/),(/i_spin,i_spin/),E,what)) cycle
          !
-         if (E%Eo(ib,ik,1)> 1.E-5) iref=0
-         if (E%Eo(ib,ik,1)<=1.E-5) iref=nM
-         if (E%Eo(ib,ik,1)> 1.E-5) rref=Eoc
-         if (E%Eo(ib,ik,1)<=1.E-5) rref=Eov
+         if (E%Eo(ib,ik,i_spin)> 1.E-5) iref=0
+         if (E%Eo(ib,ik,i_spin)<=1.E-5) iref=n_of_coeff
+         if (E%Eo(ib,ik,i_spin)> 1.E-5) rref=Eoc
+         if (E%Eo(ib,ik,i_spin)<=1.E-5) rref=Eov
          !
          if (what=='Z') then
            !
-           E%Z(ib,ik,1)=Mf(1)+(0.,1.)*Mf(2)
-           if (DB_corrected(ib,ik)/=1) then
-             if (Mr(1)/=1.) E%Z(ib,ik,1)=(Mf(1)+Mr(1))/2.+(0.,1.)*(Mf(2)+Mr(2))/2.
+           E%Z(ib,ik,i_spin)=M_factors_free(1)+(0.,1.)*M_factors_free(2)
+           if (DB_corrected(ib,ik,i_spin)/=1) then
+             if (M_factors_base(1)/=1.) E%Z(ib,ik,i_spin)=(M_factors_free(1)+M_factors_base(1))/2.+&
+&                                               (0.,1.)*(M_factors_free(2)+M_factors_base(2))/2.
            endif
-           E%qp_done(ib,ik)=E%qp_done(ib,ik)+4
+           E%QP_corrected(ib,ik,i_spin)=E%QP_corrected(ib,ik,i_spin)+4
            cycle
            !
          endif
          !
          ! Calculates the polinomial expansion (delta)
-         ! using Mf and Mr coefficients
+         ! using M_factors_free and M_factors_base coefficients
          !
-         delta=Mf(iref+1)
-         do i3=1,nM-1
-           Ml=Mf(iref+1+i3)
+         delta=M_factors_free(iref+1)
+         do i3=1,n_of_coeff-1
+           M_factor_local=M_factors_free(iref+1+i3)
            if (what=='E') then
-             Ml=Ml-1.
-             delta=delta+Ml*(E%Eo(ib,ik,1)-rref)**i3
+             M_factor_local=M_factor_local-1.
+             delta=delta+M_factor_local*(E%Eo(ib,ik,i_spin)-rref)**i3
            endif
-           if (what=='W') delta=delta+Ml*(E%Eo(ib,ik,1)-rref)**(i3+1)
+           if (what=='W') delta=delta+M_factor_local*(E%Eo(ib,ik,i_spin)-rref)**(i3+1)
          enddo
-         if (DB_corrected(ib,ik)/=1) then
-           delta=delta+Mr(iref+1)
-           do i3=1,nM-1
-             Ml=Mr(iref+1+i3)
+         if (DB_corrected(ib,ik,i_spin)/=1) then
+           delta=delta+M_factors_base(iref+1)
+           do i3=1,n_of_coeff-1
+             M_factor_local=M_factors_base(iref+1+i3)
              if (what=='E') then
-               Ml=Ml-1.
-               delta=delta+Ml*(E%Eo(ib,ik,1)-rref)**i3
+               M_factor_local=M_factor_local-1.
+               delta=delta+M_factor_local*(E%Eo(ib,ik,i_spin)-rref)**i3
              endif
-             if (what=='W') delta=delta+Ml*(E%Eo(ib,ik,1)-rref)**(i3+1)
+             if (what=='W') delta=delta+M_factor_local*(E%Eo(ib,ik,i_spin)-rref)**(i3+1)
            enddo
          endif
          !
-         if (what=='E') E%E(ib,ik,1)=E%E(ib,ik,1)+delta
+         if (what=='E') E%E(ib,ik,i_spin)=E%E(ib,ik,i_spin)+delta
          !
          if (what=='W') then
-           if (E%Eo(ib,ik,1)<=1.E-5) E%W(ib,ik,1)=E%W(ib,ik,1)+abs(delta)
-           if (E%Eo(ib,ik,1)> 1.E-5) E%W(ib,ik,1)=E%W(ib,ik,1)-abs(delta)
+           if (E%Eo(ib,ik,i_spin)<=1.E-5) E%W(ib,ik,i_spin)=E%W(ib,ik,i_spin)+abs(delta)
+           if (E%Eo(ib,ik,i_spin)> 1.E-5) E%W(ib,ik,i_spin)=E%W(ib,ik,i_spin)-abs(delta)
          endif
          !
-         if (what=='E') E%qp_done(ib,ik)=E%qp_done(ib,ik)+1
-         if (what=='W') E%qp_done(ib,ik)=E%qp_done(ib,ik)+2
+         if (what=='E') E%QP_corrected(ib,ik,i_spin)=E%QP_corrected(ib,ik,i_spin)+1
+         if (what=='W') E%QP_corrected(ib,ik,i_spin)=E%QP_corrected(ib,ik,i_spin)+2
          !
        enddo
      enddo

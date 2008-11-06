@@ -443,7 +443,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          do i1=1,BS_blk_dim(ik1)
            do i2=1,BS_n_g_exch
              O1x(i2,i1)=O1x(i2,i1)/bare_qpg(iq,i2)**2
-             enddo
+           enddo
          enddo
        endif 
        !

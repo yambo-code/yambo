@@ -50,10 +50,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  ! 
  ! Work Space
  !
- integer          :: i1,i2,fr(2),iq
-#if defined _MAGNON
- integer          :: G_of_the_shift
-#endif
+ integer          :: i1,i2,fr(2),iq,G_of_the_shift
  real(SP)         :: output_data(5),Q_pt(3),Q_sq_modulus
  character(10)    :: headings(10)
  character(12)    :: ch12

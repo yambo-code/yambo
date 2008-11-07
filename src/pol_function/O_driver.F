@@ -33,7 +33,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use electrons,     ONLY:levels,BZ_RIM_tot_nkpts
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg,g_vec
  use com,           ONLY:msg,of_open_close
- use vec_operate,   ONLY:v_norm
+ use vec_operate,   ONLY:v_norm,iku_v_norm
  use X_m,           ONLY:X_t,X_epsilon,X_mat,X_alloc,X_poles_tab,X_fxc,&
 &                        alpha_dim,eps_2_alpha,use_X_RIM
  use par_proc_m,    ONLY:pp_redux_wait
@@ -50,8 +50,11 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  ! 
  ! Work Space
  !
- integer          :: i1,i2,fr(2),iq,G_of_the_shift
- real(SP)         :: output_data(5),Q_pt(3)
+ integer          :: i1,i2,fr(2),iq
+#if defined _MAGNON
+ integer          :: G_of_the_shift
+#endif
+ real(SP)         :: output_data(5),Q_pt(3),Q_sq_modulus
  character(10)    :: headings(10)
  character(12)    :: ch12
  character(schlen):: ch,of_name(4)
@@ -141,9 +144,11 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    if (iq==1.and.G_of_the_shift==1) then
      Q_pt=X%q0/v_norm(X%q0)
+     Q_sq_modulus=q_norm(iq)**2.
      ch12=' [q->0 dir]:'
    else
      Q_pt=X%q0+g_vec(G_of_the_shift,:)
+     Q_sq_modulus=q_norm(iq)**2.+iku_v_norm(g_vec(G_of_the_shift,:))**2.
      ch12=' [iku]:'
    endif
    !
@@ -201,7 +206,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      !
      ! Without LF eps/alpha
      !
-     X_epsilon(1,fr(1):fr(2))=1.0_SP-X_mat(G_of_the_shift,G_of_the_shift,:)*4.0_SP*pi/q_norm(iq)**2
+     X_epsilon(1,fr(1):fr(2))=1.0_SP-X_mat(G_of_the_shift,G_of_the_shift,:)*4.0_SP*pi/Q_sq_modulus
      !
      ! ... for alpha_0 (2) and (3) coincides
      !
@@ -211,7 +216,8 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      !
      call X_s(iq,fr,X,wv)
      !
-     X_epsilon(2,fr(1):fr(2))=1./(X_mat(G_of_the_shift,G_of_the_shift,:)*bare_qpg(iq,1)**2/q_norm(iq)**2+1.)
+     X_epsilon(2,fr(1):fr(2))=1./(X_mat(G_of_the_shift,G_of_the_shift,:)*&
+&                                 bare_qpg(iq,G_of_the_shift)**2/Q_sq_modulus+1.)
      X_epsilon(3,fr(1):fr(2))=-1./X_epsilon(1,:)
      X_epsilon(4,fr(1):fr(2))=-1./X_epsilon(2,:)
      !
@@ -383,7 +389,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      !
      q_plus_G_direction=q_plus_G_direction/v_norm(q_plus_G_direction)
      !
-     shells_msg(1)='Shells compatible with the shift direction:'
+     shells_msg(1)='Indexes of the RL vectors parallel to the Q-shift :'
      !
      if (iq==1) Q_pt_=X%q0
      if (iq/=1) Q_pt_=q%pt(iq,:)

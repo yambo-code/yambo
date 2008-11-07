@@ -141,13 +141,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  call X_reset(Xbsk)
  !
  if (FINALIZE) then
-   call call_init_load('GameOver')
+   call call_init_load('Game_Over')
    call initinfio(defs,11)
    if (master_cpu) call ofiles_append(defs=defs)
    return
  endif
  if (CLOSE_Gs) then
-   call call_init_load('Gclose')
+   call call_init_load('Close_G_vectors')
    call barriers( )
    call logicalson
    return
@@ -155,7 +155,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! First vars loading
  ! 
- call call_init_load('load')
+ call call_init_load('create_shadow_vars')
  !
  ! DB props listing mode ?
  !
@@ -336,15 +336,15 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !Variables(read from DB files) -> local cache
  !
- !Note that here ('todef') is the latest chance to change
+ !Note that here ('load_defaults') is the latest chance to change
  !a predefined var verbosity and to force its appearnce
  !in the input file.
  !
- call call_init_load('todef')
+ call call_init_load('load_defaults')
  !
  !Input file/local cache -> local cache/Variables
  !
- call call_init_load('parserload')
+ call call_init_load('parser_input_file')
  !
  !RUNLEVELS VARIABLES ACTIVATION (LOGICALS FROM INPUT FILE)
  !
@@ -671,11 +671,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    subroutine call_init_load(mode)
      character(*)::mode
-     if (mode=='load') initmode=0
-     if (mode=='todef') initmode=1
-     if (mode=='Gclose') initmode=2
-     if (mode=='GameOver') initmode=3
-     if (mode=='parserload') initmode=4
+     if (mode=='create_shadow_vars') initmode=0
+     if (mode=='load_defaults') initmode=1
+     if (mode=='Close_G_vectors') initmode=2
+     if (mode=='Game_Over') initmode=3
+     if (mode=='parser_input_file') initmode=4
      call init_load(defs,en,q,k,X,Xw)
    end subroutine
    !

@@ -23,28 +23,26 @@
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
 AC_DEFUN([KH_PATH_NETCDF_F90],[
-AC_ARG_WITH(netcdf,AC_HELP_STRING([--with-netcdf-include=<path>],
-                                  [Path of the NetCDF include directory]),
-  [NETCDF_INCLUDE="$withval"], [NETCDF_INCLUDE="/usr/local/include"] )
-AC_ARG_WITH(netcdf,AC_HELP_STRING([--with-netcdf-lib=<path>],
-                                  [Path of the NetCDF lib directory]),
-  [NETCDF_LIB="$withval"], [NETCDF_LIB="/usr/local/lib"] )
 
+AC_ARG_WITH(netcdf_include,AC_HELP_STRING([--with-netcdf-include=<path>],
+                                  [Path of the NetCDF include directory]))
+AC_ARG_WITH(netcdf_lib,AC_HELP_STRING([--with-netcdf-lib=<path>],
+                                  [Path of the NetCDF lib directory]))
 netcdf="no"
 dnetcdf=""
 NCLIBS=""
 AC_MSG_CHECKING([whether the NetCDF library is installed])
-if ! test -z "$NETCDF_INCLUDE" && ! test "$with_netcdf" = "no"; then
+if ! test -z "$with_netcdf_include" && ! test "$with_netcdf_lib" = "no"; then
  AC_LANG([Fortran])
  save_fcflags="$FCFLAGS"
  for flag in "-I" "-M" "-p"; do
-    FCFLAGS="$flag$NETCDF_INCLUDE $save_fcflags"
+    FCFLAGS="$flag$with_netcdf_include $save_fcflags"
     AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], [use netcdf]),
      [netcdf=yes 
-      for file in `find $NETCDF_INCLUDE \( -name '*netcdf*' -o -name '*typesizes*' \) `; do
+      for file in `find $with_netcdf_include \( -name '*netcdf*' -o -name '*typesizes*' \) `; do
        cp $file include/ 
       done
-      for file in `find $NETCDF_LIB -name '*netcdf*.a'`; do
+      for file in `find $with_netcdf_lib -name '*netcdf*.a'`; do
        cp $file lib/ 
       done
      ], [netcdf=no])

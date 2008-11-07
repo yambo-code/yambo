@@ -26,6 +26,7 @@ subroutine K_dump_to_o_file(iq,mode)
 &                    BSS_n_descs,BS_K_coupling,BS_K_is_ALDA
  use X_m,       ONLY:X_epsilon,alpha_dim,eps_2_alpha
  use com,       ONLY:msg,of_open_close
+ use drivers,   ONLY:l_col_cut
  implicit none
  integer    :: mode,iq
  !
@@ -79,6 +80,17 @@ subroutine K_dump_to_o_file(iq,mode)
    if (mode==1) call msg("o eps alpha",'#',BSS_of_title,INDENT=0,USE_TABS=.TRUE.)
    if (mode/=1) call msg("o eps alpha",'#',BSS_of_title(:5),INDENT=0,USE_TABS=.TRUE.)
    call msg("o eps alpha",'#')
+   !
+   ! When the bare coulomb potential is used we have 
+   ! epsilon_M=1-v\barP=X_epsilon(2)
+   !
+   ! if the cutoffed coulomb potential is used we have as a result of the
+   ! diagonalization X_epsilon(2)=1-vP  so that:
+   !
+   ! epsilon_M=1/epsilon^-1=1/(1+vP)=1/(2-X_espilon(2))
+   !
+   if (l_col_cut) X_epsilon(2,:) = 1./(2-X_epsilon(2,:))
+   !
    do i1=1,size(X_epsilon(1,:))
      !
      od(1)=real(X_epsilon(1,i1))*HARTREE

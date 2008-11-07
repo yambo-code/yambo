@@ -109,9 +109,9 @@ subroutine BZ_RIM(Xk,Xen)
  gap(1)=minval(BZ_E%E(Xen%nbf+1,:,1))-maxval(BZ_E%E(Xen%nbf,:,1)) 
  gap(2)=10000.
  do i1=1,nkibz
-    if (BZ_E%E(Xen%nbf+1,i1,1)-BZ_E%E(Xen%nbf,i1,1)<gap(2)) then
-      gap(2)=BZ_E%E(Xen%nbf+1,i1,1)-BZ_E%E(Xen%nbf,i1,1)
-    endif
+   if (BZ_E%E(Xen%nbf+1,i1,1)-BZ_E%E(Xen%nbf,i1,1)<gap(2)) then
+     gap(2)=BZ_E%E(Xen%nbf+1,i1,1)-BZ_E%E(Xen%nbf,i1,1)
+   endif
  enddo
  !
  call msg('s',':: Electrons             :',default_nel)

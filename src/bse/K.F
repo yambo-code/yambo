@@ -447,6 +447,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          enddo
        endif 
        !
+       ! Even if the cutoff coulomb interaction is used and this term should
+       ! be in principle included, they are vanishing due to the q->0 in the
+       ! oscillator and the finitness of qpg(1,1) term.
+       !
        O1x(1,:)=(0.,0.)
        O2x(1,:)=(0.,0.)
        !

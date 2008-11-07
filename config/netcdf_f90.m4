@@ -32,7 +32,7 @@ netcdf="no"
 dnetcdf=""
 NCLIBS=""
 AC_MSG_CHECKING([whether the NetCDF library is installed])
-if ! test -z "$with_netcdf_include" && ! test "$with_netcdf_lib" = "no"; then
+if test -d "$with_netcdf_include" && test -d "$with_netcdf_lib" ; then
  AC_LANG([Fortran])
  save_fcflags="$FCFLAGS"
  for flag in "-I" "-M" "-p"; do

@@ -58,8 +58,8 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  ! Work Space
  !
  integer              :: i1,i2,ik,is,ikp,ikbz,ikpbz,i_spin,&
-&                        isp,iv,ic,g1,g2,g2max,iw,iwmax,isave(4),n_poles 
- logical              :: force_bare_X_G
+&                        isp,iv,ic,g1,g2,g2_max,g2_min,iw,iwmax,isave(4),n_poles 
+ logical              :: force_bare_X_G,skip_WF_load
  real(SP)             :: minmax_ehe(2),drude_factor,eh_occ
  type(pp_indexes)     :: px
  type(ggwinfo)        :: isc
@@ -82,8 +82,19 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  drude_Gf = cmplx(0.,0.,SP)
  !
  force_bare_X_G=associated(Xen%W).or.associated(Xen%Z).or.use_X_RIM
+ skip_WF_load=.false.
+ g2_min=1
+ !
+ ! Project's dependent presets
+ !
 #if defined _MANYK
  if(iq.ne.1) force_bare_X_G=.true.
+#endif
+#if defined _RAS || _MANYK
+ skip_WF_load = iq==1.and.X%ng==1 
+#endif
+#if defined _RAS
+ g2_min=2
 #endif
  !
  call mem_est("Xo_WS",(/size(XoR)+2*X%ng/))
@@ -93,11 +104,8 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  if (iq==1) call X_O_strengths(Xen, Xk, X, X%q0)
  !
 #if defined _RAS
- if (iq == 1) then
-   if ((lras.or.lreels).and.loptcut) then
-     call X_O_strengths_cut( Xen, Xk, X, X%q0)
-   endif
- endif
+ if (iq == 1.and.&
+&    (lras.or.lreels).and.loptcut) call X_O_strengths_cut( Xen, Xk, X, X%q0)
 #endif
  !
  ! Drude Contrib.
@@ -121,13 +129,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  ! WF load
  !
-#if defined _RAS || _MANYK
- if(.not.( iq==1 .and. X%ng==1 )) then
-#endif
-   call wf_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
-#if defined _RAS || _MANYK
- endif
-#endif
+ if (.not.skip_WF_load) call wf_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
  !
  if (iq/=iq_now) then
    !
@@ -166,9 +168,9 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  if (.not.half_X_mat_only) then
    half_X_mat_only= all( aimag(Xw%p(:))<1.E-4 ).and. all( real(Xw%p(:))<1.E-4 )
  endif
- g2max=X%ng
+ g2_max=X%ng
  iwmax=1
- if (half_X_mat_only) g2max=-1
+ if (half_X_mat_only) g2_max=-1
  if (Xw%n(2)==1.and.half_X_mat_only) iwmax=2
  if (iq_now==0.and.half_X_mat_only ) call msg('s','[X] Upper matrix triangle filled')
  !
@@ -260,32 +262,20 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
        else
          iscut= -conjg( X_rhoq0(ic,iv,ikbz,i_spin) )
        endif
-       g2 = 1
- 
-#if defined _DOUBLE
-       call zaxpy(g2,Gf(1)*eh_occ*iscut,conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
-       do g2=2,X%ng
-         call zaxpy(g2,Gf(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
-       enddo
-#else
-       call caxpy(g2,Gf(1)*eh_occ*iscut,conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
-       do g2=2,X%ng
-         call caxpy(g2,Gf(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
-       enddo
-#endif
+       !
+       XoR(1,1)=XoR(1,1)+Gf(1)*eh_occ*iscut*conjg(isc%rhotw(1))
        !-----------------------------------------------------------------------------
-#else 
+#endif 
        !
        ! Filling the upper triangular part of the residual here ! 
        !             ^^^^^
-       do g2=1,X%ng
+       do g2=g2_min,X%ng
 #if defined _DOUBLE
          call zaxpy(g2,Gf(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
 #else
          call caxpy(g2,Gf(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
 #endif
        enddo
-#endif
      enddo
      !
      do i2=iwmax,Xw%n(2)
@@ -294,12 +284,12 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
        do g2=1,X%ng
 #if defined _DOUBLE
          call zaxpy(g2,Gf(i2)/Gf(1),XoR(:g2,g2),1,Xo(:g2,g2,i2),1)
-         if (g2<g2max) call zaxpy(X%ng-g2,Gf(i2)/conjg(Gf(1)),conjg(XoR(g2,g2+1:)),&
-&                               1,Xo(g2+1:,g2,i2),1)
+         if (g2<g2_max) call zaxpy(X%ng-g2,Gf(i2)/conjg(Gf(1)),conjg(XoR(g2,g2+1:)),&
+&                                  1,Xo(g2+1:,g2,i2),1)
 #else
          call caxpy(g2,Gf(i2)/Gf(1),XoR(:g2,g2),1,Xo(:g2,g2,i2),1)
-         if (g2<g2max) call caxpy(X%ng-g2,Gf(i2)/conjg(Gf(1)),conjg(XoR(g2,g2+1:)),&
-&                               1,Xo(g2+1:,g2,i2),1)
+         if (g2<g2_max) call caxpy(X%ng-g2,Gf(i2)/conjg(Gf(1)),conjg(XoR(g2,g2+1:)),&
+&                                  1,Xo(g2+1:,g2,i2),1)
 #endif
        enddo
      enddo
@@ -349,12 +339,12 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
        do g2=1,X%ng
 #if defined _DOUBLE
          call zaxpy(g2,Gf(i2)/Gf(1),XoR(:g2,g2),1,Xo(:g2,g2,i2),1)
-         if (g2<g2max) call zaxpy(X%ng-g2,Gf(i2)/conjg(Gf(1)),conjg(XoR(g2,g2+1:)),&
-&                                 1,Xo(g2+1:,g2,i2),1)
+         if (g2<g2_max) call zaxpy(X%ng-g2,Gf(i2)/conjg(Gf(1)),conjg(XoR(g2,g2+1:)),&
+&                                  1,Xo(g2+1:,g2,i2),1)
 #else
          call caxpy(g2,Gf(i2)/Gf(1),XoR(:g2,g2),1,Xo(:g2,g2,i2),1)
-         if (g2<g2max) call caxpy(X%ng-g2,Gf(i2)/conjg(Gf(1)),conjg(XoR(g2,g2+1:)),&
-&                                 1,Xo(g2+1:,g2,i2),1)
+         if (g2<g2_max) call caxpy(X%ng-g2,Gf(i2)/conjg(Gf(1)),conjg(XoR(g2,g2+1:)),&
+&                                  1,Xo(g2+1:,g2,i2),1)
 #endif
        enddo
      enddo

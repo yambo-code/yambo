@@ -158,7 +158,7 @@ module QP_CTL_m
      ! Description initialization
      !
      spin_ch=(/'',''/)
-     if (n_sp_pol==2) spin_ch=(/'(spin down)','(spin up)'/)
+     if (n_sp_pol==2) spin_ch=(/'(spin down)','  (spin up)'/)
      !
      do i_spin=1,n_sp_pol
        QP_ctl_from_DB(i_spin)%short_descr='[QP@'//what//trim(spin_ch(i_spin))//']'

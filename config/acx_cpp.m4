@@ -85,17 +85,18 @@ AC_MSG_RESULT([$acx_C_ok])
 acx_F90_ok=yes
 AC_MSG_CHECKING([if precompiler works on F90 source])
 cat << EOF_ > conftest.F
+ program conftest
  character (1) :: a
  a="a"
  write (*,'('//a//')') 'hello'
  ! Replace "S" with "\" and find the max length of
  a="\"
- end
+ end program
 EOF_
 (eval $CPP $CPPFLAGS conftest.F > conftest.${F90SUFFIX}) 2> conftest.er1
 if ! test -s conftest.er1 ; then 
  eval $CPP $CPPFLAGS conftest.F > conftest.${F90SUFFIX} 
- eval $FC $FCFLAGS -c conftest.${F90SUFFIX} >& conftest.er2
+ eval $FC $FCFLAGS -c conftest.${F90SUFFIX} 2> conftest.er2
  if test -s conftest.er2 ; then 
   acx_F90_ok=no ; 
   CPP_TESTS_PASSED=no;

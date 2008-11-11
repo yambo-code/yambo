@@ -23,7 +23,7 @@ use File::Find;
 # Define special flags and stuff.
 # Script scans all text files; might be safer to scan only named extension files? (.F)
 #
-$manual_preprocess_files = "X_os.F ";
+$manual_preprocess_files = " ";
 $exclude_files = "yamboo.pl ";
 @core_projects = ('yambo','ypp','p2y','a2y','f2y','e2y');
 @user_projects = ('RAS','REELS','MANYK','ELPH','SC','BS_CPL','YPP_ELPH','YPP_RAS','PH','TB','GAMMA','SPIN','MAGNON');

@@ -137,16 +137,16 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! Titles 
    !
-   !... Q point (normalized at 1 if Gamma)
+   !... Q point (normalized at 1 if Gamma with no additional shift)
+   !
+   Q_pt=X%q0+g_vec(G_of_the_shift,:)
+   Q_sq_modulus=q_norm(iq)**2.+iku_v_norm(g_vec(G_of_the_shift,:))**2.
+   ch12=' [iku]:'
    !
    if (iq==1.and.G_of_the_shift==1) then
      Q_pt=X%q0/v_norm(X%q0)
      Q_sq_modulus=q_norm(iq)**2.
      ch12=' [q->0 dir]:'
-   else
-     Q_pt=X%q0+g_vec(G_of_the_shift,:)
-     Q_sq_modulus=q_norm(iq)**2.+iku_v_norm(g_vec(G_of_the_shift,:))**2.
-     ch12=' [iku]:'
    endif
    !
    ch = '# Absorption @ IQ '//trim(intc(iq))//ch12

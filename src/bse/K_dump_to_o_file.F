@@ -89,7 +89,7 @@ subroutine K_dump_to_o_file(iq,mode)
    !
    ! epsilon_M=1/epsilon^-1=1/(1+vP)=1/(2-X_espilon(2))
    !
-   if (l_col_cut) X_epsilon(2,:) = 1./(2-X_epsilon(2,:))
+   if (l_col_cut) X_epsilon(2,:) = 1./(2.-X_epsilon(2,:))
    !
    do i1=1,size(X_epsilon(1,:))
      !

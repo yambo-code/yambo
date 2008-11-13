@@ -58,7 +58,8 @@ subroutine setup(en,Xen,Ken,k,Xk)
  atoms_string=' '
  if (allocated(znucl)) then
    do is=1,n_atom_species
-     dumb_ch1=trim(intc(n_atoms(is)))//PT_elements(znucl(is))
+     dumb_ch1=trim(intc(n_atoms(is)))//'--'
+     if (znucl(is)/=0) dumb_ch1=trim(intc(n_atoms(is)))//PT_elements(znucl(is))
      atoms_string=trim(atoms_string)//trim(dumb_ch1)
    enddo
    call msg('rn','Unit cell contains '//trim(atoms_string)//' atoms')

@@ -139,14 +139,17 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    !... Q point (normalized at 1 if Gamma with no additional shift)
    !
-   Q_pt=X%q0+g_vec(G_of_the_shift,:)
-   Q_sq_modulus=q_norm(iq)**2.+iku_v_norm(g_vec(G_of_the_shift,:))**2.
    ch12=' [iku]:'
-   !
    if (iq==1.and.G_of_the_shift==1) then
      Q_pt=X%q0/v_norm(X%q0)
      Q_sq_modulus=q_norm(iq)**2.
      ch12=' [q->0 dir]:'
+   else if (iq==1.and.G_of_the_shift> 1) then
+     Q_pt=g_vec(G_of_the_shift,:)
+     Q_sq_modulus=iku_v_norm(Q_pt)**2.
+   else if (iq> 1) then
+     Q_pt=q%pt(iq,:)+g_vec(G_of_the_shift,:)
+     Q_sq_modulus=iku_v_norm(Q_pt)**2.
    endif
    !
    ch = '# Absorption @ IQ '//trim(intc(iq))//ch12
@@ -404,7 +407,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      !
      if (X_select_the_G_component/=1) then
        call msg('rs',trim(shells_msg(2)))
-       call msg('r','Momentum shift [cc]:',g_vec(X_select_the_G_component,:))
+       call msg('r','Momentum shift [iku]:',g_vec(X_select_the_G_component,:))
      endif
      !
    end function

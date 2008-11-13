@@ -53,7 +53,7 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  use pars,          ONLY:SP,DP,pi
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:DL_vol
- use com,           ONLY:msg
+ use com,           ONLY:msg,warning
  use electrons,     ONLY:levels,n_spin
  use FFT_m,         ONLY:fft_size
  use xc_functionals,ONLY:XC_EXCHANGE,XC_EXCHANGE_CORRELATION,XC_CORRELATION,&
@@ -78,7 +78,7 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  ! note that multidimensional dvxc & vxc is allowed only in xcspol
  !
  real(DP) :: dvxc(fft_size,3),exc(fft_size),vxc(fft_size,n_spin)
- real(DP) :: dvx(fft_size),ex(fft_size),vx(fft_size)
+ real(DP) :: dvx(fft_size,3), ex(fft_size), vx(fft_size,n_spin)
  !
  ! Init
  !
@@ -106,6 +106,9 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  rho=rho_sp*real(fft_size,DP)/real(DL_vol,DP)
  forall (i1=1:fft_size) rspts(i1)=(3._DP/4._DP/pi/rho(i1))**(1._DP/3._DP)
  !
+ ! GPL_EXCLUDE_START SPIN_IGNORE
+ !
+ !
  if (n_spin==2) then
    !
    ! Electronic magnetization & Zeta
@@ -116,6 +119,8 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
    !
  endif
  !
+ ! GPL_EXCLUDE_END SPIN_IGNORE
+ !
  ! Hartree
  !
  if (KIND==NONE) then
@@ -125,14 +130,14 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
    return
  endif
  !
- ! EXX = X_alpha when alpha=3/4
+ ! EXX = X_alpha when alpha=3/4. HF when alpha=1.
  !
  if (KIND/=XC_EXCHANGE_CORRELATION.or.FUNCTIONAL==XC_LDA_X) then
-   call xcxalp(1._DP,ex,fft_size,ORDER,rspts,vx,dvx)
+   call xcxalp(1._DP,ex,fft_size,n_spin,ORDER,rspts,zeta,vx,dvx)
    if (KIND==XC_EXCHANGE.or.FUNCTIONAL==XC_LDA_X) then
      exc=ex
-     vxc(:,1)=vx
-     dvxc(:,1)=dvx
+     vxc=vx
+     dvxc=dvx
    endif
  endif
  !
@@ -155,25 +160,35 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
        call xchelu(dvxc(:,1),exc,fft_size,ORDER,rspts,vxc(:,1))
        !
      case (XC_LDA_C_XALPHA)
-       call xcxalp(3._DP/2._DP,exc,fft_size,ORDER,rspts,vxc(:,1),dvxc(:,1))
+       call xcxalp(3._DP/2._DP,exc,fft_size,n_spin,ORDER,rspts,zeta,vxc,dvxc)
        !
      case (XC_LDA_C_KP)
        call xc_rpa_kp(rspts,exc)
        !
    end select
    !
+   ! GPL_EXCLUDE_START SPIN_IGNORE
+   !
+   !
+   ! Only XC_LDA_C_PW supports spin
+   ! 
+   if (FUNCTIONAL/=XC_LDA_C_PW.and.FUNCTIONAL/=XC_LDA_C_XALPHA.and.n_spin==2) then
+     call warning('Used functional is NOT spin-polarized')
+     vxc(:,2)=vxc(:,1)
+     dvxc(:,2)=0._DP
+     dvxc(:,3)=dvxc(:,1)
+   endif
+   !
+   ! GPL_EXCLUDE_END SPIN_IGNORE
+   !
  endif
- !
- ! Only XC_LDA_C_PW supports spin
- ! 
- if (FUNCTIONAL/=XC_LDA_C_PW.and.n_spin==2) vxc(:,2)=vxc(:,1)
  !
  ! CORRELATION ONLY
  !
  if (KIND==XC_CORRELATION) then
-   exc=exc-ex
-   vxc(:,1)=vxc(:,1)-vx
-   dvxc(:,1)=dvxc(:,1)-dvx
+   exc =exc-ex
+   vxc =vxc-vx
+   dvxc=dvxc-dvx
  endif
  !
  ! Allocation and Transfer

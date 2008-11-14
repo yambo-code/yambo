@@ -65,8 +65,8 @@ subroutine report_energies(E,k,Xk,n_bands_,k_range,what,header)
          call msg('r',what//' ',(/(E_(ib,1),ib=i1,min(i1+7,n_bands_))/))
        else
          if (i1==1) then
-           if (is_pol==1) call msg('r','[dn] '//what//' ',(/(E_(ib,1),ib=i1,min(i1+7,n_bands_))/))
-           if (is_pol==2) call msg('r','[up] '//what//' ',(/(E_(ib,2),ib=i1,min(i1+7,n_bands_))/))
+           if (is_pol==1) call msg('r','[up] '//what//' ',(/(E_(ib,1),ib=i1,min(i1+7,n_bands_))/))
+           if (is_pol==2) call msg('r','[dn] '//what//' ',(/(E_(ib,2),ib=i1,min(i1+7,n_bands_))/))
          else
            if (is_pol==1) call msg('r','     '//what//' ',(/(E_(ib,1),ib=i1,min(i1+7,n_bands_))/))
            if (is_pol==2) call msg('r','     '//what//' ',(/(E_(ib,2),ib=i1,min(i1+7,n_bands_))/))

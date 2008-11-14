@@ -95,7 +95,7 @@ subroutine ypp_init_load(defs)
  !
  ! GPL_EXCLUDE_START SPIN_IGNORE
  !
- call it(defs,'MagDir', '[cc] Magnetization direction',mag_dir)
+ call it(defs,'MagDir', 'Magnetization component',mag_dir)
  !
  ! GPL_EXCLUDE_END SPIN_IGNORE
  !

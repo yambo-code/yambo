@@ -44,7 +44,7 @@ subroutine el_density(en,Xk,rho,use_si)
  use pars,          ONLY:SP
  use com,           ONLY:warning
  use R_lattice,     ONLY:bz_samp
- use electrons,     ONLY:levels,n_sp_pol,n_spinor
+ use electrons,     ONLY:levels,n_sp_pol,n_spin
  use D_lattice,     ONLY:nsym,i_time_rev
  use FFT_m,         ONLY:fft_size,fft_rot_r
  use wave_func,     ONLY:wf_state,wf
@@ -57,7 +57,7 @@ subroutine el_density(en,Xk,rho,use_si)
  !
  ! Work Space 
  !
- integer :: i1,i2,is,ifft,rho_syms
+ integer :: i1,i2,i_spin,ifft,rho_syms
  real(SP):: rho_no_sym(fft_size),f_occ
  logical :: warn_done
  !
@@ -68,20 +68,20 @@ subroutine el_density(en,Xk,rho,use_si)
  do i1=1,en%nbm
    do i2=1,Xk%nibz
      !
-     is=1
+     i_spin=1
      !
      ! GPL_EXCLUDE_START SPIN_IGNORE
      !
-     do is=1,n_spinor
+     do i_spin=1,n_spin
        !
-       if (size(wf_state,3)<is) cycle
+       if (size(wf_state,3)<i_spin) cycle
        !
        ! GPL_EXCLUDE_END SPIN_IGNORE
        !
        if (size(wf_state,1)<i1) cycle
        if (size(wf_state,2)<i2) cycle
        !
-       ifft=wf_state(i1,i2,is)
+       ifft=wf_state(i1,i2,i_spin)
        !
        if (ifft==0) then
          if (.not.warn_done) call warning('Not enough states to calculate rho')
@@ -93,7 +93,7 @@ subroutine el_density(en,Xk,rho,use_si)
        !
        ! GPL_EXCLUDE_START SPIN_IGNORE
        !
-       if (n_sp_pol==2) f_occ=en%f(i1,i2,is)
+       if (n_sp_pol==2) f_occ=en%f(i1,i2,i_spin)
        !
        ! GPL_EXCLUDE_END SPIN_IGNORE
        !

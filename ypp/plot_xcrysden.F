@@ -25,7 +25,7 @@ subroutine plot_xcrysden(use_2d)
  use LOGO,        ONLY:code_version
  use com,         ONLY:msg
  use YPP,         ONLY:nr,v2plot,ncell,v2plot2D,r_hole,plot_dim,l_free_hole,&
-&                      l_norm_to_one,WF_multiplier,l_exc_wf
+&                      l_norm_to_one,WF_multiplier,l_exc_wf,plot_title
  use D_lattice,   ONLY:n_atom_species,n_atoms,a,atom_pos,znucl
  use timing,      ONLY:live_timing
  !
@@ -150,7 +150,11 @@ subroutine plot_xcrysden(use_2d)
      max_=maxval(v2plot)
      if (.not.l_norm_to_one) max_=1.
      !
-     call live_timing('3D Plot',nr(3),SERIAL=.true.)
+     if (len_trim(plot_title)==0) then
+       call live_timing('3D Plot',nr(3),SERIAL=.true.)
+     else
+       call live_timing('3D Plot of '//trim(plot_title),nr(3),SERIAL=.true.)
+     endif
      !
      do i3 = 0, nr(3)-1
        do i2 = 0, nr(2)-1

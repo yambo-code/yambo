@@ -47,6 +47,7 @@ module YPP
  character(1) ::mag_dir     
  character(3) ::p_dir        
  character(lchlen) ::output_fname 
+ character(schlen) ::plot_title 
  integer               ::nr(3)
  integer               ::nr_tot
  integer               ::plot_dim

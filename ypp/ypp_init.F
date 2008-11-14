@@ -87,6 +87,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    l_merge=.true.
    l_norm_to_one=.true.
    output_fname=' '
+   plot_title=' '
    !
    ! EXC WF
    !
@@ -187,12 +188,14 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
      if ( trim(rstr_piece(i1)) == 'plot') then
        l_exc_wf    =trim(rstr_piece(i1+1))=='e'
        !
-       l_density =trim(rstr_piece(i1+1))=='d'
+       l_density =trim(rstr_piece(i1+1))=='d'.or.trim(rstr_piece(i1+1))=='dm'.or.&
+&                 trim(rstr_piece(i1+1))=='md'
        l_sp_wf   =trim(rstr_piece(i1+1))=='w'
        !
        ! GPL_EXCLUDE_START SPIN_IGNORE
        !
-       l_mag     =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
+       l_mag =(trim(rstr_piece(i1+1))=='m'.or.trim(rstr_piece(i1+1))=='dm'.or.&
+&              trim(rstr_piece(i1+1))=='md').and.n_spin>1
        !
        ! GPL_EXCLUDE_END SPIN_IGNORE
        !

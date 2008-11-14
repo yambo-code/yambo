@@ -124,6 +124,9 @@ subroutine DFT_Vxc(E,Xk)
      el_mag(:,3)=1.
    endif
    !
+   ! Vxc^+=(Vxc_up+Vxc_down)/2
+   ! Vxc^+=(Vxc_up-Vxc_down)/2
+   !
    vxc_plus(:) =(V_xc(:,1)+V_xc(:,2))/2.
    vxc_minus(:)=(V_xc(:,1)-V_xc(:,2))/2.
    !

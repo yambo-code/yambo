@@ -311,11 +311,20 @@ module QP_CTL_m
      ! Reporting
      !
      call msg('r', '[QP] Fermi level variation [ev]:',en%Efermi(1)*HARTREE)
-     call msg('r', '[QP] Last Filled/Metallic band :',(/en%nbf,en%nbm/))
+     call msg('r',   '[QP] Last Filled/Metallic band :',(/en%nbf,en%nbm/))
      if (en%nbf==en%nbm) then
-       call msg('r','[QP] Ind. Gap Correction  [ev]:',&
-&                (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
-&                -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HARTREE)
+       if (n_sp_pol==1) then
+         call msg('r','[QP] Ind. Gap Correction  [ev]:',&
+&                  (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
+&                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HARTREE)
+       else
+         call msg('r','[QP] Ind. Gap Correction  (up) [ev]:',&
+&                  (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
+&                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HARTREE)
+         call msg('r','                        (down) [ev]:',&
+&                  (minval(en%E(en%nbf+1,:,2))-maxval(en%E(en%nbf,:,2)) &
+&                  -minval(en%Eo(en%nbf+1,:,2))+maxval(en%Eo(en%nbf,:,2)) )*HARTREE)
+       endif
      endif
      !
      end subroutine

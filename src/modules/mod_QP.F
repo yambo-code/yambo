@@ -91,7 +91,7 @@ module QP_m
  ! Note that QP_ctl_E/W/Z are dimensioned *,2)
  ! to describe spin polarized systems.
  ! The second element of the last argument 
- ! is not used in non-collinear or scalar cases 
+ ! is not used in non-collinear or scalar cases.
  !
  real(SP)                :: QP_ctl_E(3,3,2)
  real(SP)                :: QP_ctl_W(3,4,2)

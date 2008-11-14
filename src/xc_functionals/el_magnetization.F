@@ -53,29 +53,31 @@ subroutine el_magnetization(en,Xk,el_mag)
  !
  do i1=1,en%nbm
    do i2=1,Xk%nibz
+     !
      ifft_up=wf_state(i1,i2,1)
      ifft_dn=wf_state(i1,i2,2)
+     !
      if (ifft_up==0 .or. ifft_dn==0) cycle
      if (n_spinor==2) then
        !
        ! mx
        !
        cv(:,1)=cv(:,1)+Xk%weights(i2)*(&
-&      en%f(i1,i2,1)*conjg(wf(:,ifft_up))*wf(:,ifft_dn)&
-&     +en%f(i1,i2,2)*conjg(wf(:,ifft_dn))*wf(:,ifft_up) )
+&              en%f(i1,i2,1)*conjg(wf(:,ifft_up))*wf(:,ifft_dn)&
+&             +en%f(i1,i2,2)*conjg(wf(:,ifft_dn))*wf(:,ifft_up) )
        !
        ! my
        !
        cv(:,2)=cv(:,2)+Xk%weights(i2)*(0.,-1.d0)*(&
-&      en%f(i1,i2,2)*conjg(wf(:,ifft_up))*wf(:,ifft_dn)&
-&     -en%f(i1,i2,1)*conjg(wf(:,ifft_dn))*wf(:,ifft_up) )
+&              en%f(i1,i2,1)*conjg(wf(:,ifft_up))*wf(:,ifft_dn)&
+&             -en%f(i1,i2,2)*conjg(wf(:,ifft_dn))*wf(:,ifft_up) )
      endif
      !
      ! mz
      !
      cv(:,3)=cv(:,3)+Xk%weights(i2)*(&
-&    en%f(i1,i2,2)*conjg(wf(:,ifft_up))*wf(:,ifft_up)&
-&   -en%f(i1,i2,1)*conjg(wf(:,ifft_dn))*wf(:,ifft_dn) )
+&            en%f(i1,i2,1)*conjg(wf(:,ifft_up))*wf(:,ifft_up)&
+&           -en%f(i1,i2,2)*conjg(wf(:,ifft_dn))*wf(:,ifft_dn) )
    enddo
  enddo
  !

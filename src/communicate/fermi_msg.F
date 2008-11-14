@@ -84,8 +84,8 @@ subroutine fermi_msg(E,mode)
    i1=1
    !
    prefix_=''
-   if (n_sp_pol>1.and.i_s_pol==1) prefix_='                 [spin dn]'
-   if (n_sp_pol>1.and.i_s_pol==2) prefix_='                      [up]'
+   if (n_sp_pol>1.and.i_s_pol==1) prefix_='                 [spin up]'
+   if (n_sp_pol>1.and.i_s_pol==2) prefix_='                      [dn]'
    !
    if (nbf_(i_s_pol)==0) i1=0
    if (nbf_(i_s_pol)/=nbm_(i_s_pol)) then
@@ -106,8 +106,8 @@ subroutine fermi_msg(E,mode)
    if (nbf_(i_s_pol)/=nbm_(i_s_pol)) cycle
    !
    prefix_='Indirect Gaps          [ev]:'
-   if (n_sp_pol>1.and.i_s_pol==1) prefix_='Indirect Gaps [ev] spin dn'
-   if (n_sp_pol>1.and.i_s_pol==2) prefix_='                        up'
+   if (n_sp_pol>1.and.i_s_pol==1) prefix_='Indirect Gaps [ev] spin up'
+   if (n_sp_pol>1.and.i_s_pol==2) prefix_='                        dn'
    ind_gaps(1)=minval(E%E(nbf_(i_s_pol)+1,:,i_s_pol))-maxval(E%E(nbf_(i_s_pol),:,i_s_pol))
    ind_gaps(2)=maxval(E%E(nbf_(i_s_pol)+1,:,i_s_pol))-maxval(E%E(nbf_(i_s_pol),:,i_s_pol))
    call msg('r',prefix_//':',ind_gaps*HARTREE)
@@ -121,8 +121,8 @@ subroutine fermi_msg(E,mode)
    if (nbf_(i_s_pol)/=nbm_(i_s_pol)) cycle
    !
    prefix_='Direct Gaps            [ev]:'
-   if (n_sp_pol>1.and.i_s_pol==1) prefix_='Direct Gaps   [ev] spin dn'
-   if (n_sp_pol>1.and.i_s_pol==2) prefix_='                        up'
+   if (n_sp_pol>1.and.i_s_pol==1) prefix_='Direct Gaps   [ev] spin up'
+   if (n_sp_pol>1.and.i_s_pol==2) prefix_='                        dn'
    dir_gaps=(/100.,-100./)
    do i1=1,E%nk
      dir_gaps(1)=min(dir_gaps(1),&

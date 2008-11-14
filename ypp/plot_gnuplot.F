@@ -25,7 +25,8 @@ subroutine plot_gnuplot(use_1d,use_2d,eval_only)
  use com,         ONLY:msg
  use FFT_m,       ONLY:fft_dim
  use D_lattice,   ONLY:a
- use YPP,         ONLY:nr,v2plot,r_hole,v2plot2D,l_norm_to_one,WF_multiplier,plot_dim
+ use YPP,         ONLY:nr,v2plot,r_hole,v2plot2D,l_norm_to_one,WF_multiplier,plot_dim,&
+&                      plot_title
  use timing,      ONLY:live_timing
  !
  implicit none
@@ -37,7 +38,11 @@ subroutine plot_gnuplot(use_1d,use_2d,eval_only)
  character(schlen) :: titles(4)
  real(SP)          :: v_max
  !
- call live_timing('3D Merge',nr(1),SERIAL=.true.)
+ if (len_trim(plot_title)==0) then
+   call live_timing('3D Merge',nr(1),SERIAL=.true.)
+ else
+   call live_timing('3D Merge of '//trim(plot_title),nr(1),SERIAL=.true.)
+ endif
  !
  if (.not.eval_only) then
    !

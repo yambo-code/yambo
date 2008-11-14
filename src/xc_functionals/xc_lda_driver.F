@@ -50,6 +50,13 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
  ! Andrea (9/8/06)
  !
+ ! In case of spin polarized systems *REMEMBER* that:
+ !
+ !  whatever(1) == whatever UP
+ !  whatever(2) == whatever DOWN
+ !
+ ! Yambo have been considering the wrong order up to revision 335 (November 2008)
+ !
  use pars,          ONLY:SP,DP,pi
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:DL_vol

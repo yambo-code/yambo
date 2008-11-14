@@ -1,4 +1,4 @@
-!
+! 
 ! Copyright (C) 2000-2008 A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
@@ -21,16 +21,16 @@
 !
 subroutine plot_driver(Xk,Xen)
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,schlen
  use stderr,        ONLY:intc
  use wave_func,     ONLY:wf_load,wf,WF_free,wf_ng,wf_state
- use FFT_m,         ONLY:fft_size,fft_dim,fft_rot_r
+ use FFT_m,         ONLY:fft_size,fft_dim
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:nsym
- use electrons,     ONLY:levels,n_spin,n_sp_pol
+ use electrons,     ONLY:levels,n_spin,n_spinor,spin,n_sp_pol
  use QP_m,          ONLY:QP_table,QP_n_states,QP_state
  use YPP,           ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
-&                        use_gnuplot,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one
+&                        use_gnuplot,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,plot_title
  use com,           ONLY:msg,of_open_close,warning
  implicit none
  !
@@ -39,8 +39,9 @@ subroutine plot_driver(Xk,Xen)
  !
  ! Work Space
  !
- real(SP), allocatable :: el_mag(:,:)
- integer :: i1,ik,ib,ir,is,i_wf,i_spin,mag_i_dir
+ real(SP), allocatable :: el_mag(:,:),el_den(:)
+ integer               :: i_qp,ik,ib,ir,is,i_wf,i_spin,mag_i_dir,nb_to_load(2)
+ character(schlen)     :: ch_ws
  !
  if (.not.any((/l_mag,l_density,l_sp_wf/))) return
  !
@@ -48,10 +49,13 @@ subroutine plot_driver(Xk,Xen)
  !
  ! Loading  Wf 
  !
- call wf_load(wf_ng,1,(/1,Xen%nbm/),(/1,Xk%nibz/),space='R',title='-WF')
- !
+ nb_to_load=(/1,Xen%nbm/)
+ if (l_sp_wf) then
+   call QP_state_table_setup(Xen)
+   nb_to_load=(/1,maxval(QP_table(:,1))/)
+ endif
+ call wf_load(wf_ng,1,nb_to_load,(/1,Xk%nibz/),space='R',title='-WF')
  nr=fft_dim
- !
  allocate(v2plot(fft_size))
  !
  ! DENSITY
@@ -60,14 +64,19 @@ subroutine plot_driver(Xk,Xen)
    !
    call section('*','Density Plot')
    !
-   call el_density(Xen,Xk,v2plot,.FALSE.) 
+   allocate(el_den(fft_size))
    !
-   if (use_xcrysden) output_fname='density_'//trim(intc(plot_dim))//'d.xsf'
-   if (use_gnuplot)  output_fname='density_'//trim(intc(plot_dim))//'d'
+   call el_density(Xen,Xk,el_den,.FALSE.) 
+   v2plot=el_den
+   !
+   ch_ws='density_'//trim(intc(plot_dim))
+   if (use_xcrysden) output_fname=trim(ch_ws)//'d.xsf'
+   if (use_gnuplot)  output_fname=trim(ch_ws)//'d'
    !
    call of_open_close(trim(output_fname),'ot')
    call msg('o den',"#")
    !
+   plot_title='density'
    call plot_check_and_launch(.false.)
    !
    call of_open_close(trim(output_fname))
@@ -76,44 +85,51 @@ subroutine plot_driver(Xk,Xen)
  !
  ! SYMMETRIZED WAVEFUNCTIONS (summed over all symmetries and degenerate states)
  !
- v2plot=0.
- !
  if (l_sp_wf) then
+   !
+   v2plot=0.
    !
    call section('*','Single Particle wavefunction Plot')
    !
-   if (n_spin>1) then
-     call warning ('SPIN support still not implemented')
+   if (n_spinor==2) then
+     call warning ('Non collinear spin support still not implemented')
      goto 1
    endif
    !
-   call QP_state_table_setup(Xen)
+   i_qp=1
    !
-   i1=1
-   !
-   do while (i1<=QP_n_states) 
+   do while (i_qp<=QP_n_states) 
      !
-     ! n   =QP_table(i1,1)
-     ! k   =QP_table(i1,3)
+     ! n   =QP_table(i_qp,1)
+     ! k   =QP_table(i_qp,3)
+     ! sp  =QP_table(i_qp,4)
      !
-     ib =QP_table(i1,1)
-     ik =QP_table(i1,3)
+     ib    =QP_table(i_qp,1)
+     ik    =QP_table(i_qp,3)
+     i_spin=spin(QP_table(i_qp,:))
      !
-     i_wf=wf_state(ib,ik,1)
+     i_qp=i_qp+1
      !
-     i1=i1+1
+     i_wf=wf_state(ib,ik,i_spin)
      !
-     do is=1,nsym
-       forall(ir=1:fft_size) v2plot(ir)=v2plot(ir)+wf(fft_rot_r(i1,ir),i_wf)*conjg( wf(fft_rot_r(i1,ir),i_wf) )
-     enddo
+     forall(ir=1:fft_size) v2plot(ir)=wf(ir,i_wf)*conjg( wf(ir,i_wf) )
      !
-     if (ib/=Xen%nb.and.abs(Xen%E(ib,ik,1)-Xen%E(ib+1,ik,1))<deg_energy) then
+     if (ib/=Xen%nb.and.abs(Xen%E(ib,ik,i_spin)-Xen%E(ib+1,ik,i_spin))<deg_energy) then
        cycle
      else
-       if (use_xcrysden) output_fname='sp_wf_k'//trim(intc(ik))//'_b'//&
-&                                      trim(intc(ib))//'_'//trim(intc(plot_dim))//'d.xsf'
-       if (use_gnuplot)  output_fname='sp_wf_k'//trim(intc(ik))//'_b'//&
-&                                      trim(intc(ib))//'_'//trim(intc(plot_dim))//'d'
+       !
+       if (n_spin==2) then
+         if (i_spin==1) ch_ws='sp_wf_k'//trim(intc(ik))//'_b'//&
+&              trim(intc(ib))//'_UP_'//trim(intc(plot_dim))
+         if (i_spin==2) ch_ws='sp_wf_k'//trim(intc(ik))//'_b'//&
+&              trim(intc(ib))//'_DN_'//trim(intc(plot_dim))
+         if (i_spin==1) plot_title='k '//trim(intc(ik))//' b '//trim(intc(ib))//' UP'
+         if (i_spin==2) plot_title='k '//trim(intc(ik))//' b '//trim(intc(ib))//' DN'
+       else
+         ch_ws='sp_wf_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_'//trim(intc(plot_dim)) 
+       endif
+       if (use_xcrysden) output_fname=trim(ch_ws)//'d.xsf'
+       if (use_gnuplot)  output_fname=trim(ch_ws)//'d'
        !
        call of_open_close(trim(output_fname),'ot')
        call msg('o wf',"#")
@@ -122,9 +138,8 @@ subroutine plot_driver(Xk,Xen)
        !
        call of_open_close(trim(output_fname))
        !
-       v2plot=0.
-       !
      endif
+     !
    enddo
     !
  endif
@@ -155,9 +170,45 @@ subroutine plot_driver(Xk,Xen)
    call of_open_close(trim(output_fname),'ot')
    call msg('o mag',"#")
    !
+   plot_title='magnetization'
+   !
    call plot_check_and_launch(.false.)
    !
    call of_open_close(trim(output_fname))
+   !
+   if (n_sp_pol==2.and.l_density) then
+     !
+     call section('*','Spin Polarized densities')
+     !
+     do i_spin=1,2
+       !
+       ! rho DN
+       if (i_spin==1) then
+         v2plot=(el_den(:)-el_mag(:,3))/2.
+         ch_ws='density_DN_'//trim(intc(plot_dim))
+       else
+         !
+         ! rho UP
+         v2plot=(el_den(:)+el_mag(:,3))/2.
+         ch_ws='density_UP_'//trim(intc(plot_dim))
+       endif
+       !
+       if (use_xcrysden) output_fname=trim(ch_ws)//'d.xsf'
+       if (use_gnuplot)  output_fname=trim(ch_ws)//'d'
+       !
+       call of_open_close(trim(output_fname),'ot')
+       call msg('o density_UP density_DN',"#")
+       !
+       if (i_spin==1) plot_title='den DN'
+       if (i_spin==2) plot_title='den UP'
+       call plot_check_and_launch(.false.)
+       !
+       call of_open_close(trim(output_fname))
+       !
+     enddo
+     !
+   endif
+   !
    !
  endif
  !
@@ -166,5 +217,7 @@ subroutine plot_driver(Xk,Xen)
  deallocate(v2plot)
  if (allocated(QP_table)) deallocate(QP_table,QP_state)
  if (allocated(el_mag))   deallocate(el_mag)
+ if (allocated(el_den))   deallocate(el_den)
+ plot_title=' '
  !
 end subroutine

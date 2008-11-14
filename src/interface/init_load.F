@@ -418,8 +418,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
      character(7)      ::description_ch(3)
      character(9)      ::spin_description_ch(3)
      !
-     spin_ch=(/'   ','_dn','_up'/)
-     spin_description_ch=(/'         ','spin down','  spin up'/)
+     spin_ch=(/'   ','_up','_dn'/)
+     spin_description_ch=(/'         ','spin up','  spin dn'/)
      prefix=(/'X','K','G'/)
      description_ch(1)='Xd'
      description_ch(2)='BSK BSS'

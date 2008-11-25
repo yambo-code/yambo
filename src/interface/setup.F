@@ -221,7 +221,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  call fermi_level(Xen,Xk,Tel,2)
  call extend_occupations(Xen,en)
  !
- n_met_bands=en%nbm
+ n_met_bands =en%nbm
  n_full_bands=en%nbf
  !
  ! K points / Energies report

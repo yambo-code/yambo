@@ -91,7 +91,7 @@ subroutine QP_apply_fit(band_range,qp,en,QP_ctl,what)
      if (qp%table(i1,1)<band_range(1).or.qp%table(i1,1)>band_range(2)) cycle
      if (real(qp%E_bare(i1))>1.E-5) then
        Nqpc=Nqpc+1
-       if (what=='E') Dy(Nqpc)=real(qp%E(i1)-Eoc)
+       if (what=='E') Dy(Nqpc)=real(qp%E(i1)-Ec)
        if (what=='W') Dy(Nqpc)=aimag(qp%E(i1))
        Dx(Nqpc)=real(qp%E_bare(i1)-Eoc)
      endif
@@ -116,7 +116,7 @@ subroutine QP_apply_fit(band_range,qp,en,QP_ctl,what)
      if (qp%table(i1,1)<band_range(1).or.qp%table(i1,1)>band_range(2)) cycle
      if (real(qp%E_bare(i1))<=1.E-5) then
        Nqpv=Nqpv+1
-       if (what=='E') Dy(Nqpv)=real(qp%E(i1)-Eov)
+       if (what=='E') Dy(Nqpv)=real(qp%E(i1)-Ev)
        if (what=='W') Dy(Nqpv)=aimag(qp%E(i1))
        Dx(Nqpv)=real(qp%E_bare(i1)-Eov)
      endif

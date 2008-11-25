@@ -113,12 +113,14 @@ module QP_CTL_m
      type(levels)     ::Fermi_en
      type(QP_t)       ::qp
      type(QP_ctl_t)   ::QP_ctl_from_DB(n_sp_pol),QP_ctl_input_or_impose(n_sp_pol)
-     integer          ::DB_corrected(en%nb,en%nk,n_sp_pol),ik_bz,ik_ibz,ib,i1,ik_r,SE_MORE,i_spin
+     integer          ::DB_corrected(en%nb,en%nk,n_sp_pol),ik_bz,ik_ibz,ib,i1,&
+&                       ik_r,SE_MORE,i_spin,QP_apply_db_err
      character(schlen)::ch
      character(1)     ::what
      character(11)    ::spin_ch(2)
      logical          ::is_def(4)
      integer, allocatable :: RIM_k_done(:)
+     integer, external    :: QP_apply_db
      !
      ! Resets
      !
@@ -187,13 +189,13 @@ module QP_CTL_m
        ! GPL_EXCLUDE_START
        !
        QP_ctl_from_DB(:)%db=QP_ctl_db(Eid)
-       call QP_apply_db(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,DB_corrected)
+       QP_apply_db_err=QP_apply_db(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,DB_corrected)
        !
        ! GPL_EXCLUDE_END
        !
        ! Update QP db kind in the global_XC kinds 
        !
-       if (QP_DB_kind/=SE_NONE) then
+       if (QP_DB_kind/=SE_NONE.and.QP_apply_db_err>0) then
          if (Eid==1) X_kind=QP_DB_kind
          if (Eid==2) K_kind=QP_DB_kind
          if (Eid==3) G_kind=QP_DB_kind
@@ -210,7 +212,7 @@ module QP_CTL_m
        ! Then update scissor & stretching in the global_XC kinds 
        !
        SE_MORE=MORE_NONE
-       if (any(QP_ctl_E(Eid,1,:)/=0.)) SE_MORE=MORE_SCISSOR
+       if (any(QP_ctl_E(Eid,1,:)/=0.))   SE_MORE=MORE_SCISSOR
        if (any(QP_ctl_E(Eid,2:3,:)/=1.)) SE_MORE=MORE_STRETCH
        if (any(QP_ctl_E(Eid,1,:)/=0.).and.any(QP_ctl_E(Eid,2:3,:)/=1.)) SE_MORE=MORE_SCIS_AND_STRE
        !
@@ -236,8 +238,8 @@ module QP_CTL_m
      !
      ! 2] I am imposing a qp_impose that contains qp corrections
      !
-     if (present(qp_impose)) call QP_apply_db(band_range,en,k,qp_impose,&
-&                                             QP_ctl_from_DB,msg_fmt,DB_corrected)
+     if (present(qp_impose)) QP_apply_db_err=QP_apply_db(band_range,en,k,qp_impose,&
+&                                                        QP_ctl_from_DB,msg_fmt,DB_corrected)
      !
      ! GPL_EXCLUDE_END
      !

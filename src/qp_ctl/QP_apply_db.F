@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_apply_db(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,DB_corrected)
+integer function QP_apply_db(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,DB_corrected)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use stderr,        ONLY:string_split
@@ -72,6 +72,7 @@ subroutine QP_apply_db(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,DB_corrected)
  !
  l_qp=.false.
  qp_msg=' '
+ QP_apply_db=1
  !
  if (qp%n_states/=0) then
    !
@@ -81,6 +82,7 @@ subroutine QP_apply_db(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,DB_corrected)
    QP_ctl_from_DB(:)%db="none"
    QP_ctl_from_DB(:)%short_descr="none"
    QP_ctl_from_DB(:)%interp_neigh=1
+   !
  else
    !
    ! DB.QP
@@ -109,6 +111,7 @@ subroutine QP_apply_db(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,DB_corrected)
      QP_ctl_from_DB(:)%db="none"
      QP_ctl_from_DB(:)%short_descr="none"
      call warning('DB '//trim(qp_db_name)//' not found')
+     QP_apply_db=-1
      return
    endif
    !  
@@ -122,7 +125,10 @@ subroutine QP_apply_db(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,DB_corrected)
    l_qp(3)=.false.
    !DEBUG <
    !
-   if (.not.any(l_qp)) return
+   if (.not.any(l_qp)) then
+     QP_apply_db=-1
+     return
+   endif
    !  
    ! Here I build the qp_msg char on the basis of the qp%description lines.
    ! This to give a compact description of the QP details.
@@ -204,4 +210,4 @@ subroutine QP_apply_db(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,DB_corrected)
      !
    end subroutine
    !
-end subroutine
+end function

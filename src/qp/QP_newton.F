@@ -44,7 +44,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  !
  integer     :: i1,i2,iter
  real(SP)    :: SC_corr_prev,SC_corr_now
- complex(SP) :: Z(QP_dSc_steps-1),Eqp(QP_dSc_steps-1),Eqp_prev(QP_n_states)
+ complex(SP) :: Z(QP_dSc_steps-1),Eqp(QP_dSc_steps-1)
  !
  ! Dyson equation: Newton solver 
  !
@@ -73,7 +73,6 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  !
  iter=0
  SC_corr_prev=1.
- Eqp_prev(:)=qp%E_bare(:)
  !
  ! GPL_EXCLUDE_START
  !
@@ -132,9 +131,8 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
      !
    enddo
    !
-   SC_corr_now= maxval(real(qp%E(:)-Eqp_prev(:)))
+   SC_corr_now= maxval(real(qp%E(:)-qp%E_bare(:)))
    GWo_SC_done=abs( SC_corr_prev-SC_corr_now )<SC_E_threshold.or.iter==GWo_iterations
-   Eqp_prev(:)=qp%E(:)
    !
    ! GPL_EXCLUDE_START
    !

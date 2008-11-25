@@ -452,9 +452,9 @@ module IO_m
        !
        if (.not.write_is_on(ID)) return
        !
-       restart_file=get_name(desc=desc,type=4,CORE_IO=.false.,MORE_IO=.true.,COM_IO=.FALSE.,NETCDF=.false.)
+       restart_file  =get_name(desc=desc,type=4,CORE_IO=.false.,MORE_IO=.true.,COM_IO=.FALSE.,NETCDF=.false.)
        !
-       restart_folder = string_pack(trim(more_io_path),"/RESTART")
+       restart_folder=string_pack(trim(more_io_path),"/RESTART")
        !
        if (now==todo) then
          call rm_file(restart_file)

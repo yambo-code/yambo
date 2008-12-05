@@ -139,8 +139,8 @@ if test -z "${FCFLAGS}"; then
       FCMFLAG=""
       ;;
     *g95*)
-      FCFLAGS="-O0 -fbackslash -g -fno-second-underscore"
-      UFFLAGS="-O0 -fbackslash -g -fno-second-underscore"
+      FCFLAGS="-O3 -fbackslash -fno-second-underscore"
+      UFFLAGS="-O0 -fbackslash -fno-second-underscore"
       FCMFLAG=""
       ;;
     *ifort*)

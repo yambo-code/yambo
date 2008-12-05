@@ -30,7 +30,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         n_atom_species,PT_elements
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,&
 &                         rl_sop,bz_samp,g_vec,E_of_shell
- use com,            ONLY:msg,error
+ use com,            ONLY:msg,error,warning
  use stderr,         ONLY:intc,real2ch
  use IO_m,           ONLY:REP,DUMP,NONE
  use vec_operate,    ONLY:cross_product,c2a
@@ -124,7 +124,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
    case(0)
      call msg('nr','[SYMs] K-space Time-reversal not included')
      do is=1,nsym
-        if ( all(reshape(dl_sop(:,:,is),(/9/))==(/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./)) ) inv_index=is
+       if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./)) ) inv_index=is
      enddo
  end select
  !
@@ -134,6 +134,8 @@ subroutine setup(en,Xen,Ken,k,Xk)
  if (inv_index>0) then
    if (i_space_inv==1) call msg('r','[SYMs] Spatial inversion '//trim(intc(inv_index))//' is a symmetry')
    if (i_space_inv==0) call msg('r','[SYMs] Spatial inversion '//trim(intc(inv_index))//' is NOT a symmetry')
+ else
+   call warning('Spatial Inversion not found among the given symmetry list')
  endif
  !
  ! Symmetries Multiplication Table

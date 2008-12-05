@@ -389,9 +389,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call Xon('Xd',(/'QpntsR','BndsRn','NGsBlk',&
 &                  'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
+   !
 #if defined _MAGNON
    if (l_optics) call initactivate(1,'QplusGDir QplusGShell')
 #endif
+#if defined _DIPOLE_RIM
+   if (l_optics.and.l_chi) call initactivate(1,'DoDipole')
+#endif
+   !
  endif
  !
  ! BSE 

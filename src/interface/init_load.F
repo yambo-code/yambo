@@ -191,6 +191,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'RandQpts','[RIM] Number of random q-points in the BZ',RIM_n_rand_pts)
  call it(defs,'RandGvec','[RIM] Coulomb interaction RS components',RIM_ng,G_unit)
  call it('f',defs,'QpgFull', '[F RIM] Coulomb interaction: Full matrix',verb_level=V_more)
+#if defined _DIPOLE_RIM
+ call it('f',defs,'DoDipole', '[F RIM] Apply the RIM to the dipole strengths',verb_level=V_more)
+#endif
  !
  ! CUTOFF
  !
@@ -419,7 +422,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
      character(9)      ::spin_description_ch(3)
      !
      spin_ch=(/'   ','_up','_dn'/)
-     spin_description_ch=(/'         ','spin up','  spin dn'/)
+     spin_description_ch=(/'       ','spin up','spin dn'/)
      prefix=(/'X','K','G'/)
      description_ch(1)='Xd'
      description_ch(2)='BSK BSS'

@@ -24,7 +24,7 @@ subroutine X_bare_RIM_Gf(iq,transitions,fr,Xw,Xen,Xk,Gf,ordering)
  use pars,       ONLY:SP
  use X_m,        ONLY:use_X_RIM
  use BS,         ONLY:BSS_uses_RIM
- use electrons,  ONLY:levels,BZ_RIM_table,BZ_RIM_nkpt,spin_occ
+ use electrons,  ONLY:levels,BZ_RIM_table,BZ_RIM_nkpt,spin_occ,BZ_RIM_nbands
  use R_lattice,  ONLY:qindx_X,bz_samp
  use frequency,  ONLY:w_samp
  !
@@ -59,7 +59,7 @@ subroutine X_bare_RIM_Gf(iq,transitions,fr,Xw,Xen,Xk,Gf,ordering)
  if (associated(Xen%W)) W_=Xen%W(ic,ik,i_spin)-Xen%W(iv,ikp,i_spin)
  if (associated(Xen%Z)) Z_=Xen%Z(ic,ik,i_spin)*Xen%Z(iv,ikp,i_spin)
  !
- if ((.not.use_X_RIM).and.(.not.BSS_uses_RIM)) then
+ if ((.not.use_X_RIM.or.ic>BZ_RIM_nbands).and.(.not.BSS_uses_RIM)) then
    !
    ! Using QP corrected states
    !

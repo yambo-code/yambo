@@ -23,8 +23,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  use pars,           ONLY:SP,IP
  use parser_m,       ONLY:parser
- use com,            ONLY:msg
+ use com,            ONLY:msg,warning
  use memory_m,       ONLY:mem_est
+ use D_lattice,      ONLY:inv_index
  use stderr,         ONLY:string_remove
  use electrons,      ONLY:levels,n_sp_pol
  use frequency,      ONLY:w_samp,W_reset
@@ -125,6 +126,16 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  BS_cpl_K_corr=index(BS_cpl_mode,'c')/=0
  BS_cpl_K_exchange=index(BS_cpl_mode,'x')/=0
  BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
+ !
+ ! Without spatial inversion it is not possible to include Coupling
+ !
+ if (BS_K_coupling.and.inv_index<0) then
+   call warning('Coupling switched off without spatial inversion')
+   BS_cpl_K_corr=.false.
+   BS_cpl_K_exchange=.false.
+   BS_K_coupling=.false.
+ endif
+ !
  BS_W_is_diagonal=index(BS_res_mode,'d')/=0
  !
 #if defined _SC

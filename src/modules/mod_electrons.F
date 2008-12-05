@@ -76,6 +76,10 @@ module electrons
  integer ,allocatable :: BZ_RIM_nkpt(:)
  integer ,allocatable :: BZ_RIM_table(:,:)
  !
+#if defined _DIPOLE_RIM
+ logical  :: l_dipole_RIM
+#endif
+ !
  contains
    !
    subroutine E_duplicate(Ei,Eo)

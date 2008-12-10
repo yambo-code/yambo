@@ -47,6 +47,10 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  use analyse_peaks,         ONLY : lAnalysePeaks
  use ras_module,            ONLY : lras, lreels 
 #endif
+#if defined _DIPOLE_RIM
+ use parser_m,              ONLY :parser
+ use electrons,             ONLY : l_dipole_RIM
+#endif
  implicit none
  type(levels)         :: Xen
  type(bz_samp)        :: Xk
@@ -69,6 +73,10 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  complex(SP),external :: X_Gf,X_drude
 #if defined _RAS
  complex(SP)          :: iscut
+#endif
+#if defined _DIPOLE_RIM
+ real(SP)                :: Ec_m_Ev
+ complex(SP),allocatable :: Gf_rhoq0(:)
 #endif
  !
  ! Defaults & Setups
@@ -173,6 +181,14 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  if (half_X_mat_only) g2_max=-1
  if (Xw%n(2)==1.and.half_X_mat_only) iwmax=2
  if (iq_now==0.and.half_X_mat_only ) call msg('s','[X] Upper matrix triangle filled')
+#if defined _DIPOLE_RIM
+ call parser('DoDipole',l_dipole_RIM)
+ if(.not.use_X_RIM.or.X%long_gauge) l_dipole_RIM=.false.
+ if(l_dipole_RIM) then
+   allocate(Gf_rhoq0(Xw%n(2)))
+   call msg('nrs','[X] Semi-Interpolation of rho_q0 elements')
+ endif
+#endif
  !
  ! Parallel pointers
  !
@@ -216,6 +232,9 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
        Gf=drude_Gf/real(bg_npts(i1))
      else
        if (.not.force_bare_X_G) Gf(1) = X_Gf(Xw%p(fr(1)),cg_pt(i1),X%ordering)
+#if _DIPOLE_RIM
+       if (l_dipole_RIM) call X_dipole_RIM(iq,X_poles_tab(i1,:),fr,Xw,Xen,Xk,Gf_rhoq0,X%ordering)
+#endif
        if (force_bare_X_G) call X_bare_RIM_Gf(iq,X_poles_tab(i1,:),fr,Xw,Xen,Xk,Gf,X%ordering)
      endif
      do i2 = 1,bg_npts(i1)
@@ -230,6 +249,11 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
        isc%is = (/ic,ik,1,i_spin/)
        isc%os = (/iv,ik,1,i_spin/)
        isc%qs = (/1,1,1/)
+#if _DIPOLE_RIM
+       !
+       Ec_m_Ev=Xen%E(ic,ik,i_spin)-Xen%E(iv,ik,i_spin)
+       !
+#endif
        !
        ! Note the renormalization of the eh_occ=f(1-f) factor
        !
@@ -270,6 +294,13 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
        ! Filling the upper triangular part of the residual here ! 
        !             ^^^^^
        do g2=g2_min,X%ng
+#if defined _DIPOLE_RIM
+        if(g2.eq.1.and.l_dipole_RIM) then
+           !      
+           XoR(1,1)=XoR(1,1)+Gf_rhoq0(1)*eh_occ*isc%rhotw(1)*conjg(isc%rhotw(1))*Ec_m_Ev**2
+           cycle
+        endif
+#endif
 #if defined _DOUBLE
          call zaxpy(g2,Gf(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
 #else
@@ -282,6 +313,12 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
        iw=i2+fr(1)-1
        if (.not.force_bare_X_G.and.cg_pt(i1)/=0.) Gf(i2)=X_Gf(Xw%p(iw),cg_pt(i1),X%ordering)
        do g2=1,X%ng
+#if defined _DIPOLE_RIM
+          if(g2.eq.1.and.l_dipole_RIM) then
+            Xo(1,1,i2)=Xo(1,1,i2)+XoR(1,1)*Gf_rhoq0(i2)/Gf_rhoq0(1)        
+            cycle
+          endif
+#endif
 #if defined _DOUBLE
          call zaxpy(g2,Gf(i2)/Gf(1),XoR(:g2,g2),1,Xo(:g2,g2,i2),1)
          if (g2<g2_max) call zaxpy(X%ng-g2,Gf(i2)/conjg(Gf(1)),conjg(XoR(g2,g2+1:)),&

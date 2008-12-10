@@ -47,7 +47,7 @@ typedef struct
 #endif
 #include "editor.h"
 #include "codever.h"
-#if defined _yambo  || _RAS || _REELS || _ELPH || _SC || _MANYK || _TB || _MAGNON || _DIPOLE_RIM
+#if defined _yambo  || _RAS || _REELS || _ELPH || _SC || _MANYK || _TB || _MAGNON || _DIPOLE_RIM || _PARTIAL_DIAGO
  #include "yambo_cpp.h"
 #endif
 #if defined _ypp  || _YPP_ELPH || _YPP_RAS
@@ -124,7 +124,7 @@ main(int argc, char *argv[])
 /* 
  Switch off MPI_init as I have options used to create the input file...
 */
-#if defined _yambo  || _RAS || _REELS || _ELPH || _SC || _MANYK || _TB || _MAGNON || _DIPOLE_RIM
+#if defined _yambo  || _RAS || _REELS || _ELPH || _SC || _MANYK || _TB || _MAGNON || _DIPOLE_RIM || _PARTIAL_DIAGO
      if (j> 10) {mpi_init=-1;};
 #endif
 #if defined _ypp || _YPP_ELPH || _YPP_RAS
@@ -212,7 +212,7 @@ main(int argc, char *argv[])
    MPI_Comm_size(MPI_COMM_WORLD, &np);  /* get number of processes */
  };
 #endif
-#if defined _yambo  || _RAS || _REELS || _ELPH || _SC || _MANYK || _TB || _MAGNON || _DIPOLE_RIM
+#if defined _yambo  || _RAS || _REELS || _ELPH || _SC || _MANYK || _TB || _MAGNON || _DIPOLE_RIM || _PARTIAL_DIAGO
  /* 
    Running the Fortran YAMBO driver 
  ===========================================================================
@@ -266,7 +266,7 @@ main(int argc, char *argv[])
  */
  strcpy(edit_line,editor);
  strncat(edit_line,inf,strlen(inf));
-#if defined _yambo || _RAS || _REELS || _ypp || _ELPH || _SC || _YPP_ELPH || _YPP_RAS  || _MANYK|| _TB || _MAGNON || _DIPOLE_RIM
+#if defined _yambo || _RAS || _REELS || _ypp || _ELPH || _SC || _YPP_ELPH || _YPP_RAS  || _MANYK|| _TB || _MAGNON || _DIPOLE_RIM || _PARTIAL_DIAGO
  if (iif == 1 && ttd>0)
  {
   if(strstr(editor,"none ")==0) { system(edit_line); };

@@ -50,7 +50,7 @@ TARGETS  = all yambo interfaces ypp
 UTILS    = changelog
 PROJECTS = yambo_ph yambo_sc ypp_ph yambo_ras yambo_reels \
 	       ypp_ras yambo_manyk yambo_ras_manyk yambo_tb yambo_gamma \
-           yambo_magnon yambo_dipole_rim
+           yambo_magnon yambo_dipole_rim yambo_partial_diago
 EXE      = $(TARGETS) $(PROJECTS) 
 INTERFCS = a2y p2y e2y 
 #
@@ -97,6 +97,9 @@ yambo: libs
 	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)
 	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
 # PROJECTS #
+yambo_partial_diago: libs
+	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_PARTIAL_DIAGO"; $(mksrc)
+	@X2DO="yambo_partial_diago"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_PARTIAL_DIAGO";$(mkx)
 yambo_dipole_rim: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_DIPOLE_RIM"; $(mksrc)
 	@X2DO="yambo_dipole_rim"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_DIPOLE_RIM";$(mkx)

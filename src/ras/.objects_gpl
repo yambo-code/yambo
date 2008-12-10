@@ -1,8 +1,8 @@
-#if defined _RAS
+#if defined _YPP_RAS
+objs = reels_spectrum.o ras_spectrum.o extract_eps_surf.o io_slab_eps.o write_eps_tensor.o write_reelsdiff.o 
+#else
 objs = X_O_strengths_cut.o rasdriver.o  \
        reels_spectrum.o ras_spectrum.o extract_eps_surf.o io_ostnts_cut.o \
        io_slab_eps.o write_eps_tensor.o write_reelsdiff.o \
        X_O_longitudinal_cut.o X_O_transverse_cut.o
-#else
-objs =
 #endif

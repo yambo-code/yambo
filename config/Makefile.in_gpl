@@ -78,7 +78,7 @@ TARGETS  = all interfaces
 PROJECTS = yambo_ras ypp_ras
 PJ_RASLIBS   = $(BASIC_LIBS) ras_reels_mods coulomb bz_ops qp_ctl ras \
                interface tddft pol_function qp bse
-YPPRASLIBS   = $(BASIC_LIBS) ras_reels_mods bz_ops qp_ctl interface bse
+YPPRASLIBS   = $(BASIC_LIBS) ras_reels_mods bz_ops qp_ctl ras interface bse
 #endif
 #if defined _REELS
 PROJECTS = yambo_reels
@@ -127,7 +127,7 @@ yambo_ras: libs
 	@LIBS2DO="$(PJ_RASLIBS)";ADF="-D_RAS"; $(mksrc)
 	@X2DO="yambo_ras"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS";$(mkx)
 ypp_ras: libs
-	@LIBS2DO="$(YPPRASLIBS)";ADF="-D_RAS"; $(mksrc)
+	@LIBS2DO="$(YPPRASLIBS)";ADF="-D_YPP_RAS"; $(mksrc)
 	@X2DO="ypp_ras" ;XPATH="ypp";XLIBS="$(YPPRASLIBS)"; ADF="-D_YPP_RAS";$(mkx)
 #endif
 #if defined _REELS

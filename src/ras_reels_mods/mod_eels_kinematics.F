@@ -67,17 +67,19 @@ subroutine init_kinematics(defs) ! only those common to RAS and REELS runlevels
   return
 end subroutine init_kinematics
 
-  subroutine print_eels_kin
+  subroutine print_eels_kin(where)
     use com,               ONLY : msg
     implicit none
     real(SP)                   :: fac = 180.0_SP/pi
+    character(*), optional  :: where
 
-    call msg('nr','Kinematic settings for EELS calculation:')
-    call msg('r','Incident  energy (eV)  :',E0*HARTREE )
-    call msg('r','Incident   angle (deg) :',theta0*fac )
-    call msg('r','Deflection angle (deg) :',thetap*fac )
-    call msg('r','Scattering angle (deg) :',thetas*fac )
-    call msg('r','Azimuthal  angle (deg) :',phi*fac )
+    if(.not.present(where)) where = 'r'
+    call msg('n'//where,'Kinematic settings for EELS calculation:')
+    call msg(where,'Incident  energy (eV)  :',E0*HARTREE )
+    call msg(where,'Incident   angle (deg) :',theta0*fac )
+    call msg(where,'Deflection angle (deg) :',thetap*fac )
+    call msg(where,'Scattering angle (deg) :',thetas*fac )
+    call msg(where,'Azimuthal  angle (deg) :',phi*fac )
     return
   end subroutine print_eels_kin
  

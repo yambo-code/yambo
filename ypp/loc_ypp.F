@@ -21,14 +21,15 @@
 !
  subroutine loc_ypp
    use YPP
-   use com,                     ONLY : error
-   use pars,                    ONLY : SP, pi
+   use com,                     ONLY : error, msg
+   use pars,                    ONLY : SP, pi, schlen
    use surface_geometry,        ONLY : setup_gvecaff, gvecaff
    use wave_func,               ONLY : wf, wf_ng, wf_state, wf_load, wf_free, wf_norm_test
    use D_lattice,               ONLY : alat, DL_vol
    use R_lattice,               ONLY : g_vec, nkibz
    use IO_m,                    only : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP, NONE
    use electrons,               ONLY : n_bands,n_spin,n_spinor,n_sp_pol
+ use timing,              ONLY:live_timing_is_on
    implicit none
    ! 
    ! Work Space
@@ -42,6 +43,7 @@
    integer, external        :: io_loc
    complex(SP)              :: rhoint, int, gz
    complex(SP), parameter   :: ci=cmplx(0.0_SP,1.0_SP)
+   character(schlen)        :: sch
    !
    ! Define ix,iy, iz = normal
    ! 
@@ -58,16 +60,10 @@
    call setup_gvecaff
 
    wf_norm_test = .true.
-#if !defined _RAS
-   call wf_load(ngloc,1,(/1,n_bands/),(/1,nkibz/),space='G',&
-&               title='-Localization/G space')
-#endif
 
    do ik=1,nkibz
-#if defined _RAS
      call wf_load(ngloc,1,(/1,n_bands/),(/ik,ik/),space='G',&
 &                 title='-Localization/G space')
-#endif
      do ib=1,n_bands
        ibfft=wf_state(ib,ik,1)
        rhoint = 0.0_SP
@@ -99,6 +95,20 @@
    call io_control(ACTION=OP_WR_CL, COM=NONE, SEC=(/1/), ID=ID) 
    io_err = io_loc(loc,upperlim, lowerlim, ID)
    if(io_err/=0) call error('Failed to write localization DB.')
+
+   call section('=','State localization.')
+
+   live_timing_is_on = .false.
+   call msg("ns","",nkibz)
+   call msg("s","",n_bands)
+   do ik=1,nkibz
+     do ib=1,n_bands
+       write(sch,'(i7,i7,f9.4)') ik,ib,loc(ib,ik)
+       call msg("s",trim(sch))
+       loc(ib,ik) = real(rhoint)
+     enddo
+   enddo 
+   live_timing_is_on = .true.
 
    return
  end subroutine loc_ypp

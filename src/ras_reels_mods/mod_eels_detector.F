@@ -126,19 +126,21 @@ end subroutine init_detector
 
   end subroutine check_eels_det 
   
-  subroutine print_eels_det
+  subroutine print_eels_det(where)
     use com,   ONLY:msg
     use pars,  only : radian
     implicit none
+    character(*), optional  :: where
 
+    if(.not.present(where)) where = 'r'
     ldetector = .false.
-    call msg('nr','Detector integration factors:')
-    call msg('r','Detector   angle (deg) :',thetadet/radian )
-    if(det_int_type.eq."av") call msg('r','Simple averaging over detector window.' )
-    if(det_int_type.eq."no") call msg('r','No integration over detector window.' )
+    call msg('n'//where,'Detector integration factors:')
+    call msg(where,'Detector   angle (deg) :',thetadet/radian )
+    if(det_int_type.eq."av") call msg(where,'Simple averaging over detector window.' )
+    if(det_int_type.eq."no") call msg(where,'No integration over detector window.' )
     if(det_int_type.eq."nu") then 
-       call msg('r','Numerical integration over detector window.' )
-       call msg('r','Number of integration points :',n_det_pt )
+       call msg(where,'Numerical integration over detector window.' )
+       call msg(where,'Number of integration points :',n_det_pt )
        ldetector = .true.
     endif
 !   if(det_int_type.eq."an") then 

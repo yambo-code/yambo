@@ -148,17 +148,21 @@ contains
 
   subroutine write_cell_info
     implicit none
+
     write(lch1,'(a14,1x,5a9,a10)') &
 &   "Supercell:","Layer","Cell","Vacuum","Slab","Bulk","Surf"
     if(lsymslab) write(lch1,'(a14,1x,5a9,a10)') &
 &   "Supercell:","Layer","Cell","Vacuum","Slab","Bulk","2 x Surf"
- call msg('nrs',lch1)
-      write(lch1,'(a14,1x,5f9.2,f10.2)') "No. of layers:",&
+
+    call msg('nrs',lch1)
+
+    write(lch1,'(a14,1x,5f9.2,f10.2)') "No. of layers:",&
 &               1.0,nlcell, nlvac, nlslab, nlbulk, nlsurf
- call msg('rs',lch1)
-      write(lch1,'(a14,1x,5f9.4,f10.2)') "Atomic units:",&
+    call msg('rs',lch1)
+
+    write(lch1,'(a14,1x,5f9.4,f10.2)') "Atomic units:",&
 &               d_layer,d_cell, d_vac, d_slab, d_bulk, d_surf
- call msg('rs',lch1)
+    call msg('rs',lch1)
     return
   end subroutine write_cell_info
 end subroutine extract_eps_surf

@@ -50,6 +50,7 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
   !
   costakk=2.0_SP/PI/PI/costheta0
 
+
   call live_timing('Energy loss:',nw, SERIAL=.true.)
   do iw = 1, nw
     kpmag = kpmagf( hw(iw) )
@@ -100,8 +101,8 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
 !    if(iw.eq.1) write(24,108) "####hw  ","lossx","lossy","Akk","|qpar|","|Q|^2","Q_||(x)","Q_||(y)",&
 !&   "|k'|","Img_x","Img_y"
 !    write(24,107) hw(iw)*HARTREE, lossf(iw,1), lossf(iw,2), Akk, qparm,qtot2,qpar,kpmag,Img_x,Img_y
-!107 format(f8.3,20e16.7)
-!108 format(a8,20a16)
+107 format(f8.3,20e16.7)
+108 format(a8,20a16)
 !--> DEBUG
     call live_timing(steps=1)
   enddo
@@ -110,7 +111,22 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
   qpard(1) = minval(qpard_(:))
   qpard(2) = maxval(qpard_(:))
 
+  call eels_report
   return
+
+contains
+
+  subroutine eels_report
+    use com,                    ONLY : msg
+    call msg('nrs',"REELS set up report")
+    call msg('rs',"|qpar| x d_surf =",qpard)
+    call msg('rs',"d_surf =",d_surf)
+    call msg('rs',"Loss function type ="//lossformlg(lossfm) )
+    call print_eels_kin('s')
+    call print_eels_det('s')
+    return
+  end subroutine eels_report
+
 end subroutine CalcREELS
 
 

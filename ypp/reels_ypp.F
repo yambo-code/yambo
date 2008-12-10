@@ -53,6 +53,7 @@
  use surface_geometry
  use eels_detector
  use model_loss_function
+ use convolute
  implicit none
  !
  !Work Space
@@ -63,7 +64,7 @@
  integer            ::iq , i,nw, nwy, pol_type, npol
  logical                    :: lfail = .false., do_ras = .true., lsurferr = .false.
  character(lchlen)          :: errmsg
- complex(SP), allocatable   :: eps_b(:),eps_i(:,:),surf_i(:,:)
+ complex(SP), allocatable   :: eps_b(:),eps_i(:,:),surf_i(:,:),eps_g(:,:)
  real(SP),    allocatable   :: hw(:), lossf(:,:)
 real(SP)                       :: qpard(2), q0v(3,3)
 
@@ -76,7 +77,7 @@ real(SP)                       :: qpard(2), q0v(3,3)
  call msg('nrs','Import eps X/Y/Z files')
  !
  call read_spectral_data(xdata,datatype,nw,lfail)
- allocate(eps_i(nw,3),hw(nw),eps_b(nw),surf_i(nw,3),lossf(nw,3))
+ allocate(eps_i(nw,3),hw(nw),eps_b(nw),surf_i(nw,3),lossf(nw,3), eps_g(nw,3))
  eps_i(1:nw,1) = f(1:nw)
  hw(1:nw) = freq(1:nw)/HARTREE + sshift ! shift is internally converted
  call read_spectral_data(ydata,datatype,nwy,lfail)
@@ -86,14 +87,21 @@ real(SP)                       :: qpard(2), q0v(3,3)
  if(nwy.ne.nw) call error('X/Z datafiles have inconsistent data')
  eps_i(1:nw,3) = f(1:nw)
 
- lbulkerr = .false.
+ lbulkerr = .false. ; lsurferr = .false.
  call msg('nrs','Import bulk')
  call GetBulkEps(hw, nw, eps_b, errmsg)
  call msg('nrs',trim(errmsg))
+ if(lbulkerr) call error(' Stopping')
 
-  call section('=','Write eps cell for plotting:')
-  call write_eps_tensor( q0v, eps_i, hw, nw, npol, 'cell' )
+ call section('=','Write eps cell for plotting:')
+ call write_eps_tensor( q0v, eps_i, hw, nw, npol, 'cell' )
 
+ ! 
+ ! Write the broadened eps cell also
+ ! 
+ eps_g = eps_i
+ call broaden_tensor
+ call write_eps_tensor( q0v, eps_g, hw, nw, npol, 'cell-broad' )
  !
  ! Setup the REELS geometry
  !
@@ -114,9 +122,12 @@ real(SP)                       :: qpard(2), q0v(3,3)
  call print_eels_geometry
  q0v(:,1) = q0x ; q0v(:,2) = q0y ; q0v(:,3) = norm
 
+ call section('=','Slab symmetries: ')
+ call get_slab_symmetry( .false. )
+
  call section('=','Surface dielectric function')
  call extract_eps_surf(surf_i, eps_i, npol, eps_b, nw, lbulkerr, lsurferr)
- if(lsurferr) stop 'Stopping'
+ if(lsurferr) stop ' Stopping'
  if(.not.lsurferr) call write_eps_tensor( q0v, surf_i, hw, nw, npol, 'surf' )
 
  call section('=','REELS')
@@ -184,5 +195,20 @@ real(SP)                       :: qpard(2), q0v(3,3)
      return
      
    end subroutine read_spectral_data
+  
+   subroutine broaden_tensor
+     real(SP),    allocatable   :: tmpi(:),tmpr(:)
+     integer                    :: i
+     allocate( tmpi(nw), tmpr(nw) )
+     do i = 1,3
+       tmpi = aimag(eps_g(:,i))
+       tmpr =  real(eps_g(:,i))
+       call convolute_gaussian(tmpi, hw, nw)
+       call convolute_gaussian(tmpr, hw, nw)
+       eps_g(:,i) = cmplx(tmpr,tmpi)
+     enddo
+
+     deallocate(tmpi, tmpr)
+   end subroutine broaden_tensor
    
  end subroutine reels_ypp

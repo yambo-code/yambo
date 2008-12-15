@@ -37,7 +37,7 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
   complex(SP),  intent(in) :: surf_i(nw,3) ! MUST have npol = 3
   real(SP),     intent(out):: lossf(nw,2)
 ! Local
-  integer                  :: iw, idet
+  integer                  :: iw, idet, pb=13
   real(SP)                 :: costakk, kpmag, qpard_(nw)
   real(SP)                 :: qparm, qtot2, qpar(2)
   real(SP)                 :: Akk, loss_qpar(2)
@@ -50,12 +50,12 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
   !
   costakk=2.0_SP/PI/PI/costheta0
 
-
   call live_timing('Energy loss:',nw, SERIAL=.true.)
   do iw = 1, nw
     kpmag = kpmagf( hw(iw) )
 
-    loss_qpar(:) = 0
+    loss_qpar(1) = 0.0_SP
+    loss_qpar(2) = 0.0_SP
     !
     ! Integrate scattering cross section over detector window
     !
@@ -75,7 +75,11 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
       qparm  = sqrt( qpar(1)**2 + qpar(2)**2 )
       if(idet.eq.1) qpard_(iw) = qparm*d_surf
       qtot2 = kmag**2 + kpmag**2 - 2.0_SP * kmag * kpmag * costhetad
+      if(abs(costhetad).gt.0.999999) then
+         qtot2 = kmag**2 + kpmag**2 - 2.0_SP * kmag * kpmag * 0.999999 ! fpz
+      endif
       Akk = costakk*(kpmag/kmag)*(qparm/qtot2**2) 
+
       !
       ! Parallel case 
       !
@@ -85,12 +89,14 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
       !
       eps_s(:) = (/ surf_i(iw,1), surf_i(iw,2), surf_i(iw,3) /)
       Img_x = model_Img(lossfm, eps_b(iw),qpar=qpar, esurf = eps_s, dsurf = d_surf, dvac = bimp)
+      if(pendepth.gt.0.001) Img_x = Img_x + model_Img(pb, eps_b(iw), qpar=qpar, pendepth=pendepth)
       loss_qpar(1) = loss_qpar(1) + Akk * Img_x * w_det(idet)
       !
       ! Loss function for q || q_y
       !
       eps_s(:) = (/ surf_i(iw,2), surf_i(iw,1), surf_i(iw,3) /)
       Img_y = model_Img(lossfm,eps_b(iw), qpar=qpar, esurf = eps_s, dsurf = d_surf, dvac = bimp)
+      if(pendepth.gt.0.001) Img_y = Img_y + model_Img(pb, eps_b(iw), qpar=qpar, pendepth=pendepth)
       loss_qpar(2) = loss_qpar(2) + Akk * Img_y * w_det(idet)
       !
     enddo

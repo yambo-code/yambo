@@ -553,7 +553,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &     ' E0 Theta0 Thetap Phi DetAngle'//&               ! Kinematics
 &     ' LossForm ImpactFt'//&                        ! Model of loss function
 &     ' DetIntMd NumIntPt'//&                           ! Det. integration
-&     ' GausConv')                    ! General flags
+&     ' PenDepth GausConv')                    ! General flags
  endif
 #endif
  !

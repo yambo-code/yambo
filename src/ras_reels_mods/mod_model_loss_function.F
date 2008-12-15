@@ -25,11 +25,11 @@ module model_loss_function
   !
   use pars,                   ONLY : SP
   character(2), public            :: model
-  integer, parameter              :: nlossform = 12
+  integer, parameter              :: nlossform = 13
   integer                         :: lossfm
   character(2)                    :: lossformsh(nlossform)
   character(70)                   :: lossformlg(nlossform)
-  data lossformsh/'1b','2b','2e','aq','az','ar','ig','iq','id','ip','ap','is'/
+  data lossformsh/'1b','2b','2e','aq','az','ar','ig','iq','id','ip','ap','is','pb'/
   data lossformlg/&
 & 'isotropic bulk continuum',                       & ! 1  1b
 & 'semi-infinite continuum',                        & ! 2  2b
@@ -42,7 +42,8 @@ module model_loss_function
 & 'isotropic form of 3-layer, dielectric theory',   & ! 9  id
 & 'isotropic form of 3-layer, parallel trajectory', & ! 10 ip
 & 'anisotropic form of 3-layer, parallel trajectory',&! 11 ap
-& 'isotropic bulk loss in a surface layer'/           ! 12 is
+& 'isotropic bulk loss in a surface layer',         & ! 12 is
+& 'bulk losses from a penetrating electron'/          ! 13 pb
 
 contains
 
@@ -77,11 +78,11 @@ end subroutine init_loss_function
     return
   end subroutine print_eels_form
 
-  real(SP) function model_Img(iform, ebulk, qparm, qpar, bparm, dvac, esurf, dsurf)
+  real(SP) function model_Img(iform, ebulk, qparm, qpar, bparm, dvac, esurf, dsurf, pendepth)
     implicit none
     integer,     intent(in)           :: iform
     complex(SP), intent(in)           :: ebulk
-    real(SP),    intent(in), optional :: bparm, dsurf, dvac, qparm, qpar(2)
+    real(SP),    intent(in), optional :: bparm, dsurf, dvac, qparm, qpar(2),pendepth
     complex(SP), intent(in), optional :: esurf(3)
 !   ws
     real(SP)                          :: fac1, fac2, fac3, qparm_
@@ -95,7 +96,7 @@ end subroutine init_loss_function
     ! qpar and esurf in same reference frame.
 
     if(present(qpar))  qparm_ = sqrt(qpar(1)**2 + qpar(2)**2)
-    if(present(qparm)) qparm_ = qparm_
+    if(present(qparm)) qparm_ = qparm
 
     select case (iform)
     case(1)
@@ -215,10 +216,16 @@ end subroutine init_loss_function
       !
     case(12)
       !
-      ! Bulk losses in a surface layer
+      ! Bulklike losses in a surface layer 
       !
       esavg = ( esurf(1) + esurf(2) + esurf(3) )/ 3.0_SP
       model_Img = aimag(-1.0_SP/esavg)
+      !
+    case(13)
+      !
+      ! Bulk losses occurring in a reflection geometry
+      !
+      model_Img = (pendepth*qparm_ + 1.0_SP)*aimag( -1.0_SP / ebulk ) 
       !
     end select 
     return 

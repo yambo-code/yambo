@@ -41,7 +41,7 @@ module eels_kinematics
   public :: init_kinematics
   public :: print_eels_impact, print_eels_kin, setup_eels_kin, print_eels_geometry
   public :: q_x, q_y, q_z, qy_av_, qx_av_, hwq, kpmagf
-  public :: thetap, lplanar, phi, lparallel, bimp
+  public :: thetap, lplanar, phi, lparallel, bimp, pendepth
   public :: costheta0, sintheta0, costhetap, sinthetap, kmag, reset_trig
   public :: E0, theta0_in, thetap_in, phi_in
 
@@ -63,6 +63,7 @@ subroutine init_kinematics(defs) ! only those common to RAS and REELS runlevels
   call it(defs,'Phi'     , '[REELS] Azimuthal angle  (deg)', phi_in, verb_level=V_more )
   call it(defs,'ImpactFt', '[REELS] Impact Factor (a.u.)', bimp,verb_level=V_more )
 #endif
+  call it(defs,'PenDepth', '[REELS] Penetration depth of electron (a.u.)', pendepth )
 
   return
 end subroutine init_kinematics
@@ -139,6 +140,7 @@ end subroutine init_kinematics
         if(.not.lspecular.and.lplanar) call msg('rs','... Planar scattering.')
         if(.not.lspecular.and..not.lplanar) call msg('rs','... Non-planar scattering.')
         if(lgrazing) call msg('nrs','... Warning: approaching grazing incidence! Theory breaking down....')
+        if(pendepth.gt.0.0001) call msg('rs','... Electron penetration depth (a.u.) :',pendepth)
       endif
     return
   end subroutine print_eels_geometry

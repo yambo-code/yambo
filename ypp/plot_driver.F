@@ -118,6 +118,8 @@ subroutine plot_driver(Xk,Xen)
        cycle
      else
        !
+       ! GPL_EXCLUDE_START SPIN_IGNORE
+       !
        if (n_spin==2) then
          if (i_spin==1) ch_ws='sp_wf_k'//trim(intc(ik))//'_b'//&
 &              trim(intc(ib))//'_UP_'//trim(intc(plot_dim))
@@ -126,8 +128,17 @@ subroutine plot_driver(Xk,Xen)
          if (i_spin==1) plot_title='k '//trim(intc(ik))//' b '//trim(intc(ib))//' UP'
          if (i_spin==2) plot_title='k '//trim(intc(ik))//' b '//trim(intc(ib))//' DN'
        else
+         !
+         ! GPL_EXCLUDE_END SPIN_IGNORE
+         !
          ch_ws='sp_wf_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_'//trim(intc(plot_dim)) 
+         !
+         ! GPL_EXCLUDE_START SPIN_IGNORE
+         !
        endif
+       !
+       ! GPL_EXCLUDE_END SPIN_IGNORE
+       !
        if (use_xcrysden) output_fname=trim(ch_ws)//'d.xsf'
        if (use_gnuplot)  output_fname=trim(ch_ws)//'d'
        !
@@ -144,7 +155,7 @@ subroutine plot_driver(Xk,Xen)
     !
  endif
  !
- ! MAGNETIZATION
+ ! MAGNETIZATION GPL_EXCLUDE_START
  !
  if (l_mag) then
    !
@@ -211,6 +222,8 @@ subroutine plot_driver(Xk,Xen)
    !
    !
  endif
+ !
+ ! GPL_EXCLUDE_END
  !
 1 continue
  call WF_free()

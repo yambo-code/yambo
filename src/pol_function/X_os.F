@@ -232,7 +232,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
        Gf=drude_Gf/real(bg_npts(i1))
      else
        if (.not.force_bare_X_G) Gf(1) = X_Gf(Xw%p(fr(1)),cg_pt(i1),X%ordering)
-#if _DIPOLE_RIM
+#if defined _DIPOLE_RIM
        if (l_dipole_RIM) call X_dipole_RIM(iq,X_poles_tab(i1,:),fr,Xw,Xen,Xk,Gf_rhoq0,X%ordering)
 #endif
        if (force_bare_X_G) call X_bare_RIM_Gf(iq,X_poles_tab(i1,:),fr,Xw,Xen,Xk,Gf,X%ordering)
@@ -249,7 +249,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
        isc%is = (/ic,ik,1,i_spin/)
        isc%os = (/iv,ik,1,i_spin/)
        isc%qs = (/1,1,1/)
-#if _DIPOLE_RIM
+#if defined _DIPOLE_RIM
        !
        Ec_m_Ev=Xen%E(ic,ik,i_spin)-Xen%E(iv,ik,i_spin)
        !

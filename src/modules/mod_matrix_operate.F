@@ -26,7 +26,7 @@ module matrix_operate
  integer, parameter :: ALREADY_FILLED=3
  integer, parameter :: DIAGO=4
  integer, parameter :: INV=5
- integer, parameter :: PDIAGO=6
+ integer, parameter :: PARTIAL_DIAGO=6
  integer, parameter :: USE_SVD=7
  !
  integer, parameter :: min_cpu_block_size=100
@@ -200,6 +200,9 @@ module matrix_operate
 #if ! defined _SLK
      lib_in_use=USE_LK
 #endif
+     !
+     ! =============== SERIAL SECTION ===============
+     !
      !
      ! ####> SVD INVERTION (Using Singular Value decomposition)
      !

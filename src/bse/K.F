@@ -67,7 +67,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Kernel loop
  !
- integer    :: ikk1,ikk2,live_timing_steps,is1xis2,ik1bz,iv1,ic1,ik1,is1,inv_s1,is1p,&
+ integer    :: ikk1,ikk2,live_timing_steps,live_timing_step_size,live_timing_accumulate,&
+&              is1xis2,ik1bz,iv1,ic1,ik1,is1,inv_s1,is1p,&
 &              i_sp1,i_sp2,ik2bz,iv2,ic2,ik2,is2,is2p,&
 &              icv1,icv2,iOvv,iOcc,i1,i2,i3,iqs,iq_W,ig0,bands_to_load(2)
  integer    :: iOcv, iOvc
@@ -210,7 +211,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  E_eh_range=(/minval(abs(BS_eh_E))-1.E-5,maxval(abs(BS_eh_E))/)
  S_eh_range=(/BS_eh_win(1)/100.*(E_eh_range(2)-E_eh_range(1)),& 
 &             BS_eh_win(2)/100.*(E_eh_range(2)-E_eh_range(1))/)
- call K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements)
+ call K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements,&
+&               live_timing_steps,live_timing_step_size)
  !
  if (all(n_K_elements==0)) return
  !
@@ -405,11 +407,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (.not.BS_K_coupling) call mem_est('BS_mat',(/O_x_dim**2/))
  if (BS_K_coupling) call mem_est('BS_mat',(/2*O_x_dim**2/)) 
  !
- if (.not.l_bs_fxc) call live_timing('BSK',int(n_K_elements(myid+1),4))
- if (l_bs_fxc) call live_timing('BSK->Fxc',int(n_K_elements(myid+1),4))
+ if (.not.l_bs_fxc) call live_timing('BSK',live_timing_steps)
+ if (l_bs_fxc) call live_timing('BSK->Fxc',live_timing_steps)
  !
  tot_n_K_elements=0
- live_timing_steps=0
+ live_timing_accumulate=0
  i8nc=ncpu
  i8id=myid
  !
@@ -485,10 +487,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
          ! ::: Timing START :::
          !
-         live_timing_steps=live_timing_steps+1
-         if (live_timing_steps==n_K_elements(myid+1)/10/nhash) then
-           call live_timing(steps=live_timing_steps)
-           live_timing_steps=0
+         live_timing_accumulate=live_timing_accumulate+1
+         if (live_timing_accumulate==live_timing_step_size) then
+           call live_timing(steps=1)
+           live_timing_accumulate=0
          endif
          !
          ! ::: Timing END :::
@@ -671,8 +673,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Live Timing finalize
  !
- live_timing_steps=mod( n_K_elements(myid+1) , int(10*nhash,KIND=KIND(n_K_elements)) )
- if (live_timing_steps>0) call live_timing(steps=live_timing_steps)
+ if (mod(n_K_elements(myid+1),live_timing_step_size)/=0) call live_timing(steps=1)
  call live_timing()
  call pp_redux_wait
  !

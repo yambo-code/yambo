@@ -94,6 +94,9 @@ module BS
  real(SP) :: Haydock_v0_mod
  logical  :: BSS_write_eig_2_db
  logical  :: BSS_uses_RIM
+#if defined _PARTIAL_DIAGO
+ logical  :: BSS_uses_partial_diago
+#endif
  complex(SP),allocatable :: BSS_rhoq0(:)
  !
  interface 

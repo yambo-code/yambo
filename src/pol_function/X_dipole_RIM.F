@@ -62,6 +62,28 @@ subroutine X_dipole_RIM(iq,transitions,fr,Xw,Xen,Xk,Gf_rhoq0,ordering)
  if (associated(Xen%W)) W_=Xen%W(ic,ik,i_spin)-Xen%W(iv,ikp,i_spin)
  if (associated(Xen%Z)) Z_=Xen%Z(ic,ik,i_spin)*Xen%Z(iv,ikp,i_spin)
  !
+ if (ic>BZ_RIM_nbands) then
+   !
+   ! Using QP corrected states
+   !
+   Ec_m_Ev=Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ik_rand,i_spin)
+   pole   =Ec_m_Ev+(0.,1.)*W_
+   !
+   do iw=fr(1),fr(2)
+     if (ordering=="t") &
+&      Gf_rhoq0(iw-fr(1)+1)=(Z_*(1./(Xw%p(iw)-pole)-1./(conjg(Xw%p(iw))+pole)))/Ec_m_Ev**2
+     if (ordering=="c") &
+&      Gf_rhoq0(iw-fr(1)+1)=(Z_*(1./(Xw%p(iw)-pole)-1./(Xw%p(iw)+pole))       )/Ec_m_Ev**2
+     if (ordering=="r") &
+&      Gf_rhoq0(iw-fr(1)+1)=(Z_/(Xw%p(iw)-pole)                               )/Ec_m_Ev**2
+     if (ordering=="a") &
+&      Gf_rhoq0(iw-fr(1)+1)=(           -Z_/(conjg(Xw%p(iw))+pole)            )/Ec_m_Ev**2
+   enddo
+   !
+   return
+   !
+ endif
+ !
  ! In the X_o loop the Gf is multiplied by 
  !
  !  f0fac/spin_occ/real(Xk%nbz)/DL_vol

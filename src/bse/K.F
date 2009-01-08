@@ -26,7 +26,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use pars,         ONLY:SP,pi,IP
  use LOGO,         ONLY:pickup_a_random
  use memory_m,     ONLY:mem_est
- use drivers,      ONLY:l_bs_fxc,l_col_cut
+ use drivers,      ONLY:l_bs_fxc,l_col_cut,l_td_hf
  use frequency,    ONLY:w_samp
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,spin
  use FFT_m,        ONLY:fft_size
@@ -49,9 +49,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       cumulative_index,BS_K_is_ALDA,BS_cpl_mat,&
 &                       BS_cpl_K_exchange,BSS_q0,&
 &                       O_n_scatt,BS_O,BS_cpl_K_corr
-#if defined _SC
- use BS,             ONLY:BS_bare_W
-#endif
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,RD_CL,OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END
@@ -181,11 +178,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  W_is_em1s=X%whoami==2
  W_is_pp  =X%whoami==4
  !
- if (BS_res_K_corr&
-#if defined _SC
-&    .and..not.BS_bare_W&
-#endif
-    ) then
+ if (BS_res_K_corr.and..not.l_td_hf) then
    call section('+','Screneed interaction header I/O')
    !
    ! X%ng are the G's in the X DB while BS_n_g_W the G's I want to read.
@@ -327,32 +320,22 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    allocate(isc%gamp(i1,BS_n_g_W))
    !
-#if defined _SC
-   if (.not.BS_bare_W) then
+   if (.not.l_td_hf) then
      call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
      ioX_err=ioX(X,Xw,XID)
    endif
-#else
-   call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
-   ioX_err=ioX(X,Xw,XID)
-#endif
    !
    do iq_W=1,q%nibz
      !
      isc%qs(2)=iq_W
      call scatterGamp(isc,'c')
      !
-#if defined _SC
-     if (BS_bare_W) then
+     if (l_td_hf) then
        X_mat=(0.,0.)
      else
        call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
        ioX_err=ioX(X,Xw,XID)
      endif
-#else
-     call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
-     ioX_err=ioX(X,Xw,XID)
-#endif
      !
      forall(i2=1:BS_n_g_W) X_mat(i2,i2,1)=X_mat(i2,i2,1)+1.
      do i2=1,BS_n_g_W

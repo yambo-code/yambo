@@ -22,6 +22,7 @@
 integer function variables_BS(ID,local_description,DB,X)
  !
  use pars,          ONLY:HARTREE,lchlen
+ use drivers,       ONLY:l_td_hf
  use X_m,           ONLY:X_t
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts,cut_geometry
  use BS,            ONLY:BS_identifier,BS_K_dim,BS_bands,&
@@ -41,7 +42,7 @@ integer function variables_BS(ID,local_description,DB,X)
  !
  integer             ::var_size,i_local_desc
  logical             ::res_corr_disk,res_exch_disk,cpl_disk,&
-&                      cpl_corr_disk,cpl_exch_disk
+&                      cpl_corr_disk,cpl_exch_disk,td_hf_disk
  !
  ! PARS1
  !
@@ -80,6 +81,10 @@ integer function variables_BS(ID,local_description,DB,X)
 &     VAR="    |Exchange           [cpl]:",L0=BS_cpl_K_exchange,CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
  i_local_desc=i_local_desc+1
+ call io_elemental(ID,DB_L0=td_hf_disk,&
+&     VAR="    |W interaction is bare   :",L0=l_td_hf,CHECK=.true.,OP=(/"=="/),&
+&     DESCRIPTION=local_description(i_local_desc))
+ i_local_desc=i_local_desc+1
  call io_elemental(ID,DB_L0=cpl_corr_disk,&
 &     VAR="    |Correlation        [cpl]:",L0=BS_cpl_K_corr,CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
@@ -108,73 +113,83 @@ integer function variables_BS(ID,local_description,DB,X)
  call io_elemental(ID,&
 &     VAR="    |Coupling range     [o/o]:",R1=BS_eh_win,CHECK=.true.,OP=(/"==","=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
+ !
+ ! Interaction
+ !
  if (res_corr_disk.or.cpl_corr_disk) then
- i_local_desc=i_local_desc+1
+   i_local_desc=i_local_desc+1
    call io_elemental(ID,&
 &       VAR="  W |Interaction is diagonal :",L0=BS_W_is_diagonal,CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_local_desc))
- i_local_desc=i_local_desc+1
+   i_local_desc=i_local_desc+1
    call io_elemental(ID,&
 &       VAR="    |Matrix size             :",I0=X%ng,WARN=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_local_desc))
- i_local_desc=i_local_desc+1
-   call io_elemental(ID,&
-&       VAR="    |Bands                   :",I1=X%ib,CHECK=.true.,OP=(/"==","=="/),&
-&       DESCRIPTION=local_description(i_local_desc))
- i_local_desc=i_local_desc+1
-   call io_elemental(ID,UNIT=HARTREE,&
-&       VAR="    |e/h energy range    [ev]:",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/),&
-&       DESCRIPTION=local_description(i_local_desc))
- i_local_desc=i_local_desc+1
-   call io_elemental(ID,&
-&       VAR="    |Poles              [o/o]:",R0=X%cg_percentual,CHECK=.true.,OP=(/"=="/),&
-&       DESCRIPTION=local_description(i_local_desc))
- i_local_desc=i_local_desc+1
-   call io_elemental(ID,&
-&       VAR="    |Rl vectors in the sum   :",I0=X%ngostnts,WARN=.true.,OP=(/"<="/),&
-&       DESCRIPTION=local_description(i_local_desc))
- i_local_desc=i_local_desc+1
-   call io_elemental(ID,&
-&       VAR="    |[r,Vnl] included        :",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/),&
-&       DESCRIPTION=local_description(i_local_desc))
-   !
-   if (ver_is_gt_or_eq(ID,(/3,0,9/))) then
-     !
-     ! v 3.0.8: Inclusion of %long_gauge 
-     !
-     i_local_desc=i_local_desc+1
-     call io_elemental(ID,&
-&         VAR="    |Longitudinal Gauge      :",L0=X%long_gauge,WARN=.true.,OP=(/"=="/),&
-&         DESCRIPTION=local_description(i_local_desc))
-   endif
-   !
    i_local_desc=i_local_desc+1
-   call io_elemental(ID,&
-&       VAR="    |Field direction         :",R1=X%q0,CHECK=.true.,OP=(/"==","==","=="/),&
-&       DESCRIPTION=local_description(i_local_desc))
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   if (ver_is_gt_or_eq(ID,(/3,0,11/))) then
+   ! Only if full screened interaction is used
+   !
+   if (.not.td_hf_disk) then
      !
-     ! v 3.0.11: Inclusion of cut_geometry
-     !
-     call io_elemental(ID,VAR="W_Cutoff",VAR_SZ=1,CH0="",MENU=0)
-     i_local_desc=i_local_desc+1
      call io_elemental(ID,&
-&         VAR="    |Columbian Cutoff        :",CH0=cut_geometry,CHECK=.true.,OP=(/"=="/),&
+&         VAR="    |Bands                   :",I1=X%ib,CHECK=.true.,OP=(/"==","=="/),&
 &         DESCRIPTION=local_description(i_local_desc))
      i_local_desc=i_local_desc+1
+     call io_elemental(ID,UNIT=HARTREE,&
+&         VAR="    |e/h energy range    [ev]:",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/),&
+&         DESCRIPTION=local_description(i_local_desc))
+     i_local_desc=i_local_desc+1
+     call io_elemental(ID,&
+&         VAR="    |Poles              [o/o]:",R0=X%cg_percentual,CHECK=.true.,OP=(/"=="/),&
+&         DESCRIPTION=local_description(i_local_desc))
+     i_local_desc=i_local_desc+1
+     call io_elemental(ID,&
+&         VAR="    |Rl vectors in the sum   :",I0=X%ngostnts,WARN=.true.,OP=(/"<="/),&
+&         DESCRIPTION=local_description(i_local_desc))
+     i_local_desc=i_local_desc+1
+     call io_elemental(ID,&
+&         VAR="    |[r,Vnl] included        :",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/),&
+&         DESCRIPTION=local_description(i_local_desc))
+     !
+     if (ver_is_gt_or_eq(ID,(/3,0,9/))) then
+       !
+       ! v 3.0.8: Inclusion of %long_gauge 
+       !
+       i_local_desc=i_local_desc+1
+       call io_elemental(ID,&
+&           VAR="    |Longitudinal Gauge      :",L0=X%long_gauge,WARN=.true.,OP=(/"=="/),&
+&           DESCRIPTION=local_description(i_local_desc))
+     endif
+     !
+     i_local_desc=i_local_desc+1
+     call io_elemental(ID,&
+&         VAR="    |Field direction         :",R1=X%q0,CHECK=.true.,OP=(/"==","==","=="/),&
+&         DESCRIPTION=local_description(i_local_desc))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     !
+     if (ver_is_gt_or_eq(ID,(/3,0,11/))) then
+       !
+       ! v 3.0.11: Inclusion of cut_geometry
+       !
+       call io_elemental(ID,VAR="W_Cutoff",VAR_SZ=1,CH0="",MENU=0)
+       i_local_desc=i_local_desc+1
+       call io_elemental(ID,&
+&           VAR="    |Columbian Cutoff        :",CH0=cut_geometry,CHECK=.true.,OP=(/"=="/),&
+&           DESCRIPTION=local_description(i_local_desc))
+       i_local_desc=i_local_desc+1
+       call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     endif
+     !
+     ! W_TDDFT_KERNEL
+     !
+     call io_elemental(ID,VAR="W_TDDFT_KERNEL",VAR_SZ=1,CH0="",MENU=0)
+     i_local_desc=i_local_desc+1
+     call io_elemental(ID,&
+&       VAR='    |xc-Kernel               :',CH0=X%f_xc,CHECK=.true.,&
+&       DESCRIPTION=local_description(i_local_desc))
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     !
    endif
-   !
-   ! W_TDDFT_KERNEL
-   !
-   call io_elemental(ID,VAR="W_TDDFT_KERNEL",VAR_SZ=1,CH0="",MENU=0)
-   i_local_desc=i_local_desc+1
-   call io_elemental(ID,&
-&     VAR='    |xc-Kernel               :',CH0=X%f_xc,CHECK=.true.,&
-&     DESCRIPTION=local_description(i_local_desc))
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    ! W_RIM
    !
@@ -187,6 +202,7 @@ integer function variables_BS(ID,local_description,DB,X)
    call io_elemental(ID,I0=RIM_n_rand_pts,&
 &     VAR='    |Random points      [col]:',CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
+   !
  endif
  !
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)

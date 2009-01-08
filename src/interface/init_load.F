@@ -117,6 +117,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('r',defs,'acfdt',   '[R ETOT] ACFDT Total Energy')
  call it('r',defs,'bs_fxc',  '[R TDDFT] The BSE TDDFT kernel')
  call it('r',defs,'chosex',  '[R Xp] COlumb Hole Screened EXchange')
+ call it('r',defs,'tdhf',    '[R TDHF] Unscreened e-h interaction: TD Hartree-Fock')
  !
  ! GPL_EXCLUDE_END
  !
@@ -158,7 +159,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! BSE
  !
- call it(defs,'BSresKmod',  '[BSK] Resonant Kernel mode. (`x`;`c`;`d`)',BS_res_mode)
+ call it(defs,'BSresKmod',  '[BSK] Resonant Kernel mode. (`x`;`c`;`d`,`u`)',BS_res_mode)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
@@ -258,7 +259,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! BSE
  !
- call it(defs,'BScplKmod',  '[BSK] Coupling Kernel mode. (`x`;`c`;`d`)',BS_cpl_mode)
+ call it(defs,'BScplKmod',  '[BSK] Coupling Kernel mode. (`x`;`c`;`d`;`u`)',BS_cpl_mode)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',&
 &        BS_eh_en,E_unit,verb_level=V_more)
  call it(defs,'BSehWind','[BSK] [o/o] E/h coupling pairs energy window',&

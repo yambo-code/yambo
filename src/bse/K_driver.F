@@ -26,7 +26,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use com,            ONLY:msg,warning
  use memory_m,       ONLY:mem_est
  use D_lattice,      ONLY:inv_index
- use stderr,         ONLY:string_remove
+ use stderr,         ONLY:string_remove,string_add
  use electrons,      ONLY:levels,n_sp_pol
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset
@@ -39,13 +39,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 #if defined _ELPH
  use BS,             ONLY:BS_eh_Eo
 #endif
-#if defined _SC
- use BS,             ONLY:BS_bare_W
-#endif
  use TDDFT,          ONLY:FXC,FXC_per_memstps,FXC_n_mem_freqs,&
 &                         FXC_is_causal
  use QP_CTL_m,       ONLY:QP_apply
- use drivers,        ONLY:l_bss,l_bs_fxc,l_alda_fxc
+ use drivers,        ONLY:l_bss,l_bs_fxc,l_alda_fxc,l_td_hf
  use par_proc_m,     ONLY:pp_redux_wait
  use R_lattice,      ONLY:bz_samp,qindx_B
  use parser_m,       ONLY:parser
@@ -119,11 +116,23 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    !
  endif
  !
+ ! GPL_EXCLUDE_START  
+ !  
+ if (l_td_hf) then
+   !
+   ! In TDHF correlation is replaced with the (d)iagonal bare W
+   !
+   BS_res_mode=trim( string_add(BS_res_mode,'d') )
+   if (index(BS_cpl_mode,'c')/=0) BS_res_mode=trim( string_add(BS_res_mode,'d') ) 
+ endif
+ !  
+ ! GPL_EXCLUDE_END  
+ !
  ! Logicals (Drivers)
  !
- BS_res_K_corr=index(BS_res_mode,'c')/=0
+ BS_res_K_corr=index(BS_res_mode,'c')/=0.or.index(BS_res_mode,'u')/=0
  BS_res_K_exchange=index(BS_res_mode,'x')/=0
- BS_cpl_K_corr=index(BS_cpl_mode,'c')/=0
+ BS_cpl_K_corr=index(BS_cpl_mode,'c')/=0.or.index(BS_cpl_mode,'u')/=0
  BS_cpl_K_exchange=index(BS_cpl_mode,'x')/=0
  BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
  !
@@ -137,13 +146,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  endif
  !
  BS_W_is_diagonal=index(BS_res_mode,'d')/=0
- !
-#if defined _SC
- BS_bare_W=index(BS_res_mode,'b')/=0
- if (BS_bare_W) BS_W_is_diagonal=.true.
- if (BS_bare_W) BS_res_K_corr=.true.
- if (BS_bare_W) BS_cpl_K_corr=.false.
-#endif
  !
  BS_K_is_ALDA=l_alda_fxc
  !

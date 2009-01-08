@@ -145,6 +145,22 @@ module stderr
      !
    end function
    !
+   character(lchlen) function string_add(string_in,what)
+     !
+     character(*)     :: string_in
+     character(*)     :: what
+     !
+     ! Work Space
+     !
+     integer          :: i_pos
+     !
+     string_add=string_in
+     i_pos=index(string_in,what)
+     if (i_pos/=0) return
+     write (string_add,'(2a)') trim(string_in),trim(what)
+     !
+   end function
+   !
    character(6) function intc(i)
      !
      character(6) temp

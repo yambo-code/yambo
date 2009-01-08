@@ -41,6 +41,7 @@ subroutine barriers()
  !  OPT G-SPACE l_chi          OPT BSE     l_bse 
  !  BSE DIAGO   bss_diago      BSE INV     bss_inv 
  !  BSE HAYD    bss_haydock    SC          l_sc_run
+ !  TDHF
  !
  use drivers
  use pars,       ONLY:schlen
@@ -84,7 +85,7 @@ subroutine barriers()
  ! only already activated runlevels
  !
  ! NON-GPL RUNLEVELS that MUST BE SWITCHED OFF  
- ! (thos runlevels can be on if a non-gpl input file is being reading)
+ ! (those runlevels can be on if a non-gpl input file is being reading)
  !====================================================================
  !
  ! GPL_INCLUDE_START
@@ -92,6 +93,7 @@ subroutine barriers()
  !call switch_off_runlevel('acfdt',on_name=' ')
  !call switch_off_runlevel('bs_fxc',on_name=' ')
  !call switch_off_runlevel('chosex',on_name=' ')
+ !call switch_off_runlevel('tdhf',on_name=' ')
  ! GPL_INCLUDE_END
  !
  ! RUNLEVELS
@@ -139,7 +141,7 @@ subroutine barriers()
    goto 1
  endif
  if (l_bss.or.l_bse) then
-   call switch_off_runlevel('all',on_name='bs_fxc bse bss em1s em1d ppa optics '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='tdhf bs_fxc bse bss em1s em1d ppa optics '//trim(always_runlevels))
    goto 1
  endif
  !

@@ -27,34 +27,42 @@ module drivers
  logical :: infile_editing
  logical :: Finite_Tel
  !
- ! Runlevels
+ ! Specific Drivers
  !
- logical :: l_setup,l_rim,l_col_cut,l_acfdt
+ logical :: l_setup
+ logical :: l_rim
+ logical :: l_col_cut
+ logical :: l_acfdt
  !
- ! Specific runlevels drivers...
+ logical :: l_el_corr
+ logical :: l_ph_corr
  !
- ! Correlation
+ logical :: l_xxvxc
+ logical :: l_ppa
+ logical :: l_gw0
+ logical :: l_life
+ logical :: l_chosex
  !
- logical :: l_el_corr,l_ph_corr
+ logical :: l_optics
+ logical :: l_chi
+ logical :: l_em1d
+ logical :: l_em1s
  !
- ! QP
+ logical :: l_bse
+ logical :: l_bss
+ logical :: l_td_hf
  !
- logical :: l_xxvxc,l_ppa,l_gw0,l_life,l_chosex
+ logical :: l_sc_run
+ logical :: l_sc_hartree
+ logical :: l_sc_exx
+ logical :: l_sc_exxc
+ logical :: l_sc_hf
+ logical :: l_sc_chosex
+ logical :: l_sc_pz
+ logical :: l_sc_lda_x
  !
- ! LR
- !
- logical :: l_optics,l_chi,l_em1d,l_em1s
- !
- ! BSE
- !
- logical :: l_bse,l_bss
- !
- ! SC
- !
- logical :: l_sc_run,l_sc_hartree,l_sc_exx,l_sc_exxc,l_sc_hf,l_sc_chosex,l_sc_pz,l_sc_lda_x
- !
- ! TDDFT
- !
- logical :: l_alda_fxc,l_bs_fxc,l_lrc_fxc
+ logical :: l_alda_fxc
+ logical :: l_bs_fxc
+ logical :: l_lrc_fxc
  !
 end module drivers

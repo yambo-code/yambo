@@ -73,6 +73,9 @@ PJ_MANYKLIBS       = $(MAIN_LIBS)
 #if defined _TB
 PROJECTS = yambo_tb
 #endif
+#if defined _SC
+PROJECTS = yambo_sc
+#endif
 #if defined _RAS
 TARGETS  = all interfaces 
 PROJECTS = yambo_ras ypp_ras

@@ -147,7 +147,7 @@ subroutine QP_state_table_setup(en)
    !
  endif
  !
- ! GPL_EXCLUDE_START
+ ! GPL_EXCLUDE_START SC_IGNORE
  !
  ! Band Mixing
  !=============
@@ -174,10 +174,10 @@ subroutine QP_state_table_setup(en)
    bands_mixed=1
  endif
  !
- ! GPL_EXCLUDE_END
- ! GPL_INCLUDE_START
+ ! GPL_EXCLUDE_END SC_IGNORE
+ ! GPL_INCLUDE_START SC_IGNORE
  !bands_mixed=1
- ! GPL_INCLUDE_END
+ ! GPL_INCLUDE_END SC_IGNORE
  !
  ! QP_table allocation
  !

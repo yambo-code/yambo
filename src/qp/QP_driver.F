@@ -103,7 +103,12 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    ! GPL_EXCLUDE_START
    !
    if ( GWo_iterations > 0 ) QP_DB_kind=SE_GWo_PPA
+   !
+   ! GPL_EXCLUDE_END
+   !
  else if (l_chosex) then
+   !
+   ! GPL_EXCLUDE_START SC_IGNORE
    !
    ! in CHOSEX no SC possible
    !
@@ -111,7 +116,13 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    qp%description(2)=' == CHOSEX GW =='
    QP_DB_kind=SE_CHOSEX
+   !
+   ! GPL_EXCLUDE_END SC_IGNORE
+   !
  else
+   !
+   ! GPL_EXCLUDE_START
+   !
    qp%description(2)=' == Real Axis GW =='
    QP_DB_kind=SE_GoWo_PPA
    if ( GWo_iterations > 0 ) QP_DB_kind=SE_GWo_PPA

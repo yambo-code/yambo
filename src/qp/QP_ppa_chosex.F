@@ -130,18 +130,14 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  io_err=ioX(X,Xw,ID)
  if (io_err/=0) call error('Incomplete and/or broken PPA/Static diel. fun. database')
  !
- ! GPL_EXCLUDE_START
- !
  ! Test the spatial Inversion
  !   
  call space_inv_by_wf(E,Xk)
  !
- ! GPL_EXCLUDE_END
- !
  ! ALLOCATION
  !------------
  !
- ! GPL_EXCLUDE_START
+ ! GPL_EXCLUDE_START SC_IGNORE
  !
  if (l_chosex) then
    !
@@ -150,7 +146,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
    call mem_est("PPaR",(/2*size(PPaR_ws)/),errors=(/alloc_err/))
  else
    !
-   ! GPL_EXCLUDE_END
+   ! GPL_EXCLUDE_END SC_IGNORE
    !
    call X_alloc('X',(/X%ng,X%ng,2/))
    allocate(E_(QP_dSc_steps),dc(QP_dSc_steps),stat=alloc_err)
@@ -159,11 +155,11 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
    call mem_est("PPaP",(/size(PPaP)+2*size(PPaR_ws),2*size(PPaR)/),&
 &               (/SP/),errors=(/alloc_err/))
    !
-   ! GPL_EXCLUDE_START
+   ! GPL_EXCLUDE_START SC_IGNORE
    !
  endif
  !
- ! GPL_EXCLUDE_END
+ ! GPL_EXCLUDE_END SC_IGNORE
  !
  allocate(isc%gamp(X%ng,X%ng),isc%rhotw(isc%ngrho),iscp%rhotw(isc%ngrho),stat=alloc_err)
  call mem_est("ISC-GAMP",(/X%ng**2+2*isc%ngrho/),errors=(/alloc_err/))
@@ -241,7 +237,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! CHO (using completeness relation)
      !
-     ! GPL_EXCLUDE_START
+     ! GPL_EXCLUDE_START SC_IGNORE
      !
      if (l_chosex.and..not.CHOSEX_use_empties) then
        !
@@ -263,7 +259,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
      endif
      !
-     ! GPL_EXCLUDE_END
+     ! GPL_EXCLUDE_END SC_IGNORE
      !
      do ib=QP_n_G_bands(1),QP_n_G_bands(2)
        !
@@ -296,7 +292,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          QP_Sc(i1,:)=QP_Sc(i1,:)+dc(:)
          !
-         ! GPL_EXCLUDE_START
+         ! GPL_EXCLUDE_START SC_IGNORE
          !
        else
          !
@@ -319,7 +315,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          QP_Sc(i1,:)=QP_Sc(i1,:)+dc(1)+dc(2)
          !
-         ! GPL_EXCLUDE_END
+         ! GPL_EXCLUDE_END SC_IGNORE
          !
        endif
        !

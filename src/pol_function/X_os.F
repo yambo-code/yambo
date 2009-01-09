@@ -164,13 +164,9 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
    !
  endif 
  !
- ! GPL_EXCLUDE_START
- !
  ! Time-Rev is Spatial Inv => only half X is eval
  !                            ===================
  call space_inv_by_wf(Xen,Xk)
- !
- ! GPL_EXCLUDE_END
  !
  half_X_mat_only=i_space_inv==1
  if (.not.half_X_mat_only) then

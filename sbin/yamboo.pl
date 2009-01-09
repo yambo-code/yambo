@@ -10,7 +10,6 @@
 #
 # Status
 # Works for: _TB _PH
-# Doesnt work for: _RAS _SC
 #
 
 use Getopt::Long;

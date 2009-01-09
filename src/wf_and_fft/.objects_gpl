@@ -1,7 +1,0 @@
-#if defined _FFTW
-objs = fft_setup.o fft_3d.o \
-       scatter_Bamp.o scatter_Gamp.o wf_load.o
-#else
-objs = fft_setup.o fft_3d.o sgfft.o \
-       scatter_Bamp.o scatter_Gamp.o wf_load.o
-#endif

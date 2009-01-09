@@ -58,7 +58,7 @@ subroutine barriers()
  logical :: metallic_system, newton,secant,green,bss_tddft,&
             TR_or_SI,gw0_raxis,alda_r_space,bss_diago,&
 &           bss_haydock,gw0_ppa,gw0_chosex,gw0_el_ph,alda_g_space,bss_inv
- character(schlen) :: always_runlevels
+ character(schlen) :: always_runlevels,on_runlevels
  !
  ! ...
  !
@@ -92,29 +92,37 @@ subroutine barriers()
  !call switch_off_runlevel('life',on_name=' ')
  !call switch_off_runlevel('acfdt',on_name=' ')
  !call switch_off_runlevel('bs_fxc',on_name=' ')
- !call switch_off_runlevel('chosex',on_name=' ')
  !call switch_off_runlevel('tdhf',on_name=' ')
  ! GPL_INCLUDE_END
+ !
+ ! GPL_INCLUDE_START SC_IGNORE
+ !call switch_off_runlevel('chosex',on_name=' ')
+ ! GPL_INCLUDE_END SC_IGNORE
  !
  ! RUNLEVELS
  !===========
  !
- ! GPL_EXCLUDE_START
+ ! GPL_EXCLUDE_START SC_IGNORE
  !
  if (l_sc_run) then
    call switch_off_runlevel('all',on_name='scpot xxvxc chosex em1s '//trim(always_runlevels))
    goto 1
  endif
+ if (gw0_chosex) then
+   call switch_off_runlevel('all',on_name='gw0 em1s chosex el_el el_ph xxvxc '//trim(always_runlevels))
+   goto 1
+ endif
+ !
+ ! GPL_EXCLUDE_END SC_IGNORE
+ !
+ ! GPL_EXCLUDE_START
+ !
  if (l_acfdt) then
    call switch_off_runlevel('all',on_name='acfdt xxvxc '//trim(always_runlevels))
    goto 1
  endif
  if (l_life) then
    call switch_off_runlevel('all',on_name='life em1d '//trim(always_runlevels))
-   goto 1
- endif
- if (gw0_chosex) then
-   call switch_off_runlevel('all',on_name='gw0 em1s chosex el_el el_ph xxvxc '//trim(always_runlevels))
    goto 1
  endif
  if (gw0_raxis) then
@@ -129,7 +137,11 @@ subroutine barriers()
  ! GPL_EXCLUDE_END
  !
  if (gw0_ppa) then
-   call switch_off_runlevel('all',on_name='gw0 ppa em1d el_el el_ph xxvxc '//trim(always_runlevels))
+   on_runlevels='gw0 ppa em1d el_el el_ph xxvxc'
+   ! GPL_INCLUDE_START SC_IGNORE
+   !on_runlevels='gw0 ppa xxvxc'
+   ! GPL_INCLUDE_END SC_IGNORE
+   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
  if (alda_g_space) then
@@ -141,7 +153,11 @@ subroutine barriers()
    goto 1
  endif
  if (l_bss.or.l_bse) then
-   call switch_off_runlevel('all',on_name='tdhf bs_fxc bse bss em1s em1d ppa optics '//trim(always_runlevels))
+   on_runlevels='tdhf bs_fxc bse bss em1s em1d ppa optics'
+   ! GPL_INCLUDE_START SC_IGNORE
+   !on_runlevels='bse bss em1s ppa optics'
+   ! GPL_INCLUDE_END SC_IGNORE
+   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
  !

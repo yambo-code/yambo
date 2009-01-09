@@ -1,7 +1,12 @@
 #if defined _FFTW
-objs = fft_setup.o fft_3d.o  \
-       scatter_Bamp.o scatter_Gamp.o space_inv_by_wf.o wf_load.o WF_rotate.o
+FFT_object =
 #else
-objs = fft_setup.o fft_3d.o sgfft.o  \
-       scatter_Bamp.o scatter_Gamp.o space_inv_by_wf.o wf_load.o WF_rotate.o
+FFT_object = sgfft.o
 #endif
+#if defined _SC
+WF_rot_object = WF_rotate.o
+#else
+WF_rot_object =
+#endif
+objs = fft_setup.o fft_3d.o $(FFT_object)  \
+       scatter_Bamp.o scatter_Gamp.o space_inv_by_wf.o wf_load.o $(WF_rot_object)

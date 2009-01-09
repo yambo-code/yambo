@@ -108,6 +108,12 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('r',defs,'lrc_fxc', '[R TDDFT] The LRC TDDFT kernel')
  call it('r',defs,'rim_cut', '[R RIM CUT] Coulomb interaction')
  !
+ ! GPL_EXCLUDE_START SC_IGNORE
+ !
+ call it('r',defs,'chosex',  '[R Xp] COlumb Hole Screened EXchange')
+ !
+ ! GPL_EXCLUDE_END SC_IGNORE
+ !
  ! GPL_EXCLUDE_START
  !
  !===================
@@ -116,7 +122,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('r',defs,'life',    '[R GW] GoWo Quasiparticle lifetimes')
  call it('r',defs,'acfdt',   '[R ETOT] ACFDT Total Energy')
  call it('r',defs,'bs_fxc',  '[R TDDFT] The BSE TDDFT kernel')
- call it('r',defs,'chosex',  '[R Xp] COlumb Hole Screened EXchange')
  call it('r',defs,'tdhf',    '[R TDHF] Unscreened e-h interaction: TD Hartree-Fock')
  !
  ! GPL_EXCLUDE_END
@@ -236,10 +241,15 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'GEnSteps', '[GW] G_gw energy steps',QP_Sc_steps)
  call it(defs,'GEnRnge',  '[GW] G_gw energy range',QP_G_er,E_unit)
  call it(defs,'GWoIter',  '[GW] GWo SC iterations',GWo_iterations,verb_level=V_more)
- call it('f',defs,'UseEbands', '[GW] Force CHOSEX to use empty bands',verb_level=V_more)
  call it('f',defs,'NewtDchk','[F GW] Test dSc/dw convergence',verb_level=V_more)
  !
  ! GPL_EXCLUDE_END
+ !
+ ! GPL_EXCLUDE_START SC_IGNORE
+ !
+ call it('f',defs,'UseEbands', '[GW] Force CHOSEX to use empty bands',verb_level=V_more)
+ !
+ ! GPL_EXCLUDE_END SC_IGNORE
  !
  ! QP ctl 
  !

@@ -709,10 +709,16 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_bs_fxc=runlevel_is_on('bs_fxc')
        l_life=runlevel_is_on('life')
        l_acfdt=runlevel_is_on('acfdt')
-       l_chosex=runlevel_is_on('chosex')
        l_td_hf=runlevel_is_on('tdhf')
        !
        ! GPL_EXCLUDE_END
+       !
+       ! GPL_EXCLUDE_START SC_IGNORE
+       ! 
+       l_chosex=runlevel_is_on('chosex')
+       !
+       ! GPL_EXCLUDE_END SC_IGNORE
+       ! 
        ! 
 #if defined  _SC
        l_sc_run=runlevel_is_on('scpot')
@@ -799,7 +805,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      endif
      !
 #if defined _SC
-     if (l_sc_run) then
+     if (l_sc_run.and.io_SC_err==0) then
        QP_ng_Sx=SC_ng_Sx
        X(2)%ib=SC_X_bands
        X(2)%ng=SC_X_size
@@ -973,17 +979,25 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
        if ( trim(rstr_piece(i1)) == 'gwapprx' ) then
          !
-         ! GPL_EXCLUDE_START
-         !
          if (trim(rstr_piece(i1+1))=='p') then
+           !
+           ! GPL_EXCLUDE_START
+           !
            infile_editing=.true.
            call initactivate(1,'ppa')
+           !
+           ! GPL_EXCLUDE_END
+           !
          else if (trim(rstr_piece(i1+1))=='c') then
+           !
+           ! GPL_EXCLUDE_START SC_IGNORE
+           !
            infile_editing=.true.
            call initactivate(1,'chosex gw0') 
+           !
+           ! GPL_EXCLUDE_END SC_IGNORE
+           !
          endif
-         !
-         ! GPL_EXCLUDE_END
          !
        endif
        !

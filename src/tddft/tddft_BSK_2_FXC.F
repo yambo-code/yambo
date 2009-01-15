@@ -24,9 +24,9 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  use pars,          ONLY:SP
  use electrons,     ONLY:spin_occ,spin
  use X_m,           ONLY:X_rhoq0,X_t
- use BS,            ONLY:BS_blk_dim,BS_eh_table,BS_mat,BS_eh_E
+ use BS,            ONLY:BS_blk_dim,BS_eh_table,BS_mat,BS_eh_E,BS_eh_W
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_K_diagonal,FXC,&
-&                        FXC_is_causal,ioBS_Fxc
+&                        FXC_is_causal,ioBS_Fxc,FXC_n_mem_freqs
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use D_lattice,     ONLY:DL_vol
@@ -53,7 +53,7 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! Local Energies 
  !
- real(SP),    allocatable :: blk_Eo(:,:)
+ complex(SP),   allocatable :: blk_Eo(:,:)
  real(SP),      parameter :: E_same_treshold=1.E-5
  !
  ! Fxc procedure
@@ -116,10 +116,18 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
      enddo
    enddo
  endif
+ !
+ ! BS diagonal + Non interacting energies and widths
+ !
  forall(i1=1:BS_blk_dim(ik1)) blk_Eo(1,i1)=BS_eh_E(blk_pos(1)+i1)+&
 &                                          FXC_K_diagonal(blk_pos(1)+i1)
  forall(i2=1:BS_blk_dim(ik2)) blk_Eo(2,i2)=BS_eh_E(blk_pos(2)+i2)+&
 &                                          FXC_K_diagonal(blk_pos(2)+i2)
+ !
+ if (allocated(BS_eh_W)) then
+   forall(i1=1:BS_blk_dim(ik1)) blk_Eo(1,i1)=blk_Eo(1,i1)+(0.,1.)*BS_eh_W(blk_pos(1)+i1)
+   forall(i2=1:BS_blk_dim(ik2)) blk_Eo(1,i2)=blk_Eo(1,i2)+(0.,1.)*BS_eh_W(blk_pos(2)+i2)
+ endif
  !
  ! Projectors
  !
@@ -260,18 +268,20 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
    !
    pure function Fb2x1(E1,E2,T)
      implicit none
-     real(SP), intent(in):: E1,E2,T
-     real(SP)            :: Fb2x1
-     if (abs(E1-E2)<T) Fb2x1=1./2./T
-     if (abs(E1-E2)>T) Fb2x1=1./(E1-E2)
+     complex(SP), intent(in):: E1,E2
+     real(SP), intent(in)   :: T
+     real(SP)               :: Fb2x1
+     if (abs(real(E1-E2))<T) Fb2x1=1./2./T
+     if (abs(real(E1-E2))>T) Fb2x1=1./(E1-E2)
    end function
    !
    pure function Fb2x2(E1,E2,T)
      implicit none
-     real(SP), intent(in):: E1,E2,T
-     real(SP)            :: Fb2x2
+     complex(SP), intent(in):: E1,E2
+     real(SP), intent(in)   :: T
+     real(SP)               :: Fb2x2
      Fb2x2=0.
-     if (abs(E1-E2)<T) Fb2x2=1.
+     if (abs(real(E1-E2))<T) Fb2x2=1.
    end function
    !
 end subroutine

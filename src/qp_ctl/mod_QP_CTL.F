@@ -299,12 +299,16 @@ module QP_CTL_m
      ! the K-points of the X grid !
      !
      if (Eid==3) then
+       !
        Fermi_en%nb=en%nb
        Fermi_en%nk=nXkibz
+       !
        allocate(Fermi_en%E(Fermi_en%nb,Fermi_en%nk,n_sp_pol))
        Fermi_en%E(:,:,:)=en%E(:,:nXkibz,:)
+       !
        call fermi_level(Fermi_en,k,Tel,1)
        call extend_occupations(Fermi_en,en)
+       !
        nullify(Fermi_en%E)
      endif
      !

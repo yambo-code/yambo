@@ -32,7 +32,8 @@ integer function ioBS_Fxc(iq,FXC_W,ID,X)
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
 &                         io_elemental,io_status,io_bulk,io_mode,&
-&                         read_is_on,write_is_on,io_header,ver_is_gt_or_eq,DUMP
+&                         read_is_on,write_is_on,io_header,DUMP,&
+&                         close_is_on,RD_CL,io_action
  implicit none
  type(w_samp)        ::FXC_W
  integer             ::ID,iq
@@ -56,13 +57,6 @@ integer function ioBS_Fxc(iq,FXC_W,ID,X)
  ioBS_Fxc=io_connect(desc=trim(db_name),type=2,ID=ID)
  !
  if (ioBS_Fxc/=0) goto 1
- !
- ! v 3.0.5: Inclusion of %f_xc
- !
- if (.not.ver_is_gt_or_eq(ID,(/3,0,12/))) then
-   ioBS_Fxc=-1
-   goto 1
- endif
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
@@ -104,15 +98,19 @@ integer function ioBS_Fxc(iq,FXC_W,ID,X)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    ioBS_Fxc=io_status(ID)
    !
-   ! Addd BS variables
+   ! Add BS variables
    !
-   if (present(X).and.ioBS_Fxc==0) then
-     ioBS_Fxc=variables_BS(ID,local_description,'Fxc',X=X) 
-   else if (ioBS_Fxc==0) then
-     i1=io_mode(ID)
-     io_mode(ID)=DUMP
-     ioBS_Fxc=variables_BS(ID,local_description,'Fxc',X=X_dummy) 
-     io_mode(ID)=i1
+   local_description(:)=' '
+   !
+   if (ioBS_Fxc==0) then
+     if (present(X)) then
+       ioBS_Fxc=variables_BS(ID,local_description,'Fxc',X=X) 
+     else
+       i1=io_mode(ID)
+       io_mode(ID)=DUMP
+       ioBS_Fxc=variables_BS(ID,local_description,'Fxc',X=X_dummy) 
+       io_mode(ID)=i1
+     endif
    endif
    !
    ! Create FXC description fields
@@ -124,10 +122,18 @@ integer function ioBS_Fxc(iq,FXC_W,ID,X)
      endif
    enddo
    !
-   if (ioBS_Fxc/=0.or.maxval(io_sec(ID,:))==1) then
-      if (ioBS_Fxc/=0) FXC_n_descs=0
+   ! Parameters check failed in section 1. In case both secs 1 and 2
+   ! were planned to be read, we need to switch the action to RD_CL
+   ! to close the unit in io_disconnect
+   !
+   if (ioBS_Fxc/=0) then
+      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
+      FXC_n_descs=0
+      if (.not.close_is_on(ID)) io_action(ID)=RD_CL
       goto 1
    endif
+   !
+   if (maxval(io_sec(ID,:))==1) goto 1
    !
  endif
  !

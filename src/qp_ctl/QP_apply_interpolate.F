@@ -39,7 +39,7 @@ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
  type(levels)::en
  type(QP_t)  ::qp
  type(bz_samp)::k
- integer :: n_neigh,band_range(2),DB_corrected(en%nb,en%nk)
+ integer :: n_neigh,band_range(2),DB_corrected(en%nb,en%nk,n_sp_pol)
  logical :: l_qp(4),wrong_width_sign_warn
  !
  ! Work Space
@@ -102,7 +102,7 @@ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
 &               real(nk_interpolated)/real(k%nibz)*100._SP)
  endif
  !
- if (all(DB_corrected(band_range(1):band_range(2),:)==1)) l_qp(:3)=.false.
+ if (all(DB_corrected(band_range(1):band_range(2),:,:)==1)) l_qp(:3)=.false.
  !
  QP_ctl_applied=.true.
  !
@@ -150,41 +150,47 @@ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
      enddo
      do i3=band_range(1),band_range(2)
        if (l_qp(1)) then
-         if (QP_apply_done((/i3,i3/),(/ik,ik/),(/i_spin,i_spin/),en,'E')) cycle
          !
          if (any(Dl(i3,:)==0._SP)) cycle
-         !
          do i_spin=1,n_sp_pol
+           !
+           if (QP_apply_done((/i3,i3/),(/ik,ik/),(/i_spin,i_spin/),en,'E')) cycle
+           !
            en%E(i3,ik,i_spin)=en%Eo(i3,ik,i_spin)+Dl(i3,i_spin)/real(n_neigh_)
+           !
          enddo
          !
-         DB_corrected(i3,ik)=1
+         DB_corrected(i3,ik,:)=1
          !
        endif
        if (l_qp(2)) then
          !
-         if (QP_apply_done((/i3,i3/),(/ik,ik/),(/i_spin,i_spin/),en,'W')) cycle
-         !
          if (any(Wl(i3,:)==0._SP)) cycle
          !
          do i_spin=1,n_sp_pol
+           !
+           if (QP_apply_done((/i3,i3/),(/ik,ik/),(/i_spin,i_spin/),en,'W')) cycle
+           !
            en%W(i3,ik,i_spin)=Wl(i3,i_spin)/real(n_neigh_)
+           !
          enddo
          !
-         DB_corrected(i3,ik)=1
+         DB_corrected(i3,ik,:)=1
          !
        endif
        if (l_qp(3)) then
          !
-         if (QP_apply_done((/i3,i3/),(/ik,ik/),(/i_spin,i_spin/),en,'Z')) cycle
-         !
          if (any(Zl(i3,:)==(0._SP,0._SP))) cycle
          !
          do i_spin=1,n_sp_pol
+           !
+           if (QP_apply_done((/i3,i3/),(/ik,ik/),(/i_spin,i_spin/),en,'Z')) cycle
+           !
            en%Z(i3,ik,i_spin)=Zl(i3,i_spin)/real(n_neigh_)
+           !
          enddo
          !
-         DB_corrected(i3,ik)=1
+         DB_corrected(i3,ik,:)=1
          !
        endif
      enddo

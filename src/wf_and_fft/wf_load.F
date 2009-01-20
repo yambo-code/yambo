@@ -241,7 +241,9 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  call load_SC_components('check_bands',n_bands=bands_to_load(2))
  !
  if (using_SC_basis) then
+   !
    call load_SC_components('WF',COM_=NONE,MODE_=DUMP,kind=WF_kind,xc_functional=WF_xc_functional)
+   !
    if (wf_space=='R') wf_size=fft_size
    if (wf_space=='G') wf_size=wf_ng
    do ikibz=1,nkibz

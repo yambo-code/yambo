@@ -67,7 +67,7 @@ PJ_RASLIBS   = $(BASIC_LIBS) ras_reels_mods coulomb bz_ops qp_ctl ras \
 PJ_REELSLIBS = $(BASIC_LIBS) ras_reels_mods coulomb bz_ops qp_ctl reels \
                interface tddft pol_function qp acfdt bse
 
-PJ_SCLIBS       = $(MAIN_LIBS) sc
+PJ_SCLIBS       = $(MAIN_LIBS) sc 
 PJ_MANYKLIBS    = $(MAIN_LIBS)
 PJ_PHLIBS       = $(MAIN_LIBS)
 #

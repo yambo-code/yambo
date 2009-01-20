@@ -105,7 +105,7 @@ subroutine barriers()
  ! GPL_EXCLUDE_START SC_IGNORE
  !
  if (l_sc_run) then
-   call switch_off_runlevel('all',on_name='scpot xxvxc chosex em1s '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='scpot xxvxc chosex em1s negf '//trim(always_runlevels))
    goto 1
  endif
  if (gw0_chosex) then

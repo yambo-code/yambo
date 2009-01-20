@@ -24,12 +24,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use pars,           ONLY:SP,HARTREE,schlen
  use drivers,        ONLY:l_sc_exx,l_sc_chosex,l_sc_hartree,l_sc_pz,l_sc_lda_x,&
 &                         l_sc_hf,l_sc_exxc
- use electrons,      ONLY:levels,nel,n_full_bands,n_met_bands
+ use electrons,      ONLY:levels,nel,n_met_bands
  use R_lattice,      ONLY:bz_samp,qindx_S,G_m_G
  use D_lattice,      ONLY:Tel
  use QP_m,           ONLY:QP_state,QP_nb,QP_nk,QP_Vxc,QP_n_states,QP_table,&
-&                         QP_ng_Sx,QP_Sx,QP_t,QP_reset,CHOSEX_use_empties,QP_sc
- use SC,             ONLY:SC_bands,SC_iterations,SC_E_threshold,SC_kind,SC_xc_functional,&
+&                         QP_ng_Sx,QP_Sx,QP_t,QP_reset,QP_sc
+ use SC,             ONLY:SC_bands,SC_iterations,SC_E_threshold,&
 &                         SC_rho_threshold,SC_potential,it_now,E_convergence,&
 &                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,SC_bands_mixed,&
 &                         SC_cycle_mixing,V_hartree_sc,NSC_shot,SC_fft_size,&
@@ -42,11 +42,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use X_m,            ONLY:X_t
  use timing,         ONLY:live_time_msg
  use stderr,         ONLY:tty_size,intc,real2ch
- use xc_functionals, ONLY:V_xc,XC_LDA_X,XC_LDA_C_PZ,XC_EXCHANGE_CORRELATION,XC_EXCHANGE
+ use xc_functionals, ONLY:V_xc
  use frequency,      ONLY:w_samp
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,&
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL
- use global_XC,      ONLY:SC_EXX,SC_HF,SC_CHOSEX,SC_EXXC
  use vec_operate,    ONLY:degeneration_finder
  use timing,         ONLY:live_timing
  !
@@ -71,7 +70,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  complex(SP)              :: Ho(SC_bands,SC_bands,k%nibz)
  character(schlen)        :: dumb_ch
  integer, external        :: io_SC_components,eval_G_minus_G
- logical, external        :: stop_now
+ logical, external        :: stop_now,XC_switch
  logical                  :: SC_cycle,RESTART
  type(QP_t)               :: qp_dummy
  !
@@ -89,43 +88,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  call QP_reset(qp_dummy)
  !
- select case (trim(SC_potential))
-   case('HARTREE')
-     l_sc_hartree=.true.
-     SC_kind=0
-     SC_xc_functional=0
-   case('HARTREE-FOCK')
-     l_sc_hf=.true.
-     SC_kind=SC_HF
-     SC_xc_functional=0
-   case('EXX')
-     l_sc_exx=.true.
-     SC_kind=SC_EXX
-     SC_xc_functional=0
-     if (n_full_bands/=n_met_bands) return
-   case('EXXC')
-     l_sc_exxc=.true.
-     SC_kind=SC_EXXC
-     SC_xc_functional=XC_LDA_C_PZ
-     if (n_full_bands/=n_met_bands) return
-   case('CHOSEX')
-     l_sc_chosex=.true.
-     SC_kind=SC_CHOSEX
-     SC_xc_functional=0
-     CHOSEX_use_empties=.FALSE.
-   case('LDA_X')
-     l_sc_lda_x=.true.
-     SC_kind=XC_EXCHANGE
-     SC_xc_functional=XC_LDA_X
-   case('PZ')
-     l_sc_pz=.true.
-     SC_kind=XC_EXCHANGE_CORRELATION
-     SC_xc_functional=XC_LDA_C_PZ
- end select
+ ! Switch to the user defined potential (if appropriate)
  !
- if (.not.any((/l_sc_hartree,l_sc_hf,l_sc_exx,l_sc_exxc,l_sc_chosex,l_sc_lda_x,l_sc_pz/))) return
- !
- local_V=l_sc_exx.or.l_sc_exxc.or.l_sc_hartree.or.l_sc_lda_x.or.l_sc_pz
+ if (.not.XC_switch()) return
  !
  call section('*','Self-Consistent '//trim(SC_potential))
  !

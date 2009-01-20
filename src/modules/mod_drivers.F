@@ -29,30 +29,42 @@ module drivers
  !
  ! Specific Drivers
  !
- logical :: l_setup
- logical :: l_rim
- logical :: l_col_cut
- logical :: l_acfdt
+ logical :: l_setup     ! Initial setup
+ logical :: l_rim       ! Random Integration Method
+ logical :: l_col_cut   ! Coloumb potential cutoff
+ logical :: l_acfdt     ! Total Energy
+ logical :: l_real_time ! Real Time evolution
+ !
+ ! The self-energy correlation "kind"
  !
  logical :: l_el_corr
  logical :: l_ph_corr
  !
- logical :: l_xxvxc
- logical :: l_ppa
- logical :: l_gw0
- logical :: l_life
- logical :: l_chosex
+ ! Real Axis non SC Self-energies
+ !
+ logical :: l_xxvxc   ! HF
+ logical :: l_life    ! GoWo lifetims
+ logical :: l_gw0     ! GWo main logical
+ logical :: l_ppa     ! PPA
+ logical :: l_chosex  ! CHOSEX
+ !
+ ! The optical runlevels ...
  !
  logical :: l_optics
  logical :: l_chi
  logical :: l_em1d
  logical :: l_em1s
  !
+ ! ... and BS solvers
+ !
  logical :: l_bse
  logical :: l_bss
  logical :: l_td_hf
  !
- logical :: l_sc_run
+ logical :: l_sc_run ! SC 
+ !
+ ! The XC types (Vxc)
+ !
  logical :: l_sc_hartree
  logical :: l_sc_exx
  logical :: l_sc_exxc
@@ -60,6 +72,8 @@ module drivers
  logical :: l_sc_chosex
  logical :: l_sc_pz
  logical :: l_sc_lda_x
+ !
+ ! The XC types (Fxc)
  !
  logical :: l_alda_fxc
  logical :: l_bs_fxc

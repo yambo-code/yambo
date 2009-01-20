@@ -127,19 +127,20 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! GPL_EXCLUDE_END
  !
 #if defined _SC
- call it('r',defs,'scpot',   '[R] Self-Consistent run') ! [18]
+ call it('r',defs,'scpot',   '[R] Self-Consistent potentials') 
+ call it('r',defs,'negf',    '[R] Real-Time dynamics') 
 #endif
 #if defined _RAS
- call it('r',defs,'sursp',  '[R] Surface Spectroscopy ') ! [18]
- call it('r',defs,'reels',  '[R] Reflection EELS (3-layer model) ') ! [19]
- call it('r',defs,'ras',    '[R] Reflectance anisotropy spectroscopy (RAS)')   ! [20]
+ call it('r',defs,'sursp',  '[R] Surface Spectroscopy ') 
+ call it('r',defs,'reels',  '[R] Reflection EELS (3-layer model) ') 
+ call it('r',defs,'ras',    '[R] Reflectance anisotropy spectroscopy (RAS)')   
 #endif
 #if defined _REELS
- call it('r',defs,'reels',  '[R] Surface Spectroscopy (REELS)') ! [18]
+ call it('r',defs,'reels',  '[R] Surface Spectroscopy (REELS)') 
 #endif
 #if defined _ELPH
- call it('r',defs,'el_ph',   '[R] Electron-Phonon Correlation')   ! [18]
- call it('r',defs,'el_el',   '[R] Electron-Electron Correlation') ! [19]
+ call it('r',defs,'el_ph',   '[R] Electron-Phonon Correlation')   
+ call it('r',defs,'el_el',   '[R] Electron-Electron Correlation') 
 #endif
  !
  !================

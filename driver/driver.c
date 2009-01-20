@@ -38,6 +38,9 @@ typedef struct
         int   nc;
         int   st;
 } Ldes;
+/* 
+ Includes (I)
+*/
 #if defined _FORTRAN_US
  #define F90_FUNC(name,NAME) name ## _
  #define F90_FUNC_(name,NAME) name ## _
@@ -47,10 +50,26 @@ typedef struct
 #endif
 #include "editor.h"
 #include "codever.h"
-#if defined _yambo  || _RAS || _REELS || _ELPH || _SC || _MANYK || _TB || _MAGNON || _DIPOLE_RIM || _PARTIAL_DIAGO
- #include "yambo_cpp.h"
+#include <gnu-versions.h>
+/* 
+ Yambo/Ypp driver flag
+*/
+#if defined _yambo  || _RAS || _REELS || _ELPH || _SC  
+ #define _YAMBO_MAIN
+#endif
+#if defined _MANYK || _TB || _MAGNON || _DIPOLE_RIM || _PARTIAL_DIAGO
+ #define _YAMBO_MAIN
 #endif
 #if defined _ypp  || _YPP_ELPH || _YPP_RAS
+ #define _YPP_MAIN
+#endif
+/* 
+ Includes (II)
+*/
+#if defined _YAMBO_MAIN
+ #include "yambo_cpp.h"
+#endif
+#if defined _YPP_MAIN
  #include "ypp_cpp.h"
 #endif
 #if defined _a2y
@@ -124,10 +143,10 @@ main(int argc, char *argv[])
 /* 
  Switch off MPI_init as I have options used to create the input file...
 */
-#if defined _yambo  || _RAS || _REELS || _ELPH || _SC || _MANYK || _TB || _MAGNON || _DIPOLE_RIM || _PARTIAL_DIAGO
+#if defined _YAMBO_MAIN
      if (j> 10) {mpi_init=-1;};
 #endif
-#if defined _ypp || _YPP_ELPH || _YPP_RAS
+#if defined  _YPP_MAIN
      if (j> 6) {mpi_init=-1;};
 #endif
 /* 
@@ -212,7 +231,7 @@ main(int argc, char *argv[])
    MPI_Comm_size(MPI_COMM_WORLD, &np);  /* get number of processes */
  };
 #endif
-#if defined _yambo  || _RAS || _REELS || _ELPH || _SC || _MANYK || _TB || _MAGNON || _DIPOLE_RIM || _PARTIAL_DIAGO
+#if defined _YAMBO_MAIN
  /* 
    Running the Fortran YAMBO driver 
  ===========================================================================
@@ -220,7 +239,7 @@ main(int argc, char *argv[])
  F90_FUNC(yambo_driver,YAMBO_DRIVER)(
           rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
 #endif
-#if defined _ypp || _YPP_ELPH || _YPP_RAS
+#if defined _YPP_MAIN
  /* 
    Running the Fortran YPP driver
  ===========================================================================
@@ -266,7 +285,7 @@ main(int argc, char *argv[])
  */
  strcpy(edit_line,editor);
  strncat(edit_line,inf,strlen(inf));
-#if defined _yambo || _RAS || _REELS || _ypp || _ELPH || _SC || _YPP_ELPH || _YPP_RAS  || _MANYK|| _TB || _MAGNON || _DIPOLE_RIM || _PARTIAL_DIAGO
+#if defined _YAMBO_MAIN || _YPP_MAIN 
  if (iif == 1 && ttd>0)
  {
   if(strstr(editor,"none ")==0) { system(edit_line); };

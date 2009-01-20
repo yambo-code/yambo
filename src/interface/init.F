@@ -720,8 +720,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! GPL_EXCLUDE_END SC_IGNORE
        ! 
        ! 
-#if defined  _SC
+#if defined  _SC 
        l_sc_run=runlevel_is_on('scpot')
+       l_real_time=runlevel_is_on('negf')
 #endif
 #if defined  _RAS
        lreels=runlevel_is_on('reels')
@@ -1011,7 +1012,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        endif
 #endif
        !
-       ! Sc
+       ! Sc / NEGF
        !
 #if defined _SC
        if ( trim(rstr_piece(i1)) == 'scpot' )  then
@@ -1027,6 +1028,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          else if ( trim(rstr_piece(i1+1)) == 'hf') then
            SC_potential='HARTREE-FOCK'
            call initactivate(1,'xxvxc')
+         else if ( trim(rstr_piece(i1+1)) == 'h') then
+           SC_potential='HARTREE'
          endif
        endif
 #endif

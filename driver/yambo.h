@@ -43,9 +43,6 @@
   {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0},                  
   {"bss",    "y","BSE solver [opt=h/d/i/t]",0,0,1,0},                      
   {"acfdt",  "a","ACFDT Total Energy",0,0,0,0},                            
-#if defined _SC 
-  {"scpot",  "v","Self-Consistent [opt=(hf),(c)hosex,(exx),(exxc)]",0,0,1,0}, 
-#endif
 #if defined _RAS 
   {"sursp",  "s","Surface Spectroscopy [opt=r(as)/e(el)/b(oth)]",0,0,1,0}, 
 #endif
@@ -54,6 +51,10 @@
 #endif
 #if defined _ELPH
   {"corrtp", "s","Correlation [opt=e(lectrons)/p(honons)/b(oth)]",0,0,1,0},    
+#endif
+#if defined _SC 
+  {"scpot",  "v","Self-Consistent Potential [opt=(hf),(c)hosex,(exx),(exxc),(h)artree]",0,0,1,0}, 
+  {"negf",   "k","Real-time dynamics",0,0,0,0}, 
 #endif
   {NULL,NULL,NULL,0,0,0,0}
  };

@@ -7,5 +7,5 @@ objs = mod_pars.o  mod_stderr.o  mod_par_proc.o \
        mod_wave_func.o mod_vec_operate.o \
        mod_functions.o mod_zeros.o \
        mod_BS.o mod_QP.o mod_TDDFT.o mod_ACFDT.o \
-       mod_IO.o mod_ELPH.o mod_xc_functionals.o mod_SC.o \
+       mod_IO.o mod_ELPH.o mod_xc_functionals.o mod_SC.o mod_real_time.o \
        mod_global_XC.o std_presets.o 

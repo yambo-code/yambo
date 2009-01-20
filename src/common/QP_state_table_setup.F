@@ -33,7 +33,8 @@ subroutine QP_state_table_setup(en)
  ! Out:  QP_table(1:QP_n_states,:) = (n,n`,ikibz)
  !       QP_state
  !
- use pars,          ONLY:SP,HARTREE,IP
+ use pars,          ONLY:SP,IP
+ use units,         ONLY:HARTREE
  use drivers,       ONLY:l_sc_run
  use memory_m,      ONLY:mem_est
  use QP_m,          ONLY:QP_nk,QP_nb,QP_state,QP_n_states,QP_table

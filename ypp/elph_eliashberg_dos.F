@@ -21,7 +21,8 @@
 !
 subroutine elph_eliashberg_dos(k,en,q)
  !
- use pars,                ONLY:SP,schlen,pi,HA2GHZ,HA2THZ,HARTREE
+ use pars,                ONLY:SP,schlen,pi
+ use units,               ONLY:HARTREE,HA2GHZ,HA2THZ 
  use com,                 ONLY:msg,of_open_close
  use electrons,           ONLY:levels,n_met_bands,n_full_bands
  use R_lattice,           ONLY:bz_samp

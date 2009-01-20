@@ -21,7 +21,8 @@
 !
 subroutine QP_states_simmetrize(vec_2_sim,en,state_is_2do)
  !
- use pars,          ONLY:SP,HARTREE
+ use pars,          ONLY:SP
+ use units,         ONLY:HARTREE
  use vec_operate,   ONLY:sort,degeneration_finder
  use electrons,     ONLY:levels
  use QP_m,          ONLY:QP_n_states,QP_table

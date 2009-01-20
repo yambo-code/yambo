@@ -1,5 +1,6 @@
 subroutine write_eps_tensor( q0v, eps_i, hw, nw, npol, epstype ) 
-  use pars,                  only : SP, HARTREE, schlen
+  use pars,                  only : SP, schlen
+  use units,                 only : HARTREE
   use com,                   only : msg, of_open_close
   use vec_operate,           only : v_norm
   implicit none

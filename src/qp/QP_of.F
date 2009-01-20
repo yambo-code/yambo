@@ -21,7 +21,8 @@
 !
 subroutine QP_of(kp,qp,en)
  !
- use pars,      ONLY:HARTREE,SP,lchlen
+ use pars,      ONLY:SP,lchlen
+ use units,     ONLY:HARTREE
  use drivers,   ONLY:l_life,l_el_corr
  use com,       ONLY:msg,of_open_close
  use R_lattice, ONLY:bz_samp

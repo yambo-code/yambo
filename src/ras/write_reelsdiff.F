@@ -1,5 +1,6 @@
 subroutine write_reelsdiff(lossf, hw, nw )
-  use pars,                   ONLY : PI, SP, schlen, HARTREE
+  use pars,                   ONLY : PI, SP, schlen
+  use units,                  ONLY : HARTREE
   use com,                    ONLY : msg, of_open_close
   use convolute
   implicit none

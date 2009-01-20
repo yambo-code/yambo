@@ -21,7 +21,8 @@
 !
 module X_m
  !
- use pars, ONLY:SP,HARTREE,lchlen,schlen
+ use pars,  ONLY:SP,lchlen,schlen
+ use units, ONLY:HARTREE
  !
  ! Absorption & Polarizability
  !

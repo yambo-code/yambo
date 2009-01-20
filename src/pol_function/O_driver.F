@@ -25,7 +25,8 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  !
  ! Calculates dielectric function for a generic q vector.
  ! 
- use pars,          ONLY:pi,SP,HARTREE,schlen
+ use pars,          ONLY:pi,SP,schlen
+ use units,         ONLY:HARTREE
  use memory_m,      ONLY:mem_est
  use stderr,        ONLY:intc
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_col_cut

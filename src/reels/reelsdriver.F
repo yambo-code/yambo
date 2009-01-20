@@ -20,7 +20,8 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine reelsdriver(Xen,Xk,q,wv,X)
-  use pars,                    only : SP, lchlen, HARTREE
+  use pars,                    only : SP, lchlen
+  use units,                   only : HARTREE
   use memory_m,                only : mem_est
   use com,                     only : msg
   use X_m,                     only : X_t

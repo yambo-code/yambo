@@ -24,7 +24,8 @@ subroutine average_epsm1_q(epsm1_av, iq, Xen, Xk, X, q, wq)
   ! Calculates eps^1(iq) averaged on iq and iq-1
   !
   use X_m,                     only : X_t
-  use pars,                    only : SP, HARTREE
+  use pars,                    only : SP
+  use units,                   only : HARTREE
   use R_lattice,               only : bz_samp
   use frequency,               only : w_samp
   use electrons,               only : levels

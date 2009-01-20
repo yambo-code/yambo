@@ -21,7 +21,8 @@
 !
 subroutine X_O_rotate(X_bands,use_trans_gauge,E)
  !
- use pars,                ONLY:SP,HARTREE
+ use pars,                ONLY:SP
+ use units,               ONLY:HARTREE
  use R_lattice,           ONLY:nXkibz
  use electrons,           ONLY:levels
  use SC,                  ONLY:SC_bands,SC_R,load_SC_components,H_nl_sc,H_rotate

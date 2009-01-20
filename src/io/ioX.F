@@ -21,7 +21,8 @@
 !
 integer function ioX(X,Xw,ID)
  !
- use pars,          ONLY:SP,schlen,HARTREE
+ use pars,          ONLY:SP,schlen
+ use units,         ONLY:HARTREE
  use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:nqibz,g_vec
  use matrix_operate,ONLY:mat_c2r,mat_r2c,mat_r2c_ordered

@@ -1,7 +1,8 @@
 
 subroutine write_reels_sec( hw, loss, nw, ipol, q0, imode)
   use com,                    only : msg, of_open_close
-  use pars,                   only : SP, schlen, HARTREE, lchlen
+  use pars,                   only : SP, schlen, lchlen
+  use units,                  ONLY : HARTREE
   use reels_module,           only : npol
   use surface_geometry,       only : q0x, q0y, qname
   use vec_operate,            only : v_norm
@@ -81,7 +82,8 @@ end subroutine write_reels_sec
 
 subroutine write_reels_x( loss, hw, nw)
   use com,                    only : msg, of_open_close
-  use pars,                   only : SP, schlen, HARTREE
+  use pars,                   only : SP, schlen
+  use units,                  only : HARTREE
   implicit none
   integer,          intent(in)    :: nw
   real(SP),         intent(in)    :: loss(nw), hw(nw)
@@ -114,7 +116,8 @@ subroutine write_reels_x( loss, hw, nw)
 end subroutine write_reels_x
 
 subroutine write_reelsdiff(lossf, hw, nw )
-  use pars,                   ONLY : PI, SP, schlen, HARTREE
+  use pars,                   ONLY : PI, SP, schlen
+  use units,                  ONLY : HARTREE
   use com,                    ONLY : msg, of_open_close
   use convolute
   implicit none

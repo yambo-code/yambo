@@ -21,7 +21,8 @@
 !
 subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
- use pars,          ONLY:SP,schlen,IP,HARTREE
+ use pars,          ONLY:SP,schlen,IP
+ use units,         ONLY:HARTREE
  use memory_m,      ONLY:mem_est
  use drivers,       ONLY:l_life,l_ppa,l_el_corr,l_ph_corr,l_chosex
  use electrons,     ONLY:levels,n_sp_pol,spin

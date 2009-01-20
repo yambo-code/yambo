@@ -24,7 +24,8 @@ module bulkeps
   ! Routines and types for reading, storing and processing 
   ! the bulk dielectric function
   !
-  use pars,                 ONLY : schlen, lchlen, SP, PI, HARTREE
+  use pars,                 ONLY : schlen, lchlen, SP, PI
+  use units,                ONLY : HARTREE
   save
   private
 

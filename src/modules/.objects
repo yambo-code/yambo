@@ -1,4 +1,4 @@
-objs = mod_pars.o  mod_stderr.o  mod_par_proc.o \
+objs = mod_pars.o mod_units.o  mod_stderr.o  mod_par_proc.o \
        mod_collision.o mod_drivers.o  mod_FFT.o \
        mod_timing.o  mod_logo.o \
        mod_com.o mod_memory.o  mod_electrons.o mod_R_lattice.o  \

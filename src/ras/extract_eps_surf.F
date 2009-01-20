@@ -20,7 +20,8 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine extract_eps_surf(surf_i, cell_i, npol, eps_b, nw, lbulkerr, lsurferr)
-  use pars,                   ONLY : lchlen, schlen, SP, HARTREE
+  use pars,                   ONLY : lchlen, schlen, SP
+  use units,                  ONLY : HARTREE
   use surface_geometry,       only : d_surf, az, nlcell, nlslab, nlbulk, lsymslab, d_vac
   use optcut,                 ONLY : loptcut, dc
   use com,                    ONLY : msg

@@ -21,7 +21,8 @@
 !
 subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
     
-  use pars,                    only : SP, PI, schlen, lchlen, HARTREE
+  use pars,                    only : SP, PI, schlen, lchlen
+  use units,                   only : HARTREE
   use com,                     only : msg
   use memory_m,                only : mem_est
   use parser_m,                only : parser

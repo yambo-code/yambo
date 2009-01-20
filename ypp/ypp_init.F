@@ -21,7 +21,7 @@
 !
 subroutine ypp_init(instr,lnstr,FINALIZE)
  !
- use pars,           ONLY:HARTREE
+ use units,          ONLY:HARTREE
  use wave_func,      ONLY:wf_ng 
  use R_lattice,      ONLY:ng_vec
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&

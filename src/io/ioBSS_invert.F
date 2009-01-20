@@ -21,7 +21,8 @@
 !
 integer function ioBSS_invert(iq,n_,inv_err,eps,W_disk,ID)
  !
- use pars,          ONLY:SP,HARTREE
+ use pars,          ONLY:SP
+ use units,         ONLY:HARTREE
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
  use BS,            ONLY:BS_identifier,BSS_q0,BSS_uses_RIM,BSS_dr,&

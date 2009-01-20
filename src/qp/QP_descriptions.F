@@ -23,7 +23,7 @@ subroutine QP_descriptions(qp,X,Xw)
  ! 
  ! WARNING ! Changes here must be updated in ioQP as well.
  !
- use pars,          ONLY:HARTREE
+ use units,         ONLY:HARTREE
  use X_m,           ONLY:X_t,use_X_RIM
  use QP_m,          ONLY:QP_t,QP_ng_Sx,QP_n_G_bands,QP_cg_percent,&
 &                        QP_dSc_delta,QP_G_damp,QP_dSc_steps,GWo_iterations,&

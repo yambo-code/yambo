@@ -21,7 +21,8 @@
 !
 subroutine report_energies(E,k,Xk,n_bands_,k_range,what,header)
  !
- use pars,           ONLY:schlen,HARTREE,SP
+ use pars,           ONLY:schlen,SP
+ use units,          ONLY:HARTREE
  use R_lattice,      ONLY:bz_samp,nXkibz
  use electrons,      ONLY:n_sp_pol,nel,n_full_bands
  use stderr,         ONLY:intc,real2ch

@@ -21,7 +21,8 @@
 !
 integer function ioOSTNTS(X,Xen,ID)
  !
- use pars,          ONLY:SP,HARTREE,schlen
+ use pars,          ONLY:SP,schlen
+ use units,         ONLY:HARTREE
  use X_m,           ONLY:X_t,X_q0grad,X_alloc,P_bands_ordered
  use electrons,     ONLY:levels,n_sp_pol
  use R_lattice,     ONLY:nXkibz,q0_def_norm

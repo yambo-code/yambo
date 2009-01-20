@@ -28,7 +28,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! init = 2  : DB listing mode
  !
  use drivers
- use pars,           ONLY:schlen,lchlen,HARTREE
+ use pars,           ONLY:schlen,lchlen
+ use units,          ONLY:HARTREE
  use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&

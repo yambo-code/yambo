@@ -21,7 +21,8 @@
 !
 subroutine K_dump_to_o_file(iq,mode)
  !
- use pars,      ONLY:HARTREE,pi,SP
+ use pars,      ONLY:pi,SP
+ use units,     ONLY:HARTREE
  use BS,        ONLY:BSS_description,BSS_of_title,BSS_file_name,&
 &                    BSS_n_descs,BS_K_coupling,BS_K_is_ALDA
  use X_m,       ONLY:X_epsilon,alpha_dim,eps_2_alpha

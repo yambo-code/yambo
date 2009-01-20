@@ -20,7 +20,8 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
-  use pars,                 ONLY : schlen, SP, HARTREE, PI
+  use pars,                 ONLY : schlen, SP,PI
+  use units,                ONLY : HARTREE
   use surface_geometry
   use eels_kinematics
   use eels_detector

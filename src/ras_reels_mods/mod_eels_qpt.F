@@ -23,7 +23,8 @@ module eels_qpt
   ! 
   ! q-point manipulations for HREELS
   !
-  use pars,             ONLY : lchlen, SP, HARTREE
+  use pars,             ONLY : lchlen, SP
+  use units,            ONLY : HARTREE
   use com,              ONLY : msg
   use R_lattice,        ONLY : bz_samp
   use surface_geometry

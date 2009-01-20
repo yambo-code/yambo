@@ -23,7 +23,8 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  !
  ! Hartree S_x self-energy + call to V_xc 
  !
- use pars,          ONLY:SP,schlen,DP,pi,HARTREE
+ use pars,          ONLY:SP,schlen,DP,pi
+ use units,         ONLY:HARTREE
  use drivers,       ONLY:l_sc_run,l_acfdt,l_sc_exx,l_sc_exxc
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg,depth

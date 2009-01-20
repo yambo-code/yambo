@@ -21,7 +21,8 @@
 !
 integer function ioBS_Fxc(iq,FXC_W,ID,X)
  !
- use pars,           ONLY:SP,schlen,HARTREE,lchlen
+ use pars,           ONLY:SP,schlen,lchlen
+ use units,          ONLY:HARTREE
  use memory_m,       ONLY:mem_est
  use stderr,         ONLY:intc
  use BS,             ONLY:BSS_q0,BS_K_dim,variables_BS

@@ -20,7 +20,8 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine calc_loss_function(ipol, Xen, Xk, X, q, wq)
-  use pars,                    only : SP, lchlen, HARTREE
+  use pars,                    only : SP, lchlen 
+  use units,                   ONLY : HARTREE
   use memory_m,                only : mem_est
   use com,                     only : msg
   Use electrons,               only : levels
@@ -173,7 +174,8 @@ contains
 !end cleanup_eels_qpar
 subroutine write_loss_sec( imode )
   use com,                    only : msg, of_open_close
-  use pars,                   only : schlen, HARTREE, lchlen
+  use pars,                   only : schlen, lchlen
+  use units,                  only : HARTREE 
   use eels_wgrid,             only : hwqgrid
 ! use reels_module,           only : npol
   use surface_geometry,       only : qname

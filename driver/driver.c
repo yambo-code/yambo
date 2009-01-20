@@ -285,7 +285,7 @@ main(int argc, char *argv[])
  */
  strcpy(edit_line,editor);
  strncat(edit_line,inf,strlen(inf));
-#if defined _YAMBO_MAIN || _YPP_MAIN 
+#if defined _YAMBO_MAIN || defined _YPP_MAIN 
  if (iif == 1 && ttd>0)
  {
   if(strstr(editor,"none ")==0) { system(edit_line); };

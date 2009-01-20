@@ -25,7 +25,8 @@ subroutine QP_apply_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
  ! Here I apply the strecth for both QP_ctl_from_DB (respecting the 
  ! qp_done array) and QP_ctl_add (everywhere)
  !
- use pars,          ONLY:SP,lchlen,HARTREE
+ use pars,          ONLY:SP,lchlen
+ use units,         ONLY:HARTREE
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
  use electrons,     ONLY:levels,n_sp_pol

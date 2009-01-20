@@ -22,6 +22,7 @@
  subroutine trans_ypp(en,k)
    use pars                    
    use YPP
+   use units,                   ONLY : HARTREE
    use com,                     ONLY : error, msg
    use stderr,       ONLY: intc
    use electrons,               ONLY : levels, n_sp_pol

@@ -19,28 +19,23 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module pars
+module UNITS
+ !
+ use pars,       ONLY:SP,pi
  !
  implicit none
  !
- ! KINDS
+ ! UNITs CONVERSION
  !
- integer, parameter  :: DP = selected_real_kind(14,200)
-#if defined _DOUBLE
- integer, parameter  :: SP = selected_real_kind(14,200)
-#else
- integer, parameter  :: SP = selected_real_kind(6,30)
-#endif
- integer, parameter  :: IP = selected_int_kind(9)
- !
- ! STRINGs
- !
- integer, parameter  :: schlen=100
- integer, parameter  :: lchlen=300
- !
- ! CONSTANTs
- !
- real(SP), parameter :: pi=3.141592653589793238462643383279502884197_SP
- real(SP), parameter :: zero_dfl=1.E-5
+ real(SP), parameter :: HARTREE=27.2113834_SP         ! HA2EV, 1 HA = HA2EV eV
+ real(SP), parameter :: HA2GHZ=HARTREE*241798.474_SP
+ real(SP), parameter :: HA2THZ=HARTREE*241.798474_SP
+ real(SP), parameter :: HA2CM1=HARTREE*8065.5_SP
+ real(SP), parameter :: Kelvin=1.1604*10.**4*HARTREE  ! KE2EV, 1 K = KE2EV eV
+ real(SP), parameter :: BOHR=0.52917721_SP            ! Armostrongs
+ real(SP), parameter :: radian=pi/180.0_SP  
+ real(SP), parameter :: PS2EVm1=1.000_SP/0.65822_SP
+ real(SP), parameter :: FS2EVm1=1._SP/0.65822_SP
+ real(SP), parameter :: FS2EVm1=0.001._SP/0.65822_SP
  !
 end module 

@@ -21,7 +21,8 @@
 !
 module eels_kinematics
 
-  use pars,                   ONLY : schlen, SP, pi, HARTREE
+  use pars,                   ONLY : schlen, SP, pi
+  use units,                  ONLY : HARTREE
 
   real(SP)                  :: theta0_in, thetap_in, thetas_in, phi_in
   real(SP)                  :: theta0, thetap, thetas, phi
@@ -48,7 +49,8 @@ module eels_kinematics
 contains
 
 subroutine init_kinematics(defs) ! only those common to RAS and REELS runlevels
-  use pars,                  ONLY : SP, HARTREE
+  use pars,                  ONLY : SP
+  use units,                 ONLY : HARTREE
   use it_m,                  ONLY : it, initdefs, E_unit,G_unit,T_unit, V_more
   implicit none
   type(initdefs), intent(inout)  :: defs

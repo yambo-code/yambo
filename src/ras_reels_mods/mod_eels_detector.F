@@ -64,7 +64,7 @@ subroutine init_detector(defs)
 end subroutine init_detector
 
   subroutine setup_eels_det( lfail )
-    use pars,                only  : radian
+    use units,               only  : radian
     implicit none
     logical, intent(out)           :: lfail
 
@@ -128,7 +128,7 @@ end subroutine init_detector
   
   subroutine print_eels_det(where)
     use com,   ONLY:msg
-    use pars,  only : radian
+    use units, only : radian
     implicit none
     character(*), optional  :: where
 
@@ -190,7 +190,7 @@ end subroutine init_detector
   end subroutine reset_trig_det
 
   subroutine setup_det
-    use pars,                   only :  radian
+    use units, only : radian
     implicit none
     integer                         :: i, j, ii
     !

@@ -23,7 +23,8 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  ! Non interacting X with SPIN support.
  !
- use pars,          ONLY:SP,HARTREE
+ use pars,          ONLY:SP
+ use units,         ONLY:HARTREE
  use collision,     ONLY:ggwinfo,collision_reset
  use timing,        ONLY:live_timing
  use com,           ONLY:msg

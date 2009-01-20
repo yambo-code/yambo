@@ -23,7 +23,8 @@ integer function io_SC_components(what,E_sc,ID)
  !
  ! what can be E WF V
  !
- use pars,           ONLY:SP,HARTREE
+ use pars,           ONLY:SP
+ use units,          ONLY:HARTREE
  use drivers,        ONLY:l_sc_run
  use R_lattice,      ONLY:nkibz
  use D_lattice,      ONLY:atoms_string

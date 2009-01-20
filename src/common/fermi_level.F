@@ -32,7 +32,8 @@ subroutine fermi_level(E,K,test_Tel,mode)
  ! Mode > 1 -> Mode 1 +
  !  Full report of system electronic character
  !
- use pars,          ONLY:SP,DP,HARTREE,Kelvin
+ use pars,          ONLY:SP,DP
+ use units,         ONLY:HARTREE,Kelvin
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Tel
  use electrons,     ONLY:levels,nel,n_sp_pol,spin_occ,filled_tresh,&

@@ -22,6 +22,7 @@
  integer function ioOSTNTS_cut(X,Xen,io_db)
 !======================================
  use pars
+ use units,            ONLY : Hartree
  use X_m,              ONLY : X_t
  use electrons,        ONLY : levels, n_spinor, n_spin
  use R_lattice,        ONLY : nXkibz

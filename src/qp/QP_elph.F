@@ -25,7 +25,8 @@ subroutine QP_elph(en,k,q,qp)
  ! following the Allen-Cardona formulation (see for example 
  ! PRB 23, 1495 (1981) )
  !
- use pars,          ONLY:SP,DP,schlen,HARTREE,HA2THZ,pi
+ use pars,          ONLY:SP,DP,schlen,pi
+ use units,         ONLY:HARTREE,HA2THZ
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp,W_reset
  use electrons,     ONLY:levels,spin_occ

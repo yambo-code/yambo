@@ -34,7 +34,8 @@ subroutine calc_eps( iq,  Xen,Xk, X, q, wq, epsm1, ngblk, nw ,iqf )
   !
   ! eps(hw) is calculated on the input mesh wq(1:nw)
   !
-  use pars,                  only : PI, HARTREE, lchlen
+  use pars,                  only : PI, lchlen
+  use units,                 only : HARTREE
   use com,                   only : msg
   use parser_m,              only : parser
   use X_m,                   only : X_t, X_mat, X_epsilon, X_alloc

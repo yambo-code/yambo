@@ -26,7 +26,8 @@ subroutine QP_raxis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  ! [1] Real axis GW S.E.
  ! [2] Electronic Lifetimes
  !
- use pars,          ONLY:SP,schlen,pi,IP,HARTREE
+ use pars,          ONLY:SP,schlen,pi,IP
+ use units,         ONLY:HARTREE
  use stderr,        ONLY:string_pack
  use drivers,       ONLY:l_life
  use electrons,     ONLY:levels,spin

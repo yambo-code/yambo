@@ -21,7 +21,8 @@
 !
 subroutine plot_gnuplot(use_1d,use_2d,eval_only)
  !
- use pars,        ONLY:SP,schlen,BOHR
+ use pars,        ONLY:SP,schlen
+ use units,       ONLY:BOHR
  use com,         ONLY:msg
  use FFT_m,       ONLY:fft_dim
  use D_lattice,   ONLY:a

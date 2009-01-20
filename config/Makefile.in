@@ -132,7 +132,7 @@ yambo_reels: libs
 	@X2DO="yambo_reels"; XPATH="driver";XLIBS="$(PJ_REELSLIBS)";ADF="-D_REELS";$(mkx)
 ypp_ph: libs
 	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
-	@X2DO="Ypp_ph" ;XPATH="Ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_ELPH";$(mkx)
+	@X2DO="ypp_ph" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_ELPH";$(mkx)
 ypp_ras: libs
 	@LIBS2DO="$(YPPRASLIBS)" ; ADF="-D_YPP_RAS";$(mksrc)
 	@X2DO="ypp_ras" ;XPATH="ypp";XLIBS="$(YPPRASLIBS)"; ADF="-D_YPP_RAS";$(mkx)

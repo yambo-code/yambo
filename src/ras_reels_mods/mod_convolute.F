@@ -23,7 +23,8 @@ module convolute
   !
   ! Routines for convoluting functions 
   !
-  use pars,                ONLY : PI, SP, HARTREE
+  use pars,                ONLY : PI, SP
+  use units,               ONLY : HARTREE
   use numerical_integration, ONLY : simpson
   implicit none
   real(SP)                     :: gbroad ! The FWHM

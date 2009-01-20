@@ -24,7 +24,8 @@ module eels_wgrid
   ! Routines for the q-dependent energy grids
   !
   use com,                    only : msg
-  use pars,                   only : schlen, SP, PI, HARTREE
+  use pars,                   only : schlen, SP, PI
+  use units,                  only : HARTREE
   use frequency,              only : w_samp
   use eels_qpt,               only : iqmin, iqmax, nqpar
   implicit none

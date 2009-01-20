@@ -24,7 +24,8 @@ module eels_scattering
   ! Setting up electron scattering off surface, prefactors, etc
   !
   use com,             ONLY : msg
-  Use pars,            only : HARTREE, SP, PI
+  Use pars,            only : SP, PI
+  Use units,           only : HARTREE
   use surface_geometry
   use eels_kinematics
 

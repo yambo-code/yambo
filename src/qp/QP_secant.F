@@ -45,7 +45,8 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  !
  ! 2. SECANT SOLUTION: see "Numerical Recipes (Fortran version)", Pag. 248
  !
- use pars,          ONLY:SP,HARTREE,IP
+ use pars,          ONLY:SP,IP
+ use units,         ONLY:HARTREE
  use memory_m,      ONLY:mem_est
  use timing,        ONLY:live_timing
  use electrons,     ONLY:levels

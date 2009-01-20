@@ -22,6 +22,7 @@
  integer function ioslabeps(eps_i_r, X, Xk, Xen, wv, q0v, npol, io_db)
 !======================================
  use pars
+ use units,             ONLY : HARTREE
  use X_m,               ONLY : X_t
  use electrons,         ONLY : levels
  use IO_m,              ONLY : io_connect,io_disconnect,io_sec,&

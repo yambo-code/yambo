@@ -21,7 +21,8 @@
 !
 subroutine plot_xcrysden(use_2d)
  !
- use pars,        ONLY:BOHR,SP,schlen
+ use pars,        ONLY:SP,schlen
+ use units,       ONLY:BOHR
  use LOGO,        ONLY:code_version
  use com,         ONLY:msg
  use YPP,         ONLY:nr,v2plot,ncell,v2plot2D,r_hole,plot_dim,l_free_hole,&

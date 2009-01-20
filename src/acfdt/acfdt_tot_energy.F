@@ -21,7 +21,8 @@
 !
 subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  !
- use pars,           ONLY:SP,schlen,HARTREE,pi,DP
+ use pars,           ONLY:SP,schlen,pi,DP
+ use units,          ONLY:HARTREE
  use ACFDT,          ONLY:ACFDT_n_freqs,ACFDT_n_lambda,ACFDT_E_range
  use FFT_m,          ONLY:fft_size
  use frequency,      ONLY:w_samp,W_reset

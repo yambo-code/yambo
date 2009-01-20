@@ -21,7 +21,8 @@
 !
 subroutine exc_properties(Xk,Xen)
  !
- use pars,          ONLY:SP,IP,pi,BOHR
+ use pars,          ONLY:SP,IP,pi
+ use units,         ONLY:BOHR
  use stderr,        ONLY:intc
  use FFT_m,         ONLY:fft_rot_r,fft_dim
  use D_lattice,     ONLY:a,i_time_rev,nsym,alat

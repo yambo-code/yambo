@@ -21,7 +21,8 @@
 !
 subroutine fermi_msg(E,mode)
  !
- use pars,          ONLY:SP,lchlen,HARTREE
+ use pars,          ONLY:SP,lchlen
+ use units,         ONLY:HARTREE
  use com,           ONLY:msg,warning
  use electrons,     ONLY:levels,n_sp_pol,n_spin
  implicit none

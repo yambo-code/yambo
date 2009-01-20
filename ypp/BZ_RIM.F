@@ -21,7 +21,8 @@
 !
 subroutine BZ_RIM(Xk,Xen)
  !
- use pars,                ONLY:SP,DP,HARTREE
+ use pars,                ONLY:SP,DP
+ use units,               ONLY:HARTREE
  use R_lattice,           ONLY:bz_samp,nkibz
  use D_lattice,           ONLY:alat,nsym,default_Tel,a
  use com,                 ONLY:msg

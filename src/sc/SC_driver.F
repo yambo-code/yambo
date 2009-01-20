@@ -21,7 +21,8 @@
 !
 subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
- use pars,           ONLY:SP,HARTREE,schlen
+ use pars,           ONLY:SP,schlen
+ use units,          ONLY:HARTREE
  use drivers,        ONLY:l_sc_exx,l_sc_chosex,l_sc_hartree,l_sc_pz,l_sc_lda_x,&
 &                         l_sc_hf,l_sc_exxc
  use electrons,      ONLY:levels,nel,n_met_bands

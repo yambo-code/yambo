@@ -184,7 +184,8 @@ integer function elph_pw_dbs(k,E,q)
    !     read (99) Ek_plus_q
    !   ENDDO
    !
-   use pars,           ONLY:SP,DP,schlen,HA2CM1
+   use pars,           ONLY:SP,DP,schlen
+   use units,          ONLY:HA2CM1
    use D_lattice,      ONLY:nsym,sop_inv,alat,n_atoms
    use R_lattice,      ONLY:nqibz
    use IO_m,           ONLY:io_control,OP_RD,RD_CL,io_connect,io_unit,&

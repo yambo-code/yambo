@@ -377,7 +377,7 @@ subroutine K_diagonalization(iq,W)
    !
    subroutine eval_IP_contrib_to_E_lambda(Eigen_V)
      use D_lattice, ONLY:Tel
-     use pars,      ONLY:KELVIN,HARTREE
+     use units,     ONLY:KELVIN,HARTREE
      complex(SP) :: Eigen_V(BS_K_dim,BS_K_dim)
      complex(SP) :: Eigen_V_sq(BS_K_dim),dE_lambda(BS_K_dim),dE_o(BS_K_dim)
      integer     :: il,i2

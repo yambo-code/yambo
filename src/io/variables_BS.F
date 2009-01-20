@@ -21,7 +21,8 @@
 !
 integer function variables_BS(ID,local_description,DB,X)
  !
- use pars,          ONLY:HARTREE,lchlen
+ use pars,          ONLY:lchlen
+ use units,         ONLY:HARTREE
  use drivers,       ONLY:l_td_hf
  use X_m,           ONLY:X_t
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts,cut_geometry

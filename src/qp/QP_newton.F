@@ -21,7 +21,8 @@
 !
 subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  !
- use pars,          ONLY:SP,HARTREE
+ use pars,          ONLY:SP
+ use units,         ONLY:HARTREE
  use drivers,       ONLY:l_ppa,l_el_corr,l_ph_corr,l_chosex
  use com,           ONLY:msg
  use X_m,           ONLY:X_t

@@ -20,7 +20,8 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
  subroutine ras_presets()
-   use pars,                  only : HARTREE, SP, schlen
+   use pars,                  only : SP, schlen
+   use units,                 only : HARTREE
    use surface_geometry,      only : q0x, q0y, nlayers
    use analyse_peaks,         only : lAnalysePeaks
    use eels_kinematics,       only : E0, theta0_in, thetap_in, phi_in, bimp

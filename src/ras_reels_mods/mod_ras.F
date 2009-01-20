@@ -35,7 +35,8 @@ module ras_module
 contains
 
 subroutine CalcRAS(hw, eps_x, eps_y, eps_b, nw, d_surf)
-  use pars,                   ONLY : schlen, SP, HARTREE
+  use pars,                   ONLY : schlen, SP
+  use units,                  ONLY : HARTREE
   use com,                    ONLY : msg, of_open_close
   implicit none
   integer,             intent(in) :: nw

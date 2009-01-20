@@ -23,7 +23,8 @@ module eels_gvec
   ! 
   ! G vector manipulation for HREELS code
   !
-  use pars,             ONLY : lchlen, SP, HARTREE
+  use pars,             ONLY : lchlen, SP
+  use units,            ONLY : HARTREE
   use com,              ONLY : msg
   use surface_geometry
   use eels_qpt

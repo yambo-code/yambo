@@ -24,7 +24,8 @@ subroutine write_loss( hw, nw, ipol )
   ! NEver used!
   !
   use com,                    only : msg, of_open_close
-  use pars,                   only : SP, schlen, HARTREE
+  use pars,                   only : SP, schlen
+  use units,                  only : HARTREE
   implicit none
   integer,          intent(in)    :: nw, ipol
   real(SP),         intent(in)    :: hw(nw)

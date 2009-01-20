@@ -21,7 +21,9 @@
 !
 subroutine init_convert(rfac,ivar,v_descr,force_RL)
  !
- use pars
+ use pars,   ONLY:SP
+ use units
+ !
  implicit none
  !
  real(SP):: rfac

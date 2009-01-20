@@ -22,7 +22,8 @@
 subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  use drivers
- use pars,       ONLY:SP,HARTREE
+ use pars,       ONLY:SP
+ use units,      ONLY:HARTREE
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:iq_now,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                     alpha_dim,use_X_RIM,long_path,X_RIM_nkpts,P_bands_ordered

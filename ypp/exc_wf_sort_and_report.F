@@ -21,7 +21,8 @@
 !
 subroutine exc_wf_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
  !
- use pars,          ONLY:SP,schlen,pi,HARTREE
+ use pars,          ONLY:SP,schlen,pi
+ use units,         ONLY:HARTREE
  use electrons,     ONLY:spin_occ,levels,spin
  use stderr,        ONLY:intc
  use BS,            ONLY:BSS_description,BSS_n_descs,BS_eh_table

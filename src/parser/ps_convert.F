@@ -21,7 +21,8 @@
 !
 subroutine ps_convert(rvar,ivar,v_name)
  !
- use pars
+ use pars,  ONLY:SP,lchlen,schlen
+ use units
  use it_m,  ONLY: nflines,flines,ni1v,ni2v,ni3v,nr1v,nr2v,nc1v,&
 &                 nr3v,i1vars,i2vars,i3vars,r1vars,r2vars,r3vars,c1vars
  implicit none

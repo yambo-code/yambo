@@ -21,7 +21,8 @@
 !
 module QP_CTL_m
  !
- use pars,  ONLY:SP,schlen,IP,HARTREE
+ use pars,  ONLY:SP,schlen,IP
+ use units, ONLY:HARTREE
  !
  ! QP Pars
  !

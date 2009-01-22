@@ -21,6 +21,8 @@
 !
 module FFT_m
  use pars,         ONLY: SP
+ implicit none
+ !
  real(SP)             :: fft_norm
  integer              :: fft_size
  integer              :: fft_dim(3)

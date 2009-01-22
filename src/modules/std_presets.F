@@ -23,7 +23,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  use drivers
  use pars,       ONLY:SP
- use units,      ONLY:HARTREE
+ use units,      ONLY:HARTREE,FS2AUT
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:iq_now,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                     alpha_dim,use_X_RIM,long_path,X_RIM_nkpts,P_bands_ordered
@@ -74,6 +74,9 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 #if defined _SC
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,SC_E_threshold,&
 &                     using_SC_basis,SC_cycle_mixing,SC_fft_size
+ use real_time,  ONLY:RT_step,T_initial, Thermal_eta, Ext_Field_freq, &
+&                     Tot_steps, Thermal_steps, Ext_Field_int,&
+&                     Ext_Field_name, Integrator_name
 #endif
  use SC,         ONLY:SC_band_mixing
  !
@@ -359,6 +362,18 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  SC_E_threshold=0.01/HARTREE
  SC_potential='none'
  using_SC_basis=.FALSE.
+ !
+ ! Real Time
+ !
+ RT_step=1.*FS2AUT
+ T_initial=0.
+ Thermal_eta=0.
+ Ext_Field_freq=0.
+ Ext_Field_Int=0.
+ Tot_steps=0
+ Thermal_steps=0
+ Ext_Field_name='SINUSOIDAL'
+ Integrator_name='SIMPLE'
  !
 #endif
  SC_band_mixing=100.

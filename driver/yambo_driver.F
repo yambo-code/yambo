@@ -220,7 +220,7 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
    !
  endif
  !
- if (l_gw0) then
+ if (l_gw0.or.l_life) then
    !
    ! GPL_EXCLUDE_START
    !

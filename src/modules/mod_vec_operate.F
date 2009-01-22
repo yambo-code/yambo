@@ -22,12 +22,12 @@
 module vec_operate
  !
  use pars,      ONLY:SP,pi,zero_dfl
+ implicit none
  !
  contains
    ! 
    function normalize_v(v,zero_norm_)
      !
-     implicit none
      real(SP), intent(in) :: v(3)
      real(SP), optional   :: zero_norm_
      !
@@ -46,21 +46,18 @@ module vec_operate
    !
    !
    function v_norm(v)
-     implicit none
      real(SP) :: v(3),v_norm
      v_norm=sqrt(dot_product(v,v))
    end function v_norm
    !
    function iku_v_norm(v)
      use D_lattice,      ONLY:alat
-     implicit none
      real(SP) :: v(3),u(3),iku_v_norm
      u(:)=v(:)*2.*pi/alat(:)
      iku_v_norm=sqrt(dot_product(u,u))
    end function iku_v_norm
    !
    function cross_product(a,b)
-     implicit none
      real(SP), intent(in) :: a(3),b(3)
      real(SP)             :: cross_product(3)
      cross_product(1) = a(2) * b(3) - a(3) * b(2)
@@ -69,7 +66,6 @@ module vec_operate
    end function cross_product
    !
    logical function v_is_zero(v,zero_)
-     implicit none
      real(SP)          :: v(3),local_zero(3)
      real(SP),optional :: zero_(3)
      !
@@ -82,7 +78,6 @@ module vec_operate
    end function v_is_zero
    !
    logical function rlu_v_is_zero(v,zero_)
-     implicit none
      real(SP)          :: v(3),u(3)
      real(SP),optional :: zero_(3)
      u=v-nint(v)
@@ -99,7 +94,6 @@ module vec_operate
      use D_lattice,      ONLY:alat
      use R_lattice,      ONLY:b
      use matrix_operate, ONLY:m3inv
-     implicit none
      real(SP)          :: v_in(3)
      real(SP), optional:: b_in(3,3),v_out(3)
      character(4)::mode
@@ -132,7 +126,6 @@ module vec_operate
      ! k is iku 
      !
      use R_lattice,  ONLY:b
-     implicit none
      real(SP)           :: v_in(3)
      real(SP), optional :: v_out(3),b_in(3,3)
      ! 
@@ -171,7 +164,6 @@ module vec_operate
      !
      ! Output is the module the k in the IBZ, ak2bz=|k|
      !
-     implicit none
      real(SP) :: k(3)
      real(SP) :: k_i(3) !ws
      !
@@ -188,7 +180,6 @@ module vec_operate
      ! arrout and give permutations in indx.
      ! Content of indx is destroyed.
      !
-     implicit none
      real(SP)::  arrin(:)
      integer,  optional::  indx(:)
      real(SP), optional::  arrout(:)
@@ -268,7 +259,6 @@ module vec_operate
      !
      ! deg_grps = 2
      !
-     implicit none
      !
      integer, intent(in)  :: n
      integer, intent(out) :: first_deg_el(n),deg_elmnts(n),deg_grps

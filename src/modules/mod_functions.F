@@ -22,6 +22,8 @@
 module functions
  !
  use pars, ONLY: SP
+ implicit none
+ !
  real(SP)     :: bose_E_cut
  !
  contains
@@ -32,7 +34,6 @@ module functions
    function Fermi_fnc(E,T)
      !
      use electrons, ONLY:filled_tresh
-     implicit none
      real(SP)::E,T,Fermi_fnc
      Fermi_fnc=1.
      if (T==0..and.E>0.) Fermi_fnc=0.
@@ -54,7 +55,6 @@ module functions
      !
      ! Note that the function defined here is integrated to 1.
      !
-     implicit none
      real(SP) :: E,T,Fermi_fnc_derivative
      real(SP),parameter :: tresh=0.
      Fermi_fnc_derivative=0. 
@@ -69,7 +69,6 @@ module functions
      !
      use drivers,   ONLY:Finite_Tel
      use D_lattice, ONLY:Tel
-     implicit none
      real(SP), intent(in):: Eb
      real(SP)            :: bose_f
      bose_f=0.
@@ -94,7 +93,6 @@ module functions
    use drivers,   ONLY:Finite_Tel
      !
      use D_lattice, ONLY:Tel
-     implicit none
      real(SP), intent(in):: E
      real(SP)            :: bose_decay
      bose_decay=1.
@@ -122,7 +120,6 @@ module functions
      !
      use electrons,   ONLY:levels
      use drivers,     ONLY:Finite_Tel
-     implicit none
      integer      ::is(2),os(2),e2et
      type(levels) ::E
      real(SP) :: F
@@ -144,7 +141,6 @@ module functions
      !
      use electrons, ONLY:levels
      use drivers,   ONLY:Finite_Tel
-     implicit none
      integer      ::is(2),os(2),h2ht
      type(levels) ::E
      real(SP) :: F
@@ -168,7 +164,6 @@ module functions
    !
    logical function K_scatter(E,Ep,Er,Dr)
      !
-     implicit none
      real(SP)::E,Ep,Er(2),Dr(2),D
      K_scatter=.false.
      D=Dr(1)+(E-Er(1))/(Er(2)-Er(1))*(Dr(2)-Dr(1))
@@ -181,7 +176,6 @@ module functions
      ! Returns the BZ index of a given ik in the IBZ
      !
      use R_lattice,      ONLY:bz_samp
-     implicit none
      type(bz_samp) :: k
      integer       :: ik
      if (ik==1) BZ_index=1

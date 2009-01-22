@@ -22,6 +22,8 @@
 module electrons
  !
  use pars
+ implicit none
+ !
  real(SP) :: nel
  real(SP) :: default_nel
  real(SP) :: spin_occ
@@ -85,7 +87,6 @@ module electrons
    subroutine E_duplicate(Ei,Eo)
      use com,       ONLY:warning
      use memory_m,  ONLY:mem_est
-     implicit none
      type(levels):: Ei,Eo
      !
      integer :: QP_corrected_bounds(2)
@@ -150,7 +151,6 @@ module electrons
    !
    subroutine E_reset(E)
      use memory_m, ONLY:mem_est
-     implicit none
      type(levels)::E
      E%Efermi=0.
      E%nb=0

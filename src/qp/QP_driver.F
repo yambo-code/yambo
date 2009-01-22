@@ -21,8 +21,8 @@
 !
 subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
- use pars,          ONLY:SP,schlen,IP
- use units,         ONLY:HARTREE
+ use pars,          ONLY:SP,schlen,IP,pi
+ use units,         ONLY:HARTREE,HA2FSm1
  use memory_m,      ONLY:mem_est
  use drivers,       ONLY:l_life,l_ppa,l_el_corr,l_ph_corr,l_chosex
  use electrons,     ONLY:levels,n_sp_pol,spin
@@ -309,7 +309,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
            if (l_ph_corr) then
              r_numbers(6)=aimag(qp%E(i1))*HARTREE/1.E-3
              r_numbers(7)=0.
-             if (r_numbers(6)>0.) r_numbers(7)=0.65822/2./aimag(qp%E(i1))/HARTREE
+             if (r_numbers(6)>0.) r_numbers(7)=1./(HA2FSm1*2*pi*aimag(qp%E(i1)))
            endif
            r_fmt=gen_fmt(r_v=r_numbers(:7))
            fmt_='(3(a,f6.2),a,f4.2,4(a,'//trim(r_fmt)//'))'
@@ -317,10 +317,18 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
            ! GPL_EXCLUDE_START
            !
          else if (widths) then
+           !
+           ! Note the definition of Lifetime is
+           !
+           !  tau = 1/(2 pi Sigma_2) => tau[fs] = 1/(2 pi Sigma_2[H]) / HA2FSm1
+           !
+           ! now HA2FSm1 = HARTREE*241.798474*10^-3 = > tau[fs]= 1/( 2 Sigma_2[H] HARTREE ) * 
+           !                                                     10^3/( pi 241.798474 )
+           !
            r_numbers(:2)=(/qp%E_bare(i1)*HARTREE,real(qp%Z(i1))/)
            r_numbers(3)=aimag(qp%E(i1))*HARTREE/1.E-3
            r_numbers(4)=0.
-           if (r_numbers(3)>0.) r_numbers(4)=0.65822/2./aimag(qp%E(i1))/HARTREE
+           if (r_numbers(3)>0.) r_numbers(4)=1./(HA2FSm1*2*pi*aimag(qp%E(i1)))
            r_fmt=gen_fmt(r_v=r_numbers(:4))
            fmt_='(a,f6.2,1x,3(a,'//trim(r_fmt)//',1x))'
            !

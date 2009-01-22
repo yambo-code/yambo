@@ -22,6 +22,7 @@
 module R_lattice
  !
  use pars, ONLY:SP,schlen, IP
+ implicit none
  !
  ! K lattice
  !
@@ -154,7 +155,6 @@ module R_lattice
    end subroutine bz_samp_reset
    !
    subroutine bz_samp_duplicate(BZi, BZo)
-     implicit none
      type(bz_samp), intent(in)    :: BZi
      type(bz_samp), intent(inout) :: BZo
      BZo%nibz  = BZi%nibz
@@ -167,7 +167,6 @@ module R_lattice
    end subroutine bz_samp_duplicate
    !
    subroutine cutoff_presets()
-     implicit none
      Box_length=0.
      cyl_ph_radius=0.
      box_length=0.

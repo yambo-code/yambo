@@ -69,6 +69,10 @@ subroutine init_convert(rfac,ivar,v_descr,force_RL)
      rfac=HA2GHZ
    else if (index(trim(v_descr),'THz')/=0) then
      rfac=HA2THZ
+   else if (index(trim(v_descr),'ps')/=0) then
+     rfac=1./PS2AUT
+   else if (index(trim(v_descr),'fs')/=0) then
+     rfac=1./FS2AUT
    endif
  endif
  !

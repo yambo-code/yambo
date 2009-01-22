@@ -528,7 +528,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _SC
  if (l_sc_run) then
-   call initactivate(1,'SCPot FFTGvecs SCEtresh SCRhoTresh SCIter SCmixing SCBands BandMix')
+   call initactivate(1,'SCPot FFTGvecs SCIter SCmixing SCBands BandMix')
+   if (l_real_time) then
+     call initactivate(1,'RTstep RTsteps Tinitial ThermDamp ThermStps')
+     call initactivate(1,'Integrator ExtField ExtFiInt ExtFiFreq')
+   else
+     call initactivate(1,'SCEtresh SCRhoTresh')
+   endif
    call initactivate(-1,'QpntsRXs')
  endif
 #endif

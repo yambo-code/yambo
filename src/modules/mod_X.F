@@ -23,6 +23,7 @@ module X_m
  !
  use pars,  ONLY:SP,lchlen,schlen
  use units, ONLY:HARTREE
+ implicit none
  !
  ! Absorption & Polarizability
  !
@@ -74,7 +75,6 @@ module X_m
      !
      use electrons, ONLY:n_sp_pol
      use memory_m,  ONLY:mem_est
-     implicit none
      character(*)      :: what
      integer, optional :: d(:)
      !
@@ -122,7 +122,6 @@ module X_m
    end subroutine
    !
    subroutine X_duplicate(Xi,Xo)
-     implicit none
      type(X_t):: Xi,Xo
      Xo%ng=Xi%ng
      Xo%ng_db=Xi%ng_db
@@ -141,7 +140,6 @@ module X_m
    end subroutine
    !
    subroutine X_reset(X,type)
-     implicit none
      integer, optional :: type
      type(X_t)::X
      X%ng=1

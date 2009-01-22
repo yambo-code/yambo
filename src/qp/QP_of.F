@@ -21,8 +21,8 @@
 !
 subroutine QP_of(kp,qp,en)
  !
- use pars,      ONLY:SP,lchlen
- use units,     ONLY:HARTREE
+ use pars,      ONLY:SP,lchlen,pi
+ use units,     ONLY:HARTREE,HA2FSM1
  use drivers,   ONLY:l_life,l_el_corr
  use com,       ONLY:msg,of_open_close
  use R_lattice, ONLY:bz_samp
@@ -100,7 +100,7 @@ subroutine QP_of(kp,qp,en)
      endif
      values(4:6)=(/qp%E_bare(i1)*HARTREE,real(qp%E(i1)*HARTREE),real(qp%Z(i1))/)
      values(9:10)=(/real(qp_k),real(qp_b)/)
-     values(12:13)=(/aimag(qp%E(i1)*HARTREE/1.E-3),0.65822/2./aimag(qp%E(i1))/HARTREE/)
+     values(12:13)=(/aimag(qp%E(i1)*HARTREE/1.E-3),1./(HA2FSm1*2*pi*aimag(qp%E(i1)))/)
      if (qp_isp==1) values(14)= 1.
      if (qp_isp==2) values(14)=-1.
      if (aimag(qp%E(i1))==0.) values(12:13)=0.

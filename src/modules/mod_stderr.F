@@ -22,6 +22,7 @@
 module stderr
  !
  use pars
+ implicit none
  !
  integer          :: tty_size
  logical          :: write_to_log

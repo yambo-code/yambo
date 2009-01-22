@@ -33,7 +33,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,V_more,&
-&                        V_qp,V_io,V_testing
+&                        V_qp,V_io,V_testing,Time_unit
  use X_m,           ONLY:X_t,long_path
 #if defined _MAGNON
  use X_m,           ONLY:q_plus_G_direction,q_plus_G_shell
@@ -60,6 +60,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        SC_E_threshold,SC_rho_threshold,SC_cycle_mixing
 #endif
  use SC,            ONLY:SC_band_mixing
+ use real_time,     ONLY:RT_step, T_initial, Thermal_eta, Ext_Field_freq, &
+&                        Tot_steps, Thermal_steps, Ext_Field_Int,&
+&                        Ext_Field_name, Integrator_name
 #if defined _RAS
  use bulkeps,              ONLY : init_bulk
  use eels_kinematics,      ONLY : init_kinematics
@@ -249,6 +252,18 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! GPL_EXCLUDE_START SC_IGNORE
  !
  call it('f',defs,'UseEbands', '[GW] Force CHOSEX to use empty bands',verb_level=V_more)
+ !
+ ! Real Time dynamics
+ !
+ call it(defs,'RTstep',    '[RT]  Real Time step',RT_step,unit=Time_unit)
+ call it(defs,'RTsteps',   '[RT]  Real Time steps',Tot_steps)
+ call it(defs,'Tinitial',  '[RT]  Initial Time',T_initial,unit=Time_unit)
+ call it(defs,'ThermDamp', '[RT]  Thermal damping',Thermal_eta,unit='GHz')
+ call it(defs,'ThermStps', '[RT]  Thermal Steps',Thermal_steps)
+ call it(defs,'ExtFiFreq', '[RT]  External Field Frequency',Ext_Field_freq,unit=E_unit)
+ call it(defs,'ExtFiInt',  '[RT]  External Field Intensity',Ext_Field_Int)
+ call it(defs,'ExtField',  '[RT]  External Field',Ext_Field_name)
+ call it(defs,'Integrator','[RT]  Integrator',Integrator_name)
  !
  ! GPL_EXCLUDE_END SC_IGNORE
  !

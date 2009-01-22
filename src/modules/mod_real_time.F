@@ -21,4 +21,26 @@
 !
 module real_time
  !
+ use pars,      ONLY:SP,schlen
+ !
+ implicit none
+ !
+ real(SP) :: RT_step
+ real(SP) :: T_initial
+ real(SP) :: Thermal_eta
+ real(SP) :: Ext_Field_freq
+ real(SP) :: Ext_Field_Int
+ integer  :: Tot_steps
+ integer  :: Thermal_steps
+ character(schlen) :: Ext_Field_name
+ character(schlen) :: Integrator_name
+ !
+ ! GFs
+ !
+ complex(SP), allocatable :: G_lesser(:,:,:)
+ complex(SP), allocatable :: G_greater(:,:,:)
+ complex(SP), allocatable :: I_lesser(:,:,:)
+ complex(SP), allocatable :: I_greater(:,:,:)
+ complex(SP), allocatable :: Ext_Field(:,:)
+ !
 end module

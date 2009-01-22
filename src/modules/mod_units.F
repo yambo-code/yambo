@@ -27,15 +27,36 @@ module UNITS
  !
  ! UNITs CONVERSION
  !
- real(SP), parameter :: HARTREE=27.2113834_SP         ! HA2EV, 1 HA = HA2EV eV
- real(SP), parameter :: HA2GHZ=HARTREE*241798.474_SP
- real(SP), parameter :: HA2THZ=HARTREE*241.798474_SP
- real(SP), parameter :: HA2CM1=HARTREE*8065.5_SP
- real(SP), parameter :: Kelvin=1.1604*10.**4*HARTREE  ! KE2EV, 1 K = KE2EV eV
  real(SP), parameter :: BOHR=0.52917721_SP            ! Armostrongs
  real(SP), parameter :: radian=pi/180.0_SP  
- real(SP), parameter :: PS2EVm1=1.000_SP/0.65822_SP
- real(SP), parameter :: FS2EVm1=1._SP/0.65822_SP
- real(SP), parameter :: FS2EVm1=0.001._SP/0.65822_SP
+ !
+ ! Energies
+ !
+ real(SP), parameter :: HARTREE=27.2113834_SP         ! EV2HA, 1 HA = HA2EV eV
+ real(SP), parameter :: Kelvin=11604.5077_SP*HARTREE  ! EV2K,  1 K = KE2EV eV
+ !
+ ! Format :  U2 = U1_2_U2 * U1
+ ! 
+ ! remember: G=10^9 T=10^12
+ !
+ ! Frequencies
+ !
+ !
+ real(SP), parameter :: HA2GHZ=HARTREE*241798.474_SP
+ real(SP), parameter :: HA2THZ=HA2GHZ/1000._SP
+ !
+ ! wavelength
+ !
+ real(SP), parameter :: HA2CM1=HARTREE*8065.5_SP
+ !
+ ! Time
+ !
+ real(SP), parameter :: HA2PSm1=HA2THZ
+ real(SP), parameter :: HA2FSm1=HA2THZ/1000._SP     ! Note that 1 THz = 10^-3 / fs
+ !
+ real(SP), parameter :: AUT2SEC=2.418884326505_SP*10._SP**(-17)
+ real(SP), parameter :: SEC2AUT=1._SP/AUT2SEC
+ real(SP), parameter :: FS2AUT =10.**2./2.418884326505_SP
+ real(SP), parameter :: PS2AUT =10.**5./2.418884326505_SP
  !
 end module 

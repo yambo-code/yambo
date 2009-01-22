@@ -22,6 +22,7 @@
 module TDDFT
  !
  use pars,     ONLY:SP,lchlen
+ implicit none
  !
  character(lchlen):: FXC_description(100)
  character(10)    :: FXC_type

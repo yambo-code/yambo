@@ -1,15 +1,16 @@
-#if defined _SC || defined _RAS
-objs = O_driver.o \
-       X_O_strengths.o \
-       X_O_kb_pp_comp.o X_O_kb_sum.o X_O_kb_Ylm.o \
-       X_O_transverse.o X_O_rotate.o f_sum_rule.o \
-       X_drude.o  X_pre_setup.o X_Gf.o X_eh_setup.o X_em1.o X_os.o X_s.o \
-       X_delta_part.o X_bare_RIM_Gf.o X_O_check_shifted_grids.o X_O_longitudinal.o
+#if defined _SC
+SC_objects = X_O_rotate.o f_sum_rule.o
 #else
+SC_objects =
+#endif
+#if defined _RAS
+RAS_objects =  X_O_check_shifted_grids.o X_O_longitudinal.o
+#else
+RAS_objects = 
+#endif
 objs = O_driver.o \
        X_O_strengths.o \
        X_O_kb_pp_comp.o X_O_kb_sum.o X_O_kb_Ylm.o \
-       X_O_transverse.o \
+       X_O_transverse.o $(SC_objects)  \
        X_drude.o  X_pre_setup.o X_Gf.o X_eh_setup.o X_em1.o X_os.o X_s.o \
-       X_delta_part.o X_bare_RIM_Gf.o
-#endif
+       X_delta_part.o X_bare_RIM_Gf.o $(RAS_objects)

@@ -31,12 +31,18 @@
   {"nompi", "N","Skip MPI initialization",0,0,0,0}, 
   {"dbfrag","S","DataBases fragmentation",0,0,0,0}, 
   {"kpt",   "k","K-grid generator",0,0,0,0}, 
-  {"excp",  "e","Excitons [(s)ort,(sp)in,(a)mplitude]",0,0,1,0}, 
-  {"plot",  "p","Plot [(e)xciton,(d)ensity,(m)agnetization,(w)ave,(em/dm)]",0,0,1,0}, 
-  {"freehole","f","Free hole position [excitonic plot]",0,0,0,0}, 
+#if defined _YPP_ELPH
+  {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mplitude,(w)ave,(e)lias,(m)ag]",0,0,1,0}, 
+  {"electrons","s","Electrons [(a)ave,(d)ensity,(e)lias,(m)ag]",0,0,1,0}, 
+#else
+  {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mplitude,(w)ave,(m)ag]",0,0,1,0}, 
+  {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag]",0,0,1,0}, 
+#endif
+  {"freehole","f","Free hole position [excitons plot]",0,0,0,0}, 
   {"bzrim",   "r","BZ energy RIM analyzer",0,0,0,0}, 
 #if defined _YPP_ELPH
-  {"elph", "p","Electron-Phonon DBs preprocessing",0,0,0,0}, 
+  {"phonons","p","Phonon [(d)os,(e)lias]",0,0,1,0}, 
+  {"gkkp"  , "g","gkkp databases",0,0,0,0}, 
 #endif
 #if defined _YPP_RAS
   {"surf", "a","Surface spectroscopy postprocessor",0,0,1,0}, 

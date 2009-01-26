@@ -32,14 +32,14 @@ module YPP
  character(schlen) :: coo_in
  character(schlen) :: coo_out
  !
- ! PLOT
+ ! REAL SPACE PLOT
  !
  logical      ::l_plot
- logical      ::l_exc_wf
- logical      ::l_sp_wf
+ logical      ::l_wavefunction
  logical      ::l_density
  logical      ::l_mag
- logical      ::l_merge
+ logical      ::l_sp_wf
+ logical      ::l_exc_wf
  logical      ::l_norm_to_one
  logical      ::use_gnuplot
  logical      ::use_xcrysden
@@ -54,9 +54,10 @@ module YPP
  real(SP), allocatable ::v2plot(:)
  real(SP), allocatable ::v2plot2D(:,:)
  !
- ! Exc Properties
+ ! Exc/SP Properties
  !
- logical      ::l_exc_props
+ logical      ::l_excitons
+ logical      ::l_electrons
  logical      ::l_sort
  logical      ::l_amplitude
  logical      ::l_spin
@@ -73,7 +74,10 @@ module YPP
  !
  !EL-PH
  !
- logical :: lelph
+ logical :: l_dos
+ logical :: l_gkkp
+ logical :: l_phonons
+ logical :: l_eliashberg
  integer :: elph_steps
  real(SP):: elph_gamma_broad
  real(SP):: ph_broad

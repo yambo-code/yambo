@@ -157,19 +157,25 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  ! GPL_EXCLUDE_END
  !
- if (l_exc_props) call exc_properties(Xk,Xen)
+ if (l_excitons) call excitons_driver(k,Xk,en,Xen,q)
  !   ===========
  !
- if (l_plot.and..not.l_exc_props) call plot_driver(Xk,Xen)
- !   ======
+#if defined _YPP_ELPH
+ if (l_electrons.and..not.l_eliashberg) call electrons_driver(Xk,Xen)
+#else
+ if (l_electrons)                       call electrons_driver(Xk,Xen)
+#endif
+ !   ===========
  !
 #if defined _YPP_ELPH
  !
- if (lelph) then
- !   =====
+ if (l_gkkp.or.l_phonons) then
+   ! =====     ========
    i_err=elph_pw_dbs(k,en,q)
-   call elph_eliashberg_dos(k,en,q)
+   if (l_eliashberg.or.l_dos) call elph_eliashberg_dos(k,en,q)
  endif
+ !
+ if (l_electrons.and.l_eliashberg) call elph_general_gFsq(k,en,q)
  !
 #endif
  !

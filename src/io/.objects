@@ -1,4 +1,8 @@
 #if defined _SC
+SC_objects = load_SC_components.o io_SC_components.o
+#else
+SC_objects = 
+#endif
 objs = ver_is_gt_or_eq.o \
        ioRIM.o        ioGROT.o     ioELPH.o \
        ioOSTNTS.o     ioQINDX.o    ioQP.o      ioX.o \
@@ -7,15 +11,4 @@ objs = ver_is_gt_or_eq.o \
        ioBSS_diago.o  ioBSS_Haydock.o ioBSS_invert.o \
        io_elemental.o io_bulk.o      io_header.o ioE_RIM.o \
        ioCOL_CUT.o    ioDB1_reload.o \
-       variables_BS.o \
-       load_SC_components.o io_SC_components.o
-#else
-objs = ver_is_gt_or_eq.o \
-       ioRIM.o        ioGROT.o     ioELPH.o \
-       ioOSTNTS.o     ioQINDX.o    ioQP.o      ioX.o \
-       ioDB1.o        ioWF.o       ioKB_PP.o   ioXXVXC.o \
-       ioBS.o         ioBS_Fxc.o  \
-       ioBSS_diago.o  ioBSS_Haydock.o ioBSS_invert.o \
-       io_elemental.o io_bulk.o      io_header.o ioE_RIM.o \
-       ioCOL_CUT.o    ioDB1_reload.o variables_BS.o 
-#endif
+       variables_BS.o $(SC_objects)

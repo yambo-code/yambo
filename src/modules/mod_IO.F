@@ -213,16 +213,17 @@ module IO_m
          !
          ! First alternative is same DB with(/out) NETCDF support
          !
-         alternative_file(1)=get_name(desc,subfolder,type,open_is_on(ID),&
-&                                     write_is_on(ID),.FALSE.,.not.io_netcdf_support(ID))
+         alternative_file(1)=get_name(desc,subfolder,type,CORE_IO=open_is_on(ID),&
+&                                     MORE_IO=write_is_on(ID),COM_IO=.FALSE.,&
+&                                     NETCDF=.not.io_netcdf_support(ID))
          if (type/=0.and.read_is_on(ID)) then
            !
            ! 2nd/3rd alternatives are  DBs with(/out) NETCDF support in SAVE folder
            !
-           alternative_file(2)=get_name(desc,subfolder,type,.FALSE.,&
-&                                       .TRUE.,.FALSE.,io_netcdf_support(ID))
-           alternative_file(3)=get_name(desc,subfolder,type,.FALSE.,&
-&                                       .TRUE.,.FALSE.,.not.io_netcdf_support(ID))
+           alternative_file(2)=get_name(desc,subfolder,type,CORE_IO=.FALSE.,&
+&                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
+           alternative_file(3)=get_name(desc,subfolder,type,CORE_IO=.FALSE.,&
+&                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.io_netcdf_support(ID))
          endif
        endif
        !

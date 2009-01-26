@@ -38,9 +38,6 @@ subroutine K_eh_setup(iq,Ken,Xk)
 &                       O_n_v_states,O_n_c_states,BS_eh_E,BS_eh_f,BS_eh_en,&
 &                       BS_eh_table,BS_bands,BS_blk_dim,BS_K_coupling,&
 &                       BS_not_const_eh_f,BS_eh_W,BS_eh_Z
-#if defined _ELPH
- use BS,           ONLY:BS_eh_Eo
-#endif
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,n_spin
  use R_lattice,    ONLY:qindx_X,bz_samp
  !
@@ -125,9 +122,6 @@ subroutine K_eh_setup(iq,Ken,Xk)
            endif
            !
            if (allocated(BS_eh_E)) BS_eh_E(BS_K_dim)=E_eh
-#if defined _ELPH
-           if (allocated(BS_eh_Eo)) BS_eh_Eo(BS_K_dim)=Ken%Eo(ic,ik,i_sp)-Ken%Eo(iv,ikp,i_sp) 
-#endif
            if (allocated(BS_eh_f)) BS_eh_f(BS_K_dim)=f_eh
            if (allocated(BS_eh_W)) BS_eh_W(BS_K_dim)=Ken%W(ic,ik,i_sp)-Ken%W(iv,ikp,i_sp)
            if (allocated(BS_eh_Z)) BS_eh_Z(BS_K_dim)=Ken%Z(ic,ik,i_sp)*Ken%Z(iv,ikp,i_sp)
@@ -197,12 +191,6 @@ subroutine K_eh_setup(iq,Ken,Xk)
    ! Allocations
    !
    allocate(BS_eh_table(BS_K_dim,3+n_sp_pol-1),BS_eh_E(BS_K_dim),BS_eh_f(BS_K_dim))
-#if defined _ELPH
-   if (associated(Ken%Eo)) then
-     allocate(BS_eh_Eo(BS_K_dim))
-     call mem_est("BS_eh_Eo",(/BS_K_dim/),(/SP/))
-   endif
-#endif
    call mem_est("BS_eh_table BS_eh_E BS_eh_f",&
 &               (/(3+n_sp_pol-1)*BS_K_dim,BS_K_dim,BS_K_dim/),(/IP,SP,SP/))
    !

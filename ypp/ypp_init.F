@@ -59,7 +59,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  ! What is running ?
  !
  what_is_running='YPP'
-#if defined _ELPH
+#if defined _YPP_ELPH
  what_is_running='YPP_PH'
 #endif
 #if defined _YPP_RAS
@@ -84,7 +84,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    l_density=.false.
    l_mag=.false.
    l_sp_wf=.false.
-   l_merge=.true.
    l_norm_to_one=.true.
    output_fname=' '
    plot_title=' '
@@ -105,6 +104,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    !
    ! ELPH
    !
+   l_phonons=.false.
+   l_dos=.false.
+   l_gkkp=.false.
+   l_eliashberg=.false.
    elph_steps=200
    ph_broad=0.01/HARTREE
    elph_gamma_broad=0.0
@@ -185,68 +188,80 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        infile_editing=.true.
        call initactivate(1,trim(rnlvls(i2,1)))
      endif
-     if ( trim(rstr_piece(i1)) == 'plot') then
-       l_exc_wf    =trim(rstr_piece(i1+1))=='e'
-       !
-       l_density =trim(rstr_piece(i1+1))=='d'.or.trim(rstr_piece(i1+1))=='dm'.or.&
-&                 trim(rstr_piece(i1+1))=='md'
-       l_sp_wf   =trim(rstr_piece(i1+1))=='w'
-       !
-       ! GPL_EXCLUDE_START SPIN_IGNORE
-       !
-       l_mag =(trim(rstr_piece(i1+1))=='m'.or.trim(rstr_piece(i1+1))=='dm'.or.&
-&              trim(rstr_piece(i1+1))=='md').and.n_spin>1
-       !
-       ! GPL_EXCLUDE_END SPIN_IGNORE
-       !
-       if (trim(rstr_piece(i1+1))=='em') then
-         call initactivate(1,'excp')
-         l_mag=.true.
-         l_free_hole=.true.
-       endif
-       !
-       if  (l_exc_wf)  call initactivate(1,'exc_wf')
-       if  (l_exc_wf)  call initactivate(1,'excp')
-       if  (l_density) call initactivate(1,'density')
-       if  (l_mag)     call initactivate(1,'magnetization')
-       if  (l_sp_wf)   call initactivate(1,'wavefunction')
-       !
+#if defined _YPP_ELPH
+     if ( trim(rstr_piece(i1)) == 'phonons') then
+       l_dos            =trim(rstr_piece(i1+1))=='d'
+       l_eliashberg     =trim(rstr_piece(i1+1))=='e'
+       if (l_dos)          call initactivate(1,'dos')
+       if (l_eliashberg)   call initactivate(1,'eliashberg')
      endif
-     if ( trim(rstr_piece(i1)) == 'excp') then
+#endif
+     if ( trim(rstr_piece(i1)) == 'excitons') then
+       l_wavefunction   =trim(rstr_piece(i1+1))=='w'
+       l_sort           =trim(rstr_piece(i1+1))=='s'
+       l_amplitude      =trim(rstr_piece(i1+1))=='a'
        !
        ! GPL_EXCLUDE_START SPIN_IGNORE
        !
        l_spin  =trim(rstr_piece(i1+1))=='sp'.and.n_spin>1
+       l_mag   =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
        !
        ! GPL_EXCLUDE_END SPIN_IGNORE
        !
-       l_sort       =trim(rstr_piece(i1+1))=='s'
-       l_amplitude  =trim(rstr_piece(i1+1))=='a'
-       if  (l_amplitude)   call initactivate(1,'exc_amp')
+#if defined _YPP_ELPH
+       l_eliashberg      =trim(rstr_piece(i1+1))=='e'
+#endif
+       !
+     endif
+     if ( trim(rstr_piece(i1)) == 'electrons') then
+       !
+       l_density        =trim(rstr_piece(i1+1))=='d'
+       l_wavefunction   =trim(rstr_piece(i1+1))=='w'
        !
        ! GPL_EXCLUDE_START SPIN_IGNORE
        !
-       if  (l_spin) call initactivate(1,'exc_spin')
+       l_mag   =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
        !
        ! GPL_EXCLUDE_END SPIN_IGNORE
        !
-       if  (l_sort) infile_editing=.false.
+#if defined _YPP_ELPH
+       l_eliashberg      =trim(rstr_piece(i1+1))=='e'
+#endif
        !
+     endif
+     if ( trim(rstr_piece(i1)) == 'excitons'.or. trim(rstr_piece(i1)) == 'electrons') then
+       if (l_amplitude)      call initactivate(1,'amplitude')
+       if (l_spin)           call initactivate(1,'spin')
+       if (l_mag)            call initactivate(1,'magnetization')
+       if (l_wavefunction)   call initactivate(1,'wavefunction')
+#if defined _YPP_ELPH
+       if (l_eliashberg)     call initactivate(1,'eliashberg')
+#endif
+       if (l_density)        call initactivate(1,'density')
+       if (l_sort)           infile_editing=.false.
      endif
    enddo
  enddo
  !
  if (.not.l_sort) call call_init_load('parserload')
  !
- lkanalyze  =runlevel_is_on('kpt')
- l_exc_props=runlevel_is_on('excp')
+ lkanalyze  = runlevel_is_on('kpt')
+#if defined _YPP_ELPH
+ l_eliashberg=runlevel_is_on('eliashberg')
+ l_dos       =runlevel_is_on('dos')
+ l_phonons   =runlevel_is_on('phonons')
+ l_gkkp      =runlevel_is_on('gkkp')
+#endif
+ l_excitons =runlevel_is_on('excitons')
+ l_electrons=runlevel_is_on('electrons')
+ l_plot=any((/runlevel_is_on('wavefunction'),runlevel_is_on('magnetization'),&
+&             runlevel_is_on('density')/))
  l_free_hole=runlevel_is_on('freehole')
- l_amplitude=runlevel_is_on('exc_amp')
- l_exc_wf   =runlevel_is_on('exc_wf')
- l_density  =runlevel_is_on('density')
+ l_amplitude=runlevel_is_on('amplitude')
+ l_exc_wf   =runlevel_is_on('wavefunction').and.runlevel_is_on('excitons')
+ l_sp_wf    =runlevel_is_on('wavefunction').and.runlevel_is_on('electrons')
+ l_density  =runlevel_is_on('density').and.runlevel_is_on('electrons')
  l_mag      =runlevel_is_on('magnetization')
- l_sp_wf    =runlevel_is_on('wavefunction')
- l_plot     =runlevel_is_on('plot')
  if (.not.l_exc_wf) l_free_hole=.false.
  !
  ! GPL_EXCLUDE_START SPIN_IGNORE
@@ -275,7 +290,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    if (l_mag)   call initactivate(1,"MagDir") 
  endif
  !
- if (l_exc_props) then
+ if (l_excitons) then
    call initactivate(1,"States")
    if (l_exc_wf) call initactivate(1,"Degen_Step")
    if (l_exc_wf.and..not.l_free_hole) call initactivate(1,"Cells Hole Dimension") 
@@ -284,10 +299,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  endif
  !
 #if defined _YPP_ELPH
- !
- lelph=runlevel_is_on('elph')
- if (lelph) call initactivate(1,"DBsPATH PHfreqF EEfermi EfGbroad PhBroad PhStps")
- !
+ if (l_gkkp)                       call initactivate(1,"DBsPATH PHfreqF")
+ if (l_dos.or.l_eliashberg)        call initactivate(1,"EEfermi EfGbroad PhBroad PhStps")
+ if ((l_excitons.or.l_electrons).and.l_eliashberg) &
+&                                  call initactivate(-1,"EEfermi EfGbroad")
 #endif
 
 #if defined _YPP_RAS
@@ -320,9 +335,14 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    call pp_redux_wait
  endif
  !
- if (l_plot.and.l_sp_wf) call QP_init(.FALSE.,.FALSE.)
+#if defined _YPP_ELPH
+ if ((l_plot.and.l_sp_wf).or.(l_electrons.and.l_eliashberg)) &
+#else
+ if (l_plot.and.l_sp_wf) &
+#endif
+&                        call QP_init(.FALSE.,.FALSE.)
  !
- contains
+contains
  !
  subroutine call_init_load(mode) 
    character(*)::mode

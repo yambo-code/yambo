@@ -391,7 +391,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
      !
      ! o.qp
      !
-     if (l_ph_corr)   QP_rep_string=trim(QP_rep_string)//'lm'
+     if (l_ph_corr.and.index(QP_rep_string,'lm')==0)  &
+&                     QP_rep_string=trim(QP_rep_string)//'lm'
      if (widths)      QP_rep_string='kpbne0lmlf'
      if (n_sp_pol==2) QP_rep_string=trim(QP_rep_string)//'sp'
      call QP_of(k,qp,en)

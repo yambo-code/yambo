@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine plot_driver(Xk,Xen)
+subroutine electrons_driver(Xk,Xen)
  !
  use pars,          ONLY:SP,schlen
  use stderr,        ONLY:intc

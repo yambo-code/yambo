@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine exc_properties(Xk,Xen)
+subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  use pars,          ONLY:SP,IP,pi
  use units,         ONLY:BOHR
@@ -32,6 +32,9 @@ subroutine exc_properties(Xk,Xen)
 &                        nr,v2plot,nr_tot,state_ctl,BS_H_dim,&
 &                        exc_wf_sort_and_report,l_amplitude,l_free_hole,&
 &                        output_fname,use_xcrysden,use_gnuplot,plot_dim,l_norm_to_one
+#if defined _YPP_ELPH
+ use YPP,           ONLY:l_eliashberg
+#endif
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
  use BS,            ONLY:BS_K_dim,BS_bands,BS_q,&
 &                        BS_eh_table,BS_mat,BS_K_coupling,BS_cpl_mode,&
@@ -47,8 +50,8 @@ subroutine exc_properties(Xk,Xen)
  use vec_operate,   ONLY:c2a
  !
  implicit none
- type(bz_samp) ::Xk
- type(levels)  ::Xen
+ type(bz_samp) ::Xk,k,q
+ type(levels)  ::Xen,en
  !
  ! Work Space
  !
@@ -83,7 +86,6 @@ subroutine exc_properties(Xk,Xen)
 #else
  complex(SP)  :: cdotu
 #endif
- type(bz_samp)    ::q
  type(pp_indexes) ::px
  logical          ::TR_apply
  !
@@ -125,7 +127,12 @@ subroutine exc_properties(Xk,Xen)
  !
  n_lambda = get_lambda()
  !
- if (.not.any((/l_sort,(l_exc_wf.and.n_lambda>0),(l_amplitude.and.n_lambda>0),l_spin/))) return
+ if (.not.any((/l_sort,(l_exc_wf.and.n_lambda>0),(l_amplitude.and.n_lambda>0),l_spin&
+#if defined _YPP_ELPH
+&              ,l_eliashberg/))) return
+#else
+&                           /))) return
+#endif
  !
  ! Allocation of energies and residuum, then also eigenvector
  !
@@ -183,6 +190,18 @@ subroutine exc_properties(Xk,Xen)
  !========================================
  !
  call exc_wf_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,BS_E_degs=BS_E_degs)
+ !
+ ! Excitonic Eliashberg function 
+ !================================
+ !
+#if defined _YPP_ELPH
+ if (l_eliashberg) then
+   call elph_general_gFsq(k,en,q)
+   deallocate(BS_eh_table,BS_mat)
+   call mem_est('BS_eh_table BS_mat')
+   return
+ endif
+#endif
  !
  ! GPL_EXCLUDE_START SPIN_IGNORE
  !

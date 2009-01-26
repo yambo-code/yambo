@@ -67,7 +67,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_SVD_digits,&
 &                     FXC_is_causal
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
- use ELPH,       ONLY:ph_modes,elph_nb,PH_null_E_rgn,ph_damping
+ use ELPH,       ONLY:ph_modes,elph_nb,PH_null_E_rgn
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND
@@ -349,7 +349,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  ph_modes=0
  elph_nb=0
- ph_damping=0.
  ph_null_E_rgn=0.1/HARTREE
  !
 #if defined _SC

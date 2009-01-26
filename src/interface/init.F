@@ -311,7 +311,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _ELPH
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- ioELPH_err=ioELPH(io_ID)
+ ioELPH_err=ioELPH(io_ID,'gkkp')
 #endif
  !
  ! SC 
@@ -480,7 +480,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined  _ELPH
    if (l_ph_corr) then
      call initactivate(1,'DysSolver')
-     call initactivate(1,'GphBRnge PHdamping GDamping PHnullErgn QPreport ElPhRndNq')
+     call initactivate(1,'GphBRnge GDamping PHnullErgn QPreport ElPhRndNq WRgFsq')
    endif
 #endif
    !

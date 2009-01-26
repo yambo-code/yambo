@@ -25,7 +25,7 @@ integer function elph_pw_dbs(k,E,q)
  use stderr,              ONLY:intc
  use electrons,           ONLY:levels
  use ELPH,                ONLY:ph_freqs_sq,ph_modes,elph_nb,elph_use_q_grid,&
-&                              elph_gkkp_free,max_ph_freq,elph_gkkp_alloc,&
+&                              elph_global_free,max_ph_freq,elph_global_alloc,&
 &                              elph_nq,ph_qpt
  use com,                 ONLY:msg,warning,file_exists,error
  use R_lattice,           ONLY:bz_samp
@@ -99,12 +99,12 @@ integer function elph_pw_dbs(k,E,q)
  ! Check if DB is already done
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),MODE=VERIFY,ID=ID)
- io_elph_err=ioELPH(ID)
+ io_elph_err=ioELPH(ID,'gkkp')
  if (io_elph_err==0) return
  !
  ! Allocation...
  !
- call elph_gkkp_alloc()
+ call elph_global_alloc('gkkp')
  !
  ! ... rebuilding of ph q-points table
  !
@@ -152,7 +152,7 @@ integer function elph_pw_dbs(k,E,q)
    else
      call io_control(ACTION=OP_APP_WR_CL,SEC=(/iq+1/),ID=ID)
    endif
-   io_elph_err=ioELPH(ID)
+   io_elph_err=ioELPH(ID,'gkkp')
    call live_timing(steps=1)
    !
  enddo
@@ -163,7 +163,7 @@ integer function elph_pw_dbs(k,E,q)
  call msg("s",':: Modes           :',ph_modes)
  call msg("s",':: Bands range     :',elph_nb)
  !
- call elph_gkkp_free()
+ call elph_global_free()
  dbs_fragment=dbs_fragment_save
  !
  contains

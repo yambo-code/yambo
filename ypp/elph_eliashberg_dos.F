@@ -27,10 +27,10 @@ subroutine elph_eliashberg_dos(k,en,q)
  use electrons,           ONLY:levels,n_met_bands,n_full_bands
  use R_lattice,           ONLY:bz_samp
  use YPP,                 ONLY:elph_steps,elph_Ef,elph_gamma_broad,&
-&                              ph_broad
+&                              ph_broad,l_dos,l_eliashberg
  use ELPH,                ONLY:ph_modes,elph_nb,elph_gkkp,ph_freqs_sq,&
 &                              max_ph_freq,elph_nq,elph_use_q_grid,&
-&                              E_k_plus_q,setup_k_plus_q_levels,elph_gkkp_free
+&                              E_k_plus_q,setup_k_plus_q_levels,elph_global_free
  use IO_m,                ONLY:io_control,OP_RD,RD_CL_IF_END,DUMP,RD_CL
  use timing,              ONLY:live_timing
  use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid
@@ -48,7 +48,6 @@ subroutine elph_eliashberg_dos(k,en,q)
  complex(SP)       ::d_elias_dos
  character(schlen) ::o_file_name,ch
  type(pp_indexes)  ::px
- logical           ::l_elias,l_dos
  real(SP), allocatable :: gamma(:,:)
  !
  !I/O
@@ -56,10 +55,10 @@ subroutine elph_eliashberg_dos(k,en,q)
  integer           ::io_err,ID
  integer, external ::ioELPH
  !
- l_elias=elph_gamma_broad>1.E-8.and.n_met_bands/=n_full_bands
- l_dos  =ph_broad>1.E-8
+ if (l_eliashberg) l_eliashberg=elph_gamma_broad>1.E-8.and.n_met_bands/=n_full_bands
+ if (l_dos)        l_dos =ph_broad>1.E-8
  !
- if (l_elias.and.l_dos) then
+ if (l_eliashberg.and.l_dos) then
    call section("*","== Electron-Phonon Interface: phonon DOS & Eliashberg Function ==")
  else if (l_dos) then
    call section("*","== Electron-Phonon Interface: phonon DOS ==")
@@ -85,7 +84,7 @@ subroutine elph_eliashberg_dos(k,en,q)
  enddo
  !
  call io_control(ACTION=OP_RD,SEC=(/1/),MODE=DUMP,ID=ID)
- io_err=ioELPH(ID)
+ io_err=ioELPH(ID,'gkkp')
  !
  call msg('s',':: Checking database ...')
  if (io_err<0) then
@@ -110,15 +109,15 @@ subroutine elph_eliashberg_dos(k,en,q)
  aF=0.
  ph_dos=0.
  !
- if (l_elias) then
+ if (l_eliashberg) then
    allocate(gamma(nq_todo,ph_modes))
    gamma=0.
  endif
  !
  call par_indexes(px,(/nq_todo/))
- if (l_elias.and..not.l_dos) call live_timing('Eliashberg',px%stps(myid+1))
- if (.not.l_elias.and.l_dos) call live_timing('ph DOS',px%stps(myid+1))
- if (l_dos.and.l_elias)      call live_timing('Eliashberg & DOS',px%stps(myid+1))
+ if (l_eliashberg.and..not.l_dos) call live_timing('Eliashberg',px%stps(myid+1))
+ if (.not.l_eliashberg.and.l_dos) call live_timing('ph DOS',px%stps(myid+1))
+ if (l_dos.and.l_eliashberg)      call live_timing('Eliashberg & DOS',px%stps(myid+1))
  !
  ! calculate q%weights
  !
@@ -129,9 +128,9 @@ subroutine elph_eliashberg_dos(k,en,q)
    ! I/O
    !
    call io_control(ACTION=RD_CL_IF_END,SEC=(/iq+1/),ID=ID)
-   io_err=ioELPH(ID)  
+   io_err=ioELPH(ID,'gkkp')  
    !
-   if (.not.elph_use_q_grid.and.l_elias) call setup_k_plus_q_levels(en%Efermi(1))
+   if (.not.elph_use_q_grid.and.l_eliashberg) call setup_k_plus_q_levels(en%Efermi(1))
    !
    ! Q weight
    !
@@ -145,7 +144,7 @@ subroutine elph_eliashberg_dos(k,en,q)
      cycle
    endif
    !
-   if (l_elias) then
+   if (l_eliashberg) then
      !
      ! Gamma Factors
      !
@@ -160,8 +159,8 @@ subroutine elph_eliashberg_dos(k,en,q)
        !
        d_elias_dos=q_weight*Fermi_fnc_derivative(ph_energy(i2)-omega,ph_broad)
        !
-       if (l_elias) aF(i2)=aF(i2)+gamma(iq,im)*d_elias_dos/omega/dos_ef
-       if (l_dos)   ph_dos(i2)=ph_dos(i2)+d_elias_dos
+       if (l_eliashberg) aF(i2)=aF(i2)+gamma(iq,im)*d_elias_dos/omega/dos_ef
+       if (l_dos)     ph_dos(i2)=ph_dos(i2)+d_elias_dos
        !
      enddo
    enddo
@@ -171,7 +170,7 @@ subroutine elph_eliashberg_dos(k,en,q)
  enddo
  !
  call live_timing()
- if (l_elias) then
+ if (l_eliashberg) then
    call pp_redux_wait(gamma)
    call pp_redux_wait(aF)
  endif
@@ -179,7 +178,7 @@ subroutine elph_eliashberg_dos(k,en,q)
  !
  ! Output file
  !
- if (l_elias) then
+ if (l_eliashberg) then
    o_file_name='eliashberg'
    call of_open_close(o_file_name,'ot')
    call msg('o eli','#',' Eliashberg Function & Gamma factors',INDENT=0)
@@ -215,8 +214,8 @@ subroutine elph_eliashberg_dos(k,en,q)
  !
  !CLEAN
  !
- if (l_elias) deallocate(gamma)
- call elph_gkkp_free()
+ if (l_eliashberg) deallocate(gamma)
+ call elph_global_free()
  !
  contains
    !

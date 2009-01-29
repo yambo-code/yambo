@@ -29,7 +29,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use wave_func,     ONLY:wf_load,wf_state,wf,WF_free,wf_ng
  use R_lattice,     ONLY:nXkibz,bz_samp
  use YPP,           ONLY:l_sort,l_exc_wf,l_spin,ncell,lambda,r_hole,&
-&                        nr,v2plot,nr_tot,state_ctl,BS_H_dim,&
+&                        nr,v2plot,nr_tot,state_ctl,BS_H_dim,n_lambda,&
 &                        exc_wf_sort_and_report,l_amplitude,l_free_hole,&
 &                        output_fname,use_xcrysden,use_gnuplot,plot_dim,l_norm_to_one
 #if defined _YPP_ELPH
@@ -55,7 +55,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Work Space
  !
- integer              :: n_lambda,i_lambda
+ integer              :: i_lambda
  integer ,allocatable :: lambda_s(:)
  !
  ! ... parameters
@@ -196,9 +196,9 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
 #if defined _YPP_ELPH
  if (l_eliashberg) then
-   call elph_general_gFsq(k,en,q)
-   deallocate(BS_eh_table,BS_mat)
-   call mem_est('BS_eh_table BS_mat')
+   allocate (lambda_s(n_lambda)) 
+   n_lambda = get_lambda()
+   call elph_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
    return
  endif
 #endif
@@ -271,7 +271,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
      !
      n_lambda_deg=count(BS_E_degs==BS_E_degs(lambda))
      !
-     if (n_lambda_deg>0) call msg('s',':: State '//trim(intc(lambda))//' Merged with states '//&
+     if (n_lambda_deg>1) call msg('s',':: State '//trim(intc(lambda))//' Merged with states '//&
 &                                     trim(intc(BS_E_degs(lambda)))//' -> '//&
 &                                     trim(intc(BS_E_degs(lambda)+n_lambda_deg-1)))
      do neh = 1,BS_H_dim
@@ -386,7 +386,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    !
    n_lambda_deg=count(BS_E_degs==BS_E_degs(lambda))
    !
-   if (n_lambda_deg>0) call msg('s',':: State '//trim(intc(lambda))//' Merged with states '//&
+   if (n_lambda_deg>1) call msg('s',':: State '//trim(intc(lambda))//' Merged with states '//&
 &                                   trim(intc(BS_E_degs(lambda)))//' -> '//&
 &                                   trim(intc(BS_E_degs(lambda)+n_lambda_deg-1)))
    !

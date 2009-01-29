@@ -175,7 +175,7 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
    if (l_eliashberg.or.l_dos) call elph_eliashberg_dos(k,en,q)
  endif
  !
- if (l_electrons.and.l_eliashberg) call elph_general_gFsq(k,en,q)
+ if (l_electrons.and.l_eliashberg) call elph_general_gFsq(k,en,Xk,Xen,q)
  !
 #endif
  !

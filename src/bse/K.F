@@ -664,7 +664,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Live Timing finalize
  !
- if (mod(n_K_elements(myid+1),live_timing_step_size)/=0) call live_timing(steps=1)
+ if (mod(n_K_elements(myid+1),int(live_timing_step_size,8))/=0) call live_timing(steps=1)
  call live_timing()
  call pp_redux_wait
  !

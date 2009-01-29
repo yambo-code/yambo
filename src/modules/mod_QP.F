@@ -108,4 +108,66 @@ module QP_m
      nullify(qp%table,qp%k,qp%E,qp%Z,qp%E_bare)
    end subroutine
    !
+   subroutine QP_states_simmetrize(en,vec_2_sim,state_is_2do)
+     !
+     use pars,          ONLY:SP
+     use units,         ONLY:HARTREE
+     use vec_operate,   ONLY:sort,degeneration_finder
+     use electrons,     ONLY:levels
+     !
+     real(SP), optional  ::vec_2_sim(QP_n_states)
+     logical,  optional  ::state_is_2do(QP_n_states)
+     type(levels) ::en
+     !
+     ! Work Space
+     !
+     real(SP) ::Eo_sorted(QP_n_states),sym_value
+     integer  ::Eo_sorted_index(QP_n_states),i1,inx,i2,&
+&               first_el(QP_n_states),n_of_el(QP_n_states),n_deg_grp
+     !
+     ! Degenerate bands average.
+     ! The PW gkkp m.e. are not symmetrized and, consequently,
+     ! degnerate bands can be splitted.
+     !
+     forall(i1=1:QP_n_states) Eo_sorted(i1)=en%E(QP_table(i1,1),QP_table(i1,3),1)
+     !
+     call sort(Eo_sorted,indx=Eo_sorted_index)
+     call degeneration_finder(Eo_sorted,QP_n_states,first_el,n_of_el,n_deg_grp,0.0001/HARTREE)
+     !
+     if (present(state_is_2do)) then
+       state_is_2do=.TRUE.
+     endif
+     !
+     do i1=1,n_deg_grp
+       !
+       sym_value=0.
+       !
+       do i2=first_el(i1),first_el(i1)+n_of_el(i1)-1
+         !
+         inx   =Eo_sorted_index(i2)
+         !
+         if (present(state_is_2do)) then
+           if (i2>first_el(i1)) state_is_2do(inx)=.FALSE.
+         endif
+         !
+         if (present(vec_2_sim)) then
+           sym_value=sym_value+vec_2_sim(inx)/real( n_of_el(i1) )
+         endif
+         !
+       enddo
+       !
+       do i2=first_el(i1),first_el(i1)+n_of_el(i1)-1
+         !
+         inx   =Eo_sorted_index(i2)
+         !
+         if (present(vec_2_sim)) then
+           vec_2_sim(inx)=sym_value
+         endif
+         !
+       enddo
+       !
+     enddo
+     !
+   end subroutine
+   !
 end module 

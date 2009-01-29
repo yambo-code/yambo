@@ -37,15 +37,15 @@ module it_m
  !
  integer, parameter :: V_more=1,V_qp=2,V_io=3,V_testing=4
  !
- integer, parameter :: maxrnlvls=30
- integer, parameter :: maxflags =20
+ integer, parameter :: maxrnlvls=50
+ integer, parameter :: maxflags =50
  integer, parameter :: maxi1vars=50
  integer, parameter :: maxi2vars=50
  integer, parameter :: maxi3vars=50
  integer, parameter :: maxr1vars=50
  integer, parameter :: maxr2vars=50
  integer, parameter :: maxr3vars=50
- integer, parameter :: maxr4vars=10
+ integer, parameter :: maxr4vars=50
  integer, parameter :: maxc1vars=50
  integer, parameter :: maxchvars=50
  integer, parameter :: nvars=(maxi1vars+2*maxi2vars+2*maxi3vars+&
@@ -72,7 +72,7 @@ module it_m
  integer ::           r3st(maxr3vars)
  character(schlen) :: r4vars(maxr4vars,3)
  integer ::           r4st(maxr4vars)
- character(schlen) :: c1vars(maxr4vars,3)
+ character(schlen) :: c1vars(maxc1vars,3)
  integer ::           c1st(maxc1vars)
  character(schlen) :: chvars(maxchvars,2)
  integer ::           chst(maxchvars)

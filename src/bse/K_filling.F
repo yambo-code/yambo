@@ -106,6 +106,6 @@ subroutine K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements,&
  live_timing_steps=test_LT_elements
  live_timing_step_size=i_scale*nhash
  !
- if (mod(n_K_elements(myid+1),live_timing_step_size)/=0) live_timing_steps=live_timing_steps+1
+ if (mod(n_K_elements(myid+1),int(live_timing_step_size,8))/=0) live_timing_steps=live_timing_steps+1
  !
 end subroutine

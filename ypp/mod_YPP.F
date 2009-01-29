@@ -63,6 +63,7 @@ module YPP
  logical      ::l_spin
  logical      ::l_free_hole
  integer      ::lambda
+ integer      ::n_lambda
  integer      ::BS_H_dim
  integer      ::ncell(3)     
  real(SP)     ::r_hole(3)    
@@ -140,6 +141,21 @@ module YPP
      real(SP),optional  :: S_sq(BS_H_dim)
      integer, optional  :: BS_E_degs(BS_H_dim)
    end subroutine
+   !
+#if defined _YPP_PH
+   !
+   subroutine  elph_general_gFsq(k,en,q,lambda_s,BS_E_degs)
+     use R_lattice,     ONLY:bz_samp
+     use electrons,     ONLY:levels
+     use BS_m,          ONLY:BS_K_dim
+     implicit none
+     type(bz_samp)      :: k,q
+     type(levels)       :: en
+     integer, optional  :: lambda(n_lambda)
+     integer, optional  :: BS_E_degs(BS_K_dim)
+   end subroutine
+   !
+#endif
    !
  end interface
  !

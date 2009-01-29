@@ -345,19 +345,19 @@ subroutine QP_elph(en,k,q,qp)
    subroutine Cardona_Allen_report()
      !
      use functions,  ONLY:bose_f
+     use QP_m,       ONLY:QP_states_simmetrize
      complex(DP)        ::DP_corr
      real(SP)           ::ph_freq
-     logical            ::state_is_2do(QP_n_states)
      !
      ! Degenerate bands average
      !
      do iq=1,elph_nq_used
        do il=1,ph_modes
-         call QP_states_simmetrize(gsqF_fan(:,iq,il),en,state_is_2do)
-         call QP_states_simmetrize(gsqF_dw(:,iq,il),en,state_is_2do)
-         call QP_states_simmetrize(gsqF_ca_corr(:,iq,il),en,state_is_2do)
-         call QP_states_simmetrize(gsqF_life_bose(:,iq,il),en,state_is_2do)
-         call QP_states_simmetrize(gsqF_life_f(:,iq,il),en,state_is_2do)
+         call QP_states_simmetrize(en,vec_2_sim=gsqF_fan(:,iq,il))
+         call QP_states_simmetrize(en,vec_2_sim=gsqF_dw(:,iq,il))
+         call QP_states_simmetrize(en,vec_2_sim=gsqF_ca_corr(:,iq,il))
+         call QP_states_simmetrize(en,vec_2_sim=gsqF_life_bose(:,iq,il))
+         call QP_states_simmetrize(en,vec_2_sim=gsqF_life_f(:,iq,il))
        enddo
      enddo
      !

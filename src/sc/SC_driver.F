@@ -25,7 +25,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use units,          ONLY:HARTREE
  use drivers,        ONLY:l_sc_exx,l_sc_chosex,l_sc_hartree,l_sc_pz,l_sc_lda_x,&
 &                         l_sc_hf,l_sc_exxc
- use electrons,      ONLY:levels,nel,n_met_bands
+ use electrons,      ONLY:levels,nel,n_met_bands,el_density
  use R_lattice,      ONLY:bz_samp,qindx_S,G_m_G
  use D_lattice,      ONLY:Tel
  use QP_m,           ONLY:QP_state,QP_nb,QP_nk,QP_Vxc,QP_n_states,QP_table,&
@@ -247,7 +247,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !===========================
  !
  call DFT_Vxc(E,k)
- call el_density(E,k,rho_n,.FALSE.)
+ call el_density(E,k,rho_n)
  call V_Hartree(rho_n,V_hartree_sc)
  !
  ! The Ho = -nabla**2. + V_ext is deduced from the input energies en0:
@@ -308,7 +308,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    ! ... rho_n and V_hartree_sc
    !
-   call el_density(E,k,rho_n,.FALSE.)
+   call el_density(E,k,rho_n)
    call V_Hartree(rho_n,V_hartree_sc)
    !
    V_xc_nm1 = V_xc_sc
@@ -493,7 +493,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !=============
      !
      rho_nm1 = rho_n 
-     call el_density(E,k,rho_n,.FALSE.)
+     call el_density(E,k,rho_n)
      !
      ! Convergences
      !

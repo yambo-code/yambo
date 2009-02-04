@@ -28,7 +28,7 @@ subroutine space_inv_by_wf(en,Xk)
  !  i_space_inv=1 (it is)
  !
  use pars,          ONLY:SP
- use electrons,     ONLY:levels
+ use electrons,     ONLY:levels,el_density
  use FFT_m,         ONLY:fft_size
  use wave_func,     ONLY:wf,wf_space
  use com,           ONLY:msg
@@ -63,8 +63,8 @@ subroutine space_inv_by_wf(en,Xk)
  else
    !
    allocate(rho_si(fft_size),rho_nsi(fft_size),cv(fft_size))
-   call el_density(en,Xk,rho_si,.true.)
-   call el_density(en,Xk,rho_nsi,.false.)
+   call el_density(en,Xk,rho_si,force_si=.true.)
+   call el_density(en,Xk,rho_nsi)
    !
    cv=(0.,0.)
    forall(i1=1:fft_size) cv(i1)=conjg(wf(i1,1))*wf(i1,1)

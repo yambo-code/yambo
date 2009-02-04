@@ -53,7 +53,7 @@
   {"corrtp", "s","Correlation [opt=e(lectrons)/p(honons)/b(oth)]",0,0,1,0},    
 #endif
 #if defined _SC 
-  {"scpot",  "v","Self-Consistent Potential [opt=(hf),(c)hosex,(exx),(exxc),(h)artree]",0,0,1,0}, 
+  {"scpot",  "v","Self-Consistent Potential [opt=(n)none,(hf),(c)hosex,(exx),(exxc),(h)artree]",0,0,1,0}, 
   {"negf",   "k","Real-time dynamics",0,0,0,0}, 
 #endif
   {NULL,NULL,NULL,0,0,0,0}

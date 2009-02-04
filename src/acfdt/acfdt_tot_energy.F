@@ -32,7 +32,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m,  ONLY:par_indexes
  use R_lattice,      ONLY:bz_samp,bare_qpg,nqibz
- use electrons,      ONLY:levels,nel
+ use electrons,      ONLY:levels,nel,el_density
  use D_lattice,      ONLY:DL_vol
  use com,            ONLY:msg
  use X_m,            ONLY:X_t,X_alloc,X_mat
@@ -94,7 +94,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  call wf_load(0,1,(/1,Xen%nbm/),(/1,Xk%nibz/),title='-Density')
  !
  allocate(E_xc(fft_size),rho(fft_size))
- call el_density(Xen,Xk,rho,.false.)
+ call el_density(Xen,Xk,rho)
  !
  call xc_lda_driver(Xen,Xk,XC_EXCHANGE_CORRELATION,XC_LDA_C_KP,0)
 #if defined _DOUBLE

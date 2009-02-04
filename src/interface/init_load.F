@@ -62,7 +62,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use SC,            ONLY:SC_band_mixing
  use real_time,     ONLY:RT_step, T_initial, Thermal_eta, Ext_Field_freq, &
 &                        Tot_steps, Thermal_steps, Ext_Field_Int,&
-&                        Ext_Field_name, Integrator_name
+&                        Ext_Field_name, Integrator_name,EF_q0,T_memory
 #if defined _RAS
  use bulkeps,              ONLY : init_bulk
  use eels_kinematics,      ONLY : init_kinematics
@@ -264,6 +264,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'ExtFiInt',  '[RT]  External Field Intensity',Ext_Field_Int)
  call it(defs,'ExtField',  '[RT]  External Field',Ext_Field_name)
  call it(defs,'Integrator','[RT]  Integrator',Integrator_name)
+ call it(defs,'ELongDir',  '[RT]  Electric Field Versor',EF_q0)
+ call it(defs,'Tmemory',   '[RT]  Memory depth',T_memory,unit=Time_unit)
  !
  ! GPL_EXCLUDE_END SC_IGNORE
  !

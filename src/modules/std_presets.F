@@ -76,7 +76,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     using_SC_basis,SC_cycle_mixing,SC_fft_size
  use real_time,  ONLY:RT_step,T_initial, Thermal_eta, Ext_Field_freq, &
 &                     Tot_steps, Thermal_steps, Ext_Field_int,&
-&                     Ext_Field_name, Integrator_name
+&                     Ext_Field_name, Integrator_name,EF_q0,T_memory
 #endif
  use SC,         ONLY:SC_band_mixing
  !
@@ -373,6 +373,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  Thermal_steps=0
  Ext_Field_name='SINUSOIDAL'
  Integrator_name='SIMPLE'
+ EF_q0=(/1.0,0.0,0.0/)
+ T_memory=0.
  !
 #endif
  SC_band_mixing=100.

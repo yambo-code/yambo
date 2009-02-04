@@ -530,8 +530,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_sc_run) then
    call initactivate(1,'SCPot FFTGvecs SCIter SCmixing SCBands BandMix')
    if (l_real_time) then
-     call initactivate(1,'RTstep RTsteps Tinitial ThermDamp ThermStps')
-     call initactivate(1,'Integrator ExtField ExtFiInt ExtFiFreq')
+     call initactivate(1,'RTstep RTsteps Tinitial ThermDamp ThermStps Tmemory')
+     call initactivate(1,'Integrator ExtField ExtFiInt ExtFiFreq ELongDir')
    else
      call initactivate(1,'SCEtresh SCRhoTresh')
    endif
@@ -1037,6 +1037,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            call initactivate(1,'xxvxc')
          else if ( trim(rstr_piece(i1+1)) == 'h') then
            SC_potential='HARTREE'
+         else if ( trim(rstr_piece(i1+1)) == 'n') then
+           SC_potential='none'
          endif
        endif
 #endif

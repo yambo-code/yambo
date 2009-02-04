@@ -60,6 +60,9 @@ typedef struct
 #if defined _MANYK || _TB || _MAGNON || _DIPOLE_RIM || _PARTIAL_DIAGO
  #define _YAMBO_MAIN
 #endif
+#if defined _DOUBLES || _SOLITONS
+ #define _YAMBO_MAIN
+#endif
 #if defined _ypp  || _YPP_ELPH || _YPP_RAS
  #define _YPP_MAIN
 #endif

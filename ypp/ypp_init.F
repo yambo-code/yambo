@@ -156,6 +156,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    !BZ RIM
    !
    BZ_RIM_path="."
+   gamma_radius=0.
    !
    ! GPL_EXCLUDE_END
    !
@@ -280,7 +281,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_START
  !
- if (lbzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut")
+ if (lbzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut GammaRadius")
  !
  ! GPL_EXCLUDE_END
  !

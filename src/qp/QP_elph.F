@@ -231,7 +231,8 @@ subroutine QP_elph(en,k,q,qp)
        !
        do il=1,ph_modes
          !
-         ! Skip modes @ Gamma
+         ! Skip modes @ Gamma (1st point is always gamma, either with random
+         ! or uniform grids, as it is needed to evaluate the DW factor) 
          !
          if (iq==1) cycle
          !

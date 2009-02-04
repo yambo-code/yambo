@@ -121,6 +121,7 @@ module YPP
  !
  integer  :: BZ_RIM_nkpts
  logical  :: lbzrim
+ real(SP) :: Gamma_radius
  character(lchlen) :: BZ_RIM_path
  !
  ! GPL_EXCLUDE_END RAS_IGNORE

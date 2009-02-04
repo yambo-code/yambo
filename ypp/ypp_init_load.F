@@ -150,6 +150,8 @@ subroutine ypp_init_load(defs)
  !
  call it(defs,'BZ_RIM_Nk','BZ Random Integration points',BZ_RIM_nkpts)
  call it(defs,'BZ_RIM_path','Path to the SAVE folder with the RIM DB1',BZ_RIM_path)
+ call it(defs,'GammaRadius','[a.u.] Maximum distance from gamma',&
+&              gamma_radius,verb_level=V_more)
  !
  ! GPL_EXCLUDE_END
  !

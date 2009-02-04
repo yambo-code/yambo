@@ -26,8 +26,8 @@ subroutine BZ_RIM(Xk,Xen)
  use R_lattice,           ONLY:bz_samp,nkibz
  use D_lattice,           ONLY:alat,nsym,default_Tel,a
  use com,                 ONLY:msg
- use vec_operate,         ONLY:c2a,ak2bz
- use YPP,                 ONLY:BZ_RIM_nkpts,coo_out,BZ_RIM_path
+ use vec_operate,         ONLY:c2a,ak2bz,v_norm
+ use YPP,                 ONLY:BZ_RIM_nkpts,coo_out,BZ_RIM_path,gamma_radius
  use electrons,           ONLY:levels,default_nel,n_bands,&
 &                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
 &                              BZ_RIM_tot_nkpts,n_spin,BZ_RIM_max_filling
@@ -40,7 +40,7 @@ subroutine BZ_RIM(Xk,Xen)
  !
  ! Work Space
  !
- real(SP)     ::dummy,v(3),rand_kpt(BZ_RIM_nkpts+1,3),a_save(3,3),alat_save(3),&
+ real(SP)     ::dummy,rand_kpt(BZ_RIM_nkpts+1,3),a_save(3,3),alat_save(3),&
 &               gap(2)
  integer      ::i1,i2,ikbz
  integer, external :: k_the_nearest
@@ -48,10 +48,10 @@ subroutine BZ_RIM(Xk,Xen)
  ! Random Generator
  !
  character(12)      :: ch(3)
- integer            :: iseed(8)
+ integer            :: iseed(8),k_counter
  real(DP), external :: dlaran
- !
- logical      :: add_X_grid
+ real(SP)           :: k_module,k_(3)
+ logical      :: add_X_grid,impose_gamma_radius
  !
  ! BZ DB1 I/O
  !
@@ -59,7 +59,6 @@ subroutine BZ_RIM(Xk,Xen)
  type(bz_samp)     :: BZ_k
  integer           :: ID,i_err
  integer, external :: ioDB1_reload,ioE_RIM
-
  !
  ! Saves 2 check
  !
@@ -81,6 +80,8 @@ subroutine BZ_RIM(Xk,Xen)
    i_err=-1
  endif
  !
+ impose_gamma_radius=gamma_radius>0.
+ !
  if (i_err/=0.or.trim(BZ_RIM_path)==".") then
    !
    call date_and_time(ch(1),ch(2),ch(3),iseed)
@@ -89,17 +90,34 @@ subroutine BZ_RIM(Xk,Xen)
    iseed(4)=2*(iseed(4)/2)+1
    !
    call section('*',"== BZ RIM grid generator ==")
+   !
    live_timing_is_on=.false.
+   !
    call msg("s"," ========== RIM K-grid ==========")
-   do i1=1,BZ_RIM_nkpts
+   !
+   k_counter=1
+   !
+   do while ( k_counter < BZ_RIM_nkpts -1 )
      do i2=1,3
-       rand_kpt(i1,i2)=(2.*dlaran(iseed(4:))-1.)
+       rand_kpt(k_counter,i2)=(2.*dlaran(iseed(4:))-1.)
      enddo
-     dummy=ak2bz(rand_kpt(i1,:))
-     call c2a(v_in=rand_kpt(i1,:),mode="ka2i")
-     if (trim(coo_out)=="cc") call c2a(v_in=rand_kpt(i1,:),mode="ki2c")
-     if (trim(coo_out)=="rlu") call c2a(v_in=rand_kpt(i1,:),mode="ki2a")
-     call msg("s"," ",rand_kpt(i1,:))
+     dummy=ak2bz(rand_kpt(k_counter,:))
+     call c2a(v_in=rand_kpt(k_counter,:),mode="ka2i")
+     !
+     ! select only point with |k| < gamma_radius [a.u.]
+     !
+     if (impose_gamma_radius) then
+       call c2a(v_in=rand_kpt(k_counter,:),v_out=k_,mode="ki2c")
+       k_module=v_norm(k_)
+       if (k_module > gamma_radius) cycle
+     endif
+     !
+     if (trim(coo_out)=="cc") call c2a(v_in=rand_kpt(k_counter,:),mode="ka2c")
+     !
+     call msg("s"," ",rand_kpt(k_counter,:))
+     !
+     k_counter=k_counter+1
+     !
    enddo
    live_timing_is_on=.true.
    return

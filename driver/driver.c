@@ -50,7 +50,6 @@ typedef struct
 #endif
 #include "editor.h"
 #include "codever.h"
-#include <gnu-versions.h>
 /* 
  Yambo/Ypp driver flag
 */

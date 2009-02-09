@@ -56,7 +56,7 @@ module UNITS
  !
  real(SP), parameter :: AUT2SEC=2.418884326505_SP*10._SP**(-17)
  real(SP), parameter :: SEC2AUT=1._SP/AUT2SEC
- real(SP), parameter :: FS2AUT =10.**2./2.418884326505_SP
- real(SP), parameter :: PS2AUT =10.**5./2.418884326505_SP
+ real(SP), parameter :: FS2AUT =10.**2/2.418884326505_SP
+ real(SP), parameter :: PS2AUT =10.**5/2.418884326505_SP
  !
 end module 

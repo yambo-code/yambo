@@ -89,7 +89,7 @@ module ELPH
          allocate(ph_freqs_sq(elph_nq,ph_modes))
        endif
        allocate(E_k_plus_q(elph_nb,nkbz,1))
-       call mem_est("ph_freqs_sq f_k_plus_q",(/size(ph_freqs_sq),size(E_k_plus_q)/),&
+       call mem_est("ph_freqs_sq E_k_plus_q",(/size(ph_freqs_sq),size(E_k_plus_q)/),&
 &                                            (/SP,SP/))
      endif
      !

@@ -26,7 +26,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  use R_lattice,      ONLY:ng_vec
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
-&                         nrnlvls,rnlvls,runlevel_is_on,switch_off_runlevel,&
+&                         nrnlvls,rnlvls,runlevel_is_on,&
 &                         infile_verbosity
  use drivers,        ONLY:infile_editing
  use com,            ONLY:file_exists
@@ -201,6 +201,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        l_wavefunction   =trim(rstr_piece(i1+1))=='w'
        l_sort           =trim(rstr_piece(i1+1))=='s'
        l_amplitude      =trim(rstr_piece(i1+1))=='a'
+#if defined _YPP_ELPH
+       l_gkkp           =trim(rstr_piece(i1+1))=='g'
+#endif
        !
        ! GPL_EXCLUDE_START SPIN_IGNORE
        !
@@ -237,6 +240,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        if (l_wavefunction)   call initactivate(1,'wavefunction')
 #if defined _YPP_ELPH
        if (l_eliashberg)     call initactivate(1,'eliashberg')
+       if (l_gkkp)           call initactivate(1,'gkkp')
 #endif
        if (l_density)        call initactivate(1,'density')
        if (l_sort)           infile_editing=.false.
@@ -303,7 +307,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  endif
  !
 #if defined _YPP_ELPH
- if (l_gkkp)                       call initactivate(1,"DBsPATH PHfreqF")
+ if (l_gkkp.and..not.l_excitons)   call initactivate(1,"DBsPATH PHfreqF")
+ if (l_gkkp.and.     l_excitons)   call initactivate(1,"PhBroad PhStps")
  if (l_dos.or.l_eliashberg)        call initactivate(1,"EEfermi EfGbroad PhBroad PhStps")
  if ((l_excitons.or.l_electrons).and.l_eliashberg) &
 &                                  call initactivate(-1,"EEfermi EfGbroad")

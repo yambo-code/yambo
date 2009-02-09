@@ -26,7 +26,6 @@ subroutine electrons_driver(Xk,Xen)
  use wave_func,     ONLY:wf_load,wf,WF_free,wf_ng,wf_state
  use FFT_m,         ONLY:fft_size,fft_dim
  use R_lattice,     ONLY:bz_samp
- use D_lattice,     ONLY:nsym
  use electrons,     ONLY:levels,n_spin,n_spinor,spin,n_sp_pol,el_density
  use QP_m,          ONLY:QP_table,QP_n_states,QP_state
  use YPP,           ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
@@ -40,7 +39,7 @@ subroutine electrons_driver(Xk,Xen)
  ! Work Space
  !
  real(SP), allocatable :: el_mag(:,:),el_den(:)
- integer               :: i_qp,ik,ib,ir,is,i_wf,i_spin,mag_i_dir,nb_to_load(2)
+ integer               :: i_qp,ik,ib,ir,i_wf,i_spin,mag_i_dir,nb_to_load(2)
  character(schlen)     :: ch_ws
  !
  if (.not.any((/l_mag,l_density,l_sp_wf/))) return

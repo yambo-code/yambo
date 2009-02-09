@@ -32,7 +32,7 @@
   {"dbfrag","S","DataBases fragmentation",0,0,0,0}, 
   {"kpt",   "k","K-grid generator",0,0,0,0}, 
 #if defined _YPP_ELPH
-  {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mplitude,(w)ave,(e)lias,(m)ag]",0,0,1,0}, 
+  {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mp,(w)ave,(e)lias,(g)kkp,(m)ag]",0,0,1,0}, 
   {"electrons","s","Electrons [(a)ave,(d)ensity,(e)lias,(m)ag]",0,0,1,0}, 
 #else
   {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mplitude,(w)ave,(m)ag]",0,0,1,0}, 

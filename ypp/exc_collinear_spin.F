@@ -22,9 +22,8 @@
 subroutine exc_collinear_spin(deg_list,S_sq,S_z)
  !
  use pars,          ONLY:SP
- use BS,            ONLY:BS_mat,BS_eh_table
+ use BS,            ONLY:BS_mat
  use YPP,           ONLY:BS_H_dim
- use com,           ONLY:msg,of_open_close,error,warning
  !
  implicit none
  !

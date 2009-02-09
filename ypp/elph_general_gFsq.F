@@ -47,8 +47,7 @@ subroutine elph_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  !
  ! Work Space (electrons)
  !
- integer              ::iqp,QP_n_states_done,QP_n_states_2do,&
-&                       QP_n_states_here
+ integer              ::iqp,QP_n_states_2do,QP_n_states_here 
  logical, allocatable ::state_is_2do(:)
  integer, allocatable ::QP_table_map(:,:),QP_table_here(:,:) 
  !

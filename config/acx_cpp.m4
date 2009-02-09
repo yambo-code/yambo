@@ -90,11 +90,14 @@ cat << EOF_ > conftest.F
  a="a"
  write (*,'('//a//')') 'hello'
  ! Replace "S" with "\" and find the max length of
- a="\"
  end program
 EOF_
 (eval $CPP $CPPFLAGS conftest.F > conftest.${F90SUFFIX}) 2> conftest.er1
-if ! test -s conftest.er1 ; then 
+
+if [ -n "`grep \"magic ${PKMAGICHEX}\" ${file}`" ]; then
+
+#if ! test -s conftest.er1 && 
+if [ -n "`grep successful conftest.er1`"  ] ; then 
  eval $CPP $CPPFLAGS conftest.F > conftest.${F90SUFFIX} 
  eval $FC $FCFLAGS -c conftest.${F90SUFFIX} 2> conftest.er2
  if test -s conftest.er2 ; then 

@@ -33,7 +33,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 &                        exc_wf_sort_and_report,l_amplitude,l_free_hole,&
 &                        output_fname,use_xcrysden,use_gnuplot,plot_dim,l_norm_to_one
 #if defined _YPP_ELPH
- use YPP,           ONLY:l_eliashberg
+ use YPP,           ONLY:l_eliashberg,l_gkkp
 #endif
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
  use BS,            ONLY:BS_K_dim,BS_bands,BS_q,&
@@ -129,7 +129,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  if (.not.any((/l_sort,(l_exc_wf.and.n_lambda>0),(l_amplitude.and.n_lambda>0),l_spin&
 #if defined _YPP_ELPH
-&              ,l_eliashberg/))) return
+&              ,l_eliashberg,l_gkkp/))) return
 #else
 &                           /))) return
 #endif
@@ -195,10 +195,11 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !================================
  !
 #if defined _YPP_ELPH
- if (l_eliashberg) then
+ if (l_eliashberg.or.l_gkkp) then
    allocate (lambda_s(n_lambda)) 
    n_lambda = get_lambda()
-   call elph_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
+   if (l_eliashberg) call elph_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
+   if (l_gkkp)       call elph_excitonic_gkkp(Xk,lambda_s)
    return
  endif
 #endif

@@ -169,7 +169,7 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
 #if defined _YPP_ELPH
  !
- if (l_gkkp.or.l_phonons) then
+ if ((l_gkkp.and..not.l_excitons).or.l_phonons) then
    ! =====     ========
    i_err=elph_pw_dbs(k,en,q)
    if (l_eliashberg.or.l_dos) call elph_eliashberg_dos(k,en,q)

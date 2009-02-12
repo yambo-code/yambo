@@ -185,6 +185,7 @@ module IO_m
      !
      integer          ::CREATE_MODE
      character(lchlen)::alternative_file(3),folder
+     character(schlen)::subfolder_
      !
      io_connect=0
      if ( (read_is_on(ID).and..not.IO_read).or.&
@@ -204,25 +205,28 @@ module IO_m
      !
      ! Build the file name
      !
+     subfolder_=' '
+     if (present(subfolder)) subfolder_=subfolder
+     !
      if (len_trim(io_file(ID))==0) then
        !
-       io_file(ID)=get_name(desc,subfolder,type,open_is_on(ID),&
+       io_file(ID)=get_name(desc,subfolder_,type,open_is_on(ID),&
 &                           write_is_on(ID),.FALSE.,io_netcdf_support(ID))
        alternative_file=" "
        if (type/=-2) then
          !
          ! First alternative is same DB with(/out) NETCDF support
          !
-         alternative_file(1)=get_name(desc,subfolder,type,CORE_IO=open_is_on(ID),&
+         alternative_file(1)=get_name(desc,subfolder_,type,CORE_IO=open_is_on(ID),&
 &                                     MORE_IO=write_is_on(ID),COM_IO=.FALSE.,&
 &                                     NETCDF=.not.io_netcdf_support(ID))
          if (type/=0.and.read_is_on(ID)) then
            !
            ! 2nd/3rd alternatives are  DBs with(/out) NETCDF support in SAVE folder
            !
-           alternative_file(2)=get_name(desc,subfolder,type,CORE_IO=.FALSE.,&
+           alternative_file(2)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,&
 &                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
-           alternative_file(3)=get_name(desc,subfolder,type,CORE_IO=.FALSE.,&
+           alternative_file(3)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,&
 &                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.io_netcdf_support(ID))
          endif
        endif

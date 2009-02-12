@@ -171,6 +171,7 @@ subroutine QP_apply_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
          ! using M_factors_free and M_factors_base coefficients
          !
          delta=M_factors_free(iref+1)
+         !
          do i3=1,n_of_coeff-1
            M_factor_local=M_factors_free(iref+1+i3)
            if (what=='E') then
@@ -208,9 +209,9 @@ subroutine QP_apply_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
    subroutine fit_report(qpfit)
      type(QP_ctl_t)::qpfit
      if (qpfit%db_scissor/=0.) &
-&       call msg(' r',' Band edges  DB correction [ev]:',qpfit%db_scissor*HARTREE)
+&       call msg(' r',' Gap correction (database) [ev]:',qpfit%db_scissor*HARTREE)
      if (qpfit%fit_scissor/=0.) &
-&       call msg(' r',' Additional FIT correction [ev]:',qpfit%fit_scissor*HARTREE)
+&       call msg(' r','                     (FIT) [ev]:',qpfit%fit_scissor*HARTREE)
      if (any(qpfit%E/=(/0.,1.,0.,1./))) then
       call msg(' r',' Energies 0th order c/v [ev]:',(/qpfit%E(1),qpfit%E(3)/)*HARTREE)
       call msg(' r',' Energies 1st order         :',(/qpfit%E(2),qpfit%E(4)/))

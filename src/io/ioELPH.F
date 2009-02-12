@@ -74,7 +74,8 @@ integer function ioELPH(ID,what)
    call io_elemental(ID,&
 &       VAR=" Q points        [avail]:",I0=elph_nq,CHECK=.true.,OP=(/"=="/))
    !
-   if (ver_is_gt_or_eq(ID,(/3,2,1/)).and.what=='gFsq') then
+   if ( (ver_is_gt_or_eq(ID,revision=356).and.what=='gFsq').or.&
+&       (.not.ver_is_gt_or_eq(ID,revision=356))            ) then
      call io_elemental(ID,&
 &       VAR="                  [used]:",I0=elph_nq_used,CHECK=.true.,OP=(/"=="/))
    endif

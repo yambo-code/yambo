@@ -134,9 +134,9 @@ subroutine QP_apply_fit(band_range,qp,en,QP_ctl,what)
    !
    ! Storing
    !
-   QP_ctl(i_spin)%db_scissor=(Ec-Ev)-(Eoc-Eov)
-   if (what=='E') QP_ctl(i_spin)%fit_scissor=TCc(1)-TCv(1)-QP_ctl(i_spin)%db_scissor
-   if (what=='E') QP_ctl(i_spin)%E=(/TCc(1),TCc(2),TCv(1),TCv(2)/)
+   QP_ctl(i_spin)%db_scissor=(Ec-Eoc)-(Ev-Eov)
+   if (what=='E') QP_ctl(i_spin)%fit_scissor=TCc(1)-TCv(1)
+   if (what=='E') QP_ctl(i_spin)%E=(/TCc(1)+Ec-Eoc,TCc(2)+Ev-Eov,TCv(1),TCv(2)/)
    if (what=='W') QP_ctl(i_spin)%W=QP_ctl(i_spin)%W+(/TCc(1),TCc(2),TCc(3),TCv(1),TCv(2),TCv(3)/)
    !
  enddo

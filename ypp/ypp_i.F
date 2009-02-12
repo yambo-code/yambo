@@ -31,6 +31,7 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP
  use com,                 ONLY:msg,write_to_report
  use it_m,                ONLY:it_reset,infile
+ use wave_func,           ONLY:ioWF
  use YPP
  implicit none
  !
@@ -48,7 +49,7 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  ! I/O 
  !
  integer           :: ID,i_err
- integer, external :: ioDB1,ioQINDX,iogrot,ioWF
+ integer, external :: ioDB1,ioQINDX,iogrot
 #if defined _YPP_ELPH
  integer, external :: elph_pw_dbs
 #endif

@@ -171,7 +171,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Dump the input file
  !
- if (file_exists(trim(infile))) call infile_dump()
+ if (file_exists(trim(infile))) then
+   call infile_dump()
+ else if (.not.infile_editing) then
+   infile='(none)'
+ endif
  !
  ! BASICAL DATABASES
  !
@@ -530,8 +534,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_sc_run) then
    call initactivate(1,'SCPot FFTGvecs SCIter SCmixing SCBands BandMix')
    if (l_real_time) then
-     call initactivate(1,'RTstep RTsteps Tinitial ThermDamp ThermStps Tmemory')
+     call initactivate(1,'RTstep RTsteps Tinitial ThermDamp ThermStps')
      call initactivate(1,'Integrator ExtField ExtFiInt ExtFiFreq ELongDir')
+     call initactivate(1,'LongRelax TransRelax')
+     call initactivate(1,'RTNoIntraband RTResonant RTNoPhaseInt')
    else
      call initactivate(1,'SCEtresh SCRhoTresh')
    endif

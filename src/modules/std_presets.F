@@ -53,7 +53,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,&
 &                     of_unit,write_to_of,write_to_report,max_open_ofs,&
 &                     more_io_path,core_io_path,jobstr,com_path
- use stderr,     ONLY:win_size,tty_size,write_to_log,logfile
+ use stderr,     ONLY:win_size,tty_size,write_to_log,logfile,set_real_printed_length
  use timing,     ONLY:log_line_to_dump,log_line,nhash,live_timing_is_on,&
 &                     parallel_timing,ct
  use wave_func,  ONLY:wf_b,wf_k,wf_ng,wf_space,wf_norm_test,wf_nb_io,wf_nb_io_groups
@@ -75,8 +75,10 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,SC_E_threshold,&
 &                     using_SC_basis,SC_cycle_mixing,SC_fft_size
  use real_time,  ONLY:RT_step,T_initial, Thermal_eta, Ext_Field_freq, &
-&                     Tot_steps, Thermal_steps, Ext_Field_int,&
-&                     Ext_Field_name, Integrator_name,EF_q0,T_memory
+&                     Tot_steps, Thermal_steps,Ext_Field_int,RT_no_phase_int, &
+&                     Ext_Field_name,Integrator_name,EF_q0,TransRelax,LongRelax, &
+&                     RT_no_intraband,RT_resonant
+
 #endif
  use SC,         ONLY:SC_band_mixing
  !
@@ -84,6 +86,10 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  character(*) :: INSTR,IND,OD,JS,COM_DIR
  integer      :: i1,i2
+ !
+ ! Printed reals format lengths 
+ !
+ call set_real_printed_length()
  !
  ! Stack Size 
  !
@@ -372,9 +378,13 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  Tot_steps=0
  Thermal_steps=0
  Ext_Field_name='SINUSOIDAL'
- Integrator_name='SIMPLE'
+ Integrator_name='RK2'
  EF_q0=(/1.0,0.0,0.0/)
- T_memory=0.
+ TransRelax=0._SP
+ LongRelax =0._SP
+ RT_no_phase_int=.FALSE.
+ RT_resonant =.FALSE.
+ RT_no_intraband=.FALSE.
  !
 #endif
  SC_band_mixing=100.

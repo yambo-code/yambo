@@ -23,15 +23,16 @@ subroutine BZ_RIM(Xk,Xen)
  !
  use pars,                ONLY:SP,DP
  use units,               ONLY:HARTREE
+ use stderr,              ONLY:set_real_printed_length
  use R_lattice,           ONLY:bz_samp,nkibz
  use D_lattice,           ONLY:alat,nsym,default_Tel,a
- use com,                 ONLY:msg
+ use com,                 ONLY:msg,of_open_close
  use vec_operate,         ONLY:c2a,ak2bz,v_norm
  use YPP,                 ONLY:BZ_RIM_nkpts,coo_out,BZ_RIM_path,gamma_radius
  use electrons,           ONLY:levels,default_nel,n_bands,&
 &                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
 &                              BZ_RIM_tot_nkpts,n_spin,BZ_RIM_max_filling
- use timing,              ONLY:live_timing_is_on,live_timing
+ use timing,              ONLY:live_timing
  use IO_m,                ONLY:io_control,NONE,OP_WR_CL
  !
  implicit none
@@ -42,16 +43,14 @@ subroutine BZ_RIM(Xk,Xen)
  !
  real(SP)     ::dummy,rand_kpt(BZ_RIM_nkpts+1,3),a_save(3,3),alat_save(3),&
 &               gap(2)
- integer      ::i1,i2,ikbz
+ integer      ::i1,ikbz
  integer, external :: k_the_nearest
  !
  ! Random Generator
  !
  character(12)      :: ch(3)
  integer            :: iseed(8),k_counter
- real(DP), external :: dlaran
- real(SP)           :: k_module,k_(3)
- logical      :: add_X_grid,impose_gamma_radius
+ logical            :: add_X_grid,impose_gamma_radius
  !
  ! BZ DB1 I/O
  !
@@ -89,37 +88,46 @@ subroutine BZ_RIM(Xk,Xen)
    ! iseed(4) must be odd
    iseed(4)=2*(iseed(4)/2)+1
    !
-   call section('*',"== BZ RIM grid generator ==")
+   call section('*',"== Random k-points generator ==")
    !
-   live_timing_is_on=.false.
+   call live_timing('Random k-points',BZ_RIM_nkpts,SERIAL=.true.)
    !
-   call msg("s"," ========== RIM K-grid ==========")
+   call set_real_printed_length(f_length=20,g_length=20)
    !
-   k_counter=1
+   call of_open_close("random_k_pts",'ot')
+   call msg('o random',"#",(/"X","Y","Z"/),INDENT=0,USE_TABS=.true.)
    !
-   do while ( k_counter < BZ_RIM_nkpts -1 )
-     do i2=1,3
-       rand_kpt(k_counter,i2)=(2.*dlaran(iseed(4:))-1.)
-     enddo
-     dummy=ak2bz(rand_kpt(k_counter,:))
-     call c2a(v_in=rand_kpt(k_counter,:),mode="ka2i")
-     !
-     ! select only point with |k| < gamma_radius [a.u.]
+   k_counter=0
+   !
+   do while ( k_counter < BZ_RIM_nkpts )
      !
      if (impose_gamma_radius) then
-       call c2a(v_in=rand_kpt(k_counter,:),v_out=k_,mode="ki2c")
-       k_module=v_norm(k_)
-       if (k_module > gamma_radius) cycle
+       !
+       ! select only point with |k| < gamma_radius [a.u.]
+       !
+       call build_spherical_k()
+       !
+     else
+       !
+       call build_3D_k()
+       !
      endif
      !
-     if (trim(coo_out)=="cc") call c2a(v_in=rand_kpt(k_counter,:),mode="ka2c")
+     if (trim(coo_out)=="cc" ) call c2a(v_in=rand_kpt(k_counter+1,:),mode="ki2c")
+     if (trim(coo_out)=="rlu") call c2a(v_in=rand_kpt(k_counter+1,:),mode="ki2a")
      !
-     call msg("s"," ",rand_kpt(k_counter,:))
+     call msg('o random',"",rand_kpt(k_counter+1,:),USE_TABS=.true.)
      !
      k_counter=k_counter+1
      !
+     call live_timing(steps=1)
+     !
    enddo
-   live_timing_is_on=.true.
+   !
+   call of_open_close("random_k_pts")
+   call live_timing()
+   call set_real_printed_length()
+   !
    return
  endif 
  !
@@ -214,4 +222,45 @@ subroutine BZ_RIM(Xk,Xen)
  call k_ibz2bz(Xk,'d',.false.) 
  call k_ibz2bz(BZ_k,'d',.false.) 
  !
+ contains
+   !
+   subroutine build_3D_k()
+     real(DP), external :: dlaran
+     do i1=1,3
+       rand_kpt(k_counter+1,i1)=(2.*dlaran(iseed(4:))-1.)
+     enddo
+     dummy=ak2bz(rand_kpt(k_counter+1,:))
+     call c2a(v_in=rand_kpt(k_counter+1,:),mode="ka2i")
+   end subroutine
+   !
+   subroutine build_spherical_k()
+     real(DP), external :: dlaran
+     real(SP)           :: k_module
+     k_module=gamma_radius+1.
+     do while ( k_module > gamma_radius) 
+       do i1=1,3
+         rand_kpt(k_counter+1,i1)=gamma_radius*(2.*dlaran(iseed(4:))-1.)
+       enddo
+       k_module=v_norm(rand_kpt(k_counter+1,:))
+       call c2a(v_in=rand_kpt(k_counter+1,:),mode="kc2a")
+       dummy=ak2bz(rand_kpt(k_counter+1,:))
+       call c2a(v_in=rand_kpt(k_counter+1,:),mode="ka2i")
+     enddo
+   end subroutine
+   !
+   subroutine build_spherical_k_sp_units()
+     use pars,                ONLY:pi
+     real(DP), external :: dlaran
+     real(SP)           :: phi,theta,rho
+     phi  =2.*pi*dlaran(iseed(4:))
+     theta=pi*dlaran(iseed(4:))
+     rho  =gamma_radius*dlaran(iseed(4:))
+     rand_kpt(k_counter+1,:)=rho*(/sin(theta)*cos(phi),&
+&                                  sin(theta)*sin(phi),&
+&                                  cos(theta)/)
+     call c2a(v_in=rand_kpt(k_counter+1,:),mode="kc2a")
+     dummy=ak2bz(rand_kpt(k_counter+1,:))
+     call c2a(v_in=rand_kpt(k_counter+1,:),mode="ka2i")
+   end subroutine
+   !
 end subroutine

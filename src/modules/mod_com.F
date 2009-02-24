@@ -50,7 +50,6 @@ module com
  integer            :: of_unit(max_open_ofs)
  logical            :: write_to_of
  logical            :: write_to_report
- integer, parameter :: of_tabs(10)=(/2,13,24,35,46,57,68,79,90,101/)
  !
  interface msg
    module procedure na0msg,na1msg,namsg,ni1msg,nimsg,nr1msg,nrmsg,nl0msg
@@ -456,7 +455,7 @@ module com
    end subroutine
    !
    character(lchlen) function composed_fmt(basic_fmt,n,USE_TABS,INDENT)
-     use stderr, ONLY:string_pack
+     use stderr, ONLY:string_pack,of_tabs
      character(*)     :: basic_fmt
      integer          :: n,INDENT
      logical          :: USE_TABS

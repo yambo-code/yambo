@@ -31,39 +31,52 @@ module real_time
  real(SP) :: Ext_Field_freq
  real(SP) :: Ext_Field_Int
  real(SP) :: EF_q0(3)
- real(SP) :: RTime  ! The real time on the diagonal RTime = it*RT_step
- real(SP) :: T_memory
  integer  :: n_poles
  integer  :: n_steps_mem
  integer  :: Tot_steps
  integer  :: Thermal_steps
  character(schlen) :: Ext_Field_name
- character(schlen) :: Integrator_name
- logical           :: Gf_diagonal
  logical           :: l_rt_exc
+ real(SP)          :: LongRelax
+ real(SP)          :: TransRelax
  !
  ! GFs
  !
- complex(SP), allocatable :: G_lesser (:,:,:)
+ complex(SP), allocatable :: G_lesser(:,:,:)
  complex(SP), allocatable :: G_l_old(:,:,:)
  complex(SP), allocatable :: Go_Phases(:,:)
- complex(SP), allocatable :: I1_lesser(:,:),I2_lesser(:,:)
+ complex(SP), allocatable :: I1_lesser(:,:,:),I2_lesser(:,:,:)
  !
  ! External Field
  !
  logical                  :: l_rt_efield  
+ logical                  :: RT_resonant
+ logical                  :: RT_no_intraband
  complex(SP), allocatable :: Ef_rhoq0(:,:,:)
  ! 
  ! Other
  !
- complex(SP)             :: Ekin,Ex,Ec
- complex(SP)             :: Trace_Gf
  real(SP), allocatable   :: rho(:)
+ real(SP), allocatable   :: V_hartree_0(:)  
+ real(SP), allocatable   :: V_xc_0(:,:)  
+ real(SP)                :: Thermal_time
  !
- ! Singular part (in time) of the self-energy 
- ! it contains External Field and Hartree-Fock
+ ! Integrator Variables
  !
- complex(SP), allocatable :: Sigma_s(:,:)
+ character(schlen), parameter :: EULER="EULER"
+ character(schlen), parameter :: RK2="RK2"
+ !
+ ! Integrate exactly the part of the dynamics due to H_o 
+ ! as it is done in Comp. Phys. Comm. 123(1999)
+ ! in this case I choosed H_o = H_lda ( rho_0 )
+ !
+ logical                      :: RT_no_phase_int
+ character(schlen)            :: Integrator_name
+ !
+ ! Ho as in SC see SC_driver.F
+ !
+ complex(SP), allocatable :: Ho(:,:,:)
+ real(SP),    allocatable :: E_bare(:,:) ! H(rho_0)
  !
  contains
    !
@@ -74,20 +87,20 @@ module real_time
    use memory_m,       ONLY:mem_est
    use SC,             ONLY:SC_bands,V_hartree_sc
    use FFT_m,          ONLY:fft_size
-   use electrons,      ONLY:levels
+   use electrons,      ONLY:levels,n_spin
    implicit none
    !
    type(levels), intent(in) :: en
    !
-   allocate(Sigma_s(SC_bands,SC_bands))
-   call mem_est('Sigma_s',(/size(Sigma_s)/),(/2*SP/)) 
-   !
    allocate(rho(fft_size))
    call mem_est('Density',(/fft_size/),(/SP/))
    !
-   if(l_sc_hartree) then
+   allocate(V_hartree_0(fft_size),V_xc_0(fft_size,n_spin))
+   call mem_est('Hartree',(/fft_size/),(/(1+n_spin)*SP/))
+   !
+   if(l_rt_exc) then
      allocate(V_hartree_sc(fft_size))
-     call mem_est('V_Hartree',(/fft_size/),(/SP/))
+     call mem_est('Potentials',(/fft_size/),(/SP/))
    endif 
    !
    if(l_rt_efield) then
@@ -98,42 +111,57 @@ module real_time
    allocate(G_lesser(SC_bands,SC_bands,en%nk))
    call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
    !
-   allocate(I1_lesser(SC_bands,SC_bands))
+   allocate(E_bare(SC_bands,en%nk))
+   call mem_est("E_bare",(/size(E_bare)/),(/SP/))
+   !
+   allocate(Ho(SC_bands,SC_bands,en%nk))
+   call mem_est("Ho",(/size(Ho)/),(/2*SP/))
+   !
+   allocate(I1_lesser(SC_bands,SC_bands,en%nk))
    call mem_est("I1_lesser",(/size(I1_lesser)/),(/2*SP/))
    !
-   allocate(I2_lesser(SC_bands,SC_bands))
+   allocate(I2_lesser(SC_bands,SC_bands,en%nk))
    call mem_est("I2_lesser",(/size(I2_lesser)/),(/2*SP/))
    !
    allocate(G_l_old(SC_bands,SC_bands,en%nk))
    call mem_est("Gf_l_old",(/size(G_l_old)/),(/2*SP/))
    !
-   allocate(Go_Phases(SC_bands,en%nk))
-   call mem_est("Go_phases",(/size(Go_Phases)/),(/2*SP/))
+   if(.not.RT_no_phase_int) then
+     !
+     allocate(Go_Phases(SC_bands,en%nk))
+     call mem_est("Go_phases",(/size(Go_Phases)/),(/2*SP/))
+     !
+   endif
    !
    end subroutine RT_alloc
    
    subroutine RT_free
    !
-   use drivers,        ONLY:l_sc_hartree
    use SC,             ONLY:V_hartree_sc
    use memory_m,       ONLY:mem_est
    implicit none
    !
-   deallocate(Sigma_s)
-   call mem_est('Sigma_s')
-   !
    deallocate(rho)
    call mem_est('Density')
    !
-   if(l_sc_hartree) then
+   deallocate(V_hartree_0,V_xc_0)
+   call mem_est('Hartree')
+   !  
+   if(l_rt_exc) then
      deallocate(V_hartree_sc)
-     call mem_est('V_Hartree')
+     call mem_est('Potentials')
    endif
    !
    if(l_rt_efield) then
      deallocate(Ef_rhoq0)
      call mem_est('ExtField_rhoq0')
    endif
+   !
+   deallocate(E_bare)
+   call mem_est("E_bare")
+   !
+   deallocate(Ho)
+   call mem_est("Ho")
    !
    deallocate(G_lesser)
    call mem_est("G_lesser")
@@ -147,8 +175,10 @@ module real_time
    deallocate(G_l_old)
    call mem_est("G_l_old")
    !
-   deallocate(Go_Phases)
-   call mem_est("Go_Phases")
+   if(.not.RT_no_phase_int) then
+     deallocate(Go_Phases)
+     call mem_est("Go_Phases")
+   endif
    !
    end subroutine RT_free
    !

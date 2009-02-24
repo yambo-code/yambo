@@ -58,11 +58,12 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _SC
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential,&
 &                        SC_E_threshold,SC_rho_threshold,SC_cycle_mixing
-#endif
- use SC,            ONLY:SC_band_mixing
  use real_time,     ONLY:RT_step, T_initial, Thermal_eta, Ext_Field_freq, &
 &                        Tot_steps, Thermal_steps, Ext_Field_Int,&
-&                        Ext_Field_name, Integrator_name,EF_q0,T_memory
+&                        Ext_Field_name,Integrator_name,EF_q0,RT_no_phase_int, &
+&                        RT_resonant,RT_no_intraband,LongRelax,TransRelax
+#endif
+ use SC,            ONLY:SC_band_mixing
 #if defined _RAS
  use bulkeps,              ONLY : init_bulk
  use eels_kinematics,      ONLY : init_kinematics
@@ -255,17 +256,23 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! Real Time dynamics
  !
+#if defined _SC
  call it(defs,'RTstep',    '[RT]  Real Time step',RT_step,unit=Time_unit)
  call it(defs,'RTsteps',   '[RT]  Real Time steps',Tot_steps)
  call it(defs,'Tinitial',  '[RT]  Initial Time',T_initial,unit=Time_unit)
- call it(defs,'ThermDamp', '[RT]  Thermal damping',Thermal_eta,unit='GHz')
+ call it(defs,'ThermDamp', '[RT]  Thermal damping',Thermal_eta,unit=Time_unit)
  call it(defs,'ThermStps', '[RT]  Thermal Steps',Thermal_steps)
  call it(defs,'ExtFiFreq', '[RT]  External Field Frequency',Ext_Field_freq,unit=E_unit)
  call it(defs,'ExtFiInt',  '[RT]  External Field Intensity',Ext_Field_Int)
  call it(defs,'ExtField',  '[RT]  External Field',Ext_Field_name)
  call it(defs,'Integrator','[RT]  Integrator',Integrator_name)
  call it(defs,'ELongDir',  '[RT]  Electric Field Versor',EF_q0)
- call it(defs,'Tmemory',   '[RT]  Memory depth',T_memory,unit=Time_unit)
+ call it('f',defs,'RTResonant', '[RT] Only Resonant part of the External Field',verb_level=V_more)
+ call it('f',defs,'RTNoIntraband', '[RT] Do not Include Intraband transitions',verb_level=V_more)
+ call it('f',defs,'RTNoPhaseInt', '[RT] Do not use Exact integration fast phase factors',verb_level=V_testing)
+ call it(defs,'LongRelax',  '[RT]  Longitudinal Relaxation Time',LongRelax,verb_level=V_more,unit=Time_unit)
+ call it(defs,'TransRelax',  '[RT]  Transverse Relaxation Time',TransRelax,verb_level=V_more,unit=Time_unit)
+#endif
  !
  ! GPL_EXCLUDE_END SC_IGNORE
  !

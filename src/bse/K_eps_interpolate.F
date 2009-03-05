@@ -21,7 +21,7 @@
 !
 subroutine K_eps_interpolate(nW,W,err)
  !
- use pars,         ONLY:SP,DP
+ use pars,         ONLY:SP
  use vec_operate,  ONLY:sort
  use X_m,          ONLY:X_epsilon
  implicit none
@@ -34,7 +34,7 @@ subroutine K_eps_interpolate(nW,W,err)
  integer, parameter :: order_max=3,n_pts_max=5
  integer    ::iw,iw_fit,n_pts,order,i1
  real(SP)   ::r_fit_pt(n_pts_max)
- real(DP)   ::EPS,Dy(n_pts_max),Dx(n_pts_max),Pol_coeff(order_max+1)
+ real(SP)   ::EPS,Dy(n_pts_max),Dx(n_pts_max),Pol_coeff(order_max+1)
  !
  w_loop: do iw=1,nW
    if (err(iw)/=0) then
@@ -59,9 +59,9 @@ subroutine K_eps_interpolate(nW,W,err)
        if (n_pts<n_pts_max) order=n_pts-2
        if (order<=0) cycle w_loop
        !
-       Dx=0._DP
-       Dy=0._DP
-       Pol_coeff=0._DP
+       Dx=0._SP
+       Dy=0._SP
+       Pol_coeff=0._SP
        do iw_fit=1,n_pts
          Dx(iw_fit)=W( int(r_fit_pt(iw_fit)) )-W(iw)
          if (i1==1) Dy(iw_fit)=aimag(X_epsilon(2, int(r_fit_pt(iw_fit)) ))

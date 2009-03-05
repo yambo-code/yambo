@@ -57,7 +57,7 @@ subroutine tddft_alda_g_space(E,k)
  ! ALDA functional
  !
  allocate(F_xc(fft_size),F_xc_DP(fft_size))
- call xc_lda_driver(E,k,WF_KIND,WF_xc_FUNCTIONAL,2)
+ call xc_lda_driver(E,k,WF_KIND,WF_xc_functional,2)
  F_xc_DP=F_xc
  !
  ! need to reset the plan to do a BACKWARD FFT (R->G)

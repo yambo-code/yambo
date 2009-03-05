@@ -77,7 +77,7 @@ module BS
  ! Solvers
  !
  character(lchlen):: BSS_description(100)
- character(lchlen):: BSS_file_name(2)
+ character(lchlen):: BSS_file_name(3)
  character(schlen):: BSS_mode
  character(schlen):: BSS_of_title(7)
  integer  :: BSS_n_descs

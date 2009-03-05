@@ -29,14 +29,14 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use units,         ONLY:HARTREE
  use memory_m,      ONLY:mem_est
  use stderr,        ONLY:intc
- use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_col_cut
+ use drivers,       ONLY:l_bs_fxc,l_alda_fxc
  use frequency,     ONLY:w_samp,rg_index_bg,bg_npts,cg_pt,cg_index_bg
  use electrons,     ONLY:levels,BZ_RIM_tot_nkpts
- use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg,g_vec
+ use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
  use vec_operate,   ONLY:v_norm,iku_v_norm
  use X_m,           ONLY:X_t,X_epsilon,X_mat,X_alloc,X_poles_tab,X_fxc,&
-&                        alpha_dim,eps_2_alpha,use_X_RIM
+&                        use_X_RIM,eval_alpha,alpha_dim,eps_2_alpha,O_eels
  use par_proc_m,    ONLY:pp_redux_wait
  use wave_func,     ONLY:WF_free
  use TDDFT,         ONLY:FXC_n_descs,FXC_description,FXC_type,&
@@ -54,19 +54,14 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  ! 
  ! Work Space
  !
- integer          :: i1,i2,fr(2),iq,G_of_the_shift
+ integer          :: i1,i2,fr(2),iq
  real(SP)         :: output_data(5),Q_pt(3),Q_sq_modulus
  character(10)    :: headings(10)
  character(12)    :: ch12
  character(schlen):: ch,of_name(4)
- logical          :: l_skip_non_int_eps
+ logical          :: l_skip_non_int_eps,eval_eels
  !
  call section('*','Optics')
- !
- if (trim(alpha_dim)/='adim') then
-   call msg('r', 'Optical renormalization   [au]:',eps_2_alpha)
-   call msg('rn','Polarizability dimension      :',trim(alpha_dim))
- endif
  !
  ! Basical Checks
  !
@@ -74,18 +69,10 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  !
  do iq=X%iq(1),X%iq(2)
    !
-   G_of_the_shift=1
-   !
-#if defined _MAGNON
-   ! Find the RL vector to shift the q-point (if a direction is 
-   ! specified in the input file)
-   !
-   G_of_the_shift=X_select_the_G_component()
-#endif
-   !
    ! TDDFT setup
    !
    call tddft_do_X_W_typs(iq,X,wv)
+   !
    if (l_alda_fxc) call tddft_alda_g_space(Xen,Xk)
    !
    ! In TDDFT with BS based kernel eps0 is non-sense
@@ -109,6 +96,10 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    call freqs_setup(wv)
    !
+   ! Check if EELS can be evaluated
+   !
+   eval_eels= O_eels(wv%p,wv%n(1),.TRUE.,X%ordering)
+   !
    ! OutPut files...
    !
    of_name(:)=' '
@@ -127,14 +118,14 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! ... eels ...
    !
-   if (index(X%ordering,'r')==0) then
+   if (eval_eels) then 
      write (of_name(2),'(a,i3.3,a)') 'eel_q',iq,trim(FXC_type)
      call of_open_close(of_name(2),'ot')
    endif
    !
    ! ... alpha ...
    !
-   if (trim(alpha_dim)/='adim') then
+   if (eval_alpha.and.eval_eels) then
      write (of_name(4),'(a,i3.3,a)') 'alpha_q',iq,trim(FXC_type)
      call of_open_close(of_name(4),'ot')
    endif
@@ -144,15 +135,12 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !... Q point (normalized at 1 if Gamma with no additional shift)
    !
    ch12=' [iku]:'
-   if (iq==1.and.G_of_the_shift==1) then
+   if (iq==1) then
      Q_pt=X%q0/v_norm(X%q0)
      Q_sq_modulus=q_norm(iq)**2.
      ch12=' [q->0 dir]:'
-   else if (iq==1.and.G_of_the_shift> 1) then
-     Q_pt=g_vec(G_of_the_shift,:)
-     Q_sq_modulus=iku_v_norm(Q_pt)**2.
-   else if (iq> 1) then
-     Q_pt=q%pt(iq,:)+g_vec(G_of_the_shift,:)
+   else 
+     Q_pt=q%pt(iq,:)
      Q_sq_modulus=iku_v_norm(Q_pt)**2.
    endif
    !
@@ -210,49 +198,14 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      !
      ! Without LF eps/alpha
      !
-     X_epsilon(1,fr(1):fr(2))=1.0_SP-X_mat(G_of_the_shift,G_of_the_shift,:)*4.0_SP*pi/Q_sq_modulus
-     !
-     ! ... for alpha_0 (2) and (3) coincides
-     !
-     X_epsilon(5,fr(1):fr(2))=(X_epsilon(1,fr(1):fr(2))-1.)/4./pi*eps_2_alpha  !(3)
+     X_epsilon(1,fr(1):fr(2))=1.0_SP-X_mat(1,1,:)*4.0_SP*pi/Q_sq_modulus
      !
      ! X Dyson equation solver
      !
      call X_s(iq,fr,X,wv)
      !
-     X_epsilon(2,fr(1):fr(2))=1./(X_mat(G_of_the_shift,G_of_the_shift,:)*&
-&                                 bare_qpg(iq,G_of_the_shift)**2/Q_sq_modulus+1.)
-     X_epsilon(3,fr(1):fr(2))=-1./X_epsilon(1,:)
-     X_epsilon(4,fr(1):fr(2))=-1./X_epsilon(2,:)
-     !
-     ! This relation is exact
-     !
-     ! alpha = -eps_2_alpha X(1,1) / |q|^2      (1)
-     !       =  (1 -eps_M^-1) eps_2_alpha/4/pi  (2)
-     !
-     ! and BOTH need the antiresonant part of X ( or eps_M(w) )
-     !
-     ! In the limit of eps_2_alpha (or the volume) -> \infty we get
-     !
-     ! eps_M^-1 \sim 1 - 4 pi /|q|^2 X(1,1)
-     !
-     ! so that
-     !
-     ! alpha=(epsilon_M-1) eps_2_alpha/4/pi (3)
-     !
-     ! this does not need the antiresonant part of X. Now when using the 
-     ! columbian cutoff OR when the Green's function is not resonant or
-     ! antiresonant only I use the full expression
-     !
-     if (l_col_cut.or.(trim(X%ordering)/='a'.and.trim(X%ordering)/='r')) then
-       !
-       X_epsilon(6,fr(1):fr(2))=(1.-1./X_epsilon(2,fr(1):fr(2)))/4./pi*eps_2_alpha ! (2)
-       !
-     else
-       !
-       X_epsilon(6,fr(1):fr(2))=(X_epsilon(2,fr(1):fr(2))-1._SP)*eps_2_alpha/4./pi ! (3)
-       !
-     endif
+     X_epsilon(2,fr(1):fr(2))=1./(X_mat(1,1,:)*&
+&                                 bare_qpg(iq,1)**2/Q_sq_modulus+1.)
      !
      call of_open_close(of_name(1),'oa')
      call of_open_close(of_name(2),'oa')
@@ -313,24 +266,53 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        if (l_skip_non_int_eps)      call msg('o eps','',output_data(:3),INDENT=-2,USE_TABS=.true.)
        if (.not.l_skip_non_int_eps) call msg('o eps','',output_data,INDENT=-2,USE_TABS=.true.)
        !
-       ! EEL
-       !
-       output_data=(/real(wv%p(i2))*HARTREE,aimag(X_epsilon(4,i2)),real(X_epsilon(4,i2)),&
-&                    aimag(X_epsilon(3,i2)),real(X_epsilon(3,i2))/)
-       if (l_skip_non_int_eps)      call msg('o eel','',output_data(:3),INDENT=-2,USE_TABS=.true.)
-       if (.not.l_skip_non_int_eps) call msg('o eel','',output_data,INDENT=-2,USE_TABS=.true.)
-       !
-       ! Alpha
-       !
-       output_data=(/real(wv%p(i2))*HARTREE,aimag(X_epsilon(6,i2)),real(X_epsilon(6,i2)),&
-&                    aimag(X_epsilon(5,i2)),real(X_epsilon(5,i2))/)
-       if (l_skip_non_int_eps)      call msg('o alpha','',output_data(:3),INDENT=-2,USE_TABS=.true.)
-       if (.not.l_skip_non_int_eps) call msg('o alpha','',output_data,INDENT=-2,USE_TABS=.true.)
      enddo
      call of_open_close(of_name(1))
      call of_open_close(of_name(2))
      call of_open_close(of_name(4))
    enddo
+   !
+   if (eval_eels) then 
+     !
+     call of_open_close(of_name(2),'oa')
+     call of_open_close(of_name(4),'oa')
+     !
+     eval_eels= O_eels(wv%p,wv%n(1),.TRUE.,X%ordering,X_epsilon(1,:),X_epsilon(3,:))
+     eval_eels= O_eels(wv%p,wv%n(1),.FALSE.,X%ordering,X_epsilon(2,:),X_epsilon(4,:))
+     !
+     if (eval_alpha) then
+       !
+       ! alpha = -eps_2_alpha X(1,1) / |q|^2    
+       !       =  (1 -eps_M^-1) eps_2_alpha/4/pi
+       !       =  (1 +eels    ) eps_2_alpha/4/pi  
+       !
+       X_epsilon(5,:)=(1.+X_epsilon(3,:))/4./pi*eps_2_alpha
+       X_epsilon(6,:)=(1.+X_epsilon(4,:))/4./pi*eps_2_alpha 
+       !
+     endif
+     !
+     do i1=1,wv%n(1)
+       !
+       ! EEL
+       !
+       output_data=(/real(wv%p(i1))*HARTREE,aimag(X_epsilon(4,i1)),real(X_epsilon(4,i1)),&
+&                    aimag(X_epsilon(3,i1)),real(X_epsilon(3,i1))/)
+       if (l_skip_non_int_eps)      call msg('o eel','',output_data(:3),INDENT=-2,USE_TABS=.true.)
+       if (.not.l_skip_non_int_eps) call msg('o eel','',output_data,INDENT=-2,USE_TABS=.true.)
+       !
+       ! Alpha
+       !
+       output_data=(/real(wv%p(i1))*HARTREE,aimag(X_epsilon(6,i1)),real(X_epsilon(6,i1)),&
+&                    aimag(X_epsilon(5,i1)),real(X_epsilon(5,i1))/)
+       !
+       if (l_skip_non_int_eps)      call msg('o alpha','',output_data(:3),INDENT=-2,USE_TABS=.true.)
+       if (.not.l_skip_non_int_eps) call msg('o alpha','',output_data,INDENT=-2,USE_TABS=.true.)
+     enddo
+     !
+     call of_open_close(of_name(2))
+     call of_open_close(of_name(4))
+     !
+   endif
    !
    ! TDDFT Kernel output
    !
@@ -371,51 +353,4 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    call mem_est("FXC FXC_K_diagonal")
  endif
  !
-#if defined _MAGNON
- !
- contains
-   !
-   integer function X_select_the_G_component
-     use X_m,            ONLY:q_plus_G_direction,q_plus_G_shell 
-     use R_lattice,      ONLY:ng_in_shell
-     use vec_operate,    ONLY:v_norm,v_is_zero
-     use stderr,         ONLY:intc
-     !
-     ! Work Space
-     !
-     integer :: ig
-     real(SP):: vec(3),projection_,Q_pt_(3)
-     character(schlen):: shells_msg(2)
-     !
-     X_select_the_G_component=1 
-     !
-     if (v_is_zero(q_plus_G_direction).or.q_plus_G_shell<=1) return
-     !
-     q_plus_G_direction=q_plus_G_direction/v_norm(q_plus_G_direction)
-     !
-     shells_msg(1)='Indexes of the RL vectors parallel to the Q-shift :'
-     !
-     if (iq==1) Q_pt_=X%q0
-     if (iq/=1) Q_pt_=q%pt(iq,:)
-     !
-     do ig=min(ng_in_shell(q_plus_G_shell),X%ng),2,-1
-       vec=Q_pt_+g_vec(ig,:)
-       vec=vec/v_norm(vec)
-       projection_=dot_product(vec,q_plus_G_direction)-1.
-       if (abs(projection_)<1.E-5) then
-         if (X_select_the_G_component==1) X_select_the_G_component=ig
-         shells_msg(2)=trim(shells_msg(1))//' '//trim(intc(ig)) 
-         shells_msg(1)=shells_msg(2)
-       endif
-     enddo
-     !
-     if (X_select_the_G_component/=1) then
-       call msg('rs',trim(shells_msg(2)))
-       call msg('r','Momentum shift [iku]:',g_vec(X_select_the_G_component,:))
-     endif
-     !
-   end function
-   !
-#endif
-   !
 end subroutine

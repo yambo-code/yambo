@@ -22,9 +22,8 @@
 subroutine f_sum_rule(W)
  ! 
  use pars,          ONLY:SP,pi
- use units,         ONLY:HARTREE
  use D_lattice,     ONLY:DL_vol
- use X_m,           ONLY:X_t,X_epsilon
+ use X_m,           ONLY:X_epsilon
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:nel
  use com,           ONLY:msg

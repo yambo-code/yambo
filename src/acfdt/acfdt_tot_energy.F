@@ -110,7 +110,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  Ex_LDA=sdot(fft_size,rho,1,E_xc,1)
 #endif
  !
- call xc_lda_driver(Xen,Xk,XC_CORRELATION,WF_xc_FUNCTIONAL,0)
+ call xc_lda_driver(Xen,Xk,XC_CORRELATION,WF_xc_functional,0)
 #if defined _DOUBLE
  Ec_LDA=ddot(fft_size,rho,1,E_xc,1)
 #else 

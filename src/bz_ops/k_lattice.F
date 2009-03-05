@@ -27,13 +27,11 @@ subroutine k_lattice(k,Xk)
  !  eps_2_alpha alpha_dim
  !
  use pars,           ONLY:SP,schlen
- use X_m,            ONLY:eps_2_alpha,alpha_dim
  use memory_m,       ONLY:mem_est
  use vec_operate,    ONLY:v_norm,v_is_zero,cross_product,&
 &                         c2a,sort,ak2bz
  use com,            ONLY:msg,error
  use matrix_operate, ONLY:m3det
- use D_lattice,      ONLY:DL_vol,a
  use R_lattice,      ONLY:b,k_grid_b,k_grid_dim,k_grid,RL_vol,&
 &                         k_grid_uc_vol,nkibz,nkbz,nXkibz,nXkbz,d3k_factor,&
 &                         bz_samp
@@ -44,7 +42,7 @@ subroutine k_lattice(k,Xk)
  !
  ! Work Space
  !
- integer  :: i1,i2,i3,iv(3),i_dim_coord(3)
+ integer  :: i1,i2,i3,iv(3)
  real(SP) :: v0(3),v1(3),v0_ibz_mod
  real(SP),allocatable ::idist(:)
  integer, allocatable ::order(:)
@@ -192,38 +190,6 @@ subroutine k_lattice(k,Xk)
  !
  if (k_grid_dim>0) call msg('r','Grid dimensions               :',k_grid(:k_grid_dim))
  call msg('r',                  'K lattice UC volume       [au]:',k_grid_uc_vol)
- !
- ! Polarizability convertion factor
- !
- i_dim_coord=1
- if (all((/Xk%pt(:,1)==0./))) i_dim_coord(1)=0
- if (all((/Xk%pt(:,2)==0./))) i_dim_coord(2)=0
- if (all((/Xk%pt(:,3)==0./))) i_dim_coord(3)=0
- if (sum(i_dim_coord)==k_grid_dim) then
-   select case(k_grid_dim)
-     case(2)
-       if (i_dim_coord(1)==0) then
-         eps_2_alpha=sqrt(dot_product(a(1,:),a(1,:)))
-       else if (i_dim_coord(2)==0) then
-         eps_2_alpha=sqrt(dot_product(a(2,:),a(2,:)))
-       else if (i_dim_coord(3)==0) then
-         eps_2_alpha=sqrt(dot_product(a(3,:),a(3,:)))
-       endif
-       alpha_dim='length'
-     case(1)
-       if (i_dim_coord(1)==1) then
-         eps_2_alpha=DL_vol/sqrt(dot_product(a(1,:),a(1,:)))
-       else if (i_dim_coord(2)==1) then
-         eps_2_alpha=DL_vol/sqrt(dot_product(a(2,:),a(2,:)))
-       else if (i_dim_coord(3)==1) then
-         eps_2_alpha=DL_vol/sqrt(dot_product(a(3,:),a(3,:)))
-       endif
-       alpha_dim='area'
-     case(0)
-       alpha_dim='volume'
-       eps_2_alpha=DL_vol
-   end select
- endif
  !
  ! CLEAN
  !

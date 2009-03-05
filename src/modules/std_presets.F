@@ -26,10 +26,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use units,      ONLY:HARTREE,FS2AUT
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:iq_now,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
-&                     alpha_dim,use_X_RIM,long_path,X_RIM_nkpts,P_bands_ordered
-#if defined _MAGNON
- use X_m,        ONLY:q_plus_G_direction,q_plus_G_shell
-#endif
+&                      alpha_dim,use_X_RIM,long_path,X_RIM_nkpts,P_bands_ordered,&
+&                      eval_alpha
  use QP_m,       ONLY:QP_rep_string,QP_dSc_steps,QP_n_W_freqs,&
 &                     QP_Sx_low_band,QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_W_er,QP_W_dr,QP_cg_percent,&
@@ -39,7 +37,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     CHOSEX_use_empties,QP_ctl_E,QP_ctl_W,QP_ctl_Z
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,n_atoms_max,n_atom_species,pp_n_l_comp_max,&
-&                     pp_kbv_dim,input_Tel_fixed
+&                     pp_kbv_dim,input_Tel_fixed,non_periodic_directions
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
@@ -156,6 +154,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !D_lattice
  !
  input_Tel_fixed=.false.
+ non_periodic_directions='none'
  !
  !R_lattice
  !
@@ -273,10 +272,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  eps_2_alpha=1._SP
  alpha_dim='adim'
  long_path='none'
-#if defined _MAGNON
- q_plus_G_direction=0.
- q_plus_G_shell=0
-#endif
+ eval_alpha=.FALSE.
  !
  !QPm
  !

@@ -27,7 +27,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,sop_inv,&
 &                         sop_tab,atoms_spatial_invertion,i_space_inv,input_Tel_fixed,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms,znucl,&
-&                         n_atom_species,PT_elements
+&                         n_atom_species,PT_elements,non_periodic_directions
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,&
 &                         rl_sop,bz_samp,g_vec,E_of_shell
  use com,            ONLY:msg,error,warning
@@ -165,6 +165,15 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !=================================
  !
  call k_lattice(k,Xk) 
+ !
+ if (trim(non_periodic_directions)/="none") then
+   !
+   call section('=','Non periodic geometry')
+   !========================================
+   !
+   call check_periodic_directions()
+   !
+ endif
  !
  call section('=','RL shells')
  !============================

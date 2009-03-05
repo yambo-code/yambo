@@ -38,7 +38,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       RIM_anisotropy,ik_is_table,bare_qpg
  use par_proc_m,   ONLY:pp_redux_wait,myid,ncpu
  use com,          ONLY:msg,warning,error
- use timing,       ONLY:live_timing,nhash
+ use timing,       ONLY:live_timing
  use X_m,          ONLY:X_alloc,X_t,X_mat
  use BS,           ONLY:BS_bands,BS_eh_E,BS_res_K_corr,BS_W_is_diagonal,&
 &                       BS_res_K_exchange,O_n_c_states,&
@@ -293,7 +293,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (BS_K_is_ALDA) then
    allocate(F_xc(fft_size))
-   call xc_lda_driver(Ken,Xk,WF_KIND,WF_xc_FUNCTIONAL,2)
+   call xc_lda_driver(Ken,Xk,WF_KIND,WF_xc_functional,2)
  endif
  !
  if (BS_res_K_corr) then
@@ -372,7 +372,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! DB identifier 
  !
- BS_identifier=pickup_a_random(10000.)
+ BS_identifier=pickup_a_random(10000._SP)
  !
  call section('=','Main loop')
  !

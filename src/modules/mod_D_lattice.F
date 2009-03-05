@@ -24,6 +24,10 @@ module D_lattice
  use pars, ONLY:SP,lchlen
  implicit none
  !
+ ! Non periodic directions
+ !
+ character(lchlen) :: non_periodic_directions
+ !
  ! Temperature
  !
  real(SP) :: Tel

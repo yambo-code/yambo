@@ -45,6 +45,7 @@ subroutine BZ_RIM(Xk,Xen)
 &               gap(2)
  integer      ::i1,ikbz
  integer, external :: k_the_nearest
+ character(lchlen) :: k_rand_fname
  !
  ! Random Generator
  !
@@ -94,7 +95,8 @@ subroutine BZ_RIM(Xk,Xen)
    !
    call set_real_printed_length(f_length=20,g_length=20)
    !
-   call of_open_close("random_k_pts",'ot')
+   k_rand_fname="random_k_pts"
+   call of_open_close(k_rand_fname,'ot')
    call msg('o random',"#",(/"X","Y","Z"/),INDENT=0,USE_TABS=.true.)
    !
    k_counter=0
@@ -124,7 +126,7 @@ subroutine BZ_RIM(Xk,Xen)
      !
    enddo
    !
-   call of_open_close("random_k_pts")
+   call of_open_close(k_rand_fname))
    call live_timing()
    call set_real_printed_length()
    !

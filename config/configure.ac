@@ -19,11 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 3.2.1 r.356 , yambo@yambo-code.org)
+AC_INIT(Yambo, 3.2.1 r.359 , yambo@yambo-code.org)
 SVERSION="3"
 SPATCHLEVEL="2"
 SSUBLEVEL="1"
-SREVISION="356"
+SREVISION="359"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -91,26 +91,17 @@ test -z "$AR_FLAGS" && AR_FLAGS="-ru"
 
 # ============================================================================
 # DEBUG
-AC_ARG_ENABLE(debug, AC_HELP_STRING([--disable-debug],
- [Objects are removed. Production option.]))
-enable_debug="yes"
-if ! test x"$disable_debug" = "x"; then
- enable_debug="no"
-fi
+AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug],[Objects are not removed but saved in appropriate directories. Default is yes.]))
+if test x"$enable_debug" = "x"; then enable_debug="yes"; fi
 AC_SUBST(enable_debug)
-
 # ============================================================================
 # DP
-AC_ARG_ENABLE(dp, AC_HELP_STRING([--enable-dp], [Double-precision build.]))
-dp_cpp="-D_DOUBLE"
-if test x"$enable_dp" = "x"; then
- dp_cpp=""
- enable_dp="no"
-fi
-#
+AC_ARG_ENABLE(dp, AC_HELP_STRING([--enable-dp], [Double-precision build. Default is no.]))
+dp_cpp=""
+if test x"$enable_dp" = "x"; then enable_dp="no"; fi
+if test x"$enable_dp" = "xyes"; then dp_cpp="-D_DOUBLE"; fi
 AC_SUBST(enable_dp)
 AC_SUBST(dp_cpp)
-
 # ============================================================================
 # check for IOTK library 
 #
@@ -189,6 +180,30 @@ AC_SUBST(etsf_dir)
 
 # ============================================================================
 #
+# Verbose compilation
+#
+AC_ARG_ENABLE(msgs-comps, AC_HELP_STRING([--enable-msgs-comps],
+              [Compress compilation messaging. Default is yes.]))
+if test x"$enable_msgs_comps" = "x"; then enable_msgs_comps="yes"; fi
+MKMF_PREFIX=" "
+if test x"$enable_msgs_comps" = "xyes"; then MKMF_PREFIX="@"; fi
+AC_SUBST(MKMF_PREFIX)
+AC_SUBST(ECHO_N)
+#
+# ============================================================================
+#
+# C options specific for driver.c
+#
+AC_ARG_ENABLE(options_check, AC_HELP_STRING([--enable-options-check],
+              [Enable the command line options check in driver.c. Default is yes.]))
+if test x"$enable_options_check" = "x"; then enable_options_check="yes"; fi
+if test x"$enable_options_check" = "xno"; then
+ SAVE=$CFLAGS
+ CFLAGS="${SAVE} -D_NO_OPTIONS_CHECK"
+fi
+#
+# ============================================================================
+#
 # Fortran 90
 #
 acx_save_fcflags="$FCFLAGS"
@@ -248,11 +263,11 @@ AC_LANG_POP(Fortran 77)
 # check for BLAS/Lapack
 compile_blas="no"
 compile_lapack="no"
+BLAS_LIBS=" "
+LAPACK_LIBS=" "
 if test "$with_blas" = "" || test "$with_lapack" = "" ; then
  compile_blas="yes"
  compile_lapack="yes"
- BLAS_LIBS="-lblas"
- LAPACK_LIBS="-llapack"
 else
  ACX_BLAS([], 
   compile_blas="yes";
@@ -265,6 +280,8 @@ else
   compile_lapack="yes"
  fi
 fi
+if test "$compile_blas"="yes"; then BLAS_LIBS="-lblas"; fi
+if test "$compile_lapack"="yes"; then LAPACK_LIBS="-llapack"; fi
 AC_SUBST(compile_blas)
 AC_SUBST(compile_lapack)
 # ============================================================================
@@ -339,8 +356,8 @@ AC_HAVE_FFTW
 SLK_SETUP
 # ============================================================================
 # NETCDF
-AC_ARG_ENABLE(extlibs, AC_HELP_STRING([--enable-largedb],
- [Enable NetCDF large file support for Wfcs DB]))
+AC_ARG_ENABLE(largedb, AC_HELP_STRING([--enable-largedb],
+ [Enable NetCDF large file support. Default is no.]))
 if test x"$enable_largedb" = "x"; then enable_largedb="no"; fi
 AC_SUBST(enable_largedb)
 KH_PATH_NETCDF_F90

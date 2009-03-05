@@ -162,24 +162,16 @@ interfaces: libs
 ypp: libs
 	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
 	@X2DO="ypp" ;XPATH="ypp";XLIBS="$(YPPLIBS)";$(mkx)
-clean:
-	@echo "modes: clean_[o/a/m/am/oam/oamx] distclean cclean"
-clean_a: 
-	@$(aclean)
-clean_m: 
-	@$(mclean)
-clean_o: 
+clean: clean_fast
+clean_fast: 
 	@$(oclean)
-clean_am: 
-	@$(aclean);$(mclean)
-clean_oam: 
-	@$(oclean);$(aclean);$(mclean)
-clean_oamx: 
-	@$(oclean);$(aclean);$(mclean);$(xclean)
-distclean: 
-	@$(oclean);$(amdclean);$(xclean);$(confclean)
-cclean:
-	@$(confclean)
+	@$(amclean)
+	@$(xclean)
+clean_all: 
+	@$(oclean)
+	@$(amclean)
+	@$(conf_clean)
+	@$(xclean)
 
 # Functions
 define make_message
@@ -192,6 +184,8 @@ define mksrc
  for ldir in $$LIBS2DO; do \
   if test ! -f "$(libdir)/lib$$ldir.a" || test "$(debug)" = yes  ; \
   then rm -f "$(libdir)/lib$$ldir.a" ; \
+  echo " " ; \
+  echo ">>>[Making $$ldir]<<<" ; \
   ./sbin/make_makefile.sh src/$$ldir lib$$ldir.a .objects l $(xcpp) $$ADF ; \
   cd src/$$ldir ; $(make) VPATH=src/$$ldir || exit "$$?" ; cd ../../; fi \
  done
@@ -199,6 +193,8 @@ endef
 define mklib
  for ldir in $$LIBS2DO; do \
   if test ! -f "$(libdir)/lib$$ldir.a" ; \
+  echo " " ; \
+  echo ">>>[Making $$ldir]<<<" ; \
   then ./sbin/make_makefile.sh $$DIR2GO/$$ldir lib$$ldir.a .objects l $(precision) $$ADF ; \
   cd $$DIR2GO/$$ldir ; $(make) VPATH=$$DIR2GO/$$ldir || exit "$$?" ; cd ../../; fi \
  done
@@ -206,43 +202,42 @@ endef
 define mkx
  LLIBS="";for exe in $$XLIBS; do LLIBS="$$LLIBS -l$$exe" ; done ; \
  for exe in $$X2DO; do \
+  echo " " ; \
+  echo ">>>[Linking $$exe]<<<" ; \
   if test ! -f "$(bindir)/$$exe" || test "$(debug)" = yes  ; \
   then ./sbin/make_makefile.sh $$XPATH $$exe .objects x $$LLIBS $(xcpp) $$ADF ; \
   cd $$XPATH ; $(make) VPATH=$$XPATH || exit "$$?" ; fi ; \
+  echo " " ; \
  done
 endef
 define oclean
  find . \( -name '*.o' -o -name 'Makefile' -o -name '*.f90' \
         -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' \) \
         -type f -print | grep -v '\.\/Makefile' | xargs rm -f
- echo "[.o .f90 _cpp ifc Makefiles locks] cleaned" 
+ echo "objects ... cleaned"
+ echo "broken files ... cleaned"
+ echo "Makefiles ... cleaned"
  if test "$(debug)" = yes ; then \
  find . -name '.debug*' | xargs rm -fr ; \
- echo "[debug subdirectories] cleaned" ; fi
+ echo "debug ... cleaned" ; \
+ echo "subdirectories ... cleaned" ; \
+ fi
 endef
-define aclean
- find . \( -name '*.a' \) \
-   -type f -print | grep -v netcdf | grep -v iotk | xargs rm -f
- echo "[.a] cleaned" 
-endef
-define mclean
- find . \( -name '*.mod' \) \
-   -type f -print | grep -v netcdf | grep -v iotk | xargs rm -f
- echo "[.mod <soft>] cleaned" 
-endef
-define amdclean
+define amclean
  find . \( -name '*.a' -o -name '*.mod' -o -name 'netcdf*h' \
            -o -name 'netcdf*inc' \) -type f -print | xargs rm -f
- echo "[.a .mod netcdf <deep>] cleaned" 
+ echo "libraries ... cleaned" 
+ echo "modules ... cleaned" 
+ echo "NETCDF files ... cleaned  " 
 endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
  for exe in $(INTERFCS); do rm -f $(bindir)/$$exe; done
- echo "[targets] cleaned"
+ echo "targets ... cleaned" 
 endef
-define confclean
+define conf_clean
  rm -f $(CFGFILES)
  rm -f config.status config.log
  rm -fr autom4te.cache
- echo "[autoconf files] cleaned"
+ echo "autoconf files ... cleaned" 
 endef

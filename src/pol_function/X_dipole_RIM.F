@@ -35,7 +35,7 @@ subroutine X_dipole_RIM(iq,transitions,fr,Xw,Xen,Xk,Gf_rhoq0,ordering)
  !
  !Work Space
  !
- integer      ::i1,i2,iw,ikbz,ikpbz,iv,ic,i_spin,ik_rand,ikp_rand,ik,ikp
+ integer      ::i1,iw,ikbz,ikpbz,iv,ic,i_spin,ik_rand,ik,ikp
  real(SP)     ::ffac,f0fac,W_
  complex(SP)  ::Gf_tmp
  complex(SP), optional :: Gf_rhoq0(Xw%n(2))

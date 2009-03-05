@@ -25,16 +25,16 @@ module X_m
  use units, ONLY:HARTREE
  implicit none
  !
- ! Absorption & Polarizability
+ ! Polarizability
  !
  real(SP)                 :: eps_2_alpha
+ character(6)             :: alpha_dim ! 'adim' 'area' 'length' 'volume'
+ logical                  :: eval_alpha
+ !
+ ! Absorption & Polarizability
+ !
  complex(SP), allocatable :: X_epsilon(:,:)
  complex(SP), allocatable :: X_fxc(:)
- character(6)             :: alpha_dim ! 'adim' 'area' 'length' 'volume'
-#if defined _MAGNON
- real(SP)                 :: q_plus_G_direction(3)
- integer                  :: q_plus_G_shell
-#endif
  !
  ! Response function
  !
@@ -68,6 +68,17 @@ module X_m
    character(1)     :: ordering
    character(schlen):: f_xc
  end type
+ !
+ interface
+   logical function O_eels(wv,nw,be_verbose,ordering,eps,eel)
+     use pars,          ONLY:SP
+     integer              :: nw 
+     complex(SP)          :: wv(nw)
+     logical              :: be_verbose
+     character(1)         :: ordering
+     complex(SP) ,optional:: eps(nw),eel(nw)
+   end function
+ end interface
  !
  contains
    !

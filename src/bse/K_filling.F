@@ -25,7 +25,7 @@ subroutine K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements,&
  use pars,         ONLY:SP,schlen
  use com,          ONLY:msg
  use functions,    ONLY:K_scatter
- use BS,           ONLY:BS_eh_E,BS_columns,BS_K_dim,BS_blk_dim,BS_blk_coord
+ use BS,           ONLY:BS_eh_E,BS_columns,BS_blk_dim,BS_blk_coord
  use par_proc_m,   ONLY:myid,ncpu,pp_redux_wait
  use timing,       ONLY:live_timing,nhash
  implicit none

@@ -27,7 +27,7 @@ subroutine QP_apply_fit(band_range,qp,en,QP_ctl,what)
  ! that will be passed to the QP_apply_stretch routine driven by
  ! the mod_QP_CTL module.
  !
- use pars,          ONLY:SP,schlen,DP
+ use pars,          ONLY:SP,schlen
  use com,           ONLY:warning
  use stderr,        ONLY:intc
  use QP_m,          ONLY:QP_t
@@ -45,8 +45,8 @@ subroutine QP_apply_fit(band_range,qp,en,QP_ctl,what)
  !
  integer  :: i1,Nqpc,Nqpv,fit_order,fit_order_on_fly,i_spin
  real(SP) :: Eoc,Eov,Ec,Ev
- real(DP) :: EPS,Dy(qp%n_states),Dx(qp%n_states),Tt_def(3)
- real(DP), allocatable :: TCv(:),TCc(:)
+ real(SP) :: EPS,Dy(qp%n_states),Dx(qp%n_states),Tt_def(3)
+ real(SP), allocatable :: TCv(:),TCc(:)
  !
  ! Presets
  !

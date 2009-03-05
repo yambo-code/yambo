@@ -55,7 +55,7 @@ module LOGO
    !
    subroutine pickup_a_logo(unit_)
      !
-     use pars,     ONLY:schlen
+     use pars,     ONLY:schlen,SP
      use stderr,   ONLY:intc
      !
      integer      :: unit_
@@ -86,8 +86,8 @@ module LOGO
      comment(2)='http://www.yambo-code.org'
      !
      if (ID_logo<0) then
-       ID_logo=pickup_a_random(10.)
-       ID_logo_stderr=10+pickup_a_random(6.)
+       ID_logo=pickup_a_random(10._SP)
+       ID_logo_stderr=10+pickup_a_random(6._SP)
        if (ID_logo==0) ID_logo=1
        if (ID_logo_stderr==0) ID_logo_stderr=1
      endif

@@ -56,7 +56,7 @@ case "${CPP}" in
     ;;
 esac
 #
-AC_MSG_NOTICE([tesing preprocessor $CPP $CPPFLAGS])
+AC_MSG_NOTICE([testing preprocessor $CPP $CPPFLAGS])
 #
 # TESTS
 #=======
@@ -94,10 +94,7 @@ cat << EOF_ > conftest.F
 EOF_
 (eval $CPP $CPPFLAGS conftest.F > conftest.${F90SUFFIX}) 2> conftest.er1
 
-if [ -n "`grep \"magic ${PKMAGICHEX}\" ${file}`" ]; then
-
-#if ! test -s conftest.er1 && 
-if [ -n "`grep successful conftest.er1`"  ] ; then 
+if ! test -s conftest.er1 || test -n "`grep successful conftest.er1`"  ; then 
  eval $CPP $CPPFLAGS conftest.F > conftest.${F90SUFFIX} 
  eval $FC $FCFLAGS -c conftest.${F90SUFFIX} 2> conftest.er2
  if test -s conftest.er2 ; then 

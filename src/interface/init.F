@@ -374,6 +374,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_setup) call initactivate(1,'MinusQ')
 #endif
  !
+ if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse)/)))  call initactivate(1,'NonPDirs')
+ !
  !RIM
  !
  if (l_rim) call initactivate(1,'RandQpts RandGvec QpgFull Em1Anys IDEm1Ref')
@@ -392,12 +394,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call QP_ctl_switch('X')
    call initactivate(1,'LongPath')
    call Xon('Xd',(/'QpntsR','BndsRn','NGsBlk',&
-&                  'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
+&                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
    !
-#if defined _MAGNON
-   if (l_optics) call initactivate(1,'QplusGDir QplusGShell')
-#endif
 #if defined _DIPOLE_RIM
    if (l_optics.and.l_chi) call initactivate(1,'DoDipole')
 #endif
@@ -459,7 +458,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        call initactivate(1,'GbndRnge') 
        if (.not.l_chosex.and.trim(QP_solver)/='g') call initactivate(1,'GDamping') 
        if (.not.l_ppa.and..not.l_chosex) call Xon('Xd',(/'BndsRn','NGsBlk',&
-&                      'DmRnge','CGrdSp','ETStps','EMStps',&
+&                      'DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                      'DrudeW','EhEngy','LongDr'/)) 
        !
        if (.not.l_chosex) call initactivate(1,'DysSolver')

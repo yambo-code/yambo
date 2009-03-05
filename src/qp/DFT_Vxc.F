@@ -65,7 +65,7 @@ subroutine DFT_Vxc(E,Xk)
    ! ...LDA (and more) Vxc
    !
 #endif
-   call xc_lda_driver(E,Xk,WF_KIND,WF_xc_FUNCTIONAL,1)
+   call xc_lda_driver(E,Xk,WF_KIND,WF_xc_functional,1)
 #if defined _SC
  else
    !

@@ -24,19 +24,20 @@ subroutine K_dump_to_o_file(iq,mode)
  use pars,      ONLY:pi,SP
  use units,     ONLY:HARTREE
  use BS,        ONLY:BSS_description,BSS_of_title,BSS_file_name,&
-&                    BSS_n_descs,BS_K_coupling,BS_K_is_ALDA
- use X_m,       ONLY:X_epsilon,alpha_dim,eps_2_alpha
+&                    BSS_n_descs,BS_K_coupling,BS_K_is_ALDA,BSS_n_freqs
+ use X_m,       ONLY:X_epsilon,eval_alpha,eps_2_alpha,O_eels
  use com,       ONLY:msg,of_open_close
- use drivers,   ONLY:l_col_cut
  implicit none
  integer    :: mode,iq
  !
  ! Work Space
  !
  character(10)     :: extension,ch
- integer           :: i1
+ character(1)      :: ordering
+ integer           :: i1,n_od
  real(SP)          :: od(7)
- complex(SP)       :: alpha
+ complex(SP)       :: eels(3,BSS_n_freqs),alpha(3,BSS_n_freqs)
+ logical           :: eval_eels
  !
  ! Haydock
  !
@@ -61,15 +62,26 @@ subroutine K_dump_to_o_file(iq,mode)
    extension=trim(ch)//'_alda'
  endif
  !
+ ordering='r'
+ if (BS_K_coupling) ordering='c'
+ eval_eels= O_eels(X_epsilon(1,:),BSS_n_freqs,.TRUE.,ordering) 
+ !
  if (mode<0) then
    write (BSS_file_name(1),'(a,i3.3,a)') 'eps_q',iq,trim(extension)
    write (BSS_file_name(2),'(a,i3.3,a)') 'alpha_q',iq,trim(extension)
+   write (BSS_file_name(3),'(a,i3.3,a)') 'eel_q',iq,trim(extension)
    !
    call of_open_close(BSS_file_name(1),'ot')
-   if (trim(alpha_dim)/='adim') call of_open_close(BSS_file_name(2),'ot')
+   if (eval_eels) then 
+     call of_open_close(BSS_file_name(3),'ot')
+     if (eval_alpha) call of_open_close(BSS_file_name(2),'ot')
+   endif
  else
    call of_open_close(BSS_file_name(1),'Ot')
-   if (trim(alpha_dim)/='adim') call of_open_close(BSS_file_name(2),'Ot')
+   if (eval_eels) then 
+     call of_open_close(BSS_file_name(3),'Ot')
+     if (eval_alpha) call of_open_close(BSS_file_name(2),'Ot')
+   endif
  endif
  !
  do i1=1,BSS_n_descs
@@ -82,92 +94,66 @@ subroutine K_dump_to_o_file(iq,mode)
    if (mode/=1) call msg("o eps alpha",'#',BSS_of_title(:5),INDENT=0,USE_TABS=.TRUE.)
    call msg("o eps alpha",'#')
    !
-   ! When the bare coulomb potential is used we have 
-   ! epsilon_M=1-v\barP=X_epsilon(2)
+   ! ABSORPTION
+   !------------
    !
-   ! if the cutoffed coulomb potential is used we have as a result of the
-   ! diagonalization X_epsilon(2)=1-vP  so that:
-   !
-   ! epsilon_M=1/epsilon^-1=1/(1+vP)=1/(2-X_espilon(2))
-   !
-   if (l_col_cut) X_epsilon(2,:) = 1./(2.-X_epsilon(2,:))
-   !
-   do i1=1,size(X_epsilon(1,:))
+   do i1=1,BSS_n_freqs
      !
-     od(1)=real(X_epsilon(1,i1))*HARTREE
-     od(2)=aimag(X_epsilon(2,i1))
-     od(3)=real(X_epsilon(2,i1))
-     od(4)=aimag(X_epsilon(3,i1))
-     od(5)=real(X_epsilon(3,i1))
+     ! X_epsilon: 2 (int) 3 (non int) 4 (n-1 Haydock)
+     !
+     od(1:5)=(/real(X_epsilon(1,i1))*HARTREE,aimag(X_epsilon(2,i1)),real(X_epsilon(2,i1)),&
+&              aimag(X_epsilon(3,i1)),real(X_epsilon(3,i1))/)
      !
      ! Hayodock n-1 iteration
      !
-     if (mode==1) then
-       od(6)=aimag(X_epsilon(4,i1))
-       od(7)=real(X_epsilon(4,i1))
-     endif
+     n_od=5
+     if (mode==1) n_od=7
+     if (mode==1) od(6:7)=(/aimag(X_epsilon(4,i1)),real(X_epsilon(4,i1))/)
      !
-     ! ABSORPTION
-     !------------
-     if (mode==1) then
-       call msg("o eps",'',od(:7),INDENT=-2,USE_TABS=.TRUE.)
-     else
-       call msg("o eps",'',od(:5),INDENT=-2,USE_TABS=.TRUE.)
-     endif
-     !
-     if (trim(alpha_dim)/='adim') then
-       !
-       ! POLARIZABILITY
-       !----------------
-       !
-       ! This relation is exact
-       ! 
-       ! alpha = -eps_2_alpha X(1,1) / |q|^2      (1)
-       !       =  (1 -eps_M^-1) eps_2_alpha/4/pi  (2)
-       !
-       ! and BOTH need the antiresonant part of X ( or eps_M(w) )
-       !
-       ! In the limit of eps_2_alpha (or the volume) -> \infty we get
-       !
-       ! eps_M^-1 \sim 1 - 4 pi /|q|^2 X(1,1)
-       !
-       ! so that
-       !
-       ! alpha=(epsilon_M-1) eps_2_alpha/4/pi (3)
-       !
-       ! this does not need the antiresonant part of X. 
-       ! Now when using the BS kernel includes the coupling I use (2) (instead
-       ! of (1) like in O_driver.F)
-       !
-       if (BS_K_coupling)      alpha=1.-1./X_epsilon(2,i1)       ! (2)
-       if (.not.BS_K_coupling) alpha=X_epsilon(2,i1)-1.          ! (3)
-       !
-       od(2:3)=(/aimag(alpha),real(alpha)/)*eps_2_alpha/4./pi
-       !
-       ! No LF
-       !
-       alpha=X_epsilon(3,i1)-1.          ! (3)
-       !
-       od(4:5)=(/aimag(alpha),real(alpha)/)*eps_2_alpha/4./pi
-       !
-       if (mode==1) then
-         if (BS_K_coupling)      alpha=1.-1./X_epsilon(4,i1) 
-         if (.not.BS_K_coupling) alpha=X_epsilon(4,i1)-1.     
-         od(6:7)=(/aimag(alpha),real(alpha)/)*eps_2_alpha/4./pi
-       endif
-       !
-     endif
-     !
-     if (mode==1) then
-       call msg("o alpha",'',od(:7),INDENT=-2,USE_TABS=.TRUE.)
-     else
-       call msg("o alpha",'',od(:5),INDENT=-2,USE_TABS=.TRUE.)
-     endif
+     call msg("o eps",'',od(:n_od),INDENT=-2,USE_TABS=.TRUE.)
      !
    enddo
+   !
+   ! EELS & POLARIZABILTY
+   !---------------------
+   !
+   if (eval_eels) then
+     !
+     eval_eels=O_eels(X_epsilon(1,:),BSS_n_freqs,.TRUE.,ordering,X_epsilon(2,:),eels(1,:)) 
+     eval_eels=O_eels(X_epsilon(1,:),BSS_n_freqs,.TRUE.,ordering,X_epsilon(3,:),eels(2,:)) 
+     if (mode==1) eval_eels=O_eels(X_epsilon(1,:),BSS_n_freqs,.TRUE.,ordering,X_epsilon(4,:),eels(3,:)) 
+     !
+     alpha(1,:)=(1.+eels(1,:))/4./pi*eps_2_alpha
+     alpha(2,:)=(1.+eels(2,:))/4./pi*eps_2_alpha
+     if (mode==1) alpha(3,:)=(1.+eels(3,:))/4./pi*eps_2_alpha
+     !
+     do i1=1,BSS_n_freqs
+       !
+       ! EELS
+       !
+       od(1:5)=(/real(X_epsilon(1,i1))*HARTREE,aimag(eels(1,i1)),real(eels(1,i1)),&
+&                aimag(eels(2,i1)),real(eels(2,i1))/)
+       n_od=5
+       if (mode==1) n_od=7
+       if (mode==1) od(6:7)=(/aimag(eels(3,i1)),real(eels(3,i1))/)
+       call msg("o eel",'',od(:n_od),INDENT=-2,USE_TABS=.TRUE.)
+       !
+       ! ALPHA
+       !
+       od(1:5)=(/real(X_epsilon(1,i1))*HARTREE,aimag(alpha(1,i1)),real(alpha(1,i1)),&
+&                aimag(alpha(2,i1)),real(alpha(2,i1))/)
+       n_od=5
+       if (mode==1) n_od=7
+       if (mode==1) od(6:7)=(/aimag(alpha(3,i1)),real(alpha(3,i1))/)
+       call msg("o alpha",'',od(:n_od),INDENT=-2,USE_TABS=.TRUE.)
+       !
+     enddo
+   endif
+   !
  endif
  !
  call of_open_close(BSS_file_name(1))
  call of_open_close(BSS_file_name(2))
+ call of_open_close(BSS_file_name(3))
  !
 end subroutine

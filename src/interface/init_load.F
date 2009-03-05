@@ -35,15 +35,12 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,V_more,&
 &                        V_qp,V_io,V_testing,Time_unit
  use X_m,           ONLY:X_t,long_path
-#if defined _MAGNON
- use X_m,           ONLY:q_plus_G_direction,q_plus_G_shell
-#endif
  use QP_m,          ONLY:QP_rep_string,QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,QP_Sx_low_band,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations
  use timing,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
- use D_lattice,     ONLY:Tel
+ use D_lattice,     ONLY:Tel,non_periodic_directions
  use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry
@@ -159,6 +156,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',&
 &                        ng_closed,unit=G_unit,verb_level=V_more)
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit,verb_level=V_more)
+ call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,Verb_level=V_more)
  !
  ! S_xc
  !
@@ -318,10 +316,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! Optics
  !
-#if defined _MAGNON
- call it(defs,'QplusGDir',   '[Xd] [iku] Transferred momentum shift direction',q_plus_G_direction,verb_level=V_more)
- call it(defs,'QplusGShell', '[Xd] Shell index of the shift',q_plus_G_shell,verb_level=V_more)
-#endif
  call it(defs,'LongPath',    '[Xd] Longitudinal gauge path',long_path,verb_level=V_more)
  !
  ! GPL_EXCLUDE_END
@@ -391,7 +385,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
      !
      nms=(/'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
 &          'DrudeW','LongDr','EhEngy','PPAPnt',&
-&          'NGsBlk','QpntsR','BndsRn','DmMode'/)
+&          'NGsBlk','QpntsR','BndsRn','DmERef'/)
      des(1) ='Green`s function t/c/r/a'
      des(2) ='Energy range'
      des(3) ='Damping range'

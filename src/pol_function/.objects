@@ -8,7 +8,7 @@ DIPOLE_RIM_objects = X_dipole_RIM.o
 #else
 DIPOLE_RIM_objects = 
 #endif
-objs = O_driver.o \
+objs = O_driver.o O_eels.o \
        X_O_strengths.o \
        X_O_kb_pp_comp.o X_O_kb_sum.o X_O_kb_Ylm.o \
        X_O_transverse.o $(SC_objects) \

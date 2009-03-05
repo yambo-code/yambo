@@ -136,7 +136,11 @@ main(int argc, char *argv[])
      for(i=0;i<=nr-1;i++) {
        if (strstr(argv[io-1],opts[i].sn)!=0 && opts[i].st==0) { j=i;break;};
      };
+#if defined _NO_OPTIONS_CHECK 
+     if (c=='?') {break;};
+#else
      if (c=='?') {usage(1);exit(0);};
+#endif
  /*
    Upper Case actions
  */
@@ -159,12 +163,20 @@ main(int argc, char *argv[])
      opts[j].st++; lni=0;lnr=0;lnc=0;
      nf=opts[j].ni+opts[j].nr+opts[j].nc;
      if (optind+nf>argc) {
+#if defined _NO_OPTIONS_CHECK 
+       break;
+#else
        fprintf(stderr,"\n%s : invalid option -- %s\n",tool,opts[j].sn); usage(1);exit(0);
+#endif
      };
      for(i=1;i<=nf;i++) {
        k=0;
        if (strspn(argv[optind-1+i],"-")==1) {
+#if defined _NO_OPTIONS_CHECK 
+         break;
+#else
          fprintf(stderr,"\n%s : invalid option -- %s\n",tool,opts[j].sn); usage(1);exit(0);
+#endif
        };
        if (opts[j].ni!=0 && k==0) {lni++;iv[lni]=atoi(argv[optind-1+i]);opts[j].ni--;k=1;};
        if (opts[j].nr!=0 && k==0) {lnr++;rv[lnr]=atof(argv[optind-1+i]);opts[j].nr--;k=1;};

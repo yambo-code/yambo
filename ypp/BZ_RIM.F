@@ -21,7 +21,7 @@
 !
 subroutine BZ_RIM(Xk,Xen)
  !
- use pars,                ONLY:SP,DP
+ use pars,                ONLY:SP,DP,lchlen
  use units,               ONLY:HARTREE
  use stderr,              ONLY:set_real_printed_length
  use R_lattice,           ONLY:bz_samp,nkibz
@@ -126,7 +126,7 @@ subroutine BZ_RIM(Xk,Xen)
      !
    enddo
    !
-   call of_open_close(k_rand_fname))
+   call of_open_close(k_rand_fname)
    call live_timing()
    call set_real_printed_length()
    !

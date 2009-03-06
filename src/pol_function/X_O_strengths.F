@@ -168,7 +168,7 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
  !
  ! Warn about missing [Vnl,r] commutator
  !
- if (.not.X%Vnl_included.and..not.Vnl_commutator_warning) then
+ if (.not.X%Vnl_included.and..not.Vnl_commutator_warning.and.l_optics) then
    call warning(' Missing non-local pseudopoential contribution')
    Vnl_commutator_warning=.TRUE.
  endif

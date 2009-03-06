@@ -27,7 +27,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:iq_now,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                      alpha_dim,use_X_RIM,long_path,X_RIM_nkpts,P_bands_ordered,&
-&                      eval_alpha
+&                      eval_alpha,Vnl_commutator_warning
  use QP_m,       ONLY:QP_rep_string,QP_dSc_steps,QP_n_W_freqs,&
 &                     QP_Sx_low_band,QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_W_er,QP_W_dr,QP_cg_percent,&
@@ -273,6 +273,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  alpha_dim='adim'
  long_path='none'
  eval_alpha=.FALSE.
+ Vnl_commutator_warning=.FALSE.
  !
  !QPm
  !

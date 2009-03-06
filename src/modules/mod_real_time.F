@@ -60,11 +60,13 @@ module real_time
  real(SP), allocatable   :: V_hartree_0(:)  
  real(SP), allocatable   :: V_xc_0(:,:)  
  real(SP)                :: Thermal_time
+ integer                 :: DiagH_Iter
  !
  ! Integrator Variables
  !
- character(schlen), parameter :: EULER="EULER"
- character(schlen), parameter :: RK2="RK2"
+ character(schlen), parameter :: EULER ="EULER"
+ character(schlen), parameter :: RK2   ="RK2"
+ character(schlen), parameter :: EXACT ="EXACT"
  !
  ! Integrate exactly the part of the dynamics due to H_o 
  ! as it is done in Comp. Phys. Comm. 123(1999)
@@ -72,10 +74,10 @@ module real_time
  !
  logical                      :: RT_no_phase_int
  character(schlen)            :: Integrator_name
- !
+ !                                             
  ! Ho as in SC see SC_driver.F
  !
- complex(SP), allocatable :: Ho(:,:,:)
+ complex(SP), allocatable :: Ho(:,:,:),H_t(:,:,:)
  real(SP),    allocatable :: E_bare(:,:) ! H(rho_0)
  !
  contains
@@ -114,8 +116,8 @@ module real_time
    allocate(E_bare(SC_bands,en%nk))
    call mem_est("E_bare",(/size(E_bare)/),(/SP/))
    !
-   allocate(Ho(SC_bands,SC_bands,en%nk))
-   call mem_est("Ho",(/size(Ho)/),(/2*SP/))
+   allocate(Ho(SC_bands,SC_bands,en%nk),H_t(SC_bands,SC_bands,en%nk))
+   call mem_est("Ho",(/size(Ho)/),(/2*2*SP/))
    !
    allocate(I1_lesser(SC_bands,SC_bands,en%nk))
    call mem_est("I1_lesser",(/size(I1_lesser)/),(/2*SP/))

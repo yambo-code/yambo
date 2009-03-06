@@ -28,20 +28,28 @@
 !
 !    y(t+dt) = y(t) + dt * f(t,y(t))
 !
-! if(Integrator_name=="RK2")  Runge-Kutta 2nd order
+! elseif(Integrator_name=="RK2")  Runge-Kutta 2nd order
 !
 !    y(t+dt) = y(y) + dt * f(t+dt/2,y(t+dt/2))
+!
+! elseif(Integrator_name=="EXACT")  Exact Integration
+!
+! The full Hamiltonian is diagonalized Ho + Sigma_s
+! and the G_lesser is integrated in this diagonal bases
 !
 ! Notice that G_old is never overwritten
 !
 recursive subroutine RT_Integrator(G_new,G_old,T_step,en,k,int_name,RT_time)
  !
  use pars,           ONLY:SP,schlen
- use SC,             ONLY:SC_potential,SC_bands
+ use com,            ONLY:error
+ use SC,             ONLY:SC_potential,SC_bands,H_rotate
  use R_lattice,      ONLY:bz_samp  
- use real_time,      ONLY:G_lesser,G_l_old,Go_Phases,I1_lesser,I2_lesser,RT_step&
-&                        ,n_poles,Integrator_Name,RT_step,EULER,RK2,RT_no_phase_int
+ use real_time,      ONLY:G_lesser,G_l_old,Go_Phases,I1_lesser,I2_lesser,RT_step    &
+&                        ,n_poles,Integrator_Name,RT_step,EULER,RK2,RT_no_phase_int &
+&                        ,EXACT,H_t
  use electrons,      ONLY:levels
+ use matrix_operate, ONLY:mat_dia_inv,INV,USE_LK,DIAGO
  use X_m,            ONLY:X_poles,X_poles_tab 
  implicit none
  character(schlen), intent(in) :: int_name
@@ -54,7 +62,9 @@ recursive subroutine RT_Integrator(G_new,G_old,T_step,en,k,int_name,RT_time)
  ! Work Space
  !
  complex(SP) :: P_Factor(SC_bands,SC_bands),Tmp_Factor(SC_bands,SC_bands)
+ complex(SP) :: TmpMatrix(SC_bands,SC_bands)
  integer     :: ik,i1,i2,i,j,i_pole,iv,ic
+ complex(SP) :: tmp
  !
  if(trim(int_name)==EULER) then
    !
@@ -67,7 +77,7 @@ recursive subroutine RT_Integrator(G_new,G_old,T_step,en,k,int_name,RT_time)
      ! G(T+dt) = G(T+dt) - i dt *(I1(T) - I2(T))
      !
      G_new(:,:,:)=G_new(:,:,:)-(0._SP,1._SP)*T_step*(I1_lesser(:,:,:)-I2_lesser(:,:,:))
-     !                                                            
+     !
    else
      !
      do ik=1,k%nibz
@@ -127,6 +137,28 @@ recursive subroutine RT_Integrator(G_new,G_old,T_step,en,k,int_name,RT_time)
    ! final step G(t+dt)=G(t) + dt * (I1(t+dt/2) - I2(t+dt/2))
    !
    call RT_Integrator(G_new,G_old,T_step,en,k,EULER,RT_time)
+   !
+ elseif(trim(Integrator_name)==EXACT) then
+   !
+   do ik=1,en%nk
+     !
+     TmpMatrix(:,:)=H_t(:,:,ik)
+     !
+     call mat_dia_inv(DIAGO,USE_LK,TmpMatrix,E_real=en%E(:SC_bands,ik,1))
+     !
+     call H_rotate(TmpMatrix,G_old(:,:,ik),SC_bands,1)
+     !
+     forall(i1=1:SC_bands,i2=1:SC_bands)
+       G_new(i1,i2,ik)=G_old(i1,i2,ik)*exp(-(0._SP,1._SP)*(en%E(i1,ik,1)-en%E(i2,ik,1))*T_step)
+     end forall
+     !
+     call H_rotate(TmpMatrix,G_new(:,:,ik),SC_bands,-1)
+     !     
+   enddo
+   !
+ else
+   !
+   call error("Unknown Integrator!")
    !
  endif   
  !

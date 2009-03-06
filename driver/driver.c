@@ -112,10 +112,14 @@ main(int argc, char *argv[])
  strcpy(inf,tool);
  strcat(inf,".in");
  iif=strlen(inf);
- id  = (char *) malloc(2);strcpy(id,".");
- od  = (char *) malloc(2);strcpy(od,".");
- com_dir  = (char *) malloc(2);strcpy(com_dir,".");
- js  = (char *) malloc(2);strcpy(js," ");
+ id  = (char *) malloc(2);
+ od  = (char *) malloc(2);
+ com_dir  = (char *) malloc(2);
+ js  = (char *) malloc(2);
+ strcpy(od,".");
+ strcpy(js," ");
+ strcpy(id,".");
+ strcpy(com_dir,".");
 
  ttd=guess_winsize();
 
@@ -134,10 +138,14 @@ main(int argc, char *argv[])
      io=optind;
      if (io==1) {io++;};
      for(i=0;i<=nr-1;i++) {
-       if (strstr(argv[io-1],opts[i].sn)!=0 && opts[i].st==0) { j=i;break;};
+       if (strstr(argv[io-1],opts[i].sn)!=0 && opts[i].st==0) { 
+        j=i;
+        break;};
      };
 #if defined _NO_OPTIONS_CHECK 
      if (c=='?') {break;};
+     nf=opts[j].ni+opts[j].nr+opts[j].nc;
+     if (optind+nf>argc) {break;};
 #else
      if (c=='?') {usage(1);exit(0);};
 #endif
@@ -159,15 +167,15 @@ main(int argc, char *argv[])
  ... or if nompi is given 
 */
      if (strcmp(opts[j].ln,"nompi")==0) {mpi_init=-1;};
-
-     opts[j].st++; lni=0;lnr=0;lnc=0;
+/* 
+*/
+     opts[j].st++; 
+     lni=0;
+     lnr=0;
+     lnc=0;
      nf=opts[j].ni+opts[j].nr+opts[j].nc;
      if (optind+nf>argc) {
-#if defined _NO_OPTIONS_CHECK 
-       break;
-#else
        fprintf(stderr,"\n%s : invalid option -- %s\n",tool,opts[j].sn); usage(1);exit(0);
-#endif
      };
      for(i=1;i<=nf;i++) {
        k=0;

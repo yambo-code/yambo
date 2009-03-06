@@ -19,11 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 3.2.1 r.359 , yambo@yambo-code.org)
+AC_INIT(Yambo, 3.2.1 r.361 , yambo@yambo-code.org)
 SVERSION="3"
 SPATCHLEVEL="2"
 SSUBLEVEL="1"
-SREVISION="359"
+SREVISION="361"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -272,7 +272,7 @@ else
  ACX_BLAS([], 
   compile_blas="yes";
   AC_MSG_NOTICE([Could not find blas. Using the built-in library]))
- if test "$compile_blas"="no"; then
+ if test "$compile_blas" = "no"; then
   ACX_LAPACK([], 
    compile_lapack="yes";
    AC_MSG_NOTICE([Could not find lapack. Using the built-in library]))
@@ -280,8 +280,10 @@ else
   compile_lapack="yes"
  fi
 fi
-if test "$compile_blas"="yes"; then BLAS_LIBS="-lblas"; fi
-if test "$compile_lapack"="yes"; then LAPACK_LIBS="-llapack"; fi
+if test x"$compile_blas" = "xyes"; then BLAS_LIBS="-lblas"; fi
+if test x"$compile_lapack" = "xyes"; then LAPACK_LIBS="-llapack"; fi
+AC_SUBST(BLAS_LIBS)
+AC_SUBST(LAPACK_LIBS)
 AC_SUBST(compile_blas)
 AC_SUBST(compile_lapack)
 # ============================================================================

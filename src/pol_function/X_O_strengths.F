@@ -21,6 +21,7 @@
 !
 subroutine X_O_strengths(Xen,Xk,X,field_dir)
  !
+ use drivers,        ONLY:l_optics
  use pars,           ONLY:SP
  use com,            ONLY:warning
 #if defined _RAS
@@ -36,7 +37,8 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
  use par_proc_m,     ONLY:pp_redux_wait
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
- use X_m,            ONLY:X_rhoq0,X_alloc,X_t,X_q0grad,long_path,P_bands_ordered
+ use X_m,            ONLY:X_rhoq0,X_alloc,X_t,X_q0grad,long_path,P_bands_ordered,&
+&                         Vnl_commutator_warning
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use memory_m,       ONLY:mem_est
  use wave_func,      ONLY:wf_ng,wf_load,WF_free
@@ -164,10 +166,19 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
  q_norm(1)=q0_def_norm
  if (.not.l_col_cut) bare_qpg(1,1)=q0_def_norm
  !
+ ! Warn about missing [Vnl,r] commutator
+ !
+ if (.not.X%Vnl_included.and..not.Vnl_commutator_warning) then
+   call warning(' Missing non-local pseudopoential contribution')
+   Vnl_commutator_warning=.TRUE.
+ endif
+ !
  ! Calculate the q-dependent oscillators (OptOsc)
  !
  call X_alloc('OptOsc',(/X%ib(2),Xen%nbm,Xk%nbz/))
  X_rhoq0 = (0.0_SP,0.0_SP)
+ !
+ !
  do i1 = 1,Xk%nbz
    !
    ik = Xk%sstar(i1,1)

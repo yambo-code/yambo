@@ -31,6 +31,10 @@ module X_m
  character(6)             :: alpha_dim ! 'adim' 'area' 'length' 'volume'
  logical                  :: eval_alpha
  !
+ ! Warning about non-local commutator
+ !
+ logical                  :: Vnl_commutator_warning
+ !
  ! Absorption & Polarizability
  !
  complex(SP), allocatable :: X_epsilon(:,:)

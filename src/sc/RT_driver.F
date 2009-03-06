@@ -34,13 +34,14 @@ subroutine RT_driver(en,Xen,X,k,xk)
  use FFT_m,          ONLY:fft_size
  use R_lattice,      ONLY:bz_samp
  use parser_m,       ONLY:parser
+ use matrix_operate, ONLY:mat_dia_inv,INV,USE_LK,DIAGO
  use QP_m,           ONLY:QP_state,QP_nb,QP_nk,QP_table,QP_n_states,QP_Vxc
  use SC,             ONLY:SC_potential,SC_bands,SC_fft_size,V_hartree_sc
  use real_time,      ONLY:EF_q0,Thermal_steps,Tot_steps,Ext_Field_name,RT_step,G_lesser, &
 &                         Go_Phases,Ef_rhoq0,G_l_old,l_rt_efield,n_poles,Ext_Field_Int,  &
 &                         RT_alloc,RT_free,rho,Thermal_eta,Integrator_name,l_rt_exc,     &
 &                         RT_no_intraband,RT_resonant,V_hartree_0,V_xc_0,Thermal_time,   &
-&                         RT_no_phase_int,Ho,E_bare
+&                         RT_no_phase_int,Ho,E_bare,DiagH_Iter,H_t
 
  use xc_functionals, ONLY:V_xc
 
@@ -54,15 +55,18 @@ subroutine RT_driver(en,Xen,X,k,xk)
  logical, external        :: XC_switch
  integer                  :: it,idt,i1,i2,ib,ibp
  character(schlen)        :: dumb_ch,energy_ch,Int_Type
- character(lchlen)        :: file_name
+ character(lchlen)        :: file_name,qp_fname
  integer                  :: WF_G_max,WF_Go_indx
  integer                  :: i_pole,iv,ic,ik,i_sp
  integer                  :: X_eh_setup
  real(SP)                 :: minmax_ehe(2)
  real(SP)                 :: values(4)
+ real(SP)                 :: Occ_Natural(SC_bands,en%nk)
+ complex(SP)              :: TmpMatrix(SC_bands,SC_bands)
+ complex(SP)              :: V_tmp1(SC_bands),V_tmp2(SC_bands)
  real(SP)                 :: RT_time  ! The real time on the diagonal RTime = it*RT_step   
  complex(SP)              :: Trace_Gf
- complex(SP)              :: Ko,Vh
+ complex(SP)              :: Ko,Vh,cdotc
  !
  call parser('RTResonant',RT_resonant)
  call parser('RTNoIntraband',RT_no_intraband)
@@ -125,7 +129,7 @@ subroutine RT_driver(en,Xen,X,k,xk)
  G_l_old =(0._SP,0._SP)
  ! 
  forall(i1=1:SC_bands,ik=1:en%nk)
-      G_lesser(i1,i1,ik)=(0._SP,1._SP)*en%f(i1,ik,1)
+      G_lesser(i1,i1,ik)=(0._SP,1._SP)*en%f(i1,ik,1)/2._SP
  end forall
  !
  G_l_old=G_lesser
@@ -184,7 +188,7 @@ subroutine RT_driver(en,Xen,X,k,xk)
  ! Update occupations
  !
  forall(i1=1:SC_bands,ik=1:en%nk) 
-   en%f(i1,ik,1)=-(0._SP,1._SP)*G_lesser(i1,i1,ik)
+   en%f(i1,ik,1)=-(0._SP,2._SP)*G_lesser(i1,i1,ik)
  end forall
  !
  call el_density(en,Xk,rho,G_lesser=G_lesser)
@@ -194,14 +198,10 @@ subroutine RT_driver(en,Xen,X,k,xk)
  ! Fill the initial Hamiltonian Ho
  !
  call V_Hartree(rho,V_hartree_0)
- do ik=1,QP_nk
-   call V_to_H(ik,-V_hartree_0,Ho(:,:,ik),wf)
- enddo
+ Ho(:,:,:)=(0._SP,0._SP)
  !
  ! Ho is the non-interacting kinetic energy 
  !    as defined in SC_driver.F
- !
- Ho(:,:,:)=(0._SP,0._SP)
  !
  do i1 = 1, QP_n_states
    ib =QP_table(i1,1)
@@ -217,6 +217,14 @@ subroutine RT_driver(en,Xen,X,k,xk)
    Ho(ibp,ib,ik) = Ho(ib,ibp,ik) !????????????????
    !
  enddo
+ !
+ if(DiagH_Iter/=0) then
+   !      
+   dumb_ch='[RT] Hamiltonianan Diagonalization '
+   call live_time_msg("n",dumb_ch,"","%s")
+   call report_energies(en%E(:SC_bands,:,:),k,Xk,SC_bands,(/1,en%nk/),'E  ',.TRUE.)
+   ! 
+ endif
  !
  ! Real zero of the time                   
  !
@@ -238,33 +246,79 @@ subroutine RT_driver(en,Xen,X,k,xk)
     !
     call live_time_msg("n",dumb_ch,"","%s")
     !
+    ! Copy G_lesser in G_old before start collisin
+    !
+    G_l_old=G_lesser
+    !
     ! Simmetrization
     !
-!    do i1=1,SC_bands
-!      do i2=i1+1,SC_bands
-!        G_l_old(i1,i2,:)=G_lesser(i1,i2,:)
-!        G_l_old(i2,i1,:)=-conjg(G_lesser(i1,i2,:))
-!      enddo
-!      G_l_old(i1,i1,:)=(0._SP,1._SP)*imag(G_lesser(i1,i1,:))
-!   enddo
+    do i1=1,SC_bands
+      do i2=i1+1,SC_bands
+        G_l_old(i1,i2,:)=G_l_old(i1,i2,:)
+        G_l_old(i2,i1,:)=-conjg(G_l_old(i1,i2,:))
+      enddo
+      G_l_old(i1,i1,:)=(0._SP,1._SP)*imag(G_l_old(i1,i1,:))
+   enddo
     !
     call RT_Collision(G_l_old,en,k,RT_time)
     !
     call RT_Integrator(G_lesser,G_l_old,RT_step,en,k,Integrator_name,RT_time)
+    ! 
+    if(DiagH_Iter/=0) then
+      if(mod(it,DiagH_Iter)==0) then
+      !      
+      dumb_ch='[RT] Hamiltonianan Diagonalization '
+      call live_time_msg("n",dumb_ch,"","%s")
+      !
+      call msg('nr','[RT] Iterations               :',it)
+      call msg('r' ,'[RT] Real Time                :',RT_time/FS2AUT)
+      !
+      ! Diagonalize H_nl_sc 
+      !=====================
+      !
+      do ik=1,en%nk
+        !
+        ! Find the natural orbitals
+        !
+        TmpMatrix=-(0._SP,1._SP)*G_lesser(:,:,ik)
+        call mat_dia_inv(DIAGO,USE_LK,TmpMatrix,E_real=Occ_Natural(:SC_bands,ik))
+        do ib=1,SC_bands
+          call cgemv('n',SC_bands,SC_bands,(1._SP,0._SP),H_t(:,:,ik),SC_bands,TmpMatrix(:,ib),1,(0._SP,0._SP),V_tmp1,1)
+          en%E(ib,ik,1)=real(cdotc(SC_bands,TmpMatrix(:,ib),1,V_tmp1,1))
+        enddo
+        !
+      enddo
+      !
+      call report_energies(en%E(:SC_bands,:,:),k,Xk,SC_bands,(/1,en%nk/),'E  ',.FALSE.)
+      !
+      ! Now write the occupation
+      !
+      do ik=1,en%nk
+        do i1=1,SC_bands,8 
+          !      
+          call msg('r','n   ',(/(Occ_Natural(SC_bands-ib+1,1),ib=i1,min(i1+7,SC_bands))/))
+          !
+        enddo
+      enddo
+      !
+      endif
+    endif
     !
     call Eval_Energy(en,k,Ko,Vh,Trace_Gf)
-    ! 
+    !
     ! Now print the Energy and other stuff
     !
     values(1)=RT_time/FS2AUT
     values(2)=real(Ko)
     values(3)=real(Vh)
-    values(4)=real(Trace_Gf)
+    values(4)=2._SP*real(Trace_Gf)
     call msg('o dynamics','',values(:),INDENT=-2,USE_TABS=.TRUE.)
     !
  enddo
  !
  call of_open_close(file_name)
+ !
+ if(DiagH_Iter/=0) call of_open_close(qp_fname)
  !
  call RT_free()
  !

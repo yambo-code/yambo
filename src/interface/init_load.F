@@ -58,7 +58,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use real_time,     ONLY:RT_step, T_initial, Thermal_eta, Ext_Field_freq, &
 &                        Tot_steps, Thermal_steps, Ext_Field_Int,&
 &                        Ext_Field_name,Integrator_name,EF_q0,RT_no_phase_int, &
-&                        RT_resonant,RT_no_intraband,LongRelax,TransRelax
+&                        RT_resonant,RT_no_intraband,LongRelax,TransRelax,DiagH_Iter
 #endif
  use SC,            ONLY:SC_band_mixing
 #if defined _RAS
@@ -265,6 +265,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'ExtField',  '[RT]  External Field',Ext_Field_name)
  call it(defs,'Integrator','[RT]  Integrator',Integrator_name)
  call it(defs,'ELongDir',  '[RT]  Electric Field Versor',EF_q0)
+ call it(defs,'DiagHIter', '[RT]  Digaonalize the Hamiltonian',DiagH_Iter)
  call it('f',defs,'RTResonant', '[RT] Only Resonant part of the External Field',verb_level=V_more)
  call it('f',defs,'RTNoIntraband', '[RT] Do not Include Intraband transitions',verb_level=V_more)
  call it('f',defs,'RTNoPhaseInt', '[RT] Do not use Exact integration fast phase factors',verb_level=V_testing)

@@ -98,8 +98,10 @@ if ! test -s conftest.er1 || test -n "`grep successful conftest.er1`"  ; then
  eval $CPP $CPPFLAGS conftest.F > conftest.${F90SUFFIX} 
  eval $FC $FCFLAGS -c conftest.${F90SUFFIX} 2> conftest.er2
  if test -s conftest.er2 ; then 
-  acx_F90_ok=no ; 
-  CPP_TESTS_PASSED=no;
+  if ! test -n "`grep successful conftest.er2`"  ; then 
+   acx_F90_ok=no ; 
+   CPP_TESTS_PASSED=no;
+  fi
  fi 
 else
  acx_F90_ok=no ; 

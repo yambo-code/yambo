@@ -23,7 +23,7 @@
 ! This subroutine prepare I1(t_1,t_2) and I2(t_1,t_2) give a G^<(t_1,t_1) 
 ! Actualy it works only for the diagonal I1(t_1,t_1), I2(t_1,t_1)
 !
-subroutine RT_Collision(G_lesser,en,k,RT_time)
+subroutine RT_Collision(G_input,en,k,RT_time)
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels,el_density
@@ -34,7 +34,7 @@ subroutine RT_Collision(G_lesser,en,k,RT_time)
  use QP_m,           ONLY:QP_nk
  use real_time,      ONLY:I1_lesser,I2_lesser,V_xc_0,l_rt_exc,rho,V_hartree_0,        &
  &                         Thermal_eta,Thermal_Time,l_rt_efield,TransRelax,LongRelax, &
- &                         T_initial,RT_no_phase_int,E_bare
+ &                         T_initial,RT_no_phase_int,E_bare,H_t,Ho
  use wave_func,      ONLY:wf
  !
  implicit none
@@ -42,22 +42,22 @@ subroutine RT_Collision(G_lesser,en,k,RT_time)
  real(SP),      intent(in)   :: RT_time
  type(levels),  intent(in)   :: en
  type(bz_samp), intent(in)   :: k
- complex(SP),   intent(in)   :: G_lesser(SC_bands,SC_bands,en%nk)
+ complex(SP),   intent(in)   :: G_input(SC_bands,SC_bands,en%nk)
  !
  ! Work Space
  !
- integer     :: ik,iv,i1,i2
+ integer     :: ik,iv,i1,i2,i3
  complex(SP) :: Sigma_s(SC_bands,SC_bands)
  !
  ! Update occupations
  !
  forall(iv=1:SC_bands,ik=1:en%nk) 
-   en%f(iv,ik,1)=-(0._SP,1._SP)*G_lesser(iv,iv,ik)
+   en%f(iv,ik,1)=-(0._SP,2._SP)*G_input(iv,iv,ik)
  end forall
  !
  if(l_rt_exc) then
    !
-   call el_density(en,k,rho,G_lesser=G_lesser)
+   call el_density(en,k,rho,G_lesser=G_input)
    !
    call V_Hartree(rho,V_hartree_sc)
    !
@@ -98,6 +98,8 @@ subroutine RT_Collision(G_lesser,en,k,RT_time)
      !
    endif
    !
+   H_t(:,:,ik)=Sigma_s(:,:)
+   !
    ! Fictitious lifetime equivalent to the broadening
    ! in linear optics
    !
@@ -105,8 +107,8 @@ subroutine RT_Collision(G_lesser,en,k,RT_time)
      !   
      do i1=1,SC_bands
        do i2=i1+1,SC_bands
-         Sigma_s(i1,i2)=Sigma_s(i1,i2)-G_lesser(i1,i2,ik)/TransRelax
-         Sigma_s(i2,i1)=Sigma_s(i2,i1)-G_lesser(i2,i1,ik)/TransRelax
+         Sigma_s(i1,i2)=Sigma_s(i1,i2)-G_input(i1,i2,ik)/TransRelax
+         Sigma_s(i2,i1)=Sigma_s(i2,i1)-G_input(i2,i1,ik)/TransRelax
        enddo
      enddo
      !
@@ -115,7 +117,7 @@ subroutine RT_Collision(G_lesser,en,k,RT_time)
    if(LongRelax/=0._SP) then
      !   
      forall(i1=1:SC_bands)
-       Sigma_s(i1,i1)=Sigma_s(i1,i1)-G_lesser(i1,i1,ik)/LongRelax
+       Sigma_s(i1,i1)=Sigma_s(i1,i1)-G_input(i1,i1,ik)/LongRelax
      end forall
      !
    endif
@@ -125,13 +127,13 @@ subroutine RT_Collision(G_lesser,en,k,RT_time)
    !
 #if defined _DOUBLE
    call zgemm('n','n',SC_bands,SC_bands,SC_bands,(1._SP,0._SP),Sigma_s,&
-&             SC_bands,G_lesser(:,:,ik),SC_bands,(0._SP,0._SP),I1_lesser(:,:,ik),SC_bands)
-   call zgemm('n','n',SC_bands,SC_bands,SC_bands,(1._SP,0._SP),G_lesser(:,:,ik),&
+&             SC_bands,G_input(:,:,ik),SC_bands,(0._SP,0._SP),I1_lesser(:,:,ik),SC_bands)
+   call zgemm('n','n',SC_bands,SC_bands,SC_bands,(1._SP,0._SP),G_input(:,:,ik),&
 &             SC_bands,Sigma_s,SC_bands,(0._SP,0._SP),I2_lesser(:,:,ik),SC_bands)
 #else
    call cgemm('n','n',SC_bands,SC_bands,SC_bands,(1._SP,0._SP),Sigma_s,&
-&             SC_bands,G_lesser(:,:,ik),SC_bands,(0._SP,0._SP),I1_lesser(:,:,ik),SC_bands)
-   call cgemm('n','n',SC_bands,SC_bands,SC_bands,(1._SP,0._SP),G_lesser(:,:,ik),&
+&             SC_bands,G_input(:,:,ik),SC_bands,(0._SP,0._SP),I1_lesser(:,:,ik),SC_bands)
+   call cgemm('n','n',SC_bands,SC_bands,SC_bands,(1._SP,0._SP),G_input(:,:,ik),&
 &             SC_bands,Sigma_s,SC_bands,(0._SP,0._SP),I2_lesser(:,:,ik),SC_bands)
 #endif
    !

@@ -66,8 +66,6 @@ if test x"$acx_lapack_ok" = xyes; then
  fi
 fi
 
-AC_SUBST(LAPACK_LIBS)
-
 # Execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 if test x"$acx_lapack_ok" = xyes; then
         ifelse([$1],,AC_DEFINE(HAVE_LAPACK,1,[Define if you have LAPACK library.]),[$1])

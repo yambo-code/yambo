@@ -531,14 +531,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _SC
  if (l_sc_run) then
-   call initactivate(1,'SCPot FFTGvecs SCIter SCmixing SCBands BandMix')
+   call initactivate(1,'SCPot FFTGvecs SCmixing SCBands BandMix')
    if (l_real_time) then
      call initactivate(1,'RTstep RTsteps Tinitial ThermDamp ThermStps')
      call initactivate(1,'Integrator ExtField ExtFiInt ExtFiFreq ELongDir')
-     call initactivate(1,'LongRelax TransRelax')
+     call initactivate(1,'LongRelax TransRelax DiagHIter')
      call initactivate(1,'RTNoIntraband RTResonant RTNoPhaseInt')
    else
-     call initactivate(1,'SCEtresh SCRhoTresh')
+     call initactivate(1,'SCIter SCEtresh SCRhoTresh')
    endif
    call initactivate(-1,'QpntsRXs')
  endif

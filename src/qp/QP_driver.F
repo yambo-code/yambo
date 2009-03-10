@@ -220,12 +220,16 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    if (QP_W_partially_done) return
  endif
- ! 
- ! GPL_EXCLUDE_START 
+ !
+ ! GPL_EXCLUDE_START  GW_REAL_AXIS_IGNORE
  ! 
  ! SECANT
  ! 
  if (trim(QP_solver)=='s') call QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
+ !
+ ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
+ ! 
+ ! GPL_EXCLUDE_START 
  !
  ! LIFETIMES
  !

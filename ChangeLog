@@ -1,3 +1,195 @@
+2009-03-06 18:16:41 r362 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Wrong optional in X_O_strengths.F
+
+2009-03-06 18:13:45 r361 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/acx_blas.m4 config/acx_cpp.m4 config/configure.ac config/acx_lapack.m4 interface/init_load.F interface/init.F sc/RT_driver.F sc/RT_Collision.F sc/RT_Integrator.F modules/mod_real_time.F driver/driver.c
+
+	Bugs:
+	- Still CPP test failed when using IBM "XLF" based compilers
+	- Wrong linking of BLAS/LAPACK
+
+	Additions:
+	- [SC] Exact integrator for Real-Time dynamics (just for testing purpose) (Claudio)
+	- Added warning in case optical oscillators are loaded
+	  to perform an optical calculation without including
+	  non-local pseudo commutator
+
+	Changes:
+	- Still trying to solve the "-p" problem with driver.c
+
+	Patch sent by: Andrea & Claudio
+
+2009-03-06 12:17:49 r360 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Small bug in ypp/BZ_RIM.F fixed
+
+2009-03-05 17:01:05 r359 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/Makefile.in config/Makefile.in_gpl config/acx_cpp.m4 config/configure.ac lib/slatec/dqwgtf.f lib/slatec/d1mach.f lib/slatec/polfit.f lib/slatec/dbesi0.f lib/slatec/dbsi1e.f lib/slatec/dbesk1.f lib/slatec/dbsk1e.f lib/slatec/dqag.f lib/slatec/dqawoe.f lib/slatec/dqk21.f lib/slatec/davint.f lib/slatec/dqk61.f lib/slatec/initds.f lib/slatec/pcoef.f lib/slatec/pvalue.f lib/slatec/dbsi0e.f lib/slatec/dbsk0e.f lib/slatec/dbesj1.f lib/slatec/dqk15w.f lib/slatec/dcsevl.f lib/slatec/dqk15.f lib/slatec/dqk51.f lib/slatec/dqcheb.f lib/slatec/d9b0mp.f lib/slatec/d9b1mp.f lib/slatec/dqelg.f lib/slatec/dbesi1.f lib/slatec/dbesk0.f lib/slatec/dqage.f lib/slatec/dqk41.f lib/slatec/dqc25f.f lib/slatec/dbesj0.f lib/slatec/dqawo.f lib/slatec/dgtsl.f lib/slatec/dqpsrt.f lib/slatec/.objects lib/slatec/dqk31.f qp/DFT_Vxc.F acfdt/acfdt_tot_energy.F qp_ctl/QP_apply_fit.F external_c/ct_etime.c common/pol_fit.F bz_ops/k_lattice.F pol_function/f_sum_rule.F pol_function/O_eels.F pol_function/O_driver.F pol_function/X_dipole_RIM.F pol_function/.objects pol_function/.objects_gpl coulomb/bessel_F2.F coulomb/bessel_F6.F coulomb/cutoff_cylinder.F interface/check_periodic_directions.F interface/setup.F interface/init_load.F interface/.objects interface/init.F tddft/tddft_alda_g_space.F modules/mod_logo.F modules/mod_BS.F modules/std_presets.F modules/mod_X.F modules/mod_D_lattice.F bse/K_dump_to_o_file.F bse/K_filling.F bse/K_eps_interpolate.F bse/K.F ypp/BZ_RIM.F driver/getopt.c driver/driver.c sbin/make_makefile.sh.in
+
+	Bugs:
+	- In acx_cpp.m4 wrong syntax.
+	- In ct_etime.c wrong declaration of tt variable in double
+	  precision builds.
+
+	Additions:
+	- In configure added : --enable-msgs-comps to exapand the compilation messages
+	                       --enable-options-check to allow the check of the options
+	                                              passed to driver.c
+	   By using --disable-options-check it is possible to solve the
+	   annoying problem caused by some mpirun scripts (-p option)
+	- Added DOUBLE PRECISION slatec sources
+	- O_eels.F and check_periodic_directions.F. Used to allow the user
+	  to specify non periodic directions. In case those are given
+	  the polarizability is calculated by using KK transformations
+	  even in the TDA.
+
+	Changes:
+	- Removed different make clean*. Now only available "make clean"
+	  and "make clean_all". In the first case the configuration files
+	  are not removed and the code can be compiled without running
+	  configure again.
+	- slatec routines used for polynomial fit replaced with
+	  single/double versions.
+
+	Patch sent by: Andrea
+
+2009-02-24 14:11:50 r358 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  interface/init_load.F interface/init.F sc/RT_driver.F sc/RT_Collision.F sc/Eval_Energy.F sc/RT_Integrator.F sc/Ext_Field.F modules/mod_real_time.F modules/std_presets.F modules/mod_stderr.F modules/mod_com.F ypp/BZ_RIM.F ypp/plot_check_and_launch.F
+
+	Bugs:
+	- [SC] Many bugs corrected in Real-Time dynamics (C)
+
+	Additions:
+	- [SC] 2nd order Runge-Kutta integrator for Real-Time dynamics (C)
+	- [SC] Integration algorithm with or without fast phase factors integration
+	       (RTNoPhaseInt variable) (C)
+
+	Changes:
+	- Input file name set to "(none)" when the file is not found/written (A)
+	- Added set_real_printed_length rotuine in STDERR module in order
+	  to tune on-fly the format of the output/report file for reals (A)
+	- ypp/BZ_RIM.F randon generator rewritten (A)
+
+	Patch sent by: Andrea & Claudio
+
+2009-02-12 17:09:24 r357 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  qp_ctl/QP_apply_stretch.F qp_ctl/QP_apply_fit.F io/ioELPH.F modules/mod_IO.F ypp/ypp_i.F driver/ypp.h
+
+	Bugs:
+	- qp_ctl: wrong transfer of gap correction obtained after a fit (Myrta)
+	- mod_IO: use of optional "subfolder" even if not passed
+	- ypp_i : wrong use of ioWF (not declared as part if wave_func module)
+
+	Additions:
+	- [ELPH] elph_nq_used written in  ioELPH only for a gFsq DB
+
+	Patch sent by: Andrea
+
+2009-02-09 16:36:41 r356 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure config/acx_cpp.m4 io/ioELPH.F modules/mod_units.F modules/mod_ELPH.F ypp/ypp_init.F ypp/exc_collinear_spin.F ypp/elph_general_gFsq.F ypp/excitons_driver.F ypp/elph_excitonic_gkkp.F ypp/electrons_driver.F ypp/exc_non_collinear_spin.F ypp/ypp_i.F ypp/.objects driver/ypp.h driver/driver.c
+
+	Bugs:
+	- Fixed bug in configure that was causing a stop when using IBM compilers
+	  during the testing of the C/Fortran precompiler
+	- In mod_units.F. Integer exponents required by IBM compilers.
+	- Removed include <gnu-versions.h> in driver.c for compatibility
+	  with non-GNU platforms.
+
+	Additions:
+	- [ELPH] Routine to calculate excitonic gkkp factors.
+
+	Changes:
+	-
+
+	Patch sent by: Andrea
+
+2009-02-04 18:03:03 r355 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac xc_functionals/el_density.F xc_functionals/.objects xc_functionals/xc_lda_driver.F acfdt/acfdt_tot_energy.F wf_and_fft/space_inv_by_wf.F interface/init_load.F interface/init.F sc/SC_driver.F sc/RT_driver.F sc/RT_Collision.F sc/Eval_Energy.F sc/.objects sc/RT_Integrator.F sc/Ext_Field.F sc/.objects_gpl modules/mod_electrons.F modules/mod_real_time.F modules/std_presets.F modules/.objects ypp/electrons_driver.F driver/yambo.h driver/yambo.h_gpl driver/yambo_driver.F
+
+	Additions:
+	- [SC] Real-Time dynamics in Hartree approximation with an external field
+	- [SC] Electronic density calculated from the full G_lesser
+
+	Changes:
+	- [TRUNK]: el_density.F moved in mod_electrons.F
+
+	Patch sent by: Claudio
+
+2009-02-04 10:56:40 r354 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/Makefile.in config/configure.ac qp/QP_elph.F ypp/ypp_init.F ypp/mod_YPP.F ypp/BZ_RIM.F ypp/ypp_init_load.F driver/driver.c
+
+	Additions:
+	- SOLITONS and DOUBLES projects opened.
+	- [YPP] Added a max radius in the generation of random k-points.
+
+	Patch sent by: Andrea
+
+2009-01-29 14:48:29 r353 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac qp/QP_elph.F common/QP_states_simmetrize.F common/.objects parser/mod_itm.F modules/mod_QP.F bse/K_filling.F bse/K.F ypp/ypp_init.F ypp/elph_general_gFsq.F ypp/excitons_driver.F ypp/mod_YPP.F ypp/ypp_i.F
+
+	Bugs:
+	- Wrong dimension of c1vars in mod_itm was causing weird
+	  behaviour when compiled using pgf90  [reported by Myrta]
+	- Wrong use of integers in mod function in K_filling.F/K.F [reported by Claudio]
+
+	Additions:
+	- [ELPH] Excitonic generalized Eliashberg function now implemented
+	  in ypp_ph
+
+	Changes:
+	- [ELPH] QP_states_simmetrize.F moved in mod_QP (with optionals)
+
+	Patch sent by: Andrea
+
+2009-01-26 18:00:18 r352 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/Makefile.in config/configure.ac qp/QP_driver.F qp/QP_states_simmetrize.F qp/.objects qp/QP_elph.F + common/.objects pol_function/.objects pol_function/.objects_gpl interface/init_load.F interface/init.F io/ioELPH.F io/.objects io/.objects_gpl modules/mod_BS.F modules/std_presets.F modules/mod_IO.F modules/mod_ELPH.F bse/K_driver.F bse/K_diagonalization.F bse/K_eh_setup.F ypp/exc_properties.F ypp/ypp_init.F ypp/elph_general_gFsq.F + ypp/mod_YPP.F + ypp/ypp_i.F ypp/elph_eliashberg_dos.F ypp/.objects ypp/.objects_gpl ypp/elph_pw_dbs.F ypp/plot_driver.F ypp/ypp_init_load.F driver/ypp.h driver/ypp.h_gpl
+
+	Additions:
+	- [ELPH] gF^2 coefficients written by ioELPH. Added new DB.
+	- [ELPH] elph_general_gFsq.F
+
+	Changes:
+	- [ELPH] QP_states_simmetrize.F moved in common
+	- [ELPH] Eliashberg function calculations moved in ypp_ph
+	- Restyling of .objects using CPP commands (to be finished)
+	- Restyling of alloc/dealloc routines in mod_ELPH
+	- exc_properties renamed in excitons_driver.F
+	- plot_driver renamed in electrons_driver.F
+
+	WARNING !
+
+	- Deep restyling of ypp command-line options.
+
+	Patch sent by: Andrea
+
 2009-01-22 12:30:37 r351 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Version 3.2.1

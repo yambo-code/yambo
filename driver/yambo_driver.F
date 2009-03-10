@@ -210,48 +210,48 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
    !
    if (l_ppa)                           ierr=X_em1(Xen,Xk,q,X(4),Xw(4),.false.)
    ! 
-   ! GPL_EXCLUDE_START 
+   ! GPL_EXCLUDE_START GW_REAL_AXIS_IGNORE
    ! 
    ! Dynamical 
    !
    if (.not.l_ppa.and..not.l_chosex)    ierr=X_em1(Xen,Xk,q,X(3),Xw(3),.false.)
    !
-   ! GPL_EXCLUDE_END
+   ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
    !
  endif
  !
  if (l_gw0.or.l_life) then
    !
-   ! GPL_EXCLUDE_START
-   !
    if (l_chosex) then
+     !
+     ! GPL_EXCLUDE_START
      !
      ! CHOSEX 
      !========
      !
      call QP_driver(X(2),Xen,Xk,en,k,q,Xw(2))
      !
-   else if (l_ppa) then
-     !
      ! GPL_EXCLUDE_END
+     !
+   else if (l_ppa) then
      !
      ! PPA 
      !=====
      !
      call QP_driver(X(4),Xen,Xk,en,k,q,Xw(4))
      !
-     ! GPL_EXCLUDE_START
-     !
    else 
      !
+     ! GPL_EXCLUDE_START GW_REAL_AXIS_IGNORE
      !
      ! Real Axis 
      !============
      !
      call QP_driver(X(3),Xen,Xk,en,k,q,Xw(3))
+     !
+     ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
+     !
    endif
-   !
-   ! GPL_EXCLUDE_END
    !
  endif
  !

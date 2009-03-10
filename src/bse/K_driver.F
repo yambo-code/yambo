@@ -164,8 +164,12 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! KERNEL
  !
  iq=BS_q(1)
- !
+ ! 
+# if defined _DOUBLES
+ call K_doubles(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
+# else
  call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
+# endif
  !
  ! SOLVER
  !

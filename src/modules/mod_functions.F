@@ -106,7 +106,7 @@ module functions
      !
    end function
    !
-   ! GPL_EXCLUDE_START
+   ! GPL_EXCLUDE_START GW_REAL_AXIS_IGNORE
    !
    ! Lifetime functions e2et/h2ht
    !------------------------------
@@ -160,7 +160,7 @@ module functions
      if (h2ht==0) F=0.
    end function
    !
-   ! GPL_EXCLUDE_END
+   ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
    !
    logical function K_scatter(E,Ep,Er,Dr)
      !

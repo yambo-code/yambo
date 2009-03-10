@@ -125,6 +125,12 @@ subroutine barriers()
    call switch_off_runlevel('all',on_name='life em1d '//trim(always_runlevels))
    goto 1
  endif
+ !
+ ! GPL_EXCLUDE_END
+ !
+ !
+ ! GPL_EXCLUDE_START GW_REAL_AXIS_IGNORE
+ !
  if (gw0_raxis) then
    call switch_off_runlevel('all',on_name='gw0 em1d el_el el_ph xxvxc '//trim(always_runlevels))
    goto 1
@@ -134,7 +140,7 @@ subroutine barriers()
  call switch_off_runlevel('all',on_name='chi optics setup bse bss')
 #endif
  !
- ! GPL_EXCLUDE_END
+ ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
  !
  if (gw0_ppa) then
    on_runlevels='gw0 ppa em1d el_el el_ph xxvxc'

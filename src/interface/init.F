@@ -979,12 +979,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          l_el_corr=.true.
 #endif
          !
-         ! GPL_INCLUDE_START
+         ! GPL_INCLUDE_START  GW_REAL_AXIS_IGNORE 
          !
          !infile_editing=.true.
          !call initactivate(1,'ppa')
          !
-         ! GPL_INCLUDE_END
+         ! GPL_INCLUDE_END GW_REAL_AXIS_IGNORE
          !
        endif
        !
@@ -994,12 +994,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          if (trim(rstr_piece(i1+1))=='p') then
            !
-           ! GPL_EXCLUDE_START
+           ! GPL_EXCLUDE_START GW_REAL_AXIS_IGNORE
            !
            infile_editing=.true.
            call initactivate(1,'ppa')
            !
-           ! GPL_EXCLUDE_END
+           ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
            !
          else if (trim(rstr_piece(i1+1))=='c') then
            !

@@ -62,9 +62,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  if (.not.allocated(QP_Sx).and..not.allocated(QP_Vxc).and.l_el_corr.and.&
      .not.l_life) return
  !
- ! GPL_INCLUDE_START
+ ! GPL_INCLUDE_START GW_REAL_AXIS_IGNORE
  !QP_solver='n'
- ! GPL_INCLUDE_END
+ ! GPL_INCLUDE_END GW_REAL_AXIS_IGNORE
  !
  ! Head message
  !
@@ -76,7 +76,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    call section('*','Dyson equation: Newton solver')
  else if (trim(QP_solver)=='s') then
    !
-   ! GPL_EXCLUDE_START
+   ! GPL_EXCLUDE_START GW_REAL_AXIS_IGNORE
    !
    ! When using secant no SC available
    !
@@ -84,6 +84,12 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    write (qp%description(1),'(a)') ' GW solver              : Secant'
    call section('*','Dyson equation: non perturbative secant method')
+   !
+   ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
+   !
+   !
+   ! GPL_EXCLUDE_START
+   !
  else if (trim(QP_solver)=='g') then
    write (qp%description(1),'(a)') ' GW solver              : Full Green`s function'
    call section('*','Dyson equation: full Green`s function')

@@ -102,22 +102,36 @@ module vec_operate
      !
      real(SP) a_here(3,3),mat(3,3),n(3),u(3)
      !
+     ! Define local unit cell vectors
+     !
      a_here=b
      if (present(b_in)) a_here=b_in
      !
+     ! Scale factor if input vector is in iku
+     !
      if (index(mode,'r')/=0) n(:)=alat(:)
      if (index(mode,'k')/=0) n(:)=2.*pi/alat(:)
+     !
+     ! u is rlu or cc (no iku)
+     !
      u=v_in
-     if (index(mode,'i2')/=0) u(:)=v_in(:)*n(:) ! rlu -> cc
+     if (index(mode,'i2')/=0) u(:)=v_in(:)*n(:) ! iku -> cc
+     !
+     ! i2c/c2i
      mat=reshape((/1.,0.,0.,0.,1.,0.,0.,0.,1./),(/3,3/))
+     !
+     ! a2c/a2i
      if (index(mode,'a2c')/=0.or.index(mode,'a2i')/=0) mat=transpose(a_here)
-     if (index(mode,'c2a')/=0.or.index(mode,'i2a')/=0) call m3inv(transpose(a_here),mat)
+     !
+     ! c2a/i2a
+     if (index(mode,'c2a')/=0.or.index(mode,'i2a')/=0) call m3inv(transpose(a_here),mat) 
+     !
      if (present(v_out)) then
        v_out=matmul(mat,u) 
-       if (index(mode,'2i')/=0) v_out(:)=v_out(:)/n(:) ! * -> rlu
+       if (index(mode,'2i')/=0) v_out(:)=v_out(:)/n(:) ! * -> iku
      else
        v_in=matmul(mat,u) 
-       if (index(mode,'2i')/=0) v_in(:)=v_in(:)/n(:) ! * -> rlu
+       if (index(mode,'2i')/=0) v_in(:)=v_in(:)/n(:) ! * -> iku
      endif
    end subroutine c2a
    !

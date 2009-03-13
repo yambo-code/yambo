@@ -116,15 +116,16 @@ module matrix_operate
      real(SP),optional :: m_inv(3,3)
      real(SP)          :: det,inv(3,3) ! Work Space
      det=m3det(m)
-     inv(1,1)=(-(m(2,3)*m(3,2)) + m(2,2)*m(3,3))/det
-     inv(1,2)=(m(1,3)*m(3,2) - m(1,2)*m(3,3))/det
-     inv(1,3)=(-(m(1,3)*m(2,2)) + m(1,2)*m(2,3))/det
-     inv(2,1)=(m(2,3)*m(3,1) - m(2,1)*m(3,3))/det
-     inv(2,2)=(-(m(1,3)*m(3,1)) + m(1,1)*m(3,3))/det
-     inv(2,3)= (m(1,3)*m(2,1) - m(1,1)*m(2,3))/det
-     inv(3,1)= (-(m(2,2)*m(3,1)) + m(2,1)*m(3,2))/det
-     inv(3,2)= (m(1,2)*m(3,1) - m(1,1)*m(3,2))/det
-     inv(3,3)= (-(m(1,2)*m(2,1)) + m(1,1)*m(2,2))/det
+     inv(1,1)=(-m(2,3)*m(3,2) + m(2,2)*m(3,3) )/det
+     inv(1,2)=( m(1,3)*m(3,2) - m(1,2)*m(3,3) )/det
+     inv(1,3)=(-m(1,3)*m(2,2) + m(1,2)*m(2,3) )/det
+     inv(2,1)=( m(2,3)*m(3,1) - m(2,1)*m(3,3) )/det
+     inv(2,2)=(-m(1,3)*m(3,1) + m(1,1)*m(3,3) )/det
+     inv(2,3)=( m(1,3)*m(2,1) - m(1,1)*m(2,3) )/det
+     inv(3,1)=(-m(2,2)*m(3,1) + m(2,1)*m(3,2) )/det
+     inv(3,2)=( m(1,2)*m(3,1) - m(1,1)*m(3,2) )/det
+     inv(3,3)=(-m(1,2)*m(2,1) + m(1,1)*m(2,2) )/det
+     !
      if (abs(det)<=1.E-7) call error('Null determinant. Inversion failed.')
      if (present(m_inv))      m_inv=inv
      if (.not.present(m_inv)) m=inv
@@ -134,9 +135,9 @@ module matrix_operate
    function m3det(m)
      use pars, ONLY:SP
      real(SP) :: m(3,3),m3det
-     m3det =-m(1,3)*m(2,2)*m(3,1) + m(1,2)*m(2,3)*m(3,1) &
-&           + m(1,3)*m(2,1)*m(3,2) - m(1,1)*m(2,3)*m(3,2) &
-&           - m(1,2)*m(2,1)*m(3,3) + m(1,1)*m(2,2)*m(3,3)
+     m3det = m(1,1)*( m(2,2)*m(3,3) - m(2,3)*m(3,2) ) + &
+&           -m(1,2)*( m(2,1)*m(3,3) - m(2,3)*m(3,1) ) + &
+&            m(1,3)*( m(2,1)*m(3,2) - m(2,2)*m(3,1) )
    end function
    !
    subroutine mat_dia_inv(idriver,lib_in,M,blt,V_left,V_right,&

@@ -93,7 +93,7 @@ subroutine elph_excitonic_gkkp(Xk,lambda_s)
        lambda=lambda_s(i_lambda)
        !
        do neh1=1,BS_blk_dim(ik_ibz)
-
+          !
           ik_bz1= BS_eh_table(ikk+neh1,1)
           iv1   = BS_eh_table(ikk+neh1,2)
           ic1   = BS_eh_table(ikk+neh1,3)

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2008 D. Sangalli and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -28,9 +28,9 @@ module BS_doubles
  !
  ! BS Kernel building
  !
- integer    , allocatable :: BS_eh_table_m1(:,:)
- integer    , allocatable :: BS_doubles_table(:,:)
- complex(SP), allocatable :: BS_mat_doubles(:,:)
+ integer     , allocatable :: BS_eh_table_m1(:,:)
+ complex(SP) , allocatable :: BS_mat_doubles(:,:,:,:)
+ logical :: BS_res_K_doubles
  !
  ! Solvers
  !

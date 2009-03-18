@@ -3,6 +3,11 @@ SC_objects = load_SC_components.o io_SC_components.o
 #else
 SC_objects = 
 #endif
+#if defined _DOUBLES
+DB_objects = ioBS_doubles.o
+#else
+DB_objects = 
+#endif
 objs = ver_is_gt_or_eq.o \
        ioRIM.o        ioGROT.o     ioELPH.o \
        ioOSTNTS.o     ioQINDX.o    ioQP.o      ioX.o \
@@ -11,4 +16,4 @@ objs = ver_is_gt_or_eq.o \
        ioBSS_diago.o  ioBSS_Haydock.o ioBSS_invert.o \
        io_elemental.o io_bulk.o      io_header.o ioE_RIM.o \
        ioCOL_CUT.o    ioDB1_reload.o \
-       variables_BS.o $(SC_objects)
+       variables_BS.o $(SC_objects) $(DB_objects)

@@ -569,13 +569,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! for more details see A. Fleszar PRB 64, 245204
  !
  V_xc_sc_shift= maxval(E_bare(:n_met_bands,:))-maxval(E%E(:n_met_bands,:,:)) 
- if (local_V) V_xc_sc=V_xc_sc+V_xc_sc_shift
- !
- ! Rewrite scV database in order to update the convergence parameter
- ! for rho and energies.
- !
- call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(3))
- io_V=io_SC_components('V' ,E,ID(3))
+ if (local_V) then
+   V_xc_sc=V_xc_sc+V_xc_sc_shift
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(3))
+   io_V=io_SC_components('V' ,E,ID(3))
+ endif
  !
  call fermi_level(E,k,Tel,1)
  !

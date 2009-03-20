@@ -120,8 +120,8 @@ subroutine K_dump_to_o_file(iq,mode)
    if (eval_eels) then
      !
      eval_eels=O_eels(X_epsilon(1,:),BSS_n_freqs,.TRUE.,ordering,X_epsilon(2,:),eels(1,:)) 
-     eval_eels=O_eels(X_epsilon(1,:),BSS_n_freqs,.TRUE.,ordering,X_epsilon(3,:),eels(2,:)) 
-     if (mode==1) eval_eels=O_eels(X_epsilon(1,:),BSS_n_freqs,.TRUE.,ordering,X_epsilon(4,:),eels(3,:)) 
+     eval_eels=O_eels(X_epsilon(1,:),BSS_n_freqs,.FALSE.,ordering,X_epsilon(3,:),eels(2,:)) 
+     if (mode==1) eval_eels=O_eels(X_epsilon(1,:),BSS_n_freqs,.FALSE.,ordering,X_epsilon(4,:),eels(3,:)) 
      !
      alpha(1,:)=(1.+eels(1,:))/4./pi*eps_2_alpha
      alpha(2,:)=(1.+eels(2,:))/4./pi*eps_2_alpha

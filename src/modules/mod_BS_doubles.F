@@ -28,7 +28,6 @@ module BS_doubles
  !
  ! BS Kernel building
  !
- integer     , allocatable :: BS_eh_table_m1(:,:)
  complex(SP) , allocatable :: BS_mat_doubles(:,:,:,:)
  logical :: BS_res_K_doubles
  !

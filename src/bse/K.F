@@ -668,7 +668,27 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call live_timing()
  call pp_redux_wait
  !
- ! CLEAN
+ ! CLEAN before _DOUBLEs
+ !
+ if (BS_res_K_corr.or.BS_cpl_K_corr) then
+   deallocate(Ovv,Occ,Cc)
+   call mem_est("O_RES_WS")
+   deallocate(BS_W)
+   call mem_est("BS_W")
+ endif
+ !
+ if (load_O_X) then
+   deallocate(O1x,O2x)
+   call mem_est("O1x O2x")
+ endif
+ !
+ ! DOUBLES excitations contribution
+ !
+#if defined _DOUBLES
+ call K_doubles(iq,Ken,Xk,q,X,Xw,W_bss)
+#endif
+ !
+ ! Final CLEAN
  !
  deallocate(O_table)
  call mem_est("O_table")
@@ -679,12 +699,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
    deallocate(O_v_state,O_c_state,O_n_c_states,O_n_v_states)
    call mem_est("O_v_state O_c_state O_n_c_states O_n_v_states")
-   deallocate(BS_W,O_phase,ik_is_table)
-   call mem_est("BS_W O_phase ik_is_table")
-   deallocate(Ovv,Occ,Cc)
-   call mem_est("O_RES_WS")
    deallocate(BS_O)
    call mem_est("BS_O")
+   deallocate(ik_is_table,O_phase)
+   call mem_est("ik_is_table O_phase")
    !
    ! GPL_EXCLUDE_START
    !
@@ -697,23 +715,5 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
  !
- if (load_O_X) then
-   deallocate(O1x,O2x)
-   call mem_est("O1x O2x")
- endif
- !
- if (l_bs_fxc) then
-   !
-   ! GPL_EXCLUDE_START
-   !
-   deallocate(FXC_K_diagonal,FXC)
-   call mem_est("FXC_K_diagonal FXC")
-   call mem_est("BS_K_2_FXC")
-   !
-   ! GPL_EXCLUDE_END
-   !
- else if (BS_K_is_ALDA) then
-   deallocate(F_xc)
- endif
  !
 end subroutine

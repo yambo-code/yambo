@@ -22,31 +22,33 @@
 integer function ioBS_doubles(ID)
  !
  use pars,          ONLY:SP,schlen
+ use stderr,        ONLY:intc
  use BS,            ONLY:BS_identifier,BS_K_dim,BS_eh_table
  use BS_doubles,    ONLY:BS_mat_doubles
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&
 &                        io_header,write_is_on,read_is_on
- use electrons,    ONLY:n_sp_pol
+ use electrons,     ONLY:n_sp_pol
  implicit none
  integer     :: ID
  !
  ! Work Space
  !
- integer          :: i1
+ integer          :: is,id2,icin
  character(schlen):: db_name
- real(SP)         :: BS_mat_disk(2,BS_K_dim)
+ real(SP)         :: BS_mat_doubles_disk(2,BS_K_dim,BS_K_dim,BS_K_dim)
  !
- db_name='BS_doubles'
+ db_name='BS_C_doubles'
+ !
  ioBS_doubles=io_connect(desc=trim(db_name),type=2,ID=ID)
  if (ioBS_doubles/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
    ! As this DB must respect the BS ideentifier I only need to
-   ! check the K QP corrections
+   ! check the K QP corrections                    <----------------- ?????????
    !
-   ioBS_doubles=io_header(ID,XC_KIND="K_E force")
+   ioBS_doubles=io_header(ID,XC_KIND="K_E force")         !<----------- ??
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=1,MENU=0)
    !
@@ -65,20 +67,22 @@ integer function ioBS_doubles(ID)
    call io_bulk(ID,'BS_TABLE',VAR_SZ=(/BS_K_dim,3+n_sp_pol-1/))
    call io_bulk(ID,I2=BS_eh_table(:BS_K_dim,:))
    !
-   ! Doubles
+   ! Doubles, coupling terms of the kernel
    !
-!   call io_bulk(ID,'BS_EIGENSTATES',VAR_SZ=(/2,BS_H_dim,BS_H_dim/))
-!   !
-!   do i1=1,BS_H_dim
-!     !
-!     if (write_is_on(ID)) BS_mat_disk(1,:)=real(BS_mat(:,i1))
-!     if (write_is_on(ID)) BS_mat_disk(2,:)=aimag(BS_mat(:,i1))
-!     !
-!     call io_bulk(ID,R2=BS_mat_disk,IPOS=(/1,1,i1/))
-!     !
-!     if (read_is_on(ID)) BS_mat(:,i1)=BS_mat_disk(1,:)+(0._SP,1._SP)*BS_mat_disk(2,:)
-!     !
-!   enddo
+   do icin=1,8
+     !
+     if (write_is_on(ID)) BS_mat_doubles_disk(1,:,:,:)=real(BS_mat_doubles(:,:,:,icin))
+     if (write_is_on(ID)) BS_mat_doubles_disk(2,:,:,:)=aimag(BS_mat_doubles(:,:,:,icin))
+     !
+     call io_bulk(ID,'BS_DOUBLES_REAL_KIN'//trim(intc(icin)),VAR_SZ=(/BS_K_dim,BS_K_dim,BS_K_dim/))
+     call io_bulk(ID,R3=BS_mat_doubles_disk(1,:,:,:))
+     call io_bulk(ID,'BS_DOUBLES_IMG_KIN'//trim(intc(icin)),VAR_SZ=(/BS_K_dim,BS_K_dim,BS_K_dim/))
+     call io_bulk(ID,R3=BS_mat_doubles_disk(2,:,:,:))
+     !
+     if (read_is_on(ID)) BS_mat_doubles(:,:,:,icin)=&
+&                 BS_mat_doubles_disk(1,:,:,:)+(0._SP,1._SP)*BS_mat_doubles_disk(2,:,:,:)
+     !
+   enddo
    !
  endif
  !

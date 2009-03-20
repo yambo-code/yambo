@@ -57,7 +57,7 @@ logical function O_eels(wv,nw,be_verbose,ordering,eps,eel)
  !
  if ( (maxval(aimag(eps))/aimag(eps(1))<100..or.&
 &      maxval(aimag(eps))/aimag(eps(nw))<100.) .and. be_verbose) &
-&   call warning(' [O_eels] Possible inaccuracy in the prolungation of dielectric function')
+&   call warning(' [O_eels] Possible inaccuracy in the EPS prolungation')
  !
  ! extend eps to the negative frequencies
  !

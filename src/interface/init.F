@@ -66,6 +66,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  implicit none
  type(levels) ::en        
+#if defined _SC
+ type(levels) ::en_sc
+#endif
  type(bz_samp)::q,k   
  type(X_t)    ::X(4)
  type(w_samp) ::Xw(4)
@@ -116,6 +119,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _MANYK 
  what_is_running='YAMBO_MANYK'
 #endif
+#if defined _DOUBLES 
+ what_is_running='YAMBO_DOUBLES'
+#endif
  !
  !Presets (input)
  !
@@ -123,6 +129,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (.not.FINALIZE.and..not.CLOSE_Gs) then
    call E_reset(en)
+#if defined _SC
+   call E_reset(en_sc)
+#endif
    call bz_samp_reset(k)
    call bz_samp_reset(q)
    call W_reset(Xw(1))
@@ -322,7 +331,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _SC
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_SC_err=io_SC_components('V',en,io_ID)
+ io_SC_err=io_SC_components('E',en_sc,io_ID)
 #endif
  !
  if (list_dbs) then

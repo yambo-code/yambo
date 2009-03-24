@@ -31,11 +31,13 @@ subroutine RT_Collision(G_input,en,k,RT_time)
 &                         l_sc_hf,l_sc_exxc
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc
- use QP_m,           ONLY:QP_nk
+ use QP_m,           ONLY:QP_nk,QP_Vxc,QP_n_states,QP_table 
  use real_time,      ONLY:I1_lesser,I2_lesser,V_xc_0,l_rt_exc,rho,V_hartree_0,        &
- &                         Thermal_eta,Thermal_Time,l_rt_efield,TransRelax,LongRelax, &
- &                         T_initial,RT_no_phase_int,E_bare,H_t,Ho
+ &                         Thermal_Time,l_rt_efield,TransRelax,LongRelax, &
+ &                         T_initial,RT_phase_int,E_bare,H_t,Ho
  use wave_func,      ONLY:wf
+ use xc_functionals, ONLY:V_xc
+ use global_XC,      ONLY:WF_kind,WF_xc_functional 
  !
  implicit none
  !
@@ -46,7 +48,7 @@ subroutine RT_Collision(G_input,en,k,RT_time)
  !
  ! Work Space
  !
- integer     :: ik,iv,i1,i2,i3
+ integer     :: ik,iv,i1,i2,i3,ik1,ib,ibp
  complex(SP) :: Sigma_s(SC_bands,SC_bands)
  !
  ! Update occupations
@@ -55,11 +57,25 @@ subroutine RT_Collision(G_input,en,k,RT_time)
    en%f(iv,ik,1)=-(0._SP,2._SP)*G_input(iv,iv,ik)
  end forall
  !
+ call el_density(en,k,rho,G_lesser=G_input)
+ !
  if(l_rt_exc) then
    !
-   call el_density(en,k,rho,G_lesser=G_input)
-   !
    call V_Hartree(rho,V_hartree_sc)
+   !
+   if(l_sc_pz) then
+     !
+     call xc_lda_driver(en,k,WF_KIND,WF_xc_functional,1)
+     !
+   endif
+   !
+ else
+   !
+   ! Simple case without anycorrelation just transition between bands
+   ! equivalent to RPA without local field effects
+   !
+   V_hartree_sc=V_hartree_0
+   V_xc        =V_xc_0
    !
  endif
  !
@@ -67,38 +83,52 @@ subroutine RT_Collision(G_input,en,k,RT_time)
    !      
    Sigma_s=(0._SP,0._SP)
    !
-   if(l_rt_efield.and.RT_time>0._SP) then
-     !      
-     call Ext_Field(ik,Sigma_s,RT_time-T_initial)
-     !
-   endif
+   !  I subtract the V_xc_0 term if there is a self-energy /=0 (at least V_h)
+   !  and not TD-LDA
    !
-   if(l_rt_exc) then
-     !
-     call V_to_H(ik,V_hartree_sc-V_hartree_0-V_xc_0(:,1),Sigma_s,wf)
+   if(l_rt_exc.and..not.l_sc_pz) then 
+     !  
+     call V_to_H(ik,-V_xc_0(:,1),Sigma_s,wf)
      !
    endif
    !
    ! Adiabatic Switching
    !
-   if(Thermal_eta/=0.0.and.RT_time<0._SP) then
+   if(Thermal_time/=0.0) then 
      !      
-     Sigma_s=Sigma_s*(1._SP-exp(-(RT_time+Thermal_time)/Thermal_eta))
+     Sigma_s=Sigma_s*(1._SP+tanh((RT_time+Thermal_time/2._SP)/Thermal_time*8._SP))/2._SP
      !
    endif
    !
-   ! Add H(rho_o) in the right part of the equation if it is not
-   ! cancelled by the phase factors
-   !
-   if(RT_no_phase_int) then
+   if(.not.RT_phase_int) then
      !
-     forall(i1=1:SC_bands)
-       Sigma_s(i1,i1)=Sigma_s(i1,i1)+E_bare(i1,ik)
-     end forall
+     ! If I do not integrate analyticaly the H_o(rho_o) part
+     ! I have to add the rest of the Hamiltonian Ho + V_H + V_xc 
+     !
+     call V_to_H(ik,V_hartree_sc+V_xc(:,1),Sigma_s,wf)
+     !
+     Sigma_s=Sigma_s+Ho(:,:,ik)
+     !
+   else
+     !
+     ! I use H_o + V_h(rho_o) + V_xc(rho_o) as phase factor 
+     ! so I put only the differences in the self-energy
+     ! 
+     if(l_rt_exc) then
+       !      
+       call V_to_H(ik,V_hartree_sc-V_hartree_0+V_xc(:,1)-V_xc_0(:,1),Sigma_s,wf)
+       !
+     endif
      !
    endif
    !
-   H_t(:,:,ik)=Sigma_s(:,:)
+   ! And now add the external field
+   !
+   if(l_rt_efield.and.RT_time>0._SP) then
+     !      
+     call Ext_Field(ik,Sigma_s,RT_time-T_initial)
+     !
+   endif
    !
    ! Fictitious lifetime equivalent to the broadening
    ! in linear optics
@@ -122,6 +152,8 @@ subroutine RT_Collision(G_input,en,k,RT_time)
      !
    endif
    !
+   H_t(:,:,ik)=Sigma_s(:,:)
+   !
    ! Now prepare I1 and I2 before the integration notice that 
    ! they contain also the external field
    !
@@ -137,7 +169,7 @@ subroutine RT_Collision(G_input,en,k,RT_time)
 &             SC_bands,Sigma_s,SC_bands,(0._SP,0._SP),I2_lesser(:,:,ik),SC_bands)
 #endif
    !
- enddo
+ enddo  !---- loop on k-points
  !
 end subroutine RT_Collision
 

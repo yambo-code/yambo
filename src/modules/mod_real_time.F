@@ -44,7 +44,6 @@ module real_time
  !
  complex(SP), allocatable :: G_lesser(:,:,:)
  complex(SP), allocatable :: G_l_old(:,:,:)
- complex(SP), allocatable :: Go_Phases(:,:)
  complex(SP), allocatable :: I1_lesser(:,:,:),I2_lesser(:,:,:)
  !
  ! External Field
@@ -64,15 +63,16 @@ module real_time
  !
  ! Integrator Variables
  !
- character(schlen), parameter :: EULER ="EULER"
- character(schlen), parameter :: RK2   ="RK2"
- character(schlen), parameter :: EXACT ="EXACT"
+ character(schlen), parameter :: EULER    = "EULER"
+ character(schlen), parameter :: RK2      = "RK2"
+ character(schlen), parameter :: EXACT    = "EXACT"
+ character(schlen), parameter :: RK2EXACT = "RK2EXACT"
  !
  ! Integrate exactly the part of the dynamics due to H_o 
  ! as it is done in Comp. Phys. Comm. 123(1999)
  ! in this case I choosed H_o = H_lda ( rho_0 )
  !
- logical                      :: RT_no_phase_int
+ logical                      :: RT_phase_int
  character(schlen)            :: Integrator_name
  !                                             
  ! Ho as in SC see SC_driver.F
@@ -128,13 +128,6 @@ module real_time
    allocate(G_l_old(SC_bands,SC_bands,en%nk))
    call mem_est("Gf_l_old",(/size(G_l_old)/),(/2*SP/))
    !
-   if(.not.RT_no_phase_int) then
-     !
-     allocate(Go_Phases(SC_bands,en%nk))
-     call mem_est("Go_phases",(/size(Go_Phases)/),(/2*SP/))
-     !
-   endif
-   !
    end subroutine RT_alloc
    
    subroutine RT_free
@@ -176,11 +169,6 @@ module real_time
    !
    deallocate(G_l_old)
    call mem_est("G_l_old")
-   !
-   if(.not.RT_no_phase_int) then
-     deallocate(Go_Phases)
-     call mem_est("Go_Phases")
-   endif
    !
    end subroutine RT_free
    !

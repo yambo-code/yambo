@@ -23,7 +23,7 @@ subroutine RT_driver(en,Xen,X,k,xk)
  !
  use pars,           ONLY:SP,lchlen,schlen
  use units,          ONLY:HARTREE,FS2AUT
- use com,            ONLY:msg,of_open_close
+ use com,            ONLY:msg,of_open_close,error
  use vec_operate,    ONLY:normalize_v
  use stderr,         ONLY:intc,real2ch
  use timing,         ONLY:live_time_msg
@@ -38,10 +38,10 @@ subroutine RT_driver(en,Xen,X,k,xk)
  use QP_m,           ONLY:QP_state,QP_nb,QP_nk,QP_table,QP_n_states,QP_Vxc
  use SC,             ONLY:SC_potential,SC_bands,SC_fft_size,V_hartree_sc
  use real_time,      ONLY:EF_q0,Thermal_steps,Tot_steps,Ext_Field_name,RT_step,G_lesser, &
-&                         Go_Phases,Ef_rhoq0,G_l_old,l_rt_efield,n_poles,Ext_Field_Int,  &
-&                         RT_alloc,RT_free,rho,Thermal_eta,Integrator_name,l_rt_exc,     &
+&                         Ef_rhoq0,G_l_old,l_rt_efield,n_poles,Ext_Field_Int,  &
+&                         RT_alloc,RT_free,rho,Integrator_Name,l_rt_exc,     &
 &                         RT_no_intraband,RT_resonant,V_hartree_0,V_xc_0,Thermal_time,   &
-&                         RT_no_phase_int,Ho,E_bare,DiagH_Iter,H_t
+&                         RT_phase_int,Ho,E_bare,DiagH_Iter,H_t,EXACT,RK2EXACT
 
  use xc_functionals, ONLY:V_xc
 
@@ -70,7 +70,7 @@ subroutine RT_driver(en,Xen,X,k,xk)
  !
  call parser('RTResonant',RT_resonant)
  call parser('RTNoIntraband',RT_no_intraband)
- call parser('RTNoPhaseInt',RT_no_phase_int)
+ call parser('PhaseInt',RT_phase_int)
  !
  WF_G_max=wf_ng
  WF_Go_indx=1  
@@ -78,10 +78,31 @@ subroutine RT_driver(en,Xen,X,k,xk)
  !
  call wf_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),title=' ')  
  call section('*',trim(SC_potential)//' Real-Time Dynamics')
- if(Thermal_eta/=0.0) call section('*','Adiabatic Switching: '//trim(intc(int(Thermal_eta/RT_step))))
+ !
+ if(Thermal_steps/=0) then
+   !
+   Thermal_time=real(Thermal_steps)*RT_step
+   call section('*','Adiabatic Switching')
+   call msg('nr','Thermalization Time :',Thermal_Time/FS2AUT)
+   !
+ else
+   !      
+   Thermal_time=0._SP
+   !
+ endif
  !
  l_rt_efield=.false.
- if(Ext_Field_Name/='NONE'.and.Ext_Field_Int/=0.0) l_rt_efield=.true.
+ if(Ext_Field_Name/='NONE'.and.Ext_Field_Int/=0.0) then
+   !      
+   l_rt_efield=.true.
+   call section('*','External Field')
+   !
+ endif
+ !
+ if(RT_phase_int.and.(trim(Integrator_Name)==EXACT.or.trim(Integrator_Name)==RK2EXACT)) &
+& call error(" You cannot use EXACT integrator with PhaseInt!")
+ !
+ call msg('nr','[RT] Integrator:'//Integrator_Name)
  !
  ! Allocation quasi-particle indices
  !
@@ -112,16 +133,6 @@ subroutine RT_driver(en,Xen,X,k,xk)
  call msg('o dynamics',energy_ch)
  !
  ! Initialize the Gf and potentials
- !
- if(.not.RT_no_phase_int) then
-   !
-   ! Go_Phases(n,k)= exp(- i \Delta T * E_{n,k} )
-   !
-   forall(i1=1:SC_bands,ik=1:en%nk)
-     Go_Phases(i1,ik)=exp(-(0._SP,1._SP)*RT_step*E_bare(i1,ik))
-   end forall
-   !
- endif
  !
  ! G_lesser(T=0,T=0)=Go and G_l_old(T=0,T=0)=Go
  !
@@ -196,12 +207,15 @@ subroutine RT_driver(en,Xen,X,k,xk)
  V_xc_0=V_xc 
  !
  ! Fill the initial Hamiltonian Ho
+ ! Ho is the non-interacting kinetic energy 
+ ! as defined in SC_driver.F
  !
  call V_Hartree(rho,V_hartree_0)
- Ho(:,:,:)=(0._SP,0._SP)
  !
- ! Ho is the non-interacting kinetic energy 
- !    as defined in SC_driver.F
+ Ho=(0.,0.)
+ do ik=1,QP_nk
+   call V_to_H(ik,-V_hartree_0,Ho(:,:,ik),wf)
+ enddo
  !
  do i1 = 1, QP_n_states
    ib =QP_table(i1,1)
@@ -214,7 +228,7 @@ subroutine RT_driver(en,Xen,X,k,xk)
    !
    if (ib==ibp) Ho(ib,ibp,ik) = real(Ho(ib,ibp,ik))
    !
-   Ho(ibp,ib,ik) = Ho(ib,ibp,ik) !????????????????
+   Ho(ibp,ib,ik) = conjg(Ho(ib,ibp,ik))
    !
  enddo
  !
@@ -227,8 +241,6 @@ subroutine RT_driver(en,Xen,X,k,xk)
  endif
  !
  ! Real zero of the time                   
- !
- Thermal_time=real(Thermal_steps)*RT_step
  !
  do it=1,Thermal_steps+Tot_steps
     !
@@ -258,7 +270,7 @@ subroutine RT_driver(en,Xen,X,k,xk)
         G_l_old(i2,i1,:)=-conjg(G_l_old(i1,i2,:))
       enddo
       G_l_old(i1,i1,:)=(0._SP,1._SP)*imag(G_l_old(i1,i1,:))
-   enddo
+    enddo
     !
     call RT_Collision(G_l_old,en,k,RT_time)
     !
@@ -280,11 +292,12 @@ subroutine RT_driver(en,Xen,X,k,xk)
         !
         ! Find the natural orbitals
         !
-        TmpMatrix=-(0._SP,1._SP)*G_lesser(:,:,ik)
-        call mat_dia_inv(DIAGO,USE_LK,TmpMatrix,E_real=Occ_Natural(:SC_bands,ik))
+        TmpMatrix=H_t(:,:,ik) !-(0._SP,1._SP)*G_lesser(:,:,ik)
+        call mat_dia_inv(DIAGO,USE_LK,TmpMatrix,E_real=en%E(1:SC_bands,ik,1))
+        !
         do ib=1,SC_bands
-          call cgemv('n',SC_bands,SC_bands,(1._SP,0._SP),H_t(:,:,ik),SC_bands,TmpMatrix(:,ib),1,(0._SP,0._SP),V_tmp1,1)
-          en%E(ib,ik,1)=real(cdotc(SC_bands,TmpMatrix(:,ib),1,V_tmp1,1))
+          call cgemv('n',SC_bands,SC_bands,-(0._SP,1._SP),G_lesser(:,:,ik),SC_bands,TmpMatrix(:,ib),1,(0._SP,0._SP),V_tmp1,1)
+          Occ_Natural(ib,ik)=real(cdotc(SC_bands,TmpMatrix(:,ib),1,V_tmp1,1))
         enddo
         !
       enddo
@@ -296,7 +309,7 @@ subroutine RT_driver(en,Xen,X,k,xk)
       do ik=1,en%nk
         do i1=1,SC_bands,8 
           !      
-          call msg('r','n   ',(/(Occ_Natural(SC_bands-ib+1,1),ib=i1,min(i1+7,SC_bands))/))
+          call msg('r','n   ',(/(Occ_Natural(ib,ik),ib=i1,min(i1+7,SC_bands))/))
           !
         enddo
       enddo

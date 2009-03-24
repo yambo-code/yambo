@@ -28,8 +28,11 @@ module BS_doubles
  !
  ! BS Kernel building
  !
- complex(SP) , allocatable :: BS_mat_doubles(:,:,:,:)
- logical :: BS_res_K_doubles
+ integer  :: BS_K_doubles_dim,BS_bands_doubles
+ logical  :: BS_res_K_doubles
+ integer     , allocatable ::  BS_doubles_table(:,:)
+ complex(SP) , allocatable ::  BS_mat_doubles(:,:,:)
+ real(SP)    , allocatable ::  BS_doubles_E(:)
  !
  ! Solvers
  !

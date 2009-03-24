@@ -140,12 +140,10 @@ integer function io_SC_components(what,E_sc,ID)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif
    !
-   if (l_V.and.local_V) then
-     call io_elemental(ID,VAR="RHOCONV_ECONV",VAR_SZ=2,MENU=0) 
-     call io_elemental(ID,R0=rho_convergence)
-     call io_elemental(ID,R0=E_convergence)
-     call io_elemental(ID,VAR="",VAR_SZ=0)
-   endif
+   call io_elemental(ID,VAR="RHOCONV_ECONV",VAR_SZ=2,MENU=0) 
+   call io_elemental(ID,R0=rho_convergence)
+   call io_elemental(ID,R0=E_convergence)
+   call io_elemental(ID,VAR="",VAR_SZ=0)
    !
    io_SC_components=io_status(ID)
    if (io_SC_components/=0) goto 1

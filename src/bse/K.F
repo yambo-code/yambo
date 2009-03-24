@@ -670,31 +670,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! CLEAN before _DOUBLEs
  !
- if (BS_res_K_corr.or.BS_cpl_K_corr) then
-   deallocate(Ovv,Occ,Cc)
-   call mem_est("O_RES_WS")
-   deallocate(BS_W)
-   call mem_est("BS_W")
- endif
+ deallocate(O_table)
+ call mem_est("O_table")
+ call mem_est("BS_mat")
  !
  if (load_O_X) then
    deallocate(O1x,O2x)
    call mem_est("O1x O2x")
  endif
- !
- ! DOUBLES excitations contribution
- !
-#if defined _DOUBLES
- call K_doubles(iq,Ken,Xk,q,X,Xw,W_bss)
-#endif
- !
- ! Final CLEAN
- !
- deallocate(O_table)
- call mem_est("O_table")
- !
- call WF_free()
- call mem_est("BS_mat")
  !
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
    deallocate(O_v_state,O_c_state,O_n_c_states,O_n_v_states)
@@ -703,6 +686,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call mem_est("BS_O")
    deallocate(ik_is_table,O_phase)
    call mem_est("ik_is_table O_phase")
+   deallocate(Ovv,Occ,Cc)
+   call mem_est("O_RES_WS")
+   deallocate(BS_W)
+   call mem_est("BS_W")
    !
    ! GPL_EXCLUDE_START
    !
@@ -714,6 +701,16 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! GPL_EXCLUDE_END
    !
  endif
+ !
+ ! DOUBLES excitations contribution
+ !
+#if defined _DOUBLES
+ call K_doubles(iq,Ken,Xk,q,X,Xw,W_bss)
+#endif
+ !
+ ! Final CLEAN
+ !
+ call WF_free()
  !
  !
 end subroutine

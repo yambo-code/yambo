@@ -86,7 +86,6 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
    read(11) wf_disk_DP
    wf_disk(1,i1,:,1)=real(wf_disk_DP(:))
    wf_disk(2,i1,:,1)=aimag(wf_disk_DP(:))
-   !
  enddo
  !
  if (ikibz==nkibz.and.ib_grp==wf_nb_io_groups) close(11)

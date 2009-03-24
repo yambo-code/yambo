@@ -101,6 +101,11 @@ subroutine BZ_RIM(Xk,Xen)
    !
    k_counter=0
    !
+   ! DEBUG >
+   !call build_special_k()
+   !k_counter=0
+   ! DEBUG <
+   !
    do while ( k_counter < BZ_RIM_nkpts )
      !
      if (impose_gamma_radius) then
@@ -249,6 +254,29 @@ subroutine BZ_RIM(Xk,Xen)
        call c2a(v_in=rand_kpt(k_counter+1,:),mode="ka2i")
      enddo
    end subroutine
+   !
+   ! DEBUG <
+   subroutine build_special_k()
+     use pars, ONLY:pi
+     !
+     integer i_q,i_a
+     real(SP)           :: phi,theta,rho
+     !
+     do i_q=1,20
+       do i_a=1,1
+         k_counter=k_counter+1
+         rho=gamma_radius/20.*i_q
+         phi=(.3+(.5-.3)/2.*(i_a-1))*pi
+         rand_kpt(k_counter,:)=rho*(/cos(phi),&
+&                                      sin(phi),&
+&                                      0./)
+         call c2a(v_in=rand_kpt(k_counter,:),mode="kc2a")
+         dummy=ak2bz(rand_kpt(k_counter,:))
+         call c2a(v_in=rand_kpt(k_counter,:),mode="ka2i")
+       enddo
+     enddo
+   end subroutine
+   ! DEBUG >
    !
    subroutine build_spherical_k_sp_units()
      use pars,                ONLY:pi

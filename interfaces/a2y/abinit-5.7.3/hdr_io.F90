@@ -58,13 +58,31 @@
 !! CHILDREN
 !!      leave_new,rhoij_alloc,wrtout
 !!
-! SOURCE
+!! SOURCE
 
- subroutine hdr_io_wfftype(fform,hdr,rdwr,wff)
+#if defined HAVE_CONFIG_H
+#include "config.h"
+#endif
 
- use defs_datatypes, ONLY:hdr_type,wffile_type
+subroutine hdr_io_wfftype(fform,hdr,rdwr,wff)
+
+ use defs_basis
+ use defs_datatypes
+
+#if defined MPI && defined MPI2
+ use mpi
+#endif
+
+!This section has been created automatically by the script Abilint (TD).
+!Do not modify the following lines by hand.
+ use interfaces_13io_mpi, except_this_one => hdr_io_wfftype
+!End of the abilint section
 
  implicit none
+
+#if defined MPI && defined MPI1
+ include 'mpif.h'
+#endif
 
 !Arguments ------------------------------------
  integer,intent(inout) :: fform
@@ -73,9 +91,17 @@
  type(wffile_type),intent(inout) :: wff
 
 !Local variables-------------------------------
- integer :: unitfi,ierr
+!no_abirules
+#if defined MPI
+           integer :: ierr
+#endif
 
 ! *************************************************************************
+
+!DEBUG
+! write(6,*)' hdr_io : enter hdr_io_wfftype '
+! call flush(6)
+!ENDDEBUG
 
  if( wff%accesswff==0                            .or. &
 &   (wff%accesswff==-1 .and.wff%master==wff%me).or. &
@@ -83,13 +109,40 @@
   call hdr_io_int(fform,hdr,rdwr,wff%unwff)
  end if
 
- end subroutine hdr_io_wfftype
+#if defined MPI
+!          In the parallel case, if the files were not local, need to bcast the data
+           if(rdwr==1)then
+            if (wff%accesswff==-1 .or. wff%accesswff==1) then
+             call MPI_BCAST(fform,1,MPI_INTEGER,wff%master,wff%spaceComm,ierr)
+             call hdr_comm(hdr,wff%master,wff%me,wff%spaceComm)
+
+             if(wff%accesswff==1)then
+              call hdr_skip_wfftype(wff,ierr)
+             end if
+            end if
+           end if
+#          if defined MPI_IO
+           if (rdwr == 2 .and. wff%accesswff==1  ) then
+              call MPI_BARRIER(wff%spaceComm,ierr)
+              call hdr_skip_wfftype(wff,ierr)
+           end if
+#          endif
+#endif
+
+end subroutine hdr_io_wfftype
 
 !-----------------------------------------------------------------------------------
 
- subroutine hdr_io_int(fform,hdr,rdwr,unitfi)
+subroutine hdr_io_int(fform,hdr,rdwr,unitfi)
 
- use defs_datatypes, ONLY:hdr_type,dp,ch10,zero,tol6
+ use defs_basis
+ use defs_datatypes
+
+!This section has been created automatically by the script Abilint (TD).
+!Do not modify the following lines by hand.
+ use interfaces_01manage_mpi
+ use interfaces_11util
+!End of the abilint section
 
  implicit none
 
@@ -110,13 +163,20 @@
 
 ! *************************************************************************
 
+!DEBUG
+!write(6,*)' hdr_io : enter hdr_io_int '
+! call flush(6)
+!ENDDEBUG
+
 ! -------------------------------------------------------------------------
 ! Reading the header of an unformatted file
 ! -------------------------------------------------------------------------
 
  if(rdwr==1 .or. rdwr==5)then
 
-  if (rdwr==1) rewind(unitfi)
+  if (rdwr==1) then
+   rewind(unitfi)
+  end if
 
 ! Reading the first record of the file ------------------------------------
 
@@ -155,8 +215,8 @@
 &    '  The first line of the (WF, DEN or POT) file read in unit ',unitfi,' is erroneous.',ch10,&
 &    '  headform is ',headform,', while it should be 23, 34, 40, 41, 42, 44, 53 or 56 or 57.',ch10,&
 &    '  Action : check the correctness of your file.'
-    !call wrtout(6,message,'COLL')
-    !call leave_new('COLL')
+    call wrtout(6,message,'COLL')
+    call leave_new('COLL')
    end if
 
   end if
@@ -164,6 +224,11 @@
   hdr%codvsn=codvsn
   hdr%headform=headform
 ! fform is not a record of hdr_type
+
+!DEBUG
+! write(6,*)' hdr_io : debug '
+! write(6,*)' hdr_io : codvsn,headform,fform',codvsn,headform,fform
+!ENDDEBUG
 
 ! Reading the second record of the file ------------------------------------
 
@@ -260,9 +325,15 @@
 &   '  to restart from a old wavefunction file. By contrast, you can restart from an old',ch10,&
 &   '  potential or density file, and perform a self-consistent cycle with a new ABINIT version.',ch10,&
 &   '  Action : produce a density or potential file using the old version of ABINIT, and restart from it.'
-!   call wrtout(6,message,'COLL')
-!   call leave_new('COLL')
+   call wrtout(6,message,'COLL')
+   call leave_new('COLL')
   end if
+
+!DEBUG
+!  write(6,*)' hdr_io : before allocate '
+!  write(6,*)' hdr_io : bantot,natom,nkpt,npsp,nsppol,nsym,ntypat',&
+!&  bantot,natom,nkpt,npsp,nsppol,nsym,ntypat
+!ENDDEBUG
 
 ! Allocate all parts of hdr that need to be --------------------------------
 
@@ -287,6 +358,7 @@
   allocate(hdr%zionpsp(npsp))
   allocate(hdr%znuclpsp(npsp))
   allocate(hdr%znucltypat(ntypat))
+  if(hdr%usepaw==1) allocate(hdr%pawrhoij(natom))
 
 !DEBUG
 ! write(6,*)' hdr_io : after allocate '
@@ -387,6 +459,64 @@
    read(unitfi) hdr%residm, hdr%xred(:,:), hdr%etot, hdr%fermie
   end if
 
+!DEBUG
+!  write(6,*)' hdr_io : read mode, hdr%so_psp(:), hdr%symafm(:)=',&
+!&                                 hdr%so_psp(:), hdr%symafm(:)
+!ENDDEBUG
+
+! Reading the Rhoij tab if the PAW method was used  -----------------------
+  if (hdr%usepaw==1) then
+
+
+   if ((headform>=44).and.(headform<56)) then
+    allocate(nsel44(hdr%nspden,hdr%natom))
+    read(unitfi) ((nsel44(ispden,iatom),ispden=1,hdr%nspden),iatom=1,hdr%natom)
+    call rhoij_alloc(1,hdr%lmn_size,hdr%nspden,hdr%nsppol,hdr%pawrhoij,hdr%typat)
+    do iatom=1,hdr%natom
+     hdr%pawrhoij(iatom)%nrhoijsel=nsel44(1,iatom)
+    end do
+    bsize=sum(nsel44);allocate(ibuffer(bsize),buffer(bsize));ii=0
+    read(unitfi) ibuffer(:),buffer(:)
+    do iatom=1,hdr%natom
+     nselect=nsel44(1,iatom)
+     hdr%pawrhoij(iatom)%rhoijselect(1:nselect)=ibuffer(ii+1:ii+nselect)
+     do ispden=1,hdr%nspden
+      hdr%pawrhoij(iatom)%rhoijp(1:nselect,ispden)=buffer(ii+1:ii+nselect)
+      ii=ii+nselect
+     end do
+    end do
+    deallocate(ibuffer,buffer,nsel44)
+
+   else if (headform>=56) then
+    allocate(nsel56(hdr%natom))
+    if (headform==56) then
+     read(unitfi) (nsel56(iatom),iatom=1,hdr%natom),cplex
+     nspden=hdr%nspden
+    else
+     read(unitfi) (nsel56(iatom),iatom=1,hdr%natom),cplex,nspden
+    end if
+    call rhoij_alloc(cplex,hdr%lmn_size,nspden,hdr%nsppol,hdr%pawrhoij,hdr%typat)
+    do iatom=1,hdr%natom
+     hdr%pawrhoij(iatom)%nrhoijsel=nsel56(iatom)
+    end do
+    bsize=sum(nsel56);allocate(ibuffer(bsize),buffer(bsize*nspden*cplex))
+    ii=0;jj=0
+    read(unitfi) ibuffer(:),buffer(:)
+    do iatom=1,hdr%natom
+     nselect=nsel56(iatom)
+     hdr%pawrhoij(iatom)%rhoijselect(1:nselect)=ibuffer(ii+1:ii+nselect)
+     ii=ii+nselect
+     do ispden=1,nspden
+      hdr%pawrhoij(iatom)%rhoijp(1:cplex*nselect,ispden)=buffer(jj+1:jj+cplex*nselect)
+      jj=jj+cplex*nselect
+     end do
+    end do
+    deallocate(ibuffer,buffer,nsel56)
+   end if
+
+  end if
+
+
 ! -------------------------------------------------------------------------
 ! Writing the header of an unformatted file
 ! -------------------------------------------------------------------------
@@ -396,7 +526,9 @@
 ! natom,nkpt,npsp,ntypat... are not defined in this section :
 ! always address them from hdr
 
-  if(rdwr==2) rewind(unitfi)
+  if(rdwr==2) then
+   rewind(unitfi)
+  end if
 
 ! Writing always use last format version
   headform=57
@@ -413,7 +545,11 @@
   write(unitfi) hdr%istwfk(:), hdr%nband(:), hdr%npwarr(:),&
 &   hdr%so_psp(:), hdr%symafm(:), hdr%symrel(:,:,:), &
 &   hdr%typat(:), hdr%kptns(:,:), hdr%occ(:), &
-&   hdr%tnons(:,:), hdr%znucltypat(:)
+&   hdr%tnons(:,:), hdr%znucltypat(:), hdr%wtk(:)
+
+!DEBUG
+!   write(6,*)' hdr_io : write psp record, headform= ',hdr%headform
+!ENDDEBUG
 
   do ipsp=1,hdr%npsp
 
@@ -423,8 +559,199 @@
 
   end do
 
+!DEBUG
+!  write(6,*)' hdr_io : write mode, hdr%so_psp(:), hdr%symafm(:)=',&
+!&                                  hdr%so_psp(:), hdr%symafm(:)
+!ENDDEBUG
+
   write(unitfi) hdr%residm, hdr%xred(:,:), hdr%etot, hdr%fermie
 
+  if (hdr%usepaw==1) then
+   allocate(nsel56(hdr%natom))
+   cplex=hdr%pawrhoij(1)%cplex
+   nspden=hdr%pawrhoij(1)%nspden
+   do iatom=1,hdr%natom
+    nsel56(iatom)=hdr%pawrhoij(iatom)%nrhoijsel
+   end do
+   write(unitfi) (nsel56(iatom),iatom=1,hdr%natom),cplex,nspden
+   bsize=sum(nsel56);allocate(ibuffer(bsize),buffer(bsize*nspden*cplex))
+   ii=0;jj=0
+   do iatom=1,hdr%natom
+    nselect=nsel56(iatom)
+    ibuffer(ii+1:ii+nselect)=hdr%pawrhoij(iatom)%rhoijselect(1:nselect)
+    ii=ii+nselect
+    do ispden=1,nspden
+     buffer(jj+1:jj+cplex*nselect)=hdr%pawrhoij(iatom)%rhoijp(1:cplex*nselect,ispden)
+     jj=jj+cplex*nselect
+    end do
+   end do
+   write(unitfi) ibuffer(:),buffer(:)
+   deallocate(ibuffer,buffer,nsel56)
+  end if
+
+! -------------------------------------------------------------------------
+! Writing the header of a formatted file
+! -------------------------------------------------------------------------
+
+ else if(rdwr==3 .or. rdwr==4)then
+
+  write(unitfi, '(a)' )&
+&  ' ==============================================================================='
+  if(rdwr==3)write(unitfi, '(a)' ) ' ECHO of part of the ABINIT file header '
+  if(rdwr==4)write(unitfi, '(a)' ) ' ECHO of the ABINIT file header '
+  write(unitfi, '(a)' ) ' '
+  write(unitfi, '(a)' ) ' First record :'
+  write(unitfi, '(a,a6,2i5)' )  '.codvsn,headform,fform = ',&
+&  hdr%codvsn, hdr%headform, fform     ! Do not worry about 22 format
+
+  write(unitfi, '(a)' ) ' '
+  write(unitfi, '(a)' ) ' Second record :'
+  write(unitfi, '(a,4i6)') ' bantot,intxc,ixc,natom  =',&
+&                            hdr%bantot, hdr%intxc, hdr%ixc, hdr%natom
+  write(unitfi, '(a,4i6)') ' ngfft(1:3),nkpt         =',&
+&                            hdr%ngfft(1:3), hdr%nkpt
+
+  if(hdr%headform>=23)then
+   write(unitfi, '(a,2i6)') ' nspden,nspinor          =',&
+&                            hdr%nspden, hdr%nspinor
+  end if
+
+  if(hdr%headform<=23)then
+   write(unitfi, '(a,4i6)' ) ' nsppol,nsym,ntypat,occopt=',&
+&                            hdr%nsppol,hdr%nsym,hdr%ntypat,hdr%occopt
+  else if(hdr%headform<=40)then
+   write(unitfi, '(a,5i6)' ) ' nsppol,nsym,npsp,ntypat,occopt=',&
+&                            hdr%nsppol,hdr%nsym,hdr%npsp,hdr%ntypat,hdr%occopt
+
+  else if(hdr%headform==41 .or. hdr%headform==42)then
+   write(unitfi, '(a,6i6)' ) ' nsppol,nsym,npsp,ntypat,occopt,pertcase=',&
+&                            hdr%nsppol,hdr%nsym,hdr%npsp,hdr%ntypat,hdr%occopt,hdr%pertcase
+  else if(hdr%headform>=44)then
+   write(unitfi, '(a,4i6)' ) ' nsppol,nsym,npsp,ntypat =',&
+&                            hdr%nsppol,hdr%nsym,hdr%npsp,hdr%ntypat
+   write(unitfi, '(a,3i6)' ) ' occopt,pertcase,usepaw  =',&
+&                            hdr%occopt,hdr%pertcase,hdr%usepaw
+  end if
+
+  if(hdr%headform==40 .or. hdr%headform==41 .or. hdr%headform==42)then
+   write(unitfi, '(a,2es18.10)') ' ecut,ecutsm             =',hdr%ecut, hdr%ecutsm
+  else if(hdr%headform>=44)then
+   write(unitfi, '(a,3es18.10)') ' ecut,ecutdg,ecutsm      =',&
+&   hdr%ecut, hdr%ecutdg, hdr%ecutsm
+  end if
+
+  write(unitfi, '(a, es18.10)' ) ' ecut_eff                =',hdr%ecut_eff
+
+  if(hdr%headform>=41)then
+   write(unitfi, '(a,3es18.10)') ' qptn(1:3)               =',hdr%qptn(1:3)
+  end if
+
+  write(unitfi, '(a,3es18.10)' ) ' rprimd(1:3,1)           =',hdr%rprimd(1:3,1)
+  write(unitfi, '(a,3es18.10)' ) ' rprimd(1:3,2)           =',hdr%rprimd(1:3,2)
+  write(unitfi, '(a,3es18.10)' ) ' rprimd(1:3,3)           =',hdr%rprimd(1:3,3)
+
+  if(hdr%headform==40.or.hdr%headform==41)then
+   write(unitfi, '(a,2es18.10)') ' tphysel,tsmear          =',hdr%tphysel, hdr%tsmear
+  else if(hdr%headform>=42)then
+   write(unitfi, '(a,3es18.10)') ' stmbias,tphysel,tsmear  =',&
+&   hdr%stmbias,hdr%tphysel, hdr%tsmear
+  end if
+
+  write(unitfi, '(a)' )
+  if(rdwr==3)then
+   write(unitfi, '(a,i3,a)' ) ' The header contain ',hdr%npsp+2,' additional records.'
+  else
+
+   write(unitfi, '(a)' ) ' Third record :'
+   write(unitfi, '(a,(12i4,8x))') ' istwfk=',hdr%istwfk(:)
+   write(unitfi, '(a,(12i4,8x))') ' nband =',hdr%nband(:)
+   write(unitfi, '(a,(10i5,8x))') ' npwarr=',hdr%npwarr(:)
+
+   if(hdr%headform>=40)then
+    write(unitfi, '(a,(12i4,8x))') ' so_psp=',hdr%so_psp(:)
+   end if
+
+   if(hdr%headform>=40)then
+    write(unitfi, '(a)') ' symafm='
+    write(unitfi, '(8x,24i3,8x)') hdr%symafm(:)
+   end if
+
+   write(unitfi, '(a)' ) ' symrel='
+   do isym=1,hdr%nsym/2
+    write(unitfi, '(a,9i4,a,9i4)' ) '        ',hdr%symrel(:,:,2*isym-1),&
+&                                         '  ',hdr%symrel(:,:,2*isym)
+   end do
+   if(2*(hdr%nsym/2)/=hdr%nsym)write(unitfi, '(a,9i4)' ) '        ',hdr%symrel(:,:,hdr%nsym)
+
+   write(unitfi, '(a,(12i4,8x))') ' type  =',hdr%typat(:)
+   write(unitfi, '(a)' ) ' kptns =                 (max 50 k-points will be written)'
+   do ikpt=1,min(hdr%nkpt,50)
+    write(unitfi, '(a,3es16.6)' ) '        ',hdr%kptns(:,ikpt)
+   end do
+   write(unitfi, '(a)' ) ' wtk ='
+   do ikpt=1,hdr%nkpt,10
+    write(unitfi, '(a,10f6.2)' ) '        ',hdr%wtk(ikpt:min(hdr%nkpt,ikpt + 10 - 1))
+   end do
+   write(unitfi, '(a)' ) '   occ ='
+   do ii=1,hdr%bantot,10
+    write(unitfi, '(a,10f6.2)') '        ',hdr%occ(ii:min(hdr%bantot,ii+10-1))
+   end do
+   write(unitfi, '(a)' ) ' tnons ='
+   do isym=1,hdr%nsym/2
+    write(unitfi, '(a,3f10.6,a,3f10.6)' ) '        ',hdr%tnons(:,2*isym-1),&
+&                                               '  ',hdr%tnons(:,2*isym)
+   end do
+   if(2*(hdr%nsym/2)/=hdr%nsym)write(unitfi, '(a,3f10.6)' ) '        ',hdr%tnons(:,hdr%nsym)
+   write(unitfi, '(a,(10f6.2,8x))') '  znucl=',hdr%znucltypat(:)
+   write(unitfi,'(a)')
+
+   write(unitfi, '(a)' ) ' Pseudopotential info :'
+   do ipsp=1,hdr%npsp
+    write(unitfi,'(a,a)' ) ' title=',trim(hdr%title(ipsp))
+    write(unitfi,'(a,f6.2,a,f6.2,a,i3,a,i6,a,i3,a,i3)' ) &
+&    '  znuclpsp=',hdr%znuclpsp(ipsp),    ', zionpsp=',  hdr%zionpsp(ipsp),    &
+&    ', pspso=' , hdr%pspso(ipsp),  ', pspdat=',hdr%pspdat(ipsp),  &
+&    ', pspcod=', hdr%pspcod(ipsp), ', pspxc=', hdr%pspxc(ipsp)
+    if(hdr%headform>=44)then
+     if(hdr%usepaw==1)then
+      write(unitfi,'(a,i3)' ) '  lmn_size=', hdr%lmn_size(ipsp)
+     else
+      write(unitfi,'(a,i3)' ) '  lmnmax  =', hdr%lmn_size(ipsp)
+     end if
+    end if
+
+   end do
+
+   write(unitfi, '(a)' ) ' '
+   write(unitfi, '(a)' ) ' Last record :'
+   write(unitfi, '(a,es16.6,es22.12,es16.6)' ) &
+&   ' residm,etot,fermie=',hdr%residm, hdr%etot, hdr%fermie
+   write(unitfi, '(a)' ) ' xred ='
+   do iatom=1,hdr%natom
+    write(unitfi, '(a,3es16.6)' ) '        ',hdr%xred(:,iatom)
+   end do
+
+   if(hdr%usepaw==1)then
+    natinc=1;if(hdr%natom>1) natinc=hdr%natom-1
+    do iatom=1,hdr%natom,natinc
+     do ispden=1,hdr%pawrhoij(iatom)%nspden
+      write(unitfi, '(a,i4,a,i1,a)' ) ' rhoij(',iatom,',',ispden,&
+&           ')=  (max 12 non-zero components will be written)'
+      call print_ij(hdr%pawrhoij(iatom)%rhoijp(:,ispden),&
+&                   hdr%pawrhoij(iatom)%nrhoijsel,&
+&                   hdr%pawrhoij(iatom)%cplex,&
+&                   hdr%pawrhoij(iatom)%lmn_size,2,-1,ibuffer,1,0,&
+&                   hdr%pawrhoij(iatom)%rhoijselect(:),-1.d0,1)
+     end do
+    end do
+   end if
+
+  if(rdwr==3)write(unitfi, '(a)' ) ' End the ECHO of part of the ABINIT file header '
+  if(rdwr==4)write(unitfi, '(a)' ) ' End the ECHO of the ABINIT file header '
+  write(unitfi, '(a)' )&
+&  ' ==============================================================================='
+
+  end if ! rdwr is 3 or 4
 
  end if ! choice read/write/echo
 

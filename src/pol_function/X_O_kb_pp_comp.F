@@ -23,18 +23,18 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_O_kb_pp_comp(ik,Xk,kbv)
+subroutine X_O_kb_pp_comp(ik,i_spin,Xk,kbv)
  !
  use pars,          ONLY:SP,pi
  use vec_operate,   ONLY:iku_v_norm,v_norm,c2a
  use R_lattice,     ONLY:b,g_vec,bz_samp
- use D_lattice,     ONLY:pp_kbv_dim,pp_n_l_comp_max,n_atom_species,atom_pos,&
-&                        n_atoms,pp_n_l_comp,pp_kbs,pp_kb,pp_kbd
+ use D_lattice,     ONLY:n_atom_species,atom_pos,n_atoms
+ use pseudo,        ONLY:pp_kbv_dim,pp_n_l_comp_max,pp_n_l_comp,pp_kbs,pp_kb,pp_kbd
  use wave_func,     ONLY:wf,wf_ng
  implicit none
  type(bz_samp) :: Xk
  complex(SP)   :: kbv(wf_ng,pp_kbv_dim,4)
- integer       :: ik
+ integer       :: ik,i_spin
  ! 
  ! Work Space
  !
@@ -63,9 +63,9 @@ subroutine X_O_kb_pp_comp(ik,Xk,kbv)
            c2(2:4)=sqrt(4.*pi/(2.*(il-1.)+1.))*&
 &                    (dYlm(1,il,im)*Ygrad(1,:)+dYlm(2,il,im)*Ygrad(2,:))
            kbv(ig,i1,1)=kbv(ig,i1,1)+c2(1)*&
-&                        pp_kbs(is,il)*pp_kb(ig,is,il)*c1(is)
+&                        pp_kbs(is,il)*pp_kb(ig,is,il,i_spin)*c1(is)
            kbv(ig,i1,2:4)=kbv(ig,i1,2:4)+c1(is)*&
-&            (v1(:)/r1*pp_kbd(ig,is,il)*c2(1)+pp_kb(ig,is,il)*c2(2:4))
+&            (v1(:)/r1*pp_kbd(ig,is,il,i_spin)*c2(1)+pp_kb(ig,is,il,i_spin)*c2(2:4))
          enddo
        enddo
      enddo

@@ -37,7 +37,7 @@ subroutine X_O_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  ! Ygrad(1,i) = \partial(theta)/\partial(k_i) i=1,3
  ! Ygrad(2,i) = \partial(phi)/\partial(k_i) i=1,3
  !
- use pars
+ use pars, ONLY:SP,pi
  implicit none
  integer     :: lang
  complex(SP) :: Ylm(lang,2*lang+1),dYlm(2,lang,2*lang+1)

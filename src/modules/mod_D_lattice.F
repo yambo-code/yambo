@@ -21,7 +21,7 @@
 !
 module D_lattice
  !
- use pars, ONLY:SP,lchlen
+ use pars,      ONLY:SP,lchlen
  implicit none
  !
  ! Non periodic directions
@@ -60,35 +60,7 @@ module D_lattice
  ! Periodic Table
  character(len=2)      :: PT_elements(103)
  !
- ! KB Pseudo
- !
- integer :: pp_n_l_comp_max
- integer :: pp_kbv_dim
- integer,  allocatable:: pp_n_l_comp(:)
- real(SP), allocatable:: pp_kbs(:,:)
- real(SP), allocatable:: pp_kb(:,:,:)
- real(SP), allocatable:: pp_kbd(:,:,:)
- !
  contains
-   !
-   subroutine PP_alloc()
-     use memory_m,   ONLY:mem_est
-     use wave_func,  ONLY:wf_ng
-     integer  :: alloc_err(3)
-     allocate(pp_kbs(n_atom_species,pp_n_l_comp_max),stat=alloc_err(1))
-     allocate(pp_kb(wf_ng,n_atom_species,pp_n_l_comp_max),stat=alloc_err(2))
-     allocate(pp_kbd(wf_ng,n_atom_species,pp_n_l_comp_max),stat=alloc_err(3))
-     call mem_est("pp_kbs pp_kb pp_kbd",&
-&                 (/size(pp_kbs),size(pp_kb),size(pp_kbd)/),&
-&                 elements_kind=(/SP,SP,SP/),errors=alloc_err)
-   end subroutine
-   !
-   subroutine PP_free()
-     use memory_m,   ONLY:mem_est
-     if (.not.allocated(pp_kbs)) return
-     deallocate(pp_kbs,pp_kb,pp_kbd)
-     call mem_est("pp_kbs pp_kb pp_kbd")
-   end subroutine
    !
    subroutine atoms_spatial_invertion()
      use pars,           ONLY:zero_dfl

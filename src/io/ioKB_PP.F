@@ -23,7 +23,8 @@ integer function ioKB_PP(ID)
  !
  use pars,             ONLY:schlen,IP,SP
  use D_lattice,        ONLY:n_atoms_max,n_atom_species,n_atoms,&
-&                           atom_pos,pp_n_l_comp_max,&
+&                           atom_pos
+ use pseudo,           ONLY:pp_n_l_comp_max,&
 &                           pp_n_l_comp,pp_kbs,pp_kb,PP_alloc,pp_kbd
  use memory_m,         ONLY:mem_est
  use wave_func,        ONLY:wf_ncx,wf_igk,wf_nc_k,wf_ng
@@ -99,7 +100,7 @@ integer function ioKB_PP(ID)
  !
  allocate(pp_disk(wf_ncx,n_atom_species,pp_n_l_comp_max))
  !
- if (write_is_on(ID)) pp_disk=pp_kb
+ if (write_is_on(ID)) pp_disk=pp_kb(:,:,:,1)
  !
  write (VAR_NAME,'(a,i4.4)') 'PP_KB_IK',ik
  call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=shape(pp_disk))
@@ -109,11 +110,11 @@ integer function ioKB_PP(ID)
    pp_kb=0._SP
    do i1=1,wf_nc_k(ik)
      if (wf_igk(i1,ik) > wf_ng) cycle
-     pp_kb( wf_igk(i1,ik) ,:,:) = pp_disk(i1,:,:)
+     pp_kb( wf_igk(i1,ik) ,:,:,1) = pp_disk(i1,:,:)
    enddo
  endif
  !
- if (write_is_on(ID)) pp_disk=pp_kbd
+ if (write_is_on(ID)) pp_disk=pp_kbd(:,:,:,1)
  !
  write (VAR_NAME,'(a,i4.4)') 'PP_KBD_IK',ik
  call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=shape(pp_disk))
@@ -123,7 +124,7 @@ integer function ioKB_PP(ID)
    pp_kbd=0._SP
    do i1=1,wf_nc_k(ik)
      if (wf_igk(i1,ik) > wf_ng) cycle
-     pp_kbd( wf_igk(i1,ik) ,:,:) = pp_disk(i1,:,:)
+     pp_kbd( wf_igk(i1,ik) ,:,:,1) = pp_disk(i1,:,:)
    enddo
  endif
  !

@@ -27,8 +27,9 @@ subroutine a2y_db1(en,k,KSS_file_name)
 &                                  n_spinor 
  use R_lattice,             ONLY : bz_samp, ng_vec, g_vec,nkibz, b
  use D_lattice,             ONLY : DL_vol, a, alat, default_Tel,&
-&                                  pp_n_l_comp_max,n_atom_species,n_atoms,pp_n_l_comp,&
+&                                  n_atom_species,n_atoms,&
 &                                  n_atoms_max,atom_pos,znucl
+ use pseudo,                ONLY : pp_n_l_comp_max,pp_n_l_comp
  use wave_func,             ONLY : wf_nc_k, wf_igk,wf_ncx,wf_ng
  use vec_operate,           ONLY : cross_product
  use defs_datatypes,        ONLY : hdr_type, wffile_type
@@ -46,7 +47,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !Work Space
  !
  real(SP)                       :: cp(3)
- integer                        :: i1, ik, i2, i3, inel
+ integer                        :: i1, ik, i2, i3, inel,i_spin
  !
  !ABINIT
  !
@@ -101,9 +102,9 @@ subroutine a2y_db1(en,k,KSS_file_name)
  read(11) a_nsym, en%nb, ng_vec, ishm, pp_n_l_comp_max
  n_bands= en%nb
  !
- n_spin=1
- n_spinor=1
- n_sp_pol=1
+ n_spinor=ahdr%nspinor
+ n_sp_pol=ahdr%nsppol
+ n_spin=max(n_sp_pol,n_spinor)
  !
  k%nibz      = ahdr%nkpt
  nkibz       = k%nibz
@@ -176,6 +177,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  read(11) (agvec(:,i1),i1=1,ng_vec)
  read(11) 
+ read(11) 
  do i1=1,ng_vec
    g_vec(i1,:)=matmul(transpose(b),agvec(:,i1))*alat(:)/2./pi
  enddo
@@ -188,18 +190,19 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  call msg('s','Energies...')
  !
- read(11) 
- do ik=1,k%nibz
-   do i1=1,n_atom_species
-     do i2=1,pp_n_l_comp_max
-       read(11)
+ do i_spin=1,n_spin
+   do ik=1,k%nibz
+     do i1=1,n_atom_species
+       do i2=1,pp_n_l_comp_max
+         read(11)
+         read(11) 
+       enddo
+     enddo
+     read(11) rstr
+     en%E(:,ik,i_spin)=rstr(:)
+     do i1=1,en%nb
        read(11) 
      enddo
-   enddo
-   read(11) rstr
-   en%E(:,ik,1)=rstr(:)
-   do i1=1,en%nb
-     read(11) 
    enddo
  enddo
  call msg('l','done')

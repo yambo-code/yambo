@@ -146,6 +146,7 @@ define driver
  ${PREFIX}if test ! "\$(dmpi)" = ""; \
   then \$(pcc) \$(pccflags) \$(dopts) -D_\$@ -c \$(srcdir)/driver/driver.c; fi
  ${PREFIX}rm -f \$(srcdir)/driver/yambo_cpp.h \$(srcdir)/driver/ypp_cpp.h
+ @echo
 endef
 define link
  ${PREFIX}(eval \$(fc) \$(fcflags) \$(linclude) -o \$@ driver.o getopt.o \$(objs) \$(llibs) ) > /dev/null

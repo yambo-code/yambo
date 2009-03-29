@@ -27,7 +27,7 @@ subroutine X_O_kb_sum(ivfft,icfft,rho,kbv)
  !
  use pars,          ONLY:SP,DP
  use wave_func,     ONLY:wf,wf_ng
- use D_lattice,     ONLY:pp_kbv_dim
+ use pseudo,        ONLY:pp_kbv_dim
  implicit none
  integer    :: ivfft,icfft
  complex(SP):: rho(3),kbv(wf_ng,pp_kbv_dim,4)

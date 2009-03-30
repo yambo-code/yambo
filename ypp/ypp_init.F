@@ -150,6 +150,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    coo_out="rlu"
    Kgw_1=0.
    qlong= 0.0_SP
+   No_Weight=.false.
    !
    ! GPL_EXCLUDE_START
    !
@@ -281,7 +282,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_END
  !
- if (lkanalyze) call initactivate(1,"cooIn cooOut GWKpts Qpts KShift1 KShift2 KShift3")
+ if (lkanalyze) call initactivate(1,"cooIn cooOut GWKpts Qpts KShift1 KShift2 KShift3 NoWeights")
  !
  ! GPL_EXCLUDE_START
  !

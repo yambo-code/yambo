@@ -28,7 +28,7 @@ subroutine k_analize(en,k,Xk,q)
  use com,                 ONLY:msg,warning
  use parser_m,            ONLY:parser
  use vec_operate,         ONLY:c2a,rlu_v_is_zero,v_is_zero,v_norm
- use YPP,                 ONLY:coo_in,coo_out,qlong
+ use YPP,                 ONLY:coo_in,coo_out,qlong,No_Weight
  use timing,              ONLY:live_timing_is_on
  use zeros,               ONLY:k_iku_zero,k_rlu_zero
  !
@@ -58,6 +58,7 @@ subroutine k_analize(en,k,Xk,q)
  call k_ibz2bz(q,'i',.false.)
  call k_ibz2bz(Xk,'i',.false.)
  call msg("s",'Q-points  (BZ):',q%nbz)
+ call parser('NoWeights',No_Weight)
  !
  call section('*',"== Built-in K-grid ==")
  !=========================================
@@ -89,10 +90,8 @@ subroutine k_analize(en,k,Xk,q)
    !
    ! Transform the user_k_points in iku
    !
-   v=USER_K%pt(USER_K%nibz,:)
-   if (trim(coo_in)=="cc")  call c2a(v_in=USER_K%pt(USER_K%nibz,:),v_out=v,mode="ki2c")
-   if (trim(coo_in)=="rlu") call c2a(v_in=USER_K%pt(USER_K%nibz,:),v_out=v,mode="ki2a")
-   USER_K%pt(USER_K%nibz,:)=v
+   if (trim(coo_in)=="cc")  call c2a(v_in=USER_K%pt(USER_K%nibz,:),mode="kc2i")
+   if (trim(coo_in)=="rlu") call c2a(v_in=USER_K%pt(USER_K%nibz,:),mode="ka2i")
    !
    if (real_ctl/=999.) then
      !
@@ -108,6 +107,15 @@ subroutine k_analize(en,k,Xk,q)
    endif
  enddo gw_main_loop
  USER_K%nibz=USER_K%nibz-1
+ !
+ do i1=1,USER_K%nibz
+   !      
+   if (trim(coo_in)=="cc")  call c2a(v_in=USER_K%pt(USER_K%nibz,:),v_out=v,mode="kc2i")
+   if (trim(coo_in)=="rlu") call c2a(v_in=USER_K%pt(USER_K%nibz,:),v_out=v,mode="ka2i")
+   USER_K%pt(USER_K%nibz,:)=v      
+   !
+ enddo
+ !
  call msg("s",'User K-points :',USER_K%nibz)
  !
  ! Extended grid
@@ -331,9 +339,14 @@ subroutine k_analize(en,k,Xk,q)
          endif
          if (trim(coo_out)=="cc") call c2a(v_in=K_grid%pt(i1,:),mode="ki2c")
          if (trim(coo_out)=="rlu") call c2a(v_in=K_grid%pt(i1,:),mode="ki2a")
-         if (int_ctl(i1)==0) write (ch,'(4f12.7)') K_grid%pt(i1,:),K_grid%weights(i1)
-         if (int_ctl(i1)/=0) write (ch,'(4f12.7,i3)') K_grid%pt(i1,:),&
+         if(No_Weight) then
+           if (int_ctl(i1)==0) write (ch,'(3f12.7)') K_grid%pt(i1,:)
+           if (int_ctl(i1)/=0) write (ch,'(3f12.7,i3)') K_grid%pt(i1,:),int_ctl(i1)
+         else
+           if (int_ctl(i1)==0) write (ch,'(4f12.7)') K_grid%pt(i1,:),K_grid%weights(i1)
+           if (int_ctl(i1)/=0) write (ch,'(4f12.7,i3)') K_grid%pt(i1,:),&
 &                                                     K_grid%weights(i1),int_ctl(i1)
+         endif
          call msg("s",trim(ch))
        enddo
      enddo

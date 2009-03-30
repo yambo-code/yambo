@@ -27,6 +27,7 @@ module YPP
  ! K analysis
  !
  logical  :: lkanalyze
+ logical  :: No_Weight
  real(SP) :: Kgw_1(3)
  real(SP) :: qlong(3,3)
  character(schlen) :: coo_in

@@ -30,7 +30,7 @@ subroutine section(mode,name)
  use it_m,       ONLY:ofiles_append
  use stderr,     ONLY:string_pack
  use timing,     ONLY:time_string,ct,date_time_at_start,cput_tot,cput_sec,&
-&                     live_time_msg,date_and_time_string
+&                     date_and_time_string
  use par_proc_m, ONLY:pp_redux_wait,ncpu
  use com,        ONLY:msg,depth,previous_secmode,isec,secnm,&
 &                     write_to_report,write_the_logo
@@ -111,7 +111,6 @@ subroutine section(mode,name)
  secnm=ch
  call msg('nrs',trim(secnm))
  call msg('rn',repeat('=',len_trim(secnm)))
- if (mode=='X') call live_time_msg("","","n","%s",NO_CPUT=.true.)
  !
  ! Finalize
  !
@@ -146,6 +145,8 @@ subroutine section(mode,name)
      call ofiles_append(line=trim(ch))
      !
    endif
+   !
+   call acknowledge_yambo()
    !
    call ct(FIN=.TRUE.)
    !

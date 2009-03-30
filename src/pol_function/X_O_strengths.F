@@ -194,7 +194,16 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
          if(.not.transloc(ic,iv,ik)) cycle
        endif
 #endif
-       do i_spin = 1, n_sp_pol
+       !
+       ! GPL_INCLUDE_START SPIN_IGNORE
+       ! i_spin=1
+       ! GPL_INCLUDE_END SPIN_IGNORE
+       ! 
+       ! GPL_EXCLUDE_START SPIN_IGNORE
+       !
+       do i_spin=1,n_sp_pol
+         ! 
+         ! GPL_EXCLUDE_END SPIN_IGNORE
          !
          ! X_rhoq0 = i q . < v k | r | c k >
          !
@@ -203,7 +212,13 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
          if ( is > nsym/(i_time_rev+1) ) X_rhoq0(ic,iv,i1,i_spin) = &
 &          dot_product( X_q0grad(:,ic,iv,ik,i_spin), field_dir_rot ) 
          !
+         ! 
+         ! GPL_EXCLUDE_START SPIN_IGNORE
+         !
        enddo
+       ! 
+       ! GPL_EXCLUDE_END SPIN_IGNORE
+       !
      enddo
      X_rhoq0(iv,iv,i1,:) = (1.0_SP,0.0_SP)
    enddo

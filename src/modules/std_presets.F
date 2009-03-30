@@ -178,13 +178,16 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  call cutoff_presets()
  !
- !D_lattice
+ ! D_lattice 
  !
  n_atoms_max=0
  n_atom_species=0
+ i_space_inv=-1
+ !
+ ! Pseudo
+ !
  pp_n_l_comp_max=0
  pp_kbv_dim=0
- i_space_inv=-1
  !
  !drivers
  !

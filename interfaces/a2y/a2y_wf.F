@@ -71,13 +71,13 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  !    do ib=1,nbandksseff
  !     write(untkss) (wfg(:,ig,ib),ig=1,npwkss*nspinor)
  !    end do
- ! end do ! k-point
- !end do ! spin
+ !  end do ! k-point
+ ! end do ! spin
  !close(unit=ntkss)
  !
  ! Number of records for each k-point
  !
- number_of_records_each_k=n_atom_species*pp_n_l_comp_max*2+1+nb_to_read
+ number_of_records_each_k=n_atom_species*pp_n_l_comp_max*2+1+wf_nb_io
  !
  if (ikibz==1.and.ib_grp==1) then
    open(unit=11,file=KSS_file_name,form='unformatted')
@@ -93,15 +93,25 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
    pp_kbs=pp_kbs_disk
  endif
  !
+ wf_disk(:,:,:,:)=0.
+ !
+ ! GPL_INCLUDE_START SPIN_IGNORE
+ ! i_spin=1
+ ! GPL_INCLUDE_END SPIN_IGNORE
+ ! 
+ ! GPL_EXCLUDE_START SPIN_IGNORE
+ !
  do i_spin=1,n_spin
+   ! 
+   ! GPL_EXCLUDE_END SPIN_IGNORE
    !
    if (ib_grp==1) then
      do i1=1,n_atom_species
        do i2=1,pp_n_l_comp_max
          read(11) pp_kb_kdb_disk
-         pp_kb(:,i1,i2,1)=pp_kb_kdb_disk
+         pp_kb(:,i1,i2,i_spin)=pp_kb_kdb_disk
          read(11) pp_kb_kdb_disk
-         pp_kbd(:,i1,i2,1)=pp_kb_kdb_disk
+         pp_kbd(:,i1,i2,i_spin)=pp_kb_kdb_disk
        enddo
      enddo
      read(11) 
@@ -112,12 +122,10 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
    nb_to_read=wf_nb_io
    if (ib_grp*wf_nb_io>n_bands) nb_to_read=n_bands-wf_nb_io*(ib_grp-1) 
    !
-   wf_disk(:,:,:,:)=0.
-   !
    do i1=1,nb_to_read
      read(11) wf_disk_DP
-     wf_disk(1,i1,:,1)=real(wf_disk_DP(:))
-     wf_disk(2,i1,:,1)=aimag(wf_disk_DP(:))
+     wf_disk(1,i1,:,i_spin)=real(wf_disk_DP(:))
+     wf_disk(2,i1,:,i_spin)=aimag(wf_disk_DP(:))
    enddo
    !
    if (n_spin==2) then
@@ -143,8 +151,12 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
      endif
      !
    endif
+   ! 
+   ! GPL_EXCLUDE_START SPIN_IGNORE
    !
  enddo
+ ! 
+ ! GPL_EXCLUDE_END SPIN_IGNORE
  !
  if (ikibz==nkibz.and.ib_grp==wf_nb_io_groups) close(11)
  !

@@ -102,8 +102,18 @@ subroutine a2y_db1(en,k,KSS_file_name)
  read(11) a_nsym, en%nb, ng_vec, ishm, pp_n_l_comp_max
  n_bands= en%nb
  !
+ ! GPL_INCLUDE_START SPIN_IGNORE
+ !n_spinor=1
+ !n_sp_pol=1
+ ! GPL_INCLUDE_END SPIN_IGNORE
+ !
+ ! GPL_EXCLUDE_START SPIN_IGNORE
+ !
  n_spinor=ahdr%nspinor
  n_sp_pol=ahdr%nsppol
+ !
+ ! GPL_EXCLUDE_END SPIN_IGNORE
+ !
  n_spin=max(n_sp_pol,n_spinor)
  !
  k%nibz      = ahdr%nkpt
@@ -190,7 +200,16 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  call msg('s','Energies...')
  !
+ ! GPL_INCLUDE_START SPIN_IGNORE
+ ! i_spin=1
+ ! GPL_INCLUDE_END SPIN_IGNORE
+ ! 
+ ! GPL_EXCLUDE_START SPIN_IGNORE
+ !
  do i_spin=1,n_spin
+   ! 
+   ! GPL_EXCLUDE_END SPIN_IGNORE
+   !
    do ik=1,k%nibz
      do i1=1,n_atom_species
        do i2=1,pp_n_l_comp_max
@@ -204,7 +223,13 @@ subroutine a2y_db1(en,k,KSS_file_name)
        read(11) 
      enddo
    enddo
+   ! 
+   ! GPL_EXCLUDE_START SPIN_IGNORE
+   !
  enddo
+ ! 
+ ! GPL_EXCLUDE_END SPIN_IGNORE
+ !
  call msg('l','done')
  close(11)
  !

@@ -97,6 +97,9 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
    call msg('l','done ==')
  endif
  !
+ ! Splitting + SPIN support still not implemented (see a2y_wf.F for
+ ! more details)
+ !
  if (n_spin==1) call wf_splitter()
  !
  call msg('s','== DB2 + nlPP ...')
@@ -108,15 +111,15 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
      !
      call a2y_wf(wf_disk,ik,ib_grp,trim(KSS_file_name))
      !
-!     if (n_atoms_max>0.and.ib_grp==1) then
-!       if (ik==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-!       if (ik> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
-!       io_err=ioKB_PP(ID)
-!     endif
-!     !
-!     if (ik==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
-!     if (ik> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
-!     io_err=ioWF(ID,wf=wf_disk)
+     if (n_atoms_max>0.and.ib_grp==1) then
+       if (ik==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
+       if (ik> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
+       io_err=ioKB_PP(ID)
+     endif
+     !
+     if (ik==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
+     if (ik> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
+     io_err=ioWF(ID,wf=wf_disk)
      !
    enddo
    !

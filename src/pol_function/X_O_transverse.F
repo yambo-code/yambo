@@ -111,8 +111,16 @@ subroutine X_O_transverse(Xen,Xk,X)
      if (ik==Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
      io_err=ioKB_PP(ID)
    endif
+   ! 
+   ! GPL_INCLUDE_START SPIN_IGNORE
+   ! i_spin=1
+   ! GPL_INCLUDE_END SPIN_IGNORE
+   ! 
+   ! GPL_EXCLUDE_START SPIN_IGNORE
    !
    do i_spin=1,n_spin
+     ! 
+     ! GPL_EXCLUDE_END SPIN_IGNORE
      !
      if (io_err==0) call X_O_kb_pp_comp(ik,i_spin,Xk,kbv)
      !
@@ -183,13 +191,19 @@ subroutine X_O_transverse(Xen,Xk,X)
          !
          ! GPL_EXCLUDE_END SPIN_IGNORE
          !
-       enddo  ! conduction band loop
+       enddo    ! conduction band loop
        !
        call live_timing(steps=1)
        !
      enddo      ! valence band loop
-   enddo    ! spin loop
- enddo        ! k-points
+     ! 
+     ! GPL_EXCLUDE_START SPIN_IGNORE
+     !
+   enddo        ! spin loop
+   ! 
+   ! GPL_EXCLUDE_END SPIN_IGNORE
+   !
+ enddo          ! k-points
  !
  call live_timing
  !

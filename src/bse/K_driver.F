@@ -88,6 +88,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! W RL size setup looking at the max index of G-G' 
  !
  if (BS_n_g_W/= eval_G_minus_G(BS_n_g_W,maxval(qindx_B(:,:,2))) ) then
+   BS_n_g_W= eval_G_minus_G(BS_n_g_W,maxval(qindx_B(:,:,2)))
+   call warning (' W size reduced due to symmetry constraints')
    call msg('s','[BSE-W] W size forced by symmetry to be :',BS_n_g_W)
  endif
  !

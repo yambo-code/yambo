@@ -21,6 +21,8 @@
 !
 module real_time
  !
+#if defined _SC
+ !
  use pars,      ONLY:SP,schlen
  !
  implicit none
@@ -83,93 +85,95 @@ module real_time
  contains
    !
    subroutine RT_alloc(en)
-   !
-   use pars,           ONLY:SP,schlen
-   use drivers,        ONLY:l_sc_hartree
-   use memory_m,       ONLY:mem_est
-   use SC,             ONLY:SC_bands,V_hartree_sc
-   use FFT_m,          ONLY:fft_size
-   use electrons,      ONLY:levels,n_spin
-   implicit none
-   !
-   type(levels), intent(in) :: en
-   !
-   allocate(rho(fft_size))
-   call mem_est('Density',(/fft_size/),(/SP/))
-   !
-   allocate(V_hartree_0(fft_size),V_xc_0(fft_size,n_spin))
-   call mem_est('Hartree',(/fft_size/),(/(1+n_spin)*SP/))
-   !
-   if(l_rt_exc) then
-     allocate(V_hartree_sc(fft_size))
-     call mem_est('Potentials',(/fft_size/),(/SP/))
-   endif 
-   !
-   if(l_rt_efield) then
-     allocate(Ef_rhoq0(SC_bands,SC_bands,en%nk))
-     call mem_est('ExtField_rhoq0',(/fft_size/),(/2*SP/))
-   endif
-   !
-   allocate(G_lesser(SC_bands,SC_bands,en%nk))
-   call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
-   !
-   allocate(E_bare(SC_bands,en%nk))
-   call mem_est("E_bare",(/size(E_bare)/),(/SP/))
-   !
-   allocate(Ho(SC_bands,SC_bands,en%nk),H_t(SC_bands,SC_bands,en%nk))
-   call mem_est("Ho",(/size(Ho)/),(/2*2*SP/))
-   !
-   allocate(I1_lesser(SC_bands,SC_bands,en%nk))
-   call mem_est("I1_lesser",(/size(I1_lesser)/),(/2*SP/))
-   !
-   allocate(I2_lesser(SC_bands,SC_bands,en%nk))
-   call mem_est("I2_lesser",(/size(I2_lesser)/),(/2*SP/))
-   !
-   allocate(G_l_old(SC_bands,SC_bands,en%nk))
-   call mem_est("Gf_l_old",(/size(G_l_old)/),(/2*SP/))
-   !
+     !
+     use pars,           ONLY:SP,schlen
+     use drivers,        ONLY:l_sc_hartree
+     use memory_m,       ONLY:mem_est
+     use SC,             ONLY:SC_bands,V_hartree_sc
+     use FFT_m,          ONLY:fft_size
+     use electrons,      ONLY:levels,n_spin
+     implicit none
+     !
+     type(levels), intent(in) :: en
+     !
+     allocate(rho(fft_size))
+     call mem_est('Density',(/fft_size/),(/SP/))
+     !
+     allocate(V_hartree_0(fft_size),V_xc_0(fft_size,n_spin))
+     call mem_est('Hartree',(/fft_size/),(/(1+n_spin)*SP/))
+     !
+     if(l_rt_exc) then
+       allocate(V_hartree_sc(fft_size))
+       call mem_est('Potentials',(/fft_size/),(/SP/))
+     endif 
+     !
+     if(l_rt_efield) then
+       allocate(Ef_rhoq0(SC_bands,SC_bands,en%nk))
+       call mem_est('ExtField_rhoq0',(/fft_size/),(/2*SP/))
+     endif
+     !
+     allocate(G_lesser(SC_bands,SC_bands,en%nk))
+     call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
+     !
+     allocate(E_bare(SC_bands,en%nk))
+     call mem_est("E_bare",(/size(E_bare)/),(/SP/))
+     !
+     allocate(Ho(SC_bands,SC_bands,en%nk),H_t(SC_bands,SC_bands,en%nk))
+     call mem_est("Ho",(/size(Ho)/),(/2*2*SP/))
+     !
+     allocate(I1_lesser(SC_bands,SC_bands,en%nk))
+     call mem_est("I1_lesser",(/size(I1_lesser)/),(/2*SP/))
+     !
+     allocate(I2_lesser(SC_bands,SC_bands,en%nk))
+     call mem_est("I2_lesser",(/size(I2_lesser)/),(/2*SP/))
+     !
+     allocate(G_l_old(SC_bands,SC_bands,en%nk))
+     call mem_est("Gf_l_old",(/size(G_l_old)/),(/2*SP/))
+     !
    end subroutine RT_alloc
    
    subroutine RT_free
-   !
-   use SC,             ONLY:V_hartree_sc
-   use memory_m,       ONLY:mem_est
-   implicit none
-   !
-   deallocate(rho)
-   call mem_est('Density')
-   !
-   deallocate(V_hartree_0,V_xc_0)
-   call mem_est('Hartree')
-   !  
-   if(l_rt_exc) then
-     deallocate(V_hartree_sc)
-     call mem_est('Potentials')
-   endif
-   !
-   if(l_rt_efield) then
-     deallocate(Ef_rhoq0)
-     call mem_est('ExtField_rhoq0')
-   endif
-   !
-   deallocate(E_bare)
-   call mem_est("E_bare")
-   !
-   deallocate(Ho)
-   call mem_est("Ho")
-   !
-   deallocate(G_lesser)
-   call mem_est("G_lesser")
-   !
-   deallocate(I1_lesser)
-   call mem_est("I1_lesser")
-   !
-   deallocate(I2_lesser)
-   call mem_est("I2_lesser")
-   !
-   deallocate(G_l_old)
-   call mem_est("G_l_old")
-   !
+     !
+     use SC,             ONLY:V_hartree_sc
+     use memory_m,       ONLY:mem_est
+     implicit none
+     !
+     deallocate(rho)
+     call mem_est('Density')
+     !
+     deallocate(V_hartree_0,V_xc_0)
+     call mem_est('Hartree')
+     !  
+     if(l_rt_exc) then
+       deallocate(V_hartree_sc)
+       call mem_est('Potentials')
+     endif
+     !
+     if(l_rt_efield) then
+       deallocate(Ef_rhoq0)
+       call mem_est('ExtField_rhoq0')
+     endif
+     !
+     deallocate(E_bare)
+     call mem_est("E_bare")
+     !
+     deallocate(Ho)
+     call mem_est("Ho")
+     !
+     deallocate(G_lesser)
+     call mem_est("G_lesser")
+     !
+     deallocate(I1_lesser)
+     call mem_est("I1_lesser")
+     !
+     deallocate(I2_lesser)
+     call mem_est("I2_lesser")
+     !
+     deallocate(G_l_old)
+     call mem_est("G_l_old")
+     !
    end subroutine RT_free
+   !
+#endif
    !
 end module

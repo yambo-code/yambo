@@ -21,32 +21,6 @@
 !
 subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  !
- use pars,                  ONLY:SP,DP
- use electrons,             ONLY:n_bands,n_spin
- use D_lattice,             ONLY:n_atom_species
- use pseudo,                ONLY:pp_n_l_comp_max,PP_alloc,pp_kbs,pp_kb,pp_kbd
- use R_lattice,             ONLY:nkibz
- use wave_func,             ONLY:wf_ncx,wf_nb_io,wf_nb_io_groups
- use defs_datatypes,        ONLY:hdr_type, wffile_type
- implicit none
- !
- integer        :: ikibz,ib_grp
- character(*)   :: KSS_file_name
- real(SP)       :: wf_disk(2,wf_nb_io,wf_ncx,n_spin)
- ! 
- ! Workspace ...
- ! 
- integer            :: i1,i2,nb_to_read,number_of_records_each_k
- !
- ! ... abinit
- !
- type(hdr_type)     :: ahdr
- type(wffile_type)  :: wff
- real(DP)           :: pp_kb_kdb_disk(wf_ncx),&
-&                      pp_kbs_disk(n_atom_species,pp_n_l_comp_max)
- complex(DP)        :: wf_disk_DP(wf_ncx)
- integer            :: fform,i_spin
- !
  ! Schematic I/O in outkss.F90:
  !
  ! open(untkss,file=filekss,form='unformatted')
@@ -73,7 +47,33 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  !    end do
  !  end do ! k-point
  ! end do ! spin
- !close(unit=ntkss)
+ ! close(unit=ntkss)
+ !
+ use pars,                  ONLY:SP,DP
+ use electrons,             ONLY:n_bands,n_spin
+ use D_lattice,             ONLY:n_atom_species
+ use pseudo,                ONLY:pp_n_l_comp_max,PP_alloc,pp_kbs,pp_kb,pp_kbd
+ use R_lattice,             ONLY:nkibz
+ use wave_func,             ONLY:wf_ncx,wf_nb_io,wf_nb_io_groups
+ use defs_datatypes,        ONLY:hdr_type, wffile_type
+ implicit none
+ !
+ integer        :: ikibz,ib_grp
+ character(*)   :: KSS_file_name
+ real(SP)       :: wf_disk(2,wf_nb_io,wf_ncx,n_spin)
+ ! 
+ ! Workspace ...
+ ! 
+ integer            :: i1,i2,nb_to_read,number_of_records_each_k
+ !
+ ! ... abinit
+ !
+ type(hdr_type)     :: ahdr
+ type(wffile_type)  :: wff
+ real(DP)           :: pp_kb_kdb_disk(wf_ncx),&
+&                      pp_kbs_disk(n_atom_species,pp_n_l_comp_max)
+ complex(DP)        :: wf_disk_DP(wf_ncx)
+ integer            :: fform,i_spin
  !
  ! Number of records for each k-point
  !
@@ -127,6 +127,8 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
      wf_disk(1,i1,:,i_spin)=real(wf_disk_DP(:))
      wf_disk(2,i1,:,i_spin)=aimag(wf_disk_DP(:))
    enddo
+   ! 
+   ! GPL_EXCLUDE_START SPIN_IGNORE
    !
    if (n_spin==2) then
      ! 
@@ -151,8 +153,6 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
      endif
      !
    endif
-   ! 
-   ! GPL_EXCLUDE_START SPIN_IGNORE
    !
  enddo
  ! 

@@ -170,8 +170,7 @@ clean_fast:
 	@$(xclean)
 clean_all: 
 	@$(objects_clean)
-	@$(lib_mod_clean)
-	@$(nectcdf_clean)
+	@$(lib_mod_netcdf_clean)
 	@$(conf_clean)
 	@$(xclean)
 
@@ -227,12 +226,16 @@ define objects_clean
  fi
 endef
 define lib_mod_clean
- find . \( -name '*.a' -o -name '*.mod' \) -type f -print | xargs rm -f 
+ find . \( -name '*.a' -o -name '*.mod' \) -type f -print | \
+       grep -v netcdf | grep -v iotk | grep -v typesize | xargs rm -f 
  echo "libraries ... cleaned" 
  echo "modules ... cleaned" 
 endef
-define netcdf_clean
- find . \( -name 'netcdf*h' -o -name 'netcdf*inc' \) -type f -print | xargs rm -f 
+define lib_mod_netcdf_clean
+ find . \( -name '*.a' -o -name '*.mod' \
+           -o -name 'netcdf*h' -o -name 'netcdf*inc' \) -type f -print | xargs rm -f 
+ echo "libraries ... cleaned" 
+ echo "modules ... cleaned" 
  echo "NETCDF files ... cleaned  " 
 endef
 define xclean

@@ -122,7 +122,8 @@ integer function ioKB_PP(ID)
    if (ver_is_gt_or_eq(ID,revision=374)) then
      call io_bulk(ID,VAR='PP_KB_IK'//trim(intc(ik))//'_SPIN'//trim(intc(i_spin)),VAR_SZ=shape(pp_disk)) 
    else
-     call io_bulk(ID,VAR='PP_KB_IK'//trim(intc(ik)),VAR_SZ=shape(pp_disk)) 
+     write (VAR_NAME,'(a,i4.4)') 'PP_KB_IK',ik
+     call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=shape(pp_disk)) 
    endif
    call io_bulk(ID,R3=pp_disk)
    !
@@ -138,7 +139,8 @@ integer function ioKB_PP(ID)
    if (ver_is_gt_or_eq(ID,revision=374)) then
      call io_bulk(ID,VAR='PP_KBD_IK'//trim(intc(ik))//'_SPIN'//trim(intc(i_spin)),VAR_SZ=shape(pp_disk)) 
    else
-     call io_bulk(ID,VAR='PP_KBD_IK'//trim(intc(ik)),VAR_SZ=shape(pp_disk)) 
+     write (VAR_NAME,'(a,i4.4)') 'PP_KBD_IK',ik
+     call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=shape(pp_disk)) 
    endif
    call io_bulk(ID,R3=pp_disk)
    !

@@ -21,8 +21,6 @@
 !
 subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
- ! Evaluate Bethe-Salpeter kernel
- !
  ! K = <2V-W>
  !
  use pars,         ONLY:SP,pi,IP
@@ -304,8 +302,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Screneed interaction
    !
    X%ng=BS_n_g_W
-   if (W_is_em1s) call X_alloc('X',(/BS_n_g_W,BS_n_g_W,1/))
-   if (W_is_pp)   call X_alloc('X',(/BS_n_g_W,BS_n_g_W,2/))
+   !
+   ! GPL_EXCLUDE_START
+   if (.not.l_td_hf) then
+     ! GPL_EXCLUDE_END
+     if (W_is_em1s) call X_alloc('X',(/BS_n_g_W,BS_n_g_W,1/))
+     if (W_is_pp)   call X_alloc('X',(/BS_n_g_W,BS_n_g_W,2/))
+     ! GPL_EXCLUDE_START
+   endif
+   ! GPL_EXCLUDE_END
    !
    i1=BS_n_g_W
    if (BS_W_is_diagonal) i1=1
@@ -337,27 +342,29 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      call scatterGamp(isc,'c')
      !
      ! GPL_EXCLUDE_START
-     if (l_td_hf) then
-       X_mat=(0.,0.)
-     else
+     if (.not.l_td_hf) then
        ! GPL_EXCLUDE_END
        call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
        ioX_err=ioX(X,Xw,XID)
-       ! GPL_EXCLUDE_START
-     endif
-     ! GPL_EXCLUDE_END
-     !
-     forall(i2=1:BS_n_g_W) X_mat(i2,i2,1)=X_mat(i2,i2,1)+1.
-     do i2=1,BS_n_g_W
-       do i3=1,BS_n_g_W
-         if (.not.BS_W_is_diagonal) then
-           BS_W(i2,i3,iq_W)=X_mat(i2,i3,1)*isc%gamp(i2,i3)
-           if (i_space_inv==0.and.i_time_rev==1) &
-&             BS_W(i2,i3,q%nibz+iq_W)=X_mat(i3,i2,1)*isc%gamp(i2,i3)
-         endif
-         if (BS_W_is_diagonal.and.i2==i3) BS_W(i2,1,iq_W)=real(X_mat(i2,i2,1))*isc%gamp(1,i2)
+       !
+       forall(i2=1:BS_n_g_W) X_mat(i2,i2,1)=X_mat(i2,i2,1)+1.
+       do i2=1,BS_n_g_W
+         do i3=1,BS_n_g_W
+           if (.not.BS_W_is_diagonal) then
+             BS_W(i2,i3,iq_W)=X_mat(i2,i3,1)*isc%gamp(i2,i3)
+             if (i_space_inv==0.and.i_time_rev==1) &
+&               BS_W(i2,i3,q%nibz+iq_W)=X_mat(i3,i2,1)*isc%gamp(i2,i3)
+           endif
+           if (BS_W_is_diagonal.and.i2==i3) BS_W(i2,1,iq_W)=real(X_mat(i2,i2,1))*isc%gamp(1,i2)
+         enddo
        enddo
-     enddo
+       ! GPL_EXCLUDE_START
+     else
+       forall(i2=1:BS_n_g_W) BS_W(i2,1,iq_W)=isc%gamp(1,i2)
+     endif
+     ! 
+     ! GPL_EXCLUDE_END
+     ! 
    enddo
    !
    ! Anisotropy correction. Note that isc%gamp(1,1)=RIM_anisotropy while
@@ -366,7 +373,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if (RIM_anisotropy/=0.) BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2.-RIM_anisotropy/2.
    !
    deallocate(isc%gamp)
-   call X_alloc('X')
+   !
+   if (.not.l_td_hf) call X_alloc('X')
    !
    X%ng=X%ng_db
    call collision_reset(isc)
@@ -670,13 +678,16 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call live_timing()
  call pp_redux_wait
  !
- ! CLEAN
+ ! CLEAN before _DOUBLEs
  !
  deallocate(O_table)
  call mem_est("O_table")
- !
- call WF_free()
  call mem_est("BS_mat")
+ !
+ if (load_O_X) then
+   deallocate(O1x,O2x)
+   call mem_est("O1x O2x")
+ endif
  !
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
    deallocate(O_v_state,O_c_state,O_n_c_states,O_n_v_states)
@@ -699,11 +710,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
  !
- if (load_O_X) then
-   deallocate(O1x,O2x)
-   call mem_est("O1x O2x")
- endif
- !
  if (l_bs_fxc) then
    !
    ! GPL_EXCLUDE_START
@@ -717,5 +723,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  else if (BS_K_is_ALDA) then
    deallocate(F_xc)
  endif
+ !
+ ! DOUBLES excitations contribution
+#if defined _DOUBLES
+ call K_doubles(iq,Ken,Xk,q,X,Xw,W_bss)
+#endif
+ !
+ ! Final CLEAN
+ !
+ call WF_free()
  !
 end subroutine

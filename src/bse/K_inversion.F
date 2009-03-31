@@ -24,6 +24,10 @@ subroutine K_inversion(iq,W,E,k,q)
  use pars,           ONLY:SP,pi,DP
  use X_m,            ONLY:X_epsilon
  use stderr,         ONLY:intc,real2ch
+#if defined _DOUBLES
+ use BS_doubles,    ONLY:BS_mat_doubles,BS_doubles_E,BS_res_K_doubles, &
+&                        BS_doubles_table,BS_K_doubles_dim
+#endif
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_not_const_eh_f,&
 &                         BS_K_coupling,BS_eh_table,BS_eh_E,BS_bands,Kernel_by_V,&
 &                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,&
@@ -74,7 +78,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  integer           ::i_err,ID
  type(w_samp)      ::W_disk
- integer, external ::ioBSS_invert
+ integer, external ::ioBSS_invert,ioBS_doubles
  integer, allocatable     ::inv_err_disk(:),disk_freq_table(:)
  complex(SP), allocatable ::eps_2start(:)
  !
@@ -95,6 +99,10 @@ subroutine K_inversion(iq,W,E,k,q)
  BSS_uses_RIM=BZ_RIM_nbands>=BS_bands(2)
  call parser('SkipInv',skip_full_inv)
  call parser('FullInv',force_full_inv)
+ !
+#if defined _DOUBLES
+ force_full_inv=.TRUE.
+#endif
  !
  if (force_full_inv) skip_full_inv=.FALSE.
  !
@@ -165,6 +173,19 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  call Kernel_by_V(iq)
  forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)-BS_eh_E(i1)
+ !
+ !  Kernel doubles
+#if defined _DOUBLES
+ allocate(BS_mat_doubles(BS_K_dim,BS_K_doubles_dim,8))
+ call mem_est('BS_mat_doubles',(/size(BS_mat_doubles)*2/))
+ allocate(BS_doubles_E(BS_K_doubles_dim))
+ call mem_est('BS_doubles_E',(/size(BS_doubles_E)/))
+ allocate(BS_doubles_table(BS_K_doubles_dim,4))
+ call mem_est('BS_doubles_table',(/size(BS_doubles_table)/)) 
+ !
+ call io_control(action=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
+ i_err=ioBS_doubles(ID)
+#endif
  !
  ! Initialize the output file 
  !
@@ -295,6 +316,9 @@ subroutine K_inversion(iq,W,E,k,q)
    do i1=1,full_inf_freqs
      if (.not.px%i1p(i1)) cycle
      iw=iw_full(i1)
+#if defined _DOUBLES
+     call K_doubles_mount(iw,W)
+#endif
      call perform_invertion(iw,1)
      call live_timing(steps=1)
    enddo
@@ -302,6 +326,13 @@ subroutine K_inversion(iq,W,E,k,q)
    call pp_redux_wait(inv_err,imode=2)
    call pp_redux_wait(X_epsilon)
  endif
+ !
+#if defined _DOUBLES
+ deallocate(BS_mat_doubles)
+ call mem_est("BS_mat_doubles")
+ deallocate(BS_doubles_E,BS_doubles_table)
+ call mem_est("BS_doubles_E BS_doubles_table")
+#endif
  !
  nw_conv=0
  do iw=1,W%n(1)

@@ -1,5 +1,5 @@
 #if defined _DOUBLES
-K_object = K_doubles.o
+K_object = K_doubles.o K_doubles_mount.o
 #else
 K_object = 
 #endif

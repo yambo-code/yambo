@@ -94,20 +94,28 @@ subroutine K_doubles(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Davide doubles
  ! preparation lines:
- BS_res_K_doubles=.TRUE.
+ BS_res_K_doubles=.true.
  BS_W_is_diagonal=.TRUE.
- BS_bands_doubles=BS_bands(2)+2
+ BS_bands_doubles(1)=BS_bands(1)
+ BS_bands_doubles(2)=BS_bands(2)
  !
  nc=BS_bands(2)-Ken%nbf
  nv=Ken%nbf-BS_bands(1)+1
- nc_doubles=BS_bands_doubles-Ken%nbf
- nv_doubles=Ken%nbf
+ nc_doubles=BS_bands_doubles(2)-Ken%nbf
+ nv_doubles=Ken%nbf-BS_bands_doubles(1)+1
  !
  BS_K_doubles_dim=(nc_doubles*nv_doubles)**2
  !
  Co=4._SP*pi/DL_vol/real(1,SP)
  !
  !
+ if(.not.BS_res_K_doubles) return
+ ! DEBUG <
+ open(unit=3456, file='debug.txt', status='unknown')
+ open(unit=3457, file='interaction_cccv.txt', status='unknown')
+ open(unit=3458, file='interaction_vvcv.txt', status='unknown')
+ open(unit=3459, file='BS_mat_doubles.txt', status='unknown')
+ ! DEBUG >
  call section('*','Bethe-Salpeter Kernel + DOUBLES')
  !
  ! Setups
@@ -135,28 +143,28 @@ subroutine K_doubles(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! PP/Epsm1S DBs
  !
- W_is_em1s=X%whoami==2
- W_is_pp  =X%whoami==4
-! if (.not.BS_res_K_doubles) then
-!   call section('+','Screneed interaction header I/O')
-!   !
-!   ! X%ng are the G's in the X DB while BS_n_g_W the G's I want to read.
-!   ! Now to read only BS_n_g_W components I need to redefine X%ng
-!   !
-!   X%ng=BS_n_g_W
-!   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=XID)
-!   ioX_err=ioX(X,Xw,XID) 
-!   !
-!   if (ioX_err/=0) call warning('BS section skipped. PP/Em1s DB does not fit/exist')
-!   !
-!   ! X%ng is set to BS_n_g_W to VERIFY if there wnough bands.
-!   ! From now on it is used to keep track of the actual sixe of W in the DB
-!   !
-!   X%ng=X%ng_db
-!   !
-!   if (ioX_err/=0) return
-!   !
-! endif
+ if (.not.BS_res_K_doubles) then
+   W_is_em1s=X%whoami==2
+   W_is_pp  =X%whoami==4
+   call section('+','Screneed interaction header I/O')
+   !
+   ! X%ng are the G's in the X DB while BS_n_g_W the G's I want to read.
+   ! Now to read only BS_n_g_W components I need to redefine X%ng
+   !
+   X%ng=BS_n_g_W
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=XID)
+   ioX_err=ioX(X,Xw,XID) 
+   !
+   if (ioX_err/=0) call warning('BS section skipped. PP/Em1s DB does not fit/exist')
+   !
+   ! X%ng is set to BS_n_g_W to VERIFY if there wnough bands.
+   ! From now on it is used to keep track of the actual sixe of W in the DB
+   !
+   X%ng=X%ng_db
+   !
+   if (ioX_err/=0) return
+   !
+ endif
  !
  ! Parallel stuff  <
  !
@@ -171,51 +179,59 @@ subroutine K_doubles(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Screneed interaction
  !
- X%ng=BS_n_g_W
- if (W_is_em1s) call X_alloc('X',(/BS_n_g_W,BS_n_g_W,1/))
- if (W_is_pp)   call X_alloc('X',(/BS_n_g_W,BS_n_g_W,2/))
- !
- i1=BS_n_g_W
- if (BS_W_is_diagonal) i1=1
- !
- allocate(BS_W(BS_n_g_W,i1,1),stat=alloc_err)
- call mem_est('BS_W',(/size(BS_W)/),errors=(/alloc_err/))
- !
- allocate(isc%gamp(i1,BS_n_g_W))
- !
- if (.not.BS_res_K_doubles) then
-   call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
-   ioX_err=ioX(X,Xw,XID)
- endif
- !
- isc%qs(2)=1
- call scatterGamp(isc,'c')
- !
- if (BS_res_K_doubles) then 
-     X_mat=(0.,0.)
- else
+ if(.not.BS_res_K_doubles) then
+   X%ng=BS_n_g_W
+   if (W_is_em1s) call X_alloc('X',(/BS_n_g_W,BS_n_g_W,1/))
+   if (W_is_pp)   call X_alloc('X',(/BS_n_g_W,BS_n_g_W,2/))
+   !
+   i1=BS_n_g_W
+   if (BS_W_is_diagonal) i1=1
+   !
+   allocate(BS_W(BS_n_g_W,i1,1),stat=alloc_err)
+   call mem_est('BS_W',(/size(BS_W)/),errors=(/alloc_err/))
+   BS_W(:,:,:)=(0.,0.)
+   !
+   allocate(isc%gamp(i1,BS_n_g_W))
+   !
+   if (.not.BS_res_K_doubles) then
+     call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
+     ioX_err=ioX(X,Xw,XID)
+   endif
+   !
+   isc%qs(2)=1
+   call scatterGamp(isc,'c')
+   !
    call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2,3/),ID=XID)
    ioX_err=ioX(X,Xw,XID)
+   !
+   forall(i2=1:BS_n_g_W) X_mat(i2,i2,1)=X_mat(i2,i2,1)+1.
+   do i2=1,BS_n_g_W
+     do i3=1,BS_n_g_W
+       if (.not.BS_W_is_diagonal) then
+         BS_W(i2,i3,1)=X_mat(i2,i3,1)*isc%gamp(i2,i3)
+       endif
+       if (BS_W_is_diagonal.and.i2==i3) BS_W(i2,1,1)=real(X_mat(i2,i2,1))*isc%gamp(1,i2)
+     enddo
+   enddo
+   !
+   call X_alloc('X')
+ else
+   allocate(BS_W(BS_n_g_W,1,1),stat=alloc_err)
+   call mem_est('BS_W',(/size(BS_W)/),errors=(/alloc_err/))
+   BS_W(:,:,:)=(0.,0.)
+   allocate(isc%gamp(1,BS_n_g_W))
+   isc%qs(2)=1
+   call scatterGamp(isc,'c')
+   forall(i1=1:BS_n_g_W) BS_W(i1,1,1)=isc%gamp(1,i1)
+   !forall(i1=2:BS_n_g_W) BS_W(i1,1,1)=1/bare_qpg(1,i1)**2
  endif
  !
- forall(i2=1:BS_n_g_W) X_mat(i2,i2,1)=X_mat(i2,i2,1)+1.
- do i2=1,BS_n_g_W
-   do i3=1,BS_n_g_W
-     if (.not.BS_W_is_diagonal) then
-       BS_W(i2,i3,1)=X_mat(i2,i3,1)*isc%gamp(i2,i3)
-     endif
-     if (BS_W_is_diagonal.and.i2==i3) BS_W(i2,1,1)=real(X_mat(i2,i2,1))*isc%gamp(1,i2)
-   enddo
- enddo
- !
  deallocate(isc%gamp)
- call X_alloc('X')
  !
  ! Load wave funtions
  !
- X%ng=X%ng_db           !     <---------     ???????
  !
- call wf_load(BS_n_g_W,1,(/1,BS_bands_doubles/),(/1,1/),&
+ call wf_load(BS_n_g_W,1,(/BS_bands_doubles(1),BS_bands_doubles(2)/),(/1,1/),&
 &             space='R',title='-BSK')
  !
  ! 
@@ -230,7 +246,7 @@ subroutine K_doubles(iq,Ken,Xk,q,X,Xw,W_bss)
  BS_doubles_E(:)=(0.,0.)
  !
  ! Allocation: Oscillators
- allocate(Ovv(BS_n_g_W,nv,nv_doubles),Occ(BS_n_g_W,nc,nc_doubles))
+ allocate(Ovv(BS_n_g_W,nv_doubles,nv),Occ(BS_n_g_W,nc,nc_doubles))
  call mem_est('Occ',(/size(Occ)*2/))
  call mem_est('Ovv',(/size(Ovv)*2/))
  allocate(Ocv(BS_n_g_W,nc_doubles,nv_doubles))
@@ -241,7 +257,7 @@ subroutine K_doubles(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Allocation: Interaction and BS_mat_doubles
  allocate(Interaction_cccv(nc,nc_doubles,nc_doubles,nv_doubles))
- allocate(Interaction_vvcv(nv,nv_doubles,nc_doubles,nv_doubles))
+ allocate(Interaction_vvcv(nv_doubles,nv,nc_doubles,nv_doubles))
  call mem_est('Interaction_cccv',(/size(interaction_cccv)*2/))
  call mem_est('Interaction_vvcv',(/size(interaction_vvcv)*2/))
  allocate(BS_mat_doubles(BS_K_dim,BS_K_doubles_dim,8))
@@ -255,16 +271,19 @@ subroutine K_doubles(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Doubles table
  i_doubles=0
- do iv1=1,nv_doubles
-   do iv2=1,nv_doubles
-     do ic1=nv_doubles+1,BS_bands_doubles
-       do ic2=nv_doubles+1,BS_bands_doubles
+ do iv1=BS_bands_doubles(1),Ken%nbf
+   do iv2=BS_bands_doubles(1),Ken%nbf
+     do ic1=Ken%nbf+1,BS_bands_doubles(2)
+       do ic2=Ken%nbf+1,BS_bands_doubles(2)
          i_doubles=i_doubles+1
          BS_doubles_table(i_doubles,1)=iv1
          BS_doubles_table(i_doubles,2)=iv2
          BS_doubles_table(i_doubles,3)=ic1
          BS_doubles_table(i_doubles,4)=ic2
          BS_doubles_E(i_doubles)=Ken%E(ic1,1,1)+Ken%E(ic2,1,1)-Ken%E(iv1,1,1)-Ken%E(iv2,1,1)
+         ! DEBUG <
+         !write(3456,*) ic1,ic2,iv1,iv2,BS_doubles_E(i_doubles)*27.2116
+         ! DEBUG >
        enddo
      enddo
    enddo
@@ -282,29 +301,38 @@ subroutine K_doubles(iq,Ken,Xk,q,X,Xw,W_bss)
  allocate(isc%gamp(1,BS_n_g_W))
  !
  do iv=BS_bands(1),Ken%nbf
-   do iv1=1,nv_doubles
+   do iv1=BS_bands_doubles(1),Ken%nbf
      isc%is(1)=iv1
      isc%os(1)=iv
      call scatterBamp(isc)
-     forall(i1=1:BS_n_g_W) Ovv(i1,iv-BS_bands(1)+1,iv1)=isc%rhotw(i1)
+     forall(i1=1:BS_n_g_W) Ovv(i1,iv1-BS_bands_doubles(1)+1,iv-BS_bands(1)+1)=isc%rhotw(i1)
+     ! DEBUG <
+     !write(3456,*) iv1,iv,Ovv(:,iv1,iv-BS_bands(1)+1)
+     ! DEBUG >
    enddo
  enddo
  !
  do ic=1+Ken%nbf,BS_bands(2)
-   do ic1=1+Ken%nbf,BS_bands_doubles
+   do ic1=1+Ken%nbf,BS_bands_doubles(2)
      isc%is(1)=ic
      isc%os(1)=ic1
      call scatterBamp(isc)
      forall(i1=1:BS_n_g_W) Occ(i1,ic-Ken%nbf,ic1-Ken%nbf)=isc%rhotw(i1)
+     ! DEBUG <
+     !write(3456,*) ic,ic1,Occ(:,ic-Ken%nbf,ic1-Ken%nbf)
+     ! DEBUG >
    enddo
  enddo
  !
- do iv2=1,nv_doubles
-   do ic2=1+Ken%nbf,BS_bands_doubles
+ do iv2=BS_bands_doubles(1),Ken%nbf
+   do ic2=1+Ken%nbf,BS_bands_doubles(2)
      isc%is(1)=ic2
      isc%os(1)=iv2
      call scatterBamp(isc)
-     forall(i1=1:BS_n_g_W) Ocv(i1,ic2-Ken%nbf,iv2)=conjg(isc%rhotw(i1))
+     forall(i1=1:BS_n_g_W) Ocv(i1,ic2-Ken%nbf,iv2-BS_bands_doubles(1)+1)=isc%rhotw(i1)
+     ! DEBUG <
+     !write(3456,*) ic2,iv2,Ocv(:,ic2-Ken%nbf,iv2)
+     ! DEBUG >
    enddo
  enddo
  call collision_reset(isc)
@@ -363,13 +391,13 @@ subroutine K_doubles(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (BS_res_K_doubles) then
    !
-   !  Step 1: Here the code constructs U_{cc1,c2v2} and U_{vv1,c2v2} 
+   !  Step 1: Here the code constructs U_{cc1,c2v2} and U_{v1v,c2v2} 
    !          starting Ocv, Occ and Ovv
    !
    !          1.a: U_{c c1 c2 v2}
    !
-   do ic=1,BS_bands(2)-Ken%nbf
-     do ic1=1,BS_bands_doubles-nv_doubles
+   do ic=1,nc
+     do ic1=1,nc_doubles
        !
        if (BS_W_is_diagonal) then
          forall(i1=1:BS_n_g_W) Occ(i1,ic,ic1)=Occ(i1,ic,ic1)*BS_W(i1,1,1)
@@ -384,13 +412,17 @@ subroutine K_doubles(iq,Ken,Xk,q,X,Xw,W_bss)
          enddo
        endif
        do iv2=1,nv_doubles
-         do ic2=1,BS_bands_doubles-nv_doubles
+         do ic2=1,nc_doubles
            !
 #if defined _DOUBLE
            Interaction_cccv(ic,ic1,ic2,iv2)=zdotc(BS_n_g_W,Ocv(1,ic2,iv2),1,Occ(1,ic,ic1),1)*4.*pi       
 #else                                                         
            Interaction_cccv(ic,ic1,ic2,iv2)=cdotc(BS_n_g_W,Ocv(1,ic2,iv2),1,Occ(1,ic,ic1),1)*4.*pi       
 #endif
+           ! DEBUG <
+           write(3457,*) ic+Ken%nbf,ic1+Ken%nbf,ic2+Ken%nbf,iv2+BS_bands_doubles(1)-1,&
+&                        Interaction_cccv(ic,ic1,ic2,iv2)
+           ! DEBUG >
          enddo
        enddo
      enddo
@@ -398,28 +430,32 @@ subroutine K_doubles(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    !          1.b: U_{v v1 c2 v2}
    !
-   do iv=1,Ken%nbf-BS_bands(1)+1
+   do iv=1,nv
      do iv1=1,nv_doubles
        !
        if (BS_W_is_diagonal) then
-         forall(i1=1:BS_n_g_W) Ovv(i1,iv,iv1)=Ovv(i1,iv,iv1)*BS_W(i1,1,1) 
+         forall(i1=1:BS_n_g_W) Ovv(i1,iv1,iv)=Ovv(i1,iv1,iv)*BS_W(i1,1,1) 
        else
          !
          do i1=1,BS_n_g_W 
 #if defined _DOUBLE
-           Ovv(i1,iv,iv1)=zdotu(BS_n_g_W,Ovv(1,iv,iv1),1,BS_W(1,i1,1),1)
+           Ovv(i1,iv1,iv)=zdotu(BS_n_g_W,Ovv(1,iv1,iv),1,BS_W(1,i1,1),1)
 #else
-           Ovv(i1,iv,iv1)=cdotu(BS_n_g_W,Ovv(1,iv,iv1),1,BS_W(1,i1,1),1)
+           Ovv(i1,iv1,iv)=cdotu(BS_n_g_W,Ovv(1,iv1,iv),1,BS_W(1,i1,1),1)
 #endif
          enddo
        endif
        do iv2=1,nv_doubles
-         do ic2=1,BS_bands_doubles-nv_doubles
+         do ic2=1,nc_doubles
 #if defined _DOUBLE
-           Interaction_vvcv(iv,iv1,ic2,iv2)=zdotc(BS_n_g_W,Ocv(1,ic2,iv2),1,Ovv(1,iv,iv1),1)*4.*pi       
+           Interaction_vvcv(iv1,iv,ic2,iv2)=zdotc(BS_n_g_W,Ocv(1,ic2,iv2),1,Ovv(1,iv1,iv),1)*4.*pi       
 #else                                                         
-           Interaction_vvcv(iv,iv1,ic2,iv2)=cdotc(BS_n_g_W,Ocv(1,ic2,iv2),1,Ovv(1,iv,iv1),1)*4.*pi
+           Interaction_vvcv(iv1,iv,ic2,iv2)=cdotc(BS_n_g_W,Ocv(1,ic2,iv2),1,Ovv(1,iv1,iv),1)*4.*pi
 #endif
+           ! DEBUG <
+           write(3458,*) iv+BS_bands(1)-1,iv1+BS_bands_doubles(1)-1,ic2+Ken%nbf,iv2+BS_bands_doubles(1)-1,&
+&                        Interaction_vvcv(iv1,iv,ic2,iv2)
+           ! DEBUG >
          enddo
        enddo
      enddo
@@ -427,7 +463,7 @@ subroutine K_doubles(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    !  Step 2: Here the code constructs the half-diagrams
    !          D1(icv,i_doubles) and D2(icv,i_doubles),
-   !          starting from U_{cc1,c2v2} and U_{vv1,c2v2}
+   !          starting from U_{cc1,c2v2} and U_{v1v,c2v2}
    !
    !          c  ===<===:===<===  c1              c  ===<===x===<===  c1
    !                    :                                   
@@ -442,24 +478,31 @@ subroutine K_doubles(iq,Ken,Xk,q,X,Xw,W_bss)
    !          and the final simmetrized expression:
    !          C_{sd}=0.25*[D1+D2 -(c1<->c2) -(v1<->v2) +(c1,v1<->c2,v2)]
    !
+   !DEBUG <
+   write(3459,*) '                                                                       ',&
+&                '       kin1            kin2            kin3            kin4     ',&
+&                '       kin5            kin6            kin7            kin8     ',&
+&                '       kin1            kin2            kin3            kin4     ',&
+&                '       kin5            kin6            kin7            kin8     '
+   !DEBUG >
    !
    !
    do i_doubles=1,BS_K_doubles_dim
-     iv1=BS_doubles_table(i_doubles,1)
-     iv2=BS_doubles_table(i_doubles,2)
+     iv1=BS_doubles_table(i_doubles,1)-BS_bands_doubles(1)+1
+     iv2=BS_doubles_table(i_doubles,2)-BS_bands_doubles(1)+1
      ic1=BS_doubles_table(i_doubles,3)-Ken%nbf
      ic2=BS_doubles_table(i_doubles,4)-Ken%nbf
      !
      do icv=1,BS_K_dim
-       iv=BS_eh_table(icv,2)
+       iv=BS_eh_table(icv,2)-BS_bands(1)+1
        ic=BS_eh_table(icv,3)-Ken%nbf
-       if (iv==iv1) then
+       if (iv+BS_bands(1)==iv1+BS_bands_doubles(1)) then
          BS_mat_doubles(icv,i_doubles,1)=&
 &               Interaction_cccv(ic,ic1,ic2,iv2)                      !D1
          BS_mat_doubles(icv,i_doubles,2)=&
 &              -Interaction_cccv(ic,ic2,ic1,iv2)                      !D1c
        endif
-       if (iv==iv2) then 
+       if (iv+BS_bands(1)==iv2+BS_bands_doubles(1)) then 
          BS_mat_doubles(icv,i_doubles,3)=&
 &               Interaction_cccv(ic,ic1,ic2,iv1)                      !D1v
          BS_mat_doubles(icv,i_doubles,4)=&
@@ -467,16 +510,28 @@ subroutine K_doubles(iq,Ken,Xk,q,X,Xw,W_bss)
        endif
        if (ic==ic1) then
          BS_mat_doubles(icv,i_doubles,5)=&
-&               Interaction_vvcv(iv-BS_bands(1)+1,iv1,ic2,iv2)        !D2
+&               Interaction_vvcv(iv1,iv,ic2,iv2)                      !D2
          BS_mat_doubles(icv,i_doubles,7)=&
-               -Interaction_vvcv(iv-BS_bands(1)+1,iv2,ic2,iv1)        !D2v
+               -Interaction_vvcv(iv2,iv,ic2,iv1)                      !D2v
        endif
        if (ic==ic2) then 
          BS_mat_doubles(icv,i_doubles,6)=&
-&               Interaction_vvcv(iv-BS_bands(1)+1,iv1,ic1,iv2)        !D2c
+&               Interaction_vvcv(iv1,iv,ic1,iv2)                      !D2c
          BS_mat_doubles(icv,i_doubles,8)=&
-&              -Interaction_vvcv(iv-BS_bands(1)+1,iv2,ic1,iv1)        !D2cv
+&              -Interaction_vvcv(iv2,iv,ic1,iv1)                      !D2cv
        endif
+       ! DEBUG <
+       write(3459,*) ic+Ken%nbf,iv+BS_bands(1),&
+&                    ic1+Ken%nbf,ic2+Ken%nbf,iv1+BS_bands_doubles(1),iv2+BS_bands_doubles(1),&
+&                    real(BS_mat_doubles(icv,i_doubles,1)),real(BS_mat_doubles(icv,i_doubles,2)),&
+&                    real(BS_mat_doubles(icv,i_doubles,3)),real(BS_mat_doubles(icv,i_doubles,4)),&
+&                    real(BS_mat_doubles(icv,i_doubles,5)),real(BS_mat_doubles(icv,i_doubles,6)),&
+&                    real(BS_mat_doubles(icv,i_doubles,7)),real(BS_mat_doubles(icv,i_doubles,8)),&
+&                    aimag(BS_mat_doubles(icv,i_doubles,1)),aimag(BS_mat_doubles(icv,i_doubles,2)),&
+&                    aimag(BS_mat_doubles(icv,i_doubles,3)),aimag(BS_mat_doubles(icv,i_doubles,4)),&
+&                    aimag(BS_mat_doubles(icv,i_doubles,5)),aimag(BS_mat_doubles(icv,i_doubles,6)),&
+&                    aimag(BS_mat_doubles(icv,i_doubles,7)),aimag(BS_mat_doubles(icv,i_doubles,8))
+       ! DEBUG >
      enddo
    enddo
    !
@@ -510,8 +565,14 @@ subroutine K_doubles(iq,Ken,Xk,q,X,Xw,W_bss)
  call mem_est("Occ Ovv Ocv")
  deallocate(BS_W)
  call mem_est("BS_W")
- deallocate(BS_doubles_table)
- call mem_est("BS_doubles_table")
+ deallocate(BS_doubles_table,BS_doubles_E)
+ call mem_est("BS_doubles_table BS_doubles_E")
  !
+ ! DEBUG >
+ close(unit=3456)
+ close(unit=3457)
+ close(unit=3458)
+ close(unit=3459)
+ ! DEBUG <
  !
 end subroutine

@@ -53,7 +53,8 @@ PROJECTS = yambo_ph yambo_sc ypp_ph yambo_ras yambo_reels \
 	       ypp_ras yambo_manyk yambo_ras_manyk yambo_tb yambo_gamma \
            yambo_magnon yambo_dipole_rim yambo_partial_diago \
            yambo_solitons yambo_doubles
-EXE      = $(TARGETS) $(PROJECTS) 
+TESTS    = yambo_test_1 
+EXE      = $(TARGETS) $(PROJECTS) $(TESTS)
 INTERFCS = a2y p2y e2y 
 #
 # Libraries (ordered for compiling & linking)
@@ -144,6 +145,10 @@ ypp_ph: libs
 ypp_ras: libs
 	@LIBS2DO="$(YPPRASLIBS)" ; ADF="-D_YPP_RAS";$(mksrc)
 	@X2DO="ypp_ras" ;XPATH="ypp";XLIBS="$(YPPRASLIBS)"; ADF="-D_YPP_RAS";$(mkx)
+# TESTS #
+yambo_test_1: libs
+	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_TEST_1"; $(mksrc)
+	@X2DO="yambo_test_1"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_TEST_1";$(mkx)
 #
 interfaces: libs
 	@LIBS2DO="$(2SLIBS)" ; $(mksrc)
@@ -173,6 +178,7 @@ define make_message
  for target in $(TARGETS); do echo  " [stable] $$target" ; done;echo;\
  for target in $(PROJECTS); do echo " [devel] $$target" ; done;echo;\
  for target in $(UTILS); do echo  " [util] $$target" ; done;echo
+ for target in $(TESTS); do echo  " [tests] $$target" ; done;echo
  for target in $(CLEANS); do echo  " [clean] $$target" ; done;echo
 endef
 define mksrc

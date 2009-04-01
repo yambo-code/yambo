@@ -78,7 +78,10 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  integer           ::i_err,ID
  type(w_samp)      ::W_disk
- integer, external ::ioBSS_invert,ioBS_doubles
+ integer, external ::ioBSS_invert
+#if defined _DOUBLES
+ integer, external ::ioBS_doubles
+#endif
  integer, allocatable     ::inv_err_disk(:),disk_freq_table(:)
  complex(SP), allocatable ::eps_2start(:)
  !

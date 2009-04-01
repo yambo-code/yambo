@@ -153,7 +153,7 @@ if test -z "${FCFLAGS}"; then
          CPU_FLAG="-tpp7"
          ;;
       esac
-      FCFLAGS="-assume bscc -O3 $CPU_FLAG"
+      FCFLAGS="-assume bscc -O3 -ip $CPU_FLAG"
       UFFLAGS="-assume bscc -O0 $CPU_FLAG"
       FCMFLAG="-nofor_main"
     ;;
@@ -178,7 +178,7 @@ if test -z "${FCFLAGS}"; then
          CPU_FLAG="-mtune=pentium4"
          ;;
       esac
-      FCFLAGS="-assume bscc -O3 $CPU_FLAG"
+      FCFLAGS="-assume bscc -O3 -ip $CPU_FLAG"
       UFFLAGS="-assume bscc -O0 $CPU_FLAG"
       FCMFLAG="-nofor_main"
       ;;
@@ -209,7 +209,7 @@ if test -z "${FCFLAGS}"; then
          CPU_FLAG="-tpp7"
          ;;
       esac
-      FCFLAGS="-assume bscc -O3 $CPU_FLAG"
+      FCFLAGS="-assume bscc -O3 -ip $CPU_FLAG"
       UFFLAGS="-assume bscc -O0 $CPU_FLAG"
       FCMFLAG="-nofor_main"
       ;;

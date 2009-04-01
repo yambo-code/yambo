@@ -383,6 +383,11 @@ contains
  !
  subroutine get_symmetries
    use mod_com2y,  ONLY : symmetries_check_and_load
+   use com,        ONLY : warning,error
+
+   real(DP) :: trasl_(3,48)
+
+   trasl_=0._SP
 
 #if defined _P2Y_EXPORT
 
@@ -390,10 +395,14 @@ contains
 
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
 
-   call qexml_read_symmetry(invsym=invsym_, s=isym_(:,:,1:nsym_), ierr=ierr)
+   call qexml_read_symmetry(invsym=invsym_, trasl=trasl_(:,1:nsym_),s=isym_(:,:,1:nsym_), ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_symmetry','IOTK error',ABS(ierr))
 
 #endif
+   !
+   if(any(trasl_(:,1:nsym_)/=0._SP)) then
+     call error(' Non-symmorphic symmetry operations are not supported! Use nosym=.true.ed in PWSCF')
+   endif
 
    ! Note that invsym_ is well defined here, could be used for checks.
    do i1 = 1,nsym_

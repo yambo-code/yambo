@@ -122,7 +122,7 @@ subroutine X_O_transverse(Xen,Xk,X)
      ! 
      ! GPL_EXCLUDE_END SPIN_IGNORE
      !
-     if (io_err==0) call X_O_kb_pp_comp(ik,i_spin,Xk,kbv)
+     if (ioKB_err==0) call X_O_kb_pp_comp(ik,i_spin,Xk,kbv)
      !
      E_i_spin=i_spin
      if (n_spinor==2) E_i_spin=1

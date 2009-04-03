@@ -1,0 +1,2 @@
+objs = init_load.o init.o QP_init.o setup.o G_shells_finder.o \
+       init_q_pts.o  stop_now.o barriers.o check_periodic_directions.o

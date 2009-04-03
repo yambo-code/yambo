@@ -1,3 +1,174 @@
+2009-04-03 11:50:43 r387 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  trunk/configure trunk/include/version.inc trunk/config/configure.ac trunk/common/.objects trunk/common/fermi_level_test_1.F branches/gpl/devel/04_03_2009 branches/gpl/devel/04_03_2009/fermi_level.F branches/gpl/devel/04_03_2009/README branches/gpl/configure branches/gpl/include/version.inc branches/gpl/p2y/mod_p2y.F branches/gpl/config/acx.m4 branches/gpl/config/configure.ac branches/gpl/bse/K.F
+
+	Bugs:
+	- [GPL] Added  in the devel/04_03_2009 a new test version of fermi_level.F
+	        in response to the problem posted in the forum:
+	        http://www.yambo-code.org/forum/viewtopic.php?f=12&t=18
+
+	Additions:
+	- [TRUNK] Added  in the TEST_1 test build the new version of fermi_level.F
+	- [GPL] check in p2y of non symmorphic symmetries
+
+	Changes:
+	- [GPL] Ifort optimization option "-ip" added
+
+	Patch sent by: Andrea
+
+2009-04-01 17:14:42 r386 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc p2y/mod_p2y.F config/Makefile.in config/acx.m4 config/configure.ac bz_ops/k_lattice_test_1.F bz_ops/.objects interface/setup_test_1.F interface/.objects bse/K_inversion.F driver/driver.c
+
+	Additions:
+	- Check in p2y to stop in case of non-symmorphic symmetries (Claudio)
+	- Added TESTS targets in makefile to test devel bug-fixes. Please
+	  try using yambo_test_1 to check the k-grid.
+
+	Patch sent by: Andrea & Claudio
+
+2009-03-31 17:09:03 r384 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Update in _DOUBLES project
+
+2009-03-30 22:27:36 r383 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  trunk/configure trunk/include/version.inc trunk/config/configure.ac trunk/bse/K_driver.F branches/gpl/configure branches/gpl/include/version.inc branches/gpl/config/configure.ac branches/gpl/bse/K_driver.F branches/gpl+spin/configure branches/gpl+spin/include/version.inc branches/gpl+spin/config/configure.ac branches/gpl+spin/bse/K_driver.F
+
+	Bugs:
+	- Bug in K_driver.F. Fixed thanks to John Lawson
+
+	Patch sent by: Andrea
+
+2009-03-30 18:54:26 r382 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	BUG in ioKB_PP. Wrong VARIABLE_NAME. (Davide)
+
+2009-03-30 16:45:56 r381 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  trunk/configure trunk/include/version.inc trunk/config/configure.ac trunk/communicate/acknowledge_yambo.F branches/gpl/configure branches/gpl/include/version.inc branches/gpl/config/Makefile.in branches/gpl/config/configure.ac branches/gpl/communicate/.objects branches/gpl/communicate/section.F branches/gpl/communicate/acknowledge_yambo.F branches/gpl/modules/mod_BS.F branches/gpl/ypp/ypp_init.F branches/gpl/ypp/k_analyze.F branches/gpl/ypp/.objects branches/gpl/ypp/mod_YPP.F branches/gpl/ypp/ypp_init_load.F branches/gpl+spin/configure branches/gpl+spin/include/version.inc branches/gpl+spin/config/configure.ac branches/gpl+spin/communicate/.objects branches/gpl+spin/communicate/section.F branches/gpl+spin/communicate/acknowledge_yambo.F branches/gpl+spin/ypp/ypp_init.F branches/gpl+spin/ypp/k_analyze.F branches/gpl+spin/ypp/mod_YPP.F branches/gpl+spin/ypp/ypp_init_load.F
+
+	Bugs:
+	- In ypp (Claudio)
+
+	Additions:
+	- Acknowledge message at the end of each run (Andrea)
+
+	Patch sent by: Andrea & Claudio
+
+2009-03-30 16:25:57 r380 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Small bug fixed in ypp/k_analyze.F (Claudio)
+
+2009-03-30 15:27:48 r379 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  trunk/configure trunk/include/version.inc trunk/a2y/a2y_wf.F trunk/config/Makefile.in_gpl trunk/config/configure.ac trunk/wf_and_fft/.objects_gpl trunk/modules/mod_real_time.F trunk/ypp/.objects trunk/ypp/.objects_gpl branches/gpl/configure branches/gpl/include/version.inc branches/gpl/e2y/e2y_db1.F branches/gpl/e2y/e2y_kb_pp.F branches/gpl/p2y/p2y_wf.F branches/gpl/a2y/defs_datatypes.F branches/gpl/a2y/a2y_db1.F branches/gpl/a2y/a2y_i.F branches/gpl/a2y/hdr_io.F branches/gpl/a2y/a2y_wf.F branches/gpl/config/Makefile.in branches/gpl/config/configure.ac branches/gpl/qp/QP_driver.F branches/gpl/qp/.objects branches/gpl/pol_function/X_O_transverse.F branches/gpl/pol_function/O_eels.F branches/gpl/pol_function/X_O_kb_pp_comp.F branches/gpl/pol_function/X_O_kb_Ylm.F branches/gpl/pol_function/X_O_kb_sum.F branches/gpl/pol_function/X_O_strengths.F branches/gpl/interface/init_load.F branches/gpl/interface/barriers.F branches/gpl/coulomb/cutoff_test.F branches/gpl/io/ioKB_PP.F branches/gpl/modules/mod_real_time.F branches/gpl/modules/mod_vec_operate.F branches/gpl/modules/mod_pseudo.F branches/gpl/modules/std_presets.F branches/gpl/modules/mod_BS_doubles.F branches/gpl/modules/mod_matrix_operate.F branches/gpl/modules/.objects branches/gpl/modules/mod_D_lattice.F branches/gpl/bse/K_exchange.F branches/gpl/bse/K_dump_to_o_file.F branches/gpl/bse/K.F branches/gpl/driver/yambo_driver.F branches/gpl/sbin/make_makefile.sh.in branches/gpl+spin/configure branches/gpl+spin/include/version.inc branches/gpl+spin/e2y/e2y_db1.F branches/gpl+spin/e2y/e2y_kb_pp.F branches/gpl+spin/p2y/p2y_wf.F branches/gpl+spin/a2y/defs_datatypes.F branches/gpl+spin/a2y/a2y_db1.F branches/gpl+spin/a2y/a2y_i.F branches/gpl+spin/a2y/hdr_io.F branches/gpl+spin/a2y/a2y_wf.F branches/gpl+spin/config/Makefile.in branches/gpl+spin/config/acx_blas.m4 branches/gpl+spin/config/acx_cpp.m4 branches/gpl+spin/config/configure.ac branches/gpl+spin/config/acx_lapack.m4 branches/gpl+spin/lib/slatec/dqwgtf.f branches/gpl+spin/lib/slatec/d1mach.f branches/gpl+spin/lib/slatec/polfit.f branches/gpl+spin/lib/slatec/dbesi0.f branches/gpl+spin/lib/slatec/dbsi1e.f branches/gpl+spin/lib/slatec/dbesk1.f branches/gpl+spin/lib/slatec/dbsk1e.f branches/gpl+spin/lib/slatec/dqag.f branches/gpl+spin/lib/slatec/dqawoe.f branches/gpl+spin/lib/slatec/dqk21.f branches/gpl+spin/lib/slatec/davint.f branches/gpl+spin/lib/slatec/dqk61.f branches/gpl+spin/lib/slatec/initds.f branches/gpl+spin/lib/slatec/pcoef.f branches/gpl+spin/lib/slatec/pvalue.f branches/gpl+spin/lib/slatec/dbsi0e.f branches/gpl+spin/lib/slatec/dbsk0e.f branches/gpl+spin/lib/slatec/dbesj1.f branches/gpl+spin/lib/slatec/dqk15w.f branches/gpl+spin/lib/slatec/dcsevl.f branches/gpl+spin/lib/slatec/dqk15.f branches/gpl+spin/lib/slatec/dqk51.f branches/gpl+spin/lib/slatec/dqcheb.f branches/gpl+spin/lib/slatec/d9b0mp.f branches/gpl+spin/lib/slatec/d9b1mp.f branches/gpl+spin/lib/slatec/dqelg.f branches/gpl+spin/lib/slatec/dbesi1.f branches/gpl+spin/lib/slatec/dbesk0.f branches/gpl+spin/lib/slatec/dqage.f branches/gpl+spin/lib/slatec/dqk41.f branches/gpl+spin/lib/slatec/dqc25f.f branches/gpl+spin/lib/slatec/dbesj0.f branches/gpl+spin/lib/slatec/dqawo.f branches/gpl+spin/lib/slatec/dgtsl.f branches/gpl+spin/lib/slatec/dqpsrt.f branches/gpl+spin/lib/slatec/.objects branches/gpl+spin/lib/slatec/dqk31.f branches/gpl+spin/xc_functionals/el_density.F branches/gpl+spin/xc_functionals/.objects branches/gpl+spin/xc_functionals/xc_lda_driver.F branches/gpl+spin/qp/QP_driver.F branches/gpl+spin/qp/DFT_Vxc.F branches/gpl+spin/qp/QP_XX_Vxc.F branches/gpl+spin/qp/.objects branches/gpl+spin/qp/QP_of.F branches/gpl+spin/qp/QP_descriptions.F branches/gpl+spin/qp/QP_ppa_chosex.F branches/gpl+spin/qp/QP_newton.F branches/gpl+spin/qp_ctl/QP_apply_stretch.F branches/gpl+spin/qp_ctl/mod_QP_CTL.F branches/gpl+spin/external_c/ct_etime.c branches/gpl+spin/common/pol_fit.F branches/gpl+spin/common/extend_occupations.F branches/gpl+spin/common/.objects branches/gpl+spin/common/kk.F branches/gpl+spin/common/QP_state_table_setup.F branches/gpl+spin/common/fermi_level.F branches/gpl+spin/parser/ps_convert.F branches/gpl+spin/parser/init_convert.F branches/gpl+spin/parser/mod_itm.F branches/gpl+spin/bz_ops/k_lattice.F branches/gpl+spin/wf_and_fft/space_inv_by_wf.F branches/gpl+spin/wf_and_fft/.objects branches/gpl+spin/pol_function/X_O_transverse.F branches/gpl+spin/pol_function/O_eels.F branches/gpl+spin/pol_function/X_os.F branches/gpl+spin/pol_function/O_driver.F branches/gpl+spin/pol_function/X_O_kb_pp_comp.F branches/gpl+spin/pol_function/X_O_kb_Ylm.F branches/gpl+spin/pol_function/.objects branches/gpl+spin/pol_function/X_O_kb_sum.F branches/gpl+spin/pol_function/X_O_strengths.F branches/gpl+spin/interface/check_periodic_directions.F branches/gpl+spin/interface/setup.F branches/gpl+spin/interface/init_load.F branches/gpl+spin/interface/.objects branches/gpl+spin/interface/init.F branches/gpl+spin/interface/barriers.F branches/gpl+spin/coulomb/bessel_F2.F branches/gpl+spin/coulomb/bessel_F6.F branches/gpl+spin/coulomb/cutoff_cylinder.F branches/gpl+spin/coulomb/cutoff_test.F branches/gpl+spin/communicate/report_energies.F branches/gpl+spin/communicate/fermi_msg.F branches/gpl+spin/tddft/tddft_alda_g_space.F branches/gpl+spin/io/variables_BS.F branches/gpl+spin/io/ioDB1.F branches/gpl+spin/io/ioX.F branches/gpl+spin/io/io_header.F branches/gpl+spin/io/ioOSTNTS.F branches/gpl+spin/io/ioKB_PP.F branches/gpl+spin/io/.objects branches/gpl+spin/modules/mod_electrons.F branches/gpl+spin/modules/mod_logo.F branches/gpl+spin/modules/mod_frequency.F branches/gpl+spin/modules/mod_real_time.F branches/gpl+spin/modules/mod_units.F branches/gpl+spin/modules/mod_BS.F branches/gpl+spin/modules/mod_TDDFT.F branches/gpl+spin/modules/mod_R_lattice.F branches/gpl+spin/modules/mod_memory.F branches/gpl+spin/modules/mod_functions.F branches/gpl+spin/modules/mod_drivers.F branches/gpl+spin/modules/mod_vec_operate.F branches/gpl+spin/modules/mod_pseudo.F branches/gpl+spin/modules/std_presets.F branches/gpl+spin/modules/mod_par_indexes.F branches/gpl+spin/modules/mod_stderr.F branches/gpl+spin/modules/mod_pars.F branches/gpl+spin/modules/mod_IO.F branches/gpl+spin/modules/mod_X.F branches/gpl+spin/modules/mod_com.F branches/gpl+spin/modules/mod_FFT.F branches/gpl+spin/modules/mod_QP.F branches/gpl+spin/modules/mod_BS_doubles.F branches/gpl+spin/modules/mod_matrix_operate.F branches/gpl+spin/modules/.objects branches/gpl+spin/modules/mod_ELPH.F branches/gpl+spin/modules/mod_D_lattice.F branches/gpl+spin/bse/K_exchange.F branches/gpl+spin/bse/K_dump_to_o_file.F branches/gpl+spin/bse/K_filling.F branches/gpl+spin/bse/K_driver.F branches/gpl+spin/bse/K_diagonalization.F branches/gpl+spin/bse/K.F branches/gpl+spin/ypp/ypp_init.F branches/gpl+spin/ypp/exc_properties.F branches/gpl+spin/ypp/plot_xcrysden.F branches/gpl+spin/ypp/exc_wf_sort_and_report.F branches/gpl+spin/ypp/exc_collinear_spin.F branches/gpl+spin/ypp/reels_ypp.F branches/gpl+spin/ypp/loc_ypp.F branches/gpl+spin/ypp/generate_epsdb.F branches/gpl+spin/ypp/mod_YPP.F branches/gpl+spin/ypp/excitons_driver.F branches/gpl+spin/ypp/electrons_driver.F branches/gpl+spin/ypp/exc_non_collinear_spin.F branches/gpl+spin/ypp/trans_ypp.F branches/gpl+spin/ypp/ypp_i.F branches/gpl+spin/ypp/BZ_RIM.F branches/gpl+spin/ypp/elph_eliashberg_dos.F branches/gpl+spin/ypp/.objects branches/gpl+spin/ypp/plot_gnuplot.F branches/gpl+spin/ypp/elph_pw_dbs.F branches/gpl+spin/ypp/plot_check_and_launch.F branches/gpl+spin/ypp/plot_driver.F branches/gpl+spin/ypp/ypp_init_load.F branches/gpl+spin/driver/getopt.c branches/gpl+spin/driver/yambo_driver.F branches/gpl+spin/driver/driver.c branches/gpl+spin/driver/ypp.h branches/gpl+spin/sbin/make_makefile.sh.in
+
+	Additions:
+	- A2Y support for Abinit 5.7.3
+
+	Changes:
+	- Overall syncronization of trunk with GPL and GPL+SPIN branches
+
+	Patch sent by: Andrea
+
+2009-03-30 13:27:48 r378 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Rejected patches cleaned. Preparing GPL branches
+
+2009-03-30 12:56:26 r377 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  e2y/e2y_db1.F a2y/hdr_io.F_v4 a2y/a2y_db1.F a2y/a2y_i.F a2y/a2y_wf.F a2y/defs_datatypes.F_v4 a2y/abinit-5.7.3 a2y/abinit-5.7.3/defs_basis.F90 a2y/abinit-5.7.3/hdr_io.F90 a2y/abinit-5.7.3/outkss.F90 a2y/abinit-5.7.3/defs_datatypes.F90 pol_function/X_O_transverse.F pol_function/X_O_strengths.F coulomb/cutoff_test.F io/ioKB_PP.F modules/std_presets.F
+
+	Bugs:
+	- cutoff_test.F (daniele)
+
+	Additions:
+	- SPIN SUPPORT in a2y and in [Vnl,r] KB components (changed
+	  dimensions in e2y. TO TEST (conor))
+	- Pseudo variables move from mod_D_lattice to a new module
+	  (mod_pseudo.F) added to fix some dependecy problems.
+
+	Changes:
+	- src/pol_function/X_O_*.F changed in order to include spin
+	  indexes. Note the change of order in the loops in X_O_transverse.F.
+
+	Patch sent by: Andrea
+
+2009-03-29 21:45:34 r376 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Temporary version. Working on a2y with spin support
+
+2009-03-24 15:56:44 r375 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Completing previous commit
+
+2009-03-24 15:53:55 r374 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc a2y/a2y_wf.F config/Makefile.in config/Makefile.in_gpl config/configure.ac interface/init_load.F interface/init.F sc/RT_driver.F sc/RT_Collision.F sc/RT_Integrator.F modules/mod_electrons.F modules/mod_real_time.F modules/std_presets.F ypp/ypp_init.F ypp/elph_excitonic_gkkp.F ypp/BZ_RIM.F
+
+	Additions:
+	- [SC] All the integrators (EULER,EXACT,RK2,RK2EXACT) give the same result now
+	- Added clean and clean_all in makefile targets
+
+	Patch sent by: Claudio
+
+2009-03-24 10:53:53 r373 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Update in DOUBLES project
+
+2009-03-20 17:55:48 r372 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	SC_driver reverted to rev 369
+
+2009-03-20 17:55:18 r371 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	SC_driver reverted to rev 369
+
+2009-03-20 15:56:26 r370 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	DOUBLES project update
+
+2009-03-18 10:08:54 r369 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Doubles project update
+
+2009-03-13 11:44:22 r368 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  modules/mod_vec_operate.F modules/std_presets.F modules/mod_BS_doubles.F modules/mod_matrix_operate.F modules/.objects bse/K_doubles.F ypp/elph_excitonic_gkkp.F
+
+	Additions:
+	- [DOUBLES] mod_BS_doubles.F
+
+	Changes:
+	- [DOUBLES] K_doubles.F modified. Only Gamma point implemented.
+
+	Patch sent by: Andrea & Davide (Sangalli)
+
+2009-03-10 11:01:37 r366 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Small changes in GW_REAL_AXIS GPL project
+
+2009-03-10 09:20:09 r365 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Added GW_REAL_AXIS IGNORE in GPL sections. Added K_doubles.F
+
 2009-03-06 18:16:41 r362 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Wrong optional in X_O_strengths.F

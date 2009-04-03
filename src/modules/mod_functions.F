@@ -38,11 +38,7 @@ module functions
      Fermi_fnc=1.
      if (T==0..and.E>0.) Fermi_fnc=0.
      !
-     ! GPL_EXCLUDE_START
-     !
      if (T/=0.) Fermi_fnc=1./(1.+exp(E/T))
-     !
-     ! GPL_EXCLUDE_END
      !
      if (Fermi_fnc<filled_tresh)  Fermi_fnc=0.
      !

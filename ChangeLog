@@ -1,3 +1,11 @@
+2009-04-03 17:48:46 r389 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Minor bug in X_O_transverse (discovere by Claudio)
+
+2009-04-03 12:09:45 r388 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	To complete rev. 387. Forgot to add finite T in Fermi function
+
 2009-04-03 11:50:43 r387 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Version 3.2.1

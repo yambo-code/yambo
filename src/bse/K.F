@@ -302,7 +302,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Screneed interaction
    !
    X%ng=BS_n_g_W
-   !
    ! GPL_EXCLUDE_START
    if (.not.l_td_hf) then
      ! GPL_EXCLUDE_END
@@ -692,8 +691,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
    deallocate(O_v_state,O_c_state,O_n_c_states,O_n_v_states)
    call mem_est("O_v_state O_c_state O_n_c_states O_n_v_states")
-   deallocate(BS_W,O_phase,ik_is_table)
-   call mem_est("BS_W O_phase ik_is_table")
+#if !defined _DOUBLES
+   deallocate(BS_W)
+   call mem_est("BS_W")
+#endif
+   deallocate(O_phase,ik_is_table)
+   call mem_est("O_phase ik_is_table")
    deallocate(Ovv,Occ,Cc)
    call mem_est("O_RES_WS")
    deallocate(BS_O)
@@ -709,6 +712,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! GPL_EXCLUDE_END
    !
  endif
+ !
  !
  if (l_bs_fxc) then
    !
@@ -726,7 +730,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! DOUBLES excitations contribution
 #if defined _DOUBLES
- call K_doubles(iq,Ken,Xk,q,X,Xw,W_bss)
+ call K_doubles(Ken,BS_W)
+ deallocate(BS_W)
+ call mem_est("BS_W")
 #endif
  !
  ! Final CLEAN

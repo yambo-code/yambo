@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine k_analize(en,k,Xk,q)
+subroutine k_analize(en,k,Xk,q,Only_print_q_grid)
  !
  use pars,                ONLY:SP,schlen
  use electrons,           ONLY:levels
@@ -39,6 +39,7 @@ subroutine k_analize(en,k,Xk,q)
  ! Work Space
  !
  type(bz_samp)::USER_K,Final_K,Q_user
+ logical      ::Only_print_q_grid
  real(SP)     ::real_ctl,v(3),ka(3),q0(3)
  integer      ::i1,i2,is,ik, j1
  real(SP):: kout(Xk%nibz,3)
@@ -60,19 +61,19 @@ subroutine k_analize(en,k,Xk,q)
  call msg("s",'Q-points  (BZ):',q%nbz)
  call parser('NoWeights',No_Weight)
  !
+ if (Only_print_q_grid) then
+   !  
+   call section('*',"== Built-in Q-grid ==")
+   !=========================================
+   call print_the_grid(q)
+   !
+   return
+   !
+ endif
+ !
  call section('*',"== Built-in K-grid ==")
  !=========================================
- live_timing_is_on=.false.
- do i1=1,Xk%nibz
-   if (trim(coo_out)=="rlu") then
-     call c2a(v_in=Xk%pt(i1,:),v_out=v,mode="ki2a")
-   else if (trim(coo_out)=="iku") then
-     v=Xk%pt(i1,:)
-   endif
-   write(ch,'(3(f12.7,1x))') v
-   call msg("s",'      ',trim(ch))
- enddo
- live_timing_is_on=.true.
+ call print_the_grid(Xk)
  !
  call section('*',"== GW K-grid analyzer ==")
  !===========================================
@@ -271,6 +272,23 @@ subroutine k_analize(en,k,Xk,q)
  !
  !
  contains
+   !
+   subroutine print_the_grid(K_)
+     type(bz_samp)   ::K_
+     !
+     live_timing_is_on=.false.
+     do i1=1,K_%nibz
+       if (trim(coo_out)=="rlu") then
+         call c2a(v_in=K_%pt(i1,:),v_out=v,mode="ki2a")
+       else if (trim(coo_out)=="iku") then
+         v=K_%pt(i1,:)
+       endif
+       write(ch,'(3(f12.7,1x))') v
+       call msg("s",'      ',trim(ch))
+     enddo
+     live_timing_is_on=.true.
+     !
+   end subroutine 
    !
    subroutine reduce_and_print(K_grid,GW_grid)
      !

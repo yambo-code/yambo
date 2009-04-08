@@ -67,7 +67,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! Work Space
  !
  integer                  :: ir,i1,i2,ik,ib,ibp,WF_G_max,WF_Go_indx,ID(3),io_E,io_V,io_WF
- real(SP)                 :: max_proj,V_xc_sc_shift
+ real(SP)                 :: max_proj,E_v_shift
  complex(SP)              :: Ho(SC_bands,SC_bands,k%nibz)
  character(schlen)        :: dumb_ch
  integer, external        :: io_SC_components,eval_G_minus_G
@@ -296,7 +296,15 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2))
  io_WF=io_SC_components('WF',E,ID(2))
  !
+ if (RESTART.or.NSC_shot) then
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID(3))  ! Local potential
+   io_V=io_SC_components('V' ,E,ID(3))
+ endif
+ !
  if (RESTART) then
+   !
+   if ((1.-SC_cycle_mixing)>1.E-5) call &
+&    warning('Short splitted runs with fractional mixing may give different results')
    !
    ! RESTART
    !
@@ -319,9 +327,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    ! Non-SC shot
    !
    it_now=0
-   ! ... reload again the scV DB to update the Hartree potential
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(3)) 
-   io_V=io_SC_components('V' ,E,ID(3))
    !
  else
    !
@@ -568,9 +573,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! must be shifted of max(Ev)-max(E_bare_v)
  ! for more details see A. Fleszar PRB 64, 245204
  !
- V_xc_sc_shift= maxval(E_bare(:n_met_bands,:))-maxval(E%E(:n_met_bands,:,:)) 
+ E_v_shift= maxval(E_bare(:n_met_bands,:))-maxval(E%E(:n_met_bands,:,:)) 
+ !
  if (local_V) then
-   V_xc_sc=V_xc_sc+V_xc_sc_shift
+   if (.not.l_sc_hartree) V_xc_sc=V_xc_sc+E_v_shift
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(3))
    io_V=io_SC_components('V' ,E,ID(3))
  endif

@@ -137,8 +137,6 @@ subroutine fermi_msg(E,mode)
  !
  ! [3] Report if the system is treated as a metal
  !
- if (E%nbf/=E%nbm.and..not.any(nbf_/=nbm_)) then
-   call warning('Merged spin levels are metallic')
- endif
+ if (E%nbf/=E%nbm.and..not.any(nbf_/=nbm_)) call warning('Merged spin levels are metallic') 
  !
 end subroutine

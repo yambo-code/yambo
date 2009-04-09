@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function elph_pw_dbs(k,E,q)
+integer function elph_databases(k,E,q)
  !
  use pars,                ONLY:DP,SP
  use stderr,              ONLY:intc
@@ -49,7 +49,7 @@ integer function elph_pw_dbs(k,E,q)
  !
  integer            ::idb,io_err,io_elph_err,ID
  integer, external  ::ioELPH 
- logical            ::dbs_fragment_save,use_ext_ph_freqs
+ logical            ::dbs_fragment_save,use_ext_ph_freqs,abinit_DB
  !
  !... dummies 
  !
@@ -68,11 +68,11 @@ integer function elph_pw_dbs(k,E,q)
  elph_use_q_grid=.true.
  elph_nq=0
  iq_db=0
- elph_pw_dbs=0
+ elph_databases=0
  !
  do while (.TRUE.)
    elph_nq=elph_nq+1
-   io_err=elph_pw_dbs_io(-elph_nq)
+   io_err=elph_databases_io(-elph_nq)
    if (io_err==-1) exit
    if (io_err==-2) then
      call msg("l","incorrect K-point correspondance")
@@ -120,7 +120,7 @@ integer function elph_pw_dbs(k,E,q)
  dbs_fragment_save=dbs_fragment
  dbs_fragment=.TRUE.
  !
- ! With the external ph_freqs_file PW file I can overwrite the 
+ ! With the external ph_freqs_file I can overwrite the 
  ! phonon frequencies read from the s.dbph* files. In this way I can, for example, 
  ! use ph freqs obtained via interpolation (q2r, matdyn ...).
  ! 
@@ -139,7 +139,7 @@ integer function elph_pw_dbs(k,E,q)
    iq=idb
    if (elph_use_q_grid) iq=iq_db(idb)
    !
-   io_err=elph_pw_dbs_io(idb)
+   io_err=elph_databases_io(idb)
    !
    if (io_err==-1) then
      call live_timing(steps=1)
@@ -169,13 +169,13 @@ integer function elph_pw_dbs(k,E,q)
  !
  contains
    !
-   integer function elph_pw_dbs_io(idb_)
+   integer function elph_databases_io(idb_)
    !------------------------------------
    !
    ! s.dbph_ structure
    !
    !   read (99) ph_modes,elph_nk,elph_nb
-   !   read (99) pw_alat,pw_q,pw_k
+   !   read (99) alat_DP,Q_DP,K_DP
    !   read (99) ph_freqs_sq
    !   DO ik=1,nksq
    !     read (99) elph_gkkp_disk
@@ -210,9 +210,9 @@ integer function elph_pw_dbs(k,E,q)
    !
    integer           :: ID,io_err,type_
    character(schlen) :: db_name
-   real(SP)          :: dVRY2Ha,pw_q_iku(3),ph_q(3)
-   real(DP)          :: pw_k(3,k%nbz),pw_alat,pw_q(3),Ek(n_bands),&
-&                       Ek_p_q(n_bands),pw_E_k_shift
+   real(SP)          :: dVRY2Ha,ph_q_disk(3),ph_q(3),K_(3,k%nbz)
+   real(DP)          :: K_DP(3,k%nbz),alat_DP,Q_DP(3),Ek(n_bands),&
+&                       Ek_p_q(n_bands),GS_E_k_shift
    real(DP),    allocatable :: ph_freqs_sq_disk(:)
    complex(DP), allocatable :: gkkp_disk(:,:,:),pol_vec(:,:,:)
    !
@@ -221,7 +221,7 @@ integer function elph_pw_dbs(k,E,q)
    integer           :: i1,ik,k_found(k%nbz),k2k_tab(k%nbz),ikbz_rot,iq_check
    integer           :: nsmall,small(nsym)
    !
-   elph_pw_dbs_io=-1
+   elph_databases_io=-1
    !
    call io_control(ACTION=OP_RD,ID=ID)
    !
@@ -232,33 +232,46 @@ integer function elph_pw_dbs(k,E,q)
    if (trim(elph_dbs_path)=='.') type_=-2
    io_err=io_connect(desc=trim(db_name),subfolder=trim(elph_dbs_path),type=type_,ID=ID)
    !
-   elph_pw_dbs_io=io_err
+   elph_databases_io=io_err
    if (io_err/=0) return  
    !
    ! HEADER 
    !
    read (io_unit(ID)) ph_modes,elph_nk,elph_nb
-   read (io_unit(ID)) pw_alat,pw_q,pw_k(:,:elph_nk)
+   read (io_unit(ID)) alat_DP,Q_DP,K_DP(:,:elph_nk) 
    !
-   if (elph_nb>n_bands) elph_pw_dbs_io=-1
+   abinit_DB=alat_DP<0._DP
+   !
+   if (elph_nb>n_bands) elph_databases_io=-1
    if (elph_nb>n_bands) return
    !
-   pw_q_iku(:)=pw_q(:)/pw_alat*alat(:)
-   forall (i1=1:elph_nk) pw_k(:,i1)=pw_k(:,i1)/pw_alat*alat(:)
+   if (abinit_DB) then
+     if (idb_==-1) call msg("l","[ABINIT] ...")
+     ph_q_disk(:)=Q_DP(:)
+     call c2a(v_in=ph_q_disk,mode="ka2i")
+     K_=K_DP
+     do i1=1,elph_nk
+       call c2a(v_in=K_(:,i1),mode="ka2i")
+     enddo
+   else
+     call msg("l","[PHONON] ...")
+     ph_q_disk(:)=Q_DP(:)/alat_DP*alat(:)
+     forall (i1=1:elph_nk) K_(:,i1)=K_DP(:,i1)/alat_DP*alat(:)
+   endif
    !
    if (idb_<0) then
      iq_check=0
      do i1=1,nqibz
-       if (v_is_zero(pw_q_iku(:)+q%pt(i1,:),zero_=k_iku_zero)) iq_check=i1
+       if (v_is_zero(ph_q_disk(:)+q%pt(i1,:),zero_=k_iku_zero)) iq_check=i1
      enddo
      if (iq_check==0) elph_use_q_grid=.false.
-     elph_pw_dbs_io=iq_check
+     elph_databases_io=iq_check
      !
      ! When elph_use_q_grid = .false. idb_ is the q-pt counter
      !
      if (iq_check==0) iq_check=iabs(idb_)
      !
-     ph_qpt_(iq_check,:)=pw_q_iku
+     ph_qpt_(iq_check,:)=ph_q_disk
      !
    endif
    !
@@ -268,32 +281,33 @@ integer function elph_pw_dbs(k,E,q)
    k_found=0
    do i1=1,elph_nk
      !
-     ! For non zero phonon q PW grid is composed of (k_1,k_1+q,k_2,k_2+q ...).
+     ! For non zero phonon q GS grid is composed of (k_1,k_1+q,k_2,k_2+q ...).
      ! I table the  k1,k2 ...
      !
      do ik=1,k%nbz
        if (k_found(ik)==1) cycle
-       call c2a(v_in=k%ptbz(ik,:)-real(pw_k(:,i1),SP),v_out=r_v,mode="ki2a")
+       call c2a(v_in=k%ptbz(ik,:)-K_(:,i1),v_out=r_v,mode="ki2a")
        if (rlu_v_is_zero(r_v,zero_=k_rlu_zero)) then
          k2k_tab(i1)=ik
          k_found(ik)=1
          exit
        endif
      enddo
-     if (k2k_tab(i1)==0) elph_pw_dbs_io=-2
+     if (k2k_tab(i1)==0) elph_databases_io=-2
    enddo
    !
    ! Phonon Frequencies
    !
    allocate(ph_freqs_sq_disk(ph_modes))
    !
-   ! PW energies are in Rydbergs. Here we have the phonon frequencies square
+   ! GS energies are in Rydbergs. Here we have the phonon frequencies square
    !
    read (io_unit(ID)) ph_freqs_sq_disk
    !
    do il=1,ph_modes
      !
-     ph_freq=sqrt( max( real(ph_freqs_sq_disk(il)),0._SP))/2._SP
+     ph_freq=sqrt( max( real(ph_freqs_sq_disk(il)),0._SP))
+     if (.not.abinit_DB) ph_freq=ph_freq/2._SP
      max_ph_freq=max(max_ph_freq,ph_freq)
      !
    enddo
@@ -303,7 +317,7 @@ integer function elph_pw_dbs(k,E,q)
    endif
    if (use_ext_ph_freqs) then
      read(99,*) ph_q 
-     if (.not.v_is_zero(ph_q(:)-real(pw_q(:)),zero_=k_iku_zero)) call error("Incorrect q-point in "//trim(ph_freqs_file))
+     if (.not.v_is_zero(ph_q(:)-real(Q_DP(:)),zero_=k_iku_zero)) call error("Incorrect q-point in "//trim(ph_freqs_file))
      do i1=1,ph_modes,6
        read(99,*) ph_freqs_sq(iq,i1:min(i1+5,ph_modes))
      enddo
@@ -331,45 +345,57 @@ integer function elph_pw_dbs(k,E,q)
      !                                |                               | 
      ! el_ph_mat(i,j,k,I)= <\psi(k+q) n_i|dV_{SCF}/du^q_{i a}|\psi(k) n_j>
      !                           |                          
-     !                           ik[PW]/k2k_tab(ik)[YAMBO]  
+     !                           ik[GS]/k2k_tab(ik)[YAMBO]  
      !
      ! I = (i,a)
      !
-     ! In PW we define
+     ! In GS we define
      !
      !  gkkp_disk(i,j,k,l) = el_ph_mat(i,j,k,I) u(I,l)^* eps_I(q l)/sqrt(M_a)
      !
      ! However YAMBO table describe the k->k-q transitions and not k+q. So we 
      ! define
      !
-     ! g_jik^{qI}|_YAMBO= g_jik^{-qI}|_PW = <k-q n_i|dV_{SCF}/du^-q_{i a}|k n_j>
+     ! g_jik^{qI}|_YAMBO= g_jik^{-qI}|_GS = <k-q n_i|dV_{SCF}/du^-q_{i a}|k n_j>
      !
      ! where k = k2k_tab(ik). Note that this procedure implies that YAMBO {q}'s
-     ! are -{q}'s in PW (note the MinusQ flag).
+     ! are -{q}'s in GS (note the MinusQ flag).
      !
      read (io_unit(ID)) gkkp_disk
      read (io_unit(ID)) pol_vec
      if (idb==1) read (io_unit(ID)) grad_at_gamma(k2k_tab(ik),:,:,:,:)
-     read (io_unit(ID)) Ek(:elph_nb)
-     read (io_unit(ID)) Ek_p_q(:elph_nb)
      !
-     ! To allign correctly the E(k+q) energies I use the shift between
-     ! the ABSOLUTE YAMBO energy levels at k and the PW ones.
-     !
-     pw_E_k_shift=real(Ek(1)/2._DP)-(E%E(1,k%sstar(k2k_tab(ik),1),1)+E%Efermi(1))
-     !
-     E_k_plus_q(:,k2k_tab(ik),1)=real(Ek_p_q(:elph_nb)/2._DP)-pw_E_k_shift
+     if (.not.abinit_DB) then
+       read (io_unit(ID)) Ek(:elph_nb)
+       read (io_unit(ID)) Ek_p_q(:elph_nb)
+       !
+       ! To allign correctly the E(k+q) energies I use the shift between
+       ! the ABSOLUTE YAMBO energy levels at k and the GS ones.
+       !
+       GS_E_k_shift=real(Ek(1)/2._DP)-(E%E(1,k%sstar(k2k_tab(ik),1),1)+E%Efermi(1))
+       !
+       E_k_plus_q(:,k2k_tab(ik),1)=real(Ek_p_q(:elph_nb)/2._DP)-GS_E_k_shift
+       !
+     else
+       E_k_plus_q(:,k2k_tab(ik),1)=0.
+     endif
      !
      do ib1=1,elph_nb
        do ib2=1,elph_nb
          !
-         ! PW energies are in Rydbergs.
+         ! PW     energies are in Rydbergs.
+         ! Abinit energies are in Hartrees.
+         !
+         ! YAMBO is in HARTREE
+         !
+         ! Thus, in the case of PW I need to rescale the gkkp
          !
          !   Here we have <dV/dr>. Now [<V>]=[E] but [<r>]=[E^{-1/2}] so
          !
          !   [<dV/dr>] = [E^{3/2}]   
          !
          dVRY2Ha=2._DP**(-3._DP/2._DP)
+         if (abinit_DB) dVRY2Ha=1._DP
          !
          elph_gkkp(k2k_tab(ik),:,ib1,ib2)=gkkp_disk(ib1,ib2,:)*dVRY2Ha
          !
@@ -401,9 +427,9 @@ integer function elph_pw_dbs(k,E,q)
    !
    ! The small group of q
    ! 
-   call q_small(real(pw_q_iku,SP),small,nsmall)
+   call q_small(ph_q_disk,small,nsmall)
    !
-   ! The pw_k K-grid is reduced using the small group of q. 
+   ! The GS K-grid is reduced using the small group of q. 
    ! I need to expand the K-grid to define the missing elements of elph_dV
    !
    do ik=1,k%nbz
@@ -418,7 +444,7 @@ integer function elph_pw_dbs(k,E,q)
      enddo
    enddo
    !
-   if (any((/k_found==0/))) elph_pw_dbs_io=-4
+   if (any((/k_found==0/))) elph_databases_io=-4
    !
    ! CLEAN
    !

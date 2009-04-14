@@ -21,13 +21,14 @@
 !
 module YPP
  !
- use pars,    ONLY:SP,lchlen,schlen
+ use pars,    ONLY:SP
+ use pars,    ONLY:lchlen
+ use pars,    ONLY:schlen
  implicit none
  !
  ! K analysis
  !
  logical  :: lkanalyze
- logical  :: No_Weight
  real(SP) :: Kgw_1(3)
  real(SP) :: qlong(3,3)
  character(schlen) :: coo_in

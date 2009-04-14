@@ -51,13 +51,13 @@ module SC
  !
  ! Rotation matrices and xc potential
  !
- complex(SP), allocatable :: SC_R(:,:,:)
- real(SP),    allocatable :: V_xc_sc(:)
- real(SP),    allocatable :: V_hartree_sc(:)
+ complex(SP), allocatable :: SC_R(:,:,:,:)
+ real(SP),    allocatable :: V_xc_sc(:,:)
+ real(SP),    allocatable :: V_hartree_sc(:,:)
  !
  ! Non-Local part (sigma_x, sigma_chosex)
  !
- complex(SP), allocatable :: H_nl_sc(:,:)
+ complex(SP), allocatable :: H_nl_sc(:,:,:)
  !
  interface
    !

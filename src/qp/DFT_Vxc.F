@@ -42,7 +42,7 @@ subroutine DFT_Vxc(E,Xk)
  !
  ! Work Space
  !
- integer     ::i1,ifft,ifftp,ifft_sp1,ifft_sp2,ib,ibp,ik,i_sp1,io_err
+ integer     ::i1,ifft,ifftp,ifft_sp1,ifftp_sp1,ifft_sp2,ib,ibp,ik,i_sp1,io_err
 #if defined _DOUBLE
  complex(DP) ::zdotc,zdotu
 #else 
@@ -71,13 +71,13 @@ subroutine DFT_Vxc(E,Xk)
    !
    ! ...SC EXX and EXX+LDA_C
    !
-   allocate(V_xc_sc(fft_size),V_hartree_sc(fft_size))
+   allocate(V_xc_sc(fft_size,n_spin),V_hartree_sc(fft_size,n_spin))
    SC_fft_size=fft_size
    call load_SC_components('V',COM_=REP,MODE_=VERIFY,io_err_=io_err)
    !
    if (io_err/=0) call error('SC potential FFT size is wrong')
    !
-   V_xc(:,1)=V_xc_sc
+   V_xc=V_xc_sc
    deallocate(V_xc_sc,V_hartree_sc)
  endif
 #endif
@@ -152,14 +152,16 @@ subroutine DFT_Vxc(E,Xk)
    do i1=1,QP_n_states
      !
      ib=QP_table(i1,1)
+     ibp=QP_table(i1,2)
      ik=QP_table(i1,3)
      !
      if (n_sp_pol==2) then
        !
        i_sp1=spin(QP_table(i1,:))
        ifft_sp1=wf_state(ib,ik,i_sp1)
+       ifftp_sp1=wf_state(ibp,ik,i_sp1)
        !
-       c_ws(:,1)=wf(:,ifft_sp1)*V_xc_mat(:,i_sp1,i_sp1)
+       c_ws(:,1)=wf(:,ifftp_sp1)*V_xc_mat(:,i_sp1,i_sp1)
        !
 #if defined _DOUBLE
        QP_Vxc(i1)=zdotc(fft_size,wf(:,ifft_sp1),1,c_ws(:,1),1)

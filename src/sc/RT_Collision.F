@@ -23,10 +23,16 @@
 ! This subroutine prepare I1(t_1,t_2) and I2(t_1,t_2) give a G^<(t_1,t_1) 
 ! Actualy it works only for the diagonal I1(t_1,t_1), I2(t_1,t_1)
 !
+!!!!!!
+!WARNING: The variables Sigma_s  have been generalized for spin
+!polarized calculation due to changes in V_to_H subroutine. 
+!Here the spin index is set to 1 ...(Daniele e Maurizia).
+!!!!!!
+
 subroutine RT_Collision(G_input,en,k,RT_time)
  !
  use pars,           ONLY:SP
- use electrons,      ONLY:levels,el_density
+ use electrons,      ONLY:levels,el_density,n_sp_pol
  use drivers,        ONLY:l_sc_exx,l_sc_chosex,l_sc_hartree,l_sc_pz,l_sc_lda_x,&
 &                         l_sc_hf,l_sc_exxc
  use R_lattice,      ONLY:bz_samp
@@ -49,7 +55,7 @@ subroutine RT_Collision(G_input,en,k,RT_time)
  ! Work Space
  !
  integer     :: ik,iv,i1,i2,i3,ik1,ib,ibp
- complex(SP) :: Sigma_s(SC_bands,SC_bands)
+ complex(SP) :: Sigma_s(SC_bands,SC_bands,n_sp_pol)
  !
  ! Update occupations
  !
@@ -74,7 +80,7 @@ subroutine RT_Collision(G_input,en,k,RT_time)
    ! Simple case without anycorrelation just transition between bands
    ! equivalent to RPA without local field effects
    !
-   V_hartree_sc=V_hartree_0
+   V_hartree_sc(:,1)=V_hartree_0
    V_xc        =V_xc_0
    !
  endif
@@ -88,7 +94,7 @@ subroutine RT_Collision(G_input,en,k,RT_time)
    !
    if(l_rt_exc.and..not.l_sc_pz) then 
      !  
-     call V_to_H(ik,-V_xc_0(:,1),Sigma_s,wf)
+     call V_to_H(ik,-V_xc_0,Sigma_s,wf)
      !
    endif
    !
@@ -105,9 +111,9 @@ subroutine RT_Collision(G_input,en,k,RT_time)
      ! If I do not integrate analyticaly the H_o(rho_o) part
      ! I have to add the rest of the Hamiltonian Ho + V_H + V_xc 
      !
-     call V_to_H(ik,V_hartree_sc+V_xc(:,1),Sigma_s,wf)
+     call V_to_H(ik,V_hartree_sc+V_xc,Sigma_s,wf)
      !
-     Sigma_s=Sigma_s+Ho(:,:,ik)
+     Sigma_s(:,:,1)=Sigma_s(:,:,1)+Ho(:,:,ik)
      !
    else
      !
@@ -116,7 +122,7 @@ subroutine RT_Collision(G_input,en,k,RT_time)
      ! 
      if(l_rt_exc) then
        !      
-       call V_to_H(ik,V_hartree_sc-V_hartree_0+V_xc(:,1)-V_xc_0(:,1),Sigma_s,wf)
+       call V_to_H(ik,V_hartree_sc(:,1)-V_hartree_0+V_xc(:,1)-V_xc_0(:,1),Sigma_s,wf)
        !
      endif
      !
@@ -137,8 +143,8 @@ subroutine RT_Collision(G_input,en,k,RT_time)
      !   
      do i1=1,SC_bands
        do i2=i1+1,SC_bands
-         Sigma_s(i1,i2)=Sigma_s(i1,i2)-G_input(i1,i2,ik)/TransRelax
-         Sigma_s(i2,i1)=Sigma_s(i2,i1)-G_input(i2,i1,ik)/TransRelax
+         Sigma_s(i1,i2,1)=Sigma_s(i1,i2,1)-G_input(i1,i2,ik)/TransRelax
+         Sigma_s(i2,i1,1)=Sigma_s(i2,i1,1)-G_input(i2,i1,ik)/TransRelax
        enddo
      enddo
      !
@@ -147,26 +153,26 @@ subroutine RT_Collision(G_input,en,k,RT_time)
    if(LongRelax/=0._SP) then
      !   
      forall(i1=1:SC_bands)
-       Sigma_s(i1,i1)=Sigma_s(i1,i1)-G_input(i1,i1,ik)/LongRelax
+       Sigma_s(i1,i1,1)=Sigma_s(i1,i1,1)-G_input(i1,i1,ik)/LongRelax
      end forall
      !
    endif
    !
-   H_t(:,:,ik)=Sigma_s(:,:)
+   H_t(:,:,ik)=Sigma_s(:,:,1)
    !
    ! Now prepare I1 and I2 before the integration notice that 
    ! they contain also the external field
    !
 #if defined _DOUBLE
-   call zgemm('n','n',SC_bands,SC_bands,SC_bands,(1._SP,0._SP),Sigma_s,&
+   call zgemm('n','n',SC_bands,SC_bands,SC_bands,(1._SP,0._SP),Sigma_s(:,:,1),&
 &             SC_bands,G_input(:,:,ik),SC_bands,(0._SP,0._SP),I1_lesser(:,:,ik),SC_bands)
    call zgemm('n','n',SC_bands,SC_bands,SC_bands,(1._SP,0._SP),G_input(:,:,ik),&
-&             SC_bands,Sigma_s,SC_bands,(0._SP,0._SP),I2_lesser(:,:,ik),SC_bands)
+&             SC_bands,Sigma_s(:,:,1),SC_bands,(0._SP,0._SP),I2_lesser(:,:,ik),SC_bands)
 #else
-   call cgemm('n','n',SC_bands,SC_bands,SC_bands,(1._SP,0._SP),Sigma_s,&
+   call cgemm('n','n',SC_bands,SC_bands,SC_bands,(1._SP,0._SP),Sigma_s(:,:,1),&
 &             SC_bands,G_input(:,:,ik),SC_bands,(0._SP,0._SP),I1_lesser(:,:,ik),SC_bands)
    call cgemm('n','n',SC_bands,SC_bands,SC_bands,(1._SP,0._SP),G_input(:,:,ik),&
-&             SC_bands,Sigma_s,SC_bands,(0._SP,0._SP),I2_lesser(:,:,ik),SC_bands)
+&             SC_bands,Sigma_s(:,:,1),SC_bands,(0._SP,0._SP),I2_lesser(:,:,ik),SC_bands)
 #endif
    !
  enddo  !---- loop on k-points

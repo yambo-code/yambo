@@ -150,7 +150,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    coo_out="rlu"
    Kgw_1=0.
    qlong= 0.0_SP
-   No_Weight=.false.
    !
    ! GPL_EXCLUDE_START
    !
@@ -282,7 +281,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_END
  !
- if (lkanalyze) call initactivate(1,"cooIn cooOut GWKpts Qpts KShift1 KShift2 KShift3 NoWeights")
+ if (lkanalyze) call initactivate(1,"cooIn cooOut GWKpts Qpts KShift1 KShift2 KShift3")
+ if (lkanalyze) call initactivate(1,"NoWeights ForceUserPts")
  !
  ! GPL_EXCLUDE_START
  !
@@ -308,9 +308,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  endif
  !
 #if defined _YPP_ELPH
- if (l_gkkp.and..not.l_excitons)   call initactivate(1,"DBsPATH PHfreqF cooOut")
+ if (l_gkkp.and..not.l_excitons)   call initactivate(1,"DBsPATH PHfreqF")
  if (l_dos.or.l_eliashberg)        call initactivate(1,"EEfermi EfGbroad PhBroad PhStps")
- if ((l_excitons.or.l_electrons).and.l_eliashberg) &
+ if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) &
 &                                  call initactivate(-1,"EEfermi EfGbroad")
 #endif
 

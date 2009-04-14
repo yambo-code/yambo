@@ -19,49 +19,30 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine WF_rotate(ik,WFo,wf_size)
+subroutine parse_K_list(k,variable)
  !
- ! <r|n'>= <m|n'><r|m>
- !
- ! with <:|n'>=H_sc(:,n')
- !
- ! wf(:,n')= sum_m WFo(:,m) H_sc(m,n')
- !
- ! Extended only to collinear case
- !
- use electrons,      ONLY:n_sp_pol
  use pars,           ONLY:SP
- use wave_func,      ONLY:wf_state,wf_n_states,wf,wf_b
- use SC,             ONLY:SC_R
- implicit none
+ use R_lattice,      ONLY:bz_samp
+ use parser_m,       ONLY:parser
  !
- integer     :: ik,wf_size
- complex(SP) :: WFo(wf_size,wf_n_states)
+ implicit none
+ type(bz_samp)::k
+ character(*) ::variable
  !
  ! Work Space
  !
- integer     :: ib,ibp,ifft,ifftp,i_spin
- complex(SP) :: WS_wf(wf_size,wf_b(2))
+ real(SP)     ::real_ctl
  !
-
- do i_spin=1,n_sp_pol
-   WS_wf=(0.,0.)
-   !
-   do ib  = wf_b(1),wf_b(2)
-     ifft = wf_state(ib,ik,i_spin)
-     do ibp = wf_b(1),wf_b(2)
-       ifftp = wf_state(ibp,ik,i_spin)
-       !
-       if (ifft==0.or.ifftp==0) cycle
-       !
-       call caxpy(wf_size,SC_R(ibp,ib,ik,i_spin),WFo(:,ifftp),1,WS_wf(:,ib),1)
-     end do
-   end do
-   !
-   do ib=wf_b(1),wf_b(2)
-     wf(:,wf_state(ib,ik,i_spin))=WS_wf(:,ib)
-   enddo
-   !
- enddo
-
+ real_ctl=0.
+ k%nibz=1
+ K_loop: do while(real_ctl/=999.)
+   if (associated(k%pt)) deallocate(k%pt)
+   allocate(k%pt(k%nibz,3))
+   k%pt(k%nibz,:)=(/0.,0.,999./)
+   call parser('QptCoord',k%pt)
+   real_ctl=k%pt(k%nibz,3)
+   if (real_ctl/=999.) k%nibz=k%nibz+1
+ enddo K_loop
+ k%nibz=k%nibz-1
+ !
 end subroutine

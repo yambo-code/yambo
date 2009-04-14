@@ -157,7 +157,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  input_Tel_fixed=.false.
  non_periodic_directions='none'
  !
- !R_lattice
+ ! R_lattice
  !
  n_g_shells=0
  nqibz=0

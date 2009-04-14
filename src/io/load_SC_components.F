@@ -24,7 +24,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,xc_functional,io
  use drivers,   ONLY:l_sc_run
  use SC,        ONLY:using_SC_basis,SC_R,SC_bands,H_nl_sc,SC_kind,&
 &                    SC_xc_functional
- use electrons, ONLY:levels,E_reset
+ use electrons, ONLY:levels,E_reset,n_sp_pol
  use R_lattice, ONLY:nkibz
  use memory_m,  ONLY:mem_est
  use IO_m,      ONLY:io_control,OP_RD_CL,RD_CL_IF_END,OP_RD,RD_CL,&
@@ -67,7 +67,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,xc_functional,io
      io_err=io_SC_components('V',E_dummy,ID)
      if (io_err==0.and.ik>0) then
        if (ik==1) then
-         allocate(H_nl_sc(SC_bands,SC_bands))
+         allocate(H_nl_sc(SC_bands,SC_bands,n_sp_pol))
          call mem_est("H_nl_sc",(/size(H_nl_sc)/))
        endif
        do ip=1,ik
@@ -80,7 +80,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,xc_functional,io
    case("WF")
      io_err=io_SC_components('WF',E_dummy,ID)
      if (io_err==0) then
-       allocate(SC_R(SC_bands,SC_bands,nkibz))
+       allocate(SC_R(SC_bands,SC_bands,nkibz,n_sp_pol))
        call mem_est("SC_R",(/size(SC_R)/))
        do ip=1,nkibz
          call io_control(ACTION=RD_CL_IF_END,SEC=(/ip+1/),ID=ID)

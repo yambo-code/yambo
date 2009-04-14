@@ -21,15 +21,16 @@
 !
 subroutine V_to_H(ik,V,H,wf)
  !
+ use electrons,      ONLY:n_sp_pol,spin
  use pars,           ONLY:SP
  use FFT_m,          ONLY:fft_size
  use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
  use wave_func,      ONLY:wf_state,wf_n_states
  implicit none
  !
- integer     :: ik
- real(SP)    :: V(fft_size)
- complex(SP) :: H(QP_nb,QP_nb),wf(fft_size,wf_n_states)
+ integer     :: ik,i_spin
+ real(SP)    :: V(fft_size,n_sp_pol)
+ complex(SP) :: H(QP_nb,QP_nb,n_sp_pol),wf(fft_size,wf_n_states)
  !
  ! Work Space
  !
@@ -49,17 +50,18 @@ subroutine V_to_H(ik,V,H,wf)
    !
    ib =QP_table(i1,1)
    ibp=QP_table(i1,2)
+   i_spin=spin(qp_table(i1,:))
    !
    ! <ifft|V|ifftp>
    !
-   ifft =wf_state(ib,ik,1)
-   ifftp=wf_state(ibp,ik,1)
-   c_ws(:)=V(:)*wf(:,ifftp)
+   ifft =wf_state(ib,ik,i_spin)
+   ifftp=wf_state(ibp,ik,i_spin)
+   c_ws(:)=V(:,i_spin)*wf(:,ifftp)
    !
 #if defined _DOUBLE
-   H(ib,ibp) = H(ib,ibp) + zdotc(fft_size,wf(:,ifft),1,c_ws(:),1)
+   H(ib,ibp,i_spin) = H(ib,ibp,i_spin) + zdotc(fft_size,wf(:,ifft),1,c_ws(:),1)
 #else
-   H(ib,ibp) = H(ib,ibp) + cdotc(fft_size,wf(:,ifft),1,c_ws(:),1)
+   H(ib,ibp,i_spin) = H(ib,ibp,i_spin) + cdotc(fft_size,wf(:,ifft),1,c_ws(:),1)
 #endif
    !
  end do
@@ -67,9 +69,9 @@ subroutine V_to_H(ik,V,H,wf)
  ! ... and symmetrize
  !
  do ib=1,QP_nb
-   H(ib,ib)=real(H(ib,ib))
+   H(ib,ib,i_spin)=real(H(ib,ib,i_spin))
    do ibp=1,ib-1
-     H(ib,ibp)=conjg(H(ibp,ib))
+     H(ib,ibp,i_spin)=conjg(H(ibp,ib,i_spin))
    enddo
  enddo
  !

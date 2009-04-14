@@ -91,7 +91,7 @@ module real_time
      use memory_m,       ONLY:mem_est
      use SC,             ONLY:SC_bands,V_hartree_sc
      use FFT_m,          ONLY:fft_size
-     use electrons,      ONLY:levels,n_spin
+     use electrons,      ONLY:levels,n_spin,n_sp_pol
      implicit none
      !
      type(levels), intent(in) :: en
@@ -103,8 +103,8 @@ module real_time
      call mem_est('Hartree',(/fft_size/),(/(1+n_spin)*SP/))
      !
      if(l_rt_exc) then
-       allocate(V_hartree_sc(fft_size))
-       call mem_est('Potentials',(/fft_size/),(/SP/))
+       allocate(V_hartree_sc(fft_size,n_spin))
+       call mem_est('Potentials',(/fft_size/),(/(1+n_spin)*SP/))
      endif 
      !
      if(l_rt_efield) then

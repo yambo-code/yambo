@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine k_analize(en,k,Xk,q,Only_print_q_grid)
+subroutine k_analyze(en,k,Xk,q)
  !
  use pars,                ONLY:SP,schlen
  use electrons,           ONLY:levels
@@ -28,7 +28,7 @@ subroutine k_analize(en,k,Xk,q,Only_print_q_grid)
  use com,                 ONLY:msg,warning
  use parser_m,            ONLY:parser
  use vec_operate,         ONLY:c2a,rlu_v_is_zero,v_is_zero,v_norm
- use YPP,                 ONLY:coo_in,coo_out,qlong,No_Weight
+ use YPP,                 ONLY:coo_in,coo_out,qlong
  use timing,              ONLY:live_timing_is_on
  use zeros,               ONLY:k_iku_zero,k_rlu_zero
  !
@@ -39,7 +39,6 @@ subroutine k_analize(en,k,Xk,q,Only_print_q_grid)
  ! Work Space
  !
  type(bz_samp)::USER_K,Final_K,Q_user
- logical      ::Only_print_q_grid
  real(SP)     ::real_ctl,v(3),ka(3),q0(3)
  integer      ::i1,i2,is,ik, j1
  real(SP):: kout(Xk%nibz,3)
@@ -47,6 +46,7 @@ subroutine k_analize(en,k,Xk,q,Only_print_q_grid)
  character(schlen)     :: ch
  character(len=35)     :: fm
  integer               :: fac(3)
+ logical               :: No_Weight,Force_User_points
  !
  call bz_samp_reset(USER_K)
  call bz_samp_reset(Q_user)
@@ -60,20 +60,11 @@ subroutine k_analize(en,k,Xk,q,Only_print_q_grid)
  call k_ibz2bz(Xk,'i',.false.)
  call msg("s",'Q-points  (BZ):',q%nbz)
  call parser('NoWeights',No_Weight)
- !
- if (Only_print_q_grid) then
-   !  
-   call section('*',"== Built-in Q-grid ==")
-   !=========================================
-   call print_the_grid(q)
-   !
-   return
-   !
- endif
+ call parser('ForceUserPts',Force_User_points)
  !
  call section('*',"== Built-in K-grid ==")
  !=========================================
- call print_the_grid(Xk)
+ call print_the_grid(Xk,' ',.FALSE.)
  !
  call section('*',"== GW K-grid analyzer ==")
  !===========================================
@@ -150,13 +141,11 @@ subroutine k_analize(en,k,Xk,q,Only_print_q_grid)
    real_ctl=Q_user%pt(Q_user%nibz,3)
    if (real_ctl/=999.) then
      !
-     if (Q_user%nibz==1.and.v_is_zero(Q_user%pt(1,:))) goto 1
-     !
      do i1=1,q%nbz
        v=q%ptbz(i1,:)
        if (trim(coo_in)=="cc")  call c2a(v_in=q%ptbz(i1,:),v_out=v,mode="ki2c")
        if (trim(coo_in)=="rlu") call c2a(v_in=q%ptbz(i1,:),v_out=v,mode="ki2a")
-       if (v_is_zero(v(:)-Q_user%pt(Q_user%nibz,:),zero_=k_iku_zero)) then
+       if (v_is_zero(v(:)-Q_user%pt(Q_user%nibz,:),zero_=k_iku_zero).and..not.Force_User_points) then
          call warning(' Point already in the grid')
          exit q_main_loop
        endif
@@ -169,6 +158,11 @@ subroutine k_analize(en,k,Xk,q,Only_print_q_grid)
  Q_user%nibz=Q_user%nibz-1
  !
  if (Q_user%nibz>=1) call msg("s",'User Q-points :',Q_user%nibz)
+ !
+ if (Force_User_points) then
+   call print_the_grid(Q_user,coo_in,.TRUE.)
+   goto 1
+ endif
  !
  ! Extended grid
  !
@@ -273,17 +267,26 @@ subroutine k_analize(en,k,Xk,q,Only_print_q_grid)
  !
  contains
    !
-   subroutine print_the_grid(K_)
+   subroutine print_the_grid(K_,coo_in_,formatted_)
      type(bz_samp)   ::K_
+     character(*)    ::coo_in_
+     logical         ::formatted_
      !
      live_timing_is_on=.false.
      do i1=1,K_%nibz
+       !
+       if (trim(coo_in_)=="rlu") call c2a(v_in=K_%pt(i1,:),mode="ka2i")
+       if (trim(coo_in_)=="cc")  call c2a(v_in=K_%pt(i1,:),mode="kc2i")
+       !
        if (trim(coo_out)=="rlu") then
          call c2a(v_in=K_%pt(i1,:),v_out=v,mode="ki2a")
+       else if (trim(coo_out)=="cc") then
+         call c2a(v_in=K_%pt(i1,:),v_out=v,mode="ki2c")
        else if (trim(coo_out)=="iku") then
          v=K_%pt(i1,:)
        endif
        write(ch,'(3(f12.7,1x))') v
+       if (formatted_) write(ch,'(3(f12.7,1x,a,1x))') v(1),'|',v(2),'|',v(3),'|'
        call msg("s",'      ',trim(ch))
      enddo
      live_timing_is_on=.true.

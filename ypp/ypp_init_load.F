@@ -78,7 +78,8 @@ subroutine ypp_init_load(defs)
  call it(defs,'KShift1','K-grid shift vector[1] ',qlong(1,:))
  call it(defs,'KShift2','K-grid shift vector[2] ',qlong(2,:))
  call it(defs,'KShift3','K-grid shift vector[3] ',qlong(3,:))
- call it('f',defs,'NoWeights', ' Do not print K-points weight') 
+ call it('f',defs,'NoWeights',    ' Do not print K-points weight') 
+ call it('f',defs,'ForceUserPts', ' Do not check the correcteness of the user points') 
  !
  ! EXC WF
  !

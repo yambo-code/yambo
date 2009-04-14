@@ -148,7 +148,7 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  ! Specific SECTIONS
  !===================
  !
- if (lkanalyze) call k_analize(en,k,Xk,q,.FALSE.)
+ if (lkanalyze) call k_analyze(en,k,Xk,q)
  !   =========
  !
  ! GPL_EXCLUDE_START

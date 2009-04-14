@@ -60,6 +60,8 @@ subroutine elph_eliashberg_dos(k,en,q)
  !
  if (l_eliashberg.and.l_dos) then
    call section("*","== Electron-Phonon Interface: phonon DOS & Eliashberg Function ==")
+ else if (l_eliashberg) then
+   call section("*","== Electron-Phonon Interface: Eliashberg Function ==")
  else if (l_dos) then
    call section("*","== Electron-Phonon Interface: phonon DOS ==")
  else

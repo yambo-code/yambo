@@ -606,7 +606,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! To handle externally defined Q-points I use the init_q_pts
  !
- if (l_setup.and.ioQINDX_err/=0) call init_q_pts()
+ ! (a) first check if input file contains already a list of Q-points...
+ call init_q_pts(.FALSE.)
+ !
+ ! (b) ... then (re)write the file
+ if (l_setup.and.ioQINDX_err/=0.and.infile_editing) call init_q_pts(.TRUE.)
  !
  !If qp limits are requested they are added at the end of the input file
  !
@@ -1002,14 +1006,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        if ( trim(rstr_piece(i1)) == 'gwapprx' ) then
          !
          if (trim(rstr_piece(i1+1))=='p') then
-           !
-           ! GPL_EXCLUDE_START GW_REAL_AXIS_IGNORE
-           !
            infile_editing=.true.
            call initactivate(1,'ppa')
-           !
-           ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
-           !
          else if (trim(rstr_piece(i1+1))=='c') then
            !
            ! GPL_EXCLUDE_START SC_IGNORE

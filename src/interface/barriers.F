@@ -48,7 +48,7 @@ subroutine barriers()
  use D_lattice,  ONLY:i_time_rev,i_space_inv
  use R_lattice,  ONLY:Xk_grid_is_uniform
  use BS,         ONLY:BSS_mode
- use electrons,  ONLY:n_spin,n_met_bands,n_full_bands
+ use electrons,  ONLY:n_spin,n_met_bands,n_full_bands,n_spinor
  use QP_m,       ONLY:QP_solver
  use it_m,       ONLY:switch_off_runlevel
  implicit none
@@ -145,7 +145,7 @@ subroutine barriers()
  if (gw0_ppa) then
    on_runlevels='gw0 ppa em1d el_el el_ph xxvxc'
    ! GPL_INCLUDE_START SC_IGNORE
-   !on_runlevels='gw0 ppa xxvxc'
+   !on_runlevels='gw0 ppa em1d xxvxc'
    ! GPL_INCLUDE_END SC_IGNORE
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
@@ -197,7 +197,8 @@ subroutine barriers()
  !
  if (n_spin>1) then
    call switch_off_runlevel('all',on_name=&
-&       'chi optics xxvxc bse em1s em1d ppa gw0 bss alda_fxc bs_fxc chosex '//trim(always_runlevels))
+&       'chi optics xxvxc bse em1s em1d ppa gw0 bss alda_fxc bs_fxc chosex scpot '//trim(always_runlevels))
+   if (n_spinor>1) call switch_off_runlevel('scpot',on_name=' ')
    if (gw0_raxis) call switch_off_runlevel('all',on_name=' ')
  endif 
  !

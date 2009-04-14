@@ -83,7 +83,6 @@ integer function elph_databases(k,E,q)
  elph_nq=elph_nq-1
  if (elph_nq==0) then
    call msg("l","not found")
-   call k_analize(E,k,k,q,.TRUE.)
    return
  endif
  if (elph_use_q_grid) then

@@ -30,7 +30,10 @@ subroutine X_O_rotate(X_bands,use_trans_gauge,E)
  use IO_m,                ONLY:NONE,DUMP
  use memory_m,            ONLY:mem_est
  implicit none
- !
+ !!!!!!
+ !WARNING: The SC variables H_nl_sc,SC_R have been generalized for spin
+ !polarized calculation. Here the spin index is set to 1 ...Daniele and Maurizia
+ !!!!!!
  integer      :: X_bands
  logical      :: use_trans_gauge
  type(levels) :: E
@@ -41,7 +44,7 @@ subroutine X_O_rotate(X_bands,use_trans_gauge,E)
  real(SP)    :: delta_E(X_bands,X_bands),delta_E_tilde(X_bands,X_bands)
  complex(SP) :: D_WS_n(X_bands,X_bands),D_WS_nm1(X_bands,X_bands)
  !
- ! irst I read the rotation matrices
+ ! First I read the rotation matrices
  !                  -----------------
  !
  return
@@ -58,7 +61,7 @@ subroutine X_O_rotate(X_bands,use_trans_gauge,E)
    !
    ! Rotate H_nl_sc in the NEW basis.
    !
-   call H_rotate(SC_R(:,:,ik),H_nl_sc,SC_bands,1)
+   call H_rotate(SC_R(:,:,ik,1),H_nl_sc(:,:,1),SC_bands,1)
    !
    do ib=1,X_bands
      do ibp=1,X_bands
@@ -66,7 +69,7 @@ subroutine X_O_rotate(X_bands,use_trans_gauge,E)
        delta_E(ib,ibp)=E%E(ib,ik,1)-E%E(ibp,ik,1)
        if (associated(E%Eo)) delta_E(ib,ibp)=E%Eo(ib,ik,1)-E%Eo(ibp,ik,1)
        !
-       delta_E_tilde(ib,ibp)=delta_E(ib,ibp)+H_nl_sc(ibp,ibp)-H_nl_sc(ib,ib)
+       delta_E_tilde(ib,ibp)=delta_E(ib,ibp)+H_nl_sc(ibp,ibp,1)-H_nl_sc(ib,ib,1)
        !
        if (abs(delta_E(ib,ibp))<=1.E-5_SP) then
          delta_E(ib,ibp)=1.
@@ -79,7 +82,7 @@ subroutine X_O_rotate(X_bands,use_trans_gauge,E)
    !
    ! Zero the diagonal of the H_sc
    !
-   forall (ib=1:X_bands) H_nl_sc(ib,ib)=(0.,0.)
+   forall (ib=1:X_bands) H_nl_sc(ib,ib,1)=(0.,0.)
    !
    do ic=1,3
      !
@@ -96,8 +99,8 @@ subroutine X_O_rotate(X_bands,use_trans_gauge,E)
        !
        ! where \tilde{H} has zero diagonal terms
        !
-       D_WS_n(:,:)=-matmul(D_WS_nm1(:,:),H_nl_sc(:X_bands,:X_bands))+&
-&                   matmul(H_nl_sc(:X_bands,:X_bands),D_WS_nm1(:,:))
+       D_WS_n(:,:)=-matmul(D_WS_nm1(:,:),H_nl_sc(:X_bands,:X_bands,1))+&
+&                   matmul(H_nl_sc(:X_bands,:X_bands,1),D_WS_nm1(:,:))
 
        !
        forall (ib=1:X_bands,ibp=1:X_bands) D_WS_n(ib,ibp)=&

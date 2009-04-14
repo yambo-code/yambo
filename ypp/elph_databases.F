@@ -299,7 +299,7 @@ integer function elph_databases(k,E,q)
    !
    allocate(ph_freqs_sq_disk(ph_modes))
    !
-   ! GS energies are in Rydbergs. Here we have the phonon frequencies square
+   ! GS energies are in Rydbergs(PW)/Hartree(Abinit). Here we have the phonon frequencies square
    !
    read (io_unit(ID)) ph_freqs_sq_disk
    !
@@ -322,7 +322,8 @@ integer function elph_databases(k,E,q)
      enddo
      ph_freqs_sq(iq,:)=(abs(ph_freqs_sq(iq,:))/HA2CM1)**2.
    else
-     ph_freqs_sq(iq,:)=abs(ph_freqs_sq_disk)/4._DP
+     ph_freqs_sq(iq,:)=abs(ph_freqs_sq_disk)
+     if (.not.abinit_DB)  ph_freqs_sq(iq,:)=abs(ph_freqs_sq_disk)/4._SP
    endif
    !
    elph_gkkp=(0._SP,0._SP)

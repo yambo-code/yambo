@@ -42,7 +42,7 @@
 !
 ! Notice that G_old is never overwritten
 !
-recursive subroutine RT_Integrator(G_new,G_old,T_step,en,k,Integrator,RT_time)
+recursive subroutine RT_Integrator(G_new,G_old,T_step,en,k,q,Integrator,RT_time)
  !
  use pars,           ONLY:SP,schlen
  use com,            ONLY:error
@@ -56,7 +56,7 @@ recursive subroutine RT_Integrator(G_new,G_old,T_step,en,k,Integrator,RT_time)
  !
  implicit none
  character(schlen), intent(in) :: Integrator
- type(bz_samp),     intent(in) :: k
+ type(bz_samp),     intent(in) :: k,q
  type(levels),      intent(in) :: en
  real(SP),          intent(in) :: T_step,RT_time
  complex(SP),       intent(in) :: G_old(SC_bands,SC_bands,k%nibz)
@@ -79,7 +79,7 @@ recursive subroutine RT_Integrator(G_new,G_old,T_step,en,k,Integrator,RT_time)
      !
      ! G(T+dt) = G(T+dt) - i dt *(I1(T) - I2(T))
      !
-     G_new(:,:,:)=G_new(:,:,:)-(0._SP,1._SP)*T_step*(I2_lesser(:,:,:)-I1_lesser(:,:,:))
+     G_new(:,:,:)=G_new(:,:,:)-(0._SP,1._SP)*T_step*(I1_lesser(:,:,:)-I2_lesser(:,:,:))
      !
    else
      !
@@ -98,10 +98,10 @@ recursive subroutine RT_Integrator(G_new,G_old,T_step,en,k,Integrator,RT_time)
            iv=X_poles_tab(i_pole,2)
            ic=X_poles_tab(i_pole,3)
            !
-           Go_phase=exp(-(0._SP,1._SP)*T_step*X_poles(i_pole))
+           Go_phase=exp(+(0._SP,1._SP)*T_step*X_poles(i_pole))
            !
-           P_factor(iv,ic)=(1.0-Go_phase)/X_poles(i_pole)
-           P_factor(ic,iv)=(1.0-conjg(Go_phase))/(-X_poles(i_pole))
+           P_factor(iv,ic)=(1.0-Go_phase)/(-X_poles(i_pole))
+           P_factor(ic,iv)=(1.0-conjg(Go_phase))/X_poles(i_pole)
            !
            ! Gf_{n,m}(T+dt) = G_{n,m}(T) * exp(-i*dt(E_n-E_m))
            !
@@ -110,9 +110,9 @@ recursive subroutine RT_Integrator(G_new,G_old,T_step,en,k,Integrator,RT_time)
            !
        enddo
        !
-       ! G(T+dt) = G(T+dt) - (1 - exp(-i dt (E_n-E_m))/(E_n-E_m))*(I2(T) - I1(T))
+       ! G(T+dt) = G(T+dt) - (1 - exp(-i dt (E_n-E_m))/(E_n-E_m))*(I1(T) - I2(T))
        !
-       G_new(:,:,ik)=G_new(:,:,ik)-P_factor(:,:)*(I2_lesser(:,:,ik)-I1_lesser(:,:,ik))
+       G_new(:,:,ik)=G_new(:,:,ik)-P_factor(:,:)*(I1_lesser(:,:,ik)-I2_lesser(:,:,ik))
        !                                                            
      enddo
      !
@@ -122,15 +122,15 @@ recursive subroutine RT_Integrator(G_new,G_old,T_step,en,k,Integrator,RT_time)
    !
    ! Evaluate G(t+dt/2)
    !
-   call RT_Integrator(G_new,G_old,T_step/2._SP,en,k,EULER,RT_time) 
+   call RT_Integrator(G_new,G_old,T_step/2._SP,en,k,q,EULER,RT_time) 
    !
    ! use G(t+dt/2) to evaluate I1(t+dt/2) and I2(t+dt/2)
    !
-   call RT_Collision(G_new,en,k,RT_time+T_step/2._SP)
+   call RT_Collision(G_new,en,k,q,RT_time+T_step/2._SP)
    !
    ! final step G(t+dt)=G(t) + dt * (I1(t+dt/2) - I2(t+dt/2))
    !
-   call RT_Integrator(G_new,G_old,T_step,en,k,EULER,RT_time)
+   call RT_Integrator(G_new,G_old,T_step,en,k,q,EULER,RT_time)
    !
  elseif(trim(Integrator)==EXACT) then
    !
@@ -158,15 +158,15 @@ recursive subroutine RT_Integrator(G_new,G_old,T_step,en,k,Integrator,RT_time)
    !
    ! Evaluate G(t+dt/2)
    !
-   call RT_Integrator(G_new,G_old,T_step/2._SP,en,k,EXACT,RT_time) 
+   call RT_Integrator(G_new,G_old,T_step/2._SP,en,k,q,EXACT,RT_time) 
    !
    ! use G(t+dt/2) to evaluate I1(t+dt/2) and I2(t+dt/2)
    !
-   call RT_Collision(G_new,en,k,RT_time+T_step/2._SP)
+   call RT_Collision(G_new,en,k,q,RT_time+T_step/2._SP)
    !
    ! final step G(t+dt)=G(t) + dt * (I1(t+dt/2) - I2(t+dt/2))
    !
-   call RT_Integrator(G_new,G_old,T_step,en,k,EXACT,RT_time)
+   call RT_Integrator(G_new,G_old,T_step,en,k,q,EXACT,RT_time)
    !                                                        
  else
    !

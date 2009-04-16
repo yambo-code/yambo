@@ -36,6 +36,7 @@ subroutine elph_eliashberg_dos(k,en,q)
  use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid
  use par_indexes_m,       ONLY:par_indexes
  use functions,           ONLY:Fermi_fnc_derivative
+ use stderr,              ONLY:set_real_printed_length
  implicit none
  type(levels) ::en
  type(bz_samp)::k,q
@@ -155,8 +156,11 @@ subroutine elph_eliashberg_dos(k,en,q)
    endif
    !
    do im=1,ph_modes
+     !
      omega = sqrt( MAX( ph_freqs_sq(iq,im),0. ) )
+     !
      if (omega<1.E-10) cycle
+     !
      do i2=1,elph_steps
        !
        d_elias_dos=q_weight*Fermi_fnc_derivative(ph_energy(i2)-omega,ph_broad)
@@ -179,6 +183,8 @@ subroutine elph_eliashberg_dos(k,en,q)
  if (l_dos) call pp_redux_wait(ph_dos)
  !
  ! Output file
+ !
+ call set_real_printed_length(f_length=20,g_length=20)
  !
  if (l_eliashberg) then
    o_file_name='eliashberg'
@@ -213,6 +219,8 @@ subroutine elph_eliashberg_dos(k,en,q)
    enddo
    call of_open_close(o_file_name)
  endif
+ !
+ call set_real_printed_length()
  !
  !CLEAN
  !

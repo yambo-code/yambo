@@ -23,13 +23,7 @@
 ! This subroutine prepare I1(t_1,t_2) and I2(t_1,t_2) give a G^<(t_1,t_1) 
 ! Actualy it works only for the diagonal I1(t_1,t_1), I2(t_1,t_1)
 !
-!!!!!!
-!WARNING: The variables Sigma_s  have been generalized for spin
-!polarized calculation due to changes in V_to_H subroutine. 
-!Here the spin index is set to 1 ...(Daniele e Maurizia).
-!!!!!!
-
-subroutine RT_Collision(G_input,en,k,RT_time)
+subroutine RT_Collision(G_input,en,k,q,RT_time)
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels,el_density,n_sp_pol
@@ -40,7 +34,7 @@ subroutine RT_Collision(G_input,en,k,RT_time)
  use QP_m,           ONLY:QP_nk,QP_Vxc,QP_n_states,QP_table 
  use real_time,      ONLY:I1_lesser,I2_lesser,V_xc_0,l_rt_exc,rho,V_hartree_0,        &
  &                         Thermal_Time,l_rt_efield,TransRelax,LongRelax, &
- &                         T_initial,RT_phase_int,E_bare,H_t,Ho
+ &                         T_initial,RT_phase_int,E_bare,H_t,Ho,Ho_pot
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
@@ -49,21 +43,22 @@ subroutine RT_Collision(G_input,en,k,RT_time)
  !
  real(SP),      intent(in)   :: RT_time
  type(levels),  intent(in)   :: en
- type(bz_samp), intent(in)   :: k
+ type(bz_samp), intent(in)   :: k,q
  complex(SP),   intent(in)   :: G_input(SC_bands,SC_bands,en%nk)
  !
  ! Work Space
  !
- integer     :: ik,iv,i1,i2,i3,ik1,ib,ibp
+ integer     :: ik,iv,i1,i2,i3,ik1,ib,ibp,i_spin
  complex(SP) :: Sigma_s(SC_bands,SC_bands,n_sp_pol)
  !
  ! Update occupations
  !
  forall(iv=1:SC_bands,ik=1:en%nk) 
-   en%f(iv,ik,1)=-(0._SP,2._SP)*G_input(iv,iv,ik)
+   en%f(iv,ik,1)=-(0._SP,1._SP)*G_input(iv,iv,ik)
  end forall
  !
  call el_density(en,k,rho,G_lesser=G_input)
+ !
  !
  if(l_rt_exc) then
    !
@@ -73,17 +68,27 @@ subroutine RT_Collision(G_input,en,k,RT_time)
      !
      call xc_lda_driver(en,k,WF_KIND,WF_xc_functional,1)
      !
+   else
+     !
+     V_xc=V_xc_0
+     !
    endif
    !
  else
    !
-   ! Simple case without anycorrelation just transition between bands
+   ! Simple case without any correlation just transition between bands
    ! equivalent to RPA without local field effects
    !
-   V_hartree_sc(:,1)=V_hartree_0
-   V_xc        =V_xc_0
+   V_hartree_sc     =V_hartree_0
+   V_xc             =V_xc_0
    !
  endif
+ !
+ ! l_rt_exc=.false.
+ !
+ ! Simple case without any correlation just transition between bands
+ ! equivalent to RPA without local field effects
+ !
  !
  do ik=1,QP_nk 
    !      
@@ -106,25 +111,22 @@ subroutine RT_Collision(G_input,en,k,RT_time)
      !
    endif
    !
+   ! Fill the Singular Self-Energy Sigma_s(:,:,:)
+   !
+   if(l_rt_exc) call V_to_H(ik,V_hartree_sc+V_xc,Sigma_s,wf)
+   !
    if(.not.RT_phase_int) then
      !
-     ! If I do not integrate analyticaly the H_o(rho_o) part
-     ! I have to add the rest of the Hamiltonian Ho + V_H + V_xc 
-     !
-     call V_to_H(ik,V_hartree_sc+V_xc,Sigma_s,wf)
+     ! Ho is part of the Hamiltonian (or singular self-energy Sigma_s) 
      !
      Sigma_s(:,:,1)=Sigma_s(:,:,1)+Ho(:,:,ik)
      !
    else
      !
      ! I use H_o + V_h(rho_o) + V_xc(rho_o) as phase factor 
-     ! so I put only the differences in the self-energy
-     ! 
-     if(l_rt_exc) then
-       !      
-       call V_to_H(ik,V_hartree_sc(:,1)-V_hartree_0+V_xc(:,1)-V_xc_0(:,1),Sigma_s,wf)
-       !
-     endif
+     ! so I subtract them from the Self-Energy Sigma_S(:,:,:)
+     !      
+     if(l_rt_exc) Sigma_s(:,:,1)=Sigma_s(:,:,1)-Ho_pot(:,:,ik)
      !
    endif
    !
@@ -143,8 +145,8 @@ subroutine RT_Collision(G_input,en,k,RT_time)
      !   
      do i1=1,SC_bands
        do i2=i1+1,SC_bands
-         Sigma_s(i1,i2,1)=Sigma_s(i1,i2,1)-G_input(i1,i2,ik)/TransRelax
-         Sigma_s(i2,i1,1)=Sigma_s(i2,i1,1)-G_input(i2,i1,ik)/TransRelax
+         Sigma_s(i1,i2,:)=Sigma_s(i1,i2,:)-G_input(i1,i2,ik)/TransRelax
+         Sigma_s(i2,i1,:)=Sigma_s(i2,i1,:)-G_input(i2,i1,ik)/TransRelax
        enddo
      enddo
      !
@@ -153,12 +155,14 @@ subroutine RT_Collision(G_input,en,k,RT_time)
    if(LongRelax/=0._SP) then
      !   
      forall(i1=1:SC_bands)
-       Sigma_s(i1,i1,1)=Sigma_s(i1,i1,1)-G_input(i1,i1,ik)/LongRelax
+       Sigma_s(i1,i1,:)=Sigma_s(i1,i1,:)-G_input(i1,i1,ik)/LongRelax
      end forall
      !
    endif
    !
    H_t(:,:,ik)=Sigma_s(:,:,1)
+   !
+   if(RT_phase_int) H_t(:,:,ik)=H_t(:,:,ik)+Ho(:,:,ik)+Ho_pot(:,:,ik)
    !
    ! Now prepare I1 and I2 before the integration notice that 
    ! they contain also the external field

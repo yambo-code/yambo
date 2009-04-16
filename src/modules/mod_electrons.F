@@ -285,8 +285,8 @@ module electrons
              !
              if(ifft==0.or.ifft2==0) cycle
              !
-             rho_no_sym(:)=rho_no_sym(:)+Xk%weights(ik)*2._SP*real(wf(:,ifft) &
-&                      *conjg(wf(:,ifft2))*(0._SP,-2._SP)*G_lesser(i1,i2,ik))
+             rho_no_sym(:)=rho_no_sym(:)-Xk%weights(ik)*2._SP*real(wf(:,ifft) &
+&                      *conjg(wf(:,ifft2))*(0._SP,1._SP)*G_lesser(i1,i2,ik))
              !
            enddo
            !

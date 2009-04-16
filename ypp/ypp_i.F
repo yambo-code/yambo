@@ -172,7 +172,7 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  if ((l_gkkp.and..not.l_excitons).or.l_phonons) then
    ! =====     ========
-   i_err=elph_databases(k,en,q)
+   if (l_gkkp)               i_err=elph_databases(k,en,q)
    if (l_eliashberg.or.l_dos) call elph_eliashberg_dos(k,en,q)
  endif
  !

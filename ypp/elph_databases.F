@@ -253,7 +253,7 @@ integer function elph_databases(k,E,q)
        call c2a(v_in=K_(:,i1),mode="ka2i")
      enddo
    else
-     call msg("l","[PHONON] ...")
+     if (idb_==-1) call msg("l","[PHONON] ...")
      ph_q_disk(:)=Q_DP(:)/alat_DP*alat(:)
      forall (i1=1:elph_nk) K_(:,i1)=K_DP(:,i1)/alat_DP*alat(:)
    endif
@@ -306,7 +306,11 @@ integer function elph_databases(k,E,q)
    do il=1,ph_modes
      !
      ph_freq=sqrt( max( real(ph_freqs_sq_disk(il)),0._SP))
+     !
+     ! PW energies are in Rydbergs
+     !
      if (.not.abinit_DB) ph_freq=ph_freq/2._SP
+     !
      max_ph_freq=max(max_ph_freq,ph_freq)
      !
    enddo

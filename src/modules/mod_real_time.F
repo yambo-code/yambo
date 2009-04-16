@@ -58,7 +58,7 @@ module real_time
  ! Other
  !
  real(SP), allocatable   :: rho(:)
- real(SP), allocatable   :: V_hartree_0(:)  
+ real(SP), allocatable   :: V_hartree_0(:,:)  
  real(SP), allocatable   :: V_xc_0(:,:)  
  real(SP)                :: Thermal_time
  integer                 :: DiagH_Iter
@@ -79,8 +79,8 @@ module real_time
  !                                             
  ! Ho as in SC see SC_driver.F
  !
- complex(SP), allocatable :: Ho(:,:,:),H_t(:,:,:)
- real(SP),    allocatable :: E_bare(:,:) ! H(rho_0)
+ complex(SP), allocatable :: Ho(:,:,:),H_t(:,:,:),Ho_pot(:,:,:)
+ real(SP),    allocatable :: E_bare(:,:) 
  !
  contains
    !
@@ -89,7 +89,7 @@ module real_time
      use pars,           ONLY:SP,schlen
      use drivers,        ONLY:l_sc_hartree
      use memory_m,       ONLY:mem_est
-     use SC,             ONLY:SC_bands,V_hartree_sc
+     use SC,             ONLY:SC_bands,V_hartree_sc,local_V
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      implicit none
@@ -99,13 +99,15 @@ module real_time
      allocate(rho(fft_size))
      call mem_est('Density',(/fft_size/),(/SP/))
      !
-     allocate(V_hartree_0(fft_size),V_xc_0(fft_size,n_spin))
+     allocate(V_hartree_0(fft_size,n_spin))
      call mem_est('Hartree',(/fft_size/),(/(1+n_spin)*SP/))
-     !
+     !  
      if(l_rt_exc) then
-       allocate(V_hartree_sc(fft_size,n_spin))
-       call mem_est('Potentials',(/fft_size/),(/(1+n_spin)*SP/))
-     endif 
+       !      
+       allocate(V_xc_0(fft_size,n_spin),V_hartree_sc(fft_size,n_spin))
+       call mem_est('Potentials',(/fft_size/),(/(1+n_spin)*2*SP/))
+       !
+     endif
      !
      if(l_rt_efield) then
        allocate(Ef_rhoq0(SC_bands,SC_bands,en%nk))
@@ -120,6 +122,11 @@ module real_time
      !
      allocate(Ho(SC_bands,SC_bands,en%nk),H_t(SC_bands,SC_bands,en%nk))
      call mem_est("Ho",(/size(Ho)/),(/2*2*SP/))
+     !
+     if(RT_phase_int) then
+       allocate(Ho_pot(SC_bands,SC_bands,en%nk))
+       call mem_est("Ho_pot",(/size(Ho_pot)/),(/2*SP/))
+     endif
      !
      allocate(I1_lesser(SC_bands,SC_bands,en%nk))
      call mem_est("I1_lesser",(/size(I1_lesser)/),(/2*SP/))
@@ -141,12 +148,14 @@ module real_time
      deallocate(rho)
      call mem_est('Density')
      !
-     deallocate(V_hartree_0,V_xc_0)
+     deallocate(V_hartree_0)
      call mem_est('Hartree')
      !  
      if(l_rt_exc) then
-       deallocate(V_hartree_sc)
+       !      
+       deallocate(V_hartree_sc,V_xc_0)
        call mem_est('Potentials')
+       !
      endif
      !
      if(l_rt_efield) then
@@ -157,8 +166,15 @@ module real_time
      deallocate(E_bare)
      call mem_est("E_bare")
      !
-     deallocate(Ho)
+     deallocate(Ho,H_t)
      call mem_est("Ho")
+     !
+     if(RT_phase_int) then
+       !      
+       deallocate(Ho_pot)
+       call mem_est("Ho_pot")
+       !
+     endif
      !
      deallocate(G_lesser)
      call mem_est("G_lesser")

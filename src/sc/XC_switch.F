@@ -61,6 +61,12 @@ logical function XC_switch()
      l_sc_pz=.true.
      SC_kind=XC_EXCHANGE_CORRELATION
      SC_xc_functional=XC_LDA_C_PZ
+   case('none')
+     local_V=.true.
+     SC_kind=0
+     SC_xc_functional=0
+     XC_switch=.false.
+     return
  end select
  !
  XC_switch=any((/l_sc_hartree,l_sc_hf,l_sc_exx,l_sc_exxc,l_sc_chosex,l_sc_lda_x,l_sc_pz/))

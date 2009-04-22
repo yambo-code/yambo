@@ -1,3 +1,3 @@
 objs =	SC_driver.o V_Hartree.o V_exx.o SC_mute.o V_to_H.o \
         RT_driver.o XC_switch.o Ext_Field.o RT_Collision.o RT_Integrator.o \
-	RT_Energy.o 
+	RT_Energy.o Kinetic.o RT_current.o

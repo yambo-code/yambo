@@ -757,7 +757,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        lreels=runlevel_is_on('reels')
 #endif
 #if defined  _ELPH
-       l_ph_corr=(runlevel_is_on('el_ph').and.ioELPH_err==0) 
+       if (.not.CLOSE_Gs) l_ph_corr=runlevel_is_on('el_ph').and.ioELPH_err==0
        l_el_corr=runlevel_is_on('el_el')
 #else
        l_el_corr=l_gw0.or.l_life

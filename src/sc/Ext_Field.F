@@ -25,7 +25,7 @@ subroutine Ext_Field(ik,Sigma_s,time)
  use com,            ONLY:error
  use SC,             ONLY:SC_bands,SC_potential
  use real_time,      ONLY:Ext_Field_freq,Ext_Field_Int,Ext_Field_name,&
-&                         RT_step,Ef_rhoq0,RT_resonant
+&                         RT_step,RT_resonant,Grad_dot_q0,A_t
 
  implicit none
  integer, intent(in)     :: ik
@@ -34,24 +34,22 @@ subroutine Ext_Field(ik,Sigma_s,time)
  ! 
  ! Work Space
  !
- complex(SP) :: Et
  real(SP)    :: sigma
  integer     :: i1,i2
  !
  select case(trim(Ext_Field_name))
    case('SINUSOIDAL')
      if(RT_resonant) then
-       Et=Ext_Field_Int*exp(-(0._SP,1._SP)*Ext_Field_freq*time)
+       A_t=-Ext_Field_Int*exp(-(0._SP,1._SP)*Ext_Field_freq*time)/((0._SP,2._SP)*Ext_Field_freq)
      else
-       Et=Ext_Field_Int*cos(Ext_Field_freq*time)
+       A_t=-Ext_Field_Int*sin(Ext_Field_freq*time)/Ext_Field_freq
      endif
    case('DELTA')
-     sigma=RT_step
-     Et=Ext_Field_Int*1._SP/(sigma*sqrt(pi))*exp(-(time/sigma)**2)
+     A_t=Ext_Field_Int
    case('STEP')
-     Et=Ext_Field_Int
+     A_t=Ext_Field_Int*time
    case default
-     call error("External Field "//trim(Ext_Field_name)//" not implemented ") 
+     call error(" External Field "//trim(Ext_Field_name)//" not implemented ") 
  end select
  !
  ! Add the External Field to the singular part of the Self-Energy
@@ -61,8 +59,8 @@ subroutine Ext_Field(ik,Sigma_s,time)
  do i1=1,SC_bands
    do i2=i1+1,SC_bands
       !     
-      Sigma_s(i1,i2)=Sigma_s(i1,i2)+Ef_rhoq0(i1,i2,ik)*Et
-      Sigma_s(i2,i1)=Sigma_s(i2,i1)+Ef_rhoq0(i2,i1,ik)*conjg(Et)
+      Sigma_s(i1,i2)=Sigma_s(i1,i2)+Grad_dot_q0(i1,i2,ik,1)*A_t
+      Sigma_s(i2,i1)=Sigma_s(i2,i1)+Grad_dot_q0(i2,i1,ik,1)*conjg(A_t)
       !
    enddo
  enddo

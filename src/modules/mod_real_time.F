@@ -53,7 +53,9 @@ module real_time
  logical                  :: l_rt_efield  
  logical                  :: RT_resonant
  logical                  :: RT_no_intraband
- complex(SP), allocatable :: Ef_rhoq0(:,:,:)
+ complex(SP), allocatable :: Grad(:,:,:,:,:)
+ complex(SP), allocatable :: Grad_dot_q0(:,:,:,:)
+ complex(SP)              :: A_t ! Vector potential A(t)
  ! 
  ! Other
  !
@@ -77,9 +79,13 @@ module real_time
  logical                      :: RT_phase_int
  character(schlen)            :: Integrator_name
  !                                             
- ! Ho as in SC see SC_driver.F
+ ! Time dependent Hamiltonian 
  !
- complex(SP), allocatable :: Ho(:,:,:),H_t(:,:,:),Ho_pot(:,:,:)
+ complex(SP), allocatable :: H_t(:,:,:)
+ !
+ ! Non-interaction potential energies and potentials
+ !
+ complex(SP), allocatable :: Ho_pot(:,:,:)
  real(SP),    allocatable :: E_bare(:,:) 
  !
  contains
@@ -89,9 +95,11 @@ module real_time
      use pars,           ONLY:SP,schlen
      use drivers,        ONLY:l_sc_hartree
      use memory_m,       ONLY:mem_est
-     use SC,             ONLY:SC_bands,V_hartree_sc,local_V
+     use SC,             ONLY:SC_bands,V_hartree_sc,local_V,Ko,H_ion
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
+     use xc_functionals, ONLY:E_xc
+     !
      implicit none
      !
      type(levels), intent(in) :: en
@@ -99,20 +107,27 @@ module real_time
      allocate(rho(fft_size))
      call mem_est('Density',(/fft_size/),(/SP/))
      !
+     allocate(E_xc(fft_size))
+     call mem_est('Exc',(/fft_size/),(/SP/))
+     !
      allocate(V_hartree_0(fft_size,n_spin))
      call mem_est('Hartree',(/fft_size/),(/(1+n_spin)*SP/))
      !  
-     if(l_rt_exc) then
-       !      
-       allocate(V_xc_0(fft_size,n_spin),V_hartree_sc(fft_size,n_spin))
-       call mem_est('Potentials',(/fft_size/),(/(1+n_spin)*2*SP/))
+     allocate(V_xc_0(fft_size,n_spin),V_hartree_sc(fft_size,n_spin))
+     call mem_est('Potentials',(/fft_size/),(/(1+n_spin)*2*SP/))
+     !
+     if(l_rt_efield) then
+       !
+       allocate(Grad_dot_q0(SC_bands,SC_bands,en%nk,n_spin))
+       call mem_est('Ext_Field',(/size(Grad_dot_q0)/),(/(1+n_spin)*2*SP/))
        !
      endif
      !
-     if(l_rt_efield) then
-       allocate(Ef_rhoq0(SC_bands,SC_bands,en%nk))
-       call mem_est('ExtField_rhoq0',(/fft_size/),(/2*SP/))
-     endif
+     allocate(Ko(SC_bands,SC_bands,en%nk,n_spin))
+     call mem_est("Kinetic Energy",(/size(Ko)/),(/2*SP/))
+     !
+     allocate(Grad(3,SC_bands,SC_bands,en%nk,n_spin))
+     call mem_est("Momentum",(/size(Grad)/),(/2*SP/))
      !
      allocate(G_lesser(SC_bands,SC_bands,en%nk))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
@@ -120,8 +135,8 @@ module real_time
      allocate(E_bare(SC_bands,en%nk))
      call mem_est("E_bare",(/size(E_bare)/),(/SP/))
      !
-     allocate(Ho(SC_bands,SC_bands,en%nk),H_t(SC_bands,SC_bands,en%nk))
-     call mem_est("Ho",(/size(Ho)/),(/2*2*SP/))
+     allocate(H_ion(SC_bands,SC_bands,en%nk,n_spin),H_t(SC_bands,SC_bands,en%nk))
+     call mem_est("H_ion",(/size(H_ion)/),(/2*2*SP/))
      !
      if(RT_phase_int) then
        allocate(Ho_pot(SC_bands,SC_bands,en%nk))
@@ -141,33 +156,34 @@ module real_time
    
    subroutine RT_free
      !
-     use SC,             ONLY:V_hartree_sc
+     use SC,             ONLY:V_hartree_sc,Ko,H_ion
      use memory_m,       ONLY:mem_est
+     use xc_functionals, ONLY:E_xc
      implicit none
+     !
+     deallocate(E_xc)
+     call mem_est('Exc')
      !
      deallocate(rho)
      call mem_est('Density')
      !
+     deallocate(Ko)
+     call mem_est('Kinetic Energy')
+     !
+     deallocate(Grad)
+     call mem_est('Momentum')
+     !
      deallocate(V_hartree_0)
      call mem_est('Hartree')
      !  
-     if(l_rt_exc) then
-       !      
-       deallocate(V_hartree_sc,V_xc_0)
-       call mem_est('Potentials')
-       !
-     endif
-     !
-     if(l_rt_efield) then
-       deallocate(Ef_rhoq0)
-       call mem_est('ExtField_rhoq0')
-     endif
+     deallocate(V_hartree_sc,V_xc_0)
+     call mem_est('Potentials')
      !
      deallocate(E_bare)
      call mem_est("E_bare")
      !
-     deallocate(Ho,H_t)
-     call mem_est("Ho")
+     deallocate(H_ion,H_t)
+     call mem_est("H_ion")
      !
      if(RT_phase_int) then
        !      
@@ -187,6 +203,13 @@ module real_time
      !
      deallocate(G_l_old)
      call mem_est("G_l_old")
+     !
+     if(l_rt_efield) then
+       !
+       deallocate(Grad_dot_q0)
+       call mem_est("Ext_Field")
+       !
+     endif
      !
    end subroutine RT_free
    !

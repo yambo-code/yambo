@@ -30,11 +30,11 @@ subroutine RT_Collision(G_input,en,k,q,RT_time)
  use drivers,        ONLY:l_sc_exx,l_sc_chosex,l_sc_hartree,l_sc_pz,l_sc_lda_x,&
 &                         l_sc_hf,l_sc_exxc
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc
+ use SC,             ONLY:SC_bands,V_hartree_sc,Ko,H_ion
  use QP_m,           ONLY:QP_nk,QP_Vxc,QP_n_states,QP_table 
  use real_time,      ONLY:I1_lesser,I2_lesser,V_xc_0,l_rt_exc,rho,V_hartree_0,        &
  &                         Thermal_Time,l_rt_efield,TransRelax,LongRelax, &
- &                         T_initial,RT_phase_int,E_bare,H_t,Ho,Ho_pot
+ &                         T_initial,RT_phase_int,E_bare,H_t,Ho_pot
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
@@ -113,13 +113,13 @@ subroutine RT_Collision(G_input,en,k,q,RT_time)
    !
    ! Fill the Singular Self-Energy Sigma_s(:,:,:)
    !
-   if(l_rt_exc) call V_to_H(ik,V_hartree_sc+V_xc,Sigma_s,wf)
+   call V_to_H(ik,V_hartree_sc+V_xc,Sigma_s,wf)
    !
    if(.not.RT_phase_int) then
      !
      ! Ho is part of the Hamiltonian (or singular self-energy Sigma_s) 
      !
-     Sigma_s(:,:,1)=Sigma_s(:,:,1)+Ho(:,:,ik)
+     Sigma_s(:,:,1)=Sigma_s(:,:,1)+Ko(:,:,ik,1)+H_ion(:,:,ik,1)
      !
    else
      !
@@ -162,7 +162,7 @@ subroutine RT_Collision(G_input,en,k,q,RT_time)
    !
    H_t(:,:,ik)=Sigma_s(:,:,1)
    !
-   if(RT_phase_int) H_t(:,:,ik)=H_t(:,:,ik)+Ho(:,:,ik)+Ho_pot(:,:,ik)
+   if(RT_phase_int) H_t(:,:,ik)=H_t(:,:,ik)+Ko(:,:,ik,1)+H_ion(:,:,ik,1)+Ho_pot(:,:,ik)
    !
    ! Now prepare I1 and I2 before the integration notice that 
    ! they contain also the external field

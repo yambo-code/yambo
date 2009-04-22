@@ -326,8 +326,10 @@ integer function elph_databases(k,E,q)
      enddo
      ph_freqs_sq(iq,:)=(abs(ph_freqs_sq(iq,:))/HA2CM1)**2.
    else
-     ph_freqs_sq(iq,:)=abs(ph_freqs_sq_disk)
-     if (.not.abinit_DB)  ph_freqs_sq(iq,:)=abs(ph_freqs_sq_disk)/4._SP
+     do il=1,ph_modes
+       ph_freqs_sq(iq,il)=max( real(ph_freqs_sq_disk(il)),0._SP)
+       if (.not.abinit_DB)  ph_freqs_sq(iq,il)=ph_freqs_sq(iq,il)/4._SP
+     enddo
    endif
    !
    elph_gkkp=(0._SP,0._SP)

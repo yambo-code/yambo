@@ -55,6 +55,11 @@ module SC
  real(SP),    allocatable :: V_xc_sc(:,:)
  real(SP),    allocatable :: V_hartree_sc(:,:)
  !
+ ! Kinetic Energy and Ionic potential energy
+ !
+ complex(SP), allocatable :: Ko(:,:,:,:)
+ complex(SP), allocatable :: H_ion(:,:,:,:)
+ !
  ! Non-Local part (sigma_x, sigma_chosex)
  !
  complex(SP), allocatable :: H_nl_sc(:,:,:)

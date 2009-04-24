@@ -95,7 +95,7 @@ module real_time
      use pars,           ONLY:SP,schlen
      use drivers,        ONLY:l_sc_hartree
      use memory_m,       ONLY:mem_est
-     use SC,             ONLY:SC_bands,V_hartree_sc,local_V,Ko,H_ion
+     use SC,             ONLY:SC_bands,V_hartree_sc,local_V,H_ion
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
@@ -122,12 +122,6 @@ module real_time
        call mem_est('Ext_Field',(/size(Grad_dot_q0)/),(/(1+n_spin)*2*SP/))
        !
      endif
-     !
-     allocate(Ko(SC_bands,SC_bands,en%nk,n_spin))
-     call mem_est("Kinetic Energy",(/size(Ko)/),(/2*SP/))
-     !
-     allocate(Grad(3,SC_bands,SC_bands,en%nk,n_spin))
-     call mem_est("Momentum",(/size(Grad)/),(/2*SP/))
      !
      allocate(G_lesser(SC_bands,SC_bands,en%nk))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
@@ -156,7 +150,7 @@ module real_time
    
    subroutine RT_free
      !
-     use SC,             ONLY:V_hartree_sc,Ko,H_ion
+     use SC,             ONLY:V_hartree_sc,H_ion
      use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:E_xc
      implicit none
@@ -166,12 +160,6 @@ module real_time
      !
      deallocate(rho)
      call mem_est('Density')
-     !
-     deallocate(Ko)
-     call mem_est('Kinetic Energy')
-     !
-     deallocate(Grad)
-     call mem_est('Momentum')
      !
      deallocate(V_hartree_0)
      call mem_est('Hartree')

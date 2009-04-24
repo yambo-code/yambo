@@ -20,8 +20,6 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !
-!
-!
 !  This subroutine perform integration using different methods
 !
 ! if(Integrator=="EULER") simple Euler's method
@@ -34,11 +32,16 @@
 !
 ! elseif(Integrator=="EXACT")    Exact Integration
 !
-! elseif(Integrator=="RK2EXACT") Runge-Kutta with Exact Integration
-!                                instead of the Euler step
+! It diagonalize the Hamiltonian and integrate in the 
+! eigenstate space
 !
+! elseif(Integrator=="RK2EXACT") 
+! 
+! Runge-Kutta with Exact Integration instead of the Euler step
 ! The full Hamiltonian is diagonalized Ho + Sigma_s
 ! and the G_lesser is integrated in this diagonal bases
+!
+! ------------------------------------------------------------
 !
 ! Notice that G_old is never overwritten
 !

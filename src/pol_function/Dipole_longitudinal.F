@@ -35,7 +35,7 @@ subroutine Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
 &                                pp_indexes_reset
  use par_indexes_m,       ONLY : par_indexes
  use R_lattice,           ONLY : bz_samp,q0_def_norm,nkibz
- use X_m,                 ONLY : X_t,X_q0grad, long_path 
+ use X_m,                 ONLY : X_t,DIP_iR_or_P, long_path 
  use memory_m,            ONLY : mem_est
  use wave_func,           ONLY : wf,wf_ng,wf_igk,wf_state,wf_load,WF_free , wf_ncx
 #if defined _RAS
@@ -212,7 +212,7 @@ subroutine Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
            if (abs(Ev_m_Ec)<=1.E-5_SP) cycle
            icfft = wf_state_local(ic,ik,i_spin) 
            !
-           ! X_q0grad = < v,k+q | c,k >/q
+           ! DIP_iR_or_P = < v,k+q | c,k >/q
            !
 #if defined _DOUBLE
            rho(i_spin) = zdotc( wf_ng_eff, wf(1:wf_ng_eff,ivfft), &
@@ -225,12 +225,12 @@ subroutine Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
          enddo    ! spin loop
          !
          if (n_sp_pol==2) then
-           X_q0grad(ir,ic,iv,ik,1)=rho(1)
-           X_q0grad(ir,ic,iv,ik,2)=rho(2)
+           DIP_iR_or_P(ir,ic,iv,ik,1)=rho(1)
+           DIP_iR_or_P(ir,ic,iv,ik,2)=rho(2)
          else if (n_spinor==2) then
-           X_q0grad(ir,ic,iv,ik,1)=(rho(1)+rho(2))
+           DIP_iR_or_P(ir,ic,iv,ik,1)=(rho(1)+rho(2))
          else if (n_spin==1) then
-           X_q0grad(ir,ic,iv,ik,1)=rho(1)
+           DIP_iR_or_P(ir,ic,iv,ik,1)=rho(1)
          endif
          !
        enddo  ! conduction band loop
@@ -245,7 +245,7 @@ subroutine Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  !
  call WF_free()
  do i_spin=1,n_spin
-   call pp_redux_wait(X_q0grad(:,:,:,:,i_spin))
+   call pp_redux_wait(DIP_iR_or_P(:,:,:,:,i_spin))
  enddo
  !
  ! Switch off transverse calculation if successful 

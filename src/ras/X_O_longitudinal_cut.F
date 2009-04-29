@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine X_O_longitudinal_cut(Xen, Xk, X, field_dir, use_trans_gauge)
+ subroutine Dipole_longitudinal_cut(Xen, Xk, X, field_dir, use_trans_gauge)
 !====================================
    use pars
    use com,                     ONLY : msg, core_io_path, msg, error, warning
@@ -104,7 +104,7 @@
    ! - Determine grid displacement vectors
    ! - Check compatibility of requested polarization vector
    !
-   call X_O_check_shifted_grids( Xk_shift, Xk, ifail, num_long_grid)
+   call Dipole_check_shifted_grids( Xk_shift, Xk, ifail, num_long_grid)
    call select_field_dir(ifail, field_dir, num_long_grid)
 
    if(ifail>0) then
@@ -213,7 +213,7 @@
              ivfft   = wf_state(iv,ikpq,i_spin)
              icfft = wf_state_local(ic,ik,i_spin)
              !
-             ! X_q0grad = < v,k+q | T(z) e^i(q.r)| c,k >/q
+             ! DIP_iR_or_P = < v,k+q | T(z) e^i(q.r)| c,k >/q
              !
              call PScut(PS, wf(1:wf_ng_long,ivfft), wf_local(1:wf_ng_long,icfft))
              rho(:,i_spin) = PS(:)/q0_def_norm
@@ -285,4 +285,4 @@
     return
   end subroutine reset_DB1
 
- end subroutine X_O_longitudinal_cut
+ end subroutine Dipole_longitudinal_cut

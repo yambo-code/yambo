@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine X_O_strengths_cut(Xen, Xk, X, field_dir)
+ subroutine Dipole_driver_cut(Xen, Xk, X, field_dir)
 !====================================
  use pars
  use com,                     ONLY : msg, warning
@@ -91,12 +91,12 @@
      !
      ! Use longitudinal gauge, supporting fallback to transverse gauge
      !
-     call X_O_longitudinal_cut(Xen,Xk,X,field_dir, use_trans_gauge)
+     call Dipole_longitudinal_cut(Xen,Xk,X,field_dir, use_trans_gauge)
      !
      if(use_trans_gauge) call warning('Reverting to transverse gauge')
    endif
    !
-   if(use_trans_gauge) call X_O_transverse_cut(Xen,Xk,X)
+   if(use_trans_gauge) call Dipole_transverse_cut(Xen,Xk,X)
 
    !
    ! Free any loaded WFs
@@ -141,7 +141,7 @@
 #endif
        do i_spin = 1, n_sp_pol
          !
-         ! X_rhoq0 = i q . < v k | r | c k >
+         ! DIP_iq_dot_r = i q . < v k | r | c k >
          !
          Xcut_rhoq0(ic,iv,i1,i_spin) = &
 &          dot_product( field_dir_rot, Xcut_q0grad(:,ic,iv,ik,i_spin) ) 
@@ -160,4 +160,4 @@
  call mem_est('Xcut_q0grad')
  return
 
-end subroutine X_O_strengths_cut
+end subroutine Dipole_driver_cut

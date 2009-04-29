@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Ext_Field(ik,Sigma_s,time)
+subroutine RT_Ext_Field(ik,Sigma_s,time)
  !
  use pars,           ONLY:SP,pi
  use com,            ONLY:error
@@ -65,4 +65,4 @@ subroutine Ext_Field(ik,Sigma_s,time)
    enddo
  enddo
  !
-end subroutine Ext_Field
+end subroutine RT_Ext_Field

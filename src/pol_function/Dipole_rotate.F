@@ -26,7 +26,7 @@ subroutine Dipole_rotate(X_bands,use_trans_gauge,E)
  use R_lattice,           ONLY:nXkibz
  use electrons,           ONLY:levels
  use SC,                  ONLY:SC_bands,SC_R,load_SC_components,H_nl_sc,H_rotate
- use X_m,                 ONLY:X_q0grad
+ use X_m,                 ONLY:DIP_iR_or_P
  use IO_m,                ONLY:NONE,DUMP
  use memory_m,            ONLY:mem_est
  implicit none
@@ -86,10 +86,10 @@ subroutine Dipole_rotate(X_bands,use_trans_gauge,E)
    !
    do ic=1,3
      !
-     ! Remember that X_q0grad(n,n') = i <n'|r|n>
+     ! Remember that DIP_iR_or_P(n,n') = i <n'|r|n>
      ! 
      forall (ib=1:X_bands,ibp=1:X_bands) D_WS_nm1(ib,ibp)=&
-&           X_q0grad(ic,ibp,ib,ik,1)*delta_E(ib,ibp)/delta_E_tilde(ib,ibp) 
+&           DIP_iR_or_P(ic,ibp,ib,ik,1)*delta_E(ib,ibp)/delta_E_tilde(ib,ibp) 
      D_WS_n=D_WS_nm1
      !
      do it=1,0
@@ -104,14 +104,14 @@ subroutine Dipole_rotate(X_bands,use_trans_gauge,E)
 
        !
        forall (ib=1:X_bands,ibp=1:X_bands) D_WS_n(ib,ibp)=&
-&             X_q0grad(ic,ibp,ib,ik,1)*delta_E(ib,ibp)/delta_E_tilde(ib,ibp)+&
+&             DIP_iR_or_P(ic,ibp,ib,ik,1)*delta_E(ib,ibp)/delta_E_tilde(ib,ibp)+&
 &             D_WS_n(ib,ibp)/delta_E_tilde(ib,ibp)
        !
        D_WS_nm1=D_WS_n
        !
      enddo 
      !
-     forall (ib=1:X_bands,ibp=1:X_bands) X_q0grad(ic,ib,ibp,ik,1)=D_WS_n(ibp,ib)
+     forall (ib=1:X_bands,ibp=1:X_bands) DIP_iR_or_P(ic,ib,ibp,ik,1)=D_WS_n(ibp,ib)
      !
    enddo
    !

@@ -192,7 +192,7 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
     do iw = 1, nw
       eps_i(iw,ipol) = X_epsilon(1,iw)
     enddo
-    call X_alloc('OptOsc')  ! X_rhoq0
+    call X_alloc('OptOsc')  ! DIP_iq_dot_r
     if(loptcut) deallocate(Xcut_rhoq0)
      
   enddo    

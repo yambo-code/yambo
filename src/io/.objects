@@ -8,7 +8,7 @@ DB_objects = ioBS_doubles.o
 #else
 DB_objects = 
 #endif
-objs = ver_is_gt_or_eq.o \
+objs = ver_is_gt_or_eq.o IO_mute.o \
        ioRIM.o        ioGROT.o     ioELPH.o \
        ioOSTNTS.o     ioQINDX.o    ioQP.o      ioX.o \
        ioDB1.o        ioWF.o       ioKB_PP.o   ioXXVXC.o \

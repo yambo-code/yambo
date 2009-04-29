@@ -108,9 +108,9 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  !
  ! E_xc Energy 
  !
- call SC_mute("report log io_in io_out")
+ call IO_mute("report log io_in io_out")
  call xc_lda_driver(en,k,WF_KIND,WF_xc_functional,0)
- call SC_mute("  ")
+ call IO_mute("  ")
  !
 #if defined _DOUBLE
  Exc=ddot(fft_size,rho,1,E_xc,1)

@@ -244,7 +244,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        iscs_save(1,: )=isc%os
        iscs_save(2,:3)=isc%qs
-       isc%os=isc%is
+       isc%os=(/QP_table(i1,2),QP_table(i1,3),1,spin(QP_table(i1,:))/)
        isc%qs=(/1,1,1/)
        call scatterBamp(isc)
        do ig1=1,X%ng

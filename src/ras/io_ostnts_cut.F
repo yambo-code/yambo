@@ -76,7 +76,7 @@
    if (ioOSTNTS_cut/=0) goto 1
  endif
 !
-! On disk the size is X_q0grad(3,db_nb(2),db_nbm,nXkibz)
+! On disk the size is DIP_iR_or_P(3,db_nb(2),db_nbm,nXkibz)
 !
  sec_size=3*db_nb(2)*db_nbm
  if (any((/io_sec(io_db,:)==2/))) then

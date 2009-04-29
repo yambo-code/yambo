@@ -37,10 +37,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use par_proc_m,     ONLY:pp_redux_wait
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
- use X_m,            ONLY:X_rhoq0,X_alloc,X_t,X_q0grad,long_path,P_bands_ordered,&
-&                         Vnl_commutator_warning
+ use X_m,            ONLY:DIP_iq_dot_r,X_alloc,X_t,DIP_iR_or_P,long_path,Dipole_bands_ordered,&
+&                         Vnl_commutator_warning,Eval_P_and_P2_only,P_square
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
- use memory_m,       ONLY:mem_est
  use wave_func,      ONLY:wf_ng,wf_load,WF_free
  use vec_operate,    ONLY:v_norm
  implicit none
@@ -61,7 +60,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  integer :: ID,io_err
  integer, external :: ioOSTNTS
  !
- if (allocated(X_rhoq0)) return
+ if (allocated(DIP_iq_dot_r)) return
  !
 #if defined _SC
  ! Check first the kind of the wavefunctions 
@@ -73,9 +72,12 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! Transitions ordering
  !
- P_bands_ordered=.true.
+ Dipole_bands_ordered=.true.
 #if defined _SC
- P_bands_ordered=.not.using_SC_basis.or.(using_SC_basis.and.local_V)
+ Dipole_bands_ordered=.not.using_SC_basis.or.(using_SC_basis.and.local_V)
+ if (Eval_P_and_P2_only) Dipole_bands_ordered=.FALSE.
+#else
+ Eval_P_and_P2_only=.false.
 #endif
  !
  ! Check first if ostnts DB is already done
@@ -92,8 +94,15 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! GPL_EXCLUDE_END RAS_IGNORE
  !
+ ! Swith off I/O in case gradient is calculated
+ if (Eval_P_and_P2_only) call IO_mute("io_in io_out")
+ !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=ioOSTNTS(X,Xen,ID)
+ !
+#if defined _SC
+ if (Eval_P_and_P2_only) call IO_mute(" ")
+#endif
  !
  if (io_err.ne.0) then
    !
@@ -102,12 +111,18 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    ! When using internal SC potentials oscilators must be rotated
    ! in the new basis. So all transitions are needed
    !
-   if (P_bands_ordered) then
+   if (Dipole_bands_ordered) then
      call X_alloc('OptGrad',(/3,X%ib(2),Xen%nbm,Xk%nibz/))
    else
      call X_alloc('OptGrad',(/3,X%ib(2),X%ib(2),Xk%nibz/))
+#if defined _SC
+     if (Eval_P_and_P2_only) then
+       call X_alloc('P_square',(/X%ib(2),X%ib(2),Xk%nibz/))
+       P_square=(0.,0.)
+     endif
+#endif
    endif
-   X_q0grad=(0.,0.)
+   DIP_iR_or_P=(0.,0.)
    !
 #if !defined _MANYK
    call wf_load(0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
@@ -148,14 +163,25 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    if (using_SC_basis.and..not.local_V) call Dipole_rotate(X%ib(2),use_trans_gauge,Xen)
    !
+   ! Swith off I/O in case gradient is calculated
+   !
+   if (Eval_P_and_P2_only) call IO_mute("io_in io_out")
+   !
 #endif
    !
-   ! Write the q0grad to its database
+   ! Write the DIP_iR_or_P to its database (Only in the case of "R")
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=ioOSTNTS(X,Xen,ID)
    !
  end if
+ !
+#if defined _SC
+ if (Eval_P_and_P2_only) then
+   call IO_mute(" ")
+   return
+ endif
+#endif
  !
  ! The field direction and the gamma-point norm must be renormalized here in case the
  ! oscillator strengths have been calculated using the long. gauge.
@@ -176,8 +202,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! Calculate the q-dependent oscillators (OptOsc)
  !
  call X_alloc('OptOsc',(/X%ib(2),Xen%nbm,Xk%nbz/))
- X_rhoq0 = (0.0_SP,0.0_SP)
- !
+ DIP_iq_dot_r = (0.0_SP,0.0_SP)
  !
  do i1 = 1,Xk%nbz
    !
@@ -205,12 +230,12 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
          ! 
          ! GPL_EXCLUDE_END SPIN_IGNORE
          !
-         ! X_rhoq0 = i q . < v k | r | c k >
+         ! DIP_iq_dot_r = i q . < v k | r | c k >
          !
-         X_rhoq0(ic,iv,i1,i_spin) = & 
-&          dot_product( field_dir_rot, X_q0grad(:,ic,iv,ik,i_spin) )
-         if ( is > nsym/(i_time_rev+1) ) X_rhoq0(ic,iv,i1,i_spin) = &
-&          dot_product( X_q0grad(:,ic,iv,ik,i_spin), field_dir_rot ) 
+         DIP_iq_dot_r(ic,iv,i1,i_spin) = & 
+&          dot_product( field_dir_rot, DIP_iR_or_P(:,ic,iv,ik,i_spin) )
+         if ( is > nsym/(i_time_rev+1) ) DIP_iq_dot_r(ic,iv,i1,i_spin) = &
+&          dot_product( DIP_iR_or_P(:,ic,iv,ik,i_spin), field_dir_rot ) 
          !
          ! 
          ! GPL_EXCLUDE_START SPIN_IGNORE
@@ -220,7 +245,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        ! GPL_EXCLUDE_END SPIN_IGNORE
        !
      enddo
-     X_rhoq0(iv,iv,i1,:) = (1.0_SP,0.0_SP)
+     DIP_iq_dot_r(iv,iv,i1,:) = (1.0_SP,0.0_SP)
    enddo
  enddo
  call pp_redux_wait()

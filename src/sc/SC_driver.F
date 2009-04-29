@@ -187,7 +187,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  if ((l_sc_exx.or.l_sc_exxc).and.SC_cycle) then
    X(1)%ib(2)=SC_bands
    X(1)%ng=QP_ng_Sx
-   call X_O_strengths(E, Xk, X(1), X(1)%q0)
+   call Dipole_driver(E, Xk, X(1), X(1)%q0)
  endif
  !
  ! WF
@@ -360,14 +360,14 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      if (l_sc_hartree) V_xc_sc=(0.,0.)
      !
-     call SC_mute("report log io_in io_out")
+     call IO_mute("report log io_in io_out")
      !
      if (l_sc_lda_x)            call xc_lda_driver(E,k,1,1,1)
      if (l_sc_pz.or.l_sc_exxc)  call xc_lda_driver(E,k,3,8,1)
      if (l_sc_pz.or.l_sc_lda_x) V_xc_sc(:,:)=V_xc(:,:)
      if (l_sc_exxc) V_xc_sc(:,:)=V_xc_sc(:,:)+V_xc(:,:)
      !
-     call SC_mute(" ")
+     call IO_mute(" ")
      !
      ! Mixing 
      !========
@@ -380,19 +380,19 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      ! Stop all messagging
      !
-     call SC_mute("report io_in io_out")
+     call IO_mute("report io_in io_out")
      !
      ! Hartee-Fock
      !
      call QP_XX_Vxc(E,k,k,q)
      !
-     call SC_mute("report io_out")
+     call IO_mute("report io_out")
      !
      ! CHOSEX
      !
      if (l_sc_chosex) call QP_ppa_chosex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1)
      !
-     call SC_mute(" ")
+     call IO_mute(" ")
      !
      ! Mixing 
      !========

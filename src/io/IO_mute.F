@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SC_mute(what)
+subroutine IO_mute(what)
  !
  use pars,           ONLY:schlen
  use IO_m,           ONLY:IO_write,IO_read
@@ -50,4 +50,4 @@ subroutine SC_mute(what)
    enddo
  endif
  !
-end subroutine SC_mute
+end subroutine IO_mute

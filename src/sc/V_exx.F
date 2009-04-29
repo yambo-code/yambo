@@ -74,9 +74,9 @@ subroutine V_exx(X,E,k,q,Vexx)
  !
  ! 2:
  call X_alloc('X',(/X%ng,X%ng,Xw%n(2)/))
- call SC_mute("report") 
+ call IO_mute("report") 
  call X_os(X_mat,1,(/1,Xw%n(1)/),E,k,Xw,X)
- call SC_mute("") 
+ call IO_mute("") 
  ! 3:
  allocate(Xo_inverse(X%ng-1,X%ng-1))
  Xo_inverse(:X%ng-1,:X%ng-1) =  X_mat(2:X%ng,2:X%ng,1) 
@@ -98,9 +98,9 @@ subroutine V_exx(X,E,k,q,Vexx)
  ! 1:
  allocate(QP_Sx(QP_n_states))
  call mem_est("QP_Sx",(/QP_n_states/))
- call SC_mute("report io_in io_out") 
+ call IO_mute("report io_in io_out") 
  call QP_XX_Vxc(E,k,k,q)
- call SC_mute(" ")
+ call IO_mute(" ")
  ! 2:
  call collision_reset(isc)
  isc%ngrho=X%ng

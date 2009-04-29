@@ -134,7 +134,7 @@ subroutine RT_Collision(G_input,en,k,q,RT_time)
    !
    if(l_rt_efield.and.RT_time>0._SP) then
      !      
-     call Ext_Field(ik,Sigma_s,RT_time-T_initial)
+     call RT_Ext_Field(ik,Sigma_s,RT_time-T_initial)
      !
    endif
    !

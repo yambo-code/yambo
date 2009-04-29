@@ -46,7 +46,8 @@ module real_time
  !
  complex(SP), allocatable :: G_lesser(:,:,:)
  complex(SP), allocatable :: G_l_old(:,:,:)
- complex(SP), allocatable :: I1_lesser(:,:,:),I2_lesser(:,:,:)
+ complex(SP), allocatable :: I1_lesser(:,:,:)
+ complex(SP), allocatable :: I2_lesser(:,:,:)
  !
  ! External Field
  !

@@ -71,6 +71,10 @@ subroutine elph_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  integer           ::io_err,ID
  integer, external ::ioELPH
  !
+ ! calculate q%weights
+ !
+ call k_expand(q) 
+ !
  gFsq_is_excitonic=allocated(BS_mat)
  if (gFsq_is_excitonic) then
    call section("+","Excitonic Generalized Eliashberg functions")

@@ -110,11 +110,11 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  !  Optical strengths
  !
- if (iq==1) call X_O_strengths(Xen, Xk, X, X%q0)
+ if (iq==1) call Dipole_driver(Xen, Xk, X, X%q0)
  !
 #if defined _RAS
  if (iq == 1.and.&
-&    (lras.or.lreels).and.loptcut) call X_O_strengths_cut( Xen, Xk, X, X%q0)
+&    (lras.or.lreels).and.loptcut) call Dipole_driver_cut( Xen, Xk, X, X%q0)
 #endif
  !
  ! Drude Contrib.

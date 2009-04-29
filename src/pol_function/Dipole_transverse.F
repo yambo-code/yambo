@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_O_transverse(Xen,Xk,X)
+subroutine Dipole_transverse(Xen,Xk,X)
  !
  use pars,                ONLY:SP,pi
  use timing,              ONLY:live_timing
@@ -122,7 +122,7 @@ subroutine X_O_transverse(Xen,Xk,X)
      ! 
      ! GPL_EXCLUDE_END SPIN_IGNORE
      !
-     if (ioKB_err==0) call X_O_kb_pp_comp(ik,i_spin,Xk,kbv)
+     if (ioKB_err==0) call Dipole_kb_pp_comp(ik,i_spin,Xk,kbv)
      !
      E_i_spin=i_spin
      if (n_spinor==2) E_i_spin=1
@@ -165,7 +165,7 @@ subroutine X_O_transverse(Xen,Xk,X)
          rho(2)=cdotc(wf_ng,wf_xyz(:,2),1,wf(:,icfft),1)
          rho(3)=cdotc(wf_ng,wf_xyz(:,3),1,wf(:,icfft),1)
 #endif
-         if (ioKB_err==0) call X_O_kb_sum(ivfft,icfft,rho(:),kbv)
+         if (ioKB_err==0) call Dipole_kb_sum(ivfft,icfft,rho(:),kbv)
          !
          rho(:)=rho(:)/Ev_m_Ec
          !
@@ -222,4 +222,4 @@ subroutine X_O_transverse(Xen,Xk,X)
  enddo
  !
  return
-end subroutine X_O_transverse
+end subroutine Dipole_transverse

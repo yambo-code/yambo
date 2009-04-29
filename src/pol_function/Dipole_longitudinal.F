@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
+subroutine Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  !
  ! In the longitudinal gauge we can use the wfc 
  ! at the k,k-q points to construct
@@ -108,7 +108,7 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  ! Determine grid displacement
  !
  ifail = 0
- call X_O_check_shifted_grids( Xk_shift, Xk, ifail, num_long_grid)
+ call Dipole_check_shifted_grids( Xk_shift, Xk, ifail, num_long_grid)
 #if defined _RAS
  call select_field_dir(ifail, field_dir, num_long_grid)
 #endif
@@ -294,4 +294,4 @@ subroutine X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
      return
    end subroutine set_parms
    !
-end subroutine X_O_longitudinal
+end subroutine Dipole_longitudinal

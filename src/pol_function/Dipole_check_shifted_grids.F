@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_O_check_shifted_grids( Xk_shift, Xk, ifail, num_long_grid )
+subroutine Dipole_check_shifted_grids( Xk_shift, Xk, ifail, num_long_grid )
  !
  use pars,            ONLY : SP
  use stderr,          ONLY : intc
@@ -118,4 +118,4 @@ subroutine X_O_check_shifted_grids( Xk_shift, Xk, ifail, num_long_grid )
  !
  return
  !
-end subroutine X_O_check_shifted_grids
+end subroutine Dipole_check_shifted_grids

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_O_strengths(Xen,Xk,X,field_dir)
+subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  use drivers,        ONLY:l_optics
  use pars,           ONLY:SP
@@ -123,7 +123,7 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
      !
      ! Use longitudinal gauge, supporting fallback to transverse gauge
      !
-     call X_O_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
+     call Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
      !
      if(use_trans_gauge) then
        call warning('Reverting to transverse gauge')
@@ -137,7 +137,7 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
    !
    ! GPL_EXCLUDE_END RAS_IGNORE
    !
-   if (use_trans_gauge) call X_O_transverse(Xen,Xk,X)
+   if (use_trans_gauge) call Dipole_transverse(Xen,Xk,X)
    !
    ! Free any loaded WFs
    !
@@ -146,7 +146,7 @@ subroutine X_O_strengths(Xen,Xk,X,field_dir)
    !
    ! Rotate the oscillators in the SC basis
    !
-   if (using_SC_basis.and..not.local_V) call X_O_rotate(X%ib(2),use_trans_gauge,Xen)
+   if (using_SC_basis.and..not.local_V) call Dipole_rotate(X%ib(2),use_trans_gauge,Xen)
    !
 #endif
    !

@@ -23,7 +23,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_O_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
+subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  !
  !
  ! Ylm(il,im) := Spherical harmonic 

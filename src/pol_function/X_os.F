@@ -110,9 +110,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  !  Optical strengths
  !
- Eval_P_and_P2_only=.TRUE.
  if (iq==1) call Dipole_driver(Xen, Xk, X, X%q0)
- stop
  !
 #if defined _RAS
  if (iq == 1.and.&

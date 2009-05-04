@@ -1,7 +1,7 @@
 #if defined _SC
 objs =	SC_driver.o V_Hartree.o V_exx.o V_to_H.o \
         RT_driver.o XC_switch.o RT_Ext_Field.o RT_Collision.o RT_Integrator.o \
-	    RT_Energy.o Kinetic.o RT_current.o
+	    RT_Energy.o Kinetic.o RT_current.o SC_precondition.o
 #else
 objs =
 #endif

@@ -20,38 +20,38 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !
-!  This subroutine perform integration using different methods
-!
-! if(Integrator=="EULER") simple Euler's method
-!
-!    y(t+dt) = y(t) + dt * f(t,y(t))
-!
-! elseif(Integrator=="RK2")  Runge-Kutta 2nd order
-!
-!    y(t+dt) = y(y) + dt * f(t+dt/2,y(t+dt/2))
-!
-! elseif(Integrator=="EXACT")    Exact Integration
-!
-! It diagonalize the Hamiltonian and integrate in the 
-! eigenstate space
-!
-! elseif(Integrator=="RK2EXACT") 
-! 
-! Runge-Kutta with Exact Integration instead of the Euler step
-! The full Hamiltonian is diagonalized Ho + Sigma_s
-! and the G_lesser is integrated in this diagonal bases
-!
-! ------------------------------------------------------------
-!
-! Notice that G_old is never overwritten
-!
 recursive subroutine RT_Integrator(G_new,G_old,T_step,en,k,q,Integrator,RT_time)
+ !
+ !  This subroutine perform integration using different methods
+ !
+ ! if(Integrator=="EULER") simple Euler's method
+ !
+ !    y(t+dt) = y(t) + dt * f(t,y(t))
+ !
+ ! elseif(Integrator=="RK2")  Runge-Kutta 2nd order
+ !
+ !    y(t+dt) = y(t) + dt * f(t+dt/2,y(t+dt/2))
+ !
+ ! elseif(Integrator=="EXACT")    Exact Integration
+ !
+ ! It diagonalize the Hamiltonian and integrate in the 
+ ! eigenstate space
+ !
+ ! elseif(Integrator=="RK2EXACT") 
+ ! 
+ ! Runge-Kutta with Exact Integration instead of the Euler step
+ ! The full Hamiltonian is diagonalized Ho + Sigma_s
+ ! and the G_lesser is integrated in this diagonal bases
+ !
+ !
+ ! Notice that G_old is never overwritten       
+ ! ------------------------------------------------------------
  !
  use pars,           ONLY:SP,schlen
  use com,            ONLY:error
  use SC,             ONLY:SC_potential,SC_bands,H_rotate
  use R_lattice,      ONLY:bz_samp  
- use real_time,      ONLY:G_lesser,G_l_old,I1_lesser,I2_lesser,RT_step,E_bare   &
+ use real_time,      ONLY:G_lesser,I1_lesser,I2_lesser,RT_step,E_bare   &
 &                        ,n_poles,RT_step,EULER,RK2,RT_phase_int,EXACT,RK2EXACT,H_t 
  use electrons,      ONLY:levels
  use matrix_operate, ONLY:mat_dia_inv,INV,USE_LK,DIAGO

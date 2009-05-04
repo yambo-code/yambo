@@ -45,7 +45,7 @@ module real_time
  ! GFs
  !
  complex(SP), allocatable :: G_lesser(:,:,:)
- complex(SP), allocatable :: G_l_old(:,:,:)
+ complex(SP), allocatable :: G_lesser_old(:,:,:)
  complex(SP), allocatable :: I1_lesser(:,:,:)
  complex(SP), allocatable :: I2_lesser(:,:,:)
  !
@@ -54,8 +54,6 @@ module real_time
  logical                  :: l_rt_efield  
  logical                  :: RT_resonant
  logical                  :: RT_no_intraband
- complex(SP), allocatable :: Grad(:,:,:,:,:)
- complex(SP), allocatable :: Grad_dot_q0(:,:,:,:)
  complex(SP)              :: A_t ! Vector potential A(t)
  ! 
  ! Other
@@ -96,7 +94,7 @@ module real_time
      use pars,           ONLY:SP,schlen
      use drivers,        ONLY:l_sc_hartree
      use memory_m,       ONLY:mem_est
-     use SC,             ONLY:SC_bands,V_hartree_sc,local_V,H_ion
+     use SC,             ONLY:SC_bands,V_hartree_sc,local_V,Ho
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
@@ -117,21 +115,14 @@ module real_time
      allocate(V_xc_0(fft_size,n_spin),V_hartree_sc(fft_size,n_spin))
      call mem_est('Potentials',(/fft_size/),(/(1+n_spin)*2*SP/))
      !
-     if(l_rt_efield) then
-       !
-       allocate(Grad_dot_q0(SC_bands,SC_bands,en%nk,n_spin))
-       call mem_est('Ext_Field',(/size(Grad_dot_q0)/),(/(1+n_spin)*2*SP/))
-       !
-     endif
-     !
      allocate(G_lesser(SC_bands,SC_bands,en%nk))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
      !
      allocate(E_bare(SC_bands,en%nk))
      call mem_est("E_bare",(/size(E_bare)/),(/SP/))
      !
-     allocate(H_ion(SC_bands,SC_bands,en%nk,n_spin),H_t(SC_bands,SC_bands,en%nk))
-     call mem_est("H_ion",(/size(H_ion)/),(/2*2*SP/))
+     allocate(Ho(SC_bands,SC_bands,en%nk,n_spin),H_t(SC_bands,SC_bands,en%nk))
+     call mem_est("Ho",(/size(Ho)/),(/2*2*SP/))
      !
      if(RT_phase_int) then
        allocate(Ho_pot(SC_bands,SC_bands,en%nk))
@@ -144,14 +135,14 @@ module real_time
      allocate(I2_lesser(SC_bands,SC_bands,en%nk))
      call mem_est("I2_lesser",(/size(I2_lesser)/),(/2*SP/))
      !
-     allocate(G_l_old(SC_bands,SC_bands,en%nk))
-     call mem_est("Gf_l_old",(/size(G_l_old)/),(/2*SP/))
+     allocate(G_lesser_old(SC_bands,SC_bands,en%nk))
+     call mem_est("Gf_l_old",(/size(G_lesser_old)/),(/2*SP/))
      !
    end subroutine RT_alloc
    
    subroutine RT_free
      !
-     use SC,             ONLY:V_hartree_sc,H_ion
+     use SC,             ONLY:V_hartree_sc,Ho
      use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:E_xc
      implicit none
@@ -171,8 +162,8 @@ module real_time
      deallocate(E_bare)
      call mem_est("E_bare")
      !
-     deallocate(H_ion,H_t)
-     call mem_est("H_ion")
+     deallocate(Ho,H_t)
+     call mem_est("Ho")
      !
      if(RT_phase_int) then
        !      
@@ -190,15 +181,8 @@ module real_time
      deallocate(I2_lesser)
      call mem_est("I2_lesser")
      !
-     deallocate(G_l_old)
-     call mem_est("G_l_old")
-     !
-     if(l_rt_efield) then
-       !
-       deallocate(Grad_dot_q0)
-       call mem_est("Ext_Field")
-       !
-     endif
+     deallocate(G_lesser_old)
+     call mem_est("G_lesser_old")
      !
    end subroutine RT_free
    !

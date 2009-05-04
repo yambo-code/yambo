@@ -57,8 +57,7 @@ module SC
  !
  ! Kinetic Energy and Ionic potential energy
  !
- complex(SP), allocatable :: Ko(:,:,:,:)
- complex(SP), allocatable :: H_ion(:,:,:,:)
+ complex(SP), allocatable :: Ho(:,:,:,:)
  !
  ! Non-Local part (sigma_x, sigma_chosex)
  !

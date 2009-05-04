@@ -21,11 +21,13 @@
 !
 subroutine RT_Ext_Field(ik,Sigma_s,time)
  !
- use pars,           ONLY:SP,pi
+ use pars,           ONLY:SP,DP,pi
  use com,            ONLY:error
+ use real_time,      ONLY:EF_q0
+ use X_m,            ONLY:DIP_iR_or_P
  use SC,             ONLY:SC_bands,SC_potential
  use real_time,      ONLY:Ext_Field_freq,Ext_Field_Int,Ext_Field_name,&
-&                         RT_step,RT_resonant,Grad_dot_q0,A_t
+&                         RT_step,RT_resonant,A_t,RT_no_intraband
 
  implicit none
  integer, intent(in)     :: ik
@@ -36,6 +38,9 @@ subroutine RT_Ext_Field(ik,Sigma_s,time)
  !
  real(SP)    :: sigma
  integer     :: i1,i2
+ complex(SP) :: cdotu,cdotc
+ complex(DP) :: zdotu,zdotc
+ complex(SP) :: A_t_vec(3)
  !
  select case(trim(Ext_Field_name))
    case('SINUSOIDAL')
@@ -52,15 +57,23 @@ subroutine RT_Ext_Field(ik,Sigma_s,time)
      call error(" External Field "//trim(Ext_Field_name)//" not implemented ") 
  end select
  !
+ A_t_vec(:)=EF_q0(:)*A_t
+ !
  ! Add the External Field to the singular part of the Self-Energy
  ! in case of complex Efield puts the correct Hermitian matrix
  ! and the intraband optical matrix elements have been set to zero
  !
+ if(.not.RT_no_intraband) then
+   do i1=1,SC_bands
+     Sigma_s(i1,i1)=Sigma_s(i1,i1)+cdotu(3,A_t_vec,1,DIP_iR_or_P(:,i1,i1,ik,1),1)
+   enddo
+ endif
+ !
  do i1=1,SC_bands
    do i2=i1+1,SC_bands
       !     
-      Sigma_s(i1,i2)=Sigma_s(i1,i2)+Grad_dot_q0(i1,i2,ik,1)*A_t
-      Sigma_s(i2,i1)=Sigma_s(i2,i1)+Grad_dot_q0(i2,i1,ik,1)*conjg(A_t)
+      Sigma_s(i1,i2)=Sigma_s(i1,i2)+cdotu(3,A_t_vec,1,DIP_iR_or_P(:,i1,i2,ik,1),1)
+      Sigma_s(i2,i1)=Sigma_s(i2,i1)+cdotc(3,A_t_vec,1,DIP_iR_or_P(:,i1,i2,ik,1),1)
       !
    enddo
  enddo

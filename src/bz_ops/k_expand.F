@@ -73,13 +73,11 @@ subroutine k_expand(k)
  integer         :: i1,i2,is
  real(SP)        :: v(3),kstar(nsym,3)
  logical         :: k_found
- character(schlen)::ch
  !
  if (associated(k%sstar)) return
  !
  allocate(k%star(k%nibz,nsym),k%nstar(k%nibz),k%weights(k%nibz))
- write (ch,'(2a)') trim(k%description),"-star"
- call mem_est(trim(ch),(/k%nibz*(nsym+2)+k%nbz*2/),(/IP/))
+ call mem_est( trim(k%description)//'-star' ,(/k%nibz*(nsym+2)+k%nbz*2/),(/IP/))
  !
  k%nstar=0
  k%star=0

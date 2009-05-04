@@ -34,10 +34,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                         SC_rho_threshold,SC_potential,it_now,E_convergence,&
 &                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,SC_bands_mixed,&
 &                         SC_cycle_mixing,V_hartree_sc,NSC_shot,SC_fft_size,&
-&                         SC_ng_Sx,SC_X_bands,SC_X_size
+&                         SC_ng_Sx,SC_X_bands,SC_X_size,Ho
  use wave_func,      ONLY:wf_load,wf,wf_n_states,WF_free
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size,fft_size
+ use parser_m,       ONLY:parser 
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
  use com,            ONLY:msg,warning
  use X_m,            ONLY:X_t
@@ -63,17 +64,18 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                            E_previous(SC_bands,k%nibz,n_sp_pol),dE(SC_bands,k%nibz,n_sp_pol),&
 &                            E_conv(n_sp_pol)
  real(SP),    allocatable :: rho_n(:),V_xc_nm1(:,:),rho_nm1(:)
- complex(SP), allocatable :: WFo(:,:),QP_Sxc_nm1(:)
+ real(SP),    allocatable :: delta_rho(:)
+ complex(SP), allocatable :: WFo(:,:)
  ! 
  ! Work Space
  !
  integer                  :: ir,i1,i2,ik,ib,ibp,WF_G_max,WF_Go_indx,ID(3),io_E,io_V,io_WF,i_spin
  real(SP)                 :: max_proj,V_xc_sc_shift(n_spin)
- complex(SP)              :: Ho(SC_bands,SC_bands,k%nibz,n_sp_pol)
  character(schlen)        :: dumb_ch
  integer, external        :: io_SC_components,eval_G_minus_G
  logical, external        :: stop_now,XC_switch
  logical                  :: SC_cycle,RESTART
+ logical                  :: l_TF_precond
  type(QP_t)               :: qp_dummy
  !
  ! ws for states spread evaluation
@@ -81,6 +83,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  real(SP)                 :: WS_spread(SC_bands)
  integer                  :: first_el(SC_bands),n_of_el(SC_bands),n_deg_grp,&
 &                            b_of_max_proj(SC_bands,k%nibz,n_sp_pol)
+ !
+ !
+ allocate(Ho(SC_bands,SC_bands,k%nibz,n_sp_pol))
  !
  ! Define SC internal variables
  !
@@ -218,11 +223,13 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  endif
  !
  SC_fft_size=fft_size
+ call parser('TF_precondition',l_TF_precond) 
  !
  ! Allocation(s)...
  !
  allocate(rho_n(fft_size),rho_nm1(fft_size),&
 &         V_xc_sc(fft_size,n_spin),V_xc_nm1(fft_size,n_spin),V_hartree_sc(fft_size,n_spin))
+ if (l_TF_precond) allocate(delta_rho(fft_size))
  call mem_est("Potentials",(/5*fft_size/),(/SP/))
  !
  allocate(WFo(fft_size,wf_n_states))
@@ -234,10 +241,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  allocate(SC_R(SC_bands,SC_bands,k%nibz,n_sp_pol),H_nl_sc(SC_bands,SC_bands,n_sp_pol))
  call mem_est("SC_R H_nl_sc",(/size(SC_R),size(H_nl_sc)/))
  !
- if (.not.local_V) then
-   allocate(QP_Sxc_nm1(QP_n_states))
-   call mem_est("QP_Sxc_nm1",(/QP_n_states/))
- endif
  !
  if (l_sc_chosex) then
    allocate(QP_Sc(QP_n_states,1))
@@ -372,6 +375,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      ! Mixing 
      !========
      !
+     !WARNING:
+     !The mixing of the potential has been eliminated for HF and CHOSEX, for
+     !V_xc_sc case tests are needed.
+     ! 
      if (it>1) V_xc_sc = SC_cycle_mixing*V_xc_sc + (1.-SC_cycle_mixing)*V_xc_nm1 
      !
      V_xc_nm1=V_xc_sc
@@ -394,24 +401,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      call IO_mute(" ")
      !
-     ! Mixing 
-     !========
-     !
-     if (it>1) then
-       if (l_sc_chosex) then
-         forall (i1=1:QP_n_states)  QP_Sx(i1)=SC_cycle_mixing*QP_Sx(i1)+&
-&                                             (1.-SC_cycle_mixing)/2.*QP_Sxc_nm1(i1)
-         forall (i1=1:QP_n_states)  QP_Sc(i1,1)=SC_cycle_mixing*QP_Sc(i1,1)+&
-&                                               (1.-SC_cycle_mixing)/2.*QP_Sxc_nm1(i1)
-       else
-         forall (i1=1:QP_n_states)  QP_Sx(i1)=SC_cycle_mixing*QP_Sx(i1)+&
-&                                             (1.-SC_cycle_mixing)*QP_Sxc_nm1(i1)
-       endif
-     endif
-     !
-     forall (i1=1:QP_n_states)                  QP_Sxc_nm1(i1)= QP_Sx(i1)
-     if (l_sc_chosex) forall (i1=1:QP_n_states) QP_Sxc_nm1(i1)= QP_Sxc_nm1(i1)+QP_sc(i1,1)
-     !
    endif
    !
    ! Hartree potential
@@ -419,7 +408,15 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    if (it>1) then
      !
-     rho_n = SC_cycle_mixing*rho_n + (1.-SC_cycle_mixing)*rho_nm1
+     if (.not.l_TF_precond) then 
+       rho_n = SC_cycle_mixing*rho_n + (1.-SC_cycle_mixing)*rho_nm1
+     else
+       delta_rho=rho_n-rho_nm1
+       !
+       call SC_precondition(delta_rho)
+       !
+       rho_n=rho_nm1+SC_cycle_mixing*delta_rho
+     endif
      !
      call V_Hartree(rho_n,V_hartree_sc)
      V_hartree_sc(:,n_sp_pol)=V_hartree_sc(:,1)
@@ -513,6 +510,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !=============
      !
      rho_nm1 = rho_n 
+     !
      call el_density(E,k,rho_n)
      !
      ! Convergences
@@ -662,11 +660,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  call WF_free()
  if (SC_cycle.or.NSC_shot) then
    deallocate(rho_n,rho_nm1,V_xc_sc,V_xc_nm1,V_hartree_sc,WFo,H_nl_sc)
+   if (allocated(delta_rho)) deallocate(delta_rho)
    call mem_est("Hs Potentials WF_save H_nl_sc")
-   if (.not.local_V) then
-     deallocate(QP_Sxc_nm1)
-     call mem_est("QP_Sxc_nm1")
-   endif
    if (l_sc_chosex) then
      deallocate(QP_Sc)
      call mem_est("QP_Sc")

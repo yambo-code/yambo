@@ -23,7 +23,8 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  !
  use pars,           ONLY:SP,DP,schlen
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,Ko,H_ion
+ use SC,             ONLY:SC_bands,V_hartree_sc,Ho
+ use X_m,            ONLY:P_square
  use real_time,      ONLY:G_lesser,RT_step,rho,l_rt_exc
  use electrons,      ONLY:levels,n_sp_pol
  use wave_func,      ONLY:wf
@@ -54,35 +55,39 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  !
  TmpMatrix=(0._SP,0._SP)
  !
- ! Ko is the non-interaction kinetc
+ ! Non-interaction kinetc energy
  !
- ! E_Kin = - i Tr {Ko G^<}  
+ ! E_Kin = - i Tr { P^2 G^<}/2  
  !
  E_kin=(0._SP,0._SP)
  !
  do ik=1,en%nk
    !      
 #if defined _DOUBLE
-   E_kin=E_kin-(0._SP,1._SP)*zdotc(SC_bands*SC_bands,Ko(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+   E_kin=E_kin-(0._SP,1._SP)*zdotc(SC_bands*SC_bands,P_square(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #else
-   E_kin=E_kin-(0._SP,1._SP)*cdotc(SC_bands*SC_bands,Ko(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+   E_kin=E_kin-(0._SP,1._SP)*cdotc(SC_bands*SC_bands,P_square(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #endif
    !
  enddo
+ !
+ E_kin=E_kin/2.
  !  
- ! E_ion = - i Tr {H_ion G^<}
+ ! E_ion = - i Tr {Ho G^<} - Ekin
  !
  E_ion=(0._SP,0._SP)
  !
  do ik=1,en%nk
    !      
 #if defined _DOUBLE
-   E_ion=E_ion-(0._SP,1._SP)*zdotc(SC_bands*SC_bands,H_ion(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+   E_ion=E_ion-(0._SP,1._SP)*zdotc(SC_bands*SC_bands,Ho(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #else
-   E_ion=E_ion-(0._SP,1._SP)*cdotc(SC_bands*SC_bands,H_ion(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+   E_ion=E_ion-(0._SP,1._SP)*cdotc(SC_bands*SC_bands,Ho(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #endif
    !
  enddo
+ !
+ E_ion = E_ion - E_kin
  !
  ! Hartree potential Energy
  !

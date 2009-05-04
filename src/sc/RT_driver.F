@@ -22,27 +22,25 @@
 subroutine RT_driver(en,Xen,X,k,xk,q)
  !
  use pars,           ONLY:SP,lchlen,schlen
- use drivers,        ONLY:l_sc_hf
  use units,          ONLY:HARTREE,FS2AUT
  use com,            ONLY:msg,of_open_close,error
  use vec_operate,    ONLY:normalize_v
- use stderr,         ONLY:intc,real2ch
+ use stderr,         ONLY:intc
  use timing,         ONLY:live_time_msg,live_timing 
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels,el_density,spin_occ,n_spin 
- use X_m,            ONLY:X_t,X_poles,X_poles_tab
+ use X_m,            ONLY:X_t,X_poles,X_poles_tab,Eval_P_and_P2_only,X_alloc
  use wave_func,      ONLY:wf,wf_load,wf_ng,WF_free
  use FFT_m,          ONLY:fft_size
  use R_lattice,      ONLY:bz_samp
  use parser_m,       ONLY:parser
  use matrix_operate, ONLY:mat_dia_inv,INV,USE_LK,DIAGO
  use QP_m,           ONLY:QP_state,QP_nb,QP_nk,QP_table,QP_n_states,QP_Vxc
- use SC,             ONLY:SC_potential,SC_bands,SC_fft_size,V_hartree_sc,Ko,H_ion
+ use SC,             ONLY:SC_potential,SC_bands,SC_fft_size,V_hartree_sc,Ho
  use real_time,      ONLY:EF_q0,Thermal_steps,Tot_steps,Ext_Field_name,RT_step,G_lesser, &
-&                         G_l_old,l_rt_efield,n_poles,Ext_Field_Int,RT_alloc,RT_free,rho,&
-&                         Integrator_Name,l_rt_exc,Grad_dot_q0,RT_no_intraband,Grad,     &
-&                         RT_resonant,V_hartree_0,V_xc_0,Thermal_time,RT_phase_int,      &
-&                         E_bare,DiagH_Iter,H_t,EXACT,RK2EXACT,Ho_pot,A_t
+&                         G_lesser_old,l_rt_efield,n_poles,Ext_Field_Int,RT_alloc,RT_free,rho,&
+&                         Integrator_Name,l_rt_exc,RT_no_intraband,RT_resonant,V_hartree_0,V_xc_0, &
+&                         Thermal_time,RT_phase_int,E_bare,DiagH_Iter,H_t,EXACT,RK2EXACT,Ho_pot,A_t
 
  use D_lattice,      ONLY:Tel
  use xc_functionals, ONLY:V_xc
@@ -56,8 +54,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  !
  logical, external        :: XC_switch
  integer                  :: it,idt,i1,i2,ib,ibp
- character(schlen)        :: dumb_ch,energy_ch,Int_Type
- character(lchlen)        :: file_name,qp_fname
+ character(schlen)        :: dumb_ch,headings(10),Int_Type
+ character(lchlen)        :: file_name(2),qp_fname
  integer                  :: WF_G_max,WF_Go_indx
  integer                  :: i_pole,iv,ic,ik,i_sp
  integer                  :: X_eh_setup
@@ -67,7 +65,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  complex(SP)              :: TmpMatrix(SC_bands,SC_bands)
  complex(SP)              :: V_tmp1(SC_bands),V_tmp2(SC_bands)
  real(SP)                 :: RT_time  ! The real time on the diagonal RTime = it*RT_step   
- complex(SP)              :: Trace_Gf
+ complex(SP)              :: Trace_Gf,cdotu
  complex(SP)              :: E_kin,E_ion,E_h
  real(SP)                 :: E_xc
  complex(SP)              :: j_current(3)
@@ -121,15 +119,12 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  !
  call wf_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),space='G',title='-Kinetic Energy/G space')  
  !
- allocate(Ko(SC_bands,SC_bands,en%nk,n_spin))
- call mem_est("Kinetic_Energy",(/size(Ko)/),(/2*SP/))
- !
- allocate(Grad(3,SC_bands,SC_bands,en%nk,n_spin))
- call mem_est("Momentum",(/size(Grad)/),(/2*SP/))  
- !
- call Kinetic(en,Xk)
- !
  call WF_free()
+ !
+ X(1)%ib(2)=SC_bands
+ X(1)%ng   =wf_ng
+ Eval_P_and_P2_only=.true.
+ call Dipole_driver(en, Xk, X(1), X(1)%q0)
  !
  call wf_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),space='R',title=' ')  
  !
@@ -152,23 +147,28 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  !
  E_bare=en%E(:SC_bands,:,1)
  !
- file_name='dynamics'
- call of_open_close(file_name,'ot') 
- energy_ch='#Time     E_kin      E_ion      E_Hartree      E_xc     N' 
- call msg('o dynamics',energy_ch)
+ file_name(1)='dynamics'
+ call of_open_close(file_name(1),'ot') 
+ headings(1)="Time"
+ headings(2)="E_kin"
+ headings(3)="E_ion"
+ headings(4)="E_Hartree"
+ headings(5)="E_xc"
+ headings(6)="N" 
+ call msg('o '//file_name(1),'#',headings(1:6),INDENT=-2,USE_TABS=.TRUE.)
  !
  ! Initialize the Gf and potentials
  !
- ! G_lesser(T=0,T=0)=Go and G_l_old(T=0,T=0)=Go
+ ! G_lesser(T=0,T=0)=Go and G_lesser_old(T=0,T=0)=Go
  !
  G_lesser=(0._SP,0._SP)
- G_l_old =(0._SP,0._SP)
+ G_lesser_old =(0._SP,0._SP)
  ! 
  forall(i1=1:SC_bands,ik=1:en%nk)
-      G_lesser(i1,i1,ik)=(0._SP,1._SP)*en%f(i1,ik,1)
+   G_lesser(i1,i1,ik)=(0._SP,1._SP)*en%f(i1,ik,1)
  end forall
  !
- G_l_old=G_lesser
+ G_lesser_old=G_lesser
  !
  ! I set this values in such a way to sum on all transitions
  !
@@ -190,10 +190,11 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  !
  if(l_rt_efield) then
    !      
-   file_name='response'
-   call of_open_close(file_name,'ot') 
-   energy_ch='#Time     Re(Ext_Field)  Img(Ext_Field)     j(1)       j(2)      j(3) ' 
-   call msg('o response',energy_ch)
+   file_name(2)='response'
+   call of_open_close(file_name(2),'ot') 
+   headings(1:9)=(/'Time','Re(Ext_Field)','Img(Ext_Field)','Re(j_1)','Re(j_2)','Re(j_3)' &
+     &            ,'Imag(j_1)','Imag(j_2)','Imag(j_3)'/) 
+   call msg('o '//file_name(2),'#',headings(1:9),INDENT=-2,USE_TABS=.TRUE.)
    !
    if(RT_resonant.and..not.RT_no_intraband) then
      RT_no_intraband=.true.
@@ -201,21 +202,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
      call live_time_msg("n",dumb_ch,"","%s")
    endif
    !
-   forall(i1=1:SC_bands,i2=1:SC_bands,ik=1:en%nk)
-      Grad_dot_q0(i1,i2,ik,1)=Grad(1,i1,i2,ik,1)*Ef_q0(1)+Grad(2,i1,i2,ik,1)*Ef_q0(2)+Grad(3,i1,i2,ik,1)*Ef_q0(3)
-   end forall
-   !
-   ! Remove intraband elements if NoIntraband=.false.
-   !
-   if(RT_no_intraband) then
-     forall(i1=1:SC_Bands,ik=1:en%nk) 
-       Grad_dot_q0(i1,i1,ik,1)=(0._SP,0._SP)
-     end forall
-   endif
-   !
- else
-   deallocate(Grad)
-   call mem_est("Momentum")  
  endif
  !
  ! Update occupations
@@ -234,12 +220,12 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  ! Ho is the non-interacting kinetic energy 
  ! as defined in SC_driver.F
  !
- H_ion=(0.,0.)
+ Ho=(0.,0.)
  !
  call V_Hartree(rho,V_hartree_0)
  !
  do ik=1,QP_nk
-   call V_to_H(ik,-V_hartree_0,H_ion(:,:,ik,1),wf)
+   call V_to_H(ik,-V_hartree_0,Ho(:,:,ik,1),wf)
  enddo
  !
  do i1 = 1, QP_n_states
@@ -248,19 +234,15 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    ibp=QP_table(i1,2)
    ik =QP_table(i1,3)
    !
-   if (ib==ibp) H_ion(ib,ibp,ik,1) = H_ion(ib,ibp,ik,1) + E_bare(ib,ik)
+   if (ib==ibp) Ho(ib,ibp,ik,1) = Ho(ib,ibp,ik,1) + E_bare(ib,ik)
    !
-   H_ion(ib,ibp,ik,1) = H_ion(ib,ibp,ik,1) - QP_Vxc(i1)
+   Ho(ib,ibp,ik,1) = Ho(ib,ibp,ik,1) - QP_Vxc(i1)
    !
-   if (ib==ibp) H_ion(ib,ibp,ik,1) = real(H_ion(ib,ibp,ik,1))
+   if (ib==ibp) Ho(ib,ibp,ik,1) = real(Ho(ib,ibp,ik,1))
    !
-   H_ion(ibp,ib,ik,1) = conjg(H_ion(ib,ibp,ik,1))
+   Ho(ibp,ib,ik,1) = conjg(Ho(ib,ibp,ik,1))
    !
  enddo
- !
- ! Now I subtract the kinetic energy
- !
- H_ion=H_ion-Ko
  !
  if(RT_phase_int.and.l_rt_exc) then 
    !
@@ -307,13 +289,13 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
     !
     do i1=1,SC_bands
       do i2=i1+1,SC_bands
-        G_l_old(i1,i2,:)=G_lesser(i1,i2,:)
-        G_l_old(i2,i1,:)=-conjg(G_lesser(i1,i2,:))
+        G_lesser_old(i1,i2,:)=G_lesser(i1,i2,:)
+        G_lesser_old(i2,i1,:)=-conjg(G_lesser(i1,i2,:))
       enddo
-      G_l_old(i1,i1,:)=(0._SP,1._SP)*imag(G_lesser(i1,i1,:))
+      G_lesser_old(i1,i1,:)=(0._SP,1._SP)*imag(G_lesser(i1,i1,:))
     enddo
     !
-    call RT_Collision(G_l_old,en,k,q,RT_time)
+    call RT_Collision(G_lesser_old,en,k,q,RT_time)
     !
     call RT_Energy(en,k,E_kin,E_ion,E_h,E_xc,Trace_Gf)
     !
@@ -329,7 +311,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
     !
     if(l_rt_efield) then
       !
-      call RT_current(j_current,en,xK,A_t,EF_q0,G_l_old)
+      call RT_current(j_current,en,xK,A_t,EF_q0,G_lesser_old)
       !
       values(2)=real(A_t)
       values(3)=aimag(A_t)
@@ -340,7 +322,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
       !
     endif
     !
-    call RT_Integrator(G_lesser,G_l_old,RT_step,en,k,q,Integrator_name,RT_time)
+    call RT_Integrator(G_lesser,G_lesser_old,RT_step,en,k,q,Integrator_name,RT_time)
     ! 
     if(DiagH_Iter/=0) then
       if(mod(it,DiagH_Iter)==0) then
@@ -391,25 +373,22 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
     !
  enddo
  !
- call of_open_close("dynamics")
- if(l_rt_efield) call of_open_close("response")
+ call of_open_close(file_name(1))
+ if(l_rt_efield) call of_open_close(file_name(2))
  !
  if(DiagH_Iter/=0) call of_open_close(qp_fname)
  !
  call RT_free()
  !
- deallocate(Ko)
- call mem_est("Kinetic_Energy")
- !
- if(allocated(Grad)) then
-   deallocate(Grad)
-   call mem_est("Momentum")  
- endif
+ call X_alloc("P_square")
  !
  deallocate(QP_state)
  call mem_est("QP_state")
  !  
  deallocate(QP_Vxc)
  call mem_est("QP_Vxc")
+ !
+ deallocate(X_poles_tab)
+ call mem_est("X_poles_tab")
  !
 end subroutine RT_driver

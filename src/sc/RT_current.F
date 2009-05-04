@@ -23,12 +23,12 @@
 !
 subroutine RT_current(j_current,en,xK,A_t,EF_q0,G_lesser)
  !
- use pars,          ONLY:SP,DP
- use R_lattice,     ONLY:bz_samp
- use D_lattice,     ONLY:nsym,i_time_rev
+ use pars,          ONLY:SP,DP,pi
+ use R_lattice,     ONLY:bz_samp,RL_vol
+ use D_lattice,     ONLY:nsym,i_time_rev,dl_sop,sop_inv,i_time_rev
  use SC,            ONLY:SC_bands
- use real_time,     ONLY:Grad
  use electrons,     ONLY:nel,levels
+ use X_m,           ONLY:DIP_iR_or_P
  !
  implicit none
  type(levels),  intent(in) ::en       
@@ -40,28 +40,50 @@ subroutine RT_current(j_current,en,xK,A_t,EF_q0,G_lesser)
  !
  ! Work Space
  !
- integer :: i1,i2,ik,i_spin,SC_bands2
+ integer :: i1,i2,ik,is,SC_bands2
+ complex(SP)   :: j_dir(3),j_dir_rot(3)
  complex(DP)   :: zdotc
  complex(SP)   :: cdotc
  !
  j_current(:)=(0._SP,0._SP)
  SC_bands2=SC_bands**2
  !
- do ik=1,Xk%nibz
-   do i1=1,3
+ ! j(r,t) = -\sum_ijk e/2m \psi^*_i(k) p \psi_j(k) + e^2/m n(r) A(r,t)
+ !
+ ! j_current(t) = int dr j(r,t)
+ !
+ do i1=1,Xk%nbz
+   !
+   ik = Xk%sstar(i1,1)
+   is = sop_inv(Xk%sstar(i1,2))      
+   !
+   do i2=1,3
      !      
 #if defined _DOUBLE
-     j_current(i1)=j_current(i1)-(0._DP,1._DP)*zdotc(SC_bands2,Grad(i1,:,:,ik,1),1,G_lesser(:,:,ik),1)*Xk%weights(ik)
+     j_dir(i2)=(0._DP,1._DP)*zdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1)
 #else
-     j_current(i1)=j_current(i1)-(0._SP,1._SP)*cdotc(SC_bands2,Grad(i1,:,:,ik,1),1,G_lesser(:,:,ik),1)*Xk%weights(ik)
+     j_dir(i2)=(0._SP,1._SP)*cdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1)
 #endif
      !
    enddo
+   !
+   ! To be checked again for is > sym/(i_time_rev+1)
+   !
+   if(is >  nsym/(i_time_rev+1)) then
+     j_dir_rot = -matmul( dl_sop(:,:,is), conjg(j_dir) )
+   else
+     j_dir_rot = matmul( dl_sop(:,:,is), j_dir )
+   endif
+   !
+   j_current(:)=j_current(:)+j_dir_rot(:)
+   !
  enddo
+ !
+ j_current(:)=j_current(:)*RL_vol/(Xk%nbz*(2.*pi)**3)
  !
  ! Diamagnetic term. It is correct??
  !
-! j_current(:)=j_current(:)+A_t*EF_q0(:)*nel
+ ! j_current(:)=j_current(:)+A_t*EF_q0(:)*nel
  !
  !
 end subroutine RT_current

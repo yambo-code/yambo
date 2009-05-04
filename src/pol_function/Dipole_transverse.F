@@ -44,7 +44,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  integer                      :: ik,i1,icfft,ivfft,ic,iv,iv_max,ic_min
  integer                      :: is,ia,il,im,alloc_err,i_spin,E_i_spin,wf_dim
  complex(SP), allocatable     :: wf_xyz(:,:), kbv(:,:,:)
- complex(SP)                  :: rho(3)
+ complex(SP)                  :: rho(4)
  real(SP)                     :: Ev_m_Ec
  type(pp_indexes)             :: px
  !

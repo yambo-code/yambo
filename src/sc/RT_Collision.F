@@ -19,18 +19,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-!
-! This subroutine prepare I1(t_1,t_2) and I2(t_1,t_2) give a G^<(t_1,t_1) 
-! Actualy it works only for the diagonal I1(t_1,t_1), I2(t_1,t_1)
-!
 subroutine RT_Collision(G_input,en,k,q,RT_time)
+ !
+ ! This subroutine prepare I1(t_1,t_2) and I2(t_1,t_2) give a G^<(t_1,t_1) 
+ ! Actualy it works only for the diagonal I1(t_1,t_1), I2(t_1,t_1)
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels,el_density,n_sp_pol
  use drivers,        ONLY:l_sc_exx,l_sc_chosex,l_sc_hartree,l_sc_pz,l_sc_lda_x,&
 &                         l_sc_hf,l_sc_exxc
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,Ko,H_ion
+ use SC,             ONLY:SC_bands,V_hartree_sc,Ho
  use QP_m,           ONLY:QP_nk,QP_Vxc,QP_n_states,QP_table 
  use real_time,      ONLY:I1_lesser,I2_lesser,V_xc_0,l_rt_exc,rho,V_hartree_0,        &
  &                         Thermal_Time,l_rt_efield,TransRelax,LongRelax, &
@@ -119,7 +118,7 @@ subroutine RT_Collision(G_input,en,k,q,RT_time)
      !
      ! Ho is part of the Hamiltonian (or singular self-energy Sigma_s) 
      !
-     Sigma_s(:,:,1)=Sigma_s(:,:,1)+Ko(:,:,ik,1)+H_ion(:,:,ik,1)
+     Sigma_s(:,:,1)=Sigma_s(:,:,1)+Ho(:,:,ik,1)
      !
    else
      !
@@ -162,7 +161,7 @@ subroutine RT_Collision(G_input,en,k,q,RT_time)
    !
    H_t(:,:,ik)=Sigma_s(:,:,1)
    !
-   if(RT_phase_int) H_t(:,:,ik)=H_t(:,:,ik)+Ko(:,:,ik,1)+H_ion(:,:,ik,1)+Ho_pot(:,:,ik)
+   if(RT_phase_int) H_t(:,:,ik)=H_t(:,:,ik)+Ho(:,:,ik,1)+Ho_pot(:,:,ik)
    !
    ! Now prepare I1 and I2 before the integration notice that 
    ! they contain also the external field

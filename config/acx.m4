@@ -146,7 +146,7 @@ if test -z "${FCFLAGS}"; then
     *ifort*)
       CPU_FLAG=""
       case "${FCVERSION}" in
-        *10*)
+        *1*)
          CPU_FLAG="-xW"
          ;;
         *)
@@ -171,7 +171,7 @@ if test -z "${FCFLAGS}"; then
     *ifort*)
       CPU_FLAG=""
       case "${FCVERSION}" in
-        *10*)
+        *1*)
          CPU_FLAG="-mtune=pentium4"
          ;;
         *)
@@ -202,7 +202,7 @@ if test -z "${FCFLAGS}"; then
     *ifort*)
       CPU_FLAG=""
       case "${FCVERSION}" in
-        *10*)
+        *1*)
          CPU_FLAG="-xW"
          ;;
         *)

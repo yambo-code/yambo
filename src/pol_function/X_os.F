@@ -64,7 +64,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  integer              :: i1,i2,ik,is,ikp,ikbz,ikpbz,i_spin,&
 &                        isp,iv,ic,g1,g2,g2_max,g2_min,iw,iwmax,isave(4),n_poles 
- logical              :: force_bare_X_G,skip_WF_load
+ logical              :: force_bare_X_G,skip_WF_load,Drude_term
  real(SP)             :: minmax_ehe(2),drude_factor,eh_occ
  type(pp_indexes)     :: px
  type(ggwinfo)        :: isc
@@ -117,11 +117,14 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
 &    (lras.or.lreels).and.loptcut) call Dipole_driver_cut( Xen, Xk, X, X%q0)
 #endif
  !
- ! Drude Contrib.
+ ! Drude Contrib. if all of following conditions hold
+ !  . Non zero Drude Freq.
+ !  . Metallic system 
+ !  . Optical response @ q = Gamma
  !
- if (all((/real(X%Wd)>0.,aimag(X%Wd)>0.,&   ! Non zero Drude Freq.
-&          Xen%kf>0,Xen%nbf/=Xen%nbm,&      ! Metallic system 
-&          iq==1/))) then                   ! Optical response
+ Drude_term=all((/real(X%Wd)>0.,aimag(X%Wd)>0.,Xen%kf>0,Xen%nbf/=Xen%nbm,iq==1/))
+ !
+ if ( Drude_term ) then
    !
    call msg('nrs','[X] Drude contribution @[ev]:',(/real(X%Wd),aimag(X%Wd)/)*HARTREE)
    !
@@ -134,6 +137,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
    do iw=fr(1),fr(2)
      drude_Gf(iw-fr(1)+1)=X_drude(real(Xw%p(iw)),X%Wd,q_norm(1))/drude_factor
    enddo
+   !
  endif
  !
  ! WF load

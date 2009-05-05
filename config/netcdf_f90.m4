@@ -31,8 +31,8 @@ AC_ARG_WITH(netcdf_lib,AC_HELP_STRING([--with-netcdf-lib=<path>],
 netcdf="no"
 dnetcdf=""
 NCLIBS=""
-AC_MSG_CHECKING([whether the NetCDF library is installed])
 if test -d "$with_netcdf_include" && test -d "$with_netcdf_lib" ; then
+ AC_MSG_CHECKING([for NetCDF in $with_netcdf_lib])
  AC_LANG([Fortran])
  save_fcflags="$FCFLAGS"
  for flag in "-I" "-M" "-p"; do

@@ -19,10 +19,10 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_DEFUN([AC_HAVE_FFTW],
-[AC_MSG_CHECKING([whether the FFTW library is installed])
+AC_DEFUN([AC_HAVE_FFTW],[
 AC_ARG_WITH(fftw,AC_HELP_STRING([--with-fftw=<path>],
             [Path of the FFTW library directory]),[],[])
+AC_MSG_CHECKING([for FFTW])
 FFTW_LIBS="-lfftw3"
 FFTW_PATH=""
 case $with_fftw in

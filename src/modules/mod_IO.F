@@ -242,21 +242,21 @@ module IO_m
            ! 7/8. MORE_IO=.FALSE. CORE_IO=.TRUE. COM_IO=.FALSE.  type=1 (no   JOBSTR)
            !
            alternative_file(1)=get_name(desc,subfolder_,2,CORE_IO=.FALSE.,&
-&                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
+&                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.io_netcdf_support(ID))
            alternative_file(2)=get_name(desc,subfolder_,2,CORE_IO=.FALSE.,&
-&                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.io_netcdf_support(ID))
-           alternative_file(3)=get_name(desc,subfolder_,1,CORE_IO=.FALSE.,&
 &                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
-           alternative_file(4)=get_name(desc,subfolder_,1,CORE_IO=.FALSE.,&
+           alternative_file(3)=get_name(desc,subfolder_,1,CORE_IO=.FALSE.,&
 &                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.io_netcdf_support(ID))
+           alternative_file(4)=get_name(desc,subfolder_,1,CORE_IO=.FALSE.,&
+&                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
            alternative_file(5)=get_name(desc,subfolder_,2,CORE_IO=.TRUE.,&
-&                                       MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
+&                                       MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.not.io_netcdf_support(ID))
            alternative_file(6)=get_name(desc,subfolder_,2,CORE_IO=.TRUE.,&
-&                                       MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.not.io_netcdf_support(ID))
-           alternative_file(7)=get_name(desc,subfolder_,1,CORE_IO=.TRUE.,&
 &                                       MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
-           alternative_file(8)=get_name(desc,subfolder_,1,CORE_IO=.TRUE.,&
+           alternative_file(7)=get_name(desc,subfolder_,1,CORE_IO=.TRUE.,&
 &                                       MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.not.io_netcdf_support(ID))
+           alternative_file(8)=get_name(desc,subfolder_,1,CORE_IO=.TRUE.,&
+&                                       MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
            !
          endif
          !
@@ -340,23 +340,24 @@ module IO_m
        if (.not.file_exists(trim(io_file(ID)))) then
          if (file_exists(trim(alternative_file(1)))) then
            io_file(ID)=alternative_file(1)
+           io_netcdf_support(ID)=.not.io_netcdf_support(ID)
          else if (file_exists(trim(alternative_file(2)))) then
            io_file(ID)=alternative_file(2)
          else if (file_exists(trim(alternative_file(3)))) then
            io_file(ID)=alternative_file(3)
+           io_netcdf_support(ID)=.not.io_netcdf_support(ID)
          else if (file_exists(trim(alternative_file(4)))) then
            io_file(ID)=alternative_file(4)
-           io_netcdf_support(ID)=.not.io_netcdf_support(ID)
          else if (file_exists(trim(alternative_file(5)))) then
            io_file(ID)=alternative_file(5)
+           io_netcdf_support(ID)=.not.io_netcdf_support(ID)
          else if (file_exists(trim(alternative_file(6)))) then
            io_file(ID)=alternative_file(6)
-           io_netcdf_support(ID)=.not.io_netcdf_support(ID)
          else if (file_exists(trim(alternative_file(7)))) then
            io_file(ID)=alternative_file(7)
+           io_netcdf_support(ID)=.not.io_netcdf_support(ID)
          else if (file_exists(trim(alternative_file(8)))) then
            io_file(ID)=alternative_file(8)
-           io_netcdf_support(ID)=.not.io_netcdf_support(ID)
          else
            io_connect=-1
            call io_reset(ID)

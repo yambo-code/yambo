@@ -28,9 +28,8 @@ integer function ioOSTNTS(X,Xen,ID)
  use R_lattice,     ONLY:nXkibz,q0_def_norm
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
-&                        io_elemental,io_status,io_bulk,io_save_to_try_again,&
-&                        read_is_on,write_is_on,io_header,ver_is_gt_or_eq,&
-&                        io_restore_to_try_again
+&                        io_elemental,io_status,io_bulk,&
+&                        read_is_on,write_is_on,io_header,ver_is_gt_or_eq
  use global_XC,     ONLY:WF_global_xc_string
  !
  implicit none
@@ -45,16 +44,7 @@ integer function ioOSTNTS(X,Xen,ID)
  character(schlen)    :: VAR_name
  real(SP),allocatable :: DIP_iR_or_P_disk(:,:,:)
  !
- call io_save_to_try_again(ID)
  ioOSTNTS=io_connect(desc='ostnts',type=2,ID=ID)
- !
- ! The OSTNTS DB is searched in the SAVE folder when 
- ! it is not found in the JOBNAME folder
- !
- if (read_is_on(ID).and.ioOSTNTS/=0) then
-   call io_restore_to_try_again(ID)
-   ioOSTNTS=io_connect(desc='ostnts',type=1,ID=ID)
- endif
  if (ioOSTNTS/=0) goto 1
  !
  sec_size=8

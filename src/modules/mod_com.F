@@ -59,16 +59,18 @@ module com
    !
    character(lchlen) function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,NETCDF)
      !
-     ! -2 ----------------  -> desc (NETCDF as OUTPUT)
+     ! -2 ----------------  -> desc (NETCDF deduced from presence of "ndb" in desc)
      ! -1 ----------------  -> subfolder/(n)desc
      !  0 Stable s.         -> CORE_IO_PATH/SAVE/subfolder/(n)s.desc
      !  1 Stable db.        -> CORE_IO_PATH/SAVE/subfolder/(n)db.desc
-     !  2 Job dependent db. -> MORE_IO_PATH/JOBSTR/subfolder/(n)db.desc
-     !  3 Job dependent o.  -> MORE_IO_PATH/o.desc-JOBSTR
+     !  2 Job dependent db. -> PATH/JOBSTR/subfolder/(n)db.desc
+     !  3 Job dependent o.  -> COM_PATH/o.desc-JOBSTR
      !  4 ----------------  -> MORE_IO_PATH/RESTART/(n)db.desc_FOLDER
      !                                                    |
+     ! if (CORE_IO) PATH=core_io_path
+     ! if (MORE_IO) PATH=more_io_path
+     ! if ( COM_IO) PATH=com_path
      !                                                    JOBSTR, or  SAVE if no JOBSTR 
-     use stderr,         ONLY:string_pack
      character(*)           ::desc
      integer                ::type
      logical                ::CORE_IO,MORE_IO,NETCDF,COM_IO
@@ -83,50 +85,58 @@ module com
      folder="SAVE"
      if (.not.CORE_IO.and..not.MORE_IO.and..not.COM_IO) return
      !
-     if (CORE_IO) ch(1)=core_io_path
-     if (MORE_IO) ch(1)=more_io_path
-     if ( COM_IO) ch(1)=com_path
+     ch(1)=core_io_path
      !
      select case(type)
        case(-2)
-         get_name=string_pack('./',desc)
+         get_name="./"//trim(desc)
          NETCDF=index(desc,'ndb')>0
          return
        case(-1)
          ch(2)=desc
          folder="."
          if (present(subfolder)) folder=subfolder
+         !
+         ! No inpath/outpath must pre-appended when an explicit path is given
+         !
+         ch(1)=' '
+         !
        case(0)
-         ch(2)=string_pack('s.',desc)
+         ch(2)="s."//trim(desc)
        case(1)
-         ch(2)=string_pack('db.',desc)
+         ch(2)="db."//trim(desc)
        case(2,4)
-         ch(2)=string_pack('db.',desc)
+         ch(2)="db."//trim(desc)
          if (len_trim(jobstr)>0) folder=trim(jobstr)
          if (type==4) then
-           ch(2)=string_pack('db.',desc,'_',trim(folder))
+           ch(2)="db."//trim(desc)//"_"//trim(folder)
            folder="RESTART"
+           !
+           ! The RESTART folder is always in the outpath
+           !
+           ch(1)=more_io_path
+           !
+         else if (type==2) then
+           !
+           if (CORE_IO) ch(1)=core_io_path
+           if (MORE_IO) ch(1)=more_io_path
+           if ( COM_IO) ch(1)=com_path
+           !
          endif
        case(3)
-         ch(2)=string_pack('o.',desc)
+         ch(2)="o."//trim(desc)
          folder=""
-         if (len_trim(jobstr)>0) ch(2)=string_pack('o-',trim(jobstr),'.',desc)
+         if (len_trim(jobstr)>0) ch(2)="o-"//trim(jobstr)//"."//trim(desc)
+         ch(1)=com_path
      end select 
      !
-     ! The RESTART folder is always in the outpath
+     if (len_trim(folder)>0) ch(1)=trim(ch(1))//"/"//trim(folder)
+     if (present(subfolder).and.type>=0) ch(1)=trim(ch(1))//"/"//trim(subfolder)
      !
-     if (type==4 ) ch(1)=more_io_path
-     !
-     ! No inpath/outpath must pre-appended when an explicit path is given
-     !
-     if (type==-1) ch(1)=' '
-     !
-     if (len_trim(folder)>0) ch(1)=string_pack(trim(ch(1)),'/',folder)
-     if (present(subfolder).and.type>=0) ch(1)=string_pack(trim(ch(1)),'/',subfolder)
      if (NETCDF) then
-       get_name=string_pack(trim(ch(1)),'/n',trim(ch(2)))
+       get_name=trim(ch(1))//"/n"//trim(ch(2))
      else
-       get_name=string_pack(trim(ch(1)),'/',trim(ch(2)))
+       get_name=trim(ch(1))//"/"//trim(ch(2))
      endif
      !
    end function

@@ -25,8 +25,8 @@ integer function ioELPH(ID,what)
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
 &                         io_elemental,io_status,io_bulk,io_header,&
 &                         read_is_on,write_is_on,RD_CL,RD_CL_IF_END,io_action,&
-&                         io_mode,DUMP,io_fragment,io_save_to_try_again,&
-&                         io_restore_to_try_again,ver_is_gt_or_eq
+&                         io_mode,DUMP,io_fragment,&
+&                         ver_is_gt_or_eq
  use ELPH,           ONLY:ph_modes,elph_nb,elph_global_alloc,ph_freqs_sq,elph_gkkp,&
 &                         QP_PH_n_G_bands,max_ph_freq,elph_DW,elph_nq,&
 &                         elph_use_q_grid,E_k_plus_q,ph_qpt,elph_nq_used,&
@@ -49,14 +49,7 @@ integer function ioELPH(ID,what)
  if (what=='gkkp') db_name='elph_gkkp'
  if (what=='gFsq') db_name='elph_gFsq'
  !
- call io_save_to_try_again(ID)
- !
  ioELPH=io_connect(desc=db_name,type=2,ID=ID)
- if (read_is_on(ID).and.ioELPH/=0) then
-   call io_restore_to_try_again(ID)
-   ioELPH=io_connect(desc=db_name,type=1,ID=ID)
- endif
- !
  if (ioELPH/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then

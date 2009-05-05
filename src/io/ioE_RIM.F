@@ -27,24 +27,13 @@ integer function ioE_RIM(E,ID)
  use R_lattice,      ONLY:nXkbz
  use memory_m,       ONLY:mem_est
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
-&                         io_bulk,io_header,io_save_to_try_again,&
-&                         io_restore_to_try_again
+&                         io_bulk,io_header
  implicit none
  !
  type(levels) :: E
  integer      :: ID 
  !
- call io_save_to_try_again(ID)
  ioE_RIM=io_connect(desc='E_RIM',type=2,ID=ID)
- ! 
- ! The DB is searched in the SAVE folder when
- ! it is not found in the JOBNAME folder
- !
- if (read_is_on(ID).and.ioE_RIM/=0) then
-   call io_restore_to_try_again(ID)
-   ioE_RIM=io_connect(desc='E_RIM',type=1,ID=ID)
- endif
- !
  if (ioE_RIM/=0) goto 1
  !
  ioE_RIM=io_header(ID)

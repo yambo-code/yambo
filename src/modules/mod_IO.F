@@ -184,7 +184,7 @@ module IO_m
      ! Work Space
      !
      integer          ::CREATE_MODE
-     character(lchlen)::alternative_file(3),folder
+     character(lchlen)::alternative_file(8),folder
      character(schlen)::subfolder_
      !
      io_connect=0
@@ -208,27 +208,58 @@ module IO_m
      subfolder_=' '
      if (present(subfolder)) subfolder_=subfolder
      !
+     alternative_file=" "
+     !
      if (len_trim(io_file(ID))==0) then
        !
-       io_file(ID)=get_name(desc,subfolder_,type,open_is_on(ID),&
-&                           write_is_on(ID),.FALSE.,io_netcdf_support(ID))
-       alternative_file=" "
-       if (type/=-2) then
+       if (write_is_on(ID)) then
          !
-         ! First alternative is same DB with(/out) NETCDF support
+         ! NEW databases are always written respecting the "type" (see mod_com.F)
          !
-         alternative_file(1)=get_name(desc,subfolder_,type,CORE_IO=open_is_on(ID),&
-&                                     MORE_IO=write_is_on(ID),COM_IO=.FALSE.,&
-&                                     NETCDF=.not.io_netcdf_support(ID))
-         if (type/=0.and.read_is_on(ID)) then
+         io_file(ID)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,&
+&                             MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
+         !
+       else if (read_is_on(ID)) then
+         !
+         io_file(ID)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,&
+&                             MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
+         !
+         if (type/=-2.and.type/=1.and.type/=2) then
            !
-           ! 2nd/3rd alternatives are  DBs with(/out) NETCDF support in SAVE folder
+           ! Alternative is the same as when write_is_on(ID)=.TRUE. with(/out) NETCDF support
            !
-           alternative_file(2)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,&
-&                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
-           alternative_file(3)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,&
+           alternative_file(1)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,&
 &                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.io_netcdf_support(ID))
          endif
+         !
+         if (type==1.or.type==2) then
+           !
+           ! OLD databases are searched in the following order:
+           !
+           ! 1/2. MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=2 (with JOBSTR)
+           ! 3/4. MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=1 (no   JOBSTR)
+           ! 5/6. MORE_IO=.FALSE. CORE_IO=.TRUE. COM_IO=.FALSE.  type=2 (with JOBSTR)
+           ! 7/8. MORE_IO=.FALSE. CORE_IO=.TRUE. COM_IO=.FALSE.  type=1 (no   JOBSTR)
+           !
+           alternative_file(1)=get_name(desc,subfolder_,2,CORE_IO=.FALSE.,&
+&                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
+           alternative_file(2)=get_name(desc,subfolder_,2,CORE_IO=.FALSE.,&
+&                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.io_netcdf_support(ID))
+           alternative_file(3)=get_name(desc,subfolder_,1,CORE_IO=.FALSE.,&
+&                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
+           alternative_file(4)=get_name(desc,subfolder_,1,CORE_IO=.FALSE.,&
+&                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.io_netcdf_support(ID))
+           alternative_file(5)=get_name(desc,subfolder_,2,CORE_IO=.TRUE.,&
+&                                       MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
+           alternative_file(6)=get_name(desc,subfolder_,2,CORE_IO=.TRUE.,&
+&                                       MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.not.io_netcdf_support(ID))
+           alternative_file(7)=get_name(desc,subfolder_,1,CORE_IO=.TRUE.,&
+&                                       MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
+           alternative_file(8)=get_name(desc,subfolder_,1,CORE_IO=.TRUE.,&
+&                                       MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.not.io_netcdf_support(ID))
+           !
+         endif
+         !
        endif
        !
      endif
@@ -309,11 +340,22 @@ module IO_m
        if (.not.file_exists(trim(io_file(ID)))) then
          if (file_exists(trim(alternative_file(1)))) then
            io_file(ID)=alternative_file(1)
-           io_netcdf_support(ID)=.not.io_netcdf_support(ID)
          else if (file_exists(trim(alternative_file(2)))) then
            io_file(ID)=alternative_file(2)
          else if (file_exists(trim(alternative_file(3)))) then
            io_file(ID)=alternative_file(3)
+         else if (file_exists(trim(alternative_file(4)))) then
+           io_file(ID)=alternative_file(4)
+           io_netcdf_support(ID)=.not.io_netcdf_support(ID)
+         else if (file_exists(trim(alternative_file(5)))) then
+           io_file(ID)=alternative_file(5)
+         else if (file_exists(trim(alternative_file(6)))) then
+           io_file(ID)=alternative_file(6)
+           io_netcdf_support(ID)=.not.io_netcdf_support(ID)
+         else if (file_exists(trim(alternative_file(7)))) then
+           io_file(ID)=alternative_file(7)
+         else if (file_exists(trim(alternative_file(8)))) then
+           io_file(ID)=alternative_file(8)
            io_netcdf_support(ID)=.not.io_netcdf_support(ID)
          else
            io_connect=-1
@@ -341,26 +383,6 @@ module IO_m
      endif
      !
    end function
-   !
-   subroutine io_save_to_try_again(ID)
-     implicit none
-     integer           :: ID
-     io_unit_save=io_unit(ID)
-     io_action_save=io_action(ID)
-     io_mode_save=io_mode(ID)
-     io_sec_save=io_sec(ID,:)
-     io_com_save=io_com(ID)
-   end subroutine
-   !
-   subroutine io_restore_to_try_again(ID)
-     implicit none
-     integer           :: ID
-     io_unit(ID)=io_unit_save
-     io_action(ID)=io_action_save
-     io_mode(ID)=io_mode_save
-     io_sec(ID,:)=io_sec_save
-     io_com(ID)=io_com_save    
-   end subroutine
    !
    subroutine io_fragment(ID,i_pointer,j_pointer,ierr)
      !

@@ -270,12 +270,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'ExtField',  '[RT]  External Field',Ext_Field_name)
  call it(defs,'Integrator','[RT]  Integrator',Integrator_name)
  call it(defs,'ELongDir',  '[RT]  Electric Field Versor',EF_q0)
- call it(defs,'DiagHIter', '[RT]  Digaonalize the Hamiltonian',DiagH_Iter)
+ call it(defs,'DiagHIter', '[RT]  Digaonalize the Hamiltonian',DiagH_Iter,verb_level=V_more)
  call it('f',defs,'RTResonant', '[RT] Only Resonant part of the External Field',verb_level=V_more)
  call it('f',defs,'RTNoIntraband', '[RT] Do not Include Intraband transitions',verb_level=V_more)
  call it('f',defs,'PhaseInt', '[RT] Use Exact integration fast phase factors',verb_level=V_more)
  call it(defs,'LongRelax',  '[RT]  Longitudinal Relaxation Time',LongRelax,verb_level=V_more,unit=Time_unit)
- call it(defs,'TransRelax',  '[RT]  Transverse Relaxation Time',TransRelax,verb_level=V_more,unit=Time_unit)
+ call it(defs,'TransRelax',  '[RT]  Transverse Relaxation Time',TransRelax,unit=Time_unit)
+ call it('f',defs,'EpsAnalyze', '[RT] Analyze real-time response to an external field')
 #endif
  !
  ! GPL_EXCLUDE_END SC_IGNORE

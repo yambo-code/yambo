@@ -22,10 +22,11 @@
 subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  !
  use pars,           ONLY:SP,DP,schlen
+ use drivers,        ONLY:l_sc_pz
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho
  use X_m,            ONLY:P_square
- use real_time,      ONLY:G_lesser,RT_step,rho,l_rt_exc
+ use real_time,      ONLY:G_lesser,RT_step,rho,l_rt_exc,Ho_pot
  use electrons,      ONLY:levels,n_sp_pol
  use wave_func,      ONLY:wf
  use FFT_m,          ONLY:fft_size
@@ -43,14 +44,14 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  ! Work Space
  !
  integer       :: ik,i1
- complex(DP)   :: zdotc
- complex(SP)   :: cdotc
  complex(SP)   :: TmpMatrix(SC_bands,SC_bands,n_sp_pol)
  !
 #if defined _DOUBLE
- real(DP):: ddot
+ real(DP)      :: ddot
+ complex(DP)   :: zdotc
 #else
- real(SP):: sdot
+ real(SP)      :: sdot
+ complex(SP)   :: cdotc
 #endif
  !
  TmpMatrix=(0._SP,0._SP)
@@ -89,39 +90,54 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  !
  E_ion = E_ion - E_kin
  !
- ! Hartree potential Energy
- !
- E_h=(0._SP,0._SP)
- !
- do ik=1,en%nk
+ if(l_rt_exc) then
    !
-   TmpMatrix=(0._SP,0._SP)
+   ! Hartree potential Energy
    !
-   if(l_rt_exc) then
+   E_h=(0._SP,0._SP)
+   !
+   do ik=1,en%nk
+     !
+     TmpMatrix=(0._SP,0._SP)
+     !
      call V_to_H(ik,V_hartree_sc,TmpMatrix,wf)
-   else
-     call V_to_H(ik,V_hartree_0,TmpMatrix,wf)
-   endif
-   !
+     !
 #if defined _DOUBLE
-   E_h=E_h-(0._SP,0.5_SP)*zdotc(SC_bands*SC_bands,TmpMatrix(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+     E_h=E_h-(0._SP,0.5_SP)*zdotc(SC_bands*SC_bands,TmpMatrix(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #else
-   E_h=E_h-(0._SP,0.5_SP)*cdotc(SC_bands*SC_bands,TmpMatrix(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+     E_h=E_h-(0._SP,0.5_SP)*cdotc(SC_bands*SC_bands,TmpMatrix(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+#endif
+     !
+   enddo
+   !
+   !
+   ! E_xc Energy 
+   !
+   call IO_mute("report log io_in io_out")
+   call xc_lda_driver(en,k,WF_KIND,WF_xc_functional,0)
+   call IO_mute("  ")
+   !
+#if defined _DOUBLE
+   Exc=ddot(fft_size,rho,1,E_xc,1)
+#else 
+   Exc=sdot(fft_size,rho,1,E_xc,1)
 #endif
    !
- enddo
- !
- ! E_xc Energy 
- !
- call IO_mute("report log io_in io_out")
- call xc_lda_driver(en,k,WF_KIND,WF_xc_functional,0)
- call IO_mute("  ")
- !
+ else
+   !
+   E_h=(0.,0.)
+   !
+   do ik=1,en%nk
 #if defined _DOUBLE
- Exc=ddot(fft_size,rho,1,E_xc,1)
-#else 
- Exc=sdot(fft_size,rho,1,E_xc,1)
+     E_h=E_h-(0.,1.0)*zdotc(SC_bands*SC_bands,Ho_pot(:,:,ik),1,G_lesser(:,:,ik),1)*k%weights(ik)
+#else
+     E_h=E_h-(0.,1.0)*cdotc(SC_bands*SC_bands,Ho_pot(:,:,ik),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #endif
+   enddo
+   !
+   Exc=0.
+   !
+ endif
  !
  ! Total number of electrons
  !

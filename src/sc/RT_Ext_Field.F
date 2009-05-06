@@ -27,7 +27,7 @@ subroutine RT_Ext_Field(ik,Sigma_s,time)
  use X_m,            ONLY:DIP_iR_or_P
  use SC,             ONLY:SC_bands,SC_potential
  use real_time,      ONLY:Ext_Field_freq,Ext_Field_Int,Ext_Field_name,&
-&                         RT_step,RT_resonant,A_t,RT_no_intraband
+&                         RT_step,RT_resonant,A_t,RT_no_intraband,T_initial
 
  implicit none
  integer, intent(in)     :: ik
@@ -50,9 +50,17 @@ subroutine RT_Ext_Field(ik,Sigma_s,time)
        A_t=-Ext_Field_Int*sin(Ext_Field_freq*time)/Ext_Field_freq
      endif
    case('DELTA')
-     A_t=Ext_Field_Int
+     if(time>=T_initial) then
+       A_t=Ext_Field_Int
+     else
+       A_t=(0.,0.)
+     endif
    case('STEP')
-     A_t=Ext_Field_Int*time
+     if(time>=T_initial) then
+       A_t=Ext_Field_Int*time
+     else
+       A_t=(0.,0.)
+     endif
    case default
      call error(" External Field "//trim(Ext_Field_name)//" not implemented ") 
  end select
@@ -63,7 +71,7 @@ subroutine RT_Ext_Field(ik,Sigma_s,time)
  ! in case of complex Efield puts the correct Hermitian matrix
  ! and the intraband optical matrix elements have been set to zero
  !
- if(.not.RT_no_intraband) then
+ if(.not.RT_no_intraband.or..not.RT_resonant) then
    do i1=1,SC_bands
      Sigma_s(i1,i1)=Sigma_s(i1,i1)+cdotu(3,A_t_vec,1,DIP_iR_or_P(:,i1,i1,ik,1),1)
    enddo

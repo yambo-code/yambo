@@ -85,7 +85,6 @@ module real_time
  ! Non-interaction potential energies and potentials
  !
  complex(SP), allocatable :: Ho_pot(:,:,:)
- real(SP),    allocatable :: E_bare(:,:) 
  !
  contains
    !
@@ -118,13 +117,10 @@ module real_time
      allocate(G_lesser(SC_bands,SC_bands,en%nk))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
      !
-     allocate(E_bare(SC_bands,en%nk))
-     call mem_est("E_bare",(/size(E_bare)/),(/SP/))
-     !
      allocate(Ho(SC_bands,SC_bands,en%nk,n_spin),H_t(SC_bands,SC_bands,en%nk))
      call mem_est("Ho",(/size(Ho)/),(/2*2*SP/))
      !
-     if(RT_phase_int) then
+     if(RT_phase_int.or..not.l_rt_exc) then
        allocate(Ho_pot(SC_bands,SC_bands,en%nk))
        call mem_est("Ho_pot",(/size(Ho_pot)/),(/2*SP/))
      endif
@@ -159,13 +155,10 @@ module real_time
      deallocate(V_hartree_sc,V_xc_0)
      call mem_est('Potentials')
      !
-     deallocate(E_bare)
-     call mem_est("E_bare")
-     !
      deallocate(Ho,H_t)
      call mem_est("Ho")
      !
-     if(RT_phase_int) then
+     if(RT_phase_int.or..not.l_rt_exc) then
        !      
        deallocate(Ho_pot)
        call mem_est("Ho_pot")

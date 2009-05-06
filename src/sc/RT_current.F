@@ -29,6 +29,7 @@ subroutine RT_current(j_current,en,xK,A_t,EF_q0,G_lesser)
  use SC,            ONLY:SC_bands
  use electrons,     ONLY:nel,levels
  use X_m,           ONLY:DIP_iR_or_P
+ use com,           ONLY:msg
  !
  implicit none
  type(levels),  intent(in) ::en       
@@ -36,17 +37,19 @@ subroutine RT_current(j_current,en,xK,A_t,EF_q0,G_lesser)
  complex(SP), intent(in)  :: G_lesser(en%nbm,en%nbm,Xk%nibz)
  complex(SP), intent(in)  :: A_t
  real(SP),    intent(in)  :: EF_q0(3)
- complex(SP), intent(out) :: j_current(3)
+ real(SP),    intent(out) :: j_current(3)
  !
  ! Work Space
  !
  integer :: i1,i2,ik,is,SC_bands2
- complex(SP)   :: j_dir(3),j_dir_rot(3)
+ real(SP)   :: j_dir(3),j_dir_rot(3)
  complex(DP)   :: zdotc
  complex(SP)   :: cdotc
  !
- j_current(:)=(0._SP,0._SP)
+ j_current(:)=0.
  SC_bands2=SC_bands**2
+ !
+ call msg('nr','[RT] Eps Analyzer')
  !
  ! j(r,t) = -\sum_ijk e/2m \psi^*_i(k) p \psi_j(k) + e^2/m n(r) A(r,t)
  !
@@ -60,9 +63,9 @@ subroutine RT_current(j_current,en,xK,A_t,EF_q0,G_lesser)
    do i2=1,3
      !      
 #if defined _DOUBLE
-     j_dir(i2)=(0._DP,1._DP)*zdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1)
+     j_dir(i2)=-aimag(zdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1))
 #else
-     j_dir(i2)=(0._SP,1._SP)*cdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1)
+     j_dir(i2)=-aimag(cdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1))
 #endif
      !
    enddo
@@ -70,9 +73,9 @@ subroutine RT_current(j_current,en,xK,A_t,EF_q0,G_lesser)
    ! To be checked again for is > sym/(i_time_rev+1)
    !
    if(is >  nsym/(i_time_rev+1)) then
-     j_dir_rot = -matmul( dl_sop(:,:,is), conjg(j_dir) )
+     j_dir_rot = -matmul( dl_sop(:,:,is), j_dir )
    else
-     j_dir_rot = matmul( dl_sop(:,:,is), j_dir )
+     j_dir_rot =  matmul( dl_sop(:,:,is), j_dir )
    endif
    !
    j_current(:)=j_current(:)+j_dir_rot(:)

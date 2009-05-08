@@ -262,14 +262,14 @@ subroutine BZ_RIM(Xk,Xen)
      integer i_q,i_a
      real(SP)           :: phi,theta,rho
      !
-     do i_q=1,20
-       do i_a=1,1
+     do i_a=1,5
+       do i_q=2,20
          k_counter=k_counter+1
          rho=gamma_radius/20.*i_q
          phi=(.3+(.5-.3)/2.*(i_a-1))*pi
          rand_kpt(k_counter,:)=rho*(/cos(phi),&
-&                                      sin(phi),&
-&                                      0./)
+&                                    sin(phi),&
+&                                    0./)
          call c2a(v_in=rand_kpt(k_counter,:),mode="kc2a")
          dummy=ak2bz(rand_kpt(k_counter,:))
          call c2a(v_in=rand_kpt(k_counter,:),mode="ka2i")

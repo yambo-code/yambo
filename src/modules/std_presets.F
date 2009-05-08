@@ -76,7 +76,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     using_SC_basis,SC_cycle_mixing,SC_fft_size
  use real_time,  ONLY:RT_step,T_initial, Ext_Field_freq, Tot_steps, Thermal_steps,   &
 &                     Ext_Field_int,RT_phase_int, Ext_Field_name,Integrator_name, &
-&                     EF_q0,TransRelax,LongRelax,RT_no_intraband,RT_resonant
+&                     EF_q0,TransRelax,LongRelax,RT_no_intraband,RT_resonant,l_keep_vxc
 
 #endif
  use SC,         ONLY:SC_band_mixing
@@ -382,7 +382,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  Ext_Field_Int=0.
  Tot_steps=5000
  Thermal_steps=0
- Ext_Field_name='DELTA'
+ Ext_Field_name='none'
  Integrator_name='RK2'
  EF_q0=(/1.0,0.0,0.0/)
  TransRelax=0._SP
@@ -390,6 +390,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  RT_phase_int=.FALSE.
  RT_resonant =.FALSE.
  RT_no_intraband=.FALSE.
+ l_keep_vxc=.FALSE.
  !
 #endif
  SC_band_mixing=100.

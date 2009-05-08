@@ -73,7 +73,7 @@ subroutine RT_Ext_Field(ik,Sigma_s,time)
  !
  if(.not.RT_no_intraband.or..not.RT_resonant) then
    do i1=1,SC_bands
-     Sigma_s(i1,i1)=Sigma_s(i1,i1)+cdotu(3,A_t_vec,1,DIP_iR_or_P(:,i1,i1,ik,1),1)
+     Sigma_s(i1,i1)=Sigma_s(i1,i1)+real(cdotu(3,A_t_vec,1,DIP_iR_or_P(:,i1,i1,ik,1),1))
    enddo
  endif
  !
@@ -81,7 +81,7 @@ subroutine RT_Ext_Field(ik,Sigma_s,time)
    do i2=i1+1,SC_bands
       !     
       Sigma_s(i1,i2)=Sigma_s(i1,i2)+cdotu(3,A_t_vec,1,DIP_iR_or_P(:,i1,i2,ik,1),1)
-      Sigma_s(i2,i1)=Sigma_s(i2,i1)+cdotc(3,A_t_vec,1,DIP_iR_or_P(:,i1,i2,ik,1),1)
+      Sigma_s(i2,i1)=Sigma_s(i2,i1)+cdotc(3,A_t_vec,1,DIP_iR_or_P(:,i2,i1,ik,1),1)
       !
    enddo
  enddo

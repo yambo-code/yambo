@@ -39,6 +39,13 @@ module real_time
  integer  :: Thermal_steps
  character(schlen) :: Ext_Field_name
  logical           :: l_rt_exc
+ !
+ ! If l_keep_vxc=.true. do not subtract Vxc from the self-energy
+ !
+ logical           :: l_keep_vxc
+ !
+ ! Diagonal and off-diagonal relaxation time
+ !
  real(SP)          :: LongRelax
  real(SP)          :: TransRelax
  !

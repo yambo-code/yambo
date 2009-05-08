@@ -129,9 +129,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! Logicals (Drivers)
  !
- BS_res_K_corr=index(BS_res_mode,'c')/=0.or.index(BS_res_mode,'u')/=0
+ BS_res_K_corr=index(BS_res_mode,'c')/=0
  BS_res_K_exchange=index(BS_res_mode,'x')/=0
- BS_cpl_K_corr=index(BS_cpl_mode,'c')/=0.or.index(BS_cpl_mode,'u')/=0
+ BS_cpl_K_corr=index(BS_cpl_mode,'c')/=0
  BS_cpl_K_exchange=index(BS_cpl_mode,'x')/=0
  BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
  !

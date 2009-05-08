@@ -174,7 +174,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! BSE
  !
- call it(defs,'BSresKmod',  '[BSK] Resonant Kernel mode. (`x`;`c`;`d`,`u`)',BS_res_mode)
+ call it(defs,'BSresKmod',  '[BSK] Resonant Kernel mode. (`x`;`c`;`d`)',BS_res_mode)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
@@ -272,11 +272,12 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'ELongDir',  '[RT]  Electric Field Versor',EF_q0)
  call it(defs,'DiagHIter', '[RT]  Digaonalize the Hamiltonian',DiagH_Iter,verb_level=V_more)
  call it('f',defs,'RTResonant', '[RT] Only Resonant part of the External Field',verb_level=V_more)
- call it('f',defs,'RTNoIntraband', '[RT] Do not Include Intraband transitions',verb_level=V_more)
- call it('f',defs,'PhaseInt', '[RT] Use Exact integration fast phase factors',verb_level=V_more)
+ call it('f',defs,'RTNoIntraband', '[RT] Do not include intraband transitions',verb_level=V_more)
+ call it('f',defs,'PhaseInt', '[RT] Use Exact Integration for the fast phase factors',verb_level=V_more)
  call it(defs,'LongRelax',  '[RT]  Longitudinal Relaxation Time',LongRelax,verb_level=V_more,unit=Time_unit)
  call it(defs,'TransRelax',  '[RT]  Transverse Relaxation Time',TransRelax,unit=Time_unit)
  call it('f',defs,'EpsAnalyze', '[RT] Analyze real-time response to an external field')
+ call it('f',defs,'KeepVxc', '[RT] Do not subtract Vxc from the self-energy',verb_level=V_more)
 #endif
  !
  ! GPL_EXCLUDE_END SC_IGNORE

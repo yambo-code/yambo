@@ -167,6 +167,7 @@ contains
    use D_lattice,             ONLY : default_Tel, n_atom_species
    use wave_func,             ONLY : wf_ncx 
    use com,                   ONLY : msg, error
+   use timing,                ONLY : live_timing_is_on
    type(levels),     intent(out)  :: en     ! Energies
    type(bz_samp),    intent(out)  :: k      ! K/Q points
    !
@@ -195,8 +196,9 @@ contains
 #endif
 
    if (ierr.ne.0) then
-     call msg('s','Error reading data: most likely you are using an incompatible')
-     call msg('s','version of p2y with your data (3.1/3.1.1/3.2).')
+     live_timing_is_on=.FALSE.
+     call msg('ms','Error reading data: most likely you are using an incompatible')
+     call msg('s','version of p2y with your data.')
      call msg('s','Action: Compile a compatible version of p2y.')
      call errore('qexml_read_bands.','IOTK error:',ABS(ierr)) 
    endif

@@ -33,7 +33,7 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
  use QP_m,           ONLY:QP_nk,QP_Vxc,QP_n_states,QP_table 
  use real_time,      ONLY:I1_lesser,I2_lesser,V_xc_0,l_rt_exc,rho,V_hartree_0, &
  &                        Thermal_Time,l_rt_efield,TransRelax,LongRelax,T_initial, &
- &                        RT_phase_int,H_t,Ho_pot
+ &                        RT_phase_int,H_t,Ho_pot,l_keep_vxc
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
@@ -97,9 +97,9 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
    Sigma_s=(0._SP,0._SP)
    !
    !  I subtract the V_xc_0 term if there is a self-energy /=0 (at least V_h)
-   !  and not TD-LDA
+   !  and not l_keep_vxc=.true. (used to include local field effects only)
    !
-   if(l_rt_exc.and..not.l_sc_pz) then 
+   if(l_rt_exc.and..not.l_keep_vxc) then 
      !  
      call V_to_H(ik,-V_xc_0,Sigma_s,wf)
      !

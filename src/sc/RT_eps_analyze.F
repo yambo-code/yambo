@@ -47,7 +47,7 @@ subroutine RT_eps_analyze(j_current,A_t)
  fftw_plan=0
  fft_sign=-1
  !
- omega=2.*pi/(dble(tot_steps)*RT_step)   ! Frequency convertion factor to 1/fs to eV
+ omega=2.*pi/(dble(tot_steps)*RT_step)  ! Frequency step
  !
  do i1=1,3
 #if defined _FFTW
@@ -87,7 +87,7 @@ subroutine RT_eps_analyze(j_current,A_t)
  endif
  !
  forall(i1=2:tot_steps/2+1)
-   chi(i1,:)=chi(i1,:)/((0.,-1.)*omega*dble(i1-1)*w_dot_A_w(i1))
+   chi(i1,:)=chi(i1,:)/((0.,1.)*omega*dble(i1-1)*w_dot_A_w(i1))
  end forall
  !
  !
@@ -106,7 +106,7 @@ subroutine RT_eps_analyze(j_current,A_t)
  !
  do i1=2,tot_steps/2+1
    !      
-   w_eps(1)   = omega*dble(i1-1)*HARTREE
+   w_eps(1)   = omega*dble(i1-1)*HARTREE  ! Frequency convertion factor from 1/fs to eV
    !
    do i2=1,3
      w_eps(2*i2)       = aimag((1._SP,0._SP)+chi(i1,i2))

@@ -18,18 +18,19 @@
 ! License along with this program; if not, write to the Free 
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
+!                  \
 ! Evalute current including also the diamagnetic contribution
 !
 subroutine RT_current(j_current,en,xK,A_t,EF_q0,G_lesser)
  !
- use pars,          ONLY:SP,DP,pi
- use R_lattice,     ONLY:bz_samp,RL_vol
- use D_lattice,     ONLY:nsym,i_time_rev,dl_sop,sop_inv,i_time_rev
- use SC,            ONLY:SC_bands
- use electrons,     ONLY:nel,levels
- use X_m,           ONLY:DIP_iR_or_P
- use com,           ONLY:msg
+ use pars,           ONLY:SP,DP,pi
+ use matrix_operate, ONLY:m3det
+ use R_lattice,      ONLY:bz_samp,RL_vol,rl_sop
+ use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv,i_time_rev
+ use SC,             ONLY:SC_bands
+ use electrons,      ONLY:nel,levels
+ use X_m,            ONLY:DIP_iR_or_P
+ use com,            ONLY:msg
  !
  implicit none
  type(levels),  intent(in) ::en       
@@ -41,19 +42,20 @@ subroutine RT_current(j_current,en,xK,A_t,EF_q0,G_lesser)
  !
  ! Work Space
  !
- integer :: i1,i2,ik,is,SC_bands2
- real(SP)   :: j_dir(3),j_dir_rot(3)
+ integer       :: i1,i2,ik,is,SC_bands2
+ real(SP)      :: j_dir(3),j_dir_rot(3)
  complex(DP)   :: zdotc
  complex(SP)   :: cdotc
  !
- j_current(:)=0.
  SC_bands2=SC_bands**2
  !
  call msg('nr','[RT] Eps Analyzer')
  !
- ! j(r,t) = -\sum_ijk e/2m \psi^*_i(k) p \psi_j(k) + e^2/m n(r) A(r,t)
+ ! j(r,t) = \sum_ijk e/2m \psi^*_i(k) p \psi_j(k) - e^2/m n(r) A(r,t)
  !
  ! j_current(t) = int dr j(r,t)
+ !
+ j_current(:)=0.
  !
  do i1=1,Xk%nbz
    !
@@ -73,9 +75,9 @@ subroutine RT_current(j_current,en,xK,A_t,EF_q0,G_lesser)
    ! To be checked again for is > sym/(i_time_rev+1)
    !
    if(is >  nsym/(i_time_rev+1)) then
-     j_dir_rot = -matmul( dl_sop(:,:,is), j_dir )
+     j_dir_rot  =   matmul( dl_sop(:,:,is), j_dir )*dl_sop(3,3,is) 
    else
-     j_dir_rot =  matmul( dl_sop(:,:,is), j_dir )
+     j_dir_rot  =  -matmul( dl_sop(:,:,is), j_dir )*dl_sop(3,3,is)  
    endif
    !
    j_current(:)=j_current(:)+j_dir_rot(:)
@@ -86,7 +88,7 @@ subroutine RT_current(j_current,en,xK,A_t,EF_q0,G_lesser)
  !
  ! Diamagnetic term. It is correct??
  !
- ! j_current(:)=j_current(:)+A_t*EF_q0(:)*nel
+ j_current(:)=j_current(:)+A_t*EF_q0(:)*nel*RL_vol/(Xk%nbz*(2.*pi)**3) 
  !
  !
 end subroutine RT_current

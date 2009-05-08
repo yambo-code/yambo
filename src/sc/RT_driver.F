@@ -38,8 +38,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  use matrix_operate, ONLY:mat_dia_inv,INV,USE_LK,DIAGO
  use QP_m,           ONLY:QP_state,QP_nb,QP_nk,QP_table,QP_n_states,QP_Vxc
  use SC,             ONLY:SC_potential,SC_bands,SC_fft_size,V_hartree_sc,Ho
- use real_time,      ONLY:EF_q0,Thermal_steps,Tot_steps,Ext_Field_name,RT_step,G_lesser, &
-&                         G_lesser_old,l_rt_efield,n_poles,Ext_Field_Int,RT_alloc,RT_free,rho,&
+ use real_time,      ONLY:EF_q0,Thermal_steps,Tot_steps,Ext_Field_name,RT_step,G_lesser,           &
+&                         G_lesser_old,l_rt_efield,n_poles,RT_alloc,RT_free,rho,l_keep_vxc,        &
 &                         Integrator_Name,l_rt_exc,RT_no_intraband,RT_resonant,V_hartree_0,V_xc_0, &
 &                         Thermal_time,RT_phase_int,DiagH_Iter,H_t,EXACT,RK2EXACT,Ho_pot,A_t
 
@@ -92,6 +92,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  call parser('RTNoIntraband',RT_no_intraband)
  call parser('PhaseInt',RT_phase_int)
  call parser('EpsAnalyze',EpsAnalyze)
+ call parser('KeepVxc',l_keep_vxc)
  !
  call set_real_printed_length(f_length=15,g_length=15)  
  !
@@ -114,7 +115,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  endif
  !
  l_rt_efield=.false.
- if(Ext_Field_Name/='NONE'.and.Ext_Field_Name/='none'.and.Ext_Field_Int/=0.0) then
+ if(Ext_Field_Name/='NONE'.and.Ext_Field_Name/='none') then
    !      
    l_rt_efield=.true.
    call section('*','External Field')
@@ -344,13 +345,13 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
       !
       if(EpsAnalyze.and.RT_time>0) then
         A_t_store(it-Thermal_steps)=A_t
-        j_current_store(it-Thermal_steps,:)=real(j_current(:))
+        j_current_store(it-Thermal_steps,:)=j_current(:)
       endif
       !
     endif
     !
     call RT_Integrator(G_lesser,G_lesser_old,RT_step,en,Xen,k,q,Integrator_name,RT_time)
-    ! 
+    !
     if(DiagH_Iter/=0) then
       if(mod(it,DiagH_Iter)==0) then
       !      

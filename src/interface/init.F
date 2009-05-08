@@ -544,7 +544,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (l_real_time) then
      call initactivate(1,'RTstep RTsteps Tinitial ThermStps ')
      call initactivate(1,'Integrator ExtField ExtFiInt ExtFiFreq ELongDir')
-     call initactivate(1,'LongRelax TransRelax DiagHIter')
+     call initactivate(1,'LongRelax TransRelax DiagHIter KeepVxc')
      call initactivate(1,'RTNoIntraband RTResonant PhaseInt EpsAnalyze')
    else
      call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')

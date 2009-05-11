@@ -118,14 +118,15 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
      !
      do i2=1,Sc_W(i1)%n(1) 
        !
-       QP_Go=0.5*E%f(is(1),is(2),1)/(Sc_W(i1)%p(i2)-E_bare)
+       !  Davide: 15/04/2009 moved conjg from the second term of the Green to
+       !          the first according to the QP expression for the T-ordered Green
+       !          G=\frac{1}{\omega-\epsilon_i+i\eta sign(\epsilon-\mu)}         
        if (Finite_Tel) then
-         QP_Go=QP_Go+0.5*&
-&              (2.-E%f(is(1),is(2),1))/(Sc_W(i1)%p(i2)-E_bare)
+         QP_Go=0.5*E%f(is(1),is(2),1)/(Sc_W(i1)%p(i2)-E_bare)
        else
-         QP_Go=QP_Go+0.5*&
-&              (2.-E%f(is(1),is(2),1))/(conjg(Sc_W(i1)%p(i2))-E_bare)
+         QP_Go=0.5*E%f(is(1),is(2),1)/(conjg(Sc_W(i1)%p(i2))-E_bare)                   
        endif
+       QP_Go=QP_Go+0.5*(2.-E%f(is(1),is(2),1))/(Sc_W(i1)%p(i2)-E_bare)                           
        !
        QP_G(i1,i2)=QP_Go/(1.-QP_Go*(QP_Sc(i1,i2)+QP_Sx(i1)-QP_Vxc(i1)))
        !

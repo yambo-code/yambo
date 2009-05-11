@@ -21,6 +21,14 @@
 !
 subroutine K_doubles(Ken,BS_W)
  !
+ ! This subroutine computes and write to disk in ndb.BS_C_doubles
+ ! the coupling part of the second order kernel:
+ ! C^{i}_{sd} with s={c,v} ; d={c1,c2,v1,v2} ; i=1,8
+ ! see comments around lines 380 for a more detailed description of C
+ !
+ ! The subroutine K_doubles_solvers.F will read this file and pass the
+ ! matrix BS_mat_doubles to the subroutine BS_doubles_mount.F which will
+ ! compute the second order kernel for a specific frequency
  !
  use pars,          ONLY:SP,pi
  use drivers,       ONLY:l_td_hf
@@ -36,7 +44,8 @@ subroutine K_doubles(Ken,BS_W)
 &                        BS_n_g_W,BS_blk_dim,O_phase,&
 &                        BS_eh_table,BS_identifier,BS_K_dim,BS_mat
  use BS_doubles,    ONLY:BS_mat_doubles,BS_res_K_doubles,BS_K_doubles_dim,  &
-                         BS_doubles_table,BS_bands_doubles,BS_doubles_E
+&                        BS_doubles_table,BS_bands_doubles,BS_doubles_E,    &
+&                        static_approx
  use collision,     ONLY:ggwinfo,collision_reset
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,OP_WR_CL
  !
@@ -44,12 +53,14 @@ subroutine K_doubles(Ken,BS_W)
  type(levels)     ::Ken  
  type(pp_indexes) ::px
  !
- ! Kernel loop
+ ! Main loop variables
  !
  integer    :: iv1,ic1,iv2,ic2,icv1,icv2,&
 &              iOvv,iOcc,i1,i2,i3,&
 &              icv,ic,iv,nc,nv,nv_doubles,nc_doubles,i_doubles
  complex(SP),allocatable ::  Interaction_cccv(:,:,:,:),Interaction_vvcv(:,:,:,:)
+ !
+ ! From lapac libraries, functions for the scalar product of two vectors
  !
 #if defined _DOUBLE
  complex(SP):: zdotc,zdotu
@@ -57,24 +68,21 @@ subroutine K_doubles(Ken,BS_W)
  complex(SP):: cdotc,cdotu
 #endif
  !
- ! Kernel
- !
+ ! Elements for the construction of the Kernel:
+ ! 1 - interaction
  complex(SP) ::BS_W(BS_n_g_W,1,1)
- !
- ! Oscillators
- !
- integer    :: alloc_err
- complex(SP),allocatable::Ovv(:,:,:),Occ(:,:,:),Ocv(:,:,:)
  type(ggwinfo)          ::isc
+ ! 2 - oscillators
+ complex(SP),allocatable::Ovv(:,:,:),Occ(:,:,:),Ocv(:,:,:)
  !
  ! I/O
- !
  integer           ::io_err,ID     
  integer, external ::ioBS_doubles  
  !
  ! Davide doubles
  ! preparation lines:
  BS_res_K_doubles=l_td_hf
+! BS_res_K_doubles=.false.
  BS_bands_doubles(1)=BS_bands(1)
  BS_bands_doubles(2)=BS_bands(2)
  !
@@ -95,44 +103,40 @@ subroutine K_doubles(Ken,BS_W)
  ! DEBUG >
  call section('*','Bethe-Salpeter Kernel + DOUBLES')
  !
- ! Setups
- !
+ ! Check fo the dimension of the kernel
  if (BS_K_doubles_dim==0) then
    call error(' Null BSE doubles kernel block dimension(s) found. Increase doubles range')
  endif
  !
- ! Check for the doubles DB
- !
+ ! Check for the doubles DB, if already present exit from the subroutine
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
  io_err=ioBS_doubles(ID)
- !
  if (io_err==0) then
    return
  endif
  !
+ ! Start the computation of the database
  call msg('rsn','[BSE] Doubles dimension      :',BS_K_doubles_dim)
  !
  ! Load wave funtions
- !
  call wf_load(BS_n_g_W,1,(/BS_bands_doubles(1),BS_bands_doubles(2)/),(/1,1/),&
 &             space='R',title='-BSK_doubles')
  !
- ! ****** Allocations *****
- !
+ ! *************************
+ ! ****** Allocations ******
+ ! *************************
  ! Allocation: Table and energies
  allocate(BS_doubles_table(BS_K_doubles_dim,4))
  call mem_est('BS_doubles_table',(/size(BS_doubles_table)/))
  BS_doubles_table(:,:)=0
- allocate(BS_doubles_E(BS_K_doubles_dim))
- call mem_est('BS_E_table',(/size(BS_doubles_E)*2/))
+ allocate(BS_doubles_E(BS_K_doubles_dim),static_approx(BS_K_doubles_dim))
+ call mem_est('BS_doubles_E',(/size(BS_doubles_E)*2/))
  BS_doubles_E(:)=(0.,0.)
+ static_approx(:)=0
  !
  ! Allocation: Oscillators
- allocate(Ovv(BS_n_g_W,nv_doubles,nv),Occ(BS_n_g_W,nc,nc_doubles))
- call mem_est('Occ',(/size(Occ)*2/))
- call mem_est('Ovv',(/size(Ovv)*2/))
- allocate(Ocv(BS_n_g_W,nc_doubles,nv_doubles))
- call mem_est('Ocv',(/size(Ocv)*2/))
+ allocate(Ovv(BS_n_g_W,nv_doubles,nv),Occ(BS_n_g_W,nc,nc_doubles),Ocv(BS_n_g_W,nc_doubles,nv_doubles))
+ call mem_est('Occ Ovv Ocv',(/size(Occ)*2,size(Ovv)*2,size(Ocv)*2/))
  Occ(:,:,:)=(0.,0.)
  Ovv(:,:,:)=(0.,0.)
  Ocv(:,:,:)=(0.,0.)
@@ -148,10 +152,10 @@ subroutine K_doubles(Ken,BS_W)
  Interaction_cccv(:,:,:,:)=(0.,0.)
  Interaction_vvcv(:,:,:,:)=(0.,0.)
  !
- !
- !***** Before the main loop *****
- !
- ! Doubles table
+ ! ********************************
+ ! ***** Before the main loop *****
+ ! ********************************
+ ! Doubles tables for indexes and energies
  i_doubles=0
  do iv1=BS_bands_doubles(1),Ken%nbf
    do iv2=BS_bands_doubles(1),Ken%nbf
@@ -160,6 +164,15 @@ subroutine K_doubles(Ken,BS_W)
          i_doubles=i_doubles+1
          BS_doubles_table(i_doubles,:)=(/iv1,iv2,ic1,ic2/)
          BS_doubles_E(i_doubles)=Ken%E(ic1,1,1)+Ken%E(ic2,1,1)-Ken%E(iv1,1,1)-Ken%E(iv2,1,1)
+         ! STATIC APPROX <
+         ! Check for BS_doubles_E. If greater than ?? eV then the corrisponding 
+         ! index is recorded so that will be possible to do a static approximation
+         ! for the kernel for that index
+         !if ( BS_doubles_E(i_doubles)*27.2116> ?? ) then
+         !  static_approx(i_doubles)=1
+         !  write(3456,*) i_doubles
+         !endif
+         ! STATIC APPROX >
          ! DEBUG <
          !write(3456,*) ic1,ic2,iv1,iv2,BS_doubles_E(i_doubles)*27.2116
          ! DEBUG >
@@ -168,8 +181,8 @@ subroutine K_doubles(Ken,BS_W)
    enddo
  enddo
  !
- !
  ! Oscillators construction
+ ! 1 - preparations lines
  call collision_reset(isc)
  isc%is(:)=1
  isc%os(:)=1
@@ -179,6 +192,7 @@ subroutine K_doubles(Ken,BS_W)
  allocate(isc%rhotw(BS_n_g_W))
  allocate(isc%gamp(1,BS_n_g_W))
  !
+ ! 2 - Ovv construction
  ! Paral <
  call pp_indexes_reset(px)
  call par_indexes(px,(/Ken%nbf,Ken%nbf/),(/BS_bands(1),BS_bands_doubles(1)/))
@@ -207,6 +221,7 @@ subroutine K_doubles(Ken,BS_W)
  call pp_redux_wait(Ovv)
  call pp_indexes_reset(px)
  !
+ ! 3 -Occ construction
  call par_indexes(px,(/BS_bands(2),BS_bands_doubles(2)/),(/1+Ken%nbf,1+Ken%nbf/))
  call pp_redux_wait
  call live_timing('Occ',px%stps(myid+1))
@@ -233,6 +248,7 @@ subroutine K_doubles(Ken,BS_W)
  call pp_redux_wait(Occ)
  call pp_indexes_reset(px)
  !
+ ! 4 -Ocv construction
  call par_indexes(px,(/Ken%nbf,BS_bands_doubles(2)/),(/BS_bands_doubles(1),1+Ken%nbf/))
  call pp_redux_wait
  call live_timing('Ocv',px%stps(myid+1))
@@ -263,16 +279,14 @@ subroutine K_doubles(Ken,BS_W)
  call collision_reset(isc)
  !
  !  ********************************************
- !  *******          Main loop           *******
+ !  *******       Main loop: start       *******
  !  ********************************************
- !
- !
  if (BS_res_K_doubles) then
    !
    !  Step 1: Here the code constructs U_{cc1,c2v2} and U_{v1v,c2v2} 
-   !          starting Ocv, Occ and Ovv
+   !          starting Ocv, Occ and Ovv, and BS_W
    !
-   !          1.a: U_{c c1 c2 v2}
+   !          1.a: U_{c c1 c2 v2} = Occ * BS_W * Ocv
    !
    ! Paral <
    call pp_indexes_reset(px)
@@ -327,7 +341,7 @@ subroutine K_doubles(Ken,BS_W)
    call live_timing('Interaction_vvcv',px%stps(myid+1))
    ! Paral >
    !
-   !          1.b: U_{v v1 c2 v2}
+   !          1.b: U_{v v1 c2 v2} = Ovv * BS_W * Ocv
    !
    do iv=1,nv
      do iv1=1,nv_doubles
@@ -385,7 +399,16 @@ subroutine K_doubles(Ken,BS_W)
    !          v  ===>===x===>===  v1                 ===>===:===>===  v1
    !
    !          and the final simmetrized expression:
-   !          C_{sd}=0.25*[D1+D2 -(c1<->c2) -(v1<->v2) +(c1,v1<->c2,v2)]
+   !          C_{sd}=0.5*[D1+D2 -(c1<->c2) -(v1<->v2) +(c1,v1<->c2,v2)]
+   !          Here the prefactor 0.5 to each half-diagram is needed as we have 8 half-diagrams
+   !          which composed will give 8*8=64 diagrams, but equal at groups of 4
+   !          (i.e. D1*D2 = D1(c1<->c2)*D2(c1<->c2) = ...) so we have to divide by 4(=0.5*0.5)
+   !
+   !  In the code:
+   !  D1=BS_mat_doubls(:,:,1)                              D2=BS_mat_doubls(:,:,5)
+   !  D1(c1<->c2)=BS_mat_doubls(:,:,2)                     D2(c1<->c2)=BS_mat_doubls(:,:,6)
+   !  D1(v1<->v2)=BS_mat_doubls(:,:,3)                     D2(v1<->v2)=BS_mat_doubls(:,:,7)   
+   !  D1(v1,c1<->v2,c2)=BS_mat_doubls(:,:,4)               D2(v1,c1<->v2,c2)=BS_mat_doubls(:,:,8)
    !
    !DEBUG <
    write(3459,*) '                                                                       ',&
@@ -395,9 +418,8 @@ subroutine K_doubles(Ken,BS_W)
 &                '       kin5            kin6            kin7            kin8     '
    !DEBUG >
    !
-   !
    ! Paral <
-   call par_indexes(px,(/i_doubles/),(/1/))
+   call par_indexes(px,(/BS_K_doubles_dim/),(/1/))
    call pp_redux_wait
    call live_timing('BS_mat_doubles',px%stps(myid+1))
    ! Paral >
@@ -414,17 +436,17 @@ subroutine K_doubles(Ken,BS_W)
      do icv=1,BS_K_dim
        iv=BS_eh_table(icv,2)-BS_bands(1)+1
        ic=BS_eh_table(icv,3)-Ken%nbf
-       if (iv+BS_bands(1)==iv1+BS_bands_doubles(1)) then
+       if ( (iv+BS_bands(1)) == (iv1+BS_bands_doubles(1)) ) then
          BS_mat_doubles(icv,i_doubles,1)=&
 &               Interaction_cccv(ic,ic1,ic2,iv2)                      !D1
          BS_mat_doubles(icv,i_doubles,2)=&
 &              -Interaction_cccv(ic,ic2,ic1,iv2)                      !D1c
        endif
-       if (iv+BS_bands(1)==iv2+BS_bands_doubles(1)) then 
+       if ( (iv+BS_bands(1)) == (iv2+BS_bands_doubles(1)) ) then 
          BS_mat_doubles(icv,i_doubles,3)=&
-&               Interaction_cccv(ic,ic1,ic2,iv1)                      !D1v
+&              -Interaction_cccv(ic,ic1,ic2,iv1)                      !D1v
          BS_mat_doubles(icv,i_doubles,4)=&
-&              -Interaction_cccv(ic,ic2,ic1,iv1)                      !D1cv
+&               Interaction_cccv(ic,ic2,ic1,iv1)                      !D1cv
        endif
        if (ic==ic1) then
          BS_mat_doubles(icv,i_doubles,5)=&
@@ -434,21 +456,15 @@ subroutine K_doubles(Ken,BS_W)
        endif
        if (ic==ic2) then 
          BS_mat_doubles(icv,i_doubles,6)=&
-&               Interaction_vvcv(iv1,iv,ic1,iv2)                      !D2c
+&              -Interaction_vvcv(iv1,iv,ic1,iv2)                      !D2c
          BS_mat_doubles(icv,i_doubles,8)=&
-&              -Interaction_vvcv(iv2,iv,ic1,iv1)                      !D2cv
+&               Interaction_vvcv(iv2,iv,ic1,iv1)                      !D2cv
        endif
        ! DEBUG <
        write(3459,*) ic+Ken%nbf,iv+BS_bands(1)-1,&
 &                    ic1+Ken%nbf,ic2+Ken%nbf,iv1+BS_bands_doubles(1)-1,iv2+BS_bands_doubles(1)-1,&
-&                    real(BS_mat_doubles(icv,i_doubles,1)),real(BS_mat_doubles(icv,i_doubles,2)),&
-&                    real(BS_mat_doubles(icv,i_doubles,3)),real(BS_mat_doubles(icv,i_doubles,4)),&
-&                    real(BS_mat_doubles(icv,i_doubles,5)),real(BS_mat_doubles(icv,i_doubles,6)),&
-&                    real(BS_mat_doubles(icv,i_doubles,7)),real(BS_mat_doubles(icv,i_doubles,8)),&
-&                    aimag(BS_mat_doubles(icv,i_doubles,1)),aimag(BS_mat_doubles(icv,i_doubles,2)),&
-&                    aimag(BS_mat_doubles(icv,i_doubles,3)),aimag(BS_mat_doubles(icv,i_doubles,4)),&
-&                    aimag(BS_mat_doubles(icv,i_doubles,5)),aimag(BS_mat_doubles(icv,i_doubles,6)),&
-&                    aimag(BS_mat_doubles(icv,i_doubles,7)),aimag(BS_mat_doubles(icv,i_doubles,8))
+&                    (real(BS_mat_doubles(icv,i_doubles,i1)),i1=1,8),&
+&                    (aimag(BS_mat_doubles(icv,i_doubles,i1)),i1=1,8)
        ! DEBUG >
      enddo
    enddo
@@ -458,14 +474,19 @@ subroutine K_doubles(Ken,BS_W)
    call pp_indexes_reset(px)
    ! Paral >
    !
-   BS_mat_doubles(:,:,:)=0.25*BS_mat_doubles(:,:,:)
+   ! For the 0.5 here see comment around lines 402
+   BS_mat_doubles(:,:,:)=0.5/sqrt(2.)*BS_mat_doubles(:,:,:)
    !
  endif
+ !  ********************************************
+ !  *******       Main loop: end         *******
+ !  ********************************************
  !
- !
+ ! Write BS_mat_doubles to disk
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
  io_err=ioBS_doubles(ID)
  !
+ ! Final deallocation
  deallocate(Interaction_cccv,Interaction_vvcv)
  call mem_est('Interaction_cccv Interaction_vvcv')
  deallocate(BS_mat_doubles)
@@ -474,7 +495,6 @@ subroutine K_doubles(Ken,BS_W)
  call mem_est("Occ Ovv Ocv")
  deallocate(BS_doubles_table,BS_doubles_E)
  call mem_est("BS_doubles_table BS_doubles_E")
- !
  !
  ! DEBUG >
  close(unit=3456)

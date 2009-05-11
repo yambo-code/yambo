@@ -1,5 +1,6 @@
 #if defined _DOUBLES
-K_object = K_doubles.o K_doubles_mount.o
+K_object = K_doubles.o K_doubles_mount.o K_fixed_point.o \
+           K_doubles_diagonalization.o K_doubles_degeneracy.o
 #else
 K_object = 
 #endif

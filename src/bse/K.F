@@ -55,6 +55,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use TDDFT,        ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,ioBS_Fxc
  use xc_functionals, ONLY:F_xc
  use global_XC,    ONLY:WF_kind,WF_xc_functional
+#if defined _DOUBLES
+ use BS_doubles,   ONLY:BS_res_K_doubles,BS_K_doubles_dim
+#endif
  implicit none
  type(levels)  ::Ken 
  type(bz_samp) ::Xk,q
@@ -158,6 +161,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if (BS_res_K_corr) then
      deallocate(O_v_state,O_c_state,O_n_c_states,O_n_v_states)
      call mem_est("O_v_state O_c_state O_n_c_states O_n_v_states")
+#if defined _DOUBLES
+     BS_res_K_doubles=l_td_hf
+     BS_K_doubles_dim=BS_K_dim**2
+#endif
    endif
    return
  endif
@@ -731,8 +738,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! DOUBLES excitations contribution
 #if defined _DOUBLES
  call K_doubles(Ken,BS_W)
- deallocate(BS_W)
- call mem_est("BS_W")
+ if (BS_res_K_corr.or.BS_cpl_K_corr) then
+   deallocate(BS_W)
+   call mem_est("BS_W")
+ endif
 #endif
  !
  ! Final CLEAN

@@ -27,8 +27,8 @@ subroutine BZ_RIM(Xk,Xen)
  use R_lattice,           ONLY:bz_samp,nkibz
  use D_lattice,           ONLY:alat,nsym,default_Tel,a
  use com,                 ONLY:msg,of_open_close
- use vec_operate,         ONLY:c2a,ak2bz,v_norm
- use YPP,                 ONLY:BZ_RIM_nkpts,coo_out,BZ_RIM_path,gamma_radius
+ use vec_operate,         ONLY:ak2bz,v_norm,c2a
+ use YPP,                 ONLY:BZ_RIM_nkpts,BZ_RIM_path,gamma_radius,K_transform
  use electrons,           ONLY:levels,default_nel,n_bands,&
 &                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
 &                              BZ_RIM_tot_nkpts,n_spin,BZ_RIM_max_filling
@@ -97,7 +97,7 @@ subroutine BZ_RIM(Xk,Xen)
    !
    k_rand_fname="random_k_pts"
    call of_open_close(k_rand_fname,'ot')
-   call msg('o random',"#",(/"X","Y","Z"/),INDENT=0,USE_TABS=.true.)
+   call msg('o random',"#",(/"c1","c2","c3"/),INDENT=0,USE_TABS=.true.)
    !
    k_counter=0
    !
@@ -120,8 +120,7 @@ subroutine BZ_RIM(Xk,Xen)
        !
      endif
      !
-     if (trim(coo_out)=="cc" ) call c2a(v_in=rand_kpt(k_counter+1,:),mode="ki2c")
-     if (trim(coo_out)=="rlu") call c2a(v_in=rand_kpt(k_counter+1,:),mode="ki2a")
+     call K_transform(rand_kpt(k_counter+1,:),'iku')
      !
      call msg('o random',"",rand_kpt(k_counter+1,:),USE_TABS=.true.)
      !

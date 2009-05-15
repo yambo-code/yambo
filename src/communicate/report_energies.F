@@ -42,6 +42,8 @@ subroutine report_energies(E,k,Xk,n_bands_,k_range,what,header)
  character(schlen) :: dumb_ch
  real(SP)          :: E_(n_bands_,n_sp_pol)
  !
+ call msg('rn','Energy unit is electronVolt [eV]')
+ !
  do ik=k_range(1),k_range(2)
    ! 
    dumb_ch='K ['//trim(intc(ik))//'] :'//trim(real2ch(k%pt(ik,1)))//' '//&

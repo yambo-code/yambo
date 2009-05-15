@@ -19,8 +19,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function p2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
-&                       com_dir,icd,js,ijs,np,pid)
+integer function p2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
+&                      com_dir,icd,js,ijs,np,pid)
  !
  use P2Y,                 only : pw_init, pw_close, verboseIO
  use LOGO,                only : pickup_a_random

@@ -19,6 +19,9 @@
   Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
+/*
+ INCLUDES
+*/
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
@@ -28,6 +31,11 @@
 #if defined _MPI 
  #include <mpi.h>
 #endif
+#include "editor.h"
+#include "codever.h"
+/* 
+ Command line options structure
+*/
 typedef struct 
 {
         char *ln;
@@ -38,18 +46,6 @@ typedef struct
         int   nc;
         int   st;
 } Ldes;
-/* 
- Includes (I)
-*/
-#if defined _FORTRAN_US
- #define F90_FUNC(name,NAME) name ## _
- #define F90_FUNC_(name,NAME) name ## _
-#else
- #define F90_FUNC(name,NAME) name
- #define F90_FUNC_(name,NAME) name
-#endif
-#include "editor.h"
-#include "codever.h"
 /* 
  Yambo/Ypp driver flag
 */
@@ -86,8 +82,24 @@ typedef struct
 #if defined _e2y
  #include "e2y.h"
 #endif
+/* 
+ Declarations 
+*/
 static void usage(int verbose);
 static void title(FILE *file_name,char *cmnt);
+/*
+*/
+/* 
+ F90 wrapper
+*/
+#if defined _FORTRAN_US
+ #define F90_FUNC(name,NAME) name ## _
+ #define F90_FUNC_(name,NAME) name ## _
+#else
+ #define F90_FUNC(name,NAME) name
+ #define F90_FUNC_(name,NAME) name
+#endif
+/* */
 main(int argc, char *argv[])
 {
  int io,i,c,j,k,nf,lni,lnr,lnc,ttd,
@@ -100,11 +112,10 @@ main(int argc, char *argv[])
  double rv[4];
  char *cv[4];
  char *fmt=NULL,*inf=NULL,*od=NULL,*id=NULL,*js=NULL,*db=NULL,*com_dir=NULL;
- extern int optind, optopt;
+ extern int optind;
  extern int guess_winsize();
  char rnstr1[500]={'\0'},rnstr2[500]={'\0'},edit_line[100]={'\0'};
  struct stat buf;
-
 /* 
  Default input file, Job string, I/O directories
 */
@@ -291,14 +302,6 @@ main(int argc, char *argv[])
  ===========================================================================
  */
  F90_FUNC(e2y_i,E2Y_I)(
-          rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
-#endif
-#if defined _f2y 
- /* 
-   Running the Fortran f2y driver 
- ===========================================================================
- */
- F90_FUNC(f2y_i,F2Y_I)(
           rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
 #endif
  /* 

@@ -53,7 +53,7 @@ PROJECTS = yambo_ph yambo_sc ypp_ph yambo_ras yambo_reels \
 	       ypp_ras yambo_manyk yambo_ras_manyk yambo_tb yambo_gamma \
            yambo_magnon yambo_dipole_rim yambo_partial_diago \
            yambo_solitons yambo_doubles
-TESTS    = yambo_test_1 
+TESTS    = 
 EXE      = $(TARGETS) $(PROJECTS) $(TESTS)
 INTERFCS = a2y p2y e2y 
 #
@@ -76,7 +76,7 @@ PJ_PHLIBS       = $(MAIN_LIBS)
 #
 # Interfaces
 #
-2SLIBS       = external_c modules parser communicate common io 
+2YLIBS       = external_c modules parser communicate common io 
 #
 # YPP
 #
@@ -151,13 +151,13 @@ yambo_test_1: libs
 	@X2DO="yambo_test_1"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_TEST_1";$(mkx)
 #
 interfaces: libs
-	@LIBS2DO="$(2SLIBS)" ; $(mksrc)
+	@LIBS2DO="$(2YLIBS)" ; $(mksrc)
 	@LIBS2DO="int_modules"; DIR2GO="interfaces" ; $(mklib)
-	@X2DO="a2y" ;XPATH="interfaces/a2y";XLIBS="$(2SLIBS)";$(mkx)
+	@X2DO="a2y" ;XPATH="interfaces/a2y";XLIBS="$(2YLIBS)";$(mkx)
 	@if test "$(do_p2y)" = yes ; then X2DO="p2y" ; XPATH="interfaces/p2y" ; \
-	XLIBS="$(2SLIBS)"; ADF="-D@PW_CPP@"; $(mkx) ; fi
+	XLIBS="$(2YLIBS)"; ADF="-D@PW_CPP@"; $(mkx) ; fi
 	@if test "$(do_e2y)" = yes ; then X2DO="e2y" ; XPATH="interfaces/e2y" ; \
-	XLIBS="$(2SLIBS)" ; $(mkx) ; fi
+	XLIBS="$(2YLIBS)" ; $(mkx) ; fi
 ypp: libs
 	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
 	@X2DO="ypp" ;XPATH="ypp";XLIBS="$(YPPLIBS)";$(mkx)

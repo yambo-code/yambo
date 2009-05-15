@@ -343,7 +343,7 @@ contains
  subroutine get_cell
    use pars,                  only : pi
    use R_lattice,             ONLY : bz_samp, ng_vec, b
-   use D_lattice,             ONLY : DL_vol, a, alat
+   use D_lattice,             ONLY : DL_vol, a, alat,lattice
    use mod_com2y,            ONLY : alat_mult_factor
    use vec_operate,           ONLY : cross_product
    real(SP) :: cp(3)
@@ -368,6 +368,13 @@ contains
    alat(1) = maxval(abs(a(1,:)))*alat_mult_factor
    alat(2) = maxval(abs(a(2,:)))*alat_mult_factor
    alat(3) = maxval(abs(a(3,:)))*alat_mult_factor
+   call crystal_lattice()
+   if (trim(lattice)=='Unknown') then
+     alat(1) = maxval(abs(a(1,:)))*2.
+     alat(2) = maxval(abs(a(2,:)))*2.
+     alat(3) = maxval(abs(a(3,:)))*2.
+     call crystal_lattice()
+   endif
    cp = cross_product(a(2,:),a(3,:))
    do i1=1,3
      DL_vol= DL_vol+a(1,i1)*cp(i1)
@@ -564,7 +571,7 @@ contains
 
      call qexml_read_gk(ik, npwk=npwk_, index=index_, ierr=ierr)
      if (ierr.ne.0) call errore('qexml_read_gk','IOTK error',ABS(ierr))
-
+  
 !    if(npwk_.gt.wf_ncx) then
 !      call msg('s','PWscf v3.1 contains a bug for parallel jobs.')
 !      call msg('s','The tag <MAX_NPW> is incorrect      :',wf_ncx)
@@ -697,51 +704,85 @@ contains
  !---------------------------------------------------------------------*
  !
  subroutine get_xc
-   use xc_functionals,        ONLY : GS_xc_KIND,GS_xc_FUNCTIONAL
    implicit none
 
 #if defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
    call qexml_read_xc(dft=pw_dft, ierr=ierr)
-   call scan_xc(pw_dft,GS_xc_KIND,GS_xc_FUNCTIONAL)
+   call scan_xc(pw_dft)
 #endif
 
    return
  end subroutine get_xc
 
- subroutine scan_xc(pw_dft, GS_xc_KIND_,GS_xc_FUNCTIONAL_)
+ subroutine scan_xc(pw_dft)
    !
-   ! Default: GS_xc_KIND_ = -1 , GS_xc_FUNCTIONAL_ = -1
+   ! Default: GS_xc_KIND = -1 , GS_xc_FUNCTIONAL = -1
    !
-   use xc_functionals,        ONLY : XC_EXCHANGE_CORRELATION, XC_EXCHANGE, &
-&                                  xc_string,XC_LDA_C_PW,XC_LDA_C_PZ,XC_LDA_C_WIGNER,   &
-&                                  XC_LDA_C_HL,XC_LDA_C_XALPHA
+   use xc_functionals
+   use com,             ONLY:warning
    implicit none
    character(256), intent(in)    :: pw_dft
-   integer, intent(out)          :: GS_xc_KIND_,GS_xc_FUNCTIONAL_
    !
-   ! No support for GGA yet
+   ! Correlation: "noc"    none                           icorr=0
+   !              "pz"     Perdew-Zunger                  icorr=1 (default)
+   !              "vwn"    Vosko-Wilk-Nusair              icorr=2
+   !              "lyp"    Lee-Yang-Parr                  icorr=3
+   !              "pw"     Perdew-Wang                    icorr=4
+   !              "wig"    Wigner                         icorr=5
+   !              "hl"     Hedin-Lunqvist                 icorr=6
+   !              "obz"    Ortiz-Ballone form for PZ      icorr=7
+   !              "obw"    Ortiz-Ballone form for PW      icorr=8
+   !              "gl"     Gunnarson-Lunqvist             icorr=9
    !
-   if(index(pw_dft,'NOGX')==0.or.index(pw_dft,'NOGC')==0) then
-     return
+   !
+   if (index(pw_dft,'PZ')/=0)  GS_xc_FUNCTIONAL = XC_LDA_C_PZ
+   !if (index(pw_dft,'VWN')/=0) GS_xc_FUNCTIONAL = XC_LDA_C_VWN
+   !if (index(pw_dft,'LYP')/=0) GS_xc_FUNCTIONAL = XC_LDA_C_LYP
+   if (index(pw_dft,'PW')/=0)  GS_xc_FUNCTIONAL = XC_LDA_C_PW
+   if (index(pw_dft,'WIG')/=0) GS_xc_FUNCTIONAL = XC_LDA_C_WIGNER
+   if (index(pw_dft,'HL')/=0)  GS_xc_FUNCTIONAL = XC_LDA_C_HL
+   !if (index(pw_dft,'OBZ')/=0) GS_xc_FUNCTIONAL = XC_LDA_C_OB_PZ
+   !if (index(pw_dft,'OBW')/=0) GS_xc_FUNCTIONAL = XC_LDA_C_OB_PW
+   !if (index(pw_dft,'GL')/=0)  GS_xc_FUNCTIONAL = XC_LDA_C_GL
+   !
+   if (GS_xc_FUNCTIONAL>0) then
+     GS_xc_KIND=XC_CORRELATION
+   else
+     call warning ('Unknown XC functional: swicthing to PZ. PW XC string is: '//trim(pw_dft))
    endif
    !
-   ! This list mimics the support for the Abinit functionals only.
+   ! Exchange:    "nox"    none                           iexch=0
+   !              "sla"    Slater (alpha=2/3)             iexch=1 (default)
+   !              "sl1"    Slater (alpha=1.0)             iexch=2
+   !              "rxc"    Relativistic Slater            iexch=3
+   !              "oep"    Optimized Effective Potential  iexch=4
+   !              "hf"     Hartree-Fock                   iexch=5
+   !              "pb0x"   PBE0                           iexch=6
    !
-   if(index(pw_dft,'PZ')/=0.and.index(pw_dft,'SLA')/=0) then
-     GS_xc_FUNCTIONAL_ = XC_LDA_C_PZ
-     GS_xc_KIND_ = XC_EXCHANGE_CORRELATION
-   else if(index(pw_dft,'PW')/=0.and.index(pw_dft,'SLA')/=0) then
-     GS_xc_FUNCTIONAL_ = XC_LDA_C_PW
-     GS_xc_KIND_ = XC_EXCHANGE_CORRELATION
-   else if(index(pw_dft,'WIG')/=0.and.index(pw_dft,'SLA')/=0) then
-     GS_xc_FUNCTIONAL_ = XC_LDA_C_WIGNER
-     GS_xc_KIND_ = XC_EXCHANGE_CORRELATION
-   else if(index(pw_dft,'HL')/=0.and.index(pw_dft,'SLA')/=0) then
-     GS_xc_FUNCTIONAL_ = XC_LDA_C_HL
-     GS_xc_KIND_ = XC_EXCHANGE_CORRELATION
-!  else if(index(pw_dft,'SL1')/=0) then ! Have to check this...
-!    GS_xc_FUNCTIONAL_ = XC_LDA_C_XALPHA
-!    GS_xc_KIND_ = XC_EXCHANGE
+   if (index(pw_dft,'SLA')/=0) GS_xc_KIND=GS_xc_KIND+XC_EXCHANGE
+   !if (index(pw_dft,'SL1')/=0) GS_xc_FUNCTIONAL = 
+   !if (index(pw_dft,'PW')/=0)  GS_xc_FUNCTIONAL = 
+   !if (index(pw_dft,'RXC')/=0) GS_xc_FUNCTIONAL = 
+   !if (index(pw_dft,'OEP')/=0)  GS_xc_FUNCTIONAL = 
+   !if (index(pw_dft,'HF')/=0) GS_xc_FUNCTIONAL = 
+   !if (index(pw_dft,'pb0x')/=0) GS_xc_FUNCTIONAL = 
+   !
+   if (GS_xc_KIND==XC_EXCHANGE) GS_xc_FUNCTIONAL=XC_LDA_X
+   !
+   ! Default
+   !
+   if (GS_xc_FUNCTIONAL<0) then
+     GS_xc_FUNCTIONAL = XC_LDA_C_PZ
+     GS_xc_KIND = XC_EXCHANGE_CORRELATION
+   else
+     !
+     ! No support for GGA yet
+     !
+     if(index(pw_dft,'NOGX')==0.or.index(pw_dft,'NOGC')==0) then
+       call warning ('GGA not supported: swicthing to PZ. PW XC string is: '//trim(pw_dft))
+       GS_xc_FUNCTIONAL = XC_LDA_C_PZ
+       GS_xc_KIND = XC_EXCHANGE_CORRELATION
+     endif
    endif
    !
    return

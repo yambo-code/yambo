@@ -37,7 +37,17 @@ subroutine ypp_init_load(defs)
  !
  ! RunLevels
  !
- call it('r',defs,'kpt',       '[R] K-grid analysis') 
+ call it('r',defs,'bzgrids',   '[R] BZ Grid') 
+ call it('r',defs,'K_grid',    '[R] K-grid analysis') 
+ call it('r',defs,'Q_grid',    '[R] Q-grid analysis') 
+ !
+ ! GPL_EXCLUDE_START
+ !
+ call it('r',defs,'Long_Gauge','[R] Longitudinal gauge grids') 
+ !
+ ! GPL_EXCLUDE_END
+ !
+ call it('r',defs,'High_Symm', '[R] High_Symmetry points and paths') 
  call it('r',defs,'excitons',  '[R] Excitons')
  call it('r',defs,'electrons', '[R] Electrons (and holes)')
  call it('r',defs,'freehole',  '[R] Free hole position')
@@ -69,7 +79,7 @@ subroutine ypp_init_load(defs)
  !
  ! GPL_EXCLUDE_END
  !
- ! Kpt analysis
+ ! BZ grids
  !
  call it(defs,'cooIn','Points coordinates (in) cc/rlu/iku',coo_in)
  call it(defs,'cooOut','Points coordinates (out) cc/rlu/iku',coo_out)
@@ -78,6 +88,14 @@ subroutine ypp_init_load(defs)
  call it(defs,'KShift1','K-grid shift vector[1] ',qlong(1,:))
  call it(defs,'KShift2','K-grid shift vector[2] ',qlong(2,:))
  call it(defs,'KShift3','K-grid shift vector[3] ',qlong(3,:))
+ !
+ ! GPL_EXCLUDE_START 
+ !
+ call it(defs,'PtsPath','Series of Points for path generation',PtsPath)
+ call it(defs,'NPtsPath','Number of Points for each segment of the path',N_path_pts)
+ !
+ ! GPL_EXCLUDE_END
+ !
  call it('f',defs,'NoWeights',    ' Do not print K-points weight') 
  call it('f',defs,'ForceUserPts', ' Do not check the correcteness of the user points') 
  !

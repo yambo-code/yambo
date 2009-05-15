@@ -37,7 +37,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     CHOSEX_use_empties,QP_ctl_E,QP_ctl_W,QP_ctl_Z
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,n_atoms_max,n_atom_species,&
-&                     input_Tel_fixed,non_periodic_directions
+&                     input_Tel_fixed,non_periodic_directions,lattice
  use pseudo,     ONLY:pp_n_l_comp_max,pp_kbv_dim
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
@@ -156,6 +156,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  input_Tel_fixed=.false.
  non_periodic_directions='none'
+ lattice='Unknown'
  !
  ! R_lattice
  !

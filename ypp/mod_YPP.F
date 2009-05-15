@@ -26,13 +26,19 @@ module YPP
  use pars,    ONLY:schlen
  implicit none
  !
- ! K analysis
+ ! BZ grids 
  !
- logical  :: lkanalyze
+ logical  :: l_bz_grids
+ logical  :: l_k_grid
+ logical  :: l_q_grid
+ logical  :: l_long_grid
+ logical  :: l_high_sym_pts
+ integer  :: n_path_pts
  real(SP) :: Kgw_1(3)
  real(SP) :: qlong(3,3)
  character(schlen) :: coo_in
  character(schlen) :: coo_out
+ character(schlen) :: PtsPath
  !
  ! REAL SPACE PLOT
  !
@@ -73,8 +79,6 @@ module YPP
  real(SP)     ::WF_multiplier   
  character(schlen) ::state_ctl 
  !
-#if defined _YPP_ELPH
- !
  !EL-PH
  !
  logical :: l_dos
@@ -88,9 +92,6 @@ module YPP
  real(SP):: elph_E_max
  character(schlen) :: elph_dbs_path
  character(schlen) :: ph_freqs_file
- !
-#endif
-#if defined _YPP_RAS
  !
  !RAS
  !
@@ -115,14 +116,12 @@ module YPP
  real(SP)          :: Ecv_min, Ecv_max
  integer           :: idir
  !
-#endif
- !
  ! GPL_EXCLUDE_START RAS_IGNORE
  !
  ! BZ RIM
  !
  integer  :: BZ_RIM_nkpts
- logical  :: lbzrim
+ logical  :: l_bzrim
  real(SP) :: Gamma_radius
  character(lchlen) :: BZ_RIM_path
  !
@@ -145,21 +144,52 @@ module YPP
      integer, optional  :: BS_E_degs(BS_H_dim)
    end subroutine
    !
-#if defined _YPP_PH
-   !
-   subroutine  elph_general_gFsq(k,en,q,lambda_s,BS_E_degs)
+   subroutine  elph_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
      use R_lattice,     ONLY:bz_samp
      use electrons,     ONLY:levels
-     use BS_m,          ONLY:BS_K_dim
      implicit none
-     type(bz_samp)      :: k,q
-     type(levels)       :: en
-     integer, optional  :: lambda(n_lambda)
-     integer, optional  :: BS_E_degs(BS_K_dim)
+     type(bz_samp)      :: k,q,Xk
+     type(levels)       :: en,Xen
+     integer, optional  :: lambda_s(:)
+     integer, optional  :: BS_E_degs(:)
    end subroutine
-   !
-#endif
    !
  end interface
  !
+ contains
+   !
+   subroutine K_transform(k,in_mode)
+     !
+     use D_lattice,    ONLY:alat
+     use units,        ONLY:pi
+     use vec_operate,  ONLY:c2a
+     !
+     real(SP)     :: k(3)
+     character(*) :: in_mode
+     !
+     select case (in_mode)
+       case ('cc')
+         if (trim(coo_out)=="iku")  call c2a(v_in=k,mode="kc2i")
+         if (trim(coo_out)=="rlu")  call c2a(v_in=k,mode="kc2a")
+         if (trim(coo_out)=="alat") then
+           k=k*alat(1)/2./pi
+         endif
+       case ('iku')
+         if (trim(coo_out)=="cc")   call c2a(v_in=k,mode="ki2c")
+         if (trim(coo_out)=="rlu")  call c2a(v_in=k,mode="ki2a")
+         if (trim(coo_out)=="alat") then
+           call c2a(v_in=k,mode="ki2c")
+           k=k*alat(1)/2./pi
+         endif
+       case ('rlu')
+         if (trim(coo_out)=="cc")   call c2a(v_in=k,mode="ka2c")
+         if (trim(coo_out)=="iku")  call c2a(v_in=k,mode="ka2i")
+         if (trim(coo_out)=="alat") then
+           call c2a(v_in=k,mode="ka2c")
+           k=k*alat(1)/2./pi
+         endif
+     end select
+     !
+   end subroutine
+   !
 end module YPP

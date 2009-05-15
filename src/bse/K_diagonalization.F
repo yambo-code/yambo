@@ -41,7 +41,8 @@ subroutine K_diagonalization(iq,W)
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,VERIFY,OP_WR_CL
  use parser_m,       ONLY:parser
 #if defined _DOUBLES
- use BS_doubles,     ONLY:Eigen_singles,Eigen_doubles,BS_K_doubles_dim
+ use BS_doubles,     ONLY:Eigen_singles,Eigen_doubles,BS_K_doubles_dim,&
+&                         BS_res_K_doubles 
 #endif
  implicit none
  type(w_samp)  :: W
@@ -103,15 +104,20 @@ subroutine K_diagonalization(iq,W)
  if (BS_K_coupling) BS_H_dim=2*BS_K_dim
  !
 #if defined _DOUBLES
- n_poles_theory=BS_K_dim+BS_K_doubles_dim
+ if(BS_res_K_doubles) then
+   n_poles_theory=BS_K_dim+BS_K_doubles_dim
+ else
+   n_poles_theory=BS_H_dim
+   n_poles=BS_H_dim
+ endif
 #endif
  !
-#if !defined _DOUBLES
- allocate(BS_R(BS_H_dim),BS_E(BS_H_dim))
- call mem_est("BS_R BS_E",(/BS_H_dim,BS_H_dim/))
-#else
+#if defined _DOUBLES
  allocate(BS_R(n_poles_theory),BS_E(n_poles_theory))
  call mem_est("BS_R BS_E",(/n_poles_theory,n_poles_theory/))
+#else
+ allocate(BS_R(BS_H_dim),BS_E(BS_H_dim))
+ call mem_est("BS_R BS_E",(/BS_H_dim,BS_H_dim/))
 #endif
  !
  if (K_is_not_hermitian) then
@@ -133,11 +139,11 @@ subroutine K_diagonalization(iq,W)
  !
  ! Diagonalization DB (IN)
  !
-#if !defined _DOUBLES
+#if defined _DOUBLES
+ io_err=-1
+#else
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
-#else
- io_err=-1
 #endif
  !
  if(io_err<0) then
@@ -174,8 +180,12 @@ subroutine K_diagonalization(iq,W)
    !
    lib_driver=USE_LK
    if (ncpu>1) lib_driver=USE_SLK
-#if !defined _DOUBLES
-   call live_timing('BSK diagonalize',1)
+#if defined _DOUBLES
+   if(.not.BS_res_K_doubles) then
+#endif
+     call live_timing('BSK diagonalize',1)
+#if defined _DOUBLES
+   endif
 #endif
    if (K_is_not_hermitian) then
      call mat_dia_inv(DIAGO,lib_driver,BS_mat,E_cmpl=BS_E,&
@@ -185,15 +195,28 @@ subroutine K_diagonalization(iq,W)
      !
    else
 #if defined _DOUBLES
-     call K_doubles_diagonalization(W,n_poles_theory,BS_E,n_poles)
-#else
-     call mat_dia_inv(DIAGO,lib_driver,BS_mat,E_real=BS_E_real)
-     BS_E=BS_E_real
+     if (BS_res_K_doubles) then
+       call K_doubles_diagonalization(W,n_poles_theory,BS_E,n_poles)
+       deallocate(BS_mat)
+       allocate(BS_mat(BS_K_dim,n_poles))
+       call mem_est('BS_mat')
+       BS_mat(:,:)=Eigen_singles(:,1:n_poles)
+       call mem_est('BS_mat',(/BS_K_dim,n_poles/))
+     else
+#endif
+       call mat_dia_inv(DIAGO,lib_driver,BS_mat,E_real=BS_E_real)
+       BS_E=BS_E_real
+# if defined _DOUBLES
+     endif
 #endif
    endif
-#if !defined _DOUBLES
-   call live_timing(steps=1)
-   call live_timing
+#if defined _DOUBLES
+   if(.not.BS_res_K_doubles) then
+#endif
+     call live_timing(steps=1)
+     call live_timing
+#if defined _DOUBLES
+   endif
 #endif
    !
    if (K_is_not_hermitian) then
@@ -319,19 +342,10 @@ subroutine K_diagonalization(iq,W)
      do i1=1,BS_K_dim
 #endif
        if (.not.px%i1p(i1)) cycle
-#if defined _DOUBLES
-#if defined _DOUBLE
-       BS_R(i1)=zdotc(BS_K_dim,BSS_rhoq0,1,Eigen_singles(:,i1),1)
-#else
-       BS_R(i1)=cdotc(BS_K_dim,BSS_rhoq0,1,Eigen_singles(:,i1),1)
-#endif
-!
-#else
 #if defined _DOUBLE
        BS_R(i1)=zdotc(BS_K_dim,BSS_rhoq0,1,BS_mat(:,i1),1)
 #else
        BS_R(i1)=cdotc(BS_K_dim,BSS_rhoq0,1,BS_mat(:,i1),1)
-#endif
 #endif
        call live_timing(steps=1)
      enddo
@@ -372,8 +386,8 @@ subroutine K_diagonalization(iq,W)
  call live_timing
  call pp_redux_wait(X_epsilon)
  !
- X_epsilon(2,:)=1.+X_epsilon(2,:)*&
-&                  real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/(q_norm(1))**2
+   X_epsilon(2,:)=1.+X_epsilon(2,:)*&
+&                    real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/(q_norm(1))**2
  !
  X_epsilon(1,:)=W%p(:)
  !
@@ -401,8 +415,10 @@ subroutine K_diagonalization(iq,W)
    deallocate(BS_E_real)
    call mem_est("BS_E_real")
 #if defined _DOUBLES
-   deallocate(Eigen_singles,Eigen_doubles)
-   call mem_est("Eigen_singles Eigen_doubles")
+   if(BS_res_K_doubles) then
+     deallocate(Eigen_singles,Eigen_doubles)
+     call mem_est("Eigen_singles Eigen_doubles")
+   endif
 #endif
  endif
  call pp_indexes_reset(px)

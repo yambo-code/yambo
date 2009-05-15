@@ -1,6 +1,6 @@
 TEST_1_objects = setup.o
 #if defined _TEST_1
-TEST_1_objects = setup_test_1.o
+TEST_1_objects = setup_test_1.o 
 #endif
 objs = init_load.o init.o QP_init.o $(TEST_1_objects) G_shells_finder.o \
        parse_K_list.o \

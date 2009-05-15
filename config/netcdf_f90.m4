@@ -54,9 +54,9 @@ if test -d "$with_netcdf_include" && test -d "$with_netcdf_lib" ; then
      break
     fi
  done
-fi
-if test "x$netcdf" = xno; then
- AC_MSG_RESULT([no])
+ if test "x$netcdf" = xno; then
+  AC_MSG_RESULT([no])
+ fi
 fi
 AC_SUBST(NCLIBS)
 AC_SUBST(netcdf)

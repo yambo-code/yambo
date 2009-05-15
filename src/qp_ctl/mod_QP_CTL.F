@@ -187,12 +187,8 @@ module QP_CTL_m
      !
      if (.not.present(qp_impose).and..not.present(QP_ctl_impose)) then
        !
-       ! GPL_EXCLUDE_START
-       !
        QP_ctl_from_DB(:)%db=QP_ctl_db(Eid)
        QP_apply_db_err=QP_apply_db(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,DB_corrected)
-       !
-       ! GPL_EXCLUDE_END
        !
        ! Update QP db kind in the global_XC kinds 
        !

@@ -28,6 +28,7 @@ module D_lattice
  !
  character(lchlen) :: non_periodic_directions
  !
+ !
  ! Temperature
  !
  real(SP) :: Tel
@@ -56,6 +57,7 @@ module D_lattice
  integer,  allocatable :: znucl(:)
  real(SP), allocatable :: atom_pos(:,:,:)
  character(lchlen)     :: atoms_string
+ character(7)          :: lattice
  !
  ! Periodic Table
  character(len=2)      :: PT_elements(103)

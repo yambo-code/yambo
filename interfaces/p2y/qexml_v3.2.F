@@ -335,7 +335,7 @@ CONTAINS
       CHARACTER(LEN=*),   INTENT(IN)  :: rho_file_base
       INTEGER,            INTENT(IN)  :: nr1, nr2, nr3
       INTEGER,            INTENT(IN)  :: nr1x, nr2x
-      REAL(dbl),          INTENT(OUT) :: rho(:)
+      REAL(dbl),          INTENT(INOUT) :: rho(:)
       INTEGER, OPTIONAL,  INTENT(IN)  :: ipp(:)
       INTEGER, OPTIONAL,  INTENT(IN)  :: npp(:)
       !

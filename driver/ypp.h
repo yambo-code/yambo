@@ -19,6 +19,19 @@
   Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
+/*
+ Driver declaration
+*/
+#if defined _FORTRAN_US
+ int ypp_i
+#else
+ int ypp_i_
+#endif
+ (char *str1,int *,char *inf,int *,char* id,
+  int *,char *od,int *,char *com_dir,int *,char *js,int *,int *,int *); 
+/*
+ Command line structure
+*/
  static Ldes opts[] = { /* Int Real Ch (Dummy)*/
   {"help",  "h","Short Help",0,0,0,0}, 
   {"lhelp", "H","Long Help",0,0,0,0}, 
@@ -30,7 +43,7 @@
   {"cdir",  "C","Communications I/O directory",0,0,1,0},
   {"nompi", "N","Skip MPI initialization",0,0,0,0}, 
   {"dbfrag","S","DataBases fragmentation",0,0,0,0}, 
-  {"kpt",   "k","K-grid generator",0,0,0,0}, 
+  {"bzgrids","k","BZ Grid generator [(k)pt,(q)pt,(l)ongitudinal,(h)igh symmetry]",0,0,1,0}, 
 #if defined _YPP_ELPH
   {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mp,(w)ave,(e)lias,(g)kkp,(m)ag]",0,0,1,0}, 
   {"electrons","s","Electrons [(a)ave,(d)ensity,(e)lias,(m)ag]",0,0,1,0}, 

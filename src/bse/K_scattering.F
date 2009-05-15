@@ -126,7 +126,6 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
              !
              wf_cmp=dot_product(wf(fft_rot_r(is1xis2,:),ifft),wf(fft_rot_r(iss_tab,:),ifft))
              if (abs(abs(wf_cmp)-1.)<=1.E-3) then
-               !
                O_phase(is1xis2,ib1,i_sp2)=nint(real(wf_cmp))
              else
                O_phase(is1xis2,ib1,i_sp2)=-99

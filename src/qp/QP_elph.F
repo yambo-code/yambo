@@ -231,12 +231,12 @@ subroutine QP_elph(en,k,q,qp)
        !
        do il=1,ph_modes
          !
+         ph_E=sqrt(abs(ph_freqs_sq(iq,il)))
+         !
          ! Skip modes @ Gamma (1st point is always gamma, either with random
          ! or uniform grids, as it is needed to evaluate the DW factor) 
          !
-         if (iq==1) cycle
-         !
-         ph_E=sqrt(abs(ph_freqs_sq(iq,il)))
+         if (iq==1.or.abs(ph_E)<epsilon(1._SP)) cycle
          !
          ! In the SE expression I have the m.e. 
          !
@@ -277,6 +277,7 @@ subroutine QP_elph(en,k,q,qp)
          if (abs(delta_E)>PH_null_E_rgn) &
 &          gsqF_ca_corr(iqp,iq,il)= gsqF_ca_corr(iqp,iq,il)+elph_gkkp_sq*&
 &                  ph_E*one_minus_2f_occ/(delta_E**2.-ph_E**2.)*q_weight
+
          !
          ! Cardona-Allen formulation
          !

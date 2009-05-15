@@ -19,6 +19,19 @@
   Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
+/*
+ Driver declaration
+*/
+#if defined _FORTRAN_US
+ int a2y_i_
+#else
+ int a2y_i
+#endif
+ (char *str1,int *,char *inf,int *,char* id,
+  int *,char *od,int *,char *com_dir,int *,char *js,int *,int *,int *); 
+/*
+ Command line structure
+*/
  static Ldes opts[] = { /* Int Real Ch (Dummy)*/
   {"help",  "h","Short Help",0,0,0,0}, 
   {"lhelp", "H","Long Help",0,0,0,0}, 

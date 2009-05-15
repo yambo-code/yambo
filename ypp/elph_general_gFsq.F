@@ -42,8 +42,8 @@ subroutine elph_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  implicit none
  type(levels) ::en,Xen
  type(bz_samp)::k,Xk,q
- integer,  optional      ::lambda_s(n_lambda)
- integer,  optional      ::BS_E_degs(BS_K_dim)
+ integer,  optional      ::lambda_s(:)
+ integer,  optional      ::BS_E_degs(:)
  !
  ! Work Space (electrons)
  !

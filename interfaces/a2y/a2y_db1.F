@@ -28,7 +28,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  use R_lattice,             ONLY : bz_samp, ng_vec, g_vec,nkibz, b
  use D_lattice,             ONLY : DL_vol, a, alat, default_Tel,&
 &                                  n_atom_species,n_atoms,&
-&                                  n_atoms_max,atom_pos,znucl
+&                                  n_atoms_max,atom_pos,znucl,lattice
  use pseudo,                ONLY : pp_n_l_comp_max,pp_n_l_comp
  use wave_func,             ONLY : wf_nc_k, wf_igk,wf_ncx,wf_ng
  use vec_operate,           ONLY : cross_product
@@ -122,9 +122,18 @@ subroutine a2y_db1(en,k,KSS_file_name)
  a(1,:)  = ahdr%rprimd(:,1)
  a(2,:)  = ahdr%rprimd(:,2)
  a(3,:)  = ahdr%rprimd(:,3)
+ !
  alat(1) = maxval(abs(a(1,:)))*alat_mult_factor
  alat(2) = maxval(abs(a(2,:)))*alat_mult_factor
  alat(3) = maxval(abs(a(3,:)))*alat_mult_factor
+ call crystal_lattice()
+ if (trim(lattice)=='Unknown') then
+   alat(1) = maxval(abs(a(1,:)))*2.
+   alat(2) = maxval(abs(a(2,:)))*2.
+   alat(3) = maxval(abs(a(3,:)))*2.
+   call crystal_lattice()
+ endif
+ !
  default_nel = 0.
  !
  do i1 = 1, ahdr%natom

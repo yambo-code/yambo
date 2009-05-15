@@ -1,2 +1,0 @@
-objs= mod_QP_CTL.o QP_apply_done.o QP_apply_stretch.o 
-      

@@ -148,12 +148,12 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  ! Specific SECTIONS
  !===================
  !
- if (lkanalyze) call k_analyze(en,k,Xk,q)
+ if (l_bz_grids) call BZ_grids(en,k,Xk,q)
  !   =========
  !
  ! GPL_EXCLUDE_START
  !
- if (lbzrim) call BZ_RIM(Xk,Xen)
+ if (l_bzrim) call BZ_RIM(Xk,Xen)
  !   ======
  !
  ! GPL_EXCLUDE_END

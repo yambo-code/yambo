@@ -301,6 +301,16 @@ module com
      open(unit=11,file=trim(repfile),position='append')
    end subroutine
    !
+   subroutine msg_deliver(formatted_msg)
+     character(*) :: formatted_msg
+     integer      :: i_unit
+     do i_unit=1,max_open_ofs
+       if (of_unit(i_unit)<=0) cycle
+       write (of_unit(i_unit),'(a)') formatted_msg
+       of_unit(i_unit)=-of_unit(i_unit)
+     enddo
+    end subroutine
+   !
    !#######################
    ! INTERFACE STARTS HERE
    !#######################
@@ -429,7 +439,7 @@ module com
      if (index(how,'s')/=0) call live_time_msg("n",trim(lch),"","%s")
    end subroutine
    !
-   subroutine nrmsg(how,mesg,val,USE_TABS,INDENT)
+   subroutine nrmsg(how,mesg,val,USE_TABS,INDENT,formatted_msg)
      use stderr,   ONLY: c_print,write_to_log,tty_size
      use timing,   ONLY: live_time_msg
      character(*)     :: mesg
@@ -437,6 +447,7 @@ module com
      real(SP)         :: val(:)
      integer,optional :: INDENT
      logical,optional :: USE_TABS
+     character(lchlen), optional :: formatted_msg
      ! 
      ! Work Space
      !
@@ -452,8 +463,12 @@ module com
      msgfmt=composed_fmt(trim(gen_fmt(r_v=val)),size(val),l_fmt,l_indent)
      do i1=1,max_open_ofs
        if (of_unit(i1)<=0) cycle
-       write (of_unit(i1),trim(msgfmt)) mesg,val
-       of_unit(i1)=-of_unit(i1)
+       if (present(formatted_msg)) then
+         write (formatted_msg,trim(msgfmt)) mesg,val
+       else
+         write (of_unit(i1),trim(msgfmt)) mesg,val
+         of_unit(i1)=-of_unit(i1)
+       endif
      enddo
      if (index(how,'o')>0.or.index(how,'O')>0) return
      if (.not.write_to_log.or.(index(how,'s')==0.and.index(how,'l')==0)) return

@@ -144,12 +144,14 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    !
 #endif
    !
-   ! K analyze
+   ! BZ grids
    !
    coo_in="iku"
    coo_out="rlu"
    Kgw_1=0.
    qlong= 0.0_SP
+   PtsPath= ' '
+   N_path_pts=0
    !
    ! GPL_EXCLUDE_START
    !
@@ -189,13 +191,29 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        infile_editing=.true.
        call initactivate(1,trim(rnlvls(i2,1)))
      endif
+     if ( trim(rstr_piece(i1)) == 'bzgrids') then
+       l_k_grid=trim(rstr_piece(i1+1))=='k'
+       l_q_grid=trim(rstr_piece(i1+1))=='q'
+       l_long_grid=trim(rstr_piece(i1+1))=='l'
+       !
+       ! GPL_EXCLUDE_START 
+       !
+       l_high_sym_pts=trim(rstr_piece(i1+1))=='h'
+       !
+       ! GPL_EXCLUDE_END
+       !
+       if (l_k_grid) call initactivate(1,"K_grid")
+       if (l_q_grid) call initactivate(1,"Q_grid")
+       if (l_long_grid) call initactivate(1,"Long_Gauge")
+       if (l_high_sym_pts) call initactivate(1,"High_Symm")
+    endif
 #if defined _YPP_ELPH
      if ( trim(rstr_piece(i1)) == 'phonons') then
        l_dos            =trim(rstr_piece(i1+1))=='d'
        l_eliashberg     =trim(rstr_piece(i1+1))=='e'
        if (l_dos)          call initactivate(1,'dos')
        if (l_eliashberg)   call initactivate(1,'eliashberg')
-     endif
+    endif
 #endif
      if ( trim(rstr_piece(i1)) == 'excitons') then
        l_wavefunction   =trim(rstr_piece(i1+1))=='w'
@@ -250,7 +268,11 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (.not.l_sort) call call_init_load('parserload')
  !
- lkanalyze  = runlevel_is_on('kpt')
+ l_bz_grids  = runlevel_is_on('bzgrids')
+ l_k_grid    = runlevel_is_on('K_grid')
+ l_q_grid    = runlevel_is_on('Q_grid')
+ l_long_grid = runlevel_is_on('Long_Gauge')
+ l_high_sym_pts = runlevel_is_on('High_Symm')
 #if defined _YPP_ELPH
  l_eliashberg=runlevel_is_on('eliashberg')
  l_dos       =runlevel_is_on('dos')
@@ -275,18 +297,24 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_END SPIN_IGNORE 
  !
- ! GPL_EXCLUDE_START 
- !
- lbzrim     =runlevel_is_on('bzrim')
- !
- ! GPL_EXCLUDE_END
- !
- if (lkanalyze) call initactivate(1,"cooIn cooOut GWKpts Qpts KShift1 KShift2 KShift3")
- if (lkanalyze) call initactivate(1,"NoWeights ForceUserPts")
+ if (l_bz_grids) then
+   call initactivate(1,"cooIn cooOut")
+   if (l_k_grid) call initactivate(1,"GWKpts")
+   if (l_q_grid) call initactivate(1,"Qpts")
+   if (l_long_grid) call initactivate(1,"KShift1 KShift2 KShift3")
+   if (l_high_sym_pts) then
+     call initactivate(1,"PtsPath NPtsPath")
+     call initactivate(-1,"NoWeights ForceUserPts cooIn")
+   else
+     call initactivate(1,"NoWeights ForceUserPts")
+   endif
+ endif
  !
  ! GPL_EXCLUDE_START
  !
- if (lbzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut GammaRadius")
+ l_bzrim     =runlevel_is_on('bzrim')
+ !
+ if (l_bzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut GammaRadius")
  !
  ! GPL_EXCLUDE_END
  !

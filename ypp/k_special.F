@@ -73,7 +73,7 @@ subroutine k_special()
      k_label(6)='U'
      !
      do ik=1,n_special_k
-       call c2a(b_in=trial_b,v_in=special_k(ik,:),mode='a2c')
+       call c2a(b_in=trial_b,v_in=special_k(ik,:),mode='ka2c')
      enddo
      !
    case('BCC')
@@ -111,7 +111,7 @@ subroutine k_special()
      k_label(4)='R'
      !
      do ik=1,n_special_k
-       call c2a(b_in=trial_b,v_in=special_k(ik,:),mode='a2c')
+       call c2a(b_in=trial_b,v_in=special_k(ik,:),mode='ka2c')
      enddo
      !
    case('HCP')
@@ -136,7 +136,7 @@ subroutine k_special()
      k_label(6)='H'
      !
      do ik=1,n_special_k
-       call c2a(b_in=trial_b,v_in=special_k(ik,:),mode='a2c')
+       call c2a(b_in=trial_b,v_in=special_k(ik,:),mode='ka2c')
      enddo
      !
  end select

@@ -33,16 +33,15 @@ module real_time
  real(SP) :: Ext_Field_freq
  real(SP) :: Ext_Field_Int
  real(SP) :: EF_q0(3)
- integer  :: n_poles
  integer  :: n_steps_mem
  integer  :: Tot_steps
  integer  :: Thermal_steps
  character(schlen) :: Ext_Field_name
- logical           :: l_rt_exc
+ logical           :: l_RT_no_updates
  !
  ! If l_keep_vxc=.true. do not subtract Vxc from the self-energy
  !
- logical           :: l_keep_vxc
+ logical           :: l_RPA
  !
  ! Diagonal and off-diagonal relaxation time
  !
@@ -52,27 +51,29 @@ module real_time
  ! GFs
  !
  complex(SP), allocatable :: G_lesser(:,:,:)
- complex(SP), allocatable :: G_lesser_old(:,:,:)
+ complex(SP), allocatable :: G_lesser_previous(:,:,:)
  complex(SP), allocatable :: I1_lesser(:,:,:)
  complex(SP), allocatable :: I2_lesser(:,:,:)
  !
  ! External Field
  !
+ logical                  :: l_eps_analyze  
  logical                  :: l_rt_efield  
  logical                  :: RT_resonant
  logical                  :: RT_no_intraband
- complex(SP)              :: A_t ! Vector potential A(t)
+ complex(SP)              :: A_norm ! Vector potential A(t) norm
  ! 
  ! Other
  !
  real(SP), allocatable   :: rho(:)
  real(SP), allocatable   :: V_hartree_0(:,:)  
- real(SP), allocatable   :: V_xc_0(:,:)  
+ real(SP), allocatable   :: V_xc_0(:,:) 
  real(SP)                :: Thermal_time
  integer                 :: DiagH_Iter
  !
  ! Integrator Variables
  !
+ integer                      :: I_time
  character(schlen), parameter :: EULER    = "EULER"
  character(schlen), parameter :: RK2      = "RK2"
  character(schlen), parameter :: EXACT    = "EXACT"
@@ -82,16 +83,17 @@ module real_time
  ! as it is done in Comp. Phys. Comm. 123(1999)
  ! in this case I choosed H_o = H_lda ( rho_0 )
  !
- logical                      :: RT_phase_int
  character(schlen)            :: Integrator_name
  !                                             
- ! Time dependent Hamiltonian 
+ ! Time dependent Hamiltonian, current and vec. potential
  !
  complex(SP), allocatable :: H_t(:,:,:)
+ complex(SP), allocatable :: j_current(:,:)
+ complex(SP), allocatable :: A_vec_pot(:,:)
  !
  ! Non-interaction potential energies and potentials
  !
- complex(SP), allocatable :: Ho_pot(:,:,:)
+ complex(SP), allocatable :: Hartree_plus_Vxc_0(:,:,:)
  !
  contains
    !
@@ -124,12 +126,9 @@ module real_time
      allocate(G_lesser(SC_bands,SC_bands,en%nk))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
      !
-     allocate(Ho(SC_bands,SC_bands,en%nk,n_spin),H_t(SC_bands,SC_bands,en%nk))
-     call mem_est("Ho",(/size(Ho)/),(/2*2*SP/))
-     !
-     if(RT_phase_int.or..not.l_rt_exc) then
-       allocate(Ho_pot(SC_bands,SC_bands,en%nk))
-       call mem_est("Ho_pot",(/size(Ho_pot)/),(/2*SP/))
+     if(.not.l_RT_no_updates) then
+       allocate(Hartree_plus_Vxc_0(SC_bands,SC_bands,en%nk))
+       call mem_est("Hartree_plus_Vxc_0",(/size(Hartree_plus_Vxc_0)/),(/2*SP/))
      endif
      !
      allocate(I1_lesser(SC_bands,SC_bands,en%nk))
@@ -138,8 +137,14 @@ module real_time
      allocate(I2_lesser(SC_bands,SC_bands,en%nk))
      call mem_est("I2_lesser",(/size(I2_lesser)/),(/2*SP/))
      !
-     allocate(G_lesser_old(SC_bands,SC_bands,en%nk))
-     call mem_est("Gf_l_old",(/size(G_lesser_old)/),(/2*SP/))
+     allocate(G_lesser_previous(SC_bands,SC_bands,en%nk))
+     call mem_est("Gf_l_old",(/size(G_lesser_previous)/),(/2*SP/))
+     !
+     allocate(j_current(Tot_steps,3))
+     call mem_est("J_current",(/size(j_current)/),(/SP/))
+     !
+     allocate(A_vec_pot(Tot_steps,3))
+     call mem_est("A_vec_pot",(/size(A_vec_pot)/),(/2*SP/))
      !
    end subroutine RT_alloc
    
@@ -165,10 +170,10 @@ module real_time
      deallocate(Ho,H_t)
      call mem_est("Ho")
      !
-     if(RT_phase_int.or..not.l_rt_exc) then
+     if(.not.l_RT_no_updates) then
        !      
-       deallocate(Ho_pot)
-       call mem_est("Ho_pot")
+       deallocate(Hartree_plus_Vxc_0)
+       call mem_est("Hartree_plus_Vxc_0")
        !
      endif
      !
@@ -181,8 +186,14 @@ module real_time
      deallocate(I2_lesser)
      call mem_est("I2_lesser")
      !
-     deallocate(G_lesser_old)
-     call mem_est("G_lesser_old")
+     deallocate(G_lesser_previous)
+     call mem_est("G_lesser_previous")
+     !
+     deallocate(j_current)
+     call mem_est("j_current")
+     !
+     deallocate(A_vec_pot)
+     call mem_est("A_vec_pot")
      !
    end subroutine RT_free
    !

@@ -21,7 +21,7 @@
 !                  \
 ! Evalute current including also the diamagnetic contribution
 !
-subroutine RT_current(j_current,en,xK,A_t,EF_q0,G_lesser)
+subroutine RT_current(j_current,en,xK,A_vec_pot,EF_q0,G_lesser)
  !
  use pars,           ONLY:SP,DP,pi
  use matrix_operate, ONLY:m3det
@@ -36,7 +36,7 @@ subroutine RT_current(j_current,en,xK,A_t,EF_q0,G_lesser)
  type(levels),  intent(in) ::en       
  type(bz_samp), intent(in) ::Xk
  complex(SP), intent(in)  :: G_lesser(en%nbm,en%nbm,Xk%nibz)
- complex(SP), intent(in)  :: A_t
+ complex(SP), intent(in)  :: A_vec_pot
  real(SP),    intent(in)  :: EF_q0(3)
  real(SP),    intent(out) :: j_current(3)
  !
@@ -88,7 +88,7 @@ subroutine RT_current(j_current,en,xK,A_t,EF_q0,G_lesser)
  !
  ! Diamagnetic term. It is correct??
  !
- j_current(:)=j_current(:)+A_t*EF_q0(:)*nel*RL_vol/(Xk%nbz*(2.*pi)**3) 
+ j_current(:)=j_current(:)+A_vec_pot*EF_q0(:)*nel*RL_vol/(Xk%nbz*(2.*pi)**3) 
  !
  !
 end subroutine RT_current

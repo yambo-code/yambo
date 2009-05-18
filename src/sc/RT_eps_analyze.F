@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !
-subroutine RT_eps_analyze(j_current,A_t)
+subroutine RT_eps_analyze(j_current,A_vec_pot)
  !
  use pars,      ONLY:pi,SP,DP,schlen,lchlen
  use units,     ONLY:HARTREE
@@ -31,7 +31,7 @@ subroutine RT_eps_analyze(j_current,A_t)
  !
  implicit none
  real(DP),    intent(in) :: j_current(tot_steps,3)
- complex(DP), intent(in) :: A_t(tot_steps)
+ complex(DP), intent(in) :: A_vec_pot(tot_steps)
  !
  ! Work Space
  !
@@ -69,7 +69,7 @@ subroutine RT_eps_analyze(j_current,A_t)
    !
  else
    !        
-   w_dot_A_w=A_t
+   w_dot_A_w=A_vec_pot
    fftw_plan=0
    !
 #if defined _FFTW  

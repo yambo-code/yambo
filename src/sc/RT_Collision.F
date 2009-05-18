@@ -31,9 +31,9 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho
  use QP_m,           ONLY:QP_nk,QP_Vxc,QP_n_states,QP_table 
- use real_time,      ONLY:I1_lesser,I2_lesser,V_xc_0,l_rt_exc,rho,V_hartree_0, &
+ use real_time,      ONLY:I1_lesser,I2_lesser,V_xc_0,l_RT_no_updates,rho,V_hartree_0, &
  &                        Thermal_Time,l_rt_efield,TransRelax,LongRelax,T_initial, &
- &                        RT_phase_int,H_t,Ho_pot,l_keep_vxc
+ &                        H_t,Hartree_plus_Vxc_0,l_RPA
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
@@ -59,10 +59,9 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
    Xen%f(iv,ik,1)=-(0._SP,1._SP)*G_input(iv,iv,ik)
  end forall
  !
- if(l_rt_exc) call el_density(Xen,k,rho,G_lesser=G_input)
+ if(.not.l_RT_no_updates) call el_density(Xen,k,rho,G_lesser=G_input)
  !
- !
- if(l_rt_exc) then
+ if(.not.l_RT_no_updates) then
    !
    call V_Hartree(rho,V_hartree_sc)
    !
@@ -99,7 +98,7 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
    !  I subtract the V_xc_0 term if there is a self-energy /=0 (at least V_h)
    !  and not l_keep_vxc=.true. (used to include local field effects only)
    !
-   if(l_rt_exc.and..not.l_keep_vxc) then 
+   if(.not.l_RT_no_updates.and..not.l_RPA) then 
      !  
      call V_to_H(ik,-V_xc_0,Sigma_s,wf)
      !
@@ -115,38 +114,39 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
    !
    ! Fill the Singular (in time) Self-Energy Sigma_s(:,:,:)
    !
-   if(l_rt_exc) then
+   if(.not.l_RT_no_updates) then
      call V_to_H(ik,V_hartree_sc+V_xc,Sigma_s,wf)
    else
 #if defined _DOUBLE
-     call zaxpy(SC_bands2,(1.,0.),Ho_pot(:,:,ik),1,Sigma_s(:,:,1),1)
+     call zaxpy(SC_bands2,(1.,0.),Hartree_plus_Vxc_0(:,:,ik),1,Sigma_s(:,:,1),1)
 #else
-     call caxpy(SC_bands2,(1.,0.),Ho_pot(:,:,ik),1,Sigma_s(:,:,1),1)
+     call caxpy(SC_bands2,(1.,0.),Hartree_plus_Vxc_0(:,:,ik),1,Sigma_s(:,:,1),1)
 #endif
    endif
    !
-   if(.not.RT_phase_int) then
-     !
-     ! Ho is part of the Hamiltonian (or singular self-energy Sigma_s) 
-     !
+   ! Ho is part of the Hamiltonian (or singular self-energy Sigma_s) 
+   !
 #if defined _DOUBLE
-     call zaxpy(SC_bands2,(1.,0.),Ho(:,:,ik,1),1,Sigma_s(:,:,1),1)
+   call zaxpy(SC_bands2,(1.,0.),Ho(:,:,ik,1),1,Sigma_s(:,:,1),1)
 #else
-     call caxpy(SC_bands2,(1.,0.),Ho(:,:,ik,1),1,Sigma_s(:,:,1),1)
+   call caxpy(SC_bands2,(1.,0.),Ho(:,:,ik,1),1,Sigma_s(:,:,1),1)
 #endif
-     !
-   else
-     !
-     ! I use H_o + V_h(rho_o) + V_xc(rho_o) as phase factor 
-     ! so I subtract them from the Self-Energy Sigma_S(:,:,:)
-     !      
-#if defined _DOUBLE
-     call zaxpy(SC_bands2,(-1.,0.),Ho_pot(:,:,ik),1,Sigma_s(:,:,1),1)
-#else
-     call caxpy(SC_bands2,(-1.,0.),Ho_pot(:,:,ik),1,Sigma_s(:,:,1),1)
-#endif
-     !
-   endif
+   !
+!   
+! RT phase section   
+!  
+!   else
+!     !
+!     ! I use H_o + V_h(rho_o) + V_xc(rho_o) as phase factor 
+!     ! so I subtract them from the Self-Energy Sigma_S(:,:,:)
+!     !      
+!#if defined _DOUBLE
+!     call zaxpy(SC_bands2,(-1.,0.),Hartree_plus_Vxc_0(:,:,ik),1,Sigma_s(:,:,1),1)
+!#else
+!     call caxpy(SC_bands2,(-1.,0.),Hartree_plus_Vxc_0(:,:,ik),1,Sigma_s(:,:,1),1)
+!#endif
+!     !
+!   endif
    !
    ! And now add the external field
    !
@@ -156,9 +156,9 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
      !
    endif
    !
-   H_t(:,:,ik)=Sigma_s(:,:,1)
+!   H_t(:,:,ik)=Sigma_s(:,:,1)
    !
-   if(RT_phase_int) H_t(:,:,ik)=H_t(:,:,ik)+Ho(:,:,ik,1)+Ho_pot(:,:,ik)
+!   if(RT_phase_int) H_t(:,:,ik)=H_t(:,:,ik)+Ho(:,:,ik,1)+Hartree_plus_Vxc_0(:,:,ik)
    !
    ! Now prepare I1 and I2 before the integration notice that 
    ! they contain also the external field

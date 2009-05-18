@@ -51,8 +51,8 @@ recursive subroutine RT_Integrator(G_new,G_old,T_step,en,Xen,k,q,Integrator,RT_t
  use com,            ONLY:error
  use SC,             ONLY:SC_potential,SC_bands,H_rotate
  use R_lattice,      ONLY:bz_samp  
- use real_time,      ONLY:G_lesser,I1_lesser,I2_lesser,RT_step,n_poles,RT_step, &
- &                        EULER,RK2,RT_phase_int,EXACT,RK2EXACT,H_t 
+ use real_time,      ONLY:G_lesser,I1_lesser,I2_lesser,RT_step,RT_step, &
+ &                        EULER,RK2,EXACT,RK2EXACT,H_t 
  use electrons,      ONLY:levels
  use matrix_operate, ONLY:mat_dia_inv,INV,USE_LK,DIAGO
  use X_m,            ONLY:X_poles,X_poles_tab 
@@ -67,65 +67,63 @@ recursive subroutine RT_Integrator(G_new,G_old,T_step,en,Xen,k,q,Integrator,RT_t
  ! 
  ! Work Space
  !
- complex(SP) :: P_Factor(SC_bands,SC_bands)
  complex(SP) :: TmpMatrix(SC_bands,SC_bands)
  integer     :: ik,i1,i2,i,j,i_pole,iv,ic,SC_bands2_dot_nibz
- complex(SP) :: Go_phase
+! complex(SP) :: P_Factor(SC_bands,SC_bands)
+! complex(SP) :: Go_phase
  !
  SC_bands2_dot_nibz=SC_bands**2*k%nibz
  !
  if(trim(Integrator)==EULER) then
    !
-   if(.not.RT_phase_int) then
-     !      
-     ! Gf_{n,m}(T+dt) = G_{n,m}(T) 
-     !
-     G_new(:,:,:)=G_old(:,:,:)
-     !
-     ! G(T+dt) = G(T+dt) - i dt *(I1(T) - I2(T))
-     !
+   ! Gf_{n,m}(T+dt) = G_{n,m}(T) 
+   !
+   G_new(:,:,:)=G_old(:,:,:)
+   !
+   ! G(T+dt) = G(T+dt) - i dt *(I1(T) - I2(T))
+   !
 #if defined _DOUBLE
-     call zaxpy(SC_bands2_dot_nibz,dcmplx(0.,-T_step),I1_lesser(:,:,:),1,G_new(:,:,:),1)
-     call zaxpy(SC_bands2_dot_nibz,dcmplx(0.,+T_step),I2_lesser(:,:,:),1,G_new(:,:,:),1)
+   call zaxpy(SC_bands2_dot_nibz,dcmplx(0.,-T_step),I1_lesser(:,:,:),1,G_new(:,:,:),1)
+   call zaxpy(SC_bands2_dot_nibz,dcmplx(0.,+T_step),I2_lesser(:,:,:),1,G_new(:,:,:),1)
 #else
-     call caxpy(SC_bands2_dot_nibz,cmplx(0.,-T_step),I1_lesser(:,:,:),1,G_new(:,:,:),1)
-     call caxpy(SC_bands2_dot_nibz,cmplx(0.,+T_step),I2_lesser(:,:,:),1,G_new(:,:,:),1)
+   call caxpy(SC_bands2_dot_nibz,cmplx(0.,-T_step),I1_lesser(:,:,:),1,G_new(:,:,:),1)
+   call caxpy(SC_bands2_dot_nibz,cmplx(0.,+T_step),I2_lesser(:,:,:),1,G_new(:,:,:),1)
 #endif
-     !
-   else
-     !
-     do ik=1,k%nibz
-       !
-       G_new(:,:,ik)=G_old(:,:,ik)
-       !
-       ! Calculate the phase factor and put the correct limit for E_eh --> 0
-       !
-       P_Factor(:,:)  =(0._SP,1._SP)*T_step
-       !
-       do i_pole=1,n_poles
-         !     
-         if(X_poles_tab(i_pole,1)/=ik) cycle
-           !
-           iv=X_poles_tab(i_pole,2)
-           ic=X_poles_tab(i_pole,3)
-           !
-           Go_phase=exp(+(0._SP,1._SP)*T_step*X_poles(i_pole))
-           !
-           P_factor(iv,ic)=(1.0-Go_phase)/(-X_poles(i_pole))
-           !
-           ! Gf_{n,m}(T+dt) = G_{n,m}(T) * exp(-i*dt(E_n-E_m))
-           !
-           G_new(iv,ic,ik)=G_old(iv,ic,ik)*Go_phase
-           !
-       enddo
-       !
-       ! G(T+dt) = G(T+dt) - (1 - exp(-i dt (E_n-E_m))/(E_n-E_m))*(I1(T) - I2(T))
-       !
-       G_new(:,:,ik)=G_new(:,:,ik)-P_factor(:,:)*(I1_lesser(:,:,ik)-I2_lesser(:,:,ik))
-       !                                                            
-     enddo
-     !
-   endif
+   !
+!   else
+!     !
+!     do ik=1,k%nibz
+!       !
+!       G_new(:,:,ik)=G_old(:,:,ik)
+!       !
+!       ! Calculate the phase factor and put the correct limit for E_eh --> 0
+!       !
+!       P_Factor(:,:)  =(0._SP,1._SP)*T_step
+!       !
+!       do i_pole=1,n_poles
+!         !     
+!         if(X_poles_tab(i_pole,1)/=ik) cycle
+!           !
+!           iv=X_poles_tab(i_pole,2)
+!           ic=X_poles_tab(i_pole,3)
+!           !
+!           Go_phase=exp(+(0._SP,1._SP)*T_step*X_poles(i_pole))
+!           !
+!           P_factor(iv,ic)=(1.0-Go_phase)/(-X_poles(i_pole))
+!           !
+!           ! Gf_{n,m}(T+dt) = G_{n,m}(T) * exp(-i*dt(E_n-E_m))
+!           !
+!           G_new(iv,ic,ik)=G_old(iv,ic,ik)*Go_phase
+!           !
+!       enddo
+!       !
+!       ! G(T+dt) = G(T+dt) - (1 - exp(-i dt (E_n-E_m))/(E_n-E_m))*(I1(T) - I2(T))
+!       !
+!       G_new(:,:,ik)=G_new(:,:,ik)-P_factor(:,:)*(I1_lesser(:,:,ik)-I2_lesser(:,:,ik))
+!       !                                                            
+!     enddo
+!     !
+!   endif
    !
  elseif(trim(Integrator)==RK2) then
    !

@@ -36,7 +36,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv,inv_index
  use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,qindx_X,bz_samp,RIM_qpg,&
 &                       RIM_anisotropy,ik_is_table,bare_qpg
- use par_proc_m,   ONLY:pp_redux_wait,myid,ncpu
+ use par_proc_m,   ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
+ use par_indexes_m,ONLY:par_indexes
  use com,          ONLY:msg,warning,error
  use timing,       ONLY:live_timing
  use X_m,          ONLY:X_alloc,X_t,X_mat
@@ -45,10 +46,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_n_g_W,BS_blk_dim,O_table,BS_mat,&
 &                       O_phase,O_c_state,O_v_state,O_ng,BS_eh_table,BS_columns,&
 &                       BS_n_g_exch,BS_identifier,BS_K_coupling,O_n_v_states,&
-&                       BS_K_dim,BS_eh_win,BS_blk_coord,&
-&                       cumulative_index,BS_K_is_ALDA,BS_cpl_mat,&
+&                       BS_K_dim,BS_eh_win,BS_k_and_row_restart,&
+&                       BS_K_is_ALDA,BS_cpl_mat,&
 &                       BS_cpl_K_exchange,BSS_q0,&
-&                       O_n_scatt,BS_O,BS_cpl_K_corr
+&                       O_n_scatt,BS_O,BS_cpl_K_corr,BS_rows,get_k_and_row,BS_IO_index
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,RD_CL,OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END
@@ -67,7 +68,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Kernel loop
  !
- integer    :: ikk1,ikk2,live_timing_steps,live_timing_step_size,live_timing_accumulate,&
+ integer    :: ikk1,ikk2,&
 &              is1xis2,ik1bz,iv1,ic1,ik1,is1,inv_s1,is1p,&
 &              i_sp1,i_sp2,ik2bz,iv2,ic2,ik2,is2,is2p,&
 &              icv1,icv2,iOvv,iOcc,i1,i2,i3,iqs,iq_W,ig0,bands_to_load(2)
@@ -81,12 +82,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Kernel
  !
- integer(8) :: n_K_elements(ncpu),tot_n_K_elements,i8nc,i8id
  real(SP)   :: E_eh_range(2),S_eh_range(2)
- real(SP)   :: filling
  complex(SP),allocatable ::BS_W(:,:,:)
  complex(SP),   external ::tddft_alda_r_space
  logical    :: W_is_em1s,W_is_pp
+ !
+ ! MPI
+ !
+ type(pp_indexes) :: px
+ integer          :: n_rows,rows_done
  !
  ! Oscillators
  !
@@ -115,7 +119,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Setups
  !
  if (BS_columns<=0.or.BS_columns>Xk%nibz) BS_columns=Xk%nibz
- BS_blk_coord=0
+ BS_k_and_row_restart=0
  !
  ! Dimensions and Tables
  ! 
@@ -210,15 +214,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
  !
- ! Kernel filling
+ ! E/h range limits 
  !
  E_eh_range=(/minval(abs(BS_eh_E))-1.E-5,maxval(abs(BS_eh_E))/)
  S_eh_range=(/BS_eh_win(1)/100.*(E_eh_range(2)-E_eh_range(1)),& 
 &             BS_eh_win(2)/100.*(E_eh_range(2)-E_eh_range(1))/)
- call K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements,&
-&               live_timing_steps,live_timing_step_size)
  !
- if (all(n_K_elements==0)) return
+ !if (all(n_K_elements==0)) return
  !
  ! TDDFT xc-kernel Setup
  !
@@ -275,18 +277,35 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call mem_est('O_table',(/size(O_table)/),elements_kind=(/SP/),errors=(/alloc_err(1)/))
  !
+ ! Here I evaluate
+ !
+ ! 1. the TOTAL number of ROWS to be done 
+ !
+ BS_rows=0 
+ do ik2=1,Xk%nibz
+   do ik1=ik2,1,-1
+     BS_rows=BS_rows+BS_blk_dim(ik1)
+   enddo
+ enddo
+ !
+ ! 2. the size of the oscillators to be used in the present configuration
+ !
+ n_rows=0
  O_dim=-1
  O_x_dim=maxval(BS_blk_dim)
  do ik2=1,BS_columns
    do ik1=ik2,1,-1
      !
-     if (any((/ik2<BS_blk_coord(2),ik2==BS_blk_coord(2).and.ik1>BS_blk_coord(1)/))) cycle
+     if (any((/ik2<BS_k_and_row_restart(2),ik2==BS_k_and_row_restart(2).and.ik1>BS_k_and_row_restart(1)/))) cycle
      !
      call K_scattering(iq,ik1,ik2,Xk,q)  
      O_dim=max(O_dim,O_n_scatt)
      !
+     n_rows=n_rows+BS_blk_dim(ik1)
+     !
    enddo
  enddo
+ !
  !
  ! GPL_EXCLUDE_START
  !
@@ -414,15 +433,17 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (.not.BS_K_coupling) call mem_est('BS_mat',(/O_x_dim**2/))
  if (BS_K_coupling) call mem_est('BS_mat',(/2*O_x_dim**2/)) 
  !
- if (.not.l_bs_fxc) call live_timing('BSK',live_timing_steps)
- if (l_bs_fxc) call live_timing('BSK->Fxc',live_timing_steps)
+ ! Parallelization
  !
- tot_n_K_elements=0
- live_timing_accumulate=0
- i8nc=ncpu
- i8id=myid
+ call pp_indexes_reset(px)
+ call par_indexes(px,(/n_rows/))
+ !
+ if (.not.l_bs_fxc) call live_timing('BSK',px%stps(myid+1))
+ if (l_bs_fxc) call live_timing('BSK->Fxc',px%stps(myid+1))
  !
  call pp_redux_wait
+ n_rows=0
+ !
  do ik2=1,BS_columns
    ikk2=sum(BS_blk_dim(:ik2-1))
    !
@@ -430,7 +451,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    do ik1=ik2,1,-1
      !
-     if (any((/ik2<BS_blk_coord(2),ik2==BS_blk_coord(2).and.ik1>BS_blk_coord(1)/))) cycle
+     if (any((/ik2<BS_k_and_row_restart(2),ik2==BS_k_and_row_restart(2).and.ik1>BS_k_and_row_restart(1)/))) cycle
      !
      ikk1=sum(BS_blk_dim(:ik1-1))
      !
@@ -470,6 +491,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      !
      call pp_redux_wait
      do icv1=1,BS_blk_dim(ik1)
+       !
        ik1bz=BS_eh_table(ikk1+icv1,1)
        iv1=BS_eh_table(ikk1+icv1,2)
        ic1=BS_eh_table(ikk1+icv1,3)
@@ -477,6 +499,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        is1=Xk%sstar(ik1bz,2)
        !
        is1p=Xk%sstar( qindx_X(iq,ik1bz,1) ,2)
+       !
+       ! ::: Parallel Switch :::
+       !
+       n_rows=n_rows+1
+       if (.not.px%i1p(n_rows)) cycle
        !
        do icv2=1,BS_blk_dim(ik2)
          !
@@ -486,21 +513,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
          if (.not.K_scatter(abs(BS_eh_E(ikk1+icv1)),abs(BS_eh_E(ikk2+icv2)),&
 &                           E_eh_range,S_eh_range)) cycle
-         !
-         ! ::: Parallel Switch :::
-         !
-         tot_n_K_elements=tot_n_K_elements+1
-         if (mod(tot_n_K_elements-i8id,i8nc)/=1.and.ncpu>1)  cycle
-         !
-         ! ::: Timing START :::
-         !
-         live_timing_accumulate=live_timing_accumulate+1
-         if (live_timing_accumulate==live_timing_step_size) then
-           call live_timing(steps=1)
-           live_timing_accumulate=0
-         endif
-         !
-         ! ::: Timing END :::
          !
          ik2bz=BS_eh_table(ikk2+icv2,1)
          iv2=BS_eh_table(ikk2+icv2,2)
@@ -651,13 +663,20 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          ! GPL_EXCLUDE_END
          !
        enddo
+       !
+       ! ::: Timing :::
+       !
+       call live_timing(steps=1)
+       !
      enddo
+     !
      call pp_redux_wait(BS_mat)
      if (BS_K_coupling) call pp_redux_wait(BS_cpl_mat)
      !
      if (l_bs_fxc) then
        !
        ! GPL_EXCLUDE_START
+       !
        !
        call TDDFT_BSK_2_FXC(iq,ik1,ik2,&
 &                           O1x(:FXC_n_g_corr,:),O2x(:FXC_n_g_corr,:),O_x_dim,W_bss,X)
@@ -666,9 +685,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
      else
        if (ik2==1.and.ik1==1) then
-         call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,cumulative_index(1,1)/),ID=ID)
+         call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,BS_IO_index(1,1)/),ID=ID)
        else
-         call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/cumulative_index(ik1,ik2)/),ID=ID)
+         call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/BS_IO_index(ik1,ik2)/),ID=ID)
        endif
        ioBS_Fxc_err=ioBS(iq,X,ID)
      endif
@@ -680,8 +699,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Live Timing finalize
  !
- if (mod(n_K_elements(myid+1),int(live_timing_step_size,8))/=0) call live_timing(steps=1)
  call live_timing()
+ call pp_indexes_reset(px)
  call pp_redux_wait
  !
  ! CLEAN before _DOUBLEs

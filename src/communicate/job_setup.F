@@ -61,7 +61,9 @@ subroutine job_setup(en,k)
 &                ' nodes ('//trim(intc(n_cpu_per_node))//' each)'
      call msg('rns',trim(cluster_msg))
      !
-     IO_write=sum(cpu_seen_by_me(myid+1:))==n_cpu_per_node
+     ! To add a configure option to switch the parallel I/O on
+     !
+!     IO_write=sum(cpu_seen_by_me(myid+1:))==n_cpu_per_node
      !
      dbs_fragment=.true.
      !

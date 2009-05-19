@@ -26,8 +26,8 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:nqbz,bz_samp,nXkibz
  use BS,            ONLY:BS_mat,BS_res_K_exchange,BS_n_g_exch,&
-&                        BS_bands,BS_blk_dim,BS_K_dim,BS_blk_coord,&
-&                        cumulative_index
+&                        BS_bands,BS_blk_dim,BS_K_dim,BS_k_and_row_restart,&
+&                        BS_IO_index
  use com,           ONLY:isec
  use timing,        ONLY:live_timing
  use par_proc_m,    ONLY:pp_redux_wait
@@ -104,7 +104,7 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
  ioBS_err=ioBS(iq,X_static,ID)
  !
  call live_timing('Fxc',(nXkibz**2-nXkibz)/2+nXkibz)
- BS_blk_coord=0
+ BS_k_and_row_restart=0
  do ik2=1,nXkibz
    !
    call K_exchange(.true.,iq,ik2,Xk,O2x,O_x_dim)
@@ -118,7 +118,7 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
      !
      ACTION=RD
      if (ik1==1.and.ik2==nXkibz) ACTION=RD_CL
-     call io_control(ACTION=ACTION,COM=NONE,SEC=(/cumulative_index(ik1,ik2)/),ID=ID)
+     call io_control(ACTION=ACTION,COM=NONE,SEC=(/BS_IO_index(ik1,ik2)/),ID=ID)
      ioBS_err=ioBS(iq,X_static,ID)
      !
      if (BS_res_K_exchange) then

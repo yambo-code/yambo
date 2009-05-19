@@ -6,7 +6,7 @@ K_object =
 #endif
 TEST_1_objects = K.o K_filling.o
 #if defined _TEST_1
-TEST_1_objects = K_test_1.o K_filling_test_1.o
+TEST_1_objects = K_test_1.o 
 #endif
 objs =	K_driver.o K_eh_setup.o \
         $(TEST_1_objects) $(K_object) K_scattering.o K_exchange.o \

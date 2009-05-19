@@ -385,7 +385,9 @@ module IO_m
      !
    end function
    !
-   subroutine io_fragment(ID,i_pointer,j_pointer,ierr)
+   subroutine io_fragment(ID,i_pointer,j_pointer,k_pointer,ierr)
+     !
+     use stderr, ONLY:intc
      !
      ! This routine checks if the DB is fragmented. If it is
      ! it closes the DB and opens the fragment corresponding
@@ -398,7 +400,7 @@ module IO_m
      !
      implicit none
      integer           :: ID
-     integer, optional :: i_pointer,j_pointer,ierr
+     integer, optional :: i_pointer,j_pointer,k_pointer,ierr
      !
      ! Work Space
      !
@@ -432,7 +434,11 @@ module IO_m
      !
      ! Note that the fragment DB keeps the same type of the DB core (io_type(ID))
      !
-     ierr_=io_connect('fragment',subfolder=subfolder,type=io_type(ID),ID=ID)
+     if (present(k_pointer)) then
+       ierr_=io_connect('fragment_'//trim(intc(k_pointer)),subfolder=subfolder,type=io_type(ID),ID=ID)
+     else
+       ierr_=io_connect('fragment',subfolder=subfolder,type=io_type(ID),ID=ID)
+     endif
      if (present(ierr)) ierr=ierr_
      !
      ! io_action must be saved otherwise any io_disconnect call would

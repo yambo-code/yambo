@@ -25,7 +25,7 @@ subroutine K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements,&
  use pars,         ONLY:SP,schlen
  use com,          ONLY:msg
  use functions,    ONLY:K_scatter
- use BS,           ONLY:BS_eh_E,BS_columns,BS_blk_dim,BS_blk_coord
+ use BS,           ONLY:BS_eh_E,BS_columns,BS_blk_dim,BS_k_and_row_restart
  use par_proc_m,   ONLY:myid,ncpu,pp_redux_wait
  use timing,       ONLY:live_timing,nhash
  implicit none
@@ -52,7 +52,7 @@ subroutine K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements,&
  n_blocks=0
  do ik2=1,BS_columns
    do ik1=ik2,1,-1
-     if (any((/ik2<BS_blk_coord(2),ik2==BS_blk_coord(2).and.ik1>BS_blk_coord(1)/))) cycle
+     if (any((/ik2<BS_k_and_row_restart(2),ik2==BS_k_and_row_restart(2).and.ik1>BS_k_and_row_restart(1)/))) cycle
      n_blocks=n_blocks+1
    enddo
  enddo
@@ -66,7 +66,7 @@ subroutine K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements,&
      ikk1=sum(BS_blk_dim(:ik1-1))
      ikk2=sum(BS_blk_dim(:ik2-1))
      !
-     if (any((/ik2<BS_blk_coord(2),ik2==BS_blk_coord(2).and.ik1>BS_blk_coord(1)/))) cycle
+     if (any((/ik2<BS_k_and_row_restart(2),ik2==BS_k_and_row_restart(2).and.ik1>BS_k_and_row_restart(1)/))) cycle
      call live_timing(steps=1)
      !
      do icv1=1,BS_blk_dim(ik1)

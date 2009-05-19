@@ -8,11 +8,15 @@ DB_objects = ioBS_doubles.o
 #else
 DB_objects = 
 #endif
+TEST_1_objects = ioBS.o
+#if defined _TEST_1
+TEST_1_objects = ioBS_test_1.o
+#endif
 objs = ver_is_gt_or_eq.o IO_mute.o \
        ioRIM.o        ioGROT.o     ioELPH.o \
        ioOSTNTS.o     ioQINDX.o    ioQP.o      ioX.o \
        ioDB1.o        ioWF.o       ioKB_PP.o   ioXXVXC.o \
-       ioBS.o         ioBS_Fxc.o  \
+       $(TEST_1_objects)           ioBS_Fxc.o  \
        ioBSS_diago.o  ioBSS_Haydock.o ioBSS_invert.o \
        io_elemental.o io_bulk.o      io_header.o ioE_RIM.o \
        ioCOL_CUT.o    ioDB1_reload.o \

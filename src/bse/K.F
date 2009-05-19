@@ -45,8 +45,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_n_g_W,BS_blk_dim,O_table,BS_mat,&
 &                       O_phase,O_c_state,O_v_state,O_ng,BS_eh_table,BS_columns,&
 &                       BS_n_g_exch,BS_identifier,BS_K_coupling,O_n_v_states,&
-&                       BS_K_dim,BS_eh_win,BS_blk_coord,&
-&                       cumulative_index,BS_K_is_ALDA,BS_cpl_mat,&
+&                       BS_K_dim,BS_eh_win,BS_k_and_row_restart,&
+&                       BS_IO_index,BS_K_is_ALDA,BS_cpl_mat,&
 &                       BS_cpl_K_exchange,BSS_q0,&
 &                       O_n_scatt,BS_O,BS_cpl_K_corr
  use collision,    ONLY:ggwinfo,collision_reset
@@ -115,7 +115,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Setups
  !
  if (BS_columns<=0.or.BS_columns>Xk%nibz) BS_columns=Xk%nibz
- BS_blk_coord=0
+ BS_k_and_row_restart=0
  !
  ! Dimensions and Tables
  ! 
@@ -280,7 +280,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  do ik2=1,BS_columns
    do ik1=ik2,1,-1
      !
-     if (any((/ik2<BS_blk_coord(2),ik2==BS_blk_coord(2).and.ik1>BS_blk_coord(1)/))) cycle
+     if (any((/ik2<BS_k_and_row_restart(2),ik2==BS_k_and_row_restart(2).and.ik1>BS_k_and_row_restart(1)/))) cycle
      !
      call K_scattering(iq,ik1,ik2,Xk,q)  
      O_dim=max(O_dim,O_n_scatt)
@@ -430,7 +430,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    do ik1=ik2,1,-1
      !
-     if (any((/ik2<BS_blk_coord(2),ik2==BS_blk_coord(2).and.ik1>BS_blk_coord(1)/))) cycle
+     if (any((/ik2<BS_k_and_row_restart(2),ik2==BS_k_and_row_restart(2).and.ik1>BS_k_and_row_restart(1)/))) cycle
      !
      ikk1=sum(BS_blk_dim(:ik1-1))
      !
@@ -666,9 +666,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
      else
        if (ik2==1.and.ik1==1) then
-         call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,cumulative_index(1,1)/),ID=ID)
+         call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,BS_IO_index(1,1)/),ID=ID)
        else
-         call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/cumulative_index(ik1,ik2)/),ID=ID)
+         call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/BS_IO_index(ik1,ik2)/),ID=ID)
        endif
        ioBS_Fxc_err=ioBS(iq,X,ID)
      endif

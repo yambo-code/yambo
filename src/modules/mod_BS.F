@@ -33,7 +33,10 @@ module BS
  integer :: BS_n_g_W
  integer :: BS_q(2)
  integer :: BS_identifier
- integer :: BS_blk_coord(2)
+#if defined _TEST_1
+ integer :: BS_rows
+#endif
+ integer :: BS_k_and_row_restart(2)
  real(SP):: BS_eh_en(2)
  real(SP):: BS_eh_win(2)
  logical :: BS_W_is_diagonal
@@ -125,10 +128,37 @@ module BS
  !
  contains
    !
-   integer function cumulative_index(ik1,ik2)
+   integer function BS_IO_index(ik1,ik2)
      integer :: ik1,ik2
-     cumulative_index=(ik2**2+ik2)/2-ik1+2
+     BS_IO_index=(ik2**2+ik2)/2-ik1+2
    end function
+   !
+#if defined _TEST_1
+   !
+   function get_k_and_row(i_global_row)
+     use R_lattice, ONLY:nXkibz
+     integer :: i_global_row
+     integer :: get_k_and_row(3)
+     integer :: ik1,ik2,i_row
+     !
+     get_k_and_row=0
+     !
+     i_row=0
+     do ik2=1,nXkibz
+       do ik1=ik2,1,-1
+         get_k_and_row=(/ik1,ik2,BS_blk_dim(ik1)/)
+         if ( i_row + BS_blk_dim(ik1)== i_global_row ) return
+         if ( i_row + BS_blk_dim(ik1)> i_global_row ) then
+           get_k_and_row=(/ik1,ik2,i_global_row-i_row/)
+           return
+         endif
+         i_row=i_row+BS_blk_dim(ik1)
+       enddo
+     enddo
+     !
+   end function
+   !
+#endif
    !
    function BS_blocks(I)
      use R_lattice, ONLY:nXkibz
@@ -137,7 +167,7 @@ module BS
      BS_blocks=0
      do ik1=1,nXkibz
        do ik2=1,nXkibz
-         if (cumulative_index(ik1,ik2)==I) then
+         if (BS_IO_index(ik1,ik2)==I) then
            BS_blocks=(/ik1,ik2/)
            return
          endif

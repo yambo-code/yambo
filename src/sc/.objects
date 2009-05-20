@@ -1,5 +1,8 @@
+RT_OBJECTS = 
+#if defined _RT
+RT_OBJECTS = RT_initialize.o check_symm.o \
+             RT_driver.o RT_Ext_Field.o RT_Collision.o RT_Integrator.o \
+             RT_Energy.o RT_current.o RT_eps_analyze.o  
+#endif
 objs =	SC_driver.o V_Hartree.o V_exx.o V_to_H.o SC_common_build_Ho.o \
-        RT_initialize.o \
-        RT_driver.o XC_switch.o RT_Ext_Field.o RT_Collision.o RT_Integrator.o \
-        RT_Energy.o RT_current.o RT_eps_analyze.o SC_precondition.o 
-    
+        SC_precondition.o XC_switch.o $(RT_OBJECTS)

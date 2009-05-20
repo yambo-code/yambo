@@ -52,9 +52,11 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
  use com,           ONLY:more_io_path,com_path
  use functions,     ONLY:bose_E_cut
-#if defined _SC
+#if defined _SC || defined _RT
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential,&
 &                        SC_E_threshold,SC_rho_threshold,SC_cycle_mixing
+#endif
+#if defined _RT
  use real_time,     ONLY:RT_step, T_initial, Ext_Field_freq, Tot_steps, Thermal_steps, &
 &                        Ext_Field_Int, Ext_Field_name,Integrator_name,EF_q0,    &
 &                        LongRelax,TransRelax,DiagH_Iter
@@ -127,8 +129,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! GPL_EXCLUDE_END
  !
-#if defined _SC
+#if defined _SC || defined _RT
  call it('r',defs,'scpot',   '[R] Self-Consistent potentials') 
+#endif
+#if defined _RT
  call it('r',defs,'negf',    '[R] Real-Time dynamics') 
 #endif
 #if defined _RAS
@@ -260,7 +264,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! Real Time dynamics
  !
-#if defined _SC
+#if defined _RT
  call it(defs,'RTstep',    '[RT]  Real Time step',RT_step,unit=Time_unit)
  call it(defs,'RTsteps',   '[RT]  Real Time steps',Tot_steps)
  call it(defs,'Tinitial',  '[RT]  Initial Time',T_initial,unit=Time_unit)
@@ -339,14 +343,19 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! SC
  !
 #if defined _SC
- call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  call it(defs,'SCIter',    '[SC] SC Iterations',SC_iterations)
- call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_more)
- call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)
- call it(defs,'SCPot',     '[SC] SC Potential',SC_potential)
  call it(defs,'SCEtresh',  '[SC] Energy convergence threshold',SC_E_threshold,unit=E_unit)
  call it(defs,'SCRhoTresh','[SC] Rho convergence threshold',SC_rho_threshold)
  call it('f',defs,'TF_precondition','[SC] Thomas Fermi precondition in density',verb_level=V_more)
+#endif
+ ! 
+ ! SC [common with RT]
+ !
+#if defined _SC || defined _RT
+ call it(defs,'SCBands',   '[SC] Bands',SC_bands)
+ call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_more)
+ call it(defs,'SCPot',     '[SC] SC Potential',SC_potential)
+ call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)
 #endif
  ! 
  ! RAS

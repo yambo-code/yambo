@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !
-subroutine RT_eps_analyze(j_current,A_vec_pot)
+subroutine RT_eps_analyze(j_current,A_norm)
  !
  use pars,      ONLY:pi,SP,DP,schlen,lchlen
  use units,     ONLY:HARTREE
@@ -30,12 +30,12 @@ subroutine RT_eps_analyze(j_current,A_vec_pot)
  use memory_m,  ONLY:mem_est 
  !
  implicit none
- real(DP),    intent(in) :: j_current(tot_steps,3)
- complex(DP), intent(in) :: A_vec_pot(tot_steps)
+ complex(DP),    intent(in) :: j_current(tot_steps,3)
+ complex(DP), intent(in) :: A_norm(tot_steps)
  !
  ! Work Space
  !
- complex(DP)              :: chi(tot_steps/2+1,3)
+ complex(DP)              :: chi(tot_steps,3)
  complex(DP), allocatable :: w_dot_A_w(:)
  real(SP)    :: w_eps(7),omega
  integer     :: i1,i2,fft_sign
@@ -50,10 +50,13 @@ subroutine RT_eps_analyze(j_current,A_vec_pot)
  omega=2.*pi/(dble(tot_steps)*RT_step)  ! Frequency step
  !
  do i1=1,3
+    !
+    chi(:,i1)=j_current(:,i1)
+    !
 #if defined _FFTW
-   call fft_1d_real(j_current(1,i1),chi(1,i1),tot_steps,fft_sign,fftw_plan)
+   call fft_1d(chi(1,i1),tot_steps,fft_sign,fftw_plan)
 #else
-   call fft_1d_real(j_current(1,i1),chi(1,i1),tot_steps,fft_sign)
+   call fft_1d(chi(1,i1),tot_steps,fft_sign)
 #endif
    !
    chi(:,i1)=chi(:,i1)/sqrt(dble(tot_steps))
@@ -69,7 +72,7 @@ subroutine RT_eps_analyze(j_current,A_vec_pot)
    !
  else
    !        
-   w_dot_A_w=A_vec_pot
+   w_dot_A_w=A_norm
    fftw_plan=0
    !
 #if defined _FFTW  

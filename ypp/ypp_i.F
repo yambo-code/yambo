@@ -154,7 +154,12 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  ! GPL_EXCLUDE_START
  !
  if (l_bzrim) call BZ_RIM(Xk,Xen)
+ !
+#if defined _YPP_RT
+ !
+ if (l_rsymm) call remove_symmetries(en,k)
  !   ======
+#endif
  !
  ! GPL_EXCLUDE_END
  !

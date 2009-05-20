@@ -24,7 +24,7 @@ subroutine RT_initialize(file_name,Xen)
  use real_time,      ONLY:l_RPA,RT_resonant,RT_no_intraband,l_eps_analyze,&
 &                         Thermal_steps,Thermal_time,RT_step,l_rt_efield,&
 &                         Ext_Field_Name,G_lesser,G_lesser_previous,&
-&                         l_RT_no_updates,A_norm,Integrator_Name
+&                         l_RT_no_updates,Integrator_Name,EF_q0
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
  implicit none
@@ -60,10 +60,10 @@ subroutine RT_initialize(file_name,Xen)
  if(Ext_Field_Name/='NONE'.and.Ext_Field_Name/='none') then
    !      
    l_rt_efield=.true.
+   call check_symm(EF_q0)
    !
  else
    !      
-   A_norm=(0._SP,0._SP)
    if( l_eps_analyze) then
      call warning(' No External Field  l_eps_analyze set to .false.')      
      l_eps_analyze=.false.

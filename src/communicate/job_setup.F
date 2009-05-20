@@ -53,20 +53,23 @@ subroutine job_setup(en,k)
    n_cpu_per_node=cpu_seen_by_any(1)
    !
    if (.not.all(cpu_seen_by_any==n_cpu_per_node)) then
-     call warning('Impossible to setup a clustered job')
+     call warning('Impossible to setup a clustered I/O configuration')
      more_IO_path=core_IO_path
    else
      n_nodes=ncpu/n_cpu_per_node
-     cluster_msg=trim(intc(ncpu))//' CPUs are clustered in '//trim(intc(n_nodes))//&
-&                ' nodes ('//trim(intc(n_cpu_per_node))//' each)'
-     call msg('rns',trim(cluster_msg))
-     !
-     ! To add a configure option to switch the parallel I/O on
-     !
-!     IO_write=sum(cpu_seen_by_me(myid+1:))==n_cpu_per_node
-     !
-     dbs_fragment=.true.
-     !
+     if (n_nodes>1) then
+       cluster_msg=trim(intc(ncpu))//' CPUs I/O is clustered in '//&
+&                  trim(intc(n_nodes))//&
+&                  ' node(s) ('//trim(intc(n_cpu_per_node))//' each)'
+       call msg('rns',trim(cluster_msg))
+       !
+       ! To add a configure option to switch the parallel I/O on
+       !
+       IO_write=sum(cpu_seen_by_me(myid+1:))==n_cpu_per_node
+       !
+       dbs_fragment=.true.
+       !
+     endif
    endif
    !
  endif

@@ -271,20 +271,22 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  if (l_acfdt) call acfdt_tot_energy(Xen,Xk,En,k,q,X(1))
  !
  ! GPL_EXCLUDE_END
- !
-#if defined _SC
  ! SC
  !====
  !
  if (l_sc_run) then
+ !
+#if defined _SC
    if (.not.l_real_time) call SC_driver(X(:2),Xw(:2),Xk,en,k,q)
+#endif
    !
    ! REAL-TIME
    !==========
    !
+#if defined _RT
    if (     l_real_time) call RT_driver(en,Xen,X,k,xk)
- endif
 #endif
+ endif
  !
  ! GAME OVER :(
  !==============

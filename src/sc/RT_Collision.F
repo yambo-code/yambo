@@ -29,11 +29,11 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
  use drivers,        ONLY:l_sc_exx,l_sc_chosex,l_sc_hartree,l_sc_pz,l_sc_lda_x,&
 &                         l_sc_hf,l_sc_exxc
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,Ho
+ use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc
  use QP_m,           ONLY:QP_nk,QP_Vxc,QP_n_states,QP_table 
  use real_time,      ONLY:I1_lesser,I2_lesser,V_xc_0,l_RT_no_updates,rho,V_hartree_0, &
  &                        Thermal_Time,l_rt_efield,TransRelax,LongRelax,T_initial, &
- &                        H_t,Hartree_plus_Vxc_0,l_RPA
+ &                        Hartree_plus_Vxc_0,l_RPA
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
@@ -47,8 +47,8 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
  !
  ! Work Space
  !
- integer     :: ik,iv,i1,i2,i3,ik1,ib,ibp,i_spin,SC_bands2
- complex(SP) :: Sigma_s(SC_bands,SC_bands,n_sp_pol),tmp,tmp1,tmp2
+ integer     :: ik,iv,i1,SC_bands2
+ complex(SP) :: Sigma_s(SC_bands,SC_bands,n_sp_pol)
  real(SP)    :: RelaxDiff
  !
  SC_bands2=SC_bands**2
@@ -59,9 +59,9 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
    Xen%f(iv,ik,1)=-(0._SP,1._SP)*G_input(iv,iv,ik)
  end forall
  !
- if(.not.l_RT_no_updates) call el_density(Xen,k,rho,G_lesser=G_input)
- !
  if(.not.l_RT_no_updates) then
+   !
+   call el_density(Xen,k,rho,G_lesser=G_input)
    !
    call V_Hartree(rho,V_hartree_sc)
    !
@@ -156,7 +156,7 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
      !
    endif
    !
-!   H_t(:,:,ik)=Sigma_s(:,:,1)
+   H_nl_sc(:,:,ik)=Sigma_s(:,:,1)
    !
 !   if(RT_phase_int) H_t(:,:,ik)=H_t(:,:,ik)+Ho(:,:,ik,1)+Hartree_plus_Vxc_0(:,:,ik)
    !

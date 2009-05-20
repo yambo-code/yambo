@@ -21,6 +21,7 @@
 !
 subroutine SC_common_build_Ho(E,Xk,k)
  !
+#if defined _RT
  use pars,           ONLY:SP
  use electrons,      ONLY:levels,n_spin,el_density
  use QP_m,           ONLY:QP_n_states,QP_nk,QP_nb,QP_state,QP_Vxc,QP_table
@@ -90,7 +91,7 @@ subroutine SC_common_build_Ho(E,Xk,k)
  !
  ! Define Hartree+xc potential Hamiltonian
  !
- if(.not.l_RT_no_updates) then 
+ if(l_RT_no_updates) then 
    !
    Hartree_plus_Vxc_0=(0._SP,0._SP)
    !
@@ -99,5 +100,6 @@ subroutine SC_common_build_Ho(E,Xk,k)
    enddo
   !
  endif
+#endif
  !
 end subroutine SC_common_build_Ho

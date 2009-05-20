@@ -21,7 +21,7 @@
 !                  \
 ! Evalute current including also the diamagnetic contribution
 !
-subroutine RT_current(j_current,en,xK,A_vec_pot,EF_q0,G_lesser)
+subroutine RT_current(j_current,en,xK,A_vec_pot,G_lesser)
  !
  use pars,           ONLY:SP,DP,pi
  use matrix_operate, ONLY:m3det
@@ -36,16 +36,18 @@ subroutine RT_current(j_current,en,xK,A_vec_pot,EF_q0,G_lesser)
  type(levels),  intent(in) ::en       
  type(bz_samp), intent(in) ::Xk
  complex(SP), intent(in)  :: G_lesser(en%nbm,en%nbm,Xk%nibz)
- complex(SP), intent(in)  :: A_vec_pot
- real(SP),    intent(in)  :: EF_q0(3)
- real(SP),    intent(out) :: j_current(3)
+ complex(DP),    intent(in)  :: A_vec_pot(3)
+ complex(DP),    intent(out) :: j_current(3)
  !
  ! Work Space
  !
  integer       :: i1,i2,ik,is,SC_bands2
- real(SP)      :: j_dir(3),j_dir_rot(3)
+ complex(SP)      :: j_dir(3),j_dir_rot(3)
+#if defined _DOUBLE
  complex(DP)   :: zdotc
+#else
  complex(SP)   :: cdotc
+#endif
  !
  SC_bands2=SC_bands**2
  !
@@ -63,7 +65,7 @@ subroutine RT_current(j_current,en,xK,A_vec_pot,EF_q0,G_lesser)
    is = sop_inv(Xk%sstar(i1,2))      
    !
    do i2=1,3
-     !      
+     !
 #if defined _DOUBLE
      j_dir(i2)=-aimag(zdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1))
 #else
@@ -88,7 +90,7 @@ subroutine RT_current(j_current,en,xK,A_vec_pot,EF_q0,G_lesser)
  !
  ! Diamagnetic term. It is correct??
  !
- j_current(:)=j_current(:)+A_vec_pot*EF_q0(:)*nel*RL_vol/(Xk%nbz*(2.*pi)**3) 
+ j_current(:)=j_current(:)+A_vec_pot(:)*nel*RL_vol/(Xk%nbz*(2.*pi)**3) 
  !
  !
 end subroutine RT_current

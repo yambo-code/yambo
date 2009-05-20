@@ -31,11 +31,12 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  use X_m,            ONLY:X_t,Eval_P_and_P2_only,X_alloc
  use wave_func,      ONLY:wf,wf_load,wf_ng,WF_free
  use R_lattice,      ONLY:bz_samp
- use QP_m,           ONLY:QP_state,QP_nb,QP_nk,QP_Vxc
+ use QP_m,           ONLY:QP_nb,QP_nk
  use SC,             ONLY:SC_potential,SC_bands,Ho
  use real_time,      ONLY:EF_q0,Thermal_steps,Tot_steps,RT_step,G_lesser, &
 &                         G_lesser_previous,l_rt_efield,RT_alloc,RT_free, &
-&                         A_vec_pot,A_norm,l_eps_analyze,I_time,Integrator_name
+&                         A_vec_pot,A_norm,l_eps_analyze,I_time,Integrator_name,&
+&                         j_current
  use xc_functionals, ONLY:V_xc
  !
  implicit none
@@ -52,16 +53,9 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  ! Work Space
  !
  character(lchlen)        :: file_name(2)
- integer                  :: WF_G_max,WF_Go_indx,iv,ic,it,i1,ib
- real(SP)                 :: values(9) ,RT_time  ! The real time on the diagonal RTime = it*RT_step    
+ integer                  :: WF_G_max,WF_Go_indx,it,i1
+ real(SP)                 :: values(9), E_xc, RT_time  ! The real time on the diagonal RTime = it*RT_step    
  complex(SP)              :: Trace_Gf,E_kin,E_ion,E_h 
- real(SP)                 :: j_current(3),E_xc
- !
-#if defined _DOUBLE
- complex(DP)              :: zdotc
-#else
- complex(SP)              :: cdotc
-#endif
  !
  call section('*',trim(SC_potential)//' Real-Time Dynamics')
  !##########################################################
@@ -79,6 +73,10 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  WF_Go_indx=1  
  call wf_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),space='R',title=' ')  
  !
+ ! 2 CHANGE !!!!!!!!!!!!!!!!!!!!!!
+ !
+ Xen%nbm=SC_bands
+ !
  ! Core allocations
  !
  call RT_alloc(Xen)
@@ -89,13 +87,10 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  !
  QP_nb=SC_bands
  QP_nk=k%nibz
+ !
  call SC_common_build_Ho(Xen,Xk,k)
  !
  ! I set this values in such a way to sum on all transitions
- !
- ! 2 CHANGE !!!!!!!!!!!!!!!!!!!!!!
- !
- Xen%nbm=SC_bands
  !
  ! Real zero of the time                   
  !
@@ -118,7 +113,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    ! Simmetrization
    !
    G_lesser_previous=G_lesser
-   forall( i1=1:SC_bands )  G_lesser_previous(i1,i1,:)=(0._SP,1._SP)*imag(G_lesser(i1,i1,:))
+   forall( i1=1:SC_bands )  G_lesser_previous(i1,i1,:)=(0._SP,1._SP)*aimag(G_lesser(i1,i1,:))
    !
    call RT_Collision(G_lesser_previous,en,Xen,k,q,RT_time)
    !
@@ -133,10 +128,10 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    !
    if(l_rt_efield) then
      !
-     call RT_current(j_current,Xen,xK,A_vec_pot,EF_q0,G_lesser_previous)
+     call RT_current(j_current(i_time,:),Xen,xK,A_vec_pot(i_time,:),G_lesser_previous)
      !
-     values(2:3)=(/real(A_norm),aimag(A_norm)/)
-     values(4:6)=j_current(1:3)
+     values(2:3)=(/real(A_norm(i_time)),aimag(A_norm(i_time))/)
+     values(4:6)=real(j_current(i_time,1:3))
      !
      call msg('o '//file_name(2),'',values(1:6),USE_TABS=.TRUE.)
      !
@@ -159,12 +154,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  call WF_free()
  !
  call X_alloc("P_square")
- !
- deallocate(QP_state)
- call mem_est("QP_state")
- !  
- deallocate(QP_Vxc)
- call mem_est("QP_Vxc")
  !
  call set_real_printed_length()
  !

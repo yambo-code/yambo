@@ -1,4 +1,4 @@
-#if defined _SC
+#if defined _SC || defined _RT
 SC_objects = load_SC_components.o io_SC_components.o
 #else
 SC_objects = 

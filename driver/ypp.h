@@ -53,6 +53,9 @@
 #endif
   {"freehole","f","Free hole position [excitons plot]",0,0,0,0}, 
   {"bzrim",   "r","BZ energy RIM analyzer",0,0,0,0}, 
+#if defined _RT
+  {"rsymm",   "n","Remove symmetries in presence of an external field",0,0,0,0}, 
+#endif
 #if defined _YPP_ELPH
   {"phonons","p","Phonon [(d)os,(e)lias]",0,0,1,0}, 
   {"gkkp"  , "g","gkkp databases",0,0,0,0}, 

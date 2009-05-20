@@ -2,13 +2,16 @@
 ELPH_objects = elph_databases.o elph_eliashberg_dos.o \
                elph_general_gFsq.o elph_excitonic_gkkp.o
 #endif
+#if defined _YPP_RT
+RT_objects = remove_symmetries.o 
+#endif
 #if defined _YPP_RAS
 RAS_objects = ras_ypp.o generate_epsdb.o reels_ypp.o loc_ypp.o trans_ypp.o
 #endif
+
 objs = mod_YPP.o     ypp_i.o   ypp_init.o ypp_init_load.o \
        BZ_grids.o k_special.o \
        excitons_driver.o electrons_driver.o plot_check_and_launch.o plot_gnuplot.o plot_xcrysden.o \
        exc_wf_sort_and_report.o exc_collinear_spin.o exc_non_collinear_spin.o \
-       $(ELPH_objects) $(RAS_objects) \
-       BZ_RIM.o 
+       $(ELPH_objects) $(RAS_objects) $(RT_objects) BZ_RIM.o 
 

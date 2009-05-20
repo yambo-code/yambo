@@ -60,13 +60,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined  _ELPH
  use ELPH,           ONLY:elph_nq,elph_nq_used
 #endif
-#if defined _SC
+#if defined _SC || defined _RT
  use SC,             ONLY:SC_potential,SC_ng_Sx,SC_X_bands,SC_X_size
 #endif
  !
  implicit none
  type(levels) ::en        
-#if defined _SC
+#if defined _SC || defined _RT
  type(levels) ::en_sc
 #endif
  type(bz_samp)::q,k   
@@ -83,7 +83,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer, external :: ioX,ioOSTNTS,ioGROT,ioQINDX,ioRIM,ioE_RIM,&
 &                     ioXXVXC,ioQP,ioBS,ioDB1,ioKB_PP,&
 &                     ioCOL_CUT
-#if defined _SC
+#if defined _SC || defined _RT
  integer, external :: io_SC_components 
 #endif
 #if defined _ELPH
@@ -113,6 +113,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SC
  what_is_running='YAMBO_SC'
 #endif
+#if defined _RT
+ what_is_running='YAMBO_RT'
+#endif
 #if defined _MANYK || _RAS
  what_is_running='YAMBO_RAS_MANYK'
 #endif
@@ -129,7 +132,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (.not.FINALIZE.and..not.CLOSE_Gs) then
    call E_reset(en)
-#if defined _SC
+#if defined _SC || defined _RT
    call E_reset(en_sc)
 #endif
    call bz_samp_reset(k)
@@ -329,7 +332,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! SC 
  !
-#if defined _SC
+#if defined _SC || defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_SC_err=io_SC_components('E',en_sc,io_ID)
 #endif
@@ -538,7 +541,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! DFT
  !
-#if defined _SC
+#if defined _SC || defined _RT
  if (l_sc_run) then
    call initactivate(1,'SCPot FFTGvecs SCmixing SCBands BandMix')
    if (l_real_time) then
@@ -745,7 +748,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! GPL_EXCLUDE_END SC_IGNORE
        ! 
        ! 
-#if defined  _SC 
+#if defined _SC || defined _RT
        l_sc_run=runlevel_is_on('scpot')
        l_real_time=runlevel_is_on('negf')
 #endif
@@ -830,7 +833,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
      endif
      !
-#if defined _SC
+#if defined _SC || defined _RT
      if (l_sc_run.and.io_SC_err==0) then
        QP_ng_Sx=SC_ng_Sx
        X(2)%ib=SC_X_bands
@@ -1033,7 +1036,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
        ! Sc / NEGF
        !
-#if defined _SC
+#if defined _SC || defined _RT
        if ( trim(rstr_piece(i1)) == 'scpot' )  then
          if ( trim(rstr_piece(i1+1)) == 'exx' ) then
            SC_potential='EXX'

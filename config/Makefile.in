@@ -49,10 +49,10 @@ CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
 TARGETS  = all yambo interfaces ypp 
 UTILS    = changelog
 CLEANS   = clean clean_all
-PROJECTS = yambo_ph yambo_sc ypp_ph yambo_ras yambo_reels \
-	       ypp_ras yambo_manyk yambo_ras_manyk yambo_tb yambo_gamma \
+PROJECTS = yambo_ph yambo_sc yambo_ras yambo_reels \
+	       yambo_manyk yambo_ras_manyk yambo_tb yambo_gamma \
            yambo_magnon yambo_dipole_rim yambo_partial_diago \
-           yambo_solitons yambo_doubles
+           yambo_solitons yambo_doubles yambo_rt ypp_rt ypp_ph ypp_ras
 TESTS    = 
 EXE      = $(TARGETS) $(PROJECTS) $(TESTS)
 INTERFCS = a2y p2y e2y 
@@ -124,6 +124,9 @@ yambo_tb: libs
 yambo_sc: libs
 	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_SC"; $(mksrc)
 	@X2DO="yambo_sc"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_SC";$(mkx)
+yambo_rt: libs
+	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_RT"; $(mksrc)
+	@X2DO="yambo_rt"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_RT";$(mkx)
 yambo_manyk: libs
 	@LIBS2DO="$(PJ_MANYKLIBS)";ADF="-D_MANYK"; $(mksrc)
 	@X2DO="yambo_manyk"; XPATH="driver";XLIBS="$(PJ_MANYKLIBS)";ADF="-D_MANYK";$(mkx)
@@ -145,6 +148,9 @@ ypp_ph: libs
 ypp_ras: libs
 	@LIBS2DO="$(YPPRASLIBS)" ; ADF="-D_YPP_RAS";$(mksrc)
 	@X2DO="ypp_ras" ;XPATH="ypp";XLIBS="$(YPPRASLIBS)"; ADF="-D_YPP_RAS";$(mkx)
+ypp_rt: libs
+	@LIBS2DO="$(YPPLIBS)" ; ADF="-D_YPP_RT";$(mksrc)
+	@X2DO="ypp_rt" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_RT";$(mkx)
 # TESTS #
 yambo_test_1: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_TEST_1"; $(mksrc)

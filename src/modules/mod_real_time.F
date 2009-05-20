@@ -21,9 +21,7 @@
 !
 module real_time
  !
-#if defined _SC
- !
- use pars,      ONLY:SP,schlen
+ use pars,      ONLY:DP,SP,schlen
  !
  implicit none
  !
@@ -61,7 +59,6 @@ module real_time
  logical                  :: l_rt_efield  
  logical                  :: RT_resonant
  logical                  :: RT_no_intraband
- complex(SP)              :: A_norm ! Vector potential A(t) norm
  ! 
  ! Other
  !
@@ -87,9 +84,9 @@ module real_time
  !                                             
  ! Time dependent Hamiltonian, current and vec. potential
  !
- complex(SP), allocatable :: H_t(:,:,:)
- complex(SP), allocatable :: j_current(:,:)
- complex(SP), allocatable :: A_vec_pot(:,:)
+ complex(DP), allocatable :: j_current(:,:)
+ complex(DP), allocatable :: A_vec_pot(:,:)
+ complex(DP), allocatable :: A_norm(:) ! Vector potential A(t) norm
  !
  ! Non-interaction potential energies and potentials
  !
@@ -102,7 +99,7 @@ module real_time
      use pars,           ONLY:SP,schlen
      use drivers,        ONLY:l_sc_hartree
      use memory_m,       ONLY:mem_est
-     use SC,             ONLY:SC_bands,V_hartree_sc,local_V,Ho
+     use SC,             ONLY:SC_bands,V_hartree_sc,local_V
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
@@ -141,16 +138,19 @@ module real_time
      call mem_est("Gf_l_old",(/size(G_lesser_previous)/),(/2*SP/))
      !
      allocate(j_current(Tot_steps,3))
-     call mem_est("J_current",(/size(j_current)/),(/SP/))
+     call mem_est("J_current",(/size(j_current)/),(/DP/))
      !
      allocate(A_vec_pot(Tot_steps,3))
-     call mem_est("A_vec_pot",(/size(A_vec_pot)/),(/2*SP/))
+     call mem_est("A_vec_pot",(/size(A_vec_pot)/),(/DP/))
+     !
+     allocate(A_norm(Tot_steps))
+     call mem_est("A_norm",(/size(A_norm)/),(/DP/))
      !
    end subroutine RT_alloc
    
    subroutine RT_free
      !
-     use SC,             ONLY:V_hartree_sc,Ho
+     use SC,             ONLY:V_hartree_sc,Ho,H_nl_sc
      use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:E_xc
      implicit none
@@ -167,7 +167,7 @@ module real_time
      deallocate(V_hartree_sc,V_xc_0)
      call mem_est('Potentials')
      !
-     deallocate(Ho,H_t)
+     deallocate(Ho,H_nl_sc)
      call mem_est("Ho")
      !
      if(.not.l_RT_no_updates) then
@@ -195,8 +195,9 @@ module real_time
      deallocate(A_vec_pot)
      call mem_est("A_vec_pot")
      !
+     deallocate(A_norm)
+     call mem_est("A_norm")
+     !
    end subroutine RT_free
-   !
-#endif
    !
 end module

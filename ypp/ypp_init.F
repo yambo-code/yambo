@@ -160,6 +160,13 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    BZ_RIM_path="."
    gamma_radius=0.
    !
+#if defined _YPP_RT
+   !REMOVE SYMMETRIES
+   !
+   efield=0._SP
+   NEW_WF_path="."
+   !
+#endif
    ! GPL_EXCLUDE_END
    !
  endif
@@ -314,6 +321,12 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  l_bzrim     =runlevel_is_on('bzrim')
  !
+#if defined _YPP_RT
+ l_rsymm     =runlevel_is_on('rsymm')
+ !             
+ if (l_rsymm) call initactivate(1,"NEW_WF_path ExtField1 ExtField2 RmAllSymm")
+ !
+#endif
  if (l_bzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut GammaRadius")
  !
  ! GPL_EXCLUDE_END

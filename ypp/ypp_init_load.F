@@ -71,6 +71,9 @@ subroutine ypp_init_load(defs)
  ! GPL_EXCLUDE_START 
  !
  call it('r',defs,'bzrim',   '[R] BZ energy RIM analyzer')
+#if defined _YPP_RT
+ call it('r',defs,'rsymm',   '[R] Reduce Symmetries')
+#endif
  call it('r',defs,'surf',    '[R] Surface spectroscopy postprocessor')
  call it('r',defs,'ras',     '[R] RAS spectra generator')
  call it('r',defs,'reels',   '[R] REELS spectra generator')
@@ -172,6 +175,13 @@ subroutine ypp_init_load(defs)
  call it(defs,'BZ_RIM_path','Path to the SAVE folder with the RIM DB1',BZ_RIM_path)
  call it(defs,'GammaRadius','[a.u.] Maximum distance from gamma',&
 &              gamma_radius,verb_level=V_more)
+ !
+#if defined _YPP_RT
+ call it(defs,'ExtField1','External Field[1]',efield(1,:))
+ call it(defs,'ExtField2','External Field[2]',efield(2,:))
+ call it(defs,'NEW_WF_path','Path of the new SAVE folder',NEW_WF_path)
+ call it('f',defs,'RmAllSymm','Remove all symmetries') 
+#endif
  !
  ! GPL_EXCLUDE_END
  !

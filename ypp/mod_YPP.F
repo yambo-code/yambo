@@ -125,6 +125,16 @@ module YPP
  real(SP) :: Gamma_radius
  character(lchlen) :: BZ_RIM_path
  !
+#if defined _YPP_RT
+ !
+ ! Reduce Symmetries
+ !
+ logical  :: l_rsymm
+ real(SP) :: efield(2,3)
+ character(lchlen) :: NEW_WF_path
+ !
+#endif
+ !
  ! GPL_EXCLUDE_END RAS_IGNORE
  !
  interface

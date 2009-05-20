@@ -27,44 +27,43 @@ subroutine RT_Ext_Field(ik,Sigma_s,time)
  use X_m,            ONLY:DIP_iR_or_P
  use SC,             ONLY:SC_bands,SC_potential
  use real_time,      ONLY:Ext_Field_freq,Ext_Field_Int,Ext_Field_name,&
-&                         RT_step,RT_resonant,A_norm,RT_no_intraband,T_initial,&
-&                         A_vec_pot,I_time
+&                         RT_step,RT_resonant,RT_no_intraband,T_initial,&
+&                         A_norm,I_time,A_vec_pot
  implicit none
  integer,     intent(in)    :: ik
  real(SP),    intent(in)    :: time
- complex(SP), intent(inout) :: Sigma_s(SC_bands,SC_bands) 
+ complex(SP), intent(inout) :: Sigma_s(SC_bands,SC_bands)
  ! 
  ! Work Space
  !
- real(SP)    :: sigma
  integer     :: i1,i2
- complex(SP) :: cdotu,cdotc
- complex(DP) :: zdotu,zdotc
+ complex(DP) :: A_dot_P
  !
  select case(trim(Ext_Field_name))
    case('SINUSOIDAL')
      if(RT_resonant) then
-       A_norm=-Ext_Field_Int*exp(-(0._SP,1._SP)*Ext_Field_freq*time)/((0._SP,2._SP)*Ext_Field_freq)
+       A_norm(I_time)=-Ext_Field_Int*exp(-(0._SP,1._SP)*Ext_Field_freq*time)/((0._SP,2._SP)*Ext_Field_freq)
      else
-       A_norm=-Ext_Field_Int*sin(Ext_Field_freq*time)/Ext_Field_freq
+       A_norm(I_time)=-Ext_Field_Int*sin(Ext_Field_freq*time)/Ext_Field_freq
      endif
    case('DELTA')
      if(time>=T_initial) then
-       A_norm=Ext_Field_Int
+       A_norm(I_time)=Ext_Field_Int
      else
-       A_norm=(0.,0.)
+       A_norm(I_time)=(0.,0.)
      endif
    case('STEP')
      if(time>=T_initial) then
-       A_norm=Ext_Field_Int*time
+       A_norm(I_time)=Ext_Field_Int*time
      else
-       A_norm=(0.,0.)
+       A_norm(I_time)=(0.,0.) 
      endif
    case default
      call error(" External Field "//trim(Ext_Field_name)//" not implemented ") 
  end select
  !
- A_vec_pot(:,I_time)=EF_q0(:)*A_norm
+ A_vec_pot(I_time,:)=EF_q0(:)*A_norm(I_time)
+ !
  !
  ! Add the External Field to the singular part of the Self-Energy
  ! in case of complex Efield puts the correct Hermitian matrix
@@ -72,15 +71,16 @@ subroutine RT_Ext_Field(ik,Sigma_s,time)
  !
  if(.not.RT_no_intraband.or..not.RT_resonant) then
    do i1=1,SC_bands
-     Sigma_s(i1,i1)=Sigma_s(i1,i1)+real(cdotu(3,A_vec_pot(:,I_time),1,DIP_iR_or_P(:,i1,i1,ik,1),1))
+     Sigma_s(i1,i1)=Sigma_s(i1,i1)+sum(A_vec_pot(I_time,:)*DIP_iR_or_P(:,i1,i1,ik,1))
    enddo
  endif
  !
  do i1=1,SC_bands
    do i2=i1+1,SC_bands
       !     
-      Sigma_s(i1,i2)=Sigma_s(i1,i2)+cdotu(3,A_vec_pot(:,I_time),1,DIP_iR_or_P(:,i1,i2,ik,1),1)
-      Sigma_s(i2,i1)=Sigma_s(i2,i1)+cdotc(3,A_vec_pot(:,I_time),1,DIP_iR_or_P(:,i2,i1,ik,1),1)
+      A_dot_P=sum(A_vec_pot(I_time,:)*DIP_iR_or_P(:,i1,i2,ik,1))
+      Sigma_s(i1,i2)=Sigma_s(i1,i2)+A_dot_P
+      Sigma_s(i2,i1)=Sigma_s(i2,i1)+conjg(A_dot_P)
       !
    enddo
  enddo

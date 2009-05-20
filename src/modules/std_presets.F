@@ -74,6 +74,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 #if defined _SC
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,SC_E_threshold,&
 &                     using_SC_basis,SC_cycle_mixing,SC_fft_size
+#endif
+#if defined _RT
  use real_time,  ONLY:RT_step,T_initial, Ext_Field_freq, Tot_steps, Thermal_steps,   &
 &                     Ext_Field_int, Ext_Field_name,Integrator_name, &
 &                     EF_q0,TransRelax,LongRelax,RT_no_intraband,RT_resonant,l_RPA
@@ -374,6 +376,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  SC_E_threshold=0.01/HARTREE
  SC_potential='none'
  using_SC_basis=.FALSE.
+#endif
+#if _RT
  !
  ! Real Time
  !

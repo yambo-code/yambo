@@ -49,10 +49,10 @@ recursive subroutine RT_Integrator(G_new,G_old,T_step,en,Xen,k,q,Integrator,RT_t
  !
  use pars,           ONLY:SP,schlen
  use com,            ONLY:error
- use SC,             ONLY:SC_potential,SC_bands,H_rotate
+ use SC,             ONLY:SC_potential,SC_bands,H_rotate,H_nl_sc
  use R_lattice,      ONLY:bz_samp  
  use real_time,      ONLY:G_lesser,I1_lesser,I2_lesser,RT_step,RT_step, &
- &                        EULER,RK2,EXACT,RK2EXACT,H_t 
+ &                        EULER,RK2,EXACT,RK2EXACT
  use electrons,      ONLY:levels
  use matrix_operate, ONLY:mat_dia_inv,INV,USE_LK,DIAGO
  use X_m,            ONLY:X_poles,X_poles_tab 
@@ -68,7 +68,7 @@ recursive subroutine RT_Integrator(G_new,G_old,T_step,en,Xen,k,q,Integrator,RT_t
  ! Work Space
  !
  complex(SP) :: TmpMatrix(SC_bands,SC_bands)
- integer     :: ik,i1,i2,i,j,i_pole,iv,ic,SC_bands2_dot_nibz
+ integer     :: ik,i1,i2,SC_bands2_dot_nibz
 ! complex(SP) :: P_Factor(SC_bands,SC_bands)
 ! complex(SP) :: Go_phase
  !
@@ -146,7 +146,7 @@ recursive subroutine RT_Integrator(G_new,G_old,T_step,en,Xen,k,q,Integrator,RT_t
    !
    do ik=1,en%nk
      !
-     TmpMatrix(:,:)=H_t(:,:,ik)
+     TmpMatrix(:,:)=H_nl_sc(:,:,ik)
      !
      call mat_dia_inv(DIAGO,USE_LK,TmpMatrix,E_real=Xen%E(:SC_bands,ik,1))
      !

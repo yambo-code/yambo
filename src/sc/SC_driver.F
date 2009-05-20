@@ -28,13 +28,13 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use electrons,      ONLY:levels,nel,n_met_bands,el_density,n_sp_pol,n_spin,spin
  use R_lattice,      ONLY:bz_samp,qindx_S,G_m_G
  use D_lattice,      ONLY:Tel
- use QP_m,           ONLY:QP_state,QP_nb,QP_nk,QP_Vxc,QP_n_states,QP_table,&
-&                         QP_ng_Sx,QP_Sx,QP_t,QP_reset,QP_sc
- use SC,             ONLY:SC_bands,SC_iterations,SC_E_threshold,&
+ use QP_m,           ONLY:QP_nk,QP_n_states,QP_Sc,&
+&                         QP_ng_Sx,QP_Sx,QP_t,QP_reset
+ use SC,             ONLY:SC_bands,SC_iterations,SC_E_threshold,rho_n,&
 &                         SC_rho_threshold,SC_potential,it_now,E_convergence,&
 &                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,SC_bands_mixed,&
 &                         SC_cycle_mixing,V_hartree_sc,NSC_shot,SC_fft_size,&
-&                         SC_ng_Sx,SC_X_bands,SC_X_size,Ho
+&                         SC_ng_Sx,SC_X_bands,SC_X_size,Ho,E_bare,SC_alloc,SC_free
  use wave_func,      ONLY:wf_load,wf,wf_n_states,WF_free
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size,fft_size
@@ -60,10 +60,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! Iterations
  !
  integer                  :: it
- real(SP)                 :: E_bare(SC_bands,k%nibz,n_sp_pol),spread(SC_bands,k%nibz,n_sp_pol),&
+ real(SP)                 :: spread(SC_bands,k%nibz,n_sp_pol),&
 &                            E_previous(SC_bands,k%nibz,n_sp_pol),dE(SC_bands,k%nibz,n_sp_pol),&
 &                            E_conv(n_sp_pol)
- real(SP),    allocatable :: rho_n(:),V_xc_nm1(:,:),rho_nm1(:)
+ real(SP),    allocatable :: V_xc_nm1(:,:),rho_nm1(:)
  real(SP),    allocatable :: delta_rho(:)
  complex(SP), allocatable :: WFo(:,:)
  ! 
@@ -84,8 +84,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  integer                  :: first_el(SC_bands),n_of_el(SC_bands),n_deg_grp,&
 &                            b_of_max_proj(SC_bands,k%nibz,n_sp_pol)
  !
+ ! Switch to the user defined potential (if appropriate)
  !
- allocate(Ho(SC_bands,SC_bands,k%nibz,n_sp_pol))
+ if (.not.XC_switch()) return
  !
  ! Define SC internal variables
  !
@@ -95,32 +96,17 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  call QP_reset(qp_dummy)
  !
- ! Switch to the user defined potential (if appropriate)
- !
- if (.not.XC_switch()) return
- !
  call section('*','Self-Consistent '//trim(SC_potential))
- !
- ! Table for QP indexes
- !
- QP_nb=SC_bands
- QP_nk=k%nibz
- if (allocated(QP_state)) deallocate(QP_state)
- allocate(QP_state(QP_nb,QP_nk))
- QP_state=.TRUE.
  !
  ! Reference energies
  !
+ allocate(E_bare(SC_bands,k%nibz,n_sp_pol))
+ call mem_est("E_bare ",(/size(E_bare)/))
  E_bare=E%E(:SC_bands,:,:)
- !
- call QP_state_table_setup(E)
  !
  ! Perform a first I/O to check which DBs are present. In this VERIFY call
  ! even if the fft_size is not set it is verified anyway as it is defined
  ! by the Sigma_x/Chi RL vectors.
- !
- SC_cycle=SC_iterations> 0
- RESTART=.false.
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(1)) ! Energies
  io_E=io_SC_components('E' ,E,ID(1))
@@ -130,7 +116,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  io_V=io_SC_components('V' ,E,ID(3))
  !
  RESTART=all((/io_E==0,io_WF==0,io_V==0/))
+ !
  NSC_shot=SC_iterations==1.and.all((/io_E/=0,io_WF/=0,io_V==0.or.io_V==-2/)).and.local_V
+ !
+ SC_cycle=SC_iterations> 0
  if (NSC_shot) SC_cycle=.false.
  !
  ! Self-Consistent run, Non-SC shot ot nothing ?
@@ -227,70 +216,13 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  ! Allocation(s)...
  !
- allocate(rho_n(fft_size),rho_nm1(fft_size),&
-&         V_xc_sc(fft_size,n_spin),V_xc_nm1(fft_size,n_spin),V_hartree_sc(fft_size,n_spin))
- if (l_TF_precond) allocate(delta_rho(fft_size))
- call mem_est("Potentials",(/5*fft_size/),(/SP/))
+ call SC_alloc(E)
+ call SC_local_alloc()
  !
- allocate(WFo(fft_size,wf_n_states))
- call mem_est("WF_save",(/fft_size*wf_n_states/))
+ !  Ho (kinetic + potential)
+ !---------------------------
  !
- allocate(QP_Vxc(QP_n_states))
- call mem_est("QP_Vxc",(/QP_n_states/))
- !
- allocate(SC_R(SC_bands,SC_bands,k%nibz,n_sp_pol),H_nl_sc(SC_bands,SC_bands,n_sp_pol))
- call mem_est("SC_R H_nl_sc",(/size(SC_R),size(H_nl_sc)/))
- !
- !
- if (l_sc_chosex) then
-   allocate(QP_Sc(QP_n_states,1))
-   call mem_est("QP_Sc",(/QP_n_states/))
- endif
- !
- !  Vxc[rho_0] and Vh[rho_0]
- !===========================
- !
- call DFT_Vxc(E,k)
- call el_density(E,k,rho_n)
- call V_Hartree(rho_n,V_hartree_sc)
- !
- ! The Ho = -nabla**2. + V_ext is deduced from the input energies en0:
- !
- ! H = Ho + v_hxc[rho_in] and
- ! H psi_0(n) = en0(n) psi_0(n)
- !
- ! then Ho_n,m = en0(n) delta_n,m - v_hxc[rho_0]_n,m
- !
- ! where the matrix elements are calculated from the  psi_0(n)
- !
- ! ... so first store -Vhartree in Ho ...
- !========================================
- !
- Ho=(0.,0.)
- V_hartree_sc(:,n_sp_pol)=  V_hartree_sc(:,1)
- do ik=1,QP_nk
-   call V_to_H(ik,-V_hartree_sc,Ho(:,:,ik,:),wf)
- enddo
- !
- ! ... then remove Vxc[rho_0] also
- !=================================
- !
- do i1 = 1, QP_n_states
-   ib =QP_table(i1,1)
-   ibp=QP_table(i1,2)
-   ik =QP_table(i1,3)
-   i_spin = spin(QP_table(i1,:))
-   !
-   if (ib==ibp) Ho(ib,ibp,ik,i_spin) = Ho(ib,ibp,ik,i_spin) +&
-                &E_bare(ib,ik,i_spin)
-   !
-   Ho(ib,ibp,ik,i_spin) = Ho(ib,ibp,ik,i_spin) - QP_Vxc(i1)
-   !
-   if (ib==ibp) Ho(ib,ibp,ik,i_spin) = real(Ho(ib,ibp,ik,i_spin))
-   !
- end do
- deallocate(QP_Vxc)
- call mem_est("QP_Vxc")
+ call SC_common_build_Ho(E,Xk,k)
  !
  ! Reference wavefunctions
  !
@@ -439,7 +371,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      if (local_V) then
        !
        H_nl_sc(:,:,:) = Ho(:,:,ik,:)
-       call V_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WFo)
+       call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WFo)
        !
      else
        !
@@ -447,19 +379,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        ! Add Sigma_x and, eventually, Sigma_c (CHOSEX)
        !
-       do i1 = 1, QP_n_states
-         if (QP_table(i1,3)/=ik) cycle
-         ib =QP_table(i1,1)
-         ibp=QP_table(i1,2)
-         i_spin = spin(QP_table(i1,:))
-         H_nl_sc(ib,ibp,i_spin) =  QP_Sx(i1)
-         if (l_sc_chosex) H_nl_sc(ib,ibp,i_spin) = H_nl_sc(ib,ibp,i_spin) + QP_Sc(i1,1)
-         !
-         ! Force to be Hermitian
-         !
-         if (ib/=ibp) H_nl_sc(ibp,ib,i_spin) = conjg(H_nl_sc(ib,ibp,i_spin))
-         !
-       end do
+       call V_qp_basis_to_H(ik,QP_Sx,H_nl_sc)
+       if (l_sc_chosex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc)
        !
        ! Rotate H_nl_sc in the WFo basis.
        !
@@ -479,7 +400,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        ! Add V_Hartree
        !
-       call V_to_H(ik,V_hartree_sc,H_nl_sc,WFo)
+       call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WFo)
        !
      endif
      !
@@ -655,17 +576,46 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    call report_energies(real(b_of_max_proj)/HARTREE,k,Xk,SC_bands,(/ik,ik/),'Bnd',.FALSE.)
  enddo
  !
- deallocate(SC_R)
- call mem_est("SC_R")
- call WF_free()
+ deallocate(E_bare)
+ call mem_est("E_bare")
  if (SC_cycle.or.NSC_shot) then
-   deallocate(rho_n,rho_nm1,V_xc_sc,V_xc_nm1,V_hartree_sc,WFo,H_nl_sc)
-   if (allocated(delta_rho)) deallocate(delta_rho)
-   call mem_est("Hs Potentials WF_save H_nl_sc")
-   if (l_sc_chosex) then
-     deallocate(QP_Sc)
-     call mem_est("QP_Sc")
-   endif
+   call WF_free()
+   call SC_free()
+   call SC_local_free()
  endif
  !
+ contains
+   !
+   subroutine SC_local_alloc()
+     allocate(rho_nm1(fft_size))
+     call mem_est("rho_nm1",(/fft_size/),(/SP/))
+     !
+     allocate(V_xc_nm1(fft_size,n_spin))
+     call mem_est("V_xc_nm1",(/QP_n_states/))
+     !
+     if (l_TF_precond) then
+       allocate(delta_rho(fft_size))
+       call mem_est("delta_rho",(/fft_size/),(/SP/))
+     endif
+     !
+     allocate(WFo(fft_size,wf_n_states))
+     call mem_est("WFo",(/fft_size*wf_n_states/))
+     !
+   end subroutine
+   !
+   subroutine SC_local_free()
+     deallocate(rho_nm1)
+     call mem_est("rho_nm1")
+     !
+     deallocate(V_xc_nm1)
+     call mem_est("V_xc_nm1")
+     !
+     if (l_TF_precond) deallocate(delta_rho)
+     call mem_est("delta_rho")
+     !
+     deallocate(WFo)
+     call mem_est("WFo")
+     !
+   end subroutine
+   !
 end subroutine SC_driver

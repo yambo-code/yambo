@@ -23,7 +23,7 @@ subroutine check_symm(field_dir)
   !
   use pars,          ONLY:SP,lchlen
   use vec_operate,   ONLY:v_norm
-  use com,           ONLY:msg
+  use com,           ONLY:msg,error
   use R_lattice,     ONLY:rl_sop
   use D_lattice,     ONLY:nsym
   use stderr,        ONLY:intc
@@ -36,7 +36,6 @@ subroutine check_symm(field_dir)
   !
   integer  :: is,nsym_wrong
   real(SP) :: v(3)
-  logical  :: symm_ok
   !
   if(v_norm(field_dir)<1.E-5) return
   !
@@ -63,7 +62,7 @@ subroutine check_symm(field_dir)
   !
   if(nsym_wrong/=0) then
     call msg('s',' Number of not compatible symm '//intc(nsym_wrong)//' on '//intc(nsym))
-    call msg('s',' Use ypp -n to remove these symmetries ')
+    call error(' Use ypp -n to remove these symmetries ')
     stop '  '
   endif
   !

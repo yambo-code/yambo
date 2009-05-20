@@ -49,15 +49,14 @@ recursive subroutine RT_Integrator(G_new,G_old,T_step,en,Xen,k,q,Integrator,RT_t
  !
  use pars,           ONLY:SP,schlen
  use com,            ONLY:error
- use SC,             ONLY:SC_potential,SC_bands,H_rotate,H_nl_sc
+ use SC,             ONLY:SC_bands,H_rotate,H_nl_sc
  use R_lattice,      ONLY:bz_samp  
- use real_time,      ONLY:G_lesser,I1_lesser,I2_lesser,RT_step,RT_step, &
+ use real_time,      ONLY:I1_lesser,I2_lesser, &
  &                        EULER,RK2,EXACT,RK2EXACT
  use electrons,      ONLY:levels
- use matrix_operate, ONLY:mat_dia_inv,INV,USE_LK,DIAGO
- use X_m,            ONLY:X_poles,X_poles_tab 
- !
+ use matrix_operate, ONLY:mat_dia_inv,USE_LK,DIAGO
  implicit none
+ !
  character(schlen), intent(in) :: Integrator
  type(bz_samp),     intent(in) :: k,q
  type(levels),      intent(in) :: en,Xen

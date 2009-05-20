@@ -31,7 +31,7 @@ subroutine DFT_Vxc(E,Xk)
  use wave_func,     ONLY:wf,wf_state
  use xc_functionals,ONLY:V_xc,xc_string,el_mag
  use global_XC,     ONLY:WF_kind,WF_xc_functional
-#if defined _SC
+#if defined _SC || defined _RT
  use com,           ONLY:error
  use IO_m,          ONLY:REP,VERIFY
  use SC,            ONLY:load_SC_components,V_xc_sc,V_hartree_sc,SC_fft_size
@@ -59,14 +59,14 @@ subroutine DFT_Vxc(E,Xk)
  !
  allocate(V_xc(fft_size,n_spin),el_mag(fft_size,3))
  !
-#if defined _SC
+#if defined _SC || defined _RT
  if (WF_KIND< 300 ) then
    !
    ! ...LDA (and more) Vxc
    !
 #endif
    call xc_lda_driver(E,Xk,WF_KIND,WF_xc_functional,1)
-#if defined _SC
+#if defined _SC || defined _RT
  else
    !
    ! ...SC EXX and EXX+LDA_C

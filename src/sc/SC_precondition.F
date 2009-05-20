@@ -26,7 +26,7 @@ subroutine SC_precondition(delta_rho)
   !
  use pars,          ONLY: pi,DP
  use R_lattice,     ONLY: bare_qpg
- use D_lattice,     ONLY: DL_vol,alat
+ use D_lattice,     ONLY: DL_vol
  use fft_m,         ONLY: fft_size,fft_dim,fftw_plan,fft_g_table
  use wave_func,     ONLY: wf_ng
  use electrons,     ONLY: nel

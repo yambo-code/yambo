@@ -21,17 +21,15 @@
 !
 subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  !
- use pars,           ONLY:SP,DP,schlen
- use drivers,        ONLY:l_sc_pz
+ use pars,           ONLY:SP,DP
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,Ho
+ use SC,             ONLY:SC_bands,V_hartree_sc,Ho,rho_n
  use X_m,            ONLY:P_square
- use real_time,      ONLY:G_lesser,RT_step,rho,l_RT_no_updates,Hartree_plus_Vxc_0
+ use real_time,      ONLY:G_lesser,l_RT_no_updates,Hartree_plus_Vxc_sc
  use electrons,      ONLY:levels,n_sp_pol
  use wave_func,      ONLY:wf
  use FFT_m,          ONLY:fft_size
- use real_time,      ONLY:V_xc_0,V_hartree_0
- use xc_functionals, ONLY:V_xc,E_xc
+ use xc_functionals, ONLY:E_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  !
  implicit none 
@@ -100,7 +98,7 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
      !
      TmpMatrix=(0._SP,0._SP)
      !
-     call V_to_H(ik,V_hartree_sc,TmpMatrix,wf)
+     call V_real_space_to_H(ik,V_hartree_sc,TmpMatrix,wf)
      !
 #if defined _DOUBLE
      E_h=E_h-(0._SP,0.5_SP)*zdotc(SC_bands*SC_bands,TmpMatrix(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
@@ -118,9 +116,9 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
    call IO_mute("  ")
    !
 #if defined _DOUBLE
-   Exc=ddot(fft_size,rho,1,E_xc,1)
+   Exc=ddot(fft_size,rho_n,1,E_xc,1)
 #else 
-   Exc=sdot(fft_size,rho,1,E_xc,1)
+   Exc=sdot(fft_size,rho_n,1,E_xc,1)
 #endif
    !
  else
@@ -129,9 +127,9 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
    !
    do ik=1,en%nk
 #if defined _DOUBLE
-     E_h=E_h-(0.,1.0)*zdotc(SC_bands*SC_bands,Hartree_plus_Vxc_0(:,:,ik),1,G_lesser(:,:,ik),1)*k%weights(ik)
+     E_h=E_h-(0.,1.0)*zdotc(SC_bands*SC_bands,Hartree_plus_Vxc_sc(:,:,ik),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #else
-     E_h=E_h-(0.,1.0)*cdotc(SC_bands*SC_bands,Hartree_plus_Vxc_0(:,:,ik),1,G_lesser(:,:,ik),1)*k%weights(ik)
+     E_h=E_h-(0.,1.0)*cdotc(SC_bands*SC_bands,Hartree_plus_Vxc_sc(:,:,ik),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #endif
    enddo
    !

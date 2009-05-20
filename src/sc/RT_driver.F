@@ -21,23 +21,22 @@
 !
 subroutine RT_driver(en,Xen,X,k,xk,q)
  !
- use pars,           ONLY:SP,DP,lchlen,schlen
+ use pars,           ONLY:SP,lchlen
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:FS2AUT
  use com,            ONLY:msg,of_open_close
  use timing,         ONLY:live_timing 
  use memory_m,       ONLY:mem_est
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,n_sp_pol
  use X_m,            ONLY:X_t,Eval_P_and_P2_only,X_alloc
  use wave_func,      ONLY:wf,wf_load,wf_ng,WF_free
  use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:QP_nb,QP_nk
- use SC,             ONLY:SC_potential,SC_bands,Ho
- use real_time,      ONLY:EF_q0,Thermal_steps,Tot_steps,RT_step,G_lesser, &
+ use SC,             ONLY:SC_potential,SC_bands,Ho,E_bare
+ use real_time,      ONLY:Thermal_steps,Tot_steps,RT_step,G_lesser, &
 &                         G_lesser_previous,l_rt_efield,RT_alloc,RT_free, &
 &                         A_vec_pot,A_norm,l_eps_analyze,I_time,Integrator_name,&
 &                         j_current
- use xc_functionals, ONLY:V_xc
  !
  implicit none
  !
@@ -87,6 +86,12 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  !
  QP_nb=SC_bands
  QP_nk=k%nibz
+ !
+ ! Reference energies
+ !
+ allocate(E_bare(SC_bands,k%nibz,n_sp_pol))
+ call mem_est("E_bare ",(/size(E_bare)/))
+ E_bare=en%E(:SC_bands,:,:)
  !
  call SC_common_build_Ho(Xen,Xk,k)
  !
@@ -149,6 +154,12 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  !
  if (l_eps_analyze) call RT_eps_analyze(j_current,A_norm) 
  !
+ ! Finalize
+ !-----------
+ !
+ deallocate(E_bare)
+ call mem_est("E_bare")
+ !
  call RT_free()
  !
  call WF_free()
@@ -158,53 +169,3 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  call set_real_printed_length()
  !
 end subroutine RT_driver
-!
-!    if(DiagH_Iter/=0) then
-!      if(mod(it,DiagH_Iter)==0) then
-!      !      
-!      dumb_ch='[RT] Hamiltonianan Diagonalization '
-!      call live_time_msg("n",dumb_ch,"","%s")
-!      !
-!      call msg('nr','[RT] Iterations               :',it)
-!      call msg('r' ,'[RT] Real Time                :',RT_time/FS2AUT)
-!      !
-!      ! Diagonalize H_nl_sc 
-!      !=====================
-!      !
-!      do ik=1,en%nk
-!        !
-!        ! Find the natural orbitals
-!        !
-!        TmpMatrix=H_t(:,:,ik) 
-!        call mat_dia_inv(DIAGO,USE_LK,TmpMatrix,E_real=Xen%E(1:SC_bands,ik,1))
-!        !
-!        do ib=1,SC_bands
-!          call cgemv('n',SC_bands,SC_bands,-(0._SP,1._SP),G_lesser(:,:,ik),SC_bands,TmpMatrix(:,ib),1,(0._SP,0._SP),V_tmp1,1)
-!#if defined _DOUBLE
-!          Occ_Natural(ib,ik)=real(zdotc(SC_bands,TmpMatrix(:,ib),1,V_tmp1,1))
-!#else 
-!          Occ_Natural(ib,ik)=real(cdotc(SC_bands,TmpMatrix(:,ib),1,V_tmp1,1))
-!#endif   
-!        enddo
-!        !
-!      enddo
-!      !
-!      call fermi_level(Xen,k,Tel,0)
-!      !
-!      call report_energies(Xen%E(:SC_bands,:,:)-Xen%Efermi(1),k,Xk,SC_bands,(/1,Xen%nk/),'E  ',.FALSE.)
-!      !
-!      ! Now write the occupation
-!      !
-!      do ik=1,Xen%nk
-!        do i1=1,SC_bands,8 
-!          !      
-!          call msg('r','n   ',(/(Occ_Natural(ib,ik),ib=i1,min(i1+7,SC_bands))/))
-!          !
-!        enddo
-!      enddo
-!     !
-!     endif
-!   endif
-!
-! if(DiagH_Iter/=0) call of_open_close(qp_fname)
-

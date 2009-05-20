@@ -22,10 +22,10 @@
 !
 subroutine RT_eps_analyze(j_current,A_norm)
  !
- use pars,      ONLY:pi,SP,DP,schlen,lchlen
+ use pars,      ONLY:SP,DP,schlen,lchlen,pi
  use units,     ONLY:HARTREE
  use com,       ONLY:msg,of_open_close
- use real_time, ONLY:EF_q0,tot_steps,Ext_Field_name,Ext_Field_Int,RT_step, &
+ use real_time, ONLY:tot_steps,Ext_Field_name,Ext_Field_Int,RT_step, &
 &                    T_initial
  use memory_m,  ONLY:mem_est 
  !

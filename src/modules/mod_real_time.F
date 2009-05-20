@@ -62,7 +62,6 @@ module real_time
  ! 
  ! Other
  !
- real(SP), allocatable   :: rho(:)
  real(SP), allocatable   :: V_hartree_0(:,:)  
  real(SP), allocatable   :: V_xc_0(:,:) 
  real(SP)                :: Thermal_time
@@ -90,7 +89,7 @@ module real_time
  !
  ! Non-interaction potential energies and potentials
  !
- complex(SP), allocatable :: Hartree_plus_Vxc_0(:,:,:)
+ complex(SP), allocatable :: Hartree_plus_Vxc_sc(:,:,:)
  !
  contains
    !
@@ -99,7 +98,7 @@ module real_time
      use pars,           ONLY:SP,schlen
      use drivers,        ONLY:l_sc_hartree
      use memory_m,       ONLY:mem_est
-     use SC,             ONLY:SC_bands,V_hartree_sc,local_V
+     use SC,             ONLY:SC_bands,V_hartree_sc,local_V,V_xc_sc,SC_alloc
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
@@ -108,24 +107,21 @@ module real_time
      !
      type(levels), intent(in) :: en
      !
-     allocate(rho(fft_size))
-     call mem_est('Density',(/fft_size/),(/SP/))
+     call SC_alloc(en)
      !
      allocate(E_xc(fft_size))
      call mem_est('Exc',(/fft_size/),(/SP/))
      !
      allocate(V_hartree_0(fft_size,n_spin))
-     call mem_est('Hartree',(/fft_size/),(/(1+n_spin)*SP/))
-     !  
-     allocate(V_xc_0(fft_size,n_spin),V_hartree_sc(fft_size,n_spin))
+     allocate(V_xc_0(fft_size,n_spin))
      call mem_est('Potentials',(/fft_size/),(/(1+n_spin)*2*SP/))
      !
      allocate(G_lesser(SC_bands,SC_bands,en%nk))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
      !
      if(.not.l_RT_no_updates) then
-       allocate(Hartree_plus_Vxc_0(SC_bands,SC_bands,en%nk))
-       call mem_est("Hartree_plus_Vxc_0",(/size(Hartree_plus_Vxc_0)/),(/2*SP/))
+       allocate(Hartree_plus_Vxc_sc(SC_bands,SC_bands,en%nk))
+       call mem_est("Hartree_plus_Vxc_sc",(/size(Hartree_plus_Vxc_sc)/),(/2*SP/))
      endif
      !
      allocate(I1_lesser(SC_bands,SC_bands,en%nk))
@@ -150,30 +146,23 @@ module real_time
    
    subroutine RT_free
      !
-     use SC,             ONLY:V_hartree_sc,Ho,H_nl_sc
+     use SC,             ONLY:V_hartree_sc,Ho,H_nl_sc,V_xc_Sc,SC_free
      use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:E_xc
      implicit none
      !
+     call SC_free()
+     !
      deallocate(E_xc)
      call mem_est('Exc')
      !
-     deallocate(rho)
-     call mem_est('Density')
-     !
-     deallocate(V_hartree_0)
-     call mem_est('Hartree')
-     !  
-     deallocate(V_hartree_sc,V_xc_0)
+     deallocate(V_hartree_0,V_xc_0)
      call mem_est('Potentials')
-     !
-     deallocate(Ho,H_nl_sc)
-     call mem_est("Ho")
      !
      if(.not.l_RT_no_updates) then
        !      
-       deallocate(Hartree_plus_Vxc_0)
-       call mem_est("Hartree_plus_Vxc_0")
+       deallocate(Hartree_plus_Vxc_sc)
+       call mem_est("Hartree_plus_Vxc_sc")
        !
      endif
      !

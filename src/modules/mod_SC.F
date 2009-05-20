@@ -54,10 +54,12 @@ module SC
  complex(SP), allocatable :: SC_R(:,:,:,:)
  real(SP),    allocatable :: V_xc_sc(:,:)
  real(SP),    allocatable :: V_hartree_sc(:,:)
+ real(SP),    allocatable :: rho_n(:)
  !
  ! Kinetic Energy and Ionic potential energy
  !
  complex(SP), allocatable :: Ho(:,:,:,:)
+ real(SP),    allocatable :: E_bare(:,:,:)
  !
  ! Non-Local part (sigma_x, sigma_chosex)
  !
@@ -75,6 +77,87 @@ module SC
  end interface  
  !
  contains
+   !
+   subroutine SC_alloc(E)
+     use pars,           ONLY:SP
+     use R_lattice,      ONLY:nkibz
+     use drivers,        ONLY:l_real_time,l_sc_chosex
+     use electrons,      ONLY:n_spin,n_sp_pol,levels
+     use FFT_m,          ONLY:fft_size
+     use QP_m,           ONLY:QP_Vxc,QP_n_states,QP_nk,QP_Sc,QP_state,QP_nb
+     use memory_m,       ONLY:mem_est
+     implicit none
+     !
+     type(levels) :: E
+     !
+     ! Build-up QP table
+     !
+     QP_nb=SC_bands
+     QP_nk=nkibz
+     allocate(QP_state(QP_nb,QP_nk))
+     call mem_est("QP_state",(/QP_n_states*QP_nk/))
+     QP_state=.TRUE.
+     call QP_state_table_setup(E)
+     !
+     allocate(Ho(SC_bands,SC_bands,E%nk,n_sp_pol),H_nl_sc(SC_bands,SC_bands,E%nk))
+     call mem_est("Ho H_nl_sc",(/size(Ho)/),(/2*2*SP/))
+     !
+     allocate(rho_n(fft_size))
+     call mem_est("rho",(/fft_size/),(/SP/))
+     !
+     allocate(V_xc_sc(fft_size,n_spin),V_hartree_sc(fft_size,n_spin))
+     call mem_est("Optentials",(/2*size(V_xc_sc)/))
+     !
+     allocate(H_nl_sc(SC_bands,SC_bands,n_sp_pol))
+     call mem_est("H_nl_sc",(/size(H_nl_sc)/))
+     !
+     allocate(QP_Vxc(QP_n_states))
+     call mem_est("QP_Vxc",(/QP_n_states/))
+     !
+     if (l_sc_chosex) then
+       allocate(QP_Sc(QP_n_states,1))
+       call mem_est("QP_Sc",(/QP_n_states/))
+     endif
+     !
+     if (.not.l_real_time) then
+       allocate(SC_R(SC_bands,SC_bands,QP_nk,n_sp_pol))
+       call mem_est("SC_R",(/size(SC_R)/))
+     endif
+     !
+   end subroutine
+   !
+   subroutine SC_free()
+     use drivers,        ONLY:l_real_time,l_sc_chosex
+     use QP_m,           ONLY:QP_Vxc,QP_Sc
+     use memory_m,       ONLY:mem_est
+     implicit none
+     !
+     deallocate(Ho,H_nl_sc)
+     call mem_est("Ho H_nl_sc")
+     !
+     deallocate(rho_n)
+     call mem_est("rho")
+     !
+     deallocate(V_xc_sc,V_hartree_sc)
+     call mem_est("Optentials")
+     !
+     deallocate(H_nl_sc)
+     call mem_est("H_nl_sc")
+     !
+     deallocate(QP_Vxc)
+     call mem_est("QP_Vxc")
+     !
+     if (l_sc_chosex) then
+       deallocate(QP_Sc)
+       call mem_est("QP_Sc")
+     endif
+     !
+     if (.not.l_real_time) then
+       deallocate(SC_R)
+       call mem_est("SC_R")
+     endif
+     !
+   end subroutine
    !
    subroutine H_rotate(R,H,N,direction)
      !

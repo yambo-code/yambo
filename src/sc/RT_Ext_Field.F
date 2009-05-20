@@ -21,13 +21,13 @@
 !
 subroutine RT_Ext_Field(ik,Sigma_s,time)
  !
- use pars,           ONLY:SP,DP,pi
+ use pars,           ONLY:SP,DP
  use com,            ONLY:error
  use real_time,      ONLY:EF_q0
  use X_m,            ONLY:DIP_iR_or_P
- use SC,             ONLY:SC_bands,SC_potential
+ use SC,             ONLY:SC_bands
  use real_time,      ONLY:Ext_Field_freq,Ext_Field_Int,Ext_Field_name,&
-&                         RT_step,RT_resonant,RT_no_intraband,T_initial,&
+&                         RT_resonant,RT_no_intraband,T_initial,&
 &                         A_norm,I_time,A_vec_pot
  implicit none
  integer,     intent(in)    :: ik

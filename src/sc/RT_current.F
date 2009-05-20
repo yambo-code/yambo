@@ -24,8 +24,7 @@
 subroutine RT_current(j_current,en,xK,A_vec_pot,G_lesser)
  !
  use pars,           ONLY:SP,DP,pi
- use matrix_operate, ONLY:m3det
- use R_lattice,      ONLY:bz_samp,RL_vol,rl_sop
+ use R_lattice,      ONLY:bz_samp,RL_vol
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv,i_time_rev
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel,levels

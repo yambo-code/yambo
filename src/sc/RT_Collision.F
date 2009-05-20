@@ -26,14 +26,13 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels,el_density,n_sp_pol
- use drivers,        ONLY:l_sc_exx,l_sc_chosex,l_sc_hartree,l_sc_pz,l_sc_lda_x,&
-&                         l_sc_hf,l_sc_exxc
+ use drivers,        ONLY:l_sc_pz
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc
- use QP_m,           ONLY:QP_nk,QP_Vxc,QP_n_states,QP_table 
- use real_time,      ONLY:I1_lesser,I2_lesser,V_xc_0,l_RT_no_updates,rho,V_hartree_0, &
- &                        Thermal_Time,l_rt_efield,TransRelax,LongRelax,T_initial, &
- &                        Hartree_plus_Vxc_0,l_RPA
+ use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,V_xc_sc,rho_n
+ use QP_m,           ONLY:QP_nk
+ use real_time,      ONLY:I1_lesser,I2_lesser,l_RT_no_updates, &
+ &                        l_rt_efield,TransRelax,LongRelax,T_initial, &
+ &                        Hartree_plus_Vxc_sc,l_RPA,V_hartree_0,V_xc_0,Thermal_time
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
@@ -61,17 +60,18 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
  !
  if(.not.l_RT_no_updates) then
    !
-   call el_density(Xen,k,rho,G_lesser=G_input)
+   call el_density(Xen,k,rho_n,G_lesser=G_input)
    !
-   call V_Hartree(rho,V_hartree_sc)
+   call V_Hartree(rho_n,V_hartree_sc)
    !
    if(l_sc_pz) then
      !
      call xc_lda_driver(Xen,k,WF_KIND,WF_xc_functional,1)
+     V_xc_sc=V_xc
      !
    else
      !
-     V_xc=V_xc_0
+     V_xc_sc=V_xc_0
      !
    endif
    !
@@ -81,7 +81,7 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
    ! equivalent to RPA without local field effects
    !
    V_hartree_sc     =V_hartree_0
-   V_xc             =V_xc_0
+   V_xc_sc          =V_xc_0
    !
  endif
  !
@@ -95,12 +95,12 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
    !      
    Sigma_s=(0._SP,0._SP)
    !
-   !  I subtract the V_xc_0 term if there is a self-energy /=0 (at least V_h)
+   !  I subtract the V_xc_sc term if there is a self-energy /=0 (at least V_h)
    !  and not l_keep_vxc=.true. (used to include local field effects only)
    !
    if(.not.l_RT_no_updates.and..not.l_RPA) then 
      !  
-     call V_to_H(ik,-V_xc_0,Sigma_s,wf)
+     call V_real_space_to_H(ik,-V_xc_sc,Sigma_s,wf)
      !
    endif
    !
@@ -115,12 +115,12 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
    ! Fill the Singular (in time) Self-Energy Sigma_s(:,:,:)
    !
    if(.not.l_RT_no_updates) then
-     call V_to_H(ik,V_hartree_sc+V_xc,Sigma_s,wf)
+     call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,Sigma_s,wf)
    else
 #if defined _DOUBLE
-     call zaxpy(SC_bands2,(1.,0.),Hartree_plus_Vxc_0(:,:,ik),1,Sigma_s(:,:,1),1)
+     call zaxpy(SC_bands2,(1.,0.),Hartree_plus_Vxc_sc(:,:,ik),1,Sigma_s(:,:,1),1)
 #else
-     call caxpy(SC_bands2,(1.,0.),Hartree_plus_Vxc_0(:,:,ik),1,Sigma_s(:,:,1),1)
+     call caxpy(SC_bands2,(1.,0.),Hartree_plus_Vxc_sc(:,:,ik),1,Sigma_s(:,:,1),1)
 #endif
    endif
    !

@@ -3,7 +3,7 @@ FFT_object = fft_1d.o fft_1d_real.o
 #else
 FFT_object = fft_1d.o fft_1d_real.o  sgfft.o rfft.o fft_singleton.o
 #endif
-#if defined _SC
+#if defined _SC || defined _RT
 WF_rot_object = WF_rotate.o
 #else
 WF_rot_object =

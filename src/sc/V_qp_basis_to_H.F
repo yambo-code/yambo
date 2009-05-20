@@ -19,60 +19,35 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine V_to_H(ik,V,H,wf)
+subroutine V_qp_basis_to_H(ik,V,H)
  !
  use electrons,      ONLY:n_sp_pol,spin
  use pars,           ONLY:SP
- use FFT_m,          ONLY:fft_size
  use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
- use wave_func,      ONLY:wf_state,wf_n_states
  implicit none
  !
- integer     :: ik,i_spin
- real(SP)    :: V(fft_size,n_sp_pol)
- complex(SP) :: H(QP_nb,QP_nb,n_sp_pol),wf(fft_size,wf_n_states)
+ integer     :: ik
+ real(SP)    :: V(QP_n_states)
+ complex(SP) :: H(QP_nb,QP_nb,n_sp_pol)
  !
  ! Work Space
  !
- integer    :: i1,ib,ibp,ifft,ifftp
- complex(SP):: c_ws(fft_size)
-#if defined _DOUBLE
- complex(DP):: zdotc
-#else
- complex(SP):: cdotc
-#endif
+ integer    :: i1,ib,ibp,i_spin
  !
  ! Fill ...
  !
  do i1=1,QP_n_states
    !
    if (QP_table(i1,3)/=ik) cycle
-   !
    ib =QP_table(i1,1)
    ibp=QP_table(i1,2)
-   i_spin=spin(qp_table(i1,:))
+   i_spin = spin(QP_table(i1,:))
+   H(ib,ibp,i_spin) = H(ib,ibp,i_spin) + V(i1)
    !
-   ! <ifft|V|ifftp>
+   ! Force to be Hermitian
    !
-   ifft =wf_state(ib,ik,i_spin)
-   ifftp=wf_state(ibp,ik,i_spin)
-   c_ws(:)=V(:,i_spin)*wf(:,ifftp)
-   !
-#if defined _DOUBLE
-   H(ib,ibp,i_spin) = H(ib,ibp,i_spin) + zdotc(fft_size,wf(:,ifft),1,c_ws(:),1)
-#else
-   H(ib,ibp,i_spin) = H(ib,ibp,i_spin) + cdotc(fft_size,wf(:,ifft),1,c_ws(:),1)
-#endif
+   if (ib/=ibp) H(ibp,ib,i_spin) = conjg(H(ib,ibp,i_spin))
    !
  end do
- !
- ! ... and symmetrize
- !
- do ib=1,QP_nb
-   H(ib,ib,i_spin)=real(H(ib,ib,i_spin))
-   do ibp=1,ib-1
-     H(ib,ibp,i_spin)=conjg(H(ibp,ib,i_spin))
-   enddo
- enddo
  !
 end subroutine 

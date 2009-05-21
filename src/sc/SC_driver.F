@@ -29,10 +29,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use R_lattice,      ONLY:bz_samp,qindx_S,G_m_G
  use D_lattice,      ONLY:Tel
  use QP_m,           ONLY:QP_nk,QP_n_states,QP_Sc,&
-&                         QP_ng_Sx,QP_Sx,QP_t,QP_reset
- use SC,             ONLY:SC_bands,SC_iterations,SC_E_threshold,rho_n,&
+&                         QP_ng_Sx,QP_Sx,QP_t,QP_reset,SC_E_threshold,SC_bands_mixed
+ use SC,             ONLY:SC_bands,SC_iterations,rho_n,&
 &                         SC_rho_threshold,SC_potential,it_now,E_convergence,&
-&                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,SC_bands_mixed,&
+&                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,&
 &                         SC_cycle_mixing,V_hartree_sc,NSC_shot,SC_fft_size,&
 &                         SC_ng_Sx,SC_X_bands,SC_X_size,Ho,E_bare,SC_alloc,SC_free
  use wave_func,      ONLY:wf_load,wf,wf_n_states,WF_free

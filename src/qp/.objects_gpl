@@ -1,5 +1,5 @@
 #if defined _GW_REAL_AXIS
-GW_REAL_AXIS_objects = QP_secant.o QP_raxis.o QP_W2Sc.o \
+GW_REAL_AXIS_objects = QP_secant.o QP_real_axis.o QP_W2Sc.o \
                        QP_life_transitions.o secant.o bracket.o
 #else
 GW_REAL_AXIS_objects =

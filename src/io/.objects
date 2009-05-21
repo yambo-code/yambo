@@ -1,19 +1,21 @@
+SC_objects = 
 #if defined _SC || defined _RT
 SC_objects = load_SC_components.o io_SC_components.o
-#else
-SC_objects = 
 #endif
+DB_objects = 
 #if defined _DOUBLES
 DB_objects = ioBS_doubles.o
-#else
-DB_objects = 
+#endif
+ELPH_objects = 
+#if defined _ELPH || defined _YPP_ELPH || defined _SOLITONS
+ELPH_objects = ioELPH.o
 #endif
 TEST_1_objects = ioBS.o
 #if defined _TEST_1
 TEST_1_objects = ioBS_test_1.o
 #endif
 objs = ver_is_gt_or_eq.o IO_mute.o \
-       ioRIM.o        ioGROT.o     ioELPH.o \
+       ioRIM.o        ioGROT.o     $(ELPH_objects) \
        ioOSTNTS.o     ioQINDX.o    ioQP.o      ioX.o \
        ioDB1.o        ioWF.o       ioKB_PP.o   ioXXVXC.o \
        $(TEST_1_objects)           ioBS_Fxc.o  \

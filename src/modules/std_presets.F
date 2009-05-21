@@ -31,8 +31,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use QP_m,       ONLY:QP_rep_string,QP_dSc_steps,QP_n_W_freqs,&
 &                     QP_Sx_low_band,QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_W_er,QP_W_dr,QP_cg_percent,&
-&                     QP_ctl_db,QP_ctl_interp_neigh,&
-&                     QP_Sc_steps,QP_G_er,QP_G_dr,&
+&                     QP_ctl_db,QP_ctl_interp_neigh,SC_E_threshold, &
+&                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
 &                     QP_W_partially_done,GWo_SC_done,GWo_iterations,&
 &                     CHOSEX_use_empties,QP_ctl_E,QP_ctl_W,QP_ctl_Z
  use functions,  ONLY:bose_E_cut
@@ -67,12 +67,14 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_SVD_digits,&
 &                     FXC_is_causal
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
+#if defined _ELPH || defined _SOLITONS
  use ELPH,       ONLY:ph_modes,elph_nb,PH_null_E_rgn
+#endif
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND
 #if defined _SC
- use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,SC_E_threshold,&
+ use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,&
 &                     using_SC_basis,SC_cycle_mixing,SC_fft_size
 #endif
 #if defined _RT
@@ -81,7 +83,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     EF_q0,TransRelax,LongRelax,RT_no_intraband,RT_resonant,l_RPA
 
 #endif
- use SC,         ONLY:SC_band_mixing
  !
  implicit none
  !
@@ -306,6 +307,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  GWo_iterations=0
  GWo_SC_done=.false.
  CHOSEX_use_empties=.false.
+ SC_E_threshold=0.01/HARTREE
+ SC_band_mixing=100.
  !
  ! QP_ctl control
  !
@@ -360,11 +363,14 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  GS_xc_FUNCTIONAL=-1             ! unknow 
  GS_xc_KIND=-1                   ! unknow 
  !
+#if defined _ELPH || defined _SOLITONS
+ !
  ! ELPH
  !
  ph_modes=0
  elph_nb=0
  ph_null_E_rgn=0.1/HARTREE
+#endif
  !
 #if defined _SC
  ! SC
@@ -373,7 +379,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  SC_iterations=100
  SC_cycle_mixing=0.5
  SC_rho_threshold=1.E-5
- SC_E_threshold=0.01/HARTREE
  SC_potential='none'
  using_SC_basis=.FALSE.
 #endif
@@ -397,6 +402,5 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_RPA=.FALSE.
  !
 #endif
- SC_band_mixing=100.
  !
 end subroutine

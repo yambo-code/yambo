@@ -79,7 +79,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  !
  !I need to store on disk the <W> m. elemnts
  !
- call QP_raxis(X,Xen,Xk,en,k,q,qp,Xw,0)
+ call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0)
  !
  !I prepare the Sc energy type
  !

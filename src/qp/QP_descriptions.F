@@ -34,7 +34,9 @@ subroutine QP_descriptions(qp,X,Xw)
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:BZ_RIM_tot_nkpts
  use IO_m,          ONLY:ver_is_gt_or_eq
+#if defined _ELPH || defined _SOLITONS
  use ELPH,          ONLY:QP_PH_n_G_bands
+#endif
  implicit none
  !
  type(QP_t)::qp
@@ -150,6 +152,8 @@ subroutine QP_descriptions(qp,X,Xw)
 &       ' Sx RL components       :',QP_ng_Sx
  endif
  !
+#if defined _ELPH || defined _SOLITONS
+ !
  ! El-Ph
  !
  if (ver_is_gt_or_eq(-1,(/3,0,1/))) then
@@ -180,6 +184,8 @@ subroutine QP_descriptions(qp,X,Xw)
    endif
    !
  endif
+ !
+#endif
  !
  i4=(/1,1,0,0/)
  do while(QP_state_extract(i4)>0)

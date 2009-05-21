@@ -37,7 +37,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use X_m,           ONLY:X_t,long_path
  use QP_m,          ONLY:QP_rep_string,QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,QP_Sx_low_band,&
-&                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations
+&                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,SC_band_mixing,&
+&                        SC_E_threshold
  use timing,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,non_periodic_directions
@@ -54,7 +55,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use functions,     ONLY:bose_E_cut
 #if defined _SC || defined _RT
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential,&
-&                        SC_E_threshold,SC_rho_threshold,SC_cycle_mixing
+&                        SC_rho_threshold,SC_cycle_mixing
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, T_initial, Ext_Field_freq, Tot_steps, Thermal_steps, &
@@ -62,7 +63,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        LongRelax,TransRelax,DiagH_Iter
 
 #endif
- use SC,            ONLY:SC_band_mixing
 #if defined _RAS
  use bulkeps,              ONLY : init_bulk
  use eels_kinematics,      ONLY : init_kinematics
@@ -83,7 +83,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use reels_module,         ONLY : init_reels
  use eels_integration,     ONLY : init_reels_integration
 #endif
-#if defined _ELPH
+#if defined _ELPH || defined _SOLITONS
  use ELPH,                 ONLY : QP_PH_n_G_bands,PH_null_E_rgn,elph_nq_used
 #endif
  !
@@ -143,7 +143,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _REELS
  call it('r',defs,'reels',  '[R] Surface Spectroscopy (REELS)') 
 #endif
-#if defined _ELPH
+#if defined _ELPH || defined _SOLITONS
  call it('r',defs,'el_ph',   '[R] Electron-Phonon Correlation')   
  call it('r',defs,'el_el',   '[R] Electron-Electron Correlation') 
 #endif
@@ -242,7 +242,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_more) 
  call it(defs,'OccTresh','Occupation treshold (metallic bands)',filled_tresh,verb_level=V_more)
  call it(defs,'BoseCut', '[BOSE] Finite Tel Bose function cutoff',bose_E_cut,verb_level=V_more)
-#if defined _ELPH
+#if defined _ELPH || defined _SOLITONS
  call it('f',defs,'MinusQ', '[KPT] Use -{q} grid',verb_level=V_more)
  call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nq_used,verb_level=V_more) 
 #endif
@@ -333,7 +333,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! El-Ph
  !
-#if defined _ELPH
+#if defined _ELPH || defined _SOLITONS
  call it(defs,'GphBRnge',  '[ELPH] G[W] bands range',QP_PH_n_G_bands)
  call it(defs,'PHnullErgn','[ELPH] Null transitions energy window',&
 &                          PH_null_E_rgn,verb_level=V_qp,unit=E_unit)

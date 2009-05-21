@@ -62,7 +62,7 @@
 #if defined _REELS
   {"reels",  "r","Surface Spectroscopy (REELS)",0,0,0,0},                  
 #endif
-#if defined _ELPH
+#if defined _ELPH || defined _SOLITONS
   {"corrtp", "s","Correlation [opt=e(lectrons)/p(honons)/b(oth)]",0,0,1,0},    
 #endif
 #if defined _SC 

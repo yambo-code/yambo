@@ -26,6 +26,12 @@ module QP_m
  !
  integer, parameter:: max_qp_descs=100
  !
+ ! Mixing for non perturbative calculations
+ !
+ integer           :: SC_bands_mixed
+ real(SP)          :: SC_band_mixing
+ real(SP)          :: SC_E_threshold
+ !
  integer           :: QP_dSc_steps
  integer           :: QP_Sc_steps
  integer           :: QP_n_W_freqs

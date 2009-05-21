@@ -24,12 +24,6 @@ module SC
  use pars,      ONLY:SP,schlen
  implicit none
  !
- ! Mixing for non perturbative calculations
- !
- integer           :: SC_bands_mixed
- real(SP)          :: SC_band_mixing
- !
- real(SP)          :: SC_E_threshold
  integer           :: SC_bands
  integer           :: it_now
  integer           :: SC_iterations

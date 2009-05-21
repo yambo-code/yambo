@@ -50,11 +50,12 @@ TARGETS  = all yambo interfaces ypp
 UTILS    = changelog
 CLEANS   = clean clean_all
 PROJECTS = yambo_ph yambo_sc yambo_ras yambo_reels \
-	       yambo_manyk yambo_ras_manyk yambo_tb yambo_gamma \
+	       yambo_manyk yambo_ras_manyk yambo_tb \
            yambo_magnon yambo_dipole_rim yambo_partial_diago \
            yambo_solitons yambo_doubles yambo_rt ypp_rt ypp_ph ypp_ras
+BROKEN   = yambo_gamma
 TESTS    = 
-EXE      = $(TARGETS) $(PROJECTS) $(TESTS)
+EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(TESTS)
 INTERFCS = a2y p2y e2y 
 #
 # Libraries (ordered for compiling & linking)
@@ -87,7 +88,7 @@ nothing:
 	@$(make_message)
 changelog:
 	svn log | perl sbin/svn2cl.pl > ChangeLog
-all: $(EXE)
+all: $(TARGETS) $(PROJECTS) $(TESTS)
 libs:
 	@LIBS2DO="slatec"; DIR2GO="lib" ; $(mklib)
 	@if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; \
@@ -99,7 +100,7 @@ libs:
 yambo: libs
 	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)
 	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
-# PROJECTS #
+# PROJECTS & BROKEN #
 yambo_solitons: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_SOLITONS"; $(mksrc)
 	@X2DO="yambo_solitons"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_SOLITONS";$(mkx)
@@ -183,6 +184,7 @@ define make_message
  echo;echo "YAMBO" @SVERSION@.@SPATCHLEVEL@.@SSUBLEVEL@ r.@SREVISION@ targets;echo;\
  for target in $(TARGETS); do echo  " [stable] $$target" ; done;echo;\
  for target in $(PROJECTS); do echo " [devel] $$target" ; done;echo;\
+ for target in $(BROKEN); do echo " [broken] $$target" ; done;echo;\
  for target in $(UTILS); do echo  " [util] $$target" ; done;echo
  for target in $(TESTS); do echo  " [tests] $$target" ; done;echo
  for target in $(CLEANS); do echo  " [clean] $$target" ; done;echo

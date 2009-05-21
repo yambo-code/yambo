@@ -240,7 +240,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! LIFETIMES
  !
  if (l_life) then
-   call QP_raxis(X,Xen,Xk,en,k,q,qp,Xw,0) 
+   call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
    qp%Z=1.
    call QP_report(.FALSE.,.TRUE.)
    return
@@ -250,8 +250,12 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  ! Electronic
  !
- if (trim(QP_solver)=='g'.and.l_el_corr.and.&
-&             (.not.l_ppa.and..not.l_chosex)) call QP_raxis(X,Xen,Xk,en,k,q,qp,Xw,0)
+ if (trim(QP_solver)=='g') then
+   if (l_el_corr.and.(.not.l_ppa.and..not.l_chosex)) call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
+#if defined _SOLITONS
+   if (l_ph_corr)                                    call QP_elph(en,k,q,qp)
+#endif
+ endif
  !
  ! GPL_EXCLUDE_END
  !

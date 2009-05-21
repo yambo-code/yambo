@@ -1,12 +1,14 @@
-#if defined _FFTW
-FFT_object = fft_1d.o fft_1d_real.o  
-#else
-FFT_object = fft_1d.o fft_1d_real.o  sgfft.o rfft.o fft_singleton.o
+FFT_more =
+#if defined _RT
+FFT_more = fft_1d.o fft_1d_real.o rfft.o fft_singleton.o
 #endif
+FFT_object = sgfft.o 
+#if defined _FFTW
+FFT_object =
+#endif
+WF_rot_object =
 #if defined _SC || defined _RT
 WF_rot_object = WF_rotate.o
-#else
-WF_rot_object =
 #endif
-objs = fft_setup.o fft_3d.o $(FFT_object)  \
+objs = fft_setup.o fft_3d.o $(FFT_object) $(FFT_more) \
        scatter_Bamp.o scatter_Gamp.o space_inv_by_wf.o wf_load.o $(WF_rot_object)

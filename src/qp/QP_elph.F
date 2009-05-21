@@ -39,7 +39,7 @@ subroutine QP_elph(en,k,q,qp)
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,OP_WR_CL
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
-&                        QP_dSc_steps,QP_dSc_delta
+&                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,QP_G_er,QP_G_dr
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
  use R_lattice,     ONLY:qindx_S,bz_samp,ik_is_table
  use ELPH,          ONLY:ph_modes,elph_nb,ph_freqs_sq,elph_gkkp,&
@@ -110,13 +110,27 @@ subroutine QP_elph(en,k,q,qp)
  !
  !Sc Energy points
  !
- do iqp=1,qp%n_states
-   Sc_W(iqp)%n=QP_dSc_steps
-   allocate(Sc_W(iqp)%p(Sc_W(iqp)%n(1)))
-   forall (i2=1:QP_dSc_steps) Sc_W(iqp)%p(i2)=&
-&         en%E(QP_table(iqp,1),QP_table(iqp,3),1)+(i2-1)*QP_dSc_delta+&
-&         cmplx(0.,QP_G_damp,SP)
- enddo
+#if defined _SOLITONS
+ if (trim(QP_solver)=='g') then
+   do iqp=1,qp%n_states
+     Sc_W(iqp)%n =QP_Sc_steps
+     Sc_W(iqp)%er=QP_G_er
+     Sc_W(iqp)%dr=QP_G_dr
+     call freqs_setup(Sc_W(iqp))
+     QP_Sc_steps=Sc_W(iqp)%n(1)
+   enddo
+ else if (trim(QP_solver)=='n') then
+#endif
+   do iqp=1,qp%n_states
+     Sc_W(iqp)%n=QP_dSc_steps
+     allocate(Sc_W(iqp)%p(Sc_W(iqp)%n(1)))
+     forall (i2=1:QP_dSc_steps) Sc_W(iqp)%p(i2)=&
+&           en%E(QP_table(iqp,1),QP_table(iqp,3),1)+(i2-1)*QP_dSc_delta+&
+&           cmplx(0.,QP_G_damp,SP)
+   enddo
+#if defined _SOLITONS
+ endif
+#endif
  !
  iq_ref=0
  !
@@ -319,7 +333,6 @@ subroutine QP_elph(en,k,q,qp)
  !
  ! All 2 All
  !
- call pp_redux_wait(QP_Sc)
  call pp_redux_wait(gsqF_dw(:,:,:))
  call pp_redux_wait(gsqF_fan(:,:,:))
  call pp_redux_wait(gsqF_ca_corr(:,:,:))

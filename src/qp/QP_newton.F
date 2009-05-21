@@ -26,10 +26,9 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  use drivers,       ONLY:l_ppa,l_el_corr,l_ph_corr,l_chosex
  use com,           ONLY:msg
  use X_m,           ONLY:X_t
- use SC,            ONLY:SC_E_threshold
  use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Sx,QP_Vxc,QP_Sc,&
 &                        QP_n_states,QP_dSc,QP_dSc_delta,QP_n_G_bands,&
-&                        GWo_SC_done,GWo_iterations
+&                        GWo_SC_done,GWo_iterations,SC_E_threshold 
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
@@ -88,7 +87,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
        !
        ! GPL_EXCLUDE_START GW_REAL_AXIS_IGNORE
        !
-       call QP_raxis(X,Xen,Xk,en,k,q,qp,Xw,iter)
+       call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,iter)
        !
        ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
        !
@@ -99,7 +98,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
    !
    ! GPL_EXCLUDE_START
    !
-# if defined _ELPH
+# if defined _ELPH || defined _SOLITONS
    !
    if (l_ph_corr)    call QP_elph(en,k,q,qp)
    !

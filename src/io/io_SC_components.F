@@ -29,8 +29,9 @@ integer function io_SC_components(what,E_sc,ID)
  use R_lattice,      ONLY:nkibz
  use D_lattice,      ONLY:atoms_string
  use stderr,         ONLY:intc
+ use QP_m,           ONLY:SC_band_mixing
  use SC,             ONLY:SC_bands,it_now,rho_convergence,E_convergence,SC_potential,&
-&                         SC_R,V_xc_sc,local_V,H_nl_sc,SC_band_mixing,SC_kind,&
+&                         SC_R,V_xc_sc,local_V,H_nl_sc,SC_kind,&
 &                         SC_xc_functional,V_hartree_sc,NSC_shot,SC_fft_size,&
 &                         SC_ng_Sx,SC_X_bands,SC_X_size
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&

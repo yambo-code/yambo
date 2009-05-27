@@ -194,7 +194,7 @@ subroutine k_special()
    !
    k_f_name="path_points"
    call of_open_close(k_f_name,'ot')
-   call msg('o path',"#",(/"c1","c2","c3","Norm"/),INDENT=0,USE_TABS=.true.)
+   call msg('o path',"#",(/"c1  ","c2  ","c3  ","Norm"/),INDENT=0,USE_TABS=.true.)
    call msg('o path',"#"," ",INDENT=0)
    !
    do ik=1,n_total_k

@@ -281,6 +281,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'TransRelax',  '[RT]  Transverse Relaxation Time',TransRelax,unit=Time_unit)
  call it('f',defs,'RTEpsAnalyze', '[RT] Analyze real-time response to an external field')
  call it('f',defs,'KeepVxc', '[RT] Do not subtract Vxc from the self-energy',verb_level=V_more)
+ call it('f',defs,'NoDiamagnetic', '[RT] Exclude the diamagnetic term in coupling and current',verb_level=V_more)
 #endif
  !
  ! GPL_EXCLUDE_END SC_IGNORE

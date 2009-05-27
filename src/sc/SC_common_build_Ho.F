@@ -23,7 +23,7 @@ subroutine SC_common_build_Ho(E,Xk,k)
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels,n_sp_pol,el_density,spin
- use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc
+ use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
  use SC,             ONLY:Ho,E_bare,V_xc_sc,V_hartree_sc,rho_n
  use memory_m,       ONLY:mem_est
  use real_time,      ONLY:Hartree_plus_Vxc_sc,l_RT_no_updates,G_lesser,V_xc_0,V_hartree_0
@@ -39,6 +39,9 @@ subroutine SC_common_build_Ho(E,Xk,k)
  !
  integer   :: ik,ib,i_spin
  !
+ allocate(QP_Vxc(QP_n_states))
+ call mem_est("QP_Vxc",(/QP_n_states/))    
+ !
  call DFT_Vxc(E,k)
  !
 #if defined _RT
@@ -48,9 +51,6 @@ subroutine SC_common_build_Ho(E,Xk,k)
 #endif
  !
  V_xc_sc=V_xc 
-#if defined _RT
- V_xc_0=V_xc 
-#endif
  !
  ! The Ho = -nabla**2. + V_ext is deduced from the input energies en0:
  !
@@ -66,25 +66,31 @@ subroutine SC_common_build_Ho(E,Xk,k)
  !
  !
  Ho=(0.,0.)
- V_hartree_sc(:,n_sp_pol)=  V_hartree_sc(:,1)
-#if defined _RT
- V_hartree_0(:,n_sp_pol) =  V_hartree_sc(:,1)
-#endif
+ call V_Hartree(rho_n,V_hartree_sc)
+ V_hartree_sc(:,n_sp_pol)=V_hartree_sc(:,1)
+ !
  do ik=1,QP_nk
-   forall (ib=1:QP_nb,i_spin=1:n_sp_pol) Ho(ib,ib,ik,i_spin) = E_bare(ib,ik,i_spin)  
    call V_real_space_to_H(ik,-V_hartree_sc,Ho(:,:,ik,:),wf)
  enddo
+ !
+ forall (ib=1:QP_nb,ik=1:QP_nk,i_spin=1:n_sp_pol) Ho(ib,ib,ik,i_spin) = Ho(ib,ib,ik,i_spin) + E_bare(ib,ik,i_spin)  
  !
  ! ... then remove Vxc[rho_0] also
  !=================================
  !
  do ik=1,QP_nk
-   call V_qp_basis_to_H(ik,-QP_Vxc,Ho)
+   call V_qp_basis_to_H(ik,-QP_Vxc,Ho(:,:,ik,:))
  enddo
+ !
  deallocate(QP_Vxc)
  call mem_est("QP_Vxc")
  !
 #if defined _RT
+ !
+ ! Save Hartree and V_xc at T=0
+ !
+ V_xc_0                  =  V_xc 
+ V_hartree_0(:,n_sp_pol) =  V_hartree_sc(:,1)
  !
  ! Define Hartree+xc potential Hamiltonian
  !
@@ -93,7 +99,7 @@ subroutine SC_common_build_Ho(E,Xk,k)
    Hartree_plus_Vxc_sc=(0._SP,0._SP)
    !
    do ik=1,QP_nk
-     call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,Hartree_plus_Vxc_sc(:,:,ik),wf)
+     call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,Hartree_plus_Vxc_sc(:,:,ik,:),wf)
    enddo
    !
  endif

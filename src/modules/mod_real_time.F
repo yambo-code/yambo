@@ -59,6 +59,7 @@ module real_time
  logical                  :: l_rt_efield  
  logical                  :: RT_resonant
  logical                  :: RT_no_intraband
+ logical                  :: l_no_diamagnetic
  ! 
  ! Other
  !
@@ -66,6 +67,7 @@ module real_time
  real(SP), allocatable   :: V_xc_0(:,:) 
  real(SP)                :: Thermal_time
  integer                 :: DiagH_Iter
+ logical                 :: l_qp_analyze
  !
  ! Integrator Variables
  !
@@ -89,7 +91,8 @@ module real_time
  !
  ! Non-interaction potential energies and potentials
  !
- complex(SP), allocatable :: Hartree_plus_Vxc_sc(:,:,:)
+ complex(SP), allocatable :: Hartree_plus_Vxc_sc(:,:,:,:)
+ complex(SP), allocatable :: H_t(:,:,:,:)
  !
  contains
    !
@@ -98,10 +101,13 @@ module real_time
      use pars,           ONLY:SP,schlen
      use drivers,        ONLY:l_sc_hartree
      use memory_m,       ONLY:mem_est
-     use SC,             ONLY:SC_bands,V_hartree_sc,local_V,V_xc_sc,SC_alloc
+     use SC,             ONLY:SC_bands,V_hartree_sc,local_V,V_xc_sc,SC_alloc, &
+&                             E_bare
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
+     use QP_m,           ONLY:QP_nk
+
      !
      implicit none
      !
@@ -119,9 +125,14 @@ module real_time
      allocate(G_lesser(SC_bands,SC_bands,en%nk))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
      !
-     if(.not.l_RT_no_updates) then
-       allocate(Hartree_plus_Vxc_sc(SC_bands,SC_bands,en%nk))
+     if(l_RT_no_updates) then
+       allocate(Hartree_plus_Vxc_sc(SC_bands,SC_bands,en%nk,n_sp_pol))
        call mem_est("Hartree_plus_Vxc_sc",(/size(Hartree_plus_Vxc_sc)/),(/2*SP/))
+     endif
+     !
+     if(l_qp_analyze.or.trim(Integrator_name)==EXACT.or.trim(Integrator_name)==RK2EXACT) then
+       allocate(H_t(SC_bands,SC_bands,en%nk,n_sp_pol))
+       call mem_est("H_t",(/size(H_t)/),(/2*SP/))
      endif
      !
      allocate(I1_lesser(SC_bands,SC_bands,en%nk))
@@ -142,11 +153,17 @@ module real_time
      allocate(A_norm(Tot_steps))
      call mem_est("A_norm",(/size(A_norm)/),(/DP/))
      !
+     ! Reference energies
+     !
+     allocate(E_bare(SC_bands,QP_nk,n_sp_pol))
+     call mem_est("E_bare",(/size(E_bare)/))
+     E_bare=en%E(:SC_bands,:,:)
+     !
    end subroutine RT_alloc
    
    subroutine RT_free
      !
-     use SC,             ONLY:V_hartree_sc,Ho,H_nl_sc,V_xc_Sc,SC_free
+     use SC,             ONLY:V_hartree_sc,Ho,V_xc_Sc,SC_free,E_bare
      use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:E_xc
      implicit none
@@ -159,10 +176,17 @@ module real_time
      deallocate(V_hartree_0,V_xc_0)
      call mem_est('Potentials')
      !
-     if(.not.l_RT_no_updates) then
+     if(l_RT_no_updates) then
        !      
        deallocate(Hartree_plus_Vxc_sc)
        call mem_est("Hartree_plus_Vxc_sc")
+       !
+     endif
+     !
+     if(l_qp_analyze.or.trim(Integrator_name)==EXACT.or.trim(Integrator_name)==RK2EXACT) then
+       !
+       deallocate(H_t)
+       call mem_est("H_t")
        !
      endif
      !
@@ -186,6 +210,9 @@ module real_time
      !
      deallocate(A_norm)
      call mem_est("A_norm")
+     !
+     deallocate(E_bare)
+     call mem_est("E_bare")
      !
    end subroutine RT_free
    !

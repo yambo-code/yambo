@@ -19,17 +19,18 @@
 subroutine RT_initialize(file_name,Xen)
  ! 
  use pars,           ONLY:SP,lchlen,schlen
- use SC,             ONLY:SC_bands
+ use SC,             ONLY:SC_bands,rho_n
  use com,            ONLY:msg,of_open_close,warning
  use real_time,      ONLY:l_RPA,RT_resonant,RT_no_intraband,l_eps_analyze,&
 &                         Thermal_steps,Thermal_time,RT_step,l_rt_efield,&
 &                         Ext_Field_Name,G_lesser,G_lesser_previous,&
-&                         l_RT_no_updates,Integrator_Name,EF_q0
+&                         l_RT_no_updates,Integrator_Name,EF_q0,l_qp_analyze, &
+&                         l_no_diamagnetic
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
  implicit none
  !
- character(lchlen)        :: file_name(2)
+ character(lchlen)        :: file_name(3)
  type(levels)             :: Xen
  !
  ! Work space
@@ -44,7 +45,9 @@ subroutine RT_initialize(file_name,Xen)
  call parser('RTResonant',RT_resonant)
  call parser('RTNoIntraband',RT_no_intraband)
  call parser('RTEpsAnalyze',l_eps_analyze)
+ call parser('RTQpAnalyze',l_qp_analyze)
  call parser('KeepVxc',l_RPA)
+ call parser('NoDiamagnetic',l_no_diamagnetic)
  !
  if(Thermal_steps/=0) then
    !
@@ -77,19 +80,6 @@ subroutine RT_initialize(file_name,Xen)
    RT_no_intraband=.true.
    call warning('[RT] Intraband transitions excluded because Resonant Efield !')
  endif
- !
- ! Initialize the Gf and potentials
- !----------------------------------
- ! G_lesser(T=0,T=0)=Go and G_lesser_old(T=0,T=0)=Go
- !
- G_lesser=(0._SP,0._SP)
- G_lesser_previous =(0._SP,0._SP)
- ! 
- forall(i1=1:SC_bands,ik=1:Xen%nk)
-   G_lesser(i1,i1,ik)=(0._SP,1._SP)*Xen%f(i1,ik,1)
- end forall
- !
- G_lesser_previous=G_lesser
  !
  ! OUTPUT Files
  !--------------
@@ -131,5 +121,9 @@ subroutine RT_initialize(file_name,Xen)
  call msg('nr','[RT] Intraband transitions :',.not.RT_no_intraband)
  call msg(' r','[RT] Dielectric function   :',l_eps_analyze)
  call msg(' r','[RT] RPA                   :',l_RPA)
+ call msg(' r','[RT] Diamagnetic term      :',.not.l_no_diamagnetic)
+ !
+ file_name(3)="qp"
+ if(l_qp_analyze) call of_open_close(file_name(3))
  !
 end subroutine RT_initialize

@@ -108,11 +108,10 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
      !
    enddo
    !
-   !
    ! E_xc Energy 
    !
    call IO_mute("report log io_in io_out")
-   call xc_lda_driver(en,k,WF_KIND,WF_xc_functional,0)
+   call xc_lda_driver(en,k,WF_KIND,WF_xc_functional,0,G_lesser)
    call IO_mute("  ")
    !
 #if defined _DOUBLE
@@ -127,9 +126,9 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
    !
    do ik=1,en%nk
 #if defined _DOUBLE
-     E_h=E_h-(0.,1.0)*zdotc(SC_bands*SC_bands,Hartree_plus_Vxc_sc(:,:,ik),1,G_lesser(:,:,ik),1)*k%weights(ik)
+     E_h=E_h-(0.,1.0)*zdotc(SC_bands*SC_bands,Hartree_plus_Vxc_sc(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #else
-     E_h=E_h-(0.,1.0)*cdotc(SC_bands*SC_bands,Hartree_plus_Vxc_sc(:,:,ik),1,G_lesser(:,:,ik),1)*k%weights(ik)
+     E_h=E_h-(0.,1.0)*cdotc(SC_bands*SC_bands,Hartree_plus_Vxc_sc(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #endif
    enddo
    !

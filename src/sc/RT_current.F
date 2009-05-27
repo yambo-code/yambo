@@ -30,6 +30,7 @@ subroutine RT_current(j_current,en,xK,A_vec_pot,G_lesser)
  use electrons,      ONLY:nel,levels
  use X_m,            ONLY:DIP_iR_or_P
  use com,            ONLY:msg
+ use real_time,      ONLY:l_no_diamagnetic
  !
  implicit none
  type(levels),  intent(in) ::en       
@@ -89,7 +90,8 @@ subroutine RT_current(j_current,en,xK,A_vec_pot,G_lesser)
  !
  ! Diamagnetic term. It is correct??
  !
- j_current(:)=j_current(:)+A_vec_pot(:)*nel*RL_vol/(Xk%nbz*(2.*pi)**3) 
+ if(.not.l_no_diamagnetic) &
+&  j_current(:)=j_current(:)+A_vec_pot(:)*nel*RL_vol/(Xk%nbz*(2.*pi)**3) 
  !
  !
 end subroutine RT_current

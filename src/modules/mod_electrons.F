@@ -269,7 +269,7 @@ module electrons
        enddo
      enddo
      !
-#if defined _SC
+#if defined _RT
      !
      ! If present G_lesser add the Off-diagonal contributions
      !

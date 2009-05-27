@@ -19,7 +19,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#if defined _RT
+subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER,G_lesser)
+#else
 subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
+#endif
  !
  ! These sources have been slightly adpated from Abinit 4.6.5.
  !
@@ -63,6 +67,9 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  use com,           ONLY:msg,warning
  use electrons,     ONLY:levels,n_spin,el_density
  use FFT_m,         ONLY:fft_size
+#if defined _RT
+ use SC,            ONLY:SC_bands
+#endif
  use xc_functionals,ONLY:XC_EXCHANGE,XC_EXCHANGE_CORRELATION,XC_CORRELATION,&
 &                        E_xc,F_xc,V_xc,XC_LDA_X,&
 &                        XC_LDA_C_PW,xc_string,XC_LDA_C_PZ,&
@@ -72,6 +79,9 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  type(levels) ::en
  type(bz_samp)::Xk
  integer      ::KIND,FUNCTIONAL,ORDER
+#if defined _RT
+ complex(SP), intent(in) :: G_lesser(SC_bands,SC_bands,en%nk)
+#endif
  !
  ! Work Space
  !
@@ -109,7 +119,11 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
  ! Electronic density & Rs
  !
+#if defined _RT
+ call el_density(en,Xk,rho_sp,G_lesser=G_lesser)
+#else
  call el_density(en,Xk,rho_sp)
+#endif
  rho=rho_sp*real(fft_size,DP)/real(DL_vol,DP)
  forall (i1=1:fft_size) rspts(i1)=(3._DP/4._DP/pi/rho(i1))**(1._DP/3._DP)
  !

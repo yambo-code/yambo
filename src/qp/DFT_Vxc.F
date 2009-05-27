@@ -19,13 +19,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#if defined _RT
+subroutine DFT_Vxc(E,Xk,G_lesser)
+#else
 subroutine DFT_Vxc(E,Xk)
+#endif
  !
  ! V_xc
  !
  use pars,          ONLY:SP,DP,pi
  use electrons,     ONLY:levels,n_spin,n_spinor,n_sp_pol,spin
- use QP_m,          ONLY:QP_Vxc,QP_n_states,QP_table
+ use QP_m,          ONLY:QP_Vxc,QP_n_states,QP_table,QP_nk
  use R_lattice,     ONLY:bz_samp
  use FFT_m,         ONLY:fft_size
  use wave_func,     ONLY:wf,wf_state
@@ -34,11 +38,16 @@ subroutine DFT_Vxc(E,Xk)
 #if defined _SC || defined _RT
  use com,           ONLY:error
  use IO_m,          ONLY:REP,VERIFY
- use SC,            ONLY:load_SC_components,V_xc_sc,V_hartree_sc,SC_fft_size
+ use SC,            ONLY:load_SC_components,V_xc_sc,V_hartree_sc,SC_fft_size, &
+ &                       SC_bands
 #endif
+ !
  implicit none
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
+#if defined _RT
+ complex(SP),   intent(in) :: G_lesser(SC_bands,SC_bands,QP_nk)
+#endif
  !
  ! Work Space
  !
@@ -65,7 +74,11 @@ subroutine DFT_Vxc(E,Xk)
    ! ...LDA (and more) Vxc
    !
 #endif
+#if defined _RT
+   call xc_lda_driver(E,Xk,WF_KIND,WF_xc_functional,1,G_lesser)
+#else
    call xc_lda_driver(E,Xk,WF_KIND,WF_xc_functional,1)
+#endif
 #if defined _SC || defined _RT
  else
    !

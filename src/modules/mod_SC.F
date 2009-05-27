@@ -78,7 +78,7 @@ module SC
      use drivers,        ONLY:l_real_time,l_sc_chosex
      use electrons,      ONLY:n_spin,n_sp_pol,levels
      use FFT_m,          ONLY:fft_size
-     use QP_m,           ONLY:QP_Vxc,QP_n_states,QP_nk,QP_Sc,QP_state,QP_nb
+     use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc,QP_state,QP_nb
      use memory_m,       ONLY:mem_est
      implicit none
      !
@@ -88,13 +88,14 @@ module SC
      !
      QP_nb=SC_bands
      QP_nk=nkibz
+     !
      allocate(QP_state(QP_nb,QP_nk))
      call mem_est("QP_state",(/QP_n_states*QP_nk/))
      QP_state=.TRUE.
      call QP_state_table_setup(E)
      !
-     allocate(Ho(SC_bands,SC_bands,E%nk,n_sp_pol),H_nl_sc(SC_bands,SC_bands,E%nk))
-     call mem_est("Ho H_nl_sc",(/size(Ho)/),(/2*2*SP/))
+     allocate(Ho(SC_bands,SC_bands,E%nk,n_sp_pol))
+     call mem_est("Ho",(/size(Ho)/),(/2*SP/))
      !
      allocate(rho_n(fft_size))
      call mem_est("rho",(/fft_size/),(/SP/))
@@ -103,10 +104,7 @@ module SC
      call mem_est("Optentials",(/2*size(V_xc_sc)/))
      !
      allocate(H_nl_sc(SC_bands,SC_bands,n_sp_pol))
-     call mem_est("H_nl_sc",(/size(H_nl_sc)/))
-     !
-     allocate(QP_Vxc(QP_n_states))
-     call mem_est("QP_Vxc",(/QP_n_states/))
+     call mem_est("H_nl_sc",(/size(H_nl_sc)/),(/2*SP/))
      !
      if (l_sc_chosex) then
        allocate(QP_Sc(QP_n_states,1))
@@ -122,24 +120,21 @@ module SC
    !
    subroutine SC_free()
      use drivers,        ONLY:l_real_time,l_sc_chosex
-     use QP_m,           ONLY:QP_Vxc,QP_Sc
+     use QP_m,           ONLY:QP_Sc
      use memory_m,       ONLY:mem_est
      implicit none
      !
-     deallocate(Ho,H_nl_sc)
-     call mem_est("Ho H_nl_sc")
+     deallocate(Ho)
+     call mem_est("Ho")
+     !
+     deallocate(H_nl_sc)
+     call mem_est("H_nl_sc")
      !
      deallocate(rho_n)
      call mem_est("rho")
      !
      deallocate(V_xc_sc,V_hartree_sc)
      call mem_est("Optentials")
-     !
-     deallocate(H_nl_sc)
-     call mem_est("H_nl_sc")
-     !
-     deallocate(QP_Vxc)
-     call mem_est("QP_Vxc")
      !
      if (l_sc_chosex) then
        deallocate(QP_Sc)

@@ -35,8 +35,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  use SC,             ONLY:SC_potential,SC_bands,Ho,E_bare
  use real_time,      ONLY:Thermal_steps,Tot_steps,RT_step,G_lesser, &
 &                         G_lesser_previous,l_rt_efield,RT_alloc,RT_free, &
-&                         A_vec_pot,A_norm,l_eps_analyze,I_time,Integrator_name,&
-&                         j_current
+&                         A_vec_pot,A_norm,l_eps_analyze,i_time,Integrator_name,&
+&                         j_current,l_qp_analyze,I1_lesser
  !
  implicit none
  !
@@ -51,8 +51,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  ! 
  ! Work Space
  !
- character(lchlen)        :: file_name(2)
- integer                  :: WF_G_max,WF_Go_indx,it,i1
+ character(lchlen)        :: file_name(3)
+ integer                  :: WF_G_max,WF_Go_indx,it,i1,ik
  real(SP)                 :: values(9), E_xc, RT_time  ! The real time on the diagonal RTime = it*RT_step    
  complex(SP)              :: Trace_Gf,E_kin,E_ion,E_h 
  !
@@ -76,26 +76,31 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  !
  Xen%nbm=SC_bands
  !
- ! Core allocations
- !
- call RT_alloc(Xen)
- !
  ! Core initialization
  !
  call RT_initialize(file_name,Xen)
  !
- QP_nb=SC_bands
- QP_nk=k%nibz
+ ! Core allocations
  !
- ! Reference energies
+ call RT_alloc(Xen)
  !
- allocate(E_bare(SC_bands,k%nibz,n_sp_pol))
- call mem_est("E_bare ",(/size(E_bare)/))
+ ! Initialize the Gf and potentials
+ !----------------------------------
+ ! G_lesser(T=0,T=0)=Go and G_lesser_old(T=0,T=0)=Go
+ !
+ G_lesser=(0._SP,0._SP)
+ G_lesser_previous =(0._SP,0._SP)
+ ! 
+ forall(i1=1:SC_bands,ik=1:Xen%nk)
+   G_lesser(i1,i1,ik)=(0._SP,1._SP)*Xen%f(i1,ik,1)
+ end forall
+ !
+ G_lesser_previous=G_lesser   
+ !
+ ! Build Ho
+ !
  E_bare=en%E(:SC_bands,:,:)
- !
  call SC_common_build_Ho(Xen,Xk,k)
- !
- ! I set this values in such a way to sum on all transitions
  !
  ! Real zero of the time                   
  !
@@ -103,7 +108,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  !
  do it=1,Thermal_steps+Tot_steps
    !
-   I_time=it
+   i_time=it
    !
    RT_time=(it-Thermal_steps)*RT_step
    !
@@ -120,7 +125,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    G_lesser_previous=G_lesser
    forall( i1=1:SC_bands )  G_lesser_previous(i1,i1,:)=(0._SP,1._SP)*aimag(G_lesser(i1,i1,:))
    !
-   call RT_Collision(G_lesser_previous,en,Xen,k,q,RT_time)
+   call RT_Collision(G_lesser_previous,Xen,k,q,RT_time)
    !
    call RT_Energy(Xen,k,E_kin,E_ion,E_h,E_xc,Trace_Gf)
    !
@@ -131,6 +136,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
 &                real(Trace_Gf)/)
    call msg('o dynamics','',values(1:6),USE_TABS=.TRUE.)
    !
+   if(l_qp_analyze) call RT_qp_analyze()
+   !
    if(l_rt_efield) then
      !
      call RT_current(j_current(i_time,:),Xen,xK,A_vec_pot(i_time,:),G_lesser_previous)
@@ -138,16 +145,19 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
      values(2:3)=(/real(A_norm(i_time)),aimag(A_norm(i_time))/)
      values(4:6)=real(j_current(i_time,1:3))
      !
-     call msg('o '//file_name(2),'',values(1:6),USE_TABS=.TRUE.)
+     call msg('o response','',values(1:6),USE_TABS=.TRUE.)
      !
    endif
    !
-   call RT_Integrator(G_lesser,G_lesser_previous,RT_step,en,Xen,k,q,Integrator_name,RT_time)
+   call RT_Integrator(G_lesser,G_lesser_previous,RT_step,Xen,k,q,Integrator_name,RT_time)
    !
  enddo
  !
  call of_open_close(file_name(1))
- if(l_rt_efield) call of_open_close(file_name(2))
+ !
+ if(l_rt_efield)  call of_open_close(file_name(2))
+ !        
+ if(l_qp_analyze) call of_open_close(file_name(3)) 
  !
  ! Dielectric Function
  !---------------------
@@ -156,9 +166,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  !
  ! Finalize
  !-----------
- !
- deallocate(E_bare)
- call mem_est("E_bare")
  !
  call RT_free()
  !

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
+subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  !
  ! This subroutine prepare I1(t_1,t_2) and I2(t_1,t_2) give a G^<(t_1,t_1) 
  ! Actualy it works only for the diagonal I1(t_1,t_1), I2(t_1,t_1)
@@ -30,9 +30,10 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,V_xc_sc,rho_n
  use QP_m,           ONLY:QP_nk
- use real_time,      ONLY:I1_lesser,I2_lesser,l_RT_no_updates, &
+ use real_time,      ONLY:I1_lesser,I2_lesser,l_RT_no_updates,l_qp_analyze, &
  &                        l_rt_efield,TransRelax,LongRelax,T_initial, &
- &                        Hartree_plus_Vxc_sc,l_RPA,V_hartree_0,V_xc_0,Thermal_time
+ &                        Hartree_plus_Vxc_sc,l_RPA,V_hartree_0,V_xc_0,Thermal_time, &
+ &                        Integrator_name,EXACT,RK2EXACT,H_t
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
@@ -40,14 +41,13 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
  implicit none
  !
  real(SP),      intent(in)   :: RT_time
- type(levels),  intent(in)   :: en,Xen
+ type(levels),  intent(in)   :: Xen
  type(bz_samp), intent(in)   :: k,q
- complex(SP),   intent(in)   :: G_input(SC_bands,SC_bands,en%nk)
+ complex(SP),   intent(in)   :: G_input(SC_bands,SC_bands,Xen%nk)
  !
  ! Work Space
  !
  integer     :: ik,iv,i1,SC_bands2
- complex(SP) :: Sigma_s(SC_bands,SC_bands,n_sp_pol)
  real(SP)    :: RelaxDiff
  !
  SC_bands2=SC_bands**2
@@ -58,20 +58,24 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
    Xen%f(iv,ik,1)=-(0._SP,1._SP)*G_input(iv,iv,ik)
  end forall
  !
+ call el_density(Xen,k,rho_n,G_lesser=G_input)
+ !
  if(.not.l_RT_no_updates) then
    !
-   call el_density(Xen,k,rho_n,G_lesser=G_input)
-   !
    call V_Hartree(rho_n,V_hartree_sc)
+   V_hartree_sc(:,n_sp_pol)=V_hartree_sc(:,1)
    !
    if(l_sc_pz) then
      !
-     call xc_lda_driver(Xen,k,WF_KIND,WF_xc_functional,1)
-     V_xc_sc=V_xc
+     call IO_mute("report log io_in io_out")
+     call xc_lda_driver(Xen,k,WF_KIND,WF_xc_functional,1,G_input)
+     call IO_mute("  ")
+     !
+     V_xc_sc        =V_xc
      !
    else
      !
-     V_xc_sc=V_xc_0
+     V_xc_sc        =V_xc_0
      !
    endif
    !
@@ -85,7 +89,7 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
    !
  endif
  !
- ! l_rt_exc=.false.
+ ! l_RT_no_updates=.true.
  !
  ! Simple case without any correlation just transition between bands
  ! equivalent to RPA without local field effects
@@ -93,14 +97,14 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
  !
  do ik=1,QP_nk 
    !      
-   Sigma_s=(0._SP,0._SP)
+   H_nl_sc=(0.,0.)
    !
    !  I subtract the V_xc_sc term if there is a self-energy /=0 (at least V_h)
-   !  and not l_keep_vxc=.true. (used to include local field effects only)
+   !  and not l_RPA=.true. (used to include local field effects only)
    !
    if(.not.l_RT_no_updates.and..not.l_RPA) then 
      !  
-     call V_real_space_to_H(ik,-V_xc_sc,Sigma_s,wf)
+     call V_real_space_to_H(ik,-V_xc_0,H_nl_sc,wf)
      !
    endif
    !
@@ -108,73 +112,56 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
    !
    if(Thermal_time/=0.0) then 
      !      
-     Sigma_s=Sigma_s*(1._SP+tanh((RT_time+Thermal_time/2._SP)/Thermal_time*8._SP))/2._SP
+     H_nl_sc=H_nl_sc*(1._SP+tanh((RT_time+Thermal_time/2._SP)/Thermal_time*8._SP))/2._SP
      !
    endif
    !
-   ! Fill the Singular (in time) Self-Energy Sigma_s(:,:,:)
+   ! Fill the Singular (in time) Self-Energy H_nl_sc(:,:,:)
    !
    if(.not.l_RT_no_updates) then
-     call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,Sigma_s,wf)
+     call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,wf)
    else
 #if defined _DOUBLE
-     call zaxpy(SC_bands2,(1.,0.),Hartree_plus_Vxc_sc(:,:,ik),1,Sigma_s(:,:,1),1)
+     call zaxpy(SC_bands2,(1.,0.),Hartree_plus_Vxc_sc(:,:,ik,1),1,H_nl_sc(:,:,1),1)
 #else
-     call caxpy(SC_bands2,(1.,0.),Hartree_plus_Vxc_sc(:,:,ik),1,Sigma_s(:,:,1),1)
+     call caxpy(SC_bands2,(1.,0.),Hartree_plus_Vxc_sc(:,:,ik,1),1,H_nl_sc(:,:,1),1)
 #endif
    endif
    !
-   ! Ho is part of the Hamiltonian (or singular self-energy Sigma_s) 
+   ! Ho is part of the Hamiltonian (or singular self-energy H_nl_sc) 
    !
 #if defined _DOUBLE
-   call zaxpy(SC_bands2,(1.,0.),Ho(:,:,ik,1),1,Sigma_s(:,:,1),1)
+   call zaxpy(SC_bands2,(1.,0.),Ho(:,:,ik,1),1,H_nl_sc(:,:,1),1)
 #else
-   call caxpy(SC_bands2,(1.,0.),Ho(:,:,ik,1),1,Sigma_s(:,:,1),1)
+   call caxpy(SC_bands2,(1.,0.),Ho(:,:,ik,1),1,H_nl_sc(:,:,1),1)
 #endif
-   !
-!   
-! RT phase section   
-!  
-!   else
-!     !
-!     ! I use H_o + V_h(rho_o) + V_xc(rho_o) as phase factor 
-!     ! so I subtract them from the Self-Energy Sigma_S(:,:,:)
-!     !      
-!#if defined _DOUBLE
-!     call zaxpy(SC_bands2,(-1.,0.),Hartree_plus_Vxc_0(:,:,ik),1,Sigma_s(:,:,1),1)
-!#else
-!     call caxpy(SC_bands2,(-1.,0.),Hartree_plus_Vxc_0(:,:,ik),1,Sigma_s(:,:,1),1)
-!#endif
-!     !
-!   endif
    !
    ! And now add the external field
    !
    if(l_rt_efield.and.RT_time>0._SP) then
      !      
-     call RT_Ext_Field(ik,Sigma_s,RT_time-T_initial)
+     call RT_Ext_Field(ik,H_nl_sc,Xen,RT_time-T_initial)
      !
    endif
    !
-   H_nl_sc(:,:,ik)=Sigma_s(:,:,1)
-   !
-!   if(RT_phase_int) H_t(:,:,ik)=H_t(:,:,ik)+Ho(:,:,ik,1)+Hartree_plus_Vxc_0(:,:,ik)
+   if(l_qp_analyze.or.trim(Integrator_name)==EXACT.or.trim(Integrator_name)==RK2EXACT) then
+     H_t(:,:,ik,1)=H_nl_sc(:,:,1)
+   endif
    !
    ! Now prepare I1 and I2 before the integration notice that 
    ! they contain also the external field
    !
 #if defined _DOUBLE
-   call zgemm('n','n',SC_bands,SC_bands,SC_bands,(1._SP,0._SP),Sigma_s(:,:,1),&
+   call zgemm('n','n',SC_bands,SC_bands,SC_bands,(1._SP,0._SP),H_nl_sc(:,:,1),&
 &             SC_bands,G_input(:,:,ik),SC_bands,(0._SP,0._SP),I1_lesser(:,:,ik),SC_bands)
    call zgemm('n','n',SC_bands,SC_bands,SC_bands,(1._SP,0._SP),G_input(:,:,ik),&
-&             SC_bands,Sigma_s(:,:,1),SC_bands,(0._SP,0._SP),I2_lesser(:,:,ik),SC_bands)
+&             SC_bands,H_nl_sc(:,:,1),SC_bands,(0._SP,0._SP),I2_lesser(:,:,ik),SC_bands)
 #else
-   call cgemm('n','n',SC_bands,SC_bands,SC_bands,(1._SP,0._SP),Sigma_s(:,:,1),&
+   call cgemm('n','n',SC_bands,SC_bands,SC_bands,(1._SP,0._SP),H_nl_sc(:,:,1),&
 &             SC_bands,G_input(:,:,ik),SC_bands,(0._SP,0._SP),I1_lesser(:,:,ik),SC_bands)
    call cgemm('n','n',SC_bands,SC_bands,SC_bands,(1._SP,0._SP),G_input(:,:,ik),&
-&             SC_bands,Sigma_s(:,:,1),SC_bands,(0._SP,0._SP),I2_lesser(:,:,ik),SC_bands)
+&             SC_bands,H_nl_sc(:,:,1),SC_bands,(0._SP,0._SP),I2_lesser(:,:,ik),SC_bands)
 #endif
-   !
    !
    ! Fictitious lifetime equivalent to the broadening
    ! in linear optics
@@ -193,7 +180,7 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
      ! This term send the electron distribution into the initial one en%f()
      !   
      forall(i1=1:SC_bands)
-       I1_lesser(i1,i1,ik)=I1_lesser(i1,i1,ik)-(1.,0.)*en%f(i1,ik,1)/TransRelax
+       I1_lesser(i1,i1,ik)=I1_lesser(i1,i1,ik)-(1.,0.)*Xen%f(i1,ik,1)/TransRelax
      end forall 
      !
      ! Use a different relaxation time for the diagonal part
@@ -203,7 +190,7 @@ subroutine RT_Collision(G_input,en,Xen,k,q,RT_time)
        RelaxDiff=1./LongRelax-1./TransRelax
        !
        forall(i1=1:SC_bands)
-         I1_lesser(i1,i1,ik)=I1_lesser(i1,i1,ik)-(0.,1.)*(G_input(i1,i1,ik)-(0.,1.)*en%f(i1,ik,1))*RelaxDiff
+         I1_lesser(i1,i1,ik)=I1_lesser(i1,i1,ik)-(0.,1.)*(G_input(i1,i1,ik)-(0.,1.)*Xen%f(i1,ik,1))*RelaxDiff
        end forall
        !
      endif

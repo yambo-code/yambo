@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !
-recursive subroutine RT_Integrator(G_new,G_old,T_step,en,Xen,k,q,Integrator,RT_time)
+recursive subroutine RT_Integrator(G_new,G_old,T_step,Xen,k,q,Integrator,RT_time)
  !
  !  This subroutine perform integration using different methods
  !
@@ -49,9 +49,9 @@ recursive subroutine RT_Integrator(G_new,G_old,T_step,en,Xen,k,q,Integrator,RT_t
  !
  use pars,           ONLY:SP,schlen
  use com,            ONLY:error
- use SC,             ONLY:SC_bands,H_rotate,H_nl_sc
+ use SC,             ONLY:SC_bands,H_rotate
  use R_lattice,      ONLY:bz_samp  
- use real_time,      ONLY:I1_lesser,I2_lesser, &
+ use real_time,      ONLY:I1_lesser,I2_lesser,H_t, &
  &                        EULER,RK2,EXACT,RK2EXACT
  use electrons,      ONLY:levels
  use matrix_operate, ONLY:mat_dia_inv,USE_LK,DIAGO
@@ -59,7 +59,7 @@ recursive subroutine RT_Integrator(G_new,G_old,T_step,en,Xen,k,q,Integrator,RT_t
  !
  character(schlen), intent(in) :: Integrator
  type(bz_samp),     intent(in) :: k,q
- type(levels),      intent(in) :: en,Xen
+ type(levels),      intent(in) :: Xen
  real(SP),          intent(in) :: T_step,RT_time
  complex(SP),       intent(in) :: G_old(SC_bands,SC_bands,k%nibz)
  complex(SP),    intent(inout) :: G_new(SC_bands,SC_bands,k%nibz)
@@ -128,24 +128,24 @@ recursive subroutine RT_Integrator(G_new,G_old,T_step,en,Xen,k,q,Integrator,RT_t
    !
    ! Evaluate G(t+dt/2)
    !
-   call RT_Integrator(G_new,G_old,T_step/2._SP,en,Xen,k,q,EULER,RT_time) 
+   call RT_Integrator(G_new,G_old,T_step/2._SP,Xen,k,q,EULER,RT_time) 
    !
    ! use G(t+dt/2) to evaluate I1(t+dt/2) and I2(t+dt/2)
    !
-   call RT_Collision(G_new,en,Xen,k,q,RT_time+T_step/2._SP)
+   call RT_Collision(G_new,Xen,k,q,RT_time+T_step/2._SP)
    !
    ! final step G(t+dt)=G(t) + dt * (I1(t+dt/2) - I2(t+dt/2))
    !
-   call RT_Integrator(G_new,G_old,T_step,en,Xen,k,q,EULER,RT_time)
+   call RT_Integrator(G_new,G_old,T_step,Xen,k,q,EULER,RT_time)
    !
  elseif(trim(Integrator)==EXACT) then
    !
    ! Diagonalize the Self-Energy (H_t) and make a step 
    ! in the space of its eigenstates
    !
-   do ik=1,en%nk
+   do ik=1,Xen%nk
      !
-     TmpMatrix(:,:)=H_nl_sc(:,:,ik)
+     TmpMatrix(:,:)=H_t(:,:,ik,1)
      !
      call mat_dia_inv(DIAGO,USE_LK,TmpMatrix,E_real=Xen%E(:SC_bands,ik,1))
      !
@@ -164,15 +164,15 @@ recursive subroutine RT_Integrator(G_new,G_old,T_step,en,Xen,k,q,Integrator,RT_t
    !
    ! Evaluate G(t+dt/2)
    !
-   call RT_Integrator(G_new,G_old,T_step/2._SP,en,Xen,k,q,EXACT,RT_time) 
+   call RT_Integrator(G_new,G_old,T_step/2._SP,Xen,k,q,EXACT,RT_time) 
    !
    ! use G(t+dt/2) to evaluate I1(t+dt/2) and I2(t+dt/2)
    !
-   call RT_Collision(G_new,en,Xen,k,q,RT_time+T_step/2._SP)
+   call RT_Collision(G_new,Xen,k,q,RT_time+T_step/2._SP)
    !
    ! final step G(t+dt)=G(t) + dt * (I1(t+dt/2) - I2(t+dt/2))
    !
-   call RT_Integrator(G_new,G_old,T_step,en,Xen,k,q,EXACT,RT_time)
+   call RT_Integrator(G_new,G_old,T_step,Xen,k,q,EXACT,RT_time)
    !                                                        
  else
    !

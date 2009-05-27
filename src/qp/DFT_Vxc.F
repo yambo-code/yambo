@@ -206,7 +206,10 @@ subroutine DFT_Vxc(E,Xk)
  !
  ! Clean
  !
- deallocate(V_xc,el_mag)
+#if !defined _SC && !defined _RT
+ deallocate(V_xc)
+#endif
+ deallocate(el_mag)
  ! 
  ! GPL_EXCLUDE_END SPIN_IGNORE
  !

@@ -106,4 +106,6 @@ subroutine SC_common_build_Ho(E,Xk,k)
  !
 #endif
  !
+ deallocate(V_xc)
+ !
 end subroutine SC_common_build_Ho

@@ -199,11 +199,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    endif
    if (l_sc_exx.or.l_sc_exxc)  then
      WF_G_max=max(QP_ng_Sx,X(1)%ng)
-   else if (l_sc_chosex)  then
-     WF_G_max=max(QP_ng_Sx,X(2)%ng)
    endif
  endif
- call wf_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),title=' ')
+ call wf_load(WF_G_max,WF_Go_indx,(/1,max(SC_bands,E%nbm)/),(/1,k%nibz/),title=' ')
  !
  if (NSC_shot.and.SC_fft_size/=fft_size) then
    call warning(' FFT size of V_xc does not fit. Skipping NSC run')
@@ -273,8 +271,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    it_now=0
    !
-   V_xc_sc  =(0.,0.)
-   V_xc_nm1 =(0.,0.)
+   V_xc_sc  =0.
+   V_xc_nm1 =0.
    !
  endif
  !

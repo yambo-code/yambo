@@ -101,7 +101,7 @@ module SC
      call mem_est("rho",(/fft_size/),(/SP/))
      !
      allocate(V_xc_sc(fft_size,n_spin),V_hartree_sc(fft_size,n_spin))
-     call mem_est("Optentials",(/2*size(V_xc_sc)/))
+     call mem_est("Potentials",(/2*size(V_xc_sc)/))
      !
      allocate(H_nl_sc(SC_bands,SC_bands,n_sp_pol))
      call mem_est("H_nl_sc",(/size(H_nl_sc)/),(/2*SP/))

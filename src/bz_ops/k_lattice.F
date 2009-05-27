@@ -44,10 +44,11 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  ! Work Space
  !
  integer  :: i1,i2,i3,iv(3),ig,N_g_vecs,N_ext_K_pts,k_grid_borders(3,2)
- real(SP) :: v0(3),v1(3),v0_ibz_mod,k_b_m1(3,3) 
+ real(SP) :: v0(3),v1(3),v0_ibz_mod,k_b_m1(3,3)
  real(SP),allocatable ::idist(:),extended_K_points(:,:)
  integer, allocatable ::order(:)
- character(schlen)    ::warn_msg,ch
+ character(schlen)    ::warn_msg,ch 
+ logical  :: small_b_in_UC
  !
  k_lattice=0
  !
@@ -220,9 +221,18 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
      !
      ! Exclude the max index when both borders are on the border of the
      ! rlu unit cell
+     ! 
+     small_b_in_UC=.FALSE.
      !
-     v0=(k_grid_borders(i1,2)-k_grid_borders(i1,1))*abs(k_grid_b(i1,:))
-     if (any(v0>1.-1.E-5)) k_grid_borders(i1,2)=k_grid_borders(i1,2)-1
+     do while (.not.small_b_in_UC)
+       v0=(k_grid_borders(i1,2)-k_grid_borders(i1,1))*abs(k_grid_b(i1,:))
+       if (any(v0>1.-1.E-5)) then
+         k_grid_borders(i1,2)=k_grid_borders(i1,2)-1
+       else
+         small_b_in_UC=.TRUE.
+       endif
+     enddo
+     !
    endif
    if (k_grid(i1)==0) k_grid(i1)=1
    !

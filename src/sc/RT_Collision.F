@@ -25,15 +25,15 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  ! Actualy it works only for the diagonal I1(t_1,t_1), I2(t_1,t_1)
  !
  use pars,           ONLY:SP
- use electrons,      ONLY:levels,el_density,n_sp_pol
- use drivers,        ONLY:l_sc_pz
+ use electrons,      ONLY:levels,n_sp_pol
+ use drivers,        ONLY:l_sc_pz,l_sc_hf
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,V_xc_sc,rho_n
  use QP_m,           ONLY:QP_nk
  use real_time,      ONLY:I1_lesser,I2_lesser,l_RT_no_updates,l_qp_analyze, &
- &                        l_rt_efield,TransRelax,LongRelax,T_initial, &
- &                        Hartree_plus_Vxc_sc,l_RPA,V_hartree_0,V_xc_0,Thermal_time, &
- &                        Integrator_name,EXACT,RK2EXACT,H_t
+ &                        l_rt_efield,TransRelax,LongRelax,T_initial,H_t,l_RPA, &
+ &                        Hartree_plus_Vxc_sc,V_hartree_0,V_xc_0,Thermal_time, &
+ &                        Integrator_name,EXACT,RK2EXACT,rho_rho_gamp,Thermal_eta
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
@@ -49,6 +49,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  !
  integer     :: ik,iv,i1,SC_bands2
  real(SP)    :: RelaxDiff
+ complex(SP) :: cdotu
  !
  SC_bands2=SC_bands**2
  !
@@ -58,7 +59,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
    Xen%f(iv,ik,1)=-(0._SP,1._SP)*G_input(iv,iv,ik)
  end forall
  !
- call el_density(Xen,k,rho_n,G_lesser=G_input)
+ call el_density(G_input,k,rho_n,.false.)
  !
  if(.not.l_RT_no_updates) then
    !
@@ -78,6 +79,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
      V_xc_sc        =V_xc_0
      !
    endif
+
    !
  else
    !
@@ -94,32 +96,48 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  ! Simple case without any correlation just transition between bands
  ! equivalent to RPA without local field effects
  !
- !
  do ik=1,QP_nk 
    !      
    H_nl_sc=(0.,0.)
    !
-   !  I subtract the V_xc_sc term if there is a self-energy /=0 (at least V_h)
-   !  and not l_RPA=.true. (used to include local field effects only)
-   !
-   if(.not.l_RT_no_updates.and..not.l_RPA) then 
-     !  
-     call V_real_space_to_H(ik,-V_xc_0,H_nl_sc,wf)
+   if(.not.l_RT_no_updates) then
+     !
+     if(l_sc_hf) then
+       !
+       ! Add the exchange term
+       !
+#if defined _DOUBLE
+       call zgemv('T',SC_bands2,SC_bands2,(0.,-1.),rho_rho_gamp(:,:,:,:,ik) &
+&                ,SC_bands2,G_input(:,:,ik),1,(1.,0.),H_nl_sc,1)
+#else
+       call cgemv('T',SC_bands2,SC_bands2,(0.,-1.),rho_rho_gamp(:,:,:,:,ik) &
+&                 ,SC_bands2,G_input(:,:,ik),1,(1.,0.),H_nl_sc,1)
+#endif
+       !
+     endif
+     !
+     !  I subtract the V_xc_sc term if there is a self-energy /=0 (at least V_h)
+     !  and not l_RPA=.true. (used to include local field effects only)
+     !
+     if(.not.l_RPA) call V_real_space_to_H(ik,-V_xc_0,H_nl_sc,wf)
      !
    endif
    !
    ! Adiabatic Switching
+   ! (for all the parts of self-energy different from V_h + V_xc)
    !
    if(Thermal_time/=0.0) then 
      !      
-     H_nl_sc=H_nl_sc*(1._SP+tanh((RT_time+Thermal_time/2._SP)/Thermal_time*8._SP))/2._SP
+     H_nl_sc=H_nl_sc*(1._SP+tanh((RT_time+Thermal_time/2._SP)/Thermal_time*Thermal_eta))/2._SP
      !
    endif
    !
-   ! Fill the Singular (in time) Self-Energy H_nl_sc(:,:,:)
+   ! Put the V_Hartree and V_xc
    !
    if(.not.l_RT_no_updates) then
+     !      
      call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,wf)
+     !
    else
 #if defined _DOUBLE
      call zaxpy(SC_bands2,(1.,0.),Hartree_plus_Vxc_sc(:,:,ik,1),1,H_nl_sc(:,:,1),1)

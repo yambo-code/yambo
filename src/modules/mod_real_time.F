@@ -66,6 +66,7 @@ module real_time
  real(SP), allocatable   :: V_hartree_0(:,:)  
  real(SP), allocatable   :: V_xc_0(:,:) 
  real(SP)                :: Thermal_time
+ complex(SP),allocatable :: rho_rho_gamp(:,:,:,:,:)
  integer                 :: DiagH_Iter
  logical                 :: l_qp_analyze
  !
@@ -93,13 +94,14 @@ module real_time
  !
  complex(SP), allocatable :: Hartree_plus_Vxc_sc(:,:,:,:)
  complex(SP), allocatable :: H_t(:,:,:,:)
+ real(SP),    allocatable :: Occ_natural_orb(:,:) ! Occupation natural orbitals
  !
  contains
    !
    subroutine RT_alloc(en)
      !
      use pars,           ONLY:SP,schlen
-     use drivers,        ONLY:l_sc_hartree
+     use drivers,        ONLY:l_sc_hf
      use memory_m,       ONLY:mem_est
      use SC,             ONLY:SC_bands,V_hartree_sc,local_V,V_xc_sc,SC_alloc, &
 &                             E_bare
@@ -122,26 +124,26 @@ module real_time
      allocate(V_xc_0(fft_size,n_spin))
      call mem_est('Potentials',(/fft_size/),(/(1+n_spin)*2*SP/))
      !
-     allocate(G_lesser(SC_bands,SC_bands,en%nk))
+     allocate(G_lesser(SC_bands,SC_bands,QP_nk))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
      !
      if(l_RT_no_updates) then
-       allocate(Hartree_plus_Vxc_sc(SC_bands,SC_bands,en%nk,n_sp_pol))
+       allocate(Hartree_plus_Vxc_sc(SC_bands,SC_bands,QP_nk,n_sp_pol))
        call mem_est("Hartree_plus_Vxc_sc",(/size(Hartree_plus_Vxc_sc)/),(/2*SP/))
      endif
      !
      if(l_qp_analyze.or.trim(Integrator_name)==EXACT.or.trim(Integrator_name)==RK2EXACT) then
-       allocate(H_t(SC_bands,SC_bands,en%nk,n_sp_pol))
+       allocate(H_t(SC_bands,SC_bands,QP_nk,n_sp_pol))
        call mem_est("H_t",(/size(H_t)/),(/2*SP/))
      endif
      !
-     allocate(I1_lesser(SC_bands,SC_bands,en%nk))
+     allocate(I1_lesser(SC_bands,SC_bands,QP_nk))
      call mem_est("I1_lesser",(/size(I1_lesser)/),(/2*SP/))
      !
-     allocate(I2_lesser(SC_bands,SC_bands,en%nk))
+     allocate(I2_lesser(SC_bands,SC_bands,QP_nk))
      call mem_est("I2_lesser",(/size(I2_lesser)/),(/2*SP/))
      !
-     allocate(G_lesser_previous(SC_bands,SC_bands,en%nk))
+     allocate(G_lesser_previous(SC_bands,SC_bands,QP_nk))
      call mem_est("Gf_l_old",(/size(G_lesser_previous)/),(/2*SP/))
      !
      allocate(j_current(Tot_steps,3))
@@ -153,16 +155,27 @@ module real_time
      allocate(A_norm(Tot_steps))
      call mem_est("A_norm",(/size(A_norm)/),(/DP/))
      !
+     if(l_sc_hf) then
+       allocate(rho_rho_gamp(SC_bands,SC_bands,SC_bands,SC_bands,QP_nk))
+       call mem_est("rho_rho_gamp",(/size(rho_rho_gamp)/),(/2*SP/))
+     endif
+     !
      ! Reference energies
      !
      allocate(E_bare(SC_bands,QP_nk,n_sp_pol))
      call mem_est("E_bare",(/size(E_bare)/))
      E_bare=en%E(:SC_bands,:,:)
      !
+     if(l_qp_analyze) then
+       allocate(Occ_natural_orb(SC_bands,QP_nk))
+       call mem_est("Occ_natural",(/size(Occ_natural_orb)/))
+     endif
+     !
    end subroutine RT_alloc
    
    subroutine RT_free
      !
+     use drivers,        ONLY:l_sc_hf
      use SC,             ONLY:V_hartree_sc,Ho,V_xc_Sc,SC_free,E_bare
      use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:E_xc
@@ -211,8 +224,18 @@ module real_time
      deallocate(A_norm)
      call mem_est("A_norm")
      !
+     if(l_sc_hf) then
+       deallocate(rho_rho_gamp)
+       call mem_est("rho_rho_gamp")
+     endif
+     !
      deallocate(E_bare)
      call mem_est("E_bare")
+     !
+     if(l_qp_analyze) then
+       deallocate(Occ_natural_orb)
+       call mem_est("Occ_natural")
+     endif
      !
    end subroutine RT_free
    !

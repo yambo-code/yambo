@@ -35,7 +35,7 @@ subroutine RT_current(j_current,en,xK,A_vec_pot,G_lesser)
  implicit none
  type(levels),  intent(in) ::en       
  type(bz_samp), intent(in) ::Xk
- complex(SP), intent(in)  :: G_lesser(en%nbm,en%nbm,Xk%nibz)
+ complex(SP),    intent(in)  :: G_lesser(SC_bands,SC_bands,Xk%nibz)
  complex(DP),    intent(in)  :: A_vec_pot(3)
  complex(DP),    intent(out) :: j_current(3)
  !

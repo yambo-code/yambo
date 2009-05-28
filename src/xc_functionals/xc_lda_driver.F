@@ -65,7 +65,7 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:DL_vol
  use com,           ONLY:msg,warning
- use electrons,     ONLY:levels,n_spin,el_density
+ use electrons,     ONLY:levels,n_spin
  use FFT_m,         ONLY:fft_size
 #if defined _RT
  use SC,            ONLY:SC_bands
@@ -120,9 +120,9 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  ! Electronic density & Rs
  !
 #if defined _RT
- call el_density(en,Xk,rho_sp,G_lesser=G_lesser)
+ call el_density(G_lesser,Xk,rho_sp,.false.)
 #else
- call el_density(en,Xk,rho_sp)
+ call el_density(en,Xk,rho_sp,.false.)
 #endif
  rho=rho_sp*real(fft_size,DP)/real(DL_vol,DP)
  forall (i1=1:fft_size) rspts(i1)=(3._DP/4._DP/pi/rho(i1))**(1._DP/3._DP)

@@ -19,7 +19,9 @@
 subroutine RT_initialize(file_name,Xen)
  ! 
  use pars,           ONLY:SP,lchlen,schlen
+ use drivers,        ONLY:l_sc_hf
  use SC,             ONLY:SC_bands,rho_n
+ use QP_m,           ONLY:QP_Sx_low_band
  use com,            ONLY:msg,of_open_close,warning
  use real_time,      ONLY:l_RPA,RT_resonant,RT_no_intraband,l_eps_analyze,&
 &                         Thermal_steps,Thermal_time,RT_step,l_rt_efield,&
@@ -48,6 +50,11 @@ subroutine RT_initialize(file_name,Xen)
  call parser('RTQpAnalyze',l_qp_analyze)
  call parser('KeepVxc',l_RPA)
  call parser('NoDiamagnetic',l_no_diamagnetic)
+ !
+ if(l_sc_hf.and.QP_Sx_low_band/=1) then
+   QP_Sx_low_band=1
+   call warning('  Exchange summation low band set to 1 ')
+ endif
  !
  if(Thermal_steps/=0) then
    !
@@ -122,8 +129,9 @@ subroutine RT_initialize(file_name,Xen)
  call msg(' r','[RT] Dielectric function   :',l_eps_analyze)
  call msg(' r','[RT] RPA                   :',l_RPA)
  call msg(' r','[RT] Diamagnetic term      :',.not.l_no_diamagnetic)
+ call msg(' r','[RT] Analyze QP-dynamics   :',l_qp_analyze)
  !
  file_name(3)="qp"
- if(l_qp_analyze) call of_open_close(file_name(3))
+ if(l_qp_analyze) call of_open_close(file_name(3),'ot')
  !
 end subroutine RT_initialize

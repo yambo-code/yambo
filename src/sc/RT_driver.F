@@ -22,6 +22,7 @@
 subroutine RT_driver(en,Xen,X,k,xk,q)
  !
  use pars,           ONLY:SP,lchlen
+ use drivers,        ONLY:l_sc_hf
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:FS2AUT
  use com,            ONLY:msg,of_open_close
@@ -30,21 +31,20 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  use electrons,      ONLY:levels,n_sp_pol
  use X_m,            ONLY:X_t,Eval_P_and_P2_only,X_alloc
  use wave_func,      ONLY:wf,wf_load,wf_ng,WF_free
- use R_lattice,      ONLY:bz_samp
- use QP_m,           ONLY:QP_nb,QP_nk
+ use R_lattice,      ONLY:bz_samp,qindx_S
+ use QP_m,           ONLY:QP_nb,QP_nk,QP_ng_Sx
  use SC,             ONLY:SC_potential,SC_bands,Ho,E_bare
  use real_time,      ONLY:Thermal_steps,Tot_steps,RT_step,G_lesser, &
 &                         G_lesser_previous,l_rt_efield,RT_alloc,RT_free, &
 &                         A_vec_pot,A_norm,l_eps_analyze,i_time,Integrator_name,&
-&                         j_current,l_qp_analyze,I1_lesser
+&                         j_current,l_qp_analyze,I1_lesser,rho_rho_gamp
  !
  implicit none
  !
- ! Notice that "en" never changes, it contains
- ! the bare occupation and bare energies
+ ! if l_qp_analyze=.true.  "en"  will contains new energies and occupations
+ ! otherwise it will not be used
  !
- type(levels)  :: en
- type(levels)  :: Xen
+ type(levels)  :: en,Xen
  !
  type(bz_samp) :: k,Xk,q
  type(X_t):: X(4)
@@ -72,10 +72,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  WF_Go_indx=1  
  call wf_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),space='R',title=' ')  
  !
- ! 2 CHANGE !!!!!!!!!!!!!!!!!!!!!!
- !
- Xen%nbm=SC_bands
- !
  ! Core initialization
  !
  call RT_initialize(file_name,Xen)
@@ -102,13 +98,39 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  E_bare=en%E(:SC_bands,:,:)
  call SC_common_build_Ho(Xen,Xk,k)
  !
+ if(l_sc_hf) then
+   !
+   ! Build rho_rho_gamp(:,:,:,:,nk)
+   !
+   call wf_free()
+   WF_G_max  =wf_ng
+   if(QP_ng_Sx>wf_ng) QP_ng_Sx=wf_ng 
+   WF_Go_indx=maxval(qindx_S(:,:,2))
+   call wf_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),title=' ')
+   !
+   call IO_mute("report io_in io_out")
+   !
+   call QP_XX_Vxc(Xen,k,Xk,q,rho_rho_gamp,G_lesser)
+   !
+   call IO_mute("  ")
+   !
+   call wf_free()
+   WF_G_max=wf_ng
+   WF_Go_indx=1  
+   call wf_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),space='R',title=' ')  
+   !
+ endif
+ !
  ! Real zero of the time                   
  !
  if(Thermal_steps/=0) call live_timing('[RT] Thermalization :',Thermal_steps)
  !
  do it=1,Thermal_steps+Tot_steps
    !
-   i_time=it
+   ! i_time: integer index of the time staring from RT_time>0 
+   !         after the Thermalization, used for A_t and J_current
+   !
+   if(it>Thermal_steps) i_time=it-Thermal_steps  
    !
    RT_time=(it-Thermal_steps)*RT_step
    !
@@ -136,9 +158,9 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
 &                real(Trace_Gf)/)
    call msg('o dynamics','',values(1:6),USE_TABS=.TRUE.)
    !
-   if(l_qp_analyze) call RT_qp_analyze()
+   if(l_qp_analyze) call RT_qp_analyze(it,en,k,Xk,G_lesser)
    !
-   if(l_rt_efield) then
+   if(l_rt_efield.and.RT_time>0.) then
      !
      call RT_current(j_current(i_time,:),Xen,xK,A_vec_pot(i_time,:),G_lesser_previous)
      !

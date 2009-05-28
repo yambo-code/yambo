@@ -19,13 +19,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#if defined _RT
+subroutine QP_XX_Vxc(E,k,Xk,q,rho_rho_gamp,G_lesser)
+#else
 subroutine QP_XX_Vxc(E,k,Xk,q)
+#endif
  !
  ! Hartree S_x self-energy + call to V_xc 
  !
  use pars,          ONLY:SP,schlen,DP,pi
  use units,         ONLY:HARTREE
- use drivers,       ONLY:l_sc_run,l_acfdt,l_sc_exx,l_sc_exxc
+ use drivers,       ONLY:l_sc_run,l_acfdt,l_sc_exx,l_sc_exxc,l_real_time
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg,depth
  use timing,        ONLY:live_timing
@@ -38,19 +42,23 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  use R_lattice,     ONLY:qindx_S,bz_samp
  use wave_func,     ONLY:wf,wf_load,wf_ng,WF_free
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
-#if defined _SC
- use SC,            ONLY:it_now
+#if defined _SC || defined _RT
+ use SC,            ONLY:it_now,SC_bands
 #endif
  !
  implicit none
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
+#if defined _RT
+ complex(SP), intent(out) :: rho_rho_gamp(SC_bands,SC_bands,SC_bands,SC_bands,k%nibz)
+ complex(SP), intent(in)  :: G_lesser(SC_bands,SC_bands,k%nibz)
+#endif
  !
  !Work Space
  !
  type(ggwinfo)    ::isc,iscp
  type(pp_indexes) ::px
- integer                 ::i1,i2,iq,ib,ik,ibp,jb
+ integer                 ::i1,i2,iq,ib,ik,ibp,jb,jb2
 #if defined _DOUBLE
  complex(DP)             ::zdotc,zdotu
 #else 
@@ -78,6 +86,10 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  !
  ! Section
  !
+#if defined _RT
+ rho_rho_gamp=(0.,0.)
+#endif
+ !
  if (l_acfdt) then
    call section('p','EX(change)S(elf-energy) and Vxc potential')
  else if (.not.l_sc_run) then
@@ -103,8 +115,10 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  ! I/O
  !
  io_err=-1
+#if !defined _RT
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=ioXXVXC(ID)
+#endif
  !
  if (io_err/=0) then
    !
@@ -138,11 +152,15 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
    !
    ! par indexes
    !
+#if defined _RT
+   call par_indexes(px,(/q%nbz,SC_bands/),(/1,QP_Sx_low_band/))
+#else
    call par_indexes(px,(/q%nbz,E%nbm/),(/1,QP_Sx_low_band/))
+#endif
    call pp_redux_wait
    !
    ch='EXS'
-#if defined _SC
+#if defined _SC 
    if (l_sc_run) ch='EXS@it'//trim(intc(it_now))
 #endif
    !
@@ -168,6 +186,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
        !
        ib =QP_table(i1,1)
        ibp=QP_table(i1,2)
+       ik =QP_table(i1,3)
        !
        isc%is=(/QP_table(i1,1),QP_table(i1,3),1,spin(QP_table(i1,:))/)
        isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iq,1),:),spin(QP_table(i1,:))/)
@@ -176,12 +195,16 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
        isc%qs(1)=qindx_S(QP_table(i1,3),iq,2)
        iscp%qs=isc%qs
        !
+#if defined _RT
+       do jb=1,SC_bands
+#else
        do jb=QP_Sx_low_band,E%nbm
+#endif
          if (.not.px%i2p(iq,jb)) cycle
          isc%os(1)=jb
          iscp%os=isc%os
          call live_timing(steps=1)
-#if defined _SC
+#if defined _SC 
          !
          ! In Exact-Exchange only vc matrix elements so ... no cc' no vv' 
          ! (cv is not permitted by the order in QP_table)
@@ -190,6 +213,32 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
 #endif
          !
          call scatterBamp(isc)
+         !
+#if defined _RT
+         !
+         ! Use the full density matrix  -i*G_lesser
+         ! Symmetries can used to reduce this calculation
+         ! parallelization doesn't work yet on rho_rho_gamp(:,:,:,:,:)
+         ! and store
+         !
+         ! rho_rho_gamp(n,n',m,m',k) = \sum_{G,q} ( rho(m,n,G,q,k) x rho*(m',n',G,q,k) /|q+G|^2 )
+         !
+         do jb2=1,SC_bands
+           !      
+           iscp%os(1)=jb2
+           call scatterBamp(iscp)
+           local_rhotw=-4./spin_occ*pi*isc%rhotw*conjg(iscp%rhotw)
+#if defined _DOUBLE
+           DP_Sx=zdotu(QP_ng_Sx,local_rhotw,1,isc%gamp(1,1),1)
+#else 
+           DP_Sx=cdotu(QP_ng_Sx,local_rhotw,1,isc%gamp(1,1),1)
+#endif
+           rho_rho_gamp(jb,jb2,ib,ibp,ik)=rho_rho_gamp(jb,jb2,ib,ibp,ik)+DP_Sx
+           !
+         enddo
+#else
+         !
+         ! Normal case, the density matrix is diagonal
          !
          iscp%rhotw=isc%rhotw
          if (isc%is(1)/=iscp%is(1)) call scatterBamp(iscp)
@@ -203,6 +252,8 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
          DP_Sx=cdotu(QP_ng_Sx,local_rhotw,1,isc%gamp(1,1),1)
 #endif
          QP_Sx(i1)=QP_Sx(i1)+DP_Sx
+         !
+#endif   
        enddo
        !
      enddo
@@ -210,6 +261,29 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
    enddo
    !
    call live_timing()
+   !
+#if defined _RT
+   !
+   ! Now I reconstruct the QP_Sx from the product 
+   ! QP_Sx(m,m',k) = - (0.,1.) * \sum_{n,n'} rho_rho_(n,n',m,m',k) x G_lesser(n,n',k)
+   !
+   do i1=1,QP_n_states
+     !
+     ib =QP_table(i1,1)
+     ibp=QP_table(i1,2)
+     ik =QP_table(i1,3)     
+     !
+#if defined _DOUBLE
+     QP_Sx(i1)=-(0.,1.)*zdotu(SC_bands*SC_bands,rho_rho_gamp(:,:,ib,ibp,ik),1,G_lesser(:,:,ik),1)
+#else 
+     QP_Sx(i1)=-(0.,1.)*cdotu(SC_bands*SC_bands,rho_rho_gamp(:,:,ib,ibp,ik),1,G_lesser(:,:,ik),1)
+#endif
+     !
+   enddo
+   !
+#endif
+   !
+   !
    deallocate(isc%gamp,isc%rhotw,iscp%rhotw,local_rhotw)
    !
    call pp_redux_wait(QP_Sx)
@@ -219,7 +293,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
    !
    ! Vxc
    !
-   if (.not.l_sc_run) then
+   if (.not.l_sc_run.and..not.l_real_time) then
      call DFT_Vxc(E,Xk)
      call WF_free()
    endif

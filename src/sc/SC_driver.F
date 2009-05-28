@@ -25,7 +25,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use units,          ONLY:HARTREE
  use drivers,        ONLY:l_sc_exx,l_sc_chosex,l_sc_hartree,l_sc_pz,l_sc_lda_x,&
 &                         l_sc_hf,l_sc_exxc
- use electrons,      ONLY:levels,nel,n_met_bands,el_density,n_sp_pol,n_spin,spin
+ use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin
  use R_lattice,      ONLY:bz_samp,qindx_S,G_m_G
  use D_lattice,      ONLY:Tel
  use QP_m,           ONLY:QP_nk,QP_n_states,QP_Sc,&
@@ -163,17 +163,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  if (.not.any((/RESTART,SC_cycle,NSC_shot/))) return
  !
- call msg('nr','[SC] Self-Consistency (SC)            :',SC_cycle)
- call msg('r' ,'[SC] Restart + SC                     :',RESTART)
- call msg('r' ,'[SC] Non SC single shot               :',NSC_shot)
- call msg('r' ,'[SC] Bands                            :',SC_bands)
- call msg('r' ,'[SC] Mixed bands                      :',SC_bands_mixed)
- if (SC_cycle) then
-   call msg('r' ,'[SC] N (N-1) order mixing             :',SC_cycle_mixing)
-   call msg('r' ,'[SC] Imposed accuracy on density      :',SC_rho_threshold)
-   call msg('rn','[SC]                  on energies [ev]:',SC_E_threshold*HARTREE)
- endif
- !
  ! before loading the WF in R-space I check and/or calculate
  ! the optical oscillators that are done in G-space and would
  ! force the reloading of the WFs
@@ -217,6 +206,17 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  call SC_alloc(E)
  call SC_local_alloc()
  !
+ call msg('nr','[SC] Self-Consistency (SC)            :',SC_cycle)
+ call msg('r' ,'[SC] Restart + SC                     :',RESTART)
+ call msg('r' ,'[SC] Non SC single shot               :',NSC_shot)
+ call msg('r' ,'[SC] Bands                            :',SC_bands)
+ call msg('r' ,'[SC] Mixed bands                      :',SC_bands_mixed)
+ if (SC_cycle) then
+   call msg('r' ,'[SC] N (N-1) order mixing             :',SC_cycle_mixing)
+   call msg('r' ,'[SC] Imposed accuracy on density      :',SC_rho_threshold)
+   call msg('rn','[SC]                  on energies [ev]:',SC_E_threshold*HARTREE)
+ endif
+ !
  !  Ho (kinetic + potential)
  !---------------------------
  !
@@ -253,7 +253,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    ! ... rho_n and V_hartree_sc
    !
-   call el_density(E,k,rho_n)
+   call el_density(E,k,rho_n,.false.)
    call V_Hartree(rho_n,V_hartree_sc)
    !
    V_hartree_sc(:,n_sp_pol)= V_hartree_sc(:,1)
@@ -430,7 +430,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      rho_nm1 = rho_n 
      !
-     call el_density(E,k,rho_n)
+     call el_density(E,k,rho_n,.false.)
      !
      ! Convergences
      !

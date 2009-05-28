@@ -22,7 +22,7 @@
 subroutine SC_common_build_Ho(E,Xk,k)
  !
  use pars,           ONLY:SP
- use electrons,      ONLY:levels,n_sp_pol,el_density,spin
+ use electrons,      ONLY:levels,n_sp_pol,spin
  use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
  use SC,             ONLY:Ho,E_bare,V_xc_sc,V_hartree_sc,rho_n
  use memory_m,       ONLY:mem_est
@@ -42,12 +42,12 @@ subroutine SC_common_build_Ho(E,Xk,k)
  allocate(QP_Vxc(QP_n_states))
  call mem_est("QP_Vxc",(/QP_n_states/))    
  !
- call DFT_Vxc(E,k)
- !
 #if defined _RT
- call el_density(E,Xk,rho_n,G_lesser=G_lesser)
+ call DFT_Vxc(E,k,G_lesser)
+ call el_density(G_lesser,Xk,rho_n,.false.)
 #else
- call el_density(E,Xk,rho_n)
+ call DFT_Vxc(E,k)
+ call el_density(E,Xk,rho_n,.false.)
 #endif
  !
  V_xc_sc=V_xc 

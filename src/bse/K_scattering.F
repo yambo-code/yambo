@@ -62,7 +62,7 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
  type(ggwinfo)   ::isc
  type(pp_indexes)::p_index
  integer     :: i1,i2,i3,i4,b_ref,ik1bz,ik2bz,ifft,is1,is2,is1xis2,&
-&               iss_tab,is_coll,ib1,ib2,i_sp2,i_sp1
+&               iss_tab,is_coll,ib1,ib2,i_spin2,i_spin1
  integer     :: scatt_stat(BS_bands(2)-BS_bands(1)+1,BS_bands(2)-BS_bands(1)+1,nsym,n_sp_pol)
  complex(SP) :: wf_cmp
  logical     :: eval_collision
@@ -103,7 +103,7 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
    ik1bz=sum(Xk%nstar(:ik1-1))+i1
    is1=Xk%star(ik1,i1)
    !
-   do i_sp1=1,n_sp_pol
+   do i_spin1=1,n_sp_pol
      !
      do i2=1,Xk%nstar(ik2)
        !
@@ -117,18 +117,18 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
        if (is1xis2==iss_tab) O_phase(is1xis2,:,:)=1
        if (is1xis2/=iss_tab.and..not.eval_collision) then
          !
-         do i_sp2=1,n_sp_pol
+         do i_spin2=1,n_sp_pol
            !
            do ib1=BS_bands(1),BS_bands(2)
              !
-             if (O_phase(is1xis2,ib1,i_sp2)/=0) cycle
-             ifft=wf_state(ib1,ik2,i_sp2)
+             if (O_phase(is1xis2,ib1,i_spin2)/=0) cycle
+             ifft=wf_state(ib1,ik2,i_spin2)
              !
              wf_cmp=dot_product(wf(fft_rot_r(is1xis2,:),ifft),wf(fft_rot_r(iss_tab,:),ifft))
              if (abs(abs(wf_cmp)-1.)<=1.E-3) then
-               O_phase(is1xis2,ib1,i_sp2)=nint(real(wf_cmp))
+               O_phase(is1xis2,ib1,i_spin2)=nint(real(wf_cmp))
              else
-               O_phase(is1xis2,ib1,i_sp2)=-99
+               O_phase(is1xis2,ib1,i_spin2)=-99
              endif
            enddo
          enddo
@@ -140,43 +140,43 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
        !
        ! <ib1 ik1bz | ib2 ik2bz>
        !
-       do i3=1,O_n_v_states(ik1bz,i_sp1)+O_n_c_states(ik1bz,i_sp1)
+       do i3=1,O_n_v_states(ik1bz,i_spin1)+O_n_c_states(ik1bz,i_spin1)
          !
-         if (i3<=O_n_v_states(ik1bz,i_sp1)) ib1=O_v_state(ik1bz,i3,i_sp1)
-         if (i3> O_n_v_states(ik1bz,i_sp1)) ib1=O_c_state(ik1bz,i3-O_n_v_states(ik1bz,i_sp1),i_sp1)
+         if (i3<=O_n_v_states(ik1bz,i_spin1)) ib1=O_v_state(ik1bz,i3,i_spin1)
+         if (i3> O_n_v_states(ik1bz,i_spin1)) ib1=O_c_state(ik1bz,i3-O_n_v_states(ik1bz,i_spin1),i_spin1)
          !
-         do i4=1,O_n_v_states(ik2bz,i_sp1)+O_n_c_states(ik2bz,i_sp1)
+         do i4=1,O_n_v_states(ik2bz,i_spin1)+O_n_c_states(ik2bz,i_spin1)
            !
-           if (i4<=O_n_v_states(ik2bz,i_sp1)) ib2=O_v_state(ik2bz,i4,i_sp1)
-           if (i4> O_n_v_states(ik2bz,i_sp1)) ib2=O_c_state(ik2bz,i4-O_n_v_states(ik2bz,i_sp1),i_sp1)
+           if (i4<=O_n_v_states(ik2bz,i_spin1)) ib2=O_v_state(ik2bz,i4,i_spin1)
+           if (i4> O_n_v_states(ik2bz,i_spin1)) ib2=O_c_state(ik2bz,i4-O_n_v_states(ik2bz,i_spin1),i_spin1)
            !
            ! Prevent the calculation of c->v or v->c oscillators in the resonant
            ! only calculation
            !
            if (.not.BS_cpl_K_corr.and. (&
-&              (i3> O_n_v_states(ik1bz,i_sp1).and.i4<=O_n_v_states(ik2bz,i_sp1)).or.&
-&              (i3<=O_n_v_states(ik1bz,i_sp1).and.i4> O_n_v_states(ik2bz,i_sp1)))) cycle
+&              (i3> O_n_v_states(ik1bz,i_spin1).and.i4<=O_n_v_states(ik2bz,i_spin1)).or.&
+&              (i3<=O_n_v_states(ik1bz,i_spin1).and.i4> O_n_v_states(ik2bz,i_spin1)))) cycle
            !
            is_coll=iss_tab
            !
-           if (O_phase(is1xis2,ib2,i_sp1)==-99) is_coll=is1xis2
-           if(scatt_stat(ib1-b_ref,ib2-b_ref,is_coll,i_sp1)==0) then
+           if (O_phase(is1xis2,ib2,i_spin1)==-99) is_coll=is1xis2
+           if(scatt_stat(ib1-b_ref,ib2-b_ref,is_coll,i_spin1)==0) then
              !
              O_n_scatt=O_n_scatt+1
-             O_table(ib1-b_ref,is1,ib2-b_ref,is2,i_sp1)   =O_n_scatt
-             scatt_stat(ib1-b_ref,ib2-b_ref,is_coll,i_sp1)=O_n_scatt
+             O_table(ib1-b_ref,is1,ib2-b_ref,is2,i_spin1)   =O_n_scatt
+             scatt_stat(ib1-b_ref,ib2-b_ref,is_coll,i_spin1)=O_n_scatt
              if (.not.allocated(BS_O)) cycle
              if (.not.eval_collision) cycle
              if (.not.p_index%i1p(O_n_scatt)) cycle
              !
-             isc%is=(/ib1,ik1,1,i_sp1/)
-             isc%os=(/ib2,ik2,is_coll,i_sp1/)
+             isc%is=(/ib1,ik1,1,i_spin1/)
+             isc%os=(/ib2,ik2,is_coll,i_spin1/)
              call scatterBamp(isc)
              BS_O(:,O_n_scatt)=isc%rhotw 
              !
            else
              !
-             O_table(ib1-b_ref,is1,ib2-b_ref,is2,i_sp1)=scatt_stat(ib1-b_ref,ib2-b_ref,is_coll,i_sp1)
+             O_table(ib1-b_ref,is1,ib2-b_ref,is2,i_spin1)=scatt_stat(ib1-b_ref,ib2-b_ref,is_coll,i_spin1)
              !
            endif
          enddo
@@ -206,8 +206,8 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
  !
  do i1=1,nsym
   do i2=1,BS_bands(2)
-    do i_sp1=1,n_sp_pol
-      if (O_phase(i1,i2,i_sp1)==-99.or.O_phase(i1,i2,i_sp1)==0) O_phase(i1,i2,i_sp1)=1
+    do i_spin1=1,n_sp_pol
+      if (O_phase(i1,i2,i_spin1)==-99.or.O_phase(i1,i2,i_spin1)==0) O_phase(i1,i2,i_spin1)=1
     enddo
   enddo
  enddo

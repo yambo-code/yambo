@@ -87,22 +87,22 @@ subroutine RT_qp_analyze(it,en,k,xK,G_input)
  ! Now write the occupation
  !
  dump_ch=' Iteration : '//trim(intc(it))//'  Time :'//trim(real2ch(RT_step*real(it)/FS2AUT))
- call msg('o qp','',dump_ch)
+ call msg('o qp_rt','',dump_ch)
  !
  do ik=1,QP_nk
    !      
    dump_ch='K ['//trim(intc(ik))//'] :'//trim(real2ch(k%pt(ik,1)))//' '//&
 &          trim(real2ch(k%pt(ik,2)))//' '//trim(real2ch(k%pt(ik,3)))//&
 &          ' (iku) '
-   call msg('o qp','',dump_ch)
+   call msg('o qp_rt','',dump_ch)
    !
    do i1=1,SC_bands,8
      write(dump_ch,'(a,8f12.6)') 'E  ',(en%E(ib,ik,1)*HARTREE,ib=i1,min(i1+7,SC_bands))
-     call msg('o qp','',dump_ch)
+     call msg('o qp_rt','',dump_ch)
    enddo
    do i1=1,SC_bands,8
      write(dump_ch,'(a,8f12.6)') 'O  ',(Occ_natural_orb(ib,ik),ib=i1,min(i1+7,SC_bands))
-     call msg('o qp','',dump_ch)
+     call msg('o qp_rt','',dump_ch)
    enddo
  enddo
  !

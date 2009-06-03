@@ -73,7 +73,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND
-#if defined _SC
+#if defined _SC || defined _RT
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,&
 &                     using_SC_basis,SC_cycle_mixing,SC_fft_size
 #endif
@@ -373,7 +373,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  ph_null_E_rgn=0.1/HARTREE
 #endif
  !
-#if defined _SC
+#if defined _SC || defined _RT
  ! SC
  !
  SC_fft_size=0

@@ -54,6 +54,8 @@ subroutine el_density(en,Xk,rho,force_si)
   use wave_func,     ONLY:wf_state,wf
 #if defined _RT
   use SC,            ONLY:SC_bands
+  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
+  use par_indexes_m, ONLY:par_indexes
 #endif
   !
   implicit none
@@ -71,6 +73,9 @@ subroutine el_density(en,Xk,rho,force_si)
   integer :: i1,i2,ik,i_spin,ifft,rho_syms,ifft2
   real(SP):: rho_no_sym(fft_size),f_occ
   logical :: warn_done
+#if defined _RT
+  type(pp_indexes) ::px
+#endif
   !
   rho=0.
   rho_no_sym=0.
@@ -131,10 +136,17 @@ subroutine el_density(en,Xk,rho,force_si)
   !
   ! Off-diagonal contributions
   !
-  do i1=1,SC_bands
-    do i2=i1+1,SC_bands
-      !      
-      do ik=1,Xk%nibz
+  call pp_indexes_reset(px)
+  call par_indexes(px,(/Xk%nibz,SC_bands/))
+  !
+  do ik=1,Xk%nibz
+    !      
+    do i1=1,SC_bands
+      !
+      if (.not.px%i2p(ik,i1)) cycle
+      !
+      do i2=i1+1,SC_bands
+        !      
         !
         ifft=wf_state(i1,ik,1)
         ifft2=wf_state(i2,ik,1)
@@ -145,9 +157,12 @@ subroutine el_density(en,Xk,rho,force_si)
 &                 *conjg(wf(:,ifft2))*(0._SP,1._SP)*G_lesser(i1,i2,ik))
         !
       enddo
-      !
     enddo
+    !
   enddo
+  !
+  call pp_redux_wait(rho_no_sym)
+  call pp_indexes_reset(px)
   !
 #endif
   !

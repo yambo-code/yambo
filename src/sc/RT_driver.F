@@ -44,6 +44,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  ! if l_qp_analyze=.true.  "en"  will contains new energies and occupations
  ! otherwise it will not be used
  !
+ ! Notice that Xen is never changed!
+ !
  type(levels)  :: en,Xen
  !
  type(bz_samp) :: k,Xk,q
@@ -162,7 +164,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    !
    if(l_rt_efield.and.RT_time>0.) then
      !
-     call RT_current(j_current(i_time,:),Xen,xK,A_vec_pot(i_time,:),G_lesser_previous)
+     call RT_current(j_current(i_time,:),xK,A_vec_pot(i_time,:),G_lesser)
      !
      values(2:3)=(/real(A_norm(i_time)),aimag(A_norm(i_time))/)
      values(4:6)=real(j_current(i_time,1:3))

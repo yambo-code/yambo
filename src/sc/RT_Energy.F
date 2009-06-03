@@ -22,15 +22,18 @@
 subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  !
  use pars,           ONLY:SP,DP
+ use drivers,        ONLY:l_sc_hf
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,rho_n
  use X_m,            ONLY:P_square
- use real_time,      ONLY:G_lesser,l_RT_no_updates,Hartree_plus_Vxc_sc
+ use real_time,      ONLY:G_lesser,l_RT_no_updates,Hartree_plus_Vxc_sc,&
+&                         rho_rho_gamp
  use electrons,      ONLY:levels,n_sp_pol
  use wave_func,      ONLY:wf
  use FFT_m,          ONLY:fft_size
  use xc_functionals, ONLY:E_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional
+ use QP_m,           ONLY:QP_nk
  !
  implicit none 
  !
@@ -41,16 +44,18 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  !
  ! Work Space
  !
- integer       :: ik,i1
- complex(SP)   :: TmpMatrix(SC_bands,SC_bands,n_sp_pol)
+ integer       :: ik,i1,SC_bands2
+ complex(SP)   :: TmpMatrix(SC_bands,SC_bands,n_sp_pol),Ex
  !
 #if defined _DOUBLE
  real(DP)      :: ddot
  complex(DP)   :: zdotc
 #else
  real(SP)      :: sdot
- complex(SP)   :: cdotc
+ complex(SP)   :: cdotc,cdotu
 #endif
+ !
+ SC_bands2=SC_bands**2
  !
  TmpMatrix=(0._SP,0._SP)
  !
@@ -60,12 +65,12 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  !
  E_kin=(0._SP,0._SP)
  !
- do ik=1,en%nk
+ do ik=1,QP_nk
    !      
 #if defined _DOUBLE
-   E_kin=E_kin-(0._SP,1._SP)*zdotc(SC_bands*SC_bands,P_square(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+   E_kin=E_kin-(0._SP,1._SP)*zdotc(SC_bands2,P_square(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #else
-   E_kin=E_kin-(0._SP,1._SP)*cdotc(SC_bands*SC_bands,P_square(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+   E_kin=E_kin-(0._SP,1._SP)*cdotc(SC_bands2,P_square(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #endif
    !
  enddo
@@ -76,12 +81,12 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  !
  E_ion=(0._SP,0._SP)
  !
- do ik=1,en%nk
+ do ik=1,QP_nk
    !      
 #if defined _DOUBLE
-   E_ion=E_ion-(0._SP,1._SP)*zdotc(SC_bands*SC_bands,Ho(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+   E_ion=E_ion-(0._SP,1._SP)*zdotc(SC_bands2,Ho(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #else
-   E_ion=E_ion-(0._SP,1._SP)*cdotc(SC_bands*SC_bands,Ho(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+   E_ion=E_ion-(0._SP,1._SP)*cdotc(SC_bands2,Ho(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #endif
    !
  enddo
@@ -94,41 +99,65 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
    !
    E_h=(0._SP,0._SP)
    !
-   do ik=1,en%nk
+   do ik=1,QP_nk
      !
      TmpMatrix=(0._SP,0._SP)
      !
      call V_real_space_to_H(ik,V_hartree_sc,TmpMatrix,wf)
      !
 #if defined _DOUBLE
-     E_h=E_h-(0._SP,0.5_SP)*zdotc(SC_bands*SC_bands,TmpMatrix(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+     E_h=E_h-(0._SP,0.5_SP)*zdotc(SC_bands2,TmpMatrix(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #else
-     E_h=E_h-(0._SP,0.5_SP)*cdotc(SC_bands*SC_bands,TmpMatrix(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+     E_h=E_h-(0._SP,0.5_SP)*cdotc(SC_bands2,TmpMatrix(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #endif
      !
    enddo
    !
-   ! E_xc Energy 
-   !
-   call IO_mute("report log io_in io_out")
-   call xc_lda_driver(en,k,WF_KIND,WF_xc_functional,0,G_lesser)
-   call IO_mute("  ")
-   !
+   if(l_sc_hf) then
+     !
+     Ex=(0.,0.)
+     !
+     do ik=1,QP_nk
+       !
 #if defined _DOUBLE
-   Exc=ddot(fft_size,rho_n,1,E_xc,1)
-#else 
-   Exc=sdot(fft_size,rho_n,1,E_xc,1)
+       call zgemv('T',SC_bands2,SC_bands2,(0.,-1.),rho_rho_gamp(:,:,:,:,ik) &
+&                ,SC_bands2,G_lesser(:,:,ik),1,(0.,0.),TmpMatrix(:,:,1),1)
+       Ex=Ex-(0.,0.5)*zdotc(SC_bands2,TmpMatrix(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+#else
+       call cgemv('T',SC_bands2,SC_bands2,(0.,-1.),rho_rho_gamp(:,:,:,:,ik) &
+&                 ,SC_bands2,G_lesser(:,:,ik),1,(0.,0.),TmpMatrix(:,:,1),1)
+       Ex=Ex-(0.,0.5)*cdotc(SC_bands2,TmpMatrix(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #endif
+       !
+     enddo
+     !
+     Exc=real(Ex)
+     !
+   else        
+     !
+     ! E_xc Energy 
+     !
+     call IO_mute("report log io_in io_out")
+     call xc_lda_driver(en,k,WF_KIND,WF_xc_functional,0,G_lesser)
+     call IO_mute("  ")
+     !
+#if defined _DOUBLE
+     Exc=ddot(fft_size,rho_n,1,E_xc,1)
+#else 
+     Exc=sdot(fft_size,rho_n,1,E_xc,1)
+#endif
+     !
+   endif
    !
  else
    !
    E_h=(0.,0.)
    !
-   do ik=1,en%nk
+   do ik=1,QP_nk
 #if defined _DOUBLE
-     E_h=E_h-(0.,1.0)*zdotc(SC_bands*SC_bands,Hartree_plus_Vxc_sc(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+     E_h=E_h-(0.,1.0)*zdotc(SC_bands2,Hartree_plus_Vxc_sc(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #else
-     E_h=E_h-(0.,1.0)*cdotc(SC_bands*SC_bands,Hartree_plus_Vxc_sc(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+     E_h=E_h-(0.,1.0)*cdotc(SC_bands2,Hartree_plus_Vxc_sc(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #endif
    enddo
    !
@@ -138,10 +167,10 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  !
  ! Total number of electrons
  !
- Trace_Gf=(0._SP,0._SP)
+ Trace_Gf=(0.,0.)
  !
  do i1=1,SC_bands
-   Trace_Gf=Trace_Gf-(0._SP,1._SP)*sum(G_lesser(i1,i1,:)*k%weights(:))
+   Trace_Gf=Trace_Gf-(0.,1.)*sum(G_lesser(i1,i1,:)*k%weights(:))
  enddo
  !
 end subroutine RT_Energy

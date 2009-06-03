@@ -575,7 +575,9 @@ module it_m
              if (trim(name)=='InDir'.and.trim(defs%chdef(i1))/='.') cycle
              if (trim(name)=='BSSmod'.and.trim(defs%chdef(i1))/='') cycle
              if (trim(name)=='DysSolver'.and.trim(defs%chdef(i1))/='') cycle
+#if !defined _RT
              if (trim(name)=='SCPot'.and.trim(defs%chdef(i1))/='none') cycle
+#endif
              call parser(trim(name),defs%chdef(i1))
            endif
            if (initmode<=3) defs%chdef(i1)=defval

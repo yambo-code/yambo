@@ -42,6 +42,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  use R_lattice,     ONLY:qindx_S,bz_samp
  use wave_func,     ONLY:wf,wf_load,wf_ng,WF_free
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
+ use FFT_m,         ONLY:fftw_plan
 #if defined _SC || defined _RT
  use SC,            ONLY:it_now,SC_bands
 #endif
@@ -89,6 +90,8 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
 #if defined _RT
  rho_rho_gamp=(0.,0.)
 #endif
+ !
+ fftw_plan=0
  !
  if (l_acfdt) then
    call section('p','EX(change)S(elf-energy) and Vxc potential')

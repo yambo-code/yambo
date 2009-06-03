@@ -26,7 +26,7 @@ subroutine electrons_driver(Xk,Xen)
  use wave_func,     ONLY:wf_load,wf,WF_free,wf_ng,wf_state
  use FFT_m,         ONLY:fft_size,fft_dim
  use R_lattice,     ONLY:bz_samp
- use electrons,     ONLY:levels,n_spin,n_spinor,spin,n_sp_pol,el_density
+ use electrons,     ONLY:levels,n_spin,n_spinor,spin,n_sp_pol
  use QP_m,          ONLY:QP_table,QP_n_states,QP_state
  use YPP,           ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                        use_gnuplot,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,plot_title

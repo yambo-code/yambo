@@ -21,7 +21,7 @@
 !                  \
 ! Evalute current including also the diamagnetic contribution
 !
-subroutine RT_current(j_current,en,xK,A_vec_pot,G_lesser)
+subroutine RT_current(j_current,xK,A_vec_pot,G_lesser)
  !
  use pars,           ONLY:SP,DP,pi
  use R_lattice,      ONLY:bz_samp,RL_vol
@@ -33,7 +33,6 @@ subroutine RT_current(j_current,en,xK,A_vec_pot,G_lesser)
  use real_time,      ONLY:l_no_diamagnetic
  !
  implicit none
- type(levels),  intent(in) ::en       
  type(bz_samp), intent(in) ::Xk
  complex(SP),    intent(in)  :: G_lesser(SC_bands,SC_bands,Xk%nibz)
  complex(DP),    intent(in)  :: A_vec_pot(3)

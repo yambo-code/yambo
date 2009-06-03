@@ -37,27 +37,23 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
+ use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
+ use par_indexes_m,  ONLY:par_indexes  
  !
  implicit none
  !
  real(SP),      intent(in)   :: RT_time
  type(levels),  intent(in)   :: Xen
  type(bz_samp), intent(in)   :: k,q
- complex(SP),   intent(in)   :: G_input(SC_bands,SC_bands,Xen%nk)
+ complex(SP),   intent(in)   :: G_input(SC_bands,SC_bands,QP_nk)
  !
  ! Work Space
  !
  integer     :: ik,iv,i1,SC_bands2
  real(SP)    :: RelaxDiff
- complex(SP) :: cdotu
+ type(pp_indexes) ::px
  !
  SC_bands2=SC_bands**2
- !
- ! Update occupations
- !
- forall(iv=1:SC_bands,ik=1:Xen%nk) 
-   Xen%f(iv,ik,1)=-(0._SP,1._SP)*G_input(iv,iv,ik)
- end forall
  !
  call el_density(G_input,k,rho_n,.false.)
  !
@@ -96,8 +92,13 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  ! Simple case without any correlation just transition between bands
  ! equivalent to RPA without local field effects
  !
+ call pp_indexes_reset(px)
+ call par_indexes(px,(/QP_nk/))
+ !
  do ik=1,QP_nk 
-   !      
+   !
+   if (.not.px%i1p(ik)) cycle
+   !
    H_nl_sc=(0.,0.)
    !
    if(.not.l_RT_no_updates) then
@@ -158,7 +159,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
    !
    if(l_rt_efield.and.RT_time>0._SP) then
      !      
-     call RT_Ext_Field(ik,H_nl_sc,Xen,RT_time-T_initial)
+     call RT_Ext_Field(ik,H_nl_sc,G_input,RT_time-T_initial)
      !
    endif
    !
@@ -216,6 +217,10 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
    endif
    !
  enddo  !---- loop on k-points
+ !
+ call pp_redux_wait(I1_lesser)
+ call pp_redux_wait(I2_lesser)
+ call pp_indexes_reset(px) 
  !
 end subroutine RT_Collision
 

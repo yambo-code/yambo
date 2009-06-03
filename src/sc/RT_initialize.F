@@ -97,8 +97,15 @@ subroutine RT_initialize(file_name,Xen)
  headings(2)="E_kin"
  headings(3)="E_ion"
  if(.not.l_RT_no_updates) then
-   headings(4)="E_Hartree"
-   headings(5)="E_xc"
+   !      
+   if(l_sc_hf) then
+     headings(4)="E_Hartree"
+     headings(5)="E_x"
+   else
+     headings(4)="E_Hartree"
+     headings(5)="E_xc"
+   endif
+   !
  else
    headings(4)="Eo_pot"
    headings(5)="none"
@@ -131,7 +138,7 @@ subroutine RT_initialize(file_name,Xen)
  call msg(' r','[RT] Diamagnetic term      :',.not.l_no_diamagnetic)
  call msg(' r','[RT] Analyze QP-dynamics   :',l_qp_analyze)
  !
- file_name(3)="qp"
+ file_name(3)="qp_rt"
  if(l_qp_analyze) call of_open_close(file_name(3),'ot')
  !
 end subroutine RT_initialize

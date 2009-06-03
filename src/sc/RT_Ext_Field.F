@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Ext_Field(ik,Sigma_s,Xen,time)
+subroutine RT_Ext_Field(ik,H_nl_sc,G_lesser,time)
  !
  use pars,           ONLY:SP,DP
  use com,            ONLY:error
@@ -27,14 +27,15 @@ subroutine RT_Ext_Field(ik,Sigma_s,Xen,time)
  use electrons,      ONLY:levels,n_sp_pol
  use X_m,            ONLY:DIP_iR_or_P
  use SC,             ONLY:SC_bands
+ use QP_m,           ONLY:QP_nk
  use real_time,      ONLY:Ext_Field_freq,Ext_Field_Int,Ext_Field_name,&
 &                         RT_resonant,RT_no_intraband,T_initial,&
 &                         A_norm,i_time,A_vec_pot
  implicit none
  integer,     intent(in)    :: ik
  real(SP),    intent(in)    :: time
- complex(SP), intent(inout) :: Sigma_s(SC_bands,SC_bands,n_sp_pol)
- type(levels),intent(in)    :: Xen
+ complex(SP), intent(inout) :: H_nl_sc(SC_bands,SC_bands,n_sp_pol)
+ complex(SP), intent(in)    :: G_lesser(SC_bands,SC_bands,QP_nk)
  ! 
  ! Work Space
  !
@@ -73,7 +74,7 @@ subroutine RT_Ext_Field(ik,Sigma_s,Xen,time)
  !
  if(.not.RT_no_intraband.or..not.RT_resonant) then
    do i1=1,SC_bands
-     Sigma_s(i1,i1,1)=Sigma_s(i1,i1,1)+sum(A_vec_pot(i_time,:)*DIP_iR_or_P(:,i1,i1,ik,1))
+     H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)+sum(A_vec_pot(i_time,:)*DIP_iR_or_P(:,i1,i1,ik,1))
    enddo
  endif
  !
@@ -81,15 +82,15 @@ subroutine RT_Ext_Field(ik,Sigma_s,Xen,time)
    do i2=i1+1,SC_bands
       !     
       A_dot_P=sum(A_vec_pot(i_time,:)*DIP_iR_or_P(:,i1,i2,ik,1))
-      Sigma_s(i1,i2,1)=Sigma_s(i1,i2,1)+A_dot_P
-      Sigma_s(i2,i1,1)=Sigma_s(i2,i1,1)+conjg(A_dot_P)
+      H_nl_sc(i1,i2,1)=H_nl_sc(i1,i2,1)+A_dot_P
+      H_nl_sc(i2,i1,1)=H_nl_sc(i2,i1,1)+conjg(A_dot_P)
       !
    enddo
  enddo
  !
  if(.not.l_no_diamagnetic) then
    forall(i1=1:SC_bands,is=1:n_sp_pol) 
-     Sigma_s(i1,i1,is)=Sigma_s(i1,i1,is)+0.5*A_norm(i_time)**2*Xen%f(i1,ik,is)
+     H_nl_sc(i1,i1,is)=H_nl_sc(i1,i1,is)+0.5*A_norm(i_time)**2*(0.,-1.)*G_lesser(i1,i1,ik)
    end forall
  endif
  !

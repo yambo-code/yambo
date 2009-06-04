@@ -383,7 +383,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  SC_potential='none'
  using_SC_basis=.FALSE.
 #endif
-#if _RT
+#if defined _RT
  !
  ! Real Time
  !

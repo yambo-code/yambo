@@ -42,7 +42,12 @@ subroutine cutoff_cylinder(q,is_cut)
  real(SP)      ::cyl_ph_radius2,cyl_cut2,c1,c2,Vd,abserr,epsabs,z
  complex(SP)   ::V_cut(q%nibz,wf_ng)
  logical       ::infcyl
- real(SP),  external    ::BESJ1,bessel_F2,bessel_F3,bessel_F4,bessel_F5,bessel_F6,bessel_J0
+#if defined _DOUBLE
+ real(SP),  external    ::DBESJ1_
+#else
+ real(SP),  external    ::BESJ1
+#endif
+ real(SP),  external    ::bessel_F2,bessel_F3,bessel_F4,bessel_F5,bessel_F6,bessel_J0
  real(SP),  allocatable ::work(:),work2(:)
  integer,   allocatable ::iwork(:),iwork2(:)
  type(pp_indexes) ::px
@@ -162,12 +167,14 @@ subroutine cutoff_cylinder(q,is_cut)
 #if defined _DOUBLE
          call dqag(bessel_F5,0,cyl_ph_radius,epsabs,0,key,Vd,abserr, &
 &                 neval,ier,limit,lenw,last,iwork,work)
+         V_cut(iq,ig)=-Vd+cyl_ph_radius*log(2*cyl_cut)* &
+&                     DBESJ1_(cyl_vr_save*cyl_ph_radius)/cyl_vr_save 
 #else
          call qag(bessel_F5,0,cyl_ph_radius,epsabs,0,key,Vd,abserr, &
 &                 neval,ier,limit,lenw,last,iwork,work)
-#endif
          V_cut(iq,ig)=-Vd+cyl_ph_radius*log(2*cyl_cut)* &
 &                     BESJ1(cyl_vr_save*cyl_ph_radius)/cyl_vr_save 
+#endif
        else if (cyl_vz_save/=0.) then
          V_cut(iq,ig)=bessel_F6(cyl_vr_save,abs(cyl_vz_save))/(cyl_vz_save**2+cyl_vr_save**2)
        endif

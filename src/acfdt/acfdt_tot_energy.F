@@ -133,7 +133,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    !
    allocate(freq(2*ACFDT_n_freqs+1),freq_weight(2*ACFDT_n_freqs+1))
    !
-   call gauss_leg_grid(0.,ACFDT_E_range(1),freq(:ACFDT_n_freqs),&
+   call gauss_leg_grid(0._SP,ACFDT_E_range(1),freq(:ACFDT_n_freqs),&
 &                      freq_weight(:ACFDT_n_freqs),ACFDT_n_freqs)
    !
    call gauss_leg_grid(ACFDT_E_range(1),ACFDT_E_range(2),freq(ACFDT_n_freqs+1:),&
@@ -147,7 +147,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    !GL-grid setup (coupling)
    !
    allocate(lambda(ACFDT_n_lambda),lambda_weight(ACFDT_n_lambda))
-   call gauss_leg_grid(0.,1.,lambda,lambda_weight,ACFDT_n_lambda)
+   call gauss_leg_grid(0._SP,1._SP,lambda,lambda_weight,ACFDT_n_lambda)
    lambda_weight(:)=lambda_weight(:)*2.*pi
    !
    ! Report

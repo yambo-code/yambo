@@ -108,7 +108,7 @@ subroutine fermi_level(E,K,test_Tel,mode)
  ! ... or when there is a odd number of electrons (when n_sp_pol>1
  ! the system can be semiconductive in the two channels).
  ! 
- if (mod(nel,2.)/=0.) n_b_full_guess=0
+ if (mod(nel,2._SP)/=0._SP) n_b_full_guess=0
  !
  ! Start Loop
  ! 

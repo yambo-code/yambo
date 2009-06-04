@@ -59,10 +59,6 @@ subroutine BZ_grids(en,k,Xk,q)
  !
  if (l_high_sym_pts) l_high_sym_pts=trim(lattice)/='none'
  !
- ! Setup logicals 
- !
- if (l_high_sym_pts) l_high_sym_pts=trim(lattice)/='none'
- !
  !Q/Xk (IBZ->BZ)
  !
  call k_ibz2bz(q,'i',.false.)

@@ -177,7 +177,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          ! rho(4) =  \sum_G u^*_{iv ik}(G) ( k + G )^2 u_{ic ik}(G)
          !
 #if defined _DOUBLE
-         call zgemv('C',wf_ng,wf_dim,(1._DP,0._DP),wf_xyz,wf_ng,wf(:,icfft),1,(0._DP,0._DP),rho,1)
+         call zgemv('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,wf(:,icfft),1,(0._SP,0._SP),rho,1)
 #else
          call cgemv('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,wf(:,icfft),1,(0._SP,0._SP),rho,1)
 #endif

@@ -115,7 +115,7 @@ subroutine K_inversion(iq,W,E,k,q)
  call W_reset(W_disk)
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
- i_err=ioBSS_invert(iq,1,(/0/),(/(0.,0.)/),W_disk,ID)
+ i_err=ioBSS_invert(iq,1,(/0/),(/(0._SP,0._SP)/),W_disk,ID)
  !
  ! When the damping range is not uniform then changing
  ! the energy borders

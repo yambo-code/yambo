@@ -42,9 +42,9 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  use R_lattice,     ONLY:qindx_S,bz_samp
  use wave_func,     ONLY:wf,wf_load,wf_ng,WF_free
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
- use FFT_m,         ONLY:fftw_plan
 #if defined _SC || defined _RT
  use SC,            ONLY:it_now,SC_bands
+ use FFT_m,         ONLY:fftw_plan
 #endif
  !
  implicit none
@@ -59,7 +59,10 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  !
  type(ggwinfo)    ::isc,iscp
  type(pp_indexes) ::px
- integer                 ::i1,i2,iq,ib,ik,ibp,jb,jb2
+ integer                 ::i1,i2,iq,ib,ibp,jb
+#if defined _RT
+ integer                 ::ik,jb2
+#endif
 #if defined _DOUBLE
  complex(DP)             ::zdotc,zdotu
 #else 
@@ -89,9 +92,8 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  !
 #if defined _RT
  rho_rho_gamp=(0.,0.)
-#endif
- !
  fftw_plan=0
+#endif
  !
  if (l_acfdt) then
    call section('p','EX(change)S(elf-energy) and Vxc potential')
@@ -189,7 +191,9 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
        !
        ib =QP_table(i1,1)
        ibp=QP_table(i1,2)
+#if defined _RT
        ik =QP_table(i1,3)
+#endif
        !
        isc%is=(/QP_table(i1,1),QP_table(i1,3),1,spin(QP_table(i1,:))/)
        isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iq,1),:),spin(QP_table(i1,:))/)
@@ -231,14 +235,6 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
            iscp%os(1)=jb2
            call scatterBamp(iscp)
            local_rhotw=-4./spin_occ*pi*isc%rhotw*conjg(iscp%rhotw)
-#if defined _DOUBLE
-           DP_Sx=zdotu(QP_ng_Sx,local_rhotw,1,isc%gamp(1,1),1)
-#else 
-           DP_Sx=cdotu(QP_ng_Sx,local_rhotw,1,isc%gamp(1,1),1)
-#endif
-           rho_rho_gamp(jb,jb2,ib,ibp,ik)=rho_rho_gamp(jb,jb2,ib,ibp,ik)+DP_Sx
-           !
-         enddo
 #else
          !
          ! Normal case, the density matrix is diagonal
@@ -248,12 +244,21 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
          !
          local_rhotw=-4./spin_occ*pi*isc%rhotw*conjg(iscp%rhotw)*E%f(jb,isc%os(2),isc%os(4))
          !
-         DP_Sx=(0.d0,0.d0)
-#if defined _DOUBLE
-         DP_Sx=zdotu(QP_ng_Sx,local_rhotw,1,isc%gamp(1,1),1)
-#else 
-         DP_Sx=cdotu(QP_ng_Sx,local_rhotw,1,isc%gamp(1,1),1)
 #endif
+           !
+#if defined _DOUBLE
+           DP_Sx=zdotu(QP_ng_Sx,local_rhotw,1,isc%gamp(1,1),1)
+#else 
+           DP_Sx=cdotu(QP_ng_Sx,local_rhotw,1,isc%gamp(1,1),1)
+#endif
+           !
+#if defined _RT
+           !
+           rho_rho_gamp(jb,jb2,ib,ibp,ik)=rho_rho_gamp(jb,jb2,ib,ibp,ik)+DP_Sx
+           !
+         enddo
+#else
+         !
          QP_Sx(i1)=QP_Sx(i1)+DP_Sx
          !
 #endif   
@@ -276,16 +281,18 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
      ibp=QP_table(i1,2)
      ik =QP_table(i1,3)     
      !
-#if defined _DOUBLE
+#endif
+#if defined _DOUBLE &&  defined _RT
      QP_Sx(i1)=-(0.,1.)*zdotu(SC_bands*SC_bands,rho_rho_gamp(:,:,ib,ibp,ik),1,G_lesser(:,:,ik),1)
-#else 
+#endif
+#if !defined _DOUBLE &&  defined _RT
      QP_Sx(i1)=-(0.,1.)*cdotu(SC_bands*SC_bands,rho_rho_gamp(:,:,ib,ibp,ik),1,G_lesser(:,:,ik),1)
 #endif
+#if defined _RT
      !
    enddo
    !
 #endif
-   !
    !
    deallocate(isc%gamp,isc%rhotw,iscp%rhotw,local_rhotw)
    !

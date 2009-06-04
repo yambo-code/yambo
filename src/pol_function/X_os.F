@@ -152,7 +152,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
    call mem_est("X_poles_tab",(/size(X_poles_tab)/))
    !
    if (.not.force_bare_X_G) call coarse_grid('X',X_poles,n_poles,X%cg_percentual)
-   if (force_bare_X_G)      call coarse_grid('X',X_poles,n_poles,0.)
+   if (force_bare_X_G)      call coarse_grid('X',X_poles,n_poles,0._SP)
    !
    n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
    deallocate(X_poles)

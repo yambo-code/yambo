@@ -117,7 +117,7 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
    enddo
  enddo
  !
- minmax_ehe=(/max(minval(poles(:X_eh_setup))-0.1,0.),maxval(poles(:X_eh_setup))+0.1/)
+ minmax_ehe=(/max(minval(poles(:X_eh_setup))-0.1_SP,0._SP),maxval(poles(:X_eh_setup))+0.1_SP/)
  !
  if (iq<0) then
    if (.not.allocated(X_poles)) then

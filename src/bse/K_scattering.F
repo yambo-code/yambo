@@ -94,6 +94,11 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
  !
 1 continue
  !
+ ! GPL_INCLUDE_START SPIN_IGNORE
+ !i_spin1=1
+ !i_spin2=1
+ ! GPL_INCLUDE_END SPIN_IGNORE
+ !
  O_table=0
  scatt_stat=0
  O_n_scatt=0
@@ -103,7 +108,11 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
    ik1bz=sum(Xk%nstar(:ik1-1))+i1
    is1=Xk%star(ik1,i1)
    !
+   ! GPL_EXCLUDE_START SPIN_IGNORE
+   !
    do i_spin1=1,n_sp_pol
+     !
+     ! GPL_EXCLUDE_END SPIN_IGNORE
      !
      do i2=1,Xk%nstar(ik2)
        !
@@ -117,7 +126,11 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
        if (is1xis2==iss_tab) O_phase(is1xis2,:,:)=1
        if (is1xis2/=iss_tab.and..not.eval_collision) then
          !
+         ! GPL_EXCLUDE_START SPIN_IGNORE
+         !
          do i_spin2=1,n_sp_pol
+           !
+           ! GPL_EXCLUDE_END SPIN_IGNORE
            !
            do ib1=BS_bands(1),BS_bands(2)
              !
@@ -131,7 +144,13 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
                O_phase(is1xis2,ib1,i_spin2)=-99
              endif
            enddo
+           !
+           ! GPL_EXCLUDE_START SPIN_IGNORE
+           !
          enddo
+         !
+         ! GPL_EXCLUDE_END SPIN_IGNORE
+         !
        endif
        !
        ! NO Q simmetry and/or Go shift here
@@ -183,7 +202,13 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
        enddo
        !
      enddo
+     !
+     ! GPL_EXCLUDE_START SPIN_IGNORE
+     !
    enddo
+   !
+   ! GPL_EXCLUDE_END SPIN_IGNORE
+   !
  enddo
  !
  if (allocated(BS_O))then
@@ -205,11 +230,23 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
  ! to 0
  !
  do i1=1,nsym
-  do i2=1,BS_bands(2)
-    do i_spin1=1,n_sp_pol
-      if (O_phase(i1,i2,i_spin1)==-99.or.O_phase(i1,i2,i_spin1)==0) O_phase(i1,i2,i_spin1)=1
-    enddo
-  enddo
+   do i2=1,BS_bands(2)
+     !
+     ! GPL_EXCLUDE_START SPIN_IGNORE
+     !
+     do i_spin1=1,n_sp_pol
+       !
+       ! GPL_EXCLUDE_END SPIN_IGNORE
+       !
+       if (O_phase(i1,i2,i_spin1)==-99.or.O_phase(i1,i2,i_spin1)==0) O_phase(i1,i2,i_spin1)=1
+       ! 
+       ! GPL_EXCLUDE_START SPIN_IGNORE
+       !
+     enddo
+     !
+     ! GPL_EXCLUDE_END SPIN_IGNORE
+     !
+   enddo
  enddo
  !
 end subroutine

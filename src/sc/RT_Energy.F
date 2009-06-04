@@ -24,16 +24,15 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  use pars,           ONLY:SP,DP
  use drivers,        ONLY:l_sc_hf
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,Ho,rho_n
+ use SC,             ONLY:SC_bands,V_hartree_sc,Ho,rho_n,H_nl_sc
  use X_m,            ONLY:P_square
- use real_time,      ONLY:G_lesser,l_RT_no_updates,Hartree_plus_Vxc_sc,&
-&                         rho_rho_gamp
+ use real_time,      ONLY:G_lesser,l_RT_no_updates,Hartree_plus_Vxc_sc
  use electrons,      ONLY:levels,n_sp_pol
  use wave_func,      ONLY:wf
  use FFT_m,          ONLY:fft_size
  use xc_functionals, ONLY:E_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional
- use QP_m,           ONLY:QP_nk
+ use QP_m,           ONLY:QP_nk,QP_Sx
  !
  implicit none 
  !
@@ -45,7 +44,7 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  ! Work Space
  !
  integer       :: ik,i1,SC_bands2
- complex(SP)   :: TmpMatrix(SC_bands,SC_bands,n_sp_pol),Ex
+ complex(SP)   :: Ex
  !
 #if defined _DOUBLE
  real(DP)      :: ddot
@@ -57,7 +56,7 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  !
  SC_bands2=SC_bands**2
  !
- TmpMatrix=(0._SP,0._SP)
+ H_nl_sc=(0._SP,0._SP)
  !
  ! Non-interaction kinetc energy
  !
@@ -101,14 +100,14 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
    !
    do ik=1,QP_nk
      !
-     TmpMatrix=(0._SP,0._SP)
+     H_nl_sc=(0._SP,0._SP)
      !
-     call V_real_space_to_H(ik,V_hartree_sc,TmpMatrix,wf)
+     call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,wf)
      !
 #if defined _DOUBLE
-     E_h=E_h-(0._SP,0.5_SP)*zdotc(SC_bands2,TmpMatrix(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+     E_h=E_h-(0._SP,0.5_SP)*zdotc(SC_bands2,H_nl_sc(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #else
-     E_h=E_h-(0._SP,0.5_SP)*cdotc(SC_bands2,TmpMatrix(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+     E_h=E_h-(0._SP,0.5_SP)*cdotc(SC_bands2,H_nl_sc(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #endif
      !
    enddo
@@ -119,14 +118,14 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
      !
      do ik=1,QP_nk
        !
+       H_nl_sc=(0.,0.)
+       !
+       call V_qp_basis_to_H(ik,QP_Sx,H_nl_sc)
+       !
 #if defined _DOUBLE
-       call zgemv('T',SC_bands2,SC_bands2,(0.,-1.),rho_rho_gamp(:,:,:,:,ik) &
-&                ,SC_bands2,G_lesser(:,:,ik),1,(0.,0.),TmpMatrix(:,:,1),1)
-       Ex=Ex-(0.,0.5)*zdotc(SC_bands2,TmpMatrix(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+       Ex=Ex+(0.,0.5)*zdotc(SC_bands2,H_nl_sc(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #else
-       call cgemv('T',SC_bands2,SC_bands2,(0.,-1.),rho_rho_gamp(:,:,:,:,ik) &
-&                 ,SC_bands2,G_lesser(:,:,ik),1,(0.,0.),TmpMatrix(:,:,1),1)
-       Ex=Ex-(0.,0.5)*cdotc(SC_bands2,TmpMatrix(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+       Ex=Ex+(0.,0.5)*cdotc(SC_bands2,H_nl_sc(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #endif
        !
      enddo

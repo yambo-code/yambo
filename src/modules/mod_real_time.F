@@ -66,7 +66,7 @@ module real_time
  real(SP), allocatable   :: V_hartree_0(:,:)  
  real(SP), allocatable   :: V_xc_0(:,:) 
  real(SP)                :: Thermal_time
- complex(SP),allocatable :: rho_rho_gamp(:,:,:,:,:)
+ complex(SP),allocatable :: rho_rho_gamp(:,:,:)
  integer                 :: DiagH_Iter
  logical                 :: l_qp_analyze
  !
@@ -108,8 +108,7 @@ module real_time
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
-     use QP_m,           ONLY:QP_nk
-
+     use QP_m,           ONLY:QP_nk,QP_n_states
      !
      implicit none
      !
@@ -156,7 +155,7 @@ module real_time
      call mem_est("A_norm",(/size(A_norm)/),(/DP/))
      !
      if(l_sc_hf) then
-       allocate(rho_rho_gamp(SC_bands,SC_bands,SC_bands,SC_bands,QP_nk))
+       allocate(rho_rho_gamp(SC_bands,SC_bands,QP_n_states))
        call mem_est("rho_rho_gamp",(/size(rho_rho_gamp)/),(/2*SP/))
      endif
      !

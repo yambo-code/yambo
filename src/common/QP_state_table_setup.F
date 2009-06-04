@@ -38,6 +38,9 @@ subroutine QP_state_table_setup(en)
  use drivers,       ONLY:l_sc_run
  use memory_m,      ONLY:mem_est
  use QP_m,          ONLY:QP_nk,QP_nb,QP_state,QP_n_states,QP_table,SC_bands_mixed,SC_band_mixing 
+#if defined _RT
+ use QP_m,          ONLY:QP_table_by_k,QP_n_states_for_k 
+#endif
  use electrons,     ONLY:levels,n_sp_pol
  use parser_m,      ONLY:parser
  implicit none
@@ -226,6 +229,30 @@ subroutine QP_state_table_setup(en)
      !
    enddo
  enddo
+ !
+#if defined _RT
+ !
+ if(allocated(QP_n_states_for_k)) &
+&  deallocate(QP_n_states_for_k,QP_table_by_k) 
+ !
+ allocate(QP_n_states_for_k(QP_nk),QP_table_by_k(QP_nk,QP_nb*QP_nb,3+n_sp_pol-1))
+ !
+ QP_n_states_for_k=0
+ QP_table_by_k    =0
+ !
+ do i1=1,QP_n_states
+   !      
+   ik=QP_table(i1,3)
+   QP_n_states_for_k(ik)=QP_n_states_for_k(ik)+1
+   !
+   QP_table_by_k(ik,QP_n_states_for_k(ik),1)                 =QP_table(i1,1)
+   QP_table_by_k(ik,QP_n_states_for_k(ik),2)                 =QP_table(i1,2)
+   QP_table_by_k(ik,QP_n_states_for_k(ik),3)                 =i1 ! QP index
+   if (n_sp_pol==2) QP_table_by_k(ik,QP_n_states_for_k(ik),4)=QP_table(i1,4)
+   !        
+ enddo
+ !
+#endif
  !
  contains
    !

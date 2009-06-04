@@ -34,7 +34,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  use R_lattice,      ONLY:bz_samp,qindx_S
  use QP_m,           ONLY:QP_nb,QP_nk,QP_ng_Sx
  use SC,             ONLY:SC_potential,SC_bands,Ho,E_bare
- use real_time,      ONLY:Thermal_steps,Tot_steps,RT_step,G_lesser, &
+ use real_time,      ONLY:Thermal_steps,Tot_steps,RT_step,G_lesser,l_RT_no_updates, &
 &                         G_lesser_previous,l_rt_efield,RT_alloc,RT_free, &
 &                         A_vec_pot,A_norm,l_eps_analyze,i_time,Integrator_name,&
 &                         j_current,l_qp_analyze,I1_lesser,rho_rho_gamp
@@ -57,6 +57,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  integer                  :: WF_G_max,WF_Go_indx,it,i1,ik
  real(SP)                 :: values(9), E_xc, RT_time  ! The real time on the diagonal RTime = it*RT_step    
  complex(SP)              :: Trace_Gf,E_kin,E_ion,E_h 
+ logical                  :: XC_switch
  !
  call section('*',trim(SC_potential)//' Real-Time Dynamics')
  !##########################################################
@@ -68,10 +69,16 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  Eval_P_and_P2_only=.true.
  call Dipole_driver(Xen, Xk, X(1), X(1)%q0)
  !
+ l_RT_no_updates=.not.XC_switch()
+ !
  ! WFs loading
  !
  WF_G_max=wf_ng
- WF_Go_indx=1  
+ if(l_sc_hf) then
+   WF_Go_indx=maxval(qindx_S(:,:,2))
+ else
+   WF_Go_indx=1  
+ endif
  call wf_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),space='R',title=' ')  
  !
  ! Core initialization
@@ -104,22 +111,13 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    !
    ! Build rho_rho_gamp(:,:,:,:,nk)
    !
-   call wf_free()
-   WF_G_max  =wf_ng
    if(QP_ng_Sx>wf_ng) QP_ng_Sx=wf_ng 
-   WF_Go_indx=maxval(qindx_S(:,:,2))
-   call wf_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),title=' ')
    !
    call IO_mute("report io_in io_out")
    !
    call QP_XX_Vxc(Xen,k,Xk,q,rho_rho_gamp,G_lesser)
    !
    call IO_mute("  ")
-   !
-   call wf_free()
-   WF_G_max=wf_ng
-   WF_Go_indx=1  
-   call wf_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),space='R',title=' ')  
    !
  endif
  !

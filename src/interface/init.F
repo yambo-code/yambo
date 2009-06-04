@@ -80,9 +80,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,&
 &                     ioBS_Fxc_err,ioQINDX_err,io_SC_err
- integer, external :: ioX,ioOSTNTS,ioGROT,ioQINDX,ioRIM,ioE_RIM,&
+ integer, external :: ioX,ioOSTNTS,ioGROT,ioQINDX,ioRIM,&
 &                     ioXXVXC,ioQP,ioBS,ioDB1,ioKB_PP,&
 &                     ioCOL_CUT
+ !
+ ! GPL_EXCLUDE_START
+ integer, external :: ioE_RIM
+ ! GPL_EXCLUDE_END
+ !
 #if defined _SC || defined _RT
  integer, external :: io_SC_components 
 #endif

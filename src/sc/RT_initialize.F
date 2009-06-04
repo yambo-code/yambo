@@ -38,7 +38,6 @@ subroutine RT_initialize(file_name,Xen)
  ! Work space
  !
  character(schlen)        :: headings(10)
- logical                  :: XC_switch
  integer                  :: i1,ik
  !
  ! Logicals
@@ -80,8 +79,6 @@ subroutine RT_initialize(file_name,Xen)
    endif
    !
  endif
- !
- l_RT_no_updates=.not.XC_switch()
  !
  if(l_rt_efield.and.RT_resonant.and..not.RT_no_intraband) then
    RT_no_intraband=.true.

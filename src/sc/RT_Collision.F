@@ -29,7 +29,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  use drivers,        ONLY:l_sc_pz,l_sc_hf
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,V_xc_sc,rho_n
- use QP_m,           ONLY:QP_nk
+ use QP_m,           ONLY:QP_nk,QP_Sx
  use real_time,      ONLY:I1_lesser,I2_lesser,l_RT_no_updates,l_qp_analyze, &
  &                        l_rt_efield,TransRelax,LongRelax,T_initial,H_t,l_RPA, &
  &                        Hartree_plus_Vxc_sc,V_hartree_0,V_xc_0,Thermal_time, &
@@ -107,13 +107,8 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
        !
        ! Add the exchange term
        !
-#if defined _DOUBLE
-       call zgemv('T',SC_bands2,SC_bands2,(0.,-1.),rho_rho_gamp(:,:,:,:,ik) &
-&                ,SC_bands2,G_input(:,:,ik),1,(1.,0.),H_nl_sc,1)
-#else
-       call cgemv('T',SC_bands2,SC_bands2,(0.,-1.),rho_rho_gamp(:,:,:,:,ik) &
-&                 ,SC_bands2,G_input(:,:,ik),1,(1.,0.),H_nl_sc,1)
-#endif
+       call RT_make_QP_Sx(ik,G_input)
+       call V_qp_basis_to_H(ik,QP_Sx,H_nl_sc) 
        !
      endif
      !

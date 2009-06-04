@@ -44,14 +44,13 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
 #if defined _SC || defined _RT
  use SC,            ONLY:it_now,SC_bands
- use FFT_m,         ONLY:fftw_plan
 #endif
  !
  implicit none
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
 #if defined _RT
- complex(SP), intent(out) :: rho_rho_gamp(SC_bands,SC_bands,SC_bands,SC_bands,k%nibz)
+ complex(SP), intent(out) :: rho_rho_gamp(SC_bands,SC_bands,QP_n_states)
  complex(SP), intent(in)  :: G_lesser(SC_bands,SC_bands,k%nibz)
 #endif
  !
@@ -59,9 +58,9 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  !
  type(ggwinfo)    ::isc,iscp
  type(pp_indexes) ::px
- integer                 ::i1,i2,iq,ib,ibp,jb
+ integer                 ::i1,i2,iq,ib,ibp,jb,ik
 #if defined _RT
- integer                 ::ik,jb2
+ integer                 ::jb2
 #endif
 #if defined _DOUBLE
  complex(DP)             ::zdotc,zdotu
@@ -92,7 +91,6 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  !
 #if defined _RT
  rho_rho_gamp=(0.,0.)
- fftw_plan=0
 #endif
  !
  if (l_acfdt) then
@@ -191,9 +189,6 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
        !
        ib =QP_table(i1,1)
        ibp=QP_table(i1,2)
-#if defined _RT
-       ik =QP_table(i1,3)
-#endif
        !
        isc%is=(/QP_table(i1,1),QP_table(i1,3),1,spin(QP_table(i1,:))/)
        isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iq,1),:),spin(QP_table(i1,:))/)
@@ -228,7 +223,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
          ! parallelization doesn't work yet on rho_rho_gamp(:,:,:,:,:)
          ! and store
          !
-         ! rho_rho_gamp(n,n',m,m',k) = \sum_{G,q} ( rho(m,n,G,q,k) x rho*(m',n',G,q,k) /|q+G|^2 )
+         ! rho_rho_gamp(n,n',qp_n_states) = \sum_{G,q} ( rho(m,n,G,q,k) x rho*(m',n',G,q,k) /|q+G|^2 )
          !
          do jb2=1,SC_bands
            !      
@@ -254,7 +249,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
            !
 #if defined _RT
            !
-           rho_rho_gamp(jb,jb2,ib,ibp,ik)=rho_rho_gamp(jb,jb2,ib,ibp,ik)+DP_Sx
+           rho_rho_gamp(jb,jb2,i1)=rho_rho_gamp(jb,jb2,i1)+DP_Sx
            !
          enddo
 #else
@@ -273,22 +268,11 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
 #if defined _RT
    !
    ! Now I reconstruct the QP_Sx from the product 
-   ! QP_Sx(m,m',k) = - (0.,1.) * \sum_{n,n'} rho_rho_(n,n',m,m',k) x G_lesser(n,n',k)
+   ! QP_Sx(qp_state) = - (0.,1.) * \sum_{n,n'} rho_rho_(n,n',qp_state) x G_lesser(n,n',k)
    !
    do i1=1,QP_n_states
      !
-     ib =QP_table(i1,1)
-     ibp=QP_table(i1,2)
-     ik =QP_table(i1,3)     
-     !
-#endif
-#if defined _DOUBLE &&  defined _RT
-     QP_Sx(i1)=-(0.,1.)*zdotu(SC_bands*SC_bands,rho_rho_gamp(:,:,ib,ibp,ik),1,G_lesser(:,:,ik),1)
-#endif
-#if !defined _DOUBLE &&  defined _RT
-     QP_Sx(i1)=-(0.,1.)*cdotu(SC_bands*SC_bands,rho_rho_gamp(:,:,ib,ibp,ik),1,G_lesser(:,:,ik),1)
-#endif
-#if defined _RT
+     call RT_make_QP_Sx(ik,G_lesser)
      !
    enddo
    !

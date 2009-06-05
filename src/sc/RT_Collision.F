@@ -31,9 +31,10 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n
  use QP_m,           ONLY:QP_nk,QP_Sx
  use real_time,      ONLY:I1_lesser,I2_lesser,l_RT_no_updates,l_qp_analyze, &
- &                        l_rt_efield,TransRelax,LongRelax,T_initial,H_t,l_RPA, &
+ &                        l_rt_efield,LifeTime,T_initial,H_t,l_RPA, &
  &                        H_Hartree_0,QP_Vxc_0,Thermal_time,Integrator_name, &
- &                        EXACT,RK2EXACT,rho_rho_gamp,Thermal_eta
+ &                        EXACT,RK2EXACT,rho_rho_gamp,Thermal_eta,l_always_relax, &
+ &                        i_time,Thermal_steps,G_lesser_reference
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
@@ -170,37 +171,28 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
 &             SC_bands,H_nl_sc(:,:,1),SC_bands,(0._SP,0._SP),I2_lesser(:,:,ik),SC_bands)
 #endif
    !
+   ! Life-time always for optics 
+   !
+   if(i_time<Thermal_steps+1.and..not.l_always_relax) cycle
+   !
    ! Fictitious lifetime equivalent to the broadening
    ! in linear optics
    !
-   if(TransRelax/=0._SP) then
+   if(LifeTime/=0._SP) then
      !   
      ! This term kill the induced polarization, namley off-diagonal term in the
      ! Green function
      !
+     ! This term send the electron distribution into the initial one
+     ! G_lesser_refence(:,:,:) 
+     !
 #if defined _DOUBLE
-     call zaxpy(SC_bands2,dcmplx(0.,-1./TransRelax),G_input(:,:,ik),1,I1_lesser(:,:,ik),1)
+     call zaxpy(SC_bands2,dcmplx(0.,-1./LifeTime), &
+             &  G_input(:,:,ik)-G_lesser_reference(:,:,ik),1,I1_lesser(:,:,ik),1)
 #else
-     call caxpy(SC_bands2, cmplx(0.,-1./TransRelax),G_input(:,:,ik),1,I1_lesser(:,:,ik),1)
+     call caxpy(SC_bands2, cmplx(0.,-1./LifeTime), &
+             &  G_input(:,:,ik)-G_lesser_reference(:,:,ik),1,I1_lesser(:,:,ik),1)
 #endif
-     !
-     ! This term send the electron distribution into the initial one en%f()
-     !   
-     forall(i1=1:SC_bands)
-       I1_lesser(i1,i1,ik)=I1_lesser(i1,i1,ik)-(1.,0.)*Xen%f(i1,ik,1)/TransRelax
-     end forall 
-     !
-     ! Use a different relaxation time for the diagonal part
-     !
-     if(LongRelax/=TransRelax.and.LongRelax/=0.) then
-       !      
-       RelaxDiff=1./LongRelax-1./TransRelax
-       !
-       forall(i1=1:SC_bands)
-         I1_lesser(i1,i1,ik)=I1_lesser(i1,i1,ik)-(0.,1.)*(G_input(i1,i1,ik)-(0.,1.)*Xen%f(i1,ik,1))*RelaxDiff
-       end forall
-       !
-     endif
      !
    endif
    !

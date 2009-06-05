@@ -80,8 +80,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 #if defined _RT
  use real_time,  ONLY:RT_step,T_initial, Ext_Field_freq, Tot_steps, Thermal_steps,   &
 &                     Ext_Field_int, Ext_Field_name,Integrator_name, DiagH_iter, &
-&                     EF_q0,TransRelax,LongRelax,RT_no_intraband,RT_resonant,l_RPA, &
-&                     l_qp_analyze,Thermal_eta
+&                     EF_q0,LifeTime,RT_no_intraband,RT_resonant,l_RPA, &
+&                     l_qp_analyze,Thermal_eta,l_always_relax
 
 #endif
  !
@@ -397,13 +397,13 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  Ext_Field_name='none'
  Integrator_name='RK2'
  EF_q0=(/1.0,0.0,0.0/)
- TransRelax=0._SP
- LongRelax =0._SP
+ LifeTime = 4.0
  RT_resonant =.FALSE.
  RT_no_intraband=.FALSE.
  l_RPA=.FALSE.
  DiagH_iter=1
  l_qp_analyze=.FALSE.
+ l_always_relax=.FALSE.
  !
 #endif
  !

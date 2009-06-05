@@ -37,7 +37,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  use real_time,      ONLY:Thermal_steps,Tot_steps,RT_step,G_lesser,l_RT_no_updates, &
 &                         G_lesser_previous,l_rt_efield,RT_alloc,RT_free, &
 &                         A_vec_pot,A_norm,l_eps_analyze,i_time,Integrator_name,&
-&                         j_current,l_qp_analyze,I1_lesser,rho_rho_gamp
+&                         j_current,l_qp_analyze,I1_lesser,rho_rho_gamp, &
+&                         G_lesser_reference
  !
  implicit none
  !
@@ -100,7 +101,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    G_lesser(i1,i1,ik)=(0._SP,1._SP)*Xen%f(i1,ik,1)
  end forall
  !
- G_lesser_previous=G_lesser   
+ G_lesser_previous =G_lesser   
+ G_lesser_reference=G_lesser
  !
  ! Build Ho
  !
@@ -161,6 +163,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    call msg('o dynamics','',values(1:6),USE_TABS=.TRUE.)
    !
    if(l_qp_analyze) call RT_qp_analyze(it,en,k,Xk,G_lesser)
+   !
+   if(it==Thermal_steps.and.Thermal_steps/=0) G_lesser_reference=G_lesser
    !
    if(l_rt_efield.and.RT_time>0.) then
      !

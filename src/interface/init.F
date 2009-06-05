@@ -559,8 +559,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'SCPot FFTGvecs SCmixing SCBands BandMix')
    if (l_real_time) then
      call initactivate(1,'RTstep RTsteps Tinitial ThermStps ThermEta')
-     call initactivate(1,'Integrator ExtField ExtFiInt ExtFiFreq ELongDir')
-     call initactivate(1,'LongRelax TransRelax DiagHIter KeepVxc NoDiamagnetic')
+     call initactivate(1,'Integrator ExtField ExtFiInt ExtFiFreq ELongDir LifeTime ')
+     call initactivate(1,'DiagHIter KeepVxc NoDiamagnetic AlwaysRelax ')
      call initactivate(1,'RTNoIntraband RTResonant PhaseInt RTEpsAnalyze RTQpAnalyze')
    else
      call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')

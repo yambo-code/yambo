@@ -59,8 +59,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, T_initial, Ext_Field_freq, Tot_steps, Thermal_steps, &
-&                        Ext_Field_Int, Ext_Field_name,Integrator_name,EF_q0,    &
-&                        LongRelax,TransRelax,DiagH_Iter,Thermal_eta
+&                        Ext_Field_Int, Ext_Field_name,Integrator_name,EF_q0,LifeTime, &
+&                        DiagH_Iter,Thermal_eta
 
 #endif
 #if defined _RAS
@@ -278,11 +278,12 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'DiagHIter', '[RT]  Digaonalize the Hamiltonian',DiagH_Iter,verb_level=V_more)
  call it('f',defs,'RTResonant', '[RT] Only Resonant part of the External Field',verb_level=V_more)
  call it('f',defs,'RTNoIntraband', '[RT] Do not include intraband transitions',verb_level=V_more)
- call it(defs,'LongRelax',  '[RT]  Longitudinal Relaxation Time',LongRelax,verb_level=V_more,unit=Time_unit)
- call it(defs,'TransRelax',  '[RT]  Transverse Relaxation Time',TransRelax,unit=Time_unit)
+ call it(defs,'LifeTime',  '[RT]  Quasi-particle Relaxation Time',LifeTime,verb_level=V_more,unit=Time_unit)
  call it('f',defs,'RTEpsAnalyze', '[RT] Analyze real-time response to an external field')
  call it('f',defs,'RTQpAnalyze', '[RT] Analyze quasi-particle dynamics in real-time',verb_level=V_more)
  call it('f',defs,'KeepVxc', '[RT] Do not subtract Vxc from the self-energy',verb_level=V_more)
+ call it('f',defs,'AlwaysRelax', '[RT] Turn on relaxation also during the adiabatic switching', &
+ &  verb_level=V_more)
  call it('f',defs,'NoDiamagnetic', '[RT] Exclude the diamagnetic term in coupling and current',verb_level=V_more)
 #endif
  !

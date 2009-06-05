@@ -27,7 +27,7 @@ subroutine RT_initialize(file_name,Xen)
 &                         Thermal_steps,Thermal_time,RT_step,l_rt_efield,&
 &                         Ext_Field_Name,G_lesser,G_lesser_previous,&
 &                         l_RT_no_updates,Integrator_Name,EF_q0,l_qp_analyze, &
-&                         l_no_diamagnetic,Ext_Field_Int
+&                         l_no_diamagnetic,Ext_Field_Int,l_always_relax
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
  implicit none
@@ -49,6 +49,7 @@ subroutine RT_initialize(file_name,Xen)
  call parser('RTQpAnalyze',l_qp_analyze)
  call parser('KeepVxc',l_RPA)
  call parser('NoDiamagnetic',l_no_diamagnetic)
+ call parser('AlwaysRelax',l_always_relax)
  !
  if(l_sc_hf.and.QP_Sx_low_band/=1) then
    QP_Sx_low_band=1

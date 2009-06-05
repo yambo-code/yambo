@@ -43,13 +43,17 @@ module real_time
  !
  ! Diagonal and off-diagonal relaxation time
  !
- real(SP)          :: LongRelax
- real(SP)          :: TransRelax
+ real(SP)          :: LifeTime
+ !
+ ! Turn on qp-relaxation also during the adiabatic switching
+ !
+ logical           :: l_always_relax 
  !
  ! GFs
  !
  complex(SP), allocatable :: G_lesser(:,:,:)
  complex(SP), allocatable :: G_lesser_previous(:,:,:)
+ complex(SP), allocatable :: G_lesser_reference(:,:,:)
  complex(SP), allocatable :: I1_lesser(:,:,:)
  complex(SP), allocatable :: I2_lesser(:,:,:)
  !
@@ -143,6 +147,9 @@ module real_time
      allocate(G_lesser_previous(SC_bands,SC_bands,QP_nk))
      call mem_est("Gf_l_old",(/size(G_lesser_previous)/),(/2*SP/))
      !
+     allocate(G_lesser_reference(SC_bands,SC_bands,QP_nk))
+     call mem_est("Gf_l_old",(/size(G_lesser_reference)/),(/2*SP/))
+     !
      allocate(j_current(Tot_steps,3))
      call mem_est("J_current",(/size(j_current)/),(/DP/))
      !
@@ -210,6 +217,9 @@ module real_time
      call mem_est("I2_lesser")
      !
      deallocate(G_lesser_previous)
+     call mem_est("G_lesser_previous")
+     !
+     deallocate(G_lesser_reference)
      call mem_est("G_lesser_previous")
      !
      deallocate(j_current)

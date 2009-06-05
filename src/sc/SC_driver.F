@@ -588,8 +588,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      allocate(rho_nm1(fft_size))
      call mem_est("rho_nm1",(/fft_size/),(/SP/))
      !
+     allocate(V_xc_sc(fft_size,n_spin))
+     call mem_est("V_xc_sc",(/size(V_xc_sc)/))
+     !
      allocate(V_xc_nm1(fft_size,n_spin))
-     call mem_est("V_xc_nm1",(/QP_n_states/))
+     call mem_est("V_xc_nm1",(/size(V_xc_nm1)/))
      !
      if (l_TF_precond) then
        allocate(delta_rho(fft_size))
@@ -604,6 +607,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    subroutine SC_local_free()
      deallocate(rho_nm1)
      call mem_est("rho_nm1")
+     !
+     deallocate(V_xc_sc)
+     call mem_est("V_xc_sc")
      !
      deallocate(V_xc_nm1)
      call mem_est("V_xc_nm1")

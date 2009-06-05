@@ -28,12 +28,12 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  use electrons,      ONLY:levels,n_sp_pol
  use drivers,        ONLY:l_sc_pz,l_sc_hf
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,V_xc_sc,rho_n
+ use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n
  use QP_m,           ONLY:QP_nk,QP_Sx
  use real_time,      ONLY:I1_lesser,I2_lesser,l_RT_no_updates,l_qp_analyze, &
  &                        l_rt_efield,TransRelax,LongRelax,T_initial,H_t,l_RPA, &
- &                        Hartree_plus_Vxc_sc,V_hartree_0,V_xc_0,Thermal_time, &
- &                        Integrator_name,EXACT,RK2EXACT,rho_rho_gamp,Thermal_eta
+ &                        H_Hartree_0,QP_Vxc_0,Thermal_time,Integrator_name, &
+ &                        EXACT,RK2EXACT,rho_rho_gamp,Thermal_eta
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
@@ -55,9 +55,9 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  !
  SC_bands2=SC_bands**2
  !
- call el_density(G_input,k,rho_n,.false.)
- !
  if(.not.l_RT_no_updates) then
+   !
+   call el_density(G_input,k,rho_n,.false.)
    !
    call V_Hartree(rho_n,V_hartree_sc)
    V_hartree_sc(:,n_sp_pol)=V_hartree_sc(:,1)
@@ -68,22 +68,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
      call xc_lda_driver(Xen,k,WF_KIND,WF_xc_functional,1,G_input)
      call IO_mute("  ")
      !
-     V_xc_sc        =V_xc
-     !
-   else
-     !
-     V_xc_sc        =V_xc_0
-     !
    endif
-
-   !
- else
-   !
-   ! Simple case without any correlation just transition between bands
-   ! equivalent to RPA without local field effects
-   !
-   V_hartree_sc     =V_hartree_0
-   V_xc_sc          =V_xc_0
    !
  endif
  !
@@ -107,15 +92,15 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
        !
        ! Add the exchange term
        !
-       call RT_make_QP_Sx(ik,G_input)
+       call RT_make_QP_Sx(ik,k,q,G_input)
        call V_qp_basis_to_H(ik,QP_Sx,H_nl_sc) 
        !
      endif
      !
-     !  I subtract the V_xc_sc term if there is a self-energy /=0 (at least V_h)
+     !  I subtract the V_xc term if there is a self-energy /=0 (at least V_h)
      !  and not l_RPA=.true. (used to include local field effects only)
      !
-     if(.not.l_RPA) call V_real_space_to_H(ik,-V_xc_0,H_nl_sc,wf)
+     if(.not.l_RPA) call V_qp_basis_to_H(ik,-QP_Vxc_0,H_nl_sc) 
      !
    endif
    !
@@ -132,13 +117,21 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
    !
    if(.not.l_RT_no_updates) then
      !      
-     call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,wf)
+     if(l_sc_pz) then
+       call V_real_space_to_H(ik,V_hartree_sc+V_xc,H_nl_sc,wf)
+     else
+       !      
+       call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,wf)
+       call V_qp_basis_to_H(ik,QP_Vxc_0,H_nl_sc) 
+       !
+     endif
      !
    else
+     call V_qp_basis_to_H(ik,QP_Vxc_0,H_nl_sc) 
 #if defined _DOUBLE
-     call zaxpy(SC_bands2,(1.,0.),Hartree_plus_Vxc_sc(:,:,ik,1),1,H_nl_sc(:,:,1),1)
+     call zaxpy(SC_bands2,(1.,0.),H_Hartree_0(:,:,ik,1),1,H_nl_sc(:,:,1),1)
 #else
-     call caxpy(SC_bands2,(1.,0.),Hartree_plus_Vxc_sc(:,:,ik,1),1,H_nl_sc(:,:,1),1)
+     call caxpy(SC_bands2,(1.,0.),H_Hartree_0(:,:,ik,1),1,H_nl_sc(:,:,1),1)
 #endif
    endif
    !

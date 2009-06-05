@@ -27,7 +27,7 @@ subroutine RT_initialize(file_name,Xen)
 &                         Thermal_steps,Thermal_time,RT_step,l_rt_efield,&
 &                         Ext_Field_Name,G_lesser,G_lesser_previous,&
 &                         l_RT_no_updates,Integrator_Name,EF_q0,l_qp_analyze, &
-&                         l_no_diamagnetic
+&                         l_no_diamagnetic,Ext_Field_Int
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
  implicit none
@@ -66,7 +66,7 @@ subroutine RT_initialize(file_name,Xen)
  endif
  !
  l_rt_efield=.false.
- if(Ext_Field_Name/='NONE'.and.Ext_Field_Name/='none') then
+ if(Ext_Field_Name/='NONE'.and.Ext_Field_Name/='none'.and.Ext_Field_Int/=0.) then
    !      
    l_rt_efield=.true.
    call check_symm(EF_q0)

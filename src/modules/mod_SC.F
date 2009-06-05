@@ -100,8 +100,8 @@ module SC
      allocate(rho_n(fft_size))
      call mem_est("rho",(/fft_size/),(/SP/))
      !
-     allocate(V_xc_sc(fft_size,n_spin),V_hartree_sc(fft_size,n_spin))
-     call mem_est("Potentials",(/2*size(V_xc_sc)/))
+     allocate(V_hartree_sc(fft_size,n_spin))
+     call mem_est("Hartree_Potential",(/size(V_hartree_sc)/))
      !
      allocate(H_nl_sc(SC_bands,SC_bands,n_sp_pol))
      call mem_est("H_nl_sc",(/size(H_nl_sc)/),(/2*SP/))
@@ -133,8 +133,8 @@ module SC
      deallocate(rho_n)
      call mem_est("rho")
      !
-     deallocate(V_xc_sc,V_hartree_sc)
-     call mem_est("Optentials")
+     deallocate(V_hartree_sc)
+     call mem_est("Hartree_Ptential")
      !
      if (l_sc_chosex) then
        deallocate(QP_Sc)

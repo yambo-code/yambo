@@ -22,11 +22,12 @@
 subroutine SC_common_build_Ho(E,Xk,k)
  !
  use pars,           ONLY:SP
+ use com,            ONLY:error
  use electrons,      ONLY:levels,n_sp_pol,spin
  use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
- use SC,             ONLY:Ho,E_bare,V_xc_sc,V_hartree_sc,rho_n
+ use SC,             ONLY:Ho,E_bare,V_xc_sc,V_hartree_sc,rho_n,SC_bands
  use memory_m,       ONLY:mem_est
- use real_time,      ONLY:Hartree_plus_Vxc_sc,l_RT_no_updates,G_lesser,V_xc_0,V_hartree_0
+ use real_time,      ONLY:l_RT_no_updates,G_lesser,QP_Vxc_0,H_Hartree_0
  use wave_func,      ONLY:wf
  use R_lattice,      ONLY:bz_samp
  use xc_functionals, ONLY:V_xc
@@ -37,7 +38,7 @@ subroutine SC_common_build_Ho(E,Xk,k)
  !
  ! Work space
  !
- integer   :: ik,ib,i_spin
+ integer   :: i1,ik,ib,i_spin
  !
  allocate(QP_Vxc(QP_n_states))
  call mem_est("QP_Vxc",(/QP_n_states/))    
@@ -48,9 +49,10 @@ subroutine SC_common_build_Ho(E,Xk,k)
 #else
  call DFT_Vxc(E,k)
  call el_density(E,Xk,rho_n,.false.)
+ V_xc_sc=V_xc 
 #endif
  !
- V_xc_sc=V_xc 
+ if(SC_bands==0) call error(' Error SCBands==0 ')
  !
  ! The Ho = -nabla**2. + V_ext is deduced from the input energies en0:
  !
@@ -82,29 +84,28 @@ subroutine SC_common_build_Ho(E,Xk,k)
    call V_qp_basis_to_H(ik,-QP_Vxc,Ho(:,:,ik,:))
  enddo
  !
- deallocate(QP_Vxc)
- call mem_est("QP_Vxc")
- !
 #if defined _RT
  !
- ! Save Hartree and V_xc at T=0
+ ! Save H_Hartree_0 and Q_Vxc_0 at T=0
  !
- V_xc_0                  =  V_xc 
- V_hartree_0(:,n_sp_pol) =  V_hartree_sc(:,1)
+ QP_Vxc_0=QP_Vxc
  !
  ! Define Hartree+xc potential Hamiltonian
  !
  if(l_RT_no_updates) then 
    !
-   Hartree_plus_Vxc_sc=(0._SP,0._SP)
+   H_Hartree_0=(0.,0.)
    !
    do ik=1,QP_nk
-     call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,Hartree_plus_Vxc_sc(:,:,ik,:),wf)
+     call V_real_space_to_H(ik,V_hartree_sc,H_Hartree_0(:,:,ik,:),wf)
    enddo
    !
  endif
  !
 #endif
+ !
+ deallocate(QP_Vxc)
+ call mem_est("QP_Vxc")
  !
  deallocate(V_xc)
  !

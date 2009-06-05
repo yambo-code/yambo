@@ -121,6 +121,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    !
  endif
  !
+ if(l_RT_no_updates) call wf_free()
+ !
  ! Real zero of the time                   
  !
  if(Thermal_steps/=0) call live_timing('[RT] Thermalization :',Thermal_steps)

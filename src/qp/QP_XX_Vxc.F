@@ -50,7 +50,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
 #if defined _RT
- complex(SP), intent(out) :: rho_rho_gamp(SC_bands,SC_bands,QP_n_states)
+ complex(SP), intent(out) :: rho_rho_gamp(SC_bands,SC_bands,q%nibz,QP_n_states)
  complex(SP), intent(in)  :: G_lesser(SC_bands,SC_bands,k%nibz)
 #endif
  !
@@ -60,7 +60,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  type(pp_indexes) ::px
  integer                 ::i1,i2,iq,ib,ibp,jb,ik
 #if defined _RT
- integer                 ::jb2
+ integer                 ::jb2,ik_minus_q
 #endif
 #if defined _DOUBLE
  complex(DP)             ::zdotc,zdotu
@@ -198,6 +198,8 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
        iscp%qs=isc%qs
        !
 #if defined _RT
+       ik_minus_q=isc%os(2)
+       !
        do jb=1,SC_bands
 #else
        do jb=QP_Sx_low_band,E%nbm
@@ -249,7 +251,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
            !
 #if defined _RT
            !
-           rho_rho_gamp(jb,jb2,i1)=rho_rho_gamp(jb,jb2,i1)+DP_Sx
+           rho_rho_gamp(jb,jb2,ik_minus_q,i1)=rho_rho_gamp(jb,jb2,ik_minus_q,i1)+DP_Sx
            !
          enddo
 #else
@@ -270,9 +272,9 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
    ! Now I reconstruct the QP_Sx from the product 
    ! QP_Sx(qp_state) = - (0.,1.) * \sum_{n,n'} rho_rho_(n,n',qp_state) x G_lesser(n,n',k)
    !
-   do i1=1,QP_n_states
+   do ik=1,k%nibz
      !
-     call RT_make_QP_Sx(ik,G_lesser)
+     call RT_make_QP_Sx(ik,k,q,G_lesser)
      !
    enddo
    !

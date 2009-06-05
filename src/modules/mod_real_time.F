@@ -63,10 +63,8 @@ module real_time
  ! 
  ! Other
  !
- real(SP), allocatable   :: V_hartree_0(:,:)  
- real(SP), allocatable   :: V_xc_0(:,:) 
  real(SP)                :: Thermal_time
- complex(SP),allocatable :: rho_rho_gamp(:,:,:)
+ complex(SP),allocatable :: rho_rho_gamp(:,:,:,:)
  integer                 :: DiagH_Iter
  logical                 :: l_qp_analyze
  !
@@ -92,7 +90,8 @@ module real_time
  !
  ! Non-interaction potential energies and potentials
  !
- complex(SP), allocatable :: Hartree_plus_Vxc_sc(:,:,:,:)
+ complex(SP), allocatable :: H_Hartree_0(:,:,:,:)
+ complex(SP), allocatable :: QP_Vxc_0(:)
  complex(SP), allocatable :: H_t(:,:,:,:)
  real(SP),    allocatable :: Occ_natural_orb(:,:) ! Occupation natural orbitals
  !
@@ -119,16 +118,15 @@ module real_time
      allocate(E_xc(fft_size))
      call mem_est('Exc',(/fft_size/),(/SP/))
      !
-     allocate(V_hartree_0(fft_size,n_spin))
-     allocate(V_xc_0(fft_size,n_spin))
-     call mem_est('Potentials',(/fft_size/),(/(1+n_spin)*2*SP/))
-     !
      allocate(G_lesser(SC_bands,SC_bands,QP_nk))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
      !
+     allocate(QP_Vxc_0(QP_n_states))
+     call mem_est("QP_Vxc_0",(/QP_n_states/),(/2*SP/))
+     !
      if(l_RT_no_updates) then
-       allocate(Hartree_plus_Vxc_sc(SC_bands,SC_bands,QP_nk,n_sp_pol))
-       call mem_est("Hartree_plus_Vxc_sc",(/size(Hartree_plus_Vxc_sc)/),(/2*SP/))
+       allocate(H_Hartree_0(SC_bands,SC_bands,QP_nk,n_sp_pol))
+       call mem_est("H_Hartree_0",(/size(H_Hartree_0)/),(/2*SP/))
      endif
      !
      if(l_qp_analyze.or.trim(Integrator_name)==EXACT.or.trim(Integrator_name)==RK2EXACT) then
@@ -155,7 +153,7 @@ module real_time
      call mem_est("A_norm",(/size(A_norm)/),(/DP/))
      !
      if(l_sc_hf) then
-       allocate(rho_rho_gamp(SC_bands,SC_bands,QP_n_states))
+       allocate(rho_rho_gamp(SC_bands,SC_bands,QP_nk,QP_n_states))
        call mem_est("rho_rho_gamp",(/size(rho_rho_gamp)/),(/2*SP/))
      endif
      !
@@ -185,13 +183,13 @@ module real_time
      deallocate(E_xc)
      call mem_est('Exc')
      !
-     deallocate(V_hartree_0,V_xc_0)
-     call mem_est('Potentials')
+     deallocate(QP_Vxc_0)
+     call mem_est("QP_Vxc_0")
      !
      if(l_RT_no_updates) then
        !      
-       deallocate(Hartree_plus_Vxc_sc)
-       call mem_est("Hartree_plus_Vxc_sc")
+       deallocate(H_Hartree_0)
+       call mem_est("H_Hartree_0")
        !
      endif
      !

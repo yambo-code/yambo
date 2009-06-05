@@ -19,23 +19,25 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_make_QP_Sx(ik,G_input)
+subroutine RT_make_QP_Sx(ik,k,q,G_input)
  !
- ! QP_Sx(qp_state) = - (0.,1.) * \sum_{n,n'} rho_rho_(n,n',qp_state) x G_lesser(n,n',k)
+ ! QP_Sx(qp_state) = - (0.,1.) * \sum_{n,n',q} rho_rho_(n,n',q,qp_state) x G_lesser(n,n',k-q)
  ! 
  use pars,           ONLY:SP
  use QP_m,           ONLY:QP_nk,QP_table_by_k,QP_n_states_for_k,QP_Sx
  use SC,             ONLY:SC_bands
  use real_time,      ONLY:rho_rho_gamp
+ use R_lattice,      ONLY:bz_samp,qindx_S
  !
  implicit none
  !       
- complex(SP), intent(in) :: G_input(SC_bands,SC_bands,QP_nk)
- integer, intent(in) :: ik
+ complex(SP), intent(in)   :: G_input(SC_bands,SC_bands,QP_nk)
+ integer, intent(in)       :: ik
+ type(bz_samp), intent(in) :: q,k
  !
  ! Work Space
  !
- integer    :: i1,ib,ibp,iqp
+ integer    :: i1,ib,ibp,iqp,iq,ik_minus_q,SC_bands2
  !
 #if defined _DOUBLE
  complex(DP)   :: zdotu
@@ -43,17 +45,27 @@ subroutine RT_make_QP_Sx(ik,G_input)
  complex(SP)   :: cdotu
 #endif
  !
+ SC_bands2=SC_bands**2
+ !
  do i1=1,QP_n_states_for_k(ik)
    !
    ib =QP_table_by_k(ik,i1,1)
    ibp=QP_table_by_k(ik,i1,2)
    iqp=QP_table_by_k(ik,i1,3)
    !
+   QP_Sx(iqp)=(0.,0.)
+   !
+   do iq=1,q%nbz
+     !
+     ik_minus_q=k%sstar(qindx_S(ik,iq,1),1)
+     !
 #if defined _DOUBLE
-   QP_Sx(iqp)=-(0.,1.)*zdotu(SC_bands*SC_bands,rho_rho_gamp(:,:,iqp),1,G_input(:,:,ik),1)
+     QP_Sx(iqp)=QP_Sx(iqp)-(0.,1.)*zdotu(SC_bands2,rho_rho_gamp(:,:,ik_minus_q,iqp),1,G_input(:,:,ik_minus_q),1)
 #else 
-   QP_Sx(iqp)=-(0.,1.)*cdotu(SC_bands*SC_bands,rho_rho_gamp(:,:,iqp),1,G_input(:,:,ik),1)
+     QP_Sx(iqp)=QP_Sx(iqp)-(0.,1.)*cdotu(SC_bands2,rho_rho_gamp(:,:,ik_minus_q,iqp),1,G_input(:,:,ik_minus_q),1)
 #endif
+     !
+   enddo
    !
  enddo
  !

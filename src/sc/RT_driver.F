@@ -38,7 +38,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
 &                         G_lesser_previous,l_rt_efield,RT_alloc,RT_free, &
 &                         A_vec_pot,A_norm,l_eps_analyze,i_time,Integrator_name,&
 &                         j_current,l_qp_analyze,I1_lesser,rho_rho_gamp, &
-&                         G_lesser_reference
+&                         G_lesser_reference,QP_Hartree,l_fast_hartree,l_fast_exchange
  !
  implicit none
  !
@@ -117,13 +117,14 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    !
    call IO_mute("report io_in io_out")
    !
-   call QP_XX_Vxc(Xen,k,Xk,q,rho_rho_gamp,G_lesser)
+   call QP_XX_Vxc(Xen,k,Xk,q,G_lesser)
    !
    call IO_mute("  ")
    !
  endif
  !
  if(l_RT_no_updates) call wf_free()
+ if(l_fast_exchange.and.l_fast_hartree) call wf_free()
  !
  ! Real zero of the time                   
  !
@@ -166,7 +167,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    !
    if(it==Thermal_steps.and.Thermal_steps/=0) G_lesser_reference=G_lesser
    !
-   if(l_rt_efield.and.RT_time>0.) then
+   if(l_rt_efield.and.i_time>0) then
      !
      call RT_current(j_current(i_time,:),xK,A_vec_pot(i_time,:),G_lesser)
      !

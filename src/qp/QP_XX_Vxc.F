@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 #if defined _RT
-subroutine QP_XX_Vxc(E,k,Xk,q,rho_rho_gamp,G_lesser)
+subroutine QP_XX_Vxc(E,k,Xk,q,G_lesser)
 #else
 subroutine QP_XX_Vxc(E,k,Xk,q)
 #endif
@@ -44,13 +44,13 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
 #if defined _SC || defined _RT
  use SC,            ONLY:it_now,SC_bands
+ use real_time,     ONLY:l_fast_exchange,rho_rho_gamp
 #endif
  !
  implicit none
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
 #if defined _RT
- complex(SP), intent(out) :: rho_rho_gamp(SC_bands,SC_bands,q%nibz,QP_n_states)
  complex(SP), intent(in)  :: G_lesser(SC_bands,SC_bands,k%nibz)
 #endif
  !
@@ -90,7 +90,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  ! Section
  !
 #if defined _RT
- rho_rho_gamp=(0.,0.)
+ if(l_fast_exchange) rho_rho_gamp=(0.,0.)
 #endif
  !
  if (l_acfdt) then
@@ -251,7 +251,11 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
            !
 #if defined _RT
            !
-           rho_rho_gamp(jb,jb2,ik_minus_q,i1)=rho_rho_gamp(jb,jb2,ik_minus_q,i1)+DP_Sx
+           if(l_fast_exchange) then
+             rho_rho_gamp(jb,jb2,ik_minus_q,i1)=rho_rho_gamp(jb,jb2,ik_minus_q,i1)+DP_Sx
+           else
+              QP_Sx(i1)=QP_Sx(i1)+DP_Sx*(0.,-1.)*G_lesser(jb,jb2,ik_minus_q)
+           endif
            !
          enddo
 #else
@@ -272,11 +276,11 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
    ! Now I reconstruct the QP_Sx from the product 
    ! QP_Sx(qp_state) = - (0.,1.) * \sum_{n,n'} rho_rho_(n,n',qp_state) x G_lesser(n,n',k)
    !
-   do ik=1,k%nibz
-     !
-     call RT_make_QP_Sx(ik,k,q,G_lesser)
-     !
-   enddo
+   if(l_fast_exchange) then 
+     do ik=1,k%nibz
+       call RT_make_QP_Sx(ik,k,q,G_lesser)
+     enddo
+   endif
    !
 #endif
    !

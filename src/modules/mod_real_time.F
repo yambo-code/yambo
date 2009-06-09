@@ -71,6 +71,7 @@ module real_time
  complex(SP),allocatable :: rho_rho_gamp(:,:,:,:)
  integer                 :: DiagH_Iter
  logical                 :: l_qp_analyze
+ logical                 :: l_fast_exchange
  !
  ! Integrator Variables
  !
@@ -92,11 +93,17 @@ module real_time
  complex(DP), allocatable :: A_vec_pot(:,:)
  complex(DP), allocatable :: A_norm(:) ! Vector potential A(t) norm
  !
+ ! Hartree term
+ !
+ logical                  :: l_fast_hartree
+ complex(SP), allocatable :: Hartree_Matrix(:,:,:,:)
+ complex(SP), allocatable :: H_Hartree_0(:,:,:,:)
+ complex(SP), allocatable :: H_t(:,:,:,:)
+ complex(SP), allocatable :: QP_Hartree(:)
+ !
  ! Non-interaction potential energies and potentials
  !
- complex(SP), allocatable :: H_Hartree_0(:,:,:,:)
  complex(SP), allocatable :: QP_Vxc_0(:)
- complex(SP), allocatable :: H_t(:,:,:,:)
  real(SP),    allocatable :: Occ_natural_orb(:,:) ! Occupation natural orbitals
  !
  contains
@@ -107,7 +114,7 @@ module real_time
      use drivers,        ONLY:l_sc_hf
      use memory_m,       ONLY:mem_est
      use SC,             ONLY:SC_bands,V_hartree_sc,local_V,V_xc_sc,SC_alloc, &
-&                             E_bare
+&                             E_bare,rho_n
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
@@ -159,9 +166,27 @@ module real_time
      allocate(A_norm(Tot_steps))
      call mem_est("A_norm",(/size(A_norm)/),(/DP/))
      !
-     if(l_sc_hf) then
+     if(l_sc_hf.and.l_fast_exchange) then
        allocate(rho_rho_gamp(SC_bands,SC_bands,QP_nk,QP_n_states))
        call mem_est("rho_rho_gamp",(/size(rho_rho_gamp)/),(/2*SP/))
+     endif
+     !
+     if(l_fast_hartree) then
+       !      
+       allocate(Hartree_Matrix(SC_bands,SC_bands,QP_nk,QP_n_states))
+       call mem_est("Hartree_Matrix",(/size(Hartree_Matrix)/),(/2*SP/))
+       !
+       allocate(QP_Hartree(QP_n_states))
+       call mem_est("QP_Hartree",(/size(QP_Hartree)/),(/2*SP/))
+       !
+    else
+       !     
+       allocate(V_hartree_sc(fft_size,n_spin))
+       call mem_est("Hartree_Potential",(/size(V_hartree_sc)/))
+       !
+       allocate(rho_n(fft_size))
+       call mem_est("rho",(/fft_size/),(/SP/))
+       !
      endif
      !
      ! Reference energies
@@ -180,7 +205,7 @@ module real_time
    subroutine RT_free
      !
      use drivers,        ONLY:l_sc_hf
-     use SC,             ONLY:V_hartree_sc,Ho,V_xc_Sc,SC_free,E_bare
+     use SC,             ONLY:V_hartree_sc,Ho,V_xc_Sc,SC_free,E_bare,rho_n
      use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:E_xc
      implicit none
@@ -231,7 +256,7 @@ module real_time
      deallocate(A_norm)
      call mem_est("A_norm")
      !
-     if(l_sc_hf) then
+     if(l_sc_hf.and.l_fast_exchange) then
        deallocate(rho_rho_gamp)
        call mem_est("rho_rho_gamp")
      endif
@@ -242,6 +267,24 @@ module real_time
      if(l_qp_analyze) then
        deallocate(Occ_natural_orb)
        call mem_est("Occ_natural")
+     endif
+     !
+     if(l_fast_hartree) then
+       !      
+       deallocate(Hartree_Matrix)
+       call mem_est("Hartree_Matrix")
+       !
+       deallocate(QP_Hartree)
+       call mem_est("QP_Hartree")
+       !
+     else
+       !
+       deallocate(V_hartree_sc)
+       call mem_est("Hartree_Potential")
+       !
+       deallocate(rho_n)
+       call mem_est("rho")
+       !
      endif
      !
    end subroutine RT_free

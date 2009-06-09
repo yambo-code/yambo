@@ -139,7 +139,7 @@ if test -z "${FCFLAGS}"; then
       FCMFLAG=""
       ;;
     *g95*)
-      FCFLAGS="-O3 -fbackslash -fno-second-underscore"
+      FCFLAGS="-O3 -fbackslash -fno-second-underscore -mtune=pentium4"
       UFFLAGS="-O0 -fbackslash -fno-second-underscore"
       FCMFLAG=""
       ;;

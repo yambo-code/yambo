@@ -19,7 +19,7 @@
 subroutine RT_initialize(file_name,Xen)
  ! 
  use pars,           ONLY:SP,lchlen,schlen
- use drivers,        ONLY:l_sc_hf
+ use drivers,        ONLY:l_sc_hf,l_sc_pz
  use SC,             ONLY:SC_bands,rho_n
  use QP_m,           ONLY:QP_Sx_low_band
  use com,            ONLY:msg,of_open_close,warning
@@ -27,7 +27,9 @@ subroutine RT_initialize(file_name,Xen)
 &                         Thermal_steps,Thermal_time,RT_step,l_rt_efield,&
 &                         Ext_Field_Name,G_lesser,G_lesser_previous,&
 &                         l_RT_no_updates,Integrator_Name,EF_q0,l_qp_analyze, &
-&                         l_no_diamagnetic,Ext_Field_Int,l_always_relax
+&                         l_no_diamagnetic,Ext_Field_Int,l_always_relax,i_time,&
+&                         l_fast_hartree,l_fast_exchange
+
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
  implicit none
@@ -50,6 +52,15 @@ subroutine RT_initialize(file_name,Xen)
  call parser('KeepVxc',l_RPA)
  call parser('NoDiamagnetic',l_no_diamagnetic)
  call parser('AlwaysRelax',l_always_relax)
+ call parser('FastHartree',l_fast_hartree)
+ call parser('FastExchange',l_fast_exchange)
+ !
+ if(l_sc_pz.and.l_fast_hartree) then
+   call warning(' Fast Hartree not compatible with TD-LDA ')
+   l_fast_hartree=.true.
+ endif
+ !
+ i_time=0
  !
  if(l_sc_hf.and.QP_Sx_low_band/=1) then
    QP_Sx_low_band=1

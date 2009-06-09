@@ -27,13 +27,14 @@ logical function XC_switch()
  use global_XC,      ONLY:SC_EXX,SC_HF,SC_CHOSEX,SC_EXXC
  use electrons,      ONLY:n_full_bands,n_met_bands
  use QP_m,           ONLY:CHOSEX_use_empties
+ use com,            ONLY:error
  implicit none
  !
  select case (trim(SC_potential))
    case('HARTREE')
      l_sc_hartree=.true.
      SC_kind=0
-     SC_xc_functional=0
+     SC_xc_functional=0          
    case('HARTREE-FOCK')
      l_sc_hf=.true.
      SC_kind=SC_HF
@@ -61,12 +62,14 @@ logical function XC_switch()
      l_sc_pz=.true.
      SC_kind=XC_EXCHANGE_CORRELATION
      SC_xc_functional=XC_LDA_C_PZ
-   case('none')
+   case('none','NONE')
      local_V=.true.
      SC_kind=0
      SC_xc_functional=0
      XC_switch=.false.
      return
+   case default
+     call error("Unknown SC potential! ")
  end select
  !
  XC_switch=any((/l_sc_hartree,l_sc_hf,l_sc_exx,l_sc_exxc,l_sc_chosex,l_sc_lda_x,l_sc_pz/))

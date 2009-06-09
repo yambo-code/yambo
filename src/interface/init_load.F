@@ -285,6 +285,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'AlwaysRelax', '[RT] Turn on relaxation also during the adiabatic switching', &
  &  verb_level=V_more)
  call it('f',defs,'NoDiamagnetic', '[RT] Exclude the diamagnetic term in coupling and current',verb_level=V_more)
+ call it('f',defs,'FastHartree', '[RT] Use fast Hartree subroutines, it requires a lot of memory',verb_level=V_more)
+ call it('f',defs,'FastExchange', '[RT] Use fast Exchange, it requires a lot of memory',verb_level=V_more)
 #endif
  !
  ! GPL_EXCLUDE_END SC_IGNORE

@@ -232,8 +232,6 @@ subroutine remove_symmetries(en,k)
 ! core_io_path_save=core_io_path
 ! core_io_path     =NEW_WF_path
  !
- k%pt(:,3)=0
- !
  call msg('s','== Writing new DB1 ...')
  !
  ng_closed_save =ng_closed  ! ng_closed is overwritten from ioDB1 !!

@@ -90,7 +90,7 @@ subroutine RT_eps_analyze(j_current,A_norm)
  endif
  !
  forall(i1=2:tot_steps/2+1)
-   chi(i1,:)=chi(i1,:)/((0.,1.)*omega*dble(i1-1)*w_dot_A_w(i1))
+   chi(i1,:)=chi(i1,:)/((0.,-1.)*omega*dble(i1-1)*w_dot_A_w(i1))
  end forall
  !
  !

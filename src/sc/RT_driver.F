@@ -38,7 +38,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
 &                         G_lesser_previous,l_rt_efield,RT_alloc,RT_free, &
 &                         A_vec_pot,A_norm,l_eps_analyze,i_time,Integrator_name,&
 &                         j_current,l_qp_analyze,I1_lesser,rho_rho_gamp, &
-&                         G_lesser_reference,QP_Hartree,l_fast_hartree,l_fast_exchange
+&                         G_lesser_reference,QP_Hartree,l_fast_exchange
  !
  implicit none
  !
@@ -124,7 +124,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  endif
  !
  if(l_RT_no_updates) call wf_free()
- if(l_fast_exchange.and.l_fast_hartree) call wf_free()
  !
  ! Real zero of the time                   
  !

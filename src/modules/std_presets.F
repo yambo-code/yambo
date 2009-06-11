@@ -81,8 +81,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use real_time,  ONLY:RT_step,T_initial, Ext_Field_freq, Tot_steps, Thermal_steps,   &
 &                     Ext_Field_int, Ext_Field_name,Integrator_name, DiagH_iter, &
 &                     EF_q0,LifeTime,RT_no_intraband,RT_resonant,l_RPA, &
-&                     l_qp_analyze,Thermal_eta,l_always_relax,l_fast_exchange, &
-&                     l_fast_hartree
+&                     l_qp_analyze,Thermal_eta,l_always_relax,l_fast_exchange 
 
 #endif
  !
@@ -406,7 +405,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_qp_analyze=.FALSE.
  l_always_relax=.FALSE.
  l_fast_exchange=.FALSE.
- l_fast_hartree =.FALSE.
  !
 #endif
  !

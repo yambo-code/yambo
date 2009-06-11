@@ -159,10 +159,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    call WF_free()
 #if defined _SC || defined _RT
    !
-   ! Rotate the oscillators in the SC basis
-   !
-   if (using_SC_basis.and..not.local_V) call Dipole_rotate(X%ib(2),use_trans_gauge,Xen)
-   !
    ! Swith off I/O in case gradient is calculated
    !
    if (Eval_P_and_P2_only) call IO_mute("io_in io_out")

@@ -28,7 +28,7 @@ subroutine RT_initialize(file_name,Xen)
 &                         Ext_Field_Name,G_lesser,G_lesser_previous,&
 &                         l_RT_no_updates,Integrator_Name,EF_q0,l_qp_analyze, &
 &                         l_no_diamagnetic,Ext_Field_Int,l_always_relax,i_time,&
-&                         l_fast_hartree,l_fast_exchange
+&                         l_fast_exchange
 
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
@@ -52,13 +52,7 @@ subroutine RT_initialize(file_name,Xen)
  call parser('KeepVxc',l_RPA)
  call parser('NoDiamagnetic',l_no_diamagnetic)
  call parser('AlwaysRelax',l_always_relax)
- call parser('FastHartree',l_fast_hartree)
  call parser('FastExchange',l_fast_exchange)
- !
- if(l_sc_pz.and.l_fast_hartree) then
-   call warning(' Fast Hartree not compatible with TD-LDA ')
-   l_fast_hartree=.true.
- endif
  !
  i_time=0
  !

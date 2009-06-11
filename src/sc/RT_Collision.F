@@ -34,8 +34,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  &                        l_rt_efield,LifeTime,T_initial,H_t,l_RPA, &
  &                        H_Hartree_0,QP_Vxc_0,Thermal_time,Integrator_name, &
  &                        EXACT,RK2EXACT,rho_rho_gamp,Thermal_eta,l_always_relax, &
- &                        i_time,Thermal_steps,G_lesser_reference,QP_Hartree,  &
- &                        l_fast_hartree,l_fast_exchange
+ &                        i_time,Thermal_steps,G_lesser_reference,l_fast_exchange
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
@@ -59,14 +58,10 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  !
  if(.not.l_RT_no_updates) then
    !
-   if(.not.l_fast_hartree) then
-     !      
-     call el_density(G_input,k,rho_n,.false.)
-     !
-     call V_Hartree(rho_n,V_hartree_sc)
-     V_hartree_sc(:,n_sp_pol)=V_hartree_sc(:,1)
-     !
-   endif
+   call el_density(G_input,k,rho_n,.false.)
+   !
+   call V_Hartree(rho_n,V_hartree_sc)
+   V_hartree_sc(:,n_sp_pol)=V_hartree_sc(:,1)
    !
    if(l_sc_pz) then
      !
@@ -86,6 +81,12 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  call pp_indexes_reset(px)
  call par_indexes(px,(/QP_nk/))
  !
+ if(.not.l_fast_exchange.and.l_sc_hf) then
+   call IO_mute("report io_in io_out")
+   call QP_XX_Vxc(Xen,k,k,q,G_input)
+   call IO_mute("  ")
+ endif
+ !
  do ik=1,QP_nk 
    !
    if (.not.px%i1p(ik)) cycle
@@ -94,19 +95,11 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
    !
    if(.not.l_RT_no_updates) then
      !
-     if(l_fast_hartree) call RT_make_QP_Hartree(ik,k,G_input)
-     !
      if(l_sc_hf) then
        !
        ! Add the exchange term
        !
-       if(l_fast_exchange) then
-         call RT_make_QP_Sx(ik,k,q,G_input)
-       else
-         call IO_mute("report io_in io_out")
-         call QP_XX_Vxc(Xen,k,k,q,G_input)
-         call IO_mute("  ")
-       endif
+       if(l_fast_exchange) call RT_make_QP_Sx(ik,k,G_input)
        !
        call V_qp_basis_to_H(ik,QP_Sx,H_nl_sc) 
        !
@@ -136,11 +129,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
        call V_real_space_to_H(ik,V_hartree_sc+V_xc,H_nl_sc,wf)
      else
        !      
-       if(.not.l_fast_hartree) then
-         call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,wf)
-       else
-         call V_qp_basis_to_H(ik,QP_Hartree,H_nl_sc)
-       endif
+       call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,wf)
        !
        call V_qp_basis_to_H(ik,QP_Vxc_0,H_nl_sc) 
        !
@@ -173,7 +162,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
    !
    if(l_qp_analyze.or.trim(Integrator_name)==EXACT.or.trim(Integrator_name)==RK2EXACT) then
      H_t(:,:,ik,1)=H_nl_sc(:,:,1)
-   endif
+   endif               
    !
    ! Now prepare I1 and I2 before the integration notice that 
    ! they contain also the external field

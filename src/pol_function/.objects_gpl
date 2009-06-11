@@ -1,5 +1,5 @@
 #if defined _SC
-SC_objects = Dipole_rotate.o f_sum_rule.o
+SC_objects = f_sum_rule.o
 #else
 SC_objects =
 #endif

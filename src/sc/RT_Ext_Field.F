@@ -67,7 +67,6 @@ subroutine RT_Ext_Field(ik,H_nl_sc,G_lesser,time)
  !
  A_vec_pot(i_time,:)=EF_q0(:)*A_norm(i_time)
  !
- !
  ! Add the External Field to the singular part of the Self-Energy
  ! in case of complex Efield puts the correct Hermitian matrix
  ! and the intraband optical matrix elements have been set to zero

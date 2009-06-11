@@ -75,7 +75,10 @@ module real_time
  !
  ! Integrator Variables
  !
- integer                      :: I_time
+ integer                      :: i_time   ! full time index
+ integer                      :: ef1_time ! time index for extern field one
+ integer                      :: ef2_time ! time index for extern field two
+ !
  character(schlen), parameter :: EULER    = "EULER"
  character(schlen), parameter :: RK2      = "RK2"
  character(schlen), parameter :: EXACT    = "EXACT"
@@ -95,8 +98,6 @@ module real_time
  !
  ! Hartree term
  !
- logical                  :: l_fast_hartree
- complex(SP), allocatable :: Hartree_Matrix(:,:,:,:)
  complex(SP), allocatable :: H_Hartree_0(:,:,:,:)
  complex(SP), allocatable :: H_t(:,:,:,:)
  complex(SP), allocatable :: QP_Hartree(:)
@@ -169,24 +170,6 @@ module real_time
      if(l_sc_hf.and.l_fast_exchange) then
        allocate(rho_rho_gamp(SC_bands,SC_bands,QP_nk,QP_n_states))
        call mem_est("rho_rho_gamp",(/size(rho_rho_gamp)/),(/2*SP/))
-     endif
-     !
-     if(l_fast_hartree) then
-       !      
-       allocate(Hartree_Matrix(SC_bands,SC_bands,QP_nk,QP_n_states))
-       call mem_est("Hartree_Matrix",(/size(Hartree_Matrix)/),(/2*SP/))
-       !
-       allocate(QP_Hartree(QP_n_states))
-       call mem_est("QP_Hartree",(/size(QP_Hartree)/),(/2*SP/))
-       !
-    else
-       !     
-       allocate(V_hartree_sc(fft_size,n_spin))
-       call mem_est("Hartree_Potential",(/size(V_hartree_sc)/))
-       !
-       allocate(rho_n(fft_size))
-       call mem_est("rho",(/fft_size/),(/SP/))
-       !
      endif
      !
      ! Reference energies
@@ -267,24 +250,6 @@ module real_time
      if(l_qp_analyze) then
        deallocate(Occ_natural_orb)
        call mem_est("Occ_natural")
-     endif
-     !
-     if(l_fast_hartree) then
-       !      
-       deallocate(Hartree_Matrix)
-       call mem_est("Hartree_Matrix")
-       !
-       deallocate(QP_Hartree)
-       call mem_est("QP_Hartree")
-       !
-     else
-       !
-       deallocate(V_hartree_sc)
-       call mem_est("Hartree_Potential")
-       !
-       deallocate(rho_n)
-       call mem_est("rho")
-       !
      endif
      !
    end subroutine RT_free

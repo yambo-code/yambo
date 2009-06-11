@@ -27,8 +27,7 @@ subroutine SC_common_build_Ho(E,Xk,k)
  use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
  use SC,             ONLY:Ho,E_bare,V_xc_sc,V_hartree_sc,rho_n,SC_bands
  use memory_m,       ONLY:mem_est
- use real_time,      ONLY:l_RT_no_updates,G_lesser,QP_Vxc_0,H_Hartree_0,& 
- &                        QP_Hartree,l_fast_hartree
+ use real_time,      ONLY:l_RT_no_updates,G_lesser,QP_Vxc_0,H_Hartree_0 
  use wave_func,      ONLY:wf
  use R_lattice,      ONLY:bz_samp
  use xc_functionals, ONLY:V_xc
@@ -46,7 +45,7 @@ subroutine SC_common_build_Ho(E,Xk,k)
  !
 #if defined _RT
  call DFT_Vxc(E,k,G_lesser)
- if(.not.l_fast_hartree) call el_density(G_lesser,Xk,rho_n,.false.)
+ call el_density(G_lesser,Xk,rho_n,.false.)
 #else
  call DFT_Vxc(E,k)
  call el_density(E,Xk,rho_n,.false.)
@@ -70,29 +69,12 @@ subroutine SC_common_build_Ho(E,Xk,k)
  !
  Ho=(0.,0.)
  !
-#if defined _RT
- if(.not.l_fast_hartree) then
-#endif         
-   !      
-   call V_Hartree(rho_n,V_hartree_sc)
-   V_hartree_sc(:,n_sp_pol)=V_hartree_sc(:,1)
-   !
-   do ik=1,QP_nk
-     call V_real_space_to_H(ik,-V_hartree_sc,Ho(:,:,ik,:),wf)
-   enddo
-   !
-#if defined _RT
- else
-   !      
-   call RT_fill_Hartree_matrix()
-   !
-   do ik=1,QP_nk
-     call RT_make_QP_Hartree(ik,k,G_lesser)
-     call V_qp_basis_to_H(ik,-QP_Hartree,Ho(:,:,ik,:))
-   enddo
-   !
- endif
-#endif
+ call V_Hartree(rho_n,V_hartree_sc)
+ V_hartree_sc(:,n_sp_pol)=V_hartree_sc(:,1)
+ !
+ do ik=1,QP_nk
+   call V_real_space_to_H(ik,-V_hartree_sc,Ho(:,:,ik,:),wf)
+ enddo
  !
  forall (ib=1:QP_nb,ik=1:QP_nk,i_spin=1:n_sp_pol) Ho(ib,ib,ik,i_spin) = Ho(ib,ib,ik,i_spin) + E_bare(ib,ik,i_spin)  
  !

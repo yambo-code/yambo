@@ -602,12 +602,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      allocate(WFo(fft_size,wf_n_states))
      call mem_est("WFo",(/fft_size*wf_n_states/))
      !
-     allocate(V_hartree_sc(fft_size,n_spin))
-     call mem_est("Hartree_Potential",(/size(V_hartree_sc)/))
-     !
-     allocate(rho_n(fft_size))
-     call mem_est("rho",(/fft_size/),(/SP/))
-     !
    end subroutine
    !
    subroutine SC_local_free()
@@ -625,12 +619,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      deallocate(WFo)
      call mem_est("WFo")
-     !
-     deallocate(V_hartree_sc)
-     call mem_est("Hartree_Ptential")
-     !
-     deallocate(rho_n)
-     call mem_est("rho")
      !
    end subroutine
    !

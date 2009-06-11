@@ -26,8 +26,7 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,rho_n,H_nl_sc
  use X_m,            ONLY:P_square
- use real_time,      ONLY:G_lesser,l_RT_no_updates,H_Hartree_0,QP_Vxc_0, &
-&                         l_fast_hartree,QP_Hartree
+ use real_time,      ONLY:G_lesser,l_RT_no_updates,H_Hartree_0,QP_Vxc_0
  use electrons,      ONLY:levels,n_sp_pol
  use wave_func,      ONLY:wf
  use FFT_m,          ONLY:fft_size
@@ -103,11 +102,7 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
      !
      H_nl_sc=(0._SP,0._SP)
      !
-     if(.not.l_fast_hartree) then
-       call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,wf)
-     else
-       call V_qp_basis_to_H(ik,QP_Hartree,H_nl_sc)
-     endif
+     call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,wf)
      !
 #if defined _DOUBLE
      E_h=E_h-(0._SP,0.5_SP)*zdotc(SC_bands2,H_nl_sc(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
@@ -128,9 +123,9 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
        call V_qp_basis_to_H(ik,QP_Sx,H_nl_sc)
        !
 #if defined _DOUBLE
-       Ex=Ex-(0.,0.5)*zdotc(SC_bands2,H_nl_sc(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+       Ex=Ex+(0.,0.5)*zdotc(SC_bands2,H_nl_sc(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #else
-       Ex=Ex-(0.,0.5)*cdotc(SC_bands2,H_nl_sc(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+       Ex=Ex+(0.,0.5)*cdotc(SC_bands2,H_nl_sc(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #endif
        !
      enddo
@@ -141,25 +136,15 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
      !
      ! E_xc Energy 
      !
-     if(.not.l_fast_hartree) then
-       !
-       call IO_mute("report log io_in io_out")
-       call xc_lda_driver(en,k,WF_KIND,WF_xc_functional,0,G_lesser)
-       call IO_mute("  ")
-       !
+     call IO_mute("report log io_in io_out")
+     call xc_lda_driver(en,k,WF_KIND,WF_xc_functional,0,G_lesser)
+     call IO_mute("  ")
+     !
 #if defined _DOUBLE
-       Exc=ddot(fft_size,rho_n,1,E_xc,1)
-#else 
-       Exc=sdot(fft_size,rho_n,1,E_xc,1)
+     Exc=ddot(fft_size,rho_n,1,E_xc,1)
+#else
+     Exc=sdot(fft_size,rho_n,1,E_xc,1)
 #endif
-       !
-     else
-       !      
-       ! Cannot be calculated with FastHartree use l_fast_hartree=.false.
-       !
-       Exc=0.
-       !
-     endif
      !
    endif
    !

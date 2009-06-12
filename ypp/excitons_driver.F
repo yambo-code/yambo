@@ -30,7 +30,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use R_lattice,     ONLY:nXkibz,bz_samp
  use YPP,           ONLY:l_sort,l_exc_wf,l_spin,ncell,lambda,r_hole,&
 &                        nr,v2plot,nr_tot,state_ctl,BS_H_dim,n_lambda,&
-&                        exc_wf_sort_and_report,l_amplitude,l_free_hole,&
+&                        excitons_sort_and_report,l_amplitude,l_free_hole,&
 &                        output_fname,use_xcrysden,use_gnuplot,plot_dim,l_norm_to_one
 #if defined _YPP_ELPH
  use YPP,           ONLY:l_eliashberg,l_gkkp
@@ -151,7 +151,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  if (l_sort) then
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
    io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
-   call exc_wf_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E)
+   call excitons_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E)
    deallocate(BS_R,BS_E)
    call mem_est('BS_R_E')
    return
@@ -189,7 +189,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! Sort energies to find degenerate states
  !========================================
  !
- call exc_wf_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,BS_E_degs=BS_E_degs)
+ call excitons_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,BS_E_degs=BS_E_degs)
  !
  ! Excitonic Eliashberg function 
  !================================
@@ -211,8 +211,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  if (l_spin.and.n_spinor==1) then
    allocate(S_z(BS_H_dim),S_sq(BS_H_dim))
-   if (n_sp_pol==2)  call exc_collinear_spin(BS_E_degs,S_z,S_sq)
-   call exc_wf_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,S_sq=S_sq,S_z=S_z)
+   if (n_sp_pol==2)  call excitons_collinear(BS_E_degs,S_z,S_sq)
+   call excitons_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,S_sq=S_sq,S_z=S_z)
    deallocate(S_z,S_sq)
    return
  endif
@@ -235,8 +235,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    !
    n_lambda = get_lambda()
    ! 
-   call exc_non_collinear_spin(Xk,lambda_s,n_lambda,S_z,S_sq)
-   call exc_wf_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,S_sq=S_sq,S_z=S_z)
+   call excitons_non_collinear(Xk,lambda_s,n_lambda,S_z,S_sq)
+   call excitons_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,S_sq=S_sq,S_z=S_z)
    !
    deallocate(lambda_s)
    deallocate(S_z,S_sq)
@@ -283,7 +283,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
        !
      enddo
      !
-     call exc_wf_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,A_weight=A_weight)
+     call excitons_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,A_weight=A_weight)
      !
    enddo
    !

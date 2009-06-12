@@ -25,7 +25,7 @@ integer function e2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  use etsf_io_low_level
  use pars,                only : SP,lchlen
  use LOGO,                only : pickup_a_random
- use com,                 only : msg,write_to_report,more_io_path, file_exists
+ use com,                 only : msg,write_to_report,core_io_path, file_exists
  use par_proc_m,          only : ncpu,myid,p_finalize
  use electrons,           only : levels,E_reset,n_bands,n_spin
  use D_lattice,           only : PP_alloc, PP_free, n_atoms_max
@@ -67,7 +67,7 @@ integer function e2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  e2y_i = 0
  ncpu  = np
  myid  = pid
- call std_presets(instr,ind,od,'','')
+ call std_presets(instr,od,od,'','')
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en)
@@ -98,7 +98,7 @@ integer function e2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  call etsf_io_low_open_read(ncid, trim(ETSF_file_name), lstat, error_data = error_data)
  if (.not. lstat) call etsf_long_error(error_data)
- call msg('s','DBs path set to :',trim(more_io_path))
+ call msg('s','DBs path set to :',trim(core_io_path))
  !
  ! DB1
  !==========================================

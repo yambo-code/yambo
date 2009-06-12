@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine generate_epsdb(X,Xk,Xen)
+ subroutine ras_generate_epsdb(X,Xk,Xen)
 
  !--------------------------
  ! RAS in 3 layer model:
@@ -175,4 +175,4 @@ real(SP)                       :: qpard(2), q0v(3,3)
      
    end subroutine read_spectral_data
    
- end subroutine generate_epsdb
+ end subroutine ras_generate_epsdb

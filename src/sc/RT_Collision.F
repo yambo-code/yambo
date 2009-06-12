@@ -83,7 +83,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  !
  if(.not.l_fast_exchange.and.l_sc_hf) then
    call IO_mute("report io_in io_out")
-   call QP_XX_Vxc(Xen,k,k,q,G_input)
+   call QP_XX_Vxc(Xen,k,k,q,G_input,.false.)
    call IO_mute("  ")
  endif
  !

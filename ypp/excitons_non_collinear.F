@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine exc_non_collinear_spin(Xk,lambda_s,n_lambda,S_sq,S_z)
+subroutine excitons_non_collinear(Xk,lambda_s,n_lambda,S_sq,S_z)
  !
  use pars,          ONLY:SP
  use stderr,        ONLY:intc

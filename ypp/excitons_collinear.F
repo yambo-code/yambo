@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine exc_collinear_spin(deg_list,S_sq,S_z)
+subroutine excitons_collinear(deg_list,S_sq,S_z)
  !
  use pars,          ONLY:SP
  use BS,            ONLY:BS_mat

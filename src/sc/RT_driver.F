@@ -24,8 +24,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  use pars,           ONLY:SP,lchlen
  use drivers,        ONLY:l_sc_hf
  use stderr,         ONLY:set_real_printed_length
- use units,          ONLY:FS2AUT
- use com,            ONLY:msg,of_open_close
+ use units,          ONLY:FS2AUT,HARTREE
+ use com,            ONLY:msg,of_open_close,warning
  use timing,         ONLY:live_timing 
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels,n_sp_pol
@@ -33,12 +33,15 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  use wave_func,      ONLY:wf,wf_load,wf_ng,WF_free
  use R_lattice,      ONLY:bz_samp,qindx_S
  use QP_m,           ONLY:QP_nb,QP_nk,QP_ng_Sx
- use SC,             ONLY:SC_potential,SC_bands,Ho,E_bare
+ use SC,             ONLY:SC_potential,SC_bands,Ho,E_bare,SC_R,E_convergence,&
+&                         rho_convergence,H_rotate
  use real_time,      ONLY:Thermal_steps,Tot_steps,RT_step,G_lesser,l_RT_no_updates, &
 &                         G_lesser_previous,l_rt_efield,RT_alloc,RT_free, &
 &                         A_vec_pot,A_norm,l_eps_analyze,i_time,Integrator_name,&
 &                         j_current,l_qp_analyze,I1_lesser,rho_rho_gamp, &
 &                         G_lesser_reference,QP_Hartree,l_fast_exchange
+ use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,&
+&                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL   
  !
  implicit none
  !
@@ -51,6 +54,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  !
  type(bz_samp) :: k,Xk,q
  type(X_t):: X(4)
+ integer, external :: io_SC_components
  ! 
  ! Work Space
  !
@@ -59,6 +63,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  real(SP)                 :: values(9), E_xc, RT_time  ! The real time on the diagonal RTime = it*RT_step    
  complex(SP)              :: Trace_Gf,E_kin,E_ion,E_h 
  logical                  :: XC_switch
+ integer                  :: ID(5),io_E,io_V,io_WF,io_J,io_G
+ logical                  :: RESTART,RESTART_FROM_SC
  !
  call section('*',trim(SC_potential)//' Real-Time Dynamics')
  !##########################################################
@@ -90,6 +96,29 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  !
  call RT_alloc(Xen)
  !
+ ! Perform a first I/O to check which DBs are present. 
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(1)) ! Energies
+ io_E=io_SC_components('E' ,Xen,ID(1))
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2)) ! WFs
+ io_WF=io_SC_components('WF',Xen,ID(2))
+ call io_control(ACTION=OP_RD_CL,COM=REP ,SEC=(/1/),MODE=VERIFY,ID=ID(3)) ! Local potential
+ io_V=io_SC_components('V' ,Xen,ID(3))
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
+ io_J=io_SC_components('J' ,Xen,ID(4))
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(5)) ! G_lesser
+ io_G=io_SC_components('G' ,Xen,ID(5))
+ !
+ ! To restart from RT only the G_lesser is necessary
+ !
+ if(l_rt_efield) then
+   RESTART        = all((/io_G==0, io_J==0/))
+ else
+   RESTART        = io_G==0
+ endif
+ !
+ RESTART_FROM_SC=all((/io_E==0,io_WF==0,io_V==0,io_G/=0,io_J/=0/))
+ !
  ! Initialize the Gf and potentials
  !----------------------------------
  ! G_lesser(T=0,T=0)=Go and G_lesser_old(T=0,T=0)=Go
@@ -101,13 +130,64 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    G_lesser(i1,i1,ik)=(0._SP,1._SP)*Xen%f(i1,ik,1)
  end forall
  !
- G_lesser_previous =G_lesser   
- G_lesser_reference=G_lesser
- !
  ! Build Ho
  !
  E_bare=en%E(:SC_bands,:,:)
  call SC_common_build_Ho(Xen,Xk,k)
+ !
+ if(RESTART_FROM_SC) then
+   !
+   !  I only need SC_R than I can reconstruct G_lesser(:,:,:)
+   !  rotating the non-integrating G_lesser
+   !
+   allocate(SC_R(SC_bands,SC_bands,k%nibz,n_sp_pol))
+   call mem_est("SC_R ",(/size(SC_R)/))
+   !
+   call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2))
+   io_WF=io_SC_components('WF',Xen,ID(2))
+   !
+   do ik=1,QP_nk
+     call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(2))
+     io_WF=io_SC_components('WF',Xen,ID(2))
+   enddo
+   !
+   call msg('nr','[RT] Restart from a Self-Consistent Calculation ')
+   call msg('nr','[RT] Found   accuracy on density      :',rho_convergence)
+   call msg('rn','[RT]                  on energies [ev]:',E_convergence*HARTREE)
+   !
+   if ( E_convergence>0.01.and.rho_convergence>1e-4) &
+&    call warning(" Restart from a non-converged Self-Consistent calculation! ")
+   !
+   if ( Thermal_steps/=0) &
+&    call warning(" Restart from a SC could not work with thermalization! ")
+   !
+   ! Now I build the G_lesser rotating the non interaction one
+   ! G_lesser(i1,i1,ik)=(0.,1)*en%f(i1,ik)
+   !
+   do ik=1,QP_nk
+     call H_rotate(SC_R(:,:,ik,1),G_lesser(:,:,ik),SC_bands,-1)
+   enddo
+   !
+ endif
+ !
+ if(RESTART) then
+   !
+   !  I use G_lesser(:,:,:) to reconstruct everything
+   !
+   call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(5))
+   io_G=io_SC_components('G',Xen,ID(5))
+   !
+   do ik=1,QP_nk
+     call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(5))
+     io_G=io_SC_components('G',Xen,ID(5))
+   enddo
+   !
+ endif 
+ !
+ ! Initialize G_lesser_previous and G_lesser_reference
+ !
+ G_lesser_previous =G_lesser   
+ G_lesser_reference=G_lesser
  !
  if(l_sc_hf) then
    !
@@ -116,9 +196,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    if(QP_ng_Sx>wf_ng) QP_ng_Sx=wf_ng 
    !
    call IO_mute("report io_in io_out")
-   !
-   call QP_XX_Vxc(Xen,k,Xk,q,G_lesser)
-   !
+   call QP_XX_Vxc(Xen,k,Xk,q,G_lesser,.true.)
    call IO_mute("  ")
    !
  endif
@@ -175,9 +253,15 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
      !
      call msg('o response','',values(1:6),USE_TABS=.TRUE.)
      !
+     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
+     io_J=io_SC_components('J' ,Xen,ID(4))
+     !
    endif
    !
    call RT_Integrator(G_lesser,G_lesser_previous,RT_step,Xen,k,q,Integrator_name,RT_time)
+   !
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! G_lesser
+   io_G=io_SC_components('G' ,Xen,ID(5))
    !
  enddo
  !

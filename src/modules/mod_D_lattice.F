@@ -64,6 +64,46 @@ module D_lattice
  !
  contains
    !
+   subroutine symmetry_group_table(msg_where)
+     !
+     use pars,           ONLY:SP,IP
+     use com,            ONLY:error,msg
+     use memory_m,       ONLY:mem_est
+     !
+     character(*) :: msg_where
+     !
+     ! Work Space
+     !
+     integer  :: i1,i2,i3
+     real(SP) :: m(3,3)
+     !
+     if (allocated(sop_tab)) then
+       deallocate(sop_tab,sop_inv)
+       call mem_est("SYMtable SYMinv")
+     endif
+     allocate(sop_tab(nsym,nsym),sop_inv(nsym))
+     call mem_est("SYMtable SYMinv",(/3*3*nsym,nsym**2+nsym/),(/SP,IP/))
+     sop_tab=0
+     sop_inv=0
+     do i1=1,nsym
+       do i2=1,nsym
+         m=matmul(dl_sop(:,:,i1),dl_sop(:,:,i2))
+         do i3=1,nsym
+           if (all(abs(m-dl_sop(:,:,i3))<=1.E-5)) then
+             if (sop_tab(i1,i2)/=0) call error('[SYMs] check the input symmetries!')        
+             sop_tab(i1,i2)=i3
+             if (sop_tab(i1,i2)==1) sop_inv(i1)=i2                
+           endif
+         enddo
+         if (sop_tab(i1,i2)==0) call error('[SYMs] check the input symmetries!')    
+       enddo
+     enddo
+     if (any(sop_inv==0)) call error('[SYMs] check the input symmetries!')
+     call msg(msg_where,'[SYMs] Group table built correctly')
+     !
+   end subroutine
+   !
+   !
    subroutine atoms_spatial_invertion()
      use pars,           ONLY:zero_dfl
      use matrix_operate, ONLY:m3inv

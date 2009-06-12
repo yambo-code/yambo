@@ -21,13 +21,13 @@
 !
 subroutine setup(en,Xen,Ken,k,Xk)
  !
- use pars,           ONLY:SP,IP,pi,schlen
+ use pars,           ONLY:SP,pi,schlen
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate
- use memory_m,       ONLY:mem_est
- use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,sop_inv,&
-&                         sop_tab,atoms_spatial_invertion,i_space_inv,input_Tel_fixed,&
+ use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
+&                         atoms_spatial_invertion,i_space_inv,input_Tel_fixed,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms,znucl,&
-&                         n_atom_species,PT_elements,non_periodic_directions,lattice
+&                         n_atom_species,PT_elements,non_periodic_directions,lattice,&
+&                         symmetry_group_table
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,&
 &                         rl_sop,bz_samp,g_vec,E_of_shell
  use com,            ONLY:msg,error,warning
@@ -151,26 +151,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! Symmetries Multiplication Table
  !
- allocate(sop_tab(nsym,nsym),sop_inv(nsym))
- call mem_est("SOP-adds SOPs",(/3*3*nsym,nsym**2+nsym/),(/SP,IP/))
- !
- sop_tab=0
- sop_inv=0
- do i1=1,nsym
-   do i2=1,nsym
-     m=matmul(dl_sop(:,:,i1),dl_sop(:,:,i2))
-     do i3=1,nsym
-       if (all(abs(m-dl_sop(:,:,i3))<=1.E-5)) then
-         if (sop_tab(i1,i2)/=0) call error('Error (stab 1): check the input symmetries!')        
-         sop_tab(i1,i2)=i3
-         if (sop_tab(i1,i2)==1) sop_inv(i1)=i2                
-       endif
-     enddo
-     if (sop_tab(i1,i2)==0) call error('[SYMs] check the input symmetries!')    
-   enddo
- enddo
- if (any(sop_inv==0)) call error('[SYMs] check the input symmetries!')
- call msg('r','[SYMs] Group table built correctly')
+ call symmetry_group_table('r')
  !
  call section('=','RL shells')
  !============================

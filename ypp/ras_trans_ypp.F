@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine trans_ypp(en,k)
+ subroutine ras_trans_ypp(en,k)
    use pars                    
    use YPP
    use units,                   ONLY : HARTREE
@@ -199,4 +199,4 @@ integer :: db_nbm,db_nbf,db_nb(2),nb(2), nbm, ixyz, i_spin, ib, i1, nbf
      return
    end subroutine get_q0grad
 
- end subroutine trans_ypp
+ end subroutine ras_trans_ypp

@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 #if defined _RT
-subroutine QP_XX_Vxc(E,k,Xk,q,G_lesser)
+subroutine QP_XX_Vxc(E,k,Xk,q,G_lesser,show_livetiming)
 #else
 subroutine QP_XX_Vxc(E,k,Xk,q)
 #endif
@@ -52,6 +52,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  type(bz_samp)::k,Xk,q
 #if defined _RT
  complex(SP), intent(in)  :: G_lesser(SC_bands,SC_bands,k%nibz)
+ logical, intent(in)      :: show_livetiming
 #endif
  !
  !Work Space
@@ -167,7 +168,11 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
    if (l_sc_run) ch='EXS@it'//trim(intc(it_now))
 #endif
    !
+#if defined _RT
+   if(show_livetiming) call live_timing(trim(ch),px%stps(myid+1)*QP_n_states)
+#else
    call live_timing(trim(ch),px%stps(myid+1)*QP_n_states)
+#endif
    !
    do iq=1,q%nbz
      !
@@ -207,7 +212,12 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
          if (.not.px%i2p(iq,jb)) cycle
          isc%os(1)=jb
          iscp%os=isc%os
+#if defined _RT
+         if(show_livetiming) call live_timing(steps=1)
+#else
          call live_timing(steps=1)
+#endif
+         !
 #if defined _SC 
          !
          ! In Exact-Exchange only vc matrix elements so ... no cc' no vv' 
@@ -269,7 +279,12 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
      !
    enddo
    !
+#if defined _RT
+   if(show_livetiming) call live_timing()
+#else
    call live_timing()
+#endif
+
    !
 #if defined _RT
    !
@@ -278,7 +293,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
    !
    if(l_fast_exchange) then 
      do ik=1,k%nibz
-       call RT_make_QP_Sx(ik,k,q,G_lesser)
+       call RT_make_QP_Sx(ik,k,G_lesser)
      enddo
    endif
    !

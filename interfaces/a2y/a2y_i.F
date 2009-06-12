@@ -24,7 +24,7 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  use pars,                ONLY:SP,lchlen
  use LOGO,                ONLY:pickup_a_random
- use com,                 ONLY:msg,write_to_report,more_io_path
+ use com,                 ONLY:msg,write_to_report,core_io_path
  use par_proc_m,          ONLY:ncpu,myid,p_finalize
  use electrons,           ONLY:levels,E_reset,n_bands,n_spin
  use D_lattice,           ONLY:n_atoms_max
@@ -56,7 +56,7 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  a2y_i =0
  ncpu  =np
  myid  =pid
- call std_presets(instr,ind,od,'','')
+ call std_presets(instr,od,od,'','')
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en) 
@@ -80,7 +80,7 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  endif
  call msg('l',trim(KSS_file_name))
  !
- call msg('s','DBs path set to :',trim(more_io_path))
+ call msg('s','DBs path set to :',trim(core_io_path))
  !
  call a2y_db1(en,k,trim(KSS_file_name))
  !

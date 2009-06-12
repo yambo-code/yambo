@@ -26,7 +26,7 @@ integer function p2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  use LOGO,                only : pickup_a_random
  use pars,                only : SP,lchlen
  use memory_m,            only : mem_est
- use com,                 only : msg,write_to_report,more_io_path, error
+ use com,                 only : msg,write_to_report,core_io_path, error
  use par_proc_m,          only : ncpu,myid,p_finalize
  use electrons,           only : levels,E_reset,n_bands, n_spin, n_sp_pol
  use D_lattice,           only : n_atoms_max
@@ -59,7 +59,7 @@ integer function p2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  p2y_i =0
  ncpu  =np
  myid  =pid
- call std_presets(instr,ind,od,'','')
+ call std_presets(instr,od,od,'','')
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en)
@@ -86,7 +86,7 @@ integer function p2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
 #else
  call error('Unknown version of P2Y. Stopping.')
 #endif
- call msg('s','DBs path set to ',trim(more_io_path))
+ call msg('s','DBs path set to ',trim(core_io_path))
  !
  ! Verbose I/O
  !

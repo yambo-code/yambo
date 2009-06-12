@@ -148,16 +148,16 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  ! Specific SECTIONS
  !===================
  !
- if (l_bz_grids) call BZ_grids(en,k,Xk,q)
+ if (l_bz_grids) call k_grids(en,k,Xk,q)
  !   =========
  !
  ! GPL_EXCLUDE_START
  !
- if (l_bzrim) call BZ_RIM(Xk,Xen)
+ if (l_bzrim) call k_random(Xk,Xen)
  !
 #if defined _YPP_RT
  !
- if (l_rsymm) call remove_symmetries(en,k)
+ if (l_rsymm) call RT_fix_symmetries(en,k)
  !   ======
 #endif
  !
@@ -189,9 +189,9 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  if (lras) call ras_ypp
  if (lreels) call reels_ypp
- if (lcelleps) call generate_epsdb(en,k)
- if (lloc) call loc_ypp
- if (ltrans) call trans_ypp(en,k)
+ if (lcelleps) call ras_generate_epsdb(en,k)
+ if (lloc) call ras_loc_ypp
+ if (ltrans) call ras_trans_ypp(en,k)
  !
 #endif
  !

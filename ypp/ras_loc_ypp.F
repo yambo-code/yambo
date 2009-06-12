@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine loc_ypp
+ subroutine ras_loc_ypp
    use YPP
    use com,                     ONLY : error, msg
    use pars,                    ONLY : SP, pi, schlen
@@ -111,4 +111,4 @@
    live_timing_is_on = .true.
 
    return
- end subroutine loc_ypp
+ end subroutine ras_loc_ypp

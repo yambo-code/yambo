@@ -179,7 +179,6 @@ subroutine ypp_init_load(defs)
 #if defined _YPP_RT
  call it(defs,'ExtField1','External Field[1]',efield(1,:))
  call it(defs,'ExtField2','External Field[2]',efield(2,:))
- call it(defs,'NEW_WF_path','Path of the new SAVE folder',NEW_WF_path)
  call it('f',defs,'RmAllSymm','Remove all symmetries') 
 #endif
  !

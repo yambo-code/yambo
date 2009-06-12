@@ -163,6 +163,26 @@ module R_lattice
      BZo%description = BZi%description
      allocate( BZo%pt(BZo%nibz,3) )
      BZo%pt(:,:) = BZi%pt(:,:)
+     if (associated( BZi%nstar )) then
+       allocate( BZo%nstar(BZo%nibz) ) 
+       BZo%nstar=BZi%nstar
+     endif
+     if (associated( BZi%weights )) then
+       allocate( BZo%weights(BZo%nibz) ) 
+       BZo%weights=BZi%weights
+     endif
+     if (associated( BZi%star )) then
+       allocate( BZo%star(BZo%nibz, size(BZi%star,2) ) ) 
+       BZo%star=BZi%star
+     endif
+     if (associated( BZi%sstar )) then
+       allocate( BZo%sstar(BZo%nbz,2) ) 
+       BZo%sstar=BZi%sstar
+     endif
+     if (associated( BZi%ptbz )) then
+       allocate( BZo%ptbz(BZo%nbz,3) ) 
+       BZo%ptbz=BZi%ptbz
+     endif
    return
    end subroutine bz_samp_duplicate
    !

@@ -131,7 +131,6 @@ module YPP
  !
  logical  :: l_rsymm
  real(SP) :: efield(2,3)
- character(lchlen) :: NEW_WF_path
  !
 #endif
  !
@@ -139,7 +138,7 @@ module YPP
  !
  interface
    !
-   subroutine exc_wf_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
+   subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
      use pars,          ONLY:SP
      use R_lattice,     ONLY:bz_samp
      use electrons,     ONLY:levels

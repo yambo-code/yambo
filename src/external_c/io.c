@@ -53,10 +53,10 @@ void F90_FUNC_(iremove, IREMOVE)
         remove(name);
 }
 
-void F90_FUNC_(isndcmd, ISNDCMD)
-                 (char *name)
+void F90_FUNC_(isystem, ISSYSTEM)
+                 (char *name, int* ierr)
 {
-        system(name);
+        *ierr=system(name);
 }
 
 void F90_FUNC_(igetcwd, IGETCWD)

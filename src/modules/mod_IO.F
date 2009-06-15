@@ -608,12 +608,19 @@ module IO_m
    end subroutine
    !
    subroutine mk_dir(dirname)
-     use pars
      use stderr,         ONLY:cstr
      implicit none
      character(*)      :: dirname
      if (len_trim(dirname)==0) return
      call imkdir( cstr(trim(dirname)) )
+   end subroutine
+   !
+   subroutine cp_file(file_,dest_,ierr_)
+     use stderr,         ONLY:cstr
+     implicit none
+     character(*)      :: file_,dest_
+     integer           :: ierr_
+     call isystem( cstr("cp "//file_//" "//dest_//" >& /dev/null" ), ierr_ )
    end subroutine
    !
    subroutine rm_file(filename)

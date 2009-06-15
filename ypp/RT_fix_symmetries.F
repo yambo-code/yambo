@@ -22,31 +22,22 @@
 subroutine RT_fix_symmetries(E,k)
  !
  use YPP
- use pars,                ONLY :SP,lchlen
- use com,                 ONLY :msg,error,warning,core_io_path 
- use memory_m,            ONLY :mem_est
- use electrons,           ONLY :levels,E_reset,n_spin
- use vec_operate,         ONLY :v_norm
- use D_lattice,           ONLY :nsym,dl_sop,i_time_rev,a,atoms_spatial_invertion&
-&                              ,i_space_inv,alat,sop_inv,sop_tab
- use R_lattice,           only :bz_samp,bz_samp_reset,nkibz,rl_sop,nkibz,nXkibz,g_vec&
-&                              ,ng_vec,g_rot,ng_closed
- use IO_m,                only :io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_RD_CL,OP_WR &
-&                              ,DUMP,serial_number,RD_CL_IF_END,RD_CL,OP_RD,OP_APP,REP  &
-&                              ,VERIFY,io_disconnect
- use wave_func,           ONLY :ioWF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io,wf_nb_io_groups &
-&                              ,wf_ng
- use stderr,              ONLY :intc
- use timing,              ONLY :live_timing
- use parser_m,            ONLY :parser
- !
- use wave_func,           ONLY:wf_load,wf_state,wf,WF_free,wf_ng
- use IO_m,                ONLY:mk_dir
+ use pars,                ONLY:SP,lchlen
+ use com,                 ONLY:msg,error,warning,core_io_path,more_io_path
+ use memory_m,            ONLY:mem_est
+ use electrons,           ONLY:levels,E_reset,n_spin
+ use vec_operate,         ONLY:v_norm,v_is_zero
+ use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,a,alat,&
+&                              i_space_inv,sop_inv,inv_index,symmetry_group_table
+ use R_lattice,           ONLY:bz_samp,bz_samp_reset,g_vec,&
+&                              g_rot,ng_closed,bz_samp_duplicate,rl_sop
+ use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,&
+&                              RD_CL,OP_RD,OP_APP,cp_file,rm_file
+ use wave_func,           ONLY:ioWF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io, &
+&                              wf_ng,wf_state,wf_load,wf_state,wf,WF_free,wf_ng 
+ use stderr,              ONLY:intc,set_real_printed_length
+ use parser_m,            ONLY:parser
  use zeros,               ONLY:k_iku_zero
- use vec_operate,         ONLY:v_is_zero
- use stderr,              ONLY:set_real_printed_length
- use R_lattice,           ONLY:bz_samp_duplicate
- use D_lattice,           ONLY:inv_index,symmetry_group_table
  !
  implicit none
  type(levels)                 :: E,E_expanded
@@ -56,22 +47,21 @@ subroutine RT_fix_symmetries(E,k)
  !
  ! Work Space
  !
- integer               :: ID,io_err,ioWF_err
- integer               :: new_space_inv
+ integer               :: kpoints_map(2,k%nibz),ik_save,iv(2),ierr,ib,i_wf,i_spin,&
+&                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik
+ integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:)
  real(SP)              :: v1(3),v2(3),m(3,3)
- integer,allocatable   :: old_wf_nc_k(:),old_wf_igk(:,:)
- logical               :: Rm_all_symm,found    
- integer               :: i1,i2,i3,is,isym,itmp(2),ik
- integer               :: ikibz,ib_grp
- integer               :: ng_closed_save,wf_nb_io_save
- real(SP), allocatable :: wf_disk(:,:,:,:),tmp_wf(:,:,:,:,:,:)
+ real(SP), allocatable :: wf_disk(:,:,:,:)
+ logical               :: Rm_all_symm
+ type(bz_samp)         :: k_save
  character(lchlen)     :: core_io_path_save
  !
- type(bz_samp)         :: k_save
- integer               :: kpoints_map(2,k%nibz),ik_save,iv(2)
- real(SP)              :: v(3)
- !
  call section('*',"== Real Time: BZ sampling remapping ==")
+ !
+ if (wf_nb_io/=E%nb) then
+   call warning('Splitted wavefunctions still not supported')
+   return
+ endif
  !
  call section('+',"Symmetries")
  !=============================
@@ -127,11 +117,14 @@ subroutine RT_fix_symmetries(E,k)
  !
  inv_index=-1
  do is=1,nsym
+   forall (i1=1:3,i2=1:3) rl_sop(i1,i2,is)=dl_sop(i1,i2,is)*alat(i1)/alat(i2)
    if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./)) ) inv_index=is
  enddo
  if (inv_index<0) i_space_inv=0
  !
  ! Check group table
+ !
+ sop_inv_save=sop_inv
  !
  call symmetry_group_table('s')
  !
@@ -164,25 +157,16 @@ subroutine RT_fix_symmetries(E,k)
      do i1=ik+1,k%nibz
        if ( kpoints_map(2, i1 )==1 ) then
          iv=kpoints_map(:, ik )
-         v =k%pt(ik,:)
+         v1=k%pt(ik,:)
          kpoints_map(:,ik)=kpoints_map(:,i1)
          kpoints_map(:,i1)=iv
          k%pt(ik,:)=k%pt(i1,:)
-         k%pt(i1,:)=v
+         k%pt(i1,:)=v1
          cycle main_loop
        endif
      enddo
    endif
  enddo main_loop
- !
- !DEBUG >
- !do ik=1,k%nibz 
- !  write (*,*) ik
- !  write (*,*) k%pt(ik,:)
- !  if (ik<=k_save%nibz) write (*,*) k_save%pt(ik,:)
- !  write (*,*) kpoints_map(:,ik)
- !enddo
- !DEBUG >
  !
  call section('=',"Energies")
  !===========================
@@ -192,127 +176,109 @@ subroutine RT_fix_symmetries(E,k)
  E_expanded%nk=k%nibz
  allocate(E_expanded%E(E%nb,k%nibz,n_spin))
  !
- deallocate(wf_nc_k,wf_igk)
- allocate(wf_nc_k(k%nibz),wf_igk(wf_ncx,k%nibz))
- !
  do ik=1,k%nibz
    E_expanded%E(:,ik,:)=E%E(:,kpoints_map(1,ik),:)
  enddo
  !
- call section('=',"Rebuilding DB1")
- !=================================
- !
- ng_closed_save =ng_closed  ! ng_closed is overwritten from ioDB1 !!
- !
- call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
- io_err=ioDB1(E_expanded,k,ID)
- !
- ng_closed=ng_closed_save
- !
  call section('=',"Wavefunctions")
  !===============================
  !
- call wf_load(wf_ng,1,E%nb,(/1,k_save%nibz/),space='G',title='-RT')
- write (*,*) allocated(wf)
-
- stop
+ call wf_load(wf_ng,1,(/1,E%nb/),(/1,k_save%nibz/),space='C',title='')
  !
- allocate(old_wf_nc_k(k%nibz),old_wf_igk(wf_ncx,k%nibz))
+ if (trim(core_io_path)/=trim(more_io_path)) then
+   !
+   call msg('s',':: Copying existing database ...')
+   !
+   call cp_file(trim(core_io_path)//"/SAVE/ns.wf",trim(more_io_path)//"/SAVE",ierr)
+   if (ierr/=0) call cp_file(trim(core_io_path)//"/SAVE/s.wf",trim(more_io_path)//"/SAVE",ierr)
+   !
+   call msg('l','done')
+   !
+ else
+   call warning(':: Existing database will be overwritten')
+ endif
  !
- old_wf_nc_k= wf_nc_k
- old_wf_igk = wf_igk
- wf_igk(1:wf_ncx,1:k_save%nibz)       = old_wf_igk(1:wf_ncx,1:k_save%nibz)
- wf_nc_k(1:k_save%nibz)               = old_wf_nc_k(1:k_save%nibz)
+ ! Rotating wavefunctions components
+ !
+ call msg('s',':: Rotating wavefunctions')
+ !
+ allocate(wf_nc_k_save(k_save%nibz),wf_igk_save(wf_ncx,k_save%nibz))
+ wf_nc_k_save=wf_nc_k
+ wf_igk      =wf_igk_save
+ !
+ deallocate(wf_nc_k,wf_igk)
+ allocate(wf_nc_k(k%nibz),wf_igk(wf_ncx,k%nibz))
+ !
+ wf_igk(1:wf_ncx,1:k_save%nibz)       = wf_igk_save(1:wf_ncx,1:k_save%nibz)
+ wf_nc_k(1:k_save%nibz)               = wf_nc_k_save(1:k_save%nibz)
  !
  do i1=k_save%nibz+1,k%nibz 
    !      
-   isym=sop_inv(kpoints_map(2,i1))
+   is=sop_inv_save(kpoints_map(2,i1))
+   ik=kpoints_map(1,i1)
    !
-   wf_igk (1:ng_closed,i1)   = old_wf_igk(g_rot(isym,1:ng_closed),kpoints_map(1,i1))
-   wf_nc_k(i1)               = ng_closed
-   !
-   call msg('s','== For k '//intc(i1)// " number of G set to :"//intc(ng_closed))
+   wf_igk (1:wf_nc_k(ik),i1) = wf_igk_save(g_rot(is,1:wf_nc_k(ik)),ik)
+   wf_nc_k(i1)               = wf_nc_k(ik)
    !
  enddo
- !
- nXkibz = k%nibz
- !
- !
- call msg('s','== Reading/Writing WF ...')
- !
- call io_control(ACTION=OP_RD_CL,SEC=(/1/),COM=NONE,MODE=DUMP,ID=ID)
- ioWF_err=ioWF(ID) 
  !
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
  !
- allocate(tmp_wf(2,wf_nb_io,wf_ncx,n_spin,wf_nb_io_groups,nkibz-k_save%nibz))
- call mem_est("tmp_wf",(/size(tmp_wf)/),(/SP/))
+ call section('=',"Final I/O")
+ !============================
  !
- call live_timing(' Reading old WF :',k_save%nibz) 
+ core_io_path_save=core_io_path
+ core_io_path=more_io_path
  !
- call io_disconnect(ID)
+ call msg('s',':: Wavefunctions ...')
  !
- tmp_wf=0.
- !
- nkibz  = k_save%nibz  ! in order to close the file !!!
- !
- do ikibz=1,k_save%nibz
-   !
-   do ib_grp=1,wf_nb_io_groups
-     !
-     ! Read an old k-point
-     !
-     if (ikibz==1.and.ib_grp==1) call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1,2,1/),ID=ID)
-     if (ikibz >1 .or. ib_grp>1) call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)
-     ioWF_err=ioWF(ID,wf_disk)
-     !
-     do i1=k_save%nibz+1,k%nibz
-       !      
-       if(kpoints_map(1,i1)==ikibz) then
-         !      
-         isym=sop_inv(kpoints_map(2,i1))
-         !
-         tmp_wf(1:2,1:wf_nb_io,1:ng_closed,1:n_spin,ib_grp,i1-k_save%nibz) &
-  &    =wf_disk(1:2,1:wf_nb_io,1:ng_closed,1:n_spin)
-         !
-       endif
-       !
-     enddo
-     !
-   enddo
-   !
-   call live_timing(steps=1)
-   !
- enddo
- !
- deallocate(wf_disk)
- call mem_est("wf_disk")
- !
- call live_timing()
- !
- call live_timing(' Writing new WF :',nkibz) 
- !
- nkibz  = k%nibz  ! in order to close the file 
- !
- ! Append the new k-points
- !
- do ik=k_save%nibz+1,nkibz
+ do i1=k_save%nibz+1,k%nibz 
    !      
-   do ib_grp=1,wf_nb_io_groups
+   ik=kpoints_map(1,i1)
+   call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/i1+1,1/),ID=ID)
    !
-   call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
-   io_err=ioWF(ID,wf=tmp_wf(:,:,:,:,ib_grp,ik-k_save%nibz))
-   !
+   do ib=1,E%nb
+     do i_spin=1,n_spin
+       i_wf=wf_state(ib,ik,i_spin)
+       wf_disk(1,ib,:,i_spin)= real(wf(:,i_wf))
+       wf_disk(2,ib,:,i_spin)=aimag(wf(:,i_wf))
+     enddo
    enddo
    !
-   call live_timing(steps=1)
+   io_err=ioWF(ID,wf=wf_disk)
    !
  enddo
  !
- call live_timing()
+ call msg('l','done')
  !
- deallocate(tmp_wf)
- call mem_est("tmp_wf")
+ call msg('s',':: DB1 ...')
+ !
+ call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
+ io_err=ioDB1(E_expanded,k,ID)
+ !
+ core_io_path=core_io_path_save
+ !
+ call msg('l','done')
+ !
+ ! (n)db clean
+ !=============
+ !
+ if (trim(core_io_path)==trim(more_io_path)) then
+   call msg('s',':: Cleaning ...')
+   call rm_file((trim(core_io_path))//"/SAVE/ndb.kindx")
+   call rm_file((trim(core_io_path))//"/SAVE/ndb.gops")
+   call rm_file((trim(core_io_path))//"/SAVE/db.kindx")
+   call rm_file((trim(core_io_path))//"/SAVE/db.gops")
+   call msg('l','done')
+ endif
+ !
+ ! CLEAN
+ !=======
+ deallocate(wf_nc_k_save,wf_igk_save,wf_disk)
+ call bz_samp_reset(k_save)
+ call E_reset(E_expanded)
+ call WF_free()
+ call mem_est("wf_disk")
  !
 end subroutine

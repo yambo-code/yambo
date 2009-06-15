@@ -246,18 +246,20 @@ main(int argc, char *argv[])
 
    };
  };
-/* 
- If id/od/com_dir are not found switch to the deafult i/o directory 
-*/
  lni=strlen(rnstr2);
- if (stat(id, &buf) != 0) {strcpy(id,".");iid=1;};
-/* 
- I have removed this line beacuse the additional I/O directory
- can be written by the code on-fly
+ /* 
 
+ If id/od/com_dir are not found switch to the deafult i/o directory 
+
+ [June 2009] 
+ I have removed this line beacuse the additional I/O directories
+ can be written by the code on-fly (Andrea)
+
+ if (stat(id, &buf) != 0) {strcpy(id,".");iid=1;};
  if (stat(od, &buf) != 0) {strcpy(od,".");iod=1;}; 
-*/
  if (stat(com_dir, &buf) != 0) {strcpy(com_dir,".");icd=1;};
+
+ */
  /* 
    MPI
  ===========================================================================

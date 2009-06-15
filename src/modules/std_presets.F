@@ -57,7 +57,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     parallel_timing,ct
  use wave_func,  ONLY:wf_b,wf_k,wf_ng,wf_space,wf_norm_test,wf_nb_io,wf_nb_io_groups
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
- use IO_m,       ONLY:io_reset,max_io_units,IO_write,dbs_fragment,serial_number,IO_read
+ use IO_m,       ONLY:io_reset,max_io_units,IO_write,dbs_fragment,serial_number,IO_read,mk_dir
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
@@ -105,11 +105,20 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  k_rlu_zero=zero_dfl
  G_iku_zero=zero_dfl
  !
- ! PATHS 
+ ! PATHS  ...
  !
  core_io_path=IND
  more_io_path=OD
  com_path=COM_DIR
+ !
+ ! ... created
+ !
+ call mk_dir(core_io_path)
+ call mk_dir(more_io_path)
+ call mk_dir(com_path)
+ !
+ ! ... and Job string
+ !
  jobstr=JS
  !
  ! PAR PROC Setup

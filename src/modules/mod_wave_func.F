@@ -90,6 +90,7 @@ module wave_func
      !
      if (wf_space=="R") allocate(wf(fft_size,wf_n_states),stat=err)
      if (wf_space=="G") allocate(wf(wf_ng,wf_n_states),stat=err)
+     if (wf_space=="C") allocate(wf(wf_ncx,wf_n_states),stat=err)
      !
      if (err==0) allocate(wf_state(wf_b(2),wf_k(2),wf_s(2)),stat=err)
      !

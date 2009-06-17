@@ -255,7 +255,13 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  if (trim(QP_solver)=='g') then
    if (l_el_corr.and.(.not.l_ppa.and..not.l_chosex)) call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
+   !
+# if defined _ELPH || defined _SOLITONS
+   !
    if (l_ph_corr)                                    call QP_elph(en,k,q,qp)
+   !
+#endif
+   !
  endif
  !
  ! GPL_EXCLUDE_END

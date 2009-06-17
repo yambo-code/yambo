@@ -309,7 +309,6 @@ subroutine QP_elph(en,k,q,qp)
            if (abs(delta_E)>PH_null_E_rgn) &
 &            gsqF_ca_corr(iqp,iq,il,iw)= gsqF_ca_corr(iqp,iq,il,iw)+elph_gkkp_sq*&
 &                    ph_E*one_minus_2f_occ/(delta_E**2.-ph_E**2.)*q_weight
-  
            !
            ! Cardona-Allen formulation
            !

@@ -21,22 +21,26 @@
 !                  \
 ! Evalute current including also the diamagnetic contribution
 !
-subroutine RT_current(j_current,xK,A_vec_pot,G_lesser)
+subroutine RT_current(j_current,xK,Xen,A_vec_pot,G_lesser)
  !
- use pars,           ONLY:SP,DP,pi
+ use pars,           ONLY:SP,pi
+ use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp,RL_vol
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv,i_time_rev
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel,levels
  use X_m,            ONLY:DIP_iR_or_P
  use com,            ONLY:msg
- use real_time,      ONLY:l_no_diamagnetic
+ use real_time,      ONLY:l_no_diamagnetic,io_J,ID,i_time
+ use IO_m,           ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL
  !
  implicit none
  type(bz_samp), intent(in) ::Xk
+ type(levels),  intent(in) ::Xen
  complex(SP),    intent(in)  :: G_lesser(SC_bands,SC_bands,Xk%nibz)
- complex(DP),    intent(in)  :: A_vec_pot(3)
- complex(DP),    intent(out) :: j_current(3)
+ complex(SP),    intent(in)  :: A_vec_pot(3)
+ complex(SP),    intent(out) :: j_current(3)
+ integer, external           :: io_SC_components
  !
  ! Work Space
  !
@@ -49,8 +53,6 @@ subroutine RT_current(j_current,xK,A_vec_pot,G_lesser)
 #endif
  !
  SC_bands2=SC_bands**2
- !
- call msg('nr','[RT] Eps Analyzer')
  !
  ! j(r,t) = \sum_ijk e/2m \psi^*_i(k) p \psi_j(k) - e^2/m n(r) A(r,t)
  !
@@ -92,5 +94,13 @@ subroutine RT_current(j_current,xK,A_vec_pot,G_lesser)
  if(.not.l_no_diamagnetic) &
 &  j_current(:)=j_current(:)+A_vec_pot(:)*nel*RL_vol/(Xk%nbz*(2.*pi)**3) 
  !
+ ! Write current on disk
+ !
+ if(i_time==1) then
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID(4)) ! Current response
+ else
+   call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/i_time+1/),ID=ID(4)) ! Current response
+ endif
+   io_J=io_SC_components('J' ,Xen,ID(4))
  !
 end subroutine RT_current

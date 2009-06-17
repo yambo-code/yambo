@@ -59,7 +59,6 @@ module real_time
  !
  ! External Field
  !
- logical                  :: l_eps_analyze  
  logical                  :: l_rt_efield  
  logical                  :: RT_resonant
  logical                  :: RT_no_intraband
@@ -92,9 +91,9 @@ module real_time
  !                                             
  ! Time dependent Hamiltonian, current and vec. potential
  !
- complex(DP), allocatable :: j_current(:,:)
- complex(DP), allocatable :: A_vec_pot(:,:)
- complex(DP), allocatable :: A_norm(:) ! Vector potential A(t) norm
+ complex(SP) :: j_current(3)
+ complex(SP) :: A_vec_pot(3)
+ complex(SP) :: A_norm ! Vector potential A(t) norm
  !
  ! Hartree term
  !
@@ -107,6 +106,11 @@ module real_time
  complex(SP), allocatable :: QP_Vxc_0(:)
  real(SP),    allocatable :: Occ_natural_orb(:,:) ! Occupation natural orbitals
  !
+ ! Databases input/output
+ !
+ integer                  :: io_J,io_G
+ integer                  :: ID(5)                
+ !
  contains
    !
    subroutine RT_alloc(en)
@@ -114,8 +118,7 @@ module real_time
      use pars,           ONLY:SP,schlen
      use drivers,        ONLY:l_sc_hf
      use memory_m,       ONLY:mem_est
-     use SC,             ONLY:SC_bands,V_hartree_sc,local_V,V_xc_sc,SC_alloc, &
-&                             E_bare,rho_n
+     use SC,             ONLY:SC_bands,V_hartree_sc,local_V,SC_alloc,E_bare,rho_n
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
@@ -157,15 +160,6 @@ module real_time
      !
      allocate(G_lesser_reference(SC_bands,SC_bands,QP_nk))
      call mem_est("Gf_l_old",(/size(G_lesser_reference)/),(/2*SP/))
-     !
-     allocate(j_current(Tot_steps,3))
-     call mem_est("J_current",(/size(j_current)/),(/DP/))
-     !
-     allocate(A_vec_pot(Tot_steps,3))
-     call mem_est("A_vec_pot",(/size(A_vec_pot)/),(/DP/))
-     !
-     allocate(A_norm(Tot_steps))
-     call mem_est("A_norm",(/size(A_norm)/),(/DP/))
      !
      if(l_sc_hf.and.l_fast_exchange) then
        allocate(rho_rho_gamp(SC_bands,SC_bands,QP_nk,QP_n_states))
@@ -229,15 +223,6 @@ module real_time
      !
      deallocate(G_lesser_reference)
      call mem_est("G_lesser_previous")
-     !
-     deallocate(j_current)
-     call mem_est("j_current")
-     !
-     deallocate(A_vec_pot)
-     call mem_est("A_vec_pot")
-     !
-     deallocate(A_norm)
-     call mem_est("A_norm")
      !
      if(l_sc_hf.and.l_fast_exchange) then
        deallocate(rho_rho_gamp)

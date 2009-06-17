@@ -43,6 +43,8 @@ integer function io_SC_components(what,E_sc,ID)
 &                         LifeTime,l_always_relax,Ext_Field_name,Ext_Field_Int,  &
 &                         Ext_Field_freq,RT_resonant,RT_no_intraband,l_no_diamagnetic,&
 &                         T_initial,j_current,A_norm,G_lesser
+ use IO_m,           ONLY:io_restart,io_check_restart
+ use QP_m,           ONLY:QP_nk
 #endif                                
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use electrons,      ONLY:levels,n_sp_pol,n_spin
@@ -56,10 +58,11 @@ integer function io_SC_components(what,E_sc,ID)
  ! Work Space
  !
  real(SP), allocatable :: R_H_disk(:,:,:),E_disk(:,:,:)
- integer               :: ik,bands_to_load,ib,SC_kind_disk,io_status_save,i_spin
+ integer               :: ik,bands_to_load,ib,SC_kind_disk,io_status_save,i_spin,i1
  logical               :: l_wf,l_V,l_E,l_IMPOSE_SN,CHECK_
 #if defined _RT		
  logical               :: l_J,l_G
+ integer               :: it_IO
  real(SP)              :: current_disk(3),vec_pot_disk(2)
 #endif
  !
@@ -116,8 +119,14 @@ integer function io_SC_components(what,E_sc,ID)
    call io_elemental(ID,VAR="LOCAL_ITER_BANDS_MIX",VAR_SZ=4,MENU=0) 
    call io_elemental(ID,L0=Local_V,&
 &       VAR=' The potential is local          :')
+#if defined _RT
+   if(.not.l_G.and..not.l_J) then
+#endif
    call io_elemental(ID,I0=it_now,DB_I0=it_now,&
 &       VAR=' Iteration                       :')
+#if defined _RT
+   endif
+#endif
    !
    if (l_sc_run) then
      call io_elemental(ID,I0=SC_bands,&
@@ -221,7 +230,23 @@ integer function io_SC_components(what,E_sc,ID)
    !
  endif
  ! 
+#if defined _RT
+ !
+ ! Time to store
+ !
+ do i1=1,size(io_sec(ID,:))
+   if(io_sec(ID,i1)==0.or.io_sec(ID,i1)==1) cycle
+   it_IO=io_sec(ID,i1)-1
+ enddo 
+ !
+ if(any((/l_E,l_V,l_wf/))) then
+   call manage_RD_WR_CL_IF_END(ID,ik,nkibz)
+ else
+   call manage_RD_WR_CL_IF_END(ID,it_now,Tot_steps+Thermal_steps)
+ endif  
+#else
  call manage_RD_WR_CL_IF_END(ID,ik,nkibz)
+#endif
  !
  ! Potential
  !===========
@@ -269,12 +294,20 @@ integer function io_SC_components(what,E_sc,ID)
    !
  endif
  !
+#if defined _RT
+ if(any((/l_E,l_V,l_wf/))) then
+#endif
+ !
  if (ik==0) goto 1
  !
  ! Fragmentation
  !===============
  !
  call io_fragment(ID,i_pointer=ik)
+ !
+#if defined _RT
+ endif
+#endif
  !
  if (l_V.and..not.local_V) then
    !
@@ -318,24 +351,43 @@ integer function io_SC_components(what,E_sc,ID)
  endif
  !
 #if defined _RT
+ !
  if ( l_G ) then
    !
    ! lesser Green Function
    !=================
    !
-   allocate(R_H_disk(SC_bands,SC_bands,2))
+   call io_check_restart("rtG",ID)
+   io_SC_components=io_restart(ID)
    !
-!   do i_spin=1,n_sp_pol
+   if (io_SC_components/=0) goto 1  
+   !
+   if(any(io_sec(ID,:)/=1)) then
+     !
+     allocate(R_H_disk(SC_bands,SC_bands,2))
+     !
+!    do i_spin=1,n_sp_pol
      i_spin=1
-     call io_bulk(ID,VAR="Lesser_Green_Function"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
+     !
+     do ik=1,QP_nk
+       !
+       call io_bulk(ID,VAR="Lesser_Green_Function"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
 &                 VAR_SZ=(/SC_bands,SC_bands,2/))
+       !
+       if (write_is_on(ID)) call mat_c2r(G_lesser(:,:,ik),R_H_disk)
+       call io_bulk(ID,R3=R_H_disk)
+       if (read_is_on(ID))  call mat_r2c(R_H_disk,G_lesser(:,:,ik))
+       !
+     enddo
      !
-     if (write_is_on(ID)) call mat_c2r(G_lesser(:,:,ik),R_H_disk)
-     call io_bulk(ID,R3=R_H_disk)
-     if (read_is_on(ID))  call mat_r2c(R_H_disk,G_lesser(:,:,ik))
+!    enddo
+     deallocate(R_H_disk)
      !
-!   enddo
-   deallocate(R_H_disk)
+     call io_check_restart("rtG",ID,now=it_IO,todo=Thermal_steps+Tot_Steps)  
+     io_SC_components=io_restart(ID)    
+     !
+   endif
+   !
  endif
  !
  if ( l_J ) then
@@ -343,19 +395,23 @@ integer function io_SC_components(what,E_sc,ID)
    ! Current and Vector Potential
    !=================
    !
-   call io_bulk(ID,VAR="Induced_current",VAR_SZ=(/3/))
-   if (write_is_on(ID))    current_disk(:)=real(j_current(it_now,:))
-   call io_bulk(ID,R1=current_disk)
-   if (read_is_on(ID)) j_current(it_now,:)=cmplx(current_disk(:),0.)
-   !
-   call io_bulk(ID,VAR="Vector_potential",VAR_SZ=(/2/))
-   if (write_is_on(ID)) then
-     vec_pot_disk(1)=real(A_norm(it_now))
-     vec_pot_disk(2)=aimag(A_norm(it_now))
-   endif
-   call io_bulk(ID,R1=vec_pot_disk)
-   if (read_is_on(ID)) then
-     A_norm(it_now) = cmplx(vec_pot_disk(1),vec_pot_disk(2))
+   if(any(io_sec(ID,:)/=1)) then
+     !   
+     call io_bulk(ID,VAR="Induced_current",VAR_SZ=(/3/))
+     if (write_is_on(ID))    current_disk(:)=real(j_current(:))
+     call io_bulk(ID,R1=current_disk)
+     if (read_is_on(ID)) j_current(:)=cmplx(current_disk(:),0.)
+     !
+     call io_bulk(ID,VAR="Vector_potential",VAR_SZ=(/2/))
+     if (write_is_on(ID)) then
+       vec_pot_disk(1)=real(A_norm)
+       vec_pot_disk(2)=aimag(A_norm)
+     endif
+     call io_bulk(ID,R1=vec_pot_disk)
+     if (read_is_on(ID)) then
+       A_norm = cmplx(vec_pot_disk(1),vec_pot_disk(2))
+     endif
+     !
    endif
    !
  endif       

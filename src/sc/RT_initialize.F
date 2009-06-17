@@ -23,18 +23,16 @@ subroutine RT_initialize(file_name,Xen)
  use SC,             ONLY:SC_bands,rho_n
  use QP_m,           ONLY:QP_Sx_low_band
  use com,            ONLY:msg,of_open_close,warning
- use real_time,      ONLY:l_RPA,RT_resonant,RT_no_intraband,l_eps_analyze,&
-&                         Thermal_steps,Thermal_time,RT_step,l_rt_efield,&
-&                         Ext_Field_Name,G_lesser,G_lesser_previous,&
+ use real_time,      ONLY:l_RPA,RT_resonant,RT_no_intraband,Thermal_steps,    &
+&                         Thermal_time,RT_step,l_rt_efield,l_fast_exchange,   &
+&                         Ext_Field_Name,G_lesser,G_lesser_previous,i_time,   &
 &                         l_RT_no_updates,Integrator_Name,EF_q0,l_qp_analyze, &
-&                         l_no_diamagnetic,Ext_Field_Int,l_always_relax,i_time,&
-&                         l_fast_exchange
-
+&                         l_no_diamagnetic,Ext_Field_Int,l_always_relax
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
  implicit none
  !
- character(lchlen)        :: file_name(3)
+ character(lchlen)        :: file_name(2)
  type(levels)             :: Xen
  !
  ! Work space
@@ -47,7 +45,6 @@ subroutine RT_initialize(file_name,Xen)
  !
  call parser('RTResonant',RT_resonant)
  call parser('RTNoIntraband',RT_no_intraband)
- call parser('RTEpsAnalyze',l_eps_analyze)
  call parser('RTQpAnalyze',l_qp_analyze)
  call parser('KeepVxc',l_RPA)
  call parser('NoDiamagnetic',l_no_diamagnetic)
@@ -76,13 +73,6 @@ subroutine RT_initialize(file_name,Xen)
    !      
    l_rt_efield=.true.
    call check_symm(EF_q0)
-   !
- else
-   !      
-   if( l_eps_analyze) then
-     call warning(' No External Field  l_eps_analyze set to .false.')      
-     l_eps_analyze=.false.
-   endif
    !
  endif
  !
@@ -117,31 +107,15 @@ subroutine RT_initialize(file_name,Xen)
  !
  call msg('o '//file_name(1),'#',headings(1:6),INDENT=-2,USE_TABS=.TRUE.)
  !
- if(l_rt_efield) then
-   !      
-   file_name(2)='response'
-   call of_open_close(file_name(2),'ot') 
-   headings(1)='Time'
-   headings(2)='Re(Ext_Field)'
-   headings(3)='Img(Ext_Field)'
-   headings(4)='j_x'
-   headings(5)='j_y'
-   headings(6)='j_x'
-   !
-   call msg('o '//file_name(2),'#',headings(1:6),INDENT=-2,USE_TABS=.TRUE.)
-   !
- endif
- !
  call msg('nr','[RT] Integrator          :'//trim(Integrator_Name))
  call msg( 'r','[RT] External Field      :'//trim(Ext_Field_Name))
  call msg(' r','[RT] Resonant Field      :',RT_resonant)
  call msg('nr','[RT] Intraband transitions :',.not.RT_no_intraband)
- call msg(' r','[RT] Dielectric function   :',l_eps_analyze)
  call msg(' r','[RT] RPA                   :',l_RPA)
  call msg(' r','[RT] Diamagnetic term      :',.not.l_no_diamagnetic)
  call msg(' r','[RT] Analyze QP-dynamics   :',l_qp_analyze)
  !
- file_name(3)="qp_rt"
- if(l_qp_analyze) call of_open_close(file_name(3),'ot')
+ file_name(2)="qp_rt"
+ if(l_qp_analyze) call of_open_close(file_name(2),'ot')
  !
 end subroutine RT_initialize

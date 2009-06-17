@@ -30,7 +30,7 @@ subroutine RT_Ext_Field(ik,H_nl_sc,G_lesser,time)
  use QP_m,           ONLY:QP_nk
  use real_time,      ONLY:Ext_Field_freq,Ext_Field_Int,Ext_Field_name,&
 &                         RT_resonant,RT_no_intraband,T_initial,&
-&                         A_norm,i_time,A_vec_pot
+&                         A_norm,A_vec_pot
  implicit none
  integer,     intent(in)    :: ik
  real(SP),    intent(in)    :: time
@@ -45,27 +45,27 @@ subroutine RT_Ext_Field(ik,H_nl_sc,G_lesser,time)
  select case(trim(Ext_Field_name))
    case('SINUSOIDAL')
      if(RT_resonant) then
-       A_norm(i_time)=-Ext_Field_Int*exp(-(0._SP,1._SP)*Ext_Field_freq*time)/((0._SP,2._SP)*Ext_Field_freq)
+       A_norm=-Ext_Field_Int*exp(-(0._SP,1._SP)*Ext_Field_freq*time)/((0._SP,2._SP)*Ext_Field_freq)
      else
-       A_norm(i_time)=-Ext_Field_Int*sin(Ext_Field_freq*time)/Ext_Field_freq
+       A_norm=-Ext_Field_Int*sin(Ext_Field_freq*time)/Ext_Field_freq
      endif
    case('DELTA')
      if(time>=T_initial) then
-       A_norm(i_time)=Ext_Field_Int
+       A_norm=Ext_Field_Int
      else
-       A_norm(i_time)=(0.,0.)
+       A_norm=(0.,0.)
      endif
    case('STEP')
      if(time>=T_initial) then
-       A_norm(i_time)=Ext_Field_Int*time
+       A_norm=Ext_Field_Int*time
      else
-       A_norm(i_time)=(0.,0.) 
+       A_norm=(0.,0.) 
      endif
    case default
      call error(" External Field "//trim(Ext_Field_name)//" not implemented ") 
  end select
  !
- A_vec_pot(i_time,:)=EF_q0(:)*A_norm(i_time)
+ A_vec_pot(:)=EF_q0(:)*A_norm
  !
  ! Add the External Field to the singular part of the Self-Energy
  ! in case of complex Efield puts the correct Hermitian matrix
@@ -73,14 +73,14 @@ subroutine RT_Ext_Field(ik,H_nl_sc,G_lesser,time)
  !
  if(.not.RT_no_intraband.or..not.RT_resonant) then
    do i1=1,SC_bands
-     H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)+sum(A_vec_pot(i_time,:)*DIP_iR_or_P(:,i1,i1,ik,1))
+     H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)+sum(A_vec_pot(:)*DIP_iR_or_P(:,i1,i1,ik,1))
    enddo
  endif
  !
  do i1=1,SC_bands
    do i2=i1+1,SC_bands
       !     
-      A_dot_P=sum(A_vec_pot(i_time,:)*DIP_iR_or_P(:,i1,i2,ik,1))
+      A_dot_P=sum(A_vec_pot(:)*DIP_iR_or_P(:,i1,i2,ik,1))
       H_nl_sc(i1,i2,1)=H_nl_sc(i1,i2,1)+A_dot_P
       H_nl_sc(i2,i1,1)=H_nl_sc(i2,i1,1)+conjg(A_dot_P)
       !
@@ -89,7 +89,7 @@ subroutine RT_Ext_Field(ik,H_nl_sc,G_lesser,time)
  !
  if(.not.l_no_diamagnetic) then
    forall(i1=1:SC_bands,is=1:n_sp_pol) 
-     H_nl_sc(i1,i1,is)=H_nl_sc(i1,i1,is)+0.5*A_norm(i_time)**2*(0.,-1.)*G_lesser(i1,i1,ik)
+     H_nl_sc(i1,i1,is)=H_nl_sc(i1,i1,is)+0.5*A_norm**2*(0.,-1.)*G_lesser(i1,i1,ik)
    end forall
  endif
  !

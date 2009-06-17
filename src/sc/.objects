@@ -1,8 +1,8 @@
 RT_OBJECTS = 
 #if defined _RT
-RT_OBJECTS = RT_initialize.o check_symm.o RT_make_QP_Sx.o \
+RT_OBJECTS = RT_initialize.o check_symm.o RT_make_QP_Sx.o RT_restart.o \
              RT_driver.o RT_Ext_Field.o RT_Collision.o RT_Integrator.o \
-             RT_Energy.o RT_current.o RT_eps_analyze.o RT_qp_analyze.o 
+             RT_Energy.o RT_current.o RT_qp_analyze.o 
 #endif
 objs =	SC_driver.o V_Hartree.o V_exx.o V_real_space_to_H.o SC_common_build_Ho.o \
         V_qp_basis_to_H.o \

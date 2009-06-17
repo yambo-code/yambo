@@ -503,12 +503,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined  _ELPH || defined _SOLITONS
    if (l_ph_corr) then
      call initactivate(1,'DysSolver')
-     call initactivate(1,'GphBRnge GDamping PHnullErgn QPreport ElPhRndNq WRgFsq')
+     call initactivate(1,'GphBRnge GDamping PHnullErgn QPreport ElPhRndNq')
+     call initactivate(1,'WRgFsq NewtDchk OnMassShell')
    endif
-#endif
-#if defined _SOLITONS
    if (trim(QP_solver)=="g".and.l_ph_corr) then
      call initactivate(1,'GEnSteps GEnRnge GDmRnge') 
+     call initactivate(-1,'WRgFsq NewtDchk OnMassShell')
    endif
 #endif
    !

@@ -47,7 +47,8 @@ subroutine RT_fix_symmetries(E,k)
  !
  ! Work Space
  !
- integer               :: kpoints_map(2,k%nibz),ik_save,iv(2),ierr,ib,i_wf,i_spin,&
+ integer, allocatable  :: kpoints_map(:,:)
+ integer               :: ik_save,iv(2),ierr,ib,i_wf,i_spin,&
 &                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik
  integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:)
  real(SP)              :: v1(3),v2(3),m(3,3)
@@ -143,6 +144,8 @@ subroutine RT_fix_symmetries(E,k)
  !
  ! with ik,is relative to the unreduced set of k-points and symmetries
  !
+ allocate(kpoints_map(2,k%nibz))
+ !
  kpoints_map=0
  do ik=1,k%nibz 
    do ik_save=1,k%nbz
@@ -204,7 +207,7 @@ subroutine RT_fix_symmetries(E,k)
  !
  allocate(wf_nc_k_save(k_save%nibz),wf_igk_save(wf_ncx,k_save%nibz))
  wf_nc_k_save=wf_nc_k
- wf_igk      =wf_igk_save
+ wf_igk_save =wf_igk
  !
  deallocate(wf_nc_k,wf_igk)
  allocate(wf_nc_k(k%nibz),wf_igk(wf_ncx,k%nibz))
@@ -270,12 +273,13 @@ subroutine RT_fix_symmetries(E,k)
    call rm_file((trim(core_io_path))//"/SAVE/ndb.gops")
    call rm_file((trim(core_io_path))//"/SAVE/db.kindx")
    call rm_file((trim(core_io_path))//"/SAVE/db.gops")
+   call rm_file((trim(core_io_path))//"/SAVE/s.kb_pp")
    call msg('l','done')
  endif
  !
  ! CLEAN
  !=======
- deallocate(wf_nc_k_save,wf_igk_save,wf_disk)
+ deallocate(wf_nc_k_save,wf_igk_save,wf_disk,kpoints_map)
  call bz_samp_reset(k_save)
  call E_reset(E_expanded)
  call WF_free()

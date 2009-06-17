@@ -254,7 +254,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'GEnSteps', '[GW] G_gw energy steps',QP_Sc_steps)
  call it(defs,'GEnRnge',  '[GW] G_gw energy range',QP_G_er,E_unit)
  call it(defs,'GWoIter',  '[GW] GWo SC iterations',GWo_iterations,verb_level=V_more)
- call it('f',defs,'NewtDchk','[F GW] Test dSc/dw convergence',verb_level=V_more)
+ call it('f',defs,'NewtDchk',   '[F GW] Test dSc/dw convergence',verb_level=V_more)
+ call it('f',defs,'OnMassShell','[F GW] On mass shell approximation',verb_level=V_more)
  !
  ! GPL_EXCLUDE_END
  !

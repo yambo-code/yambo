@@ -34,7 +34,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     QP_ctl_db,QP_ctl_interp_neigh,SC_E_threshold, &
 &                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
 &                     QP_W_partially_done,GWo_SC_done,GWo_iterations,&
-&                     CHOSEX_use_empties,QP_ctl_E,QP_ctl_W,QP_ctl_Z
+&                     CHOSEX_use_empties,QP_ctl_E,QP_ctl_W,QP_ctl_Z,On_Mass_Shell_approx
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,n_atoms_max,n_atom_species,&
 &                     input_Tel_fixed,non_periodic_directions,lattice
@@ -68,7 +68,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     FXC_is_causal
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
 #if defined _ELPH || defined _SOLITONS
- use ELPH,       ONLY:ph_modes,elph_nb,PH_null_E_rgn
+ use ELPH,       ONLY:ph_modes,elph_nb,PH_null_E_rgn,gsqF_energy_steps
 #endif
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
@@ -317,6 +317,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  GWo_iterations=0
  GWo_SC_done=.false.
  CHOSEX_use_empties=.false.
+ On_Mass_Shell_approx=.false.
  SC_E_threshold=0.01/HARTREE
  SC_band_mixing=100.
  !
@@ -379,7 +380,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  ph_modes=0
  elph_nb=0
- ph_null_E_rgn=0.1/HARTREE
+ PH_null_E_rgn=0.1/HARTREE
+ gsqF_energy_steps=2
 #endif
  !
 #if defined _SC || defined _RT

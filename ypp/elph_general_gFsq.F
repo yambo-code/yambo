@@ -180,15 +180,15 @@ subroutine elph_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
          !
          delta_E=real(g_sq_F_E%p(iw))-ph_freq
          !
-         g_sq_F(iqp,iw,1)=g_sq_F(iqp,iw,1)+gsqF_fan(iqp,iq,il)*&
+         g_sq_F(iqp,iw,1)=g_sq_F(iqp,iw,1)+gsqF_fan(iqp,iq,il,1)*&
 &                    Fermi_fnc_derivative(delta_E,aimag(g_sq_F_E%p(iw)))
          g_sq_F(iqp,iw,2)=g_sq_F(iqp,iw,2)+gsqF_dw(iqp,iq,il)*&
 &                    Fermi_fnc_derivative(delta_E,aimag(g_sq_F_E%p(iw)))
-         g_sq_F(iqp,iw,3)=g_sq_F(iqp,iw,3)+gsqF_ca_corr(iqp,iq,il)*&
+         g_sq_F(iqp,iw,3)=g_sq_F(iqp,iw,3)+gsqF_ca_corr(iqp,iq,il,1)*&
 &                     Fermi_fnc_derivative(delta_E,aimag(g_sq_F_E%p(iw)))
-         g_sq_F(iqp,iw,4)=g_sq_F(iqp,iw,4)+gsqF_life_bose(iqp,iq,il)*&
+         g_sq_F(iqp,iw,4)=g_sq_F(iqp,iw,4)+gsqF_life_bose(iqp,iq,il,1)*&
 &                    Fermi_fnc_derivative(delta_E,aimag(g_sq_F_E%p(iw)))
-         g_sq_F(iqp,iw,5)=g_sq_F(iqp,iw,5)+gsqF_life_f(iqp,iq,il)*&
+         g_sq_F(iqp,iw,5)=g_sq_F(iqp,iw,5)+gsqF_life_f(iqp,iq,il,1)*&
 &                    Fermi_fnc_derivative(delta_E,aimag(g_sq_F_E%p(iw)))
          !
        enddo

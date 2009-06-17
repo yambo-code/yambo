@@ -46,6 +46,7 @@ module QP_m
  logical           :: QP_W_partially_done
  logical           :: GWo_SC_done
  logical           :: CHOSEX_use_empties
+ logical           :: On_Mass_Shell_approx
  character(schlen) :: QP_rep_string
  character(schlen) :: QP_solver
  real(SP)          :: QP_G_damp

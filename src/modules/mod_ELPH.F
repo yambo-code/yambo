@@ -39,11 +39,12 @@ module ELPH
  ! 
  ! gFsq matrices
  !
- real(SP),allocatable :: gsqF_fan(:,:,:)
+ integer              :: gsqF_energy_steps
+ real(SP),allocatable :: gsqF_fan(:,:,:,:)
  real(SP),allocatable :: gsqF_dw(:,:,:)
- real(SP),allocatable :: gsqF_ca_corr(:,:,:)
- real(SP),allocatable :: gsqF_life_bose(:,:,:)
- real(SP),allocatable :: gsqF_life_f(:,:,:)
+ real(SP),allocatable :: gsqF_ca_corr(:,:,:,:)
+ real(SP),allocatable :: gsqF_life_bose(:,:,:,:)
+ real(SP),allocatable :: gsqF_life_f(:,:,:,:)
  !
  ! el-ph Self-Energy
  !
@@ -60,17 +61,17 @@ module ELPH
      integer           ::alloc_err(5)
      !
      if (what=='gFsq'.and..not.allocated(gsqF_fan)) then
-       allocate(gsqF_fan(QP_n_states,elph_nq_used,ph_modes))
+       allocate(gsqF_fan(QP_n_states,elph_nq_used,ph_modes,gsqF_energy_steps))
        allocate(gsqF_dw(QP_n_states,elph_nq_used,ph_modes))
-       allocate(gsqF_ca_corr(QP_n_states,elph_nq_used,ph_modes))
-       allocate(gsqF_life_bose(QP_n_states,elph_nq_used,ph_modes))
-       allocate(gsqF_life_f(QP_n_states,elph_nq_used,ph_modes))
+       allocate(gsqF_ca_corr(QP_n_states,elph_nq_used,ph_modes,gsqF_energy_steps))
+       allocate(gsqF_life_bose(QP_n_states,elph_nq_used,ph_modes,gsqF_energy_steps))
+       allocate(gsqF_life_f(QP_n_states,elph_nq_used,ph_modes,gsqF_energy_steps))
        gsqF_fan=0.
        gsqF_dw=0.
        gsqF_ca_corr=0.
        gsqF_life_bose=0.
        gsqF_life_f=0.
-       call mem_est('gsqF_residuals',(/5*size(gsqF_fan)/),(/SP/))
+       call mem_est('gsqF_residuals',(/4*size(gsqF_fan),size(gsqF_dw)/),(/SP,SP/))
      endif
      if (what=='gkkp'.and..not.allocated(elph_gkkp)) then
        allocate(elph_gkkp(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err(1))

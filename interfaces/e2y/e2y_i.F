@@ -28,7 +28,8 @@ integer function e2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  use com,                 only : msg,write_to_report,core_io_path, file_exists
  use par_proc_m,          only : ncpu,myid,p_finalize
  use electrons,           only : levels,E_reset,n_bands,n_spin
- use D_lattice,           only : PP_alloc, PP_free, n_atoms_max
+ use D_lattice,           only : n_atoms_max
+ use pseudo,              only : PP_alloc, PP_free
  use R_lattice,           only : bz_samp,bz_samp_reset,nkibz
  use timing,              only : live_timing_is_on
  use wave_func,           only : wf_ncx,ioWF,wf_nb_io_groups,wf_nb_io

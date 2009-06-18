@@ -18,10 +18,10 @@
 ! License along with this program; if not, write to the Free 
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!                  \
-! Evalute current including also the diamagnetic contribution
-!
+!                  
 subroutine RT_current(j_current,xK,Xen,A_vec_pot,G_lesser)
+ !
+ ! Evalute current including also the diamagnetic contribution
  !
  use pars,           ONLY:SP,pi
  use electrons,      ONLY:levels

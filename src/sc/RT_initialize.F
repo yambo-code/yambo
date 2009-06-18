@@ -72,7 +72,7 @@ subroutine RT_initialize(file_name,Xen)
  if(Ext_Field_Name/='NONE'.and.Ext_Field_Name/='none'.and.Ext_Field_Int/=0.) then
    !      
    l_rt_efield=.true.
-   call check_symm(EF_q0)
+   call RT_check_symmetries(EF_q0)
    !
  endif
  !

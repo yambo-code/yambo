@@ -52,7 +52,7 @@ typedef struct
 #if defined _yambo  || _RAS || _REELS || _ELPH || _SC  || _RT
  #define _YAMBO_MAIN
 #endif
-#if defined _MANYK || _TB || _MAGNON || _DIPOLE_RIM || _PARTIAL_DIAGO
+#if defined _MANYK || _TB || _MAGNETIC || _DIPOLE_RIM || _PARTIAL_DIAGO
  #define _YAMBO_MAIN
 #endif
 #if defined _SOLITONS || _TEST_1

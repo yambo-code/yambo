@@ -51,8 +51,8 @@ UTILS    = changelog
 CLEANS   = clean clean_all
 PROJECTS = yambo_ph yambo_sc yambo_ras yambo_reels \
 	       yambo_manyk yambo_ras_manyk yambo_tb \
-           yambo_magnon yambo_dipole_rim yambo_partial_diago \
-           yambo_solitons yambo_doubles yambo_rt ypp_rt ypp_ph ypp_ras
+           yambo_magnetic yambo_dipole_rim yambo_partial_diago \
+           yambo_solitons yambo_rt ypp_rt ypp_ph ypp_ras
 BROKEN   = yambo_gamma
 TESTS    = 
 EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(TESTS)
@@ -104,18 +104,15 @@ yambo: libs
 yambo_solitons: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_SOLITONS"; $(mksrc)
 	@X2DO="yambo_solitons"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_SOLITONS";$(mkx)
-yambo_doubles: libs
-	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_DOUBLES"; $(mksrc)
-	@X2DO="yambo_doubles"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_DOUBLES";$(mkx)
 yambo_partial_diago: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_PARTIAL_DIAGO"; $(mksrc)
 	@X2DO="yambo_partial_diago"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_PARTIAL_DIAGO";$(mkx)
 yambo_dipole_rim: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_DIPOLE_RIM"; $(mksrc)
 	@X2DO="yambo_dipole_rim"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_DIPOLE_RIM";$(mkx)
-yambo_magnon: libs
-	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_MAGNON"; $(mksrc)
-	@X2DO="yambo_magnon"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_MAGNON";$(mkx)
+yambo_magnetic: libs
+	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_MAGNETIC"; $(mksrc)
+	@X2DO="yambo_magnetic"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_MAGNETIC";$(mkx)
 yambo_gamma: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_GAMMA"; $(mksrc)
 	@X2DO="yambo_gamma"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_GAMMA";$(mkx)

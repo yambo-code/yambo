@@ -24,9 +24,6 @@ logical function O_eels(wv,nw,be_verbose,ordering,eps,eel)
  use pars,          ONLY:SP,pi
  use units,         ONLY:HARTREE
  use com,           ONLY:warning
-#if defined _DOUBLES
- use BS_doubles,    ONLY:eps2eel
-#endif
  implicit none
  !
  integer              :: nw
@@ -39,13 +36,6 @@ logical function O_eels(wv,nw,be_verbose,ordering,eps,eel)
  !
  integer            :: iw
  complex(SP)        :: eps_extended(nw),eps_kk(nw),wv_kk(nw)
- !
-#if defined _DOUBLES
- if(eps2eel) then
-   O_eels=.false.
-   return
- endif
-#endif 
  !
  O_eels=.TRUE.
  !
@@ -64,10 +54,6 @@ logical function O_eels(wv,nw,be_verbose,ordering,eps,eel)
    eel(:)=-1./eps(:)
    return
  endif
-!#if defined _DOUBLES
-! eel(:)=-1./eps(:)
-! return
-!#endif
  !
  if ( (maxval(aimag(eps))/aimag(eps(1))<100..or.&
 &      maxval(aimag(eps))/aimag(eps(nw))<100.) .and. be_verbose) &

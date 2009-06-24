@@ -24,11 +24,6 @@ subroutine K_inversion(iq,W,E,k,q)
  use pars,           ONLY:SP,pi,DP
  use X_m,            ONLY:X_epsilon
  use stderr,         ONLY:intc,real2ch
-#if defined _DOUBLES
- use BS_doubles,    ONLY:BS_mat_doubles,BS_doubles_E,BS_res_K_doubles, &
-&                        BS_doubles_table,BS_K_doubles_dim,eps2eel,&
-&                        BS_mat_tmp,doubles_corr
-#endif
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_not_const_eh_f,&
 &                         BS_K_coupling,BS_eh_table,BS_eh_E,BS_bands,Kernel_by_V,&
 &                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,&
@@ -80,10 +75,6 @@ subroutine K_inversion(iq,W,E,k,q)
  integer           ::i_err,ID
  type(w_samp)      ::W_disk
  integer, external ::ioBSS_invert
-#if defined _DOUBLES
- integer, external    ::ioBS_doubles
- integer              ::ncin
-#endif
  integer, allocatable     ::inv_err_disk(:),disk_freq_table(:)
  complex(SP), allocatable ::eps_2start(:)
  !
@@ -105,9 +96,6 @@ subroutine K_inversion(iq,W,E,k,q)
  call parser('SkipInv',skip_full_inv)
  call parser('FullInv',force_full_inv)
  !
-#if defined _DOUBLES
- force_full_inv=.TRUE.
-#endif
  !
  if (force_full_inv) skip_full_inv=.FALSE.
  !
@@ -179,23 +167,6 @@ subroutine K_inversion(iq,W,E,k,q)
  call Kernel_by_V(iq)
  forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)-BS_eh_E(i1)
  !
- !  Kernel doubles
-#if defined _DOUBLES
- ncin=2
- if (doubles_corr) ncin=1
- allocate(BS_mat_tmp(BS_K_dim,BS_K_dim,2))
- call mem_est('BS_mat_tmp',(/size(BS_mat_tmp)*2/))
- allocate(BS_mat_doubles(BS_K_dim,BS_K_doubles_dim,ncin+1))
- call mem_est('BS_mat_doubles',(/size(BS_mat_doubles)*2/))
- allocate(BS_doubles_E(BS_K_doubles_dim))
- call mem_est('BS_doubles_E',(/size(BS_doubles_E)/))
- allocate(BS_doubles_table(BS_K_doubles_dim,4))
- call mem_est('BS_doubles_table',(/size(BS_doubles_table)/)) 
- !
- call io_control(action=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- i_err=ioBS_doubles(ID)
-#endif
- !
  ! Initialize the output file 
  !
  of_mode=3
@@ -248,14 +219,6 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! Perturbative Invertion
  !========================
-#if !defined _DOUBLES
- full_diago=.false.
- call pp_indexes_reset(px)
- call par_indexes(px,(/W%n(1)/))
- call live_timing('Freq loop [pert]',px%stps(myid+1))
- call perform_invertion(1,W%n(1))
- call pp_redux_wait(inv_err,imode=2)
-#endif
  !
  ! I/O [after pert invertion]
  !
@@ -271,14 +234,8 @@ subroutine K_inversion(iq,W,E,k,q)
  if (force_full_inv) then
    full_inf_freqs=0
    do i1=1,W%n(1)
-#if !defined _DOUBLES
-     if (inv_err(i1)/=0) then
-#endif
-       full_inf_freqs=full_inf_freqs+1
-       iw_full(full_inf_freqs)=i1
-#if !defined _DOUBLES
-     endif
-#endif
+     full_inf_freqs=full_inf_freqs+1
+     iw_full(full_inf_freqs)=i1
    enddo
    !
  else
@@ -327,41 +284,17 @@ subroutine K_inversion(iq,W,E,k,q)
    call par_indexes(px,(/full_inf_freqs/))
    call live_timing('Freq loop [full]',px%stps(myid+1))
    full_diago=.true.
-   ! Davide: DEBUG <
-   ! open(unit=3455, file='Kernel_doubles.txt', status='unknown')
-   ! Davide: DEBUG >
-#if defined _DOUBLES
-   BS_mat_tmp(:,:,1)=BS_mat(:,:)
-#endif
    do i1=1,full_inf_freqs
      if (.not.px%i1p(i1)) cycle
      iw=iw_full(i1)
-#if defined _DOUBLES
-     call K_doubles_mount(W%p(iw))
-#endif
      call perform_invertion(iw,1)
-#if defined _DOUBLES
-     ! Davide: DEBUG <
-     ! write(3455,*) real(W%p(iw))*27.2116,(aimag(BS_mat(i2,i2)),i2=1,BS_K_dim)
-     ! Davide: DEBUG >
-     BS_mat(:,:)=BS_mat_tmp(:,:,1)
-#endif
      call live_timing(steps=1)
    enddo
-   ! Davide: DEBUG <
-   ! close(unit=3455)
-   ! Davide: DEBUG >
    call live_timing()
    call pp_redux_wait(inv_err,imode=2)
    call pp_redux_wait(X_epsilon)
  endif
  !
-#if defined _DOUBLES
- deallocate(BS_mat_doubles,BS_mat_tmp)
- call mem_est("BS_mat_doubles BS_mat_tmp")
- deallocate(BS_doubles_E,BS_doubles_table)
- call mem_est("BS_doubles_E BS_doubles_table")
-#endif
  !
  nw_conv=0
  do iw=1,W%n(1)
@@ -379,15 +312,7 @@ subroutine K_inversion(iq,W,E,k,q)
  call K_eps_interpolate(W%n(1),real(W%p),inv_err)
  call pp_redux_wait()
  !
-#if defined _DOUBLES
- if (eps2eel) then
-   X_epsilon(2,:)=-(1.-X_epsilon(2,:))
- else
-#endif
  X_epsilon(2,:)=1.+X_epsilon(2,:)
-#if defined _DOUBLES
- endif
-#endif
  X_epsilon(1,:)=W%p(:)
  !
  BSS_n_descs=BSS_n_descs+2

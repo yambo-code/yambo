@@ -55,9 +55,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use TDDFT,        ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,ioBS_Fxc
  use xc_functionals, ONLY:F_xc
  use global_XC,    ONLY:WF_kind,WF_xc_functional
-#if defined _DOUBLES
- use BS_doubles,   ONLY:BS_res_K_doubles,BS_K_doubles_dim,eps2eel,BS_mat_tmp   !DOUBLES CORRELATION PROJECT
-#endif
  implicit none
  type(levels)  ::Ken 
  type(bz_samp) ::Xk,q
@@ -161,10 +158,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if (BS_res_K_corr) then
      deallocate(O_v_state,O_c_state,O_n_c_states,O_n_v_states)
      call mem_est("O_v_state O_c_state O_n_c_states O_n_v_states")
-#if defined _DOUBLES
-     BS_res_K_doubles=l_td_hf
-     BS_K_doubles_dim=BS_K_dim**2
-#endif
    endif
    return
  endif
@@ -222,10 +215,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! TDDFT xc-kernel Setup
  !
-#if defined _DOUBLES
- eps2eel=.false.
- if (eps2eel) call Dipole_driver(Ken,Xk,X,BSS_q0)
-#endif
  if (l_bs_fxc) then
    !  
    if (iq==1) call Dipole_driver(Ken,Xk,X,BSS_q0)
@@ -440,10 +429,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      !
      allocate(BS_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
      if (BS_K_coupling) allocate(BS_cpl_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
-#if defined _DOUBLES
-! DOUBLES CORRELATION PROJECT
-     allocate(BS_mat_tmp(BS_K_dim,BS_K_dim,1))
-#endif
      !
      if (BS_res_K_corr) call K_scattering(iq,ik1,ik2,Xk,q)  
      !
@@ -468,23 +453,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        ! be in principle included, they are vanishing due to the q->0 in the
        ! oscillator and the finitness of qpg(1,1) term.
        !
-#if defined _DOUBLES
-       if(.not.eps2eel) then
-#endif
        O1x(1,:)=(0.,0.)
        O2x(1,:)=(0.,0.)
-#if defined _DOUBLES
-       endif
-#endif
        !
      endif
      !
      BS_mat=(0.,0.)
      if (BS_K_coupling) BS_cpl_mat=(0.,0.)
-#if defined _DOUBLES
-! DOUBLES CORRELATION PROJECT
-     BS_mat_tmp(:,:,1)=(0.,0.)
-#endif
      !
      call pp_redux_wait
      do icv1=1,BS_blk_dim(ik1)
@@ -547,9 +522,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
          ! :::Exchange    (coupling):::
          !
-#if defined _DOUBLES
-         O2x(1,icv2)=-O2x(1,icv2)
-#endif
 #if defined _DOUBLE
          if (BS_cpl_K_exchange) H_cpl_x=zdotu(BS_n_g_exch,&
 &                               O2x( g_rot(inv_index,1:BS_n_g_exch),icv2),1,O1x(1,icv1),1)
@@ -671,18 +643,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
          ! GPL_EXCLUDE_END
          !
-#if defined _DOUBLES
-! DOUBLES CORRELATION PROJECT
-         BS_mat_tmp(icv1,icv2,1)=H_res_x*real(spin_occ)*Co-H_res_c
-#endif
        enddo
      enddo
      call pp_redux_wait(BS_mat)
      if (BS_K_coupling) call pp_redux_wait(BS_cpl_mat)
-#if defined _DOUBLES
-! DOUBLES CORRELATION PROJECT
-    call pp_redux_wait(BS_mat_tmp)
-#endif
      !
      if (l_bs_fxc) then
        !
@@ -713,8 +677,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call live_timing()
  call pp_redux_wait
  !
- ! CLEAN before _DOUBLEs
- !
  deallocate(O_table)
  call mem_est("O_table")
  call mem_est("BS_mat")
@@ -727,10 +689,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
    deallocate(O_v_state,O_c_state,O_n_c_states,O_n_v_states)
    call mem_est("O_v_state O_c_state O_n_c_states O_n_v_states")
-#if !defined _DOUBLES
-   deallocate(BS_W)
-   call mem_est("BS_W")
-#endif
    deallocate(O_phase,ik_is_table)
    call mem_est("O_phase ik_is_table")
    deallocate(Ovv,Occ,Cc)
@@ -749,7 +707,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
  !
- !
  if (l_bs_fxc) then
    !
    ! GPL_EXCLUDE_START
@@ -763,17 +720,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  else if (BS_K_is_ALDA) then
    deallocate(F_xc)
  endif
- !
- ! DOUBLES excitations contribution
-#if defined _DOUBLES
- call K_doubles(Ken,BS_W)
- if (BS_res_K_corr.or.BS_cpl_K_corr) then
-   deallocate(BS_W)
-   call mem_est("BS_W")
-! DOUBLES CORRELATION PROJECT
-   deallocate(BS_mat_tmp)
- endif
-#endif
  !
  ! Final CLEAN
  !

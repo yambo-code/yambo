@@ -2,10 +2,6 @@ SC_objects =
 #if defined _SC || defined _RT
 SC_objects = load_SC_components.o io_SC_components.o
 #endif
-DB_objects = 
-#if defined _DOUBLES
-DB_objects = ioBS_doubles.o
-#endif
 ELPH_objects = 
 #if defined _ELPH || defined _YPP_ELPH || defined _SOLITONS
 ELPH_objects = ioELPH.o
@@ -22,4 +18,4 @@ objs = ver_is_gt_or_eq.o IO_mute.o \
        ioBSS_diago.o  ioBSS_Haydock.o ioBSS_invert.o \
        io_elemental.o io_bulk.o      io_header.o ioE_RIM.o \
        ioCOL_CUT.o    ioDB1_reload.o \
-       variables_BS.o $(SC_objects) $(DB_objects)
+       variables_BS.o $(SC_objects) 

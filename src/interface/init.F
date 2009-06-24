@@ -127,9 +127,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _MANYK 
  what_is_running='YAMBO_MANYK'
 #endif
-#if defined _DOUBLES 
- what_is_running='YAMBO_DOUBLES'
-#endif
 #if defined _SOLITONS 
  what_is_running='YAMBO_SOLITONS'
 #endif

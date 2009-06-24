@@ -44,8 +44,8 @@ subroutine RT_restart(Xen)
  integer :: io_E,io_V,io_WF
  logical :: RESTART
  logical :: RESTART_FROM_SC
- ! 
- ! Starting index for real-time dynamics
+ !
+ ! Starting point 
  !
  it_now=1
  !
@@ -64,9 +64,9 @@ subroutine RT_restart(Xen)
  !
  ! To restart from RT only the G_lesser is necessary
  !
- RESTART        = io_G>=0
+ RESTART        = io_G ==0
  !
- RESTART_FROM_SC=all((/io_E==0,io_WF==0,io_V==0,io_G<0/))  
+ RESTART_FROM_SC=all((/io_E==0,io_WF==0,io_V==0,io_G/=0/))  
  !
  if(RESTART_FROM_SC) then
    !
@@ -112,43 +112,26 @@ subroutine RT_restart(Xen)
    !  I use G_lesser(:,:,:) to reconstruct everything
    !  and I read it_now from the databases
    !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(5))
+   call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(5))
    io_G=io_SC_components('G',Xen,ID(5))
    !
-   if(io_G/=0) then
-     !
-     it_now=io_G-1
-     !
-     call live_timing('[RT] Reading previous steps :',it_now-1)
-     !
-     ! I have to read the last G_lesser to restart calculation
-     !
-     call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1,2/),ID=ID(5))
+   it_now=it_now+1
+   !
+   do ik=1,QP_nk
+     call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(5))
      io_G=io_SC_components('G',Xen,ID(5))
+   enddo
+   !
+   if(io_G==0.and.it_now<Tot_steps+Thermal_steps) then
      !
-     do it=2,it_now
-       !
-       call io_control(ACTION=RD_CL_IF_END,SEC=(/it+1/),ID=ID(5))
-       io_G=io_SC_components('G',Xen,ID(5))
-       !
-       call live_timing(steps=1)
-       !
-     enddo
-     !
-     call live_timing
-     !
-     call msg('nr','[RT] Restart from a Real-Time Calculation ')
-     call msg('nr','[RT] Number of steps done         :',it_now)
-     call msg('s' ,'[RT] Restart from                 :',it_now)
-     !
-   else
-     !
-     ! if io_G==0 calculation already done
-     ! I will skip main loop
-     !
-     it_now=Thermal_steps+Tot_steps+1
+     call msg('snr','[RT] Restart from a Real-Time Calculation ')
+     call msg('snr','[RT] Number of steps done         :',it_now-1)
      !
    endif
+   !
+ else
+   !
+   it_now=1
    !
  endif
  !

@@ -108,6 +108,8 @@ subroutine SC_common_build_Ho(E,Xk,k)
  deallocate(QP_Vxc)
  call mem_est("QP_Vxc")
  !
+#if defined _RT
  deallocate(V_xc)
+#endif
  !
 end subroutine SC_common_build_Ho

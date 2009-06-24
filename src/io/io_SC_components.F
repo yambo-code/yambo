@@ -42,7 +42,7 @@ integer function io_SC_components(what,E_sc,ID)
 &                         Thermal_steps,Integrator_name,l_qp_analyze,DiagH_Iter, &
 &                         LifeTime,l_always_relax,Ext_Field_name,Ext_Field_Int,  &
 &                         Ext_Field_freq,RT_resonant,RT_no_intraband,l_no_diamagnetic,&
-&                         T_initial,j_current,A_norm,G_lesser
+&                         T_initial,j_current,A_norm,G_lesser,i_time
  use IO_m,           ONLY:io_restart,io_check_restart
  use QP_m,           ONLY:QP_nk
 #endif                                
@@ -62,8 +62,7 @@ integer function io_SC_components(what,E_sc,ID)
  logical               :: l_wf,l_V,l_E,l_IMPOSE_SN,CHECK_
 #if defined _RT		
  logical               :: l_J,l_G
- integer               :: it_IO
- real(SP)              :: current_disk(3),vec_pot_disk(2)
+ real(SP)              :: current_pot_disk(5)
 #endif
  !
  l_E =what=="E"
@@ -119,14 +118,8 @@ integer function io_SC_components(what,E_sc,ID)
    call io_elemental(ID,VAR="LOCAL_ITER_BANDS_MIX",VAR_SZ=4,MENU=0) 
    call io_elemental(ID,L0=Local_V,&
 &       VAR=' The potential is local          :')
-#if defined _RT
-   if(.not.l_G.and..not.l_J) then
-#endif
    call io_elemental(ID,I0=it_now,DB_I0=it_now,&
 &       VAR=' Iteration                       :')
-#if defined _RT
-   endif
-#endif
    !
    if (l_sc_run) then
      call io_elemental(ID,I0=SC_bands,&
@@ -172,40 +165,57 @@ integer function io_SC_components(what,E_sc,ID)
 #if defined _RT
    !
    if(any((/l_J,l_G/))) then
-     call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=6,MENU=0) 
-     call io_elemental(ID,L0=l_fast_exchange,VAR=' Use fast exchange  :')
-     call io_elemental(ID,L0=l_RPA,VAR=' RPA optics in real time  :')
+     call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=5,MENU=0) 
+     call io_elemental(ID,L0=l_fast_exchange,VAR=' Use fast exchange :', &
+&     CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,L0=l_RPA,VAR=' RPA optics in real time  :', &
+&     CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,&
 &       VAR=" external field intensity          :",R0=RT_step,CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID, &
-&       VAR=" total number of steps          :",I0=Tot_steps,CHECK=.true.,OP=(/"=="/))
+&       VAR=" total number of steps          :",I0=Tot_steps,CHECK=.true.,OP=(/">="/))
      call io_elemental(ID, &
 &       VAR=" number of thermalization steps :",I0=Thermal_steps,CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     !
+     call io_elemental(ID,VAR="INTEGRATOR",CH0="",VAR_SZ=1) 
      call io_elemental(ID,CH0=Integrator_name, &
 &         VAR=' integrator                   :',CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
      call io_elemental(ID,VAR="RT_OTHERS",VAR_SZ=4,MENU=0) 
-     call io_elemental(ID,L0=l_qp_analyze,VAR=' analize quasi-particles  :')
-     call io_elemental(ID,I0=DiagH_Iter,VAR='diagonalization interval   :')
-     call io_elemental(ID,R0=LifeTime,VAR=' quasi-particle life time  :')
-     call io_elemental(ID,L0=l_always_relax,VAR=' relaxation during thermalization  :')
+     call io_elemental(ID,L0=l_qp_analyze,VAR=' analize quasi-particles :', &
+&     CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,I0=DiagH_Iter,VAR='diagonalization interval :',&
+&     CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,R0=LifeTime,VAR=' quasi-particle life time :', &
+&     CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,L0=l_always_relax,VAR=' relaxation during thermalization  :', &
+&     CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
-     call io_elemental(ID,VAR="EXTERNAL_FIELD",VAR_SZ=8,MENU=0) 
-     call io_elemental(ID,L0=l_rt_efield,VAR=' External Field is present :')
-     call io_elemental(ID,CH0=Ext_Field_name, &
-&         VAR=' external field                  :',CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,VAR="EXTERNAL_FIELD",VAR_SZ=10,MENU=0) 
+     call io_elemental(ID,L0=l_rt_efield,VAR=' External Field is present :', &
+&      CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,R1=EF_q0,CHECK=.true., &
 &       VAR=" electric field versor             :",OP=(/"==","==","=="/))
      call io_elemental(ID,&
 &       VAR=" external field intensity          :",R0=Ext_Field_Int,CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,&
 &       VAR=" external field frequency          :",R0=Ext_Field_freq,CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,L0=RT_resonant,    VAR=' Resonant external field    :')
-     call io_elemental(ID,L0=RT_no_intraband,VAR=' No intraband transitions   :')
-     call io_elemental(ID,L0=l_no_diamagnetic,VAR=' No diamagnetic term        :')
-     call io_elemental(ID,R0=T_initial,VAR=' initial time for the external field :')
+     call io_elemental(ID,L0=RT_resonant,    VAR=' Resonant external field    :',&
+&       CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,L0=RT_no_intraband,VAR=' No intraband transitions   :',&
+&       CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,L0=l_no_diamagnetic,VAR=' No diamagnetic term        :',& 
+&       CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,R0=T_initial,VAR=' initial time for the external field :',&
+&       CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     !                       
+     call io_elemental(ID,VAR="FIELD_NAME",CH0="",VAR_SZ=1) 
+     call io_elemental(ID,CH0=Ext_Field_name, &
+&         VAR=' external field                  :',CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0)
      !
    endif
@@ -230,23 +240,7 @@ integer function io_SC_components(what,E_sc,ID)
    !
  endif
  ! 
-#if defined _RT
- !
- ! Time to store
- !
- do i1=1,size(io_sec(ID,:))
-   if(io_sec(ID,i1)==0.or.io_sec(ID,i1)==1) cycle
-   it_IO=io_sec(ID,i1)-1
- enddo 
- !
- if(any((/l_E,l_V,l_wf/))) then
-   call manage_RD_WR_CL_IF_END(ID,ik,nkibz)
- else
-   call manage_RD_WR_CL_IF_END(ID,it_now,Tot_steps+Thermal_steps)
- endif  
-#else
  call manage_RD_WR_CL_IF_END(ID,ik,nkibz)
-#endif
  !
  ! Potential
  !===========
@@ -295,7 +289,7 @@ integer function io_SC_components(what,E_sc,ID)
  endif
  !
 #if defined _RT
- if(any((/l_E,l_V,l_wf/))) then
+ if(any((/l_E,l_V,l_wf,l_G/))) then
 #endif
  !
  if (ik==0) goto 1
@@ -357,36 +351,22 @@ integer function io_SC_components(what,E_sc,ID)
    ! lesser Green Function
    !=================
    !
-   call io_check_restart("rtG",ID)
-   io_SC_components=io_restart(ID)
-   !
    if (io_SC_components/=0) goto 1  
    !
-   if(any(io_sec(ID,:)/=1)) then
-     !
-     allocate(R_H_disk(SC_bands,SC_bands,2))
-     !
-!    do i_spin=1,n_sp_pol
-     i_spin=1
-     !
-     do ik=1,QP_nk
-       !
-       call io_bulk(ID,VAR="Lesser_Green_Function"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
-&                 VAR_SZ=(/SC_bands,SC_bands,2/))
-       !
-       if (write_is_on(ID)) call mat_c2r(G_lesser(:,:,ik),R_H_disk)
-       call io_bulk(ID,R3=R_H_disk)
-       if (read_is_on(ID))  call mat_r2c(R_H_disk,G_lesser(:,:,ik))
-       !
-     enddo
-     !
-!    enddo
-     deallocate(R_H_disk)
-     !
-     call io_check_restart("rtG",ID,now=it_IO,todo=Thermal_steps+Tot_Steps)  
-     io_SC_components=io_restart(ID)    
-     !
-   endif
+   allocate(R_H_disk(SC_bands,SC_bands,2))
+   !
+!  do i_spin=1,n_sp_pol
+   i_spin=1
+   !
+   call io_bulk(ID,VAR="G_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
+&       VAR_SZ=(/SC_bands,SC_bands,2/))
+   !
+   if (write_is_on(ID)) call mat_c2r(G_lesser(:,:,ik),R_H_disk)
+   call io_bulk(ID,R3=R_H_disk)
+   if (read_is_on(ID))  call mat_r2c(R_H_disk,G_lesser(:,:,ik))
+   !
+!  enddo
+   deallocate(R_H_disk)
    !
  endif
  !
@@ -395,22 +375,24 @@ integer function io_SC_components(what,E_sc,ID)
    ! Current and Vector Potential
    !=================
    !
-   if(any(io_sec(ID,:)/=1)) then
-     !   
-     call io_bulk(ID,VAR="Induced_current",VAR_SZ=(/3/))
-     if (write_is_on(ID))    current_disk(:)=real(j_current(:))
-     call io_bulk(ID,R1=current_disk)
-     if (read_is_on(ID)) j_current(:)=cmplx(current_disk(:),0.)
+   if(i_time>0) then
+     !    
+     call io_bulk(ID,VAR="Current_and_Potential_TIME"//trim(intc(i_time)),VAR_SZ=(/5/))
      !
-     call io_bulk(ID,VAR="Vector_potential",VAR_SZ=(/2/))
-     if (write_is_on(ID)) then
-       vec_pot_disk(1)=real(A_norm)
-       vec_pot_disk(2)=aimag(A_norm)
+     if (write_is_on(ID)) then 
+        current_pot_disk(1:3)=real(j_current(1:3))
+        current_pot_disk(4)=real(A_norm)
+        current_pot_disk(5)=aimag(A_norm)
      endif
-     call io_bulk(ID,R1=vec_pot_disk)
-     if (read_is_on(ID)) then
-       A_norm = cmplx(vec_pot_disk(1),vec_pot_disk(2))
+     !
+     call io_bulk(ID,R1=current_pot_disk)
+     !
+     if (read_is_on(ID)) then 
+       j_current(1:3)=cmplx(current_pot_disk(1:3),0.)
+       A_norm        =cmplx(current_pot_disk(4),current_pot_disk(5))
      endif
+     !
+     call io_disconnect(ID)
      !
    endif
    !

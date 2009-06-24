@@ -34,7 +34,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  use R_lattice,      ONLY:bz_samp,qindx_S
  use QP_m,           ONLY:QP_nb,QP_nk,QP_ng_Sx
  use SC,             ONLY:SC_potential,SC_bands,Ho,E_bare,it_now
- use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_APP_WR_CL
+ use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,REP
  use real_time,      ONLY:Thermal_steps,Tot_steps,RT_step,G_lesser,l_RT_no_updates, &
 &                         G_lesser_previous,l_rt_efield,RT_alloc,RT_free,io_G,ID,   &
 &                         A_vec_pot,A_norm,i_time,Integrator_name,j_current,        &
@@ -178,15 +178,18 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    !
    if(l_rt_efield.and.i_time>0)  call RT_current(j_current(:),xK,A_vec_pot(:),G_lesser)
    !
-   ! Write G_lesser on disk
+   ! Write last G_lesser on disk
    !
-   if(it==1) then
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID(5)) 
-   else
-     call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/it+1/),ID=ID(5)) 
-   endif
+   it_now=it ! used in RESTART
    !
+   if (it==1) call io_control(ACTION=OP_WR,COM=REP, SEC=(/1/),ID=ID(5))
+   if (it> 1) call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(5))
    io_G=io_SC_components('G' ,Xen,ID(5))
+   !
+   do ik = 1, QP_nk 
+     call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
+     io_G=io_SC_components('G',Xen,ID(5))
+   enddo
    !
    ! Integrate equation of motion
    !

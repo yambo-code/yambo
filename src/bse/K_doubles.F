@@ -45,7 +45,11 @@ subroutine K_doubles(Ken,BS_W)
 &                        BS_eh_table,BS_identifier,BS_K_dim,BS_mat
  use BS_doubles,    ONLY:BS_mat_doubles,BS_res_K_doubles,BS_K_doubles_dim,  &
 &                        BS_doubles_table,BS_bands_doubles,BS_doubles_E,    &
-&                        static_approx
+&                        static_approx,&
+! DOUBLES CORR PROJECT
+&                        BS_mat_tmp,Eigen_doubles,doubles_corr
+ use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
+ use X_m,           ONLY:DIP_iq_dot_r
  use collision,     ONLY:ggwinfo,collision_reset
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,OP_WR_CL
  !
@@ -55,13 +59,16 @@ subroutine K_doubles(Ken,BS_W)
  !
  ! Main loop variables
  !
- integer    :: iv1,ic1,iv2,ic2,icv1,icv2,&
-&              iOvv,iOcc,i1,i2,i3,&
+ integer    :: iv1,ic1,iv2,ic2,iv3,ic3,icv1,icv2,icv3,icin,&
+&              iOvv,iOcc,i1,i2,i3,ncin,&
 &              icv,ic,iv,nc,nv,nv_doubles,nc_doubles,i_doubles
- complex(SP),allocatable ::  Interaction_cccv(:,:,:,:),Interaction_vvcv(:,:,:,:)
+ complex(SP),allocatable :: Interaction_cccv(:,:,:,:),Interaction_vvcv(:,:,:,:)
+ ! DOUBLES CORR PROJECT
+ integer    ,allocatable :: BS_eh_table_m1(:,:)
+ integer                 :: lib_driver
+ real(SP)   ,allocatable :: BS_E_tmp(:)
  !
  ! From lapac libraries, functions for the scalar product of two vectors
- !
 #if defined _DOUBLE
  complex(SP):: zdotc,zdotu
 #else
@@ -83,6 +90,9 @@ subroutine K_doubles(Ken,BS_W)
  ! preparation lines:
  BS_res_K_doubles=l_td_hf
 ! BS_res_K_doubles=.false.
+ doubles_corr=.true.
+! doubles_corr=.false.
+ lib_driver=USE_LK
  BS_bands_doubles(1)=BS_bands(1)
  BS_bands_doubles(2)=BS_bands(2)
  !
@@ -93,6 +103,8 @@ subroutine K_doubles(Ken,BS_W)
  !
  BS_K_doubles_dim=(nc_doubles*nv_doubles)**2
  !
+ ncin=2
+ if(doubles_corr) ncin=1
  !
  if(.not.BS_res_K_doubles) return
  ! DEBUG <
@@ -127,7 +139,12 @@ subroutine K_doubles(Ken,BS_W)
  ! *************************
  ! Allocation: Table and energies
  allocate(BS_doubles_table(BS_K_doubles_dim,4))
- call mem_est('BS_doubles_table',(/size(BS_doubles_table)/))
+ if (doubles_corr) then
+   allocate(BS_eh_table_m1(BS_bands_doubles(2),BS_bands_doubles(2)))
+   allocate(BS_E_tmp(BS_K_dim))
+   call mem_est('BS_E_tmp',(/size(BS_doubles_E)*2/))
+   BS_eh_table_m1(:,:)=0
+ endif
  BS_doubles_table(:,:)=0
  allocate(BS_doubles_E(BS_K_doubles_dim),static_approx(BS_K_doubles_dim))
  call mem_est('BS_doubles_E',(/size(BS_doubles_E)*2/))
@@ -146,9 +163,6 @@ subroutine K_doubles(Ken,BS_W)
  allocate(Interaction_vvcv(nv_doubles,nv,nc_doubles,nv_doubles))
  call mem_est('Interaction_cccv',(/size(interaction_cccv)*2/))
  call mem_est('Interaction_vvcv',(/size(interaction_vvcv)*2/))
- allocate(BS_mat_doubles(BS_K_dim,BS_K_doubles_dim,8))
- call mem_est('BS_mat_doubles',(/size(BS_mat_doubles)*2/))
- BS_mat_doubles(:,:,:)=(0.,0.)
  Interaction_cccv(:,:,:,:)=(0.,0.)
  Interaction_vvcv(:,:,:,:)=(0.,0.)
  !
@@ -157,9 +171,12 @@ subroutine K_doubles(Ken,BS_W)
  ! ********************************
  ! Doubles tables for indexes and energies
  i_doubles=0
+ icv1=0
  do iv1=BS_bands_doubles(1),Ken%nbf
-   do iv2=BS_bands_doubles(1),Ken%nbf
-     do ic1=Ken%nbf+1,BS_bands_doubles(2)
+   do ic1=Ken%nbf+1,BS_bands_doubles(2)
+     icv1=icv1+1
+      if (doubles_corr) BS_eh_table_m1(iv1,ic1)=icv1
+     do iv2=BS_bands_doubles(1),Ken%nbf
        do ic2=Ken%nbf+1,BS_bands_doubles(2)
          i_doubles=i_doubles+1
          BS_doubles_table(i_doubles,:)=(/iv1,iv2,ic1,ic2/)
@@ -264,6 +281,9 @@ subroutine K_doubles(Ken,BS_W)
      isc%os(1)=iv2
      call scatterBamp(isc)
      forall(i1=1:BS_n_g_W) Ocv(i1,ic2-Ken%nbf,iv2-BS_bands_doubles(1)+1)=isc%rhotw(i1)
+     ! Warning, should evaluate the term  G=0 of Ocv but use this only in the 
+     ! bubble diagrams when c=c' ; v=v'. Presently Ocv=0 for G=0
+!     Ocv(1,ic2-Ken%nbf,iv2-BS_bands_doubles(1)+1)=-conjg(DIP_iq_dot_r(ic2,iv2,1,1))/bare_qpg(1,1)
      ! DEBUG <
      !write(3456,*) ic2,iv2,Ocv(:,ic2-Ken%nbf,iv2)
      ! DEBUG >
@@ -382,7 +402,16 @@ subroutine K_doubles(Ken,BS_W)
    call live_timing()
    call pp_redux_wait(Interaction_vvcv)
    call pp_indexes_reset(px)
-   ! Paral >
+   !
+ endif
+ !
+ deallocate(Occ,Ovv,Ocv)
+ call mem_est("Occ Ovv Ocv")
+ !
+ if (BS_res_K_doubles) then
+   allocate(BS_mat_doubles(BS_K_dim,BS_K_doubles_dim,ncin+1))
+   call mem_est('BS_mat_doubles',(/size(BS_mat_doubles)*2/))
+   BS_mat_doubles(:,:,:)=(0.,0.)
    !
    !  Step 2: Here the code constructs the half-diagrams
    !          D1(icv,i_doubles) and D2(icv,i_doubles),
@@ -405,10 +434,8 @@ subroutine K_doubles(Ken,BS_W)
    !          (i.e. D1*D2 = D1(c1<->c2)*D2(c1<->c2) = ...) so we have to divide by 4(=0.5*0.5)
    !
    !  In the code:
-   !  D1=BS_mat_doubls(:,:,1)                              D2=BS_mat_doubls(:,:,5)
-   !  D1(c1<->c2)=BS_mat_doubls(:,:,2)                     D2(c1<->c2)=BS_mat_doubls(:,:,6)
-   !  D1(v1<->v2)=BS_mat_doubls(:,:,3)                     D2(v1<->v2)=BS_mat_doubls(:,:,7)   
-   !  D1(v1,c1<->v2,c2)=BS_mat_doubls(:,:,4)               D2(v1,c1<->v2,c2)=BS_mat_doubls(:,:,8)
+   !  BS_mat_doubles(:,:,1)=sqrt(0.5)*[D1+D2 +(c1,v1<->c2,v2)]*sqrt(2)                 spin:(up,down)
+   !  BS_mat_doubles(:,:,2)=sqrt(0.5)*[D1+D2 +(c1,v1<->c2,v2) -(c1<->c2) -(v1<->v2) ]  spin:(up,up)
    !
    !DEBUG <
    write(3459,*) '                                                                       ',&
@@ -419,82 +446,167 @@ subroutine K_doubles(Ken,BS_W)
    !DEBUG >
    !
    ! Paral <
-   call par_indexes(px,(/BS_K_doubles_dim/),(/1/))
+   call par_indexes(px,(/4*ncin,BS_K_doubles_dim/))
    call pp_redux_wait
    call live_timing('BS_mat_doubles',px%stps(myid+1))
    ! Paral >
-   do i_doubles=1,BS_K_doubles_dim
-     ! Paral <
-     if (.not.px%i1p(i_doubles)) cycle
-     call live_timing(steps=1)
-     ! Paral >
-     iv1=BS_doubles_table(i_doubles,1)-BS_bands_doubles(1)+1
-     iv2=BS_doubles_table(i_doubles,2)-BS_bands_doubles(1)+1
-     ic1=BS_doubles_table(i_doubles,3)-Ken%nbf
-     ic2=BS_doubles_table(i_doubles,4)-Ken%nbf
-     !
-     do icv=1,BS_K_dim
-       iv=BS_eh_table(icv,2)-BS_bands(1)+1
-       ic=BS_eh_table(icv,3)-Ken%nbf
-       if ( (iv+BS_bands(1)) == (iv1+BS_bands_doubles(1)) ) then
-         BS_mat_doubles(icv,i_doubles,1)=&
-&               Interaction_cccv(ic,ic1,ic2,iv2)                      !D1
-         BS_mat_doubles(icv,i_doubles,2)=&
-&              -Interaction_cccv(ic,ic2,ic1,iv2)                      !D1c
-       endif
-       if ( (iv+BS_bands(1)) == (iv2+BS_bands_doubles(1)) ) then 
-         BS_mat_doubles(icv,i_doubles,3)=&
-&              -Interaction_cccv(ic,ic1,ic2,iv1)                      !D1v
-         BS_mat_doubles(icv,i_doubles,4)=&
-&               Interaction_cccv(ic,ic2,ic1,iv1)                      !D1cv
-       endif
-       if (ic==ic1) then
-         BS_mat_doubles(icv,i_doubles,5)=&
-&               Interaction_vvcv(iv1,iv,ic2,iv2)                      !D2
-         BS_mat_doubles(icv,i_doubles,7)=&
-               -Interaction_vvcv(iv2,iv,ic2,iv1)                      !D2v
-       endif
-       if (ic==ic2) then 
-         BS_mat_doubles(icv,i_doubles,6)=&
-&              -Interaction_vvcv(iv1,iv,ic1,iv2)                      !D2c
-         BS_mat_doubles(icv,i_doubles,8)=&
-&               Interaction_vvcv(iv2,iv,ic1,iv1)                      !D2cv
-       endif
-       ! DEBUG <
-       write(3459,*) ic+Ken%nbf,iv+BS_bands(1)-1,&
-&                    ic1+Ken%nbf,ic2+Ken%nbf,iv1+BS_bands_doubles(1)-1,iv2+BS_bands_doubles(1)-1,&
-&                    (real(BS_mat_doubles(icv,i_doubles,i1)),i1=1,8),&
-&                    (aimag(BS_mat_doubles(icv,i_doubles,i1)),i1=1,8)
-       ! DEBUG >
+   do icin=1,4*ncin
+     do i_doubles=1,BS_K_doubles_dim
+       ! Paral <
+       if (.not.px%i2p(icin,i_doubles)) cycle
+       call live_timing(steps=1)
+       ! Paral >
+       iv1=BS_doubles_table(i_doubles,1)-BS_bands_doubles(1)+1
+       iv2=BS_doubles_table(i_doubles,2)-BS_bands_doubles(1)+1
+       ic1=BS_doubles_table(i_doubles,3)-Ken%nbf
+       ic2=BS_doubles_table(i_doubles,4)-Ken%nbf
+       !
+       do icv=1,BS_K_dim
+         iv=BS_eh_table(icv,2)-BS_bands(1)+1
+         ic=BS_eh_table(icv,3)-Ken%nbf
+         select case (icin)
+           case(1)
+             if ( (iv+BS_bands(1)) /= (iv1+BS_bands_doubles(1)) ) cycle
+             BS_mat_doubles(icv,i_doubles,ncin+1)=&
+&                   Interaction_cccv(ic,ic1,ic2,iv2)                  !D1
+           case(2)
+             if ( (iv+BS_bands(1)) /= (iv2+BS_bands_doubles(1)) ) cycle 
+             BS_mat_doubles(icv,i_doubles,ncin+1)=&
+&                   Interaction_cccv(ic,ic2,ic1,iv1)                  !D1cv
+           case(3)
+             if (ic/=ic1) cycle
+             BS_mat_doubles(icv,i_doubles,ncin+1)=&
+&                   Interaction_vvcv(iv1,iv,ic2,iv2)                  !D2
+           case(4)
+             if (ic/=ic2) cycle 
+             BS_mat_doubles(icv,i_doubles,ncin+1)=&
+&                   Interaction_vvcv(iv2,iv,ic1,iv1)                  !D2cv
+           case(5)
+             if ( (iv+BS_bands(1)) /= (iv1+BS_bands_doubles(1)) ) cycle
+             BS_mat_doubles(icv,i_doubles,ncin+1)=&
+&                  -Interaction_cccv(ic,ic2,ic1,iv2)                  !D1c
+           case(6)
+             if ( (iv+BS_bands(1)) /= (iv2+BS_bands_doubles(1)) ) cycle 
+             BS_mat_doubles(icv,i_doubles,ncin+1)=&
+&                  -Interaction_cccv(ic,ic1,ic2,iv1)                  !D1v
+           case(7)
+             if (ic/=ic1) cycle
+             BS_mat_doubles(icv,i_doubles,ncin+1)=&
+&                  -Interaction_vvcv(iv2,iv,ic2,iv1)                  !D2v
+           case(8)
+             if (ic/=ic2) cycle
+             BS_mat_doubles(icv,i_doubles,ncin+1)=&
+&                  -Interaction_vvcv(iv1,iv,ic1,iv2)                  !D2c
+         end select
+!       ! DEBUG <
+!       write(3459,*) ic+Ken%nbf,iv+BS_bands(1)-1,&
+!&                    ic1+Ken%nbf,ic2+Ken%nbf,iv1+BS_bands_doubles(1)-1,iv2+BS_bands_doubles(1)-1,&
+!&                    (real(BS_mat_doubles(icv,i_doubles,i1)),i1=1,8),&
+!&                    (aimag(BS_mat_doubles(icv,i_doubles,i1)),i1=1,8)
+!       ! DEBUG >
+       enddo
      enddo
+     !
+     ! sqrt(0.5) is due to second order
+     ! For BS_mat_doubles_1 we obtain an overall factor 0.5
+     ! For BS_mat_doubles_2 we obtain an overall factor 0.5
+     if(icin<=4) BS_mat_doubles(:,:,1)=BS_mat_doubles(:,:,1)+0.5*BS_mat_doubles(:,:,ncin+1)
+     if(.not.doubles_corr) BS_mat_doubles(:,:,2)=&
+&                    BS_mat_doubles(:,:,2)+0.5*sqrt(0.5)*BS_mat_doubles(:,:,ncin+1)
+     BS_mat_doubles(:,:,ncin+1)=(0.,0.)
    enddo
+   !
    ! Paral <
-   call live_timing()
    call pp_redux_wait(BS_mat_doubles)
+   call live_timing()
    call pp_indexes_reset(px)
    ! Paral >
    !
-   ! For the 0.5 here see comment around lines 402
-   BS_mat_doubles(:,:,:)=0.5/sqrt(2.)*BS_mat_doubles(:,:,:)
+   !
+   !
+   ! DUOBLES CORRELATION PROJECT
+   ! *******************************
+   ! We do a static diagonalization to get the RPA eigenvalues and
+   ! eigenvectors. Then construct from these the RPA doubles eigenvectors.
+   ! (Write a new database for the doubles with CU instead of C (this for restart) 
+   ! and BS_doubles_E(i_doubles)=E_1^RPA+E_2^RPA
+   !
+   if (doubles_corr) then
+     BS_mat_doubles(:,:,2)=(0.,0.)
+     BS_doubles_E(:)=0.
+     do icv1=2,BS_K_dim
+       forall(icv2=1:icv1-1) BS_mat_tmp(icv1,icv2,1)=conjg(BS_mat_tmp(icv2,icv1,1))
+     enddo
+     do icv1=1,BS_K_dim
+       iv1=BS_eh_table(icv1,2)
+       ic1=BS_eh_table(icv1,3)
+       BS_mat_tmp(icv1,icv1,1)=BS_mat_tmp(icv1,icv1,1)+Ken%E(ic1,1,1)-Ken%E(iv1,1,1)
+     enddo
+     call mat_dia_inv(DIAGO,lib_driver,BS_mat_tmp(:,:,1),E_real=BS_E_tmp)
+     allocate(Eigen_doubles(BS_K_dim**2,1))
+     !
+     ! Paral <
+     call par_indexes(px,(/BS_K_doubles_dim/),(/1/))
+     call pp_redux_wait
+     call live_timing('Doubles correlation',px%stps(myid+1))
+     ! Paral >
+     !
+     do i_doubles=1,BS_K_doubles_dim
+       ! Paral <
+       if (.not.px%i1p(i_doubles)) cycle
+       call live_timing(steps=1)
+       ! Paral >
+       iv1=BS_doubles_table(i_doubles,1)
+       iv2=BS_doubles_table(i_doubles,2)
+       ic1=BS_doubles_table(i_doubles,3)
+       ic2=BS_doubles_table(i_doubles,4)
+       icv1=BS_eh_table_m1(iv1,ic1)
+       icv2=BS_eh_table_m1(iv2,ic2)
+       BS_doubles_E(i_doubles)=BS_E_tmp(icv1)+BS_E_tmp(icv2)
+       ! Important: here the indexes loops in the same way in i_doubles and icv1,icv2 in the
+       ! tables, i_doubles=icv1,ivc2=iv1,ic1,iv2,ic2 ---> the last index goes faster
+       do icv=1,BS_K_dim
+         Eigen_doubles( 1+(icv-1)*BS_K_dim : icv*BS_K_dim ,1)=&
+&                  BS_mat_tmp(:,icv1,1)*BS_mat_tmp(icv,icv2,1)
+       enddo
+       call cgemv('n',BS_K_dim,BS_K_doubles_dim,(1._SP,0._SP),&
+&        BS_mat_doubles(:,:,1),BS_K_dim,Eigen_doubles(:,1),1,&
+&        (0._SP,0._SP),BS_mat_doubles(:,i_doubles,2),1)
+     enddo
+     !
+     ! Paral <
+     call pp_redux_wait(BS_mat_doubles(:,:,2))
+     call pp_redux_wait(BS_doubles_E)
+     call live_timing()
+     call pp_indexes_reset(px)
+     ! Paral >
+     BS_mat_doubles(:,:,1)=BS_mat_doubles(:,:,2)
+     !
+     do icv=1,BS_K_dim
+       write(*,*) BS_E_tmp(icv)*27.2116
+     enddo
+     deallocate(Eigen_doubles,BS_E_tmp,BS_eh_table_m1)
+     !
+   endif
+   !
+   ! Write BS_mat_doubles to disk
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
+   io_err=ioBS_doubles(ID)
+   !
+   ! Final deallocation
+   deallocate(Interaction_cccv,Interaction_vvcv)
+   call mem_est('Interaction_cccv Interaction_vvcv')
+   deallocate(BS_mat_doubles)
+   call mem_est('BS_mat_doubles')
+   deallocate(BS_doubles_table,BS_doubles_E)
+   call mem_est("BS_doubles_E")
    !
  endif
+ stop
+ !
  !  ********************************************
  !  *******       Main loop: end         *******
  !  ********************************************
- !
- ! Write BS_mat_doubles to disk
- call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
- io_err=ioBS_doubles(ID)
- !
- ! Final deallocation
- deallocate(Interaction_cccv,Interaction_vvcv)
- call mem_est('Interaction_cccv Interaction_vvcv')
- deallocate(BS_mat_doubles)
- call mem_est('BS_mat_doubles')
- deallocate(Occ,Ovv,Ocv)
- call mem_est("Occ Ovv Ocv")
- deallocate(BS_doubles_table,BS_doubles_E)
- call mem_est("BS_doubles_table BS_doubles_E")
  !
  ! DEBUG >
  close(unit=3456)

@@ -25,7 +25,9 @@ integer function ioBS_doubles(ID)
  use stderr,        ONLY:intc
  use BS,            ONLY:BS_identifier,BS_K_dim
  use BS_doubles,    ONLY:BS_mat_doubles,BS_K_doubles_dim,&
-                         BS_doubles_table,BS_doubles_E 
+                         BS_doubles_table,BS_doubles_E,&
+! DOUBLES CORR PROJECT
+&                        doubles_corr
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&
 &                        io_header,write_is_on,read_is_on
@@ -35,7 +37,7 @@ integer function ioBS_doubles(ID)
  !
  ! Work Space
  !
- integer          :: is,id2,icin
+ integer          :: is,id2,icin,ncin
  character(schlen):: db_name
  real(SP)         :: BS_mat_doubles_disk(2,BS_K_dim,BS_K_doubles_dim)
  !
@@ -75,7 +77,10 @@ integer function ioBS_doubles(ID)
    !
    ! Doubles, coupling terms of the kernel
    !
-   do icin=1,8
+   ncin=2
+   if(doubles_corr) ncin=1
+   !
+   do icin=1,ncin
      !
      if (write_is_on(ID)) BS_mat_doubles_disk(1,:,:)=real(BS_mat_doubles(:,:,icin))
      if (write_is_on(ID)) BS_mat_doubles_disk(2,:,:)=aimag(BS_mat_doubles(:,:,icin))

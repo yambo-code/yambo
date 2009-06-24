@@ -42,7 +42,7 @@ subroutine K_diagonalization(iq,W)
  use parser_m,       ONLY:parser
 #if defined _DOUBLES
  use BS_doubles,     ONLY:Eigen_singles,Eigen_doubles,BS_K_doubles_dim,&
-&                         BS_res_K_doubles 
+&                         BS_res_K_doubles,eps2eel
 #endif
  implicit none
  type(w_samp)  :: W
@@ -139,11 +139,11 @@ subroutine K_diagonalization(iq,W)
  !
  ! Diagonalization DB (IN)
  !
-#if defined _DOUBLES
- io_err=-1
-#else
+#if !defined _DOUBLES
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
+#else
+ io_err=-1
 #endif
  !
  if(io_err<0) then
@@ -198,15 +198,15 @@ subroutine K_diagonalization(iq,W)
      if (BS_res_K_doubles) then
        call K_doubles_diagonalization(W,n_poles_theory,BS_E,n_poles)
        deallocate(BS_mat)
-       allocate(BS_mat(BS_K_dim,n_poles))
        call mem_est('BS_mat')
-       BS_mat(:,:)=Eigen_singles(:,1:n_poles)
+       allocate(BS_mat(BS_K_dim,n_poles))
        call mem_est('BS_mat',(/BS_K_dim,n_poles/))
+       BS_mat(:,:)=Eigen_singles(:,1:n_poles)
      else
 #endif
        call mat_dia_inv(DIAGO,lib_driver,BS_mat,E_real=BS_E_real)
        BS_E=BS_E_real
-# if defined _DOUBLES
+#if defined _DOUBLES
      endif
 #endif
    endif
@@ -237,6 +237,7 @@ subroutine K_diagonalization(iq,W)
      !
 #if defined _DOUBLES
      call pp_indexes_reset(px)
+     call pp_redux_wait
      call par_indexes(px,(/BS_H_dim/))
 #endif
      call live_timing('BSK R residuals',px%stps(myid+1))
@@ -333,6 +334,11 @@ subroutine K_diagonalization(iq,W)
      ! BS_R(i)=\sum_k <q0|k><k|i> =
      !         \sum_k BS_mat(k,i) x conjg( BSS_rhoq0(k) )
      !
+#if defined _DOUBLES
+     call pp_indexes_reset(px)
+     call pp_redux_wait
+     call par_indexes(px,(/n_poles/))
+#endif
      call live_timing('BSK   residuals',px%stps(myid+1))
      BS_R=(0.,0.)
      !
@@ -386,8 +392,17 @@ subroutine K_diagonalization(iq,W)
  call live_timing
  call pp_redux_wait(X_epsilon)
  !
+#if defined _DOUBLES
+ if(eps2eel) then
+   X_epsilon(2,:)=-(1.-X_epsilon(2,:)*&
+&                    real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/(q_norm(1))**2)
+ else
+#endif
  X_epsilon(2,:)=1.+X_epsilon(2,:)*&
-&               real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/(q_norm(1))**2
+&                  real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/(q_norm(1))**2
+#if defined _DOUBLES
+ endif
+#endif
  !
  X_epsilon(1,:)=W%p(:)
  !

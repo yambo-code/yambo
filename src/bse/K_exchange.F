@@ -27,6 +27,10 @@ subroutine K_exchange(divide_by_qpg,iq,ik,Xk,Ox,X_dim)
  use R_lattice,      ONLY:g_rot,qindx_X,bz_samp,bare_qpg
  use collision,      ONLY:ggwinfo,collision_reset
  use electrons,      ONLY:n_sp_pol,spin
+#if defined _DOUBLES
+ use X_m,            ONLY:DIP_iq_dot_r
+ use BS_doubles,     ONLY:eps2eel
+#endif
  !
  implicit none
  type(bz_samp) ::Xk
@@ -88,6 +92,15 @@ subroutine K_exchange(divide_by_qpg,iq,ik,Xk,Ox,X_dim)
          forall(i2=1:BS_n_g_exch) Ox(i2,i1)=isc%rhotw(i2)
        endif
    end select
+#if defined _DOUBLES
+   if(eps2eel) then
+     if(divide_by_qpg) then
+       Ox(1,i1)=-conjg(DIP_iq_dot_r(ic1,iv1,ikbz,i_sp))/bare_qpg(iq,1)
+     else
+       Ox(1,i1)=-conjg(DIP_iq_dot_r(ic1,iv1,ikbz,i_sp))
+     endif   
+   endif
+#endif
  enddo
  !
  call collision_reset(isc)

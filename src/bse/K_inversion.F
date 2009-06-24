@@ -26,7 +26,8 @@ subroutine K_inversion(iq,W,E,k,q)
  use stderr,         ONLY:intc,real2ch
 #if defined _DOUBLES
  use BS_doubles,    ONLY:BS_mat_doubles,BS_doubles_E,BS_res_K_doubles, &
-&                        BS_doubles_table,BS_K_doubles_dim
+&                        BS_doubles_table,BS_K_doubles_dim,eps2eel,&
+&                        BS_mat_tmp,doubles_corr
 #endif
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_not_const_eh_f,&
 &                         BS_K_coupling,BS_eh_table,BS_eh_E,BS_bands,Kernel_by_V,&
@@ -81,7 +82,7 @@ subroutine K_inversion(iq,W,E,k,q)
  integer, external ::ioBSS_invert
 #if defined _DOUBLES
  integer, external    ::ioBS_doubles
- complex, allocatable ::BS_mat_static(:,:)
+ integer              ::ncin
 #endif
  integer, allocatable     ::inv_err_disk(:),disk_freq_table(:)
  complex(SP), allocatable ::eps_2start(:)
@@ -180,9 +181,11 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  !  Kernel doubles
 #if defined _DOUBLES
- allocate(BS_mat_static(BS_K_dim,BS_K_dim))
- call mem_est('BS_mat_static',(/size(BS_mat_static)*2/))
- allocate(BS_mat_doubles(BS_K_dim,BS_K_doubles_dim,8))
+ ncin=2
+ if (doubles_corr) ncin=1
+ allocate(BS_mat_tmp(BS_K_dim,BS_K_dim,2))
+ call mem_est('BS_mat_tmp',(/size(BS_mat_tmp)*2/))
+ allocate(BS_mat_doubles(BS_K_dim,BS_K_doubles_dim,ncin+1))
  call mem_est('BS_mat_doubles',(/size(BS_mat_doubles)*2/))
  allocate(BS_doubles_E(BS_K_doubles_dim))
  call mem_est('BS_doubles_E',(/size(BS_doubles_E)/))
@@ -327,17 +330,21 @@ subroutine K_inversion(iq,W,E,k,q)
    ! Davide: DEBUG <
    ! open(unit=3455, file='Kernel_doubles.txt', status='unknown')
    ! Davide: DEBUG >
+#if defined _DOUBLES
+   BS_mat_tmp(:,:,1)=BS_mat(:,:)
+#endif
    do i1=1,full_inf_freqs
      if (.not.px%i1p(i1)) cycle
      iw=iw_full(i1)
 #if defined _DOUBLES
-     BS_mat_static(:,:)=BS_mat(:,:)
      call K_doubles_mount(W%p(iw))
 #endif
      call perform_invertion(iw,1)
 #if defined _DOUBLES
-     write(3455,*) real(W%p(iw))*27.2116,(aimag(BS_mat(i2,i2)),i2=1,BS_K_dim)
-     BS_mat(:,:)=BS_mat_static(:,:)
+     ! Davide: DEBUG <
+     ! write(3455,*) real(W%p(iw))*27.2116,(aimag(BS_mat(i2,i2)),i2=1,BS_K_dim)
+     ! Davide: DEBUG >
+     BS_mat(:,:)=BS_mat_tmp(:,:,1)
 #endif
      call live_timing(steps=1)
    enddo
@@ -350,8 +357,8 @@ subroutine K_inversion(iq,W,E,k,q)
  endif
  !
 #if defined _DOUBLES
- deallocate(BS_mat_doubles,BS_mat_static)
- call mem_est("BS_mat_doubles BS_mat_static")
+ deallocate(BS_mat_doubles,BS_mat_tmp)
+ call mem_est("BS_mat_doubles BS_mat_tmp")
  deallocate(BS_doubles_E,BS_doubles_table)
  call mem_est("BS_doubles_E BS_doubles_table")
 #endif
@@ -372,7 +379,15 @@ subroutine K_inversion(iq,W,E,k,q)
  call K_eps_interpolate(W%n(1),real(W%p),inv_err)
  call pp_redux_wait()
  !
+#if defined _DOUBLES
+ if (eps2eel) then
+   X_epsilon(2,:)=-(1.-X_epsilon(2,:))
+ else
+#endif
  X_epsilon(2,:)=1.+X_epsilon(2,:)
+#if defined _DOUBLES
+ endif
+#endif
  X_epsilon(1,:)=W%p(:)
  !
  BSS_n_descs=BSS_n_descs+2

@@ -157,8 +157,10 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
 #if defined _YPP_RT
  !
- if (l_rsymm) call RT_fix_symmetries(en,k)
- !   ======
+ if (l_rsymm)    call RT_fix_symmetries(en,k)
+ !
+ if (l_rtoptics) call RT_spectrum(en,k)
+ !  
 #endif
  !
  ! GPL_EXCLUDE_END

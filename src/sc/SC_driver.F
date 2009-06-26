@@ -37,7 +37,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                         SC_ng_Sx,SC_X_bands,SC_X_size,Ho,E_bare,SC_alloc,SC_free
  use wave_func,      ONLY:wf_load,wf,wf_n_states,WF_free
  use memory_m,       ONLY:mem_est
- use FFT_m,          ONLY:fft_size,fft_size
+ use FFT_m,          ONLY:fft_size
  use parser_m,       ONLY:parser 
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
  use com,            ONLY:msg,warning
@@ -190,7 +190,18 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      WF_G_max=max(QP_ng_Sx,X(1)%ng)
    endif
  endif
+ !
+#if defined _MAGNETIC
+ ! To construct the magnetic part of the Hamiltonian I need the wave
+ ! functions in G space.
+ ! So yambo_magnetic load wf in G space, evaluate the derivative,
+ ! does the fft of the derivative. Then call wf_free and load the wf in
+ ! real space, compute the magnetic part of the hamiltonian and, 
+ ! after inizialisation of Ho, write it in Ho 
+ call SC_add_Hmagnetic(Xk%pt,WF_G_max,WF_Go_indx)
+#else
  call wf_load(WF_G_max,WF_Go_indx,(/1,max(SC_bands,E%nbm)/),(/1,k%nibz/),title=' ')
+#endif
  !
  if (NSC_shot.and.SC_fft_size/=fft_size) then
    call warning(' FFT size of V_xc does not fit. Skipping NSC run')

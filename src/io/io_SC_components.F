@@ -40,9 +40,9 @@ integer function io_SC_components(what,E_sc,ID)
 #if defined _RT
  use real_time,      ONLY:l_rt_efield,EF_q0,l_fast_exchange,l_RPA,RT_step,Tot_steps, &
 &                         Thermal_steps,Integrator_name,l_qp_analyze,DiagH_Iter, &
-&                         LifeTime,l_always_relax,Ext_Field_name,Ext_Field_Int,  &
+&                         LifeTime,Ext_Field_name,Ext_Field_Int,G_lesser,i_time,  &
 &                         Ext_Field_freq,RT_resonant,RT_no_intraband,l_no_diamagnetic,&
-&                         T_initial,j_current,A_norm,G_lesser,i_time
+&                         T_initial,j_current,A_norm
  use IO_m,           ONLY:io_restart,io_check_restart
  use QP_m,           ONLY:QP_nk
 #endif                                
@@ -189,8 +189,6 @@ integer function io_SC_components(what,E_sc,ID)
      call io_elemental(ID,I0=DiagH_Iter,VAR='diagonalization interval :',&
 &     CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,R0=LifeTime,VAR=' quasi-particle life time :', &
-&     CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,L0=l_always_relax,VAR=' relaxation during thermalization  :', &
 &     CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !

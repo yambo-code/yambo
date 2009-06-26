@@ -103,7 +103,7 @@ module real_time
  !
  ! Non-interaction potential energies and potentials
  !
- complex(SP), allocatable :: QP_Vxc_0(:)
+ real(SP),    allocatable :: V_xc_0(:,:)
  real(SP),    allocatable :: Occ_natural_orb(:,:) ! Occupation natural orbitals
  !
  ! Databases input/output
@@ -136,8 +136,8 @@ module real_time
      allocate(G_lesser(SC_bands,SC_bands,QP_nk))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
      !
-     allocate(QP_Vxc_0(QP_n_states))
-     call mem_est("QP_Vxc_0",(/QP_n_states/),(/2*SP/))
+     allocate(V_xc_0(fft_size,n_spin))
+     call mem_est("V_xc_0",(/size(V_xc_0)/))
      !
      if(l_RT_no_updates) then
        allocate(H_Hartree_0(SC_bands,SC_bands,QP_nk,n_sp_pol))
@@ -158,8 +158,10 @@ module real_time
      allocate(G_lesser_previous(SC_bands,SC_bands,QP_nk))
      call mem_est("Gf_l_old",(/size(G_lesser_previous)/),(/2*SP/))
      !
-     allocate(G_lesser_reference(SC_bands,SC_bands,QP_nk))
-     call mem_est("Gf_l_old",(/size(G_lesser_reference)/),(/2*SP/))
+     if(LifeTime/=0.) then
+       allocate(G_lesser_reference(SC_bands,SC_bands,QP_nk))
+       call mem_est("Gf_l_old",(/size(G_lesser_reference)/),(/2*SP/))
+     endif
      !
      if(l_sc_hf.and.l_fast_exchange) then
        allocate(rho_rho_gamp(SC_bands,SC_bands,QP_nk,QP_n_states))
@@ -192,8 +194,8 @@ module real_time
      deallocate(E_xc)
      call mem_est('Exc')
      !
-     deallocate(QP_Vxc_0)
-     call mem_est("QP_Vxc_0")
+     deallocate(V_xc_0)
+     call mem_est("V_xc_0")
      !
      if(l_RT_no_updates) then
        !      
@@ -221,8 +223,10 @@ module real_time
      deallocate(G_lesser_previous)
      call mem_est("G_lesser_previous")
      !
-     deallocate(G_lesser_reference)
-     call mem_est("G_lesser_previous")
+     if(LifeTime/=0.) then
+       deallocate(G_lesser_reference)
+       call mem_est("G_lesser_previous")
+     endif
      !
      if(l_sc_hf.and.l_fast_exchange) then
        deallocate(rho_rho_gamp)

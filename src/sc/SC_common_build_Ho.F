@@ -27,7 +27,7 @@ subroutine SC_common_build_Ho(E,Xk,k)
  use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
  use SC,             ONLY:Ho,E_bare,V_xc_sc,V_hartree_sc,rho_n,SC_bands
  use memory_m,       ONLY:mem_est
- use real_time,      ONLY:l_RT_no_updates,G_lesser,QP_Vxc_0,H_Hartree_0 
+ use real_time,      ONLY:l_RT_no_updates,G_lesser,V_xc_0,H_Hartree_0 
  use wave_func,      ONLY:wf
  use R_lattice,      ONLY:bz_samp
  use xc_functionals, ONLY:V_xc
@@ -67,7 +67,11 @@ subroutine SC_common_build_Ho(E,Xk,k)
  !========================================
  !
  !
+#if !defined _MAGNETIC
+ ! If we are using yambo_magnetic now Ho already
+ ! contains H_magnetic
  Ho=(0.,0.)
+#endif
  !
  call V_Hartree(rho_n,V_hartree_sc)
  V_hartree_sc(:,n_sp_pol)=V_hartree_sc(:,1)
@@ -87,9 +91,9 @@ subroutine SC_common_build_Ho(E,Xk,k)
  !
 #if defined _RT
  !
- ! Save H_Hartree_0 and Q_Vxc_0 at T=0
+ ! Save H_Hartree_0 and V_xc_0 at T=0
  !
- QP_Vxc_0=QP_Vxc
+ V_xc_0=V_xc
  !
  ! Define Hartree+xc potential Hamiltonian
  !

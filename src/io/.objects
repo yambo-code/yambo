@@ -1,5 +1,5 @@
 SC_objects = 
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
 SC_objects = load_SC_components.o io_SC_components.o
 #endif
 ELPH_objects = 

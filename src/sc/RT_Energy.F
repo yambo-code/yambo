@@ -26,13 +26,15 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,rho_n,H_nl_sc
  use X_m,            ONLY:P_square
- use real_time,      ONLY:G_lesser,l_RT_no_updates,H_Hartree_0,QP_Vxc_0
+ use real_time,      ONLY:G_lesser,l_RT_no_updates,H_Hartree_0,V_xc_0
  use electrons,      ONLY:levels,n_sp_pol
  use wave_func,      ONLY:wf
  use FFT_m,          ONLY:fft_size
  use xc_functionals, ONLY:E_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use QP_m,           ONLY:QP_nk,QP_Sx
+ use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
+ use par_indexes_m,  ONLY:par_indexes
  !
  implicit none 
  !
@@ -43,6 +45,7 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  !
  ! Work Space
  !
+ type(pp_indexes) :: px
  integer       :: ik,i1,SC_bands2
  complex(SP)   :: Ex
  !
@@ -51,8 +54,11 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  complex(DP)   :: zdotc
 #else
  real(SP)      :: sdot
- complex(SP)   :: cdotc,cdotu
+ complex(SP)   :: cdotc
 #endif
+ !
+ call pp_indexes_reset(px)
+ call par_indexes(px,(/QP_nk/))
  !
  SC_bands2=SC_bands**2
  !
@@ -65,7 +71,9 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  E_kin=(0._SP,0._SP)
  !
  do ik=1,QP_nk
-   !      
+   !
+   if (.not.px%i1p(ik)) cycle
+   !
 #if defined _DOUBLE
    E_kin=E_kin-(0._SP,1._SP)*zdotc(SC_bands2,P_square(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #else
@@ -73,6 +81,8 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
 #endif
    !
  enddo
+ !
+ call pp_redux_wait(E_kin)
  !
  E_kin=E_kin/2.
  !  
@@ -82,6 +92,8 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  !
  do ik=1,QP_nk
    !      
+   if (.not.px%i1p(ik)) cycle
+   !        
 #if defined _DOUBLE
    E_ion=E_ion-(0._SP,1._SP)*zdotc(SC_bands2,Ho(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #else
@@ -89,6 +101,8 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
 #endif
    !
  enddo
+ !
+ call pp_redux_wait(E_ion)
  !
  E_ion = E_ion - E_kin
  !
@@ -100,6 +114,8 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
    !
    do ik=1,QP_nk
      !
+     if (.not.px%i1p(ik)) cycle
+     !        
      H_nl_sc=(0._SP,0._SP)
      !
      call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,wf)
@@ -112,12 +128,16 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
      !
    enddo
    !
+   call pp_redux_wait(E_h)
+   !
    if(l_sc_hf) then
      !
      Ex=(0.,0.)
      !
      do ik=1,QP_nk
        !
+       if (.not.px%i1p(ik)) cycle
+       !        
        H_nl_sc=(0.,0.)
        !
        call V_qp_basis_to_H(ik,QP_Sx,H_nl_sc)
@@ -131,6 +151,8 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
      enddo
      !
      Exc=real(Ex)
+     !
+     call pp_redux_wait(Exc)
      !
    else        
      !
@@ -154,8 +176,10 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
    !
    do ik=1,QP_nk
      !      
+     if (.not.px%i1p(ik)) cycle
+     !        
      H_nl_sc=(0.,0.)
-     call V_qp_basis_to_H(ik,QP_Vxc_0,H_nl_sc)
+     call V_real_space_to_H(ik,V_xc_0,H_nl_sc,wf) 
 #if defined _DOUBLE
      E_h=E_h-(0.,1.0)*zdotc(SC_bands2,H_Hartree_0(:,:,ik,1)+H_nl_sc(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
 #else
@@ -163,6 +187,8 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
 #endif
      !
    enddo
+   !
+   call pp_redux_wait(E_h)
    !
    Exc=0.
    !
@@ -175,6 +201,8 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  do i1=1,SC_bands
    Trace_Gf=Trace_Gf-(0.,1.)*sum(G_lesser(i1,i1,:)*k%weights(:))
  enddo
+ !
+ call pp_indexes_reset(px)
  !
 end subroutine RT_Energy
 

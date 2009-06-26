@@ -7,7 +7,7 @@ FFT_object = sgfft.o
 FFT_object =
 #endif
 WF_rot_object =
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
 WF_rot_object = WF_rotate.o
 #endif
 objs = fft_setup.o fft_3d.o $(FFT_object) $(FFT_more) \

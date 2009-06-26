@@ -115,8 +115,6 @@ subroutine RT_restart(Xen)
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(5))
    io_G=io_SC_components('G',Xen,ID(5))
    !
-   it_now=it_now+1
-   !
    do ik=1,QP_nk
      call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(5))
      io_G=io_SC_components('G',Xen,ID(5))
@@ -125,7 +123,7 @@ subroutine RT_restart(Xen)
    if(io_G==0.and.it_now<Tot_steps+Thermal_steps) then
      !
      call msg('snr','[RT] Restart from a Real-Time Calculation ')
-     call msg('snr','[RT] Number of steps done         :',it_now-1)
+     call msg('snr','[RT] Number of steps done         :',it_now)
      !
    endif
    !

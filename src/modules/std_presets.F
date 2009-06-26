@@ -408,7 +408,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  Ext_Field_name='none'
  Integrator_name='RK2'
  EF_q0=(/1.0,0.0,0.0/)
- LifeTime = 4.0*FS2AUT
+ LifeTime = 0.0*FS2AUT
  RT_resonant =.FALSE.
  RT_no_intraband=.FALSE.
  l_RPA=.FALSE.

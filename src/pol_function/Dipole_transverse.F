@@ -160,9 +160,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
 #if defined _SC || defined _RT
          if(Eval_P_and_P2_only) then
            wf_xyz(:wf_ng,4) = wf(1:wf_ng,ivfft) *  & 
-&                          ( (xK%pt(ik,1) + g_vec(:wf_ng,1))**2 * (2.0_SP*pi/alat(1))**2  &
-&                          + (xK%pt(ik,2) + g_vec(:wf_ng,2))**2 * (2.0_SP*pi/alat(2))**2  &
-&                          + (xK%pt(ik,3) + g_vec(:wf_ng,3))**2 * (2.0_SP*pi/alat(3))**2 )
+&                          ( (Xk%pt(ik,1) + g_vec(:wf_ng,1))**2 * (2.0_SP*pi/alat(1))**2  &
+&                          + (Xk%pt(ik,2) + g_vec(:wf_ng,2))**2 * (2.0_SP*pi/alat(2))**2  &
+&                          + (Xk%pt(ik,3) + g_vec(:wf_ng,3))**2 * (2.0_SP*pi/alat(3))**2 )
          endif
 #endif
          !
@@ -245,6 +245,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  do i_spin=1,n_sp_pol
    call pp_redux_wait(DIP_iR_or_P(:,:,:,:,i_spin))
+#if defined _RT
+   call pp_redux_wait(P_square(:,:,:,i_spin))
+#endif
  enddo
  !
 end subroutine Dipole_transverse

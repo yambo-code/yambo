@@ -82,6 +82,7 @@ PJ_PHLIBS       = $(MAIN_LIBS)
 # YPP
 #
 YPPLIBS      = $(BASIC_LIBS) bz_ops qp_ctl interface bse
+YPPRTLIBS    = $(YPPLIBS) sc
 YPPRASLIBS   = $(BASIC_LIBS) ras_reels_mods bz_ops qp_ctl interface ras bse
 
 nothing: 
@@ -111,8 +112,8 @@ yambo_dipole_rim: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_DIPOLE_RIM"; $(mksrc)
 	@X2DO="yambo_dipole_rim"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_DIPOLE_RIM";$(mkx)
 yambo_magnetic: libs
-	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_MAGNETIC"; $(mksrc)
-	@X2DO="yambo_magnetic"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_MAGNETIC";$(mkx)
+	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_MAGNETIC"; $(mksrc)
+	@X2DO="yambo_magnetic"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_MAGNETIC";$(mkx)
 yambo_gamma: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_GAMMA"; $(mksrc)
 	@X2DO="yambo_gamma"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_GAMMA";$(mkx)
@@ -147,8 +148,8 @@ ypp_ras: libs
 	@LIBS2DO="$(YPPRASLIBS)" ; ADF="-D_YPP_RAS";$(mksrc)
 	@X2DO="ypp_ras" ;XPATH="ypp";XLIBS="$(YPPRASLIBS)"; ADF="-D_YPP_RAS";$(mkx)
 ypp_rt: libs
-	@LIBS2DO="$(YPPLIBS)" ; ADF="-D_YPP_RT";$(mksrc)
-	@X2DO="ypp_rt" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_RT";$(mkx)
+	@LIBS2DO="$(YPPRTLIBS)" ; ADF="-D_YPP_RT -D_RT";$(mksrc)
+	@X2DO="ypp_rt" ;XPATH="ypp";XLIBS="$(YPPRTLIBS)"; ADF="-D_YPP_RT";$(mkx)
 # TESTS #
 yambo_test_1: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_TEST_1"; $(mksrc)

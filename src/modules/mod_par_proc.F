@@ -47,7 +47,7 @@ module par_proc_m
  interface pp_redux_wait
    module procedure i1share,i18share,i2share,i3share,r0share,&
 &                   r1share,r2share,r3share,c1share,c2share,&
-&                   c3share,c4share,pwait
+&                   c3share,c4share,pwait,c0share
  end interface pp_redux_wait
  !
  contains
@@ -318,6 +318,32 @@ module par_proc_m
 &         local_type,mpi_sum,mpi_comm_world,ierr)
      array=reshape(larray,dimensions)
      deallocate(larray)
+     call mpi_barrier(mpi_comm_world,ierr)
+#endif
+   end subroutine
+   !
+   subroutine c0share(cval,imode)
+     complex(SP)       :: cval
+     integer, optional :: imode
+#if defined _MPI
+     integer :: ierr,omode  ! Work Space
+     complex(SP):: local_cval  ! Work Space
+     if (ncpu==1) return
+     !
+     local_type=MPI_COMPLEX
+     if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
+     !
+     call mpi_barrier(mpi_comm_world,ierr)
+     if (present(imode)) then
+       if (imode==1) omode=mpi_sum
+       if (imode==2) omode=mpi_prod
+     else
+       omode=mpi_sum
+     endif
+     local_cval=0.
+     call mpi_allreduce(cval,local_cval,1,&
+&         local_type,omode,mpi_comm_world,ierr)
+     cval=local_cval
      call mpi_barrier(mpi_comm_world,ierr)
 #endif
    end subroutine

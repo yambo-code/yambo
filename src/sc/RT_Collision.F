@@ -32,9 +32,9 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  use QP_m,           ONLY:QP_nk,QP_Sx
  use real_time,      ONLY:I1_lesser,I2_lesser,l_RT_no_updates,l_qp_analyze, &
  &                        l_rt_efield,LifeTime,T_initial,H_t,l_RPA, &
- &                        H_Hartree_0,QP_Vxc_0,Thermal_time,Integrator_name, &
- &                        EXACT,RK2EXACT,rho_rho_gamp,Thermal_eta,l_always_relax, &
- &                        i_time,Thermal_steps,G_lesser_reference,l_fast_exchange
+ &                        H_Hartree_0,V_xc_0,Thermal_time,Integrator_name, &
+ &                        EXACT,RK2EXACT,rho_rho_gamp,Thermal_eta,l_fast_exchange, &
+ &                        i_time,Thermal_steps,G_lesser_reference
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
@@ -78,14 +78,18 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  ! Simple case without any correlation just transition between bands
  ! equivalent to RPA without local field effects
  !
- call pp_indexes_reset(px)
- call par_indexes(px,(/QP_nk/))
- !
  if(.not.l_fast_exchange.and.l_sc_hf) then
    call IO_mute("report io_in io_out")
    call QP_XX_Vxc(Xen,k,k,q,G_input,.false.)
    call IO_mute("  ")
  endif
+ !
+ I1_lesser=(0.,0.)
+ I2_lesser=(0.,0.)
+ if(allocated(H_t)) H_t =  (0.,0.) 
+ !
+ call pp_indexes_reset(px)
+ call par_indexes(px,(/QP_nk/))
  !
  do ik=1,QP_nk 
    !
@@ -108,7 +112,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
      !  I subtract the V_xc term if there is a self-energy /=0 (at least V_h)
      !  and not l_RPA=.true. (used to include local field effects only)
      !
-     if(.not.l_RPA) call V_qp_basis_to_H(ik,-QP_Vxc_0,H_nl_sc) 
+     if(.not.l_RPA) call V_real_space_to_H(ik,-V_xc_0,H_nl_sc,wf) 
      !
    endif
    !
@@ -129,14 +133,12 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
        call V_real_space_to_H(ik,V_hartree_sc+V_xc,H_nl_sc,wf)
      else
        !      
-       call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,wf)
-       !
-       call V_qp_basis_to_H(ik,QP_Vxc_0,H_nl_sc) 
+       call V_real_space_to_H(ik,V_hartree_sc+V_xc_0,H_nl_sc,wf)
        !
      endif
      !
    else
-     call V_qp_basis_to_H(ik,QP_Vxc_0,H_nl_sc) 
+     call V_real_space_to_H(ik,V_xc_0,H_nl_sc,wf)
 #if defined _DOUBLE
      call zaxpy(SC_bands2,(1.,0.),H_Hartree_0(:,:,ik,1),1,H_nl_sc(:,:,1),1)
 #else
@@ -181,7 +183,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
    !
    ! Life-time always for optics 
    !
-   if(i_time<0.and..not.l_always_relax) cycle
+   if(i_time<0) cycle
    !
    ! Fictitious lifetime equivalent to the broadening
    ! in linear optics
@@ -206,6 +208,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
    !
  enddo  !---- loop on k-points
  !
+ if(allocated(H_t)) call pp_redux_wait(H_t(:,:,:,1))
  call pp_redux_wait(I1_lesser)
  call pp_redux_wait(I2_lesser)
  call pp_indexes_reset(px) 

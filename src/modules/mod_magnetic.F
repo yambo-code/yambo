@@ -20,5 +20,6 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 module magnetic
- !
+ real    :: r_0, B_0
+ integer :: AB_cutoff
 end module

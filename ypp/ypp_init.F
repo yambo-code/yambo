@@ -323,8 +323,12 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #if defined _YPP_RT
  l_rsymm     =runlevel_is_on('rsymm')
  !             
+ l_rtoptics  =runlevel_is_on('rtoptics')
+ !
  if (l_rsymm) call initactivate(1,"ExtField1 ExtField2 RmAllSymm")
  !
+ if (l_rtoptics) call initactivate(1,"EnRngeRt ETStpsRt TmRngeRt DampMode DampFactor LongDrRt")
+ ! 
 #endif
  if (l_bzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut GammaRadius")
  !

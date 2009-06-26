@@ -21,7 +21,7 @@
 !
 subroutine ypp_init_load(defs)
  !
- use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_more
+ use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_more,Time_unit
  use wave_func,     ONLY:wf_ng
  use YPP
 #if defined _YPP_RAS
@@ -73,6 +73,7 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'bzrim',   '[R] BZ energy RIM analyzer')
 #if defined _YPP_RT
  call it('r',defs,'rsymm',   '[R] Reduce Symmetries')
+ call it('r',defs,'rtoptics',   '[R] Real-Time Optics')
 #endif
  call it('r',defs,'surf',    '[R] Surface spectroscopy postprocessor')
  call it('r',defs,'ras',     '[R] RAS spectra generator')
@@ -180,6 +181,14 @@ subroutine ypp_init_load(defs)
  call it(defs,'ExtField1','External Field[1]',efield(1,:))
  call it(defs,'ExtField2','External Field[2]',efield(2,:))
  call it('f',defs,'RmAllSymm','Remove all symmetries') 
+ !
+ call it(defs,'EnRngeRt','Energy range',X_rt%energy_range,unit=E_unit)
+ call it(defs,'ETStpsRt','Total Energy steps',X_rt%energy_steps)
+ call it(defs,'TmRngeRt','Time-window where processing is done',X_rt%time_range,unit=Time_unit)
+ call it(defs,'DampMode','Damping/Filtering to be applied before the Fourier transform',X_rt%damp)
+ call it(defs,'DampFactor','Damping parameter used in specific DampMode',X_rt%damp_factor) 
+ call it(defs,'LongDrRt','Electric Field used for the response',X_rt%q0) 
+ call it(defs,'FourierDamp','Damping used in the Fourier Transform',X_rt%eta) 
 #endif
  !
  ! GPL_EXCLUDE_END

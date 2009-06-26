@@ -82,12 +82,20 @@ subroutine el_density(en,Xk,rho,force_si)
   warn_done=.false.
   !
 #if defined _RT
+  !
+  call pp_indexes_reset(px)
+  call par_indexes(px,(/Xk%nibz,SC_bands/))
+  !
   do i1=1,SC_bands
 #else
   do i1=1,en%nbm
 #endif
     do i2=1,Xk%nibz
       !
+#if defined _RT
+      if (.not.px%i2p(i2,i1)) cycle
+#endif
+      !        
       i_spin=1
       !
       ! GPL_EXCLUDE_START SPIN_IGNORE
@@ -135,9 +143,6 @@ subroutine el_density(en,Xk,rho,force_si)
 #if defined _RT
   !
   ! Off-diagonal contributions
-  !
-  call pp_indexes_reset(px)
-  call par_indexes(px,(/Xk%nibz,SC_bands/))
   !
   do ik=1,Xk%nibz
     !      

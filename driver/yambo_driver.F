@@ -277,7 +277,7 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  !
  if (l_sc_run) then
  !
-#if defined _SC
+#if defined _SC || defined _MAGNETIC
    if (.not.l_real_time) call SC_driver(X(:2),Xw(:2),Xk,en,k,q)
 #endif
    !

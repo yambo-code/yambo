@@ -22,7 +22,7 @@ subroutine RT_initialize(file_name,Xen)
  use drivers,        ONLY:l_sc_hf,l_sc_pz
  use SC,             ONLY:SC_bands,rho_n
  use QP_m,           ONLY:QP_Sx_low_band
- use com,            ONLY:msg,of_open_close,warning
+ use com,            ONLY:msg,of_open_close,warning,error
  use real_time,      ONLY:l_RPA,RT_resonant,RT_no_intraband,Thermal_steps,    &
 &                         Thermal_time,RT_step,l_rt_efield,l_fast_exchange,   &
 &                         Ext_Field_Name,G_lesser,G_lesser_previous,i_time,   &
@@ -50,6 +50,8 @@ subroutine RT_initialize(file_name,Xen)
  call parser('NoDiamagnetic',l_no_diamagnetic)
  call parser('AlwaysRelax',l_always_relax)
  call parser('FastExchange',l_fast_exchange)
+ !
+ if(SC_bands==0) call error("SC_bands = 0 ! ")
  !
  i_time=0
  !

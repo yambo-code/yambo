@@ -1,5 +1,5 @@
 RT_SC_objects =
-#if defined _RT || defined _SC
+#if defined _RT || defined _SC || defined _MAGNETIC
 RT_SC_objects = mod_SC.o mod_real_time.o
 #endif
 ELPH_objects =

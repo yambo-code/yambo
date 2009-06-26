@@ -39,7 +39,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
 &                         G_lesser_previous,l_rt_efield,RT_alloc,RT_free,io_G,ID,   &
 &                         A_vec_pot,A_norm,i_time,Integrator_name,j_current,        &
 &                         l_qp_analyze,rho_rho_gamp,G_lesser_reference,QP_Hartree,  &
-&                         l_fast_exchange
+&                         l_fast_exchange,LifeTime
  !
  implicit none
  !
@@ -112,10 +112,14 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  ! G_lesser,G_lesser_previous,G_lesser_reference
  ! 
  call RT_restart(Xen)
+ !                                        
+ ! Calculation already done
+ !
+ if(it_now>Thermal_steps+Tot_steps) return
  !
  if(l_sc_hf) then
    !
-   ! Build rho_rho_gamp(:,:,:,:,nk)
+   ! Build exchage matrix elements
    !
    if(QP_ng_Sx>wf_ng) QP_ng_Sx=wf_ng 
    !
@@ -174,7 +178,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    !
    if(l_qp_analyze) call RT_qp_analyze(it,en,k,Xk,G_lesser)
    !
-   if(it==Thermal_steps.and.Thermal_steps/=0) G_lesser_reference=G_lesser
+   if(it==Thermal_steps.and.Thermal_steps/=0.and.LifeTime/=0.0) &
+     &  G_lesser_reference=G_lesser
    !
    if(l_rt_efield.and.i_time>0)  call RT_current(j_current(:),xK,A_vec_pot(:),G_lesser)
    !

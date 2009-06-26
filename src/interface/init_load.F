@@ -282,8 +282,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'LifeTime',  '[RT]  Quasi-particle Relaxation Time',LifeTime,verb_level=V_more,unit=Time_unit)
  call it('f',defs,'RTQpAnalyze', '[RT] Analyze quasi-particle dynamics in real-time',verb_level=V_more)
  call it('f',defs,'KeepVxc', '[RT] Do not subtract Vxc from the self-energy',verb_level=V_more)
- call it('f',defs,'AlwaysRelax', '[RT] Turn on relaxation also during the adiabatic switching', &
- &  verb_level=V_more)
  call it('f',defs,'NoDiamagnetic', '[RT] Exclude the diamagnetic term in coupling and current',verb_level=V_more)
  call it('f',defs,'FastExchange', '[RT] Use fast Exchange, it requires a lot of memory',verb_level=V_more)
 #endif

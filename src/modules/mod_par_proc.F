@@ -46,8 +46,8 @@ module par_proc_m
  !
  interface pp_redux_wait
    module procedure i1share,i18share,i2share,i3share,r0share,&
-&                   r1share,r2share,r3share,c1share,c2share,&
-&                   c3share,c4share,pwait,c0share
+&                   r1share,r2share,r3share,c0share,c1share,c2share,&
+&                   c3share,c4share,pwait
  end interface pp_redux_wait
  !
  contains

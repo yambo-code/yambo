@@ -28,7 +28,8 @@ subroutine RT_restart(Xen)
  use timing,         ONLY:live_timing
  use electrons,      ONLY:levels,n_sp_pol
  use real_time,      ONLY:G_lesser,ID,io_J,io_G,ID,l_rt_efield,Tot_steps,&
-&                         G_lesser_previous,G_lesser_reference,Thermal_steps  
+&                         G_lesser_previous,G_lesser_reference,Thermal_steps, &
+&                         LifeTime
  use SC,             ONLY:SC_potential,SC_bands,SC_R,E_convergence,it_now,&
 &                        rho_convergence,H_rotate
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,&
@@ -136,6 +137,6 @@ subroutine RT_restart(Xen)
  ! Initialize G_lesser_previous and G_lesser_reference
  !
  G_lesser_previous =G_lesser   
- G_lesser_reference=G_lesser   
+ if(LifeTime/=0.0) G_lesser_reference=G_lesser   
  !
 end subroutine RT_restart

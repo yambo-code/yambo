@@ -115,7 +115,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  !                                        
  ! Calculation already done
  !
- if(it_now>Thermal_steps+Tot_steps) return
+ if(it_now>=Thermal_steps+Tot_steps) return
  !
  if(l_sc_hf) then
    !
@@ -181,7 +181,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    if(it==Thermal_steps.and.Thermal_steps/=0.and.LifeTime/=0.0) &
      &  G_lesser_reference=G_lesser
    !
-   if(l_rt_efield.and.i_time>0)  call RT_current(j_current(:),xK,A_vec_pot(:),G_lesser)
+   if(l_rt_efield.and.i_time>0)  call RT_current(j_current,xK,Xen,A_vec_pot,G_lesser)
    !
    ! Write last G_lesser on disk
    !

@@ -186,9 +186,14 @@ subroutine ypp_init_load(defs)
  call it(defs,'ETStpsRt','Total Energy steps',X_rt%energy_steps)
  call it(defs,'TmRngeRt','Time-window where processing is done',X_rt%time_range,unit=Time_unit)
  call it(defs,'DampMode','Damping/Filtering to be applied before the Fourier transform',X_rt%damp)
- call it(defs,'DampFactor','Damping parameter used in specific DampMode',X_rt%damp_factor) 
- call it(defs,'LongDrRt','Electric Field used for the response',X_rt%q0) 
- call it(defs,'FourierDamp','Damping used in the Fourier Transform',X_rt%eta) 
+ call it(defs,'DampFactor','Damping parameter used in specific DampMode',X_rt%damp_factor,unit=E_unit) 
+ call it(defs,'FourierDamp','Damping used in the Fourier Transform',X_rt%eta,unit=E_unit) 
+ !
+ call it('f',defs,'PrtCurrent','Print induced current')
+ call it('f',defs,'PrtEinduced','Print induced electric field')
+ call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics')
+ !
+
 #endif
  !
  ! GPL_EXCLUDE_END

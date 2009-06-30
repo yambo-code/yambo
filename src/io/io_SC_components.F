@@ -172,7 +172,7 @@ integer function io_SC_components(what,E_sc,ID)
 &     CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,&
 &       VAR=" external field intensity          :",R0=RT_step,CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID, &
+     if(l_G) call io_elemental(ID, &
 &       VAR=" total number of steps          :",I0=Tot_steps,CHECK=.true.,OP=(/">="/))
      call io_elemental(ID, &
 &       VAR=" number of thermalization steps :",I0=Thermal_steps,CHECK=.true.,OP=(/"=="/))
@@ -238,7 +238,15 @@ integer function io_SC_components(what,E_sc,ID)
    !
  endif
  ! 
- call manage_RD_WR_CL_IF_END(ID,ik,nkibz)
+#if defined _RT
+ if(l_J) then
+   call manage_RD_WR_CL_IF_END(ID,ik,Tot_steps)
+ else
+#endif
+   call manage_RD_WR_CL_IF_END(ID,ik,nkibz)
+#if defined _RT
+ endif
+#endif
  !
  ! Potential
  !===========

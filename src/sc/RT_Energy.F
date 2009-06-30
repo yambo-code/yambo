@@ -26,7 +26,7 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,rho_n,H_nl_sc
  use X_m,            ONLY:P_square
- use real_time,      ONLY:G_lesser,l_RT_no_updates,H_Hartree_0,V_xc_0
+ use real_time,      ONLY:G_lesser,l_RT_no_updates,H_Hartree_Vxc_0,V_xc_0
  use electrons,      ONLY:levels,n_sp_pol
  use wave_func,      ONLY:wf
  use FFT_m,          ONLY:fft_size
@@ -181,9 +181,11 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
      H_nl_sc=(0.,0.)
      call V_real_space_to_H(ik,V_xc_0,H_nl_sc,wf) 
 #if defined _DOUBLE
-     E_h=E_h-(0.,1.0)*zdotc(SC_bands2,H_Hartree_0(:,:,ik,1)+H_nl_sc(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+     E_h=E_h-(0.,1.0)*zdotc(SC_bands2,H_Hartree_Vxc_0(:,:,ik,1)+H_nl_sc(:,:,1),1, &
+&        G_lesser(:,:,ik),1)*k%weights(ik)
 #else
-     E_h=E_h-(0.,1.0)*cdotc(SC_bands2,H_Hartree_0(:,:,ik,1)+H_nl_sc(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+     E_h=E_h-(0.,1.0)*cdotc(SC_bands2,H_Hartree_Vxc_0(:,:,ik,1)+H_nl_sc(:,:,1),1, &
+&        G_lesser(:,:,ik),1)*k%weights(ik)
 #endif
      !
    enddo

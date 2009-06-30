@@ -97,7 +97,7 @@ module real_time
  !
  ! Hartree term
  !
- complex(SP), allocatable :: H_Hartree_0(:,:,:,:)
+ complex(SP), allocatable :: H_Hartree_Vxc_0(:,:,:,:)
  complex(SP), allocatable :: H_t(:,:,:,:)
  complex(SP), allocatable :: QP_Hartree(:)
  !
@@ -136,12 +136,16 @@ module real_time
      allocate(G_lesser(SC_bands,SC_bands,QP_nk))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
      !
-     allocate(V_xc_0(fft_size,n_spin))
-     call mem_est("V_xc_0",(/size(V_xc_0)/))
-     !
      if(l_RT_no_updates) then
-       allocate(H_Hartree_0(SC_bands,SC_bands,QP_nk,n_sp_pol))
-       call mem_est("H_Hartree_0",(/size(H_Hartree_0)/),(/2*SP/))
+       !
+       allocate(H_Hartree_Vxc_0(SC_bands,SC_bands,QP_nk,n_sp_pol))
+       call mem_est("H_Hartree_Vxc_0",(/size(H_Hartree_Vxc_0)/),(/2*SP/))
+       !
+     else
+       ! 
+       allocate(V_xc_0(fft_size,n_spin))
+       call mem_est("V_xc_0",(/size(V_xc_0)/))
+       !
      endif
      !
      if(l_qp_analyze.or.trim(Integrator_name)==EXACT.or.trim(Integrator_name)==RK2EXACT) then
@@ -184,7 +188,7 @@ module real_time
    subroutine RT_free
      !
      use drivers,        ONLY:l_sc_hf
-     use SC,             ONLY:V_hartree_sc,Ho,V_xc_Sc,SC_free,E_bare,rho_n
+     use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare,rho_n
      use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:E_xc
      implicit none
@@ -194,13 +198,15 @@ module real_time
      deallocate(E_xc)
      call mem_est('Exc')
      !
-     deallocate(V_xc_0)
-     call mem_est("V_xc_0")
-     !
      if(l_RT_no_updates) then
        !      
-       deallocate(H_Hartree_0)
-       call mem_est("H_Hartree_0")
+       deallocate(H_Hartree_Vxc_0)
+       call mem_est("H_Hartree_Vxc_0")
+       !
+     else
+       ! 
+       deallocate(V_xc_0)
+       call mem_est("V_xc_0")
        !
      endif
      !

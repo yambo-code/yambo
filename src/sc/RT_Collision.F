@@ -32,7 +32,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  use QP_m,           ONLY:QP_nk,QP_Sx
  use real_time,      ONLY:I1_lesser,I2_lesser,l_RT_no_updates,l_qp_analyze, &
  &                        l_rt_efield,LifeTime,T_initial,H_t,l_RPA, &
- &                        H_Hartree_0,V_xc_0,Thermal_time,Integrator_name, &
+ &                        H_Hartree_Vxc_0,V_xc_0,Thermal_time,Integrator_name, &
  &                        EXACT,RK2EXACT,rho_rho_gamp,Thermal_eta,l_fast_exchange, &
  &                        i_time,Thermal_steps,G_lesser_reference
  use wave_func,      ONLY:wf
@@ -138,12 +138,13 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
      endif
      !
    else
-     call V_real_space_to_H(ik,V_xc_0,H_nl_sc,wf)
+     !   
 #if defined _DOUBLE
-     call zaxpy(SC_bands2,(1.,0.),H_Hartree_0(:,:,ik,1),1,H_nl_sc(:,:,1),1)
+     call zaxpy(SC_bands2,(1.,0.),H_Hartree_Vxc_0(:,:,ik,1),1,H_nl_sc(:,:,1),1)
 #else
-     call caxpy(SC_bands2,(1.,0.),H_Hartree_0(:,:,ik,1),1,H_nl_sc(:,:,1),1)
+     call caxpy(SC_bands2,(1.,0.),H_Hartree_Vxc_0(:,:,ik,1),1,H_nl_sc(:,:,1),1)
 #endif
+     !
    endif
    !
    ! Ho is part of the Hamiltonian (or singular self-energy H_nl_sc) 

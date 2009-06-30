@@ -135,12 +135,11 @@ module YPP
  !
  type Xw_rt
    real(SP) :: time_range(2)       ! time windows for the transform
-   real(SP) :: energy_steps        ! number of steps in energy mesh
+   integer  :: energy_steps        ! number of steps in energy mesh
    real(SP) :: energy_range(2)     ! energy range 
    character(schlen) :: damp        ! Damp type (none, lorentian or gaussian)
    real(SP) :: damp_factor         ! factor used in damping
    real(SP) :: eta                 ! damping used in Fourier transform
-   real(SP) :: q0(3)               ! Electric field direction for the response
  end type Xw_rt
  !
  type(Xw_rt) :: X_rt 

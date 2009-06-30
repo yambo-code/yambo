@@ -24,12 +24,16 @@
 subroutine RT_spectrum(en,k)
  !
  use YPP
+ use pars,           ONLY:SP,DP,pi
+ use units,          ONLY:FS2AUT,HARTREE
  use electrons,      ONLY:levels
- use com,            ONLY:error
+ use com,            ONLY:error,msg,of_open_close,warning
+ use stderr,         ONLY:set_real_printed_length
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:bz_samp
- use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,NONE
- use real_time,      ONLY:Tot_steps,RT_step,j_current,A_norm,Ef_q0
+ use parser_m,       ONLY:parser
+ use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,NONE,DUMP
+ use real_time,      ONLY:Tot_steps,RT_step,j_current,A_norm,Ef_q0,i_time
  implicit none
  !
  type(levels)   :: en
@@ -37,13 +41,21 @@ subroutine RT_spectrum(en,k)
  !
  ! Work Space
  !
- integer  :: io_J,ID
+ integer  :: io_J,io_G,ID(2)
  integer  :: damp,i1,i2
- integer  :: niter,istart,iend
- real(SP) :: dt,av
+ integer  :: niter,istart,iend,nsteps
+ logical  :: Prt_Current,Prt_Einduced,Use_FFT
+ character(lchlen)  :: file_name(3),dump_ch
+ character(schlen)  :: headings(7)
+ real(SP)           :: values(8)
+ real(SP) :: av,omega,tt,de
  real(SP), allocatable :: damp_function(:)
  real(SP), allocatable :: current(:,:)
- complex(SP), allocatable :: Avec(:,:)
+ complex(SP), allocatable :: Avec(:)
+ complex(DP), allocatable :: dielectric(:,:)
+ real(DP), allocatable :: E_induced(:,:)
+ integer     :: fft_sign
+ integer(8)  :: fftw_plan
  !
  ! Parameters
  !
@@ -52,6 +64,10 @@ subroutine RT_spectrum(en,k)
  integer, parameter :: DAMP_GAUSSIAN   = 2    
  integer, external  :: io_SC_components
  !
+ call msg("s",'Real-Time reposne analizer')
+ call parser('PrtCurrent',Prt_Current)
+ call parser('PrtEinduced',Prt_EInduced)
+ call parser('UseFFT',Use_FFT)
  ! 
  ! Check damping mode
  !
@@ -67,8 +83,17 @@ subroutine RT_spectrum(en,k)
  !
  ! Check for saved current and vector potential
  !
- call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID) ! Current response
- io_J=io_SC_components('J' ,en,ID)
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID(1)) ! Current response
+ io_J=io_SC_components('J' ,en,ID(1))
+ !
+ if(io_J/=0) call error(" Error reading current file ")
+ !
+ ! Read last G_lesser to obtain Tot_steps
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID(2)) 
+ io_G=io_SC_components('G' ,en,ID(2))
+ !
+ if(io_G/=0) call error(" Error reading G_lesser file ")
  !
  ! Fix Time limits
  !
@@ -79,6 +104,8 @@ subroutine RT_spectrum(en,k)
  if(iend<=0.0.or.iend>Tot_steps)     iend  =Tot_steps
  !
  niter=iend-istart+1
+ !
+ omega=2.*pi/(dble(niter)*RT_step)  ! Frequency step in real-time dynamics
  !
  ! Calculate damping function
  !
@@ -91,23 +118,30 @@ subroutine RT_spectrum(en,k)
     case(DAMP_NONE)
       damp_function(i1) = 1.0
     case(DAMP_LORENTZIAN)
-      damp_function(i1)= exp(-i2*dt*X_rt%damp_factor)
+      damp_function(i1)= exp(-i2*RT_step*X_rt%damp_factor)
     case(DAMP_GAUSSIAN)
-      damp_function(i1)= exp(-(i2*dt)**2*X_rt%damp_factor**2)
+      damp_function(i1)= exp(-(i2*RT_step)**2*X_rt%damp_factor**2)
     end select
+    !
  enddo
  !
  ! Read Current and Vector Potential
  !
- allocate(current(3,istart:iend),Avec(3,istart:iend))
+ allocate(current(istart:iend,3),Avec(istart:iend))
  !
- do i1=1,Tot_steps
+ do i_time=1,Tot_steps
    !      
-   call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/i1+1/),ID=ID) ! Current response
-   io_J=io_SC_components('J' ,en,ID)
-   if(i1>=istart.and.i1<=iend) then
-     current(:,i1)=j_current(:)
-     Avec(:,i1)   =Ef_q0(:)*A_norm
+   if(i_time==1) then
+     call io_control(ACTION=OP_RD,COM=NONE,MODE=DUMP,SEC=(/1,2/),ID=ID(1)) 
+   else
+     call io_control(ACTION=RD_CL_IF_END,COM=NONE,MODE=DUMP,SEC=(/i_time+1/),ID=ID(1)) 
+   endif
+   io_J=io_SC_components('J' ,en,ID(1))
+   !
+   !
+   if(i_time>=istart.and.i_time<=iend) then
+     current(i_time,:)=j_current(:)
+     Avec(i_time)     =A_norm  ! to get the Vector one just multiply for versor Ef_q0(:)
    endif
    !
  enddo
@@ -115,8 +149,162 @@ subroutine RT_spectrum(en,k)
  ! Remove the dc component
  !
  do i1 = 1, 3
-  av = sum(current(i1, istart:iend))
-  current(i1, istart:iend) = current(i1, istart:iend) - av/dble(niter)
- end do
+  av = sum(current( istart:iend, i1))
+  current( istart:iend, i1) = current(istart:iend ,i1) - av/dble(niter)
+ enddo
+ !
+ ! Print current and vector potential if required
+ !
+ if(Prt_Current) then
+   !
+   call set_real_printed_length(f_length=15,g_length=15)
+   file_name(1)="current"
+   call of_open_close(file_name(1),'ot')
+   headings(1)="Time"
+   headings(2)="ReA"
+   headings(3)="ImA"
+   headings(4)="j_x"
+   headings(5)="j_y"
+   headings(6)="j_z"
+   call msg('o current','#',headings(1:6),INDENT=-2,USE_TABS=.TRUE.)
+   do i1=istart,iend
+     values(1:6)=(/RT_step*(i1-1+istart)/FS2AUT,real(Avec(i1)),aimag(Avec(i1)), &
+&                 current(i1,1),current(i1,2),current(i1,3)/)
+     call msg('o current','',values(1:6),USE_TABS=.TRUE.)
+   enddo
+   !
+   call set_real_printed_length()
+   call of_open_close(file_name(1))
+   !
+ endif
+ !
+ ! Calculate the induced Electric Field
+ !
+ allocate(E_induced(istart:iend,3))
+ call mem_est("E_induced",(/size(E_induced)/),(/SP/))
+ !
+ E_induced=(0.,0.) 
+ !  
+ do i1=istart, iend
+   do i2=1,3
+     E_induced(i1,i2)=-sum(current(istart:i1,i2))*RT_step
+   enddo
+ enddo
+ !
+ ! Apply the damping function
+ !
+ E_induced(:,1)=E_induced(:,1)*damp_function(:)
+ E_induced(:,2)=E_induced(:,2)*damp_function(:)
+ E_induced(:,3)=E_induced(:,3)*damp_function(:)
+ !
+ if(Prt_Einduced) then
+   !
+   call set_real_printed_length(f_length=15,g_length=15)
+   !
+   file_name(2)="einduced"
+   call of_open_close(file_name(2),'ot')
+   headings(1)="Time"
+   headings(2)="E_x"
+   headings(3)="E_y"
+   headings(4)="E_z"
+   call msg('o einduced','#',headings(1:4),INDENT=-2,USE_TABS=.TRUE.)
+   do i1=istart,iend
+     values(1:4)=(/RT_step*(i1-1+istart)/FS2AUT, &
+&    real(E_induced(i1,1),4),real(E_induced(i1,2),4) , real(E_induced(i1,3),4)/)
+     call msg('o einduced','',values(1:4),USE_TABS=.TRUE.)
+   enddo
+   !
+   call set_real_printed_length()
+   call of_open_close(file_name(2))
+   !
+ endif
+ !
+ if(Use_FFT) then
+   call warning("Energy steps and range reset from real-time dynamics")
+   !
+   X_rt%energy_steps   =niter/2+1
+   X_rt%energy_range(1)=omega
+   X_rt%energy_range(2)=omega*niter/2.
+   de=(X_rt%energy_range(2) - X_rt%energy_range(1))/X_rt%energy_steps
+   !
+ else
+   de=(X_rt%energy_range(2) - X_rt%energy_range(1))/X_rt%energy_steps
+ endif
+ !
+ ! Calculate Dielectric constant
+ ! it works only for constant vector potentials
+ !
+ allocate(dielectric(X_rt%energy_steps,1:3))  
+ call mem_est("Dielectric",(/size(Dielectric)/),(/2*SP/))
+ !
+ dielectric=(0.,0.)
+ !
+ if(Use_FFT) then
+  !
+  fftw_plan=0
+  fft_sign =-1
+  !
+  do i1=1,3
+    !
+#if defined _FFTW
+   call fft_1d_real(E_induced(:,i1),dielectric(:,i1),niter,fft_sign,fftw_plan)
+#else
+   call fft_1d_real(E_induced(:,i1),dielectric(:,i1),niter,fft_sign)
+#endif
+    !
+  enddo
+  !
+  dielectric(:,:)=dielectric(:,:)/sqrt(dble(niter))  
+  !
+ else
+  ! 
+  do i1 = 1, X_rt%energy_steps
+    omega = (i1-1)*de+X_rt%energy_range(1)
+    do i2 = istart, iend
+      tt = i2*RT_step
+      dielectric(i1,1:3) = dielectric(i1,1:3) &
+      &  + E_induced(i2,1:3)*exp(((0.,1.)*omega - X_rt%eta)*tt)*RT_step
+    enddo
+  enddo
+  !
+ endif
+ !
+ dielectric(:,:) = dielectric(:,:)/Avec(1) + (1.,0.)
+ dielectric(:,:) = (1.,0.)/dielectric(:,:)
+ !
+ ! Write dielectric constant 
+ !
+ file_name(3)='eps_q001_rt'
+ call of_open_close(file_name(3),'ot')
+ !
+ write(dump_ch,*) " Max Frequency Range: ",omega*HARTREE," - ",omega*dble(niter/2.)*HARTREE," eV "
+ call msg('o eps_q001_rt','#',dump_ch,INDENT=0,USE_TABS=.true.)
+ call msg('o eps_q001_rt','#','',INDENT=0,USE_TABS=.true.)
+ !
+ headings(1)  ='E/ev[1]'
+ headings(2:3)=(/'e_x/Im[2]','e_x/Re[3]'/)
+ headings(4:5)=(/'e_y/Im[4]','e_y/Re[5]'/)
+ headings(6:7)=(/'e_z/Im[6]','e_z/Re[7]'/)
+ !
+ call msg('o eps_q001_rt','#',headings(1:7),INDENT=0,USE_TABS=.true.)
+ !
+ do i1=1,X_rt%energy_steps
+   values(1)= ((i1-1)*de+X_rt%energy_range(1))*HARTREE
+   !
+   do i2=1,3
+     values(2*i2)       = aimag(dielectric(i1,i2))
+     values(2*i2+1)     =  real(dielectric(i1,i2))
+   enddo
+   !
+   call msg('o eps_q001_rt','',values(1:7),INDENT=-2,USE_TABS=.TRUE.)
+   !
+ enddo
+ !
+ call of_open_close(file_name(3))
+ ! 
+ deallocate(E_induced,dielectric,current,damp_function)
+ call mem_est("Dielectric")
+ call mem_est("E_induced")
+ call mem_est("Damp_Function")
  !
 end subroutine

@@ -273,6 +273,7 @@ subroutine RT_fix_symmetries(E,k)
    call rm_file((trim(core_io_path))//"/SAVE/ndb.gops")
    call rm_file((trim(core_io_path))//"/SAVE/db.kindx")
    call rm_file((trim(core_io_path))//"/SAVE/db.gops")
+   call rm_file((trim(core_io_path))//"/SAVE/ns.kb_pp")
    call rm_file((trim(core_io_path))//"/SAVE/s.kb_pp")
    call msg('l','done')
  endif

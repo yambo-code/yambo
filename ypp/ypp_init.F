@@ -21,7 +21,7 @@
 !
 subroutine ypp_init(instr,lnstr,FINALIZE)
  !
- use units,          ONLY:HARTREE
+ use units,          ONLY:HARTREE,FS2AUT
  use wave_func,      ONLY:wf_ng 
  use R_lattice,      ONLY:ng_vec
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
@@ -161,9 +161,19 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    gamma_radius=0.
    !
 #if defined _YPP_RT
+   !
    !REMOVE SYMMETRIES
    !
    efield=0._SP
+   !
+   !ANALIZE RESPONSE
+   !
+   X_rt%time_range(:)  =(/-FS2AUT,-FS2AUT/)
+   X_rt%energy_steps   =100
+   X_rt%energy_range(:)=(/0.,10./HARTREE/)
+   X_rt%damp           ="LORENTZIAN"
+   X_rt%damp_factor    =0.01/HARTREE
+   X_rt%eta            =0.1/HARTREE
    !
 #endif
    ! GPL_EXCLUDE_END
@@ -327,7 +337,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (l_rsymm) call initactivate(1,"ExtField1 ExtField2 RmAllSymm")
  !
- if (l_rtoptics) call initactivate(1,"EnRngeRt ETStpsRt TmRngeRt DampMode DampFactor LongDrRt")
+ if (l_rtoptics) then 
+    call initactivate(1,"EnRngeRt ETStpsRt TmRngeRt DampMode DampFactor FourierDamp")
+    call initactivate(1,"PrtCurrent PrtEinduced")
+ endif
  ! 
 #endif
  if (l_bzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut GammaRadius")

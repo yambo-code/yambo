@@ -35,6 +35,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  use electrons,      ONLY:n_spin
  use par_proc_m,     ONLY:master_cpu,pp_redux_wait
  use timing,         ONLY:what_is_running
+ use ELPH,           ONLY:gsqF_energy_steps
 #if defined _YPP_RAS
  use bulkeps,        only : bshift, bbroad, bfile, btype 
  use convolute,      only : gbroad
@@ -114,6 +115,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    elph_Ef=0.
    elph_dbs_path='.'
    ph_freqs_file='none'
+   gsqF_energy_steps=1
    !
 #endif
    !

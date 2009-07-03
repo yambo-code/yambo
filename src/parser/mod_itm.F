@@ -32,6 +32,7 @@ module it_m
  character(2),parameter :: G_unit='RL'
  character(2),parameter :: T_unit='eV'
  character(2),parameter :: Time_unit='fs'
+ character(2),parameter :: B_unit='T'
  ! 
  ! Verbosity
  !
@@ -552,12 +553,14 @@ module it_m
      endif
    end subroutine
    !
-   subroutine loadchvar(defs,name,description,defval,verb_level)
+   subroutine loadchvar(defs,name,description,defval,verb_level,protect)
+     use drivers,        ONLY:infile_editing
      use parser_m,       ONLY:parser
      character(*)::name,description,defval
      type(initdefs)::defs
      integer::v_id
-     integer, optional::verb_level !ws
+     integer, optional::verb_level 
+     logical, optional::protect
      if (initmode==0) then
        chst=0
        nchv=nchv+1
@@ -571,13 +574,9 @@ module it_m
          if (trim(chvars(i1,1))==trim(name)) then
            v_id=i1
            if (initmode==4) then
-             if (trim(name)=='OutDir'.and.trim(defs%chdef(i1))/='.') cycle
-             if (trim(name)=='InDir'.and.trim(defs%chdef(i1))/='.') cycle
-             if (trim(name)=='BSSmod'.and.trim(defs%chdef(i1))/='') cycle
-             if (trim(name)=='DysSolver'.and.trim(defs%chdef(i1))/='') cycle
-#if !defined _RT
-             if (trim(name)=='SCPot'.and.trim(defs%chdef(i1))/='none') cycle
-#endif
+             if (present(protect)) then
+               if (.not.protect.and.infile_editing) cycle
+             endif
              call parser(trim(name),defs%chdef(i1))
            endif
            if (initmode<=3) defs%chdef(i1)=defval

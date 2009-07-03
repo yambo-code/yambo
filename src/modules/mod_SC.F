@@ -49,6 +49,7 @@ module SC
  real(SP),    allocatable :: V_xc_sc(:,:)
  real(SP),    allocatable :: V_hartree_sc(:,:)
  real(SP),    allocatable :: rho_n(:)
+ real(SP),    allocatable :: el_mag_n(:,:)
  !
  ! Kinetic Energy and Ionic potential energy
  !
@@ -58,6 +59,10 @@ module SC
  ! Non-Local part (sigma_x, sigma_chosex)
  !
  complex(SP), allocatable :: H_nl_sc(:,:,:)
+ !
+ ! Wavefunction indexes
+ !
+ integer :: WF_G_max,WF_Go_indx
  !
  interface
    !
@@ -88,17 +93,30 @@ module SC
      !
      QP_nb=SC_bands
      QP_nk=nkibz
+     ! 
+     ! QP_state my be read from DBs at start-up
+     !
+     if (allocated(QP_state)) deallocate(QP_state)
      !
      allocate(QP_state(QP_nb,QP_nk))
      call mem_est("QP_state",(/QP_n_states*QP_nk/))
      QP_state=.TRUE.
      call QP_state_table_setup(E)
      !
-     allocate(Ho(SC_bands,SC_bands,E%nk,n_sp_pol))
-     call mem_est("Ho",(/size(Ho)/),(/2*SP/))
+     ! In the magnetic project Ho has already been allocated
+     !
+     if (.not.allocated(Ho)) then
+       allocate(Ho(SC_bands,SC_bands,E%nk,n_sp_pol))
+       call mem_est("Ho",(/size(Ho)/),(/2*SP/))
+     endif
      !
      allocate(rho_n(fft_size))
      call mem_est("rho",(/fft_size/),(/SP/))
+     !
+     if (n_spin>1) then
+       allocate(el_mag_n(fft_size,3))
+       call mem_est("el_mag_n",(/fft_size*3/),(/SP/))
+     endif
      !
      allocate(V_hartree_sc(fft_size,n_spin))
      call mem_est("Hartree_Potential",(/size(V_hartree_sc)/))
@@ -120,6 +138,7 @@ module SC
    !
    subroutine SC_free()
      use drivers,        ONLY:l_real_time,l_sc_chosex
+     use electrons,      ONLY:n_spin
      use QP_m,           ONLY:QP_Sc
      use memory_m,       ONLY:mem_est
      implicit none
@@ -132,6 +151,11 @@ module SC
      !
      deallocate(rho_n)
      call mem_est("rho")
+     !
+     if (n_spin>1) then
+       deallocate(el_mag_n)
+       call mem_est("el_mag_n")
+     endif
      !
      deallocate(V_hartree_sc)
      call mem_est("Hartree_Ptential")

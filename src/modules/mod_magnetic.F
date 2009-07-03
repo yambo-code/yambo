@@ -20,6 +20,13 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 module magnetic
- real    :: r_0, B_0
- integer :: AB_cutoff
+ !
+ use pars, ONLY:SP,schlen
+ !
+ character(schlen) :: MAG_hamiltonian
+ real(SP)    :: MAG_B_z
+ real(SP)    :: MAG_radius 
+ logical     :: MAG_pauli
+ logical     :: MAG_landau
+ !
 end module

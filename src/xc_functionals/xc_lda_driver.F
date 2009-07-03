@@ -129,7 +129,6 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
  ! GPL_EXCLUDE_START SPIN_IGNORE
  !
- !
  if (n_spin==2) then
    !
    ! Electronic magnetization & Zeta

@@ -21,7 +21,6 @@
 !
 subroutine SC_common_build_Ho(E,Xk,k)
  !
- use pars,           ONLY:SP
  use com,            ONLY:error
  use electrons,      ONLY:levels,n_sp_pol,spin
  use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
@@ -38,7 +37,7 @@ subroutine SC_common_build_Ho(E,Xk,k)
  !
  ! Work space
  !
- integer   :: i1,ik,ib,i_spin
+ integer   :: ik,ib,i_spin
  !
  allocate(QP_Vxc(QP_n_states))
  call mem_est("QP_Vxc",(/QP_n_states/))    
@@ -68,9 +67,12 @@ subroutine SC_common_build_Ho(E,Xk,k)
  !
  !
 #if !defined _MAGNETIC
+ !
  ! If we are using yambo_magnetic now Ho already
  ! contains H_magnetic
+ !
  Ho=(0.,0.)
+ !
 #endif
  !
  call V_Hartree(rho_n,V_hartree_sc)

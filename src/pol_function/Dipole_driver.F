@@ -27,7 +27,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if defined _RAS
  use ras_module,     ONLY:transloc, lras
 #endif
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
  use SC,             ONLY:using_SC_basis,SC_bands,local_V,&
 &                         load_SC_components
  use global_XC,      ONLY:WF_kind,WF_xc_functional,MORE_NONE,setup_global_XC
@@ -62,7 +62,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  if (allocated(DIP_iq_dot_r)) return
  !
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
  ! Check first the kind of the wavefunctions 
  ! 
  call load_SC_components('check_bands',n_bands=X%ib(2),&
@@ -73,7 +73,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! Transitions ordering
  !
  Dipole_bands_ordered=.true.
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
  Dipole_bands_ordered=.not.using_SC_basis.or.(using_SC_basis.and.local_V)
  if (Eval_P_and_P2_only) Dipole_bands_ordered=.FALSE.
 #else
@@ -100,7 +100,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=ioOSTNTS(X,Xen,ID)
  !
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
  if (Eval_P_and_P2_only) call IO_mute(" ")
 #endif
  !
@@ -115,7 +115,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      call X_alloc('OptGrad',(/3,X%ib(2),Xen%nbm,Xk%nibz/))
    else
      call X_alloc('OptGrad',(/3,X%ib(2),X%ib(2),Xk%nibz/))
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
      if (Eval_P_and_P2_only) then
        call X_alloc('P_square',(/X%ib(2),X%ib(2),Xk%nibz/))
        P_square=(0.,0.)
@@ -157,7 +157,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    ! Free any loaded WFs
    !
    call WF_free()
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
    !
    ! Swith off I/O in case gradient is calculated
    !
@@ -172,7 +172,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
  end if
  !
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
  if (Eval_P_and_P2_only) then
    call IO_mute(" ")
    return

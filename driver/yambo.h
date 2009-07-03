@@ -65,12 +65,14 @@
 #if defined _ELPH || defined _SOLITONS
   {"corrtp", "s","Correlation [opt=e(lectrons)/p(honons)/b(oth)]",0,0,1,0},    
 #endif
-#if defined _SC | defined _MAGNETIC
-  {"scpot",  "v","Self-Consistent Potential [opt=(n)none,(hf),(c)hosex,(exx),(exxc),(h)artree]",0,0,1,0}, 
+#if defined _SC | defined _MAGNETIC | defined _RT
+  {"scpot",  "v","Self-Consistent Potential [opt=(n)none,(hf),(c)hosex,(exx),(exxc),(h)artree,(d)ef]",0,0,1,0}, 
 #endif
 #if defined _RT 
-  {"scpot",  "v","Self-Consistent Potential [opt=(n)none,(hf),(c)hosex,(exx),(exxc),(h)artree]",0,0,1,0}, 
   {"negf",   "k","Real-time dynamics",0,0,0,0}, 
+#endif
+#if defined _MAGNETIC 
+  {"magnetic", "m","Magnetic [opt=(p)auli,(l)andau,(a)ll]",0,0,1,0}, 
 #endif
   {NULL,NULL,NULL,0,0,0,0}
  };

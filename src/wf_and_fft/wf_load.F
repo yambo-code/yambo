@@ -38,7 +38,7 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  use timing,        ONLY:live_timing
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,REP,&
 &                        io_fragmented, io_netcdf_support, RD_CL,DUMP
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
  use SC,            ONLY:using_SC_basis,SC_R,load_SC_components
  use global_XC,     ONLY:WF_kind,WF_xc_functional,&
 &                        setup_global_XC,MORE_NONE
@@ -234,7 +234,7 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  ! Rotate in the SC basis
  !========================
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
  !
  ! First check if there are enough bands
  !

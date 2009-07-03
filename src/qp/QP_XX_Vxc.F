@@ -29,7 +29,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  !
  use pars,          ONLY:SP,schlen,DP,pi
  use units,         ONLY:HARTREE
- use drivers,       ONLY:l_sc_run,l_acfdt,l_sc_exx,l_sc_exxc,l_real_time
+ use drivers,       ONLY:l_sc_run,l_acfdt,l_sc_exx,l_real_time
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg,depth
  use timing,        ONLY:live_timing
@@ -42,7 +42,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  use R_lattice,     ONLY:qindx_S,bz_samp
  use wave_func,     ONLY:wf,wf_load,wf_ng,WF_free
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
  use SC,            ONLY:it_now,SC_bands
  use real_time,     ONLY:l_fast_exchange,rho_rho_gamp
 #endif
@@ -164,7 +164,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
    call pp_redux_wait
    !
    ch='EXS'
-#if defined _SC 
+#if defined _SC  || defined _MAGNETIC
    if (l_sc_run) ch='EXS@it'//trim(intc(it_now))
 #endif
    !
@@ -218,7 +218,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
          call live_timing(steps=1)
 #endif
          !
-#if defined _SC 
+#if defined _SC  || defined _MAGNETIC
          !
          ! In Exact-Exchange only vc matrix elements so ... no cc' no vv' 
          ! (cv is not permitted by the order in QP_table)

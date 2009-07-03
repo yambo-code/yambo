@@ -73,7 +73,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,&
 &                     using_SC_basis,SC_cycle_mixing,SC_fft_size
 #endif
@@ -83,6 +83,9 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     EF_q0,LifeTime,RT_no_intraband,RT_resonant,l_RPA, &
 &                     l_qp_analyze,Thermal_eta,l_always_relax,l_fast_exchange 
 
+#endif
+#if defined _MAGNETIC
+ use magnetic,    ONLY:MAG_B_z,MAG_radius,MAG_Hamiltonian,MAG_landau,MAG_pauli
 #endif
  !
  implicit none
@@ -225,13 +228,10 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_el_corr=.false.
  l_ph_corr=.false.
  l_sc_run=.false.
- l_sc_hartree=.false.
  l_sc_hf=.false.
  l_sc_chosex=.false.
  l_sc_exx=.false.
- l_sc_exxc=.false.
- l_sc_lda_x=.false.
- l_sc_pz=.false.
+ l_sc_contains_lda=.false.
  !
  !electrons
  !
@@ -374,7 +374,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  GS_xc_FUNCTIONAL=-1             ! unknow 
  GS_xc_KIND=-1                   ! unknow 
  !
-#if defined _ELPH || defined _SOLITONS
+#if defined _ELPH || defined _SOLITONS 
  !
  ! ELPH
  !
@@ -384,7 +384,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  gsqF_energy_steps=2
 #endif
  !
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
  ! SC
  !
  SC_fft_size=0
@@ -417,6 +417,17 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_always_relax=.FALSE.
  l_fast_exchange=.FALSE.
  !
+#endif
+ !
+#if defined _MAGNETIC
+ !
+ ! Magnetic
+ !
+ MAG_B_z=0.
+ MAG_radius=0.
+ MAG_Hamiltonian='pauli'
+ MAG_pauli=.FALSE.
+ MAG_landau=.FALSE.
 #endif
  !
 end subroutine

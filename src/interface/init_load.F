@@ -32,7 +32,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use pars,          ONLY:schlen
  use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
- use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,V_more,&
+ use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,V_more,B_unit,&
 &                        V_qp,V_io,V_testing,Time_unit
  use X_m,           ONLY:X_t,long_path
  use QP_m,          ONLY:QP_rep_string,QP_cg_percent,QP_G_damp,QP_solver,&
@@ -53,7 +53,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
  use com,           ONLY:more_io_path,com_path
  use functions,     ONLY:bose_E_cut
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential,&
 &                        SC_rho_threshold,SC_cycle_mixing
 #endif
@@ -62,6 +62,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        Ext_Field_Int, Ext_Field_name,Integrator_name,EF_q0,LifeTime, &
 &                        DiagH_Iter,Thermal_eta
 
+#endif
+#if defined _MAGNETIC
+ use magnetic,      ONLY:MAG_B_z,MAG_Hamiltonian,MAG_radius
 #endif
 #if defined _RAS
  use bulkeps,              ONLY : init_bulk
@@ -129,11 +132,14 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! GPL_EXCLUDE_END
  !
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
  call it('r',defs,'scpot',   '[R] Self-Consistent potentials') 
 #endif
 #if defined _RT
  call it('r',defs,'negf',    '[R] Real-Time dynamics') 
+#endif
+#if defined _MAGNETIC
+ call it('r',defs,'magnetic','[R] Magnetic fields')
 #endif
 #if defined _RAS
  call it('r',defs,'sursp',  '[R] Surface Spectroscopy ') 
@@ -171,7 +177,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! GPL_EXCLUDE_START GW_REAL_AXIS_IGNORE
  !
- call it(defs,'DysSolver','[GW] Dyson Equation solver (`n`,`s`,`g`)',QP_solver)
+ call it(defs,'DysSolver','[GW] Dyson Equation solver (`n`,`s`,`g`)',QP_solver,protect=.FALSE.)
  !
  ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
  !
@@ -182,7 +188,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
- call it(defs,'BSSmod',  '[BSS] Solvers `h/d/i/t`',BSS_mode)
+ call it(defs,'BSSmod',  '[BSS] Solvers `h/d/i/t`',BSS_mode,protect=.FALSE.)
  call it(defs,'BLongDir','[BSS] [cc] Electric Field',BSS_q0)
  call it(defs,'BEnRange','[BSS] Energy range',BSS_er,E_unit)
  call it(defs,'BDmRange','[BSS] Damping range',BSS_dr,E_unit)
@@ -286,6 +292,12 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'FastExchange', '[RT] Use fast Exchange, it requires a lot of memory',verb_level=V_more)
 #endif
  !
+#if defined _MAGNETIC
+ call it(defs,'Hamiltonian','[MAG] Hamiltonian kind [pauli,landau]',MAG_Hamiltonian,protect=.FALSE.)
+ call it(defs,'B_z_Field',  '[MAG] Magnetic field z component',MAG_B_z,unit=B_unit)
+ call it(defs,'B_radius',   '[MAG] Magnetic flux radius',MAG_radius)
+#endif
+ !
  ! GPL_EXCLUDE_END SC_IGNORE
  !
  ! QP ctl 
@@ -345,7 +357,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! 
  ! SC
  !
-#if defined _SC
+#if defined _SC || defined _MAGNETIC
  call it(defs,'SCIter',    '[SC] SC Iterations',SC_iterations)
  call it(defs,'SCEtresh',  '[SC] Energy convergence threshold',SC_E_threshold,unit=E_unit)
  call it(defs,'SCRhoTresh','[SC] Rho convergence threshold',SC_rho_threshold)
@@ -354,10 +366,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! 
  ! SC [common with RT]
  !
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_more)
- call it(defs,'SCPot',     '[SC] SC Potential',SC_potential)
+ call it(defs,'SCPot',     '[SC] SC Potential',SC_potential,protect=.FALSE.)
  call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)
 #endif
  ! 

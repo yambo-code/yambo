@@ -35,7 +35,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use electrons,      ONLY:levels,spin_occ,spin
  use R_lattice,      ONLY:d3k_factor,bz_samp,q_norm
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,NONE
-#if defined _SC
+#if defined _SC || defined _MAGNETIC
  use SC,             ONLY:using_SC_basis
 #endif
  !
@@ -194,7 +194,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! GPL_EXCLUDE_END
  !
-#if defined _SC
+#if defined _SC || defined _MAGNETIC
  if (using_SC_basis) call f_sum_rule(W_bss)
 #endif
  !

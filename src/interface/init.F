@@ -60,13 +60,16 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined  _ELPH || defined _SOLITONS
  use ELPH,           ONLY:elph_nq,elph_nq_used
 #endif
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
  use SC,             ONLY:SC_potential,SC_ng_Sx,SC_X_bands,SC_X_size
+#endif
+#if defined _MAGNETIC
+ use magnetic,        ONLY:MAG_Hamiltonian,MAG_pauli,MAG_landau
 #endif
  !
  implicit none
  type(levels) ::en        
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
  type(levels) ::en_sc
 #endif
  type(bz_samp)::q,k   
@@ -88,7 +91,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer, external :: ioE_RIM
  ! GPL_EXCLUDE_END
  !
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
  integer, external :: io_SC_components 
 #endif
 #if defined _ELPH || defined _SOLITONS
@@ -130,6 +133,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SOLITONS 
  what_is_running='YAMBO_SOLITONS'
 #endif
+#if defined _MAGNETIC
+ what_is_running='YAMBO_MAGNETIC'
+#endif
  !
  !Presets (input)
  !
@@ -137,7 +143,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (.not.FINALIZE.and..not.CLOSE_Gs) then
    call E_reset(en)
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
    call E_reset(en_sc)
 #endif
    call bz_samp_reset(k)
@@ -337,7 +343,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! SC 
  !
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_SC_err=io_SC_components('E',en_sc,io_ID)
 #endif
@@ -551,7 +557,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! DFT
  !
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
  if (l_sc_run) then
    call initactivate(1,'SCPot FFTGvecs SCmixing SCBands BandMix')
    if (l_real_time) then
@@ -564,6 +570,17 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    endif
    call initactivate(-1,'QpntsRXs')
  endif
+#endif
+ !
+#if defined _MAGNETIC
+ !
+ ! Magnetic
+ !
+ if (l_sc_magnetic) then
+   call initactivate(1,'Hamiltonian B_z_Field')
+   if (MAG_landau) call initactivate(1,'B_radius')
+ endif
+ !
 #endif
  !
  ! RAS
@@ -758,9 +775,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! GPL_EXCLUDE_END SC_IGNORE
        ! 
        ! 
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC 
        l_sc_run=runlevel_is_on('scpot')
        l_real_time=runlevel_is_on('negf')
+       l_sc_magnetic=runlevel_is_on('magnetic')
 #endif
 #if defined  _RAS
        lreels=runlevel_is_on('reels')
@@ -843,7 +861,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
      endif
      !
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
+     if (l_sc_magnetic) then
+       call initactivate(1,'scpot')
+       SC_potential='default'
+     endif
      if (l_sc_run.and.io_SC_err==0) then
        QP_ng_Sx=SC_ng_Sx
        X(2)%ib=SC_X_bands
@@ -1046,7 +1068,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
        ! Sc / NEGF
        !
-#if defined _SC || defined _RT
+#if defined _SC || defined _RT || defined _MAGNETIC
        if ( trim(rstr_piece(i1)) == 'scpot' )  then
          if ( trim(rstr_piece(i1+1)) == 'exx' ) then
            SC_potential='EXX'
@@ -1064,6 +1086,23 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            SC_potential='HARTREE'
          else if ( trim(rstr_piece(i1+1)) == 'n') then
            SC_potential='none'
+         else if ( trim(rstr_piece(i1+1)) == 'd') then
+           SC_potential='default'
+         endif
+       endif
+#endif
+#if defined _MAGNETIC
+       if ( trim(rstr_piece(i1)) == 'magnetic' )  then
+         if ( trim(rstr_piece(i1+1)) == 'p' ) then
+           MAG_Hamiltonian='pauli'
+           MAG_pauli=.true.
+         else if ( trim(rstr_piece(i1+1)) == 'l' ) then
+           MAG_Hamiltonian='landau'
+           MAG_landau=.true.
+         else if ( trim(rstr_piece(i1+1)) == 'a') then
+           MAG_Hamiltonian='all'
+           MAG_landau=.true.
+           MAG_pauli=.true.
          endif
        endif
 #endif

@@ -42,6 +42,7 @@ subroutine barriers()
  !  BSE DIAGO   bss_diago      BSE INV     bss_inv 
  !  BSE HAYD    bss_haydock    SC          l_sc_run
  !  TDHF
+ !  MAGNETIC    l_magnetic
  !
  use drivers
  use pars,       ONLY:schlen
@@ -105,7 +106,7 @@ subroutine barriers()
  ! GPL_EXCLUDE_START SC_IGNORE
  !
  if (l_sc_run) then
-   call switch_off_runlevel('all',on_name='scpot xxvxc chosex em1s negf '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='scpot xxvxc chosex em1s negf magnetic '//trim(always_runlevels))
    goto 1
  endif
  if (gw0_chosex) then
@@ -197,9 +198,12 @@ subroutine barriers()
  !
  if (n_spin>1) then
    call switch_off_runlevel('all',on_name=&
-&       'chi optics xxvxc bse em1s em1d ppa gw0 bss alda_fxc bs_fxc chosex scpot '//trim(always_runlevels))
+&       'chi optics xxvxc bse em1s em1d ppa gw0 bss alda_fxc bs_fxc chosex magnetic scpot '//&
+&       trim(always_runlevels))
    if (n_spinor>1) call switch_off_runlevel('scpot',on_name=' ')
    if (gw0_raxis) call switch_off_runlevel('all',on_name=' ')
+ else if (n_spin==1) then
+   call switch_off_runlevel('magnetic',on_name=' ')
  endif 
  !
  ! GPL_EXCLUDE_END SPIN_INGORE

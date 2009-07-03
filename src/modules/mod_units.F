@@ -53,10 +53,14 @@ module UNITS
  !
  real(SP), parameter :: HA2PSm1=HA2THZ
  real(SP), parameter :: HA2FSm1=HA2THZ/1000._SP     ! Note that 1 THz = 10^-3 / fs
- !
  real(SP), parameter :: AUT2SEC=2.418884326505_SP*10._SP**(-17)
  real(SP), parameter :: SEC2AUT=1._SP/AUT2SEC
  real(SP), parameter :: FS2AUT =10.**2/2.418884326505_SP
  real(SP), parameter :: PS2AUT =10.**5/2.418884326505_SP
+ !
+ ! Magnetic fields
+ !
+ real(SP), parameter :: Tesla2AU=2.350517*10.**5
+ real(SP), parameter :: AU2Tesla=1./Tesla2AU
  !
 end module 

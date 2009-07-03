@@ -42,7 +42,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use TDDFT,         ONLY:FXC_n_descs,FXC_description,FXC_type,&
 &                        FXC,FXC_K_diagonal,FXC_n_g_corr
  use global_XC,     ONLY:X_WF_xc_string,X_E_xc_string
-#if defined _SC
+#if defined _SC || defined _MAGNETIC
  use SC,            ONLY:using_SC_basis
 #endif
  !
@@ -330,7 +330,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    call X_alloc('X')
    !
-#if defined _SC
+#if defined _SC || defined _MAGNETIC
    if (using_SC_basis) call f_sum_rule(wv)
 #endif
    !

@@ -19,82 +19,106 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SC_add_Hmagnetic(kpt,WF_G_max_in,WF_Go_indx_in)
+subroutine SC_add_Hmagnetic()
  !
  ! This subroutine evaluate the magnetic Hamilnian in the space of 
  ! KS wave-functions. The field due to a single supercell is supposed to be:
  ! *******************************************************************************************
- !                               [  B_0    r<=r_0
+ !                               [  MAG_B    r<=MAG_radius
  !    Bx=0   ,   By=0    ,  Bz = {                     ====> A; B=rot(A)
- !                               [   0     r> r_0  
+ !                               [   0     r> MAG_radius  
  !
- !      [ -0.5*B_0 y                            [ 0.5*B_0 x
+ !      [ -0.5*MAG_B y                            [ 0.5*MAG_B x
  ! Ax = {                                  Ay = {                                    A_z=0
- !      [ -0.5*B_0 (r_0**2)*y/(x**2+y**2)       [ 0.5*B_0 (r_0**2)*x/(x**2+y**2)
+ !      [ -0.5*MAG_B (MAG_radius**2)*y/(x**2+y**2)       [ 0.5*MAG_B (MAG_radius**2)*x/(x**2+y**2)
  ! *******************************************************************************************
- ! B_0 and r_0 are given in input
- ! If r_0 == 0 then Bz=B_0 everywhere and we decide A to be the same in each supercell
- ! (which is possible thanks to gauge invariance), that is Ax=-0.5*B_0 y ; Ay=0.5*B_0 x
- ! If r_0 /= 0 then we have the field inside a circle in each supercell.
- ! then to the expression of the vector potential in the supercell R=0 we have to add
- ! a contributoin due to all other cells. This is done summing over a number of supercell
- ! which can be controlled thanks to the input variable AB_cutoff. As the potential goes
- ! to zero as 1/r the number of supercells to be considered should be checked.
+ ! MAG_B and MAG_radius are given in input
+ ! If MAG_radius == 0 then Bz=MAG_B everywhere ... --> ???
+ ! If MAG_radius /= 0 then we have the field inside a circle in each supercell.
  !
- ! Here all magnetic effect are included except the Zeeman splitting, which could be implemented
- ! simlpy with a shift of the energy levels spin up Vs spin down...(at list for collinear systems)
- !
- use pars,           ONLY:SP,pi
+ use pars,           ONLY:SP,DP,pi
  use SC,             ONLY:Ho
  use memory_m,       ONLY:mem_est
- use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table
- use D_lattice,      ONLY:a,DL_vol,alat
- use R_lattice,      ONLY:g_vec
- use magnetic,       ONLY:r_0,B_0,AB_cutoff
- use QP_m,           ONLY:QP_nk,QP_nb
+ use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
+ use D_lattice,      ONLY:a,alat
+ use R_lattice,      ONLY:g_vec,k_pt,nkibz
+ use magnetic,       ONLY:MAG_radius,MAG_B_z,MAG_Hamiltonian,MAG_landau,MAG_pauli
  use electrons,      ONLY:n_sp_pol
- use SC,             ONLY:SC_bands
- use wave_func,      ONLY:wf,wf_state,wf_load,wf_free
- ! 
+ use SC,             ONLY:SC_bands,SC_potential
+ use wave_func,      ONLY:wf,wf_state,wf_load,WF_free,wf_ng
+ use timing,         ONLY:live_timing
+ use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
+ use par_indexes_m,  ONLY:par_indexes
+ use vec_operate,    ONLY:v_norm
+ implicit none
  !
- ! Input variables
- integer   :: WF_G_max_in,WF_Go_indx_in
- real      :: kpt(QP_nk,3)
+ ! Parallelization indexes
+ !
+ type(pp_indexes) ::px
  !
  ! Dummies
- integer   :: i1,ir1,ir2,ir3,ig1
- integer   :: icell1,icell2
- integer   :: ik,i_spin,ib,ibp
- real, allocatable  :: r_cell_cc(:,:),r2(:)
  !
- complex, allocatable  :: H_magn_n2(:,:),H_paramagn_x(:),H_paramagn_y(:),&
-&                         H_diamagn(:), H_zeeman(:,:)
- complex, allocatable  :: wf_derivative(:,:), wf_x(:,:), wf_y(:,:)
- real,    allocatable  :: A_magn_x(:),A_magn_y(:)
+ integer   :: ir,ir1,ir2,ir3,i_spin,ifft,jfft,i1,ik,ib,ibp   
+ real(SP)  :: radius, r_mod
  !
- ! Data expexted to be received from input_file
- B_0=1
- r_0=1
- AB_cutoff=1
+ ! Allocs
  !
- ! ******** Allocation ********
- allocate(A_magn_x(fft_size),A_magn_y(fft_size))
- call mem_est("A_magn_x A_magn_y",(/2*fft_size/))
- allocate(H_paramagn_x(fft_size),H_paramagn_y(fft_size))
- allocate(H_zeeman(fft_size,2),H_diamagn(fft_size))
- call mem_est("H_paramagn_x H_paramagn_y",(/fft_size*2/))
- call mem_est("H_zeeman H_diamagn",(/fft_size*2/))
- A_magn_x(:)=0.
- A_magn_y(:)=0.
- H_paramagn_x(:)=0.
- H_paramagn_y(:)=0.
- H_diamagn(:)=0.
- H_zeeman(:,:)=0.
+ real(SP),    allocatable :: r_cell_cc(:,:)
+ real(SP),    allocatable :: A_magn_x(:),A_magn_y(:)
+ complex(SP), allocatable :: H_tmp(:),H_paramagn_x(:),H_paramagn_y(:),&
+&                            H_diamagn(:), H_pauli(:,:)
+ complex(SP), allocatable :: wf_derivative(:,:), wf_x(:,:), wf_y(:,:)
+ complex(DP), allocatable :: wf_DP(:)
  !
- allocate(r_cell_cc(fft_size,3),r2(fft_size))
- call mem_est("r_cell_cc r2",(/fft_size*4/))
- ! First we construct A(r)
+ ! From lapac libraries, functions for the scalar product of two vectors
+ !
+#if defined _DOUBLE
+ complex(SP):: zdotc,zdotu
+#else
+ complex(SP):: cdotc,cdotu
+#endif
+ !
+ MAG_landau=trim(MAG_Hamiltonian)=='landau'
+ MAG_pauli =trim(MAG_Hamiltonian)=='pauli'
+ if (MAG_landau.and.MAG_radius<epsilon(1.)) then
+   MAG_Hamiltonian='pauli'
+   MAG_landau=.false.
+   if (.not.MAG_pauli) return
+ endif
+ !
+ if (trim(SC_potential)=='none')  call section('*','Magnetic field ('//trim(MAG_Hamiltonian)//') Hamiltonian') 
+ if (trim(SC_potential)/='none')  call section('+','Magnetic field ('//trim(MAG_Hamiltonian)//') Hamiltonian') 
+ !
+ ! Wavefunctions 
+ !===============
+ !
+ ! To construct the magnetic part of the Hamiltonian
+ ! I need the wave functions in G space.
+ !
+ if (MAG_landau) then
+   call wf_load(0,1,(/1,SC_bands/),(/1,nkibz/),space='G',title='-MAG')
+   call fft_setup(0,1,.false.) ! FFT size
+ else
+   call wf_load(0,1,(/1,SC_bands/),(/1,nkibz/),title='-MAG')
+ endif
+ !
+ ! DEBUG <
+ !open(unit=3454, file='vector_pot_x.txt', status='unknown')
+ !open(unit=3455, file='vector_pot_y.txt', status='unknown')
+ !open(unit=3456, file='wf.txt', status='unknown')
+ !open(unit=3457, file='wf_x.txt', status='unknown')
+ !open(unit=3458, file='wf_y.txt', status='unknown')
+ ! DEBUG >
+ !
+ ! Allocation 
+ !============
+ !
+ call local_alloc(0)
+ !
+ ! A(r) Build-Up
  ! Ax , Ay  (Az=0)   
+ !=================
+ !
  do ir1 = 0, fft_dim(1)-1
    do ir2 = 0, fft_dim(2)-1
      do ir3 = 0, fft_dim(3)-1
@@ -104,154 +128,262 @@ subroutine SC_add_Hmagnetic(kpt,WF_G_max_in,WF_Go_indx_in)
        r_cell_cc(ir,:) =  ir1*a(1,:)/fft_dim(1) +&
 &                         ir2*a(2,:)/fft_dim(2) +&
 &                         ir3*a(3,:)/fft_dim(3)
-       ! Radius in the direction perpendicular to the magnetic
-       ! field
-       r2(ir)=r_cell_cc(ir,1)**2 + r_cell_cc(ir,2)**2
-       if(r2(ir)<=r_0**2) then
-         A_magn_x(ir)=-0.5*B_0*r_cell_cc(ir,2)
-         A_magn_y(ir)= 0.5*B_0*r_cell_cc(ir,1)
-         ! I evaluate here the H_zeeman term, here 1,2 are the spin components
-         H_zeeman(ir,1)= B_0
-         H_zeeman(ir,2)=-B_0
+       if (MAG_landau) then
+         ! Radius in the direction perpendicular to the magnetic
+         ! field
+         r_mod=v_norm((/r_cell_cc(ir,1),r_cell_cc(ir,2),0./))
+         if(r_mod<=MAG_radius**2) then
+           A_magn_x(ir)=-0.5*MAG_B_z*r_cell_cc(ir,2)
+           A_magn_y(ir)= 0.5*MAG_B_z*r_cell_cc(ir,1)
+           ! I evaluate here the H_pauli term, here 1,2 are the spin components
+           H_pauli(ir,1)= MAG_B_z
+           H_pauli(ir,2)=-MAG_B_z
+         else
+           A_magn_x(ir)=-0.5*MAG_B_z*MAG_radius**2*r_cell_cc(ir,2)/r_mod
+           A_magn_y(ir)= 0.5*MAG_B_z*MAG_radius**2*r_cell_cc(ir,1)/r_mod
+           ! I evaluate here the H_pauli
+           H_pauli(ir,1)=0 
+           H_pauli(ir,2)=0
+         endif
        else
-         A_magn_x(ir)=-0.5*B_0*r_0**2*r_cell_cc(ir,2)/r2(ir)
-         A_magn_y(ir)= 0.5*B_0*r_0**2*r_cell_cc(ir,1)/r2(ir)
-         ! I evaluate here the H_zeeman
-         H_zeeman(ir,1)=0 
-         H_zeeman(ir,2)=0
+         H_pauli(ir,1)= MAG_B_z
+         H_pauli(ir,2)=-MAG_B_z
        endif
      enddo
    enddo
  enddo
  !
- if (AB_cutoff/=0) then
-   radius=(AB_cutoff*a(1,1)+AB_cutoff*a(2,1))**2
-   do icell1 = 1, AB_cutoff
-     do icell2 = 1, AB_cutoff
-       shift_x=icell1*a(1,1)+icell2*a(2,1)
-       shift_y=icell1*a(1,2)+icell2*a(2,2) 
-       ! Here I set a cutoff on a number cycrcle of radius AB_cutoff**2
-       if((shift_x**2+shift_y**2)>radius) cycle
-       ! I add the contribution from the cells which are on the top-right
-       r_cell_cc(:,1)=r_cell_cc(:,1)+shift_x
-       r_cell_cc(:,2)=r_cell_cc(:,2)+shift_y
-       r2(:)=r_cell_cc(:,1)**2 + r_cell_cc(:,2)**2
-       A_magn_x(:)=A_magn_x(:)-0.5*B_0*r_0**2*r_cell_cc(:,2)/r2(:)
-       A_magn_y(:)=A_magn_y(:)+0.5*B_0*r_0**2*r_cell_cc(:,1)/r2(:)
-       ! I add the contribution from the cells which are on the bottom-left
-       r_cell_cc(:,1)=r_cell_cc(:,1)-2*shift_x
-       r_cell_cc(:,2)=r_cell_cc(:,2)-2*shift_y
-       r2(:)=r_cell_cc(:,1)**2 + r_cell_cc(:,2)**2
-       A_magn_x(:)=A_magn_x(:)-0.5*B_0*r_0**2*r_cell_cc(:,2)/r2(:)
-       A_magn_y(:)=A_magn_y(:)+0.5*B_0*r_0**2*r_cell_cc(:,1)/r2(:)
-       ! Set back r_cell_cc to its value in the cell R=0
-       r_cell_cc(:,1)=r_cell_cc(:,1)+shift_x
-       r_cell_cc(:,2)=r_cell_cc(:,2)+shift_y
+ if (MAG_landau) then
+   !
+   ! To calculate the m.e. of the B-induced Hamiltonian we need
+   ! to evaluate the WFs derivative
+   !
+   ! 1) H_paramagn = Ax px + Ay py     (orbital component only of H_paramagnetic)
+   ! 2) H_diamagn  = Ax**2 + A_y**2
+   ! 3) H_pauli    = \sigma \ddot rot^A   (spin component of H_paramagnetic)
+   !
+   ! 1)
+   H_paramagn_x(:)=A_magn_x(:) 
+   H_paramagn_y(:)=A_magn_y(:)
+   ! 2) H_diamagnetic
+   H_diamagn(:)=A_magn_x(:)**2 + A_magn_y(:)**2
+   ! 3) H_pauli
+   ! Already computed when A has been constructed
+   !
+   !
+   ! Local alloc/free
+   !==================
+   call local_free(1)
+   call local_alloc(1)
+   !
+   ! Parallel indexes
+   !
+   call pp_indexes_reset(px)
+   call par_indexes(px,(/nkibz,SC_bands/))
+   call pp_redux_wait
+   call live_timing("WFs derivative",px%stps(myid+1))
+   !==================================================
+#if defined _FFTW
+   fftw_plan = 0
+#endif
+   !
+   do ik=1,nkibz   
+     do ib=1,SC_bands
+       ! 
+       if (.not.px%i2p(ik,ib)) cycle
+       !
+       do i_spin=1,n_sp_pol   
+         ifft=wf_state(ib,ik,i_spin)
+         ! Evaluate the wf_derivative in G space
+         ! wf_derivative(:,i)=-i grad_i wf(:)=p_x wf(:)    i=x,y,z
+         ! wf_derivative(G,i)= (k_i+G_i) wf(:)
+         ! presently wf_z is not needed
+         !
+         do i1=1,2
+           wf_derivative(:,i1)=wf(:,ifft)*(k_pt(ik,i1)+g_vec(: wf_ng ,i1))*2.0_SP*pi/alat(i1)
+         enddo
+         ! Here we FFT wf_derivative to real space --> wf_x,wf_y
+         wf_DP=(0._DP,0._DP)
+         wf_DP(fft_g_table(1:9,1))= wf_derivative(:9,1)*fft_norm
+#if defined _FFTW
+         call fft_3d(wf_DP,fft_dim,1,fftw_plan)
+#else
+         call fft_3d(wf_DP,fft_dim,1)
+#endif
+         wf_x(:,ifft)=wf_DP(:)
+         wf_DP=(0._DP,0._DP)
+         wf_DP(fft_g_table(1:wf_ng,1))= wf_derivative(:wf_ng,2)*fft_norm
+#if defined _FFTW
+         call fft_3d(wf_DP,fft_dim,1,fftw_plan)
+#else
+         call fft_3d(wf_DP,fft_dim,1)
+#endif
+         wf_y(:,ifft)=wf_DP(:)
+       enddo
+       !
+       call live_timing(steps=1)
+       !
      enddo
    enddo
-   ! Here I'm doing an error which is of the order ~ B_0 r_0 / radius ...
+   !
+   call live_timing()
+   call pp_redux_wait(wf_x)
+   call pp_redux_wait(wf_y)
+   call pp_indexes_reset(px)
+   !
+   !
+   ! Free the wf in G space and load in real space
+   !
+   call WF_free()
+   call wf_load(0,1,(/1,SC_bands/),(/1,nkibz/),title='-MAG')
+   !
  endif
  !
- ! 1) H_paramagn = Ax px + Ay py     (orbital component only of H_paramagnetic)
- ! 2) H_diamagn  = Ax**2 + A_y**2
- ! 3) H_zeeman   = \sigma \ddot rot^A   (spin component of H_paramagneti)
- ! 1)
- ! We will take into account the px(/py) component in the derivative of
- ! the wave function, in the next step, so now we have to set up an artificial
- ! distinction H_x and H_y
- H_paramagn_x(:)=A_magn_x(:) 
- H_paramagn_y(:)=A_magn_y(:)
- ! 2) H_diamagnetic
- H_diamagn(:)=A_magn_x(:)**2 + A_magn_y(:)**2
- ! 3) H_zeeman
- ! Already computed when A has been constructed
- deallocate(A_magn_x,A_magn_y)
- call mem_est("A_magn_x A_magn_y")
- deallocate(r_cell_cc,r2)
- call mem_est("r_cell_cc r2")
+ call local_free(2)
+ call local_alloc(2)
  !
- ! Load the wf in G space
- !  ------------>  ???????? max(SC_bands,E%nbm) ? QP_nb  <--------------------- ???????????
- !  ------------>  ???????? K%nibz ? QP_nk               <--------------------- ???????????
- ! call wf_load(WF_G_max_in,WF_Go_indx_in,(/1,max(SC_bands,E%nbm)/),(/1,k%nibz/),space='G',title=' ')
- call wf_load(WF_G_max_in,WF_Go_indx_in,(/1,QP_nb/),(/1,QP_nb/),space='G',title=' ')
- ! Allocate the wf_derivative and wf_x, wf_y
- allocate(wf_derivative(WF_G_max_in,2))                                                 ! This is in G space
- call mem_est("wf_derivative",(/WF_G_max_in/))
- allocate(wf_x(fft_size,QP_nk*n_sp_pol*QP_nb),wf_y(fft_size,QP_nk*n_sp_pol*QP_nb))   ! These are in real space
- call mem_est("wf_x wf_y",(/fft_size*QP_nk*n_sp_pol*QP_nb*2/))
+ ! DEBUG <
+ !do ir1 = 0, fft_dim(1)-1
+ !  ir = 1 + ir1
+ !  write(3456,*) r_cell_cc(ir,1),real(wf(ir,:)),aimag(wf(ir,:))
+ !  write(3457,*) r_cell_cc(ir,1),real(wf_x(ir,:)),aimag(wf_x(ir,:))
+ !  write(3458,*) r_cell_cc(ir,1),real(wf_y(ir,:)),aimag(wf_y(ir,:))
+ !enddo
+ ! DEBUG >
  !
- do ik=1,QP_nk   
-   do ispin=1,n_sp_pol   
-     do ib=1,QP_nb   
-       n1=wf_state(ib,ik,ispin)
-       ! Evaluate the wf_derivative in G space
-       ! wf_derivative(:,i)=-i grad_i wf(:)    i=x,y,z
-       ! wf_derivative(G,i)= (k_i+G_i) wf(:)
-       ! presently wf_z is not needed
-       do i1=1,2
-         wf_derivative(:,i1)=wf(:,n1)*(kpt(ik,i1)+g_vec(: WF_G_max_in ,i1))*2.0_SP*pi/alat(i1)
-       enddo
-       ! Here we FFT wf_derivative to real space --> wf_x,wf_y
-       do ig1=1,WF_G_max_in
-         wf_x(fft_g_table(ig1,1),n1)= wf_derivative(ig1-1,1)/(DL_vol*float(nkbz)) 
-         wf_y(fft_g_table(ig1,1),n1)= wf_derivative(ig1-1,2)/(DL_vol*float(nkbz)) 
-       enddo
-#if defined _FFTW
-       fftw_plan = 0
-       call fft_3d(wf_x(:,n1),fft_dim,1,fftw_plan)
-       fftw_plan = 0
-       call fft_3d(wf_y(:,n1),fft_dim,1,fftw_plan)
-#else
-       call fft_3d(wf_x(:,n1),fft_dim,1)
-       call fft_3d(wf_y(:,n1),fft_dim,1)
-#endif
-     enddo
-   enddo
- enddo
- !
- deallocate(wf_derivative)
- call mem_est("wf_derivative")
- ! Free the wf in G space and load in real space
- call wf_free()
-! call wf_load(WF_G_max_in,WF_Go_indx_in,(/1,max(SC_bands,E%nbm)/),(/1,k%nibz/),title=' ')
- call wf_load(WF_G_max_in,WF_Go_indx_in,(/1,QP_nb/),(/1,QP_nk/),title=' ')
+ ! Matrix Elements
+ !=================
  !
  ! Now we compute < n1| H_magn |n2 > = < n1| H_paramagn_x | n2x> + < n1 | H_paramagn_y | n2y> +
  !                                     + < n1| H_diamagnetic |n2 >
- ! were n2x=-i*px|n2 > ;  n2y=-i*py|n2 > 
+ ! were n2x= px|n2 > ;  n2y= py|n2 > 
  !
- allocate(H_magn_n2(fft_size,2))
- call mem_est("H_magn_n2",(/fft_size*2/)*2)
- H_magn_n2(:,:)=(0.,0.)
+ call pp_indexes_reset(px)
+ call par_indexes(px,(/nkibz,SC_bands/))
+ call pp_redux_wait
+ call live_timing("Hamiltonian",px%stps(myid+1))
  !
- do ik=1,QP_nk   
-   do ispin=1,n_sp_pol   
-     do ib=1,QP_nb   
-       do ibp=1,QP_nb
+ do ik=1,nkibz   
+   do ib=1,SC_bands   
+     !
+     if (.not.px%i2p(ik,ib)) cycle
+     !
+     do ibp=1,SC_bands
+       do i_spin=1,n_sp_pol   
          !
-         n1=wf_state(ib,ik,ispin)  
-         n2=wf_state(ibp,ik,ispin) 
+         ifft=wf_state(ib,ik,i_spin)  
+         jfft=wf_state(ibp,ik,i_spin) 
          !
-         H_magn_n2(:,ispin)= H_paramagn_x(:)*wf_x(:,n2)+H_paramagn_y(:)*wf_y(:,n2)
-         H_magn_n2(:,ispin)= H_magn_n2(:,ispin)+(H_diamagn(:)+H_zeeman(:,ispin))*wf(:,n2)
+         H_tmp=(0.,0.)
+         if (MAG_landau) H_tmp(:)= H_paramagn_x(:)*wf_x(:,jfft)+H_paramagn_y(:)*wf_y(:,jfft)+&
+&                                  H_diamagn(:)*wf(:,jfft)
+         if (MAG_pauli)  H_tmp(:)= H_tmp(:)+H_pauli(:,i_spin)*wf(:,jfft)
          !
 #if defined _DOUBLE
-         Ho(ib,ibp,ik,ispin) = zdotc(fft_size,wf(:,n1),1,H_magn_n2(:,ispin),1)
+         Ho(ib,ibp,ik,i_spin) = zdotc(fft_size,wf(:,ifft),1,H_tmp(:),1)
 #else
-         Ho(ib,ibp,ik,ispin) = cdotc(fft_size,wf(:,n1),1,H_magn_n2(:,ispin),1)
+         Ho(ib,ibp,ik,i_spin) = cdotc(fft_size,wf(:,ifft),1,H_tmp(:),1)
 #endif
-         H_magn_n2(:,:)=(0.,0.)
        enddo
      enddo
+     !
+     call live_timing(steps=1)
+     !
    enddo
  enddo
  !
- deallocate(H_magn_n2)
- call mem_est("H_mag_n2")
- deallocate(wf_x,wf_y)
- call mem_est("wf_x wf_y")
- deallocate(H_paramagn_x,H_paramagn_y,H_diamagn,H_zeeman)
- call mem_est("H_paramagn_x H_paramagn_y H_diamagn H_zeeman")
+ call live_timing()
+ call pp_redux_wait(Ho)
+ call pp_indexes_reset(px)
+ ! 
+ ! Clean Up
  !
+ call local_free(3)
+ call WF_free()
+ !
+ ! DEBUG >
+ !close(unit=3454)
+ !close(unit=3455)
+ !close(unit=3456)
+ !close(unit=3457)
+ !close(unit=3458)
+ ! DEBUG <
+ !
+ contains
+   !
+   subroutine local_alloc(level)
+     integer :: level
+     select case(level)
+       case(0)
+         allocate(r_cell_cc(fft_size,3))
+         call mem_est("r_cell_cc",(/fft_size*3,fft_size/))
+         if (MAG_landau) then
+           allocate(A_magn_x(fft_size),A_magn_y(fft_size))
+           call mem_est("A_magn_x A_magn_y",(/fft_size,fft_size/))
+           allocate(H_paramagn_x(fft_size),H_paramagn_y(fft_size))
+           call mem_est("H_paramagn_x H_paramagn_y",(/fft_size,fft_size/))
+           allocate(H_diamagn(fft_size))
+           call mem_est("H_diamagn",(/fft_size/))
+           A_magn_x=0.
+           A_magn_y=0.
+           H_paramagn_x=0.
+           H_paramagn_y=0.
+           H_diamagn=0.
+         endif
+         if (MAG_pauli) then
+           allocate(H_pauli(fft_size,2))
+           call mem_est("H_pauli",(/2*fft_size/))
+           H_pauli=0.
+         endif
+       case(1)
+         ! 
+         ! Allocate the wf_derivative and wf_x, wf_y
+         !
+         allocate(wf_derivative(wf_ng,2))                     ! G space
+         call mem_est("wf_derivative",(/wf_ng*2/))
+         allocate(wf_DP(fft_size))                            ! real space
+         call mem_est("wf_DP",(/fft_size/),(/DP/))
+         allocate(wf_x(fft_size,nkibz*n_sp_pol*SC_bands),wf_y(fft_size,nkibz*n_sp_pol*SC_bands))   ! real space
+         call mem_est("wf_x wf_y",(/fft_size*nkibz*n_sp_pol*SC_bands,fft_size*nkibz*n_sp_pol*SC_bands/))
+         wf_derivative=(0.,0.)
+         wf_DP=(0._DP,0._DP)
+         wf_x=(0.,0.)
+         wf_y=(0.,0.)
+       case(2)
+         allocate(H_tmp(fft_size))
+         call mem_est("H_tmp",(/fft_size/)*2)
+         allocate(Ho(SC_bands,SC_bands,nkibz,n_sp_pol))
+         call mem_est("Ho",(/size(Ho)/),(/2*SP/))
+         H_tmp=(0.,0.)
+     end select
+   end subroutine
+   !
+   subroutine local_free(level)
+     integer :: level
+     select case(level)
+       case(1)
+         deallocate(A_magn_x,A_magn_y)
+         call mem_est("A_magn_x A_magn_y")
+         deallocate(r_cell_cc)
+         call mem_est("r_cell_cc")
+       case(2)
+         if (.not.MAG_landau) return
+         deallocate(wf_DP)
+         call mem_est("wf_DP")
+         deallocate(wf_derivative)
+         call mem_est("wf_derivative")
+       case(3)
+         if (MAG_landau) deallocate(H_paramagn_x,H_paramagn_y)
+         if (MAG_pauli)  deallocate(H_pauli)
+         if (MAG_landau) deallocate(H_diamagn)
+         if (MAG_landau) deallocate(wf_x,wf_y) 
+         deallocate(H_tmp)
+         call mem_est("H_paramagn_x H_paramagn_y")
+         call mem_est("H_pauli H_diamagn")
+         call mem_est("wf_x wf_y")
+         call mem_est("H_tmp")
+     end select
+  end subroutine
+  !
 end subroutine
+

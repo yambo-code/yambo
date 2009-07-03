@@ -73,6 +73,8 @@ subroutine init_convert(rfac,ivar,v_descr,force_RL)
      rfac=1./PS2AUT
    else if (index(trim(v_descr),'fs')/=0) then
      rfac=1./FS2AUT
+   else if (index(trim(v_descr),'T')/=0) then
+     rfac=AU2Tesla
    endif
  endif
  !

@@ -39,7 +39,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  use memory_m,      ONLY:mem_est
  use X_m,           ONLY:X_t,X_poles,DIP_iq_dot_r,iq_now,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_RIM
-#if defined _SC
+#if defined _SC || defined _MAGNETIC
  use drivers,       ONLY:l_sc_run
  use SC,            ONLY:it_now
 #endif
@@ -197,7 +197,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  px%i1wts=bg_npts+Xw%n(2)
  call par_indexes(px,(/cg_npts/))
  !
-#if defined _SC
+#if defined _SC || defined _MAGNETIC
  if (l_sc_run) then
    call live_timing('Xo @it'//trim(intc(it_now)),px%stps(myid+1))
  else

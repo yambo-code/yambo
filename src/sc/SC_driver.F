@@ -23,18 +23,19 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  use pars,           ONLY:SP,schlen
  use units,          ONLY:HARTREE
- use drivers,        ONLY:l_sc_exx,l_sc_chosex,l_sc_hartree,l_sc_pz,l_sc_lda_x,&
-&                         l_sc_hf,l_sc_exxc
+ use drivers,        ONLY:l_sc_exx,l_sc_chosex,l_sc_contains_lda,&
+&                         l_sc_hf,l_sc_magnetic
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin
  use R_lattice,      ONLY:bz_samp,qindx_S,G_m_G
  use D_lattice,      ONLY:Tel
- use QP_m,           ONLY:QP_nk,QP_n_states,QP_Sc,&
+ use QP_m,           ONLY:QP_nk,QP_Sc,&
 &                         QP_ng_Sx,QP_Sx,QP_t,QP_reset,SC_E_threshold,SC_bands_mixed
  use SC,             ONLY:SC_bands,SC_iterations,rho_n,&
 &                         SC_rho_threshold,SC_potential,it_now,E_convergence,&
 &                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,&
 &                         SC_cycle_mixing,V_hartree_sc,NSC_shot,SC_fft_size,&
-&                         SC_ng_Sx,SC_X_bands,SC_X_size,Ho,E_bare,SC_alloc,SC_free
+&                         SC_ng_Sx,SC_X_bands,SC_X_size,Ho,E_bare,SC_alloc,SC_free,&
+&                         WF_G_max,WF_Go_indx,SC_kind,SC_xc_functional
  use wave_func,      ONLY:wf_load,wf,wf_n_states,WF_free
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
@@ -50,6 +51,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL
  use vec_operate,    ONLY:degeneration_finder
  use timing,         ONLY:live_timing
+#if defined _MAGNETIC
+ use magnetic,       ONLY:MAG_Hamiltonian
+#endif
  !
  implicit none
  type(levels) ::E
@@ -63,13 +67,13 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  real(SP)                 :: spread(SC_bands,k%nibz,n_sp_pol),&
 &                            E_previous(SC_bands,k%nibz,n_sp_pol),dE(SC_bands,k%nibz,n_sp_pol),&
 &                            E_conv(n_sp_pol)
- real(SP),    allocatable :: V_xc_nm1(:,:),rho_nm1(:)
+ real(SP),    allocatable :: V_xc_nm1(:,:),rho_nm1(:),el_mag_nm1(:,:)
  real(SP),    allocatable :: delta_rho(:)
  complex(SP), allocatable :: WFo(:,:)
  ! 
  ! Work Space
  !
- integer                  :: ir,i1,i2,ik,ib,ibp,WF_G_max,WF_Go_indx,ID(3),io_E,io_V,io_WF,i_spin
+ integer                  :: ir,i1,i2,ik,ib,ibp,ID(3),io_E,io_V,io_WF,i_spin
  real(SP)                 :: max_proj,V_xc_sc_shift(n_spin)
  character(schlen)        :: dumb_ch
  integer, external        :: io_SC_components,eval_G_minus_G
@@ -96,7 +100,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  call QP_reset(qp_dummy)
  !
- call section('*','Self-Consistent '//trim(SC_potential))
+ if (trim(SC_potential)/='none') call section('*','Self-Consistent '//trim(SC_potential))
  !
  ! Reference energies
  !
@@ -115,9 +119,16 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID(3))  ! Local potential
  io_V=io_SC_components('V' ,E,ID(3))
  !
- RESTART=all((/io_E==0,io_WF==0,io_V==0/))
+#if defined _MAGNETIC
  !
- NSC_shot=SC_iterations==1.and.all((/io_E/=0,io_WF/=0,io_V==0.or.io_V==-2/)).and.local_V
+ ! precaution : disable RESTART and NSC_shot
+ !
+#endif
+ !
+ RESTART=all((/io_E==0,io_WF==0,io_V==0/)).and..not.l_sc_magnetic
+ !
+ NSC_shot=SC_iterations==1.and.all((/io_E/=0,io_WF/=0,io_V==0.or.io_V==-2/)).and.&
+&                        local_V.and..not.l_sc_magnetic
  !
  SC_cycle=SC_iterations> 0
  if (NSC_shot) SC_cycle=.false.
@@ -167,7 +178,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! the optical oscillators that are done in G-space and would
  ! force the reloading of the WFs
  !
- if ((l_sc_exx.or.l_sc_exxc).and.SC_cycle) then
+ if (l_sc_exx.and.SC_cycle) then
    X(1)%ib(2)=SC_bands
    X(1)%ng=QP_ng_Sx
    call Dipole_driver(E, Xk, X(1), X(1)%q0)
@@ -180,28 +191,32 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  WF_G_max=0
  WF_Go_indx=1
  !
- if (SC_cycle.and.(l_sc_hf.or.l_sc_exx.or.l_sc_exxc.or.l_sc_chosex)) then
+ if (SC_cycle.and.(l_sc_hf.or.l_sc_exx.or.l_sc_chosex)) then
    WF_Go_indx=maxval(qindx_S(:,:,2)) ! Sigma_x/c
    if (l_sc_chosex) then
      X(2)%ng=eval_G_minus_G(X(2)%ng,0)
      WF_G_max=max(QP_ng_Sx,maxval(G_m_G))
    endif
-   if (l_sc_exx.or.l_sc_exxc)  then
+   if (l_sc_exx)  then
      WF_G_max=max(QP_ng_Sx,X(1)%ng)
    endif
  endif
  !
 #if defined _MAGNETIC
- ! To construct the magnetic part of the Hamiltonian I need the wave
- ! functions in G space.
- ! So yambo_magnetic load wf in G space, evaluate the derivative,
- ! does the fft of the derivative. Then call wf_free and load the wf in
- ! real space, compute the magnetic part of the hamiltonian and, 
- ! after inizialisation of Ho, write it in Ho 
- call SC_add_Hmagnetic(Xk%pt,WF_G_max,WF_Go_indx)
-#else
- call wf_load(WF_G_max,WF_Go_indx,(/1,max(SC_bands,E%nbm)/),(/1,k%nibz/),title=' ')
+ !
+ if (l_sc_magnetic) then
+   !
+   ! Now SC_add_magnetic evaluates the derivative,
+   ! does the fft of the derivative. Then call WF_free and load the wf in
+   ! real space, compute the magnetic part of the hamiltonian and, 
+   ! allocate and initialise Ho, write Hmagnetic in Ho 
+   !
+   call SC_add_Hmagnetic()
+   !
+ endif
 #endif
+ !
+ call wf_load(WF_G_max,WF_Go_indx,(/1,max(SC_bands,E%nbm)/),(/1,k%nibz/),title='-SC')
  !
  if (NSC_shot.and.SC_fft_size/=fft_size) then
    call warning(' FFT size of V_xc does not fit. Skipping NSC run')
@@ -300,16 +315,15 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    if (local_V.and.SC_cycle) then
      !
-     if (l_sc_exx.or.l_sc_exxc) call V_exx(X,E,k,q,V_xc_sc)
+     V_xc_sc=(0.,0.)
      !
-     if (l_sc_hartree) V_xc_sc=(0.,0.)
+     if (l_sc_exx) call V_exx(X,E,k,q,V_xc_sc)
      !
      call IO_mute("report log io_in io_out")
      !
-     if (l_sc_lda_x)            call xc_lda_driver(E,k,1,1,1)
-     if (l_sc_pz.or.l_sc_exxc)  call xc_lda_driver(E,k,3,8,1)
-     if (l_sc_pz.or.l_sc_lda_x) V_xc_sc(:,:)=V_xc(:,:)
-     if (l_sc_exxc) V_xc_sc(:,:)=V_xc_sc(:,:)+V_xc(:,:)
+     if (l_sc_contains_lda) call xc_lda_driver(E,Xk,SC_KIND,SC_xc_functional,1)
+     if (l_sc_contains_lda.and..not.l_sc_exx) V_xc_sc(:,:)=V_xc(:,:)
+     if (l_sc_contains_lda.and.     l_sc_exx) V_xc_sc(:,:)=V_xc(:,:)+V_xc_sc(:,:)
      !
      call IO_mute(" ")
      !
@@ -596,8 +610,14 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  contains
    !
    subroutine SC_local_alloc()
+     !
      allocate(rho_nm1(fft_size))
      call mem_est("rho_nm1",(/fft_size/),(/SP/))
+     !
+     if (n_spin>1) then
+       allocate(el_mag_nm1(fft_size,3))
+       call mem_est("el_mag_nm1",(/fft_size*3/),(/SP/))
+     endif
      !
      allocate(V_xc_sc(fft_size,n_spin))
      call mem_est("V_xc_sc",(/size(V_xc_sc)/))
@@ -616,8 +636,14 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    end subroutine
    !
    subroutine SC_local_free()
+     !
      deallocate(rho_nm1)
      call mem_est("rho_nm1")
+     !
+     if (n_spin>1) then
+       deallocate(el_mag_nm1)
+       call mem_est("el_mag_nm1")
+     endif
      !
      deallocate(V_xc_sc)
      call mem_est("V_xc_sc")

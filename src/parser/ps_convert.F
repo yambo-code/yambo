@@ -36,7 +36,7 @@ subroutine ps_convert(rvar,ivar,v_name)
  integer :: i1,ipos           
  character(lchlen) :: v_line  
  character(schlen) :: v_s_unit
- logical :: var_is_time
+ logical :: var_is_time,var_is_B
  !
  ! First I search for the variable name in the input file 
  !
@@ -65,6 +65,7 @@ subroutine ps_convert(rvar,ivar,v_name)
  ! check if the var is a Time variable (incompatible with energy types)
  !
  var_is_time=trim(v_s_unit)=="fs"
+ var_is_B   =trim(v_s_unit)=="T"
  !
  if (ivar>0) then
    !
@@ -87,7 +88,8 @@ subroutine ps_convert(rvar,ivar,v_name)
      call set_itp_unit('Ry',1)
    endif
    return
- else if (abs(rvar)>1.E-10.and..not.var_is_time) then
+   !
+ else if (abs(rvar)>1.E-10.and..not.var_is_time.and..not.var_is_B) then
    !
    ! REALS (ENERGY)
    !
@@ -160,6 +162,16 @@ subroutine ps_convert(rvar,ivar,v_name)
    ! If nothing has been done and the real has a unit I assume it is in eV!
    !
    rvar=rvar/HARTREE
+   !
+ else if (var_is_B) then
+   !
+   ! MAGNETIC FIelds
+   !
+   if (index(v_line,'T')/=0) then
+     rvar=rvar*Tesla2AU
+     call set_itp_unit('T',1)
+     return
+   endif 
  endif
  !
  contains 

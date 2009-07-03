@@ -23,16 +23,21 @@ logical function XC_switch()
  !
  use drivers
  use SC,             ONLY:SC_kind,SC_xc_functional,SC_potential,local_V
- use xc_functionals, ONLY:XC_LDA_X,XC_LDA_C_PZ,XC_EXCHANGE_CORRELATION,XC_EXCHANGE
+ use xc_functionals, ONLY:XC_LDA_X,XC_LDA_C_PZ,XC_EXCHANGE_CORRELATION,XC_EXCHANGE,&
+&                         GS_xc_KIND,GS_xc_FUNCTIONAL
  use global_XC,      ONLY:SC_EXX,SC_HF,SC_CHOSEX,SC_EXXC
  use electrons,      ONLY:n_full_bands,n_met_bands
  use QP_m,           ONLY:CHOSEX_use_empties
  use com,            ONLY:error
  implicit none
  !
+ XC_switch=.TRUE.
+ local_V=.FALSE.
+ !
  select case (trim(SC_potential))
    case('HARTREE')
-     l_sc_hartree=.true.
+     l_sc_contains_lda=.true.
+     local_V=.true.
      SC_kind=0
      SC_xc_functional=0          
    case('HARTREE-FOCK')
@@ -41,11 +46,14 @@ logical function XC_switch()
      SC_xc_functional=0
    case('EXX')
      l_sc_exx=.true.
+     local_V=.true.
      SC_kind=SC_EXX
      SC_xc_functional=0
      if (n_full_bands/=n_met_bands) return
    case('EXXC')
-     l_sc_exxc=.true.
+     l_sc_exx=.true.
+     local_V=.true.
+     l_sc_contains_lda=.true.
      SC_kind=SC_EXXC
      SC_xc_functional=XC_LDA_C_PZ
      if (n_full_bands/=n_met_bands) return
@@ -55,25 +63,29 @@ logical function XC_switch()
      SC_xc_functional=0
      CHOSEX_use_empties=.FALSE.
    case('LDA_X')
-     l_sc_lda_x=.true.
+     l_sc_contains_lda=.true.
+     local_V=.true.
      SC_kind=XC_EXCHANGE
      SC_xc_functional=XC_LDA_X
    case('PZ')
-     l_sc_pz=.true.
+     l_sc_contains_lda=.true.
+     local_V=.true.
      SC_kind=XC_EXCHANGE_CORRELATION
      SC_xc_functional=XC_LDA_C_PZ
    case('none','NONE')
+     l_sc_contains_lda=.false.
      local_V=.true.
      SC_kind=0
      SC_xc_functional=0
-     XC_switch=.false.
+     XC_switch=.FALSE.
      return
+   case('default')
+     l_sc_contains_lda=.true.
+     local_V=.true.
+     SC_kind=GS_xc_KIND
+     SC_xc_functional=GS_xc_FUNCTIONAL
    case default
      call error("Unknown SC potential! ")
  end select
- !
- XC_switch=any((/l_sc_hartree,l_sc_hf,l_sc_exx,l_sc_exxc,l_sc_chosex,l_sc_lda_x,l_sc_pz/))
- !
- local_V=l_sc_exx.or.l_sc_exxc.or.l_sc_hartree.or.l_sc_lda_x.or.l_sc_pz
  !
 end function XC_switch

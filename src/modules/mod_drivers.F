@@ -62,16 +62,14 @@ module drivers
  logical :: l_td_hf
  !
  logical :: l_sc_run ! SC 
+ logical :: l_sc_magnetic ! SC + Magnetic field
  !
  ! The XC types (Vxc)
  !
- logical :: l_sc_hartree
  logical :: l_sc_exx
- logical :: l_sc_exxc
  logical :: l_sc_hf
  logical :: l_sc_chosex
- logical :: l_sc_pz
- logical :: l_sc_lda_x
+ logical :: l_sc_contains_lda
  !
  ! The XC types (Fxc)
  !

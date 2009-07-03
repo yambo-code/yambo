@@ -193,7 +193,6 @@ subroutine ypp_init_load(defs)
  call it('f',defs,'PrtEinduced','Print induced electric field')
  call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics')
  !
-
 #endif
  !
  ! GPL_EXCLUDE_END

@@ -22,9 +22,9 @@
 subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  !
  use pars,           ONLY:SP,DP
- use drivers,        ONLY:l_sc_hf
+ use drivers,        ONLY:l_sc_hf,l_sc_contains_lda
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,Ho,rho_n,H_nl_sc
+ use SC,              ONLY:SC_bands,V_hartree_sc,Ho,rho_n,H_nl_sc,SC_xc_functional
  use X_m,            ONLY:P_square
  use real_time,      ONLY:G_lesser,l_RT_no_updates,H_Hartree_Vxc_0,V_xc_0
  use electrons,      ONLY:levels,n_sp_pol
@@ -156,17 +156,43 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
      !
    else        
      !
-     ! E_xc Energy 
-     !
-     call IO_mute("report log io_in io_out")
-     call xc_lda_driver(en,k,WF_KIND,WF_xc_functional,0,G_lesser)
-     call IO_mute("  ")
-     !
+     if(l_sc_contains_lda.and.SC_xc_functional/=0) then 
+       !        
+       ! E_xc Energy 
+       !
+       call IO_mute("report log io_in io_out")
+       call xc_lda_driver(en,k,WF_KIND,WF_xc_functional,0,G_lesser)
+       call IO_mute("  ")
+       !
 #if defined _DOUBLE
-     Exc=ddot(fft_size,rho_n,1,E_xc,1)
+       Exc=ddot(fft_size,rho_n,1,E_xc,1)
 #else
-     Exc=sdot(fft_size,rho_n,1,E_xc,1)
+       Exc=sdot(fft_size,rho_n,1,E_xc,1)
 #endif
+       !
+     else
+       !      
+       Exc=(0.,0.)
+       !
+       do ik=1,QP_nk
+         !
+         if (.not.px%i1p(ik)) cycle
+         !        
+         H_nl_sc=(0.,0.)
+         !
+         call V_real_space_to_H(ik,V_xc_0,H_nl_sc,wf) 
+         !
+#if defined _DOUBLE
+         Exc=Exc+(0.,1.)*zdotc(SC_bands2,H_nl_sc(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+#else
+         Exc=Exc+(0.,1.)*cdotc(SC_bands2,H_nl_sc(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
+#endif
+         !
+       enddo
+       !
+       call pp_redux_wait(Exc)
+       !
+     endif
      !
    endif
    !
@@ -179,7 +205,6 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
      if (.not.px%i1p(ik)) cycle
      !        
      H_nl_sc=(0.,0.)
-     call V_real_space_to_H(ik,V_xc_0,H_nl_sc,wf) 
 #if defined _DOUBLE
      E_h=E_h-(0.,1.0)*zdotc(SC_bands2,H_Hartree_Vxc_0(:,:,ik,1)+H_nl_sc(:,:,1),1, &
 &        G_lesser(:,:,ik),1)*k%weights(ik)

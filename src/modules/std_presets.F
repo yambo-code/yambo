@@ -85,7 +85,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 
 #endif
 #if defined _MAGNETIC
- use magnetic,    ONLY:MAG_B_z,MAG_radius,MAG_Hamiltonian,MAG_landau,MAG_pauli
+ use magnetic,    ONLY:MAG_B_z,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli
 #endif
  !
  implicit none
@@ -425,7 +425,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  MAG_B_z=0.
  MAG_radius=0.
- MAG_Hamiltonian='pauli'
+ MAG_hamiltonian_type='pauli'
  MAG_pauli=.FALSE.
  MAG_landau=.FALSE.
 #endif

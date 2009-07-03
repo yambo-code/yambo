@@ -52,7 +52,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use vec_operate,    ONLY:degeneration_finder
  use timing,         ONLY:live_timing
 #if defined _MAGNETIC
- use magnetic,       ONLY:MAG_Hamiltonian
+ use magnetic,       ONLY:MAG_hamiltonian_type
 #endif
  !
  implicit none
@@ -91,6 +91,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! Switch to the user defined potential (if appropriate)
  !
  if (.not.XC_switch()) return
+ !
+#if defined _MAGNETIC
+ !
+ call MAG_Hamiltonian(.TRUE.)
+ !
+#endif
  !
  ! Define SC internal variables
  !
@@ -211,7 +217,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    ! real space, compute the magnetic part of the hamiltonian and, 
    ! allocate and initialise Ho, write Hmagnetic in Ho 
    !
-   call SC_add_Hmagnetic()
+   call MAG_Hamiltonian(.FALSE.)
    !
  endif
 #endif
@@ -450,6 +456,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    if (SC_cycle) then
      !
+     ! New occupations 
+     !=================
+     !
+     if (E%nbm/=E%nbf) call fermi_level(E,k,Tel,1) 
+     !
      ! New density 
      !=============
      !
@@ -458,6 +469,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      call el_density(E,k,rho_n,.false.)
      !
      ! Convergences
+     !==============
      !
      E_convergence=0.
      E_conv=0.
@@ -535,7 +547,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! for more details see A. Fleszar PRB 64, 245204
  !
  do i_spin=1,n_sp_pol
-   V_xc_sc_shift(i_spin)= maxval(E_bare(:n_met_bands,:,i_spin))&
+   V_xc_sc_shift(i_spin )= maxval(E_bare(:n_met_bands,:,i_spin))&
                         &-maxval(E%E(:n_met_bands,:,i_spin)) 
    if (local_V) then
      V_xc_sc(:,i_spin)=V_xc_sc(:,i_spin)+V_xc_sc_shift(i_spin)
@@ -543,8 +555,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      io_V=io_SC_components('V' ,E,ID(3))
    endif
  enddo
- !
- call fermi_level(E,k,Tel,1)
  !
  do i_spin=1,n_sp_pol
    do ik=1,k%nibz

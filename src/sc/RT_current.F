@@ -68,9 +68,9 @@ subroutine RT_current(j_current,xK,Xen,A_vec_pot,G_lesser)
    do i2=1,3
      !
 #if defined _DOUBLE
-     j_dir(i2)=-aimag(zdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1))
+     j_dir(i2)=aimag(zdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1))
 #else
-     j_dir(i2)=-aimag(cdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1))
+     j_dir(i2)=aimag(cdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1))
 #endif
      !
    enddo

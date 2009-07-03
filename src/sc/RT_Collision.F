@@ -26,7 +26,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels,n_sp_pol
- use drivers,        ONLY:l_sc_pz,l_sc_hf
+ use drivers,        ONLY:l_sc_contains_lda,l_sc_hf
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n
  use QP_m,           ONLY:QP_nk,QP_Sx
@@ -40,6 +40,8 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
  use par_indexes_m,  ONLY:par_indexes  
+ use SC,             ONLY:SC_xc_functional
+ use xc_functionals, ONLY:XC_LDA_C_PZ
  !
  implicit none
  !
@@ -63,7 +65,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
    call V_Hartree(rho_n,V_hartree_sc)
    V_hartree_sc(:,n_sp_pol)=V_hartree_sc(:,1)
    !
-   if(l_sc_pz) then
+   if(l_sc_contains_lda.and.SC_xc_functional/=0) then
      !
      call IO_mute("report log io_in io_out")
      call xc_lda_driver(Xen,k,WF_KIND,WF_xc_functional,1,G_input)
@@ -129,7 +131,8 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
    !
    if(.not.l_RT_no_updates) then
      !      
-     if(l_sc_pz) then
+     if(l_sc_contains_lda.and.SC_xc_functional/=0) then
+
        call V_real_space_to_H(ik,V_hartree_sc+V_xc,H_nl_sc,wf)
      else
        !      

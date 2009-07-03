@@ -19,7 +19,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SC_add_Hmagnetic()
+subroutine MAG_Hamiltonian(initial_check_only)
+ !
+ ! ANDREA 3/7/09
+ ! 
+ ! STILL TODO: 
+ !
+ !  1. add magnetization check in SC cycle (including mixing)
+ !  2. Save el_mag_n in SC DBs
+ !  3. Check if SC works in metals (not obvious)
  !
  ! This subroutine evaluate the magnetic Hamilnian in the space of 
  ! KS wave-functions. The field due to a single supercell is supposed to be:
@@ -42,7 +50,7 @@ subroutine SC_add_Hmagnetic()
  use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
  use D_lattice,      ONLY:a,alat
  use R_lattice,      ONLY:g_vec,k_pt,nkibz
- use magnetic,       ONLY:MAG_radius,MAG_B_z,MAG_Hamiltonian,MAG_landau,MAG_pauli
+ use magnetic,       ONLY:MAG_radius,MAG_B_z,MAG_hamiltonian_type,MAG_landau,MAG_pauli
  use electrons,      ONLY:n_sp_pol
  use SC,             ONLY:SC_bands,SC_potential
  use wave_func,      ONLY:wf,wf_state,wf_load,WF_free,wf_ng
@@ -51,6 +59,8 @@ subroutine SC_add_Hmagnetic()
  use par_indexes_m,  ONLY:par_indexes
  use vec_operate,    ONLY:v_norm
  implicit none
+ !
+ logical :: initial_check_only
  !
  ! Parallelization indexes
  !
@@ -78,16 +88,21 @@ subroutine SC_add_Hmagnetic()
  complex(SP):: cdotc,cdotu
 #endif
  !
- MAG_landau=trim(MAG_Hamiltonian)=='landau'
- MAG_pauli =trim(MAG_Hamiltonian)=='pauli'
- if (MAG_landau.and.MAG_radius<epsilon(1.)) then
-   MAG_Hamiltonian='pauli'
-   MAG_landau=.false.
-   if (.not.MAG_pauli) return
+ if (initial_check_only) then
+   MAG_landau=trim(MAG_hamiltonian_type)=='landau'.or.trim(MAG_hamiltonian_type)=='all'
+   MAG_pauli =trim(MAG_hamiltonian_type)=='pauli'.or.trim(MAG_hamiltonian_type)=='all'
+   if (MAG_landau.and.MAG_radius<epsilon(1.)) then
+     MAG_hamiltonian_type='pauli'
+     MAG_landau=.false.
+   endif
+   return
  endif
  !
- if (trim(SC_potential)=='none')  call section('*','Magnetic field ('//trim(MAG_Hamiltonian)//') Hamiltonian') 
- if (trim(SC_potential)/='none')  call section('+','Magnetic field ('//trim(MAG_Hamiltonian)//') Hamiltonian') 
+ if (trim(SC_potential)=='default') then
+   call section('*','Magnetic field ('//trim(MAG_hamiltonian_type)//') Hamiltonian') 
+ else 
+   call section('+','Magnetic field ('//trim(MAG_hamiltonian_type)//') Hamiltonian') 
+ endif
  !
  ! Wavefunctions 
  !===============

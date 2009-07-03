@@ -24,7 +24,7 @@ integer function io_SC_components(what,E_sc,ID)
  ! what can be E WF V J G
  !
  use pars,           ONLY:SP
- use units,          ONLY:HARTREE
+ use units,          ONLY:HARTREE,AU2Tesla
  use drivers,        ONLY:l_sc_run
  use R_lattice,      ONLY:nkibz
  use D_lattice,      ONLY:atoms_string
@@ -46,6 +46,9 @@ integer function io_SC_components(what,E_sc,ID)
  use IO_m,           ONLY:io_restart,io_check_restart
  use QP_m,           ONLY:QP_nk
 #endif                                
+#if defined _MAGNETIC
+ use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B_z,MAG_radius,MAG_landau,MAG_pauli
+#endif
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use electrons,      ONLY:levels,n_sp_pol,n_spin
  use global_XC,      ONLY:SC_EXX,SC_HF,SC_CHOSEX,SC_EXXC
@@ -161,6 +164,24 @@ integer function io_SC_components(what,E_sc,ID)
 &         VAR=' FFT mesh points                 :',CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif
+   !
+#if defined _MAGNETIC
+   if (MAG_pauli.or.MAG_landau) then
+ write (*,*) what
+     call io_elemental(ID,VAR="MAG_hamiltonian",CH0="",VAR_SZ=1,MENU=0) 
+     call io_elemental(ID,CH0=MAG_hamiltonian_type, &
+&         VAR=' [MAG] Hamiltonian kind          :',CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     call io_elemental(ID,VAR="B_FIELD_parameters",VAR_SZ=2,MENU=0) 
+     call io_elemental(ID,UNIT=AU2Tesla,R0=MAG_B_z,&
+&         VAR=' [MAG] z-components B filed   [T]:',CHECK=.true.,OP=(/"=="/))
+     if (MAG_landau) then
+       call io_elemental(ID,R0=MAG_radius,&
+&         VAR=' [MAG] B flux radius             :',CHECK=.true.,OP=(/"=="/))
+     endif
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   endif
+#endif
    !
 #if defined _RT
    !

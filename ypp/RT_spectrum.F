@@ -118,9 +118,9 @@ subroutine RT_spectrum(en,k)
     case(DAMP_NONE)
       damp_function(i1) = 1.0
     case(DAMP_LORENTZIAN)
-      damp_function(i1)= exp(-i2*RT_step*X_rt%damp_factor)
+      damp_function(i1) = exp(-i2*RT_step*X_rt%damp_factor)
     case(DAMP_GAUSSIAN)
-      damp_function(i1)= exp(-(i2*RT_step)**2*X_rt%damp_factor**2)
+      damp_function(i1) = exp(-(i2*RT_step)**2*X_rt%damp_factor**2)
     end select
     !
  enddo
@@ -220,16 +220,16 @@ subroutine RT_spectrum(en,k)
  endif
  !
  if(Use_FFT) then
-   call warning("Energy steps and range reset from real-time dynamics")
+   !      
+   call warning("Energy steps and range set from real-time dynamics")
    !
    X_rt%energy_steps   =niter/2+1
-   X_rt%energy_range(1)=omega
+   X_rt%energy_range(1)=0.
    X_rt%energy_range(2)=omega*niter/2.
-   de=(X_rt%energy_range(2) - X_rt%energy_range(1))/X_rt%energy_steps
    !
- else
-   de=(X_rt%energy_range(2) - X_rt%energy_range(1))/X_rt%energy_steps
  endif
+ !
+ de=(X_rt%energy_range(2) - X_rt%energy_range(1))/X_rt%energy_steps
  !
  ! Calculate Dielectric constant
  ! it works only for constant vector potentials
@@ -252,25 +252,29 @@ subroutine RT_spectrum(en,k)
    call fft_1d_real(E_induced(:,i1),dielectric(:,i1),niter,fft_sign)
 #endif
     !
+    ! due to the definition of FFT 
+    !
+    dielectric(:,i1)=conjg(dielectric(:,i1))
+    !
   enddo
-  !
-  dielectric(:,:)=dielectric(:,:)/sqrt(dble(niter))  
   !
  else
   ! 
+  ! Notice that in the integration should appear dt = RT_step but this cancel
+  ! when one divides from Avec(1) that is the Fourier Transform of a delta function 
+  !
   do i1 = 1, X_rt%energy_steps
     omega = (i1-1)*de+X_rt%energy_range(1)
     do i2 = istart, iend
       tt = i2*RT_step
       dielectric(i1,1:3) = dielectric(i1,1:3) &
-      &  + E_induced(i2,1:3)*exp(((0.,1.)*omega - X_rt%eta)*tt)*RT_step
+      &  + E_induced(i2,1:3)*exp(((0.,1.)*omega - X_rt%eta)*tt)
     enddo
   enddo
   !
  endif
  !
  dielectric(:,:) = dielectric(:,:)/Avec(1) + (1.,0.)
- dielectric(:,:) = (1.,0.)/dielectric(:,:)
  !
  ! Write dielectric constant 
  !
@@ -278,6 +282,9 @@ subroutine RT_spectrum(en,k)
  call of_open_close(file_name(3),'ot')
  !
  write(dump_ch,*) " Max Frequency Range: ",omega*HARTREE," - ",omega*dble(niter/2.)*HARTREE," eV "
+ call msg('o eps_q001_rt','#',dump_ch,INDENT=0,USE_TABS=.true.)
+ call msg('o eps_q001_rt','#','',INDENT=0,USE_TABS=.true.)
+ write(dump_ch,*) " Max Time  Range: ",0," - ",tot_steps/FS2AUT," fs "
  call msg('o eps_q001_rt','#',dump_ch,INDENT=0,USE_TABS=.true.)
  call msg('o eps_q001_rt','#','',INDENT=0,USE_TABS=.true.)
  !

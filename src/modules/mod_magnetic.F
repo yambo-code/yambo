@@ -23,7 +23,7 @@ module magnetic
  !
  use pars, ONLY:SP,schlen
  !
- character(schlen) :: MAG_hamiltonian
+ character(schlen) :: MAG_hamiltonian_type
  real(SP)    :: MAG_B_z
  real(SP)    :: MAG_radius 
  logical     :: MAG_pauli

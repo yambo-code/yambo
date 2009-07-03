@@ -64,7 +64,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 
 #endif
 #if defined _MAGNETIC
- use magnetic,      ONLY:MAG_B_z,MAG_Hamiltonian,MAG_radius
+ use magnetic,      ONLY:MAG_B_z,MAG_hamiltonian_type,MAG_radius
 #endif
 #if defined _RAS
  use bulkeps,              ONLY : init_bulk
@@ -293,7 +293,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
  !
 #if defined _MAGNETIC
- call it(defs,'Hamiltonian','[MAG] Hamiltonian kind [pauli,landau]',MAG_Hamiltonian,protect=.FALSE.)
+ call it(defs,'Hamiltonian','[MAG] Hamiltonian kind [pauli,landau]',MAG_hamiltonian_type,protect=.FALSE.)
  call it(defs,'B_z_Field',  '[MAG] Magnetic field z component',MAG_B_z,unit=B_unit)
  call it(defs,'B_radius',   '[MAG] Magnetic flux radius',MAG_radius)
 #endif

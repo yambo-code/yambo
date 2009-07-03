@@ -64,7 +64,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use SC,             ONLY:SC_potential,SC_ng_Sx,SC_X_bands,SC_X_size
 #endif
 #if defined _MAGNETIC
- use magnetic,        ONLY:MAG_Hamiltonian,MAG_pauli,MAG_landau
+ use magnetic,        ONLY:MAG_hamiltonian_type,MAG_pauli,MAG_landau
 #endif
  !
  implicit none
@@ -1094,13 +1094,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _MAGNETIC
        if ( trim(rstr_piece(i1)) == 'magnetic' )  then
          if ( trim(rstr_piece(i1+1)) == 'p' ) then
-           MAG_Hamiltonian='pauli'
+           MAG_hamiltonian_type='pauli'
            MAG_pauli=.true.
          else if ( trim(rstr_piece(i1+1)) == 'l' ) then
-           MAG_Hamiltonian='landau'
+           MAG_hamiltonian_type='landau'
            MAG_landau=.true.
          else if ( trim(rstr_piece(i1+1)) == 'a') then
-           MAG_Hamiltonian='all'
+           MAG_hamiltonian_type='all'
            MAG_landau=.true.
            MAG_pauli=.true.
          endif

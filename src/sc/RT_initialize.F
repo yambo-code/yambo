@@ -19,7 +19,7 @@
 subroutine RT_initialize(file_name,Xen)
  ! 
  use pars,           ONLY:SP,lchlen,schlen
- use drivers,        ONLY:l_sc_hf,l_sc_pz
+ use drivers,        ONLY:l_sc_hf
  use SC,             ONLY:SC_bands,rho_n
  use QP_m,           ONLY:QP_Sx_low_band
  use com,            ONLY:msg,of_open_close,warning,error

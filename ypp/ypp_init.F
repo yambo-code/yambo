@@ -35,7 +35,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  use electrons,      ONLY:n_spin
  use par_proc_m,     ONLY:master_cpu,pp_redux_wait
  use timing,         ONLY:what_is_running
+#if defined _YPP_ELPH
  use ELPH,           ONLY:gsqF_energy_steps
+#endif
 #if defined _YPP_RAS
  use bulkeps,        only : bshift, bbroad, bfile, btype 
  use convolute,      only : gbroad
@@ -174,7 +176,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    X_rt%energy_steps   =100
    X_rt%energy_range(:)=(/0.,10./HARTREE/)
    X_rt%damp           ="LORENTZIAN"
-   X_rt%damp_factor    =0.01/HARTREE
+   X_rt%damp_factor    =0.1/HARTREE
    X_rt%eta            =0.1/HARTREE
    !
 #endif
@@ -341,7 +343,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (l_rtoptics) then 
     call initactivate(1,"EnRngeRt ETStpsRt TmRngeRt DampMode DampFactor FourierDamp")
-    call initactivate(1,"PrtCurrent PrtEinduced")
+    call initactivate(1,"PrtCurrent PrtEinduced UseFFT")
  endif
  ! 
 #endif
@@ -357,7 +359,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (l_excitons) then
    call initactivate(1,"States")
-   if (l_exc_wf) call initactivate(1,"Degen_Step")
+   if (l_exc_wf.or.l_amplitude) call initactivate(1,"Degen_Step")
    if (l_exc_wf.and..not.l_free_hole) call initactivate(1,"Cells Hole Dimension") 
    if (l_exc_wf.and.l_free_hole) call initactivate(1,"WFMult") 
    if (l_spin) call initactivate(1,"Degen_Step")

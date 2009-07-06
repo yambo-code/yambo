@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2008 C. Attaccalite and the YAMBO team
+! Copyright (C) 2000-2008 C. Attaccalite & A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_check_symmetries(field_dir)
+subroutine SC_check_symmetries(field_dir)
   !
   use pars,          ONLY:SP,lchlen
   use vec_operate,   ONLY:v_norm
@@ -30,12 +30,12 @@ subroutine RT_check_symmetries(field_dir)
   implicit none
   !
   real(SP), intent(in)  :: field_dir(3)
-  character(lchlen)       :: dump_ch
   !
   ! Work space
   !
   integer  :: is,nsym_wrong
   real(SP) :: v(3)
+  character(lchlen) :: dump_ch
   !
   if(v_norm(field_dir)<1.E-5) return
   !
@@ -45,25 +45,26 @@ subroutine RT_check_symmetries(field_dir)
     !      
     v(:) = matmul( rl_sop(:,:,is), field_dir )
     !
-    !
     if( v_norm(v(:)-field_dir(:))>1.E-5) then
-        call msg('s',' ')
-        call msg('s',' * * * SYMMETRY NOT COMPATIBLE * * * ')
-        write(dump_ch,'(a,3f12.6,a)') '|',rl_sop(:,1,is),'|'
-        call msg('s',dump_ch)      
-        write(dump_ch,'(a,3f12.6,a)') '|',rl_sop(:,2,is),'|'
-        call msg('s',dump_ch)      
-        write(dump_ch,'(a,3f12.6,a)') '|',rl_sop(:,3,is),'|'
-        call msg('s',dump_ch)      
-        nsym_wrong=nsym_wrong+1
+! DEBUG >
+!        call msg('s',' ')
+!        call msg('s',' * * * SYMMETRY NOT COMPATIBLE * * * ')
+!        write(dump_ch,'(a,3f12.6,a)') '|',rl_sop(:,1,is),'|'
+!        call msg('s',dump_ch)      
+!        write(dump_ch,'(a,3f12.6,a)') '|',rl_sop(:,2,is),'|'
+!        call msg('s',dump_ch)      
+!        write(dump_ch,'(a,3f12.6,a)') '|',rl_sop(:,3,is),'|'
+!        call msg('s',dump_ch)      
+! DEBUG <
+      nsym_wrong=nsym_wrong+1
     endif
     !
   enddo
   !
   if(nsym_wrong/=0) then
-    call msg('s',' Number of not compatible symm '//intc(nsym_wrong)//' on '//intc(nsym))
-    call error(' Use ypp -n to remove these symmetries ')
+    call msg('s','Detected '//intc(nsym_wrong)//' wrong symmetries (out of '//intc(nsym)//' )')
+    call error(' Use ypp_rt -n to remove fix the symmetry group and restart Yambo ')
     stop '  '
   endif
   !
-end subroutine RT_check_symmetries
+end subroutine SC_check_symmetries

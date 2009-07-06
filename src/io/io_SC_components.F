@@ -167,7 +167,6 @@ integer function io_SC_components(what,E_sc,ID)
    !
 #if defined _MAGNETIC
    if (MAG_pauli.or.MAG_landau) then
- write (*,*) what
      call io_elemental(ID,VAR="MAG_hamiltonian",CH0="",VAR_SZ=1,MENU=0) 
      call io_elemental(ID,CH0=MAG_hamiltonian_type, &
 &         VAR=' [MAG] Hamiltonian kind          :',CHECK=.true.,OP=(/"=="/))

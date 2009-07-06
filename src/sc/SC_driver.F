@@ -45,7 +45,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use X_m,            ONLY:X_t
  use timing,         ONLY:live_time_msg
  use stderr,         ONLY:tty_size,intc,real2ch
- use xc_functionals, ONLY:V_xc
+ use xc_functionals, ONLY:V_xc,el_mag
  use frequency,      ONLY:w_samp
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,&
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL
@@ -220,6 +220,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    call MAG_Hamiltonian(.FALSE.)
    !
  endif
+ !
 #endif
  !
  call wf_load(WF_G_max,WF_Go_indx,(/1,max(SC_bands,E%nbm)/),(/1,k%nibz/),title='-SC')
@@ -479,7 +480,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                         maxval(abs(E%E(:SC_bands,ik,i_spin)-E_previous(:,ik,i_spin)-&
 &                                    E%E(1,ik,i_spin)+E_previous(1,ik,i_spin)       )))
        enddo
-      E_convergence=max(E_convergence,maxval(E_conv))
+       E_convergence=max(E_convergence,maxval(E_conv))
      enddo
      !
      rho_convergence = 0.
@@ -651,7 +652,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      call mem_est("rho_nm1")
      !
      if (n_spin>1) then
-       deallocate(el_mag_nm1)
+       deallocate(el_mag_nm1,el_mag)
        call mem_est("el_mag_nm1")
      endif
      !

@@ -89,6 +89,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
 #endif
  !
  if (initial_check_only) then
+   !
    MAG_landau=trim(MAG_hamiltonian_type)=='landau'.or.trim(MAG_hamiltonian_type)=='all'
    MAG_pauli =trim(MAG_hamiltonian_type)=='pauli'.or.trim(MAG_hamiltonian_type)=='all'
    if (MAG_landau.and.MAG_radius<epsilon(1.)) then
@@ -103,6 +104,10 @@ subroutine MAG_Hamiltonian(initial_check_only)
  else 
    call section('+','Magnetic field ('//trim(MAG_hamiltonian_type)//') Hamiltonian') 
  endif
+ !
+ ! Symmetries check
+ !
+ call SC_check_symmetries((/0.,0.,MAG_B_z/))
  !
  ! Wavefunctions 
  !===============

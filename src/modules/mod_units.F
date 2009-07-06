@@ -60,7 +60,7 @@ module UNITS
  !
  ! Magnetic fields
  !
- real(SP), parameter :: Tesla2AU=2.350517*10.**5
- real(SP), parameter :: AU2Tesla=1./Tesla2AU
+ real(SP), parameter :: AU2Tesla=2.350517*10.**5
+ real(SP), parameter :: Tesla2AU=1./AU2Tesla
  !
 end module 

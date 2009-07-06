@@ -117,7 +117,9 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  ! ... created
  !
  call mk_dir(core_io_path)
+ call mk_dir(trim(core_io_path)//'/SAVE')
  call mk_dir(more_io_path)
+ call mk_dir(trim(more_io_path)//'/SAVE')
  call mk_dir(com_path)
  !
  ! ... and Job string

@@ -677,6 +677,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call live_timing()
  call pp_redux_wait
  !
+ ! GLOBAL CLEANING 
+ !=================
+ !
  deallocate(O_table)
  call mem_est("O_table")
  call mem_est("BS_mat")

@@ -167,6 +167,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        ng_closed,unit=G_unit,verb_level=V_more)
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit,verb_level=V_more)
  call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,Verb_level=V_more)
+ call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_more)
+ call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_more) 
  !
  ! S_xc
  !
@@ -244,8 +246,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'Nelectro','Electrons number',nel,verb_level=V_more)
  call it(defs,'ElecTemp','Electronic Temperature',Tel,T_unit,verb_level=V_more)
- call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_more)
- call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_more) 
  call it(defs,'OccTresh','Occupation treshold (metallic bands)',filled_tresh,verb_level=V_more)
  call it(defs,'BoseCut', '[BOSE] Finite Tel Bose function cutoff',bose_E_cut,verb_level=V_more)
 #if defined _ELPH || defined _SOLITONS

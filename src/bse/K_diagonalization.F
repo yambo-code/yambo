@@ -49,7 +49,11 @@ subroutine K_diagonalization(iq,W)
  type(pp_indexes)     ::px
  integer              ::i1,lib_driver,BS_H_dim
  logical              ::K_is_not_hermitian
- complex(SP):: cdotu,cdotc
+#if defined _DOUBLE
+ complex(DP)::zdotu,zdotc
+#else
+ complex(SP)::cdotu,cdotc
+#endif
  !
  ! Residuals & Energies
  !

@@ -66,9 +66,8 @@ subroutine DFT_Vxc(E,Xk)
  !
  ! Allocation 
  !
-#if !defined _SC && !defined _RT && !defined _MAGNETIC
- allocate(V_xc(fft_size,n_spin),el_mag(fft_size,3))
-#endif
+ if (.not.allocated(V_xc))   allocate(V_xc(fft_size,n_spin))
+ if (.not.allocated(el_mag)) allocate(el_mag(fft_size,3))
  !
 #if defined _SC || defined _RT || defined _MAGNETIC
  if (WF_KIND< 300 ) then

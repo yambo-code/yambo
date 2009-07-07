@@ -21,7 +21,7 @@
 !
 module SC
  !
- use pars,      ONLY:SP,schlen
+ use pars,            ONLY:SP,schlen
  implicit none
  !
  integer           :: SC_bands
@@ -84,6 +84,7 @@ module SC
      use FFT_m,          ONLY:fft_size
      use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc,QP_state,QP_nb
      use memory_m,       ONLY:mem_est
+     use xc_functionals, ONLY:el_mag,V_xc
      implicit none
      !
      type(levels) :: E
@@ -112,6 +113,14 @@ module SC
      allocate(rho_n(fft_size))
      call mem_est("rho",(/fft_size/),(/SP/))
      !
+     if(n_spin>1) then
+       allocate(el_mag(fft_size,3))
+       call mem_est("el_mag",(/fft_size*3/),(/SP/))
+     endif
+     !
+     allocate(V_xc(fft_size,n_spin))
+     call mem_est('V_xc',(/fft_size*n_spin/),(/SP/))
+     !
      allocate(V_hartree_sc(fft_size,n_spin))
      call mem_est("Hartree_Potential",(/size(V_hartree_sc)/))
      !
@@ -134,6 +143,7 @@ module SC
      use drivers,        ONLY:l_real_time,l_sc_chosex
      use QP_m,           ONLY:QP_Sc
      use memory_m,       ONLY:mem_est
+     use xc_functionals, ONLY:el_mag,V_xc
      implicit none
      !
      deallocate(Ho)
@@ -144,6 +154,14 @@ module SC
      !
      deallocate(rho_n)
      call mem_est("rho")
+     !
+     if(allocated(el_mag)) then
+       deallocate(el_mag)
+       call mem_est("el_mag")
+     endif
+     !
+     deallocate(V_xc)
+     call mem_est('V_xc')
      !
      deallocate(V_hartree_sc)
      call mem_est("Hartree_Ptential")

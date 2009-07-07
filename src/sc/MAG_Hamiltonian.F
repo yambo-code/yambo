@@ -177,10 +177,12 @@ subroutine MAG_Hamiltonian(initial_check_only)
    ! To calculate the m.e. of the B-induced Hamiltonian we need
    ! to evaluate the WFs derivative
    !
-   ! 1) H_paramagn = Ax px + Ay py     (orbital component only of H_paramagnetic)
+   ! 1) H_paramagn = Ax px + Ay py         (orbital component only of H_paramagnetic)
    ! 2) H_diamagn  = Ax**2 + A_y**2
-   ! 3) H_pauli    = \sigma \ddot rot^A   (spin component of H_paramagnetic)
-   !
+   ! 3) H_pauli    = \sigma \ddot \rot^A   (spin component of H_paramagnetic)
+   !               = \sigma_z B_z (remember here that the hamiltonian has a minus
+   !                               which is canceled by the minus of the magnetic
+   !                               moment with respect to the spin)
    ! 1) H_paramagn
    H_paramagn_x(:)=A_magn_x(:) 
    H_paramagn_y(:)=A_magn_y(:)

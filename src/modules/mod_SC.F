@@ -49,7 +49,6 @@ module SC
  real(SP),    allocatable :: V_xc_sc(:,:)
  real(SP),    allocatable :: V_hartree_sc(:,:)
  real(SP),    allocatable :: rho_n(:)
- real(SP),    allocatable :: el_mag_n(:,:)
  !
  ! Kinetic Energy and Ionic potential energy
  !
@@ -113,11 +112,6 @@ module SC
      allocate(rho_n(fft_size))
      call mem_est("rho",(/fft_size/),(/SP/))
      !
-     if (n_spin>1) then
-       allocate(el_mag_n(fft_size,3))
-       call mem_est("el_mag_n",(/fft_size*3/),(/SP/))
-     endif
-     !
      allocate(V_hartree_sc(fft_size,n_spin))
      call mem_est("Hartree_Potential",(/size(V_hartree_sc)/))
      !
@@ -138,7 +132,6 @@ module SC
    !
    subroutine SC_free()
      use drivers,        ONLY:l_real_time,l_sc_chosex
-     use electrons,      ONLY:n_spin
      use QP_m,           ONLY:QP_Sc
      use memory_m,       ONLY:mem_est
      implicit none
@@ -151,11 +144,6 @@ module SC
      !
      deallocate(rho_n)
      call mem_est("rho")
-     !
-     if (n_spin>1) then
-       deallocate(el_mag_n)
-       call mem_est("el_mag_n")
-     endif
      !
      deallocate(V_hartree_sc)
      call mem_est("Hartree_Ptential")

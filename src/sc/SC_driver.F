@@ -67,7 +67,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  real(SP)                 :: spread(SC_bands,k%nibz,n_sp_pol),&
 &                            E_previous(SC_bands,k%nibz,n_sp_pol),dE(SC_bands,k%nibz,n_sp_pol),&
 &                            E_conv(n_sp_pol)
- real(SP),    allocatable :: V_xc_nm1(:,:),rho_nm1(:),el_mag_nm1(:,:)
+ real(SP),    allocatable :: V_xc_nm1(:,:),rho_nm1(:)
  real(SP),    allocatable :: delta_rho(:)
  complex(SP), allocatable :: WFo(:,:)
  ! 
@@ -625,11 +625,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      allocate(rho_nm1(fft_size))
      call mem_est("rho_nm1",(/fft_size/),(/SP/))
      !
-     if (n_spin>1) then
-       allocate(el_mag_nm1(fft_size,3))
-       call mem_est("el_mag_nm1",(/fft_size*3/),(/SP/))
-     endif
-     !
      allocate(V_xc_sc(fft_size,n_spin))
      call mem_est("V_xc_sc",(/size(V_xc_sc)/))
      !
@@ -650,11 +645,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      deallocate(rho_nm1)
      call mem_est("rho_nm1")
-     !
-     if (n_spin>1) then
-       deallocate(el_mag_nm1,el_mag)
-       call mem_est("el_mag_nm1")
-     endif
      !
      deallocate(V_xc_sc)
      call mem_est("V_xc_sc")

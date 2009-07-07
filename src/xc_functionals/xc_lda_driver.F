@@ -133,7 +133,7 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
    !
    ! Electronic magnetization & Zeta
    !
-   call el_magnetization(en,Xk,el_mag)
+   call el_magnetization(en,Xk)
    !
    zeta(:)=sqrt(el_mag(:,1)**2+el_mag(:,2)**2+el_mag(:,3)**2)/rho_sp
    !

@@ -21,16 +21,17 @@
 !
 subroutine electrons_driver(Xk,Xen)
  !
- use pars,          ONLY:SP,schlen
- use stderr,        ONLY:intc
- use wave_func,     ONLY:wf_load,wf,WF_free,wf_ng,wf_state
- use FFT_m,         ONLY:fft_size,fft_dim
- use R_lattice,     ONLY:bz_samp
- use electrons,     ONLY:levels,n_spin,n_spinor,spin,n_sp_pol
- use QP_m,          ONLY:QP_table,QP_n_states,QP_state
- use YPP,           ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
-&                        use_gnuplot,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,plot_title
- use com,           ONLY:msg,of_open_close,warning
+ use pars,           ONLY:SP,schlen
+ use stderr,         ONLY:intc
+ use wave_func,      ONLY:wf_load,wf,WF_free,wf_ng,wf_state
+ use FFT_m,          ONLY:fft_size,fft_dim
+ use R_lattice,      ONLY:bz_samp
+ use electrons,      ONLY:levels,n_spin,n_spinor,spin,n_sp_pol
+ use QP_m,           ONLY:QP_table,QP_n_states,QP_state
+ use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
+&                         use_gnuplot,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,plot_title
+ use com,            ONLY:msg,of_open_close,warning
+ use xc_functionals, ONLY:el_mag
  implicit none
  !
  type(bz_samp) ::Xk
@@ -38,7 +39,7 @@ subroutine electrons_driver(Xk,Xen)
  !
  ! Work Space
  !
- real(SP), allocatable :: el_mag(:,:),el_den(:)
+ real(SP), allocatable :: el_den(:)
  integer               :: i_qp,ik,ib,ir,i_wf,i_spin,mag_i_dir,nb_to_load(2)
  character(schlen)     :: ch_ws
  !
@@ -168,7 +169,7 @@ subroutine electrons_driver(Xk,Xen)
    !
    call section('*','Single Particle Magnetization along '//mag_dir)
    !
-   call el_magnetization(Xen,Xk,el_mag)
+   call el_magnetization(Xen,Xk)
    !
    v2plot=el_mag(:,mag_i_dir)
    !

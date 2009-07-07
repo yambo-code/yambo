@@ -33,12 +33,12 @@ subroutine MAG_Hamiltonian(initial_check_only)
  ! KS wave-functions. The field due to a single supercell is supposed to be:
  ! *******************************************************************************************
  !                               [  MAG_B    r<=MAG_radius
- !    Bx=0   ,   By=0    ,  Bz = {                     ====> A; B=rot(A)
- !                               [   0     r> MAG_radius  
+ !    Bx=0   ,   By=0    ,  Bz = {                                ====> A; B=rot(A)
+ !                               [   0       r> MAG_radius  
  !
- !      [ -0.5*MAG_B y                            [ 0.5*MAG_B x
- ! Ax = {                                  Ay = {                                    A_z=0
- !      [ -0.5*MAG_B (MAG_radius**2)*y/(x**2+y**2)       [ 0.5*MAG_B (MAG_radius**2)*x/(x**2+y**2)
+ !      [ -0.5*MAG_B y                                     [ 0.5*MAG_B x
+ ! Ax = {                                             Ay = {                                          A_z=0
+ !      [ -0.5*MAG_B (MAG_radius**2)*y/(x**2+y**2)         [ 0.5*MAG_B (MAG_radius**2)*x/(x**2+y**2)
  ! *******************************************************************************************
  ! MAG_B and MAG_radius are given in input
  ! If MAG_radius == 0 then Bz=MAG_B everywhere ... --> ???
@@ -149,8 +149,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
 &                         ir2*a(2,:)/fft_dim(2) +&
 &                         ir3*a(3,:)/fft_dim(3)
        if (MAG_landau) then
-         ! Radius in the direction perpendicular to the magnetic
-         ! field
+         ! Radius in the direction perpendicular to the magnetic field
          r_mod=v_norm((/r_cell_cc(ir,1),r_cell_cc(ir,2),0./))
          if(r_mod<=MAG_radius**2) then
            A_magn_x(ir)=-0.5*MAG_B_z*r_cell_cc(ir,2)
@@ -182,7 +181,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
    ! 2) H_diamagn  = Ax**2 + A_y**2
    ! 3) H_pauli    = \sigma \ddot rot^A   (spin component of H_paramagnetic)
    !
-   ! 1)
+   ! 1) H_paramagn
    H_paramagn_x(:)=A_magn_x(:) 
    H_paramagn_y(:)=A_magn_y(:)
    ! 2) H_diamagnetic
@@ -222,7 +221,8 @@ subroutine MAG_Hamiltonian(initial_check_only)
          do i1=1,2
            wf_derivative(:,i1)=wf(:,ifft)*(k_pt(ik,i1)+g_vec(: wf_ng ,i1))*2.0_SP*pi/alat(i1)
          enddo
-         ! Here we FFT wf_derivative to real space --> wf_x,wf_y
+         ! Here we FFT wf_derivative to real space
+         ! a) wf_x
          wf_DP=(0._DP,0._DP)
          wf_DP(fft_g_table(1:9,1))= wf_derivative(:9,1)*fft_norm
 #if defined _FFTW
@@ -231,6 +231,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
          call fft_3d(wf_DP,fft_dim,1)
 #endif
          wf_x(:,ifft)=wf_DP(:)
+         ! b) wf_y
          wf_DP=(0._DP,0._DP)
          wf_DP(fft_g_table(1:wf_ng,1))= wf_derivative(:wf_ng,2)*fft_norm
 #if defined _FFTW

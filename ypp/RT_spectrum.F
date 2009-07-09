@@ -210,7 +210,7 @@ subroutine RT_spectrum(en,k)
    call msg('o einduced','#',headings(1:4),INDENT=-2,USE_TABS=.TRUE.)
    do i1=istart,iend
      values(1:4)=(/RT_step*(i1-1+istart)/FS2AUT, &
-&    real(E_induced(i1,1),4),real(E_induced(i1,2),4) , real(E_induced(i1,3),4)/)
+&    real(E_induced(i1,1),SP),real(E_induced(i1,2),SP) , real(E_induced(i1,3),SP)/)
      call msg('o einduced','',values(1:4),USE_TABS=.TRUE.)
    enddo
    !

@@ -79,7 +79,7 @@ recursive subroutine RT_Integrator(G_new,G_old,T_step,Xen,k,q,Integrator,RT_time
    !
    G_new(:,:,:)=G_old(:,:,:)
    !
-   ! G(T+dt) = G(T+dt) - i dt *(I1(T) - I2(T))
+   ! G(T+dt) = G(T) - i dt *(I1(T) - I2(T))
    !
 #if defined _DOUBLE
    call zaxpy(SC_bands2_dot_nibz,dcmplx(0.,-T_step),I1_lesser(:,:,:),1,G_new(:,:,:),1)
@@ -143,21 +143,34 @@ recursive subroutine RT_Integrator(G_new,G_old,T_step,Xen,k,q,Integrator,RT_time
    ! Diagonalize the Self-Energy (H_t) and make a step 
    ! in the space of its eigenstates
    !
+   G_new=G_old
+   !
    do ik=1,Xen%nk
      !
      TmpMatrix(:,:)=H_t(:,:,ik,1)
      !
      call mat_dia_inv(DIAGO,USE_LK,TmpMatrix,E_real=Xen%E(:SC_bands,ik,1))
      !
-     call H_rotate(TmpMatrix,G_old(:,:,ik),SC_bands,1)
+     call H_rotate(TmpMatrix,G_new(:,:,ik),SC_bands,1)
      !
      forall(i1=1:SC_bands,i2=1:SC_bands)
-       G_new(i1,i2,ik)=G_old(i1,i2,ik)*exp(-(0._SP,1._SP)*(Xen%E(i1,ik,1)-Xen%E(i2,ik,1))*T_step)
+       G_new(i1,i2,ik)=G_new(i1,i2,ik)*exp(-(0._SP,1._SP)*(Xen%E(i1,ik,1)-Xen%E(i2,ik,1))*T_step)
      end forall
      !
      call H_rotate(TmpMatrix,G_new(:,:,ik),SC_bands,-1)
-     call H_rotate(TmpMatrix,G_old(:,:,ik),SC_bands,-1)
-     !     
+     !
+     ! Symmetrization
+     !
+     do i1=1,SC_bands
+       G_new(i1,i1,ik)=(0.,1.)*aimag(G_new(i1,i1,ik))
+       !
+       do i2=i1+1,SC_bands
+         G_new(i1,i2,ik)=(G_new(i1,i2,ik)-conjg(G_new(i2,i1,ik)))/2.0
+         G_new(i2,i1,ik)=-conjg(G_new(i1,i2,ik))
+       enddo
+       !
+     enddo
+     !
    enddo
    !
  elseif(trim(Integrator)==RK2EXACT) then

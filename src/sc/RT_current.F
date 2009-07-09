@@ -26,7 +26,7 @@ subroutine RT_current(j_current,xK,Xen,A_vec_pot,G_lesser)
  use pars,           ONLY:SP,pi
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp,RL_vol
- use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv,i_time_rev
+ use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel,levels
  use X_m,            ONLY:DIP_iR_or_P
@@ -68,20 +68,16 @@ subroutine RT_current(j_current,xK,Xen,A_vec_pot,G_lesser)
    do i2=1,3
      !
 #if defined _DOUBLE
-     j_dir(i2)=aimag(zdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1))
+     j_dir(i2)=-aimag(zdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1))
 #else
-     j_dir(i2)=aimag(cdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1))
+     j_dir(i2)=-aimag(cdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1))
 #endif
      !
    enddo
    !
-   ! To be checked again for is > sym/(i_time_rev+1)
+   ! Time-reversal is always excluded in the symmetries list!
    !
-   if(is >  nsym/(i_time_rev+1)) then
-     j_dir_rot  =   matmul( dl_sop(:,:,is), j_dir )*dl_sop(3,3,is) 
-   else
-     j_dir_rot  =  -matmul( dl_sop(:,:,is), j_dir )*dl_sop(3,3,is)  
-   endif
+   j_dir_rot  =  matmul( dl_sop(:,:,is), j_dir )
    !
    j_current(:)=j_current(:)+j_dir_rot(:)
    !
@@ -101,6 +97,7 @@ subroutine RT_current(j_current,xK,Xen,A_vec_pot,G_lesser)
  else
    call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/i_time+1/),ID=ID(4)) ! Current response
  endif
-   io_J=io_SC_components('J' ,Xen,ID(4))
+ !
+ io_J=io_SC_components('J' ,Xen,ID(4))
  !
 end subroutine RT_current

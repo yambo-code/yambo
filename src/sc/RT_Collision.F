@@ -132,8 +132,9 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
    if(.not.l_RT_no_updates) then
      !      
      if(l_sc_contains_lda.and.SC_xc_functional/=0) then
-
+       !
        call V_real_space_to_H(ik,V_hartree_sc+V_xc,H_nl_sc,wf)
+       !
      else
        !      
        call V_real_space_to_H(ik,V_hartree_sc+V_xc_0,H_nl_sc,wf)

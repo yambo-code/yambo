@@ -73,7 +73,7 @@ subroutine RT_Ext_Field(ik,H_nl_sc,G_lesser,time)
  !
  if(.not.RT_no_intraband.or..not.RT_resonant) then
    do i1=1,SC_bands
-     H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)+sum(A_vec_pot(:)*DIP_iR_or_P(:,i1,i1,ik,1))
+     H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)+real(sum(A_vec_pot(:)*DIP_iR_or_P(:,i1,i1,ik,1)))
    enddo
  endif
  !

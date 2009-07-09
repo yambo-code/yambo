@@ -87,7 +87,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use eels_integration,     ONLY : init_reels_integration
 #endif
 #if defined _ELPH || defined _SOLITONS
- use ELPH,                 ONLY : QP_PH_n_G_bands,PH_null_E_rgn,elph_nq_used
+ use ELPH,                 ONLY : QP_PH_n_G_bands,elph_nq_used
 #endif
  !
  implicit none
@@ -350,8 +350,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
 #if defined _ELPH || defined _SOLITONS
  call it(defs,'GphBRnge',  '[ELPH] G[W] bands range',QP_PH_n_G_bands)
- call it(defs,'PHnullErgn','[ELPH] Null transitions energy window',&
-&                          PH_null_E_rgn,verb_level=V_qp,unit=E_unit)
  call it('f',defs,'WRgFsq','[ELPH] Dump on file gFsq coefficients')
 #endif
  ! 

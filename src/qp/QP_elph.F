@@ -46,7 +46,7 @@ subroutine QP_elph(en,k,q,qp)
  use ELPH,          ONLY:ph_modes,elph_nb,ph_freqs_sq,elph_gkkp,&
 &                        elph_global_free,QP_PH_n_G_bands,max_ph_freq,elph_DW,&
 &                        elph_nq,E_k_plus_q,elph_use_q_grid,&
-&                        setup_k_plus_q_levels,f_k_plus_q,PH_null_E_rgn,elph_nq_used,&
+&                        setup_k_plus_q_levels,f_k_plus_q,elph_nq_used,&
 &                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,&
 &                        elph_global_alloc,gsqF_energy_steps
  use functions,     ONLY:Fermi_fnc_derivative
@@ -65,9 +65,10 @@ subroutine QP_elph(en,k,q,qp)
  integer          ::io_err,ID,iv4(4)
  integer, external::ioELPH,QP_state_extract
  character(schlen)::ch
- real(SP)         ::q_weight,ph_E,delta_E,delta_E_at_gamma,one_minus_2f_occ,f_occ,&
+ real(SP)         ::q_weight,ph_E,delta_E_at_gamma,one_minus_2f_occ,f_occ,&
 &                   E_k_plus_q_at_gamma(elph_nb,k%nbz),elph_gkkp_sq,gsqF_damping
- logical          ::l_WRgFsq
+ complex(SP)      ::delta_E
+ logical          ::l_WRgFsq,l_GF_from_CA
  !
  ! Zeroing
  !
@@ -86,13 +87,18 @@ subroutine QP_elph(en,k,q,qp)
  !
  call parser('WRgFsq',l_WRgFsq)
  !
+ ! Eval Green's function directly from Allen-Cardona expression ?
+ !
+ call parser('GF_from_CA',l_GF_from_CA)
+ !
  call k_sym2sym(k,'k')
  call k_expand(k)
  !
  if (QP_PH_n_G_bands<=0.or.QP_PH_n_G_bands>elph_nb) QP_PH_n_G_bands=elph_nb
  !
  call msg('r', '[GW/El-Ph] Bands range       :',(/1,QP_PH_n_G_bands/))
- call msg('r', '[GW/El-Ph] G damping     [ev]:',QP_G_damp*HARTREE)
+ if (trim(QP_solver)=='n') &
+&  call msg('r', '[GW/El-Ph] G damping     [ev]:',QP_G_damp*HARTREE)
  call msg('r','')
  !
  iv4=(/1,1,0,0/)
@@ -115,8 +121,14 @@ subroutine QP_elph(en,k,q,qp)
    !
    do iqp=1,qp%n_states
      Sc_W(iqp)%n =QP_Sc_steps
-     Sc_W(iqp)%er=(/minval(en%E(:,:,:))-1./HARTREE,maxval(en%E(:,:,:))+1./HARTREE/) 
-     Sc_W(iqp)%dr=QP_G_damp
+     if (l_GF_from_CA) then
+       Sc_W(iqp)%er=QP_G_er
+       Sc_W(iqp)%dr=QP_G_dr
+     else
+       Sc_W(iqp)%er=(/minval(en%E(:,:,:))-2.*max_ph_freq,&
+&                     maxval(en%E(:QP_PH_n_G_bands,:,:))+2.*max_ph_freq/) 
+       Sc_W(iqp)%dr=QP_G_dr
+     endif
      call freqs_setup(Sc_W(iqp))
      QP_Sc_steps=Sc_W(iqp)%n(1)
    enddo
@@ -143,8 +155,15 @@ subroutine QP_elph(en,k,q,qp)
  !
  iq_ref=0
  !
- time_order_sign=-1
- if (Finite_Tel.or.trim(QP_solver)=='g') time_order_sign=1
+ ! Time-Ordering
+ !----------------
+ time_order_sign=-1                ! T-order
+ if (Finite_Tel) time_order_sign=1 ! Causal
+ !
+ ! Note that only by using causal ordering it is correct to use 
+ ! the KK to calculate the Green's function
+ !
+ if (trim(QP_solver)=='g')  time_order_sign=1
  !
  if (elph_use_q_grid) elph_nq_used=q%nbz
  q_weight=1./real(elph_nq_used)
@@ -265,13 +284,13 @@ subroutine QP_elph(en,k,q,qp)
            ! Define gsqF denominators
            !
            if (elph_use_q_grid) then
-             delta_E         =real( Sc_W(iqp)%p(iw) )-en%E(ob,ok,1)
-             delta_E_at_gamma=en%E(ib,ik,1)          -en%E(ob,ik,1)
+             delta_E         =Sc_W(iqp)%p(iw)-en%E(ob,ok,1)
+             delta_E_at_gamma=en%E(ib,ik,1)  -en%E(ob,ik,1)
              f_occ=en%f(ob,ok,1)/spin_occ
              one_minus_2f_occ=(1.-2.*f_occ)
            else
-             delta_E         =real( Sc_W(iqp)%p(iw) )-E_k_plus_q(ob,ik_bz,1)
-             delta_E_at_gamma=en%E(ib,ik,1)          -E_k_plus_q_at_gamma(ob,ik_bz)
+             delta_E         =Sc_W(iqp)%p(iw)-E_k_plus_q(ob,ik_bz,1)
+             delta_E_at_gamma=en%E(ib,ik,1)  -E_k_plus_q_at_gamma(ob,ik_bz)
              f_occ=f_k_plus_q(ob,ik_bz,1)/spin_occ
              one_minus_2f_occ=(1.-2.*f_occ)
            endif
@@ -284,52 +303,47 @@ subroutine QP_elph(en,k,q,qp)
            ! "Bose" Term
            !
            gsqF_life_bose(iqp,iq,il,iw)= gsqF_life_bose(iqp,iq,il,iw)+2.*pi*elph_gkkp_sq*q_weight*&
-&            ( Fermi_fnc_derivative(delta_E+ph_E,gsqF_damping) + &
-&              time_order_sign* Fermi_fnc_derivative(delta_E-ph_E,gsqF_damping) )
+&            ( Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) + &
+&              time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping) )
            !
            ! "f" Term
            !
            gsqF_life_f(iqp,iq,il,iw)= gsqF_life_f(iqp,iq,il,iw)+pi*elph_gkkp_sq*q_weight*&
-&            ( ( Fermi_fnc_derivative(delta_E+ph_E,gsqF_damping) - &
-&                time_order_sign* Fermi_fnc_derivative(delta_E-ph_E,gsqF_damping) )*f_occ-&
-&              Fermi_fnc_derivative(delta_E+ph_E,gsqF_damping) )
+&            ( ( Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) - &
+&                time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping) )*f_occ-&
+&              Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) )
            !
-           if (trim(QP_solver)=='g') cycle
+           if (trim(QP_solver)=='g'.and..not.l_GF_from_CA) cycle
            !
            ! QP's energies
            !--------------
            !
-           ! Security cycle to avoid divergencies in the denominators
-           !
-           if (abs(delta_E/ph_E)-1.<0.01) cycle
-           !
            ! Correction to the Fan-DW term (not in Cardona-Allen paper, possibly
            ! important for metals).
            !
-           if (abs(delta_E)>PH_null_E_rgn) &
-&            gsqF_ca_corr(iqp,iq,il,iw)= gsqF_ca_corr(iqp,iq,il,iw)+elph_gkkp_sq*&
-&                    ph_E*one_minus_2f_occ/(delta_E**2.-ph_E**2.)*q_weight
+           gsqF_ca_corr(iqp,iq,il,iw)=gsqF_ca_corr(iqp,iq,il,iw)+elph_gkkp_sq*&
+&                                      ph_E*one_minus_2f_occ/(delta_E**2.-ph_E**2.)*q_weight
            !
            ! Cardona-Allen formulation
            !
-           ! The Energy term contributing to gsqF_fan/dw
-           ! is and odd function of E-E'. So it should integrate
-           ! to zero for E\simE'. This defines the PH_null_E_rgn treshold
-           !
-           ! (a) Fan Term                                  this 2 is to be consistent with AC definition
-           !                                               |
-           !                                               \/
-           if (abs(delta_E)>PH_null_E_rgn) &
-&            gsqF_fan(iqp,iq,il,iw)=gsqF_fan(iqp,iq,il,iw)+2.*elph_gkkp_sq*&
-&                    delta_E/(delta_E**2.-ph_E**2.)*q_weight
+           ! (a) Fan Term                                this 2 is to be consistent with AC definition
+           !                                             |
+           !                                             \/
+           gsqF_fan(iqp,iq,il,iw)=gsqF_fan(iqp,iq,il,iw)+2.*elph_gkkp_sq*&
+&                                 delta_E/(delta_E**2.-ph_E**2.)*q_weight
            !
          enddo
          !
+         ! The DW term comes from a perturbation theory expansion
+         ! which does not allow zero-energy transitions between the
+         ! perturbed stated and itself
+         !
+         if (ib==ob) cycle
+         !
          ! (b) Debye Waller Term
          !
-         if (abs(delta_E_at_gamma)>PH_null_E_rgn) &
-&          gsqF_dw(iqp,iq,il)= gsqF_dw(iqp,iq,il)-1./2.*&
-&                  2.*elph_DW(ik_bz,il,ib,ob)/delta_E_at_gamma*q_weight/2./ph_E
+         gsqF_dw(iqp,iq,il)= gsqF_dw(iqp,iq,il)-1./2.*&
+&                            2.*elph_DW(ik_bz,il,ib,ob)/delta_E_at_gamma*q_weight/2./ph_E
          !        /\
          !        |
          !        this 2 is to be consistent with AC definition (see Eq. 5, PRB 31, 2163)
@@ -425,7 +439,7 @@ subroutine QP_elph(en,k,q,qp)
        call W_reset(Sc_local_W)
        Sc_local_W%n =QP_Sc_steps
        Sc_local_W%er=QP_G_er
-       Sc_local_W%dr=QP_G_dr
+       Sc_local_W%dr=0.001/HARTREE
        call freqs_setup(Sc_local_W)
      endif
      !
@@ -446,10 +460,15 @@ subroutine QP_elph(en,k,q,qp)
            !
            do iw=1,gsqF_energy_steps
              !
-             ! QP lifetimes
-             !--------------
-             DP_FAN(iw)=DP_FAN(iw)+coefficient*(gsqF_life_bose(iqp,iq,il,iw)*(bose_f(ph_freq)+1.)/2.+&
-&                                  gsqF_life_f(iqp,iq,il,iw))
+             ! QP lifetimes/Green's function
+             !-------------------------------
+             if (l_GF_from_CA.and.trim(QP_solver)=='g') then
+               DP_FAN(iw)=DP_FAN(iw)+gsqF_fan(iqp,iq,il,iw)*(bose_f(ph_freq)+1.)/2.+&
+&                                    gsqF_ca_corr(iqp,iq,il,iw)
+             else 
+               DP_FAN(iw)=DP_FAN(iw)+coefficient*(gsqF_life_bose(iqp,iq,il,iw)*(bose_f(ph_freq)+1.)/2.+&
+&                                    gsqF_life_f(iqp,iq,il,iw))
+             endif
              !
              if ( trim(QP_solver)=='n' )  then
                !
@@ -488,12 +507,20 @@ subroutine QP_elph(en,k,q,qp)
          !
        else if ( trim(QP_solver)=='g' )  then
          !
-         Sc_local=(0.,0.)
-         !
-         call kk(cmplx(DP_FAN(:))/pi,real(Sc_W(1)%p)    ,QP_Sc_steps,&
-&                Sc_local           ,conjg(Sc_local_W%p),QP_Sc_steps,(0.,0.))
-         !
-         QP_Sc(iqp,:)=QP_Sc(iqp,:)+Sc_local(:)+DP_DW
+         if (.not.l_GF_from_CA) then
+           !
+           Sc_local=(0.,0.)
+           !
+           call kk(cmplx(DP_FAN(:))/pi,real(Sc_W(1)%p)    ,QP_Sc_steps,&
+&                  Sc_local           ,conjg(Sc_local_W%p),QP_Sc_steps,(0.,0.))
+           !
+           QP_Sc(iqp,:)=QP_Sc(iqp,:)+Sc_local(:)+DP_DW
+           !
+         else
+           !
+           QP_Sc(iqp,:)=DP_FAN(:)+DP_DW
+           !
+         endif
          !
          ! Dyson equation
          !

@@ -86,7 +86,7 @@ subroutine G_shells_finder()
        if (v_is_zero(v1-g_vec(i3,:),zero_=G_iku_zero)) then
          g_rot(i2,i1)=i3
          !
-         ! Number of rotated G a"below" the given G
+         ! Number of rotated G "below" the given G
          !  
          if (i3<=i1) i_G_below=i_G_below+1
          !
@@ -105,7 +105,7 @@ subroutine G_shells_finder()
      ! Gamma point
      !
      if (i1==1) cycle
-
+     !
      G_module(1)=iku_v_norm(g_vec(i_G_shell,:))
      G_module(2)=iku_v_norm(g_vec(i1,:))
      !

@@ -49,7 +49,6 @@ module ELPH
  ! el-ph Self-Energy
  !
  integer   :: QP_PH_n_G_bands
- real(SP)  :: PH_null_E_rgn
  !
  contains
    !

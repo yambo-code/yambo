@@ -160,8 +160,10 @@ module SC
        call mem_est("el_mag")
      endif
      !
-     deallocate(V_xc)
-     call mem_est('V_xc')
+     if(allocated(V_xc)) then 
+       deallocate(V_xc)
+       call mem_est('V_xc')
+     endif
      !
      deallocate(V_hartree_sc)
      call mem_est("Hartree_Ptential")

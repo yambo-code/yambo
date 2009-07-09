@@ -68,7 +68,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     FXC_is_causal
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
 #if defined _ELPH || defined _SOLITONS
- use ELPH,       ONLY:ph_modes,elph_nb,PH_null_E_rgn,gsqF_energy_steps
+ use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps
 #endif
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
@@ -382,7 +382,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  ph_modes=0
  elph_nb=0
- PH_null_E_rgn=0.1/HARTREE
  gsqF_energy_steps=2
 #endif
  !

@@ -48,7 +48,7 @@ subroutine QP_elph(en,k,q,qp)
 &                        elph_nq,E_k_plus_q,elph_use_q_grid,&
 &                        setup_k_plus_q_levels,f_k_plus_q,elph_nq_used,&
 &                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,&
-&                        elph_global_alloc,gsqF_energy_steps
+&                        elph_global_alloc,gsqF_energy_steps,eval_G_using_KK
  use functions,     ONLY:Fermi_fnc_derivative
  !
  implicit none
@@ -90,6 +90,7 @@ subroutine QP_elph(en,k,q,qp)
  ! Eval Green's function directly from Allen-Cardona expression ?
  !
  call parser('GF_from_CA',l_GF_from_CA)
+ eval_G_using_KK=trim(QP_solver)=='g'.and..not.l_GF_from_CA
  !
  call k_sym2sym(k,'k')
  call k_expand(k)
@@ -371,8 +372,10 @@ subroutine QP_elph(en,k,q,qp)
  !
  call pp_redux_wait(gsqF_dw(:,:,:))
  do iw=1,gsqF_energy_steps
-   call pp_redux_wait(gsqF_fan(:,:,:,iw))
-   call pp_redux_wait(gsqF_ca_corr(:,:,:,iw))
+   if (.not.eval_G_using_KK) then
+     call pp_redux_wait(gsqF_fan(:,:,:,iw))
+     call pp_redux_wait(gsqF_ca_corr(:,:,:,iw))
+   endif
    call pp_redux_wait(gsqF_life_bose(:,:,:,iw))
    call pp_redux_wait(gsqF_life_f(:,:,:,iw))
  enddo
@@ -384,7 +387,7 @@ subroutine QP_elph(en,k,q,qp)
  !
  ! Dump on file gFsq coefficients 
  !
- if (l_WRgFsq) then
+ if (l_WRgFsq.and..not.eval_G_using_KK) then
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=ioELPH(ID,'gFsq')
  endif
@@ -414,8 +417,10 @@ subroutine QP_elph(en,k,q,qp)
        do il=1,ph_modes
          call QP_states_simmetrize(en,vec_2_sim=gsqF_dw(:,iq,il))
          do iw=1,gsqF_energy_steps
-           call QP_states_simmetrize(en,vec_2_sim=gsqF_fan(:,iq,il,iw))
-           call QP_states_simmetrize(en,vec_2_sim=gsqF_ca_corr(:,iq,il,iw))
+           if (.not.eval_G_using_KK) then
+             call QP_states_simmetrize(en,vec_2_sim=gsqF_fan(:,iq,il,iw))
+             call QP_states_simmetrize(en,vec_2_sim=gsqF_ca_corr(:,iq,il,iw))
+           endif
            call QP_states_simmetrize(en,vec_2_sim=gsqF_life_bose(:,iq,il,iw))
            call QP_states_simmetrize(en,vec_2_sim=gsqF_life_f(:,iq,il,iw))
          enddo

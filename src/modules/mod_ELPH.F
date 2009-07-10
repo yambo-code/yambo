@@ -49,6 +49,7 @@ module ELPH
  ! el-ph Self-Energy
  !
  integer   :: QP_PH_n_G_bands
+ logical   :: eval_G_using_KK ! Perform KK of the spectral function
  !
  contains
    !
@@ -57,29 +58,33 @@ module ELPH
      use QP_m,      ONLY:QP_n_states
      use R_lattice, ONLY:nkbz,nqibz
      character(*)      ::what
-     integer           ::alloc_err(5)
+     integer           ::alloc_err
      !
      if (what=='gFsq'.and..not.allocated(gsqF_fan)) then
-       allocate(gsqF_fan(QP_n_states,elph_nq_used,ph_modes,gsqF_energy_steps))
-       allocate(gsqF_dw(QP_n_states,elph_nq_used,ph_modes))
-       allocate(gsqF_ca_corr(QP_n_states,elph_nq_used,ph_modes,gsqF_energy_steps))
-       allocate(gsqF_life_bose(QP_n_states,elph_nq_used,ph_modes,gsqF_energy_steps))
-       allocate(gsqF_life_f(QP_n_states,elph_nq_used,ph_modes,gsqF_energy_steps))
-       gsqF_fan=0.
+       if (.not.eval_G_using_KK) then
+         allocate(gsqF_fan(QP_n_states,elph_nq_used,ph_modes,gsqF_energy_steps),stat=alloc_err)
+         call mem_est('gsqF_fan',(/size(gsqF_fan)/),(/SP/),errors=(/alloc_err/))
+         allocate(gsqF_ca_corr(QP_n_states,elph_nq_used,ph_modes,gsqF_energy_steps),stat=alloc_err)
+         call mem_est('gsqF_ca_corr',(/size(gsqF_ca_corr)/),(/SP/),errors=(/alloc_err/))
+         gsqF_fan=0.
+         gsqF_ca_corr=0.
+       endif
+       allocate(gsqF_dw(QP_n_states,elph_nq_used,ph_modes),stat=alloc_err)
+       call mem_est('gsqF_dw',(/size(gsqF_dw)/),(/SP/),errors=(/alloc_err/))
+       allocate(gsqF_life_bose(QP_n_states,elph_nq_used,ph_modes,gsqF_energy_steps),stat=alloc_err)
+       call mem_est('gsqF_life_bose',(/size(gsqF_life_bose)/),(/SP/),errors=(/alloc_err/))
+       allocate(gsqF_life_f(QP_n_states,elph_nq_used,ph_modes,gsqF_energy_steps),stat=alloc_err)
+       call mem_est('gsqF_life_f',(/size(gsqF_life_f)/),(/SP/),errors=(/alloc_err/))
        gsqF_dw=0.
-       gsqF_ca_corr=0.
        gsqF_life_bose=0.
        gsqF_life_f=0.
-       call mem_est('gsqF_residuals',(/4*size(gsqF_fan),size(gsqF_dw)/),(/SP,SP/))
      endif
      if (what=='gkkp'.and..not.allocated(elph_gkkp)) then
-       allocate(elph_gkkp(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err(1))
-       allocate(elph_DW(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err(2))
-       allocate(f_k_plus_q(elph_nb,nkbz,1),stat=alloc_err(3))
-       call mem_est("elph_gkkp elph_DW f_k_plus_q",&
-&                   (/size(elph_gkkp),size(elph_DW),&
-&                     size(f_k_plus_q)/),&
-&                   (/2*SP,SP/),errors=alloc_err)
+       allocate(elph_gkkp(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err)
+       call mem_est("GKKP",(/size(elph_gkkp)/),(/2*SP/),errors=(/alloc_err/))
+       allocate(elph_DW(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err)
+       call mem_est("GKKP_DW",(/size(elph_DW)/),(/SP/),errors=(/alloc_err/))
+       allocate(f_k_plus_q(elph_nb,nkbz,1))
      endif
      !
      if (.not.allocated(ph_freqs_sq)) then
@@ -103,8 +108,12 @@ module ELPH
    subroutine elph_global_free()
      use memory_m,  ONLY:mem_est
      if (allocated(gsqF_fan)) then
-       deallocate(gsqF_fan,gsqF_dw,gsqF_ca_corr,gsqF_life_bose,gsqF_life_f)
-       call mem_est("gsqF_residuals")
+       deallocate(gsqF_fan,gsqF_dw,gsqF_ca_corr)
+       call mem_est("gsqF_fan gsqF_dw gsqF_ca_corr")
+     endif
+     if (allocated(gsqF_life_f)) then
+       deallocate(gsqF_life_bose,gsqF_life_f)
+       call mem_est("gsqF_life_bose gsqF_life_f")
      endif
      if (allocated(elph_gkkp)) then
        deallocate(elph_gkkp,elph_DW,f_k_plus_q)

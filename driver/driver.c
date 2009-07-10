@@ -58,7 +58,7 @@ typedef struct
 #if defined _SOLITONS || _TEST_1
  #define _YAMBO_MAIN
 #endif
-#if defined _ypp  || _YPP_ELPH || _YPP_RAS || _YPP_RT
+#if defined _ypp  || _YPP_ELPH || _YPP_RAS || _YPP_RT || _YPP_SC
  #define _YPP_MAIN
 #endif
 /* 

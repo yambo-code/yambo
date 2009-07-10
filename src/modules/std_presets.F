@@ -68,7 +68,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     FXC_is_causal
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
 #if defined _ELPH || defined _SOLITONS
- use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps
+ use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK
 #endif
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
@@ -383,6 +383,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  ph_modes=0
  elph_nb=0
  gsqF_energy_steps=2
+ eval_G_using_KK=.false.
 #endif
  !
 #if defined _SC || defined _RT || defined _MAGNETIC

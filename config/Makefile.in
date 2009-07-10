@@ -52,7 +52,7 @@ CLEANS   = clean clean_all
 PROJECTS = yambo_ph yambo_sc yambo_ras yambo_reels \
 	       yambo_manyk yambo_ras_manyk yambo_tb \
            yambo_magnetic yambo_dipole_rim yambo_partial_diago \
-           yambo_solitons yambo_rt ypp_rt ypp_ph ypp_ras
+           yambo_solitons yambo_rt ypp_rt ypp_ph ypp_ras ypp_sc
 BROKEN   = yambo_gamma
 TESTS    = 
 EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(TESTS)
@@ -82,7 +82,7 @@ PJ_PHLIBS       = $(MAIN_LIBS)
 # YPP
 #
 YPPLIBS      = $(BASIC_LIBS) bz_ops qp_ctl interface bse
-YPPRTLIBS    = $(YPPLIBS) sc
+YPPSCLIBS    = $(YPPLIBS) sc
 YPPRASLIBS   = $(BASIC_LIBS) ras_reels_mods bz_ops qp_ctl interface ras bse
 
 nothing: 
@@ -142,14 +142,17 @@ yambo_reels: libs
 	@LIBS2DO="$(PJ_REELSLIBS)";ADF="-D_REELS"; $(mksrc)
 	@X2DO="yambo_reels"; XPATH="driver";XLIBS="$(PJ_REELSLIBS)";ADF="-D_REELS";$(mkx)
 ypp_ph: libs
-	@LIBS2DO="$(YPPLIBS)";ADF="-D_YPP_ELPH"; $(mksrc)
+	@LIBS2DO="$(YPPLIBS)";ADF="-D_ELPH"; $(mksrc)
 	@X2DO="ypp_ph" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_ELPH";$(mkx)
 ypp_ras: libs
 	@LIBS2DO="$(YPPRASLIBS)" ; ADF="-D_YPP_RAS";$(mksrc)
 	@X2DO="ypp_ras" ;XPATH="ypp";XLIBS="$(YPPRASLIBS)"; ADF="-D_YPP_RAS";$(mkx)
 ypp_rt: libs
-	@LIBS2DO="$(YPPRTLIBS)" ; ADF="-D_YPP_RT -D_RT";$(mksrc)
-	@X2DO="ypp_rt" ;XPATH="ypp";XLIBS="$(YPPRTLIBS)"; ADF="-D_YPP_RT";$(mkx)
+	@LIBS2DO="$(YPPSCLIBS)" ; ADF="-D_RT";$(mksrc)
+	@X2DO="ypp_rt" ;XPATH="ypp";XLIBS="$(YPPSCLIBS)"; ADF="-D_YPP_RT";$(mkx)
+ypp_sc: libs
+	@LIBS2DO="$(YPPSCLIBS)" ; ADF="-D_SC";$(mksrc)
+	@X2DO="ypp_sc" ;XPATH="ypp";XLIBS="$(YPPSCLIBS)"; ADF="-D_YPP_SC";$(mkx)
 # TESTS #
 yambo_test_1: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_TEST_1"; $(mksrc)

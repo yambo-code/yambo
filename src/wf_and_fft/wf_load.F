@@ -250,6 +250,7 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
      call WF_rotate(ikibz,wf,wf_size)
    enddo
    call load_SC_components('WF_clean')
+   !
  endif
  !
  ! Call setup of WF xc here so to syncronize the WF_global_xc_string 

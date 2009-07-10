@@ -3,7 +3,7 @@ SC_objects =
 SC_objects = load_SC_components.o io_SC_components.o
 #endif
 ELPH_objects = 
-#if defined _ELPH || defined _YPP_ELPH || defined _SOLITONS
+#if defined _ELPH || defined _SOLITONS
 ELPH_objects = ioELPH.o
 #endif
 TEST_1_objects = ioBS.o

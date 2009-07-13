@@ -37,9 +37,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,REP
  use real_time,      ONLY:Thermal_steps,Tot_steps,RT_step,G_lesser,l_RT_no_updates, &
 &                         G_lesser_previous,l_rt_efield,RT_alloc,RT_free,io_G,ID,   &
-&                         A_vec_pot,A_norm,i_time,Integrator_name,j_current,        &
-&                         l_qp_analyze,rho_rho_gamp,G_lesser_reference,QP_Hartree,  &
-&                         l_fast_exchange,LifeTime
+&                         A_norm,i_time,Integrator_name,j_current,l_qp_analyze,     &
+&                         rho_rho_gamp,G_lesser_reference,QP_Hartree,l_fast_exchange,LifeTime
  !
  implicit none
  !
@@ -181,7 +180,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    if(it==Thermal_steps.and.Thermal_steps/=0.and.LifeTime/=0.0) &
      &  G_lesser_reference=G_lesser
    !
-   if(l_rt_efield.and.i_time>0)  call RT_current(j_current,xK,Xen,A_vec_pot,G_lesser)
+   if(l_rt_efield.and.i_time>0)  call RT_current(j_current,xK,Xen,G_lesser)
    !
    ! Write last G_lesser on disk
    !

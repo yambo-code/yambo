@@ -22,7 +22,7 @@
 subroutine a2y_db1(en,k,KSS_file_name)
  !
  use pars,                  ONLY : SP, DP, PI, schlen
- use com,                   ONLY : msg
+ use com,                   ONLY : msg,warning
  use electrons,             ONLY : levels, default_nel,n_bands,n_spin,n_sp_pol,&
 &                                  n_spinor 
  use R_lattice,             ONLY : bz_samp, ng_vec, g_vec,nkibz, b
@@ -95,6 +95,10 @@ subroutine a2y_db1(en,k,KSS_file_name)
   case (8)
    GS_xc_FUNCTIONAL=XC_EXCHANGE
    GS_xc_KIND=XC_LDA_X
+  case (9:)
+   call warning ('GGA not supported: switching to PZ')
+   GS_xc_FUNCTIONAL = XC_LDA_C_PZ
+   GS_xc_KIND = XC_EXCHANGE_CORRELATION
  end select
 
  read(11)

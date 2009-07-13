@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine RT_current(j_current,xK,Xen,A_vec_pot,G_lesser)
+subroutine RT_current(j_current,xK,Xen,G_lesser)
  !
  ! Evalute current including also the diamagnetic contribution
  !
@@ -31,14 +31,14 @@ subroutine RT_current(j_current,xK,Xen,A_vec_pot,G_lesser)
  use electrons,      ONLY:nel,levels
  use X_m,            ONLY:DIP_iR_or_P
  use com,            ONLY:msg
- use real_time,      ONLY:l_no_diamagnetic,io_J,ID,i_time
+ use real_time,      ONLY:l_no_diamagnetic,io_J,ID,i_time,Efield,n_ext_fields &
+&                        ,A_norm
  use IO_m,           ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL
  !
  implicit none
  type(bz_samp), intent(in) ::Xk
  type(levels),  intent(in) ::Xen
  complex(SP),    intent(in)  :: G_lesser(SC_bands,SC_bands,Xk%nibz)
- complex(SP),    intent(in)  :: A_vec_pot(3)
  complex(SP),    intent(out) :: j_current(3)
  integer, external           :: io_SC_components
  !
@@ -87,8 +87,11 @@ subroutine RT_current(j_current,xK,Xen,A_vec_pot,G_lesser)
  !
  ! Diamagnetic term. It is correct??
  !
- if(.not.l_no_diamagnetic) &
-&  j_current(:)=j_current(:)+A_vec_pot(:)*nel*RL_vol/(Xk%nbz*(2.*pi)**3) 
+ if(.not.l_no_diamagnetic) then
+   do i1=1,n_ext_fields
+     if(Efield(i1)%ef_name/='none') j_current(:)=j_current(:)+A_norm(i1)*nel*RL_vol/(Xk%nbz*(2.*pi)**3)*Efield(i1)%versor(:) 
+   enddo
+ endif
  !
  ! Write current on disk
  !

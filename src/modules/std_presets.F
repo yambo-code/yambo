@@ -78,10 +78,9 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     using_SC_basis,SC_cycle_mixing,SC_fft_size
 #endif
 #if defined _RT
- use real_time,  ONLY:RT_step,T_initial, Ext_Field_freq, Tot_steps, Thermal_steps,   &
-&                     Ext_Field_int, Ext_Field_name,Integrator_name, DiagH_iter, &
-&                     EF_q0,LifeTime,RT_no_intraband,RT_resonant,l_RPA, &
-&                     l_qp_analyze,Thermal_eta,l_always_relax,l_fast_exchange 
+ use real_time,  ONLY:RT_step,Tot_steps, Thermal_steps, Efield,Integrator_name, &
+&                     DiagH_iter, LifeTime,l_RPA, n_ext_fields, l_qp_analyze,   &
+&                     Thermal_eta,l_always_relax,l_fast_exchange 
 
 #endif
 #if defined _MAGNETIC
@@ -400,19 +399,22 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  ! Real Time
  !
+ do i1=1,n_ext_fields
+   Efield(i1)%t_initial   =0.*FS2AUT
+   Efield(i1)%frequency   =0.
+   Efield(i1)%intensity   =0.
+   Efield(i1)%no_intraband=.FALSE.
+   Efield(i1)%ef_name     ='none'
+   Efield(i1)%versor      =(/1.0,0.0,0.0/)
+ enddo
+ !
+ !
  RT_step=0.002*FS2AUT
- T_initial=0.
- Ext_Field_freq=0.
- Ext_Field_Int=0.
  Tot_steps=0
  Thermal_steps=0
  Thermal_eta  =8.0
- Ext_Field_name='none'
  Integrator_name='RK2'
- EF_q0=(/1.0,0.0,0.0/)
  LifeTime = 0.0*FS2AUT
- RT_resonant =.FALSE.
- RT_no_intraband=.FALSE.
  l_RPA=.FALSE.
  DiagH_iter=1
  l_qp_analyze=.FALSE.

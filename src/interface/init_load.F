@@ -58,9 +58,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        SC_rho_threshold,SC_cycle_mixing
 #endif
 #if defined _RT
- use real_time,     ONLY:RT_step, T_initial, Ext_Field_freq, Tot_steps, Thermal_steps, &
-&                        Ext_Field_Int, Ext_Field_name,Integrator_name,EF_q0,LifeTime, &
-&                        DiagH_Iter,Thermal_eta
+ use real_time,     ONLY:RT_step, Tot_steps, Thermal_steps, Integrator_name, LifeTime, &
+&                        DiagH_Iter,Thermal_eta,EField
 
 #endif
 #if defined _MAGNETIC
@@ -274,21 +273,33 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _RT
  call it(defs,'RTstep',    '[RT]  Real Time step',RT_step,unit=Time_unit)
  call it(defs,'RTsteps',   '[RT]  Real Time steps',Tot_steps)
- call it(defs,'Tinitial',  '[RT]  Initial Time',T_initial,unit=Time_unit)
  call it(defs,'ThermStps', '[RT]  Thermal Steps',Thermal_steps)
- call it(defs,'ExtFiFreq', '[RT]  External Field Frequency',Ext_Field_freq,unit=E_unit)
- call it(defs,'ExtFiInt',  '[RT]  External Field Intensity',Ext_Field_Int)
- call it(defs,'ExtField',  '[RT]  External Field',Ext_Field_name)
+ !
+ ! External field number 1
+ !
+ call it(defs,'ExtFiFreq1', '[RT]  External Field Frequency',EField(1)%frequency,unit=E_unit)
+ call it(defs,'ExtFInt1',  '[RT]  External Field Intensity',EField(1)%intensity)
+ call it(defs,'ExtField1',  '[RT]  External Field',EField(1)%ef_name)
+ call it(defs,'ELongDir1',  '[RT]  Electric Field Versor',Efield(1)%versor)
+ call it(defs,'ExtFTinitial1',  '[RT]  Initial Time',EField(1)%t_initial,unit=Time_unit)
+ call it('f',defs,'EFNoIntraband1', '[RT] Do not include intraband coupling',verb_level=V_more)
+ !
+ ! External field number 2
+ !
+ call it(defs,'ExtFiFreq2', '[RT]  External Field Frequency',EField(2)%frequency,unit=E_unit)
+ call it(defs,'ExtFInt2',  '[RT]  External Field Intensity',EField(2)%intensity)
+ call it(defs,'ExtField2',  '[RT]  External Field',EField(2)%ef_name)
+ call it(defs,'ELongDir2',  '[RT]  Electric Field Versor',Efield(2)%versor)
+ call it(defs,'ExtFTinitial2',  '[RT]  Initial Time',EField(2)%t_initial,unit=Time_unit)
+ call it('f',defs,'EFNoIntraband2', '[RT] Do not include intraband coupling',verb_level=V_more)
+ !
  call it(defs,'Integrator','[RT]  Integrator',Integrator_name)
- call it(defs,'ELongDir',  '[RT]  Electric Field Versor',EF_q0)
  call it(defs,'ThermEta',  '[RT]  Adiabatic switching characteristic time  1/(ThermStps*ThermEta)',Thermal_eta,verb_level=V_more)
  call it(defs,'DiagHIter', '[RT]  Digaonalize the Hamiltonian',DiagH_Iter,verb_level=V_more)
- call it('f',defs,'RTResonant', '[RT] Only Resonant part of the External Field',verb_level=V_more)
- call it('f',defs,'RTNoIntraband', '[RT] Do not include intraband transitions',verb_level=V_more)
  call it(defs,'LifeTime',  '[RT]  Quasi-particle Relaxation Time',LifeTime,verb_level=V_more,unit=Time_unit)
  call it('f',defs,'RTQpAnalyze', '[RT] Analyze quasi-particle dynamics in real-time',verb_level=V_more)
  call it('f',defs,'KeepVxc', '[RT] Do not subtract Vxc from the self-energy',verb_level=V_more)
- call it('f',defs,'NoDiamagnetic', '[RT] Exclude the diamagnetic term in coupling and current',verb_level=V_more)
+ call it('f',defs,'NoDiamagnetic', '[RT] Exclude the diamagnetic term in current and coupling',verb_level=V_more)
  call it('f',defs,'FastExchange', '[RT] Use fast Exchange, it requires a lot of memory',verb_level=V_more)
 #endif
  !

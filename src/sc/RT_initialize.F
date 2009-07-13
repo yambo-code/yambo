@@ -19,17 +19,18 @@
 subroutine RT_initialize(file_name,Xen)
  ! 
  use pars,           ONLY:SP,lchlen,schlen
+ use vec_operate,    ONLY:normalize_v
  use drivers,        ONLY:l_sc_hf
  use SC,             ONLY:SC_bands,rho_n
  use QP_m,           ONLY:QP_Sx_low_band
  use com,            ONLY:msg,of_open_close,warning,error
- use real_time,      ONLY:l_RPA,RT_resonant,RT_no_intraband,Thermal_steps,    &
-&                         Thermal_time,RT_step,l_rt_efield,l_fast_exchange,   &
-&                         Ext_Field_Name,G_lesser,G_lesser_previous,i_time,   &
-&                         l_RT_no_updates,Integrator_Name,EF_q0,l_qp_analyze, &
-&                         l_no_diamagnetic,Ext_Field_Int,l_always_relax
+ use real_time,      ONLY:l_RPA,Thermal_steps,Thermal_time,RT_step,l_rt_efield, &
+&                         l_fast_exchange,G_lesser,G_lesser_previous,i_time,     &
+&                         l_RT_no_updates,Integrator_Name,l_qp_analyze,          &
+&                         l_no_diamagnetic,l_always_relax,EField,n_ext_fields
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
+ use stderr,         ONLY:intc
  implicit none
  !
  character(lchlen)        :: file_name(2)
@@ -43,8 +44,11 @@ subroutine RT_initialize(file_name,Xen)
  ! Logicals
  !----------
  !
- call parser('RTResonant',RT_resonant)
- call parser('RTNoIntraband',RT_no_intraband)
+ call parser('EFNoIntraband1',EField(1)%no_intraband)
+ call parser('EFNoIntraband2',EField(2)%no_intraband)
+ call parser('EFNoDiamagnetic1',EField(1)%no_diamagnetic)
+ call parser('EFNoDiamagnetic2',EField(2)%no_diamagnetic)
+ !
  call parser('RTQpAnalyze',l_qp_analyze)
  call parser('KeepVxc',l_RPA)
  call parser('NoDiamagnetic',l_no_diamagnetic)
@@ -71,17 +75,22 @@ subroutine RT_initialize(file_name,Xen)
  endif
  !
  l_rt_efield=.false.
- if(Ext_Field_Name/='NONE'.and.Ext_Field_Name/='none'.and.Ext_Field_Int/=0.) then
-   !      
-   l_rt_efield=.true.
-   call SC_check_symmetries(EF_q0)
-   !
- endif
  !
- if(l_rt_efield.and.RT_resonant.and..not.RT_no_intraband) then
-   RT_no_intraband=.true.
-   call warning('[RT] Intraband transitions excluded because Resonant Efield !')
- endif
+ do i1=1,n_ext_fields
+   !      
+   Efield(i1)%ef_name=trim(Efield(i1)%ef_name)      
+   !
+   if((Efield(i1)%ef_name/='none'.and.EField(i1)%intensity/=0.)) then
+     !      
+     l_rt_efield=.true.
+     !
+     EField(i1)%versor=normalize_v(Efield(i1)%versor)
+     !
+     call SC_check_symmetries(Efield(i1)%versor)
+     !
+   endif
+   !
+ enddo
  !
  ! OUTPUT Files
  !--------------
@@ -110,12 +119,17 @@ subroutine RT_initialize(file_name,Xen)
  call msg('o '//file_name(1),'#',headings(1:6),INDENT=-2,USE_TABS=.TRUE.)
  !
  call msg('nr','[RT] Integrator          :'//trim(Integrator_Name))
- call msg( 'r','[RT] External Field      :'//trim(Ext_Field_Name))
- call msg(' r','[RT] Resonant Field      :',RT_resonant)
- call msg('nr','[RT] Intraband transitions :',.not.RT_no_intraband)
  call msg(' r','[RT] RPA                   :',l_RPA)
  call msg(' r','[RT] Diamagnetic term      :',.not.l_no_diamagnetic)
  call msg(' r','[RT] Analyze QP-dynamics   :',l_qp_analyze)
+ !
+ do i1=1,n_ext_fields
+   call msg('nr','[RT] External Field('//trim(intc(i1))//'      :'//trim(EField(i1)%ef_name))
+   call msg(' r','[RT] Intensity                  :',EField(i1)%intensity)
+   call msg(' r','[RT] Frequancy                  :',EField(i1)%frequency)
+   call msg(' r','[RT] Direction                  :',EField(i1)%versor)
+   call msg(' r','[RT] Intraband transitions      :',.not.EField(i1)%no_intraband)
+ enddo  
  !
  file_name(2)="qp_rt"
  if(l_qp_analyze) call of_open_close(file_name(2),'ot')

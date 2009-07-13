@@ -38,11 +38,10 @@ integer function io_SC_components(what,E_sc,ID)
 &                         io_sec,io_bulk,io_fragment,read_is_on,write_is_on,&
 &                         manage_RD_WR_CL_IF_END
 #if defined _RT
- use real_time,      ONLY:l_rt_efield,EF_q0,l_fast_exchange,l_RPA,RT_step,Tot_steps, &
-&                         Thermal_steps,Integrator_name,l_qp_analyze,DiagH_Iter, &
-&                         LifeTime,Ext_Field_name,Ext_Field_Int,G_lesser,i_time,  &
-&                         Ext_Field_freq,RT_resonant,RT_no_intraband,l_no_diamagnetic,&
-&                         T_initial,j_current,A_norm
+ use real_time,      ONLY:l_rt_efield,l_fast_exchange,l_RPA,RT_step,Tot_steps,       &
+&                         Thermal_steps,Integrator_name,l_qp_analyze,DiagH_Iter,     &
+&                         LifeTime,G_lesser,i_time,l_no_diamagnetic,j_current,A_norm,&
+&                         n_ext_fields,Efield
  use IO_m,           ONLY:io_restart,io_check_restart
  use QP_m,           ONLY:QP_nk
 #endif                                
@@ -65,7 +64,7 @@ integer function io_SC_components(what,E_sc,ID)
  logical               :: l_wf,l_V,l_E,l_IMPOSE_SN,CHECK_
 #if defined _RT		
  logical               :: l_J,l_G
- real(SP)              :: current_pot_disk(5)
+ real(SP)              :: current_pot_disk(3+2*n_ext_fields)
 #endif
  !
  l_E =what=="E"
@@ -203,38 +202,38 @@ integer function io_SC_components(what,E_sc,ID)
 &         VAR=' integrator                   :',CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
-     call io_elemental(ID,VAR="RT_OTHERS",VAR_SZ=4,MENU=0) 
+     call io_elemental(ID,VAR="RT_OTHERS",VAR_SZ=6,MENU=0) 
      call io_elemental(ID,L0=l_qp_analyze,VAR=' analize quasi-particles :', &
 &     CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,I0=DiagH_Iter,VAR='diagonalization interval :',&
 &     CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,R0=LifeTime,VAR=' quasi-particle life time :', &
 &     CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-     !
-     call io_elemental(ID,VAR="EXTERNAL_FIELD",VAR_SZ=10,MENU=0) 
      call io_elemental(ID,L0=l_rt_efield,VAR=' External Field is present :', &
 &      CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,R1=EF_q0,CHECK=.true., &
-&       VAR=" electric field versor             :",OP=(/"==","==","=="/))
-     call io_elemental(ID,&
-&       VAR=" external field intensity          :",R0=Ext_Field_Int,CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,&
-&       VAR=" external field frequency          :",R0=Ext_Field_freq,CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,L0=RT_resonant,    VAR=' Resonant external field    :',&
-&       CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,L0=RT_no_intraband,VAR=' No intraband transitions   :',&
-&       CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,L0=l_no_diamagnetic,VAR=' No diamagnetic term        :',& 
 &       CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,R0=T_initial,VAR=' initial time for the external field :',&
-&       CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-     !                       
-     call io_elemental(ID,VAR="FIELD_NAME",CH0="",VAR_SZ=1) 
-     call io_elemental(ID,CH0=Ext_Field_name, &
+     !
+     do i1=1,n_ext_fields
+       call io_elemental(ID,VAR="EXTERNAL_FIELD"//trim(intc(i1)),VAR_SZ=7,MENU=0) 
+       call io_elemental(ID,R1=Efield(i1)%versor,CHECK=.true., &
+&       VAR=" electric field versor             :",OP=(/"==","==","=="/))
+       call io_elemental(ID,&
+&       VAR=" external field intensity          :",R0=Efield(i1)%intensity,CHECK=.true.,OP=(/"=="/))
+       call io_elemental(ID,&
+&       VAR=" external field frequency          :",R0=Efield(i1)%frequency,CHECK=.true.,OP=(/"=="/))
+       call io_elemental(ID,L0=Efield(i1)%no_intraband,VAR=' No intraband transitions   :',&
+&       CHECK=.true.,OP=(/"=="/))
+       call io_elemental(ID,R0=Efield(i1)%t_initial,VAR=' initial time for the external field :',&
+&       CHECK=.true.,OP=(/"=="/))
+       call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+       !                       
+       call io_elemental(ID,VAR="FIELD_NAME"//trim(intc(i1)),CH0="",VAR_SZ=1) 
+       call io_elemental(ID,CH0=Efield(i1)%ef_name, &
 &         VAR=' external field                  :',CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,VAR="",VAR_SZ=0)
+       call io_elemental(ID,VAR="",VAR_SZ=0)
+     enddo
      !
    endif
    !
@@ -403,19 +402,23 @@ integer function io_SC_components(what,E_sc,ID)
    !
    if(i_time>0) then
      !    
-     call io_bulk(ID,VAR="Current_and_Potential_TIME"//trim(intc(i_time)),VAR_SZ=(/5/))
+     call io_bulk(ID,VAR="Current_and_Potential_TIME"//trim(intc(i_time)),VAR_SZ=(/3+2*n_ext_fields/))
      !
      if (write_is_on(ID)) then 
         current_pot_disk(1:3)=real(j_current(1:3))
-        current_pot_disk(4)=real(A_norm)
-        current_pot_disk(5)=aimag(A_norm)
+        do i1=1,n_ext_fields
+          current_pot_disk(3+2*i1-1)=real(A_norm(i1))
+          current_pot_disk(3+2*i1)  =aimag(A_norm(i1))
+        enddo
      endif
      !
      call io_bulk(ID,R1=current_pot_disk)
      !
      if (read_is_on(ID)) then 
        j_current(1:3)=cmplx(current_pot_disk(1:3),0.)
-       A_norm        =cmplx(current_pot_disk(4),current_pot_disk(5))
+       do i1=1,n_ext_fields
+         A_norm(i1)  =cmplx(current_pot_disk(3+2*i1-1),current_pot_disk(3+2*i1))
+       enddo
      endif
      !
      call io_disconnect(ID)

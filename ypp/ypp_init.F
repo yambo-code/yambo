@@ -170,6 +170,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    !
    efield=0._SP
    !
+   ! Probe external field to calcualted dielectric constant
+   ! 
+   ref_efield=1
+   !
    !ANALIZE RESPONSE
    !
    X_rt%time_range(:)  =(/-FS2AUT,-FS2AUT/)
@@ -343,7 +347,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (l_rtoptics) then 
     call initactivate(1,"EnRngeRt ETStpsRt TmRngeRt DampMode DampFactor FourierDamp")
-    call initactivate(1,"PrtCurrent PrtEinduced UseFFT")
+    call initactivate(1,"RefExtField PrtCurrent PrtEinduced UseFFT")
  endif
  ! 
 #endif

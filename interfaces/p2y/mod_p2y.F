@@ -779,7 +779,7 @@ contains
      ! No support for GGA yet
      !
      if(index(pw_dft,'NOGX')==0.or.index(pw_dft,'NOGC')==0) then
-       call warning ('GGA not supported: swicthing to PZ. PW XC string is: '//trim(pw_dft))
+       call warning ('GGA not supported: switching to PZ. PW XC string is: '//trim(pw_dft))
        GS_xc_FUNCTIONAL = XC_LDA_C_PZ
        GS_xc_KIND = XC_EXCHANGE_CORRELATION
      endif

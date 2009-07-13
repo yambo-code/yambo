@@ -19,59 +19,54 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Ext_Field(ik,H_nl_sc,G_lesser,time)
+subroutine RT_Ext_Field(ik,H_nl_sc,G_lesser,time,Efield,A_norm)
  !
  use pars,           ONLY:SP,DP
  use com,            ONLY:error
- use real_time,      ONLY:EF_q0,l_no_diamagnetic
+ use real_time,      ONLY:l_no_diamagnetic,ext_field
  use electrons,      ONLY:levels,n_sp_pol
  use X_m,            ONLY:DIP_iR_or_P
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
- use real_time,      ONLY:Ext_Field_freq,Ext_Field_Int,Ext_Field_name,&
-&                         RT_resonant,RT_no_intraband,T_initial,&
-&                         A_norm,A_vec_pot
+ !
  implicit none
- integer,     intent(in)    :: ik
- real(SP),    intent(in)    :: time
+ integer,     intent(in)     :: ik
+ real(SP),    intent(in)     :: time
+ complex(SP), intent(out)    :: A_norm
+ type(ext_field), intent(in) :: Efield
  complex(SP), intent(inout) :: H_nl_sc(SC_bands,SC_bands,n_sp_pol)
  complex(SP), intent(in)    :: G_lesser(SC_bands,SC_bands,QP_nk)
  ! 
  ! Work Space
  !
  integer     :: i1,i2,is
- complex(DP) :: A_dot_P
+ complex(DP) :: A_dot_P,A_vec_pot(3)
  !
- select case(trim(Ext_Field_name))
+ if(time<Efield%t_initial) then
+   A_norm=(0.,0.)
+   return
+ endif
+ !
+ select case(trim(Efield%ef_name))
    case('SINUSOIDAL')
-     if(RT_resonant) then
-       A_norm=-Ext_Field_Int*exp(-(0._SP,1._SP)*Ext_Field_freq*time)/((0._SP,2._SP)*Ext_Field_freq)
-     else
-       A_norm=-Ext_Field_Int*sin(Ext_Field_freq*time)/Ext_Field_freq
-     endif
+     A_norm=-Efield%intensity*sin(Efield%frequency*time)/Efield%frequency
+   case('RESONANT')
+     A_norm=-Efield%intensity*exp(-(0._SP,1._SP)*Efield%frequency*time)/((0._SP,2._SP)*Efield%frequency)
    case('DELTA')
-     if(time>=T_initial) then
-       A_norm=Ext_Field_Int
-     else
-       A_norm=(0.,0.)
-     endif
+     A_norm=Efield%intensity
    case('STEP')
-     if(time>=T_initial) then
-       A_norm=Ext_Field_Int*time
-     else
-       A_norm=(0.,0.) 
-     endif
+     A_norm=Efield%intensity*time
    case default
-     call error(" External Field "//trim(Ext_Field_name)//" not implemented ") 
+     call error(" External Field "//trim(Efield%ef_name)//" not implemented ") 
  end select
  !
- A_vec_pot(:)=EF_q0(:)*A_norm
+ A_vec_pot(:)=Efield%versor(:)*A_norm
  !
  ! Add the External Field to the singular part of the Self-Energy
  ! in case of complex Efield puts the correct Hermitian matrix
  ! and the intraband optical matrix elements have been set to zero
  !
- if(.not.RT_no_intraband.or..not.RT_resonant) then
+ if(trim(Efield%ef_name)/="RESONANT".or.Efield%no_intraband) then
    do i1=1,SC_bands
      H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)+real(sum(A_vec_pot(:)*DIP_iR_or_P(:,i1,i1,ik,1)))
    enddo

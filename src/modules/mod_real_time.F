@@ -25,17 +25,31 @@ module real_time
  !
  implicit none
  !
+ !
+ ! External Field type
+ ! 
+ type ext_field
+   real(SP) :: t_initial
+   real(SP) :: frequency
+   real(SP) :: intensity
+   real(SP) :: versor(3)
+   character(schlen) :: ef_name
+   logical  :: no_intraband
+   logical  :: no_diamagnetic
+ end type ext_field
+ !
+ integer, parameter  :: n_ext_fields=2
+ !
  real(SP) :: RT_step
- real(SP) :: T_initial
  real(SP) :: Thermal_eta
- real(SP) :: Ext_Field_freq
- real(SP) :: Ext_Field_Int
- real(SP) :: EF_q0(3)
  integer  :: n_steps_mem
  integer  :: Tot_steps
  integer  :: Thermal_steps
- character(schlen) :: Ext_Field_name
- logical           :: l_RT_no_updates
+ logical  :: l_RT_no_updates
+ !
+ ! External Fields
+ !
+ type(ext_field) :: EField(n_ext_fields)
  !
  ! If l_keep_vxc=.true. do not subtract Vxc from the self-energy
  !
@@ -57,11 +71,12 @@ module real_time
  complex(SP), allocatable :: I1_lesser(:,:,:)
  complex(SP), allocatable :: I2_lesser(:,:,:)
  !
- ! External Field
+ ! External Field on flag
  !
  logical                  :: l_rt_efield  
- logical                  :: RT_resonant
- logical                  :: RT_no_intraband
+ !
+ ! To exclude the Diamagnetic term in current
+ !
  logical                  :: l_no_diamagnetic
  ! 
  ! Other
@@ -92,8 +107,7 @@ module real_time
  ! Time dependent Hamiltonian, current and vec. potential
  !
  complex(SP) :: j_current(3)
- complex(SP) :: A_vec_pot(3)
- complex(SP) :: A_norm ! Vector potential A(t) norm
+ complex(SP) :: A_norm(n_ext_fields) ! Vector potential A(t) norm
  !
  ! Hartree term
  !

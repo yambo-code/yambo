@@ -30,11 +30,11 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n
  use QP_m,           ONLY:QP_nk,QP_Sx
- use real_time,      ONLY:I1_lesser,I2_lesser,l_RT_no_updates,l_qp_analyze, &
- &                        l_rt_efield,LifeTime,T_initial,H_t,l_RPA, &
- &                        H_Hartree_Vxc_0,V_xc_0,Thermal_time,Integrator_name, &
- &                        EXACT,RK2EXACT,rho_rho_gamp,Thermal_eta,l_fast_exchange, &
- &                        i_time,Thermal_steps,G_lesser_reference
+ use real_time,      ONLY:I1_lesser,I2_lesser,l_RT_no_updates,l_qp_analyze,         &
+ &                        l_rt_efield,LifeTime,H_t,l_RPA,H_Hartree_Vxc_0,V_xc_0,    &
+ &                        Thermal_time,Integrator_name,EXACT,RK2EXACT,rho_rho_gamp, &
+ &                        Thermal_eta,l_fast_exchange, i_time,Thermal_steps,        &
+ &                        G_lesser_reference,Efield,n_ext_fields,A_norm
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
@@ -162,8 +162,10 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
    ! And now add the external field
    !
    if(l_rt_efield.and.i_time>0) then
-     !      
-     call RT_Ext_Field(ik,H_nl_sc,G_input,RT_time-T_initial)
+     !
+     do i1=1,n_ext_fields
+       if(Efield(i1)%ef_name/='none') call RT_Ext_Field(ik,H_nl_sc,G_input,RT_time,Efield(i1),A_norm(i1))
+     enddo
      !
    endif
    !

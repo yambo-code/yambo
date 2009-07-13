@@ -561,10 +561,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_sc_run) then
    call initactivate(1,'SCPot FFTGvecs SCmixing SCBands BandMix')
    if (l_real_time) then
-     call initactivate(1,'RTstep RTsteps Tinitial ThermStps ThermEta')
-     call initactivate(1,'Integrator ExtField ExtFiInt ExtFiFreq ELongDir LifeTime ')
-     call initactivate(1,'DiagHIter KeepVxc NoDiamagnetic FastExchange')
-     call initactivate(1,'RTNoIntraband RTResonant PhaseInt RTQpAnalyze')
+     call initactivate(1,'RTstep RTsteps ThermStps ThermEta')
+     call initactivate(1,'Integrator LifeTime DiagHIter KeepVxc ') 
+     call initactivate(1,'RTQpAnalyze NoDiamagnetic FastExchange')
+     call initactivate(1,'ExtField1 ExtFTinitial1 ExtFInt1 ExtFFreq1 ELongDir1 EFNoIntraband1')
+     call initactivate(1,'ExtField2 ExtFTinitial2 ExtFInt2 ExtFFreq2 ELongDir2 EFNoIntraband2')
    else
      call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
    endif

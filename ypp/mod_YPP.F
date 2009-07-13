@@ -132,6 +132,7 @@ module YPP
  logical  :: l_rsymm
  logical  :: l_rtoptics
  real(SP) :: efield(2,3)
+ integer  :: ref_efield
  !
  type Xw_rt
    real(SP) :: time_range(2)       ! time windows for the transform

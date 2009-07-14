@@ -85,7 +85,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use reels_module,         ONLY : init_reels
  use eels_integration,     ONLY : init_reels_integration
 #endif
-#if defined _ELPH || defined _SOLITONS
+#if defined _ELPH 
  use ELPH,                 ONLY : QP_PH_n_G_bands,elph_nq_used
 #endif
  !
@@ -148,7 +148,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _REELS
  call it('r',defs,'reels',  '[R] Surface Spectroscopy (REELS)') 
 #endif
-#if defined _ELPH || defined _SOLITONS
+#if defined _ELPH 
  call it('r',defs,'el_ph',   '[R] Electron-Phonon Correlation')   
  call it('r',defs,'el_el',   '[R] Electron-Electron Correlation') 
 #endif
@@ -247,7 +247,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'ElecTemp','Electronic Temperature',Tel,T_unit,verb_level=V_more)
  call it(defs,'OccTresh','Occupation treshold (metallic bands)',filled_tresh,verb_level=V_more)
  call it(defs,'BoseCut', '[BOSE] Finite Tel Bose function cutoff',bose_E_cut,verb_level=V_more)
-#if defined _ELPH || defined _SOLITONS
+#if defined _ELPH 
  call it('f',defs,'MinusQ', '[KPT] Use -{q} grid',verb_level=V_more)
  call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nq_used,verb_level=V_more) 
 #endif
@@ -257,10 +257,11 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'SxLowBnd', '[XX] Exchange summation low band',QP_Sx_low_band,verb_level=V_more)
  call it(defs,'LifeTrCG', '[GW] [o/o] Lifetime transitions reduction',QP_cg_percent)
  call it(defs,'GEnSteps', '[GW] G_gw energy steps',QP_Sc_steps)
- call it(defs,'GEnRnge',  '[GW] G_gw energy range',QP_G_er,E_unit)
+ call it(defs,'GEnRnge',  '[GW] G_gw energy range (centered in the bare energy)',QP_G_er,E_unit)
  call it(defs,'GWoIter',  '[GW] GWo SC iterations',GWo_iterations,verb_level=V_more)
  call it('f',defs,'NewtDchk',   '[F GW] Test dSc/dw convergence',verb_level=V_more)
  call it('f',defs,'OnMassShell','[F GW] On mass shell approximation',verb_level=V_more)
+ call it('f',defs,'GreenF2QP',  '[F GW] Use real axis Green`s function to define the QPs',verb_level=V_more)
  !
  ! GPL_EXCLUDE_END
  !
@@ -359,7 +360,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! El-Ph
  !
-#if defined _ELPH || defined _SOLITONS
+#if defined _ELPH 
  call it(defs,'GphBRnge',  '[ELPH] G[W] bands range',QP_PH_n_G_bands)
  call it('f',defs,'WRgFsq','[ELPH] Dump on file gFsq coefficients')
 #endif

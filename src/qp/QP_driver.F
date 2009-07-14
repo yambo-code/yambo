@@ -21,12 +21,12 @@
 !
 subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
- use pars,          ONLY:SP,schlen,IP,pi
- use units,         ONLY:HARTREE,HA2FSm1
+ use pars,          ONLY:SP,IP,pi
+ use units,         ONLY:HARTREE
  use memory_m,      ONLY:mem_est
  use drivers,       ONLY:l_life,l_ppa,l_el_corr,l_ph_corr,l_chosex
  use electrons,     ONLY:levels,n_sp_pol,spin
- use stderr,        ONLY:gen_fmt,real2ch
+ use stderr,        ONLY:real2ch
  use R_lattice,     ONLY:bz_samp
  use frequency,     ONLY:w_samp
  use com,           ONLY:msg
@@ -34,10 +34,10 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use parser_m,      ONLY:parser
  use QP_m,          ONLY:QP_t,QP_dSc,QP_dSc_steps,QP_Vxc,QP_Sc,QP_solver,QP_table,&
 &                        QP_Sx,QP_n_states,QP_nb,&
-&                        QP_nk,QP_rep_string,QP_state,QP_dSc_test,QP_reset,&
+&                        QP_nk,QP_state,QP_dSc_test,QP_reset,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_G,QP_W_partially_done,&
-&                        GWo_iterations,CHOSEX_use_empties,On_Mass_Shell_approx
- use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
+&                        GWo_iterations,CHOSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP
+ use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE
  use global_XC,     ONLY:QP_DB_kind,SE_CHOSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo   
  implicit none
  type(levels) ::en,Xen
@@ -51,17 +51,19 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  integer           ::i1,io_err,ID,i_spin
  integer, external ::ioQP
  !
- ! Parser
+ ! Driver Logicals
+ !=================
  !
- call parser('NewtDchk',QP_dSc_test)
+ call parser('NewtDchk',   QP_dSc_test)
  call parser('OnMassShell',On_Mass_Shell_approx)
- call parser('UseEbands',CHOSEX_use_empties)
+ call parser('UseEbands',  CHOSEX_use_empties)
+ call parser('GreenF2QP',  use_GreenF_to_eval_QP)
  !
  if (On_Mass_Shell_approx) QP_dSc_test=.FALSE.
  !
  ! S_x/Vxc are always need if not l_life or el. correlations is
  ! skipped
- !
+ !==============================================================
  if (.not.allocated(QP_Sx).and..not.allocated(QP_Vxc).and.l_el_corr.and.&
      .not.l_life) return
  !
@@ -70,7 +72,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! GPL_INCLUDE_END GW_REAL_AXIS_IGNORE
  !
  ! Head message
- !
+ !==============
  call QP_reset(qp)
  !
  qp%n_descs=1
@@ -96,9 +98,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  else if (trim(QP_solver)=='g') then
    write (qp%description(1),'(a)') ' GW solver              : Full Green`s function'
    call section('*','Dyson equation: full Green`s function')
-   call msg('rn','[Green] Sc steps             :',QP_Sc_steps)
-   call msg('r', '[Green] Sc energy range  [ev]:',QP_G_er*HARTREE)
-   call msg('r', '[Green] Sc damping range [ev]:',QP_G_dr*HARTREE)
+   call msg('rn','[Green] Sc steps                                         :',QP_Sc_steps)
+   call msg('r', '[Green] Sc energy range (centered in the bare value) [ev]:',QP_G_er*HARTREE)
+   call msg('r', '[Green] Sc damping range                             [ev]:',QP_G_dr*HARTREE)
  else if (.not.l_life) then
    return
    !
@@ -167,18 +169,12 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  ! GPL_EXCLUDE_END
  !
+ ! Local Allocations
+ !===================
+ !
+ call local_alloc()
+ !
  call QP_descriptions(qp,X,Xw)
- !
- allocate(qp%Z(qp%n_states),qp%E(qp%n_states),&
-&         qp%E_bare(qp%n_states),&
-&         qp%k(qp%nk,3),qp%table(qp%n_states,3+n_sp_pol-1))
- !
- call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table",&
-&    (/QP_n_states,QP_n_states,QP_n_states,3*qp%nk,QP_n_states*(3+n_sp_pol-1)/),&
-&    (/2*SP,       2*SP,       SP,         SP,           IP/))
- !
- qp%table=QP_table
- qp%E=0.
  !
  do i1=1,QP_n_states
    !
@@ -192,244 +188,155 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    if (associated(en%Eo)) qp%E_bare(i1)=en%Eo(QP_table(i1,1),QP_table(i1,3),i_spin)
    !
    qp%k(QP_table(i1,3),:)=k%pt(QP_table(i1,3),:)
+   !
  enddo
  !
- ! Sc energy steps. 2/3 If Newton/Secant. QP_Sc_steps 
- ! the full Green`s function is requested.
- !
- if (trim(QP_solver)=='g') then
-   allocate(QP_Sc(QP_n_states,QP_Sc_steps))
-   allocate(QP_G(QP_n_states,QP_Sc_steps))
-   call mem_est("QP_G",(/size(QP_G)/))
- else if (.not.l_life) then
-   QP_dSc_steps=2
-   if (QP_dSc_test) QP_dSc_steps=3
-   allocate(QP_Sc(QP_n_states,QP_dSc_steps),QP_dSc(qp%n_states,QP_dSc_steps-1))
-   call mem_est("QP_dSc",(/size(QP_dSc)/))
+ if (.not.l_life) then
    !
-   ! QP i/o
+   ! QP I/O
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
    io_err=ioQP('QP',qp,ID)
-   if (io_err==0) return
+   if (io_err==0) then
+     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
+     io_err=ioQP('QP',qp,ID)
+     call QP_report_and_write(k,qp,en,io_err)
+     call local_free()
+     return
+   endif
+   !
+   ! Sigma_C I/O & Green's Function
+   !
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
+   io_err=ioQP('G',qp,ID)
+   if (io_err==0) then
+     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
+     io_err=ioQP('G',qp,ID)
+     call QP_Green_Function(qp,en,io_err)
+     call QP_report_and_write(k,qp,en,io_err)
+     call local_free()
+     return
+   endif
+   !
  endif
  !
  call mem_est("QP_Sc",(/size(QP_Sc)/))
  !
- !Solver "type"
+ ! Solvers 
+ !=========
  !
  if (trim(QP_solver)=='n') then
    !
    ! NEWTON
-   !
+   !--------
    call QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
    !
    ! When the W q-loop is not completed done the S_c cannot be
    ! calculated on-fly 
    !
-   if (QP_W_partially_done) return
+   if (QP_W_partially_done) then
+     call local_free()
+     return
+   endif
  endif
  !
  ! GPL_EXCLUDE_START  GW_REAL_AXIS_IGNORE
  ! 
  ! SECANT
- ! 
+ !--------
  if (trim(QP_solver)=='s') call QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  !
  ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
- ! 
- ! GPL_EXCLUDE_START 
- !
- ! LIFETIMES
- !
- if (l_life) then
-   call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
-   qp%Z=1.
-   call QP_report(.FALSE.,.TRUE.)
-   return
- endif
  !
  ! GREEN`s FUNCTIONS
+ !-------------------
  !
- ! Electronic
+ ! GPL_EXCLUDE_START 
  !
  if (trim(QP_solver)=='g') then
+   !
    if (l_el_corr.and.(.not.l_ppa.and..not.l_chosex)) call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
    !
-# if defined _ELPH || defined _SOLITONS
+# if defined _ELPH 
    !
    if (l_ph_corr)                                    call QP_elph(en,k,q,qp)
    !
 #endif
    !
+   call QP_Green_Function(qp,en,-1)
+   !
+   call QP_report_and_write(k,qp,en,-1)
+   call local_free()
+   return
+   !
  endif
  !
- ! GPL_EXCLUDE_END
+ ! LIFETIMES
+ !
+ if (l_life) then
+   !
+   call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
+   !
+   qp%Z=1.
+   !
+   call QP_report_and_write(k,qp,en,-1)
+   call local_free()
+   return
+   !
+ endif
+ !
+ ! GPL_EXCLUDE_END 
  !
  ! Reporting
  !
- call QP_report(.TRUE.,.FALSE.)
+ call QP_report_and_write(k,qp,en,-1)
+ call local_free()
  !
- contains 
+ contains
    !
-   subroutine QP_report(energies,widths)
+   subroutine local_alloc()
      !
-     use stderr,   ONLY:intc
+     allocate(qp%Z(qp%n_states),qp%E(qp%n_states),&
+&             qp%E_bare(qp%n_states),&
+&             qp%k(qp%nk,3),qp%table(qp%n_states,3+n_sp_pol-1))
      !
-     logical :: energies,widths
+     call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table",&
+&        (/QP_n_states,QP_n_states,QP_n_states,3*qp%nk,QP_n_states*(3+n_sp_pol-1)/),&
+&        (/2*SP,       2*SP,       SP,         SP,           IP/))
      !
-     integer          ::ik,ib
-     real(SP)         ::xx_dummy,xc_dummy,r_numbers(20),dscp
-     character(schlen)::r_fmt,fmt_,ch1,ch2,ch_spin
-     character(4)     ::ch_xx
-     character(5)     ::ch_vxc
+     qp%table=QP_table
+     qp%E=0.
      !
-     if (trim(QP_solver)/='g') then
-       !
-       ik=QP_table(1,3)
-       !
-       call section('=','Q(uasi)P(article) properties')
-       call msg(' r','Legend (energies in eV):')
-       call msg(' r','- B  : Band       - Eo  : bare energy')
-       if (energies) then
-         call msg(' r','- E  : QP energy  - Z   : Renormalization factor')
-         call msg(' r','- So : Sc(Eo)     - S   : Sc(E)')
-         if (l_ph_corr) then
-           call msg('r', '- Gm : Width [meV]- Gf  : Width [fs]')
-           call msg('rn','- dSp : Sc derivative precision')
-         else
-           call msg('rn','- xx/Vxc : Sx/Vxc - dSp : Sc derivative precision')
-         endif
-         call msg('nr','QP [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
-       else if (widths) then
-         call msg(' r','- Z  : Renormalization factor')
-         call msg('rn','- Gm : Width [meV] - Gf  : Width [fs]')
-         call msg('nr','Lifetimes @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
-       endif
-       !
-       do i1=1,QP_n_states
-         !
-         if (l_el_corr.and.energies) then
-           xx_dummy=real(QP_Sx(i1))*HARTREE
-           xc_dummy=real(QP_Vxc(i1))*HARTREE
-         else
-           xx_dummy=0.
-           xc_dummy=0.
-         endif
-         !
-         ib=QP_table(i1,1)
-         if (QP_table(i1,3)/=ik) then
-           ik=QP_table(i1,3)
-           if (energies) call msg('nr','QP [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
-           if (widths)   call msg('nr','Lifetimes [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
-         endif
-         !
-         if (energies) then
-           r_numbers(:7)=(/qp%E_bare(i1)*HARTREE,real(qp%E(i1))*HARTREE,&
-&                      real(qp%E(i1)-qp%E_bare(i1))*HARTREE,real(qp%Z(i1)),&
-&                      real(QP_Sc(i1,1))*HARTREE,xx_dummy,xc_dummy/)
-           if (l_ph_corr) then
-             r_numbers(6)=aimag(qp%E(i1))*HARTREE/1.E-3
-             r_numbers(7)=0.
-             if (r_numbers(6)>0.) r_numbers(7)=1./(HA2FSm1*2*pi*aimag(qp%E(i1)))
-           endif
-           r_fmt=gen_fmt(r_v=r_numbers(:7))
-           fmt_='(3(a,f6.2),a,f4.2,4(a,'//trim(r_fmt)//'))'
-           !
-           ! GPL_EXCLUDE_START
-           !
-         else if (widths) then
-           !
-           ! Note the definition of Lifetime is
-           !
-           !  tau = 1/(2 pi Sigma_2) => tau[fs] = 1/(2 pi Sigma_2[H]) / HA2FSm1
-           !
-           ! now HA2FSm1 = HARTREE*241.798474*10^-3 = > tau[fs]= 1/( 2 Sigma_2[H] HARTREE ) * 
-           !                                                     10^3/( pi 241.798474 )
-           !
-           r_numbers(:2)=(/qp%E_bare(i1)*HARTREE,real(qp%Z(i1))/)
-           r_numbers(3)=aimag(qp%E(i1))*HARTREE/1.E-3
-           r_numbers(4)=0.
-           if (r_numbers(3)>0.) r_numbers(4)=1./(HA2FSm1*2*pi*aimag(qp%E(i1)))
-           r_fmt=gen_fmt(r_v=r_numbers(:4))
-           fmt_='(a,f6.2,1x,3(a,'//trim(r_fmt)//',1x))'
-           !
-           ! GPL_EXCLUDE_END
-           !
-         endif
-         !
-         ch_spin=' '
-         !
-         if (n_sp_pol==2.and.spin(QP_table(i1,:))==1) ch_spin='[up]'
-         if (n_sp_pol==2.and.spin(QP_table(i1,:))==2) ch_spin='[dn]'
-         !
-         if (energies) then
-           !
-           ch_xx =' xx='
-           ch_vxc=' Vxc='
-           if (l_ph_corr) ch_xx =' Gm='
-           if (l_ph_corr) ch_vxc=' Gf='
-           !
-           ch1=trim(ch_spin)//' B='//trim(intc(ib))//' Eo='
-           write (ch2,trim(fmt_)) trim(ch1),r_numbers(1),&
-&            ' E=',r_numbers(2),' E-Eo=',r_numbers(3),' Z=',r_numbers(4),&
-&            ' So=',r_numbers(5),ch_xx,r_numbers(6),ch_vxc,r_numbers(7)
-           !
-           ch1=ch2
-           !
-           if (QP_dSc_steps>2) then
-             dscp=abs(QP_dSc(i1,2)-QP_dSc(i1,1))/abs(QP_dSc(i1,1))
-             write (ch2,'(a,i3.3,a)') trim(ch1)//' dSp=',100-int(dscp*100.),'%'
-             ch1=trim(ch2)
-           endif
-           !
-           ! GPL_EXCLUDE_START
-           !
-         else if (widths) then
-           !
-           ch1=trim(ch_spin)//' B='//trim(intc(ib))//' Eo='
-           write (ch2,trim(fmt_)) trim(ch1),r_numbers(1),&
-&            'Z=',r_numbers(2),' Gm=',r_numbers(3),' Gf=',r_numbers(4)
-           !
-           ch1=ch2
-           !
-           ! GPL_EXCLUDE_END
-           !
-         endif
-         !
-         if (i1/=QP_n_states) call msg('r',trim(ch1))
-         if (i1==QP_n_states) call msg('rn',trim(ch1))
-         !
-       enddo
-       !
-       ! QP i/o
-       !
-       if (energies) then
-         call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
-         io_err=ioQP('QP',qp,ID)
-       endif
-       !
+     ! Sc energy steps. 2/3 If Newton/Secant. QP_Sc_steps 
+     ! the full Green`s function is requested.
+     !
+     if (.not.l_life)                 QP_dSc_steps=2
+     if (.not.l_life.and.QP_dSc_test) QP_dSc_steps=3
+     !
+     allocate(QP_Sc(QP_n_states,QP_Sc_steps))
+     call mem_est("QP_Sc",(/size(QP_G)/))
+     !
+     if (trim(QP_solver)=='g') then
+       allocate(QP_G(QP_n_states,QP_Sc_steps))
+       call mem_est("QP_G",(/size(QP_G)/))
+       allocate(qp%S_total(QP_n_states,QP_Sc_steps))
+       call mem_est("qp_S_total",(/size(qp%S_total)/))
+     else if (.not.l_life) then
+       allocate(QP_dSc(qp%n_states,QP_dSc_steps-1))
+       call mem_est("QP_dSc",(/size(QP_dSc)/))
      endif
      !
-     ! o.qp / Green's functions o. files
-     !
-     if (l_ph_corr.and.index(QP_rep_string,'lm')==0)  &
-&                     QP_rep_string=trim(QP_rep_string)//'lm'
-     if (widths)      QP_rep_string='kpbne0lmlf'
-     if (n_sp_pol==2) QP_rep_string=trim(QP_rep_string)//'sp'
-     !
-     call QP_of(k,qp,en)
-     !
-     ! CLEAN
-     !
+   end subroutine
+   !
+   subroutine local_free()
      deallocate(qp%Z,qp%E,qp%E_bare,qp%k,qp%table,QP_table,QP_state)
      if (allocated(QP_Sc))  deallocate(QP_Sc)
      if (allocated(QP_dSc)) deallocate(QP_dSc)
      if (allocated(QP_G))   deallocate(QP_G)
      if (allocated(QP_Sx))  deallocate(QP_Sx,QP_Vxc)
+     if (associated(qp%S_total))  nullify(qp%S_total)
      call mem_est("QP_Sc QP_dSc QP_G QP_Sx QP_Vxc")
-     call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table QP_table QP_state")
-     !
+     call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table QP_table QP_state qp_S_total")
    end subroutine
    !
 end subroutine

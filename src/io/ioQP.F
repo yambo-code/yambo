@@ -27,10 +27,10 @@ integer function ioQP(what,qp,ID)
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:n_sp_pol
  use matrix_operate, ONLY:mat_c2r,mat_r2c
- use QP_m,           ONLY:QP_t,QP_state,QP_nk,QP_nb,&
-&                         QP_n_G_bands,QP_n_states,QP_W,&
+ use QP_m,           ONLY:QP_t,QP_state,QP_nk,QP_nb,QP_G_dr,&
+&                         QP_n_G_bands,QP_n_states,QP_W,QP_G_er,&
 &                         QP_n_W_freqs,QP_W_dr,QP_W_er,QP_W_partially_done,&
-&                         GWo_iterations
+&                         GWo_iterations,QP_solver,QP_Sc_steps,QP_Sc
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
 &                         write_is_on,io_mode,DUMP,VERIFY,&
@@ -50,12 +50,12 @@ integer function ioQP(what,qp,ID)
  !
  integer              ::i1,i2,iqbz,QP_n_G_bands_disk(2),i_found,&
 &                       QP_nk_disk,QP_nb_disk,QP_n_states_disk,n_descs_disk,var_size
- real(SP),allocatable ::qp_E_Eo_Z_disk(:,:,:),QP_W_disk(:,:,:)
- integer ,allocatable ::qp_table_disk(:,:)
  character(schlen)    ::ch
  character(2)         ::OP(1)
+ integer ,    allocatable ::qp_table_disk(:,:)
+ real(SP),    allocatable ::qp_DATA_disk(:,:,:),QP_W_disk(:,:,:)
  !
- if (what=="QP".or.what=="W") then
+ if (what=="QP".or.what=="W".or.what=="G") then
    ioQP=io_connect(desc=what,type=2,ID=ID)
  else
    ioQP=io_connect(desc=what,type=-2,ID=ID)
@@ -99,10 +99,11 @@ integer function ioQP(what,qp,ID)
    !
    var_size=4
    if (what/="W".and.ver_is_gt_or_eq(ID,(/3,0,1/))) var_size=5 
+   if (what=="G") var_size=6 
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=var_size,MENU=0)
    !
-   if (what/="W") OP="<="
+   if (what/="W")  OP="<="
    if (what=="W" ) OP="=="
    !
    call io_elemental(ID,I0=qp%nb,DB_I0=QP_nb_disk,CHECK=.true.,OP=OP)
@@ -118,6 +119,17 @@ integer function ioQP(what,qp,ID)
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
+   if (what=="G") then
+     !
+     ! Tough the GF's parameters are already stored in the QP_descriptions
+     ! I need then on-fly to, eventually, rebuild the Green's function
+     !
+     call io_elemental(ID,VAR="SE_OPERATOR_PARAMETERS",VAR_SZ=5,MENU=0)
+     call io_elemental(ID,I0=QP_Sc_steps)
+     call io_elemental(ID,R1=QP_G_er)
+     call io_elemental(ID,R1=QP_G_dr)
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   endif
  endif
  !
  if (any((/io_sec(ID,:)==2/))) then
@@ -249,34 +261,66 @@ integer function ioQP(what,qp,ID)
      enddo
    endif
    !
-   allocate(qp_E_Eo_Z_disk(3,qp%n_states,2))
-   !  
-   if (write_is_on(ID)) then
-     do i1=1,qp%n_states
-       qp_E_Eo_Z_disk(1,i1,1)=real(qp%E(i1))
-       qp_E_Eo_Z_disk(1,i1,2)=aimag(qp%E(i1))
-       qp_E_Eo_Z_disk(2,i1,1)=qp%E_bare(i1)
-       qp_E_Eo_Z_disk(2,i1,2)=0.
-       qp_E_Eo_Z_disk(3,i1,1)=real(qp%Z(i1))
-       qp_E_Eo_Z_disk(3,i1,2)=aimag(qp%Z(i1))
-     enddo
+   if (what=="QP") then
+     !
+     ! QP corrections 
+     !
+     allocate(qp_DATA_disk(3,qp%n_states,2))
+     !  
+     if (write_is_on(ID)) then
+       do i1=1,qp%n_states
+         qp_DATA_disk(1,i1,1)=real(qp%E(i1))
+         qp_DATA_disk(1,i1,2)=aimag(qp%E(i1))
+         qp_DATA_disk(2,i1,1)=qp%E_bare(i1)
+         qp_DATA_disk(2,i1,2)=0.
+         qp_DATA_disk(3,i1,1)=real(qp%Z(i1))
+         qp_DATA_disk(3,i1,2)=aimag(qp%Z(i1))
+       enddo
+     endif
+     !
+     call io_bulk(ID,VAR="QP_E_Eo_Z",VAR_SZ=(/3,qp%n_states,2/))
+     !
+     call io_bulk(ID,R3=qp_DATA_disk)
+     !
+     if (read_is_on(ID)) then
+       allocate(qp%Z(qp%n_states),qp%E(qp%n_states),qp%E_bare(qp%n_states))
+       call mem_est("qp_Z qp_E qp_E_bare",(/qp%n_states,qp%n_states,qp%n_states/))
+       do i1=1,qp%n_states
+         qp%E(i1) =cmplx(qp_DATA_disk(1,i1,1),qp_DATA_disk(1,i1,2),SP)
+         qp%E_bare(i1)=cmplx(qp_DATA_disk(2,i1,1),qp_DATA_disk(2,i1,2),SP)
+         qp%Z(i1) =cmplx(qp_DATA_disk(3,i1,1),qp_DATA_disk(3,i1,2),SP)
+       enddo
+     endif
+     !
+     deallocate(qp_DATA_disk)
+     !
    endif
    !
-   call io_bulk(ID,VAR="QP_E_Eo_Z",VAR_SZ=(/3,qp%n_states,2/))
-   !
-   call io_bulk(ID,R3=qp_E_Eo_Z_disk)
-   !
-   if (read_is_on(ID)) then
-     allocate(qp%Z(qp%n_states),qp%E(qp%n_states),qp%E_bare(qp%n_states))
-     call mem_est("qp_Z qp_E qp_E_bare",(/qp%n_states,qp%n_states,qp%n_states/))
-     do i1=1,qp%n_states
-       qp%E(i1) =cmplx(qp_E_Eo_Z_disk(1,i1,1),qp_E_Eo_Z_disk(1,i1,2),SP)
-       qp%E_bare(i1)=cmplx(qp_E_Eo_Z_disk(2,i1,1),qp_E_Eo_Z_disk(2,i1,2),SP)
-       qp%Z(i1) =cmplx(qp_E_Eo_Z_disk(3,i1,1),qp_E_Eo_Z_disk(3,i1,2),SP)
-     enddo
+   if (what=="G") then
+     !
+     ! Green Functions 
+     !
+     allocate(qp_DATA_disk(qp%n_states,QP_Sc_steps,2))
+     !
+     if (write_is_on(ID)) then
+       do i1=1,qp%n_states
+         qp_DATA_disk(i1,:,1)=real(qp%S_total(i1,:))
+         qp_DATA_disk(i1,:,2)=aimag(qp%S_total(i1,:))
+       enddo
+     endif
+     !
+     call io_bulk(ID,VAR="SE_Operator",VAR_SZ=(/qp%n_states,QP_Sc_steps,2/))
+     !
+     call io_bulk(ID,R3=qp_DATA_disk)
+     !
+     if (read_is_on(ID)) then
+       allocate(qp%S_total(qp%n_states,QP_Sc_steps))
+       call mem_est("qp_S_total",(/size(qp%S_total)/))
+       do i1=1,qp%n_states
+         qp%S_total(i1,:) =cmplx(qp_DATA_disk(i1,:,1),qp_DATA_disk(i1,:,2),SP)
+       enddo
+     endif
    endif
-   !
-   deallocate(qp_E_Eo_Z_disk)
    !
    ioQP=io_status(ID)
    if (ioQP/=0) goto 1

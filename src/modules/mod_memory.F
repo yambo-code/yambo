@@ -77,7 +77,7 @@ module memory_m
            if (trim(mem_element(i2))==trim(input_name(i1))) exit
          enddo
          if (i2==element_loaded+1) element_loaded=element_loaded+1
-    
+         !
          mem_element(i2)=trim(input_name(i1))
          local_kind=preset_kind
          if (present(elements_kind)) local_kind=elements_kind(i1)

@@ -27,15 +27,14 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
  !
  use pars,          ONLY:SP
  use QP_m,          ONLY:QP_t,QP_W,QP_Sc,QP_n_states,QP_G_damp,QP_n_G_bands,&
-&                        QP_solver_state,QP_table,QP_n_W_freqs,QP_solver,QP_G,&
-&                        QP_Vxc,QP_Sx
+&                        QP_solver_state,QP_n_W_freqs,QP_solver,QP_G,QP_table
  use drivers,       ONLY:Finite_Tel
  use frequency,     ONLY:w_samp
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use functions,     ONLY:bose_f,bose_decay
  use electrons,     ONLY:levels
- use R_lattice,     ONLY:qindx_S,bz_samp,nqbz
+ use R_lattice,     ONLY:qindx_S,bz_samp
  !
  implicit none
  type(bz_samp)::k
@@ -47,8 +46,8 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
  !
  integer         :: i1,i2,ib,is(2),os(2)
  type(pp_indexes):: px
- real(SP)        :: tsign,E_bare
- complex(SP)     :: QP_W_here(QP_n_W_freqs),QP_Go
+ real(SP)        :: tsign
+ complex(SP)     :: QP_W_here(QP_n_W_freqs)
  complex(SP), allocatable :: dSc(:)
  !
  tsign=-1.
@@ -104,34 +103,5 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
    deallocate(dSc)
    !
  enddo
- !
- ! The Green`s functions
- !
- if (trim(QP_solver)=="g".and.iqbz==nqbz) then
-   !
-   do i1=1,QP_n_states
-     !
-     is=(/QP_table(i1,1),QP_table(i1,3)/) ! (nk) QP
-     !
-     E_bare=E%E(is(1),is(2),1) 
-     if (associated(E%Eo)) E_bare=E%Eo(is(1),is(2),1)
-     !
-     do i2=1,Sc_W(i1)%n(1) 
-       !
-       !  Davide: 15/04/2009 moved conjg from the second term of the Green to
-       !          the first according to the QP expression for the T-ordered Green
-       !          G=\frac{1}{\omega-\epsilon_i+i\eta sign(\epsilon-\mu)}         
-       if (Finite_Tel) then
-         QP_Go=0.5*E%f(is(1),is(2),1)/(Sc_W(i1)%p(i2)-E_bare)
-       else
-         QP_Go=0.5*E%f(is(1),is(2),1)/(conjg(Sc_W(i1)%p(i2))-E_bare)                   
-       endif
-       QP_Go=QP_Go+0.5*(2.-E%f(is(1),is(2),1))/(Sc_W(i1)%p(i2)-E_bare)                           
-       !
-       QP_G(i1,i2)=QP_Go/(1.-QP_Go*(QP_Sc(i1,i2)+QP_Sx(i1)-QP_Vxc(i1)))
-       !
-     enddo
-   enddo
- endif
  !
 end subroutine

@@ -102,9 +102,6 @@ yambo: libs
 	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)
 	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
 # PROJECTS & BROKEN #
-yambo_solitons: libs
-	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_SOLITONS"; $(mksrc)
-	@X2DO="yambo_solitons"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_SOLITONS";$(mkx)
 yambo_partial_diago: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_PARTIAL_DIAGO"; $(mksrc)
 	@X2DO="yambo_partial_diago"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_PARTIAL_DIAGO";$(mkx)

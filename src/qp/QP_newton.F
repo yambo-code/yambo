@@ -28,7 +28,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  use X_m,           ONLY:X_t
  use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Sx,QP_Vxc,QP_Sc,&
 &                        QP_n_states,QP_dSc,QP_dSc_delta,QP_n_G_bands,&
-&                        GWo_SC_done,GWo_iterations,SC_E_threshold 
+&                        GWo_SC_done,GWo_iterations,SC_E_threshold,On_Mass_Shell_approx
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
@@ -98,7 +98,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
    !
    ! GPL_EXCLUDE_START
    !
-# if defined _ELPH || defined _SOLITONS
+# if defined _ELPH 
    !
    if (l_ph_corr)    call QP_elph(en,k,q,qp)
    !
@@ -108,8 +108,13 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
    !
    do i1=1,QP_n_states
      !
+     QP_dSc(i1,1)=(0.,0.)
+     if (.not.On_Mass_Shell_approx) then
+       do i2=1,QP_dSc_steps-1
+         QP_dSc(i1,i2)=(QP_Sc(i1,i2+1)-QP_Sc(i1,i2))/QP_dSc_delta
+       enddo
+     endif
      do i2=1,QP_dSc_steps-1
-       QP_dSc(i1,i2)=(QP_Sc(i1,i2+1)-QP_Sc(i1,i2))/QP_dSc_delta
        Z(i2)=1./(1.-QP_dSc(i1,i2))
        !
        Eqp(i2)=qp%E_bare(i1)+Z(i2)*QP_Sc(i1,1)

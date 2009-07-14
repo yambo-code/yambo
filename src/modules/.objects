@@ -3,7 +3,7 @@ RT_SC_objects =
 RT_SC_objects = mod_SC.o mod_real_time.o
 #endif
 ELPH_objects =
-#if defined _ELPH || defined _SOLITONS
+#if defined _ELPH 
 ELPH_objects = mod_ELPH.o
 #endif
 MAGNETIC_objects =

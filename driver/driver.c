@@ -55,7 +55,7 @@ typedef struct
 #if defined _MANYK || _TB || _MAGNETIC || _DIPOLE_RIM || _PARTIAL_DIAGO
  #define _YAMBO_MAIN
 #endif
-#if defined _SOLITONS || _TEST_1
+#if defined _TEST_1
  #define _YAMBO_MAIN
 #endif
 #if defined _ypp  || _YPP_ELPH || _YPP_RAS || _YPP_RT || _YPP_SC

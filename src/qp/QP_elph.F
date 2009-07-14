@@ -39,8 +39,8 @@ subroutine QP_elph(en,k,q,qp)
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,OP_WR_CL
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
-&                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,QP_G_er,QP_G_dr,&
-&                        On_Mass_Shell_approx
+&                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,QP_G_dr,&
+&                        On_Mass_Shell_approx,GF_energy_range
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
  use R_lattice,     ONLY:qindx_S,bz_samp,ik_is_table
  use ELPH,          ONLY:ph_modes,elph_nb,ph_freqs_sq,elph_gkkp,&
@@ -123,14 +123,13 @@ subroutine QP_elph(en,k,q,qp)
    do iqp=1,qp%n_states
      Sc_W(iqp)%n =QP_Sc_steps
      if (l_GF_from_CA) then
-       Sc_W(iqp)%er=QP_G_er
-       Sc_W(iqp)%dr=QP_G_dr
+       call GF_energy_range(iqp,Sc_W(iqp),en%E)
      else
        Sc_W(iqp)%er=(/minval(en%E(:,:,:))-2.*max_ph_freq,&
 &                     maxval(en%E(:QP_PH_n_G_bands,:,:))+2.*max_ph_freq/) 
        Sc_W(iqp)%dr=QP_G_dr
+       call freqs_setup(Sc_W(iqp))
      endif
-     call freqs_setup(Sc_W(iqp))
      QP_Sc_steps=Sc_W(iqp)%n(1)
    enddo
    gsqF_energy_steps=QP_Sc_steps
@@ -405,10 +404,10 @@ subroutine QP_elph(en,k,q,qp)
    subroutine Final_Report_and_actions()
      !
      use functions,  ONLY:bose_f
-     use QP_m,       ONLY:QP_states_simmetrize,QP_G
+     use QP_m,       ONLY:QP_states_simmetrize
      type(w_samp)       ::Sc_local_W
      complex(DP)        ::DP_FAN(gsqF_energy_steps),DP_DW
-     complex(SP)        ::coefficient,Sc_local(gsqF_energy_steps),QP_Go
+     complex(SP)        ::coefficient,Sc_local(gsqF_energy_steps)
      real(SP)           ::ph_freq
      !
      ! Degenerate bands average
@@ -443,12 +442,12 @@ subroutine QP_elph(en,k,q,qp)
        coefficient=(1.,0.)
        call W_reset(Sc_local_W)
        Sc_local_W%n =QP_Sc_steps
-       Sc_local_W%er=QP_G_er
        Sc_local_W%dr=0.001/HARTREE
-       call freqs_setup(Sc_local_W)
      endif
      !
      do iqp=1,QP_n_states   
+       !
+       if ( trim(QP_solver)=='g' ) call GF_energy_range(iqp,Sc_local_W,en%E)
        !
        ib   =QP_table(iqp,1)
        ik   =QP_table(iqp,3)
@@ -523,20 +522,10 @@ subroutine QP_elph(en,k,q,qp)
            !
          else
            !
-           QP_Sc(iqp,:)=DP_FAN(:)+DP_DW
+           QP_Sc(iqp,:)=QP_Sc(iqp,:)+DP_FAN(:)+DP_DW 
            !
          endif
          !
-         ! Dyson equation
-         !
-         do iw=1,gsqF_energy_steps
-           !
-           QP_Go=1./(Sc_local_W%p(iw)-en%E(ib,ik,1))
-           !
-           QP_G(iqp,iw)=QP_Go/(1.-QP_Go*QP_Sc(iqp,iw))
-           !
-         enddo
-         ! 
          call live_timing(steps=1)
          !
        endif

@@ -6,4 +6,4 @@ GW_REAL_AXIS_objects =
 #endif
 objs = QP_driver.o QP_newton.o QP_ppa_chosex.o \
        $(GW_REAL_AXIS_objects) \
-       QP_descriptions.o QP_XX_Vxc.o DFT_Vxc.o QP_of.o
+       QP_descriptions.o QP_report_and_write.o  QP_XX_Vxc.o DFT_Vxc.o QP_of.o

@@ -29,7 +29,7 @@ subroutine QP_of(kp,qp,en)
  use electrons, ONLY:levels,spin
  use QP_m,      ONLY:QP_t,QP_Vxc,QP_Sc,QP_dSc,QP_Sx,QP_table,&
 &                    QP_rep_string,QP_solver,QP_n_states,&
-&                    QP_G,QP_G_er,QP_G_dr,QP_Sc_steps
+&                    QP_G,GF_energy_range,QP_G_dr,QP_Sc_steps
  use stderr,    ONLY:set_real_printed_length
  use frequency, ONLY:w_samp,W_reset
  implicit none
@@ -115,17 +115,17 @@ subroutine QP_of(kp,qp,en)
    !
    call W_reset(Sc_W)
    Sc_W%n=QP_Sc_steps
-   Sc_W%er=QP_G_er
    Sc_W%dr=QP_G_dr
-   call freqs_setup(Sc_W)
    !
    do  i1=1,QP_n_states
+     !
+     call GF_energy_range(i1,Sc_W,en%E)
+     !
      write (G_Sc_name,'(2(a,i3.3))') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3)
      call of_open_close(G_Sc_name,'ot')
      call msg('o G_Sc','# GW [Green`s function & Self-Energy]')
      call msg('o G_Sc','#')
      do i2=2,qp%n_descs
-       if (index(qp%description(i2),'dS/dw')/=0) cycle
        call msg('o G_Sc','# ',trim(qp%description(i2)),INDENT=0)
      enddo
      call msg('o G_Sc','#')
@@ -138,7 +138,7 @@ subroutine QP_of(kp,qp,en)
      do i2=1,QP_Sc_steps
        values=0.
        values(1:3)=(/real(Sc_W%p(i2)),real(QP_G(i1,i2)),aimag(QP_G(i1,i2))/)*HARTREE
-       values(4:5)=(/real(QP_Sc(i1,i2)),aimag(QP_Sc(i1,i2))/)*HARTREE
+       values(4:5)=(/real(qp%S_total(i1,i2)),aimag(qp%S_total(i1,i2))/)*HARTREE
        values(6)=values(4)
        if (l_el_corr) values(4)=values(4)+real(QP_Sx(i1)-QP_Vxc(i1))*HARTREE
        call msg('o G_Sc','',values(:6),INDENT=-2,USE_TABS=.TRUE.)

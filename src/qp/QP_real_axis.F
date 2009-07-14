@@ -28,7 +28,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  use pars,          ONLY:SP,schlen,pi,IP
  use units,         ONLY:HARTREE
- use stderr,        ONLY:string_pack
  use drivers,       ONLY:l_life
  use electrons,     ONLY:levels,spin
  use frequency,     ONLY:w_samp,cg_index_bg,cg_npts,W_reset
@@ -42,13 +41,14 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        QP_W,QP_solver,QP_W_er,QP_W_dr,QP_n_W_freqs,&
-&                        QP_G_er,QP_G_dr,QP_Sc_steps
+&                        GF_energy_range,QP_G_dr,QP_Sc_steps
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use functions,     ONLY:e2et,h2ht,bose_decay
  use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:qindx_S,bz_samp
  use D_lattice,     ONLY:nsym,i_space_inv,i_time_rev
  use wave_func,     ONLY:wf_load,wf_free
+ use stderr,        ONLY:intc
  !
  implicit none
  type(levels) ::en,Xen
@@ -130,25 +130,19 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    ! I need to put to 0. the G damping embodied in QP_W2Sc
    !
    QP_G_damp=0.
+   !
    do i1=1,qp%n_states
-     Sc_W(i1)%n=QP_Sc_steps
-     Sc_W(i1)%er=QP_G_er
+     Sc_W(i1)%n =QP_Sc_steps
      Sc_W(i1)%dr=QP_G_dr
-     call freqs_setup(Sc_W(i1))
+     call GF_energy_range(i1,Sc_W(i1),en%E)
      QP_Sc_steps=Sc_W(i1)%n(1)
    enddo
  endif
  !
+ Sc_name="G"//trim(intc(GW_iter))
  !
- if (GW_iter<9) write (Sc_name,'(a,i1.1)') 'G',GW_iter
- if (GW_iter>9) write (Sc_name,'(a,i2.2)') 'G',GW_iter
- ch=trim(string_pack(Sc_name,'W0 on the Real Axis'))
- !
- if (GW_iter==0) then
-   call section('+',trim(ch))
- else
-   call section('=',trim(ch))
- endif
+ if (GW_iter==0) call section('+',trim(Sc_name)//"W0 on the real axis")
+ if (GW_iter> 0) call section('=',trim(Sc_name)//"W0 on the real axis")
  !
  if (.not.l_life) call msg('r', '[GW] Bands range     :',QP_n_G_bands)
  call msg('r', '[GW] G damping   [ev]:',QP_G_damp*HARTREE)
@@ -171,7 +165,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  if (io_err==0) then
    if (QP_solver=="n".or.QP_solver=="g") then
      QP_Sc=cmplx(0.,0.,SP)
-     call live_timing(string_pack(Sc_name,'W0'),q%nbz)
+     call live_timing(trim(Sc_name)//'W0',q%nbz)
      do iqbz=1,q%nbz
        if (iqbz< q%nbz) call io_control(ACTION=RD,COM=NONE,SEC=(/2+iqbz/),ID=WID)
        if (iqbz==q%nbz) call io_control(ACTION=RD_CL,COM=NONE,SEC=(/2+iqbz/),ID=WID)
@@ -258,7 +252,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !===========
  !
  call pp_redux_wait
- call live_timing(string_pack(Sc_name,'W0'),px%stps(myid+1)*(q%nbz-iq_to_start+1))
+ call live_timing(trim(Sc_name)//'W0',px%stps(myid+1)*(q%nbz-iq_to_start+1))
  !
  do iqbz=iq_to_start,q%nbz
    !

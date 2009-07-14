@@ -67,7 +67,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_SVD_digits,&
 &                     FXC_is_causal
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
-#if defined _ELPH || defined _SOLITONS
+#if defined _ELPH 
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK
 #endif
  use memory_m,   ONLY:mem_reset
@@ -312,7 +312,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  QP_W_er=0.
  QP_W_dr=0.1/HARTREE
  QP_W_partially_done=.false.
- QP_G_er=(/0._SP,10._SP/HARTREE/)
+ QP_G_er=(/-10._SP/HARTREE,10._SP/HARTREE/)
  QP_G_dr=0.1/HARTREE
  QP_cg_percent=100.
  GWo_iterations=0
@@ -375,7 +375,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  GS_xc_FUNCTIONAL=-1             ! unknow 
  GS_xc_KIND=-1                   ! unknow 
  !
-#if defined _ELPH || defined _SOLITONS 
+#if defined _ELPH 
  !
  ! ELPH
  !

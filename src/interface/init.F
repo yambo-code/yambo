@@ -57,7 +57,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _REELS
  use reels_module,   ONLY:lreels
 #endif
-#if defined  _ELPH || defined _SOLITONS
+#if defined  _ELPH 
  use ELPH,           ONLY:elph_nq,elph_nq_used
 #endif
 #if defined _SC || defined _RT || defined _MAGNETIC
@@ -94,7 +94,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SC || defined _RT || defined _MAGNETIC
  integer, external :: io_SC_components 
 #endif
-#if defined _ELPH || defined _SOLITONS
+#if defined _ELPH 
  integer           :: ioELPH_err
  integer, external :: ioELPH
 #endif
@@ -109,7 +109,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! What is running ?
  !
  what_is_running='YAMBO'
-#if defined _ELPH || defined _SOLITONS
+#if defined _ELPH 
  what_is_running='YAMBO_PH'
 #endif
 #if defined _RAS
@@ -129,9 +129,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _MANYK 
  what_is_running='YAMBO_MANYK'
-#endif
-#if defined _SOLITONS 
- what_is_running='YAMBO_SOLITONS'
 #endif
 #if defined _MAGNETIC
  what_is_running='YAMBO_MAGNETIC'
@@ -336,7 +333,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! ELPH 
  !
-#if defined _ELPH || defined _SOLITONS
+#if defined _ELPH 
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  ioELPH_err=ioELPH(io_ID,'gkkp')
 #endif
@@ -393,7 +390,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !Setup
  !
  if (l_setup) call initactivate(1,'MaxGvecs IkSigLim IkXLim')
-#if defined  _ELPH || defined _SOLITONS
+#if defined  _ELPH 
  if (l_setup) call initactivate(1,'MinusQ')
 #endif
  !
@@ -433,7 +430,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'LongPath')
    call initactivate(1,'BSresKmod BScplKmod BSEQptR BSEBands')
    call initactivate(1,'BSENGBlk BSENGexx BSEEhEny BSEClmns BSehWind')
-#if defined _ELPH || defined _SOLITONS
+#if defined _ELPH 
    if (l_ph_corr) call initactivate(1,'ElPhRndNq')
 #endif
  endif
@@ -487,7 +484,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        if (.not.l_chosex) call initactivate(1,'DysSolver')
        if (     l_chosex) call initactivate(1,'UseEbands')
        if (trim(QP_solver)=="g") then
-         call initactivate(1,'GEnSteps GEnRnge GDmRnge') 
+         call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenF2QP') 
        else
          call initactivate(1,'GWoIter')
          if (.not.l_chosex) call initactivate(1,'NewtDchk QPreport')
@@ -503,14 +500,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      endif
    endif 
    !
-#if defined  _ELPH || defined _SOLITONS
+#if defined  _ELPH 
    if (l_ph_corr) then
      call initactivate(1,'DysSolver')
      call initactivate(1,'GphBRnge GDamping QPreport ElPhRndNq')
      call initactivate(1,'WRgFsq NewtDchk OnMassShell')
    endif
    if (trim(QP_solver)=="g".and.l_ph_corr) then
-     call initactivate(1,'GEnSteps GEnRnge GDmRnge') 
+     call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenF2QP') 
      call initactivate(-1,'WRgFsq NewtDchk OnMassShell GDamping QPreport')
    endif
 #endif
@@ -788,7 +785,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined  _REELS
        lreels=runlevel_is_on('reels')
 #endif
-#if defined  _ELPH || defined _SOLITONS
+#if defined  _ELPH 
        if (.not.CLOSE_Gs) l_ph_corr=runlevel_is_on('el_ph').and.ioELPH_err==0
        l_el_corr=runlevel_is_on('el_el')
 #else
@@ -840,7 +837,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      X(3)%ordering = 'c'
      Xw(3)%n = 101 ! 2 components
 #endif 
-#if defined  _ELPH || defined _SOLITONS
+#if defined  _ELPH 
      if (.not.l_el_corr.and..not.l_ph_corr) l_el_corr=.true.
      elph_nq_used=elph_nq
 #endif
@@ -905,7 +902,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        call X_duplicate(X(4),X(2))
        call W_duplicate(Xw(4),Xw(2))
      endif
-#if !defined _ELPH && !defined _SOLITONS
+#if !defined _ELPH 
      if (l_gw0) l_el_corr=.true.
 #endif
      !
@@ -1024,7 +1021,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          QP_solver=trim(rstr_piece(i1+1))
          if (trim(QP_solver)/='n'.and.trim(QP_solver)/='s'.and.&
 &            trim(QP_solver)/='g') QP_solver='n'
-#if !defined  _ELPH && !defined _SOLITONS
+#if !defined  _ELPH 
          l_el_corr=.true.
 #endif
          !
@@ -1110,7 +1107,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
        ! ELPH
        !
-#if defined  _ELPH || defined _SOLITONS
+#if defined  _ELPH 
        if ( trim(rstr_piece(i1)) == 'corrtp' ) then
          if ( trim(rstr_piece(i1+1)) == 'e') l_el_corr=.true.
          if ( trim(rstr_piece(i1+1)) == 'p') l_ph_corr=.true.

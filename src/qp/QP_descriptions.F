@@ -27,14 +27,14 @@ subroutine QP_descriptions(qp,X,Xw)
  use X_m,           ONLY:X_t,use_X_RIM
  use QP_m,          ONLY:QP_t,QP_ng_Sx,QP_n_G_bands,QP_cg_percent,&
 &                        QP_dSc_delta,QP_G_damp,QP_dSc_steps,GWo_iterations,&
-&                        CHOSEX_use_empties
+&                        CHOSEX_use_empties,QP_Sc_steps,QP_G_er,QP_G_dr,QP_solver
  use stderr,        ONLY:string_pack,gen_fmt
  use drivers,       ONLY:l_life,l_ppa,l_ph_corr,l_el_corr,l_chosex
  use R_lattice,     ONLY:RIM_qpg,RIM_n_rand_pts,RIM_ng
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:BZ_RIM_tot_nkpts
  use IO_m,          ONLY:ver_is_gt_or_eq
-#if defined _ELPH || defined _SOLITONS
+#if defined _ELPH 
  use ELPH,          ONLY:QP_PH_n_G_bands
 #endif
  implicit none
@@ -99,7 +99,7 @@ subroutine QP_descriptions(qp,X,Xw)
  write (qp%description(qp%n_descs),trim(&
 &     string_pack('(a,2(',gen_fmt( r_v=X%ehe*HARTREE ),',1x))'))) &
 &     ' X e/h E range      [ev]:',X%ehe*HARTREE
-
+ !
  if (ver_is_gt_or_eq(-1,(/3,0,5/))) then
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),'(2a)') ' X xc-Kernel            :',trim(X%f_xc)
@@ -152,15 +152,18 @@ subroutine QP_descriptions(qp,X,Xw)
 &       ' Sx RL components       :',QP_ng_Sx
  endif
  !
-#if defined _ELPH || defined _SOLITONS
+#if defined _ELPH 
  !
  ! El-Ph
  !
  if (ver_is_gt_or_eq(-1,(/3,0,1/))) then
    !
    if (l_ph_corr) then
-     if (.not.l_el_corr) then
-       qp%n_descs=n_descs_save+1
+     !
+     qp%n_descs=qp%n_descs+1
+     if (.not.l_el_corr) qp%n_descs=n_descs_save+1
+     !
+     if (trim(QP_solver)/='g') then
        write (qp%description(qp%n_descs),trim(&
 &            string_pack('(a,',gen_fmt( i_v=(/QP_dSc_steps /) ),')'))) &
 &            ' [ph] dS/dw steps        :',QP_dSc_steps
@@ -186,6 +189,25 @@ subroutine QP_descriptions(qp,X,Xw)
  endif
  !
 #endif
+ !
+ ! Green's Functions
+ !
+ if (ver_is_gt_or_eq(-1,revision=452).and.trim(QP_solver)=='g') then
+   qp%n_descs=qp%n_descs+1
+   write (qp%description(qp%n_descs),trim(&
+&        string_pack('(a,',gen_fmt( i_v=(/QP_Sc_steps /) ),')'))) &
+&        ' S(E) real-axis steps    :',QP_Sc_steps
+   qp%n_descs=qp%n_descs+1
+   write (qp%description(qp%n_descs),trim(&
+&       string_pack('(a,2(',gen_fmt( r_v=QP_G_er*HARTREE ),',1x))'))) &
+&        ' S(E) E displacement   [eV]:',QP_G_er*HARTREE
+   qp%n_descs=qp%n_descs+1
+   write (qp%description(qp%n_descs),trim(&
+&       string_pack('(a,2(',gen_fmt( r_v=QP_G_dr*HARTREE ),',1x))'))) &
+&        ' S(E) damping          [eV]:',QP_G_dr*HARTREE
+ endif
+ !
+ ! QP states
  !
  i4=(/1,1,0,0/)
  do while(QP_state_extract(i4)>0)

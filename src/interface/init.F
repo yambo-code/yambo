@@ -285,6 +285,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! GPL_EXCLUDE_START
  !
+ ! Green Functions
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
+ io_err=ioQP('G',qp,io_ID) 
+ !
  ! W
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
@@ -477,6 +482,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_gw0) then
        call initactivate(1,'GbndRnge') 
        if (.not.l_chosex.and.trim(QP_solver)/='g') call initactivate(1,'GDamping') 
+       if (.not.l_chosex) call initactivate(1,'dScStep') 
        if (.not.l_ppa.and..not.l_chosex) call Xon('Xd',(/'BndsRn','NGsBlk',&
 &                      'DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                      'DrudeW','EhEngy','LongDr'/)) 
@@ -484,10 +490,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        if (.not.l_chosex) call initactivate(1,'DysSolver')
        if (     l_chosex) call initactivate(1,'UseEbands')
        if (trim(QP_solver)=="g") then
-         call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenF2QP') 
+         call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenF2QP ForceNewton') 
        else
          call initactivate(1,'GWoIter')
-         if (.not.l_chosex) call initactivate(1,'NewtDchk QPreport')
+         if (.not.l_chosex) call initactivate(1,'NewtDchk QPreport OnMassShell')
        endif
        !
      endif
@@ -503,12 +509,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined  _ELPH 
    if (l_ph_corr) then
      call initactivate(1,'DysSolver')
-     call initactivate(1,'GphBRnge GDamping QPreport ElPhRndNq')
+     call initactivate(1,'GphBRnge GDamping dScStep QPreport ElPhRndNq')
      call initactivate(1,'WRgFsq NewtDchk OnMassShell')
    endif
    if (trim(QP_solver)=="g".and.l_ph_corr) then
-     call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenF2QP') 
-     call initactivate(-1,'WRgFsq NewtDchk OnMassShell GDamping QPreport')
+     call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenF2QP ForceNewton') 
+     call initactivate(-1,'WRgFsq NewtDchk GDamping QPreport OnMassShell')
    endif
 #endif
    !
@@ -911,6 +917,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    subroutine read_command_line(rstr,init_) 
      !
      use stderr, ONLY:string_split
+     use it_m,   ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp 
      implicit none
      integer     :: init_
      character(*):: rstr
@@ -954,9 +961,32 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        call initactivate(1, trim(rstr_piece(i1)) )
        !
        ! Verbosity
+       ! V_RL=1
+       ! V_kpt=2
+       ! V_sc=3
+       ! V_qp=4
+       ! V_io=5
+       ! V_general=6
+       ! V_resp=7
        !
-       if ( trim(rstr_piece(i1)) == 'infver' )  read(rstr_piece(i1+1),*) infile_verbosity
-       if (infile_verbosity<0) infile_verbosity=0
+       if ( trim(rstr_piece(i1)) == 'infver' ) then
+         select case (trim(rstr_piece(i1+1)))
+           case ('RL','rl')
+             infile_verbosity=V_RL
+           case ('kpt','k')
+             infile_verbosity=V_kpt
+           case ('sc','SC')
+             infile_verbosity=V_sc
+           case ('QP','qp')
+             infile_verbosity=V_qp
+           case ('IO','io')
+             infile_verbosity=V_io
+           case ('gen')
+             infile_verbosity=V_general
+           case ('resp','X')
+             infile_verbosity=V_resp
+         end select
+       endif
        !
        ! TDDFT
        !

@@ -21,24 +21,17 @@
 !
 subroutine init_load(defs,en,q,k,X,Xw)
  !
- ! VERBOSITY
- ! 
- ! 0 (default)
- ! 1 (More) V_more
- ! 2 (QP)   V_qp
- ! 3 (I/O)  V_io
- ! 4 (testing)  V_testing
- !
  use pars,          ONLY:schlen
  use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
- use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,V_more,B_unit,&
-&                        V_qp,V_io,V_testing,Time_unit
+ use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,B_unit,&
+&                        Time_unit,&
+&                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp 
  use X_m,           ONLY:X_t,long_path
  use QP_m,          ONLY:QP_rep_string,QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,QP_Sx_low_band,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,SC_band_mixing,&
-&                        SC_E_threshold
+&                        SC_E_threshold,QP_dSc_delta
  use timing,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,non_periodic_directions
@@ -163,11 +156,11 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        QP_rep_string)
  call it(defs,'StdoHash','[IO] Live-timing Hashes',nhash,verb_level=V_io)
  call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',&
-&                        ng_closed,unit=G_unit,verb_level=V_more)
- call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit,verb_level=V_more)
- call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,Verb_level=V_more)
- call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_more)
- call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_more) 
+&                        ng_closed,unit=G_unit,verb_level=V_RL)
+ call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit,verb_level=V_RL)
+ call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,Verb_level=V_resp)
+ call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_kpt)
+ call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_kpt) 
  !
  ! S_xc
  !
@@ -175,6 +168,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'GbndRnge', '[GW] G[W] bands range',QP_n_G_bands)
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
+ call it(defs,'dScStep',  '[GW] Energy step to evalute Z factors',QP_dSc_delta,E_unit)
  !
  ! GPL_EXCLUDE_START GW_REAL_AXIS_IGNORE
  !
@@ -194,9 +188,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BEnRange','[BSS] Energy range',BSS_er,E_unit)
  call it(defs,'BDmRange','[BSS] Damping range',BSS_dr,E_unit)
  call it(defs,'BSHayTrs','[BSS] [o/o] Haydock treshold. Strict(>0)/Average(<0)',&
-&              Haydock_treshold,verb_level=V_more)
+&              Haydock_treshold,verb_level=V_resp)
  call it(defs,'BEnSteps','[BSS] Energy steps',BSS_n_freqs)
- call it('f',defs,'WRbsWF', '[BSS] Write to disk excitonic the FWs',verb_level=V_more)
+ call it('f',defs,'WRbsWF', '[BSS] Write to disk excitonic the FWs',verb_level=V_resp)
  !
  ! F_xc
  !
@@ -212,14 +206,14 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! RIM
  !
  call it(defs,'Em1Anys', '[RIM] X Y Z Static Inverse dielectric matrix',&
-&                         RIM_epsm1,verb_level=V_more)
+&                         RIM_epsm1,verb_level=V_RL)
  call it(defs,'IDEm1Ref','[RIM] Dielectric matrix reference component 1(x)/2(y)/3(z)',&
-&                         RIM_id_epsm1_reference,verb_level=V_more)
+&                         RIM_id_epsm1_reference,verb_level=V_RL)
  call it(defs,'RandQpts','[RIM] Number of random q-points in the BZ',RIM_n_rand_pts)
  call it(defs,'RandGvec','[RIM] Coulomb interaction RS components',RIM_ng,G_unit)
- call it('f',defs,'QpgFull', '[F RIM] Coulomb interaction: Full matrix',verb_level=V_more)
+ call it('f',defs,'QpgFull', '[F RIM] Coulomb interaction: Full matrix',verb_level=V_RL)
 #if defined _DIPOLE_RIM
- call it('f',defs,'DoDipole', '[F RIM] Apply the RIM to the dipole strengths',verb_level=V_more)
+ call it('f',defs,'DoDipole', '[F RIM] Apply the RIM to the dipole strengths',verb_level=V_RL)
 #endif
  !
  ! CUTOFF
@@ -228,7 +222,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'CUTBox',   '[CUT] [au] Box sides',box_length)
  call it(defs,'CUTRadius','[CUT] [au] Sphere/Cylinder radius',cyl_ph_radius)
  call it(defs,'CUTCylLen','[CUT] [au] Cylinder length',cyl_length)
- call it('f',defs,'CUTCol_test','[CUT] Perform a cutoff test in R-space',verb_level=V_more)
+ call it('f',defs,'CUTCol_test','[CUT] Perform a cutoff test in R-space',verb_level=V_RL)
  !
  ! GPL_EXCLUDE_START
  !
@@ -243,31 +237,32 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! Basics
  !
- call it(defs,'Nelectro','Electrons number',nel,verb_level=V_more)
- call it(defs,'ElecTemp','Electronic Temperature',Tel,T_unit,verb_level=V_more)
- call it(defs,'OccTresh','Occupation treshold (metallic bands)',filled_tresh,verb_level=V_more)
- call it(defs,'BoseCut', '[BOSE] Finite Tel Bose function cutoff',bose_E_cut,verb_level=V_more)
+ call it(defs,'Nelectro','Electrons number',nel,verb_level=V_general)
+ call it(defs,'ElecTemp','Electronic Temperature',Tel,T_unit,verb_level=V_general)
+ call it(defs,'OccTresh','Occupation treshold (metallic bands)',filled_tresh,verb_level=V_general)
+ call it(defs,'BoseCut', '[BOSE] Finite Tel Bose function cutoff',bose_E_cut,verb_level=V_general)
 #if defined _ELPH 
- call it('f',defs,'MinusQ', '[KPT] Use -{q} grid',verb_level=V_more)
- call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nq_used,verb_level=V_more) 
+ call it('f',defs,'MinusQ', '[KPT] Use -{q} grid',verb_level=V_kpt)
+ call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nq_used,verb_level=V_kpt) 
 #endif
  !
  ! S_xc
  !
- call it(defs,'SxLowBnd', '[XX] Exchange summation low band',QP_Sx_low_band,verb_level=V_more)
+ call it(defs,'SxLowBnd', '[XX] Exchange summation low band',QP_Sx_low_band,verb_level=V_qp)
  call it(defs,'LifeTrCG', '[GW] [o/o] Lifetime transitions reduction',QP_cg_percent)
  call it(defs,'GEnSteps', '[GW] G_gw energy steps',QP_Sc_steps)
  call it(defs,'GEnRnge',  '[GW] G_gw energy range (centered in the bare energy)',QP_G_er,E_unit)
- call it(defs,'GWoIter',  '[GW] GWo SC iterations',GWo_iterations,verb_level=V_more)
- call it('f',defs,'NewtDchk',   '[F GW] Test dSc/dw convergence',verb_level=V_more)
- call it('f',defs,'OnMassShell','[F GW] On mass shell approximation',verb_level=V_more)
- call it('f',defs,'GreenF2QP',  '[F GW] Use real axis Green`s function to define the QPs',verb_level=V_more)
+ call it(defs,'GWoIter',  '[GW] GWo SC iterations',GWo_iterations,verb_level=V_qp)
+ call it('f',defs,'NewtDchk',   '[F GW] Test dSc/dw convergence',verb_level=V_qp)
+ call it('f',defs,'OnMassShell','[F GW] On mass shell approximation',verb_level=V_qp)
+ call it('f',defs,'ForceNewton','[F GW] Uses Newton expression for the QP energy',verb_level=V_qp)
+ call it('f',defs,'GreenF2QP',  '[F GW] Use real axis Green`s function to define the QPs',verb_level=V_qp)
  !
  ! GPL_EXCLUDE_END
  !
  ! GPL_EXCLUDE_START SC_IGNORE
  !
- call it('f',defs,'UseEbands', '[GW] Force CHOSEX to use empty bands',verb_level=V_more)
+ call it('f',defs,'UseEbands', '[GW] Force CHOSEX to use empty bands',verb_level=V_qp)
  !
  ! Real Time dynamics
  !
@@ -283,7 +278,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'ExtField1',  '[RT]  External Field',EField(1)%ef_name)
  call it(defs,'ELongDir1',  '[RT]  Electric Field Versor',Efield(1)%versor)
  call it(defs,'ExtFTinitial1',  '[RT]  Initial Time',EField(1)%t_initial,unit=Time_unit)
- call it('f',defs,'EFNoIntraband1', '[RT] Do not include intraband coupling',verb_level=V_more)
+ call it('f',defs,'EFNoIntraband1', '[RT] Do not include intraband coupling',verb_level=V_sc)
  !
  ! External field number 2
  !
@@ -292,16 +287,16 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'ExtField2',  '[RT]  External Field',EField(2)%ef_name)
  call it(defs,'ELongDir2',  '[RT]  Electric Field Versor',Efield(2)%versor)
  call it(defs,'ExtFTinitial2',  '[RT]  Initial Time',EField(2)%t_initial,unit=Time_unit)
- call it('f',defs,'EFNoIntraband2', '[RT] Do not include intraband coupling',verb_level=V_more)
+ call it('f',defs,'EFNoIntraband2', '[RT] Do not include intraband coupling',verb_level=V_sc)
  !
  call it(defs,'Integrator','[RT]  Integrator',Integrator_name)
- call it(defs,'ThermEta',  '[RT]  Adiabatic switching characteristic time  1/(ThermStps*ThermEta)',Thermal_eta,verb_level=V_more)
- call it(defs,'DiagHIter', '[RT]  Digaonalize the Hamiltonian',DiagH_Iter,verb_level=V_more)
- call it(defs,'LifeTime',  '[RT]  Quasi-particle Relaxation Time',LifeTime,verb_level=V_more,unit=Time_unit)
- call it('f',defs,'RTQpAnalyze', '[RT] Analyze quasi-particle dynamics in real-time',verb_level=V_more)
- call it('f',defs,'KeepVxc', '[RT] Do not subtract Vxc from the self-energy',verb_level=V_more)
- call it('f',defs,'NoDiamagnetic', '[RT] Exclude the diamagnetic term in current and coupling',verb_level=V_more)
- call it('f',defs,'FastExchange', '[RT] Use fast Exchange, it requires a lot of memory',verb_level=V_more)
+ call it(defs,'ThermEta',  '[RT]  Adiabatic switching characteristic time  1/(ThermStps*ThermEta)',Thermal_eta,verb_level=V_sc)
+ call it(defs,'DiagHIter', '[RT]  Digaonalize the Hamiltonian',DiagH_Iter,verb_level=V_sc)
+ call it(defs,'LifeTime',  '[RT]  Quasi-particle Relaxation Time',LifeTime,verb_level=V_sc,unit=Time_unit)
+ call it('f',defs,'RTQpAnalyze', '[RT] Analyze quasi-particle dynamics in real-time',verb_level=V_sc)
+ call it('f',defs,'KeepVxc', '[RT] Do not subtract Vxc from the self-energy',verb_level=V_sc)
+ call it('f',defs,'NoDiamagnetic', '[RT] Exclude the diamagnetic term in current and coupling',verb_level=V_sc)
+ call it('f',defs,'FastExchange', '[RT] Use fast Exchange, it requires a lot of memory',verb_level=V_sc)
 #endif
  !
 #if defined _MAGNETIC
@@ -323,24 +318,24 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! F_xc
  !
  call it(defs,'FxcMEStps','[TDDFT] [o/o] Memory energy steps',&
-&                         FXC_per_memstps,verb_level=V_more)
+&                         FXC_per_memstps,verb_level=V_resp)
  call it(defs,'FxcSVdig','[TDDFT] Keep SV that are within FxcSVdig digits',&
-&                         FXC_SVD_digits,verb_level=V_more)
- call it('f',defs,'FxcCausal', '[TDDFT] Causal TDDFT kernel',verb_level=V_more)
+&                         FXC_SVD_digits,verb_level=V_resp)
+ call it('f',defs,'FxcCausal', '[TDDFT] Causal TDDFT kernel',verb_level=V_resp)
  !
  ! BSE
  !
  call it(defs,'BScplKmod',  '[BSK] Coupling Kernel mode. (`x`;`c`;`d`;`u`)',BS_cpl_mode)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',&
-&        BS_eh_en,E_unit,verb_level=V_more)
+&        BS_eh_en,E_unit,verb_level=V_resp)
  call it(defs,'BSehWind','[BSK] [o/o] E/h coupling pairs energy window',&
-&        BS_eh_win,verb_level=V_more)
- call it(defs,'BSEQptR', '[BSK] Transferred momenta range',BS_q,verb_level=V_more)
- call it(defs,'BSEClmns','[BSK] Kernel Columns',BS_columns,verb_level=V_more)
+&        BS_eh_win,verb_level=V_resp)
+ call it(defs,'BSEQptR', '[BSK] Transferred momenta range',BS_q,verb_level=V_resp)
+ call it(defs,'BSEClmns','[BSK] Kernel Columns',BS_columns,verb_level=V_resp)
  call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,&
-&                        E_unit,verb_level=V_more)
- call it('f',defs,'SkipInv', '[BSS] Skip full invertion in perturbative solver',verb_level=V_more)
- call it('f',defs,'FullInv', '[BSS] Force full invertion in perturbative solver',verb_level=V_more)
+&                        E_unit,verb_level=V_resp)
+ call it('f',defs,'SkipInv', '[BSS] Skip full invertion in perturbative solver',verb_level=V_resp)
+ call it('f',defs,'FullInv', '[BSS] Force full invertion in perturbative solver',verb_level=V_resp)
  !
  ! Xx
  !
@@ -354,7 +349,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! Optics
  !
- call it(defs,'LongPath',    '[Xd] Longitudinal gauge path',long_path,verb_level=V_more)
+ call it(defs,'LongPath',    '[Xd] Longitudinal gauge path',long_path,verb_level=V_resp)
  !
  ! GPL_EXCLUDE_END
  !
@@ -371,14 +366,14 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'SCIter',    '[SC] SC Iterations',SC_iterations)
  call it(defs,'SCEtresh',  '[SC] Energy convergence threshold',SC_E_threshold,unit=E_unit)
  call it(defs,'SCRhoTresh','[SC] Rho convergence threshold',SC_rho_threshold)
- call it('f',defs,'TF_precondition','[SC] Thomas Fermi precondition in density',verb_level=V_more)
+ call it('f',defs,'TF_precondition','[SC] Thomas Fermi precondition in density',verb_level=V_sc)
 #endif
  ! 
  ! SC [common with RT]
  !
 #if defined _SC || defined _RT || defined _MAGNETIC
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
- call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_more)
+ call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_sc)
  call it(defs,'SCPot',     '[SC] SC Potential',SC_potential,protect=.FALSE.)
  call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)
 #endif
@@ -394,8 +389,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call init_loss_function(defs)
  call init_detector(defs)
  call init_convolute(defs)
- call it(defs,'LocType','[RAS] Transition filter (ss/sb/bs/bb|no)',loctype,verb_level=V_more)
- call it(defs,'LocLimit','[RAS] Factor defining state localization',locfac,verb_level=V_more)
+ call it(defs,'LocType','[RAS] Transition filter (ss/sb/bs/bb|no)',loctype,verb_level=V_resp)
+ call it(defs,'LocLimit','[RAS] Factor defining state localization',locfac,verb_level=V_resp)
 #endif
  ! 
  ! REELS
@@ -453,20 +448,20 @@ subroutine init_load(defs,en,q,k,X,Xw)
        write (nms(i1),'(2a)')  lch2(1:6),trim(sfx)
      enddo
      !
-     call it(defs,nms( 1),des( 1),X%ordering,verb_level=V_more)
+     call it(defs,nms( 1),des( 1),X%ordering,verb_level=V_resp)
      call it(defs,nms( 2),des( 2),wv%er,E_unit,verb_level=0) 
      call it(defs,nms( 3),des( 3),wv%dr,E_unit,verb_level=0)
-     call it(defs,nms( 4),des( 4),X%cg_percentual,verb_level=V_more)
+     call it(defs,nms( 4),des( 4),X%cg_percentual,verb_level=V_resp)
      call it(defs,nms( 5),des( 5),wv%n(1),verb_level=0)
      call it(defs,nms( 6),des( 6),wv%per_memstps,verb_level=1)
      call it(defs,nms( 7),des( 7),X%Wd,E_unit,verb_level=1) 
      call it(defs,nms( 8),des( 8),X%q0,verb_level=0)
-     call it(defs,nms( 9),des( 9),X%ehe,E_unit,verb_level=V_more)
+     call it(defs,nms( 9),des( 9),X%ehe,E_unit,verb_level=V_resp)
      call it(defs,nms(10),des(10),X%ppaE,E_unit,verb_level=0)
      call it(defs,nms(11),des(11),X%ng,G_unit,verb_level=0) 
      call it(defs,nms(12),des(12),X%iq,verb_level=0)
      call it(defs,nms(13),des(13),X%ib,verb_level=0)
-     call it(defs,nms(14),des(14),wv%damp_reference,E_unit,verb_level=V_more)
+     call it(defs,nms(14),des(14),wv%damp_reference,E_unit,verb_level=V_resp)
      !
    end subroutine
    !
@@ -518,13 +513,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &              prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_W',&
 &              '[EXTQP '//trim(description_ch(i_type))//'] W parameters '//&
 &              trim(spin_description_ch(i1))//' (c/v)',&
-&              QP_ctl_W(i_type,:,i_spin),verb_level=V_testing)
+&              QP_ctl_W(i_type,:,i_spin),verb_level=V_qp)
        !
        call it(defs,&
 &              prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Z',&
 &              '[EXTQP '//trim(description_ch(i_type))//'] Z factor '//&
 &              trim(spin_description_ch(i1))//' (c/v)',&
-&              QP_ctl_Z(i_type,i_spin),verb_level=V_testing)
+&              QP_ctl_Z(i_type,i_spin),verb_level=V_qp)
        !
      enddo
      !

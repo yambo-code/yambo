@@ -25,6 +25,9 @@ logical function XC_switch()
  use SC,             ONLY:SC_kind,SC_xc_functional,SC_potential,local_V
  use xc_functionals, ONLY:XC_LDA_X,XC_LDA_C_PZ,XC_EXCHANGE_CORRELATION,XC_EXCHANGE,&
 &                         GS_xc_KIND,GS_xc_FUNCTIONAL
+#if defined _MAGNETIC
+ use xc_functionals, ONLY:EXT_Bz_LANDAU,EXT_Bz_PAULI,EXT_Bz_MAGNETISM
+#endif
  use global_XC,      ONLY:SC_EXX,SC_HF,SC_CHOSEX,SC_EXXC
  use electrons,      ONLY:n_full_bands,n_met_bands
  use QP_m,           ONLY:CHOSEX_use_empties
@@ -87,5 +90,10 @@ logical function XC_switch()
    case default
      call error("Unknown SC potential! ")
  end select
+!#if defined _MAGNETIC
+! if (l_sc_magnetic) then
+!   if (MAG_pauli) 
+! endif
+!#endif
  !
 end function XC_switch

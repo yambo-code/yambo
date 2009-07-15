@@ -47,6 +47,7 @@ module QP_m
  logical           :: GWo_SC_done
  logical           :: CHOSEX_use_empties
  logical           :: On_Mass_Shell_approx
+ logical           :: Force_Newton_QP
  logical           :: use_GreenF_to_eval_QP
  character(schlen) :: QP_rep_string
  character(schlen) :: QP_solver

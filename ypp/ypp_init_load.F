@@ -21,7 +21,7 @@
 !
 subroutine ypp_init_load(defs)
  !
- use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_more,Time_unit
+ use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,Time_unit
  use wave_func,     ONLY:wf_ng
  use YPP
 #if defined _YPP_RAS
@@ -111,7 +111,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'States','Index of the BS state(s)',state_ctl)
  call it(defs,'Cells', 'Number of cell repetitions (even or 1)',ncell)
  call it(defs,'Hole', '[cc] Hole position in unit cell',r_hole)
- call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier,verb_level=V_more)
+ call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier,verb_level=V_general)
  !
  ! PLOT
  !
@@ -175,7 +175,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'BZ_RIM_Nk','BZ Random Integration points',BZ_RIM_nkpts)
  call it(defs,'BZ_RIM_path','Path to the SAVE folder with the RIM DB1',BZ_RIM_path)
  call it(defs,'GammaRadius','[a.u.] Maximum distance from gamma',&
-&              gamma_radius,verb_level=V_more)
+&              gamma_radius,verb_level=V_general)
  !
 #if defined _YPP_RT
  call it(defs,'ExtField1','External Field[1]',efield(1,:))

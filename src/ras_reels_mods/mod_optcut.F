@@ -67,7 +67,7 @@ subroutine init_cutoff(defs)
   use it_m,                  ONLY : it, initdefs, E_unit,G_unit,T_unit
   use parser_m,      only : parser
   implicit none
-  integer, parameter             :: V_more=1, V_qp=2, V_io=3
+  integer, parameter             :: V_general=1, V_qp=2, V_io=3
   type(initdefs), intent(inout)  :: defs
   character(schlen)              :: loptcut_
 

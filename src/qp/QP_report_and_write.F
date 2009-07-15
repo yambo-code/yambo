@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_report_and_write(k,qp,en,what,QPdb_read_err)
+subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !
  use drivers,       ONLY:l_ph_corr,l_el_corr,l_life
  use units,         ONLY:HARTREE,HA2FSm1
@@ -36,7 +36,6 @@ subroutine QP_report_and_write(k,qp,en,what,QPdb_read_err)
  use R_lattice,     ONLY:bz_samp
  implicit none
  !
- character(*)     ::what
  type(QP_t)       ::qp
  type(bz_samp)    ::k
  type(levels)     ::en
@@ -66,7 +65,7 @@ subroutine QP_report_and_write(k,qp,en,what,QPdb_read_err)
  !
  have_Sc=.not.QPdb_read_err==0.and..not.On_Mass_Shell_approx
  have_Sx=allocated(QP_Sx)
- have_dSc=.not.On_Mass_Shell_approx
+ have_dSc=.not.On_Mass_Shell_approx.and..not.trim(QP_solver)=='g'
  do_IO=.TRUE.
  if (l_life.or.QPdb_read_err==0) then
    do_IO=.FALSE.
@@ -84,7 +83,7 @@ subroutine QP_report_and_write(k,qp,en,what,QPdb_read_err)
    !
    ! Plot the Green Functions
    !
-   call QP_of(k,qp,en)
+   call QP_of(k,qp,en,have_Sc,have_Sx,have_dSc)
    !
    if (do_IO) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
@@ -242,13 +241,15 @@ subroutine QP_report_and_write(k,qp,en,what,QPdb_read_err)
  ! Output File
  !==============
  !
- if (.not.have_Sc)           QP_rep_string="kpbne0ee"
+ if (.not.have_Sc)           QP_rep_string="kpbne0eqeezf" 
+ if (trim(QP_solver)=='g'.and.use_GreenF_to_eval_QP) &
+&                            QP_rep_string="kpbne0eqeezf" 
  if (l_ph_corr.and.index(QP_rep_string,'lm')==0)  &
                              QP_rep_string=trim(QP_rep_string)//'lm'
  if (l_life)                 QP_rep_string='kpbne0lmlf'
  if (n_sp_pol==2)            QP_rep_string=trim(QP_rep_string)//'sp'
  !
- call QP_of(k,qp,en)
+ call QP_of(k,qp,en,have_Sc,have_Sx,have_dSc)
  !
 end subroutine
 

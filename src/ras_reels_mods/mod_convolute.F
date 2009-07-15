@@ -46,11 +46,11 @@ subroutine print_convolute
 end subroutine print_convolute
 
 subroutine init_convolute(defs) 
-  use it_m,                  ONLY : it, initdefs, E_unit,G_unit,T_unit, V_more
+  use it_m,                  ONLY : it, initdefs, E_unit,G_unit,T_unit, V_general
   implicit none
   type(initdefs), intent(inout)  :: defs
 #if defined _REELS
-  call it(defs,'GausConv', '[REELS] Gaussian convolution (FWHM)',gbroad, E_unit, verb_level=V_more )
+  call it(defs,'GausConv', '[REELS] Gaussian convolution (FWHM)',gbroad, E_unit, verb_level=V_general )
 #else
   call it(defs,'GausConv', '[REELS] Gaussian convolution (FWHM)',gbroad, E_unit )
 #endif

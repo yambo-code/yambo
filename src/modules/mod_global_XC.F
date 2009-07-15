@@ -79,6 +79,13 @@ module global_XC
    MORE_STRETCH       = 503, &
    MORE_SCIS_AND_STRE = 504, &
    MORE_INTERPOLATION = 505
+ !
+ ! Perturbations
+ integer, public, parameter :: &
+   EXT_NONE             = 601, &
+   EXT_Bz_LANDAU        = 602, &
+   EXT_Bz_PAULI         = 603, &
+   EXT_Bz_MAGNETISM     = 604
    !
  contains
    !
@@ -184,6 +191,13 @@ module global_XC
            global_XC_string=trim(ch)//trim(ch_plus)//'Interpolation'
        end select
      endif
+
+!         case(EXT_Bz_PAULI)
+!           global_XC_string=trim(ch)//trim(ch_plus)//'Pauli Magnetism (z-axis)'
+!         case(EXT_Bz_LANDAU)
+!           global_XC_string=trim(ch)//trim(ch_plus)//'Landau Magnetism (z-axis)'
+!         case(EXT_Bz_MAGNETISM)
+!           global_XC_string=trim(ch)//trim(ch_plus)//'Magnetism (z-axis)'
      !
    end function
    !

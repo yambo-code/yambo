@@ -36,13 +36,13 @@ contains
 
 subroutine init_analyse_peaks(defs)
   !
-  use it_m,                  ONLY : it, initdefs, E_unit,G_unit,T_unit, V_more
+  use it_m,                  ONLY : it, initdefs, E_unit,G_unit,T_unit, V_general
   use parser_m,      only : parser
   implicit none
   type(initdefs), intent(inout)  :: defs
 
   call it('f',defs,'PkAnlyse', '[RAS] Peak analysis mode (Uncomment to use)', &
-&       verb_level=V_more )
+&       verb_level=V_general )
   call parser('PkAnlyse',lAnalysePeaks)
 
   return

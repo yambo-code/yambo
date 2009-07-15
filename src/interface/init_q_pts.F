@@ -23,7 +23,7 @@ subroutine init_q_pts(l_WRITE)
  !
  use pars,        ONLY:SP
  use memory_m,    ONLY:mem_est
- use it_m,        ONLY:nflines,flines,infile,infile_verbosity,V_more
+ use it_m,        ONLY:nflines,flines,infile,infile_verbosity,V_kpt
  use R_lattice,   ONLY:nqibz,q_pt,bz_samp,bz_samp_reset
  use vec_operate, ONLY:c2a
  implicit none
@@ -35,7 +35,7 @@ subroutine init_q_pts(l_WRITE)
  integer       :: i1,nflines_save
  type(bz_samp) :: q
  !
- if (l_WRITE.and.infile_verbosity==V_more) then
+ if (l_WRITE.and.infile_verbosity==V_kpt) then
    nflines_save=nflines
    write (flines(nflines+1),'(a,t30,a)') '% QptCoord',&
 &        '# [KPT] [iku] Q-points coordinates (compatibility)'

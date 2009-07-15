@@ -27,7 +27,8 @@ subroutine QP_descriptions(qp,X,Xw)
  use X_m,           ONLY:X_t,use_X_RIM
  use QP_m,          ONLY:QP_t,QP_ng_Sx,QP_n_G_bands,QP_cg_percent,&
 &                        QP_dSc_delta,QP_G_damp,QP_dSc_steps,GWo_iterations,&
-&                        CHOSEX_use_empties,QP_Sc_steps,QP_G_er,QP_G_dr,QP_solver
+&                        CHOSEX_use_empties,QP_Sc_steps,QP_G_er,QP_G_dr,QP_solver,&
+&                        use_GreenF_to_eval_QP
  use stderr,        ONLY:string_pack,gen_fmt
  use drivers,       ONLY:l_life,l_ppa,l_ph_corr,l_el_corr,l_chosex
  use R_lattice,     ONLY:RIM_qpg,RIM_n_rand_pts,RIM_ng
@@ -67,6 +68,7 @@ subroutine QP_descriptions(qp,X,Xw)
 &        string_pack('(a,',gen_fmt( i_v=(/GWo_iterations /) ),')'))) &
 &        ' GW SC iterations       :',GWo_iterations
    !
+   !if (.not.l_chosex.and. (trim(QP_solver)/='g'.and..not.use_GreenF_to_eval_QP) ) then
    if (.not.l_chosex) then
      qp%n_descs=qp%n_descs+1
      write (qp%description(qp%n_descs),trim(&

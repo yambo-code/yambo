@@ -36,7 +36,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
 &                        QP_Sx,QP_n_states,QP_nb,&
 &                        QP_nk,QP_state,QP_dSc_test,QP_reset,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_G,QP_W_partially_done,&
-&                        GWo_iterations,CHOSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP
+&                        GWo_iterations,CHOSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
+&                        Force_Newton_QP
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE
  use global_XC,     ONLY:QP_DB_kind,SE_CHOSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo   
  implicit none
@@ -58,6 +59,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  call parser('OnMassShell',On_Mass_Shell_approx)
  call parser('UseEbands',  CHOSEX_use_empties)
  call parser('GreenF2QP',  use_GreenF_to_eval_QP)
+ call parser('ForceNewton',Force_Newton_QP)
  !
  if (On_Mass_Shell_approx) QP_dSc_test=.FALSE.
  !
@@ -98,9 +100,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  else if (trim(QP_solver)=='g') then
    write (qp%description(1),'(a)') ' GW solver              : Full Green`s function'
    call section('*','Dyson equation: full Green`s function')
-   call msg('rn','[Green] Sc steps                                         :',QP_Sc_steps)
-   call msg('r', '[Green] Sc energy range (centered in the bare value) [ev]:',QP_G_er*HARTREE)
-   call msg('r', '[Green] Sc damping range                             [ev]:',QP_G_dr*HARTREE)
+   call msg('r','[Green] Sc steps                                         :',QP_Sc_steps)
+   call msg('r','[Green] Sc energy range (centered in the bare value) [ev]:',QP_G_er*HARTREE)
+   call msg('r','[Green] Sc damping range                             [ev]:',QP_G_dr*HARTREE)
  else if (.not.l_life) then
    return
    !
@@ -197,7 +199,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
    io_err=ioQP('QP',qp,ID)
-   if (io_err==0) then
+   if (io_err==0.and.trim(QP_solver)/='g') then
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
      io_err=ioQP('QP',qp,ID)
      call QP_report_and_write(k,qp,en,io_err)
@@ -212,8 +214,12 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    if (io_err==0) then
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
      io_err=ioQP('G',qp,ID)
-     call QP_Green_Function(qp,en,io_err)
-     call QP_report_and_write(k,qp,en,io_err)
+     call QP_Green_Function(qp,en,io_err) 
+     if (use_GreenF_to_eval_QP) then
+       call QP_report_and_write(k,qp,en,-1)
+     else
+       call QP_report_and_write(k,qp,en,io_err)
+     endif
      call local_free()
      return
    endif

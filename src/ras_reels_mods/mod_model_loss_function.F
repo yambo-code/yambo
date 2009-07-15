@@ -51,7 +51,7 @@ contains
 subroutine init_loss_function(defs) ! REELS exclusive to 3LM
   use it_m,                  ONLY : it, initdefs, E_unit,G_unit,T_unit
   implicit none
-  integer, parameter             :: V_more=1, V_qp=2, V_io=3
+  integer, parameter             :: V_general=1, V_qp=2, V_io=3
   type(initdefs), intent(inout)  :: defs
 
   call it(defs,'LossForm', '[REELS] Functional form of loss (1b/2b/2e/aq/az/ar/ig/iq/id/ip/ap/is)', model )

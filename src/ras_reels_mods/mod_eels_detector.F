@@ -47,7 +47,7 @@ contains
  
 subroutine init_detector(defs)
   use pars,                  ONLY : SP
-  use it_m,                  ONLY : it, initdefs, E_unit,G_unit,T_unit, V_more
+  use it_m,                  ONLY : it, initdefs, E_unit,G_unit,T_unit, V_general
   implicit none
   type(initdefs), intent(inout)  :: defs
 
@@ -56,7 +56,7 @@ subroutine init_detector(defs)
 #if defined _YPP_RAS 
   call it(defs,'NumIntPt', '[REELS] Number of points for integral', n_det_pt )
 #else
-  call it(defs,'NumIntPt', '[REELS] Number of points for integral', n_det_pt, verb_level=V_more )
+  call it(defs,'NumIntPt', '[REELS] Number of points for integral', n_det_pt, verb_level=V_general )
 #endif
 ! check here...
 

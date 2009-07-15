@@ -27,8 +27,6 @@ module SC
  integer           :: SC_bands
  integer           :: it_now
  integer           :: SC_iterations
- integer           :: SC_kind
- integer           :: SC_xc_functional
  integer           :: SC_fft_size
  integer           :: SC_ng_Sx
  integer           :: SC_X_bands(2)
@@ -42,6 +40,12 @@ module SC
  logical           :: using_SC_basis
  logical           :: local_V
  logical           :: NSC_shot
+ !
+ ! Possible Kinds, functionals and external perturbations
+ !
+ integer           :: SC_kind
+ integer           :: SC_xc_functional
+ integer           :: SC_perturbation
  !
  ! Rotation matrices and xc potential
  !

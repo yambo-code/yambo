@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_of(kp,qp,en)
+subroutine QP_of(kp,qp,en,have_Sc,have_Sx,have_dSc)
  !
  use pars,      ONLY:SP,lchlen,pi
  use units,     ONLY:HARTREE,HA2FSM1
@@ -29,13 +29,16 @@ subroutine QP_of(kp,qp,en)
  use electrons, ONLY:levels,spin
  use QP_m,      ONLY:QP_t,QP_Vxc,QP_Sc,QP_dSc,QP_Sx,QP_table,&
 &                    QP_rep_string,QP_solver,QP_n_states,&
-&                    QP_G,QP_G_dr,QP_Sc_steps
+&                    QP_G,QP_G_dr,QP_Sc_steps,use_GreenF_to_eval_QP
  use stderr,    ONLY:set_real_printed_length
  use frequency, ONLY:w_samp,W_reset
  implicit none
  type(QP_t)   ::qp
  type(bz_samp)::kp
  type(levels) ::en
+ !
+ !Global logicals
+ logical          ::have_Sc,have_Sx,have_dSc,do_IO
  !
  ! Work Space
  !
@@ -56,12 +59,14 @@ subroutine QP_of(kp,qp,en)
  data abbrev/'xc','s0','sq','e0','eq','zf','ds','ee','kp','bn',&
 &            'xx','lm','lf','sp'/
  !
- if (trim(QP_solver)=='n'.or.trim(QP_solver)=='s'.or.l_life) then
+ if ( trim(QP_solver)=='n'.or.trim(QP_solver)=='s'.or.l_life.or.&
+&    (trim(QP_solver)=='g'.and.use_GreenF_to_eval_QP)             ) then
    !
    file_name='qp'
    call of_open_close(file_name,'ot')
    if (trim(QP_solver)=='n') call msg('o qp','# GW [Newton Solver]')
    if (trim(QP_solver)=='s') call msg('o qp','# GW [Secant method Solver]')
+   if (trim(QP_solver)=='g') call msg('o qp','# GW [Green`s Function Solver]')
    !
    call msg('o qp','#')
    do i1=2,qp%n_descs
@@ -91,10 +96,14 @@ subroutine QP_of(kp,qp,en)
      qp_isp=spin(QP_table(i1,:))
      !
      if (.not.l_life) then
-       values(2:3)=(/real(QP_Sc(i1,1))*HARTREE,&
-&                 real(QP_Sc(i1,1)+QP_dSc(i1,1)*(qp%E(i1)-qp%E_bare(i1)))*HARTREE/)
-       values(7:8)=(/real(QP_dSc(i1,1)),real((qp%E(i1)-qp%E_bare(i1))*HARTREE)/)
-       if (l_el_corr) then
+       if (have_Sc) values(2)=real(QP_Sc(i1,1))*HARTREE
+       if (have_dSc) then
+         values(7:8)=(/real(QP_dSc(i1,1)),real((qp%E(i1)-qp%E_bare(i1))*HARTREE)/) 
+         values(3  )=real(QP_Sc(i1,1)+QP_dSc(i1,1)*(qp%E(i1)-qp%E_bare(i1)))*HARTREE
+       else
+         values(8)=real(qp%E(i1)-qp%E_bare(i1))*HARTREE
+       endif
+       if (have_Sx) then
          values(1)=real(QP_Vxc(i1))*HARTREE
          values(11)=real(QP_Sx(i1))*HARTREE
        endif
@@ -133,15 +142,23 @@ subroutine QP_of(kp,qp,en)
      titles(2:3)=(/'Re[G]','Im[G]'/)
      titles(4:5)=(/'Re[S_tot]','Im[S_tot]'/)
      titles(6)  ='Re[S_c]'
-     call msg('o G_Sc','#',titles(:6),INDENT=0,USE_TABS=.TRUE.)
+     if (have_Sx) then
+       call msg('o G_Sc','#',titles(:6),INDENT=0,USE_TABS=.TRUE.)
+     else
+       call msg('o G_Sc','#',titles(:5),INDENT=0,USE_TABS=.TRUE.)
+     endif
      call msg('o G_Sc','#')
      do i2=1,QP_Sc_steps
        values=0.
        values(1:3)=(/real(Sc_W%p(i2)),real(QP_G(i1,i2)),aimag(QP_G(i1,i2))/)*HARTREE
        values(4:5)=(/real(qp%S_total(i1,i2)),aimag(qp%S_total(i1,i2))/)*HARTREE
        values(6)=values(4)
-       if (l_el_corr) values(4)=values(4)+real(QP_Sx(i1)-QP_Vxc(i1))*HARTREE
-       call msg('o G_Sc','',values(:6),INDENT=-2,USE_TABS=.TRUE.)
+       if (have_Sx.and.l_el_corr) then
+         values(6)=values(6)-real(QP_Sx(i1)+QP_Vxc(i1))*HARTREE
+         call msg('o G_Sc','',values(:6),INDENT=-2,USE_TABS=.TRUE.)
+       else
+         call msg('o G_Sc','',values(:5),INDENT=-2,USE_TABS=.TRUE.)
+       endif
      enddo
      call of_open_close(G_Sc_name)
    enddo

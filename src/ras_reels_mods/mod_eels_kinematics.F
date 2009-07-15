@@ -51,7 +51,7 @@ contains
 subroutine init_kinematics(defs) ! only those common to RAS and REELS runlevels
   use pars,                  ONLY : SP
   use units,                 ONLY : HARTREE
-  use it_m,                  ONLY : it, initdefs, E_unit,G_unit,T_unit, V_more
+  use it_m,                  ONLY : it, initdefs, E_unit,G_unit,T_unit, V_general
   implicit none
   type(initdefs), intent(inout)  :: defs
 
@@ -62,8 +62,8 @@ subroutine init_kinematics(defs) ! only those common to RAS and REELS runlevels
   call it(defs,'Phi'     , '[REELS] Azimuthal angle  (deg)', phi_in )
   call it(defs,'ImpactFt', '[REELS] Impact Factor (a.u.)', bimp )
 #else
-  call it(defs,'Phi'     , '[REELS] Azimuthal angle  (deg)', phi_in, verb_level=V_more )
-  call it(defs,'ImpactFt', '[REELS] Impact Factor (a.u.)', bimp,verb_level=V_more )
+  call it(defs,'Phi'     , '[REELS] Azimuthal angle  (deg)', phi_in, verb_level=V_general )
+  call it(defs,'ImpactFt', '[REELS] Impact Factor (a.u.)', bimp,verb_level=V_general )
 #endif
   call it(defs,'PenDepth', '[REELS] Penetration depth of electron (a.u.)', pendepth )
 

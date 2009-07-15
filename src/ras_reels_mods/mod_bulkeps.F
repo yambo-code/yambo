@@ -55,14 +55,14 @@ contains
 subroutine init_bulk(defs)
   use it_m,                  ONLY : it, initdefs, E_unit,G_unit,T_unit
   implicit none
-  integer, parameter             :: V_more=1, V_qp=2, V_io=3
+  integer, parameter             :: V_general=1, V_qp=2, V_io=3
   type(initdefs), intent(inout)  :: defs
 
   call it(defs,'BulkFile', '[RAS] File containing bulk', bfile )
   call it(defs,'BulkForm', '[RAS] Format of bulk (`3ri`,`3ir`,`2KK`,`3KK`) ',btype )
 #if defined _RAS
   call it(defs,'BlkShift', '[RAS] GW shift of bulk eps ', bshift, &
-&         E_unit,verb_level=V_more  )
+&         E_unit,verb_level=V_general  )
 #else
   call it(defs,'BlkShift', '[RAS] GW shift of bulk eps ', bshift, &
 &         E_unit  )

@@ -80,7 +80,7 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
      QP_Go=QP_Go+(spin_occ-E%f(ib,ik,i_spin))/(W%p(iw)-Eo)/spin_occ                    
      !
      if (QPdb_read_err<0) then
-       if ( l_el_corr.and.allocated(QP_Sx) ) then
+       if ( allocated(QP_Sx) ) then
          qp%S_total(iqp,:)=QP_Sc(iqp,:)+QP_Sx(iqp)-QP_Vxc(iqp)
        else
          qp%S_total(iqp,:)=QP_Sc(iqp,:)

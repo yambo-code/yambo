@@ -26,7 +26,7 @@ logical function XC_switch()
  use xc_functionals, ONLY:XC_LDA_X,XC_LDA_C_PZ,XC_EXCHANGE_CORRELATION,XC_EXCHANGE,&
 &                         GS_xc_KIND,GS_xc_FUNCTIONAL
 #if defined _MAGNETIC
- use xc_functionals, ONLY:EXT_Bz_LANDAU,EXT_Bz_PAULI,EXT_Bz_MAGNETISM
+ use global_XC,      ONLY:EXT_Bz_LANDAU,EXT_Bz_PAULI,EXT_Bz_MAGNETISM
 #endif
  use global_XC,      ONLY:SC_EXX,SC_HF,SC_CHOSEX,SC_EXXC
  use electrons,      ONLY:n_full_bands,n_met_bands

@@ -68,8 +68,7 @@ subroutine QP_descriptions(qp,X,Xw)
 &        string_pack('(a,',gen_fmt( i_v=(/GWo_iterations /) ),')'))) &
 &        ' GW SC iterations       :',GWo_iterations
    !
-   !if (.not.l_chosex.and. (trim(QP_solver)/='g'.and..not.use_GreenF_to_eval_QP) ) then
-   if (.not.l_chosex) then
+   if (.not.l_chosex.and.trim(QP_solver)/='g'.and..not.use_GreenF_to_eval_QP) then
      qp%n_descs=qp%n_descs+1
      write (qp%description(qp%n_descs),trim(&
 &          string_pack('(a,',gen_fmt( i_v=(/QP_dSc_steps /) ),')'))) &

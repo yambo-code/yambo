@@ -66,8 +66,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! S_x/Vxc are always need if not l_life or el. correlations is
  ! skipped
  !==============================================================
- if (.not.allocated(QP_Sx).and..not.allocated(QP_Vxc).and.l_el_corr.and.&
-     .not.l_life) return
+ if (.not.allocated(QP_Sx).and..not.allocated(QP_Vxc).and.l_el_corr.and..not.l_life) return
  !
  ! GPL_INCLUDE_START GW_REAL_AXIS_IGNORE
  !QP_solver='n'
@@ -330,6 +329,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
      else if (.not.l_life) then
        allocate(QP_dSc(qp%n_states,QP_dSc_steps-1))
        call mem_est("QP_dSc",(/size(QP_dSc)/))
+     endif
+     !
+     if (.not.l_el_corr) then
+       if (allocated(QP_Sx))  deallocate(QP_Sx,QP_Vxc)
+       call mem_est("QP_Sx QP_Vxc")
      endif
      !
    end subroutine

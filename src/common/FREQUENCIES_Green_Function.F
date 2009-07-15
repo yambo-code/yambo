@@ -19,41 +19,21 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine kk(fi,wi,ni,fo,wo,no,y0)
+subroutine FREQUENCIES_Green_Function(iqp,W,E)
  !
- ! Calculates Kramers-Kronig transformation:
- !
- ! fo(i) = Int_{wi(1)}^{wi(last)} fi(y)/(wo(i)-y-y0) dy
- !
- ! Remember wo MUST HAVE A NON ZERO IMAGINARY PART.
- !
- ! wi must be real
- !
- ! fo is not INITIALIZED to 0. !
- !
- use pars,    ONLY:SP
+ use pars,       ONLY:SP
+ use R_lattice,  ONLY:nkibz
+ use electrons,  ONLY:n_bands,spin,n_sp_pol
+ use frequency,  ONLY:w_samp
+ use QP_m,       ONLY:QP_table,QP_G_dr,QP_G_er
  implicit none
- integer,     intent(in)  :: ni,no
- real(SP),    intent(in)  :: wi(ni)
- complex(SP), intent(in)  :: fi(ni),wo(no),y0
- complex(SP), intent(out) :: fo(no)
  !
- ! Work Space
+ integer      :: iqp
+ type(w_samp) :: W
+ real(SP)     :: E(n_bands,nkibz,n_sp_pol)
  !
- integer      :: i1,i2
- complex(SP)  :: m(ni-1),q(ni-1)
- !
- do i1=1,ni-1
-   m(i1)=(fi(i1)-fi(i1+1))/(wi(i1)-wi(i1+1))
-   q(i1)=fi(i1)-m(i1)*wi(i1)
- enddo
- !
- do i1=1,no
-   do i2=1,ni-1
-     fo(i1)=fo(i1)+m(i2)*(wi(i2)-wi(i2+1))+&
-&           (q(i2)+m(i2)*(wo(i1)-y0))*&
-&           log((wi(i2)-wo(i1)+y0)/(wi(i2+1)-wo(i1)+y0))
-   enddo
- enddo
+ W%er=QP_G_er+E(QP_table(iqp,1),QP_table(iqp,3),spin(QP_table(iqp,:)))
+ W%dr=QP_G_dr
+ call FREQUENCIES_setup(W)
  !
 end subroutine

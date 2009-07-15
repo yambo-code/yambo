@@ -69,7 +69,7 @@ subroutine V_exx(X,E,k,q,Vexx)
  ! 1:
  call W_reset(Xw)
  Xw%n = 1
- call freqs_setup(Xw)
+ call FREQUENCIES_setup(Xw)
  Xw%p(1)=real(Xw%p(1))+(0.,1.)*epsilon(1._SP)
  !
  ! 2:

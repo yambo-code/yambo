@@ -113,18 +113,6 @@ module QP_m
  !
  contains
    !
-   subroutine GF_energy_range(iqp,W,E)
-     use R_lattice,  ONLY:nkibz
-     use electrons,  ONLY:n_bands,spin,n_sp_pol
-     use frequency,  ONLY:w_samp
-     integer      :: iqp
-     type(w_samp) :: W
-     real(SP)     :: E(n_bands,nkibz,n_sp_pol)
-     W%er=QP_G_er+E(QP_table(iqp,1),QP_table(iqp,3),spin(QP_table(iqp,:)))
-     W%dr=QP_G_dr
-     call freqs_setup(W)
-   end subroutine
-   !
    subroutine QP_reset(qp)
      type(QP_t)::qp
      qp%description=' '

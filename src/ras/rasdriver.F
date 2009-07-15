@@ -108,7 +108,7 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   !
   ! Energy grids and energy dependent arrays
   !
-  call freqs_setup(wv) 
+  call FREQUENCIES_setup(wv) 
   call X_pre_setup(Xen,X)
   nw = wv%n(1) ! Have to use freqs_setup in case wv%n(1) is lowered (%)
 

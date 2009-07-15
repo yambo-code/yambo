@@ -23,7 +23,7 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
  !
  use drivers,       ONLY:l_ph_corr,Finite_Tel
  use pars,          ONLY:SP
- use QP_m,          ONLY:QP_G,QP_t,QP_Sc,QP_Sx,QP_Vxc,QP_table,Gf_energy_range,&
+ use QP_m,          ONLY:QP_G,QP_t,QP_Sc,QP_Sx,QP_Vxc,QP_table,&
 &                        QP_n_states,use_GreenF_to_eval_QP,QP_Sc_steps,QP_G_dr
  use electrons,     ONLY:spin,levels,spin_occ
  use frequency,     ONLY:w_samp,W_reset
@@ -50,7 +50,7 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
    !
    ! Frequency range
    !
-   call GF_energy_range(iqp,W,E%E)
+   call FREQUENCIES_Green_Function(iqp,W,E%E)
    QP_Sc_steps=W%n(1)
    !
    ! Bare energy

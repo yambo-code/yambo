@@ -305,11 +305,11 @@ contains
     implicit none
     type(w_samp), intent(inout) :: wv
     integer :: i1
-    real(SP), external :: damping
+    real(SP), external :: FREQUENCIES_damping
 
     do i1=1,wv%n(1)
       wv%p(i1)=real(wv%p(i1)) + &
-&              damping(wv,real(wv%p(i1)))*cmplx(0.,1.,SP)
+&              FREQUENCIES_damping(wv,real(wv%p(i1)))*cmplx(0.,1.,SP)
     enddo
     return
   end subroutine add_broad

@@ -100,7 +100,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
  !
- call freqs_setup(Xw)
+ call FREQUENCIES_setup(Xw)
  !
  ! Prepare the IO ( and check if q has been already done)
  !

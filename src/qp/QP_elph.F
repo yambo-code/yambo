@@ -40,7 +40,7 @@ subroutine QP_elph(en,k,q,qp)
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,OP_WR_CL
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
 &                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,QP_G_dr,&
-&                        On_Mass_Shell_approx,GF_energy_range
+&                        On_Mass_Shell_approx
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
  use R_lattice,     ONLY:qindx_S,bz_samp,ik_is_table
  use ELPH,          ONLY:ph_modes,elph_nb,ph_freqs_sq,elph_gkkp,&
@@ -123,12 +123,12 @@ subroutine QP_elph(en,k,q,qp)
    do iqp=1,qp%n_states
      Sc_W(iqp)%n =QP_Sc_steps
      if (l_GF_from_CA) then
-       call GF_energy_range(iqp,Sc_W(iqp),en%E)
+       call FREQUENCIES_Green_Function(iqp,Sc_W(iqp),en%E)
      else
        Sc_W(iqp)%er=(/minval(en%E(:,:,:))-2.*max_ph_freq,&
 &                     maxval(en%E(:QP_PH_n_G_bands,:,:))+2.*max_ph_freq/) 
        Sc_W(iqp)%dr=QP_G_dr
-       call freqs_setup(Sc_W(iqp))
+       call FREQUENCIES_setup(Sc_W(iqp))
      endif
      QP_Sc_steps=Sc_W(iqp)%n(1)
    enddo
@@ -447,7 +447,7 @@ subroutine QP_elph(en,k,q,qp)
      !
      do iqp=1,QP_n_states   
        !
-       if ( trim(QP_solver)=='g' ) call GF_energy_range(iqp,Sc_local_W,en%E)
+       if ( trim(QP_solver)=='g' ) call FREQUENCIES_Green_Function(iqp,Sc_local_W,en%E)
        !
        ib   =QP_table(iqp,1)
        ik   =QP_table(iqp,3)
@@ -515,8 +515,8 @@ subroutine QP_elph(en,k,q,qp)
            !
            Sc_local=(0.,0.)
            !
-           call kk(cmplx(DP_FAN(:))/pi,real(Sc_W(1)%p)    ,QP_Sc_steps,&
-&                  Sc_local           ,conjg(Sc_local_W%p),QP_Sc_steps,(0.,0.))
+           call Kramers_Kronig(cmplx(DP_FAN(:))/pi,real(Sc_W(1)%p)    ,QP_Sc_steps,&
+&                              Sc_local           ,conjg(Sc_local_W%p),QP_Sc_steps,(0.,0.))
            !
            QP_Sc(iqp,:)=QP_Sc(iqp,:)+Sc_local(:)+DP_DW
            !

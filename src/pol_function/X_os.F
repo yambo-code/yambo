@@ -151,8 +151,8 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
    allocate(X_poles_tab(n_poles,4)) 
    call mem_est("X_poles_tab",(/size(X_poles_tab)/))
    !
-   if (.not.force_bare_X_G) call coarse_grid('X',X_poles,n_poles,X%cg_percentual)
-   if (force_bare_X_G)      call coarse_grid('X',X_poles,n_poles,0._SP)
+   if (.not.force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,X%cg_percentual)
+   if (force_bare_X_G)      call FREQUENCIES_coarse_grid('X',X_poles,n_poles,0._SP)
    !
    n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
    deallocate(X_poles)
@@ -164,7 +164,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
    !  This call is needed as Xw%p is deallocated inside
    !  the q-loop of X_em1
    !
-   call freqs_setup(Xw)
+   call FREQUENCIES_setup(Xw)
 #  endif
    !
  endif 

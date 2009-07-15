@@ -19,13 +19,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-function damping(W,E)
+function FREQUENCIES_damping(W,E)
  !
  use pars,      ONLY:SP
  use frequency, ONLY:w_samp
  implicit none
  !
- real(SP)      :: damping,E,beta
+ real(SP)      :: FREQUENCIES_damping,E,beta
  type(w_samp)  :: W
  ! 
  ! Work Space
@@ -71,10 +71,10 @@ function damping(W,E)
    !         /
    !   (E1,D1) 
    !
-   damping=d1+(d2-d1)/(e2-e1)*(E_-e1)
+   FREQUENCIES_damping=d1+(d2-d1)/(e2-e1)*(E_-e1)
  else
    beta=1./(W%damp_reference-e1)*log( (d2-d1)/d1 )
-   damping=d2/(1+exp(-beta*(E_-W%damp_reference)))
+   FREQUENCIES_damping=d2/(1+exp(-beta*(E_-W%damp_reference)))
  endif
  !
 end function

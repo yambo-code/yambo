@@ -51,7 +51,7 @@
  use YPP
  use bulkeps,             only : lbulkerr, GetBulkEps
  use ras_module,          only : CalcRAS
- use frequency,     ONLY:w_samp
+ use frequency,           ONLY:w_samp
  use eels_kinematics
  use surface_geometry
  use eels_detector
@@ -85,7 +85,7 @@ real(SP)                       :: qpard(2), q0v(3,3)
  call msg('nrs','Cell thickness d_cell (au): ',d_cellin)
  npol  = 3
 
-  call freqs_setup(wv)
+  call FREQUENCIES_setup(wv)
 ! call X_pre_setup(Xen,X)
 ! nw = wv%n(1) ! Have to use freqs_setup in case wv%n(1) is lowered (%)
 
@@ -97,7 +97,7 @@ real(SP)                       :: qpard(2), q0v(3,3)
 
  wv%n(1) = nw
  wv%n(2) = nw
- call freqs_setup(wv)
+ call FREQUENCIES_setup(wv)
  wv%p(:) = hw(:)
 
  call read_spectral_data(ydata,datatype,nwy,lfail)

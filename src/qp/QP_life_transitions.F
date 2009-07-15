@@ -43,7 +43,7 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
 &           n_of_transitions(q%nibz),i_or,i2
  real(SP)             :: F
  real(SP),allocatable :: X_freqs(:,:)
- real(SP),external    :: damping
+ real(SP),external    :: FREQUENCIES_damping
  !
  !                :
  !               /:\ iqibz
@@ -102,7 +102,7 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  !
  ! Here I reduce the frequencies
  !
- call coarse_grid('Life',X_freqs(iqibz_in,:n_of_transitions(iqibz_in)),&
+ call FREQUENCIES_coarse_grid('Life',X_freqs(iqibz_in,:n_of_transitions(iqibz_in)),&
 &                 n_of_transitions(iqibz_in),QP_cg_percent)
  X_life_W%n=cg_npts
  !
@@ -111,7 +111,7 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  allocate(X_life_W%p(cg_npts))
  do i1=1,cg_npts
    ! 
-   X_life_W%p(i1)=cg_pt(i1)+damping(X_life_W,cg_pt(i1))*cmplx(0.,1.,SP)
+   X_life_W%p(i1)=cg_pt(i1)+FREQUENCIES_damping(X_life_W,cg_pt(i1))*cmplx(0.,1.,SP)
    !
  enddo
  !

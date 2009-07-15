@@ -202,7 +202,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
        Xw%er=QP_W_er
        Xw%dr=QP_W_dr
        Xw%n=QP_n_W_freqs
-       call freqs_setup(Xw)
+       call FREQUENCIES_setup(Xw)
        !
        call QP_W2Sc(iqbz,k,en,Xw,Sc_W)
        if (.not.allocated(QP_solver_state)) call live_timing(steps=1)

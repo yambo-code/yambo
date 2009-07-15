@@ -120,7 +120,7 @@ subroutine elph_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  g_sq_F_E%n=elph_steps
  g_sq_F_E%er=(/0._SP,max_ph_freq*1.1/)
  g_sq_F_E%dr=ph_broad
- call freqs_setup(g_sq_F_E)
+ call FREQUENCIES_setup(g_sq_F_E)
  call pp_indexes_reset(px)
  !
  ! Local QP states

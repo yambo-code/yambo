@@ -80,7 +80,7 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
 &                         (2.-E%f(os(1),os(2),1)+bose_f(real(Xw%p(i2))))*&
 &                         bose_decay(real(Xw%p(i2)))
      !
-     call kk(QP_W_here,real(Xw%p(:)),QP_n_W_freqs,dSc,&
+     call Kramers_Kronig(QP_W_here,real(Xw%p(:)),QP_n_W_freqs,dSc,&
 &            real(Sc_W(i1)%p(:))-cmplx(0.,tsign,SP)*aimag(Sc_W(i1)%p(:)),&
 &            Sc_W(i1)%n(1),&
 &            E%E(os(1),os(2),1)+tsign*cmplx(0.,QP_G_damp,SP))
@@ -91,7 +91,7 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
 &                         (E%f(os(1),os(2),1)+bose_f(real(Xw%p(i2))))*&
 &                         bose_decay(real(Xw%p(i2)))
      !
-     call kk(-QP_W_here,real(Xw%p(:)),QP_n_W_freqs,dSc,&
+     call Kramers_Kronig(-QP_W_here,real(Xw%p(:)),QP_n_W_freqs,dSc,&
 &            -real(Sc_W(i1)%p(:))+cmplx(0.,1.,SP)*aimag(Sc_W(i1)%p(:)),Sc_W(i1)%n(1),&
 &            -E%E(os(1),os(2),1)-cmplx(0.,QP_G_damp,SP))
      !

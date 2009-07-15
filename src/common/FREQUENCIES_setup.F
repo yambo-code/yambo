@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine freqs_setup(wv)
+subroutine FREQUENCIES_setup(W)
  !
  ! %er %dr %n -> %p
  !
@@ -27,50 +27,50 @@ subroutine freqs_setup(wv)
  use frequency,     ONLY:w_samp
  use memory_m,      ONLY:mem_est
  implicit none
- type(w_samp):: wv 
+ type(w_samp):: W 
  ! 
  ! Work Space
  !
  integer          :: i1
- real(SP),external:: damping
+ real(SP),external:: FREQUENCIES_damping
  !
  !If %p is associated and consitent with %er/%dr return
  !
- if (associated(wv%p)) then
-   if (size(wv%p)==wv%n(1).and.&
-&      abs(  real(wv%p(1))-wv%er(1) )<1.E-5.and.&
-&      abs( aimag(wv%p(1))-wv%dr(1) )<1.E-5.and.&
-&      abs(  real(wv%p(wv%n(1)))-wv%er(2) )<1.E-5.and.&
-&      abs( aimag(wv%p(wv%n(1)))-wv%dr(2) )<1.E-5) return
+ if (associated(W%p)) then
+   if (size(W%p)==W%n(1).and.&
+&      abs(  real(W%p(1))-W%er(1) )<1.E-5.and.&
+&      abs( aimag(W%p(1))-W%dr(1) )<1.E-5.and.&
+&      abs(  real(W%p(W%n(1)))-W%er(2) )<1.E-5.and.&
+&      abs( aimag(W%p(W%n(1)))-W%dr(2) )<1.E-5) return
  endif
  !
- if (associated(wv%p)) then
-   deallocate(wv%p)
+ if (associated(W%p)) then
+   deallocate(W%p)
    call mem_est("W-p")
  endif
  !
  ! First the total/mem steps
  !
- if (wv%er(2)==wv%er(1)) wv%n=1
- wv%n(2)=nint(wv%per_memstps*real(wv%n(1))/100.)
- if (wv%n(1)<wv%n(2)) wv%n(2)=wv%n(1)
+ if (W%er(2)==W%er(1)) W%n=1
+ W%n(2)=nint(W%per_memstps*real(W%n(1))/100.)
+ if (W%n(1)<W%n(2)) W%n(2)=W%n(1)
  !
  ! Redefine n(1) to the closest multiplier of n(2)
  !
- wv%n(1)=wv%n(1)-mod(wv%n(1),wv%n(2))
+ W%n(1)=W%n(1)-mod(W%n(1),W%n(2))
  !
- allocate(wv%p(wv%n(1)))
- call mem_est("W-p",(/wv%n(1)/))
+ allocate(W%p(W%n(1)))
+ call mem_est("W-p",(/W%n(1)/))
  !
- wv%p(1)=cmplx(wv%er(1),wv%dr(1),SP)
- if (wv%n(1)==1) then
-   wv%er(2)=wv%er(1)
-   wv%dr(2)=wv%dr(1)
+ W%p(1)=cmplx(W%er(1),W%dr(1),SP)
+ if (W%n(1)==1) then
+   W%er(2)=W%er(1)
+   W%dr(2)=W%dr(1)
    return
  endif
- forall(i1=1:wv%n(1)-1) wv%p(i1+1)=wv%er(1)+(wv%er(2)-wv%er(1))/(wv%n(1)-1)*i1
- do i1=1,wv%n(1)
-   wv%p(i1)=real(wv%p(i1))+damping(wv,real(wv%p(i1)))*cmplx(0.,1.,SP)
+ forall(i1=1:W%n(1)-1) W%p(i1+1)=W%er(1)+(W%er(2)-W%er(1))/(W%n(1)-1)*i1
+ do i1=1,W%n(1)
+   W%p(i1)=real(W%p(i1))+FREQUENCIES_damping(W,real(W%p(i1)))*cmplx(0.,1.,SP)
  enddo
  !
 end subroutine

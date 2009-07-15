@@ -41,7 +41,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        QP_W,QP_solver,QP_W_er,QP_W_dr,QP_n_W_freqs,&
-&                        GF_energy_range,QP_G_dr,QP_Sc_steps
+&                        QP_G_dr,QP_Sc_steps
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use functions,     ONLY:e2et,h2ht,bose_decay
  use memory_m,      ONLY:mem_est
@@ -134,7 +134,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    do i1=1,qp%n_states
      Sc_W(i1)%n =QP_Sc_steps
      Sc_W(i1)%dr=QP_G_dr
-     call GF_energy_range(i1,Sc_W(i1),en%E)
+     call FREQUENCIES_Green_Function(i1,Sc_W(i1),en%E)
      QP_Sc_steps=Sc_W(i1)%n(1)
    enddo
  endif
@@ -176,7 +176,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
        Xw%er=QP_W_er
        Xw%dr=QP_W_dr
        Xw%n=QP_n_W_freqs
-       call freqs_setup(Xw)
+       call FREQUENCIES_setup(Xw)
        ! 
        call QP_W2Sc(iqbz,k,en,Xw,Sc_W)
        call live_timing(steps=1)

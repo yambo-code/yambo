@@ -94,7 +94,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! Frequencies (AFTER TDDFT SETUP!)
    !
-   call freqs_setup(wv)
+   call FREQUENCIES_setup(wv)
    !
    ! Check if EELS can be evaluated
    !

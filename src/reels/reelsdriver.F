@@ -68,16 +68,16 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
   ! Note: wv = mesh across full frequency range
   !       wq = mesh redefined for each Q
   !
-  call freqs_setup(wv)     ! Define wv%n(), alloc and fill wv%p 
-  call W_duplicate(wv, wq) ! Copies n,er,dr but not p
-  call freqs_setup(wq)     ! Define wq%n(), alloc and fill wq%p 
+  call FREQUENCIES_setup(wv)     ! Define wv%n(), alloc and fill wv%p 
+  call W_duplicate(wv, wq)       ! Copies n,er,dr but not p
+  call FREQUENCIES_setup(wq)     ! Define wq%n(), alloc and fill wq%p 
   !
   ! The regular energy grid for final output mapping
   !
   wfull%n(1) = nfull; wfull%per_memstps = 100; wfull%er = wv%er
-  call freqs_setup(wfull)     ! Define wfull%n(), alloc and fill wq%p 
+  call FREQUENCIES_setup(wfull) ! Define wfull%n(), alloc and fill wq%p 
 
-  call X_pre_setup(Xen,X)     ! Some checks/reset on X%ib() and X%iq() 
+  call X_pre_setup(Xen,X)       ! Some checks/reset on X%ib() and X%iq() 
   !
   ! nw    = number of points epsm1 is calculated on (i.e., wq%n(1) from input)
   ! nwsec = number of points lossq is calculated at for each section:

@@ -160,7 +160,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! defines %n(2) and the memory allocation of the kernel
  !
  W_bss%per_memstps=FXC_per_memstps
- call freqs_setup(W_bss)
+ call FREQUENCIES_setup(W_bss)
  FXC_n_mem_freqs=W_bss%n(2)
  !
  ! KERNEL

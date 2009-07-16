@@ -331,11 +331,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
        call mem_est("QP_dSc",(/size(QP_dSc)/))
      endif
      !
-     if (.not.l_el_corr) then
-       if (allocated(QP_Sx))  deallocate(QP_Sx,QP_Vxc)
-       call mem_est("QP_Sx QP_Vxc")
-     endif
-     !
    end subroutine
    !
    subroutine local_free()

@@ -29,7 +29,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  use stderr,        ONLY:intc
  use QP_m,          ONLY:QP_t,QP_dSc,QP_G,QP_Sc,QP_Sx,QP_Vxc,QP_rep_string,QP_table,QP_state,&
 &                        QP_n_states,QP_dSc_steps,use_GreenF_to_eval_QP,On_Mass_Shell_approx,&
-&                        QP_solver
+&                        QP_solver,report_Sx,report_Sc,report_dSc 
  use electrons,     ONLY:n_sp_pol,spin,levels
  use stderr,        ONLY:gen_fmt
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
@@ -55,21 +55,24 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !
  !I/O
  integer, external::ioQP
+ logical          ::do_IO
  integer          ::ID,io_err
  !
- !Global logicals
- logical          ::have_Sc,have_Sx,have_dSc,do_IO
+ ! GLOBAL Logicals
  !
- ! GLOABAL Logicals
- !==================
+ ! In some combinations of logical
+ ! and flags some components of the Correlation
+ ! are not loaded/read. To avoid meaningles
+ ! numbers to be reported here I perform a selective deallocation
+ !============================================================
  !
- have_Sc=.not.QPdb_read_err==0.and..not.On_Mass_Shell_approx
- have_Sx=allocated(QP_Sx)
- have_dSc=.not.On_Mass_Shell_approx.and..not.trim(QP_solver)=='g'
+ report_Sc=.not.QPdb_read_err==0.and..not.On_Mass_Shell_approx
+ report_Sx=l_el_corr
+ report_dSc=.not.On_Mass_Shell_approx.and..not.trim(QP_solver)=='g'
  do_IO=.TRUE.
  if (l_life.or.QPdb_read_err==0) then
    do_IO=.FALSE.
-   have_dSc=.FALSE.
+   report_dSc=.FALSE.
  endif
  !
  ! TITLES
@@ -83,7 +86,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    !
    ! Plot the Green Functions
    !
-   call QP_of(k,qp,en,have_Sc,have_Sx,have_dSc)
+   call QP_of(k,qp,en)
    !
    if (do_IO) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
@@ -97,11 +100,11 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    call msg('rn','- Gm : Width [meV] - Gf  : Width [fs]')
  else 
    call msg(' r','- E  : QP energy  - Z   : Renormalization factor')
-   if (have_Sc) call msg(' r','- So : Sc(Eo)     - S   : Sc(E)')
+   if (report_Sc) call msg(' r','- So : Sc(Eo)     - S   : Sc(E)')
    if (l_ph_corr) call msg('r', '- Gm : Width [meV]- Gf  : Width [fs]')
-   if (have_Sx.and.have_dSc)      call msg('rn','- xx/Vxc : Sx/Vxc - dSp : Sc derivative precision')
-   if (.not.have_Sx.and.have_dSc) call msg('rn','- dSp : Sc derivative precision')
-   if (have_Sx.and..not.have_dSc) call msg('rn','- xx/Vxc : Sx/Vxc')
+   if (report_Sx.and.report_dSc)      call msg('rn','- xx/Vxc : Sx/Vxc - dSp : Sc derivative precision')
+   if (.not.report_Sx.and.report_dSc) call msg('rn','- dSp : Sc derivative precision')
+   if (report_Sx.and..not.report_dSc) call msg('rn','- xx/Vxc : Sx/Vxc')
  endif 
  !
  ! Store temporary shadows of the Self-energy components
@@ -130,7 +133,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    shadow_string(4)=' Z='
    shadow_fmt(4)   ='(a,f4.2)'
    !
-   if (have_Sx) then
+   if (report_Sx) then
      n_shadows=n_shadows+1
      shadow_string(n_shadows)=' XX='
      shadow(n_shadows)=real(QP_Sx(iqp))*HARTREE
@@ -139,13 +142,13 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
      shadow(n_shadows)=real(QP_Vxc(iqp))*HARTREE
    endif
    !
-   if (have_Sc) then
+   if (report_Sc) then
      n_shadows=n_shadows+1
      shadow_string(n_shadows)=' So='
      shadow(n_shadows)=real(QP_Sc(iqp,1))*HARTREE
    endif
    !
-   if (have_dSc.and.QP_dSc_steps>2) then
+   if (report_dSc.and.QP_dSc_steps>2) then
      dSc_diff=abs(QP_dSc(iqp,2)-QP_dSc(iqp,1))/abs(QP_dSc(iqp,1)) 
      n_shadows=n_shadows+1
      shadow_string(n_shadows)=' dSp='
@@ -241,7 +244,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  ! Output File
  !==============
  !
- if (.not.have_Sc)           QP_rep_string="kpbne0eqeezf" 
+ if (.not.report_Sc)         QP_rep_string="kpbne0eqeezf" 
  if (trim(QP_solver)=='g'.and.use_GreenF_to_eval_QP) &
 &                            QP_rep_string="kpbne0eqeezf" 
  if (l_ph_corr.and.index(QP_rep_string,'lm')==0)  &
@@ -249,7 +252,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  if (l_life)                 QP_rep_string='kpbne0lmlf'
  if (n_sp_pol==2)            QP_rep_string=trim(QP_rep_string)//'sp'
  !
- call QP_of(k,qp,en,have_Sc,have_Sx,have_dSc)
+ call QP_of(k,qp,en)
  !
 end subroutine
 

@@ -26,9 +26,9 @@ module global_XC
  !
  ! Energies (linked to the three energy types)
  !
- integer     , public :: G_kind,G_xc_functional,G_SE_more
- integer     , public :: X_kind,X_xc_functional,X_SE_more
- integer     , public :: K_kind,K_xc_functional,K_SE_more
+ integer     , public :: G_kind,G_xc_functional,G_SE_more,G_perturbation
+ integer     , public :: X_kind,X_xc_functional,X_SE_more,X_perturbation
+ integer     , public :: K_kind,K_xc_functional,K_SE_more,K_perturbation
  !
  ! QP database
  !

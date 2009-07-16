@@ -72,6 +72,12 @@ module QP_m
  integer,    allocatable:: QP_n_states_for_k(:)
 #endif
  !
+ ! Logicals used for reporting
+ !
+ logical           :: report_Sx
+ logical           :: report_Sc
+ logical           :: report_dSc
+ !
  type QP_t
    character(schlen)  :: description(max_qp_descs)
    integer,    pointer:: table(:,:)

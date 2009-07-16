@@ -41,7 +41,7 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 #if defined _SC || defined _RT || defined _MAGNETIC
  use SC,            ONLY:using_SC_basis,SC_R,load_SC_components
  use global_XC,     ONLY:WF_kind,WF_xc_functional,&
-&                        setup_global_XC,MORE_NONE
+&                        setup_global_XC,MORE_NONE,WF_perturbation
 #endif
  implicit none
  !
@@ -242,7 +242,8 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if (using_SC_basis) then
    !
-   call load_SC_components('WF',COM_=NONE,MODE_=DUMP,kind=WF_kind,xc_functional=WF_xc_functional)
+   call load_SC_components('WF',COM_=NONE,MODE_=DUMP,kind=WF_kind,xc_functional=WF_xc_functional,&
+&                          perturbation=WF_perturbation)
    !
    if (wf_space=='R') wf_size=fft_size
    if (wf_space=='G') wf_size=wf_ng
@@ -258,7 +259,7 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  ! This is needed as, for example, WF_global_xc_string may be dumped
  ! from ostnts database.
  !
- call setup_global_XC('WF',WF_kind,MORE_NONE,WF_xc_functional)
+ call setup_global_XC('WF',WF_kind,MORE_NONE,WF_xc_functional,WF_perturbation)
  !
 #endif
  !

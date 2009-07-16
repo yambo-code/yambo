@@ -22,13 +22,14 @@
 logical function XC_switch()
  !
  use drivers
- use SC,             ONLY:SC_kind,SC_xc_functional,SC_potential,local_V
+ use SC,             ONLY:SC_kind,SC_xc_functional,SC_potential,local_V,SC_perturbation 
  use xc_functionals, ONLY:XC_LDA_X,XC_LDA_C_PZ,XC_EXCHANGE_CORRELATION,XC_EXCHANGE,&
 &                         GS_xc_KIND,GS_xc_FUNCTIONAL
 #if defined _MAGNETIC
  use global_XC,      ONLY:EXT_Bz_LANDAU,EXT_Bz_PAULI,EXT_Bz_MAGNETISM
+ use magnetic,       ONLY:MAG_landau,MAG_pauli
 #endif
- use global_XC,      ONLY:SC_EXX,SC_HF,SC_CHOSEX,SC_EXXC
+ use global_XC,      ONLY:SC_EXX,SC_HF,SC_CHOSEX,SC_EXXC,EXT_NONE
  use electrons,      ONLY:n_full_bands,n_met_bands
  use QP_m,           ONLY:CHOSEX_use_empties
  use com,            ONLY:error
@@ -90,10 +91,16 @@ logical function XC_switch()
    case default
      call error("Unknown SC potential! ")
  end select
-!#if defined _MAGNETIC
-! if (l_sc_magnetic) then
-!   if (MAG_pauli) 
-! endif
-!#endif
+ !
+ SC_perturbation=EXT_NONE
+ !
+#if defined _MAGNETIC
+ !
+ if (l_sc_magnetic) then
+   if (MAG_pauli)  SC_perturbation=EXT_Bz_PAULI
+   if (MAG_landau) SC_perturbation=EXT_Bz_LANDAU
+   if (MAG_landau.and.MAG_pauli) SC_perturbation=EXT_Bz_MAGNETISM
+ endif
+#endif
  !
 end function XC_switch

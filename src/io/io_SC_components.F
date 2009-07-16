@@ -31,12 +31,12 @@ integer function io_SC_components(what,E_sc,ID)
  use stderr,         ONLY:intc
  use QP_m,           ONLY:SC_band_mixing
  use SC,             ONLY:SC_bands,it_now,rho_convergence,E_convergence,SC_potential,&
-&                         SC_R,V_xc_sc,local_V,H_nl_sc,SC_kind,&
+&                         SC_R,V_xc_sc,local_V,H_nl_sc,SC_kind,SC_perturbation,&
 &                         SC_xc_functional,V_hartree_sc,NSC_shot,SC_fft_size,&
 &                         SC_ng_Sx,SC_X_bands,SC_X_size
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,io_fragment,read_is_on,write_is_on,&
-&                         manage_RD_WR_CL_IF_END
+&                         manage_RD_WR_CL_IF_END,ver_is_gt_or_eq 
 #if defined _RT
  use real_time,      ONLY:l_rt_efield,l_fast_exchange,l_RPA,RT_step,Tot_steps,       &
 &                         Thermal_steps,Integrator_name,l_qp_analyze,DiagH_Iter,     &
@@ -46,7 +46,8 @@ integer function io_SC_components(what,E_sc,ID)
  use QP_m,           ONLY:QP_nk
 #endif                                
 #if defined _MAGNETIC
- use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B_z,MAG_radius,MAG_landau,MAG_pauli
+ use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B_z,MAG_radius
+ use global_XC,      ONLY:EXT_Bz_LANDAU,EXT_Bz_PAULI,EXT_Bz_MAGNETISM
 #endif
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use electrons,      ONLY:levels,n_sp_pol,n_spin
@@ -60,7 +61,8 @@ integer function io_SC_components(what,E_sc,ID)
  ! Work Space
  !
  real(SP), allocatable :: R_H_disk(:,:,:),E_disk(:,:,:)
- integer               :: ik,bands_to_load,ib,SC_kind_disk,io_status_save,i_spin,i1
+ integer               :: ik,bands_to_load,ib,SC_kind_disk,SC_perturbation_disk,&
+&                         io_status_save,i_spin,i1
  logical               :: l_wf,l_V,l_E,l_IMPOSE_SN,CHECK_
 #if defined _RT		
  logical               :: l_J,l_G
@@ -111,7 +113,12 @@ integer function io_SC_components(what,E_sc,ID)
 &       VAR=' xc Functional                   :',CHECK=CHECK_,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   call io_elemental(ID,VAR="XC_KIND",VAR_SZ=2,MENU=0)
+   if (ver_is_gt_or_eq(ID,revision=455)) then
+     call io_elemental(ID,VAR="XC_GLOBALS",VAR_SZ=3,MENU=0)
+     call io_elemental(ID,I0=SC_perturbation,DB_I0=SC_perturbation_disk)
+   else
+     call io_elemental(ID,VAR="XC_KIND",VAR_SZ=2,MENU=0)
+   endif
    call io_elemental(ID,I0=SC_kind,DB_I0=SC_kind_disk)
    call io_elemental(ID,I0=SC_xc_functional)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
@@ -165,7 +172,8 @@ integer function io_SC_components(what,E_sc,ID)
    endif
    !
 #if defined _MAGNETIC
-   if (MAG_pauli.or.MAG_landau) then
+   if (any((/SC_perturbation_disk==EXT_Bz_LANDAU,SC_perturbation_disk==EXT_Bz_PAULI,&
+&            SC_perturbation_disk==EXT_Bz_MAGNETISM/))) then
      call io_elemental(ID,VAR="MAG_hamiltonian",CH0="",VAR_SZ=1,MENU=0) 
      call io_elemental(ID,CH0=MAG_hamiltonian_type, &
 &         VAR=' [MAG] Hamiltonian kind          :',CHECK=.true.,OP=(/"=="/))
@@ -173,7 +181,7 @@ integer function io_SC_components(what,E_sc,ID)
      call io_elemental(ID,VAR="B_FIELD_parameters",VAR_SZ=2,MENU=0) 
      call io_elemental(ID,UNIT=AU2Tesla,R0=MAG_B_z,&
 &         VAR=' [MAG] z-components B filed   [T]:',CHECK=.true.,OP=(/"=="/))
-     if (MAG_landau) then
+     if (SC_perturbation_disk/=EXT_Bz_PAULI) then
        call io_elemental(ID,R0=MAG_radius,&
 &         VAR=' [MAG] B flux radius             :',CHECK=.true.,OP=(/"=="/))
      endif

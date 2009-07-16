@@ -19,11 +19,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,xc_functional,io_err_)
+subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,&
+&                             xc_functional,perturbation,io_err_)
  !
  use drivers,   ONLY:l_sc_run
  use SC,        ONLY:using_SC_basis,SC_R,SC_bands,H_nl_sc,SC_kind,&
-&                    SC_xc_functional
+&                    SC_xc_functional,SC_perturbation
  use electrons, ONLY:levels,E_reset,n_sp_pol
  use R_lattice, ONLY:nkibz
  use memory_m,  ONLY:mem_est
@@ -33,12 +34,19 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,xc_functional,io
  !
  character(*)           :: what
  type(levels), optional :: E
- integer,      optional :: COM_,MODE_,ik,n_bands,kind,xc_functional,io_err_
+ integer,      optional :: COM_
+ integer,      optional :: MODE_
+ integer,      optional :: ik
+ integer,      optional :: n_bands
+ integer,      optional :: kind
+ integer,      optional :: xc_functional
+ integer,      optional :: io_err_
+ integer,      optional :: perturbation
  ! 
  ! Work Space
  !
- type(levels) :: E_dummy
- integer      :: ID,ip,io_err,SC_bands_save
+ type(levels)      :: E_dummy
+ integer           :: ID,ip,io_err,SC_bands_save
  integer, external :: io_SC_components
  !
  if (l_sc_run) using_SC_basis=.false.
@@ -120,6 +128,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,xc_functional,io
  if (io_err==0.and.present(kind)) then
    kind=SC_kind
    xc_functional=SC_xc_functional
+   perturbation=SC_perturbation
  endif
  !
  if (present(io_err_)) io_err_=io_err

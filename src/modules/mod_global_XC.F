@@ -36,7 +36,7 @@ module global_XC
  !
  ! Wavefunctions
  !
- integer     , public :: WF_kind,WF_xc_functional
+ integer     , public :: WF_kind,WF_xc_functional,WF_perturbation
  !
  ! Strings... to be used in io_header, so linked to the databases
  !
@@ -89,46 +89,52 @@ module global_XC
    !
  contains
    !
-   subroutine  setup_global_XC(what,kind,se_more,xc_functional)
+   subroutine  setup_global_XC(what,kind,se_more,xc_functional,perturbation)
      character(*)      :: what          
      integer           :: kind          
      integer, optional :: se_more       
      integer, optional :: xc_functional 
+     integer, optional :: perturbation 
      !
      ! Work Space
      !
-     integer :: local_se_more,local_xc_functional
+     integer :: local_se_more,local_xc_functional,local_perturbation
      !
      local_se_more=MORE_NONE
      local_xc_functional=0
+     local_perturbation=EXT_NONE
      if (present(se_more)) local_se_more=se_more
      if (present(xc_functional)) local_xc_functional=xc_functional
+     if (present(perturbation)) local_perturbation=perturbation
      !
      if (what=='E'.or.what=='preset'.or.what=='G') then
        G_kind=kind
        G_SE_more=local_se_more
        G_xc_functional=local_xc_functional
-       G_E_xc_string=global_XC_string(kind,local_se_more,local_xc_functional)
+       G_perturbation=local_perturbation
+       G_E_xc_string=global_XC_string(kind,local_se_more,local_xc_functional,local_perturbation)
      endif
      !
      if (what=='X'.or.what=='preset') then
        X_kind=kind
        X_SE_more=local_se_more
        X_xc_functional=local_xc_functional
-       X_E_xc_string=global_XC_string(kind,local_se_more,local_xc_functional)
+       X_perturbation=local_perturbation
+       X_E_xc_string=global_XC_string(kind,local_se_more,local_xc_functional,local_perturbation)
      endif
      !
      if (what=='K'.or.what=='preset') then
        K_kind=kind
        K_SE_more=local_se_more
        K_xc_functional=local_xc_functional
-       K_E_xc_string=global_XC_string(kind,local_se_more,local_xc_functional)
+       K_perturbation=local_perturbation
+       K_E_xc_string=global_XC_string(kind,local_se_more,local_xc_functional,local_perturbation)
      endif
      !
      if (what=='WF'.or.what=='preset') then
        WF_kind=kind
        WF_xc_functional=local_xc_functional
-       WF_global_xc_string=global_XC_string(kind,MORE_NONE,local_xc_functional)
+       WF_global_xc_string=global_XC_string(kind,MORE_NONE,local_xc_functional,local_perturbation)
        G_WF_xc_string=WF_global_xc_string
        X_WF_xc_string=WF_global_xc_string
        K_WF_xc_string=WF_global_xc_string
@@ -138,13 +144,14 @@ module global_XC
      !
    end subroutine
    !
-   character(lchlen) function global_XC_string(kind,se_more,xc_functional)
+   character(lchlen) function global_XC_string(kind,se_more,xc_functional,perturbation)
      !
      use xc_functionals,  ONLY:xc_string,XC_CORRELATION
      !
      integer           :: kind          ! <300 (LDA's GGa's ...) >300 See above
      integer           :: se_more       ! scissor's and more
      integer           :: xc_functional ! In case kind < 300 gives DFT functional
+     integer           :: perturbation
      ! 
      character(1)      :: ch_plus
      character(lchlen) :: ch
@@ -191,13 +198,18 @@ module global_XC
            global_XC_string=trim(ch)//trim(ch_plus)//'Interpolation'
        end select
      endif
-
-!         case(EXT_Bz_PAULI)
-!           global_XC_string=trim(ch)//trim(ch_plus)//'Pauli Magnetism (z-axis)'
-!         case(EXT_Bz_LANDAU)
-!           global_XC_string=trim(ch)//trim(ch_plus)//'Landau Magnetism (z-axis)'
-!         case(EXT_Bz_MAGNETISM)
-!           global_XC_string=trim(ch)//trim(ch_plus)//'Magnetism (z-axis)'
+     !
+     if (perturbation/=EXT_NONE) then
+       ch=global_XC_string
+       select case (perturbation)
+         case(EXT_Bz_PAULI)
+           global_XC_string=trim(ch)//'+ Pauli Magnetism (z-axis)'
+         case(EXT_Bz_LANDAU)
+           global_XC_string=trim(ch)//'+ Landau Magnetism (z-axis)'
+         case(EXT_Bz_MAGNETISM)
+           global_XC_string=trim(ch)//'+ Magnetism (z-axis)'
+       end select
+     endif
      !
    end function
    !

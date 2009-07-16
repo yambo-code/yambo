@@ -89,7 +89,6 @@ subroutine MAG_Hamiltonian(initial_check_only)
 #endif
  !
  if (initial_check_only) then
-   !
    MAG_landau=trim(MAG_hamiltonian_type)=='landau'.or.trim(MAG_hamiltonian_type)=='all'
    MAG_pauli =trim(MAG_hamiltonian_type)=='pauli'.or.trim(MAG_hamiltonian_type)=='all'
    if (MAG_landau.and.MAG_radius<epsilon(1.)) then
@@ -115,12 +114,14 @@ subroutine MAG_Hamiltonian(initial_check_only)
  ! To construct the magnetic part of the Hamiltonian
  ! I need the wave functions in G space.
  !
+ call IO_mute("report")
  if (MAG_landau) then
    call wf_load(0,1,(/1,SC_bands/),(/1,nkibz/),space='G',title='-MAG')
    call fft_setup(0,1,.false.) ! FFT size
  else
    call wf_load(0,1,(/1,SC_bands/),(/1,nkibz/),title='-MAG')
  endif
+ call IO_mute(" ")
  !
  ! DEBUG <
  !open(unit=3454, file='vector_pot_x.txt', status='unknown')

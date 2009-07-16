@@ -69,12 +69,13 @@ module SC
  !
  interface
    !
-   subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,xc_functional,io_err_)
+   subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,xc_functional,&
+&                                perturbation,io_err_)
      use electrons, ONLY:levels
      implicit none
      character(*)           :: what
      type(levels), optional :: E
-     integer,      optional :: COM_,MODE_,ik,n_bands,kind,xc_functional,io_err_
+     integer,      optional :: COM_,MODE_,ik,n_bands,kind,xc_functional,io_err_,perturbation
    end subroutine  
  end interface  
  !

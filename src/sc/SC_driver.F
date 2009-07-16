@@ -88,15 +88,17 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  integer                  :: first_el(SC_bands),n_of_el(SC_bands),n_deg_grp,&
 &                            b_of_max_proj(SC_bands,k%nibz,n_sp_pol)
  !
- ! Switch to the user defined potential (if appropriate)
- !
- if (.not.XC_switch()) return
+ ! Magnetic logical setup
  !
 #if defined _MAGNETIC
  !
  call MAG_Hamiltonian(.TRUE.)
  !
 #endif
+ !
+ ! Switch to the user defined potential (if appropriate)
+ !
+ if (.not.XC_switch()) return
  !
  ! Define SC internal variables
  !
@@ -601,6 +603,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    enddo
    !
  enddo
+ !
+ !
+ ! Final occupations 
+ !====================
+ if (SC_cycle) call fermi_level(E,k,Tel,2)  
+ call msg('r',' ')
  !
  do ik=1,k%nibz
    call report_energies(E%E(:SC_bands,:,:),k,Xk,SC_bands,(/ik,ik/),'E  ',.TRUE.)

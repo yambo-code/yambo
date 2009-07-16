@@ -28,9 +28,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use ras_module,     ONLY:transloc, lras
 #endif
 #if defined _SC || defined _RT || defined _MAGNETIC
- use SC,             ONLY:using_SC_basis,SC_bands,local_V,&
-&                         load_SC_components
- use global_XC,      ONLY:WF_kind,WF_xc_functional,MORE_NONE,setup_global_XC
+ use SC,             ONLY:using_SC_basis,SC_bands,local_V,load_SC_components
+ use global_XC,      ONLY:WF_kind,WF_xc_functional,MORE_NONE,setup_global_XC,WF_perturbation
 #endif
  use drivers,        ONLY:l_col_cut
  use electrons,      ONLY:levels,n_sp_pol
@@ -46,8 +45,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  type(bz_samp), intent(inout) :: Xk
  type(levels),  intent(inout) :: Xen
- type(X_t),  intent(inout) :: X
- real(SP),   intent(inout) :: field_dir(3)
+ type(X_t),     intent(inout) :: X
+ real(SP),      intent(inout) :: field_dir(3)
  !
  ! Work Space
  !
@@ -66,8 +65,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! Check first the kind of the wavefunctions 
  ! 
  call load_SC_components('check_bands',n_bands=X%ib(2),&
-&                        kind=WF_kind,xc_functional=WF_xc_functional)
- call setup_global_XC('WF',WF_kind,MORE_NONE,WF_xc_functional)
+&                        kind=WF_kind,xc_functional=WF_xc_functional,perturbation=WF_perturbation)
+ call setup_global_XC('WF',WF_kind,MORE_NONE,WF_xc_functional,WF_perturbation)
 #endif
  !
  ! Transitions ordering

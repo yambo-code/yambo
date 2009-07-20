@@ -45,14 +45,14 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use X_m,            ONLY:X_t
  use timing,         ONLY:live_time_msg
  use stderr,         ONLY:tty_size,intc,real2ch
- use xc_functionals, ONLY:V_xc,el_mag
+ use xc_functionals, ONLY:V_xc
  use frequency,      ONLY:w_samp
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,&
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL
  use vec_operate,    ONLY:degeneration_finder
  use timing,         ONLY:live_timing
 #if defined _MAGNETIC
- use magnetic,       ONLY:MAG_hamiltonian_type
+ use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B_z,eval_Lz
 #endif
  !
  implicit none
@@ -525,7 +525,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    enddo
    !
    if ( (E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold) .or.&
-&       stop_now(.FALSE.) ) exit
+&       stop_now(.FALSE.) ) then
+#if defined _MAGNETIC
+     if(eval_Lz) call MAG_eval_Lz(2)
+#endif
+     exit
+   endif
    !
  end do
  !

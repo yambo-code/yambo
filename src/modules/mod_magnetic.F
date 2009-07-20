@@ -24,6 +24,11 @@ module magnetic
  use pars, ONLY:SP,schlen
  !
  character(schlen) :: MAG_hamiltonian_type
+ ! Check Lz
+ logical           :: eval_Lz
+ complex(SP), allocatable :: wf_x(:,:), wf_y(:,:)
+ real(SP), allocatable    :: x(:),y(:)
+ ! Check Lz
  real(SP)    :: MAG_B_z
  real(SP)    :: MAG_radius 
  logical     :: MAG_pauli

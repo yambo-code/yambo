@@ -29,6 +29,8 @@ subroutine MAG_Hamiltonian(initial_check_only)
  !  2. Save el_mag_n in SC DBs
  !  3. Check if SC works in metals (not obvious)
  !
+ ! WARNING: you need to put you system at the corner of the supercell <---
+ !
  ! This subroutine evaluate the magnetic Hamilnian in the space of 
  ! KS wave-functions. The field due to a single supercell is supposed to be:
  ! *******************************************************************************************
@@ -41,8 +43,12 @@ subroutine MAG_Hamiltonian(initial_check_only)
  !      [ -0.5*MAG_B (MAG_radius**2)*y/(x**2+y**2)         [ 0.5*MAG_B (MAG_radius**2)*x/(x**2+y**2)
  ! *******************************************************************************************
  ! MAG_B and MAG_radius are given in input
- ! If MAG_radius == 0 then Bz=MAG_B everywhere ... --> ???
+ ! Landau magnetism, possible only for isolated or 1D systems
+ ! If MAG_radius == 0 then Bz=MAG_B everywhere
  ! If MAG_radius /= 0 then we have the field inside a circle in each supercell.
+ ! Pauli magnetism, for every system, everywhere, except when Landau is on;
+ ! Then we have magnetic field in the same region of the supercell.
+ !
  !
  use pars,           ONLY:SP,DP,pi
  use SC,             ONLY:Ho
@@ -50,7 +56,8 @@ subroutine MAG_Hamiltonian(initial_check_only)
  use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
  use D_lattice,      ONLY:a,alat
  use R_lattice,      ONLY:g_vec,k_pt,nkibz
- use magnetic,       ONLY:MAG_radius,MAG_B_z,MAG_hamiltonian_type,MAG_landau,MAG_pauli
+ use magnetic,       ONLY:MAG_radius,MAG_B_z,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
+&                         wf_x,wf_y,eval_Lz
  use electrons,      ONLY:n_sp_pol
  use SC,             ONLY:SC_bands,SC_potential
  use wave_func,      ONLY:wf,wf_state,wf_load,WF_free,wf_ng
@@ -69,15 +76,16 @@ subroutine MAG_Hamiltonian(initial_check_only)
  ! Dummies
  !
  integer   :: ir,ir1,ir2,ir3,i_spin,ifft,jfft,i1,ik,ib,ibp   
- real(SP)  :: radius, r_mod
+ real(SP)  :: radius, r_mod,cell_center(3)
  !
  ! Allocs
  !
  real(SP),    allocatable :: r_cell_cc(:,:)
  real(SP),    allocatable :: A_magn_x(:),A_magn_y(:)
- complex(SP), allocatable :: H_tmp(:),H_paramagn_x(:),H_paramagn_y(:),&
+ complex(SP), allocatable :: H_tmp(:)
+ real(SP),    allocatable :: H_paramagn_x(:),H_paramagn_y(:),&
 &                            H_diamagn(:), H_pauli(:,:)
- complex(SP), allocatable :: wf_derivative(:,:), wf_x(:,:), wf_y(:,:)
+ complex(SP), allocatable :: wf_derivative(:,:)
  complex(DP), allocatable :: wf_DP(:)
  !
  ! From lapac libraries, functions for the scalar product of two vectors
@@ -91,10 +99,11 @@ subroutine MAG_Hamiltonian(initial_check_only)
  if (initial_check_only) then
    MAG_landau=trim(MAG_hamiltonian_type)=='landau'.or.trim(MAG_hamiltonian_type)=='all'
    MAG_pauli =trim(MAG_hamiltonian_type)=='pauli'.or.trim(MAG_hamiltonian_type)=='all'
-   if (MAG_landau.and.MAG_radius<epsilon(1.)) then
-     MAG_hamiltonian_type='pauli'
-     MAG_landau=.false.
-   endif
+   eval_Lz=.true.
+!   if (MAG_landau.and.MAG_radius<epsilon(1.)) then
+!     MAG_hamiltonian_type='pauli'
+!     MAG_landau=.false.
+!   endif
    return
  endif
  !
@@ -116,8 +125,8 @@ subroutine MAG_Hamiltonian(initial_check_only)
  !
  call IO_mute("report")
  if (MAG_landau) then
-   call wf_load(0,1,(/1,SC_bands/),(/1,nkibz/),space='G',title='-MAG')
    call fft_setup(0,1,.false.) ! FFT size
+   call wf_load(0,1,(/1,SC_bands/),(/1,nkibz/),space='G',title='-MAG')
  else
    call wf_load(0,1,(/1,SC_bands/),(/1,nkibz/),title='-MAG')
  endif
@@ -140,6 +149,9 @@ subroutine MAG_Hamiltonian(initial_check_only)
  ! Ax , Ay  (Az=0)   
  !=================
  !
+ cell_center(1:2)= a(1,1:2)/2 + a(2,1:2)/2 + a(3,1:2)/2
+ cell_center(3)=0.
+ !
  do ir1 = 0, fft_dim(1)-1
    do ir2 = 0, fft_dim(2)-1
      do ir3 = 0, fft_dim(3)-1
@@ -152,18 +164,38 @@ subroutine MAG_Hamiltonian(initial_check_only)
        if (MAG_landau) then
          ! Radius in the direction perpendicular to the magnetic field
          r_mod=v_norm((/r_cell_cc(ir,1),r_cell_cc(ir,2),0./))
-         if(r_mod<=MAG_radius**2) then
-           A_magn_x(ir)=-0.5*MAG_B_z*r_cell_cc(ir,2)
-           A_magn_y(ir)= 0.5*MAG_B_z*r_cell_cc(ir,1)
+         if(r_mod<=MAG_radius**2 .or. MAG_radius==0) then
+           if (r_cell_cc(ir,2)<cell_center(2)) then
+             A_magn_x(ir)=-0.5*MAG_B_z*r_cell_cc(ir,2)
+           else
+             A_magn_x(ir)=-0.5*MAG_B_z*(r_cell_cc(ir,2)-2*cell_center(2))
+           endif
+           if (r_cell_cc(ir,1)<cell_center(1)) then
+             A_magn_y(ir)= 0.5*MAG_B_z*r_cell_cc(ir,1)
+           else
+             A_magn_y(ir)= 0.5*MAG_B_z*(r_cell_cc(ir,1)-2*cell_center(1))
+           endif
            ! I evaluate here the H_pauli term, here 1,2 are the spin components
-           H_pauli(ir,1)= MAG_B_z
-           H_pauli(ir,2)=-MAG_B_z
+           if (MAG_pauli) then
+             H_pauli(ir,1)= MAG_B_z
+             H_pauli(ir,2)=-MAG_B_z
+           endif
          else
-           A_magn_x(ir)=-0.5*MAG_B_z*MAG_radius**2*r_cell_cc(ir,2)/r_mod
-           A_magn_y(ir)= 0.5*MAG_B_z*MAG_radius**2*r_cell_cc(ir,1)/r_mod
+           if (r_cell_cc(ir,2)<cell_center(2)) then
+             A_magn_x(ir)=-0.5*MAG_B_z*MAG_radius**2*r_cell_cc(ir,2)/r_mod
+           else
+             A_magn_x(ir)=-0.5*MAG_B_z*MAG_radius**2*(r_cell_cc(ir,2)-2*cell_center(2))/r_mod
+           endif
+           if (r_cell_cc(ir,1)<cell_center(1)) then
+             A_magn_y(ir)= 0.5*MAG_B_z*MAG_radius**2*r_cell_cc(ir,1)/r_mod
+           else
+             A_magn_y(ir)= 0.5*MAG_B_z*MAG_radius**2*(r_cell_cc(ir,1)-2*cell_center(1))/r_mod
+           endif
            ! I evaluate here the H_pauli
-           H_pauli(ir,1)=0 
-           H_pauli(ir,2)=0
+           if (MAG_pauli) then
+             H_pauli(ir,1)=0 
+             H_pauli(ir,2)=0
+           endif
          endif
        else
          H_pauli(ir,1)= MAG_B_z
@@ -178,17 +210,18 @@ subroutine MAG_Hamiltonian(initial_check_only)
    ! To calculate the m.e. of the B-induced Hamiltonian we need
    ! to evaluate the WFs derivative
    !
-   ! 1) H_paramagn = Ax px + Ay py         (orbital component only of H_paramagnetic)
+   ! 1) H_paramagn = (Ax px + Ay py) + (px Ax py Ay)        as [px,Ax]+[py,Ay]=0 we obtain 
+   !               = 2*(Ax px + Ay py)                    (orbital component only of H_paramagnetic)
    ! 2) H_diamagn  = Ax**2 + A_y**2
    ! 3) H_pauli    = \sigma \ddot \rot^A   (spin component of H_paramagnetic)
    !               = \sigma_z B_z (remember here that the hamiltonian has a minus
    !                               which is canceled by the minus of the magnetic
    !                               moment with respect to the spin)
-   ! 1) H_paramagn
-   H_paramagn_x(:)=A_magn_x(:) 
-   H_paramagn_y(:)=A_magn_y(:)
+   ! 1) H_paramagn (the px,py component will be applied directly to the wf)
+   H_paramagn_x(:)=2*A_magn_x(:) 
+   H_paramagn_y(:)=2*A_magn_y(:)
    ! 2) H_diamagnetic
-   H_diamagn(:)=A_magn_x(:)**2 + A_magn_y(:)**2
+   !H_diamagn(:)=A_magn_x(:)**2 + A_magn_y(:)**2                        !<----- Diamagnetic hamiltonian is off temporary
    ! 3) H_pauli
    ! Already computed when A has been constructed
    !
@@ -217,7 +250,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
        do i_spin=1,n_sp_pol   
          ifft=wf_state(ib,ik,i_spin)
          ! Evaluate the wf_derivative in G space
-         ! wf_derivative(:,i)=-i grad_i wf(:)=p_x wf(:)    i=x,y,z
+         ! wf_derivative(:,i)=-i grad_i wf(:)=p_i wf(:)    i=x,y,z
          ! wf_derivative(G,i)= (k_i+G_i) wf(:)
          ! presently wf_z is not needed
          !
@@ -227,7 +260,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
          ! Here we FFT wf_derivative to real space
          ! a) wf_x
          wf_DP=(0._DP,0._DP)
-         wf_DP(fft_g_table(1:9,1))= wf_derivative(:9,1)*fft_norm
+         wf_DP(fft_g_table(1:wf_ng,1))= wf_derivative(1:wf_ng,1)*fft_norm
 #if defined _FFTW
          call fft_3d(wf_DP,fft_dim,1,fftw_plan)
 #else
@@ -236,7 +269,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
          wf_x(:,ifft)=wf_DP(:)
          ! b) wf_y
          wf_DP=(0._DP,0._DP)
-         wf_DP(fft_g_table(1:wf_ng,1))= wf_derivative(:wf_ng,2)*fft_norm
+         wf_DP(fft_g_table(1:wf_ng,1))= wf_derivative(1:wf_ng,2)*fft_norm
 #if defined _FFTW
          call fft_3d(wf_DP,fft_dim,1,fftw_plan)
 #else
@@ -267,11 +300,12 @@ subroutine MAG_Hamiltonian(initial_check_only)
  call local_alloc(2)
  !
  ! DEBUG <
- !do ir1 = 0, fft_dim(1)-1
- !  ir = 1 + ir1
- !  write(3456,*) r_cell_cc(ir,1),real(wf(ir,:)),aimag(wf(ir,:))
- !  write(3457,*) r_cell_cc(ir,1),real(wf_x(ir,:)),aimag(wf_x(ir,:))
- !  write(3458,*) r_cell_cc(ir,1),real(wf_y(ir,:)),aimag(wf_y(ir,:))
+ ! For this debug r_cell_cc deallocation should be moved from
+ ! case 1 to case 3 in local_free
+ !do ir = 1, fft_dim(1)
+ !  write(3456,*) r_cell_cc(ir,1),real(wf(ir,6:7)),aimag(wf(ir,6:7))
+ !  write(3457,*) r_cell_cc(ir,1),-aimag(wf_x(ir,6:7)),real(wf_x(ir,6:7))
+ !   write(3458,*) r_cell_cc(ir,1),-aimag(wf_y(ir,:10)),real(wf_y(ir,:10))
  !enddo
  ! DEBUG >
  !
@@ -285,7 +319,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
  call pp_indexes_reset(px)
  call par_indexes(px,(/nkibz,SC_bands/))
  call pp_redux_wait
- call live_timing("Hamiltonian",px%stps(myid+1))
+ call live_timing("MAG-Hamiltonian",px%stps(myid+1))
  !
  do ik=1,nkibz   
    do ib=1,SC_bands   
@@ -299,7 +333,8 @@ subroutine MAG_Hamiltonian(initial_check_only)
          jfft=wf_state(ibp,ik,i_spin) 
          !
          H_tmp=(0.,0.)
-         if (MAG_landau) H_tmp(:)= H_paramagn_x(:)*wf_x(:,jfft)+H_paramagn_y(:)*wf_y(:,jfft)+&
+         !
+         if (MAG_landau) H_tmp(:)= H_paramagn_x(:)*wf_x(:,jfft)+H_paramagn_y(:)*wf_y(:,jfft)  +&
 &                                  H_diamagn(:)*wf(:,jfft)
          if (MAG_pauli)  H_tmp(:)= H_tmp(:)+H_pauli(:,i_spin)*wf(:,jfft)
          !
@@ -308,6 +343,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
 #else
          Ho(ib,ibp,ik,i_spin) = cdotc(fft_size,wf(:,ifft),1,H_tmp(:),1)
 #endif
+         !
        enddo
      enddo
      !
@@ -316,9 +352,17 @@ subroutine MAG_Hamiltonian(initial_check_only)
    enddo
  enddo
  !
+ !
  call live_timing()
  call pp_redux_wait(Ho)
  call pp_indexes_reset(px)
+ !
+ ! If eval_Lz = .true. then
+ !   store H_paramag_x,H_paramag_y in memory before the cleaning
+ !   moreover wf_x and wf_y will not be cleaned
+ !   and evaluate <i|Lz|j> on the LDA wf
+ if(eval_Lz) call MAG_eval_Lz(1,x_tmp=(H_paramagn_y/MAG_B_z),&
+&                                 y_tmp=-(H_paramagn_x/MAG_B_z))
  ! 
  ! Clean Up
  !
@@ -332,6 +376,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
  !close(unit=3457)
  !close(unit=3458)
  ! DEBUG <
+ !
  !
  contains
    !
@@ -399,8 +444,10 @@ subroutine MAG_Hamiltonian(initial_check_only)
        case(3)
          if (MAG_landau) deallocate(H_paramagn_x,H_paramagn_y)
          if (MAG_pauli)  deallocate(H_pauli)
-         if (MAG_landau) deallocate(H_diamagn)
-         if (MAG_landau) deallocate(wf_x,wf_y) 
+         if (MAG_landau) then
+           deallocate(H_diamagn)
+           if (.not.eval_Lz) deallocate(wf_x,wf_y) 
+         endif
          deallocate(H_tmp)
          call mem_est("H_paramagn_x H_paramagn_y")
          call mem_est("H_pauli H_diamagn")
@@ -410,4 +457,3 @@ subroutine MAG_Hamiltonian(initial_check_only)
   end subroutine
   !
 end subroutine
-

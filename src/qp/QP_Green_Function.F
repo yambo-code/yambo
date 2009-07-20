@@ -21,7 +21,7 @@
 !
 subroutine QP_Green_Function(qp,E,QPdb_read_err)
  !
- use drivers,       ONLY:l_ph_corr,Finite_Tel,l_el_corr
+ use drivers,       ONLY:l_ph_corr,Finite_Tel
  use pars,          ONLY:SP
  use units,         ONLY:HARTREE
  use QP_m,          ONLY:QP_G,QP_t,QP_Sc,QP_Sx,QP_Vxc,QP_table,&
@@ -40,8 +40,10 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
  type(w_samp)     ::W
  integer          ::iqp,ib,ik,i_spin,iw,n_poles,ip,ip_larger_R,nw_dSc
  integer,parameter::n_max_poles=100
- complex(SP)      ::QP_Go,Eqp(n_max_poles),R(n_max_poles),beta(n_max_poles),G_m1(QP_Sc_steps)
+ complex(SP)      ::QP_Go,Eqp(n_max_poles),R(n_max_poles),beta(n_max_poles),G_m1(QP_Sc_steps),&
+&                   f_energy
  real(SP)         ::Eo
+ logical          ::band_is_metallic
  !
  ! The Green's function
  !
@@ -62,6 +64,8 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
    ik    =QP_table(iqp,3)
    i_spin=spin(QP_table(iqp,:))
    !
+   band_is_metallic=ib>E%nbf.and.ib<=E%nbm
+   !
    Eo=E%E(ib,ik,i_spin) 
    if (associated(E%Eo)) Eo=E%Eo(ib,ik,i_spin)
    !
@@ -71,13 +75,11 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
      !          the first according to the QP expression for the T-ordered Green
      !          G=\frac{1}{\omega-\epsilon_i+i\eta sign(\epsilon-\mu)}         
      !
-     if (Finite_Tel.or.l_ph_corr) then
-       QP_Go=E%f(ib,ik,i_spin)/(W%p(iw)-Eo)/spin_occ
-     else
-       QP_Go=E%f(ib,ik,i_spin)/(conjg(W%p(iw))-Eo)/spin_occ
-     endif
+     f_energy=conjg(W%p(iw))
+     if (Finite_Tel.or.l_ph_corr) f_energy=W%p(iw)
      !
-     QP_Go=QP_Go+(spin_occ-E%f(ib,ik,i_spin))/(W%p(iw)-Eo)/spin_occ                    
+     QP_Go=           E%f(ib,ik,i_spin)/(f_energy-Eo)/spin_occ+&
+&          (spin_occ-E%f(ib,ik,i_spin))/(W%p(iw) -Eo)/spin_occ  
      !
      if (QPdb_read_err<0) then
        if ( allocated(QP_Sx) ) then
@@ -87,7 +89,18 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
        endif
      endif
      !
-     QP_G(iqp,iw)=QP_Go/(1.-QP_Go*qp%S_total(iqp,iw))
+     if ( band_is_metallic ) then
+       QP_G(iqp,iw)=QP_Go/(1.-QP_Go*qp%S_total(iqp,iw)) 
+     else
+       !
+       ! Andrea (20/7/2009): If the imaginary part of the self-energy
+       ! is smaller than the broadening the sign of the spectral function
+       ! may be wrong. So, as the SE is already broaded during the evaluation,
+       ! in case the band/k is not metallic I use an analytic QP_Go with 
+       ! zero damping.
+       !
+       QP_G(iqp,iw)=1./(real(W%p(iw))-Eo-qp%S_total(iqp,iw)) 
+     endif
      !
    enddo
    !

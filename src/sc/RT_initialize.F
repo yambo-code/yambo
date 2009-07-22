@@ -16,16 +16,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_initialize(file_name,Xen)
+subroutine RT_initialize(file_name)
  ! 
  use pars,           ONLY:SP,lchlen,schlen
  use vec_operate,    ONLY:normalize_v
  use drivers,        ONLY:l_sc_hf
- use SC,             ONLY:SC_bands,rho_n
  use QP_m,           ONLY:QP_Sx_low_band
- use com,            ONLY:msg,of_open_close,warning,error
- use real_time,      ONLY:l_RPA,Thermal_steps,Thermal_time,RT_step,l_rt_efield, &
-&                         l_fast_exchange,G_lesser,G_lesser_previous,i_time,     &
+ use com,            ONLY:msg,of_open_close,warning
+ use real_time,      ONLY:l_RPA,Thermal_steps,Thermal_time,RT_step,l_rt_efield,i_time, &
 &                         l_RT_no_updates,Integrator_Name,l_qp_analyze,          &
 &                         l_no_diamagnetic,l_always_relax,EField,n_ext_fields
  use electrons,      ONLY:levels
@@ -34,12 +32,11 @@ subroutine RT_initialize(file_name,Xen)
  implicit none
  !
  character(lchlen)        :: file_name(2)
- type(levels)             :: Xen
  !
  ! Work space
  !
- character(schlen)        :: headings(10)
- integer                  :: i1,ik
+ character(schlen)        :: headings(10),hash_ch,where_ch
+ integer                  :: i1,i2
  !
  ! Logicals
  !----------
@@ -53,9 +50,6 @@ subroutine RT_initialize(file_name,Xen)
  call parser('KeepVxc',l_RPA)
  call parser('NoDiamagnetic',l_no_diamagnetic)
  call parser('AlwaysRelax',l_always_relax)
- call parser('FastExchange',l_fast_exchange)
- !
- if(SC_bands==0) call error("SC_bands = 0 ! ")
  !
  i_time=0
  !
@@ -95,7 +89,7 @@ subroutine RT_initialize(file_name,Xen)
  ! OUTPUT Files
  !--------------
  !
- file_name(1)='dynamics'
+ file_name(1)='RT-dynamics'
  call of_open_close(file_name(1),'ot') 
  headings(1)="Time"
  headings(2)="E_kin"
@@ -116,22 +110,36 @@ subroutine RT_initialize(file_name,Xen)
  endif
  headings(6)="N" 
  !
- call msg('o '//file_name(1),'#',headings(1:6),INDENT=-2,USE_TABS=.TRUE.)
- !
- call msg('nr','[RT] Integrator          :'//trim(Integrator_Name))
- call msg(' r','[RT] RPA                   :',l_RPA)
- call msg(' r','[RT] Diamagnetic term      :',.not.l_no_diamagnetic)
- call msg(' r','[RT] Analyze QP-dynamics   :',l_qp_analyze)
- !
- do i1=1,n_ext_fields
-   call msg('nr','[RT] External Field('//trim(intc(i1))//'      :'//trim(EField(i1)%ef_name))
-   call msg(' r','[RT] Intensity                  :',EField(i1)%intensity)
-   call msg(' r','[RT] Frequancy                  :',EField(i1)%frequency)
-   call msg(' r','[RT] Direction                  :',EField(i1)%versor)
-   call msg(' r','[RT] Intraband transitions      :',.not.EField(i1)%no_intraband)
- enddo  
- !
- file_name(2)="qp_rt"
+ file_name(2)="RT-qp"
  if(l_qp_analyze) call of_open_close(file_name(2),'ot')
+ !
+ do i1=1,2
+   !
+   where_ch='r'
+   hash_ch ='[RT]'
+   if (i1==2) where_ch='o '//file_name(1)//' '//file_name(2)
+   if (i1==2) hash_ch ='# [RT]'
+   !
+   call msg(trim(where_ch),trim(hash_ch)//' Integrator            :',trim(Integrator_Name),INDENT=0)
+   call msg(trim(where_ch),trim(hash_ch)//' RPA                   :',l_RPA,INDENT=0)
+   call msg(trim(where_ch),trim(hash_ch)//' Diamagnetic term      :',.not.l_no_diamagnetic,INDENT=0)
+   call msg(trim(where_ch),trim(hash_ch)//' Analyze QP-dynamics   :',l_qp_analyze,INDENT=0)
+   !
+   do i2=1,n_ext_fields
+     call msg(trim(where_ch),trim(hash_ch))
+     call msg(trim(where_ch),trim(hash_ch)//' External Field('//trim(intc(i2))//&
+&                                           ')      :',trim(EField(i2)%ef_name),INDENT=0)
+     call msg(trim(where_ch),trim(hash_ch)//' Intensity                  :',EField(i2)%intensity,INDENT=0)
+     call msg(trim(where_ch),trim(hash_ch)//' Frequancy                  :',EField(i2)%frequency,INDENT=0)
+     call msg(trim(where_ch),trim(hash_ch)//' Direction                  :',EField(i2)%versor,INDENT=0)
+     call msg(trim(where_ch),trim(hash_ch)//' Intraband transitions      :',.not.EField(i2)%no_intraband,INDENT=0)
+   enddo  
+   !
+   if (i1==2) call msg(trim(where_ch),'#')
+   !
+ enddo
+ !
+ call msg('o '//file_name(1),'#',headings(1:6),INDENT=0,USE_TABS=.TRUE.)
+ call msg('o '//file_name(1),'#')
  !
 end subroutine RT_initialize

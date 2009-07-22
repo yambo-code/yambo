@@ -63,6 +63,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SC || defined _RT || defined _MAGNETIC
  use SC,             ONLY:SC_potential,SC_ng_Sx,SC_X_bands,SC_X_size
 #endif
+#if defined _RT
+ use oscillators_IO, ONLY:ioRHO_RHO_VX  
+#endif
 #if defined _MAGNETIC
  use magnetic,        ONLY:MAG_hamiltonian_type,MAG_pauli,MAG_landau
 #endif
@@ -82,7 +85,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Work Space
  !
  integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,&
-&                     ioBS_Fxc_err,ioQINDX_err,io_SC_err
+&                     ioBS_Fxc_err,ioQINDX_err,io_SC_err,io_RHO_err
  integer, external :: ioX,ioOSTNTS,ioGROT,ioQINDX,ioRIM,&
 &                     ioXXVXC,ioQP,ioBS,ioDB1,ioKB_PP,&
 &                     ioCOL_CUT
@@ -350,6 +353,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  io_SC_err=io_SC_components('E',en_sc,io_ID)
 #endif
  !
+ ! RT 
+ !
+#if defined _RT 
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_RHO_err=ioRHO_RHO_VX(0,io_ID)
+#endif
+ !
  if (list_dbs) then
    call msg('s','')
    return
@@ -411,7 +421,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !XX
  !
- if (l_xxvxc) call initactivate(1,'EXXRLvcs SxLowBnd') 
+ if (l_xxvxc) call initactivate(1,'EXXRLvcs SxLowBnd')  
+#if defined _RT
+ if (l_xxvxc.and.l_rho_IO) then
+   call initactivate(1,'SCBands')
+   call initactivate(-1,'SxLowBnd')
+ endif
+#endif
  !
  ! Optics(not bse) nor GW (no PP)
  !
@@ -648,7 +664,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !If qp limits are requested they are added at the end of the input file
  !
- if ( any((/l_xxvxc,l_gw0,l_life/)).and..not.l_sc_run ) then
+ if ( any((/l_xxvxc,l_gw0,l_life/)).and..not.l_sc_run.and..not.l_rho_IO ) then
    !
    ! The QP_state is read from ioxxvxc in DUMP mode.
    ! If it is not allocated I define it on the basis 
@@ -784,6 +800,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_real_time=runlevel_is_on('negf')
        l_sc_magnetic=runlevel_is_on('magnetic')
 #endif
+#if defined _RT
+       l_rho_IO=runlevel_is_on('rhoIO')
+#endif
 #if defined  _RAS
        lreels=runlevel_is_on('reels')
        lras=runlevel_is_on('ras')
@@ -875,6 +894,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        X(2)%ib=SC_X_bands
        X(2)%ng=SC_X_size
      endif
+#endif
+#if defined _RT
+     if (l_xxvxc) call initactivate(1,'rhoIO negf') 
+     if (l_real_time.and.l_xxvxc) call initactivate(1,'rhoIO') 
 #endif
      !
    end subroutine varsetup1 

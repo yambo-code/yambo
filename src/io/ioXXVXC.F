@@ -34,7 +34,7 @@ integer function ioXXVXC(ID)
  !
  ! Work Space
  !
- integer           :: QP_state_disk(2+n_sp_pol),&
+ integer           :: QP_table_disk(2+n_sp_pol),&
 &                     QP_n_states_disk,bands(2),i1,i2,i_found,var_sz
  real(SP)          :: Sx(2),Vxc(2)
  character(schlen) :: QP_xc_FUNCTIONAL
@@ -95,25 +95,25 @@ integer function ioXXVXC(ID)
    call io_bulk(ID,VAR="Sx_Vxc",VAR_SZ=(/var_sz/))
    do i1=1,QP_n_states_disk
      if (write_is_on(ID)) then
-       QP_state_disk=QP_table(i1,:)
+       QP_table_disk=QP_table(i1,:)
        Sx=(/real(QP_Sx(i1)),aimag(QP_Sx(i1))/)
        Vxc=(/real(QP_Vxc(i1)),aimag(QP_Vxc(i1))/)
      endif
-     call io_bulk(ID,I1=QP_state_disk)
+     call io_bulk(ID,I1=QP_table_disk)
      call io_bulk(ID,R1=Sx)
      call io_bulk(ID,R1=Vxc)
      if (read_is_on(ID)) then
        if (io_mode(ID)==DUMP) then
-         QP_state(QP_state_disk(1),QP_state_disk(3))=.true. 
+         QP_state(QP_table_disk(1),QP_table_disk(3))=.true. 
        else
          do i2=1,QP_n_states
-           if (all((/QP_state_disk==QP_table(i2,:)/))) then
+           if (all((/QP_table_disk==QP_table(i2,:)/))) then
              QP_Sx(i2)=cmplx(Sx(1),Sx(2),SP)
              QP_Vxc(i2)=cmplx(Vxc(1),Vxc(2),SP)
              i_found=i_found+1
            endif
          enddo 
-         QP_state_disk=QP_table(i1,:)
+         QP_table_disk=QP_table(i1,:)
        endif
      endif
    enddo

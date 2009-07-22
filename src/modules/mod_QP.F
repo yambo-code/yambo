@@ -67,10 +67,6 @@ module QP_m
  integer,    allocatable:: QP_solver_state(:)
  integer,    allocatable:: QP_table(:,:)
  logical,    allocatable:: QP_state(:,:)
-#if defined _RT
- integer,    allocatable:: QP_table_by_k(:,:,:)
- integer,    allocatable:: QP_n_states_for_k(:)
-#endif
  !
  ! Logicals used for reporting
  !

@@ -35,6 +35,7 @@ subroutine RT_fix_symmetries(E,k)
 &                              RD_CL,OP_RD,OP_APP,cp_file,rm_file
  use wave_func,           ONLY:ioWF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io, &
 &                              wf_ng,wf_state,wf_load,wf_state,wf,WF_free,wf_ng 
+ use real_time,           ONLY:kpoints_map
  use stderr,              ONLY:intc,set_real_printed_length
  use parser_m,            ONLY:parser
  use zeros,               ONLY:k_iku_zero
@@ -47,7 +48,6 @@ subroutine RT_fix_symmetries(E,k)
  !
  ! Work Space
  !
- integer, allocatable  :: kpoints_map(:,:)
  integer               :: ik_save,iv(2),ierr,ib,i_wf,i_spin,&
 &                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik
  integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:)

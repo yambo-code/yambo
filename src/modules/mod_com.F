@@ -141,6 +141,39 @@ module com
      !
    end function
    !
+   function all_locations(desc,subfolder,type,NETCDF_DB)
+     !
+     character(*)           ::desc
+     integer                ::type
+     character(*), optional ::subfolder
+     logical                ::NETCDF_DB
+     character(lchlen)      ::all_locations(8)
+     !
+     ! Possible Paths
+     !
+     ! 1/2. MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=2 (with JOBSTR)
+     ! 3/4. MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=1 (no   JOBSTR)
+     ! 5/6. MORE_IO=.FALSE. CORE_IO=.TRUE. COM_IO=.FALSE.  type=2 (with JOBSTR)
+     ! 7/8. MORE_IO=.FALSE. CORE_IO=.TRUE. COM_IO=.FALSE.  type=1 (no   JOBSTR)
+     !
+     all_locations(1)=get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
+&                              MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB)
+     all_locations(2)=get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
+&                              MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB)
+     all_locations(3)=get_name(desc,subfolder,1,CORE_IO=.FALSE.,&
+&                              MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB)
+     all_locations(4)=get_name(desc,subfolder,1,CORE_IO=.FALSE.,&
+&                              MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB)
+     all_locations(5)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,&
+&                              MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB)
+     all_locations(6)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,&
+&                              MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB)
+     all_locations(7)=get_name(desc,subfolder,1,CORE_IO=.TRUE.,&
+&                              MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.not.NETCDF_DB)
+     all_locations(8)=get_name(desc,subfolder,1,CORE_IO=.TRUE.,&
+&                              MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=NETCDF_DB)
+   end function
+   !
    subroutine of_open_close(of_name,mode)
      !
      character(*)           :: of_name

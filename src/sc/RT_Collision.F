@@ -32,9 +32,9 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  use QP_m,           ONLY:QP_nk,QP_Sx
  use real_time,      ONLY:I1_lesser,I2_lesser,l_RT_no_updates,l_qp_analyze,         &
  &                        l_rt_efield,LifeTime,H_t,l_RPA,H_Hartree_Vxc_0,V_xc_0,    &
- &                        Thermal_time,Integrator_name,EXACT,RK2EXACT,rho_rho_gamp, &
- &                        Thermal_eta,l_fast_exchange, i_time,Thermal_steps,        &
- &                        G_lesser_reference,Efield,n_ext_fields,A_norm
+ &                        Thermal_time,Integrator_name,EXACT,RK2EXACT,A_norm,       &
+ &                        Thermal_eta, i_time,Efield, &
+ &                        G_lesser_reference,n_ext_fields
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
@@ -53,7 +53,6 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  ! Work Space
  !
  integer     :: ik,iv,i1,SC_bands2
- real(SP)    :: RelaxDiff
  type(pp_indexes) ::px
  !
  SC_bands2=SC_bands**2
@@ -80,15 +79,11 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  ! Simple case without any correlation just transition between bands
  ! equivalent to RPA without local field effects
  !
- if(.not.l_fast_exchange.and.l_sc_hf) then
-   call IO_mute("report io_in io_out")
-   call QP_XX_Vxc(Xen,k,k,q,G_input,.false.)
-   call IO_mute("  ")
- endif
- !
  I1_lesser=(0.,0.)
  I2_lesser=(0.,0.)
  if(allocated(H_t)) H_t =  (0.,0.) 
+ !
+ call RT_make_QP_Sx(G_input)
  !
  call pp_indexes_reset(px)
  call par_indexes(px,(/QP_nk/))
@@ -104,8 +99,6 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
      if(l_sc_hf) then
        !
        ! Add the exchange term
-       !
-       if(l_fast_exchange) call RT_make_QP_Sx(ik,k,G_input)
        !
        call V_qp_basis_to_H(ik,QP_Sx,H_nl_sc) 
        !

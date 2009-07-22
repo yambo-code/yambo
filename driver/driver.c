@@ -248,19 +248,6 @@ main(int argc, char *argv[])
  };
  lni=strlen(rnstr2);
  /* 
-
- If id/od/com_dir are not found switch to the deafult i/o directory 
-
- [June 2009] 
- I have removed this line beacuse the additional I/O directories
- can be written by the code on-fly (Andrea)
-
- if (stat(id, &buf) != 0) {strcpy(id,".");iid=1;};
- if (stat(od, &buf) != 0) {strcpy(od,".");iod=1;}; 
- if (stat(com_dir, &buf) != 0) {strcpy(com_dir,".");icd=1;};
-
- */
- /* 
    MPI
  ===========================================================================
  */
@@ -375,12 +362,19 @@ static void usage(int verbose)
  };
  if (verbose==2) {title(stderr,"");
  for(j=0;j<=nr-1;j++)
-  {fprintf(stderr," -%s",opts[j].sn);
-   for(i=1;i<=opts[j].ni;i++) {fprintf(stderr," %s","<int>");};
-   for(i=1;i<=opts[j].nr;i++) {fprintf(stderr," %s","<real>");};
-   for(i=1;i<=opts[j].nc;i++) {fprintf(stderr," %s","<opt>");};
-   if (opts[j].ni==0 && opts[j].nr==0 && opts[j].nc==0) {fprintf(stderr,"\t");};
-   fprintf(stderr,"\t:%s\n",opts[j].d);
+  {if (strcmp(opts[j].ln,"DESC")==0) 
+   {
+    fprintf(stderr,"\t\t %s\n",opts[j].d);
+   }
+   else
+   {
+    fprintf(stderr," -%s",opts[j].sn);
+    for(i=1;i<=opts[j].ni;i++) {fprintf(stderr," %s","<int>");};
+    for(i=1;i<=opts[j].nr;i++) {fprintf(stderr," %s","<real>");};
+    for(i=1;i<=opts[j].nc;i++) {fprintf(stderr," %s","<opt>");};
+    if (opts[j].ni==0 && opts[j].nr==0 && opts[j].nc==0) {fprintf(stderr,"\t");};
+    fprintf(stderr,"\t:%s\n",opts[j].d);
+   };
   };
   fprintf(stderr,"\n");
   fprintf(stderr,"%s\t%s\n\t%s\n\n","By","YAMBO developers group",

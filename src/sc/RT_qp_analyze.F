@@ -36,7 +36,7 @@ subroutine RT_qp_analyze(it,en,k,xK,G_input)
  use D_lattice,      ONLY:Tel
  use units,          ONLY:FS2AUT
  use com,            ONLY:msg
- use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK,INV
+ use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
  !
  implicit none
  !

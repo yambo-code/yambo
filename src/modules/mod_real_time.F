@@ -82,10 +82,8 @@ module real_time
  ! Other
  !
  real(SP)                :: Thermal_time
- complex(SP),allocatable :: rho_rho_gamp(:,:,:,:)
  integer                 :: DiagH_Iter
  logical                 :: l_qp_analyze
- logical                 :: l_fast_exchange
  !
  ! Integrator Variables
  !
@@ -130,19 +128,29 @@ module real_time
    subroutine RT_alloc(en)
      !
      use pars,           ONLY:SP,schlen
-     use drivers,        ONLY:l_sc_hf
+     use drivers,        ONLY:l_sc_hf,l_xxvxc
      use memory_m,       ONLY:mem_est
      use SC,             ONLY:SC_bands,V_hartree_sc,local_V,SC_alloc,E_bare,rho_n
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
-     use QP_m,           ONLY:QP_nk,QP_n_states
+     use QP_m,           ONLY:QP_nk,QP_n_states,QP_Sx
+     use oscillators_IO, ONLY:oscillators_IO_alloc
      !
      implicit none
      !
      type(levels), intent(in) :: en
      !
      call SC_alloc(en)
+     !
+     if (l_xxvxc) call oscillators_IO_alloc()
+     !
+     if (l_xxvxc) then
+       !
+       allocate(QP_Sx(QP_n_states))
+       call mem_est("QP_Sx",(/QP_n_states/))
+       !
+     endif
      !
      allocate(E_xc(fft_size))
      call mem_est('Exc',(/fft_size/),(/SP/))
@@ -181,11 +189,6 @@ module real_time
        call mem_est("Gf_l_old",(/size(G_lesser_reference)/),(/2*SP/))
      endif
      !
-     if(l_sc_hf.and.l_fast_exchange) then
-       allocate(rho_rho_gamp(SC_bands,SC_bands,QP_nk,QP_n_states))
-       call mem_est("rho_rho_gamp",(/size(rho_rho_gamp)/),(/2*SP/))
-     endif
-     !
      ! Reference energies
      !
      allocate(E_bare(SC_bands,QP_nk,n_sp_pol))
@@ -201,13 +204,22 @@ module real_time
    
    subroutine RT_free
      !
-     use drivers,        ONLY:l_sc_hf
+     use drivers,        ONLY:l_sc_hf,l_xxvxc
      use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare,rho_n
      use memory_m,       ONLY:mem_est
+     use QP_m,           ONLY:QP_Sx
      use xc_functionals, ONLY:E_xc
+     use oscillators_IO, ONLY:oscillators_IO_free
      implicit none
      !
      call SC_free()
+     !
+     if (l_xxvxc) call oscillators_IO_free()
+     !
+     if (l_xxvxc) then
+       deallocate(QP_Sx)
+       call mem_est("QP_Sx")
+     endif
      !
      deallocate(E_xc)
      call mem_est('Exc')
@@ -246,11 +258,6 @@ module real_time
      if(LifeTime/=0.) then
        deallocate(G_lesser_reference)
        call mem_est("G_lesser_previous")
-     endif
-     !
-     if(l_sc_hf.and.l_fast_exchange) then
-       deallocate(rho_rho_gamp)
-       call mem_est("rho_rho_gamp")
      endif
      !
      deallocate(E_bare)

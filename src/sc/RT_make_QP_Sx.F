@@ -19,52 +19,54 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_make_QP_Sx(ik,k,G_input)
+subroutine RT_make_QP_Sx(G_input)
  !
  ! QP_Sx(qp_state) = - (0.,1.) * \sum_{n,n',q} rho_rho_(n,n',q,qp_state) x G_lesser(n,n',k-q)
  ! 
  use pars,           ONLY:SP
- use QP_m,           ONLY:QP_nk,QP_table_by_k,QP_n_states_for_k,QP_Sx
+ use QP_m,           ONLY:QP_nk,QP_n_states,QP_Sx
  use SC,             ONLY:SC_bands
- use real_time,      ONLY:rho_rho_gamp
- use R_lattice,      ONLY:bz_samp,qindx_S
+ use oscillators_IO, ONLY:rho_VX_rho,n_rho_states,rho_table,ioRHO_RHO_VX 
+ use par_proc_m,     ONLY:pp_indexes,pp_redux_wait,pp_indexes_reset
+ use par_indexes_m,  ONLY:par_indexes
+ use IO_m,           ONLY:io_control,OP_RD_CL
  !
  implicit none
  !       
  complex(SP), intent(in)   :: G_input(SC_bands,SC_bands,QP_nk)
- integer, intent(in)       :: ik
- type(bz_samp), intent(in) :: k
  !
  ! Work Space
  !
- integer    :: i1,i2,ib,ibp,iqp,iq,ik_minus_q,SC_bands2
+ integer           :: i1,ib,ibp,ik,ic
+ integer           :: io_err,ID       
+ type(pp_indexes)  :: px
  !
-#if defined _DOUBLE
- complex(DP)   :: zdotu
-#else
- complex(SP)   :: cdotu
-#endif
+ call pp_indexes_reset(px)   
  !
- SC_bands2=SC_bands**2
+ call par_indexes(px,(/QP_n_states/))
  !
- do i1=1,QP_n_states_for_k(ik)
+ QP_Sx=(0.,0.)
+ !
+ do i1=1,QP_n_states 
    !
-   ib =QP_table_by_k(ik,i1,1)
-   ibp=QP_table_by_k(ik,i1,2)
-   iqp=QP_table_by_k(ik,i1,3)
+   if(.not.px%i1p(i1)) cycle  
    !
-   QP_Sx(iqp)=(0.,0.)
+   call io_control(ACTION=OP_RD_CL,SEC=(/i1+1/),ID=ID)
+   io_err=ioRHO_RHO_VX(i1,ID)
    !
-   do ik_minus_q=1,QP_nk
+   do ic=1,n_rho_states
+     !      
+     ib =rho_table(1,ic)
+     ibp=rho_table(2,ic)
+     ik =rho_table(3,ic)
      !
-#if defined _DOUBLE
-     QP_Sx(iqp)=QP_Sx(iqp)-(0.,1.)*zdotu(SC_bands2,rho_rho_gamp(:,:,ik_minus_q,iqp),1,G_input(:,:,ik_minus_q),1)
-#else 
-     QP_Sx(iqp)=QP_Sx(iqp)-(0.,1.)*cdotu(SC_bands2,rho_rho_gamp(:,:,ik_minus_q,iqp),1,G_input(:,:,ik_minus_q),1)
-#endif
+     QP_Sx(i1)=QP_Sx(i1)-(0.,1.)*rho_VX_rho(ic)*G_input(ib,ibp,ik)      
      !
    enddo
    !
  enddo
  !
+ call pp_redux_wait(QP_Sx)
+ call pp_indexes_reset(px)
+ ! 
 end subroutine 

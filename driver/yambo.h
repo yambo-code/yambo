@@ -36,7 +36,8 @@
   {"help",   "h","Short Help",0,0,0,0},              
   {"lhelp",  "H","Long Help",0,0,0,0},               
   {"jobstr", "J","Job string identifier",0,0,1,0},   
-  {"infver", "V","Input file verbosity [opt=RL,kpt,sc,qp,io,gen,resp]",0,0,1,0},    
+  {"infver", "V","Input file verbosity",0,0,1,0},    
+  {"DESC",   " ","opt=RL,kpt,sc,qp,io,gen,resp",0,0,0,0},
   {"ifile",  "F","Input file",0,0,1,0},              
   {"idir",   "I","Core I/O directory",0,0,1,0},         
   {"odir",   "O","Additional I/O directory",0,0,1,0},   
@@ -44,6 +45,9 @@
   {"nompi",  "N","Skip MPI initialization",0,0,0,0}, 
   {"dbpr",   "D","DataBases properties",0,0,0,0},    
   {"dbfrag", "S","DataBases fragmentation",0,0,0,0}, 
+#if defined _RT 
+  {"rhoIO",  "R","Extended Oscillators IO",0,0,0,0}, 
+#endif
   {"setup",  "i","Initialization",0,0,0,0},          
   {"optics", "o","Optics [opt=(c)hi/(b)se/(t)dhf]",0,0,1,0},    
   {"tddft",  "t","The TDDFTs [opt=(a)LDA/(b)SE/(l)RC]",0,0,1,0},     
@@ -52,7 +56,8 @@
   {"em1d",   "d","Dynamical Inverse Dielectric Matrix",0,0,0,0},     
   {"em1s",   "b","Static Inverse Dielectric Matrix",0,0,0,0},        
   {"gwapprx","p","GW approximations [opt=(p)PA/c(HOSEX)]",0,0,1,0},              
-  {"gw0",    "g","Dyson Equation solver [opt=n(ewton)/s(ecant)/g(reen)]",0,0,1,0}, 
+  {"gw0",    "g","Dyson Equation solver",0,0,1,0}, 
+  {"DESC",   " ","opt=n(ewton)/s(ecant)/g(reen)",0,0,0,0},
   {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0},                  
   {"bss",    "y","BSE solver [opt=h/d/i/t]",0,0,1,0},                      
   {"acfdt",  "a","ACFDT Total Energy",0,0,0,0},                            
@@ -66,7 +71,8 @@
   {"corrtp", "s","Correlation [opt=e(lectrons)/p(honons)/b(oth)]",0,0,1,0},    
 #endif
 #if defined _SC | defined _MAGNETIC | defined _RT
-  {"scpot",  "v","Self-Consistent Potential [opt=(n)none,(hf),(c)hosex,(exx),(exxc),(h)artree,(d)ef]",0,0,1,0}, 
+  {"scpot",  "v","Self-Consistent Potential",0,0,1,0}, 
+  {"DESC",   " ","opt=(n)none,(hf),(c)hosex,(exx),(exxc),(h)artree,(d)ef",0,0,0,0},
 #endif
 #if defined _RT 
   {"negf",   "k","Real-time dynamics",0,0,0,0}, 

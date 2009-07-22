@@ -35,7 +35,6 @@ subroutine SC_check_symmetries(field_dir)
   !
   integer  :: is,nsym_wrong
   real(SP) :: v(3)
-  character(lchlen) :: dump_ch
   !
   if(v_norm(field_dir)<1.E-5) return
   !
@@ -46,16 +45,6 @@ subroutine SC_check_symmetries(field_dir)
     v(:) = matmul( rl_sop(:,:,is), field_dir )
     !
     if( v_norm(v(:)-field_dir(:))>1.E-5) then
-! DEBUG >
-!        call msg('s',' ')
-!        call msg('s',' * * * SYMMETRY NOT COMPATIBLE * * * ')
-!        write(dump_ch,'(a,3f12.6,a)') '|',rl_sop(:,1,is),'|'
-!        call msg('s',dump_ch)      
-!        write(dump_ch,'(a,3f12.6,a)') '|',rl_sop(:,2,is),'|'
-!        call msg('s',dump_ch)      
-!        write(dump_ch,'(a,3f12.6,a)') '|',rl_sop(:,3,is),'|'
-!        call msg('s',dump_ch)      
-! DEBUG <
       nsym_wrong=nsym_wrong+1
     endif
     !

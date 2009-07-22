@@ -33,7 +33,13 @@ module drivers
  logical :: l_rim       ! Random Integration Method
  logical :: l_col_cut   ! Coloumb potential cutoff
  logical :: l_acfdt     ! Total Energy
- logical :: l_real_time ! Real Time evolution
+ !
+ ! Real Time & SC
+ !
+ logical :: l_real_time 
+ logical :: l_sc_run
+ logical :: l_sc_magnetic
+ logical :: l_rho_IO
  !
  ! The self-energy correlation "kind"
  !
@@ -60,9 +66,6 @@ module drivers
  logical :: l_bse
  logical :: l_bss
  logical :: l_td_hf
- !
- logical :: l_sc_run ! SC 
- logical :: l_sc_magnetic ! SC + Magnetic field
  !
  ! The XC types (Vxc)
  !

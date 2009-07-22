@@ -38,7 +38,7 @@ integer function io_SC_components(what,E_sc,ID)
 &                         io_sec,io_bulk,io_fragment,read_is_on,write_is_on,&
 &                         manage_RD_WR_CL_IF_END,ver_is_gt_or_eq 
 #if defined _RT
- use real_time,      ONLY:l_rt_efield,l_fast_exchange,l_RPA,RT_step,Tot_steps,       &
+ use real_time,      ONLY:l_rt_efield,l_RPA,RT_step,Tot_steps,       &
 &                         Thermal_steps,Integrator_name,l_qp_analyze,DiagH_Iter,     &
 &                         LifeTime,G_lesser,i_time,l_no_diamagnetic,j_current,A_norm,&
 &                         n_ext_fields,Efield
@@ -192,9 +192,7 @@ integer function io_SC_components(what,E_sc,ID)
 #if defined _RT
    !
    if(any((/l_J,l_G/))) then
-     call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=5,MENU=0) 
-     call io_elemental(ID,L0=l_fast_exchange,VAR=' Use fast exchange :', &
-&     CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=4,MENU=0) 
      call io_elemental(ID,L0=l_RPA,VAR=' RPA optics in real time  :', &
 &     CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,&

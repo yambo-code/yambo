@@ -43,6 +43,7 @@ subroutine barriers()
  !  BSE HAYD    bss_haydock    SC          l_sc_run
  !  TDHF
  !  MAGNETIC    l_magnetic
+ !  RHO_IO      l_rho_IO
  !
  use drivers
  use pars,       ONLY:schlen
@@ -106,7 +107,7 @@ subroutine barriers()
  ! GPL_EXCLUDE_START SC_IGNORE
  !
  if (l_sc_run) then
-   call switch_off_runlevel('all',on_name='scpot xxvxc chosex em1s negf magnetic '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='scpot xxvxc chosex em1s negf rhoIO magnetic '//trim(always_runlevels))
    goto 1
  endif
  if (gw0_chosex) then

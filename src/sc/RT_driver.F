@@ -27,18 +27,17 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  use units,          ONLY:FS2AUT
  use com,            ONLY:msg,of_open_close
  use timing,         ONLY:live_timing 
- use memory_m,       ONLY:mem_est
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels
  use X_m,            ONLY:X_t,Eval_P_and_P2_only,X_alloc
  use wave_func,      ONLY:wf,wf_load,wf_ng,WF_free
  use R_lattice,      ONLY:bz_samp,qindx_S
- use QP_m,           ONLY:QP_nb,QP_nk,QP_ng_Sx
+ use QP_m,           ONLY:QP_nk
  use SC,             ONLY:SC_potential,SC_bands,Ho,E_bare,it_now
- use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,REP
+ use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP
  use real_time,      ONLY:Thermal_steps,Tot_steps,RT_step,G_lesser,l_RT_no_updates, &
 &                         G_lesser_previous,l_rt_efield,RT_alloc,RT_free,io_G,ID,   &
-&                         A_norm,i_time,Integrator_name,j_current,l_qp_analyze,     &
-&                         rho_rho_gamp,G_lesser_reference,QP_Hartree,l_fast_exchange,LifeTime
+&                         i_time,Integrator_name,j_current,l_qp_analyze,     &
+&                         G_lesser_reference,LifeTime
  !
  implicit none
  !
@@ -64,7 +63,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  call section('*',trim(SC_potential)//' Real-Time Dynamics')
  !##########################################################
  !
- call set_real_printed_length(f_length=15,g_length=15)  
+ call set_real_printed_length(f_length=10,g_length=10)  
  !
  X(1)%ib(2)=SC_bands
  X(1)%ng   =wf_ng
@@ -85,7 +84,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  !
  ! Core initialization
  !
- call RT_initialize(file_name,Xen)
+ call RT_initialize(file_name)
  !
  ! Core allocations
  !
@@ -115,18 +114,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  ! Calculation already done
  !
  if(it_now>=Thermal_steps+Tot_steps) return
- !
- if(l_sc_hf) then
-   !
-   ! Build exchage matrix elements
-   !
-   if(QP_ng_Sx>wf_ng) QP_ng_Sx=wf_ng 
-   !
-   call IO_mute("report io_in io_out")
-   call QP_XX_Vxc(Xen,k,Xk,q,G_lesser,.true.)
-   call IO_mute("  ")
-   !
- endif
  !
  if(l_RT_no_updates) call wf_free()
  !
@@ -204,7 +191,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  call live_timing
  !
  call of_open_close(file_name(1))
- !
  if(l_qp_analyze) call of_open_close(file_name(2)) 
  !
  ! Finalize

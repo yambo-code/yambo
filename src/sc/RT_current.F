@@ -26,11 +26,10 @@ subroutine RT_current(j_current,xK,Xen,G_lesser)
  use pars,           ONLY:SP,pi
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp,RL_vol
- use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
+ use D_lattice,      ONLY:dl_sop,sop_inv
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel,levels
  use X_m,            ONLY:DIP_iR_or_P
- use com,            ONLY:msg
  use real_time,      ONLY:l_no_diamagnetic,io_J,ID,i_time,Efield,n_ext_fields &
 &                        ,A_norm
  use IO_m,           ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL

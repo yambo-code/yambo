@@ -27,7 +27,7 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  use SC,              ONLY:SC_bands,V_hartree_sc,Ho,rho_n,H_nl_sc,SC_xc_functional
  use X_m,            ONLY:P_square
  use real_time,      ONLY:G_lesser,l_RT_no_updates,H_Hartree_Vxc_0,V_xc_0
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels
  use wave_func,      ONLY:wf
  use FFT_m,          ONLY:fft_size
  use xc_functionals, ONLY:E_xc

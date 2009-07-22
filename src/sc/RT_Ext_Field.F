@@ -24,7 +24,7 @@ subroutine RT_Ext_Field(ik,H_nl_sc,G_lesser,time,Efield,A_norm)
  use pars,           ONLY:SP,DP
  use com,            ONLY:error
  use real_time,      ONLY:l_no_diamagnetic,ext_field
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:n_sp_pol
  use X_m,            ONLY:DIP_iR_or_P
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk

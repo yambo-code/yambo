@@ -33,8 +33,7 @@ subroutine RT_spectrum(en,k)
  use R_lattice,      ONLY:bz_samp
  use parser_m,       ONLY:parser
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,NONE,DUMP
- use real_time,      ONLY:Tot_steps,RT_step,j_current,A_norm,i_time &
-&                        ,n_ext_fields,Efield
+ use real_time,      ONLY:Tot_steps,RT_step,j_current,A_norm,i_time 
  implicit none
  !
  type(levels)   :: en

@@ -175,7 +175,7 @@ module IO_m
    integer function io_connect(desc,subfolder,type,ENABLE_LARGE_FILE,ID)
      !
      use stderr,        ONLY:string_pack
-     use com,           ONLY:get_name,jobstr,file_exists,more_io_path
+     use com,           ONLY:get_name,jobstr,file_exists,more_io_path,all_locations
      character(*)           :: desc
      integer                :: type,ID
      character(*), optional :: subfolder
@@ -234,29 +234,7 @@ module IO_m
          !
          if (type==1.or.type==2) then
            !
-           ! OLD databases are searched in the following order:
-           !
-           ! 1/2. MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=2 (with JOBSTR)
-           ! 3/4. MORE_IO=.TRUE.  CORE_IO=.FALSE. COM_IO=.FALSE. type=1 (no   JOBSTR)
-           ! 5/6. MORE_IO=.FALSE. CORE_IO=.TRUE. COM_IO=.FALSE.  type=2 (with JOBSTR)
-           ! 7/8. MORE_IO=.FALSE. CORE_IO=.TRUE. COM_IO=.FALSE.  type=1 (no   JOBSTR)
-           !
-           alternative_file(1)=get_name(desc,subfolder_,2,CORE_IO=.FALSE.,&
-&                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.io_netcdf_support(ID))
-           alternative_file(2)=get_name(desc,subfolder_,2,CORE_IO=.FALSE.,&
-&                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
-           alternative_file(3)=get_name(desc,subfolder_,1,CORE_IO=.FALSE.,&
-&                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.not.io_netcdf_support(ID))
-           alternative_file(4)=get_name(desc,subfolder_,1,CORE_IO=.FALSE.,&
-&                                       MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
-           alternative_file(5)=get_name(desc,subfolder_,2,CORE_IO=.TRUE.,&
-&                                       MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.not.io_netcdf_support(ID))
-           alternative_file(6)=get_name(desc,subfolder_,2,CORE_IO=.TRUE.,&
-&                                       MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
-           alternative_file(7)=get_name(desc,subfolder_,1,CORE_IO=.TRUE.,&
-&                                       MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.not.io_netcdf_support(ID))
-           alternative_file(8)=get_name(desc,subfolder_,1,CORE_IO=.TRUE.,&
-&                                       MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
+           alternative_file=all_locations(desc,subfolder_,type,io_netcdf_support(ID))
            !
          endif
          !
@@ -638,6 +616,33 @@ module IO_m
      if (len_trim(filename_old)==0) return
      call irename( cstr(trim(filename_old)), cstr(trim(filename_new)) )
    end subroutine
+   !
+   logical function file_is_present(desc,subfolder,type)
+     !
+     use com,           ONLY:all_locations,file_exists
+     !
+     character(*)           :: desc
+     character(*), optional :: subfolder
+     integer                :: type
+     !
+     ! Work Space
+     !
+     integer            :: i_f
+     character(lchlen)  :: possible_locations(8)
+     character(schlen)  :: subfolder_
+     !
+     subfolder_=' '
+     if (present(subfolder)) subfolder_=subfolder
+     !
+     possible_locations=all_locations(desc,subfolder_,type,.TRUE.)
+     !
+     file_is_present=.true.
+     do i_f=1,8
+       if( file_exists(trim( possible_locations(i_f) )  ) ) return
+     enddo
+     file_is_present=.false.
+     !
+   end function file_is_present
    !
    logical function file_is_open(filename,ID)
      character(*)      :: filename

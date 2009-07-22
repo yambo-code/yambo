@@ -80,8 +80,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 #if defined _RT
  use real_time,  ONLY:RT_step,Tot_steps, Thermal_steps, Efield,Integrator_name, &
 &                     DiagH_iter, LifeTime,l_RPA, n_ext_fields, l_qp_analyze,   &
-&                     Thermal_eta,l_always_relax,l_fast_exchange 
-
+&                     Thermal_eta,l_always_relax
+ use oscillators_IO,ONLY:n_rho_states
 #endif
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B_z,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli
@@ -233,6 +233,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_sc_chosex=.false.
  l_sc_exx=.false.
  l_sc_contains_lda=.false.
+ l_sc_magnetic=.false.
+ l_rho_IO=.false.
  !
  !electrons
  !
@@ -410,7 +412,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  !
  RT_step=0.002*FS2AUT
- Tot_steps=0
+ Tot_steps=1000
  Thermal_steps=0
  Thermal_eta  =8.0
  Integrator_name='RK2'
@@ -419,7 +421,10 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  DiagH_iter=1
  l_qp_analyze=.FALSE.
  l_always_relax=.FALSE.
- l_fast_exchange=.FALSE.
+ !
+ ! RHO I/O
+ !
+ n_rho_states=0
  !
 #endif
  !

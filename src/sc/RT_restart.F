@@ -25,15 +25,13 @@ subroutine RT_restart(Xen)
  use memory_m,       ONLY:mem_est
  use QP_m,           ONLY:QP_nk
  use units,          ONLY:HARTREE
- use timing,         ONLY:live_timing
  use electrons,      ONLY:levels,n_sp_pol
- use real_time,      ONLY:G_lesser,ID,io_J,io_G,ID,l_rt_efield,Tot_steps,&
+ use real_time,      ONLY:G_lesser,ID,io_J,io_G,ID,Tot_steps,&
 &                         G_lesser_previous,G_lesser_reference,Thermal_steps, &
 &                         LifeTime
- use SC,             ONLY:SC_potential,SC_bands,SC_R,E_convergence,it_now,&
+ use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,&
 &                        rho_convergence,H_rotate
- use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,&
-&                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL 
+ use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE
  implicit none
  !
  type(levels)      :: Xen

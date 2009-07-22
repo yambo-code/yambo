@@ -1,6 +1,6 @@
 RT_SC_objects =
 #if defined _RT || defined _SC || defined _MAGNETIC
-RT_SC_objects = mod_SC.o mod_real_time.o
+RT_SC_objects = mod_SC.o mod_oscillators_IO.o mod_real_time.o
 #endif
 ELPH_objects =
 #if defined _ELPH 

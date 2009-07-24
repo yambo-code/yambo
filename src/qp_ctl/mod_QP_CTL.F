@@ -24,6 +24,13 @@ module QP_CTL_m
  use pars,  ONLY:SP,schlen,IP
  use units, ONLY:HARTREE
  !
+ ! Global logicals for QP DB I/O
+ !
+ logical      :: load_E
+ logical      :: load_W
+ logical      :: load_Z
+ logical      :: load_Green
+ !
  ! QP Pars
  !
  !?fnQP_db= " E W Z < db-pp.qp "     # [?] QP database.

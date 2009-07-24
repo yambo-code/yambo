@@ -219,8 +219,6 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
 #if defined _RT
    if (.not.px%i1p(i_qp)) cycle
    !        
-   call live_timing(steps=1)
-   !
    if (QP_DB_done(i_qp)) then
      call live_timing(steps=1)
      cycle

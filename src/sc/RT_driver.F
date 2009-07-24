@@ -84,7 +84,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  !
  ! Core initialization
  !
- call RT_initialize(file_name)
+ call RT_initialize()
  !
  ! Core allocations
  !
@@ -110,10 +110,24 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  ! G_lesser,G_lesser_previous,G_lesser_reference
  ! 
  call RT_restart(Xen)
- !                                        
+ !
  ! Calculation already done
  !
- if(it_now>=Thermal_steps+Tot_steps) return
+ if(it_now>=Thermal_steps+Tot_steps) then
+   !      
+   call RT_free()
+   !
+   call WF_free()
+   !
+   call X_alloc("P_square")
+   !
+   call RT_report(file_name,.false.)
+   !
+   return
+   !
+ endif
+ !
+ call RT_report(file_name,.true.)
  !
  if(l_RT_no_updates) call wf_free()
  !

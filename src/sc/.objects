@@ -2,7 +2,7 @@ RT_OBJECTS =
 #if defined _RT
 RT_OBJECTS = RT_initialize.o RT_make_QP_Sx.o RT_restart.o \
              RT_driver.o RT_Ext_Field.o RT_Collision.o RT_Integrator.o \
-             RT_Energy.o RT_current.o RT_qp_analyze.o 
+             RT_Energy.o RT_current.o RT_qp_analyze.o RT_report.o
 #endif
 MAGNETIC_objects = 
 #if defined _MAGNETIC

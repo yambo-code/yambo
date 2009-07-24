@@ -111,7 +111,6 @@ module real_time
  !
  complex(SP), allocatable :: H_Hartree_Vxc_0(:,:,:,:)
  complex(SP), allocatable :: H_t(:,:,:,:)
- complex(SP), allocatable :: QP_Hartree(:)
  !
  ! Non-interaction potential energies and potentials
  !
@@ -122,6 +121,10 @@ module real_time
  !
  integer                  :: io_J,io_G
  integer                  :: ID(5)                
+ !
+ ! Others
+ !
+ integer, allocatable :: kpoints_map(:,:)
  !
  contains
    !
@@ -143,9 +146,9 @@ module real_time
      !
      call SC_alloc(en)
      !
-     if (l_xxvxc) call oscillators_IO_alloc()
-     !
      if (l_xxvxc) then
+       !
+       call oscillators_IO_alloc()
        !
        allocate(QP_Sx(QP_n_states))
        call mem_est("QP_Sx",(/QP_n_states/))

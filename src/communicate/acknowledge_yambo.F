@@ -40,8 +40,7 @@ subroutine acknowledge_yambo()
 #else
  call msg('r','| A. Marini, C. Hogan, M. Gr\"uning, D. Varsano')
 #endif
- call msg('r','| Computer Physics Communications (2009), in press.')
- call msg('r','| http://dx.doi.org/10.1016/j.cpc.2009.02.003')
+ call msg('r','| Computer Physics Communications  180, 1392 (2009).')
  call msg('r','|')
  call msg('r',' ')
  !

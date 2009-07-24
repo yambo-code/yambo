@@ -180,7 +180,7 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  ! HARTREE-FOCK AND VXC
  !======================
  !
- if (l_xxvxc.and..not.l_sc_run) call QP_XX_Vxc(en,k,Xk,q)
+ if (l_xxvxc.and.(.not.l_sc_run.or.l_real_time)) call QP_XX_Vxc(en,k,Xk,q)
  !
  ! RAS & REELS
  !=============

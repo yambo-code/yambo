@@ -41,17 +41,29 @@ module oscillators_IO
  !
  contains
    !
-   subroutine oscillators_IO_alloc()
+   subroutine oscillators_IO_alloc(rho_VX_input_size)
      use pars,           ONLY:IP
      use QP_m,           ONLY:QP_nk
      use SC,             ONLY:SC_bands
      use memory_m,       ONLY:mem_est
-     if (n_rho_states==0) then
-       allocate(rho_VX_rho(SC_bands*SC_bands*QP_nk))
-       call mem_est("rho_VX_rho",(/size(rho_VX_rho)/),(/2*SP/))
-       allocate(rho_table(3,SC_bands*SC_bands*QP_nk))
-       call mem_est("rho_table",(/size(rho_table)/),(/IP/))
+     !
+     integer, intent(in), optional :: rho_VX_input_size
+     !
+     ! Work Space
+     !
+     integer :: rho_VX_size
+     !
+     if(present(rho_VX_input_size)) then
+       rho_VX_size=rho_VX_input_size
+     else
+       rho_VX_size=SC_bands*SC_bands*QP_nk
      endif
+     !
+     call mem_est("rho_VX_rho",(/size(rho_VX_rho)/),(/2*SP/))
+     allocate(rho_VX_rho(rho_VX_size))
+     allocate(rho_table(3,rho_VX_size))
+     call mem_est("rho_table",(/size(rho_table)/),(/IP/))
+     !
    end subroutine
    !
    subroutine oscillators_IO_free()

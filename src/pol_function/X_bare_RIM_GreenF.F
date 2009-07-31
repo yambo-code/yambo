@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_bare_RIM_Gf(iq,transitions,fr,Xw,Xen,Xk,Gf,ordering)
+subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
  !
  use pars,       ONLY:SP
  use X_m,        ONLY:use_X_RIM
@@ -33,7 +33,7 @@ subroutine X_bare_RIM_Gf(iq,transitions,fr,Xw,Xen,Xk,Gf,ordering)
  type(w_samp) :: Xw
  type(levels) :: Xen
  type(bz_samp):: Xk
- complex(SP)  :: Gf(Xw%n(2))
+ complex(SP)  :: GreenF(Xw%n(2))
  character(*) :: ordering
  !
  !Work Space
@@ -41,8 +41,11 @@ subroutine X_bare_RIM_Gf(iq,transitions,fr,Xw,Xen,Xk,Gf,ordering)
  integer      ::i1,i2,iw,ikbz,ikpbz,iv,ic,i_spin,ik_rand,ikp_rand,ik,ikp
  real(SP)     ::ffac,f0fac,W_
  complex(SP)  ::Z_,pole
+#if defined _POLARON
+ complex(SP), allocatable  ::Green_F_convoluted(:)
+#endif
  !
- Gf  = cmplx(0.,0.,SP)
+ GreenF  = cmplx(0.,0.,SP)
  !
  ! Transitions
  !
@@ -53,6 +56,32 @@ subroutine X_bare_RIM_Gf(iq,transitions,fr,Xw,Xen,Xk,Gf,ordering)
  iv     = transitions(2)
  ic     = transitions(3)
  i_spin = transitions(4)
+ !
+#if defined _POLARON
+ !
+ ! Green Functions convolution
+ !
+ if (associated(Xen%GreenF)) then 
+   ! 
+   allocate(Green_F_convoluted(Xen%GreenF_n_E_steps))
+   !
+   call Convolve(real(Xen%GreenF(ic,ik,1,:)), real(Xen%GreenF(iv,ikp,1,:)),&
+&                Green_F_convoluted,Xen%GreenF_n_E_steps)
+   !
+! GreenF, real(Xw%p), Xw%n(2))
+   GreenF=(0.,0.)
+   !
+!   call Kramers_Kronig(Green_F_convoluted, real(Xen%GreenF_W(iv,ikp,1,:)),Xen%GreenF_n_E_steps,&
+!&                      )
+   !
+   deallocate(Green_F_convoluted)
+   !
+   return
+   !
+ endif
+ !
+#endif
+ !
  !
  W_=0.
  Z_=(1.,0.)
@@ -66,10 +95,10 @@ subroutine X_bare_RIM_Gf(iq,transitions,fr,Xw,Xen,Xk,Gf,ordering)
    pole=Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin)+(0.,1.)*W_
    !
    do iw=fr(1),fr(2)
-     if (ordering=="t") Gf(iw-fr(1)+1)=Z_*(1./(Xw%p(iw)-pole)-1./(conjg(Xw%p(iw))+pole))
-     if (ordering=="c") Gf(iw-fr(1)+1)=Z_*(1./(Xw%p(iw)-pole)-1./(Xw%p(iw)+pole))
-     if (ordering=="r") Gf(iw-fr(1)+1)=Z_/(Xw%p(iw)-pole)
-     if (ordering=="a") Gf(iw-fr(1)+1)=           -Z_/(conjg(Xw%p(iw))+pole)
+     if (ordering=="t") GreenF(iw-fr(1)+1)=Z_*(1./(Xw%p(iw)-pole)-1./(conjg(Xw%p(iw))+pole))
+     if (ordering=="c") GreenF(iw-fr(1)+1)=Z_*(1./(Xw%p(iw)-pole)-1./(Xw%p(iw)+pole))
+     if (ordering=="r") GreenF(iw-fr(1)+1)=Z_/(Xw%p(iw)-pole)
+     if (ordering=="a") GreenF(iw-fr(1)+1)=           -Z_/(conjg(Xw%p(iw))+pole)
    enddo
    !
    return
@@ -78,7 +107,7 @@ subroutine X_bare_RIM_Gf(iq,transitions,fr,Xw,Xen,Xk,Gf,ordering)
  !
  ! GPL_EXCLUDE_START
  !
- ! In the X_o loop the Gf is multiplied by 
+ ! In the X_o loop the GreenF is multiplied by 
  !
  !  f0fac/spin_occ/real(Xk%nbz)/DL_vol
  !
@@ -99,13 +128,13 @@ subroutine X_bare_RIM_Gf(iq,transitions,fr,Xw,Xen,Xk,Gf,ordering)
      !
      do iw=fr(1),fr(2)
        !
-       if (ordering=="t") Gf(iw-fr(1)+1)=Gf(iw-fr(1)+1)+&
+       if (ordering=="t") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)+&
 &                         ffac/(Xw%p(iw)-pole)-ffac/(conjg(Xw%p(iw))+pole)
-       if (ordering=="c") Gf(iw-fr(1)+1)=Gf(iw-fr(1)+1)+&
+       if (ordering=="c") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)+&
 &                         ffac/(Xw%p(iw)-pole)-ffac/(Xw%p(iw)+pole)
-       if (ordering=="r") Gf(iw-fr(1)+1)=Gf(iw-fr(1)+1)+&
+       if (ordering=="r") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)+&
 &                         ffac/(Xw%p(iw)-pole)
-       if (ordering=="a") Gf(iw-fr(1)+1)=Gf(iw-fr(1)+1)&
+       if (ordering=="a") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)&
 &                                                -ffac/(conjg(Xw%p(iw))+pole)
      enddo
      !
@@ -125,13 +154,13 @@ subroutine X_bare_RIM_Gf(iq,transitions,fr,Xw,Xen,Xk,Gf,ordering)
 &         real(BZ_RIM_nkpt(ikbz))/real(BZ_RIM_nkpt(ikpbz))/f0fac
        !
        do iw=fr(1),fr(2)
-         if (ordering=="t") Gf(iw-fr(1)+1)=Gf(iw-fr(1)+1)+&
+         if (ordering=="t") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)+&
 &                           ffac/(Xw%p(iw)-pole)-ffac/(conjg(Xw%p(iw))+pole)
-         if (ordering=="c") Gf(iw-fr(1)+1)=Gf(iw-fr(1)+1)+&
+         if (ordering=="c") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)+&
 &                           ffac/(Xw%p(iw)-pole)-ffac/(Xw%p(iw)+pole)
-         if (ordering=="r") Gf(iw-fr(1)+1)=Gf(iw-fr(1)+1)+&
+         if (ordering=="r") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)+&
 &                           ffac/(Xw%p(iw)-pole)
-         if (ordering=="a") Gf(iw-fr(1)+1)=Gf(iw-fr(1)+1)&
+         if (ordering=="a") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)&
 &                                                  -ffac/(conjg(Xw%p(iw))+pole)
        enddo
        !

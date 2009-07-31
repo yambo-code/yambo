@@ -24,7 +24,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use pars,          ONLY:SP,IP,pi
  use units,         ONLY:HARTREE
  use memory_m,      ONLY:mem_est
- use drivers,       ONLY:l_life,l_ppa,l_el_corr,l_ph_corr,l_chosex
+ use drivers,       ONLY:l_life,l_ppa,l_el_corr,l_ph_corr,l_chosex,Finite_Tel
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:real2ch
  use R_lattice,     ONLY:bz_samp
@@ -35,11 +35,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use QP_m,          ONLY:QP_t,QP_dSc,QP_dSc_steps,QP_Vxc,QP_Sc,QP_solver,QP_table,&
 &                        QP_Sx,QP_n_states,QP_nb,&
 &                        QP_nk,QP_state,QP_dSc_test,QP_reset,&
-&                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_G,QP_W_partially_done,&
+&                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_W_partially_done,&
 &                        GWo_iterations,CHOSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
-&                        Force_Newton_QP
+&                        Force_Newton_QP,GF_is_causal
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE
- use global_XC,     ONLY:QP_DB_kind,SE_CHOSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo   
+ use global_XC,     ONLY:QP_DB_kind,SE_CHOSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON
  implicit none
  type(levels) ::en,Xen
  type(bz_samp)::Xk,k,q
@@ -137,7 +137,13 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    ! GPL_EXCLUDE_START
    !
    qp%description(2)=' == Real Axis GW =='
-   QP_DB_kind=SE_GoWo_PPA
+   !
+   ! Here I am not considering the case where ELPH + GW is used.
+   ! For this case I need to create a new global KIND.
+   !
+   QP_DB_kind=SE_GoWo
+   if (l_ph_corr) QP_DB_kind=SE_POLARON 
+   !
    if ( GWo_iterations > 0 ) QP_DB_kind=SE_GWo_PPA
    !
    ! GPL_EXCLUDE_END
@@ -193,34 +199,37 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  enddo
  !
  if (.not.l_life) then
-   !
-   ! QP I/O
-   !
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
-   io_err=ioQP('QP',qp,ID)
-   if (io_err==0.and.trim(QP_solver)/='g') then
-     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
+   if (.not.trim(QP_solver)=='g'.or.use_GreenF_to_eval_QP) then
+     !
+     ! QP I/O
+     !
+     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
      io_err=ioQP('QP',qp,ID)
-     call QP_report_and_write(k,qp,en,io_err)
-     call local_free()
-     return
-   endif
-   !
-   ! Sigma_C I/O & Green's Function
-   !
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
-   io_err=ioQP('G',qp,ID)
-   if (io_err==0) then
-     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
-     io_err=ioQP('G',qp,ID)
-     call QP_Green_Function(qp,en,io_err) 
-     if (use_GreenF_to_eval_QP) then
-       call QP_report_and_write(k,qp,en,-1)
-     else
+     if (io_err==0.and.trim(QP_solver)/='g') then
+       call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
+       io_err=ioQP('QP',qp,ID)
        call QP_report_and_write(k,qp,en,io_err)
+       call local_free()
+       return
      endif
-     call local_free()
-     return
+   else
+     !
+     ! Sigma_C I/O & Green's Function
+     !
+     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
+     io_err=ioQP('G',qp,ID)
+     if (io_err==0) then
+       call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
+       io_err=ioQP('G',qp,ID)
+       call QP_Green_Function(qp,en,io_err) 
+       if (use_GreenF_to_eval_QP) then
+         call QP_report_and_write(k,qp,en,-1)
+       else
+         call QP_report_and_write(k,qp,en,io_err)
+       endif
+       call local_free()
+       return
+     endif
    endif
    !
  endif
@@ -259,6 +268,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! GPL_EXCLUDE_START 
  !
  if (trim(QP_solver)=='g') then
+   !
+   GF_is_causal=Finite_Tel.or.l_ph_corr
    !
    if (l_el_corr.and.(.not.l_ppa.and..not.l_chosex)) call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
    !
@@ -308,7 +319,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
      call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table",&
 &        (/QP_n_states,QP_n_states,QP_n_states,3*qp%nk,QP_n_states*(3+n_sp_pol-1)/),&
 &        (/2*SP,       2*SP,       SP,         SP,           IP/))
-     !
      qp%table=QP_table
      qp%E=0.
      !
@@ -319,13 +329,16 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
      if (.not.l_life.and.QP_dSc_test) QP_dSc_steps=3
      !
      allocate(QP_Sc(QP_n_states,QP_Sc_steps))
-     call mem_est("QP_Sc",(/size(QP_G)/))
+     call mem_est("QP_Sc",(/size(QP_Sc)/))
      !
      if (trim(QP_solver)=='g') then
-       allocate(QP_G(QP_n_states,QP_Sc_steps))
-       call mem_est("QP_G",(/size(QP_G)/))
+       allocate(qp%GreenF(QP_n_states,QP_Sc_steps))
+       call mem_est("qp_GreenF",(/size(qp%GreenF)/))
        allocate(qp%S_total(QP_n_states,QP_Sc_steps))
        call mem_est("qp_S_total",(/size(qp%S_total)/))
+       allocate(qp%GreenF_W(QP_n_states,QP_Sc_steps))
+       call mem_est("qp_GreenF_W",(/size(qp%GreenF_W)/))
+       qp%GreenF_n_steps=QP_Sc_steps
      else if (.not.l_life) then
        allocate(QP_dSc(qp%n_states,QP_dSc_steps-1))
        call mem_est("QP_dSc",(/size(QP_dSc)/))
@@ -335,12 +348,13 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    subroutine local_free()
      deallocate(qp%Z,qp%E,qp%E_bare,qp%k,qp%table,QP_table,QP_state)
-     if (allocated(QP_Sc))  deallocate(QP_Sc)
-     if (allocated(QP_dSc)) deallocate(QP_dSc)
-     if (allocated(QP_G))   deallocate(QP_G)
-     if (allocated(QP_Sx))  deallocate(QP_Sx,QP_Vxc)
+     if (allocated(QP_Sc))       deallocate(QP_Sc)
+     if (allocated(QP_dSc))      deallocate(QP_dSc)
+     if (allocated(QP_Sx))       deallocate(QP_Sx,QP_Vxc)
+     if (associated(qp%GreenF))   nullify(qp%GreenF)
+     if (associated(qp%GreenF_W)) nullify(qp%GreenF_W)
      if (associated(qp%S_total))  nullify(qp%S_total)
-     call mem_est("QP_Sc QP_dSc QP_G QP_Sx QP_Vxc")
+     call mem_est("QP_Sc QP_dSc qp_GreenF QP_Sx QP_Vxc qp_GreenF_W")
      call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table QP_table QP_state qp_S_total")
    end subroutine
    !

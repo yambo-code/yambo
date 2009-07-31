@@ -54,7 +54,7 @@ module X_m
  integer ,    allocatable :: X_poles_tab(:,:)
  integer ,    allocatable :: X_RLcomp_ig(:)
  complex(SP), allocatable :: X_mat(:,:,:)
- integer :: iq_now
+ integer :: current_iq
  integer :: X_RIM_nkpts
  logical :: half_X_mat_only
  logical :: self_detect_E_range

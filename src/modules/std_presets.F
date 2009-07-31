@@ -25,7 +25,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use pars,       ONLY:SP
  use units,      ONLY:HARTREE,FS2AUT
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
- use X_m,        ONLY:iq_now,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
+ use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                      alpha_dim,use_X_RIM,long_path,X_RIM_nkpts,Dipole_bands_ordered,&
 &                      eval_alpha,Vnl_commutator_warning,Eval_P_and_P2_only
  use QP_m,       ONLY:QP_rep_string,QP_dSc_steps,QP_n_W_freqs,&
@@ -45,9 +45,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     cutoff_presets
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_RIM_nbands,BZ_RIM_tot_nkpts,&
 &                     filled_tresh, spin_orbit
-#if defined _DIPOLE_RIM
- use electrons,  ONLY:l_dipole_RIM
-#endif
  use par_proc_m, ONLY:myid,master_cpu,ncpu,n_nodes
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,&
 &                     of_unit,write_to_of,write_to_report,max_open_ofs,&
@@ -245,9 +242,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  BZ_RIM_nbands=0
  BZ_RIM_tot_nkpts=0
  filled_tresh=0.00001
-#if defined _DIPOLE_RIM
- l_dipole_RIM=.false.
-#endif
  !
  !memory
  !
@@ -284,7 +278,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  !X
  !
- iq_now=0
+ current_iq=0
  X_RIM_nkpts=0
  self_detect_E_range=.false.
  half_X_mat_only=.false.

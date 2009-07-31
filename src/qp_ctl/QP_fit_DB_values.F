@@ -19,13 +19,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_apply_fit(band_range,qp,en,QP_ctl,what)
+subroutine QP_fit_DB_values(band_range,qp,en,QP_ctl,what)
  !
  ! Performs a linear fit of the QP corrections in the database
  ! that will be passed to the QP_apply_stretch routine driven by
- ! the mod_QP_CTL module Performs a linear fit of the QP corrections in the database
- ! that will be passed to the QP_apply_stretch routine driven by
- ! the mod_QP_CTL module.
+ ! the mod_QP_CTL module
  !
  use pars,          ONLY:SP,schlen
  use com,           ONLY:warning

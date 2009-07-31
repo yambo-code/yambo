@@ -33,7 +33,7 @@ subroutine V_exx(X,E,k,q,Vexx)
  !
  use pars,            ONLY:SP,DP
  use D_lattice,       ONLY:DL_vol,i_time_rev,sop_inv,nsym,i_space_inv
- use X_m,             ONLY:X_t, X_alloc,X_mat,X_poles_tab,iq_now 
+ use X_m,             ONLY:X_t, X_alloc,X_mat,X_poles_tab,current_iq 
  use electrons,       ONLY:levels
  use R_lattice,       ONLY:bz_samp,g_rot,nkibz,nkbz
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan
@@ -203,6 +203,6 @@ subroutine V_exx(X,E,k,q,Vexx)
  if (allocated(rg_index_bg)) deallocate(rg_index_bg)
  deallocate(X_poles_tab,bg_npts,cg_pt,cg_index_bg)
  call mem_est("X_poles_tab RGi BGn CGp CGi")
- iq_now=0
+ current_iq=0
  !
 end subroutine V_exx

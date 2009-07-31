@@ -30,20 +30,21 @@ integer function ioQP(what,qp,ID)
  use QP_m,           ONLY:QP_t,QP_state,QP_nk,QP_nb,QP_G_dr,&
 &                         QP_n_G_bands,QP_n_states,QP_W,QP_G_er,&
 &                         QP_n_W_freqs,QP_W_dr,QP_W_er,QP_W_partially_done,&
-&                         GWo_iterations,QP_solver,QP_Sc_steps,QP_Sc
+&                         GWo_iterations,QP_solver,GF_is_causal
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
 &                         write_is_on,io_mode,DUMP,VERIFY,&
 &                         io_fragment,io_check_restart,io_restart,&
 &                         io_netcdf_support,ver_is_gt_or_eq,&
 &                         db_alat,variable_is_found
- use global_XC,      ONLY:QP_DB_kind,SE_GoWo,SE_GWo,SE_GoWo_PPA,SE_GWo_PPA,SE_CHOSEX,SE_NONE
+ use global_XC,      ONLY:QP_DB_kind,SE_GoWo,SE_GWo,SE_GoWo_PPA,SE_GWo_PPA,SE_CHOSEX,SE_NONE,&
+&                         SE_POLARON
  use com,            ONLY:warning
  !
  implicit none
  type(QP_t)  ::qp
  character(*)::what 
- !             'QP'/'W'
+ !             'QP'/'W'/'G'/filename
  integer     ::ID
  !
  ! Work Space
@@ -69,6 +70,11 @@ integer function ioQP(what,qp,ID)
  if (any((/io_sec(ID,:)==1/))) then
    ! 
    if (what/="W") then
+     !
+     ! except for db.W all other DBs written by this routine can be
+     ! reload to apply QP corrections. In this case QP_DB_kind must be 
+     ! present to be transferred in the energy type by mod_qp_ctl
+     !
      if (variable_is_found(ID,"QP_DB_kind")==1.or.write_is_on(ID)) then
        call io_elemental(ID,VAR="QP_DB_kind",VAR_SZ=1,MENU=0)
        call io_elemental(ID,I0=QP_DB_kind)
@@ -84,7 +90,12 @@ integer function ioQP(what,qp,ID)
      ioQP=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,&
 &                   D_LATT=.true.,XC_KIND="Xd")
    else
-     select case (QP_DB_KIND)
+     !
+     ! QP_DB_kind points to the "type" of self-energy. This is used
+     ! to report about XC kind of the components of the self-energy here
+     ! and it is also later transfered to the G/X .. global kinds in mod_qp_ctl.
+     !
+     select case (QP_DB_kind)
        case(0,SE_NONE)
          ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.)
        case(SE_CHOSEX)
@@ -93,13 +104,14 @@ integer function ioQP(what,qp,ID)
          ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xp")
        case(SE_GoWo,SE_GWo)
          ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xd")
+       case(SE_POLARON)
+         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G")
      end select
    endif
    if (ioQP/=0) goto 1
    !
    var_size=4
    if (what/="W".and.ver_is_gt_or_eq(ID,(/3,0,1/))) var_size=5 
-   if (what=="G") var_size=6 
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=var_size,MENU=0)
    !
@@ -119,17 +131,24 @@ integer function ioQP(what,qp,ID)
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   if (what=="G") then
+   ! GPL_EXCLUDE_START
+   !
+   if (index(what,".G")/=0.or.what=="G") then
      !
      ! Tough the GF's parameters are already stored in the QP_descriptions
      ! I need then on-fly to, eventually, rebuild the Green's function
      !
-     call io_elemental(ID,VAR="SE_OPERATOR_PARAMETERS",VAR_SZ=5,MENU=0)
-     call io_elemental(ID,I0=QP_Sc_steps)
+     call io_elemental(ID,VAR="SE_OPERATOR_PARAMETERS",VAR_SZ=6,MENU=0)
+     call io_elemental(ID,I0=qp%GreenF_n_steps)
      call io_elemental(ID,R1=QP_G_er)
      call io_elemental(ID,R1=QP_G_dr)
+     call io_elemental(ID,L0=GF_is_causal)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     !
    endif
+   !
+   ! GPL_EXCLUDE_END
+   !
  endif
  !
  if (any((/io_sec(ID,:)==2/))) then
@@ -261,7 +280,7 @@ integer function ioQP(what,qp,ID)
      enddo
    endif
    !
-   if (what=="QP") then
+   if (index(what,".QP")/=0.or.what=="QP") then
      !
      ! QP corrections 
      !
@@ -296,34 +315,55 @@ integer function ioQP(what,qp,ID)
      !
    endif
    !
-   if (what=="G") then
+   ! GPL_EXCLUDE_START
+   !
+   if (index(what,".G")/=0.or.what=="G") then
      !
-     ! Green Functions 
+     allocate(qp_DATA_disk(qp%n_states,qp%GreenF_n_steps,6))
      !
-     allocate(qp_DATA_disk(qp%n_states,QP_Sc_steps,2))
+     ! Real axis Self Energy & Green Function 
+     !=========================================
      !
      if (write_is_on(ID)) then
        do i1=1,qp%n_states
          qp_DATA_disk(i1,:,1)=real(qp%S_total(i1,:))
          qp_DATA_disk(i1,:,2)=aimag(qp%S_total(i1,:))
+         qp_DATA_disk(i1,:,3)=real(qp%GreenF(i1,:))
+         qp_DATA_disk(i1,:,4)=aimag(qp%GreenF(i1,:))
+         qp_DATA_disk(i1,:,5)=real(qp%GreenF_W(i1,:))
+         qp_DATA_disk(i1,:,6)=aimag(qp%GreenF_W(i1,:))
        enddo
      endif
      !
-     call io_bulk(ID,VAR="SE_Operator",VAR_SZ=(/qp%n_states,QP_Sc_steps,2/))
-     !
-     call io_bulk(ID,R3=qp_DATA_disk)
+     call io_bulk(ID,VAR="SE_Operator",VAR_SZ=(/qp%n_states,qp%GreenF_n_steps,2/))
+     call io_bulk(ID,R3=qp_DATA_disk(:,:,1:2))
+     call io_bulk(ID,VAR="Green_Functions",VAR_SZ=(/qp%n_states,qp%GreenF_n_steps,2/))
+     call io_bulk(ID,R3=qp_DATA_disk(:,:,3:4))
+     call io_bulk(ID,VAR="Green_Functions_Energies",VAR_SZ=(/qp%n_states,qp%GreenF_n_steps,2/))
+     call io_bulk(ID,R3=qp_DATA_disk(:,:,5:6))
      !
      if (read_is_on(ID)) then
-       allocate(qp%S_total(qp%n_states,QP_Sc_steps))
+       allocate(qp%S_total(qp%n_states,qp%GreenF_n_steps))
        call mem_est("qp_S_total",(/size(qp%S_total)/))
+       allocate(qp%GreenF(qp%n_states,qp%GreenF_n_steps))
+       call mem_est("qp_GreenF",(/size(qp%GreenF)/))
+       allocate(qp%GreenF_W(qp%n_states,qp%GreenF_n_steps))
+       call mem_est("qp_GreenF_W",(/size(qp%GreenF_W)/))
        do i1=1,qp%n_states
          qp%S_total(i1,:) =cmplx(qp_DATA_disk(i1,:,1),qp_DATA_disk(i1,:,2),SP)
+         qp%GreenF(i1,:)  =cmplx(qp_DATA_disk(i1,:,3),qp_DATA_disk(i1,:,4),SP)
+         qp%GreenF_W(i1,:)=cmplx(qp_DATA_disk(i1,:,5),qp_DATA_disk(i1,:,6),SP)
        enddo
      endif
+     !
+     deallocate(qp_DATA_disk)
+     !
    endif
    !
    ioQP=io_status(ID)
    if (ioQP/=0) goto 1
+   !
+   ! GPL_EXCLUDE_END
    !
  endif
  !

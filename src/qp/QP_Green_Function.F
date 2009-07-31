@@ -21,12 +21,12 @@
 !
 subroutine QP_Green_Function(qp,E,QPdb_read_err)
  !
- use drivers,       ONLY:l_ph_corr,Finite_Tel
+ use drivers,       ONLY:l_ph_corr
  use pars,          ONLY:SP
  use units,         ONLY:HARTREE
- use QP_m,          ONLY:QP_G,QP_t,QP_Sc,QP_Sx,QP_Vxc,QP_table,&
+ use QP_m,          ONLY:QP_t,QP_Sc,QP_Sx,QP_Vxc,QP_table,&
 &                        QP_n_states,use_GreenF_to_eval_QP,QP_Sc_steps,QP_G_dr,&
-&                        QP_dSc_delta,Force_Newton_QP
+&                        QP_dSc_delta,Force_Newton_QP,GF_is_causal
  use electrons,     ONLY:spin,levels,spin_occ
  use frequency,     ONLY:w_samp,W_reset
  implicit none
@@ -48,15 +48,15 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
  ! The Green's function
  !
  call W_reset(W)
- W%n =QP_Sc_steps
- W%dr=QP_G_dr
+ W%n                =QP_Sc_steps
+ W%dr               =QP_G_dr
  !
  do iqp=1,QP_n_states
    !
    ! Frequency range
    !
    call FREQUENCIES_Green_Function(iqp,W,E%E)
-   QP_Sc_steps=W%n(1)
+   qp%GreenF_W(iqp,:)=W%p(:)
    !
    ! Bare energy
    !
@@ -76,7 +76,7 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
      !          G=\frac{1}{\omega-\epsilon_i+i\eta sign(\epsilon-\mu)}         
      !
      f_energy=conjg(W%p(iw))
-     if (Finite_Tel.or.l_ph_corr) f_energy=W%p(iw)
+     if (GF_is_causal)  f_energy=W%p(iw)
      !
      QP_Go=           E%f(ib,ik,i_spin)/(f_energy-Eo)/spin_occ+&
 &          (spin_occ-E%f(ib,ik,i_spin))/(W%p(iw) -Eo)/spin_occ  
@@ -90,7 +90,7 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
      endif
      !
      if ( band_is_metallic ) then
-       QP_G(iqp,iw)=QP_Go/(1.-QP_Go*qp%S_total(iqp,iw)) 
+       qp%GreenF(iqp,iw)=QP_Go/(1.-QP_Go*qp%S_total(iqp,iw)) 
      else
        !
        ! Andrea (20/7/2009): If the imaginary part of the self-energy
@@ -99,7 +99,7 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
        ! in case the band/k is not metallic I use an analytic QP_Go with 
        ! zero damping.
        !
-       QP_G(iqp,iw)=1./(real(W%p(iw))-Eo-qp%S_total(iqp,iw)) 
+       qp%GreenF(iqp,iw)=1./(real(W%p(iw))-Eo-qp%S_total(iqp,iw)) 
      endif
      !
    enddo
@@ -126,7 +126,7 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
        if (real(G_m1(iw))*real(G_m1(iw+1))<0.) then
          n_poles=n_poles+1
          Eqp(n_poles)=cmplx(real(W%p(iw)),aimag(qp%S_total(iqp,iw)))
-         R(n_poles)   =QP_G(iqp,iw)
+         R(n_poles)   =qp%GreenF(iqp,iw)
          beta(n_poles)=(qp%S_total(iqp,min(iw+nw_Dsc,W%n(1)))-qp%S_total(iqp,iw))/&
 &                      (real(W%p(min(iw+nw_Dsc,W%n(1)))-W%p(iw)))
        endif

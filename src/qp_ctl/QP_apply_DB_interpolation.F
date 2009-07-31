@@ -19,13 +19,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
-&                               DB_corrected,n_neigh)
+subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
+&                                    DB_corrected,n_neigh)
  !
  ! Using qp% elements (all must be defined) I QP correct
  ! the en type
  !
- ! l_qp=( E W Z Interp )
+ ! l_plan_todo_EWZI=( E W Z Interp )
  !
  use pars,          ONLY:SP
  use electrons,     ONLY:n_sp_pol,spin
@@ -40,7 +40,7 @@ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
  type(QP_t)  ::qp
  type(bz_samp)::k
  integer :: n_neigh,band_range(2),DB_corrected(en%nb,en%nk,n_sp_pol)
- logical :: l_qp(4),wrong_width_sign_warn
+ logical :: l_plan_todo_EWZI(4),wrong_width_sign_warn
  !
  ! Work Space
  !
@@ -87,7 +87,7 @@ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
    if (i_err==0.and.n_neigh==1) then
      call qp_transfer(k_near(1),i1,1)
      nk_exact=nk_exact+1
-   else if (l_qp(4)) then
+   else if (l_plan_todo_EWZI(4)) then
      call qp_transfer(k_near,i1,n_neigh)
      nk_interpolated=nk_interpolated+1
    endif
@@ -96,13 +96,13 @@ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
  !
  call msg('r','[QP] Kpts covered exactly  [o/o]:',&
 &              real(nk_exact)/real(k%nibz)*100._SP)
- if (l_qp(4).and.nk_interpolated>0) then
+ if (l_plan_todo_EWZI(4).and.nk_interpolated>0) then
    call msg('r','[Interpolate] Nighbours         :',n_neigh)
    call msg('r','[Interpolate] Kpts covered [o/o]:',&
 &               real(nk_interpolated)/real(k%nibz)*100._SP)
  endif
  !
- if (all(DB_corrected(band_range(1):band_range(2),:,:)==1)) l_qp(:3)=.false.
+ if (all(DB_corrected(band_range(1):band_range(2),:,:)==1)) l_plan_todo_EWZI(:3)=.false.
  !
  QP_ctl_applied=.true.
  !
@@ -120,7 +120,7 @@ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
      real(SP)   :: Dl(band_range(2),n_sp_pol),Wl(band_range(2),n_sp_pol)
      complex(SP):: Zl(band_range(2),n_sp_pol)
      integer    :: i3,i4,bqp
-     logical    :: QP_apply_done
+     logical    :: QP_check_if_corrected
      !
      Dl=0.
      Wl=0.
@@ -135,9 +135,9 @@ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
          !
          if (bqp<band_range(1).or.bqp>band_range(2)) cycle
          !
-         if (l_qp(1)) Dl(bqp,i_spin)=Dl(bqp,i_spin)+real(qp%E(i3)-qp%E_bare(i3))
+         if (l_plan_todo_EWZI(1)) Dl(bqp,i_spin)=Dl(bqp,i_spin)+real(qp%E(i3)-qp%E_bare(i3))
          !
-         if (l_qp(2).and.real(qp%E(i3))>0..and.aimag(qp%E(i3))>0) then
+         if (l_plan_todo_EWZI(2).and.real(qp%E(i3))>0..and.aimag(qp%E(i3))>0) then
            if (.not.wrong_width_sign_warn) call warning(' Wrong QP width sign fixed')
            Wl(bqp,i_spin)=Wl(bqp,i_spin)-aimag(qp%E(i3))
            wrong_width_sign_warn=.true.
@@ -145,16 +145,16 @@ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
            Wl(bqp,i_spin)=Wl(bqp,i_spin)+aimag(qp%E(i3))
          endif
          !
-         if (l_qp(3)) Zl(bqp,i_spin)=Zl(bqp,i_spin)+qp%Z(i3)
+         if (l_plan_todo_EWZI(3)) Zl(bqp,i_spin)=Zl(bqp,i_spin)+qp%Z(i3)
        enddo
      enddo
      do i3=band_range(1),band_range(2)
-       if (l_qp(1)) then
+       if (l_plan_todo_EWZI(1)) then
          !
          if (any(Dl(i3,:)==0._SP)) cycle
          do i_spin=1,n_sp_pol
            !
-           if (QP_apply_done((/i3,i3/),(/ik,ik/),(/i_spin,i_spin/),en,'E')) cycle
+           if (QP_check_if_corrected((/i3,i3/),(/ik,ik/),(/i_spin,i_spin/),en,'E')) cycle
            !
            en%E(i3,ik,i_spin)=en%Eo(i3,ik,i_spin)+Dl(i3,i_spin)/real(n_neigh_)
            !
@@ -163,13 +163,13 @@ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
          DB_corrected(i3,ik,:)=1
          !
        endif
-       if (l_qp(2)) then
+       if (l_plan_todo_EWZI(2)) then
          !
          if (any(Wl(i3,:)==0._SP)) cycle
          !
          do i_spin=1,n_sp_pol
            !
-           if (QP_apply_done((/i3,i3/),(/ik,ik/),(/i_spin,i_spin/),en,'W')) cycle
+           if (QP_check_if_corrected((/i3,i3/),(/ik,ik/),(/i_spin,i_spin/),en,'W')) cycle
            !
            en%W(i3,ik,i_spin)=Wl(i3,i_spin)/real(n_neigh_)
            !
@@ -178,13 +178,13 @@ subroutine QP_apply_interpolate(band_range,qp,en,k,l_qp,&
          DB_corrected(i3,ik,:)=1
          !
        endif
-       if (l_qp(3)) then
+       if (l_plan_todo_EWZI(3)) then
          !
          if (any(Zl(i3,:)==(0._SP,0._SP))) cycle
          !
          do i_spin=1,n_sp_pol
            !
-           if (QP_apply_done((/i3,i3/),(/ik,ik/),(/i_spin,i_spin/),en,'Z')) cycle
+           if (QP_check_if_corrected((/i3,i3/),(/ik,ik/),(/i_spin,i_spin/),en,'Z')) cycle
            !
            en%Z(i3,ik,i_spin)=Zl(i3,i_spin)/real(n_neigh_)
            !

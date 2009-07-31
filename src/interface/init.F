@@ -438,10 +438,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
    !
-#if defined _DIPOLE_RIM
-   if (l_optics.and.l_chi) call initactivate(1,'DoDipole')
-#endif
-   !
  endif
  !
  ! BSE 

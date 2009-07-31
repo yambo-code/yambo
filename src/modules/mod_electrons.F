@@ -55,13 +55,23 @@ module electrons
    integer         :: bf
    integer         :: kf
    integer         :: sf
+   real(SP)        :: Efermi(3)
+   !
+   ! QP corrections
+   !
    integer,pointer :: QP_corrected(:,:,:)
-   real(SP)            :: Efermi(3)
    real(SP),   pointer :: E(:,:,:)
    real(SP),   pointer :: Eo(:,:,:)
    real(SP),   pointer :: f(:,:,:)
    real(SP),   pointer :: W(:,:,:)
    complex(SP),pointer :: Z(:,:,:)
+   !
+   ! Green Functions
+   !
+   logical             :: GreenF_is_causal
+   integer             :: GreenF_n_E_steps
+   complex(SP),pointer :: GreenF_W(:,:,:,:)
+   complex(SP),pointer :: GreenF(:,:,:,:)
    ! 
    ! Fine energy grid
    !  
@@ -77,10 +87,6 @@ module electrons
  integer  :: BZ_RIM_nbands
  integer ,allocatable :: BZ_RIM_nkpt(:)
  integer ,allocatable :: BZ_RIM_table(:,:)
- !
-#if defined _DIPOLE_RIM
- logical  :: l_dipole_RIM
-#endif
  !
  contains
    !
@@ -159,8 +165,10 @@ module electrons
      E%nbm=0
      E%bf=0
      E%kf=0 
-     nullify(E%E,E%Eo,E%Z,E%W,E%f,E%QP_corrected)
-     call mem_est("E-E E-Eo E-f E-W E-Z E-QP_corrected")
+     E%GreenF_n_E_steps=0 
+     E%GreenF_is_causal=.FALSE. 
+     nullify(E%E,E%Eo,E%Z,E%W,E%f,E%QP_corrected,E%GreenF,E%GreenF_W)
+     call mem_est("E-E E-Eo E-f E-W E-Z E-QP_corrected E-GreenF E-GreenF_W")
      !
      nullify(E%E_RIM,E%f_RIM)
      call mem_est("E_RIM f_RIM")

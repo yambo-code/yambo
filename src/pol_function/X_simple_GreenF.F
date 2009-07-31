@@ -19,17 +19,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-function X_Gf(W,pole,ordering)
+function X_simple_GreenF(W,pole,ordering)
  !
  use pars, ONLY:SP
  implicit none
  real(SP)     ::pole
- complex(SP)  ::W,X_Gf
+ complex(SP)  ::W,X_simple_GreenF
  character(*) ::ordering
  !
- if (ordering=="t") X_Gf=1./(W-pole)-1./(conjg(W)+pole)
- if (ordering=="c") X_Gf=1./(W-pole)-1./(W+pole)       
- if (ordering=="r") X_Gf=1./(W-pole)                   
- if (ordering=="a") X_Gf=           -1./(conjg(W)+pole)
+ if (ordering=="t") X_simple_GreenF=1./(W-pole)-1./(conjg(W)+pole)
+ if (ordering=="c") X_simple_GreenF=1./(W-pole)-1./(W+pole)       
+ if (ordering=="r") X_simple_GreenF=1./(W-pole)                   
+ if (ordering=="a") X_simple_GreenF=           -1./(conjg(W)+pole)
  !
 end function

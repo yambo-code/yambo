@@ -24,12 +24,7 @@ module QP_CTL_m
  use pars,  ONLY:SP,schlen,IP
  use units, ONLY:HARTREE
  !
- ! Global logicals for QP DB I/O
- !
- logical      :: load_E
- logical      :: load_W
- logical      :: load_Z
- logical      :: load_Green
+ implicit none
  !
  ! QP Pars
  !
@@ -63,7 +58,6 @@ module QP_CTL_m
  contains
    !
    subroutine reset_QP_ctl(QP_ctl)
-     implicit none
      type(QP_ctl_t)::QP_ctl
      QP_ctl%db="none"
      QP_ctl%E=(/0.,1.,0.,1./)
@@ -84,10 +78,10 @@ module QP_CTL_m
      !
      ! scheme
      !::::::::
-     ! |_ qp_apply_db
-     ! |      |_ qp_apply_interpolate 
-     ! |      |_ qp_apply_fit 
-     ! |_ qp_apply_stretch
+     ! |_ qp_load_DB
+     ! |      |_ qp_apply_DB_interpolation
+     ! |      |_ qp_fit_DB_values
+     ! |_ qp_apply_global_stretch
      ! |_ (if X or K) fermi_level
      !
      ! Eid
@@ -108,7 +102,6 @@ module QP_CTL_m
      use global_XC,     ONLY:setup_global_XC,MORE_SCISSOR,MORE_SCIS_AND_STRE,MORE_STRETCH,&
 &                            K_kind,K_xc_functional,MORE_NONE,G_kind,G_xc_functional,&
 &                            X_kind,X_xc_functional,QP_DB_kind,SE_NONE
-     implicit none
      integer       ::Eid,band_range(2)
      type(levels)  ::en
      type(bz_samp) ::k
@@ -122,13 +115,13 @@ module QP_CTL_m
      type(QP_t)       ::qp
      type(QP_ctl_t)   ::QP_ctl_from_DB(n_sp_pol),QP_ctl_input_or_impose(n_sp_pol)
      integer          ::DB_corrected(en%nb,en%nk,n_sp_pol),ik_bz,ik_ibz,ib,i1,&
-&                       ik_r,SE_MORE,i_spin,QP_apply_db_err
+&                       ik_r,SE_MORE,i_spin,QP_load_DB_err
      character(schlen)::ch
      character(1)     ::what
      character(11)    ::spin_ch(2)
-     logical          ::is_def(4)
+     logical          ::is_def(4),GFs_from_DB
      integer, allocatable :: RIM_k_done(:)
-     integer, external    :: QP_apply_db
+     integer, external    :: QP_load_DB
      !
      ! Resets
      !
@@ -190,16 +183,16 @@ module QP_CTL_m
      !
      ! NOW I HAVE DIFFERENT OPTIONS ... 
      !
-     ! 1] I am using the input file QP correctins (contained in the qp_impose type)
+     ! 1] I am using the input file specifed QP corrections (contained in the qp_impose type)
      !
      if (.not.present(qp_impose).and..not.present(QP_ctl_impose)) then
        !
        QP_ctl_from_DB(:)%db=QP_ctl_db(Eid)
-       QP_apply_db_err=QP_apply_db(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,DB_corrected)
+       QP_load_DB_err=QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,DB_corrected,GFs_from_DB)
        !
        ! Update QP db kind in the global_XC kinds 
        !
-       if (QP_DB_kind/=SE_NONE.and.QP_apply_db_err>0) then
+       if (QP_DB_kind/=SE_NONE.and.QP_load_DB_err>0) then
          if (Eid==1) X_kind=QP_DB_kind
          if (Eid==2) K_kind=QP_DB_kind
          if (Eid==3) G_kind=QP_DB_kind
@@ -242,8 +235,8 @@ module QP_CTL_m
      !
      ! 2] I am imposing a qp_impose that contains qp corrections
      !
-     if (present(qp_impose)) QP_apply_db_err=QP_apply_db(band_range,en,k,qp_impose,&
-&                                                        QP_ctl_from_DB,msg_fmt,DB_corrected)
+     if (present(qp_impose)) QP_load_DB_err=QP_load_DB(band_range,en,k,qp_impose,&
+&                                                      QP_ctl_from_DB,msg_fmt,DB_corrected,GFs_from_DB)
      !
      ! GPL_EXCLUDE_END
      !
@@ -261,13 +254,16 @@ module QP_CTL_m
      !
      call QP_apply_stretch(band_range,en,QP_ctl_from_DB,QP_ctl_input_or_impose,DB_corrected)
      !
+     ! Fermi Level Updates
+     !=====================
+     !
      ! X/K -> Fermi Level Update
      !
-     if (Eid<3) then
+     if (Eid<3.and.associated(en%Eo)) then
        !
        ! GPL_EXCLUDE_START
        !
-       if (associated(en%E_RIM).and.associated(en%Eo)) then
+       if (associated(en%E_RIM)) then
          !
          allocate(RIM_k_done(BZ_RIM_tot_nkpts))
          RIM_k_done=0
@@ -302,7 +298,7 @@ module QP_CTL_m
      ! G -> Fermi Level Update... but using the levels cooresponding to
      ! the K-points of the X grid !
      !
-     if (Eid==3) then
+     if (Eid==3.and.associated(en%Eo)) then
        !
        Fermi_en%nb=en%nb
        Fermi_en%nk=nXkibz
@@ -315,6 +311,11 @@ module QP_CTL_m
        !
        nullify(Fermi_en%E)
      endif
+     !
+     ! CLEAN
+     !
+     call QP_reset(qp)
+     call E_Reset(Fermi_en)
      !
      if (.not.QP_ctl_applied) return
      !

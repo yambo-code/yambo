@@ -217,8 +217,13 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        !
        !
        call msg('o eps eel alpha','#')
-       call msg('o eps eel alpha','# ','- Energies      are '//trim(X_E_xc_string(4)),INDENT=0)
+       if (associated(Xen%GreenF)) then
+         call msg('o eps eel alpha','# ','- G. Functions  are '//trim(X_E_xc_string(4)),INDENT=0)
+       else
+         call msg('o eps eel alpha','# ','- Energies      are '//trim(X_E_xc_string(4)),INDENT=0)
+       endif
        call msg('o eps eel alpha','# ','- Wavefunctions are '//trim(X_WF_xc_string(4)),INDENT=0)
+       call msg('o eps eel alpha','# ')
        ch='- The Green`s function is T-ordered -'
        if (trim(X%ordering)=='a') ch='- The Green`s function is antiresonant -'
        if (trim(X%ordering)=='r') ch='- The Green`s function is resonant -'

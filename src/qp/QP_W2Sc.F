@@ -27,7 +27,7 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
  !
  use pars,          ONLY:SP
  use QP_m,          ONLY:QP_t,QP_W,QP_Sc,QP_n_states,QP_G_damp,QP_n_G_bands,&
-&                        QP_solver_state,QP_n_W_freqs,QP_solver,QP_G,QP_table
+&                        QP_solver_state,QP_n_W_freqs,QP_solver,QP_table
  use drivers,       ONLY:Finite_Tel
  use frequency,     ONLY:w_samp
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset

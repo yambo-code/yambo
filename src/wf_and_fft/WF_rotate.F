@@ -43,7 +43,6 @@ subroutine WF_rotate(ik,WFo,wf_size)
  integer     :: ib,ibp,ifft,ifftp,i_spin
  complex(SP) :: WS_wf(wf_size,wf_b(2))
  !
-
  do i_spin=1,n_sp_pol
    WS_wf=(0.,0.)
    !
@@ -63,5 +62,5 @@ subroutine WF_rotate(ik,WFo,wf_size)
    enddo
    !
  enddo
-
+ !
 end subroutine

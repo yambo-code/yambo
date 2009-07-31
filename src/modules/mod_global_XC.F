@@ -70,7 +70,8 @@ module global_XC
    SE_GoWo_PPA      = 402, &
    SE_GoWo          = 403, &
    SE_GWo_PPA       = 404, &
-   SE_GWo           = 405
+   SE_GWo           = 405, &
+   SE_POLARON       = 406
  !
  ! More Self-Energies
  integer, public, parameter :: &
@@ -180,6 +181,8 @@ module global_XC
          global_XC_string='GWo Plasmon Pole appox.'
        case(SE_GWo)
          global_XC_string='GWo on real axis'
+       case(SE_POLARON)
+         global_XC_string='Polarons'
      end select
      !
      ch_plus='+'

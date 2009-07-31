@@ -19,35 +19,26 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-logical function QP_apply_done(band_range,k_range,spin_range,en,what)
+subroutine Convolve(f,g,f_times_g,N)
  !
- ! (E) qp_done = 1 3 5 7
- ! (W) qp_done = 2 3 6 7
- ! (Z) qp_done = 4 5 6 7
- !
- use electrons,     ONLY:levels,n_sp_pol
+ use pars,    ONLY:SP
  implicit none
- type(levels) ::en
- integer      ::band_range(2),k_range(2),spin_range(2)
- character(1) ::what
- ! 
+ integer,     intent(in)  :: N
+ real(SP),    intent(in)  :: f(N),g(N)
+ complex(SP), intent(out) :: f_times_g(N)
+ !
  ! Work Space
  !
- integer :: i1,i2,i_sp,iref(4)
+ integer      :: K,J,L
  !
- QP_apply_done=.true.
- if (what=='E') iref=(/1,3,5,7/)
- if (what=='W') iref=(/2,3,6,7/)
- if (what=='Z') iref=(/3,5,6,7/)
- do i1=band_range(1),band_range(2)
-   do i2=k_range(1),k_range(2)
-     do i_sp=spin_range(1),spin_range(2)
-       if (en%QP_corrected(i1,i2,i_sp)/=iref(1).and.&
-&          en%QP_corrected(i1,i2,i_sp)/=iref(2).and.&
-&          en%QP_corrected(i1,i2,i_sp)/=iref(3).and.&
-&          en%QP_corrected(i1,i2,i_sp)/=iref(4)) QP_apply_done=.false.
-     enddo
+ f_times_G=(0.,0.)
+ !
+ do K=1,N-1
+   do J=1,N-1
+     L=K-J
+     if (L<1.or.L>N-1) cycle
+     f_times_G(K)=f_times_G(K)+f(L)*g(J)
    enddo
  enddo
  !
-end function
+end subroutine

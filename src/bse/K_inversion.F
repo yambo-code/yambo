@@ -198,7 +198,7 @@ subroutine K_inversion(iq,W,E,k,q)
      if (allocated(BS_eh_Z)) QP_Z=BS_eh_Z(i1)
      Lo(i1,:)=QP_Z/(W%p(:)-BS_eh_E(i1)-(0.,1.)*QP_width)
    else
-     call X_bare_RIM_Gf(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1,:),"r")
+     call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1,:),"r")
    endif
    X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*Lo(i1,:)*Co
    !
@@ -207,7 +207,7 @@ subroutine K_inversion(iq,W,E,k,q)
    !
    if (BSS_uses_RIM) then
      forall(iw=1:W%n(1)) W_shifted%p(iw)=W%p(iw)-BS_mat(i1,i1)
-     call X_bare_RIM_Gf(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W_shifted,E,k,Lo(i1,:),"r")
+     call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W_shifted,E,k,Lo(i1,:),"r")
      BS_mat(i1,i1)=(0.,0.)
    endif
    !

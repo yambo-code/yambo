@@ -49,6 +49,7 @@ module QP_m
  logical           :: On_Mass_Shell_approx
  logical           :: Force_Newton_QP
  logical           :: use_GreenF_to_eval_QP
+ logical           :: GF_is_causal
  character(schlen) :: QP_rep_string
  character(schlen) :: QP_solver
  real(SP)          :: QP_G_damp
@@ -62,7 +63,6 @@ module QP_m
  complex(SP),allocatable:: QP_W(:,:,:)
  complex(SP),allocatable:: QP_Sx(:)
  complex(SP),allocatable:: QP_Sc(:,:)
- complex(SP),allocatable:: QP_G(:,:)
  complex(SP),allocatable:: QP_Vxc(:)
  integer,    allocatable:: QP_solver_state(:)
  integer,    allocatable:: QP_table(:,:)
@@ -75,17 +75,25 @@ module QP_m
  logical           :: report_dSc
  !
  type QP_t
+   !
    character(schlen)  :: description(max_qp_descs)
    integer,    pointer:: table(:,:)
    real(SP)   ,pointer:: k(:,:)
    real(SP)   ,pointer:: E_bare(:)
    complex(SP),pointer:: E(:)
    complex(SP),pointer:: Z(:)
-   complex(SP),pointer:: S_total(:,:)
    integer  :: n_descs
    integer  :: nk
    integer  :: nb
    integer  :: n_states
+   !
+   ! Green Function and Self-Energy
+   !
+   integer            :: GreenF_n_steps
+   complex(SP),pointer:: S_total(:,:)
+   complex(SP),pointer:: GreenF(:,:)
+   complex(SP),pointer:: GreenF_W(:,:)
+   !
  end type QP_t
  !
  ! QP CTL
@@ -121,7 +129,7 @@ module QP_m
      qp%description=' '
      qp%n_descs=0
      qp%n_states=0
-     nullify(qp%table,qp%k,qp%E,qp%Z,qp%E_bare,qp%S_total)
+     nullify(qp%table,qp%k,qp%E,qp%Z,qp%E_bare,qp%S_total,qp%GreenF,qp%GreenF_W)
    end subroutine
    !
    subroutine QP_states_simmetrize(en,vec_2_sim,state_is_2do)

@@ -42,7 +42,7 @@ subroutine QP_apply_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
  integer  ::ib,ik,i_sp,n_of_coeff,i_spin
  real(SP) ::Eoc,Eov,M_factors_base(6),M_factors_free(6)
  character(lchlen) ::ch
- logical           ::QP_apply_done,do_E,do_W,do_Z
+ logical           ::QP_check_if_corrected,do_E,do_W,do_Z
  !
  ! Loop on spins
  !
@@ -55,11 +55,11 @@ subroutine QP_apply_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
    do_Z=.false.
    !
    if (any(QP_ctl_from_DB(i_sp)%E/=(/0.,1.,0.,1./)).or.any(QP_ctl_add(i_sp)%E/=(/0.,1.,0.,1./))) then
-     if (QP_apply_done(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'E')) return
+     if (QP_check_if_corrected(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'E')) return
      do_E=.true.
    endif
    if (any((/QP_ctl_from_DB(i_sp)%W(:)/=0/)).or.any((/QP_ctl_add(i_sp)%W(:)/=0/))) then
-     if (QP_apply_done(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'W')) return
+     if (QP_check_if_corrected(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'W')) return
      do_W=.true.
      if (.not.associated(E%W)) then
        allocate(E%W(E%nb,E%nk,n_sp_pol))
@@ -68,7 +68,7 @@ subroutine QP_apply_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
      endif
    endif
    if (QP_ctl_from_DB(i_sp)%Z/=(1.,0.).or.QP_ctl_add(i_sp)%Z/=(1.,0.)) then
-     if (QP_apply_done(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'Z')) return
+     if (QP_check_if_corrected(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'Z')) return
      do_Z=.true.
      if (.not.associated(E%Z)) then
        allocate(E%Z(E%nb,E%nk,n_sp_pol))
@@ -142,13 +142,13 @@ subroutine QP_apply_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
      !
      integer  :: i1,i2,i3,iref,ik_r
      real(SP) :: delta,rref,M_factor_local
-     logical  :: QP_apply_done
+     logical  :: QP_check_if_corrected
      !
      do ib=band_range(1),band_range(2)
        !
        do ik=1,E%nk
          !
-         if (QP_apply_done((/ib,ib/),(/ik,ik/),(/i_spin,i_spin/),E,what)) cycle
+         if (QP_check_if_corrected((/ib,ib/),(/ik,ik/),(/i_spin,i_spin/),E,what)) cycle
          !
          if (E%Eo(ib,ik,i_spin)> 1.E-5) iref=0
          if (E%Eo(ib,ik,i_spin)<=1.E-5) iref=n_of_coeff

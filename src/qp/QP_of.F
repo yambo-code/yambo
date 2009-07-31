@@ -29,7 +29,7 @@ subroutine QP_of(kp,qp,en)
  use electrons, ONLY:levels,spin
  use QP_m,      ONLY:QP_t,QP_Vxc,QP_Sc,QP_dSc,QP_Sx,QP_table,&
 &                    QP_rep_string,QP_solver,QP_n_states,&
-&                    QP_G,QP_G_dr,QP_Sc_steps,use_GreenF_to_eval_QP,&
+&                    QP_G_dr,QP_Sc_steps,use_GreenF_to_eval_QP,&
 &                    report_Sx,report_Sc,report_dSc
  use stderr,    ONLY:set_real_printed_length
  use frequency, ONLY:w_samp,W_reset
@@ -148,7 +148,7 @@ subroutine QP_of(kp,qp,en)
      call msg('o G_Sc','#')
      do i2=1,QP_Sc_steps
        values=0.
-       values(1:3)=(/real(Sc_W%p(i2)),real(QP_G(i1,i2)),aimag(QP_G(i1,i2))/)*HARTREE
+       values(1:3)=(/real(Sc_W%p(i2)),real(qp%GreenF(i1,i2)),aimag(qp%GreenF(i1,i2))/)*HARTREE
        values(4:5)=(/real(qp%S_total(i1,i2)),aimag(qp%S_total(i1,i2))/)*HARTREE
        values(6)=values(4)
        if (report_Sx) then

@@ -30,12 +30,15 @@ integer function ioELPH(ID,what)
  use ELPH,           ONLY:ph_modes,elph_nb,elph_global_alloc,ph_freqs_sq,elph_gkkp,&
 &                         QP_PH_n_G_bands,max_ph_freq,elph_DW,elph_nq,&
 &                         elph_use_q_grid,E_k_plus_q,ph_qpt,elph_nq_used,&
-&                         gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f
+&                         gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f,&
+&                         pol_vector
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:nkbz,nqibz
+ use D_lattice,      ONLY:nkbz,nqibz,n_atoms
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:n_sp_pol
  use QP_m,           ONLY:QP_n_states,QP_nb,QP_nk,QP_table
+ use matrix_operate, ONLY:mat_c2r,mat_r2c
  implicit none
  integer      ::ID
  character(*) ::what
@@ -43,7 +46,7 @@ integer function ioELPH(ID,what)
  !Work Space
  !
  integer                ::iq,im,ik,i1,i2,ierr
- real(SP), allocatable  ::elph_gkkp_disk(:,:,:)
+ real(SP), allocatable  ::elph_gkkp_disk(:,:,:),pol_vec_disk(:,:,:,:)
  character(9)           ::db_name
  !
  if (what=='gkkp') db_name='elph_gkkp'
@@ -164,6 +167,33 @@ integer function ioELPH(ID,what)
  !
  call io_bulk(ID,VAR="PH_FREQS"//trim(intc(iq)),VAR_SZ=(/ph_modes/))
  call io_bulk(ID,R1=ph_freqs_sq(iq,:))
+ !
+ if (ver_is_gt_or_eq(ID,revision=464)) then
+   !
+   allocate(pol_vec_disk(ph_modes,sum(n_atoms),2,3))
+   !
+   ! Polarization vectors
+   ! 
+   if (write_is_on(ID)) then
+     call mat_c2r(pol_vector(:,:,1),pol_vec_disk(:,:,:,1))
+     call mat_c2r(pol_vector(:,:,2),pol_vec_disk(:,:,:,2))
+     call mat_c2r(pol_vector(:,:,3),pol_vec_disk(:,:,:,3))
+   endif
+   !
+   call io_bulk(ID,VAR="POLARIZATION_VECTORS_REAL",VAR_SZ=(/ph_modes,sum(n_atoms),3/))
+   call io_bulk(ID,R3=pol_vec_disk(:,:,1,:))
+   call io_bulk(ID,VAR="POLARIZATION_VECTORS_IMAG",VAR_SZ=(/ph_modes,sum(n_atoms),3/))
+   call io_bulk(ID,R3=pol_vec_disk(:,:,2,:))
+   ! 
+   if (write_is_on(ID)) then
+     call mat_r2c(pol_vec_disk(:,:,:,1),pol_vector(:,:,1))
+     call mat_r2c(pol_vec_disk(:,:,:,2),pol_vector(:,:,2))
+     call mat_r2c(pol_vec_disk(:,:,:,3),pol_vector(:,:,3))
+   endif
+   !
+   deallocate(pol_vec_disk)
+   !
+ endif
  ! 
  ! Ek+q (to be used when  elph_use_q_grid=.FALSE.)
  !

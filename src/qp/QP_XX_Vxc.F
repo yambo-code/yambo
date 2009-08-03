@@ -124,7 +124,9 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
      deallocate(QP_DB_done)
      return
    endif
-   !      
+   !
+   call msg('s', '[RHO] Disk space required [Gb]:',real(QP_n_states*SC_bands**2*k%nibz*SP))
+   !
    allocate(tmp_sx(SC_bands,SC_bands,k%nibz))
    call mem_est("tmp_sx",(/size(tmp_sx)/),(/2*SP/))
    !      

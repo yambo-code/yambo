@@ -45,21 +45,21 @@ subroutine RT_report(file_name,write_output_files)
    !      
    file_name(1)='RT-dynamics'
    call of_open_close(file_name(1),'ot') 
-   headings(1)="Time"
-   headings(2)="E_kin"
-   headings(3)="E_ion"
+   headings(1)="Time[fs]"
+   headings(2)="E_kin[eV]"
+   headings(3)="E_ion[eV]"
    if(.not.l_RT_no_updates) then
      !      
      if(l_sc_hf) then
-       headings(4)="E_Hartree"
-       headings(5)="E_x"
+       headings(4)="E_Hartree[eV]"
+       headings(5)="E_x[eV]"
      else
-       headings(4)="E_Hartree"
-       headings(5)="E_xc"
+       headings(4)="E_Hartree[eV]"
+       headings(5)="E_xc[eV]"
      endif
      !
    else
-     headings(4)="Eo_pot"
+     headings(4)="Eo_pot[eV]"
      headings(5)="none"
    endif
    headings(6)="N" 
@@ -93,6 +93,7 @@ subroutine RT_report(file_name,write_output_files)
      call msg(trim(where_ch),trim(hash_ch)//' External Field('//trim(intc(i2))//&
 &                                           ')      :',trim(EField(i2)%ef_name),INDENT=0)
      call msg(trim(where_ch),trim(hash_ch)//' Intensity                  :',EField(i2)%intensity,INDENT=0)
+     call msg(trim(where_ch),trim(hash_ch)//' Amplitude                  :',EField(i2)%amplitude,INDENT=0)
      call msg(trim(where_ch),trim(hash_ch)//' Frequancy                  :',EField(i2)%frequency,INDENT=0)
      call msg(trim(where_ch),trim(hash_ch)//' Direction                  :',EField(i2)%versor,INDENT=0)
      call msg(trim(where_ch),trim(hash_ch)//' Intraband transitions      :',.not.EField(i2)%no_intraband,INDENT=0)

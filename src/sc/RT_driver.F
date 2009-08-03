@@ -63,7 +63,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  call section('*',trim(SC_potential)//' Real-Time Dynamics')
  !##########################################################
  !
- call set_real_printed_length(f_length=10,g_length=10)  
+ call set_real_printed_length(f_length=15,g_length=15)  
  !
  X(1)%ib(2)=SC_bands
  X(1)%ng   =wf_ng

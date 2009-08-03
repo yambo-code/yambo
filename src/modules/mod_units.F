@@ -63,4 +63,25 @@ module UNITS
  real(SP), parameter :: AU2Tesla=2.350517*10.**5
  real(SP), parameter :: Tesla2AU=1./AU2Tesla
  !
+ ! From Octopus ( http://www.tddft.org/programs/octopus )
+ !
+ ! It is very common to describe the strength of a laser field by it intensity, 
+ ! rather than using the electric field amplitude. In atomic units, the relationship 
+ ! between instantaneous electric field and intensity is:
+ !
+ ! I(t) = \frac{c}{8\pi} E^2(t)
+ !
+ ! It is common to read intensities in kW cm^-2. The dimensions of intensities are [W]/(L^2T), 
+ ! where [W] are the dimensions of energy. The relevant conversion factors are:
+ !
+ ! Hartree / (a_0^2 atomic_time) = 6.4364086e+09 kW cm^-2
+ !
+ ! If, in atomic units, we set the electric field amplitude to E_0, then the intensity is:
+ !
+ ! I_0 = \frac{c}{8 \pi}  1./W2Au kW cm^-2 (E_0^2)
+ !
+ real(SP), parameter :: SPEED_OF_LIGHT = 137.03599911
+ !
+ real(SP), parameter :: W2Au = 1./6.4364086E+09 
+ !
 end module 

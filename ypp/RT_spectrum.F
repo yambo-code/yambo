@@ -27,13 +27,14 @@ subroutine RT_spectrum(en,k)
  use pars,           ONLY:SP,DP,pi
  use units,          ONLY:FS2AUT,HARTREE
  use electrons,      ONLY:levels
- use com,            ONLY:error,msg,of_open_close,warning
+ use com,            ONLY:msg,of_open_close,warning
  use stderr,         ONLY:set_real_printed_length
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:bz_samp
  use parser_m,       ONLY:parser
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,NONE,DUMP
- use real_time,      ONLY:Tot_steps,RT_step,j_current,A_norm,i_time 
+ use real_time,      ONLY:Tot_steps,RT_step,j_current,A_norm,i_time, &
+&                         max_rt_steps_disk,current_cache,n_ext_fields 
  implicit none
  !
  type(levels)   :: en
@@ -49,11 +50,11 @@ subroutine RT_spectrum(en,k)
  character(schlen)  :: headings(7)
  real(SP)           :: values(8)
  real(SP) :: av,omega,tt,de
- real(SP), allocatable :: damp_function(:)
- real(SP), allocatable :: current(:,:)
+ real(SP),    allocatable :: damp_function(:)
+ real(SP),    allocatable :: current(:,:)
  complex(SP), allocatable :: Avec(:)
  complex(DP), allocatable :: dielectric(:,:)
- real(DP), allocatable :: E_induced(:,:)
+ real(DP),    allocatable :: E_induced(:,:)
  integer     :: fft_sign
  integer(8)  :: fftw_plan
  !
@@ -64,7 +65,7 @@ subroutine RT_spectrum(en,k)
  integer, parameter :: DAMP_GAUSSIAN   = 2    
  integer, external  :: io_SC_components
  !
- call msg("s",'Real-Time reposne analizer')
+ call msg("s",'Real-Time response analizer')
  call parser('PrtCurrent',Prt_Current)
  call parser('PrtEinduced',Prt_EInduced)
  call parser('UseFFT',Use_FFT)
@@ -72,13 +73,14 @@ subroutine RT_spectrum(en,k)
  ! Check damping mode
  !
  if(trim(X_rt%damp)=="NONE") then
-   damp=0
+   damp=DAMP_NONE
  elseif(trim(X_rt%damp)=="LORENTZIAN")  then
-   damp=1
+   damp=DAMP_LORENTZIAN
  elseif(trim(X_rt%damp)=="GAUSSIAN") then
-   damp=2
+   damp=DAMP_GAUSSIAN
  else
-   call error(" Unknown DampMode chose ( NONE | LORENTZIAN | GAUSSIAN ) ")
+   damp=DAMP_NONE
+   call warning(" Unknown DampMode. Switching to NONE")
  endif
  !
  ! Check for saved current and vector potential
@@ -86,14 +88,20 @@ subroutine RT_spectrum(en,k)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID(1)) ! Current response
  io_J=io_SC_components('J' ,en,ID(1))
  !
- if(io_J/=0) call error(" Error reading current file ")
+ if(io_J/=0) then
+   call warning(" Error reading J database")
+   return
+ endif
  !
  ! Read last G_lesser to obtain Tot_steps
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID(2)) 
  io_G=io_SC_components('G' ,en,ID(2))
  !
- if(io_G/=0) call error(" Error reading G_lesser file ")
+ if(io_G/=0) then
+   call warning(" Error reading G database")
+   return
+ endif
  !
  ! Fix Time limits
  !
@@ -127,22 +135,22 @@ subroutine RT_spectrum(en,k)
  !
  ! Read Current and Vector Potential
  !
- allocate(current(istart:iend,3),Avec(istart:iend))
+ allocate(current(istart:iend,3))
+ call mem_est("Current",(/size(current)/),(/SP/))
+ allocate(Avec(istart:iend))
+ call mem_est("Avec",(/size(Avec)/),(/2*SP/))
+ allocate(current_cache(3+2*n_ext_fields,max_rt_steps_disk))
+ call mem_est("Current_Cache",(/size(current_cache)/),(/SP/))
  !
  do i_time=1,Tot_steps
    !      
-   if(i_time==1) then
-     call io_control(ACTION=OP_RD,COM=NONE,MODE=DUMP,SEC=(/1,2/),ID=ID(1)) 
-   else
-     call io_control(ACTION=RD_CL_IF_END,COM=NONE,MODE=DUMP,SEC=(/i_time+1/),ID=ID(1)) 
-   endif
+   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/i_time+1/),ID=ID(1)) 
    io_J=io_SC_components('J' ,en,ID(1))
    !
-   !
    if(i_time>=istart.and.i_time<=iend) then
-     current(i_time,:)=j_current(:)
-     Avec(i_time)     =A_norm(ref_efield)  ! to get the Vector one just multiply for versor Ef_q0(:)
-   endif
+     current(i_time,:)= j_current(:)
+     Avec(i_time)     = A_norm(ref_efield) ! to get the Vector one just multiply for versor Ef_q0(:)
+   endif            
    !
  enddo
  !
@@ -160,7 +168,7 @@ subroutine RT_spectrum(en,k)
    call set_real_printed_length(f_length=15,g_length=15)
    file_name(1)="current"
    call of_open_close(file_name(1),'ot')
-   headings(1)="Time"
+   headings(1)="Time[fs]"
    headings(2)="ReA"
    headings(3)="ImA"
    headings(4)="j_x"
@@ -203,7 +211,7 @@ subroutine RT_spectrum(en,k)
    !
    file_name(2)="einduced"
    call of_open_close(file_name(2),'ot')
-   headings(1)="Time"
+   headings(1)="Time[fs]"
    headings(2)="E_x"
    headings(3)="E_y"
    headings(4)="E_z"
@@ -309,7 +317,10 @@ subroutine RT_spectrum(en,k)
  !
  call of_open_close(file_name(3))
  ! 
- deallocate(E_induced,dielectric,current,damp_function)
+ deallocate(E_induced,dielectric,current,damp_function,Avec,current_cache)
+ call mem_est("Current_Cache")
+ call mem_est("Current")
+ call mem_est("Avec")
  call mem_est("Dielectric")
  call mem_est("E_induced")
  call mem_est("Damp_Function")

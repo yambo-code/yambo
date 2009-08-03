@@ -33,11 +33,11 @@ subroutine Convolve(f,g,f_times_g,N)
  !
  f_times_G=(0.,0.)
  !
- do K=1,N-1
-   do J=1,N-1
+ do K=1,N
+   do J=1,N
      L=K-J
-     if (L<1.or.L>N-1) cycle
-     f_times_G(K)=f_times_G(K)+f(L)*g(J)
+     if (L<1.or.L>N) cycle
+     f_times_g(K)=f_times_G(K)+f(L)*g(J)
    enddo
  enddo
  !

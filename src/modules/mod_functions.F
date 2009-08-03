@@ -85,8 +85,8 @@ module functions
    end function
    !
    pure function bose_decay(E)
-   !
-   use drivers,   ONLY:Finite_Tel
+     !
+     use drivers,   ONLY:Finite_Tel
      !
      use D_lattice, ONLY:Tel
      real(SP), intent(in):: E

@@ -65,14 +65,36 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
    ! 
    allocate(Green_F_convoluted(Xen%GreenF_n_E_steps))
    !
-   call Convolve(real(Xen%GreenF(ic,ik,1,:)), real(Xen%GreenF(iv,ikp,1,:)),&
+   call Convolve(real(Xen%GreenF(ic,ik,i_spin,:)), real(Xen%GreenF(iv,ikp,i_spin,:)),&
 &                Green_F_convoluted,Xen%GreenF_n_E_steps)
    !
-! GreenF, real(Xw%p), Xw%n(2))
    GreenF=(0.,0.)
    !
-!   call Kramers_Kronig(Green_F_convoluted, real(Xen%GreenF_W(iv,ikp,1,:)),Xen%GreenF_n_E_steps,&
-!&                      )
+   ! Resonant Part
+   !
+   if (ordering/="a") &
+&    call Kramers_Kronig(Green_F_convoluted,real(Xen%GreenF_W(iv,ikp,i_spin,:)),Xen%GreenF_n_E_steps,&
+&                        GreenF,            Xw%p,                          Xw%n(1), cmplx(0.,0.,SP))
+   !
+   if (ordering=="c") then
+     call Kramers_Kronig(Green_F_convoluted,real(Xen%GreenF_W(iv,ikp,i_spin,:)),Xen%GreenF_n_E_steps,&
+&                        GreenF,            -Xw%p,                      Xw%n(1), cmplx(0.,0.,SP))
+   else if (ordering=="a".or.ordering=="t") then
+     call Kramers_Kronig(Green_F_convoluted,real(Xen%GreenF_W(iv,ikp,i_spin,:)),Xen%GreenF_n_E_steps,&
+&                        GreenF,            -conjg(Xw%p),               Xw%n(1), cmplx(0.,0.,SP))
+   endif
+   !
+!do i_w=1,Xen%GreenF_n_E_steps
+!  write (120,'(3f20.10)') real( Xen%GreenF_W(iv,ikp,1,i_w) )*HARTREE,real(Green_F_convoluted(i_w))
+!  write (100,'(3f20.10)') real( Xen%GreenF_W(iv,ikp,1,i_w) )*HARTREE,&
+!&                                    real( Xen%GreenF(iv,ikp,1,i_w))
+!  write (110,'(3f20.10)') real( Xen%GreenF_W(ic,ik,1,i_w) )*HARTREE,&
+!&                                    real( Xen%GreenF(ic,ik,1,i_w))
+!enddo
+!do i_w=1,Xw%n(1)
+!  write (200,'(3f20.10)') real( Xw%p(i_w) )*HARTREE, GreenF(i_w)
+!enddo
+!stop
    !
    deallocate(Green_F_convoluted)
    !

@@ -18,14 +18,16 @@
 !
 subroutine RT_initialize()
  ! 
- use pars,           ONLY:SP,lchlen,schlen
- use com,            ONLY:warning
+ use pars,           ONLY:SP,lchlen,schlen,pi
+ use units,          ONLY:SPEED_OF_LIGHT
+ use com,            ONLY:msg,warning
  use vec_operate,    ONLY:normalize_v
  use drivers,        ONLY:l_sc_hf
  use QP_m,           ONLY:QP_Sx_low_band
  use real_time,      ONLY:l_RPA,Thermal_steps,Thermal_time,RT_step,l_rt_efield,i_time, &
-&                         l_RT_no_updates,Integrator_Name,l_qp_analyze,          &
-&                         l_no_diamagnetic,l_always_relax,EField,n_ext_fields
+&                         l_RT_no_updates,Integrator_Name,l_qp_analyze,Tot_steps,    &
+&                         l_no_diamagnetic,l_always_relax,EField,n_ext_fields,         &
+&                         max_rt_steps_disk
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
  implicit none
@@ -33,7 +35,7 @@ subroutine RT_initialize()
  ! Work space
  !
  character(schlen)        :: headings(10),hash_ch,where_ch
- integer                  :: i1,i2
+ integer                  :: i1,i2,rest
  !
  ! Logicals
  !----------
@@ -53,6 +55,19 @@ subroutine RT_initialize()
  if(l_sc_hf.and.QP_Sx_low_band/=1) then
    QP_Sx_low_band=1
    call warning('  Exchange summation low band set to 1 ')
+ endif
+ !
+ ! Set a number of steps compatible with the cache 
+ !
+ if(mod(Thermal_steps+Tot_steps,max_rt_steps_disk)/=0) then
+   rest=mod(Thermal_steps+Tot_steps,max_rt_steps_disk)
+   if(Tot_steps/=0) then
+     Tot_steps = Tot_steps+max_rt_steps_disk-rest
+     call msg('snr','[RT] Number of steps set to                 :',Tot_steps)
+   elseif(Tot_steps==0.and.Thermal_steps/=0) then
+     Thermal_steps = Thermal_steps+max_rt_steps_disk-rest
+     call msg('snr','[RT] Number of thermalization steps set to  :',Thermal_steps)
+   endif
  endif
  !
  if(Thermal_steps/=0) then
@@ -75,7 +90,9 @@ subroutine RT_initialize()
      !      
      l_rt_efield=.true.
      !
-     EField(i1)%versor=normalize_v(Efield(i1)%versor)
+     EField(i1)%versor   =normalize_v(Efield(i1)%versor)
+     !
+     EField(i1)%amplitude=sqrt( Efield(i1)%intensity*(8.0*pi)/SPEED_OF_LIGHT ) 
      !
      call SC_check_symmetries(Efield(i1)%versor)
      !

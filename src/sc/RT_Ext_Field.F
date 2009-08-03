@@ -49,13 +49,13 @@ subroutine RT_Ext_Field(ik,H_nl_sc,G_lesser,time,Efield,A_norm)
  !
  select case(trim(Efield%ef_name))
    case('SINUSOIDAL')
-     A_norm=-Efield%intensity*sin(Efield%frequency*time)/Efield%frequency
+     A_norm=-Efield%amplitude*sin(Efield%frequency*time)/Efield%frequency
    case('RESONANT')
-     A_norm=-Efield%intensity*exp(-(0._SP,1._SP)*Efield%frequency*time)/((0._SP,2._SP)*Efield%frequency)
+     A_norm=-Efield%amplitude*exp(-(0._SP,1._SP)*Efield%frequency*time)/((0._SP,2._SP)*Efield%frequency)
    case('DELTA')
-     A_norm=Efield%intensity
+     A_norm=Efield%amplitude
    case('STEP')
-     A_norm=Efield%intensity*time
+     A_norm=Efield%amplitude*time
    case default
      call error(" External Field "//trim(Efield%ef_name)//" not implemented ") 
  end select

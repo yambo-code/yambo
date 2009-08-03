@@ -21,7 +21,8 @@
 !
 module ELPH
  !
- use pars, ONLY:SP
+ use pars,       ONLY:SP
+ use D_lattice,  ONLY:n_atoms
  !
  implicit none
  integer   :: ph_modes
@@ -36,6 +37,7 @@ module ELPH
  real(SP),    allocatable :: E_k_plus_q(:,:,:)
  real(SP),    allocatable :: f_k_plus_q(:,:,:)
  complex(SP), allocatable :: elph_gkkp(:,:,:,:)
+ complex(SP), allocatable :: pol_vector(:,:,:)
  ! 
  ! gFsq matrices
  !
@@ -96,6 +98,10 @@ module ELPH
        allocate(E_k_plus_q(elph_nb,nkbz,1))
        call mem_est("ph_freqs_sq E_k_plus_q",(/size(ph_freqs_sq),size(E_k_plus_q)/),&
 &                                            (/SP,SP/))
+       !
+       allocate(pol_vector(ph_modes,sum(n_atoms),3))
+       call mem_est("pol_vector",(/size(pol_vector)/))
+       !
      endif
      !
      if (.not.allocated(ph_qpt)) then
@@ -120,8 +126,8 @@ module ELPH
        call mem_est("elph_gkkp elph_DW f_k_plus_q")
      endif
      if (allocated(ph_freqs_sq)) then
-       deallocate(ph_freqs_sq,E_k_plus_q)
-       call mem_est("ph_freqs_sq f_k_plus_q")
+       deallocate(ph_freqs_sq,E_k_plus_q,pol_vector)
+       call mem_est("ph_freqs_sq f_k_plus_q pol_vector")
      endif
      if (allocated(ph_qpt)) then
        deallocate(ph_qpt)

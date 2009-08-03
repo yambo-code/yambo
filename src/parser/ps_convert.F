@@ -36,7 +36,7 @@ subroutine ps_convert(rvar,ivar,v_name)
  integer :: i1,ipos           
  character(lchlen) :: v_line  
  character(schlen) :: v_s_unit
- logical :: var_is_time,var_is_B
+ logical :: var_is_time,var_is_B,var_is_intensity
  !
  ! First I search for the variable name in the input file 
  !
@@ -64,8 +64,9 @@ subroutine ps_convert(rvar,ivar,v_name)
  !
  ! check if the var is a Time variable (incompatible with energy types)
  !
- var_is_time=trim(v_s_unit)=="fs"
- var_is_B   =trim(v_s_unit)=="T"
+ var_is_time     =trim(v_s_unit)=="fs"
+ var_is_B        =trim(v_s_unit)=="T"
+ var_is_intensity=trim(v_s_unit)=="kWLm2"
  !
  if (ivar>0) then
    !
@@ -89,7 +90,7 @@ subroutine ps_convert(rvar,ivar,v_name)
    endif
    return
    !
- else if (abs(rvar)>1.E-10.and..not.var_is_time.and..not.var_is_B) then
+ else if (abs(rvar)>1.E-10.and..not.var_is_time.and..not.var_is_B.and..not.var_is_intensity) then
    !
    ! REALS (ENERGY)
    !
@@ -170,6 +171,15 @@ subroutine ps_convert(rvar,ivar,v_name)
    if (index(v_line,'T')/=0) then
      rvar=rvar*Tesla2AU
      call set_itp_unit('T',1)
+     return
+   endif 
+ else if (var_is_intensity) then
+   !
+   ! Laser Intensity 
+   !
+   if (index(v_line,'kWLm2')/=0) then
+     rvar=rvar*W2Au
+     call set_itp_unit('kWLm2',1)
      return
    endif 
  endif

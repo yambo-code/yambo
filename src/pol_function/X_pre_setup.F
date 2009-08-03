@@ -81,12 +81,4 @@ subroutine X_pre_setup(Xen,X)
  !
  if (Finite_Tel) X%ordering="c"
  !
- ! When using the Green Function the ordering is decided by the corresponding
- ! logical in the Energy type
- !
- if (associated(Xen%GreenF)) then
-   X%ordering="t"
-   if (Xen%GreenF_is_causal) X%ordering="c"
- endif
- !
 end subroutine

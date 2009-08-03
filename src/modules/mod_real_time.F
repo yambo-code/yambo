@@ -32,6 +32,7 @@ module real_time
    real(SP) :: t_initial
    real(SP) :: frequency
    real(SP) :: intensity
+   real(SP) :: amplitude
    real(SP) :: versor(3)
    character(schlen) :: ef_name
    logical  :: no_intraband
@@ -121,10 +122,9 @@ module real_time
  !
  integer                  :: io_J,io_G
  integer                  :: ID(5)                
- !
- ! Others
- !
- integer, allocatable :: kpoints_map(:,:)
+ integer, allocatable     :: kpoints_map(:,:)
+ integer                  :: max_rt_steps_disk 
+ real(SP), allocatable    :: current_cache(:,:)
  !
  contains
    !
@@ -153,6 +153,11 @@ module real_time
        allocate(QP_Sx(QP_n_states))
        call mem_est("QP_Sx",(/QP_n_states/))
        !
+     endif
+     !
+     if(l_rt_efield) then
+       allocate(current_cache(3+2*n_ext_fields,max_rt_steps_disk))
+       call mem_est('Current_Cache',(/size(current_cache)/),(/SP/))
      endif
      !
      allocate(E_xc(fft_size))
@@ -269,6 +274,11 @@ module real_time
      if(l_qp_analyze) then
        deallocate(Occ_natural_orb)
        call mem_est("Occ_natural")
+     endif
+     !
+     if(l_rt_efield) then
+       deallocate(current_cache)
+       call mem_est('Current_Cache')
      endif
      !
    end subroutine RT_free

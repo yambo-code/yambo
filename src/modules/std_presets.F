@@ -77,7 +77,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 #if defined _RT
  use real_time,  ONLY:RT_step,Tot_steps, Thermal_steps, Efield,Integrator_name, &
 &                     DiagH_iter, LifeTime,l_RPA, n_ext_fields, l_qp_analyze,   &
-&                     Thermal_eta,l_always_relax
+&                     Thermal_eta,l_always_relax,max_rt_steps_disk
  use oscillators_IO,ONLY:n_rho_states
 #endif
 #if defined _MAGNETIC
@@ -415,6 +415,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  DiagH_iter=1
  l_qp_analyze=.FALSE.
  l_always_relax=.FALSE.
+ max_rt_steps_disk=200
  !
  ! RHO I/O
  !

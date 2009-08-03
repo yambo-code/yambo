@@ -40,7 +40,7 @@ subroutine X_GreenF_remap(bands,E,W)
  type(w_samp)       :: W_A
  type(levels)       :: E_map
  !
- real(SP)           :: W_Ao(E%GreenF_n_E_steps),A_sign
+ real(SP)           :: W_sign,A_sign
  complex(SP)        :: Ao(E%GreenF_n_E_steps),zero_plus
  !
  ! Resets
@@ -51,7 +51,7 @@ subroutine X_GreenF_remap(bands,E,W)
  ! New energy range
  !
  W_A%n=max(new_map_points,W%n(1))
- W_A%er=W_A%er
+ W_A%er=max(abs(W%er(1)),abs(W%er(2)))*(/0.,1./)
  W_A%dr=0.
  call FREQUENCIES_setup(W_A)
  W_A%p=real(W_A%p)
@@ -65,33 +65,35 @@ subroutine X_GreenF_remap(bands,E,W)
    do i_k=1,E%nk
 !do i_w=1,E%GreenF_n_E_steps
 !  write (100+i_b*10+i_k,'(3f20.10)') real(E%GreenF_W(i_b,i_k,1,i_w))*HARTREE,&
-!&                                 aimag(E%GreenF(i_b,i_k,1,i_w)),&
-!&                                 real(E%GreenF(i_b,i_k,1,i_w))
+!&                                    aimag(E%GreenF(i_b,i_k,1,i_w)),&
+!&                                    real(E%GreenF(i_b,i_k,1,i_w))
 !enddo
      do i_spin=1,n_sp_pol
        !
-       Ao=-1._SP/pi*aimag(E%GreenF(i_b,i_k,i_spin,:))
-       Ao(1)                  = (0.,0.)
-       Ao(E%GreenF_n_E_steps) = (0.,0.)
-       ! 
-       A_sign= 1.
-       if ( i_b> E%nbf .and. .not.E%GreenF_is_causal ) A_sign=-1.
-       !
-       W_Ao=real(E%GreenF_W(i_b,i_k,i_spin,:))
-       zero_plus=-cmplx(0.,0.00001/HARTREE)
-       if ( i_b<=E%nbf ) then
-         do i_w=1,E%GreenF_n_E_steps
-           W_Ao(i_w)=real(E%GreenF_W(i_b,i_k,i_spin, E%GreenF_n_E_steps-i_w+1))
-         enddo
-         zero_plus=-zero_plus
+       if ( i_b> E%nbf ) then
+         !
+         ! Conduction
+         !
+         W_sign= 1.
+         A_sign=-1.
+         if ( E%GreenF_is_causal ) A_sign=1.
+       else
+         !
+         ! Valence
+         !
+         W_sign=-1.
+         A_sign=-1.
        endif
        !
-       E%GreenF(i_b,i_k,i_spin,E%GreenF_n_E_steps)=(0.,0.)
-       E_map%GreenF_W(i_b,i_k,i_spin,:)=W_A%p
+       Ao=A_sign/pi*aimag(E%GreenF(i_b,i_k,i_spin,:))
+       Ao(1)                  = (0.,0.)
+       Ao(E%GreenF_n_E_steps) = (0.,0.)
+       zero_plus=cmplx(0.,0.00001/HARTREE)
        !
-       call Kramers_Kronig(A_sign*Ao,W_Ao,E%GreenF_n_E_steps,&
+       call Kramers_Kronig(Ao,&
+&                          real(E%GreenF_W(i_b,i_k,i_spin,:)),E%GreenF_n_E_steps,&
 &                          E_map%GreenF(i_b,i_k,i_spin,:),&
-&                          W_A%p,W_A%n(1),zero_plus)
+&                          W_sign*W_A%p,W_A%n(1),W_sign*zero_plus)
        !
      enddo
      !

@@ -36,12 +36,12 @@ integer function io_SC_components(what,E_sc,ID)
 &                         SC_ng_Sx,SC_X_bands,SC_X_size
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,io_fragment,read_is_on,write_is_on,&
-&                         manage_RD_WR_CL_IF_END,ver_is_gt_or_eq 
+&                         manage_RD_WR_CL_IF_END,ver_is_gt_or_eq,io_reset
 #if defined _RT
  use real_time,      ONLY:l_rt_efield,l_RPA,RT_step,Tot_steps,       &
 &                         Thermal_steps,Integrator_name,l_qp_analyze,DiagH_Iter,     &
 &                         LifeTime,G_lesser,i_time,l_no_diamagnetic,j_current,A_norm,&
-&                         n_ext_fields,Efield
+&                         n_ext_fields,Efield,max_rt_steps_disk,current_cache
  use IO_m,           ONLY:io_restart,io_check_restart
  use QP_m,           ONLY:QP_nk
 #endif                                
@@ -65,7 +65,8 @@ integer function io_SC_components(what,E_sc,ID)
 &                         io_status_save,i_spin,i1
  logical               :: l_wf,l_V,l_E,l_IMPOSE_SN,CHECK_
 #if defined _RT		
- logical               :: l_J,l_G
+ integer               :: file_number
+ logical               :: l_J,l_G,IO_current
  real(SP)              :: current_pot_disk(3+2*n_ext_fields)
 #endif
  !
@@ -87,9 +88,41 @@ integer function io_SC_components(what,E_sc,ID)
  if (l_E)  io_SC_components=io_connect(desc="scE",type=2,ID=ID)
  if (l_V)  io_SC_components=io_connect(desc="scV",type=2,ID=ID)
 #if defined _RT
- if (l_J)  io_SC_components=io_connect(desc="rtJ",type=2,ID=ID)
- if (l_G)  io_SC_components=io_connect(desc="rtG",type=2,ID=ID)
+ !
+ ! Write only every max_rt_steps_disk
+ !
+ if(l_J)then
+   !      
+   file_number=(i_time-1)/max_rt_steps_disk
+   !      
+   if(io_sec(ID,1)==1) then 
+     io_SC_components=io_connect(desc="rtJ",type=2,ID=ID)
+   else
+     !      
+     IO_current=.false.
+     if(mod(i_time,max_rt_steps_disk)  ==0.and.write_is_on(ID))  IO_current=.true.
+     if(mod(i_time-1,max_rt_steps_disk)==0.and.read_is_on(ID))   IO_current=.true.
+     !
+     if(IO_current) then
+       io_SC_components=io_connect(desc="rtJ_"//trim(intc(file_number)),type=2,ID=ID)
+     else
+       io_SC_components=0
+     endif
+     !
+   endif
+ !
+ endif
+ !
+ if(l_G) then
+   if(mod(i_time,max_rt_steps_disk)/=0.and.write_is_on(ID)) then
+     call io_reset(ID)
+     return
+   endif
+   io_SC_components=io_connect(desc="rtG",type=2,ID=ID)
+ endif
+ !
 #endif
+ !
  !
  if (io_SC_components/=0) goto 1
  !
@@ -208,10 +241,12 @@ integer function io_SC_components(what,E_sc,ID)
 &         VAR=' integrator                   :',CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
-     call io_elemental(ID,VAR="RT_OTHERS",VAR_SZ=6,MENU=0) 
+     call io_elemental(ID,VAR="RT_OTHERS",VAR_SZ=7,MENU=0) 
      call io_elemental(ID,L0=l_qp_analyze,VAR=' analize quasi-particles :', &
 &     CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,I0=DiagH_Iter,VAR='diagonalization interval :',&
+&     CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,I0=max_rt_steps_disk,VAR='cache size :',&
 &     CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,R0=LifeTime,VAR=' quasi-particle life time :', &
 &     CHECK=.true.,OP=(/"=="/))
@@ -405,29 +440,43 @@ integer function io_SC_components(what,E_sc,ID)
    !
    ! Current and Vector Potential
    !=================
-   !
-   if(i_time>0) then
-     !    
-     call io_bulk(ID,VAR="Current_and_Potential_TIME"//trim(intc(i_time)),VAR_SZ=(/3+2*n_ext_fields/))
+   !        
+   if(io_sec(ID,1)/=1) then
      !
-     if (write_is_on(ID)) then 
-        current_pot_disk(1:3)=real(j_current(1:3))
-        do i1=1,n_ext_fields
-          current_pot_disk(3+2*i1-1)=real(A_norm(i1))
-          current_pot_disk(3+2*i1)  =aimag(A_norm(i1))
-        enddo
-     endif
-     !
-     call io_bulk(ID,R1=current_pot_disk)
-     !
-     if (read_is_on(ID)) then 
-       j_current(1:3)=cmplx(current_pot_disk(1:3),0.)
+     if(write_is_on(ID)) then
+       !
+       current_cache(:3,mod(i_time-1,max_rt_steps_disk)+1)=j_current(:3)
        do i1=1,n_ext_fields
-         A_norm(i1)  =cmplx(current_pot_disk(3+2*i1-1),current_pot_disk(3+2*i1))
+         current_cache(2*i1+2,mod(i_time-1,max_rt_steps_disk)+1)= real(A_norm(i1))
+         current_cache(2*i1+3,mod(i_time-1,max_rt_steps_disk)+1)=aimag(A_norm(i1))
        enddo
+       !
      endif
      !
-     call io_disconnect(ID)
+     if (IO_current) then
+       !                                
+       call io_bulk(ID,VAR="Current_and_Potential_TIME"//trim(intc(file_number)), &
+&                  VAR_SZ=(/3+2*n_ext_fields,max_rt_steps_disk/))
+       !
+       call io_bulk(ID,R2=current_cache)
+       !
+       call io_disconnect(ID)
+       !
+     endif
+     !
+     if(read_is_on(ID)) then
+       !
+       ! Read from cache
+       !
+       j_current(:)=current_cache(:,mod(i_time-1,max_rt_steps_disk)+1)
+       do i1=1,n_ext_fields
+         A_norm(i1)=cmplx(current_cache(2*i1+2,mod(i_time-1,max_rt_steps_disk)+1), &
+&                         current_cache(2*i1+3,mod(i_time-1,max_rt_steps_disk)+1))
+       enddo
+       !
+     endif 
+     !
+     if(.not.IO_current) call io_reset(ID) 
      !
    endif
    !

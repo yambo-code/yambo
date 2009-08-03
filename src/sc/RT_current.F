@@ -30,8 +30,7 @@ subroutine RT_current(j_current,xK,Xen,G_lesser)
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel,levels
  use X_m,            ONLY:DIP_iR_or_P
- use real_time,      ONLY:l_no_diamagnetic,io_J,ID,i_time,Efield,n_ext_fields &
-&                        ,A_norm
+ use real_time,      ONLY:l_no_diamagnetic,io_J,ID,i_time,Efield,n_ext_fields,A_norm
  use IO_m,           ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL
  !
  implicit none
@@ -94,12 +93,15 @@ subroutine RT_current(j_current,xK,Xen,G_lesser)
  !
  ! Write current on disk
  !
- if(i_time==1) then
-   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID(4)) ! Current response
+ if(i_time==1) then 
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
+   io_J=io_SC_components('J' ,Xen,ID(4))
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/2/),ID=ID(4)) 
+   io_J=io_SC_components('J' ,Xen,ID(4))
  else
-   call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/i_time+1/),ID=ID(4)) ! Current response
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/i_time+1/),ID=ID(4)) 
+   io_J=io_SC_components('J' ,Xen,ID(4))
  endif
  !
- io_J=io_SC_components('J' ,Xen,ID(4))
  !
 end subroutine RT_current

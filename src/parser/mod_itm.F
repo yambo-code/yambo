@@ -33,6 +33,7 @@ module it_m
  character(2),parameter :: T_unit='eV'
  character(2),parameter :: Time_unit='fs'
  character(2),parameter :: B_unit='T'
+ character(5),parameter :: I_unit='kWLm2'
  ! 
  ! Verbosity
  !===========
@@ -769,7 +770,7 @@ module it_m
            nflines=nflines+1
            if (ou/=20) call init_convert(0._SP,defs%i1def(i2),i1vars(i2,3),.FALSE.)
            ch(2)=gen_fmt((/defs%i1def(i2)/))
-           write (ch(1),'(3a)') '(2a,',trim(ch(2)),',t26,a,t30,2a)'
+           write (ch(1),'(3a)') '(2a,',trim(ch(2)),',t24,a,t30,2a)'
            write (flines(nflines),trim(ch(1))) trim(i1vars(i2,1)),'=',&
 &                defs%i1def(i2),trim(i1vars(i2,3)),'# ',trim(i1vars(i2,2))
          endif
@@ -782,7 +783,7 @@ module it_m
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(i2vars(i2,1))
            ch(2)=gen_fmt(defs%i2def(i2,:))
-           write (ch(1),'(3a)') '(2(',trim(ch(2)),',1x,a),t26,a,t30,2a)'
+           write (ch(1),'(3a)') '(2(',trim(ch(2)),',1x,a),t24,a,t30,2a)'
            nflines=nflines+1
            write (flines(nflines),trim(ch(1))) &
 &           defs%i2def(i2,1),'|',defs%i2def(i2,2),'|',&
@@ -832,7 +833,7 @@ module it_m
            call init_convert(unit_factor,0,r1vars(i2,3),.FALSE.)
            nflines=nflines+1
            ch(2)=gen_fmt(r_v=(/defs%r1def(i2)*unit_factor/))
-           write (ch(1),'(3a)') '(2a,',trim(ch(2)),',t26,a,t30,2a)'
+           write (ch(1),'(3a)') '(2a,',trim(ch(2)),',t24,a,t30,2a)'
            write (flines(nflines),trim(ch(1))) &
 &                trim(r1vars(i2,1)),'=',defs%r1def(i2)*unit_factor,&
 &                trim(r1vars(i2,3)),'# ',trim(r1vars(i2,2))
@@ -846,7 +847,7 @@ module it_m
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(r2vars(i2,1))
            ch(2)=gen_fmt(r_v=defs%r2def(i2,:)*unit_factor)
-           write (ch(1),'(3a)') '(2(',trim(ch(2)),',1x,a),t26,a,t30,2a)'
+           write (ch(1),'(3a)') '(2(',trim(ch(2)),',1x,a),t24,a,t30,2a)'
            nflines=nflines+1
            write (flines(nflines),trim(ch(1))) &
 &           defs%r2def(i2,1)*unit_factor,'|',defs%r2def(i2,2)*unit_factor,&

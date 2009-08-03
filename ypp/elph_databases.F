@@ -191,7 +191,7 @@ integer function elph_databases(k,E,q)
    use IO_m,           ONLY:io_control,OP_RD,RD_CL,io_connect,io_unit,&
 &                           io_netcdf_support,io_disconnect,io_file
    use ELPH,           ONLY:ph_modes,elph_nb,E_k_plus_q,&
-&                           ph_freqs_sq,elph_gkkp,elph_DW
+&                           ph_freqs_sq,elph_gkkp,elph_DW,pol_vector
    use YPP,            ONLY:elph_dbs_path
    use vec_operate,    ONLY:v_is_zero,rlu_v_is_zero,c2a
    use zeros,          ONLY:k_iku_zero,k_rlu_zero
@@ -369,6 +369,9 @@ integer function elph_databases(k,E,q)
      !
      read (io_unit(ID)) gkkp_disk
      read (io_unit(ID)) pol_vec
+     !
+     if (ik==1) pol_vector=pol_vec
+     !
      if (idb==1) read (io_unit(ID)) grad_at_gamma(k2k_tab(ik),:,:,:,:)
      !
      if (.not.abinit_DB) then
@@ -456,10 +459,10 @@ integer function elph_databases(k,E,q)
    !
    deallocate(ph_freqs_sq_disk,gkkp_disk,pol_vec)
    if (idb==elph_nq) deallocate(grad_at_gamma)
- 
+   !
 1  call io_control(ACTION=RD_CL,ID=ID)
    call io_disconnect(ID)
- 
+   !
    end function
    !
    subroutine q_small(q_,small,nsmall)

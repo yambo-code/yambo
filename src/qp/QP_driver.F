@@ -37,7 +37,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
 &                        QP_nk,QP_state,QP_dSc_test,QP_reset,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_W_partially_done,&
 &                        GWo_iterations,CHOSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
-&                        Force_Newton_QP,GF_is_causal
+&                        Force_Newton_QP,GF_is_causal,QP_G_amplitude_integral
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE
  use global_XC,     ONLY:QP_DB_kind,SE_CHOSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON
  implicit none
@@ -102,6 +102,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    call msg('r','[Green] Sc steps                                         :',QP_Sc_steps)
    call msg('r','[Green] Sc energy range (centered in the bare value) [ev]:',QP_G_er*HARTREE)
    call msg('r','[Green] Sc damping range                             [ev]:',QP_G_dr*HARTREE)
+   !
+   GF_is_causal=Finite_Tel.or.l_ph_corr 
+   !
  else if (.not.l_life) then
    return
    !
@@ -269,8 +272,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  if (trim(QP_solver)=='g') then
    !
-   GF_is_causal=Finite_Tel.or.l_ph_corr
-   !
    if (l_el_corr.and.(.not.l_ppa.and..not.l_chosex)) call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
    !
 # if defined _ELPH 
@@ -339,6 +340,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
        allocate(qp%GreenF_W(QP_n_states,QP_Sc_steps))
        call mem_est("qp_GreenF_W",(/size(qp%GreenF_W)/))
        qp%GreenF_n_steps=QP_Sc_steps
+       allocate(QP_G_amplitude_integral(QP_n_states))
+       call mem_est("QP_G_amplitude_integral",(/size(QP_G_amplitude_integral)/))
      else if (.not.l_life) then
        allocate(QP_dSc(qp%n_states,QP_dSc_steps-1))
        call mem_est("QP_dSc",(/size(QP_dSc)/))
@@ -354,6 +357,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
      if (associated(qp%GreenF))   nullify(qp%GreenF)
      if (associated(qp%GreenF_W)) nullify(qp%GreenF_W)
      if (associated(qp%S_total))  nullify(qp%S_total)
+     if (allocated(QP_G_amplitude_integral)) deallocate(QP_G_amplitude_integral)
+     call mem_est("QP_G_amplitude_integral")
      call mem_est("QP_Sc QP_dSc qp_GreenF QP_Sx QP_Vxc qp_GreenF_W")
      call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table QP_table QP_state qp_S_total")
    end subroutine

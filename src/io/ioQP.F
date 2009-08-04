@@ -149,6 +149,9 @@ integer function ioQP(what,qp,ID)
    !
    ! GPL_EXCLUDE_END
    !
+   ioQP=io_status(ID)
+   if (ioQP/=0) goto 1
+   !
  endif
  !
  if (any((/io_sec(ID,:)==2/))) then

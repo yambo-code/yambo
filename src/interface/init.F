@@ -806,7 +806,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined  _REELS
        lreels=runlevel_is_on('reels')
 #endif
-#if defined  _ELPH 
+#if defined  _ELPH  
        if (.not.CLOSE_Gs) l_ph_corr=runlevel_is_on('el_ph').and.ioELPH_err==0
        l_el_corr=runlevel_is_on('el_el')
 #else

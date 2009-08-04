@@ -36,7 +36,7 @@ subroutine X_GreenF_remap(bands,E,W)
  ! Work Space
  !
  integer, parameter :: new_map_points=500
- integer            :: i_b,i_k,i_spin,i_w
+ integer            :: i_b,i_k,i_spin
  type(w_samp)       :: W_A
  type(levels)       :: E_map
  !
@@ -63,11 +63,6 @@ subroutine X_GreenF_remap(bands,E,W)
  ! 
  do i_b=bands(1),bands(2)
    do i_k=1,E%nk
-!do i_w=1,E%GreenF_n_E_steps
-!  write (100+i_b*10+i_k,'(3f20.10)') real(E%GreenF_W(i_b,i_k,1,i_w))*HARTREE,&
-!&                                    aimag(E%GreenF(i_b,i_k,1,i_w)),&
-!&                                    real(E%GreenF(i_b,i_k,1,i_w))
-!enddo
      do i_spin=1,n_sp_pol
        !
        if ( i_b> E%nbf ) then
@@ -97,10 +92,6 @@ subroutine X_GreenF_remap(bands,E,W)
        !
      enddo
      !
-!do i_w=1,W_A%n(1)
-!  write (200+i_b*10+i_k,'(3f20.10)') real(W_A%p(i_w))*HARTREE,aimag(E_map%GreenF(i_b,i_k,1,i_w))
-!enddo
-     !
      call live_timing(steps=1)
      !
    enddo
@@ -109,6 +100,9 @@ subroutine X_GreenF_remap(bands,E,W)
  call live_timing()
  !
  ! Transfer
+ !
+ ! Note that the spectral function of the Green Functions defined here have 
+ ! an integral equal to (Z*pi)
  !
  nullify(E%GreenF,E%GreenF_W)
  call mem_est("E-GreenF E-GreenF_W")

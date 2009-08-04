@@ -22,6 +22,9 @@
 subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
  !
  use pars,       ONLY:SP
+#if defined _POLARON
+ use units,      ONLY:pi
+#endif
  use X_m,        ONLY:use_X_RIM
  use BS,         ONLY:BSS_uses_RIM
  use electrons,  ONLY:levels,BZ_RIM_table,BZ_RIM_nkpt,spin_occ,BZ_RIM_nbands
@@ -43,6 +46,7 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
  complex(SP)  ::Z_,pole
 #if defined _POLARON
  complex(SP), allocatable  ::Green_F_convoluted(:)
+ real(SP)                  ::W_step
 #endif
  !
  GreenF  = cmplx(0.,0.,SP)
@@ -65,8 +69,15 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
    ! 
    allocate(Green_F_convoluted(Xen%GreenF_n_E_steps))
    !
+   W_step=real( Xen%GreenF_W(ic,ik,i_spin,2) - Xen%GreenF_W(ic,ik,i_spin,1))
+   !
    call Convolve(real(Xen%GreenF(ic,ik,i_spin,:)), real(Xen%GreenF(iv,ikp,i_spin,:)),&
-&                Green_F_convoluted,Xen%GreenF_n_E_steps)
+&                Green_F_convoluted,Xen%GreenF_n_E_steps,W_step)
+   !
+   ! Green_F_convoluted is now integrated to Zc*Zv*pi*pi. As I want the spectral function only
+   ! to pass to the KK transformation I need to rescale by pi
+   !
+   Green_F_convoluted=Green_F_convoluted/pi**2.
    !
    GreenF=(0.,0.)
    !
@@ -83,18 +94,6 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
      call Kramers_Kronig(Green_F_convoluted,real(Xen%GreenF_W(iv,ikp,i_spin,:)),Xen%GreenF_n_E_steps,&
 &                        GreenF,            -conjg(Xw%p),               Xw%n(1), cmplx(0.,0.,SP))
    endif
-   !
-!do i_w=1,Xen%GreenF_n_E_steps
-!  write (120,'(3f20.10)') real( Xen%GreenF_W(iv,ikp,1,i_w) )*HARTREE,real(Green_F_convoluted(i_w))
-!  write (100,'(3f20.10)') real( Xen%GreenF_W(iv,ikp,1,i_w) )*HARTREE,&
-!&                                    real( Xen%GreenF(iv,ikp,1,i_w))
-!  write (110,'(3f20.10)') real( Xen%GreenF_W(ic,ik,1,i_w) )*HARTREE,&
-!&                                    real( Xen%GreenF(ic,ik,1,i_w))
-!enddo
-!do i_w=1,Xw%n(1)
-!  write (200,'(3f20.10)') real( Xw%p(i_w) )*HARTREE, GreenF(i_w)
-!enddo
-!stop
    !
    deallocate(Green_F_convoluted)
    !

@@ -1,7 +1,3 @@
-SC_objects =
-#if defined _SC || defined _RT || defined _MAGNETIC
-SC_objects = f_sum_rule.o
-#endif
 POLARON_objects =
 #if defined _POLARON
 POLARON_objects = X_GreenF_remap.o
@@ -9,6 +5,6 @@ POLARON_objects = X_GreenF_remap.o
 objs = O_driver.o O_eels.o \
        Dipole_driver.o \
        Dipole_kb_pp_comp.o Dipole_kb_sum.o Dipole_kb_Ylm.o \
-       Dipole_transverse.o $(SC_objects) $(POLARON_objects) \
+       Dipole_transverse.o $(POLARON_objects) \
        X_drude.o  X_pre_setup.o X_simple_GreenF.o X_eh_setup.o X_em1.o X_os.o X_s.o \
        X_delta_part.o X_bare_RIM_GreenF.o Dipole_check_shifted_grids.o Dipole_longitudinal.o

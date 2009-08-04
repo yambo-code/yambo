@@ -5,7 +5,7 @@ POLARON_objects= Convolve.o
 objs = eval_G_minus_G.o \
        FREQUENCIES_damping.o FREQUENCIES_setup.o FREQUENCIES_coarse_grid.o \
        FREQUENCIES_Green_Function.o \
-       Kramers_Kronig.o $(POLARON_objects) \
+       Kramers_Kronig.o $(POLARON_objects) Integrate.o \
        fermi_level.o extend_occupations.o \
        QP_state_extract.o QP_state_table_setup.o \
        pert_inversion.o crystal_lattice.o pol_fit.o

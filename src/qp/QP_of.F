@@ -30,7 +30,7 @@ subroutine QP_of(kp,qp,en)
  use QP_m,      ONLY:QP_t,QP_Vxc,QP_Sc,QP_dSc,QP_Sx,QP_table,&
 &                    QP_rep_string,QP_solver,QP_n_states,&
 &                    QP_G_dr,QP_Sc_steps,use_GreenF_to_eval_QP,&
-&                    report_Sx,report_Sc,report_dSc
+&                    report_Sx,report_Sc,report_dSc,QP_G_amplitude_integral
  use stderr,    ONLY:set_real_printed_length
  use frequency, ONLY:w_samp,W_reset
  implicit none
@@ -136,6 +136,9 @@ subroutine QP_of(kp,qp,en)
        call msg('o G_Sc','# ',trim(qp%description(i2)),INDENT=0)
      enddo
      call msg('o G_Sc','#')
+     call msg('o G_Sc','# Spectral function at this point integrates to:',QP_G_amplitude_integral(i1),&
+&             INDENT=0)
+     call msg('o G_Sc','#')
      titles(1)='Energy'
      titles(2:3)=(/'Re[G]','Im[G]'/)
      titles(4:5)=(/'Re[S_tot]','Im[S_tot]'/)
@@ -148,7 +151,8 @@ subroutine QP_of(kp,qp,en)
      call msg('o G_Sc','#')
      do i2=1,QP_Sc_steps
        values=0.
-       values(1:3)=(/real(Sc_W%p(i2)),real(qp%GreenF(i1,i2)),aimag(qp%GreenF(i1,i2))/)*HARTREE
+       values(1)  =real(Sc_W%p(i2))*HARTREE
+       values(2:3)=(/real(qp%GreenF(i1,i2)),aimag(qp%GreenF(i1,i2))/)/HARTREE
        values(4:5)=(/real(qp%S_total(i1,i2)),aimag(qp%S_total(i1,i2))/)*HARTREE
        values(6)=values(4)
        if (report_Sx) then

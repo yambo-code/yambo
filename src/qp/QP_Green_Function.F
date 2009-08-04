@@ -22,11 +22,12 @@
 subroutine QP_Green_Function(qp,E,QPdb_read_err)
  !
  use drivers,       ONLY:l_ph_corr
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,pi
  use units,         ONLY:HARTREE
  use QP_m,          ONLY:QP_t,QP_Sc,QP_Sx,QP_Vxc,QP_table,&
 &                        QP_n_states,use_GreenF_to_eval_QP,QP_Sc_steps,QP_G_dr,&
-&                        QP_dSc_delta,Force_Newton_QP,GF_is_causal
+&                        QP_dSc_delta,Force_Newton_QP,GF_is_causal,&
+&                        QP_G_amplitude_integral
  use electrons,     ONLY:spin,levels,spin_occ
  use frequency,     ONLY:w_samp,W_reset
  implicit none
@@ -42,8 +43,10 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
  integer,parameter::n_max_poles=100
  complex(SP)      ::QP_Go,Eqp(n_max_poles),R(n_max_poles),beta(n_max_poles),G_m1(QP_Sc_steps),&
 &                   f_energy
- real(SP)         ::Eo
- logical          ::band_is_metallic
+ real(SP)         ::Eo,A_integral
+ logical          ::band_is_metallic,apply_damping
+ !
+ real(SP), external :: Integrate
  !
  ! The Green's function
  !
@@ -69,6 +72,16 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
    Eo=E%E(ib,ik,i_spin) 
    if (associated(E%Eo)) Eo=E%Eo(ib,ik,i_spin)
    !
+   if (QPdb_read_err<0) then
+     if ( allocated(QP_Sx) ) then
+       qp%S_total(iqp,:)=QP_Sc(iqp,:)+QP_Sx(iqp)-QP_Vxc(iqp)
+     else
+       qp%S_total(iqp,:)=QP_Sc(iqp,:)
+     endif
+   endif
+   !
+   apply_damping= maxval(abs( aimag(qp%S_total(iqp,:) ) )) < 0.001/HARTREE
+   !
    do iw=1,W%n(1) 
      !
      !  Davide: 15/04/2009 moved conjg from the second term of the Green to
@@ -81,16 +94,8 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
      QP_Go=           E%f(ib,ik,i_spin)/(f_energy-Eo)/spin_occ+&
 &          (spin_occ-E%f(ib,ik,i_spin))/(W%p(iw) -Eo)/spin_occ  
      !
-     if (QPdb_read_err<0) then
-       if ( allocated(QP_Sx) ) then
-         qp%S_total(iqp,:)=QP_Sc(iqp,:)+QP_Sx(iqp)-QP_Vxc(iqp)
-       else
-         qp%S_total(iqp,:)=QP_Sc(iqp,:)
-       endif
-     endif
-     !
-     if ( band_is_metallic ) then
-       qp%GreenF(iqp,iw)=QP_Go/(1.-QP_Go*qp%S_total(iqp,iw)) 
+     if ( band_is_metallic .or. apply_damping ) then
+       qp%GreenF(iqp,iw)=QP_Go/(1.-QP_Go*qp%S_total(iqp,iw))  
      else
        !
        ! Andrea (20/7/2009): If the imaginary part of the self-energy
@@ -101,6 +106,8 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
        !
        qp%GreenF(iqp,iw)=1./(real(W%p(iw))-Eo-qp%S_total(iqp,iw)) 
      endif
+     !
+     QP_G_amplitude_integral(iqp)=Integrate(aimag(qp%GreenF(iqp,:)),real(W%p),W%n(1))/pi
      !
    enddo
    !

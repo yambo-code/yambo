@@ -19,42 +19,23 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine f_sum_rule(W)
- ! 
- use pars,          ONLY:SP,pi
- use D_lattice,     ONLY:DL_vol
- use X_m,           ONLY:X_epsilon
- use frequency,     ONLY:w_samp
- use electrons,     ONLY:nel
- use com,           ONLY:msg
- implicit none
+function Integrate(F,W,N)
  !
- type(w_samp) :: W
+ use pars,    ONLY:SP
+ implicit none
+ integer,     intent(in)  :: N
+ real(SP),    intent(in)  :: W(N),F(N)
+ real(SP)                 :: Integrate
  !
  ! Work Space
  !
- integer  :: iw
- real(SP) :: integral_,y(2),delta_x,N_el_per_cell
+ integer      :: i_w
+ real(SP)     :: M,Q
  !
- integral_=0.
- !
- ! \int dw w e_2(w)  = \pi/2 w_p^2 =  2 pi^2 Na/Vol Ne
- !
- ! = > Ne = (\int dw w e_2(w)) * Vol/Na /2 /pi^2
- !     Ne*Na = (\int dw w e_2(w)) * Vol /2 /pi^2
- !
- do iw=1,W%n(1)-1
-   !
-   delta_x=real(W%p(iw+1)-W%p(iw))
-   y(1)= real(W%p(iw))   * aimag(X_epsilon(2,iw))
-   y(2)= real(W%p(iw+1)) * aimag(X_epsilon(2,iw+1))
-   !
-   integral_=integral_+delta_x*(y(1)+y(2))*.5
-   !
+ do i_w=1,N-1
+   M=(F(i_w)-F(i_w+1))/(W(i_w)-W(i_w+1))
+   Q=F(i_w)-M*W(i_w)
+   Integrate=Integrate+1./2.*M*(W(i_w+1)**2.-W(i_w)**2.)+Q*(W(i_w+1)-W(i_w))
  enddo
  !
- N_el_per_cell=integral_*DL_vol/2./pi**2.
- !
- call msg('snr','[SUM RULE] Electrons per unit cell (found expected):',(/N_el_per_cell,nel/))
- !
-end subroutine
+end function

@@ -335,10 +335,6 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    call X_alloc('X')
    !
-#if defined _SC || defined _MAGNETIC
-   if (using_SC_basis) call f_sum_rule(wv)
-#endif
-   !
    deallocate(X_epsilon,wv%p)
    call mem_est("W-p")
    if (allocated(X_fxc)) deallocate(X_fxc)

@@ -1,6 +1,6 @@
 #if defined _YPP_ELPH
 ELPH_objects = elph_databases.o elph_eliashberg_dos.o \
-               elph_general_gFsq.o elph_excitonic_gkkp.o
+               elph_general_gFsq.o elph_excitonic_gkkp.o elph_atomic_amplitude.o
 #endif
 #if defined _YPP_RT
 RT_objects = RT_fix_symmetries.o RT_spectrum.o

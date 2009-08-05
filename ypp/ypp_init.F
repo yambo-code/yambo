@@ -111,6 +111,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    l_dos=.false.
    l_gkkp=.false.
    l_eliashberg=.false.
+   l_atomic_amplitude=.false.
    elph_steps=200
    ph_broad=0.01/HARTREE
    elph_gamma_broad=0.0
@@ -179,9 +180,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    X_rt%time_range(:)  =(/-FS2AUT,-FS2AUT/)
    X_rt%energy_steps   =100
    X_rt%energy_range(:)=(/0.,10./HARTREE/)
-   X_rt%damp           ="LORENTZIAN"
    X_rt%damp_factor    =0.1/HARTREE
-   X_rt%eta            =0.1/HARTREE
    !
 #endif
    ! GPL_EXCLUDE_END
@@ -233,8 +232,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
     endif
 #if defined _YPP_ELPH
      if ( trim(rstr_piece(i1)) == 'phonons') then
-       l_dos            =trim(rstr_piece(i1+1))=='d'
-       l_eliashberg     =trim(rstr_piece(i1+1))=='e'
+       l_dos              =trim(rstr_piece(i1+1))=='d'
+       l_eliashberg       =trim(rstr_piece(i1+1))=='e'
+       l_atomic_amplitude =trim(rstr_piece(i1+1))=='a'
+       if (l_atomic_amplitude) infile_editing=.false.
        if (l_dos)          call initactivate(1,'dos')
        if (l_eliashberg)   call initactivate(1,'eliashberg')
     endif
@@ -271,7 +272,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        ! GPL_EXCLUDE_END SPIN_IGNORE
        !
 #if defined _YPP_ELPH
-       l_eliashberg      =trim(rstr_piece(i1+1))=='e'
+       l_eliashberg       =trim(rstr_piece(i1+1))=='e'
 #endif
        !
      endif
@@ -281,8 +282,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        if (l_mag)            call initactivate(1,'magnetization')
        if (l_wavefunction)   call initactivate(1,'wavefunction')
 #if defined _YPP_ELPH
-       if (l_eliashberg)     call initactivate(1,'eliashberg')
-       if (l_gkkp)           call initactivate(1,'gkkp')
+       if (l_eliashberg)       call initactivate(1,'eliashberg')
+       if (l_gkkp)             call initactivate(1,'gkkp')
 #endif
        if (l_density)        call initactivate(1,'density')
        if (l_sort)           infile_editing=.false.

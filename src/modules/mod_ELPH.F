@@ -126,8 +126,12 @@ module ELPH
        call mem_est("elph_gkkp elph_DW f_k_plus_q")
      endif
      if (allocated(ph_freqs_sq)) then
-       deallocate(ph_freqs_sq,E_k_plus_q,pol_vector)
-       call mem_est("ph_freqs_sq f_k_plus_q pol_vector")
+       deallocate(ph_freqs_sq,E_k_plus_q)
+       call mem_est("ph_freqs_sq f_k_plus_q")
+     endif
+     if (allocated(pol_vector)) then
+       deallocate(pol_vector)
+       call mem_est("pol_vector")
      endif
      if (allocated(ph_qpt)) then
        deallocate(ph_qpt)

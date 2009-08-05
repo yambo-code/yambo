@@ -194,10 +194,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! GPL_EXCLUDE_END
  !
-#if defined _SC || defined _MAGNETIC
- if (using_SC_basis) call f_sum_rule(W_bss)
-#endif
- !
  ! CLEAN
  !
  deallocate(BSS_rhoq0,X_epsilon)

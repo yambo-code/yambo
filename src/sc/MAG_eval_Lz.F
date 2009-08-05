@@ -52,8 +52,6 @@ subroutine MAG_eval_Lz(call_type,x_tmp,y_tmp)
  complex(SP):: cdotc
 #endif
  !
- !
- !
  if(call_type==1) then
    allocate(x(fft_size),y(fft_size))
    x(1:fft_size)=x_tmp(1:fft_size)

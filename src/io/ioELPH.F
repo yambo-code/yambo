@@ -49,8 +49,8 @@ integer function ioELPH(ID,what)
  real(SP), allocatable  ::elph_gkkp_disk(:,:,:),pol_vec_disk(:,:,:,:)
  character(9)           ::db_name
  !
- if (what=='gkkp') db_name='elph_gkkp'
- if (what=='gFsq') db_name='elph_gFsq'
+ if (what=='gkkp'.or.what=='no_gkkp') db_name='elph_gkkp'
+ if (what=='gFsq')                db_name='elph_gFsq'
  !
  ioELPH=io_connect(desc=db_name,type=2,ID=ID)
  if (ioELPH/=0) goto 1
@@ -157,7 +157,10 @@ integer function ioELPH(ID,what)
  !
  ! Allocation
  !
- if (read_is_on(ID)) call elph_global_alloc('gkkp')
+ if (read_is_on(ID)) then
+   if (what/='no_gkkp') call elph_global_alloc('gkkp')
+   if (what=='no_gkkp') call elph_global_alloc('no_gkkp')
+ endif
  !
  ! Manage RD_CL_IF_END
  !
@@ -185,15 +188,20 @@ integer function ioELPH(ID,what)
    call io_bulk(ID,VAR="POLARIZATION_VECTORS_IMAG",VAR_SZ=(/ph_modes,sum(n_atoms),3/))
    call io_bulk(ID,R3=pol_vec_disk(:,:,2,:))
    ! 
-   if (write_is_on(ID)) then
+   if (read_is_on(ID)) then
      call mat_r2c(pol_vec_disk(:,:,:,1),pol_vector(:,:,1))
      call mat_r2c(pol_vec_disk(:,:,:,2),pol_vector(:,:,2))
      call mat_r2c(pol_vec_disk(:,:,:,3),pol_vector(:,:,3))
    endif
    !
    deallocate(pol_vec_disk)
+ else
+   !
+   deallocate(pol_vector)
    !
  endif
+ !
+ if (what=='no_gkkp') goto 1
  ! 
  ! Ek+q (to be used when  elph_use_q_grid=.FALSE.)
  !

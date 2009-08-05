@@ -361,8 +361,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
  !   store H_paramag_x,H_paramag_y in memory before the cleaning
  !   moreover wf_x and wf_y will not be cleaned
  !   and evaluate <i|Lz|j> on the LDA wf
- if(eval_Lz) call MAG_eval_Lz(1,x_tmp=(H_paramagn_y/MAG_B_z),&
-&                                 y_tmp=-(H_paramagn_x/MAG_B_z))
+ if(eval_Lz) call MAG_eval_Lz(1,H_paramagn_y/MAG_B_z,-(H_paramagn_x/MAG_B_z)) 
  ! 
  ! Clean Up
  !

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-! Partialy copied from Octopus v. 3.1.0
+! Partialy inspired from Octopus v. 3.1.0
 !
 subroutine RT_spectrum(en,k)
  !
@@ -32,6 +32,7 @@ subroutine RT_spectrum(en,k)
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:bz_samp
  use parser_m,       ONLY:parser
+ use timing,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,NONE,DUMP
  use real_time,      ONLY:Tot_steps,RT_step,j_current,A_norm,i_time, &
 &                         max_rt_steps_disk,current_cache,n_ext_fields 
@@ -43,26 +44,25 @@ subroutine RT_spectrum(en,k)
  ! Work Space
  !
  integer  :: io_J,io_G,ID(2)
- integer  :: damp,i1,i2
+ integer  :: i1,i2,last_point
  integer  :: niter,istart,iend,nsteps
  logical  :: Prt_Current,Prt_Einduced,Use_FFT
  character(lchlen)  :: file_name(3),dump_ch
  character(schlen)  :: headings(7)
  real(SP)           :: values(8)
- real(SP) :: av,omega,tt,de
+ real(SP) :: av,omega,tt,de,min_energy
  real(SP),    allocatable :: damp_function(:)
  real(SP),    allocatable :: current(:,:)
  complex(SP), allocatable :: Avec(:)
  complex(DP), allocatable :: dielectric(:,:)
+ complex(SP) :: min_eps(3) 
  real(DP),    allocatable :: E_induced(:,:)
  integer     :: fft_sign
  integer(8)  :: fftw_plan
+ logical     :: found
  !
  ! Parameters
  !
- integer, parameter :: DAMP_NONE       = 0  
- integer, parameter :: DAMP_LORENTZIAN = 1
- integer, parameter :: DAMP_GAUSSIAN   = 2    
  integer, external  :: io_SC_components
  !
  call msg("s",'Real-Time response analizer')
@@ -70,19 +70,6 @@ subroutine RT_spectrum(en,k)
  call parser('PrtEinduced',Prt_EInduced)
  call parser('UseFFT',Use_FFT)
  ! 
- ! Check damping mode
- !
- if(trim(X_rt%damp)=="NONE") then
-   damp=DAMP_NONE
- elseif(trim(X_rt%damp)=="LORENTZIAN")  then
-   damp=DAMP_LORENTZIAN
- elseif(trim(X_rt%damp)=="GAUSSIAN") then
-   damp=DAMP_GAUSSIAN
- else
-   damp=DAMP_NONE
-   call warning(" Unknown DampMode. Switching to NONE")
- endif
- !
  ! Check for saved current and vector potential
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID(1)) ! Current response
@@ -122,15 +109,7 @@ subroutine RT_spectrum(en,k)
  !
  do i1=istart,iend
    i2=i1-istart
-   select case(damp)
-    case(DAMP_NONE)
-      damp_function(i1) = 1.0
-    case(DAMP_LORENTZIAN)
-      damp_function(i1) = exp(-i2*RT_step*X_rt%damp_factor)
-    case(DAMP_GAUSSIAN)
-      damp_function(i1) = exp(-(i2*RT_step)**2*X_rt%damp_factor**2)
-    end select
-    !
+   damp_function(i1) = exp(-i2*RT_step*X_rt%damp_factor)
  enddo
  !
  ! Read Current and Vector Potential
@@ -142,6 +121,7 @@ subroutine RT_spectrum(en,k)
  allocate(current_cache(3+2*n_ext_fields,max_rt_steps_disk))
  call mem_est("Current_Cache",(/size(current_cache)/),(/SP/))
  !
+ call live_timing('Reading current:',Tot_steps)
  do i_time=1,Tot_steps
    !      
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/i_time+1/),ID=ID(1)) 
@@ -150,9 +130,12 @@ subroutine RT_spectrum(en,k)
    if(i_time>=istart.and.i_time<=iend) then
      current(i_time,:)= j_current(:)
      Avec(i_time)     = A_norm(ref_efield) ! to get the Vector one just multiply for versor Ef_q0(:)
-   endif            
+   endif           
+   !
+   call live_timing(steps=1)
    !
  enddo
+ call live_timing()
  !
  ! Remove the dc component
  !
@@ -163,9 +146,10 @@ subroutine RT_spectrum(en,k)
  !
  ! Print current and vector potential if required
  !
+ call set_real_printed_length(f_length=15,g_length=15)
+ !
  if(Prt_Current) then
    !
-   call set_real_printed_length(f_length=15,g_length=15)
    file_name(1)="current"
    call of_open_close(file_name(1),'ot')
    headings(1)="Time[fs]"
@@ -181,7 +165,6 @@ subroutine RT_spectrum(en,k)
      call msg('o current','',values(1:6),USE_TABS=.TRUE.)
    enddo
    !
-   call set_real_printed_length()
    call of_open_close(file_name(1))
    !
  endif
@@ -191,14 +174,8 @@ subroutine RT_spectrum(en,k)
  allocate(E_induced(istart:iend,3))
  call mem_est("E_induced",(/size(E_induced)/),(/SP/))
  !
- E_induced=(0.,0.) 
+ E_induced=current
  !  
- do i1=istart, iend
-   do i2=1,3
-     E_induced(i1,i2)=-sum(current(istart:i1,i2))*RT_step
-   enddo
- enddo
- !
  ! Apply the damping function
  !
  E_induced(:,1)=E_induced(:,1)*damp_function(:)
@@ -271,16 +248,62 @@ subroutine RT_spectrum(en,k)
   ! Notice that in the integration should appear dt = RT_step but this cancel
   ! when one divides from Avec(1) that is the Fourier Transform of a delta function 
   !
+  call live_timing('FFT:', X_rt%energy_steps)
+  !
   do i1 = 1, X_rt%energy_steps
     omega = (i1-1)*de+X_rt%energy_range(1)
     do i2 = istart, iend
       tt = i2*RT_step
       dielectric(i1,1:3) = dielectric(i1,1:3) &
-      &  + E_induced(i2,1:3)*exp(((0.,1.)*omega - X_rt%eta)*tt)
+      &  + E_induced(i2,1:3)*exp((0.,1.)*omega*tt)
     enddo
+    call live_timing(steps=1)
   enddo
   !
+  call live_timing()
+  !
  endif
+ !
+ if(X_rt%damp_factor<3.*2.*pi/(dble(niter)*RT_step)) then
+   write(dump_ch,*) " You should use a damping factor greater than :", &
+&                    3*2.*pi/(dble(niter)*RT_step)*HARTREE 
+   call warning(dump_ch)
+ endif
+ !
+ ! Minumum trustable frequency due to finite time simulation and damping
+ !
+ min_energy=max(X_rt%damp_factor,2.*pi/(dble(niter)*RT_step)) 
+ found=.false.
+ !
+ ! Find the last trustable real part of eps in order to interpolate
+ ! for omega->0, the imaginary part is set to zero
+ ! This interpolation is not good for metals
+ !
+ i1=1
+ last_point=0
+ do while(.not.found.and.i1<=X_rt%energy_steps) 
+   omega = (i1-1)*de+X_rt%energy_range(1)
+   if(omega>=3*min_energy) then
+      found=.true.
+      min_eps(1:3)=dielectric(i1,1:3)/((0.,1.)*omega - X_rt%damp_factor)
+      last_point=i1
+   else
+     i1=i1+1
+   endif
+ enddo  
+ !
+ ! Interpolate low frequencies due to simulation finite time
+ ! and to the damp-factor, in oder to obtain eps(w->0) perform
+ ! a longer simulation and use a smaller damp_factor
+ !
+ do i1 = 1, X_rt%energy_steps
+   omega = (i1-1)*de+X_rt%energy_range(1)
+   if(i1<=last_point) then
+     dielectric(i1,1:3)=min_eps(1:3)
+   else
+     dielectric(i1,1:3)=dielectric(i1,1:3)/((0.,1.)*omega - X_rt%damp_factor)
+   endif
+ enddo
  !
  dielectric(:,:) = dielectric(:,:)/Avec(1) + (1.,0.)
  !
@@ -288,6 +311,12 @@ subroutine RT_spectrum(en,k)
  !
  file_name(3)='eps_q001_rt'
  call of_open_close(file_name(3),'ot')
+ !
+ omega=2.*pi/(dble(niter)*RT_step)  ! Frequency step in real-time dynamics
+ !
+ write(dump_ch,*) " Dielectric constant interpolated below: ",min_energy*HARTREE," eV "
+ call msg('o eps_q001_rt','#',dump_ch,INDENT=0,USE_TABS=.true.)
+ call msg('o eps_q001_rt','#','',INDENT=0,USE_TABS=.true.)
  !
  write(dump_ch,*) " Max Frequency Range: ",omega*HARTREE," - ",omega*dble(niter/2.)*HARTREE," eV "
  call msg('o eps_q001_rt','#',dump_ch,INDENT=0,USE_TABS=.true.)
@@ -317,6 +346,8 @@ subroutine RT_spectrum(en,k)
  !
  call of_open_close(file_name(3))
  ! 
+ call set_real_printed_length()
+ !
  deallocate(E_induced,dielectric,current,damp_function,Avec,current_cache)
  call mem_est("Current_Cache")
  call mem_est("Current")

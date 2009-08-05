@@ -85,6 +85,7 @@ module YPP
  logical :: l_gkkp
  logical :: l_phonons
  logical :: l_eliashberg
+ logical :: l_atomic_amplitude
  integer :: elph_steps
  real(SP):: elph_gamma_broad
  real(SP):: ph_broad
@@ -140,7 +141,6 @@ module YPP
    real(SP) :: energy_range(2)     ! energy range 
    character(schlen) :: damp        ! Damp type (none, lorentian or gaussian)
    real(SP) :: damp_factor         ! factor used in damping
-   real(SP) :: eta                 ! damping used in Fourier transform
  end type Xw_rt
  !
  type(Xw_rt) :: X_rt 

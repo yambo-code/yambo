@@ -126,6 +126,8 @@ subroutine RT_restart(Xen)
      !
    endif
    !
+   it_now=it_now+1
+   !
  else
    !
    it_now=1

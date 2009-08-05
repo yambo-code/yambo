@@ -183,6 +183,10 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    !
    if(l_rt_efield.and.i_time>0)  call RT_current(j_current,xK,Xen,G_lesser)
    !
+   ! Integrate equation of motion
+   !
+   call RT_Integrator(G_lesser,G_lesser_previous,RT_step,Xen,k,q,Integrator_name,RT_time)
+   !
    ! Write last G_lesser on disk
    !
    it_now=it ! used in RESTART
@@ -195,10 +199,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
      call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
      io_G=io_SC_components('G',Xen,ID(5))
    enddo
-   !
-   ! Integrate equation of motion
-   !
-   call RT_Integrator(G_lesser,G_lesser_previous,RT_step,Xen,k,q,Integrator_name,RT_time)
    !
  enddo
  !

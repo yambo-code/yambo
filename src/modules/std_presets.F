@@ -36,7 +36,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     QP_W_partially_done,GWo_SC_done,GWo_iterations,&
 &                     CHOSEX_use_empties,QP_ctl_E,QP_ctl_W,QP_ctl_Z,On_Mass_Shell_approx
  use functions,  ONLY:bose_E_cut
- use D_lattice,  ONLY:i_space_inv,n_atoms_max,n_atom_species,&
+ use D_lattice,  ONLY:i_space_inv,n_atoms_species_max,n_atomic_species,&
 &                     input_Tel_fixed,non_periodic_directions,lattice
  use pseudo,     ONLY:pp_n_l_comp_max,pp_kbv_dim
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,&
@@ -195,8 +195,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  ! D_lattice 
  !
- n_atoms_max=0
- n_atom_species=0
+ n_atoms_species_max=0
+ n_atomic_species=0
  i_space_inv=-1
  !
  ! Pseudo

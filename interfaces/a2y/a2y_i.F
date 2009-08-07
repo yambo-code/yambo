@@ -27,7 +27,7 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  use com,                 ONLY:msg,write_to_report,core_io_path
  use par_proc_m,          ONLY:ncpu,myid,p_finalize
  use electrons,           ONLY:levels,E_reset,n_bands,n_spin
- use D_lattice,           ONLY:n_atoms_max
+ use D_lattice,           ONLY:n_atoms_species_max
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY:wf_ncx,ioWF,wf_nb_io_groups,wf_nb_io
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
@@ -111,7 +111,7 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
      !
      call a2y_wf(wf_disk,ik,ib_grp,trim(KSS_file_name))
      !
-     if (n_atoms_max>0.and.ib_grp==1) then
+     if (n_atoms_species_max>0.and.ib_grp==1) then
        if (ik==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
        if (ik> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
        io_err=ioKB_PP(ID)

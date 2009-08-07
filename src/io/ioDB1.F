@@ -28,8 +28,8 @@ integer function ioDB1(E,k,ID)
  use electrons,        ONLY:levels,default_nel,n_spin,n_bands,nel,n_sp_pol,&
 &                           n_spinor
  use D_lattice,        ONLY:a, alat, nsym, i_time_rev, default_Tel, dl_sop, &
-&                           Tel, n_atoms_max,n_atom_species,n_atoms,atom_pos, &
-&                           znucl
+&                           Tel, n_atoms_species_max,n_atomic_species,n_atoms_species,atom_pos, &
+&                           Z_species, n_atoms
  use R_lattice,        ONLY:ng_vec, g_vec, bz_samp,nkibz,&
 &                           qp_states_k,nXkibz,ng_closed
  use wave_func,        ONLY:wf_ncx, wf_nc_k, wf_igk,wf_ng,wf_nb_io
@@ -157,11 +157,11 @@ integer function ioDB1(E,k,ID)
    !
    if (ver_is_gt_or_eq(ID,(/3,0,4/))) then 
      call io_elemental(ID, VAR="MAX_ATOMS",VAR_SZ=1,MENU=0)
-     call io_elemental(ID,I0=n_atoms_max,   CHECK=.true.,OP=(/"=="/),&
+     call io_elemental(ID,I0=n_atoms_species_max,   CHECK=.true.,OP=(/"=="/),&
 &                      VAR=' Max atoms/species               :')
      !
      call io_elemental(ID, VAR="number_of_atom_species",VAR_SZ=1,MENU=0)
-     call io_elemental(ID,I0=n_atom_species,CHECK=.true.,OP=(/"=="/),&
+     call io_elemental(ID,I0=n_atomic_species,CHECK=.true.,OP=(/"=="/),&
 &                      VAR=' No. of atom species             :')
    endif
    call io_elemental(ID, VAR="",VAR_SZ=0)
@@ -191,6 +191,8 @@ integer function ioDB1(E,k,ID)
      ng_closed=ng_vec
      if (.not.ver_is_gt_or_eq(ID,(/3,0,3/))) wf_ng=wf_ncx
      !
+     n_atoms=sum(n_atoms_species)    
+     !
      call setup_global_XC('preset',GS_xc_KIND,xc_functional=GS_xc_functional,perturbation=EXT_NONE)
      !
    endif
@@ -217,11 +219,11 @@ integer function ioDB1(E,k,ID)
 &               (/SP,        SP,        SP,           IP,         IP/) )
    !
    if (ver_is_gt_or_eq(ID,(/3,0,4/))) then 
-     allocate(n_atoms(n_atom_species))
-     allocate(znucl(n_atom_species))
-     allocate(atom_pos(3,n_atoms_max,n_atom_species))
-     call mem_est("n_atoms atom_pos znucl",&
-&                 (/n_atom_species,size(atom_pos),n_atom_species/),&
+     allocate(n_atoms_species(n_atomic_species))
+     allocate(Z_species(n_atomic_species))
+     allocate(atom_pos(3,n_atoms_species_max,n_atomic_species))
+     call mem_est("n_atoms_species atom_pos Z_species",&
+&                 (/n_atomic_species,size(atom_pos),n_atomic_species/),&
 &                 (/IP,SP,IP/))
    endif
    !
@@ -238,12 +240,12 @@ integer function ioDB1(E,k,ID)
  ! Atoms
  !
  if (ver_is_gt_or_eq(ID,(/3,0,4/))) then 
-   call io_bulk(ID,VAR="N_ATOMS",VAR_SZ=(/n_atom_species/))
-   call io_bulk(ID,I1=n_atoms)
+   call io_bulk(ID,VAR="N_ATOMS",VAR_SZ=(/n_atomic_species/))
+   call io_bulk(ID,I1=n_atoms_species)
    call io_bulk(ID,VAR="ATOM_POS",VAR_SZ=shape(atom_pos))
    call io_bulk(ID,R3=atom_pos)
-   call io_bulk(ID,VAR="atomic_numbers",VAR_SZ=(/n_atom_species/))
-   call io_bulk(ID,I1=znucl)
+   call io_bulk(ID,VAR="atomic_numbers",VAR_SZ=(/n_atomic_species/))
+   call io_bulk(ID,I1=Z_species)
  endif
  !
  ! Symmetry

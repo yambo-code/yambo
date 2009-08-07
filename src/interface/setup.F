@@ -25,8 +25,8 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
 &                         atoms_spatial_invertion,i_space_inv,input_Tel_fixed,&
-&                         inv_index,atoms_string,load_PT_elements,n_atoms,znucl,&
-&                         n_atom_species,PT_elements,non_periodic_directions,lattice,&
+&                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
+&                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
 &                         symmetry_group_table
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,&
 &                         rl_sop,bz_samp,g_vec,E_of_shell
@@ -66,10 +66,10 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  atoms_string=' '
  !
- if (allocated(znucl)) then
-   do is=1,n_atom_species
-     dumb_ch1=trim(intc(n_atoms(is)))//'--'
-     if (znucl(is)/=0) dumb_ch1=trim(intc(n_atoms(is)))//PT_elements(znucl(is))
+ if (allocated(Z_species)) then
+   do is=1,n_atomic_species
+     dumb_ch1=trim(intc(n_atoms_species(is)))//'--'
+     if (Z_species(is)/=0) dumb_ch1=trim(intc(n_atoms_species(is)))//PT_elements(Z_species(is))
      atoms_string=trim(atoms_string)//trim(dumb_ch1)
    enddo
    call msg('rn','... containing '//trim(atoms_string)//' atoms')

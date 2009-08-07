@@ -55,7 +55,6 @@ subroutine rim()
  !
  ! Anisotropy Setup
  !
- !
  ! em1_anis refers to the X part only of epsm1 as in the self-energy
  ! the bare part is embodied in the exchange.
  !

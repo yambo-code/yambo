@@ -27,8 +27,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
 &                                  n_spinor 
  use R_lattice,             ONLY : bz_samp, ng_vec, g_vec,nkibz, b
  use D_lattice,             ONLY : DL_vol, a, alat, default_Tel,&
-&                                  n_atom_species,n_atoms,&
-&                                  n_atoms_max,atom_pos,znucl,lattice
+&                                  n_atomic_species,n_atoms_species,&
+&                                  n_atoms_species_max,atom_pos,Z_species,lattice
  use pseudo,                ONLY : pp_n_l_comp_max,pp_n_l_comp
  use wave_func,             ONLY : wf_nc_k, wf_igk,wf_ncx,wf_ng
  use vec_operate,           ONLY : cross_product
@@ -164,23 +164,23 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  call msg('s',":: Atoms positions...")
  !
- n_atom_species=ahdr%ntypat
- allocate(n_atoms(n_atom_species),pp_n_l_comp(n_atom_species))
+ n_atomic_species=ahdr%ntypat
+ allocate(n_atoms_species(n_atomic_species),pp_n_l_comp(n_atomic_species))
  pp_n_l_comp=pp_n_l_comp_max
- n_atoms(:)=0
+ n_atoms_species(:)=0
  do i1=1,ahdr%natom
-   n_atoms( ahdr%typat(i1) ) = n_atoms( ahdr%typat(i1) ) +1
+   n_atoms_species( ahdr%typat(i1) ) = n_atoms_species( ahdr%typat(i1) ) +1
  enddo
- n_atoms_max=maxval(n_atoms)
- allocate(atom_pos(3,n_atoms_max,n_atom_species),znucl(n_atom_species))
- n_atoms(:)=0
+ n_atoms_species_max=maxval(n_atoms_species)
+ allocate(atom_pos(3,n_atoms_species_max,n_atomic_species),Z_species(n_atomic_species))
+ n_atoms_species(:)=0
  do i1=1,ahdr%natom
-   n_atoms( ahdr%typat(i1) ) = n_atoms( ahdr%typat(i1) ) +1
-   atom_pos(:, n_atoms( ahdr%typat(i1) ) ,ahdr%typat(i1) )=&
+   n_atoms_species( ahdr%typat(i1) ) = n_atoms_species( ahdr%typat(i1) ) +1
+   atom_pos(:, n_atoms_species( ahdr%typat(i1) ) ,ahdr%typat(i1) )=&
 &          matmul(transpose(a),ahdr%xred(:,i1))
  enddo
  do i1=1,ahdr%npsp
-   znucl(i1) = ahdr%znuclpsp(i1)
+   Z_species(i1) = ahdr%znuclpsp(i1)
  enddo
  call msg('l','done')
  !
@@ -224,7 +224,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
    ! GPL_EXCLUDE_END SPIN_IGNORE
    !
    do ik=1,k%nibz
-     do i1=1,n_atom_species
+     do i1=1,n_atomic_species
        do i2=1,pp_n_l_comp_max
          read(11)
          read(11) 

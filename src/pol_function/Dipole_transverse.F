@@ -26,7 +26,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use electrons,           ONLY:levels,n_spin, n_spinor, n_sp_pol
  use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m,       ONLY:par_indexes
- use D_lattice,           ONLY:alat,n_atom_species,n_atoms
+ use D_lattice,           ONLY:alat,n_atomic_species,n_atoms_species
  use pseudo,              ONLY:pp_kbv_dim,pp_n_l_comp,PP_free
  use R_lattice,           ONLY:g_vec,bz_samp
  use X_m,                 ONLY:X_t,DIP_iR_or_P,Dipole_bands_ordered,Eval_P_and_P2_only,P_square
@@ -65,8 +65,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
  if (ioKB_err==0) then
    X%Vnl_included=.true.
    pp_kbv_dim=0
-   do is = 1,n_atom_species
-     do ia = 1,n_atoms(is)
+   do is = 1,n_atomic_species
+     do ia = 1,n_atoms_species(is)
        do il = 1, pp_n_l_comp(is)
          do im = 1,2*(il-1)+1
            pp_kbv_dim=pp_kbv_dim+1

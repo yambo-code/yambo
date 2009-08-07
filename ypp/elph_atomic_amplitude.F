@@ -24,7 +24,7 @@ subroutine elph_atomic_amplitude(q)
  use pars,                ONLY:SP
  use com,                 ONLY:msg,of_open_close,warning
  use R_lattice,           ONLY:bz_samp
- use D_lattice,           ONLY:n_atoms,znucl
+ use D_lattice,           ONLY:n_atoms_species,Z_species
  use ELPH,                ONLY:ph_modes,ph_freqs_sq,&
 &                              max_ph_freq,elph_nq,elph_use_q_grid,&
 &                              elph_global_free,pol_vector
@@ -37,9 +37,9 @@ subroutine elph_atomic_amplitude(q)
  !
  ! Work Space 
  !
- integer           ::nq_todo,iq,im,is,i,j,n_atoms_tot
+ integer           ::nq_todo,iq,im,is,i,j,n_atoms_species_tot
  real(SP)          ::q_weight,omega,U_eigenvalues(3)
- complex(SP)       ::mean_ui_uj(sum(n_atoms),3,3)
+ complex(SP)       ::mean_ui_uj(sum(n_atoms_species),3,3)
  !
  !I/O
  !
@@ -68,7 +68,7 @@ subroutine elph_atomic_amplitude(q)
  !
  mean_ui_uj=(0.,0.)
  !
- n_atoms_tot=sum(n_atoms)
+ n_atoms_species_tot=sum(n_atoms_species)
  !
  do iq=1,nq_todo 
    !
@@ -94,7 +94,7 @@ subroutine elph_atomic_amplitude(q)
      !
      if (omega<1.E-10) cycle
      !
-     do is=1,n_atoms_tot
+     do is=1,n_atoms_species_tot
        do i=1,3
          do j=1,3
            mean_ui_uj(is,i,j)=mean_ui_uj(is,i,j)+q_weight*1./2./omega*&
@@ -105,11 +105,17 @@ subroutine elph_atomic_amplitude(q)
        enddo
      enddo
      !
+write (100,'(a,i3,a,i3)') 'Q=',iq,' Mode=',im
+do is=1,n_atoms_species_tot
+pol_vector(im,is,:)=pol_vector(im,is,:)/sqrt(dot_product(pol_vector(im,is,:),pol_vector(im,is,:)))
+  write (100,'(3f10.6)') real(pol_vector(im,is,1)), real(pol_vector(im,is,2)), real(pol_vector(im,is,3))
+  write (100,'(3f10.6)') aimag(pol_vector(im,is,1)), aimag(pol_vector(im,is,2)), aimag(pol_vector(im,is,3))
+enddo
    enddo
    !
  enddo
  !
- do is=1,n_atoms_tot
+ do is=1,n_atoms_species_tot
    call mat_dia_inv(DIAGO,USE_LK,mean_ui_uj(is,:,:),E_real=U_eigenvalues)
    !
    write (*,*) 

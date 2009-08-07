@@ -24,7 +24,7 @@ integer function ioDB1_reload(E,k,DB1_path)
  use pars,             ONLY:lchlen
  use memory_m,         ONLY:mem_est
  use electrons,        ONLY:levels,E_reset
- use D_lattice,        ONLY:dl_sop,n_atoms,znucl,atom_pos
+ use D_lattice,        ONLY:dl_sop,n_atoms_species,Z_species,atom_pos
  use R_lattice,        ONLY:g_vec,bz_samp,bz_samp_reset
  use wave_func,        ONLY:wf_nc_k,wf_igk
  use com,              ONLY:core_io_path
@@ -50,9 +50,9 @@ integer function ioDB1_reload(E,k,DB1_path)
  call E_reset(E)
  deallocate(g_vec,dl_sop,wf_nc_k,wf_igk)
  call mem_est("g_vec dl_sop wf_nc_k wf_igk")
- if (allocated(n_atoms)) then
-   deallocate(n_atoms,znucl,atom_pos)
-   call mem_est("n_atoms atom_pos znucl")
+ if (allocated(n_atoms_species)) then
+   deallocate(n_atoms_species,Z_species,atom_pos)
+   call mem_est("n_atoms_species atom_pos Z_species")
  endif
  !
  ! Path redirection

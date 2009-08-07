@@ -22,7 +22,7 @@
 module ELPH
  !
  use pars,       ONLY:SP
- use D_lattice,  ONLY:n_atoms
+ use D_lattice,  ONLY:n_atoms_species
  !
  implicit none
  integer   :: ph_modes
@@ -99,7 +99,7 @@ module ELPH
        call mem_est("ph_freqs_sq E_k_plus_q",(/size(ph_freqs_sq),size(E_k_plus_q)/),&
 &                                            (/SP,SP/))
        !
-       allocate(pol_vector(ph_modes,sum(n_atoms),3))
+       allocate(pol_vector(ph_modes,sum(n_atoms_species),3))
        call mem_est("pol_vector",(/size(pol_vector)/))
        !
      endif

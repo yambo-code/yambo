@@ -29,7 +29,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S
  use com,           ONLY:msg,of_open_close
  use YPP,           ONLY:deg_energy,lambda
  use R_lattice,     ONLY:d3k_factor,q0_def_norm,bz_samp
- use D_lattice,     ONLY:n_atom_species,n_atoms,atom_pos,znucl
+ use D_lattice,     ONLY:n_atomic_species,n_atoms_species,atom_pos,Z_species
  use vec_operate,   ONLY:sort
  implicit none 
  !
@@ -236,10 +236,10 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S
      call msg('o sort',"#",trim(BSS_description(j1)),INDENT=0)
    enddo
    call msg('o sort',"#")
-   do is=1,n_atom_species
-     do ia=1,n_atoms(is)
+   do is=1,n_atomic_species
+     do ia=1,n_atoms_species(is)
        call msg('o sort',"# Atom "//trim(intc(ia))//&
-&                        " with Z "//trim(intc(znucl(is)))//" [cc]:",&
+&                        " with Z "//trim(intc(Z_species(is)))//" [cc]:",&
 &               atom_pos(:,ia,is),INDENT=0)
      enddo
    enddo

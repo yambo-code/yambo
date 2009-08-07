@@ -30,7 +30,7 @@
 &                                    master_cpu, pp_indexes_reset
    use par_indexes_m,           ONLY : par_indexes
    use R_lattice,               ONLY : g_vec, bz_samp, bz_samp_duplicate,bz_samp_reset, q0_def_norm, nkibz
-   use D_lattice,               ONLY : DL_sop, n_atoms, atom_pos, znucl
+   use D_lattice,               ONLY : DL_sop, n_atoms_species, atom_pos, Z_species
    use X_m,                     ONLY : X_alloc, X_t, long_path
    use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP, ver_is_gt_or_eq
    use memory_m,                ONLY : mem_est
@@ -274,8 +274,8 @@
     if(allocated(wf_igk)) deallocate(wf_igk)
 !   if (ver_is_gt_or_eq(io_ID,(/3,0,4/))) then
     if (ver_is_gt_or_eq(ID,(/3,0,4/))) then
-      if(allocated(n_atoms))   deallocate(n_atoms)
-      if(allocated(znucl))     deallocate(znucl)
+      if(allocated(n_atoms_species))   deallocate(n_atoms_species)
+      if(allocated(Z_species))     deallocate(Z_species)
       if(allocated(atom_pos)) deallocate(atom_pos)
     endif
     io_err=ioDB1(Xen,Xk,ID)

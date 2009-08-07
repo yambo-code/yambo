@@ -27,7 +27,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 &                         alpha_dim,eps_2_alpha,X_duplicate
  use BS,             ONLY:BSS_n_freqs,BS_K_dim,BSS_rhoq0,BS_eh_f,BS_not_const_eh_f,&
 &                         BS_bands,BSS_q0,BS_eh_table,BSS_mode,BS_eh_E,&
-&                         BSS_n_descs,BSS_description,BSS_of_title,BS_K_coupling
+&                         BSS_n_descs,BSS_description,BS_K_coupling
  use com,            ONLY:msg,warning
  use drivers,        ONLY:l_bs_fxc
  use stderr,         ONLY:intc,gen_fmt
@@ -61,21 +61,11 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  ioBS_err=ioBS(iq,X_static,ID)
  if (ioBS_err/=0) return
  !
- ! Titles & Descriptions
- !
  ! Polarizability ?
  !
  if (trim(alpha_dim)/='adim') then
    call msg('r', 'Optical renormalization   [au]:',eps_2_alpha)
    call msg('rn','Polarizability dimension      :',trim(alpha_dim))
-   BSS_of_title(1)  ='E/ev[1]'
-   BSS_of_title(2:3)=(/'alpha/Im','alpha/Re'/)
-   BSS_of_title(4:5)=(/'alphao/Im','alphao/Re'/) 
-   if (index(BSS_mode,'h')/=0) BSS_of_title(6:7)=(/'alpha`/Im','alpha`/Re'/)
- else
-   BSS_of_title(1:3)=(/'E/ev','e/Im','e/Re'/)
-   BSS_of_title(4:5)=(/'eo/Im','eo/Re'/) 
-   if (index(BSS_mode,'h')/=0) BSS_of_title(6:7)=(/'e`/Im','e`/Re'/)
  endif
  !
  ! Eps_0

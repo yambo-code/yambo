@@ -46,7 +46,7 @@
   {"bzgrids","k","BZ Grid generator [(k)pt,(q)pt,(l)ongitudinal,(h)igh symmetry]",0,0,1,0}, 
 #if defined _YPP_ELPH
   {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mp,(w)ave,(e)lias,(g)kkp,(m)ag]",0,0,1,0}, 
-  {"electrons","s","Electrons [(a)ave,(d)ensity,(e)lias,(m)ag]",0,0,1,0}, 
+  {"electrons","s","Electrons [(w)ave,(d)ensity,(e)lias,(m)ag]",0,0,1,0}, 
 #else
   {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mplitude,(w)ave,(m)ag]",0,0,1,0}, 
   {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag]",0,0,1,0}, 

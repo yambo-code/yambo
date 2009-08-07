@@ -23,7 +23,7 @@ subroutine K_dump_to_o_file(iq,mode)
  !
  use pars,      ONLY:pi,SP
  use units,     ONLY:HARTREE
- use BS,        ONLY:BSS_description,BSS_of_title,BSS_file_name,&
+ use BS,        ONLY:BSS_description,BSS_file_name, BS_of_heads,&
 &                    BSS_n_descs,BS_K_coupling,BS_K_is_ALDA,BSS_n_freqs
  use X_m,       ONLY:X_epsilon,eval_alpha,eps_2_alpha,O_eels
  use com,       ONLY:msg,of_open_close
@@ -32,7 +32,8 @@ subroutine K_dump_to_o_file(iq,mode)
  !
  ! Work Space
  !
- character(10)     :: extension,ch
+ character(10)     :: extension,ch 
+ character(15)     :: headings(7)
  character(1)      :: ordering
  integer           :: i1,n_od
  real(SP)          :: od(7)
@@ -84,15 +85,31 @@ subroutine K_dump_to_o_file(iq,mode)
    endif
  endif
  !
- do i1=1,BSS_n_descs
-   call msg("o eps alpha","#",trim(BSS_description(i1)),INDENT=0)
- enddo
- call msg("o eps alpha",'#')
+ ! Description of the run and headings for output files:
  !
- if (mode>0) then
-   if (mode==1) call msg("o eps alpha",'#',BSS_of_title,INDENT=0,USE_TABS=.TRUE.)
-   if (mode/=1) call msg("o eps alpha",'#',BSS_of_title(:5),INDENT=0,USE_TABS=.TRUE.)
-   call msg("o eps alpha",'#')
+ !
+ do i1=1,BSS_n_descs
+   call msg("o eps eel alpha","#",trim(BSS_description(i1)),INDENT=0)
+ enddo
+ call msg("o eps eel alpha",'#')
+ !
+ if (mode>0) then 
+   !
+   call BS_of_heads('eps', headings)
+   !
+   if (mode==1) call msg("o eps",'#',headings,INDENT=0,USE_TABS=.TRUE.)
+   if (mode/=1) call msg("o eps",'#',headings(:5),INDENT=0,USE_TABS=.TRUE.)
+   if (eval_eels) then 
+     call BS_of_heads('eel', headings)
+     if (mode==1) call msg("o eel",'#',headings,INDENT=0,USE_TABS=.TRUE.)
+     if (mode/=1) call msg("o eel",'#',headings(:5),INDENT=0,USE_TABS=.TRUE.)
+   end if   
+   if (eval_alpha) then 
+     call BS_of_heads('alpha', headings)
+     if (mode==1) call msg("o alpha",'#',headings,INDENT=0,USE_TABS=.TRUE.)
+     if (mode/=1) call msg("o alpha",'#',headings(:5),INDENT=0,USE_TABS=.TRUE.)
+   endif
+   call msg("o eps eel alpha",'#')
    !
    ! ABSORPTION
    !------------
@@ -104,7 +121,7 @@ subroutine K_dump_to_o_file(iq,mode)
      od(1:5)=(/real(X_epsilon(1,i1))*HARTREE,aimag(X_epsilon(2,i1)),real(X_epsilon(2,i1)),&
 &              aimag(X_epsilon(3,i1)),real(X_epsilon(3,i1))/)
      !
-     ! Hayodock n-1 iteration
+     ! Haydock n-1 iteration
      !
      n_od=5
      if (mode==1) n_od=7
@@ -114,7 +131,7 @@ subroutine K_dump_to_o_file(iq,mode)
      !
    enddo
    !
-   ! EELS & POLARIZABILTY
+   ! EELS & POLARIZABILITY
    !---------------------
    !
    if (eval_eels) then

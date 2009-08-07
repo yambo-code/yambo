@@ -181,8 +181,8 @@ module mod_com2y
      use R_lattice,             ONLY : bz_samp, ng_vec, g_vec
      use D_lattice,             ONLY : nsym, i_time_rev, i_space_inv, dl_sop, &
 &                                      DL_vol, a, alat, default_Tel, &
-&                                      n_atoms_max,n_atom_species,n_atoms, atom_pos, &
-&                                      znucl
+&                                      n_atoms_species_max,n_atomic_species,n_atoms_species, atom_pos, &
+&                                      Z_species
      use wave_func,             ONLY : wf_nc_k, wf_ncx, wf_igk, wf_ng,real_wavefunctions
      use xc_functionals,        ONLY : GS_xc_KIND,GS_xc_FUNCTIONAL, xc_string
      use vec_operate,           ONLY : v_is_zero
@@ -204,8 +204,8 @@ module mod_com2y
      call msg('s',' :: RL vectors        (WF):',wf_ng)
      call msg('s',' :: RL vectors    (CHARGE):',ng_vec)
      call msg('s',' :: XC potential          : ',xc_string(GS_xc_KIND,GS_xc_FUNCTIONAL))
-     call msg('s',' :: Atomic species        :',n_atom_species)
-     call msg('s',' :: Max atoms/species     :',n_atoms_max)
+     call msg('s',' :: Atomic species        :',n_atomic_species)
+     call msg('s',' :: Max atoms/species     :',n_atoms_species_max)
      !
      ! Check if real wavefunction are possible (gamma point only).
      !

@@ -82,7 +82,7 @@ module BS
  character(lchlen):: BSS_description(100)
  character(lchlen):: BSS_file_name(3)
  character(schlen):: BSS_mode
- character(schlen):: BSS_of_title(7)
+ !character(schlen):: BSS_of_title(7)
  integer  :: BSS_n_descs
  integer  :: BSS_n_freqs
  real(SP) :: BSS_er(2)
@@ -175,4 +175,21 @@ module BS
      enddo
    end function
    !
+   subroutine BS_of_heads(desc,head)
+     ! 
+     character(*), intent(in)  :: desc
+     character(15), intent(out):: head(7)
+     ! Work space
+     integer :: ii
+     character(10) :: suffix(6)
+     !
+     suffix(:6) = (/'/Im[2]','/Re[3]','0/Im[4]','0/Re[5]','`/Im[6]','`/Re[7]'/)
+     head(1) = 'E/ev[1]'
+     !
+     do ii = 1,6
+       head(ii+1)=trim(desc)//trim(suffix(ii))
+     enddo
+     !
+  end subroutine BS_of_heads
+  !
 end module BS

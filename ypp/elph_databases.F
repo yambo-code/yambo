@@ -186,7 +186,7 @@ integer function elph_databases(k,E,q)
    !
    use pars,           ONLY:SP,DP,schlen
    use units,          ONLY:HA2CM1
-   use D_lattice,      ONLY:nsym,sop_inv,alat,n_atoms
+   use D_lattice,      ONLY:nsym,sop_inv,alat,n_atoms_species
    use R_lattice,      ONLY:nqibz
    use IO_m,           ONLY:io_control,OP_RD,RD_CL,io_connect,io_unit,&
 &                           io_netcdf_support,io_disconnect,io_file
@@ -337,7 +337,7 @@ integer function elph_databases(k,E,q)
    ! 
    ! ELPH_gkkp 
    !
-   nat=sum(n_atoms)
+   nat=sum(n_atoms_species)
    !
    allocate(gkkp_disk(elph_nb,elph_nb,ph_modes),pol_vec(ph_modes,nat,3))
    if (idb_==1) allocate(grad_at_gamma(k%nbz,elph_nb,elph_nb,nat,3))

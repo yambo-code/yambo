@@ -45,7 +45,7 @@ subroutine e2y_db1(en,k,ncid)
  use electrons,            only : levels, n_bands, n_spin,n_sp_pol,n_spinor, spin_orbit
  use wave_func,            only : wf_ncx
  use R_lattice,            only : bz_samp
- use D_lattice,            only : nsym, n_atom_species
+ use D_lattice,            only : nsym, n_atomic_species
  use mod_com2y,            only : print_interface_dimensions
  implicit none
  type(levels),   intent(inout) :: en
@@ -72,7 +72,7 @@ subroutine e2y_db1(en,k,ncid)
  wf_ncx   = dims%max_number_of_coefficients
  n_spinor = dims%number_of_spinor_components 
  n_sp_pol = dims%number_of_spins
- n_atom_species = dims%number_of_atom_species
+ n_atomic_species = dims%number_of_atom_species
  !
  ! Derived YAMBO dimensions
  !
@@ -152,8 +152,8 @@ contains
     use R_lattice,            only : b
     use D_lattice,            only : nsym, i_time_rev, i_space_inv, dl_sop, &
 &                                  DL_vol, a, alat, &
-&                                  n_atom_species,n_atoms,&
-&                                  n_atoms_max,atom_pos, znucl
+&                                  n_atomic_species,n_atoms_species,&
+&                                  n_atoms_species_max,atom_pos, Z_species
     use mod_com2y,           only : symmetries_check_and_load, alat_mult_factor
     implicit none
     type(etsf_geometry)           :: geometry_group
@@ -196,31 +196,31 @@ contains
     ! n_atoms         n_atoms(n_atom_species) : number of atoms for each atom species
     ! atom_pos        the positions
     !
-    allocate( n_atoms(n_atom_species) )
+    allocate( n_atoms_species(n_atomic_species) )
     !
     ! Determine n_atoms_max
     !
-    n_atoms(:) = 0 
+    n_atoms_species(:) = 0 
     do i1 = 1, dims%number_of_atoms
-      n_atoms( atom_species_(i1) ) = n_atoms( atom_species_(i1) ) + 1
+      n_atoms_species( atom_species_(i1) ) = n_atoms_species( atom_species_(i1) ) + 1
     enddo
-    n_atoms_max = maxval(n_atoms)
+    n_atoms_species_max = maxval(n_atoms_species)
     !
     ! Reset n_atoms, and fill _natoms and  atom_pos arrays
     !
-    n_atoms(:) = 0 
-    allocate( atom_pos(3, n_atoms_max, n_atom_species) )
+    n_atoms_species(:) = 0 
+    allocate( atom_pos(3, n_atoms_species_max, n_atomic_species) )
     do i1 = 1, dims%number_of_atoms
-      n_atoms( atom_species_(i1) ) = n_atoms( atom_species_(i1) ) + 1
-      atom_pos(:, n_atoms( atom_species_(i1) ) , atom_species_(i1) ) = &
+      n_atoms_species( atom_species_(i1) ) = n_atoms_species( atom_species_(i1) ) + 1
+      atom_pos(:, n_atoms_species( atom_species_(i1) ) , atom_species_(i1) ) = &
 &                 matmul( transpose(a), reduced_atom_positions_(:,i1) )
     enddo
     !
     ! Atomic species data
     !
-    allocate( znucl(n_atom_species) )
-    do i1 = 1, n_atom_species
-      znucl(i1) = atomic_numbers_( i1 )
+    allocate( Z_species(n_atomic_species) )
+    do i1 = 1, n_atomic_species
+      Z_species(i1) = atomic_numbers_( i1 )
     enddo
     !
     ! Symmetry 
@@ -334,7 +334,7 @@ contains
   ! This routine must be called, however, to set pp_n_l_comp array.
   !
   subroutine import_gwdata_group
-    use D_lattice,             only : n_atom_species
+    use D_lattice,             only : n_atomic_species
     use pseudo,                only : pp_n_l_comp_max,&
 &                                  pp_n_l_comp, pp_kbs,pp_kb,pp_kbd
     implicit none
@@ -350,7 +350,7 @@ contains
 
 !   call etsf_io_gwdata_get(ncid, gwdata_group, lstat, error_data)
 
-    allocate(pp_n_l_comp(n_atom_species))
+    allocate(pp_n_l_comp(n_atomic_species))
     pp_n_l_comp = pp_n_l_comp_max
     !
     call deallocate_gwdata_group
@@ -364,7 +364,7 @@ contains
     ! Here read any data not appearing in ETSF specs, or not
     ! yet supported properly
     !
-    use D_lattice,            only : default_Tel, n_atom_species, n_atoms
+    use D_lattice,            only : default_Tel, n_atomic_species, n_atoms_species
     use electrons,            only : spin_orbit, default_nel
     use xc_functionals,       only : XC_EXCHANGE_CORRELATION,GS_xc_KIND,GS_xc_FUNCTIONAL,&
 &                                  xc_string,XC_LDA_C_PW,XC_LDA_C_PZ,XC_LDA_C_WIGNER,&
@@ -382,19 +382,19 @@ contains
     !
     ! Number of electrons (Abinit)
     !
-    allocate(valence_charges_(n_atom_species))
+    allocate(valence_charges_(n_atomic_species))
     call etsf_io_low_read_var(ncid, "valence_charges", valence_charges_, lstat)
     if(lstat) then
       default_nel = 0.
-      do i1 = 1,n_atom_species
-        default_nel = default_nel + n_atoms(i1)*valence_charges_(i1)
+      do i1 = 1,n_atomic_species
+        default_nel = default_nel + n_atoms_species(i1)*valence_charges_(i1)
       enddo
     endif
     deallocate(valence_charges_)
     !
     ! Spin orbit splitting (Abinit)
     !
-    allocate(spin_orbit_atom_(n_atom_species))
+    allocate(spin_orbit_atom_(n_atomic_species))
     call etsf_io_low_read_var(ncid, "so_typat", spin_orbit_atom_, lstat)
     if(lstat) then
       spin_orbit = .false.

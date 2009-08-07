@@ -34,7 +34,7 @@ integer function ioELPH(ID,what)
 &                         pol_vector
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:nkbz,nqibz
- use D_lattice,      ONLY:nkbz,nqibz,n_atoms
+ use D_lattice,      ONLY:nkbz,nqibz,n_atoms_species
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:n_sp_pol
  use QP_m,           ONLY:QP_n_states,QP_nb,QP_nk,QP_table
@@ -173,7 +173,7 @@ integer function ioELPH(ID,what)
  !
  if (ver_is_gt_or_eq(ID,revision=464)) then
    !
-   allocate(pol_vec_disk(ph_modes,sum(n_atoms),2,3))
+   allocate(pol_vec_disk(ph_modes,sum(n_atoms_species),2,3))
    !
    ! Polarization vectors
    ! 
@@ -183,9 +183,9 @@ integer function ioELPH(ID,what)
      call mat_c2r(pol_vector(:,:,3),pol_vec_disk(:,:,:,3))
    endif
    !
-   call io_bulk(ID,VAR="POLARIZATION_VECTORS_REAL",VAR_SZ=(/ph_modes,sum(n_atoms),3/))
+   call io_bulk(ID,VAR="POLARIZATION_VECTORS_REAL",VAR_SZ=(/ph_modes,sum(n_atoms_species),3/))
    call io_bulk(ID,R3=pol_vec_disk(:,:,1,:))
-   call io_bulk(ID,VAR="POLARIZATION_VECTORS_IMAG",VAR_SZ=(/ph_modes,sum(n_atoms),3/))
+   call io_bulk(ID,VAR="POLARIZATION_VECTORS_IMAG",VAR_SZ=(/ph_modes,sum(n_atoms_species),3/))
    call io_bulk(ID,R3=pol_vec_disk(:,:,2,:))
    ! 
    if (read_is_on(ID)) then

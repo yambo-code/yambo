@@ -29,7 +29,7 @@ integer function p2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  use com,                 only : msg,write_to_report,core_io_path, error
  use par_proc_m,          only : ncpu,myid,p_finalize
  use electrons,           only : levels,E_reset,n_bands, n_spin, n_sp_pol
- use D_lattice,           only : n_atoms_max
+ use D_lattice,           only : n_atoms_species_max
  use R_lattice,           only : bz_samp,bz_samp_reset,nkibz
  use timing,              only : live_timing_is_on
  use wave_func,           only : wf_ncx,ioWF, wf_nb_io_groups,wf_nb_io

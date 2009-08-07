@@ -264,9 +264,9 @@ subroutine RT_spectrum(en,k)
   !
  endif
  !
- if(X_rt%damp_factor<3.*2.*pi/(dble(niter)*RT_step)) then
+ if(X_rt%damp_factor<2.*pi/(dble(niter)*RT_step)) then
    write(dump_ch,*) " You should use a damping factor greater than :", &
-&                    3*2.*pi/(dble(niter)*RT_step)*HARTREE 
+&                    2.*pi/(dble(niter)*RT_step)*HARTREE 
    call warning(dump_ch)
  endif
  !

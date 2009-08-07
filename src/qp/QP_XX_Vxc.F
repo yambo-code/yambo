@@ -125,7 +125,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
      return
    endif
    !
-   call msg('s', '[RHO] Disk space required [Gb]:',real(QP_n_states*SC_bands**2*k%nibz*SP))
+   call msg('s', '[RHO] Disk space required [Gb]:',real(QP_n_states*SC_bands**2*k%nibz*SP)/1e9)
    !
    allocate(tmp_sx(SC_bands,SC_bands,k%nibz))
    call mem_est("tmp_sx",(/size(tmp_sx)/),(/2*SP/))
@@ -337,7 +337,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
      do jb=1,SC_bands
        do jb2=1,SC_bands
          do ik=1,E%nk
-           if(abs(tmp_sx(jb,jb2,ik))>=sx_max/1000.)  ic=ic+1
+           if(abs(tmp_sx(jb,jb2,ik))>=sx_max/2000.)  ic=ic+1
          enddo
        enddo
      enddo
@@ -349,7 +349,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
      do jb=1,SC_bands
        do jb2=1,SC_bands
          do ik=1,E%nk
-           if(abs(tmp_sx(jb,jb2,ik))>=sx_max/1000.) then
+           if(abs(tmp_sx(jb,jb2,ik))>=sx_max/2000.) then
              ic=ic+1
              rho_table(1,ic)=jb
              rho_table(2,ic)=jb2
@@ -381,8 +381,6 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  !
  deallocate(isc%gamp,isc%rhotw,iscp%rhotw,local_rhotw)
  !
- call pp_redux_wait(QP_Sx)
- !
  call collision_reset(isc)
  call collision_reset(iscp) 
  call pp_indexes_reset(px)
@@ -400,6 +398,11 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
    call WF_free()
    return
  endif
+ !
+#else
+ !
+ call pp_redux_wait(QP_Sx)
+ !
 #endif
  !
  ! Vxc

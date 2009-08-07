@@ -1,9 +1,6 @@
 SC_objects = 
 #if defined _SC || defined _RT || defined _MAGNETIC
-SC_objects = load_SC_components.o io_SC_components.o
-#endif
-#if defined _RT
-RT_objects = ioRHO_RHO_VX.o
+SC_objects = ioRHO_RHO_VX.o load_SC_components.o io_SC_components.o
 #endif
 ELPH_objects = 
 #if defined _ELPH 
@@ -20,5 +17,4 @@ objs = ver_is_gt_or_eq.o IO_mute.o \
        $(TEST_1_objects)           ioBS_Fxc.o  \
        ioBSS_diago.o  ioBSS_Haydock.o ioBSS_invert.o \
        io_elemental.o io_bulk.o      io_header.o ioE_RIM.o \
-       ioCOL_CUT.o    ioDB1_reload.o $(RT_objects) \
-       variables_BS.o $(SC_objects) 
+       ioCOL_CUT.o    ioDB1_reload.o variables_BS.o $(SC_objects) 

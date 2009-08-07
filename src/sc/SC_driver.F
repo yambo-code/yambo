@@ -28,14 +28,15 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin
  use R_lattice,      ONLY:bz_samp,qindx_S,G_m_G
  use D_lattice,      ONLY:Tel
- use QP_m,           ONLY:QP_nk,QP_Sc,&
+ use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_table,&
 &                         QP_ng_Sx,QP_Sx,QP_t,QP_reset,SC_E_threshold,SC_bands_mixed
  use SC,             ONLY:SC_bands,SC_iterations,rho_n,&
 &                         SC_rho_threshold,SC_potential,it_now,E_convergence,&
 &                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,&
-&                         SC_cycle_mixing,V_hartree_sc,NSC_shot,SC_fft_size,&
-&                         SC_ng_Sx,SC_X_bands,SC_X_size,Ho,E_bare,SC_alloc,SC_free,&
-&                         WF_G_max,WF_Go_indx,SC_kind,SC_xc_functional
+&                         SC_cycle_mixing,V_hartree_sc,NSC_shot,SC_fft_size,        &
+&                         SC_ng_Sx,SC_X_bands,SC_X_size,Ho,E_bare,SC_alloc,SC_free, &
+&                         WF_G_max,WF_Go_indx,SC_kind,SC_xc_functional,l_use_RHO_IO,&
+&                         G_lesser
  use wave_func,      ONLY:wf_load,wf,wf_n_states,WF_free
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
@@ -51,6 +52,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL
  use vec_operate,    ONLY:degeneration_finder
  use timing,         ONLY:live_timing
+ use oscillators_IO, ONLY:oscillators_IO_alloc,oscillators_IO_free,ioRHO_RHO_VX,&
+&                         V_kind
+ use global_XC,      ONLY:SC_HF    
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B_z,eval_Lz
 #endif
@@ -73,7 +77,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! 
  ! Work Space
  !
- integer                  :: ir,i1,i2,ik,ib,ibp,ID(3),io_E,io_V,io_WF,i_spin
+ integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_spin
  real(SP)                 :: max_proj,V_xc_sc_shift(n_spin)
  character(schlen)        :: dumb_ch
  integer, external        :: io_SC_components,eval_G_minus_G
@@ -87,6 +91,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  real(SP)                 :: WS_spread(SC_bands)
  integer                  :: first_el(SC_bands),n_of_el(SC_bands),n_deg_grp,&
 &                            b_of_max_proj(SC_bands,k%nibz,n_sp_pol)
+ !
+ ! Extended Oscillators RHO_IO
+ ! 
+ integer                  :: io_RHO_err
+ logical, allocatable     :: QP_DB_done(:)
+
  !
  ! Magnetic logical setup
  !
@@ -235,10 +245,45 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  SC_fft_size=fft_size
  call parser('TF_precondition',l_TF_precond) 
+ call parser('UseRhoIO',l_use_RHO_IO) 
  !
  ! Allocation(s)...
  !
  call SC_alloc(E)
+ !
+ ! Initialize SC_R matrix
+ !
+ if(.not.RESTART.and.l_use_RHO_IO) then
+   !      
+   SC_R=(0.,0.)
+   forall(i1=1:SC_bands)
+     SC_R(i1,i1,:,:)=1.
+   end forall
+   !
+ endif
+ ! 
+ !
+ ! Checking extended oscillators
+ !
+ if(l_use_RHO_IO) then
+   !
+   V_kind=-1
+   if(l_sc_hf) V_kind=SC_HF
+   !
+   call io_control(ACTION=OP_RD_CL,SEC=(/1/),MODE=VERIFY,ID=ID(4)) 
+   allocate(QP_DB_done(QP_n_states)) 
+   io_RHO_err=ioRHO_RHO_VX(0,ID(4),QP_DB_done)
+   !
+   if(io_RHO_err/=0.or..not.all(QP_DB_done)) then
+      l_use_RHO_IO=.false.
+      call warning(' Extented Oscillators do not fit, UseRhoIO set to .false. ')
+   endif
+   deallocate(QP_DB_done)
+   !
+ endif
+ !                       
+ ! Local allocation(s)...
+ !
  call SC_local_alloc()
  !
  call msg('nr','[SC] Self-Consistency (SC)            :',SC_cycle)
@@ -246,6 +291,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  call msg('r' ,'[SC] Non SC single shot               :',NSC_shot)
  call msg('r' ,'[SC] Bands                            :',SC_bands)
  call msg('r' ,'[SC] Mixed bands                      :',SC_bands_mixed)
+ call msg('r' ,'[SC] Use Extented Oscillators         :',l_use_RHO_IO)
+ call msg('r' ,'[SC] Use Thomas-Fermi precondition    :',l_TF_precond) 
  if (SC_cycle) then
    call msg('r' ,'[SC] N (N-1) order mixing             :',SC_cycle_mixing)
    call msg('r' ,'[SC] Imposed accuracy on density      :',SC_rho_threshold)
@@ -349,13 +396,30 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
    else if (SC_cycle) then
      !
+     ! Hartee-Fock
+     !
+     if(l_use_RHO_IO) then
+       !     
+       G_lesser=(0.,0.)
+       forall(i1=1:SC_bands,ik=1:E%nk)
+         G_lesser(i1,i1,ik)=(0._SP,1._SP)*E%f(i1,ik,1)
+       end forall
+       !
+       ! Now I build the G_lesser rotating the non interaction one
+       ! G_lesser(i1,i1,ik)=(0.,1)*en%f(i1,ik)
+       !  
+       do ik=1,QP_nk
+         call H_rotate(SC_R(:,:,ik,1),G_lesser(:,:,ik),SC_bands,-1)
+       enddo
+       call SC_extended_oscillators(G_lesser)
+       !
+     endif
+     !
      ! Stop all messagging
      !
      call IO_mute("report io_in io_out")
      !
-     ! Hartee-Fock
-     !
-     call QP_XX_Vxc(E,k,k,q)
+     if(.not.l_use_RHO_IO) call QP_XX_Vxc(E,k,k,q)
      !
      call IO_mute("report io_out")
      !
@@ -411,7 +475,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        ! Add Sigma_x and, eventually, Sigma_c (CHOSEX)
        !
-       call V_qp_basis_to_H(ik,QP_Sx,H_nl_sc)
+       if(.not.l_use_RHO_IO) call V_qp_basis_to_H(ik,QP_Sx,H_nl_sc)
+       !        
        if (l_sc_chosex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc)
        !
        ! Rotate H_nl_sc in the WFo basis.
@@ -421,6 +486,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
            call H_rotate(SC_R(:,:,ik,i_spin),H_nl_sc(:,:,i_spin),SC_bands,-1)
          end do
        endif
+       !
+       if(l_use_RHO_IO) call V_qp_basis_to_H(ik,QP_Sx,H_nl_sc)
        !
        ! IO [H_nl_sc]
        !==============
@@ -613,6 +680,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! Final occupations 
  !====================
  if (SC_cycle) call fermi_level(E,k,Tel,2)  
+ !
+ dE(:,:,:)=E%E(:SC_bands,:,:)-E_bare(:,:,:)
+ !
  call msg('r',' ')
  !
  do ik=1,k%nibz
@@ -652,6 +722,18 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      allocate(WFo(fft_size,wf_n_states))
      call mem_est("WFo",(/fft_size*wf_n_states/))
      !
+     if(l_use_RHO_IO) then
+       !
+       allocate(G_lesser(SC_bands,SC_bands,QP_nk))
+       call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
+       !
+       allocate(QP_Sx(QP_n_states))
+       call mem_est("QP_Sx",(/size(QP_Sx)/),(/2*SP/))
+       !
+       call oscillators_IO_alloc()
+       !
+     endif
+     !
    end subroutine
    !
    subroutine SC_local_free()
@@ -670,6 +752,18 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      deallocate(WFo)
      call mem_est("WFo")
+     !
+     if(l_use_RHO_IO) then
+       !
+       deallocate(G_lesser)
+       call mem_est("G_lesser")
+       !
+       deallocate(QP_Sx)
+       call mem_est("QP_Sx")
+       !
+       call oscillators_IO_free()
+       !
+     endif
      !
    end subroutine
    !

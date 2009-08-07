@@ -83,7 +83,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  I2_lesser=(0.,0.)
  if(allocated(H_t)) H_t =  (0.,0.) 
  !
- if(l_sc_hf) call RT_make_QP_Sx(G_input)
+ if(l_sc_hf) call SC_extended_oscillators(G_input)
  !
  call pp_indexes_reset(px)
  call par_indexes(px,(/QP_nk/))

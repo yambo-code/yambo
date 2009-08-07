@@ -21,6 +21,7 @@
 !
 module real_time
  !
+ use SC,        ONLY:G_lesser
  use pars,      ONLY:DP,SP,schlen
  !
  implicit none
@@ -66,7 +67,6 @@ module real_time
  !
  ! GFs
  !
- complex(SP), allocatable :: G_lesser(:,:,:)
  complex(SP), allocatable :: G_lesser_previous(:,:,:)
  complex(SP), allocatable :: G_lesser_reference(:,:,:)
  complex(SP), allocatable :: I1_lesser(:,:,:)

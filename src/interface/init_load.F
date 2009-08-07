@@ -366,6 +366,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'SCEtresh',  '[SC] Energy convergence threshold',SC_E_threshold,unit=E_unit)
  call it(defs,'SCRhoTresh','[SC] Rho convergence threshold',SC_rho_threshold)
  call it('f',defs,'TF_precondition','[SC] Thomas Fermi precondition in density',verb_level=V_sc)
+ call it('f',defs,'UseRhoIO',    '[SC] Use Extended Oscillators',verb_level=V_sc)
 #endif
  ! 
  ! SC [common with RT]

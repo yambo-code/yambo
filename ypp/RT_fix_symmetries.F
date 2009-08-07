@@ -108,7 +108,7 @@ subroutine RT_fix_symmetries(E,k)
  !
  call msg('l'," "//trim(intc(nsym)))
  !
- call set_real_printed_length(f_length=6,g_length=6)
+ call set_real_printed_length(f_length=7,g_length=7)
  do is=1,nsym
    call msg('s','[S'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))  
  enddo

@@ -202,7 +202,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    !
  enddo
  !
- call live_timing
+ if(Tot_steps/=0) call live_timing
  !
  call of_open_close(file_name(1))
  if(l_qp_analyze) call of_open_close(file_name(2)) 

@@ -582,7 +582,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call initactivate(1,'ExtField1 ExtFTinitial1 ExtFInt1 ExtFFreq1 ELongDir1 EFNoIntraband1')
      call initactivate(1,'ExtField2 ExtFTinitial2 ExtFInt2 ExtFFreq2 ELongDir2 EFNoIntraband2')
    else
-     call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
+     call initactivate(1,'UseRhoIO SCIter SCEtresh SCRhoTresh TF_precondition')
    endif
    call initactivate(-1,'QpntsRXs')
  endif

@@ -40,6 +40,7 @@ module SC
  logical           :: using_SC_basis
  logical           :: local_V
  logical           :: NSC_shot
+ logical           :: l_use_RHO_IO
  !
  ! Possible Kinds, functionals and external perturbations
  !
@@ -66,6 +67,10 @@ module SC
  ! Wavefunction indexes
  !
  integer :: WF_G_max,WF_Go_indx
+ !
+ ! G_lesser ( = density matrix) to use extended oscillators
+ !
+ complex(SP), allocatable :: G_lesser(:,:,:)
  !
  interface
    !

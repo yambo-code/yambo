@@ -183,7 +183,7 @@ module BS
      integer :: ii
      character(10) :: suffix(6)
      !
-     suffix(:6) = (/'/Im[2]','/Re[3]','0/Im[4]','0/Re[5]','`/Im[6]','`/Re[7]'/)
+     suffix(:6) = (/' /Im[2]',' /Re[3]','0/Im[4]','0/Re[5]','`/Im[6]','`/Re[7]'/)
      head(1) = 'E/ev[1]'
      !
      do ii = 1,6

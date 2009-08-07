@@ -115,6 +115,7 @@ integer function io_SC_components(what,E_sc,ID)
  !
  if(l_G) then
    if(mod(i_time,max_rt_steps_disk)/=0.and.write_is_on(ID)) then
+     io_SC_components=0
      call io_reset(ID)
      return
    endif

@@ -191,8 +191,6 @@ integer function ioDB1(E,k,ID)
      ng_closed=ng_vec
      if (.not.ver_is_gt_or_eq(ID,(/3,0,3/))) wf_ng=wf_ncx
      !
-     n_atoms=sum(n_atoms_species)    
-     !
      call setup_global_XC('preset',GS_xc_KIND,xc_functional=GS_xc_functional,perturbation=EXT_NONE)
      !
    endif
@@ -225,6 +223,7 @@ integer function ioDB1(E,k,ID)
      call mem_est("n_atoms_species atom_pos Z_species",&
 &                 (/n_atomic_species,size(atom_pos),n_atomic_species/),&
 &                 (/IP,SP,IP/))
+     !
    endif
    !
  endif
@@ -246,6 +245,9 @@ integer function ioDB1(E,k,ID)
    call io_bulk(ID,R3=atom_pos)
    call io_bulk(ID,VAR="atomic_numbers",VAR_SZ=(/n_atomic_species/))
    call io_bulk(ID,I1=Z_species)
+   !
+   if (io_mode(ID)==DUMP.or.write_is_on(ID))  n_atoms=sum(n_atoms_species) 
+   !
  endif
  !
  ! Symmetry

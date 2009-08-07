@@ -315,8 +315,6 @@ contains
 
    allocate(n_atoms_species(n_atomic_species))
    n_atoms_species(:)=0
-write (*,*) ityp_
-stop
    do i1 = 1, nat_
      n_atoms_species( ityp_(i1) ) = n_atoms_species( ityp_(i1) ) +1
    enddo

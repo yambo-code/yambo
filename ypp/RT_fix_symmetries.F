@@ -213,7 +213,7 @@ subroutine RT_fix_symmetries(E,k)
  allocate(wf_nc_k(k%nibz),wf_igk(wf_ncx,k%nibz))
  !
  wf_igk(1:wf_ncx,1:k_save%nibz)       = wf_igk_save(1:wf_ncx,1:k_save%nibz)
- wf_nc_k(1:k_save%nibz)               = wf_nc_k_save(1:k_save%nibz)
+ wf_nc_k(1:k_save%nibz)               = ng_closed
  !
  do i1=k_save%nibz+1,k%nibz 
    !      

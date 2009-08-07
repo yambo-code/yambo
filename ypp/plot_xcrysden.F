@@ -27,7 +27,7 @@ subroutine plot_xcrysden(use_2d)
  use com,         ONLY:msg
  use YPP,         ONLY:nr,v2plot,ncell,v2plot2D,r_hole,plot_dim,l_free_hole,&
 &                      l_norm_to_one,WF_multiplier,l_exc_wf,plot_title
- use D_lattice,   ONLY:n_atomic_species,n_atoms_species,a,atom_pos,Z_species
+ use D_lattice,   ONLY:n_atomic_species,n_atoms_species,a,atom_pos,Z_species,n_atoms
  use timing,      ONLY:live_timing
  !
  implicit none
@@ -35,16 +35,11 @@ subroutine plot_xcrysden(use_2d)
  !
  ! Work Space...
  !
- integer  :: i1,i2,i3,ir,is,ia,n_atoms_species_tot,dir2plot(2),nr2plot(2)
+ integer  :: i1,i2,i3,ir,is,ia,dir2plot(2),nr2plot(2)
  real(SP) :: a_angs(3,3)    !lattice vectors in Angstrom
  real(SP) :: rv(3),max_
  character(schlen) :: ch
  ! 
- n_atoms_species_tot=0
- do is=1,n_atomic_species
-   n_atoms_species_tot=n_atoms_species_tot+n_atoms_species(is)
- enddo
- !
  !the atomic cell is given in a.u. and I want
  !to write the output of xcrysden in \AA
  !
@@ -59,14 +54,14 @@ subroutine plot_xcrysden(use_2d)
  call msg('o exc den mag wf','',ncell(3)*a_angs(3,:))
  call msg('o exc den mag wf','PRIMCOORD')
  if (.not.l_free_hole.and.l_exc_wf) then
-   call msg('o exc','',(/n_atoms_species_tot*ncell(1)*ncell(2)*ncell(3)+1,1/))
+   call msg('o exc','',(/n_atoms*ncell(1)*ncell(2)*ncell(3)+1,1/))
    !
    ! write Hole position
    ! 
    write(ch,'(i2,f10.5,f10.5,f10.5)') -1,r_hole*BOHR
    call msg('o exc den mag wf','',ch,INDENT=0,USE_TABS=.FALSE.)
  else
-   call msg('o exc den mag wf','',(/n_atoms_species_tot*ncell(1)*ncell(2)*ncell(3),1/))
+   call msg('o exc den mag wf','',(/n_atoms*ncell(1)*ncell(2)*ncell(3),1/))
  endif
  !
  ! write the translated atoms of the cell

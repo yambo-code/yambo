@@ -246,7 +246,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  do i_spin=1,n_sp_pol
    call pp_redux_wait(DIP_iR_or_P(:,:,:,:,i_spin))
 #if defined _RT
-   call pp_redux_wait(P_square(:,:,:,i_spin))
+   if ( Eval_P_and_P2_only ) call pp_redux_wait(P_square(:,:,:,i_spin))
 #endif
  enddo
  !

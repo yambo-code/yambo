@@ -39,6 +39,12 @@ module YPP
  character(schlen) :: coo_in
  character(schlen) :: coo_out
  character(schlen) :: PtsPath
+ ! 
+ ! DOS
+ !
+ logical      ::l_dos ! electrons and phonons
+ real         ::dos_broadening ! electrons
+ integer      ::dos_bands      ! electrons
  !
  ! REAL SPACE PLOT
  !
@@ -81,7 +87,6 @@ module YPP
  !
  !EL-PH
  !
- logical :: l_dos
  logical :: l_gkkp
  logical :: l_phonons
  logical :: l_eliashberg

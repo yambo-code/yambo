@@ -24,14 +24,19 @@ module magnetic
  use pars, ONLY:SP,schlen
  !
  character(schlen) :: MAG_hamiltonian_type
- ! Check Lz
+ character(schlen) :: MAG_gauge ! 'SYMM' 'X_ASYMM' 'Y_ASYMM'
+ real(SP)          :: MAG_B_z
+ real(SP)          :: MAG_radius 
+ logical           :: MAG_pauli
+ logical           :: MAG_landau
+ !
+ ! Lz Check
+ !
  logical           :: eval_Lz
- complex(SP), allocatable :: wf_x(:,:), wf_y(:,:)
- real(SP), allocatable    :: x(:),y(:)
- ! Check Lz
- real(SP)    :: MAG_B_z
- real(SP)    :: MAG_radius 
- logical     :: MAG_pauli
- logical     :: MAG_landau
+ complex(SP), allocatable :: wf_x(:,:)
+ complex(SP), allocatable :: wf_y(:,:)
+ real(SP),    allocatable :: A_magn_x(:)
+ real(SP),    allocatable :: A_magn_y(:)
+ integer                  :: gauge_factors(2)
  !
 end module

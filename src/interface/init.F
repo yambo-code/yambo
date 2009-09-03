@@ -593,7 +593,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Magnetic
  !
  if (l_sc_magnetic) then
-   call initactivate(1,'Hamiltonian B_z_Field')
+   call initactivate(1,'Hamiltonian B_z_Field Gauge')
    if (MAG_landau) call initactivate(1,'B_radius')
  endif
  !

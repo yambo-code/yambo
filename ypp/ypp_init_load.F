@@ -40,6 +40,7 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'bzgrids',   '[R] BZ Grid') 
  call it('r',defs,'K_grid',    '[R] K-grid analysis') 
  call it('r',defs,'Q_grid',    '[R] Q-grid analysis') 
+ call it('r',defs,'dos',       '[R] DOS')
  !
  ! GPL_EXCLUDE_START
  !
@@ -58,7 +59,6 @@ subroutine ypp_init_load(defs)
 #if defined _YPP_ELPH
  call it('r',defs,'eliashberg',   '[R] Eliashberg')
  call it('r',defs,'phonons',      '[R] Phonons')
- call it('r',defs,'dos',          '[R] DOS')
  call it('r',defs,'gkkp',         '[R] Electron-Phonon databases')
 #endif
  !
@@ -82,6 +82,11 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'trans',   '[R] Transition analyzer')
  !
  ! GPL_EXCLUDE_END
+ !
+ ! DOS
+ !
+ call it(defs,'DOS_broad', 'Broadening of the DOS',dos_broadening,E_unit) 
+ call it(defs,'DOS_bands', 'DOS bands',dos_bands) 
  !
  ! BZ grids
  !

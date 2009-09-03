@@ -81,7 +81,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use oscillators_IO,ONLY:n_rho_states
 #endif
 #if defined _MAGNETIC
- use magnetic,    ONLY:MAG_B_z,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli
+ use magnetic,    ONLY:MAG_B_z,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
+&                      MAG_gauge
 #endif
  !
  implicit none
@@ -390,6 +391,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  SC_rho_threshold=1.E-5
  SC_potential='none'
  using_SC_basis=.FALSE.
+ MAG_gauge='SYMM'
+ !
 #endif
 #if defined _RT
  !

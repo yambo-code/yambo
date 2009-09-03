@@ -32,7 +32,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  use com,            ONLY:file_exists
  use stderr,         ONLY:string_split
  use YPP
- use electrons,      ONLY:n_spin
+ use electrons,      ONLY:n_spin,n_bands
  use par_proc_m,     ONLY:master_cpu,pp_redux_wait
  use timing,         ONLY:what_is_running
 #if defined _YPP_ELPH
@@ -76,6 +76,13 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  else
    !
    ! DEFAULTS
+   ! ======== 
+   !
+   ! DOS
+   !
+   l_dos=.false.
+   dos_broadening=0.1/HARTREE
+   dos_bands=n_bands
    !
    ! PLOT
    !
@@ -108,7 +115,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    ! ELPH
    !
    l_phonons=.false.
-   l_dos=.false.
    l_gkkp=.false.
    l_eliashberg=.false.
    l_atomic_amplitude=.false.
@@ -236,7 +242,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        l_eliashberg       =trim(rstr_piece(i1+1))=='e'
        l_atomic_amplitude =trim(rstr_piece(i1+1))=='a'
        if (l_atomic_amplitude) infile_editing=.false.
-       if (l_dos)          call initactivate(1,'dos')
        if (l_eliashberg)   call initactivate(1,'eliashberg')
     endif
 #endif
@@ -263,6 +268,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
      if ( trim(rstr_piece(i1)) == 'electrons') then
        !
        l_density        =trim(rstr_piece(i1+1))=='d'
+       l_dos            =trim(rstr_piece(i1+1))=='s'
        l_wavefunction   =trim(rstr_piece(i1+1))=='w'
        !
        ! GPL_EXCLUDE_START SPIN_IGNORE
@@ -288,6 +294,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        if (l_density)        call initactivate(1,'density')
        if (l_sort)           infile_editing=.false.
      endif
+     if ( trim(rstr_piece(i1)) == 'phonons'.or. trim(rstr_piece(i1)) == 'electrons') then
+       if (l_dos)            call initactivate(1,'dos')
+     endif
    enddo
  enddo
  !
@@ -298,9 +307,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_q_grid    = runlevel_is_on('Q_grid')
  l_long_grid = runlevel_is_on('Long_Gauge')
  l_high_sym_pts = runlevel_is_on('High_Symm')
+ l_dos       =runlevel_is_on('dos')
 #if defined _YPP_ELPH
  l_eliashberg=runlevel_is_on('eliashberg')
- l_dos       =runlevel_is_on('dos')
  l_phonons   =runlevel_is_on('phonons')
  l_gkkp      =runlevel_is_on('gkkp')
 #endif
@@ -356,6 +365,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_END
  !
+ if (l_electrons.and.l_dos) call initactivate(1,"DOS_broad DOS_bands")
+ !
  if (l_plot) then
    call initactivate(1,"Format Direction FFTGvecs") 
    if (l_sp_wf) call initactivate(1,"Degen_Step")  
@@ -375,7 +386,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
 #if defined _YPP_ELPH
  if (l_gkkp.and..not.l_excitons)   call initactivate(1,"DBsPATH PHfreqF")
- if (l_dos.or.l_eliashberg)        call initactivate(1,"EEfermi EfGbroad PhBroad PhStps")
+ if (l_phonons.and.(l_dos.or.l_eliashberg))   call initactivate(1,"EEfermi EfGbroad PhBroad PhStps")
  if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) &
 &                                  call initactivate(-1,"EEfermi EfGbroad")
 #endif

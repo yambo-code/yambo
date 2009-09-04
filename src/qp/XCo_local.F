@@ -20,9 +20,9 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 #if defined _RT
-subroutine DFT_Vxc(E,Xk,G_lesser)
+subroutine XCo_local(E,Xk,G_lesser)
 #else
-subroutine DFT_Vxc(E,Xk)
+subroutine XCo_local(E,Xk)
 #endif
  !
  ! V_xc

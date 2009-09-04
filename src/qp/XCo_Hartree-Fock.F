@@ -19,9 +19,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_XX_Vxc(E,k,Xk,q)
+subroutine XCo_Hatree-Fock(E,k,Xk,q)
  !
- ! Hartree S_x self-energy + call to V_xc 
+ ! Hartree-Fock
  !
  use pars,          ONLY:SP,schlen,DP,pi
  use units,         ONLY:HARTREE
@@ -408,7 +408,7 @@ subroutine QP_XX_Vxc(E,k,Xk,q)
  ! Vxc
  !
  if (.not.l_sc_run) then
-   call DFT_Vxc(E,Xk)
+   call XCo_local(E,Xk)
    call WF_free()
  endif
  !

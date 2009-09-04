@@ -23,12 +23,16 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  use drivers,       ONLY:l_acfdt,l_rho_io,l_sc_run
  use pars,          ONLY:schlen
+ use com,           ONLY:msg
  use units,         ONLY:HARTREE
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:intc,real2ch
  use R_lattice,     ONLY:bz_samp
+ use par_proc_m,    ONLY:pp_redux_wait
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use QP_m,          ONLY:QP_table,QP_Vxc,QP_Sx,QP_n_states
+ use memory_m,      ONLY:mem_est
+ use wave_func,     ONLY:WF_free
  !
  implicit none
  type(levels) ::E       
@@ -39,7 +43,7 @@ subroutine XCo_driver(E,k,Xk,q)
  ! Reporting
  !
  integer           ::i_qp,ib,ik,ibp
- character(schlen) ::sec_mode_and_message(2),ch,ch_spin,nloc_fmt,loc_fmt
+ character(schlen) ::sec_mode_and_message(2),ch,ch_spin,nloc_fmt,loc_fmt,loc_kind,nloc_kind
  !
  ! IO
  !
@@ -52,7 +56,29 @@ subroutine XCo_driver(E,k,Xk,q)
  sec_mode_and_message(2)='Bare local and non-local Exchange-Correlation'
  if (l_acfdt)   sec_mode_and_message(1)='p'
  if (l_rho_IO)  sec_mode_and_message(2)='Hartree-Fock extended oscillators'
- if (.not.l_sc_run) call section(trim(sec_mode_and_message(1)),trim(sec_mode_and_message(1)))
+ if (.not.l_sc_run) call section(trim(sec_mode_and_message(1)),trim(sec_mode_and_message(2)))
+ !
+ ! QP states setup
+ !
+#if defined _RT
+ if (l_rho_IO) QP_nb=SC_bands
+#endif
+ call QP_state_table_setup(E)
+ !
+ ! Allocation
+ !
+ if (.not.l_rho_IO) then
+   if (.not.allocated(QP_Sx)) then
+     allocate(QP_Sx(QP_n_states))
+     call mem_est("QP_Sx",(/QP_n_states/))
+   endif
+   if (.not.allocated(QP_Vxc)) then
+     allocate(QP_Vxc(QP_n_states))
+     call mem_est("QP_Vxc",(/QP_n_states/))
+   endif
+   QP_Sx=(0.,0.)
+   QP_Vxc=(0.,0.)
+ endif
  !
  ! Main DB I/O
  !
@@ -69,8 +95,13 @@ subroutine XCo_driver(E,k,Xk,q)
    return
    !
  else
+   ! The point here is that dependening on the kind of XCo I do/don't need HF
    !
-   call XCo_Hartree-Fock(E,k,xk,q)
+   ! XCo=any local => Eqp=Eo+QP_Sc+QP_Sx-QP_Vxc => QP_XCo_nloc=QP_Sx
+   ! XCo=CHOSEX    => Eqp=Eo+QP_Sc-CHOSEX       => QP_XCo_nloc=-QP_CHOSEX
+   ! XCo=HF        => Eqp=Eo+QP_Sc              => QP_XCo_nloc=0.
+   !
+   call XCo_Hartree_Fock(E,k,xk,q)
    !
  endif
  !
@@ -89,8 +120,11 @@ subroutine XCo_driver(E,k,Xk,q)
    !
    subroutine XCo_report_and_IO()
      !
+     loc_kind= 'Vxc'
+     nloc_kind='HF'
+     !
      ik=QP_table(1,3)
-     call msg('nr','XC non-loc/loc [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
+     call msg('nr','XC '//trim(nloc_kind)//' and '//trim(loc_kind)//' [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
      !
      do i_qp=1,QP_n_states
        !
@@ -98,7 +132,7 @@ subroutine XCo_driver(E,k,Xk,q)
        ibp=QP_table(i_qp,2)
        if (QP_table(i_qp,3)/=ik) then
          ik=QP_table(i_qp,3)
-         call msg('nr','XC non-loc/local [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
+         call msg('nr','XC '//trim(nloc_kind)//' and '//trim(loc_kind)//' [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
        endif
        !
        ch_spin=' '
@@ -106,9 +140,9 @@ subroutine XCo_driver(E,k,Xk,q)
        if (n_sp_pol==2.and.spin(QP_table(i_qp,:))==1) ch_spin='(up)'
        if (n_sp_pol==2.and.spin(QP_table(i_qp,:))==2) ch_spin='(dn)'
        ! 
-       nloc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|non-loc|'//trim(intc(ibp))&
+       nloc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|'//trim(nloc_kind)//'|'//trim(intc(ibp))&
 &         //trim(ch_spin)//'> ='
-       loc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|local|'//trim(intc(ibp))&
+       loc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|'//trim(loc_kind)//'|'//trim(intc(ibp))&
 &         //trim(ch_spin)//'> ='
        !
        ch=trim(nloc_fmt)//' '//&

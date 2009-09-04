@@ -25,7 +25,7 @@ subroutine XCo_local(E,Xk,G_lesser)
 subroutine XCo_local(E,Xk)
 #endif
  !
- ! V_xc
+ ! Local V_xc
  !
  use pars,          ONLY:SP,DP,pi
  use electrons,     ONLY:levels,n_spin,n_spinor,n_sp_pol,spin

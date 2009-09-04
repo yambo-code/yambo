@@ -419,7 +419,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      call IO_mute("report io_in io_out")
      !
-     if(.not.l_use_RHO_IO) call QP_XX_Vxc(E,k,k,q)
+     if (.not.l_use_RHO_IO) call XCo_driver(E,k,k,q)
      !
      call IO_mute("report io_out")
      !

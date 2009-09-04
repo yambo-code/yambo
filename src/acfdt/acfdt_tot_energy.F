@@ -247,7 +247,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  allocate(QP_state(QP_nb,QP_nk))
  QP_state=.TRUE.
  !
- call QP_XX_Vxc(En,k,Xk,q)
+ call XCo_driver(En,k,Xk,q)
  !
  ACFDT_EXX=0.
  !

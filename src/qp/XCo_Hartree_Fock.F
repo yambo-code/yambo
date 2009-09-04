@@ -19,24 +19,23 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine XCo_Hatree-Fock(E,k,Xk,q)
+subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  ! Hartree-Fock
  !
  use pars,          ONLY:SP,schlen,DP,pi
- use units,         ONLY:HARTREE
- use drivers,       ONLY:l_sc_run,l_acfdt,l_sc_exx,l_rho_IO
+ use drivers,       ONLY:l_sc_run,l_sc_exx,l_rho_IO
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
  use timing,        ONLY:live_timing
- use stderr,        ONLY:intc,real2ch
- use electrons,     ONLY:levels,spin_occ,n_sp_pol,spin
+ use stderr,        ONLY:intc
+ use electrons,     ONLY:levels,spin_occ,spin
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use collision,     ONLY:ggwinfo,collision_reset
- use QP_m,          ONLY:QP_Sx,QP_ng_Sx,QP_table,QP_nb,QP_n_states,QP_Sx_low_band,QP_Vxc
+ use QP_m,          ONLY:QP_Sx,QP_ng_Sx,QP_table,QP_nb,QP_n_states,QP_Sx_low_band
  use R_lattice,     ONLY:qindx_S,bz_samp
- use wave_func,     ONLY:wf,wf_load,wf_ng,WF_free
+ use wave_func,     ONLY:wf,wf_load,WF_free
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP,OP_WR
 #if defined _SC || defined _RT || defined _MAGNETIC
  use SC,            ONLY:it_now,SC_bands
@@ -88,27 +87,12 @@ subroutine XCo_Hatree-Fock(E,k,Xk,q)
  call collision_reset(iscp) 
  call pp_indexes_reset(px)
  !
-#if defined _RT
- if (l_rho_IO) QP_nb=SC_bands
-#endif
- call QP_state_table_setup(E)
- !
  QP_Sx_upper_band=E%nbm
+ !
+#if defined _RT
  !
  ! Oscillators I/O
  !
- !
- ! Section
- if (l_acfdt) then
-   call section('p','EX(change)S(elf-energy) and Vxc potential')
- else if (l_rho_IO) then
-   call section('*','Hartree-Fock extended oscillators')
- else if (.not.l_sc_run) then
-   call section('*','EX(change)S(elf-energy) and Vxc potential')
- endif
- if (QP_ng_Sx==0) QP_ng_Sx=wf_ng
- !
-#if defined _RT
  if(l_rho_IO) then
    !
    allocate(QP_DB_done(QP_n_states))
@@ -135,37 +119,6 @@ subroutine XCo_Hatree-Fock(E,k,Xk,q)
  endif
  !
 #endif
- !
- ! Allocation
- !
- if (.not.l_rho_IO) then
-   if (.not.allocated(QP_Sx)) then
-     allocate(QP_Sx(QP_n_states))
-     call mem_est("QP_Sx",(/QP_n_states/))
-   endif
-   if (.not.allocated(QP_Vxc)) then
-     allocate(QP_Vxc(QP_n_states))
-     call mem_est("QP_Vxc",(/QP_n_states/))
-   endif
-   QP_Sx=(0.,0.)
-   QP_Vxc=(0.,0.)
- endif
- !
- ! I/O
- !
- io_err=-1
- if (.not.l_rho_IO) then
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
-   io_err=ioXXVXC(ID)
- endif
- !
- if (io_err==0) then
-   !
-   call XX_Vxc_report_and_IO()
-   !
-   return
-   !
- endif
  !
  if (QP_Sx_low_band>E%nbm) QP_Sx_low_band=1
  call msg('r', '[EXS] Plane waves :',QP_ng_Sx)
@@ -405,66 +358,4 @@ subroutine XCo_Hatree-Fock(E,k,Xk,q)
  !
 #endif
  !
- ! Vxc
- !
- if (.not.l_sc_run) then
-   call XCo_local(E,Xk)
-   call WF_free()
- endif
- !
- call XX_Vxc_report_and_IO()
- !
- contains
-   !
-   subroutine XX_Vxc_report_and_IO()
-     !
-     ! ... reporting the <Vxc/Sig_x> m.e.
-     !
-     ik=QP_table(1,3)
-     call msg('nr','S_x/V_xc [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
-     !
-     do i_qp=1,QP_n_states
-       !
-       ib =QP_table(i_qp,1)
-       ibp=QP_table(i_qp,2)
-       if (QP_table(i_qp,3)/=ik) then
-         ik=QP_table(i_qp,3)
-         call msg('nr','S_x/V_xc [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
-       endif
-       !
-       ch_spin=' '
-       !
-       if (n_sp_pol==2.and.spin(QP_table(i_qp,:))==1) ch_spin='(up)'
-       if (n_sp_pol==2.and.spin(QP_table(i_qp,:))==2) ch_spin='(dn)'
-       ! 
-       sx_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|S_x|'//trim(intc(ibp))&
-&         //trim(ch_spin)//'> ='
-       vxc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|V_xc|'//trim(intc(ibp))&
-&         //trim(ch_spin)//'> ='
-       !
-       ch=trim(sx_fmt)//' '//&
-&        trim(real2ch(real(QP_Sx(i_qp)*HARTREE)))//' '//&
-&        trim(real2ch(aimag(QP_Sx(i_qp)*HARTREE)))//' '//&
-&        trim(vxc_fmt)//' '//&
-&        trim(real2ch(real(QP_Vxc(i_qp)*HARTREE)))//' '//&
-&        trim(real2ch(aimag(QP_Vxc(i_qp)*HARTREE)))
-       !
-       if (i_qp/=QP_n_states) call msg('r',trim(ch))
-       if (i_qp==QP_n_states) call msg('rn',trim(ch))
-       !
-     enddo
-     !
-     ! I/O
-     !
-     if (io_err/=0) then
-       call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
-       io_err=ioXXVXC(ID)
-     endif
-     !
-     ! MPI barrier
-     !
-     call pp_redux_wait
-     !
-   end subroutine
-   !
 end subroutine

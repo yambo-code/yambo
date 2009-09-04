@@ -38,7 +38,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
 &                                  XC_LDA_C_HL,XC_LDA_C_XALPHA,NONE,XC_LDA_X,&
 &                                  XC_EXCHANGE
  use mod_com2y,            ONLY : print_interface_dimensions,symmetries_check_and_load,&
-&                                  alat_mult_factor
+&                                  alat_mult_factor,artificial_spin_pol
  implicit none
  character(*)                   :: KSS_file_name
  type(levels),     intent(out)  :: en
@@ -115,6 +115,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  n_spinor=ahdr%nspinor
  n_sp_pol=ahdr%nsppol
+ !
+ if (n_sp_pol==1.and.artificial_spin_pol) n_sp_pol=2
  !
  ! GPL_EXCLUDE_END SPIN_IGNORE
  !
@@ -220,6 +222,11 @@ subroutine a2y_db1(en,k,KSS_file_name)
  ! GPL_EXCLUDE_START SPIN_IGNORE
  !
  do i_spin=1,n_spin
+   !
+   if (i_spin==2.and.artificial_spin_pol) then
+     en%E(:,:,2)=en%E(:,:,1)
+     cycle
+   endif
    ! 
    ! GPL_EXCLUDE_END SPIN_IGNORE
    !

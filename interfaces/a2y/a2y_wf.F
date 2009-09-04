@@ -56,6 +56,7 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  use R_lattice,             ONLY:nkibz
  use wave_func,             ONLY:wf_ncx,wf_nb_io,wf_nb_io_groups
  use defs_datatypes,        ONLY:hdr_type, wffile_type
+ use mod_com2y,             ONLY:artificial_spin_pol
  implicit none
  !
  integer        :: ikibz,ib_grp
@@ -102,6 +103,13 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  ! GPL_EXCLUDE_START SPIN_IGNORE
  !
  do i_spin=1,n_spin
+   !
+   if (i_spin==2.and.artificial_spin_pol) then
+     pp_kb(:,:,:,2) = pp_kb(:,:,:,1) 
+     pp_kbd(:,:,:,2)= pp_kbd(:,:,:,1)
+     wf_disk(:,:,:,2)=wf_disk(:,:,:,1)
+     cycle
+   endif
    ! 
    ! GPL_EXCLUDE_END SPIN_IGNORE
    !
@@ -130,7 +138,7 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
    ! 
    ! GPL_EXCLUDE_START SPIN_IGNORE
    !
-   if (n_spin==2) then
+   if (n_spin==2.and..not.artificial_spin_pol) then
      ! 
      ! BIG PROBLEM WITH ABINIT: abinit uses a different ordering
      ! of the k-points/spins. This makes the I/O very complicate.

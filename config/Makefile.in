@@ -50,7 +50,7 @@ UTILS    = changelog
 CLEANS   = clean clean_all
 PROJECTS = yambo_ph yambo_sc yambo_ras yambo_reels \
 	       yambo_manyk yambo_ras_manyk yambo_tb \
-           yambo_magnetic yambo_partial_diago yambo_polaron \
+           yambo_magnetic yambo_PWdiago yambo_polaron \
            yambo_rt ypp_rt ypp_ph ypp_ras ypp_sc 
 BROKEN   = yambo_gamma
 TESTS    = 
@@ -101,9 +101,9 @@ yambo: libs
 	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)
 	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
 # PROJECTS & BROKEN #
-yambo_partial_diago: libs
-	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_PARTIAL_DIAGO"; $(mksrc)
-	@X2DO="yambo_partial_diago"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_PARTIAL_DIAGO";$(mkx)
+yambo_PWdiago: libs
+	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_PW_DIAGO"; $(mksrc)
+	@X2DO="yambo_PWdiago"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_PW_DIAGO";$(mkx)
 yambo_magnetic: libs
 	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_MAGNETIC"; $(mksrc)
 	@X2DO="yambo_magnetic"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_MAGNETIC";$(mkx)

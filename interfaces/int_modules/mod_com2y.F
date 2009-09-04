@@ -27,6 +27,7 @@ module mod_com2y
  logical :: force_noTR
  logical :: force_noSYM
  logical :: force_noWFs
+ logical :: artificial_spin_pol
  !
  real(SP):: alat_mult_factor
  !
@@ -47,6 +48,7 @@ module mod_com2y
      force_noTR =index(in_string,'notr')>0
      force_noSYM=index(in_string,'nosym')>0
      force_noWFs=index(in_string,'nowf')>0
+     artificial_spin_pol=index(in_string,'dupl')>0
      !
      alat_mult_factor=1.
      do i1=1,100

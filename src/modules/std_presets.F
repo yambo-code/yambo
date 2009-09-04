@@ -391,7 +391,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  SC_rho_threshold=1.E-5
  SC_potential='none'
  using_SC_basis=.FALSE.
- MAG_gauge='SYMM'
  !
 #endif
 #if defined _RT
@@ -435,6 +434,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  MAG_hamiltonian_type='pauli'
  MAG_pauli=.FALSE.
  MAG_landau=.FALSE.
+ MAG_gauge='SYMM'
+ !
 #endif
  !
 end subroutine

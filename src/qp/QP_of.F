@@ -27,7 +27,7 @@ subroutine QP_of(kp,qp,en)
  use com,       ONLY:msg,of_open_close
  use R_lattice, ONLY:bz_samp
  use electrons, ONLY:levels,spin
- use QP_m,      ONLY:QP_t,QP_Vxc,QP_Sc,QP_dSc,QP_Sx,QP_table,&
+ use QP_m,      ONLY:QP_t,QP_Vxc,QP_Sc,QP_dSc,QP_Vnl_xc,QP_table,&
 &                    QP_rep_string,QP_solver,QP_n_states,&
 &                    QP_G_dr,QP_Sc_steps,use_GreenF_to_eval_QP,&
 &                    report_Sx,report_Sc,report_dSc,QP_G_amplitude_integral
@@ -103,7 +103,7 @@ subroutine QP_of(kp,qp,en)
        endif
        if (report_Sx) then
          values(1)=real(QP_Vxc(i1))*HARTREE
-         values(11)=real(QP_Sx(i1))*HARTREE
+         values(11)=real(QP_Vnl_xc(i1))*HARTREE
        endif
      endif
      values(4:6)=(/qp%E_bare(i1)*HARTREE,real(qp%E(i1)*HARTREE),real(qp%Z(i1))/)
@@ -156,7 +156,7 @@ subroutine QP_of(kp,qp,en)
        values(4:5)=(/real(qp%S_total(i1,i2)),aimag(qp%S_total(i1,i2))/)*HARTREE
        values(6)=values(4)
        if (report_Sx) then
-         values(6)=values(6)-real(QP_Sx(i1)+QP_Vxc(i1))*HARTREE
+         values(6)=values(6)-real(QP_Vnl_xc(i1)+QP_Vxc(i1))*HARTREE
          call msg('o G_Sc','',values(:6),INDENT=-2,USE_TABS=.TRUE.)
        else
          call msg('o G_Sc','',values(:5),INDENT=-2,USE_TABS=.TRUE.)

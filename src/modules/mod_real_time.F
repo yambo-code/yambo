@@ -137,7 +137,7 @@ module real_time
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
-     use QP_m,           ONLY:QP_nk,QP_n_states,QP_Sx
+     use QP_m,           ONLY:QP_nk,QP_n_states,QP_Vnl_xc
      use oscillators_IO, ONLY:oscillators_IO_alloc
      !
      implicit none
@@ -150,8 +150,8 @@ module real_time
        !
        call oscillators_IO_alloc()
        !
-       allocate(QP_Sx(QP_n_states))
-       call mem_est("QP_Sx",(/QP_n_states/))
+       allocate(QP_Vnl_xc(QP_n_states))
+       call mem_est("QP_Vnl_xc",(/QP_n_states/))
        !
      endif
      !
@@ -215,7 +215,7 @@ module real_time
      use drivers,        ONLY:l_sc_hf,l_xxvxc
      use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare,rho_n
      use memory_m,       ONLY:mem_est
-     use QP_m,           ONLY:QP_Sx
+     use QP_m,           ONLY:QP_Vnl_xc
      use xc_functionals, ONLY:E_xc
      use oscillators_IO, ONLY:oscillators_IO_free
      implicit none
@@ -225,8 +225,8 @@ module real_time
      if (l_xxvxc) call oscillators_IO_free()
      !
      if (l_xxvxc) then
-       deallocate(QP_Sx)
-       call mem_est("QP_Sx")
+       deallocate(QP_Vnl_xc)
+       call mem_est("QP_Vnl_xc")
      endif
      !
      deallocate(E_xc)

@@ -24,7 +24,7 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
  use drivers,       ONLY:l_ph_corr
  use pars,          ONLY:SP,pi
  use units,         ONLY:HARTREE
- use QP_m,          ONLY:QP_t,QP_Sc,QP_Sx,QP_Vxc,QP_table,&
+ use QP_m,          ONLY:QP_t,QP_Sc,QP_Vnl_xc,QP_Vxc,QP_table,&
 &                        QP_n_states,use_GreenF_to_eval_QP,QP_Sc_steps,QP_G_dr,&
 &                        QP_dSc_delta,Force_Newton_QP,GF_is_causal,&
 &                        QP_G_amplitude_integral
@@ -73,8 +73,8 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
    if (associated(E%Eo)) Eo=E%Eo(ib,ik,i_spin)
    !
    if (QPdb_read_err<0) then
-     if ( allocated(QP_Sx) ) then
-       qp%S_total(iqp,:)=QP_Sc(iqp,:)+QP_Sx(iqp)-QP_Vxc(iqp)
+     if ( allocated(QP_Vnl_xc) ) then
+       qp%S_total(iqp,:)=QP_Sc(iqp,:)+QP_Vnl_xc(iqp)-QP_Vxc(iqp)
      else
        qp%S_total(iqp,:)=QP_Sc(iqp,:)
      endif

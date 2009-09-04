@@ -32,7 +32,7 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  use FFT_m,          ONLY:fft_size
  use xc_functionals, ONLY:E_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional
- use QP_m,           ONLY:QP_nk,QP_Sx
+ use QP_m,           ONLY:QP_nk,QP_Vnl_xc
  use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
  use par_indexes_m,  ONLY:par_indexes
  !
@@ -140,7 +140,7 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
        !        
        H_nl_sc=(0.,0.)
        !
-       call V_qp_basis_to_H(ik,QP_Sx,H_nl_sc)
+       call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc)
        !
 #if defined _DOUBLE
        Ex=Ex+(0.,0.5)*zdotc(SC_bands2,H_nl_sc(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)

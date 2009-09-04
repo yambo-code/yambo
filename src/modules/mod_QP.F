@@ -40,7 +40,7 @@ module QP_m
  integer           :: QP_n_states
  integer           :: QP_ng_Sx
  integer           :: QP_n_G_bands(2)
- integer           :: QP_Sx_low_band
+ integer           :: Sx_low_band
  integer           :: GWo_iterations
  logical           :: QP_dSc_test
  logical           :: QP_W_partially_done
@@ -62,7 +62,7 @@ module QP_m
  real(SP)   ,allocatable:: QP_G_amplitude_integral(:)
  complex(SP),allocatable:: QP_dSc(:,:)
  complex(SP),allocatable:: QP_W(:,:,:)
- complex(SP),allocatable:: QP_Sx(:)
+ complex(SP),allocatable:: QP_Vnl_xc(:)
  complex(SP),allocatable:: QP_Sc(:,:)
  complex(SP),allocatable:: QP_Vxc(:)
  integer,    allocatable:: QP_solver_state(:)

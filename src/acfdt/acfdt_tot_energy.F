@@ -36,7 +36,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use D_lattice,      ONLY:DL_vol
  use com,            ONLY:msg
  use X_m,            ONLY:X_t,X_alloc,X_mat
- use QP_m,           ONLY:QP_nb,QP_nk,QP_n_states,QP_table,QP_state,QP_Sx,QP_Vxc
+ use QP_m,           ONLY:QP_nb,QP_nk,QP_n_states,QP_table,QP_state,QP_Vnl_xc,QP_Vxc
  use collision,      ONLY:ggwinfo,collision_reset
  use matrix_operate, ONLY:mat_dia_inv,INV,USE_LK
  use IO_m,           ONLY:io_control,RD_CL_IF_END,OP_RD
@@ -254,7 +254,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  do i1=1,QP_n_states
    ib=QP_table(i1,1)
    ik=QP_table(i1,3)
-   ACFDT_EXX=ACFDT_EXX+En%f(ib,ik,1)*k%weights(ik)*QP_Sx(i1)
+   ACFDT_EXX=ACFDT_EXX+En%f(ib,ik,1)*k%weights(ik)*QP_Vnl_xc(i1)
  enddo
  ACFDT_EXX=ACFDT_EXX/DL_vol/2._SP
  !
@@ -282,7 +282,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  !
  if (do_Ec) deallocate(freq,freq_weight,lambda,lambda_weight)
  if (do_Ec) deallocate(Xw%p)
- deallocate(QP_Sx,QP_Vxc,QP_table,QP_state)
- call mem_est("QP_table QP_state QP_Sx QP_Vxc W-p")
+ deallocate(QP_Vnl_xc,QP_Vxc,QP_table,QP_state)
+ call mem_est("QP_table QP_state QP_Vnl_xc QP_Vxc W-p")
  !
 end subroutine

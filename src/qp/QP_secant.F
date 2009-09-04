@@ -54,7 +54,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  use frequency,     ONLY:w_samp,W_reset
  use X_m,           ONLY:X_t
  use par_proc_m,    ONLY:pp_redux_wait
- use QP_m,          ONLY:QP_t,QP_Vxc,QP_Sx,QP_Sc,QP_n_W_freqs,QP_W,QP_n_states,&
+ use QP_m,          ONLY:QP_t,QP_Vxc,QP_Vnl_xc,QP_Sc,QP_n_W_freqs,QP_W,QP_n_states,&
 &                        QP_solver_state,QP_dSc_steps,QP_dSc,&
 &                        QP_W_dr,QP_W_er,QP_dSc_delta
  use IO_m,          ONLY:io_control,NONE,RD,RD_CL,OP_RD
@@ -217,7 +217,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
          ! The convergence criteria is dQP_raxis= 0.
          !
          if (QP_solver_state(i1)>0) dQP_raxis(i1,QP_solver_state(i1))=&
-&            ( qp%E_bare(i1)+real(QP_Sc(i1,1))+QP_Sx(i1)-QP_Vxc(i1) )-&
+&            ( qp%E_bare(i1)+real(QP_Sc(i1,1))+QP_Vnl_xc(i1)-QP_Vxc(i1) )-&
 &            Eqp_raxis(i1,QP_solver_state(i1))
        enddo
      endif

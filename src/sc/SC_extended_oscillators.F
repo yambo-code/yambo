@@ -24,7 +24,7 @@ subroutine SC_extended_oscillators(G_input)
  ! QP_Sx(qp_state) = - (0.,1.) * \sum_{n,n',q} rho_rho_(n,n',q,qp_state) x G_lesser(n,n',k-q)
  ! 
  use pars,           ONLY:SP
- use QP_m,           ONLY:QP_nk,QP_n_states,QP_Sx
+ use QP_m,           ONLY:QP_nk,QP_n_states,QP_Vnl_xc
  use SC,             ONLY:SC_bands
  use oscillators_IO, ONLY:rho_VX_rho,n_rho_states,rho_table,ioRHO_RHO_VX 
  use par_proc_m,     ONLY:pp_indexes,pp_redux_wait,pp_indexes_reset
@@ -45,7 +45,7 @@ subroutine SC_extended_oscillators(G_input)
  !
  call par_indexes(px,(/QP_n_states/))
  !
- QP_Sx=(0.,0.)
+ QP_Vnl_xc=(0.,0.)
  !
  do i1=1,QP_n_states 
    !
@@ -60,13 +60,13 @@ subroutine SC_extended_oscillators(G_input)
      ibp=rho_table(2,ic)
      ik =rho_table(3,ic)
      !
-     QP_Sx(i1)=QP_Sx(i1)-(0.,1.)*rho_VX_rho(ic)*G_input(ib,ibp,ik)      
+     QP_Vnl_xc(i1)=QP_Vnl_xc(i1)-(0.,1.)*rho_VX_rho(ic)*G_input(ib,ibp,ik)      
      !
    enddo
    !
  enddo
  !
- call pp_redux_wait(QP_Sx)
+ call pp_redux_wait(QP_Vnl_xc)
  call pp_indexes_reset(px)
  ! 
 end subroutine 

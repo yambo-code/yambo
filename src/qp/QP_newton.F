@@ -26,7 +26,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  use drivers,       ONLY:l_ppa,l_el_corr,l_ph_corr,l_chosex
  use com,           ONLY:msg
  use X_m,           ONLY:X_t
- use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Sx,QP_Vxc,QP_Sc,&
+ use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Vnl_xc,QP_Vxc,QP_Sc,&
 &                        QP_n_states,QP_dSc,QP_dSc_delta,QP_n_G_bands,&
 &                        GWo_SC_done,GWo_iterations,SC_E_threshold,On_Mass_Shell_approx
  use frequency,     ONLY:w_samp
@@ -118,14 +118,14 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
        Z(i2)=1./(1.-QP_dSc(i1,i2))
        !
        Eqp(i2)=qp%E_bare(i1)+Z(i2)*QP_Sc(i1,1)
-       if (l_el_corr) Eqp(i2)=Eqp(i2)+Z(i2)*(QP_Sx(i1)-QP_Vxc(i1))
+       if (l_el_corr) Eqp(i2)=Eqp(i2)+Z(i2)*(QP_Vnl_xc(i1)-QP_Vxc(i1))
        !
      enddo
      !
      ! CHOSEX: no energy dependence
      !
      if (l_chosex) then
-       Eqp(1)=qp%E_bare(i1)+(QP_Sc(i1,1)+QP_Sx(i1)-QP_Vxc(i1))
+       Eqp(1)=qp%E_bare(i1)+(QP_Sc(i1,1)+QP_Vnl_xc(i1)-QP_Vxc(i1))
        Z(1)=1.
      endif
      !

@@ -33,7 +33,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use X_m,           ONLY:X_t
  use parser_m,      ONLY:parser
  use QP_m,          ONLY:QP_t,QP_dSc,QP_dSc_steps,QP_Vxc,QP_Sc,QP_solver,QP_table,&
-&                        QP_Sx,QP_n_states,QP_nb,&
+&                        QP_Vnl_xc,QP_n_states,QP_nb,&
 &                        QP_nk,QP_state,QP_dSc_test,QP_reset,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_W_partially_done,&
 &                        GWo_iterations,CHOSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
@@ -66,7 +66,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! S_x/Vxc are always need if not l_life or el. correlations is
  ! skipped
  !==============================================================
- if (.not.allocated(QP_Sx).and..not.allocated(QP_Vxc).and.l_el_corr.and..not.l_life) return
+ if (.not.allocated(QP_Vnl_xc).and..not.allocated(QP_Vxc).and.l_el_corr.and..not.l_life) return
  !
  ! GPL_INCLUDE_START GW_REAL_AXIS_IGNORE
  !QP_solver='n'
@@ -353,13 +353,13 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
      deallocate(qp%Z,qp%E,qp%E_bare,qp%k,qp%table,QP_table,QP_state)
      if (allocated(QP_Sc))       deallocate(QP_Sc)
      if (allocated(QP_dSc))      deallocate(QP_dSc)
-     if (allocated(QP_Sx))       deallocate(QP_Sx,QP_Vxc)
+     if (allocated(QP_Vnl_xc))       deallocate(QP_Vnl_xc,QP_Vxc)
      if (associated(qp%GreenF))   nullify(qp%GreenF)
      if (associated(qp%GreenF_W)) nullify(qp%GreenF_W)
      if (associated(qp%S_total))  nullify(qp%S_total)
      if (allocated(QP_G_amplitude_integral)) deallocate(QP_G_amplitude_integral)
      call mem_est("QP_G_amplitude_integral")
-     call mem_est("QP_Sc QP_dSc qp_GreenF QP_Sx QP_Vxc qp_GreenF_W")
+     call mem_est("QP_Sc QP_dSc qp_GreenF QP_Vnl_xc QP_Vxc qp_GreenF_W")
      call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table QP_table QP_state qp_S_total")
    end subroutine
    !

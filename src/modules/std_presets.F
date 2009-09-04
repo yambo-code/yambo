@@ -29,7 +29,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                      alpha_dim,use_X_RIM,long_path,X_RIM_nkpts,Dipole_bands_ordered,&
 &                      eval_alpha,Vnl_commutator_warning,Eval_P_and_P2_only
  use QP_m,       ONLY:QP_rep_string,QP_dSc_steps,QP_n_W_freqs,&
-&                     QP_Sx_low_band,QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
+&                     Sx_low_band,QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_W_er,QP_W_dr,QP_cg_percent,&
 &                     QP_ctl_db,QP_ctl_interp_neigh,SC_E_threshold, &
 &                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
@@ -301,7 +301,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  QP_dSc_steps=2
  QP_Sc_steps=100
  QP_n_W_freqs=100
- QP_Sx_low_band=1
+ Sx_low_band=1
  QP_dSc_test=.false.
  QP_solver=' '
  QP_G_damp=0.1/HARTREE

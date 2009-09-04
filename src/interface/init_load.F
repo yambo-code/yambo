@@ -29,7 +29,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp 
  use X_m,           ONLY:X_t,long_path
  use QP_m,          ONLY:QP_rep_string,QP_cg_percent,QP_G_damp,QP_solver,&
-&                        QP_n_G_bands,QP_ng_Sx,QP_Sx_low_band,&
+&                        QP_n_G_bands,QP_ng_Sx,Sx_low_band,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,SC_band_mixing,&
 &                        SC_E_threshold,QP_dSc_delta
  use timing,        ONLY:nhash
@@ -246,7 +246,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! S_xc
  !
- call it(defs,'SxLowBnd', '[XX] Exchange summation low band',QP_Sx_low_band,verb_level=V_qp)
+ call it(defs,'SxLowBnd', '[XX] Exchange summation low band',Sx_low_band,verb_level=V_qp)
  call it(defs,'LifeTrCG', '[GW] [o/o] Lifetime transitions reduction',QP_cg_percent)
  call it(defs,'GEnSteps', '[GW] G_gw energy steps',QP_Sc_steps)
  call it(defs,'GEnRnge',  '[GW] G_gw energy range (centered in the bare energy)',QP_G_er,E_unit)

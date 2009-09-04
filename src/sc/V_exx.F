@@ -40,7 +40,7 @@ subroutine V_exx(X,E,k,q,Vexx)
  use frequency,       ONLY:w_samp,W_reset,bg_npts,cg_pt,cg_index_bg,rg_index_bg
  use matrix_operate,  ONLY:mat_dia_inv,INV,USE_LK
  use collision,       ONLY:ggwinfo,collision_reset
- use QP_m,            ONLY:QP_Sx,QP_n_states,QP_table
+ use QP_m,            ONLY:QP_Vnl_xc,QP_n_states,QP_table
  use memory_m,        ONLY:mem_est
  !
  ! I/O
@@ -96,8 +96,8 @@ subroutine V_exx(X,E,k,q,Vexx)
  ! NB: a. it does not work for metallic systems
  ! -----------------------------------------------
  ! 1:
- allocate(QP_Sx(QP_n_states))
- call mem_est("QP_Sx",(/QP_n_states/))
+ allocate(QP_Vnl_xc(QP_n_states))
+ call mem_est("QP_Vnl_xc",(/QP_n_states/))
  call IO_mute("report io_in io_out") 
  call XCo_driver(E,k,k,q)
  call IO_mute(" ")
@@ -118,7 +118,7 @@ subroutine V_exx(X,E,k,q,Vexx)
      iv = QP_table(i1,1)
      ic = QP_table(i1,2)
      if (QP_table(i1,3)/=ik.or.iv>E%nbf.or.ic<=E%nbf) cycle
-     SigmaX(iv,ic) = QP_Sx(i1)
+     SigmaX(iv,ic) = QP_Vnl_xc(i1)
    enddo
    ! 4:
    do ic = E%nbf+1, X%ib(2)
@@ -159,7 +159,7 @@ subroutine V_exx(X,E,k,q,Vexx)
  end do 
  deallocate(isc%rhotw,rhotw_save,rhotw_sum,rhotw_sum_TR,SigmaX)
  call X_alloc('OptOsc')
- if (allocated(QP_Sx))  deallocate(QP_Sx)
+ if (allocated(QP_Vnl_xc))  deallocate(QP_Vnl_xc)
  !
  ! Add c.c. contribution
  !

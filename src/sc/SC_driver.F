@@ -29,7 +29,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use R_lattice,      ONLY:bz_samp,qindx_S,G_m_G
  use D_lattice,      ONLY:Tel
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_table,&
-&                         QP_ng_Sx,QP_Sx,QP_t,QP_reset,SC_E_threshold,SC_bands_mixed
+&                         QP_ng_Sx,QP_Vnl_xc,QP_t,QP_reset,SC_E_threshold,SC_bands_mixed
  use SC,             ONLY:SC_bands,SC_iterations,rho_n,&
 &                         SC_rho_threshold,SC_potential,it_now,E_convergence,&
 &                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,&
@@ -475,7 +475,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        ! Add Sigma_x and, eventually, Sigma_c (CHOSEX)
        !
-       if(.not.l_use_RHO_IO) call V_qp_basis_to_H(ik,QP_Sx,H_nl_sc)
+       if(.not.l_use_RHO_IO) call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc)
        !        
        if (l_sc_chosex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc)
        !
@@ -487,7 +487,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
          end do
        endif
        !
-       if(l_use_RHO_IO) call V_qp_basis_to_H(ik,QP_Sx,H_nl_sc)
+       if(l_use_RHO_IO) call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc)
        !
        ! IO [H_nl_sc]
        !==============
@@ -727,8 +727,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        allocate(G_lesser(SC_bands,SC_bands,QP_nk))
        call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
        !
-       allocate(QP_Sx(QP_n_states))
-       call mem_est("QP_Sx",(/size(QP_Sx)/),(/2*SP/))
+       allocate(QP_Vnl_xc(QP_n_states))
+       call mem_est("QP_Vnl_xc",(/size(QP_Vnl_xc)/),(/2*SP/))
        !
        call oscillators_IO_alloc()
        !
@@ -758,8 +758,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        deallocate(G_lesser)
        call mem_est("G_lesser")
        !
-       deallocate(QP_Sx)
-       call mem_est("QP_Sx")
+       deallocate(QP_Vnl_xc)
+       call mem_est("QP_Vnl_xc")
        !
        call oscillators_IO_free()
        !

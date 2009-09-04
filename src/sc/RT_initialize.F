@@ -23,7 +23,7 @@ subroutine RT_initialize()
  use com,            ONLY:msg,warning
  use vec_operate,    ONLY:normalize_v
  use drivers,        ONLY:l_sc_hf
- use QP_m,           ONLY:QP_Sx_low_band
+ use QP_m,           ONLY:Sx_low_band
  use real_time,      ONLY:l_RPA,Thermal_steps,Thermal_time,RT_step,l_rt_efield,i_time, &
 &                         l_RT_no_updates,Integrator_Name,l_qp_analyze,Tot_steps,    &
 &                         l_no_diamagnetic,l_always_relax,EField,n_ext_fields,         &
@@ -52,8 +52,8 @@ subroutine RT_initialize()
  !
  i_time=0
  !
- if(l_sc_hf.and.QP_Sx_low_band/=1) then
-   QP_Sx_low_band=1
+ if(l_sc_hf.and.Sx_low_band/=1) then
+   Sx_low_band=1
    call warning('  Exchange summation low band set to 1 ')
  endif
  !

@@ -30,7 +30,7 @@ subroutine XCo_driver(E,k,Xk,q)
  use R_lattice,     ONLY:bz_samp
  use par_proc_m,    ONLY:pp_redux_wait
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
- use QP_m,          ONLY:QP_table,QP_Vxc,QP_Sx,QP_n_states
+ use QP_m,          ONLY:QP_table,QP_Vxc,QP_Vnl_xc,QP_n_states
  use memory_m,      ONLY:mem_est
  use wave_func,     ONLY:WF_free
  !
@@ -68,15 +68,15 @@ subroutine XCo_driver(E,k,Xk,q)
  ! Allocation
  !
  if (.not.l_rho_IO) then
-   if (.not.allocated(QP_Sx)) then
-     allocate(QP_Sx(QP_n_states))
-     call mem_est("QP_Sx",(/QP_n_states/))
+   if (.not.allocated(QP_Vnl_xc)) then
+     allocate(QP_Vnl_xc(QP_n_states))
+     call mem_est("QP_Vnl_xc",(/QP_n_states/))
    endif
    if (.not.allocated(QP_Vxc)) then
      allocate(QP_Vxc(QP_n_states))
      call mem_est("QP_Vxc",(/QP_n_states/))
    endif
-   QP_Sx=(0.,0.)
+   QP_Vnl_xc=(0.,0.)
    QP_Vxc=(0.,0.)
  endif
  !
@@ -95,11 +95,12 @@ subroutine XCo_driver(E,k,Xk,q)
    return
    !
  else
+   !
    ! The point here is that dependening on the kind of XCo I do/don't need HF
    !
-   ! XCo=any local => Eqp=Eo+QP_Sc+QP_Sx-QP_Vxc => QP_XCo_nloc=QP_Sx
-   ! XCo=CHOSEX    => Eqp=Eo+QP_Sc-CHOSEX       => QP_XCo_nloc=-QP_CHOSEX
-   ! XCo=HF        => Eqp=Eo+QP_Sc              => QP_XCo_nloc=0.
+   ! XCo=any local => Eqp=Eo+QP_Sc+QP_Sx-QP_Vxc => QP_Vnl_xc=QP_Sx
+   ! XCo=CHOSEX    => Eqp=Eo+QP_Sc-CHOSEX       => QP_Vnl_xc=-QP_CHOSEX
+   ! XCo=HF        => Eqp=Eo+QP_Sc              => QP_Vnl_xc=0.
    !
    call XCo_Hartree_Fock(E,k,xk,q)
    !
@@ -146,8 +147,8 @@ subroutine XCo_driver(E,k,Xk,q)
 &         //trim(ch_spin)//'> ='
        !
        ch=trim(nloc_fmt)//' '//&
-&        trim(real2ch(real(QP_Sx(i_qp)*HARTREE)))//' '//&
-&        trim(real2ch(aimag(QP_Sx(i_qp)*HARTREE)))//' '//&
+&        trim(real2ch(real(QP_Vnl_xc(i_qp)*HARTREE)))//' '//&
+&        trim(real2ch(aimag(QP_Vnl_xc(i_qp)*HARTREE)))//' '//&
 &        trim(loc_fmt)//' '//&
 &        trim(real2ch(real(QP_Vxc(i_qp)*HARTREE)))//' '//&
 &        trim(real2ch(aimag(QP_Vxc(i_qp)*HARTREE)))

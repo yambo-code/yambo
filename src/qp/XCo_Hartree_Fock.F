@@ -33,7 +33,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use collision,     ONLY:ggwinfo,collision_reset
- use QP_m,          ONLY:QP_Sx,QP_ng_Sx,QP_table,QP_nb,QP_n_states,QP_Sx_low_band
+ use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states,Sx_low_band
  use R_lattice,     ONLY:qindx_S,bz_samp
  use wave_func,     ONLY:wf,wf_load,WF_free
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP,OP_WR
@@ -53,7 +53,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  type(ggwinfo)    ::isc,iscp
  type(pp_indexes) ::px
- integer                 ::i2,iq,ib,ibp,jb,ik,QP_Sx_upper_band,i_qp
+ integer                 ::i2,iq,ib,ibp,jb,ik,Sx_upper_band,i_qp
 #if defined _RT
  integer                 :: jb2,ik_minus_q,ic,COM_
  real(SP)                :: sx_max
@@ -87,7 +87,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  call collision_reset(iscp) 
  call pp_indexes_reset(px)
  !
- QP_Sx_upper_band=E%nbm
+ Sx_upper_band=E%nbm
  !
 #if defined _RT
  !
@@ -97,7 +97,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
    !
    allocate(QP_DB_done(QP_n_states))
    !
-   QP_Sx_upper_band=SC_bands
+   Sx_upper_band=SC_bands
    !
    V_kind=SC_HF
    !
@@ -120,9 +120,9 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
 #endif
  !
- if (QP_Sx_low_band>E%nbm) QP_Sx_low_band=1
+ if (Sx_low_band>E%nbm) Sx_low_band=1
  call msg('r', '[EXS] Plane waves :',QP_ng_Sx)
- call msg('rn','[EXS] Bands range :',(/QP_Sx_low_band,E%nbm/))
+ call msg('rn','[EXS] Bands range :',(/Sx_low_band,E%nbm/))
  !
  ! QP_table -> report
  !
@@ -153,7 +153,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
 #if defined _RT
  call par_indexes(px,(/QP_n_states/))
 #else
- call par_indexes(px,(/q%nbz,E%nbm/),(/1,QP_Sx_low_band/))
+ call par_indexes(px,(/q%nbz,E%nbm/),(/1,Sx_low_band/))
 #endif
  call pp_redux_wait
  !
@@ -212,7 +212,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
      ik_minus_q=isc%os(2)
 #endif
      !
-     do jb=QP_Sx_low_band,QP_Sx_upper_band
+     do jb=Sx_low_band,Sx_upper_band
        !      
 #if !defined _RT
        if (.not.px%i2p(iq,jb)) cycle
@@ -268,7 +268,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
        enddo
 #else
        !
-       QP_Sx(i_qp)=QP_Sx(i_qp)+DP_Sx
+       QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)+DP_Sx
        !
        call live_timing(steps=1)
        !
@@ -354,7 +354,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
 #else
  !
- call pp_redux_wait(QP_Sx)
+ call pp_redux_wait(QP_Vnl_xc)
  !
 #endif
  !

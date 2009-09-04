@@ -29,7 +29,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  use drivers,        ONLY:l_sc_contains_lda,l_sc_hf
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n
- use QP_m,           ONLY:QP_nk,QP_Sx
+ use QP_m,           ONLY:QP_nk,QP_Vnl_xc
  use real_time,      ONLY:I1_lesser,I2_lesser,l_RT_no_updates,l_qp_analyze,         &
  &                        l_rt_efield,LifeTime,H_t,l_RPA,H_Hartree_Vxc_0,V_xc_0,    &
  &                        Thermal_time,Integrator_name,EXACT,RK2EXACT,A_norm,       &
@@ -100,7 +100,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
        !
        ! Add the exchange term
        !
-       call V_qp_basis_to_H(ik,QP_Sx,H_nl_sc) 
+       call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 
        !
      endif
      !

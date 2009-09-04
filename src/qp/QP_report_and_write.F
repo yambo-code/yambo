@@ -27,7 +27,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  use com,           ONLY:msg
  use memory_m,      ONLY:mem_est
  use stderr,        ONLY:intc
- use QP_m,          ONLY:QP_t,QP_dSc,QP_Sc,QP_Sx,QP_Vxc,QP_rep_string,QP_table,QP_state,&
+ use QP_m,          ONLY:QP_t,QP_dSc,QP_Sc,QP_Vnl_xc,QP_Vxc,QP_rep_string,QP_table,QP_state,&
 &                        QP_n_states,QP_dSc_steps,use_GreenF_to_eval_QP,On_Mass_Shell_approx,&
 &                        QP_solver,report_Sx,report_Sc,report_dSc 
  use electrons,     ONLY:n_sp_pol,spin,levels
@@ -136,7 +136,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    if (report_Sx) then
      n_shadows=n_shadows+1
      shadow_string(n_shadows)=' XX='
-     shadow(n_shadows)=real(QP_Sx(iqp))*HARTREE
+     shadow(n_shadows)=real(QP_Vnl_xc(iqp))*HARTREE
      n_shadows=n_shadows+1
      shadow_string(n_shadows)=' Vxc='
      shadow(n_shadows)=real(QP_Vxc(iqp))*HARTREE

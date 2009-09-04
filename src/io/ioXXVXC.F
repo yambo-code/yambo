@@ -24,8 +24,8 @@ integer function ioXXVXC(ID)
  use pars,           ONLY:SP,schlen
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts
  use electrons,      ONLY:n_met_bands,n_sp_pol
- use QP_m,           ONLY:QP_Sx,QP_ng_Sx,QP_nb,QP_nk,QP_Vxc,QP_n_states,&
-&                         QP_Sx_low_band,QP_table,QP_state
+ use QP_m,           ONLY:QP_Vnl_xc,QP_ng_Sx,QP_nb,QP_nk,QP_Vxc,QP_n_states,&
+&                         Sx_low_band,QP_table,QP_state
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
 &                         write_is_on,io_mode,DUMP,ver_is_gt_or_eq
@@ -39,10 +39,13 @@ integer function ioXXVXC(ID)
  real(SP)          :: Sx(2),Vxc(2)
  character(schlen) :: QP_xc_FUNCTIONAL
  !
- ioXXVXC=io_connect(desc="xxvxc",type=2,ID=ID)
+ ioXXVXC=io_connect(desc="HF_and_locXC",type=2,ID=ID)
+ !if (ioXXVXC/=0) then
+ !  ioXXVXC=io_connect(desc="xxvxc",type=2,ID=ID)
+ !endif
  if (ioXXVXC/=0) goto 1
  !
- bands=(/QP_Sx_low_band,n_met_bands/)
+ bands=(/Sx_low_band,n_met_bands/)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
@@ -96,7 +99,7 @@ integer function ioXXVXC(ID)
    do i1=1,QP_n_states_disk
      if (write_is_on(ID)) then
        QP_table_disk=QP_table(i1,:)
-       Sx=(/real(QP_Sx(i1)),aimag(QP_Sx(i1))/)
+       Sx=(/real(QP_Vnl_xc(i1)),aimag(QP_Vnl_xc(i1))/)
        Vxc=(/real(QP_Vxc(i1)),aimag(QP_Vxc(i1))/)
      endif
      call io_bulk(ID,I1=QP_table_disk)
@@ -108,7 +111,7 @@ integer function ioXXVXC(ID)
        else
          do i2=1,QP_n_states
            if (all((/QP_table_disk==QP_table(i2,:)/))) then
-             QP_Sx(i2)=cmplx(Sx(1),Sx(2),SP)
+             QP_Vnl_xc(i2)=cmplx(Sx(1),Sx(2),SP)
              QP_Vxc(i2)=cmplx(Vxc(1),Vxc(2),SP)
              i_found=i_found+1
            endif

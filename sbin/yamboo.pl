@@ -27,7 +27,7 @@ $exclude_files = "yamboo.pl ";
 @core_projects = ('yambo','ypp','p2y','a2y','f2y','e2y');
 @user_projects = ('RAS','REELS','MANYK','ELPH','SC','BS_CPL','YPP_ELPH',\
                   'YPP_RAS','PH','TB','GAMMA','SPIN','MAGNETIC',\
-                  'PARTIAL_PW_DIAGO','GW_REAL_AXIS','RT','TEST_1','POLARON');
+                  'PW_DIAGO','GW_REAL_AXIS','RT','TEST_1','POLARON');
 $user_projects_string = join(" ",@user_projects); # Append a space
 $files_to_skip = $manual_preprocess_files.$exclude_files;
 #

@@ -30,7 +30,7 @@ subroutine XCo_driver(E,k,Xk,q)
  use R_lattice,     ONLY:bz_samp
  use par_proc_m,    ONLY:pp_redux_wait
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
- use QP_m,          ONLY:QP_table,QP_Vxc,QP_Vnl_xc,QP_n_states
+ use QP_m,          ONLY:QP_table,QP_Vxc,QP_Vnl_xc,QP_n_states,Vxc_kind,Vnlxc_kind 
  use memory_m,      ONLY:mem_est
  use wave_func,     ONLY:WF_free
  !
@@ -43,12 +43,12 @@ subroutine XCo_driver(E,k,Xk,q)
  ! Reporting
  !
  integer           ::i_qp,ib,ik,ibp
- character(schlen) ::sec_mode_and_message(2),ch,ch_spin,nloc_fmt,loc_fmt,loc_kind,nloc_kind
+ character(schlen) ::sec_mode_and_message(2),ch,ch_spin,nloc_fmt,loc_fmt
  !
  ! IO
  !
  integer           :: ID,io_err
- integer, external :: ioXXVXC
+ integer, external :: io_HF_and_locXC
  !
  ! Section
  !
@@ -85,7 +85,7 @@ subroutine XCo_driver(E,k,Xk,q)
  io_err=-1
  if (.not.l_rho_IO) then
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
-   io_err=ioXXVXC(ID)
+   io_err=io_HF_and_locXC(ID)
  endif
  !
  if (io_err==0) then
@@ -98,7 +98,7 @@ subroutine XCo_driver(E,k,Xk,q)
    !
    ! The point here is that dependening on the kind of XCo I do/don't need HF
    !
-   ! XCo=any local => Eqp=Eo+QP_Sc+QP_Sx-QP_Vxc => QP_Vnl_xc=QP_Sx
+   ! XCo=any local => Eqp=Eo+QP_Sc+HF-QP_Vxc => QP_Vnl_xc=HF
    ! XCo=CHOSEX    => Eqp=Eo+QP_Sc-CHOSEX       => QP_Vnl_xc=-QP_CHOSEX
    ! XCo=HF        => Eqp=Eo+QP_Sc              => QP_Vnl_xc=0.
    !
@@ -115,17 +115,17 @@ subroutine XCo_driver(E,k,Xk,q)
    !
  endif
  !
- call XCo_report_and_IO()
+ if(.not.l_rho_IO) call XCo_report_and_IO()
  !
  contains
    !
    subroutine XCo_report_and_IO()
      !
-     loc_kind= 'Vxc'
-     nloc_kind='HF'
+     Vxc_kind= 'LDA'
+     Vnlxc_kind='HF'
      !
      ik=QP_table(1,3)
-     call msg('nr','XC '//trim(nloc_kind)//' and '//trim(loc_kind)//' [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
+     call msg('nr','XC '//trim(Vnlxc_kind)//' and '//trim(Vxc_kind)//' [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
      !
      do i_qp=1,QP_n_states
        !
@@ -133,7 +133,7 @@ subroutine XCo_driver(E,k,Xk,q)
        ibp=QP_table(i_qp,2)
        if (QP_table(i_qp,3)/=ik) then
          ik=QP_table(i_qp,3)
-         call msg('nr','XC '//trim(nloc_kind)//' and '//trim(loc_kind)//' [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
+         call msg('nr','XC '//trim(Vnlxc_kind)//' and '//trim(Vxc_kind)//' [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
        endif
        !
        ch_spin=' '
@@ -141,9 +141,9 @@ subroutine XCo_driver(E,k,Xk,q)
        if (n_sp_pol==2.and.spin(QP_table(i_qp,:))==1) ch_spin='(up)'
        if (n_sp_pol==2.and.spin(QP_table(i_qp,:))==2) ch_spin='(dn)'
        ! 
-       nloc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|'//trim(nloc_kind)//'|'//trim(intc(ibp))&
+       nloc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|'//trim(Vnlxc_kind)//'|'//trim(intc(ibp))&
 &         //trim(ch_spin)//'> ='
-       loc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|'//trim(loc_kind)//'|'//trim(intc(ibp))&
+       loc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|'//trim(Vxc_kind)//'|'//trim(intc(ibp))&
 &         //trim(ch_spin)//'> ='
        !
        ch=trim(nloc_fmt)//' '//&
@@ -162,7 +162,7 @@ subroutine XCo_driver(E,k,Xk,q)
      !
      if (io_err/=0) then
        call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
-       io_err=ioXXVXC(ID)
+       io_err=io_HF_and_locXC(ID)
      endif
      !
      ! MPI barrier

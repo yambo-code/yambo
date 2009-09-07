@@ -28,13 +28,14 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                      alpha_dim,use_X_RIM,long_path,X_RIM_nkpts,Dipole_bands_ordered,&
 &                      eval_alpha,Vnl_commutator_warning,Eval_P_and_P2_only
- use QP_m,       ONLY:QP_rep_string,QP_dSc_steps,QP_n_W_freqs,&
+ use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,&
 &                     Sx_low_band,QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_W_er,QP_W_dr,QP_cg_percent,&
 &                     QP_ctl_db,QP_ctl_interp_neigh,SC_E_threshold, &
 &                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
 &                     QP_W_partially_done,GWo_SC_done,GWo_iterations,&
-&                     CHOSEX_use_empties,QP_ctl_E,QP_ctl_W,QP_ctl_Z,On_Mass_Shell_approx
+&                     CHOSEX_use_empties,QP_ctl_E,QP_ctl_W,QP_ctl_Z,On_Mass_Shell_approx,&
+&                     Vnlxc_kind,Vxc_kind,l_extended_output 
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,n_atoms_species_max,n_atomic_species,&
 &                     input_Tel_fixed,non_periodic_directions,lattice
@@ -213,7 +214,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_rim=.false.
  l_col_cut=.false.
  l_optics=.false.
- l_xxvxc=.false.
+ l_HF_and_locXC=.false.
  l_em1d=.false.
  l_em1s=.false.
  l_ppa=.false.
@@ -297,7 +298,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  !QPm
  !
- QP_rep_string='kpbne0ees0'
  QP_dSc_steps=2
  QP_Sc_steps=100
  QP_n_W_freqs=100
@@ -318,6 +318,9 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  On_Mass_Shell_approx=.false.
  SC_E_threshold=0.01/HARTREE
  SC_band_mixing=100.
+ Vnlxc_kind='HF'
+ Vxc_kind='LDA'
+ l_extended_output=.FALSE.
  !
  ! QP_ctl control
  !

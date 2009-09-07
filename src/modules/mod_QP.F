@@ -50,7 +50,6 @@ module QP_m
  logical           :: Force_Newton_QP
  logical           :: use_GreenF_to_eval_QP
  logical           :: GF_is_causal
- character(schlen) :: QP_rep_string
  character(schlen) :: QP_solver
  real(SP)          :: QP_G_damp
  real(SP)          :: QP_dSc_delta
@@ -71,9 +70,12 @@ module QP_m
  !
  ! Logicals used for reporting
  !
- logical           :: report_Sx
+ logical           :: report_Vnlxc
  logical           :: report_Sc
  logical           :: report_dSc
+ logical           :: l_extended_output
+ character(10)     :: Vnlxc_kind
+ character(10)     :: Vxc_kind
  !
  type QP_t
    !

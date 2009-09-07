@@ -52,7 +52,7 @@
   {"optics", "o","Optics [opt=(c)hi/(b)se/(t)dhf]",0,0,1,0},    
   {"tddft",  "t","The TDDFTs [opt=(a)LDA/(b)SE/(l)RC]",0,0,1,0},     
   {"rim_cut","c","Coulomb interaction",0,0,0,0},  
-  {"xxvxc",  "x","Hartree-Fock Self-energy and Vxc",0,0,0,0},      
+  {"HF_and_locXC",  "x","Hartree-Fock Self-energy and local XC",0,0,0,0},      
   {"em1d",   "d","Dynamical Inverse Dielectric Matrix",0,0,0,0},     
   {"em1s",   "b","Static Inverse Dielectric Matrix",0,0,0,0},        
   {"gwapprx","p","GW approximations [opt=(p)PA/c(HOSEX)]",0,0,1,0},              

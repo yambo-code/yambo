@@ -79,7 +79,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !IO
  !
  integer           :: ID,io_err
- integer, external :: ioXXVXC
+ integer, external :: io_HF_and_locXC
  !
  ! Resets & basis setup
  !

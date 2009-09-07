@@ -30,7 +30,7 @@ module stderr
  !
  integer :: f_format_length
  integer :: g_format_length
- integer :: of_tabs(10)
+ integer :: of_tabs(15)
  !
  interface  
    !
@@ -61,7 +61,7 @@ module stderr
      endif
      !
      of_tabs(1)=2
-     do it=2,10
+     do it=2,15
        of_tabs(it)=of_tabs(it-1)+2+max(f_format_length,g_format_length)
      enddo
    end subroutine

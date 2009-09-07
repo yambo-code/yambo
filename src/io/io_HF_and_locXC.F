@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioXXVXC(ID)
+integer function io_HF_and_locXC(ID)
  !
  use pars,           ONLY:SP,schlen
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts
@@ -39,18 +39,18 @@ integer function ioXXVXC(ID)
  real(SP)          :: Sx(2),Vxc(2)
  character(schlen) :: QP_xc_FUNCTIONAL
  !
- ioXXVXC=io_connect(desc="HF_and_locXC",type=2,ID=ID)
- !if (ioXXVXC/=0) then
- !  ioXXVXC=io_connect(desc="xxvxc",type=2,ID=ID)
- !endif
- if (ioXXVXC/=0) goto 1
+ io_HF_and_locXC=io_connect(desc="HF_and_locXC",type=2,ID=ID,no_full_RESET=.TRUE.)
+ if (io_HF_and_locXC/=0) then
+   io_HF_and_locXC=io_connect(desc="xxvxc",type=2,ID=ID)
+ endif
+ if (io_HF_and_locXC/=0) goto 1
  !
  bands=(/Sx_low_band,n_met_bands/)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   ioXXVXC=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,XC_KIND="G_WF force")
-   if (ioXXVXC/=0) goto 1
+   io_HF_and_locXC=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,XC_KIND="G_WF force")
+   if (io_HF_and_locXC/=0) goto 1
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=8,MENU=0)
    !
@@ -81,8 +81,8 @@ integer function ioXXVXC(ID)
      call io_elemental(ID,VAR="",VAR_SZ=0)
    endif
    !
-   ioXXVXC=io_status(ID)
-   if (ioXXVXC/=0) goto 1
+   io_HF_and_locXC=io_status(ID)
+   if (io_HF_and_locXC/=0) goto 1
    !
  endif
  !
@@ -122,8 +122,8 @@ integer function ioXXVXC(ID)
    enddo
    !
    if (read_is_on(ID).and.i_found/=QP_n_states) io_status(ID)=-1
-   ioXXVXC=io_status(ID)
-   if (ioXXVXC/=0) goto 1
+   io_HF_and_locXC=io_status(ID)
+   if (io_HF_and_locXC/=0) goto 1
    !
  endif
  !

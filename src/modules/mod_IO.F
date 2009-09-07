@@ -172,14 +172,14 @@ module IO_m
 &                      io_action(ID)==WR_CL_IF_END/))
    end function
    !
-   integer function io_connect(desc,subfolder,type,ENABLE_LARGE_FILE,ID)
+   integer function io_connect(desc,subfolder,type,ENABLE_LARGE_FILE,no_full_RESET,ID)
      !
      use stderr,        ONLY:string_pack
      use com,           ONLY:get_name,jobstr,file_exists,more_io_path,all_locations
      character(*)           :: desc
      integer                :: type,ID
      character(*), optional :: subfolder
-     logical,      optional :: ENABLE_LARGE_FILE
+     logical,      optional :: ENABLE_LARGE_FILE,no_full_RESET
      !
      ! Work Space
      !
@@ -338,8 +338,12 @@ module IO_m
            io_file(ID)=alternative_file(8)
          else
            io_connect=-1
-           call io_reset(ID)
-           io_type(ID)=0
+           if (present(no_full_RESET)) then
+             io_file(ID)=''
+           else
+             call io_reset(ID)
+             io_type(ID)=0
+           endif
            return
          endif
        endif
@@ -349,8 +353,12 @@ module IO_m
 &                         nf90_nowrite,io_unit(ID)))
 #else
          io_connect=-1
-         call io_reset(ID)
-         io_type(ID)=0
+         if (present(no_full_RESET)) then
+           io_file(ID)=''
+         else
+           call io_reset(ID)
+           io_type(ID)=0
+         endif
          return
 #endif
        else

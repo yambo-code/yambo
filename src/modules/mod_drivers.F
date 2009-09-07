@@ -48,7 +48,7 @@ module drivers
  !
  ! Real Axis non SC Self-energies
  !
- logical :: l_xxvxc   ! HF
+ logical :: l_HF_and_locXC   ! HF + local XC
  logical :: l_life    ! GoWo lifetims
  logical :: l_gw0     ! GWo main logical
  logical :: l_ppa     ! PPA

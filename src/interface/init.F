@@ -87,7 +87,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,&
 &                     ioBS_Fxc_err,ioQINDX_err,io_SC_err,io_RHO_err
  integer, external :: ioX,ioOSTNTS,ioGROT,ioQINDX,ioRIM,&
-&                     ioXXVXC,ioQP,ioBS,ioDB1,ioKB_PP,&
+&                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_PP,&
 &                     ioCOL_CUT
  !
  ! GPL_EXCLUDE_START
@@ -274,7 +274,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! xxvxc
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
- io_err=ioXXVXC(io_ID) 
+ io_err=io_HF_and_locXC(io_ID) 
  !
  ! QP
  !
@@ -400,7 +400,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !FFT
  !
  if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse),l_em1d,&
-&          l_em1s,l_acfdt,l_xxvxc,l_col_cut/))) call initactivate(1,'FFTGvecs')
+&          l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut/))) call initactivate(1,'FFTGvecs')
  !
  !Setup
  !
@@ -421,9 +421,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !XX
  !
- if (l_xxvxc) call initactivate(1,'EXXRLvcs SxLowBnd')  
+ if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs SxLowBnd')  
 #if defined _RT
- if (l_xxvxc.and.l_rho_IO) then
+ if (l_HF_and_locXC.and.l_rho_IO) then
    call initactivate(1,'SCBands')
    call initactivate(-1,'SxLowBnd')
  endif
@@ -505,7 +505,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenF2QP ForceNewton') 
        else
          call initactivate(1,'GWoIter')
-         if (.not.l_chosex) call initactivate(1,'NewtDchk QPreport OnMassShell')
+         if (.not.l_chosex) call initactivate(1,'NewtDchk ExtendOut OnMassShell')
        endif
        !
      endif
@@ -521,12 +521,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined  _ELPH 
    if (l_ph_corr) then
      call initactivate(1,'DysSolver')
-     call initactivate(1,'GphBRnge GDamping dScStep QPreport ElPhRndNq')
+     call initactivate(1,'GphBRnge GDamping dScStep ExtendOut ElPhRndNq')
      call initactivate(1,'WRgFsq NewtDchk OnMassShell')
    endif
    if (trim(QP_solver)=="g".and.l_ph_corr) then
      call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenF2QP ForceNewton') 
-     call initactivate(-1,'WRgFsq NewtDchk GDamping QPreport OnMassShell')
+     call initactivate(-1,'WRgFsq NewtDchk GDamping ExtendOut OnMassShell')
    endif
 #endif
    !
@@ -660,7 +660,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !If qp limits are requested they are added at the end of the input file
  !
- if ( any((/l_xxvxc,l_gw0,l_life/)).and..not.l_sc_run.and..not.l_rho_IO ) then
+ if ( any((/l_HF_and_locXC,l_gw0,l_life/)).and..not.l_sc_run.and..not.l_rho_IO ) then
    !
    ! The QP_state is read from ioxxvxc in DUMP mode.
    ! If it is not allocated I define it on the basis 
@@ -766,7 +766,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_bse=runlevel_is_on('bse')
        l_rim=runlevel_is_on('rim_cut')
        l_col_cut=runlevel_is_on('rim_cut')
-       l_xxvxc=runlevel_is_on('xxvxc')
+       l_HF_and_locXC=runlevel_is_on('HF_and_locXC')
        l_em1d=runlevel_is_on('em1d')
        l_em1s=runlevel_is_on('em1s')
        l_ppa=runlevel_is_on('ppa')
@@ -862,7 +862,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (.not.l_el_corr.and..not.l_ph_corr) l_el_corr=.true.
      elph_nq_used=elph_nq
 #endif
-     if (l_gw0.and.l_el_corr) call initactivate(1,'xxvxc')
+     if (l_gw0.and.l_el_corr) call initactivate(1,'HF_and_locXC')
      if (l_ppa)    call initactivate(1,'em1d')
      if (l_chosex) call initactivate(1,'em1s')
      if (l_bss)    call initactivate(1,'bse')
@@ -892,8 +892,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      endif
 #endif
 #if defined _RT
-     if (l_xxvxc) call initactivate(1,'rhoIO negf') 
-     if (l_real_time.and.l_xxvxc) call initactivate(1,'rhoIO') 
+     if (l_HF_and_locXC) call initactivate(1,'rhoIO negf') 
+     if (l_real_time.and.l_HF_and_locXC) call initactivate(1,'rhoIO') 
 #endif
      !
    end subroutine varsetup1 
@@ -1119,16 +1119,16 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        if ( trim(rstr_piece(i1)) == 'scpot' )  then
          if ( trim(rstr_piece(i1+1)) == 'exx' ) then
            SC_potential='EXX'
-           call initactivate(1,'xxvxc')
+           call initactivate(1,'HF_and_locXC')
          else if ( trim(rstr_piece(i1+1)) == 'exxc' ) then
            SC_potential='EXXC'
-           call initactivate(1,'xxvxc')
+           call initactivate(1,'HF_and_locXC')
          else if ( trim(rstr_piece(i1+1)) == 'c' ) then
            SC_potential='CHOSEX'
-           call initactivate(1,'chosex xxvxc')
+           call initactivate(1,'chosex HF_and_locXC')
          else if ( trim(rstr_piece(i1+1)) == 'hf') then
            SC_potential='HARTREE-FOCK'
-           call initactivate(1,'xxvxc')
+           call initactivate(1,'HF_and_locXC')
          else if ( trim(rstr_piece(i1+1)) == 'h') then
            SC_potential='HARTREE'
          else if ( trim(rstr_piece(i1+1)) == 'n') then

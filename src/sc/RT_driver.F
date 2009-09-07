@@ -133,11 +133,11 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  !
  if(Thermal_steps/=0.and.it_now<=Thermal_steps) then
    ! 
-   call live_timing('[RT] Thermalization :',Thermal_steps-it_now+1)
+   call live_timing('[RT] Thermalization :',Thermal_steps-it_now+1,SERIAL=.true.)
    !
  elseif(it_now>Thermal_steps+1) then
    !
-   call live_timing('[RT] Iteration :',Tot_steps-it_now+1)
+   call live_timing('[RT] Iteration :',Tot_steps-it_now+1,SERIAL=.true.)
    !
  endif
  !
@@ -152,7 +152,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    !
    RT_time=(it-Thermal_steps)*RT_step
    !
-   if(it==Thermal_steps+1) call live_timing('[RT] Iteration :',Tot_steps)
+   if(it==Thermal_steps+1) call live_timing('[RT] Iteration :',Tot_steps,SERIAL=.true.)
    !
    call live_timing(steps=1)
    !

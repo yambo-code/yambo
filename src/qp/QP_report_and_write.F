@@ -25,11 +25,10 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  use units,         ONLY:HARTREE,HA2FSm1
  use pars,          ONLY:SP,schlen,pi,lchlen
  use com,           ONLY:msg
- use memory_m,      ONLY:mem_est
  use stderr,        ONLY:intc
- use QP_m,          ONLY:QP_t,QP_dSc,QP_Sc,QP_Vnl_xc,QP_Vxc,QP_rep_string,QP_table,QP_state,&
+ use QP_m,          ONLY:QP_t,QP_dSc,QP_Sc,QP_Vnl_xc,QP_Vxc,QP_table,&
 &                        QP_n_states,QP_dSc_steps,use_GreenF_to_eval_QP,On_Mass_Shell_approx,&
-&                        QP_solver,report_Sx,report_Sc,report_dSc 
+&                        QP_solver,report_Vnlxc,report_Sc,report_dSc,Vxc_kind,Vnlxc_kind
  use electrons,     ONLY:n_sp_pol,spin,levels
  use stderr,        ONLY:gen_fmt
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
@@ -50,7 +49,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  character(lchlen)::line_string,dummy_string
  !
  ! Work Space
- integer          ::iqp,i_sh,i_ph_position
+ integer          ::iqp,i_sh
  real(SP)         ::shadow(10)
  !
  !I/O
@@ -67,7 +66,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !============================================================
  !
  report_Sc=.not.QPdb_read_err==0.and..not.On_Mass_Shell_approx
- report_Sx=l_el_corr
+ report_Vnlxc=l_el_corr
  report_dSc=.not.On_Mass_Shell_approx.and..not.trim(QP_solver)=='g'
  do_IO=.TRUE.
  if (l_life.or.QPdb_read_err==0) then
@@ -86,7 +85,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    !
    ! Plot the Green Functions
    !
-   call QP_of(k,qp,en)
+   call QP_of(qp,en,QPdb_read_err)
    !
    if (do_IO) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
@@ -102,9 +101,11 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    call msg(' r','- E  : QP energy  - Z   : Renormalization factor')
    if (report_Sc) call msg(' r','- So : Sc(Eo)     - S   : Sc(E)')
    if (l_ph_corr) call msg('r', '- Gm : Width [meV]- Gf  : Width [fs]')
-   if (report_Sx.and.report_dSc)      call msg('rn','- xx/Vxc : Sx/Vxc - dSp : Sc derivative precision')
-   if (.not.report_Sx.and.report_dSc) call msg('rn','- dSp : Sc derivative precision')
-   if (report_Sx.and..not.report_dSc) call msg('rn','- xx/Vxc : Sx/Vxc')
+   if (report_dSc) call msg('rn','- dSp: Sc derivative precision')
+   if (report_Vnlxc) then
+     call msg('r','- lXC: Starting Local XC ('//trim(Vxc_kind)//')')
+     call msg('r','-nlXC: Starting non-Local XC ('//trim(Vnlxc_kind)//')')
+   endif
  endif 
  !
  ! Store temporary shadows of the Self-energy components
@@ -133,12 +134,12 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    shadow_string(4)=' Z='
    shadow_fmt(4)   ='(a,f4.2)'
    !
-   if (report_Sx) then
+   if (report_Vnlxc) then
      n_shadows=n_shadows+1
-     shadow_string(n_shadows)=' XX='
+     shadow_string(n_shadows)=' nlXC='
      shadow(n_shadows)=real(QP_Vnl_xc(iqp))*HARTREE
      n_shadows=n_shadows+1
-     shadow_string(n_shadows)=' Vxc='
+     shadow_string(n_shadows)=' lXC='
      shadow(n_shadows)=real(QP_Vxc(iqp))*HARTREE
    endif
    !
@@ -244,15 +245,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  ! Output File
  !==============
  !
- if (.not.report_Sc)         QP_rep_string="kpbne0eqeezf" 
- if (trim(QP_solver)=='g'.and.use_GreenF_to_eval_QP) &
-&                            QP_rep_string="kpbne0eqeezf" 
- if (l_ph_corr.and.index(QP_rep_string,'lm')==0)  &
-                             QP_rep_string=trim(QP_rep_string)//'lm'
- if (l_life)                 QP_rep_string='kpbne0lmlf'
- if (n_sp_pol==2)            QP_rep_string=trim(QP_rep_string)//'sp'
- !
- call QP_of(k,qp,en)
+ call QP_of(qp,en,QPdb_read_err)
  !
 end subroutine
 

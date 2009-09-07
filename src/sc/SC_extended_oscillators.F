@@ -21,7 +21,7 @@
 !
 subroutine SC_extended_oscillators(G_input)
  !
- ! QP_Sx(qp_state) = - (0.,1.) * \sum_{n,n',q} rho_rho_(n,n',q,qp_state) x G_lesser(n,n',k-q)
+ ! HF(qp_state) = - (0.,1.) * \sum_{n,n',q} rho_rho_(n,n',q,qp_state) x G_lesser(n,n',k-q)
  ! 
  use pars,           ONLY:SP
  use QP_m,           ONLY:QP_nk,QP_n_states,QP_Vnl_xc

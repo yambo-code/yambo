@@ -37,7 +37,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
 &                        QP_nk,QP_state,QP_dSc_test,QP_reset,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_W_partially_done,&
 &                        GWo_iterations,CHOSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
-&                        Force_Newton_QP,GF_is_causal,QP_G_amplitude_integral
+&                        Force_Newton_QP,GF_is_causal,QP_G_amplitude_integral,l_extended_output
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE
  use global_XC,     ONLY:QP_DB_kind,SE_CHOSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON
  implicit none
@@ -60,6 +60,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  call parser('UseEbands',  CHOSEX_use_empties)
  call parser('GreenF2QP',  use_GreenF_to_eval_QP)
  call parser('ForceNewton',Force_Newton_QP)
+ call parser('ExtendOut',  l_extended_output)
  !
  if (On_Mass_Shell_approx) QP_dSc_test=.FALSE.
  !

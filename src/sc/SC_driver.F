@@ -28,7 +28,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin
  use R_lattice,      ONLY:bz_samp,qindx_S,G_m_G
  use D_lattice,      ONLY:Tel
- use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_table,&
+ use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,&
 &                         QP_ng_Sx,QP_Vnl_xc,QP_t,QP_reset,SC_E_threshold,SC_bands_mixed
  use SC,             ONLY:SC_bands,SC_iterations,rho_n,&
 &                         SC_rho_threshold,SC_potential,it_now,E_convergence,&

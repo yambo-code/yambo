@@ -28,7 +28,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        Time_unit,I_unit,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp 
  use X_m,           ONLY:X_t,long_path
- use QP_m,          ONLY:QP_rep_string,QP_cg_percent,QP_G_damp,QP_solver,&
+ use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,Sx_low_band,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,SC_band_mixing,&
 &                        SC_E_threshold,QP_dSc_delta
@@ -96,7 +96,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('r',defs,'optics',  '[R OPT] Optics')
  call it('r',defs,'chi',     '[R CHI] Dyson equation for Chi.')
  call it('r',defs,'bse',     '[R BSK] Bethe Salpeter Equation.')
- call it('r',defs,'xxvxc',   '[R XX] Hartree-Fock Self-energy and Vxc')
+ call it('r',defs,'HF_and_locXC',   '[R XX] Hartree-Fock Self-energy and Vxc')
  call it('r',defs,'em1s',    '[R Xs] Static Inverse Dielectric Matrix')
  call it('r',defs,'em1d',    '[R Xd] Dynamical Inverse Dielectric Matrix')
  call it('r',defs,'ppa',     '[R Xp] Plasmon Pole Approximation')
@@ -153,8 +153,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! Basics
  !
- call it(defs,'QPreport','[GW] QP info. Keys: kp/bn/xx/xc/s0/sq/e0/eq/ee/zf/ds/lm/lf',&
-&                        QP_rep_string)
  call it(defs,'StdoHash','[IO] Live-timing Hashes',nhash,verb_level=V_io)
  call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',&
 &                        ng_closed,unit=G_unit,verb_level=V_RL)
@@ -255,6 +253,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'OnMassShell','[F GW] On mass shell approximation',verb_level=V_qp)
  call it('f',defs,'ForceNewton','[F GW] Uses Newton expression for the QP energy',verb_level=V_qp)
  call it('f',defs,'GreenF2QP',  '[F GW] Use real axis Green`s function to define the QPs',verb_level=V_qp)
+ call it('f',defs,'ExtendOut',  '[F GW] Print all variables in the output file',verb_level=V_qp)
  !
  ! GPL_EXCLUDE_END
  !

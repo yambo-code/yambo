@@ -107,11 +107,11 @@ subroutine barriers()
  ! GPL_EXCLUDE_START SC_IGNORE
  !
  if (l_sc_run) then
-   call switch_off_runlevel('all',on_name='scpot xxvxc chosex em1s negf rhoIO magnetic '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='scpot HF_and_locXC chosex em1s negf rhoIO magnetic '//trim(always_runlevels))
    goto 1
  endif
  if (gw0_chosex) then
-   call switch_off_runlevel('all',on_name='gw0 em1s chosex el_el el_ph xxvxc '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='gw0 em1s chosex el_el el_ph HF_and_locXC '//trim(always_runlevels))
    goto 1
  endif
  !
@@ -120,7 +120,7 @@ subroutine barriers()
  ! GPL_EXCLUDE_START
  !
  if (l_acfdt) then
-   call switch_off_runlevel('all',on_name='acfdt xxvxc '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='acfdt HF_and_locXC '//trim(always_runlevels))
    goto 1
  endif
  if (l_life) then
@@ -134,7 +134,7 @@ subroutine barriers()
  ! GPL_EXCLUDE_START GW_REAL_AXIS_IGNORE
  !
  if (gw0_raxis) then
-   call switch_off_runlevel('all',on_name='gw0 em1d el_el el_ph xxvxc '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='gw0 em1d el_el el_ph HF_and_locXC '//trim(always_runlevels))
    goto 1
  endif
  !
@@ -145,7 +145,7 @@ subroutine barriers()
  ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
  !
  if (gw0_ppa) then
-   on_runlevels='gw0 ppa em1d el_el el_ph xxvxc'
+   on_runlevels='gw0 ppa em1d el_el el_ph HF_and_locXC'
    ! GPL_INCLUDE_START SC_IGNORE
    !on_runlevels='gw0 ppa em1d xxvxc'
    ! GPL_INCLUDE_END SC_IGNORE
@@ -199,7 +199,7 @@ subroutine barriers()
  !
  if (n_spin>1) then
    call switch_off_runlevel('all',on_name=&
-&       'chi optics xxvxc bse em1s em1d ppa gw0 bss alda_fxc bs_fxc chosex magnetic scpot '//&
+&       'chi optics HF_and_locXC bse em1s em1d ppa gw0 bss alda_fxc bs_fxc chosex magnetic scpot '//&
 &       trim(always_runlevels))
    if (n_spinor>1) call switch_off_runlevel('scpot',on_name=' ')
    if (gw0_raxis) call switch_off_runlevel('all',on_name=' ')

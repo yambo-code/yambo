@@ -131,7 +131,7 @@ module real_time
    subroutine RT_alloc(en)
      !
      use pars,           ONLY:SP,schlen
-     use drivers,        ONLY:l_sc_hf,l_xxvxc
+     use drivers,        ONLY:l_sc_hf,l_HF_and_locXC
      use memory_m,       ONLY:mem_est
      use SC,             ONLY:SC_bands,V_hartree_sc,local_V,SC_alloc,E_bare,rho_n
      use FFT_m,          ONLY:fft_size
@@ -146,7 +146,7 @@ module real_time
      !
      call SC_alloc(en)
      !
-     if (l_xxvxc) then
+     if (l_HF_and_locXC) then
        !
        call oscillators_IO_alloc()
        !
@@ -212,7 +212,7 @@ module real_time
    
    subroutine RT_free
      !
-     use drivers,        ONLY:l_sc_hf,l_xxvxc
+     use drivers,        ONLY:l_sc_hf,l_HF_and_locXC
      use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare,rho_n
      use memory_m,       ONLY:mem_est
      use QP_m,           ONLY:QP_Vnl_xc
@@ -222,11 +222,12 @@ module real_time
      !
      call SC_free()
      !
-     if (l_xxvxc) call oscillators_IO_free()
-     !
-     if (l_xxvxc) then
+     if (l_HF_and_locXC) then
+       !
+       call oscillators_IO_free()
        deallocate(QP_Vnl_xc)
        call mem_est("QP_Vnl_xc")
+       !
      endif
      !
      deallocate(E_xc)

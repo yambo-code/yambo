@@ -186,7 +186,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    X_rt%time_range(:)  =(/-FS2AUT,-FS2AUT/)
    X_rt%energy_steps   =100
    X_rt%energy_range(:)=(/0.,10./HARTREE/)
+   X_rt%damp           ="LORENTZIAN"
    X_rt%damp_factor    =0.1/HARTREE
+   X_rt%noise_ratio    =200
    !
 #endif
    ! GPL_EXCLUDE_END
@@ -357,7 +359,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (l_rtoptics) then 
     call initactivate(1,"EnRngeRt ETStpsRt TmRngeRt DampMode DampFactor FourierDamp")
-    call initactivate(1,"RefExtField PrtCurrent PrtEinduced UseFFT")
+    call initactivate(1,"RefExtField NoiseRatio PrtCurrent PrtEinduced UseFFT")
  endif
  ! 
 #endif

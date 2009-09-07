@@ -111,7 +111,7 @@ subroutine V_exx(X,E,k,q,Vexx)
  !
  do ik = 1, nkibz
    !
-   ! Accumulate QP_Sx in a local SigmaX array
+   ! Accumulate QP_Vnl_xc in a local SigmaX array
    !
    SigmaX = (0.,0.)
    do i1 = 1,QP_n_states

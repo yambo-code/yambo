@@ -11,7 +11,7 @@ SC_objects =
 objs = ver_is_gt_or_eq.o IO_mute.o \
        ioRIM.o        ioGROT.o     \
        ioOSTNTS.o     ioQINDX.o    ioQP.o      ioX.o \
-       ioDB1.o        ioWF.o       ioKB_PP.o   ioXXVXC.o \
+       ioDB1.o        ioWF.o       ioKB_PP.o   io_HF_and_locXC.o \
        ioBS.o         \
        ioBSS_diago.o  ioBSS_Haydock.o \
        io_elemental.o io_bulk.o      io_header.o \

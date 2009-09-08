@@ -23,13 +23,15 @@ subroutine MAG_eval_Lz(call_type)
  !
  ! Important:
  ! We are in presence of a potential vector field, so
- ! L = r x P = r x (p-A)    
+ ! L = r x P = r x (p-A_gauge)    
  ! is the canonical angula momentum, which is gauge invariant
- ! Remember that for the LDA wf A=0, while for the SC wf A/=0
+ ! Remember that for the LDA wf A=0, while for the SC wf A_gauge
+ ! could be different from zero
  !
  use pars,           ONLY:SP
  use xc_functionals, ONLY:el_mag
- use magnetic,       ONLY:wf_x,wf_y,A_magn_x,A_magn_y,MAG_B_z,gauge_factors
+ use magnetic,       ONLY:wf_x,wf_y,A_magn_x,A_magn_y,MAG_B_z,gauge_factors,&
+&                         x,y
  use FFT_m,          ONLY:fft_dim,fft_size
  use D_lattice,      ONLY:a
  use wave_func,      ONLY:wf,wf_state
@@ -44,7 +46,7 @@ subroutine MAG_eval_Lz(call_type)
  !
  ! Internal variables
  complex(SP), allocatable :: Lz_tmp(:),Lz(:,:,:,:),wf_x_new(:,:),wf_y_new(:,:)
- real(SP)                 :: x(fft_size),y(fft_size)
+
  ! Dummyes
  integer                  :: ifft,jfft,ib,ibp,ik,i_spin
  ! DEBUG <
@@ -59,8 +61,6 @@ subroutine MAG_eval_Lz(call_type)
 #endif
  !
  if(call_type==1) then
-   x(1:fft_size)=2*A_magn_y(1:fft_size)/MAG_B_z
-   y(1:fft_size)=-2*A_magn_x(1:fft_size)/MAG_B_z
    !
    ! First evaluate Lz for the LDA wf
    ! 
@@ -163,9 +163,6 @@ subroutine MAG_eval_Lz(call_type)
  open(unit=332211,file='Lz_SC.txt',status='unknown')
  open(unit=332212,file='Lz_SC_diag.txt',status='unknown')
  !
- x(1:fft_size)=2*A_magn_y(1:fft_size)/MAG_B_z 
- y(1:fft_size)=-2*A_magn_x(1:fft_size)/MAG_B_z
- !
  do ik=1,QP_nk
    do i_spin=1,n_sp_pol
      do ib=1,SC_bands   
@@ -177,7 +174,11 @@ subroutine MAG_eval_Lz(call_type)
          !  r x p component
          Lz_tmp(:)=x(:)*wf_y_new(:,jfft)-y(:)*wf_x_new(:,jfft)
          ! -r x A component
-         Lz_tmp(:)=Lz_tmp(:)-(x(:)*A_magn_y(:)*gauge_factors(1)-y(:)*A_magn_x(:)*gauge_factors(2))*wf(:,jfft)
+!         Lz_tmp(:)=Lz_tmp(:)-(x(:)*A_magn_y(:)*gauge_factors(1)- &
+!&                             y(:)*A_magn_x(:)*gauge_factors(2))*wf(:,jfft)
+         ! -r x A_gauge component
+         Lz_tmp(:)=Lz_tmp(:)-(x(:)*A_magn_y(:)*(gauge_factors(1)-1)- &
+&                             y(:)*A_magn_x(:)*(gauge_factors(2)-1))*wf(:,jfft)
          !
 #if defined _DOUBLE
          Lz(ib,ibp,ik,i_spin) = zdotc(fft_size,wf(:,ifft),1,Lz_tmp(:),1)
@@ -199,6 +200,7 @@ subroutine MAG_eval_Lz(call_type)
  ! 
  deallocate(Lz,Lz_tmp,wf_x_new,wf_y_new)
  deallocate(A_magn_x,A_magn_y)
+ deallocate(x,y)
  !
  !
 end subroutine

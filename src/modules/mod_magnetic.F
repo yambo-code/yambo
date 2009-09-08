@@ -37,6 +37,8 @@ module magnetic
  complex(SP), allocatable :: wf_y(:,:)
  real(SP),    allocatable :: A_magn_x(:)
  real(SP),    allocatable :: A_magn_y(:)
+ real(SP),    allocatable :: x(:)
+ real(SP),    allocatable :: y(:)
  integer                  :: gauge_factors(2)
  !
 end module

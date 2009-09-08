@@ -33,6 +33,10 @@ subroutine XCo_driver(E,k,Xk,q)
  use QP_m,          ONLY:QP_table,QP_Vxc,QP_Vnl_xc,QP_n_states,Vxc_kind,Vnlxc_kind 
  use memory_m,      ONLY:mem_est
  use wave_func,     ONLY:WF_free
+#if defined _RT
+ use SC,            ONLY:SC_bands
+ use QP_m,          ONLY:QP_nb
+#endif
  !
  implicit none
  type(levels) ::E       

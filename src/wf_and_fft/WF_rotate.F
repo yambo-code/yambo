@@ -53,7 +53,11 @@ subroutine WF_rotate(ik,WFo,wf_size)
        !
        if (ifft==0.or.ifftp==0) cycle
        !
+#if defined _DOUBLE
+       call zaxpy(wf_size,SC_R(ibp,ib,ik,i_spin),WFo(:,ifftp),1,WS_wf(:,ib),1)
+#else
        call caxpy(wf_size,SC_R(ibp,ib,ik,i_spin),WFo(:,ifftp),1,WS_wf(:,ib),1)
+#endif
      end do
    end do
    !

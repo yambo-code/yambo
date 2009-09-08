@@ -66,7 +66,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
 #endif
  complex(DP)             ::DP_Sx
  complex(SP),allocatable ::local_rhotw(:)
- character(schlen)       ::ch,ch_spin,sx_fmt,vxc_fmt
+ character(schlen)       ::ch,ch_spin,sx_fmt,vxc_fmt,dump_ch
  !
  !QP list
  !
@@ -109,7 +109,9 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
      return
    endif
    !
-   call msg('s', '[RHO] Disk space required [Gb]:',real(QP_n_states*SC_bands**2*k%nibz*SP)/1e9)
+   write (dump_ch,'(a,f10.5)') &
+      & '[RHO] Disk space required [Gb]:',real(QP_n_states*SC_bands**2*k%nibz*SP)/1.0e9
+   call msg('s',dump_ch)
    !
    allocate(tmp_sx(SC_bands,SC_bands,k%nibz))
    call mem_est("tmp_sx",(/size(tmp_sx)/),(/2*SP/))

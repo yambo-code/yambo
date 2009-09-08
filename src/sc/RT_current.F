@@ -23,7 +23,7 @@ subroutine RT_current(j_current,xK,Xen,G_lesser)
  !
  ! Evalute current including also the diamagnetic contribution
  !
- use pars,           ONLY:SP,pi
+ use pars,           ONLY:SP,DP,pi
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp,RL_vol
  use D_lattice,      ONLY:dl_sop,sop_inv

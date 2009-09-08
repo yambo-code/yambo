@@ -21,7 +21,7 @@
 !
 subroutine RT_driver(en,Xen,X,k,xk,q)
  !
- use pars,           ONLY:SP,lchlen
+ use pars,           ONLY:SP,lchlen,schlen
  use drivers,        ONLY:l_sc_hf
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:FS2AUT
@@ -55,6 +55,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  ! Work Space
  !
  character(lchlen)        :: file_name(2)
+ character(schlen)        :: sec_mode_and_message(2)
  integer                  :: WF_G_max,WF_Go_indx,it,i1,ik
  real(SP)                 :: values(9), E_xc, RT_time  ! The real time on the diagonal RTime = it*RT_step    
  complex(SP)              :: Trace_Gf,E_kin,E_ion,E_h 
@@ -77,9 +78,15 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  WF_G_max=wf_ng
  if(l_sc_hf) then
    WF_Go_indx=maxval(qindx_S(:,:,2))
+   sec_mode_and_message(1)='*'
+   sec_mode_and_message(2)='Hartree-Fock extended oscillators'  
+   call section(trim(sec_mode_and_message(1)),trim(sec_mode_and_message(2)))
+   call QP_state_table_setup(Xen)
+   call XCo_Hartree_Fock(Xen, k, Xk, q)
  else
    WF_Go_indx=1  
  endif
+ !
  call wf_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),space='R',title=' ')  
  !
  ! Core initialization

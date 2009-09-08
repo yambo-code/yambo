@@ -22,7 +22,7 @@
 subroutine V_real_space_to_H(ik,V,H,wf)
  !
  use electrons,      ONLY:n_sp_pol,spin
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,DP
  use FFT_m,          ONLY:fft_size
  use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
  use wave_func,      ONLY:wf_state,wf_n_states

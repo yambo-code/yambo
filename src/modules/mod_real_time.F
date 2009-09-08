@@ -225,6 +225,7 @@ module real_time
      if (l_HF_and_locXC) then
        !
        call oscillators_IO_free()
+       !
        deallocate(QP_Vnl_xc)
        call mem_est("QP_Vnl_xc")
        !

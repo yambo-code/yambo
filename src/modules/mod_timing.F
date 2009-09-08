@@ -373,7 +373,7 @@ module timing
      call cclock(tcpu)      
 #endif 
 #if defined _linux 
-     real(SP) tmp(2) 
+     real(4) tmp(2) 
      real(DP) etime
      tcpu=etime(tmp)
 #endif

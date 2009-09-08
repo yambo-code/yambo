@@ -67,7 +67,8 @@ subroutine MAG_Hamiltonian(initial_check_only)
  use D_lattice,      ONLY:a,alat
  use R_lattice,      ONLY:g_vec,k_pt,nkibz
  use magnetic,       ONLY:MAG_radius,MAG_B_z,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
-&                         MAG_gauge,wf_x,wf_y,eval_Lz,A_magn_x,A_magn_y,gauge_factors
+&                         MAG_gauge,wf_x,wf_y,eval_Lz,A_magn_x,A_magn_y,gauge_factors,&
+&                         x,y
  use electrons,      ONLY:n_sp_pol
  use SC,             ONLY:SC_bands,SC_potential
  use wave_func,      ONLY:wf,wf_state,wf_load,WF_free,wf_ng
@@ -86,7 +87,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
  ! Dummies
  !
  integer   :: ir,ir1,ir2,ir3,i_spin,ifft,jfft,i1,ik,ib,ibp   
- real(SP)  :: radius, r_mod,cell_center(3),x,y
+ real(SP)  :: radius, r_mod,cell_center(3)
  !
  ! Allocs
  !
@@ -108,11 +109,9 @@ subroutine MAG_Hamiltonian(initial_check_only)
  if (initial_check_only) then
    MAG_landau=trim(MAG_hamiltonian_type)=='landau'.or.trim(MAG_hamiltonian_type)=='all'
    MAG_pauli =trim(MAG_hamiltonian_type)=='pauli'.or.trim(MAG_hamiltonian_type)=='all'
-   if(MAG_radius==0) then
-     eval_Lz=.true.
-   else
-     eval_Lz=.false.
-     ! Set the gauge
+   eval_Lz=.true.
+   if(MAG_radius/=0) then
+     ! Impose the symmetric gauge
      MAG_gauge='SYMM'
    endif
 !   if (MAG_landau.and.MAG_radius<epsilon(1.)) then
@@ -199,35 +198,35 @@ subroutine MAG_Hamiltonian(initial_check_only)
          ! correclty compute x and y with respect to cartesian axis
          ! They are saw-like and the jump is always at the axis parallel to the vectors
          ! which defines the supercell and which cross at the center of the supercell
-         ! The differents if take into account how the supercell is "compound" around the
+         ! The differents "if" take into account how the supercell is "compound" around the
          ! supercell corner
          if (r_cell_cc(ir,2)<cell_center(2) .and. r_cell_cc(ir,1)<cell_center(1)) then
-           y=r_cell_cc(ir,2)
-           x=r_cell_cc(ir,1)
+           y(ir)=r_cell_cc(ir,2)
+           x(ir)=r_cell_cc(ir,1)
          endif
          if (r_cell_cc(ir,2)<cell_center(2) .and. r_cell_cc(ir,1)>cell_center(1)) then
-           y=r_cell_cc(ir,2)-a(1,2)
-           x=r_cell_cc(ir,1)-a(1,1)
+           y(ir)=r_cell_cc(ir,2)-a(1,2)
+           x(ir)=r_cell_cc(ir,1)-a(1,1)
          endif
          if (r_cell_cc(ir,2)>cell_center(2) .and. r_cell_cc(ir,1)<cell_center(1)) then
-           y=r_cell_cc(ir,2)-a(2,2)
-           x=r_cell_cc(ir,1)-a(2,1)
+           y(ir)=r_cell_cc(ir,2)-a(2,2)
+           x(ir)=r_cell_cc(ir,1)-a(2,1)
          endif
          if (r_cell_cc(ir,2)>cell_center(2) .and. r_cell_cc(ir,1)>cell_center(1)) then
-           y=r_cell_cc(ir,2)-a(1,2)-a(2,2)
-           x=r_cell_cc(ir,1)-a(2,1)-a(1,1)
+           y(ir)=r_cell_cc(ir,2)-a(1,2)-a(2,2)
+           x(ir)=r_cell_cc(ir,1)-a(2,1)-a(1,1)
          endif
          ! Now build up the vector potential         
          if(r_mod<=MAG_radius**2 .or. MAG_radius==0) then
-           A_magn_x(ir)=-0.5*MAG_B_z*y
-           A_magn_y(ir)= 0.5*MAG_B_z*x
+           A_magn_x(ir)=-0.5*MAG_B_z*y(ir)
+           A_magn_y(ir)= 0.5*MAG_B_z*x(ir)
            if (MAG_pauli) then
              H_pauli(ir,1)= MAG_B_z
              H_pauli(ir,2)=-MAG_B_z
            endif
          else
-           A_magn_x(ir)=-0.5*MAG_B_z*MAG_radius**2*y/r_mod
-           A_magn_y(ir)= 0.5*MAG_B_z*MAG_radius**2*x/r_mod
+           A_magn_x(ir)=-0.5*MAG_B_z*MAG_radius**2*y(ir)/r_mod
+           A_magn_y(ir)= 0.5*MAG_B_z*MAG_radius**2*x(ir)/r_mod
            ! I evaluate here the H_pauli
            if (MAG_pauli) then
              H_pauli(ir,1)=0 
@@ -258,7 +257,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
    H_paramagn_x(:)=2*A_magn_x(:)*gauge_factors(1) 
    H_paramagn_y(:)=2*A_magn_y(:)*gauge_factors(2)
    ! 2) H_diamagnetic
-   H_diamagn(:)=(A_magn_x(:)*gauge_factors(1))**2 + (A_magn_y(:)*gauge_factors(2))**2
+!   H_diamagn(:)=(A_magn_x(:)*gauge_factors(1))**2 + (A_magn_y(:)*gauge_factors(2))**2
    ! 3) H_pauli
    ! Already computed when A has been constructed
    !
@@ -396,16 +395,13 @@ subroutine MAG_Hamiltonian(initial_check_only)
    enddo
  enddo
  !
- !
  call live_timing()
  call pp_redux_wait(Ho)
  call pp_indexes_reset(px)
  !
- ! If eval_Lz = .true. then
- !   store H_paramag_x,H_paramag_y in memory before the cleaning
- !   moreover wf_x and wf_y will not be cleaned
- !   and evaluate <i|Lz|j> on the LDA wf
- if(eval_Lz) call MAG_eval_Lz(1)  !  2*A_magn_y/MAG_B_z,-2*(A_magn_x/MAG_B_z)) 
+ ! If eval_Lz = .true.
+ ! evaluate <i|Lz|j> on the LDA wf
+ if(eval_Lz) call MAG_eval_Lz(1)
  ! 
  ! Clean Up
  !
@@ -431,12 +427,16 @@ subroutine MAG_Hamiltonian(initial_check_only)
          allocate(r_cell_cc(fft_size,3))
          call mem_est("r_cell_cc",(/fft_size*3/))
          if (MAG_landau) then
+           allocate(x(fft_size),y(fft_size))
+           call mem_est("x y",(/fft_size,fft_size/))
            allocate(A_magn_x(fft_size),A_magn_y(fft_size))
            call mem_est("A_magn_x A_magn_y",(/fft_size,fft_size/))
            allocate(H_paramagn_x(fft_size),H_paramagn_y(fft_size))
            call mem_est("H_paramagn_x H_paramagn_y",(/fft_size,fft_size/))
            allocate(H_diamagn(fft_size))
            call mem_est("H_diamagn",(/fft_size/))
+           x=0.
+           y=0.
            A_magn_x=0.
            A_magn_y=0.
            H_paramagn_x=0.
@@ -467,6 +467,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
          call mem_est("H_tmp",(/fft_size/)*2)
          allocate(Ho(SC_bands,SC_bands,nkibz,n_sp_pol))
          call mem_est("Ho",(/size(Ho)/),(/2*SP/))
+         Ho=(0.,0.)
          H_tmp=(0.,0.)
      end select
    end subroutine
@@ -476,8 +477,11 @@ subroutine MAG_Hamiltonian(initial_check_only)
      select case(level)
        case(1)
          if(.not.eval_Lz) then
+           ! If eval_Lz=.true. these will be deallocated in MAG_eval_Lz subroutine
            deallocate(A_magn_x,A_magn_y)
            call mem_est("A_magn_x A_magn_y")
+           deallocate(x,y)
+           call mem_est("x y")
          endif
          ! NO DEBUG <
 !         deallocate(r_cell_cc)

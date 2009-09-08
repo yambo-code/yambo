@@ -71,7 +71,7 @@ subroutine RT_qp_analyze(it,en,k,xK,G_input)
    do ib=1,SC_bands
 #if defined _DOUBLE
      call zgemv('N',SC_bands,SC_bands,(0.,-1.),G_input(:,:,ik),SC_bands,H_nl_sc(:,ib,1),1,(0.,0.),tmp_v,1)
-     Occ_natural_orb(ib,ik)=real(zdotc(SC_bands,TmpMatrix(:,ib),1,tmp_v,1))
+     Occ_natural_orb(ib,ik)=real(zdotc(SC_bands,H_nl_sc(:,ib,1),1,tmp_v,1))
 #else 
      call cgemv('N',SC_bands,SC_bands,(0.,-1.),G_input(:,:,ik),SC_bands,H_nl_sc(:,ib,1),1,(0.,0.),tmp_v,1)
      Occ_natural_orb(ib,ik)=real(cdotc(SC_bands,H_nl_sc(:,ib,1),1,tmp_v,1))

@@ -143,6 +143,11 @@ if test -z "${FCFLAGS}"; then
       UFFLAGS="-O0 -fbackslash -fno-second-underscore"
       FCMFLAG=""
       ;;
+    *gfortran*)
+      FCFLAGS="-O3 -mtune=native"
+      UFFLAGS="-O0 -mtune=native"
+      FCMFLAG=""
+      ;;
     *ifort*)
       CPU_FLAG=""
       case "${FCVERSION}" in
@@ -163,6 +168,11 @@ if test -z "${FCFLAGS}"; then
    ;;
   *86*apple* )
     case "${FC}" in
+    *gfortran*)
+      FCFLAGS="-O3 -mtune=native"
+      UFFLAGS="-O0 -mtune=native"
+      FCMFLAG=""
+      ;;
     *g95*)
       FCFLAGS="-O3 -fno-second-underscore -mtune=pentium4"
       UFFLAGS="-O0 -fno-second-underscore"
@@ -188,6 +198,11 @@ if test -z "${FCFLAGS}"; then
     ;;
   ia64*linux* | *x86*64* )
     case "${FC}" in
+    *gfortran*)
+      FCFLAGS="-O3 -mtune=native"
+      UFFLAGS="-O0 -mtune=native"
+      FCMFLAG=""
+      ;;
     *pgf90*)
       FCFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
       FCMFLAG="-Mnomain"

@@ -33,6 +33,9 @@ subroutine XCo_driver(E,k,Xk,q)
  use QP_m,          ONLY:QP_table,QP_Vxc,QP_Vnl_xc,QP_n_states,Vxc_kind,Vnlxc_kind 
  use memory_m,      ONLY:mem_est
  use wave_func,     ONLY:WF_free
+#if defined _SC
+ use global_XC,     ONLY:SC_HF,SC_CHOSEX,WF_kind
+#endif
 #if defined _RT
  use SC,            ONLY:SC_bands
  use QP_m,          ONLY:QP_nb
@@ -100,13 +103,28 @@ subroutine XCo_driver(E,k,Xk,q)
    !
  else
    !
+#if defined _SC
+   !
    ! The point here is that dependening on the kind of XCo I do/don't need HF
    !
-   ! XCo=any local => Eqp=Eo+QP_Sc+HF-QP_Vxc => QP_Vnl_xc=HF
-   ! XCo=CHOSEX    => Eqp=Eo+QP_Sc-CHOSEX       => QP_Vnl_xc=-QP_CHOSEX
+   ! XCo=any local => Eqp=Eo+QP_Sc+HF-QP_Vxc    => QP_Vnl_xc=HF
+   ! XCo=CHOSEX    => Eqp=Eo+QP_Sc+HF-CHOSEX    => QP_Vnl_xc=HF-QP_CHOSEX
    ! XCo=HF        => Eqp=Eo+QP_Sc              => QP_Vnl_xc=0.
+   ! XCo=EXX       => Eqp=Eo+QP_Sc+HF-EXX       => QP_Vnl_xc=HF
+   ! XCo=EXXC      => Eqp=Eo+QP_Sc+HF-EXXC      => QP_Vnl_xc=HF
+   !
+   if (WF_kind/=SC_HF) then
+     call XCo_Hartree_Fock(E,k,xk,q)
+   else
+     QP_vnl_xc=(0.,0.)
+   endif
+   !
+   if (WF_kind==SC_CHOSEX) call QP_load_SC_xc()
+#else
    !
    call XCo_Hartree_Fock(E,k,xk,q)
+   !
+#endif
    !
  endif
  !

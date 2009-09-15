@@ -62,6 +62,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  if (allocated(DIP_iq_dot_r)) return
  !
 #if defined _SC || defined _RT || defined _MAGNETIC
+ !
  ! Check first the kind of the wavefunctions 
  ! 
  call load_SC_components('check_bands',n_bands=X%ib(2),&

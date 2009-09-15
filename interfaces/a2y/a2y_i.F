@@ -105,6 +105,7 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  call msg('s','== DB2 + nlPP ...')
  !
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
+ !
  do ik=1,nkibz
    !
    do ib_grp=1,wf_nb_io_groups

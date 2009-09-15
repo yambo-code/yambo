@@ -25,8 +25,8 @@ subroutine QP_load_SC_xc()
  !
  use memory_m,        ONLY:mem_est
  use electrons,       ONLY:levels,spin,n_sp_pol
- use QP_m,            ONLY:QP_table,QP_n_states,QP_SC_xc
- use IO_m,            ONLY:VERIFY,DUMP
+ use QP_m,            ONLY:QP_table,QP_n_states,QP_vnl_xc
+ use IO_m,            ONLY:VERIFY,DUMP,NONE
  use R_lattice,       ONLY:nkibz
  use SC,              ONLY:SC_bands,H_nl_sc,load_SC_components,SC_R,H_rotate
  use matrix_operate,  ONLY:mat_dia_inv,INV,USE_LK
@@ -37,8 +37,6 @@ subroutine QP_load_SC_xc()
  !
  integer  :: i_qp,i_k,i_spin,io_err
  !
- allocate (QP_SC_xc(QP_n_states))
- !
  ! Load SC_R rotation matrices
  !
  call load_SC_components('WF',COM_=NONE,MODE_=DUMP)
@@ -47,10 +45,7 @@ subroutine QP_load_SC_xc()
    if (any(QP_table(:,3)==i_k)) then 
      !
      call load_SC_components('Hsc',COM_=NONE,MODE_=VERIFY,ik=i_k,io_err_=io_err)
-     if (io_err/=0) then
-       deallocate (QP_SC_xc)
-       return
-     endif
+     if (io_err/=0) return
      !
      do i_spin=1,n_sp_pol
        call mat_dia_inv(INV,USE_LK,SC_R(:,:,i_k,i_spin))
@@ -60,20 +55,16 @@ subroutine QP_load_SC_xc()
      do i_qp=1,QP_n_states
        if (QP_table(i_qp,3)==i_k) then
          i_spin = spin(QP_table(i_qp,:))
-         QP_SC_xc(i_qp)=H_nl_sc(QP_table(i_qp,1),QP_table(i_qp,2),i_spin)
+         QP_vnl_xc(i_qp)=QP_vnl_xc(i_qp)-H_nl_sc(QP_table(i_qp,1),QP_table(i_qp,2),i_spin)
        endif
      enddo
      !
    endif
  enddo
  !
- call mem_est("QP_SC_xc",(/QP_n_states/))
- !
  ! Deallocations
  !
  call load_SC_components('WF_clean')
  call load_SC_components('Hsc_clean')
- !
- deallocate(QP_SC_xc)
  !
 end subroutine

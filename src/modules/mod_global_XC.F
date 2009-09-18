@@ -52,7 +52,7 @@ module global_XC
  character(lchlen) , public :: X_WF_xc_string(4)
  character(lchlen) , public :: K_WF_xc_string
  !
- character(lchlen) , public :: WF_global_xc_string  ! ... set in wf_load after rotation
+ character(lchlen) , public :: loaded_WF_xc_string  ! ... set in wf_load after rotation
  !
  ! SC's and Self Energies are KINDS
  !
@@ -135,10 +135,16 @@ module global_XC
      if (what=='WF'.or.what=='preset') then
        WF_kind=kind
        WF_xc_functional=local_xc_functional
-       WF_global_xc_string=global_XC_string(kind,MORE_NONE,local_xc_functional,local_perturbation)
-       G_WF_xc_string=WF_global_xc_string
-       X_WF_xc_string=WF_global_xc_string
-       K_WF_xc_string=WF_global_xc_string
+       !
+       ! loaded_WF_xc_string represents the xc kind of the WF that are loaded trough wf_load.
+       ! G/X/K_WF_xc_string, instead, may be overwritten by the value written in the databases.
+       !
+       loaded_WF_xc_string=global_XC_string(kind,MORE_NONE,local_xc_functional,local_perturbation)
+       !
+       G_WF_xc_string=loaded_WF_xc_string
+       X_WF_xc_string=loaded_WF_xc_string
+       K_WF_xc_string=loaded_WF_xc_string
+       !
      endif
      !
      if (what=='preset') QP_DB_kind=SE_none

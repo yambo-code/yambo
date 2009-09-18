@@ -31,7 +31,7 @@ subroutine WF_rotate(ik,WFo,wf_size)
  !
  use electrons,      ONLY:n_sp_pol
  use pars,           ONLY:SP
- use wave_func,      ONLY:wf_state,wf_n_states,wf,wf_b
+ use wave_func,      ONLY:wf_state,wf_n_states,wf
  use SC,             ONLY:SC_R,SC_bands
  implicit none
  !
@@ -41,14 +41,14 @@ subroutine WF_rotate(ik,WFo,wf_size)
  ! Work Space
  !
  integer     :: ib,ibp,ifft,ifftp,i_spin
- complex(SP) :: WS_wf(wf_size,wf_b(2))
+ complex(SP) :: WS_wf(wf_size,SC_bands)
  !
  do i_spin=1,n_sp_pol
    WS_wf=(0.,0.)
    !
-   do ib  = wf_b(1),min(wf_b(2),SC_bands)
+   do ib  = 1,SC_bands
      ifft = wf_state(ib,ik,i_spin)
-     do ibp = wf_b(1),min(wf_b(2),SC_bands)
+     do ibp = 1,SC_bands
        ifftp = wf_state(ibp,ik,i_spin)
        !
        if (ifft==0.or.ifftp==0) cycle
@@ -61,7 +61,7 @@ subroutine WF_rotate(ik,WFo,wf_size)
      end do
    end do
    !
-   do ib=wf_b(1),min(wf_b(2),SC_bands)
+   do ib=1,SC_bands
      wf(:,wf_state(ib,ik,i_spin))=WS_wf(:,ib)
    enddo
    !

@@ -38,8 +38,8 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
 &                        DUMP,VERIFY,NONE,io_fragmented,dbs_fragment,&
 &                        ver_is_gt_or_eq,db_alat,io_code_revision
  use zeros,         ONLY:define_zeros
- use global_XC,     ONLY:G_E_xc_string,X_E_xc_string,K_E_xc_string,WF_global_xc_string,&
-&                              G_WF_xc_string,X_WF_xc_string,K_WF_xc_string
+ use global_XC,     ONLY:G_E_xc_string,X_E_xc_string,K_E_xc_string,loaded_WF_xc_string,&
+&                        G_WF_xc_string,X_WF_xc_string,K_WF_xc_string
  !
  implicit none
  integer               :: ID
@@ -317,7 +317,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
          call io_elemental(ID,CH0=string_,VAR=desc_,WARN=WARN,OP=(/"=="/))
        endif
      else
-       call io_elemental(ID,CH0=WF_global_xc_string,VAR=desc_,WARN=WARN,OP=(/"=="/))
+       call io_elemental(ID,CH0=loaded_WF_xc_string,VAR=desc_,WARN=WARN,OP=(/"=="/))
      endif
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !

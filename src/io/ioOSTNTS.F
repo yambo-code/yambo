@@ -30,7 +30,7 @@ integer function ioOSTNTS(X,Xen,ID)
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&
 &                        read_is_on,write_is_on,io_header,ver_is_gt_or_eq
- use global_XC,     ONLY:WF_global_xc_string
+ use global_XC,     ONLY:loaded_WF_xc_string
  !
  implicit none
  type(X_t)::X
@@ -93,7 +93,7 @@ integer function ioOSTNTS(X,Xen,ID)
      ! Wavefunctions xc 
      !
      call io_elemental(ID,VAR='WAVE_FUNC_XC',CH0="",VAR_SZ=1,MENU=0)
-     call io_elemental(ID,CH0=WF_global_xc_string,&
+     call io_elemental(ID,CH0=loaded_WF_xc_string,&
 &         VAR=' Wavefunctions          :',CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0)
    else

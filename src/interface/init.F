@@ -61,7 +61,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use ELPH,           ONLY:elph_nq,elph_nq_used
 #endif
 #if defined _SC || defined _RT || defined _MAGNETIC
- use SC,             ONLY:SC_potential,SC_ng_Sx,SC_X_bands,SC_X_size
+ use global_XC,      ONLY:MORE_NONE,setup_global_XC
+ use SC,             ONLY:SC_potential,SC_ng_Sx,SC_X_bands,SC_X_size,SC_kind,SC_xc_functional,SC_perturbation
 #endif
 #if defined _RT
  use oscillators_IO, ONLY:ioRHO_RHO_VX  
@@ -374,6 +375,17 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call varsetup1
  !
+ ! On the basis of the SC_kind
+ ! here I preset the relative WF_kind and xc_strings.
+ ! This to check the correcteness of the WF kind in the databases.
+ ! However the ACTUAL CHECK on the number of bands is done ONLY at the wf_load
+ ! call. So I assume that whenever a DB is rewritten because of the WF xc_string
+ ! then wf_load is called
+ !
+#if defined _SC || defined _RT || defined _MAGNETIC
+ if (io_SC_err==0) call setup_global_XC('WF',SC_kind,MORE_NONE,SC_xc_functional,SC_perturbation)
+#endif
+ ! 
  !Variables(read from DB files) -> local cache
  !
  !Note that here ('load_defaults') is the latest chance to change

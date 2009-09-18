@@ -23,7 +23,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,&
 &                             xc_functional,perturbation,io_err_)
  !
  use drivers,   ONLY:l_sc_run
- use SC,        ONLY:using_SC_basis,SC_R,SC_bands,H_nl_sc,SC_kind,&
+ use SC,        ONLY:using_SC_WFs,SC_R,SC_bands,H_nl_sc,SC_kind,&
 &                    SC_xc_functional,SC_perturbation
  use electrons, ONLY:levels,E_reset,n_sp_pol
  use R_lattice, ONLY:nkibz
@@ -49,7 +49,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,&
  integer           :: ID,ip,io_err,SC_bands_save
  integer, external :: io_SC_components
  !
- if (l_sc_run) using_SC_basis=.false.
+ if (l_sc_run) using_SC_WFs=.false.
  if (l_sc_run) return
  !
  call E_reset(E_dummy)
@@ -133,6 +133,6 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,&
  !
  if (present(io_err_)) io_err_=io_err
  !
- using_SC_basis=io_err==0
+ using_SC_WFs=io_err==0
  !
 end subroutine

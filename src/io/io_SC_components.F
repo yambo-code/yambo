@@ -87,6 +87,7 @@ integer function io_SC_components(what,E_sc,ID)
  if (l_wf) io_SC_components=io_connect(desc="scWFs",type=2,ID=ID)
  if (l_E)  io_SC_components=io_connect(desc="scE",type=2,ID=ID)
  if (l_V)  io_SC_components=io_connect(desc="scV",type=2,ID=ID)
+ !
 #if defined _RT
  !
  ! Write only every max_rt_steps_disk
@@ -164,13 +165,8 @@ integer function io_SC_components(what,E_sc,ID)
    call io_elemental(ID,I0=it_now,DB_I0=it_now,&
 &       VAR=' Iteration                       :')
    !
-   if (l_sc_run) then
-     call io_elemental(ID,I0=SC_bands,&
-&         VAR=' Total number of bands           :',CHECK=CHECK_,OP=(/"=="/))
-   else
-     call io_elemental(ID,I0=SC_bands,&
-&         VAR=' Total number of bands           :',CHECK=.true.,OP=(/"<="/))
-   endif
+   call io_elemental(ID,I0=SC_bands,&
+&       VAR=' Total number of bands           :',CHECK=CHECK_,OP=(/"=="/))
    !
    call io_elemental(ID,R0=SC_band_mixing,&
 &       VAR=' Bands mixing                    :',CHECK=CHECK_,OP=(/"=="/))

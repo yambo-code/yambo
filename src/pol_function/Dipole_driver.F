@@ -28,7 +28,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use ras_module,     ONLY:transloc, lras
 #endif
 #if defined _SC || defined _RT || defined _MAGNETIC
- use SC,             ONLY:using_SC_basis,SC_bands,local_V,load_SC_components
+ use SC,             ONLY:load_SC_components
  use global_XC,      ONLY:WF_kind,WF_xc_functional,MORE_NONE,setup_global_XC,WF_perturbation
 #endif
  use drivers,        ONLY:l_col_cut
@@ -73,11 +73,14 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! Transitions ordering
  !
  Dipole_bands_ordered=.true.
-#if defined _SC || defined _RT || defined _MAGNETIC
- Dipole_bands_ordered=.not.using_SC_basis.or.(using_SC_basis.and.local_V)
- if (Eval_P_and_P2_only) Dipole_bands_ordered=.FALSE.
-#else
- Eval_P_and_P2_only=.false.
+ !
+ ! NOTE that in case we will enter here during a SC run to update the screened interaction
+ ! all transitions must be considered in order to rotate <P>.
+ !
+ ! in _RT P and P^2 are ALWAYS calculated => no band ordering
+ !
+#if defined _RT 
+ Dipole_bands_ordered=.FALSE.
 #endif
  !
  ! Check first if ostnts DB is already done

@@ -61,14 +61,14 @@ INTERFCS = a2y p2y e2y
 #
 BASIC_LIBS   = external_c modules xc_functionals parser communicate common io wf_and_fft 
 
-MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl interface \
+MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface \
                tddft pol_function qp acfdt bse
 
 PJ_RASLIBS   = $(BASIC_LIBS) ras_reels_mods coulomb bz_ops qp_ctl ras \
-               interface tddft pol_function qp acfdt bse
+               setup interface tddft pol_function qp acfdt bse
 
 PJ_REELSLIBS = $(BASIC_LIBS) ras_reels_mods coulomb bz_ops qp_ctl reels \
-               interface tddft pol_function qp acfdt bse
+               setup interface tddft pol_function qp acfdt bse
 
 PJ_SCLIBS       = $(MAIN_LIBS) sc 
 PJ_MANYKLIBS    = $(MAIN_LIBS)
@@ -80,9 +80,9 @@ PJ_PHLIBS       = $(MAIN_LIBS)
 #
 # YPP
 #
-YPPLIBS      = $(BASIC_LIBS) bz_ops qp_ctl interface bse
+YPPLIBS      = $(BASIC_LIBS) bz_ops qp_ctl setup interface bse
 YPPSCLIBS    = $(YPPLIBS) sc
-YPPRASLIBS   = $(BASIC_LIBS) ras_reels_mods bz_ops qp_ctl interface ras bse
+YPPRASLIBS   = $(BASIC_LIBS) ras_reels_mods bz_ops qp_ctl setup interface ras bse
 
 nothing: 
 	@$(make_message)

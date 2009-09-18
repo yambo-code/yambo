@@ -63,7 +63,11 @@ subroutine XCo_driver(E,k,Xk,q)
  sec_mode_and_message(2)='Bare local and non-local Exchange-Correlation'
  if (l_acfdt)   sec_mode_and_message(1)='p'
  if (l_rho_IO)  sec_mode_and_message(2)='Hartree-Fock extended oscillators'
- if (.not.l_sc_run) call section(trim(sec_mode_and_message(1)),trim(sec_mode_and_message(2)))
+ if (.not.l_sc_run &
+#if defined _SC
+&    .and.WF_kind/=SC_HF &
+#endif
+&   ) call section(trim(sec_mode_and_message(1)),trim(sec_mode_and_message(2)))
  !
  ! QP states setup
  !
@@ -85,6 +89,11 @@ subroutine XCo_driver(E,k,Xk,q)
    endif
    QP_Vnl_xc=(0.,0.)
    QP_Vxc=(0.,0.)
+   !
+#if defined _SC
+   if (WF_kind==SC_HF) return
+#endif
+   !
  endif
  !
  ! Main DB I/O
@@ -103,26 +112,21 @@ subroutine XCo_driver(E,k,Xk,q)
    !
  else
    !
+   call XCo_Hartree_Fock(E,k,xk,q)
+   !
 #if defined _SC
    !
    ! The point here is that dependening on the kind of XCo I do/don't need HF
    !
-   ! XCo=any local => Eqp=Eo+QP_Sc+HF-QP_Vxc    => QP_Vnl_xc=HF
-   ! XCo=CHOSEX    => Eqp=Eo+QP_Sc+HF-CHOSEX    => QP_Vnl_xc=HF-QP_CHOSEX
-   ! XCo=HF        => Eqp=Eo+QP_Sc              => QP_Vnl_xc=0.
-   ! XCo=EXX       => Eqp=Eo+QP_Sc+HF-EXX       => QP_Vnl_xc=HF
-   ! XCo=EXXC      => Eqp=Eo+QP_Sc+HF-EXXC      => QP_Vnl_xc=HF
+   ! Eqp=Eo+QP_Sc+QP_Vnl_xc-QP_Vxc 
    !
-   if (WF_kind/=SC_HF) then
-     call XCo_Hartree_Fock(E,k,xk,q)
-   else
-     QP_vnl_xc=(0.,0.)
-   endif
+   ! XCo=any local => QP_Vnl_xc=HF           & QP_Vxc=any local
+   ! XCo=CHOSEX    => QP_Vnl_xc=HF-QP_CHOSEX & QP_Vxc= 0.
+   ! XCo=HF        => QP_Vnl_xc=0.           & QP_Vxc= 0.
+   ! XCo=EXX       => QP_Vnl_xc=HF           & QP_Vxc= EXX
+   ! XCo=EXXC      => QP_Vnl_xc=HF           & QP_Vxc= EXXc
    !
    if (WF_kind==SC_CHOSEX) call QP_load_SC_xc()
-#else
-   !
-   call XCo_Hartree_Fock(E,k,xk,q)
    !
 #endif
    !
@@ -132,12 +136,13 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  if (.not.l_sc_run) then
    !
-   call XCo_local(E,Xk)
-   call WF_free()
+   if( WF_kind/= SC_CHOSEX ) call XCo_local(E,Xk)
    !
  endif
  !
- if(.not.l_rho_IO) call XCo_report_and_IO()
+ if (.not.l_sc_run)  call WF_free()
+ !
+ if(.not.l_rho_IO)   call XCo_report_and_IO()
  !
  contains
    !

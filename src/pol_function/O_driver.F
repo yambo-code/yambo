@@ -43,7 +43,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
 &                        FXC,FXC_K_diagonal,FXC_n_g_corr
  use global_XC,     ONLY:X_WF_xc_string,X_E_xc_string
 #if defined _SC || defined _MAGNETIC
- use SC,            ONLY:using_SC_basis
+ use SC,            ONLY:using_SC_WFs
 #endif
  !
  implicit none

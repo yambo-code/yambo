@@ -37,7 +37,7 @@ module SC
  real(SP)          :: SC_cycle_mixing
  !
  character(schlen) :: SC_potential
- logical           :: using_SC_basis
+ logical           :: using_SC_WFs
  logical           :: local_V
  logical           :: NSC_shot
  logical           :: l_use_RHO_IO

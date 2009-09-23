@@ -23,10 +23,10 @@ integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
- use oscillators_IO,ONLY:rho_Vx_rho,rho_table,n_rho_states,V_kind
+ use oscillators_IO,ONLY:rho_table,n_rho_states,V_kind,rho_VX_rho
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
-&                        io_bulk,write_is_on,io_disconnect,IO_write,io_file,file_is_present
- use global_XC,     ONLY:SC_HF,SC_CHOSEX,global_XC_string,EXT_NONE,SE_NONE
+&                        io_bulk,write_is_on,io_disconnect,IO_write,file_is_present
+ use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE
  use stderr,        ONLY:intc
  use SC,            ONLY:SC_bands
  use QP_m,          ONLY:QP_ng_Sx,QP_n_states
@@ -41,7 +41,7 @@ integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
  !
  character(schlen)     :: db_name
  real(SP), allocatable :: rho_VX_rho_disk(:,:)
- integer               :: V_kind_disk,i_qp_db,ID_qp_DB
+ integer               :: V_kind_disk,i_qp_db
  character(lchlen)     :: V_kind_string
  !
  if (present(QP_DB_done)) then 

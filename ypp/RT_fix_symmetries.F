@@ -23,16 +23,16 @@ subroutine RT_fix_symmetries(E,k)
  !
  use YPP
  use pars,                ONLY:SP,lchlen
- use com,                 ONLY:msg,error,warning,core_io_path,more_io_path
+ use com,                 ONLY:msg,warning,core_io_path,more_io_path
  use memory_m,            ONLY:mem_est
  use electrons,           ONLY:levels,E_reset,n_spin
  use vec_operate,         ONLY:v_norm,v_is_zero
  use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,a,alat,&
 &                              i_space_inv,sop_inv,inv_index,symmetry_group_table
- use R_lattice,           ONLY:bz_samp,bz_samp_reset,g_vec,&
+ use R_lattice,           ONLY:bz_samp,bz_samp_reset,&
 &                              g_rot,ng_closed,bz_samp_duplicate,rl_sop
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,&
-&                              RD_CL,OP_RD,OP_APP,cp_file,rm_file
+&                              OP_APP,cp_file,rm_file
  use wave_func,           ONLY:ioWF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io, &
 &                              wf_ng,wf_state,wf_load,wf_state,wf,WF_free,wf_ng 
  use real_time,           ONLY:kpoints_map

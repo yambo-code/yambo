@@ -26,7 +26,7 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  use LOGO,                ONLY:pickup_a_random
  use com,                 ONLY:msg,write_to_report,core_io_path
  use par_proc_m,          ONLY:ncpu,myid,p_finalize
- use electrons,           ONLY:levels,E_reset,n_bands,n_spin
+ use electrons,           ONLY:levels,E_reset,n_spin
  use D_lattice,           ONLY:n_atoms_species_max
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY:wf_ncx,ioWF,wf_nb_io_groups,wf_nb_io
@@ -47,7 +47,7 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  character(icd),   intent(in) :: com_dir   
  !
  character(lchlen) :: KSS_file_name
- integer           :: ID,io_err,ioPP_err,ik,icycle,ib_grp
+ integer           :: ID,io_err,ik,ib_grp
  integer,     external :: a2y_KSS_file_name,ioDB1,ioKB_PP
  real(SP), allocatable :: wf_disk(:,:,:,:)
  !

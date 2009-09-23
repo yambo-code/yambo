@@ -20,16 +20,16 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,&
-&                             xc_functional,perturbation,io_err_)
+&                             xc_functional,perturbation)
  !
  use drivers,   ONLY:l_sc_run
- use SC,        ONLY:using_SC_WFs,SC_R,SC_bands,H_nl_sc,SC_kind,&
-&                    SC_xc_functional,SC_perturbation
+ use SC,        ONLY:compatible_SC_DB,SC_R,SC_bands,H_nl_sc,SC_kind,&
+&                    SC_xc_functional,SC_perturbation,found_SC_DB
  use electrons, ONLY:levels,E_reset,n_sp_pol
  use R_lattice, ONLY:nkibz
  use memory_m,  ONLY:mem_est
  use IO_m,      ONLY:io_control,OP_RD_CL,RD_CL_IF_END,OP_RD,RD_CL,&
-&                    VERIFY,DUMP,OP_RD_CL,NONE,io_unit
+&                    DUMP,OP_RD_CL,NONE,IO_NO_DATABASE
  implicit none
  !
  character(*)           :: what
@@ -40,17 +40,20 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,&
  integer,      optional :: n_bands
  integer,      optional :: kind
  integer,      optional :: xc_functional
- integer,      optional :: io_err_
  integer,      optional :: perturbation
  ! 
  ! Work Space
  !
  type(levels)      :: E_dummy
- integer           :: ID,ip,io_err,SC_bands_save
+ integer           :: ID,ip,io_err
  integer, external :: io_SC_components
  !
- if (l_sc_run) using_SC_WFs=.false.
- if (l_sc_run) return
+ compatible_SC_DB=.false.
+ !
+ if (l_sc_run) then
+   found_SC_DB=.false.
+   return
+ endif
  !
  call E_reset(E_dummy)
  ! 
@@ -70,6 +73,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,&
      !
    case("V")
      io_err=io_SC_components('V',E_dummy,ID)
+     compatible_SC_DB = io_err==0
      !
    case("Hsc")
      io_err=io_SC_components('V',E_dummy,ID)
@@ -110,18 +114,12 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,&
        return
      endif
      !
-   case("check_bands")
-     !
-     ! first dump all (including SC_bands)
+   case("check_WF_DB")
      !
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
      io_err=io_SC_components('WF',E_dummy,ID)
      !
-     SC_bands_save=SC_bands
-     SC_bands=n_bands
-     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID)
-     io_err=io_SC_components('E',E_dummy,ID)
-     SC_bands=SC_bands_save
+     compatible_SC_DB = n_bands<= SC_bands
      ! 
  end select
  !
@@ -131,8 +129,6 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,&
    perturbation=SC_perturbation
  endif
  !
- if (present(io_err_)) io_err_=io_err
- !
- using_SC_WFs=io_err==0
+ found_SC_DB     = .not.(io_err==IO_NO_DATABASE)
  !
 end subroutine

@@ -24,8 +24,7 @@ integer function io_SC_components(what,E_sc,ID)
  ! what can be E WF V J G
  !
  use pars,           ONLY:SP
- use units,          ONLY:HARTREE,AU2Tesla
- use drivers,        ONLY:l_sc_run
+ use units,          ONLY:AU2Tesla
  use R_lattice,      ONLY:nkibz
  use D_lattice,      ONLY:atoms_string
  use stderr,         ONLY:intc
@@ -36,7 +35,7 @@ integer function io_SC_components(what,E_sc,ID)
 &                         SC_ng_Sx,SC_X_bands,SC_X_size
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,io_fragment,read_is_on,write_is_on,&
-&                         manage_RD_WR_CL_IF_END,ver_is_gt_or_eq,io_reset
+&                         manage_RD_WR_CL_IF_END,ver_is_gt_or_eq,io_reset,IO_INCOMPATIBLE_VAR
 #if defined _RT
  use real_time,      ONLY:l_rt_efield,l_RPA,RT_step,Tot_steps,       &
 &                         Thermal_steps,Integrator_name,l_qp_analyze,DiagH_Iter,     &
@@ -190,7 +189,7 @@ integer function io_SC_components(what,E_sc,ID)
    endif
    !
    if (io_status_save==0.and.io_status(ID)<0) then
-     io_status(ID)=-2
+     io_status(ID)=IO_INCOMPATIBLE_VAR
      if (NSC_shot) io_status(ID)=0
    endif
    !

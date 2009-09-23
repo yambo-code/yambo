@@ -22,11 +22,7 @@
 subroutine p2y_db1(en,k)
  !
  use P2Y
- use pars,                  ONLY : SP,schlen,pi
  use com,                   ONLY : msg
- use electrons,             ONLY : default_nel, n_sp_pol
- use R_lattice,             ONLY : g_vec, ng_vec
- use wave_func,             ONLY : wf_nc_k, wf_ncx, wf_igk,wf_ng
  use mod_com2y,             ONLY : print_interface_dimensions
  use xc_functionals,        ONLY : xc_string,GS_xc_KIND,GS_xc_FUNCTIONAL
  implicit none

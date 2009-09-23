@@ -28,10 +28,8 @@ integer function p2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  use memory_m,            only : mem_est
  use com,                 only : msg,write_to_report,core_io_path, error
  use par_proc_m,          only : ncpu,myid,p_finalize
- use electrons,           only : levels,E_reset,n_bands, n_spin, n_sp_pol
- use D_lattice,           only : n_atoms_species_max
+ use electrons,           only : levels,E_reset,n_bands, n_spin
  use R_lattice,           only : bz_samp,bz_samp_reset,nkibz
- use timing,              only : live_timing_is_on
  use wave_func,           only : wf_ncx,ioWF, wf_nb_io_groups,wf_nb_io
  use IO_m,                only : io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
  use mod_com2y,           only : interface_presets,force_noWFs
@@ -49,9 +47,9 @@ integer function p2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  character(ijs),   intent(in) :: js
  character(icd),   intent(in) :: com_dir   
  !
- character(lchlen) :: index_filename, lch
- integer           :: ID,io_err,ioPP_err,ik,icycle, ib_grp
- integer, external :: ioDB1,ioKB_PP
+ character(lchlen) :: lch
+ integer           :: ID,io_err,ik, ib_grp
+ integer, external :: ioDB1
  real(SP), allocatable :: wf_disk(:,:,:,:)
  !
  ! Presets
@@ -71,7 +69,6 @@ integer function p2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  ! Switch off report file support
  !
  write_to_report=.FALSE.
- !live_timing_is_on=.FALSE.
  !
 #if defined _P2Y_EXPORT
  call section('*','P(W) 2 Y(ambo) - pw_export.x version')

@@ -28,7 +28,7 @@ integer function io_HF_and_locXC(ID)
 &                         Sx_low_band,QP_table,QP_state
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
-&                         write_is_on,io_mode,DUMP,ver_is_gt_or_eq
+&                         write_is_on,io_mode,DUMP,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR
  implicit none
  integer :: ID
  !
@@ -120,7 +120,7 @@ integer function io_HF_and_locXC(ID)
      endif
    enddo
    !
-   if (read_is_on(ID).and.i_found/=QP_n_states) io_status(ID)=-1
+   if (read_is_on(ID).and.i_found/=QP_n_states) io_status(ID)=IO_INCOMPATIBLE_VAR
    io_HF_and_locXC=io_status(ID)
    if (io_HF_and_locXC/=0) goto 1
    !

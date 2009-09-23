@@ -33,7 +33,7 @@ integer function ioX(X,Xw,ID)
 &                        read_is_on,write_is_on,io_check_restart,io_header,&
 &                        io_fragment,RD_CL,RD_CL_IF_END,io_action,&
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
-&                        NONE
+&                        NONE,IO_INCOMPATIBLE_VAR
  use stderr,        ONLY:intc
  implicit none
  type(X_t)   :: X
@@ -154,7 +154,7 @@ integer function ioX(X,Xw,ID)
 &        allocated(g_vec)) then
        if (.not.allocated(X_RLcomp_ig)) allocate(X_RLcomp_ig(X%ng))
        i_err = X_RLcomp_table() 
-       if ( i_err < 0 ) io_status(ID) = -1
+       if ( i_err < 0 ) io_status(ID) = IO_INCOMPATIBLE_VAR
        if ( i_err > 0 ) different_db_RL_order=.true.
      endif
      deallocate(RL_vecs_disk)

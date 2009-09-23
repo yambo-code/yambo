@@ -42,9 +42,6 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use TDDFT,         ONLY:FXC_n_descs,FXC_description,FXC_type,&
 &                        FXC,FXC_K_diagonal,FXC_n_g_corr
  use global_XC,     ONLY:X_WF_xc_string,X_E_xc_string
-#if defined _SC || defined _MAGNETIC
- use SC,            ONLY:using_SC_WFs
-#endif
  !
  implicit none
  type(levels)::Xen
@@ -214,7 +211,6 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      if (i1==1) then
        !
        ! T-ordering
-       !
        !
        call msg('o eps eel alpha','#')
        if (associated(Xen%GreenF)) then

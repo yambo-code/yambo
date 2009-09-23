@@ -54,6 +54,10 @@ module IO_m
  !
  integer, parameter:: REP=41,LOG=42,NONE=43
  !
+ ! I/O errors
+ !
+ integer, parameter:: IO_NO_DATABASE=-1,IO_INCOMPATIBLE_VAR=-2,IO_GENERIC_ERROR=-3
+ !
  ! Units
  !
  integer, parameter:: max_io_units=10
@@ -93,7 +97,7 @@ module IO_m
  interface 
    !
    subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
-&                          DB_R0,R0,R1,DB_R1,CH0,CH1,L0,DB_L0,UNIT,MENU,&
+&                          DB_R0,R0,R1,DB_R1,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
 &                          DESCRIPTION)
      !
      use pars
@@ -103,7 +107,7 @@ module IO_m
      integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
      real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
      logical     ,optional :: L0,DB_L0,CHECK,WARN
-     character(*),optional :: CH0,CH1(:)
+     character(*),optional :: CH0,DB_CH0,CH1(:)
      character(lchlen),optional :: DESCRIPTION
      !
    end subroutine
@@ -190,7 +194,7 @@ module IO_m
      io_connect=0
      if ( (read_is_on(ID).and..not.IO_read).or.&
 &         (write_is_on(ID).and..not.IO_write) ) then
-       io_connect=-1
+       io_connect=IO_NO_DATABASE
        call io_reset(ID)
        return
      endif
@@ -337,7 +341,7 @@ module IO_m
          else if (file_exists(trim(alternative_file(8)))) then
            io_file(ID)=alternative_file(8)
          else
-           io_connect=-1
+           io_connect=IO_NO_DATABASE
            if (present(no_full_RESET)) then
              io_file(ID)=''
            else
@@ -352,7 +356,7 @@ module IO_m
          call netcdf_call(nf90_open(trim(io_file(ID)),&
 &                         nf90_nowrite,io_unit(ID)))
 #else
-         io_connect=-1
+         io_connect=IO_NO_DATABASE
          if (present(no_full_RESET)) then
            io_file(ID)=''
          else

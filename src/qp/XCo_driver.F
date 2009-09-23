@@ -136,7 +136,11 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  if (.not.l_sc_run) then
    !
+#if defined _SC
    if( WF_kind/= SC_CHOSEX ) call XCo_local(E,Xk)
+#else
+   call XCo_local(E,Xk)
+#endif
    !
  endif
  !

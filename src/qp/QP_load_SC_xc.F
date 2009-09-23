@@ -28,14 +28,15 @@ subroutine QP_load_SC_xc()
  use QP_m,            ONLY:QP_table,QP_n_states,QP_vnl_xc
  use IO_m,            ONLY:VERIFY,DUMP,NONE
  use R_lattice,       ONLY:nkibz
- use SC,              ONLY:SC_bands,H_nl_sc,load_SC_components,SC_R,H_rotate
+ use SC,              ONLY:SC_bands,H_nl_sc,load_SC_components,SC_R,H_rotate,compatible_SC_DB,&
+&                          found_SC_DB
  use matrix_operate,  ONLY:mat_dia_inv,INV,USE_LK
  !
  implicit none
  !
  ! Work Space
  !
- integer  :: i_qp,i_k,i_spin,io_err
+ integer  :: i_qp,i_k,i_spin
  !
  ! Load SC_R rotation matrices
  !
@@ -44,8 +45,8 @@ subroutine QP_load_SC_xc()
  do i_k=1,nkibz
    if (any(QP_table(:,3)==i_k)) then 
      !
-     call load_SC_components('Hsc',COM_=NONE,MODE_=VERIFY,ik=i_k,io_err_=io_err)
-     if (io_err/=0) return
+     call load_SC_components('Hsc',COM_=NONE,MODE_=VERIFY,ik=i_k)
+     if (.not.compatible_SC_DB.or..not.found_SC_DB) return
      !
      do i_spin=1,n_sp_pol
        call mat_dia_inv(INV,USE_LK,SC_R(:,:,i_k,i_spin))

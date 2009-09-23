@@ -24,35 +24,52 @@ module global_XC
  use pars,      ONLY:lchlen
  implicit none
  !
- ! Energies (linked to the three energy types)
+ ! general notice:
+ !
+ ! Yambo uses integers to store locally the xc specs. These integers
+ ! are transformed in strings when setup_global_XC is called.
+ ! setup_global_XC is called in
+ !
+ !  mod_QP_ctl: when using external QP corrections
+ !  setup: when using SC energies/WF
+ !
+ ! The strings obtained are then written in the corresponding DB or veryfied
+ ! against the value in the DB. Note that in the case of WFs only the loaded_WF_xc_string
+ ! is set in SC_initial_WF_setup. All other strings are eventually read from the DB's
+ !
+ ! Energies (linked to the three energy types) ...
+ !
+ !  ... Integers ...
  !
  integer     , public :: G_kind,G_xc_functional,G_SE_more,G_perturbation
  integer     , public :: X_kind,X_xc_functional,X_SE_more,X_perturbation
  integer     , public :: K_kind,K_xc_functional,K_SE_more,K_perturbation
  !
- ! QP database
- !
- integer     , public :: QP_DB_kind
- !
- ! Wavefunctions
- !
- integer     , public :: WF_kind,WF_xc_functional,WF_perturbation
- !
- ! Strings... to be used in io_header, so linked to the databases
- !
- ! ... these are defined with the above integers
+ ! ... and Strings... 
  !
  character(lchlen) , public :: G_E_xc_string
  character(lchlen) , public :: X_E_xc_string(4)
  character(lchlen) , public :: K_E_xc_string
  !
- ! ... these are read from the DB (when writing WF_global_xc_string is used)
+ ! Wavefunctions ...
+ !
+ ! ... integers ...
+ !
+ integer     , public :: WF_kind,WF_xc_functional,WF_perturbation
+ !
+ character(lchlen) , public :: loaded_WF_xc_string  
+ !
+ ! ... and Strings
+ ! ... these are read from the DB (when writing, instead, all these string are set equal to  loaded_WF_xc_string)
  !
  character(lchlen) , public :: G_WF_xc_string
  character(lchlen) , public :: X_WF_xc_string(4)
  character(lchlen) , public :: K_WF_xc_string
+ character(lchlen) , public :: Dipole_WF_xc_string ! Dipole strengths DB uses its own field (so no integer associated)
  !
- character(lchlen) , public :: loaded_WF_xc_string  ! ... set in wf_load after rotation
+ ! QP database
+ !
+ integer     , public :: QP_DB_kind
  !
  ! SC's and Self Energies are KINDS
  !
@@ -91,11 +108,11 @@ module global_XC
  contains
    !
    subroutine  setup_global_XC(what,kind,se_more,xc_functional,perturbation)
-     character(*)      :: what          
-     integer           :: kind          
-     integer, optional :: se_more       
-     integer, optional :: xc_functional 
-     integer, optional :: perturbation 
+     character(*)           :: what          
+     integer                :: kind          
+     integer,      optional :: se_more       
+     integer,      optional :: xc_functional 
+     integer,      optional :: perturbation 
      !
      ! Work Space
      !
@@ -137,13 +154,14 @@ module global_XC
        WF_xc_functional=local_xc_functional
        !
        ! loaded_WF_xc_string represents the xc kind of the WF that are loaded trough wf_load.
-       ! G/X/K_WF_xc_string, instead, may be overwritten by the value written in the databases.
+       ! G/X/K/Dipole_WF_xc_string, instead, may be overwritten by the value written in the databases.
        !
        loaded_WF_xc_string=global_XC_string(kind,MORE_NONE,local_xc_functional,local_perturbation)
        !
-       G_WF_xc_string=loaded_WF_xc_string
-       X_WF_xc_string=loaded_WF_xc_string
-       K_WF_xc_string=loaded_WF_xc_string
+       if (what=='preset') G_WF_xc_string     =loaded_WF_xc_string
+       if (what=='preset') X_WF_xc_string     =loaded_WF_xc_string
+       if (what=='preset') K_WF_xc_string     =loaded_WF_xc_string
+       if (what=='preset') Dipole_WF_xc_string=loaded_WF_xc_string
        !
      endif
      !
@@ -174,7 +192,7 @@ module global_XC
        case(SC_EXXC)
          global_XC_string='SC Exact Exchange +'//trim(xc_string(XC_CORRELATION,xc_functional))
        case(SC_HF)
-         global_XC_string='SC Hartee Fock'
+         global_XC_string='SC Hartree Fock'
        case(SC_CHOSEX)
          global_XC_string='SC CHOSEX'
        case(SE_CHOSEX)

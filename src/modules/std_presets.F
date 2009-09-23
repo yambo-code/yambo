@@ -73,7 +73,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND
 #if defined _SC || defined _RT || defined _MAGNETIC
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,&
-&                     using_SC_WFs,SC_cycle_mixing,SC_fft_size
+&                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB
 #endif
 #if defined _RT
  use real_time,  ONLY:RT_step,Tot_steps, Thermal_steps, Efield,Integrator_name, &
@@ -393,7 +393,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  SC_cycle_mixing=0.5
  SC_rho_threshold=1.E-5
  SC_potential='none'
- using_SC_WFs=.FALSE.
+ compatible_SC_DB=.FALSE.
+ found_SC_DB=.FALSE.
  !
 #endif
 #if defined _RT

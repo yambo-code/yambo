@@ -39,7 +39,7 @@ subroutine XCo_local(E,Xk)
  use com,           ONLY:error
  use IO_m,          ONLY:REP,VERIFY
  use SC,            ONLY:load_SC_components,V_xc_sc,V_hartree_sc,SC_fft_size, &
- &                       SC_bands
+ &                       SC_bands,compatible_SC_DB
 #endif
  !
  implicit none
@@ -51,7 +51,7 @@ subroutine XCo_local(E,Xk)
  !
  ! Work Space
  !
- integer     ::i1,ifft,ifftp,ifft_sp1,ifftp_sp1,ifft_sp2,ib,ibp,ik,i_sp1,io_err
+ integer     ::i1,ifft,ifftp,ifft_sp1,ifftp_sp1,ifft_sp2,ib,ibp,ik,i_sp1
 #if defined _DOUBLE
  complex(DP) ::zdotc,zdotu
 #else 
@@ -89,9 +89,9 @@ subroutine XCo_local(E,Xk)
    !
    allocate(V_xc_sc(fft_size,n_spin),V_hartree_sc(fft_size,n_spin))
    SC_fft_size=fft_size
-   call load_SC_components('V',COM_=REP,MODE_=VERIFY,io_err_=io_err)
+   call load_SC_components('V',COM_=REP,MODE_=VERIFY)
    !
-   if (io_err/=0) call error('SC potential FFT size is wrong')
+   if (.not.compatible_SC_DB) call error('Incompatible potential database')
    !
    V_xc=V_xc_sc
    deallocate(V_xc_sc,V_hartree_sc)

@@ -21,7 +21,6 @@
 !
 integer function ioQP(what,qp,ID)
  use pars,           ONLY:SP,schlen
- use drivers,        ONLY:l_ppa,l_chosex
  use D_lattice,      ONLY:alat
  use R_lattice,      ONLY:nqbz
  use memory_m,       ONLY:mem_est
@@ -30,16 +29,15 @@ integer function ioQP(what,qp,ID)
  use QP_m,           ONLY:QP_t,QP_state,QP_nk,QP_nb,QP_G_dr,&
 &                         QP_n_G_bands,QP_n_states,QP_W,QP_G_er,&
 &                         QP_n_W_freqs,QP_W_dr,QP_W_er,QP_W_partially_done,&
-&                         GWo_iterations,QP_solver,GF_is_causal
+&                         GWo_iterations,GF_is_causal
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
 &                         write_is_on,io_mode,DUMP,VERIFY,&
 &                         io_fragment,io_check_restart,io_restart,&
 &                         io_netcdf_support,ver_is_gt_or_eq,&
-&                         db_alat,variable_is_found
+&                         db_alat,variable_is_found,IO_INCOMPATIBLE_VAR
  use global_XC,      ONLY:QP_DB_kind,SE_GoWo,SE_GWo,SE_GoWo_PPA,SE_GWo_PPA,SE_CHOSEX,SE_NONE,&
 &                         SE_POLARON
- use com,            ONLY:warning
  !
  implicit none
  type(QP_t)  ::qp
@@ -81,7 +79,7 @@ integer function ioQP(what,qp,ID)
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      else if (variable_is_found(ID,"QP_DB_kind")< 0.and.read_is_on(ID)) then
        QP_DB_kind=0
-       ioQP=-1
+       ioQP=IO_INCOMPATIBLE_VAR
        return
      endif
    endif
@@ -224,7 +222,7 @@ integer function ioQP(what,qp,ID)
            i_found=0
          endif
        enddo
-       if (i_found/=0) io_status(ID)=-1
+       if (i_found/=0) io_status(ID)=IO_INCOMPATIBLE_VAR
      enddo
    endif
    !

@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
-&                       DB_R0,R0,R1,DB_R1,CH0,CH1,L0,DB_L0,UNIT,MENU,&
+&                       DB_R0,R0,R1,DB_R1,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
 &                       DESCRIPTION)
  !
  use pars,    ONLY:SP,schlen,lchlen
@@ -43,7 +43,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
  real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
  logical,     optional :: L0,DB_L0,CHECK,WARN
- character(*),optional :: CH0,CH1(:)
+ character(*),optional :: CH0,DB_CH0,CH1(:)
  character(lchlen),optional :: DESCRIPTION
  !
  ! Work Space
@@ -379,6 +379,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      else
        write(io_unit(ID)) db_ch(1)
      endif
+     if (present(DB_CH0))   DB_CH0=CH0
      if (present(VAR)) call msg(msg_where,VAR,trim(db_ch(1)))
    else if (read_is_on(ID)) then
      if (io_netcdf_support(ID)) then
@@ -391,6 +392,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      endif
      ch=""
      if (io_mode(ID)==DUMP) CH0=db_ch(1)
+     if (present(DB_CH0))   DB_CH0=db_ch(1)
      if (io_mode(ID)==VERIFY) then
        i_err=0
        if (trim(db_ch(1))/=CH0) i_err=-1

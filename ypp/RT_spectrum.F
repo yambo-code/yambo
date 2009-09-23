@@ -33,7 +33,7 @@ subroutine RT_spectrum(en,k)
  use R_lattice,      ONLY:bz_samp
  use parser_m,       ONLY:parser
  use timing,         ONLY:live_timing
- use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,NONE,DUMP
+ use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP
  use real_time,      ONLY:Tot_steps,RT_step,j_current,A_norm,i_time, &
 &                         max_rt_steps_disk,current_cache,n_ext_fields 
  implicit none
@@ -44,8 +44,8 @@ subroutine RT_spectrum(en,k)
  ! Work Space
  !
  integer  :: io_J,io_G,ID(2)
- integer  :: damp,i1,i2,last_point
- integer  :: niter,istart,iend,nsteps
+ integer  :: damp,i1,i2
+ integer  :: niter,istart,iend
  logical  :: Prt_Current,Prt_Einduced,Use_FFT
  character(lchlen)  :: file_name(3),dump_ch
  character(schlen)  :: headings(7)
@@ -58,7 +58,6 @@ subroutine RT_spectrum(en,k)
  real(DP),    allocatable :: E_induced(:,:)
  integer     :: fft_sign
  integer(8)  :: fftw_plan
- logical     :: found
  !
  ! Parameters
  !

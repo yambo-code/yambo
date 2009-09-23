@@ -37,7 +37,8 @@ module SC
  real(SP)          :: SC_cycle_mixing
  !
  character(schlen) :: SC_potential
- logical           :: using_SC_WFs
+ logical           :: compatible_SC_DB
+ logical           :: found_SC_DB
  logical           :: local_V
  logical           :: NSC_shot
  logical           :: l_use_RHO_IO
@@ -75,12 +76,18 @@ module SC
  interface
    !
    subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,xc_functional,&
-&                                perturbation,io_err_)
+&                                perturbation)
      use electrons, ONLY:levels
      implicit none
      character(*)           :: what
      type(levels), optional :: E
-     integer,      optional :: COM_,MODE_,ik,n_bands,kind,xc_functional,io_err_,perturbation
+     integer,      optional :: COM_
+     integer,      optional :: MODE_
+     integer,      optional :: ik
+     integer,      optional :: n_bands
+     integer,      optional :: kind
+     integer,      optional :: xc_functional
+     integer,      optional :: perturbation
    end subroutine  
  end interface  
  !

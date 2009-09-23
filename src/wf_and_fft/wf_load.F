@@ -40,9 +40,9 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                        io_fragmented, io_netcdf_support, RD_CL,DUMP
 #if defined _SC || defined _RT || defined _MAGNETIC
  use com,           ONLY:warning,error
- use SC,            ONLY:using_SC_WFs,SC_R,load_SC_components,SC_bands
+ use SC,            ONLY:compatible_SC_DB,SC_R,load_SC_components,SC_bands,found_SC_DB
  use global_XC,     ONLY:WF_kind,WF_xc_functional,&
-&                        setup_global_XC,MORE_NONE,WF_perturbation,global_xc_string,SE_NONE,EXT_NONE
+&                        MORE_NONE,WF_perturbation,global_xc_string,SE_NONE,EXT_NONE
  use xc_functionals,ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL
 #endif
  implicit none
@@ -53,7 +53,7 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  ! Work Space
  !
- character(1)     ::wf_space_here
+ character(2)     ::wf_space_here
  character(schlen)::wf_title
  integer          ::i1,ikibz,ib,i2,ic,is,ig,igfft,wf_size,ib_grp,&
 &                   s_2_load(2),iG_max,iG_bounds_loaded(2),iGo_max,ACTION_
@@ -120,26 +120,25 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  call WF_free()
  !
+ wf_b=bands_to_load
+ !
 #if defined _SC || defined _RT || defined _MAGNETIC
  !
- ! First check if there are enough bands
+ ! First check and fix the number of bands 
  !
- call load_SC_components('check_bands',n_bands=bands_to_load(2))
+ call load_SC_components('check_WF_DB',n_bands=bands_to_load(2))
  !
- if (.not.using_SC_WFs) then
+ if (found_SC_DB.and.compatible_SC_DB) then
    !
-   if (bands_to_load(2)>SC_bands) call error(' [WF] Too many bands required ('//&
-&                                            trim(intc(bands_to_load(2)))//'). Only '//trim(intc(SC_bands))//' available.')
-   !
+   if (any ( wf_b/=(/1,SC_bands/) )) call warning(' [WF] Forced '//trim(intc(SC_bands))//' bands to be loaded')
    wf_b=(/1,SC_bands/)
-   using_SC_WFs=.TRUE.
-   call warning(' [WF] Forced '//trim(intc(SC_bands))//' bands to be loaded')
+   !
+ else if (.not.compatible_SC_DB) then
+   !
+   call error(' [WF] Too many bands required ('//&
+&             trim(intc(bands_to_load(2)))//'). Only '//trim(intc(SC_bands))//' available.')
    !
  endif
- !
-#else
- !
- wf_b=bands_to_load
  !
 #endif
  !
@@ -263,7 +262,7 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
 #if defined _SC || defined _RT || defined _MAGNETIC
  !
- if (using_SC_WFs) then
+ if (found_SC_DB) then
    !
    call load_SC_components('WF',COM_=NONE,MODE_=DUMP,kind=WF_kind,xc_functional=WF_xc_functional,&
 &                          perturbation=WF_perturbation)
@@ -277,17 +276,6 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
      call WF_rotate(ikibz,wf,wf_size)
    enddo
    call load_SC_components('WF_clean')
-   !
-   ! Call setup of WF xc here so to syncronize the WF_global_xc_string 
-   ! to the actual values of WF_kind and WF_xc_functional.
-   ! This is needed as, for example, loaded_WF_xc_string may be dumped
-   ! from ostnts database.
-   !
-   call setup_global_XC('WF',WF_kind,MORE_NONE,WF_xc_functional,WF_perturbation)
-   !
- else
-   !
-   call setup_global_XC('WF',GS_xc_KIND,MORE_NONE,GS_xc_FUNCTIONAL,EXT_NONE)
    !
  endif
  !

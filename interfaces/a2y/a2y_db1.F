@@ -21,7 +21,7 @@
 !
 subroutine a2y_db1(en,k,KSS_file_name)
  !
- use pars,                  ONLY : SP, DP, PI, schlen
+ use pars,                  ONLY : SP, DP,pi
  use com,                   ONLY : msg,warning
  use electrons,             ONLY : levels, default_nel,n_bands,n_spin,n_sp_pol,&
 &                                  n_spinor 
@@ -34,7 +34,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  use vec_operate,           ONLY : cross_product
  use defs_datatypes,        ONLY : hdr_type, wffile_type
  use xc_functionals,        ONLY : XC_EXCHANGE_CORRELATION,GS_xc_KIND,GS_xc_FUNCTIONAL,&
-&                                  xc_string,XC_LDA_C_PW,XC_LDA_C_PZ,XC_LDA_C_WIGNER,&
+&                                  XC_LDA_C_PW,XC_LDA_C_PZ,XC_LDA_C_WIGNER,&
 &                                  XC_LDA_C_HL,XC_LDA_C_XALPHA,NONE,XC_LDA_X,&
 &                                  XC_EXCHANGE
  use mod_com2y,            ONLY : print_interface_dimensions,symmetries_check_and_load,&

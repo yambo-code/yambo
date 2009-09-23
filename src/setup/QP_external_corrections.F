@@ -22,6 +22,12 @@
 subroutine QP_external_corrections(Xen,en,Xk,k,X)
  !
  use drivers
+#if defined _RAS
+ use ras_module,    ONLY:lras, lreels
+#endif
+#if defined _REELS
+ use reels_module,  ONLY:lreels
+#endif
  use X_m,           ONLY:X_t
  use electrons,     ONLY:levels,n_bands
  use R_lattice,     ONLY:bz_samp

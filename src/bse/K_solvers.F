@@ -45,7 +45,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! Work Space
  !
- integer           ::ik,iv,ic,i1,i_sp,X_ib_save(2),ioBS_err,ID 
+ integer           ::ik,iv,ic,i1,i_sp,ioBS_err,ID 
  real(SP)          ::v(3)
  logical           ::run_Haydock,run_Diago,Pert_inversion
  integer, external ::ioBS

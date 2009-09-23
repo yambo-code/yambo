@@ -21,6 +21,7 @@
 !
 subroutine setup(en,Xen,Ken,k,Xk)
  !
+ use drivers,        ONLY:l_sc_run
  use pars,           ONLY:SP,pi,schlen
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
@@ -256,16 +257,20 @@ subroutine setup(en,Xen,Ken,k,Xk)
  K_perturbation=X_perturbation
  call setup_global_XC('K',K_kind,MORE_NONE,K_xc_functional,K_perturbation)
  !
- ! SC wavefunctions
- !
- ! Here I only check for the existence of the SC WF DB. Band checking will be done later
- !
- call load_SC_components('check_WF_DB',n_bands=0,&
-&                        kind=WF_kind,xc_functional=WF_xc_functional,perturbation=WF_perturbation)
-
- if (found_SC_DB) then
-   call setup_global_XC('WF',WF_kind,MORE_NONE,WF_xc_functional,WF_perturbation)
-   call warning(trim(loaded_WF_xc_string)//' wavefunctions found. Bands check at loading time.')
+ if (.not.l_sc_run) then
+   !
+   ! SC wavefunctions
+   !
+   ! Here I only check for the existence of the SC WF DB. Band checking will be done later
+   !
+   call load_SC_components('check_WF_DB',n_bands=0,&
+&                          kind=WF_kind,xc_functional=WF_xc_functional,perturbation=WF_perturbation)
+   !
+   if (found_SC_DB) then
+     call setup_global_XC('WF',WF_kind,MORE_NONE,WF_xc_functional,WF_perturbation)
+     call warning(trim(loaded_WF_xc_string)//' wavefunctions found. Bands check at loading time.')
+   endif
+   !
  endif
  !
 #endif

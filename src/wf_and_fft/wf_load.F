@@ -133,7 +133,7 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    if (any ( wf_b/=(/1,SC_bands/) )) call warning(' [WF] Forced '//trim(intc(SC_bands))//' bands to be loaded')
    wf_b=(/1,SC_bands/)
    !
- else if (.not.compatible_SC_DB) then
+ else if (found_SC_DB.and..not.compatible_SC_DB) then
    !
    call error(' [WF] Too many bands required ('//&
 &             trim(intc(bands_to_load(2)))//'). Only '//trim(intc(SC_bands))//' available.')

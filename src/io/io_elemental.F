@@ -21,7 +21,7 @@
 !
 subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
 &                       DB_R0,R0,R1,DB_R1,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
-&                       DESCRIPTION)
+&                       DESCRIPTION,DO_NOT_DUMP)
  !
  use pars,    ONLY:SP,schlen,lchlen
 #if defined _NETCDF_IO
@@ -42,7 +42,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
                                ! MENU = 1 (on) 0 (off)
  integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
  real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
- logical,     optional :: L0,DB_L0,CHECK,WARN
+ logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
  character(*),optional :: CH0,DB_CH0,CH1(:)
  character(lchlen),optional :: DESCRIPTION
  !
@@ -53,7 +53,12 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  integer :: i_db(MAX_DB_ELEMENTS),i_err
  real(SP):: r_db(MAX_DB_ELEMENTS),local_unit
  character(schlen) :: db_ch(MAX_DB_ELEMENTS)
- logical :: CHECK_
+ logical :: CHECK_,DUMP_
+ !
+ DUMP_=io_mode(ID)==DUMP
+ if (present(DO_NOT_DUMP)) then
+   DUMP_=.not.DO_NOT_DUMP
+ endif
  !
  if  (present(CHECK)) then
    CHECK_=CHECK
@@ -133,7 +138,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      else
        read(io_unit(ID)) i_db(1)
      endif
-     if (io_mode(ID)==DUMP) I0=i_db(1)
+     if (DUMP_)          I0=i_db(1)
      if (present(DB_I0)) DB_I0=i_db(1)
      ch=""
      if (io_mode(ID)==VERIFY.and.present(OP)) then
@@ -183,7 +188,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      else
        read(io_unit(ID)) i_db(:size(I1))
      endif
-     if (io_mode(ID)==DUMP) I1=i_db(:size(I1))
+     if (DUMP_)          I1=i_db(:size(I1))
      if (present(DB_I1)) DB_I1=i_db(:size(I1))
      ch=""
      if (io_mode(ID)==VERIFY.and.present(OP)) then
@@ -233,8 +238,8 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      else
        read(io_unit(ID)) r_db(1)
      endif
+     if (DUMP_)          R0=r_db(1)
      if (present(DB_R0)) DB_R0=r_db(1)
-     if (io_mode(ID)==DUMP) R0=r_db(1)
      ch=""
      if (io_mode(ID)==VERIFY.and.present(OP)) then
        i_err=r_verify((/R0/),(/r_db(1)/))
@@ -283,7 +288,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      else
        read(io_unit(ID)) r_db(:size(R1))
      endif
-     if (io_mode(ID)==DUMP) R1=r_db(:size(R1))
+     if (DUMP_)          R1=r_db(:size(R1))
      if (present(DB_R1)) DB_R1=r_db(:size(R1))
      ch=""
      if (io_mode(ID)==VERIFY.and.present(OP)) then
@@ -341,7 +346,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      endif
      ch=""
      if (present(DB_L0)) DB_L0=i_db(2)==1
-     if (io_mode(ID)==DUMP) L0=i_db(2)==1
+     if (DUMP_)          L0=i_db(2)==1
      if (io_mode(ID)==VERIFY.and.present(OP)) then
        i_err=i_verify((/i_db(1)/),(/i_db(2)/))
        if (CHECK_) then
@@ -391,7 +396,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
        read(io_unit(ID)) db_ch(1)
      endif
      ch=""
-     if (io_mode(ID)==DUMP) CH0=db_ch(1)
+     if (DUMP_)             CH0=db_ch(1)
      if (present(DB_CH0))   DB_CH0=db_ch(1)
      if (io_mode(ID)==VERIFY) then
        i_err=0

@@ -28,7 +28,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use ras_module,     ONLY:transloc, lras
 #endif
 #if defined _SC || defined _RT || defined _MAGNETIC
- use SC,             ONLY:load_SC_components,found_SC_DB,compatible_SC_DB
+ use SC,             ONLY:load_SC_components,found_SC_DB
  use global_XC,      ONLY:WF_kind,WF_xc_functional,MORE_NONE,WF_perturbation
 #endif
  use drivers,        ONLY:l_col_cut

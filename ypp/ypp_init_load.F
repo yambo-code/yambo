@@ -183,8 +183,10 @@ subroutine ypp_init_load(defs)
 &              gamma_radius,verb_level=V_general)
  !
 #if defined _YPP_RT
- call it(defs,'ExtField1','External Field[1]',efield(1,:))
- call it(defs,'ExtField2','External Field[2]',efield(2,:))
+ !
+ call it(defs,'EField1','First external Electric Field',E_field(1,:))
+ call it(defs,'EField1','Additional external Electric Field',E_field(2,:))
+ call it(defs,'BField', 'External Magnetic Field direction ("X","Y","Z")',B_field_direction)
  call it('f',defs,'RmAllSymm','Remove all symmetries') 
  !
  call it(defs,'EnRngeRt','Energy range',X_rt%energy_range,unit=E_unit)

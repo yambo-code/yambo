@@ -27,14 +27,15 @@ subroutine RT_fix_symmetries(E,k)
  use memory_m,            ONLY:mem_est
  use electrons,           ONLY:levels,E_reset,n_spin
  use vec_operate,         ONLY:v_norm,v_is_zero
+ use matrix_operate,      ONLY:m3det
  use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,a,alat,&
 &                              i_space_inv,sop_inv,inv_index,symmetry_group_table
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,&
 &                              g_rot,ng_closed,bz_samp_duplicate,rl_sop
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,&
-&                              OP_APP,cp_file,rm_file
+&                              OP_APP,cp_file,rm_file,cp_directory
  use wave_func,           ONLY:ioWF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io, &
-&                              wf_ng,wf_state,wf_load,wf_state,wf,WF_free,wf_ng 
+&                              wf_ng,wf_state,wf_load,wf_state,wf,WF_free,wf_ng ,wf_nb_io_groups
  use real_time,           ONLY:kpoints_map
  use stderr,              ONLY:intc,set_real_printed_length
  use parser_m,            ONLY:parser
@@ -49,15 +50,23 @@ subroutine RT_fix_symmetries(E,k)
  ! Work Space
  !
  integer               :: ik_save,iv(2),ierr,ib,i_wf,i_spin,&
-&                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik
+&                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik,i_elmt
  integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:)
  real(SP)              :: v1(3),v2(3),m(3,3)
  real(SP), allocatable :: wf_disk(:,:,:,:)
- logical               :: Rm_all_symm
+ logical               :: Rm_all_symm,use_E_field,use_B_field,reject_symmetry
  type(bz_samp)         :: k_save
- character(lchlen)     :: core_io_path_save
+ character(lchlen)     :: core_io_path_save,wf_fragment
  !
- call section('*',"== Real Time: BZ sampling remapping ==")
+ use_E_field=.FALSE.
+ use_B_field=.FALSE.
+ if (any(E_field/=0.)) use_E_field=.TRUE.
+ if (any((/"X","x","Y","y","Z","z"/)==B_field_direction)) use_B_field=.TRUE.
+ !
+ if (use_E_field) call section('*',"== Electric Fields in real time: BZ sampling remapping ==")
+ if (use_B_field) call section('*',"== Magnetic field: BZ sampling remapping ==")
+ !
+ if (.not.use_B_field.and..not.use_E_field) return
  !
  if (wf_nb_io/=E%nb) then
    call warning('Splitted wavefunctions still not supported')
@@ -90,19 +99,47 @@ subroutine RT_fix_symmetries(E,k)
  i_time_rev=0 ! No time reversal
  call msg('s',trim(intc(nsym))//' spatial symmetries reduced to ...')
  !
+ if (use_B_field) then
+   select case (B_field_direction)
+     case ("X","x")
+       i_elmt=1
+     case ("Y","y")
+       i_elmt=2
+     case ("Z","z")
+       i_elmt=3
+   end select
+ endif
+ !
  if(Rm_all_symm) then
    nsym=1
- else
+ else 
    is=2
    do while (is<=nsym)
-     v1(:) = matmul( dl_sop(:,:,is), efield(1,:) )      
-     v2(:) = matmul( dl_sop(:,:,is), efield(2,:) )      
-     if((v_norm(v1(:)-efield(1,:)))>1.E-5.or.(v_norm(v2(:)-efield(2,:)))>1.E-5) then
+     !
+     if (use_E_field) then
+       v1(:) = matmul( dl_sop(:,:,is), E_field(1,:) )      
+       v2(:) = matmul( dl_sop(:,:,is), E_field(2,:) )      
+       reject_symmetry=v_norm(v1(:)-E_field(1,:))>1.E-5.or.v_norm(v2(:)-E_field(2,:))>1.E-5
+     else if (use_B_field) then
+       reject_symmetry= abs(dl_sop(i_elmt,i_elmt,is))-1.>1.E-5
+       if (.not.reject_symmetry) then
+         do i1=1,3
+           if (i1/=i_elmt.and.abs(dl_sop(i1,i_elmt,is))>1.E-5 ) reject_symmetry=.TRUE.
+           if (i1/=i_elmt.and.abs(dl_sop(i_elmt,i1,is))>1.E-5 ) reject_symmetry=.TRUE.
+         enddo
+       endif
+       if (.not.reject_symmetry) then
+         if ( abs ( m3det(dl_sop(:,:,is))/dl_sop(i_elmt,i_elmt,is) - 1.)>1.E-5)  reject_symmetry=.TRUE.
+       endif
+     endif
+     !
+     if(reject_symmetry) then
        dl_sop(:,:,is:nsym-1)=dl_sop(:,:,is+1:nsym)
        nsym=nsym-1
      else
        is=is+1
      endif
+     !
    enddo
  endif
  !
@@ -193,7 +230,13 @@ subroutine RT_fix_symmetries(E,k)
    call msg('s',':: Copying existing database ...')
    !
    call cp_file(trim(core_io_path)//"/SAVE/ns.wf",trim(more_io_path)//"/SAVE",ierr)
-   if (ierr/=0) call cp_file(trim(core_io_path)//"/SAVE/s.wf",trim(more_io_path)//"/SAVE",ierr)
+   call cp_file(trim(core_io_path)//"/SAVE/s.wf",trim(more_io_path)//"/SAVE",ierr)
+   do ik=1,k%nibz
+     do i1=1,wf_nb_io_groups
+        write (wf_fragment,'(a,i5.5,a,i5.5)') 'wf_',ik,'_',i1
+        call cp_directory(trim(core_io_path)//"/SAVE/"//trim(wf_fragment),trim(more_io_path)//"/SAVE",ierr)
+     enddo
+   enddo
    !
    call msg('l','done')
    !

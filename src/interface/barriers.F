@@ -203,8 +203,6 @@ subroutine barriers()
 &       trim(always_runlevels))
    if (n_spinor>1) call switch_off_runlevel('scpot',on_name=' ')
    if (gw0_raxis) call switch_off_runlevel('all',on_name=' ')
- else if (n_spin==1) then
-   call switch_off_runlevel('magnetic',on_name=' ')
  endif 
  !
  ! GPL_EXCLUDE_END SPIN_INGORE

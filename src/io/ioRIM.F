@@ -38,7 +38,7 @@ integer function ioRIM(ID)
  integer             ::RIM_ng_disk,i1
  character(schlen)   ::VAR_name
  !
- ioRIM=io_connect(desc="RIM",type=1,ID=ID)
+ ioRIM=io_connect(desc="RIM",type=2,ID=ID)
  !
  if (ioRIM/=0) goto 1
  !

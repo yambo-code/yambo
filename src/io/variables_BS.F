@@ -198,11 +198,11 @@ integer function variables_BS(ID,local_description,DB,X)
    i_local_desc=i_local_desc+1
    call io_elemental(ID,I0=RIM_ng,&
 &     VAR=' RIM|RL components      [col]:',CHECK=.true.,OP=(/"=="/),&
-&     DESCRIPTION=local_description(i_local_desc))
+&     DESCRIPTION=local_description(i_local_desc),DO_NOT_DUMP=.TRUE.)
    i_local_desc=i_local_desc+1
    call io_elemental(ID,I0=RIM_n_rand_pts,&
 &     VAR='    |Random points      [col]:',CHECK=.true.,OP=(/"=="/),&
-&     DESCRIPTION=local_description(i_local_desc))
+&     DESCRIPTION=local_description(i_local_desc),DO_NOT_DUMP=.TRUE.)
    !
  endif
  !

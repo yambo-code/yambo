@@ -98,7 +98,7 @@ module IO_m
    !
    subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
 &                          DB_R0,R0,R1,DB_R1,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
-&                          DESCRIPTION)
+&                          DESCRIPTION,DO_NOT_DUMP)
      !
      use pars
      integer      :: ID
@@ -106,7 +106,7 @@ module IO_m
      integer,     optional :: VAR_SZ,MENU
      integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
      real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
-     logical     ,optional :: L0,DB_L0,CHECK,WARN
+     logical     ,optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
      character(*),optional :: CH0,DB_CH0,CH1(:)
      character(lchlen),optional :: DESCRIPTION
      !
@@ -610,7 +610,15 @@ module IO_m
      implicit none
      character(*)      :: file_,dest_
      integer           :: ierr_
-     call isystem( cstr("cp "//file_//" "//dest_//" >& /dev/null" ), ierr_ )
+     call isystem( cstr("bash -c 'cp "//file_//" "//dest_//" >& /dev/null' " ), ierr_ )
+   end subroutine
+   !
+   subroutine cp_directory(dir_,dest_,ierr_)
+     use stderr,         ONLY:cstr
+     implicit none
+     character(*)      :: dir_,dest_
+     integer           :: ierr_
+     call isystem( cstr("bash -c 'cp -R "//dir_//" "//dest_//" >& /dev/null' " ), ierr_ )
    end subroutine
    !
    subroutine rm_file(filename)

@@ -54,7 +54,7 @@
   {"freehole","f","Free hole position [excitons plot]",0,0,0,0}, 
   {"bzrim",   "r","BZ energy RIM analyzer",0,0,0,0}, 
 #if defined _YPP_RT
-  {"rsymm",   "n","Find symmetries consistent with an external applied field",0,0,0,0}, 
+  {"rsymm",   "n","Find symmetries consistent with an external vector potential",0,0,0,0}, 
   {"rtoptics","o","Analize response from real-time dynamics",0,0,0,0}, 
 #endif
 #if defined _YPP_ELPH

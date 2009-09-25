@@ -135,10 +135,11 @@ module YPP
  !
  ! Reduce Symmetries
  !
- logical  :: l_rsymm
- logical  :: l_rtoptics
- real(SP) :: efield(2,3)
- integer  :: ref_efield
+ logical     :: l_rsymm
+ logical     :: l_rtoptics
+ real(SP)    :: E_field(2,3)
+ character(1):: B_field_direction
+ integer     :: ref_efield
  !
  type Xw_rt
    real(SP) :: time_range(2)       ! time windows for the transform

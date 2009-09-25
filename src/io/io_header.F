@@ -315,13 +315,13 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
          call io_elemental(ID,CH0=string_,VAR=desc_)
        else
          if (xc_kind_force) then
-           call io_elemental(ID,DB_CH0=string_,CH0=loaded_WF_xc_string,VAR=desc_,CHECK=WARN,OP=(/"=="/))
+           call io_elemental(ID,DB_CH0=string_,CH0=loaded_WF_xc_string,VAR=desc_,CHECK=WARN,OP=(/"=="/),DO_NOT_DUMP=.TRUE.)
          else
-           call io_elemental(ID,DB_CH0=string_,CH0=loaded_WF_xc_string,VAR=desc_,WARN=WARN,OP=(/"=="/))
+           call io_elemental(ID,DB_CH0=string_,CH0=loaded_WF_xc_string,VAR=desc_,WARN=WARN,OP=(/"=="/),DO_NOT_DUMP=.TRUE.)
          endif
        endif
      else
-       call io_elemental(ID,CH0=string_,VAR=desc_,WARN=WARN,OP=(/"=="/))
+       call io_elemental(ID,CH0=loaded_WF_xc_string,VAR=desc_,WARN=WARN,OP=(/"=="/))
      endif
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !

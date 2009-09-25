@@ -64,6 +64,8 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,&
    if (ik==0) call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=MODE_,ID=ID)
  else if (what=="E".or.what=="V") then
    call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=MODE_,ID=ID)
+ else if (what=="check_WF_DB") then
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
  endif
  !
  select case (what)
@@ -73,7 +75,9 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,&
      !
    case("V")
      io_err=io_SC_components('V',E_dummy,ID)
-     compatible_SC_DB = io_err==0
+     !
+   case("check_WF_DB")
+     io_err=io_SC_components('WF',E_dummy,ID)
      !
    case("Hsc")
      io_err=io_SC_components('V',E_dummy,ID)
@@ -113,22 +117,20 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,&
        call mem_est("SC_R")
        return
      endif
-     !
-   case("check_WF_DB")
-     !
-     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
-     io_err=io_SC_components('WF',E_dummy,ID)
-     !
-     compatible_SC_DB = n_bands<= SC_bands
      ! 
  end select
+ !
+ ! Define compatible_SC_DB/found_SC_DB flags
+ !
+ found_SC_DB      = .not.(io_err==IO_NO_DATABASE)
+ compatible_SC_DB = io_err == 0
+ !
+ if (what=="check_WF_DB")  compatible_SC_DB = n_bands<= SC_bands
  !
  if (io_err==0.and.present(kind)) then
    kind=SC_kind
    xc_functional=SC_xc_functional
    perturbation=SC_perturbation
  endif
- !
- found_SC_DB     = .not.(io_err==IO_NO_DATABASE)
  !
 end subroutine

@@ -175,7 +175,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    !
    !REMOVE SYMMETRIES
    !
-   efield=0._SP
+   E_field=0._SP
+   B_field_direction=" "
    !
    ! Probe external field to calcualted dielectric constant
    ! 
@@ -355,7 +356,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !             
  l_rtoptics  =runlevel_is_on('rtoptics')
  !
- if (l_rsymm) call initactivate(1,"ExtField1 ExtField2 RmAllSymm")
+ if (l_rsymm) call initactivate(1,"EField1 EField2 BField RmAllSymm")
  !
  if (l_rtoptics) then 
     call initactivate(1,"EnRngeRt ETStpsRt TmRngeRt DampMode DampFactor FourierDamp")

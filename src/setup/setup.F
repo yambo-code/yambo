@@ -217,7 +217,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! SC Energies 
  !-------------
-#if defined _SC || defined _RT || _MAGNETIC
+#if defined _SC || defined _RT || defined _MAGNETIC
  !
  ! First check if it possible to load the SC energies
  !

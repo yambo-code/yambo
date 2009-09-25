@@ -224,10 +224,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  if (l_sc_magnetic) then
    !
-   ! Now SC_add_magnetic evaluates the derivative,
+   ! MAG_Hamiltonian evaluates the derivative,
    ! does the fft of the derivative. Then call WF_free and load the wf in
    ! real space, compute the magnetic part of the hamiltonian and, 
-   ! allocate and initialise Ho, write Hmagnetic in Ho 
+   ! allocate and initialise Ho, write H_magnetic in Ho 
    !
    call MAG_Hamiltonian(.FALSE.)
    !

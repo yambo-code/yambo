@@ -168,6 +168,9 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/),quiet=QUIET_)
  !
  call io_control(ACTION=OP_RD,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
+#if defined _MANYK
+ if (wf_k(1)==wf_k(2).and.wf_k(1)>1) call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
+#endif
  io_err=ioWF(ID,wf_disk)
  !
  ! GPL_INCLUDE_START SPIN_IGNORE

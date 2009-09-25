@@ -76,6 +76,7 @@ module YPP
  logical      ::l_amplitude
  logical      ::l_spin
  logical      ::l_free_hole
+ logical      ::l_angular_momentum
  integer      ::lambda
  integer      ::n_lambda
  integer      ::BS_H_dim

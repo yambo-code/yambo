@@ -51,7 +51,7 @@ CLEANS   = clean clean_all
 PROJECTS = yambo_ph yambo_sc yambo_ras yambo_reels \
 	       yambo_manyk yambo_ras_manyk yambo_tb \
            yambo_magnetic yambo_PWdiago yambo_polaron \
-           yambo_rt ypp_rt ypp_ph ypp_ras ypp_sc 
+           yambo_rt ypp_rt ypp_ph ypp_ras ypp_sc
 BROKEN   = yambo_gamma
 TESTS    = 
 EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(TESTS)

@@ -45,7 +45,7 @@ integer function io_SC_components(what,E_sc,ID)
  use QP_m,           ONLY:QP_nk
 #endif                                
 #if defined _MAGNETIC
- use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B_z,MAG_radius
+ use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B_z,MAG_radius,MAG_gauge
  use global_XC,      ONLY:EXT_Bz_LANDAU,EXT_Bz_PAULI,EXT_Bz_MAGNETISM
 #endif
  use matrix_operate, ONLY:mat_c2r,mat_r2c
@@ -215,6 +215,12 @@ integer function io_SC_components(what,E_sc,ID)
 &         VAR=' [MAG] B flux radius             :',CHECK=.true.,OP=(/"=="/))
      endif
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     !
+     call io_elemental(ID,VAR='MAG_GAUGE',CH0="",VAR_SZ=1,MENU=0)
+     call io_elemental(ID,CH0=MAG_gauge,&
+&         VAR=' [MAG] Gauge                     :',CHECK=CHECK_,OP=(/"=="/))
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     !
    endif
 #endif
    !

@@ -20,7 +20,10 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
 /*
- Driver declaration
+  declaration
+*/
+/*
+ "e" and "s" commmand line structure
 */
 #if defined _FORTRAN_US
  int ypp_i
@@ -44,10 +47,15 @@
   {"nompi", "N","Skip MPI initialization",0,0,0,0}, 
   {"dbfrag","S","DataBases fragmentation",0,0,0,0}, 
   {"bzgrids","k","BZ Grid generator [(k)pt,(q)pt,(l)ongitudinal,(h)igh symmetry]",0,0,1,0}, 
-#if defined _YPP_ELPH
+#if defined _YPP_ELPH && ! defined _YPP_SC
   {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mp,(w)ave,(e)lias,(g)kkp,(m)ag]",0,0,1,0}, 
   {"electrons","s","Electrons [(w)ave,(d)ensity,(e)lias,(m)ag,do(s)]",0,0,1,0}, 
-#else
+#endif
+#if ! defined _YPP_ELPH && _YPP_SC
+  {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mp,(w)ave,(m)ag,(l)]",0,0,1,0}, 
+  {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s),(l)]",0,0,1,0}, 
+#endif
+#if ! defined _YPP_ELPH && ! _YPP_SC
   {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mplitude,(w)ave,(m)ag]",0,0,1,0}, 
   {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s)]",0,0,1,0}, 
 #endif

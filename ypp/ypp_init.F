@@ -192,6 +192,15 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    X_rt%noise_ratio    =200
    !
 #endif
+   !
+   ! ANGULAR MOMENTUM
+   !
+#if defined _YPP_SC
+   !
+   l_angular_momentum=.false.
+   !
+#endif
+   !
    ! GPL_EXCLUDE_END
    !
  endif
@@ -284,6 +293,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        l_eliashberg       =trim(rstr_piece(i1+1))=='e'
 #endif
        !
+#if defined _YPP_SC
+       l_angular_momentum =trim(rstr_piece(i1+1))=='l'
+#endif
+       !
      endif
      if ( trim(rstr_piece(i1)) == 'excitons'.or. trim(rstr_piece(i1)) == 'electrons') then
        if (l_amplitude)      call initactivate(1,'amplitude')
@@ -293,6 +306,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #if defined _YPP_ELPH
        if (l_eliashberg)       call initactivate(1,'eliashberg')
        if (l_gkkp)             call initactivate(1,'gkkp')
+#endif
+#if defined _YPP_SC
+       if (l_angular_momentum) call initactivate(1,'angular_m')
 #endif
        if (l_density)        call initactivate(1,'density')
        if (l_sort)           infile_editing=.false.
@@ -315,6 +331,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_eliashberg=runlevel_is_on('eliashberg')
  l_phonons   =runlevel_is_on('phonons')
  l_gkkp      =runlevel_is_on('gkkp')
+#endif
+#if defined _YPP_SC
+ l_angular_momentum = runlevel_is_on('angular_m')
 #endif
  l_excitons =runlevel_is_on('excitons')
  l_electrons=runlevel_is_on('electrons')
@@ -430,6 +449,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  if (l_plot.and.l_sp_wf) &
 #endif
 &                        call QP_init(.FALSE.,.FALSE.)
+#if defined _YPP_SC
+ if (l_angular_momentum) call QP_init(.FALSE.,.FALSE.)
+#endif
  !
 contains
  !

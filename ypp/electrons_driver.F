@@ -32,7 +32,7 @@ subroutine electrons_driver(Xk,Xen)
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
-&                         plot_title,l_dos,dos_broadening,DOS_bands
+&                         plot_title,l_dos,dos_broadening,DOS_bands,l_angular_momentum
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:el_mag
@@ -49,7 +49,11 @@ subroutine electrons_driver(Xk,Xen)
  integer               :: i_qp,ik,ib,ir,i_wf,i_spin,mag_i_dir,nb_to_load(2)
  character(schlen)     :: ch_ws,titles(4)
  !
- if (.not.any((/l_mag,l_density,l_sp_wf,l_dos/))) return
+ if (.not.any((/l_mag,l_density,l_sp_wf,l_dos&
+#if defined _YPP_SC
+&    ,l_angular_momentum  &
+#endif
+&   /))) return
  !
  call plot_check_and_launch(.true.)
  !
@@ -282,6 +286,15 @@ subroutine electrons_driver(Xk,Xen)
    !
    !
  endif
+ !
+ ! Angular momentum 
+ !==================
+ !
+#if defined _YPP_SC
+ if (l_angular_momentum) then 
+   call electrons_angular_momentum()
+ endif
+#endif
  !
  ! GPL_EXCLUDE_END
  !

@@ -32,9 +32,9 @@ module magnetic
  !
  ! Lz Check
  !
- logical           :: eval_Lz
  complex(SP), allocatable :: wf_x(:,:)
  complex(SP), allocatable :: wf_y(:,:)
+ complex(SP), allocatable :: wf_z(:,:)
  real(SP),    allocatable :: A_magn_x(:)
  real(SP),    allocatable :: A_magn_y(:)
  real(SP),    allocatable :: x(:)

@@ -58,7 +58,7 @@ typedef struct
 #if defined _TEST_1
  #define _YAMBO_MAIN
 #endif
-#if defined _ypp  || _YPP_ELPH || _YPP_RAS || _YPP_RT || _YPP_SC
+#if defined _ypp  || _YPP_ELPH || _YPP_RAS || _YPP_RT || _YPP_SC || _YPP_MAGNETIC
  #define _YPP_MAIN
 #endif
 /* 

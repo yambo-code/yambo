@@ -194,7 +194,7 @@ module matrix_operate
      ! Decide which to use among LK or SLK
      !
      if (ncpu==1.or.M_size/ncpu<min_cpu_block_size) lib_in_use=USE_LK 
-#if ! defined _SLK
+#if ! defined _SCALAPACK
      lib_in_use=USE_LK
 #endif
      !
@@ -346,7 +346,7 @@ module matrix_operate
        return
      endif
      !
-#if defined _SLK
+#if defined _SCALAPACK
      !
      ! =============== PARALLEL SECTION ===============
      !
@@ -471,7 +471,7 @@ module matrix_operate
        !Release the proc grid and the BLACS library
        !
        call blacs_gridexit(iblt%ictxt)
-       call blacs_exit(1)
+       !
      endif
      !
 #endif

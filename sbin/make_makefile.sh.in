@@ -71,7 +71,7 @@ llibs="$lib_path $llibs"
 linclude="-I\$(includedir)"
 case $target in
   yambo*)
-   llibs="$llibs \$(llapack) \$(lscalapack) \$(lblacs) \$(lblas)"
+   llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
    llibs="$llibs \$(lnetcdf) -lslatec \$(llocal) \$(lfftw) -lm $llmpi"
     ;;
   a2y|f2y)

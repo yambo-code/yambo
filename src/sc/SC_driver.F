@@ -55,9 +55,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use oscillators_IO, ONLY:oscillators_IO_alloc,oscillators_IO_free,ioRHO_RHO_VX,&
 &                         V_kind
  use global_XC,      ONLY:SC_HF    
-#if defined _MAGNETIC
- use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B_z,eval_Lz
-#endif
  !
  implicit none
  type(levels) ::E
@@ -593,9 +590,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    if ( (E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold) .or.&
 &       stop_now(.FALSE.) ) then
-#if defined _MAGNETIC
-     if(eval_Lz) call MAG_eval_Lz(2)
-#endif
      exit
    endif
    !

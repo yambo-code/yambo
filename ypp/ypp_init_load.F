@@ -61,7 +61,7 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'phonons',      '[R] Phonons')
  call it('r',defs,'gkkp',         '[R] Electron-Phonon databases')
 #endif
-#if defined _YPP_SC
+#if defined _YPP_MAGNETIC
  call it('r',defs,'angular_m',    '[R] Canonical angular momentum')
 #endif
  !

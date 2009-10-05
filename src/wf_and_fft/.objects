@@ -10,5 +10,10 @@ WF_rot_object =
 #if defined _SC || defined _RT || defined _MAGNETIC
 WF_rot_object = WF_rotate.o
 #endif
+WF_mag_objects =
+#if defined _MAGNETIC
+WF_mag_objects = WF_derivative.o
+#endif
 objs = fft_setup.o fft_3d.o $(FFT_object) $(FFT_more) \
-       scatter_Bamp.o scatter_Gamp.o space_inv_by_wf.o wf_load.o $(WF_rot_object)
+       scatter_Bamp.o scatter_Gamp.o space_inv_by_wf.o \
+       wf_load.o $(WF_rot_object) $(WF_mag_objects)

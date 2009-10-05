@@ -23,7 +23,7 @@ subroutine electrons_driver(Xk,Xen)
  !
  use units,          ONLY:HARTREE
  use pars,           ONLY:SP,schlen
- use stderr,         ONLY:intc
+ Use stderr,         ONLY:intc
  use wave_func,      ONLY:wf_load,wf,WF_free,wf_ng,wf_state
  use FFT_m,          ONLY:fft_size,fft_dim
  use R_lattice,      ONLY:bz_samp,nkibz
@@ -50,7 +50,7 @@ subroutine electrons_driver(Xk,Xen)
  character(schlen)     :: ch_ws,titles(4)
  !
  if (.not.any((/l_mag,l_density,l_sp_wf,l_dos&
-#if defined _YPP_SC
+#if defined _YPP_MAGNETIC
 &    ,l_angular_momentum  &
 #endif
 &   /))) return
@@ -64,7 +64,11 @@ subroutine electrons_driver(Xk,Xen)
    call QP_state_table_setup(Xen)
    nb_to_load=(/1,maxval(QP_table(:,1))/)
  endif
- if(.not.l_dos) then
+ if(.not.l_dos &
+#if defined _YPP_MAGNETIC
+&   .and. .not.l_angular_momentum &
+#endif
+&) then
    call wf_load(wf_ng,1,nb_to_load,(/1,Xk%nibz/),space='R',title='-WF')
    nr=fft_dim
    allocate(v2plot(fft_size))
@@ -290,7 +294,7 @@ subroutine electrons_driver(Xk,Xen)
  ! Angular momentum 
  !==================
  !
-#if defined _YPP_SC
+#if defined _YPP_MAGNETIC
  if (l_angular_momentum) then 
    call electrons_angular_momentum()
  endif

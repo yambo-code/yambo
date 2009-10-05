@@ -195,7 +195,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    !
    ! ANGULAR MOMENTUM
    !
-#if defined _YPP_SC
+#if defined _YPP_MAGNETIC
    !
    l_angular_momentum=.false.
    !
@@ -293,7 +293,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        l_eliashberg       =trim(rstr_piece(i1+1))=='e'
 #endif
        !
-#if defined _YPP_SC
+#if defined _YPP_MAGNETIC
        l_angular_momentum =trim(rstr_piece(i1+1))=='l'
 #endif
        !
@@ -307,7 +307,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        if (l_eliashberg)       call initactivate(1,'eliashberg')
        if (l_gkkp)             call initactivate(1,'gkkp')
 #endif
-#if defined _YPP_SC
+#if defined _YPP_MAGNETIC
        if (l_angular_momentum) call initactivate(1,'angular_m')
 #endif
        if (l_density)        call initactivate(1,'density')
@@ -332,7 +332,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_phonons   =runlevel_is_on('phonons')
  l_gkkp      =runlevel_is_on('gkkp')
 #endif
-#if defined _YPP_SC
+#if defined _YPP_MAGNETIC
  l_angular_momentum = runlevel_is_on('angular_m')
 #endif
  l_excitons =runlevel_is_on('excitons')
@@ -449,7 +449,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  if (l_plot.and.l_sp_wf) &
 #endif
 &                        call QP_init(.FALSE.,.FALSE.)
-#if defined _YPP_SC
+#if defined _YPP_MAGNETIC
  if (l_angular_momentum) call QP_init(.FALSE.,.FALSE.)
 #endif
  !

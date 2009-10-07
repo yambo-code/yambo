@@ -52,7 +52,7 @@ subroutine tddft_do_X_W_typs(iq,X,wv)
  ! LRC setup
  !
  if (l_lrc_fxc) then
-   FXC_type='-tddft_lrc'
+   FXC_type='LRC'
    write (X%f_xc,'(a,1x,f10.4)') 'LRC ',FXC_LRC_alpha
    return
  endif
@@ -60,7 +60,7 @@ subroutine tddft_do_X_W_typs(iq,X,wv)
  ! ALDA setup
  !
  if (l_alda_fxc) then
-   FXC_type='-alda'
+   FXC_type='alda'
    write (X%f_xc,'(a,1x,i4.4,a)') 'ALDA',FXC_n_g_corr,'G`s'
    return
  endif
@@ -74,7 +74,7 @@ subroutine tddft_do_X_W_typs(iq,X,wv)
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  ioFxc_err=ioBS_Fxc(iq,wv,ID)
  if (ioFxc_err/=0) then
-   FXC_type='-rpa'
+   FXC_type='rpa'
    l_bs_fxc=.FALSE.
    return
  endif
@@ -102,7 +102,7 @@ subroutine tddft_do_X_W_typs(iq,X,wv)
  ! Note that independently of the lbss value (TRUE/FALSE)
  ! the BS/BSS and FXC components are read from the FXC file
  !
- FXC_type='-tddft_bs'
+ FXC_type='BSFxc'
  X%f_xc='BS'
  !
  X%ib= BS_bands

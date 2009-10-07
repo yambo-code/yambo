@@ -58,7 +58,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  call parser('NewtDchk',   QP_dSc_test)
  call parser('OnMassShell',On_Mass_Shell_approx)
  call parser('UseEbands',  CHOSEX_use_empties)
+ ! GPL_EXCLUDE_START
  call parser('GreenF2QP',  use_GreenF_to_eval_QP)
+ ! GPL_EXCLUDE_END
  call parser('ForceNewton',Force_Newton_QP)
  call parser('ExtendOut',  l_extended_output)
  !
@@ -216,6 +218,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
        call local_free()
        return
      endif
+     ! GPL_EXCLUDE_START
    else
      !
      ! Sigma_C I/O & Green's Function
@@ -234,6 +237,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
        call local_free()
        return
      endif
+     ! GPL_EXCLUDE_END
    endif
    !
  endif

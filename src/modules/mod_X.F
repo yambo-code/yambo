@@ -31,6 +31,11 @@ module X_m
  character(6)             :: alpha_dim ! 'adim' 'area' 'length' 'volume'
  logical                  :: eval_alpha
  !
+ ! Large Q-vector support 
+ !
+ real(SP)                 :: q_plus_G_direction(3)
+ integer                  :: Q_Shift_Order
+ !
  ! Warning about non-local commutator
  !
  logical                  :: Vnl_commutator_warning

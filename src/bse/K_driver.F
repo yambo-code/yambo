@@ -115,8 +115,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    !
  endif
  !
- ! GPL_EXCLUDE_START  
- !  
  if (l_td_hf) then
    !
    ! In TDHF correlation is replaced with the (d)iagonal bare W
@@ -124,8 +122,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    BS_res_mode=trim( string_add(BS_res_mode,'d') )
    if (index(BS_cpl_mode,'c')/=0) BS_res_mode=trim( string_add(BS_res_mode,'d') ) 
  endif
- !  
- ! GPL_EXCLUDE_END  
  !
  ! Logicals (Drivers)
  !

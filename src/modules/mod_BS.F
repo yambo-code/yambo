@@ -80,9 +80,7 @@ module BS
  ! Solvers
  !
  character(lchlen):: BSS_description(100)
- character(lchlen):: BSS_file_name(3)
  character(schlen):: BSS_mode
- !character(schlen):: BSS_of_title(7)
  integer  :: BSS_n_descs
  integer  :: BSS_n_freqs
  real(SP) :: BSS_er(2)
@@ -93,6 +91,9 @@ module BS
  real(SP) :: Haydock_v0_mod
  logical  :: BSS_write_eig_2_db
  logical  :: BSS_uses_RIM
+ logical  :: BSS_Vnl_included
+ logical  :: BSS_uses_GreenF
+ logical  :: BSS_long_gauge
 #if defined _PARTIAL_DIAGO
  logical  :: BSS_uses_partial_diago
 #endif
@@ -175,21 +176,4 @@ module BS
      enddo
    end function
    !
-   subroutine BS_of_heads(desc,head)
-     ! 
-     character(*), intent(in)  :: desc
-     character(15), intent(out):: head(7)
-     ! Work space
-     integer :: ii
-     character(10) :: suffix(6)
-     !
-     suffix(:6) = (/' /Im[2]',' /Re[3]','0/Im[4]','0/Re[5]','`/Im[6]','`/Re[7]'/)
-     head(1) = 'E/ev[1]'
-     !
-     do ii = 1,6
-       head(ii+1)=trim(desc)//trim(suffix(ii))
-     enddo
-     !
-  end subroutine BS_of_heads
-  !
 end module BS

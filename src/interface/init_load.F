@@ -27,7 +27,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,B_unit,&
 &                        Time_unit,I_unit,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp 
- use X_m,           ONLY:X_t,long_path
+ use X_m,           ONLY:X_t,long_path,q_plus_G_direction,Q_Shift_Order
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,Sx_low_band,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,SC_band_mixing,&
@@ -201,6 +201,11 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call Xload(X(2),Xw(2))
  call Xload(X(3),Xw(3))
  call Xload(X(4),Xw(4))
+ !
+ ! Optics: large Q momenta
+ !
+ call it(defs,'Qdirection', '[Xd] Transferred momentum direction (iku)',q_plus_G_direction,verb_level=V_resp)
+ call it(defs,'QShiftOrder', '[Xd] Pick-up the (QShiftOrder)th q+G vector',Q_Shift_Order,verb_level=V_resp)
  !
  ! RIM
  !

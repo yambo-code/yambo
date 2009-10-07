@@ -279,7 +279,7 @@ subroutine K_Haydock(iq,W)
 &                                    trim(real2ch(reached_treshold))
      BSS_description(BSS_n_descs)='        |Iteration                 :'//trim(intc(it))
      !
-     call K_dump_to_o_file(iq,1)
+     call K_output_file(iq,1)
      dumb_ch='[Haydock] Iteration '//trim(intc(it))//' Accuracy :'//&
 &            trim(real2ch(reached_treshold))//'|'//trim(real2ch(Haydock_treshold))
      if (tty_size>0.and.it_on_disk==0) call live_time_msg("r",dumb_ch,"","%s")

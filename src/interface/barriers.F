@@ -138,10 +138,6 @@ subroutine barriers()
    goto 1
  endif
  !
-#if defined _TB
- call switch_off_runlevel('all',on_name='chi optics setup bse bss')
-#endif
- !
  ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
  !
  if (gw0_ppa) then
@@ -173,18 +169,6 @@ subroutine barriers()
  !
  ! ENVIROMENTS
  !=============
- !
-#if !defined _TB
- !
- if (.not.Xk_grid_is_uniform) then
-   !
-   ! For non uniform grids I have to switch off all logicals that are
-   ! not LF/RPA
-   !
-   call switch_off_runlevel('all',on_name='chi optics sursp ras reels '//trim(always_runlevels))
- endif 
- !
-#endif
  !
  ! SPIN
  !=============

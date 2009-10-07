@@ -147,7 +147,7 @@ subroutine K_diagonalization(iq,W)
  !
  ! Initialize the output file 
  !
- call K_dump_to_o_file(iq,-2)
+ call K_output_file(iq,-2)
  !
  if(io_err<0) then
    !
@@ -331,7 +331,7 @@ subroutine K_diagonalization(iq,W)
  !
  ! I write the output file 
  !
- call K_dump_to_o_file(iq,2)
+ call K_output_file(iq,2)
  !
  ! Diagonalization DB (OUT)
  !

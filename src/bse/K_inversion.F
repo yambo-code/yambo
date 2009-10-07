@@ -170,7 +170,7 @@ subroutine K_inversion(iq,W,E,k,q)
  ! Initialize the output file 
  !
  of_mode=3
- call K_dump_to_o_file(iq,-of_mode)
+ call K_output_file(iq,-of_mode)
  !
  ! Green`s function and non-interacting eps2
  !
@@ -322,7 +322,7 @@ subroutine K_inversion(iq,W,E,k,q)
  BSS_description(BSS_n_descs)='    |Converged frequencies [o/o]:'//&
 &                             trim(real2ch(real(nw_conv)/real(W%n(1))*100._SP))
  !
- call K_dump_to_o_file(iq,of_mode)
+ call K_output_file(iq,of_mode)
  !
  ! CLEAN
  !

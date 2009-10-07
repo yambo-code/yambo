@@ -27,7 +27,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                      alpha_dim,use_X_RIM,long_path,X_RIM_nkpts,Dipole_bands_ordered,&
-&                      eval_alpha,Vnl_commutator_warning,Eval_P_and_P2_only
+&                      eval_alpha,Vnl_commutator_warning,Eval_P_and_P2_only,&
+&                      q_plus_G_direction,Q_Shift_Order
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,&
 &                     Sx_low_band,QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_W_er,QP_W_dr,QP_cg_percent,&
@@ -60,7 +61,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
 &                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_RIM,BSS_damp_reference,&
-&                     BS_columns
+&                     BS_columns,BSS_Vnl_included,BSS_long_gauge,BSS_uses_GreenF
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_SVD_digits,&
 &                     FXC_is_causal
@@ -291,6 +292,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  long_path='none'
  eval_alpha=.FALSE.
  Vnl_commutator_warning=.FALSE.
+ q_plus_G_direction=0.
+ Q_Shift_Order=1
  !
  !Dipole
  !
@@ -352,11 +355,14 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  BS_not_const_eh_f=.FALSE.
  Haydock_treshold=-0.02
  BS_columns=0
+ BSS_Vnl_included=.FALSE.
+ BSS_long_gauge=.FALSE.
+ BSS_uses_GreenF=.FALSE.
  !
  ! TDDFT
  !
  FXC_description=""
- FXC_type='-rpa'
+ FXC_type='rpa'
  FXC_n_descs=0
  FXC_n_g_corr=1
  FXC_per_memstps=100.

@@ -28,35 +28,35 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use pars,          ONLY:pi,SP,schlen
  use units,         ONLY:HARTREE
  use memory_m,      ONLY:mem_est
- use stderr,        ONLY:intc
+ use stderr,        ONLY:intc,set_real_printed_length
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc
  use frequency,     ONLY:w_samp,rg_index_bg,bg_npts,cg_pt,cg_index_bg
  use electrons,     ONLY:levels,BZ_RIM_tot_nkpts
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
- use vec_operate,   ONLY:v_norm,iku_v_norm
  use X_m,           ONLY:X_t,X_epsilon,X_mat,X_alloc,X_poles_tab,X_fxc,&
-&                        use_X_RIM,eval_alpha,alpha_dim,eps_2_alpha,O_eels
+&                        use_X_RIM,eval_alpha,eps_2_alpha,O_eels
  use par_proc_m,    ONLY:pp_redux_wait
  use wave_func,     ONLY:WF_free
  use TDDFT,         ONLY:FXC_n_descs,FXC_description,FXC_type,&
 &                        FXC,FXC_K_diagonal,FXC_n_g_corr
- use global_XC,     ONLY:X_WF_xc_string,X_E_xc_string
+ use X_output,      ONLY:X_setup_file_names,eps_file_name,eel_file_name,alpha_file_name,fxc_file_name,&
+&                        X_write_q_plus_G,X_write_descriptions,X_write_messages_before_headers,headers,&
+&                        X_setup_headers
  !
  implicit none
- type(levels)::Xen
+ type(levels)  ::Xen
  type(bz_samp) ::Xk,q
- type(X_t):: X
- type(w_samp):: wv 
+ type(X_t)     :: X
+ type(w_samp)  :: wv 
  ! 
  ! Work Space
  !
- integer          :: i1,i2,fr(2),iq
- real(SP)         :: output_data(5),Q_pt(3),Q_sq_modulus
- character(10)    :: headings(10)
- character(12)    :: ch12
- character(schlen):: ch,of_name(4)
+ integer          :: iw_group,iw,i2,frequencies_range(2),iq,i_G_shift
+ real(SP)         :: output_data(5),Q_plus_G_pt(3),Q_plus_G_sq_modulus
  logical          :: l_skip_non_int_eps,eval_eels
+ !
+ integer,external :: O_select_q_and_G
  !
  call section('*','Optics')
  !
@@ -64,7 +64,15 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  !
  call X_pre_setup(Xen,X)
  !
+ call set_real_printed_length(f_length=10,g_length=10)
+ !
  do iq=X%iq(1),X%iq(2)
+   !
+   ! Check if this q is compatible with the user defined direction in chartesian coordinates
+   ! and if an additional RL vectors must be added
+   !
+   i_G_shift=O_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
+   if (i_G_shift<0) cycle
    !
    ! TDDFT setup
    !
@@ -96,79 +104,38 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    ! Check if EELS can be evaluated
    !
    eval_eels= O_eels(wv%p,wv%n(1),.TRUE.,X%ordering)
+   if (eval_alpha) eval_alpha=eval_eels
    !
    ! OutPut files...
    !
-   of_name(:)=' '
+   call X_setup_file_names(iq,'inv',trim(FXC_type),'dyson',ig=i_G_shift)
    !
-   ! ... epsilon ...
+   ! ... open ...
    !
-   write (of_name(1),'(a,i3.3,a)') 'eps_q',iq,trim(FXC_type)
-   call of_open_close(of_name(1),'ot')
+   call of_open_close(eps_file_name,'ot')
+   if (eval_eels)       call of_open_close(eel_file_name,'ot')
+   if (.not.eval_eels)  eel_file_name=' '
+   if (eval_alpha)      call of_open_close(alpha_file_name,'ot')
+   if (.not.eval_alpha) alpha_file_name=' '
+   if (l_bs_fxc)        call of_open_close(fxc_file_name,'ot')
    !
-   ! ... fxc ...
+   ! Initial Messages
    !
-   if (l_bs_fxc) then
-     write (of_name(3),'(a,i3.3)')   'bs_fxc_q',iq
-     call of_open_close(of_name(3),'ot')
-   endif
+   call X_write_q_plus_G(iq,Q_plus_G_pt,ig=i_G_shift)
    !
-   ! ... eels ...
-   !
-   if (eval_eels) then 
-     write (of_name(2),'(a,i3.3,a)') 'eel_q',iq,trim(FXC_type)
-     call of_open_close(of_name(2),'ot')
-   endif
-   !
-   ! ... alpha ...
-   !
-   if (eval_alpha.and.eval_eels) then
-     write (of_name(4),'(a,i3.3,a)') 'alpha_q',iq,trim(FXC_type)
-     call of_open_close(of_name(4),'ot')
-   endif
-   !
-   ! Titles 
-   !
-   !... Q point (normalized at 1 if Gamma with no additional shift)
-   !
-   ch12=' [iku]:'
-   if (iq==1) then
-     Q_pt=X%q0/v_norm(X%q0)
-     Q_sq_modulus=q_norm(iq)**2.
-     ch12=' [q->0 dir]:'
-   else 
-     Q_pt=q%pt(iq,:)
-     Q_sq_modulus=iku_v_norm(Q_pt)**2.
-   endif
-   !
-   ch = '# Absorption @ IQ '//trim(intc(iq))//ch12
-   call msg("o eps",trim(ch),Q_pt,INDENT=0)
-   ch = '# EELS @ IQ '//trim(intc(iq))//ch12
-   call msg("o eel",trim(ch),Q_pt,INDENT=0)
-   ch = '# Polarizability ( -<<X>> ) ['//&
-&       trim(alpha_dim)//'] @ IQ '//trim(intc(iq))//ch12
-   call msg("o alpha",trim(ch),Q_pt,INDENT=0)
+   ! Fxc descriptions
    !
    if (l_bs_fxc) then
-     call msg('o eps eel alpha','#')
-     do i1=1,FXC_n_descs
-       call msg('o eps eel fxc alpha','# ',trim(FXC_description(i1)),INDENT=0)    
-     enddo
-     call msg('o eps eel alpha fxc','#')
-     ch=' TDDFT|Fxc size             :'//trim(intc(FXC_n_g_corr))
-     call msg('o eps eel alpha','#',trim(ch),INDENT=0)    
-     ch='      |Hartree size         :'//trim(intc(X%ng))
-     call msg('o eps eel alpha','#',trim(ch),INDENT=0)    
-     ch='      |Ordering             :'//trim(X%ordering)
-     call msg('o eps eel alpha','#',trim(ch),INDENT=0)    
+     call X_write_descriptions(FXC_n_descs,FXC_description)
+     call msg('o eps eel alpha','#',' TDDFT|Fxc size             :'//trim(intc(FXC_n_g_corr)),INDENT=0)    
+     call msg('o eps eel alpha','#','      |Hartree size         :'//trim(intc(X%ng)),INDENT=0)    
+     call msg('o eps eel alpha','#','      |Ordering             :'//trim(X%ordering),INDENT=0)    
      !
      ! Fxc file titles
      !
-     headings(1)  ='E/ev[1]'
-     headings(2:3)=(/'q^2*Fxc/Re','q^2*Fxc/Im'/)
-     call msg('o fxc','#',headings(:3),INDENT=0,USE_TABS=.true.)    
+     call X_setup_headers('q2Fxc')
+     call msg('o fxc','#',(/headers(1),headers(3),headers(2)/),INDENT=0,USE_TABS=.true.)    
      call msg('o fxc','#')
-     !
    endif
    !
    ! BZ RIM
@@ -180,85 +147,63 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    call pp_redux_wait
    !
-   call of_open_close(of_name(1))
-   call of_open_close(of_name(2))
-   call of_open_close(of_name(3))
-   call of_open_close(of_name(4))
+   call of_open_close(eps_file_name)
+   call of_open_close(eel_file_name)
+   call of_open_close(alpha_file_name)
+   call of_open_close(fxc_file_name)
    !
    ! e Table
    ! 1:e0 2:e 3:eel0 4:eel 5:alpha0 6:alpha 
    !
    X_epsilon=(0.,0.)
-   do i1=1,wv%n(1),wv%n(2)
-     fr=(/i1,i1+wv%n(2)-1/)
-     call X_os(X_mat,iq,fr,Xen,Xk,wv,X)     
+   do iw_group=1,wv%n(1),wv%n(2)
+     !
+     frequencies_range=(/iw_group,iw_group+wv%n(2)-1/)
+     call X_os(X_mat,iq,frequencies_range,Xen,Xk,wv,X)     
      !
      ! Without LF eps/alpha
      !
-     X_epsilon(1,fr(1):fr(2))=1.0_SP-X_mat(1,1,:)*4.0_SP*pi/Q_sq_modulus
+     X_epsilon(1,frequencies_range(1):frequencies_range(2))=1.0_SP-X_mat(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
      !
      ! X Dyson equation solver
      !
-     call X_s(iq,fr,X,wv)
+     call X_s(iq,frequencies_range,X,wv)
      !
-     X_epsilon(2,fr(1):fr(2))=1./(X_mat(1,1,:)*&
-&                                 bare_qpg(iq,1)**2/Q_sq_modulus+1.)
+     X_epsilon(2,frequencies_range(1):frequencies_range(2))=1./(X_mat(i_G_shift,i_G_shift,:)*&
+&                                                           bare_qpg(iq,1)**2/Q_plus_G_sq_modulus+1.)
      !
-     call of_open_close(of_name(1),'oa')
-     call of_open_close(of_name(2),'oa')
-     call of_open_close(of_name(4),'oa')
+     call of_open_close(eps_file_name,'oa')
+     call of_open_close(eel_file_name,'oa')
+     call of_open_close(alpha_file_name,'oa')
      !
-     if (i1==1) then
+     if (iw_group==1) then
        !
-       ! T-ordering
+       ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_os
        !
-       call msg('o eps eel alpha','#')
-       if (associated(Xen%GreenF)) then
-         call msg('o eps eel alpha','# ','- G. Functions  are '//trim(X_E_xc_string(4)),INDENT=0)
-       else
-         call msg('o eps eel alpha','# ','- Energies      are '//trim(X_E_xc_string(4)),INDENT=0)
-       endif
-       call msg('o eps eel alpha','# ','- Wavefunctions are '//trim(X_WF_xc_string(4)),INDENT=0)
-       call msg('o eps eel alpha','# ')
-       ch='- The Green`s function is T-ordered -'
-       if (trim(X%ordering)=='a') ch='- The Green`s function is antiresonant -'
-       if (trim(X%ordering)=='r') ch='- The Green`s function is resonant -'
-       if (trim(X%ordering)=='c') ch='- The Green`s function is causal -'
-       call msg('o eps eel alpha','# ',trim(ch),INDENT=0)
-       !
-       ! Gauges
-       !
-       if (iq==1) then
-         ch='- The gauge is transverse -'
-         if (X%Vnl_included) ch='- The gauge is transverse + [r,Vnl] -'
-         if (X%long_gauge)   ch='- The gauge is longitudinal -'
-         call msg('o eps eel alpha','# ',trim(ch),INDENT=0)
-       endif
+       call X_write_messages_before_headers(iq,associated(Xen%GreenF),X%Vnl_included,X%long_gauge,X%ordering)
        !
        ! Titles 
        !
-       headings(:3)=(/'E/ev[1]','e/Im[2]','e/Re[3]'/)
-       headings(4:5)=(/'eo/Im[4]','eo/Re[5]'/)
-       headings(6:7)=(/'alpha/Im','alpha/Re'/)
-       headings(8:9)=(/'alpha0/Im','alpha0/Re'/)
+       call X_setup_headers('eps')
        call msg('o eps eel fxc alpha','#')
-       if (.not.l_skip_non_int_eps) call msg('o eps','#',headings(:5),INDENT=0,USE_TABS=.true.)    
-       if (l_skip_non_int_eps)      call msg('o eps','#',headings(:3),INDENT=0,USE_TABS=.true.)    
-       headings(2:3)=(/'EEL/Im[2]','EEL/Re[3]'/)
-       headings(4:5)=(/'EELo/Im[4]','EELo/Re[5]'/)
-       if (.not.l_skip_non_int_eps) call msg('o eel','#',headings(:5),INDENT=0,USE_TABS=.true.)    
-       if (l_skip_non_int_eps)      call msg('o eel','#',headings(:3),INDENT=0,USE_TABS=.true.)    
+       if (.not.l_skip_non_int_eps) call msg('o eps','#',headers(:5),INDENT=0,USE_TABS=.true.)    
+       if (l_skip_non_int_eps)      call msg('o eps','#',headers(:3),INDENT=0,USE_TABS=.true.)    
+       call X_setup_headers('eel')
+       if (.not.l_skip_non_int_eps) call msg('o eel','#',headers(:5),INDENT=0,USE_TABS=.true.)    
+       if (l_skip_non_int_eps)      call msg('o eel','#',headers(:3),INDENT=0,USE_TABS=.true.)    
+       call X_setup_headers('alpha')
        if (l_skip_non_int_eps) then
-         call msg('o alpha','#',(/headings(1),headings(6),headings(7)/),&
+         call msg('o alpha','#',(/headers(1),headers(6),headers(7)/),&
 &                                 INDENT=0,USE_TABS=.true.)
        else
-         call msg('o alpha','#',(/headings(1),headings(6),headings(7),&
-&                                 headings(8),headings(9)/),INDENT=0,USE_TABS=.true.)
+         call msg('o alpha','#',(/headers(1),headers(6),headers(7),&
+&                                 headers(8),headers(9)/),INDENT=0,USE_TABS=.true.)
        endif
        call msg('o eps eel alpha','#')
+       !
      endif
      !
-     do i2=fr(1),fr(2)
+     do i2=frequencies_range(1),frequencies_range(2)
        !
        ! Eps
        !
@@ -268,15 +213,15 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        if (.not.l_skip_non_int_eps) call msg('o eps','',output_data,INDENT=-2,USE_TABS=.true.)
        !
      enddo
-     call of_open_close(of_name(1))
-     call of_open_close(of_name(2))
-     call of_open_close(of_name(4))
+     call of_open_close(eps_file_name)
+     call of_open_close(eel_file_name)
+     call of_open_close(alpha_file_name)
    enddo
    !
    if (eval_eels) then 
      !
-     call of_open_close(of_name(2),'oa')
-     call of_open_close(of_name(4),'oa')
+     call of_open_close(eel_file_name,'oa')
+     call of_open_close(alpha_file_name,'oa')
      !
      eval_eels= O_eels(wv%p,wv%n(1),.TRUE.,X%ordering,X_epsilon(1,:),X_epsilon(3,:))
      eval_eels= O_eels(wv%p,wv%n(1),.FALSE.,X%ordering,X_epsilon(2,:),X_epsilon(4,:))
@@ -292,26 +237,26 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        !
      endif
      !
-     do i1=1,wv%n(1)
+     do iw=1,wv%n(1)
        !
        ! EEL
        !
-       output_data=(/real(wv%p(i1))*HARTREE,aimag(X_epsilon(4,i1)),real(X_epsilon(4,i1)),&
-&                    aimag(X_epsilon(3,i1)),real(X_epsilon(3,i1))/)
+       output_data=(/real(wv%p(iw))*HARTREE,aimag(X_epsilon(4,iw)),real(X_epsilon(4,iw)),&
+&                    aimag(X_epsilon(3,iw)),real(X_epsilon(3,iw))/)
        if (l_skip_non_int_eps)      call msg('o eel','',output_data(:3),INDENT=-2,USE_TABS=.true.)
        if (.not.l_skip_non_int_eps) call msg('o eel','',output_data,INDENT=-2,USE_TABS=.true.)
        !
        ! Alpha
        !
-       output_data=(/real(wv%p(i1))*HARTREE,aimag(X_epsilon(6,i1)),real(X_epsilon(6,i1)),&
-&                    aimag(X_epsilon(5,i1)),real(X_epsilon(5,i1))/)
+       output_data=(/real(wv%p(iw))*HARTREE,aimag(X_epsilon(6,iw)),real(X_epsilon(6,iw)),&
+&                    aimag(X_epsilon(5,iw)),real(X_epsilon(5,iw))/)
        !
        if (l_skip_non_int_eps)      call msg('o alpha','',output_data(:3),INDENT=-2,USE_TABS=.true.)
        if (.not.l_skip_non_int_eps) call msg('o alpha','',output_data,INDENT=-2,USE_TABS=.true.)
      enddo
      !
-     call of_open_close(of_name(2))
-     call of_open_close(of_name(4))
+     call of_open_close(eel_file_name)
+     call of_open_close(alpha_file_name)
      !
    endif
    !
@@ -319,12 +264,12 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    if (l_bs_fxc) then
      call pp_redux_wait(X_fxc)
-     call of_open_close(of_name(3),'oa')
-     do i1=1,wv%n(1)
-       call msg('o fxc','',(/real(wv%p(i1))*HARTREE,real(X_fxc(i1)*q_norm(iq)**2.),&
-&                           aimag(X_fxc(i1)*q_norm(iq)**2.)/),INDENT=-2,USE_TABS=.true.)
+     call of_open_close(fxc_file_name,'oa')
+     do iw=1,wv%n(1)
+       call msg('o fxc','',(/real(wv%p(iw))*HARTREE,real(X_fxc(iw)*q_norm(iq)**2.),&
+&                           aimag(X_fxc(iw)*q_norm(iq)**2.)/),INDENT=-2,USE_TABS=.true.)
      enddo
-     call of_open_close(of_name(3))
+     call of_open_close(fxc_file_name)
    endif
    !
    ! CLEAN (each q)
@@ -344,6 +289,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  call X_alloc('OptOsc')
  call WF_free()
  call pp_redux_wait
+ call set_real_printed_length()
  !
  if (l_bs_fxc.and.allocated(FXC)) then
    deallocate(FXC,FXC_K_diagonal)

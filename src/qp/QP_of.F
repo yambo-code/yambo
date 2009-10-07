@@ -152,6 +152,8 @@ subroutine QP_of(qp,en,QPdb_read_err)
    enddo
    call of_open_close(file_name)
    !
+   ! GPL_EXCLUDE_START 
+   !
  else if (trim(QP_solver)=='g') then
    !
    call set_real_printed_length(f_length=12,g_length=12)
@@ -203,6 +205,8 @@ subroutine QP_of(qp,en,QPdb_read_err)
    call W_reset(Sc_W)
    !
    call set_real_printed_length()
+   !
+   ! GPL_EXCLUDE_END 
    !
  endif
  !

@@ -177,12 +177,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  W_is_em1s=X%whoami==2
  W_is_pp  =X%whoami==4
- ! GPL_EXCLUDE_START
+ ! 
  if (BS_res_K_corr.and..not.l_td_hf) then
-   ! GPL_EXCLUDE_END
- ! GPL_INCLUDE_START
- !if (BS_res_K_corr) then
-   ! GPL_INCLUDE_END
+   !
    call section('+','Screneed interaction header I/O')
    !
    ! X%ng are the G's in the X DB while BS_n_g_W the G's I want to read.
@@ -302,14 +299,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Screneed interaction
    !
    X%ng=BS_n_g_W
-   ! GPL_EXCLUDE_START
    if (.not.l_td_hf) then
-     ! GPL_EXCLUDE_END
      if (W_is_em1s) call X_alloc('X',(/BS_n_g_W,BS_n_g_W,1/))
      if (W_is_pp)   call X_alloc('X',(/BS_n_g_W,BS_n_g_W,2/))
-     ! GPL_EXCLUDE_START
    endif
-   ! GPL_EXCLUDE_END
    !
    i1=BS_n_g_W
    if (BS_W_is_diagonal) i1=1
@@ -326,23 +319,17 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    allocate(isc%gamp(i1,BS_n_g_W))
    !
-   ! GPL_EXCLUDE_START
    if (.not.l_td_hf) then
-     ! GPL_EXCLUDE_END
      call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
      ioX_err=ioX(X,Xw,XID)
-     ! GPL_EXCLUDE_START
    endif
-   ! GPL_EXCLUDE_END
    !
    do iq_W=1,q%nibz
      !
      isc%qs(2)=iq_W
      call scatterGamp(isc,'c')
      !
-     ! GPL_EXCLUDE_START
      if (.not.l_td_hf) then
-       ! GPL_EXCLUDE_END
        call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
        ioX_err=ioX(X,Xw,XID)
        !
@@ -357,12 +344,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            if (BS_W_is_diagonal.and.i2==i3) BS_W(i2,1,iq_W)=real(X_mat(i2,i2,1))*isc%gamp(1,i2)
          enddo
        enddo
-       ! GPL_EXCLUDE_START
      else
        forall(i2=1:BS_n_g_W) BS_W(i2,1,iq_W)=isc%gamp(1,i2)
      endif
-     ! 
-     ! GPL_EXCLUDE_END
      ! 
    enddo
    !

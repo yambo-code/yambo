@@ -434,7 +434,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_ppa)) then
    call QP_ctl_switch('X')
-   call initactivate(1,'LongPath')
+   call initactivate(1,'LongPath Qdirection QShiftOrder')
    call Xon('Xd',(/'QpntsR','BndsRn','NGsBlk',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
@@ -775,13 +775,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_bss=runlevel_is_on('bss')
        l_alda_fxc=runlevel_is_on('alda_fxc')
        l_lrc_fxc=runlevel_is_on('lrc_fxc')
+       l_td_hf=runlevel_is_on('tdhf')
        !
        ! GPL_EXCLUDE_START
        ! 
        l_bs_fxc=runlevel_is_on('bs_fxc')
        l_life=runlevel_is_on('life')
        l_acfdt=runlevel_is_on('acfdt')
-       l_td_hf=runlevel_is_on('tdhf')
        !
        ! GPL_EXCLUDE_END
        !
@@ -1039,13 +1039,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          l_chi= trim(rstr_piece(i1+1)) == 'c'
          l_bse= trim(rstr_piece(i1+1)) == 'b'
          !
-         ! GPL_EXCLUDE_START
-         !
          l_td_hf= trim(rstr_piece(i1+1)) == 't'
          if (l_td_hf) l_bse=.TRUE.
          if (l_td_hf) call initactivate(1,'tdhf')
-         !
-         ! GPL_EXCLUDE_END
          !
          if (.not.l_chi.and..not.l_bse) l_chi=.true.
          if (l_chi) call initactivate(1,'chi')

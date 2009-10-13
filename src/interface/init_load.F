@@ -105,6 +105,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('r',defs,'alda_fxc','[R TDDFT] The ALDA TDDFT kernel')
  call it('r',defs,'lrc_fxc', '[R TDDFT] The LRC TDDFT kernel')
  call it('r',defs,'rim_cut', '[R RIM CUT] Coulomb interaction')
+ call it('r',defs,'tdhf',    '[R TDHF] Unscreened e-h interaction: TD Hartree-Fock')
  !
  ! GPL_EXCLUDE_START SC_IGNORE
  !
@@ -120,7 +121,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('r',defs,'life',    '[R GW] GoWo Quasiparticle lifetimes')
  call it('r',defs,'acfdt',   '[R ETOT] ACFDT Total Energy')
  call it('r',defs,'bs_fxc',  '[R TDDFT] The BSE TDDFT kernel')
- call it('r',defs,'tdhf',    '[R TDHF] Unscreened e-h interaction: TD Hartree-Fock')
  !
  ! GPL_EXCLUDE_END
  !
@@ -338,8 +338,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BSEClmns','[BSK] Kernel Columns',BS_columns,verb_level=V_resp)
  call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,&
 &                        E_unit,verb_level=V_resp)
- call it('f',defs,'SkipInv', '[BSS] Skip full invertion in perturbative solver',verb_level=V_resp)
- call it('f',defs,'FullInv', '[BSS] Force full invertion in perturbative solver',verb_level=V_resp)
+ call it('f',defs,'SkipFullInv',  '[BSS] Skip full invertion in perturbative solver',verb_level=V_resp)
  !
  ! Xx
  !

@@ -62,7 +62,7 @@ subroutine K_inversion(iq,W,E,k,q)
  integer    ::full_inf_freqs,nw,nw_conv,&
 &             min_dist_non_conv_freqs ! Every W%n(1)/min_dist_non_conv_freqs
                                       ! I perform a full inversion
- logical    ::full_diago,skip_full_inv,force_full_inv,full_inf_freqs_found
+ logical    ::full_diago,skip_full_inv,full_inf_freqs_found
  !
 #if defined _DOUBLE
  complex(DP)::zdotu,zdotc
@@ -93,11 +93,7 @@ subroutine K_inversion(iq,W,E,k,q)
  ! RIM support ? Full invertion ?
  !
  BSS_uses_RIM=BZ_RIM_nbands>=BS_bands(2)
- call parser('SkipInv',skip_full_inv)
- call parser('FullInv',force_full_inv)
- !
- !
- if (force_full_inv) skip_full_inv=.FALSE.
+ call parser('SkipFullInv', skip_full_inv)
  !
  ! I/O
  !
@@ -220,6 +216,13 @@ subroutine K_inversion(iq,W,E,k,q)
  ! Perturbative Invertion
  !========================
  !
+ full_diago=.false.
+ call pp_indexes_reset(px)
+ call par_indexes(px,(/W%n(1)/))
+ call live_timing('Freq loop [pert]',px%stps(myid+1))
+ call perform_invertion(1,W%n(1))
+ call pp_redux_wait(inv_err,imode=2)
+ !
  ! I/O [after pert invertion]
  !
  call pp_redux_wait(X_epsilon)
@@ -231,11 +234,14 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! First I define the group of frequencies not converged
  !
- if (force_full_inv) then
+ if (.not.skip_full_inv) then
+   !
    full_inf_freqs=0
    do i1=1,W%n(1)
-     full_inf_freqs=full_inf_freqs+1
-     iw_full(full_inf_freqs)=i1
+     if (inv_err(i1)/=0) then
+       full_inf_freqs=full_inf_freqs+1
+       iw_full(full_inf_freqs)=i1
+     endif
    enddo
    !
  else
@@ -294,7 +300,6 @@ subroutine K_inversion(iq,W,E,k,q)
    call pp_redux_wait(inv_err,imode=2)
    call pp_redux_wait(X_epsilon)
  endif
- !
  !
  nw_conv=0
  do iw=1,W%n(1)

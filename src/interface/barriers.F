@@ -94,7 +94,6 @@ subroutine barriers()
  !call switch_off_runlevel('life',on_name=' ')
  !call switch_off_runlevel('acfdt',on_name=' ')
  !call switch_off_runlevel('bs_fxc',on_name=' ')
- !call switch_off_runlevel('tdhf',on_name=' ')
  ! GPL_INCLUDE_END
  !
  ! GPL_INCLUDE_START SC_IGNORE
@@ -159,7 +158,7 @@ subroutine barriers()
  if (l_bss.or.l_bse) then
    on_runlevels='tdhf bs_fxc bse bss em1s em1d ppa optics'
    ! GPL_INCLUDE_START SC_IGNORE
-   !on_runlevels='bse bss em1s ppa optics'
+   !on_runlevels='tdhf bse bss em1s ppa optics'
    ! GPL_INCLUDE_END SC_IGNORE
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1

@@ -565,10 +565,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_bss) then
   call QP_ctl_switch('K')
   call initactivate(1,'BoseCut LongPath')
-  call initactivate(1,'BSSmod BEnRange BDmRange BDmERef BEnSteps BLongDir WRbsWF')
+  call initactivate(1,'BSSmod BEnRange BDmRange BDmERef BEnSteps BLongDir')
+  if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF')
   if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs')
   if (index(BSS_mode,'t')/=0)  call initactivate(1,'FxcGRLc FxcSVdig FxcMEStps FxcCausal')
-  if (index(BSS_mode,'i')/=0)  call initactivate(1,'SkipInv FullInv')
+  if (index(BSS_mode,'i')/=0)  call initactivate(1,'SkipFullInv')
  endif
  !
  ! DFT

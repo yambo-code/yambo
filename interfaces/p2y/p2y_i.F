@@ -131,7 +131,7 @@ integer function p2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
    ! Print verbose wfc read message
    !
    if(verboseIO.and.(any( (/1,2,nkibz/)-ik.eq.0 ) &
-&  .or.mod(ik,k%nibz/4).eq.0)) then
+&  .or.mod(ik,max(k%nibz/4,1)).eq.0)) then
      write(lch,'(" :: K-point:",i5,"/",i5," Spinors ",i1)') ik,nkibz,n_spin
      call msg('s',trim(lch))
    endif

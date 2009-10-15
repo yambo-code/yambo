@@ -34,7 +34,7 @@ subroutine XCo_driver(E,k,Xk,q)
  use memory_m,      ONLY:mem_est
  use wave_func,     ONLY:WF_free
 #if defined _SC
- use global_XC,     ONLY:SC_HF,SC_CHOSEX,WF_kind
+ use global_XC,     ONLY:SC_HF,SC_CHOSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
 #endif
 #if defined _RT
  use SC,            ONLY:SC_bands
@@ -152,8 +152,27 @@ subroutine XCo_driver(E,k,Xk,q)
    !
    subroutine XCo_report_and_IO()
      !
-     Vxc_kind= 'LDA'
-     Vnlxc_kind='HF'
+#if defined _SC
+     if (WF_kind < 100) then
+       Vxc_kind='LDA'
+     elseif  (WF_kind < 200) then
+       Vxc_kind='GGA'
+     elseif  (WF_kind == SC_EXX) then
+       Vxc_kind='OEP-EXX'
+     elseif  (WF_kind == SC_EXXC) then
+       Vxc_kind='OEP-EXX+C'
+     else
+       Vxc_kind='none'
+     endif
+     
+     if (WF_kind == SC_CHOSEX) then 
+       Vnlxc_kind='HF-QP_CHOSEX'
+     else
+       Vnlxc_kind='HF'
+     endif
+#else
+     Vxc_kind='LDA'
+#endif
      !
      ik=QP_table(1,3)
      call msg('nr','XC '//trim(Vnlxc_kind)//' and '//trim(Vxc_kind)//' [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))

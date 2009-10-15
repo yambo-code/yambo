@@ -74,7 +74,7 @@ module QP_m
  logical           :: report_Sc
  logical           :: report_dSc
  logical           :: l_extended_output
- character(10)     :: Vnlxc_kind
+ character(12)     :: Vnlxc_kind
  character(10)     :: Vxc_kind
  !
  type QP_t

@@ -357,7 +357,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    r_hole=r_cell_cc(:,ir_hole)
    !
    call msg('s','::      translated position      [cc]:',r_hole)
-   call msg('s','::                             [bohr]:',r_hole*BOHR)
+   call msg('s','::                                [A]:',r_hole*BOHR)
    !
  endif
  !

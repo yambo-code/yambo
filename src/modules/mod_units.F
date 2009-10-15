@@ -27,7 +27,7 @@ module UNITS
  !
  ! UNITs CONVERSION
  !
- real(SP), parameter :: BOHR=0.52917721_SP            ! Armostrongs
+ real(SP), parameter :: BOHR=0.52917721_SP            ! Armstrongs
  real(SP), parameter :: radian=pi/180.0_SP  
  !
  ! Energies

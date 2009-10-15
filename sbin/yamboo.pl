@@ -9,7 +9,7 @@
 #
 #
 # Status
-# Works for: _TB _PH
+# Works for: _DISTRO _PH
 #
 
 use Getopt::Long;

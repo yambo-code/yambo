@@ -299,6 +299,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !  Ho (kinetic + potential)
  !---------------------------
  !
+ call fermi_level(E,k,Tel,2)  
  call SC_common_build_Ho(E,Xk,k)
  !
  ! Reference wavefunctions

@@ -52,7 +52,7 @@ typedef struct
 #if defined _yambo  || _RAS || _REELS || _ELPH || _SC  || _RT
  #define _YAMBO_MAIN
 #endif
-#if defined _MANYK || _MAGNETIC || _PW_DIAGO || _TEST_1
+#if defined _MANYK || _DISTRO || _MAGNETIC || _PW_DIAGO || _TEST_1
  #define _YAMBO_MAIN
 #endif
 #if defined _ypp  || _YPP_ELPH || _YPP_RAS || _YPP_RT || _YPP_SC || _YPP_MAGNETIC

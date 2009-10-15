@@ -192,13 +192,8 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        if (.not.l_skip_non_int_eps) call msg('o eel','#',headers(:5),INDENT=0,USE_TABS=.true.)    
        if (l_skip_non_int_eps)      call msg('o eel','#',headers(:3),INDENT=0,USE_TABS=.true.)    
        call X_setup_headers('alpha')
-       if (l_skip_non_int_eps) then
-         call msg('o alpha','#',(/headers(1),headers(6),headers(7)/),&
-&                                 INDENT=0,USE_TABS=.true.)
-       else
-         call msg('o alpha','#',(/headers(1),headers(6),headers(7),&
-&                                 headers(8),headers(9)/),INDENT=0,USE_TABS=.true.)
-       endif
+       if (.not.l_skip_non_int_eps) call msg('o alpha','#',headers(:5),INDENT=0,USE_TABS=.true.)    
+       if (l_skip_non_int_eps)      call msg('o alpha','#',headers(:3),INDENT=0,USE_TABS=.true.)    
        call msg('o eps eel alpha','#')
        !
      endif

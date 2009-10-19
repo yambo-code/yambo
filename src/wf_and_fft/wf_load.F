@@ -159,9 +159,15 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  if (wf_space=='R') call msg('rns',trim(wf_title),fft_dim)
  !
  QUIET_=.false.
-#if !defined _MANYK
+#if defined _MAGNETIC
+ if (wf_k(1)==1 .and. wf_k(2)==nkibz) then
+#endif
+#if !defined _MANYK 
  call live_timing('[WF loader] Wfs (re)loading',wf_n_states,SERIAL=.true.)
  QUIET_=.true.
+#endif
+#if defined _MAGNETIC
+ endif
 #endif
  !
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
@@ -192,7 +198,7 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
      !
      ACTION_=RD_CL_IF_END
 #if defined _MAGNETIC
-     if(wf_k(2)/=nkibz) ACTION_=RD_CL
+     if(wf_k(1)/=1 .or. wf_k(2)/=nkibz) ACTION_=RD_CL
 #endif
 #if defined _MANYK  
      ACTION_=RD_CL
@@ -228,8 +234,14 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
          enddo
          if (wf_space=='G'.or.wf_space=='C') then
            wf(:,wf_n_states)=wf_DP(:)
+#if defined _MAGNETIC
+ if (wf_k(1)==1 .and. wf_k(2)==nkibz) then
+#endif
 #if !defined _MANYK
            call live_timing(steps=1)
+#endif
+#if defined _MAGNETIC
+ endif
 #endif
            cycle
          endif
@@ -252,8 +264,14 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    enddo
  enddo
  !
+#if defined _MAGNETIC
+ if (wf_k(1)==1 .and. wf_k(2)==nkibz) then
+#endif
 #if !defined _MANYK
  call live_timing()
+#endif
+#if defined _MAGNETIC
+ endif
 #endif
  !
  ! CLEAN

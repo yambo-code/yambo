@@ -26,13 +26,14 @@ subroutine WF_derivative(load,n_bands,der_k,do_der)
  use wave_func,      ONLY:wf,wf_state,wf_load,WF_free,wf_ng,wf_b
  use electrons,      ONLY:n_sp_pol
  use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
- use R_lattice,      ONLY:g_vec
+ use R_lattice,      ONLY:g_vec,nkibz
  use stderr,         ONLY:intc
  use timing,         ONLY:live_timing
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:k_pt
  use D_lattice,      ONLY:alat
  !
+ implicit none
  ! Input variables
  integer :: n_bands(2)
  integer :: der_k(2)
@@ -83,7 +84,7 @@ subroutine WF_derivative(load,n_bands,der_k,do_der)
    wf_z=(0.,0.)
  endif
  !
- call live_timing('WF derivatives',n_states)
+ if (der_k(1)==1 .and. der_k(2)==nkibz) call live_timing('WF derivatives',n_states)
 #if defined _FFTW
  fftw_plan = 0
 #endif
@@ -115,13 +116,13 @@ subroutine WF_derivative(load,n_bands,der_k,do_der)
          if(i1==3) wf_z(:,ifft)=wf_DP(:)
          !
        enddo
-       call live_timing(steps=1)
+       if (der_k(1)==1 .and. der_k(2)==nkibz) call live_timing(steps=1)
        !
      enddo
    enddo
  enddo
  !
- call live_timing()
+ if (der_k(1)==1 .and. der_k(2)==nkibz) call live_timing()
  call WF_free()
  !
  deallocate(wf_DP)

@@ -145,7 +145,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
    H_paramagn_x(:)=2*A_magn_x(:)*gauge_factors(1) 
    H_paramagn_y(:)=2*A_magn_y(:)*gauge_factors(2)
  ! 2) H_diamagnetic
-!   H_diamagn(:)=(A_magn_x(:)*gauge_factors(1))**2 + (A_magn_y(:)*gauge_factors(2))**2
+   H_diamagn(:)=(A_magn_x(:)*gauge_factors(1))**2 + (A_magn_y(:)*gauge_factors(2))**2
  endif
  ! 3) H_pauli
  if(MAG_pauli) then
@@ -191,18 +191,18 @@ subroutine MAG_Hamiltonian(initial_check_only)
  call pp_redux_wait
  !==================================================
  !
-! if (MAG_landau) call WF_derivative(.true.,(/1,SC_bands/),(/1,nkibz/),(/.true.,.true.,.false./))
-! call wf_load(0,1,(/1,SC_bands/),(/1,nkibz/),title='-MAG')
+ if (MAG_landau) call WF_derivative(.true.,(/1,SC_bands/),(/1,nkibz/),(/.true.,.true.,.false./))
+ call wf_load(0,1,(/1,SC_bands/),(/1,nkibz/),title='-MAG')
  !
  do ik=1,nkibz   
    ! 
    if (.not.px%i1p(ik)) cycle
-   if (MAG_landau) call WF_derivative(.true.,(/1,SC_bands/),(/ik,ik/),(/.true.,.true.,.false./))
+!   if (MAG_landau) call WF_derivative(.true.,(/1,SC_bands/),(/ik,ik/),(/.true.,.true.,.false./))
    !
    ! Wavefunctions 
-   call IO_mute("report")
-   call wf_load(0,1,(/1,SC_bands/),(/ik,ik/),title='-MAG')
-   call IO_mute(" ")
+!   call IO_mute("report")
+!   call wf_load(0,1,(/1,SC_bands/),(/ik,ik/),title='-MAG')
+!   call IO_mute(" ")
    !
    call live_timing('MAG-Hamiltonian. kpt#'//trim(intc(ik))//'',SC_bands*SC_bands*n_sp_pol)
    !
@@ -237,13 +237,13 @@ subroutine MAG_Hamiltonian(initial_check_only)
    enddo
    !
    call live_timing()
-   call WF_free()
-   if(MAG_landau) call WF_derivative(.false.,(/0,0/),(/0,0/),(/.true.,.true.,.false./))    ! Deallocate the derivatives...
+!   call WF_free()
+!   if(MAG_landau) call WF_derivative(.false.,(/0,0/),(/0,0/),(/.true.,.true.,.false./))    ! Deallocate the derivatives...
    !
  enddo
  !
-! if(MAG_landau) call WF_derivative(.false.,(/0,0/),(/0,0/),(/.true.,.true.,.false./))    ! Deallocate the derivatives...
-! call WF_free()
+ if(MAG_landau) call WF_derivative(.false.,(/0,0/),(/0,0/),(/.true.,.true.,.false./))    ! Deallocate the derivatives...
+ call WF_free()
  !
  call pp_redux_wait(Ho)
  call pp_indexes_reset(px)

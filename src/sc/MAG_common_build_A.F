@@ -107,8 +107,6 @@ subroutine MAG_common_build_A(build)
        cell_center(1)=a(1,1)/2+a(2,1)*ir2/fft_dim(2)+a(3,1)*ir3/fft_dim(3)
        cell_center(2)=a(2,2)/2+a(1,2)*ir1/fft_dim(1)+a(3,2)*ir3/fft_dim(3)
        !
-       ! Radius in the direction perpendicular to the magnetic field
-       r_mod=v_norm((/r_cell_cc(ir,1),r_cell_cc(ir,2),0./))
        ! correclty compute x and y with respect to cartesian axis
        ! They are saw-like and the jump is always at the axis parallel to the vectors
        ! which defines the supercell and which cross at the center of the supercell
@@ -130,6 +128,8 @@ subroutine MAG_common_build_A(build)
          y(ir)=r_cell_cc(ir,2)-a(1,2)-a(2,2)
          x(ir)=r_cell_cc(ir,1)-a(2,1)-a(1,1)
        endif
+       ! Radius in the direction perpendicular to the magnetic field
+       r_mod=v_norm((/x(ir),y(ir),0./))
        ! Now build up the vector potential         
        if(MAG_landau) then
          if(r_mod<=MAG_radius .or. MAG_radius==0) then

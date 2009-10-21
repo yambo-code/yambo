@@ -34,7 +34,7 @@ integer function ioELPH(ID,what)
 &                         pol_vector
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:nkbz,nqibz
- use D_lattice,      ONLY:nkbz,nqibz,n_atoms_species
+ use D_lattice,      ONLY:n_atoms_species
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:n_sp_pol
  use QP_m,           ONLY:QP_n_states,QP_nb,QP_nk,QP_table

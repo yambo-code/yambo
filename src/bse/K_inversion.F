@@ -27,7 +27,7 @@ subroutine K_inversion(iq,W,E,k,q)
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_not_const_eh_f,&
 &                         BS_K_coupling,BS_eh_table,BS_eh_E,BS_bands,Kernel_by_V,&
 &                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,&
-&                         BSS_n_descs,BSS_description,BS_eh_W,BS_eh_Z
+&                         BSS_n_descs,BSS_description,BS_eh_W,BS_eh_Z,BSS_uses_GreenF
  use memory_m,       ONLY:mem_est
  use parser_m,       ONLY:parser
  use electrons,      ONLY:spin_occ,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,spin
@@ -179,6 +179,18 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  call live_timing('Green`s function',BS_K_dim)
  !
+#if defined _POLARON
+ !
+ ! Green Functions must be all mapped to the Xw range so
+ ! to be easily convoluted
+ !
+ if (associated(E%GreenF)) then
+   call X_GreenF_remap(BS_bands,E,W)
+   BSS_uses_GreenF=.TRUE.
+ endif
+ !
+#endif
+ !
  do i1=1,BS_K_dim
    !
    ik_bz =BS_eh_table(i1,1)
@@ -192,7 +204,11 @@ subroutine K_inversion(iq,W,E,k,q)
      QP_Z=(1.,0.)
      if (allocated(BS_eh_W)) QP_width=BS_eh_W(i1)
      if (allocated(BS_eh_Z)) QP_Z=BS_eh_Z(i1)
-     Lo(i1,:)=QP_Z/(W%p(:)-BS_eh_E(i1)-(0.,1.)*QP_width)
+     if (associated(E%GreenF)) then
+       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1,:),"r")
+     else
+       Lo(i1,:)=QP_Z/(W%p(:)-BS_eh_E(i1)-(0.,1.)*QP_width)
+     endif
    else
      call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1,:),"r")
    endif

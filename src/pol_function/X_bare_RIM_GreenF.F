@@ -75,7 +75,7 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
 &                Green_F_convoluted,Xen%GreenF_n_E_steps,W_step)
    !
    ! Green_F_convoluted is now integrated to Zc*Zv*pi*pi. As I want the spectral function only
-   ! to pass to the KK transformation I need to rescale by pi
+   ! to pass to the KK transformation I need to rescale by pi^2
    !
    Green_F_convoluted=Green_F_convoluted/pi**2.
    !

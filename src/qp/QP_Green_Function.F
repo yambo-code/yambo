@@ -107,9 +107,9 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
        qp%GreenF(iqp,iw)=1./(real(W%p(iw))-Eo-qp%S_total(iqp,iw)) 
      endif
      !
-     QP_G_amplitude_integral(iqp)=Integrate(aimag(qp%GreenF(iqp,:)),real(W%p),W%n(1))/pi
-     !
    enddo
+   !
+   QP_G_amplitude_integral(iqp)=Integrate(aimag(qp%GreenF(iqp,:)),real(W%p),W%n(1))/pi
    !
    if (.not.use_GreenF_to_eval_QP) cycle
    !

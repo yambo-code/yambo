@@ -81,4 +81,9 @@ subroutine X_pre_setup(Xen,X)
  !
  if (Finite_Tel) X%ordering="c"
  !
+ ! Transfer the GF's ordering 
+ !
+ if ( associated(Xen%GreenF).and.Xen%GreenF_is_causal      ) X%ordering='c'
+ if ( associated(Xen%GreenF).and..not.Xen%GreenF_is_causal ) X%ordering='t'
+ !
 end subroutine

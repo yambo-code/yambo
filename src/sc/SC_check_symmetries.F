@@ -23,6 +23,7 @@ subroutine SC_check_symmetries(field_dir)
   !
   use pars,          ONLY:SP,lchlen
   use vec_operate,   ONLY:v_norm
+  use matrix_operate,ONLY:m3det
   use com,           ONLY:msg,error
   use R_lattice,     ONLY:rl_sop
   use D_lattice,     ONLY:nsym
@@ -33,7 +34,7 @@ subroutine SC_check_symmetries(field_dir)
   !
   ! Work space
   !
-  integer  :: is,nsym_wrong
+  integer  :: is,nsym_wrong,i_wrong
   real(SP) :: v(3)
   !
   if(v_norm(field_dir)<1.E-5) return
@@ -44,9 +45,25 @@ subroutine SC_check_symmetries(field_dir)
     !      
     v(:) = matmul( rl_sop(:,:,is), field_dir )
     !
-    if( v_norm(v(:)-field_dir(:))>1.E-5) then
+#if defined _MAGNETIC
+    !
+    i_wrong=0
+    !
+    if( all( abs(v(:)-field_dir(:))<epsilon(1.) )) i_wrong=+1
+    if( all( abs(v(:)+field_dir(:))<epsilon(1.) )) i_wrong=-1
+    !
+    if(i_wrong==0) then
       nsym_wrong=nsym_wrong+1
+      cycle
+    else
+      if( m3det(rl_sop(:,:,is))/i_wrong-1>1E-5 ) nsym_wrong=nsym_wrong+1
     endif
+    !
+#else
+    !
+    if( v_norm(v(:)-field_dir(:))>1.E-5) nsym_wrong=nsym_wrong+1
+    !
+#endif
     !
   enddo
   !

@@ -21,7 +21,7 @@
 !
 subroutine ypp_init_load(defs)
  !
- use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,Time_unit
+ use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,Time_unit,B_unit
  use wave_func,     ONLY:wf_ng
  use YPP
 #if defined _YPP_RAS
@@ -189,7 +189,9 @@ subroutine ypp_init_load(defs)
  !
  call it(defs,'EField1','First external Electric Field',E_field(1,:))
  call it(defs,'EField1','Additional external Electric Field',E_field(2,:))
- call it(defs,'BField', 'External Magnetic Field direction ("X","Y","Z")',B_field_direction)
+ call it(defs,'BField',    '[MAG] Magnetic field modulus',B_field,unit=B_unit)
+ call it(defs,'Bpsi',      '[MAG] Magnietic field psi angle [degree]',B_psi,unit='degree')
+ call it(defs,'Btheta',    '[MAG] Magnietic field theta angle [degree]',B_theta,unit='degree')
  call it('f',defs,'RmAllSymm','Remove all symmetries') 
  !
  call it(defs,'EnRngeRt','Energy range',X_rt%energy_range,unit=E_unit)

@@ -24,7 +24,7 @@ integer function io_SC_components(what,E_sc,ID)
  ! what can be E WF V J G
  !
  use pars,           ONLY:SP
- use units,          ONLY:AU2Tesla
+ use units,          ONLY:AU2Tesla,radian
  use R_lattice,      ONLY:nkibz
  use D_lattice,      ONLY:atoms_string
  use stderr,         ONLY:intc
@@ -45,8 +45,8 @@ integer function io_SC_components(what,E_sc,ID)
  use QP_m,           ONLY:QP_nk
 #endif                                
 #if defined _MAGNETIC
- use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B_z,MAG_radius,MAG_gauge
- use global_XC,      ONLY:EXT_Bz_LANDAU,EXT_Bz_PAULI,EXT_Bz_MAGNETISM
+ use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
+ use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
 #endif
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use electrons,      ONLY:levels,n_sp_pol,n_spin
@@ -201,19 +201,30 @@ integer function io_SC_components(what,E_sc,ID)
    endif
    !
 #if defined _MAGNETIC
-   if (any((/SC_perturbation_disk==EXT_Bz_LANDAU,SC_perturbation_disk==EXT_Bz_PAULI,&
-&            SC_perturbation_disk==EXT_Bz_MAGNETISM/))) then
+   if (any((/SC_perturbation_disk==EXT_B_LANDAU,SC_perturbation_disk==EXT_B_PAULI,&
+&            SC_perturbation_disk==EXT_B_MAGNETISM/))) then
+     !
      call io_elemental(ID,VAR="MAG_hamiltonian",CH0="",VAR_SZ=1,MENU=0) 
      call io_elemental(ID,CH0=MAG_hamiltonian_type, &
 &         VAR=' [MAG] Hamiltonian kind          :',CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-     call io_elemental(ID,VAR="B_FIELD_parameters",VAR_SZ=2,MENU=0) 
-     call io_elemental(ID,UNIT=AU2Tesla,R0=MAG_B_z,&
-&         VAR=' [MAG] z-components B filed   [T]:',CHECK=.true.,OP=(/"=="/))
-     if (SC_perturbation_disk/=EXT_Bz_PAULI) then
+     !
+     call io_elemental(ID,VAR='B_FIELD_parameters',VAR_SZ=4,MENU=0) 
+     call io_elemental(ID,UNIT=AU2Tesla,R0=MAG_B,&
+&         VAR=' [MAG] B modulus              [T]:',CHECK=.true.,OP=(/"=="/))
+     !
+     if (ver_is_gt_or_eq(ID,revision=492)) then
+       call io_elemental(ID,UNIT=(1./radian),R0=MAG_theta,& 
+&           VAR=' [MAG] B theta angle    [degrees]:',CHECK=.true.,OP=(/"=="/))
+       call io_elemental(ID,UNIT=(1./radian),R0=MAG_psi,& 
+&           VAR=' [MAG] B psi angle      [degrees]:',CHECK=.true.,OP=(/"=="/))
+     endif
+     !
+     if (SC_perturbation_disk/=EXT_B_PAULI) then
        call io_elemental(ID,R0=MAG_radius,&
 &         VAR=' [MAG] B flux radius             :',CHECK=.true.,OP=(/"=="/))
      endif
+     !
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
      call io_elemental(ID,VAR='MAG_GAUGE',CH0="",VAR_SZ=1,MENU=0)
@@ -222,6 +233,7 @@ integer function io_SC_components(what,E_sc,ID)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
    endif
+   !
 #endif
    !
 #if defined _RT

@@ -25,7 +25,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,B_unit,&
-&                        Time_unit,I_unit,&
+&                        Time_unit,I_unit,Angle_unit,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp 
  use X_m,           ONLY:X_t,long_path,q_plus_G_direction,Q_Shift_Order
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
@@ -56,7 +56,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 
 #endif
 #if defined _MAGNETIC
- use magnetic,      ONLY:MAG_B_z,MAG_hamiltonian_type,MAG_radius,MAG_GAUGE
+ use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
 #endif
 #if defined _RAS
  use bulkeps,              ONLY : init_bulk
@@ -304,9 +304,11 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
 #if defined _MAGNETIC
  call it(defs,'Hamiltonian','[MAG] Hamiltonian kind [pauli,landau]',MAG_hamiltonian_type,protect=.FALSE.)
- call it(defs,'B_z_Field',  '[MAG] Magnetic field z component',MAG_B_z,unit=B_unit)
+ call it(defs,'B_Field',    '[MAG] Magnetic field modulus',MAG_B,unit=B_unit)
+ call it(defs,'B_psi',      '[MAG] Magnetic field psi angle',MAG_psi,unit=Angle_unit)
+ call it(defs,'B_theta',    '[MAG] Magnetic field theta angle',MAG_theta,unit=Angle_unit)
  call it(defs,'B_radius',   '[MAG] Magnetic flux radius',MAG_radius)
- call it(defs,'Gauge',      '[MAG] Gauge ("SYMM"etric, "X_ASYMM"etric and "Y_ASYMM"etric)',MAG_gauge)
+ call it(defs,'Gauge',      '[MAG] Gauge ("SYMM"etric, "X_ASYMM", "Y_ASYMM" or "Z_ASYMM"etric)',MAG_gauge)
 #endif
  !
  ! GPL_EXCLUDE_END SC_IGNORE

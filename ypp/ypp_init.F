@@ -176,7 +176,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    !REMOVE SYMMETRIES
    !
    E_field=0._SP
-   B_field_direction=" "
+   B_field=0._SP
+   B_theta=0._SP
+   B_psi=0._SP
    !
    ! Probe external field to calcualted dielectric constant
    ! 
@@ -375,7 +377,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !             
  l_rtoptics  =runlevel_is_on('rtoptics')
  !
- if (l_rsymm) call initactivate(1,"EField1 EField2 BField RmAllSymm")
+ if (l_rsymm) call initactivate(1,"EField1 EField2 BField Bpsi Btheta RmAllSymm")
  !
  if (l_rtoptics) then 
     call initactivate(1,"EnRngeRt ETStpsRt TmRngeRt DampMode DampFactor FourierDamp")
@@ -388,6 +390,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  ! GPL_EXCLUDE_END
  !
  if (l_electrons.and.l_dos) call initactivate(1,"DOS_broad DOS_bands")
+#if defined _YPP_MAGNETIC
+ if (l_angular_momentum) call initactivate(1,"FFTGvecs")
+#endif
  !
  if (l_plot) then
    call initactivate(1,"Format Direction FFTGvecs") 

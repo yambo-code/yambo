@@ -52,8 +52,8 @@
   {"electrons","s","Electrons [(w)ave,(d)ensity,(e)lias,(m)ag,do(s)]",0,0,1,0}, 
 #endif
 #if defined _YPP_MAGNETIC 
-  {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mp,(w)ave,(m)ag,(l)]",0,0,1,0}, 
-  {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s),(l)]",0,0,1,0}, 
+  {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mp,(w)ave,(m)ag]",0,0,1,0}, 
+  {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s),angu(l)ar p]",0,0,1,0}, 
 #endif
 #if ! defined _YPP_ELPH && ! defined _YPP_MAGNETIC
   {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mplitude,(w)ave,(m)ag]",0,0,1,0}, 

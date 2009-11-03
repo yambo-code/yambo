@@ -6,7 +6,7 @@ RT_OBJECTS = RT_initialize.o RT_restart.o \
 #endif
 MAGNETIC_objects = 
 #if defined _MAGNETIC
-MAGNETIC_objects = MAG_Hamiltonian.o MAG_common_build_A.o
+MAGNETIC_objects = MAG_Hamiltonian.o MAG_common_build_A.o 
 #endif
 objs =	SC_driver.o V_Hartree.o V_exx.o V_real_space_to_H.o SC_common_build_Ho.o \
         V_qp_basis_to_H.o SC_check_symmetries.o SC_extended_oscillators.o \

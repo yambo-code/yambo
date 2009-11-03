@@ -101,9 +101,9 @@ module global_XC
  ! Perturbations
  integer, public, parameter :: &
    EXT_NONE             = 601, &
-   EXT_Bz_LANDAU        = 602, &
-   EXT_Bz_PAULI         = 603, &
-   EXT_Bz_MAGNETISM     = 604
+   EXT_B_LANDAU         = 602, &
+   EXT_B_PAULI          = 603, &
+   EXT_B_MAGNETISM      = 604
    !
  contains
    !
@@ -229,12 +229,12 @@ module global_XC
      if (perturbation/=EXT_NONE) then
        ch=global_XC_string
        select case (perturbation)
-         case(EXT_Bz_PAULI)
-           global_XC_string=trim(ch)//'+ Pauli Magnetism (z-axis)'
-         case(EXT_Bz_LANDAU)
-           global_XC_string=trim(ch)//'+ Landau Magnetism (z-axis)'
-         case(EXT_Bz_MAGNETISM)
-           global_XC_string=trim(ch)//'+ Magnetism (z-axis)'
+         case(EXT_B_PAULI)
+           global_XC_string=trim(ch)//'+ Pauli Magnetism'
+         case(EXT_B_LANDAU)
+           global_XC_string=trim(ch)//'+ Landau Magnetism'
+         case(EXT_B_MAGNETISM)
+           global_XC_string=trim(ch)//'+ Magnetism'
        end select
      endif
      !

@@ -34,6 +34,7 @@ module it_m
  character(2),parameter :: Time_unit='fs'
  character(2),parameter :: B_unit='T'
  character(5),parameter :: I_unit='kWLm2'
+ character(3),parameter :: Angle_unit='deg'
  ! 
  ! Verbosity
  !===========

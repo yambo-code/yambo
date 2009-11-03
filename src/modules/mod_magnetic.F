@@ -24,21 +24,35 @@ module magnetic
  use pars, ONLY:SP,schlen
  !
  character(schlen) :: MAG_hamiltonian_type
- character(schlen) :: MAG_gauge ! 'SYMM' 'X_ASYMM' 'Y_ASYMM'
- real(SP)          :: MAG_B_z
- real(SP)          :: MAG_radius 
+ character(schlen) :: MAG_gauge               ! 'SYMM' 'X_ASYMM' 'Y_ASYMM' 'Z_ASYMM'
  logical           :: MAG_pauli
  logical           :: MAG_landau
  !
- ! Lz Check
+ ! Magnetic field in polar coordinates. 
+ ! Theta angle with z axis; psi angle with x axis
  !
+ real(SP)          :: MAG_B
+ real(SP)          :: MAG_theta
+ real(SP)          :: MAG_psi
+ !
+ ! Magnetic field in cartesian coordinates
+ !
+ real(SP)          :: Bx
+ real(SP)          :: By
+ real(SP)          :: Bz
+ !
+ real(SP)          :: MAG_radius              
+ integer           :: gauge_factors(2,3)
+ !
+ real(SP),    allocatable :: A_magn_x(:)
+ real(SP),    allocatable :: A_magn_y(:)
+ real(SP),    allocatable :: A_magn_z(:)
  complex(SP), allocatable :: wf_x(:,:)
  complex(SP), allocatable :: wf_y(:,:)
  complex(SP), allocatable :: wf_z(:,:)
- real(SP),    allocatable :: A_magn_x(:)
- real(SP),    allocatable :: A_magn_y(:)
  real(SP),    allocatable :: x(:)
  real(SP),    allocatable :: y(:)
- integer                  :: gauge_factors(2)
+ real(SP),    allocatable :: z(:)
+ logical,     allocatable :: ir_table(:)
  !
 end module

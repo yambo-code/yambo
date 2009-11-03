@@ -23,7 +23,7 @@ subroutine WF_derivative(load,n_bands,der_k,do_der)
  !
  use pars,           ONLY:SP,DP,pi
  use magnetic,       ONLY:wf_x,wf_y,wf_z
- use wave_func,      ONLY:wf,wf_state,wf_load,WF_free,wf_ng,wf_b
+ use wave_func,      ONLY:wf,wf_state,wf_load,WF_free,wf_ng,wf_b,wf_n_states
  use electrons,      ONLY:n_sp_pol
  use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
  use R_lattice,      ONLY:g_vec,nkibz
@@ -41,7 +41,6 @@ subroutine WF_derivative(load,n_bands,der_k,do_der)
  logical :: load
  !
  ! Internal variables
- integer :: n_states
  complex(SP), allocatable  :: wf_der(:)
  complex(DP), allocatable  :: WF_DP(:)
  ! Dummys
@@ -55,36 +54,36 @@ subroutine WF_derivative(load,n_bands,der_k,do_der)
    return
  endif
  !
- n_states=n_sp_pol*(n_bands(2)-n_bands(1)+1)*(der_k(2)-der_k(1)+1)
- !
  ! Wavefunctions 
  !===============
  ! To construct the magnetic part of the Hamiltonian
  ! I need the wave functions in G space.
+ !
  call fft_setup(0,1,.false.)
- call wf_load(0,1,(/n_bands(1),n_bands(2)/),(/der_k(1),der_k(2)/),space='G',title='-MAG')
+ call wf_load(0,1,n_bands,der_k,space='G',title='-DERIV',impose_free_and_alloc=.TRUE.)
  !
  allocate(wf_der(wf_ng))                              ! G space
  call mem_est("wf_der",(/wf_ng/))
  allocate(wf_DP(fft_size))                            ! real space
  call mem_est("wf_DP",(/fft_size/),(/DP/))
+ !
  if(do_der(1)) then
-   allocate(wf_x(fft_size,n_states))
-   call mem_est("wf_x",(/fft_size*n_states/))
+   allocate(wf_x(fft_size,wf_n_states))
+   call mem_est("wf_x",(/fft_size*wf_n_states/))
    wf_x=(0.,0.)
  endif
  if(do_der(2)) then
-   allocate(wf_y(fft_size,n_states))
-   call mem_est("wf_y",(/fft_size*n_states/))
+   allocate(wf_y(fft_size,wf_n_states))
+   call mem_est("wf_y",(/fft_size*wf_n_states/))
    wf_y=(0.,0.)
  endif
  if(do_der(3)) then
-   allocate(wf_z(fft_size,n_states))
-   call mem_est("wf_z",(/fft_size*n_states/))
+   allocate(wf_z(fft_size,wf_n_states))
+   call mem_est("wf_z",(/fft_size*wf_n_states/))
    wf_z=(0.,0.)
  endif
  !
- if (der_k(1)==1 .and. der_k(2)==nkibz) call live_timing('WF derivatives',n_states)
+ if (der_k(1)==1 .and. der_k(2)==nkibz) call live_timing('WF derivatives',wf_n_states)
 #if defined _FFTW
  fftw_plan = 0
 #endif

@@ -83,8 +83,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use oscillators_IO,ONLY:n_rho_states
 #endif
 #if defined _MAGNETIC
- use magnetic,    ONLY:MAG_B_z,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
-&                      MAG_gauge
+ use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
+&                      MAG_gauge,MAG_psi,MAG_theta
 #endif
  !
  implicit none
@@ -439,12 +439,14 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  ! Magnetic
  !
- MAG_B_z=0.
+ MAG_B=0.
  MAG_radius=0.
- MAG_hamiltonian_type='pauli'
+ MAG_hamiltonian_type='landau'
  MAG_pauli=.FALSE.
  MAG_landau=.FALSE.
  MAG_gauge='SYMM'
+ MAG_psi=0.
+ MAG_theta=0.
  !
 #endif
  !

@@ -75,7 +75,7 @@ integer function e2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  ! S/N
  !======
- serial_number=pickup_a_random(10000.)
+ serial_number=pickup_a_random(10000._SP)
  !
  ! Switch off report file support
  !================================

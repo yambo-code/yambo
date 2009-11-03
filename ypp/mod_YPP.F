@@ -139,7 +139,7 @@ module YPP
  logical     :: l_rsymm
  logical     :: l_rtoptics
  real(SP)    :: E_field(2,3)
- character(1):: B_field_direction
+ real(SP)    :: B_field,B_theta,B_psi
  integer     :: ref_efield
  !
  type Xw_rt

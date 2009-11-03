@@ -75,6 +75,8 @@ subroutine init_convert(rfac,ivar,v_descr,force_RL)
      rfac=1./FS2AUT
    else if (index(trim(v_descr),'T')/=0) then
      rfac=AU2Tesla
+   else if (index(trim(v_descr),'deg')/=0) then
+     rfac=1./radian
    else if (index(trim(v_descr),'kWLm2')/=0) then
      rfac=1./W2Au
    endif

@@ -115,7 +115,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  call QP_reset(qp_dummy)
  !
- if (trim(SC_potential)/='none') call section('*','Self-Consistent '//trim(SC_potential))
+ if (trim(SC_potential)/='none'.and.trim(SC_potential)/='default') call section('*','Self-Consistent '//trim(SC_potential))
  !
  ! Reference energies
  !
@@ -148,7 +148,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  SC_cycle=SC_iterations> 0
  if (NSC_shot) SC_cycle=.false.
  !
- ! Self-Consistent run, Non-SC shot ot nothing ?
+ ! Self-Consistent run, Non-SC shot or nothing ?
  !-----------------------------------------------
  !
  if (io_E==0.and.RESTART) then
@@ -221,10 +221,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  if (l_sc_magnetic) then
    !
-   ! MAG_Hamiltonian evaluates the derivative,
-   ! does the fft of the derivative. Then call WF_free and load the wf in
-   ! real space, compute the magnetic part of the hamiltonian and, 
-   ! allocate and initialise Ho, write H_magnetic in Ho 
+   ! MAG_Hamiltonian:
+   ! - call WF_derivative which computes the derivative in space G
+   ! - load the wf in real space
+   ! - compute the magnetic part of the hamiltonian, 
+   !   allocate and initialise Ho, write H_magnetic in Ho 
    !
    call MAG_Hamiltonian(.FALSE.)
    !

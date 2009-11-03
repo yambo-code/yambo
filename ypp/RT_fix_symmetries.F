@@ -53,6 +53,8 @@ subroutine RT_fix_symmetries(E,k)
 &                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik,i_elmt
  integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:)
  real(SP)              :: v1(3),v2(3),m(3,3)
+ real(SP)              :: B_cart(3)
+ integer               :: det
  real(SP), allocatable :: wf_disk(:,:,:,:)
  logical               :: Rm_all_symm,use_E_field,use_B_field,reject_symmetry
  type(bz_samp)         :: k_save
@@ -61,7 +63,7 @@ subroutine RT_fix_symmetries(E,k)
  use_E_field=.FALSE.
  use_B_field=.FALSE.
  if (any(E_field/=0.)) use_E_field=.TRUE.
- if (any((/"X","x","Y","y","Z","z"/)==B_field_direction)) use_B_field=.TRUE.
+ if (B_field/=0.)     use_B_field=.TRUE.
  !
  if (use_E_field) call section('*',"== Electric Fields in real time: BZ sampling remapping ==")
  if (use_B_field) call section('*',"== Magnetic field: BZ sampling remapping ==")
@@ -100,14 +102,10 @@ subroutine RT_fix_symmetries(E,k)
  call msg('s',trim(intc(nsym))//' spatial symmetries reduced to ...')
  !
  if (use_B_field) then
-   select case (B_field_direction)
-     case ("X","x")
-       i_elmt=1
-     case ("Y","y")
-       i_elmt=2
-     case ("Z","z")
-       i_elmt=3
-   end select
+   det=0.
+   B_cart(1)=B_field*sin(B_theta)*cos(B_psi)
+   B_cart(2)=B_field*sin(B_theta)*sin(B_psi) 
+   B_cart(3)=B_field*cos(B_theta)
  endif
  !
  if(Rm_all_symm) then
@@ -121,15 +119,13 @@ subroutine RT_fix_symmetries(E,k)
        v2(:) = matmul( dl_sop(:,:,is), E_field(2,:) )      
        reject_symmetry=v_norm(v1(:)-E_field(1,:))>1.E-5.or.v_norm(v2(:)-E_field(2,:))>1.E-5
      else if (use_B_field) then
-       reject_symmetry= abs(dl_sop(i_elmt,i_elmt,is))-1.>1.E-5
-       if (.not.reject_symmetry) then
-         do i1=1,3
-           if (i1/=i_elmt.and.abs(dl_sop(i1,i_elmt,is))>1.E-5 ) reject_symmetry=.TRUE.
-           if (i1/=i_elmt.and.abs(dl_sop(i_elmt,i1,is))>1.E-5 ) reject_symmetry=.TRUE.
-         enddo
-       endif
-       if (.not.reject_symmetry) then
-         if ( abs ( m3det(dl_sop(:,:,is))/dl_sop(i_elmt,i_elmt,is) - 1.)>1.E-5)  reject_symmetry=.TRUE.
+       v1(:) = matmul( dl_sop(:,:,is), B_cart )       
+       if(all( abs(v1(:)-B_cart(:))<epsilon(1.)) ) det=+1
+       if(all( abs(v1(:)+B_cart(:))<epsilon(1.)) ) det=-1
+       if(det==0) reject_symmetry=.true.
+       !
+       if (det/=0) then
+         if ( abs ( m3det(dl_sop(:,:,is))/det - 1.)>1.E-5)  reject_symmetry=.true.
        endif
      endif
      !
@@ -144,6 +140,7 @@ subroutine RT_fix_symmetries(E,k)
  endif
  !
  call msg('l'," "//trim(intc(nsym)))
+ write(*,*) B_cart(:)
  !
  call set_real_printed_length(f_length=7,g_length=7)
  do is=1,nsym

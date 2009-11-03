@@ -35,18 +35,18 @@ subroutine IO_mute(what)
  integer          ::ich
  character(schlen)::ch_piece(10)
  !
- write_to_log=master_cpu
+ write_to_log   =master_cpu
  write_to_report=master_cpu
- IO_write=master_cpu
- IO_read=.true.
+ IO_write       =master_cpu
+ IO_read        =.true.
  !
  if (len_trim(what)>0) then
    call string_split(what,ch_piece)
    do ich=1,10
-     if (trim(ch_piece(ich))=="report") write_to_report=.false.
-     if (trim(ch_piece(ich))=="log")    write_to_log=.false.
-     if (trim(ch_piece(ich))=="io_in")  IO_read=.false.
-     if (trim(ch_piece(ich))=="io_out") IO_write=.false.
+     if (trim(ch_piece(ich))=="report".or.trim(ch_piece(ich))=="all") write_to_report=.false.
+     if (trim(ch_piece(ich))=="log"   .or.trim(ch_piece(ich))=="all") write_to_log=.false.
+     if (trim(ch_piece(ich))=="io_in" .or.trim(ch_piece(ich))=="all") IO_read=.false.
+     if (trim(ch_piece(ich))=="io_out".or.trim(ch_piece(ich))=="all") IO_write=.false.
    enddo
  endif
  !

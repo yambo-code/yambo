@@ -43,11 +43,7 @@ module wave_func
  !
  integer                :: wf_ng
  character(1)           :: wf_space
-#if defined _GAMMA
- real(SP)   ,allocatable:: wf(:,:)
-#else
  complex(SP),allocatable:: wf(:,:)
-#endif
  integer    ,allocatable:: wf_state(:,:,:)
  !
  ! Num. of COMPONENTS at each k
@@ -70,11 +66,12 @@ module wave_func
    end function 
    !
    subroutine wf_load(iG_max,iGo_max,bands_to_load,kpts_to_load,&
-&                     spins_to_load,space,title)
+&                     spins_to_load,space,title,impose_free_and_alloc)
      integer :: iG_max,iGo_max,bands_to_load(2),&
 &               kpts_to_load(2)
      integer,     optional :: spins_to_load(2)
      character(*),optional :: space,title
+     logical     ,optional :: impose_free_and_alloc
    end subroutine
    !
  end interface 

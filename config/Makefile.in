@@ -49,10 +49,10 @@ TARGETS  = all yambo interfaces ypp
 UTILS    = changelog
 CLEANS   = clean clean_all
 PROJECTS = yambo_ph yambo_sc yambo_ras yambo_reels \
-	   yambo_manyk yambo_ras_manyk yambo_distro \
+	       yambo_manyk yambo_ras_manyk yambo_distro \
            yambo_magnetic yambo_PWdiago yambo_polaron \
-           yambo_rt ypp_rt ypp_ph ypp_ras ypp_sc ypp_magnetic
-BROKEN   = yambo_gamma
+           yambo_rt ypp_rt ypp_ph ypp_ras ypp_sc ypp_magnetic 
+BROKEN   = yambo_gamma 
 TESTS    = 
 EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(TESTS)
 INTERFCS = a2y p2y e2y 
@@ -73,6 +73,7 @@ PJ_REELSLIBS = $(BASIC_LIBS) ras_reels_mods coulomb bz_ops qp_ctl reels \
 PJ_SCLIBS       = $(MAIN_LIBS) sc 
 PJ_MANYKLIBS    = $(MAIN_LIBS)
 PJ_PHLIBS       = $(MAIN_LIBS)
+GAMMA_LIBS      = $(MAIN_LIBS)
 #
 # Interfaces
 #

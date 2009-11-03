@@ -24,7 +24,8 @@ subroutine ps_convert(rvar,ivar,v_name)
  use pars,  ONLY:SP,lchlen,schlen
  use units
  use it_m,  ONLY: nflines,flines,ni1v,ni2v,ni3v,nr1v,nr2v,nc1v,&
-&                 nr3v,i1vars,i2vars,i3vars,r1vars,r2vars,r3vars,c1vars
+&                 nr3v,i1vars,i2vars,i3vars,r1vars,r2vars,r3vars,c1vars,&
+&                 B_unit,Time_unit,I_unit,Angle_unit
  implicit none
  !
  real(SP):: rvar
@@ -36,7 +37,7 @@ subroutine ps_convert(rvar,ivar,v_name)
  integer :: i1,ipos           
  character(lchlen) :: v_line  
  character(schlen) :: v_s_unit
- logical :: var_is_time,var_is_B,var_is_intensity
+ logical :: var_is_time,var_is_B,var_is_intensity,var_is_angle
  !
  ! First I search for the variable name in the input file 
  !
@@ -64,9 +65,10 @@ subroutine ps_convert(rvar,ivar,v_name)
  !
  ! check if the var is a Time variable (incompatible with energy types)
  !
- var_is_time     =trim(v_s_unit)=="fs"
- var_is_B        =trim(v_s_unit)=="T"
- var_is_intensity=trim(v_s_unit)=="kWLm2"
+ var_is_time     =trim(v_s_unit)==Time_unit
+ var_is_B        =trim(v_s_unit)==B_unit
+ var_is_angle    =trim(v_s_unit)==Angle_unit
+ var_is_intensity=trim(v_s_unit)==I_unit
  !
  if (ivar>0) then
    !
@@ -90,7 +92,8 @@ subroutine ps_convert(rvar,ivar,v_name)
    endif
    return
    !
- else if (abs(rvar)>1.E-10.and..not.var_is_time.and..not.var_is_B.and..not.var_is_intensity) then
+ else if (abs(rvar)>1.E-10.and..not.var_is_time.and..not.var_is_B &
+&         .and..not.var_is_intensity.and..not.var_is_angle) then
    !
    ! REALS (ENERGY)
    !
@@ -166,13 +169,27 @@ subroutine ps_convert(rvar,ivar,v_name)
    !
  else if (var_is_B) then
    !
-   ! MAGNETIC FIelds
+   ! MAGNETIC Fields
    !
    if (index(v_line,'T')/=0) then
      rvar=rvar*Tesla2AU
      call set_itp_unit('T',1)
      return
    endif 
+   !
+ else if (var_is_angle) then
+   !
+   ! Angles (among B and z direction, used by _MAGNETIC project)
+   ! 
+   if (index(v_line,'deg')/=0) then
+     rvar=rvar*radian
+     call set_itp_unit('deg',1)
+     return
+   else
+     call set_itp_unit('rad',1)
+     return
+   endif 
+   !
  else if (var_is_intensity) then
    !
    ! Laser Intensity 

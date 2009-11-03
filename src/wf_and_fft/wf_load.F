@@ -20,14 +20,14 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
-&                   spins_to_load,space,title)
+&                   spins_to_load,space,title,impose_free_and_alloc)
  !
  ! Load and (eventually) FFTs the wavefunctions
  !
  use pars,          ONLY:SP,DP,schlen
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
- use stderr,        ONLY:string_pack,intc
+ use stderr,        ONLY:intc
  use electrons,     ONLY:n_bands,nel,n_spin,n_spinor,n_sp_pol
  use R_lattice,     ONLY:nkibz
  use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,&
@@ -50,6 +50,7 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  integer               :: iG_in,iGo_max_in,bands_to_load(2),kpts_to_load(2)
  integer     ,optional :: spins_to_load(2)
  character(*),optional :: space,title
+ logical     ,optional :: impose_free_and_alloc
  !
  ! Work Space
  !
@@ -59,7 +60,7 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                   s_2_load(2),iG_max,iG_bounds_loaded(2),iGo_max,ACTION_
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
- logical          ::loaded_bounds_ok,QUIET_
+ logical          ::loaded_bounds_ok,use_direct_access,use_live_timing,free_and_alloc,QUIET
  real(SP),    allocatable :: wf_disk(:,:,:,:)
  complex(DP), allocatable :: wf_DP(:)
  !
@@ -116,9 +117,33 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    !
  endif
  !
+ ! Manage direct access I/O
+ ! 
+ use_direct_access=.FALSE.
+#if defined _MAGNETIC
+ use_direct_access=.not.all(kpts_to_load==(/1,nkibz/))
+#endif
+#if defined _MANYK
+ use_direct_access=.TRUE.
+#endif
+ use_live_timing =.not.use_direct_access
+ !
+ ! In case of k by k I/O prevent multiple free/alloc
+ !
+ free_and_alloc=.TRUE.
+ QUIET         =.FALSE.
+ if (kpts_to_load(1)==kpts_to_load(2)) then
+   free_and_alloc=kpts_to_load(1)==1.or.nkibz==1
+   QUIET         =kpts_to_load(1)>1
+   if (QUIET) call IO_mute("report log")
+   if (present(impose_free_and_alloc)) then
+     free_and_alloc=impose_free_and_alloc
+   endif
+ endif
+ !
  ! First WF_free then fft_setup.
  !
- call WF_free()
+ if (free_and_alloc) call WF_free()
  !
  wf_b=bands_to_load
  !
@@ -149,34 +174,20 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  if (wf_space=='R') call fft_setup(iG_max,iGo_max,.false.)
  if (wf_space=="R") fft_dim_loaded=fft_dim
  !
- call WF_alloc()
+ if (free_and_alloc) call WF_alloc()
  !
  if (wf_space=='R') allocate(wf_DP(fft_size))
  if (wf_space=='G') allocate(wf_DP(wf_ng))
  if (wf_space=='C') allocate(wf_DP(wf_ncx))
  !
- wf_title=string_pack('[FFT',trim(wf_title),'] Mesh size:')
- if (wf_space=='R') call msg('rns',trim(wf_title),fft_dim)
+ if (wf_space=='R') call msg('rns','[FFT'//trim(wf_title)//'] Mesh size:',fft_dim)
  !
- QUIET_=.false.
-#if defined _MAGNETIC
- if (wf_k(1)==1 .and. wf_k(2)==nkibz) then
-#endif
-#if !defined _MANYK 
- call live_timing('[WF loader] Wfs (re)loading',wf_n_states,SERIAL=.true.)
- QUIET_=.true.
-#endif
-#if defined _MAGNETIC
- endif
-#endif
+ if (use_live_timing) call live_timing('[WF'//trim(wf_title)//' loader] Wfs (re)loading',wf_n_states,SERIAL=.true.)
  !
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
- call mem_est("wf_disk",(/size(wf_disk)/),(/SP/),quiet=QUIET_)
+ call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
  !
- call io_control(ACTION=OP_RD,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
-#if defined _MANYK || defined _MAGNETIC 
- if (wf_k(1)==wf_k(2).and.wf_k(1)>1) call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
-#endif
+ call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
  io_err=ioWF(ID,wf_disk)
  !
  ! GPL_INCLUDE_START SPIN_IGNORE
@@ -197,12 +208,7 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
      endif
      !
      ACTION_=RD_CL_IF_END
-#if defined _MAGNETIC
-     if(wf_k(1)/=1 .or. wf_k(2)/=nkibz) ACTION_=RD_CL
-#endif
-#if defined _MANYK  
-     ACTION_=RD_CL
-#endif
+     if (use_direct_access) ACTION_=RD_CL
      call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)
      !
      io_err=ioWF(ID,wf_disk)
@@ -234,15 +240,9 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
          enddo
          if (wf_space=='G'.or.wf_space=='C') then
            wf(:,wf_n_states)=wf_DP(:)
-#if defined _MAGNETIC
- if (wf_k(1)==1 .and. wf_k(2)==nkibz) then
-#endif
-#if !defined _MANYK
-           call live_timing(steps=1)
-#endif
-#if defined _MAGNETIC
- endif
-#endif
+           !
+           if (use_live_timing) call live_timing(steps=1)
+           !
            cycle
          endif
 #if defined _FFTW
@@ -251,7 +251,8 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
          call fft_3d(wf_DP,fft_dim,+1)
 #endif
          wf(:,wf_n_states)=wf_DP(:)*fft_norm
-         call live_timing(steps=1)
+         !
+         if (use_live_timing) call live_timing(steps=1)
          !
        enddo
        !
@@ -264,20 +265,12 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    enddo
  enddo
  !
-#if defined _MAGNETIC
- if (wf_k(1)==1 .and. wf_k(2)==nkibz) then
-#endif
-#if !defined _MANYK
- call live_timing()
-#endif
-#if defined _MAGNETIC
- endif
-#endif
+ if (use_live_timing) call live_timing()
  !
  ! CLEAN
  !
  deallocate(wf_disk)
- call mem_est("wf_disk",quiet=QUIET_)
+ call mem_est("wf_disk")
  !
  deallocate(wf_DP)
  !
@@ -305,7 +298,10 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
 #endif
  !
- if (.not.wf_norm_test) return
+ if (.not.wf_norm_test) then
+   if (QUIET) call IO_mute(" ")
+   return
+ endif
  !
  ! Check normalization @ 1st k-point only.
  !
@@ -339,7 +335,10 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
      !
    enddo
  enddo
+ !
  wf_norm_test=.false.
  call msg('rn','[WF loader] Normalization (few states)  min/max  :',(/mndp,mxdp/))
+ !
+ if (QUIET) call IO_mute(" ")
  !
 end subroutine

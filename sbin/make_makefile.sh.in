@@ -86,7 +86,7 @@ case $target in
    linclude="$linclude -I\$(etsf_dir)"
     ;;
   ypp*)
-   llibs="$llibs \$(llapack) \$(lblas) \$(lnetcdf) \$(llocal) \$(lfftw) -lm $llmpi"
+   llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llocal) \$(lfftw) -lm $llmpi"
     ;;
 esac
 

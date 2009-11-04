@@ -134,7 +134,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
    if(MAG_radius/=0) then
      if(.not.MAG_gauge=='SYMM') then
        MAG_gauge='SYMM'
-       call warning('Finite radius B field in the asymm. gauge leads to divergent terms. Symm. gauge imposed')
+       call warning('Finite radius B field in the asymm. gauge has not been implemented. Symm. gauge imposed')
      endif
      if(MAG_landau) then
        if(any(a(3,:2)>epsilon(1.))) then
@@ -152,11 +152,15 @@ subroutine MAG_Hamiltonian(initial_check_only)
    return
  endif
  !
- if(MAG_landau) call MAG_common_build_A(.true.)
- l_dir(:)=.false.
- if(allocated(A_magn_x)) l_dir(1)=.true.
- if(allocated(A_magn_y)) l_dir(2)=.true.
- if(allocated(A_magn_z)) l_dir(3)=.true.
+ if(MAG_landau) then
+   call MAG_common_build_A(.true.)
+   l_dir(:)=.false.
+   if(allocated(A_magn_x)) l_dir(1)=.true.
+   if(allocated(A_magn_y)) l_dir(2)=.true.
+   if(allocated(A_magn_z)) l_dir(3)=.true.
+ else if(MAG_pauli) then
+   call fft_setup(0,1,.false.) ! FFT size
+ endif
  !
  ! Symmetries check
  call SC_check_symmetries((/Bx,By,Bz/))
@@ -189,11 +193,16 @@ subroutine MAG_Hamiltonian(initial_check_only)
  !    Here we have MAG_B, not Bz as the Pauli matricies are chosen
  !    so that the one along the B direction is diagonal
  if(MAG_pauli) then
-   do ir=1,fft_size
-     if(.not.ir_table(ir)) cycle
-     H_pauli(ir,1)= MAG_B
-     H_pauli(ir,2)=-MAG_B
-   enddo 
+   if(MAG_landau) then
+     do ir=1,fft_size
+       if(.not.ir_table(ir)) cycle
+       H_pauli(ir,1)= MAG_B
+       H_pauli(ir,2)=-MAG_B
+     enddo 
+   else
+     H_pauli(:,1)= MAG_B
+     H_pauli(:,2)=-MAG_B
+   endif
  endif
  !
  ! Local alloc/free
@@ -206,28 +215,27 @@ subroutine MAG_Hamiltonian(initial_check_only)
  ! Parallel indexes
  !
  call pp_indexes_reset(px)
- call par_indexes(px,(/nkibz/))
+ call par_indexes(px,(/nkibz,SC_bands/))
  call pp_redux_wait
  !==================================================
  !
  if (MAG_landau) then
+   derivatives(:)=.false.
    if(l_dir(1)) derivatives(1)=.true.
    if(l_dir(2)) derivatives(2)=.true.
    if(l_dir(3)) derivatives(3)=.true.
  endif
  !
+ Ho=(0.,0.)
+ !
  do ik=1,nkibz   
    ! 
    if (.not.px%i1p(ik)) cycle
+   !
    if (MAG_landau) call WF_derivative(.true.,(/1,SC_bands/),(/ik,ik/),derivatives)
    call wf_load(0,1,(/1,SC_bands/),(/ik,ik/),title='-MAG',impose_free_and_alloc=.TRUE.)
-   if (MAG_landau) call WF_derivative(.false.,(/0,0/),(/0,0/),derivatives)    ! Deallocate the derivatives...
- enddo
- stop
-
- do ik=1,nkibz   
    !
-   if (ik==1) call live_timing('MAG-Hamiltonian',SC_bands*nkibz)
+   if (ik==1) call live_timing('MAG-Hamiltonian',px%stps(myid+1))
    !
    do ib=1,SC_bands
      do ibp=1,SC_bands
@@ -260,20 +268,20 @@ subroutine MAG_Hamiltonian(initial_check_only)
 #endif
          !
        enddo
+       !
+       call live_timing(steps=1)
+       !
      enddo
-     !
-     call live_timing(steps=1)
      !
    enddo
    !
-   if (MAG_landau) call WF_derivative(.false.,(/0,0/),(/0,0/),derivatives)    ! Deallocate the derivatives...
+   call live_timing()
+   if(MAG_landau) call WF_derivative(.false.,(/0,0/),(/0,0/),derivatives)    ! Deallocate the derivatives...
+   call WF_free()
+   !
+   call pp_redux_wait(Ho(:,:,ik,:))
    !
  enddo
- !
- call live_timing()
- call WF_free()
- !
- call pp_redux_wait(Ho)
  call pp_indexes_reset(px)
  !
  ! Clean Up

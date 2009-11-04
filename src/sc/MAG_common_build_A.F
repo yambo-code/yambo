@@ -155,11 +155,10 @@ subroutine MAG_common_build_A(build)
        ! The AB effect is implemented only with a flux in the a(3,:) direction
        ! Anyway I'm not sure that this is right if a(3,:) is not perpendicular
        ! to the plane defined by a(1,:) and a(2,:)
-       if(Bz/=0.) r_mod=v_norm((/x(ir),y(ir),0./))
+       r_mod=v_norm((/x(ir),y(ir),0./))
        ! Now build up the vector potential         
        if(MAG_landau) then
          if(r_mod<=MAG_radius .or. MAG_radius==0) then
-           if(MAG_radius/=0) ir_table(ir)=.true.
            if(Bx/=0.) then
              A_magn_z(ir)= 0.5*Bx*y(ir)*gauge_factors(1,1)
              A_magn_y(ir)=-0.5*Bx*z(ir)*gauge_factors(2,1)
@@ -173,6 +172,7 @@ subroutine MAG_common_build_A(build)
              A_magn_y(ir)=A_magn_y(ir)+0.5*Bz*x(ir)*gauge_factors(2,3)
            endif
          else
+           ir_table(ir)=.false.
            if(Bx/=0.) then
              A_magn_z(ir)= 0.5*Bx*MAG_radius**2*y(ir)/r_mod**2
              A_magn_y(ir)=-0.5*Bx*MAG_radius**2*z(ir)/r_mod**2
@@ -219,10 +219,8 @@ subroutine MAG_common_build_A(build)
          A_magn_x=0.
        endif
      endif
-     if(MAG_radius/=0.) then
-       allocate(ir_table(fft_size))
-       ir_table(:)=.false.
-     endif
+     allocate(ir_table(fft_size))
+     ir_table(:)=.true.
    end subroutine
    !
    subroutine local_alloc()
@@ -238,11 +236,9 @@ subroutine MAG_common_build_A(build)
        if(allocated(A_magn_z)) deallocate(A_magn_z)
        call mem_est("A_magn_x A_magn_y A_magn_z")
      endif
-     if(allocated(x)) deallocate(x)
-     if(allocated(y)) deallocate(y)
-     if(allocated(z)) deallocate(z)
+     deallocate(x,y,z)
      call mem_est("x y z")
-     if(MAG_radius/=0.) deallocate(ir_table)
+     deallocate(ir_table)
    end subroutine
    !
    subroutine local_free()

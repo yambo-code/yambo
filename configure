@@ -1977,7 +1977,7 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 # Original version Available from the GNU Autoconf Macro Archive at:
 # http://autoconf-archive.cryp.to/macros-by-category.html
 #
-# Copyright (C) 2000-2008 A. Marini and the YAMBO team
+# Copyright (C) 2000-2009 A. Marini and the YAMBO team
 #              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU
@@ -2007,7 +2007,7 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 #
 # Copyright (C) 2002 M. Marques, A. Castro, A. Rubio, G. Bertsch
 #
-# Copyright (C) 2000-2008 A. Marini and the YAMBO team
+# Copyright (C) 2000-2009 A. Marini and the YAMBO team
 #              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU
@@ -2068,7 +2068,7 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 # autoconf macro for detecting NetCDF module file
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
-# Copyright (C) 2000-2008 A. Marini and the YAMBO team
+# Copyright (C) 2000-2009 A. Marini and the YAMBO team
 #              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU
@@ -2091,7 +2091,7 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 
 
 #
-# Copyright (C) 2000-2008 A. Marini and the YAMBO team
+# Copyright (C) 2000-2009 A. Marini and the YAMBO team
 #              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU
@@ -2120,7 +2120,7 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 
 
 #
-# Copyright (C) 2000-2008 A. Marini and the YAMBO team
+# Copyright (C) 2000-2009 A. Marini and the YAMBO team
 #              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU
@@ -2143,7 +2143,7 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 
 
 #
-# Copyright (C) 2000-2008 A. Marini and the YAMBO team
+# Copyright (C) 2000-2009 A. Marini and the YAMBO team
 #              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU
@@ -2166,7 +2166,7 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 
 
 #
-# Copyright (C) 2000-2008 A. Marini and the YAMBO team
+# Copyright (C) 2000-2009 A. Marini and the YAMBO team
 #              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU

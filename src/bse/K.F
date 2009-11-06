@@ -90,7 +90,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  integer    :: O_dim
  integer    :: O_x_dim,alloc_err(2),x_fft_size,c_fft_size
  logical    :: load_O_X
- complex(SP),allocatable::Ovv(:),Occ(:),Cc(:),O1x(:,:),O2x(:,:)
+ complex(SP),allocatable::Ovv(:),Occ(:),Cc(:)
+#if defined _GAMMA
+ complex(SP),target, allocatable::O2x(:,:)
+ complex(SP),pointer            ::O1x(:,:)
+#else
+ complex(SP),        allocatable::O1x(:,:),O2x(:,:)
+#endif
  complex(SP),allocatable::Ovc(:),Ocv(:)
  type(ggwinfo)          ::isc
  !
@@ -383,9 +389,18 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  endif
  !
  if (load_O_X) then
-   allocate(O1x(BS_n_g_exch,O_x_dim),stat=alloc_err(1))
    allocate(O2x(BS_n_g_exch,O_x_dim),stat=alloc_err(2))
-   call mem_est('O1x O2x',(/size(O1x),size(O2x)/),errors=alloc_err(:2))
+   call mem_est('O2x',(/size(O2x)/),errors=(/alloc_err(2)/))
+#if defined _GAMMA
+   if(.not.l_col_cut) then
+     O1x=>O2x
+   else
+#endif
+     allocate(O1x(BS_n_g_exch,O_x_dim),stat=alloc_err(1))
+     call mem_est('O1x',(/size(O1x)/),errors=(/alloc_err(1)/))
+#if defined _GAMMA
+   endif
+#endif
  endif
  !
  if (.not.BS_K_coupling) call mem_est('BS_mat',(/O_x_dim**2/))
@@ -669,8 +684,18 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call mem_est("BS_mat")
  !
  if (load_O_X) then
-   deallocate(O1x,O2x)
-   call mem_est("O1x O2x")
+#if defined _GAMMA
+   if(l_col_cut) then 
+#endif
+     deallocate(O1x)
+     call mem_est("O1x")
+#if defined _GAMMA
+   else
+     nullify(O1x)
+   endif
+#endif
+   deallocate(O2x)
+   call mem_est("O2x")
  endif
  !
  if (BS_res_K_corr.or.BS_cpl_K_corr) then

@@ -289,7 +289,7 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    !
    if (wf_space=='R') wf_size=fft_size
    if (wf_space=='G') wf_size=wf_ng
-   do ikibz=1,nkibz
+   do ikibz=wf_k(1),wf_k(2)
      call WF_rotate(ikibz,wf,wf_size)
    enddo
    call load_SC_components('WF_clean')

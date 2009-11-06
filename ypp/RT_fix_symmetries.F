@@ -119,14 +119,13 @@ subroutine RT_fix_symmetries(E,k)
        v2(:) = matmul( dl_sop(:,:,is), E_field(2,:) )      
        reject_symmetry=v_norm(v1(:)-E_field(1,:))>1.E-5.or.v_norm(v2(:)-E_field(2,:))>1.E-5
      else if (use_B_field) then
+       det=0
        v1(:) = matmul( dl_sop(:,:,is), B_cart )       
        if(all( abs(v1(:)-B_cart(:))<epsilon(1.)) ) det=+1
        if(all( abs(v1(:)+B_cart(:))<epsilon(1.)) ) det=-1
-       if(det==0) reject_symmetry=.true.
+       reject_symmetry=(det==0)
        !
-       if (det/=0) then
-         if ( abs ( m3det(dl_sop(:,:,is))/det - 1.)>1.E-5)  reject_symmetry=.true.
-       endif
+       if (det/=0) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/det - 1.)>1.E-5)
      endif
      !
      if(reject_symmetry) then
@@ -169,7 +168,7 @@ subroutine RT_fix_symmetries(E,k)
  call msg('s',trim(intc(k%nibz))//' k-points are now expanded to ...')
  deallocate(k%pt)
  call k_reduce(k)
- call msg('l',trim(intc(k%nibz)))
+ call msg('l'," "//trim(intc(k%nibz)))
  !
  ! Map k-point using the save BZ 
  !

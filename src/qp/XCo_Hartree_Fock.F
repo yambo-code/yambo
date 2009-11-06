@@ -41,7 +41,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use SC,            ONLY:it_now,SC_bands
  use global_XC,     ONLY:SC_HF
  use IO_m,          ONLY:NONE
- use oscillators_IO,ONLY:rho_VX_rho,rho_table,n_rho_states,&
+ use oscillators_IO,ONLY:rho_VX_rho,rho_table,n_rho_states,Sx_cutoff,&
 &                        oscillators_IO_alloc,oscillators_IO_free,V_kind,ioRHO_RHO_VX 
 #endif
  !
@@ -55,7 +55,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  type(pp_indexes) ::px
  integer                 ::i2,iq,ib,ibp,jb,ik,Sx_upper_band,i_qp
 #if defined _RT
- integer                 :: jb2,ik_minus_q,ic,COM_
+ integer                 :: jb2,ik_minus_q,ic,COM_,n_tot_states,n_stored_states
  real(SP)                :: sx_max
  complex(SP), allocatable:: tmp_sx(:,:,:)
 #endif
@@ -117,6 +117,9 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
    call mem_est("tmp_sx",(/size(tmp_sx)/),(/2*SP/))
    !      
    call oscillators_IO_alloc()
+   !
+   n_tot_states   =0
+   n_stored_states=0
    !
  endif
  !
@@ -292,19 +295,23 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
      do jb=1,SC_bands
        do jb2=1,SC_bands
          do ik=1,E%nk
-           if(abs(tmp_sx(jb,jb2,ik))>=sx_max/2000.)  ic=ic+1
+           if(abs(tmp_sx(jb,jb2,ik))>=sx_max*Sx_cutoff &
+       &     .or.sx_cutoff<0.0)  ic=ic+1
          enddo
        enddo
      enddo
      !
-     n_rho_states=ic
+     n_rho_states   =ic
+     n_tot_states   =n_tot_states+SC_bands**2*E%nk
+     n_stored_states=n_stored_states+n_rho_states
      !
      ic=0
      !
      do jb=1,SC_bands
        do jb2=1,SC_bands
          do ik=1,E%nk
-           if(abs(tmp_sx(jb,jb2,ik))>=sx_max/2000.) then
+           if(abs(tmp_sx(jb,jb2,ik))>=sx_max*Sx_cutoff &
+       &     .or.sx_cutoff<0.0)  then
              ic=ic+1
              rho_table(1,ic)=jb
              rho_table(2,ic)=jb2
@@ -351,6 +358,13 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
    deallocate(QP_DB_done)
    call oscillators_IO_free()
    call WF_free()
+   !
+   if(Sx_cutoff>0.0.and.Sx_cutoff<1.) then
+     write (dump_ch,'(a,f10.1,a)') '[RHO] Exchange elements reduced by :', &
+   &     (1.-real(n_stored_states)/real(n_tot_states))*100.,'%'
+     call msg('s',dump_ch)
+   endif
+   !
    return
  endif
  !

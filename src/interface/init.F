@@ -425,7 +425,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs SxLowBnd')  
 #if defined _RT
  if (l_HF_and_locXC.and.l_rho_IO) then
-   call initactivate(1,'SCBands')
+   call initactivate(1,'SCBands EXXCut')
    call initactivate(-1,'SxLowBnd')
  endif
 #endif
@@ -580,7 +580,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (l_real_time) then
      call initactivate(1,'RTstep RTsteps ThermStps ThermEta')
      call initactivate(1,'Integrator LifeTime DiagHIter KeepVxc ') 
-     call initactivate(1,'RTQpAnalyze NoDiamagnetic CacheSize')
+     call initactivate(1,'RTQpAnalyze NoDiamagnetic CacheSize EXXCut')
      call initactivate(1,'ExtField1 ExtFTinitial1 ExtFInt1 ExtFFreq1 ELongDir1 EFNoIntraband1')
      call initactivate(1,'ExtField2 ExtFTinitial2 ExtFInt2 ExtFFreq2 ELongDir2 EFNoIntraband2')
    else

@@ -30,11 +30,14 @@ subroutine el_magnetization(en,Xk)
  !
  use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp
- use electrons,      ONLY:levels,n_spin,n_spinor
- use D_lattice,      ONLY:nsym
+ use electrons,      ONLY:levels,n_spin,n_spinor,nel
+ use D_lattice,      ONLY:nsym,DL_vol
  use FFT_m,          ONLY:fft_size,fft_rot_r
  use wave_func,      ONLY:wf_state,wf
  use xc_functionals, ONLY:el_mag
+#if defined _MAGNETIC
+ use magnetic,       ONLY:average_el_mag
+#endif
  implicit none
  type(levels) ::en
  type(bz_samp)::Xk
@@ -46,6 +49,9 @@ subroutine el_magnetization(en,Xk)
  !
  el_mag=0.
  cv=0.
+#if defined _MAGNETIC
+ average_el_mag=0.
+#endif
  !
  if (n_spin==1) return
  !
@@ -86,6 +92,14 @@ subroutine el_magnetization(en,Xk)
      el_mag(:,i2)=el_mag(:,i2)+real(cv(fft_rot_r(i1,:),i2)/real(nsym))
    end do
  enddo
+ !
+#if defined _MAGNETIC
+  do i1=1,3
+    do i2=1,fft_size
+      average_el_mag(i1)=average_el_mag(i1)+el_mag(i2,i1)/(DL_vol*nel)
+    enddo
+  enddo
+#endif
  !
  ! GPL_EXCLUDE_END SPIN_IGNORE
  !

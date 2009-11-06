@@ -69,11 +69,11 @@ subroutine MAG_Hamiltonian(initial_check_only)
  use D_lattice,      ONLY:a,alat
  use R_lattice,      ONLY:g_vec,nkibz
  use magnetic,       ONLY:MAG_radius,MAG_B,MAG_hamiltonian_type,MAG_landau,MAG_pauli, &
-&                         MAG_gauge,wf_x,wf_y,wf_z,A_magn_x,A_magn_y,A_magn_z,x,y,z,  &
+&                         MAG_gauge,A_magn_x,A_magn_y,A_magn_z,x,y,z,  &
 &                         gauge_factors,Bx,By,Bz,MAG_theta,MAG_psi,ir_table
  use electrons,      ONLY:n_sp_pol
  use SC,             ONLY:SC_bands,SC_potential
- use wave_func,      ONLY:wf,wf_state,wf_load,WF_free,wf_ng
+ use wave_func,      ONLY:wf,wf_state,wf_ng,wf_x,wf_y,wf_z,wf_load,WF_free,WF_derivative_free
  use timing,         ONLY:live_timing
  use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m,  ONLY:par_indexes
@@ -90,7 +90,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
  !
  integer   :: ir,ir1,ir2,ir3,i_spin,ifft,jfft,i1,ik,ib,ibp   
  real(SP)  :: radius, r_mod,cell_center(3)
- logical   :: derivatives(3),l_dir(3)
+ logical   :: do_derivatives(3),H_magn_x_on,H_magn_y_on,H_magn_z_on
  !
  ! Allocs
  !
@@ -154,10 +154,12 @@ subroutine MAG_Hamiltonian(initial_check_only)
  !
  if(MAG_landau) then
    call MAG_common_build_A(.true.)
-   l_dir(:)=.false.
-   if(allocated(A_magn_x)) l_dir(1)=.true.
-   if(allocated(A_magn_y)) l_dir(2)=.true.
-   if(allocated(A_magn_z)) l_dir(3)=.true.
+   H_magn_x_on=.false.
+   H_magn_y_on=.false.
+   H_magn_z_on=.false.
+   if(allocated(A_magn_x)) H_magn_x_on=.true.
+   if(allocated(A_magn_y)) H_magn_y_on=.true.
+   if(allocated(A_magn_z)) H_magn_z_on=.true.
  else if(MAG_pauli) then
    call fft_setup(0,1,.false.) ! FFT size
  endif
@@ -180,13 +182,13 @@ subroutine MAG_Hamiltonian(initial_check_only)
  !                               moment with respect to the spin)
  if (MAG_landau) then
    ! 1) H_paramagn (the px,py,pz component will be applied directly to the wf)
-   if(l_dir(1)) H_paramagn_x(:)=2*A_magn_x(:)
-   if(l_dir(2)) H_paramagn_y(:)=2*A_magn_y(:)
-   if(l_dir(3)) H_paramagn_z(:)=2*A_magn_z(:)
+   if(H_magn_x_on) H_paramagn_x(:)=2*A_magn_x(:)
+   if(H_magn_y_on) H_paramagn_y(:)=2*A_magn_y(:)
+   if(H_magn_z_on) H_paramagn_z(:)=2*A_magn_z(:)
    ! 2) H_diamagnetic
-   if(l_dir(1)) H_diamagn(:)=A_magn_x(:)**2
-   if(l_dir(2)) H_diamagn(:)=H_diamagn(:)+A_magn_y(:)**2
-   if(l_dir(3)) H_diamagn(:)=H_diamagn(:)+A_magn_z(:)**2
+   if(H_magn_x_on) H_diamagn(:)=A_magn_x(:)**2
+   if(H_magn_y_on) H_diamagn(:)=H_diamagn(:)+A_magn_y(:)**2
+   if(H_magn_z_on) H_diamagn(:)=H_diamagn(:)+A_magn_z(:)**2
  endif
  !
  ! 3) H_pauli
@@ -220,24 +222,27 @@ subroutine MAG_Hamiltonian(initial_check_only)
  !==================================================
  !
  if (MAG_landau) then
-   derivatives(:)=.false.
-   if(l_dir(1)) derivatives(1)=.true.
-   if(l_dir(2)) derivatives(2)=.true.
-   if(l_dir(3)) derivatives(3)=.true.
+   do_derivatives(:)=.false.
+   if(H_magn_x_on) do_derivatives(1)=.true.
+   if(H_magn_y_on) do_derivatives(2)=.true.
+   if(H_magn_z_on) do_derivatives(3)=.true.
  endif
  !
  Ho=(0.,0.)
  !
  do ik=1,nkibz   
    ! 
-   if (.not.px%i1p(ik)) cycle
-   !
-   if (MAG_landau) call WF_derivative(.true.,(/1,SC_bands/),(/ik,ik/),derivatives)
-   call wf_load(0,1,(/1,SC_bands/),(/ik,ik/),title='-MAG',impose_free_and_alloc=.TRUE.)
+   if( any(px%i2p(ik,:)) ) then
+     if (MAG_landau) call wf_derivative((/1,SC_bands/),(/ik,ik/),do_derivatives)
+     call wf_load(0,1,(/1,SC_bands/),(/ik,ik/),title='-MAG',impose_free_and_alloc=.TRUE.)
+   endif
    !
    if (ik==1) call live_timing('MAG-Hamiltonian',px%stps(myid+1))
    !
    do ib=1,SC_bands
+     !
+     if (.not.px%i2p(ik,ib)) cycle
+     !
      do ibp=1,SC_bands
        do i_spin=1,n_sp_pol   
          ifft=wf_state(ib,ik,i_spin)
@@ -254,9 +259,9 @@ subroutine MAG_Hamiltonian(initial_check_only)
          H_tmp=(0.,0.)
          !
          if (MAG_landau) then
-           if(l_dir(1)) H_tmp(:)= H_paramagn_x(:)*wf_x(:,jfft)
-           if(l_dir(2)) H_tmp(:)= H_tmp(:)+H_paramagn_y(:)*wf_y(:,jfft)
-           if(l_dir(3)) H_tmp(:)= H_tmp(:)+H_paramagn_z(:)*wf_z(:,jfft)
+           if(H_magn_x_on) H_tmp(:)= H_paramagn_x(:)*wf_x(:,jfft)
+           if(H_magn_y_on) H_tmp(:)= H_tmp(:)+H_paramagn_y(:)*wf_y(:,jfft)
+           if(H_magn_z_on) H_tmp(:)= H_tmp(:)+H_paramagn_z(:)*wf_z(:,jfft)
            H_tmp(:)=H_tmp(:)+H_diamagn(:)*wf(:,jfft)
          endif
          if (MAG_pauli)  H_tmp(:)= H_tmp(:)+H_pauli(:,i_spin)*wf(:,jfft)
@@ -276,12 +281,13 @@ subroutine MAG_Hamiltonian(initial_check_only)
    enddo
    !
    call live_timing()
-   if(MAG_landau) call WF_derivative(.false.,(/0,0/),(/0,0/),derivatives)    ! Deallocate the derivatives...
+   if(MAG_landau) call WF_derivative_free()
    call WF_free()
    !
    call pp_redux_wait(Ho(:,:,ik,:))
    !
  enddo
+ !
  call pp_indexes_reset(px)
  !
  ! Clean Up
@@ -297,15 +303,15 @@ subroutine MAG_Hamiltonian(initial_check_only)
          allocate(r_cell_cc(fft_size,3))
          call mem_est("r_cell_cc",(/fft_size*3/))
          if (MAG_landau) then
-           if(l_dir(1)) allocate(H_paramagn_x(fft_size))
-           if(l_dir(2)) allocate(H_paramagn_y(fft_size))
-           if(l_dir(3)) allocate(H_paramagn_z(fft_size))
+           if(H_magn_x_on) allocate(H_paramagn_x(fft_size))
+           if(H_magn_y_on) allocate(H_paramagn_y(fft_size))
+           if(H_magn_z_on) allocate(H_paramagn_z(fft_size))
            call mem_est("H_paramagn_x H_paramagn_y H_paramagn_y",(/fft_size,fft_size,fft_size/))
            allocate(H_diamagn(fft_size))
            call mem_est("H_diamagn",(/fft_size/))
-           if(l_dir(1)) H_paramagn_x=0.
-           if(l_dir(2)) H_paramagn_y=0.
-           if(l_dir(3)) H_paramagn_z=0.
+           if(H_magn_x_on) H_paramagn_x=0.
+           if(H_magn_y_on) H_paramagn_y=0.
+           if(H_magn_z_on) H_paramagn_z=0.
            H_diamagn=0.
          endif
          if (MAG_pauli) then
@@ -331,9 +337,9 @@ subroutine MAG_Hamiltonian(initial_check_only)
          call mem_est("r_cell_cc")
        case(2)
          if (MAG_landau) then
-           if(l_dir(1)) deallocate(H_paramagn_x)
-           if(l_dir(2)) deallocate(H_paramagn_y)
-           if(l_dir(3)) deallocate(H_paramagn_z)
+           if(H_magn_x_on) deallocate(H_paramagn_x)
+           if(H_magn_y_on) deallocate(H_paramagn_y)
+           if(H_magn_z_on) deallocate(H_paramagn_z)
            deallocate(H_diamagn)
          endif
          if (MAG_pauli)  deallocate(H_pauli)

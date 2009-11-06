@@ -21,7 +21,7 @@
 !
 subroutine XCo_driver(E,k,Xk,q)
  !
- use drivers,       ONLY:l_acfdt,l_rho_io,l_sc_run
+ use drivers,       ONLY:l_acfdt,l_rho_io,l_sc_run,l_real_time
  use pars,          ONLY:schlen
  use com,           ONLY:msg
  use units,         ONLY:HARTREE
@@ -134,7 +134,7 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  ! Vxc
  !
- if (.not.l_sc_run) then
+ if (.not.l_sc_run.and..not.l_real_time) then
    !
 #if defined _SC
    if( WF_kind/= SC_CHOSEX ) call XCo_local(E,Xk)

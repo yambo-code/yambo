@@ -35,24 +35,32 @@ module magnetic
  real(SP)          :: MAG_theta
  real(SP)          :: MAG_psi
  !
- ! Magnetic field in cartesian coordinates
+ ! Magnetic field in cartesian coordinates & gauge factors
  !
  real(SP)          :: Bx
  real(SP)          :: By
  real(SP)          :: Bz
  !
- real(SP)          :: MAG_radius              
- integer           :: gauge_factors(2,3)
+ ! Aharonov Bohm variables
+ !
+ real(SP)                 :: MAG_radius              
+ logical,     allocatable :: ir_table(:)
+ !
+ ! Vector potential & gauge factors
  !
  real(SP),    allocatable :: A_magn_x(:)
  real(SP),    allocatable :: A_magn_y(:)
  real(SP),    allocatable :: A_magn_z(:)
- complex(SP), allocatable :: wf_x(:,:)
- complex(SP), allocatable :: wf_y(:,:)
- complex(SP), allocatable :: wf_z(:,:)
+ integer                  :: gauge_factors(2,3)
+ !
+ ! Centered coordinates
+ !
  real(SP),    allocatable :: x(:)
  real(SP),    allocatable :: y(:)
  real(SP),    allocatable :: z(:)
- logical,     allocatable :: ir_table(:)
+ !
+ ! Average magnetization
+ !
+ real(SP)                 :: average_el_mag(3)
  !
 end module

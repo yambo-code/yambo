@@ -25,6 +25,9 @@ subroutine fermi_msg(E,mode)
  use units,         ONLY:HARTREE
  use com,           ONLY:msg,warning
  use electrons,     ONLY:levels,n_sp_pol,n_spin
+#if defined _MAGNETIC
+ use magnetic,      ONLY:average_el_mag
+#endif
  implicit none
  type(levels)::E
  integer     ::mode
@@ -137,6 +140,12 @@ subroutine fermi_msg(E,mode)
  !
  ! [3] Report if the system is treated as a metal
  !
- if (E%nbf/=E%nbm.and..not.any(nbf_/=nbm_)) call warning('Merged spin levels are metallic') 
+ if (E%nbf/=E%nbm.and..not.any(nbf_/=nbm_)) call warning('Merged spin levels are metallic')
+ !
+#if defined _MAGNETIC
+ ! [4] Report the value of the average magnetization per electron
+ !
+ if(n_sp_pol>1)    call msg('r','Average magnetization per electron: (x,y,z)',average_el_mag(:))
+#endif
  !
 end subroutine

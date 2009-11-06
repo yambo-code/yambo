@@ -80,7 +80,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use real_time,  ONLY:RT_step,Tot_steps, Thermal_steps, Efield,Integrator_name, &
 &                     DiagH_iter, LifeTime,l_RPA, n_ext_fields, l_qp_analyze,   &
 &                     Thermal_eta,l_always_relax,max_rt_steps_disk
- use oscillators_IO,ONLY:n_rho_states
+ use oscillators_IO,ONLY:n_rho_states,Sx_cutoff
 #endif
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
@@ -428,6 +428,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_qp_analyze=.FALSE.
  l_always_relax=.FALSE.
  max_rt_steps_disk=200
+ Sx_cutoff=0.001
  !
  ! RHO I/O
  !

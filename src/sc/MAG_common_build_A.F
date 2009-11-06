@@ -52,9 +52,8 @@ subroutine MAG_common_build_A(build)
  use D_lattice,      ONLY:a
  use R_lattice,      ONLY:nkibz
  use magnetic,       ONLY:MAG_radius,MAG_B,MAG_landau,MAG_psi,MAG_theta,  &
-&                         MAG_gauge,wf_x,wf_y,wf_z,x,y,z,Bx,By,Bz,        &
-&                         A_magn_x,A_magn_y,A_magn_z,gauge_factors,       &
-&                         ir_table
+&                         MAG_gauge,x,y,z,Bx,By,Bz,ir_table,              &
+&                         A_magn_x,A_magn_y,A_magn_z,gauge_factors
  use vec_operate,    ONLY:v_norm
  implicit none
  !

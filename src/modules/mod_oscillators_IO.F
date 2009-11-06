@@ -29,6 +29,11 @@ module oscillators_IO
  integer                  :: n_rho_states
  integer                  :: V_kind 
  !
+ ! Cut off on exchange matrix elements
+ ! Sx_cutoff=0 all, (Sx_cutoff>1 or Sx_cutoff<0)=none
+ !
+ real(SP)                 :: Sx_cutoff
+ !
  interface
    !
    integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)

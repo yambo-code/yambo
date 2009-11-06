@@ -54,6 +54,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use real_time,     ONLY:RT_step, Tot_steps, Thermal_steps, Integrator_name, LifeTime, &
 &                        DiagH_Iter,Thermal_eta,EField,max_rt_steps_disk
 
+ use oscillators_IO,ONLY:Sx_cutoff
 #endif
 #if defined _MAGNETIC
  use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
@@ -292,6 +293,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'ExtFTinitial2',  '[RT] Initial Time',EField(2)%t_initial,unit=Time_unit,verb_level=V_sc)
  call it('f',defs,'EFNoIntraband2', '[RT] Do not include intraband coupling',verb_level=V_sc)
  !
+ ! Other parameters of RT
+ !
  call it(defs,'Integrator','[RT] Integrator (RK2 | EULER | EXACT | RK2EXACT) ',Integrator_name)
  call it(defs,'ThermEta',  '[RT] Adiabatic switching characteristic time  1/(ThermStps*ThermEta)',Thermal_eta,verb_level=V_sc)
  call it(defs,'DiagHIter', '[RT] Digaonalize the Hamiltonian',DiagH_Iter,verb_level=V_sc)
@@ -300,6 +303,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'KeepVxc', '[RT] Do not subtract Vxc from the self-energy',verb_level=V_sc)
  call it('f',defs,'NoDiamagnetic', '[RT] Exclude the diamagnetic term in current and coupling',verb_level=V_sc)
  call it(defs,'CacheSize', '[RT] Numer of steps stored in memory before I/O',max_rt_steps_disk,verb_level=V_sc)
+ call it(defs,'EXXCut', '[RT] Cutoff on the exchange, 0=full 1=none',Sx_cutoff,verb_level=V_sc)
 #endif
  !
 #if defined _MAGNETIC

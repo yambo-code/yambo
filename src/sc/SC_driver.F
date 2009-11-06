@@ -55,6 +55,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use oscillators_IO, ONLY:oscillators_IO_alloc,oscillators_IO_free,ioRHO_RHO_VX,&
 &                         V_kind
  use global_XC,      ONLY:SC_HF    
+#if defined _MAGNETIC
+ use magnetic,       ONLY:average_el_mag
+#endif
  !
  implicit none
  type(levels) ::E
@@ -336,6 +339,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    call el_density(E,k,rho_n,.false.)
    call V_Hartree(rho_n,V_hartree_sc)
+#if defined _MAGNETIC
+   ! and magnetization
+   if(n_sp_pol>1) call el_magnetization(E,k)
+#endif
    !
    V_hartree_sc(:,n_sp_pol)= V_hartree_sc(:,1)
    !
@@ -537,6 +544,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      call el_density(E,k,rho_n,.false.)
      !
+#if defined _MAGNETIC
+     ! New magnetization 
+     !===================
+     !
+     call el_magnetization(E,k)
+#endif
      ! Convergences
      !==============
      !
@@ -556,8 +569,18 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        rho_convergence = rho_convergence + abs(rho_n(ir)-rho_nm1(ir))/nel
      enddo
      !
+#if defined _MAGNETIC
+     if(n_sp_pol>1) then
+       dumb_ch='[SC] Iteration '//trim(intc(it_now))//' Accuracies rho(%) - E(ev) :'//&
+&            trim(real2ch(rho_convergence))//'% - '//trim(real2ch(E_convergence*HARTREE))//&
+&            '  (Mz='//trim(real2ch(average_el_mag(3)))//')'
+     else
+#endif
      dumb_ch='[SC] Iteration '//trim(intc(it_now))//' Accuracies rho(%) - E(ev) :'//&
 &            trim(real2ch(rho_convergence))//'% - '//trim(real2ch(E_convergence*HARTREE))
+#if defined _MAGNETIC
+     endif
+#endif
      !
      if (tty_size>0.or.it_now==1) then
        call live_time_msg("n",dumb_ch,"","%s")

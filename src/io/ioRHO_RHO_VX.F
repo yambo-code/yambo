@@ -23,7 +23,7 @@ integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
- use oscillators_IO,ONLY:rho_table,n_rho_states,V_kind,rho_VX_rho
+ use oscillators_IO,ONLY:rho_table,n_rho_states,V_kind,rho_VX_rho,Sx_cutoff
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
 &                        io_bulk,write_is_on,io_disconnect,IO_write,file_is_present
  use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE
@@ -70,10 +70,14 @@ integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
 &       VAR=' Interaction Kind                :',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   call io_elemental(ID,VAR="INTERACTION_PARAMETERS",VAR_SZ=3,MENU=0)
    if (V_kind_disk==SC_HF) then
+     call io_elemental(ID,VAR="INTERACTION_PARAMETERS",VAR_SZ=4,MENU=0)
      call io_elemental(ID,I0=QP_ng_Sx,&
 &         VAR=' Exchange RL vectors             :',CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,R0=Sx_cutoff,&
+&         VAR=' Exchange Cutoff                 :',CHECK=.true.,OP=(/"=="/))
+   else
+     call io_elemental(ID,VAR="INTERACTION_PARAMETERS",VAR_SZ=2,MENU=0)
    endif
    call io_elemental(ID,I0=RIM_ng,&
 &       VAR=' RIM RL components               :',CHECK=.true.,OP=(/"=="/))

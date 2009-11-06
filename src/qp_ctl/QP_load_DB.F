@@ -146,7 +146,7 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
      QP_ctl_from_DB(:)%db="none"
      QP_ctl_from_DB(:)%short_descr="none"
      if (.not.QPs_DB.and..not.GFs_DB) then
-       call warning('DB ('//trim(qp_db_name)//') not found')
+       if (len_trim(qp_db_name)>0) call warning('DB ('//trim(qp_db_name)//') not found')
      else
        call warning('Impossible to perform I/O. Incompatible actions ?')
      endif

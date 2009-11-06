@@ -19,11 +19,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine WF_derivative(load,n_bands,der_k,do_der)
+subroutine wf_derivative(derivative_bands,derivative_kpt,do_derivative)
  !
  use pars,           ONLY:SP,DP,pi
- use magnetic,       ONLY:wf_x,wf_y,wf_z
- use wave_func,      ONLY:wf,wf_state,wf_load,WF_free,wf_ng,wf_b,wf_n_states
+ use wave_func,      ONLY:wf,wf_state,wf_ng,wf_b,wf_n_states,wf_x,wf_y,wf_z,&
+&                         wf_load,WF_free,WF_derivative_alloc,WF_derivative_free
  use electrons,      ONLY:n_sp_pol
  use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
  use R_lattice,      ONLY:g_vec,nkibz
@@ -35,10 +35,9 @@ subroutine WF_derivative(load,n_bands,der_k,do_der)
  !
  implicit none
  ! Input variables
- integer :: n_bands(2)
- integer :: der_k(2)
- logical :: do_der(3)
- logical :: load
+ integer :: derivative_bands(2)
+ integer :: derivative_kpt(2)
+ logical :: do_derivative(3)
  !
  ! Internal variables
  complex(SP), allocatable  :: wf_der(:)
@@ -46,50 +45,27 @@ subroutine WF_derivative(load,n_bands,der_k,do_der)
  ! Dummys
  integer :: i1,i_spin,ib,ik,ifft
  !
- if(.not.load) then
-   if(allocated(wf_x)) deallocate(wf_x)
-   if(allocated(wf_y)) deallocate(wf_y)
-   if(allocated(wf_z)) deallocate(wf_z)
-   call mem_est("wf_x wf_y wf_z")
-   return
- endif
- !
  ! Wavefunctions 
  !===============
  ! To construct the magnetic part of the Hamiltonian
  ! I need the wave functions in G space.
  !
  call fft_setup(0,1,.false.)
- call wf_load(0,1,n_bands,der_k,space='G',title='-DERIV',impose_free_and_alloc=.TRUE.)
+ call wf_load(0,1,derivative_bands,derivative_kpt,space='G',title='-DERIV',impose_free_and_alloc=.TRUE.)
+ call WF_derivative_alloc(do_derivative)
  !
  allocate(wf_der(wf_ng))                              ! G space
  call mem_est("wf_der",(/wf_ng/))
  allocate(wf_DP(fft_size))                            ! real space
  call mem_est("wf_DP",(/fft_size/),(/DP/))
  !
- if(do_der(1)) then
-   allocate(wf_x(fft_size,wf_n_states))
-   call mem_est("wf_x",(/fft_size*wf_n_states/))
-   wf_x=(0.,0.)
- endif
- if(do_der(2)) then
-   allocate(wf_y(fft_size,wf_n_states))
-   call mem_est("wf_y",(/fft_size*wf_n_states/))
-   wf_y=(0.,0.)
- endif
- if(do_der(3)) then
-   allocate(wf_z(fft_size,wf_n_states))
-   call mem_est("wf_z",(/fft_size*wf_n_states/))
-   wf_z=(0.,0.)
- endif
- !
- if (der_k(1)==1 .and. der_k(2)==nkibz) call live_timing('WF derivatives',wf_n_states)
+ if (derivative_kpt(1)==1 .and. derivative_kpt(2)==nkibz) call live_timing('WF derivatives',wf_n_states)
 #if defined _FFTW
  fftw_plan = 0
 #endif
  !
- do ik=der_k(1),der_k(2)
-   do ib=n_bands(1),n_bands(2)
+ do ik=derivative_kpt(1),derivative_kpt(2)
+   do ib=derivative_bands(1),derivative_bands(2)
      do i_spin=1,n_sp_pol   
        ifft=wf_state(ib,ik,i_spin)
        !
@@ -98,7 +74,7 @@ subroutine WF_derivative(load,n_bands,der_k,do_der)
        ! wf_derivative(G,i)= (k_i+G_i) wf(:)
        ! wf_z is not needed
        do i1=1,3
-         if(.not.do_der(i1)) cycle
+         if(.not.do_derivative(i1)) cycle
          wf_der=(0.,0.)
          wf_der(:)=wf(:,ifft)*(k_pt(ik,i1)+g_vec(: wf_ng ,i1))*2.0_SP*pi/alat(i1)
          !
@@ -115,13 +91,13 @@ subroutine WF_derivative(load,n_bands,der_k,do_der)
          if(i1==3) wf_z(:,ifft)=wf_DP(:)
          !
        enddo
-       if (der_k(1)==1 .and. der_k(2)==nkibz) call live_timing(steps=1)
+       if (derivative_kpt(1)==1 .and. derivative_kpt(2)==nkibz) call live_timing(steps=1)
        !
      enddo
    enddo
  enddo
  !
- if (der_k(1)==1 .and. der_k(2)==nkibz) call live_timing()
+ if (derivative_kpt(1)==1 .and. derivative_kpt(2)==nkibz) call live_timing()
  call WF_free()
  !
  deallocate(wf_DP)

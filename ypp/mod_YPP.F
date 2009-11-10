@@ -36,6 +36,7 @@ module YPP
  integer  :: n_path_pts
  real(SP) :: Kgw_1(3)
  real(SP) :: qlong(3,3)
+ real(SP) :: alat_used_for_output
  character(schlen) :: coo_in
  character(schlen) :: coo_out
  character(schlen) :: PtsPath
@@ -190,7 +191,6 @@ module YPP
    !
    subroutine K_transform(k,in_mode)
      !
-     use D_lattice,    ONLY:alat
      use units,        ONLY:pi
      use vec_operate,  ONLY:c2a
      !
@@ -202,21 +202,21 @@ module YPP
          if (trim(coo_out)=="iku")  call c2a(v_in=k,mode="kc2i")
          if (trim(coo_out)=="rlu")  call c2a(v_in=k,mode="kc2a")
          if (trim(coo_out)=="alat") then
-           k=k*alat(1)/2./pi
+           k=k*alat_used_for_output/2./pi
          endif
        case ('iku')
          if (trim(coo_out)=="cc")   call c2a(v_in=k,mode="ki2c")
          if (trim(coo_out)=="rlu")  call c2a(v_in=k,mode="ki2a")
          if (trim(coo_out)=="alat") then
            call c2a(v_in=k,mode="ki2c")
-           k=k*alat(1)/2./pi
+           k=k*alat_used_for_output/2./pi
          endif
        case ('rlu')
          if (trim(coo_out)=="cc")   call c2a(v_in=k,mode="ka2c")
          if (trim(coo_out)=="iku")  call c2a(v_in=k,mode="ka2i")
          if (trim(coo_out)=="alat") then
            call c2a(v_in=k,mode="ka2c")
-           k=k*alat(1)/2./pi
+           k=k*alat_used_for_output/2./pi
          endif
      end select
      !

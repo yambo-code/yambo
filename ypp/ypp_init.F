@@ -23,11 +23,12 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  use units,          ONLY:HARTREE,FS2AUT
  use wave_func,      ONLY:wf_ng 
+ use D_lattice,      ONLY:alat
  use R_lattice,      ONLY:ng_vec
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
 &                         nrnlvls,rnlvls,runlevel_is_on,&
-&                         infile_verbosity
+&                         infile_verbosity,V_general
  use drivers,        ONLY:infile_editing
  use com,            ONLY:file_exists
  use stderr,         ONLY:string_split
@@ -163,6 +164,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    qlong= 0.0_SP
    PtsPath= ' '
    N_path_pts=0
+   alat_used_for_output=alat(1)
    !
    ! GPL_EXCLUDE_START
    !
@@ -226,8 +228,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    !
    ! Verbosity
    !
-   if ( trim(rstr_piece(i1)) == 'infver' )  read(rstr_piece(i1+1),*) infile_verbosity
-   if (infile_verbosity<0) infile_verbosity=0
+   if ( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='gen' ) infile_verbosity=V_general
    !
    do i2=1,nrnlvls
      if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1)) ) then
@@ -385,7 +386,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  endif
  ! 
 #endif
- if (l_bzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut GammaRadius")
+ if (l_bzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut OutputAlat GammaRadius")
  !
  ! GPL_EXCLUDE_END
  !

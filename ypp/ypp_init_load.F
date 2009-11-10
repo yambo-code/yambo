@@ -93,8 +93,8 @@ subroutine ypp_init_load(defs)
  !
  ! BZ grids
  !
- call it(defs,'cooIn','Points coordinates (in) cc/rlu/iku',coo_in)
- call it(defs,'cooOut','Points coordinates (out) cc/rlu/iku',coo_out)
+ call it(defs,'cooIn','Points coordinates (in) cc/rlu/iku/alat',coo_in)
+ call it(defs,'cooOut','Points coordinates (out) cc/rlu/iku/alat',coo_out)
  call it(defs,'GWKpts','GW K-point grid',Kgw_1)
  call it(defs,'Qpts',  'Q-point grid',   Kgw_1)
  call it(defs,'KShift1','K-grid shift vector[1] ',qlong(1,:))
@@ -182,8 +182,8 @@ subroutine ypp_init_load(defs)
  !
  call it(defs,'BZ_RIM_Nk','BZ Random Integration points',BZ_RIM_nkpts)
  call it(defs,'BZ_RIM_path','Path to the SAVE folder with the RIM DB1',BZ_RIM_path)
- call it(defs,'GammaRadius','[a.u.] Maximum distance from gamma',&
-&              gamma_radius,verb_level=V_general)
+ call it(defs,'GammaRadius','[a.u.] Maximum distance from gamma',gamma_radius,verb_level=V_general)
+ call it(defs,'OutputAlat','[a.u.] Lattice constant used for "alat" ouput format',alat_used_for_output,verb_level=V_general)
  !
 #if defined _YPP_RT
  !

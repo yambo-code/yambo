@@ -26,7 +26,6 @@ module real_time
  !
  implicit none
  !
- !
  ! External Field type
  ! 
  type ext_field

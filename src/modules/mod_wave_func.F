@@ -62,7 +62,10 @@ module wave_func
  integer    ,allocatable:: wf_igk(:,:)
  logical                :: wf_norm_test
  !
- logical, private       :: QUIET_
+ ! Allocation/deallocation messaging verbosity
+ !
+ logical                :: QUIET_free
+ logical                :: QUIET_alloc
  !
  interface
    !
@@ -98,12 +101,7 @@ module wave_func
      !
      if (err==0) allocate(wf_state(wf_b(2),wf_k(2),wf_s(2)),stat=err)
      !
-     QUIET_=.false.
-#if defined _MANYK
-     QUIET_=.true.
-#endif
-     !
-     call mem_est('WF',(/size(wf)/),quiet=QUIET_,errors=(/err/))
+     call mem_est('WF',(/size(wf)/),errors=(/err/))
      !
      wf=(0.,0.)
      wf_state=0
@@ -117,12 +115,8 @@ module wave_func
      use FFT_m,    ONLY : fft_size,fft_dim,fft_dim_loaded,fft_g_table,&
   &                       fft_rot_r,fftw_plan,fft_multiplier
      if (.not.allocated(wf)) return
-     QUIET_=.false.
-#if defined _MANYK
-     QUIET_=.true.
-#endif
      !
-     call mem_est('WF',quiet=QUIET_)
+     call mem_est('WF',quiet=QUIET_free)
      !
      deallocate(wf,wf_state)
      if (wf_space=="R") then
@@ -150,17 +144,17 @@ module wave_func
      !
      if(cart_direction(1)) then
        allocate(wf_x(fft_size,wf_n_states))
-       call mem_est("WF_x",(/fft_size*wf_n_states/))
+       call mem_est("WF_x",(/fft_size*wf_n_states/),quiet=QUIET_alloc)
        wf_x=(0.,0.)
      endif
      if(cart_direction(2)) then
        allocate(wf_y(fft_size,wf_n_states))
-       call mem_est("WF_y",(/fft_size*wf_n_states/))
+       call mem_est("WF_y",(/fft_size*wf_n_states/),quiet=QUIET_alloc)
        wf_y=(0.,0.)
      endif
      if(cart_direction(3)) then
        allocate(wf_z(fft_size,wf_n_states))
-       call mem_est("WF_z",(/fft_size*wf_n_states/))
+       call mem_est("WF_z",(/fft_size*wf_n_states/),quiet=QUIET_alloc)
        wf_z=(0.,0.)
      endif
    end subroutine
@@ -171,7 +165,7 @@ module wave_func
        if(allocated(wf_x)) deallocate(wf_x)
        if(allocated(wf_y)) deallocate(wf_y)
        if(allocated(wf_z)) deallocate(wf_z)
-       call mem_est("WF_x WF_y WF_z")
+       call mem_est("WF_x WF_y WF_z",quiet=QUIET_free)
        !
    end subroutine
    !

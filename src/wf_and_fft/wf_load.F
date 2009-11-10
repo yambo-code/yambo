@@ -34,7 +34,8 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                        fftw_plan,fft_g_table,fft_size
  use wave_func,     ONLY:wf_nc_k,wf_igk,WF_alloc,wf_b,wf_k,wf_space,wf,wf_s,&
 &                        wf_state,wf_ng,wf_norm_test,wf_ncx,ioWF,WF_free,&
-&                        wf_n_states,wf_nb_io,wf_nb_io_groups
+&                        wf_n_states,wf_nb_io,wf_nb_io_groups,QUIET_alloc,&
+&                        QUIET_free
  use timing,        ONLY:live_timing
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,REP,&
 &                        io_fragmented, io_netcdf_support, RD_CL,DUMP
@@ -60,7 +61,7 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                   s_2_load(2),iG_max,iG_bounds_loaded(2),iGo_max,ACTION_
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
- logical          ::loaded_bounds_ok,use_direct_access,use_live_timing,free_and_alloc,QUIET
+ logical          ::loaded_bounds_ok,use_direct_access,use_live_timing,free_and_alloc
  real(SP),    allocatable :: wf_disk(:,:,:,:)
  complex(DP), allocatable :: wf_DP(:)
  !
@@ -131,11 +132,13 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  ! In case of k by k I/O prevent multiple free/alloc
  !
  free_and_alloc=.TRUE.
- QUIET         =.FALSE.
+ QUIET_alloc   =.FALSE.
+ QUIET_free    =.FALSE.
  if (kpts_to_load(1)==kpts_to_load(2)) then
-   free_and_alloc=kpts_to_load(1)==1.or.nkibz==1
-   QUIET         =kpts_to_load(1)>1
-   if (QUIET) call IO_mute("report log")
+   free_and_alloc =kpts_to_load(1)==1.or.nkibz==1
+   QUIET_alloc    =kpts_to_load(1)>1
+   QUIET_free     =kpts_to_load(2)<nkibz
+   if (QUIET_alloc) call IO_mute("report log")
    if (present(impose_free_and_alloc)) then
      free_and_alloc=impose_free_and_alloc
    endif
@@ -299,7 +302,7 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 #endif
  !
  if (.not.wf_norm_test) then
-   if (QUIET) call IO_mute(" ")
+   if (QUIET_alloc) call IO_mute(" ")
    return
  endif
  !
@@ -339,6 +342,6 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  wf_norm_test=.false.
  call msg('rn','[WF loader] Normalization (few states)  min/max  :',(/mndp,mxdp/))
  !
- if (QUIET) call IO_mute(" ")
+ if (QUIET_alloc) call IO_mute(" ")
  !
 end subroutine

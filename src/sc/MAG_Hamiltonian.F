@@ -273,14 +273,12 @@ subroutine MAG_Hamiltonian(initial_check_only)
 #endif
          !
        enddo
-       !
-       call live_timing(steps=1)
-       !
      enddo
+     !
+     call live_timing(steps=1)
      !
    enddo
    !
-   call live_timing()
    if(MAG_landau) call WF_derivative_free()
    call WF_free()
    !
@@ -288,6 +286,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
    !
  enddo
  !
+ call live_timing()
  call pp_indexes_reset(px)
  !
  ! Clean Up

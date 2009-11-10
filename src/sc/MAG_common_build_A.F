@@ -68,18 +68,19 @@ subroutine MAG_common_build_A(build)
  real(SP),    allocatable :: r_cell_cc(:,:)
  !
  !
- ! MAG field components
- !=====================
- Bx=MAG_B*sin(MAG_theta)*cos(MAG_psi)
- By=MAG_B*sin(MAG_theta)*sin(MAG_psi) 
- Bz=MAG_B*cos(MAG_theta)
- !
  ! Allocation 
  !============
  if(.not.build) then
    call module_free()
    return
  endif
+ !
+ ! MAG field components
+ !=====================
+ Bx=MAG_B*sin(MAG_theta)*cos(MAG_psi)
+ By=MAG_B*sin(MAG_theta)*sin(MAG_psi) 
+ Bz=MAG_B*cos(MAG_theta)
+ !
  call fft_setup(0,1,.false.) ! FFT size
  call module_alloc()
  call local_alloc()

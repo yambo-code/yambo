@@ -139,7 +139,6 @@ subroutine RT_fix_symmetries(E,k)
  endif
  !
  call msg('l'," "//trim(intc(nsym)))
- write(*,*) B_cart(:)
  !
  call set_real_printed_length(f_length=7,g_length=7)
  do is=1,nsym

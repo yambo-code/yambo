@@ -125,8 +125,8 @@ subroutine fermi_msg(E,mode)
    if (nbf_(i_s_pol)/=nbm_(i_s_pol)) cycle
    !
    prefix_='Direct Gaps            [ev]:'
-   if (n_sp_pol>1.and.i_s_pol==1) prefix_='Direct Gaps   [ev] spin up'
-   if (n_sp_pol>1.and.i_s_pol==2) prefix_='                        dn'
+   if (n_sp_pol>1.and.i_s_pol==1) prefix_='Direct Gaps   [ev] spin up:'
+   if (n_sp_pol>1.and.i_s_pol==2) prefix_='                        dn:'
    dir_gaps=(/100.,-100./)
    do i1=1,E%nk
      dir_gaps(1)=min(dir_gaps(1),&
@@ -145,7 +145,7 @@ subroutine fermi_msg(E,mode)
 #if defined _MAGNETIC
  ! [4] Report the value of the average magnetization per electron
  !
- if(n_sp_pol>1)    call msg('r','Average magnetization per electron: (x,y,z)',average_el_mag(:))
+ if(n_sp_pol>1)    call msg('r','Mean magnetization (x,y,z):',average_el_mag(:))
 #endif
  !
 end subroutine

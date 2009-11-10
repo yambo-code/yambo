@@ -96,7 +96,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! 
  integer                  :: io_RHO_err
  logical, allocatable     :: QP_DB_done(:)
-
  !
  ! Magnetic logical setup
  !
@@ -137,16 +136,17 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID(3))  ! Local potential
  io_V=io_SC_components('V' ,E,ID(3))
  !
+ RESTART=all((/io_E==0,io_WF==0,io_V==0/))
+ NSC_shot=SC_iterations==1.and.all((/io_E/=0,io_WF/=0,io_V==0.or.io_V==-2/)).and.local_V
+ !
 #if defined _MAGNETIC
  !
  ! precaution : disable RESTART and NSC_shot
  !
+ if (l_sc_magnetic) RESTART =.FALSE.
+ if (l_sc_magnetic) NSC_shot=.FALSE.
+ !
 #endif
- !
- RESTART=all((/io_E==0,io_WF==0,io_V==0/)).and..not.l_sc_magnetic
- !
- NSC_shot=SC_iterations==1.and.all((/io_E/=0,io_WF/=0,io_V==0.or.io_V==-2/)).and.&
-&                        local_V.and..not.l_sc_magnetic
  !
  SC_cycle=SC_iterations> 0
  if (NSC_shot) SC_cycle=.false.
@@ -339,9 +339,13 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    call el_density(E,k,rho_n,.false.)
    call V_Hartree(rho_n,V_hartree_sc)
+   !
 #if defined _MAGNETIC
+   !
    ! and magnetization
+   !
    if(n_sp_pol>1) call el_magnetization(E,k)
+   !
 #endif
    !
    V_hartree_sc(:,n_sp_pol)= V_hartree_sc(:,1)
@@ -548,7 +552,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      ! New magnetization 
      !===================
      !
-     call el_magnetization(E,k)
+     if(n_sp_pol>1) call el_magnetization(E,k)
 #endif
      ! Convergences
      !==============

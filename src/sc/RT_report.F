@@ -48,21 +48,10 @@ subroutine RT_report(file_name,write_output_files)
    headings(1)="Time[fs]"
    headings(2)="E_kin[eV]"
    headings(3)="E_ion[eV]"
-   if(.not.l_NE_simulate_IP) then
-     !      
-     if(l_sc_hf) then
-       headings(4)="E_Hartree[eV]"
-       headings(5)="E_x[eV]"
-     else
-       headings(4)="E_Hartree[eV]"
-       headings(5)="E_xc[eV]"
-     endif
-     !
-   else
-     headings(4)="Eo_pot[eV]"
-     headings(5)="none"
-   endif
-   headings(6)="N" 
+   headings(4)="E_Hartree[eV]"
+   headings(5)="E_x[eV]"
+   headings(6)="E_c[eV]"
+   headings(7)="N" 
    !
    n_output_files=1
    !
@@ -101,7 +90,7 @@ subroutine RT_report(file_name,write_output_files)
    !
    if (i1>1) then 
      call msg(trim(where_ch),'#')
-     call msg(trim(where_ch),'#',headings(1:6),INDENT=0,USE_TABS=.TRUE.)
+     call msg(trim(where_ch),'#',headings(1:7),INDENT=0,USE_TABS=.TRUE.)
      call msg(trim(where_ch),'#')
    endif
    !

@@ -189,8 +189,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    !ANALIZE RESPONSE
    !
    X_rt%time_range(:)  =(/-FS2AUT,-FS2AUT/)
-   X_rt%energy_steps   =100
-   X_rt%energy_range(:)=(/0.,10./HARTREE/)
+   X_rt%energy_steps   =200
+   X_rt%energy_range(:)=(/1./HARTREE,20./HARTREE/)
    X_rt%damp           ="LORENTZIAN"
    X_rt%damp_factor    =0.1/HARTREE
    X_rt%noise_ratio    =0

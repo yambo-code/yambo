@@ -36,6 +36,7 @@ subroutine V_real_space_to_H(ik,V,H,wf)
  !
  integer    :: i1,ib,ibp,ifft,ifftp
  complex(SP):: c_ws(fft_size)
+ !
 #if defined _DOUBLE
  complex(DP):: zdotc
 #else

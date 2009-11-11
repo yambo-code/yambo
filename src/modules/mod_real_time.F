@@ -51,6 +51,12 @@ module real_time
  logical           :: l_NE_simulate_IP
  logical           :: l_NE_simulate_Irredux
  !
+ ! Frozen parts of self-energy
+ !
+ logical                  :: Hfrozen
+ logical                  :: XCfrozen 
+ !
+ !
  ! External Field type
  ! 
  type ext_field
@@ -129,6 +135,32 @@ module real_time
  integer, allocatable     :: kpoints_map(:,:)
  integer                  :: max_rt_steps_disk 
  real(SP), allocatable    :: current_cache(:,:)
+ !
+ ! Interface
+ !
+ interface
+   !
+   subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k)
+     !
+     use pars,       ONLY:SP
+     use SC,         ONLY:SC_bands
+     use R_lattice,  ONLY:bz_samp 
+     use QP_m,       ONLY:QP_nk,QP_table,QP_n_states
+     use electrons,  ONLY:n_sp_pol
+     use FFT_m,      ONLY:fft_size
+     !
+     implicit none
+     !
+     type(bz_samp), intent(in) :: k
+     complex(SP),   intent(in) :: G(SC_bands,SC_bands,QP_nk)
+     complex(SP),  intent(out) :: VALUE
+     complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands,SC_bands,QP_nk,n_sp_pol)
+     complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
+     real(SP),        optional, intent(in) :: O_REAL(fft_size,n_sp_pol)
+     !
+   end subroutine RT_average_operator
+   !
+ end interface
  !
  contains
    !

@@ -75,12 +75,6 @@ subroutine XC_switch()
      local_V=.true.
      SC_kind=XC_EXCHANGE_CORRELATION
      SC_xc_functional=XC_LDA_C_PZ
-   case('none','NONE')
-     l_sc_contains_lda=.false.
-     local_V=.true.
-     SC_kind=0
-     SC_xc_functional=0
-     return
    case('default')
      l_sc_contains_lda=.true.
      local_V=.true.

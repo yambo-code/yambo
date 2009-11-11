@@ -1135,8 +1135,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            call initactivate(1,'HF_and_locXC')
          else if ( trim(rstr_piece(i1+1)) == 'h') then
            SC_potential='HARTREE'
-         else if ( trim(rstr_piece(i1+1)) == 'n') then
-           SC_potential='none'
          else if ( trim(rstr_piece(i1+1)) == 'd') then
            SC_potential='default'
          endif

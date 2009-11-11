@@ -19,7 +19,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_start_and_restart(Xen,Xk)
+subroutine RT_start_and_restart(Xen,Xk,k)
+ !
+ ! This subroutine fills: 
+ ! G_lesser,G_lesser_previsous,G_lesser_reference,
+ ! XC0,V_xc_sc,V_hartree_sc
  !
  use pars,           ONLY:SP
  use com,            ONLY:msg,warning
@@ -30,10 +34,10 @@ subroutine RT_start_and_restart(Xen,Xk)
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:G_lesser,ID,io_J,io_G,ID,NE_steps,G_lesser_previous,&
 &                         G_lesser_reference,Thermal_steps,LifeTime,XC0,      &
-&                         l_RT_needs_XC0
+&                         l_RT_needs_XC0,l_NE_simulate_IP
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V, &
 &                         rho_convergence,H_rotate,local_V,V_hartree_sc,      &
-&                         load_SC_components
+&                         load_SC_components,E_bare,V_xc_sc
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use wave_func,      ONLY:wf
@@ -41,7 +45,7 @@ subroutine RT_start_and_restart(Xen,Xk)
  implicit none
  !
  type(levels)      :: Xen
- type(bz_samp)     :: Xk
+ type(bz_samp)     :: Xk,k
  integer, external :: io_SC_components
  !
  ! Work Space
@@ -60,6 +64,11 @@ subroutine RT_start_and_restart(Xen,Xk)
  forall(i1=1:SC_bands,ik=1:Xen%nk)
    G_lesser(i1,i1,ik)=(0._SP,1._SP)*Xen%f(i1,ik,1)
  end forall
+ !
+ ! Build Ho and save initial energies
+ !
+ E_bare=Xen%E(:SC_bands,:,:)
+ call SC_common_build_Ho(Xen,Xk,k)
  !
  ! Starting point 
  !
@@ -116,9 +125,13 @@ subroutine RT_start_and_restart(Xen,Xk)
        call H_rotate(SC_R(:,:,ik,1),G_lesser(:,:,ik),SC_bands,-1)
      enddo
      !
+     deallocate(SC_R)
+     call mem_est("SC_R ")
+     !
    endif
    !
    if(l_RT_needs_XC0) then
+     XC0=(0._SP,0._SP)
      if (local_V) call load_SC_components('V',COM_=NONE,MODE_=VERIFY)
      do ik=1,QP_nk
        if (local_V) then
@@ -133,9 +146,12 @@ subroutine RT_start_and_restart(Xen,Xk)
  else if (l_RT_needs_XC0) then
    !
    call xc_lda_driver(Xen,Xk,WF_KIND,WF_xc_functional,1,G_lesser)
+   XC0=(0._SP,0._SP)
    do ik=1,QP_nk
      call V_real_space_to_H(ik,V_xc,XC0(:,:,ik,:),wf) 
    enddo
+   !
+   V_xc_sc=(0._SP)
    !
  endif
  !

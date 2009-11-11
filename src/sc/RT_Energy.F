@@ -19,35 +19,28 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
+subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Ex,Exc,Trace_Gf)
  !
- use pars,           ONLY:SP,DP
+ use pars,           ONLY:SP
  use drivers,        ONLY:l_sc_hf,l_sc_contains_lda
  use R_lattice,      ONLY:bz_samp
- use SC,              ONLY:SC_bands,V_hartree_sc,Ho,rho_n,H_nl_sc,SC_xc_functional
+ use SC,             ONLY:SC_bands,V_hartree_sc,V_xc_sc,Ho
  use X_m,            ONLY:P_square
- use real_time,      ONLY:G_lesser,l_NE_simulate_IP
+ use real_time,      ONLY:G_lesser,RT_average_operator
  use electrons,      ONLY:levels
- use wave_func,      ONLY:wf
- use FFT_m,          ONLY:fft_size
+ use QP_m,           ONLY:QP_Vnl_xc
  use xc_functionals, ONLY:E_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional
- use QP_m,           ONLY:QP_nk,QP_Vnl_xc
- use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
- use par_indexes_m,  ONLY:par_indexes
  !
  implicit none 
  !
  type(levels),  intent(in) :: en
  type(bz_samp), intent(in) :: k
- complex(SP),   intent(out):: E_kin,E_ion,E_h,Trace_Gf
- real(SP),      intent(out):: Exc
+ complex(SP),   intent(out):: E_kin,E_ion,E_h,Trace_Gf,Exc,Ex
  !
  ! Work Space
  !
- type(pp_indexes) :: px
- integer       :: ik,i1,SC_bands2
- complex(SP)   :: Ex
+ integer       :: i1
  !
 #if defined _DOUBLE
  real(DP)      :: ddot
@@ -57,179 +50,57 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Exc,Trace_Gf)
  complex(SP)   :: cdotc
 #endif
  !
- call pp_indexes_reset(px)
- call par_indexes(px,(/QP_nk/))
- !
- SC_bands2=SC_bands**2
- !
- H_nl_sc=(0._SP,0._SP)
- !
  ! Non-interaction kinetc energy
  !
  ! E_Kin = - i Tr { P^2 G^<}/2  
  !
- E_kin=(0._SP,0._SP)
- !
- do ik=1,QP_nk
-   !
-   if (.not.px%i1p(ik)) cycle
-   !
-#if defined _DOUBLE
-   E_kin=E_kin-(0._SP,1._SP)*zdotc(SC_bands2,P_square(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
-#else
-   E_kin=E_kin-(0._SP,1._SP)*cdotc(SC_bands2,P_square(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
-#endif
-   !
- enddo
- !
- call pp_redux_wait(E_kin)
+ call RT_average_operator(VALUE=E_kin,O_MATRIX=P_Square,G=G_lesser,k=k)
  !
  E_kin=E_kin/2.
  !  
  ! E_ion = - i Tr {Ho G^<} - Ekin
  !
- E_ion=(0._SP,0._SP)
- !
- do ik=1,QP_nk
-   !      
-   if (.not.px%i1p(ik)) cycle
-   !        
-#if defined _DOUBLE
-   E_ion=E_ion-(0._SP,1._SP)*zdotc(SC_bands2,Ho(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
-#else
-   E_ion=E_ion-(0._SP,1._SP)*cdotc(SC_bands2,Ho(:,:,ik,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
-#endif
-   !
- enddo
- !
- call pp_redux_wait(E_ion)
+ call RT_average_operator(VALUE=E_ion,O_MATRIX=Ho,G=G_lesser,k=k)
  !
  E_ion = E_ion - E_kin
  !
- if(.not.l_NE_simulate_IP) then
+ ! Hartree potential Energy
+ !
+ call RT_average_operator(VALUE=E_h,O_REAL=V_hartree_sc,G=G_lesser,k=k)
+ !
+ E_h=E_h/2._SP
+ !
+ if(l_sc_hf) then
    !
-   ! Hartree potential Energy
+   call RT_average_operator(VALUE=Ex,O_QP=QP_Vnl_xc,G=G_lesser,k=k)
    !
-   E_h=(0._SP,0._SP)
-   !
-   do ik=1,QP_nk
-     !
-     if (.not.px%i1p(ik)) cycle
-     !        
-     H_nl_sc=(0._SP,0._SP)
-     !
-     call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,wf)
-     !
-#if defined _DOUBLE
-     E_h=E_h-(0._SP,0.5_SP)*zdotc(SC_bands2,H_nl_sc(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
-#else
-     E_h=E_h-(0._SP,0.5_SP)*cdotc(SC_bands2,H_nl_sc(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
-#endif
-     !
-   enddo
-   !
-   call pp_redux_wait(E_h)
-   !
-   if(l_sc_hf) then
-     !
-     Ex=(0.,0.)
-     !
-     do ik=1,QP_nk
-       !
-       if (.not.px%i1p(ik)) cycle
-       !        
-       H_nl_sc=(0.,0.)
-       !
-       call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc)
-       !
-#if defined _DOUBLE
-       Ex=Ex+(0.,0.5)*zdotc(SC_bands2,H_nl_sc(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
-#else
-       Ex=Ex+(0.,0.5)*cdotc(SC_bands2,H_nl_sc(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
-#endif
-       !
-     enddo
-     !
-     Exc=real(Ex)
-     !
-     call pp_redux_wait(Exc)
-     !
-   else        
-     !
-     if(l_sc_contains_lda.and.SC_xc_functional/=0) then 
-       !        
-       ! E_xc Energy 
-       !
-       call IO_mute("report log io_in io_out")
-       call xc_lda_driver(en,k,WF_KIND,WF_xc_functional,0,G_lesser)
-       call IO_mute("  ")
-       !
-#if defined _DOUBLE
-       Exc=ddot(fft_size,rho_n,1,E_xc,1)
-#else
-       Exc=sdot(fft_size,rho_n,1,E_xc,1)
-#endif
-       !
-     else
-       !      
-       Exc=(0.,0.)
-       !
-       do ik=1,QP_nk
-         !
-         if (.not.px%i1p(ik)) cycle
-         !        
-         H_nl_sc=(0.,0.)
-         !
-!         call V_real_space_to_H(ik,V_xc_0,H_nl_sc,wf) 
-         !
-#if defined _DOUBLE
-         Exc=Exc+(0.,1.)*zdotc(SC_bands2,H_nl_sc(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
-#else
-         Exc=Exc+(0.,1.)*cdotc(SC_bands2,H_nl_sc(:,:,1),1,G_lesser(:,:,ik),1)*k%weights(ik)
-#endif
-         !
-       enddo
-       !
-       call pp_redux_wait(Exc)
-       !
-     endif
-     !
-   endif
+   Ex=Ex/2._SP
    !
  else
    !
-   E_h=(0.,0.)
+   Ex=(0._SP,0._SP)
    !
-   do ik=1,QP_nk
-     !      
-     if (.not.px%i1p(ik)) cycle
-     !        
-     H_nl_sc=(0.,0.)
-#if defined _DOUBLE
-!     E_h=E_h-(0.,1.0)*zdotc(SC_bands2,H_Hartree_Vxc_0(:,:,ik,1)+H_nl_sc(:,:,1),1, &
-!&        G_lesser(:,:,ik),1)*k%weights(ik)
-#else
-!     E_h=E_h-(0.,1.0)*cdotc(SC_bands2,H_Hartree_Vxc_0(:,:,ik,1)+H_nl_sc(:,:,1),1, &
-!&        G_lesser(:,:,ik),1)*k%weights(ik)
-#endif
-     !
-   enddo
+ endif
+ !
+ if(l_sc_contains_lda) then 
+   !        
+   ! E_xc Energy 
    !
-   call pp_redux_wait(E_h)
+   call IO_mute("report log io_in io_out")
+   call xc_lda_driver(en,k,WF_KIND,WF_xc_functional,0,G_lesser)
+   call IO_mute("  ")
    !
-   Exc=0.
+   call RT_average_operator(VALUE=Exc,O_REAL=E_xc,G=G_lesser,k=k)
+   !
+ else
+   !      
+   call RT_average_operator(VALUE=Exc,O_REAL=V_xc_sc,G=G_lesser,k=k)
    !
  endif
  !
  ! Total number of electrons
  !
- Trace_Gf=(0.,0.)
- !
- do i1=1,SC_bands
-   Trace_Gf=Trace_Gf-(0.,1.)*sum(G_lesser(i1,i1,:)*k%weights(:))
- enddo
- !
- call pp_indexes_reset(px)
+ call RT_average_operator(VALUE=Trace_Gf,G=G_lesser,k=k)
  !
 end subroutine RT_Energy
 

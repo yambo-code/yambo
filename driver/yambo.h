@@ -72,7 +72,7 @@
 #endif
 #if defined _SC | defined _MAGNETIC | defined _RT
   {"scpot",  "v","Self-Consistent Potential",0,0,1,0}, 
-  {"DESC",   " ","opt=(n)none,(hf),(c)hosex,(exx),(exxc),(h)artree,(d)ef",0,0,0,0},
+  {"DESC",   " ","opt=(hf),(c)hosex,(exx),(exxc),(h)artree,(d)ef",0,0,0,0},
 #endif
 #if defined _RT 
   {"negf",   "k","Real-time dynamics",0,0,0,0}, 

@@ -347,7 +347,7 @@ subroutine RT_spectrum(en,k)
  write(dump_ch,*) " Max Frequency Range: ",omega*HARTREE," - ",omega*dble(niter/2.)*HARTREE," eV "
  call msg('o eps_q001_rt','#',dump_ch,INDENT=0,USE_TABS=.true.)
  call msg('o eps_q001_rt','#','',INDENT=0,USE_TABS=.true.)
- write(dump_ch,*) " Max Time  Range: ",0," - ",tot_steps/FS2AUT," fs "
+ write(dump_ch,*) " Max Time  Range: ",0," - ",NE_steps/FS2AUT," fs "
  call msg('o eps_q001_rt','#',dump_ch,INDENT=0,USE_TABS=.true.)
  call msg('o eps_q001_rt','#','',INDENT=0,USE_TABS=.true.)
  !

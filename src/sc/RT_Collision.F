@@ -28,13 +28,13 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  use electrons,      ONLY:levels,n_sp_pol
  use drivers,        ONLY:l_sc_contains_lda,l_sc_hf
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc
+ use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc
  use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_simulate_IP,l_RT_diagonalize, &
  &                        l_NE_with_fields,LifeTime,H_t,l_NE_simulate_RPA,       &
  &                        Thermal_steps,Integrator_name,EXACT,RK2EXACT,A_norm,   &
- &                        Thermal_time, i_time,Efield,RT_step,XC0, &
- &                        G_lesser_reference,n_ext_fields,l_RT_needs_XC0
+ &                        Thermal_time,Efield,RT_step,XC0,Hfrozen,XCfrozen,      &
+ &                        G_lesser_reference,n_ext_fields,l_RT_needs_XC0,i_time
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
@@ -57,14 +57,15 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  !
  SC_bands2=SC_bands**2
  !
- if(.not.l_NE_simulate_IP) then
+ if(.not.Hfrozen.or..not.XCfrozen.or.i_time>0) call el_density(G_input,k,rho_n,.false.)
+ !
+ if(.not.Hfrozen.and.i_time>0) call V_Hartree(rho_n,V_hartree_sc)
+ !
+ if(.not.XCfrozen.and.i_time>0) then
    !
-   call el_density(G_input,k,rho_n,.false.)
+   QP_Vnl_xc=(0._SP,0._SP)
    !
-   call V_Hartree(rho_n,V_hartree_sc)
-   V_hartree_sc(:,n_sp_pol)=V_hartree_sc(:,1)
-   !
-   if(l_sc_contains_lda.and.SC_xc_functional/=0.and..not.l_NE_simulate_RPA) then
+   if(l_sc_contains_lda.and.SC_xc_functional/=0) then
      !
      call IO_mute("report log io_in io_out")
      call xc_lda_driver(Xen,k,WF_KIND,WF_xc_functional,1,G_input)
@@ -73,13 +74,13 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
      !
    endif
    !
+   if(l_sc_hf) call SC_extended_oscillators(G_input)
+   !
  endif
  !
  I1_lesser=(0.,0.)
  I2_lesser=(0.,0.)
  if(allocated(H_t)) H_t =  (0.,0.) 
- !
- if(l_sc_hf) call SC_extended_oscillators(G_input)
  !
  call pp_indexes_reset(px)
  call par_indexes(px,(/QP_nk/))
@@ -90,37 +91,20 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
    !
    H_nl_sc=(0.,0.)
    !
-   if(.not.l_NE_simulate_IP.and..not.l_NE_simulate_RPA) then
-     !
-     if(l_sc_hf) then
-       !
-       ! Add the exchange term
-       !
-       call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 
-       !
-     endif
-     !
-     ! All other self energies here COHSEX etc..... 
-     !
-   endif
+   if(.not.local_V) call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 
+   !  
+   ! Adiabatic Switching
+   ! (for all the parts of self-energy different from V_h + V_xc)
+   ! I have to subtruct XC0
    !
-   ! Negative time means Thermalization I have to subtruct XC0
-   !
-   if(i_time<0) then 
-     !   
+   if(Thermal_steps/=0.and.Thermal_time/=0.0) then 
+     !      
 #if defined _DOUBLE
      call zaxpy(SC_bands2,(1.,0.),-XC0(:,:,ik,1),1,H_nl_sc(:,:,1),1)
 #else
      call caxpy(SC_bands2,(1.,0.),-XC0(:,:,ik,1),1,H_nl_sc(:,:,1),1)
 #endif
      !
-   endif
-   !  
-   ! Adiabatic Switching
-   ! (for all the parts of self-energy different from V_h + V_xc)
-   !
-   if(Thermal_steps/=0.and.Thermal_time/=0.0) then 
-     !      
      H_nl_sc=H_nl_sc*(1._SP+tanh((RT_time+(RT_step*real(Thermal_steps))/2._SP) &
     &        /(RT_step*real(Thermal_steps))/Thermal_time))/2._SP
      !
@@ -137,6 +121,14 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
 #endif
      !
    endif
+   !
+   ! Add Ho = T+V_ion
+   !
+#if defined _DOUBLE
+     call zaxpy(SC_bands2,(1.,0.),Ho(:,:,ik,1),1,H_nl_sc(:,:,1),1)
+#else
+     call caxpy(SC_bands2,(1.,0.),Ho(:,:,ik,1),1,H_nl_sc(:,:,1),1)
+#endif
    !
    ! And now add the external field
    !

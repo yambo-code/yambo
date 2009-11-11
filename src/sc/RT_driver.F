@@ -57,8 +57,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  character(lchlen)        :: file_name(2)
  character(schlen)        :: sec_mode_and_message(2)
  integer                  :: WF_G_max,WF_Go_indx,it,i1,ik
- real(SP)                 :: values(9), E_xc, RT_time  ! The real time on the diagonal RTime = it*RT_step    
- complex(SP)              :: Trace_Gf,E_kin,E_ion,E_h 
+ real(SP)                 :: values(9), RT_time  ! The real time on the diagonal RTime = it*RT_step    
+ complex(SP)              :: Trace_Gf,E_kin,E_ion,E_h,E_x,E_xc 
  !
  call section('*',trim(SC_potential)//' Real-Time Dynamics')
  !##########################################################
@@ -97,16 +97,9 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  !
  call RT_alloc(Xen)
  !
- ! Build Ho
- !
- E_bare=en%E(:SC_bands,:,:)
- call SC_common_build_Ho(Xen,Xk,k)
- !
- ! Restart from a previous RT run 
- ! or from a SC calculation and fill 
- ! G_lesser,G_lesser_previous,G_lesser_reference
+ ! Restart from a previous RT run or from a SC calculation
  ! 
- call RT_start_and_restart(Xen,Xk)
+ call RT_start_and_restart(Xen,Xk,k)
  !
  ! Calculation already done
  !
@@ -126,8 +119,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  !
  call RT_report(file_name,.true.)
  !
- if(l_NE_simulate_IP) call wf_free()
- !
  if(Thermal_steps/=0.and.it_now<=Thermal_steps) then
    ! 
    call live_timing('[RT] Thermalization :',Thermal_steps-it_now+1,SERIAL=.true.)
@@ -145,11 +136,13 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    ! i_time: integer index of the time staring from RT_time>0 
    !         after the Thermalization, used for A_t and J_current
    !
-   if(it>Thermal_steps) i_time=it-Thermal_steps  
+   i_time=it-Thermal_steps  
+   RT_time=i_time*RT_step
    !
-   RT_time=(it-Thermal_steps)*RT_step
-   !
-   if(it==Thermal_steps+1) call live_timing('[RT] Iteration :',NE_steps,SERIAL=.true.)
+   if(it==Thermal_steps+1) then
+     call live_timing('[RT] Iteration :',NE_steps,SERIAL=.true.)
+     if(LifeTime/=0.0) G_lesser_reference=G_lesser
+   endif
    !
    call live_timing(steps=1)
    !
@@ -164,23 +157,19 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    !
    call RT_Collision(G_lesser_previous,Xen,k,q,RT_time)
    !
-   call RT_Energy(Xen,k,E_kin,E_ion,E_h,E_xc,Trace_Gf)
+   call RT_Energy(Xen,k,E_kin,E_ion,E_h,E_x,E_xc,Trace_Gf)
    !
    ! Now print the Energy and other stuff
    !
-   values(1:6)=(/RT_time/FS2AUT,real(E_kin),real(E_ion),real(E_h) , &
-&                E_xc,& ! calculated in xc_lda_driver()
-&                real(Trace_Gf)/)
-   call msg('o dynamics','',values(1:6),USE_TABS=.TRUE.)
+   values(1:7)=(/RT_time/FS2AUT,real(E_kin),real(E_ion),real(E_h) , &
+&                real(E_x),real(E_xc),real(Trace_Gf)/)
+   call msg('o dynamics','',values(1:7),USE_TABS=.TRUE.)
    !
    if(l_RT_diagonalize) call RT_qp_analyze(it,en,k,Xk,G_lesser)
    !
    if(LifeTime/=0.0.and.it<Thermal_steps.and.mod(it,RT_diagonalization_steps)==0) then
      call RT_update_G_reference(Xen,G_lesser_reference)
    endif   
-   !
-   if(it==Thermal_steps.and.Thermal_steps/=0.and.LifeTime/=0.0) &
-     &  G_lesser_reference=G_lesser
    !
    if(l_NE_with_fields.and.i_time>0)  call RT_current(j_current,xK,Xen,G_lesser)
    !

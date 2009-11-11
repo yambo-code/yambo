@@ -54,7 +54,7 @@
   {"gw0",    "g","Dyson Equation solver [opt=n(ewton)]",0,0,1,0},
   {"bss",    "y","BSE solver [opt=h/d]",0,0,1,0},   
 #if defined _SC
-  {"scpot",  "v","Self-Consistent [opt=(n)none,(hf),(c)hosex,(exx),(exxc)]",0,0,1,0},
+  {"scpot",  "v","Self-Consistent [opt=(h)hartree,(hf),(c)hosex,(exx),(exxc)]",0,0,1,0},
 #endif
   {NULL,NULL,NULL,0,0,0,0}
  };

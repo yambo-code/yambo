@@ -81,7 +81,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  real(SP)                 :: max_proj,V_xc_sc_shift(n_spin)
  character(schlen)        :: dumb_ch
  integer, external        :: io_SC_components,eval_G_minus_G
- logical, external        :: stop_now,XC_switch
+ logical, external        :: stop_now
  logical                  :: SC_cycle,RESTART
  logical                  :: l_TF_precond
  type(QP_t)               :: qp_dummy
@@ -107,7 +107,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  ! Switch to the user defined potential (if appropriate)
  !
- if (.not.XC_switch()) return
+ call XC_switch()
  !
  ! Define SC internal variables
  !
@@ -263,7 +263,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
  endif
  ! 
- !
  ! Checking extended oscillators
  !
  if(l_use_RHO_IO) then
@@ -731,9 +730,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      allocate(rho_nm1(fft_size))
      call mem_est("rho_nm1",(/fft_size/),(/SP/))
      !
-     allocate(V_xc_sc(fft_size,n_spin))
-     call mem_est("V_xc_sc",(/size(V_xc_sc)/))
-     !
      allocate(V_xc_nm1(fft_size,n_spin))
      call mem_est("V_xc_nm1",(/size(V_xc_nm1)/))
      !
@@ -763,9 +759,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      deallocate(rho_nm1)
      call mem_est("rho_nm1")
-     !
-     deallocate(V_xc_sc)
-     call mem_est("V_xc_sc")
      !
      deallocate(V_xc_nm1)
      call mem_est("V_xc_nm1")

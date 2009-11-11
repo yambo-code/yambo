@@ -30,7 +30,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                      eval_alpha,Vnl_commutator_warning,Eval_P_and_P2_only,&
 &                      q_plus_G_direction,Q_Shift_Order
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,&
-&                     Sx_low_band,QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
+&                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_W_er,QP_W_dr,QP_cg_percent,&
 &                     QP_ctl_db,QP_ctl_interp_neigh,SC_E_threshold, &
 &                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
@@ -75,12 +75,12 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 #if defined _SC || defined _RT || defined _MAGNETIC
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,&
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB
+ use oscillators_IO,ONLY:n_rho_states,Sx_cutoff
 #endif
 #if defined _RT
- use real_time,  ONLY:RT_step,Tot_steps, Thermal_steps, Efield,Integrator_name, &
-&                     DiagH_iter, LifeTime,l_RPA, n_ext_fields, l_qp_analyze,   &
-&                     Thermal_eta,l_always_relax,max_rt_steps_disk
- use oscillators_IO,ONLY:n_rho_states,Sx_cutoff
+ use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Efield,Integrator_name, &
+&                     RT_diagonalization_steps, LifeTime,l_NE_simulate_RPA, n_ext_fields, l_RT_diagonalize,   &
+&                     Thermal_time,max_rt_steps_disk
 #endif
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
@@ -304,7 +304,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  QP_dSc_steps=2
  QP_Sc_steps=100
  QP_n_W_freqs=100
- Sx_low_band=1
  QP_dSc_test=.false.
  QP_solver=' '
  QP_G_damp=0.1/HARTREE
@@ -401,6 +400,11 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  SC_potential='none'
  compatible_SC_DB=.FALSE.
  found_SC_DB=.FALSE.
+ Sx_cutoff=0.001
+ !
+ ! RHO I/O
+ !
+ n_rho_states=0
  !
 #endif
 #if defined _RT
@@ -418,21 +422,16 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  !
  RT_step=0.002*FS2AUT
- Tot_steps=1000
+ NE_steps=1000
  Thermal_steps=0
- Thermal_eta  =8.0
+ Thermal_time = 1./8.*FS2AUT
  Integrator_name='RK2'
  LifeTime = 0.0*FS2AUT
- l_RPA=.FALSE.
- DiagH_iter=1
- l_qp_analyze=.FALSE.
- l_always_relax=.FALSE.
+ l_NE_simulate_RPA=.FALSE.
+ RT_diagonalization_steps=10
+ l_RT_diagonalize=.FALSE.
  max_rt_steps_disk=200
  Sx_cutoff=0.001
- !
- ! RHO I/O
- !
- n_rho_states=0
  !
 #endif
  !

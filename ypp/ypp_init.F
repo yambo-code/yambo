@@ -193,7 +193,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    X_rt%energy_range(:)=(/0.,10./HARTREE/)
    X_rt%damp           ="LORENTZIAN"
    X_rt%damp_factor    =0.1/HARTREE
-   X_rt%noise_ratio    =200
+   X_rt%noise_ratio    =0
    !
 #endif
    !
@@ -228,7 +228,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    !
    ! Verbosity
    !
-   if ( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='gen' ) infile_verbosity=V_general
+   if ( i1<50 .and. trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='gen' ) infile_verbosity=V_general
    !
    do i2=1,nrnlvls
      if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1)) ) then

@@ -28,7 +28,7 @@ subroutine RT_qp_analyze(it,en,k,xK,G_input)
  use pars,           ONLY:SP,DP,lchlen
  use units,          ONLY:HARTREE
  use electrons,      ONLY:levels
- use real_time,      ONLY:H_t,DiagH_iter,Occ_natural_orb,Thermal_steps,RT_step
+ use real_time,      ONLY:H_t,RT_diagonalization_steps,Occ_natural_orb,Thermal_steps,RT_step
  use QP_m,           ONLY:QP_nk  
  use stderr,         ONLY:set_real_printed_length,intc,real2ch
  use SC,             ONLY:H_nl_sc,SC_bands,E_bare
@@ -57,7 +57,7 @@ subroutine RT_qp_analyze(it,en,k,xK,G_input)
  complex(SP) :: cdotc
 #endif
  !
- if(.not.mod(it,DiagH_iter)==0.and..not.it==Thermal_steps) return
+ if(.not.mod(it,RT_diagonalization_steps)==0.and..not.it==Thermal_steps) return
  !
  call set_real_printed_length()
  !

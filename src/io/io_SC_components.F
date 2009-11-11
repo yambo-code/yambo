@@ -37,9 +37,9 @@ integer function io_SC_components(what,E_sc,ID)
 &                         io_sec,io_bulk,io_fragment,read_is_on,write_is_on,&
 &                         manage_RD_WR_CL_IF_END,ver_is_gt_or_eq,io_reset,IO_INCOMPATIBLE_VAR
 #if defined _RT
- use real_time,      ONLY:l_rt_efield,l_RPA,RT_step,Tot_steps,       &
-&                         Thermal_steps,Integrator_name,l_qp_analyze,DiagH_Iter,     &
-&                         LifeTime,G_lesser,i_time,l_no_diamagnetic,j_current,A_norm,&
+ use real_time,      ONLY:l_NE_with_fields,l_NE_simulate_RPA,RT_step,NE_steps,       &
+&                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps,     &
+&                         LifeTime,G_lesser,i_time,l_RT_no_diamagnetic,j_current,A_norm,&
 &                         n_ext_fields,Efield,max_rt_steps_disk,current_cache
  use IO_m,           ONLY:io_restart,io_check_restart
  use QP_m,           ONLY:QP_nk
@@ -240,12 +240,12 @@ integer function io_SC_components(what,E_sc,ID)
    !
    if(any((/l_J,l_G/))) then
      call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=4,MENU=0) 
-     call io_elemental(ID,L0=l_RPA,VAR=' RPA optics in real time  :', &
-&     CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,L0=l_NE_simulate_RPA,&
+&      VAR=" RPA optics in real time  :", CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,&
 &       VAR=" external field intensity          :",R0=RT_step,CHECK=.true.,OP=(/"=="/))
      if(l_G) call io_elemental(ID, &
-&       VAR=" total number of steps          :",I0=Tot_steps,CHECK=.true.,OP=(/">="/))
+&       VAR=" total number of steps          :",I0=NE_steps,CHECK=.true.,OP=(/">="/))
      call io_elemental(ID, &
 &       VAR=" number of thermalization steps :",I0=Thermal_steps,CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
@@ -256,17 +256,17 @@ integer function io_SC_components(what,E_sc,ID)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
      call io_elemental(ID,VAR="RT_OTHERS",VAR_SZ=7,MENU=0) 
-     call io_elemental(ID,L0=l_qp_analyze,VAR=' analize quasi-particles :', &
+     call io_elemental(ID,L0=l_RT_diagonalize,VAR=' analize quasi-particles :', &
 &     CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,I0=DiagH_Iter,VAR='diagonalization interval :',&
+     call io_elemental(ID,I0=RT_diagonalization_steps,VAR='diagonalization interval :',&
 &     CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,I0=max_rt_steps_disk,VAR='cache size :',&
 &     CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,R0=LifeTime,VAR=' quasi-particle life time :', &
 &     CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,L0=l_rt_efield,VAR=' External Field is present :', &
+     call io_elemental(ID,L0=l_NE_with_fields,VAR=' External Field is present :', &
 &      CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,L0=l_no_diamagnetic,VAR=' No diamagnetic term        :',& 
+     call io_elemental(ID,L0=l_RT_no_diamagnetic,VAR=' No diamagnetic term        :',& 
 &       CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
@@ -314,7 +314,7 @@ integer function io_SC_components(what,E_sc,ID)
  ! 
 #if defined _RT
  if(l_J) then
-   call manage_RD_WR_CL_IF_END(ID,ik,Tot_steps)
+   call manage_RD_WR_CL_IF_END(ID,ik,NE_steps)
  else
 #endif
    call manage_RD_WR_CL_IF_END(ID,ik,nkibz)
@@ -435,7 +435,6 @@ integer function io_SC_components(what,E_sc,ID)
    !
    allocate(R_H_disk(SC_bands,SC_bands,2))
    !
-!  do i_spin=1,n_sp_pol
    i_spin=1
    !
    call io_bulk(ID,VAR="G_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
@@ -445,7 +444,6 @@ integer function io_SC_components(what,E_sc,ID)
    call io_bulk(ID,R3=R_H_disk)
    if (read_is_on(ID))  call mat_r2c(R_H_disk,G_lesser(:,:,ik))
    !
-!  enddo
    deallocate(R_H_disk)
    !
  endif

@@ -31,13 +31,13 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  use X_m,            ONLY:X_t,Eval_P_and_P2_only,X_alloc
  use wave_func,      ONLY:wf,wf_load,wf_ng,WF_free
  use R_lattice,      ONLY:bz_samp,qindx_S
- use QP_m,           ONLY:QP_nk
+ use QP_m,           ONLY:QP_nk,QP_nb
  use SC,             ONLY:SC_potential,SC_bands,Ho,E_bare,it_now
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP
- use real_time,      ONLY:Thermal_steps,Tot_steps,RT_step,G_lesser,l_RT_no_updates, &
-&                         G_lesser_previous,l_rt_efield,RT_alloc,RT_free,io_G,ID,   &
-&                         i_time,Integrator_name,j_current,l_qp_analyze,     &
-&                         G_lesser_reference,LifeTime
+ use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &
+&                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,io_G,ID,   &
+&                         i_time,Integrator_name,j_current,l_RT_diagonalize,     &
+&                         G_lesser_reference,LifeTime,RT_diagonalization_steps
  !
  implicit none
  !
@@ -59,7 +59,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  integer                  :: WF_G_max,WF_Go_indx,it,i1,ik
  real(SP)                 :: values(9), E_xc, RT_time  ! The real time on the diagonal RTime = it*RT_step    
  complex(SP)              :: Trace_Gf,E_kin,E_ion,E_h 
- logical                  :: XC_switch
  !
  call section('*',trim(SC_potential)//' Real-Time Dynamics')
  !##########################################################
@@ -71,12 +70,13 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  Eval_P_and_P2_only=.true.
  call Dipole_driver(Xen, Xk, X(1), X(1)%q0)
  !
- l_RT_no_updates=.not.XC_switch()
+ call XC_switch()
  !
  ! WFs loading
  !
  WF_G_max=wf_ng
- if(l_sc_hf) then
+ if(l_sc_hf) then                                  
+   QP_nb=SC_bands
    WF_Go_indx=maxval(qindx_S(:,:,2))
    sec_mode_and_message(1)='*'
    sec_mode_and_message(2)='Hartree-Fock extended oscillators'  
@@ -97,16 +97,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  !
  call RT_alloc(Xen)
  !
- ! Initialize the Gf and potentials
- !----------------------------------
- ! G_lesser(T=0,T=0)=Go and G_lesser_old(T=0,T=0)=Go
- !
- G_lesser=(0._SP,0._SP)
- ! 
- forall(i1=1:SC_bands,ik=1:Xen%nk)
-   G_lesser(i1,i1,ik)=(0._SP,1._SP)*Xen%f(i1,ik,1)
- end forall
- !
  ! Build Ho
  !
  E_bare=en%E(:SC_bands,:,:)
@@ -116,11 +106,11 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  ! or from a SC calculation and fill 
  ! G_lesser,G_lesser_previous,G_lesser_reference
  ! 
- call RT_restart(Xen)
+ call RT_start_and_restart(Xen,Xk)
  !
  ! Calculation already done
  !
- if(it_now>=Thermal_steps+Tot_steps) then
+ if(it_now>=Thermal_steps+NE_steps) then
    !      
    call RT_free()
    !
@@ -136,7 +126,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  !
  call RT_report(file_name,.true.)
  !
- if(l_RT_no_updates) call wf_free()
+ if(l_NE_simulate_IP) call wf_free()
  !
  if(Thermal_steps/=0.and.it_now<=Thermal_steps) then
    ! 
@@ -144,13 +134,13 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    !
  elseif(it_now>Thermal_steps+1) then
    !
-   call live_timing('[RT] Iteration :',Tot_steps-it_now+1,SERIAL=.true.)
+   call live_timing('[RT] Iteration :',NE_steps-it_now+1,SERIAL=.true.)
    !
  endif
  !
  ! loop on time
  !
- do it=it_now,Thermal_steps+Tot_steps
+ do it=it_now,Thermal_steps+NE_steps
    !
    ! i_time: integer index of the time staring from RT_time>0 
    !         after the Thermalization, used for A_t and J_current
@@ -159,7 +149,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    !
    RT_time=(it-Thermal_steps)*RT_step
    !
-   if(it==Thermal_steps+1) call live_timing('[RT] Iteration :',Tot_steps,SERIAL=.true.)
+   if(it==Thermal_steps+1) call live_timing('[RT] Iteration :',NE_steps,SERIAL=.true.)
    !
    call live_timing(steps=1)
    !
@@ -183,12 +173,16 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
 &                real(Trace_Gf)/)
    call msg('o dynamics','',values(1:6),USE_TABS=.TRUE.)
    !
-   if(l_qp_analyze) call RT_qp_analyze(it,en,k,Xk,G_lesser)
+   if(l_RT_diagonalize) call RT_qp_analyze(it,en,k,Xk,G_lesser)
+   !
+   if(LifeTime/=0.0.and.it<Thermal_steps.and.mod(it,RT_diagonalization_steps)==0) then
+     call RT_update_G_reference(Xen,G_lesser_reference)
+   endif   
    !
    if(it==Thermal_steps.and.Thermal_steps/=0.and.LifeTime/=0.0) &
      &  G_lesser_reference=G_lesser
    !
-   if(l_rt_efield.and.i_time>0)  call RT_current(j_current,xK,Xen,G_lesser)
+   if(l_NE_with_fields.and.i_time>0)  call RT_current(j_current,xK,Xen,G_lesser)
    !
    ! Integrate equation of motion
    !
@@ -209,10 +203,10 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    !
  enddo
  !
- if(Tot_steps/=0) call live_timing
+ if(NE_steps/=0) call live_timing
  !
  call of_open_close(file_name(1))
- if(l_qp_analyze) call of_open_close(file_name(2)) 
+ if(l_RT_diagonalize) call of_open_close(file_name(2)) 
  !
  ! Finalize
  !-----------

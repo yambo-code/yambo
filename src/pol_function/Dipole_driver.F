@@ -21,7 +21,7 @@
 !
 subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
- use drivers,        ONLY:l_optics
+ use drivers,        ONLY:l_optics,l_real_time
  use pars,           ONLY:SP
  use com,            ONLY:warning
 #if defined _RAS
@@ -71,7 +71,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! in _RT P and P^2 are ALWAYS calculated => no band ordering
  !
 #if defined _RT 
- Dipole_bands_ordered=.FALSE.
+ if(l_real_time) Dipole_bands_ordered=.FALSE.
 #endif
  !
  ! Check first if ostnts DB is already done
@@ -95,7 +95,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  io_err=ioOSTNTS(X,Xen,ID)
  !
 #if defined _SC || defined _RT || defined _MAGNETIC
- if (Eval_P_and_P2_only) call IO_mute(" ")
+ if (Eval_P_and_P2_only.and.l_real_time) call IO_mute(" ")
 #endif
  !
  if (io_err.ne.0) then
@@ -110,7 +110,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    else
      call X_alloc('OptGrad',(/3,X%ib(2),X%ib(2),Xk%nibz/))
 #if defined _SC || defined _RT || defined _MAGNETIC
-     if (Eval_P_and_P2_only) then
+     if (Eval_P_and_P2_only.and.l_real_time) then
        call X_alloc('P_square',(/X%ib(2),X%ib(2),Xk%nibz/))
        P_square=(0.,0.)
      endif
@@ -155,7 +155,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    ! Swith off I/O in case gradient is calculated
    !
-   if (Eval_P_and_P2_only) call IO_mute("io_in io_out")
+   if (Eval_P_and_P2_only.and.l_real_time) call IO_mute("io_in io_out")
    !
 #endif
    !
@@ -167,7 +167,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  end if
  !
 #if defined _SC || defined _RT || defined _MAGNETIC
- if (Eval_P_and_P2_only) then
+ if (Eval_P_and_P2_only.and.l_real_time) then
    call IO_mute(" ")
    return
  endif

@@ -26,6 +26,31 @@ module real_time
  !
  implicit none
  !
+ ! CORE LOGICALS
+ !
+ ! NE dynamics
+ !
+ logical           :: l_NE_with_fields  
+ !
+ ! Inital XC (SC or default) are requested
+ !
+ logical           :: l_RT_needs_XC0
+ !
+ ! To exclude the Diamagnetic term 
+ !
+ logical           :: l_RT_no_diamagnetic
+ ! 
+ ! Diagonalization (QP analysis)
+ !
+ logical           :: l_RT_diagonalize
+ integer           :: RT_diagonalization_steps
+ !
+ ! RPA and independent particles
+ !
+ logical           :: l_NE_simulate_RPA
+ logical           :: l_NE_simulate_IP
+ logical           :: l_NE_simulate_Irredux
+ !
  ! External Field type
  ! 
  type ext_field
@@ -34,35 +59,34 @@ module real_time
    real(SP) :: intensity
    real(SP) :: amplitude
    real(SP) :: versor(3)
-   character(schlen) :: ef_name
    logical  :: no_intraband
-   logical  :: no_diamagnetic
+   character(schlen) :: ef_name
  end type ext_field
  !
- integer, parameter  :: n_ext_fields=2
+ ! Time steps and step length
  !
  real(SP) :: RT_step
- real(SP) :: Thermal_eta
- integer  :: n_steps_mem
- integer  :: Tot_steps
+ real(SP) :: Thermal_time
+ integer  :: NE_steps
  integer  :: Thermal_steps
- logical  :: l_RT_no_updates
+ integer  :: RT_memory_steps
  !
  ! External Fields
  !
- type(ext_field) :: EField(n_ext_fields)
+ integer, parameter  :: n_ext_fields=2
+ type(ext_field)     :: EField(n_ext_fields)
  !
- ! If l_keep_vxc=.true. do not subtract Vxc from the self-energy
+ ! Vector potential A(t) norm
  !
- logical           :: l_RPA
+ complex(SP)         :: A_norm(n_ext_fields) 
+ !                                             
+ ! Time dependent Hamiltonian, current and vec. potential
+ !
+ complex(SP) :: j_current(3)
  !
  ! Diagonal and off-diagonal relaxation time
  !
- real(SP)          :: LifeTime
- !
- ! Turn on qp-relaxation also during the adiabatic switching
- !
- logical           :: l_always_relax 
+ real(SP)    :: LifeTime
  !
  ! GFs
  !
@@ -70,20 +94,6 @@ module real_time
  complex(SP), allocatable :: G_lesser_reference(:,:,:)
  complex(SP), allocatable :: I1_lesser(:,:,:)
  complex(SP), allocatable :: I2_lesser(:,:,:)
- !
- ! External Field on flag
- !
- logical                  :: l_rt_efield  
- !
- ! To exclude the Diamagnetic term in current
- !
- logical                  :: l_no_diamagnetic
- ! 
- ! Other
- !
- real(SP)                :: Thermal_time
- integer                 :: DiagH_Iter
- logical                 :: l_qp_analyze
  !
  ! Integrator Variables
  !
@@ -101,25 +111,20 @@ module real_time
  ! in this case I choosed H_o = H_lda ( rho_0 )
  !
  character(schlen)            :: Integrator_name
- !                                             
- ! Time dependent Hamiltonian, current and vec. potential
- !
- complex(SP) :: j_current(3)
- complex(SP) :: A_norm(n_ext_fields) ! Vector potential A(t) norm
  !
  ! Hartree term
  !
- complex(SP), allocatable :: H_Hartree_Vxc_0(:,:,:,:)
+ complex(SP), allocatable :: XC0(:,:,:,:)
  complex(SP), allocatable :: H_t(:,:,:,:)
  !
- ! Non-interaction potential energies and potentials
+ ! Occupation natural orbitals
  !
- real(SP),    allocatable :: V_xc_0(:,:)
- real(SP),    allocatable :: Occ_natural_orb(:,:) ! Occupation natural orbitals
+ real(SP),    allocatable :: Occ_natural_orb(:,:) 
  !
  ! Databases input/output
  !
- integer                  :: io_J,io_G
+ integer                  :: io_J
+ integer                  :: io_G
  integer                  :: ID(5)                
  integer, allocatable     :: kpoints_map(:,:)
  integer                  :: max_rt_steps_disk 
@@ -154,7 +159,7 @@ module real_time
        !
      endif
      !
-     if(l_rt_efield) then
+     if(l_NE_with_fields) then
        allocate(current_cache(3+2*n_ext_fields,max_rt_steps_disk))
        call mem_est('Current_Cache',(/size(current_cache)/),(/SP/))
      endif
@@ -165,19 +170,15 @@ module real_time
      allocate(G_lesser(SC_bands,SC_bands,QP_nk))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
      !
-     if(l_RT_no_updates) then
+     if(l_RT_needs_XC0) then
        !
-       allocate(H_Hartree_Vxc_0(SC_bands,SC_bands,QP_nk,n_sp_pol))
-       call mem_est("H_Hartree_Vxc_0",(/size(H_Hartree_Vxc_0)/),(/2*SP/))
-       !
-     else
-       ! 
-       allocate(V_xc_0(fft_size,n_spin))
-       call mem_est("V_xc_0",(/size(V_xc_0)/))
+       allocate(XC0(SC_bands,SC_bands,QP_nk,n_sp_pol))
+       call mem_est("XC0",(/size(XC0)/),(/2*SP/))
        !
      endif
      !
-     if(l_qp_analyze.or.trim(Integrator_name)==EXACT.or.trim(Integrator_name)==RK2EXACT) then
+     if(l_RT_diagonalize.or.trim(Integrator_name)==EXACT.or.trim(Integrator_name)==RK2EXACT &
+&      .or.(LifeTime/=0.0.and.Thermal_Steps/=0)) then  
        allocate(H_t(SC_bands,SC_bands,QP_nk,n_sp_pol))
        call mem_est("H_t",(/size(H_t)/),(/2*SP/))
      endif
@@ -202,7 +203,7 @@ module real_time
      call mem_est("E_bare",(/size(E_bare)/))
      E_bare=en%E(:SC_bands,:,:)
      !
-     if(l_qp_analyze) then
+     if(l_RT_diagonalize) then
        allocate(Occ_natural_orb(SC_bands,QP_nk))
        call mem_est("Occ_natural",(/size(Occ_natural_orb)/))
      endif
@@ -233,23 +234,16 @@ module real_time
      deallocate(E_xc)
      call mem_est('Exc')
      !
-     if(l_RT_no_updates) then
+     if(allocated(XC0)) then
        !      
-       deallocate(H_Hartree_Vxc_0)
-       call mem_est("H_Hartree_Vxc_0")
-       !
-     else
-       ! 
-       deallocate(V_xc_0)
-       call mem_est("V_xc_0")
+       deallocate(XC0)
+       call mem_est("XC0")
        !
      endif
      !
-     if(l_qp_analyze.or.trim(Integrator_name)==EXACT.or.trim(Integrator_name)==RK2EXACT) then
-       !
+     if(allocated(H_t)) then
        deallocate(H_t)
        call mem_est("H_t")
-       !
      endif
      !
      deallocate(G_lesser)
@@ -272,12 +266,12 @@ module real_time
      deallocate(E_bare)
      call mem_est("E_bare")
      !
-     if(l_qp_analyze) then
+     if(l_RT_diagonalize) then
        deallocate(Occ_natural_orb)
        call mem_est("Occ_natural")
      endif
      !
-     if(l_rt_efield) then
+     if(l_NE_with_fields) then
        deallocate(current_cache)
        call mem_est('Current_Cache')
      endif

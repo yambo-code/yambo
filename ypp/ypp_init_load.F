@@ -200,7 +200,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'RefExtField','Probe External Field',ref_efield)
  call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',X_rt%damp)
  call it(defs,'DampFactor','Damping parameter used in specific DampMode',X_rt%damp_factor,unit=E_unit) 
- call it(defs,'NoiseRatio','Remove noise below this ration (max_value/noise<NoiseRatio)',X_rt%noise_ratio) 
+ call it(defs,'NoiseRatio','Remove noise below this ration (good value=200)',X_rt%noise_ratio) 
  !
  call it('f',defs,'PrtCurrent','Print induced current')
  call it('f',defs,'PrtEinduced','Print induced electric field')

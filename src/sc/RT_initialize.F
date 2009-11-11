@@ -23,11 +23,10 @@ subroutine RT_initialize()
  use com,            ONLY:msg,warning
  use vec_operate,    ONLY:normalize_v
  use drivers,        ONLY:l_sc_hf
- use QP_m,           ONLY:Sx_low_band
- use real_time,      ONLY:l_RPA,Thermal_steps,Thermal_time,RT_step,l_rt_efield,i_time, &
-&                         l_RT_no_updates,Integrator_Name,l_qp_analyze,Tot_steps,    &
-&                         l_no_diamagnetic,l_always_relax,EField,n_ext_fields,         &
-&                         max_rt_steps_disk
+ use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields,i_time, &
+&                         l_NE_simulate_IP,Integrator_Name,l_RT_diagonalize,NE_steps,    &
+&                         l_RT_no_diamagnetic,EField,n_ext_fields,max_rt_steps_disk,     &
+&                         l_NE_simulate_Irredux,l_RT_needs_XC0
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
  implicit none
@@ -36,51 +35,36 @@ subroutine RT_initialize()
  !
  character(schlen)        :: headings(10),hash_ch,where_ch
  integer                  :: i1,i2,rest
+ logical                  :: Hfrozen,XCfrozen
  !
  ! Logicals
  !----------
+ call parser('RTDiagonalize',l_RT_diagonalize)
+ call parser('NoDiamagnetic',l_RT_no_diamagnetic)
+ call parser('RTfreezeH',    Hfrozen)
+ call parser('RTfreezeXC',   XCfrozen)
+ l_NE_simulate_RPA=.not.Hfrozen.and.XCfrozen
+ l_NE_simulate_IP =     Hfrozen.and.XCfrozen
+ l_NE_simulate_Irredux =Hfrozen.and..not.XCfrozen
  !
- call parser('EFNoIntraband1',EField(1)%no_intraband)
- call parser('EFNoIntraband2',EField(2)%no_intraband)
- call parser('EFNoDiamagnetic1',EField(1)%no_diamagnetic)
- call parser('EFNoDiamagnetic2',EField(2)%no_diamagnetic)
- !
- call parser('RTQpAnalyze',l_qp_analyze)
- call parser('KeepVxc',l_RPA)
- call parser('NoDiamagnetic',l_no_diamagnetic)
- call parser('AlwaysRelax',l_always_relax)
+ l_RT_needs_XC0=l_NE_simulate_IP.or.l_NE_simulate_RPA.or.Thermal_steps>0
  !
  i_time=0
  !
- if(l_sc_hf.and.Sx_low_band/=1) then
-   Sx_low_band=1
-   call warning('  Exchange summation low band set to 1 ')
- endif
- !
  ! Set a number of steps compatible with the cache 
  !
- if(mod(Thermal_steps+Tot_steps,max_rt_steps_disk)/=0) then
-   rest=mod(Thermal_steps+Tot_steps,max_rt_steps_disk)
-   if(Tot_steps/=0) then
-     Tot_steps = Tot_steps+max_rt_steps_disk-rest
-     call msg('snr','[RT] Number of steps set to                 :',Tot_steps)
-   elseif(Tot_steps==0.and.Thermal_steps/=0) then
+ if(mod(Thermal_steps+NE_steps,max_rt_steps_disk)/=0) then
+   rest=mod(Thermal_steps+NE_steps,max_rt_steps_disk)
+   if(NE_steps/=0) then
+     NE_steps = NE_steps+max_rt_steps_disk-rest
+     call msg('snr','[RT] Number of steps set to                 :',NE_steps)
+   elseif(NE_steps==0.and.Thermal_steps/=0) then
      Thermal_steps = Thermal_steps+max_rt_steps_disk-rest
      call msg('snr','[RT] Number of thermalization steps set to  :',Thermal_steps)
    endif
  endif
  !
- if(Thermal_steps/=0) then
-   !
-   Thermal_time=real(Thermal_steps)*RT_step
-   !
- else
-   !      
-   Thermal_time=0._SP
-   !
- endif
- !
- l_rt_efield=.false.
+ l_NE_with_fields=.false.
  !
  do i1=1,n_ext_fields
    !      
@@ -88,7 +72,7 @@ subroutine RT_initialize()
    !
    if((Efield(i1)%ef_name/='none'.and.EField(i1)%intensity/=0.)) then
      !      
-     l_rt_efield=.true.
+     l_NE_with_fields=.true.
      !
      EField(i1)%versor   =normalize_v(Efield(i1)%versor)
      !

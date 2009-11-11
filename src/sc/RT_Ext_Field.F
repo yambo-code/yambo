@@ -23,7 +23,7 @@ subroutine RT_Ext_Field(ik,H_nl_sc,G_lesser,time,Efield,A_norm)
  !
  use pars,           ONLY:SP,DP
  use com,            ONLY:error
- use real_time,      ONLY:l_no_diamagnetic,ext_field
+ use real_time,      ONLY:l_RT_no_diamagnetic,ext_field
  use electrons,      ONLY:n_sp_pol
  use X_m,            ONLY:DIP_iR_or_P
  use SC,             ONLY:SC_bands
@@ -82,7 +82,7 @@ subroutine RT_Ext_Field(ik,H_nl_sc,G_lesser,time,Efield,A_norm)
    enddo
  enddo
  !
- if(.not.l_no_diamagnetic) then
+ if(.not.l_RT_no_diamagnetic) then
    forall(i1=1:SC_bands,is=1:n_sp_pol) 
      H_nl_sc(i1,i1,is)=H_nl_sc(i1,i1,is)+0.5*A_norm**2*(0.,-1.)*G_lesser(i1,i1,ik)
    end forall

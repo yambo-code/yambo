@@ -103,7 +103,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
      if (IMPOSE_SN) then
        io_header=-1
        if (io_com(ID)/=NONE) &
-&        call msg('sr','Incompatible serial number for '//trim(io_file(ID)))
+&        call warning('Incompatible serial number for '//trim(io_file(ID)))
        goto 1
      endif
    endif
@@ -118,7 +118,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
    if (SPIN_vec_disk(1)/=n_sp_pol.or.SPIN_vec_disk(2)/=n_spinor) then
      io_header=-1
      if (io_com(ID)/=NONE) &
-&      call msg('sr','Incompatible SPIN pol/spinors for '//trim(io_file(ID)))
+&      call warning('Incompatible SPIN pol/spinors for '//trim(io_file(ID)))
      goto 1
    endif
  endif

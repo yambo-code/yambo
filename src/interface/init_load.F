@@ -1,4 +1,4 @@
-!
+
 ! Copyright (C) 2000-2009 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
@@ -29,7 +29,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp 
  use X_m,           ONLY:X_t,long_path,q_plus_G_direction,Q_Shift_Order
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
-&                        QP_n_G_bands,QP_ng_Sx,Sx_low_band,&
+&                        QP_n_G_bands,QP_ng_Sx,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,SC_band_mixing,&
 &                        SC_E_threshold,QP_dSc_delta
  use timing,        ONLY:nhash
@@ -49,12 +49,11 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _SC || defined _RT || defined _MAGNETIC
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential,&
 &                        SC_rho_threshold,SC_cycle_mixing
+ use oscillators_IO,ONLY:Sx_cutoff
 #endif
 #if defined _RT
- use real_time,     ONLY:RT_step, Tot_steps, Thermal_steps, Integrator_name, LifeTime, &
-&                        DiagH_Iter,Thermal_eta,EField,max_rt_steps_disk
-
- use oscillators_IO,ONLY:Sx_cutoff
+ use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, LifeTime, &
+&                        RT_diagonalization_steps,Thermal_time,EField,max_rt_steps_disk
 #endif
 #if defined _MAGNETIC
  use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
@@ -250,7 +249,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! S_xc
  !
- call it(defs,'SxLowBnd', '[XX] Exchange summation low band',Sx_low_band,verb_level=V_qp)
  call it(defs,'LifeTrCG', '[GW] [o/o] Lifetime transitions reduction',QP_cg_percent)
  call it(defs,'GEnSteps', '[GW] G_gw energy steps',QP_Sc_steps)
  call it(defs,'GEnRnge',  '[GW] G_gw energy range (centered in the bare energy)',QP_G_er,E_unit)
@@ -270,40 +268,27 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! Real Time dynamics
  !
 #if defined _RT
- call it(defs,'RTstep',    '[RT] Real Time step',RT_step,unit=Time_unit)
- call it(defs,'RTsteps',   '[RT] Real Time steps',Tot_steps)
- call it(defs,'ThermStps', '[RT] Thermal Steps',Thermal_steps)
- !
- ! External field number 1
- !
- call it(defs,'ExtFiFreq1', '[RT] External Field Frequency',EField(1)%frequency,unit=E_unit)
- call it(defs,'ExtFInt1',  '[RT] External Field Intensity',EField(1)%intensity,unit=I_unit)
- call it(defs,'ExtField1',  '[RT] External Field (SINUSOIDAL | RESONANT | DELTA | STEP)', &
-&        EField(1)%ef_name)
- call it(defs,'ELongDir1',  '[RT] Electric Field Versor',Efield(1)%versor)
- call it(defs,'ExtFTinitial1',  '[RT] Initial Time',EField(1)%t_initial,unit=Time_unit)
- call it('f',defs,'EFNoIntraband1', '[RT] Do not include intraband coupling',verb_level=V_sc)
- !
- ! External field number 2
- !
- call it(defs,'ExtFiFreq2', '[RT] External Field Frequency',EField(2)%frequency,unit=E_unit,verb_level=V_sc)
- call it(defs,'ExtFInt2',  '[RT] External Field Intensity',EField(2)%intensity,verb_level=V_sc,unit=I_unit)
- call it(defs,'ExtField2',  '[RT] External Field',EField(2)%ef_name,verb_level=V_sc)
- call it(defs,'ELongDir2',  '[RT] Electric Field Versor',Efield(2)%versor,verb_level=V_sc)
- call it(defs,'ExtFTinitial2',  '[RT] Initial Time',EField(2)%t_initial,unit=Time_unit,verb_level=V_sc)
- call it('f',defs,'EFNoIntraband2', '[RT] Do not include intraband coupling',verb_level=V_sc)
+ call it(defs,'RTstep',    '[RT] Real Time step length',RT_step,unit=Time_unit)
+ call it(defs,'NEsteps',   '[RT] Non-equilibrium Time steps',NE_steps)
+ call it(defs,'ThermSteps','[RT] Thermal Steps',Thermal_steps)
  !
  ! Other parameters of RT
  !
- call it(defs,'Integrator','[RT] Integrator (RK2 | EULER | EXACT | RK2EXACT) ',Integrator_name)
- call it(defs,'ThermEta',  '[RT] Adiabatic switching characteristic time  1/(ThermStps*ThermEta)',Thermal_eta,verb_level=V_sc)
- call it(defs,'DiagHIter', '[RT] Digaonalize the Hamiltonian',DiagH_Iter,verb_level=V_sc)
- call it(defs,'LifeTime',  '[RT] Quasi-particle Relaxation Time',LifeTime,verb_level=V_sc,unit=Time_unit)
- call it('f',defs,'RTQpAnalyze', '[RT] Analyze quasi-particle dynamics in real-time',verb_level=V_sc)
- call it('f',defs,'KeepVxc', '[RT] Do not subtract Vxc from the self-energy',verb_level=V_sc)
+ call it(defs,'Integrator',  '[RT] Integrator (RK2 | EULER | EXACT | RK2EXACT) ',Integrator_name)
+ call it(defs,'SwitchOnTime','[RT] Adiabatic switch on time ',Thermal_time,verb_level=V_sc,unit=Time_unit)
+ call it(defs,'LifeTime',  '[RT] Relaxation Time',LifeTime,verb_level=V_sc,unit=Time_unit)
+ call it('f',defs,'RTDiagonalize', '[RT] Analyze quasi-particle dynamics in real-time',verb_level=V_sc)
+ call it(defs,    'RTDiagoSteps',  '[RT] Digonalize the Hamiltonian',RT_diagonalization_steps,verb_level=V_sc)
  call it('f',defs,'NoDiamagnetic', '[RT] Exclude the diamagnetic term in current and coupling',verb_level=V_sc)
- call it(defs,'CacheSize', '[RT] Numer of steps stored in memory before I/O',max_rt_steps_disk,verb_level=V_sc)
- call it(defs,'EXXCut', '[RT] Cutoff on the exchange, 0=full 1=none',Sx_cutoff,verb_level=V_sc)
+ call it('f',defs,'RTfreezeH', '[RT] Hartree not updated during RT',verb_level=V_sc)
+ call it('f',defs,'RTfreezeXC','[RT] XC potential/self-energy not updated during RT',verb_level=V_sc)
+ call it(defs,'CacheSize',     '[RT] Numer of steps stored in memory before I/O',max_rt_steps_disk,verb_level=V_sc)
+ !
+ ! External fields
+ !
+ call Afield(1) ! Probe
+ call Afield(2) ! Pump
+ !
 #endif
  !
 #if defined _MAGNETIC
@@ -384,8 +369,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _SC || defined _RT || defined _MAGNETIC
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_sc)
- call it(defs,'SCPot',     '[SC] SC Potential',SC_potential,protect=.FALSE.)
+ call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)
  call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)
+ call it(defs,'EXXCut', '[RT] Cutoff on the exchange, 0=full 1=none',Sx_cutoff,verb_level=V_sc)
 #endif
  ! 
  ! RAS
@@ -416,6 +402,30 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
  !
  contains 
+   !
+#if defined _RT
+   !
+   subroutine Afield(i_field)
+     character(5) :: name
+     integer      :: verbosity_here,i_field
+     verbosity_here=0
+     name='Probe'
+     if (i_field==2) name='Pump'
+     if (i_field==2) verbosity_here=V_sc
+     call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] External Field Frequency',&
+&    EField(i_field)%frequency,unit=E_unit,verb_level=verbosity_here)
+     call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] External Field Intensity',&
+&    EField(i_field)%intensity,unit=I_unit,verb_level=verbosity_here)
+     call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] External Field (SINUSOIDAL | RESONANT | DELTA | STEP)',&
+&    EField(i_field)%ef_name,verb_level=verbosity_here)
+     call it(defs,trim(name)//'_Dir',             '[RT '//trim(name)//'] Electric Field Versor',&
+&    Efield(i_field)%versor,verb_level=verbosity_here)
+     call it(defs,trim(name)//'_Tinitial',        '[RT '//trim(name)//'] Initial Time',&
+&    EField(i_field)%t_initial,unit=Time_unit,verb_level=verbosity_here)
+     call it('f',defs,trim(name)//'_NoIntraband', '[RT '//trim(name)//'] Do not include intraband coupling',verb_level=V_sc)
+   end subroutine
+   !
+#endif
    !
    subroutine Xload(X,wv)
      !

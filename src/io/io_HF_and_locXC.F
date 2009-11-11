@@ -25,7 +25,7 @@ integer function io_HF_and_locXC(ID)
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts
  use electrons,      ONLY:n_met_bands,n_sp_pol
  use QP_m,           ONLY:QP_Vnl_xc,QP_ng_Sx,QP_nb,QP_nk,QP_Vxc,QP_n_states,&
-&                         Sx_low_band,QP_table,QP_state
+&                         QP_table,QP_state
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
 &                         write_is_on,io_mode,DUMP,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR
@@ -45,7 +45,7 @@ integer function io_HF_and_locXC(ID)
  endif
  if (io_HF_and_locXC/=0) goto 1
  !
- bands=(/Sx_low_band,n_met_bands/)
+ bands=(/1,n_met_bands/)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
@@ -59,8 +59,14 @@ integer function io_HF_and_locXC(ID)
 &       VAR=' Total number of QP states       :',CHECK=.true.,OP=(/"<="/))
    call io_elemental(ID,I0=QP_ng_Sx,&
 &       VAR=' Exchange RL vectors             :',CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,I1=bands,&
-&       VAR=' Exchange summation bands        :',CHECK=.true.,OP=(/"==","=="/))
+   !
+   if (ver_is_gt_or_eq(ID,revision=498)) then
+     call io_elemental(ID,I0=n_met_bands,VAR=' Exchange summation bands        :',CHECK=.true.,OP=(/"=="/))
+   else
+     call io_elemental(ID,I1=bands,&
+&         VAR=' Exchange summation bands        :',CHECK=.true.,OP=(/"==","=="/))
+   endif
+   !
    call io_elemental(ID,I0=RIM_ng,&
 &       VAR=' RIM RL components               :',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,I0=RIM_n_rand_pts,&

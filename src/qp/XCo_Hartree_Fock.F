@@ -33,7 +33,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use collision,     ONLY:ggwinfo,collision_reset
- use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states,Sx_low_band
+ use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
  use wave_func,     ONLY:wf,wf_load,WF_free
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP,OP_WR
@@ -125,9 +125,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
 #endif
  !
- if (Sx_low_band>E%nbm) Sx_low_band=1
  call msg('r', '[EXS] Plane waves :',QP_ng_Sx)
- call msg('rn','[EXS] Bands range :',(/Sx_low_band,E%nbm/))
  !
  ! QP_table -> report
  !
@@ -158,7 +156,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
 #if defined _RT
  call par_indexes(px,(/QP_n_states/))
 #else
- call par_indexes(px,(/q%nbz,E%nbm/),(/1,Sx_low_band/))
+ call par_indexes(px,(/q%nbz,E%nbm/))
 #endif
  call pp_redux_wait
  !
@@ -217,7 +215,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
      ik_minus_q=isc%os(2)
 #endif
      !
-     do jb=Sx_low_band,Sx_upper_band
+     do jb=1,Sx_upper_band
        !      
 #if !defined _RT
        if (.not.px%i2p(iq,jb)) cycle

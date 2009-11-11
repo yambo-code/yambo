@@ -40,7 +40,6 @@ module QP_m
  integer           :: QP_n_states
  integer           :: QP_ng_Sx
  integer           :: QP_n_G_bands(2)
- integer           :: Sx_low_band
  integer           :: GWo_iterations
  logical           :: QP_dSc_test
  logical           :: QP_W_partially_done

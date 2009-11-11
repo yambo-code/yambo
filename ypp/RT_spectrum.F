@@ -34,7 +34,7 @@ subroutine RT_spectrum(en,k)
  use parser_m,       ONLY:parser
  use timing,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP
- use real_time,      ONLY:Tot_steps,RT_step,j_current,A_norm,i_time, &
+ use real_time,      ONLY:NE_steps,RT_step,j_current,A_norm,i_time, &
 &                         max_rt_steps_disk,current_cache,n_ext_fields 
  implicit none
  !
@@ -112,8 +112,8 @@ subroutine RT_spectrum(en,k)
  istart=int(X_rt%time_range(1)/RT_step)
  iend  =int(X_rt%time_range(2)/RT_step)
  !
- if(istart<=0.0.or.istart>Tot_steps) istart=1
- if(iend<=0.0.or.iend>Tot_steps)     iend  =Tot_steps
+ if(istart<=0.0.or.istart>NE_steps) istart=1
+ if(iend<=0.0.or.iend>NE_steps)     iend  =NE_steps
  !
  niter=iend-istart+1
  !
@@ -146,8 +146,8 @@ subroutine RT_spectrum(en,k)
  allocate(current_cache(3+2*n_ext_fields,max_rt_steps_disk))
  call mem_est("Current_Cache",(/size(current_cache)/),(/SP/))
  !
- call live_timing('Reading current:',Tot_steps)
- do i_time=1,Tot_steps
+ call live_timing('Reading current:',NE_steps)
+ do i_time=1,NE_steps
    !      
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/i_time+1/),ID=ID(1)) 
    io_J=io_SC_components('J' ,en,ID(1))
@@ -205,7 +205,9 @@ subroutine RT_spectrum(en,k)
    !
    call live_timing('Integration:',iend-istart+1)
    do i1=istart, iend
-     E_induced(i1,:)=-(2.d0*sum(current(istart:i1,:))-current(istart,:)-current(i1,:))*RT_step/2.d0
+     E_induced(i1,1)=-(2.d0*sum(current(istart:i1,1))-current(istart,1)-current(i1,1))*RT_step/2.d0
+     E_induced(i1,2)=-(2.d0*sum(current(istart:i1,2))-current(istart,2)-current(i1,2))*RT_step/2.d0
+     E_induced(i1,3)=-(2.d0*sum(current(istart:i1,3))-current(istart,3)-current(i1,3))*RT_step/2.d0
      call live_timing(steps=1)
    enddo
    call live_timing()

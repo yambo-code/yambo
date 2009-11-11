@@ -26,7 +26,7 @@ subroutine SC_common_build_Ho(E,Xk,k)
  use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
  use SC,             ONLY:Ho,E_bare,V_xc_sc,V_hartree_sc,rho_n,SC_bands
  use memory_m,       ONLY:mem_est
- use real_time,      ONLY:l_RT_no_updates,G_lesser,V_xc_0,H_Hartree_Vxc_0 
+ use real_time,      ONLY:l_NE_simulate_IP,G_lesser
  use wave_func,      ONLY:wf
  use R_lattice,      ONLY:bz_samp
  use xc_functionals, ONLY:V_xc
@@ -90,30 +90,6 @@ subroutine SC_common_build_Ho(E,Xk,k)
  do ik=1,QP_nk
    call V_qp_basis_to_H(ik,-QP_Vxc,Ho(:,:,ik,:))
  enddo
- !
-#if defined _RT
- !
- ! Save H_Hartree_0 and V_xc_0 at T=0
- !
- ! Define Hartree+xc potential Hamiltonian
- !
- if(l_RT_no_updates) then 
-   !
-   H_Hartree_Vxc_0=(0.,0.)
-   !
-   do ik=1,QP_nk
-     call V_real_space_to_H(ik,V_hartree_sc+V_xc,H_Hartree_Vxc_0(:,:,ik,:),wf)
-   enddo
-   !
-   deallocate(V_xc)
-   !
- else
-   ! 
-   V_xc_0=V_xc
-   !
- endif
- !
-#endif
  !
  deallocate(QP_Vxc)
  call mem_est("QP_Vxc")

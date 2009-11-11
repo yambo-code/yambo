@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-logical function XC_switch()
+subroutine XC_switch()
  !
  use drivers
  use SC,             ONLY:SC_kind,SC_xc_functional,SC_potential,local_V,SC_perturbation 
@@ -35,7 +35,6 @@ logical function XC_switch()
  use com,            ONLY:error
  implicit none
  !
- XC_switch=.TRUE.
  local_V=.FALSE.
  !
  select case (trim(SC_potential))
@@ -81,7 +80,6 @@ logical function XC_switch()
      local_V=.true.
      SC_kind=0
      SC_xc_functional=0
-     XC_switch=.FALSE.
      return
    case('default')
      l_sc_contains_lda=.true.
@@ -103,4 +101,4 @@ logical function XC_switch()
  endif
 #endif
  !
-end function XC_switch
+end subroutine XC_switch

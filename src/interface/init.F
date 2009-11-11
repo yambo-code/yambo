@@ -423,6 +423,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !XX
  !
  if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs SxLowBnd')  
+ !
 #if defined _RT
  if (l_HF_and_locXC.and.l_rho_IO) then
    call initactivate(1,'SCBands EXXCut')
@@ -435,7 +436,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_ppa)) then
    call QP_ctl_switch('X')
    call initactivate(1,'LongPath Qdirection QShiftOrder')
-   call Xon('Xd',(/'QpntsR','BndsRn','NGsBlk',&
+   call X_activate('Xd',(/'QpntsR','BndsRn','NGsBlk',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
    !
@@ -458,7 +459,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_em1s) then
    call QP_ctl_switch('X')
    call initactivate(1,'LongPath')
-   call Xon('Xs',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy',&
+   call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy',&
 &                  'LongDr','DrudeW'/))
  endif
  !
@@ -467,9 +468,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_chosex)) then
    call QP_ctl_switch('X')
    call initactivate(1,'LongPath')
-   if (l_ppa) call Xon('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
+   if (l_ppa) call X_activate('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
 &                      'EhEngy','LongDr','PPAPnt'/))
-   if (l_chosex) call Xon('Xs',(/'QpntsR','BndsRn','NGsBlk',&
+   if (l_chosex) call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk',&
 &                         'EhEngy','LongDr'/))
  endif
  !
@@ -479,7 +480,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call QP_ctl_switch('X')
    call initactivate(1,'LongPath')
    call initactivate(1,'EXXRLvcs AC_n_LAM AC_n_FR AC_E_Rng')
-   call Xon('Xx',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy','LongDr'/))
+   call X_activate('Xx',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy','LongDr'/))
  endif
  !
  ! GW/Life
@@ -496,7 +497,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        call initactivate(1,'GbndRnge') 
        if (.not.l_chosex.and.trim(QP_solver)/='g') call initactivate(1,'GDamping') 
        if (.not.l_chosex) call initactivate(1,'dScStep') 
-       if (.not.l_ppa.and..not.l_chosex) call Xon('Xd',(/'BndsRn','NGsBlk',&
+       if (.not.l_ppa.and..not.l_chosex) call X_activate('Xd',(/'BndsRn','NGsBlk',&
 &                      'DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                      'DrudeW','EhEngy','LongDr'/)) 
        !
@@ -513,7 +514,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      if (l_life) then
        call initactivate(1,'LifeTrCG')
-       if (l_el_corr) call Xon('Xd',(/'BndsRn','NGsBlk',&
+       if (l_el_corr) call X_activate('Xd',(/'BndsRn','NGsBlk',&
 &                                     'DmRnge','CGrdSp',&
 &                                     'DrudeW','EhEngy','LongDr'/)) 
      endif
@@ -576,13 +577,15 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _SC || defined _RT || defined _MAGNETIC
  if (l_sc_run) then
-   call initactivate(1,'SCPot FFTGvecs SCmixing SCBands BandMix')
+   call initactivate(1,'Potential FFTGvecs SCmixing SCBands BandMix EXXCut')
    if (l_real_time) then
-     call initactivate(1,'RTstep RTsteps ThermStps ThermEta')
-     call initactivate(1,'Integrator LifeTime DiagHIter KeepVxc ') 
-     call initactivate(1,'RTQpAnalyze NoDiamagnetic CacheSize EXXCut')
-     call initactivate(1,'ExtField1 ExtFTinitial1 ExtFInt1 ExtFFreq1 ELongDir1 EFNoIntraband1')
-     call initactivate(1,'ExtField2 ExtFTinitial2 ExtFInt2 ExtFFreq2 ELongDir2 EFNoIntraband2')
+     call initactivate(1,'RTfreezeH RTfreezeXC')
+     call initactivate(1,'Integrator LifeTime') 
+     call initactivate(1,'RTstep NEsteps ThermSteps SwitchOnTime')
+     call initactivate(1,'RTDiagonalize RTDiagoSteps')
+     call initactivate(1,'NoDiamagnetic CacheSize')
+     call Afield_activate('Pump')
+     call Afield_activate('Probe')
    else
      call initactivate(1,'UseRhoIO SCIter SCEtresh SCRhoTresh TF_precondition')
    endif
@@ -605,7 +608,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _RAS
  if (lras.or.lreels) then
-    call Xon('Xd',(/'QpntsR','BndsRn','NGsBlk',&
+    call X_activate('Xd',(/'QpntsR','BndsRn','NGsBlk',&
 &                 'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
 &                 'DrudeW','EhEngy'/))
     call initactivate(1,'FFTGvecs XfnQP_E'//&
@@ -630,7 +633,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _REELS
  if (lreels) then
-    call Xon('Xd',(/'QpntsR','BndsRn','NGsBlk',&
+    call X_activate('Xd',(/'QpntsR','BndsRn','NGsBlk',&
 &                 'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
 &                 'DrudeW','EhEngy'/))
     call initactivate(1,'FFTGvecs XfnQP_E'//&
@@ -730,20 +733,23 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
    end subroutine
    !
+   subroutine Afield_activate(field)
+     character(*)::field
+     call initactivate(1,field//'_Freq')
+     call initactivate(1,field//'_Int')
+     call initactivate(1,field//'_kind')
+     call initactivate(1,field//'_Dir')
+     call initactivate(1,field//'_Tstart')
+     call initactivate(1,field//'_NoIntraband')
+   end subroutine
    !
-   subroutine Xon(mode,what)
-     !
+   subroutine X_activate(mode,what)
      character(2)::mode
      character(6)::what(:)
-     !
      ! Work Space
-     !
-     character(8)::lch
      integer     ::i1
-     !
      do i1=1,size(what,1)
-       write (lch,'(2a)') what(i1),mode
-       call initactivate(1,lch)
+       call initactivate(1,what(i1)//mode)
      enddo
    end subroutine
    !

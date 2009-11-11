@@ -135,6 +135,9 @@ module SC
        call mem_est("el_mag",(/fft_size*3/),(/SP/))
      endif
      !
+     allocate(V_xc_sc(fft_size,n_spin))
+     call mem_est('V_xc_sc',(/fft_size*n_spin/),(/SP/))
+     !
      allocate(V_xc(fft_size,n_spin))
      call mem_est('V_xc',(/fft_size*n_spin/),(/SP/))
      !
@@ -181,6 +184,9 @@ module SC
        deallocate(V_xc)
        call mem_est('V_xc')
      endif
+     !
+     deallocate(V_xc_sc)
+     call mem_est('V_xc_sc')
      !
      deallocate(V_hartree_sc)
      call mem_est("Hartree_Ptential")

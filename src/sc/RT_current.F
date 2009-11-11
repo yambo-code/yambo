@@ -30,7 +30,7 @@ subroutine RT_current(j_current,xK,Xen,G_lesser)
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel,levels
  use X_m,            ONLY:DIP_iR_or_P
- use real_time,      ONLY:l_no_diamagnetic,io_J,ID,i_time,Efield,n_ext_fields,A_norm
+ use real_time,      ONLY:l_RT_no_diamagnetic,io_J,ID,i_time,Efield,n_ext_fields,A_norm
  use IO_m,           ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL
  !
  implicit none
@@ -85,7 +85,7 @@ subroutine RT_current(j_current,xK,Xen,G_lesser)
  !
  ! Diamagnetic term. It is correct??
  !
- if(.not.l_no_diamagnetic) then
+ if(.not.l_RT_no_diamagnetic) then
    do i1=1,n_ext_fields
      if(Efield(i1)%ef_name/='none') j_current(:)=j_current(:)+A_norm(i1)*nel*RL_vol/(Xk%nbz*(2.*pi)**3)*Efield(i1)%versor(:) 
    enddo

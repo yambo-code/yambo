@@ -24,8 +24,8 @@ subroutine RT_report(file_name,write_output_files)
  use pars,           ONLY:SP,lchlen,schlen
  use drivers,        ONLY:l_sc_hf
  use com,            ONLY:msg,of_open_close,warning
- use real_time,      ONLY:l_RPA,Thermal_time,RT_step,l_RT_no_updates,n_ext_fields, &
-&                         Integrator_Name,l_qp_analyze,l_no_diamagnetic,EField
+ use real_time,      ONLY:l_NE_simulate_RPA,Thermal_time,RT_step,l_NE_simulate_IP,n_ext_fields, &
+&                         Integrator_Name,l_RT_diagonalize,l_RT_no_diamagnetic,EField
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
  implicit none
@@ -48,7 +48,7 @@ subroutine RT_report(file_name,write_output_files)
    headings(1)="Time[fs]"
    headings(2)="E_kin[eV]"
    headings(3)="E_ion[eV]"
-   if(.not.l_RT_no_updates) then
+   if(.not.l_NE_simulate_IP) then
      !      
      if(l_sc_hf) then
        headings(4)="E_Hartree[eV]"
@@ -67,7 +67,7 @@ subroutine RT_report(file_name,write_output_files)
    n_output_files=1
    !
    file_name(2)="RT-qp"
-   if(l_qp_analyze) then 
+   if(l_RT_diagonalize) then 
      n_output_files=n_output_files+1
      call of_open_close(file_name(2),'ot')
    endif
@@ -84,9 +84,9 @@ subroutine RT_report(file_name,write_output_files)
    if (i1>1) hash_ch ='# [RT]'
    !
    call msg(trim(where_ch),trim(hash_ch)//' Integrator            :',trim(Integrator_Name),INDENT=0)
-   call msg(trim(where_ch),trim(hash_ch)//' RPA                   :',l_RPA,INDENT=0)
-   call msg(trim(where_ch),trim(hash_ch)//' Diamagnetic term      :',.not.l_no_diamagnetic,INDENT=0)
-   call msg(trim(where_ch),trim(hash_ch)//' Analyze QP-dynamics   :',l_qp_analyze,INDENT=0)
+   call msg(trim(where_ch),trim(hash_ch)//' RPA                   :',l_NE_simulate_RPA,INDENT=0)
+   call msg(trim(where_ch),trim(hash_ch)//' Diamagnetic term      :',.not.l_RT_no_diamagnetic,INDENT=0)
+   call msg(trim(where_ch),trim(hash_ch)//' Analyze QP-dynamics   :',l_RT_diagonalize,INDENT=0)
    !
    do i2=1,n_ext_fields
      call msg(trim(where_ch),trim(hash_ch))

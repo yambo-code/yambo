@@ -58,7 +58,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use reels_module,   ONLY:lreels
 #endif
 #if defined  _ELPH 
- use ELPH,           ONLY:elph_nq,elph_nq_used
+ use ELPH,           ONLY:elph_nDBs,elph_nDBs_used,elph_use_q_grid
 #endif
 #if defined _SC || defined _RT || defined _MAGNETIC
  use global_XC,      ONLY:MORE_NONE
@@ -450,7 +450,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'BSresKmod BScplKmod BSEQptR BSEBands')
    call initactivate(1,'BSENGBlk BSENGexx BSEEhEny BSEClmns BSehWind')
 #if defined _ELPH 
-   if (l_ph_corr) call initactivate(1,'ElPhRndNq')
+   if (l_ph_corr.and..not.elph_use_q_grid) call initactivate(1,'ElPhRndNq')
 #endif
  endif
  !
@@ -868,7 +868,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif 
 #if defined  _ELPH 
      if (.not.l_el_corr.and..not.l_ph_corr) l_el_corr=.true.
-     elph_nq_used=elph_nq
+     elph_nDBs_used=elph_nDBs
 #endif
      if (l_gw0.and.l_el_corr) call initactivate(1,'HF_and_locXC')
      if (l_ppa)    call initactivate(1,'em1d')

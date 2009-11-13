@@ -29,7 +29,7 @@ subroutine elph_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  use frequency,           ONLY:w_samp,W_reset
  use YPP,                 ONLY:elph_steps,ph_broad,n_lambda
  use stderr,              ONLY:intc
- use ELPH,                ONLY:max_ph_freq,elph_nq_used,ph_modes,elph_global_free,&
+ use ELPH,                ONLY:max_ph_freq,elph_nDBs_used,ph_modes,elph_global_free,&
 &                              gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,&
 &                              gsqF_life_f ,elph_use_q_grid,ph_freqs_sq,elph_global_alloc
  use IO_m,                ONLY:io_control,OP_RD,RD_CL,DUMP,RD_CL
@@ -47,9 +47,9 @@ subroutine elph_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  !
  ! Work Space (electrons)
  !
- integer              ::iqp,QP_n_states_2do,QP_n_states_here 
+ integer              ::iqp,QP_n_states_2do,QP_n_states_DB 
  logical, allocatable ::state_is_2do(:)
- integer, allocatable ::QP_table_map(:,:),QP_table_here(:,:) 
+ integer, allocatable ::QP_table_map(:,:),QP_table_DB(:,:) 
  !
  ! Work Space (excitons)
  !
@@ -87,7 +87,7 @@ subroutine elph_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
    QP_state=.FALSE.
    forall( i1=BS_bands(1):BS_bands(2) ) QP_state(i1,:)=.TRUE.
    call QP_state_table_setup(Xen)
-   QP_n_states_here=QP_n_states
+   QP_n_states_DB=QP_n_states
    !
  else
    call section("*","Generalized Eliashberg functions")
@@ -95,12 +95,12 @@ subroutine elph_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
    ! Input file QP states
    !
    call QP_state_table_setup(en)
-   QP_n_states_here=QP_n_states
+   QP_n_states_DB=QP_n_states
    !
  endif
  !
- allocate(QP_table_here(QP_n_states_here,3+n_sp_pol-1))
- QP_table_here=QP_table
+ allocate(QP_table_DB(QP_n_states_DB,3+n_sp_pol-1))
+ QP_table_DB=QP_table
  deallocate(QP_table)
  !
  call io_control(ACTION=OP_RD,SEC=(/1/),MODE=DUMP,ID=ID)
@@ -139,35 +139,29 @@ subroutine elph_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  ! I need to find the QP states that I really need to calculate
  ! considering degeneracies and user defined states
  !
- allocate(QP_table_map(QP_n_states_here,1))
+ allocate(QP_table_map(QP_n_states_DB,1))
  QP_table_map=-1
- do iqp=1,QP_n_states_here
+ do iqp=1,QP_n_states_DB
    do i1=1,QP_n_states
-      if (all(QP_table_here(iqp,:)==QP_table(i1,:))) QP_table_map(iqp,1)=i1
+      if (all(QP_table_DB(iqp,:)==QP_table(i1,:))) QP_table_map(iqp,1)=i1
    enddo
  enddo
  !
  QP_n_states_2do=count(QP_table_map(:,1)>0)
- !
- call par_indexes(px,(/elph_nq_used,QP_n_states_2do/))
+ call par_indexes(px,(/QP_n_states_2do,elph_nDBs_used/))
  call pp_redux_wait
  !
  call live_timing('gF^2 [el]',px%stps(myid+1))
  !
- do i1=1,QP_n_states_here
+ do i1=1,QP_n_states_DB
    !
-   if (QP_table_map(i1,1)<0) then
-     !
-     call live_timing(steps=1)
-     !
-     cycle
-   endif
+   if (QP_table_map(i1,1)<0) cycle
    !
    iqp=QP_table_map(i1,1)
    !
-   do iq=1,elph_nq_used
+   do iq=1,elph_nDBs_used
      !
-     if (.not.px%i2p(iq,i1)) cycle
+     if (.not.px%i2p(iqp,iq)) cycle
      !
      do il=1,ph_modes
        !
@@ -210,7 +204,7 @@ subroutine elph_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  !
  if (.not.gFsq_is_excitonic) then
    !
-   do i1=1,QP_n_states_here
+   do i1=1,QP_n_states_DB
      !
      if (QP_table_map(i1,1)<0) cycle
      !
@@ -325,6 +319,6 @@ subroutine elph_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  call pp_indexes_reset(px)
  deallocate(QP_table,g_sq_F)
  if (.not.gFsq_is_excitonic) deallocate(state_is_2do)
- deallocate(QP_table_map,QP_table_here)
+ deallocate(QP_table_map,QP_table_DB)
  !
 end subroutine

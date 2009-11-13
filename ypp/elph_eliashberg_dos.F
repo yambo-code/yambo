@@ -29,7 +29,7 @@ subroutine elph_eliashberg_dos(k,en,q)
  use YPP,                 ONLY:elph_steps,elph_Ef,elph_gamma_broad,&
 &                              ph_broad,l_dos,l_eliashberg
  use ELPH,                ONLY:ph_modes,elph_nb,elph_gkkp,ph_freqs_sq,&
-&                              max_ph_freq,elph_nq,elph_use_q_grid,&
+&                              max_ph_freq,elph_nDBs,elph_use_q_grid,&
 &                              E_k_plus_q,setup_k_plus_q_levels,elph_global_free
  use IO_m,                ONLY:io_control,OP_RD,RD_CL_IF_END,DUMP,RD_CL
  use timing,              ONLY:live_timing
@@ -104,7 +104,7 @@ subroutine elph_eliashberg_dos(k,en,q)
    ph_energy(i2)=(i2-1)*e_step
  enddo
  !
- nq_todo=elph_nq
+ nq_todo=elph_nDBs
  if (elph_use_q_grid) nq_todo=q%nibz
  !
  ! Eliashberg Function & DOS function
@@ -139,7 +139,7 @@ subroutine elph_eliashberg_dos(k,en,q)
    !
    ! Q weight
    !
-   q_weight=1./real(elph_nq)
+   q_weight=1./real(elph_nDBs)
    if (elph_use_q_grid) q_weight=q%weights(iq)
    !
    if (.not.px%i1p(iq)) cycle

@@ -414,9 +414,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
 #if defined _YPP_ELPH
  if (l_gkkp.and..not.l_excitons)   call initactivate(1,"DBsPATH PHfreqF")
- if (l_phonons.and.(l_dos.or.l_eliashberg))   call initactivate(1,"EEfermi EfGbroad PhBroad PhStps")
- if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) &
-&                                  call initactivate(-1,"EEfermi EfGbroad")
+ if (l_phonons.and.l_eliashberg)   call initactivate(1,"EEfermi EfGbroad")
+ if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) call initactivate(1,"PhBroad PhStps")
 #endif
 
 #if defined _YPP_RAS

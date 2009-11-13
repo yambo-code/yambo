@@ -67,7 +67,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     FXC_is_causal
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
 #if defined _ELPH 
- use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK
+ use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,nQ_memory
 #endif
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
@@ -116,9 +116,9 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  ! ... created
  !
  call mk_dir(core_io_path)
- call mk_dir(trim(core_io_path)//'/SAVE')
+ call mk_dir(trim(core_io_path)//"/SAVE")
  call mk_dir(more_io_path)
- call mk_dir(trim(more_io_path)//'/SAVE')
+ call mk_dir(trim(more_io_path)//"/SAVE")
  call mk_dir(com_path)
  !
  ! ... and Job string
@@ -388,6 +388,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  elph_nb=0
  gsqF_energy_steps=2
  eval_G_using_KK=.false.
+ nQ_memory=0
 #endif
  !
 #if defined _SC || defined _RT || defined _MAGNETIC

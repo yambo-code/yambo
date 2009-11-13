@@ -26,7 +26,7 @@ integer function elph_databases(k,E,q)
  use electrons,           ONLY:levels
  use ELPH,                ONLY:ph_freqs_sq,ph_modes,elph_nb,elph_use_q_grid,&
 &                              elph_global_free,max_ph_freq,elph_global_alloc,&
-&                              elph_nq,ph_qpt
+&                              elph_nDBs,ph_qpt
  use com,                 ONLY:msg,warning,file_exists,error
  use R_lattice,           ONLY:bz_samp
  use D_lattice,           ONLY:nsym
@@ -66,29 +66,29 @@ integer function elph_databases(k,E,q)
  io_err=0
  max_ph_freq=0.
  elph_use_q_grid=.true.
- elph_nq=0
+ elph_nDBs=0
  iq_db=0
  elph_databases=0
  !
  do while (.TRUE.)
-   elph_nq=elph_nq+1
-   io_err=elph_databases_io(-elph_nq)
+   elph_nDBs=elph_nDBs+1
+   io_err=elph_databases_io(-elph_nDBs)
    if (io_err==-1) exit
    if (io_err==-2) then
      call msg("l","incorrect K-point correspondance")
      return
    endif
-   if (io_err>0) iq_db(elph_nq)=io_err
+   if (io_err>0) iq_db(elph_nDBs)=io_err
  enddo
- elph_nq=elph_nq-1
- if (elph_nq==0) then
+ elph_nDBs=elph_nDBs-1
+ if (elph_nDBs==0) then
    call msg("l","not found")
    return
  endif
  if (elph_use_q_grid) then
-   call msg("l",'found '//trim(intc(elph_nq))//' Q-grid compatible')
+   call msg("l",'found '//trim(intc(elph_nDBs))//' Q-grid compatible')
  else
-   call msg("l",'found '//trim(intc(elph_nq))//' NOT Q-grid compatible')
+   call msg("l",'found '//trim(intc(elph_nDBs))//' NOT Q-grid compatible')
  endif
  !
  ! KBZ + SYM table
@@ -108,7 +108,7 @@ integer function elph_databases(k,E,q)
  !
  ! ... rebuilding of ph q-points table
  !
- do idb=1,elph_nq
+ do idb=1,elph_nDBs
    iq=idb
    if (elph_use_q_grid) iq=iq_db(idb)
    ph_qpt(iq,:)=ph_qpt_(iq,:)
@@ -131,9 +131,9 @@ integer function elph_databases(k,E,q)
    read(99,*)
  endif
  !
- call live_timing('ELPH databases (WRITE)',elph_nq,SERIAL=.true.)
+ call live_timing('ELPH databases (WRITE)',elph_nDBs,SERIAL=.true.)
  !
- do idb=1,elph_nq
+ do idb=1,elph_nDBs
    !
    iq=idb
    if (elph_use_q_grid) iq=iq_db(idb)
@@ -227,9 +227,7 @@ integer function elph_databases(k,E,q)
    io_netcdf_support(ID)=.FALSE.
    !
    write (db_name,'(a,i6.6)') 's.dbph_',iabs(idb_)
-   type_=-1
-   if (trim(elph_dbs_path)=='.') type_=-2
-   io_err=io_connect(desc=trim(db_name),subfolder=trim(elph_dbs_path),type=type_,ID=ID)
+   io_err=io_connect(desc=trim(elph_dbs_path)//"/"//trim(db_name),type=-2,ID=ID)
    !
    elph_databases_io=io_err
    if (io_err/=0) return  
@@ -302,6 +300,8 @@ integer function elph_databases(k,E,q)
    ! GS energies are in Rydbergs(PW)/Hartree(Abinit). Here we have the phonon frequencies square
    !
    read (io_unit(ID)) ph_freqs_sq_disk
+   !
+   ph_freqs_sq_disk=abs(ph_freqs_sq_disk)
    !
    do il=1,ph_modes
      !
@@ -458,7 +458,7 @@ integer function elph_databases(k,E,q)
    ! CLEAN
    !
    deallocate(ph_freqs_sq_disk,gkkp_disk,pol_vec)
-   if (idb==elph_nq) deallocate(grad_at_gamma)
+   if (idb==elph_nDBs) deallocate(grad_at_gamma)
    !
 1  call io_control(ACTION=RD_CL,ID=ID)
    call io_disconnect(ID)

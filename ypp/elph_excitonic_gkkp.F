@@ -27,7 +27,7 @@ subroutine elph_excitonic_gkkp(Xk,lambda_s)
  use R_lattice,           ONLY:bz_samp
  use YPP,                 ONLY:n_lambda
  use IO_m,                ONLY:io_control,OP_RD,DUMP,RD_CL_IF_END
- use ELPH,                ONLY:elph_nq,ph_modes,elph_global_free,&
+ use ELPH,                ONLY:elph_nDBS_used,ph_modes,elph_global_free,&
 &                              elph_use_q_grid,ph_freqs_sq,elph_gkkp
  use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset,myid
  use par_indexes_m,       ONLY:par_indexes
@@ -56,7 +56,7 @@ subroutine elph_excitonic_gkkp(Xk,lambda_s)
  io_err=ioELPH(ID,'gkkp')
  if (io_err/=0.or.elph_use_q_grid) return
  !
- allocate(diagonal_xhi(elph_nq,ph_modes,n_lambda),ph_freqs(ph_modes))
+ allocate(diagonal_xhi(elph_nDBS_used,ph_modes,n_lambda),ph_freqs(ph_modes))
  diagonal_xhi = (0.,0.)
  !
  ! Fill locally BS_blk_dim
@@ -69,10 +69,10 @@ subroutine elph_excitonic_gkkp(Xk,lambda_s)
  enddo
  !
  call pp_indexes_reset(px)
- call par_indexes(px,(/elph_nq,Xk%nibz/))
+ call par_indexes(px,(/elph_nDBS_used,Xk%nibz/))
  call pp_redux_wait
  !
- do iq=1,elph_nq
+ do iq=1,elph_nDBS_used
    !
    call io_control(ACTION=RD_CL_IF_END,SEC=(/iq+1/),ID=ID)
    io_err=ioELPH(ID,'gkkp')
@@ -148,7 +148,7 @@ subroutine elph_excitonic_gkkp(Xk,lambda_s)
  call msg('o gkkp','#',(/'E      [meV]', '|gkkp| [meV]','|gkkp|  [fs]'/),INDENT=0,USE_TABS=.true.)  
  call msg('o gkkp','#')
  !
- do iq=1,elph_nq
+ do iq=1,elph_nDBS_used
    !
    do i_l=1,ph_modes
      !

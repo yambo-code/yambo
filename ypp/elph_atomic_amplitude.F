@@ -26,7 +26,7 @@ subroutine elph_atomic_amplitude(q)
  use R_lattice,           ONLY:bz_samp
  use D_lattice,           ONLY:n_atoms_species,Z_species,n_atoms
  use ELPH,                ONLY:ph_modes,ph_freqs_sq,&
-&                              max_ph_freq,elph_nq,elph_use_q_grid,&
+&                              max_ph_freq,elph_nDBs,elph_use_q_grid,&
 &                              elph_global_free,pol_vector
  use IO_m,                ONLY:io_control,OP_RD,RD_CL_IF_END,DUMP,RD_CL
  use stderr,              ONLY:set_real_printed_length
@@ -37,7 +37,7 @@ subroutine elph_atomic_amplitude(q)
  !
  ! Work Space 
  !
- integer           ::nq_todo,iq,im,is,i,j
+ integer           ::nq_to_sum,iq,im,is,i,j
  real(SP)          ::q_weight,omega,U_eigenvalues(3)
  complex(SP)       ::mean_ui_uj(n_atoms,3,3)
  !
@@ -63,8 +63,8 @@ subroutine elph_atomic_amplitude(q)
  endif
  call msg('l','sane')
  !
- nq_todo=elph_nq
- if (elph_use_q_grid) nq_todo=q%nibz
+ nq_to_sum=elph_nDBs
+ if (elph_use_q_grid) nq_to_sum=q%nibz
  !
  ! calculate q%weights
  !
@@ -72,7 +72,7 @@ subroutine elph_atomic_amplitude(q)
  !
  mean_ui_uj=(0.,0.)
  !
- do iq=1,nq_todo 
+ do iq=1,nq_to_sum 
    !
    ! I/O
    !
@@ -87,7 +87,7 @@ subroutine elph_atomic_amplitude(q)
    !
    ! Q weight
    !
-   q_weight=1./real(elph_nq)
+   q_weight=1./real(elph_nDBs)
    if (elph_use_q_grid) q_weight=q%weights(iq)
    !
    do im=1,ph_modes
@@ -136,7 +136,7 @@ subroutine elph_atomic_amplitude(q)
 !   call msg('o eli','#','',INDENT=0)
 !   call msg('o eli',         '#  Bands              :',elph_nb,INDENT=0)
 !   call msg('o eli','#','',INDENT=0)
-!   do iq=1,nq_todo
+!   do iq=1,nq_to_sum
 !     write (ch,'(a,i6.6,a)') '# Gamma (',iq,') [GHz]:'
 !     call msg('o eli',trim(ch),(/gamma(iq,:)*HA2GHZ/) ,INDENT=0)
 !   enddo

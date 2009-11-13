@@ -27,8 +27,9 @@ module ELPH
  implicit none
  integer   :: ph_modes
  integer   :: elph_nb
- integer   :: elph_nq
- integer   :: elph_nq_used
+ integer   :: elph_nDBs
+ integer   :: elph_nDBs_used
+ integer   :: nq_memory
  real(SP)  :: max_ph_freq
  logical   :: elph_use_q_grid
  real(SP),    allocatable :: ph_qpt(:,:)
@@ -60,22 +61,26 @@ module ELPH
      use QP_m,      ONLY:QP_n_states
      use R_lattice, ONLY:nkbz,nqibz
      character(*)      ::what
-     integer           ::alloc_err
+     integer           ::alloc_err,nq_to_allocate
+     !
+     nq_to_allocate=elph_nDBs_used
      !
      if (what=='gFsq'.and..not.allocated(gsqF_fan)) then
-       if (.not.eval_G_using_KK) then
-         allocate(gsqF_fan(QP_n_states,elph_nq_used,ph_modes,gsqF_energy_steps),stat=alloc_err)
+       if (eval_G_using_KK) then
+         if (nq_memory>0) nq_to_allocate=nq_memory
+       else
+         allocate(gsqF_fan(QP_n_states,elph_nDBs_used,ph_modes,gsqF_energy_steps),stat=alloc_err)
          call mem_est('gsqF_fan',(/size(gsqF_fan)/),(/SP/),errors=(/alloc_err/))
-         allocate(gsqF_ca_corr(QP_n_states,elph_nq_used,ph_modes,gsqF_energy_steps),stat=alloc_err)
+         allocate(gsqF_ca_corr(QP_n_states,elph_nDBs_used,ph_modes,gsqF_energy_steps),stat=alloc_err)
          call mem_est('gsqF_ca_corr',(/size(gsqF_ca_corr)/),(/SP/),errors=(/alloc_err/))
          gsqF_fan=0.
          gsqF_ca_corr=0.
        endif
-       allocate(gsqF_dw(QP_n_states,elph_nq_used,ph_modes),stat=alloc_err)
+       allocate(gsqF_dw(QP_n_states,elph_nDBs_used,ph_modes),stat=alloc_err)
        call mem_est('gsqF_dw',(/size(gsqF_dw)/),(/SP/),errors=(/alloc_err/))
-       allocate(gsqF_life_bose(QP_n_states,elph_nq_used,ph_modes,gsqF_energy_steps),stat=alloc_err)
+       allocate(gsqF_life_bose(QP_n_states,nq_to_allocate,ph_modes,gsqF_energy_steps),stat=alloc_err)
        call mem_est('gsqF_life_bose',(/size(gsqF_life_bose)/),(/SP/),errors=(/alloc_err/))
-       allocate(gsqF_life_f(QP_n_states,elph_nq_used,ph_modes,gsqF_energy_steps),stat=alloc_err)
+       allocate(gsqF_life_f(QP_n_states,nq_to_allocate,ph_modes,gsqF_energy_steps),stat=alloc_err)
        call mem_est('gsqF_life_f',(/size(gsqF_life_f)/),(/SP/),errors=(/alloc_err/))
        gsqF_dw=0.
        gsqF_life_bose=0.
@@ -93,7 +98,7 @@ module ELPH
        if (elph_use_q_grid) then
          allocate(ph_freqs_sq(nqibz,ph_modes))
        else
-         allocate(ph_freqs_sq(elph_nq,ph_modes))
+         allocate(ph_freqs_sq(elph_nDBs,ph_modes))
        endif
        allocate(E_k_plus_q(elph_nb,nkbz,1))
        call mem_est("ph_freqs_sq E_k_plus_q",(/size(ph_freqs_sq),size(E_k_plus_q)/),&
@@ -105,7 +110,7 @@ module ELPH
      endif
      !
      if (.not.allocated(ph_qpt)) then
-       allocate(ph_qpt(elph_nq,3))
+       allocate(ph_qpt(elph_nDBs,3))
        call mem_est("ph_qpt",(/size(ph_qpt)/),(/SP/))
      endif
      !

@@ -79,7 +79,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use eels_integration,     ONLY : init_reels_integration
 #endif
 #if defined _ELPH 
- use ELPH,                 ONLY : QP_PH_n_G_bands,elph_nq_used
+ use ELPH,                 ONLY : QP_PH_n_G_bands,elph_nDBs_used
 #endif
  !
  implicit none
@@ -244,7 +244,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BoseCut', '[BOSE] Finite Tel Bose function cutoff',bose_E_cut,verb_level=V_general)
 #if defined _ELPH 
  call it('f',defs,'MinusQ', '[KPT] Use -{q} grid',verb_level=V_kpt)
- call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nq_used,verb_level=V_kpt) 
+ call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nDBs_used,verb_level=V_kpt) 
 #endif
  !
  ! S_xc

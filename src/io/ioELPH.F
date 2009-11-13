@@ -28,8 +28,8 @@ integer function ioELPH(ID,what)
 &                         io_mode,DUMP,io_fragment,&
 &                         ver_is_gt_or_eq
  use ELPH,           ONLY:ph_modes,elph_nb,elph_global_alloc,ph_freqs_sq,elph_gkkp,&
-&                         QP_PH_n_G_bands,max_ph_freq,elph_DW,elph_nq,&
-&                         elph_use_q_grid,E_k_plus_q,ph_qpt,elph_nq_used,&
+&                         QP_PH_n_G_bands,max_ph_freq,elph_DW,elph_nDBs,&
+&                         elph_use_q_grid,E_k_plus_q,ph_qpt,elph_nDBs_used,&
 &                         gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f,&
 &                         pol_vector
  use stderr,         ONLY:intc
@@ -50,7 +50,7 @@ integer function ioELPH(ID,what)
  character(9)           ::db_name
  !
  if (what=='gkkp'.or.what=='no_gkkp') db_name='elph_gkkp'
- if (what=='gFsq')                db_name='elph_gFsq'
+ if (what=='gFsq')                    db_name='elph_gFsq'
  !
  ioELPH=io_connect(desc=db_name,type=2,ID=ID)
  if (ioELPH/=0) goto 1
@@ -68,12 +68,11 @@ integer function ioELPH(ID,what)
    call io_elemental(ID,&
 &       VAR=" Phonon modes           :",I0=ph_modes,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,&
-&       VAR=" Q points        [avail]:",I0=elph_nq,CHECK=.true.,OP=(/"=="/))
+&       VAR=" Q points        [avail]:",I0=elph_nDBs,CHECK=.true.,OP=(/"=="/))
    !
-   if ( (ver_is_gt_or_eq(ID,revision=356).and.what=='gFsq').or.&
-&       (.not.ver_is_gt_or_eq(ID,revision=356))            ) then
+   if ( (ver_is_gt_or_eq(ID,revision=356).and.what=='gFsq')) then
      call io_elemental(ID,&
-&       VAR="                  [used]:",I0=elph_nq_used,CHECK=.true.,OP=(/"=="/))
+&       VAR="                  [used]:",I0=elph_nDBs_used,CHECK=.true.,OP=(/"=="/))
    endif
    !
    call io_elemental(ID,&
@@ -85,8 +84,7 @@ integer function ioELPH(ID,what)
      call io_elemental(ID,VAR="QP_nb_nk_n_states",VAR_SZ=3,MENU=0)
      call io_elemental(ID,I0=QP_nb)
      call io_elemental(ID,I0=QP_nk)
-     call io_elemental(ID,I0=QP_n_states,&
-&       VAR=' QP tot states          :')
+     call io_elemental(ID,I0=QP_n_states,VAR=' QP tot states          :')
    endif
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
@@ -106,11 +104,11 @@ integer function ioELPH(ID,what)
    ! ... allocation
    !
    if (read_is_on(ID).and..not.allocated(ph_qpt)) then
-     allocate(ph_qpt(elph_nq,3))
+     allocate(ph_qpt(elph_nDBs,3))
      call mem_est("ph_qpt",(/size(ph_qpt)/),(/SP/))
    endif
    !
-   call io_bulk(ID,VAR="PH_Q",VAR_SZ=(/elph_nq,3/) )
+   call io_bulk(ID,VAR="PH_Q",VAR_SZ=(/elph_nDBs,3/) )
    call io_bulk(ID,R2=ph_qpt(:,:))
    !
  endif
@@ -122,20 +120,20 @@ integer function ioELPH(ID,what)
    !
    call io_bulk(ID,VAR="QP_table",VAR_SZ=(/QP_n_states,3+n_sp_pol-1/))
    call io_bulk(ID,I2=QP_table)
-   call io_bulk(ID,VAR="ELPH_GFSQ_fan",VAR_SZ=(/QP_n_states,elph_nq_used,ph_modes/))
+   call io_bulk(ID,VAR="ELPH_GFSQ_fan",VAR_SZ=(/QP_n_states,elph_nDBs_used,ph_modes/))
    call io_bulk(ID,R3=gsqF_fan(:,:,:,1))
-   call io_bulk(ID,VAR="ELPH_GFSQ_dw",VAR_SZ=(/QP_n_states,elph_nq_used,ph_modes/))
+   call io_bulk(ID,VAR="ELPH_GFSQ_dw",VAR_SZ=(/QP_n_states,elph_nDBs_used,ph_modes/))
    call io_bulk(ID,R3=gsqF_dw(:,:,:))
-   call io_bulk(ID,VAR="ELPH_GFSQ_ca_corr",VAR_SZ=(/QP_n_states,elph_nq_used,ph_modes/))
+   call io_bulk(ID,VAR="ELPH_GFSQ_ca_corr",VAR_SZ=(/QP_n_states,elph_nDBs_used,ph_modes/))
    call io_bulk(ID,R3=gsqF_ca_corr(:,:,:,1))
-   call io_bulk(ID,VAR="ELPH_GFSQ_life_bose",VAR_SZ=(/QP_n_states,elph_nq_used,ph_modes/))
+   call io_bulk(ID,VAR="ELPH_GFSQ_life_bose",VAR_SZ=(/QP_n_states,elph_nDBs_used,ph_modes/))
    call io_bulk(ID,R3=gsqF_life_bose(:,:,:,1))
-   call io_bulk(ID,VAR="ELPH_GFSQ_life_f",VAR_SZ=(/QP_n_states,elph_nq_used,ph_modes/))
+   call io_bulk(ID,VAR="ELPH_GFSQ_life_f",VAR_SZ=(/QP_n_states,elph_nDBs_used,ph_modes/))
    call io_bulk(ID,R3=gsqF_life_f(:,:,:,1))
    !
    ! PH frequencies
    !
-   call io_bulk(ID,VAR="PH_FREQS",VAR_SZ=(/elph_nq,ph_modes/))
+   call io_bulk(ID,VAR="PH_FREQS",VAR_SZ=(/elph_nDBs,ph_modes/))
    call io_bulk(ID,R2=ph_freqs_sq)
    !
    goto 1
@@ -197,7 +195,7 @@ integer function ioELPH(ID,what)
    deallocate(pol_vec_disk)
  else
    !
-   deallocate(pol_vector)
+   if (allocated(pol_vector)) deallocate(pol_vector)
    !
  endif
  !

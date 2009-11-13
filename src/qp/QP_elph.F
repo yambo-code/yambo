@@ -445,7 +445,7 @@ subroutine QP_elph(en,k,q,qp)
  !
  call elph_global_free()
  call pp_indexes_reset(px)
- if allocate(Q_map) deallocate(Q_map)
+ if (allocated(Q_map)) deallocate(Q_map)
  do i_qp=1,qp%n_states
    call W_reset(Sc_W(i_qp))
  enddo

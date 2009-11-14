@@ -73,7 +73,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
 &                         gauge_factors,Bx,By,Bz,MAG_theta,MAG_psi,ir_table
  use electrons,      ONLY:n_sp_pol
  use SC,             ONLY:SC_bands,SC_potential
- use wave_func,      ONLY:wf,wf_state,wf_ng,wf_x,wf_y,wf_z,wf_load,WF_free,WF_derivative_free
+ use wave_func,      ONLY:wf,wf_state,wf_ng,wf_x,wf_y,wf_z,WF_load,WF_free,WF_derivative_free
  use timing,         ONLY:live_timing
  use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m,  ONLY:par_indexes
@@ -233,8 +233,8 @@ subroutine MAG_Hamiltonian(initial_check_only)
  do ik=1,nkibz   
    ! 
    if( any(px%i2p(ik,:)) ) then
-     if (MAG_landau) call wf_derivative((/1,SC_bands/),(/ik,ik/),do_derivatives)
-     call wf_load(0,1,(/1,SC_bands/),(/ik,ik/),title='-MAG',impose_free_and_alloc=.TRUE.)
+     if (MAG_landau) call WF_derivative((/1,SC_bands/),(/ik,ik/),do_derivatives)
+     call WF_load(0,1,(/1,SC_bands/),(/ik,ik/),title='-MAG',impose_free_and_alloc=.TRUE.)
    endif
    !
    if (ik==1) call live_timing('MAG-Hamiltonian',px%stps(myid+1))

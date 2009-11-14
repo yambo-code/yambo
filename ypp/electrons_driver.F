@@ -24,7 +24,7 @@ subroutine electrons_driver(Xk,Xen)
  use units,          ONLY:HARTREE
  use pars,           ONLY:SP,schlen
  Use stderr,         ONLY:intc
- use wave_func,      ONLY:wf_load,wf,WF_free,wf_ng,wf_state
+ use wave_func,      ONLY:WF_load,wf,WF_free,wf_ng,wf_state
  use FFT_m,          ONLY:fft_size,fft_dim
  use R_lattice,      ONLY:bz_samp,nkibz
  use D_lattice,      ONLY:DL_vol
@@ -46,7 +46,7 @@ subroutine electrons_driver(Xk,Xen)
  real(SP), allocatable :: el_den(:)
  real(SP)              :: el_dos(n_sp_pol),dos_E,delta_E,E_min,E_max
  integer               :: i1
- integer               :: i_qp,ik,ib,ir,i_wf,i_spin,mag_i_dir,nb_to_load(2)
+ integer               :: i_qp,ik,ib,ir,i_wf,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2)
  character(schlen)     :: ch_ws,titles(4)
  !
  if (.not.any((/l_mag,l_density,l_sp_wf,l_dos&
@@ -60,16 +60,23 @@ subroutine electrons_driver(Xk,Xen)
  ! Loading  Wf 
  !
  nb_to_load=(/1,Xen%nbm/)
- if (l_sp_wf) then
+ nkpt_to_load=(/1,Xk%nibz/)
+ !
+ if (l_sp_wf &
+#if defined _YPP_MAGNETIC
+&   .or. l_angular_momentum &
+#endif
+&) then
    call QP_state_table_setup(Xen)
-   nb_to_load=(/1,maxval(QP_table(:,1))/)
+   nb_to_load   =(/minval(QP_table(:,1)),maxval(QP_table(:,1))/)         !(/minval(QP_table(:,1)),maxval(QP_table(:,1))/)
+   nkpt_to_load =(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)         !(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)  
  endif
  if(.not.l_dos &
 #if defined _YPP_MAGNETIC
-&   .and. .not.l_angular_momentum &
+&   .and. .not. l_angular_momentum &
 #endif
 &) then
-   call wf_load(wf_ng,1,nb_to_load,(/1,Xk%nibz/),space='R',title='-WF')
+   call WF_load(wf_ng,1,nb_to_load,nkpt_to_load,space='R',title='-WF')
    nr=fft_dim
    allocate(v2plot(fft_size))
  endif
@@ -296,7 +303,7 @@ subroutine electrons_driver(Xk,Xen)
  !
 #if defined _YPP_MAGNETIC
  if (l_angular_momentum) then 
-   call electrons_angular_momentum()
+   call electrons_angular_momentum(nkpt_to_load,nb_to_load)
  endif
 #endif
  !

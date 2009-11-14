@@ -33,7 +33,7 @@
  use X_m,                     ONLY : X_alloc, X_t, long_path
  use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP
  use memory_m,                ONLY : mem_est
- use wave_func,               ONLY : wf, wf_ng, wf_state, wf_load, WF_free
+ use wave_func,               ONLY : wf, wf_ng, wf_state, WF_load, WF_free
  use optcut,                  ONLY : Xcut_q0grad, Xcut_rhoq0, ng_limits, setup_optcut, pscut
  use drivers,                 ONLY : l_col_cut
 #if defined _RAS
@@ -73,7 +73,7 @@
    ! WF loading (needed in both cases)
    !
 #if !defined _MANYK
-   call wf_load(0, 1, X%ib, (/1,Xk%nibz/), space='G', title='-Oscillators/G space')
+   call WF_load(0, 1, X%ib, (/1,Xk%nibz/), space='G', title='-Oscillators/G space')
 #endif
    !
    ! Set up data needed for cut off routines

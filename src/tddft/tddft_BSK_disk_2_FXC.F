@@ -32,7 +32,7 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
  use timing,        ONLY:live_timing
  use par_proc_m,    ONLY:pp_redux_wait
  use D_lattice,     ONLY:DL_vol
- use wave_func,     ONLY:wf_load,WF_free
+ use wave_func,     ONLY:WF_load,WF_free
  use X_m,           ONLY:X_t
  use IO_m,          ONLY:io_control,OP_RD,RD,NONE,RD_CL,VERIFY,OP_RD_CL,REP
  use TDDFT,         ONLY:FXC,FXC_n_g_corr,FXC_K_diagonal,ioBS_Fxc
@@ -77,7 +77,7 @@ subroutine tddft_BSK_disk_2_FXC(iq,Xk,W,X_static)
  !
  ! WF loading
  !
- call wf_load(max(BS_n_g_exch,FXC_n_g_corr),1,BS_bands,(/1,nXkibz/),title='-BS/TDDFT')
+ call WF_load(max(BS_n_g_exch,FXC_n_g_corr),1,BS_bands,(/1,nXkibz/),title='-BS/TDDFT')
  !
  ! Exchange oscillators
  !

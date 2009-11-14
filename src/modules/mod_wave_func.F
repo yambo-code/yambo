@@ -75,7 +75,7 @@ module wave_func
      real(SP), optional :: wf(:,:,:,:)
    end function 
    !
-   subroutine wf_load(iG_max,iGo_max,bands_to_load,kpts_to_load,&
+   subroutine WF_load(iG_max,iGo_max,bands_to_load,kpts_to_load,&
 &                     spins_to_load,space,title,impose_free_and_alloc)
      integer :: iG_max,iGo_max,bands_to_load(2),&
 &               kpts_to_load(2)

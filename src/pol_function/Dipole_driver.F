@@ -39,7 +39,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use X_m,            ONLY:DIP_iq_dot_r,X_alloc,X_t,DIP_iR_or_P,long_path,Dipole_bands_ordered,&
 &                         Vnl_commutator_warning,Eval_P_and_P2_only,P_square
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
- use wave_func,      ONLY:wf_ng,wf_load,WF_free
+ use wave_func,      ONLY:wf_ng,WF_load,WF_free
  use vec_operate,    ONLY:v_norm
  implicit none
  !
@@ -119,7 +119,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    DIP_iR_or_P=(0.,0.)
    !
 #if !defined _MANYK
-   call wf_load(0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
+   call WF_load(0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
 #endif
    !
    use_trans_gauge = .true.

@@ -584,8 +584,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call initactivate(1,'RTstep NEsteps ThermSteps SwitchOnTime')
      call initactivate(1,'RTDiagonalize RTDiagoSteps')
      call initactivate(1,'NoDiamagnetic CacheSize')
-     call Afield_activate('Pump')
      call Afield_activate('Probe')
+     call Afield_activate('Pump')
    else
      call initactivate(1,'UseRhoIO SCIter SCEtresh SCRhoTresh TF_precondition')
    endif

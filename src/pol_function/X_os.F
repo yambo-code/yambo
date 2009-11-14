@@ -35,7 +35,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv,i_space_inv
  use electrons,     ONLY:levels,spin_occ
  use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,q_norm 
- use wave_func,     ONLY:wf_load
+ use wave_func,     ONLY:WF_load
  use memory_m,      ONLY:mem_est
  use X_m,           ONLY:X_t,X_poles,DIP_iq_dot_r,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_RIM
@@ -137,7 +137,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  ! WF load
  !=========
- if (.not.skip_WF_load) call wf_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
+ if (.not.skip_WF_load) call WF_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
  !
  ! Poles tabulation
  !==================
@@ -177,7 +177,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  ! Time-Rev is Spatial Inv => only half X is eval
  !                            ===================
- call space_inv_by_wf(Xen,Xk)
+ call WF_spatial_invertion(Xen,Xk)
  !
  half_X_mat_only=i_space_inv==1
  if (.not.half_X_mat_only) then

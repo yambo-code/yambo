@@ -37,7 +37,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                         SC_ng_Sx,SC_X_bands,SC_X_size,Ho,E_bare,SC_alloc,SC_free, &
 &                         WF_G_max,WF_Go_indx,SC_kind,SC_xc_functional,l_use_RHO_IO,&
 &                         G_lesser
- use wave_func,      ONLY:wf_load,wf,wf_n_states,WF_free
+ use wave_func,      ONLY:WF_load,wf,wf_n_states,WF_free
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
  use parser_m,       ONLY:parser 
@@ -236,7 +236,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
 #endif
  !
- call wf_load(WF_G_max,WF_Go_indx,(/1,max(SC_bands,E%nbm)/),(/1,k%nibz/),title='-SC')
+ call WF_load(WF_G_max,WF_Go_indx,(/1,max(SC_bands,E%nbm)/),(/1,k%nibz/),title='-SC')
  !
  if (NSC_shot.and.SC_fft_size/=fft_size) then
    call warning(' FFT size of V_xc does not fit. Skipping NSC run')

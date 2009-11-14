@@ -52,7 +52,7 @@ module UNITS
  ! Time
  !
  real(SP), parameter :: HA2PSm1=HA2THZ
- real(SP), parameter :: HA2FSm1=HA2THZ/1000._SP     ! Note that 1 THz = 10^-3 / fs
+ real(SP), parameter :: HA2FSm1=HA2THZ/1000._SP       ! Note that 1 THz = 10^-3 / fs
  real(SP), parameter :: AUT2SEC=2.418884326505_SP*10._SP**(-17)
  real(SP), parameter :: SEC2AUT=1._SP/AUT2SEC
  real(SP), parameter :: FS2AUT =10.**2/2.418884326505_SP
@@ -60,8 +60,12 @@ module UNITS
  !
  ! Magnetic fields
  !
- real(SP), parameter :: AU2Tesla=2.350517*10.**5
+ real(SP), parameter :: AU2Tesla=2.350517*10._SP**5
  real(SP), parameter :: Tesla2AU=1./AU2Tesla
+ !
+ ! Magnetization 
+ !
+ real(SP), parameter :: Bohr_magneton=9.24700915_SP   ! (S.I. : 1 BM = Bohr_magneton*10^(-24) A m^2)
  !
  ! From Octopus ( http://www.tddft.org/programs/octopus )
  !

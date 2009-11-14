@@ -425,14 +425,14 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  RT_step=0.002*FS2AUT
  NE_steps=1000
  Thermal_steps=0
- Thermal_time = 1./8.*FS2AUT
+ Thermal_time = 1./8.
  Integrator_name='RK2'
  LifeTime = 0.0*FS2AUT
  l_NE_simulate_RPA=.FALSE.
  RT_diagonalization_steps=10
  l_RT_diagonalize=.FALSE.
  max_rt_steps_disk=200
- Sx_cutoff=0.001
+ Sx_cutoff=0.0005
  !
 #endif
  !
@@ -442,7 +442,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  MAG_B=0.
  MAG_radius=0.
- MAG_hamiltonian_type='landau'
+ MAG_hamiltonian_type=' '
  MAG_pauli=.FALSE.
  MAG_landau=.FALSE.
  MAG_gauge='SYMM'

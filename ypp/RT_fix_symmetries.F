@@ -35,7 +35,7 @@ subroutine RT_fix_symmetries(E,k)
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,&
 &                              OP_APP,cp_file,rm_file,cp_directory
  use wave_func,           ONLY:ioWF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io, &
-&                              wf_ng,wf_state,wf_load,wf_state,wf,WF_free,wf_ng ,wf_nb_io_groups
+&                              wf_ng,wf_state,WF_load,wf_state,wf,WF_free,wf_ng ,wf_nb_io_groups
  use real_time,           ONLY:kpoints_map
  use stderr,              ONLY:intc,set_real_printed_length
  use parser_m,            ONLY:parser
@@ -218,7 +218,7 @@ subroutine RT_fix_symmetries(E,k)
  call section('=',"Wavefunctions")
  !===============================
  !
- call wf_load(wf_ng,1,(/1,E%nb/),(/1,k_save%nibz/),space='C',title='')
+ call WF_load(wf_ng,1,(/1,E%nb/),(/1,k_save%nibz/),space='C',title='')
  !
  if (trim(core_io_path)/=trim(more_io_path)) then
    !

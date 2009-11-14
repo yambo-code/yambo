@@ -41,7 +41,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        CHOSEX_use_empties
  use X_m,           ONLY:X_alloc,X_mat,X_t
- use wave_func,     ONLY:wf_load,wf_free
+ use wave_func,     ONLY:WF_load,wf_free
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv
  !
@@ -121,7 +121,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
    ! WFs
    !
-   call wf_load(isc%ngrho,maxval(qindx_S(:,:,2)),&
+   call WF_load(isc%ngrho,maxval(qindx_S(:,:,2)),&
 &               (/1,max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-Sc')
  endif
  !
@@ -133,7 +133,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Test the spatial Inversion
  !   
- call space_inv_by_wf(E,Xk)
+ call WF_spatial_invertion(E,Xk)
  !
  ! ALLOCATION
  !------------

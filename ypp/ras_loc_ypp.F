@@ -24,7 +24,7 @@
    use com,                     ONLY : error, msg
    use pars,                    ONLY : SP, pi, schlen
    use surface_geometry,        ONLY : setup_gvecaff, gvecaff
-   use wave_func,               ONLY : wf, wf_ng, wf_state, wf_load, wf_free, wf_norm_test
+   use wave_func,               ONLY : wf, wf_ng, wf_state, WF_load, wf_free, wf_norm_test
    use D_lattice,               ONLY : alat, DL_vol
    use R_lattice,               ONLY : g_vec, nkibz
    use IO_m,                    only : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP, NONE
@@ -62,7 +62,7 @@
    wf_norm_test = .true.
 
    do ik=1,nkibz
-     call wf_load(ngloc,1,(/1,n_bands/),(/ik,ik/),space='G',&
+     call WF_load(ngloc,1,(/1,n_bands/),(/ik,ik/),space='G',&
 &                 title='-Localization/G space')
      do ib=1,n_bands
        ibfft=wf_state(ib,ik,1)

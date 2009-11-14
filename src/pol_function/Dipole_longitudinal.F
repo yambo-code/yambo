@@ -37,7 +37,7 @@ subroutine Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  use R_lattice,           ONLY : bz_samp,q0_def_norm,nkibz
  use X_m,                 ONLY : X_t,DIP_iR_or_P, long_path 
  use memory_m,            ONLY : mem_est
- use wave_func,           ONLY : wf,wf_ng,wf_igk,wf_state,wf_load,WF_free , wf_ncx
+ use wave_func,           ONLY : wf,wf_ng,wf_igk,wf_state,WF_load,WF_free , wf_ncx
 #if defined _RAS
  use ras_long,            ONLY : grid_dir, select_field_dir
 #endif
@@ -154,7 +154,7 @@ subroutine Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
    !
    core_io_path = long_path
    call WF_free()
-   call wf_load(0,1,(/ X%ib(1), Xen%nbm /),&
+   call WF_load(0,1,(/ X%ib(1), Xen%nbm /),&
 &                   (/ik_grid,ik_grid+Xk%nibz-1/),&
 &                   space='G',title='-Oscillators/G space') 
 !  wf_ng_eff = min(wf_ng_save,wf_ng_long)
@@ -176,7 +176,7 @@ subroutine Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
      !
      call set_parms(grid='  local',command='  reset')
      call WF_free()
-     call wf_load(wf_ng_eff,1,X%ib,(/ik,ik/),space='G',title='-Oscillators/G space')
+     call WF_load(wf_ng_eff,1,X%ib,(/ik,ik/),space='G',title='-Oscillators/G space')
      wf_local(:,:)         = wf(:,:)
      wf_state_local(:,1:ik,:) = wf_state(:,:,:)
      !
@@ -184,7 +184,7 @@ subroutine Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
      !
      call set_parms(grid=' shifted',command='  reset')
      call WF_free()
-     call wf_load(wf_ng_eff,1,(/X%ib(1), Xen%nbm /),&
+     call WF_load(wf_ng_eff,1,(/X%ib(1), Xen%nbm /),&
 &                   (/ikpq,ikpq/),space='G',title='-Oscillators/G space')
 #endif
 

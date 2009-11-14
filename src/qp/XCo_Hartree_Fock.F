@@ -35,7 +35,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use collision,     ONLY:ggwinfo,collision_reset
  use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
- use wave_func,     ONLY:wf,wf_load,WF_free
+ use wave_func,     ONLY:wf,WF_load,WF_free
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP,OP_WR
 #if defined _SC || defined _RT || defined _MAGNETIC
  use SC,            ONLY:it_now,SC_bands
@@ -138,7 +138,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  ! WFs
  !
- call wf_load(QP_ng_Sx,maxval(qindx_S(:,:,2)),&
+ call WF_load(QP_ng_Sx,maxval(qindx_S(:,:,2)),&
 &             (/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-Sxx/Rho')
  !
  ! allocation again

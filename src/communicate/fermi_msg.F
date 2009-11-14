@@ -22,7 +22,7 @@
 subroutine fermi_msg(E,mode)
  !
  use pars,          ONLY:SP,lchlen
- use units,         ONLY:HARTREE
+ use units,         ONLY:HARTREE,BOHR,Bohr_magneton
  use com,           ONLY:msg,warning
  use electrons,     ONLY:levels,n_sp_pol,n_spin
 #if defined _MAGNETIC
@@ -143,9 +143,12 @@ subroutine fermi_msg(E,mode)
  if (E%nbf/=E%nbm.and..not.any(nbf_/=nbm_)) call warning('Merged spin levels are metallic')
  !
 #if defined _MAGNETIC
- ! [4] Report the value of the average magnetization per electron
+ ! [4] Report the value of the mean magnetization
  !
- if(n_sp_pol>1)    call msg('r','Mean magnetization (x,y,z):',average_el_mag(:))
+ if(n_sp_pol>1) then
+   call msg('r','Mean magnetization (x,y,z) [Bohr_magneton/Bohr^3 ] :',real(average_el_mag(:)))
+   call msg('r','                           [cgs units]=[emu/cm^2)] :',real(average_el_mag(:)*Bohr_magneton/(BOHR**3)))
+ endif
 #endif
  !
 end subroutine

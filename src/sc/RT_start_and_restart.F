@@ -28,16 +28,17 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  use pars,           ONLY:SP
  use com,            ONLY:msg,warning
  use memory_m,       ONLY:mem_est
+ use drivers,        ONLY:l_sc_contains_lda
  use QP_m,           ONLY:QP_nk
  use units,          ONLY:HARTREE
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:G_lesser,ID,io_J,io_G,ID,NE_steps,G_lesser_previous,&
 &                         G_lesser_reference,Thermal_steps,LifeTime,XC0,      &
-&                         l_RT_needs_XC0,l_NE_simulate_IP
+&                         l_RT_needs_XC0,l_NE_simulate_IP,Hfrozen,XCfrozen
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V, &
 &                         rho_convergence,H_rotate,local_V,V_hartree_sc,      &
-&                         load_SC_components,E_bare,V_xc_sc
+&                         E_bare,V_xc_sc,rho_n
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use wave_func,      ONLY:wf
@@ -59,7 +60,9 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  !----------------------------------
  ! G_lesser(T=0,T=0)=Go and G_lesser_old(T=0,T=0)=Go
  !
- G_lesser=(0._SP,0._SP)
+ G_lesser    =(0._SP,0._SP)
+ V_xc_sc     =(0._SP)
+ V_hartree_sc=(0._SP)
  ! 
  forall(i1=1:SC_bands,ik=1:Xen%nk)
    G_lesser(i1,i1,ik)=(0._SP,1._SP)*Xen%f(i1,ik,1)
@@ -69,10 +72,6 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  !
  E_bare=Xen%E(:SC_bands,:,:)
  call SC_common_build_Ho(Xen,Xk,k)
- !
- ! Starting point 
- !
- it_now=1
  !
  ! Perform a first I/O to check which DBs are present. 
  !
@@ -102,42 +101,53 @@ subroutine RT_start_and_restart(Xen,Xk,k)
    if ( E_convergence>0.01.and.rho_convergence>1e-4) &
 &    call warning(" Restart from a non-converged Self-Consistent calculation! ")
    !
-   if (.not.RESTART) then
-     !
-     !  I only need SC_R than I can reconstruct G_lesser(:,:,:)
-     !  rotating the non-integrating G_lesser
-     !
-     allocate(SC_R(SC_bands,SC_bands,QP_nk,n_sp_pol))
-     call mem_est("SC_R ",(/size(SC_R)/))
-     !
-     call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2))
+   !  I only need SC_R than I can reconstruct G_lesser(:,:,:)
+   !  rotating the non-integrating G_lesser
+   !
+   allocate(SC_R(SC_bands,SC_bands,QP_nk,n_sp_pol))
+   call mem_est("SC_R ",(/size(SC_R)/))
+   !
+   call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2))
+   io_WF=io_SC_components('WF',Xen,ID(2))
+   !
+   do ik=1,QP_nk
+     call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(2))
      io_WF=io_SC_components('WF',Xen,ID(2))
-     !
-     do ik=1,QP_nk
-       call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(2))
-       io_WF=io_SC_components('WF',Xen,ID(2))
-     enddo
-     !
-     ! Now I build the G_lesser rotating the non interaction one
-     ! G_lesser(i1,i1,ik)=(0.,1)*en%f(i1,ik)
-     !
-     do ik=1,QP_nk
-       call H_rotate(SC_R(:,:,ik,1),G_lesser(:,:,ik),SC_bands,-1)
-     enddo
-     !
-     deallocate(SC_R)
-     call mem_est("SC_R ")
-     !
-   endif
+   enddo
+   !
+   ! Now I build the G_lesser rotating the non interaction one
+   ! G_lesser(i1,i1,ik)=(0.,1)*en%f(i1,ik)
+   !
+   do ik=1,QP_nk
+     call H_rotate(SC_R(:,:,ik,1),G_lesser(:,:,ik),SC_bands,-1)
+   enddo
+   !
+   deallocate(SC_R)
+   call mem_est("SC_R ")
+   !
+   if(Hfrozen) call el_density(G_lesser,k,rho_n,.false.)
+   if(Hfrozen) call V_Hartree(rho_n,V_hartree_sc)
+   !
+   V_xc_sc=(0._SP)
    !
    if(l_RT_needs_XC0) then
+     !
      XC0=(0._SP,0._SP)
-     if (local_V) call load_SC_components('V',COM_=NONE,MODE_=VERIFY)
+     !
+     if (local_V) then 
+       call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID(3))  ! Local potential
+       io_V=io_SC_components('V' ,Xen,ID(3))
+     else
+       call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID(3))  ! Non Local potential
+       io_V=io_SC_components('V' ,Xen,ID(3))
+     endif
+     !
      do ik=1,QP_nk
        if (local_V) then
          call V_real_space_to_H(ik,V_hartree_sc+V_xc,XC0(:,:,ik,:),wf)
        else
-         call load_SC_components('Hsc',COM_=NONE,MODE_=VERIFY,ik=ik)
+         call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(3))
+         io_V=io_SC_components('V',Xen,ID(3))
          XC0(:,:,ik,:)=H_nl_sc(:,:,:)
        endif
      enddo
@@ -145,8 +155,9 @@ subroutine RT_start_and_restart(Xen,Xk,k)
    !
  else if (l_RT_needs_XC0) then
    !
-   call xc_lda_driver(Xen,Xk,WF_KIND,WF_xc_functional,1,G_lesser)
    XC0=(0._SP,0._SP)
+   !
+   call xc_lda_driver(Xen,Xk,WF_KIND,WF_xc_functional,1,G_lesser)
    do ik=1,QP_nk
      call V_real_space_to_H(ik,V_xc,XC0(:,:,ik,:),wf) 
    enddo
@@ -154,6 +165,10 @@ subroutine RT_start_and_restart(Xen,Xk,k)
    V_xc_sc=(0._SP)
    !
  endif
+ !
+ ! Starting point 
+ !
+ it_now=1
  !
  if(RESTART) then
    !

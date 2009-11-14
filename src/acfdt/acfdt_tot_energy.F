@@ -26,7 +26,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use ACFDT,          ONLY:ACFDT_n_freqs,ACFDT_n_lambda,ACFDT_E_range
  use FFT_m,          ONLY:fft_size
  use frequency,      ONLY:w_samp,W_reset
- use wave_func,      ONLY:wf_load,WF_free
+ use wave_func,      ONLY:WF_load,WF_free
  use memory_m,       ONLY:mem_est
  use timing,         ONLY:live_timing
  use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
@@ -91,7 +91,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  !
  call msg('s','[ACFDT] LDA Total energy')
  !
- call wf_load(0,1,(/1,Xen%nbm/),(/1,Xk%nibz/),title='-Density')
+ call WF_load(0,1,(/1,Xen%nbm/),(/1,Xk%nibz/),title='-Density')
  !
  allocate(E_xc(fft_size),rho(fft_size))
  call el_density(Xen,Xk,rho,.false.)

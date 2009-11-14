@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
+subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                   spins_to_load,space,title,impose_free_and_alloc)
  !
  ! Load and (eventually) FFTs the wavefunctions
@@ -122,7 +122,7 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  ! 
  use_direct_access=.FALSE.
 #if defined _MAGNETIC
- use_direct_access=.not.all(kpts_to_load==(/1,nkibz/))
+ use_direct_access=(kpts_to_load(1)==kpts_to_load(2))
 #endif
 #if defined _MANYK
  use_direct_access=.TRUE.
@@ -160,6 +160,9 @@ subroutine wf_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    !
    if (any ( wf_b/=(/1,SC_bands/) )) call warning(' [WF] Forced '//trim(intc(SC_bands))//' bands to be loaded')
    wf_b=(/1,SC_bands/)
+   !DEBUG>
+   !if(title=='-DERIV') bands_to_load=(/1,SC_bands/)
+   !DEBUG<
    !
  else if (found_SC_DB.and..not.compatible_SC_DB) then
    !

@@ -26,7 +26,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use stderr,        ONLY:intc
  use FFT_m,         ONLY:fft_rot_r,fft_dim
  use D_lattice,     ONLY:a,i_time_rev,nsym,alat
- use wave_func,     ONLY:wf_load,wf_state,wf,WF_free,wf_ng
+ use wave_func,     ONLY:WF_load,wf_state,wf,WF_free,wf_ng
  use R_lattice,     ONLY:nXkibz,bz_samp
  use YPP,           ONLY:l_sort,l_exc_wf,l_spin,ncell,lambda,r_hole,&
 &                        nr,v2plot,nr_tot,state_ctl,BS_H_dim,n_lambda,&
@@ -221,7 +221,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! 
  ! Loading  Wf 
  !
- if (l_exc_wf) call wf_load(wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
+ if (l_exc_wf) call WF_load(wf_ng,1,BS_bands,(/1,nXkibz/),space='R',title='-EXCWF')
  !
  ! GPL_EXCLUDE_START SPIN_IGNORE
  !

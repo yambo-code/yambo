@@ -29,7 +29,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  use timing,         ONLY:live_timing 
  use electrons,      ONLY:levels
  use X_m,            ONLY:X_t,Eval_P_and_P2_only,X_alloc
- use wave_func,      ONLY:wf,wf_load,wf_ng,WF_free
+ use wave_func,      ONLY:wf,WF_load,wf_ng,WF_free
  use R_lattice,      ONLY:bz_samp,qindx_S
  use QP_m,           ONLY:QP_nk,QP_nb
  use SC,             ONLY:SC_potential,SC_bands,Ho,E_bare,it_now
@@ -87,7 +87,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
    WF_Go_indx=1  
  endif
  !
- call wf_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),space='R',title=' ')  
+ call WF_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),space='R',title=' ')  
  !
  ! Core initialization
  !

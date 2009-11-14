@@ -33,7 +33,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use X_m,                 ONLY:X_t,DIP_iR_or_P,Dipole_bands_ordered,Eval_P_and_P2_only,P_square
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD
  use memory_m,            ONLY:mem_est
- use wave_func,           ONLY:wf,wf_ng,wf_state, wf_load
+ use wave_func,           ONLY:wf,wf_ng,wf_state, WF_load
  !
  implicit none
  type(bz_samp), intent(in)    :: Xk
@@ -106,7 +106,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  do ik=1,Xk%nibz
 #if defined _MANYK
-   call wf_load(0,1,X%ib,(/ik,ik/),space='G',title='-Oscillators/G space')
+   call WF_load(0,1,X%ib,(/ik,ik/),space='G',title='-Oscillators/G space')
 #endif
    !
    ! [Vnl,r]

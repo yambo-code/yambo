@@ -31,7 +31,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,spin
  use FFT_m,        ONLY:fft_size
  use stderr,       ONLY:intc
- use wave_func,    ONLY:wf_load,WF_free
+ use wave_func,    ONLY:WF_load,WF_free
  use functions,    ONLY:K_scatter
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv,inv_index
  use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,qindx_X,bz_samp,RIM_qpg,&
@@ -247,7 +247,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! GPL_EXCLUDE_START
    !
-   call wf_load(max(O_ng,BS_n_g_exch),1,BS_bands,(/1,BS_columns/),&
+   call WF_load(max(O_ng,BS_n_g_exch),1,BS_bands,(/1,BS_columns/),&
 &               space='R',title='-BSK->Fxc')
    !
    ! GPL_EXCLUDE_END
@@ -257,14 +257,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    bands_to_load=BS_bands
    if (BS_K_is_ALDA) bands_to_load=(/1,BS_bands(2)/)
    !
-   call wf_load(max(O_ng,BS_n_g_exch),1,bands_to_load,(/1,BS_columns/),&
+   call WF_load(max(O_ng,BS_n_g_exch),1,bands_to_load,(/1,BS_columns/),&
 &               space='R',title='-BSK')
    !
  endif
  ! 
  ! Test the spatial Inversion
  !
- call space_inv_by_wf(Ken,Xk)
+ call WF_spatial_invertion(Ken,Xk)
  !
  allocate(O_table(BS_bands(2)-BS_bands(1)+1,nsym,&
 &                 BS_bands(2)-BS_bands(1)+1,nsym,n_sp_pol),stat=alloc_err(1))

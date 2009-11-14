@@ -99,7 +99,7 @@ subroutine el_magnetization(en,Xk)
       average_el_mag(i1)=average_el_mag(i1)+el_mag(i2,i1)
     enddo
   enddo
-  average_el_mag(:)=average_el_mag(:)*DL_vol/fft_size
+  average_el_mag(:)=-average_el_mag(:)/fft_size
 #endif
  !
  ! GPL_EXCLUDE_END SPIN_IGNORE

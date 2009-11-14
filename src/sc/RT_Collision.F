@@ -57,13 +57,11 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  !
  SC_bands2=SC_bands**2
  !
- if(.not.Hfrozen.or..not.XCfrozen.or.i_time>0) call el_density(G_input,k,rho_n,.false.)
+ if(.not.Hfrozen.or..not.XCfrozen.or.i_time<0) call el_density(G_input,k,rho_n,.false.)
  !
- if(.not.Hfrozen.and.i_time>0) call V_Hartree(rho_n,V_hartree_sc)
+ if(.not.Hfrozen.or.i_time<0) call V_Hartree(rho_n,V_hartree_sc)
  !
- if(.not.XCfrozen.and.i_time>0) then
-   !
-   QP_Vnl_xc=(0._SP,0._SP)
+ if(.not.XCfrozen.or.i_time<0) then
    !
    if(l_sc_contains_lda.and.SC_xc_functional/=0) then
      !
@@ -75,6 +73,10 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
    endif
    !
    if(l_sc_hf) call SC_extended_oscillators(G_input)
+   !
+ else
+   !  
+   QP_Vnl_xc=(0._SP,0._SP)
    !
  endif
  !

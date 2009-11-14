@@ -47,7 +47,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:qindx_S,bz_samp
  use D_lattice,     ONLY:nsym,i_space_inv,i_time_rev
- use wave_func,     ONLY:wf_load,wf_free
+ use wave_func,     ONLY:WF_load,wf_free
  use stderr,        ONLY:intc
  !
  implicit none
@@ -227,12 +227,12 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  ! WFs
  !
- call wf_load(X%ng,maxval(qindx_S(:,:,2)),&
+ call WF_load(X%ng,maxval(qindx_S(:,:,2)),&
 &            (/QP_n_G_bands(1),max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-Sc')
  !
  ! Test the spatial Inversion
  !
- call space_inv_by_wf(en,Xk)
+ call WF_spatial_invertion(en,Xk)
  !
  ! ALLOCATION (isc)
  !

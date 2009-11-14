@@ -32,7 +32,7 @@
    use R_lattice,               ONLY : g_vec, bz_samp
    use X_m,                     ONLY : X_t
    use memory_m,                ONLY : mem_est
-   use wave_func,               ONLY : wf, wf_ng, wf_state, wf_load
+   use wave_func,               ONLY : wf, wf_ng, wf_state, WF_load
    use optcut,                  ONLY : Xcut_q0grad, ng_limits, setup_optcut, pscut, PScut_slow
    use surface_geometry,        ONLY : setup_gvecaff
    implicit none
@@ -70,7 +70,7 @@
 !<-- DEBUG
 
 #if defined _MANYK
-     call wf_load(0,1,X%ib,(/ik,ik/),space='G',title='-Oscillators/G space')
+     call WF_load(0,1,X%ib,(/ik,ik/),space='G',title='-Oscillators/G space')
 #endif
 
      do i1 = 1,3

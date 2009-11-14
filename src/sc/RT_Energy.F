@@ -24,9 +24,9 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Ex,Exc,Trace_Gf)
  use pars,           ONLY:SP
  use drivers,        ONLY:l_sc_hf,l_sc_contains_lda
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,V_xc_sc,Ho
+ use SC,             ONLY:SC_bands,V_hartree_sc,Ho
  use X_m,            ONLY:P_square
- use real_time,      ONLY:G_lesser,RT_average_operator
+ use real_time,      ONLY:XC0,G_lesser,RT_average_operator
  use electrons,      ONLY:levels
  use QP_m,           ONLY:QP_Vnl_xc
  use xc_functionals, ONLY:E_xc
@@ -94,7 +94,7 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Ex,Exc,Trace_Gf)
    !
  else
    !      
-   call RT_average_operator(VALUE=Exc,O_REAL=V_xc_sc,G=G_lesser,k=k)
+   call RT_average_operator(VALUE=Exc,O_MATRIX=XC0,G=G_lesser,k=k)
    !
  endif
  !

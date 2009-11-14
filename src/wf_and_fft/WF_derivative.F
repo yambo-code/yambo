@@ -19,11 +19,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine wf_derivative(derivative_bands,derivative_kpt,do_derivative)
+subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  !
  use pars,           ONLY:SP,DP,pi
  use wave_func,      ONLY:wf,wf_state,wf_ng,wf_b,wf_n_states,wf_x,wf_y,wf_z,&
-&                         wf_load,WF_free,WF_derivative_alloc,WF_derivative_free
+&                         WF_load,WF_free,WF_derivative_alloc,WF_derivative_free
  use electrons,      ONLY:n_sp_pol
  use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
  use R_lattice,      ONLY:g_vec,nkibz
@@ -32,6 +32,8 @@ subroutine wf_derivative(derivative_bands,derivative_kpt,do_derivative)
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:k_pt
  use D_lattice,      ONLY:alat
+ use SC,             ONLY:SC_bands
+ use com,            ONLY:warning,error
  !
  implicit none
  ! Input variables
@@ -40,18 +42,24 @@ subroutine wf_derivative(derivative_bands,derivative_kpt,do_derivative)
  logical :: do_derivative(3)
  !
  ! Internal variables
+ integer :: bands_to_load(2)
+ logical :: use_live_timing
  complex(SP), allocatable  :: wf_der(:)
  complex(DP), allocatable  :: WF_DP(:)
  ! Dummys
  integer :: i1,i_spin,ib,ik,ifft
  !
- ! Wavefunctions 
- !===============
- ! To construct the magnetic part of the Hamiltonian
- ! I need the wave functions in G space.
+ ! wf_load could change bands_to_load(:) if it founds an SC-database 
+ bands_to_load(:)=derivative_bands(:)
  !
+ ! Wavefunctions in G space 
+ !==========================
  call fft_setup(0,1,.false.)
- call wf_load(0,1,derivative_bands,derivative_kpt,space='G',title='-DERIV',impose_free_and_alloc=.TRUE.)
+ call WF_load(0,1,bands_to_load,derivative_kpt,space='G',title='-DERIV',impose_free_and_alloc=.TRUE.)
+ !
+ if (any ( bands_to_load(:)/=derivative_bands(:) ))&
+&       call warning(' [WF-DERIV] Forced '//trim(intc(SC_bands))//' bands to be derived')
+ !
  call WF_derivative_alloc(do_derivative)
  !
  allocate(wf_der(wf_ng))                              ! G space
@@ -59,13 +67,14 @@ subroutine wf_derivative(derivative_bands,derivative_kpt,do_derivative)
  allocate(wf_DP(fft_size))                            ! real space
  call mem_est("wf_DP",(/fft_size/),(/DP/))
  !
- if (derivative_kpt(1)==1 .and. derivative_kpt(2)==nkibz) call live_timing('WF derivatives',wf_n_states)
+ if (derivative_kpt(1)==1 .and. derivative_kpt(2)==nkibz) use_live_timing=.false.
+ if(use_live_timing) call live_timing('[WF-DERIV] Wf_derivatives (re)loading',wf_n_states)
 #if defined _FFTW
  fftw_plan = 0
 #endif
  !
  do ik=derivative_kpt(1),derivative_kpt(2)
-   do ib=derivative_bands(1),derivative_bands(2)
+   do ib=bands_to_load(1),bands_to_load(2)
      do i_spin=1,n_sp_pol   
        ifft=wf_state(ib,ik,i_spin)
        !
@@ -91,13 +100,13 @@ subroutine wf_derivative(derivative_bands,derivative_kpt,do_derivative)
          if(i1==3) wf_z(:,ifft)=wf_DP(:)
          !
        enddo
-       if (derivative_kpt(1)==1 .and. derivative_kpt(2)==nkibz) call live_timing(steps=1)
+       if(use_live_timing) call live_timing(steps=1)
        !
      enddo
    enddo
  enddo
  !
- if (derivative_kpt(1)==1 .and. derivative_kpt(2)==nkibz) call live_timing()
+ if(use_live_timing) call live_timing()
  call WF_free()
  !
  deallocate(wf_DP)

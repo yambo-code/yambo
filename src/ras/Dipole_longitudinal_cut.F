@@ -34,7 +34,7 @@
    use X_m,                     ONLY : X_alloc, X_t, long_path
    use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP, ver_is_gt_or_eq
    use memory_m,                ONLY : mem_est
-   use wave_func,               ONLY : wf, wf_ng, wf_state, wf_load, WF_free, wf_nc_k, wf_igk, wf_ncx
+   use wave_func,               ONLY : wf, wf_ng, wf_state, WF_load, WF_free, wf_nc_k, wf_igk, wf_ncx
    use optcut,                  ONLY : Xcut_q0grad, ng_limits, setup_optcut, pscut
    use surface_geometry,        ONLY : setup_gvecaff
    use ras_long,                ONLY : select_field_dir, grid_dir
@@ -146,7 +146,7 @@
    !
    core_io_path = long_path
    call WF_free()
-   call wf_load(0,1,(/ X%ib(1), Xen%nbm /),&
+   call WF_load(0,1,(/ X%ib(1), Xen%nbm /),&
 &                   (/ik_grid,ik_grid+Xk%nibz-1/),&
 &                   space='G',title='-Oscillators/G space')
    wf_ng_long = min(wf_ng_save,wf_ng)
@@ -171,7 +171,7 @@
      wf_ncx = wf_ncx_save
      wf_ng = wf_ng_save
      call WF_free()
-     call wf_load(wf_ng_long,1,X%ib,(/ik,ik/),space='G',title='-Oscillators/G space')
+     call WF_load(wf_ng_long,1,X%ib,(/ik,ik/),space='G',title='-Oscillators/G space')
      wf_local(:,:)         = wf(:,:)
      wf_state_local(:,1:ik,:) = wf_state(:,:,:)
      !
@@ -182,7 +182,7 @@
      wf_ncx = wf_ncx_long
      wf_ng = wf_ng_save
      call WF_free()
-     call wf_load(wf_ng_long,1,(/X%ib(1), Xen%nbm /),&
+     call WF_load(wf_ng_long,1,(/X%ib(1), Xen%nbm /),&
 &                   (/ikpq,ikpq/),space='G',title='-Oscillators/G space')
 #endif
 

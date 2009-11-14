@@ -203,10 +203,12 @@ subroutine QP_elph(en,k,q,qp)
    distributed_Q=.TRUE.
    live_timing_steps=px%stps(myid+1)*QP_n_states*QP_PH_n_G_bands
    nq_memory=0
+   allocate(px%i2p(elph_nDBs_used,QP_PH_n_G_bands))
+   px%i2p=.FALSE.
    do iq_loop=1,elph_nDBs_used
-     Q_map(iq_loop)=0
      if (px%i1p(iq_loop)) nq_memory=nq_memory+1
      if (px%i1p(iq_loop)) Q_map(iq_loop)=nq_memory
+     if (px%i1p(iq_loop)) px%i2p(iq_loop,:)=.TRUE.
    enddo
    call msg('r', '[GW/El-Ph] Q-points distributed among the CPUs')
  else
@@ -237,11 +239,7 @@ subroutine QP_elph(en,k,q,qp)
    !
    ! DB I/O can be skipped except at the gamma point which is used to define E_k_plus_q_at_gamma array
    !
-   if (distributed_Q) then
-     if (.not.px%i1p(iq_ibz).and.iq_db>1) cycle
-   else
-     if (.not.any(px%i2p(iq_ibz,:)).and.iq_db>1) cycle
-   endif
+   if (.not.any(px%i2p(iq_ibz,:)).and.iq_db>1) cycle
    !
    if (iq_db/=iabs(iq_db_ref)) then
      !
@@ -264,7 +262,7 @@ subroutine QP_elph(en,k,q,qp)
      !
    endif
    !
-   if (distributed_Q.and..not.px%i1p(iq_ibz)) cycle
+   if (distributed_Q.and..not.any(px%i2p(iq_ibz,:)).and.iq_db>1) cycle
    !
    do i_qp=1,QP_n_states
      !
@@ -276,7 +274,7 @@ subroutine QP_elph(en,k,q,qp)
      !
      do ob=1,QP_PH_n_G_bands
        !
-       if (.not.distributed_Q.and..not.px%i2p(iq_ibz,ob)) cycle
+       if (.not.px%i2p(iq_ibz,ob)) cycle
        !
        ik_bz_gkkp=ik_bz
        ib_gkkp   =ib
@@ -471,7 +469,7 @@ subroutine QP_elph(en,k,q,qp)
              call QP_states_simmetrize(en,vec_2_sim=gsqF_fan(:,iq_loop,il,iw))
              call QP_states_simmetrize(en,vec_2_sim=gsqF_ca_corr(:,iq_loop,il,iw))
            endif
-           if (distributed_Q.and..not.px%i1p(iq_loop)) cycle
+           if (distributed_Q.and..not.px%i2p(iq_loop,1)) cycle
            call QP_states_simmetrize(en,vec_2_sim=gsqF_life_bose(:,Q_map(iq_loop),il,iw))
            call QP_states_simmetrize(en,vec_2_sim=gsqF_life_f(:,Q_map(iq_loop),il,iw))
          enddo
@@ -515,7 +513,7 @@ subroutine QP_elph(en,k,q,qp)
        !
        do iq_loop=1,elph_nDBs_used
          !
-         if (distributed_Q.and..not.px%i1p(iq_loop)) cycle
+         if (distributed_Q.and..not.px%i2p(iq_loop,1)) cycle
          !
          do il=1,ph_modes
            !

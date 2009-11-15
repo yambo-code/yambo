@@ -469,7 +469,6 @@ subroutine QP_elph(en,k,q,qp)
              call QP_states_simmetrize(en,vec_2_sim=gsqF_fan(:,iq_loop,il,iw))
              call QP_states_simmetrize(en,vec_2_sim=gsqF_ca_corr(:,iq_loop,il,iw))
            endif
-           if (distributed_Q.and..not.px%i2p(iq_loop,1)) cycle
            call QP_states_simmetrize(en,vec_2_sim=gsqF_life_bose(:,Q_map(iq_loop),il,iw))
            call QP_states_simmetrize(en,vec_2_sim=gsqF_life_f(:,Q_map(iq_loop),il,iw))
          enddo

@@ -30,7 +30,7 @@ subroutine QP_of(qp,en,QPdb_read_err)
  use QP_m,      ONLY:QP_t,QP_Vxc,QP_Sc,QP_dSc,QP_Vnl_xc,QP_table,&
 &                    QP_solver,QP_n_states,l_extended_output,Vxc_kind,&
 &                    QP_G_dr,QP_Sc_steps,use_GreenF_to_eval_QP,Vnlxc_kind,&
-&                    report_Vnlxc,report_Sc,report_dSc,QP_G_amplitude_integral
+&                    report_Vnlxc,report_Sc,report_dSc,QP_G_amplitude_integral,QP_states_simmetrize 
  use stderr,    ONLY:set_real_printed_length
  use frequency, ONLY:w_samp,W_reset
  implicit none
@@ -43,6 +43,7 @@ subroutine QP_of(qp,en,QPdb_read_err)
  integer           :: i1,i2,qp_b,qp_k,qp_isp
  character(lchlen) :: file_name,G_Sc_name
  type(w_samp)      :: Sc_W
+ logical           ::state_is_2do(QP_n_states)
  !
  !o.qp titles
  !
@@ -156,6 +157,8 @@ subroutine QP_of(qp,en,QPdb_read_err)
    !
  else if (trim(QP_solver)=='g') then
    !
+   call QP_states_simmetrize(en,state_is_2do=state_is_2do)
+   !
    call set_real_printed_length(f_length=12,g_length=12)
    !
    call W_reset(Sc_W)
@@ -163,6 +166,8 @@ subroutine QP_of(qp,en,QPdb_read_err)
    Sc_W%dr=QP_G_dr
    !
    do  i1=1,QP_n_states
+     !
+     if (.not.state_is_2do(i1)) cycle
      !
      call FREQUENCIES_Green_Function(i1,Sc_W,en%E)
      !

@@ -94,9 +94,7 @@ module BS
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF
  logical  :: BSS_long_gauge
-#if defined _PARTIAL_DIAGO
  logical  :: BSS_uses_partial_diago
-#endif
  complex(SP),allocatable :: BSS_rhoq0(:)
  !
  interface 

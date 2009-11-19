@@ -30,11 +30,12 @@ subroutine K_Haydock(iq,W)
  use BS,             ONLY:BSS_n_descs,BS_K_dim,BS_mat,Haydock_treshold,&
 &                         BSS_rhoq0,BSS_description,Haydock_v0_mod,&
 &                         BS_DB_is_fragmented,Kernel_by_V,&
-&                         BS_eh_f,ioBSS_Haydock,BS_K_Coupling
+&                         BS_eh_f,ioBSS_Haydock,BS_K_Coupling,Haydock_terminator
  use timing,         ONLY:live_time_msg
  use stderr,         ONLY:tty_size,intc,real2ch
  use electrons,      ONLY:spin_occ
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
+ use parser_m,       ONLY:parser
  implicit none
  type(w_samp)  ::W
  integer       ::iq
@@ -58,6 +59,10 @@ subroutine K_Haydock(iq,W)
  else if (isec(2)==0) then
    call section('+','Haydock solver')
  endif
+ !
+ ! Use terminator?
+ !
+ if (.not.Haydock_terminator) call parser('BSHayTer',Haydock_terminator)
  !
  if (BS_K_Coupling) then
    !
@@ -267,12 +272,12 @@ subroutine K_Haydock(iq,W)
        !
        ! GPL_EXCLUDE_START
        !
-       call build_L_and_check_convergence(Af(:it),Bf(:it),it,Cf(:it))
+       call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,Cf(:it))
        !
        ! GPL_EXCLUDE_END
        !
      else
-       call build_L_and_check_convergence(Af(:it),Bf(:it),it)
+       call build_L_and_check_convergence(Af(:it),Bf(:it+1),it)
      end if
      !
      BSS_description(BSS_n_descs-1)='        |Accuracy (reached)   [o/o]:'//&
@@ -343,7 +348,7 @@ subroutine K_Haydock(iq,W)
    subroutine build_L_and_check_convergence(Af,Bf,it,Cf)
      implicit none
      integer    :: it
-     real(SP)   :: Bf(it),Af(it)
+     real(SP)   :: Bf(it+1),Af(it)
      complex(SP),intent(in),optional :: Cf(it)
      !
      ! Work Space
@@ -353,10 +358,21 @@ subroutine K_Haydock(iq,W)
      complex(SP) :: X_o(2,it), YbyX(2)
      complex(SP),allocatable :: X_i(:,:)
      !
+     ! related to terminator
+     !
+     complex(SP) :: X_t 
+     real :: Av1, Av2
+     integer, parameter :: RES = 2, COUPL = 1, MIN_ITER = 10
+     logical     :: UseTerminator
+     !
      ! Co includes the spin_occ factor because Haydock is expected to work
      ! only when ALL BS_eh_f == spin_occ
      !
      Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/q_norm(1)**2.*Haydock_v0_mod**2.
+     X_t =(0._SP,0._SP)
+     UseTerminator = .false.  
+     !
+     if (it > MIN_ITER.and.Haydock_terminator) UseTerminator = .true.
      !
      ! GPL_EXCLUDE_START
      !
@@ -364,9 +380,49 @@ subroutine K_Haydock(iq,W)
      !
      ! GPL_EXCLUDE_END
      !
+     !
+     if (Useterminator) then 
+       if (.not.BS_K_Coupling) then
+         Av1 = 0.
+         Av2 = 0.
+         do i1 = 1, it
+           Av1 = Av1 + Af(i1)
+           Av2 = Av2 + Bf(i1)
+         end do
+         Av1 = Av1/it
+         Av2 = Av2/it
+       else
+       !
+       ! GPL_EXCLUDE_START
+       !
+         Av1 = 0.
+         Av2 = 0.
+         do i1 = 2,it+1,2
+           Av1 = Av1 + Bf(i1)
+           Av2 = Av2 + Bf(i1+1)
+         end do
+         Av1 = Av1/(it/2+mod(it,2))
+         Av2 = Av2/(it/2)
+       !
+       ! GPL_EXCLUDE_END
+       !
+       end if
+     end if
+     !
      do iw=1,W%n(1)
        X_o=(0._SP,0._SP)
-       X_o(:,it)=1./(W%p(iw)-Af(it))
+       if (UseTerminator) then 
+         if (.not.BS_K_Coupling) X_t = terminator(W%p(iw),Av1,Av2,RES)
+       !
+       ! GPL_EXCLUDE_START
+       !
+         if (BS_K_Coupling.and.(mod(it,2)==0)) X_t = terminator(W%p(iw),Av1,Av2,COUPL)
+         if (BS_K_Coupling.and.(mod(it,2)==1)) X_t = terminator(W%p(iw),Av2,Av1,COUPL)
+       !
+       ! GPL_EXCLUDE_END
+       !
+       endif
+       X_o(:,it)=1./(W%p(iw)-Af(it)-Bf(it+1)**2.*X_t)
        do i1=it-1,1,-1
          X_o(1,i1)=1./(W%p(iw)-Af(i1)-Bf(i1+1)**2.*X_o(1,i1+1))
        enddo
@@ -420,5 +476,30 @@ subroutine K_Haydock(iq,W)
 &                  -dot_product(v(BS_K_dim+1:2*BS_K_dim),w(BS_K_dim+1:2*BS_K_dim)))
      !
    end function fdot_product
+   !
+   function terminator(x,c1,c2,which)
+     !
+     complex(SP) :: terminator, f, g, x
+     real(SP) :: c1,c2
+     integer  :: which
+     !
+     select case(which)
+     case (1) 
+     !
+     ! GPL_EXCLUDE_START
+     !
+       f = x**2. - c1**2. + c2**2.
+       g = 2.*x*c2**2.
+       terminator = f + sqrt(f**2. -2.*x*g) 
+       terminator = terminator/g
+     !
+     ! GPL_EXCLUDE_END
+     !
+     case (2)
+       f = (x-c1)
+       terminator = f + sqrt(f**2. -4.*c2**2.)
+       terminator = terminator/2./c2**2.
+     end select
+   end function terminator
    !
 end subroutine

@@ -22,13 +22,13 @@
 subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Ex,Exc,Trace_Gf)
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_sc_hf,l_sc_contains_lda
+ use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_chosex
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho
  use X_m,            ONLY:P_square
- use real_time,      ONLY:XC0,G_lesser,RT_average_operator
+ use real_time,      ONLY:XC0,G_lesser,RT_average_operator,XCfrozen
  use electrons,      ONLY:levels
- use QP_m,           ONLY:QP_Vnl_xc
+ use QP_m,           ONLY:QP_Vnl_xc,QP_Sc
  use xc_functionals, ONLY:E_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  !
@@ -70,7 +70,7 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Ex,Exc,Trace_Gf)
  !
  E_h=E_h/2._SP
  !
- if(l_sc_hf) then
+ if(l_sc_hf.or.l_sc_chosex) then
    !
    call RT_average_operator(VALUE=Ex,O_QP=QP_Vnl_xc,G=G_lesser,k=k)
    !
@@ -82,19 +82,31 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Ex,Exc,Trace_Gf)
    !
  endif
  !
- if(l_sc_contains_lda) then 
-   !        
-   ! E_xc Energy 
+ if(XCfrozen) then
    !
-   call IO_mute("report log io_in io_out")
-   call xc_lda_driver(en,k,WF_KIND,WF_xc_functional,0,G_lesser)
-   call IO_mute("  ")
-   !
-   call RT_average_operator(VALUE=Exc,O_REAL=E_xc,G=G_lesser,k=k)
+   call RT_average_operator(VALUE=Exc,O_MATRIX=XC0,G=G_lesser,k=k)
    !
  else
-   !      
-   call RT_average_operator(VALUE=Exc,O_MATRIX=XC0,G=G_lesser,k=k)
+   !
+   if(l_sc_contains_lda) then 
+     !        
+     ! E_xc Energy 
+     !
+     call IO_mute("report log io_in io_out")
+     call xc_lda_driver(en,k,WF_KIND,WF_xc_functional,0,G_lesser)
+     call IO_mute("  ")
+     !
+     call RT_average_operator(VALUE=Exc,O_REAL=E_xc,G=G_lesser,k=k)
+     !
+   elseif(l_sc_chosex) then
+     !      
+     call RT_average_operator(VALUE=Exc,O_QP=QP_Sc,G=G_lesser,k=k)
+     !
+   else
+     !
+     Exc=(0._SP,0._SP)
+     !
+   endif
    !
  endif
  !

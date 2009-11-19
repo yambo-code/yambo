@@ -91,6 +91,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
  integer   :: ir,ir1,ir2,ir3,i_spin,ifft,jfft,i1,ik,ib,ibp   
  real(SP)  :: radius, r_mod,cell_center(3)
  logical   :: do_derivatives(3),H_magn_x_on,H_magn_y_on,H_magn_z_on
+ logical   :: timing_init
  !
  ! Allocs
  !
@@ -173,22 +174,23 @@ subroutine MAG_Hamiltonian(initial_check_only)
  ! To calculate the m.e. of the B-induced Hamiltonian we need
  ! to evaluate the WFs derivative
  !
- ! 1) H_paramagn = (Ax px + Ay py + Az pz) + (px Ax + py Ay + Az pz)   as [px,Ax]+[py,Ay]+[pz,Az]=0 we obtain 
- !               = 2*(Ax px + Ay py + Az pz)            (orbital component only of H_paramagnetic)
- ! 2) H_diamagn  = Ax**2 + A_y**2 + A_z**2
- ! 3) H_pauli    = sigma ddot rot^A                  (spin component of H_paramagnetic)
- !               = sigma ddot B (remember here that the hamiltonian has a minus
+ ! 1) H_paramagn = 1/2*(Ax px + Ay py + Az pz) + (px Ax + py Ay + Az pz)   as [px,Ax]+[py,Ay]+[pz,Az]=0 we obtain 
+ !               = (Ax px + Ay py + Az pz)            (orbital component only of H_paramagnetic)
+ ! 2) H_diamagn  = 1/2*(Ax**2 + A_y**2 + A_z**2)
+ ! 3) H_pauli    = 1/2*(sigma ddot rot^A)        (spin component of H_paramagnetic)
+ !               = 1/2*(sigma ddot B) (remember here that the hamiltonian has a minus
  !                               which is canceled by the minus of the magnetic
  !                               moment with respect to the spin)
  if (MAG_landau) then
    ! 1) H_paramagn (the px,py,pz component will be applied directly to the wf)
-   if(H_magn_x_on) H_paramagn_x(:)=2*A_magn_x(:)
-   if(H_magn_y_on) H_paramagn_y(:)=2*A_magn_y(:)
-   if(H_magn_z_on) H_paramagn_z(:)=2*A_magn_z(:)
+   if(H_magn_x_on) H_paramagn_x(:)=A_magn_x(:)
+   if(H_magn_y_on) H_paramagn_y(:)=A_magn_y(:)
+   if(H_magn_z_on) H_paramagn_z(:)=A_magn_z(:)
    ! 2) H_diamagnetic
    if(H_magn_x_on) H_diamagn(:)=A_magn_x(:)**2
    if(H_magn_y_on) H_diamagn(:)=H_diamagn(:)+A_magn_y(:)**2
    if(H_magn_z_on) H_diamagn(:)=H_diamagn(:)+A_magn_z(:)**2
+   H_diamagn(:)=0.5*H_diamagn(:)
  endif
  !
  ! 3) H_pauli
@@ -198,12 +200,12 @@ subroutine MAG_Hamiltonian(initial_check_only)
    if(MAG_landau) then
      do ir=1,fft_size
        if(.not.ir_table(ir)) cycle
-       H_pauli(ir,1)= MAG_B
-       H_pauli(ir,2)=-MAG_B
+       H_pauli(ir,1)= 0.5*MAG_B
+       H_pauli(ir,2)=-0.5*MAG_B
      enddo 
    else
-     H_pauli(:,1)= MAG_B
-     H_pauli(:,2)=-MAG_B
+     H_pauli(:,1)= 0.5*MAG_B
+     H_pauli(:,2)=-0.5*MAG_B
    endif
  endif
  !
@@ -229,15 +231,16 @@ subroutine MAG_Hamiltonian(initial_check_only)
  endif
  !
  Ho=(0.,0.)
+ timing_init=.true.
  !
  do ik=1,nkibz   
    ! 
    if( any(px%i2p(ik,:)) ) then
      if (MAG_landau) call WF_derivative((/1,SC_bands/),(/ik,ik/),do_derivatives)
      call WF_load(0,1,(/1,SC_bands/),(/ik,ik/),title='-MAG',impose_free_and_alloc=.TRUE.)
+     if(timing_init) call live_timing('MAG-Hamiltonian',px%stps(myid+1))
+     timing_init=.false.
    endif
-   !
-   if (ik==1) call live_timing('MAG-Hamiltonian',px%stps(myid+1))
    !
    do ib=1,SC_bands
      !

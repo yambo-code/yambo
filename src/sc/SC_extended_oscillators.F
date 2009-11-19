@@ -23,10 +23,12 @@ subroutine SC_extended_oscillators(G_input)
  !
  ! HF(qp_state) = - (0.,1.) * \sum_{n,n',q} rho_rho_(n,n',q,qp_state) x G_lesser(n,n',k-q)
  ! 
+ use drivers,        ONLY:l_sc_hf,l_sc_chosex
  use pars,           ONLY:SP
- use QP_m,           ONLY:QP_nk,QP_n_states,QP_Vnl_xc
+ use QP_m,           ONLY:QP_nk,QP_n_states,QP_Vnl_xc,QP_Sc
  use SC,             ONLY:SC_bands
- use oscillators_IO, ONLY:rho_VX_rho,n_rho_states,rho_table,ioRHO_RHO_VX 
+ use global_XC,      ONLY:SC_HF,SC_CHOSEX
+ use oscillators_IO, ONLY:rho_VX_rho,n_rho_states,rho_table,ioRHO_RHO_VX,V_kind 
  use par_proc_m,     ONLY:pp_indexes,pp_redux_wait,pp_indexes_reset
  use par_indexes_m,  ONLY:par_indexes
  use IO_m,           ONLY:io_control,OP_RD_CL
@@ -45,28 +47,64 @@ subroutine SC_extended_oscillators(G_input)
  !
  call par_indexes(px,(/QP_n_states/))
  !
- QP_Vnl_xc=(0.,0.)
- !
- do i1=1,QP_n_states 
+ if(l_sc_hf.or.l_sc_chosex) then
    !
-   if(.not.px%i1p(i1)) cycle  
+   QP_Vnl_xc=(0.,0.)
    !
-   call io_control(ACTION=OP_RD_CL,SEC=(/i1+1/),ID=ID)
-   io_err=ioRHO_RHO_VX(i1,ID)
+   V_kind=SC_HF
    !
-   do ic=1,n_rho_states
-     !      
-     ib =rho_table(1,ic)
-     ibp=rho_table(2,ic)
-     ik =rho_table(3,ic)
+   do i1=1,QP_n_states 
      !
-     QP_Vnl_xc(i1)=QP_Vnl_xc(i1)-(0.,1.)*rho_VX_rho(ic)*G_input(ib,ibp,ik)      
+     if(.not.px%i1p(i1)) cycle  
+     !
+     call io_control(ACTION=OP_RD_CL,SEC=(/i1+1/),ID=ID)
+     io_err=ioRHO_RHO_VX(i1,ID)
+     !
+     do ic=1,n_rho_states
+       !      
+       ib =rho_table(1,ic)
+       ibp=rho_table(2,ic)
+       ik =rho_table(3,ic)
+       !
+       QP_Vnl_xc(i1)=QP_Vnl_xc(i1)-(0.,1.)*rho_VX_rho(ic)*G_input(ib,ibp,ik)      
+       !
+     enddo
      !
    enddo
    !
- enddo
+   call pp_redux_wait(QP_Vnl_xc)
+   ! 
+ endif
  !
- call pp_redux_wait(QP_Vnl_xc)
+ if(l_sc_chosex) then
+   !
+   QP_Sc=(0._SP,0._SP)
+   !
+   V_kind=SC_CHOSEX
+   !
+   do i1=1,QP_n_states 
+     !
+     if(.not.px%i1p(i1)) cycle  
+     !
+     call io_control(ACTION=OP_RD_CL,SEC=(/i1+1/),ID=ID)
+     io_err=ioRHO_RHO_VX(i1,ID)
+     !
+     do ic=1,n_rho_states
+       !      
+       ib =rho_table(1,ic)
+       ibp=rho_table(2,ic)
+       ik =rho_table(3,ic)
+       !
+       QP_Sc(i1,1)=QP_Sc(i1,1)-(0.,1.)*rho_VX_rho(ic)*G_input(ib,ibp,ik)      
+       !
+     enddo
+     !
+   enddo
+   !
+   call pp_redux_wait(QP_Sc)
+   ! 
+ endif
+ !
  call pp_indexes_reset(px)
- ! 
+ !
 end subroutine 

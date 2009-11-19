@@ -26,10 +26,10 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels,n_sp_pol
- use drivers,        ONLY:l_sc_contains_lda,l_sc_hf
+ use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_chosex
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V
- use QP_m,           ONLY:QP_nk,QP_Vnl_xc
+ use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
  use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_simulate_IP,l_RT_diagonalize, &
  &                        l_NE_with_fields,LifeTime,H_t,l_NE_simulate_RPA,       &
  &                        Thermal_steps,Integrator_name,EXACT,RK2EXACT,A_norm,   &
@@ -72,11 +72,12 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
      !
    endif
    !
-   if(l_sc_hf) call SC_extended_oscillators(G_input)
+   if(l_sc_hf.or.l_sc_chosex) call SC_extended_oscillators(G_input)
    !
  else
    !  
    QP_Vnl_xc=(0._SP,0._SP)
+   if(l_sc_chosex) QP_Sc    =(0._SP,0._SP)
    !
  endif
  !
@@ -93,7 +94,10 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
    !
    H_nl_sc=(0.,0.)
    !
-   if(.not.local_V) call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 
+   if(.not.local_V) then
+     call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 
+     if(l_sc_chosex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc) 
+   endif
    !  
    ! Adiabatic Switching
    ! (for all the parts of self-energy different from V_h + V_xc)

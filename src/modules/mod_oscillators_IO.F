@@ -32,7 +32,9 @@ module oscillators_IO
  ! Cut off on exchange matrix elements
  ! Sx_cutoff=0 all, (Sx_cutoff>1 or Sx_cutoff<0)=none
  !
- real(SP)                 :: Sx_cutoff
+ real(SP)                 :: Sx_cutoff,sx_max
+ complex(SP), allocatable :: tmp_rho_vx(:,:,:)
+ logical, allocatable     :: QP_DB_done(:)
  !
  interface
    !
@@ -48,9 +50,9 @@ module oscillators_IO
    !
    subroutine oscillators_IO_alloc(rho_VX_input_size)
      use pars,           ONLY:IP
-     use QP_m,           ONLY:QP_nk
-     use SC,             ONLY:SC_bands
+     use QP_m,           ONLY:QP_nk,QP_nb
      use memory_m,       ONLY:mem_est
+     implicit none
      !
      integer, intent(in), optional :: rho_VX_input_size
      !
@@ -61,7 +63,7 @@ module oscillators_IO
      if(present(rho_VX_input_size)) then
        rho_VX_size=rho_VX_input_size
      else
-       rho_VX_size=SC_bands*SC_bands*QP_nk
+       rho_VX_size=QP_nb**2*QP_nk
      endif
      !
      call mem_est("rho_VX_rho",(/size(rho_VX_rho)/),(/2*SP/))
@@ -73,9 +75,11 @@ module oscillators_IO
    !
    subroutine oscillators_IO_free()
      use memory_m,       ONLY:mem_est
+     implicit none
      deallocate(rho_VX_rho)
      deallocate(rho_table)
      call mem_est("rho_VX_rho  rho_table")
-  end subroutine
- !
+     if(allocated(QP_DB_DONE)) deallocate(QP_DB_DONE)
+   end subroutine
+   !
 end module

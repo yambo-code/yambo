@@ -61,11 +61,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use ELPH,           ONLY:elph_nDBs,elph_nDBs_used,elph_use_q_grid
 #endif
 #if defined _SC || defined _RT || defined _MAGNETIC
- use global_XC,      ONLY:MORE_NONE
+ use global_XC,      ONLY:MORE_NONE,SC_HF,SC_CHOSEX
  use SC,             ONLY:SC_potential,SC_ng_Sx,SC_X_bands,SC_X_size
 #endif
 #if defined _RT
- use oscillators_IO, ONLY:ioRHO_RHO_VX  
+ use oscillators_IO, ONLY:ioRHO_RHO_VX,V_kind  
 #endif
 #if defined _MAGNETIC
  use magnetic,        ONLY:MAG_hamiltonian_type,MAG_pauli,MAG_landau
@@ -357,6 +357,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! RT 
  !
 #if defined _RT 
+ V_kind=SC_HF
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_RHO_err=ioRHO_RHO_VX(0,io_ID)
+ V_kind=SC_CHOSEX
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_RHO_err=ioRHO_RHO_VX(0,io_ID)
 #endif
@@ -569,6 +573,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
   call initactivate(1,'BSSmod BEnRange BDmRange BDmERef BEnSteps BLongDir')
   if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF')
   if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs')
+  if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTer')
   if (index(BSS_mode,'t')/=0)  call initactivate(1,'FxcGRLc FxcSVdig FxcMEStps FxcCausal')
   if (index(BSS_mode,'i')/=0)  call initactivate(1,'SkipFullInv')
  endif

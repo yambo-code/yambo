@@ -41,8 +41,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use SC,            ONLY:it_now,SC_bands
  use global_XC,     ONLY:SC_HF
  use IO_m,          ONLY:NONE
- use oscillators_IO,ONLY:rho_VX_rho,rho_table,n_rho_states,Sx_cutoff,&
-&                        oscillators_IO_alloc,oscillators_IO_free,V_kind,ioRHO_RHO_VX 
+ use oscillators_IO,ONLY:oscillators_IO_alloc,oscillators_IO_free,V_kind, &
+&                        tmp_rho_vx,QP_DB_done,ioRHO_RHO_VX
 #endif
  !
  implicit none
@@ -55,9 +55,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  type(pp_indexes) ::px
  integer                 ::i2,iq,ib,ibp,jb,ik,Sx_upper_band,i_qp
 #if defined _RT
- integer                 :: jb2,ik_minus_q,ic,COM_,n_tot_states,n_stored_states
- real(SP)                :: sx_max
- complex(SP), allocatable:: tmp_sx(:,:,:)
+ integer                 :: jb2,ik_minus_q,COM_
+ integer, external       :: QP_check_RHO_RHO_VX
 #endif
 #if defined _DOUBLE
  complex(DP)             ::zdotc,zdotu
@@ -72,9 +71,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  integer              :: i4(4)
  integer, external    :: QP_state_extract
-#if defined _RT
- logical, allocatable :: QP_DB_done(:)
-#endif
  !
  !IO
  !
@@ -95,31 +91,13 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  if(l_rho_IO) then
    !
-   allocate(QP_DB_done(QP_n_states))
-   !
    Sx_upper_band=SC_bands
    !
    V_kind=SC_HF
    !
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
-   io_err=ioRHO_RHO_VX(0,ID,QP_DB_done=QP_DB_done)
+   if(QP_check_RHO_RHO_VX()==0) return
    !
-   if(io_err==0.and.all(QP_DB_done)) then
-     deallocate(QP_DB_done)
-     return
-   endif
-   !
-   write (dump_ch,'(a,f10.5)') &
-      & '[RHO] Disk space required [Gb]:',real(QP_n_states*SC_bands**2*k%nibz*SP)/1.0e9
-   call msg('s',dump_ch)
-   !
-   allocate(tmp_sx(SC_bands,SC_bands,k%nibz))
-   call mem_est("tmp_sx",(/size(tmp_sx)/),(/2*SP/))
-   !      
    call oscillators_IO_alloc()
-   !
-   n_tot_states   =0
-   n_stored_states=0
    !
  endif
  !
@@ -163,7 +141,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  ch='EXS'
 #if defined _SC  || defined _MAGNETIC || defined _RT
  if (l_sc_run) ch='EXS@it'//trim(intc(it_now))
- if (l_rho_IO) ch='RHO_IO'
+ if (l_rho_IO) ch='RHO I/O->EXS'
 #endif
  !
 #if defined _RT
@@ -182,7 +160,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
      cycle
    endif
    !
-   tmp_sx=(0.,0.)
+   tmp_rho_vx=(0.,0.)
    !
 #endif
    do iq=1,q%nbz
@@ -245,7 +223,12 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
        do jb2=1,SC_bands
          !      
          iscp%os(1)=jb2
-         call scatterBamp(iscp)
+         if (any(isc%is/=iscp%is).or.any(isc%os/=iscp%os)) then
+            call scatterBamp(iscp)
+         else
+            iscp%rhotw=isc%rhotw
+         endif
+         !
          local_rhotw=-4./spin_occ*pi*isc%rhotw*conjg(iscp%rhotw)
 #else
        !
@@ -266,7 +249,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
        !
 #if defined _RT
          !
-         tmp_sx(jb,jb2,ik_minus_q)=tmp_sx(jb,jb2,ik_minus_q)+DP_Sx
+         tmp_rho_vx(jb,jb2,ik_minus_q)=tmp_rho_vx(jb,jb2,ik_minus_q)+DP_Sx
          !
        enddo
 #else
@@ -282,55 +265,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
    !
 #if defined _RT
    !
-   ! Reduction of tiny elements of tmp_sx.
-   !
-   if(l_rho_IO) then 
-     !      
-     sx_max=maxval(abs(tmp_sx(:,:,:)))        
-     !
-     ic=0
-     !
-     do jb=1,SC_bands
-       do jb2=1,SC_bands
-         do ik=1,E%nk
-           if(abs(tmp_sx(jb,jb2,ik))>=sx_max*Sx_cutoff &
-       &     .or.sx_cutoff<0.0)  ic=ic+1
-         enddo
-       enddo
-     enddo
-     !
-     n_rho_states   =ic
-     n_tot_states   =n_tot_states+SC_bands**2*E%nk
-     n_stored_states=n_stored_states+n_rho_states
-     !
-     ic=0
-     !
-     do jb=1,SC_bands
-       do jb2=1,SC_bands
-         do ik=1,E%nk
-           if(abs(tmp_sx(jb,jb2,ik))>=sx_max*Sx_cutoff &
-       &     .or.sx_cutoff<0.0)  then
-             ic=ic+1
-             rho_table(1,ic)=jb
-             rho_table(2,ic)=jb2
-             rho_table(3,ic)=ik
-             rho_VX_rho(ic) =tmp_sx(jb,jb2,ik)
-           endif
-         enddo      
-       enddo      
-     enddo      
-     !
-     if (i_qp==1) then
-       call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
-       io_err=ioRHO_RHO_VX(0,ID)
-       call io_control(ACTION=OP_WR_CL,SEC=(/2/),ID=ID)
-       io_err=ioRHO_RHO_VX(i_qp,ID)
-     else
-       call io_control(ACTION=OP_WR_CL,SEC=(/i_qp+1/),ID=ID)
-       io_err=ioRHO_RHO_VX(i_qp,ID)
-     endif
-     !
-   endif
+   if(l_rho_IO) call QP_store_RHO_VX_RHO(i_qp)
    !
    call live_timing(steps=1)
 #endif
@@ -351,17 +286,10 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
    COM_=REP
    if (.not.all(QP_DB_done)) COM_=NONE
    call io_control(ACTION=OP_WR_CL,COM=COM_,SEC=(/1/),ID=ID)
-   io_err=ioRHO_RHO_VX(0,ID)
+   io_err=ioRHO_RHO_VX(0,ID)  
    !
-   deallocate(QP_DB_done)
    call oscillators_IO_free()
    call WF_free()
-   !
-   if(Sx_cutoff>0.0.and.Sx_cutoff<1.) then
-     write (dump_ch,'(a,f10.1,a)') '[RHO] Exchange elements reduced by :', &
-   &     (1.-real(n_stored_states)/real(n_tot_states))*100.,'%'
-     call msg('s',dump_ch)
-   endif
    !
    return
  endif

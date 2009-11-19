@@ -19,10 +19,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_driver(en,Xen,X,k,xk,q)
+subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
  use pars,           ONLY:SP,lchlen,schlen
- use drivers,        ONLY:l_sc_hf
+ use drivers,        ONLY:l_sc_hf,l_sc_chosex
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:FS2AUT
  use com,            ONLY:msg,of_open_close
@@ -30,8 +30,10 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  use electrons,      ONLY:levels
  use X_m,            ONLY:X_t,Eval_P_and_P2_only,X_alloc
  use wave_func,      ONLY:wf,WF_load,wf_ng,WF_free
- use R_lattice,      ONLY:bz_samp,qindx_S
- use QP_m,           ONLY:QP_nk,QP_nb
+ use frequency,      ONLY:w_samp
+ use R_lattice,      ONLY:bz_samp,qindx_S,G_m_G
+ use QP_m,           ONLY:QP_nk,QP_nb,QP_t,QP_ng_Sx,CHOSEX_use_empties, &
+ &                        QP_n_G_bands 
  use SC,             ONLY:SC_potential,SC_bands,Ho,E_bare,it_now
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &
@@ -47,10 +49,10 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  ! Notice that Xen is never changed!
  !
  type(levels)  :: en,Xen
- !
+ type(w_samp)  :: Xw(2) 
  type(bz_samp) :: k,Xk,q
  type(X_t):: X(4)
- integer, external :: io_SC_components
+ integer, external :: io_SC_components,eval_G_minus_G
  ! 
  ! Work Space
  !
@@ -59,6 +61,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  integer                  :: WF_G_max,WF_Go_indx,it,i1,ik
  real(SP)                 :: values(9), RT_time  ! The real time on the diagonal RTime = it*RT_step    
  complex(SP)              :: Trace_Gf,E_kin,E_ion,E_h,E_x,E_xc 
+ type(QP_t)               :: qp_dummy
  !
  call section('*',trim(SC_potential)//' Real-Time Dynamics')
  !##########################################################
@@ -75,14 +78,21 @@ subroutine RT_driver(en,Xen,X,k,xk,q)
  ! WFs loading
  !
  WF_G_max=wf_ng
- if(l_sc_hf) then                                  
+ if(l_sc_hf.or.l_sc_chosex) then                                  
    QP_nb=SC_bands
    WF_Go_indx=maxval(qindx_S(:,:,2))
+   if (l_sc_chosex) then
+     X(2)%ng=eval_G_minus_G(X(2)%ng,0)
+     WF_G_max=max(QP_ng_Sx,maxval(G_m_G))
+     CHOSEX_use_empties=.true.
+     QP_n_G_bands(2)=SC_bands
+   endif
    sec_mode_and_message(1)='*'
    sec_mode_and_message(2)='Hartree-Fock extended oscillators'  
    call section(trim(sec_mode_and_message(1)),trim(sec_mode_and_message(2)))
    call QP_state_table_setup(Xen)
    call XCo_Hartree_Fock(Xen, k, Xk, q)
+   if(l_sc_chosex) call QP_ppa_chosex(X(2),Xk,en,k,q,qp_dummy,Xw(2),-1)
  else
    WF_Go_indx=1  
  endif

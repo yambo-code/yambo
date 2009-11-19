@@ -26,7 +26,8 @@ integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
  use oscillators_IO,ONLY:rho_table,n_rho_states,V_kind,rho_VX_rho,Sx_cutoff
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
 &                        io_bulk,write_is_on,io_disconnect,IO_write,file_is_present
- use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE
+ use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_CHOSEX
+ use com,           ONLY:error
  use stderr,        ONLY:intc
  use SC,            ONLY:SC_bands
  use QP_m,          ONLY:QP_ng_Sx,QP_n_states
@@ -35,6 +36,7 @@ integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
  implicit none
  integer, intent(inout)         :: ID
  integer, intent(in)            :: i_qp
+ character(schlen)              :: desc
  logical, intent(out), optional :: QP_DB_done(QP_n_states)
  !
  ! Work Space
@@ -48,9 +50,16 @@ integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
    QP_DB_done=.FALSE.
  endif
  !
+ if(V_kind==SC_HF) then
+   db_name     = "RHO_RHO_VX"
+ elseif(V_kind==SC_CHOSEX) then
+   db_name     = "RHO_RHO_SC"
+ else
+   call error("RHO_IO : Unknown database type ")
+ endif
+ !
  if (io_sec(ID,1)==1) then
    !
-   db_name     = "RHO_RHO_VX"
    ioRHO_RHO_VX=io_connect(desc=db_name,type=2,ID=ID)
    !
    if(ioRHO_RHO_VX/=0) goto 1
@@ -90,7 +99,7 @@ integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
    !
    if (present(QP_DB_done)) then 
      do i_qp_db=1,QP_n_states 
-       QP_DB_done(i_qp_db) =  file_is_present(desc="RHO_RHO_VX_"//trim(intc(i_qp_db)),type=2)
+       QP_DB_done(i_qp_db) =  file_is_present(desc=trim(db_name)//trim(intc(i_qp_db)),type=2)
      enddo
    endif
    !
@@ -102,8 +111,7 @@ integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
    !
    if(write_is_on(ID)) IO_write=.true.
    !
-   db_name     = "RHO_RHO_VX_"//trim(intc(i_qp))
-   ioRHO_RHO_VX=io_connect(desc=db_name,type=2,ID=ID)
+   ioRHO_RHO_VX=io_connect(desc=trim(db_name)//trim(intc(i_qp)),type=2,ID=ID)
    !
    if(ioRHO_RHO_VX/=0) goto 1
    !

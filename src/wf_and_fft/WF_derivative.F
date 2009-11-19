@@ -32,7 +32,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:k_pt
  use D_lattice,      ONLY:alat
- use SC,             ONLY:SC_bands
+ use SC,             ONLY:SC_bands,found_SC_DB
  use com,            ONLY:warning,error
  !
  implicit none
@@ -55,10 +55,12 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  ! Wavefunctions in G space 
  !==========================
  call fft_setup(0,1,.false.)
- call WF_load(0,1,bands_to_load,derivative_kpt,space='G',title='-DERIV',impose_free_and_alloc=.TRUE.)
+ call wf_load(0,1,bands_to_load,derivative_kpt,space='G',title='-DERIV',impose_free_and_alloc=.TRUE.)
  !
- if (any ( bands_to_load(:)/=derivative_bands(:) ))&
-&       call warning(' [WF-DERIV] Forced '//trim(intc(SC_bands))//' bands to be derived')
+ if (found_SC_DB) then
+   bands_to_load=(/1,SC_bands/)
+   call warning(' [WF-DERIV] Forced '//trim(intc(SC_bands))//' bands to be derived')
+ endif
  !
  call WF_derivative_alloc(do_derivative)
  !

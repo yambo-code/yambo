@@ -26,6 +26,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use pars,          ONLY:SP,pi,schlen
  use units,         ONLY:HARTREE
  use memory_m,      ONLY:mem_est
+ use drivers,       ONLY:l_real_time,l_rho_IO
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands
@@ -36,7 +37,8 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use par_indexes_m, ONLY:par_indexes
  use collision,     ONLY:ggwinfo,collision_reset
  use functions,     ONLY:bose_f
- use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END
+ use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
+&                        OP_WR_CL
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        CHOSEX_use_empties
@@ -44,6 +46,11 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use wave_func,     ONLY:WF_load,wf_free
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv
+#if defined _RT         
+ use oscillators_IO,ONLY:oscillators_IO_alloc,oscillators_IO_free,V_kind, &
+&                        tmp_rho_vx,QP_DB_done,ioRHO_RHO_VX
+ use global_XC,     ONLY:SC_CHOSEX
+#endif
  !
  implicit none
  type(levels) ::E
@@ -55,7 +62,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Work Space
  !
- integer :: i1,i2,i4,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4)
+ integer ::   i_qp,i1,i2,i4,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4)
  real(SP),    allocatable :: PPaP(:,:)
  complex(SP), allocatable :: PPaR(:,:),E_(:),dc(:),PPaR_ws(:,:)
 #if defined _DOUBLE
@@ -69,6 +76,11 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  integer, external::ioX,QP_state_extract
  character(schlen)::ch,Sc_name
  logical          ::PPaR_is_TR_rotated
+ complex(SP)      ::local_rhotw(X%ng)
+#if defined _RT         
+ integer          :: ib2,COM_
+ integer, external:: QP_check_RHO_RHO_VX
+#endif
  !
  ! Reset
  !
@@ -117,7 +129,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  if (l_chosex.and..not.CHOSEX_use_empties) isc%ngrho=maxval(G_m_G)
  iscp%ngrho=isc%ngrho
  !
- if (.not.l_sc_run) then
+ if (.not.l_sc_run.or.l_real_time) then
    !
    ! WFs
    !
@@ -165,20 +177,61 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  allocate(isc%gamp(X%ng,X%ng),isc%rhotw(isc%ngrho),iscp%rhotw(isc%ngrho),stat=alloc_err)
  call mem_est("ISC-GAMP",(/X%ng**2+2*isc%ngrho/),errors=(/alloc_err/))
  !
+#if defined _RT
+ call par_indexes(px,(/QP_n_states/))
+#else
+ !
  QP_Sc=cmplx(0.,0.,SP)
  !
  call par_indexes(px,(/q%nbz,QP_n_G_bands(2)/),(/1,QP_n_G_bands(1)/))
+ !
+#endif
+ !
  call pp_redux_wait
+ !
+#if defined _RT
+ !
+ ! Oscillators I/O
+ !
+ if(l_rho_IO) then
+   !
+   V_kind=SC_CHOSEX
+   !
+   if(QP_check_RHO_RHO_VX()==0) return
+   !
+   call oscillators_IO_alloc()
+   !
+ endif
+ !
+#endif
  !
  if (l_ppa) then
    call live_timing(trim(Sc_name)//'W0 PPA',px%stps(myid+1)*QP_n_states) 
  else if (.not.l_sc_run) then
    call live_timing(trim(Sc_name)//'W0 CHOSEX',px%stps(myid+1)*QP_n_states) 
+ else if (l_real_time.and.l_rho_IO) then
+   call live_timing("RHO_IO->CHOSEX",px%stps(myid+1)) 
  else
    call live_timing(trim(Sc_name),px%stps(myid+1)*QP_n_states) 
  endif
  !
+#if defined _RT
+ !
+ do i_qp=1,QP_n_states
+ !
+ if (.not.px%i1p(i_qp)) cycle
+ !
+ if (QP_DB_done(i_qp)) then
+    call live_timing(steps=1)
+    cycle
+ endif
+ !
+ tmp_rho_vx=(0._SP,0._SP)
+ !
+#endif                     
+ !
  do iqbz=1,q%nbz 
+   !
    !
    isc%qs(2:)=(/q%sstar(iqbz,1),q%sstar(iqbz,2)/)
    iqibz=isc%qs(2)
@@ -224,14 +277,17 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
      forall(i1=1:X%ng,i2=1:X%ng) PPaR_ws(i2,i1)=PPaR(i1,i2)
      PPaR(:,:)=PPaR_ws(:,:)
    endif
+#if !defined _RT
    !
-   do i1=1,QP_n_states
+   do i_qp=1,QP_n_states
      !
-     isc%is=(/QP_table(i1,1),QP_table(i1,3),1,spin(QP_table(i1,:))/)
-     isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iqbz,1),:),spin(QP_table(i1,:))/)
-     iscp%is=(/QP_table(i1,2),QP_table(i1,3),1,spin(QP_table(i1,:))/)
+#endif
      !
-     isc%qs(1)=qindx_S(QP_table(i1,3),iqbz,2)
+     isc%is=(/QP_table(i_qp,1),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
+     isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iqbz,1),:),spin(QP_table(i_qp,:))/)
+     isc%qs(1)=qindx_S(QP_table(i_qp,3),iqbz,2)
+     !
+     iscp%is=(/QP_table(i_qp,2),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
      iscp%qs=isc%qs
      !
      dc=cmplx(0.,0.,SP)
@@ -244,7 +300,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        iscs_save(1,: )=isc%os
        iscs_save(2,:3)=isc%qs
-       isc%os=(/QP_table(i1,2),QP_table(i1,3),1,spin(QP_table(i1,:))/)
+       isc%os=(/QP_table(i_qp,2),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
        isc%qs=(/1,1,1/)
        call scatterBamp(isc)
        do ig1=1,X%ng
@@ -253,7 +309,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
          enddo
        enddo
        !
-       if (master_cpu) QP_Sc(i1,:)=QP_Sc(i1,:)+dc(1)
+       if (master_cpu) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
        dc=cmplx(0.,0.,SP)
        isc%os=iscs_save(1,: )
        isc%qs=iscs_save(2,:3)
@@ -264,20 +320,38 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      do ib=QP_n_G_bands(1),QP_n_G_bands(2)
        !
+#if !defined _RT
        if (.not.px%i2p(iqbz,ib)) cycle
+       call live_timing(steps=1)
+#endif
        !
        isc%os(1)=ib
-       iscp%os=isc%os
-       call live_timing(steps=1)
+       !
        call scatterBamp(isc)
+       iscp%os=isc%os
+       !
+#if defined _RT
+       do ib2=QP_n_G_bands(1),QP_n_G_bands(2)
+         !
+         iscp%os(1)=ib2
+         !
+         if (any(isc%is/=iscp%is).or.any(isc%os/=iscp%os)) then
+            call scatterBamp(iscp)
+         else
+            iscp%rhotw=isc%rhotw
+         endif
+         !
+#else
+       ! 
        iscp%rhotw=isc%rhotw
        if (any(isc%is/=iscp%is)) call scatterBamp(iscp)
        !
+#endif
        dc=(0.,0.)
        !
        if (l_ppa) then
          !
-         forall (i4=1:QP_dSc_steps) E_(i4)=qp%E_bare(i1)+&
+         forall (i4=1:QP_dSc_steps) E_(i4)=qp%E_bare(i_qp)+&
 &                                          (i4-1)*QP_dSc_delta+cmplx(0.,QP_G_damp,SP)
          !
          do ig1=1,X%ng
@@ -291,42 +365,82 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
            enddo
          enddo
          !
-         QP_Sc(i1,:)=QP_Sc(i1,:)+dc(:)
+         QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(:)
          !
          ! GPL_EXCLUDE_START SC_IGNORE
          !
        else
          !
-         do ig1=1,X%ng
-           do ig2=1,X%ng
-             !
-             ! SEX
-             !
-             dc(1)=dc(1)-4./spin_occ*pi*isc%rhotw(ig1)*&
-&                   PPaR(ig1,ig2)*conjg(iscp%rhotw(ig2))*e%f(isc%os(1),isc%os(2),1)
-             !
-             ! CHO
-             !
-             dc(2)=dc(2)+2.*pi*isc%rhotw(ig1)*PPaR(ig1,ig2)*conjg(iscp%rhotw(ig2))
-             !
-           enddo
-         enddo
+         ! SEX
          !
-         if (.not.CHOSEX_use_empties) dc(2)=(0._SP,0._SP)
+#if defined _DOUBLE
+         call zgemv('N', X%ng, X%ng, (1._SP,0._SP), PPaR, X%ng, conjg(iscp%rhotw), 1, (0._SP,0_SP), local_rhotw,1)
+#else 
+         call cgemv('N', X%ng, X%ng, (1._SP,0._SP), PPaR, X%ng, conjg(iscp%rhotw), 1, (0._SP,0_SP), local_rhotw,1)
+#endif
          !
-         QP_Sc(i1,:)=QP_Sc(i1,:)+dc(1)+dc(2)
+#if defined _RT
+         dc(1)=-4._SP/spin_occ*pi*sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
+#else
+         dc(1)=dc(1)-4._SP/spin_occ*pi*sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))*e%f(isc%os(1),isc%os(2),1) 
+#endif
          !
+         ! CHO
+         !
+         if (CHOSEX_use_empties.and..not.l_real_time) then
+           !
+#if defined _DOUBLE
+           call zgemv('N', X%ng, X%ng, (1._SP,0._SP), PPaR, X%ng, conjg(iscp%rhotw),1,(0._SP,0_SP), local_rhotw,1)
+#else 
+           call cgemv('N', X%ng, X%ng, (1._SP,0._SP), PPaR, X%ng, conjg(iscp%rhotw),1,(0._SP,0_SP), local_rhotw,1)
+#endif
+           !
+#if defined _RT
+           dc(2)=2._SP*pi*sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
+#else
+           dc(2)=dc(2)+2._SP*pi*sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
+#endif
+         else 
+           dc(2)=(0._SP,0._SP)
+         endif
+         !
+#if defined _RT
+         !
+         tmp_rho_vx(ib,ib2,isc%os(2))=tmp_rho_vx(ib,ib2,isc%os(2))+dc(1)
+         !
+#else
+         !
+         QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)+dc(2)
+         !
+#endif
          ! GPL_EXCLUDE_END SC_IGNORE
          !
        endif
        !
+#if defined _RT
+       !
+       !
+      enddo ! loop on the band ib2
+#endif
      enddo
    enddo
+   !
+   !
+#if defined _RT
+   !
+   if(l_rho_IO) call QP_store_RHO_VX_RHO(i_qp)
+   !
+   call live_timing(steps=1)
+   !
+#endif
+   !
  enddo
  !
  call live_timing()
  !
+#if !defined _RT
  call pp_redux_wait(QP_Sc)
+#endif
  !
  ! CLEAN
  !
@@ -334,6 +448,15 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  if (l_ppa) deallocate(E_,PPaP)
  call mem_est("PPaP ISC-GAMP GW-E")
  call X_alloc('X')
+#if defined _RT
+ if (l_rho_IO) then
+   COM_=REP
+   if (.not.all(QP_DB_done)) COM_=NONE
+   call io_control(ACTION=OP_WR_CL,COM=COM_,SEC=(/1/),ID=ID)
+   io_err=ioRHO_RHO_VX(0,ID)  
+   call oscillators_IO_free()
+ endif
+#endif
  if (.not.l_sc_run) call wf_free()
  call collision_reset(isc)
  call collision_reset(iscp)

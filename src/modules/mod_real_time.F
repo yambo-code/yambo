@@ -184,8 +184,6 @@ module real_time
      !
      if (l_HF_and_locXC) then
        !
-       call oscillators_IO_alloc()
-       !
        allocate(QP_Vnl_xc(QP_n_states))
        call mem_est("QP_Vnl_xc",(/QP_n_states/))
        !
@@ -245,7 +243,7 @@ module real_time
    subroutine RT_free
      !
      use drivers,        ONLY:l_sc_hf,l_HF_and_locXC
-     use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare,rho_n
+     use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare,rho_n,l_use_RHO_IO
      use memory_m,       ONLY:mem_est
      use QP_m,           ONLY:QP_Vnl_xc
      use xc_functionals, ONLY:E_xc
@@ -255,8 +253,6 @@ module real_time
      call SC_free()
      !
      if (l_HF_and_locXC) then
-       !
-       call oscillators_IO_free()
        !
        deallocate(QP_Vnl_xc)
        call mem_est("QP_Vnl_xc")
@@ -307,6 +303,8 @@ module real_time
        deallocate(current_cache)
        call mem_est('Current_Cache')
      endif
+     !
+     if(l_use_RHO_IO) call oscillators_IO_free() 
      !
    end subroutine RT_free
    !

@@ -32,14 +32,15 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  use wave_func,      ONLY:wf,WF_load,wf_ng,WF_free
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:bz_samp,qindx_S,G_m_G
- use QP_m,           ONLY:QP_nk,QP_nb,QP_t,QP_ng_Sx,CHOSEX_use_empties, &
- &                        QP_n_G_bands 
- use SC,             ONLY:SC_potential,SC_bands,Ho,E_bare,it_now
+ use QP_m,           ONLY:QP_nk,QP_nb,QP_t,QP_ng_Sx,QP_n_G_bands,CHOSEX_use_empties
+ use SC,             ONLY:SC_potential,SC_bands,Ho,E_bare,it_now,local_V
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &
 &                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,io_G,ID,   &
 &                         i_time,Integrator_name,j_current,l_RT_diagonalize,     &
 &                         G_lesser_reference,LifeTime,RT_diagonalization_steps
+ use oscillators_CACHE, ONLY:load_RHO_VX_RHO,free_RHO_VX_RHO
+ use oscillators_IO,    ONLY:oscillators_IO_alloc
  !
  implicit none
  !
@@ -79,14 +80,18 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
  WF_G_max=wf_ng
  if(l_sc_hf.or.l_sc_chosex) then                                  
+   !
    QP_nb=SC_bands
    WF_Go_indx=maxval(qindx_S(:,:,2))
+   call oscillators_IO_alloc()
+   !
    if (l_sc_chosex) then
      X(2)%ng=eval_G_minus_G(X(2)%ng,0)
      WF_G_max=max(QP_ng_Sx,maxval(G_m_G))
-     CHOSEX_use_empties=.true.
      QP_n_G_bands(2)=SC_bands
+     CHOSEX_use_empties=.FALSE.
    endif
+   !
    sec_mode_and_message(1)='*'
    sec_mode_and_message(2)='Hartree-Fock extended oscillators'  
    call section(trim(sec_mode_and_message(1)),trim(sec_mode_and_message(2)))
@@ -126,6 +131,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    return
    !
  endif
+ !
+ if(.not.local_V) call load_RHO_VX_RHO()
  !
  call RT_report(file_name,.true.)
  !
@@ -213,6 +220,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  call RT_free()
  !
  call WF_free()
+ !
+ if(.not.local_V) call free_RHO_VX_RHO()
  !
  call X_alloc("P_square")
  !

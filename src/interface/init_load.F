@@ -50,6 +50,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential,&
 &                        SC_rho_threshold,SC_cycle_mixing
  use oscillators_IO,ONLY:Sx_cutoff
+ use oscillators_CACHE, ONLY:RHO_cache_size
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, LifeTime, &
@@ -283,7 +284,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'NoDiamagnetic', '[RT] Exclude the diamagnetic term in current and coupling',verb_level=V_sc)
  call it('f',defs,'RTfreezeH', '[RT] Hartree not updated during RT',verb_level=V_sc)
  call it('f',defs,'RTfreezeXC','[RT] XC potential/self-energy not updated during RT',verb_level=V_sc)
- call it(defs,'CacheSize',     '[RT] Numer of steps stored in memory before I/O',max_rt_steps_disk,verb_level=V_sc)
+ call it(defs,'DiskSteps',     '[RT] Numer of steps stored in memory before I/O',max_rt_steps_disk,verb_level=V_sc)
+ call it(defs,'RHOCache',     '[RT] Cache[Gb] for oscillators (negative value = automatic)',RHO_cache_size,verb_level=V_sc)
  !
  ! External fields
  !
@@ -417,11 +419,11 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &    EField(i_field)%frequency,unit=E_unit,verb_level=verbosity_here)
      call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] External Field Intensity',&
 &    EField(i_field)%intensity,unit=I_unit,verb_level=verbosity_here)
-     call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] External Field (SINUSOIDAL | RESONANT | DELTA | STEP)',&
+     call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] External Field (SINUSOIDAL|RESONANT|DELTA|STEP)',&
 &    EField(i_field)%ef_name,verb_level=verbosity_here)
      call it(defs,trim(name)//'_Dir',             '[RT '//trim(name)//'] Electric Field Versor',&
 &    Efield(i_field)%versor,verb_level=verbosity_here)
-     call it(defs,trim(name)//'_Tinitial',        '[RT '//trim(name)//'] Initial Time',&
+     call it(defs,trim(name)//'_Tstart',        '[RT '//trim(name)//'] Initial Time',&
 &    EField(i_field)%t_initial,unit=Time_unit,verb_level=verbosity_here)
      call it('f',defs,trim(name)//'_NoIntraband', '[RT '//trim(name)//'] Do not include intraband coupling',verb_level=V_sc)
    end subroutine

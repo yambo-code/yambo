@@ -21,7 +21,7 @@
 !
 subroutine scatterBamp(isc)
  !
- ! rhotw(G)=<ib ik_is i_sp| e^[I(Rs(G-G0)).r] | ob ok_os o_sp>   
+ ! rhotw(G)=<ib ik_is i_sp| e^[I(RsG-G0).r] | ob ok_os o_sp>   
  !
  !  is(3)=(ib,ik,is,i_sp) --<--:--<-- os(3)=(ob,ok,os,o_sp)
  !                             :
@@ -31,7 +31,7 @@ subroutine scatterBamp(isc)
  !                     \:/
  ! REMEMBER that     ->-:->-  =  conjg [-<-:-<-]
  !                                        /:\
- !  iq_is = ik_is-ok_os + Go
+ !  iq_is = ik_is-ok_os-Go
  !
  use pars,           ONLY:DP
  use electrons,      ONLY:n_spinor

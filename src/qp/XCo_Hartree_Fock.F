@@ -41,8 +41,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use SC,            ONLY:it_now,SC_bands
  use global_XC,     ONLY:SC_HF
  use IO_m,          ONLY:NONE
- use oscillators_IO,ONLY:oscillators_IO_alloc,oscillators_IO_free,V_kind, &
-&                        tmp_rho_vx,QP_DB_done,ioRHO_RHO_VX
+ use oscillators_IO,ONLY:V_kind,tmp_rho_vx,QP_DB_done
 #endif
  !
  implicit none
@@ -96,8 +95,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
    V_kind=SC_HF
    !
    if(QP_check_RHO_RHO_VX()==0) return
-   !
-   call oscillators_IO_alloc()
    !
  endif
  !
@@ -265,7 +262,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
    !
 #if defined _RT
    !
-   if(l_rho_IO) call QP_store_RHO_VX_RHO(i_qp)
+   if(l_rho_IO) call QP_store_RHO_RHO_VX(i_qp)
    !
    call live_timing(steps=1)
 #endif
@@ -283,15 +280,11 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
 #if defined _RT
  if (l_rho_IO) then
    !
-   COM_=REP
-   if (.not.all(QP_DB_done)) COM_=NONE
-   call io_control(ACTION=OP_WR_CL,COM=COM_,SEC=(/1/),ID=ID)
-   io_err=ioRHO_RHO_VX(0,ID)  
-   !
-   call oscillators_IO_free()
+   call QP_close_RHO_RHO_VX()
    call WF_free()
    !
    return
+   !
  endif
  !
 #else

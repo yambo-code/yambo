@@ -47,8 +47,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv
 #if defined _RT         
- use oscillators_IO,ONLY:oscillators_IO_alloc,oscillators_IO_free,V_kind, &
-&                        tmp_rho_vx,QP_DB_done,ioRHO_RHO_VX
+ use oscillators_IO,ONLY:V_kind,tmp_rho_vx,QP_DB_done
  use global_XC,     ONLY:SC_CHOSEX
 #endif
  !
@@ -199,8 +198,6 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
    if(QP_check_RHO_RHO_VX()==0) return
    !
-   call oscillators_IO_alloc()
-   !
  endif
  !
 #endif
@@ -309,7 +306,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
          enddo
        enddo
        !
-       if (master_cpu) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
+       if (master_cpu.and..not.l_rho_IO) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
        dc=cmplx(0.,0.,SP)
        isc%os=iscs_save(1,: )
        isc%qs=iscs_save(2,:3)
@@ -365,7 +362,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
            enddo
          enddo
          !
-         QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(:)
+         if(.not.l_rho_IO) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(:)
          !
          ! GPL_EXCLUDE_START SC_IGNORE
          !
@@ -387,7 +384,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          ! CHO
          !
-         if (CHOSEX_use_empties.and..not.l_real_time) then
+         if (CHOSEX_use_empties) then
            !
 #if defined _DOUBLE
            call zgemv('N', X%ng, X%ng, (1._SP,0._SP), PPaR, X%ng, conjg(iscp%rhotw),1,(0._SP,0_SP), local_rhotw,1)
@@ -406,7 +403,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
 #if defined _RT
          !
-         tmp_rho_vx(ib,ib2,isc%os(2))=tmp_rho_vx(ib,ib2,isc%os(2))+dc(1)
+         tmp_rho_vx(ib,ib2,isc%os(2))=tmp_rho_vx(ib,ib2,isc%os(2))+dc(1)+dc(2)
          !
 #else
          !
@@ -428,7 +425,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
 #if defined _RT
    !
-   if(l_rho_IO) call QP_store_RHO_VX_RHO(i_qp)
+   if(l_rho_IO) call QP_store_RHO_RHO_VX(i_qp)
    !
    call live_timing(steps=1)
    !
@@ -449,13 +446,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call mem_est("PPaP ISC-GAMP GW-E")
  call X_alloc('X')
 #if defined _RT
- if (l_rho_IO) then
-   COM_=REP
-   if (.not.all(QP_DB_done)) COM_=NONE
-   call io_control(ACTION=OP_WR_CL,COM=COM_,SEC=(/1/),ID=ID)
-   io_err=ioRHO_RHO_VX(0,ID)  
-   call oscillators_IO_free()
- endif
+ if (l_rho_IO) call QP_close_RHO_RHO_VX()
 #endif
  if (.not.l_sc_run) call wf_free()
  call collision_reset(isc)

@@ -34,8 +34,9 @@ subroutine RT_spectrum(en,k)
  use parser_m,       ONLY:parser
  use timing,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP
- use real_time,      ONLY:NE_steps,RT_step,j_current,A_norm,i_time, &
-&                         max_rt_steps_disk,current_cache,n_ext_fields 
+ use real_time,      ONLY:NE_steps,RT_step,j_current,A_norm,i_time,    &
+&                         max_rt_steps_disk,current_cache,n_ext_fields,&
+&                         Efield
  implicit none
  !
  type(levels)   :: en
@@ -130,7 +131,7 @@ subroutine RT_spectrum(en,k)
     case(DAMP_NONE)
       damp_function(i1) = 1.0
     case(DAMP_LORENTZIAN)
-      damp_function(i1) = exp(-i2*RT_step*X_rt%damp_factor)
+      damp_function(i1) = exp(-abs(i2*RT_step)*X_rt%damp_factor)
     case(DAMP_GAUSSIAN)
       damp_function(i1) = exp(-(i2*RT_step)**2*X_rt%damp_factor**2)
     end select
@@ -185,7 +186,7 @@ subroutine RT_spectrum(en,k)
    headings(6)="j_z"
    call msg('o current','#',headings(1:6),INDENT=-2,USE_TABS=.TRUE.)
    do i1=istart,iend
-     values(1:6)=(/RT_step*(i1-1+istart)/FS2AUT,real(Avec(i1)),aimag(Avec(i1)), &
+     values(1:6)=(/RT_step*i1/FS2AUT,real(Avec(i1)),aimag(Avec(i1)), &
 &                 current(i1,1),current(i1,2),current(i1,3)/)
      call msg('o current','',values(1:6),USE_TABS=.TRUE.)
    enddo
@@ -215,7 +216,7 @@ subroutine RT_spectrum(en,k)
  else 
    !
    ! Noise reduction is done in Fourier space I don't need integration
-   ! I just divide for 1/(i*omega) after FFT
+   ! I just divide for 1/(i*omega-damping) after FFT
    !
    E_induced=current
    !
@@ -251,7 +252,7 @@ subroutine RT_spectrum(en,k)
  !
  if(Use_FFT) then
    !      
-   call warning("Energy steps and range set from real-time dynamics")
+   call warning(" Energy steps and range set from real-time dynamics")
    !
    X_rt%energy_steps   =niter/2+1
    X_rt%energy_range(1)=0.
@@ -277,9 +278,9 @@ subroutine RT_spectrum(en,k)
   do i1=1,3
     !
 #if defined _FFTW
-   call fft_1d_real(E_induced(:,i1),dielectric(:,i1),niter,fft_sign,fftw_plan)
+   call fft_1d_real(E_induced(istart:iend,i1),dielectric(:,i1),niter,fft_sign,fftw_plan)
 #else
-   call fft_1d_real(E_induced(:,i1),dielectric(:,i1),niter,fft_sign)
+   call fft_1d_real(E_induced(istart:iend,i1),dielectric(:,i1),niter,fft_sign)
 #endif
     !
     ! due to the definition of FFT 
@@ -298,7 +299,7 @@ subroutine RT_spectrum(en,k)
   do i1 = 1, X_rt%energy_steps
     omega = (i1-1)*de+X_rt%energy_range(1)
     do i2 = istart, iend
-      tt = i2*RT_step
+      tt = (i2-istart+1)*RT_step
       dielectric(i1,1:3) = dielectric(i1,1:3) &
       &  + E_induced(i2,1:3)*exp((0.,1.)*omega*tt)
     enddo
@@ -310,10 +311,20 @@ subroutine RT_spectrum(en,k)
  endif
  !
  if(X_rt%damp_factor<2.*pi/(dble(niter)*RT_step)) then
-   write(dump_ch,*) " You should use a damping factor greater than :", &
+   write(dump_ch,*) "You should use a damping factor greater than :", &
 &                    2.*pi/(dble(niter)*RT_step)*HARTREE 
    call warning(dump_ch)
  endif
+ !
+ select case(trim(Efield(ref_efield)%ef_name))
+   case('DELTA')
+     dielectric(:,:) = dielectric(:,:)/Avec(1)
+   case('RESONANT','ANTIRESONANT')
+     dielectric(:,:) = dielectric(:,:)*(0.,2.)/Efield(ref_efield)%amplitude
+     call warning(" Only epsilon(w = Efield%frequency) is correct ")
+   case default
+     call warning(" External Field "//trim(Efield(ref_efield)%ef_name)//" not implemented in ypp_rt ")
+ end select
  !
  if(X_rt%noise_ratio/=0.) then
    !
@@ -335,7 +346,7 @@ subroutine RT_spectrum(en,k)
    !
  endif
  !
- dielectric(:,:) = dielectric(:,:)/Avec(1)+1.
+ dielectric(:,:)=dielectric(:,:)+1
  !
  ! Write dielectric constant 
  !

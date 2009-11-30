@@ -56,12 +56,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  ! Check for the KB PP DB 
  !
- if (Eval_P_and_P2_only) then
-   ioKB_err=-1
- else
-   call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
-   ioKB_err=ioKB_PP(ID)
- endif
+ call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+ ioKB_err=ioKB_PP(ID)
  !
  if (ioKB_err==0) then
    X%Vnl_included=.true.
@@ -183,7 +179,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          call cgemv('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,wf(:,icfft),1,(0._SP,0._SP),rho,1)
 #endif
          !
-         if (ioKB_err==0) call Dipole_kb_sum(ivfft,icfft,rho(:),kbv)
+         if (ioKB_err==0) call Dipole_kb_sum(ivfft,icfft,rho(:3),kbv)
          !
          if ( .not.Eval_P_and_P2_only ) rho(:)=rho(:)/Ev_m_Ec
          !

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2009 A. Marini and the YAMBO team
+! Copyright (C) 2000-2009 C. Attaccalite and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -25,13 +25,14 @@ subroutine SC_extended_oscillators(G_input)
  ! 
  use drivers,        ONLY:l_sc_hf,l_sc_chosex
  use pars,           ONLY:SP
- use QP_m,           ONLY:QP_nk,QP_n_states,QP_Vnl_xc,QP_Sc
+ use QP_m,           ONLY:QP_nk,QP_nb,QP_n_states,QP_Vnl_xc,QP_Sc
  use SC,             ONLY:SC_bands
  use global_XC,      ONLY:SC_HF,SC_CHOSEX
  use oscillators_IO, ONLY:rho_VX_rho,n_rho_states,rho_table,ioRHO_RHO_VX,V_kind 
  use par_proc_m,     ONLY:pp_indexes,pp_redux_wait,pp_indexes_reset
  use par_indexes_m,  ONLY:par_indexes
  use IO_m,           ONLY:io_control,OP_RD_CL
+ use oscillators_CACHE, ONLY:last_QP_mem,QP_rho
  !
  implicit none
  !       
@@ -43,67 +44,97 @@ subroutine SC_extended_oscillators(G_input)
  integer           :: io_err,ID       
  type(pp_indexes)  :: px
  !
+ if(.not.l_sc_hf.and..not.l_sc_chosex) return
+ !
  call pp_indexes_reset(px)   
  !
  call par_indexes(px,(/QP_n_states/))
  !
- if(l_sc_hf.or.l_sc_chosex) then
-   !
-   QP_Vnl_xc=(0.,0.)
-   !
-   V_kind=SC_HF
-   !
-   do i1=1,QP_n_states 
-     !
-     if(.not.px%i1p(i1)) cycle  
-     !
-     call io_control(ACTION=OP_RD_CL,SEC=(/i1+1/),ID=ID)
-     io_err=ioRHO_RHO_VX(i1,ID)
-     !
-     do ic=1,n_rho_states
-       !      
-       ib =rho_table(1,ic)
-       ibp=rho_table(2,ic)
-       ik =rho_table(3,ic)
-       !
-       QP_Vnl_xc(i1)=QP_Vnl_xc(i1)-(0.,1.)*rho_VX_rho(ic)*G_input(ib,ibp,ik)      
-       !
-     enddo
-     !
-   enddo
-   !
-   call pp_redux_wait(QP_Vnl_xc)
-   ! 
- endif
+ if(l_sc_hf.or.l_sc_chosex.or.last_QP_mem/=0) QP_Vnl_xc=(0.,0.)
+ if(l_sc_chosex) QP_sc=(0.,0.)
  !
- if(l_sc_chosex) then
+ ! First loop on oscillators in the Cache
+ ! notice that in memory all oscillators are sum together
+ ! so all the contribution to quasi-particle is stored in QP_Vnl_xc
+ !
+ do i1=1,last_QP_mem
    !
-   QP_Sc=(0._SP,0._SP)
+   if(.not.px%i1p(i1)) cycle  
    !
-   V_kind=SC_CHOSEX
+   ic=1
    !
-   do i1=1,QP_n_states 
+   do ib=1,QP_nb
+     do ibp=1,QP_nb
+       do ik=1,QP_nk
+         if(QP_rho(i1)%rho_table(ib,ibp,ik)/=0) then
+           QP_Vnl_xc(i1)=QP_Vnl_xc(i1)-(0.,1.)*QP_rho(i1)%RHO_VX_RHO(ic)*G_input(ib,ibp,ik)
+           ic=ic+1
+         endif
+       enddo
+     enddo
+   enddo
+   !
+ enddo
+ !
+ ! .. then read the remaning oscillators from disk
+ ! On disk each contributions is stored in a different database
+ !
+ do i1=last_QP_mem+1,QP_n_states 
+   !
+   if(.not.px%i1p(i1)) cycle  
+   !
+   if(l_sc_hf.or.l_sc_chosex) then
      !
-     if(.not.px%i1p(i1)) cycle  
+     V_kind=SC_HF
      !
      call io_control(ACTION=OP_RD_CL,SEC=(/i1+1/),ID=ID)
      io_err=ioRHO_RHO_VX(i1,ID)
      !
-     do ic=1,n_rho_states
-       !      
-       ib =rho_table(1,ic)
-       ibp=rho_table(2,ic)
-       ik =rho_table(3,ic)
-       !
-       QP_Sc(i1,1)=QP_Sc(i1,1)-(0.,1.)*rho_VX_rho(ic)*G_input(ib,ibp,ik)      
-       !
+     ic=1
+     !
+     do ib=1,QP_nb
+       do ibp=1,QP_nb
+         do ik=1,QP_nk
+           if(rho_table(ib,ibp,ik)/=0) then
+             QP_Vnl_xc(i1)=QP_Vnl_xc(i1)-(0.,1.)*rho_VX_rho(ic)*G_input(ib,ibp,ik)
+             ic=ic+1
+           endif
+         enddo
+       enddo
      enddo
      !
-   enddo
+   endif
    !
-   call pp_redux_wait(QP_Sc)
-   ! 
- endif
+   if(l_sc_chosex) then
+     !
+     V_kind=SC_CHOSEX
+     !
+     call io_control(ACTION=OP_RD_CL,SEC=(/i1+1/),ID=ID)
+     io_err=ioRHO_RHO_VX(i1,ID)
+     !
+     ic=1
+     !
+     do ib=1,QP_nb
+       do ibp=1,QP_nb
+         do ik=1,QP_nk
+           if(rho_table(ib,ibp,ik)/=0) then
+             QP_Sc(i1,1)=QP_Sc(i1,1)-(0.,1.)*rho_VX_rho(ic)*G_input(ib,ibp,ik)      
+             ic=ic+1
+           endif
+          enddo
+        enddo
+     enddo
+     !
+   endif
+   !
+ enddo
+ !
+ ! When the Cache is used all the QP correction are put together
+ ! in QP_Vnl_xc
+ ! 
+ if(l_sc_hf.or.l_sc_chosex.or.last_QP_mem/=0) &
+   &  call pp_redux_wait(QP_Vnl_xc)
+ if(l_sc_chosex)                   call pp_redux_wait(QP_Sc)
  !
  call pp_indexes_reset(px)
  !

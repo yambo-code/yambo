@@ -32,11 +32,14 @@ subroutine RT_fix_symmetries(E,k)
 &                              i_space_inv,sop_inv,inv_index,symmetry_group_table
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,&
 &                              g_rot,ng_closed,bz_samp_duplicate,rl_sop
- use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,&
-&                              OP_APP,cp_file,rm_file,cp_directory
+ use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,&
+&                              OP_APP,cp_file,rm_file,cp_directory,dbs_fragment, &
+&                              io_fragmented,OP_RD_CL,io_netcdf_support,VERIFY,  &
+&                              RD_CL,RD,io_disconnect,DUMP,REP
  use wave_func,           ONLY:ioWF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io, &
 &                              wf_ng,wf_state,WF_load,wf_state,wf,WF_free,wf_ng ,wf_nb_io_groups
  use real_time,           ONLY:kpoints_map
+ use pseudo,              ONLY:pp_kb,pp_kbd,n_atomic_species,pp_n_l_comp_max,PP_alloc,PP_free
  use stderr,              ONLY:intc,set_real_printed_length
  use parser_m,            ONLY:parser
  use zeros,               ONLY:k_iku_zero
@@ -56,9 +59,12 @@ subroutine RT_fix_symmetries(E,k)
  real(SP)              :: B_cart(3)
  integer               :: det
  real(SP), allocatable :: wf_disk(:,:,:,:)
+ real(SP), allocatable :: pp_kb_store(:,:,:,:,:),pp_kbd_store(:,:,:,:,:)
  logical               :: Rm_all_symm,use_E_field,use_B_field,reject_symmetry
  type(bz_samp)         :: k_save
  character(lchlen)     :: core_io_path_save,wf_fragment
+ integer               :: ACTION_,ioKB_err
+ integer, external     :: ioKB_PP
  !
  use_E_field=.FALSE.
  use_B_field=.FALSE.
@@ -94,6 +100,31 @@ subroutine RT_fix_symmetries(E,k)
  !
  call bz_samp_reset(k_save)
  call bz_samp_duplicate(k,k_save)
+ !
+ ! Read PseudoPotentials
+ !
+ call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
+ ioKB_err=ioKB_PP(ID) 
+ !
+ if(ioKB_err==0) then
+   ! 
+   call section('=',"PseudoPotentials")
+   allocate(pp_kb_store(wf_ng,n_atomic_species,pp_n_l_comp_max,n_spin,k%nibz))
+   allocate(pp_kbd_store(wf_ng,n_atomic_species,pp_n_l_comp_max,n_spin,k%nibz))
+   call mem_est("pp_kb_store pp_kbd_store",(/size(pp_kb),size(pp_kbd)/),elements_kind=(/SP,SP/))
+   !
+   do ik=1,k_save%nibz
+     !
+     if (ik< k_save%nibz) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
+     if (ik==k_save%nibz) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)      
+     ioKB_err=ioKB_PP(ID)
+     !
+     pp_kb_store(:,:,:,:,ik) =pp_kb(:,:,:,:)
+     pp_kbd_store(:,:,:,:,ik)=pp_kbd(:,:,:,:)
+     !
+   enddo
+   !
+ endif
  !
  ! Remove Symmetries
  !
@@ -219,6 +250,9 @@ subroutine RT_fix_symmetries(E,k)
  !===============================
  !
  call WF_load(wf_ng,1,(/1,E%nb/),(/1,k_save%nibz/),space='C',title='')
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)  
+ dbs_fragment=io_fragmented(ID)
+ io_err=ioWF(ID)
  !
  if (trim(core_io_path)/=trim(more_io_path)) then
    !
@@ -274,10 +308,14 @@ subroutine RT_fix_symmetries(E,k)
  !
  call msg('s',':: Wavefunctions ...')
  !
+ ACTION_=OP_APP_WR_CL
+ if(dbs_fragment) ACTION_=OP_WR_CL
+ !
  do i1=k_save%nibz+1,k%nibz 
    !      
    ik=kpoints_map(1,i1)
-   call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/i1+1,1/),ID=ID)
+   !
+   call io_control(ACTION=ACTION_,COM=NONE,SEC=(/i1+1,1/),ID=ID)
    !
    do ib=1,E%nb
      do i_spin=1,n_spin
@@ -290,8 +328,35 @@ subroutine RT_fix_symmetries(E,k)
    io_err=ioWF(ID,wf=wf_disk)
    !
  enddo
+ ! 
+ if(dbs_fragment) then
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
+   io_err=ioWF(ID)
+ endif
  !
  call msg('l','done')
+ !
+ if(ioKB_err==0) then 
+   !
+   call msg('s',':: PseudoPotentials ...')
+   !
+   do i1=k_save%nibz+1,k%nibz 
+     !
+     ik=kpoints_map(1,i1)
+     !
+     call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/i1+1/),ID=ID)      
+     ioKB_err=ioKB_PP(ID)
+     !
+   enddo
+   !
+   deallocate(pp_kb_store,pp_kbd_store)
+   call mem_est("pp_kb_store pp_kbd_store")
+   !
+   call PP_free()
+   !
+   call msg('l','done')
+   !
+ endif
  !
  call msg('s',':: DB1 ...')
  !
@@ -309,10 +374,10 @@ subroutine RT_fix_symmetries(E,k)
    call msg('s',':: Cleaning ...')
    call rm_file((trim(core_io_path))//"/SAVE/ndb.kindx")
    call rm_file((trim(core_io_path))//"/SAVE/ndb.gops")
+   call rm_file((trim(core_io_path))//"/SAVE/ndb.ostnts")
+   call rm_file((trim(core_io_path))//"/SAVE/db.ostnts")
    call rm_file((trim(core_io_path))//"/SAVE/db.kindx")
    call rm_file((trim(core_io_path))//"/SAVE/db.gops")
-   call rm_file((trim(core_io_path))//"/SAVE/ns.kb_pp")
-   call rm_file((trim(core_io_path))//"/SAVE/s.kb_pp")
    call msg('l','done')
  endif
  !

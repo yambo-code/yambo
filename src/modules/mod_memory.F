@@ -30,7 +30,11 @@ module memory_m
  character(schlen), private  :: mem_element(max_mem_elements)
  integer          , private  :: element_loaded
  real(SP)         , private  :: mem_element_size(max_mem_elements)
+#if defined _RT | defined _SC
+ real(SP)         :: mem_sum
+#else
  real(SP)         , private  :: mem_sum
+#endif
  !
  contains
    !

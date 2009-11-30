@@ -25,13 +25,16 @@ integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
  use oscillators_IO,ONLY:rho_table,n_rho_states,V_kind,rho_VX_rho,Sx_cutoff
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
-&                        io_bulk,write_is_on,io_disconnect,IO_write,file_is_present
+&                        io_bulk,write_is_on,io_disconnect,IO_write,         &
+&                        file_is_present,synchronize_db
  use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_CHOSEX
- use com,           ONLY:error
+ use com,           ONLY:error,more_io_path,core_io_path
  use stderr,        ONLY:intc
  use SC,            ONLY:SC_bands
- use QP_m,          ONLY:QP_ng_Sx,QP_n_states
- use par_proc_m,    ONLY:master_cpu
+ use QP_m,          ONLY:QP_ng_Sx,QP_n_states,QP_nb,QP_nk
+ use par_proc_m,    ONLY:master_cpu,pp_indexes,pp_indexes_reset
+ use par_indexes_m, ONLY:par_indexes
+
  !
  implicit none
  integer, intent(inout)         :: ID
@@ -45,6 +48,8 @@ integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
  real(SP), allocatable :: rho_VX_rho_disk(:,:)
  integer               :: V_kind_disk,i_qp_db
  character(lchlen)     :: V_kind_string
+ logical               :: synchronize_files
+ type(pp_indexes)      :: px
  !
  if (present(QP_DB_done)) then 
    QP_DB_done=.FALSE.
@@ -58,7 +63,7 @@ integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
    call error("RHO_IO : Unknown database type ")
  endif
  !
- if (io_sec(ID,1)==1) then
+ if (any(io_sec(ID,:)==1)) then
    !
    ioRHO_RHO_VX=io_connect(desc=db_name,type=2,ID=ID)
    !
@@ -103,9 +108,39 @@ integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
      enddo
    endif
    !
+   ! Distribute databases among all processors
+   !
+   synchronize_files=.false.
+   !
+   if(trim(core_io_path)/=trim(more_io_path)) then
+     !
+     if(present(QP_DB_done))  then
+        if(all(QP_DB_done(:))) synchronize_files=.true.
+     endif
+     !
+     if(.not.present(QP_DB_done).and.write_is_on(ID))    synchronize_files=.true.
+     ! 
+   endif
+   !
+   if(synchronize_files) then
+     !
+     call pp_indexes_reset(px)
+     call par_indexes(px,(/QP_n_states/))
+     !
+     do i_qp_db=1,QP_n_states 
+       if (.not.px%i1p(i_qp_db)) cycle
+       call synchronize_db(desc=trim(db_name)//trim(intc(i_qp_db)))
+     enddo
+     !
+     call pp_indexes_reset(px)
+     !
+   endif
+   !
+   call io_disconnect(ID=ID)
+   !
  endif
  !
- if (io_sec(ID,1)/=1) then     
+ if (any(io_sec(ID,:)/=1)) then     
    !
    ! All cpu write on disk
    !
@@ -117,8 +152,8 @@ integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
    !
    call io_bulk(ID,VAR='N_RHO_STATES',VAR_SZ=(/1/))
    call io_bulk(ID,I0=n_rho_states)
-   call io_bulk(ID,VAR='RHO_TABLE',VAR_SZ=(/3,n_rho_states/) )
-   call io_bulk(ID,I2=rho_table(:,1:n_rho_states))
+   call io_bulk(ID,VAR='RHO_TABLE',VAR_SZ=(/QP_nb,QP_nb,QP_nk/))
+   call io_bulk(ID,L3=rho_table)
    !
    allocate(rho_VX_rho_disk(n_rho_states,2))      
    !
@@ -135,6 +170,8 @@ integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
    deallocate(rho_VX_rho_disk)      
    !
    IO_write=master_cpu
+   !
+   if(write_is_on(ID)) call synchronize_db(desc=trim(db_name)//trim(intc(i_qp)))
    !
  endif
  !

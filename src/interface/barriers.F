@@ -105,6 +105,10 @@ subroutine barriers()
  !
  ! GPL_EXCLUDE_START SC_IGNORE
  !
+#if defined _RT
+ call switch_off_runlevel('gw0',on_name=' ')
+#endif
+ !
  if (l_sc_run) then
    call switch_off_runlevel('all',on_name='scpot HF_and_locXC chosex em1s negf rhoIO magnetic '//trim(always_runlevels))
    goto 1

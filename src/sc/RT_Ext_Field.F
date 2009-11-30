@@ -52,6 +52,8 @@ subroutine RT_Ext_Field(ik,H_nl_sc,G_lesser,time,Efield,A_norm)
      A_norm=-Efield%amplitude*sin(Efield%frequency*time)/Efield%frequency
    case('RESONANT')
      A_norm=-Efield%amplitude*exp(-(0._SP,1._SP)*Efield%frequency*time)/((0._SP,2._SP)*Efield%frequency)
+   case('ANTIRESONANT')
+     A_norm=-Efield%amplitude*exp((0._SP,1._SP)*Efield%frequency*time)/((0._SP,2._SP)*Efield%frequency)
    case('DELTA')
      A_norm=-Efield%amplitude
    case('STEP')
@@ -66,7 +68,7 @@ subroutine RT_Ext_Field(ik,H_nl_sc,G_lesser,time,Efield,A_norm)
  ! in case of complex Efield puts the correct Hermitian matrix
  ! and the intraband optical matrix elements have been set to zero
  !
- if(trim(Efield%ef_name)/="RESONANT".or.Efield%no_intraband) then
+ if((trim(Efield%ef_name)/="RESONANT".and.trim(Efield%ef_name)/="ANTIRESONANT").and..not.Efield%no_intraband) then
    do i1=1,SC_bands
      H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)+real(sum(A_vec_pot(:)*DIP_iR_or_P(:,i1,i1,ik,1)))
    enddo

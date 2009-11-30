@@ -57,7 +57,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  type(initdefs)   ::defs
  integer          ::i1,i2
- character(schlen)::rstr_piece(50) 
+ character(schlen)::rstr_piece(60) 
  !
  !
  ! What is running ?

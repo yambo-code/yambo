@@ -19,10 +19,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_store_RHO_VX_RHO(i_qp)
+subroutine QP_store_RHO_RHO_VX(i_qp)
  use pars,            ONLY:SP
  use QP_m,            ONLY:QP_nk,QP_nb
- use oscillators_IO , ONLY:ioRHO_RHO_VX,Sx_cutoff,tmp_rho_vx,rho_table,&
+ use oscillators_IO , ONLY:ioRHO_RHO_VX,Sx_cutoff,tmp_rho_vx,RHO_table,&
 &                          RHO_VX_RHO,n_rho_states
  use IO_m,            ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP,OP_WR,NONE
  !
@@ -51,7 +51,8 @@ subroutine QP_store_RHO_VX_RHO(i_qp)
    enddo
  enddo
  !
- n_rho_states=ic
+ n_rho_states    =ic
+ RHO_table(:,:,:)=0
  ic=0
  !
  do jb=1,QP_nb
@@ -60,23 +61,19 @@ subroutine QP_store_RHO_VX_RHO(i_qp)
        if(abs(tmp_rho_vx(jb,jb2,ik))>=sx_max*Sx_cutoff &
    &     .or.sx_cutoff<0.0)  then
          ic=ic+1
-         rho_table(1,ic)=jb
-         rho_table(2,ic)=jb2
-         rho_table(3,ic)=ik
-         rho_VX_rho(ic) =tmp_rho_vx(jb,jb2,ik)
+         RHO_table(jb,jb2,ik)=1
+         RHO_VX_RHO(ic)      =tmp_rho_vx(jb,jb2,ik)
        endif
      enddo      
    enddo      
  enddo      
  !
  if (i_qp==1) then
-   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
-   io_err=ioRHO_RHO_VX(0,ID)
-   call io_control(ACTION=OP_WR_CL,SEC=(/2/),ID=ID)
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
    io_err=ioRHO_RHO_VX(i_qp,ID)
  else
    call io_control(ACTION=OP_WR_CL,SEC=(/i_qp+1/),ID=ID)
    io_err=ioRHO_RHO_VX(i_qp,ID)
  endif
  !
-end subroutine QP_store_RHO_VX_RHO
+end subroutine QP_store_RHO_RHO_VX

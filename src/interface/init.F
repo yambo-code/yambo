@@ -426,13 +426,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !XX
  !
- if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs SxLowBnd')  
+ if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs')  
  !
 #if defined _RT
- if (l_HF_and_locXC.and.l_rho_IO) then
-   call initactivate(1,'SCBands EXXCut')
-   call initactivate(-1,'SxLowBnd')
- endif
+ if (l_HF_and_locXC.and.l_rho_IO) call initactivate(1,'SCBands EXXCut')
 #endif
  !
  ! Optics(not bse) nor GW (no PP)
@@ -588,7 +585,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call initactivate(1,'Integrator LifeTime') 
      call initactivate(1,'RTstep NEsteps ThermSteps SwitchOnTime')
      call initactivate(1,'RTDiagonalize RTDiagoSteps')
-     call initactivate(1,'NoDiamagnetic CacheSize')
+     call initactivate(1,'NoDiamagnetic DiskSteps RHOCache')
      call Afield_activate('Probe')
      call Afield_activate('Pump')
    else
@@ -905,8 +902,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      endif
 #endif
 #if defined _RT
-     if (l_HF_and_locXC) call initactivate(1,'rhoIO negf') 
-     if (l_real_time.and.l_HF_and_locXC) call initactivate(1,'rhoIO') 
+     if (l_HF_and_locXC.or.l_chosex) call initactivate(1,'rhoIO') 
 #endif
      !
    end subroutine varsetup1 

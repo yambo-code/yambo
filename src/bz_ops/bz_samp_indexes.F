@@ -26,7 +26,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  !                  /:\ iqbz=(iq,is)
  !                   :
  !
- ! iq_is = ik_is-ok_os+Go
+ ! iq_is = ik_is-ok_os-Go
  !
  ! qindx_X(iq,ikbz,1)=okbz
  ! qindx_X(iq,ikbz,2)=iGo

@@ -243,7 +243,7 @@ integer function io_SC_components(what,E_sc,ID)
      call io_elemental(ID,L0=l_NE_simulate_RPA,&
 &      VAR=" RPA optics in real time  :", CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,&
-&       VAR=" external field intensity          :",R0=RT_step,CHECK=.true.,OP=(/"=="/))
+&       VAR=" real-time step                 :",R0=RT_step,CHECK=.true.,OP=(/"=="/))
      if(l_G) call io_elemental(ID, &
 &       VAR=" total number of steps          :",I0=NE_steps,CHECK=.true.,OP=(/">="/))
      call io_elemental(ID, &
@@ -271,11 +271,13 @@ integer function io_SC_components(what,E_sc,ID)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
      do i1=1,n_ext_fields
-       call io_elemental(ID,VAR="EXTERNAL_FIELD"//trim(intc(i1)),VAR_SZ=7,MENU=0) 
+       call io_elemental(ID,VAR="EXTERNAL_FIELD"//trim(intc(i1)),VAR_SZ=8,MENU=0) 
        call io_elemental(ID,R1=Efield(i1)%versor,CHECK=.true., &
 &       VAR=" electric field versor             :",OP=(/"==","==","=="/))
        call io_elemental(ID,&
 &       VAR=" external field intensity          :",R0=Efield(i1)%intensity,CHECK=.true.,OP=(/"=="/))
+       call io_elemental(ID,&
+&       VAR=" external field amplitude          :",R0=Efield(i1)%amplitude,CHECK=.true.,OP=(/"=="/))
        call io_elemental(ID,&
 &       VAR=" external field frequency          :",R0=Efield(i1)%frequency,CHECK=.true.,OP=(/"=="/))
        call io_elemental(ID,L0=Efield(i1)%no_intraband,VAR=' No intraband transitions   :',&

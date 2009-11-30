@@ -21,11 +21,11 @@
 !
 module oscillators_IO
  !
- use pars,            ONLY:SP,schlen
+ use pars,            ONLY:SP,LP,schlen
  implicit none
  !
- complex(SP), allocatable :: rho_VX_rho(:)
- integer,     allocatable :: rho_table(:,:) 
+ complex(SP), allocatable :: RHO_VX_RHO(:)
+ integer(LP), allocatable :: RHO_table(:,:,:) 
  integer                  :: n_rho_states
  integer                  :: V_kind 
  !
@@ -66,20 +66,24 @@ module oscillators_IO
        rho_VX_size=QP_nb**2*QP_nk
      endif
      !
-     call mem_est("rho_VX_rho",(/size(rho_VX_rho)/),(/2*SP/))
-     allocate(rho_VX_rho(rho_VX_size))
-     allocate(rho_table(3,rho_VX_size))
-     call mem_est("rho_table",(/size(rho_table)/),(/IP/))
+     call mem_est("RHO_VX_RHO",(/size(RHO_VX_RHO)/),(/2*SP/))
+     allocate(RHO_VX_RHO(rho_VX_size))
+     allocate(RHO_table(QP_nb,QP_nb,QP_nk))
+     call mem_est("RHO_table",(/size(RHO_table)/),(/LP/))
      !
    end subroutine
    !
    subroutine oscillators_IO_free()
      use memory_m,       ONLY:mem_est
      implicit none
-     deallocate(rho_VX_rho)
-     deallocate(rho_table)
-     call mem_est("rho_VX_rho  rho_table")
-     if(allocated(QP_DB_DONE)) deallocate(QP_DB_DONE)
+     if(allocated(RHO_VX_RHO)) then
+       deallocate(RHO_VX_RHO)
+       call mem_est("RHO_VX_RHO")
+     endif
+     if(allocated(RHO_table)) then
+       deallocate(RHO_table)
+       call mem_est("RHO_table")
+     endif
    end subroutine
    !
 end module

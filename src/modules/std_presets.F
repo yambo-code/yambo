@@ -81,6 +81,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Efield,Integrator_name, &
 &                     RT_diagonalization_steps, LifeTime,l_NE_simulate_RPA, n_ext_fields, l_RT_diagonalize,   &
 &                     Thermal_time,max_rt_steps_disk
+ use oscillators_CACHE, ONLY:RHO_cache_size
 #endif
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
@@ -433,6 +434,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_RT_diagonalize=.FALSE.
  max_rt_steps_disk=200
  Sx_cutoff=0.0005
+ RHO_cache_size=-1.0
  !
 #endif
  !

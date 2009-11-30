@@ -112,7 +112,7 @@ module IO_m
      !
    end subroutine
    !
-   subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C1,IPOS)
+   subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C1,L1,L3,IPOS)
      !
      use pars
      integer      :: ID
@@ -121,6 +121,7 @@ module IO_m
      integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:)
      real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:)
      complex(SP), optional :: C1(:)
+     integer(LP), optional :: L1(:),L3(:,:,:)
      !
    end subroutine
    !
@@ -663,6 +664,77 @@ module IO_m
      file_is_present=.false.
      !
    end function file_is_present
+   !
+   subroutine synchronize_db(desc,subfolder)
+     !
+     use com,           ONLY:get_name,file_exists,more_io_path &
+&                           ,core_io_path,get_name
+     !
+     character(*), intent(in):: desc
+     character(*), optional  :: subfolder
+     integer                 :: io_err
+     !
+     ! Work Space
+     !
+     logical            :: present_in_core,present_in_more,netcdf_db
+     character(lchlen)  :: location(2)
+     character(schlen)  :: subfolder_
+     !
+     subfolder_=' '
+     if (present(subfolder)) subfolder_=subfolder
+     !
+     if(trim(more_io_path)==trim(core_io_path)) return
+     !
+     present_in_core=.FALSE.
+     present_in_more=.FALSE.
+     !
+     location(1)=get_name(desc,subfolder_,1,CORE_IO=.TRUE.,&
+&             MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.FALSE.)
+     if(file_exists(location(1))) then
+       present_in_core=.true.
+       netcdf_db=.false.
+     endif
+     !
+     location(2)=get_name(desc,subfolder_,1,CORE_IO=.TRUE.,&
+&             MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.TRUE.)
+     if(file_exists(location(2))) then
+       present_in_core=.true.
+       netcdf_db=.true.
+     endif
+     !
+     location(1)=get_name(desc,subfolder_,2,CORE_IO=.FALSE.,&
+&             MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.FALSE.)
+     if(file_exists(location(1))) then
+       present_in_more=.true.
+       netcdf_db=.false.
+     endif
+     !
+     location(2)=get_name(desc,subfolder_,2,CORE_IO=.FALSE.,&
+&             MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.TRUE.)
+     if(file_exists(location(2))) then
+       present_in_more=.true.
+       netcdf_db=.true.
+     endif
+     !
+     ! Now copy DB:    more_io_path <-> core_io_path
+     !
+     if(present_in_core.and..not.present_in_more) then 
+        location(1)=get_name(desc,subfolder_,1,CORE_IO=.TRUE.,&
+&                    MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=netcdf_db)
+        location(2)=get_name(desc,subfolder_,2,CORE_IO=.FALSE.,&
+&                    MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=netcdf_db)
+        call cp_file(trim(location(1)),trim(location(2)),io_err)
+     endif
+     !
+     if(.not.present_in_core.and.present_in_more) then 
+        location(1)=get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
+&                    MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=netcdf_db)
+        location(2)=get_name(desc,subfolder,1,CORE_IO=.TRUE.,&
+&                    MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=netcdf_db)
+       call cp_file(trim(location(1)),trim(location(2)),io_err)
+     endif
+     !
+   end subroutine synchronize_db
    !
    logical function file_is_open(filename,ID)
      character(*)      :: filename

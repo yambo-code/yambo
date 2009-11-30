@@ -24,7 +24,7 @@ subroutine fermi_msg(E,mode)
  use pars,          ONLY:SP,lchlen
  use units,         ONLY:HARTREE,BOHR,Bohr_magneton
  use com,           ONLY:msg,warning
- use electrons,     ONLY:levels,n_sp_pol,n_spin
+ use electrons,     ONLY:levels,n_sp_pol,n_spin,filled_tresh
 #if defined _MAGNETIC
  use magnetic,      ONLY:average_el_mag
 #endif
@@ -55,7 +55,7 @@ subroutine fermi_msg(E,mode)
      if (n_spin==1) r_nk=r_nk/2.
      !
      if (r_nk<=tresh) cycle
-     if (abs(r_nk-real(E%nk,SP))<=tresh) then
+     if (abs(r_nk-real(E%nk,SP))<=filled_tresh) then
        nbf_(i_s_pol)=i1
        cycle
      endif

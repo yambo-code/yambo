@@ -361,7 +361,7 @@ subroutine K_Haydock(iq,W)
      ! related to terminator
      !
      complex(SP) :: X_t 
-     real :: Av1, Av2
+     real(SP)    :: Av1, Av2
      integer, parameter :: RES = 2, COUPL = 1, MIN_ITER = 10
      logical     :: UseTerminator
      !

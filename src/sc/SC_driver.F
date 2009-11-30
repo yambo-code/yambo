@@ -52,9 +52,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL
  use vec_operate,    ONLY:degeneration_finder
  use timing,         ONLY:live_timing
- use oscillators_IO, ONLY:oscillators_IO_alloc,oscillators_IO_free,ioRHO_RHO_VX,&
-&                         V_kind
- use global_XC,      ONLY:SC_HF    
+ use oscillators_IO, ONLY:oscillators_IO_alloc,oscillators_IO_free,V_kind
+ use global_XC,      ONLY:SC_HF,SC_CHOSEX    
 #if defined _MAGNETIC
  use magnetic,       ONLY:average_el_mag
 #endif
@@ -95,7 +94,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! Extended Oscillators RHO_IO
  ! 
  integer                  :: io_RHO_err
- logical, allocatable     :: QP_DB_done(:)
+ integer, external        :: QP_check_RHO_RHO_VX
  !
  ! Magnetic logical setup
  !
@@ -268,17 +267,22 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  if(l_use_RHO_IO) then
    !
    V_kind=-1
-   if(l_sc_hf) V_kind=SC_HF
+   io_RHO_err=0
    !
-   call io_control(ACTION=OP_RD_CL,SEC=(/1/),MODE=VERIFY,ID=ID(4)) 
-   allocate(QP_DB_done(QP_n_states)) 
-   io_RHO_err=ioRHO_RHO_VX(0,ID(4),QP_DB_done)
+   if(l_sc_hf.or.l_sc_chosex) then
+     V_kind=SC_HF
+     io_RHO_err=io_RHO_err+QP_check_RHO_RHO_VX()
+   endif
    !
-   if(io_RHO_err/=0.or..not.all(QP_DB_done)) then
+   if(l_sc_chosex) then
+     V_kind=SC_CHOSEX
+     io_RHO_err=io_RHO_err+QP_check_RHO_RHO_VX()
+   endif
+   !
+   if(io_RHO_err/=0) then
       l_use_RHO_IO=.false.
       call warning(' Extented Oscillators do not fit, UseRhoIO set to .false. ')
    endif
-   deallocate(QP_DB_done)
    !
  endif
  !                       
@@ -434,7 +438,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      ! CHOSEX
      !
-     if (l_sc_chosex) call QP_ppa_chosex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1)
+     if (l_sc_chosex.and..not.l_use_RHO_IO) &
+        & call QP_ppa_chosex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1)
      !
      call IO_mute(" ")
      !
@@ -486,7 +491,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        if(.not.l_use_RHO_IO) call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc)
        !        
-       if (l_sc_chosex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc)
+       if(.not.l_use_RHO_IO.and.l_sc_chosex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc)
        !
        ! Rotate H_nl_sc in the WFo basis.
        !
@@ -498,6 +503,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        if(l_use_RHO_IO) call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc)
        !
+       if(l_use_RHO_IO.and.l_sc_chosex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc)
+       ! 
        ! IO [H_nl_sc]
        !==============
        !

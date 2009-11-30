@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2009 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2009 C. Attaccalite and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -19,34 +19,26 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module pars
+subroutine QP_close_RHO_RHO_VX()
+ use oscillators_IO,   ONLY:ioRHO_RHO_VX,QP_DB_done,tmp_rho_vx
+ use IO_m,             ONLY:io_control,OP_WR_CL,REP,NONE
+ use memory_m,         ONLY:mem_est
  !
  implicit none
  !
- ! KINDS
+ ! Work Space
  !
- integer, parameter  :: DP = selected_real_kind(14,200)
-#if defined _DOUBLE
- integer, parameter  :: SP = selected_real_kind(14,200)
-#else
- integer, parameter  :: SP = selected_real_kind(6,30)
-#endif
- integer, parameter  :: IP = selected_int_kind(9)
+ integer                  :: ID,COM_,io_err      
  !
- ! Equivalent to OneByteInt in NetCdf (normal integer is 4 byte)
- integer, parameter  :: LP = selected_int_kind(2)
+ COM_=REP
+ if (.not.all(QP_DB_done)) COM_=NONE
+ call io_control(ACTION=OP_WR_CL,COM=COM_,SEC=(/1/),ID=ID)
+ io_err=ioRHO_RHO_VX(0,ID)
  !
- ! STRINGs
+ deallocate(QP_DB_done)
+ call mem_est("QP_DB_done")
  !
- integer, parameter  :: schlen=100
- integer, parameter  :: lchlen=300
+ deallocate(tmp_rho_vx)
+ call mem_est("tmp_rho_vx")
  !
- ! CONSTANTs
- !
- real(SP), parameter :: pi=3.141592653589793238462643383279502884197_SP
-#if defined _MAGNETIC
- real(SP), parameter :: alpha_m1=137.0359997_SP
-#endif
- real(SP), parameter :: zero_dfl=1.E-5
- !
-end module 
+end subroutine QP_close_RHO_RHO_VX

@@ -30,6 +30,9 @@ subroutine SC_common_build_Ho(E,Xk,k)
  use wave_func,      ONLY:wf
  use R_lattice,      ONLY:bz_samp
  use xc_functionals, ONLY:V_xc
+#if defined _MAGNETIC
+ use drivers,        ONLY:l_sc_magnetic
+#endif
  implicit none
  !
  type(levels)             :: E
@@ -66,12 +69,12 @@ subroutine SC_common_build_Ho(E,Xk,k)
  !========================================
  !
  !
-#if !defined _MAGNETIC
+#if defined _MAGNETIC
  !
  ! If we are using yambo_magnetic now Ho already
  ! contains H_magnetic
  !
- Ho=(0.,0.)
+ if(.not.l_sc_magnetic) Ho=(0.,0.)
  !
 #endif
  !

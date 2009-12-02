@@ -228,7 +228,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    !
    ! Verbosity
    !
-   if ( i1<50 .and. trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='gen' ) infile_verbosity=V_general
+   if (i1<50) then
+     if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='gen' ) infile_verbosity=V_general
+   endif
    !
    do i2=1,nrnlvls
      if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1)) ) then

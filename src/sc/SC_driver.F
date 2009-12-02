@@ -100,7 +100,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
 #if defined _MAGNETIC
  !
- call MAG_Hamiltonian(.TRUE.)
+ if(l_sc_magnetic) call MAG_Hamiltonian(.TRUE.)
  !
 #endif
  !
@@ -716,10 +716,14 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  do ik=1,k%nibz
    call report_energies(E%E(:SC_bands,:,:),k,Xk,SC_bands,(/ik,ik/),'E  ',.TRUE.)
+#if defined _MAGNETIC
+   call report_energies(E%f(:SC_bands,:,:)/HARTREE,k,Xk,SC_bands,(/ik,ik/),'occ',.FALSE.)
+#else
    call report_energies(E_bare,k,Xk,SC_bands,(/ik,ik/),'E_o',.FALSE.)
    call report_energies(dE,k,Xk,SC_bands,(/ik,ik/),'d_E',.FALSE.)
    call report_energies(spread,k,Xk,SC_bands,(/ik,ik/),'Spr',.FALSE.)
    call report_energies(real(b_of_max_proj)/HARTREE,k,Xk,SC_bands,(/ik,ik/),'Bnd',.FALSE.)
+#endif
  enddo
  !
  deallocate(E_bare)

@@ -26,11 +26,18 @@ case "${CPP}" in
    if test -z "$CPPFLAGS"; then CPPFLAGS="-ansi"; fi
    ;;
  *gcc* )
-   if test -z "$CPPFLAGS"; then CPPFLAGS="-P"; fi
+   case "${host}" in
+     *86*apple* )
+       if test -z "$CPPFLAGS"; then CPPFLAGS="-P -D_apple"; fi
+       ;;
+     * )
+       if test -z "$CPPFLAGS"; then CPPFLAGS="-P"; fi
+       ;;
+   esac
    ;;
  *cpp* )
    case "${host}" in
-     i?86*linux* | ia64*linux* | *x86*64* | *86*apple*)
+     i?86*linux* | ia64*linux* | *x86*64* )
      case "${FC}" in
        *g95*)
          if test -z "$CPPFLAGS"; then CPPFLAGS="-P -traditional"; fi
@@ -40,6 +47,9 @@ case "${CPP}" in
          ;;
      esac
      ;;
+     *86*apple* )
+       if test -z "$CPPFLAGS"; then CPPFLAGS="-P -traditional -D_apple"; fi
+       ;;
      powerpc64*linux* )
        if test -z "$CPPFLAGS"; then CPPFLAGS="-E -traditional"; fi
        ;;

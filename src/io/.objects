@@ -1,6 +1,6 @@
 SC_objects = 
 #if defined _SC || defined _RT || defined _MAGNETIC
-SC_objects = ioRHO_RHO_VX.o load_SC_components.o io_SC_components.o
+SC_objects = ioRHO_RHO_VX.o load_RHO_VX_RHO.o load_SC_components.o io_SC_components.o
 #endif
 ELPH_objects = 
 #if defined _ELPH 

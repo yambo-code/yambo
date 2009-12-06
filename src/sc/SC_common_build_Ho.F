@@ -76,6 +76,10 @@ subroutine SC_common_build_Ho(E,Xk,k)
  !
  if(.not.l_sc_magnetic) Ho=(0.,0.)
  !
+#else
+ !
+ Ho=(0.,0.)
+ !
 #endif
  !
  call V_Hartree(rho_n,V_hartree_sc)

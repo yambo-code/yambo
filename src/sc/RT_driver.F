@@ -39,7 +39,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
 &                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,io_G,ID,   &
 &                         i_time,Integrator_name,j_current,l_RT_diagonalize,     &
 &                         G_lesser_reference,LifeTime,RT_diagonalization_steps
- use oscillators_CACHE, ONLY:load_RHO_VX_RHO,free_RHO_VX_RHO
+ use oscillators_CACHE, ONLY:free_RHO_VX_RHO
  use oscillators_IO,    ONLY:oscillators_IO_alloc
  !
  implicit none

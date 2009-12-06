@@ -62,5 +62,8 @@ module magnetic
  ! Average magnetization
  !
  real(SP)                 :: average_el_mag(3)
+ real(SP)                 :: fix_el_mag_dim
+ character(20)            :: average_el_mag_dim ! 'Bohr_magneton'        'Bohr_magneton/Bohr'
+ !                                              ! 'Bohr_magneton/Bohr^2' 'Bohr_magneton/Bohr^3'
  !
 end module

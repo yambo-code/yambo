@@ -30,7 +30,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use drivers
  use pars,           ONLY:schlen,lchlen
  use units,          ONLY:HARTREE
- use electrons,      ONLY:levels,E_reset
+ use electrons,      ONLY:levels,E_reset,n_sp_pol
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
@@ -601,6 +601,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_sc_magnetic) then
    call initactivate(1,'Hamiltonian B_Field B_psi B_theta Gauge')
+   if (n_sp_pol>1) call initactivate(1,'NonPerDir')
    if (MAG_landau) call initactivate(1,'B_radius')
  endif
  !

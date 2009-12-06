@@ -66,8 +66,13 @@ AC_REQUIRE([AC_CANONICAL_HOST])
 AC_MSG_CHECKING([if the current OS is supported])
 TIMER="ct_cclock.o"
 case "${host}" in
- i?86*linux* | ia64*linux* | *x86*64* | *86*apple* | *86*cygwin )
+ i?86*linux* | ia64*linux* | *x86*64* | *86*cygwin )
    build_os="linux"
+   TIMER="ct_etime.o"
+   if test -z "$F90SUFFIX"; then F90SUFFIX=".f90"; fi
+   ;;
+ *86*apple* )
+   build_os="apple"
    TIMER="ct_etime.o"
    if test -z "$F90SUFFIX"; then F90SUFFIX=".f90"; fi
    ;;

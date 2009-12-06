@@ -26,17 +26,16 @@ subroutine check_periodic_directions()
  use X_m,            ONLY:eps_2_alpha,alpha_dim,eval_alpha
  use D_lattice,      ONLY:DL_vol,a,non_periodic_directions
  use vec_operate,    ONLY:v_norm
+#if defined _MAGNETIC
+ use magnetic,       ONLY:average_el_mag,average_el_mag_dim,fix_el_mag_dim
+#endif
  implicit none
  !
  ! Work Space
  !
- integer  :: non_p_dir(3),i1,ia,iap,i_check
- real(SP) :: v(3,3),non_p_dot_product(3),periodic_length,non_periodic_length
+ integer  :: non_p_dir(3),i1,ia,i_check
+ real(SP) :: non_p_dot_product(3),periodic_length,non_periodic_length
  logical  :: l_3D,l_2D,l_1D
- !
- v(1,:)=(/1.,0.,0./)
- v(2,:)=(/0.,1.,0./)
- v(3,:)=(/0.,0.,1./)
  !
  non_p_dir=0
  if (index(non_periodic_directions,'x')+index(non_periodic_directions,'X')/=0) non_p_dir(1)=1
@@ -46,6 +45,10 @@ subroutine check_periodic_directions()
  l_3D=all(non_p_dir/=0)
  l_2D=sum(non_p_dir)==2
  l_1D=sum(non_p_dir)==1
+ !
+#if defined _MAGNETIC
+ average_el_mag_dim='Bohr_magneton/Bohr^3'
+#endif
  !
  if (.not.l_3D.and..not.l_2D.and..not.l_1D) return
  !
@@ -72,8 +75,9 @@ subroutine check_periodic_directions()
        if (non_p_dir(i1)==1) non_p_dot_product(ia)=non_p_dot_product(ia)+abs(a(ia,i1))
      enddo
    enddo
+   i_check=0
    do ia=1,3
-     if (non_p_dot_product(ia)==sum(abs(a(ia,:)))) then
+     if ( abs(non_p_dot_product(ia)-sum(abs(a(ia,:)))) < 1.E-5 ) then
        i_check=i_check+1
        if (l_1D) non_periodic_length=v_norm(a(ia,:))
      else if (non_p_dot_product(ia)<1.E-5) then
@@ -99,8 +103,15 @@ subroutine check_periodic_directions()
    return
  endif
  !
+#if defined _MAGNETIC
+ fix_el_mag_dim=eps_2_alpha
+ if(alpha_dim=='length') average_el_mag_dim='Bohr_magneton/Bohr^2'
+ if(alpha_dim=='area')   average_el_mag_dim='Bohr_magneton/Bohr'
+ if(alpha_dim=='volume') average_el_mag_dim='Bohr_magneton'
+#else
  call msg('r', 'Non-periodic chartesian directions :',trim(non_periodic_directions))
  call msg('r', 'Optical renormalization        [au]:',eps_2_alpha)
  call msg('rn','Polarizability dimension           :',trim(alpha_dim))
+#endif
  !
 end subroutine

@@ -158,7 +158,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',&
 &                        ng_closed,unit=G_unit,verb_level=V_RL)
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit,verb_level=V_RL)
- call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,Verb_level=V_resp)
+ call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,verb_level=V_resp)
  call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_kpt)
  call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_kpt) 
  !
@@ -297,10 +297,11 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _MAGNETIC
  call it(defs,'Hamiltonian','[MAG] Hamiltonian kind [pauli,landau]',MAG_hamiltonian_type,protect=.FALSE.)
  call it(defs,'B_Field',    '[MAG] Magnetic field modulus',MAG_B,unit=B_unit)
- call it(defs,'B_psi',      '[MAG] Magnetic field psi angle',MAG_psi,unit=Angle_unit)
- call it(defs,'B_theta',    '[MAG] Magnetic field theta angle',MAG_theta,unit=Angle_unit)
- call it(defs,'B_radius',   '[MAG] Magnetic flux radius',MAG_radius)
- call it(defs,'Gauge',      '[MAG] Gauge ("SYMM"etric, "X_ASYMM", "Y_ASYMM" or "Z_ASYMM"etric)',MAG_gauge)
+ call it(defs,'B_psi',      '[MAG] Magnetic field psi angle',MAG_psi,unit=Angle_unit,verb_level=V_sc)
+ call it(defs,'B_theta',    '[MAG] Magnetic field theta angle',MAG_theta,unit=Angle_unit,verb_level=V_sc)
+ call it(defs,'Gauge',      '[MAG] Gauge ("SYMM"etric, "X_ASYMM", "Y_ASYMM" or "Z_ASYMM"etric)',MAG_gauge,verb_level=V_sc)
+ call it(defs,'NonPerDir',  '[MAG] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,verb_level=V_sc)
+ call it(defs,'B_radius',   '[MAG] Magnetic flux radius',MAG_radius,verb_level=V_sc)
 #endif
  !
  ! GPL_EXCLUDE_END SC_IGNORE
@@ -374,7 +375,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_sc)
  call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)
  call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)
- call it(defs,'EXXCut', '[RT] Cutoff on the exchange, 0=full 1=none',Sx_cutoff,verb_level=V_sc)
+ call it(defs,'EXXCut',    '[SC] Cutoff on the exchange, 0=full 1=none',Sx_cutoff,verb_level=V_sc)
 #endif
  ! 
  ! RAS

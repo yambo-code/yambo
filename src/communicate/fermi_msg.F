@@ -26,7 +26,7 @@ subroutine fermi_msg(E,mode)
  use com,           ONLY:msg,warning
  use electrons,     ONLY:levels,n_sp_pol,n_spin,filled_tresh
 #if defined _MAGNETIC
- use magnetic,      ONLY:average_el_mag
+ use magnetic,      ONLY:average_el_mag,average_el_mag_dim
 #endif
  implicit none
  type(levels)::E
@@ -146,8 +146,7 @@ subroutine fermi_msg(E,mode)
  ! [4] Report the value of the mean magnetization
  !
  if(n_sp_pol>1) then
-   call msg('r','Mean magnetization (x,y,z) [Bohr_magneton/Bohr^3 ] :',real(average_el_mag(:)))
-   call msg('r','                           [cgs units]=[emu/cm^2)] :',real(average_el_mag(:)*Bohr_magneton/(BOHR**3)))
+   call msg('r','Mean magnetization (x,y,z) ['//trim(average_el_mag_dim)//'] :',real(average_el_mag(:)))
  endif
 #endif
  !

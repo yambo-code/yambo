@@ -187,7 +187,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  ! Andrea 31/03/2009. 
  !
  ! I have rewritten more clearly these lines where the
- ! size of the grid is esatbilshed.
+ ! size of the grid is estabilshed.
  !
  k_b_m1(:,1)=k_grid_b(1,:)
  k_b_m1(:,2)=k_grid_b(2,:)
@@ -234,11 +234,13 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
      enddo
      !
    endif
+   !
    if (k_grid(i1)==0) k_grid(i1)=1
    !
    ! Size of the shifted grid (used by bz_samp_indexes)
    ! 
-   k_grid(i1)=sum(iabs(k_grid_borders(i1,:)))+1
+   k_grid(i1)=k_grid_borders(i1,2)-k_grid_borders(i1,1)+1
+   !
  enddo
  !
  ! Reporting

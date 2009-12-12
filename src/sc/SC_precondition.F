@@ -24,7 +24,7 @@ subroutine SC_precondition(delta_rho)
   ! Thomas Fermi precondition for the mixing of the charge density
   ! delta_rho(G)=delta_rho(G)*G**2/(G**2+q_TF**2) 
   !
- use pars,          ONLY: pi,DP
+ use pars,          ONLY: pi,DP,SP
  use R_lattice,     ONLY: bare_qpg
  use D_lattice,     ONLY: DL_vol
  use fft_m,         ONLY: fft_size,fft_dim,fftw_plan,fft_g_table
@@ -36,8 +36,8 @@ subroutine SC_precondition(delta_rho)
  !
  ! Work Space
  !
- real        ::  rs
- real        :: qTF2
+ real(SP)    ::  rs
+ real(SP)    :: qTF2
  complex(DP) :: D_rho_G(fft_size)
  !
  D_rho_G  = delta_rho

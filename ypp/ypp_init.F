@@ -193,7 +193,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    X_rt%energy_range(:)=(/1./HARTREE,20./HARTREE/)
    X_rt%damp           ="LORENTZIAN"
    X_rt%damp_factor    =0.1/HARTREE
-   X_rt%noise_ratio    =0
    !
 #endif
    !

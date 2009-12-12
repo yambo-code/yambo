@@ -46,7 +46,7 @@ subroutine RT_spectrum(en,k)
  !
  integer  :: io_J,io_G,ID(2)
  integer  :: damp,i1,i2
- integer  :: niter,istart,iend
+ integer  :: niter,istart,iend,ishift
  logical  :: Prt_Current,Prt_Einduced,Use_FFT
  character(lchlen)  :: file_name(3),dump_ch
  character(schlen)  :: headings(7)
@@ -125,8 +125,15 @@ subroutine RT_spectrum(en,k)
  allocate(damp_function(istart:iend))
  call mem_est("Damp_Function",(/niter/),(/SP/))
  !
+ ! If there is a time-windows the damping function
+ ! has be applied also the initial part otherwise 
+ ! there will problems doing FFT for the non-zero starting point 
+ !
+ ishift=0
+! if(istart/=1) ishift=int(real(niter)/2.0)
+ !
  do i1=istart,iend
-   i2=i1-istart
+   i2=i1-istart-ishift
    select case(damp)
     case(DAMP_NONE)
       damp_function(i1) = 1.0
@@ -163,13 +170,6 @@ subroutine RT_spectrum(en,k)
  enddo
  call live_timing()
  !
- ! Remove the dc component
- !
- do i1 = 1, 3
-  av = sum(current( istart:iend, i1))
-  current( istart:iend, i1) = current(istart:iend ,i1) - av/dble(niter)
- enddo
- !
  ! Print current and vector potential if required
  !
  call set_real_printed_length(f_length=15,g_length=15)
@@ -195,32 +195,28 @@ subroutine RT_spectrum(en,k)
    !
  endif
  !
+ ! Remove the dc component from current
+ !
+ do i1 = 1, 3
+  av = sum(current( istart:iend, i1))
+  current( istart:iend, i1) = current(istart:iend ,i1) - av/dble(niter)
+ enddo
+ !
  ! Calculate the induced Electric Field
  !
  allocate(E_induced(istart:iend,3))
  call mem_est("E_induced",(/size(E_induced)/),(/SP/))
  !
- if(X_rt%noise_ratio==0) then
-   !
-   ! Integration with trapezoidal rule 
-   !
-   call live_timing('Integration:',iend-istart+1)
-   do i1=istart, iend
-     E_induced(i1,1)=-(2.d0*sum(current(istart:i1,1))-current(istart,1)-current(i1,1))*RT_step/2.d0
-     E_induced(i1,2)=-(2.d0*sum(current(istart:i1,2))-current(istart,2)-current(i1,2))*RT_step/2.d0
-     E_induced(i1,3)=-(2.d0*sum(current(istart:i1,3))-current(istart,3)-current(i1,3))*RT_step/2.d0
-     call live_timing(steps=1)
-   enddo
-   call live_timing()
-   !
- else 
-   !
-   ! Noise reduction is done in Fourier space I don't need integration
-   ! I just divide for 1/(i*omega-damping) after FFT
-   !
-   E_induced=current
-   !
- endif
+ ! Integration with trapezoidal rule 
+ !
+ call live_timing('Integration:',iend-istart+1)
+ do i1=istart, iend
+   E_induced(i1,1)=-(2.d0*sum(current(istart:i1,1))-current(istart,1)-current(i1,1))*RT_step/2.d0
+   E_induced(i1,2)=-(2.d0*sum(current(istart:i1,2))-current(istart,2)-current(i1,2))*RT_step/2.d0
+   E_induced(i1,3)=-(2.d0*sum(current(istart:i1,3))-current(istart,3)-current(i1,3))*RT_step/2.d0
+   call live_timing(steps=1)
+ enddo
+ call live_timing()
  !  
  ! Apply the damping function
  !
@@ -240,7 +236,7 @@ subroutine RT_spectrum(en,k)
    headings(4)="E_z"
    call msg('o einduced','#',headings(1:4),INDENT=-2,USE_TABS=.TRUE.)
    do i1=istart,iend
-     values(1:4)=(/RT_step*(i1-1+istart)/FS2AUT, &
+     values(1:4)=(/RT_step*real(i1)/FS2AUT, &
 &    real(E_induced(i1,1),SP),real(E_induced(i1,2),SP) , real(E_induced(i1,3),SP)/)
      call msg('o einduced','',values(1:4),USE_TABS=.TRUE.)
    enddo
@@ -298,11 +294,18 @@ subroutine RT_spectrum(en,k)
   !
   do i1 = 1, X_rt%energy_steps
     omega = (i1-1)*de+X_rt%energy_range(1)
-    do i2 = istart, iend
-      tt = (i2-istart+1)*RT_step
-      dielectric(i1,1:3) = dielectric(i1,1:3) &
-      &  + E_induced(i2,1:3)*exp((0.,1.)*omega*tt)
-    enddo
+    !
+!    if(omega<2._SP*pi*X_rt%damp_factor) then
+!      dielectric(i1,:)=(0._DP,0._DP)
+!    else
+      !
+      do i2 = istart, iend
+        tt = (i2-istart+1)*RT_step
+        dielectric(i1,1:3) = dielectric(i1,1:3) &
+        &  + E_induced(i2,1:3)*exp((0.,1.)*omega*tt)
+      enddo
+!    endif
+    !
     call live_timing(steps=1)
   enddo
   !
@@ -310,15 +313,15 @@ subroutine RT_spectrum(en,k)
   !
  endif
  !
- if(X_rt%damp_factor<2.*pi/(dble(niter)*RT_step)) then
+ if(X_rt%damp_factor<2.*pi/(dble(niter-ishift)*RT_step)) then
    write(dump_ch,*) "You should use a damping factor greater than :", &
-&                    2.*pi/(dble(niter)*RT_step)*HARTREE 
+&                    2.*pi/(dble(niter-ishift)*RT_step)*HARTREE 
    call warning(dump_ch)
  endif
  !
  select case(trim(Efield(ref_efield)%ef_name))
    case('DELTA')
-     dielectric(:,:) = dielectric(:,:)/Avec(1)
+     dielectric(:,:) = dielectric(:,:)/Avec(istart+1)
    case('RESONANT','ANTIRESONANT')
      dielectric(:,:) = dielectric(:,:)*(0.,2.)/Efield(ref_efield)%amplitude
      call warning(" Only epsilon(w = Efield%frequency) is correct ")
@@ -326,27 +329,7 @@ subroutine RT_spectrum(en,k)
      call warning(" External Field "//trim(Efield(ref_efield)%ef_name)//" not implemented in ypp_rt ")
  end select
  !
- if(X_rt%noise_ratio/=0.) then
-   !
-   ! Noise filter before division
-   !
-   do i1=1,3
-     max_value=maxval(abs(real(dielectric(:,i1))))
-     do i2=1,X_rt%energy_steps
-       if(abs(real(dielectric(i2,i1)))<max_value/X_rt%noise_ratio) then
-         dielectric(i2,i1)=cmplx(0.,aimag(dielectric(i2,i1)))
-       endif
-     enddo
-   enddo
-   !
-   do i1 = 1, X_rt%energy_steps
-     omega = (i1-1)*de+X_rt%energy_range(1)
-     dielectric(i1,1:3)=dielectric(i1,1:3)/((0.,1.)*omega) 
-   enddo
-   !
- endif
- !
- dielectric(:,:)=dielectric(:,:)+1
+ dielectric(:,:)=dielectric(:,:)+1._DP
  !
  ! Write dielectric constant 
  !
@@ -355,7 +338,7 @@ subroutine RT_spectrum(en,k)
  !
  omega=2.*pi/(dble(niter)*RT_step)  ! Frequency step in real-time dynamics
  !
- write(dump_ch,*) " Max Frequency Range: ",omega*HARTREE," - ",omega*dble(niter/2.)*HARTREE," eV "
+ write(dump_ch,*) " Max Frequency Range: ",omega*HARTREE," - ",omega*dble((niter-ishift)/2.)*HARTREE," eV "
  call msg('o eps_q001_rt','#',dump_ch,INDENT=0,USE_TABS=.true.)
  call msg('o eps_q001_rt','#','',INDENT=0,USE_TABS=.true.)
  write(dump_ch,*) " Max Time  Range: ",0," - ",NE_steps/FS2AUT," fs "

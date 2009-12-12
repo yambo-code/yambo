@@ -57,7 +57,7 @@ subroutine RT_qp_analyze(it,en,k,xK,G_input)
  complex(SP) :: cdotc
 #endif
  !
- if(.not.mod(it,RT_diagonalization_steps)==0.and..not.it==Thermal_steps) return
+ if(.not.mod(it,RT_diagonalization_steps)==0._SP.and..not.it==Thermal_steps) return
  !
  call set_real_printed_length()
  !
@@ -70,10 +70,10 @@ subroutine RT_qp_analyze(it,en,k,xK,G_input)
    !
    do ib=1,SC_bands
 #if defined _DOUBLE
-     call zgemv('N',SC_bands,SC_bands,(0.,-1.),G_input(:,:,ik),SC_bands,H_nl_sc(:,ib,1),1,(0.,0.),tmp_v,1)
+     call zgemv('N',SC_bands,SC_bands,(0._SP,-1._SP),G_input(:,:,ik),SC_bands,H_nl_sc(:,ib,1),1,(0._SP,0._SP),tmp_v,1)
      Occ_natural_orb(ib,ik)=real(zdotc(SC_bands,H_nl_sc(:,ib,1),1,tmp_v,1))
 #else 
-     call cgemv('N',SC_bands,SC_bands,(0.,-1.),G_input(:,:,ik),SC_bands,H_nl_sc(:,ib,1),1,(0.,0.),tmp_v,1)
+     call cgemv('N',SC_bands,SC_bands,(0._SP,-1._SP),G_input(:,:,ik),SC_bands,H_nl_sc(:,ib,1),1,(0._SP,0._SP),tmp_v,1)
      Occ_natural_orb(ib,ik)=real(cdotc(SC_bands,H_nl_sc(:,ib,1),1,tmp_v,1))
 #endif   
    enddo

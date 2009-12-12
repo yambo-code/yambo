@@ -51,6 +51,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  ! Work Space
  integer          ::iqp,i_sh
  real(SP)         ::shadow(10)
+ logical          ::print_title
  !
  !I/O
  integer, external::ioQP
@@ -214,7 +215,15 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
    !
    ! Title
    !
-   if (iqp==1.or.i_k(iqp)/=i_k(iqp-1)) then
+   if (iqp==1) then
+     print_title=.TRUE.
+   elseif(i_k(iqp)/=i_k(iqp-1)) then
+     print_title=.TRUE.
+   else
+     print_title=.FALSE.
+   endif
+   !  
+   if(print_title) then 
      if (l_life) then
        call msg('nr','Lifetimes @ K ['//trim(intc(i_k(iqp)))//'] (iku):',k%pt(i_k(iqp),:))
      else

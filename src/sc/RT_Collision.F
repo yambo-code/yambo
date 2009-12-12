@@ -76,14 +76,14 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
    !
  else
    !  
-   QP_Vnl_xc=(0._SP,0._SP)
-   if(l_sc_chosex) QP_Sc    =(0._SP,0._SP)
+   if(.not.local_V) QP_Vnl_xc=(0._SP,0._SP)
+   if(l_sc_chosex)      QP_Sc=(0._SP,0._SP)
    !
  endif
  !
- I1_lesser=(0.,0.)
- I2_lesser=(0.,0.)
- if(allocated(H_t)) H_t =  (0.,0.) 
+ I1_lesser=(0._SP,0._SP)
+ I2_lesser=(0._SP,0._SP)
+ if(allocated(H_t)) H_t =  (0._SP,0._SP) 
  !
  call pp_indexes_reset(px)
  call par_indexes(px,(/QP_nk/))
@@ -92,7 +92,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
    !
    if (.not.px%i1p(ik)) cycle
    !
-   H_nl_sc=(0.,0.)
+   H_nl_sc=(0._SP,0._SP)
    !
    if(.not.local_V) then
      call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 
@@ -106,9 +106,9 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
    if(Thermal_steps/=0.and.Thermal_time/=0.0) then 
      !      
 #if defined _DOUBLE
-     call zaxpy(SC_bands2,(1.,0.),-XC0(:,:,ik,1),1,H_nl_sc(:,:,1),1)
+     call zaxpy(SC_bands2,(1._SP,0._SP),-XC0(:,:,ik,1),1,H_nl_sc(:,:,1),1)
 #else
-     call caxpy(SC_bands2,(1.,0.),-XC0(:,:,ik,1),1,H_nl_sc(:,:,1),1)
+     call caxpy(SC_bands2,(1._SP,0._SP),-XC0(:,:,ik,1),1,H_nl_sc(:,:,1),1)
 #endif
      !
      H_nl_sc=H_nl_sc*(1._SP+tanh((RT_time+(RT_step*real(Thermal_steps))/2._SP) &
@@ -121,9 +121,9 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
    if(l_RT_needs_XC0) then 
      !   
 #if defined _DOUBLE
-     call zaxpy(SC_bands2,(1.,0.),XC0(:,:,ik,1),1,H_nl_sc(:,:,1),1)
+     call zaxpy(SC_bands2,(1._SP,0._SP),XC0(:,:,ik,1),1,H_nl_sc(:,:,1),1)
 #else
-     call caxpy(SC_bands2,(1.,0.),XC0(:,:,ik,1),1,H_nl_sc(:,:,1),1)
+     call caxpy(SC_bands2,(1._SP,0._SP),XC0(:,:,ik,1),1,H_nl_sc(:,:,1),1)
 #endif
      !
    endif
@@ -131,9 +131,9 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
    ! Add Ho = T+V_ion
    !
 #if defined _DOUBLE
-     call zaxpy(SC_bands2,(1.,0.),Ho(:,:,ik,1),1,H_nl_sc(:,:,1),1)
+     call zaxpy(SC_bands2,(1._SP,0._SP),Ho(:,:,ik,1),1,H_nl_sc(:,:,1),1)
 #else
-     call caxpy(SC_bands2,(1.,0.),Ho(:,:,ik,1),1,H_nl_sc(:,:,1),1)
+     call caxpy(SC_bands2,(1._SP,0._SP),Ho(:,:,ik,1),1,H_nl_sc(:,:,1),1)
 #endif
    !
    ! And now add the external field
@@ -175,10 +175,10 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
      ! G_lesser_refence(:,:,:) 
      !
 #if defined _DOUBLE
-     call zaxpy(SC_bands2,dcmplx(0.,-1./LifeTime), &
+     call zaxpy(SC_bands2,dcmplx(0._SP,-1._SP/LifeTime), &
              &  G_input(:,:,ik)-G_lesser_reference(:,:,ik),1,I1_lesser(:,:,ik),1)
 #else
-     call caxpy(SC_bands2, cmplx(0.,-1./LifeTime), &
+     call caxpy(SC_bands2, cmplx(0._SP,-1._SP/LifeTime), &
              &  G_input(:,:,ik)-G_lesser_reference(:,:,ik),1,I1_lesser(:,:,ik),1)
 #endif
      !

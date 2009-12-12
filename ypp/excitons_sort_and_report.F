@@ -175,7 +175,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S
      !
      if (A_weight(neh)<0.05) cycle
      !
-     call msg('o weight','',(/real(iv),real(ic),real(ikibz),real(is),&
+     call msg('o weight','',(/real(iv,SP),real(ic,SP),real(ikibz,SP),real(is,SP),&
 &                             A_weight(neh),amp_trans(amp_n_trans,1)/),&
 &            INDENT=-2,USE_TABS=.FALSE.)
    enddo
@@ -187,15 +187,15 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S
    amp_damping=(amp_range(2)-amp_range(1))/50. 
    amp_I=0.
    do j2=1,amp_steps
-     amp_E(j2)=amp_range(1)+(j2-1)*(amp_range(2)-amp_range(1))/real(amp_steps)+&
+     amp_E(j2)=amp_range(1)+(j2-1)*(amp_range(2)-amp_range(1))/real(amp_steps,SP)+&
 &              (0.,1.)*amp_damping
      do j1=1,amp_n_trans
-       amp_I(j2)=amp_I(j2)+amp_damping/pi*amp_trans(j1,2)/( (real(amp_E(j2))-amp_trans(j1,1))**2.+amp_damping**2.)
+       amp_I(j2)=amp_I(j2)+amp_damping/pi*amp_trans(j1,2)/( (real(amp_E(j2),SP)-amp_trans(j1,1))**2.+amp_damping**2.)
      enddo
    enddo
    amp_I=amp_I/maxval(amp_I)
    do j1=1,amp_steps
-     call msg('o amp','',(/real(amp_E(j1))*HARTREE,amp_I(j1)/),INDENT=-2,USE_TABS=.FALSE.)
+     call msg('o amp','',(/real(amp_E(j1),SP)*HARTREE,amp_I(j1)/),INDENT=-2,USE_TABS=.FALSE.)
    enddo
    !
    call of_open_close(ch_dummy(1))
@@ -262,13 +262,13 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S
    !
    R(:) = BS_R(:)*conjg(BS_R(:))
    if (write_widths)  R(:) = abs(BS_R(:))
-   R(:) = R(:)*real(spin_occ)/(2.*pi)**3.*&
+   R(:) = R(:)*real(spin_occ,SP)/(2.*pi)**3.*&
 &         d3k_factor*4.*pi/q0_def_norm**2*HARTREE
    Rmax = maxval(R)
    !
    if (trim(R_normalize)=='yes') R=R/Rmax
    !
-   if (i_mode==1) v2sort=real(BS_E)
+   if (i_mode==1) v2sort=real(BS_E,SP)
    if (i_mode==2) v2sort=R
    !
    call sort(arrin=v2sort,indx=S_indx)
@@ -278,7 +278,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S
      if (i_mode == 1) j2=S_indx(BS_H_dim-j1+1)
      if (i_mode == 2) j2=S_indx(j1)
      !
-     rv(:3)=(/real(BS_E(j2))*HARTREE,R(j2),real(j2)/)
+     rv(:3)=(/real(BS_E(j2),SP)*HARTREE,R(j2),real(j2,SP)/)
      !
      if (write_widths) then
        rv(4)=abs(aimag(BS_E(j2)))*HARTREE*1000.

@@ -77,8 +77,8 @@ subroutine el_density(en,Xk,rho,force_si)
   type(pp_indexes) ::px
 #endif
   !
-  rho=0.
-  rho_no_sym=0.
+  rho=0._SP
+  rho_no_sym=0._SP
   warn_done=.false.
   !
 #if defined _RT
@@ -118,7 +118,7 @@ subroutine el_density(en,Xk,rho,force_si)
         endif
         !
 #if defined _RT
-        f_occ=real(-(0.,1.)*G_lesser(i1,i1,i2))
+        f_occ=real(-(0._SP,1._SP)*G_lesser(i1,i1,i2),SP)
 #else
         f_occ=en%f(i1,i2,1)
         !
@@ -159,7 +159,7 @@ subroutine el_density(en,Xk,rho,force_si)
         if(ifft==0.or.ifft2==0) cycle
         !
         rho_no_sym(:)=rho_no_sym(:)-Xk%weights(ik)*2._SP*real(wf(:,ifft) &
-&                 *conjg(wf(:,ifft2))*(0._SP,1._SP)*G_lesser(i1,i2,ik))
+&                 *conjg(wf(:,ifft2))*(0._SP,1._SP)*G_lesser(i1,i2,ik),SP)
         !
       enddo
     enddo
@@ -176,7 +176,7 @@ subroutine el_density(en,Xk,rho,force_si)
   rho_syms=nsym/(i_time_rev+1)
   if (force_si) rho_syms=nsym
   do i1=1,rho_syms
-    rho(:)=rho(:)+real(rho_no_sym(fft_rot_r(i1,:)))/real(nsym)
+    rho(:)=rho(:)+real(rho_no_sym(fft_rot_r(i1,:)),SP)/real(nsym,SP)
   enddo
   !
   if (.not.force_si) rho=rho*(1+i_time_rev)

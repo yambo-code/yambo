@@ -21,7 +21,7 @@
 !
 subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Ex,Exc,Trace_Gf)
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,DP
  use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_chosex
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho

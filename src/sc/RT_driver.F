@@ -188,7 +188,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
      call RT_update_G_reference(Xen,G_lesser_reference)
    endif   
    !
-   if(l_NE_with_fields.and.i_time>0)  call RT_current(j_current,xK,Xen,G_lesser)
+   if(l_NE_with_fields.and.i_time>0)  call RT_current(j_current,xK,Xen,G_lesser,RT_time)
    !
    ! Integrate equation of motion
    !

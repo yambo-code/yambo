@@ -21,7 +21,7 @@
 !
 subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP,schlen,lchlen
  use units,          ONLY:HARTREE
  use drivers,        ONLY:l_sc_exx,l_sc_chosex,l_sc_contains_lda,&
 &                         l_sc_hf,l_sc_magnetic
@@ -42,7 +42,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use FFT_m,          ONLY:fft_size
  use parser_m,       ONLY:parser 
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
- use com,            ONLY:msg,warning
+ use com,            ONLY:msg,warning,of_open_close
  use X_m,            ONLY:X_t
  use timing,         ONLY:live_time_msg
  use stderr,         ONLY:tty_size,intc,real2ch
@@ -78,12 +78,13 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_spin
  real(SP)                 :: max_proj,V_xc_sc_shift(n_spin)
- character(schlen)        :: dumb_ch
+ character(schlen)        :: dumb_ch,sformat,headings(2)
  integer, external        :: io_SC_components,eval_G_minus_G
  logical, external        :: stop_now
  logical                  :: SC_cycle,RESTART
- logical                  :: l_TF_precond
+ logical                  :: l_TF_precond,l_write_qp_histo
  type(QP_t)               :: qp_dummy
+ character(lchlen)        :: file_name,ldump_ch
  !
  ! ws for states spread evaluation
  !
@@ -245,6 +246,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  SC_fft_size=fft_size
  call parser('TF_precondition',l_TF_precond) 
+ call parser('QPHistory',l_write_qp_histo) 
  call parser('UseRhoIO',l_use_RHO_IO) 
  !
  ! Allocation(s)...
@@ -301,6 +303,15 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    call msg('r' ,'[SC] N (N-1) order mixing             :',SC_cycle_mixing)
    call msg('r' ,'[SC] Imposed accuracy on density      :',SC_rho_threshold)
    call msg('rn','[SC]                  on energies [ev]:',SC_E_threshold*HARTREE)
+ endif
+ !
+ if(l_write_qp_histo) then
+   file_name="qp-history"
+   call of_open_close(file_name,'ot')
+   headings(1)="iteraction"
+   headings(2)="E_kpt1(1) .....  E_kpt1(SC_bands) E_kpt2(1) ..... E_kpt2(SC_bands) .... "
+   call msg('o qp-history','#',headings(1:2),INDENT=0,USE_TABS=.TRUE.)
+   sformat="(i3,"//trim(intc(SC_bands*QP_nk))//"f12.6)"
  endif
  !
  !  Ho (kinetic + potential)
@@ -540,6 +551,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
    end do
    !
+   if(l_write_qp_histo) then
+     write(ldump_ch,sformat) it,((E%E(ib,ik,1)*HARTREE,ib=1,SC_bands),ik=1,QP_nk)
+     call msg('o qp-history','',ldump_ch)
+   endif
+   !
    if (SC_cycle) then
      !
      ! New occupations 
@@ -705,6 +721,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
  enddo
  !
+ if(l_write_qp_histo) call of_open_close(file_name)
  !
  ! Final occupations 
  !====================

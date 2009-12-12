@@ -44,7 +44,7 @@ module YPP
  ! DOS
  !
  logical      ::l_dos ! electrons and phonons
- real         ::dos_broadening ! electrons
+ real(SP)     ::dos_broadening ! electrons
  integer      ::dos_bands      ! electrons
  !
  ! REAL SPACE PLOT

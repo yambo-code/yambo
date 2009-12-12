@@ -37,8 +37,8 @@ integer function io_SC_components(what,E_sc,ID)
 &                         io_sec,io_bulk,io_fragment,read_is_on,write_is_on,&
 &                         manage_RD_WR_CL_IF_END,ver_is_gt_or_eq,io_reset,IO_INCOMPATIBLE_VAR
 #if defined _RT
- use real_time,      ONLY:l_NE_with_fields,l_NE_simulate_RPA,RT_step,NE_steps,       &
-&                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps,     &
+ use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,Hfrozen,XCfrozen,                      &
+&                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
 &                         LifeTime,G_lesser,i_time,l_RT_no_diamagnetic,j_current,A_norm,&
 &                         n_ext_fields,Efield,max_rt_steps_disk,current_cache
  use IO_m,           ONLY:io_restart,io_check_restart
@@ -239,9 +239,11 @@ integer function io_SC_components(what,E_sc,ID)
 #if defined _RT
    !
    if(any((/l_J,l_G/))) then
-     call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=4,MENU=0) 
-     call io_elemental(ID,L0=l_NE_simulate_RPA,&
-&      VAR=" RPA optics in real time  :", CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=5,MENU=0) 
+     call io_elemental(ID,L0=Hfrozen,&
+&      VAR=" Hartree not updated     :", CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,L0=XCfrozen,&
+&      VAR=" XC potential/self-energy not updated :", CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,&
 &       VAR=" real-time step                 :",R0=RT_step,CHECK=.true.,OP=(/"=="/))
      if(l_G) call io_elemental(ID, &
@@ -482,7 +484,7 @@ integer function io_SC_components(what,E_sc,ID)
        !
        ! Read from cache
        !
-       j_current(:)=current_cache(:,mod(i_time-1,max_rt_steps_disk)+1)
+       j_current(:3)=current_cache(:3,mod(i_time-1,max_rt_steps_disk)+1)
        do i1=1,n_ext_fields
          A_norm(i1)=cmplx(current_cache(2*i1+2,mod(i_time-1,max_rt_steps_disk)+1), &
 &                         current_cache(2*i1+3,mod(i_time-1,max_rt_steps_disk)+1))

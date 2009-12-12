@@ -362,7 +362,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
            enddo
          enddo
          !
-         if(.not.l_rho_IO) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(:)
+         if(.not.l_rho_IO) QP_Sc(i_qp,:2)=QP_Sc(i_qp,:2)+dc(:2)
          !
          ! GPL_EXCLUDE_START SC_IGNORE
          !

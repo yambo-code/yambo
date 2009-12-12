@@ -75,7 +75,7 @@ subroutine RT_initialize()
      !
      EField(i1)%versor   =normalize_v(Efield(i1)%versor)
      !
-     EField(i1)%amplitude=sqrt( Efield(i1)%intensity*(8.0*pi)/SPEED_OF_LIGHT ) 
+     EField(i1)%amplitude=sqrt(Efield(i1)%intensity*(8._SP*pi)/SPEED_OF_LIGHT) 
      !
      call SC_check_symmetries(Efield(i1)%versor)
      !

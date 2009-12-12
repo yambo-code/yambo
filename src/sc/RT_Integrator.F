@@ -82,11 +82,11 @@ recursive subroutine RT_Integrator(G_new,G_old,T_step,Xen,k,q,Integrator,RT_time
    ! G(T+dt) = G(T) - i dt *(I1(T) - I2(T))
    !
 #if defined _DOUBLE
-   call zaxpy(SC_bands2_dot_nibz,dcmplx(0.,-T_step),I1_lesser(:,:,:),1,G_new(:,:,:),1)
-   call zaxpy(SC_bands2_dot_nibz,dcmplx(0.,+T_step),I2_lesser(:,:,:),1,G_new(:,:,:),1)
+   call zaxpy(SC_bands2_dot_nibz,dcmplx(0._SP,-T_step),I1_lesser(:,:,:),1,G_new(:,:,:),1)
+   call zaxpy(SC_bands2_dot_nibz,dcmplx(0._SP,+T_step),I2_lesser(:,:,:),1,G_new(:,:,:),1)
 #else
-   call caxpy(SC_bands2_dot_nibz,cmplx(0.,-T_step),I1_lesser(:,:,:),1,G_new(:,:,:),1)
-   call caxpy(SC_bands2_dot_nibz,cmplx(0.,+T_step),I2_lesser(:,:,:),1,G_new(:,:,:),1)
+   call caxpy(SC_bands2_dot_nibz,cmplx(0._SP,-T_step),I1_lesser(:,:,:),1,G_new(:,:,:),1)
+   call caxpy(SC_bands2_dot_nibz,cmplx(0._SP,+T_step),I2_lesser(:,:,:),1,G_new(:,:,:),1)
 #endif
    !
 !   else
@@ -162,10 +162,10 @@ recursive subroutine RT_Integrator(G_new,G_old,T_step,Xen,k,q,Integrator,RT_time
      ! Symmetrization
      !
      do i1=1,SC_bands
-       G_new(i1,i1,ik)=(0.,1.)*aimag(G_new(i1,i1,ik))
+       G_new(i1,i1,ik)=(0._SP,1._SP)*aimag(G_new(i1,i1,ik))
        !
        do i2=i1+1,SC_bands
-         G_new(i1,i2,ik)=(G_new(i1,i2,ik)-conjg(G_new(i2,i1,ik)))/2.0
+         G_new(i1,i2,ik)=(G_new(i1,i2,ik)-conjg(G_new(i2,i1,ik)))/2._SP
          G_new(i2,i1,ik)=-conjg(G_new(i1,i2,ik))
        enddo
        !

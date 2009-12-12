@@ -590,6 +590,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call Afield_activate('Pump')
    else
      call initactivate(1,'UseRhoIO SCIter SCEtresh SCRhoTresh TF_precondition')
+     call initactivate(1,'QPHistory')
    endif
    call initactivate(-1,'QpntsRXs')
  endif

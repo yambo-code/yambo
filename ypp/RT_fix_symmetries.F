@@ -69,12 +69,15 @@ subroutine RT_fix_symmetries(E,k)
  use_E_field=.FALSE.
  use_B_field=.FALSE.
  if (any(E_field/=0.)) use_E_field=.TRUE.
- if (B_field/=0.)     use_B_field=.TRUE.
+ if (B_field/=0.)      use_B_field=.TRUE.
+ !
+ call parser('RmAllSymm',Rm_all_symm)
  !
  if (use_E_field) call section('*',"== Electric Fields in real time: BZ sampling remapping ==")
  if (use_B_field) call section('*',"== Magnetic field: BZ sampling remapping ==")
+ if (Rm_all_symm) call section('*',"== Remove all Symmetries ==")
  !
- if (.not.use_B_field.and..not.use_E_field) return
+ if (.not.use_B_field.and..not.use_E_field.and..not.Rm_all_symm) return
  !
  if (wf_nb_io/=E%nb) then
    call warning('Splitted wavefunctions still not supported')
@@ -83,8 +86,6 @@ subroutine RT_fix_symmetries(E,k)
  !
  call section('+',"Symmetries")
  !=============================
- !
- call parser('RmAllSymm',Rm_all_symm)
  !
  ! Seek for all possible shells
  !

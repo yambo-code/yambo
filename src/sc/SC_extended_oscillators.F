@@ -50,8 +50,8 @@ subroutine SC_extended_oscillators(G_input)
  !
  call par_indexes(px,(/QP_n_states/))
  !
- if(l_sc_hf.or.l_sc_chosex.or.last_QP_mem/=0) QP_Vnl_xc=(0.,0.)
- if(l_sc_chosex) QP_sc=(0.,0.)
+ if(l_sc_hf.or.l_sc_chosex.or.last_QP_mem/=0) QP_Vnl_xc=(0._SP,0._SP)
+ if(l_sc_chosex) QP_sc=(0._SP,0._SP)
  !
  ! First loop on oscillators in the Cache
  ! notice that in memory all oscillators are sum together
@@ -67,7 +67,7 @@ subroutine SC_extended_oscillators(G_input)
      do ibp=1,QP_nb
        do ik=1,QP_nk
          if(QP_rho(i1)%rho_table(ib,ibp,ik)/=0) then
-           QP_Vnl_xc(i1)=QP_Vnl_xc(i1)-(0.,1.)*QP_rho(i1)%RHO_VX_RHO(ic)*G_input(ib,ibp,ik)
+           QP_Vnl_xc(i1)=QP_Vnl_xc(i1)-(0._SP,1._SP)*QP_rho(i1)%RHO_VX_RHO(ic)*G_input(ib,ibp,ik)
            ic=ic+1
          endif
        enddo
@@ -96,7 +96,7 @@ subroutine SC_extended_oscillators(G_input)
        do ibp=1,QP_nb
          do ik=1,QP_nk
            if(rho_table(ib,ibp,ik)/=0) then
-             QP_Vnl_xc(i1)=QP_Vnl_xc(i1)-(0.,1.)*rho_VX_rho(ic)*G_input(ib,ibp,ik)
+             QP_Vnl_xc(i1)=QP_Vnl_xc(i1)-(0._SP,1._SP)*rho_VX_rho(ic)*G_input(ib,ibp,ik)
              ic=ic+1
            endif
          enddo
@@ -118,7 +118,7 @@ subroutine SC_extended_oscillators(G_input)
        do ibp=1,QP_nb
          do ik=1,QP_nk
            if(rho_table(ib,ibp,ik)/=0) then
-             QP_Sc(i1,1)=QP_Sc(i1,1)-(0.,1.)*rho_VX_rho(ic)*G_input(ib,ibp,ik)      
+             QP_Sc(i1,1)=QP_Sc(i1,1)-(0._SP,1._SP)*rho_VX_rho(ic)*G_input(ib,ibp,ik)      
              ic=ic+1
            endif
           enddo

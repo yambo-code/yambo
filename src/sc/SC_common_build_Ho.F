@@ -21,6 +21,7 @@
 !
 subroutine SC_common_build_Ho(E,Xk,k)
  !
+ use pars,           ONLY:SP
  use com,            ONLY:error
  use electrons,      ONLY:levels,n_sp_pol,spin
  use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
@@ -74,11 +75,11 @@ subroutine SC_common_build_Ho(E,Xk,k)
  ! If we are using yambo_magnetic now Ho already
  ! contains H_magnetic
  !
- if(.not.l_sc_magnetic) Ho=(0.,0.)
+ if(.not.l_sc_magnetic) Ho=(0._SP,0._SP)
  !
 #else
  !
- Ho=(0.,0.)
+ Ho=(0._SP,0._SP)
  !
 #endif
  !

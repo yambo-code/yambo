@@ -24,23 +24,23 @@ subroutine V_Hartree(rho,vhr)
   !  Hartree potential (vhr)
   !  sum_G 4pi*rho(G)/|G|**2.  with G!=0, for G=0 vhr(0)=0 
   !
- use pars,          ONLY: pi,DP
+ use pars,          ONLY: pi,SP,DP
  use R_lattice,     ONLY: bare_qpg
  use D_lattice,     ONLY: DL_vol
  use fft_m,         ONLY: fft_size,fft_dim,fftw_plan,fft_g_table
  use wave_func,     ONLY: wf_ng
  !
  implicit none
- real :: rho(fft_size)
- real :: vhr(fft_size)
+ real(SP) :: rho(fft_size)
+ real(SP) :: vhr(fft_size)
  !
  ! Work Space
  !
  complex(DP) :: rhog(fft_size), vhtmp(fft_size) 
- complex     :: vhg(wf_ng)
+ complex(DP) :: vhg(wf_ng)
  !
- vhg   = (0.,0.)
- vhtmp = (0.,0.)
+ vhg   = (0._DP,0._DP)
+ vhtmp = (0._DP,0._DP)
  rhog  = rho
  !
  ! FFT call: rho in reciprocal space
@@ -52,7 +52,7 @@ subroutine V_Hartree(rho,vhr)
  call fft_3d(rhog,fft_dim,-1)
 #endif
  !
- vhg(2:wf_ng)=((4.*pi/DL_vol)*(rhog(fft_g_table(2:wf_ng,1))))&
+ vhg(2:wf_ng)=((4._DP*pi/DL_vol)*(rhog(fft_g_table(2:wf_ng,1))))&
 &              /bare_qpg(1,2:wf_ng)**2.
  !
  vhtmp(fft_g_table(1:wf_ng,1))=vhg(1:wf_ng)
@@ -68,6 +68,6 @@ subroutine V_Hartree(rho,vhr)
  !
  fftw_plan = 0
  !
- vhr = real(vhtmp)
+ vhr = real(vhtmp,SP)
  !
 end subroutine V_hartree

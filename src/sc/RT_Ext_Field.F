@@ -28,6 +28,7 @@ subroutine RT_Ext_Field(ik,H_nl_sc,G_lesser,time,Efield,A_norm)
  use X_m,            ONLY:DIP_iR_or_P
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
+ use units,          ONLY:FS2AUT
  !
  implicit none
  integer,     intent(in)     :: ik
@@ -40,10 +41,10 @@ subroutine RT_Ext_Field(ik,H_nl_sc,G_lesser,time,Efield,A_norm)
  ! Work Space
  !
  integer     :: i1,i2,is
- complex(DP) :: A_dot_P,A_vec_pot(3)
+ complex(SP) :: A_dot_P,A_vec_pot(3)
  !
  if(time<Efield%t_initial) then
-   A_norm=(0.,0.)
+   A_norm=(0._SP,0._SP)
    return
  endif
  !
@@ -86,7 +87,7 @@ subroutine RT_Ext_Field(ik,H_nl_sc,G_lesser,time,Efield,A_norm)
  !
  if(.not.l_RT_no_diamagnetic) then
    forall(i1=1:SC_bands,is=1:n_sp_pol) 
-     H_nl_sc(i1,i1,is)=H_nl_sc(i1,i1,is)+0.5*A_norm**2*(0.,-1.)*G_lesser(i1,i1,ik)
+     H_nl_sc(i1,i1,is)=H_nl_sc(i1,i1,is)+0.5_SP*A_norm**2*(0._SP,-1._SP)*G_lesser(i1,i1,ik)
    end forall
  endif
  !

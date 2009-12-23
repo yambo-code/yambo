@@ -26,7 +26,8 @@ subroutine RT_initialize()
  use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields,i_time, &
 &                         l_NE_simulate_IP,Integrator_Name,l_RT_diagonalize,NE_steps,    &
 &                         l_RT_no_diamagnetic,EField,n_ext_fields,max_rt_steps_disk,     &
-&                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen
+&                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,         &
+&                         l_RT_induced_field,l_RT_no_intraband,j_current_ext
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
  implicit none
@@ -40,6 +41,7 @@ subroutine RT_initialize()
  !----------
  call parser('RTDiagonalize',l_RT_diagonalize)
  call parser('NoDiamagnetic',l_RT_no_diamagnetic)
+ call parser('InducedField' ,l_RT_induced_field)
  call parser('RTfreezeH',    Hfrozen)
  call parser('RTfreezeXC',   XCfrozen)
  l_NE_simulate_RPA=.not.Hfrozen.and.XCfrozen
@@ -48,6 +50,7 @@ subroutine RT_initialize()
  !
  l_RT_needs_XC0=l_NE_simulate_IP.or.l_NE_simulate_RPA.or.Thermal_steps>0
  !
+ j_current_ext=(0._SP,0._SP)
  i_time=0
  !
  ! Set a number of steps compatible with the cache 
@@ -64,16 +67,19 @@ subroutine RT_initialize()
  endif
  !
  l_NE_with_fields=.false.
+
  !
  do i1=1,n_ext_fields
    !      
    Efield(i1)%ef_name=trim(Efield(i1)%ef_name)      
    !
-   if((Efield(i1)%ef_name/='none'.and.EField(i1)%intensity/=0.)) then
+   if((Efield(i1)%ef_name/='none').and.EField(i1)%intensity/=0.) then
      !      
      l_NE_with_fields=.true.
      !
-     EField(i1)%versor   =normalize_v(Efield(i1)%versor)
+     EField(i1)%versor         =normalize_v(Efield(i1)%versor)
+     !
+     EField(i1)%int_t_initial  =int(Efield(i1)%t_initial/RT_step)+1
      !
      EField(i1)%amplitude=sqrt(Efield(i1)%intensity*(8._SP*pi)/SPEED_OF_LIGHT) 
      !

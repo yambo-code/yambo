@@ -39,8 +39,9 @@ integer function io_SC_components(what,E_sc,ID)
 #if defined _RT
  use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,Hfrozen,XCfrozen,                      &
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
-&                         LifeTime,G_lesser,i_time,l_RT_no_diamagnetic,j_current,A_norm,&
-&                         n_ext_fields,Efield,max_rt_steps_disk,current_cache
+&                         LifeTime,G_lesser,i_time,l_RT_no_diamagnetic,j_current,l_RT_no_intraband,&
+&                         n_ext_fields,Efield,max_rt_steps_disk,current_cache,A_vecpot,            &
+&                         l_RT_induced_field
  use IO_m,           ONLY:io_restart,io_check_restart
  use QP_m,           ONLY:QP_nk
 #endif                                
@@ -66,7 +67,8 @@ integer function io_SC_components(what,E_sc,ID)
 #if defined _RT		
  integer               :: file_number
  logical               :: l_J,l_G,IO_current
- real(SP)              :: current_pot_disk(3+2*n_ext_fields)
+ real(SP)              :: current_pot_disk(9)
+ real(SP)              :: A_vecpot_disk(3,3,2)
 #endif
  !
  l_E =what=="E"
@@ -257,7 +259,7 @@ integer function io_SC_components(what,E_sc,ID)
 &         VAR=' integrator                   :',CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
-     call io_elemental(ID,VAR="RT_OTHERS",VAR_SZ=7,MENU=0) 
+     call io_elemental(ID,VAR="RT_OTHERS",VAR_SZ=9,MENU=0) 
      call io_elemental(ID,L0=l_RT_diagonalize,VAR=' analize quasi-particles :', &
 &     CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,I0=RT_diagonalization_steps,VAR='diagonalization interval :',&
@@ -270,10 +272,14 @@ integer function io_SC_components(what,E_sc,ID)
 &      CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,L0=l_RT_no_diamagnetic,VAR=' No diamagnetic term        :',& 
 &       CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,L0=l_RT_no_intraband,VAR=' No intraband coupling        :',& 
+&       CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,L0=l_RT_induced_field,VAR=' Include induced field       :',& 
+&       CHECK=.true.,OP=(/"=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
      do i1=1,n_ext_fields
-       call io_elemental(ID,VAR="EXTERNAL_FIELD"//trim(intc(i1)),VAR_SZ=8,MENU=0) 
+       call io_elemental(ID,VAR="EXTERNAL_FIELD"//trim(intc(i1)),VAR_SZ=7,MENU=0) 
        call io_elemental(ID,R1=Efield(i1)%versor,CHECK=.true., &
 &       VAR=" electric field versor             :",OP=(/"==","==","=="/))
        call io_elemental(ID,&
@@ -282,8 +288,6 @@ integer function io_SC_components(what,E_sc,ID)
 &       VAR=" external field amplitude          :",R0=Efield(i1)%amplitude,CHECK=.true.,OP=(/"=="/))
        call io_elemental(ID,&
 &       VAR=" external field frequency          :",R0=Efield(i1)%frequency,CHECK=.true.,OP=(/"=="/))
-       call io_elemental(ID,L0=Efield(i1)%no_intraband,VAR=' No intraband transitions   :',&
-&       CHECK=.true.,OP=(/"=="/))
        call io_elemental(ID,R0=Efield(i1)%t_initial,VAR=' initial time for the external field :',&
 &       CHECK=.true.,OP=(/"=="/))
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
@@ -448,6 +452,24 @@ integer function io_SC_components(what,E_sc,ID)
    call io_bulk(ID,R3=R_H_disk)
    if (read_is_on(ID))  call mat_r2c(R_H_disk,G_lesser(:,:,ik))
    !
+   if(l_NE_with_fields.and.ik==QP_nk) then
+     call io_bulk(ID,VAR="A_vecpot",VAR_SZ=(/3,3,2/))
+     if (write_is_on(ID)) then
+       A_vecpot_disk(:,1,1)= real(A_vecpot%vecpot(:))
+       A_vecpot_disk(:,1,2)=aimag(A_vecpot%vecpot(:))
+       A_vecpot_disk(:,2,1)= real(A_vecpot%vecpot_vel(:))
+       A_vecpot_disk(:,2,2)=aimag(A_vecpot%vecpot_vel(:))
+       A_vecpot_disk(:,3,1)= real(A_vecpot%vecpot_acc(:))
+       A_vecpot_disk(:,3,2)=aimag(A_vecpot%vecpot_acc(:))
+     endif
+     call io_bulk(ID,R3=A_vecpot_disk)
+     if (read_is_on(ID)) then 
+       A_vecpot%vecpot(:)    =cmplx(A_vecpot_disk(:,1,1),A_vecpot_disk(:,1,2),SP)
+       A_vecpot%vecpot_vel(:)=cmplx(A_vecpot_disk(:,2,1),A_vecpot_disk(:,2,2),SP)
+       A_vecpot%vecpot_acc(:)=cmplx(A_vecpot_disk(:,3,1),A_vecpot_disk(:,3,2),SP)
+     endif
+   endif
+   !
    deallocate(R_H_disk)
    !
  endif
@@ -461,10 +483,11 @@ integer function io_SC_components(what,E_sc,ID)
      !
      if(write_is_on(ID)) then
        !
-       current_cache(:3,mod(i_time-1,max_rt_steps_disk)+1)=j_current(:3)
-       do i1=1,n_ext_fields
-         current_cache(2*i1+2,mod(i_time-1,max_rt_steps_disk)+1)= real(A_norm(i1))
-         current_cache(2*i1+3,mod(i_time-1,max_rt_steps_disk)+1)=aimag(A_norm(i1))
+       current_cache(:3,mod(i_time-1,max_rt_steps_disk)+1)=real(j_current(:3))
+       !
+       do i1=1,3
+         current_cache(3+2*i1-1,mod(i_time-1,max_rt_steps_disk)+1)= real(A_vecpot%vecpot_vel(i1))
+         current_cache(3+2*i1  ,mod(i_time-1,max_rt_steps_disk)+1)=aimag(A_vecpot%vecpot_vel(i1))
        enddo
        !
      endif
@@ -472,7 +495,7 @@ integer function io_SC_components(what,E_sc,ID)
      if (IO_current) then
        !                                
        call io_bulk(ID,VAR="Current_and_Potential_TIME"//trim(intc(file_number)), &
-&                  VAR_SZ=(/3+2*n_ext_fields,max_rt_steps_disk/))
+&                  VAR_SZ=(/9,max_rt_steps_disk/))
        !
        call io_bulk(ID,R2=current_cache)
        !
@@ -484,10 +507,11 @@ integer function io_SC_components(what,E_sc,ID)
        !
        ! Read from cache
        !
-       j_current(:3)=current_cache(:3,mod(i_time-1,max_rt_steps_disk)+1)
-       do i1=1,n_ext_fields
-         A_norm(i1)=cmplx(current_cache(2*i1+2,mod(i_time-1,max_rt_steps_disk)+1), &
-&                         current_cache(2*i1+3,mod(i_time-1,max_rt_steps_disk)+1))
+       j_current(:3)=cmplx(current_cache(:3,mod(i_time-1,max_rt_steps_disk)+1),0._SP,SP)
+       !
+       do i1=1,3
+         A_vecpot%vecpot_vel(i1)=cmplx(current_cache(3+2*i1-1,mod(i_time-1,max_rt_steps_disk)+1), &
+&                                      current_cache(3+2*i1  ,mod(i_time-1,max_rt_steps_disk)+1),SP)
        enddo
        !
      endif 

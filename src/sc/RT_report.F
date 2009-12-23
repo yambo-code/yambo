@@ -25,7 +25,8 @@ subroutine RT_report(file_name,write_output_files)
  use drivers,        ONLY:l_sc_hf
  use com,            ONLY:msg,of_open_close,warning
  use real_time,      ONLY:l_NE_simulate_RPA,Thermal_time,RT_step,l_NE_simulate_IP,n_ext_fields, &
-&                         Integrator_Name,l_RT_diagonalize,l_RT_no_diamagnetic,EField
+&                         Integrator_Name,l_RT_diagonalize,l_RT_no_diamagnetic,EField,          &
+&                         l_RT_induced_field,l_RT_no_intraband,l_NE_with_fields,A_vecpot
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
  implicit none
@@ -51,7 +52,8 @@ subroutine RT_report(file_name,write_output_files)
    headings(4)="E_Hartree[eV]"
    headings(5)="E_x[eV]"
    headings(6)="E_c[eV]"
-   headings(7)="N" 
+   headings(7)="E_mg[eV]"
+   headings(8)="N" 
    !
    n_output_files=1
    !
@@ -75,6 +77,8 @@ subroutine RT_report(file_name,write_output_files)
    call msg(trim(where_ch),trim(hash_ch)//' Integrator            :',trim(Integrator_Name),INDENT=0)
    call msg(trim(where_ch),trim(hash_ch)//' RPA                   :',l_NE_simulate_RPA,INDENT=0)
    call msg(trim(where_ch),trim(hash_ch)//' Diamagnetic term      :',.not.l_RT_no_diamagnetic,INDENT=0)
+   call msg(trim(where_ch),trim(hash_ch)//' Intraband coupling    :',.not.l_RT_no_intraband,INDENT=0)
+   call msg(trim(where_ch),trim(hash_ch)//' Induced Field         :',.not.l_RT_induced_field,INDENT=0)
    call msg(trim(where_ch),trim(hash_ch)//' Analyze QP-dynamics   :',l_RT_diagonalize,INDENT=0)
    !
    do i2=1,n_ext_fields
@@ -85,12 +89,18 @@ subroutine RT_report(file_name,write_output_files)
      call msg(trim(where_ch),trim(hash_ch)//' Amplitude                  :',EField(i2)%amplitude,INDENT=0)
      call msg(trim(where_ch),trim(hash_ch)//' Frequancy                  :',EField(i2)%frequency,INDENT=0)
      call msg(trim(where_ch),trim(hash_ch)//' Direction                  :',EField(i2)%versor,INDENT=0)
-     call msg(trim(where_ch),trim(hash_ch)//' Intraband transitions      :',.not.EField(i2)%no_intraband,INDENT=0)
    enddo  
+   !
+   if(l_NE_with_fields) then
+     call msg(trim(where_ch),trim(hash_ch)//' Initial Vecpot             :',&
+     &               (/real(A_vecpot%vecpot),aimag(A_vecpot%vecpot)/),INDENT=0)
+     call msg(trim(where_ch),trim(hash_ch)//' Initial Vecpot Velocity    :',&
+     &               (/real(A_vecpot%vecpot_vel),aimag(A_vecpot%vecpot_vel)/),INDENT=0)
+   endif
    !
    if (i1>1) then 
      call msg(trim(where_ch),'#')
-     call msg(trim(where_ch),'#',headings(1:7),INDENT=0,USE_TABS=.TRUE.)
+     call msg(trim(where_ch),'#',headings(1:8),INDENT=0,USE_TABS=.TRUE.)
      call msg(trim(where_ch),'#')
    endif
    !

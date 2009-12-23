@@ -134,7 +134,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
        !
        do ic=ic_min,X%ib(2)
          !
-         rho(:)=(0.,0.)
+         rho(:)=(0._SP,0._SP)
          !
          Ev_m_Ec=Xen%E(iv,ik,E_i_spin)-Xen%E(ic,ik,E_i_spin)
          if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,E_i_spin)-Xen%Eo(ic,ik,E_i_spin)

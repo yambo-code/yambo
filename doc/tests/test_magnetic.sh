@@ -10,13 +10,21 @@ EPS=0.00005   # precision 5e-5
   
 E_up_landau=(   -0.9695717 -0.5407296 -0.2600582 -0.2389626 -0.2385391 -0.0004087206)
 E_down_landau=( -0.9206337 -0.476001  -0.2181368 -0.1754182 -0.1749939  0.07520718  )
-E_up_pauli=(    -0.9693784 -0.540536  -0.2598646 -0.2385588 -0.2385559 -2.168596e-05)
+E_up_pauli=(    -0.9693784 -0.540536  -0.2598646 -0.2385588 -0.2385559 -0.0002168596)
 E_down_pauli=(  -0.9208654 -0.4762328 -0.2183685 -0.175439  -0.1754365  0.07517388  )
 E_up_all=(      -0.9695718 -0.5407296 -0.2600582 -0.2389627 -0.2385392 -0.0004087853)
 E_down_all=(    -0.9210591 -0.4764264 -0.2185622 -0.1758436 -0.1754194  0.07478175  )
 
 
 ##########################################################
+
+############## YAMBO EXECUTABLE #################
+YAMBOPATH="../../../bin/"
+YAMBO="${YAMBOPATH}/yambo"
+YAMBO_MAGNETIC="${YAMBOPATH}/yambo_magnetic"
+YPP_RT="${YAMBOPATH}/ypp_rt"
+A2Y="${YAMBOPATH}/a2y"
+#################################################
 
 
 # check whether echo has the -e option
@@ -25,6 +33,15 @@ if test "`echo -e`" = "-e" ; then ECHO=echo ; else ECHO="echo -e" ; fi
 # run from directory where this script is
 cd `echo $0 | sed 's/\(.*\)\/.*/\1/'` # extract pathname
 TEST_DIR=`pwd`
+
+if [ -d test_magnetic ] ; then
+  $ECHO " WARNING: directory test_magnetic already exists "
+  $ECHO ""
+fi
+
+rm -rf test_magnetic
+mkdir  test_magnetic
+cd test_magnetic
 
 $ECHO 
 $ECHO " * * * * * * * * * * * * * * * * *"
@@ -42,30 +59,22 @@ if [ `which ncdump | wc -c` -eq 0 ] ; then
   exit 1;
 fi
 
-if [ `which a2y | wc -c` -eq 0 ] ; then
+if [ ! -f $A2Y ] ; then
   $ECHO " Compile yambo interfaces before tests "
   exit 1;
 fi
 
-if [ `which ypp_rt | wc -c` -eq 0 ] ; then
+if [ ! -f ${YPP_RT} ] ; then
   $ECHO " Ypp_rt executable not found "
   exit 1;
 fi
 
-if [ `which yambo_magnetic | wc -c` -eq 0 ] ; then
+if [ ! -f ${YAMBO_MAGNETIC} ] ; then
   $ECHO " Yambo_magnetic executable not found "
   exit 1;
 fi
 
-if [ -d test_magnetic ] ; then
-  $ECHO " WARNING: directory test_magnetic already exists "
-  $ECHO ""
-fi
 
-rm -rf test_magnetic
-mkdir  test_magnetic
-
-cd test_magnetic
 $ECHO " Downloading pseudopotentials...... "
 if (! wget ftp://ftp.abinit.org/pub/abinitio/Psps/LDA_TM.psps/08/8o.pspnc &> /dev/null) then
 $ECHO " Error downloading pseudo-potentials "
@@ -140,7 +149,7 @@ fi
 
 $ECHO " Import WF ..... "
 
-if (! a2y -N -S -F O2_dfto_DS2_KSS &> output_a2y) then
+if (! $A2Y -N -S -F O2_dfto_DS2_KSS &> output_a2y) then
 $ECHO " Error running A2Y "
 exit 1;
 fi
@@ -151,7 +160,7 @@ cat > yambo_setup.in << EOF
 setup                        # [R INI] Initialization
 EOF
 
-if (! yambo_magnetic -N -F yambo_setup.in  &> output_setup) then
+if (! ${YAMBO_MAGNETIC} -N -F yambo_setup.in  &> output_setup) then
 $ECHO " Error in YAMBO setup1 "
 exit 1;
 fi
@@ -172,14 +181,14 @@ EOF
 
 $ECHO " Ypp Fix_symm ..... "
 
-if (! ypp_rt -N -F ypp_fix_symm.in  &> output_setup) then
+if (! ${YPP_RT} -N -F ypp_fix_symm.in  &> output_setup) then
 $ECHO " Error in Ypp_rt fix symmetries "
 exit 1;
 fi
 
 $ECHO " Yambo Setup 2 ..... "
 
-if (! yambo_magnetic -N -F yambo_setup.in  &> output_setup) then
+if (! ${YAMBO_MAGNETIC} -N -F yambo_setup.in  &> output_setup) then
 $ECHO " Error in YAMBO setup2 "
 exit 1;
 fi
@@ -200,7 +209,7 @@ EOF
 
 $ECHO " Yambo magnetic (landau) ..... "
 
-if (! yambo_magnetic -N -F yambo_magnetic.in -J MAG_landau  &> output_yambo) then
+if (! ${YAMBO_MAGNETIC} -N -F yambo_magnetic.in -J MAG_landau  &> output_yambo) then
 $ECHO " Error running Yambo_magnetic (landau) ..... "
 exit 1;
 fi
@@ -221,7 +230,7 @@ EOF
 
 $ECHO " Yambo magnetic (pauli) ..... "
 
-if (! yambo_magnetic -N -F yambo_magnetic.in -J MAG_pauli  &> output_yambo) then
+if (! ${YAMBO_MAGNETIC} -N -F yambo_magnetic.in -J MAG_pauli  &> output_yambo) then
 $ECHO " Error running Yambo_magnetic (pauli) ..... "
 exit 1;
 fi
@@ -242,7 +251,7 @@ EOF
 
 $ECHO " Yambo magnetic (all) ..... "
 
-if (! yambo_magnetic -N -F yambo_magnetic.in -J MAG_all  &> output_yambo) then
+if (! ${YAMBO_MAGNETIC} -N -F yambo_magnetic.in -J MAG_all  &> output_yambo) then
 $ECHO " Error running Yambo_magnetic (all) ..... "
 exit 1;
 fi

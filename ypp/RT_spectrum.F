@@ -25,7 +25,7 @@ subroutine RT_spectrum(en,k)
  !
  use YPP
  use pars,           ONLY:SP,DP,pi
- use units,          ONLY:FS2AUT,HARTREE
+ use units,          ONLY:FS2AUT,HARTREE,SPEED_OF_LIGHT
  use electrons,      ONLY:levels
  use com,            ONLY:msg,of_open_close,warning
  use stderr,         ONLY:set_real_printed_length
@@ -34,9 +34,10 @@ subroutine RT_spectrum(en,k)
  use parser_m,       ONLY:parser
  use timing,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP
- use real_time,      ONLY:NE_steps,RT_step,j_current,A_norm,i_time,    &
+ use real_time,      ONLY:NE_steps,RT_step,j_current,i_time,Efield,  &
 &                         max_rt_steps_disk,current_cache,n_ext_fields,&
-&                         Efield
+&                         A_vecpot
+
  implicit none
  !
  type(levels)   :: en
@@ -47,14 +48,14 @@ subroutine RT_spectrum(en,k)
  integer  :: io_J,io_G,ID(2)
  integer  :: damp,i1,i2
  integer  :: niter,istart,iend,ishift
- logical  :: Prt_Current,Prt_Einduced,Use_FFT
+ logical  :: Prt_Current,Prt_Einduced,Use_FFT,l_no_remove_DC
  character(lchlen)  :: file_name(3),dump_ch
  character(schlen)  :: headings(7)
  real(SP)           :: values(8)
  real(SP) :: av,omega,tt,de,max_value
  real(SP),    allocatable :: damp_function(:)
  real(SP),    allocatable :: current(:,:)
- complex(SP), allocatable :: Avec(:)
+ real(SP),    allocatable :: A_vecpot_vel(:,:)
  complex(DP), allocatable :: dielectric(:,:)
  real(DP),    allocatable :: E_induced(:,:)
  integer     :: fft_sign
@@ -74,6 +75,7 @@ subroutine RT_spectrum(en,k)
  call parser('PrtCurrent',Prt_Current)
  call parser('PrtEinduced',Prt_EInduced)
  call parser('UseFFT',Use_FFT)
+ call parser('NoRmDC',l_no_remove_DC)
  ! 
  ! Check damping mode
  !
@@ -149,9 +151,9 @@ subroutine RT_spectrum(en,k)
  !
  allocate(current(istart:iend,3))
  call mem_est("Current",(/size(current)/),(/SP/))
- allocate(Avec(istart:iend))
- call mem_est("Avec",(/size(Avec)/),(/2*SP/))
- allocate(current_cache(3+2*n_ext_fields,max_rt_steps_disk))
+ allocate(A_vecpot_vel(3,istart:iend))
+ call mem_est("A_vecpot_vel",(/size(A_vecpot_vel)/),(/SP/))
+ allocate(current_cache(9,max_rt_steps_disk))
  call mem_est("Current_Cache",(/size(current_cache)/),(/SP/))
  !
  call live_timing('Reading current:',NE_steps)
@@ -162,7 +164,7 @@ subroutine RT_spectrum(en,k)
    !
    if(i_time>=istart.and.i_time<=iend) then
      current(i_time,:)= j_current(:)
-     Avec(i_time)     = A_norm(ref_efield) ! to get the Vector one just multiply for versor Ef_q0(:)
+     A_vecpot_vel(:,i_time)     = real(A_vecpot%vecpot_vel(:))
    endif           
    !
    call live_timing(steps=1)
@@ -179,16 +181,17 @@ subroutine RT_spectrum(en,k)
    file_name(1)="current"
    call of_open_close(file_name(1),'ot')
    headings(1)="Time[fs]"
-   headings(2)="ReA"
-   headings(3)="ImA"
-   headings(4)="j_x"
-   headings(5)="j_y"
-   headings(6)="j_z"
-   call msg('o current','#',headings(1:6),INDENT=-2,USE_TABS=.TRUE.)
+   headings(2)="A'_x"
+   headings(3)="A'_y"
+   headings(4)="A'_z"
+   headings(5)="j_x"
+   headings(6)="j_y"
+   headings(7)="j_z"
+   call msg('o current','#',headings(1:7),INDENT=-2,USE_TABS=.TRUE.)
    do i1=istart,iend
-     values(1:6)=(/RT_step*i1/FS2AUT,real(Avec(i1)),aimag(Avec(i1)), &
+     values(1:7)=(/RT_step*i1/FS2AUT,A_vecpot_vel(1,i1),A_vecpot_vel(2,i1),A_vecpot_vel(3,i1), &
 &                 current(i1,1),current(i1,2),current(i1,3)/)
-     call msg('o current','',values(1:6),USE_TABS=.TRUE.)
+     call msg('o current','',values(1:7),USE_TABS=.TRUE.)
    enddo
    !
    call of_open_close(file_name(1))
@@ -197,10 +200,14 @@ subroutine RT_spectrum(en,k)
  !
  ! Remove the dc component from current
  !
- do i1 = 1, 3
-  av = sum(current( istart:iend, i1))
-  current( istart:iend, i1) = current(istart:iend ,i1) - av/dble(niter)
- enddo
+ if(.not.l_no_remove_dc) then
+   !
+   do i1 = 1, 3
+     av = sum(current( istart:iend, i1))
+     current( istart:iend, i1) = current(istart:iend ,i1) - av/dble(niter)
+   enddo
+   !
+ endif
  !
  ! Calculate the induced Electric Field
  !
@@ -217,6 +224,8 @@ subroutine RT_spectrum(en,k)
    call live_timing(steps=1)
  enddo
  call live_timing()
+ !
+ E_induced=E_induced/SPEED_OF_LIGHT
  !  
  ! Apply the damping function
  !
@@ -288,23 +297,18 @@ subroutine RT_spectrum(en,k)
  else
   ! 
   ! Notice that in the integration should appear dt = RT_step but this cancel
-  ! when one divides from Avec(1) that is the Fourier Transform of a delta function 
+  ! when one divides from Efield%amplitude that is the Fourier Transform of a delta function 
   !
   call live_timing('FFT:', X_rt%energy_steps)
   !
   do i1 = 1, X_rt%energy_steps
     omega = (i1-1)*de+X_rt%energy_range(1)
     !
-!    if(omega<2._SP*pi*X_rt%damp_factor) then
-!      dielectric(i1,:)=(0._DP,0._DP)
-!    else
-      !
-      do i2 = istart, iend
-        tt = (i2-istart+1)*RT_step
-        dielectric(i1,1:3) = dielectric(i1,1:3) &
-        &  + E_induced(i2,1:3)*exp((0.,1.)*omega*tt)
-      enddo
-!    endif
+    do i2 = istart, iend
+      tt = (i2-istart+1)*RT_step
+      dielectric(i1,1:3) = dielectric(i1,1:3) &
+&                        + E_induced(i2,1:3)*exp((0.,1.)*omega*tt) 
+    enddo
     !
     call live_timing(steps=1)
   enddo
@@ -321,9 +325,16 @@ subroutine RT_spectrum(en,k)
  !
  select case(trim(Efield(ref_efield)%ef_name))
    case('DELTA')
-     dielectric(:,:) = dielectric(:,:)/Avec(istart+1)
-   case('RESONANT','ANTIRESONANT')
-     dielectric(:,:) = dielectric(:,:)*(0.,2.)/Efield(ref_efield)%amplitude
+     dielectric(:,:) = dielectric(:,:)/(-Efield(ref_efield)%amplitude)
+   case('RESONANT')
+     dielectric(:,:) = dielectric(:,:)/(-Efield(ref_efield)%amplitude)/(-2._SP)
+   case('ANTIRESONANT')
+     dielectric(:,:) = dielectric(:,:)/(-Efield(ref_efield)%amplitude)/2._SP
+   case('EXPSTEP')
+     do i1=1,X_rt%energy_steps
+       omega = (i1-1)*de+X_rt%energy_range(1)
+       dielectric(i1,:) = -dielectric(i1,:)*(Efield(ref_efield)%frequency+(0._SP,1._SP)*omega)
+     enddo
      call warning(" Only epsilon(w = Efield%frequency) is correct ")
    case default
      call warning(" External Field "//trim(Efield(ref_efield)%ef_name)//" not implemented in ypp_rt ")
@@ -368,10 +379,10 @@ subroutine RT_spectrum(en,k)
  ! 
  call set_real_printed_length()
  !
- deallocate(E_induced,dielectric,current,damp_function,Avec,current_cache)
+ deallocate(E_induced,dielectric,current,damp_function,A_vecpot_vel,current_cache)
  call mem_est("Current_Cache")
  call mem_est("Current")
- call mem_est("Avec")
+ call mem_est("A_vecpot_vel")
  call mem_est("Dielectric")
  call mem_est("E_induced")
  call mem_est("Damp_Function")

@@ -39,6 +39,15 @@ module real_time
  ! To exclude the Diamagnetic term 
  !
  logical           :: l_RT_no_diamagnetic
+ !
+ ! To exclude the intraband terms
+ !
+ logical           :: l_RT_no_intraband
+ !
+ ! To include the induced field in the coupling and current
+ !
+ logical           :: l_RT_induced_field
+ !
  ! 
  ! Diagonalization (QP analysis)
  !
@@ -61,11 +70,11 @@ module real_time
  ! 
  type ext_field
    real(SP) :: t_initial
+   integer  :: int_t_initial
    real(SP) :: frequency
    real(SP) :: intensity
    real(SP) :: amplitude
    real(SP) :: versor(3)
-   logical  :: no_intraband
    character(schlen) :: ef_name
  end type ext_field
  !
@@ -82,13 +91,23 @@ module real_time
  integer, parameter  :: n_ext_fields=2
  type(ext_field)     :: EField(n_ext_fields)
  !
- ! Vector potential A(t) norm
- !
- complex(SP)         :: A_norm(n_ext_fields) 
- !                                             
  ! Time dependent Hamiltonian, current and vec. potential
  !
  complex(SP) :: j_current(3)
+ !
+ ! External current to generate a given vector potential
+ !
+ complex(SP) :: j_current_ext(3)
+ !
+ ! Gauge Field (Vector potential)
+ ! 
+ type gauge_field
+   complex(SP) :: vecpot(3)
+   complex(SP) :: vecpot_vel(3)
+   complex(SP) :: vecpot_acc(3)
+ end type gauge_field
+ !
+ type(gauge_field) :: A_vecpot,A_vecpot_previous
  !
  ! Diagonal and off-diagonal relaxation time
  !
@@ -129,11 +148,9 @@ module real_time
  !
  ! Databases input/output
  !
- integer                  :: io_J
- integer                  :: io_G
  integer                  :: ID(5)                
- integer, allocatable     :: kpoints_map(:,:)
  integer                  :: max_rt_steps_disk 
+ integer, allocatable     :: kpoints_map(:,:)
  real(SP), allocatable    :: current_cache(:,:)
  !
  ! Interface
@@ -159,6 +176,9 @@ module real_time
      real(SP),        optional, intent(in) :: O_REAL(fft_size,n_sp_pol)
      !
    end subroutine RT_average_operator
+   !
+   subroutine RT_Integrator(G_new,G_old,Avec,Avec_old,T_step,Xen,k,q,Integrator,RT_time)
+   end subroutine RT_Integrator
    !
  end interface
  !
@@ -190,7 +210,7 @@ module real_time
      endif
      !
      if(l_NE_with_fields) then
-       allocate(current_cache(3+2*n_ext_fields,max_rt_steps_disk))
+       allocate(current_cache(9,max_rt_steps_disk))
        call mem_est('Current_Cache',(/size(current_cache)/),(/SP/))
      endif
      !

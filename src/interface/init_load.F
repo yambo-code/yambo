@@ -282,6 +282,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'RTDiagonalize', '[RT] Analyze quasi-particle dynamics in real-time',verb_level=V_sc)
  call it(defs,    'RTDiagoSteps',  '[RT] Digonalize the Hamiltonian',RT_diagonalization_steps,verb_level=V_sc)
  call it('f',defs,'NoDiamagnetic', '[RT] Exclude the diamagnetic term in current and coupling',verb_level=V_sc)
+ call it('f',defs,'NoIntraband', '[RT] Do not include intraband coupling',verb_level=V_sc)
+ call it('f',defs,'InducedField', '[RT] Include induced field in coupling and current(work in progress)',verb_level=V_sc)
  call it('f',defs,'RTfreezeH', '[RT] Hartree not updated during RT',verb_level=V_sc)
  call it('f',defs,'RTfreezeXC','[RT] XC potential/self-energy not updated during RT',verb_level=V_sc)
  call it(defs,'DiskSteps',     '[RT] Numer of steps stored in memory before I/O',max_rt_steps_disk,verb_level=V_sc)
@@ -424,10 +426,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
      call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] External Field (SINUSOIDAL|RESONANT|DELTA|STEP)',&
 &    EField(i_field)%ef_name,verb_level=verbosity_here)
      call it(defs,trim(name)//'_Dir',             '[RT '//trim(name)//'] Electric Field Versor',&
-&    Efield(i_field)%versor,verb_level=verbosity_here)
+&    EField(i_field)%versor,verb_level=verbosity_here)
      call it(defs,trim(name)//'_Tstart',        '[RT '//trim(name)//'] Initial Time',&
 &    EField(i_field)%t_initial,unit=Time_unit,verb_level=verbosity_here)
-     call it('f',defs,trim(name)//'_NoIntraband', '[RT '//trim(name)//'] Do not include intraband coupling',verb_level=V_sc)
    end subroutine
    !
 #endif

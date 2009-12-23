@@ -19,31 +19,31 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine RT_current(j_current,xK,Xen,G_lesser)
+subroutine RT_current(xK,Xen,G_lesser,RT_time)
  !
  ! Evalute current including also the diamagnetic contribution
  !
  use pars,           ONLY:SP,DP,pi
+ use units,          ONLY:SPEED_OF_LIGHT
  use electrons,      ONLY:levels
- use R_lattice,      ONLY:bz_samp,RL_vol
- use D_lattice,      ONLY:dl_sop,sop_inv
+ use R_lattice,      ONLY:bz_samp
+ use D_lattice,      ONLY:DL_sop,sop_inv
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel,levels
  use X_m,            ONLY:DIP_iR_or_P
- use real_time,      ONLY:l_RT_no_diamagnetic,io_J,ID,i_time,Efield,n_ext_fields,A_norm
- use IO_m,           ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL
+ use real_time,      ONLY:l_RT_no_diamagnetic,i_time,Efield,n_ext_fields,RT_step, &
+&                         l_NE_with_fields,j_current,A_vecpot,l_RT_induced_field
  !
  implicit none
  type(bz_samp), intent(in) ::Xk
  type(levels),  intent(in) ::Xen
+ real(SP),      intent(in) ::RT_time
  complex(SP),    intent(in)  :: G_lesser(SC_bands,SC_bands,Xk%nibz)
- complex(SP),    intent(out) :: j_current(3)
- integer, external           :: io_SC_components
  !
  ! Work Space
  !
- integer       :: i1,i2,ik,is,SC_bands2
- complex(SP)      :: j_dir(3),j_dir_rot(3)
+ integer       :: i1,i2,i3,ik,is,SC_bands2
+ complex(SP)      :: j_dir(3),j_dir_rot(3),G_tmp(SC_bands,SC_bands)
 #if defined _DOUBLE
  complex(DP)   :: zdotc
 #else
@@ -52,12 +52,15 @@ subroutine RT_current(j_current,xK,Xen,G_lesser)
  !
  SC_bands2=SC_bands**2
  !
- ! j(r,t) = \sum_ijk e/2m \psi^*_i(k) p \psi_j(k) - e^2/m n(r) A(r,t)
+ ! j(r,t) = \sum_ijk e/(2m) \psi^*_i(k) p \psi_j(k) - e^2/(cm) n(r) A(r,t)
  !
  ! j_current(t) = int dr j(r,t)
  !
- j_current(:)=0.
+ j_current(:)=(0._SP,0._SP)
  !
+ if(.not.l_NE_with_fields.or.i_time<0) return
+ !
+! write(100,'(4f16.8)') real(G_lesser(4,5,1)),aimag(G_lesser(4,5,1)),real(G_lesser(5,4,1)),aimag(G_lesser(5,4,1))
  do i1=1,Xk%nbz
    !
    ik = Xk%sstar(i1,1)
@@ -68,7 +71,9 @@ subroutine RT_current(j_current,xK,Xen,G_lesser)
 #if defined _DOUBLE
      j_dir(i2)=-aimag(zdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1))
 #else
-     j_dir(i2)=-aimag(cdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1))
+     DIP_iR_or_P=(0._SP,1._SP)*DIP_iR_or_P
+     j_dir(i2)=-real(cdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1))
+     DIP_iR_or_P=(0._SP,-1._SP)*DIP_iR_or_P
 #endif
      !
    enddo
@@ -81,27 +86,14 @@ subroutine RT_current(j_current,xK,Xen,G_lesser)
    !
  enddo
  !
- j_current(:)=j_current(:)*RL_vol/(Xk%nbz*(2.*pi)**3)
+ j_current(:)=j_current(:)/real(Xk%nbz,SP)
  !
- ! Diamagnetic term. It is correct??
+ ! Diamagnetic term
  !
  if(.not.l_RT_no_diamagnetic) then
-   do i1=1,n_ext_fields
-     if(Efield(i1)%ef_name/='none') j_current(:)=j_current(:)+A_norm(i1)*nel*RL_vol/(Xk%nbz*(2.*pi)**3)*Efield(i1)%versor(:) 
-   enddo
+   !
+   j_current(:)=j_current(:)+A_vecpot%vecpot(:)*real(nel,SP)/SPEED_OF_LIGHT
+   !
  endif
- !
- ! Write current on disk
- !
- if(i_time==1) then 
-   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
-   io_J=io_SC_components('J' ,Xen,ID(4))
-   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/2/),ID=ID(4)) 
-   io_J=io_SC_components('J' ,Xen,ID(4))
- else
-   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/i_time+1/),ID=ID(4)) 
-   io_J=io_SC_components('J' ,Xen,ID(4))
- endif
- !
  !
 end subroutine RT_current

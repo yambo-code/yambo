@@ -19,14 +19,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Ex,Exc,Trace_Gf)
+subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Ex,Exc,E_mg,Trace_Gf)
  !
- use pars,           ONLY:SP,DP
+ use pars,           ONLY:SP,DP,pi
+ use units,          ONLY:SPEED_OF_LIGHT
  use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_chosex
  use R_lattice,      ONLY:bz_samp
+ use D_lattice,      ONLY:DL_vol
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho
  use X_m,            ONLY:P_square
- use real_time,      ONLY:XC0,G_lesser,RT_average_operator,XCfrozen
+ use real_time,      ONLY:XC0,G_lesser,RT_average_operator,XCfrozen, &
+&                         l_NE_with_fields,A_vecpot
  use electrons,      ONLY:levels
  use QP_m,           ONLY:QP_Vnl_xc,QP_Sc
  use xc_functionals, ONLY:E_xc
@@ -36,7 +39,7 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Ex,Exc,Trace_Gf)
  !
  type(levels),  intent(in) :: en
  type(bz_samp), intent(in) :: k
- complex(SP),   intent(out):: E_kin,E_ion,E_h,Trace_Gf,Exc,Ex
+ complex(SP),   intent(out):: E_kin,E_ion,E_h,Trace_Gf,Exc,Ex,E_mg
  !
  ! Work Space
  !
@@ -108,6 +111,16 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Ex,Exc,Trace_Gf)
      !
    endif
    !
+ endif
+ !
+ ! Energy of the Electro-Magnetic Field
+ !
+ if(l_NE_with_fields) then
+   !                    
+   E_mg=DL_vol/(8._SP*pi*SPEED_OF_LIGHT**2)*abs(sum(A_vecpot%vecpot))
+   !
+ else
+   E_mg=(0._SP,0._SP)
  endif
  !
  ! Total number of electrons

@@ -33,9 +33,10 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  use units,          ONLY:HARTREE
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
- use real_time,      ONLY:G_lesser,ID,io_J,io_G,ID,NE_steps,G_lesser_previous,&
+ use real_time,      ONLY:G_lesser,ID,ID,NE_steps,G_lesser_previous,j_current,&
 &                         G_lesser_reference,Thermal_steps,LifeTime,XC0,      &
-&                         l_RT_needs_XC0,l_NE_simulate_IP,Hfrozen,XCfrozen
+&                         l_RT_needs_XC0,l_NE_simulate_IP,Hfrozen,XCfrozen,   &
+&                         A_vecpot,A_vecpot_previous,Efield,l_NE_with_fields
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V, &
 &                         rho_convergence,H_rotate,local_V,V_hartree_sc,      &
 &                         E_bare,V_xc_sc,rho_n
@@ -52,7 +53,7 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  ! Work Space
  !
  integer :: ik,it,i1
- integer :: io_E,io_V,io_WF
+ integer :: io_E,io_V,io_WF,io_G,io_J
  logical :: RESTART
  logical :: LOAD_SC_XC,SC_DB_present
  !
@@ -60,9 +61,16 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  !----------------------------------
  ! G_lesser(T=0,T=0)=Go and G_lesser_old(T=0,T=0)=Go
  !
- G_lesser    =(0._SP,0._SP)
- V_xc_sc     =(0._SP)
- V_hartree_sc=(0._SP)
+ G_lesser          =(0._SP,0._SP)
+ V_xc_sc           =(0._SP)
+ V_hartree_sc      =(0._SP)
+ !
+ ! Set to zero current and fields
+ !
+ j_current          =(0._SP,0._SP)
+ A_vecpot%vecpot    =(0._SP,0._SP)
+ A_vecpot%vecpot_vel=(0._SP,0._SP)
+ A_vecpot%vecpot_acc=(0._SP,0._SP)
  ! 
  forall(i1=1:SC_bands,ik=1:Xen%nk)
    G_lesser(i1,i1,ik)=(0._SP,1._SP)*Xen%f(i1,ik,1)
@@ -192,10 +200,15 @@ subroutine RT_start_and_restart(Xen,Xk,k)
    !
    it_now=it_now+1
    !
+ else
+   !
+   if(l_NE_with_fields) call RT_init_vecpot()
+   !
  endif
  !
  ! Initialize G_lesser_previous and G_lesser_reference
  !
+ A_vecpot_previous =A_vecpot
  G_lesser_previous =G_lesser   
  if(LifeTime/=0.0) G_lesser_reference=G_lesser   
  !

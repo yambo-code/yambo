@@ -32,13 +32,13 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  use wave_func,      ONLY:wf,WF_load,wf_ng,WF_free
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:bz_samp,qindx_S,G_m_G
- use QP_m,           ONLY:QP_nk,QP_nb,QP_t,QP_ng_Sx,QP_n_G_bands,CHOSEX_use_empties
+ use QP_m,           ONLY:QP_nb,QP_t,QP_ng_Sx,QP_n_G_bands,CHOSEX_use_empties
  use SC,             ONLY:SC_potential,SC_bands,Ho,E_bare,it_now,local_V
- use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &
-&                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,io_G,ID,   &
-&                         i_time,Integrator_name,j_current,l_RT_diagonalize,     &
-&                         G_lesser_reference,LifeTime,RT_diagonalization_steps
+&                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,      &
+&                         i_time,Integrator_name,j_current,l_RT_diagonalize,        &
+&                         G_lesser_reference,LifeTime,RT_diagonalization_steps,     &
+&                         A_vecpot,A_vecpot_previous
  use oscillators_CACHE, ONLY:free_RHO_VX_RHO
  use oscillators_IO,    ONLY:oscillators_IO_alloc
  !
@@ -53,7 +53,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  type(w_samp)  :: Xw(2) 
  type(bz_samp) :: k,Xk,q
  type(X_t):: X(4)
- integer, external :: io_SC_components,eval_G_minus_G
+ integer, external :: eval_G_minus_G
  ! 
  ! Work Space
  !
@@ -61,7 +61,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  character(schlen)        :: sec_mode_and_message(2)
  integer                  :: WF_G_max,WF_Go_indx,it,i1,ik
  real(SP)                 :: values(9), RT_time  ! The real time on the diagonal RTime = it*RT_step    
- complex(SP)              :: Trace_Gf,E_kin,E_ion,E_h,E_x,E_xc 
+ complex(SP)              :: Trace_Gf,E_kin,E_ion,E_h,E_x,E_xc,E_mg 
  type(QP_t)               :: qp_dummy
  !
  call section('*',trim(SC_potential)//' Real-Time Dynamics')
@@ -153,8 +153,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    ! i_time: integer index of the time staring from RT_time>0 
    !         after the Thermalization, used for A_t and J_current
    !
-   i_time=it-Thermal_steps  
-   RT_time=i_time*RT_step
+   i_time=it-Thermal_steps
+   RT_time=(i_time-1)*RT_step
    !
    if(it==Thermal_steps+1) then
      call live_timing('[RT] Iteration :',NE_steps,SERIAL=.true.)
@@ -174,13 +174,18 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    call RT_Collision(G_lesser_previous,Xen,k,q,RT_time)
    !
-   call RT_Energy(Xen,k,E_kin,E_ion,E_h,E_x,E_xc,Trace_Gf)
+   if(l_NE_with_fields.and.i_time>0)  then
+     A_vecpot_previous=A_vecpot
+     call RT_current(xK,Xen,G_lesser_previous,RT_time)
+   endif
+   !
+   call RT_Energy(Xen,k,E_kin,E_ion,E_h,E_x,E_xc,E_mg,Trace_Gf)
    !
    ! Now print the Energy and other stuff
    !
-   values(1:7)=(/RT_time/FS2AUT,real(E_kin),real(E_ion),real(E_h) , &
-&                real(E_x),real(E_xc),real(Trace_Gf)/)
-   call msg('o dynamics','',values(1:7),USE_TABS=.TRUE.)
+   values(1:8)=(/RT_time/FS2AUT,real(E_kin,SP),real(E_ion,SP),real(E_h,SP),&
+&              real(E_x,SP),real(E_xc,SP),real(E_mg,SP),real(Trace_Gf,SP)/)
+   call msg('o dynamics','',values(1:8),USE_TABS=.TRUE.)
    !
    if(l_RT_diagonalize) call RT_qp_analyze(it,en,k,Xk,G_lesser)
    !
@@ -188,24 +193,15 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
      call RT_update_G_reference(Xen,G_lesser_reference)
    endif   
    !
-   if(l_NE_with_fields.and.i_time>0)  call RT_current(j_current,xK,Xen,G_lesser,RT_time)
-   !
    ! Integrate equation of motion
    !
-   call RT_Integrator(G_lesser,G_lesser_previous,RT_step,Xen,k,q,Integrator_name,RT_time)
+   call RT_Integrator(G_lesser,G_lesser_previous,A_vecpot,A_vecpot_previous,RT_step,Xen,k,q,Integrator_name,RT_time)
    !
    ! Write last G_lesser on disk
    !
    it_now=it ! used in RESTART
    !
-   if (it==1) call io_control(ACTION=OP_WR,COM=REP, SEC=(/1/),ID=ID(5))
-   if (it> 1) call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(5))
-   io_G=io_SC_components('G' ,Xen,ID(5))
-   !
-   do ik = 1, QP_nk 
-     call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
-     io_G=io_SC_components('G',Xen,ID(5))
-   enddo
+   call RT_write_dbs(Xen,it)
    !
  enddo
  !

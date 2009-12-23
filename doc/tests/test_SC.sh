@@ -13,6 +13,11 @@ E_kpt2=(-0.7379777 -0.4703602 -0.2650903 -0.1071636 0.2981534 0.487517)
 
 ##########################################################
 
+############## YAMBO EXECUTABLE #################
+YAMBOPATH="../../../bin/"
+YAMBO_SC="${YAMBOPATH}/yambo_sc"
+A2Y="${YAMBOPATH}/a2y"
+#################################################
 
 # check whether echo has the -e option
 if test "`echo -e`" = "-e" ; then ECHO=echo ; else ECHO="echo -e" ; fi
@@ -20,6 +25,15 @@ if test "`echo -e`" = "-e" ; then ECHO=echo ; else ECHO="echo -e" ; fi
 # run from directory where this script is
 cd `echo $0 | sed 's/\(.*\)\/.*/\1/'` # extract pathname
 TEST_DIR=`pwd`
+
+if [ -d test_SC ] ; then
+  $ECHO " WARNING: directory test_SC already exists "
+  $ECHO ""
+fi
+
+rm -rf test_SC
+mkdir  test_SC
+cd test_SC
 
 $ECHO 
 $ECHO " * * * * * * * * * * * * * * * * *"
@@ -37,25 +51,17 @@ if [ `which ncdump | wc -c` -eq 0 ] ; then
   exit 1;
 fi
 
-if [ ! -f ../bin/a2y ] ; then
+if [ ! -f $A2Y ] ; then
   $ECHO " Compile yambo interfaces before tests "
   exit 1;
 fi
 
-if [ ! -f ../bin/yambo_sc ] ; then
+if [ ! -f $YAMBO_SC ] ; then
   $ECHO " Yambo_sc executable not found "
   exit 1;
 fi
 
-if [ -d test_SC ] ; then
-  $ECHO " WARNING: directory test_SC already exists "
-  $ECHO ""
-fi
 
-rm -rf test_SC
-mkdir  test_SC
-
-cd test_SC
 $ECHO " Downloading pseudopotentials...... "
 if (! wget ftp://ftp.abinit.org/pub/abinitio/Psps/LDA_TM.psps/05/5b.pspnc &> /dev/null) || ( ! wget ftp://ftp.abinit.org/pub/abinitio/Psps/LDA_TM.psps/07/7n.pspnc &> /dev/null ) then
 $ECHO " Error downloading pseudo-potentials "
@@ -124,7 +130,7 @@ fi
 
 $ECHO " Import WF ..... "
 
-if (! ../../bin/a2y -N -S -F bn_dfto_DS2_KSS &> output_a2y) then
+if (! $A2Y -N -S -F bn_dfto_DS2_KSS &> output_a2y) then
 $ECHO " Error running A2Y "
 exit 1;
 fi
@@ -135,7 +141,7 @@ cat > yambo_setup.in << EOF
 setup                        # [R INI] Initialization
 EOF
 
-if (! ../../bin/yambo_sc -N -F yambo_setup.in  &> output_setup) then
+if (! ${YAMBO_SC} -N -F yambo_setup.in  &> output_setup) then
 $ECHO " Error in YAMBO setup "
 exit 1;
 fi
@@ -164,7 +170,7 @@ EOF
 
 $ECHO " Yambo SC ..... "
 
-if (! ../../bin/yambo_sc -N -F yambo.in  &> output_yambo) then
+if (! ${YAMBO_SC} -N -F yambo.in  &> output_yambo) then
 $ECHO " Error running YAMBO SC "
 exit 1;
 fi

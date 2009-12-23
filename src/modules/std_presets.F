@@ -78,9 +78,10 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use oscillators_IO,ONLY:n_rho_states,Sx_cutoff
 #endif
 #if defined _RT
- use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Efield,Integrator_name, &
-&                     RT_diagonalization_steps, LifeTime,l_NE_simulate_RPA, n_ext_fields, l_RT_diagonalize,   &
-&                     Thermal_time,max_rt_steps_disk
+ use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Efield,Integrator_name,            &
+&                     RT_diagonalization_steps, LifeTime,l_NE_simulate_RPA, n_ext_fields, &
+&                     Thermal_time,max_rt_steps_disk,l_RT_no_intraband,l_RT_induced_field,&
+&                     l_RT_diagonalize
  use oscillators_CACHE, ONLY:RHO_cache_size
 #endif
 #if defined _MAGNETIC
@@ -414,12 +415,12 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  ! Real Time
  !
  do i1=1,n_ext_fields
-   Efield(i1)%t_initial   =0.*FS2AUT
-   Efield(i1)%frequency   =0.
-   Efield(i1)%intensity   =0.
-   Efield(i1)%no_intraband=.FALSE.
-   Efield(i1)%ef_name     ='none'
-   Efield(i1)%versor      =(/1.0,0.0,0.0/)
+   Efield(i1)%t_initial    =0.*FS2AUT
+   Efield(i1)%int_t_initial=0
+   Efield(i1)%frequency    =0.
+   Efield(i1)%intensity    =0.
+   Efield(i1)%ef_name      ='none'
+   Efield(i1)%versor       =(/1.0,0.0,0.0/)
  enddo
  !
  !
@@ -435,6 +436,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  max_rt_steps_disk=200
  Sx_cutoff=0.0005
  RHO_cache_size=-1.0
+ l_RT_no_intraband=.FALSE.
+ l_RT_induced_field=.FALSE.
  !
 #endif
  !

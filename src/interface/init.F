@@ -585,7 +585,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call initactivate(1,'Integrator LifeTime') 
      call initactivate(1,'RTstep NEsteps ThermSteps SwitchOnTime')
      call initactivate(1,'RTDiagonalize RTDiagoSteps')
-     call initactivate(1,'NoDiamagnetic DiskSteps RHOCache')
+     call initactivate(1,'NoDiamagnetic NoIntraband InducedField DiskSteps RHOCache')
      call Afield_activate('Probe')
      call Afield_activate('Pump')
    else
@@ -744,7 +744,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call initactivate(1,field//'_kind')
      call initactivate(1,field//'_Dir')
      call initactivate(1,field//'_Tstart')
-     call initactivate(1,field//'_NoIntraband')
    end subroutine
    !
    subroutine X_activate(mode,what)

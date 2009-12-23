@@ -32,7 +32,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
  use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_simulate_IP,l_RT_diagonalize, &
  &                        l_NE_with_fields,LifeTime,H_t,l_NE_simulate_RPA,       &
- &                        Thermal_steps,Integrator_name,EXACT,RK2EXACT,A_norm,   &
+ &                        Thermal_steps,Integrator_name,EXACT,RK2EXACT,   &
  &                        Thermal_time,Efield,RT_step,XC0,Hfrozen,XCfrozen,      &
  &                        G_lesser_reference,n_ext_fields,l_RT_needs_XC0,i_time
  use wave_func,      ONLY:wf
@@ -85,6 +85,8 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  I2_lesser=(0._SP,0._SP)
  if(allocated(H_t)) H_t =  (0._SP,0._SP) 
  !
+ if(l_NE_with_fields) call RT_Ext_Field(RT_time)
+ !
  call pp_indexes_reset(px)
  call par_indexes(px,(/QP_nk/))
  !
@@ -136,15 +138,9 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
      call caxpy(SC_bands2,(1._SP,0._SP),Ho(:,:,ik,1),1,H_nl_sc(:,:,1),1)
 #endif
    !
-   ! And now add the external field
+   ! And the gauge field
    !
-   if(l_NE_with_fields.and.i_time>0) then
-     !
-     do i1=1,n_ext_fields
-       if(Efield(i1)%ef_name/='none') call RT_Ext_Field(ik,H_nl_sc,G_input,RT_time,Efield(i1),A_norm(i1))
-     enddo
-     !
-   endif
+   if(l_NE_with_fields.and.i_time>0) call RT_apply_gauge_field(ik,H_nl_sc,G_input)
    !
    if(allocated(H_t))  H_t(:,:,ik,1)=H_nl_sc(:,:,1)
    !

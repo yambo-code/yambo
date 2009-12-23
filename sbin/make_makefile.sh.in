@@ -22,7 +22,7 @@
 #
 os="@build_os@"
 cpp="@CPP@"
-cppflags="@CPPFLAGS@"
+cppflags="@C_AS_CPP_FLAGS@"
 ECHO_N="@ECHO_N@"
 PREFIX="@MKMF_PREFIX@"
 #

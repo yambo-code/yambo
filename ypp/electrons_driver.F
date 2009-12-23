@@ -186,7 +186,7 @@ subroutine electrons_driver(Xk,Xen)
      !
      i_wf=wf_state(ib,ik,i_spin)
      !
-     forall(ir=1:fft_size) v2plot(ir)=real(wf(ir,i_wf)) !*conjg( wf(ir,i_wf) )
+     forall(ir=1:fft_size) v2plot(ir)=real( wf(ir,i_wf)*conjg( wf(ir,i_wf) ) )
      !
      if (ib/=Xen%nb.and.abs(Xen%E(ib,ik,i_spin)-Xen%E(ib+1,ik,i_spin))<deg_energy) then
        cycle

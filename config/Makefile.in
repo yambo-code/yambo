@@ -222,7 +222,7 @@ define mkx
 endef
 define objects_clean
  find . \( -name '*.o' -o -name 'Makefile' -o -name '*.f90' \
-        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' \) \
+        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' \) \
         -type f -print | grep -v '\.\/Makefile' | xargs rm -f
  echo "objects ... cleaned"
  echo "broken files ... cleaned"

@@ -19,11 +19,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
+integer function io_COLLISIONS(i_qp,ID,QP_DB_done)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
- use oscillators_IO,ONLY:rho_table,n_rho_states,V_kind,rho_VX_rho,Sx_cutoff
+ use collisions_IO,ONLY:rho_table,n_rho_states,V_kind,rho_VX_rho,Sx_cutoff
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
 &                        io_bulk,write_is_on,io_disconnect,IO_write,         &
 &                        file_is_present,synchronize_db
@@ -65,11 +65,11 @@ integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
  !
  if (any(io_sec(ID,:)==1)) then
    !
-   ioRHO_RHO_VX=io_connect(desc=db_name,type=2,ID=ID)
+   io_COLLISIONS=io_connect(desc=db_name,type=2,ID=ID)
    !
-   if(ioRHO_RHO_VX/=0) goto 1
+   if(io_COLLISIONS/=0) goto 1
    !
-   ioRHO_RHO_VX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.)
+   io_COLLISIONS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.)
    !
    call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=2,MENU=0)
    call io_elemental(ID,I0=SC_bands,&
@@ -99,8 +99,8 @@ integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
 &       VAR=' RIM random points               :',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0)
    !
-   ioRHO_RHO_VX=io_status(ID)
-   if (ioRHO_RHO_VX/=0) goto 1
+   io_COLLISIONS=io_status(ID)
+   if (io_COLLISIONS/=0) goto 1
    !
    if (present(QP_DB_done)) then 
      do i_qp_db=1,QP_n_states 
@@ -144,9 +144,9 @@ integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
    !
    if(write_is_on(ID)) IO_write=.true.
    !
-   ioRHO_RHO_VX=io_connect(desc=trim(db_name)//"_QP_"//trim(intc(i_qp)),type=2,ID=ID)
+   io_COLLISIONS=io_connect(desc=trim(db_name)//"_QP_"//trim(intc(i_qp)),type=2,ID=ID)
    !
-   if(ioRHO_RHO_VX/=0) goto 1
+   if(io_COLLISIONS/=0) goto 1
    !
    call io_bulk(ID,VAR='N_RHO_STATES',VAR_SZ=(/1/))
    call io_bulk(ID,I0=n_rho_states)
@@ -175,4 +175,4 @@ integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
  !
 1 call io_disconnect(ID=ID)
  !
-end function ioRHO_RHO_VX
+end function io_COLLISIONS

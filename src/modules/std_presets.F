@@ -75,14 +75,14 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 #if defined _SC  || defined _RT
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,&
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB
- use oscillators_IO,ONLY:n_rho_states,Sx_cutoff
+ use collisions_IO,ONLY:n_rho_states,Sx_cutoff
 #endif
 #if defined _RT
  use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Efield,Integrator_name,            &
 &                     RT_diagonalization_steps, LifeTime,l_NE_simulate_RPA, n_ext_fields, &
 &                     Thermal_time,max_rt_steps_disk,l_RT_no_intraband,l_RT_induced_field,&
 &                     l_RT_diagonalize
- use oscillators_CACHE, ONLY:RHO_cache_size
+ use collisions_CACHE, ONLY:RHO_cache_size
 #endif
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&

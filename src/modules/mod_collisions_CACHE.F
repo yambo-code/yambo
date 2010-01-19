@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module oscillators_CACHE
+module collisions_CACHE
  !
  use pars,       ONLY:SP,LP
  implicit none
@@ -37,7 +37,7 @@ module oscillators_CACHE
  contains
    !
    subroutine free_RHO_VX_RHO
-     use memory_m,       ONLY: mem_est
+     use memory_m,       ONLY:mem_est
      use stderr,         ONLY:intc
      use par_proc_m,     ONLY:pp_indexes,pp_indexes_reset
      use par_indexes_m,  ONLY:par_indexes       

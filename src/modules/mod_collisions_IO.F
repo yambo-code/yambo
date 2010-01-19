@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module oscillators_IO
+module collisions_IO
  !
  use pars,            ONLY:SP,LP,schlen
  implicit none
@@ -32,13 +32,14 @@ module oscillators_IO
  ! Cut off on exchange matrix elements
  ! Sx_cutoff=0 all, (Sx_cutoff>1 or Sx_cutoff<0)=none
  !
- real(SP)                 :: Sx_cutoff,sx_max
+ real(SP)                 :: Sx_cutoff
+ real(SP)                 :: sx_max
  complex(SP), allocatable :: tmp_rho_vx(:,:,:)
  logical, allocatable     :: QP_DB_done(:)
  !
  interface
    !
-   integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
+   integer function io_COLLISIONS(i_qp,ID,QP_DB_done)
      use QP_m,      ONLY:QP_n_states
      integer           :: i_qp,ID
      logical, optional :: QP_DB_done(QP_n_states)
@@ -48,7 +49,7 @@ module oscillators_IO
  !
  contains
    !
-   subroutine oscillators_IO_alloc(rho_VX_input_size)
+   subroutine collisions_IO_alloc(rho_VX_input_size)
      use pars,           ONLY:IP
      use QP_m,           ONLY:QP_nk,QP_nb
      use memory_m,       ONLY:mem_est
@@ -73,7 +74,7 @@ module oscillators_IO
      !
    end subroutine
    !
-   subroutine oscillators_IO_free()
+   subroutine collisions_IO_free()
      use memory_m,       ONLY:mem_est
      implicit none
      if(allocated(RHO_VX_RHO)) then

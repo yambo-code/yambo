@@ -49,8 +49,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _SC || defined _RT 
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential,&
 &                        SC_rho_threshold,SC_cycle_mixing
- use oscillators_IO,ONLY:Sx_cutoff
- use oscillators_CACHE, ONLY:RHO_cache_size
+ use collisions_IO,ONLY:Sx_cutoff
+ use collisions_CACHE, ONLY:RHO_cache_size
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, LifeTime, &

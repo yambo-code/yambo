@@ -47,7 +47,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv
 #if defined _RT         
- use oscillators_IO,ONLY:V_kind,tmp_rho_vx,QP_DB_done
+ use collisions_IO,ONLY:V_kind,tmp_rho_vx,QP_DB_done
  use global_XC,     ONLY:SC_CHOSEX
 #endif
  !
@@ -78,7 +78,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP)      ::local_rhotw(X%ng)
 #if defined _RT         
  integer          :: ib2,COM_
- integer, external:: QP_check_RHO_RHO_VX
+ integer, external:: COLLISIONS_IO_check
 #endif
  !
  ! Reset
@@ -196,7 +196,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
    V_kind=SC_CHOSEX
    !
-   if(QP_check_RHO_RHO_VX()==0) return
+   if(COLLISIONS_IO_check()==0) return
    !
  endif
  !
@@ -425,7 +425,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
 #if defined _RT
    !
-   if(l_rho_IO) call QP_store_RHO_RHO_VX(i_qp)
+   if(l_rho_IO) call COLLISIONS_IO_store(i_qp)
    !
    call live_timing(steps=1)
    !

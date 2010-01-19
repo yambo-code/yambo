@@ -155,9 +155,6 @@ ypp_magnetic: libs
 	@LIBS2DO="$(YPPSCLIBS)" ; ADF="-D_MAGNETIC";$(mksrc)
 	@X2DO="ypp_magnetic" ;XPATH="ypp";XLIBS="$(YPPSCLIBS)"; ADF="-D_YPP_MAGNETIC";$(mkx)
 # DEBUG #
-yambo_test_1: libs
-	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_TEST_1"; $(mksrc)
-	@X2DO="yambo_test_1"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_TEST_1";$(mkx)
 #
 interfaces: libs
 	@LIBS2DO="$(2YLIBS)" ; $(mksrc)

@@ -65,7 +65,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use SC,             ONLY:SC_potential,SC_ng_Sx,SC_X_bands,SC_X_size
 #endif
 #if defined _RT
- use oscillators_IO, ONLY:ioRHO_RHO_VX,V_kind  
+ use collisions_IO, ONLY:io_COLLISIONS,V_kind  
 #endif
 #if defined _MAGNETIC
  use magnetic,        ONLY:MAG_hamiltonian_type,MAG_pauli,MAG_landau
@@ -359,10 +359,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _RT 
  V_kind=SC_HF
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_RHO_err=ioRHO_RHO_VX(0,io_ID)
+ io_RHO_err=io_COLLISIONS(0,io_ID)
  V_kind=SC_CHOSEX
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_RHO_err=ioRHO_RHO_VX(0,io_ID)
+ io_RHO_err=io_COLLISIONS(0,io_ID)
 #endif
  !
  if (list_dbs) then

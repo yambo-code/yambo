@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine load_RHO_VX_RHO()
+subroutine load_COLLISIONS()
  !
  ! Load all oscillators contribution from any kind of self-energy 
  ! exchange, COHSEX etc.. and store them together in QP_rho(i_qp)
@@ -30,13 +30,13 @@ subroutine load_RHO_VX_RHO()
  use global_XC,      ONLY:SC_HF,SC_CHOSEX
  use QP_m,           ONLY:QP_n_states,QP_nb,QP_nk
  use memory_m,       ONLY:mem_sum,mem_est
- use oscillators_IO, ONLY:RHO_VX_RHO,n_rho_states,RHO_table,ioRHO_RHO_VX,V_kind,&
-&                             oscillators_IO_free
+ use collisions_IO, ONLY:RHO_VX_RHO,n_rho_states,RHO_table,io_COLLISIONS,V_kind,&
+&                             collisions_IO_free
  use stderr,         ONLY:intc
  use IO_m,           ONLY:OP_RD_CL,io_control
  use par_proc_m,     ONLY:pp_indexes,pp_indexes_reset
  use par_indexes_m,  ONLY:par_indexes
- use oscillators_CACHE
+ use collisions_CACHE
  !
  implicit none
  !
@@ -113,7 +113,7 @@ subroutine load_RHO_VX_RHO()
      V_kind=V_kinds(i1)
      !
      call io_control(ACTION=OP_RD_CL,SEC=(/i_qp+1/),ID=ID)
-     io_err=ioRHO_RHO_VX(i_qp,ID)
+     io_err=io_COLLISIONS(i_qp,ID)
      !
      ic=0
      !
@@ -164,7 +164,7 @@ subroutine load_RHO_VX_RHO()
  !
  ! If all QP are in memory I don't need anymore oscillators_IO
  !
- if(last_QP_mem==QP_n_states) call oscillators_IO_free()
+ if(last_QP_mem==QP_n_states) call collisions_IO_free()
  !
  call pp_indexes_reset(px)
  !
@@ -175,4 +175,4 @@ subroutine load_RHO_VX_RHO()
     & '[RHO] Oscillator Cache use [Gb]:',cache_memory
  call msg('s',dump_ch)
  !
-end subroutine load_RHO_VX_RHO
+end subroutine load_COLLISIONS

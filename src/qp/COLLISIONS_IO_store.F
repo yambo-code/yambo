@@ -19,10 +19,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_store_RHO_RHO_VX(i_qp)
+subroutine COLLISIONS_IO_store(i_qp)
  use pars,            ONLY:SP
  use QP_m,            ONLY:QP_nk,QP_nb
- use oscillators_IO , ONLY:ioRHO_RHO_VX,Sx_cutoff,tmp_rho_vx,RHO_table,&
+ use collisions_IO , ONLY:io_COLLISIONS,Sx_cutoff,tmp_rho_vx,RHO_table,&
 &                          RHO_VX_RHO,n_rho_states
  use IO_m,            ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP,OP_WR,NONE
  !
@@ -68,10 +68,10 @@ subroutine QP_store_RHO_RHO_VX(i_qp)
  !
  if (i_qp==1) then
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
-   io_err=ioRHO_RHO_VX(i_qp,ID)
+   io_err=io_COLLISIONS(i_qp,ID)
  else
    call io_control(ACTION=OP_WR_CL,SEC=(/i_qp+1/),ID=ID)
-   io_err=ioRHO_RHO_VX(i_qp,ID)
+   io_err=io_COLLISIONS(i_qp,ID)
  endif
  !
-end subroutine QP_store_RHO_RHO_VX
+end subroutine COLLISIONS_IO_store

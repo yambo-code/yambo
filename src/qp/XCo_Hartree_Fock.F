@@ -41,7 +41,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use SC,            ONLY:it_now,SC_bands
  use global_XC,     ONLY:SC_HF
  use IO_m,          ONLY:NONE
- use oscillators_IO,ONLY:V_kind,tmp_rho_vx,QP_DB_done,oscillators_IO_alloc,oscillators_IO_free
+ use collisions_IO,ONLY:V_kind,tmp_rho_vx,QP_DB_done,collisions_IO_alloc,collisions_IO_free
 #endif
  !
  implicit none
@@ -55,7 +55,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  integer                 ::i2,iq,ib,ibp,jb,ik,Sx_upper_band,i_qp,WF_Go_indx 
 #if defined _RT
  integer                 :: jb2,ik_minus_q,COM_
- integer, external       :: QP_check_RHO_RHO_VX
+ integer, external       :: COLLISIONS_IO_check
 #endif
 #if defined _DOUBLE
  complex(DP)             ::zdotc,zdotu
@@ -95,9 +95,9 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
    V_kind=SC_HF
    !
    WF_Go_indx=maxval(qindx_S(:,:,2))
-   if (.not.l_real_time) call oscillators_IO_alloc()
+   if (.not.l_real_time) call collisions_IO_alloc()
    !
-   if (QP_check_RHO_RHO_VX()==0) return
+   if (COLLISIONS_IO_check()==0) return
    !
  endif
  !
@@ -269,7 +269,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
    !
 #if defined _RT
    !
-   if(l_rho_IO) call QP_store_RHO_RHO_VX(i_qp)
+   if(l_rho_IO) call COLLISIONS_IO_store(i_qp)
    !
    call live_timing(steps=1)
 #endif
@@ -288,7 +288,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  if (l_rho_IO) then
    !
    call QP_close_RHO_RHO_VX()
-   if (.not.l_real_time) call oscillators_IO_free()
+   if (.not.l_real_time) call collisions_IO_free()
    call WF_free()
    !
    return

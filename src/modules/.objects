@@ -3,7 +3,7 @@ SC_objects =
 MAGNETIC_objects =
 #if defined _SC  || defined _RT
 SC_objects       = mod_SC.o
-RT_objects       = mod_oscillators_IO.o mod_real_time.o mod_oscillators_CACHE.o
+RT_objects       = mod_collisions_IO.o mod_real_time.o mod_collisions_CACHE.o
 MAGNETIC_objects = mod_magnetic.o
 #endif
 ELPH_objects =

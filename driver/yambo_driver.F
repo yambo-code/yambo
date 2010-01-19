@@ -186,10 +186,12 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
    !
  endif
  !
- ! EXTENDED OSCILLATORS (HF & CHOSEX)
+ ! EXTENDED COLLISIONS (HF & CHOSEX)
  !===================================
  !
- if (l_rho_io) call QP_eval_RHO_RHO(en,k,Xk,q)
+#if defined _RT
+ if (l_rho_io) call COLLISIONS_IO_eval(en,k,Xk,q)
+#endif
  !
  ! SELF-ENERGIES
  !===============

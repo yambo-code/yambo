@@ -39,8 +39,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
 &                         i_time,Integrator_name,j_current,l_RT_diagonalize,        &
 &                         G_lesser_reference,LifeTime,RT_diagonalization_steps,     &
 &                         A_vecpot,A_vecpot_previous
- use oscillators_CACHE, ONLY:free_RHO_VX_RHO
- use oscillators_IO,    ONLY:oscillators_IO_alloc
+ use collisions_CACHE, ONLY:free_RHO_VX_RHO
+ use collisions_IO,    ONLY:collisions_IO_alloc
  !
  implicit none
  !
@@ -83,7 +83,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    QP_nb=SC_bands
    WF_Go_indx=maxval(qindx_S(:,:,2))
-   call oscillators_IO_alloc()
+   call collisions_IO_alloc()
    !
    if (l_sc_chosex) then
      X(2)%ng=eval_G_minus_G(X(2)%ng,0)
@@ -132,7 +132,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
  endif
  !
- if(.not.local_V) call load_RHO_VX_RHO()
+ if(.not.local_V) call load_COLLISIONS()
  !
  call RT_report(file_name,.true.)
  !

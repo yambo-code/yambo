@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_eval_RHO_RHO(E,k,Xk,q)
+subroutine COLLISIONS_IO_eval(E,k,Xk,q)
  !
  use drivers,       ONLY:l_acfdt,l_rho_io,l_sc_run,l_real_time
  use pars,          ONLY:schlen
@@ -30,16 +30,12 @@ subroutine QP_eval_RHO_RHO(E,k,Xk,q)
  use R_lattice,     ONLY:bz_samp
  use par_proc_m,    ONLY:pp_redux_wait
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
- use QP_m,          ONLY:QP_table,QP_Vxc,QP_Vnl_xc,QP_n_states,Vxc_kind,Vnlxc_kind 
+ use QP_m,          ONLY:QP_table,QP_Vxc,QP_Vnl_xc,QP_n_states,Vxc_kind,Vnlxc_kind,QP_nb
  use memory_m,      ONLY:mem_est
  use wave_func,     ONLY:WF_free
-#if defined _SC
  use global_XC,     ONLY:SC_HF,SC_CHOSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
-#endif
-#if defined _RT
  use SC,            ONLY:SC_bands
  use QP_m,          ONLY:QP_nb
-#endif
  !
  implicit none
  type(levels) ::E       

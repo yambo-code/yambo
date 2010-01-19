@@ -1,8 +1,4 @@
-TEST_1_objects = K.o K_filling.o K_scattering.o
-#if defined _TEST_1
-TEST_1_objects = K_test_1.o K_scattering_test_1.o
-#endif
 objs =	K_driver.o K_eh_setup.o \
-        $(TEST_1_objects) K_exchange.o \
+        K.o K_filling.o K_scattering.o K_exchange.o \
         K_solvers.o K_Haydock.o K_diagonalization.o K_inversion.o K_eps_interpolate.o \
         K_output_file.o Kernel_by_V.o

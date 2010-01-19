@@ -38,6 +38,7 @@ fi
 
 #PPs
 $ECHO $ECHO_N " [TESTs] Downloading pseudopotentials...... "
+mkdir -p $TEST_DIR/PPs
 if (! wget ftp://ftp.abinit.org/pub/abinitio/Psps/LDA_TM.psps/05/5b.pspnc &> /dev/null) || \
  ( ! wget ftp://ftp.abinit.org/pub/abinitio/Psps/LDA_TM.psps/07/7n.pspnc &> /dev/null ) || \
  ( ! wget ftp://ftp.abinit.org/pub/abinitio/Psps/LDA_TM.psps/08/8o.pspnc &> /dev/null ) ; then

@@ -28,11 +28,11 @@ subroutine SC_extended_oscillators(G_input)
  use QP_m,           ONLY:QP_nk,QP_nb,QP_n_states,QP_Vnl_xc,QP_Sc
  use SC,             ONLY:SC_bands
  use global_XC,      ONLY:SC_HF,SC_CHOSEX
- use oscillators_IO, ONLY:rho_VX_rho,n_rho_states,rho_table,ioRHO_RHO_VX,V_kind 
+ use collisions_IO, ONLY:rho_VX_rho,n_rho_states,rho_table,io_COLLISIONS,V_kind 
  use par_proc_m,     ONLY:pp_indexes,pp_redux_wait,pp_indexes_reset
  use par_indexes_m,  ONLY:par_indexes
  use IO_m,           ONLY:io_control,OP_RD_CL
- use oscillators_CACHE, ONLY:last_QP_mem,QP_rho
+ use collisions_CACHE, ONLY:last_QP_mem,QP_rho
  !
  implicit none
  !       
@@ -88,7 +88,7 @@ subroutine SC_extended_oscillators(G_input)
      V_kind=SC_HF
      !
      call io_control(ACTION=OP_RD_CL,SEC=(/i1+1/),ID=ID)
-     io_err=ioRHO_RHO_VX(i1,ID)
+     io_err=io_COLLISIONS(i1,ID)
      !
      ic=1
      !
@@ -110,7 +110,7 @@ subroutine SC_extended_oscillators(G_input)
      V_kind=SC_CHOSEX
      !
      call io_control(ACTION=OP_RD_CL,SEC=(/i1+1/),ID=ID)
-     io_err=ioRHO_RHO_VX(i1,ID)
+     io_err=io_COLLISIONS(i1,ID)
      !
      ic=1
      !

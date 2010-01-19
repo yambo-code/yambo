@@ -52,7 +52,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL
  use vec_operate,    ONLY:degeneration_finder
  use timing,         ONLY:live_timing
- use oscillators_IO, ONLY:oscillators_IO_alloc,oscillators_IO_free,V_kind
+ use collisions_IO, ONLY:collisions_IO_alloc,collisions_IO_free,V_kind
  use global_XC,      ONLY:SC_HF,SC_CHOSEX    
 #if defined _MAGNETIC
  use magnetic,       ONLY:average_el_mag
@@ -95,7 +95,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! Extended Oscillators RHO_IO
  ! 
  integer                  :: io_RHO_err
- integer, external        :: QP_check_RHO_RHO_VX
+ integer, external        :: COLLISIONS_IO_check
  !
  ! Magnetic logical setup
  !
@@ -273,12 +273,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    if(l_sc_hf.or.l_sc_chosex) then
      V_kind=SC_HF
-     io_RHO_err=io_RHO_err+QP_check_RHO_RHO_VX()
+     io_RHO_err=io_RHO_err+COLLISIONS_IO_check()
    endif
    !
    if(l_sc_chosex) then
      V_kind=SC_CHOSEX
-     io_RHO_err=io_RHO_err+QP_check_RHO_RHO_VX()
+     io_RHO_err=io_RHO_err+COLLISIONS_IO_check()
    endif
    !
    if(io_RHO_err/=0) then
@@ -777,7 +777,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        allocate(QP_Vnl_xc(QP_n_states))
        call mem_est("QP_Vnl_xc",(/size(QP_Vnl_xc)/),(/2*SP/))
        !
-       call oscillators_IO_alloc()
+       call collisions_IO_alloc()
        !
      endif
      !
@@ -805,7 +805,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        deallocate(QP_Vnl_xc)
        call mem_est("QP_Vnl_xc")
        !
-       call oscillators_IO_free()
+       call collisions_IO_free()
        !
      endif
      !

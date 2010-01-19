@@ -9,6 +9,9 @@ source  tests/load_paths_and_executables.sh
 #  and ABINIT 5.3.4                                      #
 ##########################################################
 
+cd $prefix/tests
+rm -fr GoWo_dir
+mkdir GoWo_dir
 cd $prefix/tests/GoWo_dir
 
 EPS=0.00005   # precision 5e-5

@@ -1,20 +1,16 @@
 SC_objects = 
 #if defined _SC || defined _RT || defined _MAGNETIC
-SC_objects = ioRHO_RHO_VX.o load_RHO_VX_RHO.o load_SC_components.o io_SC_components.o
+SC_objects = io_COLLISIONS.o load_COLLISIONS.o load_SC_components.o io_SC_components.o
 #endif
 ELPH_objects = 
 #if defined _ELPH 
 ELPH_objects = ioELPH.o
 #endif
-TEST_1_objects = ioBS.o
-#if defined _TEST_1
-TEST_1_objects = ioBS_test_1.o
-#endif
 objs = ver_is_gt_or_eq.o IO_mute.o \
        ioRIM.o        ioGROT.o     $(ELPH_objects) \
        ioOSTNTS.o     ioQINDX.o    ioQP.o      ioX.o \
        ioDB1.o        ioWF.o       ioKB_PP.o   io_HF_and_locXC.o \
-       $(TEST_1_objects)           ioBS_Fxc.o  \
+       ioBS.o         ioBS_Fxc.o  \
        ioBSS_diago.o  ioBSS_Haydock.o ioBSS_invert.o \
        io_elemental.o io_bulk.o      io_header.o ioE_RIM.o \
        ioCOL_CUT.o    ioDB1_reload.o variables_BS.o $(SC_objects) 

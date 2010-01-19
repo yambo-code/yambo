@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine QP_close_RHO_RHO_VX()
- use oscillators_IO,   ONLY:ioRHO_RHO_VX,QP_DB_done,tmp_rho_vx
+ use collisions_IO,   ONLY:io_COLLISIONS,QP_DB_done,tmp_rho_vx
  use IO_m,             ONLY:io_control,OP_WR_CL,REP,NONE
  use memory_m,         ONLY:mem_est
  !
@@ -33,7 +33,7 @@ subroutine QP_close_RHO_RHO_VX()
  COM_=REP
  if (.not.all(QP_DB_done)) COM_=NONE
  call io_control(ACTION=OP_WR_CL,COM=COM_,SEC=(/1/),ID=ID)
- io_err=ioRHO_RHO_VX(0,ID)
+ io_err=io_COLLISIONS(0,ID)
  !
  deallocate(QP_DB_done)
  call mem_est("QP_DB_done")

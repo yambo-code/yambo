@@ -1,5 +1,8 @@
 #!/bin/bash
 
+### PATHS AND EXECUTABLE ###
+source  tests/load_paths_and_executables.sh
+
 EPS=0.00005   # precision 5e-5
 
 ##########################################################
@@ -7,6 +10,11 @@ EPS=0.00005   # precision 5e-5
 #  compiled with gfortran 4.3.3  (-O3 -mtune=native)     #
 #  and ABINIT 5.3.4                                      #
 ##########################################################
+
+cd $prefix/tests
+rm -fr RT_dir
+mkdir RT_dir
+cd $prefix/tests/RT_dir
 
 G_lesser[1]=0.001272533
 G_lesser[2]=0.006297965
@@ -43,67 +51,7 @@ G_lesser[32]=0.0006150323
   
 ##########################################################
 
-############## YAMBO EXECUTABLE #################
-YAMBOPATH="../../../bin/"
-YAMBO_RT="${YAMBOPATH}/yambo_rt"
-YPP_RT="${YAMBOPATH}/ypp_rt"
-A2Y="${YAMBOPATH}/a2y"
-#################################################
-
-# check whether echo has the -e option
-if test "`echo -e`" = "-e" ; then ECHO=echo ; else ECHO="echo -e" ; fi
-
-# run from directory where this script is
-cd `echo $0 | sed 's/\(.*\)\/.*/\1/'` # extract pathname
-TEST_DIR=`pwd`
-
-if [ -d test_RT ] ; then
-  $ECHO " WARNING: directory test_RT already exists "
-  $ECHO ""
-fi
-
-rm -rf test_RT
-mkdir  test_RT
-cd test_RT
-
-$ECHO 
-$ECHO " * * * * * * * * * * * * * * * * *"
-$ECHO " *        Test RT                *"
-$ECHO " * * * * * * * * * * * * * * * * *"
-$ECHO 
-
-if [ `which abinis | wc -c` -eq 0 ] ; then
-  $ECHO " ABINIT is not in your path!"
-  exit 1;
-fi
-
-if [ `which ncdump | wc -c` -eq 0 ] ; then
-  $ECHO " NCDUMP is not in your path!"
-  exit 1;
-fi
-
-if [ ! -f $A2Y ] ; then
-  $ECHO " Compile yambo interfaces before tests "
-  exit 1;
-fi
-
-if [ ! -f $YAMBO_RT ] ; then
-  $ECHO " Yambo_sc executable not found "
-  exit 1;
-fi
-
-if [ ! -f $YPP_RT ] ; then
-  $ECHO " Ypp_rt executable not found "
-  exit 1;
-fi
-
-$ECHO " Downloading pseudopotentials...... "
-if (! wget ftp://ftp.abinit.org/pub/abinitio/Psps/LDA_TM.psps/05/5b.pspnc &> /dev/null) || ( ! wget ftp://ftp.abinit.org/pub/abinitio/Psps/LDA_TM.psps/07/7n.pspnc &> /dev/null ) then
-$ECHO " Error downloading pseudo-potentials "
-exit 1;
-fi
-
-cat > bn_dft.in << EOF
+cat > gs.in << EOF
 ndtset 2
 
 nstep 100
@@ -121,7 +69,7 @@ prtden1 1
 symmorphi2 0
 iscf2    -2
 kptopt2  1        # Option for the automatic generation of k points
-nband2  8
+nband2  10
 nbandkss2 -1
 kssform2 3
 tolwfr2  1.0d-9
@@ -146,40 +94,15 @@ xcart
  -2.3588686075E+00 -1.3618934255E+00  0.0000000000E+00
 EOF
 
-cat > bn.files << EOF
-bn_dft.in
-bn_dft.out
-bn_dfti
-bn_dfto
-bn_dft
-5b.pspnc
-7n.pspnc
+cat > files << EOF
+gs.in
+gs.out
+gs_i    
+gs_o
+gs    
+../PPs/5b.pspnc
+../PPs/7n.pspnc
 EOF
-
-$ECHO " Running ABINIT calculation..... "
-
-if (! abinis < bn.files > output_abinit ) then
-$ECHO " Error running ABINIT "
-exit 1;
-fi
-
-$ECHO " Import WF ..... "
-
-if (! $A2Y -N -S -F bn_dfto_DS2_KSS &> output_a2y) then
-$ECHO " Error running A2Y "
-exit 1;
-fi
-
-$ECHO " Yambo Setup ..... "
-
-cat > yambo_setup.in << EOF
-setup                        # [R INI] Initialization
-EOF
-
-if (! ${YAMBO_RT} -N -F yambo_setup.in  &> output_setup) then
-$ECHO " Error in YAMBO setup "
-exit 1;
-fi
 
 cat > ypp_fix_symm.in << EOF
 rsymm                        # [R] Reduce Symmetries
@@ -194,20 +117,6 @@ Bpsi= 0.000000         deg   # [MAG] Magnetic field psi angle [degree]
 Btheta= 0.000000       deg   # [MAG] Magnetic field theta angle [degree]
 #RmAllSymm                   # Remove all symmetries
 EOF
-
-$ECHO " Ypp Fix_symm ..... "
-
-if (! ${YPP_RT} -N -F ypp_fix_symm.in  &> output_setup) then
-$ECHO " Error in Ypp_rt fix symmetries "
-exit 1;
-fi
-
-$ECHO " Yambo Setup 2 ..... "
-
-if (! ${YAMBO_RT} -N -F yambo_setup.in  &> output_setup) then
-$ECHO " Error in YAMBO setup2 "
-exit 1;
-fi
 
 cat > yambo_rt.in << EOF
 scpot                        # [R] Self-Consistent potentials
@@ -231,11 +140,33 @@ Probe_kind= "DELTA"           # [RT Probe] External Field (SINUSOIDAL|RESONANT|D
 Probe_Tstart= 0.000000 fs    # [RT Probe] Initial Time
 EOF
 
-$ECHO " Yambo RT ..... "
+### SETUP ####
+source  $prefix/tests/setup.sh
 
+### YAMBO ####
+
+$ECHO $ECHO_N " [TESTs] Ypp ..."
+if (! ${YPP_RT} -N -F ypp_fix_symm.in  &> output_setup) then
+ $ECHO " Error in Ypp_rt fix symmetries "
+ exit 1;
+else
+ $ECHO "done"
+fi
+
+$ECHO $ECHO_N " [TESTs] 2nd Setup ... "
+if (! ${YAMBO_RT} -N -F yambo_setup.in  &> output_setup) then
+ $ECHO " Error in YAMBO setup2 "
+ exit 1;
+else
+ $ECHO "done"
+fi
+
+$ECHO $ECHO_N " [TESTs] Yambo RT ... "
 if (! ${YAMBO_RT} -N -F yambo_rt.in  &> output_rt) then
-$ECHO " Error in YAMBO RT "
-exit 1;
+ $ECHO " Error in YAMBO RT "
+ exit 1;
+else
+ $ECHO "done"
 fi
 
 ncdump SAVE/ndb.rtG > data_ndb.rtG
@@ -249,13 +180,14 @@ do
   G_disk=`head -${line} data_ndb.rtG | tail -1 | awk -F, '{ print $2 }'` 
   diffG=`python -c "print \"%16.12f\" % abs(${G_disk}-${G_lesser[i]})"`
     if [ $(echo "$diffG < $EPS"|bc -l) -eq 0 ] ; then
-       $ECHO " Wrong G_lesser for kpt 2"
+       $ECHO " Wrong G_lesser:" ${G_disk} " instead of " ${G_lesser[i]}
        test_ok=0
     fi
 done
 
 if [ "$test_ok" -eq 1 ] ; then
-   $ECHO " Test RT ==>> OK "
+   $ECHO " [TESTs] === Test RT OK ==="
 else
-   $ECHO " Test RT ==>> failed "
-fi                             
+   $ECHO " [TESTs] === Test RT FAILED ==="
+fi
+

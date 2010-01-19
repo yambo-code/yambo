@@ -27,8 +27,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if defined _RAS
  use ras_module,     ONLY:transloc, lras
 #endif
-#if defined _SC || defined _RT || defined _MAGNETIC
- use SC,             ONLY:load_SC_components,found_SC_DB
+#if defined _RT 
  use global_XC,      ONLY:WF_kind,WF_xc_functional,MORE_NONE,WF_perturbation
 #endif
  use drivers,        ONLY:l_col_cut
@@ -94,7 +93,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=ioOSTNTS(X,Xen,ID)
  !
-#if defined _SC || defined _RT || defined _MAGNETIC
+#if defined _RT 
  if (Eval_P_and_P2_only.and.l_real_time) call IO_mute(" ")
 #endif
  !
@@ -109,7 +108,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      call X_alloc('OptGrad',(/3,X%ib(2),Xen%nbm,Xk%nibz/))
    else
      call X_alloc('OptGrad',(/3,X%ib(2),X%ib(2),Xk%nibz/))
-#if defined _SC || defined _RT || defined _MAGNETIC
+#if defined _RT 
      if (Eval_P_and_P2_only.and.l_real_time) then
        call X_alloc('P_square',(/X%ib(2),X%ib(2),Xk%nibz/))
        P_square=(0.,0.)
@@ -151,7 +150,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    ! Free any loaded WFs
    !
    call WF_free()
-#if defined _SC || defined _RT || defined _MAGNETIC
+#if defined _RT 
    !
    ! Swith off I/O in case gradient is calculated
    !
@@ -166,7 +165,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
  end if
  !
-#if defined _SC || defined _RT || defined _MAGNETIC
+#if defined _RT 
  if (Eval_P_and_P2_only.and.l_real_time) then
    call IO_mute(" ")
    return

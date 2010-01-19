@@ -26,5 +26,5 @@
 # [NoOpt] @UFFLAGS@
 #
 # [ MAKE ] @MAKE@
-# [EDITOR] @EDITOR@
+# [EDITOR] @editor@
 #

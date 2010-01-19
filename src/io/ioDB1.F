@@ -41,7 +41,7 @@ integer function ioDB1(E,k,ID)
  use BS,               ONLY:BS_bands
  use xc_functionals,   ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL 
  use global_XC,        ONLY:setup_global_XC,EXT_NONE
-#if defined _SC || defined _MAGNETIC || defined _RT
+#if defined _SC || defined _RT
  use SC,               ONLY:SC_bands
 #endif
  !
@@ -181,7 +181,7 @@ integer function ioDB1(E,k,ID)
      QP_nb=E%nb
      QP_n_G_bands=(/1,E%nb/)
      BS_bands=(/1,E%nb/)
-#if defined _SC || defined _MAGNETIC || defined _RT
+#if defined _SC || defined _RT
      SC_bands=E%nb
 #endif
      !

@@ -146,7 +146,7 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  ! HARTREE-FOCK AND VXC
  !======================
  !
- if (l_HF_and_locXC.and..not.l_sc_run) call XCo_driver(en,k,Xk,q)
+ if (l_HF_and_locXC.and..not.any((/l_sc_run,l_rho_io,l_real_time/))) call XCo_driver(en,k,Xk,q)
  !
  ! RAS & REELS
  !=============
@@ -185,6 +185,14 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
    ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
    !
  endif
+ !
+ ! EXTENDED OSCILLATORS (HF & CHOSEX)
+ !===================================
+ !
+ if (l_rho_io) call QP_eval_RHO_RHO(en,k,Xk,q)
+ !
+ ! SELF-ENERGIES
+ !===============
  !
  if (l_gw0.or.l_life) then
    !
@@ -243,7 +251,7 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  !
  if (l_sc_run) then
  !
-#if defined _SC || defined _MAGNETIC
+#if defined _SC 
    if (.not.l_real_time) call SC_driver(X(:2),Xw(:2),Xk,en,k,q)
 #endif
    !

@@ -104,7 +104,7 @@ integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
    !
    if (present(QP_DB_done)) then 
      do i_qp_db=1,QP_n_states 
-       QP_DB_done(i_qp_db) =  file_is_present(desc=trim(db_name)//trim(intc(i_qp_db)),type=2)
+       QP_DB_done(i_qp_db) =  file_is_present(desc=trim(db_name)//"_QP_"//trim(intc(i_qp_db)),type=2)
      enddo
    endif
    !
@@ -129,24 +129,22 @@ integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
      !
      do i_qp_db=1,QP_n_states 
        if (.not.px%i1p(i_qp_db)) cycle
-       call synchronize_db(desc=trim(db_name)//trim(intc(i_qp_db)))
+       call synchronize_db(desc=trim(db_name)//"_QP_"//trim(intc(i_qp_db)))
      enddo
      !
      call pp_indexes_reset(px)
      !
    endif
    !
-   call io_disconnect(ID=ID)
-   !
  endif
  !
- if (any(io_sec(ID,:)/=1)) then     
+ if (any(io_sec(ID,:)>1)) then     
    !
    ! All cpu write on disk
    !
    if(write_is_on(ID)) IO_write=.true.
    !
-   ioRHO_RHO_VX=io_connect(desc=trim(db_name)//trim(intc(i_qp)),type=2,ID=ID)
+   ioRHO_RHO_VX=io_connect(desc=trim(db_name)//"_QP_"//trim(intc(i_qp)),type=2,ID=ID)
    !
    if(ioRHO_RHO_VX/=0) goto 1
    !
@@ -171,7 +169,7 @@ integer function ioRHO_RHO_VX(i_qp,ID,QP_DB_done)
    !
    IO_write=master_cpu
    !
-   if(write_is_on(ID)) call synchronize_db(desc=trim(db_name)//trim(intc(i_qp)))
+   if(write_is_on(ID)) call synchronize_db(desc=trim(db_name)//"_QP_"//trim(intc(i_qp)))
    !
  endif
  !

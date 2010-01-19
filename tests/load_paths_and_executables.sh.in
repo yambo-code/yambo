@@ -1,0 +1,50 @@
+#!/bin/bash
+
+ECHO_N="@ECHO_N@"
+
+# check whether echo has the -e option
+if test "`echo -e`" = "-e" ; then ECHO=echo ; else ECHO="echo -e" ; fi
+
+# basic dir
+prefix=@prefix@
+
+# Run Dir
+TEST_DIR=@prefix@/tests/
+
+# Executables 
+YAMBO=@exec_prefix@/bin/yambo
+YAMBO_SC=@exec_prefix@/bin/yambo_sc
+YAMBO_MAGNETIC=@exec_prefix@/bin/yambo_magnetic
+YAMBO_RT=@exec_prefix@/bin/yambo_rt
+YPP_RT=@exec_prefix@/bin/ypp_rt  
+A2Y=@exec_prefix@/bin/a2y
+
+#Abinis & ncdump
+$ECHO $ECHO_N " [TESTs] Abinit ... "
+if [ `which abinis | wc -c` -eq 0 ] ; then
+  $ECHO " ABINIT is not in your path!"
+  exit 1;
+else
+  $ECHO "found"
+fi
+
+$ECHO $ECHO_N " [TESTs] NCDUMP ... "
+if [ `which ncdump | wc -c` -eq 0 ] ; then
+  $ECHO " NCDUMP is not in your path!"
+  exit 1;
+else
+  $ECHO "found"
+fi
+
+#PPs
+$ECHO $ECHO_N " [TESTs] Downloading pseudopotentials...... "
+if (! wget ftp://ftp.abinit.org/pub/abinitio/Psps/LDA_TM.psps/05/5b.pspnc &> /dev/null) || \
+ ( ! wget ftp://ftp.abinit.org/pub/abinitio/Psps/LDA_TM.psps/07/7n.pspnc &> /dev/null ) || \
+ ( ! wget ftp://ftp.abinit.org/pub/abinitio/Psps/LDA_TM.psps/08/8o.pspnc &> /dev/null ) ; then
+  $ECHO " Error downloading pseudo-potentials "
+  exit 1;
+else
+  $ECHO "done"
+  mv *.psp* $TEST_DIR/PPs
+fi
+

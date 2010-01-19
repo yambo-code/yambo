@@ -60,7 +60,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined  _ELPH 
  use ELPH,           ONLY:elph_nDBs,elph_nDBs_used,elph_use_q_grid
 #endif
-#if defined _SC || defined _RT || defined _MAGNETIC
+#if defined _SC || defined _RT 
  use global_XC,      ONLY:MORE_NONE,SC_HF,SC_CHOSEX
  use SC,             ONLY:SC_potential,SC_ng_Sx,SC_X_bands,SC_X_size
 #endif
@@ -73,7 +73,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  implicit none
  type(levels) ::en        
-#if defined _SC || defined _RT || defined _MAGNETIC
+#if defined _SC || defined _RT 
  type(levels) ::en_sc
 #endif
  type(bz_samp)::q,k   
@@ -95,7 +95,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer, external :: ioE_RIM
  ! GPL_EXCLUDE_END
  !
-#if defined _SC || defined _RT || defined _MAGNETIC
+#if defined _SC || defined _RT 
  integer, external :: io_SC_components 
 #endif
 #if defined _ELPH 
@@ -144,7 +144,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (.not.FINALIZE.and..not.CLOSE_Gs) then
    call E_reset(en)
-#if defined _SC || defined _RT || defined _MAGNETIC
+#if defined _SC || defined _RT 
    call E_reset(en_sc)
 #endif
    call bz_samp_reset(k)
@@ -349,7 +349,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! SC 
  !
-#if defined _SC || defined _RT || defined _MAGNETIC
+#if defined _SC || defined _RT 
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_SC_err=io_SC_components('E',en_sc,io_ID)
 #endif
@@ -429,7 +429,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs')  
  !
 #if defined _RT
- if (l_HF_and_locXC.and.l_rho_IO) call initactivate(1,'SCBands EXXCut')
+ if ( (l_HF_and_locXC.or.l_chosex) .and.l_rho_IO) call initactivate(1,'SCBands')
+ if (l_HF_and_locXC.and.l_rho_IO)                 call initactivate(1,'EXXCut')
 #endif
  !
  ! Optics(not bse) nor GW (no PP)
@@ -577,7 +578,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! DFT
  !
-#if defined _SC || defined _RT || defined _MAGNETIC
+#if defined _SC || defined _RT 
  if (l_sc_run) then
    call initactivate(1,'Potential FFTGvecs SCmixing SCBands BandMix EXXCut')
    if (l_real_time) then
@@ -802,7 +803,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! GPL_EXCLUDE_END SC_IGNORE
        ! 
        ! 
-#if defined _SC || defined _RT || defined _MAGNETIC 
+#if defined _SC || defined _RT 
        l_sc_run=runlevel_is_on('scpot')
        l_real_time=runlevel_is_on('negf')
        l_sc_magnetic=runlevel_is_on('magnetic')
@@ -891,7 +892,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
      endif
      !
-#if defined _SC || defined _RT || defined _MAGNETIC
+#if defined _SC || defined _RT 
      if (l_sc_magnetic) then
        call initactivate(1,'scpot')
        SC_potential='default'
@@ -1121,7 +1122,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
        ! Sc / NEGF
        !
-#if defined _SC || defined _RT || defined _MAGNETIC
+#if defined _SC || defined _RT 
        if ( trim(rstr_piece(i1)) == 'scpot' )  then
          if ( trim(rstr_piece(i1+1)) == 'exx' ) then
            SC_potential='EXX'

@@ -316,7 +316,7 @@ subroutine QP_elph(en,k,q,qp)
          ! Skip modes @ Gamma (1st point is always gamma, either with random
          ! or uniform grids, as it is needed to evaluate the DW factor) 
          !
-         if (iq_ibz==1.or.abs(ph_E)<epsilon(1._SP)) cycle
+         if (abs(ph_E)<epsilon(1._SP)) cycle
          !
          ! In the SE expression I have the m.e. 
          !

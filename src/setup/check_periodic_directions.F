@@ -26,8 +26,8 @@ subroutine check_periodic_directions()
  use X_m,            ONLY:eps_2_alpha,alpha_dim,eval_alpha
  use D_lattice,      ONLY:DL_vol,a,non_periodic_directions
  use vec_operate,    ONLY:v_norm
-#if defined _MAGNETIC
- use magnetic,       ONLY:average_el_mag,average_el_mag_dim,fix_el_mag_dim
+#if defined _SC
+ use magnetic,       ONLY:average_el_mag,average_el_mag_dim,average_el_mag_rescaling
 #endif
  implicit none
  !
@@ -46,7 +46,7 @@ subroutine check_periodic_directions()
  l_2D=sum(non_p_dir)==2
  l_1D=sum(non_p_dir)==1
  !
-#if defined _MAGNETIC
+#if defined _SC
  average_el_mag_dim='Bohr_magneton/Bohr^3'
 #endif
  !
@@ -102,16 +102,19 @@ subroutine check_periodic_directions()
    call warning('Non periodic geometry and unit cell are incompatible')
    return
  endif
+ ! 
+#if defined _SC
+ ! Magnetization dimensions
  !
-#if defined _MAGNETIC
- fix_el_mag_dim=eps_2_alpha
+ average_el_mag_rescaling=eps_2_alpha
  if(alpha_dim=='length') average_el_mag_dim='Bohr_magneton/Bohr^2'
  if(alpha_dim=='area')   average_el_mag_dim='Bohr_magneton/Bohr'
  if(alpha_dim=='volume') average_el_mag_dim='Bohr_magneton'
-#else
+ !
+#endif
+ !
  call msg('r', 'Non-periodic chartesian directions :',trim(non_periodic_directions))
  call msg('r', 'Optical renormalization        [au]:',eps_2_alpha)
  call msg('rn','Polarizability dimension           :',trim(alpha_dim))
-#endif
  !
 end subroutine

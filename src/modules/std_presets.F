@@ -71,8 +71,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 #endif
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
- use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND
-#if defined _SC || defined _RT || defined _MAGNETIC
+ use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND 
+#if defined _SC  || defined _RT
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,&
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB
  use oscillators_IO,ONLY:n_rho_states,Sx_cutoff
@@ -393,7 +393,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  nQ_memory=0
 #endif
  !
-#if defined _SC || defined _RT || defined _MAGNETIC
+#if defined _SC || defined _RT 
  ! SC
  !
  SC_fft_size=0

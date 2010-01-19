@@ -1,5 +1,8 @@
 #!/bin/bash
 
+### PATHS AND EXECUTABLE ###
+source  tests/load_paths_and_executables.sh
+
 EPS=0.00005   # precision 5e-5
 
 #############################################################################
@@ -15,73 +18,13 @@ E_down_pauli=(  -0.9208654 -0.4762328 -0.2183685 -0.175439  -0.1754365  0.075173
 E_up_all=(      -0.9695718 -0.5407296 -0.2600582 -0.2389627 -0.2385392 -0.0004087853)
 E_down_all=(    -0.9210591 -0.4764264 -0.2185622 -0.1758436 -0.1754194  0.07478175  )
 
-
-##########################################################
-
-############## YAMBO EXECUTABLE #################
-YAMBOPATH="../../../bin/"
-YAMBO="${YAMBOPATH}/yambo"
-YAMBO_MAGNETIC="${YAMBOPATH}/yambo_magnetic"
-YPP_RT="${YAMBOPATH}/ypp_rt"
-A2Y="${YAMBOPATH}/a2y"
-#################################################
+cd $prefix/tests
+rm -fr magnetic_dir
+mkdir magnetic_dir
+cd $prefix/tests/magnetic_dir
 
 
-# check whether echo has the -e option
-if test "`echo -e`" = "-e" ; then ECHO=echo ; else ECHO="echo -e" ; fi
-
-# run from directory where this script is
-cd `echo $0 | sed 's/\(.*\)\/.*/\1/'` # extract pathname
-TEST_DIR=`pwd`
-
-if [ -d test_magnetic ] ; then
-  $ECHO " WARNING: directory test_magnetic already exists "
-  $ECHO ""
-fi
-
-rm -rf test_magnetic
-mkdir  test_magnetic
-cd test_magnetic
-
-$ECHO 
-$ECHO " * * * * * * * * * * * * * * * * *"
-$ECHO " *        Test magnetic          *"
-$ECHO " * * * * * * * * * * * * * * * * *"
-$ECHO 
-
-if [ `which abinis | wc -c` -eq 0 ] ; then
-  $ECHO " ABINIT is not in your path!"
-  exit 1;
-fi
-
-if [ `which ncdump | wc -c` -eq 0 ] ; then
-  $ECHO " NCDUMP is not in your path!"
-  exit 1;
-fi
-
-if [ ! -f $A2Y ] ; then
-  $ECHO " Compile yambo interfaces before tests "
-  exit 1;
-fi
-
-if [ ! -f ${YPP_RT} ] ; then
-  $ECHO " Ypp_rt executable not found "
-  exit 1;
-fi
-
-if [ ! -f ${YAMBO_MAGNETIC} ] ; then
-  $ECHO " Yambo_magnetic executable not found "
-  exit 1;
-fi
-
-
-$ECHO " Downloading pseudopotentials...... "
-if (! wget ftp://ftp.abinit.org/pub/abinitio/Psps/LDA_TM.psps/08/8o.pspnc &> /dev/null) then
-$ECHO " Error downloading pseudo-potentials "
-exit 1;
-fi
-
-cat > O2.in << EOF
+cat > gs.in << EOF
 ##########  O2 ground state calculation ##################
 ndtset 2
 
@@ -131,39 +74,14 @@ istwfk2     1
 EOF
 
 
-cat > O2.files << EOF
-O2.in
-O2_dft.out
-O2_dfti
-O2_dfto
-O2_dft
-8o.pspnc
+cat > files << EOF
+gs.in
+gs.out
+gs_i    
+gs_o
+gs    
+../PPs/8o.pspnc
 EOF
-
-$ECHO " Running ABINIT calculation..... "
-
-if (! abinis < O2.files > output_abinit ) then
-$ECHO " Error running ABINIT "
-exit 1;
-fi
-
-$ECHO " Import WF ..... "
-
-if (! $A2Y -N -S -F O2_dfto_DS2_KSS &> output_a2y) then
-$ECHO " Error running A2Y "
-exit 1;
-fi
-
-$ECHO " Yambo Setup 1 ..... "
-
-cat > yambo_setup.in << EOF
-setup                        # [R INI] Initialization
-EOF
-
-if (! ${YAMBO_MAGNETIC} -N -F yambo_setup.in  &> output_setup) then
-$ECHO " Error in YAMBO setup1 "
-exit 1;
-fi
 
 cat > ypp_fix_symm.in << EOF
 rsymm                        # [R] Reduce Symmetries
@@ -179,21 +97,7 @@ Btheta= 0.000000       deg   # [MAG] Magnetic field theta angle [degree]
 #RmAllSymm                   # Remove all symmetries
 EOF
 
-$ECHO " Ypp Fix_symm ..... "
-
-if (! ${YPP_RT} -N -F ypp_fix_symm.in  &> output_setup) then
-$ECHO " Error in Ypp_rt fix symmetries "
-exit 1;
-fi
-
-$ECHO " Yambo Setup 2 ..... "
-
-if (! ${YAMBO_MAGNETIC} -N -F yambo_setup.in  &> output_setup) then
-$ECHO " Error in YAMBO setup2 "
-exit 1;
-fi
-
-cat > yambo_magnetic.in << EOF
+cat > yambo_landau.in << EOF
 scpot                        # [R] Self-Consistent potentials
 magnetic                     # [R] Magnetic fields
 Potential= "default"         # [SC] SC Potential
@@ -207,14 +111,7 @@ B_Field= 100.0000      T     # [MAG] Magnetic field modulus
 NonPerDir= "XYZ"             # [MAG] Non periodic chartesian directions (X,Y,Z,XY...)
 EOF
 
-$ECHO " Yambo magnetic (landau) ..... "
-
-if (! ${YAMBO_MAGNETIC} -N -F yambo_magnetic.in -J MAG_landau  &> output_yambo) then
-$ECHO " Error running Yambo_magnetic (landau) ..... "
-exit 1;
-fi
-
-cat > yambo_magnetic.in << EOF
+cat > yambo_pauli.in << EOF
 scpot                        # [R] Self-Consistent potentials
 magnetic                     # [R] Magnetic fields
 Potential= "default"         # [SC] SC Potential
@@ -228,14 +125,7 @@ B_Field= 100.0000      T     # [MAG] Magnetic field modulus
 NonPerDir= "XYZ"             # [MAG] Non periodic chartesian directions (X,Y,Z,XY...)
 EOF
 
-$ECHO " Yambo magnetic (pauli) ..... "
-
-if (! ${YAMBO_MAGNETIC} -N -F yambo_magnetic.in -J MAG_pauli  &> output_yambo) then
-$ECHO " Error running Yambo_magnetic (pauli) ..... "
-exit 1;
-fi
-
-cat > yambo_magnetic.in << EOF
+cat > yambo_all.in << EOF
 scpot                        # [R] Self-Consistent potentials
 magnetic                     # [R] Magnetic fields
 Potential= "default"         # [SC] SC Potential
@@ -249,11 +139,49 @@ B_Field= 100.0000      T     # [MAG] Magnetic field modulus
 NonPerDir= "XYZ"             # [MAG] Non periodic chartesian directions (X,Y,Z,XY...)
 EOF
 
-$ECHO " Yambo magnetic (all) ..... "
+### SETUP ####
+source  $prefix/tests/setup.sh
 
-if (! ${YAMBO_MAGNETIC} -N -F yambo_magnetic.in -J MAG_all  &> output_yambo) then
-$ECHO " Error running Yambo_magnetic (all) ..... "
-exit 1;
+### YAMBO ####
+
+$ECHO $ECHO_N " [TESTs] Ypp ..."
+if (! ${YPP_RT} -N -F ypp_fix_symm.in  &> output_setup) then
+ $ECHO " Error in Ypp_rt fix symmetries "
+ exit 1;
+else
+ $ECHO "done"
+fi
+
+$ECHO $ECHO_N " [TESTs] 2nd Setup ... "
+if (! ${YAMBO_MAGNETIC} -N -F yambo_setup.in  &> output_setup) then
+ $ECHO " Error in YAMBO setup2 "
+ exit 1;
+else
+ $ECHO "done"
+fi
+
+$ECHO $ECHO_N " [TESTs] Landau ... "
+if (! ${YAMBO_MAGNETIC} -N -F yambo_landau.in -J MAG_landau  &> output_yambo) then
+ $ECHO " Error running Yambo_magnetic (landau) ..... "
+ exit 1;
+else
+ $ECHO "done"
+fi
+
+$ECHO $ECHO_N " [TESTs] Pauli ... "
+if (! ${YAMBO_MAGNETIC} -N -F yambo_pauli.in -J MAG_pauli  &> output_yambo) then
+ $ECHO " Error running Yambo_magnetic (pauli) ..... "
+ exit 1;
+else
+ $ECHO "done"
+fi
+
+$ECHO $ECHO_N " [TESTs] Landau + Pauli ... "
+if (! ${YAMBO_MAGNETIC} -N -F yambo_all.in -J MAG_all  &> output_yambo) then
+ $ECHO " Error running Yambo_magnetic (all) ..... "
+ exit 1;
+else
+ $ECHO "done"
 fi
 
 
@@ -296,7 +224,7 @@ do
  diffE=`python -c "print \"%16.12f\" % abs(${E_up_pauli[bm1]}-${E_pauli[b]})"`
  if [ $(echo "$diffE < $EPS"|bc -l) -eq 0 ] ; then
    $ECHO " Wrong E_sc(pauli) for QP particle spin up band $b: E_diff  =  $diffE"
-   $test_pauli=0
+   test_pauli=0
  fi
 
  line=`python -c "print ${head_lines_pauli} + 3"`
@@ -304,7 +232,7 @@ do
  diffE=`python -c "print \"%16.12f\" % abs(${E_down_pauli[bm1]}-${E_pauli[b]})"`
  if [ $(echo "$diffE < $EPS"|bc -l) -eq 0 ] ; then
    $ECHO " Wrong E_sc(pauli) for QP particle spin down band $b: E_diff  =  $diffE"
-   $test_pauli=0
+   test_pauli=0
  fi
 
 
@@ -314,7 +242,7 @@ do
  diffE=`python -c "print \"%16.12f\" % abs(${E_up_all[bm1]}-${E_all[b]})"`
  if [ $(echo "$diffE < $EPS"|bc -l) -eq 0 ] ; then
    $ECHO " Wrong E_sc(all) for QP particle spin up band $b: E_diff  =  $diffE"
-   $test_all=0
+   test_all=0
  fi
 
  line=`python -c "print ${head_lines_all} + 3"`
@@ -328,21 +256,21 @@ done
 
 $ECHO ""
 if [ "$test_landau" -eq 1 ] ; then
-   $ECHO " Test magnetic (landau) ==>> OK "
+   $ECHO " [TESTs] === Test magnetic (Landau) OK ==="
 else
-   $ECHO " Test magnetic (landau) ==>> failed "
+   $ECHO " [TESTs] === Test magnetic (Landau) FAILED ==="
 fi
 
 if [ "$test_pauli" -eq 1 ] ; then
-   $ECHO " Test magnetic (pauli) ==>> OK "
+   $ECHO " [TESTs] === Test magnetic (Pauli) OK ==="
 else
-   $ECHO " Test magnetic (pauli) ==>> failed "
+   $ECHO " [TESTs] === Test magnetic (Pauli) FAILED ==="
 fi
 
 if [ "$test_all" -eq 1 ] ; then
-   $ECHO " Test magnetic (all) ==>> OK "
+   $ECHO " [TESTs] === Test magnetic (Landau+Pauli) OK ==="
 else
-   $ECHO " Test magnetic (all) ==>> failed "
+   $ECHO " [TESTs] === Test magnetic (Landau+Pauli) FAILED ==="
 fi
 
 cd ..

@@ -45,8 +45,7 @@ subroutine QP_store_RHO_RHO_VX(i_qp)
  do jb=1,QP_nb
    do jb2=1,QP_nb
      do ik=1,QP_nk
-       if(abs(tmp_rho_vx(jb,jb2,ik))>=sx_max*Sx_cutoff &
-       &     .or.sx_cutoff<0.0)  ic=ic+1
+       if(abs(tmp_rho_vx(jb,jb2,ik))>=sx_max*Sx_cutoff.or.sx_cutoff<0.0)  ic=ic+1
      enddo
    enddo
  enddo
@@ -58,8 +57,7 @@ subroutine QP_store_RHO_RHO_VX(i_qp)
  do jb=1,QP_nb
    do jb2=1,QP_nb
      do ik=1,QP_nk
-       if(abs(tmp_rho_vx(jb,jb2,ik))>=sx_max*Sx_cutoff &
-   &     .or.sx_cutoff<0.0)  then
+       if(abs(tmp_rho_vx(jb,jb2,ik))>=sx_max*Sx_cutoff.or.sx_cutoff<0.0)  then
          ic=ic+1
          RHO_table(jb,jb2,ik)=1
          RHO_VX_RHO(ic)      =tmp_rho_vx(jb,jb2,ik)
@@ -69,7 +67,7 @@ subroutine QP_store_RHO_RHO_VX(i_qp)
  enddo      
  !
  if (i_qp==1) then
-   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=ioRHO_RHO_VX(i_qp,ID)
  else
    call io_control(ACTION=OP_WR_CL,SEC=(/i_qp+1/),ID=ID)

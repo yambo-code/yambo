@@ -3,7 +3,7 @@ ELPH_objects =
 ELPH_objects = QP_elph.o
 #endif
 #if defined _SC || defined _RT || defined _MAGNETIC
-SC_objects = QP_load_SC_xc.o QP_store_RHO_RHO_VX.o QP_check_RHO_RHO_VX.o
+SC_objects = QP_load_SC_xc.o QP_store_RHO_RHO_VX.o QP_check_RHO_RHO_VX.o QP_eval_RHO_RHO.o
 #endif
 objs = QP_driver.o QP_newton.o QP_ppa_chosex.o \
        QP_secant.o QP_real_axis.o QP_W2Sc.o QP_life_transitions.o secant.o bracket.o \

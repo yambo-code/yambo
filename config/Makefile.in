@@ -44,7 +44,7 @@ includedir  = @includedir@
 CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
   	   sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
 	   src/external_c/.objects Makefile driver/version.h \
-       sbin/objects_debug.sh driver/editor.h
+       sbin/objects_debug.sh driver/editor.h  tests/load_paths_and_executables.sh
 TARGETS  = all yambo interfaces ypp 
 UTILS    = changelog
 CLEANS   = clean clean_all
@@ -53,8 +53,9 @@ PROJECTS = yambo_ph yambo_sc yambo_ras yambo_reels \
            yambo_magnetic yambo_PWdiago yambo_polaron \
            yambo_rt ypp_rt ypp_ph ypp_ras ypp_sc ypp_magnetic 
 BROKEN   = yambo_gamma 
-TESTS    = 
-EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(TESTS)
+DEBUG    = 
+TESTS    = test_all test_GoWo test_magnetic test_SC test_RT
+EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(DEBUG)
 INTERFCS = a2y p2y e2y 
 #
 # Libraries (ordered for compiling & linking)
@@ -89,7 +90,7 @@ nothing:
 	@$(make_message)
 changelog:
 	svn log | perl sbin/svn2cl.pl > ChangeLog
-all: $(TARGETS) $(PROJECTS) $(TESTS)
+all: $(TARGETS) $(PROJECTS) $(DEBUG)
 libs:
 	@LIBS2DO="slatec"; DIR2GO="lib" ; $(mklib)
 	@if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; \
@@ -106,8 +107,8 @@ yambo_PWdiago: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_PW_DIAGO"; $(mksrc)
 	@X2DO="yambo_PWdiago"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_PW_DIAGO";$(mkx)
 yambo_magnetic: libs
-	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_MAGNETIC"; $(mksrc)
-	@X2DO="yambo_magnetic"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_MAGNETIC";$(mkx)
+	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_MAGNETIC -D_SC"; $(mksrc)
+	@X2DO="yambo_magnetic"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_MAGNETIC -D_SC";$(mkx)
 yambo_gamma: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_GAMMA"; $(mksrc)
 	@X2DO="yambo_gamma"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_GAMMA";$(mkx)
@@ -153,7 +154,7 @@ ypp_sc: libs
 ypp_magnetic: libs
 	@LIBS2DO="$(YPPSCLIBS)" ; ADF="-D_MAGNETIC";$(mksrc)
 	@X2DO="ypp_magnetic" ;XPATH="ypp";XLIBS="$(YPPSCLIBS)"; ADF="-D_YPP_MAGNETIC";$(mkx)
-# TESTS #
+# DEBUG #
 yambo_test_1: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_TEST_1"; $(mksrc)
 	@X2DO="yambo_test_1"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_TEST_1";$(mkx)
@@ -169,16 +170,30 @@ interfaces: libs
 ypp: libs
 	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
 	@X2DO="ypp" ;XPATH="ypp";XLIBS="$(YPPLIBS)";$(mkx)
+#
+# TESTS #
+test_all: test_GoWo test_RT test_SC test_magnetic
+test_GoWo: yambo interfaces
+	./tests/test_GoWo.sh
+test_RT: yambo yambo_rt ypp_rt interfaces
+	./tests/test_RT.sh
+test_SC: yambo yambo_sc interfaces
+	./tests/test_SC.sh
+test_magnetic: yambo yambo_magnetic ypp_rt interfaces
+	./tests/test_magnetic.sh
+#
 clean: clean_fast
 clean_fast: 
 	@$(objects_clean)
 	@$(lib_mod_clean)
 	@$(xclean)
+	@$(tests_clean)
 clean_all: 
 	@$(objects_clean)
 	@$(lib_mod_netcdf_clean)
 	@$(conf_clean)
 	@$(xclean)
+	@$(tests_clean)
 
 # Functions
 define make_message
@@ -187,6 +202,7 @@ define make_message
  for target in $(PROJECTS); do echo " [devel] $$target" ; done;echo;\
  for target in $(BROKEN); do echo " [broken] $$target" ; done;echo;\
  for target in $(UTILS); do echo  " [util] $$target" ; done;echo
+ for target in $(DEBUG); do echo  " [debug] $$target" ; done;echo
  for target in $(TESTS); do echo  " [tests] $$target" ; done;echo
  for target in $(CLEANS); do echo  " [clean] $$target" ; done;echo
 endef
@@ -224,36 +240,41 @@ define objects_clean
  find . \( -name '*.o' -o -name 'Makefile' -o -name '*.f90' \
         -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' \) \
         -type f -print | grep -v '\.\/Makefile' | xargs rm -f
- echo "objects ... cleaned"
- echo "broken files ... cleaned"
- echo "Makefiles ... cleaned"
+ echo "[CLEAN] objects ... done"
+ echo "[CLEAN] broken files ... done"
+ echo "[CLEAN] Makefiles ... done"
  if test "$(debug)" = yes ; then \
  find . -name '.debug*' | xargs rm -fr ; \
- echo "debug ... cleaned" ; \
- echo "subdirectories ... cleaned" ; \
+ echo "[CLEAN] debug ... done" ; \
+ echo "[CLEAN] subdirectories ... done" ; \
  fi
 endef
 define lib_mod_clean
  find . \( -name '*.a' -o -name '*.mod' \) -type f -print | \
        grep -v netcdf | grep -v iotk | grep -v typesize | xargs rm -f 
- echo "libraries ... cleaned" 
- echo "modules ... cleaned" 
+ echo "[CLEAN] libraries ... done" 
+ echo "[CLEAN] modules ... done" 
 endef
 define lib_mod_netcdf_clean
  find . \( -name '*.a' -o -name '*.mod' \
            -o -name 'netcdf*h' -o -name 'netcdf*inc' \) -type f -print | xargs rm -f 
- echo "libraries ... cleaned" 
- echo "modules ... cleaned" 
- echo "NETCDF files ... cleaned  " 
+ echo "[CLEAN] libraries ... done" 
+ echo "[CLEAN] modules ... done" 
+ echo "[CLEAN] NETCDF files ... done" 
 endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
  for exe in $(INTERFCS); do rm -f $(bindir)/$$exe; done
- echo "targets ... cleaned" 
+ echo "[CLEAN] targets ... done" 
+endef
+define tests_clean
+ find tests/ -name '*dir' -type d -print | xargs rm -fr
+ rm -fr tests/PPs
+ echo "[CLEAN] Tests ... done" 
 endef
 define conf_clean
  rm -f $(CFGFILES)
  rm -f config.status config.log
  rm -fr autom4te.cache
- echo "autoconf files ... cleaned" 
+ echo "[CLEAN] autoconf files ... done" 
 endef

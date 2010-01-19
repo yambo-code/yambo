@@ -1,12 +1,17 @@
 #!/bin/bash
 
-EPS=0.00005   # precision 5e-5
+### PATHS AND EXECUTABLE ###
+source  tests/load_paths_and_executables.sh
 
 ##########################################################
 #  Reference data Yambo 3.2.1 r 512                      #
 #  compiled with gfortran 4.3.3  (-O3 -mtune=native)     #
 #  and ABINIT 5.3.4                                      #
 ##########################################################
+
+cd $prefix/tests/GoWo_dir
+
+EPS=0.00005   # precision 5e-5
 
 # Compare real and imaginary part of 3 quasi-particles
 
@@ -36,64 +41,9 @@ nqp=3
  Eo[6]=0
   Z[6]=-0.001213804
 
-##########################################################
+# INPUT FILES #
 
-############## YAMBO EXECUTABLE #################
-YAMBOPATH="../../../bin/"
-YAMBO="${YAMBOPATH}/yambo"
-A2Y="${YAMBOPATH}/a2y"
-#################################################
-
-# check whether echo has the -e option
-if test "`echo -e`" = "-e" ; then ECHO=echo ; else ECHO="echo -e" ; fi
-
-# run from directory where this script is
-cd `echo $0 | sed 's/\(.*\)\/.*/\1/'` # extract pathname
-TEST_DIR=`pwd`
-
-if [ -d test_GoWo ] ; then
-  $ECHO " WARNING: directory test_GoWo already exists "
-  $ECHO ""
-fi
-
-rm -rf test_GoWo
-mkdir  test_GoWo
-cd test_GoWo
-
-$ECHO 
-$ECHO " * * * * * * * * * * * * * * * * *"
-$ECHO " *        Test GoWo              *"
-$ECHO " * * * * * * * * * * * * * * * * *"
-$ECHO 
-
-if [ `which abinis | wc -c` -eq 0 ] ; then
-  $ECHO " ABINIT is not in your path!"
-  exit 1;
-fi
-
-if [ `which ncdump | wc -c` -eq 0 ] ; then
-  $ECHO " NCDUMP is not in your path!"
-  exit 1;
-fi
-
-if [ ! -f $A2Y ] ; then
-  $ECHO " Compile yambo interfaces before tests "
-  exit 1;
-fi
-
-if [ ! -f $YAMBO ] ; then
-  $ECHO " Yambo executable not found "
-  exit 1;
-fi
-
-
-$ECHO " Downloading pseudopotentials...... "
-if (! wget ftp://ftp.abinit.org/pub/abinitio/Psps/LDA_TM.psps/05/5b.pspnc &> /dev/null) || ( ! wget ftp://ftp.abinit.org/pub/abinitio/Psps/LDA_TM.psps/07/7n.pspnc &> /dev/null ) then
-$ECHO " Error downloading pseudo-potentials "
-exit 1;
-fi
-
-cat > bn_dft.in << EOF
+cat > gs.in << EOF
 ndtset 2
 
 nstep 100
@@ -136,40 +86,15 @@ xcart
  -2.3588686075E+00 -1.3618934255E+00  0.0000000000E+00
 EOF
 
-cat > bn.files << EOF
-bn_dft.in
-bn_dft.out
-bn_dfti
-bn_dfto
-bn_dft
-5b.pspnc
-7n.pspnc
+cat > files << EOF
+gs.in
+gs.out
+gs_i    
+gs_o
+gs    
+../PPs/5b.pspnc
+../PPs/7n.pspnc
 EOF
-
-$ECHO " Running ABINIT calculation..... "
-
-if (! abinis < bn.files > output_abinit ) then
-$ECHO " Error running ABINIT "
-exit 1;
-fi
-
-$ECHO " Import WF ..... "
-
-if (! $A2Y -N -S -F bn_dfto_DS2_KSS &> output_a2y) then
-$ECHO " Error running A2Y "
-exit 1;
-fi
-
-$ECHO " Yambo Setup ..... "
-
-cat > yambo_setup.in << EOF
-setup                        # [R INI] Initialization
-EOF
-
-if (! $YAMBO -N -F yambo_setup.in  &> output_setup) then
-$ECHO " Error in YAMBO setup "
-exit 1;
-fi
 
 cat > yambo.in << EOF
 ppa                          # [R Xp] Plasmon Pole Approximation
@@ -204,23 +129,25 @@ DysSolver= "n"               # [GW] Dyson Equation solver
 %
 EOF
 
-$ECHO " Yambo GoWo ..... "
 
+### SETUP ####
+source  $prefix/tests/setup.sh
+
+### YAMBO ####
+$ECHO $ECHO_N " [TESTs] GoWo ... "
 if (! $YAMBO -N -F yambo.in  &> output_yambo) then
-$ECHO " Error running YAMBO GoWo "
-exit 1;
+ $ECHO " Error running YAMBO GoWo "
+ exit 1;
+else
+ $ECHO "done"
 fi
 
+### TESTS ### 
 ncdump SAVE/ndb.QP > data_ndb.QP
 head_lines=`grep -n QP_E_Eo_Z data_ndb.QP | tail -1 | awk -F: ' { print $1 }'`
 
 test_ok=1
 
-#
-# seq does not work on MacOsX !
-#
-#for i in `seq 1 $(echo 2*$nqp |bc -l)`   
-#
 for i in 1 2 3 4 5 6 
 do 
     if [ "$i" -le "$nqp" ] ; then
@@ -253,11 +180,8 @@ do
     fi     
 done
 
-$ECHO ""
-
 if [ "$test_ok" -eq 1 ] ; then
-   $ECHO " Test GoWo ==>> OK "
+   $ECHO " [TESTs] === Test GoWo OK ==="
 else
-   $ECHO " Test GoWo ==>> failed "
+   $ECHO " [TESTs] === Test GoWo FAILED ==="
 fi
-cd ..

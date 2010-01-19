@@ -35,8 +35,8 @@ subroutine el_magnetization(en,Xk)
  use FFT_m,          ONLY:fft_size,fft_rot_r
  use wave_func,      ONLY:wf_state,wf
  use xc_functionals, ONLY:el_mag
-#if defined _MAGNETIC
- use magnetic,       ONLY:average_el_mag,fix_el_mag_dim,average_el_mag_dim
+#if defined _SC
+ use magnetic,       ONLY:average_el_mag,average_el_mag_rescaling,average_el_mag_dim
 #endif
  implicit none
  type(levels) ::en
@@ -49,8 +49,7 @@ subroutine el_magnetization(en,Xk)
  !
  el_mag=0.
  cv=0.
-#if defined _MAGNETIC
- if(average_el_mag_dim=='') call check_periodic_directions()
+#if defined _SC
  average_el_mag=0.
 #endif
  !
@@ -94,13 +93,13 @@ subroutine el_magnetization(en,Xk)
    end do
  enddo
  !
-#if defined _MAGNETIC
+#if defined _SC
   do i1=1,3
     do i2=1,fft_size
       average_el_mag(i1)=average_el_mag(i1)+el_mag(i2,i1)
     enddo
   enddo
-  average_el_mag(:)=-average_el_mag(:)/fft_size*fix_el_mag_dim
+  average_el_mag(:)=-average_el_mag(:)/fft_size*average_el_mag_rescaling
 #endif
  !
  ! GPL_EXCLUDE_END SPIN_IGNORE

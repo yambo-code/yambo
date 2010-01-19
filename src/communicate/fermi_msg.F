@@ -25,7 +25,7 @@ subroutine fermi_msg(E,mode)
  use units,         ONLY:HARTREE,BOHR,Bohr_magneton
  use com,           ONLY:msg,warning
  use electrons,     ONLY:levels,n_sp_pol,n_spin,filled_tresh
-#if defined _MAGNETIC
+#if defined _SC
  use magnetic,      ONLY:average_el_mag,average_el_mag_dim
 #endif
  implicit none
@@ -142,7 +142,7 @@ subroutine fermi_msg(E,mode)
  !
  if (E%nbf/=E%nbm.and..not.any(nbf_/=nbm_)) call warning('Merged spin levels are metallic')
  !
-#if defined _MAGNETIC
+#if defined _SC
  ! [4] Report the value of the mean magnetization
  !
  if(n_sp_pol>1) then

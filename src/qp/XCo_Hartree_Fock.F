@@ -24,7 +24,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  ! Hartree-Fock
  !
  use pars,          ONLY:SP,schlen,DP,pi
- use drivers,       ONLY:l_sc_run,l_sc_exx,l_rho_IO
+ use drivers,       ONLY:l_sc_run,l_sc_exx,l_rho_IO,l_real_time
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
  use timing,        ONLY:live_timing
@@ -37,11 +37,11 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use R_lattice,     ONLY:qindx_S,bz_samp
  use wave_func,     ONLY:wf,WF_load,WF_free
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP,OP_WR
-#if defined _SC || defined _RT || defined _MAGNETIC
+#if defined _SC || defined _RT 
  use SC,            ONLY:it_now,SC_bands
  use global_XC,     ONLY:SC_HF
  use IO_m,          ONLY:NONE
- use oscillators_IO,ONLY:V_kind,tmp_rho_vx,QP_DB_done
+ use oscillators_IO,ONLY:V_kind,tmp_rho_vx,QP_DB_done,oscillators_IO_alloc,oscillators_IO_free
 #endif
  !
  implicit none
@@ -52,7 +52,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  type(ggwinfo)    ::isc,iscp
  type(pp_indexes) ::px
- integer                 ::i2,iq,ib,ibp,jb,ik,Sx_upper_band,i_qp
+ integer                 ::i2,iq,ib,ibp,jb,ik,Sx_upper_band,i_qp,WF_Go_indx 
 #if defined _RT
  integer                 :: jb2,ik_minus_q,COM_
  integer, external       :: QP_check_RHO_RHO_VX
@@ -94,7 +94,10 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
    !
    V_kind=SC_HF
    !
-   if(QP_check_RHO_RHO_VX()==0) return
+   WF_Go_indx=maxval(qindx_S(:,:,2))
+   if (.not.l_real_time) call oscillators_IO_alloc()
+   !
+   if (QP_check_RHO_RHO_VX()==0) return
    !
  endif
  !
@@ -102,19 +105,22 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  call msg('r', '[EXS] Plane waves :',QP_ng_Sx)
  !
- ! QP_table -> report
- !
- i4=(/1,1,0,0/)
- do while(QP_state_extract(i4)>0)
-   write (ch,'(4(a,i3.3))') 'QP @ K ',i4(1),' - ',i4(2),' : b ',i4(3),' - ',i4(4)
-   call msg('r',trim(ch))
- enddo
- call msg('r','')
+ if (.not.l_rho_IO) then
+   !
+   ! QP_table -> report
+   !
+   i4=(/1,1,0,0/)
+   do while(QP_state_extract(i4)>0)
+     write (ch,'(4(a,i3.3))') 'QP @ K ',i4(1),' - ',i4(2),' : b ',i4(3),' - ',i4(4)
+     call msg('r',trim(ch))
+   enddo
+   call msg('r','')
+   !
+ endif
  !
  ! WFs
  !
- call WF_load(QP_ng_Sx,maxval(qindx_S(:,:,2)),&
-&             (/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-Sxx/Rho')
+ call WF_load(QP_ng_Sx,maxval(qindx_S(:,:,2)),(/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-HF/Rho')
  !
  ! allocation again
  !
@@ -136,9 +142,9 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  call pp_redux_wait
  !
  ch='EXS'
-#if defined _SC  || defined _MAGNETIC || defined _RT
- if (l_sc_run) ch='EXS@it'//trim(intc(it_now))
- if (l_rho_IO) ch='RHO I/O->EXS'
+#if defined _SC  || defined _RT
+ if (l_sc_run) ch='HF@it'//trim(intc(it_now))
+ if (l_rho_IO) ch='HF oscillators'
 #endif
  !
 #if defined _RT
@@ -198,7 +204,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
        isc%os(1)=jb
        iscp%os=isc%os
        !
-#if defined _SC  || defined _MAGNETIC
+#if defined _SC  
        !
        ! In Exact-Exchange only vc matrix elements so ... no cc' no vv' 
        ! (cv is not permitted by the order in QP_table)
@@ -248,6 +254,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
          !
          tmp_rho_vx(jb,jb2,ik_minus_q)=tmp_rho_vx(jb,jb2,ik_minus_q)+DP_Sx
          !
+
        enddo
 #else
        !
@@ -281,6 +288,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  if (l_rho_IO) then
    !
    call QP_close_RHO_RHO_VX()
+   if (.not.l_real_time) call oscillators_IO_free()
    call WF_free()
    !
    return

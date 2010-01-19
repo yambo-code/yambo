@@ -46,7 +46,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
  use com,           ONLY:more_io_path,com_path
  use functions,     ONLY:bose_E_cut
-#if defined _SC || defined _RT || defined _MAGNETIC
+#if defined _SC || defined _RT 
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential,&
 &                        SC_rho_threshold,SC_cycle_mixing
  use oscillators_IO,ONLY:Sx_cutoff
@@ -56,7 +56,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, LifeTime, &
 &                        RT_diagonalization_steps,Thermal_time,EField,max_rt_steps_disk
 #endif
-#if defined _MAGNETIC
+#if defined _SC
  use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
 #endif
 #if defined _RAS
@@ -125,7 +125,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! GPL_EXCLUDE_END
  !
-#if defined _SC || defined _RT || defined _MAGNETIC
+#if defined _SC || defined _RT 
  call it('r',defs,'scpot',   '[R] Self-Consistent potentials') 
 #endif
 #if defined _RT
@@ -362,7 +362,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! 
  ! SC
  !
-#if defined _SC || defined _MAGNETIC
+#if defined _SC 
  call it(defs,'SCIter',    '[SC] SC Iterations',SC_iterations)
  call it(defs,'SCEtresh',  '[SC] Energy convergence threshold',SC_E_threshold,unit=E_unit)
  call it(defs,'SCRhoTresh','[SC] Rho convergence threshold',SC_rho_threshold)
@@ -373,7 +373,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! 
  ! SC [common with RT]
  !
-#if defined _SC || defined _RT || defined _MAGNETIC
+#if defined _SC || defined _RT 
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_sc)
  call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)

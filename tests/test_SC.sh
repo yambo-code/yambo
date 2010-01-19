@@ -1,5 +1,8 @@
 #!/bin/bash
 
+### PATHS AND EXECUTABLE ###
+source  tests/load_paths_and_executables.sh
+
 EPS=0.00005   # precision 5e-5
 
 ##########################################################
@@ -11,64 +14,12 @@ EPS=0.00005   # precision 5e-5
 E_kpt1=(-0.8728241 -0.2853783 -0.1462003 -0.1441232 0.1795345 0.5165715)
 E_kpt2=(-0.7379777 -0.4703602 -0.2650903 -0.1071636 0.2981534 0.487517)
 
-##########################################################
+cd $prefix/tests
+rm -fr SC_dir
+mkdir SC_dir
+cd $prefix/tests/SC_dir
 
-############## YAMBO EXECUTABLE #################
-YAMBOPATH="../../../bin/"
-YAMBO_SC="${YAMBOPATH}/yambo_sc"
-A2Y="${YAMBOPATH}/a2y"
-#################################################
-
-# check whether echo has the -e option
-if test "`echo -e`" = "-e" ; then ECHO=echo ; else ECHO="echo -e" ; fi
-
-# run from directory where this script is
-cd `echo $0 | sed 's/\(.*\)\/.*/\1/'` # extract pathname
-TEST_DIR=`pwd`
-
-if [ -d test_SC ] ; then
-  $ECHO " WARNING: directory test_SC already exists "
-  $ECHO ""
-fi
-
-rm -rf test_SC
-mkdir  test_SC
-cd test_SC
-
-$ECHO 
-$ECHO " * * * * * * * * * * * * * * * * *"
-$ECHO " *        Test SC                *"
-$ECHO " * * * * * * * * * * * * * * * * *"
-$ECHO 
-
-if [ `which abinis | wc -c` -eq 0 ] ; then
-  $ECHO " ABINIT is not in your path!"
-  exit 1;
-fi
-
-if [ `which ncdump | wc -c` -eq 0 ] ; then
-  $ECHO " NCDUMP is not in your path!"
-  exit 1;
-fi
-
-if [ ! -f $A2Y ] ; then
-  $ECHO " Compile yambo interfaces before tests "
-  exit 1;
-fi
-
-if [ ! -f $YAMBO_SC ] ; then
-  $ECHO " Yambo_sc executable not found "
-  exit 1;
-fi
-
-
-$ECHO " Downloading pseudopotentials...... "
-if (! wget ftp://ftp.abinit.org/pub/abinitio/Psps/LDA_TM.psps/05/5b.pspnc &> /dev/null) || ( ! wget ftp://ftp.abinit.org/pub/abinitio/Psps/LDA_TM.psps/07/7n.pspnc &> /dev/null ) then
-$ECHO " Error downloading pseudo-potentials "
-exit 1;
-fi
-
-cat > bn_dft.in << EOF
+cat > gs.in << EOF
 ndtset 2
 
 nstep 100
@@ -111,40 +62,15 @@ xcart
  -2.3588686075E+00 -1.3618934255E+00  0.0000000000E+00
 EOF
 
-cat > bn.files << EOF
-bn_dft.in
-bn_dft.out
-bn_dfti
-bn_dfto
-bn_dft
-5b.pspnc
-7n.pspnc
+cat > files << EOF
+gs.in
+gs.out
+gs_i    
+gs_o
+gs    
+../PPs/5b.pspnc
+../PPs/7n.pspnc
 EOF
-
-$ECHO " Running ABINIT calculation..... "
-
-if (! abinis < bn.files > output_abinit ) then
-$ECHO " Error running ABINIT "
-exit 1;
-fi
-
-$ECHO " Import WF ..... "
-
-if (! $A2Y -N -S -F bn_dfto_DS2_KSS &> output_a2y) then
-$ECHO " Error running A2Y "
-exit 1;
-fi
-
-$ECHO " Yambo Setup ..... "
-
-cat > yambo_setup.in << EOF
-setup                        # [R INI] Initialization
-EOF
-
-if (! ${YAMBO_SC} -N -F yambo_setup.in  &> output_setup) then
-$ECHO " Error in YAMBO setup "
-exit 1;
-fi
 
 cat > yambo.in << EOF
 #
@@ -168,11 +94,16 @@ SCEtresh=   0.00100     eV    # [SC] Energy convergence threshold
 SCRhoTresh=0.1000E-5         # [SC] Rho convergence threshold
 EOF
 
-$ECHO " Yambo SC ..... "
+### SETUP ####
+source  $prefix/tests/setup.sh
 
+### YAMBO ####
+$ECHO $ECHO_N " [TESTs] Yambo SC ... "
 if (! ${YAMBO_SC} -N -F yambo.in  &> output_yambo) then
-$ECHO " Error running YAMBO SC "
-exit 1;
+ $ECHO " Error running YAMBO SC "
+ exit 1;
+else
+ $ECHO "done"
 fi
 
 ncdump SAVE/ndb.scE > data_ndb.scE
@@ -204,11 +135,8 @@ do
 
 done
 
-$ECHO ""
-
 if [ "$test_ok" -eq 1 ] ; then
-   $ECHO " Test SC ==>> OK "
+   $ECHO " [TESTs] === Test SC OK ==="
 else
-   $ECHO " Test SC ==>> failed "
+   $ECHO " [TESTs] === Test SC FAILED ==="
 fi
-cd ..

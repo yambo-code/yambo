@@ -215,16 +215,16 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #if defined _RT
  !
  do i_qp=1,QP_n_states
- !
- if (.not.px%i1p(i_qp)) cycle
- !
- if (QP_DB_done(i_qp)) then
-    call live_timing(steps=1)
-    cycle
- endif
- !
- tmp_rho_vx=(0._SP,0._SP)
- !
+   !
+   if (.not.px%i1p(i_qp)) cycle
+   !
+   if (QP_DB_done(i_qp)) then
+      call live_timing(steps=1)
+      cycle
+   endif
+   !
+   tmp_rho_vx=(0._SP,0._SP)
+   !
 #endif                     
  !
  do iqbz=1,q%nbz 

@@ -179,7 +179,7 @@ subroutine ps_convert(rvar,ivar,v_name)
    !
  else if (var_is_angle) then
    !
-   ! Angles (among B and z direction, used by _MAGNETIC project)
+   ! Angles (among B and z direction, used by MAGNETIC project)
    ! 
    if (index(v_line,'deg')/=0) then
      rvar=rvar*radian

@@ -21,7 +21,7 @@
 !
 subroutine XCo_driver(E,k,Xk,q)
  !
- use drivers,       ONLY:l_acfdt,l_rho_io,l_sc_run,l_real_time
+ use drivers,       ONLY:l_acfdt,l_sc_run,l_real_time
  use pars,          ONLY:schlen
  use com,           ONLY:msg
  use units,         ONLY:HARTREE
@@ -35,10 +35,6 @@ subroutine XCo_driver(E,k,Xk,q)
  use wave_func,     ONLY:WF_free
 #if defined _SC
  use global_XC,     ONLY:SC_HF,SC_CHOSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
-#endif
-#if defined _RT
- use SC,            ONLY:SC_bands
- use QP_m,          ONLY:QP_nb
 #endif
  !
  implicit none
@@ -62,7 +58,6 @@ subroutine XCo_driver(E,k,Xk,q)
  sec_mode_and_message(1)='*'
  sec_mode_and_message(2)='Bare local and non-local Exchange-Correlation'
  if (l_acfdt)   sec_mode_and_message(1)='p'
- if (l_rho_IO)  sec_mode_and_message(2)='Hartree-Fock extended oscillators'
  if (.not.l_sc_run &
 #if defined _SC
 &    .and.WF_kind/=SC_HF &
@@ -71,38 +66,30 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  ! QP states setup
  !
-#if defined _RT
- if (l_rho_IO) QP_nb=SC_bands
-#endif
  call QP_state_table_setup(E)
  !
  ! Allocation
  !
- if (.not.l_rho_IO) then
-   if (.not.allocated(QP_Vnl_xc)) then
-     allocate(QP_Vnl_xc(QP_n_states))
-     call mem_est("QP_Vnl_xc",(/QP_n_states/))
-   endif
-   if (.not.allocated(QP_Vxc)) then
-     allocate(QP_Vxc(QP_n_states))
-     call mem_est("QP_Vxc",(/QP_n_states/))
-   endif
-   QP_Vnl_xc=(0.,0.)
-   QP_Vxc=(0.,0.)
-   !
-#if defined _SC
-   if (WF_kind==SC_HF) return
-#endif
-   !
+ if (.not.allocated(QP_Vnl_xc)) then
+   allocate(QP_Vnl_xc(QP_n_states))
+   call mem_est("QP_Vnl_xc",(/QP_n_states/))
  endif
+ if (.not.allocated(QP_Vxc)) then
+   allocate(QP_Vxc(QP_n_states))
+   call mem_est("QP_Vxc",(/QP_n_states/))
+ endif
+ QP_Vnl_xc=(0.,0.)
+ QP_Vxc=(0.,0.)
+ !
+#if defined _SC
+ if (WF_kind==SC_HF) return
+#endif
  !
  ! Main DB I/O
  !
  io_err=-1
- if (.not.l_rho_IO) then
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
-   io_err=io_HF_and_locXC(ID)
- endif
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
+ io_err=io_HF_and_locXC(ID)
  !
  if (io_err==0) then
    !
@@ -144,9 +131,10 @@ subroutine XCo_driver(E,k,Xk,q)
    !
  endif
  !
- if (.not.l_sc_run)  call WF_free()
- !
- if(.not.l_rho_IO)   call XCo_report_and_IO()
+ if (.not.l_sc_run)  then
+   call WF_free()
+   call XCo_report_and_IO()
+ endif
  !
  contains
    !

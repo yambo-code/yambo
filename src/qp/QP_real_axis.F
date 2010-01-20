@@ -47,7 +47,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:qindx_S,bz_samp
  use D_lattice,     ONLY:nsym,i_space_inv,i_time_rev
- use wave_func,     ONLY:WF_load,wf_free
+ use wave_func,     ONLY:WF_load,WF_free
  use stderr,        ONLY:intc
  !
  implicit none
@@ -458,7 +458,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  endif
  !
  call X_alloc('X')
- call wf_free()
+ call WF_free()
  call collision_reset(isc)
  call collision_reset(iscp)
  call pp_indexes_reset(px)

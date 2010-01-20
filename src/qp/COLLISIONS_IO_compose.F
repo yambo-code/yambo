@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SC_extended_oscillators(G_input)
+subroutine COLLISIONS_IO_compose(G_input)
  !
  ! HF(qp_state) = - (0.,1.) * \sum_{n,n',q} rho_rho_(n,n',q,qp_state) x G_lesser(n,n',k-q)
  ! 
@@ -28,11 +28,11 @@ subroutine SC_extended_oscillators(G_input)
  use QP_m,           ONLY:QP_nk,QP_nb,QP_n_states,QP_Vnl_xc,QP_Sc
  use SC,             ONLY:SC_bands
  use global_XC,      ONLY:SC_HF,SC_CHOSEX
- use collisions_IO, ONLY:rho_VX_rho,n_rho_states,rho_table,io_COLLISIONS,V_kind 
+ use collisions_IO,  ONLY:COLLISIONS_v,n_collisions,COLLISIONS_table,io_COLLISIONS,V_kind 
  use par_proc_m,     ONLY:pp_indexes,pp_redux_wait,pp_indexes_reset
  use par_indexes_m,  ONLY:par_indexes
  use IO_m,           ONLY:io_control,OP_RD_CL
- use collisions_CACHE, ONLY:last_QP_mem,QP_rho
+ use collisions_CACHE, ONLY:last_QP_mem,CACHE
  !
  implicit none
  !       
@@ -66,8 +66,8 @@ subroutine SC_extended_oscillators(G_input)
    do ib=1,QP_nb
      do ibp=1,QP_nb
        do ik=1,QP_nk
-         if(QP_rho(i1)%rho_table(ib,ibp,ik)/=0) then
-           QP_Vnl_xc(i1)=QP_Vnl_xc(i1)-(0._SP,1._SP)*QP_rho(i1)%RHO_VX_RHO(ic)*G_input(ib,ibp,ik)
+         if(CACHE(i1)%COLLISIONS_table(ib,ibp,ik)/=0) then
+           QP_Vnl_xc(i1)=QP_Vnl_xc(i1)-(0._SP,1._SP)*CACHE(i1)%COLLISIONS_v(ic)*G_input(ib,ibp,ik)
            ic=ic+1
          endif
        enddo
@@ -95,8 +95,8 @@ subroutine SC_extended_oscillators(G_input)
      do ib=1,QP_nb
        do ibp=1,QP_nb
          do ik=1,QP_nk
-           if(rho_table(ib,ibp,ik)/=0) then
-             QP_Vnl_xc(i1)=QP_Vnl_xc(i1)-(0._SP,1._SP)*rho_VX_rho(ic)*G_input(ib,ibp,ik)
+           if(COLLISIONS_table(ib,ibp,ik)/=0) then
+             QP_Vnl_xc(i1)=QP_Vnl_xc(i1)-(0._SP,1._SP)*COLLISIONS_v(ic)*G_input(ib,ibp,ik)
              ic=ic+1
            endif
          enddo
@@ -117,8 +117,8 @@ subroutine SC_extended_oscillators(G_input)
      do ib=1,QP_nb
        do ibp=1,QP_nb
          do ik=1,QP_nk
-           if(rho_table(ib,ibp,ik)/=0) then
-             QP_Sc(i1,1)=QP_Sc(i1,1)-(0._SP,1._SP)*rho_VX_rho(ic)*G_input(ib,ibp,ik)      
+           if(COLLISIONS_table(ib,ibp,ik)/=0) then
+             QP_Sc(i1,1)=QP_Sc(i1,1)-(0._SP,1._SP)*COLLISIONS_v(ic)*G_input(ib,ibp,ik)      
              ic=ic+1
            endif
           enddo
@@ -132,9 +132,8 @@ subroutine SC_extended_oscillators(G_input)
  ! When the Cache is used all the QP correction are put together
  ! in QP_Vnl_xc
  ! 
- if(l_sc_hf.or.l_sc_chosex.or.last_QP_mem/=0) &
-   &  call pp_redux_wait(QP_Vnl_xc)
- if(l_sc_chosex)                   call pp_redux_wait(QP_Sc)
+ if(l_sc_hf.or.l_sc_chosex.or.last_QP_mem/=0)   call pp_redux_wait(QP_Vnl_xc)
+ if(l_sc_chosex)                                call pp_redux_wait(QP_Sc)
  !
  call pp_indexes_reset(px)
  !

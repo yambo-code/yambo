@@ -23,8 +23,7 @@ subroutine QP_load_SC_xc()
  !
  ! Load and Rotate non-local Hamiltonian coming from SC calculation 
  !
- use memory_m,        ONLY:mem_est
- use electrons,       ONLY:levels,spin,n_sp_pol
+ use electrons,       ONLY:spin,n_sp_pol
  use QP_m,            ONLY:QP_table,QP_n_states,QP_vnl_xc
  use IO_m,            ONLY:VERIFY,DUMP,NONE
  use R_lattice,       ONLY:nkibz

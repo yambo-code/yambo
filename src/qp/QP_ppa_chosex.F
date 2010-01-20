@@ -26,7 +26,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use pars,          ONLY:SP,pi,schlen
  use units,         ONLY:HARTREE
  use memory_m,      ONLY:mem_est
- use drivers,       ONLY:l_real_time,l_rho_IO
+ use drivers,       ONLY:l_collisions_IO
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands
@@ -37,18 +37,20 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use par_indexes_m, ONLY:par_indexes
  use collision,     ONLY:ggwinfo,collision_reset
  use functions,     ONLY:bose_f
- use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
-&                        OP_WR_CL
+ use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        CHOSEX_use_empties
  use X_m,           ONLY:X_alloc,X_mat,X_t
- use wave_func,     ONLY:WF_load,wf_free
+ use wave_func,     ONLY:WF_load,WF_free
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv
 #if defined _RT         
- use collisions_IO,ONLY:V_kind,tmp_rho_vx,QP_DB_done
+ use collisions_IO,ONLY:V_kind,TEMP_COLLISIONS_v,QP_COLLISIONS_done
  use global_XC,     ONLY:SC_CHOSEX
+#endif
+#if defined _SC || defined _RT 
+ use SC,            ONLY:it_now
 #endif
  !
  implicit none
@@ -128,13 +130,10 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  if (l_chosex.and..not.CHOSEX_use_empties) isc%ngrho=maxval(G_m_G)
  iscp%ngrho=isc%ngrho
  !
- if (.not.l_sc_run.or.l_real_time) then
-   !
-   ! WFs
-   !
-   call WF_load(isc%ngrho,maxval(qindx_S(:,:,2)),&
-&               (/1,max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-Sc')
- endif
+ ! WFs
+ !
+ call WF_load(isc%ngrho,maxval(qindx_S(:,:,2)),&
+&             (/1,max(QP_n_G_bands(2),QP_nb)/),(/1,k%nibz/),title='-SC')
  !
  ! Plasmon-Pole/Static interaction DB I/O
  !
@@ -188,29 +187,22 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call pp_redux_wait
  !
-#if defined _RT
+ ! LIVE-TIMING message
  !
- ! Oscillators I/O
- !
- if(l_rho_IO) then
-   !
-   V_kind=SC_CHOSEX
-   !
-   if(COLLISIONS_IO_check()==0) return
-   !
- endif
- !
+#if defined _RT || defined _SC
+ if (.not.l_collisions_IO) then
+   if (l_sc_run) then
+     if (l_chosex) call live_timing(trim(Sc_name)//'@it'//trim(intc(it_now)),px%stps(myid+1)*QP_n_states) 
+   else
 #endif
- !
- if (l_ppa) then
-   call live_timing(trim(Sc_name)//'W0 PPA',px%stps(myid+1)*QP_n_states) 
- else if (.not.l_sc_run) then
-   call live_timing(trim(Sc_name)//'W0 CHOSEX',px%stps(myid+1)*QP_n_states) 
- else if (l_real_time.and.l_rho_IO) then
-   call live_timing("RHO_IO->CHOSEX",px%stps(myid+1)) 
+     if (l_ppa)    call live_timing(trim(Sc_name)//'W0 PPA',px%stps(myid+1)*QP_n_states) 
+     if (l_chosex) call live_timing(trim(Sc_name)//'W0 CHOSEX',px%stps(myid+1)*QP_n_states) 
+#if defined _RT || defined _SC
+   endif
  else
-   call live_timing(trim(Sc_name),px%stps(myid+1)*QP_n_states) 
+   call live_timing("CHOSEX collisions",px%stps(myid+1)) 
  endif
+#endif
  !
 #if defined _RT
  !
@@ -218,12 +210,12 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
    if (.not.px%i1p(i_qp)) cycle
    !
-   if (QP_DB_done(i_qp)) then
+   if (QP_COLLISIONS_done(i_qp)) then
       call live_timing(steps=1)
       cycle
    endif
    !
-   tmp_rho_vx=(0._SP,0._SP)
+   TEMP_COLLISIONS_v=(0._SP,0._SP)
    !
 #endif                     
  !
@@ -306,7 +298,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
          enddo
        enddo
        !
-       if (master_cpu.and..not.l_rho_IO) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
+       if (master_cpu.and..not.l_collisions_IO) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
        dc=cmplx(0.,0.,SP)
        isc%os=iscs_save(1,: )
        isc%qs=iscs_save(2,:3)
@@ -362,7 +354,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
            enddo
          enddo
          !
-         if(.not.l_rho_IO) QP_Sc(i_qp,:2)=QP_Sc(i_qp,:2)+dc(:2)
+         if(.not.l_collisions_IO) QP_Sc(i_qp,:2)=QP_Sc(i_qp,:2)+dc(:2)
          !
          ! GPL_EXCLUDE_START SC_IGNORE
          !
@@ -403,7 +395,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
 #if defined _RT
          !
-         tmp_rho_vx(ib,ib2,isc%os(2))=tmp_rho_vx(ib,ib2,isc%os(2))+dc(1)+dc(2)
+         TEMP_COLLISIONS_v(ib,ib2,isc%os(2))=TEMP_COLLISIONS_v(ib,ib2,isc%os(2))+dc(1)+dc(2)
          !
 #else
          !
@@ -425,7 +417,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
 #if defined _RT
    !
-   if(l_rho_IO) call COLLISIONS_IO_store(i_qp)
+   if(l_collisions_IO) call COLLISIONS_IO_store(i_qp)
    !
    call live_timing(steps=1)
    !
@@ -435,9 +427,9 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call live_timing()
  !
-#if !defined _RT
- call pp_redux_wait(QP_Sc)
-#endif
+ ! ALL 2 ALL of QP_Sc
+ !
+ if (allocated(QP_Sc)) call pp_redux_wait(QP_Sc)
  !
  ! CLEAN
  !
@@ -445,10 +437,13 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  if (l_ppa) deallocate(E_,PPaP)
  call mem_est("PPaP ISC-GAMP GW-E")
  call X_alloc('X')
-#if defined _RT
- if (l_rho_IO) call QP_close_RHO_RHO_VX()
+ !
+#if !defined _RT && !defined _SC
+ !
+ call WF_free()
+ !
 #endif
- if (.not.l_sc_run) call wf_free()
+ !
  call collision_reset(isc)
  call collision_reset(iscp)
  call pp_indexes_reset(px)

@@ -39,7 +39,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
 &                         i_time,Integrator_name,j_current,l_RT_diagonalize,        &
 &                         G_lesser_reference,LifeTime,RT_diagonalization_steps,     &
 &                         A_vecpot,A_vecpot_previous
- use collisions_CACHE, ONLY:free_RHO_VX_RHO
+ use collisions_CACHE, ONLY:free_COLLISIONS_v
  use collisions_IO,    ONLY:collisions_IO_alloc
  !
  implicit none
@@ -53,9 +53,10 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  type(w_samp)  :: Xw(2) 
  type(bz_samp) :: k,Xk,q
  type(X_t):: X(4)
- integer, external :: eval_G_minus_G
  ! 
  ! Work Space
+ !
+ integer, external :: eval_G_minus_G
  !
  character(lchlen)        :: file_name(2)
  character(schlen)        :: sec_mode_and_message(2)
@@ -76,14 +77,12 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
  call XC_switch()
  !
- ! WFs loading
- !
  WF_G_max=wf_ng
- if(l_sc_hf.or.l_sc_chosex) then                                  
+ !
+ if (l_sc_hf.or.l_sc_chosex) then
    !
    QP_nb=SC_bands
    WF_Go_indx=maxval(qindx_S(:,:,2))
-   call collisions_IO_alloc()
    !
    if (l_sc_chosex) then
      X(2)%ng=eval_G_minus_G(X(2)%ng,0)
@@ -91,16 +90,16 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
      QP_n_G_bands(2)=SC_bands
      CHOSEX_use_empties=.FALSE.
    endif
-   !
-   sec_mode_and_message(1)='*'
-   sec_mode_and_message(2)='Hartree-Fock extended oscillators'  
-   call section(trim(sec_mode_and_message(1)),trim(sec_mode_and_message(2)))
-   call QP_state_table_setup(Xen)
-   call XCo_Hartree_Fock(Xen, k, Xk, q)
-   if(l_sc_chosex) call QP_ppa_chosex(X(2),Xk,en,k,q,qp_dummy,Xw(2),-1)
+!   call QP_state_table_setup(Xen)
+!   !
+!   !
+!   !call XCo_Hartree_Fock(Xen, k, Xk, q)
+!   !if(l_sc_chosex) call QP_ppa_chosex(X(2),Xk,en,k,q,qp_dummy,Xw(2),-1) 
  else
    WF_Go_indx=1  
  endif
+ !
+ ! WFs loading
  !
  call WF_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),space='R',title=' ')  
  !
@@ -217,7 +216,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
  call WF_free()
  !
- if(.not.local_V) call free_RHO_VX_RHO()
+ if(.not.local_V) call free_COLLISIONS_v()
  !
  call X_alloc("P_square")
  !

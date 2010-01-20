@@ -21,22 +21,22 @@
 !
 subroutine load_COLLISIONS()
  !
- ! Load all oscillators contribution from any kind of self-energy 
+ ! Load all collisions contribution from any kind of self-energy 
  ! exchange, COHSEX etc.. and store them together in QP_rho(i_qp)
  !
- use pars,           ONLY:IP,SP,LP,schlen
- use drivers,        ONLY:l_sc_hf,l_sc_chosex
- use com,            ONLY:warning,msg
- use global_XC,      ONLY:SC_HF,SC_CHOSEX
- use QP_m,           ONLY:QP_n_states,QP_nb,QP_nk
- use memory_m,       ONLY:mem_sum,mem_est
- use collisions_IO, ONLY:RHO_VX_RHO,n_rho_states,RHO_table,io_COLLISIONS,V_kind,&
-&                             collisions_IO_free
- use stderr,         ONLY:intc
- use IO_m,           ONLY:OP_RD_CL,io_control
- use par_proc_m,     ONLY:pp_indexes,pp_indexes_reset
- use par_indexes_m,  ONLY:par_indexes
- use collisions_CACHE
+ use pars,            ONLY:IP,SP,LP,schlen
+ use drivers,         ONLY:l_sc_hf,l_sc_chosex
+ use com,             ONLY:warning,msg
+ use global_XC,       ONLY:SC_HF,SC_CHOSEX
+ use QP_m,            ONLY:QP_n_states,QP_nb,QP_nk
+ use memory_m,        ONLY:mem_sum,mem_est
+ use collisions_IO,   ONLY:COLLISIONS_v,n_collisions,COLLISIONS_table,io_COLLISIONS,V_kind,&
+&                          collisions_IO_free
+ use stderr,          ONLY:intc
+ use IO_m,            ONLY:OP_RD_CL,io_control
+ use par_proc_m,      ONLY:pp_indexes,pp_indexes_reset
+ use par_indexes_m,   ONLY:par_indexes
+ use collisions_CACHE,ONLY:COLLISIONS_cache_size,last_QP_mem,cache_memory,CACHE
  !
  implicit none
  !
@@ -44,8 +44,8 @@ subroutine load_COLLISIONS()
  !
  integer, parameter :: max_V_kinds=10
  !
- ! When RHOCache_Size<0 automatically 
- ! it fills up to 1.7 Gb processor with RHO states
+ ! When COLLISIONS_cache_size<0 automatically 
+ ! it fills up to 1.7 Gb processor with COLLISIONS_cache_size states
  !
  real(SP),parameter :: mem_proc   =1.7 
  !
@@ -53,17 +53,17 @@ subroutine load_COLLISIONS()
  !
  integer            :: i1,ic,i_qp,ib,ibp,ik,io_err,ID,n_tot_rho_states
  integer            :: V_kinds(max_V_kinds),n_V_kinds
- integer            :: max_QP_rho_states
+ integer            :: max_COLLISION_cache
  real(SP)           :: mem_before_cache
  type(pp_indexes)   :: px
  character(schlen)  :: dump_ch 
- complex(SP), allocatable :: RHO_VX_disk(:,:,:)
+ complex(SP), allocatable :: COLLISIONS_disk(:,:,:)
  !
  last_QP_mem =0
  n_V_kinds   =0
  cache_memory=0
  !
- if(RHO_cache_size==0.) return
+ if(COLLISIONS_cache_size==0.) return
  !
  call pp_indexes_reset(px)
  !
@@ -71,18 +71,18 @@ subroutine load_COLLISIONS()
  !
  mem_before_cache=mem_sum
  !
- if(RHO_cache_size<=0.) RHO_cache_size=mem_proc-mem_before_cache
+ if(COLLISIONS_cache_size<=0.) COLLISIONS_cache_size=mem_proc-mem_before_cache
  !
- if(RHO_cache_size<=0.) then
+ if(COLLISIONS_cache_size<=0.) then
    call warning("Automatic Oscillator Cache failed ") 
-   RHO_cache_size=0.
+   COLLISIONS_cache_size=0.
    return
  endif
  !
- max_QP_rho_states=QP_nb**2*QP_nk
+ max_COLLISION_cache=QP_nb**2*QP_nk
  !
- allocate(RHO_VX_disk(QP_nb,QP_nb,QP_nk))
- call mem_est("RHO_VX_disk",(/QP_nb,QP_nb,QP_nk/),(/2*SP/))
+ allocate(COLLISIONS_disk(QP_nb,QP_nb,QP_nk))
+ call mem_est("COLLISIONS_disk",(/QP_nb,QP_nb,QP_nk/),(/2*SP/))
  !
  if(l_sc_hf.or.l_sc_chosex) then
    n_V_kinds          =n_V_kinds+1
@@ -96,17 +96,17 @@ subroutine load_COLLISIONS()
  !
  i_qp=1
  !
- allocate(QP_rho(QP_n_states))
+ allocate(CACHE(QP_n_states))
  !
- do while(cache_memory<RHO_cache_size.and.i_qp<=QP_n_states)  
+ do while(cache_memory<COLLISIONS_cache_size.and.i_qp<=QP_n_states)  
    !
    if(.not.px%i1p(i_qp)) cycle  
    !
-   allocate(QP_rho(i_qp)%RHO_table(QP_nb,QP_nb,QP_nk))
-   call mem_est(" QP_RHO_table_"//trim(intc(i_qp)),(/LP/))
+   allocate(CACHE(i_qp)%COLLISIONS_table(QP_nb,QP_nb,QP_nk))
+   call mem_est(" QP_COLLISIONS_table_"//trim(intc(i_qp)),(/LP/))
    !
-   QP_rho(i_qp)%RHO_table(:,:,:)=0
-   RHO_VX_disk=(0.,0.)
+   CACHE(i_qp)%COLLISIONS_table(:,:,:)=0
+   COLLISIONS_disk=(0.,0.)
    !
    do i1=1,n_V_kinds
      !
@@ -121,10 +121,10 @@ subroutine load_COLLISIONS()
        do ibp=1,QP_nb
          do ik=1,QP_nk
            !
-           if(RHO_table(ib,ibp,ik)==1) then
+           if(COLLISIONS_table(ib,ibp,ik)==1) then
              ic=ic+1
-             QP_rho(i_qp)%RHO_table(ib,ibp,ik)=1
-             RHO_VX_disk(ib,ibp,ik)=RHO_VX_disk(ib,ibp,ik)+RHO_VX_RHO(ic)
+             CACHE(i_qp)%COLLISIONS_table(ib,ibp,ik)=1
+             COLLISIONS_disk(ib,ibp,ik)=COLLISIONS_disk(ib,ibp,ik)+COLLISIONS_v(ic)
            endif
            !
          enddo
@@ -133,19 +133,19 @@ subroutine load_COLLISIONS()
      !
    enddo
    !
-   n_tot_rho_states=sum(int(QP_rho(i_qp)%RHO_table(:,:,:),IP))
+   n_tot_rho_states=sum(int(CACHE(i_qp)%COLLISIONS_table(:,:,:),IP))
    !
-   allocate(QP_rho(i_qp)%RHO_VX_RHO(n_tot_rho_states))
-   call mem_est("QP_RHO_VX_RHO"//trim(intc(i_qp)),(/2*SP/))
+   allocate(CACHE(i_qp)%COLLISIONS_v(n_tot_rho_states))
+   call mem_est("QP_COLLISIONS_v"//trim(intc(i_qp)),(/2*SP/))
    !
    ic=0
    !
    do ib=1,QP_nb
      do ibp=1,QP_nb
        do ik=1,QP_nk
-         if(QP_rho(i_qp)%RHO_table(ib,ibp,ik)==1) then
+         if(CACHE(i_qp)%COLLISIONS_table(ib,ibp,ik)==1) then
            ic=ic+1
-           QP_rho(i_qp)%RHO_VX_RHO(ic)=RHO_VX_disk(ib,ibp,ik)
+           CACHE(i_qp)%COLLISIONS_v(ic)=COLLISIONS_disk(ib,ibp,ik)
          endif
        enddo
      enddo
@@ -159,8 +159,8 @@ subroutine load_COLLISIONS()
  !
  last_QP_mem=i_qp-1
  !
- deallocate(RHO_VX_disk)
- call mem_est("RHO_VX_disk")
+ deallocate(COLLISIONS_disk)
+ call mem_est("COLLISIONS_disk")
  !
  ! If all QP are in memory I don't need anymore oscillators_IO
  !
@@ -168,11 +168,9 @@ subroutine load_COLLISIONS()
  !
  call pp_indexes_reset(px)
  !
- write (dump_ch,'(a,f10.2,a)') &
-    & '[RHO] QP in memory :',real(last_QP_mem)/real(QP_n_states)*100.0,'%'
+ write (dump_ch,'(a,f10.2,a)') '[COLLISIONS] QP in memory :',real(last_QP_mem)/real(QP_n_states)*100.0,'%'
  call msg('s',dump_ch)
- write (dump_ch,'(a,f10.5)') &
-    & '[RHO] Oscillator Cache use [Gb]:',cache_memory
+ write (dump_ch,'(a,f10.5)')   '[COLLISIONS] Oscillator Cache use [Gb]:',cache_memory
  call msg('s',dump_ch)
  !
 end subroutine load_COLLISIONS

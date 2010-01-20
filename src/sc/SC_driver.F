@@ -35,7 +35,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,&
 &                         SC_cycle_mixing,V_hartree_sc,NSC_shot,SC_fft_size,        &
 &                         SC_ng_Sx,SC_X_bands,SC_X_size,Ho,E_bare,SC_alloc,SC_free, &
-&                         WF_G_max,WF_Go_indx,SC_kind,SC_xc_functional,l_use_RHO_IO,&
+&                         WF_G_max,WF_Go_indx,SC_kind,SC_xc_functional,l_use_COLLISIONS_IO,&
 &                         G_lesser
  use wave_func,      ONLY:WF_load,wf,wf_n_states,WF_free
  use memory_m,       ONLY:mem_est
@@ -52,7 +52,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL
  use vec_operate,    ONLY:degeneration_finder
  use timing,         ONLY:live_timing
- use collisions_IO, ONLY:collisions_IO_alloc,collisions_IO_free,V_kind
+ use collisions_IO,  ONLY:collisions_IO_alloc,collisions_IO_free,V_kind
  use global_XC,      ONLY:SC_HF,SC_CHOSEX    
 #if defined _MAGNETIC
  use magnetic,       ONLY:average_el_mag
@@ -92,9 +92,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  integer                  :: first_el(SC_bands),n_of_el(SC_bands),n_deg_grp,&
 &                            b_of_max_proj(SC_bands,k%nibz,n_sp_pol)
  !
- ! Extended Oscillators RHO_IO
+ ! Extended Oscillators
  ! 
- integer                  :: io_RHO_err
+ integer                  :: io_COLLISIONS_err
  integer, external        :: COLLISIONS_IO_check
  !
  ! Magnetic logical setup
@@ -148,7 +148,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
 #endif
  !
- SC_cycle=SC_iterations> 0
+ SC_cycle=SC_iterations > 0
  if (NSC_shot) SC_cycle=.false.
  !
  ! Self-Consistent run, Non-SC shot or nothing ?
@@ -247,7 +247,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  SC_fft_size=fft_size
  call parser('TF_precondition',l_TF_precond) 
  call parser('QPHistory',l_write_qp_histo) 
- call parser('UseRhoIO',l_use_RHO_IO) 
+ call parser('UseRhoIO',l_use_COLLISIONS_IO) 
  !
  ! Allocation(s)...
  !
@@ -255,7 +255,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  ! Initialize SC_R matrix
  !
- if(.not.RESTART.and.l_use_RHO_IO) then
+ if(.not.RESTART.and.l_use_COLLISIONS_IO) then
    !      
    SC_R=(0.,0.)
    forall(i1=1:SC_bands)
@@ -266,23 +266,23 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! 
  ! Checking extended oscillators
  !
- if(l_use_RHO_IO) then
+ if(l_use_COLLISIONS_IO) then
    !
    V_kind=-1
-   io_RHO_err=0
+   io_COLLISIONS_err=0
    !
    if(l_sc_hf.or.l_sc_chosex) then
      V_kind=SC_HF
-     io_RHO_err=io_RHO_err+COLLISIONS_IO_check()
+     io_COLLISIONS_err=io_COLLISIONS_err+COLLISIONS_IO_check()
    endif
    !
    if(l_sc_chosex) then
      V_kind=SC_CHOSEX
-     io_RHO_err=io_RHO_err+COLLISIONS_IO_check()
+     io_COLLISIONS_err=io_COLLISIONS_err+COLLISIONS_IO_check()
    endif
    !
-   if(io_RHO_err/=0) then
-      l_use_RHO_IO=.false.
+   if(io_COLLISIONS_err/=0) then
+      l_use_COLLISIONS_IO=.false.
       call warning(' Extented Oscillators do not fit, UseRhoIO set to .false. ')
    endif
    !
@@ -297,7 +297,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  call msg('r' ,'[SC] Non SC single shot               :',NSC_shot)
  call msg('r' ,'[SC] Bands                            :',SC_bands)
  call msg('r' ,'[SC] Mixed bands                      :',SC_bands_mixed)
- call msg('r' ,'[SC] Use Extented Oscillators         :',l_use_RHO_IO)
+ call msg('r' ,'[SC] Use Extented Oscillators         :',l_use_COLLISIONS_IO)
  call msg('r' ,'[SC] Use Thomas-Fermi precondition    :',l_TF_precond) 
  if (SC_cycle) then
    call msg('r' ,'[SC] N (N-1) order mixing             :',SC_cycle_mixing)
@@ -410,9 +410,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      ! Mixing 
      !========
      !
-     !WARNING:
-     !The mixing of the potential has been eliminated for HF and CHOSEX, for
-     !V_xc_sc case tests are needed.
+     ! WARNING:
+     ! The mixing of the potential has been eliminated for HF and CHOSEX, for
+     ! V_xc_sc case tests are needed.
      ! 
      if (it>1) V_xc_sc = SC_cycle_mixing*V_xc_sc + (1.-SC_cycle_mixing)*V_xc_nm1 
      !
@@ -422,7 +422,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      ! Hartee-Fock
      !
-     if(l_use_RHO_IO) then
+     if(l_use_COLLISIONS_IO) then
        !     
        G_lesser=(0.,0.)
        forall(i1=1:SC_bands,ik=1:E%nk)
@@ -435,7 +435,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        do ik=1,QP_nk
          call H_rotate(SC_R(:,:,ik,1),G_lesser(:,:,ik),SC_bands,-1)
        enddo
-       call SC_extended_oscillators(G_lesser)
+       call COLLISIONS_IO_compose(G_lesser)
        !
      endif
      !
@@ -443,13 +443,13 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      call IO_mute("report io_in io_out")
      !
-     if (.not.l_use_RHO_IO) call XCo_driver(E,k,k,q)
+     if (.not.l_use_COLLISIONS_IO) call XCo_driver(E,k,k,q)
      !
      call IO_mute("report io_out")
      !
      ! CHOSEX
      !
-     if (l_sc_chosex.and..not.l_use_RHO_IO) &
+     if (l_sc_chosex.and..not.l_use_COLLISIONS_IO) &
         & call QP_ppa_chosex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1)
      !
      call IO_mute(" ")
@@ -500,9 +500,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        ! Add Sigma_x and, eventually, Sigma_c (CHOSEX)
        !
-       if(.not.l_use_RHO_IO) call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc)
+       if(.not.l_use_COLLISIONS_IO) call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc)
        !        
-       if(.not.l_use_RHO_IO.and.l_sc_chosex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc)
+       if(.not.l_use_COLLISIONS_IO.and.l_sc_chosex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc)
        !
        ! Rotate H_nl_sc in the WFo basis.
        !
@@ -512,9 +512,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
          end do
        endif
        !
-       if(l_use_RHO_IO) call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc)
+       if(l_use_COLLISIONS_IO) call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc)
        !
-       if(l_use_RHO_IO.and.l_sc_chosex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc)
+       if(l_use_COLLISIONS_IO.and.l_sc_chosex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc)
        ! 
        ! IO [H_nl_sc]
        !==============
@@ -769,7 +769,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      allocate(WFo(fft_size,wf_n_states))
      call mem_est("WFo",(/fft_size*wf_n_states/))
      !
-     if(l_use_RHO_IO) then
+     if(l_use_COLLISIONS_IO) then
        !
        allocate(G_lesser(SC_bands,SC_bands,QP_nk))
        call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
@@ -797,7 +797,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      deallocate(WFo)
      call mem_est("WFo")
      !
-     if(l_use_RHO_IO) then
+     if(l_use_COLLISIONS_IO) then
        !
        deallocate(G_lesser)
        call mem_est("G_lesser")

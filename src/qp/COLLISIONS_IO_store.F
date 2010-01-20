@@ -22,9 +22,9 @@
 subroutine COLLISIONS_IO_store(i_qp)
  use pars,            ONLY:SP
  use QP_m,            ONLY:QP_nk,QP_nb
- use collisions_IO , ONLY:io_COLLISIONS,Sx_cutoff,tmp_rho_vx,RHO_table,&
-&                          RHO_VX_RHO,n_rho_states
- use IO_m,            ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP,OP_WR,NONE
+ use collisions_IO,   ONLY:io_COLLISIONS,COLLISIONS_cutoff,TEMP_COLLISIONS_v,COLLISIONS_table,&
+&                          COLLISIONS_v,n_collisions
+ use IO_m,            ONLY:io_control,OP_WR_CL,REP,OP_WR
  !
  implicit none                                              
  !
@@ -32,35 +32,35 @@ subroutine COLLISIONS_IO_store(i_qp)
  !
  ! Work Space
  !
- integer   :: i1,ic,jb,jb2,ik
+ integer   :: ic,jb,jb2,ik
  integer   :: ID,io_err
- real(SP)  :: sx_max
+ real(SP)  :: COLLISIONS_max
  !
  ! Reduction of tiny elements of tmp_sx.
  !
- sx_max=maxval(abs(tmp_rho_vx(:,:,:)))        
+ COLLISIONS_max=maxval(abs(TEMP_COLLISIONS_v(:,:,:)))        
  !
  ic=0
  !
  do jb=1,QP_nb
    do jb2=1,QP_nb
      do ik=1,QP_nk
-       if(abs(tmp_rho_vx(jb,jb2,ik))>=sx_max*Sx_cutoff.or.sx_cutoff<0.0)  ic=ic+1
+       if(abs(TEMP_COLLISIONS_v(jb,jb2,ik))>=COLLISIONS_max*COLLISIONS_cutoff.or.COLLISIONS_cutoff<0.0)  ic=ic+1
      enddo
    enddo
  enddo
  !
- n_rho_states    =ic
- RHO_table(:,:,:)=0
+ n_collisions    =ic
+ COLLISIONS_table(:,:,:)=0
  ic=0
  !
  do jb=1,QP_nb
    do jb2=1,QP_nb
      do ik=1,QP_nk
-       if(abs(tmp_rho_vx(jb,jb2,ik))>=sx_max*Sx_cutoff.or.sx_cutoff<0.0)  then
+       if(abs(TEMP_COLLISIONS_v(jb,jb2,ik))>=COLLISIONS_max*COLLISIONS_cutoff.or.COLLISIONS_cutoff<0.0)  then
          ic=ic+1
-         RHO_table(jb,jb2,ik)=1
-         RHO_VX_RHO(ic)      =tmp_rho_vx(jb,jb2,ik)
+         COLLISIONS_table(jb,jb2,ik)=1
+         COLLISIONS_v(ic)      =TEMP_COLLISIONS_v(jb,jb2,ik)
        endif
      enddo      
    enddo      

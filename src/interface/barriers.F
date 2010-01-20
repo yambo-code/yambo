@@ -43,7 +43,7 @@ subroutine barriers()
  !  BSE HAYD    bss_haydock    SC          l_sc_run
  !  TDHF
  !  MAGNETIC    l_magnetic
- !  RHO_IO      l_rho_IO
+ !  COLL_IO     l_COLLISIONS_IO
  !
  use drivers
  use pars,       ONLY:schlen

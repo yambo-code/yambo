@@ -19,57 +19,84 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine COLLISIONS_IO_eval(E,k,Xk,q)
+subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  !
- use drivers,       ONLY:l_acfdt,l_rho_io,l_sc_run,l_real_time
+ use drivers,       ONLY:l_real_time,l_HF_and_locXC,l_chosex
  use pars,          ONLY:schlen
- use com,           ONLY:msg
- use units,         ONLY:HARTREE
- use electrons,     ONLY:levels,n_sp_pol,spin
- use stderr,        ONLY:intc,real2ch
+ use electrons,     ONLY:levels,spin
  use R_lattice,     ONLY:bz_samp
- use par_proc_m,    ONLY:pp_redux_wait
- use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
- use QP_m,          ONLY:QP_table,QP_Vxc,QP_Vnl_xc,QP_n_states,Vxc_kind,Vnlxc_kind,QP_nb
- use memory_m,      ONLY:mem_est
+ use QP_m,          ONLY:QP_nb
  use wave_func,     ONLY:WF_free
  use global_XC,     ONLY:SC_HF,SC_CHOSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
  use SC,            ONLY:SC_bands
- use QP_m,          ONLY:QP_nb
+ use QP_m,          ONLY:QP_nb,CHOSEX_use_empties,QP_n_G_bands,QP_t
+ use SC,            ONLY:SC_bands
+ use global_XC,     ONLY:SC_HF,SC_CHOSEX
+ use collisions_IO, ONLY:V_kind,collisions_IO_alloc,collisions_IO_free
+ use X_m,           ONLY:X_t
+ use frequency,     ONLY:w_samp
  !
  implicit none
- type(levels) ::E       
- type(bz_samp)::k,Xk,q
+ type(levels)  :: E
+ type(w_samp)  :: Xw(2) 
+ type(bz_samp) :: k,Xk,q
+ type(X_t)     :: X(4)
  !
  ! WorkSpace
  !
- ! Reporting
+ integer, external ::eval_G_minus_G
+ integer, external ::COLLISIONS_IO_check
+ type(QP_t)        ::qp_dummy
+ character(schlen) ::ch
  !
- integer           ::i_qp,ib,ik,ibp
- character(schlen) ::sec_mode_and_message(2),ch,ch_spin,nloc_fmt,loc_fmt
+ ! Allocation
+ !============
  !
- ! IO
- !
- integer           :: ID,io_err
- integer, external :: io_HF_and_locXC
- !
- ! Section
- !
- call section('*','Hartree-Fock extended oscillators')
+ if (l_HF_and_locXC) V_kind=SC_HF
+ if (l_chosex)       V_kind=SC_CHOSEX 
  !
  ! QP states setup
  !
- ! When storing all oscillators on file I need all SC bands
+ ! When storing all collisions on file I need all SC bands
  !
  QP_nb=SC_bands
- !
  call QP_state_table_setup(E)
  !
- ! HARTREE-FOCK
- !==============
+ call collisions_IO_alloc()
  !
- call XCo_Hartree_Fock(E,k,xk,q)
+ ! I/O check
+ !===========
  !
+ if (COLLISIONS_IO_check()==0) return
+ !
+ ! No DB => EVAL
+ !===============
+ !
+ if (l_HF_and_locXC) then
+   !
+   call section('*','Hartree-Fock extended collisions')
+   !=====================================================
+   !
+   call XCo_Hartree_Fock(E,k,xk,q)
+   !
+ else if (l_chosex) then
+   !
+   call section('*','CHOSEX extended collisions')
+   !==============================================
+   !
+   X(2)%ng=eval_G_minus_G(X(2)%ng,0)
+   QP_n_G_bands(2)=SC_bands
+   CHOSEX_use_empties=.FALSE.
+   !
+   call QP_ppa_chosex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1) 
+   !
+ endif
+ !
+ ! CLEAN
+ !=======
+ !
+ call COLLISIONS_IO_close()
  call WF_free()
+ if (.not.l_real_time) call collisions_IO_free()
  !
 end subroutine

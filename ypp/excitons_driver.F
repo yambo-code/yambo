@@ -283,7 +283,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
        !
      enddo
      !
-     call excitons_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,A_weight=A_weight)
+     call excitons_sort_and_report(BS_H_dim,Xk,Xen,BS_R,BS_E,A_weight=A_weight,verbose=i_lambda==1)
      !
    enddo
    !

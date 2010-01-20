@@ -146,7 +146,7 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  ! HARTREE-FOCK AND VXC
  !======================
  !
- if (l_HF_and_locXC.and..not.any((/l_sc_run,l_rho_io,l_real_time/))) call XCo_driver(en,k,Xk,q)
+ if (l_HF_and_locXC.and..not.any((/l_sc_run,l_collisions_IO,l_real_time/))) call XCo_driver(en,k,Xk,q)
  !
  ! RAS & REELS
  !=============
@@ -190,7 +190,7 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  !===================================
  !
 #if defined _RT
- if (l_rho_io) call COLLISIONS_IO_eval(en,k,Xk,q)
+ if (l_collisions_IO) call COLLISIONS_IO_eval(en,X,k,xk,q,Xw(:2))
 #endif
  !
  ! SELF-ENERGIES

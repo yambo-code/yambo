@@ -19,7 +19,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
+subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
+&                                   A_weight,S_z,S_sq,verbose)
  !
  use pars,          ONLY:SP,schlen,pi
  use units,         ONLY:HARTREE
@@ -41,6 +42,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S
  real(SP),optional  ::S_z(BS_H_dim)
  real(SP),optional  ::S_sq(BS_H_dim)
  integer, optional  ::BS_E_degs(BS_H_dim)
+ logical, optional  ::verbose
  !
  ! Work Space
  !
@@ -49,7 +51,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S
  real(SP), allocatable ::R(:),v2sort(:)
  real(SP)              ::Rmax,rv(10),K_weight(Xk%nibz)
  character(schlen) ::titles(6),ch_dummy(2)
- logical           ::write_widths,write_spin
+ logical           ::write_widths,write_spin,verbose_
  !
  ! Excitonc amplitude
  !
@@ -58,11 +60,14 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S
  integer      :: amp_n_trans
  real(SP)     :: amp_range(2),amp_damping,amp_I(amp_steps)
  real(SP),allocatable :: amp_trans(:,:)
- complex(SP)          :: amp_E(amp_steps)
+ complex(SP)          :: amp_E(amp_steps) 
+ !
+ verbose_=.TRUE.
+ if (present(verbose)) verbose_=verbose
  !
  if (present(BS_E_degs)) then  
    !
-   call msg('s',':: Sorting energies')
+   if (verbose_) call msg('s',':: Sorting energies')
    !==================================
    !
    allocate(v2sort(BS_H_dim),S_indx(BS_H_dim))
@@ -92,7 +97,8 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S
  endif
  !
  if (present(A_weight)) then  
-   call section('=','Reporting amplitude and weights')
+   !
+   if (verbose_) call section('=','Reporting amplitude and weights')
    !==================================================
    !
    allocate(S_indx(BS_H_dim),amp_trans(BS_H_dim,2))
@@ -211,11 +217,11 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S
  write_widths=any(abs(aimag(BS_E))>1.E-5)
  !
  if (write_spin) then
-   call section('=','Reporting sorted Energies, Strengths and Spins')
+   if (verbose_) call section('=','Reporting sorted Energies, Strengths and Spins')
  else if (write_widths) then
-   call section('=','Reporting sorted Energies, Strengths and widths')
+   if (verbose_) call section('=','Reporting sorted Energies, Strengths and widths')
  else
-   call section('=','Reporting sorted Energies and Strengths')
+   if (verbose_) call section('=','Reporting sorted Energies and Strengths')
  endif
  !==========================================================
  !

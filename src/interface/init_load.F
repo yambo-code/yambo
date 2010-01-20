@@ -49,8 +49,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _SC || defined _RT 
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential,&
 &                        SC_rho_threshold,SC_cycle_mixing
- use collisions_IO,ONLY:Sx_cutoff
- use collisions_CACHE, ONLY:RHO_cache_size
+ use collisions_IO,ONLY:COLLISIONS_cutoff
+ use collisions_CACHE, ONLY:COLLISIONS_cache_size
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, LifeTime, &
@@ -287,7 +287,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'RTfreezeH', '[RT] Hartree not updated during RT',verb_level=V_sc)
  call it('f',defs,'RTfreezeXC','[RT] XC potential/self-energy not updated during RT',verb_level=V_sc)
  call it(defs,'DiskSteps',     '[RT] Numer of steps stored in memory before I/O',max_rt_steps_disk,verb_level=V_sc)
- call it(defs,'RHOCache',     '[RT] Cache[Gb] for oscillators (negative value = automatic)',RHO_cache_size,verb_level=V_sc)
+ call it(defs,'CollCache',     '[RT] Cache[Gb] for collisions (negative value = automatic)',COLLISIONS_cache_size,verb_level=V_sc)
  !
  ! External fields
  !
@@ -378,7 +378,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_sc)
  call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)
  call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)
- call it(defs,'EXXCut',    '[SC] Cutoff on the exchange, 0=full 1=none',Sx_cutoff,verb_level=V_sc)
+ call it(defs,'EXXCut',    '[SC] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
 #endif
  ! 
  ! RAS

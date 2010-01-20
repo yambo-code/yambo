@@ -19,11 +19,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_COLLISIONS(i_qp,ID,QP_DB_done)
+integer function io_COLLISIONS(i_qp,ID,QP_COLLISIONS_done)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
- use collisions_IO,ONLY:rho_table,n_rho_states,V_kind,rho_VX_rho,Sx_cutoff
+ use collisions_IO,ONLY:COLLISIONS_table,n_collisions,V_kind,COLLISIONS_v,COLLISIONS_cutoff
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
 &                        io_bulk,write_is_on,io_disconnect,IO_write,         &
 &                        file_is_present,synchronize_db
@@ -40,27 +40,27 @@ integer function io_COLLISIONS(i_qp,ID,QP_DB_done)
  integer, intent(inout)         :: ID
  integer, intent(in)            :: i_qp
  character(schlen)              :: desc
- logical, intent(out), optional :: QP_DB_done(QP_n_states)
+ logical, intent(out), optional :: QP_COLLISIONS_done(QP_n_states)
  !
  ! Work Space
  !
  character(schlen)     :: db_name
- real(SP), allocatable :: rho_VX_rho_disk(:,:)
+ real(SP), allocatable :: COLLISIONS_v_disk(:,:)
  integer               :: V_kind_disk,i_qp_db
  character(lchlen)     :: V_kind_string
  logical               :: synchronize_files
  type(pp_indexes)      :: px
  !
- if (present(QP_DB_done)) then 
-   QP_DB_done=.FALSE.
+ if (present(QP_COLLISIONS_done)) then 
+   QP_COLLISIONS_done=.FALSE.
  endif
  !
  if(V_kind==SC_HF) then
-   db_name     = "RHO_RHO_VX"
+   db_name     = "COLLISIONS_Vbare"
  elseif(V_kind==SC_CHOSEX) then
-   db_name     = "RHO_RHO_SC"
+   db_name     = "COLLISIONS_Wstatic"
  else
-   call error("RHO_IO : Unknown database type ")
+   call error("COLLISIONS I/O : Unknown database type ")
  endif
  !
  if (any(io_sec(ID,:)==1)) then
@@ -88,7 +88,7 @@ integer function io_COLLISIONS(i_qp,ID,QP_DB_done)
      call io_elemental(ID,VAR="INTERACTION_PARAMETERS",VAR_SZ=4,MENU=0)
      call io_elemental(ID,I0=QP_ng_Sx,&
 &         VAR=' Exchange RL vectors             :',CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,R0=Sx_cutoff,&
+     call io_elemental(ID,R0=COLLISIONS_cutoff,&
 &         VAR=' Exchange Cutoff                 :',CHECK=.true.,OP=(/"=="/))
    else
      call io_elemental(ID,VAR="INTERACTION_PARAMETERS",VAR_SZ=2,MENU=0)
@@ -102,9 +102,9 @@ integer function io_COLLISIONS(i_qp,ID,QP_DB_done)
    io_COLLISIONS=io_status(ID)
    if (io_COLLISIONS/=0) goto 1
    !
-   if (present(QP_DB_done)) then 
+   if (present(QP_COLLISIONS_done)) then 
      do i_qp_db=1,QP_n_states 
-       QP_DB_done(i_qp_db) =  file_is_present(desc=trim(db_name)//"_QP_"//trim(intc(i_qp_db)),type=2)
+       QP_COLLISIONS_done(i_qp_db) =  file_is_present(desc=trim(db_name)//"_QP_"//trim(intc(i_qp_db)),type=2)
      enddo
    endif
    !
@@ -114,11 +114,11 @@ integer function io_COLLISIONS(i_qp,ID,QP_DB_done)
    !
    if(trim(core_io_path)/=trim(more_io_path)) then
      !
-     if(present(QP_DB_done))  then
-        if(all(QP_DB_done(:))) synchronize_files=.true.
+     if(present(QP_COLLISIONS_done))  then
+        if(all(QP_COLLISIONS_done(:))) synchronize_files=.true.
      endif
      !
-     if(.not.present(QP_DB_done).and.write_is_on(ID))    synchronize_files=.true.
+     if(.not.present(QP_COLLISIONS_done).and.write_is_on(ID))    synchronize_files=.true.
      ! 
    endif
    !
@@ -148,24 +148,24 @@ integer function io_COLLISIONS(i_qp,ID,QP_DB_done)
    !
    if(io_COLLISIONS/=0) goto 1
    !
-   call io_bulk(ID,VAR='N_RHO_STATES',VAR_SZ=(/1/))
-   call io_bulk(ID,I0=n_rho_states)
-   call io_bulk(ID,VAR='RHO_TABLE',VAR_SZ=(/QP_nb,QP_nb,QP_nk/))
-   call io_bulk(ID,L3=rho_table)
+   call io_bulk(ID,VAR='N_COLLISIONS_STATES',VAR_SZ=(/1/))
+   call io_bulk(ID,I0=n_collisions)
+   call io_bulk(ID,VAR='COLLISIONS_TABLE',VAR_SZ=(/QP_nb,QP_nb,QP_nk/))
+   call io_bulk(ID,L3=COLLISIONS_table)
    !
-   allocate(rho_VX_rho_disk(n_rho_states,2))      
+   allocate(COLLISIONS_v_disk(n_collisions,2))      
    !
-   call io_bulk(ID,VAR='RHO_VX_RHO',VAR_SZ=(/n_rho_states,2/))
+   call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/n_collisions,2/))
    if(write_is_on(ID)) then
-     rho_VX_rho_disk(:,1) =real(rho_VX_rho(1:n_rho_states))
-     rho_VX_rho_disk(:,2)=aimag(rho_VX_rho(1:n_rho_states))
-     call io_bulk(ID,R2=rho_VX_rho_disk)
+     COLLISIONS_v_disk(:,1) =real(COLLISIONS_v(1:n_collisions))
+     COLLISIONS_v_disk(:,2)=aimag(COLLISIONS_v(1:n_collisions))
+     call io_bulk(ID,R2=COLLISIONS_v_disk)
    else
-     call io_bulk(ID,R2=rho_VX_rho_disk)
-     rho_VX_rho(1:n_rho_states)=CMPLX(rho_VX_rho_disk(:,1),rho_VX_rho_disk(:,2))
+     call io_bulk(ID,R2=COLLISIONS_v_disk)
+     COLLISIONS_v(1:n_collisions)=CMPLX(COLLISIONS_v_disk(:,1),COLLISIONS_v_disk(:,2))
    endif
    !
-   deallocate(rho_VX_rho_disk)      
+   deallocate(COLLISIONS_v_disk)      
    !
    IO_write=master_cpu
    !

@@ -39,7 +39,7 @@ module drivers
  logical :: l_real_time 
  logical :: l_sc_run
  logical :: l_sc_magnetic
- logical :: l_rho_IO
+ logical :: l_collisions_IO
  !
  ! The self-energy correlation "kind"
  !

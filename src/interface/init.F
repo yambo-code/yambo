@@ -86,7 +86,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Work Space
  !
  integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,&
-&                     ioBS_Fxc_err,ioQINDX_err,io_SC_err,io_RHO_err
+&                     ioBS_Fxc_err,ioQINDX_err,io_SC_err,io_COLLISIONS_err
  integer, external :: ioX,ioOSTNTS,ioGROT,ioQINDX,ioRIM,&
 &                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_PP,&
 &                     ioCOL_CUT
@@ -359,10 +359,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _RT 
  V_kind=SC_HF
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_RHO_err=io_COLLISIONS(0,io_ID)
+ io_COLLISIONS_err=io_COLLISIONS(0,io_ID)
  V_kind=SC_CHOSEX
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_RHO_err=io_COLLISIONS(0,io_ID)
+ io_COLLISIONS_err=io_COLLISIONS(0,io_ID)
 #endif
  !
  if (list_dbs) then
@@ -429,8 +429,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs')  
  !
 #if defined _RT
- if ( (l_HF_and_locXC.or.l_chosex) .and.l_rho_IO) call initactivate(1,'SCBands')
- if (l_HF_and_locXC.and.l_rho_IO)                 call initactivate(1,'EXXCut')
+ if ( (l_HF_and_locXC.or.l_chosex) .and.l_collisions_IO) call initactivate(1,'SCBands')
+ if (l_HF_and_locXC.and.l_collisions_IO)                 call initactivate(1,'EXXCut')
 #endif
  !
  ! Optics(not bse) nor GW (no PP)
@@ -586,7 +586,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call initactivate(1,'Integrator LifeTime') 
      call initactivate(1,'RTstep NEsteps ThermSteps SwitchOnTime')
      call initactivate(1,'RTDiagonalize RTDiagoSteps')
-     call initactivate(1,'NoDiamagnetic NoIntraband InducedField DiskSteps RHOCache')
+     call initactivate(1,'NoDiamagnetic NoIntraband InducedField DiskSteps CollCache')
      call Afield_activate('Probe')
      call Afield_activate('Pump')
    else
@@ -670,7 +670,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !If qp limits are requested they are added at the end of the input file
  !
- if ( any((/l_HF_and_locXC,l_gw0,l_life/)).and..not.l_sc_run.and..not.l_rho_IO ) then
+ if ( any((/l_HF_and_locXC,l_gw0,l_life/)).and..not.l_sc_run.and..not.l_collisions_IO ) then
    !
    ! The QP_state is read from ioxxvxc in DUMP mode.
    ! If it is not allocated I define it on the basis 
@@ -809,7 +809,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_sc_magnetic=runlevel_is_on('magnetic')
 #endif
 #if defined _RT
-       l_rho_IO=runlevel_is_on('rhoIO')
+       l_collisions_IO=runlevel_is_on('rhoIO')
 #endif
 #if defined  _RAS
        lreels=runlevel_is_on('reels')

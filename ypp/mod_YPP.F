@@ -160,7 +160,7 @@ module YPP
  !
  interface
    !
-   subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq)
+   subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,A_weight,S_z,S_sq,verbose)
      use pars,          ONLY:SP
      use R_lattice,     ONLY:bz_samp
      use electrons,     ONLY:levels
@@ -173,6 +173,7 @@ module YPP
      real(SP),optional  :: S_z(BS_H_dim)
      real(SP),optional  :: S_sq(BS_H_dim)
      integer, optional  :: BS_E_degs(BS_H_dim)
+     logical, optional  :: verbose
    end subroutine
    !
    subroutine  elph_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)

@@ -19,8 +19,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_close_RHO_RHO_VX()
- use collisions_IO,   ONLY:io_COLLISIONS,QP_DB_done,tmp_rho_vx
+subroutine COLLISIONS_IO_close()
+ !
+ use collisions_IO,    ONLY:io_COLLISIONS,QP_COLLISIONS_done,TEMP_COLLISIONS_v
  use IO_m,             ONLY:io_control,OP_WR_CL,REP,NONE
  use memory_m,         ONLY:mem_est
  !
@@ -31,14 +32,14 @@ subroutine QP_close_RHO_RHO_VX()
  integer                  :: ID,COM_,io_err      
  !
  COM_=REP
- if (.not.all(QP_DB_done)) COM_=NONE
+ if (.not.all(QP_COLLISIONS_done)) COM_=NONE
  call io_control(ACTION=OP_WR_CL,COM=COM_,SEC=(/1/),ID=ID)
  io_err=io_COLLISIONS(0,ID)
  !
- deallocate(QP_DB_done)
- call mem_est("QP_DB_done")
+ deallocate(QP_COLLISIONS_done)
+ call mem_est("QP_COLLISIONS_done")
  !
- deallocate(tmp_rho_vx)
- call mem_est("tmp_rho_vx")
+ deallocate(TEMP_COLLISIONS_v)
+ call mem_est("TEMP_COLLISIONS_v")
  !
-end subroutine QP_close_RHO_RHO_VX
+end subroutine COLLISIONS_IO_close

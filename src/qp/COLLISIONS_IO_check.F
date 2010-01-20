@@ -21,8 +21,8 @@
 !
 integer function COLLISIONS_IO_check()
  use pars,             ONLY:IP,SP,schlen
- use collisions_IO,   ONLY:io_COLLISIONS,QP_DB_done,tmp_rho_vx
- use IO_m,             ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP,OP_WR,NONE
+ use collisions_IO,    ONLY:io_COLLISIONS,QP_COLLISIONS_done,TEMP_COLLISIONS_v
+ use IO_m,             ONLY:io_control,OP_RD_CL,VERIFY,REP
  use QP_m,             ONLY:QP_n_states,QP_nk,QP_nb
  use com,              ONLY:msg
  use memory_m,         ONLY:mem_est
@@ -32,26 +32,25 @@ integer function COLLISIONS_IO_check()
  ! Work Space
  !
  integer                  :: ID
- character(schlen)        :: dump_ch
+ real(SP)                 :: disk_space
  !
- allocate(QP_DB_done(QP_n_states))
- call mem_est("QP_DB_done",(/size(QP_DB_done)/),(/IP/))
+ allocate(QP_COLLISIONS_done(QP_n_states))
+ call mem_est("QP_COLLISIONS_done",(/size(QP_COLLISIONS_done)/),(/IP/))
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
- COLLISIONS_IO_check=io_COLLISIONS(0,ID,QP_DB_done=QP_DB_done) 
+ COLLISIONS_IO_check=io_COLLISIONS(0,ID,QP_COLLISIONS_done=QP_COLLISIONS_done) 
  !
- if(COLLISIONS_IO_check==0.and.all(QP_DB_done)) then
-   deallocate(QP_DB_done)
+ if(COLLISIONS_IO_check==0.and.all(QP_COLLISIONS_done)) then
+   deallocate(QP_COLLISIONS_done)
    return
  else
   COLLISIONS_IO_check=-1
  endif 
  !
- write (dump_ch,'(a,f10.5)') &
-    & '[RHO] Max Disk space required [Gb]:',real(QP_n_states*QP_nb**2*QP_nk*(2+0.25)*SP)/1.0e9
- call msg('s',dump_ch)  
+ disk_space=real(QP_n_states*QP_nb**2*QP_nk*(2+0.25)*SP)/1.0e9
+ if (disk_space> 0.01) call msg('s','[COLLISIONS I/O] Max Disk space required [Gb]:',disk_space)  
  !
- allocate(tmp_rho_vx(QP_nb,QP_nb,QP_nk))
- call mem_est("tmp_rho_vx",(/size(tmp_rho_vx)/),(/2*SP/))
+ allocate(TEMP_COLLISIONS_v(QP_nb,QP_nb,QP_nk))
+ call mem_est("TEMP_COLLISIONS_v",(/size(TEMP_COLLISIONS_v)/),(/2*SP/))
  !
 end function COLLISIONS_IO_check

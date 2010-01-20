@@ -24,66 +24,66 @@ module collisions_IO
  use pars,            ONLY:SP,LP,schlen
  implicit none
  !
- complex(SP), allocatable :: RHO_VX_RHO(:)
- integer(LP), allocatable :: RHO_table(:,:,:) 
- integer                  :: n_rho_states
+ complex(SP), allocatable :: COLLISIONS_v(:)
+ integer(LP), allocatable :: COLLISIONS_table(:,:,:) 
+ integer                  :: n_collisions
  integer                  :: V_kind 
  !
  ! Cut off on exchange matrix elements
  ! Sx_cutoff=0 all, (Sx_cutoff>1 or Sx_cutoff<0)=none
  !
- real(SP)                 :: Sx_cutoff
- real(SP)                 :: sx_max
- complex(SP), allocatable :: tmp_rho_vx(:,:,:)
- logical, allocatable     :: QP_DB_done(:)
+ real(SP)                 :: COLLISIONS_cutoff
+ real(SP)                 :: COLLISIONS_max
+ complex(SP), allocatable :: TEMP_COLLISIONS_v(:,:,:)
+ logical, allocatable     :: QP_COLLISIONS_done(:)
  !
  interface
    !
-   integer function io_COLLISIONS(i_qp,ID,QP_DB_done)
+   integer function io_COLLISIONS(i_qp,ID,QP_COLLISIONS_done)
      use QP_m,      ONLY:QP_n_states
      integer           :: i_qp,ID
-     logical, optional :: QP_DB_done(QP_n_states)
+     logical, optional :: QP_COLLISIONS_done(QP_n_states)
    end function 
    !
  end interface
  !
  contains
    !
-   subroutine collisions_IO_alloc(rho_VX_input_size)
+   subroutine collisions_IO_alloc(V_size_input)
      use pars,           ONLY:IP
      use QP_m,           ONLY:QP_nk,QP_nb
      use memory_m,       ONLY:mem_est
      implicit none
      !
-     integer, intent(in), optional :: rho_VX_input_size
+     integer, intent(in), optional :: V_size_input
      !
      ! Work Space
      !
-     integer :: rho_VX_size
+     integer :: V_size
      !
-     if(present(rho_VX_input_size)) then
-       rho_VX_size=rho_VX_input_size
+     if(present(V_size_input)) then
+       V_size=V_size_input
      else
-       rho_VX_size=QP_nb**2*QP_nk
+       V_size=QP_nb**2*QP_nk
      endif
      !
-     call mem_est("RHO_VX_RHO",(/size(RHO_VX_RHO)/),(/2*SP/))
-     allocate(RHO_VX_RHO(rho_VX_size))
-     allocate(RHO_table(QP_nb,QP_nb,QP_nk))
-     call mem_est("RHO_table",(/size(RHO_table)/),(/LP/))
+     call mem_est("COLLISIONS_v",(/size(COLLISIONS_v)/),(/2*SP/))
+     allocate(COLLISIONS_v(V_size))
+     allocate(COLLISIONS_table(QP_nb,QP_nb,QP_nk))
+     call mem_est("COLLISIONS_table",(/size(COLLISIONS_table)/),(/LP/))
      !
    end subroutine
    !
    subroutine collisions_IO_free()
      use memory_m,       ONLY:mem_est
      implicit none
-     if(allocated(RHO_VX_RHO)) then
-       deallocate(RHO_VX_RHO)
-       call mem_est("RHO_VX_RHO")
+     if(allocated(COLLISIONS_v)) then
+       deallocate(COLLISIONS_v)
+       call mem_est("COLLISIONS_v")
      endif
-     if(allocated(RHO_table)) then
-       deallocate(RHO_table)
-       call mem_est("RHO_table")
+     if(allocated(COLLISIONS_table)) then
+       deallocate(COLLISIONS_table)
+       call mem_est("COLLISIONS_table")
      endif
    end subroutine
    !

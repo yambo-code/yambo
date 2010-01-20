@@ -55,7 +55,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  ! Wavefunctions in G space 
  !==========================
  call fft_setup(0,1,.false.)
- call wf_load(0,1,bands_to_load,derivative_kpt,space='G',title='-DERIV',impose_free_and_alloc=.TRUE.)
+ call WF_load(0,1,bands_to_load,derivative_kpt,space='G',title='-DERIV',impose_free_and_alloc=.TRUE.)
  !
  if (found_SC_DB) then
    bands_to_load=(/1,SC_bands/)

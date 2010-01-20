@@ -24,8 +24,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  ! Hartree-Fock
  !
  use pars,          ONLY:SP,schlen,DP,pi
- use drivers,       ONLY:l_sc_run,l_sc_exx,l_rho_IO,l_real_time
- use memory_m,      ONLY:mem_est
+ use drivers,       ONLY:l_sc_run,l_sc_exx,l_collisions_IO,l_real_time
  use com,           ONLY:msg
  use timing,        ONLY:live_timing
  use stderr,        ONLY:intc
@@ -35,13 +34,10 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use collision,     ONLY:ggwinfo,collision_reset
  use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
- use wave_func,     ONLY:wf,WF_load,WF_free
- use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP,OP_WR
+ use wave_func,     ONLY:WF_load
 #if defined _SC || defined _RT 
  use SC,            ONLY:it_now,SC_bands
- use global_XC,     ONLY:SC_HF
- use IO_m,          ONLY:NONE
- use collisions_IO,ONLY:V_kind,tmp_rho_vx,QP_DB_done,collisions_IO_alloc,collisions_IO_free
+ use collisions_IO, ONLY:TEMP_COLLISIONS_v,QP_COLLISIONS_done
 #endif
  !
  implicit none
@@ -52,7 +48,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  type(ggwinfo)    ::isc,iscp
  type(pp_indexes) ::px
- integer                 ::i2,iq,ib,ibp,jb,ik,Sx_upper_band,i_qp,WF_Go_indx 
+ integer                 ::i2,iq,ib,ibp,jb,ik,Sx_upper_band,i_qp
 #if defined _RT
  integer                 :: jb2,ik_minus_q,COM_
  integer, external       :: COLLISIONS_IO_check
@@ -86,26 +82,15 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
 #if defined _RT
  !
- ! Oscillators I/O
+ ! COLLISIONS 
  !
- if(l_rho_IO) then
-   !
-   Sx_upper_band=SC_bands
-   !
-   V_kind=SC_HF
-   !
-   WF_Go_indx=maxval(qindx_S(:,:,2))
-   if (.not.l_real_time) call collisions_IO_alloc()
-   !
-   if (COLLISIONS_IO_check()==0) return
-   !
- endif
+ if(l_collisions_IO) Sx_upper_band=SC_bands
  !
 #endif
  !
  call msg('r', '[EXS] Plane waves :',QP_ng_Sx)
  !
- if (.not.l_rho_IO) then
+ if (.not.l_collisions_IO) then
    !
    ! QP_table -> report
    !
@@ -143,8 +128,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  ch='EXS'
 #if defined _SC  || defined _RT
- if (l_sc_run) ch='HF@it'//trim(intc(it_now))
- if (l_rho_IO) ch='HF oscillators'
+ if (l_sc_run)        ch='HF@it'//trim(intc(it_now))
+ if (l_collisions_IO) ch='HF collisions'
 #endif
  !
 #if defined _RT
@@ -158,12 +143,12 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
 #if defined _RT
    if (.not.px%i1p(i_qp)) cycle
    !        
-   if (QP_DB_done(i_qp)) then
+   if (QP_COLLISIONS_done(i_qp)) then
      call live_timing(steps=1)
      cycle
    endif
    !
-   tmp_rho_vx=(0.,0.)
+   TEMP_COLLISIONS_v=(0.,0.)
    !
 #endif
    do iq=1,q%nbz
@@ -252,9 +237,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
        !
 #if defined _RT
          !
-         tmp_rho_vx(jb,jb2,ik_minus_q)=tmp_rho_vx(jb,jb2,ik_minus_q)+DP_Sx
+         TEMP_COLLISIONS_v(jb,jb2,ik_minus_q)=TEMP_COLLISIONS_v(jb,jb2,ik_minus_q)+DP_Sx
          !
-
        enddo
 #else
        !
@@ -269,7 +253,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
    !
 #if defined _RT
    !
-   if(l_rho_IO) call COLLISIONS_IO_store(i_qp)
+   if(l_collisions_IO) call COLLISIONS_IO_store(i_qp)
    !
    call live_timing(steps=1)
 #endif
@@ -284,21 +268,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  call collision_reset(iscp) 
  call pp_indexes_reset(px)
  !
-#if defined _RT
- if (l_rho_IO) then
-   !
-   call QP_close_RHO_RHO_VX()
-   if (.not.l_real_time) call collisions_IO_free()
-   call WF_free()
-   !
-   return
-   !
- endif
- !
-#else
- !
- call pp_redux_wait(QP_Vnl_xc)
- !
-#endif
+ if (.not.l_real_time) call pp_redux_wait(QP_Vnl_xc)
  !
 end subroutine

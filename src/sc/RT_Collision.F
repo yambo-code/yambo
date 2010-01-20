@@ -72,7 +72,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
      !
    endif
    !
-   if(l_sc_hf.or.l_sc_chosex) call SC_extended_oscillators(G_input)
+   if(l_sc_hf.or.l_sc_chosex) call COLLISIONS_IO_compose(G_input)
    !
  else
    !  

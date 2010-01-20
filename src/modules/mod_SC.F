@@ -41,7 +41,7 @@ module SC
  logical           :: found_SC_DB
  logical           :: local_V
  logical           :: NSC_shot
- logical           :: l_use_RHO_IO
+ logical           :: l_use_COLLISIONS_IO
  !
  ! Possible Kinds, functionals and external perturbations
  !

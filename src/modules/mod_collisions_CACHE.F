@@ -24,19 +24,19 @@ module collisions_CACHE
  use pars,       ONLY:SP,LP
  implicit none
  !
- type QP_rho_states
-   integer(LP), allocatable  :: RHO_table(:,:,:)
-   complex(SP), allocatable  :: RHO_VX_RHO(:)
+ type COLLISION_cache
+   integer(LP), allocatable  :: COLLISIONS_table(:,:,:)
+   complex(SP), allocatable  :: COLLISIONS_v(:)
  end type
  !
- real(SP)                         :: RHO_cache_size
- real(SP)                         :: cache_memory
- integer                          :: last_QP_mem
- type(QP_rho_states), allocatable :: QP_rho(:)
+ real(SP)                           :: COLLISIONS_cache_size
+ real(SP)                           :: cache_memory
+ integer                            :: last_QP_mem
+ type(COLLISION_cache), allocatable :: CACHE(:)
  !
  contains
    !
-   subroutine free_RHO_VX_RHO
+   subroutine free_COLLISIONS_v
      use memory_m,       ONLY:mem_est
      use stderr,         ONLY:intc
      use par_proc_m,     ONLY:pp_indexes,pp_indexes_reset
@@ -50,7 +50,7 @@ module collisions_CACHE
      integer :: i_qp
      type(pp_indexes)  :: px
      !
-     if(RHO_cache_size==0.) return
+     if(COLLISIONS_cache_size==0.) return
      !
      call pp_indexes_reset(px)   
      !
@@ -60,19 +60,19 @@ module collisions_CACHE
        !
        if(.not.px%i1p(i_qp)) cycle  
        !
-       deallocate(QP_rho(i_qp)%RHO_table,QP_rho(i_qp)%RHO_VX_RHO)
-       call mem_est("QP_RHO_table"//trim(intc((i_qp))))
-       call mem_est("QP_RHO_VX_RHO"//trim(intc(i_qp)))
+       deallocate(CACHE(i_qp)%COLLISIONS_table,CACHE(i_qp)%COLLISIONS_v)
+       call mem_est("QP_COLLISIONS_table"//trim(intc((i_qp))))
+       call mem_est("QP_COLLISIONS_v"//trim(intc(i_qp)))
        !
      enddo
      !
      last_QP_mem=0
-     RHO_cache_size=0.0
+     COLLISIONS_cache_size=0.0
      !
-     deallocate(QP_rho)
+     deallocate(CACHE)
      !
      call pp_indexes_reset(px)
      !
-   end subroutine free_RHO_VX_RHO
+   end subroutine free_COLLISIONS_v
    !
 end module

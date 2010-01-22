@@ -51,7 +51,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  integer                 ::i2,iq,ib,ibp,jb,ik,Sx_upper_band,i_qp
 #if defined _RT
  integer                 :: jb2,ik_minus_q,COM_
- integer, external       :: COLLISIONS_IO_check
 #endif
 #if defined _DOUBLE
  complex(DP)             ::zdotc,zdotu

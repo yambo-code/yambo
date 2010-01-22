@@ -49,7 +49,10 @@ integer function COLLISIONS_IO_check(write_intent)
    COLLISIONS_IO_check=-1
  endif
  !
- if (.not.write_intent) return
+ if (.not.write_intent) then
+   deallocate(QP_COLLISIONS_done)
+   return
+ endif
  !
  disk_space=real(QP_n_states*QP_nb**2*QP_nk*(2+0.25)*SP)/1.0e9
  if (disk_space> 0.01) call msg('s','[COLLISIONS I/O] Max Disk space required [Gb]:',disk_space)  

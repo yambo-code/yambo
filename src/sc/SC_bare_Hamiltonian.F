@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SC_common_build_Ho(E,Xk,k)
+subroutine SC_bare_Hamiltonian(E,Xk,k)
  !
  use pars,           ONLY:SP
  use com,            ONLY:error
@@ -27,7 +27,7 @@ subroutine SC_common_build_Ho(E,Xk,k)
  use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
  use SC,             ONLY:Ho,E_bare,V_xc_sc,V_hartree_sc,rho_n,SC_bands
  use memory_m,       ONLY:mem_est
- use real_time,      ONLY:l_NE_simulate_IP,G_lesser
+ use real_time,      ONLY:G_lesser
  use wave_func,      ONLY:wf
  use R_lattice,      ONLY:bz_samp
  use xc_functionals, ONLY:V_xc
@@ -102,4 +102,4 @@ subroutine SC_common_build_Ho(E,Xk,k)
  deallocate(QP_Vxc)
  call mem_est("QP_Vxc")
  !
-end subroutine SC_common_build_Ho
+end subroutine SC_bare_Hamiltonian

@@ -25,16 +25,16 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  ! Actualy it works only for the diagonal I1(t_1,t_1), I2(t_1,t_1)
  !
  use pars,           ONLY:SP
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels
  use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_chosex
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
- use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_simulate_IP,l_RT_diagonalize, &
- &                        l_NE_with_fields,LifeTime,H_t,l_NE_simulate_RPA,       &
- &                        Thermal_steps,Integrator_name,EXACT,RK2EXACT,   &
- &                        Thermal_time,Efield,RT_step,XC0,Hfrozen,XCfrozen,      &
- &                        G_lesser_reference,n_ext_fields,l_RT_needs_XC0,i_time
+ use real_time,      ONLY:I1_lesser,I2_lesser, &
+ &                        l_NE_with_fields,LifeTime,H_t,       &
+ &                        Thermal_steps,   &
+ &                        Thermal_time,RT_step,XC0,Hfrozen,XCfrozen,      &
+ &                        G_lesser_reference,l_RT_needs_XC0,i_time
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional 

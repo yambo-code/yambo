@@ -46,11 +46,10 @@ subroutine MAG_common_build_A(build)
  ! The previous was the construction of the vector potential for the Bz component
  ! If we have x or y component the procedure is the same
  !
- use pars,           ONLY:SP,pi
+ use pars,           ONLY:SP
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size,fft_dim
  use D_lattice,      ONLY:a
- use R_lattice,      ONLY:nkibz
  use magnetic,       ONLY:MAG_radius,MAG_B,MAG_landau,MAG_psi,MAG_theta,  &
 &                         MAG_gauge,x,y,z,Bx,By,Bz,ir_table,              &
 &                         A_magn_x,A_magn_y,A_magn_z,gauge_factors
@@ -61,7 +60,7 @@ subroutine MAG_common_build_A(build)
  logical   :: build
  !
  ! Dummies
- integer   :: ir,ir1,ir2,ir3,i_dir   
+ integer   :: ir,ir1,ir2,ir3
  real(SP)  :: radius, r_mod,cell_center(3)
  !
  ! Allocs

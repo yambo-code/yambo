@@ -119,8 +119,8 @@ yambo_sc: libs
 	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_SC"; $(mksrc)
 	@X2DO="yambo_sc"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_SC";$(mkx)
 yambo_rt: libs
-	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_RT"; $(mksrc)
-	@X2DO="yambo_rt"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_RT";$(mkx)
+	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_RT -D_SC"; $(mksrc)
+	@X2DO="yambo_rt"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_RT -D_SC";$(mkx)
 yambo_manyk: libs
 	@LIBS2DO="$(PJ_MANYKLIBS)";ADF="-D_MANYK"; $(mksrc)
 	@X2DO="yambo_manyk"; XPATH="driver";XLIBS="$(PJ_MANYKLIBS)";ADF="-D_MANYK";$(mkx)
@@ -146,7 +146,7 @@ ypp_ras: libs
 	@LIBS2DO="$(YPPRASLIBS)" ; ADF="-D_YPP_RAS";$(mksrc)
 	@X2DO="ypp_ras" ;XPATH="ypp";XLIBS="$(YPPRASLIBS)"; ADF="-D_YPP_RAS";$(mkx)
 ypp_rt: libs
-	@LIBS2DO="$(YPPSCLIBS)" ; ADF="-D_RT";$(mksrc)
+	@LIBS2DO="$(YPPSCLIBS)" ; ADF="-D_SC -D_RT";$(mksrc)
 	@X2DO="ypp_rt" ;XPATH="ypp";XLIBS="$(YPPSCLIBS)"; ADF="-D_YPP_RT";$(mkx)
 ypp_sc: libs
 	@LIBS2DO="$(YPPSCLIBS)" ; ADF="-D_SC";$(mksrc)
@@ -237,32 +237,31 @@ define objects_clean
  find . \( -name '*.o' -o -name 'Makefile' -o -name '*.f90' \
         -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' \) \
         -type f -print | grep -v '\.\/Makefile' | xargs rm -f
- echo "[CLEAN] objects ... done"
- echo "[CLEAN] broken files ... done"
+ echo "[CLEAN] Objects ... done"
+ echo "[CLEAN] Broken files ... done"
  echo "[CLEAN] Makefiles ... done"
  if test "$(debug)" = yes ; then \
  find . -name '.debug*' | xargs rm -fr ; \
- echo "[CLEAN] debug ... done" ; \
- echo "[CLEAN] subdirectories ... done" ; \
+ echo "[CLEAN] Debug locks and directories ... done" ; \
  fi
 endef
 define lib_mod_clean
  find . \( -name '*.a' -o -name '*.mod' \) -type f -print | \
        grep -v netcdf | grep -v iotk | grep -v typesize | xargs rm -f 
- echo "[CLEAN] libraries ... done" 
- echo "[CLEAN] modules ... done" 
+ echo "[CLEAN] Libraries ... done" 
+ echo "[CLEAN] Modules ... done" 
 endef
 define lib_mod_netcdf_clean
  find . \( -name '*.a' -o -name '*.mod' \
            -o -name 'netcdf*h' -o -name 'netcdf*inc' \) -type f -print | xargs rm -f 
- echo "[CLEAN] libraries ... done" 
- echo "[CLEAN] modules ... done" 
- echo "[CLEAN] NETCDF files ... done" 
+ echo "[CLEAN] Libraries ... done" 
+ echo "[CLEAN] Modules ... done" 
+ echo "[CLEAN] NetCDF files ... done" 
 endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
  for exe in $(INTERFCS); do rm -f $(bindir)/$$exe; done
- echo "[CLEAN] targets ... done" 
+ echo "[CLEAN] Targets ... done" 
 endef
 define tests_clean
  find tests/ -name '*dir' -type d -print | xargs rm -fr
@@ -273,5 +272,5 @@ define conf_clean
  rm -f $(CFGFILES)
  rm -f config.status config.log
  rm -fr autom4te.cache
- echo "[CLEAN] autoconf files ... done" 
+ echo "[CLEAN] Autoconf files ... done" 
 endef

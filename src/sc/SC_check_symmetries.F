@@ -21,7 +21,7 @@
 !
 subroutine SC_check_symmetries(field_dir)
   !
-  use pars,          ONLY:SP,lchlen
+  use pars,          ONLY:SP
   use vec_operate,   ONLY:v_norm
   use matrix_operate,ONLY:m3det
   use com,           ONLY:msg,error

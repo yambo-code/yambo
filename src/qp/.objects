@@ -2,7 +2,7 @@ ELPH_objects =
 #if defined _ELPH 
 ELPH_objects = QP_elph.o
 #endif
-#if defined _SC || defined _RT || defined _MAGNETIC
+#if defined _SC
 SC_objects = QP_load_SC_xc.o \
              COLLISIONS_IO_check.o  COLLISIONS_IO_close.o  COLLISIONS_IO_eval.o   COLLISIONS_IO_store.o \
              COLLISIONS_IO_compose.o

@@ -31,7 +31,7 @@ integer function io_SC_components(what,E_sc,ID)
  use QP_m,           ONLY:SC_band_mixing
  use SC,             ONLY:SC_bands,it_now,rho_convergence,E_convergence,SC_potential,&
 &                         SC_R,V_xc_sc,local_V,H_nl_sc,SC_kind,SC_perturbation,&
-&                         SC_xc_functional,V_hartree_sc,NSC_shot,SC_fft_size,&
+&                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,&
 &                         SC_ng_Sx,SC_X_bands,SC_X_size
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,io_fragment,read_is_on,write_is_on,&
@@ -83,7 +83,7 @@ integer function io_SC_components(what,E_sc,ID)
  ! of bands and SC_mixing can be not respected. 
  !
  CHECK_=.TRUE.
- if (NSC_shot) CHECK_=.FALSE.
+ if (l_NSC_shot) CHECK_=.FALSE.
  !
  if (l_wf) io_SC_components=io_connect(desc="scWFs",type=2,ID=ID)
  if (l_E)  io_SC_components=io_connect(desc="scE",type=2,ID=ID)
@@ -192,7 +192,7 @@ integer function io_SC_components(what,E_sc,ID)
    !
    if (io_status_save==0.and.io_status(ID)<0) then
      io_status(ID)=IO_INCOMPATIBLE_VAR
-     if (NSC_shot) io_status(ID)=0
+     if (l_NSC_shot) io_status(ID)=0
    endif
    !
    if (all((/SC_kind_disk/=SC_HF,SC_kind_disk/=SC_CHOSEX/))) then

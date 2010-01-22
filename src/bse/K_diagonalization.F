@@ -38,7 +38,7 @@ subroutine K_diagonalization(iq,W)
  use timing,         ONLY:live_timing
  use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,ncpu,myid,pp_indexes_reset
  use par_indexes_m,  ONLY:par_indexes
- use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL
+ use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
  implicit none
  type(w_samp)  :: W
@@ -119,7 +119,8 @@ subroutine K_diagonalization(iq,W)
  !
  ! Diagonalization DB (IN)
  !
- io_err=-1
+ call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
+ io_err=ioBSS_diago(iq,BS_H_dim,BS_E,BS_R,ID)
  !
  if(io_err<0) then
    !

@@ -36,7 +36,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use IO_m,           ONLY:REP,DUMP,NONE
  use vec_operate,    ONLY:cross_product,c2a
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
-#if defined _SC || defined _RT 
+#if defined _SC
  use SC,             ONLY:load_SC_components,found_SC_DB
  use global_XC,      ONLY:G_kind,G_xc_functional,X_kind,&
 &                         X_xc_functional,setup_global_XC,MORE_NONE,K_kind,K_xc_functional,loaded_WF_xc_string,&
@@ -217,7 +217,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! SC Energies 
  !-------------
-#if defined _SC || defined _RT 
+#if defined _SC
  !
  ! First check if it possible to load the SC energies
  !
@@ -251,7 +251,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! Once the occupations have been evaluated I dump Xen in Ken
  !
  call E_duplicate(Xen,Ken)
-#if defined _SC || defined _RT 
+#if defined _SC
  K_kind=X_kind
  K_xc_functional=X_xc_functional
  K_perturbation=X_perturbation

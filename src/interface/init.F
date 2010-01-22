@@ -60,12 +60,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined  _ELPH 
  use ELPH,           ONLY:elph_nDBs,elph_nDBs_used,elph_use_q_grid
 #endif
-#if defined _SC || defined _RT 
- use global_XC,      ONLY:MORE_NONE,SC_HF,SC_CHOSEX
+#if defined _SC
+ use global_XC,      ONLY:MORE_NONE,SC_HF,SC_CHOSEX,SC_HF
  use SC,             ONLY:SC_potential,SC_ng_Sx,SC_X_bands,SC_X_size
-#endif
-#if defined _RT
- use collisions_IO, ONLY:io_COLLISIONS,V_kind  
+ use collisions_IO,  ONLY:io_COLLISIONS,V_kind  
 #endif
 #if defined _MAGNETIC
  use magnetic,        ONLY:MAG_hamiltonian_type,MAG_pauli,MAG_landau
@@ -73,7 +71,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  implicit none
  type(levels) ::en        
-#if defined _SC || defined _RT 
+#if defined _SC
  type(levels) ::en_sc
 #endif
  type(bz_samp)::q,k   
@@ -95,7 +93,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer, external :: ioE_RIM
  ! GPL_EXCLUDE_END
  !
-#if defined _SC || defined _RT 
+#if defined _SC
  integer, external :: io_SC_components 
 #endif
 #if defined _ELPH 
@@ -144,7 +142,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (.not.FINALIZE.and..not.CLOSE_Gs) then
    call E_reset(en)
-#if defined _SC || defined _RT 
+#if defined _SC
    call E_reset(en_sc)
 #endif
    call bz_samp_reset(k)
@@ -349,20 +347,23 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! SC 
  !
-#if defined _SC || defined _RT 
+#if defined _SC
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_SC_err=io_SC_components('E',en_sc,io_ID)
-#endif
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ if (io_SC_err==0.and.io_SC_components('V',en_sc,io_ID)/=0) io_SC_err=-1
  !
- ! RT 
+ ! COLLISIONS 
  !
-#if defined _RT 
  V_kind=SC_HF
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_COLLISIONS_err=io_COLLISIONS(0,io_ID)
- V_kind=SC_CHOSEX
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(0,io_ID)
+ if (io_COLLISIONS_err==0) then
+   V_kind=SC_CHOSEX
+   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+   io_COLLISIONS_err=io_COLLISIONS(0,io_ID)
+   if (io_COLLISIONS_err/=0) V_kind=-1
+ endif
 #endif
  !
  if (list_dbs) then
@@ -428,9 +429,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs')  
  !
+ !COLLISIONS
+ !
 #if defined _RT
- if ( (l_HF_and_locXC.or.l_chosex) .and.l_collisions_IO) call initactivate(1,'SCBands')
- if (l_HF_and_locXC.and.l_collisions_IO)                 call initactivate(1,'EXXCut')
+ if (l_collisions_IO) then
+   if ( l_HF_and_locXC.or.l_chosex  ) call initactivate(1,'SCBands BandMix')
+   if ( l_HF_and_locXC)               call initactivate(1,'EXXCut')
+ endif
 #endif
  !
  ! Optics(not bse) nor GW (no PP)
@@ -578,7 +583,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! DFT
  !
-#if defined _SC || defined _RT 
+#if defined _SC
  if (l_sc_run) then
    call initactivate(1,'Potential FFTGvecs SCmixing SCBands BandMix EXXCut')
    if (l_real_time) then
@@ -590,7 +595,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call Afield_activate('Probe')
      call Afield_activate('Pump')
    else
-     call initactivate(1,'UseRhoIO SCIter SCEtresh SCRhoTresh TF_precondition')
+     call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
      call initactivate(1,'QPHistory')
    endif
    call initactivate(-1,'QpntsRXs')
@@ -803,13 +808,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! GPL_EXCLUDE_END SC_IGNORE
        ! 
        ! 
-#if defined _SC || defined _RT 
+#if defined _SC
        l_sc_run=runlevel_is_on('scpot')
        l_real_time=runlevel_is_on('negf')
        l_sc_magnetic=runlevel_is_on('magnetic')
-#endif
-#if defined _RT
-       l_collisions_IO=runlevel_is_on('rhoIO')
+       l_collisions_IO=runlevel_is_on('collisions_IO')
 #endif
 #if defined  _RAS
        lreels=runlevel_is_on('reels')
@@ -892,7 +895,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
      endif
      !
-#if defined _SC || defined _RT 
+#if defined _SC
      if (l_sc_magnetic) then
        call initactivate(1,'scpot')
        SC_potential='default'
@@ -904,7 +907,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      endif
 #endif
 #if defined _RT
-     if (l_HF_and_locXC.or.l_chosex) call initactivate(1,'rhoIO') 
+     if (l_HF_and_locXC.or.l_chosex) call initactivate(1,'collisions_IO') 
 #endif
      !
    end subroutine varsetup1 
@@ -1122,7 +1125,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
        ! Sc / NEGF
        !
-#if defined _SC || defined _RT 
+#if defined _SC
        if ( trim(rstr_piece(i1)) == 'scpot' )  then
          if ( trim(rstr_piece(i1+1)) == 'exx' ) then
            SC_potential='EXX'

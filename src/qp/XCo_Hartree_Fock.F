@@ -35,7 +35,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
  use wave_func,     ONLY:WF_load
-#if defined _SC || defined _RT 
+#if defined _SC
  use SC,            ONLY:it_now,SC_bands
  use collisions_IO, ONLY:TEMP_COLLISIONS_v,QP_COLLISIONS_done
 #endif
@@ -127,7 +127,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  call pp_redux_wait
  !
  ch='EXS'
-#if defined _SC  || defined _RT
+#if defined _SC
  if (l_sc_run)        ch='HF@it'//trim(intc(it_now))
  if (l_collisions_IO) ch='HF collisions'
 #endif

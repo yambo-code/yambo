@@ -31,7 +31,7 @@ subroutine COLLISIONS_IO_compose(G_input)
  use collisions_IO,  ONLY:COLLISIONS_v,n_collisions,COLLISIONS_table,io_COLLISIONS,V_kind 
  use par_proc_m,     ONLY:pp_indexes,pp_redux_wait,pp_indexes_reset
  use par_indexes_m,  ONLY:par_indexes
- use IO_m,           ONLY:io_control,OP_RD_CL
+ use IO_m,           ONLY:io_control,OP_RD_CL,NONE
  use collisions_CACHE, ONLY:last_QP_mem,CACHE
  !
  implicit none
@@ -40,7 +40,7 @@ subroutine COLLISIONS_IO_compose(G_input)
  !
  ! Work Space
  !
- integer           :: i1,ib,ibp,ik,ic
+ integer           :: i_qp,ib,ibp,ik,ic
  integer           :: io_err,ID       
  type(pp_indexes)  :: px
  !
@@ -53,21 +53,21 @@ subroutine COLLISIONS_IO_compose(G_input)
  if(l_sc_hf.or.l_sc_chosex.or.last_QP_mem/=0) QP_Vnl_xc=(0._SP,0._SP)
  if(l_sc_chosex) QP_sc=(0._SP,0._SP)
  !
- ! First loop on oscillators in the Cache
- ! notice that in memory all oscillators are sum together
+ ! First loop on collisions in the Cache
+ ! notice that in memory all collisions are sum together
  ! so all the contribution to quasi-particle is stored in QP_Vnl_xc
  !
- do i1=1,last_QP_mem
+ do i_qp=1,last_QP_mem
    !
-   if(.not.px%i1p(i1)) cycle  
+   if(.not.px%i1p(i_qp)) cycle  
    !
    ic=1
    !
    do ib=1,QP_nb
      do ibp=1,QP_nb
        do ik=1,QP_nk
-         if(CACHE(i1)%COLLISIONS_table(ib,ibp,ik)/=0) then
-           QP_Vnl_xc(i1)=QP_Vnl_xc(i1)-(0._SP,1._SP)*CACHE(i1)%COLLISIONS_v(ic)*G_input(ib,ibp,ik)
+         if(CACHE(i_qp)%COLLISIONS_table(ib,ibp,ik)/=0) then
+           QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-(0._SP,1._SP)*CACHE(i_qp)%COLLISIONS_v(ic)*G_input(ib,ibp,ik)
            ic=ic+1
          endif
        enddo
@@ -76,19 +76,20 @@ subroutine COLLISIONS_IO_compose(G_input)
    !
  enddo
  !
- ! .. then read the remaning oscillators from disk
+ ! .. then read the remaning collisions from disk
  ! On disk each contributions is stored in a different database
  !
- do i1=last_QP_mem+1,QP_n_states 
+ do i_qp=last_QP_mem+1,QP_n_states 
    !
-   if(.not.px%i1p(i1)) cycle  
+   if(.not.px%i1p(i_qp)) cycle  
    !
    if(l_sc_hf.or.l_sc_chosex) then
      !
      V_kind=SC_HF
      !
-     call io_control(ACTION=OP_RD_CL,SEC=(/i1+1/),ID=ID)
-     io_err=io_COLLISIONS(i1,ID)
+     if (i_qp == 1 ) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),ID=ID)
+     if (i_qp >  1 ) call io_control(ACTION=OP_RD_CL,SEC=(/2/),ID=ID)
+     io_err=io_COLLISIONS(i_qp,ID)
      !
      ic=1
      !
@@ -96,7 +97,7 @@ subroutine COLLISIONS_IO_compose(G_input)
        do ibp=1,QP_nb
          do ik=1,QP_nk
            if(COLLISIONS_table(ib,ibp,ik)/=0) then
-             QP_Vnl_xc(i1)=QP_Vnl_xc(i1)-(0._SP,1._SP)*COLLISIONS_v(ic)*G_input(ib,ibp,ik)
+             QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-(0._SP,1._SP)*COLLISIONS_v(ic)*G_input(ib,ibp,ik)
              ic=ic+1
            endif
          enddo
@@ -109,8 +110,8 @@ subroutine COLLISIONS_IO_compose(G_input)
      !
      V_kind=SC_CHOSEX
      !
-     call io_control(ACTION=OP_RD_CL,SEC=(/i1+1/),ID=ID)
-     io_err=io_COLLISIONS(i1,ID)
+     call io_control(ACTION=OP_RD_CL,SEC=(/2/),ID=ID)
+     io_err=io_COLLISIONS(i_qp,ID)
      !
      ic=1
      !
@@ -118,7 +119,7 @@ subroutine COLLISIONS_IO_compose(G_input)
        do ibp=1,QP_nb
          do ik=1,QP_nk
            if(COLLISIONS_table(ib,ibp,ik)/=0) then
-             QP_Sc(i1,1)=QP_Sc(i1,1)-(0._SP,1._SP)*COLLISIONS_v(ic)*G_input(ib,ibp,ik)      
+             QP_Sc(i_qp,1)=QP_Sc(i_qp,1)-(0._SP,1._SP)*COLLISIONS_v(ic)*G_input(ib,ibp,ik)      
              ic=ic+1
            endif
           enddo

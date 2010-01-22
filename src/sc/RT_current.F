@@ -19,31 +19,29 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine RT_current(xK,Xen,G_lesser,RT_time)
+subroutine RT_current(Xk,G_lesser)
  !
  ! Evalute current including also the diamagnetic contribution
  !
- use pars,           ONLY:SP,DP,pi
+ use pars,           ONLY:SP,DP
  use units,          ONLY:SPEED_OF_LIGHT
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use D_lattice,      ONLY:DL_sop,sop_inv
+ use D_lattice,      ONLY:sop_inv,DL_sop
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel,levels
  use X_m,            ONLY:DIP_iR_or_P
- use real_time,      ONLY:l_RT_no_diamagnetic,i_time,Efield,n_ext_fields,RT_step, &
-&                         l_NE_with_fields,j_current,A_vecpot,l_RT_induced_field
+ use real_time,      ONLY:l_RT_no_diamagnetic,i_time, &
+&                         l_NE_with_fields,j_current,A_vecpot
  !
  implicit none
  type(bz_samp), intent(in) ::Xk
- type(levels),  intent(in) ::Xen
- real(SP),      intent(in) ::RT_time
- complex(SP),    intent(in)  :: G_lesser(SC_bands,SC_bands,Xk%nibz)
+ complex(SP),   intent(in) ::G_lesser(SC_bands,SC_bands,Xk%nibz)
  !
  ! Work Space
  !
- integer       :: i1,i2,i3,ik,is,SC_bands2
- complex(SP)      :: j_dir(3),j_dir_rot(3),G_tmp(SC_bands,SC_bands)
+ integer       :: i1,i2,ik,is,SC_bands2
+ complex(SP)   :: j_dir(3),j_dir_rot(3)
 #if defined _DOUBLE
  complex(DP)   :: zdotc
 #else
@@ -80,7 +78,7 @@ subroutine RT_current(xK,Xen,G_lesser,RT_time)
    !
    ! Time-reversal is always excluded in the symmetries list!
    !
-   j_dir_rot  =  matmul( dl_sop(:,:,is), j_dir )
+   j_dir_rot  =  matmul( DL_sop(:,:,is), j_dir )
    !
    j_current(:)=j_current(:)+j_dir_rot(:)
    !

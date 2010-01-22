@@ -35,7 +35,7 @@ subroutine QP_state_table_setup(en)
  !
  use pars,          ONLY:SP,IP
  use units,         ONLY:HARTREE
- use drivers,       ONLY:l_sc_run,l_real_time
+ use drivers,       ONLY:l_sc_run,l_real_time,l_collisions_IO
  use memory_m,      ONLY:mem_est
  use QP_m,          ONLY:QP_nk,QP_nb,QP_state,QP_n_states,QP_table,SC_bands_mixed,SC_band_mixing 
  use electrons,     ONLY:levels,n_sp_pol
@@ -156,9 +156,9 @@ subroutine QP_state_table_setup(en)
  !       This corresponds to assume symmetric/hermitian 
  !       matrixes
  !
- ! Note (2) : a non zero mixing is allowed only in a SC calculation
+ ! Note (2) : a non zero mixing is allowed only in a SC/RT calculation
  !
- if (l_sc_run.or.l_real_time) then
+ if (l_sc_run.or.l_real_time.or.l_collisions_IO) then
    !
    SC_bands_mixed=1
    if (any(.not.QP_state(1,:)).or.any(.not.QP_state(QP_nb,:))) SC_band_mixing=0.

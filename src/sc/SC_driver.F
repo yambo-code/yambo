@@ -23,37 +23,30 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  use pars,           ONLY:SP,schlen,lchlen
  use units,          ONLY:HARTREE
- use drivers,        ONLY:l_sc_exx,l_sc_chosex,l_sc_contains_lda,&
-&                         l_sc_hf,l_sc_magnetic
+ use drivers,        ONLY:l_sc_chosex,l_collisions_IO 
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin
- use R_lattice,      ONLY:bz_samp,qindx_S,G_m_G
+ use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:Tel
- use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,&
-&                         QP_ng_Sx,QP_Vnl_xc,QP_t,QP_reset,SC_E_threshold,SC_bands_mixed
- use SC,             ONLY:SC_bands,SC_iterations,rho_n,&
-&                         SC_rho_threshold,SC_potential,it_now,E_convergence,&
+ use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
+ use SC,             ONLY:SC_bands,SC_iterations,rho_n,SC_rho_threshold,it_now,E_convergence,&
 &                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,&
-&                         SC_cycle_mixing,V_hartree_sc,NSC_shot,SC_fft_size,        &
-&                         SC_ng_Sx,SC_X_bands,SC_X_size,Ho,E_bare,SC_alloc,SC_free, &
-&                         WF_G_max,WF_Go_indx,SC_kind,SC_xc_functional,l_use_COLLISIONS_IO,&
-&                         G_lesser
- use wave_func,      ONLY:WF_load,wf,wf_n_states,WF_free
+&                         l_SC_cycle,SC_cycle_mixing,V_hartree_sc,Ho,E_bare,SC_alloc,SC_free, &
+&                         WF_G_max,WF_Go_indx,SC_kind,SC_xc_functional,G_lesser,l_SC_RESTART,l_NSC_shot,l_TF_precond
+ use wave_func,      ONLY:wf,wf_n_states,WF_free
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
- use parser_m,       ONLY:parser 
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
- use com,            ONLY:msg,warning,of_open_close
+ use com,            ONLY:msg,warning
  use X_m,            ONLY:X_t
  use timing,         ONLY:live_time_msg
  use stderr,         ONLY:tty_size,intc,real2ch
  use xc_functionals, ONLY:V_xc
  use frequency,      ONLY:w_samp
- use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,&
-&                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL
+ use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,&
+&                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL
  use vec_operate,    ONLY:degeneration_finder
  use timing,         ONLY:live_timing
- use collisions_IO,  ONLY:collisions_IO_alloc,collisions_IO_free,V_kind
- use global_XC,      ONLY:SC_HF,SC_CHOSEX    
+ use collisions_IO,  ONLY:collisions_IO_alloc,collisions_IO_free
 #if defined _MAGNETIC
  use magnetic,       ONLY:average_el_mag
 #endif
@@ -78,13 +71,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_spin
  real(SP)                 :: max_proj,V_xc_sc_shift(n_spin)
- character(schlen)        :: dumb_ch,sformat,headings(2)
- integer, external        :: io_SC_components,eval_G_minus_G
+ character(schlen)        :: dumb_ch
+ integer, external        :: io_SC_components
  logical, external        :: stop_now
- logical                  :: SC_cycle,RESTART
- logical                  :: l_TF_precond,l_write_qp_histo
- type(QP_t)               :: qp_dummy
- character(lchlen)        :: file_name,ldump_ch
  !
  ! ws for states spread evaluation
  !
@@ -92,233 +81,52 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  integer                  :: first_el(SC_bands),n_of_el(SC_bands),n_deg_grp,&
 &                            b_of_max_proj(SC_bands,k%nibz,n_sp_pol)
  !
- ! Extended Oscillators
+ ! Initial Start & Restart 
+ !==========================
  ! 
- integer                  :: io_COLLISIONS_err
- integer, external        :: COLLISIONS_IO_check
+ call SC_start_and_restart(X,E,Xk)
  !
- ! Magnetic logical setup
- !
-#if defined _MAGNETIC
- !
- if(l_sc_magnetic) call MAG_Hamiltonian(.TRUE.)
- !
-#endif
- !
- ! Switch to the user defined potential (if appropriate)
- !
- call XC_switch()
- !
- ! Define SC internal variables
- !
- SC_ng_Sx  =QP_ng_Sx
- SC_X_bands=X(2)%ib
- SC_X_size =X(2)%ng
- !
- call QP_reset(qp_dummy)
- !
- if (trim(SC_potential)/='none'.and.trim(SC_potential)/='default') call section('*','Self-Consistent '//trim(SC_potential))
- !
- ! Reference energies
- !
- allocate(E_bare(SC_bands,k%nibz,n_sp_pol))
- call mem_est("E_bare ",(/size(E_bare)/))
- E_bare=E%E(:SC_bands,:,:)
- !
- ! Perform a first I/O to check which DBs are present. In this VERIFY call
- ! even if the fft_size is not set it is verified anyway as it is defined
- ! by the Sigma_x/Chi RL vectors.
- !
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(1)) ! Energies
- io_E=io_SC_components('E' ,E,ID(1))
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2)) ! WFs
- io_WF=io_SC_components('WF',E,ID(2))
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID(3))  ! Local potential
- io_V=io_SC_components('V' ,E,ID(3))
- !
- RESTART=all((/io_E==0,io_WF==0,io_V==0/))
- NSC_shot=SC_iterations==1.and.all((/io_E/=0,io_WF/=0,io_V==0.or.io_V==-2/)).and.local_V
- !
-#if defined _MAGNETIC
- !
- ! precaution : disable RESTART and NSC_shot
- !
- if (l_sc_magnetic) RESTART =.FALSE.
- if (l_sc_magnetic) NSC_shot=.FALSE.
- !
-#endif
- !
- SC_cycle=SC_iterations > 0
- if (NSC_shot) SC_cycle=.false.
- !
- ! Self-Consistent run, Non-SC shot or nothing ?
- !-----------------------------------------------
- !
- if (io_E==0.and.RESTART) then
-   call msg('nr','[SC] Found   accuracy on density      :',rho_convergence)
-   call msg('rn','[SC]                  on energies [ev]:',E_convergence*HARTREE)
-   SC_cycle=.not.(E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold)
-   !
-   ! Even if the accuracy on DB is not small enough with 0 iterations
-   ! I can skeep the SC cycle
-   !
-   if (SC_cycle) SC_cycle=SC_iterations>0
-   !
- endif
- !
- if (.not.SC_cycle.and.RESTART) then
-   !
-   NSC_shot=.false.
-   !
-   ! load SC_R rotation matrices
-   !-----------------------------
-   allocate(SC_R(SC_bands,SC_bands,k%nibz,n_sp_pol))
-   call mem_est("SC_R ",(/size(SC_R)/))
-   call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2))
-   io_WF=io_SC_components('WF',E,ID(2))
-   if (io_WF==0) then
-     do ik=1,QP_nk
-       call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(2))
-       io_WF=io_SC_components('WF',E,ID(2))
-     enddo
-     call msg('r',' ')
-   else
-     return
-   endif
-   !
-   goto 1
-   !
- endif
- !
- if (.not.any((/RESTART,SC_cycle,NSC_shot/))) return
- !
- ! before loading the WF in R-space I check and/or calculate
- ! the optical oscillators that are done in G-space and would
- ! force the reloading of the WFs
- !
- if (l_sc_exx.and.SC_cycle) then
-   X(1)%ib(2)=SC_bands
-   X(1)%ng=QP_ng_Sx
-   call Dipole_driver(E, Xk, X(1), X(1)%q0)
- endif
- !
- ! WF
- !
- ! x Local potentials (not including EXX)
- !
- WF_G_max=0
- WF_Go_indx=1
- !
- if (SC_cycle.and.(l_sc_hf.or.l_sc_exx.or.l_sc_chosex)) then
-   WF_Go_indx=maxval(qindx_S(:,:,2)) ! Sigma_x/c
-   if (l_sc_chosex) then
-     X(2)%ng=eval_G_minus_G(X(2)%ng,0)
-     WF_G_max=max(QP_ng_Sx,maxval(G_m_G))
-   endif
-   if (l_sc_exx)  then
-     WF_G_max=max(QP_ng_Sx,X(1)%ng)
-   endif
- endif
- !
-#if defined _MAGNETIC
- !
- if (l_sc_magnetic) then
-   !
-   ! MAG_Hamiltonian:
-   ! - call WF_derivative which computes the derivative in space G
-   ! - load the wf in real space
-   ! - compute the magnetic part of the hamiltonian, 
-   !   allocate and initialise Ho, write H_magnetic in Ho 
-   !
-   call MAG_Hamiltonian(.FALSE.)
-   !
- endif
- !
-#endif
- !
- call WF_load(WF_G_max,WF_Go_indx,(/1,max(SC_bands,E%nbm)/),(/1,k%nibz/),title='-SC')
- !
- if (NSC_shot.and.SC_fft_size/=fft_size) then
-   call warning(' FFT size of V_xc does not fit. Skipping NSC run')
-   call WF_free()
-   return
- endif
- !
- SC_fft_size=fft_size
- call parser('TF_precondition',l_TF_precond) 
- call parser('QPHistory',l_write_qp_histo) 
- call parser('UseRhoIO',l_use_COLLISIONS_IO) 
+ if (.not.any((/l_SC_RESTART,l_SC_cycle,l_NSC_shot/))) return
  !
  ! Allocation(s)...
+ !==================
  !
  call SC_alloc(E)
+ call SC_local_alloc()
  !
  ! Initialize SC_R matrix
+ !========================
  !
- if(.not.RESTART.and.l_use_COLLISIONS_IO) then
+ if(.not.l_SC_RESTART.and.l_collisions_IO) then
    !      
    SC_R=(0.,0.)
    forall(i1=1:SC_bands)
      SC_R(i1,i1,:,:)=1.
    end forall
    !
- endif
- ! 
- ! Checking extended oscillators
- !
- if(l_use_COLLISIONS_IO) then
+ else if (.not.l_SC_cycle.and.l_SC_RESTART) then
    !
-   V_kind=-1
-   io_COLLISIONS_err=0
+   ! load SC_R rotation matrices
+   !-----------------------------
+   call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2))
+   io_WF=io_SC_components('WF',E,ID(2))
+   do ik=1,QP_nk
+     call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(2))
+     io_WF=io_SC_components('WF',E,ID(2))
+   enddo
+   call msg('r',' ')
    !
-   if(l_sc_hf.or.l_sc_chosex) then
-     V_kind=SC_HF
-     io_COLLISIONS_err=io_COLLISIONS_err+COLLISIONS_IO_check()
-   endif
+   call SC_report()
+   return
    !
-   if(l_sc_chosex) then
-     V_kind=SC_CHOSEX
-     io_COLLISIONS_err=io_COLLISIONS_err+COLLISIONS_IO_check()
-   endif
-   !
-   if(io_COLLISIONS_err/=0) then
-      l_use_COLLISIONS_IO=.false.
-      call warning(' Extented Oscillators do not fit, UseRhoIO set to .false. ')
-   endif
-   !
- endif
- !                       
- ! Local allocation(s)...
- !
- call SC_local_alloc()
- !
- call msg('nr','[SC] Self-Consistency (SC)            :',SC_cycle)
- call msg('r' ,'[SC] Restart + SC                     :',RESTART)
- call msg('r' ,'[SC] Non SC single shot               :',NSC_shot)
- call msg('r' ,'[SC] Bands                            :',SC_bands)
- call msg('r' ,'[SC] Mixed bands                      :',SC_bands_mixed)
- call msg('r' ,'[SC] Use Extented Oscillators         :',l_use_COLLISIONS_IO)
- call msg('r' ,'[SC] Use Thomas-Fermi precondition    :',l_TF_precond) 
- if (SC_cycle) then
-   call msg('r' ,'[SC] N (N-1) order mixing             :',SC_cycle_mixing)
-   call msg('r' ,'[SC] Imposed accuracy on density      :',SC_rho_threshold)
-   call msg('rn','[SC]                  on energies [ev]:',SC_E_threshold*HARTREE)
- endif
- !
- if(l_write_qp_histo) then
-   file_name="qp-history"
-   call of_open_close(file_name,'ot')
-   headings(1)="iteraction"
-   headings(2)="E_kpt1(1) .....  E_kpt1(SC_bands) E_kpt2(1) ..... E_kpt2(SC_bands) .... "
-   call msg('o qp-history','#',headings(1:2),INDENT=0,USE_TABS=.TRUE.)
-   sformat="(i3,"//trim(intc(SC_bands*QP_nk))//"f12.6)"
  endif
  !
  !  Ho (kinetic + potential)
  !---------------------------
  !
  call fermi_level(E,k,Tel,2)  
- call SC_common_build_Ho(E,Xk,k)
+ call msg('r','')
+ call SC_bare_Hamiltonian(E,Xk,k)
  !
  ! Reference wavefunctions
  !
@@ -331,12 +139,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2))
  io_WF=io_SC_components('WF',E,ID(2))
  !
- if (RESTART.or.NSC_shot) then
+ if (l_SC_RESTART.or.l_NSC_shot) then
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID(3))  ! Local potential
    io_V=io_SC_components('V' ,E,ID(3))
  endif
  !
- if (RESTART) then
+ if (l_SC_RESTART) then
    !
    if ((1.-SC_cycle_mixing)>1.E-5) call &
 &    warning('Short splitted runs with fractional mixing may give different results')
@@ -367,7 +175,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    V_xc_nm1 = V_xc_sc
    rho_nm1  = rho_n
    !
- else if (NSC_shot) then
+ else if (l_NSC_shot) then
    !
    ! Non-SC shot
    !
@@ -382,10 +190,15 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
  endif
  !
+ ! History init.
+ !===============
+ !
+ call SC_History(0,E)
+ !
  ! SCF cycle & NSC shot
  !=====================
  ! 
- if (NSC_shot) call live_timing('[NSC] Single shot loop',QP_nk,SERIAL=.true.)
+ if (l_NSC_shot) call live_timing('[NSC] Single shot loop',QP_nk,SERIAL=.true.)
  !
  do it = 1, SC_iterations
    !
@@ -393,68 +206,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    it_now=it_now+1
    !
-   if (local_V.and.SC_cycle) then
-     !
-     V_xc_sc=(0.,0.)
-     !
-     if (l_sc_exx) call V_exx(X,E,k,q,V_xc_sc)
-     !
-     call IO_mute("report log io_in io_out")
-     !
-     if (l_sc_contains_lda) call xc_lda_driver(E,Xk,SC_KIND,SC_xc_functional,1)
-     if (l_sc_contains_lda.and..not.l_sc_exx) V_xc_sc(:,:)=V_xc(:,:)
-     if (l_sc_contains_lda.and.     l_sc_exx) V_xc_sc(:,:)=V_xc(:,:)+V_xc_sc(:,:)
-     !
-     call IO_mute(" ")
-     !
-     ! Mixing 
-     !========
-     !
-     ! WARNING:
-     ! The mixing of the potential has been eliminated for HF and CHOSEX, for
-     ! V_xc_sc case tests are needed.
-     ! 
-     if (it>1) V_xc_sc = SC_cycle_mixing*V_xc_sc + (1.-SC_cycle_mixing)*V_xc_nm1 
-     !
-     V_xc_nm1=V_xc_sc
-     !
-   else if (SC_cycle) then
-     !
-     ! Hartee-Fock
-     !
-     if(l_use_COLLISIONS_IO) then
-       !     
-       G_lesser=(0.,0.)
-       forall(i1=1:SC_bands,ik=1:E%nk)
-         G_lesser(i1,i1,ik)=(0._SP,1._SP)*E%f(i1,ik,1)
-       end forall
-       !
-       ! Now I build the G_lesser rotating the non interaction one
-       ! G_lesser(i1,i1,ik)=(0.,1)*en%f(i1,ik)
-       !  
-       do ik=1,QP_nk
-         call H_rotate(SC_R(:,:,ik,1),G_lesser(:,:,ik),SC_bands,-1)
-       enddo
-       call COLLISIONS_IO_compose(G_lesser)
-       !
-     endif
-     !
-     ! Stop all messagging
-     !
-     call IO_mute("report io_in io_out")
-     !
-     if (.not.l_use_COLLISIONS_IO) call XCo_driver(E,k,k,q)
-     !
-     call IO_mute("report io_out")
-     !
-     ! CHOSEX
-     !
-     if (l_sc_chosex.and..not.l_use_COLLISIONS_IO) &
-        & call QP_ppa_chosex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1)
-     !
-     call IO_mute(" ")
-     !
-   endif
+   ! Exchange & Correlation
+   !========================
+   !
+   if (l_SC_cycle) call SC_add_XC(X,Xw,Xk,E,k,q,it,V_xc_nm1)
    !
    ! Hartree potential
    !===================
@@ -500,21 +255,18 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        ! Add Sigma_x and, eventually, Sigma_c (CHOSEX)
        !
-       if(.not.l_use_COLLISIONS_IO) call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc)
-       !        
-       if(.not.l_use_COLLISIONS_IO.and.l_sc_chosex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc)
+       call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc)
        !
-       ! Rotate H_nl_sc in the WFo basis.
+       if(l_sc_chosex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc)
        !
-       if (it_now>1) then
+       if (.not.l_collisions_IO.and.it_now>1) then
+         !
+         ! Rotate H_nl_sc in the WFo basis.
+         !
          do i_spin=1,n_sp_pol
            call H_rotate(SC_R(:,:,ik,i_spin),H_nl_sc(:,:,i_spin),SC_bands,-1)
          end do
        endif
-       !
-       if(l_use_COLLISIONS_IO) call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc)
-       !
-       if(l_use_COLLISIONS_IO.and.l_sc_chosex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc)
        ! 
        ! IO [H_nl_sc]
        !==============
@@ -534,12 +286,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !=====================
      !
      do i_spin=1,n_sp_pol
-       call mat_dia_inv(DIAGO,USE_LK,H_nl_sc(:,:,i_spin),&
-                         &E_real=E%E(:SC_bands,ik,i_spin))
+       call mat_dia_inv(DIAGO,USE_LK,H_nl_sc(:,:,i_spin),E_real=E%E(:SC_bands,ik,i_spin))
        !
        ! Rotation (WFo->wf) matrix
        !
-       SC_R(:,:,ik,i_spin)=H_nl_sc(:,:,i_spin)
+       SC_R(:,:,ik,i_spin)=H_nl_sc(:,:,i_spin) 
+       !
      enddo
      !
      ! New wave functions 
@@ -547,21 +299,23 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      call WF_rotate(ik,WFo,fft_size)
      !
-     if (NSC_shot) call live_timing(steps=1)
+     if (l_NSC_shot) call live_timing(steps=1)
      !
    end do
    !
-   if(l_write_qp_histo) then
-     write(ldump_ch,sformat) it,((E%E(ib,ik,1)*HARTREE,ib=1,SC_bands),ik=1,QP_nk)
-     call msg('o qp-history','',ldump_ch)
-   endif
-   !
-   if (SC_cycle) then
+   if (l_SC_cycle) then
      !
      ! New occupations 
      !=================
      !
-     if (E%nbm/=E%nbf) call fermi_level(E,k,Tel,1) 
+     ! 21/01/2010 (Andrea): All bands above SC_bands must be shifted
+     ! in order to be consistent with the SC values. Otherwise these
+     ! bands could interfere with the SC_bands yielding non physical
+     ! occupations.
+     !
+     forall (ib=SC_bands+1:E%nb) E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_bands,:,:)-E_previous(SC_bands,:,:)
+     !
+     call fermi_level(E,k,Tel,1) 
      !
      ! New density 
      !=============
@@ -619,6 +373,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        endif
      endif
      !
+     ! History
+     !=========
+     !
+     call SC_History(it,E)
+     !
    endif
    !
    ! IO [Energies]
@@ -641,12 +400,13 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    if ( (E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold) .or.&
 &       stop_now(.FALSE.) ) then
+     call SC_History(-1,E)
      exit
    endif
    !
  end do
  !
- if (SC_cycle) then
+ if (l_SC_cycle) then
    !
    ! exit SCF cycle and report
    !
@@ -658,94 +418,13 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    call msg('r','')
  endif
  !
- if (NSC_shot) call live_timing(steps=1)
+ if (l_NSC_shot) call live_timing(steps=1)
  !
-1 continue
- !
- ! Before all the DFT energies are shifted the V_xc_sc
- ! must be shifted of max(Ev)-max(E_bare_v)
- ! for more details see A. Fleszar PRB 64, 245204
- !
- do i_spin=1,n_sp_pol
-   V_xc_sc_shift(i_spin )= maxval(E_bare(:n_met_bands,:,i_spin))&
-                        &-maxval(E%E(:n_met_bands,:,i_spin)) 
-   if (local_V) then
-     V_xc_sc(:,i_spin)=V_xc_sc(:,i_spin)+V_xc_sc_shift(i_spin)
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(3))
-     io_V=io_SC_components('V' ,E,ID(3))
-   endif
- enddo
- !
- do i_spin=1,n_sp_pol
-   do ik=1,k%nibz
-     !
-     ! Check for degenrate bands in the bare energies
-     !
-     call degeneration_finder(E_bare(:,ik,i_spin),SC_bands,first_el,n_of_el,n_deg_grp,0.0001/HARTREE)
-     !
-     do ib=1,SC_bands
-       !
-       ! Then search for the max projection   
-       ! 
-       max_proj=-1.
-       do i1=1,SC_bands
-         if (abs(SC_R(i1,ib,ik,i_spin))**2.>max_proj) then
-           b_of_max_proj(ib,ik,i_spin)=i1
-           max_proj=abs(SC_R(i1,ib,ik,i_spin))**2.
-         endif
-       enddo
-       ! 
-       ! simmetrize the spreads summing over all possible degenerate
-       ! bands
-       !
-       forall (ibp=1:SC_bands) WS_spread(ibp)=abs(SC_R(ibp,ib,ik,i_spin))**2.*100./HARTREE
-       !
-       ibp=b_of_max_proj(ib,ik,i_spin)
-       spread(ib,ik,i_spin)=WS_spread( ibp )
-       !
-       do i1=1,n_deg_grp
-         if (ibp>=first_el(i1).and.ibp<=first_el(i1)+n_of_el(i1)-1) then
-           spread(ib,ik,i_spin)=0.
-           do i2=first_el(i1),first_el(i1)+n_of_el(i1)-1
-             spread(ib,ik,i_spin)=spread(ib,ik,i_spin)+WS_spread(i2)
-           enddo
-         endif
-       enddo
-     enddo
-     !
-     ! end do SC_bands
-     !
-     dE(:,ik,i_spin)=E%E(:SC_bands,ik,i_spin)-E_bare(:,ik,i_spin)
-     !
-   enddo
-   !
- enddo
- !
- if(l_write_qp_histo) call of_open_close(file_name)
- !
- ! Final occupations 
- !====================
- if (SC_cycle) call fermi_level(E,k,Tel,2)  
- !
- dE(:,:,:)=E%E(:SC_bands,:,:)-E_bare(:,:,:)
- !
- call msg('r',' ')
- !
- do ik=1,k%nibz
-   call report_energies(E%E(:SC_bands,:,:),k,Xk,SC_bands,(/ik,ik/),'E  ',.TRUE.)
-#if defined _MAGNETIC
-   call report_energies(E%f(:SC_bands,:,:)/HARTREE,k,Xk,SC_bands,(/ik,ik/),'occ',.FALSE.)
-#else
-   call report_energies(E_bare,k,Xk,SC_bands,(/ik,ik/),'E_o',.FALSE.)
-   call report_energies(dE,k,Xk,SC_bands,(/ik,ik/),'d_E',.FALSE.)
-   call report_energies(spread,k,Xk,SC_bands,(/ik,ik/),'Spr',.FALSE.)
-   call report_energies(real(b_of_max_proj)/HARTREE,k,Xk,SC_bands,(/ik,ik/),'Bnd',.FALSE.)
-#endif
- enddo
+ call SC_report()
  !
  deallocate(E_bare)
  call mem_est("E_bare")
- if (SC_cycle.or.NSC_shot) then
+ if (l_SC_cycle.or.l_NSC_shot) then
    call WF_free()
    call SC_free()
    call SC_local_free()
@@ -769,7 +448,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      allocate(WFo(fft_size,wf_n_states))
      call mem_est("WFo",(/fft_size*wf_n_states/))
      !
-     if(l_use_COLLISIONS_IO) then
+     if(l_collisions_IO) then
        !
        allocate(G_lesser(SC_bands,SC_bands,QP_nk))
        call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
@@ -797,7 +476,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      deallocate(WFo)
      call mem_est("WFo")
      !
-     if(l_use_COLLISIONS_IO) then
+     if(l_collisions_IO) then
        !
        deallocate(G_lesser)
        call mem_est("G_lesser")
@@ -810,5 +489,89 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      endif
      !
    end subroutine
+   !
+   subroutine SC_report()
+     !
+     ! Before all the DFT energies are shifted the V_xc_sc
+     ! must be shifted of max(Ev)-max(E_bare_v)
+     ! for more details see A. Fleszar PRB 64, 245204
+     !
+     if (l_SC_cycle) then
+       do i_spin=1,n_sp_pol
+         V_xc_sc_shift(i_spin )= maxval(E_bare(:n_met_bands,:,i_spin))-maxval(E%E(:n_met_bands,:,i_spin)) 
+         if (local_V) then
+           V_xc_sc(:,i_spin)=V_xc_sc(:,i_spin)+V_xc_sc_shift(i_spin)
+           call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(3))
+           io_V=io_SC_components('V' ,E,ID(3))
+         endif
+       enddo
+     endif
+     !
+     do i_spin=1,n_sp_pol
+       do ik=1,k%nibz
+         !
+         ! Check for degenrate bands in the bare energies
+         !
+         call degeneration_finder(E_bare(:,ik,i_spin),SC_bands,first_el,n_of_el,n_deg_grp,0.0001/HARTREE)
+         !
+         do ib=1,SC_bands
+           !
+           ! Then search for the max projection   
+           ! 
+           max_proj=-1.
+           do i1=1,SC_bands
+             if (abs(SC_R(i1,ib,ik,i_spin))**2.>max_proj) then
+               b_of_max_proj(ib,ik,i_spin)=i1
+               max_proj=abs(SC_R(i1,ib,ik,i_spin))**2.
+             endif
+           enddo
+           ! 
+           ! simmetrize the spreads summing over all possible degenerate
+           ! bands
+           !
+           forall (ibp=1:SC_bands) WS_spread(ibp)=abs(SC_R(ibp,ib,ik,i_spin))**2.*100./HARTREE
+           !
+           ibp=b_of_max_proj(ib,ik,i_spin)
+           spread(ib,ik,i_spin)=WS_spread( ibp )
+           !
+           do i1=1,n_deg_grp
+             if (ibp>=first_el(i1).and.ibp<=first_el(i1)+n_of_el(i1)-1) then
+               spread(ib,ik,i_spin)=0.
+               do i2=first_el(i1),first_el(i1)+n_of_el(i1)-1
+                 spread(ib,ik,i_spin)=spread(ib,ik,i_spin)+WS_spread(i2)
+               enddo
+             endif
+           enddo
+         enddo
+         !
+         ! end do SC_bands
+         !
+         dE(:,ik,i_spin)=E%E(:SC_bands,ik,i_spin)-E_bare(:,ik,i_spin)
+         !
+       enddo
+       !
+     enddo
+     !
+     ! Final occupations 
+     !====================
+     if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle)) call fermi_level(E,k,Tel,2)  
+     !
+     dE(:,:,:)=E%E(:SC_bands,:,:)-E_bare(:,:,:)
+     !
+     call msg('r',' ')
+     !
+     do ik=1,k%nibz
+       call report_energies(E%E(:SC_bands,:,:),k,Xk,SC_bands,(/ik,ik/),'E  ',.TRUE.)
+#if defined _MAGNETIC
+       call report_energies(E%f(:SC_bands,:,:)/HARTREE,k,Xk,SC_bands,(/ik,ik/),'occ',.FALSE.)
+#else
+       call report_energies(E_bare,k,Xk,SC_bands,(/ik,ik/),'E_o',.FALSE.)
+       call report_energies(dE,k,Xk,SC_bands,(/ik,ik/),'d_E',.FALSE.)
+       call report_energies(spread,k,Xk,SC_bands,(/ik,ik/),'Spr',.FALSE.)
+       call report_energies(real(b_of_max_proj)/HARTREE,k,Xk,SC_bands,(/ik,ik/),'Bnd',.FALSE.)
+#endif
+     enddo
+     !
+   end subroutine SC_report
    !
 end subroutine SC_driver

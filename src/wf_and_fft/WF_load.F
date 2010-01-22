@@ -39,7 +39,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  use timing,        ONLY:live_timing
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,REP,&
 &                        io_fragmented, io_netcdf_support, RD_CL,DUMP
-#if defined _SC || defined _RT 
+#if defined _SC
  use com,           ONLY:warning,error
  use SC,            ONLY:compatible_SC_DB,SC_R,load_SC_components,SC_bands,found_SC_DB
  use global_XC,     ONLY:WF_kind,WF_xc_functional,&
@@ -150,7 +150,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  wf_b=bands_to_load
  !
-#if defined _SC || defined _RT 
+#if defined _SC
  !
  ! First check and fix the number of bands 
  !
@@ -283,7 +283,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  ! Rotate in the SC basis
  !========================
  !
-#if defined _SC || defined _RT 
+#if defined _SC
  !
  if (found_SC_DB) then
    !

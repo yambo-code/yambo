@@ -46,17 +46,17 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
  use com,           ONLY:more_io_path,com_path
  use functions,     ONLY:bose_E_cut
-#if defined _SC || defined _RT 
+#if defined _SC
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential,&
 &                        SC_rho_threshold,SC_cycle_mixing
- use collisions_IO,ONLY:COLLISIONS_cutoff
+ use collisions_IO, ONLY:COLLISIONS_cutoff
  use collisions_CACHE, ONLY:COLLISIONS_cache_size
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, LifeTime, &
 &                        RT_diagonalization_steps,Thermal_time,EField,max_rt_steps_disk
 #endif
-#if defined _SC
+#if defined _MAGNETIC
  use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
 #endif
 #if defined _RAS
@@ -125,12 +125,12 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! GPL_EXCLUDE_END
  !
-#if defined _SC || defined _RT 
+#if defined _SC 
  call it('r',defs,'scpot',   '[R] Self-Consistent potentials') 
+ call it('r',defs,'collisions_IO',   '[R] Use or eval(RT only) the extended Collisions')
 #endif
 #if defined _RT
- call it('r',defs,'negf',    '[R] Real-Time dynamics') 
- call it('r',defs,'rhoIO',   '[R] Extended oscillators IO')
+ call it('r',defs,'negf',            '[R] Real-Time dynamics') 
 #endif
 #if defined _MAGNETIC
  call it('r',defs,'magnetic','[R] Magnetic fields')
@@ -368,12 +368,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'SCRhoTresh','[SC] Rho convergence threshold',SC_rho_threshold)
  call it('f',defs,'TF_precondition','[SC] Thomas Fermi precondition in density',verb_level=V_sc)
  call it('f',defs,'QPHistory','[SC] Write quasi-particle history',verb_level=V_sc)
- call it('f',defs,'UseRhoIO',    '[SC] Use Extended Oscillators',verb_level=V_sc)
-#endif
  ! 
  ! SC [common with RT]
  !
-#if defined _SC || defined _RT 
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_sc)
  call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)

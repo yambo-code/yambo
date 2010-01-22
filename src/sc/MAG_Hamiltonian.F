@@ -60,20 +60,19 @@ subroutine MAG_Hamiltonian(initial_check_only)
  ! *******************************************************************************************
  !
  !
- use pars,           ONLY:SP,DP,pi
+ use pars,           ONLY:SP,pi
  use SC,             ONLY:Ho
  use memory_m,       ONLY:mem_est
  use com,            ONLY:warning,error
- use stderr,         ONLY:intc
- use FFT_m,          ONLY:fft_size,fft_dim
- use D_lattice,      ONLY:a,alat
- use R_lattice,      ONLY:g_vec,nkibz
+ use FFT_m,          ONLY:fft_size
+ use D_lattice,      ONLY:a
+ use R_lattice,      ONLY:nkibz
  use magnetic,       ONLY:MAG_radius,MAG_B,MAG_hamiltonian_type,MAG_landau,MAG_pauli, &
 &                         MAG_gauge,A_magn_x,A_magn_y,A_magn_z,x,y,z,  &
-&                         gauge_factors,Bx,By,Bz,MAG_theta,MAG_psi,ir_table
+&                         Bx,By,Bz,MAG_theta,MAG_psi,ir_table
  use electrons,      ONLY:n_sp_pol
  use SC,             ONLY:SC_bands,SC_potential
- use wave_func,      ONLY:wf,wf_state,wf_ng,wf_x,wf_y,wf_z,WF_load,WF_free,WF_derivative_free
+ use wave_func,      ONLY:wf,wf_state,wf_x,wf_y,wf_z,WF_load,WF_free,WF_derivative_free
  use timing,         ONLY:live_timing
  use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m,  ONLY:par_indexes
@@ -88,8 +87,8 @@ subroutine MAG_Hamiltonian(initial_check_only)
  !
  ! Dummies
  !
- integer   :: ir,ir1,ir2,ir3,i_spin,ifft,jfft,i1,ik,ib,ibp   
- real(SP)  :: radius, r_mod,cell_center(3)
+ integer   :: ir,i_spin,ifft,jfft,ik,ib,ibp   
+ real(SP)  :: radius
  logical   :: do_derivatives(3),H_magn_x_on,H_magn_y_on,H_magn_z_on
  logical   :: timing_init
  !

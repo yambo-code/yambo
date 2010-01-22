@@ -202,7 +202,7 @@ module IO_m
      !
      ! Check if file is already open
      !
-     if (file_is_open(io_file(ID),ID)) return
+     !if (file_is_open(io_file(ID),ID)) return
      !
      ! Keep the extension for the io_fragment routine
      !
@@ -376,7 +376,7 @@ module IO_m
      !
    end function
    !
-   subroutine io_fragment(ID,i_pointer,j_pointer,k_pointer,ierr)
+   subroutine io_fragment(ID,i_pointer,j_pointer,ierr)
      !
      use stderr, ONLY:intc
      !
@@ -391,12 +391,12 @@ module IO_m
      !
      implicit none
      integer           :: ID
-     integer, optional :: i_pointer,j_pointer,k_pointer,ierr
+     integer, optional :: i_pointer,j_pointer,ierr
      !
      ! Work Space
      !
      integer           :: ierr_,i_fragment
-     character(schlen) :: subfolder
+     character(schlen) :: subfolder,fragment_filename
      logical           :: close_is_on_save
      !
      if (.not.io_fragmented(ID)) return
@@ -419,17 +419,22 @@ module IO_m
      !
      io_file(ID)=' '
      !
-     write (subfolder,'(2a,i5.5)') trim(io_extension(ID)),'_',i_fragment
-     if (present(j_pointer)) write (subfolder,'(2a,i5.5,a,i5.5)') &
-&                            trim(io_extension(ID)),'_',i_fragment,'_',j_pointer
-     !
-     ! Note that the fragment DB keeps the same type of the DB core (io_type(ID))
-     !
-     if (present(k_pointer)) then
-       ierr_=io_connect('fragment_'//trim(intc(k_pointer)),subfolder=subfolder,type=io_type(ID),ID=ID)
+     if (write_is_on(ID).or.ver_is_gt_or_eq(ID,revision=518)) then
+       !
+       fragment_filename=trim(io_extension(ID))//"_fragment_"//trim(intc(i_pointer))
+       if (present(j_pointer)) fragment_filename=trim(io_extension(ID))//"_fragments_"//trim(intc(i_pointer))//"_"//trim(intc(j_pointer))
+       ierr_=io_connect(fragment_filename,type=io_type(ID),ID=ID)
+       !
      else
+       write (subfolder,'(2a,i5.5)') trim(io_extension(ID)),'_',i_fragment
+       if (present(j_pointer)) write (subfolder,'(2a,i5.5,a,i5.5)') &
+&                              trim(io_extension(ID)),'_',i_fragment,'_',j_pointer
+       !
+       ! Note that the fragment DB keeps the same type of the DB core (io_type(ID))
+       !
        ierr_=io_connect('fragment',subfolder=subfolder,type=io_type(ID),ID=ID)
      endif
+     !
      if (present(ierr)) ierr=ierr_
      !
      ! io_action must be saved otherwise any io_disconnect call would

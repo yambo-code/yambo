@@ -110,7 +110,7 @@ subroutine barriers()
 #endif
  !
  if (l_sc_run) then
-   call switch_off_runlevel('all',on_name='scpot HF_and_locXC chosex em1s negf rhoIO magnetic '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='scpot HF_and_locXC chosex em1s negf collisions_IO magnetic '//trim(always_runlevels))
    goto 1
  endif
  if (gw0_chosex) then

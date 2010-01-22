@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function COLLISIONS_IO_check()
+integer function COLLISIONS_IO_check(write_intent)
  use pars,             ONLY:IP,SP,schlen
  use collisions_IO,    ONLY:io_COLLISIONS,QP_COLLISIONS_done,TEMP_COLLISIONS_v
  use IO_m,             ONLY:io_control,OP_RD_CL,VERIFY,REP
@@ -28,6 +28,8 @@ integer function COLLISIONS_IO_check()
  use memory_m,         ONLY:mem_est
  !
  implicit none
+ !
+ logical :: write_intent
  !
  ! Work Space
  !
@@ -44,8 +46,10 @@ integer function COLLISIONS_IO_check()
    deallocate(QP_COLLISIONS_done)
    return
  else
-  COLLISIONS_IO_check=-1
- endif 
+   COLLISIONS_IO_check=-1
+ endif
+ !
+ if (.not.write_intent) return
  !
  disk_space=real(QP_n_states*QP_nb**2*QP_nk*(2+0.25)*SP)/1.0e9
  if (disk_space> 0.01) call msg('s','[COLLISIONS I/O] Max Disk space required [Gb]:',disk_space)  

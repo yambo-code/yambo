@@ -40,8 +40,14 @@ module SC
  logical           :: compatible_SC_DB
  logical           :: found_SC_DB
  logical           :: local_V
- logical           :: NSC_shot
- logical           :: l_use_COLLISIONS_IO
+ !
+ ! General flags
+ !
+ logical           :: l_NSC_shot
+ logical           :: l_SC_RESTART
+ logical           :: l_SC_cycle
+ logical           :: l_TF_precond
+ logical           :: l_write_qp_histo
  !
  ! Possible Kinds, functionals and external perturbations
  !
@@ -69,7 +75,7 @@ module SC
  !
  integer :: WF_G_max,WF_Go_indx
  !
- ! G_lesser ( = density matrix) to use extended oscillators
+ ! G_lesser ( = density matrix) to use extended collisions
  !
  complex(SP), allocatable :: G_lesser(:,:,:)
  !
@@ -116,7 +122,7 @@ module SC
      if (allocated(QP_state)) deallocate(QP_state)
      !
      allocate(QP_state(QP_nb,QP_nk))
-     call mem_est("QP_state",(/QP_n_states*QP_nk/))
+     call mem_est("QP_state",(/QP_nb*QP_nk/))
      QP_state=.TRUE.
      call QP_state_table_setup(E)
      !

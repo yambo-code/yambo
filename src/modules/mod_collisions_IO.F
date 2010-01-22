@@ -67,8 +67,8 @@ module collisions_IO
        V_size=QP_nb**2*QP_nk
      endif
      !
-     call mem_est("COLLISIONS_v",(/size(COLLISIONS_v)/),(/2*SP/))
      allocate(COLLISIONS_v(V_size))
+     call mem_est("COLLISIONS_v",(/size(COLLISIONS_v)/),(/2*SP/))
      allocate(COLLISIONS_table(QP_nb,QP_nb,QP_nk))
      call mem_est("COLLISIONS_table",(/size(COLLISIONS_table)/),(/LP/))
      !

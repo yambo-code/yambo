@@ -33,14 +33,13 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:bz_samp,qindx_S,G_m_G
  use QP_m,           ONLY:QP_nb,QP_t,QP_ng_Sx,QP_n_G_bands,CHOSEX_use_empties
- use SC,             ONLY:SC_potential,SC_bands,Ho,E_bare,it_now,local_V
- use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &
+ use SC,             ONLY:SC_potential,SC_bands,it_now,local_V
+ use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser, &
 &                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,      &
-&                         i_time,Integrator_name,j_current,l_RT_diagonalize,        &
+&                         i_time,Integrator_name,l_RT_diagonalize,        &
 &                         G_lesser_reference,LifeTime,RT_diagonalization_steps,     &
 &                         A_vecpot,A_vecpot_previous
  use collisions_CACHE, ONLY:free_COLLISIONS_v
- use collisions_IO,    ONLY:collisions_IO_alloc
  !
  implicit none
  !
@@ -59,8 +58,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  integer, external :: eval_G_minus_G
  !
  character(lchlen)        :: file_name(2)
- character(schlen)        :: sec_mode_and_message(2)
- integer                  :: WF_G_max,WF_Go_indx,it,i1,ik
+ integer                  :: WF_G_max,WF_Go_indx,it,i1
  real(SP)                 :: values(9), RT_time  ! The real time on the diagonal RTime = it*RT_step    
  complex(SP)              :: Trace_Gf,E_kin,E_ion,E_h,E_x,E_xc,E_mg 
  type(QP_t)               :: qp_dummy
@@ -175,7 +173,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    if(l_NE_with_fields.and.i_time>0)  then
      A_vecpot_previous=A_vecpot
-     call RT_current(xK,Xen,G_lesser_previous,RT_time)
+     call RT_current(xK,G_lesser_previous)
    endif
    !
    call RT_Energy(Xen,k,E_kin,E_ion,E_h,E_x,E_xc,E_mg,Trace_Gf)

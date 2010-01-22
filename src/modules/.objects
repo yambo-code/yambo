@@ -1,7 +1,7 @@
 RT_objects =
 SC_objects =
 MAGNETIC_objects =
-#if defined _SC  || defined _RT
+#if defined _SC
 SC_objects       = mod_SC.o
 RT_objects       = mod_collisions_IO.o mod_real_time.o mod_collisions_CACHE.o
 MAGNETIC_objects = mod_magnetic.o

@@ -24,7 +24,7 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k)
  use pars,       ONLY:SP,DP
  use SC,         ONLY:SC_bands
  use R_lattice,  ONLY:bz_samp 
- use QP_m,       ONLY:QP_nb,QP_nk,QP_table,QP_n_states
+ use QP_m,       ONLY:QP_nk,QP_n_states
  use electrons,  ONLY:n_sp_pol
  use FFT_m,      ONLY:fft_size
  use wave_func,  ONLY:wf

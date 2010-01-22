@@ -74,7 +74,7 @@ subroutine load_COLLISIONS()
  if(COLLISIONS_cache_size<=0.) COLLISIONS_cache_size=mem_proc-mem_before_cache
  !
  if(COLLISIONS_cache_size<=0.) then
-   call warning("Automatic Oscillator Cache failed ") 
+   call warning("Automatic collisions Cache failed ") 
    COLLISIONS_cache_size=0.
    return
  endif
@@ -112,7 +112,7 @@ subroutine load_COLLISIONS()
      !
      V_kind=V_kinds(i1)
      !
-     call io_control(ACTION=OP_RD_CL,SEC=(/i_qp+1/),ID=ID)
+     call io_control(ACTION=OP_RD_CL,SEC=(/2/),ID=ID)
      io_err=io_COLLISIONS(i_qp,ID)
      !
      ic=0
@@ -162,7 +162,7 @@ subroutine load_COLLISIONS()
  deallocate(COLLISIONS_disk)
  call mem_est("COLLISIONS_disk")
  !
- ! If all QP are in memory I don't need anymore oscillators_IO
+ ! If all QP are in memory I don't need anymore collisions_IO
  !
  if(last_QP_mem==QP_n_states) call collisions_IO_free()
  !
@@ -170,7 +170,7 @@ subroutine load_COLLISIONS()
  !
  write (dump_ch,'(a,f10.2,a)') '[COLLISIONS] QP in memory :',real(last_QP_mem)/real(QP_n_states)*100.0,'%'
  call msg('s',dump_ch)
- write (dump_ch,'(a,f10.5)')   '[COLLISIONS] Oscillator Cache use [Gb]:',cache_memory
+ write (dump_ch,'(a,f10.5)')   '[COLLISIONS] Collisions Cache use [Gb]:',cache_memory
  call msg('s',dump_ch)
  !
 end subroutine load_COLLISIONS

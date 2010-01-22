@@ -79,7 +79,7 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  ! Build Ho and save initial energies
  !
  E_bare=Xen%E(:SC_bands,:,:)
- call SC_common_build_Ho(Xen,Xk,k)
+ call SC_bare_Hamiltonian(Xen,Xk,k)
  !
  ! Perform a first I/O to check which DBs are present. 
  !

@@ -49,7 +49,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use collisions_IO,ONLY:V_kind,TEMP_COLLISIONS_v,QP_COLLISIONS_done
  use global_XC,     ONLY:SC_CHOSEX
 #endif
-#if defined _SC || defined _RT 
+#if defined _SC
  use SC,            ONLY:it_now
 #endif
  !
@@ -189,7 +189,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! LIVE-TIMING message
  !
-#if defined _RT || defined _SC
+#if defined _SC
  if (.not.l_collisions_IO) then
    if (l_sc_run) then
      if (l_chosex) call live_timing(trim(Sc_name)//'@it'//trim(intc(it_now)),px%stps(myid+1)*QP_n_states) 
@@ -197,7 +197,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #endif
      if (l_ppa)    call live_timing(trim(Sc_name)//'W0 PPA',px%stps(myid+1)*QP_n_states) 
      if (l_chosex) call live_timing(trim(Sc_name)//'W0 CHOSEX',px%stps(myid+1)*QP_n_states) 
-#if defined _RT || defined _SC
+#if defined _SC
    endif
  else
    call live_timing("CHOSEX collisions",px%stps(myid+1)) 
@@ -258,7 +258,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
    !   X(-q,G,G') = X(q,-G',-G')
    !
-   ! While the -1 is introduced th the oscillators the reflection of the
+   ! While the -1 is introduced th the collisions the reflection of the
    ! matrix must be done here.
    !
    if (iqs>nsym/(i_time_rev+1) .and. i_space_inv == 0 .and..not.PPaR_is_TR_rotated) then
@@ -438,7 +438,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call mem_est("PPaP ISC-GAMP GW-E")
  call X_alloc('X')
  !
-#if !defined _RT && !defined _SC
+#if !defined _SC
  !
  call WF_free()
  !

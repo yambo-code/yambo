@@ -65,7 +65,6 @@ module real_time
  logical                  :: Hfrozen
  logical                  :: XCfrozen 
  !
- !
  ! External Field type
  ! 
  type ext_field
@@ -263,7 +262,7 @@ module real_time
    subroutine RT_free
      !
      use drivers,        ONLY:l_sc_hf,l_HF_and_locXC
-     use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare,rho_n,l_use_COLLISIONS_IO
+     use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare,rho_n
      use memory_m,       ONLY:mem_est
      use QP_m,           ONLY:QP_Vnl_xc
      use xc_functionals, ONLY:E_xc
@@ -324,7 +323,7 @@ module real_time
        call mem_est('Current_Cache')
      endif
      !
-     if(l_use_COLLISIONS_IO) call collisions_IO_free() 
+     call collisions_IO_free() 
      !
    end subroutine RT_free
    !

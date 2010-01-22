@@ -1,5 +1,5 @@
 SC_objects = 
-#if defined _SC || defined _RT || defined _MAGNETIC
+#if defined _SC
 SC_objects = io_COLLISIONS.o load_COLLISIONS.o load_SC_components.o io_SC_components.o
 #endif
 ELPH_objects = 

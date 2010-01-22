@@ -72,7 +72,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND 
-#if defined _SC  || defined _RT
+#if defined _SC
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,&
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB
  use collisions_IO,ONLY:n_collisions,COLLISIONS_cutoff
@@ -393,7 +393,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  nQ_memory=0
 #endif
  !
-#if defined _SC || defined _RT 
+#if defined _SC
  ! SC
  !
  SC_fft_size=0

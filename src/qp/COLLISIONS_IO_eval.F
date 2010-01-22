@@ -25,7 +25,7 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  use pars,          ONLY:schlen
  use electrons,     ONLY:levels,spin
  use R_lattice,     ONLY:bz_samp
- use QP_m,          ONLY:QP_nb
+ use QP_m,          ONLY:QP_nb,QP_n_states
  use wave_func,     ONLY:WF_free
  use global_XC,     ONLY:SC_HF,SC_CHOSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
  use SC,            ONLY:SC_bands
@@ -67,7 +67,7 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  ! I/O check
  !===========
  !
- if (COLLISIONS_IO_check()==0) return
+ if (COLLISIONS_IO_check(.TRUE.)==0) return
  !
  ! No DB => EVAL
  !===============

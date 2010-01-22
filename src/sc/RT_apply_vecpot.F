@@ -23,14 +23,13 @@ subroutine RT_apply_gauge_field(ik,H_nl_sc,G_lesser)
  !
  ! This subroutine add the vector potential to the Hamiltonian
  !
- use pars,           ONLY:SP,DP
+ use pars,           ONLY:SP
  use units,          ONLY:SPEED_OF_LIGHT
- use real_time,      ONLY:l_RT_no_diamagnetic,A_vecpot,l_RT_induced_field,l_RT_no_intraband
+ use real_time,      ONLY:l_RT_no_diamagnetic,A_vecpot,l_RT_no_intraband
  use electrons,      ONLY:n_sp_pol
  use X_m,            ONLY:DIP_iR_or_P
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
- use units,          ONLY:FS2AUT
  !
  implicit none
  integer,     intent(in)     :: ik
@@ -39,7 +38,7 @@ subroutine RT_apply_gauge_field(ik,H_nl_sc,G_lesser)
  ! 
  ! Work Space
  !
- integer     :: i1,i2,is,i3
+ integer     :: i1,i2,is
  complex(SP) :: A_dot_P,A_vec_pot(3)
  !
  A_vec_pot=A_vecpot%vecpot/SPEED_OF_LIGHT ! Gaussian units

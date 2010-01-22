@@ -177,8 +177,6 @@ subroutine K_inversion(iq,W,E,k,q)
  call W_reset(W_shifted)
  call W_duplicate(W,W_shifted)
  !
- call live_timing('Green`s function',BS_K_dim)
- !
 #if defined _POLARON
  !
  ! Green Functions must be all mapped to the Xw range so
@@ -190,6 +188,8 @@ subroutine K_inversion(iq,W,E,k,q)
  endif
  !
 #endif
+ !
+ call live_timing('Green`s function',BS_K_dim)
  !
  do i1=1,BS_K_dim
    !

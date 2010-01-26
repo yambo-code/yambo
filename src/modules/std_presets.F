@@ -31,7 +31,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                      q_plus_G_direction,Q_Shift_Order
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
-&                     QP_W_er,QP_W_dr,QP_cg_percent,&
+&                     QP_W_er,QP_W_dr,QP_cg_percent,QP_n_states,&
 &                     QP_ctl_db,QP_ctl_interp_neigh,SC_E_threshold, &
 &                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
 &                     QP_W_partially_done,GWo_SC_done,GWo_iterations,&
@@ -47,7 +47,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     cutoff_presets
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_RIM_nbands,BZ_RIM_tot_nkpts,&
 &                     filled_tresh, spin_orbit
- use par_proc_m, ONLY:myid,master_cpu,ncpu,n_nodes
+ use par_proc_m, ONLY:myid,master_cpu,ncpu,n_nodes,local_master_cpu
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,&
 &                     of_unit,write_to_of,write_to_report,max_open_ofs,&
 &                     more_io_path,core_io_path,jobstr,com_path
@@ -56,7 +56,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     parallel_timing,ct
  use wave_func,  ONLY:wf_b,wf_k,wf_ng,wf_space,wf_norm_test,wf_nb_io,wf_nb_io_groups
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
- use IO_m,       ONLY:io_reset,max_io_units,IO_write,dbs_fragment,serial_number,IO_read,mk_dir
+ use IO_m,       ONLY:io_reset,max_io_units,IO_write,serial_number,IO_read,mk_dir,&
+&                     Fragmented_IO,Fragmented_IO_save 
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
@@ -66,6 +67,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_SVD_digits,&
 &                     FXC_is_causal
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
+ use fragments,  ONLY:Parallel_Fragments
 #if defined _ELPH 
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,nQ_memory
 #endif
@@ -113,15 +115,12 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  core_io_path=IND
  more_io_path=OD
+ more_io_path='/work/marini/TESTING/silicon_bulk/abinit/2k/cpu1'
  com_path=COM_DIR
  !
- ! ... created
+ ! ... created (core only)
  !
  call mk_dir(core_io_path)
- call mk_dir(trim(core_io_path)//"/SAVE")
- call mk_dir(more_io_path)
- call mk_dir(trim(more_io_path)//"/SAVE")
- call mk_dir(com_path)
  !
  ! ... and Job string
  !
@@ -129,7 +128,9 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  ! PAR PROC Setup
  !
- master_cpu=myid==0
+ master_cpu          =myid==0
+ local_master_cpu(1) =.TRUE.
+ local_master_cpu(2:)=.TRUE.
  !
  ! TTY size 
  !
@@ -276,7 +277,10 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  IO_write=master_cpu
  n_nodes=1
  !
- dbs_fragment=index(INSTR,'dbfrag')>0
+ Parallel_Fragments=.FALSE.
+ Fragmented_IO=index(INSTR,'dbfrag')>0
+ Fragmented_IO_save=Fragmented_IO
+ !
  do i1=1,max_io_units
    call io_reset(i1)
  enddo
@@ -303,6 +307,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  !QPm
  !
+ QP_n_states=0
  QP_dSc_steps=2
  QP_Sc_steps=100
  QP_n_W_freqs=100

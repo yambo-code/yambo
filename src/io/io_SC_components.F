@@ -34,7 +34,7 @@ integer function io_SC_components(what,E_sc,ID)
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,&
 &                         SC_ng_Sx,SC_X_bands,SC_X_size
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
-&                         io_sec,io_bulk,io_fragment,read_is_on,write_is_on,&
+&                         io_sec,io_bulk,read_is_on,write_is_on,&
 &                         manage_RD_WR_CL_IF_END,ver_is_gt_or_eq,io_reset,IO_INCOMPATIBLE_VAR
 #if defined _RT
  use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,Hfrozen,XCfrozen,                      &
@@ -42,7 +42,7 @@ integer function io_SC_components(what,E_sc,ID)
 &                         LifeTime,G_lesser,i_time,l_RT_no_diamagnetic,j_current,l_RT_no_intraband,&
 &                         n_ext_fields,Efield,max_rt_steps_disk,current_cache,A_vecpot,            &
 &                         l_RT_induced_field
- use IO_m,           ONLY:io_restart,io_check_restart
+ use IO_m,           ONLY:io_restart_point
  use QP_m,           ONLY:QP_nk
 #endif                                
 #if defined _MAGNETIC
@@ -52,6 +52,7 @@ integer function io_SC_components(what,E_sc,ID)
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use electrons,      ONLY:levels,n_sp_pol,n_spin
  use global_XC,      ONLY:SC_EXX,SC_HF,SC_CHOSEX,SC_EXXC
+ use fragments,      ONLY:io_fragment
  implicit none
  !
  integer               :: ID
@@ -385,7 +386,7 @@ integer function io_SC_components(what,E_sc,ID)
  ! Fragmentation
  !===============
  !
- call io_fragment(ID,i_pointer=ik)
+ call io_fragment(ID,i_fragment=ik)
  !
 #if defined _RT
  endif

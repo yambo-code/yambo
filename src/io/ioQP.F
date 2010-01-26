@@ -32,12 +32,12 @@ integer function ioQP(what,qp,ID)
 &                         GWo_iterations,GF_is_causal
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
-&                         write_is_on,io_mode,DUMP,VERIFY,&
-&                         io_fragment,io_check_restart,io_restart,&
+&                         write_is_on,io_mode,DUMP,VERIFY,io_restart_point,&
 &                         io_netcdf_support,ver_is_gt_or_eq,&
 &                         db_alat,variable_is_found,IO_INCOMPATIBLE_VAR
  use global_XC,      ONLY:QP_DB_kind,SE_GoWo,SE_GWo,SE_GoWo_PPA,SE_GWo_PPA,SE_CHOSEX,SE_NONE,&
 &                         SE_POLARON
+ use fragments,      ONLY:io_fragment,Fragments_Restart
  !
  implicit none
  type(QP_t)  ::qp
@@ -63,7 +63,7 @@ integer function ioQP(what,qp,ID)
  !
  ! Check the restart point 
  !  
- if (what=="W") call io_check_restart("W",ID)
+ if (what=="W") call Fragments_Restart(ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    ! 
@@ -258,7 +258,7 @@ integer function ioQP(what,qp,ID)
  ! there is a restart point
  !
  if (what=="W") then
-   ioQP=io_restart(ID)
+   ioQP=io_restart_point(ID)
    if (ioQP/=0.and.io_netcdf_support(ID)) then
      QP_W_partially_done=.true.
      goto 1
@@ -377,7 +377,7 @@ integer function ioQP(what,qp,ID)
    ! 
    ! Fragmentation
    ! 
-   call io_fragment(ID,i_pointer=iqbz)
+   call io_fragment(ID,i_fragment=iqbz)
    !
    write (ch,'(a,i5.5)') "W_PARS_",iqbz
    !
@@ -412,7 +412,7 @@ integer function ioQP(what,qp,ID)
    ioQP=io_status(ID)
    if (ioQP/=0) goto 1
    !
-   call io_check_restart("W",ID,now=iqbz,todo=nqbz)
+   call Fragments_Restart(ID,current_fragment=iqbz,fragments_todo=nqbz)
    !
  endif
  !

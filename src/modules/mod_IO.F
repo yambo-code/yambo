@@ -21,8 +21,8 @@
 !
 module IO_m
  !
- use pars,    ONLY:SP,lchlen,schlen
- use LOGO,    ONLY:code_version,code_revision
+ use pars,       ONLY:SP,lchlen,schlen
+ use LOGO,       ONLY:code_version,code_revision
 #if defined _NETCDF_IO
  use netcdf
 #endif
@@ -39,7 +39,8 @@ module IO_m
  !
  logical :: IO_write
  logical :: IO_read
- logical :: dbs_fragment
+ logical :: Fragmented_IO
+ logical :: Fragmented_IO_save
  !
  ! Actions
  !
@@ -69,7 +70,7 @@ module IO_m
  integer :: io_sec(max_io_units,max_active_sections)
  integer :: io_rec_pos(max_io_units)
  integer :: io_unit(max_io_units)
- integer :: io_restart(max_io_units)
+ integer :: io_restart_point(max_io_units)
  integer :: io_code_version(max_io_units,3)
  integer :: io_code_revision(max_io_units)
  integer :: io_serial_number(max_io_units)
@@ -79,10 +80,10 @@ module IO_m
  logical :: io_netcdf_support(max_io_units)
  character(lchlen)          :: io_file(max_io_units)
  !
- ! Private variables
+ ! Type & extension
  !
- character(schlen), private :: io_extension(max_io_units)
- integer,           private :: io_type(max_io_units)
+ character(schlen)          :: io_extension(max_io_units)
+ integer                    :: io_type(max_io_units)
  !
  ! Save variables (to try different DB locations at the same time)
  !
@@ -200,11 +201,7 @@ module IO_m
        return
      endif
      !
-     ! Check if file is already open
-     !
-     !if (file_is_open(io_file(ID),ID)) return
-     !
-     ! Keep the extension for the io_fragment routine
+     ! Keep the extension for the fragment-related procedures
      !
      io_extension(ID)=desc
      !
@@ -239,7 +236,7 @@ module IO_m
          !
          if (type==1.or.type==2) then
            !
-           alternative_file=all_locations(desc,subfolder_,type,io_netcdf_support(ID))
+           alternative_file=all_locations(desc,subfolder_,io_netcdf_support(ID))
            !
          endif
          !
@@ -376,74 +373,6 @@ module IO_m
      !
    end function
    !
-   subroutine io_fragment(ID,i_pointer,j_pointer,ierr)
-     !
-     use stderr, ONLY:intc
-     !
-     ! This routine checks if the DB is fragmented. If it is
-     ! it closes the DB and opens the fragment corresponding
-     ! to the i_pointer (j_pointer) pointers.
-     !
-     ! Note that, as io_disconnect is called with a negative
-     ! argument io_reset is no called. This is needed to save
-     ! the prperties of the DB that have been read previously 
-     ! (like io_nectdf_support or io_code_version/revision).
-     !
-     implicit none
-     integer           :: ID
-     integer, optional :: i_pointer,j_pointer,ierr
-     !
-     ! Work Space
-     !
-     integer           :: ierr_,i_fragment
-     character(schlen) :: subfolder,fragment_filename
-     logical           :: close_is_on_save
-     !
-     if (.not.io_fragmented(ID)) return
-     !
-     close_is_on_save=close_is_on(ID)
-     !
-     if (read_is_on(ID))  io_action(ID)=OP_RD_CL
-     if (write_is_on(ID)) io_action(ID)=OP_WR_CL
-     !
-     if (present(i_pointer)) i_fragment=i_pointer
-     if (.not.present(i_pointer)) i_fragment=maxval(io_sec(ID,:))
-     !
-     ! Disconnect without calling io_reset
-     !
-     io_resetable(ID)=.false.
-     !
-     call io_disconnect(ID)
-     !
-     ! io_file is redefined by io_connect
-     !
-     io_file(ID)=' '
-     !
-     if (write_is_on(ID).or.ver_is_gt_or_eq(ID,revision=518)) then
-       !
-       fragment_filename=trim(io_extension(ID))//"_fragment_"//trim(intc(i_pointer))
-       if (present(j_pointer)) fragment_filename=trim(io_extension(ID))//"_fragments_"//trim(intc(i_pointer))//"_"//trim(intc(j_pointer))
-       ierr_=io_connect(fragment_filename,type=io_type(ID),ID=ID)
-       !
-     else
-       write (subfolder,'(2a,i5.5)') trim(io_extension(ID)),'_',i_fragment
-       if (present(j_pointer)) write (subfolder,'(2a,i5.5,a,i5.5)') &
-&                              trim(io_extension(ID)),'_',i_fragment,'_',j_pointer
-       !
-       ! Note that the fragment DB keeps the same type of the DB core (io_type(ID))
-       !
-       ierr_=io_connect('fragment',subfolder=subfolder,type=io_type(ID),ID=ID)
-     endif
-     !
-     if (present(ierr)) ierr=ierr_
-     !
-     ! io_action must be saved otherwise any io_disconnect call would
-     ! call io_reset (like in ioWF) 
-     !
-     if (close_is_on_save) io_resetable(ID)=.true.
-     !
-   end subroutine
-   !
    subroutine io_disconnect(ID)
      !
      integer :: ID
@@ -461,72 +390,6 @@ module IO_m
      endif
      !
      if (io_resetable(ID)) call io_reset(ID)
-     !
-   end subroutine
-   !
-   subroutine io_check_restart(desc,ID,now,todo)
-     !
-     use drivers, ONLY:list_dbs
-     use stderr,  ONLY:string_pack
-     use com,     ONLY:get_name,file_exists,more_io_path
-     use timing,  ONLY:date_and_time_string
-     use com,     ONLY:msg
-     character(*)::desc
-     integer     ::ID,i1
-     integer, optional::now,todo
-     character(lchlen)::restart_file,restart_folder,ch
-     !
-     io_restart(ID)=0
-     !
-     if (present(now)) then
-       !
-       if (.not.write_is_on(ID)) return
-       !
-       restart_file  =get_name(desc=desc,type=4,CORE_IO=.false.,MORE_IO=.true.,COM_IO=.FALSE.,NETCDF=.false.)
-       !
-       restart_folder=string_pack(trim(more_io_path),"/RESTART")
-       !
-       if (now==todo) then
-         call rm_file(restart_file)
-         call rm_file(restart_folder)
-         return
-       endif
-       !
-       if (.not.file_exists(trim(restart_folder))) call mk_dir(restart_folder)
-       !
-       open(unit=81,file=trim(restart_file))
-       write (81,'(/2x,a,3(i2.2,a),a,i3.3)') &
-&            'Restart file for YAMBO ',code_version(1),&
-&            '.',code_version(2),'.',code_version(3),' -- ',&
-&            'revision ',code_revision
-       ch=date_and_time_string()
-       write (81,'(/2x,a)') trim(ch)
-       write (81,'(/2x,2(a,i6,1x))') 'Section Completed ',now,'. To reach ',todo
-       close(81)
-       !
-     else
-       !
-       if (io_mode(ID)/=VERIFY.and.io_mode(ID)/=DUMP) return
-       !
-       restart_file=get_name(desc=desc,type=4,CORE_IO=.false.,MORE_IO=.true.,COM_IO=.FALSE.,NETCDF=.false.)
-       if (.not.file_exists(trim(restart_file))) return
-       !
-       open(unit=81,file=trim(restart_file))
-       read (81,1) ch(:18),io_restart(ID)
-       close(81)
-       io_restart(ID)=io_restart(ID)+1
-       !
-       if (list_dbs) then
-         call msg('s',trim(string_pack('[RESTARTer] Section(s) completed for ',&
-&                       trim(io_file(ID)),' :')),io_restart(ID)-1)
-    
-       else if (io_com(ID)/=NONE) then
-         call msg('rns',trim(string_pack('[RESTARTer] Section(s) completed for ',&
-&                       trim(io_file(ID)),' :')),io_restart(ID)-1)
-       endif
-     endif
-     !
-1    format(/////2x,a,i6)
      !
    end subroutine
    !
@@ -561,7 +424,7 @@ module IO_m
        io_sec(ID,:)=0
        io_sec(ID,:size(SEC))=SEC
      endif
-     if (write_is_on(ID)) io_fragmented(ID)=dbs_fragment
+     if (write_is_on(ID)) io_fragmented(ID)=Fragmented_IO
      !
 #if defined _NETCDF_IO
      if (present(NETCDF)) io_netcdf_support(ID)=NETCDF
@@ -592,7 +455,7 @@ module IO_m
      io_file(ID)=' ' 
      io_extension(ID)=' ' 
      io_rec_pos(ID)=1
-     io_restart(ID)=1
+     io_restart_point(ID)=1
      io_code_version(ID,:)=code_version
      io_code_revision(ID)=code_revision
      io_serial_number(ID)=serial_number
@@ -643,13 +506,12 @@ module IO_m
      call irename( cstr(trim(filename_old)), cstr(trim(filename_new)) )
    end subroutine
    !
-   logical function file_is_present(desc,subfolder,type)
+   logical function file_is_present(desc,subfolder)
      !
      use com,           ONLY:all_locations,file_exists
      !
      character(*)           :: desc
      character(*), optional :: subfolder
-     integer                :: type
      !
      ! Work Space
      !
@@ -660,7 +522,7 @@ module IO_m
      subfolder_=' '
      if (present(subfolder)) subfolder_=subfolder
      !
-     possible_locations=all_locations(desc,subfolder_,type,.TRUE.)
+     possible_locations=all_locations(desc,subfolder_,.TRUE.)
      !
      file_is_present=.true.
      do i_f=1,8
@@ -672,8 +534,7 @@ module IO_m
    !
    subroutine synchronize_db(desc,subfolder)
      !
-     use com,           ONLY:get_name,file_exists,more_io_path &
-&                           ,core_io_path,get_name
+     use com,        ONLY:all_locations,file_exists,jobstr,core_io_path,more_io_path
      !
      character(*), intent(in):: desc
      character(*), optional  :: subfolder
@@ -681,63 +542,29 @@ module IO_m
      !
      ! Work Space
      !
-     logical            :: present_in_core,present_in_more,netcdf_db
-     character(lchlen)  :: location(2)
+     integer            :: i_f
+     logical            :: db_found_in_location(8),CORE_2_MORE,MORE_2_CORE
+     character(lchlen)  :: possible_locations(8)
      character(schlen)  :: subfolder_
      !
      subfolder_=' '
      if (present(subfolder)) subfolder_=subfolder
      !
-     if(trim(more_io_path)==trim(core_io_path)) return
+     possible_locations=all_locations(desc,subfolder_,.TRUE.)
      !
-     present_in_core=.FALSE.
-     present_in_more=.FALSE.
+     do i_f=1,8
+       db_found_in_location(i_f)=file_exists(trim( possible_locations(i_f) ) ) 
+     enddo
      !
-     location(1)=get_name(desc,subfolder_,1,CORE_IO=.TRUE.,&
-&             MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.FALSE.)
-     if(file_exists(location(1))) then
-       present_in_core=.true.
-       netcdf_db=.false.
-     endif
-     !
-     location(2)=get_name(desc,subfolder_,1,CORE_IO=.TRUE.,&
-&             MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=.TRUE.)
-     if(file_exists(location(2))) then
-       present_in_core=.true.
-       netcdf_db=.true.
-     endif
-     !
-     location(1)=get_name(desc,subfolder_,2,CORE_IO=.FALSE.,&
-&             MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.FALSE.)
-     if(file_exists(location(1))) then
-       present_in_more=.true.
-       netcdf_db=.false.
-     endif
-     !
-     location(2)=get_name(desc,subfolder_,2,CORE_IO=.FALSE.,&
-&             MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=.TRUE.)
-     if(file_exists(location(2))) then
-       present_in_more=.true.
-       netcdf_db=.true.
-     endif
-     !
-     ! Now copy DB:    more_io_path <-> core_io_path
-     !
-     if(present_in_core.and..not.present_in_more) then 
-        location(1)=get_name(desc,subfolder_,1,CORE_IO=.TRUE.,&
-&                    MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=netcdf_db)
-        location(2)=get_name(desc,subfolder_,2,CORE_IO=.FALSE.,&
-&                    MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=netcdf_db)
-        call cp_file(trim(location(1)),trim(location(2)),io_err)
-     endif
-     !
-     if(.not.present_in_core.and.present_in_more) then 
-        location(1)=get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
-&                    MORE_IO=.TRUE.,COM_IO=.FALSE.,NETCDF=netcdf_db)
-        location(2)=get_name(desc,subfolder,1,CORE_IO=.TRUE.,&
-&                    MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=netcdf_db)
-       call cp_file(trim(location(1)),trim(location(2)),io_err)
-     endif
+     do i_f=1,4
+       MORE_2_CORE= db_found_in_location(i_f).and..not.db_found_in_location(i_f+4)
+       CORE_2_MORE= .not.db_found_in_location(i_f).and.db_found_in_location(i_f+4)
+       if (CORE_2_MORE.and.len_trim(jobstr)>0) call mk_dir(trim(more_io_path)//"/"//trim(jobstr)) 
+       if (MORE_2_CORE.and.len_trim(jobstr)>0) call mk_dir(trim(core_io_path)//"/"//trim(jobstr))
+       !
+       if (MORE_2_CORE) call cp_file(trim(possible_locations(i_f)),trim(possible_locations(i_f+4)),io_err)
+       if (CORE_2_MORE) call cp_file(trim(possible_locations(i_f+4)),trim(possible_locations(i_f)),io_err)
+     enddo
      !
    end subroutine synchronize_db
    !

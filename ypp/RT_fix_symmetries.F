@@ -33,7 +33,7 @@ subroutine RT_fix_symmetries(E,k)
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,&
 &                              g_rot,ng_closed,bz_samp_duplicate,rl_sop
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,&
-&                              OP_APP,cp_file,rm_file,cp_directory,dbs_fragment, &
+&                              OP_APP,cp_file,rm_file,cp_directory,Fragmented_IO, &
 &                              io_fragmented,OP_RD_CL,io_netcdf_support,VERIFY,  &
 &                              RD_CL,RD,io_disconnect,DUMP,REP
  use wave_func,           ONLY:ioWF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io, &
@@ -252,7 +252,7 @@ subroutine RT_fix_symmetries(E,k)
  !
  call WF_load(wf_ng,1,(/1,E%nb/),(/1,k_save%nibz/),space='C',title='')
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)  
- dbs_fragment=io_fragmented(ID)
+ Fragmented_IO=io_fragmented(ID)
  io_err=ioWF(ID)
  !
  if (trim(core_io_path)/=trim(more_io_path)) then
@@ -310,7 +310,7 @@ subroutine RT_fix_symmetries(E,k)
  call msg('s',':: Wavefunctions ...')
  !
  ACTION_=OP_APP_WR_CL
- if(dbs_fragment) ACTION_=OP_WR_CL
+ if(Fragmented_IO) ACTION_=OP_WR_CL
  !
  do i1=k_save%nibz+1,k%nibz 
    !      
@@ -330,7 +330,7 @@ subroutine RT_fix_symmetries(E,k)
    !
  enddo
  ! 
- if(dbs_fragment) then
+ if(Fragmented_IO) then
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
    io_err=ioWF(ID)
  endif

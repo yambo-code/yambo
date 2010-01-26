@@ -35,17 +35,6 @@ module collisions_IO
  real(SP)                 :: COLLISIONS_cutoff
  real(SP)                 :: COLLISIONS_max
  complex(SP), allocatable :: TEMP_COLLISIONS_v(:,:,:)
- logical, allocatable     :: QP_COLLISIONS_done(:)
- !
- interface
-   !
-   integer function io_COLLISIONS(i_qp,ID,QP_COLLISIONS_done)
-     use QP_m,      ONLY:QP_n_states
-     integer           :: i_qp,ID
-     logical, optional :: QP_COLLISIONS_done(QP_n_states)
-   end function 
-   !
- end interface
  !
  contains
    !
@@ -86,5 +75,16 @@ module collisions_IO
        call mem_est("COLLISIONS_table")
      endif
    end subroutine
+   !
+!   subroutine collisions_IO_mem_disk_usage()
+! disk_space=real(QP_n_states*QP_nb**2*QP_nk*(2+0.25)*SP)/1.0e9
+! if (disk_space> 0.01) call msg('s','[COLLISIONS I/O] Max Disk space required [Gb]:',disk_space)  
+! if (l_collisions_IO) call msg('s' ,'[SC] Use Extented collisions I/O')
+! call msg('r' ,'[SC] Use Extented collisions          :',l_collisions_IO)
+! write (dump_ch,'(a,f10.2,a)') '[COLLISIONS] QP in memory :',real(last_QP_mem)/real(QP_n_states)*100.0,'%'
+! call msg('s',dump_ch)
+! write (dump_ch,'(a,f10.5)')   '[COLLISIONS] Collisions Cache use [Gb]:',cache_memory
+! call msg('s',dump_ch)
+!   end subroutine
    !
 end module

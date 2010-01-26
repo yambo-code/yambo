@@ -61,13 +61,13 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
    !
    if (l_sc_exx) call V_exx(X,E,k,q,V_xc_sc)
    !
-   call IO_mute("report log io_in io_out")
+   call IO_and_Messaging_switch("report log io_in io_out")
    !
    if (l_sc_contains_lda) call xc_lda_driver(E,Xk,SC_kind,SC_xc_functional,1)
    if (l_sc_contains_lda.and..not.l_sc_exx) V_xc_sc(:,:)=V_xc(:,:)
    if (l_sc_contains_lda.and.     l_sc_exx) V_xc_sc(:,:)=V_xc(:,:)+V_xc_sc(:,:)
    !
-   call IO_mute(" ")
+   call IO_and_Messaging_switch(" ")
    !
    ! Mixing 
    !========
@@ -103,15 +103,15 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
      !
      ! Stop all messagging
      !
-     call IO_mute("report io_in io_out")
+     call IO_and_Messaging_switch("report io_in io_out")
      !
      call XCo_driver(E,k,k,q)
      !
-     call IO_mute("report io_out")
+     call IO_and_Messaging_switch("report io_out")
      !
      if (l_sc_chosex) call QP_ppa_chosex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1)
      !
-     call IO_mute(" ")
+     call IO_and_Messaging_switch(" ")
      !
    endif
    !

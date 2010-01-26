@@ -25,8 +25,7 @@ integer function ioELPH(ID,what)
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
 &                         io_elemental,io_status,io_bulk,io_header,&
 &                         read_is_on,write_is_on,RD_CL,RD_CL_IF_END,io_action,&
-&                         io_mode,DUMP,io_fragment,&
-&                         ver_is_gt_or_eq
+&                         io_mode,DUMP,ver_is_gt_or_eq
  use ELPH,           ONLY:ph_modes,elph_nb,elph_global_alloc,ph_freqs_sq,elph_gkkp,&
 &                         QP_PH_n_G_bands,max_ph_freq,elph_DW,elph_nDBs,&
 &                         elph_use_q_grid,E_k_plus_q,ph_qpt,elph_nDBs_used,&
@@ -39,6 +38,7 @@ integer function ioELPH(ID,what)
  use electrons,      ONLY:n_sp_pol
  use QP_m,           ONLY:QP_n_states,QP_nb,QP_nk,QP_table
  use matrix_operate, ONLY:mat_c2r,mat_r2c
+ use fragments,      ONLY:io_fragment
  implicit none
  integer      ::ID
  character(*) ::what
@@ -142,7 +142,7 @@ integer function ioELPH(ID,what)
  !
  ! Fragmentation
  !
- call io_fragment(ID,i_pointer=iq,ierr=ierr)
+ call io_fragment(ID,i_fragment=iq,ierr=ierr)
  !
  ! When the DB is fragmented I allow a partial reading checking
  ! if the fragment exists or not.

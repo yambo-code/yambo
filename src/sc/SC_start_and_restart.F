@@ -39,7 +39,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  use FFT_m,          ONLY:fft_size
  use wave_func,      ONLY:WF_load,WF_free
  use global_XC,      ONLY:SC_HF,SC_CHOSEX,SC_HF
- use collisions_IO,  ONLY:io_COLLISIONS,V_kind  
+ use collisions_IO,  ONLY:V_kind  
  !
  implicit none
  type(bz_samp)::Xk
@@ -49,14 +49,13 @@ subroutine SC_start_and_restart(X,E,Xk)
  ! Workspace I/O
  !
  integer                 ::ID(4),io_E,io_V,io_WF
- integer, external        :: io_SC_components
- integer, external        :: eval_G_minus_G
- type(QP_t)               :: qp_dummy
+ integer, external       :: io_SC_components,io_COLLISIONS
+ integer, external       :: eval_G_minus_G
+ type(QP_t)              :: qp_dummy
  !
  ! Extended collisions
  ! 
- integer                  :: io_COLLISIONS_err(2)
- integer, external        :: COLLISIONS_IO_check
+ integer                 :: io_COLLISIONS_err(2)
  ! 
  ! Parsering
  !============
@@ -235,15 +234,17 @@ subroutine SC_start_and_restart(X,E,Xk)
  if(l_collisions_IO) then
    !
    V_kind=SC_HF
-   io_COLLISIONS_err(1)=COLLISIONS_IO_check(.FALSE.)
+   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID(1))
+   io_COLLISIONS_err(1)=io_COLLISIONS(0,ID(1))
    V_kind=SC_CHOSEX
-   io_COLLISIONS_err(2)=COLLISIONS_IO_check(.FALSE.)
+   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID(1))
+   io_COLLISIONS_err(2)=io_COLLISIONS(0,ID(1))
    !
    if (l_sc_hf)     l_collisions_IO=io_COLLISIONS_err(1)==0
-   if (l_sc_chosex) l_collisions_IO=all(io_COLLISIONS_err==0)
+   if (l_sc_chosex) l_collisions_IO=all(io_COLLISIONS_err==0) 
  endif
  !
- if (l_collisions_IO) call msg('s' ,'[SC] Use Extented collisions I/O')
- call msg('r' ,'[SC] Use Extented collisions          :',l_collisions_IO)
+ if (l_collisions_IO) call msg('s' ,'[SC] Extented collisions I/O Used')
+ call msg('r' ,'[SC] Extented collisions I/O          :',l_collisions_IO)
  !
 end subroutine SC_start_and_restart

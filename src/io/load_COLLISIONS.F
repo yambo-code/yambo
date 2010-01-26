@@ -30,7 +30,7 @@ subroutine load_COLLISIONS()
  use global_XC,       ONLY:SC_HF,SC_CHOSEX
  use QP_m,            ONLY:QP_n_states,QP_nb,QP_nk
  use memory_m,        ONLY:mem_sum,mem_est
- use collisions_IO,   ONLY:COLLISIONS_v,n_collisions,COLLISIONS_table,io_COLLISIONS,V_kind,&
+ use collisions_IO,   ONLY:COLLISIONS_v,n_collisions,COLLISIONS_table,V_kind,&
 &                          collisions_IO_free
  use stderr,          ONLY:intc
  use IO_m,            ONLY:OP_RD_CL,io_control
@@ -54,6 +54,7 @@ subroutine load_COLLISIONS()
  integer            :: i1,ic,i_qp,ib,ibp,ik,io_err,ID,n_tot_rho_states
  integer            :: V_kinds(max_V_kinds),n_V_kinds
  integer            :: max_COLLISION_cache
+ integer,external   :: io_COLLISIONS
  real(SP)           :: mem_before_cache
  type(pp_indexes)   :: px
  character(schlen)  :: dump_ch 

@@ -19,15 +19,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine job_setup(en,k)
+subroutine IO_Setup(en,k)
  use pars,           ONLY:lchlen
  use stderr,         ONLY:logfile,tty_size,intc
  use com,            ONLY:core_io_path,more_io_path,repfile,jobstr,msg,com_path,warning
  use it_m,           ONLY:infile
- use IO_m,           ONLY:io_control,OP_RD_CL,REP,IO_write,dbs_fragment
+ use IO_m,           ONLY:io_control,OP_RD_CL,REP,IO_write,Fragmented_IO
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
- use par_proc_m,     ONLY:n_nodes,ncpu,check_for_a_redundant_IO,pp_redux_wait,myid
+ use par_proc_m,     ONLY:n_nodes,ncpu,check_for_a_redundant_IO,pp_redux_wait,myid,local_master_cpu
  implicit none
  !
  type(levels)  :: en
@@ -35,12 +35,12 @@ subroutine job_setup(en,k)
  ! 
  ! Work Space
  !
- integer       :: ID,io_err,n_cpu_per_node
- integer(8)    :: cpu_seen_by_me(ncpu),cpu_seen_by_any(ncpu)
+ integer           :: ID,io_err,n_cpu_per_node
+ integer(8)        :: cpu_seen_by_me(ncpu),cpu_seen_by_any(ncpu)
  character(lchlen) :: cluster_msg
  integer, external :: ioDB1
  !
- call section('*','Job Setup') 
+ call section('*','Files & I/O Directories') 
  !
  ! GPL_EXCLUDE_START
  !
@@ -53,26 +53,33 @@ subroutine job_setup(en,k)
    n_cpu_per_node=cpu_seen_by_any(1)
    !
    if (.not.all(cpu_seen_by_any==n_cpu_per_node)) then
-     call warning('Impossible to setup a clustered I/O configuration')
+     !
+     call warning('Impossible to setup a distributed I/O configuration')
      more_IO_path=core_IO_path
+     !
    else
      n_nodes=ncpu/n_cpu_per_node
      if (n_nodes>1) then
-       cluster_msg=trim(intc(ncpu))//' CPUs I/O is clustered in '//&
-&                  trim(intc(n_nodes))//&
-&                  ' node(s) ('//trim(intc(n_cpu_per_node))//' each)'
+       cluster_msg='I/O is clustered in '//trim(intc(n_nodes))//&
+&                  ' node(s) in a '//trim(intc(n_cpu_per_node))//' cpu/node configuration'
        call msg('rns',trim(cluster_msg))
        !
-       ! To add a configure option to switch the parallel I/O on
+       ! Parallel I/O: 
        !
-       IO_write=sum(cpu_seen_by_me(myid+1:))==n_cpu_per_node
+       ! In each node I pick 1 cpu that is allowed to write in the "MIRRORING"
+       ! mode, that is the default. The local_master_cpu logical is indeed used
+       ! to restore the default in IO_switch.
        !
-       dbs_fragment=.true.
+       local_master_cpu(myid+1)=sum(cpu_seen_by_me(myid+1:))==n_cpu_per_node
+       !
+       Fragmented_IO=.true.
        !
      endif
    endif
    !
  endif
+ !
+ IO_write=local_master_cpu(myid+1)
  ! 
  ! GPL_EXCLUDE_END 
  ! 

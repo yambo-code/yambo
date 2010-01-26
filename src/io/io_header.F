@@ -35,7 +35,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
  use IO_m,          ONLY:io_elemental,io_bulk,io_code_version,io_status,&
 &                        read_is_on,write_is_on,serial_number,&
 &                        io_serial_number,io_file,io_com,io_mode,&
-&                        DUMP,VERIFY,NONE,io_fragmented,dbs_fragment,&
+&                        DUMP,VERIFY,NONE,io_fragmented,Fragmented_IO,&
 &                        ver_is_gt_or_eq,db_alat,io_code_revision
  use zeros,         ONLY:define_zeros
  use global_XC,     ONLY:G_E_xc_string,X_E_xc_string,K_E_xc_string,loaded_WF_xc_string,&
@@ -71,7 +71,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
  if (io_mode(ID)==DUMP) io_mode(ID)=VERIFY
  !
  call io_elemental(ID,VAR="FRAGMENTED",VAR_SZ=1,MENU=0)
- call io_elemental(ID,DB_L0=io_fragmented(ID),L0=dbs_fragment)
+ call io_elemental(ID,DB_L0=io_fragmented(ID),L0=Fragmented_IO)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  call io_elemental(ID,VAR="HEAD_VERSION",VAR_SZ=3,MENU=0)

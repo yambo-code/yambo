@@ -46,11 +46,12 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv
 #if defined _RT         
- use collisions_IO,ONLY:V_kind,TEMP_COLLISIONS_v,QP_COLLISIONS_done
+ use collisions_IO,ONLY:V_kind,TEMP_COLLISIONS_v
  use global_XC,     ONLY:SC_CHOSEX
 #endif
 #if defined _SC
  use SC,            ONLY:it_now
+ use fragments,     ONLY:fragment_status
 #endif
  !
  implicit none
@@ -79,8 +80,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  logical          ::PPaR_is_TR_rotated
  complex(SP)      ::local_rhotw(X%ng)
 #if defined _RT         
- integer          :: ib2,COM_
- integer, external:: COLLISIONS_IO_check
+ integer          :: ib2
 #endif
  !
  ! Reset
@@ -210,7 +210,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
    if (.not.px%i1p(i_qp)) cycle
    !
-   if (QP_COLLISIONS_done(i_qp)) then
+   if (fragment_status(i_qp)/=-1) then
       call live_timing(steps=1)
       cycle
    endif

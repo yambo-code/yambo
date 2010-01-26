@@ -37,7 +37,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use wave_func,     ONLY:WF_load
 #if defined _SC
  use SC,            ONLY:it_now,SC_bands
- use collisions_IO, ONLY:TEMP_COLLISIONS_v,QP_COLLISIONS_done
+ use collisions_IO, ONLY:TEMP_COLLISIONS_v
+ use fragments,     ONLY:fragment_status
 #endif
  !
  implicit none
@@ -142,7 +143,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
 #if defined _RT
    if (.not.px%i1p(i_qp)) cycle
    !        
-   if (QP_COLLISIONS_done(i_qp)) then
+   if (fragment_status(i_qp)/=-1)  then
      call live_timing(steps=1)
      cycle
    endif

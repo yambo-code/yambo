@@ -20,11 +20,13 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine COLLISIONS_IO_store(i_qp)
+ !
  use pars,            ONLY:SP
  use QP_m,            ONLY:QP_nk,QP_nb,QP_n_states
- use collisions_IO,   ONLY:io_COLLISIONS,COLLISIONS_cutoff,TEMP_COLLISIONS_v,COLLISIONS_table,&
+ use collisions_IO,   ONLY:COLLISIONS_cutoff,TEMP_COLLISIONS_v,COLLISIONS_table,&
 &                          COLLISIONS_v,n_collisions
- use IO_m,            ONLY:io_control,OP_WR_CL,REP,OP_WR,dbs_fragment
+ use IO_m,            ONLY:io_control,REP,OP_WR_CL,OP_APP_WR_CL
+ use par_proc_m,      ONLY:myid
  !
  implicit none                                              
  !
@@ -32,10 +34,10 @@ subroutine COLLISIONS_IO_store(i_qp)
  !
  ! Work Space
  !
+ integer, external :: io_COLLISIONS
  integer   :: ic,jb,jb2,ik
- integer   :: ID,io_err
+ integer   :: io_err,ID
  real(SP)  :: COLLISIONS_max
- logical   :: dbs_fragment_save
  !
  ! Reduction of tiny elements of tmp_sx.
  !
@@ -67,15 +69,15 @@ subroutine COLLISIONS_IO_store(i_qp)
    enddo      
  enddo      
  !
- dbs_fragment_save=dbs_fragment
- dbs_fragment=.TRUE.
- if (i_qp==1) then
+ call IO_and_Messaging_switch("DB_is_fragmented")
+ !
+ if (i_qp==myid+1) then
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=io_COLLISIONS(i_qp,ID)
  else
-   call io_control(ACTION=OP_WR_CL,SEC=(/2/),ID=ID)
+   call io_control(ACTION=OP_APP_WR_CL,SEC=(/2/),ID=ID)
    io_err=io_COLLISIONS(i_qp,ID)
  endif
- if (i_qp==QP_n_states)  dbs_fragment=dbs_fragment_save
+ if (i_qp==QP_n_states) call IO_and_Messaging_switch(" ")
  !
 end subroutine COLLISIONS_IO_store

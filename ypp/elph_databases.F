@@ -31,8 +31,7 @@ integer function elph_databases(k,E,q)
  use R_lattice,           ONLY:bz_samp
  use D_lattice,           ONLY:nsym
  use YPP,                 ONLY:ph_freqs_file
- use IO_m,                ONLY:io_control,OP_APP_WR_CL,&
-&                              OP_RD_CL,VERIFY,dbs_fragment
+ use IO_m,                ONLY:io_control,OP_APP_WR_CL,OP_RD_CL,VERIFY
  use timing,              ONLY:live_timing
  implicit none
  type(bz_samp) ::k,q
@@ -49,7 +48,7 @@ integer function elph_databases(k,E,q)
  !
  integer            ::idb,io_err,io_elph_err,ID
  integer, external  ::ioELPH 
- logical            ::dbs_fragment_save,use_ext_ph_freqs,abinit_DB
+ logical            ::use_ext_ph_freqs,abinit_DB
  !
  !... dummies 
  !
@@ -116,8 +115,7 @@ integer function elph_databases(k,E,q)
  !
  ! Force DB fragmentation
  !
- dbs_fragment_save=dbs_fragment
- dbs_fragment=.TRUE.
+ call IO_and_Messaging_switch("DB_is_fragmented")
  !
  ! With the external ph_freqs_file I can overwrite the 
  ! phonon frequencies read from the s.dbph* files. In this way I can, for example, 
@@ -164,7 +162,8 @@ integer function elph_databases(k,E,q)
  call msg("s",':: Bands range     :',elph_nb)
  !
  call elph_global_free()
- dbs_fragment=dbs_fragment_save
+ !
+ call IO_and_Messaging_switch(" ")
  !
  contains
    !

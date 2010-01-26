@@ -37,7 +37,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         infile,infile_dump,ofiles_append,runlevel_is_on,&
 &                         switch_off_runlevel
  use par_proc_m,     ONLY:pp_redux_wait,master_cpu
- use com,            ONLY:msg,repfile,com_path,jobstr,&
+ use com,            ONLY:msg,repfile,com_path,jobstr,more_io_path,core_io_path,&
 &                         write_the_logo,file_exists,rename_file,write_to_report
  use vec_operate,    ONLY:v_norm
  use timing,         ONLY:live_timing_is_on,what_is_running
@@ -47,7 +47,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use stderr,         ONLY:tty_size,logfile
  use R_lattice,      ONLY:ng_closed,q0_def_norm,bz_samp,nqibz,bz_samp_reset 
  use wave_func,      ONLY:ioWF
- use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE
+ use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir
  use TDDFT,          ONLY:ioBS_Fxc
  use BS,             ONLY:BS_bands,BS_n_g_exch,BS_n_g_W,BSS_mode,BSS_q0,&
 &                         BS_eh_en,BS_res_mode,BS_cpl_mode
@@ -63,7 +63,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SC
  use global_XC,      ONLY:MORE_NONE,SC_HF,SC_CHOSEX,SC_HF
  use SC,             ONLY:SC_potential,SC_ng_Sx,SC_X_bands,SC_X_size
- use collisions_IO,  ONLY:io_COLLISIONS,V_kind  
+ use collisions_IO,  ONLY:V_kind  
 #endif
 #if defined _MAGNETIC
  use magnetic,        ONLY:MAG_hamiltonian_type,MAG_pauli,MAG_landau
@@ -88,6 +88,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer, external :: ioX,ioOSTNTS,ioGROT,ioQINDX,ioRIM,&
 &                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_PP,&
 &                     ioCOL_CUT
+#if defined _SC
+ integer, external :: io_COLLISIONS
+#endif
  !
  ! GPL_EXCLUDE_START
  integer, external :: ioE_RIM
@@ -213,6 +216,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (io_err/=0.or.ioWF_err/=0) then
    init =-1
    return
+ else
+   call mk_dir(more_io_path)
+   call mk_dir(com_path)
+   call mk_dir(trim(core_io_path)//"/SAVE")
+   call mk_dir(trim(more_io_path)//"/SAVE")
  endif
  !
  X(3)%ib=(/1,en%nb/)

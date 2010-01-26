@@ -51,11 +51,14 @@ module par_indexes_m
            px%i1wts=1
          endif
          allocate(px%i1p(uplim(1)),i_done(uplim(1)))
-         px%i1p=.false.;tot_steps=sum(px%i1wts);i_done=1
+         px%i1p=.false.
+         tot_steps=sum(px%i1wts)
+         i_done=1
          average_steps=(tot_steps+ncpu-mod(tot_steps,ncpu))/ncpu
          do i1=lowlim(1)+myid,uplim(1),ncpu
            if (px%stps(myid+1)>=average_steps) cycle
-           px%i1p(i1)=.true.;i_done(i1)=0
+           px%i1p(i1)=.true.
+           i_done(i1)=0
            px%stps(myid+1)=px%stps(myid+1)+px%i1wts(i1)
          enddo
          call pp_redux_wait(i_done,p_prod)
@@ -64,7 +67,8 @@ module par_indexes_m
              do i1=lowlim(1),uplim(1)
                if (i_done(i1)==0) cycle
                if (px%stps(myid+1)>=average_steps) cycle
-               px%i1p(i1)=.true.;i_done(i1)=0
+               px%i1p(i1)=.true.
+               i_done(i1)=0
                px%stps(myid+1)=px%stps(myid+1)+px%i1wts(i1)
              enddo
            endif

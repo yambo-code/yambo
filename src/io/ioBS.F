@@ -31,17 +31,18 @@ integer function ioBS(iq,X,ID)
 &                        BS_DB_is_fragmented,&
 &                        BS_cpl_mat,BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
-&                        io_elemental,io_bulk,io_restart,&
-&                        read_is_on,write_is_on,io_check_restart,io_header,io_mode,&
-&                        VERIFY,io_fragment,io_fragmented,dbs_fragment,&
+&                        io_elemental,io_bulk,io_restart_point,&
+&                        read_is_on,write_is_on,io_header,io_mode,&
+&                        VERIFY,io_fragmented,Fragmented_IO,&
 &                        ver_is_gt_or_eq
+ use fragments,     ONLY:io_fragment,Fragments_Restart
  implicit none
  type(X_t):: X 
  integer  :: iq,ID
  !
  ! Work Space
  !
- integer             ::ik12(2),i_pointer,i1
+ integer             ::ik12(2),i_fragment,i1
  character(schlen)   ::ch,db_name
  character(lchlen)   ::local_description(100)
  real(SP),allocatable::BS_mat_disk(:,:,:)
@@ -52,7 +53,7 @@ integer function ioBS(iq,X,ID)
  ioBS=io_connect(desc=trim(db_name),type=2,ID=ID)
  if (ioBS/=0) goto 1
  !
- call io_check_restart(trim(db_name),ID)
+ call Fragments_Restart(ID)
  !
  ! If the DB size > 1.9Gb  I automatically switch on the fragmentation.
  ! To do so both dbs_fragment (overall fragmentation) and 
@@ -71,7 +72,7 @@ integer function ioBS(iq,X,ID)
    db_is_large=BS_K_dim>6000
    if (BS_K_coupling) db_is_large=BS_K_dim>3000
    if (db_is_large) then
-     dbs_fragment=.true.
+     Fragmented_IO=.true.
      io_fragmented(ID)=.true.
    endif
  endif
@@ -133,14 +134,14 @@ integer function ioBS(iq,X,ID)
  ! Cerfull. As io_restart is the restart point it is +1 of the
  ! one written in the RESTART directory
  !
- if (io_restart(ID)>0.and.io_mode(ID)==VERIFY) then
-   ioBS=io_restart(ID)-1
+ if (io_restart_point(ID)>0.and.io_mode(ID)==VERIFY) then
+   ioBS=io_restart_point(ID)-1
    BS_k_and_row_restart=BS_blocks(ioBS)
  endif
  !
- i_pointer=maxval(io_sec(ID,:))
- ik12=BS_blocks(i_pointer)
- if (i_pointer==1) goto 1
+ i_fragment=maxval(io_sec(ID,:))
+ ik12=BS_blocks(i_fragment)
+ if (i_fragment==1) goto 1
  !
  ! Fragmentation
  !
@@ -148,7 +149,7 @@ integer function ioBS(iq,X,ID)
  ! io_fragmented is not defined and must be overwritten with BS_DB_is_fragmented
  !
  io_fragmented(ID)=BS_DB_is_fragmented
- call io_fragment(ID,i_pointer=ik12(1),j_pointer=ik12(2))
+ call io_fragment(ID,i_fragment=ik12(1),j_fragment=ik12(2))
  !
  allocate(BS_mat_disk(BS_blk_dim(ik12(1)),BS_blk_dim(ik12(2)),2))
  !
@@ -186,8 +187,8 @@ integer function ioBS(iq,X,ID)
  !
  deallocate(BS_mat_disk)
  !
- call io_check_restart(trim(db_name),ID,now=i_pointer,todo=BS_IO_index(1,nXkibz))
- ioBS=io_restart(ID)
+ call Fragments_Restart(ID,current_fragment=i_fragment,fragments_todo=BS_IO_index(1,nXkibz))
+ ioBS=io_restart_point(ID)
  !
 1 call io_disconnect(ID)
  !

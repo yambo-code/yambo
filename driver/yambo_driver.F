@@ -112,7 +112,7 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  ! RUN SUMMARY 
  !=============
  !
- call job_setup(en,k)
+ call IO_Setup(en,k)
  !
  ! SETUPS ...
  !============

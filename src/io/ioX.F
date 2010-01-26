@@ -29,12 +29,13 @@ integer function ioX(X,Xw,ID)
  use X_m,           ONLY:X_t,X_mat,use_X_RIM,X_RLcomp_ig,X_RIM_nkpts
  use frequency,     ONLY:w_samp
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_com,&
-&                        io_elemental,io_status,io_bulk,io_restart,&
-&                        read_is_on,write_is_on,io_check_restart,io_header,&
-&                        io_fragment,RD_CL,RD_CL_IF_END,io_action,&
+&                        io_elemental,io_status,io_bulk,io_restart_point,&
+&                        read_is_on,write_is_on,io_header,&
+&                        RD_CL,RD_CL_IF_END,io_action,&
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
 &                        NONE,IO_INCOMPATIBLE_VAR
  use stderr,        ONLY:intc
+ use fragments,     ONLY:io_fragment,Fragments_Restart
  implicit none
  type(X_t)   :: X
  type(w_samp):: Xw
@@ -63,7 +64,7 @@ integer function ioX(X,Xw,ID)
  !
  ! Check the restart point
  !
- call io_check_restart(trim(db_desc),ID)
+ call Fragments_Restart(ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
@@ -184,7 +185,7 @@ integer function ioX(X,Xw,ID)
  !
  ! Fragmentation
  !
- call io_fragment(ID,i_pointer=iq)
+ call io_fragment(ID,i_fragment=iq)
  !
  !  type(X_t)    ::X(4)  x s d p
  !
@@ -232,7 +233,7 @@ integer function ioX(X,Xw,ID)
  ! Now that the menu is closed I can return with ioX/=0 if
  ! there is a restart point
  !
- ioX=io_restart(ID)
+ ioX=io_restart_point(ID)
  if (ioX/=0) goto 1
  !
  if (any((/io_sec(ID,:)==2*iq+1/))) then
@@ -291,15 +292,14 @@ integer function ioX(X,Xw,ID)
    !
    deallocate(X_disk)
  endif
-
- call io_check_restart(trim(db_desc),ID,now=iq,todo=nqibz)
  !
- ! No I/O errors I update Xio at the first q TODO
+ call Fragments_Restart(ID,current_fragment=iq,fragments_todo=nqibz)
  !
- ioX=io_restart(ID)
+ ! No I/O errors I update ioX at the first q TODO
+ !
+ ioX=io_restart_point(ID)
  !
 1 call io_disconnect(ID)
- !
  !
  contains
    !

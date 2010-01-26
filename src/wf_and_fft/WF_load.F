@@ -138,7 +138,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    free_and_alloc =kpts_to_load(1)==1.or.nkibz==1
    QUIET_alloc    =kpts_to_load(1)>1
    QUIET_free     =kpts_to_load(2)<nkibz
-   if (QUIET_alloc) call IO_mute("report log")
+   if (QUIET_alloc) call IO_and_Messaging_switch("report log")
    if (present(impose_free_and_alloc)) then
      free_and_alloc=impose_free_and_alloc
    endif
@@ -305,7 +305,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 #endif
  !
  if (.not.wf_norm_test) then
-   if (QUIET_alloc) call IO_mute(" ")
+   if (QUIET_alloc) call IO_and_Messaging_switch(" ")
    return
  endif
  !
@@ -345,6 +345,6 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  wf_norm_test=.false.
  call msg('rn','[WF loader] Normalization (few states)  min/max  :',(/mndp,mxdp/))
  !
- if (QUIET_alloc) call IO_mute(" ")
+ if (QUIET_alloc) call IO_and_Messaging_switch(" ")
  !
 end subroutine

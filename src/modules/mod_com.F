@@ -141,10 +141,9 @@ module com
      !
    end function
    !
-   function all_locations(desc,subfolder,type,NETCDF_DB)
+   function all_locations(desc,subfolder,NETCDF_DB)
      !
      character(*)           ::desc
-     integer                ::type
      character(*), optional ::subfolder
      logical                ::NETCDF_DB
      character(lchlen)      ::all_locations(8)

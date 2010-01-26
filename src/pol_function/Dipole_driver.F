@@ -88,13 +88,13 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! GPL_EXCLUDE_END RAS_IGNORE
  !
  ! Swith off I/O in case gradient is calculated
- if (Eval_P_and_P2_only) call IO_mute("io_in io_out")
+ if (Eval_P_and_P2_only) call IO_and_Messaging_switch("io_in io_out")
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=ioOSTNTS(X,Xen,ID)
  !
 #if defined _RT 
- if (Eval_P_and_P2_only.and.l_real_time) call IO_mute(" ")
+ if (Eval_P_and_P2_only.and.l_real_time) call IO_and_Messaging_switch(" ")
 #endif
  !
  if (io_err.ne.0) then
@@ -154,7 +154,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    ! Swith off I/O in case gradient is calculated
    !
-   if (Eval_P_and_P2_only.and.l_real_time) call IO_mute("io_in io_out")
+   if (Eval_P_and_P2_only.and.l_real_time) call IO_and_Messaging_switch("io_in io_out")
    !
 #endif
    !
@@ -167,7 +167,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
 #if defined _RT 
  if (Eval_P_and_P2_only.and.l_real_time) then
-   call IO_mute(" ")
+   call IO_and_Messaging_switch(" ")
    return
  endif
 #endif

@@ -19,41 +19,32 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_COLLISIONS(i_qp,ID,QP_COLLISIONS_done)
+integer function io_COLLISIONS(i_qp,ID)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
  use collisions_IO, ONLY:COLLISIONS_table,n_collisions,V_kind,COLLISIONS_v,COLLISIONS_cutoff
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
-&                        io_bulk,write_is_on,io_disconnect,IO_write,         &
-&                        file_is_present,synchronize_db,io_fragment
+&                        io_bulk,write_is_on,io_disconnect,io_restart_point
  use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_CHOSEX
- use com,           ONLY:error,more_io_path,core_io_path
- use stderr,        ONLY:intc
+ use com,           ONLY:error
  use SC,            ONLY:SC_bands
  use QP_m,          ONLY:QP_ng_Sx,QP_n_states,QP_nb,QP_nk,SC_band_mixing
- use par_proc_m,    ONLY:master_cpu,pp_indexes,pp_indexes_reset
- use par_indexes_m, ONLY:par_indexes
+ use par_proc_m,    ONLY:master_cpu
+ use fragments,     ONLY:io_fragment,Fragments_Restart,fragment_status,Fragments_Synchronize
  !
  implicit none
  !
  integer, intent(inout)         :: ID
  integer, intent(in)            :: i_qp
- character(schlen)              :: desc
- logical, intent(out), optional :: QP_COLLISIONS_done(QP_n_states)
  !
  ! Work Space
  !
  character(schlen)     :: db_name
  real(SP), allocatable :: COLLISIONS_v_disk(:,:)
- integer               :: V_kind_disk,i_qp_db
+ integer               :: V_kind_disk
  character(lchlen)     :: V_kind_string
- logical               :: synchronize_files
- type(pp_indexes)      :: px
- !
- if (present(QP_COLLISIONS_done)) then 
-   QP_COLLISIONS_done=.FALSE.
- endif
+ character(schlen)     :: desc
  !
  if(V_kind==SC_HF) then
    db_name     = "COLLISIONS_Vbare"
@@ -65,6 +56,14 @@ integer function io_COLLISIONS(i_qp,ID,QP_COLLISIONS_done)
  !
  io_COLLISIONS=io_connect(desc=db_name,type=2,ID=ID)
  if(io_COLLISIONS/=0) goto 1
+ !
+ ! Previous Fragments are syncronized (copied in the MORE_IO)
+ !
+ call Fragments_Synchronize(ID,db_name,i_fragment=-QP_n_states)
+ !
+ ! Check the restart point
+ !
+ call Fragments_Restart(ID,fragments_todo=QP_n_states)
  !
  if (any(io_sec(ID,:)==1)) then
    !
@@ -103,40 +102,6 @@ integer function io_COLLISIONS(i_qp,ID,QP_COLLISIONS_done)
    io_COLLISIONS=io_status(ID)
    if (io_COLLISIONS/=0) goto 1
    !
-!   if (present(QP_COLLISIONS_done)) then 
-!     do i_qp_db=1,QP_n_states 
-!       QP_COLLISIONS_done(i_qp_db) =  file_is_present(desc=trim(db_name)//"_QP_"//trim(intc(i_qp_db)),type=2)
-!     enddo
-!   endif
-!   !
-!   ! Distribute databases among all processors
-!   !
-!   synchronize_files=.false.
-!   !
-!   if(trim(core_io_path)/=trim(more_io_path)) then
-!     !
-!     if(present(QP_COLLISIONS_done))  then
-!        if(all(QP_COLLISIONS_done(:))) synchronize_files=.true.
-!     endif
-!     !
-!     if(.not.present(QP_COLLISIONS_done).and.write_is_on(ID))    synchronize_files=.true.
-!     ! 
-!   endif
-!   !
-!   if(synchronize_files) then
-!     !
-!     call pp_indexes_reset(px)
-!     call par_indexes(px,(/QP_n_states/))
-!     !
-!     do i_qp_db=1,QP_n_states 
-!       if (.not.px%i1p(i_qp_db)) cycle
-!       call synchronize_db(desc=trim(db_name)//"_QP_"//trim(intc(i_qp_db)))
-!     enddo
-!     !
-!     call pp_indexes_reset(px)
-!     !
-!   endif
-   !
  endif
  !
  if (.not.any(io_sec(ID,:)==2)) then     
@@ -145,17 +110,9 @@ integer function io_COLLISIONS(i_qp,ID,QP_COLLISIONS_done)
    !
  else 
    !
-   ! All cpu write on disk
-   !
-   if (write_is_on(ID)) IO_write=.true.
-   !
    ! QP-based fragmentation
    !
-   call io_fragment(ID,i_pointer=i_qp)
-   !
-   !io_COLLISIONS=io_connect(desc=trim(db_name)//"_QP_"//trim(intc(i_qp)),type=2,ID=ID)
-   !
-   if(io_COLLISIONS/=0) goto 1
+   call io_fragment(ID,i_fragment=i_qp)
    !
    call io_bulk(ID,VAR='N_COLLISIONS_STATES',VAR_SZ=(/1/))
    call io_bulk(ID,I0=n_collisions)
@@ -176,14 +133,16 @@ integer function io_COLLISIONS(i_qp,ID,QP_COLLISIONS_done)
    !
    deallocate(COLLISIONS_v_disk)      
    !
-   ! restore master-only write premission
+   ! Fragments are syncronized (copied in the CORE_IO)
    !
-   IO_write=master_cpu
-   !
-!   if (write_is_on(ID)) call synchronize_db(desc=trim(db_name)//"_QP_"//trim(intc(i_qp)))
+   call Fragments_Synchronize(ID,db_name,i_fragment=i_qp)
    !
  endif
  !
-1 call io_disconnect(ID=ID)
+1 continue
+ !
+ if(io_COLLISIONS==0) io_COLLISIONS=io_restart_point(ID)
+ !
+ call io_disconnect(ID=ID)
  !
 end function io_COLLISIONS

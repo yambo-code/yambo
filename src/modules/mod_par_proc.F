@@ -35,6 +35,10 @@ module par_proc_m
  integer, parameter :: p_prod=2
  logical            :: master_cpu
  !
+ integer, parameter :: max_n_of_cpus=1000
+ !
+ logical            :: local_master_cpu(max_n_of_cpus)
+ !
  type pp_indexes 
    logical, pointer :: i1p(:)
    logical, pointer :: i2p(:,:)

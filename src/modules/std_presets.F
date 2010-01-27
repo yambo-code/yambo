@@ -115,7 +115,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  core_io_path=IND
  more_io_path=OD
- more_io_path='/work/marini/TESTING/silicon_bulk/abinit/2k/cpu1'
  com_path=COM_DIR
  !
  ! ... created (core only)

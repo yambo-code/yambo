@@ -31,7 +31,6 @@ subroutine XC_switch()
 #endif
  use global_XC,      ONLY:SC_EXX,SC_HF,SC_CHOSEX,SC_EXXC,EXT_NONE
  use electrons,      ONLY:n_full_bands,n_met_bands
- use QP_m,           ONLY:CHOSEX_use_empties
  use com,            ONLY:error
  implicit none
  !
@@ -64,7 +63,6 @@ subroutine XC_switch()
      l_sc_chosex=.true.
      SC_kind=SC_CHOSEX
      SC_xc_functional=0
-     CHOSEX_use_empties=.FALSE.
    case('LDA_X')
      l_sc_contains_lda=.true.
      local_V=.true.

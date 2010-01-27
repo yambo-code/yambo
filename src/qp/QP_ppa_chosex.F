@@ -46,7 +46,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv
 #if defined _RT         
- use collisions_IO,ONLY:V_kind,TEMP_COLLISIONS_v
+ use collisions_IO, ONLY:V_kind,TEMP_COLLISIONS_v
  use global_XC,     ONLY:SC_CHOSEX
 #endif
 #if defined _SC
@@ -78,7 +78,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  integer, external::ioX,QP_state_extract
  character(schlen)::ch,Sc_name
  logical          ::PPaR_is_TR_rotated
- complex(SP)      ::local_rhotw(X%ng)
+ complex(SP)      ::local_rhotw(X%ng),pre_factor
 #if defined _RT         
  integer          :: ib2
 #endif
@@ -96,7 +96,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! Section
  !
  Sc_name='G'//trim(intc(GW_iter))
- if (l_sc_run) Sc_name='CHOSEX@it'//trim(intc(-GW_iter))
+ if (l_sc_run) Sc_name='CHOSEX'
  !
  ch=trim(Sc_name)//'W0 : the P(lasmon) P(ole) A(pproximation)'
  if (l_chosex)  ch=trim(Sc_name)//'W0 : CHOSEX'
@@ -190,18 +190,17 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! LIVE-TIMING message
  !
 #if defined _SC
- if (.not.l_collisions_IO) then
-   if (l_sc_run) then
-     if (l_chosex) call live_timing(trim(Sc_name)//'@it'//trim(intc(it_now)),px%stps(myid+1)*QP_n_states) 
-   else
+ if (l_sc_run) then
+   if (l_chosex) call live_timing(trim(Sc_name)//'@it'//trim(intc(it_now)),px%stps(myid+1)*QP_n_states) 
+ else if (.not.l_collisions_IO) then
 #endif
-     if (l_ppa)    call live_timing(trim(Sc_name)//'W0 PPA',px%stps(myid+1)*QP_n_states) 
-     if (l_chosex) call live_timing(trim(Sc_name)//'W0 CHOSEX',px%stps(myid+1)*QP_n_states) 
+   if (l_ppa)    call live_timing(trim(Sc_name)//'W0 PPA',px%stps(myid+1)*QP_n_states) 
+   if (l_chosex) call live_timing(trim(Sc_name)//'W0 CHOSEX',px%stps(myid+1)*QP_n_states) 
 #if defined _SC
-   endif
- else
-   call live_timing("CHOSEX collisions",px%stps(myid+1)) 
  endif
+#endif
+#if defined _RT
+ call live_timing("CHOSEX collisions",px%stps(myid+1)) 
 #endif
  !
 #if defined _RT
@@ -346,10 +345,8 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
          do ig1=1,X%ng
            do ig2=1,X%ng
              do i4=1,QP_dSc_steps
-               dc(i4)=dc(i4)+4./spin_occ*pi*isc%rhotw(ig1)*&
-&                     PPaR(ig1,ig2)*conjg(iscp%rhotw(ig2))*&
-&                     (Gfm(E_(i4),E,isc%os,PPaP(ig1,ig2))+&
-&                      Gfp(E_(i4),E,isc%os,PPaP(ig1,ig2)))
+               dc(i4)=dc(i4)+4./spin_occ*pi*isc%rhotw(ig1)*PPaR(ig1,ig2)*conjg(iscp%rhotw(ig2))*&
+&                     (Gfm(E_(i4),E,isc%os,PPaP(ig1,ig2))+Gfp(E_(i4),E,isc%os,PPaP(ig1,ig2)))
              enddo
            enddo
          enddo
@@ -359,49 +356,34 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
          ! GPL_EXCLUDE_START SC_IGNORE
          !
        else
-         !
-         ! SEX
-         !
 #if defined _DOUBLE
-         call zgemv('N', X%ng, X%ng, (1._SP,0._SP), PPaR, X%ng, conjg(iscp%rhotw), 1, (0._SP,0_SP), local_rhotw,1)
+         call zgemv('N', X%ng, X%ng, (1._SP,0._SP), PPaR, X%ng, conjg(iscp%rhotw),1,(0._SP,0_SP), local_rhotw,1)
 #else 
          call cgemv('N', X%ng, X%ng, (1._SP,0._SP), PPaR, X%ng, conjg(iscp%rhotw), 1, (0._SP,0_SP), local_rhotw,1)
 #endif
          !
+         pre_factor=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
+         !
+         ! SEX
+         !
+         dc(1)=-4._SP/spin_occ*pi*pre_factor
+         !
 #if defined _RT
-         dc(1)=-4._SP/spin_occ*pi*sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
+         !
+         TEMP_COLLISIONS_v(ib,ib2,isc%os(2))=TEMP_COLLISIONS_v(ib,ib2,isc%os(2))+dc(1)
+         !
 #else
-         dc(1)=dc(1)-4._SP/spin_occ*pi*sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))*e%f(isc%os(1),isc%os(2),1) 
+         dc(1)=dc(1)*e%f(isc%os(1),isc%os(2),1) 
 #endif
          !
          ! CHO
          !
-         if (CHOSEX_use_empties) then
-           !
-#if defined _DOUBLE
-           call zgemv('N', X%ng, X%ng, (1._SP,0._SP), PPaR, X%ng, conjg(iscp%rhotw),1,(0._SP,0_SP), local_rhotw,1)
-#else 
-           call cgemv('N', X%ng, X%ng, (1._SP,0._SP), PPaR, X%ng, conjg(iscp%rhotw),1,(0._SP,0_SP), local_rhotw,1)
-#endif
-           !
-#if defined _RT
-           dc(2)=2._SP*pi*sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
-#else
-           dc(2)=dc(2)+2._SP*pi*sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
-#endif
-         else 
-           dc(2)=(0._SP,0._SP)
-         endif
-         !
-#if defined _RT
-         !
-         TEMP_COLLISIONS_v(ib,ib2,isc%os(2))=TEMP_COLLISIONS_v(ib,ib2,isc%os(2))+dc(1)+dc(2)
-         !
-#else
+#if !defined _RT
+         if (CHOSEX_use_empties) dc(2)=2._SP*pi*pre_factor
          !
          QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)+dc(2)
-         !
 #endif
+         !
          ! GPL_EXCLUDE_END SC_IGNORE
          !
        endif

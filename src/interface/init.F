@@ -594,6 +594,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SC
  if (l_sc_run) then
    call initactivate(1,'Potential FFTGvecs SCmixing SCBands BandMix EXXCut')
+   if (l_chosex) call initactivate(1,'GbndRnge UseEbands')
    if (l_real_time) then
      call initactivate(1,'RTfreezeH RTfreezeXC')
      call initactivate(1,'Integrator LifeTime') 

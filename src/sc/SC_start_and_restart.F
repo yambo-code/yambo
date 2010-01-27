@@ -27,7 +27,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  use drivers,        ONLY:l_sc_exx,l_sc_hf,l_sc_chosex,l_sc_magnetic,l_collisions_IO 
  use units,          ONLY:HARTREE
  use R_lattice,      ONLY:bz_samp,qindx_S,nkibz,G_m_G
- use QP_m,           ONLY:QP_ng_Sx,QP_t,QP_reset,SC_E_threshold,SC_band_mixing
+ use QP_m,           ONLY:QP_ng_Sx,QP_t,QP_reset,SC_E_threshold,SC_band_mixing,CHOSEX_use_empties
  use SC,             ONLY:SC_ng_Sx,SC_X_bands,SC_X_size,l_SC_RESTART,l_NSC_shot,SC_bands,&
 &                         SC_potential,E_bare,local_V,SC_iterations,l_TF_precond,&
 &                         rho_convergence,E_convergence,SC_rho_threshold,&
@@ -61,6 +61,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  !============
  !
  call parser('TF_precondition',l_TF_precond) 
+ call parser('UseEbands',      CHOSEX_use_empties)
  !
  ! Magnetic logical setup
  !========================

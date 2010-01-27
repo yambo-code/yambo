@@ -96,11 +96,12 @@ subroutine Fragments_Restart(ID,current_fragment,fragments_todo)
          if (fragment_exists(ID,i_fragment=i1)) Fragment_status(i1)=1
        enddo
        !
-       if (.not.all(Fragment_status==-1)) then
+       if (.not.all(Fragment_status==1).and..not.all(Fragment_status==-1)) then
          do i1=1,fragments_todo
-           if (io_restart_point(ID)<0) io_restart_point(ID)=i1
+           if (io_restart_point(ID)==0.and.Fragment_status(i1)==-1) io_restart_point(ID)=i1
          enddo
        endif
+       if (io_restart_point(ID)==fragments_todo) io_restart_point(ID)=0
        !
        if (.not.allocated_fragment_status) deallocate(fragment_status)
        !

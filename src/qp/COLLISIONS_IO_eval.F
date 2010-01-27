@@ -63,53 +63,57 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  QP_nb=SC_bands
  call QP_state_table_setup(E)
  !
- ! I/O check
- !===========
- !
- if (l_HF_and_locXC) V_kind=SC_HF
- if (l_chosex)       V_kind=SC_CHOSEX 
- !
- allocate(fragment_status(QP_n_states))
- call mem_est("fragment_status",(/QP_n_states/),(/IP/))
- fragment_status=-1
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
- if (io_COLLISIONS(0,ID)==0) then
-   deallocate(fragment_status)
-   return
- endif
- !
- ! Allocations
- !=============
- !
- call collisions_IO_alloc()
- !
- allocate(TEMP_COLLISIONS_v(QP_nb,QP_nb,QP_nk))
- call mem_est("TEMP_COLLISIONS_v",(/size(TEMP_COLLISIONS_v)/),(/2*SP/))
- !
- call IO_and_Messaging_switch("all_write_fragments")
- !
  ! No DB => EVAL
  !===============
  !
  call IO_and_Messaging_switch("all_write_fragments")
+ !
+ allocate(fragment_status(QP_n_states))
+ call mem_est("fragment_status",(/QP_n_states/),(/IP/))
  !
  if (l_HF_and_locXC) then
    !
    call section('+','Hartree-Fock')
    !================================
    !
-   call XCo_Hartree_Fock(E,k,xk,q)
+   V_kind=SC_HF
+   fragment_status=-1
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
    !
- else if (l_chosex) then
+   if (io_COLLISIONS(0,ID)/=0) then
+     allocate(TEMP_COLLISIONS_v(QP_nb,QP_nb,QP_nk))
+     call mem_est("TEMP_COLLISIONS_v",(/size(TEMP_COLLISIONS_v)/),(/2*SP/))
+     call collisions_IO_alloc()
+     call XCo_Hartree_Fock(E,k,xk,q)
+   endif
    !
-   call section('+','CHOSEX')
-   !==========================
+ endif
+ !
+ if (l_chosex) then
    !
-   X(2)%ng=eval_G_minus_G(X(2)%ng,0)
-   QP_n_G_bands(2)=SC_bands
-   CHOSEX_use_empties=.FALSE.
+   if (l_HF_and_locXC)      call section('=','CHOSEX')
+   if (.not.l_HF_and_locXC) call section('+','CHOSEX')
+   !                        ==========================
    !
-   call QP_ppa_chosex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1) 
+   V_kind=SC_CHOSEX
+   fragment_status=-1
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+   !
+   if (io_COLLISIONS(0,ID)/=0) then
+     !
+     X(2)%ng=eval_G_minus_G(X(2)%ng,0)
+     QP_n_G_bands(2)=SC_bands
+     CHOSEX_use_empties=.TRUE.
+     !
+     if (.not.allocated(TEMP_COLLISIONS_v)) then
+       allocate(TEMP_COLLISIONS_v(QP_nb,QP_nb,QP_nk))
+       call mem_est("TEMP_COLLISIONS_v",(/size(TEMP_COLLISIONS_v)/),(/2*SP/))
+       call collisions_IO_alloc()
+     endif
+     !
+     call QP_ppa_chosex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1) 
+     !
+   endif
    !
  endif
  !
@@ -118,9 +122,13 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  ! CLEAN
  !=======
  !
+ deallocate(fragment_status)
+ call mem_est("fragment_status")
+ if (.not.allocated(TEMP_COLLISIONS_v)) return
+ !
  call WF_free()
  call collisions_IO_free()
- deallocate(TEMP_COLLISIONS_v,fragment_status)
- call mem_est("TEMP_COLLISIONS_v fragment_status")
+ deallocate(TEMP_COLLISIONS_v)
+ call mem_est("TEMP_COLLISIONS_v")
  !
 end subroutine

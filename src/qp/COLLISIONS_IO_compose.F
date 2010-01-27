@@ -23,15 +23,15 @@ subroutine COLLISIONS_IO_compose(G_input)
  !
  ! HF(qp_state) = - (0.,1.) * \sum_{n,n',q} rho_rho_(n,n',q,qp_state) x G_lesser(n,n',k-q)
  ! 
- use drivers,        ONLY:l_sc_hf,l_sc_chosex
- use pars,           ONLY:SP
- use QP_m,           ONLY:QP_nk,QP_nb,QP_n_states,QP_Vnl_xc,QP_Sc
- use SC,             ONLY:SC_bands
- use global_XC,      ONLY:SC_HF,SC_CHOSEX
- use collisions_IO,  ONLY:COLLISIONS_v,n_collisions,COLLISIONS_table,V_kind 
- use par_proc_m,     ONLY:pp_indexes,pp_redux_wait,pp_indexes_reset
- use par_indexes_m,  ONLY:par_indexes
- use IO_m,           ONLY:io_control,OP_RD_CL,NONE
+ use drivers,          ONLY:l_sc_hf,l_sc_chosex
+ use pars,             ONLY:SP
+ use QP_m,             ONLY:QP_nk,QP_nb,QP_n_states,QP_Vnl_xc,QP_Sc
+ use SC,               ONLY:SC_bands
+ use global_XC,        ONLY:SC_HF,SC_CHOSEX
+ use collisions_IO,    ONLY:COLLISIONS_v,n_collisions,COLLISIONS_table,V_kind 
+ use par_proc_m,       ONLY:pp_indexes,pp_redux_wait,pp_indexes_reset
+ use par_indexes_m,    ONLY:par_indexes
+ use IO_m,             ONLY:io_control,OP_RD_CL,NONE
  use collisions_CACHE, ONLY:last_QP_mem,CACHE
  !
  implicit none
@@ -44,6 +44,7 @@ subroutine COLLISIONS_IO_compose(G_input)
  integer           :: i_qp,ib,ibp,ik,ic
  integer           :: io_err,ID       
  type(pp_indexes)  :: px
+ complex(SP)       :: CHO_factor
  !
  if(.not.l_sc_hf.and..not.l_sc_chosex) return
  !
@@ -111,7 +112,8 @@ subroutine COLLISIONS_IO_compose(G_input)
      !
      V_kind=SC_CHOSEX
      !
-     call io_control(ACTION=OP_RD_CL,SEC=(/2/),ID=ID)
+     if (i_qp == 1 ) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),ID=ID)
+     if (i_qp >  1 ) call io_control(ACTION=OP_RD_CL,SEC=(/2/),ID=ID)
      io_err=io_COLLISIONS(i_qp,ID)
      !
      ic=1
@@ -120,7 +122,11 @@ subroutine COLLISIONS_IO_compose(G_input)
        do ibp=1,QP_nb
          do ik=1,QP_nk
            if(COLLISIONS_table(ib,ibp,ik)/=0) then
-             QP_Sc(i_qp,1)=QP_Sc(i_qp,1)-(0._SP,1._SP)*COLLISIONS_v(ic)*G_input(ib,ibp,ik)      
+             !
+             CHO_factor=(0._SP,1._SP)*G_input(ib,ibp,ik)
+             if (ib==ibp) CHO_factor=(0._SP,1._SP)*G_input(ib,ibp,ik) +1.
+             !
+             QP_Sc(i_qp,1)=QP_Sc(i_qp,1)-COLLISIONS_v(ic)*CHO_factor
              ic=ic+1
            endif
           enddo

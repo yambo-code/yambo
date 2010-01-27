@@ -1,5 +1,5 @@
 
-! Copyright (C) 2000-2009 A. Marini, M. Gruening and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini, M. Gruening and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -93,6 +93,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  call SC_alloc(E)
  call SC_local_alloc()
+ !
+ ! COLLISIONS
+ !============
+ !
+ call load_COLLISIONS()
  !
  ! Initialize SC_R matrix
  !========================

@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2009 A. Marini, C. Attaccalite and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini, C. Attaccalite and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -25,7 +25,7 @@ subroutine load_COLLISIONS()
  ! exchange, COHSEX etc.. and store them together in QP_rho(i_qp)
  !
  use pars,            ONLY:IP,SP,LP,schlen
- use drivers,         ONLY:l_sc_hf,l_sc_chosex
+ use drivers,         ONLY:l_sc_hf,l_sc_chosex,l_collisions_IO
  use com,             ONLY:warning,msg
  use global_XC,       ONLY:SC_HF,SC_CHOSEX
  use QP_m,            ONLY:QP_n_states,QP_nb,QP_nk
@@ -59,6 +59,8 @@ subroutine load_COLLISIONS()
  type(pp_indexes)   :: px
  character(schlen)  :: dump_ch 
  complex(SP), allocatable :: COLLISIONS_disk(:,:,:)
+ !
+ if (.not.l_collisions_IO) return
  !
  last_QP_mem =0
  n_V_kinds   =0

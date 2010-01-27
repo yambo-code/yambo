@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2009 A. Marini, C. Attaccalite and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini, C. Attaccalite and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -75,16 +75,5 @@ module collisions_IO
        call mem_est("COLLISIONS_table")
      endif
    end subroutine
-   !
-!   subroutine collisions_IO_mem_disk_usage()
-! disk_space=real(QP_n_states*QP_nb**2*QP_nk*(2+0.25)*SP)/1.0e9
-! if (disk_space> 0.01) call msg('s','[COLLISIONS I/O] Max Disk space required [Gb]:',disk_space)  
-! if (l_collisions_IO) call msg('s' ,'[SC] Use Extented collisions I/O')
-! call msg('r' ,'[SC] Use Extented collisions          :',l_collisions_IO)
-! write (dump_ch,'(a,f10.2,a)') '[COLLISIONS] QP in memory :',real(last_QP_mem)/real(QP_n_states)*100.0,'%'
-! call msg('s',dump_ch)
-! write (dump_ch,'(a,f10.5)')   '[COLLISIONS] Collisions Cache use [Gb]:',cache_memory
-! call msg('s',dump_ch)
-!   end subroutine
    !
 end module

@@ -22,7 +22,7 @@
 !! or http://www.gnu.org/copyleft/gpl.txt .
 !! For the initials of contributors, see ~ABINIT/Infos/contributors .
 !
-! Copyright (C) 2000-2009 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! Added by A. Marini spin support (November 2008) 

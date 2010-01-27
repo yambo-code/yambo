@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2009 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -594,6 +594,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SC
  if (l_sc_run) then
    call initactivate(1,'Potential FFTGvecs SCmixing SCBands BandMix EXXCut')
+   if (l_collisions_IO) call initactivate(1,'CollCache')
    if (l_chosex) call initactivate(1,'GbndRnge UseEbands')
    if (l_real_time) then
      call initactivate(1,'RTfreezeH RTfreezeXC')
@@ -605,7 +606,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call Afield_activate('Pump')
    else
      call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
-     call initactivate(1,'QPHistory')
    endif
    call initactivate(-1,'QpntsRXs')
  endif

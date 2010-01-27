@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2009 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -84,6 +84,9 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
      allocate(TEMP_COLLISIONS_v(QP_nb,QP_nb,QP_nk))
      call mem_est("TEMP_COLLISIONS_v",(/size(TEMP_COLLISIONS_v)/),(/2*SP/))
      call collisions_IO_alloc()
+     !
+     call report_disk_usage('HF')
+     !
      call XCo_Hartree_Fock(E,k,xk,q)
    endif
    !
@@ -111,6 +114,8 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
        call collisions_IO_alloc()
      endif
      !
+     call report_disk_usage('COHSEX')
+     !
      call QP_ppa_chosex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1) 
      !
    endif
@@ -131,4 +136,18 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  deallocate(TEMP_COLLISIONS_v)
  call mem_est("TEMP_COLLISIONS_v")
  !
+ contains
+   !
+   subroutine report_disk_usage(what)
+     !
+     use com, ONLY:msg
+     !
+     real(SP)     :: disk_space
+     character(*) :: what
+     !
+     disk_space=real(QP_n_states*QP_nb**2*QP_nk*SP)/1.E9
+     if (disk_space > 0.05) call msg('s','[COLLISIONS I/O] '//what//' Disk space required [Gb]:',disk_space)  
+     !
+   end subroutine
+   !
 end subroutine

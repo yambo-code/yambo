@@ -1,7 +1,7 @@
 !
 ! Copyright (C) 1998-2005 ABINIT group (DCA, XG, GMR)
 !
-! Copyright (C) 2000-2009 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 

@@ -1,5 +1,5 @@
 
-! Copyright (C) 2000-2009 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -243,6 +243,7 @@ subroutine SC_start_and_restart(X,E,Xk)
    !
    if (l_sc_hf)     l_collisions_IO=io_COLLISIONS_err(1)==0
    if (l_sc_chosex) l_collisions_IO=all(io_COLLISIONS_err==0) 
+   !
  endif
  !
  if (l_collisions_IO) call msg('s' ,'[SC] Extented collisions I/O Used')

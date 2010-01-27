@@ -1,5 +1,5 @@
 
-! Copyright (C) 2000-2009 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -287,7 +287,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'RTfreezeH', '[RT] Hartree not updated during RT',verb_level=V_sc)
  call it('f',defs,'RTfreezeXC','[RT] XC potential/self-energy not updated during RT',verb_level=V_sc)
  call it(defs,'DiskSteps',     '[RT] Numer of steps stored in memory before I/O',max_rt_steps_disk,verb_level=V_sc)
- call it(defs,'CollCache',     '[RT] Cache[Gb] for collisions (negative value = automatic)',COLLISIONS_cache_size,verb_level=V_sc)
  !
  ! External fields
  !
@@ -367,7 +366,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'SCEtresh',  '[SC] Energy convergence threshold',SC_E_threshold,unit=E_unit)
  call it(defs,'SCRhoTresh','[SC] Rho convergence threshold',SC_rho_threshold)
  call it('f',defs,'TF_precondition','[SC] Thomas Fermi precondition in density',verb_level=V_sc)
- call it('f',defs,'QPHistory','[SC] Write quasi-particle history',verb_level=V_sc)
  ! 
  ! SC [common with RT]
  !
@@ -376,6 +374,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)
  call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)
  call it(defs,'EXXCut',    '[SC] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
+ call it(defs,'CollCache',     '[RT] Cache[Gb] for collisions (negative value = automatic)',COLLISIONS_cache_size,verb_level=V_sc)
 #endif
  ! 
  ! RAS

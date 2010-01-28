@@ -64,7 +64,7 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
  !
  ! - Static X -
  !
- apply_QP=l_em1s.or.(l_optics.and.l_bse.and..not.l_ppa).or.l_bss.or.(l_em1d.and.l_chosex)
+ apply_QP=l_em1s.or.(l_optics.and.l_bse.and..not.l_ppa).or.l_bss.or.(l_em1d.and.l_cohsex)
  if (apply_QP)  call QP_apply(X(2)%ib,Xen,Xk,1,msg_fmt='s')
  !
  ! - Plasmon Pole X -

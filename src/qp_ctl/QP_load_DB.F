@@ -104,7 +104,7 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
    do i1=1,10
      if (trim(db_piece(i1))=="<") then
        qp_db_name=db_piece(i1+1)
-#if defined _POLARON
+#if defined _ELPH
        io_err=ioQP(trim( db_piece(i1+1) ),qp,ID)
 #else
        if (index(trim(qp_db_name),'.QP')/=0) io_err=ioQP(trim( db_piece(i1+1) ),qp,ID)
@@ -223,7 +223,7 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
    !
  endif
  !
-#if defined _POLARON
+#if defined _ELPH
  !
  ! Green Functions
  !

@@ -52,7 +52,7 @@ module drivers
  logical :: l_life    ! GoWo lifetims
  logical :: l_gw0     ! GWo main logical
  logical :: l_ppa     ! PPA
- logical :: l_chosex  ! CHOSEX
+ logical :: l_cohsex  ! COHSEX
  !
  ! The optical runlevels ...
  !
@@ -71,7 +71,7 @@ module drivers
  !
  logical :: l_sc_exx
  logical :: l_sc_hf
- logical :: l_sc_chosex
+ logical :: l_sc_cohsex
  logical :: l_sc_contains_lda
  !
  ! The XC types (Fxc)

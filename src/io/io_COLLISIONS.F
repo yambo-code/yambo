@@ -26,7 +26,7 @@ integer function io_COLLISIONS(i_qp,ID)
  use collisions_IO, ONLY:COLLISIONS_table,n_collisions,V_kind,COLLISIONS_v,COLLISIONS_cutoff
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
 &                        io_bulk,write_is_on,io_disconnect,io_restart_point
- use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_CHOSEX
+ use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_COHSEX
  use com,           ONLY:error
  use SC,            ONLY:SC_bands
  use QP_m,          ONLY:QP_ng_Sx,QP_n_states,QP_nb,QP_nk,SC_band_mixing
@@ -47,7 +47,7 @@ integer function io_COLLISIONS(i_qp,ID)
  !
  if(V_kind==SC_HF) then
    db_name     = "COLLISIONS_Vbare"
- elseif(V_kind==SC_CHOSEX) then
+ elseif(V_kind==SC_COHSEX) then
    db_name     = "COLLISIONS_Wstatic"
  else
    call error("COLLISIONS I/O : Unknown database type ")

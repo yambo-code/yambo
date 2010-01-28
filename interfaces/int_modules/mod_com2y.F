@@ -70,6 +70,7 @@ module mod_com2y
      !
      integer :: is,is_inv
      logical :: l_identity,l_inversion
+     logical :: double_symmetries
      real(SP):: sop_mat(3,3)
      !
      if (force_noSYM) then
@@ -84,6 +85,7 @@ module mod_com2y
      endif
      !
      i_time_rev=1
+     double_symmetries=.true.
      !
      ! Space Invertion (possible only for v >= 3.0.4)
      !
@@ -134,8 +136,10 @@ module mod_com2y
        i_time_rev=0
        call msg("l","[SO yes => TR no]...")
      endif
+     if(i_time_rev==0) double_symmetries=.false.
      if (force_noTR) then 
        i_time_rev=0
+       if(.not. (i_space_inv==1)) double_symmetries=.false.
        call msg("l","[TR no]...")
      endif
      if (.not.spin_orbit.and..not.force_noTR) then
@@ -146,7 +150,7 @@ module mod_com2y
      ! Double the simmetries if TR is added
      !
      nsym=nsym_
-     if (i_time_rev==1) nsym=2.*nsym_
+     if (double_symmetries) nsym=2.*nsym_
      !
      !
      if (i_space_inv==0) call msg("l","[SI no]")
@@ -171,7 +175,7 @@ module mod_com2y
      do is=1,nsym_
        sop_mat=matmul(transpose(a),int_sop(:,:,is))
        dl_sop(:,:,is)=matmul(sop_mat,b)/2./pi
-       if (i_time_rev==1) dl_sop(:,:,is+nsym_)=-dl_sop(:,:,is)
+       if (double_symmetries) dl_sop(:,:,is+nsym_)=-dl_sop(:,:,is)
      enddo
      !
    end subroutine

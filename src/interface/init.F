@@ -61,7 +61,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use ELPH,           ONLY:elph_nDBs,elph_nDBs_used,elph_use_q_grid
 #endif
 #if defined _SC
- use global_XC,      ONLY:SC_HF,SC_CHOSEX,SC_HF
+ use global_XC,      ONLY:SC_HF,SC_COHSEX,SC_HF
  use SC,             ONLY:SC_potential,SC_ng_Sx,SC_X_bands,SC_X_size
  use collisions_IO,  ONLY:V_kind  
 #endif
@@ -367,7 +367,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_COLLISIONS_err=io_COLLISIONS(0,io_ID)
  if (io_COLLISIONS_err==0) then
-   V_kind=SC_CHOSEX
+   V_kind=SC_COHSEX
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
    io_COLLISIONS_err=io_COLLISIONS(0,io_ID)
    if (io_COLLISIONS_err/=0) V_kind=-1
@@ -441,7 +441,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _RT
  if (l_collisions_IO) then
-   if ( l_HF_and_locXC.or.l_chosex  ) call initactivate(1,'SCBands BandMix')
+   if ( l_HF_and_locXC.or.l_cohsex  ) call initactivate(1,'SCBands BandMix')
    if ( l_HF_and_locXC)               call initactivate(1,'EXXCut')
  endif
 #endif
@@ -478,14 +478,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                  'LongDr','DrudeW'/))
  endif
  !
- ! GW (PPA & CHOSEX) 
+ ! GW (PPA & COHSEX) 
  !
- if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_chosex)) then
+ if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_cohsex)) then
    call QP_ctl_switch('X')
    call initactivate(1,'LongPath')
    if (l_ppa) call X_activate('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
 &                      'EhEngy','LongDr','PPAPnt'/))
-   if (l_chosex) call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk',&
+   if (l_cohsex) call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk',&
 &                         'EhEngy','LongDr'/))
  endif
  !
@@ -510,19 +510,19 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      if (l_gw0) then
        call initactivate(1,'GbndRnge') 
-       if (.not.l_chosex.and.trim(QP_solver)/='g') call initactivate(1,'GDamping') 
-       if (.not.l_chosex) call initactivate(1,'dScStep') 
-       if (.not.l_ppa.and..not.l_chosex) call X_activate('Xd',(/'BndsRn','NGsBlk',&
+       if (.not.l_cohsex.and.trim(QP_solver)/='g') call initactivate(1,'GDamping') 
+       if (.not.l_cohsex) call initactivate(1,'dScStep') 
+       if (.not.l_ppa.and..not.l_cohsex) call X_activate('Xd',(/'BndsRn','NGsBlk',&
 &                      'DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                      'DrudeW','EhEngy','LongDr'/)) 
        !
-       if (.not.l_chosex) call initactivate(1,'DysSolver')
-       if (     l_chosex) call initactivate(1,'UseEbands')
+       if (.not.l_cohsex) call initactivate(1,'DysSolver')
+       if (     l_cohsex) call initactivate(1,'UseEbands')
        if (trim(QP_solver)=="g") then
          call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenF2QP ForceNewton') 
        else
          call initactivate(1,'GWoIter')
-         if (.not.l_chosex) call initactivate(1,'NewtDchk ExtendOut OnMassShell')
+         if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell')
        endif
        !
      endif
@@ -544,6 +544,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (trim(QP_solver)=="g".and.l_ph_corr) then
      call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenF2QP ForceNewton') 
      call initactivate(-1,'WRgFsq NewtDchk GDamping ExtendOut OnMassShell')
+     call QP_ctl_switch('G')
    endif
 #endif
    !
@@ -556,10 +557,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! ALDA/LRC Tddft
  !
  if (l_alda_fxc.and.&
-&    any((/l_optics.and.l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,l_chosex,l_gw0/))) &
+&    any((/l_optics.and.l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,l_cohsex,l_gw0/))) &
 &    call initactivate(1,'FxcGRLc')
  if (l_lrc_fxc.and.&
-&    any((/l_optics.and.l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,l_chosex,l_gw0/))) &
+&    any((/l_optics.and.l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,l_cohsex,l_gw0/))) &
 &    call initactivate(1,'LRC_alpha')
  !
  ! BSE + TDDFT = no BS db, Fxc + LF on-fly
@@ -595,7 +596,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_sc_run) then
    call initactivate(1,'Potential FFTGvecs SCmixing SCBands BandMix EXXCut')
    if (l_collisions_IO) call initactivate(1,'CollCache')
-   if (l_chosex) call initactivate(1,'GbndRnge UseEbands')
+   if (l_cohsex) call initactivate(1,'GbndRnge UseEbands')
    if (l_real_time) then
      call initactivate(1,'RTfreezeH RTfreezeXC')
      call initactivate(1,'Integrator LifeTime') 
@@ -812,7 +813,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
        ! GPL_EXCLUDE_START SC_IGNORE
        ! 
-       l_chosex=runlevel_is_on('chosex')
+       l_cohsex=runlevel_is_on('cohsex')
        !
        ! GPL_EXCLUDE_END SC_IGNORE
        ! 
@@ -888,7 +889,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
      if (l_gw0.and.l_el_corr) call initactivate(1,'HF_and_locXC')
      if (l_ppa)    call initactivate(1,'em1d')
-     if (l_chosex) call initactivate(1,'em1s')
+     if (l_cohsex) call initactivate(1,'em1s')
      if (l_bss)    call initactivate(1,'bse')
      if (l_bss)    call initactivate(1,'l_optics')
      if (l_bse) then
@@ -913,7 +914,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      endif
 #endif
 #if defined _RT
-     if (l_HF_and_locXC.or.l_chosex) call initactivate(1,'collisions_IO') 
+     if (l_HF_and_locXC.or.l_cohsex) call initactivate(1,'collisions_IO') 
 #endif
      !
    end subroutine varsetup1 
@@ -1111,7 +1112,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            ! GPL_EXCLUDE_START SC_IGNORE
            !
            infile_editing=.true.
-           call initactivate(1,'chosex gw0') 
+           call initactivate(1,'cohsex gw0') 
            !
            ! GPL_EXCLUDE_END SC_IGNORE
            !
@@ -1140,8 +1141,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            SC_potential='EXXC'
            call initactivate(1,'HF_and_locXC')
          else if ( trim(rstr_piece(i1+1)) == 'c' ) then
-           SC_potential='CHOSEX'
-           call initactivate(1,'chosex HF_and_locXC')
+           SC_potential='COHSEX'
+           call initactivate(1,'cohsex HF_and_locXC')
          else if ( trim(rstr_piece(i1+1)) == 'hf') then
            SC_potential='HARTREE-FOCK'
            call initactivate(1,'HF_and_locXC')

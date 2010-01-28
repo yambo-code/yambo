@@ -27,10 +27,10 @@ subroutine QP_descriptions(qp,X,Xw)
  use X_m,           ONLY:X_t,use_X_RIM
  use QP_m,          ONLY:QP_t,QP_ng_Sx,QP_n_G_bands,QP_cg_percent,&
 &                        QP_dSc_delta,QP_G_damp,QP_dSc_steps,GWo_iterations,&
-&                        CHOSEX_use_empties,QP_Sc_steps,QP_G_er,QP_G_dr,QP_solver,&
+&                        COHSEX_use_empties,QP_Sc_steps,QP_G_er,QP_G_dr,QP_solver,&
 &                        use_GreenF_to_eval_QP,GF_is_causal
  use stderr,        ONLY:string_pack,gen_fmt
- use drivers,       ONLY:l_life,l_ppa,l_ph_corr,l_el_corr,l_chosex
+ use drivers,       ONLY:l_life,l_ppa,l_ph_corr,l_el_corr,l_cohsex
  use R_lattice,     ONLY:RIM_qpg,RIM_n_rand_pts,RIM_ng
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:BZ_RIM_tot_nkpts
@@ -68,7 +68,7 @@ subroutine QP_descriptions(qp,X,Xw)
 &        string_pack('(a,',gen_fmt( i_v=(/GWo_iterations /) ),')'))) &
 &        ' GW SC iterations       :',GWo_iterations
    !
-   if (.not.l_chosex.and.trim(QP_solver)/='g'.and..not.use_GreenF_to_eval_QP) then
+   if (.not.l_cohsex.and.trim(QP_solver)/='g'.and..not.use_GreenF_to_eval_QP) then
      qp%n_descs=qp%n_descs+1
      write (qp%description(qp%n_descs),trim(&
 &          string_pack('(a,',gen_fmt( i_v=(/QP_dSc_steps /) ),')'))) &
@@ -106,7 +106,7 @@ subroutine QP_descriptions(qp,X,Xw)
    write (qp%description(qp%n_descs),'(2a)') ' X xc-Kernel            :',trim(X%f_xc)
  endif
  !
- if (.not.l_ppa.and..not.l_chosex) then
+ if (.not.l_ppa.and..not.l_cohsex) then
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),trim(&
 &        string_pack('(a,2(',gen_fmt( r_v = Xw%dr*HARTREE ),',1x))')))&
@@ -134,13 +134,13 @@ subroutine QP_descriptions(qp,X,Xw)
 &        string_pack('(a,',gen_fmt( r_v=(/QP_cg_percent /) ),')'))) &
 &        ' Transitions       [o/o]:',QP_cg_percent
  else
-   if ( (.not.l_chosex) .or. (l_chosex.and.CHOSEX_use_empties) ) then
+   if ( (.not.l_cohsex) .or. (l_cohsex.and.COHSEX_use_empties) ) then
      qp%n_descs=qp%n_descs+1
      write (qp%description(qp%n_descs),trim(&
 &         string_pack('(a,2(',gen_fmt( QP_n_G_bands ),',1x))')))&
 &         ' Sc/G bands             :',QP_n_G_bands
    endif
-   if (.not.l_chosex) then
+   if (.not.l_cohsex) then
      qp%n_descs=qp%n_descs+1
      write (qp%description(qp%n_descs),trim(&
 &         string_pack('(a,',gen_fmt( r_v=(/QP_G_damp*HARTREE /) ),')')))&

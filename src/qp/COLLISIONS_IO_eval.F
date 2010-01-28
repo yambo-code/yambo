@@ -21,17 +21,17 @@
 !
 subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  !
- use drivers,       ONLY:l_HF_and_locXC,l_chosex
+ use drivers,       ONLY:l_HF_and_locXC,l_cohsex
  use pars,          ONLY:schlen,SP,IP
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use QP_m,          ONLY:QP_nb,QP_n_states,QP_nk
  use wave_func,     ONLY:WF_free
- use global_XC,     ONLY:SC_HF,SC_CHOSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
+ use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
  use SC,            ONLY:SC_bands
- use QP_m,          ONLY:QP_nb,CHOSEX_use_empties,QP_n_G_bands,QP_t
+ use QP_m,          ONLY:QP_nb,COHSEX_use_empties,QP_n_G_bands,QP_t
  use SC,            ONLY:SC_bands
- use global_XC,     ONLY:SC_HF,SC_CHOSEX
+ use global_XC,     ONLY:SC_HF,SC_COHSEX
  use collisions_IO, ONLY:V_kind,collisions_IO_alloc,collisions_IO_free,TEMP_COLLISIONS_v
  use X_m,           ONLY:X_t
  use frequency,     ONLY:w_samp
@@ -92,13 +92,13 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
    !
  endif
  !
- if (l_chosex) then
+ if (l_cohsex) then
    !
-   if (l_HF_and_locXC)      call section('=','CHOSEX')
-   if (.not.l_HF_and_locXC) call section('+','CHOSEX')
+   if (l_HF_and_locXC)      call section('=','COHSEX')
+   if (.not.l_HF_and_locXC) call section('+','COHSEX')
    !                        ==========================
    !
-   V_kind=SC_CHOSEX
+   V_kind=SC_COHSEX
    fragment_status=-1
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
    !
@@ -106,7 +106,7 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
      !
      X(2)%ng=eval_G_minus_G(X(2)%ng,0)
      QP_n_G_bands(2)=SC_bands
-     CHOSEX_use_empties=.TRUE.
+     COHSEX_use_empties=.TRUE.
      !
      if (.not.allocated(TEMP_COLLISIONS_v)) then
        allocate(TEMP_COLLISIONS_v(QP_nb,QP_nb,QP_nk))
@@ -116,7 +116,7 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
      !
      call report_disk_usage('COHSEX')
      !
-     call QP_ppa_chosex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1) 
+     call QP_ppa_cohsex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1) 
      !
    endif
    !

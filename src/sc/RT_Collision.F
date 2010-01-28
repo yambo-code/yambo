@@ -26,7 +26,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
- use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_chosex
+ use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
@@ -72,12 +72,12 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
      !
    endif
    !
-   if(l_sc_hf.or.l_sc_chosex) call COLLISIONS_IO_compose(G_input)
+   if(l_sc_hf.or.l_sc_cohsex) call COLLISIONS_IO_compose(G_input)
    !
  else
    !  
    if(.not.local_V) QP_Vnl_xc=(0._SP,0._SP)
-   if(l_sc_chosex)      QP_Sc=(0._SP,0._SP)
+   if(l_sc_cohsex)      QP_Sc=(0._SP,0._SP)
    !
  endif
  !
@@ -98,7 +98,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
    !
    if(.not.local_V) then
      call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 
-     if(l_sc_chosex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc) 
+     if(l_sc_cohsex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc) 
    endif
    !  
    ! Adiabatic Switching

@@ -29,7 +29,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  ! _RT works in the LDa basis.
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_sc_exx,l_sc_chosex,l_sc_contains_lda,l_collisions_IO
+ use drivers,        ONLY:l_sc_exx,l_sc_cohsex,l_sc_contains_lda,l_collisions_IO
  use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:QP_t,QP_nk
  use electrons,      ONLY:levels,n_spin
@@ -73,7 +73,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
    !========
    !
    ! WARNING:
-   ! The mixing of the potential has been eliminated for HF and CHOSEX, for
+   ! The mixing of the potential has been eliminated for HF and COHSEX, for
    ! V_xc_sc case tests are needed.
    ! 
    if (iteration>1) V_xc_sc = SC_cycle_mixing*V_xc_sc + (1.-SC_cycle_mixing)*V_xc_nm1 
@@ -82,7 +82,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
    !
  else 
    !
-   ! Hartee-Fock & CHOSEX
+   ! Hartee-Fock & COHSEX
    !======================
    !
    if(l_collisions_IO) then
@@ -109,7 +109,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
      !
      call IO_and_Messaging_switch("report io_out")
      !
-     if (l_sc_chosex) call QP_ppa_chosex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1)
+     if (l_sc_cohsex) call QP_ppa_cohsex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1)
      !
      call IO_and_Messaging_switch(" ")
      !

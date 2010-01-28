@@ -33,7 +33,7 @@ subroutine XCo_local(E,Xk)
  use R_lattice,     ONLY:bz_samp
  use FFT_m,         ONLY:fft_size
  use wave_func,     ONLY:wf,wf_state
- use xc_functionals,ONLY:V_xc,xc_string,el_mag
+ use xc_functionals,ONLY:V_xc,xc_string,two_spin_density
  use global_XC,     ONLY:WF_kind,WF_xc_functional
 #if defined _SC
  use com,           ONLY:error
@@ -67,7 +67,7 @@ subroutine XCo_local(E,Xk)
  ! Allocation 
  !
  if (.not.allocated(V_xc))   allocate(V_xc(fft_size,n_spin))
- if (.not.allocated(el_mag)) allocate(el_mag(fft_size,3))
+ if (.not.allocated(two_spin_density)) allocate(two_spin_density(fft_size,3))
  !
  ! Precompiler options in case a non-DFT potential is required
  !
@@ -120,7 +120,7 @@ subroutine XCo_local(E,Xk)
      !
    enddo
    !
-   deallocate(el_mag)
+   deallocate(two_spin_density)
    return
    !
  endif
@@ -133,11 +133,11 @@ subroutine XCo_local(E,Xk)
    !
    if (n_sp_pol==1) then
      do ifft=1,fft_size
-       mod_mag=sqrt(el_mag(ifft,1)**2+el_mag(ifft,2)**2+el_mag(ifft,3)**2)
-       el_mag(ifft,:)=el_mag(ifft,:)/mod_mag
+       mod_mag=sqrt(two_spin_density(ifft,1)**2+two_spin_density(ifft,2)**2+two_spin_density(ifft,3)**2)
+       two_spin_density(ifft,:)=two_spin_density(ifft,:)/mod_mag
      enddo
    else
-     el_mag(:,3)=1.
+     two_spin_density(:,3)=1.
    endif
    !
    ! Vxc^+=(Vxc_up+Vxc_down)/2
@@ -155,13 +155,13 @@ subroutine XCo_local(E,Xk)
      ! V_xc_mat ( 2 , 1 ) = dn up
      ! V_xc_mat ( 2 , 2 ) = dn dn
      !
-     V_xc_mat(:,1,1)= (vxc_plus(:)+vxc_minus(:)*el_mag(:,3))
-     V_xc_mat(:,2,2)= (vxc_plus(:)-vxc_minus(:)*el_mag(:,3))
+     V_xc_mat(:,1,1)= (vxc_plus(:)+vxc_minus(:)*two_spin_density(:,3))
+     V_xc_mat(:,2,2)= (vxc_plus(:)-vxc_minus(:)*two_spin_density(:,3))
      !
      if (n_spinor==1) cycle
      !
-     V_xc_mat(:,1,2)= vxc_minus(:)*(el_mag(:,1)-(0.,1.)*el_mag(:,2))
-     V_xc_mat(:,2,1)= vxc_minus(:)*(el_mag(:,1)+(0.,1.)*el_mag(:,2))
+     V_xc_mat(:,1,2)= vxc_minus(:)*(two_spin_density(:,1)-(0.,1.)*two_spin_density(:,2))
+     V_xc_mat(:,2,1)= vxc_minus(:)*(two_spin_density(:,1)+(0.,1.)*two_spin_density(:,2))
      !
    enddo
    !
@@ -210,7 +210,7 @@ subroutine XCo_local(E,Xk)
  ! Clean
  !
 #if !defined _SC
- deallocate(V_xc,el_mag)
+ deallocate(V_xc,two_spin_density)
 #endif
  ! 
  ! GPL_EXCLUDE_END SPIN_IGNORE

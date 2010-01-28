@@ -9,7 +9,7 @@ else
 fi
 
 $ECHO $ECHO_N " [TESTs] A2Y ... "
-if (! $A2Y -N -S -F gs_o_DS2_KSS &> output_a2y) then
+if (! $A2Y -N -F gs_o_DS2_KSS &> output_a2y) then
  $ECHO " Error running A2Y "
  exit 1;
 else

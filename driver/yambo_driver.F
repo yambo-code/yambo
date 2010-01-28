@@ -179,13 +179,13 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
    ! 
    ! Dynamical 
    !
-   if (.not.l_ppa.and..not.l_chosex)    i_err=X_em1(Xen,Xk,q,X(3),Xw(3),.false.)
+   if (.not.l_ppa.and..not.l_cohsex)    i_err=X_em1(Xen,Xk,q,X(3),Xw(3),.false.)
    !
    ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
    !
  endif
  !
- ! EXTENDED COLLISIONS (HF & CHOSEX)
+ ! EXTENDED COLLISIONS (HF & COHSEX)
  !===================================
  !
 #if defined _RT
@@ -197,11 +197,11 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  !
  if (l_gw0.or.l_life) then
    !
-   if (l_chosex) then
+   if (l_cohsex) then
      !
      ! GPL_EXCLUDE_START
      !
-     ! CHOSEX 
+     ! COHSEX 
      !========
      !
      call QP_driver(X(2),Xen,Xk,en,k,q,Xw(2))

@@ -44,7 +44,7 @@ module QP_m
  logical           :: QP_dSc_test
  logical           :: QP_W_partially_done
  logical           :: GWo_SC_done
- logical           :: CHOSEX_use_empties
+ logical           :: COHSEX_use_empties
  logical           :: On_Mass_Shell_approx
  logical           :: Force_Newton_QP
  logical           :: use_GreenF_to_eval_QP

@@ -19,11 +19,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine el_magnetization(en,Xk)
+subroutine spin_density(en,Xk)
  !
- ! Electronic Magnetization for electronic Spinors
+ ! Electronic Spin density for electronic Spinors
  !
- !  M = Sum_I (PSI^I)* Sigma_Pauli* PSI^I  I=occupied states
+ !  SD = Sum_I (PSI^I)* Sigma_Pauli* PSI^I  I=occupied states
  !
  !  PSI^I = spinor
  !  Sigma_Pauli=the 3 Pauli matrices
@@ -34,9 +34,9 @@ subroutine el_magnetization(en,Xk)
  use D_lattice,      ONLY:nsym
  use FFT_m,          ONLY:fft_size,fft_rot_r
  use wave_func,      ONLY:wf_state,wf
- use xc_functionals, ONLY:el_mag
+ use xc_functionals, ONLY:two_spin_density
 #if defined _SC
- use magnetic,       ONLY:average_el_mag,average_el_mag_rescaling
+ use magnetic,       ONLY:average_two_spin_density,average_two_spin_density_rescaling
 #endif
  implicit none
  type(levels) ::en
@@ -47,10 +47,10 @@ subroutine el_magnetization(en,Xk)
  integer :: i1,i2,ifft_up,ifft_dn
  real(SP):: cv(fft_size,3)
  !
- el_mag=0.
+ two_spin_density=0.
  cv=0.
 #if defined _SC
- average_el_mag=0.
+ average_two_spin_density=0.
 #endif
  !
  if (n_spin==1) return
@@ -89,17 +89,17 @@ subroutine el_magnetization(en,Xk)
  !
  do i1=1,nsym
    do i2=1,3
-     el_mag(:,i2)=el_mag(:,i2)+real(cv(fft_rot_r(i1,:),i2)/real(nsym))
+     two_spin_density(:,i2)=two_spin_density(:,i2)+real(cv(fft_rot_r(i1,:),i2)/real(nsym))
    end do
  enddo
  !
 #if defined _SC
   do i1=1,3
     do i2=1,fft_size
-      average_el_mag(i1)=average_el_mag(i1)+el_mag(i2,i1)
+      average_two_spin_density(i1)=average_two_spin_density(i1)+two_spin_density(i2,i1)
     enddo
   enddo
-  average_el_mag(:)=-average_el_mag(:)/fft_size*average_el_mag_rescaling
+  average_two_spin_density(:)=-average_two_spin_density(:)/fft_size*average_two_spin_density_rescaling
 #endif
  !
  ! GPL_EXCLUDE_END SPIN_IGNORE

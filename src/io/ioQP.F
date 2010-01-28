@@ -35,7 +35,7 @@ integer function ioQP(what,qp,ID)
 &                         write_is_on,io_mode,DUMP,VERIFY,io_restart_point,&
 &                         io_netcdf_support,ver_is_gt_or_eq,&
 &                         db_alat,variable_is_found,IO_INCOMPATIBLE_VAR
- use global_XC,      ONLY:QP_DB_kind,SE_GoWo,SE_GWo,SE_GoWo_PPA,SE_GWo_PPA,SE_CHOSEX,SE_NONE,&
+ use global_XC,      ONLY:QP_DB_kind,SE_GoWo,SE_GWo,SE_GoWo_PPA,SE_GWo_PPA,SE_COHSEX,SE_NONE,&
 &                         SE_POLARON
  use fragments,      ONLY:io_fragment,Fragments_Restart
  !
@@ -96,7 +96,7 @@ integer function ioQP(what,qp,ID)
      select case (QP_DB_kind)
        case(0,SE_NONE)
          ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.)
-       case(SE_CHOSEX)
+       case(SE_COHSEX)
          ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G_WF Xs")
        case(SE_GoWo_PPA,SE_GWo_PPA)
          ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xp")

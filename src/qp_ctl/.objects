@@ -1,7 +1,7 @@
-POLARON_objects=
-#if defined _POLARON
-POLARON_objects= Load_Green_Functions.o
+ELPH_objects=
+#if defined _ELPH
+ELPH_objects= Load_Green_Functions.o
 #endif
 objs= mod_QP_CTL.o QP_load_DB.o QP_check_if_corrected.o QP_fit_DB_values.o \
       QP_apply_DB_interpolation.o QP_apply_global_stretch.o \
-      $(POLARON_objects)
+      $(ELPH_objects)

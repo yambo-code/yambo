@@ -33,7 +33,7 @@ subroutine barriers()
  ! RUNLEVELS:
  !  RIM         l_rim          COL_CUT     l_col_cut 
  !  ACFDT       l_acfdt        GW PPA      gw0_ppa 
- !  GW RA       gw0_raxis      GW CHOSEX   gw0_chosex 
+ !  GW RA       gw0_raxis      GW COHSEX   gw0_cohsex 
  !  LIFE        l_life         EL-PH       gw0_el_ph 
  !  SIGMAX      l_xx_vxc       ALDA(G)     alda_g_space 
  !  ALDA(R)     alda_r_space   BS Fxc      l_bs_fxc 
@@ -58,7 +58,7 @@ subroutine barriers()
  !
  logical :: metallic_system, newton,secant,green,bss_tddft,&
             TR_or_SI,gw0_raxis,alda_r_space,bss_diago,&
-&           bss_haydock,gw0_ppa,gw0_chosex,gw0_el_ph,alda_g_space,bss_inv
+&           bss_haydock,gw0_ppa,gw0_cohsex,gw0_el_ph,alda_g_space,bss_inv
  character(schlen) :: always_runlevels,on_runlevels
  !
  ! ...
@@ -68,9 +68,9 @@ subroutine barriers()
  secant=trim(QP_solver)=='s'
  green=trim(QP_solver)=='g'
  TR_or_SI=i_time_rev==1.or.i_space_inv==1
- gw0_raxis=l_gw0.and..not.l_chosex.and..not.l_ppa
+ gw0_raxis=l_gw0.and..not.l_cohsex.and..not.l_ppa
  gw0_ppa=l_gw0.and.l_ppa
- gw0_chosex=l_gw0.and.l_chosex
+ gw0_cohsex=l_gw0.and.l_cohsex
  gw0_el_ph=l_gw0.and.l_ph_corr
  alda_r_space=l_alda_fxc.and.l_bse
  alda_g_space=l_alda_fxc.and..not.l_bse
@@ -96,7 +96,7 @@ subroutine barriers()
  ! GPL_INCLUDE_END
  !
  ! GPL_INCLUDE_START SC_IGNORE
- !call switch_off_runlevel('chosex',on_name=' ')
+ !call switch_off_runlevel('cohsex',on_name=' ')
  ! GPL_INCLUDE_END SC_IGNORE
  !
  ! RUNLEVELS
@@ -110,11 +110,11 @@ subroutine barriers()
 #endif
  !
  if (l_sc_run) then
-   call switch_off_runlevel('all',on_name='scpot HF_and_locXC chosex em1s negf collisions_IO magnetic '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='scpot HF_and_locXC cohsex em1s negf collisions_IO magnetic '//trim(always_runlevels))
    goto 1
  endif
- if (gw0_chosex) then
-   call switch_off_runlevel('all',on_name='gw0 em1s chosex el_el el_ph HF_and_locXC '//trim(always_runlevels))
+ if (gw0_cohsex) then
+   call switch_off_runlevel('all',on_name='gw0 em1s cohsex el_el el_ph HF_and_locXC '//trim(always_runlevels))
    goto 1
  endif
  !
@@ -186,7 +186,7 @@ subroutine barriers()
  !
  if (n_spin>1) then
    call switch_off_runlevel('all',on_name=&
-&       'chi optics HF_and_locXC bse em1s em1d ppa gw0 bss alda_fxc bs_fxc chosex magnetic scpot '//&
+&       'chi optics HF_and_locXC bse em1s em1d ppa gw0 bss alda_fxc bs_fxc cohsex magnetic scpot '//&
 &       trim(always_runlevels))
    if (n_spinor>1) call switch_off_runlevel('scpot',on_name=' ')
    if (gw0_raxis) call switch_off_runlevel('all',on_name=' ')
@@ -196,6 +196,6 @@ subroutine barriers()
  !
  ! MORE
  !======
- if ( (l_ppa.and.trim(QP_solver)=='s').or.l_chosex ) QP_solver='n'
+ if ( (l_ppa.and.trim(QP_solver)=='s').or.l_cohsex ) QP_solver='n'
  !
 end subroutine

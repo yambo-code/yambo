@@ -24,7 +24,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use pars,          ONLY:SP,IP,pi
  use units,         ONLY:HARTREE
  use memory_m,      ONLY:mem_est
- use drivers,       ONLY:l_life,l_ppa,l_el_corr,l_ph_corr,l_chosex,Finite_Tel
+ use drivers,       ONLY:l_life,l_ppa,l_el_corr,l_ph_corr,l_cohsex,Finite_Tel
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:real2ch
  use R_lattice,     ONLY:bz_samp
@@ -36,10 +36,10 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
 &                        QP_Vnl_xc,QP_n_states,QP_nb,&
 &                        QP_nk,QP_state,QP_dSc_test,QP_reset,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_W_partially_done,&
-&                        GWo_iterations,CHOSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
+&                        GWo_iterations,COHSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
 &                        Force_Newton_QP,GF_is_causal,QP_G_amplitude_integral,l_extended_output
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE
- use global_XC,     ONLY:QP_DB_kind,SE_CHOSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON
+ use global_XC,     ONLY:QP_DB_kind,SE_COHSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON
  implicit none
  type(levels) ::en,Xen
  type(bz_samp)::Xk,k,q
@@ -57,7 +57,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  call parser('NewtDchk',   QP_dSc_test)
  call parser('OnMassShell',On_Mass_Shell_approx)
- call parser('UseEbands',  CHOSEX_use_empties)
+ call parser('UseEbands',  COHSEX_use_empties)
  ! GPL_EXCLUDE_START
  call parser('GreenF2QP',  use_GreenF_to_eval_QP)
  ! GPL_EXCLUDE_END
@@ -125,16 +125,16 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    ! GPL_EXCLUDE_END
    !
- else if (l_chosex) then
+ else if (l_cohsex) then
    !
    ! GPL_EXCLUDE_START SC_IGNORE
    !
-   ! in CHOSEX no SC possible
+   ! in COHSEX no SC possible
    !
    GWo_iterations=0
    !
-   qp%description(2)=' == CHOSEX GW =='
-   QP_DB_kind=SE_CHOSEX
+   qp%description(2)=' == COHSEX GW =='
+   QP_DB_kind=SE_COHSEX
    !
    ! GPL_EXCLUDE_END SC_IGNORE
    !
@@ -277,7 +277,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  if (trim(QP_solver)=='g') then
    !
-   if (l_el_corr.and.(.not.l_ppa.and..not.l_chosex)) call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
+   if (l_el_corr.and.(.not.l_ppa.and..not.l_cohsex)) call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
    !
 # if defined _ELPH 
    !

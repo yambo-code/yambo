@@ -67,7 +67,7 @@ module SC
  complex(SP), allocatable :: Ho(:,:,:,:)
  real(SP),    allocatable :: E_bare(:,:,:)
  !
- ! Non-Local part (sigma_x, sigma_chosex)
+ ! Non-Local part (sigma_x, sigma_cohsex)
  !
  complex(SP), allocatable :: H_nl_sc(:,:,:)
  !
@@ -102,12 +102,12 @@ module SC
    subroutine SC_alloc(E)
      use pars,           ONLY:SP
      use R_lattice,      ONLY:nkibz
-     use drivers,        ONLY:l_real_time,l_sc_chosex
+     use drivers,        ONLY:l_real_time,l_sc_cohsex
      use electrons,      ONLY:n_spin,n_sp_pol,levels
      use FFT_m,          ONLY:fft_size
      use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc,QP_state,QP_nb
      use memory_m,       ONLY:mem_est
-     use xc_functionals, ONLY:el_mag,V_xc
+     use xc_functionals, ONLY:two_spin_density,V_xc
      implicit none
      !
      type(levels) :: E
@@ -137,8 +137,8 @@ module SC
      call mem_est("rho",(/fft_size/),(/SP/))
      !
      if(n_spin>1) then
-       allocate(el_mag(fft_size,3))
-       call mem_est("el_mag",(/fft_size*3/),(/SP/))
+       allocate(two_spin_density(fft_size,3))
+       call mem_est("two_spin_density",(/fft_size*3/),(/SP/))
      endif
      !
      allocate(V_xc_sc(fft_size,n_spin))
@@ -153,7 +153,7 @@ module SC
      allocate(H_nl_sc(SC_bands,SC_bands,n_sp_pol))
      call mem_est("H_nl_sc",(/size(H_nl_sc)/),(/2*SP/))
      !
-     if (l_sc_chosex) then
+     if (l_sc_cohsex) then
        allocate(QP_Sc(QP_n_states,1))
        call mem_est("QP_Sc",(/QP_n_states/))
      endif
@@ -166,10 +166,10 @@ module SC
    end subroutine
    !
    subroutine SC_free()
-     use drivers,        ONLY:l_real_time,l_sc_chosex
+     use drivers,        ONLY:l_real_time,l_sc_cohsex
      use QP_m,           ONLY:QP_Sc
      use memory_m,       ONLY:mem_est
-     use xc_functionals, ONLY:el_mag,V_xc
+     use xc_functionals, ONLY:two_spin_density,V_xc
      implicit none
      !
      deallocate(Ho)
@@ -181,9 +181,9 @@ module SC
      deallocate(rho_n)
      call mem_est("rho")
      !
-     if(allocated(el_mag)) then
-       deallocate(el_mag)
-       call mem_est("el_mag")
+     if(allocated(two_spin_density)) then
+       deallocate(two_spin_density)
+       call mem_est("two_spin_density")
      endif
      !
      if(allocated(V_xc)) then 
@@ -197,7 +197,7 @@ module SC
      deallocate(V_hartree_sc)
      call mem_est("Hartree_Ptential")
      !
-     if (l_sc_chosex) then
+     if (l_sc_cohsex) then
        deallocate(QP_Sc)
        call mem_est("QP_Sc")
      endif

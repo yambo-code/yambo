@@ -110,7 +110,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! GPL_EXCLUDE_START SC_IGNORE
  !
- call it('r',defs,'chosex',  '[R Xp] COlumb Hole Screened EXchange')
+ call it('r',defs,'cohsex',  '[R Xp] COlumb Hole Screened EXchange')
  !
  ! GPL_EXCLUDE_END SC_IGNORE
  !
@@ -265,7 +265,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! GPL_EXCLUDE_START SC_IGNORE
  !
- call it('f',defs,'UseEbands', '[GW] Force CHOSEX to use empty bands',verb_level=V_qp)
+ call it('f',defs,'UseEbands', '[GW] Force COHSEX to use empty bands',verb_level=V_qp)
  !
  ! Real Time dynamics
  !

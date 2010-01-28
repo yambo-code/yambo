@@ -1,11 +1,11 @@
-POLARON_objects=
-#if defined _POLARON
-POLARON_objects= Convolve.o
+ELPH_objects=
+#if defined _ELPH
+ELPH_objects= Convolve.o
 #endif
 objs = eval_G_minus_G.o \
        FREQUENCIES_damping.o FREQUENCIES_setup.o FREQUENCIES_coarse_grid.o \
        FREQUENCIES_Green_Function.o \
-       Kramers_Kronig.o $(POLARON_objects) Integrate.o \
+       Kramers_Kronig.o $(ELPH_objects) Integrate.o \
        fermi_level.o extend_occupations.o \
        crystal_lattice.o QP_state_extract.o \
        pert_inversion.o pol_fit.o

@@ -25,8 +25,8 @@ subroutine MAG_Hamiltonian(initial_check_only)
  ! 
  ! STILL TODO: 
  !
- !  1. add magnetization check in SC cycle (including mixing)
- !  2. Save el_mag_n in SC DBs
+ !  1. add spin density check in SC cycle (including mixing)
+ !  2. Save el_spin_density in SC DBs
  !  3. Check if SC works in metals (not obvious)
  !
  ! WARNING: you need to put you system at the corner of the supercell <---

@@ -34,7 +34,7 @@ subroutine XCo_driver(E,k,Xk,q)
  use memory_m,      ONLY:mem_est
  use wave_func,     ONLY:WF_free
 #if defined _SC
- use global_XC,     ONLY:SC_HF,SC_CHOSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
+ use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
 #endif
  !
  implicit none
@@ -108,12 +108,12 @@ subroutine XCo_driver(E,k,Xk,q)
    ! Eqp=Eo+QP_Sc+QP_Vnl_xc-QP_Vxc 
    !
    ! XCo=any local => QP_Vnl_xc=HF           & QP_Vxc=any local
-   ! XCo=CHOSEX    => QP_Vnl_xc=HF-QP_CHOSEX & QP_Vxc= 0.
+   ! XCo=COHSEX    => QP_Vnl_xc=HF-QP_COHSEX & QP_Vxc= 0.
    ! XCo=HF        => QP_Vnl_xc=0.           & QP_Vxc= 0.
    ! XCo=EXX       => QP_Vnl_xc=HF           & QP_Vxc= EXX
    ! XCo=EXXC      => QP_Vnl_xc=HF           & QP_Vxc= EXXc
    !
-   if (WF_kind==SC_CHOSEX) call QP_load_SC_xc()
+   if (WF_kind==SC_COHSEX) call QP_load_SC_xc()
    !
 #endif
    !
@@ -124,7 +124,7 @@ subroutine XCo_driver(E,k,Xk,q)
  if (.not.l_sc_run.and..not.l_real_time) then
    !
 #if defined _SC
-   if( WF_kind/= SC_CHOSEX ) call XCo_local(E,Xk)
+   if( WF_kind/= SC_COHSEX ) call XCo_local(E,Xk)
 #else
    call XCo_local(E,Xk)
 #endif
@@ -153,8 +153,8 @@ subroutine XCo_driver(E,k,Xk,q)
        Vxc_kind='none'
      endif
      
-     if (WF_kind == SC_CHOSEX) then 
-       Vnlxc_kind='HF-QP_CHOSEX'
+     if (WF_kind == SC_COHSEX) then 
+       Vnlxc_kind='HF-QP_COHSEX'
      else
        Vnlxc_kind='HF'
      endif

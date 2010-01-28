@@ -23,7 +23,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  !
  use pars,          ONLY:SP
  use units,         ONLY:HARTREE
- use drivers,       ONLY:l_ppa,l_el_corr,l_ph_corr,l_chosex
+ use drivers,       ONLY:l_ppa,l_el_corr,l_ph_corr,l_cohsex
  use com,           ONLY:msg
  use X_m,           ONLY:X_t
  use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Vnl_xc,QP_Vxc,QP_Sc,&
@@ -48,11 +48,11 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  !
  ! Dyson equation: Newton solver 
  !
- ! ... no energy dependence in GW CHOSEX
+ ! ... no energy dependence in GW COHSEX
  !
  ! GPL_EXCLUDE_START
  !
- if (l_chosex) then
+ if (l_cohsex) then
    !
    QP_dSc_steps=1
    !
@@ -81,8 +81,8 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
    ! GPL_EXCLUDE_END
    !
    if (l_el_corr) then
-     if (l_ppa.or.l_chosex) then
-       call QP_ppa_chosex(X,Xk,en,k,q,qp,Xw,iter)
+     if (l_ppa.or.l_cohsex) then
+       call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
      else
        !
        ! GPL_EXCLUDE_START GW_REAL_AXIS_IGNORE
@@ -122,9 +122,9 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
        !
      enddo
      !
-     ! CHOSEX: no energy dependence
+     ! COHSEX: no energy dependence
      !
-     if (l_chosex) then
+     if (l_cohsex) then
        Eqp(1)=qp%E_bare(i1)+(QP_Sc(i1,1)+QP_Vnl_xc(i1)-QP_Vxc(i1))
        Z(1)=1.
      endif

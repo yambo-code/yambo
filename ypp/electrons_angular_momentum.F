@@ -28,7 +28,7 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  !                            which is gauge invariant
  !
  use pars,           ONLY:SP,lchlen,schlen
- use xc_functionals, ONLY:el_mag
+ use xc_functionals, ONLY:two_spin_density
  use magnetic,       ONLY:MAG_landau,MAG_pauli,&
 &                         A_magn_x,A_magn_y,A_magn_z,x,y,z,&
 &                         MAG_hamiltonian_type,Bx,By,Bz,&

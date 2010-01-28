@@ -35,7 +35,7 @@ subroutine electrons_driver(Xk,Xen)
 &                         plot_title,l_dos,dos_broadening,DOS_bands,l_angular_momentum
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
- use xc_functionals, ONLY:el_mag
+ use xc_functionals, ONLY:two_spin_density
  implicit none
  !
  type(bz_samp) ::Xk
@@ -240,13 +240,13 @@ subroutine electrons_driver(Xk,Xen)
    if (mag_dir=='Z'.or.mag_dir=='z') mag_i_dir=3
    if (mag_i_dir<0) goto 1
    !
-   allocate(el_mag(fft_size,3))
+   allocate(two_spin_density(fft_size,3))
    !
    call section('*','Single Particle Magnetization along '//mag_dir)
    !
-   call el_magnetization(Xen,Xk)
+   call spin_density(Xen,Xk)
    !
-   v2plot=el_mag(:,mag_i_dir)
+   v2plot=two_spin_density(:,mag_i_dir)
    !
    if (use_xcrysden) output_fname='mag_'//trim(mag_dir)//'_'//trim(intc(plot_dim))//'d.xsf'
    if (use_gnuplot)  output_fname='mag_'//trim(mag_dir)//'_'//trim(intc(plot_dim))//'d'
@@ -270,12 +270,12 @@ subroutine electrons_driver(Xk,Xen)
        !
        ! rho DN
        if (i_spin==1) then
-         v2plot=(el_den(:)-el_mag(:,3))/2.
+         v2plot=(el_den(:)-two_spin_density(:,3))/2.
          ch_ws='density_DN_'//trim(intc(plot_dim))
        else
          !
          ! rho UP
-         v2plot=(el_den(:)+el_mag(:,3))/2.
+         v2plot=(el_den(:)+two_spin_density(:,3))/2.
          ch_ws='density_UP_'//trim(intc(plot_dim))
        endif
        !
@@ -313,7 +313,7 @@ subroutine electrons_driver(Xk,Xen)
  call WF_free()
  if (allocated(v2plot))   deallocate(v2plot)
  if (allocated(QP_table)) deallocate(QP_table,QP_state)
- if (allocated(el_mag))   deallocate(el_mag)
+ if (allocated(two_spin_density))   deallocate(two_spin_density)
  if (allocated(el_den))   deallocate(el_den)
  plot_title=' '
  !

@@ -74,7 +74,7 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
 &                        E_xc,F_xc,V_xc,XC_LDA_X,&
 &                        XC_LDA_C_PW,xc_string,XC_LDA_C_PZ,&
 &                        XC_LDA_C_WIGNER,XC_LDA_C_HL,XC_LDA_C_XALPHA,&
-&                        XC_LDA_C_KP,el_mag,NONE
+&                        XC_LDA_C_KP,two_spin_density,NONE
  implicit none
  type(levels) ::en
  type(bz_samp)::Xk
@@ -131,11 +131,11 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
  if (n_spin==2) then
    !
-   ! Electronic magnetization & Zeta
+   ! Electronic spin density & Zeta
    !
-   call el_magnetization(en,Xk)
+   call spin_density(en,Xk)
    !
-   zeta(:)=sqrt(el_mag(:,1)**2+el_mag(:,2)**2+el_mag(:,3)**2)/rho_sp
+   zeta(:)=sqrt(two_spin_density(:,1)**2+two_spin_density(:,2)**2+two_spin_density(:,3)**2)/rho_sp
    !
  endif
  !

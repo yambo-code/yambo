@@ -50,7 +50,7 @@ integer function io_SC_components(what,E_sc,ID)
 #endif
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use electrons,      ONLY:levels,n_sp_pol,n_spin
- use global_XC,      ONLY:SC_EXX,SC_HF,SC_CHOSEX,SC_EXXC
+ use global_XC,      ONLY:SC_EXX,SC_HF,SC_COHSEX,SC_EXXC
  use fragments,      ONLY:io_fragment
  implicit none
  !
@@ -174,14 +174,14 @@ integer function io_SC_components(what,E_sc,ID)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    if (any((/SC_kind_disk==SC_EXX,SC_kind_disk==SC_EXXC,SC_kind_disk==SC_HF,&
-&            SC_kind_disk==SC_CHOSEX/))) then
+&            SC_kind_disk==SC_COHSEX/))) then
      call io_elemental(ID,VAR="SIGMAx_G",VAR_SZ=1,MENU=0) 
      call io_elemental(ID,I0=SC_ng_Sx,&
 &         VAR=' Sx RL components                :',CHECK=CHECK_,OP=(/"=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif
    !
-   if ( SC_kind_disk==SC_CHOSEX   ) then
+   if ( SC_kind_disk==SC_COHSEX   ) then
      call io_elemental(ID,VAR="X_bands_size",VAR_SZ=3,MENU=0) 
      call io_elemental(ID,I1=SC_X_bands,&
 &         VAR=' Response function bands         :',CHECK=CHECK_,OP=(/"==","=="/))
@@ -195,7 +195,7 @@ integer function io_SC_components(what,E_sc,ID)
      if (l_NSC_shot) io_status(ID)=0
    endif
    !
-   if (all((/SC_kind_disk/=SC_HF,SC_kind_disk/=SC_CHOSEX/))) then
+   if (all((/SC_kind_disk/=SC_HF,SC_kind_disk/=SC_COHSEX/))) then
      call io_elemental(ID,VAR="FFT_SIZE",VAR_SZ=1,MENU=0) 
      call io_elemental(ID,I0=SC_fft_size,&
 &         VAR=' FFT mesh points                 :',CHECK=.true.,OP=(/"=="/))

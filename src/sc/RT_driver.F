@@ -22,7 +22,7 @@
 subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
  use pars,           ONLY:SP,lchlen
- use drivers,        ONLY:l_sc_hf,l_sc_chosex
+ use drivers,        ONLY:l_sc_hf,l_sc_cohsex
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:FS2AUT
  use com,            ONLY:msg,of_open_close
@@ -32,7 +32,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  use wave_func,      ONLY:wf,WF_load,wf_ng,WF_free
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:bz_samp,qindx_S,G_m_G
- use QP_m,           ONLY:QP_nb,QP_t,QP_ng_Sx,QP_n_G_bands,CHOSEX_use_empties
+ use QP_m,           ONLY:QP_nb,QP_t,QP_ng_Sx,QP_n_G_bands,COHSEX_use_empties
  use SC,             ONLY:SC_potential,SC_bands,it_now,local_V
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser, &
 &                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,      &
@@ -77,22 +77,22 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
  WF_G_max=wf_ng
  !
- if (l_sc_hf.or.l_sc_chosex) then
+ if (l_sc_hf.or.l_sc_cohsex) then
    !
    QP_nb=SC_bands
    WF_Go_indx=maxval(qindx_S(:,:,2))
    !
-   if (l_sc_chosex) then
+   if (l_sc_cohsex) then
      X(2)%ng=eval_G_minus_G(X(2)%ng,0)
      WF_G_max=max(QP_ng_Sx,maxval(G_m_G))
      QP_n_G_bands(2)=SC_bands
-     CHOSEX_use_empties=.FALSE.
+     COHSEX_use_empties=.FALSE.
    endif
 !   call QP_state_table_setup(Xen)
 !   !
 !   !
 !   !call XCo_Hartree_Fock(Xen, k, Xk, q)
-!   !if(l_sc_chosex) call QP_ppa_chosex(X(2),Xk,en,k,q,qp_dummy,Xw(2),-1) 
+!   !if(l_sc_cohsex) call QP_ppa_cohsex(X(2),Xk,en,k,q,qp_dummy,Xw(2),-1) 
  else
    WF_Go_indx=1  
  endif

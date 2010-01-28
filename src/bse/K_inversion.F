@@ -171,7 +171,7 @@ subroutine K_inversion(iq,W,E,k,q)
  call W_reset(W_shifted)
  call W_duplicate(W,W_shifted)
  !
-#if defined _POLARON
+#if defined _ELPH
  !
  ! Green Functions must be all mapped to the Xw range so
  ! to be easily convoluted

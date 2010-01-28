@@ -23,7 +23,7 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Ex,Exc,E_mg,Trace_Gf)
  !
  use pars,           ONLY:SP,DP,pi
  use units,          ONLY:SPEED_OF_LIGHT
- use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_chosex
+ use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
  use SC,             ONLY:V_hartree_sc,Ho
@@ -61,7 +61,7 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Ex,Exc,E_mg,Trace_Gf)
  !
  E_h=E_h/2._SP
  !
- if(l_sc_hf.or.l_sc_chosex) then
+ if(l_sc_hf.or.l_sc_cohsex) then
    !
    call RT_average_operator(VALUE=Ex,O_QP=QP_Vnl_xc,G=G_lesser,k=k)
    !
@@ -89,7 +89,7 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Ex,Exc,E_mg,Trace_Gf)
      !
      call RT_average_operator(VALUE=Exc,O_REAL=E_xc,G=G_lesser,k=k)
      !
-   elseif(l_sc_chosex) then
+   elseif(l_sc_cohsex) then
      !      
      call RT_average_operator(VALUE=Exc,O_QP=QP_Sc,G=G_lesser,k=k)
      !

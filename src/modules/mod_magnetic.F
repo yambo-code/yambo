@@ -59,11 +59,11 @@ module magnetic
  real(SP),    allocatable :: y(:)
  real(SP),    allocatable :: z(:)
  !
- ! Average magnetization
+ ! Average spin density
  !
- real(SP)                 :: average_el_mag(3)
- real(SP)                 :: average_el_mag_rescaling
- character(20)            :: average_el_mag_dim ! 'Bohr_magneton'        'Bohr_magneton/Bohr'
- !                                              ! 'Bohr_magneton/Bohr^2' 'Bohr_magneton/Bohr^3'
+ real(SP)                 :: average_two_spin_density(3)
+ real(SP)                 :: average_two_spin_density_rescaling
+ character(20)            :: average_two_spin_density_dim ! 'Bohr_magneton'        'Bohr_magneton/Bohr'
+ !                                                        ! 'Bohr_magneton/Bohr^2' 'Bohr_magneton/Bohr^3'
  !
 end module

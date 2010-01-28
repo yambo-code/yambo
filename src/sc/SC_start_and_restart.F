@@ -24,10 +24,10 @@ subroutine SC_start_and_restart(X,E,Xk)
  use electrons,      ONLY:levels,n_sp_pol
  use parser_m,       ONLY:parser 
  use com,            ONLY:msg,warning
- use drivers,        ONLY:l_sc_exx,l_sc_hf,l_sc_chosex,l_sc_magnetic,l_collisions_IO 
+ use drivers,        ONLY:l_sc_exx,l_sc_hf,l_sc_cohsex,l_sc_magnetic,l_collisions_IO 
  use units,          ONLY:HARTREE
  use R_lattice,      ONLY:bz_samp,qindx_S,nkibz,G_m_G
- use QP_m,           ONLY:QP_ng_Sx,QP_t,QP_reset,SC_E_threshold,SC_band_mixing,CHOSEX_use_empties
+ use QP_m,           ONLY:QP_ng_Sx,QP_t,QP_reset,SC_E_threshold,SC_band_mixing,COHSEX_use_empties
  use SC,             ONLY:SC_ng_Sx,SC_X_bands,SC_X_size,l_SC_RESTART,l_NSC_shot,SC_bands,&
 &                         SC_potential,E_bare,local_V,SC_iterations,l_TF_precond,&
 &                         rho_convergence,E_convergence,SC_rho_threshold,&
@@ -38,7 +38,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE
  use FFT_m,          ONLY:fft_size
  use wave_func,      ONLY:WF_load,WF_free
- use global_XC,      ONLY:SC_HF,SC_CHOSEX,SC_HF
+ use global_XC,      ONLY:SC_HF,SC_COHSEX,SC_HF
  use collisions_IO,  ONLY:V_kind  
  !
  implicit none
@@ -61,7 +61,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  !============
  !
  call parser('TF_precondition',l_TF_precond) 
- call parser('UseEbands',      CHOSEX_use_empties)
+ call parser('UseEbands',      COHSEX_use_empties)
  !
  ! Magnetic logical setup
  !========================
@@ -181,9 +181,9 @@ subroutine SC_start_and_restart(X,E,Xk)
  ! WF SIZE
  !=========
  !
- if (l_SC_cycle.and.(l_sc_hf.or.l_sc_exx.or.l_sc_chosex)) then
+ if (l_SC_cycle.and.(l_sc_hf.or.l_sc_exx.or.l_sc_cohsex)) then
    WF_Go_indx=maxval(qindx_S(:,:,2)) ! Sigma_x/c
-   if (l_sc_chosex) then
+   if (l_sc_cohsex) then
      X(2)%ng=eval_G_minus_G(X(2)%ng,0)
      WF_G_max=max(QP_ng_Sx,maxval(G_m_G))
    endif
@@ -237,12 +237,12 @@ subroutine SC_start_and_restart(X,E,Xk)
    V_kind=SC_HF
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID(1))
    io_COLLISIONS_err(1)=io_COLLISIONS(0,ID(1))
-   V_kind=SC_CHOSEX
+   V_kind=SC_COHSEX
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID(1))
    io_COLLISIONS_err(2)=io_COLLISIONS(0,ID(1))
    !
    if (l_sc_hf)     l_collisions_IO=io_COLLISIONS_err(1)==0
-   if (l_sc_chosex) l_collisions_IO=all(io_COLLISIONS_err==0) 
+   if (l_sc_cohsex) l_collisions_IO=all(io_COLLISIONS_err==0) 
    !
  endif
  !

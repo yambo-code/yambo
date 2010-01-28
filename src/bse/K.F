@@ -52,9 +52,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,RD_CL,OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END
- use TDDFT,        ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,ioBS_Fxc
- use xc_functionals, ONLY:F_xc
- use global_XC,    ONLY:WF_kind,WF_xc_functional
+ use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,ioBS_Fxc
+ use xc_functionals,ONLY:F_xc
+ use global_XC,     ONLY:WF_kind,WF_xc_functional
  implicit none
  type(levels)  ::Ken 
  type(bz_samp) ::Xk,q

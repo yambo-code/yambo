@@ -77,13 +77,13 @@ module global_XC
  integer, public, parameter :: &
    SC_EXX        = 301, &  ! OEP-EXX
    SC_HF         = 302, &  ! Hartree-Fock
-   SC_CHOSEX     = 303, &  ! Coulomb-Hole Screened-eXchange
+   SC_COHSEX     = 303, &  ! Coulomb-Hole Screened-eXchange
    SC_EXXC       = 304     ! OEP-EXX + LDA correlation
  !
  ! Self Energies
  integer, public, parameter :: &
    SE_NONE          = 400, &
-   SE_CHOSEX        = 401, &
+   SE_COHSEX        = 401, &
    SE_GoWo_PPA      = 402, &
    SE_GoWo          = 403, &
    SE_GWo_PPA       = 404, &
@@ -193,10 +193,10 @@ module global_XC
          global_XC_string='SC Exact Exchange +'//trim(xc_string(XC_CORRELATION,xc_functional))
        case(SC_HF)
          global_XC_string='SC Hartree Fock'
-       case(SC_CHOSEX)
-         global_XC_string='SC CHOSEX'
-       case(SE_CHOSEX)
-         global_XC_string='CHOSEX'
+       case(SC_COHSEX)
+         global_XC_string='SC COHSEX'
+       case(SE_COHSEX)
+         global_XC_string='COHSEX'
        case(SE_GoWo_PPA)
          global_XC_string='GoWo Plasmon Pole appox.'
        case(SE_GoWo)

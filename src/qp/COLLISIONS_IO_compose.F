@@ -23,11 +23,11 @@ subroutine COLLISIONS_IO_compose(G_input)
  !
  ! HF(qp_state) = - (0.,1.) * \sum_{n,n',q} rho_rho_(n,n',q,qp_state) x G_lesser(n,n',k-q)
  ! 
- use drivers,          ONLY:l_sc_hf,l_sc_chosex
+ use drivers,          ONLY:l_sc_hf,l_sc_cohsex
  use pars,             ONLY:SP
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_states,QP_Vnl_xc,QP_Sc
  use SC,               ONLY:SC_bands
- use global_XC,        ONLY:SC_HF,SC_CHOSEX
+ use global_XC,        ONLY:SC_HF,SC_COHSEX
  use collisions_IO,    ONLY:COLLISIONS_v,COLLISIONS_table,V_kind 
  use par_proc_m,       ONLY:pp_indexes,pp_redux_wait,pp_indexes_reset
  use par_indexes_m,    ONLY:par_indexes
@@ -46,14 +46,14 @@ subroutine COLLISIONS_IO_compose(G_input)
  type(pp_indexes)  :: px
  complex(SP)       :: CHO_factor
  !
- if(.not.l_sc_hf.and..not.l_sc_chosex) return
+ if(.not.l_sc_hf.and..not.l_sc_cohsex) return
  !
  call pp_indexes_reset(px)   
  !
  call par_indexes(px,(/QP_n_states/))
  !
- if(l_sc_hf.or.l_sc_chosex.or.last_QP_mem/=0) QP_Vnl_xc=(0._SP,0._SP)
- if(l_sc_chosex) QP_sc=(0._SP,0._SP)
+ if(l_sc_hf.or.l_sc_cohsex.or.last_QP_mem/=0) QP_Vnl_xc=(0._SP,0._SP)
+ if(l_sc_cohsex) QP_sc=(0._SP,0._SP)
  !
  ! First loop on collisions in the Cache
  ! notice that in memory all collisions are sum together
@@ -85,7 +85,7 @@ subroutine COLLISIONS_IO_compose(G_input)
    !
    if(.not.px%i1p(i_qp)) cycle  
    !
-   if(l_sc_hf.or.l_sc_chosex) then
+   if(l_sc_hf.or.l_sc_cohsex) then
      !
      V_kind=SC_HF
      !
@@ -108,9 +108,9 @@ subroutine COLLISIONS_IO_compose(G_input)
      !
    endif
    !
-   if(l_sc_chosex) then
+   if(l_sc_cohsex) then
      !
-     V_kind=SC_CHOSEX
+     V_kind=SC_COHSEX
      !
      if (i_qp == 1 ) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),ID=ID)
      if (i_qp >  1 ) call io_control(ACTION=OP_RD_CL,SEC=(/2/),ID=ID)
@@ -140,8 +140,8 @@ subroutine COLLISIONS_IO_compose(G_input)
  ! When the Cache is used all the QP correction are put together
  ! in QP_Vnl_xc
  ! 
- if(l_sc_hf.or.l_sc_chosex.or.last_QP_mem/=0)   call pp_redux_wait(QP_Vnl_xc)
- if(l_sc_chosex)                                call pp_redux_wait(QP_Sc)
+ if(l_sc_hf.or.l_sc_cohsex.or.last_QP_mem/=0)   call pp_redux_wait(QP_Vnl_xc)
+ if(l_sc_cohsex)                                call pp_redux_wait(QP_Sc)
  !
  call pp_indexes_reset(px)
  !

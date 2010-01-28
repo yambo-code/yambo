@@ -29,7 +29,7 @@ subroutine XC_switch()
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
  use magnetic,       ONLY:MAG_landau,MAG_pauli
 #endif
- use global_XC,      ONLY:SC_EXX,SC_HF,SC_CHOSEX,SC_EXXC,EXT_NONE
+ use global_XC,      ONLY:SC_EXX,SC_HF,SC_COHSEX,SC_EXXC,EXT_NONE
  use electrons,      ONLY:n_full_bands,n_met_bands
  use com,            ONLY:error
  implicit none
@@ -59,9 +59,9 @@ subroutine XC_switch()
      SC_kind=SC_EXXC
      SC_xc_functional=XC_LDA_C_PZ
      if (n_full_bands/=n_met_bands) return
-   case('CHOSEX')
-     l_sc_chosex=.true.
-     SC_kind=SC_CHOSEX
+   case('COHSEX')
+     l_sc_cohsex=.true.
+     SC_kind=SC_COHSEX
      SC_xc_functional=0
    case('LDA_X')
      l_sc_contains_lda=.true.

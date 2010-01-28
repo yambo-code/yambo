@@ -23,7 +23,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  use pars,           ONLY:SP,schlen
  use units,          ONLY:HARTREE
- use drivers,        ONLY:l_sc_chosex,l_collisions_IO 
+ use drivers,        ONLY:l_sc_cohsex,l_collisions_IO 
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:Tel
@@ -48,7 +48,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use timing,         ONLY:live_timing
  use collisions_IO,  ONLY:collisions_IO_alloc,collisions_IO_free
 #if defined _MAGNETIC
- use magnetic,       ONLY:average_el_mag
+ use magnetic,       ONLY:average_two_spin_density
 #endif
  !
  implicit none
@@ -169,9 +169,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
 #if defined _MAGNETIC
    !
-   ! and magnetization
+   ! and spin density
    !
-   if(n_sp_pol>1) call el_magnetization(E,k)
+   if(n_sp_pol>1) call spin_density(E,k)
    !
 #endif
    !
@@ -258,11 +258,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        H_nl_sc=(0.,0.)
        !
-       ! Add Sigma_x and, eventually, Sigma_c (CHOSEX)
+       ! Add Sigma_x and, eventually, Sigma_c (COHSEX)
        !
        call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc)
        !
-       if(l_sc_chosex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc)
+       if(l_sc_cohsex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc)
        !
        if (.not.l_collisions_IO.and.it_now>1) then
          !
@@ -330,10 +330,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      call el_density(E,k,rho_n,.false.)
      !
 #if defined _MAGNETIC
-     ! New magnetization 
+     ! New spin density 
      !===================
      !
-     if(n_sp_pol>1) call el_magnetization(E,k)
+     if(n_sp_pol>1) call spin_density(E,k)
 #endif
      ! Convergences
      !==============
@@ -358,7 +358,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      if(n_sp_pol>1) then
        dumb_ch='[SC] Iteration '//trim(intc(it_now))//' Accuracies rho(%) - E(ev) :'//&
 &            trim(real2ch(rho_convergence))//'% - '//trim(real2ch(E_convergence*HARTREE))//&
-&            '  (Mz='//trim(real2ch(average_el_mag(3)))//')'
+&            '  (Mz='//trim(real2ch(average_two_spin_density(3)))//')'
      else
 #endif
      dumb_ch='[SC] Iteration '//trim(intc(it_now))//' Accuracies rho(%) - E(ev) :'//&

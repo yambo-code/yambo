@@ -165,7 +165,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
    !
  endif 
  !
-#if defined _POLARON
+#if defined _ELPH
  !
  ! Green Functions must be all mapped to the Xw range so
  ! to be easily convoluted

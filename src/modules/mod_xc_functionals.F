@@ -28,7 +28,7 @@ module xc_functionals
  !
  integer     , public :: GS_xc_KIND
  integer     , public :: GS_xc_FUNCTIONAL
- real(SP), public, allocatable:: el_mag(:,:)
+ real(SP), public, allocatable:: two_spin_density(:,:)
  real(SP), public, allocatable:: V_xc(:,:)
  real(SP), public, allocatable:: E_xc(:)
  real(SP), public, allocatable:: F_xc(:)

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
+subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Plasomon Pole Correlation Self-Energy
  !
@@ -32,7 +32,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands
  use timing,        ONLY:live_timing
  use com,           ONLY:msg,error
- use drivers,       ONLY:Finite_Tel,l_ppa,l_chosex,l_sc_run
+ use drivers,       ONLY:Finite_Tel,l_ppa,l_cohsex,l_sc_run
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset,master_cpu
  use par_indexes_m, ONLY:par_indexes
  use collision,     ONLY:ggwinfo,collision_reset
@@ -40,7 +40,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
-&                        CHOSEX_use_empties
+&                        COHSEX_use_empties
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use wave_func,     ONLY:WF_load,WF_free
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
@@ -83,17 +83,17 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call collision_reset(iscp)
  call pp_indexes_reset(px)
  !
- ! CHOSEX: bands setup
+ ! COHSEX: bands setup
  !
- if (l_chosex.and.(.not.CHOSEX_use_empties)) QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),n_met_bands)
+ if (l_cohsex.and.(.not.COHSEX_use_empties)) QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),n_met_bands)
  !
  ! Section
  !
  Sc_name='G'//trim(intc(GW_iter))
- if (l_sc_run) Sc_name='CHOSEX'
+ if (l_sc_run) Sc_name='COHSEX'
  !
  ch=trim(Sc_name)//'W0 : the P(lasmon) P(ole) A(pproximation)'
- if (l_chosex)  ch=trim(Sc_name)//'W0 : CHOSEX'
+ if (l_cohsex)  ch=trim(Sc_name)//'W0 : COHSEX'
  !
  if (GW_iter==0) then
    call section('+',trim(ch))
@@ -121,7 +121,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  isc%iqref=0
  isc%ngrho=X%ng
- if (l_chosex.and..not.CHOSEX_use_empties) isc%ngrho=maxval(G_m_G)
+ if (l_cohsex.and..not.COHSEX_use_empties) isc%ngrho=maxval(G_m_G)
  iscp%ngrho=isc%ngrho
  !
  ! WFs
@@ -144,7 +144,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! GPL_EXCLUDE_START SC_IGNORE
  !
- if (l_chosex) then
+ if (l_cohsex) then
    !
    call X_alloc('X',(/X%ng,X%ng,1/))
    allocate(dc(2),PPaR_ws(X%ng,X%ng),PPaR(X%ng,X%ng),stat=alloc_err)
@@ -185,16 +185,16 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
 #if defined _SC
  if (l_sc_run) then
-   if (l_chosex) call live_timing(trim(Sc_name)//'@it'//trim(intc(it_now)),px%stps(myid+1)*QP_n_states) 
+   if (l_cohsex) call live_timing(trim(Sc_name)//'@it'//trim(intc(it_now)),px%stps(myid+1)*QP_n_states) 
  else if (.not.l_collisions_IO) then
 #endif
    if (l_ppa)    call live_timing(trim(Sc_name)//'W0 PPA',px%stps(myid+1)*QP_n_states) 
-   if (l_chosex) call live_timing(trim(Sc_name)//'W0 CHOSEX',px%stps(myid+1)*QP_n_states) 
+   if (l_cohsex) call live_timing(trim(Sc_name)//'W0 COHSEX',px%stps(myid+1)*QP_n_states) 
 #if defined _SC
  endif
 #endif
 #if defined _RT
- call live_timing("CHOSEX collisions",px%stps(myid+1)) 
+ call live_timing("COHSEX collisions",px%stps(myid+1)) 
 #endif
  !
 #if defined _RT
@@ -274,11 +274,11 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      dc=cmplx(0.,0.,SP)
      !
-     ! CHO (using completeness relation)
+     ! COH (using completeness relation)
      !
      ! GPL_EXCLUDE_START SC_IGNORE
      !
-     if (l_chosex.and..not.CHOSEX_use_empties) then
+     if (l_cohsex.and..not.COHSEX_use_empties) then
        !
        iscs_save(1,: )=isc%os
        iscs_save(2,:3)=isc%qs
@@ -370,10 +370,10 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
          dc(1)=dc(1)*e%f(isc%os(1),isc%os(2),1) 
 #endif
          !
-         ! CHO
+         ! COH
          !
 #if !defined _RT
-         if (CHOSEX_use_empties) dc(2)=2._SP*pi*pre_factor
+         if (COHSEX_use_empties) dc(2)=2._SP*pi*pre_factor
          !
          QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)+dc(2)
 #endif

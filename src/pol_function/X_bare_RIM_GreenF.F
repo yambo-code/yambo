@@ -22,7 +22,7 @@
 subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
  !
  use pars,       ONLY:SP
-#if defined _POLARON
+#if defined _ELPH
  use units,      ONLY:pi
 #endif
  use X_m,        ONLY:use_X_RIM
@@ -44,7 +44,7 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
  integer      ::i1,i2,iw,ikbz,ikpbz,iv,ic,i_spin,ik_rand,ikp_rand,ik,ikp
  real(SP)     ::ffac,f0fac,W_
  complex(SP)  ::Z_,pole
-#if defined _POLARON
+#if defined _ELPH
  complex(SP), allocatable  ::Green_F_convoluted(:)
  real(SP)                  ::W_step
 #endif
@@ -61,7 +61,7 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
  ic     = transitions(3)
  i_spin = transitions(4)
  !
-#if defined _POLARON
+#if defined _ELPH
  !
  ! Green Functions convolution
  !

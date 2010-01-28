@@ -23,7 +23,7 @@ subroutine X_pre_setup(Xen,X)
  !
  use X_m,           ONLY:X_t,use_X_RIM,X_RIM_nkpts
  use electrons,     ONLY:levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts
- use drivers,       ONLY:l_bs_fxc,l_col_cut,Finite_Tel,l_gw0,l_chosex
+ use drivers,       ONLY:l_bs_fxc,l_col_cut,Finite_Tel,l_gw0,l_cohsex
  use R_lattice,     ONLY:nqibz
  use TDDFT,         ONLY:FXC_n_g_corr
  implicit none
@@ -61,7 +61,7 @@ subroutine X_pre_setup(Xen,X)
  !
  ! CHO checks
  !
- if (l_gw0.and.l_chosex) X%ng=eval_G_minus_G(X%ng,0)
+ if (l_gw0.and.l_cohsex) X%ng=eval_G_minus_G(X%ng,0)
  !
  ! Fxc Checks
  !

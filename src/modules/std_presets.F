@@ -35,7 +35,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     QP_ctl_db,QP_ctl_interp_neigh,SC_E_threshold, &
 &                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
 &                     QP_W_partially_done,GWo_SC_done,GWo_iterations,&
-&                     CHOSEX_use_empties,QP_ctl_E,QP_ctl_W,QP_ctl_Z,On_Mass_Shell_approx,&
+&                     COHSEX_use_empties,QP_ctl_E,QP_ctl_W,QP_ctl_Z,On_Mass_Shell_approx,&
 &                     Vnlxc_kind,Vxc_kind,l_extended_output 
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,n_atoms_species_max,n_atomic_species,&
@@ -221,7 +221,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_em1d=.false.
  l_em1s=.false.
  l_ppa=.false.
- l_chosex=.false.
+ l_cohsex=.false.
  l_gw0=.false.
  l_bse=.false.
  l_chi=.false.
@@ -232,7 +232,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_ph_corr=.false.
  l_sc_run=.false.
  l_sc_hf=.false.
- l_sc_chosex=.false.
+ l_sc_cohsex=.false.
  l_sc_exx=.false.
  l_sc_contains_lda=.false.
  l_sc_magnetic=.false.
@@ -322,7 +322,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  QP_cg_percent=100.
  GWo_iterations=0
  GWo_SC_done=.false.
- CHOSEX_use_empties=.false.
+ COHSEX_use_empties=.false.
  On_Mass_Shell_approx=.false.
  SC_E_threshold=0.01/HARTREE
  SC_band_mixing=100.

@@ -34,12 +34,11 @@ subroutine RT_fix_symmetries(E,k)
 &                              g_rot,ng_closed,bz_samp_duplicate,rl_sop
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,&
 &                              OP_APP,cp_file,rm_file,cp_directory,Fragmented_IO, &
-&                              io_fragmented,OP_RD_CL,io_netcdf_support,VERIFY,  &
-&                              RD_CL,RD,io_disconnect,DUMP,REP
+&                              io_fragmented,OP_RD_CL,RD_CL,RD,DUMP
  use wave_func,           ONLY:ioWF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io, &
 &                              wf_ng,wf_state,WF_load,wf_state,wf,WF_free,wf_ng ,wf_nb_io_groups
  use real_time,           ONLY:kpoints_map
- use pseudo,              ONLY:pp_kb,pp_kbd,n_atomic_species,pp_n_l_comp_max,PP_alloc,PP_free
+ use pseudo,              ONLY:pp_kb,pp_kbd,n_atomic_species,pp_n_l_comp_max,PP_free
  use stderr,              ONLY:intc,set_real_printed_length
  use parser_m,            ONLY:parser
  use zeros,               ONLY:k_iku_zero
@@ -53,7 +52,7 @@ subroutine RT_fix_symmetries(E,k)
  ! Work Space
  !
  integer               :: ik_save,iv(2),ierr,ib,i_wf,i_spin,&
-&                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik,i_elmt
+&                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik
  integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:)
  real(SP)              :: v1(3),v2(3),m(3,3)
  real(SP)              :: B_cart(3)

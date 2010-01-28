@@ -22,7 +22,7 @@
 integer function O_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
  !
  use pars,           ONLY:SP,schlen
- use X_m,            ONLY:q_plus_G_direction,X_t,Q_shift_Order
+ use X_m,            ONLY:q_plus_G_direction,X_t,Q_Shift_Order
  use R_lattice,      ONLY:bz_samp,g_vec,q_norm
  use vec_operate,    ONLY:v_norm,v_is_zero,iku_v_norm
  use stderr,         ONLY:intc

@@ -23,7 +23,6 @@ subroutine Load_Green_Functions(band_range,qp,E,DB_corrected)
  !
  ! Using qp%GreenF/qp%GreenF_W I define here the Green Functions
  !
- use pars,          ONLY:SP
  use electrons,     ONLY:n_sp_pol,spin
  use electrons,     ONLY:levels
  use memory_m,      ONLY:mem_est

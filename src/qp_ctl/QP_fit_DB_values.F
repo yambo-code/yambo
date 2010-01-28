@@ -25,7 +25,7 @@ subroutine QP_fit_DB_values(band_range,qp,en,QP_ctl,what)
  ! that will be passed to the QP_apply_stretch routine driven by
  ! the mod_QP_CTL module
  !
- use pars,          ONLY:SP,schlen
+ use pars,          ONLY:SP
  use com,           ONLY:warning
  use stderr,        ONLY:intc
  use QP_m,          ONLY:QP_t

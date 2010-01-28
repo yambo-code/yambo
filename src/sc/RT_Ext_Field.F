@@ -23,11 +23,11 @@ subroutine RT_Ext_Field(time)
  !
  ! This subroutine add the extenal vector potential 
  !
- use pars,           ONLY:SP,DP,pi
+ use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT
  use D_lattice,      ONLY:DL_vol
  use com,            ONLY:error
- use real_time,      ONLY:ext_field,n_ext_fields,Efield,i_time, &
+ use real_time,      ONLY:ext_field,n_ext_fields,Efield, &
 &                         j_current_ext,A_vecpot
  !
  implicit none

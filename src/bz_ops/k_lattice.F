@@ -45,7 +45,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  !
  integer  :: i1,i2,i3,iv(3),ig,N_g_vecs,N_ext_K_pts,k_grid_borders(3,2)
  real(SP) :: v0(3),v1(3),v0_ibz_mod,k_b_m1(3,3)
- real(SP),allocatable ::idist(:),extended_K_points(:,:)
+ real(SP),allocatable ::idist(:),extended_k_points(:,:)
  integer, allocatable ::order(:)
  character(schlen)    ::warn_msg,ch 
  logical  :: small_b_in_UC

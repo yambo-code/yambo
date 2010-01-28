@@ -39,7 +39,7 @@ logical function QP_check_if_corrected(band_range,k_range,spin_range,en,what)
  ! Z     = 4 
  ! G     = 8 
  !
- use electrons,     ONLY:levels,n_sp_pol
+ use electrons,     ONLY:levels
  implicit none
  type(levels) ::en
  integer      ::band_range(2),k_range(2),spin_range(2)

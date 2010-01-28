@@ -26,10 +26,10 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Ex,Exc,E_mg,Trace_Gf)
  use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_chosex
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
- use SC,             ONLY:SC_bands,V_hartree_sc,Ho
- use X_m,            ONLY:P_square
+ use SC,             ONLY:V_hartree_sc,Ho
  use real_time,      ONLY:XC0,G_lesser,RT_average_operator,XCfrozen, &
 &                         l_NE_with_fields,A_vecpot
+ use X_m,            ONLY:P_square
  use electrons,      ONLY:levels
  use QP_m,           ONLY:QP_Vnl_xc,QP_Sc
  use xc_functionals, ONLY:E_xc
@@ -40,18 +40,6 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Ex,Exc,E_mg,Trace_Gf)
  type(levels),  intent(in) :: en
  type(bz_samp), intent(in) :: k
  complex(SP),   intent(out):: E_kin,E_ion,E_h,Trace_Gf,Exc,Ex,E_mg
- !
- ! Work Space
- !
- integer       :: i1
- !
-#if defined _DOUBLE
- real(DP)      :: ddot
- complex(DP)   :: zdotc
-#else
- real(SP)      :: sdot
- complex(SP)   :: cdotc
-#endif
  !
  ! Non-interaction kinetc energy
  !

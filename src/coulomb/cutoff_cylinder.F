@@ -47,7 +47,7 @@ subroutine cutoff_cylinder(q,is_cut)
 #else
  real(SP),  external    ::BESJ1
 #endif
- real(SP),  external    ::bessel_F2,bessel_F3,bessel_F4,bessel_F5,bessel_F6,bessel_J0
+ real(SP),  external    ::bessel_F2,bessel_F3,bessel_F4,bessel_F5,bessel_F6
  real(SP),  allocatable ::work(:),work2(:)
  integer,   allocatable ::iwork(:),iwork2(:)
  type(pp_indexes) ::px

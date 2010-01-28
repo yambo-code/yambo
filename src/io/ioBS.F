@@ -46,7 +46,7 @@ integer function ioBS(iq,X,ID)
  character(schlen)   ::ch,db_name
  character(lchlen)   ::local_description(100)
  real(SP),allocatable::BS_mat_disk(:,:,:)
- logical             ::db_is_large,load_db_once_for_all
+ logical             ::db_is_large,load_DB_once_for_all
  !
  db_name='BS_Q'//trim(intc(iq))
  !

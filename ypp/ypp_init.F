@@ -39,15 +39,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #if defined _YPP_ELPH
  use ELPH,           ONLY:gsqF_energy_steps
 #endif
-#if defined _YPP_RAS
- use bulkeps,        only : bshift, bbroad, bfile, btype 
- use convolute,      only : gbroad
- use eels_kinematics,      ONLY : bimp, E0, theta0_in, thetap_in, phi_in
- use model_loss_function,  ONLY : model
- use surface_geometry,     ONLY : nlayers
- use eels_detector,        ONLY : thetadet, det_int_type, n_det_pt
-
-#endif
  implicit none
  integer          ::lnstr
  character(lnstr) ::instr

@@ -26,7 +26,7 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  use X_m,           ONLY:DIP_iq_dot_r,X_t
  use BS,            ONLY:BS_blk_dim,BS_eh_table,BS_mat,BS_eh_E,BS_eh_W
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_K_diagonal,FXC,&
-&                        FXC_is_causal,ioBS_Fxc,FXC_n_mem_freqs
+&                        FXC_is_causal,ioBS_Fxc
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use D_lattice,     ONLY:DL_vol

@@ -30,7 +30,7 @@ subroutine load_COLLISIONS()
  use global_XC,       ONLY:SC_HF,SC_CHOSEX
  use QP_m,            ONLY:QP_n_states,QP_nb,QP_nk
  use memory_m,        ONLY:mem_sum,mem_est
- use collisions_IO,   ONLY:COLLISIONS_v,n_collisions,COLLISIONS_table,V_kind,&
+ use collisions_IO,   ONLY:COLLISIONS_v,COLLISIONS_table,V_kind,&
 &                          collisions_IO_free
  use stderr,          ONLY:intc
  use IO_m,            ONLY:OP_RD_CL,io_control

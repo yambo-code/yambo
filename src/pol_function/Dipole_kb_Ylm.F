@@ -45,7 +45,6 @@ subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  ! 
  ! Work Space
  !
- integer il,im
  real(SP)    :: costh,sinth,cosphi,sinphi,ch,kmod,kxymod
  complex(SP) :: eiphi
  !

@@ -48,7 +48,6 @@ subroutine barriers()
  use drivers
  use pars,       ONLY:schlen
  use D_lattice,  ONLY:i_time_rev,i_space_inv
- use R_lattice,  ONLY:Xk_grid_is_uniform
  use BS,         ONLY:BSS_mode
  use electrons,  ONLY:n_spin,n_met_bands,n_full_bands,n_spinor
  use QP_m,       ONLY:QP_solver

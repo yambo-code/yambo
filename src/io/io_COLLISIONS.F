@@ -30,8 +30,7 @@ integer function io_COLLISIONS(i_qp,ID)
  use com,           ONLY:error
  use SC,            ONLY:SC_bands
  use QP_m,          ONLY:QP_ng_Sx,QP_n_states,QP_nb,QP_nk,SC_band_mixing
- use par_proc_m,    ONLY:master_cpu
- use fragments,     ONLY:io_fragment,Fragments_Restart,fragment_status,Fragments_Synchronize
+ use fragments,     ONLY:io_fragment,Fragments_Restart,Fragments_Synchronize
  !
  implicit none
  !

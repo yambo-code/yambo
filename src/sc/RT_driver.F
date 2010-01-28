@@ -21,7 +21,7 @@
 !
 subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
- use pars,           ONLY:SP,lchlen,schlen
+ use pars,           ONLY:SP,lchlen
  use drivers,        ONLY:l_sc_hf,l_sc_chosex
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:FS2AUT

@@ -32,17 +32,16 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  use magnetic,       ONLY:MAG_landau,MAG_pauli,&
 &                         A_magn_x,A_magn_y,A_magn_z,x,y,z,&
 &                         MAG_hamiltonian_type,Bx,By,Bz,&
-&                         MAG_B,MAG_psi,MAG_theta,MAG_gauge
- use FFT_m,          ONLY:fft_dim,fft_size
+&                         MAG_gauge
+ use FFT_m,          ONLY:fft_size
  use D_lattice,      ONLY:a
  use wave_func,      ONLY:wf,wf_x,wf_y,wf_z,wf_state,WF_load, &
 &                         WF_free,WF_derivative_free
- use SC,             ONLY:SC_R,load_SC_components
+ use SC,             ONLY:load_SC_components
  use electrons,      ONLY:n_sp_pol
  use timing,         ONLY:live_timing
- use units,          ONLY:HARTREE,BOHR
+ use units,          ONLY:BOHR
  use com,            ONLY:msg,of_open_close
- use SC,             ONLY:found_SC_DB
  !
  implicit none
  !
@@ -59,8 +58,7 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  character(lchlen)        :: fname(6)
  character(schlen)        :: titles(5)
  ! DEBUG <
- real(SP), allocatable    :: r_cell_cc(:,:)
- integer                  :: ir,ir1,ir2,ir3,i1
+ integer                  :: ir,i1
  ! DEBUG >
  !
 #if defined _DOUBLE

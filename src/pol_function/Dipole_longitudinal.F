@@ -26,20 +26,20 @@ subroutine Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  !
  !  i q.<nk|r|mk> =  \sum_i=1,3 q(i) <u_n(k+q0(i))|u_mk>/q0(i)
  !
- use pars,                ONLY : SP,lchlen
- use com,                 ONLY : warning, core_io_path, error
- use stderr,              ONLY : intc
- use timing,              ONLY : live_timing
- use electrons,           ONLY : levels,n_spin,  n_spinor,n_sp_pol
- use par_proc_m,          ONLY : pp_redux_wait,pp_indexes,myid,&
-&                                pp_indexes_reset
- use par_indexes_m,       ONLY : par_indexes
- use R_lattice,           ONLY : bz_samp,q0_def_norm,nkibz
- use X_m,                 ONLY : X_t,DIP_iR_or_P, long_path 
- use memory_m,            ONLY : mem_est
- use wave_func,           ONLY : wf,wf_ng,wf_igk,wf_state,WF_load,WF_free , wf_ncx
+ use pars,                ONLY: SP,lchlen
+ use com,                 ONLY: warning, core_io_path, error
+ use stderr,              ONLY: intc
+ use timing,              ONLY: live_timing
+ use electrons,           ONLY: levels,n_spin,  n_spinor,n_sp_pol
+ use par_proc_m,          ONLY: pp_redux_wait,pp_indexes,myid,&
+&                               pp_indexes_reset
+ use par_indexes_m,       ONLY: par_indexes
+ use R_lattice,           ONLY: bz_samp,q0_def_norm,nkibz
+ use X_m,                 ONLY: X_t,DIP_iR_or_P, long_path 
+ use memory_m,            ONLY: mem_est
+ use wave_func,           ONLY: wf,wf_ng,wf_igk,wf_state,WF_load,WF_free , wf_ncx
 #if defined _RAS
- use ras_long,            ONLY : grid_dir, select_field_dir
+ use ras_long,            ONLY: grid_dir, select_field_dir
 #endif
  implicit none
  type(bz_samp), intent(in)    :: Xk
@@ -61,9 +61,7 @@ subroutine Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  integer                      :: i_spin, err, ifail, ir, num_long_grid
  complex(SP)                  :: rho(2)
  real(SP)                     :: Ev_m_Ec
- real(SP), parameter          :: fac = 0.70710678118654752440_SP
  type(pp_indexes)             :: px
- logical                      :: lfail
  !
  !ioDB1 shifted grids
  !

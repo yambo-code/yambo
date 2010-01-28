@@ -21,13 +21,11 @@
 !
 subroutine RT_report(file_name,write_output_files)
  ! 
- use pars,           ONLY:SP,lchlen,schlen
- use drivers,        ONLY:l_sc_hf
- use com,            ONLY:msg,of_open_close,warning
- use real_time,      ONLY:l_NE_simulate_RPA,Thermal_time,RT_step,l_NE_simulate_IP,n_ext_fields, &
+ use pars,           ONLY:lchlen,schlen
+ use com,            ONLY:msg,of_open_close
+ use real_time,      ONLY:l_NE_simulate_RPA,n_ext_fields, &
 &                         Integrator_Name,l_RT_diagonalize,l_RT_no_diamagnetic,EField,          &
 &                         l_RT_induced_field,l_RT_no_intraband,l_NE_with_fields,A_vecpot
- use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
  implicit none
  !

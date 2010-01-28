@@ -39,8 +39,6 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  use SC,             ONLY:V_xc_sc,local_V,SC_kind,SC_xc_functional,SC_cycle_mixing,V_xc_nm1,G_lesser,&
 &                         SC_bands,SC_R,H_rotate
  use FFT_m,          ONLY:fft_size
-
- use QP_m,           ONLY:QP_Sc,QP_Vnl_xc
  !
  implicit none
  !
@@ -56,8 +54,6 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  !
  integer      :: ib,ik
  type(QP_t)   :: qp_dummy
-
-integer i_qp
  !
  if (local_V) then
    !

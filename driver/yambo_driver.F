@@ -31,7 +31,6 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  !
  use drivers
  use X_m,           ONLY:X_t
- use com,           ONLY:msg
  use par_proc_m,    ONLY:myid,ncpu,p_finalize
  use it_m,          ONLY:it_reset,infile
  use QP_m,          ONLY:QP_ng_Sx

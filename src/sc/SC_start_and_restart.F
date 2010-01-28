@@ -35,7 +35,7 @@ subroutine SC_start_and_restart(X,E,Xk)
 &                         SC_fft_size
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_t
- use IO_m,           ONLY:OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE
+ use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE
  use FFT_m,          ONLY:fft_size
  use wave_func,      ONLY:WF_load,WF_free
  use global_XC,      ONLY:SC_HF,SC_CHOSEX,SC_HF

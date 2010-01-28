@@ -25,7 +25,6 @@ subroutine QP_of(qp,en,QPdb_read_err)
  use units,     ONLY:HARTREE,HA2FSM1
  use drivers,   ONLY:l_life,l_ph_corr
  use com,       ONLY:msg,of_open_close
- use R_lattice, ONLY:bz_samp
  use electrons, ONLY:levels,spin,n_sp_pol
  use QP_m,      ONLY:QP_t,QP_Vxc,QP_Sc,QP_dSc,QP_Vnl_xc,QP_table,&
 &                    QP_solver,QP_n_states,l_extended_output,Vxc_kind,&
@@ -145,7 +144,7 @@ subroutine QP_of(qp,en,QPdb_read_err)
      endif
      values(4:6)=(/qp%E_bare(i1)*HARTREE,real(qp%E(i1)*HARTREE),real(qp%Z(i1))/)
      values(9:10)=(/real(qp_k),real(qp_b)/)
-     values(12:13)=(/aimag(qp%E(i1)*HARTREE/1.E-3),1./(HA2FSm1*2*pi*aimag(qp%E(i1)))/)
+     values(12:13)=(/aimag(qp%E(i1)*HARTREE/1.E-3),1./(HA2FSM1*2*pi*aimag(qp%E(i1)))/)
      if (qp_isp==1) values(14)= 1.
      if (qp_isp==2) values(14)=-1.
      if (aimag(qp%E(i1))==0.) values(12:13)=0.

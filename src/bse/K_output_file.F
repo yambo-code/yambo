@@ -75,7 +75,7 @@ subroutine K_output_file(iq,mode)
    if (eval_alpha) call of_open_close(alpha_file_name,title_mode)
  endif
  !
- call X_write_q_plus_G(1,BSS_q0,ig=1)
+ call X_write_q_plus_g(1,BSS_q0,ig=1)
  call X_write_messages_before_headers(iq,BSS_uses_GreenF,BSS_Vnl_included,BSS_long_gauge,ordering)
  !
  ! Description of the run and headers for output files:

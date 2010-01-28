@@ -23,7 +23,7 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  !
  use drivers,       ONLY:l_HF_and_locXC,l_chosex
  use pars,          ONLY:schlen,SP,IP
- use electrons,     ONLY:levels,spin
+ use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use QP_m,          ONLY:QP_nb,QP_n_states,QP_nk
  use wave_func,     ONLY:WF_free

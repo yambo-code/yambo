@@ -45,8 +45,6 @@ subroutine excitons_non_collinear(Xk,lambda_s,n_lambda,S_sq,S_z)
  complex(SP)  :: cdotc
 #endif 
  !
- !
- complex(SP), parameter :: cI=(0.,1.)
  integer                ::iv,ic,ikbz,ikibz,is,neh
  integer                ::iv1,ic1,ikbz1,ikibz1,is1,neh1
  complex(SP)            ::cc(2),vv(2)

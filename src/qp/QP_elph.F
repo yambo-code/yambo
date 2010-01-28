@@ -28,11 +28,10 @@ subroutine QP_elph(en,k,q,qp)
  use pars,          ONLY:SP,DP,schlen,pi
  use units,         ONLY:HARTREE,HA2THZ
  use parser_m,      ONLY:parser
- use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp,W_reset
  use electrons,     ONLY:levels,spin_occ
  use timing,        ONLY:live_timing
- use com,           ONLY:msg,error,warning
+ use com,           ONLY:msg,error
  use drivers,       ONLY:Finite_Tel,l_el_corr
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset,ncpu
  use par_indexes_m, ONLY:par_indexes

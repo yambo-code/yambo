@@ -30,13 +30,13 @@ subroutine el_magnetization(en,Xk)
  !
  use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp
- use electrons,      ONLY:levels,n_spin,n_spinor,nel
- use D_lattice,      ONLY:nsym,DL_vol
+ use electrons,      ONLY:levels,n_spin,n_spinor
+ use D_lattice,      ONLY:nsym
  use FFT_m,          ONLY:fft_size,fft_rot_r
  use wave_func,      ONLY:wf_state,wf
  use xc_functionals, ONLY:el_mag
 #if defined _SC
- use magnetic,       ONLY:average_el_mag,average_el_mag_rescaling,average_el_mag_dim
+ use magnetic,       ONLY:average_el_mag,average_el_mag_rescaling
 #endif
  implicit none
  type(levels) ::en

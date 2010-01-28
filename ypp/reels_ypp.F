@@ -48,8 +48,8 @@
 &                              OP_RD_CL,VERIFY
  use timing,              ONLY:live_timing
  use YPP
- use bulkeps,             only : lbulkerr, GetBulkEps
- use ras_module,          only : CalcRAS
+ use bulkeps,             ONLY : lbulkerr, GetBulkEps
+ use ras_module,          ONLY : CalcRAS
  use eels_kinematics
  use surface_geometry
  use eels_detector
@@ -139,7 +139,7 @@ real(SP)                       :: qpard(2), q0v(3,3)
  contains
   
    subroutine read_spectral_data(filename,col,nw,lfail)
-     use com,              only : file_exists
+     use com,              ONLY : file_exists
      implicit none
      character*(*), intent(in) :: filename
      logical, intent(inout)    :: lfail

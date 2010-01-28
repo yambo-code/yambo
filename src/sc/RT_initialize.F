@@ -18,24 +18,21 @@
 !
 subroutine RT_initialize()
  ! 
- use pars,           ONLY:SP,lchlen,schlen,pi
+ use pars,           ONLY:SP,schlen,pi
  use units,          ONLY:SPEED_OF_LIGHT
- use com,            ONLY:msg,warning
+ use com,            ONLY:msg
  use vec_operate,    ONLY:normalize_v
- use drivers,        ONLY:l_sc_hf
  use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields,i_time, &
-&                         l_NE_simulate_IP,Integrator_Name,l_RT_diagonalize,NE_steps,    &
+&                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,    &
 &                         l_RT_no_diamagnetic,EField,n_ext_fields,max_rt_steps_disk,     &
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,         &
-&                         l_RT_induced_field,l_RT_no_intraband,j_current_ext
+&                         l_RT_induced_field,j_current_ext
  use parser_m,       ONLY:parser
- use stderr,         ONLY:intc
  implicit none
  !
  ! Work space
  !
- character(schlen)        :: headings(10),hash_ch,where_ch
- integer                  :: i1,i2,rest
+ integer                  :: i1,rest
  !
  ! Logicals
  !----------

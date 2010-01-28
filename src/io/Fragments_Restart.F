@@ -21,7 +21,7 @@
 !
 subroutine Fragments_Restart(ID,current_fragment,fragments_todo)
  !
- use pars,      ONLY:schlen,lchlen,IP
+ use pars,      ONLY:lchlen
  use drivers,   ONLY:list_dbs
  use IO_m,      ONLY:write_is_on,io_restart_point,io_file,code_revision,code_version,&
 &                    DUMP,io_com,NONE,io_mode,VERIFY,rm_file,mk_dir,io_extension
@@ -29,7 +29,6 @@ subroutine Fragments_Restart(ID,current_fragment,fragments_todo)
  use com,       ONLY:get_name,file_exists,more_io_path
  use timing,    ONLY:date_and_time_string
  use com,       ONLY:msg
- use memory_m,  ONLY:mem_est
  use fragments, ONLY:Parallel_Fragments,fragment_exists,fragment_status
  implicit none
  integer          ::ID

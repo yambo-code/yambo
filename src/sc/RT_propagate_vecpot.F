@@ -22,10 +22,10 @@
 !
 recursive subroutine RT_propagate_vecpot(A_new,A_old,T_step,RT_time)
  !
- use pars,           ONLY:SP,schlen,pi
+ use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT
  use D_lattice,      ONLY:DL_vol
- use real_time,      ONLY:l_NE_with_fields,j_current,gauge_field,    &
+ use real_time,      ONLY:j_current,gauge_field,    &
 &                         l_RT_induced_field,i_time,j_current_ext
  implicit none
  !

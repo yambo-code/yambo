@@ -25,12 +25,12 @@ subroutine ypp_init_load(defs)
  use wave_func,     ONLY:wf_ng
  use YPP
 #if defined _YPP_RAS
- use bulkeps,              ONLY : init_bulk
- use convolute,            ONLY : init_convolute
- use eels_kinematics,      ONLY : init_kinematics
- use model_loss_function,  ONLY : init_loss_function
- use surface_geometry,     ONLY : init_surface
- use eels_detector,        ONLY : init_detector
+ use bulkeps,              ONLY: init_bulk
+ use convolute,            ONLY: init_convolute
+ use eels_kinematics,      ONLY: init_kinematics
+ use model_loss_function,  ONLY: init_loss_function
+ use surface_geometry,     ONLY: init_surface
+ use eels_detector,        ONLY: init_detector
 #endif
  implicit none
  type(initdefs)::defs

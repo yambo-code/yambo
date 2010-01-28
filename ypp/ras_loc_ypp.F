@@ -27,7 +27,7 @@
    use wave_func,               ONLY : wf, wf_ng, wf_state, WF_load, WF_free, wf_norm_test
    use D_lattice,               ONLY : alat, DL_vol
    use R_lattice,               ONLY : g_vec, nkibz
-   use IO_m,                    only : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP, NONE
+   use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP, NONE
    use electrons,               ONLY : n_bands,n_spin,n_spinor,n_sp_pol
  use timing,              ONLY:live_timing_is_on
    implicit none

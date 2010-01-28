@@ -28,7 +28,7 @@ subroutine COLLISIONS_IO_compose(G_input)
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_states,QP_Vnl_xc,QP_Sc
  use SC,               ONLY:SC_bands
  use global_XC,        ONLY:SC_HF,SC_CHOSEX
- use collisions_IO,    ONLY:COLLISIONS_v,n_collisions,COLLISIONS_table,V_kind 
+ use collisions_IO,    ONLY:COLLISIONS_v,COLLISIONS_table,V_kind 
  use par_proc_m,       ONLY:pp_indexes,pp_redux_wait,pp_indexes_reset
  use par_indexes_m,    ONLY:par_indexes
  use IO_m,             ONLY:io_control,OP_RD_CL,NONE

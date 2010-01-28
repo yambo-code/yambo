@@ -50,8 +50,8 @@ subroutine fermi_level(E,K,test_Tel,mode)
  !
  ! Work Space
  !
- integer :: i1,i2,is,ib,ik,i_trials(2),n_b_full_guess,i_Ef(2),&
-&           n_total_states,i_group,group_size
+ integer :: i1,is,ib,ik,i_trials(2),n_b_full_guess,i_Ef(2),&
+&           n_total_states,group_size
  integer :: index(E%nk*E%nb*n_sp_pol,3),index_E_sorted(E%nk*E%nb*n_sp_pol)
  real(SP):: E_sorted(E%nk*E%nb*n_sp_pol)
  real(SP):: n_of_el_from_zero(2),Ef(2),Efdist

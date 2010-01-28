@@ -46,8 +46,7 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv
 #if defined _RT         
- use collisions_IO, ONLY:V_kind,TEMP_COLLISIONS_v
- use global_XC,     ONLY:SC_CHOSEX
+ use collisions_IO, ONLY:TEMP_COLLISIONS_v
 #endif
 #if defined _SC
  use SC,            ONLY:it_now
@@ -64,16 +63,11 @@ subroutine QP_ppa_chosex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Work Space
  !
- integer ::   i_qp,i1,i2,i4,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4)
- real(SP),    allocatable :: PPaP(:,:)
- complex(SP), allocatable :: PPaR(:,:),E_(:),dc(:),PPaR_ws(:,:)
-#if defined _DOUBLE
- complex(SP):: zdotc,zdotu
-#else
- complex(SP):: cdotc,cdotu
-#endif
- type(ggwinfo)    ::isc,iscp
- type(pp_indexes) ::px
+ integer                  ::i_qp,i1,i2,i4,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4)
+ real(SP),    allocatable ::PPaP(:,:)
+ complex(SP), allocatable ::PPaR(:,:),E_(:),dc(:),PPaR_ws(:,:)
+ type(ggwinfo)            ::isc,iscp
+ type(pp_indexes)         ::px
  integer          ::iv4(4),io_err,ID
  integer, external::ioX,QP_state_extract
  character(schlen)::ch,Sc_name

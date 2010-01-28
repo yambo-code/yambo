@@ -23,7 +23,7 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
  !
  use pars,          ONLY:SP,schlen,pi
  use vec_operate,   ONLY:v_norm
- use D_lattice,     ONLY:alat,sop_inv,DL_vol,a
+ use D_lattice,     ONLY:alat,sop_inv,a,DL_vol
  use R_lattice,     ONLY:bz_samp,cyl_ph_radius,bare_qpg,cyl_length,box_length,&
 &                        g_vec,g_rot
  use wave_func,     ONLY:wf_ng
@@ -134,9 +134,9 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
      !
    enddo
    !
-   v_xy(ip,2)=v_xy(ip,2)/Dl_vol/real(q%nbz)
-   v_yz(ip,2)=v_yz(ip,2)/Dl_vol/real(q%nbz)
-   v_xz(ip,2)=v_xz(ip,2)/Dl_vol/real(q%nbz)
+   v_xy(ip,2)=v_xy(ip,2)/DL_vol/real(q%nbz)
+   v_yz(ip,2)=v_yz(ip,2)/DL_vol/real(q%nbz)
+   v_xz(ip,2)=v_xz(ip,2)/DL_vol/real(q%nbz)
    !
    call live_timing(steps=1)
    !

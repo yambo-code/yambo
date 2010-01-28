@@ -35,8 +35,7 @@ subroutine RT_spectrum(en,k)
  use timing,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP
  use real_time,      ONLY:NE_steps,RT_step,j_current,i_time,Efield,  &
-&                         max_rt_steps_disk,current_cache,n_ext_fields,&
-&                         A_vecpot
+&                         max_rt_steps_disk,current_cache,A_vecpot
 
  implicit none
  !
@@ -52,7 +51,7 @@ subroutine RT_spectrum(en,k)
  character(lchlen)  :: file_name(3),dump_ch
  character(schlen)  :: headings(7)
  real(SP)           :: values(8)
- real(SP) :: av,omega,tt,de,max_value
+ real(SP)           :: av,omega,tt,de
  real(SP),    allocatable :: damp_function(:)
  real(SP),    allocatable :: current(:,:)
  real(SP),    allocatable :: A_vecpot_vel(:,:)

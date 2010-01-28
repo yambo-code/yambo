@@ -42,7 +42,6 @@ integer function io_SC_components(what,E_sc,ID)
 &                         LifeTime,G_lesser,i_time,l_RT_no_diamagnetic,j_current,l_RT_no_intraband,&
 &                         n_ext_fields,Efield,max_rt_steps_disk,current_cache,A_vecpot,            &
 &                         l_RT_induced_field
- use IO_m,           ONLY:io_restart_point
  use QP_m,           ONLY:QP_nk
 #endif                                
 #if defined _MAGNETIC

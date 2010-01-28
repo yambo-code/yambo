@@ -22,8 +22,8 @@
 subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  !
  use pars,           ONLY:SP,DP,pi
- use wave_func,      ONLY:wf,wf_state,wf_ng,wf_b,wf_n_states,wf_x,wf_y,wf_z,&
-&                         WF_load,WF_free,WF_derivative_alloc,WF_derivative_free
+ use wave_func,      ONLY:wf,wf_state,wf_ng,wf_n_states,wf_x,wf_y,wf_z,&
+&                         WF_load,WF_free,WF_derivative_alloc
  use electrons,      ONLY:n_sp_pol
  use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
  use R_lattice,      ONLY:g_vec,nkibz
@@ -33,7 +33,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  use R_lattice,      ONLY:k_pt
  use D_lattice,      ONLY:alat
  use SC,             ONLY:SC_bands,found_SC_DB
- use com,            ONLY:warning,error
+ use com,            ONLY:warning
  !
  implicit none
  ! Input variables
@@ -45,7 +45,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  integer :: bands_to_load(2)
  logical :: use_live_timing
  complex(SP), allocatable  :: wf_der(:)
- complex(DP), allocatable  :: WF_DP(:)
+ complex(DP), allocatable  :: wf_DP(:)
  ! Dummys
  integer :: i1,i_spin,ib,ik,ifft
  !

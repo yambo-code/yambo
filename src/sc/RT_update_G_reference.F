@@ -25,7 +25,6 @@ subroutine RT_update_G_reference(Xen,G_lesser_reference)
  ! to the groud state G_lesser of a given Hamiltonian
  !
  use pars,           ONLY:SP
- use units,          ONLY:HARTREE
  use electrons,      ONLY:levels,spin_occ
  use real_time,      ONLY:H_t
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK 

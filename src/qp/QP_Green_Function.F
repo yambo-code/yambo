@@ -21,7 +21,6 @@
 !
 subroutine QP_Green_Function(qp,E,QPdb_read_err)
  !
- use drivers,       ONLY:l_ph_corr
  use pars,          ONLY:SP,pi
  use units,         ONLY:HARTREE
  use QP_m,          ONLY:QP_t,QP_Sc,QP_Vnl_xc,QP_Vxc,QP_table,&
@@ -43,7 +42,7 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
  integer,parameter::n_max_poles=100
  complex(SP)      ::QP_Go,Eqp(n_max_poles),R(n_max_poles),beta(n_max_poles),G_m1(QP_Sc_steps),&
 &                   f_energy
- real(SP)         ::Eo,A_integral
+ real(SP)         ::Eo
  logical          ::band_is_metallic,apply_damping
  !
  real(SP), external :: Integrate

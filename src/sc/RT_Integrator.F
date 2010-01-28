@@ -47,16 +47,13 @@ recursive subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,Xen,k,q,Integr
  ! Notice that G_old is never overwritten       
  ! ------------------------------------------------------------
  !
- use pars,           ONLY:SP,schlen,pi
- use units,          ONLY:SPEED_OF_LIGHT
- use D_lattice,      ONLY:DL_vol
+ use pars,           ONLY:SP,schlen
  use com,            ONLY:error
  use SC,             ONLY:SC_bands,H_rotate
  use R_lattice,      ONLY:bz_samp  
  use real_time,      ONLY:I1_lesser,I2_lesser,H_t,EULER,RK2,EXACT,RK2EXACT, &
-&                         i_time,l_NE_with_fields,j_current,gauge_field,    &
-&                         l_RT_induced_field
- use electrons,      ONLY:levels,nel
+&                         i_time,l_NE_with_fields,gauge_field
+ use electrons,      ONLY:levels
  use matrix_operate, ONLY:mat_dia_inv,USE_LK,DIAGO
  implicit none
  !

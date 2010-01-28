@@ -44,9 +44,8 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  use SC,            ONLY:it_now
 #endif
 #if defined _RAS
- use optcut,        ONLY : loptcut, Xcut_rhoq0
- use analyse_peaks, ONLY : lAnalysePeaks
- use ras_module,    ONLY : lras, lreels 
+ use optcut,        ONLY: loptcut, Xcut_rhoq0
+ use ras_module,    ONLY: lras, lreels 
 #endif
  implicit none
  type(levels)         :: Xen

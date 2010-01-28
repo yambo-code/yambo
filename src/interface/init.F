@@ -61,7 +61,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use ELPH,           ONLY:elph_nDBs,elph_nDBs_used,elph_use_q_grid
 #endif
 #if defined _SC
- use global_XC,      ONLY:MORE_NONE,SC_HF,SC_CHOSEX,SC_HF
+ use global_XC,      ONLY:SC_HF,SC_CHOSEX,SC_HF
  use SC,             ONLY:SC_potential,SC_ng_Sx,SC_X_bands,SC_X_size
  use collisions_IO,  ONLY:V_kind  
 #endif
@@ -905,10 +905,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      endif
      !
 #if defined _SC
-     if (l_sc_magnetic) then
-       call initactivate(1,'scpot')
-       SC_potential='default'
-     endif
+     if (l_sc_magnetic) call initactivate(1,'scpot')
      if (l_sc_run.and.io_SC_err==0) then
        QP_ng_Sx=SC_ng_Sx
        X(2)%ib=SC_X_bands

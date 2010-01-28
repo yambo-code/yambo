@@ -23,10 +23,10 @@ subroutine Fragments_Synchronize(ID,db_name,i_fragment,j_fragment)
  !
  use pars,           ONLY:schlen
  use com,            ONLY:core_io_path,more_io_path,msg
- use IO_m,           ONLY:synchronize_db,io_extension,write_is_on,io_mode,VERIFY 
+ use IO_m,           ONLY:synchronize_db,write_is_on,io_mode,VERIFY 
  use stderr,         ONLY:intc
  use fragments,      ONLY:last_syncronized,fragment_status
- use timing,         ONLY:hashes_now,nhash
+ use timing,         ONLY:hashes_now
  implicit none
  !
  integer          ::ID,i_fragment
@@ -38,7 +38,7 @@ subroutine Fragments_Synchronize(ID,db_name,i_fragment,j_fragment)
  integer           ::i_loop
  character(schlen) ::fragment_filename 
  !
- if (more_IO_path==core_IO_path) return
+ if (more_io_path==core_io_path) return
  !
  if (i_fragment<0) then
    if (.not.io_mode(ID)==VERIFY) return

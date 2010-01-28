@@ -23,7 +23,7 @@ subroutine RT_init_vecpot()
  !
  ! This subroutine add the extenal vector potential 
  !
- use pars,           ONLY:SP,DP
+ use pars,           ONLY:SP
  use com,            ONLY:error
  use units,          ONLY:SPEED_OF_LIGHT
  use real_time,      ONLY:ext_field,A_vecpot,n_ext_fields,Efield

@@ -53,7 +53,7 @@ subroutine K_inversion(iq,W,E,k,q)
  integer          ::i1,i2,ik_bz,iv,ic,iw,of_mode,i_sp,ik_ibz
  integer, external::pert_inversion
  complex(SP)      ::Co,QP_Z,QP_width
- complex(SP), allocatable  ::Lo(:,:),WS(:,:)
+ complex(SP), allocatable  ::Lo(:,:)
  !
  ! ... frequencies
  !
@@ -63,12 +63,6 @@ subroutine K_inversion(iq,W,E,k,q)
 &             min_dist_non_conv_freqs ! Every W%n(1)/min_dist_non_conv_freqs
                                       ! I perform a full inversion
  logical    ::full_diago,skip_full_inv,full_inf_freqs_found
- !
-#if defined _DOUBLE
- complex(DP)::zdotu,zdotc
-#else
- complex(SP)::cdotu,cdotc
-#endif
  !
  ! I/O
  !

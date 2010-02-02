@@ -26,9 +26,9 @@ subroutine SC_start_and_restart(X,E,Xk)
  use com,            ONLY:msg,warning
  use drivers,        ONLY:l_sc_exx,l_sc_hf,l_sc_cohsex,l_sc_magnetic,l_collisions_IO 
  use units,          ONLY:HARTREE
- use R_lattice,      ONLY:bz_samp,qindx_S,nkibz,G_m_G
- use QP_m,           ONLY:QP_ng_Sx,QP_t,QP_reset,SC_E_threshold,SC_band_mixing,COHSEX_use_empties
- use SC,             ONLY:SC_ng_Sx,SC_X_bands,SC_X_size,l_SC_RESTART,l_NSC_shot,SC_bands,&
+ use R_lattice,      ONLY:bz_samp,nkibz
+ use QP_m,           ONLY:SC_E_threshold,SC_band_mixing,COHSEX_use_empties
+ use SC,             ONLY:l_SC_RESTART,l_NSC_shot,SC_bands,&
 &                         SC_potential,E_bare,local_V,SC_iterations,l_TF_precond,&
 &                         rho_convergence,E_convergence,SC_rho_threshold,&
 &                         SC_iterations,l_SC_cycle,SC_cycle_mixing,WF_G_max,WF_Go_indx,&
@@ -50,8 +50,6 @@ subroutine SC_start_and_restart(X,E,Xk)
  !
  integer                 ::ID(4),io_E,io_V,io_WF
  integer, external       :: io_SC_components,io_COLLISIONS
- integer, external       :: eval_G_minus_G
- type(QP_t)              :: qp_dummy
  !
  ! Extended collisions
  ! 
@@ -77,14 +75,10 @@ subroutine SC_start_and_restart(X,E,Xk)
  !
  call XC_switch()
  !
- ! Define SC internal variables
- !==============================
- !
- SC_ng_Sx  =QP_ng_Sx
- SC_X_bands=X(2)%ib
- SC_X_size =X(2)%ng
- !
- call QP_reset(qp_dummy)
+ ! Dipoles & dimensions
+ !======================
+ ! 
+ call SC_WF_and_dipole_dimensions(X)
  !
  ! Sectioning
  !============
@@ -163,6 +157,13 @@ subroutine SC_start_and_restart(X,E,Xk)
    call msg('rn','[SC]                  on energies [ev]:',SC_E_threshold*HARTREE)
  endif
  !
+ ! Reset WF sizes if not doing an SC_cycle
+ !
+ if (.not.l_SC_cycle) then
+   WF_G_max=0
+   WF_Go_indx=1
+ endif
+ !
  if (.not.l_SC_cycle.and..not.l_NSC_shot) return
  !
  ! Dipoles
@@ -172,28 +173,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  ! the optical collisions that are done in G-space and would
  ! force the reloading of the WFs
  !
- if (l_sc_exx.and.l_SC_cycle) then
-   X(1)%ib(2)=SC_bands
-   X(1)%ng=QP_ng_Sx
-   call Dipole_driver(E, Xk, X(1), X(1)%q0)
- endif
- !
- ! WF SIZE
- !=========
- !
- if (l_SC_cycle.and.(l_sc_hf.or.l_sc_exx.or.l_sc_cohsex)) then
-   WF_Go_indx=maxval(qindx_S(:,:,2)) ! Sigma_x/c
-   if (l_sc_cohsex) then
-     X(2)%ng=eval_G_minus_G(X(2)%ng,0)
-     WF_G_max=max(QP_ng_Sx,maxval(G_m_G))
-   endif
-   if (l_sc_exx)  then
-     WF_G_max=max(QP_ng_Sx,X(1)%ng)
-   endif
- else
-   WF_G_max=0
-   WF_Go_indx=1
- endif
+ if (l_sc_exx.and.l_SC_cycle) call Dipole_driver(E, Xk, X(1), X(1)%q0)
  !
 #if defined _MAGNETIC
  !

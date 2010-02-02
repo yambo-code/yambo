@@ -190,22 +190,22 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  ! Parallel pointers
  !===================
- allocate(px%i1wts(cg_npts))
- px%i1wts=bg_npts+Xw%n(2)
+ allocate(px%weight_1D(cg_npts))
+ px%weight_1D=bg_npts+Xw%n(2)
  call par_indexes(px,(/cg_npts/))
  !
  ! LiveTiming Title
  !==================
 #if defined _SC 
  if (l_sc_run) then
-   call live_timing('Xo @it'//trim(intc(it_now)),px%stps(myid+1))
+   call live_timing('Xo @it'//trim(intc(it_now)),px%n_of_element_1D(myid+1))
  else
    call live_timing('Xo@q['//trim(intc(iq))//'] '//&
-&                    trim(intc(fr(1)))//'-'//trim(intc(fr(2))),px%stps(myid+1))
+&                    trim(intc(fr(1)))//'-'//trim(intc(fr(2))),px%n_of_element_1D(myid+1))
  endif
 #else
  call live_timing('Xo@q['//trim(intc(iq))//'] '//&
-&                  trim(intc(fr(1)))//'-'//trim(intc(fr(2))),px%stps(myid+1))
+&                  trim(intc(fr(1)))//'-'//trim(intc(fr(2))),px%n_of_element_1D(myid+1))
 #endif
  !
  n_poles=0
@@ -229,7 +229,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
    isave=0
    do i1 = 1,cg_npts
      n_poles = sum(bg_npts(1:i1-1))
-     if (.not.px%i1p(i1)) cycle
+     if (.not.px%element_1D(i1)) cycle
      if (iwmax==1) XoR=(0.,0.)
      if (cg_pt(i1)==0.) then
        GreenF=drude_GreenF/real(bg_npts(i1))
@@ -323,7 +323,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
    !
    do i1=1,cg_npts
      n_poles=sum(bg_npts(1:i1-1))
-     if (.not.px%i1p(i1)) cycle
+     if (.not.px%element_1D(i1)) cycle
      if (iwmax==1) XoR=(0.,0.)
      if (.not.force_bare_X_G) GreenF(1)=X_simple_GreenF(Xw%p(fr(1)),cg_pt(i1),X%ordering)
      if (force_bare_X_G) call X_bare_RIM_GreenF(iq,X_poles_tab(i1,:),fr,Xw,Xen,Xk,GreenF,X%ordering)

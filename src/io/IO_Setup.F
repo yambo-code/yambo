@@ -27,7 +27,8 @@ subroutine IO_Setup(en,k)
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,IO_write,Fragmented_IO
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
- use par_proc_m,     ONLY:n_nodes,ncpu,check_for_a_redundant_IO,pp_redux_wait,myid,local_master_cpu
+ use par_proc_m,     ONLY:n_nodes,ncpu,check_for_a_redundant_IO,pp_redux_wait,myid,&
+&                         local_master_cpu,master_cpu
  implicit none
  !
  type(levels)  :: en
@@ -45,6 +46,8 @@ subroutine IO_Setup(en,k)
  ! GPL_EXCLUDE_START
  !
  ! CPU's structure
+ !
+ local_master_cpu(myid+1)=master_cpu
  !
  if (ncpu>1.and.more_IO_path/=core_IO_path) then
    !

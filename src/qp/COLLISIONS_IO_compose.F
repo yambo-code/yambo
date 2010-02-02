@@ -29,7 +29,7 @@ subroutine COLLISIONS_IO_compose(G_input)
  use SC,               ONLY:SC_bands
  use global_XC,        ONLY:SC_HF,SC_COHSEX
  use collisions_IO,    ONLY:COLLISIONS_v,COLLISIONS_table,V_kind 
- use par_proc_m,       ONLY:pp_indexes,pp_redux_wait,pp_indexes_reset
+ use par_proc_m,       ONLY:pp_indexes,pp_redux_wait,pp_indexes_reset,myid
  use par_indexes_m,    ONLY:par_indexes
  use IO_m,             ONLY:io_control,OP_RD_CL,NONE
  use collisions_CACHE, ONLY:last_QP_mem,CACHE
@@ -61,7 +61,7 @@ subroutine COLLISIONS_IO_compose(G_input)
  !
  do i_qp=1,last_QP_mem
    !
-   if(.not.px%i1p(i_qp)) cycle  
+   if(.not.px%element_1D(i_qp)) cycle  
    !
    ic=1
    !
@@ -83,14 +83,17 @@ subroutine COLLISIONS_IO_compose(G_input)
  !
  do i_qp=last_QP_mem+1,QP_n_states 
    !
-   if(.not.px%i1p(i_qp)) cycle  
+   if(.not.px%element_1D(i_qp)) cycle  
    !
    if(l_sc_hf.or.l_sc_cohsex) then
      !
      V_kind=SC_HF
      !
-     if (i_qp == 1 ) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-     if (i_qp >  1 ) call io_control(ACTION=OP_RD_CL,SEC=(/2/),ID=ID)
+     if (i_qp == px%first_of_1D(myid+1) ) then
+       call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),ID=ID)
+     else 
+       call io_control(ACTION=OP_RD_CL,SEC=(/2/),ID=ID)
+     endif
      io_err=io_COLLISIONS(i_qp,ID)
      !
      ic=1
@@ -112,8 +115,11 @@ subroutine COLLISIONS_IO_compose(G_input)
      !
      V_kind=SC_COHSEX
      !
-     if (i_qp == 1 ) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-     if (i_qp >  1 ) call io_control(ACTION=OP_RD_CL,SEC=(/2/),ID=ID)
+     if (i_qp == px%first_of_1D(myid+1) ) then
+       call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),ID=ID)
+     else 
+       call io_control(ACTION=OP_RD_CL,SEC=(/2/),ID=ID)
+     endif
      io_err=io_COLLISIONS(i_qp,ID)
      !
      ic=1

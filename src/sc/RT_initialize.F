@@ -64,7 +64,6 @@ subroutine RT_initialize()
  endif
  !
  l_NE_with_fields=.false.
-
  !
  do i1=1,n_ext_fields
    !      

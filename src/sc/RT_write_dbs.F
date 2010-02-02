@@ -23,7 +23,7 @@ subroutine RT_write_dbs(Xen,it)
  !
  use com,            ONLY:error
  use QP_m,           ONLY:QP_nk
- use real_time,      ONLY:ID,i_time,l_NE_with_fields
+ use real_time,      ONLY:ID,i_time,l_NE_with_fields,max_rt_steps_disk
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL
  use electrons,      ONLY:levels
  !
@@ -39,7 +39,7 @@ subroutine RT_write_dbs(Xen,it)
  !
  io_G=0
  !
- if (it==1) call io_control(ACTION=OP_WR,COM=REP, SEC=(/1/),ID=ID(5))
+ if (it==1.or.it==max_rt_steps_disk) call io_control(ACTION=OP_WR,COM=REP, SEC=(/1/),ID=ID(5))
  if (it> 1) call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(5))
  io_G=io_SC_components('G' ,Xen,ID(5))
  !

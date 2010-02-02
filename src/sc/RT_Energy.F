@@ -21,7 +21,7 @@
 !
 subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Ex,Exc,E_mg,Trace_Gf)
  !
- use pars,           ONLY:SP,DP,pi
+ use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT
  use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
@@ -83,9 +83,9 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Ex,Exc,E_mg,Trace_Gf)
      !        
      ! E_xc Energy 
      !
-     call IO_and_Messaging_switch("report log io_in io_out")
+     call IO_and_Messaging_switch("-report -log -io_in -io_out")
      call xc_lda_driver(en,k,WF_KIND,WF_xc_functional,0,G_lesser)
-     call IO_and_Messaging_switch("  ")
+     call IO_and_Messaging_switch("+report +log +io_in +io_out")
      !
      call RT_average_operator(VALUE=Exc,O_REAL=E_xc,G=G_lesser,k=k)
      !

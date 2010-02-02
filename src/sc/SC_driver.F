@@ -195,11 +195,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
  endif
  !
- ! History init.
- !===============
- !
- call SC_History(0,E)
- !
  ! SCF cycle & NSC shot
  !=====================
  ! 
@@ -291,6 +286,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !=====================
      !
      do i_spin=1,n_sp_pol
+       !
        call mat_dia_inv(DIAGO,USE_LK,H_nl_sc(:,:,i_spin),E_real=E%E(:SC_bands,ik,i_spin))
        !
        ! Rotation (WFo->wf) matrix

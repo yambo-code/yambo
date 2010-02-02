@@ -23,34 +23,22 @@ integer function io_SC_components(what,E_sc,ID)
  !
  ! what can be E WF V J G
  !
- use pars,           ONLY:SP
- use units,          ONLY:AU2Tesla,radian
+ use pars,           ONLY:SP,lchlen
  use R_lattice,      ONLY:nkibz
- use D_lattice,      ONLY:atoms_string
  use stderr,         ONLY:intc
- use QP_m,           ONLY:SC_band_mixing
- use SC,             ONLY:SC_bands,it_now,rho_convergence,E_convergence,SC_potential,&
-&                         SC_R,V_xc_sc,local_V,H_nl_sc,SC_kind,SC_perturbation,&
-&                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,&
-&                         SC_ng_Sx,SC_X_bands,SC_X_size
+ use SC,             ONLY:SC_bands,rho_convergence,E_convergence,&
+&                         SC_R,V_xc_sc,local_V,H_nl_sc,SC_description,&
+&                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,write_is_on,&
-&                         manage_RD_WR_CL_IF_END,ver_is_gt_or_eq,io_reset,IO_INCOMPATIBLE_VAR
+&                         manage_RD_WR_CL_IF_END,io_reset
 #if defined _RT
- use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,Hfrozen,XCfrozen,                      &
-&                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
-&                         LifeTime,G_lesser,i_time,l_RT_no_diamagnetic,j_current,l_RT_no_intraband,&
-&                         n_ext_fields,Efield,max_rt_steps_disk,current_cache,A_vecpot,            &
-&                         l_RT_induced_field
+ use real_time,      ONLY:l_NE_with_fields,NE_steps, &
+&                         G_lesser,i_time,j_current,max_rt_steps_disk,current_cache,A_vecpot
  use QP_m,           ONLY:QP_nk
 #endif                                
-#if defined _MAGNETIC
- use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
- use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
-#endif
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use electrons,      ONLY:levels,n_sp_pol,n_spin
- use global_XC,      ONLY:SC_EXX,SC_HF,SC_COHSEX,SC_EXXC
  use fragments,      ONLY:io_fragment
  implicit none
  !
@@ -60,14 +48,15 @@ integer function io_SC_components(what,E_sc,ID)
  !
  ! Work Space
  !
+ integer, external     :: variables_SC
+ character(lchlen)     :: local_description(100)
+ !
  real(SP), allocatable :: R_H_disk(:,:,:),E_disk(:,:,:)
- integer               :: ik,bands_to_load,ib,SC_kind_disk,SC_perturbation_disk,&
-&                         io_status_save,i_spin,i1
+ integer               :: ik,bands_to_load,ib,i_spin,i1
  logical               :: l_wf,l_V,l_E,l_IMPOSE_SN,CHECK_
 #if defined _RT		
  integer               :: file_number
  logical               :: l_J,l_G,IO_current
- real(SP)              :: current_pot_disk(9)
  real(SP)              :: A_vecpot_disk(3,3,2)
 #endif
  !
@@ -112,7 +101,7 @@ integer function io_SC_components(what,E_sc,ID)
      endif
      !
    endif
- !
+   !
  endif
  !
  if(l_G) then
@@ -126,7 +115,6 @@ integer function io_SC_components(what,E_sc,ID)
  !
 #endif
  !
- !
  if (io_SC_components/=0) goto 1
  !
  ik = maxval(io_sec(ID,:))-1
@@ -136,171 +124,11 @@ integer function io_SC_components(what,E_sc,ID)
    l_IMPOSE_SN=.not.l_V
    !
    io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN)
-   !
    if (io_SC_components/=0) goto 1
    !
-   call io_elemental(ID,VAR='ATOMS_STRING',CH0="",VAR_SZ=1)
-   call io_elemental(ID,CH0=atoms_string,&
-&       VAR=' Unit cell atoms                 :',CHECK=CHECK_,OP=(/"=="/))
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   !
-   call io_elemental(ID,VAR='XC_FUNCTIONAL',CH0="",VAR_SZ=1,MENU=0)
-   call io_elemental(ID,CH0=SC_potential,&
-&       VAR=' xc Functional                   :',CHECK=CHECK_,OP=(/"=="/))
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   !
-   if (ver_is_gt_or_eq(ID,revision=455)) then
-     call io_elemental(ID,VAR="XC_GLOBALS",VAR_SZ=3,MENU=0)
-     call io_elemental(ID,I0=SC_perturbation,DB_I0=SC_perturbation_disk)
-   else
-     call io_elemental(ID,VAR="XC_KIND",VAR_SZ=2,MENU=0)
-   endif
-   call io_elemental(ID,I0=SC_kind,DB_I0=SC_kind_disk)
-   call io_elemental(ID,I0=SC_xc_functional)
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   !
-   io_status_save=io_status(ID)
-   call io_elemental(ID,VAR="LOCAL_ITER_BANDS_MIX",VAR_SZ=4,MENU=0) 
-   call io_elemental(ID,L0=Local_V,&
-&       VAR=' The potential is local          :')
-   call io_elemental(ID,I0=it_now,DB_I0=it_now,&
-&       VAR=' Iteration                       :')
-   !
-   call io_elemental(ID,I0=SC_bands,&
-&       VAR=' Total number of bands           :',CHECK=CHECK_,OP=(/"=="/))
-   !
-   call io_elemental(ID,R0=SC_band_mixing,&
-&       VAR=' Bands mixing                    :',CHECK=CHECK_,OP=(/"=="/))
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   !
-   if (any((/SC_kind_disk==SC_EXX,SC_kind_disk==SC_EXXC,SC_kind_disk==SC_HF,&
-&            SC_kind_disk==SC_COHSEX/))) then
-     call io_elemental(ID,VAR="SIGMAx_G",VAR_SZ=1,MENU=0) 
-     call io_elemental(ID,I0=SC_ng_Sx,&
-&         VAR=' Sx RL components                :',CHECK=CHECK_,OP=(/"=="/))
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   endif
-   !
-   if ( SC_kind_disk==SC_COHSEX   ) then
-     call io_elemental(ID,VAR="X_bands_size",VAR_SZ=3,MENU=0) 
-     call io_elemental(ID,I1=SC_X_bands,&
-&         VAR=' Response function bands         :',CHECK=CHECK_,OP=(/"==","=="/))
-     call io_elemental(ID,I0=SC_X_size,&
-&         VAR='                   size          :',CHECK=CHECK_,OP=(/"=="/))
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   endif
-   !
-   if (io_status_save==0.and.io_status(ID)<0) then
-     io_status(ID)=IO_INCOMPATIBLE_VAR
-     if (l_NSC_shot) io_status(ID)=0
-   endif
-   !
-   if (all((/SC_kind_disk/=SC_HF,SC_kind_disk/=SC_COHSEX/))) then
-     call io_elemental(ID,VAR="FFT_SIZE",VAR_SZ=1,MENU=0) 
-     call io_elemental(ID,I0=SC_fft_size,&
-&         VAR=' FFT mesh points                 :',CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   endif
-   !
-#if defined _MAGNETIC
-   if (any((/SC_perturbation_disk==EXT_B_LANDAU,SC_perturbation_disk==EXT_B_PAULI,&
-&            SC_perturbation_disk==EXT_B_MAGNETISM/))) then
-     !
-     call io_elemental(ID,VAR="MAG_hamiltonian",CH0="",VAR_SZ=1,MENU=0) 
-     call io_elemental(ID,CH0=MAG_hamiltonian_type, &
-&         VAR=' [MAG] Hamiltonian kind          :',CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-     !
-     call io_elemental(ID,VAR='B_FIELD_parameters',VAR_SZ=4,MENU=0) 
-     call io_elemental(ID,UNIT=AU2Tesla,R0=MAG_B,&
-&         VAR=' [MAG] B modulus              [T]:',CHECK=.true.,OP=(/"=="/))
-     !
-     if (ver_is_gt_or_eq(ID,revision=492)) then
-       call io_elemental(ID,UNIT=(1./radian),R0=MAG_theta,& 
-&           VAR=' [MAG] B theta angle    [degrees]:',CHECK=.true.,OP=(/"=="/))
-       call io_elemental(ID,UNIT=(1./radian),R0=MAG_psi,& 
-&           VAR=' [MAG] B psi angle      [degrees]:',CHECK=.true.,OP=(/"=="/))
-     endif
-     !
-     if (SC_perturbation_disk/=EXT_B_PAULI) then
-       call io_elemental(ID,R0=MAG_radius,&
-&         VAR=' [MAG] B flux radius             :',CHECK=.true.,OP=(/"=="/))
-     endif
-     !
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-     !
-     call io_elemental(ID,VAR='MAG_GAUGE',CH0="",VAR_SZ=1,MENU=0)
-     call io_elemental(ID,CH0=MAG_gauge,&
-&         VAR=' [MAG] Gauge                     :',CHECK=CHECK_,OP=(/"=="/))
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-     !
-   endif
-   !
-#endif
-   !
-#if defined _RT
-   !
-   if(any((/l_J,l_G/))) then
-     call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=5,MENU=0) 
-     call io_elemental(ID,L0=Hfrozen,&
-&      VAR=" Hartree not updated     :", CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,L0=XCfrozen,&
-&      VAR=" XC potential/self-energy not updated :", CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,&
-&       VAR=" real-time step                 :",R0=RT_step,CHECK=.true.,OP=(/"=="/))
-     if(l_G) call io_elemental(ID, &
-&       VAR=" total number of steps          :",I0=NE_steps,CHECK=.true.,OP=(/">="/))
-     call io_elemental(ID, &
-&       VAR=" number of thermalization steps :",I0=Thermal_steps,CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-     !
-     call io_elemental(ID,VAR="INTEGRATOR",CH0="",VAR_SZ=1) 
-     call io_elemental(ID,CH0=Integrator_name, &
-&         VAR=' integrator                   :',CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-     !
-     call io_elemental(ID,VAR="RT_OTHERS",VAR_SZ=9,MENU=0) 
-     call io_elemental(ID,L0=l_RT_diagonalize,VAR=' analize quasi-particles :', &
-&     CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,I0=RT_diagonalization_steps,VAR='diagonalization interval :',&
-&     CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,I0=max_rt_steps_disk,VAR='cache size :',&
-&     CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,R0=LifeTime,VAR=' quasi-particle life time :', &
-&     CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,L0=l_NE_with_fields,VAR=' External Field is present :', &
-&      CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,L0=l_RT_no_diamagnetic,VAR=' No diamagnetic term        :',& 
-&       CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,L0=l_RT_no_intraband,VAR=' No intraband coupling        :',& 
-&       CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,L0=l_RT_induced_field,VAR=' Include induced field       :',& 
-&       CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-     !
-     do i1=1,n_ext_fields
-       call io_elemental(ID,VAR="EXTERNAL_FIELD"//trim(intc(i1)),VAR_SZ=7,MENU=0) 
-       call io_elemental(ID,R1=Efield(i1)%versor,CHECK=.true., &
-&       VAR=" electric field versor             :",OP=(/"==","==","=="/))
-       call io_elemental(ID,&
-&       VAR=" external field intensity          :",R0=Efield(i1)%intensity,CHECK=.true.,OP=(/"=="/))
-       call io_elemental(ID,&
-&       VAR=" external field amplitude          :",R0=Efield(i1)%amplitude,CHECK=.true.,OP=(/"=="/))
-       call io_elemental(ID,&
-&       VAR=" external field frequency          :",R0=Efield(i1)%frequency,CHECK=.true.,OP=(/"=="/))
-       call io_elemental(ID,R0=Efield(i1)%t_initial,VAR=' initial time for the external field :',&
-&       CHECK=.true.,OP=(/"=="/))
-       call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-       !                       
-       call io_elemental(ID,VAR="FIELD_NAME"//trim(intc(i1)),CH0="",VAR_SZ=1) 
-       call io_elemental(ID,CH0=Efield(i1)%ef_name, &
-&         VAR=' external field                  :',CHECK=.true.,OP=(/"=="/))
-       call io_elemental(ID,VAR="",VAR_SZ=0)
-     enddo
-     !
-   endif
-   !
-#endif
+   io_SC_components=variables_SC(ID,local_description,what)
+   !=======================================================
+   if (io_SC_components/=0) goto 1
    !
 #if defined _RT
    if(any((/l_E,l_V,l_wf/))) then

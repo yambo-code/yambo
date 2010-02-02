@@ -133,15 +133,15 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
 #endif
  !
 #if defined _RT
- call live_timing(trim(ch),px%stps(myid+1))
+ call live_timing(trim(ch),px%n_of_element_1D(myid+1))
 #else
- call live_timing(trim(ch),px%stps(myid+1)*QP_n_states)
+ call live_timing(trim(ch),px%n_of_element_1D(myid+1)*QP_n_states)
 #endif
  !
  do i_qp=1,QP_n_states
    !
 #if defined _RT
-   if (.not.px%i1p(i_qp)) cycle
+   if (.not.px%element_1D(i_qp)) cycle
    !        
    if (fragment_status(i_qp)/=-1)  then
      call live_timing(steps=1)
@@ -184,7 +184,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
      do jb=1,Sx_upper_band
        !      
 #if !defined _RT
-       if (.not.px%i2p(iq,jb)) cycle
+       if (.not.px%element_2D(iq,jb)) cycle
 #endif
        isc%os(1)=jb
        iscp%os=isc%os

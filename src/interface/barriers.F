@@ -106,7 +106,6 @@ subroutine barriers()
  !
 #if defined _RT
  call switch_off_runlevel('gw0',on_name=' ')
- call switch_off_runlevel('scpot',on_name=' ')
 #endif
  !
  if (l_sc_run) then

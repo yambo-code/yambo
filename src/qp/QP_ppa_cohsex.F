@@ -183,25 +183,27 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! LIVE-TIMING message
  !
-#if defined _SC
+#if defined _SC && !defined _RT
  if (l_sc_run) then
-   if (l_cohsex) call live_timing(trim(Sc_name)//'@it'//trim(intc(it_now)),px%stps(myid+1)*QP_n_states) 
+   if (l_cohsex) call live_timing(trim(Sc_name)//'@it'//trim(intc(it_now)),px%n_of_element_1D(myid+1)*QP_n_states) 
  else if (.not.l_collisions_IO) then
 #endif
-   if (l_ppa)    call live_timing(trim(Sc_name)//'W0 PPA',px%stps(myid+1)*QP_n_states) 
-   if (l_cohsex) call live_timing(trim(Sc_name)//'W0 COHSEX',px%stps(myid+1)*QP_n_states) 
+#if defined _RT
+ if (l_collisions_IO) then
+   call live_timing("COHSEX collisions",px%n_of_element_1D(myid+1)) 
+ else
+#endif
+   if (l_ppa)    call live_timing(trim(Sc_name)//'W0 PPA',px%n_of_element_1D(myid+1)*QP_n_states) 
+   if (l_cohsex) call live_timing(trim(Sc_name)//'W0 COHSEX',px%n_of_element_1D(myid+1)*QP_n_states) 
 #if defined _SC
  endif
-#endif
-#if defined _RT
- call live_timing("COHSEX collisions",px%stps(myid+1)) 
 #endif
  !
 #if defined _RT
  !
  do i_qp=1,QP_n_states
    !
-   if (.not.px%i1p(i_qp)) cycle
+   if (.not.px%element_1D(i_qp)) cycle
    !
    if (fragment_status(i_qp)/=-1) then
       call live_timing(steps=1)
@@ -303,7 +305,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      do ib=QP_n_G_bands(1),QP_n_G_bands(2)
        !
 #if !defined _RT
-       if (.not.px%i2p(iqbz,ib)) cycle
+       if (.not.px%element_2D(iqbz,ib)) cycle
        call live_timing(steps=1)
 #endif
        !

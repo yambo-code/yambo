@@ -21,7 +21,7 @@
 !
 module SC
  !
- use pars,            ONLY:SP,schlen
+ use pars,            ONLY:SP,schlen,lchlen
  implicit none
  !
  integer           :: SC_bands
@@ -31,12 +31,14 @@ module SC
  integer           :: SC_ng_Sx
  integer           :: SC_X_bands(2)
  integer           :: SC_X_size
+ integer           :: n_SC_descriptions
  real(SP)          :: rho_convergence
  real(SP)          :: E_convergence
  real(SP)          :: SC_rho_threshold
  real(SP)          :: SC_cycle_mixing
  !
  character(schlen) :: SC_potential
+ character(lchlen) :: SC_description(100)
  logical           :: compatible_SC_DB
  logical           :: found_SC_DB
  logical           :: local_V

@@ -82,9 +82,9 @@ GAMMA_LIBS      = $(MAIN_LIBS)
 #
 # YPP
 #
-YPPLIBS      = $(BASIC_LIBS) bz_ops qp_ctl setup interface bse
+YPPLIBS      = $(BASIC_LIBS) bz_ops qp_ctl setup interface pol_function bse
 YPPSCLIBS    = $(YPPLIBS) sc
-YPPRASLIBS   = $(BASIC_LIBS) ras_reels_mods bz_ops qp_ctl setup interface ras bse
+YPPRASLIBS   = $(BASIC_LIBS) ras_reels_mods bz_ops qp_ctl setup interface ras pol_function bse
 
 nothing: 
 	@$(make_message)

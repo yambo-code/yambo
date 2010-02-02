@@ -31,7 +31,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  use pars,           ONLY:SP
  use drivers,        ONLY:l_sc_exx,l_sc_cohsex,l_sc_contains_lda,l_collisions_IO
  use R_lattice,      ONLY:bz_samp
- use QP_m,           ONLY:QP_t,QP_nk
+ use QP_m,           ONLY:QP_t,QP_nk,QP_reset
  use electrons,      ONLY:levels,n_spin
  use frequency,      ONLY:w_samp
  use X_m,            ONLY:X_t
@@ -101,17 +101,19 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
      !    ==========
    else
      !
+     call QP_reset(qp_dummy)
+     !
      ! Stop all messagging
      !
-     call IO_and_Messaging_switch("report io_in io_out")
+     call IO_and_Messaging_switch("-report -io_in -io_out")
      !
      call XCo_driver(E,k,k,q)
      !
-     call IO_and_Messaging_switch("report io_out")
+     call IO_and_Messaging_switch("+io_in")
      !
      if (l_sc_cohsex) call QP_ppa_cohsex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1)
      !
-     call IO_and_Messaging_switch(" ")
+     call IO_and_Messaging_switch("+report +io_out")
      !
    endif
    !

@@ -36,34 +36,49 @@ subroutine IO_and_Messaging_switch(what)
  integer          ::ich
  character(schlen)::ch_piece(10)
  !
- write_to_log   =master_cpu
- write_to_report=master_cpu
- IO_write       =local_master_cpu(myid+1)
- IO_read        =.true.
- Fragmented_IO  =Fragmented_IO_save
- Parallel_Fragments  =.FALSE.
- last_syncronized    =0
- !
  if (len_trim(what)>0) then
    call string_split(what,ch_piece)
    do ich=1,10
      !
+     ! Complete Reset
+     !
+     if (trim(ch_piece(ich))=="RESET") then
+       write_to_log   =master_cpu
+       write_to_report=master_cpu
+       IO_write       =local_master_cpu(myid+1)
+       IO_read        =.true.
+       Fragmented_IO  =Fragmented_IO_save
+       Parallel_Fragments  =.FALSE.
+       last_syncronized    =0
+       return
+     endif
+     !
      ! Messages
      !
-     if (trim(ch_piece(ich))=="report".or.trim(ch_piece(ich))=="all") write_to_report=.false.
-     if (trim(ch_piece(ich))=="log"   .or.trim(ch_piece(ich))=="all") write_to_log=.false.
+     if (trim(ch_piece(ich))=="-report") write_to_report=.false.
+     if (trim(ch_piece(ich))=="-log"   ) write_to_log=.false.
+     if (trim(ch_piece(ich))=="+report") write_to_report=master_cpu
+     if (trim(ch_piece(ich))=="+log"   ) write_to_log=master_cpu
      !
      ! I/O
      !
-     if (trim(ch_piece(ich))=="io_in" .or.trim(ch_piece(ich))=="all") IO_read=.false.
-     if (trim(ch_piece(ich))=="io_out".or.trim(ch_piece(ich))=="all") IO_write=.false.
+     if (trim(ch_piece(ich))=="-io_in")  IO_read=.false.
+     if (trim(ch_piece(ich))=="-io_out") IO_write=.false.
+     if (trim(ch_piece(ich))=="+io_in")  IO_read=.true.
+     if (trim(ch_piece(ich))=="+io_out") IO_write=local_master_cpu(myid+1)
      !
-     if (trim(ch_piece(ich))=="all_write_fragments") then
+     if (trim(ch_piece(ich))=="+all_write_fragments") then
        Parallel_Fragments=.TRUE.
        IO_write          =.TRUE.
+       last_syncronized    =0
+     endif
+     if (trim(ch_piece(ich))=="-all_write_fragments") then
+       Parallel_Fragments=.FALSE.
+       IO_write          =local_master_cpu(myid+1)
      endif
      !
-     if (trim(ch_piece(ich))=="DB_is_fragmented") Fragmented_IO=.TRUE.
+     if (trim(ch_piece(ich))=="+DB_is_fragmented") Fragmented_IO=.TRUE.
+     if (trim(ch_piece(ich))=="-DB_is_fragmented") Fragmented_IO=Fragmented_IO_save
      !
    enddo
  endif

@@ -26,7 +26,6 @@ subroutine COLLISIONS_IO_store(i_qp)
  use collisions_IO,   ONLY:COLLISIONS_cutoff,TEMP_COLLISIONS_v,COLLISIONS_table,&
 &                          COLLISIONS_v,n_collisions
  use IO_m,            ONLY:io_control,REP,OP_WR_CL,OP_APP_WR_CL
- use par_proc_m,      ONLY:myid
  !
  implicit none                                              
  !
@@ -69,15 +68,12 @@ subroutine COLLISIONS_IO_store(i_qp)
    enddo      
  enddo      
  !
- call IO_and_Messaging_switch("DB_is_fragmented")
+ call IO_and_Messaging_switch("+DB_is_fragmented")
  !
- if (i_qp==myid+1) then
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
-   io_err=io_COLLISIONS(i_qp,ID)
- else
-   call io_control(ACTION=OP_APP_WR_CL,SEC=(/2/),ID=ID)
-   io_err=io_COLLISIONS(i_qp,ID)
- endif
- if (i_qp==QP_n_states) call IO_and_Messaging_switch(" ")
+ if (i_qp==1) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
+ if (i_qp/=1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/2/),ID=ID)
+ io_err=io_COLLISIONS(i_qp,ID)
+ !
+ if (i_qp==QP_n_states) call IO_and_Messaging_switch("-DB_is_fragmented")
  !
 end subroutine COLLISIONS_IO_store

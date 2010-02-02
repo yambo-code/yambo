@@ -193,7 +193,7 @@ module real_time
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
      use QP_m,           ONLY:QP_nk,QP_n_states,QP_Vnl_xc
-     use collisions_IO, ONLY:collisions_IO_alloc
+     use collisions_IO,  ONLY:collisions_IO_alloc
      !
      implicit none
      !

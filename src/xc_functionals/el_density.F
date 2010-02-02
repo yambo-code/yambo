@@ -93,7 +93,7 @@ subroutine el_density(en,Xk,rho,force_si)
     do i2=1,Xk%nibz
       !
 #if defined _RT
-      if (.not.px%i2p(i2,i1)) cycle
+      if (.not.px%element_2D(i2,i1)) cycle
 #endif
       !        
       i_spin=1
@@ -148,7 +148,7 @@ subroutine el_density(en,Xk,rho,force_si)
     !      
     do i1=1,SC_bands
       !
-      if (.not.px%i2p(ik,i1)) cycle
+      if (.not.px%element_2D(ik,i1)) cycle
       !
       do i2=i1+1,SC_bands
         !      

@@ -66,7 +66,7 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  ! No DB => EVAL
  !===============
  !
- call IO_and_Messaging_switch("all_write_fragments")
+ call IO_and_Messaging_switch("+all_write_fragments")
  !
  allocate(fragment_status(QP_n_states))
  call mem_est("fragment_status",(/QP_n_states/),(/IP/))
@@ -122,7 +122,7 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
    !
  endif
  !
- call IO_and_Messaging_switch(" ")
+ call IO_and_Messaging_switch("-all_write_fragments")
  !
  ! CLEAN
  !=======

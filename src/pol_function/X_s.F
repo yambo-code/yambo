@@ -68,16 +68,16 @@ subroutine X_s(iq,fr,X,wv)
  !
  nw_max_par=wv%n(2)-mod(wv%n(2),ncpu)
  call par_indexes(px,(/wv%n(2)/))
- if (nw_max_par<wv%n(2)) px%i1p(nw_max_par+1:)=.true.
+ if (nw_max_par<wv%n(2)) px%element_1D(nw_max_par+1:)=.true.
  call pp_redux_wait
- px%stps(myid+1)=0
+ px%n_of_element_1D(myid+1)=0
  do iw=1,wv%n(2)
-   if (iw<=nw_max_par.and..not.px%i1p(iw)) X_mat(:,:,iw)=(0.,0.)
-   if (px%i1p(iw)) px%stps(myid+1)=px%stps(myid+1)+1
+   if (iw<=nw_max_par.and..not.px%element_1D(iw)) X_mat(:,:,iw)=(0.,0.)
+   if (px%element_1D(iw)) px%n_of_element_1D(myid+1)=px%n_of_element_1D(myid+1)+1
  enddo
  !
  call live_timing(&
-&   'X @q['//trim(intc(iq))//'] '//trim(intc(fr(1)))//'-'//trim(intc(fr(2))),px%stps(myid+1))
+&   'X @q['//trim(intc(iq))//'] '//trim(intc(fr(1)))//'-'//trim(intc(fr(2))),px%n_of_element_1D(myid+1))
  do iw=1,wv%n(2)
    !
    INV_MODE=USE_LK
@@ -108,7 +108,7 @@ subroutine X_s(iq,fr,X,wv)
        ioFxc_err=ioBS_Fxc(iq,wv,ID)
      endif
      ! 
-     if (.not.px%i1p(iw)) cycle
+     if (.not.px%element_1D(iw)) cycle
      ! 
      Xom1=Xo(:FXC_n_g_corr,:FXC_n_g_corr)
      !
@@ -145,14 +145,14 @@ subroutine X_s(iq,fr,X,wv)
      !
      ! ALDA Fxc
      !
-     if (.not.px%i1p(iw)) cycle
+     if (.not.px%element_1D(iw)) cycle
      tddftk(:,:FXC_n_g_corr)=-matmul(Xo(:,:FXC_n_g_corr),FXC(:,:,1))
      !
    endif
    !
    ! I must cycle here to allow the FXC I/O properly
    !
-   if (.not.px%i1p(iw)) cycle
+   if (.not.px%element_1D(iw)) cycle
    !
    do i1=1,X%ng ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
      tddftk(:,i1)=tddftk(:,i1)-Xo(:,i1)*4.*pi/bare_qpg(iq,i1)**2

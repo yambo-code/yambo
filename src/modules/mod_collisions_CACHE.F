@@ -58,7 +58,7 @@ module collisions_CACHE
      !
      do i_qp=1,last_QP_mem
        !
-       if(.not.px%i1p(i_qp)) cycle  
+       if(.not.px%element_1D(i_qp)) cycle  
        !
        deallocate(CACHE(i_qp)%COLLISIONS_table,CACHE(i_qp)%COLLISIONS_v)
        call mem_est("QP_COLLISIONS_table"//trim(intc((i_qp))))

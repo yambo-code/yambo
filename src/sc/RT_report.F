@@ -19,28 +19,30 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_report(file_name,write_output_files)
+subroutine RT_report(i_t,values)
  ! 
- use pars,           ONLY:lchlen,schlen
+ use pars,           ONLY:lchlen,schlen,SP
  use com,            ONLY:msg,of_open_close
- use real_time,      ONLY:l_NE_simulate_RPA,n_ext_fields, &
-&                         Integrator_Name,l_RT_diagonalize,l_RT_no_diamagnetic,EField,          &
-&                         l_RT_induced_field,l_RT_no_intraband,l_NE_with_fields,A_vecpot
- use stderr,         ONLY:intc
+ use SC,             ONLY:SC_description,n_SC_descriptions
+ use real_time,      ONLY:l_RT_diagonalize
  implicit none
  !
- character(lchlen)        :: file_name(2)
- logical, intent(in)      :: write_output_files
+ integer :: i_t
+ real(SP):: values(8)
  !
  ! Work space
  !
- character(schlen)        :: headings(10),hash_ch,where_ch
- integer                  :: i1,i2,n_output_files
+ character(lchlen), save  :: file_name(2)
+ character(schlen)        :: headings(10),where_ch
+ integer                  :: i1,n_output_files,i_d
  !
  ! OUTPUT Files
  !--------------
  !
- if(write_output_files) then
+ n_output_files=1
+ if (l_RT_diagonalize) n_output_files=2
+ !
+ if(i_t==1) then
    !      
    file_name(1)='RT-dynamics'
    call of_open_close(file_name(1),'ot') 
@@ -53,55 +55,30 @@ subroutine RT_report(file_name,write_output_files)
    headings(7)="E_mg[eV]"
    headings(8)="N" 
    !
-   n_output_files=1
-   !
    file_name(2)="RT-qp"
-   if(l_RT_diagonalize) then 
-     n_output_files=n_output_files+1
-     call of_open_close(file_name(2),'ot')
-   endif
+   if(l_RT_diagonalize) call of_open_close(file_name(2),'ot')
    !
- else
-   n_output_files=0
- endif
- !
- do i1=1,n_output_files+1
-   !
-   where_ch='r'
-   hash_ch ='[RT]'
-   if (i1>1) where_ch='o '//file_name(i1-1)
-   if (i1>1) hash_ch ='# [RT]'
-   !
-   call msg(trim(where_ch),trim(hash_ch)//' Integrator            :',trim(Integrator_Name),INDENT=0)
-   call msg(trim(where_ch),trim(hash_ch)//' RPA                   :',l_NE_simulate_RPA,INDENT=0)
-   call msg(trim(where_ch),trim(hash_ch)//' Diamagnetic term      :',.not.l_RT_no_diamagnetic,INDENT=0)
-   call msg(trim(where_ch),trim(hash_ch)//' Intraband coupling    :',.not.l_RT_no_intraband,INDENT=0)
-   call msg(trim(where_ch),trim(hash_ch)//' Induced Field         :',.not.l_RT_induced_field,INDENT=0)
-   call msg(trim(where_ch),trim(hash_ch)//' Analyze QP-dynamics   :',l_RT_diagonalize,INDENT=0)
-   !
-   do i2=1,n_ext_fields
-     call msg(trim(where_ch),trim(hash_ch))
-     call msg(trim(where_ch),trim(hash_ch)//' External Field('//trim(intc(i2))//&
-&                                           ')      :',trim(EField(i2)%ef_name),INDENT=0)
-     call msg(trim(where_ch),trim(hash_ch)//' Intensity                  :',EField(i2)%intensity,INDENT=0)
-     call msg(trim(where_ch),trim(hash_ch)//' Amplitude                  :',EField(i2)%amplitude,INDENT=0)
-     call msg(trim(where_ch),trim(hash_ch)//' Frequancy                  :',EField(i2)%frequency,INDENT=0)
-     call msg(trim(where_ch),trim(hash_ch)//' Direction                  :',EField(i2)%versor,INDENT=0)
-   enddo  
-   !
-   if(l_NE_with_fields) then
-     call msg(trim(where_ch),trim(hash_ch)//' Initial Vecpot             :',&
-     &               (/real(A_vecpot%vecpot),aimag(A_vecpot%vecpot)/),INDENT=0)
-     call msg(trim(where_ch),trim(hash_ch)//' Initial Vecpot Velocity    :',&
-     &               (/real(A_vecpot%vecpot_vel),aimag(A_vecpot%vecpot_vel)/),INDENT=0)
-   endif
-   !
-   if (i1>1) then 
+   do i1=1,n_output_files
+     !
+     where_ch='o '//file_name(i1)
+     !
+     do i_d=1,n_SC_descriptions
+       call msg(trim(where_ch),'#',trim(SC_description(i_d)),INDENT=0)
+     enddo
+     !
      call msg(trim(where_ch),'#')
      call msg(trim(where_ch),'#',headings(1:8),INDENT=0,USE_TABS=.TRUE.)
      call msg(trim(where_ch),'#')
-   endif
+     !
+   enddo
    !
- enddo
+ else if (i_t<0) then
+   !
+   call of_open_close(file_name(1))
+   call of_open_close(file_name(2))
+   !
+ endif
+ !
+ if (i_t>0) call msg('o dynamics','',values(1:8),USE_TABS=.TRUE.)
  !
 end subroutine RT_report

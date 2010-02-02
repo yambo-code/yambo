@@ -229,7 +229,7 @@ subroutine K_inversion(iq,W,E,k,q)
  full_diago=.false.
  call pp_indexes_reset(px)
  call par_indexes(px,(/W%n(1)/))
- call live_timing('Freq loop [pert]',px%stps(myid+1))
+ call live_timing('Freq loop [pert]',px%n_of_element_1D(myid+1))
  call perform_invertion(1,W%n(1))
  call pp_redux_wait(inv_err,imode=2)
  !
@@ -298,10 +298,10 @@ subroutine K_inversion(iq,W,E,k,q)
    !
    call pp_indexes_reset(px)
    call par_indexes(px,(/full_inf_freqs/))
-   call live_timing('Freq loop [full]',px%stps(myid+1))
+   call live_timing('Freq loop [full]',px%n_of_element_1D(myid+1))
    full_diago=.true.
    do i1=1,full_inf_freqs
-     if (.not.px%i1p(i1)) cycle
+     if (.not.px%element_1D(i1)) cycle
      iw=iw_full(i1)
      call perform_invertion(iw,1)
      call live_timing(steps=1)
@@ -358,7 +358,7 @@ subroutine K_inversion(iq,W,E,k,q)
        !
        if(.not.full_diago) then
          !
-         if (.not.px%i1p(i2)) cycle
+         if (.not.px%element_1D(i2)) cycle
          !
        endif
        !

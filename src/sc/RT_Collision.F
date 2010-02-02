@@ -65,9 +65,9 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
    !
    if(l_sc_contains_lda.and.SC_xc_functional/=0) then
      !
-     call IO_and_Messaging_switch("report log io_in io_out")
+     call IO_and_Messaging_switch("-report -log -io_in -io_out")
      call xc_lda_driver(Xen,k,WF_KIND,WF_xc_functional,1,G_input)
-     call IO_and_Messaging_switch("  ")
+     call IO_and_Messaging_switch("+report +log +io_in +io_out")
      V_xc_sc=V_xc
      !
    endif
@@ -92,7 +92,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  !
  do ik=1,QP_nk 
    !
-   if (.not.px%i1p(ik)) cycle
+   if (.not.px%element_1D(ik)) cycle
    !
    H_nl_sc=(0._SP,0._SP)
    !

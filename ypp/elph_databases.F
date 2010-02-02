@@ -115,7 +115,7 @@ integer function elph_databases(k,E,q)
  !
  ! Force DB fragmentation
  !
- call IO_and_Messaging_switch("DB_is_fragmented")
+ call IO_and_Messaging_switch("+DB_is_fragmented")
  !
  ! With the external ph_freqs_file I can overwrite the 
  ! phonon frequencies read from the s.dbph* files. In this way I can, for example, 
@@ -163,7 +163,7 @@ integer function elph_databases(k,E,q)
  !
  call elph_global_free()
  !
- call IO_and_Messaging_switch(" ")
+ call IO_and_Messaging_switch("-DB_is_fragmented")
  !
  contains
    !

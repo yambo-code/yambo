@@ -391,14 +391,14 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 &                                   trim(intc(BS_E_degs(lambda)))//' -> '//&
 &                                   trim(intc(BS_E_degs(lambda)+n_lambda_deg-1)))
    !
-   call live_timing('ExcWF@'//trim(intc(lambda)),px%stps(myid+1))  
+   call live_timing('ExcWF@'//trim(intc(lambda)),px%n_of_element_1D(myid+1))  
    !
    v2plot  =0._SP
    wf_vc   =(0._SP,0._SP)
    !
    do ir=1,nr_tot
      !
-     if (.not.px%i1p(ir)) cycle
+     if (.not.px%element_1D(ir)) cycle
      !
      if (l_free_hole) then
        r_eh(:)=0.

@@ -89,7 +89,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  call pp_indexes_reset(px)
  call par_indexes(px,(/Xk%nibz,iv_max/),(/1,X%ib(1)/))
- call live_timing('Dipole (T):',px%stps(myid+1)*n_spin)
+ call live_timing('Dipole (T):',px%n_of_element_1D(myid+1)*n_spin)
  call pp_redux_wait
  !
  wf_dim=3
@@ -130,7 +130,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
      !
      do iv=X%ib(1),iv_max 
        !
-       if (.not.px%i2p(ik,iv)) cycle
+       if (.not.px%element_2D(ik,iv)) cycle
        !
        do ic=ic_min,X%ib(2)
          !

@@ -21,19 +21,16 @@
 !
 subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
- use pars,           ONLY:SP,lchlen
- use drivers,        ONLY:l_sc_hf,l_sc_cohsex
+ use pars,           ONLY:SP
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:FS2AUT
- use com,            ONLY:msg,of_open_close
  use timing,         ONLY:live_timing 
  use electrons,      ONLY:levels
- use X_m,            ONLY:X_t,Eval_P_and_P2_only,X_alloc
- use wave_func,      ONLY:wf,WF_load,wf_ng,WF_free
+ use X_m,            ONLY:X_t,X_alloc
+ use wave_func,      ONLY:WF_load,WF_free
  use frequency,      ONLY:w_samp
- use R_lattice,      ONLY:bz_samp,qindx_S,G_m_G
- use QP_m,           ONLY:QP_nb,QP_t,QP_ng_Sx,QP_n_G_bands,COHSEX_use_empties
- use SC,             ONLY:SC_potential,SC_bands,it_now,local_V
+ use R_lattice,      ONLY:bz_samp
+ use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser, &
 &                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,      &
 &                         i_time,Integrator_name,l_RT_diagonalize,        &
@@ -42,7 +39,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  use collisions_CACHE, ONLY:free_COLLISIONS_v
  !
  implicit none
- !
  ! if l_qp_analyze=.true.  "en"  will contains new energies and occupations
  ! otherwise it will not be used
  !
@@ -55,49 +51,36 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  ! 
  ! Work Space
  !
- integer, external :: eval_G_minus_G
- !
- character(lchlen)        :: file_name(2)
- integer                  :: WF_G_max,WF_Go_indx,it,i1
- real(SP)                 :: values(9), RT_time  ! The real time on the diagonal RTime = it*RT_step    
+ integer                  :: it,i1
+ real(SP)                 :: RT_time  ! The real time on the diagonal RTime = it*RT_step    
  complex(SP)              :: Trace_Gf,E_kin,E_ion,E_h,E_x,E_xc,E_mg 
- type(QP_t)               :: qp_dummy
  !
  call section('*',trim(SC_potential)//' Real-Time Dynamics')
  !##########################################################
  !
- call set_real_printed_length(f_length=15,g_length=15)  
+ call set_real_printed_length(f_length=10,g_length=10)  
  !
- X(1)%ib(2)=SC_bands
- X(1)%ng   =wf_ng
- Eval_P_and_P2_only=.true.
+ ! Dipoles & WF dimensions
+ !=========================
+ ! 
+ call SC_WF_and_dipole_dimensions(X(:2))
+ !
+ ! Dipoles
+ !========
+ !
+ ! before loading the WF in R-space I check and/or calculate
+ ! the optical collisions that are done in G-space and would
+ ! force the reloading of the WFs
+ !
  call Dipole_driver(Xen, Xk, X(1), X(1)%q0)
+ !
+ ! Switch 
+ !=======
  !
  call XC_switch()
  !
- WF_G_max=wf_ng
- !
- if (l_sc_hf.or.l_sc_cohsex) then
-   !
-   QP_nb=SC_bands
-   WF_Go_indx=maxval(qindx_S(:,:,2))
-   !
-   if (l_sc_cohsex) then
-     X(2)%ng=eval_G_minus_G(X(2)%ng,0)
-     WF_G_max=max(QP_ng_Sx,maxval(G_m_G))
-     QP_n_G_bands(2)=SC_bands
-     COHSEX_use_empties=.FALSE.
-   endif
-!   call QP_state_table_setup(Xen)
-!   !
-!   !
-!   !call XCo_Hartree_Fock(Xen, k, Xk, q)
-!   !if(l_sc_cohsex) call QP_ppa_cohsex(X(2),Xk,en,k,q,qp_dummy,Xw(2),-1) 
- else
-   WF_Go_indx=1  
- endif
- !
  ! WFs loading
+ !=============
  !
  call WF_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),space='R',title=' ')  
  !
@@ -123,15 +106,11 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    call X_alloc("P_square")
    !
-   call RT_report(file_name,.false.)
-   !
    return
    !
  endif
  !
  if(.not.local_V) call load_COLLISIONS()
- !
- call RT_report(file_name,.true.)
  !
  if(Thermal_steps/=0.and.it_now<=Thermal_steps) then
    ! 
@@ -178,12 +157,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    call RT_Energy(Xen,k,E_kin,E_ion,E_h,E_x,E_xc,E_mg,Trace_Gf)
    !
-   ! Now print the Energy and other stuff
-   !
-   values(1:8)=(/RT_time/FS2AUT,real(E_kin,SP),real(E_ion,SP),real(E_h,SP),&
-&              real(E_x,SP),real(E_xc,SP),real(E_mg,SP),real(Trace_Gf,SP)/)
-   call msg('o dynamics','',values(1:8),USE_TABS=.TRUE.)
-   !
    if(l_RT_diagonalize) call RT_qp_analyze(it,en,k,Xk,G_lesser)
    !
    if(LifeTime/=0.0.and.it<Thermal_steps.and.mod(it,RT_diagonalization_steps)==0) then
@@ -200,12 +173,16 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    call RT_write_dbs(Xen,it)
    !
+   ! Now print the Energy and other stuff
+   !
+   call RT_report(it,(/RT_time/FS2AUT,real(E_kin,SP),real(E_ion,SP),real(E_h,SP),&
+&                    real(E_x,SP),real(E_xc,SP),real(E_mg,SP),real(Trace_Gf,SP)/))
+   !
  enddo
  !
  if(NE_steps/=0) call live_timing
  !
- call of_open_close(file_name(1))
- if(l_RT_diagonalize) call of_open_close(file_name(2)) 
+ call RT_report(-1,spread(0.,1,4))
  !
  ! Finalize
  !-----------

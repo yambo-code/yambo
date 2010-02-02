@@ -103,7 +103,7 @@ subroutine load_COLLISIONS()
  !
  do while(cache_memory<COLLISIONS_cache_size.and.i_qp<=QP_n_states)  
    !
-   if(.not.px%i1p(i_qp)) cycle  
+   if(.not.px%element_1D(i_qp)) cycle  
    !
    allocate(CACHE(i_qp)%COLLISIONS_table(QP_nb,QP_nb,QP_nk))
    call mem_est(" QP_COLLISIONS_table_"//trim(intc(i_qp)),(/LP/))

@@ -186,7 +186,7 @@ subroutine K_scattering(iq,ik1,ik2,Xk,q)
              scatt_stat(ib1-b_ref,ib2-b_ref,is_coll,i_spin1)=O_n_scatt
              if (.not.allocated(BS_O)) cycle
              if (.not.eval_collision) cycle
-             if (.not.p_index%i1p(O_n_scatt)) cycle
+             if (.not.p_index%element_1D(O_n_scatt)) cycle
              !
              isc%is=(/ib1,ik1,1,i_spin1/)
              isc%os=(/ib2,ik2,is_coll,i_spin1/)

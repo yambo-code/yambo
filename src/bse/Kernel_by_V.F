@@ -105,7 +105,7 @@ subroutine Kernel_by_V(iq,iter,Vi,Vo)
        if (use_fragments) then
          frag_pointer=BS_k_and_row_restart(:2)
          BS_k_and_row_restart=0
-         if (.not.Kp%i1p(BS_IO_index(ik1,ik2)-1)) cycle
+         if (.not.Kp%element_1D(BS_IO_index(ik1,ik2)-1)) cycle
          allocate(BS_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
          if (BS_K_coupling) allocate(BS_cpl_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
          ACTION=OP_RD_CL

@@ -252,7 +252,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !===========
  !
  call pp_redux_wait
- call live_timing(trim(Sc_name)//'W0',px%stps(myid+1)*(q%nbz-iq_to_start+1))
+ call live_timing(trim(Sc_name)//'W0',px%n_of_element_1D(myid+1)*(q%nbz-iq_to_start+1))
  !
  do iqbz=iq_to_start,q%nbz
    !
@@ -327,7 +327,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
 &               h2ht(isc%is(:2),isc%os(:2),en,life_Fh))
        if (l_life) QP_n_W_freqs=QP_n_W_freqs+i_or
        !
-       if (.not.px%i2p(i1,ib)) cycle
+       if (.not.px%element_2D(i1,ib)) cycle
        !
        iscp%os=isc%os
        call live_timing(steps=1)

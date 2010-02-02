@@ -258,6 +258,7 @@ subroutine RT_fix_symmetries(E,k)
    !
    call msg('s',':: Copying existing database ...')
    !
+   call cp_file(trim(core_io_path)//"/SAVE/ns.kb_pp",trim(more_io_path)//"/SAVE",ierr)
    call cp_file(trim(core_io_path)//"/SAVE/ns.wf",trim(more_io_path)//"/SAVE",ierr)
    call cp_file(trim(core_io_path)//"/SAVE/s.wf",trim(more_io_path)//"/SAVE",ierr)
    do ik=1,k%nibz
@@ -275,7 +276,7 @@ subroutine RT_fix_symmetries(E,k)
  !
  ! Rotating wavefunctions components
  !
- call msg('s',':: Rotating wavefunctions')
+ call msg('s',':: Rotating wavefunctions ...')
  !
  allocate(wf_nc_k_save(k_save%nibz),wf_igk_save(wf_ncx,k_save%nibz))
  wf_nc_k_save=wf_nc_k
@@ -299,6 +300,8 @@ subroutine RT_fix_symmetries(E,k)
  !
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
+ !
+ call msg('l','done')
  !
  call section('=',"Final I/O")
  !============================

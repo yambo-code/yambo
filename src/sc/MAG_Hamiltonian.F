@@ -234,16 +234,16 @@ subroutine MAG_Hamiltonian(initial_check_only)
  !
  do ik=1,nkibz   
    ! 
-   if( any(px%i2p(ik,:)) ) then
+   if( any(px%element_2D(ik,:)) ) then
      if (MAG_landau) call WF_derivative((/1,SC_bands/),(/ik,ik/),do_derivatives)
      call WF_load(0,1,(/1,SC_bands/),(/ik,ik/),title='-MAG',impose_free_and_alloc=.TRUE.)
-     if(timing_init) call live_timing('MAG-Hamiltonian',px%stps(myid+1))
+     if(timing_init) call live_timing('MAG-Hamiltonian',px%n_of_element_1D(myid+1))
      timing_init=.false.
    endif
    !
    do ib=1,SC_bands
      !
-     if (.not.px%i2p(ik,ib)) cycle
+     if (.not.px%element_2D(ik,ib)) cycle
      !
      do ibp=1,SC_bands
        do i_spin=1,n_sp_pol   

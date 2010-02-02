@@ -89,7 +89,7 @@ subroutine cutoff_cylinder(q,is_cut)
  !
  call par_indexes(px,(/q%nibz,wf_ng/))
  !
- call live_timing('Cylinder',px%stps(myid+1))
+ call live_timing('Cylinder',px%n_of_element_1D(myid+1))
  !
  ! finite cylinder
  !
@@ -105,7 +105,7 @@ subroutine cutoff_cylinder(q,is_cut)
    allocate (iwork2(leniw),work2(lenw2))
    do ig=1,wf_ng
      do iq=1,q%nibz
-       if (.not.px%i2p(iq,ig)) cycle
+       if (.not.px%element_2D(iq,ig)) cycle
        cyl_vz_save=(q%pt(iq,ipar)+g_vec(ig,ipar) )*2.*pi/alat(ipar)
        cyl_vr_save=sqrt(((q%pt(iq,iort1)+g_vec(ig,iort1))*2.*pi/alat(iort1))**2+&
 &            ((q%pt(iq,iort2)+g_vec(ig,iort2))*2.*pi/alat(iort2))**2)
@@ -158,7 +158,7 @@ subroutine cutoff_cylinder(q,is_cut)
    allocate (iwork(limit),work(lenw))
    do ig=1,wf_ng
      do iq=1,q%nibz
-       if (.not.px%i2p(iq,ig)) cycle
+       if (.not.px%element_2D(iq,ig)) cycle
        cyl_vz_save=(q%pt(iq,ipar)+g_vec(ig,ipar) )*2.*pi/alat(ipar)
        cyl_vr_save=sqrt(((q%pt(iq,iort1)+g_vec(ig,iort1))*2.*pi/alat(iort1))**2+&
 &                 ((q%pt(iq,iort2)+g_vec(ig,iort2))*2.*pi/alat(iort2))**2)

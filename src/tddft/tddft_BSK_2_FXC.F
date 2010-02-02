@@ -161,14 +161,14 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  call par_indexes(p1,(/BS_blk_dim(ik1)/))
  do i1=1,BS_blk_dim(ik1)
-   if (.not.p1%i1p(i1)) cycle
+   if (.not.p1%element_1D(i1)) cycle
    right_R(i1,:)=matmul(BS_mat(i1,:),O2x_qpg(:,:))
  enddo
  call pp_redux_wait(right_R)
  !
  call par_indexes(p2,(/BS_blk_dim(ik2)/))
  do i2=1,BS_blk_dim(ik2)
-   if (.not.p2%i1p(i2)) cycle
+   if (.not.p2%element_1D(i2)) cycle
    left_R(:,i2)=-matmul(conjg_O1x_qpg(:,:),BS_mat(:,i2))
  enddo
  call pp_redux_wait(left_R)
@@ -205,7 +205,7 @@ subroutine tddft_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
    !
    do iw=iw_blk,iw_blk+W%n(2)-1
      !
-     if (.not.p1%i1p(iw-iw_blk+1)) then
+     if (.not.p1%element_1D(iw-iw_blk+1)) then
        FXC(:,:,iw-iw_blk+1)=(0._SP,0._SP)
        cycle
      endif

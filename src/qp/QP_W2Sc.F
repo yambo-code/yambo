@@ -70,7 +70,7 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
    os(2)=k%sstar(qindx_S(is(2),iqbz,1),1) ! (nk) intermediate state
    !
    do ib=QP_n_G_bands(1),QP_n_G_bands(2)
-     if (.not.px%i1p(ib)) cycle
+     if (.not.px%element_1D(ib)) cycle
      !
      os(1)=ib
      !

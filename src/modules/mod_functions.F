@@ -64,7 +64,7 @@ module functions
    pure function bose_f(Eb)
      !
      use drivers,   ONLY:Finite_Tel
-     use D_lattice, ONLY:Tel
+     use D_lattice, ONLY:Bose_Temp
      real(SP), intent(in):: Eb
      real(SP)            :: bose_f
      bose_f=0.
@@ -74,10 +74,10 @@ module functions
      ! GPL_EXCLUDE_START
      !
      if (abs(Eb)>epsilon(1.)) then
-       if (abs(Eb)<=bose_E_cut*Tel) bose_f=2.*Tel/Eb
-       if (abs(Eb)> bose_E_cut*Tel) bose_f=2./(exp(Eb/Tel)-1.)
+       if (abs(Eb)<=bose_E_cut*Bose_Temp) bose_f=2.*Bose_Temp/Eb
+       if (abs(Eb)> bose_E_cut*Bose_Temp) bose_f=2./(exp(Eb/Bose_Temp)-1.)
      else
-       bose_f=2.*Tel/epsilon(1.)
+       bose_f=2.*Bose_Temp/epsilon(1.)
      endif
      !
      ! GPL_EXCLUDE_END

@@ -364,7 +364,7 @@ contains
     ! Here read any data not appearing in ETSF specs, or not
     ! yet supported properly
     !
-    use D_lattice,            only : default_Tel, n_atomic_species, n_atoms_species
+    use D_lattice,            only : input_GS_Tel, n_atomic_species, n_atoms_species
     use electrons,            only : spin_orbit, default_nel
     use xc_functionals,       only : XC_EXCHANGE_CORRELATION,GS_xc_KIND,GS_xc_FUNCTIONAL,&
 &                                  xc_string,XC_LDA_C_PW,XC_LDA_C_PZ,XC_LDA_C_WIGNER,&
@@ -377,7 +377,7 @@ contains
     if(lstat) then
       default_Tel = temperature_ ! type conversion
     else
-      default_Tel = 0.0_SP
+      input_GS_Tel = 0.0_SP
     endif
     !
     ! Number of electrons (Abinit)

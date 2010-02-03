@@ -21,6 +21,8 @@
 !
 ! Partialy inspired from Octopus v. 3.1.0
 !
+! Copyright (C) 2002 M. Marques, A. Castro, A. Rubio, G. Bertsch
+!
 subroutine RT_spectrum(en,k)
  !
  use YPP

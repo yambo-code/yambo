@@ -25,7 +25,7 @@ subroutine k_random(Xk,Xen)
  use units,               ONLY:HARTREE
  use stderr,              ONLY:set_real_printed_length
  use R_lattice,           ONLY:bz_samp,nkibz
- use D_lattice,           ONLY:alat,nsym,default_Tel,a
+ use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a
  use com,                 ONLY:msg,of_open_close
  use vec_operate,         ONLY:ak2bz,v_norm,c2a
  use YPP,                 ONLY:BZ_RIM_nkpts,BZ_RIM_path,gamma_radius,K_transform
@@ -143,7 +143,7 @@ subroutine k_random(Xk,Xen)
  enddo
  !
  call msg('s',':: Electrons             :',default_nel)
- call msg('s',':: Temperature       [ev]:',default_Tel)
+ call msg('s',':: Temperature       [ev]:',input_GS_Tel)
  call msg('s',':: Lattice factors [a.u.]:',alat)
  call msg('s',':: K points              :',nkibz)
  call msg('s',':: Bands                 :',n_bands)

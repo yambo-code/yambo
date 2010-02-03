@@ -257,6 +257,8 @@ module real_time
        call mem_est("Occ_natural",(/size(Occ_natural_orb)/))
      endif
      !
+     call collisions_IO_alloc()
+     !
    end subroutine RT_alloc
    
    subroutine RT_free
@@ -266,7 +268,7 @@ module real_time
      use memory_m,       ONLY:mem_est
      use QP_m,           ONLY:QP_Vnl_xc
      use xc_functionals, ONLY:E_xc
-     use collisions_IO, ONLY:collisions_IO_free
+     use collisions_IO,  ONLY:collisions_IO_free
      implicit none
      !
      call SC_free()

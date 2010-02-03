@@ -26,7 +26,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use drivers,        ONLY:l_sc_cohsex,l_collisions_IO 
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin
  use R_lattice,      ONLY:bz_samp
- use D_lattice,      ONLY:Tel
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
  use SC,             ONLY:SC_bands,SC_iterations,rho_n,SC_rho_threshold,it_now,E_convergence,&
 &                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,&
@@ -129,7 +128,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !  Ho (kinetic + potential)
  !---------------------------
  !
- call fermi_level(E,k,Tel,2)  
+ call fermi_level(E,k,2)  
  call msg('r','')
  call SC_bare_Hamiltonian(E,Xk,k)
  !
@@ -316,7 +315,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      forall (ib=SC_bands+1:E%nb) E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_bands,:,:)-E_previous(SC_bands,:,:)
      !
-     call fermi_level(E,k,Tel,1) 
+     call fermi_level(E,k,1) 
      !
      ! New density 
      !=============
@@ -555,7 +554,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      ! Final occupations 
      !====================
-     if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle)) call fermi_level(E,k,Tel,2)  
+     if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle)) call fermi_level(E,k,2)  
      !
      dE(:,:,:)=E%E(:SC_bands,:,:)-E_bare(:,:,:)
      !

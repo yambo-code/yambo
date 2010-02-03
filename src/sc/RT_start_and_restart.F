@@ -51,7 +51,7 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  !
  ! Work Space
  !
- integer :: ik,it,i1
+ integer :: ik,it,i1,COM_
  integer :: io_E,io_V,io_WF,io_G,io_J
  logical :: RESTART
  logical :: SC_DB_present
@@ -89,9 +89,12 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  io_WF=io_SC_components('WF',Xen,ID(2))
  call io_control(ACTION=OP_RD_CL,COM=REP ,SEC=(/1/),MODE=VERIFY,ID=ID(3)) ! Local potential
  io_V=io_SC_components('V' ,Xen,ID(3))
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
+ !
+ COM_=REP
+ call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
  io_J=io_SC_components('J' ,Xen,ID(4))
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(5)) ! G_lesser
+ if (io_J==0) COM_=NONE
+ call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(5)) ! G_lesser
  io_G=io_SC_components('G' ,Xen,ID(5))
  !
  ! To restart from RT only the G_lesser is necessary

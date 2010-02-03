@@ -27,7 +27,7 @@ integer function ioDB1(E,k,ID)
  use LOGO,             ONLY:code_version,code_revision
  use electrons,        ONLY:levels,default_nel,n_spin,n_bands,nel,n_sp_pol,&
 &                           n_spinor
- use D_lattice,        ONLY:a, alat, nsym, i_time_rev, default_Tel, dl_sop, &
+ use D_lattice,        ONLY:a, alat, nsym, i_time_rev, input_GS_Tel, dl_sop, &
 &                           Tel, n_atoms_species_max,n_atomic_species,n_atoms_species,atom_pos, &
 &                           Z_species, n_atoms
  use R_lattice,        ONLY:ng_vec, g_vec, bz_samp,nkibz,&
@@ -128,7 +128,7 @@ integer function ioDB1(E,k,ID)
    !
    n_spin=max(n_sp_pol,n_spinor,1)
    !
-   call io_elemental(ID, UNIT=HARTREE,R0=default_Tel,CHECK=.true.,OP=(/"=="/),&
+   call io_elemental(ID, UNIT=HARTREE,R0=input_GS_Tel,CHECK=.true.,OP=(/"=="/),&
 &                    VAR=' Temperature                 [ev]:')
    call io_elemental(ID, R0=default_nel,CHECK=.true.,OP=(/"=="/),&
 &                    VAR=' Electrons                       :')
@@ -185,7 +185,7 @@ integer function ioDB1(E,k,ID)
      SC_bands=E%nb
 #endif
      !
-     Tel=default_Tel
+     Tel=input_GS_Tel
      nel=default_nel
      !
      ng_closed=ng_vec

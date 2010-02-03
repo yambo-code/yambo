@@ -32,8 +32,9 @@ module D_lattice
  ! Temperature
  !
  real(SP) :: Tel
- real(SP) :: default_Tel
- logical  :: input_Tel_fixed
+ real(SP) :: Bose_Temp
+ real(SP) :: input_GS_Tel
+ logical  :: input_Tel_commands_over_header
  !
  ! SYMs
  !

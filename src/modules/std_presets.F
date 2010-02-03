@@ -39,7 +39,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     Vnlxc_kind,Vxc_kind,l_extended_output 
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,n_atoms_species_max,n_atomic_species,&
-&                     input_Tel_fixed,non_periodic_directions,lattice
+&                     input_Tel_commands_over_header,non_periodic_directions,lattice,Bose_Temp
  use pseudo,     ONLY:pp_n_l_comp_max,pp_kbv_dim
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
@@ -77,14 +77,14 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 #if defined _SC
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,&
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB
- use collisions_IO,ONLY:n_collisions,COLLISIONS_cutoff
+ use collisions_IO,    ONLY:n_collisions,COLLISIONS_cutoff
+ use collisions_CACHE, ONLY:COLLISIONS_cache_size
 #endif
 #if defined _RT
  use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Efield,Integrator_name,            &
 &                     RT_diagonalization_steps, LifeTime,l_NE_simulate_RPA, n_ext_fields, &
 &                     Thermal_time,max_rt_steps_disk,l_RT_no_intraband,l_RT_induced_field,&
 &                     l_RT_diagonalize
- use collisions_CACHE, ONLY:COLLISIONS_cache_size
 #endif
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
@@ -173,9 +173,10 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  !D_lattice
  !
- input_Tel_fixed=.false.
+ input_Tel_commands_over_header=.false.
  non_periodic_directions='none'
  lattice='Unknown'
+ Bose_Temp=-1.
  !
  ! R_lattice
  !
@@ -412,6 +413,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  ! COLLISIONS I/O
  !
  n_collisions=0
+ COLLISIONS_cache_size=-1.0
+ COLLISIONS_cutoff=0.0005
  !
 #endif
 #if defined _RT
@@ -438,8 +441,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  RT_diagonalization_steps=10
  l_RT_diagonalize=.FALSE.
  max_rt_steps_disk=200
- COLLISIONS_cutoff=0.0005
- COLLISIONS_cache_size=-1.0
  l_RT_no_intraband=.FALSE.
  l_RT_induced_field=.FALSE.
  !

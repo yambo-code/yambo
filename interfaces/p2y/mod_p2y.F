@@ -164,7 +164,7 @@ contains
    use electrons,             ONLY : default_nel, n_spin, n_sp_pol, &
 &                                    n_spinor
    use R_lattice,             ONLY : ng_vec
-   use D_lattice,             ONLY : default_Tel, n_atomic_species
+   use D_lattice,             ONLY : input_GS_Tel, n_atomic_species
    use wave_func,             ONLY : wf_ncx 
    use com,                   ONLY : msg, error
    use timing,                ONLY : live_timing_is_on
@@ -261,7 +261,7 @@ contains
    !
    ! GPL_EXCLUDE_END SPIN_IGNORE
    !
-   default_Tel = 0.d0
+   input_GS_Tel = 0.d0
    !
    return
  end subroutine get_dimensions

@@ -93,7 +93,6 @@ module QP_CTL_m
      use memory_m,      ONLY:mem_est
      use QP_m,          ONLY:QP_t,QP_reset,QP_ctl_E,QP_ctl_W,QP_ctl_Z,&
 &                            QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db
-     use D_lattice,     ONLY:Tel
      use com,           ONLY:msg,depth
      use electrons,     ONLY:levels,E_reset,n_sp_pol,&
 &                            BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_nbands,BZ_RIM_tot_nkpts
@@ -291,7 +290,7 @@ module QP_CTL_m
        !
        ! GPL_EXCLUDE_END
        !
-       call fermi_level(en,k,Tel,1)
+       call fermi_level(en,k,1)
        !
      endif
      !
@@ -306,7 +305,7 @@ module QP_CTL_m
        allocate(Fermi_en%E(Fermi_en%nb,Fermi_en%nk,n_sp_pol))
        Fermi_en%E(:,:,:)=en%E(:,:nXkibz,:)
        !
-       call fermi_level(Fermi_en,k,Tel,1)
+       call fermi_level(Fermi_en,k,1)
        call extend_occupations(Fermi_en,en)
        !
        nullify(Fermi_en%E)

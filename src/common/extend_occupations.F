@@ -85,7 +85,7 @@ subroutine extend_occupations(Xe,E)
  endif
  !
  if (E%nbf/=Xe%nbf.or.E%nbm/=Xe%nbm) then
-   call warning('X and total energy levels have different metallic character')
+   call warning('Global and response function energy levels have different metallic character')
  endif
  !
  contains

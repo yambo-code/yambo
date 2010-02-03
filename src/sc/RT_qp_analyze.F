@@ -33,7 +33,6 @@ subroutine RT_qp_analyze(it,en,k,xK,G_input)
  use stderr,         ONLY:set_real_printed_length,intc,real2ch
  use SC,             ONLY:H_nl_sc,SC_bands,E_bare
  use R_lattice,      ONLY:bz_samp
- use D_lattice,      ONLY:Tel
  use units,          ONLY:FS2AUT
  use com,            ONLY:msg
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
@@ -80,7 +79,7 @@ subroutine RT_qp_analyze(it,en,k,xK,G_input)
    !
  enddo
  !
- call fermi_level(en,k,Tel,0)
+ call fermi_level(en,k,0)
  !
  en%E(:SC_bands,:,:)=en%E(:SC_bands,:,:)-en%Efermi(1)
  !

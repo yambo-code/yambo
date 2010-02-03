@@ -122,8 +122,8 @@ cat > yambo_rt.in << EOF
 scpot                        # [R] Self-Consistent potentials
 HF_and_locXC                 # [R XX] Hartree-Fock Self-energy and Vxc
 negf                         # [R] Real-Time dynamics
-rhoIO                        # [R] Extended oscillators IO
-EXXRLvcs= 300         RL    # [XX] Exchange RL components
+collisions_IO                # [R] Extended oscillators IO
+EXXRLvcs= 300          RL    # [XX] Exchange RL components
 SCBands=  8                  # [SC] Bands
 Potential= "HARTREE-FOCK"    # [SC] SC Potential
 BandMix= 100.0000            # [SC] Band mixing

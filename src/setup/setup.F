@@ -25,7 +25,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use pars,           ONLY:SP,pi,schlen
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
-&                         atoms_spatial_invertion,i_space_inv,input_Tel_fixed,&
+&                         atoms_spatial_invertion,i_space_inv,input_Tel_commands_over_header,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
 &                         symmetry_group_table
@@ -233,10 +233,10 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! fixed in the calculation (not overwritten in io_header.F, for
  ! example).
  !
- input_Tel_fixed=Tel<0.
+ input_Tel_commands_over_header=Tel<0.
  Tel=abs(Tel)
  !
- call fermi_level(Xen,Xk,Tel,2)
+ call fermi_level(Xen,Xk,2)
  call extend_occupations(Xen,en)
  !
  n_met_bands =en%nbm

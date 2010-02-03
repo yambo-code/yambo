@@ -38,7 +38,7 @@ subroutine fermi_msg(E,mode)
  real(SP):: r_nk,ind_gaps(2),dir_gaps(2)
  real(SP),parameter:: tresh=epsilon(1._SP)
  character(lchlen) :: ch_
- character(27)     :: prefix_
+ character(23)     :: prefix_
  !
  ! Evaluate Metallic/Filled bands
  !
@@ -80,7 +80,7 @@ subroutine fermi_msg(E,mode)
  E%Efermi(2:)=E%Efermi(1)+(/maxval(E%E(E%nbf,:,:)),minval(E%E(E%nbf+1,:,:))/)
  if (E%nbf/=E%nbm) E%Efermi(2:)=0.
  !
- call msg('r','States summary             : Full        Metallic    Empty')
+ call msg('r','States summary         : Full        Metallic    Empty')
  !
  ! [1] States occupations
  !
@@ -88,8 +88,8 @@ subroutine fermi_msg(E,mode)
    i1=1
    !
    prefix_=''
-   if (n_sp_pol>1.and.i_s_pol==1) prefix_='                 [spin up]'
-   if (n_sp_pol>1.and.i_s_pol==2) prefix_='                      [dn]'
+   if (n_sp_pol>1.and.i_s_pol==1) prefix_='             [spin up]'
+   if (n_sp_pol>1.and.i_s_pol==2) prefix_='                  [dn]'
    !
    if (nbf_(i_s_pol)==0) i1=0
    if (nbf_(i_s_pol)/=nbm_(i_s_pol)) then
@@ -109,9 +109,9 @@ subroutine fermi_msg(E,mode)
    !
    if (nbf_(i_s_pol)/=nbm_(i_s_pol)) cycle
    !
-   prefix_='Indirect Gaps          [ev]:'
-   if (n_sp_pol>1.and.i_s_pol==1) prefix_='Indirect Gaps [ev] spin up'
-   if (n_sp_pol>1.and.i_s_pol==2) prefix_='                        dn'
+   prefix_=                               'Indirect Gaps      [ev]:'
+   if (n_sp_pol>1.and.i_s_pol==1) prefix_='Indirect Gaps [ev] [up]'
+   if (n_sp_pol>1.and.i_s_pol==2) prefix_='                   [dn]'
    ind_gaps(1)=minval(E%E(nbf_(i_s_pol)+1,:,i_s_pol))-maxval(E%E(nbf_(i_s_pol),:,i_s_pol))
    ind_gaps(2)=maxval(E%E(nbf_(i_s_pol)+1,:,i_s_pol))-maxval(E%E(nbf_(i_s_pol),:,i_s_pol))
    call msg('r',prefix_//':',ind_gaps*HARTREE)
@@ -124,9 +124,9 @@ subroutine fermi_msg(E,mode)
    !
    if (nbf_(i_s_pol)/=nbm_(i_s_pol)) cycle
    !
-   prefix_='Direct Gaps            [ev]:'
-   if (n_sp_pol>1.and.i_s_pol==1) prefix_='Direct Gaps   [ev] spin up:'
-   if (n_sp_pol>1.and.i_s_pol==2) prefix_='                        dn:'
+   prefix_=                               'Direct Gaps        [ev]:'
+   if (n_sp_pol>1.and.i_s_pol==1) prefix_='Direct Gaps   [ev] [up]:'
+   if (n_sp_pol>1.and.i_s_pol==2) prefix_='                   [dn]:'
    dir_gaps=(/100.,-100./)
    do i1=1,E%nk
      dir_gaps(1)=min(dir_gaps(1),&

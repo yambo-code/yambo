@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine fermi_level(E,K,test_Tel,mode)
+subroutine fermi_level(E,K,mode)
  !
  ! Mode = 0 
  !  Update the Fermi energy
@@ -35,7 +35,7 @@ subroutine fermi_level(E,K,test_Tel,mode)
  use pars,          ONLY:SP,DP
  use units,         ONLY:HARTREE,Kelvin
  use drivers,       ONLY:Finite_Tel
- use D_lattice,     ONLY:Tel
+ use D_lattice,     ONLY:Tel,Bose_Temp
  use electrons,     ONLY:levels,nel,n_sp_pol,spin_occ,filled_tresh,&
 &                        BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spinor,n_spin
  use R_lattice,     ONLY:bz_samp
@@ -46,7 +46,6 @@ subroutine fermi_level(E,K,test_Tel,mode)
  type(levels) ::E
  type(bz_samp)::K
  integer :: mode
- real(SP):: test_Tel
  !
  ! Work Space
  !
@@ -54,7 +53,7 @@ subroutine fermi_level(E,K,test_Tel,mode)
 &           n_total_states,group_size
  integer :: index(E%nk*E%nb*n_sp_pol,3),index_E_sorted(E%nk*E%nb*n_sp_pol)
  real(SP):: E_sorted(E%nk*E%nb*n_sp_pol)
- real(SP):: n_of_el_from_zero(2),Ef(2),Efdist
+ real(SP):: n_of_el_from_zero(2),Ef(2),Efdist,local_Tel
  logical :: Fermi_is_converged
  real(SP),parameter :: Telstep=0.0001/HARTREE
  real(SP),parameter :: nel_diff_zero=1.E-5
@@ -65,6 +64,8 @@ subroutine fermi_level(E,K,test_Tel,mode)
  !       2        2        1         1          collinear
  !
  spin_occ=2.0_SP/real(n_spin)
+
+ local_Tel=Telstep
  !
  ! All energies are stored in E_sorted...
  !
@@ -127,7 +128,7 @@ subroutine fermi_level(E,K,test_Tel,mode)
    !
    group_size=max(1,int(n_total_states/500))
    do i1=1,n_total_states,group_size
-     call ef2nel(test_Tel,E_sorted(i1),n_of_el_from_zero(1))
+     call ef2nel(Tel,E_sorted(i1),n_of_el_from_zero(1))
      i_Ef(1)= (int(i1/group_size)-1)*group_size 
      if (group_size>1) i_Ef(1)=i_Ef(1)+1
      if (n_of_el_from_zero(1)>0) i_Ef(2)=i1
@@ -137,7 +138,7 @@ subroutine fermi_level(E,K,test_Tel,mode)
    ! 2. [Finer search] by moving of 1 element
    !
    do i1=i_Ef(1),i_Ef(2),1
-     call ef2nel(test_Tel,E_sorted(i1),n_of_el_from_zero(1))
+     call ef2nel(Tel,E_sorted(i1),n_of_el_from_zero(1))
      if ( abs(n_of_el_from_zero(1)) < nel_diff_zero) then
        E%Efermi(1)=E_sorted(i1)
        Fermi_is_converged=.true.
@@ -152,15 +153,15 @@ subroutine fermi_level(E,K,test_Tel,mode)
    !
    if (Fermi_is_converged) exit
    !
-   call ef2nel(test_Tel,Ef(1),n_of_el_from_zero(1))
-   call ef2nel(test_Tel,Ef(2),n_of_el_from_zero(2))
+   call ef2nel(Tel,Ef(1),n_of_el_from_zero(1))
+   call ef2nel(Tel,Ef(2),n_of_el_from_zero(2))
    !
    E%Efermi(1)=Ef(1)
    if (n_of_el_from_zero(2)<-n_of_el_from_zero(1)) E%Efermi(1)=Ef(2)
    !
    i_trials(2)=1
    do while (i_trials(2)<=100)
-     call ef2nel(test_Tel,E%Efermi(1),n_of_el_from_zero(1))
+     call ef2nel(Tel,E%Efermi(1),n_of_el_from_zero(1))
      if (n_of_el_from_zero(1)<-nel_diff_zero) Ef(1)=E%Efermi(1)
      if (n_of_el_from_zero(1)> nel_diff_zero) Ef(2)=E%Efermi(1)
      if (abs(n_of_el_from_zero(1))<=nel_diff_zero) then
@@ -174,14 +175,15 @@ subroutine fermi_level(E,K,test_Tel,mode)
    !
    if (Fermi_is_converged) exit
    !
-   test_Tel=test_Tel+Telstep
+   Tel=Tel+Telstep
    if (i_trials(1)==100) call error('Impossible to converge the Fermi Level')
    !
  enddo
  !
  ! Mode = 0. Check only for the Fermi energy
  !
- Finite_Tel=(Tel>=1.E-5)
+ if (Bose_Temp<0.) Bose_Temp=Tel
+ Finite_Tel=any((/Tel,Bose_Temp/)>=1.E-5)
  !
  ! GPL_INCLUDE_START
  !
@@ -202,7 +204,7 @@ subroutine fermi_level(E,K,test_Tel,mode)
    ik=index( index_E_sorted(i1) , 2)
    is=index( index_E_sorted(i1) , 3)
    !
-   E%f(ib,ik,is)=spin_occ*Fermi_fnc(E_sorted(i1)-E%Efermi(1),test_Tel)
+   E%f(ib,ik,is)=spin_occ*Fermi_fnc(E_sorted(i1)-E%Efermi(1),Tel)
    !
    if (abs(E%E(ib,ik,is)-E%Efermi(1))<Efdist) then
      if ( E%f(ib,ik,is) < filled_tresh ) cycle
@@ -223,7 +225,7 @@ subroutine fermi_level(E,K,test_Tel,mode)
    do ik=1,BZ_RIM_tot_nkpts
      do ib=1,BZ_RIM_nbands
        do is=1,n_sp_pol
-         E%f_RIM(ib,ik,is)=spin_occ*Fermi_fnc(E%E_RIM(ib,ik,is),test_Tel)
+         E%f_RIM(ib,ik,is)=spin_occ*Fermi_fnc(E%E_RIM(ib,ik,is),Tel)
        enddo
      enddo
    enddo
@@ -236,11 +238,12 @@ subroutine fermi_level(E,K,test_Tel,mode)
    return
  endif
  !
- call msg('r','Fermi Energy[ev] - T[ev/K] :',&
-&               (/E%Efermi(1)*HARTREE,test_Tel*HARTREE,test_Tel*Kelvin/))
+ call msg('r',  'Fermi Level        [ev]:',E%Efermi(1))
+ call msg('r',  'Electronic Temp. [ev K]:',(/Tel*HARTREE,Tel*Kelvin/))
+ call msg('r',  'Bosonic    Temp. [ev K]:',(/Bose_Temp*HARTREE,Bose_Temp*Kelvin/))
  call fermi_msg(E,mode)
  if (E%nbf/=E%nbm) then
-   call msg('r','Electrons - <f_met>        :',(/n_of_el_from_zero(1)+nel,&
+   call msg('r','Electrons - <f_met>    :',(/n_of_el_from_zero(1)+nel,&
 &               sum(E%f(E%nbf+1:E%nbm,:,:))/real(K%nibz*(E%nbm-E%nbf))/))
  endif
  !

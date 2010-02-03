@@ -186,7 +186,7 @@ module mod_com2y
 &                                      n_spinor, spin_orbit
      use R_lattice,             ONLY : bz_samp, ng_vec, g_vec
      use D_lattice,             ONLY : nsym, i_time_rev, i_space_inv, dl_sop, &
-&                                      DL_vol, a, alat, default_Tel, &
+&                                      DL_vol, a, alat, input_GS_Tel, &
 &                                      n_atoms_species_max,n_atomic_species,n_atoms_species, atom_pos, &
 &                                      Z_species
      use wave_func,             ONLY : wf_nc_k, wf_ncx, wf_igk, wf_ng,real_wavefunctions
@@ -197,7 +197,7 @@ module mod_com2y
      type(bz_samp),    intent(in)   :: k      ! K/Q points
      !
      call msg('s',' :: Electrons             :',default_nel)
-     call msg('s',' :: Temperature       [ev]:',default_Tel)
+     call msg('s',' :: Temperature       [ev]:',input_GS_Tel)
      call msg('s',' :: Lattice factors [a.u.]:',alat)
      call msg('s',' :: K-points              :',k%nibz)
      call msg('s',' :: Bands                 :',en%nb)

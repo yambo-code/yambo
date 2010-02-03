@@ -22,12 +22,12 @@
 integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
  !
  use pars,          ONLY:SP,schlen,lchlen
- use units,         ONLY:HARTREE
+ use units,         ONLY:HARTREE,Kelvin
  use drivers,       ONLY:list_dbs
  use LOGO,          ONLY:code_version,code_revision
  use com,           ONLY:msg,warning
  use stderr,        ONLY:string_split
- use D_lattice,     ONLY:Tel,a,alat,input_Tel_fixed
+ use D_lattice,     ONLY:Tel,a,alat,input_Tel_commands_over_header,Bose_Temp
  use electrons,     ONLY:n_sp_pol,n_spinor
  use R_lattice,     ONLY:nqibz,nqbz,nkibz,nkbz,q_pt,k_pt
  use wave_func,     ONLY:wf_ng
@@ -49,10 +49,10 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
  ! Work Space
  !
  integer             :: i1,nqibz_disk,nkibz_disk,R_LATT_vec(4),&
-&                       R_LATT_vec_disk(4),MODE,MENU,SPIN_vec_disk(2)
+&                       R_LATT_vec_disk(4),MODE,MENU,SPIN_vec_disk(2),VAR_SZ
  real(SP),allocatable:: l_pt(:,:)
  real(SP)            :: local_zero(3),D_LATT_vec_disk(3),D_LATT_vec(3),&
-&                       save_Tel
+&                       save_Tel(2)
  logical             :: WARN,xc_kind_force
  character(schlen)   :: xc_string_kinds(10)
  !
@@ -229,14 +229,27 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
    !
    io_mode(ID)=MODE
    !
-   call io_elemental(ID,VAR="T_EL",VAR_SZ=1,MENU=MENU)
-   MENU=0
-   save_Tel=Tel
-   call io_elemental(ID,R0=Tel,&
-&       VAR=' Electronic Temperature       [ev]:',UNIT=HARTREE,WARN=WARN,OP=(/"=="/))
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   save_Tel=(/Tel,Bose_Temp/)
+   if (ver_is_gt_or_eq(ID,revision=527).or.write_is_on(ID)) then
+     call io_elemental(ID,VAR="TEMPERATURES",VAR_SZ=2,MENU=MENU)
+     MENU=0
+     call io_elemental(ID,R0=Tel,&
+&         VAR=' Electronic Temperature        [K]:',UNIT=Kelvin,WARN=WARN,OP=(/"=="/))
+     call io_elemental(ID,R0=Bose_Temp,&
+&         VAR=' Bosonic    Temperature        [K]:',UNIT=Kelvin,WARN=WARN,OP=(/"=="/))
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   else
+     call io_elemental(ID,VAR="T_EL",VAR_SZ=1,MENU=MENU)
+     MENU=0
+     call io_elemental(ID,R0=Tel,&
+&         VAR=' Electronic Temperature        [K]:',UNIT=Kelvin,WARN=WARN,OP=(/"=="/))
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   endif
    !
-   if (input_Tel_fixed) Tel=save_Tel
+   if (input_Tel_commands_over_header) then
+     Tel      =save_Tel(1)
+     Bose_Temp=save_Tel(2)
+   endif
    !
    io_header=io_status(ID)
    if (io_header/=0) goto 1

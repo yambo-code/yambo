@@ -27,7 +27,7 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  use electrons,           ONLY:levels,E_reset,n_bands,default_nel
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,ng_vec,&
 &                              nXkibz,nqibz,k_pt
- use D_lattice,           ONLY:default_Tel,alat,nsym
+ use D_lattice,           ONLY:input_GS_Tel,alat,nsym
  use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP
  use com,                 ONLY:msg,write_to_report
  use it_m,                ONLY:it_reset,infile
@@ -114,7 +114,7 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  call section('*','Core DB')
  call msg('s',':: Electrons             :',default_nel)
- call msg('s',':: Temperature       [ev]:',default_Tel)
+ call msg('s',':: Temperature       [ev]:',input_GS_Tel)
  call msg('s',':: Lattice factors [a.u.]:',alat)
  call msg('s',':: K points              :',nkibz)
  call msg('s',':: Bands                 :',n_bands)

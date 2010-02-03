@@ -22,7 +22,7 @@
 integer function variables_SC(ID,local_description,what)
  !
  use pars,           ONLY:SP,lchlen
- use units,          ONLY:AU2Tesla,radian,FS2AUT
+ use units,          ONLY:AU2Tesla,radian,FS2AUT,W2Au,HARTREE
  use D_lattice,      ONLY:atoms_string
  use stderr,         ONLY:intc
  use QP_m,           ONLY:SC_band_mixing
@@ -204,7 +204,7 @@ integer function variables_SC(ID,local_description,what)
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&
-&    VAR=" [RT] Time step              [fs]:",R0=RT_step,CHECK=.true.,OP=(/"=="/),unit=1./FS2AUT,&
+&    VAR=" [RT] Time step              [fs]:",R0=RT_step,CHECK=.true.,OP=(/"=="/),UNIT=1./FS2AUT,&
 &    DESCRIPTION=local_description(i_desc))
    if(l_G) then
      i_desc=i_desc+1
@@ -277,20 +277,20 @@ integer function variables_SC(ID,local_description,what)
 &       DESCRIPTION=local_description(i_desc))
        i_desc=i_desc+1
        call io_elemental(ID,&
-&       VAR=" [FIELDs] Field intensity        :",R0=Efield(i1)%intensity,CHECK=.true.,OP=(/"=="/),&
-&       DESCRIPTION=local_description(i_desc))
+&       VAR=" [FIELDs] Field intensity [kWLm2]:",R0=Efield(i1)%intensity,CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc),UNIT=1./W2Au)
        i_desc=i_desc+1
        call io_elemental(ID,&
 &       VAR=" [FIELDs] Field amplitude        :",R0=Efield(i1)%amplitude,CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc))
        i_desc=i_desc+1
        call io_elemental(ID,&
-&       VAR=" [FIELDs] Field frequency        :",R0=Efield(i1)%frequency,CHECK=.true.,OP=(/"=="/),&
-&       DESCRIPTION=local_description(i_desc))
+&       VAR=" [FIELDs] Field frequency    [eV]:",R0=Efield(i1)%frequency,CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc),UNIT=HARTREE)
        i_desc=i_desc+1
        call io_elemental(ID,R0=Efield(i1)%t_initial,&
-&       VAR=' [FIELDs] Initial time           :',CHECK=.true.,OP=(/"=="/),&
-&       DESCRIPTION=local_description(i_desc))
+&       VAR=' [FIELDs] Initial time       [fs]:',CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
        !                       
        if (i1/=n_ext_fields) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
        if (i1==n_ext_fields) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)

@@ -100,7 +100,7 @@ recursive subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,Xen,k,q,Integr
    ! use G(t+dt/2) to evaluate I1(t+dt/2) and I2(t+dt/2)
    !
    call RT_Collision(G_new,Xen,k,q,RT_time+T_step/2._SP)
-   if(l_NE_with_fields.and.i_time>0)  call RT_current(k,G_new)
+   if(l_NE_with_fields.and.i_time>0)  call RT_current(k,G_new,A_new)
    !
    ! final step G(t+dt)=G(t) + dt * (I1(t+dt/2) - I2(t+dt/2))
    !
@@ -152,7 +152,7 @@ recursive subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,Xen,k,q,Integr
    ! use G(t+dt/2) to evaluate I1(t+dt/2) and I2(t+dt/2)
    !
    call RT_Collision(G_new,Xen,k,q,RT_time+T_step/2._SP)
-   if(l_NE_with_fields.and.i_time>0)  call RT_current(k,G_new)
+   if(l_NE_with_fields.and.i_time>0)  call RT_current(k,G_new,A_new)
    !
    ! final step G(t+dt)=G(t) + dt * (I1(t+dt/2) - I2(t+dt/2))
    !

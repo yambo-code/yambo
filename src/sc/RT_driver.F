@@ -152,7 +152,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    if(l_NE_with_fields.and.i_time>0)  then
      A_vecpot_previous=A_vecpot
-     call RT_current(xK,G_lesser_previous)
+     call RT_current(xK,G_lesser_previous,A_vecpot)
    endif
    !
    call RT_Energy(Xen,k,E_kin,E_ion,E_h,E_x,E_xc,E_mg,Trace_Gf)

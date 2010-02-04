@@ -36,8 +36,8 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  use frequency,      ONLY:w_samp
  use X_m,            ONLY:X_t
  use xc_functionals, ONLY:V_xc
- use SC,             ONLY:V_xc_sc,local_V,SC_kind,SC_xc_functional,SC_cycle_mixing,V_xc_nm1,G_lesser,&
-&                         SC_bands,SC_R,H_rotate
+ use SC,             ONLY:V_xc_sc,local_V,SC_kind,SC_xc_functional,SC_cycle_mixing,&
+&                         G_lesser,SC_bands,SC_R,H_rotate
  use FFT_m,          ONLY:fft_size
  !
  implicit none

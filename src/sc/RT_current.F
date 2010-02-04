@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine RT_current(Xk,G_lesser)
+subroutine RT_current(Xk,G_lesser,A_vecpot)
  !
  ! Evalute current including also the diamagnetic contribution
  !
@@ -31,12 +31,13 @@ subroutine RT_current(Xk,G_lesser)
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel,levels
  use X_m,            ONLY:DIP_iR_or_P
- use real_time,      ONLY:l_RT_no_diamagnetic,i_time, &
-&                         l_NE_with_fields,j_current,A_vecpot
+ use real_time,      ONLY:l_RT_no_diamagnetic,i_time,l_NE_with_fields,j_current,&
+&                         gauge_field 
  !
  implicit none
  type(bz_samp), intent(in) ::Xk
  complex(SP),   intent(in) ::G_lesser(SC_bands,SC_bands,Xk%nibz)
+ type(gauge_field), intent(in) :: A_vecpot
  !
  ! Work Space
  !
@@ -58,7 +59,6 @@ subroutine RT_current(Xk,G_lesser)
  !
  if(.not.l_NE_with_fields.or.i_time<0) return
  !
-! write(100,'(4f16.8)') real(G_lesser(4,5,1)),aimag(G_lesser(4,5,1)),real(G_lesser(5,4,1)),aimag(G_lesser(5,4,1))
  do i1=1,Xk%nbz
    !
    ik = Xk%sstar(i1,1)
@@ -69,9 +69,7 @@ subroutine RT_current(Xk,G_lesser)
 #if defined _DOUBLE
      j_dir(i2)=-aimag(zdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1))
 #else
-     DIP_iR_or_P=(0._SP,1._SP)*DIP_iR_or_P
-     j_dir(i2)=-real(cdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1))
-     DIP_iR_or_P=(0._SP,-1._SP)*DIP_iR_or_P
+     j_dir(i2)=-aimag(cdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1))
 #endif
      !
    enddo

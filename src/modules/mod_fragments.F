@@ -68,8 +68,10 @@ module fragments
     character(schlen) :: fragment_filename
     ! 
     fragment_filename=trim(io_extension(ID))//"_fragment_"//trim(intc(i_fragment))
-    if (present(j_fragment)) fragment_filename=trim(io_extension(ID))//"_fragments_"//trim(intc(i_fragment))//"_"//trim(intc(j_fragment))
-    fragment_filename=get_name(fragment_filename,type=io_type(ID),CORE_IO=.TRUE.,MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
+    if (present(j_fragment)) fragment_filename=trim(io_extension(ID)) &
+&      //"_fragments_"//trim(intc(i_fragment))//"_"//trim(intc(j_fragment))
+    fragment_filename=get_name(fragment_filename,type=io_type(ID),&
+&      CORE_IO=.TRUE.,MORE_IO=.FALSE.,COM_IO=.FALSE.,NETCDF=io_netcdf_support(ID))
     !
     fragment_exists=file_exists(trim(fragment_filename))
     !
@@ -119,13 +121,18 @@ module fragments
      if (write_is_on(ID).or.ver_is_gt_or_eq(ID,revision=518)) then
        !
        fragment_filename=trim(io_extension(ID))//"_fragment_"//trim(intc(i_frag))
-       if (present(j_fragment)) fragment_filename=trim(io_extension(ID))//"_fragments_"//trim(intc(i_frag))//"_"//trim(intc(j_fragment))
+       if (present(j_fragment)) then
+         fragment_filename=trim(io_extension(ID)) &
+&                          //"_fragments_"//trim(intc(i_frag))//"_"//trim(intc(j_fragment))
+       endif
        ierr_=io_connect(fragment_filename,type=io_type(ID),ID=ID)
        !
      else
        write (subfolder,'(2a,i5.5)') trim(io_extension(ID)),'_',i_frag
-       if (present(j_fragment)) write (subfolder,'(2a,i5.5,a,i5.5)') &
-&                              trim(io_extension(ID)),'_',i_frag,'_',j_fragment
+       if (present(j_fragment)) then
+         write (subfolder,'(2a,i5.5,a,i5.5)') &
+&                         trim(io_extension(ID)),'_',i_frag,'_',j_fragment
+       endif
        !
        ! Note that the fragment DB keeps the same type of the DB core (io_type(ID))
        !

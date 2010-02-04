@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !
-recursive subroutine RT_propagate_vecpot(A_new,A_old,T_step,RT_time)
+subroutine RT_propagate_vecpot(A_new,A_old,T_step,RT_time)
  !
  use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT
@@ -53,9 +53,8 @@ recursive subroutine RT_propagate_vecpot(A_new,A_old,T_step,RT_time)
      A_new%vecpot_acc = A_new%vecpot_acc - j_current*4._SP*pi*SPEED_OF_LIGHT/DL_vol 
    endif
    !
-   A_new%vecpot_vel =  A_old%vecpot_vel + A_old%vecpot_acc*T_step
-   A_new%vecpot     =  A_old%vecpot     + A_old%vecpot_vel*T_step + A_old%vecpot_acc*T_step**2/2._SP
-   !
+   A_new%vecpot_vel =  A_old%vecpot_vel + (A_new%vecpot_acc+A_old%vecpot_acc)*T_step/2._SP
+   A_new%vecpot     =  A_old%vecpot     + A_new%vecpot_vel*T_step
    !
  endif
  !

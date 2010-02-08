@@ -19,30 +19,29 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_Green_Function(qp,E,QPdb_read_err)
+subroutine QP_Green_Function(qp,E,GFdb_read_err)
  !
  use pars,          ONLY:SP,pi
+ use com,           ONLY:msg
  use units,         ONLY:HARTREE
  use QP_m,          ONLY:QP_t,QP_Sc,QP_Vnl_xc,QP_Vxc,QP_table,&
 &                        QP_n_states,use_GreenF_to_eval_QP,QP_Sc_steps,QP_G_dr,&
-&                        QP_dSc_delta,Force_Newton_QP,GF_is_causal,&
-&                        QP_G_amplitude_integral
+&                        QP_dSc_delta,GF_is_causal,QP_G_Zoom_treshold,&
+&                        QP_G_amplitude_integral,QP_G_zoom_er,use_GreenF_Zoom,QP_G_er
  use electrons,     ONLY:spin,levels,spin_occ
  use frequency,     ONLY:w_samp,W_reset
  implicit none
  !
  type(levels)     ::E
  type(QP_t)       ::qp
- integer          ::QPdb_read_err
+ integer          ::GFdb_read_err
  !
  ! Work Space
  !
  type(w_samp)     ::W
- integer          ::iqp,ib,ik,i_spin,iw,n_poles,ip,ip_larger_R,nw_dSc
- integer,parameter::n_max_poles=100
- complex(SP)      ::QP_Go,Eqp(n_max_poles),R(n_max_poles),beta(n_max_poles),G_m1(QP_Sc_steps),&
-&                   f_energy
- real(SP)         ::Eo
+ integer          ::iqp,ib,ik,i_spin,iw,iw_start,iw_end
+ complex(SP)      ::QP_Go,f_energy
+ real(SP)         ::Eo,Amp_Peak,old_min_max_step(2),new_min_max_step(2),W_step
  logical          ::band_is_metallic,apply_damping
  !
  real(SP), external :: Integrate
@@ -52,13 +51,23 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
  call W_reset(W)
  W%n                =QP_Sc_steps
  W%dr               =QP_G_dr
+ old_min_max_step   =(/1000.,0./)
+ new_min_max_step   =(/1000.,0./)
  !
  do iqp=1,QP_n_states
    !
    ! Frequency range
    !
-   call FREQUENCIES_Green_Function(iqp,W,E%E)
-   qp%GreenF_W(iqp,:)=W%p(:)
+   if (GFdb_read_err<0) then
+     call FREQUENCIES_Green_Function(iqp,W,E%E)
+     qp%GreenF_W(iqp,:)=W%p(:)
+   endif
+   !
+   ! Frequency step
+   !
+   W_step=real(qp%GreenF_W(iqp,2)-qp%GreenF_W(iqp,1))
+   if (W_step<old_min_max_step(1)) old_min_max_step(1)=W_step
+   if (W_step>old_min_max_step(2)) old_min_max_step(2)=W_step
    !
    ! Bare energy
    !
@@ -71,7 +80,7 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
    Eo=E%E(ib,ik,i_spin) 
    if (associated(E%Eo)) Eo=E%Eo(ib,ik,i_spin)
    !
-   if (QPdb_read_err<0) then
+   if (GFdb_read_err<0) then
      if ( allocated(QP_Vnl_xc) ) then
        qp%S_total(iqp,:)=QP_Sc(iqp,:)+QP_Vnl_xc(iqp)-QP_Vxc(iqp)
      else
@@ -87,11 +96,11 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
      !          the first according to the QP expression for the T-ordered Green
      !          G=\frac{1}{\omega-\epsilon_i+i\eta sign(\epsilon-\mu)}         
      !
-     f_energy=conjg(W%p(iw))
-     if (GF_is_causal)  f_energy=W%p(iw)
+     f_energy=conjg(qp%GreenF_W(iqp,iw))
+     if (GF_is_causal)  f_energy=qp%GreenF_W(iqp,iw)
      !
      QP_Go=           E%f(ib,ik,i_spin)/(f_energy-Eo)/spin_occ+&
-&          (spin_occ-E%f(ib,ik,i_spin))/(W%p(iw) -Eo)/spin_occ  
+&          (spin_occ-E%f(ib,ik,i_spin))/(qp%GreenF_W(iqp,iw) -Eo)/spin_occ  
      !
      if ( band_is_metallic .or. apply_damping ) then
        qp%GreenF(iqp,iw)=QP_Go/(1.-QP_Go*qp%S_total(iqp,iw))  
@@ -103,51 +112,53 @@ subroutine QP_Green_Function(qp,E,QPdb_read_err)
        ! in case the band/k is not metallic I use an analytic QP_Go with 
        ! zero damping.
        !
-       qp%GreenF(iqp,iw)=1./(real(W%p(iw))-Eo-qp%S_total(iqp,iw)) 
+       qp%GreenF(iqp,iw)=1./(real(qp%GreenF_W(iqp,iw))-Eo-qp%S_total(iqp,iw)) 
      endif
      !
    enddo
    !
-   QP_G_amplitude_integral(iqp)=Integrate(aimag(qp%GreenF(iqp,:)),real(W%p),W%n(1))/pi
+   ! Spectral Function Integral
+   !
+   QP_G_amplitude_integral(iqp)=Integrate(aimag(qp%GreenF(iqp,:)),real(qp%GreenF_W(iqp,:)),W%n(1))/pi
+   !
+   ! Search for a finer energy range 
+   !
+   if (use_GreenF_Zoom.and.GFdb_read_err==0) then
+     Amp_Peak=maxval(aimag(qp%GreenF(iqp,:)))
+     iw_start=0
+     do iw=1,W%n(1)
+       if (iw_start==0.and.aimag(qp%GreenF(iqp,iw))>Amp_Peak*QP_G_Zoom_treshold/100.) iw_start=iw
+       if (iw_start/=0) exit
+     enddo
+     iw_end=0
+     do iw=W%n(1),1,-1
+       if (iw_end==0.and.aimag(qp%GreenF(iqp,iw))>Amp_Peak*QP_G_Zoom_treshold/100.) iw_end=iw
+       if (iw_end/=0) exit
+     enddo
+     QP_G_zoom_er(iqp,:)=(/real(qp%GreenF_W(iqp,iw_start)),real(qp%GreenF_W(iqp,iw_end))/)
+     qp%GreenF(iqp,:)=(0.,0.)
+     !
+     ! Zoomed Frequency step
+     !
+     W_step=(QP_G_zoom_er(iqp,2)-QP_G_zoom_er(iqp,1))/QP_Sc_steps
+     if (W_step<new_min_max_step(1)) new_min_max_step(1)=W_step
+     if (W_step>new_min_max_step(2)) new_min_max_step(2)=W_step
+     !
+   endif
    !
    if (.not.use_GreenF_to_eval_QP) cycle
    !
-   nw_dSc=int(QP_dSc_delta/real(W%p(2)-W%p(1))) 
-   !
    ! Extraction of the QP properties directly from the Green's function
+   !====================================================================
    !
-   G_m1(:)=real(W%p(:))-Eo-qp%S_total(iqp,:)
-   if (Force_Newton_QP) then
-     n_poles=1
-     do iw=1,W%n(1)-1
-       if (real(W%p(iw))<Eo.and.real(W%p(iw+1))>Eo) then
-         beta(1)=(qp%S_total(iqp,min(iw+nw_Dsc,W%n(1)))-qp%S_total(iqp,iw))/&
-&                real(W%p(min(iw+nw_Dsc,W%n(1)))-W%p(iw))
-         Eqp(1) =cmplx(real(W%p(iw)),aimag(qp%S_total(iqp,iw)))+1./(1.-beta(1))*qp%S_total(iqp,iw)
-       endif
-     enddo
-   else
-     n_poles=0
-     do iw=1,W%n(1)-1
-       if (real(G_m1(iw))*real(G_m1(iw+1))<0.) then
-         n_poles=n_poles+1
-         Eqp(n_poles)=cmplx(real(W%p(iw)),aimag(qp%S_total(iqp,iw)))
-         R(n_poles)   =qp%GreenF(iqp,iw)
-         beta(n_poles)=(qp%S_total(iqp,min(iw+nw_Dsc,W%n(1)))-qp%S_total(iqp,iw))/&
-&                      (real(W%p(min(iw+nw_Dsc,W%n(1)))-W%p(iw)))
-       endif
-       if (n_poles==n_max_poles) exit
-     enddo
-   endif
-   ip_larger_R=1
-   if (n_poles>1) then
-     do ip=2,n_poles
-       if (-real(R(ip))>-real(R(ip_larger_R))) ip_larger_R=ip
-     enddo
-   endif
-   qp%E(iqp)=Eqp(ip_larger_R)
-   qp%Z(iqp)=1./(1.-beta(ip_larger_R))
+   call QPartilize(W%n(1),qp%GreenF(iqp,:),real(qp%GreenF_W(iqp,:)),qp%E(iqp),qp%Z(iqp),QP_dSc_delta) 
+   !
  enddo
+ !
+ if ( use_GreenF_Zoom .and. GFdb_read_err==0) then
+   call msg('nr','[Green zoom] Frequency step              (current)   [ev]:',old_min_max_step*HARTREE)
+   call msg('r', '[Green zoom]                                (zoom)   [ev]:',new_min_max_step*HARTREE)
+ endif
  !
 end subroutine
 

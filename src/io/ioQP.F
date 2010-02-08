@@ -138,7 +138,8 @@ integer function ioQP(what,qp,ID)
      !
      call io_elemental(ID,VAR="SE_OPERATOR_PARAMETERS",VAR_SZ=6,MENU=0)
      call io_elemental(ID,I0=qp%GreenF_n_steps)
-     call io_elemental(ID,R1=QP_G_er)
+     call io_elemental(ID,R1=QP_G_er) ! <- This is, actually, not needed as the
+                                      !    full frequency dependence is stored in sec 3
      call io_elemental(ID,R1=QP_G_dr)
      call io_elemental(ID,L0=GF_is_causal)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
@@ -182,6 +183,12 @@ integer function ioQP(what,qp,ID)
 &               index(qp%description(i1),'dS/dw step')>0.or.&
 &               index(qp%description(i1),'Sx RL components')>0) then
          call io_elemental(ID,CH0=qp%description(i1))
+       else
+         call io_elemental(ID,CH0=qp%description(i1),VAR='',CHECK=.true.,OP=(/"=="/)) 
+       endif
+     else if (what=="G") then
+       if (index(qp%description(i1),'Zoom')>0) then
+         call io_elemental(ID,CH0=qp%description(i1),VAR='',WARN=.true.)
        else
          call io_elemental(ID,CH0=qp%description(i1),VAR='',CHECK=.true.,OP=(/"=="/)) 
        endif

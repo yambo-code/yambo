@@ -258,7 +258,7 @@ module QP_CTL_m
      !
      ! X/K -> Fermi Level Update
      !
-     if (Eid<3.and.associated(en%Eo)) then
+     if ((Eid<3.and.associated(en%Eo)).and..not.associated(en%GreenF)) then
        !
        ! GPL_EXCLUDE_START
        !
@@ -297,7 +297,7 @@ module QP_CTL_m
      ! G -> Fermi Level Update... but using the levels cooresponding to
      ! the K-points of the X grid !
      !
-     if (Eid==3.and.associated(en%Eo)) then
+     if ((Eid==3.and.associated(en%Eo)).and..not.associated(en%GreenF)) then
        !
        Fermi_en%nb=en%nb
        Fermi_en%nk=nXkibz

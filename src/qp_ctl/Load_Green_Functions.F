@@ -23,19 +23,18 @@ subroutine Load_Green_Functions(band_range,qp,E,DB_corrected)
  !
  ! Using qp%GreenF/qp%GreenF_W I define here the Green Functions
  !
- use electrons,     ONLY:n_sp_pol,spin
- use electrons,     ONLY:levels
+ use electrons,     ONLY:n_sp_pol,spin,levels
  use memory_m,      ONLY:mem_est
  use QP_m,          ONLY:QP_t,GF_is_causal
  !
  implicit none
  type(levels) ::E
  type(QP_t)   ::qp
- integer      :: band_range(2),DB_corrected(E%nb,E%nk,n_sp_pol)
+ integer      ::band_range(2),DB_corrected(E%nb,E%nk,n_sp_pol)
  !
  ! Work Space
  !
- integer :: i_qp,i_band,i_k_pt,i_spin
+ integer     :: i_qp,i_band,i_k_pt,i_spin
  !
  E%GreenF_is_causal=GF_is_causal
  E%GreenF_n_E_steps=qp%GreenF_n_steps
@@ -52,6 +51,17 @@ subroutine Load_Green_Functions(band_range,qp,E,DB_corrected)
    E%GreenF(i_band,i_k_pt,i_spin,:)=qp%GreenF(i_qp,:)
    E%GreenF_W(i_band,i_k_pt,i_spin,:)=qp%GreenF_W(i_qp,:)
    DB_corrected(i_band,i_k_pt,i_spin)=1
+   !
+   ! Call QPartilize to extract and treat analitically the QP part of the GF
+   !
+!DEBUG>
+!   call QPartilize(E%GreenF_n_E_steps,E%GreenF(i_band,i_k_pt,i_spin,:),&
+!&                  real(E%GreenF_W(i_band,i_k_pt,i_spin,:)),Eqp,E%Z(i_band,i_k_pt,i_spin),0.05/HARTREE)
+!   !
+!   E%E(i_band,i_k_pt,i_spin)=real(Eqp)
+!   E%W(i_band,i_k_pt,i_spin)=aimag(Eqp)
+!DEBUG<
+   !
  enddo
  !
 end subroutine

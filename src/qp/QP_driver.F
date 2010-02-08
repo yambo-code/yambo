@@ -33,11 +33,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use X_m,           ONLY:X_t
  use parser_m,      ONLY:parser
  use QP_m,          ONLY:QP_t,QP_dSc,QP_dSc_steps,QP_Vxc,QP_Sc,QP_solver,QP_table,&
-&                        QP_Vnl_xc,QP_n_states,QP_nb,&
-&                        QP_nk,QP_state,QP_dSc_test,QP_reset,&
+&                        QP_Vnl_xc,QP_n_states,QP_nb,QP_G_zoom_er,QP_G_Zoom_treshold,&
+&                        QP_nk,QP_state,QP_dSc_test,QP_reset,use_GreenF_Zoom,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_W_partially_done,&
 &                        GWo_iterations,COHSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
-&                        Force_Newton_QP,GF_is_causal,QP_G_amplitude_integral,l_extended_output
+&                        GF_is_causal,QP_G_amplitude_integral,l_extended_output
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE
  use global_XC,     ONLY:QP_DB_kind,SE_COHSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON
  implicit none
@@ -61,8 +61,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! GPL_EXCLUDE_START
  call parser('GreenF2QP',  use_GreenF_to_eval_QP)
  ! GPL_EXCLUDE_END
- call parser('ForceNewton',Force_Newton_QP)
  call parser('ExtendOut',  l_extended_output)
+ !
+ use_GreenF_Zoom=QP_G_Zoom_treshold>0.
  !
  if (On_Mass_Shell_approx) QP_dSc_test=.FALSE.
  !
@@ -102,9 +103,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  else if (trim(QP_solver)=='g') then
    write (qp%description(1),'(a)') ' GW solver              : Full Green`s function'
    call section('*','Dyson equation: full Green`s function')
-   call msg('r','[Green] Sc steps                                         :',QP_Sc_steps)
-   call msg('r','[Green] Sc energy range (centered in the bare value) [ev]:',QP_G_er*HARTREE)
-   call msg('r','[Green] Sc damping range                             [ev]:',QP_G_dr*HARTREE)
+   call msg('r', '[Green] Sc steps                                         :',QP_Sc_steps)
+   call msg('r', '[Green] Sc energy range (centered in the bare value) [ev]:',QP_G_er*HARTREE)
+   call msg('rn','[Green] Sc damping range                             [ev]:',QP_G_dr*HARTREE)
    !
    GF_is_causal=Finite_Tel.or.l_ph_corr 
    !
@@ -187,7 +188,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  call local_alloc()
  !
- call QP_descriptions(qp,X,Xw)
+ call QP_descriptions(qp,X,Xw,.FALSE.)
  !
  do i1=1,QP_n_states
    !
@@ -219,28 +220,48 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
        return
      endif
      ! GPL_EXCLUDE_START
-   else
+   endif
+   !
+   if (trim(QP_solver)=='g'.or. (use_GreenF_to_eval_QP.and.io_err/=0) ) then
      !
      ! Sigma_C I/O & Green's Function
      !
      call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
      io_err=ioQP('G',qp,ID)
+     if (io_err/=0.and.use_GreenF_Zoom) then
+       use_GreenF_Zoom=.FALSE.
+       QP_G_Zoom_treshold=0.
+       deallocate(QP_G_zoom_er)
+       call mem_est("QP_G_zoom_er")
+     endif
      if (io_err==0) then
        call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
        io_err=ioQP('G',qp,ID)
        call QP_Green_Function(qp,en,io_err) 
-       if (use_GreenF_to_eval_QP) then
-         call QP_report_and_write(k,qp,en,-1)
-       else
-         call QP_report_and_write(k,qp,en,io_err)
+       if (.not.use_GreenF_Zoom) then
+         if (use_GreenF_to_eval_QP) then
+           call QP_report_and_write(k,qp,en,-1)
+         else
+           call QP_report_and_write(k,qp,en,io_err)
+         endif
+         !
+         call local_free()
+         return
        endif
-       call local_free()
-       return
      endif
      ! GPL_EXCLUDE_END
    endif
    !
  endif
+ !
+ ! GPL_EXCLUDE_START
+ !
+ ! Updated descriptions (needed in case of Zoomed GFs)
+ !=======================
+ !
+ call QP_descriptions(qp,X,Xw,.TRUE.)
+ !
+ ! GPL_EXCLUDE_END
  !
  call mem_est("QP_Sc",(/size(QP_Sc)/))
  !
@@ -347,6 +368,10 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
        qp%GreenF_n_steps=QP_Sc_steps
        allocate(QP_G_amplitude_integral(QP_n_states))
        call mem_est("QP_G_amplitude_integral",(/size(QP_G_amplitude_integral)/))
+       if (use_GreenF_Zoom) then
+         allocate(QP_G_zoom_er(QP_n_states,2))
+         call mem_est("QP_G_zoom_er",(/size(QP_G_amplitude_integral)/),(/SP/))
+       endif
      else if (.not.l_life) then
        allocate(QP_dSc(qp%n_states,QP_dSc_steps-1))
        call mem_est("QP_dSc",(/size(QP_dSc)/))
@@ -356,15 +381,16 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    subroutine local_free()
      deallocate(qp%Z,qp%E,qp%E_bare,qp%k,qp%table,QP_table,QP_state)
-     if (allocated(QP_Sc))       deallocate(QP_Sc)
-     if (allocated(QP_dSc))      deallocate(QP_dSc)
-     if (allocated(QP_Vnl_xc))       deallocate(QP_Vnl_xc,QP_Vxc)
+     if (allocated(QP_Sc))        deallocate(QP_Sc)
+     if (allocated(QP_dSc))       deallocate(QP_dSc)
+     if (allocated(QP_Vnl_xc))    deallocate(QP_Vnl_xc,QP_Vxc)
      if (associated(qp%GreenF))   nullify(qp%GreenF)
      if (associated(qp%GreenF_W)) nullify(qp%GreenF_W)
      if (associated(qp%S_total))  nullify(qp%S_total)
      if (allocated(QP_G_amplitude_integral)) deallocate(QP_G_amplitude_integral)
+     if (allocated(QP_G_zoom_er))  deallocate(QP_G_zoom_er)
      call mem_est("QP_G_amplitude_integral")
-     call mem_est("QP_Sc QP_dSc qp_GreenF QP_Vnl_xc QP_Vxc qp_GreenF_W")
+     call mem_est("QP_Sc QP_dSc qp_GreenF QP_Vnl_xc QP_Vxc qp_GreenF_W QP_G_zoom_er")
      call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table QP_table QP_state qp_S_total")
    end subroutine
    !

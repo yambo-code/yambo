@@ -26,9 +26,13 @@ subroutine K_diagonalization(iq,W)
  !
  use pars,           ONLY:SP,DP,pi
  use X_m,            ONLY:X_epsilon
- use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,Kernel_by_V,&
-&                         BS_K_coupling,BSS_write_eig_2_db,BS_eh_f,BS_not_const_eh_f,&
-&                         BS_eh_W
+ use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_K_coupling,&
+&                         BSS_write_eig_2_db,BS_eh_f,BS_not_const_eh_f,&
+#if defined _TEST_1
+&                          BS_eh_W
+#else
+&                          BS_eh_W,K_BSmat_by_V
+#endif
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:spin_occ
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK,USE_SLK,INV
@@ -126,7 +130,11 @@ subroutine K_diagonalization(iq,W)
    !
    ! Kernel loading
    !
-   call Kernel_by_V(iq)
+#if defined _TEST_1
+   call K_BSload(iq)
+#else
+   call K_BSmat_by_V(iq)
+#endif
    !
    ! eh damping 
    !

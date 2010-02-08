@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_descriptions(qp,X,Xw)
+subroutine QP_descriptions(qp,X,Xw,Update)
  ! 
  ! WARNING ! Changes here must be updated in ioQP as well.
  !
@@ -28,7 +28,7 @@ subroutine QP_descriptions(qp,X,Xw)
  use QP_m,          ONLY:QP_t,QP_ng_Sx,QP_n_G_bands,QP_cg_percent,&
 &                        QP_dSc_delta,QP_G_damp,QP_dSc_steps,GWo_iterations,&
 &                        COHSEX_use_empties,QP_Sc_steps,QP_G_er,QP_G_dr,QP_solver,&
-&                        use_GreenF_to_eval_QP,GF_is_causal
+&                        use_GreenF_to_eval_QP,GF_is_causal,QP_G_Zoom_treshold
  use stderr,        ONLY:string_pack,gen_fmt
  use drivers,       ONLY:l_life,l_ppa,l_ph_corr,l_el_corr,l_cohsex
  use R_lattice,     ONLY:RIM_qpg,RIM_n_rand_pts,RIM_ng
@@ -40,16 +40,18 @@ subroutine QP_descriptions(qp,X,Xw)
 #endif
  implicit none
  !
- type(QP_t)::qp
- type(X_t) :: X
+ type(QP_t)  ::qp
+ type(X_t)   ::X
  type(w_samp)::Xw
+ logical     ::Update
  ! 
  ! Work Space
  !
- integer           :: i4(4),n_descs_save
+ integer           :: i4(4)
+ integer, save     :: n_descs_save
  integer, external :: QP_state_extract
  !
- n_descs_save=qp%n_descs
+ if (.not.Update) n_descs_save=qp%n_descs
  !
  if (allocated(RIM_qpg)) then
    qp%n_descs=qp%n_descs+1
@@ -195,20 +197,26 @@ subroutine QP_descriptions(qp,X,Xw)
  !
  if (ver_is_gt_or_eq(-1,revision=452).and.trim(QP_solver)=='g') then
    qp%n_descs=qp%n_descs+1
-   qp%description(qp%n_descs)=' S(E) is causal          : no'
-   if (GF_is_causal) qp%description(qp%n_descs)=' S(E) is causal          : yes'
+   qp%description(qp%n_descs)=' [GF] GF is causal       : no'
+   if (GF_is_causal) qp%description(qp%n_descs)=' [GF] GF is causal       : yes'
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),trim(&
 &        string_pack('(a,',gen_fmt( i_v=(/QP_Sc_steps /) ),')'))) &
-&        ' S(E) real-axis steps    :',QP_Sc_steps
+&        ' [GF] Real-axis steps    :',QP_Sc_steps
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),trim(&
-&       string_pack('(a,2(',gen_fmt( r_v=QP_G_er*HARTREE ),',1x))'))) &
-&        ' S(E) E displacement   [eV]:',QP_G_er*HARTREE
+&     string_pack('(a,2(',gen_fmt( r_v=QP_G_er*HARTREE ),',1x))'))) &
+&      ' [GF] Initial E range  [eV]:',QP_G_er*HARTREE
+   if (ver_is_gt_or_eq(-1,revision=530)) then
+     qp%n_descs=qp%n_descs+1
+     write (qp%description(qp%n_descs),trim(&
+&         string_pack('(a,1(',gen_fmt( r_v=(/QP_G_Zoom_treshold/)),',1x))'))) &
+&          ' [GF] Zoom treshold        :',QP_G_Zoom_treshold
+   endif
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),trim(&
 &       string_pack('(a,2(',gen_fmt( r_v=QP_G_dr*HARTREE ),',1x))'))) &
-&        ' S(E) damping          [eV]:',QP_G_dr*HARTREE
+&        ' [GF] Damping          [eV]:',QP_G_dr*HARTREE
  endif
  !
  ! QP states

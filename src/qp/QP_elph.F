@@ -47,7 +47,7 @@ subroutine QP_elph(en,k,q,qp)
 &                        elph_nDBs,E_k_plus_q,elph_use_q_grid,&
 &                        setup_k_plus_q_levels,f_k_plus_q,elph_nDBs_used,&
 &                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,&
-&                        elph_global_alloc,gsqF_energy_steps,eval_G_using_KK,nq_memory
+&                        elph_global_alloc,gsqF_energy_steps,eval_G_using_KK,nq_memory,ph_qpt
  use functions,     ONLY:Fermi_fnc_derivative
  !
  implicit none
@@ -514,6 +514,13 @@ subroutine QP_elph(en,k,q,qp)
          if (distributed_Q.and..not.px%element_2D(iq_loop,1)) cycle
          !
          do il=1,ph_modes
+!
+!DEBUG<
+if (abs(ph_qpt(iq_loop,1))<0.2.and.il<4) cycle
+if ((abs(ph_qpt(iq_loop,1))>0.2.and.abs(ph_qpt(iq_loop,1))<0.9).and.(il<=2.or.il==4)) cycle
+if (abs(ph_qpt(iq_loop,1))>0.95.and.(il==1.or.il>=3)) cycle
+!DEBUG>
+!
            !
            if (.not.elph_use_q_grid) ph_freq=sqrt(ph_freqs_sq(iq_loop,il))
            if (     elph_use_q_grid) ph_freq=sqrt(ph_freqs_sq( q%sstar(iq_loop,1) ,il))

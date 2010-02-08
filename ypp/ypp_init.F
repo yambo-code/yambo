@@ -374,7 +374,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (l_rtoptics) then 
     call initactivate(1,"EnRngeRt ETStpsRt TmRngeRt DampMode DampFactor FourierDamp")
-    call initactivate(1,"RefExtField NoRmDC PrtCurrent PrtEinduced UseFFT")
+    call initactivate(1,"RefExtField UseGaugeField NoRmDC PrtCurrent PrtEinduced UseFFT")
  endif
  ! 
 #endif

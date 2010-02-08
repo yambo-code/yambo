@@ -25,9 +25,13 @@ subroutine K_inversion(iq,W,E,k,q)
  use X_m,            ONLY:X_epsilon
  use stderr,         ONLY:intc,real2ch
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_not_const_eh_f,&
-&                         BS_K_coupling,BS_eh_table,BS_eh_E,BS_bands,Kernel_by_V,&
+&                         BS_K_coupling,BS_eh_table,BS_eh_E,BS_bands,BSS_uses_GreenF,&
 &                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,&
-&                         BSS_n_descs,BSS_description,BS_eh_W,BS_eh_Z,BSS_uses_GreenF
+#if defined _TEST_1
+&                         BSS_n_descs,BSS_description,BS_eh_W,BS_eh_Z
+#else
+&                         BSS_n_descs,BSS_description,BS_eh_W,BS_eh_Z,K_BSmat_by_V
+#endif
  use memory_m,       ONLY:mem_est
  use parser_m,       ONLY:parser
  use electrons,      ONLY:spin_occ,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,spin
@@ -154,7 +158,11 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  ! Kernel loading
  !
- call Kernel_by_V(iq)
+#if defined _TEST_1
+   call K_BSload(iq)
+#else
+   call K_BSmat_by_V(iq)
+#endif
  forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)-BS_eh_E(i1)
  !
  ! Initialize the output file 

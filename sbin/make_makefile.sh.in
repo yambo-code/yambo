@@ -172,7 +172,7 @@ FC_NOOPT_SRC= mod_parser_m.o
 	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
 	${PREFIX}(eval \$(fc) -c \$(fcuflags) \$(linclude) \$*\$(f90suffix)) > /dev/null
 	@echo $ECHO_N \$* " "
-	@rm -f \$*\$(f90suffix)".o "
+	@rm -f \$*\$(f90suffix)
 #
 # Suffixes
 #

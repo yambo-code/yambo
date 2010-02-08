@@ -49,7 +49,7 @@ subroutine RT_spectrum(en,k)
  integer  :: io_J,io_G,ID(2)
  integer  :: damp,i1,i2
  integer  :: niter,istart,iend,ishift
- logical  :: Prt_Current,Prt_Einduced,Use_FFT,l_no_remove_DC
+ logical  :: Prt_Current,Prt_Einduced,Use_FFT,l_no_remove_DC,l_use_gauge_field
  character(lchlen)  :: file_name(3),dump_ch
  character(schlen)  :: headings(7)
  real(SP)           :: values(8)
@@ -77,6 +77,7 @@ subroutine RT_spectrum(en,k)
  call parser('PrtEinduced',Prt_EInduced)
  call parser('UseFFT',Use_FFT)
  call parser('NoRmDC',l_no_remove_DC)
+ call parser('UseGaugeField',l_use_gauge_field)
  ! 
  ! Check damping mode
  !
@@ -152,7 +153,7 @@ subroutine RT_spectrum(en,k)
  !
  allocate(current(istart:iend,3))
  call mem_est("Current",(/size(current)/),(/SP/))
- allocate(A_vecpot_vel(3,istart:iend))
+ allocate(A_vecpot_vel(istart:iend,3))
  call mem_est("A_vecpot_vel",(/size(A_vecpot_vel)/),(/SP/))
  allocate(current_cache(9,max_rt_steps_disk))
  call mem_est("Current_Cache",(/size(current_cache)/),(/SP/))
@@ -165,7 +166,7 @@ subroutine RT_spectrum(en,k)
    !
    if(i_time>=istart.and.i_time<=iend) then
      current(i_time,:)= j_current(:)
-     A_vecpot_vel(:,i_time)     = real(A_vecpot%vecpot_vel(:))
+     A_vecpot_vel(i_time,:)     = real(A_vecpot%vecpot_vel(:))
    endif           
    !
    call live_timing(steps=1)
@@ -190,7 +191,7 @@ subroutine RT_spectrum(en,k)
    headings(7)="j_z"
    call msg('o current','#',headings(1:7),INDENT=-2,USE_TABS=.TRUE.)
    do i1=istart,iend
-     values(1:7)=(/RT_step*i1/FS2AUT,A_vecpot_vel(1,i1),A_vecpot_vel(2,i1),A_vecpot_vel(3,i1), &
+     values(1:7)=(/RT_step*i1/FS2AUT,A_vecpot_vel(i1,1),A_vecpot_vel(i1,2),A_vecpot_vel(i1,3), &
 &                 current(i1,1),current(i1,2),current(i1,3)/)
      call msg('o current','',values(1:7),USE_TABS=.TRUE.)
    enddo
@@ -204,6 +205,11 @@ subroutine RT_spectrum(en,k)
  if(.not.l_no_remove_dc) then
    !
    do i1 = 1, 3
+     av = sum(A_vecpot_vel( istart:iend, i1))
+     A_vecpot_vel( istart:iend, i1) = A_vecpot_vel(istart:iend ,i1) - av/dble(niter)
+   enddo
+   !
+   do i1 = 1, 3
      av = sum(current( istart:iend, i1))
      current( istart:iend, i1) = current(istart:iend ,i1) - av/dble(niter)
    enddo
@@ -215,18 +221,25 @@ subroutine RT_spectrum(en,k)
  allocate(E_induced(istart:iend,3))
  call mem_est("E_induced",(/size(E_induced)/),(/SP/))
  !
- ! Integration with trapezoidal rule 
- !
- call live_timing('Integration:',iend-istart+1)
- do i1=istart, iend
-   E_induced(i1,1)=-(2.d0*sum(current(istart:i1,1))-current(istart,1)-current(i1,1))*RT_step/2.d0
-   E_induced(i1,2)=-(2.d0*sum(current(istart:i1,2))-current(istart,2)-current(i1,2))*RT_step/2.d0
-   E_induced(i1,3)=-(2.d0*sum(current(istart:i1,3))-current(istart,3)-current(i1,3))*RT_step/2.d0
-   call live_timing(steps=1)
- enddo
- call live_timing()
+ if(l_use_gauge_field) then
+   E_induced=-A_vecpot_vel
+ else
+   ! 
+   ! Integration with trapezoidal rule 
+   !
+   call live_timing('Integration:',iend-istart+1)
+   do i1=istart, iend
+     E_induced(i1,1)=-(2.d0*sum(current(istart:i1,1))-current(istart,1)-current(i1,1))*RT_step/2.d0
+     E_induced(i1,2)=-(2.d0*sum(current(istart:i1,2))-current(istart,2)-current(i1,2))*RT_step/2.d0
+     E_induced(i1,3)=-(2.d0*sum(current(istart:i1,3))-current(istart,3)-current(i1,3))*RT_step/2.d0
+    call live_timing(steps=1)
+   enddo
+   call live_timing()
+   !
+ endif
  !
  E_induced=E_induced/SPEED_OF_LIGHT
+
  !  
  ! Apply the damping function
  !

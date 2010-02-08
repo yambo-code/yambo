@@ -53,7 +53,7 @@ PROJECTS = yambo_ph yambo_sc yambo_ras yambo_reels \
            yambo_magnetic yambo_PWdiago \
            yambo_rt ypp_rt ypp_ph ypp_ras ypp_sc ypp_magnetic 
 BROKEN   = yambo_gamma 
-DEBUG    = 
+DEBUG    = yambo_test_1
 TESTS    = test_all test_GoWo test_magnetic test_SC test_RT
 EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(DEBUG)
 INTERFCS = a2y p2y e2y 
@@ -151,7 +151,14 @@ ypp_sc: libs
 ypp_magnetic: libs
 	@LIBS2DO="$(YPPSCLIBS)" ; ADF="-D_SC -D_MAGNETIC";$(mksrc)
 	@X2DO="ypp_magnetic" ;XPATH="ypp";XLIBS="$(YPPSCLIBS)"; ADF="-D_YPP_MAGNETIC";$(mkx)
+#
 # DEBUG #
+#
+yambo_test_1: libs
+	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_TEST_1"; $(mksrc)
+	@X2DO="yambo_test_1"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_TEST_1";$(mkx)
+#
+# Interfaces & ypp #
 #
 interfaces: libs
 	@LIBS2DO="$(2YLIBS)" ; $(mksrc)

@@ -29,7 +29,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                      alpha_dim,use_X_RIM,long_path,X_RIM_nkpts,Dipole_bands_ordered,&
 &                      eval_alpha,Vnl_commutator_warning,Eval_P_and_P2_only,&
 &                      q_plus_G_direction,Q_Shift_Order
- use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,&
+ use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_W_er,QP_W_dr,QP_cg_percent,QP_n_states,&
 &                     QP_ctl_db,QP_ctl_interp_neigh,SC_E_threshold, &
@@ -176,7 +176,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  input_Tel_commands_over_header=.false.
  non_periodic_directions='none'
  lattice='Unknown'
- Bose_Temp=-1.
+ Bose_Temp=-1./HARTREE
  !
  ! R_lattice
  !
@@ -309,6 +309,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  QP_n_states=0
  QP_dSc_steps=2
+ QP_G_Zoom_treshold=0.
  QP_Sc_steps=100
  QP_n_W_freqs=100
  QP_dSc_test=.false.

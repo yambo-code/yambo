@@ -25,14 +25,18 @@ subroutine FREQUENCIES_Green_Function(iqp,W,E)
  use R_lattice,  ONLY:nkibz
  use electrons,  ONLY:n_bands,spin,n_sp_pol
  use frequency,  ONLY:w_samp
- use QP_m,       ONLY:QP_table,QP_G_dr,QP_G_er
+ use QP_m,       ONLY:QP_table,QP_G_dr,QP_G_er,QP_G_zoom_er
  implicit none
  !
  integer      :: iqp
  type(w_samp) :: W
  real(SP)     :: E(n_bands,nkibz,n_sp_pol)
  !
- W%er=QP_G_er+E(QP_table(iqp,1),QP_table(iqp,3),spin(QP_table(iqp,:)))
+ if (allocated(QP_G_zoom_er)) then
+   W%er=QP_G_zoom_er(iqp,:)
+ else
+   W%er=QP_G_er+E(QP_table(iqp,1),QP_table(iqp,3),spin(QP_table(iqp,:)))
+ endif
  W%dr=QP_G_dr
  call FREQUENCIES_setup(W)
  !

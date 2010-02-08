@@ -238,7 +238,7 @@ subroutine fermi_level(E,K,mode)
    return
  endif
  !
- call msg('r',  'Fermi Level        [ev]:',E%Efermi(1))
+ call msg('r',  'Fermi Level        [ev]:',E%Efermi(1)*HARTREE)
  call msg('r',  'Electronic Temp. [ev K]:',(/Tel*HARTREE,Tel*Kelvin/))
  call msg('r',  'Bosonic    Temp. [ev K]:',(/Bose_Temp*HARTREE,Bose_Temp*Kelvin/))
  call fermi_msg(E,mode)

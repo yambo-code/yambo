@@ -86,7 +86,6 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
    if (ordering/="a") &
 &    call Kramers_Kronig(Green_F_convoluted,real(Xen%GreenF_W(iv,ikp,i_spin,:)),Xen%GreenF_n_E_steps,&
 &                        GreenF,            Xw%p,                          Xw%n(1), cmplx(0.,0.,SP))
-   !
    if (ordering=="c") then
      call Kramers_Kronig(Green_F_convoluted,real(Xen%GreenF_W(iv,ikp,i_spin,:)),Xen%GreenF_n_E_steps,&
 &                        GreenF,            -Xw%p,                      Xw%n(1), cmplx(0.,0.,SP))
@@ -103,23 +102,22 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
  !
 #endif
  !
- !
  W_=0.
  Z_=(1.,0.)
- if (associated(Xen%W)) W_=Xen%W(ic,ik,i_spin)-Xen%W(iv,ikp,i_spin)
+ if (associated(Xen%W)) W_=abs(Xen%W(ic,ik,i_spin))+abs(Xen%W(iv,ikp,i_spin))
  if (associated(Xen%Z)) Z_=Xen%Z(ic,ik,i_spin)*Xen%Z(iv,ikp,i_spin)
  !
  if ((.not.use_X_RIM.or.ic>BZ_RIM_nbands).and.(.not.BSS_uses_RIM)) then
    !
    ! Using QP corrected states
    !
-   pole=Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin)+(0.,1.)*W_
+   pole=Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin)-(0.,1.)*W_
    !
    do iw=fr(1),fr(2)
      if (ordering=="t") GreenF(iw-fr(1)+1)=Z_*(1./(Xw%p(iw)-pole)-1./(conjg(Xw%p(iw))+pole))
-     if (ordering=="c") GreenF(iw-fr(1)+1)=Z_*(1./(Xw%p(iw)-pole)-1./(Xw%p(iw)+pole))
+     if (ordering=="c") GreenF(iw-fr(1)+1)=Z_*(1./(Xw%p(iw)-pole)-1./(Xw%p(iw)+conjg(pole)))
      if (ordering=="r") GreenF(iw-fr(1)+1)=Z_/(Xw%p(iw)-pole)
-     if (ordering=="a") GreenF(iw-fr(1)+1)=           -Z_/(conjg(Xw%p(iw))+pole)
+     if (ordering=="a") GreenF(iw-fr(1)+1)=                      -Z_/(conjg(Xw%p(iw))+pole)
    enddo
    !
    return

@@ -97,12 +97,22 @@ module BS
  !
  interface 
    !
-   subroutine Kernel_by_V(iq,iter,Vi,Vo)
+#if defined _TEST_1
+   subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
+     use pars,          ONLY:SP
+     integer               ::iq
+     integer               ::iter
+     complex(SP)           ::Vi(:),Vo(:)
+     real(SP), optional     ::iter_par
+   end subroutine
+#else
+   subroutine K_BSmat_by_V(iq,iter,Vi,Vo)
      use pars,          ONLY:SP
      integer               ::iq
      integer,     optional ::iter
      complex(SP), optional ::Vi(:),Vo(:)
    end subroutine
+#endif
    !
    integer function variables_BS(ID,local_description,DB,X)
      use pars,       ONLY:lchlen

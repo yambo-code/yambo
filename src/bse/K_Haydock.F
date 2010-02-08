@@ -29,8 +29,13 @@ subroutine K_Haydock(iq,W)
  use com,            ONLY:msg,isec
  use BS,             ONLY:BSS_n_descs,BS_K_dim,BS_mat,Haydock_treshold,&
 &                         BSS_rhoq0,BSS_description,Haydock_v0_mod,&
-&                         BS_DB_is_fragmented,Kernel_by_V,&
-&                         BS_eh_f,ioBSS_Haydock,BS_K_Coupling,Haydock_terminator
+&                         BS_DB_is_fragmented, BS_eh_f,ioBSS_Haydock,&
+&                         BS_K_Coupling,Haydock_terminator,&
+#if defined _TEST_1
+&                         K_BSmat_by_V
+#else
+&                         K_BSmat_by_V
+#endif
  use timing,         ONLY:live_time_msg
  use stderr,         ONLY:tty_size,intc,real2ch
  use electrons,      ONLY:spin_occ
@@ -47,6 +52,7 @@ subroutine K_Haydock(iq,W)
  complex(SP),allocatable :: Vn(:),Vnm1(:),Vnp1(:)
  complex(SP),allocatable :: Cf(:) 
  real(SP)           ::reached_treshold, Bf(Max_iterations),Af(Max_iterations)
+ real(SP)           ::ItParity
  character(schlen)  ::dumb_ch
  logical, external  ::stop_now
  !
@@ -68,8 +74,13 @@ subroutine K_Haydock(iq,W)
    !
    ! GPL_EXCLUDE_START
    !
+#if defined _TEST_1
+   allocate(Cf(Max_iterations+1),Vn(BS_K_dim),Vnm1(BS_K_dim),&
+&           Vnp1(BS_K_dim))
+#else
    allocate(Cf(Max_iterations+1),Vn(2*BS_K_dim),Vnm1(2*BS_K_dim),&
 &           Vnp1(2*BS_K_dim))
+#endif
    !
    ! GPL_EXCLUDE_END
    !
@@ -87,8 +98,13 @@ subroutine K_Haydock(iq,W)
    !
    ! GPL_EXCLUDE_START
    !
+#if defined _TEST_1
+   io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),&
+&  Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1))   
+#else
    io_err=ioBSS_Haydock(ID,1,2*BS_K_dim,reached_treshold,Af(1),Bf(1),&
 &  Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1))   
+#endif
    !
    ! GPL_EXCLUDE_END
    !
@@ -104,9 +120,13 @@ subroutine K_Haydock(iq,W)
    if (BS_K_Coupling) then 
      !
      ! GPL_EXCLUDE_START
-     !
+#if defined _TEST_1
+     io_err=ioBSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),&
+&            Bf(:it_on_disk+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1))
+#else
      io_err=ioBSS_Haydock(ID,it_on_disk,2*BS_K_dim,reached_treshold,Af(:it_on_disk),&
 &            Bf(:it_on_disk+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1))
+#endif
      !
      ! GPL_EXCLUDE_END
      !
@@ -154,15 +174,22 @@ subroutine K_Haydock(iq,W)
    ! | Vn > =     |q->0>/(<q->0| F (H |q->0>))
    ! | Vnp1 > = H |Vn>
    !
+   ItParity = (-1._SP)**it_on_disk
    if (it_on_disk==0) then
      Cf= (0.,0.)
      Vn(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)  *BS_eh_f(:BS_K_dim)
+#if !defined _TEST_1
      Vn(BS_K_dim+1:)=-BSS_rhoq0(BS_K_dim+1:)*BS_eh_f(:BS_K_dim)
-     call Kernel_by_V(iq,iter=it_on_disk,Vi=Vn,Vo=Vnp1)
+     call K_BSmat_by_V(iq,iter=it_on_disk,Vi=Vn,Vo=Vnp1)
      Haydock_v0_mod=sqrt(fdot_product(Vn,Vnp1))
+     Cf(1) = dot_product(BSS_rhoq0,Vn)/Haydock_v0_mod
+#else
+     call K_BSmat_by_V(iq,it_on_disk,Vn,Vnp1,iter_par=ItParity)
+     Haydock_v0_mod=sqrt(2._SP*real(dot_product(Vn,Vnp1)))
+     Cf(1) = 2._SP*aimag(dot_product(BSS_rhoq0,Vn))/Haydock_v0_mod
+#endif
      Vnp1(:) = Vnp1(:)/Haydock_v0_mod
      Vn(:)   = Vn(:)/Haydock_v0_mod
-     Cf(1) = dot_product(BSS_rhoq0,Vn)/Haydock_v0_mod
    else
      Haydock_v0_mod = Bf(1)
      Bf(1) = 0.
@@ -194,7 +221,11 @@ subroutine K_Haydock(iq,W)
      !
      !|Vn+1> = H |Vn>
      !
-     call Kernel_by_V(iq,iter=it-it_on_disk,Vi=Vn,Vo=Vnp1)
+#if defined _TEST_1
+     call K_BSmat_by_V(iq,it-it_on_disk,Vn,Vnp1)
+#else
+     call K_BSmat_by_V(iq,iter=it-it_on_disk,Vi=Vn,Vo=Vnp1)
+#endif
      !
      ! A(n) = <Vn|Vn+1>
      !
@@ -228,18 +259,28 @@ subroutine K_Haydock(iq,W)
      !
      ! GPL_EXCLUDE_START
      !
-     ! A(n) = <Vn+1|F|Vn+1> (that is <Vn|HFH|Vn>)
+     ! A(n) = <Vn+1|F|Vn+1> (that is <Vn|HFH|Vn>), 
+     !      =  0   by symmetry 
      !
-     Af(it)=fdot_product(Vnp1,Vnp1)
+     ItParity=(-1._SP)**it
+     Af(it)=0._SP
      !
      !|Vn+1> = |Vn+1> - A(n)|Vn> - B(n)|Vn-1>
      !
+#if defined _TEST_1
+#if defined _DOUBLE
+     call zaxpy(BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,1,Vnp1,1)
+#else
+     call caxpy(BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,1,Vnp1,1) 
+#endif
+#else
 #if defined _DOUBLE
      call zaxpy(2*BS_K_dim,-Af(it)*(1._SP,0._SP),Vn,1,Vnp1,1)
      call zaxpy(2*BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,1,Vnp1,1)
 #else
      call caxpy(2*BS_K_dim,-Af(it)*(1._SP,0._SP),Vn,1,Vnp1,1)
      call caxpy(2*BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,1,Vnp1,1) 
+#endif
 #endif
      !
      ! |Vn-1> = |Vn> 
@@ -250,17 +291,40 @@ subroutine K_Haydock(iq,W)
      !
      !|Vn+1> = H |Vn>
      !
-     call Kernel_by_V(iq,iter=it-it_on_disk,Vi=Vn,Vo=Vnp1)
+#if defined _TEST_1
+     call K_BSmat_by_V(iq,it-it_on_disk,Vn,Vnp1,iter_par=ItParity)
+#else
+     call K_BSmat_by_V(iq,iter=it-it_on_disk,Vi=Vn,Vo=Vnp1)
+#endif
      !
      ! B(n+1)= <Vn|F|Vn+1>^(1/2) (that is <Vn|FH|Vn>^(1/2))
+     !       = (2*Re(<Vn|Vnp1>))^(1/2) by symmetry, 
+     !          where the dot_product is just on eh pair space 
      !
+#if defined _TEST_1
+     Bf(it+1)=sqrt(2._SP*real(dot_product(Vn,Vnp1))) 
+#else
      Bf(it+1)=sqrt(fdot_product(Vn,Vnp1)) 
+#endif
      !
      !|Vn> =|Vn+1> / B(n+1)
      !
+#if defined _TEST_1
+     forall(i1=1:BS_K_dim) Vn(i1)=Vn(i1)/Bf(it+1)
+     forall(i1=1:BS_K_dim) Vnp1(i1)=Vnp1(i1)/Bf(it+1)
+     !
+     ! Using symmetry arguments
+     ! Cf=(1-ItParity)Re(<rhoq0|Vn>) + (1+ItParity)Im(<rhoq0|Vn>) 
+     ! with all product evaluated just in the eh pairs subspace 
+     !
+     Cf(it+1)= ((1._SP-ItParity)*real(dot_product(BSS_rhoq0,Vn))+&
+&               (1._SP+ItParity)*aimag(dot_product(BSS_rhoq0,Vn)))/&
+&               Haydock_v0_mod
+#else
      forall(i1=1:2*BS_K_dim) Vn(i1)=Vn(i1)/Bf(it+1)
      forall(i1=1:2*BS_K_dim) Vnp1(i1)=Vnp1(i1)/Bf(it+1)
      Cf(it+1)= dot_product(BSS_rhoq0,Vn)/Haydock_v0_mod
+#endif
      !
      ! GPL_EXCLUDE_END
      !
@@ -306,9 +370,14 @@ subroutine K_Haydock(iq,W)
      !
      ! GPL_EXCLUDE_START
      !
-     Bf(1) = Haydock_v0_mod 
+     Bf(1) = Haydock_v0_mod
+#if defined _TEST_1
+     io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_treshold,Af(:it),Bf(:it+1),   &
+&       Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it+1))
+#else 
      io_err=ioBSS_Haydock(ID,it,2*BS_K_dim,reached_treshold,Af(:it),Bf(:it+1),   &
 &       Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it+1))
+#endif
      Bf(1) = 0.
      !
      ! GPL_EXCLUDE_END
@@ -466,6 +535,7 @@ subroutine K_Haydock(iq,W)
      !
    end subroutine
    !
+#if !defined _TEST_1
    function fdot_product(v,w)
      !
      real(SP)    ::fdot_product
@@ -476,6 +546,7 @@ subroutine K_Haydock(iq,W)
 &                  -dot_product(v(BS_K_dim+1:2*BS_K_dim),w(BS_K_dim+1:2*BS_K_dim)))
      !
    end function fdot_product
+#endif
    !
    function terminator(x,c1,c2,which)
      !

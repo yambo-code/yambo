@@ -27,6 +27,7 @@ subroutine X_GreenF_remap(bands,E,W)
  use electrons,     ONLY:levels,n_sp_pol
  use frequency,     ONLY:w_samp,W_reset
  use memory_m,      ONLY:mem_est
+ use com,           ONLY:msg
  !
  implicit none
  integer      :: bands(2)
@@ -36,12 +37,12 @@ subroutine X_GreenF_remap(bands,E,W)
  ! Work Space
  !
  integer, parameter :: new_map_points=500
- integer            :: i_b,i_k,i_spin
+ integer            :: i_b,i_k,i_spin,i_w
  type(w_samp)       :: W_A
  type(levels)       :: E_map
  !
- real(SP)           :: W_sign,A_sign
- complex(SP)        :: Ao(E%GreenF_n_E_steps),zero_plus
+ real(SP)           :: W_sign,A_sign,GF_max_E_range
+ complex(SP)        :: Ao(E%GreenF_n_E_steps),zero_plus,QP_A(new_map_points)
  !
  ! Resets
  !
@@ -49,6 +50,23 @@ subroutine X_GreenF_remap(bands,E,W)
  nullify(E_map%GreenF)
  !
  ! New energy range
+ !
+ GF_max_E_range=-1.
+ do i_b=bands(1),bands(2)
+   do i_k=1,E%nk
+     do i_spin=1,n_sp_pol
+       if (maxval(real(E%GreenF_W(i_b,i_k,i_spin,:)))>GF_max_E_range.and.i_b> E%nbf )  &
+&        GF_max_E_range=maxval(real(E%GreenF_W(i_b,i_k,i_spin,:)))
+       if (-minval(real(E%GreenF_W(i_b,i_k,i_spin,:)))>GF_max_E_range.and.i_b<=E%nbf )  &
+&        GF_max_E_range=-minval(real(E%GreenF_W(i_b,i_k,i_spin,:)))
+     enddo
+   enddo
+ enddo
+ !
+ if (W%er(2)<GF_max_E_range) then
+   W%er(2)=GF_max_E_range
+   call msg('rsn','[GF remap] Energy range enlarged to [ev]: ', W_A%er*HARTREE)
+ endif
  !
  W_A%n=max(new_map_points,W%n(1))
  W_A%er=max(abs(W%er(1)),abs(W%er(2)))*(/0.,1./)

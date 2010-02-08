@@ -46,10 +46,11 @@ module QP_m
  logical           :: GWo_SC_done
  logical           :: COHSEX_use_empties
  logical           :: On_Mass_Shell_approx
- logical           :: Force_Newton_QP
  logical           :: use_GreenF_to_eval_QP
+ logical           :: use_GreenF_Zoom
  logical           :: GF_is_causal
  character(schlen) :: QP_solver
+ real(SP)          :: QP_G_Zoom_treshold
  real(SP)          :: QP_G_damp
  real(SP)          :: QP_dSc_delta
  real(SP)          :: QP_W_er(2)
@@ -58,6 +59,7 @@ module QP_m
  real(SP)          :: QP_G_dr(2)
  real(SP)          :: QP_cg_percent
  real(SP)   ,allocatable:: QP_G_amplitude_integral(:)
+ real(SP)   ,allocatable:: QP_G_zoom_er(:,:)
  complex(SP),allocatable:: QP_dSc(:,:)
  complex(SP),allocatable:: QP_W(:,:,:)
  complex(SP),allocatable:: QP_Vnl_xc(:)

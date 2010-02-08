@@ -73,7 +73,7 @@ subroutine QP_of(qp,en,QPdb_read_err)
    titles_order(4:6)=(/5,8,6/)
  endif
  if (trim(QP_solver)=='g'.and.use_GreenF_to_eval_QP) then
-   ntitles=6
+   ntitles=5
    titles_order(:ntitles)=(/9,10,4,5,6/)
  endif
  if (l_ph_corr) then

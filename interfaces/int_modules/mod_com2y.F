@@ -24,8 +24,7 @@ module mod_com2y
  use pars,      ONLY:SP,PI,lchlen,schlen,DP
  implicit none
  !
- logical :: force_noTR
- logical :: force_noSYM
+ logical :: use_SI_instead_of_TR
  logical :: force_noWFs
  logical :: artificial_spin_pol
  !
@@ -45,10 +44,9 @@ module mod_com2y
      !
      call string_split(in_string,str_piece)
      !
-     force_noTR =index(in_string,'notr')>0
-     force_noSYM=index(in_string,'nosym')>0
-     force_noWFs=index(in_string,'nowf')>0
-     artificial_spin_pol=index(in_string,'dupl')>0
+     use_SI_instead_of_TR =index(in_string,'notr')>0
+     force_noWFs          =index(in_string,'nowf')>0
+     artificial_spin_pol  =index(in_string,'dupl')>0
      !
      alat_mult_factor=1.
      do i1=1,100
@@ -73,23 +71,15 @@ module mod_com2y
      logical :: double_symmetries
      real(SP):: sop_mat(3,3)
      !
-     if (force_noSYM) then
-       i_time_rev=0
-       nsym=1
-       allocate(dl_sop(3,3,1))
-       dl_sop(1,:,1)=(/1.,0.,0./)
-       dl_sop(2,:,1)=(/0.,1.,0./)
-       dl_sop(3,:,1)=(/0.,0.,1./)
-       call msg("l","no")
-       return
-     endif
-     !
      i_time_rev=1
      double_symmetries=.true.
      !
      ! Space Invertion (possible only for v >= 3.0.4)
      !
      call atoms_spatial_invertion()
+     !
+     if (i_space_inv==0) call msg("l","[SI no]...")
+     if (i_space_inv==1) call msg("l","[SI yes]...")
      !
      ! Search for identity and inversion symmetries.
      !
@@ -107,8 +97,8 @@ module mod_com2y
          is_inv=is
        endif 
      enddo
-     if (.not.l_identity) call msg("l","[ID no]...")
-     if (l_identity)      call msg("l","[ID yes]...")
+     if (.not.l_identity) call msg("l","[I no]...")
+     if (l_identity)      call msg("l","[I yes]...")
      !
      ! Special case where I,-I present: no TR used.
      !
@@ -118,8 +108,7 @@ module mod_com2y
        ! and switch off TR
        !
        if (i_space_inv==1) i_time_rev=0
-       if (i_space_inv==0) call &
-&         error('-I is in the symmetries list but it is not a proper operation')
+       if (i_space_inv==0) call error('-I is not a proper symmetry operation')
      endif
      !
      ! Identity was stripped in outkss: swap all
@@ -127,34 +116,29 @@ module mod_com2y
      !
      if (.not.l_identity.and.l_inversion) int_sop=-int_sop
      !
-     if (.not.l_inversion) call msg("l","[INV no]...")
-     if (l_inversion)      call msg("l","[INV yes]...")
+     if (.not.l_inversion) call msg("l","[-I no]...")
+     if (l_inversion)      call msg("l","[-I yes]...")
      !
      ! TR ?
      !
-     if (spin_orbit) then 
+     if (spin_orbit) i_time_rev=0
+     ! 
+     ! when the TR is imposed to be removed from the user it must be replaced
+     ! by the spatial inversion. Otherwise it cannot be removed.
+     !
+     if (i_time_rev==1.and.use_SI_instead_of_TR.and.i_space_inv==1) then 
        i_time_rev=0
-       call msg("l","[SO yes => TR no]...")
+       double_symmetries=.not.l_inversion
      endif
-     if(i_time_rev==0) double_symmetries=.false.
-     if (force_noTR) then 
-       i_time_rev=0
-       if(.not. (i_space_inv==1)) double_symmetries=.false.
-       call msg("l","[TR no]...")
-     endif
-     if (.not.spin_orbit.and..not.force_noTR) then
-       if (i_time_rev==1) call msg("l","[TR yes]...")
-       if (i_time_rev==0) call msg("l","[TR no]...")
-     endif
+     !
+     if (i_time_rev==1) call msg("l","[TR yes]")
+     if (i_time_rev==0) call msg("l","[TR no]")
+     if (i_time_rev==0) double_symmetries=.false.
      !
      ! Double the simmetries if TR is added
      !
      nsym=nsym_
      if (double_symmetries) nsym=2.*nsym_
-     !
-     !
-     if (i_space_inv==0) call msg("l","[SI no]")
-     if (i_space_inv==1) call msg("l","[SI yes]")
      !
      !From abinit help ...
      !

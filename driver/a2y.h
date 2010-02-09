@@ -41,8 +41,7 @@
   {"dbfrag","S","DataBases fragmentation",0,0,0,0},
   {"alat_f","a","Lattice constants rescaling factor",0,1,0,0},
   {"dupl",  "d","States duplication (artificial spin polarization)",0,0,0,0},
-  {"notr",  "t","Force no TR symmetry",0,0,0,0},
-  {"nosym", "y","Force no symmetries",0,0,0,0},
+  {"notr",  "t","Force use of spatial Inv. instead of Time Rev.",0,0,0,0},
   {"nowf",  "w","Force no wavefunctions",0,0,0,0},
   {NULL,NULL,NULL,0,0,0,0}
  };

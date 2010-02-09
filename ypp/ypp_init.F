@@ -370,7 +370,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !             
  l_rtoptics  =runlevel_is_on('rtoptics')
  !
- if (l_rsymm) call initactivate(1,"EField1 EField2 BField Bpsi Btheta RmAllSymm")
+ if (l_rsymm) call initactivate(1,"EField1 EField2 BField Bpsi Btheta RmAllSymm RmTimeRev")
  !
  if (l_rtoptics) then 
     call initactivate(1,"EnRngeRt ETStpsRt TmRngeRt DampMode DampFactor FourierDamp")

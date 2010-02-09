@@ -59,7 +59,8 @@ subroutine RT_fix_symmetries(E,k)
  integer               :: det
  real(SP), allocatable :: wf_disk(:,:,:,:)
  real(SP), allocatable :: pp_kb_store(:,:,:,:,:),pp_kbd_store(:,:,:,:,:)
- logical               :: Rm_all_symm,use_E_field,use_B_field,reject_symmetry
+ logical               :: Rm_all_symm,use_E_field,use_B_field,reject_symmetry,Rm_TR,&
+&                         S_contains_TR(nsym)
  type(bz_samp)         :: k_save
  character(lchlen)     :: core_io_path_save,wf_fragment
  integer               :: ACTION_,ioKB_err
@@ -71,12 +72,16 @@ subroutine RT_fix_symmetries(E,k)
  if (B_field/=0.)      use_B_field=.TRUE.
  !
  call parser('RmAllSymm',Rm_all_symm)
+ call parser('RmTimeRev',Rm_TR)
  !
  if (use_E_field) call section('*',"== Electric Fields in real time: BZ sampling remapping ==")
  if (use_B_field) call section('*',"== Magnetic field: BZ sampling remapping ==")
  if (Rm_all_symm) call section('*',"== Remove all Symmetries ==")
  !
- if (.not.use_B_field.and..not.use_E_field.and..not.Rm_all_symm) return
+ if (Rm_TR.and.i_time_rev==0) return
+ if (Rm_TR)       call section('*',"== Remove Time Reversal ==")
+ !
+ if (.not.any((/use_B_field,use_E_field,Rm_all_symm,Rm_TR/))) return 
  !
  if (wf_nb_io/=E%nb) then
    call warning('Splitted wavefunctions still not supported')
@@ -126,11 +131,15 @@ subroutine RT_fix_symmetries(E,k)
    !
  endif
  !
+ ! time reversal-related Symmetries
+ !
+ forall (is=1:nsym) S_contains_TR(is)=is>nsym/(1+i_time_rev)
+ !
  ! Remove Symmetries
  !
  nsym=nsym/(1+i_time_rev)
- i_time_rev=0 ! No time reversal
  call msg('s',trim(intc(nsym))//' spatial symmetries reduced to ...')
+ i_time_rev=0 
  !
  if (use_B_field) then
    det=0.
@@ -141,7 +150,7 @@ subroutine RT_fix_symmetries(E,k)
  !
  if(Rm_all_symm) then
    nsym=1
- else 
+ else  if (.not.Rm_TR) then
    is=2
    do while (is<=nsym)
      !
@@ -317,6 +326,7 @@ subroutine RT_fix_symmetries(E,k)
  do i1=k_save%nibz+1,k%nibz 
    !      
    ik=kpoints_map(1,i1)
+   is=kpoints_map(2,i1)
    !
    call io_control(ACTION=ACTION_,COM=NONE,SEC=(/i1+1,1/),ID=ID)
    !
@@ -325,6 +335,7 @@ subroutine RT_fix_symmetries(E,k)
        i_wf=wf_state(ib,ik,i_spin)
        wf_disk(1,ib,:,i_spin)= real(wf(:,i_wf))
        wf_disk(2,ib,:,i_spin)=aimag(wf(:,i_wf))
+       if ( S_contains_TR(is) ) wf_disk(2,ib,:,i_spin)=-aimag(wf(:,i_wf))
      enddo
    enddo
    !

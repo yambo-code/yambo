@@ -193,6 +193,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'Bpsi',      '[MAG] Magnetic field psi angle [degree]',B_psi,unit='deg')
  call it(defs,'Btheta',    '[MAG] Magnetic field theta angle [degree]',B_theta,unit='deg')
  call it('f',defs,'RmAllSymm','Remove all symmetries') 
+ call it('f',defs,'RmTimeRev','Remove Time Reversal') 
  !
  call it(defs,'EnRngeRt','Energy range',X_rt%energy_range,unit=E_unit)
  call it(defs,'ETStpsRt','Total Energy steps',X_rt%energy_steps)

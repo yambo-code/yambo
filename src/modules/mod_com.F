@@ -43,8 +43,8 @@ module com
  ! 
  ! Output Files/Report File
  !
- integer,parameter  :: nofs=100
- integer,parameter  :: max_open_ofs=100
+ integer,parameter  :: nofs=200
+ integer,parameter  :: max_open_ofs=200
  character(lchlen)  :: of(nofs)
  character(lchlen)  :: opened_of(max_open_ofs)
  integer            :: of_unit(max_open_ofs)

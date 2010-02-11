@@ -23,10 +23,10 @@ subroutine RT_current(Xk,G_lesser,A_vecpot)
  !
  ! Evalute current including also the diamagnetic contribution
  !
- use pars,           ONLY:SP,DP
+ use pars,           ONLY:SP,DP,pi
  use units,          ONLY:SPEED_OF_LIGHT
  use electrons,      ONLY:levels
- use R_lattice,      ONLY:bz_samp
+ use R_lattice,      ONLY:bz_samp,RL_vol
  use D_lattice,      ONLY:sop_inv,DL_sop
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel,levels
@@ -35,9 +35,9 @@ subroutine RT_current(Xk,G_lesser,A_vecpot)
 &                         gauge_field 
  !
  implicit none
- type(bz_samp), intent(in) ::Xk
- complex(SP),   intent(in) ::G_lesser(SC_bands,SC_bands,Xk%nibz)
- type(gauge_field), intent(in) :: A_vecpot
+ type(bz_samp),     intent(in) ::Xk
+ complex(SP),       intent(in) ::G_lesser(SC_bands,SC_bands,Xk%nibz)
+ type(gauge_field), intent(in) ::A_vecpot
  !
  ! Work Space
  !
@@ -91,5 +91,7 @@ subroutine RT_current(Xk,G_lesser,A_vecpot)
    j_current(:)=j_current(:)+A_vecpot%vecpot(:)*real(nel,SP)/SPEED_OF_LIGHT
    !
  endif
+ !
+ j_current=j_current*RL_vol/(2._SP*pi)**3
  !
 end subroutine RT_current

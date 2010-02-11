@@ -27,7 +27,6 @@ subroutine X_GreenF_remap(bands,E,W)
  use electrons,     ONLY:levels,n_sp_pol
  use frequency,     ONLY:w_samp,W_reset
  use memory_m,      ONLY:mem_est
- use com,           ONLY:msg
  !
  implicit none
  integer      :: bands(2)
@@ -36,20 +35,20 @@ subroutine X_GreenF_remap(bands,E,W)
  !
  ! Work Space
  !
- integer, parameter :: new_map_points=500
- integer            :: i_b,i_k,i_spin,i_w
+ integer, parameter :: new_map_points=2000
+ integer            :: i_b,i_k,i_spin
  type(w_samp)       :: W_A
  type(levels)       :: E_map
  !
  real(SP)           :: W_sign,A_sign,GF_max_E_range
- complex(SP)        :: Ao(E%GreenF_n_E_steps),zero_plus,QP_A(new_map_points)
+ complex(SP)        :: Ao(E%GreenF_n_E_steps),zero_plus
  !
  ! Resets
  !
  call W_reset(W_A)
  nullify(E_map%GreenF)
  !
- ! New energy range
+ ! New energy range where the convolution is defined
  !
  GF_max_E_range=-1.
  do i_b=bands(1),bands(2)
@@ -63,13 +62,10 @@ subroutine X_GreenF_remap(bands,E,W)
    enddo
  enddo
  !
- if (W%er(2)<GF_max_E_range) then
-   W%er(2)=GF_max_E_range
-   call msg('rsn','[GF remap] Energy range enlarged to [ev]: ', W_A%er*HARTREE)
- endif
+ W_A%er=max(abs(W%er(1)),abs(W%er(2)))*(/0.,1./)
+ if (W_A%er(2)<GF_max_E_range) W_A%er(2)=GF_max_E_range
  !
  W_A%n=max(new_map_points,W%n(1))
- W_A%er=max(abs(W%er(1)),abs(W%er(2)))*(/0.,1./)
  W_A%dr=0.
  call FREQUENCIES_setup(W_A)
  W_A%p=real(W_A%p)

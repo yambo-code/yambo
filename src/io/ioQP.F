@@ -29,12 +29,12 @@ integer function ioQP(what,qp,ID)
  use QP_m,           ONLY:QP_t,QP_state,QP_nk,QP_nb,QP_G_dr,&
 &                         QP_n_G_bands,QP_n_states,QP_W,QP_G_er,&
 &                         QP_n_W_freqs,QP_W_dr,QP_W_er,QP_W_partially_done,&
-&                         GWo_iterations,GF_is_causal
+&                         GWo_iterations,GF_is_causal,QP_G_Zoom_treshold
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
 &                         write_is_on,io_mode,DUMP,VERIFY,io_restart_point,&
-&                         io_netcdf_support,ver_is_gt_or_eq,&
-&                         db_alat,variable_is_found,IO_INCOMPATIBLE_VAR
+&                         io_netcdf_support,ver_is_gt_or_eq,DB_is_OK,&
+&                         db_alat,variable_is_found,IO_INCOMPATIBLE_VAR,IO_NO_BINDING_ERROR
  use global_XC,      ONLY:QP_DB_kind,SE_GoWo,SE_GWo,SE_GoWo_PPA,SE_GWo_PPA,SE_COHSEX,SE_NONE,&
 &                         SE_POLARON
  use fragments,      ONLY:io_fragment,Fragments_Restart
@@ -136,12 +136,15 @@ integer function ioQP(what,qp,ID)
      ! Tough the GF's parameters are already stored in the QP_descriptions
      ! I need then on-fly to, eventually, rebuild the Green's function
      !
-     call io_elemental(ID,VAR="SE_OPERATOR_PARAMETERS",VAR_SZ=6,MENU=0)
+     var_size=6
+     if (ver_is_gt_or_eq(ID,revision=530))  var_size=7
+     call io_elemental(ID,VAR="SE_OPERATOR_PARAMETERS",VAR_SZ=var_size,MENU=0)
      call io_elemental(ID,I0=qp%GreenF_n_steps)
      call io_elemental(ID,R1=QP_G_er) ! <- This is, actually, not needed as the
                                       !    full frequency dependence is stored in sec 3
      call io_elemental(ID,R1=QP_G_dr)
      call io_elemental(ID,L0=GF_is_causal)
+     if (ver_is_gt_or_eq(ID,revision=530)) call io_elemental(ID,R0=QP_G_Zoom_treshold)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
    endif
@@ -149,7 +152,7 @@ integer function ioQP(what,qp,ID)
    ! GPL_EXCLUDE_END
    !
    ioQP=io_status(ID)
-   if (ioQP/=0) goto 1
+   if (.not.DB_is_OK(ID)) goto 1
    !
  endif
  !
@@ -187,11 +190,8 @@ integer function ioQP(what,qp,ID)
          call io_elemental(ID,CH0=qp%description(i1),VAR='',CHECK=.true.,OP=(/"=="/)) 
        endif
      else if (what=="G") then
-       if (index(qp%description(i1),'Zoom')>0) then
-         call io_elemental(ID,CH0=qp%description(i1),VAR='',WARN=.true.)
-       else
-         call io_elemental(ID,CH0=qp%description(i1),VAR='',CHECK=.true.,OP=(/"=="/)) 
-       endif
+       call io_elemental(ID,CH0=qp%description(i1),VAR='',CHECK=.true.,OP=(/"=="/)) 
+       if (index(qp%description(i1),'Zoom')>0.and.io_status(ID)<0)  io_status(ID)=IO_NO_BINDING_ERROR
      else
        if (index(qp%description(i1),'QP')>0) then
          call io_elemental(ID,CH0=qp%description(i1),VAR='')
@@ -205,7 +205,7 @@ integer function ioQP(what,qp,ID)
    enddo
    !
    ioQP=io_status(ID)
-   if (ioQP/=0) goto 1
+   if (.not.DB_is_OK(ID)) goto 1
    !
    ! The table is used to check the requested QP states with the disk ones.
    ! Note that I do not extract the W m.e. for a subset of Qp states
@@ -256,7 +256,7 @@ integer function ioQP(what,qp,ID)
    deallocate(qp_table_disk)
    !
    ioQP=io_status(ID)
-   if (ioQP/=0) goto 1
+   if (.not.DB_is_OK(ID)) goto 1
    !
  endif
  !
@@ -369,7 +369,7 @@ integer function ioQP(what,qp,ID)
    endif
    !
    ioQP=io_status(ID)
-   if (ioQP/=0) goto 1
+   if (.not.DB_is_OK(ID)) goto 1
    !
    ! GPL_EXCLUDE_END
    !
@@ -417,7 +417,7 @@ integer function ioQP(what,qp,ID)
    deallocate(qp_W_disk)
    !
    ioQP=io_status(ID)
-   if (ioQP/=0) goto 1
+   if (.not.DB_is_OK(ID)) goto 1
    !
    call Fragments_Restart(ID,current_fragment=iqbz,fragments_todo=nqbz)
    !

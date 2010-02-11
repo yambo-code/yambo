@@ -57,7 +57,8 @@ module IO_m
  !
  ! I/O errors
  !
- integer, parameter:: IO_NO_DATABASE=-1,IO_INCOMPATIBLE_VAR=-2,IO_GENERIC_ERROR=-3
+ integer, parameter:: IO_NO_DATABASE=-1,IO_INCOMPATIBLE_VAR=-2,IO_GENERIC_ERROR=-3,&
+&                     IO_NO_BINDING_ERROR=-4,IO_NO_ERROR=0
  !
  ! Units
  !
@@ -177,6 +178,13 @@ module IO_m
 &                      io_action(ID)==OP_WR   ,io_action(ID)==WR_CL,&
 &                      io_action(ID)==WR_CL_IF_END/))
    end function
+   ! 
+   logical function DB_is_OK(ID)
+     !
+     integer :: ID
+     DB_is_OK=any((/io_status(ID)==IO_NO_ERROR,io_status(ID)==IO_NO_BINDING_ERROR/))
+     !
+   end function
    !
    integer function io_connect(desc,subfolder,type,ENABLE_LARGE_FILE,no_full_RESET,ID)
      !
@@ -246,12 +254,10 @@ module IO_m
      !
      ! Create Directories 
      !
-     if (len_trim(jobstr)>0) then
-       write (folder,'(3a)') trim(more_io_path),'/',trim(jobstr)
-     else
-       write (folder,'(2a)') trim(more_io_path),'/SAVE'
-     endif
+     write (folder,'(2a)') trim(more_io_path),'/SAVE'
+     if (len_trim(jobstr)>0) write (folder,'(3a)') trim(more_io_path),'/',trim(jobstr)
      if (write_is_on(ID).and.(type==2.or.len_trim(jobstr)==0)) then
+       call mk_dir(more_io_path)
        call mk_dir(folder)
        if (present(subfolder)) call mk_dir(string_pack(folder,"/",subfolder))
      endif

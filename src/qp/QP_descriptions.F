@@ -211,7 +211,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
      qp%n_descs=qp%n_descs+1
      write (qp%description(qp%n_descs),trim(&
 &         string_pack('(a,1(',gen_fmt( r_v=(/QP_G_Zoom_treshold/)),',1x))'))) &
-&          ' [GF] Zoom treshold        :',QP_G_Zoom_treshold
+&          ' [GF] Zoom treshold   [o/o]:',QP_G_Zoom_treshold
    endif
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),trim(&

@@ -124,6 +124,7 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
    ! Search for a finer energy range 
    !
    if (use_GreenF_Zoom.and.GFdb_read_err==0) then
+     !
      Amp_Peak=maxval(aimag(qp%GreenF(iqp,:)))
      iw_start=0
      do iw=1,W%n(1)
@@ -143,6 +144,9 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
      W_step=(QP_G_zoom_er(iqp,2)-QP_G_zoom_er(iqp,1))/QP_Sc_steps
      if (W_step<new_min_max_step(1)) new_min_max_step(1)=W_step
      if (W_step>new_min_max_step(2)) new_min_max_step(2)=W_step
+     !
+     call FREQUENCIES_Green_Function(iqp,W,E%E)
+     qp%GreenF_W(iqp,:)=W%p(:)
      !
    endif
    !

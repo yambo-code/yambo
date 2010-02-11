@@ -38,7 +38,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_W_partially_done,&
 &                        GWo_iterations,COHSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
 &                        GF_is_causal,QP_G_amplitude_integral,l_extended_output
- use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE
+ use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE,IO_NO_BINDING_ERROR
  use global_XC,     ONLY:QP_DB_kind,SE_COHSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON
  implicit none
  type(levels) ::en,Xen
@@ -49,7 +49,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! Work Space
  !
  type(QP_t)        ::qp
- integer           ::i1,io_err,ID,i_spin
+ integer           ::i1,io_QP_err,io_G_err,ID_QP,ID_G,i_spin
  integer, external ::ioQP
  !
  ! Driver Logicals
@@ -60,10 +60,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  call parser('UseEbands',  COHSEX_use_empties)
  ! GPL_EXCLUDE_START
  call parser('GreenF2QP',  use_GreenF_to_eval_QP)
+ use_GreenF_Zoom=QP_G_Zoom_treshold>0.
  ! GPL_EXCLUDE_END
  call parser('ExtendOut',  l_extended_output)
- !
- use_GreenF_Zoom=QP_G_Zoom_treshold>0.
  !
  if (On_Mass_Shell_approx) QP_dSc_test=.FALSE.
  !
@@ -206,51 +205,66 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  enddo
  !
  if (.not.l_life) then
-   if (.not.trim(QP_solver)=='g'.or.use_GreenF_to_eval_QP) then
-     !
-     ! QP I/O
-     !
-     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
-     io_err=ioQP('QP',qp,ID)
-     if (io_err==0.and.trim(QP_solver)/='g') then
-       call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
-       io_err=ioQP('QP',qp,ID)
-       call QP_report_and_write(k,qp,en,io_err)
-       call local_free()
-       return
-     endif
-     ! GPL_EXCLUDE_START
+   !
+   ! QP I/O
+   !========
+   !
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID_QP)
+   io_QP_err=ioQP('QP',qp,ID_QP)
+   !
+   if (io_QP_err==0.and..not.trim(QP_solver)=='g') then
+     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID_QP)
+     io_QP_err=ioQP('QP',qp,ID_QP)
+     call QP_report_and_write(k,qp,en,0)
+     call local_free()
+     return
    endif
    !
-   if (trim(QP_solver)=='g'.or. (use_GreenF_to_eval_QP.and.io_err/=0) ) then
+   ! GPL_EXCLUDE_START
+   !
+   ! Green Functions I/O
+   !=====================
+   !
+   if (trim(QP_solver)=='g') then
      !
-     ! Sigma_C I/O & Green's Function
+     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID_G)
+     io_G_err=ioQP('G',qp,ID_G)
      !
-     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
-     io_err=ioQP('G',qp,ID)
-     if (io_err/=0.and.use_GreenF_Zoom) then
-       use_GreenF_Zoom=.FALSE.
-       QP_G_Zoom_treshold=0.
-       deallocate(QP_G_zoom_er)
-       call mem_est("QP_G_zoom_er")
-     endif
-     if (io_err==0) then
-       call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID)
-       io_err=ioQP('G',qp,ID)
-       call QP_Green_Function(qp,en,io_err) 
-       if (.not.use_GreenF_Zoom) then
-         if (use_GreenF_to_eval_QP) then
-           call QP_report_and_write(k,qp,en,-1)
-         else
-           call QP_report_and_write(k,qp,en,io_err)
-         endif
-         !
+     if (io_G_err==0.or.io_G_err==IO_NO_BINDING_ERROR) then
+       !
+       if (use_GreenF_to_eval_QP) use_GreenF_to_eval_QP=(.not.io_QP_err==0).and.(io_G_err==0)
+       if (use_GreenF_Zoom)       use_GreenF_Zoom=io_G_err==IO_NO_BINDING_ERROR.and..not.use_GreenF_to_eval_QP
+       !
+       call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=ID_G)
+       io_G_err=ioQP('G',qp,ID_G)
+       !
+       if (use_GreenF_to_eval_QP) then
+         call QP_Green_Function(qp,en,0) 
+         call QP_report_and_write(k,qp,en,-1)
          call local_free()
          return
        endif
+       !
+       if (use_GreenF_Zoom) then
+         allocate(QP_G_zoom_er(QP_n_states,2))
+         call mem_est("QP_G_zoom_er",(/size(QP_G_zoom_er)/),(/SP/))
+       else
+         QP_G_Zoom_treshold=0.
+       endif
+       call QP_Green_Function(qp,en,0) 
+       if (.not.use_GreenF_Zoom) then
+         call QP_report_and_write(k,qp,en,0)
+         call local_free()
+         return
+       endif
+       !
+     else
+       QP_G_Zoom_treshold=0.
      endif
-     ! GPL_EXCLUDE_END
+     !
    endif
+   !
+   ! GPL_EXCLUDE_END
    !
  endif
  !
@@ -368,10 +382,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
        qp%GreenF_n_steps=QP_Sc_steps
        allocate(QP_G_amplitude_integral(QP_n_states))
        call mem_est("QP_G_amplitude_integral",(/size(QP_G_amplitude_integral)/))
-       if (use_GreenF_Zoom) then
-         allocate(QP_G_zoom_er(QP_n_states,2))
-         call mem_est("QP_G_zoom_er",(/size(QP_G_amplitude_integral)/),(/SP/))
-       endif
      else if (.not.l_life) then
        allocate(QP_dSc(qp%n_states,QP_dSc_steps-1))
        call mem_est("QP_dSc",(/size(QP_dSc)/))

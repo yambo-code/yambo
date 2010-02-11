@@ -339,11 +339,11 @@ subroutine RT_spectrum(en,k)
  !
  select case(trim(Efield(ref_efield)%ef_name))
    case('DELTA')
-     dielectric(:,:) = dielectric(:,:)/(-Efield(ref_efield)%amplitude)
+     dielectric(:,:) = dielectric(:,:)/(-Efield(ref_efield)%amplitude)*SPEED_OF_LIGHT
    case('RESONANT')
-     dielectric(:,:) = dielectric(:,:)/(-Efield(ref_efield)%amplitude)/(-2._SP)
+     dielectric(:,:) = dielectric(:,:)/(-Efield(ref_efield)%amplitude)/(-2._SP)*SPEED_OF_LIGHT
    case('ANTIRESONANT')
-     dielectric(:,:) = dielectric(:,:)/(-Efield(ref_efield)%amplitude)/2._SP
+     dielectric(:,:) = dielectric(:,:)/(-Efield(ref_efield)%amplitude)/2._SP*SPEED_OF_LIGHT
    case('EXPSTEP')
      do i1=1,X_rt%energy_steps
        omega = (i1-1)*de+X_rt%energy_range(1)

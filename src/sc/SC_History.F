@@ -26,7 +26,7 @@ subroutine SC_History(it,E)
  use electrons,      ONLY:n_met_bands,n_full_bands,levels,n_sp_pol
  use R_lattice,      ONLY:nkibz
  use com,            ONLY:of_open_close,msg
- use stderr,         ONLY:intc
+ use stderr,         ONLY:intc,set_real_printed_length
  use SC,             ONLY:SC_bands,it_now,SC_description,n_SC_descriptions
  implicit none
  !
@@ -39,6 +39,8 @@ subroutine SC_History(it,E)
  real(SP) :: V(SC_bands)
  character(schlen), SAVE :: file_name(2)
  character(schlen)       :: headers(SC_bands*nkibz)
+ !
+! call set_real_printed_length(f_length=20,g_length=20)  
  !
  do i_spin=1,n_sp_pol
    !
@@ -80,5 +82,7 @@ subroutine SC_History(it,E)
    if ( it <  0 ) call of_open_close(file_name(i_spin))
    !
  enddo
+ !
+! call set_real_printed_length()
  !
 end subroutine SC_History

@@ -29,7 +29,9 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  !    Y   /____Y88b   /   YY   Y888b  888   |  Y888   /  
  !   /   /      Y88b /          Y888b 888__/    `88_-~   
  !
- use drivers
+ use drivers,       ONLY:l_ppa,l_HF_and_locXC,l_sc_run,l_collisions_IO,l_real_time,&
+&                        l_optics,l_chi,l_em1s,l_ppa,l_cohsex,l_bss,l_bse,l_em1d,&
+&                        l_gw0,l_el_corr,l_life,l_acfdt
  use X_m,           ONLY:X_t
  use par_proc_m,    ONLY:myid,ncpu,p_finalize
  use it_m,          ONLY:it_reset,infile
@@ -67,6 +69,7 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  !
  integer           ::i_err
  integer, external ::X_em1,init
+ logical           ::l_pp_em1,l_dyn_em1
  !
  ! Presets
  !
@@ -166,24 +169,27 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  !===============================
  !
  ! Static
+ !--------
  !
- if (l_em1s)                            i_err=X_em1(Xen,Xk,q,X(2),Xw(2),.false.)
+ if (l_em1s)       i_err=X_em1(Xen,Xk,q,X(2),Xw(2),.false.)
  !
- if (l_em1d.or.(l_gw0.and.l_el_corr)) then
-   ! 
-   ! Plasmon Pole 
-   !
-   if (l_ppa)                           i_err=X_em1(Xen,Xk,q,X(4),Xw(4),.false.)
-   ! 
-   ! GPL_EXCLUDE_START GW_REAL_AXIS_IGNORE
-   ! 
-   ! Dynamical 
-   !
-   if (.not.l_ppa.and..not.l_cohsex)    i_err=X_em1(Xen,Xk,q,X(3),Xw(3),.false.)
-   !
-   ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
-   !
- endif
+ ! Plasmon Pole 
+ !--------------
+ !
+ l_pp_em1=l_ppa.and. ( l_em1d.or.(l_gw0.and.l_el_corr).or.l_bse )
+ !
+ if (l_pp_em1)     i_err=X_em1(Xen,Xk,q,X(4),Xw(4),.false.)
+ !
+ ! GPL_EXCLUDE_START GW_REAL_AXIS_IGNORE
+ ! 
+ ! Dynamical 
+ !-----------
+ !
+ l_dyn_em1= (.not.l_ppa.and..not.l_cohsex) .and. (l_em1d.or.(l_gw0.and.l_el_corr))
+ !
+ if (l_dyn_em1)    i_err=X_em1(Xen,Xk,q,X(3),Xw(3),.false.)
+ !
+ ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
  !
  ! EXTENDED COLLISIONS (HF & COHSEX)
  !===================================
@@ -247,10 +253,10 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  !
  ! GPL_EXCLUDE_END
  !
- ! SC
- !====
- !
  if (l_sc_run) then
+   !
+   ! SC
+   !====
    !
 #if defined _SC  && !defined _RT
    if (.not.l_real_time) call SC_driver(X(:2),Xw(:2),Xk,en,k,q)

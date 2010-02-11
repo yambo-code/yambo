@@ -857,6 +857,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call W_duplicate(Xw(3),Xw(2))
      call W_duplicate(Xw(3),Xw(1))
      call W_duplicate(Xw(3),Xw(4))
+     !
    end subroutine X_var_setup
    !
    subroutine varsetup1 

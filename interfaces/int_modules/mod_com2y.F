@@ -126,6 +126,7 @@ module mod_com2y
      ! when the TR is imposed to be removed from the user it must be replaced
      ! by the spatial inversion. Otherwise it cannot be removed.
      !
+     if (i_time_rev==0) double_symmetries=.false.
      if (i_time_rev==1.and.use_SI_instead_of_TR.and.i_space_inv==1) then 
        i_time_rev=0
        double_symmetries=.not.l_inversion
@@ -133,9 +134,8 @@ module mod_com2y
      !
      if (i_time_rev==1) call msg("l","[TR yes]")
      if (i_time_rev==0) call msg("l","[TR no]")
-     if (i_time_rev==0) double_symmetries=.false.
      !
-     ! Double the simmetries if TR is added
+     ! Double the simmetries if TR or SI is added
      !
      nsym=nsym_
      if (double_symmetries) nsym=2.*nsym_

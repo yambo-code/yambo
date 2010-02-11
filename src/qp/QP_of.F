@@ -41,7 +41,6 @@ subroutine QP_of(qp,en,QPdb_read_err)
  !
  integer           :: i1,i2,qp_b,qp_k,qp_isp
  character(lchlen) :: file_name,G_Sc_name
- type(w_samp)      :: Sc_W
  logical           ::state_is_2do(QP_n_states)
  !
  !o.qp titles
@@ -95,6 +94,7 @@ subroutine QP_of(qp,en,QPdb_read_err)
      ntitles=10
      titles_order(:ntitles)=(/9,10,4,5,8,1,11,6,12,13/)
    endif
+   !
  endif
  !
  if (n_sp_pol==2) then
@@ -160,15 +160,9 @@ subroutine QP_of(qp,en,QPdb_read_err)
    !
    call set_real_printed_length(f_length=12,g_length=12)
    !
-   call W_reset(Sc_W)
-   Sc_W%n=QP_Sc_steps
-   Sc_W%dr=QP_G_dr
-   !
    do  i1=1,QP_n_states
      !
      if (.not.state_is_2do(i1)) cycle
-     !
-     call FREQUENCIES_Green_Function(i1,Sc_W,en%E)
      !
      write (G_Sc_name,'(2(a,i3.3))') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3)
      call of_open_close(G_Sc_name,'ot')
@@ -193,7 +187,7 @@ subroutine QP_of(qp,en,QPdb_read_err)
      call msg('o G_Sc','#')
      do i2=1,QP_Sc_steps
        values=0.
-       values(1)  =real(Sc_W%p(i2))*HARTREE
+       values(1)  =real(qp%GreenF_W(i1,i2))*HARTREE
        values(2:3)=(/real(qp%GreenF(i1,i2)),aimag(qp%GreenF(i1,i2))/)/HARTREE
        values(4:5)=(/real(qp%S_total(i1,i2)),aimag(qp%S_total(i1,i2))/)*HARTREE
        values(6)=values(4)
@@ -206,7 +200,6 @@ subroutine QP_of(qp,en,QPdb_read_err)
      enddo
      call of_open_close(G_Sc_name)
    enddo
-   call W_reset(Sc_W)
    !
    call set_real_printed_length()
    !

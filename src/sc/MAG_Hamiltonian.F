@@ -107,9 +107,9 @@ subroutine MAG_Hamiltonian(initial_check_only)
  complex(SP):: cdotc,cdotu
 #endif
  !
- if (trim(SC_potential)=='default'.and..not.initial_check_only) then
+ if (trim(SC_potential)=='default'.and.initial_check_only) then
    call section('*','Magnetic field ('//trim(MAG_hamiltonian_type)//') Hamiltonian') 
- else if(.not.initial_check_only) then
+ else if (initial_check_only) then
    call section('+','Magnetic field ('//trim(MAG_hamiltonian_type)//') Hamiltonian') 
  endif
  !

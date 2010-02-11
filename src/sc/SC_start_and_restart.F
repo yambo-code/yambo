@@ -112,10 +112,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  ! NSC_shot          : to use the DB's LOCAL potential
  ! SC_CYLE           : DEFAULT
  !
- l_SC_RESTART=all((/io_E==0,io_WF==0,io_V==0/))
-#if defined _MAGNETIC
- l_SC_RESTART=.FALSE.
-#endif
+ l_SC_RESTART=all((/io_E==0,io_WF==0,io_V==0/)).or.all((/io_V==0,local_V/))
  !
  if (l_SC_RESTART) then
    !
@@ -133,6 +130,7 @@ subroutine SC_start_and_restart(X,E,Xk)
    l_NSC_shot=SC_iterations==1.and.all((/io_E/=0,io_WF/=0,io_V==0.or.io_V==-2/)).and.local_V.and..not.l_SC_cycle
    !
  endif
+ !
 #if defined _MAGNETIC
  l_NSC_shot=.FALSE.
 #endif

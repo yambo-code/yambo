@@ -31,8 +31,7 @@ subroutine RT_current(Xk,G_lesser,A_vecpot)
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel,levels
  use X_m,            ONLY:DIP_iR_or_P
- use real_time,      ONLY:l_RT_no_diamagnetic,i_time,l_NE_with_fields,j_current,&
-&                         gauge_field 
+ use real_time,      ONLY:l_RT_no_diamagnetic,i_time,l_NE_with_fields,j_current,gauge_field 
  !
  implicit none
  type(bz_samp),     intent(in) ::Xk
@@ -57,7 +56,9 @@ subroutine RT_current(Xk,G_lesser,A_vecpot)
  !
  j_current(:)=(0._SP,0._SP)
  !
+#if defined _RT
  if(.not.l_NE_with_fields.or.i_time<0) return
+#endif
  !
  do i1=1,Xk%nbz
    !
@@ -86,11 +87,13 @@ subroutine RT_current(Xk,G_lesser,A_vecpot)
  !
  ! Diamagnetic term
  !
+#if defined _RT
  if(.not.l_RT_no_diamagnetic) then
    !
    j_current(:)=j_current(:)+A_vecpot%vecpot(:)*real(nel,SP)/SPEED_OF_LIGHT
    !
  endif
+#endif
  !
  j_current=j_current*RL_vol/(2._SP*pi)**3
  !

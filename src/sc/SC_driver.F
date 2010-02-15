@@ -48,6 +48,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use collisions_IO,  ONLY:collisions_IO_alloc,collisions_IO_free
 #if defined _MAGNETIC
  use magnetic,       ONLY:average_two_spin_density
+ use real_time,      ONLY:j_current
 #endif
  !
  implicit none
@@ -491,6 +492,23 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    end subroutine
    !
    subroutine SC_report()
+     !     
+#if defined _MAGNETIC
+     !
+     ! Evaluate the current     
+     !     
+     if (.not.l_SC_cycle) then
+       allocate(G_lesser(SC_bands,SC_bands,QP_nk))
+       G_lesser=(0.,0.)
+       forall(ib=1:SC_bands,ik=1:E%nk) G_lesser(ib,ib,ik)=(0._SP,1._SP)*E%f(ib,ik,1)
+       do ik=1,QP_nk
+         call H_rotate(SC_R(:,:,ik,1),G_lesser(:,:,ik),SC_bands,-1)
+       enddo
+       call RT_current(Xk,G_lesser)
+       call msg('rn','Current                : ',real(j_current))
+       deallocate(G_lesser)
+     endif
+#endif
      !
      ! Before all the DFT energies are shifted the V_xc_sc
      ! must be shifted of max(Ev)-max(E_bare_v)

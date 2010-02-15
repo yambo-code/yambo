@@ -56,8 +56,10 @@ subroutine SC_WF_and_dipole_dimensions(X)
      WF_G_max=max(QP_ng_Sx,maxval(G_m_G))
      QP_n_G_bands(2)=SC_bands
      !
-     if (.not.l_real_time) COHSEX_use_empties=.TRUE. !<- DEBUG. Related to
-                                                     !   problems in defining the COLLISIONS
+!DEBUG>
+!     if (.not.l_real_time) COHSEX_use_empties=.TRUE. !<- DEBUG. Related to
+!                                                     !   problems in defining the COLLISIONS
+!DEBUG<
      if (     l_real_time) COHSEX_use_empties=.TRUE.
      !
    else if (l_sc_exx)  then

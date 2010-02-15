@@ -1,4 +1,4 @@
-RT_OBJECTS = 
+RT_OBJECTS = RT_current.o
 #if defined _RT
 RT_OBJECTS = RT_initialize.o RT_start_and_restart.o RT_update_G_reference.o \
              RT_driver.o RT_apply_gauge_field.o RT_Collision.o RT_Integrator.o \

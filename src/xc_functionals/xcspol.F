@@ -118,53 +118,7 @@
 !it at compile time.
  fact=one/(two**(four*third)-two)
 
-!DEBUG
-!Finite-difference debugging, do not take away
-! debug=1
-! zeta_mean=0.1d0
-! delta=0.0001
-! if(debug==1)then
-!  do ipts=1,npts,5
-!   rho=ipts*0.01d0
-!   rho_up=rho*(1.0d0+zeta_mean)*0.5d0
-!   rho_dn=rho*(1.0d0-zeta_mean)*0.5d0
-!   rho_upp=rho_up+delta
-!   rho_upm=rho_up-delta
-!   rho_dnp=rho_dn+delta
-!   rho_dnm=rho_dn-delta
-!   First possibility : vary rho up , and then rho down
-!   zeta(ipts  )=(rho_up -rho_dn )/(rho_up +rho_dn )
-!   zeta(ipts+1)=(rho_upp-rho_dn )/(rho_upp+rho_dn )
-!   zeta(ipts+2)=(rho_upm-rho_dn )/(rho_upm+rho_dn )
-!   zeta(ipts+3)=(rho_up -rho_dnp)/(rho_up +rho_dnp)
-!   zeta(ipts+4)=(rho_up -rho_dnm)/(rho_up +rho_dnm)
-!   rspts(ipts  )=rsfac*(rho_up +rho_dn )**(-third)
-!   rspts(ipts+1)=rsfac*(rho_upp+rho_dn )**(-third)
-!   rspts(ipts+2)=rsfac*(rho_upm+rho_dn )**(-third)
-!   rspts(ipts+3)=rsfac*(rho_up +rho_dnp)**(-third)
-!   rspts(ipts+4)=rsfac*(rho_up +rho_dnm)**(-third)
-!DEBUGBUG : another possibility : vary rho and zeta
-!   zeta(ipts+1)=zeta(ipts  )
-!   zeta(ipts+2)=zeta(ipts  )
-!   zeta(ipts+3)=zeta(ipts  )+delta
-!   zeta(ipts+4)=zeta(ipts  )-delta
-!   rspts(ipts+1)=rsfac*(rho+delta)**(-third)
-!   rspts(ipts+2)=rsfac*(rho-delta )**(-third)
-!   rspts(ipts+3)=rspts(ipts  )
-!   rspts(ipts+4)=rspts(ipts  )
-!ENDDEBUGBUG
-!  end do
-! end if
-! nspden=2
-! order=2
-!ENDDEBUG
-
  if (nspden==1) then
-!DEBUG
-!Do not take away : uncomment, to test the computation of some nspden=1
-!quantities with the nspden=2 code
-!if (.false.) then
-!ENDDEBUG
 
 ! No spin-polarization so skip steps related to zeta not 0
 
@@ -217,13 +171,6 @@
 
 !Allows for nspden==1, in the case of testing nspden=1 against nspden=2
  else if (nspden<=2) then
-
-!  DEBUG
-!  do not take away : allows to compare nspden=1 and nspden=2 coding
-!  if (nspden==1)then
-!   zeta(:)=zero
-!  end if
-!  ENDDEBUG
 
 ! Allow for spin polarization. This part could be optimized for speed.
   do ipts=1,npts
@@ -279,11 +226,6 @@
    vxc(ipts,1)=vxcp - (zet-one)*dexcdz
    vxc(ipts,2)=vxcp - (zet+one)*dexcdz
 
-!DEBUG Allow to check the variation of rho and zeta
-!  vxc(ipts,1)=vxcp
-!  vxc(ipts,2)=dexcdz
-!ENDDEBUG
-
    if(abs(order)>1)then
 
 !   Compute second derivative with respect to rho
@@ -330,12 +272,6 @@
      dvxc(ipts,1)= ( dvxc(ipts,1) + dvxc(ipts,2) ) * half
     end if
 
-!DEBUG Allow to check the variation of rho and zeta
-!   dvxc(ipts,1)=dvxcpdrho
-!   dvxc(ipts,2)=d2excdz2
-!   dvxc(ipts,3)=dvxcpdz
-!ENDDEBUG
-
    end if
 
   end do
@@ -350,38 +286,6 @@
 !  call wrtout(06,message,'COLL')
 !  call leave_new('COLL')
  end if
-
-!DEBUG
-!Finite-difference debugging, do not take away
-!if(debug==1)then
-! write(6,*)' delta =',delta
-! do ipts=1,npts,5
-!  rho=(rspts(ipts)/rsfac)**(-3)
-!  write(6, '(a,i5,a,2es16.8)' ) ' Point number',ipts,' with rho,zeta=',rho,zeta(ipts)
-!  write(6, '(3es16.8)' )exc(ipts)*rho,vxc(ipts,1),vxc(ipts,2)
-!  write(6, '(3es16.8)' )dvxc(ipts,1),dvxc(ipts,3),dvxc(ipts,2)
-!  write(6, '(3es16.8)' )exc(ipts)*rho,&
-!&      ( exc(ipts+1)*(rho+delta) - exc(ipts+2)*(rho-delta) )/2.d0/delta,&
-!&      ( exc(ipts+3)*(rho+delta) - exc(ipts+4)*(rho-delta) )/2.d0/delta
-!   write(6, '(4es16.8)' )&
-!&    ( vxc(ipts+1,1) - vxc(ipts+2,1) )/2.d0/delta,&
-!&    ( vxc(ipts+3,2) - vxc(ipts+4,2) )/2.d0/delta,&
-!&    ( vxc(ipts+3,1) - vxc(ipts+4,1) )/2.d0/delta,&
-!&    ( vxc(ipts+1,2) - vxc(ipts+2,2) )/2.d0/delta
-!  end do
-!  stop
-! end if
-!ENDDEBUG
-
-!DEBUG
-!if(order==-2)then
-! write(6,*)' xcspol : ipts,npts ',ipts,npts
-! write(6,*)dvxcdrs,d2excdz2,d2fxcdz2,dexcdf
-! write(6,*)rhom1
-! write(6,*)dvxc(1000,1),dvxc(1000,2)
-!stop
-!end if
-!ENDDEBUG
 
  end subroutine xcspol
 !!***

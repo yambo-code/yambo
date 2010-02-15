@@ -40,6 +40,9 @@ subroutine SC_start_and_restart(X,E,Xk)
  use wave_func,      ONLY:WF_load,WF_free
  use global_XC,      ONLY:SC_HF,SC_COHSEX,SC_HF
  use collisions_IO,  ONLY:V_kind  
+#if defined _MAGNETIC
+ use X_m,            ONLY:Eval_P_and_P2_only
+#endif
  !
  implicit none
  type(bz_samp)::Xk
@@ -48,7 +51,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  !
  ! Workspace I/O
  !
- integer                 ::ID(4),io_E,io_V,io_WF
+ integer                 :: ID(4),io_E,io_V,io_WF
  integer, external       :: io_SC_components,io_COLLISIONS
  !
  ! Extended collisions
@@ -112,7 +115,10 @@ subroutine SC_start_and_restart(X,E,Xk)
  ! NSC_shot          : to use the DB's LOCAL potential
  ! SC_CYLE           : DEFAULT
  !
- l_SC_RESTART=all((/io_E==0,io_WF==0,io_V==0/)).or.all((/io_V==0,local_V/))
+ l_SC_RESTART=all((/io_E==0,io_WF==0,io_V==0/))
+#if !defined _MAGNETIC
+ if (.not.l_SC_RESTART) l_SC_RESTART= all((/io_V==0,local_V/))
+#endif
  !
  if (l_SC_RESTART) then
    !
@@ -161,6 +167,15 @@ subroutine SC_start_and_restart(X,E,Xk)
    WF_G_max=0
    WF_Go_indx=1
  endif
+ !
+ ! <p> & <p^2> to evaluate the current
+ !
+#if defined _MAGNETIC
+ if (.not.l_SC_cycle) then
+   Eval_P_and_P2_only=.TRUE.
+   call Dipole_driver(E, Xk, X(1), X(1)%q0) 
+ endif
+#endif
  !
  if (.not.l_SC_cycle.and..not.l_NSC_shot) return
  !

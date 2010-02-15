@@ -84,7 +84,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Work Space
  !
  integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,&
-&                     ioBS_Fxc_err,ioQINDX_err,io_SC_err,io_COLLISIONS_err
+&                     ioBS_Fxc_err,ioQINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err
  integer, external :: ioX,ioOSTNTS,ioGROT,ioQINDX,ioRIM,&
 &                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_PP,&
 &                     ioCOL_CUT
@@ -357,9 +357,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _SC
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_SC_err=io_SC_components('E',en_sc,io_ID)
+ io_SC_V_err=io_SC_components('V',en_sc,io_ID)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- if (io_SC_err==0.and.io_SC_components('V',en_sc,io_ID)/=0) io_SC_err=-1
+ io_SC_E_err=io_SC_components('E',en_sc,io_ID)
+ if (io_SC_E_err==0.and.io_SC_V_err/=0) io_SC_E_err=-1
  !
  ! COLLISIONS 
  !
@@ -908,7 +909,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
 #if defined _SC
      if (l_sc_magnetic) call initactivate(1,'scpot')
-     if (l_sc_run.and.io_SC_err==0) then
+     if (l_sc_run.and.io_SC_E_err==0) then
        QP_ng_Sx=SC_ng_Sx
        X(2)%ib=SC_X_bands
        X(2)%ng=SC_X_size

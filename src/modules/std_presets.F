@@ -79,6 +79,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB
  use collisions_IO,    ONLY:n_collisions,COLLISIONS_cutoff
  use collisions_CACHE, ONLY:COLLISIONS_cache_size
+ use real_time,  ONLY:l_RT_no_diamagnetic
 #endif
 #if defined _RT
  use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Efield,Integrator_name,            &
@@ -416,6 +417,10 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  n_collisions=0
  COLLISIONS_cache_size=-1.0
  COLLISIONS_cutoff=0.0005
+ !
+ ! RT current (in use in SC_driver)
+ !
+ l_RT_no_diamagnetic=.FALSE.
  !
 #endif
 #if defined _RT

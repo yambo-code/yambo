@@ -69,7 +69,8 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  allocate(wf_DP(fft_size))                            ! real space
  call mem_est("wf_DP",(/fft_size/),(/DP/))
  !
- if (derivative_kpt(1)==1 .and. derivative_kpt(2)==nkibz) use_live_timing=.false.
+ use_live_timing=.false.
+ if (derivative_kpt(1)==1 .and. derivative_kpt(2)==nkibz) use_live_timing=.true.
  if(use_live_timing) call live_timing('[WF-DERIV] Wf_derivatives (re)loading',wf_n_states)
 #if defined _FFTW
  fftw_plan = 0

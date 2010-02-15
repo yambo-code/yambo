@@ -21,7 +21,6 @@
 !
 subroutine Dipole_transverse(Xen,Xk,X)
  !
- use drivers,             ONLY:l_real_time
  use pars,                ONLY:SP,pi
  use timing,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spin, n_spinor, n_sp_pol
@@ -93,8 +92,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
  call pp_redux_wait
  !
  wf_dim=3
-#if defined _RT
- if (Eval_P_and_P2_only.and.l_real_time) wf_dim=4
+#if defined _SC
+ if (Eval_P_and_P2_only) wf_dim=4
 #endif
  allocate(wf_xyz(wf_ng,wf_dim))
  !
@@ -154,8 +153,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
          ! 
          ! GPL_EXCLUDE_START 
          !
-#if defined _RT 
-         if(Eval_P_and_P2_only.and.l_real_time) then
+#if defined _SC 
+         if(Eval_P_and_P2_only) then
            wf_xyz(:wf_ng,4) = wf(1:wf_ng,ivfft) *  & 
 &                          ( (Xk%pt(ik,1) + g_vec(:wf_ng,1))**2 * (2.0_SP*pi/alat(1))**2  &
 &                          + (Xk%pt(ik,2) + g_vec(:wf_ng,2))**2 * (2.0_SP*pi/alat(2))**2  &
@@ -202,8 +201,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
            !
          endif
          !
-#if defined _RT 
-         if ( Eval_P_and_P2_only.and.l_real_time) then
+#if defined _SC 
+         if ( Eval_P_and_P2_only) then
            if( n_spinor == 2 ) then
              P_square(ic,iv,ik,1)= P_square(ic,iv,ik,1)+rho(4)
            else
@@ -242,8 +241,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  do i_spin=1,n_sp_pol
    call pp_redux_wait(DIP_iR_or_P(:,:,:,:,i_spin))
-#if defined _RT
-   if ( Eval_P_and_P2_only.and.l_real_time) call pp_redux_wait(P_square(:,:,:,i_spin))
+#if defined _SC
+   if ( Eval_P_and_P2_only) call pp_redux_wait(P_square(:,:,:,i_spin))
 #endif
  enddo
  !

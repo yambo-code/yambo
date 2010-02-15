@@ -51,17 +51,6 @@ subroutine Load_Green_Functions(band_range,qp,E,DB_corrected)
    E%GreenF(i_band,i_k_pt,i_spin,:)=qp%GreenF(i_qp,:)
    E%GreenF_W(i_band,i_k_pt,i_spin,:)=qp%GreenF_W(i_qp,:)
    DB_corrected(i_band,i_k_pt,i_spin)=1
-   !
-   ! Call QPartilize to extract and treat analitically the QP part of the GF
-   !
-!DEBUG>
-!   call QPartilize(E%GreenF_n_E_steps,E%GreenF(i_band,i_k_pt,i_spin,:),&
-!&                  real(E%GreenF_W(i_band,i_k_pt,i_spin,:)),Eqp,E%Z(i_band,i_k_pt,i_spin),0.05/HARTREE)
-!   !
-!   E%E(i_band,i_k_pt,i_spin)=real(Eqp)
-!   E%W(i_band,i_k_pt,i_spin)=aimag(Eqp)
-!DEBUG<
-   !
  enddo
  !
 end subroutine

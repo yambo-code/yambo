@@ -27,9 +27,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if defined _RAS
  use ras_module,     ONLY:transloc, lras
 #endif
-#if defined _RT 
- use global_XC,      ONLY:WF_kind,WF_xc_functional,MORE_NONE,WF_perturbation
-#endif
  use drivers,        ONLY:l_col_cut
  use electrons,      ONLY:levels,n_sp_pol
  use par_proc_m,     ONLY:pp_redux_wait
@@ -67,10 +64,13 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! NOTE that in case we will enter here during a SC run to update the screened interaction
  ! all transitions must be considered in order to rotate <P>.
  !
- ! in _RT P and P^2 are ALWAYS calculated => no band ordering
+ ! in real-time simulations P and P^2 are ALWAYS calculated => no band ordering
  !
-#if defined _RT 
- if(l_real_time) Dipole_bands_ordered=.FALSE.
+#if defined _SC 
+ if (l_real_time)   Dipole_bands_ordered=.FALSE.
+ !DEBUG>
+ !Dipole_bands_ordered=.FALSE. ! DEBUG
+ !DEBUG<
 #endif
  !
  ! Check first if ostnts DB is already done
@@ -93,8 +93,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=ioOSTNTS(X,Xen,ID)
  !
-#if defined _RT 
- if (Eval_P_and_P2_only.and.l_real_time) call IO_and_Messaging_switch("+io_in +io_out ")
+#if defined _SC 
+ if (Eval_P_and_P2_only) call IO_and_Messaging_switch("+io_in +io_out ")
 #endif
  !
  if (io_err.ne.0) then
@@ -108,8 +108,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      call X_alloc('OptGrad',(/3,X%ib(2),Xen%nbm,Xk%nibz/))
    else
      call X_alloc('OptGrad',(/3,X%ib(2),X%ib(2),Xk%nibz/))
-#if defined _RT 
-     if (Eval_P_and_P2_only.and.l_real_time) then
+#if defined _SC 
+     if (Eval_P_and_P2_only) then
        call X_alloc('P_square',(/X%ib(2),X%ib(2),Xk%nibz/))
        P_square=(0.,0.)
      endif
@@ -150,11 +150,11 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    ! Free any loaded WFs
    !
    call WF_free()
-#if defined _RT 
+#if defined _SC 
    !
    ! Swith off I/O in case gradient is calculated
    !
-   if (Eval_P_and_P2_only.and.l_real_time) call IO_and_Messaging_switch("-io_in -io_out")
+   if (Eval_P_and_P2_only) call IO_and_Messaging_switch("-io_in -io_out")
    !
 #endif
    !
@@ -165,8 +165,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
  end if
  !
-#if defined _RT 
- if (Eval_P_and_P2_only.and.l_real_time) then
+#if defined _SC 
+ if (Eval_P_and_P2_only) then
    call IO_and_Messaging_switch("+io_in +io_out ")
    return
  endif

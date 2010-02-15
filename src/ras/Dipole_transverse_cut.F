@@ -22,7 +22,7 @@
  subroutine Dipole_transverse_cut(Xen,Xk,X)
 !====================================
    use pars
-   use com,                     ONLY : msg ! DEBUG
+   use com,                     ONLY : msg 
    use timing,                  ONLY : live_timing
    use electrons,               ONLY : levels, n_spin, n_spinor, n_sp_pol
    use par_proc_m,              ONLY : pp_redux_wait, pp_indexes, myid, &
@@ -47,7 +47,7 @@
    type(pp_indexes)                 :: px
    real(SP), allocatable            :: kg(:,:)
    complex(SP)                      :: PS(3), spinor_avg(3), rho(3,n_spin)
-   character(schlen)                :: sch ! DEBUG
+   character(schlen)                :: sch 
 !  real(SP), parameter          :: fac = 0.70710678118654752440_SP
 
 !    call setup_gvecaff
@@ -63,11 +63,9 @@
 
    do ik = 1, Xk%nibz
 
-!--> DEBUG
 !    write(sch,'(a,i4,a,i4)') 'Loop over k oscillators: ',ik,'/',Xk%nibz
 !    call msg('ns',trim(sch))
 !    write(*,*) trim(sch)
-!<-- DEBUG
 
 #if defined _MANYK
      call WF_load(0,1,X%ib,(/ik,ik/),space='G',title='-Oscillators/G space')
@@ -122,13 +120,7 @@
    enddo     ! k-points
 
    call live_timing
-!  call end_optcut
    deallocate(kg)
-!  if (ioKB_err==0) then
-!    deallocate(kbv)
-!    call mem_est("KBV")
-!    call PP_free()
-!  endif
    !
    do i_spin=1,n_sp_pol
      call pp_redux_wait(Xcut_q0grad(:,:,:,:,i_spin))

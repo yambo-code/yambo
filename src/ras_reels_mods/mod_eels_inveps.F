@@ -166,7 +166,6 @@ contains
 100 format(1x,30("-"))
   end subroutine print_eps
 
-!<-- DEBUG
 ! subroutine print_eels_inveps
 !   use msgp
 !   use msgm
@@ -181,6 +180,5 @@ contains
 !    call msg('r','Slab    limit (a.u.) :',dc )
 !   return
 ! end subroutine print_eels_inveps
-!--> DEBUG
 
 end module eels_inveps

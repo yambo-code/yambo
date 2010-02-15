@@ -241,13 +241,11 @@ end subroutine init_reels_integration
     !
     lossq(1:3) = lossg(1:3) * bqfac_w(iw)
     lossq(4)   = lossg(1)
-!<-- DEBUG 
 !   loss(:,1) = loss(:,1) + aimag( bqfac_w(:) * eHint(:)*eFint(:)/az ) ! Total 
 !   loss(:,2) = loss(:,2) + aimag( bqfac_w(:) * eHint(:)*eFint(:)/az )! No bulk
 !   loss(:,3) = loss(:,3) + aimag(             eHint(:)*eFint(:)/az  )! No kin
 !   loss(:,4) = loss(:,4) + aimag(             eHint(:)/az           ) ! eHint
 !   loss(:,5) = loss(:,5) + aimag(                       eFint(:)/az )! eFint
-!--> DEBUG 
     return
   end subroutine integrate_loss
  
@@ -286,12 +284,12 @@ end subroutine init_reels_integration
 &                 ( Fzintd(dsurf, -iq0Gz2, -qparm, dsurf, dc) - &
 &                   Fzintd(dsurf, -iq0Gz2, +qparm, dv, dsurf) + &
 &          2.0_SP * Hzintd(dsurf, -iq0Gz2,  bpar,  dv, dsurf) )
-!<-- DEBUG
-!! Testing: eps part only
-!!               eFint(iw) = eFint(iw) + epsm1(ig1,ig2,iw)
-!! Testing: integral part only
-!!                eFint(iw) = eFint(iw) + (1.d0,0.d0) *  &
-!--> DEBUG
+!DEBUG>
+! Testing: eps part only ! DEBUG
+!               eFint(iw) = eFint(iw) + epsm1(ig1,ig2,iw) ! DEBUG
+! Testing: integral part only ! DEBUG
+!                eFint(iw) = eFint(iw) + (1.d0,0.d0) *  & ! DEBUG
+!DEBUG<
       enddo
     write(*,*) "iG",ig1,eHint,eFint
 

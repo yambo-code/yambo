@@ -241,12 +241,11 @@ end subroutine init_loss_function
 
     esurf_mean_ = esurf_mean
     qzetad_     = qzetad
-!<-- DEBUG
+! This might be more correct, depending on the compiler?:
 !   if (aimag(qzetad) < 0.0_SP) then 
 !     esurf_mean_ = -esurf_mean
 !     qzetad_     = -qzetad_
 !   endif
-!<-- DEBUG
     eps_effective_DS = esurf_mean_ * &
 &                       (ebulk*cos(qzetad_) - esurf_mean_*sin(qzetad_) )/ &
 &                 (esurf_mean_*cos(qzetad_) +       ebulk*sin(qzetad_) )

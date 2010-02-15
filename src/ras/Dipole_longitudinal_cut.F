@@ -55,7 +55,7 @@
    complex(SP)                      :: PS(3), rho(3,n_spin)
    real(SP), parameter          :: fac = 0.70710678118654752440_SP, zero = 1.0E-5
    real(SP)          :: Ev_m_Ec
-   character(schlen)                :: sch ! DEBUG
+   character(schlen)                :: sch 
 !functions
 ! ioDB1 local copies
   type(levels)                 :: Xen_save
@@ -186,11 +186,9 @@
 &                   (/ikpq,ikpq/),space='G',title='-Oscillators/G space')
 #endif
 
-!--> DEBUG
        write(sch,'(a,i4,a,i4)') 'Loop over k oscillators: ',ik,'/',Xk%nibz
        call msg('ns',trim(sch))
        write(*,*) trim(sch)
-!<-- DEBUG
        call setup_optcut( ik )
        do iv = X%ib(1),Xen%nbm
          if (.not.px%element_2D(ik,iv)) cycle

@@ -204,7 +204,6 @@ end subroutine init_bulk
     !
     call generate_bulkeps(hw, nw, eps_b, errmsg)
     if(lbulkerr) return
-! -->DEBUG
 !   !
 !   !  Dump the calculated stuff to file for checking
 !   !
@@ -213,7 +212,6 @@ end subroutine init_bulk
       write(81,102) hw(i)*HARTREE, real(eps_b(i)), AIMAG(eps_b(i))
     enddo
     close(81)
-! <--DEBUG
     !
     !   Successful generation of bulk data
     !
@@ -313,19 +311,15 @@ end subroutine init_bulk
       errmsg='Wrong input option for bulk file format.'
       return
     endif
-! -->DEBUG
 !   !
 !   !  Dump the calculated stuff to file for checking
 !   !
 !   ! 
-!   if(lboss) then
     open(unit=81,file = "bulk.out")
     do i = 1, nw
       write(81,102) hw(i)*HARTREE, real(eps_b(i)), AIMAG(eps_b(i))
     enddo
     close(81)
-!   endif
-! <--DEBUG
     !
     !   Successful generation of bulk data
     !

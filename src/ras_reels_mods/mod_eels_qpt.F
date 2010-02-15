@@ -148,14 +148,10 @@ contains
     !
     allocate(qpar(nqpar,3)) 
 
-!<-- DEBUG
 !   write(*,99) "iq ","iqpar","qpar"
-!--> DEBUG
     do i1 = 1,nqpar
       qpar(i1,:) = q%ptbz(iqpar(i1),:) 
-!<-- DEBUG
 !     write(*,100) i1,iqpar(i1),qpar(i1,:)
-!--> DEBUG
     enddo
 99 format(a5,a5,3a6)
 100 format(i5,i5,3f6.3)
@@ -171,12 +167,12 @@ contains
     integer                      :: itemp(q%nbz), iqi, isi
     character(lchlen)            :: lch1,lch2
 
-!-->DEBUG ! this information is written already in the report file
-!   do i1=1,q%nibz
-!     write (lch2,200)   'Q [',i1,'] :',q%pt(i1,:),' (iku) * weight ',q%weights(i1)
-!     call msg('r',trim(lch2))
+!DEBUG> 
+!   do i1=1,q%nibz   ! DEBUG
+!     write (lch2,200)   'Q [',i1,'] :',q%pt(i1,:),' (iku) * weight ',q%weights(i1) ! DEBUG
+!     call msg('r',trim(lch2)) ! DEBUG
 !   enddo
-!<--DEBUG
+!DEBUG<
     !
     ! Generate the q points in the full BZ -> q%ptbz
     !

@@ -53,7 +53,7 @@
  type(pp_indexes)                 :: px
  complex(SP)                      :: PS(3), spinor_avg(3)
  real(SP), parameter          :: fac = 0.70710678118654752440_SP
- character(schlen)                :: sch ! DEBUG
+ character(schlen)                :: sch 
  logical                          :: use_trans_gauge
 !functions
  integer,  external               :: ioOSTNTS_cut

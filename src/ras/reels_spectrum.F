@@ -104,13 +104,13 @@ subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
 
     lossf(iw,:) = loss_qpar(:) ! other factors?
 
-!<-- DEBUG
-!    if(iw.eq.1) write(24,108) "####hw  ","lossx","lossy","Akk","|qpar|","|Q|^2","Q_||(x)","Q_||(y)",&
-!&   "|k'|","Img_x","Img_y"
-!    write(24,107) hw(iw)*HARTREE, lossf(iw,1), lossf(iw,2), Akk, qparm,qtot2,qpar,kpmag,Img_x,Img_y
+!DEBUG>
+!    if(iw.eq.1) write(24,108) "####hw  ","lossx","lossy","Akk","|qpar|","|Q|^2","Q_||(x)","Q_||(y)",& ! DEBUG
+!&   "|k'|","Img_x","Img_y"   ! DEBUG
+!    write(24,107) hw(iw)*HARTREE, lossf(iw,1), lossf(iw,2), Akk, qparm,qtot2,qpar,kpmag,Img_x,Img_y ! DEBUG
+!DEBUG<
 107 format(f8.3,20e16.7)
 108 format(a8,20a16)
-!--> DEBUG
     call live_timing(steps=1)
   enddo
   call live_timing

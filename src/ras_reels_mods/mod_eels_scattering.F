@@ -160,9 +160,7 @@ contains
     qtot2 = kmag**2 + kpmag**2 - &
 &           2.0_SP*kmag*kpmag*costhetap !  <= |Q_z(r) + Q_par(r)|^2 ?
 
-!--> DEBUG
-!     bqfac = -8.d0*pi/vzmag**2*bq2        ! for cross section wrt qpar
-!<-- DEBUG
+!   bqfac = -8.d0*pi/vzmag**2*bq2        ! for cross section wrt qpar
     bqfac = -1.0_SP/pi/pi/costheta0*bq2  ! for cross section wrt solid angle
 
     return
@@ -211,9 +209,7 @@ contains
       qtot2 = kmag**2 + kpmag**2 - &
 &              2.0_SP*kmag*kpmag*costhetap !  <= |Q_z(r) + Q_par(r)|^2 ?
 
-!<-- DEBUG
 !     bqfac = -8.d0*pi/vzmag**2*bq2        ! for cross section wrt qpar
-!--> DEBUG
       bqfac = -1.0_SP/pi/pi/costheta0*bq2  ! for cross section wrt solid angle
 
 !     Fill external arrays (suffix "_w")

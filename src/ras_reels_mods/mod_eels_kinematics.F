@@ -30,7 +30,7 @@ module eels_kinematics
 ! real(SP)                  :: costhetas, sinthetas
   real(SP)                  :: costhetap, sinthetap
   real(SP)                  :: cosphi, sinphi
-  real(SP)                  :: E0, kmag
+  real(SP)                  :: E0, kmag, pendepth
   real(SP)                  :: bimp ! impact factor in 3 layer case
   ! Depend just on the angles
   logical                  :: lplanar, lspecular, lparallel, lgrazing 

@@ -1,3 +1,2005 @@
+2010-02-15 04:56:52 r534 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc a2y/hdr_io.F config/configure.ac xc_functionals/xcspol.F qp_ctl/Load_Green_Functions.F wf_and_fft/WF_derivative.F wf_and_fft/WF_load.F pol_function/Dipole_driver.F pol_function/Dipole_transverse.F interface/init.F sc/SC_driver.F sc/SC_WF_and_dipole_dimensions.F sc/SC_start_and_restart.F sc/.objects sc/RT_current.F io/io_SC_components.F modules/std_presets.F
+
+	Bugs:
+	- The SC tresholds were not initialized to the latest loop in init.F
+	  because the scV DB was read after the ndbE.
+
+	Changes:
+	- DEBUG lines in xc_functionals cleaned
+	- Dipole_driver.F and Dipole_transverse.F in order to make possible to calculate the
+	  current also in _SC + _MAGNETIC.
+
+	Patch sent by: Andrea
+
+2010-02-11 18:02:41 r533 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc int_modules/mod_com2y.F config/configure.ac qp/QP_driver.F qp/QP_of.F qp/QP_Green_Function.F qp/QP_descriptions.F pol_function/X_GreenF_remap.F interface/init.F sc/SC_add_XC.F sc/RT_propagate_vecpot.F sc/SC_start_and_restart.F sc/SC_History.F sc/RT_current.F sc/MAG_Hamiltonian.F io/ioX.F io/ioQP.F modules/mod_stderr.F modules/mod_IO.F modules/mod_com.F ypp/RT_spectrum.F ypp/ypp_init_load.F driver/yambo_driver.F
+
+	Bugs:
+	- [RT] missing volume in definition of current, and SPEED_OF_LIGHT in RT_spectrum.F (Claudio)
+	- mod_com2y.F: set double_symmetries=.false. if i_time_rev==0 before checking for use_SI_instead_of_TR logical (Davide)
+	- [ELPH]: Zoom option in Green's function evaluation fixed and restyled (Andrea)
+	- [MAGNETIC] Bug in SC_History fixed
+	- Bugs found by Cantele when using both em1s and ppa options during a BSE calculation (Andrea)
+
+	Changes:
+	- Restored possibility of RESTART in [MAGNETIC] (Andrea)
+
+	Patch sent by: Andrea, Claudio, Myrta & Davide
+
+2010-02-09 14:47:15 r532 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc int_modules/mod_com2y.F config/configure.ac ypp/ypp_init.F ypp/RT_fix_symmetries.F ypp/ypp_init_load.F driver/p2y.h driver/a2y.h
+
+	Bugs:
+	- In interfaces/int_modules/mod_com2y.F when TR inversion was removed in system
+	  without spatial inversion
+	- In ypp/RT_fix_symmetries.F in case of a system without spatial inversion (*** BUG
+	  POTENTIALLY SEVERE ***)
+
+	Additions:
+	- Option to remove only Time Reversal in ypp_rt
+
+	Changes:
+	- To avoid confusion in the use of the interfaces I have:
+	    * removed "Force no symmetries" flag in a2y/p2y
+	    * renamed the "Force no TR symmetry" in "Force use of spatial Inv. instead of Time Rev."
+	  this to make clear that only ypp_rt can modify the total number of symmetries. The interfaces
+	  can only interpret the time reversal as a spatial inversion when possible.
+
+	Patch sent by: Andrea
+
+2010-02-08 15:36:10 r531 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/Makefile.in config/Makefile.in_gpl config/acx.m4 config/configure.ac qp/QP_driver.F qp/QP_of.F qp/QP_Green_Function.F qp/QP_descriptions.F qp/QP_report_and_write.F qp/QP_elph.F qp_ctl/mod_QP_CTL.F qp_ctl/Load_Green_Functions.F common/FREQUENCIES_Green_Function.F common/.objects common/QPartilize.F common/fermi_level.F pol_function/X_bare_RIM_GreenF.F pol_function/X_GreenF_remap.F interface/init_load.F interface/init.F sc/RT_report.F io/ioQP.F modules/mod_BS.F modules/std_presets.F modules/mod_QP.F bse/K_Haydock.F + bse/Kernel_by_V.F bse/K_BSmat_by_V_TEST_1.F bse/K_BSload.F bse/.objects bse/K_diagonalization.F bse/K_inversion.F ypp/ypp_init.F ypp/RT_spectrum.F ypp/ypp_init_load.F sbin/make_makefile.sh.in
+
+	Bugs:
+	 -config/Makefile.in_gpl added pol_function in YPPLIBS for correct compilation with xlf
+	 -config/acx.m4 lowered optimalization to -O2 for powerpc64*linux* to prevent runtime error
+	 -sbin/make_makefile.sh.in corrected a small bug that prevented cleaning of f90 files for unoptimized subroutines
+
+	Additions:
+	 -bse/K_BSload.F spinoff of bse/Kernel_by_V.F just to load BS matrix for diag and inv (used under yambo_test_1 macro)
+	 -bse/K_BSmat_by_V.F (spinoff) to multiply BS matrix by vector for Haydock (used under yambo_test_1 macro)
+	  in the case of coupling half of the information are used wrt Kernel_by_V
+	 -[RT] gauge field output file added: o.RT-guage_field
+	 -[RT] RT_spectrum.F can use directly the gauge field for the response
+	 -[ELPH] Possibility of calculating GFs on a zoomed energy window. the zoom is decided on the basis
+	  of previously saved GF databases.
+
+	Changes:
+	 - bse/K_diagonalization.F bse/K_inversion.F under  yambo_test_2 macro bse/K_BSload.F is loaded instead of bse/Kernel_by_V.F
+	 - bse/K_Haydock.F  under yambo_test_2 macro bse/K_BSmat_by_V.F is loaded instead of bse/Kernel_by_V.F,
+	   Haydock coefficients determined by symmetry properties using just half of the informations
+	  (numerical differences with previous version are possible)
+
+	Patch sent by: Myrta, Andrea & Claudio
+
+2010-02-04 11:39:20 r530 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac sc/RT_driver.F sc/SC_add_XC.F sc/RT_Integrator.F sc/RT_propagate_vecpot.F sc/RT_current.F modules/mod_fragments.F
+
+	Bugs:
+	 - small bug compiling with gfortran in mod_fragments.F and SC_add_XC.F (Davide & Claudio)
+	 -[RT] bug in RT_propagate_vecpot.F and RT_current.F integrating the Maxwell equations (Claudio)
+
+	Patch sent by: Claudio & Davide
+
+2010-02-03 15:18:39 r529 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure tests/test_RT.sh include/version.inc e2y/e2y_db1.F int_modules/mod_com2y.F p2y/mod_p2y.F a2y/a2y_db1.F config/configure.ac qp_ctl/mod_QP_CTL.F common/extend_occupations.F common/fermi_level.F setup/setup.F interface/init_load.F interface/init.F communicate/fermi_msg.F sc/RT_apply_vecpot.F sc/SC_driver.F sc/RT_start_and_restart.F + sc/RT_qp_analyze.F sc/.objects io/variables_SC.F io/ioDB1.F io/load_COLLISIONS.F io/io_header.F modules/mod_real_time.F modules/mod_functions.F modules/std_presets.F modules/mod_D_lattice.F ypp/RT_spectrum.F ypp/ypp_i.F ypp/k_random.F
+
+	Bugs:
+	- Fixed parallel I/O in load_COLLISIONS.F
+
+	Additions:
+	- Added a dedicated temperature for Bosons only
+	- Added units in variables_SC
+
+	Changes:
+	- Fixed flag name in test_RT.sh
+	- Removed test_Tel variable from fermi_level arguments
+	- Renamed RT_apply_vecpot in RT_apply_gauge_field
+
+	Patch sent by: Andrea
+
+2010-02-02 18:12:35 r528 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/Makefile.in config/configure.ac xc_functionals/el_density.F qp/XCo_Hartree_Fock.F qp/QP_real_axis.F qp/COLLISIONS_IO_eval.F qp/QP_W2Sc.F qp/COLLISIONS_IO_store.F qp/QP_elph.F qp/QP_ppa_cohsex.F qp/COLLISIONS_IO_compose.F acfdt/acfdt_tot_energy.F ras/Dipole_longitudinal_cut.F ras/Dipole_transverse_cut.F wf_and_fft/WF_load.F pol_function/X_os.F pol_function/Dipole_longitudinal.F pol_function/Dipole_driver.F pol_function/Dipole_transverse.F pol_function/X_s.F interface/barriers.F coulomb/cutoff_box.F coulomb/cutoff_cylinder.F coulomb/cutoff_test.F coulomb/rim.F sc/RT_Energy.F sc/RT_driver.F sc/RT_initialize.F sc/SC_add_XC.F sc/SC_driver.F sc/RT_report.F sc/RT_start_and_restart.F sc/V_exx.F sc/RT_Collision.F sc/SC_WF_and_dipole_dimensions.F sc/SC_start_and_restart.F sc/.objects sc/SC_History.F sc/MAG_Hamiltonian.F sc/RT_write_dbs.F tddft/tddft_BSK_2_FXC.F io/variables_SC.F io/io_SC_components.F io/IO_and_Messaging_switch.F io/load_COLLISIONS.F io/.objects io/IO_Setup.F modules/mod_real_time.F modules/mod_collisions_CACHE.F modules/mod_par_indexes.F modules/mod_SC.F modules/mod_par_proc.F bse/Kernel_by_V.F bse/K_scattering.F bse/K_inversion.F bse/K_diagonalization.F ypp/elph_databases.F ypp/elph_general_gFsq.F ypp/excitons_driver.F ypp/elph_excitonic_gkkp.F ypp/RT_fix_symmetries.F ypp/elph_eliashberg_dos.F driver/yambo_driver.F driver/ypp.h
+
+	*** DEBUG VERSION. NOT FOR PRODUCTION ***
+
+	Bugs:
+	- In COLLISIONS_IO_compose for parallel read of COLLISIONS databases
+	- In IO_Setup when setting I/O permissions
+
+	Additions:
+	- _SC and _RT common declarations moved in SC_WF_and_dipole_dimensions.F
+	- Variables created by io_SC_components moved in a separate routine (variables_SC.F) in
+	  order to be used to write messages in the ouput files (like in the BSE)
+
+	Changes:
+	- Global renaming of the components of the parallel indexes
+	- Improvement of IO_and_Messaging_switch input character parsering
+
+	Patch sent by: Andrea
+
+2010-01-28 15:52:56 r527 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure tests/test_magnetic.sh tests/setup.sh tests/test_SC.sh include/version.inc int_modules/mod_com2y.F config/configure.ac xc_functionals/.objects xc_functionals/xc_lda_driver.F + xc_functionals/el_magnetization.F qp/QP_driver.F qp/XCo_local.F qp/XCo_driver.F qp/QP_descriptions.F qp/QP_newton.F qp/COLLISIONS_IO_eval.F qp/.objects qp/.objects_gpl qp/QP_ppa_chosex.F + qp/COLLISIONS_IO_compose.F qp_ctl/.objects qp_ctl/QP_load_DB.F common/.objects pol_function/X_bare_RIM_GreenF.F pol_function/X_pre_setup.F pol_function/X_os.F pol_function/.objects setup/QP_external_corrections.F setup/check_periodic_directions.F interface/init_load.F interface/init.F interface/barriers.F communicate/fermi_msg.F sc/XC_switch.F sc/RT_Energy.F sc/RT_driver.F sc/SC_add_XC.F sc/SC_driver.F sc/RT_Collision.F sc/SC_start_and_restart.F sc/MAG_Hamiltonian.F io/io_SC_components.F io/io_COLLISIONS.F io/ioQP.F io/load_COLLISIONS.F modules/mod_BS.F modules/mod_drivers.F modules/mod_xc_functionals.F modules/std_presets.F modules/mod_stderr.F modules/mod_SC.F modules/mod_QP.F modules/mod_magnetic.F modules/mod_global_XC.F bse/K_inversion.F bse/K.F ypp/electrons_driver.F ypp/electrons_angular_momentum.F driver/yambo_driver.F
+
+	*** DEBUG VERSION. NOT FOR PRODUCTION ***
+
+	Bugs:
+	- In intc for large integers (appearing as *** field for RIM_n_points in BSE output files)
+
+	Additions:
+	- Added possibily to replace the time-invertion symmetry (and all the related symmetries)
+	  with the spatial inversion (Davide)
+	- Option to shift the G states even when calculating Green's functions (Elena)
+
+	Changes:
+	- Test's data updated. Magnetic and SC passed. RT still filed.
+	- Overall renaming of el_mag with spin_density
+	- Overall renaming of CHOSEX -> COHSEX
+	- _POLARON project merged with _ELPH project
+
+	Patch sent by: Andrea
+
+2010-01-28 12:15:40 r526 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	*** DEBUG VERSION. NOT FOR PRODUCTION ***. Removed declared & unused variables
+
+2010-01-27 13:29:59 r524 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	*** DEBUG VERSION. NOT FOR PRODUCTION ***. Added COLLISIONS cache support to _SC. GLOBAL GPL HEADER UPDATE
+
+2010-01-27 12:37:39 r523 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac qp/COLLISIONS_IO_eval.F qp/QP_ppa_chosex.F qp/COLLISIONS_IO_compose.F interface/init.F interface/barriers.F sc/XC_switch.F sc/SC_add_XC.F sc/SC_start_and_restart.F io/Fragments_Restart.F modules/std_presets.F
+
+	*** DEBUG VERSION. NOT FOR PRODUCTION ***
+
+	Bugs:
+	- COLLISIONS_IO_compose.F was not calculating COH term. Added.
+	- Removed CHOSEX_use_empties=.FALSE. constrain in _SC and ni COLLISION calculations
+	- Fragments_Restart.F was giving the wrong starting point
+
+	Additions:
+	- yambo_rt cannot do SC potential calculations using SC_driver.
+
+	Changes:
+	- COLLISIONS_IO_eval.F modified in order to compute at the same time HF and CHOSEX COLLISIONS
+	- QP_ppa_chosex.F restyled.
+
+	Patch sent by: Andrea
+
+2010-01-26 17:49:41 r522 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac qp/COLLISIONS_IO_check.F qp/XCo_Hartree_Fock.F qp/COLLISIONS_IO_eval.F qp/COLLISIONS_IO_store.F qp/.objects qp/QP_ppa_chosex.F qp/COLLISIONS_IO_close.F qp/COLLISIONS_IO_compose.F wf_and_fft/WF_load.F pol_function/.objects pol_function/Dipole_driver.F interface/init.F communicate/.objects communicate/job_setup.F sc/RT_Energy.F sc/SC_add_XC.F sc/V_exx.F sc/RT_Collision.F sc/SC_start_and_restart.F io/ioBS.F io/ioX.F io/io_SC_components.F + io/Fragments_Restart.F io/IO_mute.F io/ioWF.F io/io_COLLISIONS.F io/ioQP.F io/load_COLLISIONS.F io/io_header.F io/ioELPH.F io/Fragments_Synchronize.F io/.objects + modules/mod_fragments.F modules/std_presets.F modules/mod_par_indexes.F modules/mod_par_proc.F modules/mod_collisions_IO.F modules/mod_IO.F modules/mod_com.F modules/.objects bse/K.F ypp/elph_databases.F ypp/RT_fix_symmetries.F driver/yambo_driver.F
+
+	*** DEBUG VERSION. NOT FOR PRODUCTION ***
+
+	Additions:
+	- Parallel fragments I/O support added respecting the fragment-related pre existing modules
+	- Added Fragment specific rotuines: Fragments_Restart.F, Fragments_Synchronize.F, mod_fragments.F
+
+	Changes:
+	- COLLISIONS_IO_check.F, COLLISIONS_IO_close.F removed, replaced by more general procedures
+	- io_fragment and io_check_restart moved out of mod_IO
+
+	Patch sent by: Andrea
+
+2010-01-22 10:34:08 r521 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Small bug in COLLISIONS_IO_check.F due to deallocation of QP_COLLISIONS_done
+
+2010-01-22 10:21:27 r520 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/Makefile.in config/configure.ac qp/COLLISIONS_IO_check.F qp/XCo_local.F qp/XCo_Hartree_Fock.F qp/COLLISIONS_IO_eval.F qp/COLLISIONS_IO_store.F qp/.objects qp/QP_ppa_chosex.F qp/COLLISIONS_IO_compose.F wf_and_fft/WF_load.F wf_and_fft/.objects setup/setup.F setup/QP_state_table_setup.F interface/init_load.F interface/init.F interface/barriers.F sc/MAG_common_build_A.F sc/RT_driver.F sc/SC_add_XC.F sc/RT_apply_vecpot.F sc/SC_driver.F sc/SC_common_build_Ho.F sc/SC_check_symmetries.F sc/RT_Integrator.F sc/RT_start_and_restart.F sc/RT_average_operator.F sc/RT_Collision.F sc/SC_start_and_restart.F + sc/.objects sc/SC_History.F sc/MAG_Hamiltonian.F sc/RT_current.F io/io_SC_components.F io/ioDB1.F io/io_COLLISIONS.F io/load_COLLISIONS.F io/.objects modules/mod_real_time.F modules/std_presets.F modules/mod_collisions_IO.F modules/mod_SC.F modules/mod_IO.F modules/.objects bse/K_inversion.F bse/K_diagonalization.F driver/yambo.h
+
+	*** DEBUG VERSION. NOT FOR PRODUCTION ***
+
+	Bugs:
+	- In COLLISIONS_IO_check.F that was allocating even in read-only mode
+	- For some reason in one of the previous revisions the inital load of the diago
+	  database in K_diagonalization was removed. Restored.
+
+	Additions:
+	- SC_History
+
+	Changes:
+	- _RT now compiles on top of _SC
+	- Structure of COLLISIONS databases replaced with built-in defragmentation structure of Yambo.
+	- Hamiltonian build-up in SC_driver moved in the new subroutine SC_add_XC.F
+	- Start-up of SC_driver moved in the new subroutine SC_start_and_restart.F
+	- SC_common_build_Ho renamed in SC_bare_Hamiltonian.F
+	- Core Logicals of _SC renamed
+
+	Patch sent by: Andrea
+
+2010-01-20 11:16:55 r519 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac qp/QP_load_SC_xc.F qp/COLLISIONS_IO_check.F qp/XCo_Hartree_Fock.F qp/QP_real_axis.F qp/COLLISIONS_IO_eval.F qp/COLLISIONS_IO_store.F qp/.objects qp/QP_ppa_chosex.F qp/COLLISIONS_IO_close.F + wf_and_fft/WF_derivative.F interface/init_load.F interface/init.F interface/barriers.F sc/RT_Collision.F sc/RT_driver.F sc/SC_extended_oscillators.F sc/SC_driver.F sc/.objects io/io_COLLISIONS.F io/load_COLLISIONS.F modules/mod_real_time.F modules/mod_collisions_CACHE.F modules/mod_drivers.F modules/std_presets.F modules/mod_collisions_IO.F modules/mod_SC.F ypp/excitons_driver.F ypp/mod_YPP.F ypp/ras_loc_ypp.F ypp/excitons_sort_and_report.F driver/yambo_driver.F
+
+	*** DEBUG VERSION. NOT FOR PRODUCTION ***
+
+	- Cleaned unused variables.
+	- Fixed collisions evaluation in COLLISIONS_IO_eval of HF and CHOSEX
+	- Still some global renaming
+
+	Patch sent by: Andrea
+
+2010-01-19 05:45:51 r518 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	GLOBAL RHO_RHO renaming. NOT FOR PRODUCTION
+
+2010-01-19 04:57:31 r517 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure + + tests/load_paths_and_executables.sh.in + tests/setup.sh + + include/version.inc config/report.in config/Makefile.in config/configure.ac doc/tests doc/tests/test_magnetic.sh doc/tests/test_GoWo.sh doc/tests/test_SC.sh xc_functionals/el_magnetization.F qp/XCo_local.F qp/XCo_driver.F qp/XCo_Hartree_Fock.F qp/QP_eval_RHO_RHO.F qp/.objects qp/QP_elph.F qp/QP_ppa_chosex.F qp/QP_store_RHO_RHO_VX.F parser/ps_convert.F wf_and_fft/WF_load.F pol_function/X_os.F pol_function/Dipole_driver.F pol_function/Dipole_transverse.F interface/init_load.F interface/init.F setup/check_periodic_directions.F setup/setup.F communicate/fermi_msg.F io/ioDB1.F io/ioRHO_RHO_VX.F modules/mod_memory.F modules/std_presets.F modules/.objects modules/mod_magnetic.F driver/editor.h.in driver/yambo_driver.F
+
+	*** DEBUG VERSION. NOT FOR PRODUCTION ***
+
+	Bugs:
+	- Bugs fixed in order to be able to run HF+RHO I/O standalone.
+
+	Additions:
+	- src/qp/QP_eval_RHO_RHO.F. See below.
+
+	Changes:
+	- Tests reshaped. Now added to Makefile with automatic path generation via configure.
+	- _MAGNETIC replaced as an additional flag to _SC. So to compile yambo_magnetic now
+	  a -D_MAGNETIC -D_SC is used.
+	- I am gradually extracting the RHO_RHO I/O from the original Claudio's routines. The procedures
+	  will be in a new routine that can be used by _SC as well.
+
+	Patch sent by: Andrea
+
+2009-12-23 22:16:48 r516 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac doc/tests/test_magnetic.sh doc/tests/test_GoWo.sh doc/tests/test_SC.sh doc/tests/test_RT.sh pol_function/Dipole_transverse.F interface/init_load.F interface/init.F sc/RT_Energy.F sc/RT_Collision.F sc/RT_driver.F sc/RT_initialize.F sc/RT_propagate_vecpot.F sc/RT_Ext_Field.F sc/RT_apply_vecpot.F sc/RT_report.F sc/RT_Integrator.F sc/.objects sc/RT_current.F sc/RT_write_dbs.F sc/RT_start_and_restart.F sc/RT_init_vecpot.F io/io_SC_components.F modules/mod_real_time.F modules/std_presets.F ypp/ypp_init.F ypp/RT_spectrum.F ypp/ypp_init_load.F
+
+	Changes:
+	 -[RT] RT_Ext_Field.F: now generates the external current that enters in Maxweel equations
+
+	Additions:
+	 -[RT] Maxwell equation for the vector potential implemented, flag InducedField=.true.
+	       laplacian of A not included
+	 -[RT] Initial conditions for RESONANT,ANTIRESONANT fields
+	 -[RT] test_RT.sh script added
+	 -[RT] added energy of the electromagnetic field E_mg
+	 -[RT] RT_propagate_vecpot.F: integrates vector potential equations
+	       RT_init_vecpot.F  : initializes the vector potential
+	       RT_apply_vecpot.F : put vector potential contribution in the self-energy
+	       RT_write_dbs.F    : writes dbs at each step
+
+	Bugs:
+	 -fixed executables path in test scripts
+	 -[RT] wrong factor Xk%nbz in current diamagnetic term
+	 -[RT] fixed Gaussian units in current and coupling
+	 -[RT] fixed starting time (RT_driver.F)
+
+	Patch sent by: Claudio
+
+2009-12-23 16:41:37 r515 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Minor modifications in order to compile the code with gcc v. 4 as pre-processor
+
+2009-12-12 15:34:02 r514 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac doc/tests doc/tests/test_magnetic.sh doc/tests/test_GoWo.sh doc/tests/test_SC.sh xc_functionals/el_density.F qp/QP_report_and_write.F qp/QP_ppa_chosex.F interface/init_load.F interface/init.F sc/V_real_space_to_H.F sc/RT_Energy.F sc/RT_driver.F sc/RT_Collision.F sc/SC_extended_oscillators.F sc/RT_initialize.F sc/RT_qp_analyze.F sc/RT_Ext_Field.F sc/V_Hartree.F sc/SC_driver.F sc/SC_common_build_Ho.F sc/SC_precondition.F sc/RT_Integrator.F sc/RT_average_operator.F io/io_SC_components.F ypp/ypp_init.F ypp/mod_YPP.F ypp/RT_spectrum.F ypp/RT_fix_symmetries.F ypp/excitons_sort_and_report.F ypp/plot_check_and_launch.F ypp/ypp_init_load.F
+
+	Additions:
+	 -[SC] new flag WrQpHisto to write quasi-particle history on file
+	 -yambo test scripts (they require abinis and ncdump in the PATH)
+	 -doc/tests for SC, RT and MAGNETIC self-tests
+
+	Bugs:
+	 -[RT] Hfrozen and XCfrozen are now correctly stored in ndb.rtG
+	 -[RT] bug reading current in io_SC_components.F
+	 -[RT] QP_Vnl_xc called when not necessary (RT_Collision.F)
+	 -[RT] in RT_fix_symmetries.F RmAllSymm fixed
+	 -[RT] small bug in current for T_start/=0
+	 -fixed yambo_rt, yambo_sc and ypp in Double Precision
+	 -small bugs in QP_report_and_write.F and QP_ppa_chosex.F with some compilers
+
+	Patch sent by: Claudio
+
+2009-12-09 14:14:30 r513 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac bz_ops/k_lattice.F
+
+	Bugs:
+	- In k_lattice.F wrong estimation of K lattice dim. This bug was introduced in rev. 424
+	  where I re-wrote a part of k_lattice and it was caused by the assumption that
+	  k_grid_borders(:,1)< 0 and  k_grid_borders(:,2)>0 in any case. As Myrta pointed out
+	  this is not true for the 2D sampling of the Si surface we use as tutorial.
+	  The bug fix is easy and harmless, and it should work only in the above case.
+
+	Patch sent by: Andrea
+
+2009-12-06 20:44:24 r512 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/acx.m4 config/acx_cpp.m4 config/configure.ac xc_functionals/el_magnetization.F interface/init_load.F interface/init.F setup/check_periodic_directions.F communicate/fermi_msg.F sc/RT_driver.F sc/SC_common_build_Ho.F io/load_RHO_VX_RHO.F io/.objects modules/mod_timing.F modules/mod_oscillators_CACHE.F modules/mod_magnetic.F
+
+	Changes:
+	 -[RT] load_RHO_VX_RHO.F moved in libio.a (Claudio)
+	- Fixed definition (and dimensions) for the average el_mag.
+	  Now this is the density of magnetization for periodic systems while it is the total
+	  magnetization for isolated systems. For 1D and 2D systems it is the linear density and
+	  the surface density of magnetization respectively.   (Davide)
+
+	Additions:
+	 - build_os=apple added in acx.m4 and acx_cpp.m4  (Claudio)
+	 - time function for MacOsX added in mod_timing.F (Myrta)
+
+	Bugs:
+	 - bug in mod_timing.F calling igethname() (Myrta)
+	 -[SC] in SC_common_build_Ho.F Ho was not set to zero for non magnetic case (Claudio)
+
+	Patch sent by: Claudio, Myrta & Davide
+
+2009-12-02 11:28:05 r511 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac qp/.objects sc/SC_driver.F sc/SC_common_build_Ho.F modules/mod_units.F modules/mod_memory.F ypp/ypp_init.F
+
+	Bugs:
+	- qp/.objects : changed "QP_store_RHO_VX_RHO.o QP_check_RHO_VX_RHO.o" to "QP_store_RHO_RHO_VX.o QP_check_RHO_RHO_VX.o"
+	- ypp/ypp_init.F : change in loop at lines 228, so that yambo does not try to read rstr_piece(51) which does not exist
+
+	Changes:
+	- sc/SC_driver.F : now calls the initialization of MAG_Hamiltonian only when l_sc_magnetic==.true.
+	                   modified output to report file in yambo_magnetic in order to see the new occupations
+	- sc/SC_common_build_Ho.F : if not l_sc_magnetic Ho is correctly initialized even in yambo_magnetic
+	- modules/mod_units.F : added comment only
+	- modules/mod_memory.F : added _defined MAGNETIC option needed to compile
+
+	Patch sent by: Davide
+
+2009-11-30 14:48:58 r510 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  qp/QP_close_RHO_RHO_VX.F qp/XCo_Hartree_Fock.F qp/QP_check_RHO_VX_RHO.F + qp/QP_ppa_chosex.F qp/QP_store_RHO_VX_RHO.F + bz_ops/bz_samp_indexes.F wf_and_fft/scatter_Bamp.F pol_function/Dipole_transverse.F interface/init_load.F interface/init.F interface/barriers.F communicate/fermi_msg.F sc/RT_driver.F sc/SC_extended_oscillators.F sc/RT_Ext_Field.F sc/SC_driver.F io/io_SC_components.F io/ioRHO_RHO_VX.F io/io_bulk.F modules/mod_real_time.F modules/mod_memory.F modules/mod_oscillators_IO.F modules/std_presets.F modules/mod_pars.F modules/mod_IO.F modules/mod_oscillators_CACHE.F modules/.objects bse/K_Haydock.F ypp/ypp_init.F ypp/RT_spectrum.F ypp/RT_fix_symmetries.F
+
+	Additions:
+	 -[RT] Coulomb hole in real-time
+	 -[RT] RT_fix_symmetries.F works also for fragmented databases
+	 -[RT] RT_fix_symmetries.F duplicates also pseudopotentials
+	 -[RT] RT_spectrum.F improved and now works also for ANTI/RESONANT field
+	 -[RT] ANTIRESONANT field added
+	 -[RT] PseudoPotential contribution in current and coupling
+	 -[RT] Cache for oscillators: Exchange and COHSEX
+	 -[SC] l_rho_IO works also for COHSEX (not tested)
+	 - databases distribution among different processors
+	 - new type L1,L3  in io_bulk.F for short integer (equivalent to logical)
+	 - new kind LP in mod_pars.F kind=2 for short integer
+
+	Bugs:
+	 -[RT] Corrected RHO disk usage
+	 -[RT] Small bug in allocations oscillators_IO_alloc()
+
+	Patch sent by: Claudio
+
+2009-11-19 17:13:41 r509 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  qp/XCo_Hartree_Fock.F qp/QP_check_RHO_VX_RHO.F qp/.objects qp/QP_ppa_chosex.F qp/QP_store_RHO_VX_RHO.F wf_and_fft/WF_derivative.F interface/init_load.F interface/init.F sc/RT_Energy.F sc/RT_Collision.F sc/RT_driver.F sc/SC_extended_oscillators.F sc/MAG_Hamiltonian.F io/ioRHO_RHO_VX.F modules/mod_BS.F modules/mod_oscillators_IO.F modules/.objects bse/K_Haydock.F ypp/elph_databases.F driver/yambo_driver.F
+
+	Changes:
+	-[RT] mod_oscillator.F restyled to deal with CHOSEX (Claudio)
+	-[SC] QP_ppa_chosex.F quasi-particle index changed in i_qp (Claudio)
+	-[SC] QP_ppa_chosex.F products with PPaR rewritten using BLAS (Claudio)
+	-[MAGNETIC] wf_and_fft/WF_derivative.F : check if WF_db is present and, if yes, changes the number of
+	                                         bands to SC_bands for calls with ypp_magnetic (Davide)
+	-[MAGNETIC] sc/MAG_Hamiltonian.F : changed live_timing initialization for parallel runs in future. (Davide)
+	-[BSS] Introduced the terminator of continuos fraction in K_Haydock.F (Myrta)
+		   as a consequence modified:
+		+ init_load.F: added a "call it" to define the input entry BSHayTer
+		+ init: add a check that will activate BSHayTer only if BSSmod is h
+		+ mod_BS: add the logical Haydock_terminator
+
+	Additions:
+	-[RT] RHO_IO also in QP_ppa_chosex.F (Claudio)
+	-[RT] Screened Exchange works in RT (CHO not implemented) (Claudio)
+
+	Bugs:
+	-[RT] small bug in RT_Energy.F writing exchange-correlation energy (Claudio)
+	-[MAGNETIC] sc/MAG_Hamiltonian.F : fixed factor 2 due to 1/2m term which multiply the magnetic Hamiltonian (Davide)
+
+	Patch sent by: Davide, Claudio & Myrta
+
+2009-11-16 20:01:33 r508 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Fixed bug introduced DELIBERATELY by A. Marini in the yamboo.pl script, written by the MASTER IN COMMANDER, lrd C. Hogan
+
+2009-11-16 17:19:02 r506 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Mergering with trunk revision 505
+
+2009-11-15 08:45:56 r505 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Green's functions plotted only for non degenerate states
+
+2009-11-14 12:21:29 r504 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac xc_functionals/el_magnetization.F qp/XCo_Hartree_Fock.F qp/QP_real_axis.F qp/QP_ppa_chosex.F acfdt/acfdt_tot_energy.F ras/Dipole_longitudinal_cut.F ras/Dipole_driver_cut.F ras/Dipole_transverse_cut.F wf_and_fft/space_inv_by_wf.F wf_and_fft/WF_derivative.F wf_and_fft/wf_load.F + wf_and_fft/.objects wf_and_fft/.objects_gpl + pol_function/X_os.F pol_function/Dipole_longitudinal.F pol_function/Dipole_driver.F pol_function/Dipole_transverse.F interface/init.F communicate/fermi_msg.F sc/RT_Energy.F sc/RT_Collision.F sc/RT_driver.F sc/SC_driver.F sc/MAG_Hamiltonian.F sc/RT_start_and_restart.F sc/RT_average_operator.F tddft/tddft_BSK_disk_2_FXC.F tddft/tddft_alda_g_space.F modules/mod_units.F modules/mod_wave_func.F modules/std_presets.F bse/K_test_1.F bse/K.F ypp/excitons_driver.F ypp/electrons_driver.F ypp/ras_loc_ypp.F ypp/RT_fix_symmetries.F ypp/electrons_angular_momentum.F ypp/ypp_init_load.F
+
+	Bugs:
+	- [RT] it_now not set properly when start from SC (Claudio)
+	- [RT] bug in continuation for IP with SC wave-function (Claudio)
+	- [MAGNETIC] ypp/ypp_init_load.F : name of angular units 'degree' --> 'deg' (Davide)
+
+	Changes:
+	- [RT] Adiabatic Switching and start from SC working again (Claudio)
+	- [MAGNETIC] xc_functionals/el_magnetization.F, communicate/fermi_msg.F, modules/mod_units.F:
+	  now compute and write the magnetization per unit of volum. (Davide)
+	- [MAGNETIC] wf_and_fft/WF_derivative.F wf_and_fft/wf_load.F : modifications to load a limited nuumber of k pointd or bands
+	  with wf_derivative() (Davide)
+	- [MAGNETIC] ypp/electrons_driver.F ypp/electrons_angular_momentum.F : improved version of
+	  electrons_angular_momentum.F and related changes in electrons_driver.F (Davide)
+
+	Patch sent by: Davide & Claudio
+
+2009-11-14 10:59:31 r503 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac qp/QP_elph.F
+
+	Bugs:
+	- Bad positioning of unallocated logicals was causing seg fault when
+	  compiled with IBM compilers.
+
+	Patch sent by: Andrea
+
+2009-11-13 19:53:30 r502 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	small bug in QP_elph.F
+
+2009-11-13 19:22:20 r501 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac qp/QP_elph.F interface/init_load.F interface/init.F sc/RT_Ext_Field.F io/ioELPH.F modules/std_presets.F modules/mod_ELPH.F ypp/ypp_init.F ypp/elph_databases.F ypp/elph_general_gFsq.F ypp/elph_excitonic_gkkp.F ypp/elph_eliashberg_dos.F ypp/elph_atomic_amplitude.F
+
+	Bugs:
+	- [YPP_PH] PH broadening variable was not activated during electronic eliashnberg calculation
+
+	Changes:
+	- [ELPH] QP_elph restyled:
+	   + Changed names of loop integers and q-related indexes.
+	   + Added q-points distribution with memory usage reduction.
+
+	Patch sent by: Andrea
+
+2009-11-11 23:20:10 r500 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac interface/init.F sc/XC_switch.F sc/V_real_space_to_H.F sc/RT_Energy.F sc/RT_Collision.F sc/RT_driver.F sc/RT_initialize.F sc/RT_update_G_reference.F sc/RT_report.F sc/.objects sc/RT_start_and_restart.F sc/RT_average_operator.F modules/mod_real_time.F ypp/ypp_init.F ypp/RT_spectrum.F driver/yambo.h_gpl driver/yambo.h sbin/yambo_versions_update.tcsh
+
+	Changes:
+	 -[RT] IP, RPA and TDLDA working again
+	 -[RT] Self-Consistent potential "none" removed
+
+	Additions:
+	 -[RT] Added G_reference_update.F and RT_average_operator.F
+
+	Patch sent by: Claudio
+
+2009-11-11 09:16:09 r499 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	**TEMPORARY revision**. _RT Project under deep restyling
+
+2009-11-10 10:19:47 r498 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac xc_functionals/el_magnetization.F wf_and_fft/wf_load.F communicate/fermi_msg.F sc/MAG_common_build_A.F sc/SC_driver.F sc/MAG_Hamiltonian.F modules/mod_wave_func.F ypp/RT_fix_symmetries.F
+
+	Bugs:
+	- el_magnetization.F, fermi_msg.F: corrected expression for average_el_mag and related messsage.
+	- sc/SC_driver.F : call to el_magnetization.F only if n_sp_pol > 2
+	- sc/MAG_Hamiltonian.F : live_timing() calls moved to the right position
+
+	Changes:
+	- wf_load.F, mod_wave_func.F : extended QUIET_ option to WF_derivative alloc and free
+	- RT_fix_symmetries.F : removed forgotten write(*,*)
+	- MAG_common_build_A.F : deallocation moved earlier in the routine.
+
+	Patch sent by: Davide
+
+2009-11-10 09:27:23 r497 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Added optional alat in ypp to transform k-points in PW format
+
+2009-11-06 16:35:24 r496 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	GLOBAL UPDATE OF COPYRIGHT YEARS (2008 -> 2009)
+
+2009-11-06 12:07:39 r495 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac xc_functionals/el_magnetization.F qp/XCo_driver.F qp/XCo_Hartree_Fock.F qp_ctl/QP_load_DB.F wf_and_fft/WF_derivative.F wf_and_fft/wf_load.F interface/init_load.F interface/init.F communicate/fermi_msg.F sc/MAG_common_build_A.F sc/SC_driver.F sc/MAG_Hamiltonian.F io/ioRHO_RHO_VX.F modules/mod_wave_func.F modules/mod_oscillators_IO.F modules/std_presets.F modules/mod_magnetic.F bse/K.F ypp/RT_fix_symmetries.F
+
+	Bugs:
+	- [RT]	  small bug in XCo_driver.F when l_real_time=.true. (Claudio)
+	- Removed warning about non-existing QP DB when the input file field was
+	  left empty.
+
+	Additions:
+	- [GAMMA] Only half of the oscillators are allocated in BSE (Claudio)
+	- [RT]	  introduced cutoff for exchange matrix elements EXXCut  (Claudio)
+
+	Changes:
+	- [MAGNETIC] moved wf_derivatives to the mod_wave_functions, added wf_derivative_alloc and wf_derivative_free (Davide)
+	- [MAGNETIC] changed name of some logical variables in MAG_Hamiltonian.F and wf_derivative.F to make easier to understand the code (Davide)
+	- [MAGNETIC] added average_magnetization variable in mod_magnetic and its computation in el_magnetization.F.
+	  Then inserted calls to el_mag in SC_driver to report the average_el_mag in SC_driver and fermi_msg.F (Davide)
+	- [MAGNETIC] wf_load.F : when an SC_database is found is possible to load a limitated number of k points
+	             (EXPERIMENTAL) (Davide)
+	- [MAGNETIC] ypp_rt_fix_symmetries: minor changes (Davide)
+
+	Patch sent by: Claudio & Davide
+
+2009-11-04 10:20:05 r494 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac sc/MAG_common_build_A.F sc/MAG_Hamiltonian.F
+
+	Bugs:
+	- fft_size defined  also in the Pauli magnetism case.
+
+	Patch sent by: Davide
+
+2009-11-03 16:05:19 r493 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc e2y/e2y_i.F p2y/p2y_i.F a2y/a2y_i.F config/Makefile.in config/configure.ac parser/ps_convert.F parser/init_convert.F parser/mod_itm.F wf_and_fft/WF_derivative.F wf_and_fft/wf_load.F interface/init_load.F interface/init.F sc/MAG_common_build_A.F sc/XC_switch.F sc/SC_driver.F sc/SC_check_symmetries.F sc/.objects sc/MAG_Hamiltonian.F io/io_SC_components.F io/IO_mute.F modules/mod_memory.F modules/mod_wave_func.F modules/std_presets.F modules/mod_magnetic.F modules/mod_global_XC.F ypp/ypp_init.F ypp/mod_YPP.F ypp/RT_fix_symmetries.F ypp/electrons_angular_momentum.F ypp/ypp_init_load.F driver/driver.c driver/ypp.h sbin/make_makefile.sh.in
+
+	Bugs:
+	- Small bug in double prec compilation fixed in interfaces.
+
+	Additions:
+	- Added angle unit (degrees and radians)
+
+	Changes:
+	- wf_load changed in order to keep wf allocated in case of k-by-k I/O
+	- Implemented the possibility of a magnetic field oriented in any direction
+	- Now there are 4 gauges: SYMM, and J_ASYMM with J=X,Y,Z. The asymmetric gauge removes the vector
+	  potential which grows in the J direction thanks to the generators \Lambda=0.5*Bo*jk with j,k=xyz
+	  The generator used depends on the gauge choosen
+	- In the input the magnetic field has to be specified in polar coordinates, MAG_B, MAG_thata, MAG_psi
+	- Changed the subroutine RT_ypp_fix_symm in order to check symmetries even for magnetic fields not along z
+	- In the I/O now yambo_magnetic writes also the angles of the of magnetic field orientation
+	- Changed ypp_magnetic: now is able to compute <L_j> and <M_j> for j=x,y,z, according to how the magnetic
+	  field is oriented
+	- Pauli magnetism is done now with the direction of the spin aligned with the B-direction, this is always
+	  possible if the system has not a preferred direction. Just warning that in this case what is called
+	  \sigma_z is actualli along the B direction!
+	  If a system has a praferred spin direction then Pauli magnetism would lead to a non-collinear Hamiltonian.
+
+	Patch sent by: Davide (and Andrea for a general restyling)
+
+2009-10-21 08:58:21 r492 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Added Green Function support to BSE inversion.
+
+2009-10-19 07:18:10 r491 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac wf_and_fft/WF_derivative.F wf_and_fft/wf_load.F sc/MAG_common_build_A.F sc/MAG_Hamiltonian.F ypp/electrons_angular_momentum.F
+
+	Bugs:
+	- [MAGNETIC] sc/MAG_common_build_A.F: fixed bug for the definition fo the flux region
+
+	Changes:
+	- [MAGNETIC] wf_and_fft/WF_derivative.F wf_and_fft/wf_load.F: live timing off in magnetic project when WF and WF derivatives loaded one k-point per time.
+	- [MAGNETIC] ypp/electrons_angular_momentum.F : improved, now computes Lz, Mz, v2, r, and r2
+	- [MAGNETIC] sc/MAG_Hamiltonian.F : minor changes
+
+	Patch sent by: Davide
+
+2009-10-15 08:51:42 r490 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/Makefile.in config/Makefile.in_gpl config/configure.ac lib/lapack/.objects qp/XCo_driver.F pol_function/O_driver.F sc/SC_driver.F modules/mod_units.F modules/mod_QP.F ypp/excitons_driver.F driver/driver.c sbin/yamboo.pl sbin/make_makefile.sh.in
+
+	Bugs:
+	-[SC] in SC_driver.F E%nbm not initialized when used
+	      the first time in el_density.F
+	-[SCALAPACK support] fixed lapack/.objects and added scalapack and blacs in interfaces
+	-Wrong headers assignment in O_driver.F
+
+	Additions:
+	-[SC] Messaging in src/qp/XCo_driver.F
+
+	Changes:
+	- yambo_diago project added
+
+	Patch sent by: Davide, Claduio & Daniele
+
+2009-10-13 08:33:43 r489 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac interface/init_load.F interface/init.F interface/barriers.F bse/K_inversion.F driver/yambo.h_gpl
+
+	Bugs:
+	- K_inversion.F had several missing pieces of code after removal of _DOUBLES
+	  project. Now it works.
+
+	Changes:
+	- FullInv flag removed and replaced by the only "SkipFullInv".
+	- Removed GPL barriers for TDHF runlevel.
+
+	Patch sent by: Andrea
+
+2009-10-13 07:43:26 r488 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  p2y/p2y_i.F
+
+	Bugs:
+	- Fixed bug occurring on SP6 with mod function in p2y.
+
+	Patch sent by: Conor
+
+2009-10-07 18:37:35 r486 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  config/Makefile.in qp/QP_driver.F qp/QP_of.F qp/.objects_gpl bz_ops/bz_samp_indexes.F pol_function/O_select_q_and_G.F pol_function/O_driver.F pol_function/.objects pol_function/.objects_gpl interface/init_load.F interface/init.F interface/barriers.F tddft/tddft_do_X_W_typs.F modules/mod_BS.F modules/mod_X_output.F modules/std_presets.F modules/mod_X.F modules/.objects modules/.objects_gpl bse/K_Haydock.F bse/K_dump_to_o_file.F bse/K_driver.F bse/K_solvers.F + bse/.objects bse/.objects_gpl bse/K_eh_setup.F bse/K_inversion.F bse/K_diagonalization.F bse/K.F driver/driver.c sbin/yamboo.pl
+
+	Bugs:
+	- Wrong precompiler options used to link SCALAPACK not fixed.
+
+	Additions:
+	- Large transferred momenta (outside IBZ) now possible
+
+	Changes:
+	- **GLOBAL** restyling of messaging and output file naming in O_driver and
+	  K_solvers
+
+	Patch sent by: Andrea
+
+2009-10-05 12:23:05 r484 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/Makefile.in config/configure.ac lib/lapack/dlacpy.f lib/lapack/slacpy.f lib/lapack/.objects wf_and_fft/WF_derivative.F wf_and_fft/wf_load.F wf_and_fft/.objects sc/MAG_common_build_A.F sc/SC_driver.F sc/MAG_eval_Lz.F sc/.objects sc/MAG_Hamiltonian.F modules/mod_matrix_operate.F modules/mod_magnetic.F ypp/ypp_init.F ypp/electrons_driver.F ypp/.objects ypp/electrons_angular_momentum.F ypp/ypp_init_load.F driver/driver.c driver/ypp.h sbin/make_makefile.sh.in
+
+	Bugs:
+	- Wrong precompile option used to load SCALAPACK (Myrta)
+	- Removed call to blacs_exit in mod_matrix_operate (Myrta)
+
+	Additions:
+	- [_MAGNETIC] WF_derivative.F and MAG_common_build_A.F : added in magnetic project (Davide)
+	- [_MAGNETIC] MAG_eval_Lz.F : erased (Davide)
+	- [_MAGNETIC] electrons_angular momentum : added to ypp_magnetic project (Davide)
+	- [_MAGNETIC] SC_driver.F : erased calls to MAG_eval_Lz (Davide)
+	- [_MAGNETIC] config/Makefile.in, ypp/ypp_init.F, ypp/electrons_driver.F, ypp/.objects, ypp/ypp_init_load.F, driver/driver.c, driver/ypp.h:
+	  created _YPP_MAGNETIC project (Davide)
+
+	Changes:
+	- [_MAGNETIC] sc/MAG_Hamiltonian: "restyled" (Davide)
+	- [_MAGNETIC] wf_and_fft/wf_load.F: minor changes within magnetic project  (Davide)
+	- [_MAGNETIC] wf_and_fft/.objects, sc/.objects (Davide)
+
+	Patch sent by: Myrta & Davide
+
+2009-09-25 10:29:15 r483 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/Makefile.in config/configure.ac io/io_SC_components.F ypp/ypp_init.F ypp/mod_YPP.F ypp/electrons_driver.F ypp/.objects ypp/ypp_init_load.F driver/ypp.h
+
+	Additions:
+	- [_MAGNETIC] MAG_gauge in io_SC_components
+	- [_YPP_SC] Added calculation of angular momentum in electrons_driver
+
+	Patch sent by: Andrea & Davide
+
+2009-09-25 09:04:45 r482 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac wf_and_fft/wf_load.F pol_function/Dipole_driver.F setup/setup.F interface/barriers.F sc/SC_driver.F io/ioBS.F io/load_SC_components.F io/variables_BS.F io/io_elemental.F io/ioRIM.F io/io_header.F modules/mod_IO.F ypp/ypp_init.F ypp/mod_YPP.F ypp/RT_fix_symmetries.F ypp/ypp_init_load.F driver/ypp.h
+
+	Bugs:
+	- At initialization the values of RIM_ng and  RIM_n_rand_pts were ovewritten in ioBS. Added
+	  DO_NOT_DUMP flag in io_elemental to avoid these type of problems.
+	- In io_header.F writing of xc labels were done using wrong variables.
+	- [_YPP_RT] Fixed wrong symmetries check in case of an external MAGNETIC field (Davide).
+
+	Additions:
+	- cp_directory in mod_IO
+
+	Changes:
+	- [_MANYK] Fixed messaging during wf loading in wf_load.F
+	- [_MAGNETIC] barrier deactivated when n_spin=1
+	- [_SC,_RT,_MAGNETIC] load_SC_components.F restyled
+
+	Patch sent by: Andrea
+
+2009-09-23 16:24:55 r481 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug in wf_load when l_sc_run=.TRUE. fixed
+
+2009-09-23 15:46:41 r480 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc p2y/p2y_db1.F p2y/p2y_i.F p2y/p2y_wf.F a2y/a2y_db1.F a2y/a2y_i.F config/configure.ac qp/QP_load_SC_xc.F qp/XCo_local.F qp/XCo_driver.F common/crystal_lattice.F bz_ops/k_expand.F wf_and_fft/wf_load.F pol_function/O_driver.F pol_function/Dipole_driver.F setup/QP_external_corrections.F setup/setup.F interface/init.F interface/stop_now.F coulomb/rim.F io/io_HF_and_locXC.F io/ioX.F io/io_SC_components.F io/load_SC_components.F io/io_elemental.F io/ioRHO_RHO_VX.F io/ioQP.F io/io_header.F io/ioOSTNTS.F modules/std_presets.F modules/mod_SC.F modules/mod_IO.F modules/mod_global_XC.F bse/K_solvers.F bse/K_diagonalization.F ypp/RT_spectrum.F ypp/RT_fix_symmetries.F
+
+	Changes:
+
+	- GLOBAL clean-up of unused but declared variables
+
+	- [_SC,_MAGNETIC,_RT] GLOBAL restyling of XC labels management:
+	  * re-ordered use of mof_global_XC components during I/O
+	  * made distinction between dynamical variables (loaded_WF_xc_string) and
+	    statical (used only in I/O), like G_WF_xc_string/G_E_xc_string
+
+	Patch sent by: Andrea
+
+2009-09-18 17:24:51 r479 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/Makefile.in config/configure.ac qp/XCo_local.F qp/XCo_driver.F common/QP_state_table_setup.F common/.objects common/.objects_gpl wf_and_fft/wf_load.F wf_and_fft/WF_rotate.F pol_function/O_driver.F pol_function/Dipole_driver.F setup setup/QP_external_corrections.F + + setup/.objects + + interface/check_periodic_directions.F interface/setup.F interface/.objects interface/init.F interface/.objects_gpl interface/G_shells_finder.F io/io_HF_and_locXC.F io/io_SC_components.F io/load_SC_components.F io/io_header.F io/ioOSTNTS.F modules/std_presets.F modules/mod_SC.F modules/mod_global_XC.F bse/K_solvers.F driver/yambo_driver.F
+
+	Additions:
+	- setup/ folder added.
+	- src/setup/QP_external_corrections.F
+
+	Changes:
+	- [SC] src/qp/XCo_driver.F modified to use SC wavefunctions.
+	- [SC] src/wf_and_fft/wf_load.F. Added check on bands number (STILL NOT WORKING)
+	- [SC] Removed wf_b from src/wf_and_fft/WF_rotate.F.
+	- Fixed some of the redundant _SC + _RT precompiler options
+	- [SC] in src/io/io_SC_components.F SC_bands must always be the same
+	  of the copy in the DB
+
+	Patch sent by: Andrea & Daniele
+
+2009-09-15 16:30:17 r478 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc a2y/a2y_i.F config/configure.ac qp/QP_load_SC_xc.F qp/XCo_driver.F qp/.objects pol_function/Dipole_driver.F
+
+	Additions:
+	- src/qp/QP_load_SC_xc.F to preload SC non local potentials
+
+	Patch sent by: Andrea
+
+2009-09-08 10:46:38 r477 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/acx.m4 config/configure.ac qp/XCo_driver.F qp/XCo_Hartree_Fock.F wf_and_fft/WF_rotate.F sc/V_real_space_to_H.F sc/RT_driver.F sc/RT_qp_analyze.F sc/MAG_eval_Lz.F sc/RT_current.F sc/MAG_Hamiltonian.F modules/mod_real_time.F modules/mod_timing.F modules/mod_magnetic.F driver/yambo_driver.F
+
+	Bugs:
+	-[MAGNETIC] MAG_Hamiltonian.F : Now Ho is correctly inizialised
+	-[RT] small bug XCo_Hartree_Fock.F writing disk space
+	-[RT] missing _RT flag in XCo_driver.F
+	-small bugs when _DOUBLE is on in mod_timing.F, WF_rotate.F, RT_qp_analyze.F
+	                                   V_real_space_to_H.F, and RT_current.F
+
+	Additions:
+	-gfortran flags in config/acx.m4
+
+	Changes:
+	- [MAGNETIC]sc/MAG_eval_Lz.F sc/MAG_Hamiltonian.F modules/mod_magnetic.F:
+	  Added 'x' and 'y' variables in the module. So now Lz can be computed even
+	  when MAG_radius/=0
+	-[RT] XCo_Hartree_Fock is called directly in RT_driver.F
+
+	Patch sent by: Claudio & Davide
+
+2009-09-07 12:33:31 r476 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac qp/QP_driver.F qp/XCo_driver.F qp/QP_of.F qp/XCo_Hartree_Fock.F qp/QP_report_and_write.F interface/init_load.F interface/init.F interface/barriers.F sc/RT_driver.F sc/SC_extended_oscillators.F sc/SC_driver.F sc/V_exx.F + io/ioXXVXC.F io/.objects io/.objects_gpl modules/mod_real_time.F modules/mod_drivers.F modules/std_presets.F modules/mod_stderr.F modules/mod_IO.F modules/mod_QP.F ypp/ypp_init.F ypp/mod_YPP.F ypp/RT_spectrum.F ypp/ypp_init_load.F driver/yambo.h_gpl driver/yambo_driver.F driver/yambo.h
+
+	Additions:
+	 -[RT] introduced noise reduction for the immaginary part of epsilon
+	 -Added a flag ExtendOut to print more variables in the output file. (=> QP_of.F modified)
+	 -no_full_RESET optional logical added in io_connect to make possible
+	  to search for different file names without calling again io_control
+
+	Bugs:
+	 -[RT] bug using live_timing fixed (RT_driver.F)
+	 -small bugs in XCo_driver.F
+
+	Changes:
+	 -QP_report string removed.
+	 -Global renaiming: xxvxc -> HF_and_locXC
+
+	Patch sent by: Andrea & Claudio
+
+2009-09-04 18:53:29 r475 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac qp/QP_driver.F qp/XCo_driver.F qp/QP_of.F qp/XCo_Hartree_Fock.F qp/QP_Green_Function.F qp/QP_report_and_write.F qp/QP_newton.F qp/QP_secant.F acfdt/acfdt_tot_energy.F interface/init_load.F sc/RT_Energy.F sc/RT_Collision.F sc/SC_extended_oscillators.F sc/RT_initialize.F sc/SC_driver.F sc/V_exx.F io/ioXXVXC.F modules/mod_real_time.F modules/std_presets.F modules/mod_QP.F
+
+	Changes:
+	- QP_XX_Vxc  splitted in XCo_driver/_Hartree_Fock/_local
+	- QP_Sx renamed in QP_Vnl_xc
+
+	WARNING! Testing needed.
+
+	Patch sent by: Andrea
+
+2009-09-04 18:38:21 r474 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	WARNING! Intermediate commit. Not working revision
+
+2009-09-04 17:22:10 r473 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	WARNING! Intermediate commit. Not working revision
+
+2009-09-04 11:58:51 r472 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc int_modules/mod_com2y.F a2y/a2y_db1.F a2y/a2y_wf.F config/Makefile.in config/configure.ac modules/std_presets.F driver/a2y.h driver/driver.c sbin/yamboo.pl
+
+	Bugs:
+	- MAG_gauge was causing problems in compilation of some ypp projects (Davide)
+
+	Additions:
+	- -d option in a2y to duplicate wfs and energies of a scalar calculation in order
+	  to create "artificially spin polarized" databases
+	- _PW_DIAGO project to implement PW diagonalization routine.
+
+	Patch sent by: Andrea
+
+2009-09-03 18:16:35 r471 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac interface/init_load.F interface/init.F sc/MAG_eval_Lz.F sc/MAG_Hamiltonian.F modules/std_presets.F modules/mod_magnetic.F ypp/ypp_init.F ypp/mod_YPP.F ypp/electrons_driver.F ypp/ypp_init_load.F driver/ypp.h_gpl driver/ypp.h
+	Bugs:
+	- sc/MAG_Hamiltonian.F  sc/MAG_eval_Lz.F : solved problem with non-cubic supercells
+
+	Additions:
+	- Electronic DOS by using "ypp -s s"
+
+	Changes:
+	- sc/MAG_eval_Lz.F sc/MAG_Hamiltonian.F modules/mod_magnetic.F : inserted possibilites of Asymmetric gauge
+	  for the vector potential (this allow to study 2D systems as well as 1D systems perpendicular to B)
+
+	Patch sent by: Andrea & Davide
+
+2009-09-01 17:36:11 r470 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Test commit
+
+2009-08-07 19:17:05 r469 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc p2y/mod_p2y.F config/configure.ac pol_function/Dipole_transverse.F io/io_SC_components.F io/ioDB1.F modules/mod_BS.F ypp/plot_xcrysden.F ypp/RT_fix_symmetries.F ypp/elph_atomic_amplitude.F
+
+	Bugs:
+	 -[RT] bug in RT_fix_symmetries.F, the new wf_nc_k(:) have to be equal to ng_closed!
+	 -[RT] P_square incorrectly used  in normal optics (Dipole_transverse.F)
+	 - n_atoms_species was not allocated in ioDB1.F
+	 - mod_BS.F was not compiling with g95
+
+	Patch sent by: Andrea & Claudio
+
+2009-08-07 11:40:31 r468 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac qp/QP_XX_Vxc.F common/QP_state_table_setup.F interface/init_load.F interface/init.F sc/SC_extended_oscillators.F sc/RT_driver.F sc/RT_Collision.F sc/RT_qp_analyze.F sc/SC_driver.F sc/.objects io/.objects modules/mod_real_time.F modules/mod_SC.F ypp/RT_spectrum.F ypp/RT_fix_symmetries.F
+
+	Additions:
+	 -[SC] SC calculation now can use RHO_IO, new flag UseRhoIO
+	       one should run before "yambo_rt -x"
+
+	Bugs:
+	 -[RT] small in QP_XX_Vxc.F QP_Sx should not be used in RT
+	 -[RT] diskspace dimension was wrong (QP_XX_Vxc.F)
+	 -[RT] bug in printing symmetries ypp/RT_fix_symmetries.F (Davide)
+	 -[RT] bug doing "yambo_rt -x" QP_table was not generate properly (QP_state_table_setup.F)
+	 -[RT] bug wrinting RT-qp file (RT_qp_analyze.F)
+	 -[SC] d_E in the final report are now calculated after fermi_energy (incorrect d_E before)
+
+	Patch sent by: Claudio
+
+2009-08-07 11:27:13 r467 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  e2y/e2y_db1.F e2y/e2y_i.F e2y/e2y_kb_pp.F int_modules/mod_com2y.F p2y/p2y_i.F p2y/p2y_wf.F p2y/mod_p2y.F a2y/a2y_db1.F a2y/a2y_i.F a2y/a2y_wf.F ras/Dipole_longitudinal_cut.F wf_and_fft/wf_load.F pol_function/Dipole_kb_pp_comp.F pol_function/Dipole_transverse.F interface/setup.F coulomb/rim.F io/ioDB1.F io/ioELPH.F io/ioKB_PP.F io/ioDB1_reload.F modules/mod_BS.F modules/mod_pseudo.F modules/std_presets.F modules/mod_ELPH.F modules/mod_D_lattice.F bse/K_dump_to_o_file.F bse/K_solvers.F ypp/plot_xcrysden.F ypp/elph_databases.F ypp/excitons_sort_and_report.F ypp/elph_atomic_amplitude.F driver/ypp.h
+
+	Additions:
+	- [SC] Message in wf_load when SC wavefunctions are loaded
+	- subroutine BS_of_heads in mod_BS (Myrta)
+
+	Changes:
+	- n_atoms, n_atoms_max ... renamed
+
+	Patch sent by: Andrea & Myrta
+
+2009-08-05 16:13:55 r466 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  pol_function/O_driver.F sc/RT_driver.F sc/MAG_eval_Lz.F sc/MAG_Hamiltonian.F sc/RT_restart.F io/ioELPH.F modules/mod_ELPH.F bse/K_solvers.F ypp/ypp_init.F ypp/RT_spectrum.F ypp/mod_YPP.F ypp/ypp_i.F ypp/elph_eliashberg_dos.F ypp/.objects ypp/elph_atomic_amplitude.F ypp/ypp_init_load.F driver/ypp.h
+
+	Changes:
+	-[RT] dielectric constant is interpolated for w->0
+	-f_sum_rule.F removed
+	-[ELPH] Added option to ioELPH to skip gkkp I/O
+
+	Additions:
+	-[ELPH] ypp_ph -p a option to calcualte atomic displacements.
+
+	Bugs:
+	-[RT] small bug in continuation fixed
+
+	Patch sent by: Andrea & Claudio
+
+2009-08-04 12:33:37 r465 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac qp/QP_driver.F qp/QP_of.F qp/QP_Green_Function.F common/Convolve.F common/Integrate.F common/.objects pol_function/X_bare_RIM_GreenF.F pol_function/f_sum_rule.F pol_function/X_GreenF_remap.F pol_function/.objects pol_function/Dipole_driver.F interface/init.F io/ioQP.F modules/mod_QP.F
+
+	Bugs:
+	- Units of the Green Function (1/Energy)
+	- Added damping of the Green function when the imaginary part of the self-energy
+	  is too small
+	- Wrong definition of function in Convolve.F. Missing energy step factor.
+	- [POLARON] Fixed wrong perfactors in Green Functions convolver
+	- Missing call to io_status at the end of the first section in ioQP
+
+	Additions:
+	- QP_G_amplitude_integral added in module. It contains the integral of the spectral
+	  function and it is written in the Green function output file
+	- Integrate function
+
+	Patch sent by: Andrea
+
+2009-08-03 15:04:09 r464 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac qp/QP_XX_Vxc.F common/Convolve.F parser/ps_convert.F parser/init_convert.F parser/mod_itm.F pol_function/X_pre_setup.F pol_function/X_bare_RIM_GreenF.F pol_function/X_GreenF_remap.F interface/init_load.F interface/init.F sc/RT_driver.F sc/RT_Collision.F sc/RT_initialize.F sc/RT_Ext_Field.F sc/RT_report.F sc/RT_current.F io/io_SC_components.F io/ioELPH.F modules/mod_real_time.F modules/mod_units.F modules/mod_functions.F modules/std_presets.F modules/mod_ELPH.F ypp/elph_databases.F ypp/RT_spectrum.F
+
+	Additions:
+	- [RT] Electric field intensity
+	- [RT] I/O Cache
+	- [POLARON] Green function can be used to calculate the response function
+	- [ELPH] Polarization vectors I/O in ELPH database
+
+	Patch sent by: Andrea & Claudio
+
+2009-07-31 13:21:07 r463 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/Makefile.in config/configure.ac qp/QP_driver.F qp/QP_load_SC_xc.F qp/QP_of.F qp/QP_Green_Function.F qp/QP_descriptions.F qp/QP_report_and_write.F qp/QP_W2Sc.F qp_ctl/QP_apply_interpolate.F qp_ctl/QP_apply_stretch.F qp_ctl/mod_QP_CTL.F + + qp_ctl/.objects + + qp_ctl/.objects_gpl + qp_ctl/QP_apply_fit.F qp_ctl/Load_Green_Functions.F qp_ctl/QP_apply_db.F qp_ctl/QP_apply_done.F common/Convolve.F common/.objects wf_and_fft/WF_rotate.F + pol_function/X_pre_setup.F + pol_function/X_os.F pol_function/O_driver.F pol_function/X_GreenF_remap.F pol_function/X_Gf.F pol_function/.objects pol_function/X_bare_RIM_Gf.F interface/init_load.F interface/init.F sc/V_exx.F io/ioQP.F modules/mod_electrons.F modules/std_presets.F modules/mod_X.F modules/mod_QP.F modules/mod_global_XC.F bse/K_inversion.F driver/driver.c sbin/yamboo.pl
+
+	Additions:
+	- _POLARON project
+	- Kind for POLARON/GoWo self-energies
+	- QP_load_SC_xc.F to load SC non-local potentials
+	- Added "G < QP_DB" option
+	- Adding X_o calculated by convoluting the Green Functions
+
+	Changes:
+	- Removed the additional damping in the evaluation of the Green Function
+	  Now the damping of the self-energy is used
+	- Global renaming of qp_ctl/ routines
+	- Partial restyling of X_os.F
+	- _DIPOLE_RIM project removed
+
+	Patch sent by: Andrea
+
+2009-07-24 18:31:13 r462 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  qp/QP_XX_Vxc.F qp_ctl/mod_QP_CTL.F communicate/acknowledge_yambo.F sc/RT_driver.F sc/RT_initialize.F sc/.objects modules/mod_real_time.F modules/mod_oscillators_IO.F driver/yambo_driver.F
+
+	Changes:
+	 -[RT] RT_report.F output files are writen here if necessary
+	 -Updated aknowledgments
+
+	Bugs:
+	 -[RT] Small bugs: in allocation (mod_oscillators_IO.F);
+	         		   live_timing in QP_XX_Vxc.F;
+	                   calling QP_XX_Vx.F from yambo_driver.F;
+			           k_points_map not defined in RT_spectrum.F;
+
+	Patch sent by: Andrea & Claudio
+
+2009-07-22 13:18:28 r461 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac qp/QP_XX_Vxc.F common/QP_state_table_setup.F interface/init_load.F interface/init.F interface/barriers.F sc/RT_make_QP_Sx.F sc/RT_Energy.F sc/RT_Collision.F sc/RT_driver.F sc/RT_initialize.F sc/RT_Ext_Field.F sc/RT_qp_analyze.F sc/SC_driver.F sc/SC_check_symmetries.F sc/RT_current.F sc/RT_restart.F io/ioX.F io/io_SC_components.F io/ioXXVXC.F io/ioDB1.F io/ioRHO_RHO_VX.F io/.objects modules/mod_real_time.F modules/mod_drivers.F modules/mod_oscillators_IO.F modules/std_presets.F modules/mod_IO.F modules/mod_com.F modules/mod_QP.F modules/.objects ypp/RT_spectrum.F ypp/RT_fix_symmetries.F driver/yambo_driver.F driver/driver.c driver/yambo.h
+
+	Changes:
+	-[RT] removed zero elements in the Exchange Matrix
+	      memory usae reduced by 60%
+	-[RT] removed unused variables (QP_Hartree etc.)
+
+	Additions:
+	-[RT] kpoints_map moved to mod_real_time.F (to be used in next update)
+	-[RT] Exchange matrix elements are written and read from disk (ioRHO_RHO_VX.F)
+	-[RT] Moved in 'sc' verbosity some of the RT variables
+	- Added all_locations function in mod_com to find all possible file names
+	- Added file_is_present function in mod_IO
+	- Added possibility to insert a comment line in  the extended help
+	  command (like yambo -H)
+
+	Patch sent by: Andrea & Claudio
+
+2009-07-20 13:33:07 r460 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug fixed in QP_Green_Function.F (Andrea)
+
+2009-07-20 10:18:38 r459 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac sc/MAG_eval_Lz.F sc/SC_driver.F sc/.objects sc/MAG_Hamiltonian.F modules/mod_magnetic.F
+
+	Bugs:
+	- sc/MAG_Hamiltonian.F : fixe factor 2 in paramagnetic hamiltonian
+
+	Additions:
+	- sc/MAG_eval_Lz.F : compute Lz, only for isolated or 1D systems
+
+	Changes:
+	- sc/.objects : added MAG_eval_Lz.F
+	- sc/SC_driver.F : added call to MAG_eval_Lz.F
+	- modules/mod_magnetic.F : added objects nedde by MAG_eval_Lz.F
+	- sc/MAG_Hamiltonian.F : added call to MAG_eval_Lz.F plus some minor change
+
+	Patch sent by: Davide
+
+2009-07-16 12:34:25 r458 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac wf_and_fft/wf_load.F pol_function/Dipole_driver.F interface/setup.F sc/XC_switch.F sc/SC_driver.F sc/MAG_Hamiltonian.F io/io_SC_components.F io/load_SC_components.F io/ioDB1.F modules/mod_SC.F modules/mod_global_XC.F
+
+	Additions:
+	- [SC] Added perturbation in global identifiers (global_XC module) to label
+	  energies and wavefunction with the external magnetic field
+	- [SC] Added fermi level report at the end of a SC cycle
+
+	Patch sent by: Andrea
+
+2009-07-16 09:56:26 r457 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	QP_report logicals moved in modules
+
+2009-07-15 19:56:41 r456 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Minor changes to previous revision
+
+2009-07-15 19:21:34 r455 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac qp/QP_driver.F qp/QP_of.F qp/QP_Green_Function.F qp/QP_descriptions.F qp/QP_report_and_write.F parser/mod_itm.F interface/init_load.F interface/init.F interface/init_q_pts.F ras_reels_mods/mod_eels_kinematics.F ras_reels_mods/mod_model_loss_function.F ras_reels_mods/mod_bulkeps.F ras_reels_mods/mod_reels.F ras_reels_mods/mod_optcut.F ras_reels_mods/mod_convolute.F ras_reels_mods/mod_analyse_peaks.F ras_reels_mods/mod_eels_detector.F sc/XC_switch.F modules/mod_SC.F modules/mod_QP.F modules/mod_global_XC.F ypp/ypp_init_load.F driver/yambo.h_gpl driver/ypp.h_gpl driver/yambo.h driver/ypp.h
+
+	Additions:
+	- Added flags for the Green's function solver. Now QP energies and Z factors
+	  can be extracted directky from the GF. A newton expression can be used
+	  as a benchmark.
+
+	Changes:
+	- DEEP MODIFICATION of verbosity option. Now yambo/ypp accept string and
+	  not numbers (qp,rl ...)
+
+	Patch sent by: Andrea
+
+2009-07-15 12:49:06 r454 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Fixed some compilation bugs. Group of routine [FREQUENCIES] added
+
+2009-07-14 17:53:00 r453 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/Makefile.in config/configure.ac qp/QP_driver.F qp/QP_of.F qp/QP_Green_Function.F qp/QP_descriptions.F qp/QP_real_axis.F qp/QP_report_and_write.F qp/QP_newton.F qp/QP_W2Sc.F qp/.objects qp/.objects_gpl qp/QP_elph.F interface/init_load.F interface/init.F io/ioQP.F io/.objects modules/mod_memory.F modules/std_presets.F modules/mod_QP.F modules/.objects driver/driver.c driver/yambo.h sbin/yamboo.pl
+
+	Global restyling of reporting and I/O of QP corrections
+	and Green Functions.
+
+	Additions:
+	- Flag to calculate QP corrections directly from the Green Function
+	- QP_Green_Function.F. Now all GFs are calculated in this
+	  routine
+	- All reporting contained in QP_driver.F moved in new routine
+	  QP_report_and_write.F
+	- On_Mass_Shell_approx flag
+
+	Changes:
+	- ioQP now can write that frequency dependent self-energy
+	- QP_driver can now READ the QP/GF written in the db.QP whose
+	  contents are reported in the report and output file.
+
+	Patch sent by: Andrea
+
+2009-07-13 09:56:46 r452 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc p2y/mod_p2y.F a2y/a2y_db1.F config/configure.ac interface/init_load.F interface/init.F sc/RT_driver.F sc/RT_Collision.F sc/RT_initialize.F sc/RT_Ext_Field.F sc/RT_current.F io/io_SC_components.F modules/mod_real_time.F modules/std_presets.F ypp/ypp_init.F ypp/mod_YPP.F ypp/RT_spectrum.F ypp/ypp_init_load.F
+
+	Changes:
+	 -[REAL_TIME] removed RT_resonant flag and introduced external field "RESONANT"
+	 -Added warning in a2y regarding the use of GGA potentials.
+
+	Additions:
+	 -[REAL_TIME] Any number of external fields can be handle
+
+	Bugs:
+	 -[REAL_TIME] External Field versor was not normalized
+
+	Patch sent by: Andrea & Claudio
+
+2009-07-10 15:40:02 r451 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Changed allocation of gsqF in _ELPH. Added ypp_sc.
+
+2009-07-09 12:40:19 r450 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac qp/QP_elph.F interface/init_load.F interface/init.F interface/G_shells_finder.F sc/RT_Collision.F sc/RT_Ext_Field.F sc/RT_Integrator.F sc/RT_current.F modules/std_presets.F modules/mod_SC.F modules/mod_ELPH.F ypp/RT_spectrum.F
+
+	Changes:
+	 -[REAL_TIME] slightly improved EXACT integration algorithm
+	 -[SC] V_xc is deallocated only if necessary
+	 -[ELPH] Key change in Cardona-Allen formulation. Removed artificial
+	  numerical barriers used so far and replaced with a complex energy
+	  dependence. As a consequence QP corrections in the CA framework
+	  will always correspond to a causal Self-energy.
+
+	Additions:
+	 -[REAL_TIME] added symmetrization in case of EXACT algorithm
+
+	Bugs:
+	 -[REAL_TIME] Wrong term in presence of symmetries in the current
+
+	Patch sent by: Andrea & Claudio
+
+2009-07-07 15:21:11 r449 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Wrong use of allocate/deallocate of V_xc/el_mag in SC/RT/Magnetic Projects
+
+2009-07-07 13:58:30 r448 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  trunk/configure trunk/include/version.inc trunk/config/configure.ac trunk/interface/init_load.F trunk/bse/K_diagonalization.F trunk/bse/K.F branches/gpl/devel/03_31_2009 branches/gpl/devel/03_31_2009/k_lattice.F branches/gpl/devel/03_31_2009/setup.F branches/gpl/devel/03_31_2009/README branches/gpl/devel/04_03_2009 branches/gpl/devel/04_03_2009/fermi_level.F branches/gpl/devel/04_03_2009/README branches/gpl/configure branches/gpl/include/version.inc branches/gpl/e2y/e2y_i.F branches/gpl/p2y/p2y_i.F branches/gpl/a2y/a2y_i.F branches/gpl/config/acx.m4 branches/gpl/config/configure.ac branches/gpl/xc_functionals/el_density.F branches/gpl/xc_functionals/el_magnetization.F branches/gpl/qp/QP_driver.F branches/gpl/qp/QP_XX_Vxc.F branches/gpl/qp/QP_of.F branches/gpl/qp/QP_newton.F branches/gpl/external_c/io.c branches/gpl/parser/ps_convert.F branches/gpl/parser/init_convert.F branches/gpl/parser/mod_itm.F branches/gpl/wf_and_fft/wf_load.F branches/gpl/interface/setup.F branches/gpl/interface/init_load.F branches/gpl/interface/init.F branches/gpl/interface/barriers.F branches/gpl/communicate/report_energies.F branches/gpl/modules/mod_units.F branches/gpl/modules/mod_R_lattice.F branches/gpl/modules/mod_wave_func.F branches/gpl/modules/mod_drivers.F branches/gpl/modules/std_presets.F branches/gpl/modules/mod_par_proc.F branches/gpl/modules/mod_IO.F branches/gpl/modules/mod_QP.F branches/gpl/modules/.objects branches/gpl/modules/mod_D_lattice.F branches/gpl/bse/K_diagonalization.F branches/gpl/bse/K.F branches/gpl/ypp/ypp_init.F branches/gpl/ypp/exc_wf_sort_and_report.F branches/gpl/ypp/ypp_i.F branches/gpl/ypp/excitons_sort_and_report.F branches/gpl/ypp/k_grids.F branches/gpl/ypp/.objects branches/gpl/ypp/BZ_grids.F branches/gpl/ypp/mod_YPP.F branches/gpl/ypp/excitons_driver.F branches/gpl/ypp/electrons_driver.F branches/gpl/ypp/ypp_init_load.F branches/gpl/driver/driver.c
+
+	GPL source merged with trunk.
+
+	Production source uploaded to the Yambo web-page for
+	direct download.
+
+	Patch sent by: Andrea
+
+2009-07-07 12:44:35 r447 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Removed additional el_mag arrays. Using the one defined in the module.
+
+2009-07-06 14:59:01 r446 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Added Symmetry check for _MAGNETIC project
+
+2009-07-03 17:27:38 r445 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac interface/init_load.F interface/init.F sc/SC_add_Hmagnetic.F sc/RT_Energy.F sc/RT_Collision.F sc/RT_initialize.F sc/SC_driver.F sc/.objects sc/RT_current.F + io/io_SC_components.F modules/std_presets.F modules/mod_magnetic.F ypp/ypp_init.F ypp/RT_spectrum.F ypp/ypp_init_load.F
+
+	Changes:
+	 -[REAL_TIME] l_sc_pz changed in l_sc_contains_lda
+
+	Additions:
+	 -[REAL_TIME] RT_spectrum.F can now use FFT instead of Laplace transform
+	  Degen_Step is read also when exciton amplitude is calculated ypp/ypp_init.F
+	 -[SC] Occupations update in SC cycle
+	 -[MAGNETIC] Added variables in io_SC_components
+
+	Bugs:
+	 -[REAL_TIME] small bug in RT_Energy.F in the non-interacting case
+	 -[REAL_TIME] conversion factors in RT_spectrum.F
+	 -[REAL_TIME] minus sign in RT_current.F
+	 -[YPP_ELPH] missing precompiler line
+
+	Patch sent by: Andrea & Claudio
+
+2009-07-03 14:52:21 r444 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac xc_functionals/xc_lda_driver.F qp/DFT_Vxc.F qp/QP_XX_Vxc.F parser/ps_convert.F parser/init_convert.F parser/mod_itm.F wf_and_fft/wf_load.F pol_function/X_os.F pol_function/O_driver.F pol_function/.objects pol_function/Dipole_driver.F pol_function/Dipole_transverse.F interface/setup.F interface/init_load.F interface/init.F interface/barriers.F communicate/report_energies.F sc/XC_switch.F sc/SC_add_Hmagnetic.F sc/SC_driver.F sc/SC_common_build_Ho.F io/ioDB1.F modules/mod_units.F modules/mod_drivers.F modules/std_presets.F modules/mod_pars.F modules/mod_SC.F modules/.objects modules/mod_magnetic.F bse/K_solvers.F ypp/ypp_init.F driver/yambo.h
+
+	Bugs:
+	-[SC] el_mag was not allocated when doing a SC calculation with n_spin>1
+
+	Additions:
+	-[MAGNETIC] Magnetic field units
+	-[MAGNETIC] _MAGNETIC project variables and runlevels
+	-[SC] replaced multiple _SC logicals
+
+	Changes:
+	- Cleaned-up precompiler option for _MAGNETIC project
+
+	Changes (Davide) in _MAGNETIC PJ:
+	- qp/DFT_Vxc.F qp/QP_XX_Vxc.F wf_and_fft/wf_load.F pol_function/X_os.F pol_function/O_driver.F pol_function/.objects pol_function/Dipole_driver.F pol_function/Dipole_transverse.F interface/setup.F interface/init_load.F interface/init.F io/ioDB1.F modules/std_presets.F bse/K_solvers.F :
+	  ==> to all these subroutins added "|| defined _MAGNETIC" where there was "#if defined _SC"
+	- sc/SC_add_Hmagnetic.F : First implementation finished. Tested compilation and very simple run.
+	- modules/mod_magnetic.F : minor change, removed AB_cutoff
+	- modules/mod_pars.F : added constant "alpha" within magnetic project
+	- interface/init.F : inserted line "what is running=YAMBO_MAGNETIC"
+	- modules/mod_SC.F : allocation of Ho is done within SC_add_Hmagnetic.F in the magnetic project
+	- sc/SC_driver.F : adjusted wf_loading for magnetic project
+
+	Patch sent by: Davide & Andrea
+
+2009-06-30 16:37:40 r443 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug in mod_par_proc.F fixed (Andrea)
+
+2009-06-30 16:24:46 r442 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac sc/RT_Energy.F sc/RT_driver.F sc/RT_Collision.F sc/SC_common_build_Ho.F sc/RT_restart.F io/io_SC_components.F modules/mod_real_time.F ypp/ypp_init.F ypp/RT_spectrum.F ypp/mod_YPP.F ypp/RT_fix_symmetries.F ypp/ypp_init_load.F
+
+	Changes:
+	 -[REAL_TIME] Tot_steps is stored only in db.rtG and not in db.rtJ
+
+	Additions:
+	 -[REAL_TIME] RT_stectrum.F finished
+
+	Bugs:
+	 -[REAL_TIME] small bug in restart,and RT_fix_symmetries.F
+	 -[REAL_TIME] bug in RPA without local field effects
+
+	Patch sent by: Claudio
+
+2009-06-26 14:33:59 r441 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/Makefile.in config/configure.ac xc_functionals/el_density.F wf_and_fft/.objects pol_function/Dipole_transverse.F interface/init_load.F interface/init.F sc/SC_add_Hmagnetic.F sc/RT_Energy.F sc/RT_driver.F sc/RT_Collision.F sc/RT_initialize.F sc/SC_driver.F sc/SC_common_build_Ho.F sc/.objects sc/RT_restart.F io/io_SC_components.F io/.objects modules/mod_real_time.F modules/std_presets.F modules/mod_par_proc.F modules/.objects modules/mod_magnetic.F ypp/ypp_init.F ypp/RT_spectrum.F ypp/mod_YPP.F ypp/ypp_i.F ypp/.objects ypp/ypp_init_load.F driver/yambo_driver.F driver/yambo.h driver/ypp.h
+
+	Changes:
+	- [REAL_TIME] G_lesser_reference is allocated only when necessary
+	- [REAL_TIME] V_xc_0 instead of QP_Vxc_0 to use less memory
+	- [REAL_TIME] eliminated l_always_relax flag, relaxation during thermalization
+	              was wrong
+	Additions:
+	- [REAL_TIME] Introduced parallelization in real-time
+	- [REAL_TIME] RT_spectrum.F real-time response analizer in YPP (to be finished)
+	- [MAGNETIC] config/Makefile.in : use the same lib as the SC project
+	- [MAGNETIC] driver/yambo_driver.F : added || defined _MAGNETIC to the defined _SC line
+	- [MAGNETIC] driver/yambo : added || defined _MAGNETIC to the defined _SC line
+	- [MAGNETIC] sc/SC_driver.F : added call to src/sc/SC_add_Hmagnetic.F in the magnetic project
+	- [MAGNETIC] sc/SC_common_build_Ho.F : removed inizialization Ho=0 for the magnetic project as the
+	  initialization is now done in src/sc/SC_add_Hmagnetic.F
+	- [MAGNETIC] modules/mod_magnetic.F : inserted new elements B_0,r_0 and AB_cutoff
+	- [MAGNETIC] sc/.objects io/.objects modules/.objects wf_and_fft/.objects : inserted
+	  specifications for magnetic project
+
+	Bugs:
+	- [REAL_TIME] different bugs in parallelization, now works (el_density.F , Dipole_transverse.F)
+	- [MAGNETIC] pol_function/Dipole_transverse.F : moved xK --> Xk at lines 160-162 - [MAGNETIC]
+	  sc/SC_driver.F : removed double specification of fft_size in the line
+	  "use FFT_m, ONLY:fft_size,fft_size"
+	- [MAGNETIC] src/sc/SC_add_Hmagnetic.F : Add a magnetic field costant in a rigion of the supercell
+	  within a cilinder of radius r_0.
+
+	Patch sent by: Claudio & Davide
+
+2009-06-24 14:18:13 r440 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	_MAGNETIC module added
+
+2009-06-24 14:02:08 r439 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	_MAGNON project renamed in _MAGNETIC
+
+2009-06-24 13:59:07 r438 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	_DOUBLES Project removed (Andrea & Davide)
+
+2009-06-24 11:45:20 r437 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac pol_function/O_eels.F io/ioBS_doubles.F modules/mod_BS_doubles.F bse/K_exchange.F bse/K_doubles_diagonalization.F bse/K_doubles.F bse/K_fixed_point.F bse/K_diagonalization.F bse/K_inversion.F bse/K_doubles_mount.F bse/K.F
+
+	 Last revision with _DOUBLES project. Project will be removed
+	 in rev. 438.
+
+	Patch sent by: Davide
+
+2009-06-24 09:38:21 r436 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac sc/RT_driver.F sc/SC_common_build_Ho.F sc/RT_restart.F io/io_SC_components.F
+
+	Additions:
+	-[REAL_TIME] Current and Vector potential are stored for all steps
+
+	Bugs:
+	-[REAL_TIME] restart works with NetCDF
+	-[SC] Allocation error fixed
+
+	Patch sent by: Andrea & Claudio
+
+2009-06-18 17:05:41 r435 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Some cleaning of RT (andrea)
+
+2009-06-17 17:20:15 r434 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Small bug in QP_driver.F
+
+2009-06-17 16:55:40 r433 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  e2y/e2y_i.F
+
+	Bugs:
+	- Compilation error due to previous renaming of module components fixed
+
+	Patch sent by: Conor
+
+2009-06-17 10:42:46 r432 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac interface/init_load.F interface/init.F sc/RT_driver.F sc/RT_initialize.F sc/RT_Ext_Field.F sc/RT_eps_analyze.F sc/.objects sc/RT_current.F io/io_SC_components.F modules/mod_real_time.F
+
+	Changes:
+	 -[REAL_TIME] restart moved in a separate file RT_restart.F
+	 -[REAL_TIME] removed RT_eps_analize.F, it will implemented in YPP
+
+	Additions:
+	 -[REAL_TIME] restart for real_time dynamics
+
+	Bugs:
+	 -[REAL_TIME] small bug in ypp/RT_fix_symmetries.F
+
+	Patch sent by: Claudio
+
+2009-06-17 10:19:17 r431 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac qp/QP_driver.F qp/QP_of.F qp/QP_newton.F qp/QP_elph.F interface/init_load.F interface/init.F io/ioELPH.F modules/std_presets.F modules/mod_QP.F modules/mod_ELPH.F ypp/elph_general_gFsq.F ypp/RT_fix_symmetries.F
+
+	Bugs:
+	- [RT] bug fixed in RT_fix_symmetries.F (Claudio)
+
+	Additions:
+	- [ELPH] On Mass Shell approximation  (logical flag)
+	- [ELPH] Renormalization factors calculation
+	- [ELPH] Energy dependent self-energy (QP_solver='g')
+
+	Patch sent by: Andrea
+
+2009-06-15 17:13:02 r430 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac external_c/io.c wf_and_fft/wf_load.F modules/mod_wave_func.F modules/std_presets.F modules/mod_IO.F ypp/RT_fix_symmetries.F
+
+	Bugs:
+	- Fixed use of -I/-O options in the interfaces
+	- [REAL_TIME] bug in calling QP_XX_Vxc for l_fast_hartree=.false.
+	- In WF_alloc when reading only Components
+
+	Additions:
+	- [REAL_TIME] restart from SC works
+	- [REAL_TIME] input/output for RT (not restart yet)
+	- Now core_io_path, more_io_path and com_path are created in std_presets
+	- routine cp_file in mod_IO and io.c
+
+	Changes:
+	- [REAL_TIME] src/qp/QP_XX_Sx.F correct output for l_fast_hartree=.false.
+	- Symmetry table build-up moved in mod_D_lattice
+	- Changed bz_samp_duplicate in order to do a complete shadow of the
+	  bz_samp type
+
+	- GLOBAL RENAMING IN YPP FOLDER
+
+	Patch sent by: Andrea & Claudio
+
+2009-06-12 19:08:56 r429 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Incomplete build. Detailed commit message in the next rev.
+
+2009-06-11 08:33:32 r428 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac pol_function/.objects pol_function/.objects_gpl pol_function/Dipole_driver.F pol_function/Dipole_rotate.F interface/init_load.F interface/init.F sc/RT_make_QP_Sx.F sc/RT_make_QP_Hartree.F sc/RT_Energy.F sc/RT_Collision.F sc/RT_driver.F sc/RT_initialize.F sc/RT_Ext_Field.F sc/SC_driver.F sc/SC_common_build_Ho.F sc/.objects sc/RT_fill_Hartree_matrix.F modules/mod_real_time.F modules/std_presets.F modules/mod_SC.F
+
+	Changes:
+	 -[REAL_TIME] Removed FastHartree too much memory consuming
+
+	Bugs:
+	 -[REAL_TIME] bug in src/sc/RT_make_QP_Sx.F with symmetries
+	 -[REAL_TIME] wrong sign Exchange energy in RT_Energy.F
+
+	Patch sent by: Claudio
+
+2009-06-09 18:58:37 r427 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/acx.m4 config/configure.ac qp/QP_XX_Vxc.F interface/init_load.F interface/init.F sc/XC_switch.F sc/RT_make_QP_Hartree.F sc/RT_Energy.F sc/RT_Collision.F sc/RT_driver.F sc/RT_initialize.F sc/RT_eps_analyze.F sc/SC_driver.F sc/SC_common_build_Ho.F sc/.objects sc/RT_fill_Hartree_matrix.F modules/mod_real_time.F modules/std_presets.F modules/mod_SC.F ypp/remove_symmetries.F
+
+	Additions:
+	 -[REAL_TIME] Fast Hartree without call el_density.F
+	              Hartree-Fock one order of magnitude fast
+	 -[REAL_TIME] possibility to use normal or fast Hartree and Exchange
+	              with the flags l_fast_hartree and l_fast_exchange
+
+	Bugs:
+	 -[REAL_TIME] RT_Ext_Field was called with i_time=0
+	 -[REAL_TIME] i_time not set to zero at the beginning
+	 -[REAL_TIME] bug in remove_symmetries.F for 3D grids
+
+	Patch sent by: Claudio
+
+2009-06-05 15:41:33 r426 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac interface/init_load.F interface/init.F sc/RT_Collision.F sc/RT_driver.F sc/RT_initialize.F modules/mod_real_time.F modules/std_presets.F
+
+	Changes:
+	 -[REAL_TIME] now life-time is active only in optics not in adiabatic switching
+	              at least the flag AlwaysLT is .true.
+	 -[REAL_TIME] A single relaxation time called LifeTime default 4 fs
+
+	Additions:
+	 -[REAL_TIME] Introduce G_lesser_reference(:,:,:) as ground state reference G_lesser
+
+	Bugs:
+	 -[REAL_TIME] Wrong relaxation for optics in HF
+
+	Patch sent by: Claudio
+
+2009-06-05 10:39:38 r425 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac qp/QP_XX_Vxc.F sc/RT_make_QP_Sx.F sc/RT_Energy.F sc/RT_Collision.F sc/RT_driver.F sc/RT_initialize.F sc/SC_driver.F sc/SC_common_build_Ho.F modules/mod_real_time.F modules/mod_SC.F
+
+	Changes:
+	 -[REAL_TIME] <m| V_xc_0 |n> is not recalculated every time
+	 -[REAL_TIME] V_xc_sc not necessary removed from RT
+	 -[REAL_TIME] if l_RT_no_updates=.true. WF is deallocated
+
+	Bugs:
+	 - [REAL_TIME] missing sum on q in RT_make_QP_Sx.F
+	               now energy is conserved!
+
+	Patch sent by: Claudio
+
+2009-06-04 12:33:18 r424 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac qp/QP_XX_Vxc.F common/QP_state_table_setup.F interface/init.F sc/RT_make_QP_Sx.F sc/RT_Energy.F sc/RT_Collision.F sc/RT_driver.F sc/RT_initialize.F sc/.objects modules/mod_real_time.F modules/mod_QP.F
+
+	Changes:
+	 - [GPL] fermi_level.F and k_lattice.F definitively replaced
+	   with the devel versions.
+
+	Bugs:
+	 - [REAL_TIME] fix use of QP_Sx in Hartree-Fock
+	 - [GPL] Double precision build fixed.
+
+	Additions:
+	 - [REAL_TIME] src/sc/RT_make_QP_Sx.F new subroutine to fill  QP_Sx
+	 - [REAL_TIME] QP_table_order_by_k  quasi particle ordered also by k-points
+	 - [GPL] XC functional now recognized by p2y.
+	 - [GPL] Added self-detection of lattice  geometry (devel)
+
+	Patch sent by: Andrea & Claudio
+
+2009-06-04 11:39:40 r423 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Preparing GPL update. Fixed some Double Precision bugs
+
+2009-06-03 18:38:29 r422 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac xc_functionals/el_density.F qp/QP_XX_Vxc.F parser/mod_itm.F sc/RT_make_QP_Sx.F sc/RT_Energy.F sc/RT_driver.F sc/RT_Collision.F sc/RT_initialize.F sc/RT_qp_analyze.F sc/RT_Ext_Field.F sc/RT_current.F modules/std_presets.F bse/K_scattering.F ypp/electrons_driver.F
+
+	Changes:
+	 - [REAL_TIME] quasi-particle output file name changed in o.qp_rt
+	 - [REAL_TIME] RT_Ext_Field.F reads only G_lesser and not Xen
+	 - [REAL_TIME] Xen removed also from RT_current.F
+
+	Additions:
+	 - [REAL_TIME] Time-depent Hartree-Fock works
+	 - [REAL_TIME] Parallelization in RT_Collision.F and
+	               in the quadratic part of el_density.F
+	 - [REAL_TIME] RT_Energy.F Hartree-Fock energy implemented
+	 - [REAL_TIME] Hartree-Fock rewritten using QP_Sx (src/sc/RT_make_QP_Sx.F)
+
+	Bugs:
+	 - [REAL_TIME] RT_Collision.F bug in relaxation part, now also
+	               the diagonal part relax to the orginal fermi distribution
+
+	Patch sent by: Claudio
+
+2009-05-28 16:22:09 r421 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac xc_functionals/.objects xc_functionals/xc_lda_driver.F qp/QP_XX_Vxc.F acfdt/acfdt_tot_energy.F wf_and_fft/space_inv_by_wf.F interface/init_load.F interface/init.F sc/RT_driver.F sc/RT_Collision.F sc/RT_initialize.F sc/RT_qp_analyze.F sc/SC_driver.F sc/SC_common_build_Ho.F sc/RT_current.F modules/mod_electrons.F modules/mod_real_time.F modules/std_presets.F driver/yambo_driver.F
+
+	Changes:
+	 - el_density.F comes back in src/xc_functionals and use all the G_lesser
+	                in the case of REAL_TIME
+	 - [REAL_TIME] en%nbm is not used anymore
+
+	Additions:
+	 - [REAL_TIME] QP_XX_Vxc.F for real time with the full density matrix (not working yet)
+	 - [REAL_TIME] Adiabatic switching works with exchange
+	 - [REAL_TIME] Thermal_eta is read from input (default value 8.0)
+	 - [REAL_TIME] Report for qp dynamics (RT_qp_analyze.F)
+
+	Bugs:
+	 - [SC]	sc/SC_driver.F small bug in the output
+	 - [REAL_TIME] DFT_Vxc.F was not colled properly in SC_common_build_Ho.F
+	 - [REAL_TIME] wrong call to RT_driver in yambo_driver.F
+
+	Patch sent by: Claudio
+
+2009-05-27 15:47:23 r420 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac qp/DFT_Vxc.F wf_and_fft/WF_rotate.F sc/SC_driver.F sc/SC_common_build_Ho.F modules/mod_SC.F
+
+	Bugs:
+	- [SC] Wrong dimensioning of oscillators when using CHOSEX
+	- [SC] Seg fault removed when using SC_bands lower than the number of filled bands
+
+	Patch sent by: Andrea
+
+2009-05-27 12:56:18 r419 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	BUG Fix in k_lattice.F (Andrea)
+
+2009-05-27 10:38:17 r418 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac xc_functionals/xc_lda_driver.F qp/DFT_Vxc.F pol_function/Dipole_transverse.F interface/init_load.F interface/init.F sc/RT_Energy.F sc/V_qp_basis_to_H.F sc/RT_driver.F sc/RT_Collision.F sc/RT_initialize.F sc/RT_Ext_Field.F sc/SC_common_build_Ho.F sc/RT_Integrator.F sc/.objects sc/.objects_gpl sc/RT_current.F modules/mod_electrons.F modules/mod_real_time.F modules/mod_SC.F ypp/k_special.F driver/ypp.h
+
+	Additions:
+	 - [REAL_TIME] RT_qp_analyze.F to analyze quasi-particle dynamics
+	               in real time (not finished)
+	 - [REAL_TIME] New flag NoDiamagnetic to exclude diamagnetic term
+	 	       in coupling and current
+
+	Bugs:
+	 - [REAL_TIME] Bug in TD-LDA in the calculation of V_xc
+	 - [REAL_TIME] Linear optics works as before
+	 - [REAL_TIME] xc_functionals/xc_lda_driver.F,qp/DFT_Vxc.F  all the density matrix
+	               is required in case of -D _RT
+
+	Patch sent by: Claudio
+
+2009-05-21 15:57:01 r417 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Some file renamed. Project's and interface linking problem in compilation  solved (Andrea)
+
+2009-05-21 14:19:52 r416 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Renaming RAS files
+
+2009-05-20 17:24:28 r415 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	More Updates in mergering _SC and _RT projects. NOT FOR PRODUCTION (Andrea & Claudio)
+
+2009-05-20 13:01:52 r414 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/Makefile.in config/configure.ac interface/init_load.F interface/init.F sc/RT_Collision.F sc/RT_driver.F sc/RT_initialize.F sc/RT_Ext_Field.F sc/RT_eps_analyze.F sc/check_symm.F sc/SC_common_build_Ho.F sc/RT_Integrator.F sc/.objects sc/.objects_gpl sc/RT_current.F modules/mod_real_time.F modules/std_presets.F bse/K_scattering_test_1.F bse/.objects ypp/ypp_init.F ypp/mod_YPP.F ypp/remove_symmetries.F ypp/ypp_i.F ypp/.objects ypp/ypp_init_load.F driver/yambo_driver.F driver/driver.c driver/yambo.h driver/ypp.h
+
+	Additions:
+	- _YPP_RT and _RT projects: -n option in ypp_rt.
+
+	Patch sent by: Andrea & Claudio
+
+2009-05-19 14:51:06 r413 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Testing different level of parallelizations in BSE (Andrea). TEST_1 project. Devel, no for production
+
+2009-05-18 18:37:24 r412 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Devel version of SC project. No for production (Andrea & Claudio)
+
+2009-05-18 11:36:25 r411 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Small bug in k_special.F (Claudio)
+
+2009-05-15 14:51:31 r410 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc p2y/qexml_v3.2.F p2y/p2y_db1.F p2y/p2y_i.F p2y/mod_p2y.F a2y/a2y_db1.F config/Makefile.in config/netcdf_f90.m4 config/configure.ac qp/QP_elph.F qp_ctl/mod_QP_CTL.F qp_ctl/.objects qp_ctl/.objects_gpl common/fermi_level_test_1.F common/.objects common/.objects_gpl common/crystal_lattice.F common/fermi_level.F bz_ops/k_lattice_test_1.F bz_ops/k_lattice.F interface/setup_test_1.F interface/setup.F interface/.objects interface/.objects_gpl communicate/report_energies.F modules/std_presets.F modules/mod_com.F modules/mod_D_lattice.F bse/K_scattering.F bse/K_diagonalization.F ypp/ypp_init.F + ypp/elph_general_gFsq.F ypp/mod_YPP.F ypp/k_analyze.F ypp/ypp_i.F ypp/BZ_RIM.F ypp/.objects ypp/.objects_gpl ypp/ypp_init_load.F ypp/k_special.F driver/a2y.h driver/e2y.h driver/f2y.h driver/yambo.h driver/ypp.h driver/yambo.h_gpl driver/p2y.h driver/ypp.h_gpl driver/driver.c
+
+	Bugs:
+	- Bug in QP_elph in case of negative phonon frequencies away from gamma point.
+
+	Additions:
+	- crystal_lattice.F added. Unit cell kind (FCC,BCC,HCP and CUB) detected.
+	- p2y now reads correctly the PW xc functional.
+	- a2y and p2y interfaces use crystal_lattice.F to try to define
+	  more correctly alat(:) values.
+	- new msg_deliver subroutine. Usefull to (post) edit the formatted strings
+	  created by msg interface.
+
+	Changes:
+	- whole qp_ctl added to GPL distro.
+	- fermi_level replaced with fermi_level_test_1 containing a more
+	  efficient quest for the Fermi level (2 TEST)
+	- k_lattice replaced with k_lattice_test_1. Comment follows:
+	  ! Andrea 31/03/2009. Bug pointed out by a user.
+	  !
+	  ! writing this routine I assumed that a subgroup of the
+	  ! k-points constituets a uniform grid .
+	  ! Of course this is not true if you pick up gamma plus
+	  ! a point exactly on the BZ border. As a first work around
+	  ! I extended the k-grid using a certain number of
+	  ! RL vectors shells. (passed via G_shell)
+	- setup.F replaced with setup_test_1. Added calls to crystal_lattice
+	  and to new form of k_lattice.
+	- changed format of "ypp -k". Added "ypp -k h" (k_special.F) to view high symmetry points
+	  consistent with the unit cell detected by crystal_lattice. Added
+	  option to create paths (band structure)
+	- added declarations in .h files to avoid warning messages during compilation
+	  of driver.c.
+
+	Patch sent by: Andrea
+
+2009-05-11 12:27:53 r408 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac qp/QP_W2Sc.F modules/mod_BS_doubles.F bse/K_doubles_degeneracy.F bse/K_doubles_diagonalization.F bse/K_doubles.F bse/K_fixed_point.F bse/.objects bse/K_diagonalization.F bse/K_inversion.F bse/K_doubles_mount.F bse/K.F
+
+	Bugs:
+	- qp/QP_W2Sc.F
+	  Inverted the sign of the i\eta factors in the denominator of the QP Green functions
+	  according to the expression for the T-ordered Green function:
+	  G=\frac{1}{\omega-\epsilon_i+i\eta sign(\epsilon-\mu)}
+
+	- [DOUBLES] bse/K_doubles.F
+	  Fixed sign error for some of the elements of the doubles kernel
+
+	- [DOUBLES] bse/K.F
+	  Added a deallocation line so that the compiled yambo_doubles works even if
+	  one does a standard computation (i.e.: a static BSE) with the coupling
+
+	- [DOUBLES] bse/k_inversion.F
+	  Added the BS_mat_static matrix so that in the loop over frequency the doubles kernel
+	  is correctly add before the inversion and then subtracted after the inversion for
+	  each frequency.
+
+	Additions:
+	- [DOUBLES] bse/K_doubles_degeneracy.F
+	  Fake subroutine. Presently it does nothing
+
+	- [DOUBLES] bse/K_doubles_diagonalization.F
+	  Subroutine called by bse/K_diagonalization.F
+	  Solve the fixed point problem and gives as outup the eigenvales and the eigenvectors.
+	  In particular the solution of the fixed point equation for each eigenvalue of the
+	  frequency dependent BS_mat is solved calling the subroutine bse/K_fixed_point.F
+
+	- [DOUBLES] bse/K_fixed_point.F
+	  Subroutine called by bse/K_doubles_diagonalization.F
+	  Solve the equation $E_I(\omega)-\omega=0$ for I=1,BS_K_dim
+
+	Changes:
+	- [DOUBLES] modules/mod_BS_doubles.F
+	  Added the following tables used by the subroutine K_doubles_fixed.F _point:
+	  integer     , allocatable ::  BS_table_fixed_E(:,:)
+	  integer     , allocatable ::  tab_poles2iw(:)
+	  Added the following tables in preparation for the subroutin K_doubles_degeneracy.F:
+	  presently this is a fake subroutins which does nothing
+	  integer     , allocatable ::  tab_check2icv_zero(:),degeneracy_zero(:)
+	  integer     , allocatable ::  change(:,:), inv_change(:,:), tab_poles2iw(:)
+	  Added the following vector for a possible static approximation to be done in
+	  the code for part of the doubles kernel:
+	  integer     , allocatable ::  static_approx(:)
+	  Added the matrix which collects the eigenvectors (both the singles and the doubles part)
+	  of the "fixed point diagonalization":
+	  complex(SP) , allocatable ::  Eigen_singles(:,:),Eigen_doubles(:,:)
+
+	- [DOUBLES] bse/K_doubles.F
+	  Inserted code for a possible static approximation in the doubles kernel and refined comments
+
+	- [DOUBLES] bse/.objects
+	  Added files: K_fixed_point.o K_doubles_diagonalization.o K_doubles_degeneracy.o
+
+	- [DOUBLES] bse/K_diagonalization.F
+	  Added: call to K_doubles_diagonalization.F, lines for modules needed to get the output from
+	  K_doubles_diagonalization.F .
+	  Finally added some lines needed to compute the residues after the "fixed point diagonalization"
+	  as we obtain a different number of solution respect to the static one, so BS_R has to be
+	  allocated with a a different dimension.
+
+	- [DOUBLES] bse/K.F
+	  Added lines so that the code restarting from the doubles database works in the same way
+	  as if it start from scratch.
+
+	- [DOUBLES] bse/k_inversion.F
+	  Modified the code so that yambo_doubles always performs the ful inversion, skipping the perturbative
+	  inversion
+
+	- [DOUBLES] bse/K_doubles/mount.F
+	  Added extensive comments and modification for testing pourpose: it's possible to switch from the
+	  "whole kernel" construction to the "diagrams by diagrams contruction" (so that one can turn on and off
+	  the contribution from different diagrams separately). Finally added code for a possible static approximation
+	  to part of the kernel.
+
+	Patch sent by: Davide
+
+2009-05-08 14:33:54 r407 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc p2y/mod_p2y.F config/configure.ac interface/init_load.F interface/init.F sc/RT_driver.F sc/RT_Collision.F sc/RT_Ext_Field.F sc/RT_eps_analyze.F sc/RT_current.F modules/mod_real_time.F modules/std_presets.F bse/K_driver.F ypp/BZ_RIM.F
+
+	Changes:
+	- [REAL_TIME] "Xen" now contains the actual energies and occupations
+	              and "en" the initial ones
+
+	Additions:
+	- [REAL_TIME] Analyzer for the current response
+
+	Bugs:
+	- [REAL_TIME] Fictitious life time works
+	- [REAL_TIME] Bug in the integrator with phase factor for the case Sigma=0
+	- [REAL_TIME] For non-resonant field the diagonal terms now are set to zero
+
+	Patch sent by: Claudio
+
+2009-05-06 10:30:58 r406 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac wf_and_fft/.objects interface/init_load.F interface/init.F sc/RT_Energy.F sc/RT_driver.F sc/RT_Collision.F sc/RT_Ext_Field.F sc/RT_eps_analyze.F sc/.objects sc/RT_Integrator.F sc/.objects_gpl sc/RT_current.F modules/mod_real_time.F modules/std_presets.F
+
+	Changes:
+	  [REAL_TIME] "Xen" now contains the actual energies and occupations
+	              and "en" the initial ones
+
+	Additions:
+	- [REAL_TIME] Analyzer for the current response
+
+	Bugs:
+	- [REAL_TIME] Fictitious life time works
+	- [REAL_TIME] Bug in the integrator with phase factor for the case Sigma=0
+	- [REAL_TIME] For non-resonant field the diagonal terms now are set to zero
+
+	Patch sent by: Claudio
+
+2009-05-05 15:56:47 r405 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Small bug in the case of mixed Netcdf/Fortran I/O removed
+
+2009-05-05 15:13:34 r404 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac io/ioBS.F io/ioX.F io/ioELPH.F io/ioOSTNTS.F io/ioE_RIM.F modules/mod_IO.F modules/mod_com.F
+
+	Changes:
+	- Deeply changed the order used by the code to search for existing
+	  databases. Now the code seeks for any (n)db* in the -I directory
+	  (with and without JOB STRING), in the -O directory (with and without JOB STRING)
+
+	Patch sent by: Andrea
+
+2009-05-05 11:14:01 r403 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/fftw.m4 config/acx.m4 config/netcdf_f90.m4 config/configure.ac config/acx_get_fc_version.m4 pol_function/X_os.F
+
+	Changes:
+	- configure and acx files: added support to intel compiler v. 11
+
+	Patch sent by: Andrea
+
+2009-05-04 14:41:11 r402 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac bz_ops/k_expand.F pol_function/X_os.F pol_function/Dipole_transverse.F interface/init_load.F interface/init.F sc/RT_Energy.F sc/RT_Collision.F sc/RT_driver.F sc/RT_Ext_Field.F sc/RT_eps_analyze.F sc/SC_driver.F sc/SC_precondition.F sc/RT_Integrator.F sc/.objects sc/.objects_gpl sc/Kinetic.F sc/RT_current.F modules/mod_real_time.F modules/mod_SC.F
+
+	Additions:
+	- [SC] Thomas-Fermi preconditioning for localized systems.
+	- [REAL_TIME] Evaluatio of P and P^2 from _Dipole routines.
+
+	Changes:
+	- [SC] Fixed mixing for non-local operators.
+
+	Patch sent by: Andrea, Claudio, Daniele & Maurizia
+
+2009-04-30 15:15:30 r401 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Forgotten "stop" removed from X_os
+
+2009-04-29 17:43:39 r400 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Global rename of X_O routines in Dipole_ routines (Andrea & Claudio)
+
+2009-04-29 16:40:07 r399 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	TMP commit of pol_function dir
+
+2009-04-29 16:30:00 r398 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Pre-renaming of dipole routines
+
+2009-04-24 17:44:03 r397 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac external_c/io.c wf_and_fft/rfft.F wf_and_fft/drfft.F sc/RT_Energy.F sc/RT_driver.F sc/RT_Integrator.F sc/Kinetic.F sc/RT_current.F modules/mod_real_time.F
+
+	Additions:
+	- [SC] Current operator added
+	- Added real 1D FFT
+
+	Patch sent by: Claudio
+
+2009-04-22 11:53:15 r396 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  interface/init.F sc/RT_Energy.F sc/RT_driver.F sc/RT_Collision.F sc/.objects sc/Ext_Field.F modules/mod_real_time.F modules/mod_SC.F ypp/elph_databases.F
+
+	Additions:
+
+	- [SC] Kinetic Energy and Vector Potential (still not working)
+
+	Patch sent by: Claudio
+
+2009-04-16 14:34:34 r395 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac sc/XC_switch.F sc/RT_driver.F sc/RT_Collision.F sc/Eval_Energy.F sc/.objects sc/RT_Integrator.F modules/mod_electrons.F modules/mod_real_time.F ypp/elph_databases.F ypp/ypp_i.F ypp/elph_eliashberg_dos.F
+
+	Bugs:
+	- [SC] Real-time Hartree works, corrected different bugs
+
+	Patch sent by: Claudio
+
+2009-04-14 22:16:01 r394 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Tentative bug fix in elph_databases
+
+2009-04-14 21:35:23 r393 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac qp/DFT_Vxc.F wf_and_fft/WF_rotate.F pol_function/X_O_rotate.F interface/parse_K_list.F interface/.objects interface/init.F interface/barriers.F interface/init_q_pts.F sc/V_to_H.F sc/SC_driver.F sc/RT_Collision.F io/io_SC_components.F io/load_SC_components.F modules/mod_real_time.F modules/std_presets.F modules/mod_SC.F ypp/ypp_init.F ypp/elph_databases.F ypp/mod_YPP.F ypp/k_analyze.F ypp/ypp_i.F ypp/elph_eliashberg_dos.F ypp/ypp_init_load.F
+
+	Bugs:
+	- Remove wrong barrier in GPL includes (Andrea)
+
+	Additions:
+	- [SC] SPIN support extended to SC project (collinear case only) (Daniele & Maurizia)
+	- Added src/interface/parse_K_list.F to parse list of K/Q points from the
+	  input file (Andrea)
+	- Added possbility of doing iku<->rlu transormation of user defined q-points
+	  in ypp. (Andrea)
+
+	Changes:
+	- Removed nQptIBZ variable and added an on-fly evaluation of user defined
+	  q-points (Andrea)
+
+	Patch sent by: Andrea Daniele and Maurizia
+
+2009-04-09 16:29:00 r391 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Update in ypp_ph. Added support for ABINIT databases
+
+2009-04-08 17:55:10 r390 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.1
+
+	*  configure include/version.inc config/configure.ac communicate/fermi_msg.F sc/SC_driver.F bse/K_dump_to_o_file.F bse/K_doubles.F bse/K.F ypp/ypp_init.F ypp/k_analyze.F ypp/ypp_i.F ypp/elph_pw_dbs.F
+
+	Bugs:
+	- Fixed restart in SC_driver.F
+
+	Additions:
+	- In "ypp_ph -g": prints Q-list when no DBs are found
+
+	Changes:
+	- [DOUBLES] K_doubles.F cleaned and parallelized (Davide)
+
+	Patch sent by: Andrea & Davide
+
 2009-04-03 17:48:46 r389 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Minor bug in X_O_transverse (discovere by Claudio)

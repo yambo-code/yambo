@@ -237,17 +237,10 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
     lch = 'REELS in model form: '//trim(lossformlg(lossfm))
     call section('=',trim(lch) )
     call CalcREELS(lossf, real(wv % p), surf_i, eps_b, nw, qpard)
-!<- DEBUG
-!   call msg('nrs','Q_|| * d_surf range: ',qpard)
-!-> DEBUG
+    call msg('nrs','Q_|| * d_surf range: ',qpard)
     call write_reelsdiff(lossf, real(wv % p), nw ) 
     !
   endif
-! checked:
-! eps_i eps_b surf_i
-! wv%p
-!
-!
   !
   ! Clean up
   !
@@ -259,9 +252,6 @@ subroutine rasdriver(Xen,Xk,q,wv,X) ! remove q
   call mem_est("k_pt")
   call WF_free()
   call ras_clean
-
-! deallocate(Xen%qp_done)
-! call mem_est("en-qp_done")
 
   call pp_redux_wait
 
@@ -363,9 +353,9 @@ subroutine setup_loc(iv1,iv2,ic1,ic2)
 &                           (loc(iv,ik) <  locfac).and.(loc(ic,ik) >= locfac)
         if(loctype.eq."bb") transloc(ic,iv,ik) = &
 &                           (loc(iv,ik) <  locfac).and.(loc(ic,ik) <  locfac)
-!----> DEBUG
-!write(88,'(3i4,l2,2f7.3,1x,f7.3)') ik,iv,ic,transloc(ic,iv,ik),loc(iv,ik),loc(ic,ik),locfac
-!<---- DEBUG
+!DEBUG>
+!write(88,'(3i4,l2,2f7.3,1x,f7.3)') ik,iv,ic,transloc(ic,iv,ik),loc(iv,ik),loc(ic,ik),locfac  ! DEBUG
+!DEBUG<
       enddo
     enddo
   enddo

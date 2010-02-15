@@ -169,14 +169,6 @@ end subroutine init_cutoff
     nxx%max(2) = maxval( nxk(:)%max(2) )
     nxx%max(3) = maxval( nxk(:)%max(3) )
 
-!<- DEBUG
-!  write(34,*) "MAX",nxx%max(1:3)
-!  write(34,*) "MIN",nxx%min(1:3)
-!  do ig = 1,ngw_k
-!     write(34,*) ig,gvecaff(ig,ix),gvecaff(ig,iy),gvecaff(ig,iz)
-!  enddo
-!-> DEBUG
-
     call msg('nr','Wavefunction nG limits: ',(/ (nxx%min(i1),nxx%max(i1),i1=1,3) /) )
 
     allocate( igtab  (nxx%min(1):nxx%max(1), nxx%min(2):nxx%max(2), nxx%min(3):nxx%max(3)) )
@@ -216,10 +208,10 @@ end subroutine init_cutoff
           igtab(n1,n2,n3) = ig ! this is the label needed in wfc(ib,G) and gvec
           if(n3.lt.n3limit(n1,n2,1)) n3limit(n1,n2,1) = n3
           if(n3.gt.n3limit(n1,n2,2)) n3limit(n1,n2,2) = n3
-!--> DEBUG
-!         write(77,223) n1,n2,n3,ig,gvecaff(igtab(n1,n2,n3),xyz(:))
-!  223 format(3i4,2x,i7,3i4,2x,3i4)
-!<-- DEBUG
+!DEBUG>
+!         write(77,223) n1,n2,n3,ig,gvecaff(igtab(n1,n2,n3),xyz(:))  ! DEBUG
+!  223 format(3i4,2x,i7,3i4,2x,3i4)  ! DEBUG
+!DEBUG<
     enddo
     
     call check_index
@@ -285,9 +277,9 @@ end subroutine init_cutoff
                    stop
                 endif
 !DEBUG>
-!                write (78,224) n1,n2,n3,ig1,gvecaff(ig1,xyz(:))
-224 format(3i4,2x,i7,3i4,2x,3i4)
+!                write (78,224) n1,n2,n3,ig1,gvecaff(ig1,xyz(:)) ! DEBUG
 !DEBUG<
+224 format(3i4,2x,i7,3i4,2x,3i4)
              enddo
           endif
        enddo
@@ -425,21 +417,15 @@ end subroutine init_cutoff
           do n3 = n3min,n3max
           do n3p = n3min,n3max
              PSx = PSx + wfc1(n3) * wfc2(n3p) * kgxy(ix)* Fzg(n3,n3p) ! surface frame
-! DEBUG
 ! PS(ix) = PS(ix) + wfc1(n3) * wfc2(n3p) * kg(ix)* Fzg(n3,n3p) ! crystal frame
-! end DEBUG
              PSy = PSy + wfc1(n3) * wfc2(n3p) * kgxy(iy)* Fzg(n3,n3p) ! surface frame
-! DEBUG
 ! PSz = PSz + wfc1(n3) * wfc2(n3p) * kg(iz)* Fzg(n3,n3p) ! surface frame, iz incorrect
-! end DEBUG
 !            PSz = 0 ! if want this, need to code kg(n3p)
              if(present(kg)) kgxy(iz) = kg(iz,igtab(n1,n2,n3p)) ! crystal frame
 !         PSz = PSz + wfc1(n3) * wfc2(n3p) * kgxy(iz)* Fzg(n3,n3p) 
           PSz = PSz + wfc1(n3) * wfc2(n3p) * kgxy(iz)* Fzg(n3,n3p) + &
  &                  0.5 * wfc1(n3) * wfc2(n3p) * Fzgp(n3,n3p)
-! DEBUG
 !   write(*,*) "In pscut:",n1,n2,n3,PSx,PSy,wfc1(n3),wfc2(n3p),kgxy(ix),Fzg(n3,n3p)," XXX"
-! end DEBUG
           enddo
           enddo
        endif ! end on gfound(n1,n2)

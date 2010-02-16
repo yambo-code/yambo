@@ -35,13 +35,14 @@ subroutine X_GreenF_remap(bands,E,W)
  !
  ! Work Space
  !
- integer, parameter :: new_map_points=2000
- integer            :: i_b,i_k,i_spin
- type(w_samp)       :: W_A
- type(levels)       :: E_map
+ integer, parameter ::new_map_points=2000
+ integer            ::i_b,i_k,i_spin,i_loop
+ type(w_samp)       ::W_A
+ type(levels)       ::E_map
  !
- real(SP)           :: W_sign,A_sign,max_GF_E_range(2),proposed_GF_E_range(2)
- complex(SP)        :: Ao(E%GreenF_n_E_steps),zero_plus
+ real(SP)           ::W_sign,A_sign,max_GF_E_range(2),proposed_GF_E_range(2),E_step,Ao_norm
+ complex(SP)        ::Ao(E%GreenF_n_E_steps),zero_plus
+ real, external     ::Integrate
  !
  ! Resets
  !
@@ -71,6 +72,14 @@ subroutine X_GreenF_remap(bands,E,W)
  !
  if (W_A%er(1)>max_GF_E_range(1)) W_A%er(1)=max_GF_E_range(1)
  if (W_A%er(2)<max_GF_E_range(2)) W_A%er(2)=max_GF_E_range(2)
+ !
+ ! To allow a simple convolution algorithm to work we need the lower E range
+ ! to be multiple of the energy step 
+ !
+ do i_loop =1,100
+   E_step=(W_A%er(2)-W_A%er(1))/(new_map_points-1)
+   W_A%er(1)=nint(W_A%er(1)/E_step)*E_step
+ enddo
  !
  W_A%n=max(new_map_points,W%n(1))
  W_A%dr=0.
@@ -137,6 +146,8 @@ subroutine X_GreenF_remap(bands,E,W)
      do i_spin=1,n_sp_pol
        E%GreenF(i_b,i_k,i_spin,:)  =aimag(E_map%GreenF(i_b,i_k,i_spin,:))
        E%GreenF_W(i_b,i_k,i_spin,:)=W_A%p
+       Ao_norm=Integrate(real(E%GreenF(i_b,i_k,i_spin,:) ),real(E%GreenF_W(i_b,i_k,i_spin,:)),E%GreenF_n_E_steps) !should be pi
+       E%GreenF(i_b,i_k,i_spin,:)  =aimag(E_map%GreenF(i_b,i_k,i_spin,:))*pi/Ao_norm
      enddo
    enddo
  enddo

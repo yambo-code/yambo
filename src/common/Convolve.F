@@ -19,23 +19,25 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Convolve(f,g,f_times_g,N,step)
+subroutine Convolve(f,g,f_times_g,N,step,Eo)
  !
  use pars,    ONLY:SP
  implicit none
  integer,     intent(in)  :: N
- real(SP),    intent(in)  :: f(N),g(N),step
+ real(SP),    intent(in)  :: f(N),g(N),step,Eo
  complex(SP), intent(out) :: f_times_g(N)
  !
  ! Work Space
  !
- integer      :: K,J,L
+ integer      :: K,J,L,Mo
+ !
+ Mo=nint(Eo/step)
  !
  f_times_G=(0.,0.)
  !
  do K=1,N
    do J=1,N
-     L=K-J
+     L=K-J-Mo
      if (L<1.or.L>N) cycle
      f_times_g(K)=f_times_G(K)+f(L)*g(J)*step
    enddo

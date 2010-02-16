@@ -53,11 +53,13 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  type(hdr_type)                 :: ahdr
  type(wffile_type)              :: wff
- integer                        :: fform,ishm,a_nsym
- integer, allocatable           :: agvec(:,:),asop(:,:,:)
+ integer                        :: fform,ishm
+ integer,  allocatable          :: rel_gvec(:,:)
  real(DP), allocatable          :: rstr(:)
  !
  call msg('s','KSS Header...')
+ !
+#if !defined _ELK
  !
  ! ABINIT KSS FILE
  !
@@ -67,8 +69,23 @@ subroutine a2y_db1(en,k,KSS_file_name)
  fform=1
  call hdr_io_wfftype(fform,ahdr,5,wff)
  call msg('l','abinit version ',ahdr%codvsn)
+ read(11)
+ read(11) 
+ read(11) ahdr%nsym, n_bands, ng_vec, ishm, pp_n_l_comp_max
+ en%nb=n_bands
+ !
+#else
+ !
+ ! ELK level 0
+ !============
+ !
+ call elk_db1(ahdr,en,k,KSS_file_name,0)
+ call msg('l','ELK version ',ahdr%codvsn)
+ !
+#endif
  !
  ! XC KIND/FUNCTIONAL
+ !===================
  !
  select case (ahdr%ixc)
   case (0)
@@ -100,11 +117,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
    GS_xc_FUNCTIONAL = XC_LDA_C_PZ
    GS_xc_KIND = XC_EXCHANGE_CORRELATION
  end select
-
- read(11)
- read(11) 
- read(11) a_nsym, en%nb, ng_vec, ishm, pp_n_l_comp_max
- n_bands= en%nb
+ !
  !
  ! GPL_INCLUDE_START SPIN_IGNORE
  !n_spinor=1
@@ -122,8 +135,6 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  n_spin=max(n_sp_pol,n_spinor)
  !
- k%nibz      = ahdr%nkpt
- nkibz       = k%nibz
  input_GS_Tel = ahdr%tphysel 
  a(1,:)  = ahdr%rprimd(:,1)
  a(2,:)  = ahdr%rprimd(:,2)
@@ -140,8 +151,44 @@ subroutine a2y_db1(en,k,KSS_file_name)
    call crystal_lattice()
  endif
  !
- default_nel = 0.
+ cp=cross_product(a(2,:),a(3,:))
+ do i1 = 1,3
+   DL_vol = DL_vol+a(1,i1)*cp(i1)
+ enddo
+ b(1,:) = cross_product(a(2,:),a(3,:))*2.*pi/DL_vol
+ b(2,:) = cross_product(a(3,:),a(1,:))*2.*pi/DL_vol
+ b(3,:) = cross_product(a(1,:),a(2,:))*2.*pi/DL_vol
  !
+#if defined _ELK
+ !
+ ! ELK 
+ !######
+ !
+ ! I/O level 1
+ !============
+ !
+ call elk_db1(ahdr,en,k,KSS_file_name,1)
+ !
+ call msg('s','Symmetries...')
+ !============================
+ call symmetries_check_and_load(ahdr%symrel,ahdr%nsym)
+ !
+#else
+ !
+ k%nibz      = ahdr%nkpt
+ nkibz       = k%nibz
+ allocate(k%pt(k%nibz,3))
+ do i1 = 1,k%nibz
+   k%pt(i1,:)=matmul(transpose(b),ahdr%kptns(:,i1))*alat(:)/2./pi
+ enddo
+ !
+ ! ABINIT 
+ !#########
+ !
+ call msg('s',":: Atom's informations...")
+ !=========================================
+ !
+ default_nel = 0.
  do i1 = 1, ahdr%natom
    i2 = ahdr%typat(i1)
    inel = ahdr%znucltypat(i2)
@@ -150,21 +197,6 @@ subroutine a2y_db1(en,k,KSS_file_name)
    enddo
    default_nel = default_nel + inel
  enddo
- !
- cp=cross_product(a(2,:),a(3,:))
- do i1 = 1,3
-   DL_vol = DL_vol+a(1,i1)*cp(i1)
- enddo
- b(1,:) = cross_product(a(2,:),a(3,:))*2.*pi/DL_vol
- b(2,:) = cross_product(a(3,:),a(1,:))*2.*pi/DL_vol
- b(3,:) = cross_product(a(1,:),a(2,:))*2.*pi/DL_vol
- allocate(k%pt(k%nibz,3))
- !
- do i1 = 1,k%nibz
-   k%pt(i1,:)=matmul(transpose(b),ahdr%kptns(:,i1))*alat(:)/2./pi
- enddo
- !
- call msg('s',":: Atoms positions...")
  !
  n_atomic_species=ahdr%ntypat
  allocate(n_atoms_species(n_atomic_species),pp_n_l_comp(n_atomic_species))
@@ -178,33 +210,35 @@ subroutine a2y_db1(en,k,KSS_file_name)
  n_atoms_species(:)=0
  do i1=1,ahdr%natom
    n_atoms_species( ahdr%typat(i1) ) = n_atoms_species( ahdr%typat(i1) ) +1
-   atom_pos(:, n_atoms_species( ahdr%typat(i1) ) ,ahdr%typat(i1) )=&
-&          matmul(transpose(a),ahdr%xred(:,i1))
+   atom_pos(:, n_atoms_species( ahdr%typat(i1) ) ,ahdr%typat(i1) )=matmul(transpose(a),ahdr%xred(:,i1))
  enddo
  do i1=1,ahdr%npsp
    Z_species(i1) = ahdr%znuclpsp(i1)
- enddo
+ enddo 
+ !
  call msg('l','done')
  !
  ! ALLOCATION
  !
  allocate(wf_nc_k(k%nibz),g_vec(ng_vec,3),rstr(en%nb))
- allocate(en%E(en%nb,k%nibz,n_spin),agvec(3,ng_vec),asop(3,3,a_nsym))
+ allocate(en%E(en%nb,k%nibz,n_spin),rel_gvec(3,ng_vec))
  !
  call msg('s','Symmetries...')
+ !============================
  !
- read(11) (((asop(i1,i2,i3),i1=1,3),i2=1,3),i3=1,a_nsym)
+ read(11) (((ahdr%symrel(i1,i2,i3),i1=1,3),i2=1,3),i3=1,ahdr%nsym)
  read(11) 
  !
- call symmetries_check_and_load(asop,a_nsym)
+ call symmetries_check_and_load(ahdr%symrel,ahdr%nsym)
  !
  call msg('s','RL vectors...')
+ !============================
  !
- read(11) (agvec(:,i1),i1=1,ng_vec)
+ read(11) (rel_gvec(:,i1),i1=1,ng_vec)
  read(11) 
  read(11) 
  do i1=1,ng_vec
-   g_vec(i1,:)=matmul(transpose(b),agvec(:,i1))*alat(:)/2./pi
+   g_vec(i1,:)=matmul(transpose(b),rel_gvec(:,i1))*alat(:)/2./pi
  enddo
  wf_nc_k=ng_vec
  wf_ncx=maxval(wf_nc_k)
@@ -214,6 +248,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  call msg('l','done')
  !
  call msg('s','Energies...')
+ !==========================
  !
  ! GPL_INCLUDE_START SPIN_IGNORE
  ! i_spin=1
@@ -250,15 +285,19 @@ subroutine a2y_db1(en,k,KSS_file_name)
  ! 
  ! GPL_EXCLUDE_END SPIN_IGNORE
  !
- call msg('l','done')
- close(11)
- !
- call msg('s','Report:')
- !
- call print_interface_dimensions(en,k)
- !
  ! CLEAN
  !
- deallocate(asop,agvec)
+ deallocate(rel_gvec,rstr)
+ !
+ close(11)
+ !
+#endif
+ !
+ call msg('l','done')
+ !
+ call msg('s','Report:')
+ !======================
+ !
+ call print_interface_dimensions(en,k)
  !
 end subroutine

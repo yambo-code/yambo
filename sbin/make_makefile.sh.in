@@ -74,7 +74,7 @@ case $target in
    llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
    llibs="$llibs \$(lnetcdf) -lslatec \$(llocal) \$(lfftw) -lm $llmpi"
     ;;
-  a2y|f2y)
+  a2y|elk2y)
    llibs="-lint_modules $llibs \$(lscalapack) \$(llapack)  \$(lblacs) \$(lblas) \$(lnetcdf) \$(llocal) \$(lfftw) -lm $llmpi"
     ;;
   p2y*)

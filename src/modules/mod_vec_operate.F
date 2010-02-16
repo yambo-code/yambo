@@ -44,7 +44,6 @@ module vec_operate
      !
    end function normalize_v
    !
-   !
    function v_norm(v)
      real(SP) :: v(3),v_norm
      v_norm=sqrt(dot_product(v,v))

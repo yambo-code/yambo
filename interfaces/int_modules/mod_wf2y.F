@@ -41,6 +41,10 @@ module mod_wf2y
      wf_nb_io_groups=1
      wf_nb_io=n_bands
      !
+#if defined _ELK
+     return
+#endif
+     !
      array_sz = DP*n_bands*real(wf_ncx)/kb/kb ! wf_disk_DP
      !
      ! No memory problems: no blocks

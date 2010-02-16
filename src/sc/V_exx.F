@@ -42,6 +42,8 @@ subroutine V_exx(X,E,k,q,Vexx)
  use collision,       ONLY:ggwinfo,collision_reset
  use QP_m,            ONLY:QP_Vnl_xc,QP_n_states,QP_table
  use memory_m,        ONLY:mem_est
+ use SC,              ONLY:SC_bands,SC_R,H_rotate
+ use drivers,         ONLY:l_collisions_IO
  !
  ! I/O
  !
@@ -55,7 +57,7 @@ subroutine V_exx(X,E,k,q,Vexx)
  !
  integer                  :: i1,ik,ic,iv,is,ig1,ig2,ikbz
  logical                  :: l_is_TR
- complex(SP), allocatable :: Xo_inverse(:,:), SigmaX(:,:),rhotw_save(:),&
+ complex(SP), allocatable :: Xo_inverse(:,:), SigmaX(:,:,:),rhotw_save(:,:),&
 &                            rhotw_sum(:),rhotw_sum_TR(:),rho_x(:),Vexx_RL(:)
  complex(DP), allocatable :: Vx_dp(:)
  type(w_samp)             :: Xw
@@ -84,43 +86,48 @@ subroutine V_exx(X,E,k,q,Vexx)
  ! 4:
  call mat_dia_inv(INV,USE_LK,Xo_inverse)
  !
- ! Calculate rho_x(G) =>  1 - calculate SigmaX_{v,c}(k)
- !                        2 - initialize vars/dim
+ ! Calculate rho_x(G) =>  1 - initialize vars/dim
  !                        for each k in IBZ:
- !                        3 - retabulate SigmaX elements
+ !                        2 - retabulate SigmaX elements
  !                        for each c,v,k: 
- !                        4 - calculate  rhotw_sum (G) = sum{R} rho^*_{v,c}(k,R^-1 G)
+ !                        3 - calculate  rhotw_sum (G) = sum{R} rho^*_{v,c}(k,R^-1 G)
  !                                       rhotw_sum_TR (G) = sum{I R} rho_{v,c}(k,(IR)^-1 G)
- !                        5 - accumulate rho_x
+ !                        4 - accumulate rho_x
  ! -----------------------------------------------
  ! NB: a. it does not work for metallic systems
  ! -----------------------------------------------
  ! 1:
- allocate(QP_Vnl_xc(QP_n_states))
- call mem_est("QP_Vnl_xc",(/QP_n_states/))
- call IO_and_Messaging_switch("-report -io_in -io_out") 
- call XCo_driver(E,k,k,q)
- call IO_and_Messaging_switch("+report +io_in +io_out") 
- ! 2:
  call collision_reset(isc)
  isc%ngrho=X%ng
- allocate(isc%rhotw(X%ng),rhotw_save(X%ng),rhotw_sum(X%ng-1),rhotw_sum_TR(X%ng-1),&
-&         SigmaX(E%nbf,X%ib(2)),rho_x(X%ng-1))
- ! 3:
+ allocate(isc%rhotw(X%ng),rhotw_sum(X%ng-1),rhotw_sum_TR(X%ng-1),&
+&         SigmaX(X%ib(2),X%ib(2),1),rho_x(X%ng-1))
+ if (i_time_rev/=0.or.i_space_inv/=0) then
+   allocate(rhotw_save(X%ng,1))
+ else
+   allocate(rhotw_save(X%ng,2))
+ endif
+ ! 2:
  rho_x = (0.,0.)
  !
- do ik = 1, nkibz
+ do ik = 1, nkibz 
    !
    ! Accumulate QP_Vnl_xc in a local SigmaX array
+   ! If COLLISIONS_IO_compose was used, I need also to rotate the matrix elements
    !
    SigmaX = (0.,0.)
-   do i1 = 1,QP_n_states
-     iv = QP_table(i1,1)
-     ic = QP_table(i1,2)
-     if (QP_table(i1,3)/=ik.or.iv>E%nbf.or.ic<=E%nbf) cycle
-     SigmaX(iv,ic) = QP_Vnl_xc(i1)
-   enddo
-   ! 4:
+    if (l_collisions_IO)  then
+      call V_qp_basis_to_H(ik,QP_Vnl_xc,SigmaX)
+      call H_rotate(SC_R(:,:,ik,1),SigmaX,SC_bands,1)
+      forall (iv=E%nbf+1:X%ib(2),ic=1:E%nbf) SigmaX(iv,ic,1)= (0.,0.)
+    else
+     do i1 = 1,QP_n_states
+       iv = QP_table(i1,1)
+       ic = QP_table(i1,2)
+       if (QP_table(i1,3)/=ik.or.iv>E%nbf.or.ic<=E%nbf) cycle
+       SigmaX(iv,ic,1) = QP_Vnl_xc(i1)
+     enddo
+   endif
+   ! 3:
    do ic = E%nbf+1, X%ib(2)
      do iv = 1 ,E%nbf
        isc%is = (/iv,ik,1,1/)
@@ -128,7 +135,15 @@ subroutine V_exx(X,E,k,q,Vexx)
        isc%qs = (/1,1,1/)
        !
        call scatterBamp(isc)
-       rhotw_save = isc%rhotw
+       rhotw_save(:,1) = isc%rhotw(:)
+       if (i_time_rev==0.and.i_space_inv==0) then
+         isc%is = (/ic,ik,1,1/)
+         isc%os = (/iv,ik,1,1/)
+         isc%qs = (/1,1,1/)
+         call scatterBamp(isc)
+         rhotw_save(:,2) = isc%rhotw(:)
+       endif
+       !
        rhotw_sum    = (0.,0.)
        rhotw_sum_TR = (0.,0.)
        !
@@ -140,7 +155,7 @@ subroutine V_exx(X,E,k,q,Vexx)
          !
          do ig1=1,X%ng
            ig2 = g_rot(sop_inv(is),ig1)
-           isc%rhotw(ig1) = rhotw_save(ig2)
+           isc%rhotw(ig1) = rhotw_save(ig2,1)
          enddo
          if (l_is_TR) then
            forall(ig1=2:X%ng) rhotw_sum_TR(ig1-1)=rhotw_sum_TR(ig1-1)+isc%rhotw(ig1)
@@ -148,10 +163,19 @@ subroutine V_exx(X,E,k,q,Vexx)
            forall(ig1=2:X%ng) rhotw_sum(ig1-1)=rhotw_sum(ig1-1)+conjg(isc%rhotw(ig1))
          endif
          !
+         if (i_time_rev==0.and.i_space_inv==0) then
+           !
+           do ig1=1,X%ng
+             ig2 = g_rot(sop_inv(is),ig1)
+             isc%rhotw(ig1) = rhotw_save(ig2,2)
+           enddo
+           forall(ig1=2:X%ng) rhotw_sum_TR(ig1-1)=rhotw_sum_TR(ig1-1)+conjg(isc%rhotw(ig1))
+         endif
+         !
        end do
-       ! 5:
+       ! 4:
        rho_x(:) =  rho_x(:) + E%f(iv,ik,1)*(2.-E%f(ic,ik,1))/2.*&
-&                  (rhotw_sum(:)*SigmaX(iv,ic)+rhotw_sum_TR(:)*conjg(SigmaX(iv,ic)))/&
+&                  (rhotw_sum(:)*SigmaX(iv,ic,1)+rhotw_sum_TR(:)*conjg(SigmaX(iv,ic,1)))/&
 &                  (E%E(iv,ik,1)-E%E(ic,ik,1)) 
        !
      end do

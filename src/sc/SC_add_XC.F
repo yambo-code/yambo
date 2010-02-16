@@ -55,32 +55,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  integer      :: ib,ik
  type(QP_t)   :: qp_dummy
  !
- if (local_V) then
-   !
-   V_xc_sc=(0.,0.)
-   !
-   if (l_sc_exx) call V_exx(X,E,k,q,V_xc_sc)
-   !
-   call IO_and_Messaging_switch("-report -log -io_in -io_out")
-   !
-   if (l_sc_contains_lda) call xc_lda_driver(E,Xk,SC_kind,SC_xc_functional,1)
-   if (l_sc_contains_lda.and..not.l_sc_exx) V_xc_sc(:,:)=V_xc(:,:)
-   if (l_sc_contains_lda.and.     l_sc_exx) V_xc_sc(:,:)=V_xc(:,:)+V_xc_sc(:,:)
-   !
-   call IO_and_Messaging_switch("+report +log +io_in +io_out")
-   !
-   ! Mixing 
-   !========
-   !
-   ! WARNING:
-   ! The mixing of the potential has been eliminated for HF and COHSEX, for
-   ! V_xc_sc case tests are needed.
-   ! 
-   if (iteration>1) V_xc_sc = SC_cycle_mixing*V_xc_sc + (1.-SC_cycle_mixing)*V_xc_nm1 
-   !
-   V_xc_nm1=V_xc_sc
-   !
- else 
+ if (.not.local_V.or.l_sc_exx) then
    !
    ! Hartee-Fock & COHSEX
    !======================
@@ -96,7 +71,6 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
      do ik=1,QP_nk
        call H_rotate(SC_R(:,:,ik,1),G_lesser(:,:,ik),SC_bands,-1)
      enddo
-     !
      call COLLISIONS_IO_compose(G_lesser)
      !    ==========
    else
@@ -116,6 +90,33 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
      call IO_and_Messaging_switch("+report +io_out")
      !
    endif
+   !
+ endif
+ !
+ if (local_V) then
+ !
+   V_xc_sc=(0.,0.)
+   !
+   if (l_sc_exx) call V_exx(X(1),E,k,q,V_xc_sc)
+   !
+   call IO_and_Messaging_switch("-report -log -io_in -io_out")
+   !
+   if (l_sc_contains_lda) call xc_lda_driver(E,Xk,SC_kind,SC_xc_functional,1)
+   if (l_sc_contains_lda.and..not.l_sc_exx) V_xc_sc(:,:)=V_xc(:,:)
+   if (l_sc_contains_lda.and.     l_sc_exx) V_xc_sc(:,:)=V_xc(:,:)+V_xc_sc(:,:)
+   !
+   call IO_and_Messaging_switch("+report +log +io_in +io_out")
+   !
+   ! Mixing 
+   !========
+   !
+   ! WARNING:
+   ! The mixing of the potential has been eliminated for HF and COHSEX, for
+   ! V_xc_sc case tests are needed.
+   ! 
+   if (iteration>1) V_xc_sc = SC_cycle_mixing*V_xc_sc + (1.-SC_cycle_mixing)*V_xc_nm1 
+   !
+   V_xc_nm1=V_xc_sc
    !
  endif
  !

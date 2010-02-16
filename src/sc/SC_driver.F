@@ -482,7 +482,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        deallocate(G_lesser)
        call mem_est("G_lesser")
        !
-       deallocate(QP_Vnl_xc)
+       if (allocated(QP_Vnl_xc)) deallocate(QP_Vnl_xc)
        call mem_est("QP_Vnl_xc")
        !
        call collisions_IO_free()

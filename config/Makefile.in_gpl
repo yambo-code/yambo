@@ -41,39 +41,32 @@ exec_prefix = @exec_prefix@
 bindir      = @bindir@
 libdir      = @libdir@
 includedir  = @includedir@
-
 CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
   	   sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
 	   src/external_c/.objects Makefile driver/version.h \
-       sbin/objects_debug.sh driver/editor.h
+       sbin/objects_debug.sh driver/editor.h  tests/load_paths_and_executables.sh
 TARGETS  = all yambo interfaces ypp 
 CLEANS   = clean clean_all
 INTERFCS = a2y p2y e2y
+TESTS    = test_GoWo 
 #
 # Libraries (ordered for compiling & linking)
 #
 BASIC_LIBS   = external_c modules xc_functionals parser communicate common io wf_and_fft 
 
-MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl interface \
+MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface \
                tddft pol_function qp bse
 #
 # Interfaces
 #
-2SLIBS       = external_c modules parser communicate common io 
+2YLIBS       = external_c modules parser communicate common io 
 #
 # YPP
 #
-YPPLIBS      = $(BASIC_LIBS) bz_ops qp_ctl interface pol_function bse 
+YPPLIBS      = $(BASIC_LIBS) bz_ops qp_ctl setup interface pol_function bse 
 #
 # PROJECTS
 #
-#if defined _MANYK
-PROJECTS           = yambo_manyk 
-PJ_MANYKLIBS       = $(MAIN_LIBS) 
-#endif
-#if defined _DISTRO
-PROJECTS = yambo_distro
-#endif
 #if defined _SC
 PROJECTS = yambo_sc
 #endif
@@ -93,10 +86,6 @@ PJ_REELSLIBS = $(BASIC_LIBS) ras_reels_mods coulomb bz_ops qp_ctl reels \
 PROJECTS = yambo_sc
 PJ_SCLIBS       = $(MAIN_LIBS) sc
 #endif
-#if defined _PH
-PROJECTS = yambo_ph ypp_ph
-PJ_PHLIBS       = $(MAIN_LIBS) 
-#endif
 EXE      = $(TARGETS) $(PROJECTS)
 
 
@@ -104,7 +93,7 @@ nothing:
 	@$(make_message)
 changelog:
 	svn log | perl sbin/svn2cl.pl > ChangeLog
-all: $(EXE)
+all: $(TARGETS) $(PROJECTS) 
 libs:
 	@LIBS2DO="slatec"; DIR2GO="lib" ; $(mklib)
 	@if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; \
@@ -121,11 +110,6 @@ yambo_manyk: libs
 	@LIBS2DO="$(PJ_MANYKLIBS)";ADF="-D_MANYK"; $(mksrc)
 	@X2DO="yambo_manyk"; XPATH="driver";XLIBS="$(PJ_MANYKLIBS)";ADF="-D_MANYK";$(mkx)
 #endif
-#if defined _DISTRO
-yambo_distro: libs
-	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_DISTRO"; $(mksrc)
-	@X2DO="yambo_distro"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_DISTRO";$(mkx)
-#endif
 #if defined _RAS
 yambo_ras: libs
 	@LIBS2DO="$(PJ_RASLIBS)";ADF="-D_RAS"; $(mksrc)
@@ -138,41 +122,38 @@ ypp_ras: libs
 yambo_reels: libs
 	@LIBS2DO="$(PJ_REELSLIBS)";ADF="-D_REELS"; $(mksrc)
 	@X2DO="yambo_reels"; XPATH="driver";XLIBS="$(PJ_REELSLIBS)";ADF="-D_REELS";$(mkx)
-#endif
-#if defined _SC
-yambo_sc: libs
-	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_SC"; $(mksrc)
-	@X2DO="yambo_sc"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_SC";$(mkx)
-#endif
-#if defined _PH
-yambo_ph: libs
-	@LIBS2DO="$(PJ_PHLIBS)";ADF="-D_ELPH"; $(mksrc)
-	@X2DO="yambo_ph"; XPATH="driver";XLIBS="$(PJ_PHLIBS)";ADF="-D_ELPH";$(mkx)
 ypp_ph: libs
 	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
 	@X2DO="Ypp_ph" ;XPATH="Ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_ELPH";$(mkx)
 #endif
 interfaces: libs
-	@LIBS2DO="$(2SLIBS)" ; $(mksrc)
+	@LIBS2DO="$(2YLIBS)" ; $(mksrc)
 	@LIBS2DO="int_modules"; DIR2GO="interfaces" ; $(mklib)
-	@X2DO="a2y" ;XPATH="interfaces/a2y";XLIBS="$(2SLIBS)";$(mkx)
+	@X2DO="a2y" ;XPATH="interfaces/a2y";XLIBS="$(2YLIBS)";$(mkx)
 	@if test "$(do_p2y)" = yes ; then X2DO="p2y" ; XPATH="interfaces/p2y" ; \
-	XLIBS="$(2SLIBS)"; ADF="-D@PW_CPP@"; $(mkx) ; fi
+	XLIBS="$(2YLIBS)"; ADF="-D@PW_CPP@"; $(mkx) ; fi
 	@if test "$(do_e2y)" = yes ; then X2DO="e2y" ; XPATH="interfaces/e2y" ; \
-	XLIBS="$(2SLIBS)" ; $(mkx) ; fi
+	XLIBS="$(2YLIBS)" ; $(mkx) ; fi
 ypp: libs
 	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
 	@X2DO="ypp" ;XPATH="ypp";XLIBS="$(YPPLIBS)";$(mkx)
+#
+# TESTS #
+test_all: test_GoWo test_RT test_SC test_magnetic
+test_GoWo: yambo interfaces
+	./tests/test_GoWo.sh
 clean: clean_fast
 clean_fast: 
 	@$(objects_clean)
 	@$(lib_mod_clean)
 	@$(xclean)
+	@$(tests_clean)
 clean_all: 
 	@$(objects_clean)
 	@$(lib_mod_netcdf_clean)
 	@$(conf_clean)
 	@$(xclean)
+	@$(tests_clean)
 
 # Functions
 define make_message
@@ -214,38 +195,42 @@ define mkx
 endef
 define objects_clean
  find . \( -name '*.o' -o -name 'Makefile' -o -name '*.f90' \
-        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' \) \
+        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' \) \
         -type f -print | grep -v '\.\/Makefile' | xargs rm -f
- echo "objects ... cleaned"
- echo "broken files ... cleaned"
- echo "Makefiles ... cleaned"
+ echo "[CLEAN] Objects ... done"
+ echo "[CLEAN] Broken files ... done"
+ echo "[CLEAN] Makefiles ... done"
  if test "$(debug)" = yes ; then \
  find . -name '.debug*' | xargs rm -fr ; \
- echo "debug ... cleaned" ; \
- echo "subdirectories ... cleaned" ; \
+ echo "[CLEAN] Debug locks and directories ... done" ; \
  fi
 endef
 define lib_mod_clean
  find . \( -name '*.a' -o -name '*.mod' \) -type f -print | \
        grep -v netcdf | grep -v iotk | grep -v typesize | xargs rm -f 
- echo "libraries ... cleaned" 
- echo "modules ... cleaned" 
+ echo "[CLEAN] Libraries ... done" 
+ echo "[CLEAN] Modules ... done" 
 endef
 define lib_mod_netcdf_clean
  find . \( -name '*.a' -o -name '*.mod' \
            -o -name 'netcdf*h' -o -name 'netcdf*inc' \) -type f -print | xargs rm -f 
- echo "libraries ... cleaned" 
- echo "modules ... cleaned" 
- echo "NETCDF files ... cleaned  " 
+ echo "[CLEAN] Libraries ... done" 
+ echo "[CLEAN] Modules ... done" 
+ echo "[CLEAN] NetCDF files ... done" 
 endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
  for exe in $(INTERFCS); do rm -f $(bindir)/$$exe; done
- echo "targets ... cleaned" 
+ echo "[CLEAN] Targets ... done" 
+endef
+define tests_clean
+ find tests/ -name '*dir' -type d -print | xargs rm -fr
+ rm -fr tests/PPs
+ echo "[CLEAN] Tests ... done" 
 endef
 define conf_clean
  rm -f $(CFGFILES)
  rm -f config.status config.log
  rm -fr autom4te.cache
- echo "autoconf files ... cleaned" 
+ echo "[CLEAN] Autoconf files ... done" 
 endef

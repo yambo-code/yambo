@@ -86,9 +86,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  DL_vol=0.
  rv=cross_product(a(2,:),a(3,:))
- do i1=1,3
-   DL_vol=DL_vol+a(1,i1)*rv(i1)
- enddo
+ DL_vol=abs(dot_product(a(1,:),rv))
  call msg('r','DL volume [au]:',DL_vol)
  RL_vol=(2.*pi)**3./DL_vol
  !

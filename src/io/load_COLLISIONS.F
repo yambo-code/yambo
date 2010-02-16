@@ -25,7 +25,7 @@ subroutine load_COLLISIONS()
  ! exchange, COHSEX etc.. and store them together in QP_rho(i_qp)
  !
  use pars,            ONLY:IP,SP,LP,schlen
- use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_collisions_IO
+ use drivers,         ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_collisions_IO
  use com,             ONLY:warning,msg
  use global_XC,       ONLY:SC_HF,SC_COHSEX
  use QP_m,            ONLY:QP_n_states,QP_nb,QP_nk
@@ -87,7 +87,7 @@ subroutine load_COLLISIONS()
  allocate(COLLISIONS_disk(QP_nb,QP_nb,QP_nk))
  call mem_est("COLLISIONS_disk",(/QP_nb,QP_nb,QP_nk/),(/2*SP/))
  !
- if(l_sc_hf.or.l_sc_cohsex) then
+ if(l_sc_hf.or.l_sc_cohsex.or.l_sc_exx) then
    n_V_kinds          =n_V_kinds+1
    V_kinds(n_V_kinds) =SC_HF
  endif

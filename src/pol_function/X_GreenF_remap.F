@@ -40,7 +40,7 @@ subroutine X_GreenF_remap(bands,E,W)
  type(w_samp)       :: W_A
  type(levels)       :: E_map
  !
- real(SP)           :: W_sign,A_sign,GF_max_E_range
+ real(SP)           :: W_sign,A_sign,max_GF_E_range(2),proposed_GF_E_range(2)
  complex(SP)        :: Ao(E%GreenF_n_E_steps),zero_plus
  !
  ! Resets
@@ -50,20 +50,27 @@ subroutine X_GreenF_remap(bands,E,W)
  !
  ! New energy range where the convolution is defined
  !
- GF_max_E_range=-1.
+ W_A%er=W%er
+ !
+ max_GF_E_range=(/1.E8,-1./)
  do i_b=bands(1),bands(2)
    do i_k=1,E%nk
      do i_spin=1,n_sp_pol
-       if (maxval(real(E%GreenF_W(i_b,i_k,i_spin,:)))>GF_max_E_range.and.i_b> E%nbf )  &
-&        GF_max_E_range=maxval(real(E%GreenF_W(i_b,i_k,i_spin,:)))
-       if (-minval(real(E%GreenF_W(i_b,i_k,i_spin,:)))>GF_max_E_range.and.i_b<=E%nbf )  &
-&        GF_max_E_range=-minval(real(E%GreenF_W(i_b,i_k,i_spin,:)))
+       if (i_b>E%nbf) then
+         proposed_GF_E_range(1)=minval(real(E%GreenF_W(i_b,i_k,i_spin,:)))
+         proposed_GF_E_range(2)=maxval(real(E%GreenF_W(i_b,i_k,i_spin,:)))
+       else
+         proposed_GF_E_range(1)=-maxval(real(E%GreenF_W(i_b,i_k,i_spin,:)))
+         proposed_GF_E_range(2)=-minval(real(E%GreenF_W(i_b,i_k,i_spin,:)))
+       endif
+       if (proposed_GF_E_range(1)<max_GF_E_range(1)) max_GF_E_range(1)=proposed_GF_E_range(1)
+       if (proposed_GF_E_range(2)>max_GF_E_range(2)) max_GF_E_range(2)=proposed_GF_E_range(2)
      enddo
    enddo
  enddo
  !
- W_A%er=max(abs(W%er(1)),abs(W%er(2)))*(/0.,1./)
- if (W_A%er(2)<GF_max_E_range) W_A%er(2)=GF_max_E_range
+ if (W_A%er(1)>max_GF_E_range(1)) W_A%er(1)=max_GF_E_range(1)
+ if (W_A%er(2)<max_GF_E_range(2)) W_A%er(2)=max_GF_E_range(2)
  !
  W_A%n=max(new_map_points,W%n(1))
  W_A%dr=0.

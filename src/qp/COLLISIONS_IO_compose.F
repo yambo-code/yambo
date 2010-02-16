@@ -23,7 +23,7 @@ subroutine COLLISIONS_IO_compose(G_input)
  !
  ! HF(qp_state) = - (0.,1.) * \sum_{n,n',q} rho_rho_(n,n',q,qp_state) x G_lesser(n,n',k-q)
  ! 
- use drivers,          ONLY:l_sc_hf,l_sc_cohsex
+ use drivers,          ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx
  use pars,             ONLY:SP
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_states,QP_Vnl_xc,QP_Sc
  use SC,               ONLY:SC_bands
@@ -46,13 +46,14 @@ subroutine COLLISIONS_IO_compose(G_input)
  type(pp_indexes)  :: px
  complex(SP)       :: CHO_factor
  !
- if(.not.l_sc_hf.and..not.l_sc_cohsex) return
+ if(.not.l_sc_hf.and..not.l_sc_cohsex.and..not.l_sc_exx) return
  !
  call pp_indexes_reset(px)   
  !
  call par_indexes(px,(/QP_n_states/))
  !
- if(l_sc_hf.or.l_sc_cohsex.or.last_QP_mem/=0) QP_Vnl_xc=(0._SP,0._SP)
+ if (.not.allocated(QP_Vnl_xc))  allocate(QP_Vnl_xc(QP_n_states))
+ if(l_sc_hf.or.l_sc_cohsex.or.l_sc_exx.or.last_QP_mem/=0) QP_Vnl_xc=(0._SP,0._SP)
  if(l_sc_cohsex) QP_sc=(0._SP,0._SP)
  !
  ! First loop on collisions in the Cache
@@ -85,7 +86,7 @@ subroutine COLLISIONS_IO_compose(G_input)
    !
    if(.not.px%element_1D(i_qp)) cycle  
    !
-   if(l_sc_hf.or.l_sc_cohsex) then
+   if(l_sc_hf.or.l_sc_cohsex.or.l_sc_exx) then
      !
      V_kind=SC_HF
      !
@@ -146,7 +147,7 @@ subroutine COLLISIONS_IO_compose(G_input)
  ! When the Cache is used all the QP correction are put together
  ! in QP_Vnl_xc
  ! 
- if(l_sc_hf.or.l_sc_cohsex.or.last_QP_mem/=0)   call pp_redux_wait(QP_Vnl_xc)
+ if(l_sc_hf.or.l_sc_exx.or.l_sc_cohsex.or.last_QP_mem/=0)   call pp_redux_wait(QP_Vnl_xc)
  if(l_sc_cohsex)                                call pp_redux_wait(QP_Sc)
  !
  call pp_indexes_reset(px)

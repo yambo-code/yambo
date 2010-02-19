@@ -168,7 +168,9 @@ subroutine RT_start_and_restart(Xen,Xk,k)
    !
    XC0=(0._SP,0._SP)
    !
+   call IO_and_Messaging_switch("-report -log")
    call xc_lda_driver(Xen,Xk,WF_KIND,WF_xc_functional,1,G_lesser)
+   call IO_and_Messaging_switch("+report +log")
    do ik=1,QP_nk
      call V_real_space_to_H(ik,V_xc,XC0(:,:,ik,:),wf) 
    enddo
@@ -214,5 +216,7 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  A_vecpot_previous =A_vecpot
  G_lesser_previous =G_lesser   
  if(LifeTime/=0.0) G_lesser_reference=G_lesser   
+ !
+ call msg('r','')
  !
 end subroutine RT_start_and_restart

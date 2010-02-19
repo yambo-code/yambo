@@ -1,11 +1,3 @@
-RT_OBJECTS = 
-#if defined _RT
-RT_OBJECTS = RT_initialize.o RT_start_and_restart.o RT_update_G_reference.o \
-             RT_driver.o RT_apply_gauge_field.o RT_Collision.o RT_Integrator.o \
-             RT_Energy.o RT_current.o RT_qp_analyze.o RT_report.o RT_propagate_vecpot.o \
-             RT_current.o \
-	         RT_average_operator.o RT_write_dbs.o RT_Ext_Current.o RT_init_vecpot.o
-#endif
 MAGNETIC_objects = 
 #if defined _MAGNETIC
 MAGNETIC_objects = MAG_Hamiltonian.o MAG_common_build_A.o 
@@ -15,4 +7,4 @@ objs =	SC_driver.o SC_start_and_restart.o \
         SC_bare_Hamiltonian.o SC_add_XC.o \
         V_qp_basis_to_H.o SC_check_symmetries.o \
         SC_precondition.o XC_switch.o SC_WF_and_dipole_dimensions.o \
-        $(RT_OBJECTS) $(MAGNETIC_objects) SC_History.o
+        $(MAGNETIC_objects) SC_History.o

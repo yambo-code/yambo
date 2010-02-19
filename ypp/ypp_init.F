@@ -21,6 +21,7 @@
 !
 subroutine ypp_init(instr,lnstr,FINALIZE)
  !
+ use pars,           ONLY:pi
  use units,          ONLY:HARTREE,FS2AUT
  use wave_func,      ONLY:wf_ng 
  use D_lattice,      ONLY:alat
@@ -36,6 +37,11 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  use electrons,      ONLY:n_spin,n_bands
  use par_proc_m,     ONLY:master_cpu,pp_redux_wait
  use timing,         ONLY:what_is_running
+#if defined _YPP_RT
+ use electrons,      ONLY:levels,E_reset
+ use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
+ use real_time,      ONLY:RT_step,NE_steps,Thermal_steps,n_ext_fields,Efield
+#endif
 #if defined _YPP_ELPH
  use ELPH,           ONLY:gsqF_energy_steps
 #endif
@@ -50,10 +56,24 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  integer          ::i1,i2
  character(schlen)::rstr_piece(60) 
  !
+#if defined _YPP_RT
+ type(levels)     ::E_rt
+ integer          ::io_J,ID
+ integer, external::io_SC_components
+#endif
  !
  ! What is running ?
  !
  what_is_running='YPP'
+#if defined _YPP_RT
+ what_is_running='YPP_RT'
+#endif
+#if defined _YPP_MAGNETIC
+ what_is_running='YPP_MAGNETIC'
+#endif
+#if defined _YPP_SC
+ what_is_running='YPP_SC'
+#endif
 #if defined _YPP_ELPH
  what_is_running='YPP_PH'
 #endif
@@ -65,139 +85,164 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    call call_init_load('GameOver')
    if (master_cpu) call ofiles_append(defs=defs)
    return
- else
-   !
-   ! DEFAULTS
-   ! ======== 
-   !
-   ! DOS
-   !
-   l_dos=.false.
-   dos_broadening=0.1/HARTREE
-   dos_bands=n_bands
-   !
-   ! PLOT
-   !
-   p_dir      ='1'
-   mag_dir    ='X'
-   p_format   ='g'
-   wf_ng      =ng_vec
-   l_exc_wf=.false.
-   l_density=.false.
-   l_mag=.false.
-   l_sp_wf=.false.
-   l_norm_to_one=.true.
-   output_fname=' '
-   plot_title=' '
-   !
-   ! EXC WF
-   !
-   l_spin=.false.
-   l_sort=.false.
-   l_amplitude=.false.
-   ncell = (/1, 1, 1/) 
-   r_hole= (/0.,0.,0./)
-   lambda = 1          
-   state_ctl = '1 - 1'
-   deg_energy =0.01/HARTREE
-   WF_multiplier=1.
-   !
+ endif
+ !
+ ! DEFAULTS
+ ! ======== 
+ !
+ ! DOS
+ !
+ l_dos=.false.
+ dos_broadening=0.1/HARTREE
+ dos_bands=n_bands
+ !
+ ! PLOT
+ !
+ p_dir      ='1'
+ mag_dir    ='X'
+ p_format   ='g'
+ wf_ng      =ng_vec
+ l_exc_wf=.false.
+ l_density=.false.
+ l_mag=.false.
+ l_sp_wf=.false.
+ l_norm_to_one=.true.
+ output_fname=' '
+ plot_title=' '
+ !
+ ! EXC WF
+ !
+ l_spin=.false.
+ l_sort=.false.
+ l_amplitude=.false.
+ ncell = (/1, 1, 1/) 
+ r_hole= (/0.,0.,0./)
+ lambda = 1          
+ state_ctl = '1 - 1'
+ deg_energy =0.01/HARTREE
+ WF_multiplier=1.
+ !
 #if defined _YPP_ELPH
-   !
-   ! ELPH
-   !
-   l_phonons=.false.
-   l_gkkp=.false.
-   l_eliashberg=.false.
-   l_atomic_amplitude=.false.
-   elph_steps=200
-   ph_broad=0.01/HARTREE
-   elph_gamma_broad=0.0
-   elph_Ef=0.
-   elph_dbs_path='.'
-   ph_freqs_file='none'
-   gsqF_energy_steps=1
-   !
+ !
+ ! ELPH
+ !
+ l_phonons=.false.
+ l_gkkp=.false.
+ l_eliashberg=.false.
+ l_atomic_amplitude=.false.
+ elph_steps=200
+ ph_broad=0.01/HARTREE
+ elph_gamma_broad=0.0
+ elph_Ef=0.
+ elph_dbs_path='.'
+ ph_freqs_file='none'
+ gsqF_energy_steps=1
+ !
 #endif
-   !
+ !
 #if defined _YPP_RAS
-   !
-   ! RAS & REELS
-   !
-   call ras_presets
-   xdata = 'o.eps_q001-rpa_00'
-   ydata = 'o.eps_q001-rpa_00'
-   zdata = 'o.eps_q001-rpa_00'
-   sshift = 0.0           ! surface shift
-   datatype = 'eps23'
-   d_cellin = 1.0
-   !
-   ! Localization
-   !
-   normdir = 3
-   lowerlim = 0
-   upperlim = 1
-   ngloc = 0
-   ! 
-   ! Transition analysis
-   ! 
-   Ecv_min = 0.0
-   Ecv_max = -1.0/HARTREE
-   idir = 1
-   !
+ !
+ ! RAS & REELS
+ !
+ call ras_presets
+ xdata = 'o.eps_q001-rpa_00'
+ ydata = 'o.eps_q001-rpa_00'
+ zdata = 'o.eps_q001-rpa_00'
+ sshift = 0.0           ! surface shift
+ datatype = 'eps23'
+ d_cellin = 1.0
+ !
+ ! Localization
+ !
+ normdir = 3
+ lowerlim = 0
+ upperlim = 1
+ ngloc = 0
+ ! 
+ ! Transition analysis
+ ! 
+ Ecv_min = 0.0
+ Ecv_max = -1.0/HARTREE
+ idir = 1
+ !
 #endif
-   !
-   ! BZ grids
-   !
-   coo_in="iku"
-   coo_out="rlu"
-   Kgw_1=0.
-   qlong= 0.0_SP
-   PtsPath= ' '
-   N_path_pts=0
-   alat_used_for_output=alat(1)
-   !
-   ! GPL_EXCLUDE_START
-   !
-   !BZ RIM
-   !
-   BZ_RIM_path="."
-   gamma_radius=0.
-   !
+ !
+ ! BZ grids
+ !
+ coo_in="iku"
+ coo_out="rlu"
+ Kgw_1=0.
+ qlong= 0.0_SP
+ PtsPath= ' '
+ N_path_pts=0
+ alat_used_for_output=alat(1)
+ !
+ ! GPL_EXCLUDE_START
+ !
+ !BZ RIM
+ !
+ BZ_RIM_path="."
+ gamma_radius=0.
+ !
 #if defined _YPP_RT
-   !
-   !REMOVE SYMMETRIES
-   !
-   E_field=0._SP
-   B_field=0._SP
-   B_theta=0._SP
-   B_psi=0._SP
-   !
-   ! Probe external field to calcualted dielectric constant
-   ! 
-   ref_efield=1
-   !
-   !ANALIZE RESPONSE
-   !
-   X_rt%time_range(:)  =(/-FS2AUT,-FS2AUT/)
-   X_rt%energy_steps   =200
-   X_rt%energy_range(:)=(/1./HARTREE,20./HARTREE/)
-   X_rt%damp           ="LORENTZIAN"
-   X_rt%damp_factor    =0.1/HARTREE
-   !
+ !
+ !REMOVE SYMMETRIES
+ !
+ E_field=0._SP
+ B_field=0._SP
+ B_theta=0._SP
+ B_psi=0._SP
+ !
+ ! Probe external field to calcualted dielectric constant
+ ! 
+ ref_efield=1
+ !
+ !ANALIZE RESPONSE
+ !
+ X_rt%time_range(:)  =(/-FS2AUT,-FS2AUT/)
+ X_rt%energy_steps   =200
+ X_rt%energy_range(:)=(/1./HARTREE,20./HARTREE/)
+ X_rt%damp           ="LORENTZIAN"
+ X_rt%damp_factor    =0.1/HARTREE
+ !
 #endif
-   !
-   ! ANGULAR MOMENTUM
-   !
+ !
+ ! ANGULAR MOMENTUM
+ !
 #if defined _YPP_MAGNETIC
-   !
-   l_angular_momentum=.false.
-   !
+ !
+ l_angular_momentum=.false.
+ !
 #endif
+ !
+ ! GPL_EXCLUDE_END
+ !
+ ! DATABASES 
+ !===========
+ !
+#if defined _YPP_RT
+ ! 
+ call E_reset(E_rt) 
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
+ io_J=io_SC_components('J' ,E_rt,ID)
+ ! 
+ if (io_J==0) then
    !
-   ! GPL_EXCLUDE_END
+   ! Re-define defaults based on DB
+   !
+   if ( trim(Efield(1)%ef_name)/='none' .and.  trim(Efield(2)%ef_name)/='none' ) then
+     if (Efield(2)%t_initial > Efield(1)%t_initial ) ref_efield=2
+   else if ( trim(Efield(1)%ef_name)=='none' ) then
+     ref_efield=2 
+   endif
+   !
+   X_rt%energy_range=(/2.*pi/(RT_step*real(NE_steps)-Efield(ref_efield)%t_initial),pi/RT_step/)
+   X_rt%time_range=(/Efield(ref_efield)%t_initial,NE_steps*RT_step/)
+   X_rt%damp_factor=X_rt%energy_range(1)
    !
  endif
+#endif
  !
  ! Defaults->Defs + Initialization
  !
@@ -374,7 +419,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (l_rtoptics) then 
     call initactivate(1,"EnRngeRt ETStpsRt TmRngeRt DampMode DampFactor FourierDamp")
-    call initactivate(1,"RefExtField UseGaugeField NoRmDC PrtCurrent PrtEinduced UseFFT")
+    call initactivate(1,"UseGaugeField NoRmDC PrtCurrent PrtEinduced UseFFT")
  endif
  ! 
 #endif

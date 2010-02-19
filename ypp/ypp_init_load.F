@@ -198,7 +198,6 @@ subroutine ypp_init_load(defs)
  call it(defs,'EnRngeRt','Energy range',X_rt%energy_range,unit=E_unit)
  call it(defs,'ETStpsRt','Total Energy steps',X_rt%energy_steps)
  call it(defs,'TmRngeRt','Time-window where processing is done',X_rt%time_range,unit=Time_unit)
- call it(defs,'RefExtField','Probe External Field',ref_efield)
  call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',X_rt%damp)
  call it(defs,'DampFactor','Damping parameter',X_rt%damp_factor,unit=E_unit) 
  !

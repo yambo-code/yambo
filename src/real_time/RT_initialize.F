@@ -19,14 +19,14 @@
 subroutine RT_initialize()
  ! 
  use pars,           ONLY:SP,schlen,pi
- use units,          ONLY:SPEED_OF_LIGHT
+ use units,          ONLY:SPEED_OF_LIGHT,FS2AUT,HARTREE
  use com,            ONLY:msg,warning
  use vec_operate,    ONLY:normalize_v
  use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields,i_time, &
 &                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,    &
 &                         l_RT_no_diamagnetic,EField,n_ext_fields,max_rt_steps_disk,     &
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,         &
-&                         l_RT_induced_field,j_current_ext
+&                         l_RT_induced_field,j_current_ext,Ext_fields_initial_time
  use parser_m,       ONLY:parser
  implicit none
  !
@@ -56,12 +56,14 @@ subroutine RT_initialize()
    rest=mod(Thermal_steps+NE_steps,max_rt_steps_disk)
    if(NE_steps/=0) then
      NE_steps = NE_steps+max_rt_steps_disk-rest
-     call msg('snr','[RT] Number of steps set to                 :',NE_steps)
-   elseif(NE_steps==0.and.Thermal_steps/=0) then
+   elseif (NE_steps==0.and.Thermal_steps/=0) then
      Thermal_steps = Thermal_steps+max_rt_steps_disk-rest
-     call msg('snr','[RT] Number of thermalization steps set to  :',Thermal_steps)
    endif
  endif
+ !
+ ! Earliest time when the external field is switched on
+ !
+ Ext_fields_initial_time=1.E10
  !
  l_NE_with_fields=.false.
  !
@@ -70,6 +72,8 @@ subroutine RT_initialize()
    Efield(i1)%ef_name=trim(Efield(i1)%ef_name)      
    !
    if((Efield(i1)%ef_name/='none').and.EField(i1)%intensity/=0.) then
+     !      
+     Ext_fields_initial_time=min(Efield(i1)%t_initial,Ext_fields_initial_time)
      !      
      l_NE_with_fields=.true.
      !
@@ -89,5 +93,11 @@ subroutine RT_initialize()
    NE_steps=0
    if (Thermal_steps==0) call warning('Skipping simulation. No Ext fields ot thermalization provided')
  endif
+ !
+ call msg( 'r', '[RT] NE Steps                   :',NE_steps)
+ call msg( 'r', '[RT] Thermalization steps       :',Thermal_steps)
+ call msg( 'r', '[RT] Step length            [fs]:',RT_step/FS2AUT)
+ call msg('sr', '[RT] Response energy window [eV]:',(/2.*pi/(RT_step*real(NE_steps)-Ext_fields_initial_time),pi/RT_step/)*HARTREE)
+ call msg('rsn','[RT] Simulation time        [fs]:',(/-real(Thermal_steps)*RT_step,RT_step*real(NE_steps)/)/FS2AUT)
  !
 end subroutine RT_initialize

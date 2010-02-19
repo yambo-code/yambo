@@ -70,9 +70,9 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  write_to_report=.FALSE.
  !
 #if defined _ELK
- call section('*','A(binit) 2 Y(ambo)')
-#else
  call section('*','Elk 2 Y(ambo)')
+#else
+ call section('*','A(binit) 2 Y(ambo)')
 #endif
  !
  call msg('s','Checking input file ...')

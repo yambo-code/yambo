@@ -72,6 +72,7 @@ PJ_REELSLIBS = $(BASIC_LIBS) ras_reels_mods coulomb bz_ops qp_ctl reels \
                setup interface tddft pol_function qp acfdt bse
 
 PJ_SCLIBS       = $(MAIN_LIBS) sc 
+PJ_RTLIBS       = $(MAIN_LIBS) sc real_time
 PJ_MANYKLIBS    = $(MAIN_LIBS)
 PJ_PHLIBS       = $(MAIN_LIBS)
 GAMMA_LIBS      = $(MAIN_LIBS)
@@ -84,6 +85,7 @@ GAMMA_LIBS      = $(MAIN_LIBS)
 #
 YPPLIBS      = $(BASIC_LIBS) bz_ops qp_ctl setup interface pol_function bse
 YPPSCLIBS    = $(YPPLIBS) sc
+YPPRTLIBS    = $(YPPLIBS) sc real_time
 YPPRASLIBS   = $(BASIC_LIBS) ras_reels_mods bz_ops qp_ctl setup interface ras pol_function bse
 
 nothing: 
@@ -119,8 +121,8 @@ yambo_sc: libs
 	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_SC"; $(mksrc)
 	@X2DO="yambo_sc"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_SC";$(mkx)
 yambo_rt: libs
-	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_RT -D_SC"; $(mksrc)
-	@X2DO="yambo_rt"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_RT -D_SC";$(mkx)
+	@LIBS2DO="$(PJ_RTLIBS)";ADF="-D_RT -D_SC"; $(mksrc)
+	@X2DO="yambo_rt"; XPATH="driver";XLIBS="$(PJ_RTLIBS)";ADF="-D_RT -D_SC";$(mkx)
 yambo_manyk: libs
 	@LIBS2DO="$(PJ_MANYKLIBS)";ADF="-D_MANYK"; $(mksrc)
 	@X2DO="yambo_manyk"; XPATH="driver";XLIBS="$(PJ_MANYKLIBS)";ADF="-D_MANYK";$(mkx)
@@ -143,8 +145,8 @@ ypp_ras: libs
 	@LIBS2DO="$(YPPRASLIBS)" ; ADF="-D_YPP_RAS";$(mksrc)
 	@X2DO="ypp_ras" ;XPATH="ypp";XLIBS="$(YPPRASLIBS)"; ADF="-D_YPP_RAS";$(mkx)
 ypp_rt: libs
-	@LIBS2DO="$(YPPSCLIBS)" ; ADF="-D_SC -D_RT";$(mksrc)
-	@X2DO="ypp_rt" ;XPATH="ypp";XLIBS="$(YPPSCLIBS)"; ADF="-D_YPP_RT";$(mkx)
+	@LIBS2DO="$(YPPRTLIBS)" ; ADF="-D_SC -D_RT";$(mksrc)
+	@X2DO="ypp_rt" ;XPATH="ypp";XLIBS="$(YPPRTLIBS)"; ADF="-D_YPP_RT";$(mkx)
 ypp_sc: libs
 	@LIBS2DO="$(YPPSCLIBS)" ; ADF="-D_SC";$(mksrc)
 	@X2DO="ypp_sc" ;XPATH="ypp";XLIBS="$(YPPSCLIBS)"; ADF="-D_YPP_SC";$(mkx)

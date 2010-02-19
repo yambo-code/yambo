@@ -27,8 +27,7 @@ subroutine RT_init_vecpot()
  use pars,           ONLY:SP
  use com,            ONLY:error
  use units,          ONLY:SPEED_OF_LIGHT
- use real_time,      ONLY:ext_field,A_vecpot,n_ext_fields,Efield,&
-&                         Ext_fields_initial_time
+ use real_time,      ONLY:ext_field,A_vecpot,n_ext_fields,Efield
  !
  implicit none
  ! 
@@ -39,8 +38,6 @@ subroutine RT_init_vecpot()
  !
  A_vecpot%vecpot    =(0._SP,0._SP)
  A_vecpot%vecpot_vel=(0._SP,0._SP)
- !
- Ext_fields_initial_time=minval(Efield(:)%t_initial)
  !
  do i1=1,n_ext_fields
    ! 

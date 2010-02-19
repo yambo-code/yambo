@@ -119,7 +119,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
  elseif(it_now>Thermal_steps+1) then
    !
-   call live_timing('[RT] Iteration :',NE_steps-it_now+1,SERIAL=.true.)
+   call live_timing('[RT] Dynamics :',NE_steps-it_now+1,SERIAL=.true.)
    !
  endif
  !
@@ -139,7 +139,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    RT_time=(i_time-1)*RT_step
    !
    if(it==Thermal_steps+1) then
-     call live_timing('[RT] Iteration :',NE_steps,SERIAL=.true.)
+     call live_timing('[RT] Dynamics :',NE_steps,SERIAL=.true.)
      if(LifeTime/=0.0) G_lesser_reference=G_lesser
    endif
    !

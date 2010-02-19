@@ -73,24 +73,16 @@ subroutine RT_spectrum(en,k)
  integer, external  :: io_SC_components
  !
  call msg("s",'Real-Time response analizer')
+ !==========================================
+ !
+ ! CORE Logicals
+ !---------------
+ ! 
  call parser('PrtCurrent',Prt_Current)
  call parser('PrtEinduced',Prt_EInduced)
  call parser('UseFFT',Use_FFT)
  call parser('NoRmDC',l_no_remove_DC)
  call parser('UseGaugeField',l_use_gauge_field)
- ! 
- ! Check damping mode
- !
- if(trim(X_rt%damp)=="NONE") then
-   damp=DAMP_NONE
- elseif(trim(X_rt%damp)=="LORENTZIAN")  then
-   damp=DAMP_LORENTZIAN
- elseif(trim(X_rt%damp)=="GAUSSIAN") then
-   damp=DAMP_GAUSSIAN
- else
-   damp=DAMP_NONE
-   call warning(" Unknown DampMode. Switching to NONE")
- endif
  ! 
  ! Check for saved current and vector potential
  !
@@ -112,7 +104,8 @@ subroutine RT_spectrum(en,k)
    return
  endif
  !
- ! Fix Time limits
+ ! Time limits
+ !=============
  !
  istart=int(X_rt%time_range(1)/RT_step)
  iend  =int(X_rt%time_range(2)/RT_step)
@@ -123,33 +116,36 @@ subroutine RT_spectrum(en,k)
  niter=iend-istart+1
  !
  omega=2.*pi/(dble(niter)*RT_step)  ! Frequency step in real-time dynamics
- !
- ! Calculate damping function
- !
- allocate(damp_function(istart:iend))
- call mem_est("Damp_Function",(/niter/),(/SP/))
+ ! 
+ ! DUMPING
+ !=========
  !
  ! If there is a time-windows the damping function
  ! has be applied also the initial part otherwise 
  ! there will problems doing FFT for the non-zero starting point 
  !
  ishift=0
-! if(istart/=1) ishift=int(real(niter)/2.0)
  !
- do i1=istart,iend
-   i2=i1-istart-ishift
-   select case(damp)
-    case(DAMP_NONE)
-      damp_function(i1) = 1.0
-    case(DAMP_LORENTZIAN)
-      damp_function(i1) = exp(-abs(i2*RT_step)*X_rt%damp_factor)
-    case(DAMP_GAUSSIAN)
-      damp_function(i1) = exp(-(i2*RT_step)**2*X_rt%damp_factor**2)
-    end select
-    !
- enddo
+ allocate(damp_function(istart:iend))
+ call mem_est("Damp_Function",(/niter/),(/SP/))
  !
- ! Read Current and Vector Potential
+ if(trim(X_rt%damp)=="NONE") then
+   damp=DAMP_NONE
+   damp_function(:) = 1.0
+ elseif(trim(X_rt%damp)=="LORENTZIAN")  then
+   damp=DAMP_LORENTZIAN
+   forall(i1=istart:iend) damp_function(i1) = exp(-abs((i1-istart-ishift)*RT_step)*X_rt%damp_factor)
+ elseif(trim(X_rt%damp)=="GAUSSIAN") then
+   damp=DAMP_GAUSSIAN
+   forall(i1=istart:iend) damp_function(i1) =  exp(-((i1-istart-ishift)*RT_step)**2*X_rt%damp_factor**2)
+ else
+   damp=DAMP_NONE
+   damp_function(:) = 1.0
+   call warning(" Unknown DampMode. Switching to NONE")
+ endif
+ !
+ ! I/O of Current and Vector Potential
+ !=====================================
  !
  allocate(current(istart:iend,3))
  call mem_est("Current",(/size(current)/),(/SP/))
@@ -158,15 +154,15 @@ subroutine RT_spectrum(en,k)
  allocate(current_cache(9,max_rt_steps_disk))
  call mem_est("Current_Cache",(/size(current_cache)/),(/SP/))
  !
- call live_timing('Reading current:',NE_steps)
+ call live_timing('Current I/O:',NE_steps)
  do i_time=1,NE_steps
    !      
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/i_time+1/),ID=ID(1)) 
    io_J=io_SC_components('J' ,en,ID(1))
    !
    if(i_time>=istart.and.i_time<=iend) then
-     current(i_time,:)= j_current(:)
-     A_vecpot_vel(i_time,:)     = real(A_vecpot%vecpot_vel(:))
+     current(i_time,:)      = j_current(:)
+     A_vecpot_vel(i_time,:) = real(A_vecpot%vecpot_vel(:))
    endif           
    !
    call live_timing(steps=1)
@@ -201,6 +197,7 @@ subroutine RT_spectrum(en,k)
  endif
  !
  ! Remove the dc component from current
+ !======================================
  !
  if(.not.l_no_remove_dc) then
    !

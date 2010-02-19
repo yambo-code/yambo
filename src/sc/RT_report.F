@@ -48,10 +48,11 @@ subroutine RT_report(i_t,values)
  if (l_RT_diagonalize)  output_file(2)=.true.
  if (l_NE_with_fields)  output_file(3)=.true.
  !
- if(i_t==1) then
+ if(i_t==0) then
    !      
    file_name(1)='RT-dynamics'
-   file_name(2)="RT-qp"
+   file_name(2)=""
+   !file_name(2)="RT-qp"
    file_name(3)="RT-gauge_field"
    !
    do i1=1,n_output_files
@@ -73,9 +74,9 @@ subroutine RT_report(i_t,values)
    headings(1)="Time[fs]"
    headings(2)="E_kin[eV]"
    headings(3)="E_ion[eV]"
-   headings(4)="E_Hartree[eV]"
-   headings(5)="E_x[eV]"
-   headings(6)="E_c[eV]"
+   headings(4)="Hartree[eV]"
+   headings(5)="Exch.[eV]"
+   headings(6)="Corr.[eV]"
    headings(7)="E_mg[eV]"
    headings(8)="N" 
    !

@@ -85,7 +85,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Efield,Integrator_name,            &
 &                     RT_diagonalization_steps, LifeTime,l_NE_simulate_RPA, n_ext_fields, &
 &                     Thermal_time,max_rt_steps_disk,l_RT_no_intraband,l_RT_induced_field,&
-&                     l_RT_diagonalize
+&                     l_RT_diagonalize,Ext_fields_initial_time
 #endif
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
@@ -440,6 +440,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  RT_step=0.002*FS2AUT
  NE_steps=1000
  Thermal_steps=0
+ Ext_fields_initial_time=0.
  Thermal_time = 1./8.
  Integrator_name='RK2'
  LifeTime = 0.0*FS2AUT

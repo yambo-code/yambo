@@ -21,47 +21,56 @@
 !
 subroutine RT_init_vecpot()
  !
- ! This subroutine add the extenal vector potential 
+ ! This subroutine initialize the t=0 external vector potential 
+ ! used as starting point for the EOM for A(t)
  !
  use pars,           ONLY:SP
  use com,            ONLY:error
  use units,          ONLY:SPEED_OF_LIGHT
- use real_time,      ONLY:ext_field,A_vecpot,n_ext_fields,Efield
+ use real_time,      ONLY:ext_field,A_vecpot,n_ext_fields,Efield,&
+&                         Ext_fields_initial_time
  !
  implicit none
  ! 
  ! Work Space
  !
  integer     :: i1
- complex(SP) :: A_norm
+ complex(SP) :: E_times_c(3)
  !
  A_vecpot%vecpot    =(0._SP,0._SP)
  A_vecpot%vecpot_vel=(0._SP,0._SP)
+ !
+ Ext_fields_initial_time=minval(Efield(:)%t_initial)
  !
  do i1=1,n_ext_fields
    ! 
    if(Efield(i1)%ef_name=="none") cycle
    !
+   E_times_c=Efield(i1)%amplitude*Efield(i1)%versor(:)*SPEED_OF_LIGHT
+   !
+   ! Formally speaking:
+   !
+   !   A'(t=0) = -c E(t=0)
+   !   A(t=0)  = -c [\int E(t)]|
+   !                           |t=0
+   !
    select case(trim(Efield(i1)%ef_name))
      case('SINUSOIDAL')
+       A_vecpot%vecpot(:)    =A_vecpot%vecpot(:)    +E_times_c(:)/( Efield(i1)%frequency )
      case('RESONANT')
-       A_norm=-Efield(i1)%amplitude*SPEED_OF_LIGHT
-       A_vecpot%vecpot_vel(:)=A_vecpot%vecpot_vel(:)-A_norm*Efield(i1)%versor(:)
-       A_vecpot%vecpot(:)    =A_vecpot%vecpot(:)-A_norm*Efield(i1)%versor(:)/(Efield(i1)%frequency*(0._SP,1._SP))
+       A_vecpot%vecpot_vel(:)=A_vecpot%vecpot_vel(:)-E_times_c(:)
+       A_vecpot%vecpot(:)    =A_vecpot%vecpot(:)    -E_times_c(:)/( Efield(i1)%frequency*(0._SP,1._SP) )
      case('ANTIRESONANT')
-       A_norm=-Efield(i1)%amplitude*SPEED_OF_LIGHT
-       A_vecpot%vecpot_vel(:)=A_vecpot%vecpot_vel(:)-A_norm*Efield(i1)%versor(:)
-       A_vecpot%vecpot(:)=A_vecpot%vecpot(:)-A_norm*Efield(i1)%versor(:)/(Efield(i1)%frequency*(0._SP,-1._SP))
+       A_vecpot%vecpot_vel(:)=A_vecpot%vecpot_vel(:)-E_times_c(:)
+       A_vecpot%vecpot(:)    =A_vecpot%vecpot(:)    +E_times_c(:)/( Efield(i1)%frequency*(0._SP,1._SP) )
      case('DELTA')
-       A_norm=-Efield(i1)%amplitude*SPEED_OF_LIGHT
-       A_vecpot%vecpot(:)    =A_vecpot%vecpot(:)+Efield(i1)%versor(:)*A_norm
+       A_vecpot%vecpot(:)    =A_vecpot%vecpot_vel(:)-E_times_c(:)
      case('STEP')
-       A_norm=-Efield(i1)%amplitude*SPEED_OF_LIGHT
-       A_vecpot%vecpot_vel(:)=A_vecpot%vecpot_vel(:)+Efield(i1)%versor(:)*A_norm
+       A_vecpot%vecpot_vel(:)=A_vecpot%vecpot_vel(:)-E_times_c(:)
      case('EXPSTEP')
-       A_norm=-Efield(i1)%amplitude*SPEED_OF_LIGHT
-       A_vecpot%vecpot_vel(:)=A_vecpot%vecpot_vel(:)+Efield(i1)%versor(:)*A_norm
-       A_vecpot%vecpot(:)    =A_vecpot%vecpot(:)-Efield(i1)%versor(:)*A_norm/Efield(i1)%frequency
+       ! To check
+       !A_vecpot%vecpot_vel(:)=A_vecpot%vecpot_vel(:)+Efield(i1)%versor(:)*E_times_c
+       !A_vecpot%vecpot(:)    =A_vecpot%vecpot(:)-Efield(i1)%versor(:)*E_times_c/Efield(i1)%frequency
      case default
        call error(" External Field "//trim(Efield(i1)%ef_name)//" not implemented ") 
    end select

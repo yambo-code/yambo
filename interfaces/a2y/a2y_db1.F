@@ -22,7 +22,7 @@
 subroutine a2y_db1(en,k,KSS_file_name)
  !
  use pars,                  ONLY: SP, DP,pi
- use com,                   ONLY: msg,warning
+ use com,                   ONLY: msg,warning,error
  use electrons,             ONLY: levels, default_nel,n_bands,n_spin,n_sp_pol,&
 &                                 n_spinor 
  use R_lattice,             ONLY: bz_samp, ng_vec, g_vec,nkibz, b
@@ -31,7 +31,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
 &                                 n_atoms_species_max,atom_pos,Z_species,lattice
  use pseudo,                ONLY: pp_n_l_comp_max,pp_n_l_comp
  use wave_func,             ONLY: wf_nc_k, wf_igk,wf_ncx,wf_ng
- use vec_operate,           ONLY: cross_product
+ use vec_operate,           ONLY: cross_product,v_is_zero
  use defs_datatypes,        ONLY: hdr_type, wffile_type
  use xc_functionals,        ONLY: XC_EXCHANGE_CORRELATION,GS_xc_KIND,GS_xc_FUNCTIONAL,&
 &                                 XC_LDA_C_PW,XC_LDA_C_PZ,XC_LDA_C_WIGNER,&
@@ -228,6 +228,12 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  read(11) (((ahdr%symrel(i1,i2,i3),i1=1,3),i2=1,3),i3=1,ahdr%nsym)
  read(11) 
+ !
+ do i1=1,ahdr%nsym
+   if (.not.v_is_zero( real(ahdr%tnons(:,i1),SP) ) ) then
+     call error(' Non-symmorphic symmetry operations are not supported! Use "symmorphi 0" in ABINIT')
+   endif
+ enddo
  !
  call symmetries_check_and_load(ahdr%symrel,ahdr%nsym)
  !

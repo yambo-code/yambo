@@ -68,9 +68,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
 #if defined _SC 
  if (l_real_time)   Dipole_bands_ordered=.FALSE.
- !DEBUG>
- !Dipole_bands_ordered=.FALSE. ! DEBUG
- !DEBUG<
 #endif
  !
  ! Check first if ostnts DB is already done

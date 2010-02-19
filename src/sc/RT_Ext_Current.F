@@ -19,9 +19,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Ext_Field(time)
+subroutine RT_Ext_Current(time)
  !
- ! This subroutine add the extenal vector potential 
+ ! This subroutine defines the external current that is then used
+ ! to evolve the vector potential 
  !
  use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT
@@ -55,16 +56,15 @@ subroutine RT_Ext_Field(time)
        j_norm=-Efield(i1)%amplitude*exp(-(0._SP,1._SP)*Efield(i1)%frequency*time)*Efield(i1)%frequency*(0._SP,-1._SP)
        j_current_ext=j_current_ext+j_norm*Efield(i1)%versor(:)/(4._SP*pi)*DL_vol
      case('DELTA')
-       j_norm=(0._SP,0._SP)
      case('STEP')
-       j_norm=(0._SP,0._SP)
      case('EXPSTEP')
-       j_norm       =Efield(i1)%frequency
-       j_current_ext=j_current_ext+j_norm*A_vecpot%vecpot_vel(:)/(4._SP*pi)*DL_vol/SPEED_OF_LIGHT
+       ! To check
+       !j_norm       =Efield(i1)%frequency
+       !j_current_ext=j_current_ext+j_norm*A_vecpot%vecpot_vel(:)/(4._SP*pi)*DL_vol/SPEED_OF_LIGHT
      case default
      call error(" External Field "//trim(Efield(i1)%ef_name)//" not implemented ") 
    end select
    !
  enddo
  !
-end subroutine RT_Ext_Field
+end subroutine RT_Ext_Current

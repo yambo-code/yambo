@@ -81,6 +81,7 @@ module real_time
  !
  real(SP) :: RT_step
  real(SP) :: Thermal_time
+ real(SP) :: Ext_fields_initial_time
  integer  :: NE_steps
  integer  :: Thermal_steps
  integer  :: RT_memory_steps

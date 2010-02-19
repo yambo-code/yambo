@@ -235,10 +235,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      ! Poles and Residuals
      !
      if (l_ppa) then
-       forall(i1=1:X%ng,i2=1:X%ng) &
-&            PPaP(i1,i2)=PPaPf(X_mat(i1,i2,1),X_mat(i1,i2,2),X%ppaE)
-       forall(i1=1:X%ng,i2=1:X%ng) &
-&            PPaR(i1,i2)=-X_mat(i1,i2,1)/2.*PPaP(i1,i2)*isc%gamp(i1,i2)
+       forall(i1=1:X%ng,i2=1:X%ng) PPaP(i1,i2)=PPaPf(X_mat(i1,i2,1),X_mat(i1,i2,2),X%ppaE)
+       forall(i1=1:X%ng,i2=1:X%ng) PPaR(i1,i2)=-X_mat(i1,i2,1)/2.*PPaP(i1,i2)*isc%gamp(i1,i2)
      else
        forall(i1=1:X%ng,i2=1:X%ng) PPaR(i1,i2)=X_mat(i1,i2,1)*isc%gamp(i1,i2)
      endif

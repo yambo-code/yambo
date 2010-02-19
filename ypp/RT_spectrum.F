@@ -239,7 +239,6 @@ subroutine RT_spectrum(en,k)
  endif
  !
  E_induced=E_induced/SPEED_OF_LIGHT
-
  !  
  ! Apply the damping function
  !

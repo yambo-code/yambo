@@ -67,7 +67,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !============================================================
  !
  report_Sc=.not.QPdb_read_err==0.and..not.On_Mass_Shell_approx.and..not.use_GreenF_to_eval_QP
- report_Vnlxc=l_el_corr
+ report_Vnlxc=l_el_corr.and..not.l_life
  report_dSc=.not.On_Mass_Shell_approx.and..not.trim(QP_solver)=='g'.and..not.use_GreenF_to_eval_QP
  do_IO=.TRUE.
  if (l_life.or.QPdb_read_err==0) then

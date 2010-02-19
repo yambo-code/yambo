@@ -20,7 +20,7 @@ subroutine RT_initialize()
  ! 
  use pars,           ONLY:SP,schlen,pi
  use units,          ONLY:SPEED_OF_LIGHT
- use com,            ONLY:msg
+ use com,            ONLY:msg,warning
  use vec_operate,    ONLY:normalize_v
  use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields,i_time, &
 &                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,    &
@@ -84,5 +84,10 @@ subroutine RT_initialize()
    endif
    !
  enddo
+ !
+ if (.not.l_NE_with_fields) then
+   NE_steps=0
+   if (Thermal_steps==0) call warning('Skipping simulation. No Ext fields ot thermalization provided')
+ endif
  !
 end subroutine RT_initialize

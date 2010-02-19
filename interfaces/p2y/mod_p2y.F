@@ -410,7 +410,7 @@ contains
 #endif
    !
    if(any(trasl_(:,1:nsym_)/=0._SP)) then
-     call error(' Non-symmorphic symmetry operations are not supported! Use nosym=.true.ed in PWSCF')
+     call error(' Non-symmorphic symmetry operations are not supported! Use force_symmorphic=.true. in PWSCF')
    endif
 
    ! Note that invsym_ is well defined here, could be used for checks.

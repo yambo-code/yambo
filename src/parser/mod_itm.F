@@ -289,7 +289,7 @@ module it_m
            flags(nflags,1)=name
            flags(nflags,2)=description
            if (present(verb_level)) call initverbosity(name,nflags,'f',defs,verb_level)
-           else if (initmode==4) then
+         else if (initmode==4) then
            do i1=1,nflags
              if (trim(flags(i1,1))==trim(name)) then
                call parser(trim(name),ldef)
@@ -479,11 +479,13 @@ module it_m
      !
    end subroutine
    !
-   subroutine loadrnvar(defs,name,description,defval,unit,verb_level)
-     use parser_m,       ONLY:parser
+   subroutine loadrnvar(defs,name,description,defval,unit,verb_level,protect)
+     use drivers,       ONLY:infile_editing
+     use parser_m,      ONLY:parser
      character(*)::name,description
      character(*), optional :: unit
      integer,optional :: verb_level
+     logical, optional::protect
      real(SP) :: defval(:)
      type(initdefs)::defs
      integer :: dim,v_id
@@ -524,7 +526,12 @@ module it_m
          do i1=1,nr2v
            if (trim(r2vars(i1,1))==trim(name)) then
              v_id=i1
-             if (initmode==4) call parser(trim(name),defs%r2def(i1,:))
+             if (initmode==4) then
+               if (present(protect)) then
+                 if (.not.protect.and.infile_editing) cycle
+               endif
+               call parser(trim(name),defs%r2def(i1,:))
+             endif
              if (initmode<=3) defs%r2def(i1,:)=defval
              defval=defs%r2def(i1,:)
              exit
@@ -534,7 +541,12 @@ module it_m
          do i1=1,nr3v
            if (trim(r3vars(i1,1))==trim(name)) then
              v_id=i1
-             if (initmode==4) call parser(trim(name),defs%r3def(i1,:))
+             if (initmode==4) then
+               if (present(protect)) then
+                 if (.not.protect.and.infile_editing) cycle
+               endif
+               call parser(trim(name),defs%r3def(i1,:))
+             endif
              if (initmode<=3) defs%r3def(i1,:)=defval
              defval=defs%r3def(i1,:)
              exit
@@ -544,7 +556,12 @@ module it_m
          do i1=1,nr4v
           if (trim(r4vars(i1,1))==trim(name)) then
             v_id=i1
-            if (initmode==4) call parser(trim(name),defs%r4def(i1,:))
+            if (initmode==4) then
+              if (present(protect)) then
+                if (.not.protect.and.infile_editing) cycle
+              endif
+              call parser(trim(name),defs%r4def(i1,:))
+            endif
             if (initmode<=3) defs%r4def(i1,:)=defval
             defval=defs%r4def(i1,:)
             exit

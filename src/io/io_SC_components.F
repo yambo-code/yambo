@@ -51,7 +51,7 @@ integer function io_SC_components(what,E_sc,ID)
  integer, external     :: variables_SC
  character(lchlen)     :: local_description(100)
  !
- real(SP), allocatable :: R_H_disk(:,:,:),E_disk(:,:,:)
+ real(SP), allocatable :: R_H_G_disk(:,:,:),E_disk(:,:,:)
  integer               :: ik,bands_to_load,ib,i_spin,i1
  logical               :: l_wf,l_V,l_E,l_IMPOSE_SN,CHECK_
 #if defined _RT		
@@ -105,7 +105,7 @@ integer function io_SC_components(what,E_sc,ID)
  endif
  !
  if(l_G) then
-   if(mod(i_time,max_rt_steps_disk)/=0.and.write_is_on(ID)) then
+   if( mod(i_time,max_rt_steps_disk)/=0.and.i_time>1 .and.write_is_on(ID)) then
      io_SC_components=0
      call io_reset(ID)
      return
@@ -224,20 +224,20 @@ integer function io_SC_components(what,E_sc,ID)
    ! H_sc
    !======
    !
-   allocate(R_H_disk(SC_bands,SC_bands,2))
+   allocate(R_H_G_disk(SC_bands,SC_bands,2))
    !
    do i_spin=1,n_sp_pol
      !
      call io_bulk(ID,VAR="H_nl_sc_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
 &                 VAR_SZ=(/SC_bands,SC_bands,2/))
      !
-     if (write_is_on(ID)) call mat_c2r(H_nl_sc(:,:,i_spin),R_H_disk)
-     call io_bulk(ID,R3=R_H_disk)
-     if (read_is_on(ID))  call mat_r2c(R_H_disk,H_nl_sc(:,:,i_spin))
+     if (write_is_on(ID)) call mat_c2r(H_nl_sc(:,:,i_spin),R_H_G_disk)
+     call io_bulk(ID,R3=R_H_G_disk)
+     if (read_is_on(ID))  call mat_r2c(R_H_G_disk,H_nl_sc(:,:,i_spin))
      !
    enddo
    !
-   deallocate(R_H_disk)
+   deallocate(R_H_G_disk)
    !
  endif
  !
@@ -246,18 +246,18 @@ integer function io_SC_components(what,E_sc,ID)
    ! Rotation matrix 
    !=================
    !
-   allocate(R_H_disk(SC_bands,SC_bands,2))
+   allocate(R_H_G_disk(SC_bands,SC_bands,2))
    !
    do i_spin=1,n_sp_pol
      call io_bulk(ID,VAR="Rotation_Matrix_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
 &                 VAR_SZ=(/SC_bands,SC_bands,2/))
      !
-     if (write_is_on(ID)) call mat_c2r(SC_R(:,:,ik,i_spin),R_H_disk)
-     call io_bulk(ID,R3=R_H_disk)
-     if (read_is_on(ID))  call mat_r2c(R_H_disk,SC_R(:,:,ik,i_spin))
+     if (write_is_on(ID)) call mat_c2r(SC_R(:,:,ik,i_spin),R_H_G_disk)
+     call io_bulk(ID,R3=R_H_G_disk)
+     if (read_is_on(ID))  call mat_r2c(R_H_G_disk,SC_R(:,:,ik,i_spin))
      !
    enddo
-   deallocate(R_H_disk)
+   deallocate(R_H_G_disk)
  endif
  !
 #if defined _RT
@@ -269,16 +269,16 @@ integer function io_SC_components(what,E_sc,ID)
    !
    if (io_SC_components/=0) goto 1  
    !
-   allocate(R_H_disk(SC_bands,SC_bands,2))
+   allocate(R_H_G_disk(SC_bands,SC_bands,2))
    !
    i_spin=1
    !
    call io_bulk(ID,VAR="G_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
 &       VAR_SZ=(/SC_bands,SC_bands,2/))
    !
-   if (write_is_on(ID)) call mat_c2r(G_lesser(:,:,ik),R_H_disk)
-   call io_bulk(ID,R3=R_H_disk)
-   if (read_is_on(ID))  call mat_r2c(R_H_disk,G_lesser(:,:,ik))
+   if (write_is_on(ID)) call mat_c2r(G_lesser(:,:,ik),R_H_G_disk)
+   call io_bulk(ID,R3=R_H_G_disk)
+   if (read_is_on(ID))  call mat_r2c(R_H_G_disk,G_lesser(:,:,ik))
    !
    if(l_NE_with_fields.and.ik==QP_nk) then
      call io_bulk(ID,VAR="A_vecpot",VAR_SZ=(/3,3,2/))
@@ -298,7 +298,7 @@ integer function io_SC_components(what,E_sc,ID)
      endif
    endif
    !
-   deallocate(R_H_disk)
+   deallocate(R_H_G_disk)
    !
  endif
  !

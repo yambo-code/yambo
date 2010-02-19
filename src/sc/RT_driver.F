@@ -39,7 +39,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  use collisions_CACHE, ONLY:free_COLLISIONS_v
  !
  implicit none
- ! if l_qp_analyze=.true.  "en"  will contains new energies and occupations
+ !
+ ! if l_RT_diagonalize=.true.  "en"  will contains new energies and occupations
  ! otherwise it will not be used
  !
  ! Notice that Xen is never changed!
@@ -122,6 +123,11 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
  endif
  !
+ ! Open the output files
+ !
+ call RT_report(0,spread(0.,1,4))
+ if (l_RT_diagonalize) call SC_History(1,en)
+ !
  ! loop on time
  !
  do it=it_now,Thermal_steps+NE_steps
@@ -139,7 +145,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    call live_timing(steps=1)
    !
-   if(it==Thermal_steps) call live_timing
+   if(it==Thermal_steps) call live_timing()
    !
    ! Copy G_lesser in G_old before start collisin
    !
@@ -183,6 +189,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  if(NE_steps/=0) call live_timing
  !
  call RT_report(-1,spread(0.,1,4))
+ if (l_RT_diagonalize) call SC_History(-1,en)
  !
  ! Finalize
  !-----------

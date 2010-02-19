@@ -94,7 +94,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  endif
  !
  if (local_V) then
- !
+   !
    V_xc_sc=(0.,0.)
    !
    if (l_sc_exx) call V_exx(X(1),E,k,q,V_xc_sc)

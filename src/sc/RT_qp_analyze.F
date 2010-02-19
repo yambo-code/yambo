@@ -26,14 +26,12 @@ subroutine RT_qp_analyze(it,en,k,xK,G_input)
  ! and write them in en%E, en%f
  !
  use pars,           ONLY:SP,DP,lchlen
- use units,          ONLY:HARTREE
  use electrons,      ONLY:levels
- use real_time,      ONLY:H_t,RT_diagonalization_steps,Occ_natural_orb,Thermal_steps,RT_step
+ use real_time,      ONLY:H_t,RT_diagonalization_steps,Occ_natural_orb,Thermal_steps
  use QP_m,           ONLY:QP_nk  
- use stderr,         ONLY:set_real_printed_length,intc,real2ch
+ use stderr,         ONLY:set_real_printed_length
  use SC,             ONLY:H_nl_sc,SC_bands,E_bare
  use R_lattice,      ONLY:bz_samp
- use units,          ONLY:FS2AUT
  use com,            ONLY:msg
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
  !
@@ -46,9 +44,8 @@ subroutine RT_qp_analyze(it,en,k,xK,G_input)
  !
  ! Work Space
  !
- integer :: ik,ib,i1
+ integer     :: ik,ib
  complex(SP) :: tmp_v(SC_bands)
- character(lchlen)       :: dump_ch
  !
 #if defined _DOUBLE
  complex(DP) :: zdotc
@@ -83,32 +80,16 @@ subroutine RT_qp_analyze(it,en,k,xK,G_input)
  !
  en%E(:SC_bands,:,:)=en%E(:SC_bands,:,:)-en%Efermi(1)
  !
- ! Now write the occupation
+ ! Now write energies & occupations
  !
- dump_ch=' Iteration : '//trim(intc(it))//'  Time :'//trim(real2ch(RT_step*real(it)/FS2AUT))
- call msg('o RT-qp','',dump_ch)
- !
- do ik=1,QP_nk
-   !      
-   dump_ch='K ['//trim(intc(ik))//'] :'//trim(real2ch(k%pt(ik,1)))//' '//&
-&          trim(real2ch(k%pt(ik,2)))//' '//trim(real2ch(k%pt(ik,3)))//&
-&          ' (iku) '
-   call msg('o RT-qp','',dump_ch)
-   !
-   do i1=1,SC_bands,8
-     write(dump_ch,'(a,8f12.6)') 'E  ',(en%E(ib,ik,1)*HARTREE,ib=i1,min(i1+7,SC_bands))
-     call msg('o RT-qp','',dump_ch)
-   enddo
-   do i1=1,SC_bands,8
-     write(dump_ch,'(a,8f12.6)') 'O  ',(Occ_natural_orb(ib,ik),ib=i1,min(i1+7,SC_bands))
-     call msg('o RT-qp','',dump_ch)
-   enddo
- enddo
+ call SC_History(it,en)
  !
  if(it==Thermal_steps) then
+   call msg('r',' ')
+   call msg('r','Natural (O)ccupations, (E)nergies and (d_E) E-Eo.')
    do ik=1,QP_nk
      call report_energies(en%E(:SC_bands,:,:),k,Xk,SC_bands,(/ik,ik/),'E  ',.TRUE.)
-     call report_energies(E_bare,k,Xk,SC_bands,(/ik,ik/),'E_o  ',.TRUE.)
+     call report_energies(E_bare,k,Xk,SC_bands,(/ik,ik/),'E_o  ',.FALSE.)
      call report_energies(en%E(:SC_bands,:,:)-E_bare,k,Xk,SC_bands,(/ik,ik/),'d_E',.FALSE.)
      call report_energies(Occ_natural_orb(:SC_bands,:),k,Xk,SC_bands,(/ik,ik/),'O  ',.FALSE.)
    enddo

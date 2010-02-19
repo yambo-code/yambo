@@ -85,7 +85,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  I2_lesser=(0._SP,0._SP)
  if(allocated(H_t)) H_t =  (0._SP,0._SP) 
  !
- if(l_NE_with_fields) call RT_Ext_Field(RT_time)
+ if(l_NE_with_fields) call RT_Ext_Current(RT_time)
  !
  call pp_indexes_reset(px)
  call par_indexes(px,(/QP_nk/))

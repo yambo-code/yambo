@@ -24,16 +24,16 @@ subroutine RT_report(i_t,values)
  use pars,           ONLY:lchlen,schlen,SP
  use com,            ONLY:msg,of_open_close
  use SC,             ONLY:SC_description,n_SC_descriptions
- use real_time,      ONLY:l_RT_diagonalize,l_NE_with_fields,A_vecpot
+ use real_time,      ONLY:l_NE_with_fields,A_vecpot
  implicit none
  !
  integer :: i_t
  real(SP):: values(8)
- integer, parameter      :: n_output_files=3
+ integer, parameter      :: n_output_files=2
  !
  ! Work space
  !
- character(lchlen), save  :: file_name(3)
+ character(lchlen), save  :: file_name(n_output_files)
  character(schlen)        :: headings(10),where_ch
  integer                  :: i1,i_d
  logical                  :: output_file(n_output_files)
@@ -45,15 +45,12 @@ subroutine RT_report(i_t,values)
  output_file=.false.
  !
  output_file(1)=.true.  ! General dynamics output file
- if (l_RT_diagonalize)  output_file(2)=.true.
- if (l_NE_with_fields)  output_file(3)=.true.
+ if (l_NE_with_fields)  output_file(2)=.true.
  !
  if(i_t==0) then
    !      
    file_name(1)='RT-dynamics'
-   file_name(2)=""
-   !file_name(2)="RT-qp"
-   file_name(3)="RT-gauge_field"
+   file_name(2)="RT-gauge_field"
    !
    do i1=1,n_output_files
      !
@@ -86,7 +83,7 @@ subroutine RT_report(i_t,values)
    !
    if(l_NE_with_fields) then
      !
-     where_ch='o '//file_name(3)
+     where_ch='o '//file_name(2)
      !
      headings(1)="Time[fs]"
      headings(2)="A_x"

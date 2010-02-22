@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 C. Attaccalite, A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 C. ATime_reached, A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -30,7 +30,7 @@ subroutine RT_spectrum(en,k)
  use units,          ONLY:FS2AUT,HARTREE,SPEED_OF_LIGHT
  use electrons,      ONLY:levels
  use com,            ONLY:msg,of_open_close,warning
- use stderr,         ONLY:set_real_printed_length
+ use stderr,         ONLY:set_real_printed_length,real2ch
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:bz_samp
  use parser_m,       ONLY:parser
@@ -47,112 +47,68 @@ subroutine RT_spectrum(en,k)
  ! Work Space
  !
  integer  :: io_J,io_G,ID(2)
- integer  :: damp,i1,i2
- integer  :: niter,istart,iend,ishift
+ integer  :: i_t,i_w,i_c
+ integer  :: i_t_start,i_t_end
  logical  :: Prt_Current,Prt_Einduced,Use_FFT,l_no_remove_DC,l_use_gauge_field
- character(lchlen)  :: file_name(3),dump_ch
- character(schlen)  :: headings(7)
- real(SP)           :: values(8)
- real(SP)           :: av,omega,tt,de
+ real(SP)           :: Integral,W_RT_induced_step,W_step,Time_reached,W_reached
+ complex(SP)        :: w_Aw(3)
  real(SP),    allocatable :: damp_function(:)
  real(SP),    allocatable :: current(:,:)
  real(SP),    allocatable :: A_vecpot_vel(:,:)
- complex(DP), allocatable :: dielectric(:,:)
+ complex(DP), allocatable :: EELS(:,:),EPS(:,:)
  real(DP),    allocatable :: E_induced(:,:)
  integer     :: fft_sign
  integer(8)  :: fftw_plan
- !
- ! Parameters
- !
- integer, parameter :: DAMP_NONE       = 0
- integer, parameter :: DAMP_LORENTZIAN = 1
- integer, parameter :: DAMP_GAUSSIAN   = 2
- !
- ! Work Space
- !
  integer, external  :: io_SC_components
  !
- call msg("s",'Real-Time response analizer')
- !==========================================
+ call msg("s",'Real-Time response')
+ !=================================
  !
  ! CORE Logicals
  !---------------
  ! 
  call parser('PrtCurrent',Prt_Current)
- call parser('PrtEinduced',Prt_EInduced)
+ call parser('PrtEinduced',Prt_Einduced)
  call parser('UseFFT',Use_FFT)
  call parser('NoRmDC',l_no_remove_DC)
  call parser('UseGaugeField',l_use_gauge_field)
  ! 
- ! Check for saved current and vector potential
+ ! Check for saved current/G_lesser and vector potential
+ !-----------------
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID(1)) ! Current response
  io_J=io_SC_components('J' ,en,ID(1))
  !
- if(io_J/=0) then
-   call warning(" Error reading J database")
-   return
- endif
- !
- ! Read last G_lesser to obtain Tot_steps
- !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID(2)) 
  io_G=io_SC_components('G' ,en,ID(2))
  !
- if(io_G/=0) then
-   call warning(" Error reading G database")
-   return
- endif
+ if(io_J/=0) call warning(" Error while reading J database")
+ if(io_G/=0) call warning(" Error while reading G lesser database")
+ if(any((/io_G,io_J/)/=0)) return
  !
- ! Time limits
- !=============
+ ! Reduced Time range
+ !====================
  !
- istart=int(X_rt%time_range(1)/RT_step)
- iend  =int(X_rt%time_range(2)/RT_step)
+ i_t_start=int(X_rt%time_range(1)/RT_step)
+ i_t_end  =int(X_rt%time_range(2)/RT_step)
  !
- if(istart<=0.0.or.istart>NE_steps) istart=1
- if(iend<=0.0.or.iend>NE_steps)     iend  =NE_steps
+ if(i_t_start<=0.0.or.i_t_start>NE_steps) i_t_start=1
+ if(i_t_end<=0.0.or.i_t_end>NE_steps)     i_t_end  =NE_steps
  !
- niter=iend-istart+1
- !
- omega=2.*pi/(dble(niter)*RT_step)  ! Frequency step in real-time dynamics
- ! 
- ! DUMPING
- !=========
- !
- ! If there is a time-windows the damping function
- ! has be applied also the initial part otherwise 
- ! there will problems doing FFT for the non-zero starting point 
- !
- ishift=0
- !
- allocate(damp_function(istart:iend))
- call mem_est("Damp_Function",(/niter/),(/SP/))
- !
- if(trim(X_rt%damp)=="NONE") then
-   damp=DAMP_NONE
-   damp_function(:) = 1.0
- elseif(trim(X_rt%damp)=="LORENTZIAN")  then
-   damp=DAMP_LORENTZIAN
-   forall(i1=istart:iend) damp_function(i1) = exp(-abs((i1-istart-ishift)*RT_step)*X_rt%damp_factor)
- elseif(trim(X_rt%damp)=="GAUSSIAN") then
-   damp=DAMP_GAUSSIAN
-   forall(i1=istart:iend) damp_function(i1) =  exp(-((i1-istart-ishift)*RT_step)**2*X_rt%damp_factor**2)
- else
-   damp=DAMP_NONE
-   damp_function(:) = 1.0
-   call warning(" Unknown DampMode. Switching to NONE")
- endif
+ W_RT_induced_step=2.*pi/(real(NE_steps,SP)*RT_step)  ! Frequency step in real-time dynamics
  !
  ! I/O of Current and Vector Potential
  !=====================================
  !
- allocate(current(istart:iend,3))
+ allocate(current(NE_steps,3))
  call mem_est("Current",(/size(current)/),(/SP/))
- allocate(A_vecpot_vel(istart:iend,3))
+ allocate(A_vecpot_vel(NE_steps,3))
  call mem_est("A_vecpot_vel",(/size(A_vecpot_vel)/),(/SP/))
  allocate(current_cache(9,max_rt_steps_disk))
  call mem_est("Current_Cache",(/size(current_cache)/),(/SP/))
+ !
+ current     =0._SP
+ A_vecpot_vel=0._SP
  !
  call live_timing('Current I/O:',NE_steps)
  do i_time=1,NE_steps
@@ -160,8 +116,8 @@ subroutine RT_spectrum(en,k)
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/i_time+1/),ID=ID(1)) 
    io_J=io_SC_components('J' ,en,ID(1))
    !
-   if(i_time>=istart.and.i_time<=iend) then
-     current(i_time,:)      = j_current(:)
+   if(i_time>=i_t_start.and.i_time<=i_t_end) then
+     current(i_time,:)      = real(j_current(:))
      A_vecpot_vel(i_time,:) = real(A_vecpot%vecpot_vel(:))
    endif           
    !
@@ -170,52 +126,61 @@ subroutine RT_spectrum(en,k)
  enddo
  call live_timing()
  !
- ! Print current and vector potential if required
+ ! Print current and vector potential 
+ !------------------------------------
+ call OutPut_File("current")
+ ! 
+ ! DAMPING
+ !=========
  !
- call set_real_printed_length(f_length=15,g_length=15)
+ ! If there is a time-windows the damping function
+ ! has be applied also the initial part otherwise 
+ ! there will problems doing FFT for the non-zero starting point 
  !
- if(Prt_Current) then
-   !
-   file_name(1)="current"
-   call of_open_close(file_name(1),'ot')
-   headings(1)="Time[fs]"
-   headings(2)="A'_x"
-   headings(3)="A'_y"
-   headings(4)="A'_z"
-   headings(5)="j_x"
-   headings(6)="j_y"
-   headings(7)="j_z"
-   call msg('o current','#',headings(1:7),INDENT=-2,USE_TABS=.TRUE.)
-   do i1=istart,iend
-     values(1:7)=(/RT_step*i1/FS2AUT,A_vecpot_vel(i1,1),A_vecpot_vel(i1,2),A_vecpot_vel(i1,3), &
-&                 current(i1,1),current(i1,2),current(i1,3)/)
-     call msg('o current','',values(1:7),USE_TABS=.TRUE.)
-   enddo
-   !
-   call of_open_close(file_name(1))
-   !
+ allocate(damp_function(NE_steps))
+ call mem_est("Damp_Function",(/NE_steps/),(/SP/))
+ !
+ if(X_rt%damp_factor<2.*pi/(real(NE_steps,SP)*RT_step)) then
+   X_rt%damp_factor=2.*pi/(real(NE_steps,SP)*RT_step)
+   call warning('Damping factor redefined to be '//trim(real2ch(2.*pi/(real(NE_steps,SP)*RT_step)*HARTREE))//' eV')
  endif
  !
+ if(trim(X_rt%damp)=="NONE") then
+   damp_function(:) = 1.0
+ elseif(trim(X_rt%damp)=="LORENTZIAN")  then
+   forall(i_t=1:NE_steps) damp_function(i_t) = exp(-abs((i_t-1)*RT_step)*X_rt%damp_factor)
+ elseif(trim(X_rt%damp)=="GAUSSIAN") then
+   forall(i_t=1:NE_steps) damp_function(i_t) =  exp(-((i_t-1)*RT_step)**2*X_rt%damp_factor**2)
+ else
+   damp_function(:) = 1.0
+   call warning(" Unknown DampMode. Switching to NONE")
+ endif
+ ! 
+ ! apply the damping
+ !
+ forall(i_t=1:NE_steps) current(i_t,:)=current(i_t,:)*damp_function(i_t)
+ !
  ! Remove the dc component from current
- !======================================
+ !--------------------------------------
  !
  if(.not.l_no_remove_dc) then
    !
-   do i1 = 1, 3
-     av = sum(A_vecpot_vel( istart:iend, i1))
-     A_vecpot_vel( istart:iend, i1) = A_vecpot_vel(istart:iend ,i1) - av/dble(niter)
+   do i_c = 1, 3
+     Integral = sum(A_vecpot_vel(:, i_c))
+     A_vecpot_vel( :, i_c) = A_vecpot_vel(:,i_c) - Integral/real(NE_steps,SP)
    enddo
    !
-   do i1 = 1, 3
-     av = sum(current( istart:iend, i1))
-     current( istart:iend, i1) = current(istart:iend ,i1) - av/dble(niter)
+   do i_c = 1, 3
+     Integral = sum(current( :, i_c))
+     current( :, i_c) = current(:,i_c) - Integral/real(NE_steps)
    enddo
    !
  endif
  !
- ! Calculate the induced Electric Field
+ ! Induced Electric Field
+ !------------------------
  !
- allocate(E_induced(istart:iend,3))
+ allocate(E_induced(NE_steps,3))
  call mem_est("E_induced",(/size(E_induced)/),(/SP/))
  !
  if(l_use_gauge_field) then
@@ -224,11 +189,11 @@ subroutine RT_spectrum(en,k)
    ! 
    ! Integration with trapezoidal rule 
    !
-   call live_timing('Integration:',iend-istart+1)
-   do i1=istart, iend
-     E_induced(i1,1)=-(2.d0*sum(current(istart:i1,1))-current(istart,1)-current(i1,1))*RT_step/2.d0
-     E_induced(i1,2)=-(2.d0*sum(current(istart:i1,2))-current(istart,2)-current(i1,2))*RT_step/2.d0
-     E_induced(i1,3)=-(2.d0*sum(current(istart:i1,3))-current(istart,3)-current(i1,3))*RT_step/2.d0
+   call live_timing('Integration:',NE_steps)
+   do i_t=1, NE_steps
+     E_induced(i_t,1)=-(2.d0*sum(current(:i_t,1))-current(1,1)-current(i_t,1))*RT_step/2.d0
+     E_induced(i_t,2)=-(2.d0*sum(current(:i_t,2))-current(1,2)-current(i_t,2))*RT_step/2.d0
+     E_induced(i_t,3)=-(2.d0*sum(current(:i_t,3))-current(1,3)-current(i_t,3))*RT_step/2.d0
     call live_timing(steps=1)
    enddo
    call live_timing()
@@ -236,165 +201,211 @@ subroutine RT_spectrum(en,k)
  endif
  !
  E_induced=E_induced/SPEED_OF_LIGHT
- !  
- ! Apply the damping function
  !
- E_induced(:,1)=E_induced(:,1)*damp_function(:)
- E_induced(:,2)=E_induced(:,2)*damp_function(:)
- E_induced(:,3)=E_induced(:,3)*damp_function(:)
+ call OutPut_File("E_induced")
  !
- if(Prt_Einduced) then
-   !
-   call set_real_printed_length(f_length=15,g_length=15)
-   !
-   file_name(2)="einduced"
-   call of_open_close(file_name(2),'ot')
-   headings(1)="Time[fs]"
-   headings(2)="E_x"
-   headings(3)="E_y"
-   headings(4)="E_z"
-   call msg('o einduced','#',headings(1:4),INDENT=-2,USE_TABS=.TRUE.)
-   do i1=istart,iend
-     values(1:4)=(/RT_step*real(i1)/FS2AUT, &
-&    real(E_induced(i1,1),SP),real(E_induced(i1,2),SP) , real(E_induced(i1,3),SP)/)
-     call msg('o einduced','',values(1:4),USE_TABS=.TRUE.)
-   enddo
-   !
-   call set_real_printed_length()
-   call of_open_close(file_name(2))
-   !
- endif
+ ! 1D FFT setup
+ !--------------
  !
  if(Use_FFT) then
    !      
-   call warning(" Energy steps and range set from real-time dynamics")
+   call warning(" Energy steps and range redefined from real-time dynamics")
    !
-   X_rt%energy_steps   =niter/2+1
+   X_rt%energy_steps   =NE_steps/2+1
    X_rt%energy_range(1)=0.
-   X_rt%energy_range(2)=omega*niter/2.
+   X_rt%energy_range(2)=W_RT_induced_step*NE_steps/2.
    !
  endif
  !
- de=(X_rt%energy_range(2) - X_rt%energy_range(1))/X_rt%energy_steps
+ ! Optical Porperties 
+ !====================
+ ! (it works only for constant vector potentials)
  !
- ! Calculate Dielectric constant
- ! it works only for constant vector potentials
+ allocate(EELS(X_rt%energy_steps,1:3))  
+ allocate(EPS(X_rt%energy_steps,1:3))  
+ call mem_est("EELS EPS",(/size(EELS),size(EPS)/),(/2*SP/))
  !
- allocate(dielectric(X_rt%energy_steps,1:3))  
- call mem_est("Dielectric",(/size(Dielectric)/),(/2*SP/))
- !
- dielectric=(0.,0.)
+ EELS=(0.,0.)
+ EPS=(0.,0.)
  !
  if(Use_FFT) then
-  !
-  fftw_plan=0
-  fft_sign =-1
-  !
-  do i1=1,3
-    !
-#if defined _FFTW
-   call fft_1d_real(E_induced(istart:iend,i1),dielectric(:,i1),niter,fft_sign,fftw_plan)
-#else
-   call fft_1d_real(E_induced(istart:iend,i1),dielectric(:,i1),niter,fft_sign)
-#endif
-    !
-    ! due to the definition of FFT 
-    !
-    dielectric(:,i1)=conjg(dielectric(:,i1))
-    !
-  enddo
-  !
- else
-  ! 
-  ! Notice that in the integration should appear dt = RT_step but this cancel
-  ! when one divides from Efield%amplitude that is the Fourier Transform of a delta function 
-  !
-  call live_timing('FFT:', X_rt%energy_steps)
-  !
-  do i1 = 1, X_rt%energy_steps
-    omega = (i1-1)*de+X_rt%energy_range(1)
-    !
-    do i2 = istart, iend
-      tt = (i2-istart+1)*RT_step
-      dielectric(i1,1:3) = dielectric(i1,1:3) &
-&                        + E_induced(i2,1:3)*exp((0.,1.)*omega*tt) 
-    enddo
-    !
-    call live_timing(steps=1)
-  enddo
-  !
-  call live_timing()
-  !
- endif
- !
- if(X_rt%damp_factor<2.*pi/(dble(niter-ishift)*RT_step)) then
-   write(dump_ch,*) "You should use a damping factor greater than :", &
-&                    2.*pi/(dble(niter-ishift)*RT_step)*HARTREE 
-   call warning(dump_ch)
- endif
- !
- select case(trim(Efield(ref_efield)%ef_name))
-   case('DELTA')
-     dielectric(:,:) = dielectric(:,:)/(-Efield(ref_efield)%amplitude)*SPEED_OF_LIGHT
-   case('RESONANT')
-     dielectric(:,:) = dielectric(:,:)/(-Efield(ref_efield)%amplitude)/(-2._SP)*SPEED_OF_LIGHT
-   case('ANTIRESONANT')
-     dielectric(:,:) = dielectric(:,:)/(-Efield(ref_efield)%amplitude)/2._SP*SPEED_OF_LIGHT
-   case('EXPSTEP')
-     do i1=1,X_rt%energy_steps
-       omega = (i1-1)*de+X_rt%energy_range(1)
-       dielectric(i1,:) = -dielectric(i1,:)*(Efield(ref_efield)%frequency+(0._SP,1._SP)*omega)
-     enddo
-     call warning(" Only epsilon(w = Efield%frequency) is correct ")
-   case default
-     call warning(" External Field "//trim(Efield(ref_efield)%ef_name)//" not implemented in ypp_rt ")
- end select
- !
- dielectric(:,:)=dielectric(:,:)+1._DP
- !
- ! Write dielectric constant 
- !
- file_name(3)='eps_q001_rt'
- call of_open_close(file_name(3),'ot')
- !
- omega=2.*pi/(dble(niter)*RT_step)  ! Frequency step in real-time dynamics
- !
- write(dump_ch,*) " Max Frequency Range: ",omega*HARTREE," - ",omega*dble((niter-ishift)/2.)*HARTREE," eV "
- call msg('o eps_q001_rt','#',dump_ch,INDENT=0,USE_TABS=.true.)
- call msg('o eps_q001_rt','#','',INDENT=0,USE_TABS=.true.)
- write(dump_ch,*) " Max Time  Range: ",0," - ",NE_steps/FS2AUT," fs "
- call msg('o eps_q001_rt','#',dump_ch,INDENT=0,USE_TABS=.true.)
- call msg('o eps_q001_rt','#','',INDENT=0,USE_TABS=.true.)
- !
- headings(1)  ='E/ev[1]'
- headings(2:3)=(/'e_x/Im[2]','e_x/Re[3]'/)
- headings(4:5)=(/'e_y/Im[4]','e_y/Re[5]'/)
- headings(6:7)=(/'e_z/Im[6]','e_z/Re[7]'/)
- !
- call msg('o eps_q001_rt','#',headings(1:7),INDENT=0,USE_TABS=.true.)
- !
- do i1=1,X_rt%energy_steps
-   values(1)= ((i1-1)*de+X_rt%energy_range(1))*HARTREE
    !
-   do i2=1,3
-     values(2*i2)       = aimag(dielectric(i1,i2))
-     values(2*i2+1)     =  real(dielectric(i1,i2))
+   fftw_plan=0
+   fft_sign =-1
+   !
+   do i_c=1,3
+     !
+#if defined _FFTW
+    call fft_1d_real(current(:,i_c),EELS(:,i_c),NE_steps,fft_sign,fftw_plan)
+#else
+    call fft_1d_real(current(:,i_c),EELS(:,i_c),NE_steps,fft_sign)
+#endif
+     !
+     ! due to the definition of FFT 
+     !
+     EELS(:,i_c)=conjg(EELS(:,i_c))
+     !
    enddo
    !
-   call msg('o eps_q001_rt','',values(1:7),INDENT=-2,USE_TABS=.TRUE.)
+ else
+   ! 
+   ! Notice that in the integration should appear dt = RT_step but this cancel
+   ! when one divides from Efield%amplitude that is the Fourier Transform of a delta function 
+   !
+   call live_timing('FFT:', X_rt%energy_steps)
+   !
+   do i_w = 1, X_rt%energy_steps
+     W_reached = (i_w-1)*W_step+X_rt%energy_range(1)
+     !
+     do i_t = 1, NE_steps
+      Time_reached = i_t*RT_step
+       EELS(i_w,1:3) = EELS(i_w,1:3)+current(i_t,1:3)*exp((0.,1.)*W_reached*Time_reached) 
+     enddo
+     !
+     call live_timing(steps=1)
+   enddo
+   !
+   call live_timing()
+   !
+ endif
+ !
+ W_step=(X_rt%energy_range(2) - X_rt%energy_range(1))/X_rt%energy_steps
+ !
+ do i_w=1,X_rt%energy_steps
+   !
+   W_reached = (i_w-1)*W_step+X_rt%energy_range(1)
+   !
+   if ((trim(Efield(ref_efield)%ef_name) == 'DELTA')) w_Aw(:)=Efield(ref_efield)%amplitude*SPEED_OF_LIGHT*W_reached
+   !
+   forall (i_c=1:3) EELS(i_w,i_c) = EELS(i_w,i_c)/W_reached/w_Aw(i_c)
    !
  enddo
  !
- call of_open_close(file_name(3))
- ! 
- call set_real_printed_length()
+! select case(trim(Efield(ref_efield)%ef_name))
+!   case('DELTA')
+!     EELS(:,:) = EELS(:,:)/(-Efield(ref_efield)%amplitude)*SPEED_OF_LIGHT
+!   case('RESONANT')
+!     EELS(:,:) = EELS(:,:)/(-Efield(ref_efield)%amplitude)/(-2._SP)*SPEED_OF_LIGHT
+!   case('ANTIRESONANT')
+!     EELS(:,:) = EELS(:,:)/(-Efield(ref_efield)%amplitude)/2._SP*SPEED_OF_LIGHT
+!   case('EXPSTEP')
+!     do i_w=1,X_rt%energy_steps
+!       W_step = (i1-1)*de+X_rt%energy_range(1)
+!       EELS(i1,:) = -EELS(i1,:)*(Efield(ref_efield)%frequency+(0._SP,1._SP)*W_step)
+!     enddo
+!     call warning(" Only epsilon(w = Efield%frequency) is correct ")
+! end select
  !
- deallocate(E_induced,dielectric,current,damp_function,A_vecpot_vel,current_cache)
+ EELS(:,:)=EELS(:,:)+1._DP
+ EPS(:,:) =1./EELS(:,:)
+ !
+ call OutPut_File("eels")
+ call OutPut_File("eps")
+ !
+ deallocate(E_induced,EELS,current,damp_function,A_vecpot_vel,current_cache)
  call mem_est("Current_Cache")
  call mem_est("Current")
  call mem_est("A_vecpot_vel")
- call mem_est("Dielectric")
+ call mem_est("EELS")
  call mem_est("E_induced")
  call mem_est("Damp_Function")
  !
+ contains
+   !
+   subroutine OutPut_File(what)
+     !
+     use SC,   ONLY:n_SC_descriptions,SC_description
+     character(*) :: what
+     !
+     ! Work Space
+     !
+     real(SP)     :: output_data(10)
+     integer      :: i_file
+     integer      :: n_headings,i_d,i_s,steps_here
+     character(lchlen),SAVE  :: file_name(4)
+     character(schlen)       :: headings(7)
+     !
+     call set_real_printed_length(f_length=15,g_length=15)
+     !
+     if (trim(what)=="current".and.Prt_Current)  then
+       i_file=1
+       steps_here=NE_steps
+       file_name(i_file)="YPP_current"
+     else  if (trim(what)=="E_induced".and.Prt_Einduced)  then
+       i_file=2
+       steps_here=NE_steps
+       file_name(i_file)="YPP_E_induced"
+     else if (trim(what)=="eps") then
+       i_file=3
+       steps_here=X_rt%energy_steps
+       file_name(i_file)="YPP_eps"
+     else if (trim(what)=="eels")  then
+       i_file=4
+       steps_here=X_rt%energy_steps
+       file_name(i_file)="YPP_eels"
+     else
+       return
+     endif
+     !
+     call of_open_close(file_name(i_file),'ot')
+     !   
+     headings(1)="Time[fs]"
+     !
+     select case (trim(what))
+       case("current")
+         headings(2:4)=(/"A'_x","A'_y","A'_z"/)
+         headings(5:7)=(/"j_x","j_y","j_z"/)
+         n_headings=7
+       case("E_induced")
+         headings(2:4)=(/"E_x","E_y","E_z"/)
+         n_headings=4
+       case("eps")
+         headings(1)  ='E/ev[1]'
+         headings(2:3)=(/'eps_xx/Im[2]','eps_xx/Re[3]'/)
+         headings(4:5)=(/'eps_yy/Im[4]','eps_yy/Re[5]'/)
+         headings(6:7)=(/'eps_zz/Im[6]','eps_zz/Re[7]'/)
+         n_headings=7
+       case("eels")
+         headings(1)  ='E/ev[1]'
+         headings(2:3)=(/'eel_xx/Im[2]','eel_xx/Re[3]'/)
+         headings(4:5)=(/'eel_yy/Im[4]','eel_yy/Re[5]'/)
+         headings(6:7)=(/'eel_zz/Im[6]','eel_zz/Re[7]'/)
+         n_headings=7
+     end select
+     !
+     do i_d=1,n_SC_descriptions
+       call msg('o '//trim(what),'#',trim(SC_description(i_d)),INDENT=0)
+     enddo
+     !
+     call msg('o '//trim(what),'#',' ',INDENT=0)
+     call msg('o '//trim(what),'#',headings(1:n_headings),INDENT=-2,USE_TABS=.TRUE.)
+     call msg('o '//trim(what),'#',' ',INDENT=0)
+     !
+     do i_s=1,steps_here
+       !
+       output_data(1)=RT_step*i_s/FS2AUT
+       !
+       if (trim(what)=="current") output_data(2:n_headings)=&
+&                  (/A_vecpot_vel(i_s,1),A_vecpot_vel(i_s,2),A_vecpot_vel(i_s,3), &
+&                  current(i_s,1),current(i_s,2),current(i_s,3)/)
+       if (trim(what)=="E_induced") output_data(2:n_headings)=(/&
+&                  real(E_induced(i_s,1),SP),real(E_induced(i_s,2),SP) , real(E_induced(i_s,3),SP)/)
+       if (trim(what)=="eps") output_data(1:n_headings)=(/(i_s-1)*W_step+X_rt%energy_range(1)*HARTREE,&
+&                  real(EPS(i_s,1),SP),aimag(cmplx(EPS(i_s,1),kind=SP)),&
+&                  real(EPS(i_s,2),SP),aimag(cmplx(EPS(i_s,2),kind=SP)),&
+&                  real(EPS(i_s,3),SP),aimag(cmplx(EPS(i_s,3),kind=SP))/)
+       if (trim(what)=="eels") output_data(1:n_headings)=(/(i_s-1)*W_step+X_rt%energy_range(1)*HARTREE,&
+&                  real(EELS(i_s,1),SP),aimag(cmplx(EELS(i_s,1),kind=SP)),&
+&                  real(EELS(i_s,2),SP),aimag(cmplx(EELS(i_s,2),kind=SP)),&
+&                  real(EELS(i_s,3),SP),aimag(cmplx(EELS(i_s,3),kind=SP))/)
+       !
+       call msg('o '//trim(what),'',output_data(1:n_headings),USE_TABS=.TRUE.)
+     enddo
+     !
+     call of_open_close(file_name(i_file))
+     !
+     call set_real_printed_length()
+     !
+   end subroutine
+   !
 end subroutine

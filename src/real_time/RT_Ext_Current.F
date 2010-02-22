@@ -49,10 +49,10 @@ subroutine RT_Ext_Current(time)
      case('SINUSOIDAL')
        j_norm=-Efield(i1)%amplitude*cos(Efield(i1)%frequency*time)*Efield(i1)%frequency 
        j_current_ext=j_current_ext+j_norm*Efield(i1)%versor(:)/(4._SP*pi)*DL_vol
-     case('RESONANT')
+     case('ANTIRESONANT')
        j_norm=-Efield(i1)%amplitude*exp((0._SP,1._SP)*Efield(i1)%frequency*time)*Efield(i1)%frequency*(0._SP,1._SP)
        j_current_ext=j_current_ext+j_norm*Efield(i1)%versor(:)/(4._SP*pi)*DL_vol
-     case('ANTIRESONANT')
+     case('RESONANT')
        j_norm=-Efield(i1)%amplitude*exp(-(0._SP,1._SP)*Efield(i1)%frequency*time)*Efield(i1)%frequency*(0._SP,-1._SP)
        j_current_ext=j_current_ext+j_norm*Efield(i1)%versor(:)/(4._SP*pi)*DL_vol
      case('DELTA')

@@ -130,7 +130,7 @@ if test -z "${FCFLAGS}"; then
   case "${host}" in
   i?86*linux*)
     case "${FC}" in
-    *pgf90*)
+    *pgf9*)
       FCFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
       UFFLAGS="-O0"
       FCMFLAG="-Mnomain"
@@ -208,7 +208,7 @@ if test -z "${FCFLAGS}"; then
       UFFLAGS="-O0 -mtune=native"
       FCMFLAG=""
       ;;
-    *pgf90*)
+    *pgf9*)
       FCFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
       FCMFLAG="-Mnomain"
       ;;
@@ -260,7 +260,7 @@ if test -z "${FCFLAGS}"; then
   esac
 else
   case "${FC}" in
-  *pgf90*)
+  *pgf9*)
     FCMFLAG="-Mnomain"
     ;;
   *ifort*)

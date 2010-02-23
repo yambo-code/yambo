@@ -23,7 +23,7 @@ AC_DEFUN([ACX_GET_FC_VERSION],
 [
 FCVERSION="unknown"
 case "${FC}" in
-    *pgf90*)
+    *pgf9*)
       ;;
     *abf90*)
       ;;

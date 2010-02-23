@@ -208,6 +208,11 @@ if test -z "${FCFLAGS}"; then
       UFFLAGS="-O0 -mtune=native"
       FCMFLAG=""
       ;;
+    *g95*)
+      FCFLAGS="-O3 -fbackslash -fno-second-underscore"
+      UFFLAGS="-O0 -fbackslash -fno-second-underscore"
+      FCMFLAG=""
+      ;;
     *pgf9*)
       FCFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
       FCMFLAG="-Mnomain"
@@ -232,6 +237,11 @@ if test -z "${FCFLAGS}"; then
       FCFLAGS="-assume bscc -O3 -ip $CPU_FLAG"
       UFFLAGS="-assume bscc -O0 $CPU_FLAG"
       FCMFLAG="-nofor_main"
+      ;;
+    *openf95*)
+      FCFLAGS="-O2 -fno-second-underscore"
+      UFFLAGS="-O0 -fno-second-underscore"
+      FCMFLAG=""
       ;;
     *)
       FCFLAGS="-O"

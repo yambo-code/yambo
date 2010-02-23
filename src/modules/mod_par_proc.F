@@ -131,7 +131,7 @@ module par_proc_m
    end subroutine
    !
    subroutine i1share(array,imode)
-     integer:: array(:)
+     integer(4):: array(:)
      integer, optional :: imode
 #if defined _MPI
      integer ::ierr,omode

@@ -64,6 +64,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use global_XC,      ONLY:SC_HF,SC_COHSEX,SC_HF
  use SC,             ONLY:SC_potential,SC_ng_Sx,SC_X_bands,SC_X_size
  use collisions_IO,  ONLY:V_kind  
+ use real_time,      ONLY:l_RT_probe,l_RT_pump_and_probe
 #endif
 #if defined _MAGNETIC
  use magnetic,        ONLY:MAG_hamiltonian_type,MAG_pauli,MAG_landau
@@ -595,17 +596,17 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _SC
  if (l_sc_run) then
-   call initactivate(1,'Potential FFTGvecs SCmixing SCBands BandMix EXXCut')
+   call initactivate(1,'Potential FFTGvecs SCmixing SCBands BandMix')
    if (l_collisions_IO) call initactivate(1,'CollCache')
    if (l_cohsex) call initactivate(1,'GbndRnge UseEbands')
    if (l_real_time) then
-     call initactivate(1,'RTfreezeH RTfreezeXC')
+     call initactivate(-1,'SCmixing')
      call initactivate(1,'Integrator LifeTime') 
-     call initactivate(1,'RTstep NEsteps ThermSteps SwitchOnTime')
-     call initactivate(1,'RTDiagonalize RTDiagoSteps')
-     call initactivate(1,'NoDiamagnetic NoIntraband InducedField DiskSteps CollCache')
-     call Afield_activate('Probe')
-     call Afield_activate('Pump')
+     call initactivate(1,'RTstep NEsteps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
+     call initactivate(1,'RTfreezeH RTfreezeXC')
+     call initactivate(1,'NoDiamagnetic NoIntraband InducedField')
+     if (l_RT_probe.or.l_RT_pump_and_probe) call Afield_activate('Probe')
+     if (              l_RT_pump_and_probe) call Afield_activate('Pump')
    else
      call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
    endif
@@ -754,14 +755,18 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
    end subroutine
    !
+#if defined _RT
+   !
    subroutine Afield_activate(field)
      character(*)::field
      call initactivate(1,field//'_Freq')
      call initactivate(1,field//'_Int')
      call initactivate(1,field//'_kind')
      call initactivate(1,field//'_Dir')
-     call initactivate(1,field//'_Tstart')
+     if (l_RT_pump_and_probe.and.field=="Probe") call initactivate(1,field//'_Tstart')
    end subroutine
+   !
+#endif
    !
    subroutine X_activate(mode,what)
      character(2)::mode
@@ -959,7 +964,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    subroutine read_command_line(rstr,init_) 
      !
      use stderr, ONLY:string_split
-     use it_m,   ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp 
+     use it_m,   ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
      implicit none
      integer     :: init_
      character(*):: rstr
@@ -1010,6 +1015,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! V_io=5
        ! V_general=6
        ! V_resp=7
+       ! V_real_time=8
        !
        if ( trim(rstr_piece(i1)) == 'infver' ) then
          select case (trim(rstr_piece(i1+1)))
@@ -1027,6 +1033,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
              infile_verbosity=V_general
            case ('resp','X')
              infile_verbosity=V_resp
+           case ('rt')
+             infile_verbosity=V_real_time
          end select
        endif
        !
@@ -1184,6 +1192,15 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          if (.not.l_ph_corr.and..not.l_el_corr) l_el_corr=.true.
          if (l_ph_corr) call initactivate(1,'el_ph')
          if (l_el_corr) call initactivate(1,'el_el')
+       endif
+#endif
+       !
+       ! RT
+       !
+#if defined  _RT 
+       if ( trim(rstr_piece(i1)) == 'negf' ) then
+         if ( trim(rstr_piece(i1+1)) == 'p' ) l_RT_probe=.true.
+         if ( trim(rstr_piece(i1+1)) == 'pp') l_RT_pump_and_probe=.true.
        endif
 #endif
        !

@@ -25,7 +25,8 @@ subroutine RT_qp_analyze(it,en,k,xK,G_input)
  ! Evaluate quasi-particle energies and occupations
  ! and write them in en%E, en%f
  !
- use pars,           ONLY:SP,DP,lchlen
+ use pars,           ONLY:SP,DP
+ use units,          ONLY:HARTREE
  use electrons,      ONLY:levels
  use real_time,      ONLY:H_t,RT_diagonalization_steps,Occ_natural_orb,Thermal_steps
  use QP_m,           ONLY:QP_nk  
@@ -53,7 +54,8 @@ subroutine RT_qp_analyze(it,en,k,xK,G_input)
  complex(SP) :: cdotc
 #endif
  !
- if(.not.mod(it,RT_diagonalization_steps)==0._SP.and..not.it==Thermal_steps) return
+ if(.not.mod(it,RT_diagonalization_steps)==0.and..not.it==Thermal_steps) return
+ write (*,*) it
  !
  call set_real_printed_length()
  !
@@ -91,7 +93,7 @@ subroutine RT_qp_analyze(it,en,k,xK,G_input)
      call report_energies(en%E(:SC_bands,:,:),k,Xk,SC_bands,(/ik,ik/),'E  ',.TRUE.)
      call report_energies(E_bare,k,Xk,SC_bands,(/ik,ik/),'E_o  ',.FALSE.)
      call report_energies(en%E(:SC_bands,:,:)-E_bare,k,Xk,SC_bands,(/ik,ik/),'d_E',.FALSE.)
-     call report_energies(Occ_natural_orb(:SC_bands,:),k,Xk,SC_bands,(/ik,ik/),'O  ',.FALSE.)
+     call report_energies(Occ_natural_orb(:SC_bands,:)/HARTREE,k,Xk,SC_bands,(/ik,ik/),'O  ',.FALSE.)
    enddo
  endif
  !

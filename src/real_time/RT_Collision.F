@@ -52,7 +52,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  !
  ! Work Space
  !
- integer     :: ik,iv,i1,SC_bands2
+ integer     :: ik,iv,SC_bands2
  type(pp_indexes) ::px
  !
  SC_bands2=SC_bands**2

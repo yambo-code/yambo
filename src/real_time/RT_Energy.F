@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Ex,Exc,E_mg,Trace_Gf)
+subroutine RT_Energy(en,k,RT_Energies)
  !
  use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT
@@ -27,9 +27,9 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Ex,Exc,E_mg,Trace_Gf)
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
  use SC,             ONLY:V_hartree_sc,Ho
+ use X_m,            ONLY:P_square
  use real_time,      ONLY:XC0,G_lesser,RT_average_operator,XCfrozen, &
 &                         l_NE_with_fields,A_vecpot
- use X_m,            ONLY:P_square
  use electrons,      ONLY:levels
  use QP_m,           ONLY:QP_Vnl_xc,QP_Sc
  use xc_functionals, ONLY:E_xc
@@ -39,7 +39,11 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Ex,Exc,E_mg,Trace_Gf)
  !
  type(levels),  intent(in) :: en
  type(bz_samp), intent(in) :: k
- complex(SP),   intent(out):: E_kin,E_ion,E_h,Trace_Gf,Exc,Ex,E_mg
+ complex(SP),   intent(out):: RT_Energies(7)
+ !
+ ! Shadows
+ !
+ complex(SP)               :: E_kin,E_ion,E_h,Trace_Gf,Exc,Ex,E_mg
  !
  ! Non-interaction kinetc energy
  !
@@ -114,6 +118,10 @@ subroutine RT_Energy(en,k,E_kin,E_ion,E_h,Ex,Exc,E_mg,Trace_Gf)
  ! Total number of electrons
  !
  call RT_average_operator(VALUE=Trace_Gf,G=G_lesser,k=k)
+ !
+ ! Transfer the shadow variables
+ !
+ RT_Energies=(/E_kin,E_ion,E_h,Ex,Exc,E_mg,Trace_Gf/)
  !
 end subroutine RT_Energy
 

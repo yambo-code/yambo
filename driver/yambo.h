@@ -37,7 +37,7 @@
   {"lhelp",  "H","Long Help",0,0,0,0},               
   {"jobstr", "J","Job string identifier",0,0,1,0},   
   {"infver", "V","Input file verbosity",0,0,1,0},    
-  {"DESC",   " ","opt=RL,kpt,sc,qp,io,gen,resp",0,0,0,0},
+  {"DESC",   " ","opt=RL,kpt,sc,qp,io,gen,resp,rt",0,0,0,0},
   {"ifile",  "F","Input file",0,0,1,0},              
   {"idir",   "I","Core I/O directory",0,0,1,0},         
   {"odir",   "O","Additional I/O directory",0,0,1,0},   
@@ -75,7 +75,7 @@
   {"DESC",   " ","opt=(hf),(c)hosex,(exx),(exxc),(h)artree,(d)ef",0,0,0,0},
 #endif
 #if defined _RT 
-  {"negf",   "k","Real-time dynamics",0,0,0,0}, 
+  {"negf",   "k","Real-time dynamic [opt=(n)one,(p)robe,(pp)ump & probe]",0,0,1,0}, 
 #endif
 #if defined _MAGNETIC 
   {"magnetic", "m","Magnetic [opt=(p)auli,(l)andau,(a)ll]",0,0,1,0}, 

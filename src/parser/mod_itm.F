@@ -46,6 +46,7 @@ module it_m
  integer, parameter :: V_io=5
  integer, parameter :: V_general=6
  integer, parameter :: V_resp=7
+ integer, parameter :: V_real_time=8
  !
  integer, parameter :: maxrnlvls=50
  integer, parameter :: maxflags =50

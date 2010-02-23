@@ -31,6 +31,8 @@ module real_time
  ! NE dynamics
  !
  logical           :: l_NE_with_fields  
+ logical           :: l_RT_probe  
+ logical           :: l_RT_pump_and_probe  
  !
  ! Inital XC (SC or default) are requested
  !

@@ -104,7 +104,7 @@ subroutine SC_History(it,E)
      !
 #if defined _RT
      call msg('o Occ_History','',(/RT_step*real(it)/FS2AUT,&
-&                                ((Occ_natural_orb(ib,ik)*HARTREE,ib=n_met_bands-1,n_full_bands+1),ik=1,nkibz) &
+&                                ((Occ_natural_orb(ib,ik),ib=n_met_bands-1,n_full_bands+1),ik=1,nkibz) &
 &                                /),INDENT=-2,USE_TABS=.true.)
 #endif
    endif

@@ -18,7 +18,7 @@
 !
 subroutine RT_initialize()
  ! 
- use pars,           ONLY:SP,schlen,pi
+ use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT,FS2AUT,HARTREE
  use com,            ONLY:msg,warning
  use vec_operate,    ONLY:normalize_v
@@ -26,7 +26,7 @@ subroutine RT_initialize()
 &                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,    &
 &                         l_RT_no_diamagnetic,EField,n_ext_fields,max_rt_steps_disk,     &
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,         &
-&                         l_RT_induced_field,j_current_ext,Ext_fields_initial_time
+&                         l_RT_induced_field,j_current_ext,Ext_fields_initial_time,RT_diagonalization_steps
  use parser_m,       ONLY:parser
  implicit none
  !
@@ -36,11 +36,11 @@ subroutine RT_initialize()
  !
  ! Logicals
  !----------
- call parser('RTDiagonalize',l_RT_diagonalize)
  call parser('NoDiamagnetic',l_RT_no_diamagnetic)
  call parser('InducedField' ,l_RT_induced_field)
  call parser('RTfreezeH',    Hfrozen)
  call parser('RTfreezeXC',   XCfrozen)
+ l_RT_diagonalize=RT_diagonalization_steps>1
  l_NE_simulate_RPA=.not.Hfrozen.and.XCfrozen
  l_NE_simulate_IP =     Hfrozen.and.XCfrozen
  l_NE_simulate_Irredux =Hfrozen.and..not.XCfrozen
@@ -97,7 +97,8 @@ subroutine RT_initialize()
  call msg( 'r', '[RT] NE Steps                   :',NE_steps)
  call msg( 'r', '[RT] Thermalization steps       :',Thermal_steps)
  call msg( 'r', '[RT] Step length            [fs]:',RT_step/FS2AUT)
- call msg('sr', '[RT] Response energy window [eV]:',(/2.*pi/(RT_step*real(NE_steps)-Ext_fields_initial_time),pi/RT_step/)*HARTREE)
+ if(NE_steps>0) &
+&  call msg('sr', '[RT] Response energy window [eV]:',(/2.*pi/(RT_step*real(NE_steps)-Ext_fields_initial_time),pi/RT_step/)*HARTREE)
  call msg('rsn','[RT] Simulation time        [fs]:',(/-real(Thermal_steps)*RT_step,RT_step*real(NE_steps)/)/FS2AUT)
  !
 end subroutine RT_initialize

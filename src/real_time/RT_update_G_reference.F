@@ -38,7 +38,7 @@ subroutine RT_update_G_reference(Xen,G_lesser_reference)
  !
  ! Work Space
  !
- integer :: ik,i1,i2
+ integer :: ik,ib
  !
  do ik=1,Xen%nk
     !
@@ -48,23 +48,11 @@ subroutine RT_update_G_reference(Xen,G_lesser_reference)
     !
     G_lesser_reference(:,:,ik)=(0._SP,0._SP)
     !
-    forall(i1=1:Xen%nbm)
-      G_lesser_reference(i1,i1,ik)=(0._SP,1._SP)*spin_occ
+    forall(ib=1:Xen%nbm)
+      G_lesser_reference(ib,ib,ik)=(0._SP,1._SP)*spin_occ
     end forall   
     !
     call H_rotate(H_t(:,:,ik,1),G_lesser_reference(:,:,ik),SC_bands,-1)
-    !
-    ! Symmetrization
-    !
-!    do i1=1,SC_bands
-!      G_lesser_reference(i1,i1,ik)=(0.,1.)*aimag(G_lesser_reference(i1,i1,ik))
-!      !
-!      do i2=i1+1,SC_bands
-!        G_lesser_reference(i1,i2,ik)=(G_lesser_reference(i1,i2,ik)-conjg(G_lesser_reference(i2,i1,ik)))/2.0
-!        G_lesser_reference(i2,i1,ik)=-conjg(G_lesser_reference(i1,i2,ik))
-!      enddo
-!      !
-!    enddo
     !
   enddo
   !

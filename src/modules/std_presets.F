@@ -79,7 +79,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB
  use collisions_IO,    ONLY:n_collisions,COLLISIONS_cutoff
  use collisions_CACHE, ONLY:COLLISIONS_cache_size
- use real_time,  ONLY:l_RT_no_diamagnetic
+ use real_time,  ONLY:l_RT_no_diamagnetic,l_RT_probe,l_RT_pump_and_probe
 #endif
 #if defined _RT
  use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Efield,Integrator_name,            &
@@ -421,6 +421,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  ! RT current (in use in SC_driver)
  !
  l_RT_no_diamagnetic=.FALSE.
+ l_RT_probe=.FALSE.
+ l_RT_pump_and_probe=.FALSE.
  !
 #endif
 #if defined _RT
@@ -439,13 +441,13 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  RT_step=0.002*FS2AUT
  NE_steps=1000
- Thermal_steps=0
+ Thermal_steps=4000
  Ext_fields_initial_time=0.
  Thermal_time = 1./8.
  Integrator_name='RK2'
  LifeTime = 0.0*FS2AUT
  l_NE_simulate_RPA=.FALSE.
- RT_diagonalization_steps=10
+ RT_diagonalization_steps=-1
  l_RT_diagonalize=.FALSE.
  max_rt_steps_disk=200
  l_RT_no_intraband=.FALSE.

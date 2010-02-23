@@ -25,6 +25,7 @@ subroutine RT_report(i_t,values)
  use com,            ONLY:msg,of_open_close
  use SC,             ONLY:SC_description,n_SC_descriptions
  use real_time,      ONLY:l_NE_with_fields,A_vecpot
+ use stderr,         ONLY:set_real_printed_length
  implicit none
  !
  integer :: i_t
@@ -44,10 +45,12 @@ subroutine RT_report(i_t,values)
  !
  output_file=.false.
  !
+ call set_real_printed_length(f_length=15,g_length=15)
+ !
  output_file(1)=.true.  ! General dynamics output file
  if (l_NE_with_fields)  output_file(2)=.true.
  !
- if(i_t==0) then
+ if(i_t==1) then
    !      
    file_name(1)='RT-dynamics'
    file_name(2)="RT-gauge_field"
@@ -121,5 +124,7 @@ subroutine RT_report(i_t,values)
      call msg('o gauge_field','',gauge_field_values(1:10),USE_TABS=.TRUE.)
    endif
  endif
+ !
+ call set_real_printed_length( )
  !
 end subroutine RT_report

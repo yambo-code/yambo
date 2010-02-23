@@ -26,7 +26,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use frequency,     ONLY:w_samp
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,B_unit,&
 &                        Time_unit,I_unit,Angle_unit,&
-&                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp 
+&                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
  use X_m,           ONLY:X_t,long_path,q_plus_G_direction,Q_Shift_Order
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,&
@@ -273,21 +273,20 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _RT
  call it(defs,'RTstep',    '[RT] Real Time step length',RT_step,unit=Time_unit)
  call it(defs,'NEsteps',   '[RT] Non-equilibrium Time steps',NE_steps)
- call it(defs,'ThermSteps','[RT] Thermal Steps',Thermal_steps)
+ call it(defs,'ThermSteps','[RT Therm] Thermal Steps',Thermal_steps,Verb_level=V_real_time)
  !
  ! Other parameters of RT
  !
  call it(defs,'Integrator',  '[RT] Integrator (RK2 | EULER | EXACT | RK2EXACT) ',Integrator_name)
- call it(defs,'SwitchOnTime','[RT] Adiabatic switch on time ',Thermal_time,verb_level=V_sc,unit=Time_unit)
- call it(defs,'LifeTime',  '[RT] Relaxation Time',LifeTime,verb_level=V_sc,unit=Time_unit)
- call it('f',defs,'RTDiagonalize', '[RT] Analyze quasi-particle dynamics in real-time',verb_level=V_sc)
- call it(defs,    'RTDiagoSteps',  '[RT] Digonalize the Hamiltonian',RT_diagonalization_steps,verb_level=V_sc)
- call it('f',defs,'NoDiamagnetic', '[RT] Exclude the diamagnetic term in current and coupling',verb_level=V_sc)
- call it('f',defs,'NoIntraband', '[RT] Do not include intraband coupling',verb_level=V_sc)
- call it('f',defs,'InducedField', '[RT] Include induced field in coupling and current(work in progress)',verb_level=V_sc)
- call it('f',defs,'RTfreezeH', '[RT] Hartree not updated during RT',verb_level=V_sc)
- call it('f',defs,'RTfreezeXC','[RT] XC potential/self-energy not updated during RT',verb_level=V_sc)
- call it(defs,'DiskSteps',     '[RT] Numer of steps stored in memory before I/O',max_rt_steps_disk,verb_level=V_sc)
+ call it(defs,'SwitchOnTime','[RT Therm] Adiabatic switch on time ',Thermal_time,verb_level=V_real_time,unit=Time_unit)
+ call it(defs,'LifeTime',  '[RT] Relaxation Time',LifeTime,verb_level=V_real_time,unit=Time_unit)
+ call it(defs,    'RTDiagoSteps',  '[RT] Digonalize the Hamiltonian',RT_diagonalization_steps,verb_level=V_real_time)
+ call it('f',defs,'NoDiamagnetic', '[RT] Exclude the diamagnetic term in current and coupling',verb_level=V_real_time)
+ call it('f',defs,'NoIntraband', '[RT] Do not include intraband coupling',verb_level=V_real_time)
+ call it('f',defs,'InducedField', '[RT] Include induced field in coupling and current',verb_level=V_real_time)
+ call it('f',defs,'RTfreezeH', '[RT] Hartree not updated during RT',verb_level=V_real_time)
+ call it('f',defs,'RTfreezeXC','[RT] XC potential/self-energy not updated during RT',verb_level=V_real_time)
+ call it(defs,'DiskSteps',     '[RT] Numer of steps stored in memory before I/O',max_rt_steps_disk,verb_level=V_real_time)
  !
  ! External fields
  !
@@ -374,8 +373,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_sc)
  call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)
  call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)
- call it(defs,'EXXCut',    '[SC] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
- call it(defs,'CollCache',     '[RT] Cache[Gb] for collisions (negative value = automatic)',COLLISIONS_cache_size,verb_level=V_sc)
+ call it(defs,'EXXCut',    '[SC,RT] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
+ call it(defs,'CollCache', '[SC,RT] Cache[Gb] for collisions (negative value = automatic)',COLLISIONS_cache_size,verb_level=V_sc)
 #endif
  ! 
  ! RAS
@@ -415,7 +414,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
      verbosity_here=0
      name='Probe'
      if (i_field==2) name='Pump'
-     if (i_field==2) verbosity_here=V_sc
+     if (i_field==2) verbosity_here=V_real_time
      call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] External Field Frequency',&
 &    EField(i_field)%frequency,unit=E_unit,verb_level=verbosity_here)
      call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] External Field Intensity',&

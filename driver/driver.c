@@ -350,10 +350,12 @@ static void usage(int verbose)
   fprintf(stderr,"\nThis is %s %s\n",tool,codever); 
   fprintf(stderr,"Usage: %s",tool); 
   for(j=0;j<=nr-1;j++)
+  {if (strcmp(opts[j].ln,"DESC")!=0) 
    {fprintf(stderr," -%s",opts[j].sn);
    for(i=1;i<=opts[j].ni;i++) {fprintf(stderr," %s","<int>");};
    for(i=1;i<=opts[j].nr;i++) {fprintf(stderr," %s","<real>");};
    for(i=1;i<=opts[j].nc;i++) {fprintf(stderr," %s","<opt>");};
+   };
   };
   fprintf(stderr,"\n%s%s%s\n","Try `",tool," -H' for more information");exit(0);
  };

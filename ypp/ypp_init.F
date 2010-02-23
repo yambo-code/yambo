@@ -58,7 +58,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
 #if defined _YPP_RT
  type(levels)     ::E_rt
- integer          ::io_J,ID
+ integer          ::io_G,ID
  integer, external::io_SC_components
 #endif
  !
@@ -227,9 +227,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  call E_reset(E_rt) 
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
- io_J=io_SC_components('J' ,E_rt,ID)
+ io_G=io_SC_components('G' ,E_rt,ID)
  ! 
- if (io_J==0) then
+ if (io_G==0) then
    !
    ! Re-define defaults based on DB
    !

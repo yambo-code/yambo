@@ -52,9 +52,10 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  ! 
  ! Work Space
  !
- integer                  :: it,i1
- real(SP)                 :: RT_time  ! The real time on the diagonal RTime = it*RT_step    
- complex(SP)              :: Trace_Gf,E_kin,E_ion,E_h,E_x,E_xc,E_mg 
+ integer                  :: it,ib
+ logical                  :: Dynamics_is_over
+ real(SP)                 :: RT_time ! The real time on the diagonal RTime = it*RT_step    
+ complex(SP)              :: RT_Energies(7)
  !
  call section('*',trim(SC_potential)//' Real-Time Dynamics')
  !##########################################################
@@ -123,14 +124,19 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
  endif
  !
- ! Open the output files
+ ! Open the History output files
  !
- call RT_report(0,spread(0.,1,4))
  if (l_RT_diagonalize) call SC_History(1,en)
  !
  ! loop on time
  !
- do it=it_now,Thermal_steps+NE_steps
+ Dynamics_is_over=.FALSE.
+ !
+ it=it_now-1
+ !
+ do while (.not.Dynamics_is_over)
+   !
+   it=it+1
    !
    ! i_time: integer index of the time staring from RT_time>0 
    !         after the Thermalization, used for A_t and J_current
@@ -143,16 +149,12 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
      if(LifeTime/=0.0) G_lesser_reference=G_lesser
    endif
    !
-   call live_timing(steps=1)
-   !
-   if(it==Thermal_steps) call live_timing()
-   !
    ! Copy G_lesser in G_old before start collisin
    !
    ! Simmetrization
    !
    G_lesser_previous=G_lesser
-   forall( i1=1:SC_bands )  G_lesser_previous(i1,i1,:)=(0._SP,1._SP)*aimag(G_lesser(i1,i1,:))
+   forall( ib=1:SC_bands )  G_lesser_previous(ib,ib,:)=(0._SP,1._SP)*aimag(G_lesser(ib,ib,:))
    !
    call RT_Collision(G_lesser_previous,Xen,k,q,RT_time)
    !
@@ -161,7 +163,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
      call RT_current(xK,G_lesser_previous,A_vecpot)
    endif
    !
-   call RT_Energy(Xen,k,E_kin,E_ion,E_h,E_x,E_xc,E_mg,Trace_Gf)
+   call RT_Energy(Xen,k,RT_Energies)
    !
    if(l_RT_diagonalize) call RT_qp_analyze(it,en,k,Xk,G_lesser)
    !
@@ -181,14 +183,25 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    ! Now print the Energy and other stuff
    !
-   call RT_report(it,(/RT_time/FS2AUT,real(E_kin,SP),real(E_ion,SP),real(E_h,SP),&
-&                    real(E_x,SP),real(E_xc,SP),real(E_mg,SP),real(Trace_Gf,SP)/))
+   call RT_report(it,(/RT_time/FS2AUT,real(RT_Energies(1),SP),real(RT_Energies(2),SP),&
+&                     real(RT_Energies(3),SP),real(RT_Energies(4),SP),real(RT_Energies(5),SP),&
+&                     real(RT_Energies(6),SP),real(RT_Energies(7),SP)/))
+   !
+   call live_timing(steps=1)
+   !
+   ! End Thermalization Live-Timing
+   !
+   if (it==Thermal_steps) call live_timing()
+   !
+   ! End dynamics
+   !
+   if (it==Thermal_steps+NE_steps) Dynamics_is_over=.TRUE.
    !
  enddo
  !
  if(NE_steps/=0) call live_timing
  !
- call RT_report(-1,spread(0.,1,4))
+ call RT_report(-1,spread(0.,1,size(RT_Energies)+1))
  if (l_RT_diagonalize) call SC_History(-1,en)
  !
  ! Finalize

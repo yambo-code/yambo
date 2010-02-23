@@ -25,11 +25,9 @@ subroutine RT_Ext_Current(time)
  ! to evolve the vector potential 
  !
  use pars,           ONLY:SP,pi
- use units,          ONLY:SPEED_OF_LIGHT
  use D_lattice,      ONLY:DL_vol
  use com,            ONLY:error
- use real_time,      ONLY:ext_field,n_ext_fields,Efield, &
-&                         j_current_ext,A_vecpot
+ use real_time,      ONLY:ext_field,n_ext_fields,Efield,j_current_ext
  !
  implicit none
  real(SP),    intent(in)     :: time

@@ -47,7 +47,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use timing,         ONLY:live_timing
  use collisions_IO,  ONLY:collisions_IO_alloc,collisions_IO_free
 #if defined _MAGNETIC
- use magnetic,       ONLY:average_two_spin_density
+ use magnetic,       ONLY:average_el_mag
 #endif
  !
  implicit none
@@ -303,6 +303,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
    end do
    !
+   if(l_NSC_shot) call fermi_level(E,k,1) 
+   !
    if (l_SC_cycle) then
      !
      ! New occupations 
@@ -353,7 +355,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      if(n_sp_pol>1) then
        dumb_ch='[SC] Iteration '//trim(intc(it_now))//' Accuracies rho(%) - E(ev) :'//&
 &            trim(real2ch(rho_convergence))//'% - '//trim(real2ch(E_convergence*HARTREE))//&
-&            '  (Mz='//trim(real2ch(average_two_spin_density(3)))//')'
+&            '  (Mz='//trim(real2ch(average_el_mag(3)))//')'
      else
 #endif
      dumb_ch='[SC] Iteration '//trim(intc(it_now))//' Accuracies rho(%) - E(ev) :'//&

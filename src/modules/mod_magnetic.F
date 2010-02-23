@@ -53,17 +53,66 @@ module magnetic
  real(SP),    allocatable :: A_magn_z(:)
  integer                  :: gauge_factors(2,3)
  !
- ! Centered coordinates
+ ! Average magnetization density
  !
- real(SP),    allocatable :: x(:)
- real(SP),    allocatable :: y(:)
- real(SP),    allocatable :: z(:)
+ real(SP)                 :: average_el_mag(3)
+ real(SP)                 :: average_el_mag_rescaling
+ character(20)            :: average_el_mag_dim         ! 'Bohr_magneton'        'Bohr_magneton/Bohr'
+ !                                                      ! 'Bohr_magneton/Bohr^2' 'Bohr_magneton/Bohr^3'
+ ! Centered cartesian coordinates
  !
- ! Average spin density
+ real(SP),    allocatable :: x(:,:)
+ real(SP)                 :: cell_center(3)
  !
- real(SP)                 :: average_two_spin_density(3)
- real(SP)                 :: average_two_spin_density_rescaling
- character(20)            :: average_two_spin_density_dim ! 'Bohr_magneton'        'Bohr_magneton/Bohr'
- !                                                        ! 'Bohr_magneton/Bohr^2' 'Bohr_magneton/Bohr^3'
- !
+ contains
+   !
+   subroutine load_cc(manage_zero)
+     use FFT_m,       ONLY:fft_size,fft_dim
+     use D_lattice,   ONLY:a
+     ! input variable
+     logical    :: manage_zero
+     real(SP)   :: tmp_center(3),tmp_x(3)
+     integer    :: ir,ir1,ir2,ir3,i_dir   
+     !
+     call fft_setup(0,1,.false.)      ! FFT size
+     allocate(x(fft_size,3))
+     cell_center(:)=0.
+     !
+     do ir1 = 0, fft_dim(1)-1         ! x 
+       do ir2 = 0, fft_dim(2)-1       ! y
+         do ir3 = 0, fft_dim(3)-1     ! z
+           ir = 1 + ir1 + ir2*fft_dim(1) + ir3*fft_dim(1)*fft_dim(2)
+           ! Definition: x_i=a1_i+a_2i+a3_i     i=x,y,z
+           !             in cartesian coordinates
+           tmp_x(:) = ir1*a(1,:)/fft_dim(1) +&
+&                     ir2*a(2,:)/fft_dim(2) +&
+&                     ir3*a(3,:)/fft_dim(3)
+           tmp_center(1)=cell_center(1)+a(1,1)/2+a(2,1)*ir2/fft_dim(2)+a(3,1)*ir3/fft_dim(3)
+           tmp_center(2)=cell_center(2)+a(2,2)/2+a(1,2)*ir1/fft_dim(1)+a(3,2)*ir3/fft_dim(3)
+           tmp_center(3)=cell_center(3)+a(3,3)/2+a(1,3)*ir1/fft_dim(1)+a(2,3)*ir2/fft_dim(2)
+           ! Correclty compute x1, x2 and x3 with respect to cartesian axis
+           ! They are saw-like and the jumps are always at the axis parallel to the vectors
+           ! which defines the supercell and which cross at the center of the supercell
+           ! The differents "if" take into account how the supercell is "compound" around the
+           ! supercell corner
+           x(ir,:)=tmp_x(:)
+           do i_dir=1,3
+             if (tmp_x(i_dir)>tmp_center(i_dir)) x(ir,:)=x(ir,:)-a(i_dir,:)
+           enddo
+           do i_dir=1,3
+             if(manage_zero.and.abs(x(ir,i_dir))<10*epsilon(1.)) then
+               if(x(ir,i_dir)>=0.) x(ir,i_dir)= 10*epsilon(1.)
+               if(x(ir,i_dir)< 0.) x(ir,i_dir)=-10*epsilon(1.)
+             endif
+           enddo
+         enddo
+       enddo
+     enddo
+     !
+   end subroutine
+   !
+   subroutine free_cc()
+     deallocate(x)
+   end subroutine
+   !
 end module

@@ -26,7 +26,8 @@ subroutine fermi_msg(E,mode)
  use com,           ONLY:msg,warning
  use electrons,     ONLY:levels,n_sp_pol,n_spin,filled_tresh
 #if defined _SC
- use magnetic,      ONLY:average_two_spin_density,average_two_spin_density_dim
+ use magnetic,      ONLY:average_el_mag,average_el_mag_dim
+ use drivers,       ONLY:l_sc_magnetic
 #endif
  implicit none
  type(levels)::E
@@ -145,8 +146,8 @@ subroutine fermi_msg(E,mode)
 #if defined _SC
  ! [4] Report the value of the mean magnetization
  !
- if(n_sp_pol>1) then
-   call msg('r','Mean magnetization (x,y,z) ['//trim(average_two_spin_density_dim)//'] :',real(average_two_spin_density(:)))
+ if(n_sp_pol>1 .and. l_sc_magnetic) then
+   call msg('r','Mean magnetization (x,y,z) ['//trim(average_el_mag_dim)//'] :',real(average_el_mag(:)))
  endif
 #endif
  !

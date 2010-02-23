@@ -61,6 +61,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
  !
  !
  use pars,           ONLY:SP,pi
+ use units,          ONLY:SPEED_OF_LIGHT
  use SC,             ONLY:Ho
  use memory_m,       ONLY:mem_est
  use com,            ONLY:warning,error
@@ -68,7 +69,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
  use D_lattice,      ONLY:a
  use R_lattice,      ONLY:nkibz
  use magnetic,       ONLY:MAG_radius,MAG_B,MAG_hamiltonian_type,MAG_landau,MAG_pauli, &
-&                         MAG_gauge,A_magn_x,A_magn_y,A_magn_z,x,y,z,  &
+&                         MAG_gauge,A_magn_x,A_magn_y,A_magn_z,  &
 &                         Bx,By,Bz,MAG_theta,MAG_psi,ir_table
  use electrons,      ONLY:n_sp_pol
  use SC,             ONLY:SC_bands,SC_potential
@@ -161,7 +162,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
    if(allocated(A_magn_y)) H_magn_y_on=.true.
    if(allocated(A_magn_z)) H_magn_z_on=.true.
  else if(MAG_pauli) then
-   call fft_setup(0,1,.false.) ! FFT size
+   call fft_setup(0,1,.true.) ! FFT size
  endif
  !
  ! Symmetries check
@@ -182,13 +183,13 @@ subroutine MAG_Hamiltonian(initial_check_only)
  !                               moment with respect to the spin)
  if (MAG_landau) then
    ! 1) H_paramagn (the px,py,pz component will be applied directly to the wf)
-   if(H_magn_x_on) H_paramagn_x(:)=A_magn_x(:)
-   if(H_magn_y_on) H_paramagn_y(:)=A_magn_y(:)
-   if(H_magn_z_on) H_paramagn_z(:)=A_magn_z(:)
+   if(H_magn_x_on) H_paramagn_x(:)=A_magn_x(:)/SPEED_OF_LIGHT
+   if(H_magn_y_on) H_paramagn_y(:)=A_magn_y(:)/SPEED_OF_LIGHT
+   if(H_magn_z_on) H_paramagn_z(:)=A_magn_z(:)/SPEED_OF_LIGHT
    ! 2) H_diamagnetic
-   if(H_magn_x_on) H_diamagn(:)=A_magn_x(:)**2
-   if(H_magn_y_on) H_diamagn(:)=H_diamagn(:)+A_magn_y(:)**2
-   if(H_magn_z_on) H_diamagn(:)=H_diamagn(:)+A_magn_z(:)**2
+   if(H_magn_x_on) H_diamagn(:)=(A_magn_x(:)/SPEED_OF_LIGHT)**2
+   if(H_magn_y_on) H_diamagn(:)=H_diamagn(:)+(A_magn_y(:)/SPEED_OF_LIGHT)**2
+   if(H_magn_z_on) H_diamagn(:)=H_diamagn(:)+(A_magn_z(:)/SPEED_OF_LIGHT)**2
    H_diamagn(:)=0.5*H_diamagn(:)
  endif
  !
@@ -199,12 +200,12 @@ subroutine MAG_Hamiltonian(initial_check_only)
    if(MAG_landau) then
      do ir=1,fft_size
        if(.not.ir_table(ir)) cycle
-       H_pauli(ir,1)= 0.5*MAG_B
-       H_pauli(ir,2)=-0.5*MAG_B
+       H_pauli(ir,1)= 0.5*MAG_B/SPEED_OF_LIGHT
+       H_pauli(ir,2)=-0.5*MAG_B/SPEED_OF_LIGHT
      enddo 
    else
-     H_pauli(:,1)= 0.5*MAG_B
-     H_pauli(:,2)=-0.5*MAG_B
+     H_pauli(:,1)= 0.5*MAG_B/SPEED_OF_LIGHT
+     H_pauli(:,2)=-0.5*MAG_B/SPEED_OF_LIGHT
    endif
  endif
  !

@@ -297,9 +297,9 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  close(11)
  !
-#endif
- !
  call msg('l','done')
+ !
+#endif
  !
  call msg('s','Report:')
  !======================

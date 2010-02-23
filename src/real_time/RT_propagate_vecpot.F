@@ -35,11 +35,11 @@ subroutine RT_propagate_vecpot(A_new,A_old,T_step,RT_time)
  ! 
  ! Integrate the eq. for the vector potential
  !
- ! d^2 A / d t^2 = 4 pi J(t)  = 4 pi ( J_ext(t) + J_induced(t) )
+ ! d^2 A / d t^2 = 4 pi * c * J(t)  = 4 pi * c * ( J_ext(t) + J_induced(t) )
  !
  ! using 
  !
- ! A''(t+dt)  = 4 pi * j(t) / c 
+ ! A''(t+dt)  = 4 pi * j(t) * c 
  ! A'(t + dt) = A'(t) + A''(t) * dt
  ! A(t + dt)  = A(t)  + A'(t)  * dt + A''(t) * dt^2/2
  !

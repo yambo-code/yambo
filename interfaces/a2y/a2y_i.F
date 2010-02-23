@@ -115,9 +115,9 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
    do ib_grp=1,wf_nb_io_groups
      !
 #if defined _ELK
-     call elk_wf(wf_disk,ik,ib_grp,trim(KSS_file_name))
+     call elk_wf(wf_disk,ik,trim(KSS_file_name))
 #else
-     call a2y_wf(wf_disk,ik,ib_grp,trim(KSS_file_name))
+     call a2y_wf(wf_disk,ik,trim(KSS_file_name))
      !
      if (n_atoms_species_max>0.and.ib_grp==1) then
        if (ik==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)

@@ -1,4 +1,4 @@
-
+!
 ! Copyright (C) 2000-2010 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
@@ -302,7 +302,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'B_psi',      '[MAG] Magnetic field psi angle',MAG_psi,unit=Angle_unit,verb_level=V_sc)
  call it(defs,'B_theta',    '[MAG] Magnetic field theta angle',MAG_theta,unit=Angle_unit,verb_level=V_sc)
  call it(defs,'Gauge',      '[MAG] Gauge ("SYMM"etric, "X_ASYMM", "Y_ASYMM" or "Z_ASYMM"etric)',MAG_gauge,verb_level=V_sc)
- call it(defs,'NonPerDir',  '[MAG] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,verb_level=V_sc)
+ call it(defs,'NonPerDir',  '[MAG] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions)
  call it(defs,'B_radius',   '[MAG] Magnetic flux radius',MAG_radius,verb_level=V_sc)
 #endif
  !

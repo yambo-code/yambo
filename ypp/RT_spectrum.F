@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 C. ATime_reached, A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 C. Attaccalite, A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -51,9 +51,9 @@ subroutine RT_spectrum(en,k)
  integer  :: i_t_start,i_t_end
  logical  :: Prt_Current,Prt_Einduced,Use_FFT,l_no_remove_DC,l_use_gauge_field
  real(SP)           :: Integral,W_RT_induced_step,W_step,Time_reached,W_reached
- complex(SP)        :: w_Aw(3)
+ complex(SP)        :: w_Aw
  real(SP),    allocatable :: damp_function(:)
- real(SP),    allocatable :: current(:,:)
+ real(DP),    allocatable :: current(:,:)
  real(SP),    allocatable :: A_vecpot_vel(:,:)
  complex(DP), allocatable :: EELS(:,:),EPS(:,:)
  real(DP),    allocatable :: E_induced(:,:)
@@ -101,7 +101,7 @@ subroutine RT_spectrum(en,k)
  !=====================================
  !
  allocate(current(NE_steps,3))
- call mem_est("Current",(/size(current)/),(/SP/))
+ call mem_est("Current",(/size(current)/),(/2*SP/))
  allocate(A_vecpot_vel(NE_steps,3))
  call mem_est("A_vecpot_vel",(/size(A_vecpot_vel)/),(/SP/))
  allocate(current_cache(9,max_rt_steps_disk))
@@ -155,10 +155,6 @@ subroutine RT_spectrum(en,k)
    damp_function(:) = 1.0
    call warning(" Unknown DampMode. Switching to NONE")
  endif
- ! 
- ! apply the damping
- !
- forall(i_t=1:NE_steps) current(i_t,:)=current(i_t,:)*damp_function(i_t)
  !
  ! Remove the dc component from current
  !--------------------------------------
@@ -176,6 +172,10 @@ subroutine RT_spectrum(en,k)
    enddo
    !
  endif
+ ! 
+ ! apply the damping
+ !
+ forall(i_t=1:NE_steps) current(i_t,:)=current(i_t,:)*damp_function(i_t)
  !
  ! Induced Electric Field
  !------------------------
@@ -223,10 +223,12 @@ subroutine RT_spectrum(en,k)
  !
  allocate(EELS(X_rt%energy_steps,1:3))  
  allocate(EPS(X_rt%energy_steps,1:3))  
- call mem_est("EELS EPS",(/size(EELS),size(EPS)/),(/2*SP/))
+ call mem_est("EELS EPS",(/size(EELS),size(EPS)/),(/2*SP,2*SP/))
  !
- EELS=(0.,0.)
- EPS=(0.,0.)
+ EELS=(0._DP,0._DP)
+ EPS=(0._DP,0._DP)
+ !
+ W_step=(X_rt%energy_range(2) - X_rt%energy_range(1))/X_rt%energy_steps
  !
  if(Use_FFT) then
    !
@@ -258,7 +260,7 @@ subroutine RT_spectrum(en,k)
      W_reached = (i_w-1)*W_step+X_rt%energy_range(1)
      !
      do i_t = 1, NE_steps
-      Time_reached = i_t*RT_step
+       Time_reached = i_t*RT_step
        EELS(i_w,1:3) = EELS(i_w,1:3)+current(i_t,1:3)*exp((0.,1.)*W_reached*Time_reached) 
      enddo
      !
@@ -269,44 +271,29 @@ subroutine RT_spectrum(en,k)
    !
  endif
  !
- W_step=(X_rt%energy_range(2) - X_rt%energy_range(1))/X_rt%energy_steps
+ EField(ref_efield)%amplitude=sqrt(Efield(ref_efield)%intensity*(8._SP*pi)/SPEED_OF_LIGHT)   
  !
  do i_w=1,X_rt%energy_steps
    !
    W_reached = (i_w-1)*W_step+X_rt%energy_range(1)
    !
-   if ((trim(Efield(ref_efield)%ef_name) == 'DELTA')) w_Aw(:)=Efield(ref_efield)%amplitude*SPEED_OF_LIGHT*W_reached
+   if ((trim(Efield(ref_efield)%ef_name) == 'DELTA')) w_Aw=-Efield(ref_efield)%amplitude
    !
-   forall (i_c=1:3) EELS(i_w,i_c) = EELS(i_w,i_c)/W_reached/w_Aw(i_c)
+   EELS(i_w,:) = EELS(i_w,:)/cmplx(0._SP,W_reached)/w_Aw
    !
  enddo
  !
-! select case(trim(Efield(ref_efield)%ef_name))
-!   case('DELTA')
-!     EELS(:,:) = EELS(:,:)/(-Efield(ref_efield)%amplitude)*SPEED_OF_LIGHT
-!   case('RESONANT')
-!     EELS(:,:) = EELS(:,:)/(-Efield(ref_efield)%amplitude)/(-2._SP)*SPEED_OF_LIGHT
-!   case('ANTIRESONANT')
-!     EELS(:,:) = EELS(:,:)/(-Efield(ref_efield)%amplitude)/2._SP*SPEED_OF_LIGHT
-!   case('EXPSTEP')
-!     do i_w=1,X_rt%energy_steps
-!       W_step = (i1-1)*de+X_rt%energy_range(1)
-!       EELS(i1,:) = -EELS(i1,:)*(Efield(ref_efield)%frequency+(0._SP,1._SP)*W_step)
-!     enddo
-!     call warning(" Only epsilon(w = Efield%frequency) is correct ")
-! end select
- !
  EELS(:,:)=EELS(:,:)+1._DP
- EPS(:,:) =1./EELS(:,:)
+ EPS(:,:) =1._DP/EELS(:,:)
  !
- call OutPut_File("eels")
  call OutPut_File("eps")
+ call OutPut_File("eels")
  !
  deallocate(E_induced,EELS,current,damp_function,A_vecpot_vel,current_cache)
  call mem_est("Current_Cache")
  call mem_est("Current")
  call mem_est("A_vecpot_vel")
- call mem_est("EELS")
+ call mem_est("EELS EPS")
  call mem_est("E_induced")
  call mem_est("Damp_Function")
  !
@@ -387,17 +374,17 @@ subroutine RT_spectrum(en,k)
        !
        if (trim(what)=="current") output_data(2:n_headings)=&
 &                  (/A_vecpot_vel(i_s,1),A_vecpot_vel(i_s,2),A_vecpot_vel(i_s,3), &
-&                  current(i_s,1),current(i_s,2),current(i_s,3)/)
+&                  real(current(i_s,1)),real(current(i_s,2)),real(current(i_s,3))/)
        if (trim(what)=="E_induced") output_data(2:n_headings)=(/&
 &                  real(E_induced(i_s,1),SP),real(E_induced(i_s,2),SP) , real(E_induced(i_s,3),SP)/)
-       if (trim(what)=="eps") output_data(1:n_headings)=(/(i_s-1)*W_step+X_rt%energy_range(1)*HARTREE,&
-&                  real(EPS(i_s,1),SP),aimag(cmplx(EPS(i_s,1),kind=SP)),&
-&                  real(EPS(i_s,2),SP),aimag(cmplx(EPS(i_s,2),kind=SP)),&
-&                  real(EPS(i_s,3),SP),aimag(cmplx(EPS(i_s,3),kind=SP))/)
-       if (trim(what)=="eels") output_data(1:n_headings)=(/(i_s-1)*W_step+X_rt%energy_range(1)*HARTREE,&
-&                  real(EELS(i_s,1),SP),aimag(cmplx(EELS(i_s,1),kind=SP)),&
-&                  real(EELS(i_s,2),SP),aimag(cmplx(EELS(i_s,2),kind=SP)),&
-&                  real(EELS(i_s,3),SP),aimag(cmplx(EELS(i_s,3),kind=SP))/)
+       if (trim(what)=="eps") output_data(1:n_headings)=(/((i_s-1)*W_step+X_rt%energy_range(1))*HARTREE,&
+&                  aimag(cmplx(EPS(i_s,1),kind=SP)),real(EPS(i_s,1),SP),&
+&                  aimag(cmplx(EPS(i_s,2),kind=SP)),real(EPS(i_s,2),SP),&
+&                  aimag(cmplx(EPS(i_s,3),kind=SP)),real(EPS(i_s,3),SP)/)
+       if (trim(what)=="eels") output_data(1:n_headings)=(/((i_s-1)*W_step+X_rt%energy_range(1))*HARTREE,&
+&                  aimag(cmplx(EELS(i_s,1),kind=SP)),real(EELS(i_s,1),SP),&
+&                  aimag(cmplx(EELS(i_s,2),kind=SP)),real(EELS(i_s,2),SP),&
+&                  aimag(cmplx(EELS(i_s,3),kind=SP)),real(EELS(i_s,3),SP)/)
        !
        call msg('o '//trim(what),'',output_data(1:n_headings),USE_TABS=.TRUE.)
      enddo

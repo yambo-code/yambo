@@ -344,7 +344,7 @@ contains
    use pars,                  only : pi
    use R_lattice,             ONLY : bz_samp, ng_vec, b
    use D_lattice,             ONLY : DL_vol, a, alat,lattice
-   use mod_com2y,            ONLY : alat_mult_factor
+   use mod_com2y,             ONLY : alat_mult_factor
    use vec_operate,           ONLY : cross_product
    real(SP) :: cp(3)
     
@@ -393,6 +393,7 @@ contains
  subroutine get_symmetries
    use mod_com2y,  ONLY : symmetries_check_and_load
    use com,        ONLY : warning,error
+   use vec_operate,ONLY : v_is_zero
 
    real(DP) :: trasl_(3,48)
 
@@ -409,10 +410,12 @@ contains
 
 #endif
    !
-   if(any(trasl_(:,1:nsym_)/=0._SP)) then
-     call error(' Non-symmorphic symmetry operations are not supported! Use force_symmorphic=.true. in PWSCF')
-   endif
-
+   do i1=1,nsym_
+     if (.not.v_is_zero(real(trasl_(:,i1),SP)) ) then 
+       call error(' Non-symmorphic symmetry operations are not supported! Use force_symmorphic=.true. in PWSCF')
+     endif
+   enddo
+   !
    ! Note that invsym_ is well defined here, could be used for checks.
    do i1 = 1,nsym_
      isym_(:,:,i1) = transpose(isym_(:,:,i1))

@@ -27,7 +27,7 @@ subroutine check_periodic_directions()
  use D_lattice,      ONLY:DL_vol,a,non_periodic_directions
  use vec_operate,    ONLY:v_norm
 #if defined _SC
- use magnetic,       ONLY:average_two_spin_density,average_two_spin_density_dim,average_two_spin_density_rescaling
+ use magnetic,       ONLY:average_el_mag,average_el_mag_dim,average_el_mag_rescaling
 #endif
  implicit none
  !
@@ -47,7 +47,8 @@ subroutine check_periodic_directions()
  l_1D=sum(non_p_dir)==1
  !
 #if defined _SC
- average_two_spin_density_dim='Bohr_magneton/Bohr^3'
+ average_el_mag_dim='Bohr_magneton/Bohr^3'
+ average_el_mag_rescaling=1.
 #endif
  !
  if (.not.l_3D.and..not.l_2D.and..not.l_1D) return
@@ -106,10 +107,10 @@ subroutine check_periodic_directions()
 #if defined _SC
  ! Magnetization dimensions
  !
- average_two_spin_density_rescaling=eps_2_alpha
- if(alpha_dim=='length') average_two_spin_density_dim='Bohr_magneton/Bohr^2'
- if(alpha_dim=='area')   average_two_spin_density_dim='Bohr_magneton/Bohr'
- if(alpha_dim=='volume') average_two_spin_density_dim='Bohr_magneton'
+ average_el_mag_rescaling=eps_2_alpha
+ if(alpha_dim=='length') average_el_mag_dim='Bohr_magneton/Bohr^2'
+ if(alpha_dim=='area')   average_el_mag_dim='Bohr_magneton/Bohr'
+ if(alpha_dim=='volume') average_el_mag_dim='Bohr_magneton'
  !
 #endif
  !

@@ -24,7 +24,7 @@ subroutine electrons_driver(Xk,Xen)
  use units,          ONLY:HARTREE
  use pars,           ONLY:SP,schlen
  Use stderr,         ONLY:intc
- use wave_func,      ONLY:WF_load,wf,WF_free,wf_ng,wf_state
+ use wave_func,      ONLY:WF_load,wf,WF_free,wf_ng,wf_state,WF_derivative_free
  use FFT_m,          ONLY:fft_size,fft_dim
  use R_lattice,      ONLY:bz_samp,nkibz
  use D_lattice,      ONLY:DL_vol
@@ -32,7 +32,8 @@ subroutine electrons_driver(Xk,Xen)
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
-&                         plot_title,l_dos,dos_broadening,DOS_bands,l_angular_momentum
+&                         plot_title,l_dos,dos_broadening,DOS_bands,l_angular_momentum,&
+&                         l_position,l_current
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:two_spin_density
@@ -51,7 +52,7 @@ subroutine electrons_driver(Xk,Xen)
  !
  if (.not.any((/l_mag,l_density,l_sp_wf,l_dos&
 #if defined _YPP_MAGNETIC
-&    ,l_angular_momentum  &
+&    ,l_angular_momentum,l_position,l_current  &
 #endif
 &   /))) return
  !
@@ -64,7 +65,7 @@ subroutine electrons_driver(Xk,Xen)
  !
  if (l_sp_wf &
 #if defined _YPP_MAGNETIC
-&   .or. l_angular_momentum &
+&   .or. l_angular_momentum.or.l_position &
 #endif
 &) then
    call QP_state_table_setup(Xen)
@@ -73,7 +74,7 @@ subroutine electrons_driver(Xk,Xen)
  endif
  if(.not.l_dos &
 #if defined _YPP_MAGNETIC
-&   .and. .not. l_angular_momentum &
+&   .and. .not. any((/l_angular_momentum,l_position,l_current/)) &
 #endif
 &) then
    call WF_load(wf_ng,1,nb_to_load,nkpt_to_load,space='R',title='-WF')
@@ -302,9 +303,10 @@ subroutine electrons_driver(Xk,Xen)
  !==================
  !
 #if defined _YPP_MAGNETIC
- if (l_angular_momentum) then 
-   call electrons_angular_momentum(nkpt_to_load,nb_to_load)
- endif
+ if (l_current)          call fft_setup(0,1,.true.)
+ if (l_current)          call electrons_current(Xk,Xen)
+ if (l_angular_momentum) call electrons_angular_momentum(nkpt_to_load,nb_to_load)
+ if (l_position)         call electrons_position(nkpt_to_load,nb_to_load,1.,'cylindrical','2d')
 #endif
  !
  ! GPL_EXCLUDE_END

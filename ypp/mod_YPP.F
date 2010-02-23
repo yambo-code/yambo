@@ -53,6 +53,7 @@ module YPP
  logical      ::l_wavefunction
  logical      ::l_density
  logical      ::l_mag
+ logical      ::l_current
  logical      ::l_sp_wf
  logical      ::l_exc_wf
  logical      ::l_norm_to_one
@@ -78,6 +79,7 @@ module YPP
  logical      ::l_spin
  logical      ::l_free_hole
  logical      ::l_angular_momentum
+ logical      ::l_position
  integer      ::lambda
  integer      ::n_lambda
  integer      ::BS_H_dim

@@ -207,11 +207,13 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
 #endif
  !
- ! ANGULAR MOMENTUM
+ ! ANGULAR MOMENTUM & ELECTRON DISPLACEMENT
  !
 #if defined _YPP_MAGNETIC
  !
+ l_current=.false.
  l_angular_momentum=.false.
+ l_position=.false.
  !
 #endif
  !
@@ -334,7 +336,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #endif
        !
 #if defined _YPP_MAGNETIC
+       l_current          =trim(rstr_piece(i1+1))=='c'
        l_angular_momentum =trim(rstr_piece(i1+1))=='l'
+       l_position         =trim(rstr_piece(i1+1))=='p'
 #endif
        !
      endif
@@ -348,7 +352,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        if (l_gkkp)             call initactivate(1,'gkkp')
 #endif
 #if defined _YPP_MAGNETIC
+       if (l_current)          call initactivate(1,'current')
        if (l_angular_momentum) call initactivate(1,'angular_m')
+       if (l_position)         call initactivate(1,'position')
 #endif
        if (l_density)        call initactivate(1,'density')
        if (l_sort)           infile_editing=.false.
@@ -373,7 +379,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_gkkp      =runlevel_is_on('gkkp')
 #endif
 #if defined _YPP_MAGNETIC
+ l_current          = runlevel_is_on('current')
  l_angular_momentum = runlevel_is_on('angular_m')
+ l_position         = runlevel_is_on('position')
 #endif
  l_excitons =runlevel_is_on('excitons')
  l_electrons=runlevel_is_on('electrons')
@@ -429,7 +437,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (l_electrons.and.l_dos) call initactivate(1,"DOS_broad DOS_bands")
 #if defined _YPP_MAGNETIC
- if (l_angular_momentum) call initactivate(1,"FFTGvecs")
+ if (l_angular_momentum.or.l_position.or.l_current) call initactivate(1,"FFTGvecs")
 #endif
  !
  if (l_plot) then
@@ -492,7 +500,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #endif
 &                        call QP_init(.FALSE.,.FALSE.)
 #if defined _YPP_MAGNETIC
- if (l_angular_momentum) call QP_init(.FALSE.,.FALSE.)
+ if (l_angular_momentum.or.l_position) call QP_init(.FALSE.,.FALSE.)
 #endif
  !
 contains

@@ -62,7 +62,9 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'gkkp',         '[R] Electron-Phonon databases')
 #endif
 #if defined _YPP_MAGNETIC
+ call it('r',defs,'current',      '[R] Average current')
  call it('r',defs,'angular_m',    '[R] Canonical angular momentum')
+ call it('r',defs,'position',     '[R] Average <r^n>, n given in the input')
 #endif
  !
  ! GPL_EXCLUDE_START SPIN_IGNORE

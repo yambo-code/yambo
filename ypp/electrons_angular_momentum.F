@@ -24,15 +24,15 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  ! Important:
  ! We are in presence of a potential vector field, so
  ! L = r x p                  is the quantized canonical momentum
- ! M = r x (p-A) = r x mv     is the mechanical angula momentum,
+ ! M = r x (p-1/c*A) = r x mv     is the mechanical angula momentum,
  !                            which is gauge invariant
  !
  use pars,           ONLY:SP,lchlen,schlen
  use xc_functionals, ONLY:two_spin_density
- use magnetic,       ONLY:MAG_landau,MAG_pauli,&
-&                         A_magn_x,A_magn_y,A_magn_z,x,y,z,&
-&                         MAG_hamiltonian_type,Bx,By,Bz,&
-&                         MAG_gauge
+ use magnetic,       ONLY:MAG_landau,MAG_pauli,             &
+&                         A_magn_x,A_magn_y,A_magn_z,       &
+&                         MAG_hamiltonian_type,Bx,By,Bz,    &
+&                         MAG_gauge,load_cc,free_cc,x
  use FFT_m,          ONLY:fft_size
  use D_lattice,      ONLY:a
  use wave_func,      ONLY:wf,wf_x,wf_y,wf_z,wf_state,WF_load, &
@@ -40,32 +40,35 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  use SC,             ONLY:load_SC_components
  use electrons,      ONLY:n_sp_pol
  use timing,         ONLY:live_timing
- use units,          ONLY:BOHR
+ use units,          ONLY:BOHR,SPEED_OF_LIGHT
  use com,            ONLY:msg,of_open_close
+ use stderr,         ONLY:intc
  !
  implicit none
  !
  ! Input variables
- integer                  :: nkpt_angular(2), nband_angular(2),nkpt_tot,nband_tot
+ integer                  :: nkpt_angular(2), nband_angular(2)
  !
  ! Internal variables
- complex(SP), allocatable :: Lx_tmp(:),Mx_tmp(:),Ly_tmp(:),My_tmp(:),Lz_tmp(:),Mz_tmp(:)
- complex(SP)              :: Lx,Mx,Ly,My,Lz,Mz
+ complex(SP), allocatable :: L_tmp(:,:),M_tmp(:,:)
+ real(SP)   , allocatable :: L_tot(:,:),M_tot(:,:)
+ complex(SP)              :: L(3),M(3)
  logical                  :: angular_dir(3),do_derivative(3)
+ integer                  :: nkpt_tot,nband_tot
  !
  ! Dummyes
- integer                  :: ifft,ib,ik,i_spin
+ integer                  :: ifft,ib,ik,i_spin,i1
  character(lchlen)        :: fname(6)
  character(schlen)        :: titles(5)
- ! DEBUG <
- integer                  :: ir,i1
- ! DEBUG >
  !
 #if defined _DOUBLE
  complex(SP):: zdotc
 #else
  complex(SP):: cdotc
 #endif
+ !
+ nkpt_tot  = nkpt_angular(2)-nkpt_angular(1)+1
+ nband_tot = nband_angular(2)-nband_angular(1)+1
  !
  call load_SC_components('check_WF_DB',n_bands=nband_angular(2))
  !
@@ -76,6 +79,7 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  ! 
  ! Build the vector potential
  call MAG_common_build_A(.true.)
+ call load_cc(.false.)
  ! 
  ! Choose which are the directions you are interested in
  angular_dir(:)=.false.
@@ -111,7 +115,9 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
        titles(4:5)=(/'re(L_x)','im(L_x)'/)
        call msg('o Lx','#',titles,INDENT=0,USE_TABS=.true.)    
        if(MAG_landau) then
-         call msg('o Lx','#',(/'MAG_gauge:',MAG_gauge/),INDENT=0,USE_TABS=.true.)    
+         titles(4)='MAG_gauge:'
+         titles(5)=MAG_gauge
+         call msg('o Lx','#',titles(4:5),INDENT=0,USE_TABS=.true.)    
          titles(4:5)=(/'re(M_x)','im(M_x)'/)
          call msg('o Mx','#',titles,INDENT=0,USE_TABS=.true.)    
        endif
@@ -119,7 +125,9 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
        titles(4:5)=(/'re(L_y)','im(L_y)'/)
        call msg('o Ly','#',titles,INDENT=0,USE_TABS=.true.)    
        if(MAG_landau) then
-         call msg('o Ly','#',(/'MAG_gauge:',MAG_gauge/),INDENT=0,USE_TABS=.true.)    
+         titles(4)='MAG_gauge:'
+         titles(5)=MAG_gauge
+         call msg('o Ly','#',titles(4:5),INDENT=0,USE_TABS=.true.)    
          titles(4:5)=(/'re(M_y)','im(M_y)'/)
          call msg('o My','#',titles,INDENT=0,USE_TABS=.true.)    
        endif
@@ -127,7 +135,9 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
        titles(4:5)=(/'re(L_z)','im(L_z)'/)
        call msg('o Lz','#',titles,INDENT=0,USE_TABS=.true.)    
        if(MAG_landau) then
-         call msg('o Lz','#',(/'MAG_gauge:',MAG_gauge/),INDENT=0,USE_TABS=.true.)    
+         titles(4)='MAG_gauge:'
+         titles(5)=MAG_gauge
+         call msg('o Lz','#',titles(4:5),INDENT=0,USE_TABS=.true.)    
          titles(4:5)=(/'re(M_z)','im(M_z)'/)
          call msg('o Mz','#',titles,INDENT=0,USE_TABS=.true.)    
        endif
@@ -143,8 +153,6 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
    call WF_load(0,1,nband_angular,(/ik,ik/),title='-MAG',impose_free_and_alloc=.TRUE.)
    !
    if(ik==nkpt_angular(1)) then
-     nkpt_tot   = nkpt_angular(2)-nkpt_angular(1)
-     nband_tot = nband_angular(2)-nband_angular(1)
      if(.not.MAG_landau) call live_timing("ypp: L",nkpt_tot*n_sp_pol*nband_tot)
      if(MAG_landau) call live_timing("ypp: L & M ",nkpt_tot*n_sp_pol*nband_tot)
    endif
@@ -157,54 +165,41 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
        ! Li =(r x p)_i for i=x,y,z
        ! These are gauge dependent if MAG_landau=.true.
        ! These are quantized if wfs are eigenstate
-       if(angular_dir(1)) Lx_tmp(:)=y(:)*wf_z(:,ifft)-z(:)*wf_y(:,ifft)
-       if(angular_dir(2)) Ly_tmp(:)=z(:)*wf_x(:,ifft)-x(:)*wf_z(:,ifft)
-       if(angular_dir(3)) Lz_tmp(:)=x(:)*wf_y(:,ifft)-y(:)*wf_x(:,ifft)
+       if(angular_dir(1)) L_tmp(1,:)=x(:,2)*wf_z(:,ifft)-x(:,3)*wf_y(:,ifft)
+       if(angular_dir(2)) L_tmp(2,:)=x(:,3)*wf_x(:,ifft)-x(:,1)*wf_z(:,ifft)
+       if(angular_dir(3)) L_tmp(3,:)=x(:,1)*wf_y(:,ifft)-x(:,2)*wf_x(:,ifft)
        !
        if(MAG_landau) then
          ! Mi = [r x (p - A)]_i = Li - (r x A)_i for i=x,y,z
          ! These are the mechanicals momenta and are gauge independent
-         if(angular_dir(1)) Mx_tmp(:)=Lx_tmp(:)-(y(:)*A_magn_z(:)- &
-&                             z(:)*A_magn_y(:))*wf(:,ifft)
-         if(angular_dir(2)) My_tmp(:)=Ly_tmp(:)-(z(:)*A_magn_x(:)- &
-&                             x(:)*A_magn_z(:))*wf(:,ifft)
-         if(angular_dir(3)) Mz_tmp(:)=Lz_tmp(:)-(x(:)*A_magn_y(:)- &
-&                             y(:)*A_magn_x(:))*wf(:,ifft)
+         if(angular_dir(1)) M_tmp(1,:)=L_tmp(1,:)-1./SPEED_OF_LIGHT*(x(:,2)*A_magn_z(:)- &
+&                             x(:,3)*A_magn_y(:))*wf(:,ifft)
+         if(angular_dir(2)) M_tmp(2,:)=L_tmp(2,:)-1./SPEED_OF_LIGHT*(x(:,3)*A_magn_x(:)- &
+&                             x(:,1)*A_magn_z(:))*wf(:,ifft)
+         if(angular_dir(3)) M_tmp(3,:)=L_tmp(3,:)-1./SPEED_OF_LIGHT*(x(:,1)*A_magn_y(:)- &
+&                             x(:,2)*A_magn_x(:))*wf(:,ifft)
        endif
        !
-       Lx=0.
-       Ly=0.
-       Lz=0.
-       Mx=0.
-       My=0.
-       Mz=0.
-       !
+       do i1=1,3
+         if(.not.angular_dir(i1)) cycle
 #if defined _DOUBLE
-       if(angular_dir(1)) Lx = zdotc(fft_size,wf(:,ifft),1,Lx_tmp(:),1)
-       if(angular_dir(2)) Ly = zdotc(fft_size,wf(:,ifft),1,Ly_tmp(:),1)
-       if(angular_dir(3)) Lz = zdotc(fft_size,wf(:,ifft),1,Lz_tmp(:),1)
-       if(MAG_landau) then
-         if(angulr_dir(1)) Mx = zdotc(fft_size,wf(:,ifft),1,Mx_tmp(:),1)
-         if(angulr_dir(2)) My = zdotc(fft_size,wf(:,ifft),1,My_tmp(:),1)
-         if(angulr_dir(3)) Mz = zdotc(fft_size,wf(:,ifft),1,Mz_tmp(:),1)
-       endif
+         L(i1) = zdotc(fft_size,wf(:,ifft),1,L_tmp(i1,:),1)
+         if(MAG_landau) M(i1) = zdotc(fft_size,wf(:,ifft),1,M_tmp(i1,:),1)
 #else
-       if(angular_dir(1)) Lx = cdotc(fft_size,wf(:,ifft),1,Lx_tmp(:),1)
-       if(angular_dir(2)) Ly = cdotc(fft_size,wf(:,ifft),1,Ly_tmp(:),1)
-       if(angular_dir(3)) Lz = cdotc(fft_size,wf(:,ifft),1,Lz_tmp(:),1)
-       if(MAG_landau) then
-         if(angular_dir(1)) Mx = cdotc(fft_size,wf(:,ifft),1,Mx_tmp(:),1)
-         if(angular_dir(2)) My = cdotc(fft_size,wf(:,ifft),1,My_tmp(:),1)
-         if(angular_dir(3)) Mz = cdotc(fft_size,wf(:,ifft),1,Mz_tmp(:),1)
-       endif
+         L(i1) = cdotc(fft_size,wf(:,ifft),1,L_tmp(i1,:),1)
+         if(MAG_landau) M(i1) = cdotc(fft_size,wf(:,ifft),1,M_tmp(i1,:),1)
 #endif
-       if(angular_dir(1)) call msg('o Lx','',(/real(ib),real(ik),real(i_spin),real(Lx),aimag(Lx)/),INDENT=-2,USE_TABS=.true.)
-       if(angular_dir(2)) call msg('o Ly','',(/real(ib),real(ik),real(i_spin),real(Ly),aimag(Ly)/),INDENT=-2,USE_TABS=.true.)
-       if(angular_dir(3)) call msg('o Lz','',(/real(ib),real(ik),real(i_spin),real(Lz),aimag(Lz)/),INDENT=-2,USE_TABS=.true.)
+         L_tot(i1,ik)=L_tot(i1,ik)+L(i1)
+         if(MAG_landau) M_tot(i1,ik)=M_tot(i1,ik)+M(i1)
+       enddo
+       !
+       if(angular_dir(1)) call msg('o Lx','',(/real(ib),real(ik),real(i_spin),real(L(1)),aimag(L(1))/),INDENT=-2,USE_TABS=.true.)
+       if(angular_dir(2)) call msg('o Ly','',(/real(ib),real(ik),real(i_spin),real(L(2)),aimag(L(2))/),INDENT=-2,USE_TABS=.true.)
+       if(angular_dir(3)) call msg('o Lz','',(/real(ib),real(ik),real(i_spin),real(L(3)),aimag(L(3))/),INDENT=-2,USE_TABS=.true.)
        if(MAG_landau) then
-         if(angular_dir(1)) call msg('o Mx','',(/real(ib),real(ik),real(i_spin),real(Mx),aimag(Mx)/),INDENT=-2,USE_TABS=.true.)
-         if(angular_dir(2)) call msg('o My','',(/real(ib),real(ik),real(i_spin),real(My),aimag(My)/),INDENT=-2,USE_TABS=.true.)
-         if(angular_dir(3)) call msg('o Mz','',(/real(ib),real(ik),real(i_spin),real(Mz),aimag(Mz)/),INDENT=-2,USE_TABS=.true.)
+         if(angular_dir(1)) call msg('o Mx','',(/real(ib),real(ik),real(i_spin),real(M(1)),aimag(M(1))/),INDENT=-2,USE_TABS=.true.)
+         if(angular_dir(2)) call msg('o My','',(/real(ib),real(ik),real(i_spin),real(M(2)),aimag(M(2))/),INDENT=-2,USE_TABS=.true.)
+         if(angular_dir(3)) call msg('o Mz','',(/real(ib),real(ik),real(i_spin),real(M(3)),aimag(M(3))/),INDENT=-2,USE_TABS=.true.)
        endif
        !
        call live_timing(steps=1)
@@ -212,12 +207,36 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
      enddo
    enddo
    !
+   do i1=1,3
+     if(.not.angular_dir(i1)) cycle
+     L_tot(i1,nkpt_tot+1)=L_tot(i1,nkpt_tot+1)+L_tot(i1,ik)
+     if(MAG_landau) M_tot(i1,nkpt_tot+1)=M_tot(i1,nkpt_tot+1)+M_tot(i1,ik)
+   enddo
+   !
+   if(angular_dir(1)) call msg('o Lx','#',(/real(ik),L_tot(1,ik)/),INDENT=-2,USE_TABS=.true.)
+   if(angular_dir(2)) call msg('o Ly','#',(/real(ik),L_tot(2,ik)/),INDENT=-2,USE_TABS=.true.)
+   if(angular_dir(3)) call msg('o Lz','#',(/real(ik),L_tot(3,ik)/),INDENT=-2,USE_TABS=.true.)
+   if(MAG_landau) then
+     if(angular_dir(1)) call msg('o Mx','#',(/real(ik),M_tot(1,ik)/),INDENT=-2,USE_TABS=.true.)
+     if(angular_dir(2)) call msg('o My','#',(/real(ik),M_tot(2,ik)/),INDENT=-2,USE_TABS=.true.)
+     if(angular_dir(3)) call msg('o Mz','#',(/real(ik),M_tot(3,ik)/),INDENT=-2,USE_TABS=.true.)
+   endif
+   !
    call WF_derivative_free()
    call WF_free()
    !
  enddo
  !
  call live_timing() 
+ !
+ if(angular_dir(1)) call msg('o Lx','#',L_tot(1,nkpt_tot+1),INDENT=-2,USE_TABS=.true.)
+ if(angular_dir(2)) call msg('o Ly','#',L_tot(2,nkpt_tot+1),INDENT=-2,USE_TABS=.true.)
+ if(angular_dir(3)) call msg('o Lz','#',L_tot(3,nkpt_tot+1),INDENT=-2,USE_TABS=.true.)
+ if(MAG_landau) then
+   if(angular_dir(1)) call msg('o Mx','#',M_tot(1,nkpt_tot+1),INDENT=-2,USE_TABS=.true.)
+   if(angular_dir(2)) call msg('o My','#',M_tot(2,nkpt_tot+1),INDENT=-2,USE_TABS=.true.)
+   if(angular_dir(3)) call msg('o Mz','#',M_tot(3,nkpt_tot+1),INDENT=-2,USE_TABS=.true.)
+ endif
  !
  do i1=1,3
    if (.not.angular_dir(i1)) cycle
@@ -227,52 +246,27 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  !
  ! Free the vector potential
  call MAG_common_build_A(.false.)
+ call free_cc()
  !
  contains
    subroutine local_alloc()
-     if(angular_dir(1)) then
-       allocate(Lx_tmp(fft_size))
-       Lx_tmp=(0.,0.)
-       Lx=(0.,0.)
-     endif
-     if(angular_dir(2)) then
-       allocate(Ly_tmp(fft_size))
-       Ly_tmp=(0.,0.)
-       Ly=(0.,0.)
-     endif
-     if(angular_dir(3)) then
-       allocate(Lz_tmp(fft_size))
-       Lz_tmp=(0.,0.)
-       Lz=(0.,0.)
-     endif
+     allocate(L_tmp(3,fft_size))
+     allocate(L_tot(3,nkpt_tot+1))
+     L_tmp=(0.,0.)
+     L_tot=0.
+     L=(0.,0.)
      if(MAG_landau) then
-       if(angular_dir(1)) then
-         allocate(Mx_tmp(fft_size))
-         Mx_tmp=(0.,0.)
-         Mx=(0.,0.)
-       endif
-       if(angular_dir(2)) then
-         allocate(My_tmp(fft_size))
-         My_tmp=(0.,0.)
-         My=(0.,0.)
-       endif
-       if(angular_dir(3)) then
-         allocate(Mz_tmp(fft_size))
-         Mz_tmp=(0.,0.)
-         Mz=(0.,0.)
-       endif
+       allocate(M_tmp(3,fft_size))
+       allocate(M_tot(3,nkpt_tot+1))
+       M_tmp=(0.,0.)
+       M_tot=0.
+       M=(0.,0.)
      endif
    end subroutine 
    !
    subroutine local_free()
-     if(angular_dir(1)) deallocate(Lx_tmp)
-     if(angular_dir(2)) deallocate(Ly_tmp)
-     if(angular_dir(3)) deallocate(Lz_tmp)
-     if(MAG_landau) then
-       if(angular_dir(1)) deallocate(Mx_tmp)
-       if(angular_dir(2)) deallocate(My_tmp)
-       if(angular_dir(3)) deallocate(Mz_tmp)
-     endif
+     deallocate(L_tmp,L_tot)
+     if(MAG_landau) deallocate(M_tmp,M_tot)
    end subroutine
    !
 end subroutine

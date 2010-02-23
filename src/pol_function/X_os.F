@@ -81,7 +81,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  GreenF  = cmplx(0.,0.,SP)
  drude_GreenF = cmplx(0.,0.,SP)
  !
- ! Logicals  to wkip wf_load and/or to use bare or RIM GF (no poles accumulation)
+ ! Logicals  to skip wf_load and/or to use bare or RIM GF (no poles accumulation)
  !==========
  force_bare_X_G=associated(Xen%W).or.associated(Xen%Z).or.use_X_RIM.or.associated(Xen%GreenF)
  skip_WF_load=.false.

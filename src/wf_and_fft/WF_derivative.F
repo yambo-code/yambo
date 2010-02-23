@@ -21,6 +21,9 @@
 !
 subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  !
+ !  Remember wf_t = -i \der_t wf   with t=x,y,z
+ !  is the periodic part of the derivative
+ !
  use pars,           ONLY:SP,DP,pi
  use wave_func,      ONLY:wf,wf_state,wf_ng,wf_n_states,wf_x,wf_y,wf_z,&
 &                         WF_load,WF_free,WF_derivative_alloc
@@ -57,7 +60,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  call fft_setup(0,1,.false.)
  call WF_load(0,1,bands_to_load,derivative_kpt,space='G',title='-DERIV',impose_free_and_alloc=.TRUE.)
  !
- if (found_SC_DB) then
+ if (found_SC_DB.and.any ( bands_to_load/=(/1,SC_bands/) )) then
    bands_to_load=(/1,SC_bands/)
    call warning(' [WF-DERIV] Forced '//trim(intc(SC_bands))//' bands to be derived')
  endif

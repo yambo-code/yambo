@@ -47,7 +47,7 @@ CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
        sbin/objects_debug.sh driver/editor.h  tests/load_paths_and_executables.sh
 TARGETS  = all yambo interfaces ypp 
 CLEANS   = clean clean_all
-INTERFCS = a2y p2y e2y
+INTERFCS = a2y p2y e2y elk2y
 TESTS    = test_GoWo 
 #
 # Libraries (ordered for compiling & linking)
@@ -67,6 +67,7 @@ YPPLIBS      = $(BASIC_LIBS) bz_ops qp_ctl setup interface pol_function bse
 #
 # PROJECTS
 #
+PROJECTS = 
 #if defined _SC
 PROJECTS = yambo_sc
 #endif
@@ -87,8 +88,8 @@ PROJECTS = yambo_sc
 PJ_SCLIBS       = $(MAIN_LIBS) sc
 #endif
 EXE      = $(TARGETS) $(PROJECTS)
-
-
+#
+#
 nothing: 
 	@$(make_message)
 changelog:
@@ -130,6 +131,7 @@ interfaces: libs
 	@LIBS2DO="$(2YLIBS)" ; $(mksrc)
 	@LIBS2DO="int_modules"; DIR2GO="interfaces" ; $(mklib)
 	@X2DO="a2y" ;XPATH="interfaces/a2y";XLIBS="$(2YLIBS)";$(mkx)
+	@X2DO="elk2y" ;XPATH="interfaces/a2y";XLIBS="$(2YLIBS)";ADF="-D_ELK";$(mkx)
 	@if test "$(do_p2y)" = yes ; then X2DO="p2y" ; XPATH="interfaces/p2y" ; \
 	XLIBS="$(2YLIBS)"; ADF="-D@PW_CPP@"; $(mkx) ; fi
 	@if test "$(do_e2y)" = yes ; then X2DO="e2y" ; XPATH="interfaces/e2y" ; \
@@ -139,7 +141,7 @@ ypp: libs
 	@X2DO="ypp" ;XPATH="ypp";XLIBS="$(YPPLIBS)";$(mkx)
 #
 # TESTS #
-test_all: test_GoWo test_RT test_SC test_magnetic
+test_all: test_GoWo 
 test_GoWo: yambo interfaces
 	./tests/test_GoWo.sh
 clean: clean_fast
@@ -161,6 +163,7 @@ define make_message
  for target in $(TARGETS); do echo  " [stable] $$target" ; done;echo;\
  for target in $(PROJECTS); do echo " [devel] $$target" ; done;echo;\
  for target in $(UTILS); do echo  " [util] $$target" ; done;echo
+ for target in $(TESTS); do echo  " [tests] $$target" ; done;echo
  for target in $(CLEANS); do echo  " [clean] $$target" ; done;echo
 endef
 define mksrc

@@ -23,17 +23,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine elk_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
+subroutine elk_wf(wf_disk,ikibz,KSS_file_name)
  !
  use pars,      ONLY:SP,DP
  use electrons, ONLY:n_spin,n_bands
- use R_lattice, ONLY:nkibz
  use D_lattice, ONLY:n_atomic_species,n_atoms_species
+ use R_lattice, ONLY:nkibz
  use com,       ONLY:error
  use wave_func, ONLY:wf_ncx,wf_nb_io,wf_nc_k
  implicit none
  !
- integer        :: ikibz,ib_grp
+ integer        :: ikibz
  character(*)   :: KSS_file_name
  real(SP)       :: wf_disk(2,wf_nb_io,wf_ncx,n_spin)
  !
@@ -42,39 +42,37 @@ subroutine elk_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  integer        :: is,ia,ik,nsym,ib
  complex(DP)    :: wf_disk_DP(wf_ncx,1,n_bands)
  !
- open(unit=11,file=KSS_file_name,form='unformatted')
- !
- read(11,err=10) 
- read(11,err=10) 
- read(11,err=10) 
- do is=1,n_atomic_species
+ if (ikibz==1) then
+   open(unit=11,file=KSS_file_name,form='unformatted')
+   !
+   read(11,err=10) 
+   read(11,err=10) 
+   read(11,err=10) 
+   do is=1,n_atomic_species
+     read(11,err=10) 
+     read(11,err=10) 
+     read(11,err=10) 
+     read(11,err=10) 
+     do ia=1,n_atoms_species(is)
+       read(11,err=10) 
+     end do
+   end do
    read(11,err=10) 
    read(11,err=10) 
    read(11,err=10) 
    read(11,err=10) 
-   do ia=1,n_atoms_species(is)
+   read(11,err=10) nsym
+   do is=1,nsym
      read(11,err=10) 
    end do
- end do
- read(11,err=10) 
- read(11,err=10) 
- read(11,err=10) 
- read(11,err=10) 
- read(11,err=10) nsym
- do is=1,nsym
-   read(11,err=10) 
- end do
- read(11,err=10) 
- read(11,err=10) 
- read(11,err=10) 
- read(11,err=10) wf_ncx
- do ik=1,ikibz-1
+   read(11,err=10)
+   read(11,err=10)
    read(11,err=10) 
    read(11,err=10) 
    read(11,err=10) 
    read(11,err=10) 
-   read(11,err=10) 
- enddo
+    !
+ endif
  !
  wf_disk=(0._SP,0._SP)
  !
@@ -89,7 +87,7 @@ subroutine elk_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
    wf_disk(2,ib,:,1)=aimag(wf_disk_DP(:,1,ib))
  enddo
  !
- close(11)
+ if (ikibz==nkibz) close(11)
  return
  !
  10 call error("Reading from YAMBO")

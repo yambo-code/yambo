@@ -1,3 +1,7 @@
+MAGNETIC_objects = 
+#if defined _MAGNETIC
+MAGNETIC_objects = el_current.o
+#endif
 objs =  mod_xc_costants.o xc_lda_driver.o xc_rpa_kp.o \
         xcspol.o xcpzca.o xcwign.o xchelu.o xcxalp.o \
-        spin_density.o el_density.o 
+        spin_density.o el_density.o $(MAGNETIC_objects)

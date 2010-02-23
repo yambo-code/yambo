@@ -60,12 +60,12 @@ module UNITS
  !
  ! Magnetic fields
  !
- real(SP), parameter :: AU2Tesla=2.350517*10._SP**5   ! (S.I. convention, not Gaussian)
+ real(SP), parameter :: AU2Tesla=1.7152551_SP*10._SP**3               ! (Gaussian convention)
  real(SP), parameter :: Tesla2AU=1./AU2Tesla
  !
  ! Magnetization 
  !
- real(SP), parameter :: Bohr_magneton=9.24700915_SP   ! (S.I. : 1 BM = Bohr_magneton*10^(-24) A m^2)
+ real(SP), parameter :: Bohr_magneton=9.24700915*10._SP**(-24)     ! [S.I.]
  !
  ! From Octopus ( http://www.tddft.org/programs/octopus )
  !

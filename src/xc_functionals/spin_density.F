@@ -36,7 +36,8 @@ subroutine spin_density(en,Xk)
  use wave_func,      ONLY:wf_state,wf
  use xc_functionals, ONLY:two_spin_density
 #if defined _SC
- use magnetic,       ONLY:average_two_spin_density,average_two_spin_density_rescaling
+ use magnetic,       ONLY:average_el_mag,average_el_mag_rescaling
+ use D_lattice,      ONLY:DL_vol
 #endif
  implicit none
  type(levels) ::en
@@ -50,7 +51,7 @@ subroutine spin_density(en,Xk)
  two_spin_density=0.
  cv=0.
 #if defined _SC
- average_two_spin_density=0.
+ average_el_mag=0.
 #endif
  !
  if (n_spin==1) return
@@ -96,10 +97,10 @@ subroutine spin_density(en,Xk)
 #if defined _SC
   do i1=1,3
     do i2=1,fft_size
-      average_two_spin_density(i1)=average_two_spin_density(i1)+two_spin_density(i2,i1)
+      average_el_mag(i1)=average_el_mag(i1)+two_spin_density(i2,i1)
     enddo
   enddo
-  average_two_spin_density(:)=-average_two_spin_density(:)/fft_size*average_two_spin_density_rescaling
+  average_el_mag(:)=-0.5*average_el_mag(:)/DL_vol*average_el_mag_rescaling
 #endif
  !
  ! GPL_EXCLUDE_END SPIN_IGNORE

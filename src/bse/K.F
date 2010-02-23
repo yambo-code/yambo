@@ -197,7 +197,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    if (ioX_err/=0) call warning('BS section skipped. PP/Em1s DB does not fit/exist')
    !
-   ! X%ng is set to BS_n_g_W to VERIFY if there wnough bands.
+   ! X%ng is set to BS_n_g_W to VERIFY if there are enough bands.
    ! From now on it is used to keep track of the actual sixe of W in the DB
    !
    X%ng=X%ng_db

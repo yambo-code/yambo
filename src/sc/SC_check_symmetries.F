@@ -49,8 +49,8 @@ subroutine SC_check_symmetries(field_dir)
     !
     i_wrong=0
     !
-    if( all( abs(v(:)-field_dir(:))<epsilon(1.) )) i_wrong=+1
-    if( all( abs(v(:)+field_dir(:))<epsilon(1.) )) i_wrong=-1
+    if( all( abs(v(:)-field_dir(:))<1E-5 )) i_wrong=+1
+    if( all( abs(v(:)+field_dir(:))<1E-5 )) i_wrong=-1
     !
     if(i_wrong==0) then
       nsym_wrong=nsym_wrong+1

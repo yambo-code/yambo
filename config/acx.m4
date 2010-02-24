@@ -167,6 +167,11 @@ if test -z "${FCFLAGS}"; then
       UFFLAGS="-assume bscc -O0 $CPU_FLAG"
       FCMFLAG="-nofor_main"
     ;;
+    *pathf9*)
+      FCFLAGS="-O2 -fno-second-underscore"
+      UFFLAGS="-O0 -fno-second-underscore"
+      FCMFLAG=""
+      ;;
     *)
       FCFLAGS="-O"
     esac
@@ -238,7 +243,12 @@ if test -z "${FCFLAGS}"; then
       UFFLAGS="-assume bscc -O0 $CPU_FLAG"
       FCMFLAG="-nofor_main"
       ;;
-    *openf95*)
+    *openf9*)
+      FCFLAGS="-O2 -fno-second-underscore"
+      UFFLAGS="-O0 -fno-second-underscore"
+      FCMFLAG=""
+      ;;
+    *pathf9*)
       FCFLAGS="-O2 -fno-second-underscore"
       UFFLAGS="-O0 -fno-second-underscore"
       FCMFLAG=""

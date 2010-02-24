@@ -124,10 +124,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
  endif
  !
- ! Open the History output files
- !
- if (l_RT_diagonalize) call SC_History(1,en)
- !
  ! loop on time
  !
  Dynamics_is_over=.FALSE.
@@ -145,7 +141,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    RT_time=(i_time-1)*RT_step
    !
    if(it==Thermal_steps+1) then
-     call live_timing('[RT] Dynamics :',NE_steps,SERIAL=.true.)
+     call live_timing('[RT] NE Dynamics :',NE_steps,SERIAL=.true.)
      if(LifeTime/=0.0) G_lesser_reference=G_lesser
    endif
    !
@@ -180,6 +176,10 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    it_now=it ! used in RESTART
    !
    call RT_write_dbs(Xen,it)
+   !
+   ! History
+   !
+   if( mod(it,RT_diagonalization_steps)==0 .and. l_RT_diagonalize ) call SC_History(it,en)
    !
    ! Now print the Energy and other stuff
    !

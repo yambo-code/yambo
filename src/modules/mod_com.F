@@ -276,6 +276,15 @@ module com
      !
    end subroutine
    !
+   logical function OF_exists(name)
+     character(*) ::name
+     integer      ::i_f
+     OF_exists=.false. 
+     do i_f=1,max_open_ofs
+       if (index(opened_of(i_f),name)/=0) OF_exists=.TRUE.
+     enddo
+   end function
+   !
    logical function file_exists(name)
      character(*) name
      file_exists=.false.

@@ -21,7 +21,6 @@
 !                  
 subroutine RT_write_dbs(Xen,it)
  !
- use com,            ONLY:error
  use QP_m,           ONLY:QP_nk
  use real_time,      ONLY:ID,i_time,l_NE_with_fields,max_rt_steps_disk
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL
@@ -48,8 +47,6 @@ subroutine RT_write_dbs(Xen,it)
    io_G=io_SC_components('G',Xen,ID(5))
  enddo
  !
- if(io_G/=0) call error("Error writing G_lesser! ")
- !
  if(l_NE_with_fields.and.i_time>0) then
    !
    ! Remember that negative time = adiabatic switching
@@ -68,8 +65,6 @@ subroutine RT_write_dbs(Xen,it)
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/i_time+1/),ID=ID(4)) 
      io_J=io_SC_components('J' ,Xen,ID(4))
    endif
-   !
-   if(io_J/=0) call error("Error writing current! ")
    !
  endif
  !

@@ -25,11 +25,11 @@ subroutine SC_History(it,E)
  use units,          ONLY:HARTREE
  use electrons,      ONLY:n_met_bands,n_full_bands,levels,n_sp_pol
  use R_lattice,      ONLY:nkibz
- use com,            ONLY:of_open_close,msg
+ use com,            ONLY:of_open_close,msg,OF_exists
  use stderr,         ONLY:intc,set_real_printed_length
  use SC,             ONLY:SC_bands,it_now,SC_description,n_SC_descriptions
 #if defined _RT
- use real_time,      ONLY:RT_step,Occ_natural_orb
+ use real_time,      ONLY:RT_step,Occ_natural_orb,it_now
  use units,          ONLY:FS2AUT
 #endif
  implicit none
@@ -48,14 +48,14 @@ subroutine SC_History(it,E)
  character(schlen)       :: F_headers(SC_bands*nkibz)
 #endif
  !
- !
  do i_spin=1,n_sp_pol
    !
-   if ( it == 1 ) then
-     !
+   if ( .not. OF_exists('RT_E_History') ) then
 #if defined _RT
+     !
      headers(1)='Time[fs]'
 #else
+     !
      headers(1)='Iteration'
 #endif
      n_headers=1

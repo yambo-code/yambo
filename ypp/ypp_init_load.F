@@ -204,7 +204,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'DampFactor','Damping parameter',X_rt%damp_factor,unit=E_unit) 
  !
  call it('f',defs,'NoRmDC','Do not Remove DC component from current')
- call it('f',defs,'UseGaugeField','Use directly the gauge field for the response')
+ call it('f',defs,'UseGaugeField','Use the gauge field to define the induced electric field')
  call it('f',defs,'PrtCurrent','Print induced current')
  call it('f',defs,'PrtEinduced','Print induced electric field')
  call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics')

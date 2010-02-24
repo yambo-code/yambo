@@ -55,7 +55,6 @@ subroutine RT_qp_analyze(it,en,k,xK,G_input)
 #endif
  !
  if(.not.mod(it,RT_diagonalization_steps)==0.and..not.it==Thermal_steps) return
- write (*,*) it
  !
  call set_real_printed_length()
  !
@@ -82,9 +81,6 @@ subroutine RT_qp_analyze(it,en,k,xK,G_input)
  !
  en%E(:SC_bands,:,:)=en%E(:SC_bands,:,:)-en%Efermi(1)
  !
- ! Now write energies & occupations
- !
- call SC_History(it,en)
  !
  if(it==Thermal_steps) then
    call msg('r',' ')

@@ -38,6 +38,7 @@ subroutine RT_spectrum(en,k)
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP
  use real_time,      ONLY:NE_steps,RT_step,j_current,i_time,Efield,  &
 &                         max_rt_steps_disk,current_cache,A_vecpot
+ use D_lattice,      ONLY:DL_vol
 
  implicit none
  !
@@ -50,13 +51,13 @@ subroutine RT_spectrum(en,k)
  integer  :: i_t,i_w,i_c
  integer  :: i_t_start,i_t_end
  logical  :: Prt_Current,Prt_Einduced,Use_FFT,l_no_remove_DC,l_use_gauge_field
- real(SP)           :: Integral,W_RT_induced_step,W_step,Time_reached,W_reached
- complex(SP)        :: w_Aw
+ real(SP)           :: W_RT_induced_step,W_step,Time_reached,W_reached
+ complex(SP)        :: w_Aw,Integral
  real(SP),    allocatable :: damp_function(:)
- real(DP),    allocatable :: current(:,:)
- real(SP),    allocatable :: A_vecpot_vel(:,:)
+ complex(DP),    allocatable :: current(:,:)
+ complex(DP),    allocatable :: At_vecpot_vel(:,:),Aw_vecpot_vel(:,:)
  complex(DP), allocatable :: EELS(:,:),EPS(:,:)
- real(DP),    allocatable :: E_induced(:,:)
+ complex(DP),    allocatable :: E_induced(:,:)
  integer     :: fft_sign
  integer(8)  :: fftw_plan
  integer, external  :: io_SC_components
@@ -102,13 +103,15 @@ subroutine RT_spectrum(en,k)
  !
  allocate(current(NE_steps,3))
  call mem_est("Current",(/size(current)/),(/2*SP/))
- allocate(A_vecpot_vel(NE_steps,3))
- call mem_est("A_vecpot_vel",(/size(A_vecpot_vel)/),(/SP/))
- allocate(current_cache(9,max_rt_steps_disk))
+ allocate(Aw_vecpot_vel(NE_steps,3),At_vecpot_vel(NE_steps,3))
+ call mem_est("At_vecpot_vel",(/size(At_vecpot_vel)/),(/2*SP/))
+ call mem_est("Aw_vecpot_vel",(/size(Aw_vecpot_vel)/),(/2*SP/))
+ allocate(current_cache(12,max_rt_steps_disk))
  call mem_est("Current_Cache",(/size(current_cache)/),(/SP/))
  !
- current     =0._SP
- A_vecpot_vel=0._SP
+ current      =(0._SP,0._SP)
+ Aw_vecpot_vel=(0._SP,0._SP)
+ At_vecpot_vel=(0._SP,0._SP)
  !
  call live_timing('Current I/O:',NE_steps)
  do i_time=1,NE_steps
@@ -117,8 +120,8 @@ subroutine RT_spectrum(en,k)
    io_J=io_SC_components('J' ,en,ID(1))
    !
    if(i_time>=i_t_start.and.i_time<=i_t_end) then
-     current(i_time,:)      = real(j_current(:))
-     A_vecpot_vel(i_time,:) = real(A_vecpot%vecpot_vel(:))
+     current(i_time,:)       = j_current(:)
+     At_vecpot_vel(i_time,:) = A_vecpot%vecpot_vel(:)
    endif           
    !
    call live_timing(steps=1)
@@ -162,8 +165,8 @@ subroutine RT_spectrum(en,k)
  if(.not.l_no_remove_dc) then
    !
    do i_c = 1, 3
-     Integral = sum(A_vecpot_vel(:, i_c))
-     A_vecpot_vel( :, i_c) = A_vecpot_vel(:,i_c) - Integral/real(NE_steps,SP)
+     Integral = sum(At_vecpot_vel(:, i_c))
+     At_vecpot_vel( :, i_c) = At_vecpot_vel(:,i_c) - Integral/real(NE_steps,SP)
    enddo
    !
    do i_c = 1, 3
@@ -175,16 +178,17 @@ subroutine RT_spectrum(en,k)
  ! 
  ! apply the damping
  !
- forall(i_t=1:NE_steps) current(i_t,:)=current(i_t,:)*damp_function(i_t)
+ forall(i_t=1:NE_steps) current(i_t,:)      =current(i_t,:)*damp_function(i_t)
+ forall(i_t=1:NE_steps) At_vecpot_vel(i_t,:)=At_vecpot_vel(i_t,:)*damp_function(i_t)
  !
  ! Induced Electric Field
  !------------------------
  !
  allocate(E_induced(NE_steps,3))
- call mem_est("E_induced",(/size(E_induced)/),(/SP/))
+ call mem_est("E_induced",(/size(E_induced)/),(/2*SP/))
  !
  if(l_use_gauge_field) then
-   E_induced=-A_vecpot_vel
+   E_induced=-At_vecpot_vel
  else
    ! 
    ! Integration with trapezoidal rule 
@@ -211,9 +215,22 @@ subroutine RT_spectrum(en,k)
    !      
    call warning(" Energy steps and range redefined from real-time dynamics")
    !
-   X_rt%energy_steps   =NE_steps/2+1
+   ! I want to print only the positive frequencies
+   ! i_w > energy_steps/2 correspond to the negative ones
+   !
+   X_rt%energy_steps   =NE_steps/2
    X_rt%energy_range(1)=0.
    X_rt%energy_range(2)=W_RT_induced_step*NE_steps/2.
+   !
+   allocate(EELS(NE_steps,1:3))  
+   allocate(EPS(NE_steps,1:3))  
+   call mem_est("EELS EPS",(/size(EELS),size(EPS)/),(/2*SP,2*SP/))
+   !
+ else
+   !
+   allocate(EELS(X_rt%energy_steps,1:3))  
+   allocate(EPS(X_rt%energy_steps,1:3))  
+   call mem_est("EELS EPS",(/size(EELS),size(EPS)/),(/2*SP,2*SP/))
    !
  endif
  !
@@ -221,12 +238,9 @@ subroutine RT_spectrum(en,k)
  !====================
  ! (it works only for constant vector potentials)
  !
- allocate(EELS(X_rt%energy_steps,1:3))  
- allocate(EPS(X_rt%energy_steps,1:3))  
- call mem_est("EELS EPS",(/size(EELS),size(EPS)/),(/2*SP,2*SP/))
  !
  EELS=(0._DP,0._DP)
- EPS=(0._DP,0._DP)
+ EPS =(0._DP,0._DP)
  !
  W_step=(X_rt%energy_range(2) - X_rt%energy_range(1))/X_rt%energy_steps
  !
@@ -235,12 +249,18 @@ subroutine RT_spectrum(en,k)
    fftw_plan=0
    fft_sign =-1
    !
+   !
    do i_c=1,3
      !
+     EELS(:,i_c)          = current(:,i_c)
+     Aw_vecpot_vel(:,i_c) = At_vecpot_vel(:,i_c)
+     !
 #if defined _FFTW
-    call fft_1d_real(current(:,i_c),EELS(:,i_c),NE_steps,fft_sign,fftw_plan)
+    call fft_1d(EELS(:,i_c),NE_steps,fft_sign,fftw_plan)
+    call fft_1d(Aw_vecpot_vel(:,i_c),NE_steps,fft_sign,fftw_plan)
 #else
-    call fft_1d_real(current(:,i_c),EELS(:,i_c),NE_steps,fft_sign)
+    call fft_1d(EELS(:,i_c),NE_steps,fft_sign)
+    call fft_1d(Aw_vecpot_vel(:,i_c),NE_steps,fft_sign)
 #endif
      !
      ! due to the definition of FFT 
@@ -261,7 +281,8 @@ subroutine RT_spectrum(en,k)
      !
      do i_t = 1, NE_steps
        Time_reached = i_t*RT_step
-       EELS(i_w,1:3) = EELS(i_w,1:3)+current(i_t,1:3)*exp((0.,1.)*W_reached*Time_reached) 
+       EELS(i_w,1:3)          = EELS(i_w,1:3)+current(i_t,1:3)*exp((0.,1.)*W_reached*Time_reached) 
+       Aw_vecpot_vel(i_w,1:3) = Aw_vecpot_vel(i_w,1:3)+At_vecpot_vel(i_t,1:3)*exp((0.,1.)*W_reached*Time_reached) 
      enddo
      !
      call live_timing(steps=1)
@@ -280,9 +301,15 @@ subroutine RT_spectrum(en,k)
    if ((trim(Efield(ref_efield)%ef_name) == 'DELTA')) then 
       w_Aw=-Efield(ref_efield)%amplitude
    elseif ((trim(Efield(ref_efield)%ef_name) == 'RESONANT')) then 
-      w_Aw=-Efield(ref_efield)%amplitude*cmplx(0._SP,W_reached)
+      w_Aw=-Efield(ref_efield)%amplitude*cmplx(0.,-Efield(ref_efield)%frequency)/(4._SP*pi)
+      w_Aw=w_Aw/cmplx(0._SP,W_reached)
+   elseif ((trim(Efield(ref_efield)%ef_name) == 'ANTIRESONANT')) then 
+      w_Aw=-Efield(ref_efield)%amplitude*cmplx(0.,Efield(ref_efield)%frequency)/(4._SP*pi)
+      w_Aw=w_Aw/cmplx(0._SP,W_reached)
+   elseif ((trim(Efield(ref_efield)%ef_name) == 'SINUSOIDAL')) then 
+      w_Aw=-Efield(ref_efield)%amplitude*Efield(ref_efield)%frequency/(4._SP*pi)/2._SP
+      w_Aw=w_Aw/cmplx(0._SP,W_reached)
    endif
-   !
    EELS(i_w,:) = EELS(i_w,:)/cmplx(0._SP,W_reached)/w_Aw
    !
  enddo
@@ -293,10 +320,11 @@ subroutine RT_spectrum(en,k)
  call OutPut_File("eps")
  call OutPut_File("eels")
  !
- deallocate(E_induced,EELS,current,damp_function,A_vecpot_vel,current_cache)
+ deallocate(E_induced,EELS,current,damp_function,At_vecpot_vel,Aw_vecpot_vel,current_cache)
  call mem_est("Current_Cache")
  call mem_est("Current")
- call mem_est("A_vecpot_vel")
+ call mem_est("Aw_vecpot_vel")
+ call mem_est("At_vecpot_vel")
  call mem_est("EELS EPS")
  call mem_est("E_induced")
  call mem_est("Damp_Function")
@@ -377,7 +405,7 @@ subroutine RT_spectrum(en,k)
        output_data(1)=RT_step*i_s/FS2AUT
        !
        if (trim(what)=="current") output_data(2:n_headings)=&
-&                  (/A_vecpot_vel(i_s,1),A_vecpot_vel(i_s,2),A_vecpot_vel(i_s,3), &
+&                (/real(At_vecpot_vel(i_s,1)),real(At_vecpot_vel(i_s,2)),real(At_vecpot_vel(i_s,3)), &
 &                  real(current(i_s,1)),real(current(i_s,2)),real(current(i_s,3))/)
        if (trim(what)=="E_induced") output_data(2:n_headings)=(/&
 &                  real(E_induced(i_s,1),SP),real(E_induced(i_s,2),SP) , real(E_induced(i_s,3),SP)/)

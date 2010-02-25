@@ -212,7 +212,7 @@ module real_time
      endif
      !
      if(l_NE_with_fields) then
-       allocate(current_cache(9,max_rt_steps_disk))
+       allocate(current_cache(12,max_rt_steps_disk))
        call mem_est('Current_Cache',(/size(current_cache)/),(/SP/))
      endif
      !

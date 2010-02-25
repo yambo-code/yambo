@@ -311,11 +311,11 @@ integer function io_SC_components(what,E_sc,ID)
      !
      if(write_is_on(ID)) then
        !
-       current_cache(:3,mod(i_time-1,max_rt_steps_disk)+1)=real(j_current(:3))
-       !
        do i1=1,3
-         current_cache(3+2*i1-1,mod(i_time-1,max_rt_steps_disk)+1)= real(A_vecpot%vecpot_vel(i1))
-         current_cache(3+2*i1  ,mod(i_time-1,max_rt_steps_disk)+1)=aimag(A_vecpot%vecpot_vel(i1))
+         current_cache(2*i1-1,  mod(i_time-1,max_rt_steps_disk)+1)= real(j_current(i1))
+         current_cache(2*i1,    mod(i_time-1,max_rt_steps_disk)+1)=aimag(j_current(i1))
+         current_cache(6+2*i1-1,mod(i_time-1,max_rt_steps_disk)+1)= real(A_vecpot%vecpot_vel(i1))
+         current_cache(6+2*i1  ,mod(i_time-1,max_rt_steps_disk)+1)=aimag(A_vecpot%vecpot_vel(i1))
        enddo
        !
      endif
@@ -323,7 +323,7 @@ integer function io_SC_components(what,E_sc,ID)
      if (IO_current) then
        !                                
        call io_bulk(ID,VAR="Current_and_Potential_TIME"//trim(intc(file_number)), &
-&                  VAR_SZ=(/9,max_rt_steps_disk/))
+&                  VAR_SZ=(/12,max_rt_steps_disk/))
        !
        call io_bulk(ID,R2=current_cache)
        !
@@ -335,11 +335,12 @@ integer function io_SC_components(what,E_sc,ID)
        !
        ! Read from cache
        !
-       j_current(:3)=cmplx(current_cache(:3,mod(i_time-1,max_rt_steps_disk)+1),0._SP,SP)
        !
        do i1=1,3
-         A_vecpot%vecpot_vel(i1)=cmplx(current_cache(3+2*i1-1,mod(i_time-1,max_rt_steps_disk)+1), &
-&                                      current_cache(3+2*i1  ,mod(i_time-1,max_rt_steps_disk)+1),SP)
+         j_current(i1)          =cmplx(current_cache(2*i1-1,  mod(i_time-1,max_rt_steps_disk)+1), &
+&                                      current_cache(2*i1,    mod(i_time-1,max_rt_steps_disk)+1),SP)
+         A_vecpot%vecpot_vel(i1)=cmplx(current_cache(6+2*i1-1,mod(i_time-1,max_rt_steps_disk)+1), &
+&                                      current_cache(6+2*i1  ,mod(i_time-1,max_rt_steps_disk)+1),SP)
        enddo
        !
      endif 

@@ -25,7 +25,6 @@ subroutine RT_Ext_Current(time)
  ! to evolve the vector potential 
  !
  use pars,           ONLY:SP,pi
- use D_lattice,      ONLY:DL_vol
  use com,            ONLY:error
  use real_time,      ONLY:ext_field,n_ext_fields,Efield,j_current_ext
  !
@@ -46,19 +45,14 @@ subroutine RT_Ext_Current(time)
    select case(trim(Efield(i1)%ef_name))
      case('SINUSOIDAL')
        j_norm=-Efield(i1)%amplitude*cos(Efield(i1)%frequency*time)*Efield(i1)%frequency 
-       j_current_ext=j_current_ext+j_norm*Efield(i1)%versor(:)/(4._SP*pi)*DL_vol
+       j_current_ext=j_current_ext+j_norm*Efield(i1)%versor(:)/(4._SP*pi)
      case('ANTIRESONANT')
        j_norm=-Efield(i1)%amplitude*exp((0._SP,1._SP)*Efield(i1)%frequency*time)*Efield(i1)%frequency*(0._SP,1._SP)
-       j_current_ext=j_current_ext+j_norm*Efield(i1)%versor(:)/(4._SP*pi)*DL_vol
+       j_current_ext=j_current_ext+j_norm*Efield(i1)%versor(:)/(4._SP*pi)
      case('RESONANT')
        j_norm=-Efield(i1)%amplitude*exp(-(0._SP,1._SP)*Efield(i1)%frequency*time)*Efield(i1)%frequency*(0._SP,-1._SP)
-       j_current_ext=j_current_ext+j_norm*Efield(i1)%versor(:)/(4._SP*pi)*DL_vol
+       j_current_ext=j_current_ext+j_norm*Efield(i1)%versor(:)/(4._SP*pi)
      case('DELTA')
-     case('STEP')
-     case('EXPSTEP')
-       ! To check
-       !j_norm       =Efield(i1)%frequency
-       !j_current_ext=j_current_ext+j_norm*A_vecpot%vecpot_vel(:)/(4._SP*pi)*DL_vol/SPEED_OF_LIGHT
      case default
      call error(" External Field "//trim(Efield(i1)%ef_name)//" not implemented ") 
    end select

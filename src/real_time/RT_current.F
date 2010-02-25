@@ -50,7 +50,7 @@ subroutine RT_current(Xk,G_lesser,A_vecpot)
  !
  SC_bands2=SC_bands**2
  !
- ! j(r,t) = \sum_ijk e/(2m) \psi^*_i(k) p \psi_j(k) - e^2/(cm) n(r) A(r,t)
+ ! j(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) p \psi_j(k) - e^2/(cm) n(r) A(r,t)
  !
  ! j_current(t) = int dr j(r,t)
  !
@@ -68,9 +68,9 @@ subroutine RT_current(Xk,G_lesser,A_vecpot)
    do i2=1,3
      !
 #if defined _DOUBLE
-     j_dir(i2)=-aimag(zdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1))
+     j_dir(i2)=(0._SP,1._SP)*zdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1)
 #else
-     j_dir(i2)=-aimag(cdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1))
+     j_dir(i2)=(0._SP,1._SP)*cdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1)
 #endif
      !
    enddo
@@ -90,7 +90,7 @@ subroutine RT_current(Xk,G_lesser,A_vecpot)
 #if defined _RT
  if(.not.l_RT_no_diamagnetic) then
    !
-   j_current(:)=j_current(:)+A_vecpot%vecpot(:)*real(nel,SP)/SPEED_OF_LIGHT
+   j_current(:)=j_current(:)-A_vecpot%vecpot(:)*real(nel,SP)/SPEED_OF_LIGHT
    !
  endif
 #endif

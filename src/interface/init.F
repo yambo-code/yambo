@@ -605,8 +605,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call initactivate(1,'RTstep NEsteps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
      call initactivate(1,'RTfreezeH RTfreezeXC')
      call initactivate(1,'NoDiamagnetic NoIntraband InducedField')
+#endif
+#if defined _RT
      if (l_RT_probe.or.l_RT_pump_and_probe) call Afield_activate('Probe')
      if (              l_RT_pump_and_probe) call Afield_activate('Pump')
+#endif
+#if defined _SC
    else
      call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
    endif

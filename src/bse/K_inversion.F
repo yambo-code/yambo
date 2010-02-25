@@ -56,6 +56,7 @@ subroutine K_inversion(iq,W,E,k,q)
  type(w_samp)     ::W_shifted
  integer          ::i1,i2,ik_bz,iv,ic,iw,of_mode,i_sp,ik_ibz
  integer, external::pert_inversion
+ logical, external::stop_now
  complex(SP)      ::Co,QP_Z,QP_width
  complex(SP), allocatable  ::Lo(:,:)
  !
@@ -309,6 +310,12 @@ subroutine K_inversion(iq,W,E,k,q)
    call live_timing('Freq loop [full]',px%n_of_element_1D(myid+1))
    full_diago=.true.
    do i1=1,full_inf_freqs
+     !
+     if (STOP_NOW(.FALSE.)) then
+       call live_timing()
+       exit
+     endif
+     !
      if (.not.px%element_1D(i1)) cycle
      iw=iw_full(i1)
      call perform_invertion(iw,1)

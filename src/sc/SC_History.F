@@ -29,7 +29,7 @@ subroutine SC_History(it,E)
  use stderr,         ONLY:intc,set_real_printed_length
  use SC,             ONLY:SC_bands,it_now,SC_description,n_SC_descriptions
 #if defined _RT
- use real_time,      ONLY:RT_step,Occ_natural_orb,it_now
+ use real_time,      ONLY:RT_step,Occ_natural_orb
  use units,          ONLY:FS2AUT
 #endif
  implicit none

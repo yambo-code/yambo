@@ -277,7 +277,11 @@ subroutine RT_spectrum(en,k)
    !
    W_reached = (i_w-1)*W_step+X_rt%energy_range(1)
    !
-   if ((trim(Efield(ref_efield)%ef_name) == 'DELTA')) w_Aw=-Efield(ref_efield)%amplitude
+   if ((trim(Efield(ref_efield)%ef_name) == 'DELTA')) then 
+      w_Aw=-Efield(ref_efield)%amplitude
+   elseif ((trim(Efield(ref_efield)%ef_name) == 'RESONANT')) then 
+      w_Aw=-Efield(ref_efield)%amplitude*cmplx(0._SP,W_reached)
+   endif
    !
    EELS(i_w,:) = EELS(i_w,:)/cmplx(0._SP,W_reached)/w_Aw
    !

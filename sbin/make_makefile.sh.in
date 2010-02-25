@@ -68,7 +68,11 @@ for arg in $@; do
 done
 #
 llibs="$lib_path $llibs"
+lf90include="@F90_MODULE_FLAG@\$(includedir)"
 linclude="-I\$(includedir)"
+if [ @F90_MODULE_FLAG@ != "-I" ]; then
+lf90include="$lf90include $linclude"
+fi
 case $target in
   yambo*)
    llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
@@ -96,6 +100,7 @@ echo "fcflags=$fcflags" >> $cdir/Makefile
 echo "fcuflags=$fcuflags" >> $cdir/Makefile
 echo "llibs=$llibs" >> $cdir/Makefile
 echo "linclude=$linclude" >> $cdir/Makefile
+echo "lf90include=$lf90include" >> $cdir/Makefile
 echo "mfiles=find . -name '*.mod'" >> $cdir/Makefile
 echo "target=$target" >> $cdir/Makefile
 echo "dmpi=$dmpi" >> $cdir/Makefile
@@ -149,7 +154,7 @@ define driver
  @echo
 endef
 define link
- ${PREFIX}(eval \$(fc) \$(fcflags) \$(linclude) -o \$@ driver.o getopt.o \$(objs) \$(llibs) ) > /dev/null
+ ${PREFIX}(eval \$(fc) \$(fcflags) \$(lf90include) -o \$@ driver.o getopt.o \$(objs) \$(llibs) ) > /dev/null
 endef
 define modmove
  ${PREFIX}test \`\$(mfiles) | wc -l\` -eq 0 || mv *.mod \$(includedir)
@@ -165,12 +170,12 @@ F77_NOOPT_SRC= xerbla.o slamch.o
 \$(F77_NOOPT_SRC):
 	${PREFIX}(eval \$(f77) -c \$(f77uflags) \$*.f) > /dev/null
 #
-FC_NOOPT_SRC= mod_parser_m.o 
+FC_NOOPT_SRC= mod_parser_m.o mod_logo.o
 #
 \$(FC_NOOPT_SRC):
 	@rm -f \$*\$(f90suffix)
 	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
-	${PREFIX}(eval \$(fc) -c \$(fcuflags) \$(linclude) \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(eval \$(fc) -c \$(fcuflags) \$(lf90include) \$*\$(f90suffix)) > /dev/null
 	@echo $ECHO_N \$* " "
 	@rm -f \$*\$(f90suffix)
 #
@@ -183,7 +188,7 @@ FC_NOOPT_SRC= mod_parser_m.o
 .F.o:
 	@rm -f \$*\$(f90suffix)
 	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
-	${PREFIX}(\$(fc) -c \$(fcflags) \$(linclude) \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$*\$(f90suffix)) > /dev/null
 	@rm -f \$*\$(f90suffix)
 	@echo $ECHO_N \$*".F "
 .f.o:

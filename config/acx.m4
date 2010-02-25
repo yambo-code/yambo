@@ -132,7 +132,7 @@ if test -z "${FCFLAGS}"; then
     case "${FC}" in
     *pgf9*)
       FCFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
-      UFFLAGS="-O0"
+      UFFLAGS="-O0 -Mbackslash"
       FCMFLAG="-Mnomain"
       ;;
     *abf90*)
@@ -174,6 +174,7 @@ if test -z "${FCFLAGS}"; then
       ;;
     *)
       FCFLAGS="-O"
+      UFFLAGS="-O0"
     esac
    ;;
   *86*apple* )
@@ -204,6 +205,7 @@ if test -z "${FCFLAGS}"; then
       ;;
     *)
       FCFLAGS="-O"
+      UFFLAGS="-O0"
     esac
     ;;
   ia64*linux* | *x86*64* )
@@ -220,6 +222,7 @@ if test -z "${FCFLAGS}"; then
       ;;
     *pgf9*)
       FCFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+      UFFLAGS="-O0 -Mbackslash"
       FCMFLAG="-Mnomain"
       ;;
     *abf90*)
@@ -255,6 +258,7 @@ if test -z "${FCFLAGS}"; then
       ;;
     *)
       FCFLAGS="-O"
+      UFFLAGS="-O0"
     esac
     ;;
   alphaev*)

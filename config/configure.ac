@@ -19,11 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 3.2.1 r.546 , yambo@yambo-code.org)
+AC_INIT(Yambo, 3.2.1 r.549 , yambo@yambo-code.org)
 SVERSION="3"
 SPATCHLEVEL="2"
 SSUBLEVEL="1"
-SREVISION="546"
+SREVISION="549"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -41,6 +41,7 @@ m4_include([config/slk.m4])
 m4_include([config/acx_report.m4])
 m4_include([config/acx_get_fc_version.m4])
 m4_include([config/acx_cpp.m4])
+m4_include([config/ax_f90_module_flag.m4])
 
 AC_PREFIX_DEFAULT($PWD)
 
@@ -241,6 +242,12 @@ F90=$FC
 AC_SUBST(F90)
 AC_SUBST(AR_FLAGS)
 AC_LANG_POP(Fortran)
+#
+#=============================================================================
+# FLAGS TO INCLUDE MODULE
+AX_F90_MODULE_FLAG
+F90_MODULE_FLAG="$ax_cv_f90_modflag"
+AC_SUBST([F90_MODULE_FLAG])
 #
 # ============================================================================
 # CPP check & flags

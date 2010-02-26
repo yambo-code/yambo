@@ -188,7 +188,7 @@ FC_NOOPT_SRC= mod_parser_m.o mod_logo.o
 .F.o:
 	@rm -f \$*\$(f90suffix)
 	${PREFIX}(eval \$(cpp) \$(cppflags) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
-	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
 	@rm -f \$*\$(f90suffix)
 	@echo $ECHO_N \$*".F "
 .f.o:

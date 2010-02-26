@@ -38,8 +38,6 @@ subroutine RT_spectrum(en,k)
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP
  use real_time,      ONLY:NE_steps,RT_step,j_current,i_time,Efield,  &
 &                         max_rt_steps_disk,current_cache,A_vecpot
- use D_lattice,      ONLY:DL_vol
-
  implicit none
  !
  type(levels)   :: en

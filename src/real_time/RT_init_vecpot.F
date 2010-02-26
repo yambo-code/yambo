@@ -27,7 +27,6 @@ subroutine RT_init_vecpot()
  use pars,           ONLY:SP
  use com,            ONLY:error
  use units,          ONLY:SPEED_OF_LIGHT
- use D_lattice,      ONLY:DL_vol
  use real_time,      ONLY:ext_field,A_vecpot,n_ext_fields,Efield
  !
  implicit none
@@ -44,7 +43,7 @@ subroutine RT_init_vecpot()
    ! 
    if(Efield(i1)%ef_name=="none") cycle
    !
-   E_times_c=Efield(i1)%amplitude*Efield(i1)%versor(:)*DL_vol*SPEED_OF_LIGHT
+   E_times_c=Efield(i1)%amplitude*Efield(i1)%versor(:)*SPEED_OF_LIGHT
    !
    ! Formally speaking:
    !

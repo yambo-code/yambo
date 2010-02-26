@@ -32,6 +32,8 @@ function Integrate(F,W,N)
  integer      :: i_w
  real(SP)     :: M,Q
  !
+ Integrate=0._SP
+ !
  do i_w=1,N-1
    M=(F(i_w)-F(i_w+1))/(W(i_w)-W(i_w+1))
    Q=F(i_w)-M*W(i_w)

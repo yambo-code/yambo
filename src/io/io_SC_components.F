@@ -33,7 +33,7 @@ integer function io_SC_components(what,E_sc,ID)
 &                         io_sec,io_bulk,read_is_on,write_is_on,&
 &                         manage_RD_WR_CL_IF_END,io_reset
 #if defined _RT
- use real_time,      ONLY:l_NE_with_fields,NE_steps, &
+ use real_time,      ONLY:l_NE_with_fields,NE_steps,j_current_ext, &
 &                         G_lesser,i_time,j_current,max_rt_steps_disk,current_cache,A_vecpot
  use QP_m,           ONLY:QP_nk
 #endif                                
@@ -312,10 +312,12 @@ integer function io_SC_components(what,E_sc,ID)
      if(write_is_on(ID)) then
        !
        do i1=1,3
-         current_cache(2*i1-1,  mod(i_time-1,max_rt_steps_disk)+1)= real(j_current(i1))
-         current_cache(2*i1,    mod(i_time-1,max_rt_steps_disk)+1)=aimag(j_current(i1))
-         current_cache(6+2*i1-1,mod(i_time-1,max_rt_steps_disk)+1)= real(A_vecpot%vecpot_vel(i1))
-         current_cache(6+2*i1  ,mod(i_time-1,max_rt_steps_disk)+1)=aimag(A_vecpot%vecpot_vel(i1))
+         current_cache(  2*i1-1,  mod(i_time-1,max_rt_steps_disk)+1)= real(j_current(i1))
+         current_cache(  2*i1,    mod(i_time-1,max_rt_steps_disk)+1)=aimag(j_current(i1))
+         current_cache(6+2*i1-1,  mod(i_time-1,max_rt_steps_disk)+1)= real(A_vecpot%vecpot_vel(i1))
+         current_cache(6+2*i1  ,  mod(i_time-1,max_rt_steps_disk)+1)=aimag(A_vecpot%vecpot_vel(i1))
+         current_cache(12+2*i1-1, mod(i_time-1,max_rt_steps_disk)+1)= real(j_current_ext(i1))
+         current_cache(12+2*i1,   mod(i_time-1,max_rt_steps_disk)+1)=aimag(j_current_ext(i1))
        enddo
        !
      endif
@@ -323,7 +325,7 @@ integer function io_SC_components(what,E_sc,ID)
      if (IO_current) then
        !                                
        call io_bulk(ID,VAR="Current_and_Potential_TIME"//trim(intc(file_number)), &
-&                  VAR_SZ=(/12,max_rt_steps_disk/))
+&                  VAR_SZ=(/18,max_rt_steps_disk/))
        !
        call io_bulk(ID,R2=current_cache)
        !
@@ -337,10 +339,12 @@ integer function io_SC_components(what,E_sc,ID)
        !
        !
        do i1=1,3
-         j_current(i1)          =cmplx(current_cache(2*i1-1,  mod(i_time-1,max_rt_steps_disk)+1), &
-&                                      current_cache(2*i1,    mod(i_time-1,max_rt_steps_disk)+1),SP)
-         A_vecpot%vecpot_vel(i1)=cmplx(current_cache(6+2*i1-1,mod(i_time-1,max_rt_steps_disk)+1), &
-&                                      current_cache(6+2*i1  ,mod(i_time-1,max_rt_steps_disk)+1),SP)
+         j_current(i1)          =cmplx(current_cache(   2*i1-1,mod(i_time-1,max_rt_steps_disk)+1), &
+&                                      current_cache(   2*i1,  mod(i_time-1,max_rt_steps_disk)+1),SP)
+         A_vecpot%vecpot_vel(i1)=cmplx(current_cache(6 +2*i1-1,mod(i_time-1,max_rt_steps_disk)+1), &
+&                                      current_cache(6 +2*i1  ,mod(i_time-1,max_rt_steps_disk)+1),SP)
+         j_current_ext(i1)      =cmplx(current_cache(12+2*i1-1,mod(i_time-1,max_rt_steps_disk)+1), &
+&                                      current_cache(12+2*i1  ,mod(i_time-1,max_rt_steps_disk)+1),SP)
        enddo
        !
      endif 

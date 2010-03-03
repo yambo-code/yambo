@@ -272,7 +272,6 @@ module vec_operate
      !
      ! deg_grps = 2
      !
-     !
      integer, intent(in)  :: n
      integer, intent(out) :: first_deg_el(n),deg_elmnts(n),deg_grps
      real(SP),intent(in)  :: E(n),deg_accuracy

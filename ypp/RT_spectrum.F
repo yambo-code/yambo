@@ -37,7 +37,7 @@ subroutine RT_spectrum(en,k)
  use timing,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP
  use real_time,      ONLY:NE_steps,RT_step,j_current,i_time,Efield,  &
-&                         max_rt_steps_disk,current_cache,A_vecpot
+&                         max_rt_steps_disk,current_cache,A_vecpot,j_current_ext
  implicit none
  !
  type(levels)   :: en
@@ -52,7 +52,7 @@ subroutine RT_spectrum(en,k)
  real(SP)           :: W_RT_induced_step,W_step,Time_reached,W_reached
  complex(SP)        :: w_Aw,Integral
  real(SP),    allocatable :: damp_function(:)
- complex(DP),    allocatable :: current(:,:)
+ complex(DP),    allocatable :: current(:,:),current_ext_t(:,:),current_ext_w(:,:)
  complex(DP),    allocatable :: At_vecpot_vel(:,:),Aw_vecpot_vel(:,:)
  complex(DP), allocatable :: EELS(:,:),EPS(:,:)
  complex(DP),    allocatable :: E_induced(:,:)
@@ -99,15 +99,19 @@ subroutine RT_spectrum(en,k)
  ! I/O of Current and Vector Potential
  !=====================================
  !
- allocate(current(NE_steps,3))
+ allocate(current(NE_steps,3),current_ext_t(NE_steps,3),current_ext_w(NE_steps,3))
  call mem_est("Current",(/size(current)/),(/2*SP/))
+ call mem_est("Current_ext_t",(/size(current_ext_t)/),(/2*SP/))
+ call mem_est("Current_ext_w",(/size(current_ext_w)/),(/2*SP/))
  allocate(Aw_vecpot_vel(NE_steps,3),At_vecpot_vel(NE_steps,3))
  call mem_est("At_vecpot_vel",(/size(At_vecpot_vel)/),(/2*SP/))
  call mem_est("Aw_vecpot_vel",(/size(Aw_vecpot_vel)/),(/2*SP/))
- allocate(current_cache(12,max_rt_steps_disk))
+ allocate(current_cache(18,max_rt_steps_disk))
  call mem_est("Current_Cache",(/size(current_cache)/),(/SP/))
  !
  current      =(0._SP,0._SP)
+ current_ext_t=(0._SP,0._SP)
+ current_ext_w=(0._SP,0._SP)
  Aw_vecpot_vel=(0._SP,0._SP)
  At_vecpot_vel=(0._SP,0._SP)
  !
@@ -119,6 +123,7 @@ subroutine RT_spectrum(en,k)
    !
    if(i_time>=i_t_start.and.i_time<=i_t_end) then
      current(i_time,:)       = j_current(:)
+     current_ext_t(i_time,:) = j_current_ext(:)
      At_vecpot_vel(i_time,:) = A_vecpot%vecpot_vel(:)
    endif           
    !
@@ -252,11 +257,14 @@ subroutine RT_spectrum(en,k)
      !
      EELS(:,i_c)          = current(:,i_c)
      Aw_vecpot_vel(:,i_c) = At_vecpot_vel(:,i_c)
+     current_ext_w(:,i_c) = current_ext_t(:,i_c)
      !
 #if defined _FFTW
+    call fft_1d(current_ext_w(:,i_c),NE_steps,fft_sign,fftw_plan)
     call fft_1d(EELS(:,i_c),NE_steps,fft_sign,fftw_plan)
     call fft_1d(Aw_vecpot_vel(:,i_c),NE_steps,fft_sign,fftw_plan)
 #else
+    call fft_1d(current_ext_w(:,i_c),NE_steps,fft_sign)
     call fft_1d(EELS(:,i_c),NE_steps,fft_sign)
     call fft_1d(Aw_vecpot_vel(:,i_c),NE_steps,fft_sign)
 #endif
@@ -264,6 +272,7 @@ subroutine RT_spectrum(en,k)
      ! due to the definition of FFT 
      !
      EELS(:,i_c)=conjg(EELS(:,i_c))
+     current_ext_w(:,i_c)=conjg(current_ext_w(:,i_c))
      !
    enddo
    !
@@ -281,6 +290,7 @@ subroutine RT_spectrum(en,k)
        Time_reached = i_t*RT_step
        EELS(i_w,1:3)          = EELS(i_w,1:3)+current(i_t,1:3)*exp((0.,1.)*W_reached*Time_reached) 
        Aw_vecpot_vel(i_w,1:3) = Aw_vecpot_vel(i_w,1:3)+At_vecpot_vel(i_t,1:3)*exp((0.,1.)*W_reached*Time_reached) 
+       current_ext_w(i_w,1:3) = current_ext_w(i_w,1:3)+current_ext_t(i_t,1:3)*exp((0.,1.)*W_reached*Time_reached) 
      enddo
      !
      call live_timing(steps=1)
@@ -297,30 +307,36 @@ subroutine RT_spectrum(en,k)
    W_reached = (i_w-1)*W_step+X_rt%energy_range(1)
    !
    if ((trim(Efield(ref_efield)%ef_name) == 'DELTA')) then 
-      w_Aw=-Efield(ref_efield)%amplitude
+      w_Aw=Efield(ref_efield)%amplitude
    elseif ((trim(Efield(ref_efield)%ef_name) == 'RESONANT')) then 
-      w_Aw=-Efield(ref_efield)%amplitude*cmplx(0.,-Efield(ref_efield)%frequency)/(4._SP*pi)
-      w_Aw=w_Aw/cmplx(0._SP,W_reached)
+      w_Aw=Efield(ref_efield)%amplitude*cmplx(0.,-Efield(ref_efield)%frequency)/(4._SP*pi)
+      w_Aw=w_Aw/cmplx(0._SP,-W_reached)
    elseif ((trim(Efield(ref_efield)%ef_name) == 'ANTIRESONANT')) then 
-      w_Aw=-Efield(ref_efield)%amplitude*cmplx(0.,Efield(ref_efield)%frequency)/(4._SP*pi)
-      w_Aw=w_Aw/cmplx(0._SP,W_reached)
+      w_Aw=Efield(ref_efield)%amplitude*cmplx(0.,Efield(ref_efield)%frequency)/(4._SP*pi)
+      w_Aw=w_Aw/cmplx(0._SP,-W_reached)
    elseif ((trim(Efield(ref_efield)%ef_name) == 'SINUSOIDAL')) then 
-      w_Aw=-Efield(ref_efield)%amplitude*Efield(ref_efield)%frequency/(4._SP*pi)/2._SP
-      w_Aw=w_Aw/cmplx(0._SP,W_reached)
+      w_Aw=Efield(ref_efield)%amplitude*Efield(ref_efield)%frequency/(4._SP*pi)/2._SP
+      w_Aw=w_Aw/cmplx(0._SP,-W_reached)
+   else
+      w_Aw=-sum(current_ext_w(i_w,:)*Efield(ref_efield)%versor(:))/cmplx(0._SP,-W_reached)
    endif
-   EELS(i_w,:) = EELS(i_w,:)/cmplx(0._SP,W_reached)/w_Aw
+   !
+   EELS(i_w,:) = EELS(i_w,:)/cmplx(0._SP,-W_reached)/w_Aw
    !
  enddo
  !
- EELS(:,:)=EELS(:,:)+1._DP
+ EELS(:,:)=1._DP+EELS(:,:)
  EPS(:,:) =1._DP/EELS(:,:)
  !
  call OutPut_File("eps")
  call OutPut_File("eels")
  !
- deallocate(E_induced,EELS,current,damp_function,At_vecpot_vel,Aw_vecpot_vel,current_cache)
+ deallocate(E_induced,EELS,current,damp_function,At_vecpot_vel,Aw_vecpot_vel, &
+&           current_cache,current_ext_w,current_ext_t)
  call mem_est("Current_Cache")
  call mem_est("Current")
+ call mem_est("Current_ext_w")
+ call mem_est("Current_ext_t")
  call mem_est("Aw_vecpot_vel")
  call mem_est("At_vecpot_vel")
  call mem_est("EELS EPS")
@@ -340,7 +356,7 @@ subroutine RT_spectrum(en,k)
      integer      :: i_file
      integer      :: n_headings,i_d,i_s,steps_here
      character(lchlen),SAVE  :: file_name(4)
-     character(schlen)       :: headings(7)
+     character(schlen)       :: headings(10)
      !
      call set_real_printed_length(f_length=15,g_length=15)
      !
@@ -372,7 +388,8 @@ subroutine RT_spectrum(en,k)
        case("current")
          headings(2:4)=(/"A'_x","A'_y","A'_z"/)
          headings(5:7)=(/"j_x","j_y","j_z"/)
-         n_headings=7
+         headings(8:10)=(/"j_ext_x","j_ext_y","j_ext_z"/)
+         n_headings=10
        case("E_induced")
          headings(2:4)=(/"E_x","E_y","E_z"/)
          n_headings=4
@@ -404,7 +421,8 @@ subroutine RT_spectrum(en,k)
        !
        if (trim(what)=="current") output_data(2:n_headings)=&
 &                (/real(At_vecpot_vel(i_s,1)),real(At_vecpot_vel(i_s,2)),real(At_vecpot_vel(i_s,3)), &
-&                  real(current(i_s,1)),real(current(i_s,2)),real(current(i_s,3))/)
+&                  real(current(i_s,1)),real(current(i_s,2)),real(current(i_s,3)), &
+&                  real(current_ext_t(i_s,1)),real(current_ext_t(i_s,2)),real(current_ext_t(i_s,3))/)
        if (trim(what)=="E_induced") output_data(2:n_headings)=(/&
 &                  real(E_induced(i_s,1),SP),real(E_induced(i_s,2),SP) , real(E_induced(i_s,3),SP)/)
        if (trim(what)=="eps") output_data(1:n_headings)=(/((i_s-1)*W_step+X_rt%energy_range(1))*HARTREE,&

@@ -62,6 +62,7 @@ subroutine RT_init_vecpot()
        A_vecpot%vecpot(:)    =A_vecpot%vecpot(:)    +E_times_c(:)/( Efield(i1)%frequency*(0._SP,1._SP) )
      case('DELTA')
        A_vecpot%vecpot(:)    =A_vecpot%vecpot_vel(:)-E_times_c(:)
+     case('GAUSSIAN')
      case default
        call error(" External Field "//trim(Efield(i1)%ef_name)//" not implemented ") 
    end select

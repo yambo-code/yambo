@@ -176,9 +176,9 @@ subroutine QP_of(qp,en,QPdb_read_err)
 &             INDENT=0)
      call msg('o G_Sc','#')
      titles(1)='Energy'
-     titles(2:3)=(/'Re[G]','Im[G]'/)
-     titles(4:5)=(/'Re[S_tot]','Im[S_tot]'/)
-     titles(6)  ='Re[S_c]'
+     titles(2:3)=(/' Re[G] ','|Im(G)|'/)
+     titles(4)=    'Re(S_tot)'
+     titles(5:6)=(/'|Im(S_c)|',' Re(S_c) '/)
      if (report_Vnlxc) then
        call msg('o G_Sc','#',titles(:6),INDENT=0,USE_TABS=.TRUE.)
      else

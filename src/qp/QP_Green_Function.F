@@ -21,14 +21,22 @@
 !
 subroutine QP_Green_Function(qp,E,GFdb_read_err)
  !
+ ! This routine calcualtes a modified definition of the GF that
+ ! yields an always positive spectral function. This is because the 
+ ! Im(G) can be easily post-processed.
+ !
+ ! So regardless of the temperature the G defined here is
+ !
+ ! G = conjg( G_causal )
+ !
  use pars,          ONLY:SP,pi
  use com,           ONLY:msg
  use units,         ONLY:HARTREE
  use QP_m,          ONLY:QP_t,QP_Sc,QP_Vnl_xc,QP_Vxc,QP_table,&
 &                        QP_n_states,use_GreenF_to_eval_QP,QP_Sc_steps,QP_G_dr,&
-&                        QP_dSc_delta,GF_is_causal,QP_G_Zoom_treshold,&
-&                        QP_G_amplitude_integral,QP_G_zoom_er,use_GreenF_Zoom,QP_G_er
- use electrons,     ONLY:spin,levels,spin_occ
+&                        QP_dSc_delta,QP_G_Zoom_treshold,&
+&                        QP_G_amplitude_integral,QP_G_zoom_er,use_GreenF_Zoom
+ use electrons,     ONLY:spin,levels
  use frequency,     ONLY:w_samp,W_reset
  implicit none
  !
@@ -40,9 +48,7 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
  !
  type(w_samp)     ::W
  integer          ::iqp,ib,ik,i_spin,iw,iw_start,iw_end
- complex(SP)      ::QP_Go,f_energy
  real(SP)         ::Eo,Amp_Peak,old_min_max_step(2),new_min_max_step(2),W_step
- logical          ::band_is_metallic,apply_damping
  !
  real(SP), external :: Integrate
  !
@@ -75,8 +81,6 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
    ik    =QP_table(iqp,3)
    i_spin=spin(QP_table(iqp,:))
    !
-   band_is_metallic=ib>E%nbf.and.ib<=E%nbm
-   !
    Eo=E%E(ib,ik,i_spin) 
    if (associated(E%Eo)) Eo=E%Eo(ib,ik,i_spin)
    !
@@ -88,33 +92,8 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
      endif
    endif
    !
-   apply_damping= maxval(abs( aimag(qp%S_total(iqp,:) ) )) < 0.001/HARTREE
-   !
    do iw=1,W%n(1) 
-     !
-     !  Davide: 15/04/2009 moved conjg from the second term of the Green to
-     !          the first according to the QP expression for the T-ordered Green
-     !          G=\frac{1}{\omega-\epsilon_i+i\eta sign(\epsilon-\mu)}         
-     !
-     f_energy=conjg(qp%GreenF_W(iqp,iw))
-     if (GF_is_causal)  f_energy=qp%GreenF_W(iqp,iw)
-     !
-     QP_Go=           E%f(ib,ik,i_spin)/(f_energy-Eo)/spin_occ+&
-&          (spin_occ-E%f(ib,ik,i_spin))/(qp%GreenF_W(iqp,iw) -Eo)/spin_occ  
-     !
-     if ( band_is_metallic .or. apply_damping ) then
-       qp%GreenF(iqp,iw)=QP_Go/(1.-QP_Go*qp%S_total(iqp,iw))  
-     else
-       !
-       ! Andrea (20/7/2009): If the imaginary part of the self-energy
-       ! is smaller than the broadening the sign of the spectral function
-       ! may be wrong. So, as the SE is already broaded during the evaluation,
-       ! in case the band/k is not metallic I use an analytic QP_Go with 
-       ! zero damping.
-       !
-       qp%GreenF(iqp,iw)=1./(real(qp%GreenF_W(iqp,iw))-Eo-qp%S_total(iqp,iw)) 
-     endif
-     !
+     qp%GreenF(iqp,iw)=1./(real(qp%GreenF_W(iqp,iw))-Eo-qp%S_total(iqp,iw)) 
    enddo
    !
    ! Spectral Function Integral

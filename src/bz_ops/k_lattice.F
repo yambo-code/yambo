@@ -102,7 +102,19 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  allocate(idist(N_ext_K_pts),order(N_ext_K_pts))
  do i1=1,N_ext_K_pts
    v0=extended_k_points(i1,:)
-   idist(i1)=ak2bz(v0)
+   !
+   ! Andrea (5/3/2010): Here I am searching for the smallest
+   ! non linear-dependent vectors of the K grid (shifted in gamma).
+   ! Up to today "smallest" meant in chartesian coordinates. However I want
+   ! to build-up a grid in RLU and in the unlucky case where the smallest in 
+   ! chartesian is not the smallest in RLU the grid will turn out to be not correctly sized.
+   !
+   ! At the moment I cannot judge if this change will or not yield other problems in the case.
+   ! In any case the deep checks in bz_samp_indexes should prevent them.
+   !
+   ! idist(i1)=ak2bz(v0)  <- PREVIOUS CALL 
+   !
+   idist(i1)=v_norm(v0)
    order(i1)=i1
  enddo
  if (N_ext_K_pts>1) call sort(idist,indx=order)
@@ -112,8 +124,10 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  k_grid_b=0.
  do i1=1,N_ext_K_pts
    v0=extended_k_points(order(i1),:)
-   v0_ibz_mod=ak2bz(v0)
-   if (v_norm(v0)<=1.E-5) cycle
+   !
+   v0_ibz_mod=v_norm(v0) 
+   !
+   if (v0_ibz_mod<=1.E-5) cycle
    select case(k_grid_dim)
      case(0)
        k_grid_dim=1

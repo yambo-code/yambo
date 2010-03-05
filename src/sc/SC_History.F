@@ -50,12 +50,13 @@ subroutine SC_History(it,E)
  !
  do i_spin=1,n_sp_pol
    !
-   if ( .not. OF_exists('RT_E_History') ) then
 #if defined _RT
      !
+     if ( .not. OF_exists('RT_E_History') ) then
      headers(1)='Time[fs]'
 #else
      !
+     if ( it == 1 ) then
      headers(1)='Iteration'
 #endif
      n_headers=1

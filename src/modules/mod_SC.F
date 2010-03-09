@@ -104,7 +104,7 @@ module SC
    subroutine SC_alloc(E)
      use pars,           ONLY:SP
      use R_lattice,      ONLY:nkibz
-     use drivers,        ONLY:l_real_time,l_sc_cohsex
+     use drivers,        ONLY:l_real_time,l_sc_cohsex,l_sc_srpa
      use electrons,      ONLY:n_spin,n_sp_pol,levels
      use FFT_m,          ONLY:fft_size
      use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc,QP_state,QP_nb
@@ -155,7 +155,7 @@ module SC
      allocate(H_nl_sc(SC_bands,SC_bands,n_sp_pol))
      call mem_est("H_nl_sc",(/size(H_nl_sc)/),(/2*SP/))
      !
-     if (l_sc_cohsex) then
+     if (l_sc_cohsex.or.l_sc_srpa) then
        allocate(QP_Sc(QP_n_states,1))
        call mem_est("QP_Sc",(/QP_n_states/))
      endif
@@ -168,7 +168,7 @@ module SC
    end subroutine
    !
    subroutine SC_free()
-     use drivers,        ONLY:l_real_time,l_sc_cohsex
+     use drivers,        ONLY:l_real_time,l_sc_cohsex,l_sc_srpa
      use QP_m,           ONLY:QP_Sc
      use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:two_spin_density,V_xc
@@ -197,9 +197,9 @@ module SC
      call mem_est('V_xc_sc')
      !
      deallocate(V_hartree_sc)
-     call mem_est("Hartree_Ptential")
+     call mem_est("Hartree_Potential")
      !
-     if (l_sc_cohsex) then
+     if (l_sc_cohsex.or.l_sc_srpa) then
        deallocate(QP_Sc)
        call mem_est("QP_Sc")
      endif

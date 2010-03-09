@@ -84,7 +84,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 #if defined _RT
  use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Efield,Integrator_name,            &
 &                     RT_diagonalization_steps, LifeTime,l_NE_simulate_RPA, n_ext_fields, &
-&                     Thermal_time,max_rt_steps_disk,l_RT_no_intraband,l_RT_induced_field,&
+&                     Thermal_time,max_rt_steps_disk,l_RT_induced_field,&
 &                     l_RT_diagonalize,Ext_fields_initial_time
 #endif
 #if defined _MAGNETIC
@@ -450,7 +450,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  RT_diagonalization_steps=-1
  l_RT_diagonalize=.FALSE.
  max_rt_steps_disk=200
- l_RT_no_intraband=.FALSE.
  l_RT_induced_field=.FALSE.
  !
 #endif

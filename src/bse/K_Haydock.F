@@ -192,7 +192,7 @@ subroutine K_Haydock(iq,W)
      Vn(:)   = Vn(:)/Haydock_v0_mod
    else
      Haydock_v0_mod = Bf(1)
-     Bf(1) = 0.
+     Bf(1) = 0._SP
    endif     
    !
    ! GPL_EXCLUDE_END
@@ -378,7 +378,7 @@ subroutine K_Haydock(iq,W)
      io_err=ioBSS_Haydock(ID,it,2*BS_K_dim,reached_treshold,Af(:it),Bf(:it+1),   &
 &       Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it+1))
 #endif
-     Bf(1) = 0.
+     Bf(1) = 0._SP
      !
      ! GPL_EXCLUDE_END
      !
@@ -437,7 +437,7 @@ subroutine K_Haydock(iq,W)
      ! Co includes the spin_occ factor because Haydock is expected to work
      ! only when ALL BS_eh_f == spin_occ
      !
-     Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/q_norm(1)**2.*Haydock_v0_mod**2.
+     Co=real(spin_occ)/(2._SP*pi)**3._SP*d3k_factor*4._SP*pi/q_norm(1)**2._SP*Haydock_v0_mod**2
      X_t =(0._SP,0._SP)
      UseTerminator = .false.  
      !
@@ -452,8 +452,8 @@ subroutine K_Haydock(iq,W)
      !
      if (Useterminator) then 
        if (.not.BS_K_Coupling) then
-         Av1 = 0.
-         Av2 = 0.
+         Av1 = 0._SP
+         Av2 = 0._SP
          do i1 = 1, it
            Av1 = Av1 + Af(i1)
            Av2 = Av2 + Bf(i1)
@@ -464,8 +464,8 @@ subroutine K_Haydock(iq,W)
        !
        ! GPL_EXCLUDE_START
        !
-         Av1 = 0.
-         Av2 = 0.
+         Av1 = 0._SP
+         Av2 = 0._SP
          do i1 = 2,it+1,2
            Av1 = Av1 + Bf(i1)
            Av2 = Av2 + Bf(i1+1)
@@ -491,12 +491,12 @@ subroutine K_Haydock(iq,W)
        ! GPL_EXCLUDE_END
        !
        endif
-       X_o(:,it)=1./(W%p(iw)-Af(it)-Bf(it+1)**2.*X_t)
+       X_o(:,it)=1._SP/(W%p(iw)-Af(it)-Bf(it+1)**2*X_t)
        do i1=it-1,1,-1
-         X_o(1,i1)=1./(W%p(iw)-Af(i1)-Bf(i1+1)**2.*X_o(1,i1+1))
+         X_o(1,i1)=1._SP/(W%p(iw)-Af(i1)-Bf(i1+1)**2*X_o(1,i1+1))
        enddo
        do i1=it-2,1,-1
-         X_o(2,i1)=1./(W%p(iw)-Af(i1)-Bf(i1+1)**2.*X_o(2,i1+1))
+         X_o(2,i1)=1._SP/(W%p(iw)-Af(i1)-Bf(i1+1)**2*X_o(2,i1+1))
        enddo
        !
        ! GPL_EXCLUDE_START
@@ -519,8 +519,8 @@ subroutine K_Haydock(iq,W)
        ! GPL_EXCLUDE_END
        !
        X_epsilon(1,iw)=W%p(iw)
-       X_epsilon(2,iw)=-X_o(1,1)*Co+1.
-       X_epsilon(4,iw)=-X_o(2,1)*Co+1.
+       X_epsilon(2,iw)=-X_o(1,1)*Co+1._SP
+       X_epsilon(4,iw)=-X_o(2,1)*Co+1._SP
        if (Haydock_treshold>0._SP) reached_treshold=max(reached_treshold,&
 &         abs(X_epsilon(2,iw)-X_epsilon(4,iw))/abs(X_epsilon(2,iw)))
        if (Haydock_treshold<0._SP) reached_treshold=reached_treshold+&
@@ -559,17 +559,17 @@ subroutine K_Haydock(iq,W)
      !
      ! GPL_EXCLUDE_START
      !
-       f = x**2. - c1**2. + c2**2.
-       g = 2.*x*c2**2.
-       terminator = f + sqrt(f**2. -2.*x*g) 
+       f = x**2 - c1**2 + c2**2
+       g = 2._SP*x*c2**2
+       terminator = f + sqrt(f**2 -2._SP*x*g) 
        terminator = terminator/g
      !
      ! GPL_EXCLUDE_END
      !
      case (2)
        f = (x-c1)
-       terminator = f + sqrt(f**2. -4.*c2**2.)
-       terminator = terminator/2./c2**2.
+       terminator = f + sqrt(f**2 -4._SP*c2**2.)
+       terminator = terminator/2._SP/c2**2
      end select
    end function terminator
    !

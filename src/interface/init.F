@@ -1153,6 +1153,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          else if ( trim(rstr_piece(i1+1)) == 'exxc' ) then
            SC_potential='EXXC'
            call initactivate(1,'HF_and_locXC')
+         else if ( trim(rstr_piece(i1+1)) == 'srpa' ) then
+           SC_potential='SRPA'
+           call initactivate(1,'cohsex HF_and_locXC')
          else if ( trim(rstr_piece(i1+1)) == 'c' ) then
            SC_potential='COHSEX'
            call initactivate(1,'cohsex HF_and_locXC')

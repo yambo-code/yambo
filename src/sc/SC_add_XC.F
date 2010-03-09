@@ -29,7 +29,8 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  ! _RT works in the LDa basis.
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_sc_exx,l_sc_cohsex,l_sc_contains_lda,l_collisions_IO
+ use drivers,        ONLY:l_sc_exx,l_sc_srpa,l_sc_cohsex,l_sc_contains_lda,&
+&                         l_collisions_IO
  use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:QP_t,QP_nk,QP_reset
  use electrons,      ONLY:levels,n_spin
@@ -85,9 +86,10 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
      !
      call IO_and_Messaging_switch("+io_in")
      !
-     if (l_sc_cohsex) call QP_ppa_cohsex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1)
+     if (l_sc_cohsex.or.l_sc_srpa) call QP_ppa_cohsex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1)
      !
      call IO_and_Messaging_switch("+report +io_out")
+     !
      !
    endif
    !
@@ -97,7 +99,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
    !
    V_xc_sc=(0.,0.)
    !
-   if (l_sc_exx) call V_exx(X(1),E,k,q,V_xc_sc)
+   if (l_sc_exx) call V_oep(X(1),E,k,q,V_xc_sc)
    !
    call IO_and_Messaging_switch("-report -log -io_in -io_out")
    !

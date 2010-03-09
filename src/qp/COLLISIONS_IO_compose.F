@@ -23,7 +23,7 @@ subroutine COLLISIONS_IO_compose(G_input)
  !
  ! HF(qp_state) = - (0.,1.) * \sum_{n,n',q} rho_rho_(n,n',q,qp_state) x G_lesser(n,n',k-q)
  ! 
- use drivers,          ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx
+ use drivers,          ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_sc_srpa
  use pars,             ONLY:SP
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_states,QP_Vnl_xc,QP_Sc
  use SC,               ONLY:SC_bands
@@ -54,7 +54,7 @@ subroutine COLLISIONS_IO_compose(G_input)
  !
  if (.not.allocated(QP_Vnl_xc))  allocate(QP_Vnl_xc(QP_n_states))
  if(l_sc_hf.or.l_sc_cohsex.or.l_sc_exx.or.last_QP_mem/=0) QP_Vnl_xc=(0._SP,0._SP)
- if(l_sc_cohsex) QP_sc=(0._SP,0._SP)
+ if(l_sc_cohsex.or.l_sc_srpa) QP_sc=(0._SP,0._SP)
  !
  ! First loop on collisions in the Cache
  ! notice that in memory all collisions are sum together
@@ -63,7 +63,6 @@ subroutine COLLISIONS_IO_compose(G_input)
  do i_qp=1,last_QP_mem
    !
    if(.not.px%element_1D(i_qp)) cycle  
-   !
    ic=1
    !
    do ib=1,QP_nb
@@ -82,7 +81,7 @@ subroutine COLLISIONS_IO_compose(G_input)
  ! .. then read the remaning collisions from disk
  ! On disk each contributions is stored in a different database
  !
- do i_qp=last_QP_mem+1,QP_n_states 
+ do i_qp=last_QP_mem+1,QP_n_states
    !
    if(.not.px%element_1D(i_qp)) cycle  
    !
@@ -106,13 +105,13 @@ subroutine COLLISIONS_IO_compose(G_input)
              QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-(0._SP,1._SP)*COLLISIONS_v(ic)*G_input(ib,ibp,ik)
              ic=ic+1
            endif
-         enddo
+          enddo
        enddo
      enddo
      !
    endif
    !
-   if(l_sc_cohsex) then
+   if(l_sc_cohsex.or.l_sc_srpa) then
      !
      V_kind=SC_COHSEX
      !
@@ -148,7 +147,7 @@ subroutine COLLISIONS_IO_compose(G_input)
  ! in QP_Vnl_xc
  ! 
  if(l_sc_hf.or.l_sc_exx.or.l_sc_cohsex.or.last_QP_mem/=0)   call pp_redux_wait(QP_Vnl_xc)
- if(l_sc_cohsex)                                call pp_redux_wait(QP_Sc)
+ if(l_sc_cohsex.or.l_sc_srpa)                               call pp_redux_wait(QP_Sc)
  !
  call pp_indexes_reset(px)
  !

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Collision(G_input,Xen,k,q,RT_time)
+subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
  !
  ! This subroutine prepare I1(t_1,t_2) and I2(t_1,t_2) give a G^<(t_1,t_1) 
  ! Actualy it works only for the diagonal I1(t_1,t_1), I2(t_1,t_1)
@@ -30,11 +30,9 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
- use real_time,      ONLY:I1_lesser,I2_lesser, &
- &                        l_NE_with_fields,LifeTime,H_t,       &
- &                        Thermal_steps,   &
- &                        Thermal_time,RT_step,XC0,Hfrozen,XCfrozen,      &
- &                        G_lesser_reference,l_RT_needs_XC0,i_time
+ use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_with_fields,LifeTime,H_t,      &
+ &                        Thermal_steps,Thermal_time,RT_step,XC0,Hfrozen,XCfrozen,&
+ &                        G_lesser_reference,l_RT_needs_XC0,i_time,gauge_field
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
@@ -45,10 +43,11 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
  !
  implicit none
  !
- real(SP),      intent(in)   :: RT_time
- type(levels),  intent(in)   :: Xen
- type(bz_samp), intent(in)   :: k,q
- complex(SP),   intent(in)   :: G_input(SC_bands,SC_bands,QP_nk)
+ real(SP),      intent(in)    :: RT_time
+ type(levels),  intent(in)    :: Xen
+ type(bz_samp), intent(in)    :: k,q
+ complex(SP),   intent(in)    :: G_input(SC_bands,SC_bands,QP_nk)
+ type(gauge_field), intent(in):: A_input
  !
  ! Work Space
  !
@@ -140,7 +139,7 @@ subroutine RT_Collision(G_input,Xen,k,q,RT_time)
    !
    ! And the gauge field
    !
-   if(l_NE_with_fields.and.i_time>0) call RT_apply_gauge_field(ik,H_nl_sc,G_input)
+   if(l_NE_with_fields.and.i_time>0) call RT_apply_gauge_field(ik,H_nl_sc,A_input)
    !
    if(allocated(H_t))  H_t(:,:,ik,1)=H_nl_sc(:,:,1)
    !

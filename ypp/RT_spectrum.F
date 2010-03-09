@@ -307,7 +307,7 @@ subroutine RT_spectrum(en,k)
    W_reached = (i_w-1)*W_step+X_rt%energy_range(1)
    !
    if ((trim(Efield(ref_efield)%ef_name) == 'DELTA')) then 
-      w_Aw=Efield(ref_efield)%amplitude
+      w_Aw=Efield(ref_efield)%amplitude                            
    elseif ((trim(Efield(ref_efield)%ef_name) == 'RESONANT')) then 
       w_Aw=Efield(ref_efield)%amplitude*cmplx(0.,-Efield(ref_efield)%frequency)/(4._SP*pi)
       w_Aw=w_Aw/cmplx(0._SP,-W_reached)
@@ -318,7 +318,7 @@ subroutine RT_spectrum(en,k)
       w_Aw=Efield(ref_efield)%amplitude*Efield(ref_efield)%frequency/(4._SP*pi)/2._SP
       w_Aw=w_Aw/cmplx(0._SP,-W_reached)
    else
-      w_Aw=-sum(current_ext_w(i_w,:)*Efield(ref_efield)%versor(:))/cmplx(0._SP,-W_reached)
+      w_Aw=-sum((Aw_vecpot_vel(i_w,:))*Efield(ref_efield)%versor(:))/W_reached/(4._SP*pi*SPEED_OF_LIGHT)
    endif
    !
    EELS(i_w,:) = EELS(i_w,:)/cmplx(0._SP,-W_reached)/w_Aw

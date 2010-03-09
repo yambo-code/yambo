@@ -78,7 +78,8 @@ module global_XC
    SC_EXX        = 301, &  ! OEP-EXX
    SC_HF         = 302, &  ! Hartree-Fock
    SC_COHSEX     = 303, &  ! Coulomb-Hole Screened-eXchange
-   SC_EXXC       = 304     ! OEP-EXX + LDA correlation
+   SC_EXXC       = 304, &  ! OEP-EXX + LDA correlation
+   SC_SRPA       = 305     ! OEP-COHSEX (static RPA)
  !
  ! Self Energies
  integer, public, parameter :: &

@@ -135,7 +135,12 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
 #if defined _RT
  call live_timing(trim(ch),px%n_of_element_1D(myid+1))
 #else
- call live_timing(trim(ch),px%n_of_element_1D(myid+1)*QP_n_states)
+ if (l_sc_exx) then
+   call live_timing(trim(ch),px%n_of_element_1D(myid+1)*E%nbf*&
+        &(maxval(QP_table(:,2))-E%nbf)*maxval(QP_table(:,3)))
+ else  
+   call live_timing(trim(ch),px%n_of_element_1D(myid+1)*QP_n_states)
+ endif
 #endif
  !
  do i_qp=1,QP_n_states
@@ -151,6 +156,18 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
    TEMP_COLLISIONS_v=(0.,0.)
    !
 #endif
+   !
+   ib =QP_table(i_qp,1)
+   ibp=QP_table(i_qp,2)
+   !
+#if defined _SC  
+   !
+   ! In Exact-Exchange only vc matrix elements so ... no cc' no vv' 
+   ! (cv is not permitted by the order in QP_table)
+   !                   (c)         (v)
+   if (l_sc_exx.and.(ib>E%nbf.or.ibp<=E%nbf)) cycle
+#endif
+   !    
    do iq=1,q%nbz
      !
      isc%qs(2:)=(/q%sstar(iq,1),q%sstar(iq,2)/)
@@ -166,9 +183,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
      ! n   =QP_table(i_qp,1)
      ! m   =QP_table(i_qp,2)
      ! k   =QP_table(i_qp,3)
-     !
-     ib =QP_table(i_qp,1)
-     ibp=QP_table(i_qp,2)
      !
      isc%is=(/QP_table(i_qp,1),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
      isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iq,1),:),spin(QP_table(i_qp,:))/)
@@ -188,14 +202,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
 #endif
        isc%os(1)=jb
        iscp%os=isc%os
-       !
-#if defined _SC  
-       !
-       ! In Exact-Exchange only vc matrix elements so ... no cc' no vv' 
-       ! (cv is not permitted by the order in QP_table)
-       !                   (c)         (v)
-       if (l_sc_exx.and.(ib>E%nbf.or.ibp<=E%nbf)) cycle
-#endif
        !
        call scatterBamp(isc)
        !
@@ -246,7 +252,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
        !
        call live_timing(steps=1)
        !
-#endif   
+#endif 
      enddo
      !
    enddo

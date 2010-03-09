@@ -152,11 +152,11 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    G_lesser_previous=G_lesser
    forall( ib=1:SC_bands )  G_lesser_previous(ib,ib,:)=(0._SP,1._SP)*aimag(G_lesser(ib,ib,:))
    !
-   call RT_Collision(G_lesser_previous,Xen,k,q,RT_time)
+   call RT_Collision(G_lesser_previous,A_vecpot_previous,Xen,k,q,RT_time)
    !
    if(l_NE_with_fields.and.i_time>0)  then
      A_vecpot_previous=A_vecpot
-     call RT_current(xK,G_lesser_previous,A_vecpot)
+     call RT_current(Xk,G_lesser_previous,A_vecpot)
    endif
    !
    call RT_Energy(Xen,k,RT_Energies)

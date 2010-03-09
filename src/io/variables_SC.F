@@ -33,7 +33,7 @@ integer function variables_SC(ID,local_description,what)
 #if defined _RT
  use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,Hfrozen,XCfrozen,                      &
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
-&                         LifeTime,l_RT_no_diamagnetic,l_RT_no_intraband,&
+&                         LifeTime,l_RT_no_diamagnetic,&
 &                         n_ext_fields,Efield,max_rt_steps_disk,A_vecpot,l_RT_induced_field
 #endif                                
 #if defined _MAGNETIC
@@ -249,10 +249,6 @@ integer function variables_SC(ID,local_description,what)
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_RT_no_diamagnetic,&
 &    VAR=' [RT] No diamagnetic term        :',  CHECK=.true.,OP=(/"=="/),&
-&     DESCRIPTION=local_description(i_desc))
-   i_desc=i_desc+1
-   call io_elemental(ID,L0=l_RT_no_intraband,&
-&    VAR=' [RT] No intraband coupling      :',  CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_RT_induced_field,&

@@ -21,18 +21,17 @@
 !
 subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
- ! Plasomon Pole Correlation Self-Energy
+ ! Plasmon Pole Correlation Self-Energy
  !
  use pars,          ONLY:SP,pi,schlen
  use units,         ONLY:HARTREE
  use memory_m,      ONLY:mem_est
- use drivers,       ONLY:l_collisions_IO
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands
  use timing,        ONLY:live_timing
  use com,           ONLY:msg,error
- use drivers,       ONLY:Finite_Tel,l_ppa,l_cohsex,l_sc_run
+ use drivers,       ONLY:Finite_Tel,l_ppa,l_cohsex,l_sc_run,l_sc_srpa,l_collisions_IO
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset,master_cpu
  use par_indexes_m, ONLY:par_indexes
  use collision,     ONLY:ggwinfo,collision_reset
@@ -68,7 +67,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP), allocatable ::PPaR(:,:),E_(:),dc(:),PPaR_ws(:,:)
  type(ggwinfo)            ::isc,iscp
  type(pp_indexes)         ::px
- integer          ::iv4(4),io_err,ID
+ integer          ::iv4(4),io_err,ID, timing_states
  integer, external::ioX,QP_state_extract
  character(schlen)::ch,Sc_name
  logical          ::PPaR_is_TR_rotated
@@ -85,7 +84,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! COHSEX: bands setup
  !
- if (l_cohsex.and.(.not.COHSEX_use_empties)) QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),n_met_bands)
+ if ((l_sc_srpa.or.l_cohsex).and.(.not.COHSEX_use_empties)) &
+&                                  QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),n_met_bands)
  !
  ! Section
  !
@@ -121,7 +121,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  isc%iqref=0
  isc%ngrho=X%ng
- if (l_cohsex.and..not.COHSEX_use_empties) isc%ngrho=maxval(G_m_G)
+ if ((l_sc_srpa.or.l_cohsex).and..not.COHSEX_use_empties) isc%ngrho=maxval(G_m_G)
  iscp%ngrho=isc%ngrho
  !
  ! WFs
@@ -144,7 +144,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! GPL_EXCLUDE_START SC_IGNORE
  !
- if (l_cohsex) then
+ if (l_cohsex.or.l_sc_srpa) then
    !
    call X_alloc('X',(/X%ng,X%ng,1/))
    allocate(dc(2),PPaR_ws(X%ng,X%ng),PPaR(X%ng,X%ng),stat=alloc_err)
@@ -185,7 +185,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
 #if defined _SC && !defined _RT
  if (l_sc_run) then
-   if (l_cohsex) call live_timing(trim(Sc_name)//'@it'//trim(intc(it_now)),px%n_of_element_1D(myid+1)*QP_n_states) 
+   timing_states=QP_n_states
+   if (l_sc_srpa) timing_states=E%nbf*(maxval(QP_table(:,2))-E%nbf)*&
+        &maxval(QP_table(:,3))
+   call live_timing(trim(Sc_name)//'@it'//&
+        &trim(intc(it_now)),px%n_of_element_1D(myid+1)*timing_states) 
  else if (.not.l_collisions_IO) then
 #endif
 #if defined _RT
@@ -194,7 +198,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  else
 #endif
    if (l_ppa)    call live_timing(trim(Sc_name)//'W0 PPA',px%n_of_element_1D(myid+1)*QP_n_states) 
-   if (l_cohsex) call live_timing(trim(Sc_name)//'W0 COHSEX',px%n_of_element_1D(myid+1)*QP_n_states) 
+   if (l_cohsex) call live_timing&
+&                             (trim(Sc_name)//'W0 COHSEX',px%n_of_element_1D(myid+1)*QP_n_states) 
 #if defined _SC
  endif
 #endif
@@ -265,6 +270,14 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
 #endif
      !
+#if defined _SC  
+     !
+     ! In OEP only vc matrix elements so ... no cc' no vv' 
+     ! (cv is not permitted by the order in QP_table)
+     !                   (c)         (v)
+     if (l_sc_srpa.and.(QP_table(i_qp,1)>E%nbf.or.QP_table(i_qp,2)<=E%nbf)) cycle
+#endif
+     !
      isc%is=(/QP_table(i_qp,1),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
      isc%os(2:)=(/k%sstar(qindx_S(isc%is(2),iqbz,1),:),spin(QP_table(i_qp,:))/)
      isc%qs(1)=qindx_S(QP_table(i_qp,3),iqbz,2)
@@ -278,7 +291,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! GPL_EXCLUDE_START SC_IGNORE
      !
-     if (l_cohsex.and..not.COHSEX_use_empties) then
+     if ((l_sc_srpa.or.l_cohsex).and..not.COHSEX_use_empties) then
        !
        iscs_save(1,: )=isc%os
        iscs_save(2,:3)=isc%qs
@@ -375,7 +388,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #if !defined _RT
          if (COHSEX_use_empties) dc(2)=2._SP*pi*pre_factor
          !
-         QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)+dc(2)
+         QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)!+dc(2)
 #endif
          !
          ! GPL_EXCLUDE_END SC_IGNORE

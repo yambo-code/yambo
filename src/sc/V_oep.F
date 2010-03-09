@@ -19,16 +19,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine V_exx(X,E,k,q,Vexx)
+subroutine V_oep(X,E,k,q,Voep)
  !
- !  Exact exchange potential (vexx in direct space)
+ !  Exact exchange/static RPA potential (voep in direct space)
  !
  !  Found in reciprocal space as:
- !  vexx_RL(G) = Xo^{-1}(G,G')rho_{xc}(G)
+ !  voep_RL(G) = Xo^{-1}(G,G')rho_{xc}(G)
  !  
  !  where: 
- !  rho_x(G) = int_k sum_{c,v} ( rho_{v,c}(k,G)   SigmaX_{v,c}(k)   +  
- !                            + rho^*_{v,c}(k,G) SigmaX^*_{v,c}(k))\
+ !  rho_xc(G)= int_k sum_{c,v} ( rho_{v,c}(k,G)   SigmaXC_{v,c}(k)   +  
+ !                            + rho^*_{v,c}(k,G) SigmaXC^*_{v,c}(k))\
  !                            (E_{vk} - E_{ck})
  !
  use pars,            ONLY:SP,DP
@@ -40,15 +40,15 @@ subroutine V_exx(X,E,k,q,Vexx)
  use frequency,       ONLY:w_samp,W_reset,bg_npts,cg_pt,cg_index_bg,rg_index_bg
  use matrix_operate,  ONLY:mat_dia_inv,INV,USE_LK
  use collision,       ONLY:ggwinfo,collision_reset
- use QP_m,            ONLY:QP_Vnl_xc,QP_n_states,QP_table
+ use QP_m,            ONLY:QP_Vnl_xc,QP_n_states,QP_table,QP_Sc
  use memory_m,        ONLY:mem_est
  use SC,              ONLY:SC_bands,SC_R,H_rotate
- use drivers,         ONLY:l_collisions_IO
+ use drivers,         ONLY:l_collisions_IO,l_sc_srpa
  !
  ! I/O
  !
  implicit none
- real(SP) :: Vexx(fft_size)
+ real(SP) :: Voep(fft_size)
  type(X_t)    :: X
  type(levels) :: E
  type(bz_samp):: k,q
@@ -57,8 +57,8 @@ subroutine V_exx(X,E,k,q,Vexx)
  !
  integer                  :: i1,ik,ic,iv,is,ig1,ig2,ikbz
  logical                  :: l_is_TR
- complex(SP), allocatable :: Xo_inverse(:,:), SigmaX(:,:,:),rhotw_save(:,:),&
-&                            rhotw_sum(:),rhotw_sum_TR(:),rho_x(:),Vexx_RL(:)
+ complex(SP), allocatable :: Xo_inverse(:,:), SigmaXC(:,:,:),rhotw_save(:,:),&
+&                            rhotw_sum(:),rhotw_sum_TR(:),rho_xc(:),Voep_RL(:)
  complex(DP), allocatable :: Vx_dp(:)
  type(w_samp)             :: Xw
  type(ggwinfo)            :: isc
@@ -86,13 +86,13 @@ subroutine V_exx(X,E,k,q,Vexx)
  ! 4:
  call mat_dia_inv(INV,USE_LK,Xo_inverse)
  !
- ! Calculate rho_x(G) =>  1 - initialize vars/dim
+ ! Calculate rho_xc(G) =>  1 - initialize vars/dim
  !                        for each k in IBZ:
- !                        2 - retabulate SigmaX elements
+ !                        2 - retabulate SigmaXC elements
  !                        for each c,v,k: 
  !                        3 - calculate  rhotw_sum (G) = sum{R} rho^*_{v,c}(k,R^-1 G)
  !                                       rhotw_sum_TR (G) = sum{I R} rho_{v,c}(k,(IR)^-1 G)
- !                        4 - accumulate rho_x
+ !                        4 - accumulate rho_xc
  ! -----------------------------------------------
  ! NB: a. it does not work for metallic systems
  ! -----------------------------------------------
@@ -100,31 +100,33 @@ subroutine V_exx(X,E,k,q,Vexx)
  call collision_reset(isc)
  isc%ngrho=X%ng
  allocate(isc%rhotw(X%ng),rhotw_sum(X%ng-1),rhotw_sum_TR(X%ng-1),&
-&         SigmaX(X%ib(2),X%ib(2),1),rho_x(X%ng-1))
+&         SigmaXC(X%ib(2),X%ib(2),1),rho_xc(X%ng-1))
  if (i_time_rev/=0.or.i_space_inv/=0) then
    allocate(rhotw_save(X%ng,1))
  else
    allocate(rhotw_save(X%ng,2))
  endif
  ! 2:
- rho_x = (0.,0.)
+ rho_xc = (0.,0.)
  !
  do ik = 1, nkibz 
    !
-   ! Accumulate QP_Vnl_xc in a local SigmaX array
+   ! Accumulate QP_Vnl_xc in a local SigmaXC array
    ! If COLLISIONS_IO_compose was used, I need also to rotate the matrix elements
    !
-   SigmaX = (0.,0.)
+   SigmaXC = (0.,0.)
     if (l_collisions_IO)  then
-      call V_qp_basis_to_H(ik,QP_Vnl_xc,SigmaX)
-      call H_rotate(SC_R(:,:,ik,1),SigmaX,SC_bands,1)
-      forall (iv=E%nbf+1:X%ib(2),ic=1:E%nbf) SigmaX(iv,ic,1)= (0.,0.)
+      call V_qp_basis_to_H(ik,QP_Vnl_xc,SigmaXC)
+      if (l_sc_srpa) call V_qp_basis_to_H(ik,QP_Sc,SigmaXC)
+      call H_rotate(SC_R(:,:,ik,1),SigmaXC,SC_bands,1)
+      forall (iv=E%nbf+1:X%ib(2),ic=1:E%nbf) SigmaXC(iv,ic,1)= (0.,0.)
     else
      do i1 = 1,QP_n_states
        iv = QP_table(i1,1)
        ic = QP_table(i1,2)
        if (QP_table(i1,3)/=ik.or.iv>E%nbf.or.ic<=E%nbf) cycle
-       SigmaX(iv,ic,1) = QP_Vnl_xc(i1)
+       SigmaXC(iv,ic,1) = QP_Vnl_xc(i1)
+       if (l_sc_srpa) SigmaXC(iv,ic,1) = SigmaXC(iv,ic,1)+ QP_Sc(i1,1) 
      enddo
    endif
    ! 3:
@@ -174,37 +176,37 @@ subroutine V_exx(X,E,k,q,Vexx)
          !
        end do
        ! 4:
-       rho_x(:) =  rho_x(:) + E%f(iv,ik,1)*(2.-E%f(ic,ik,1))/2.*&
-&                  (rhotw_sum(:)*SigmaX(iv,ic,1)+rhotw_sum_TR(:)*conjg(SigmaX(iv,ic,1)))/&
+       rho_xc(:) =  rho_xc(:) + E%f(iv,ik,1)*(2.-E%f(ic,ik,1))/2.*&
+&                  (rhotw_sum(:)*SigmaXC(iv,ic,1)+rhotw_sum_TR(:)*conjg(SigmaXC(iv,ic,1)))/&
 &                  (E%E(iv,ik,1)-E%E(ic,ik,1)) 
        !
      end do
    end do
  end do 
- deallocate(isc%rhotw,rhotw_save,rhotw_sum,rhotw_sum_TR,SigmaX)
+ deallocate(isc%rhotw,rhotw_save,rhotw_sum,rhotw_sum_TR,SigmaXC)
  call X_alloc('OptOsc')
  if (allocated(QP_Vnl_xc))  deallocate(QP_Vnl_xc)
  !
  ! Add c.c. contribution
  !
  if (i_time_rev/=0) then
-   rho_x=2.*rho_x
+   rho_xc=2.*rho_xc
  else if (i_space_inv/=0) then
-   rho_x=rho_x+conjg(rho_x)
+   rho_xc=rho_xc+conjg(rho_xc)
  endif
- allocate(Vexx_RL(X%ng-1))
+ allocate(Voep_RL(X%ng-1))
  !
- ! Calculate Vexx_RL
+ ! Calculate Voep_RL
  !
- Vexx_RL=matmul(Xo_inverse,rho_x)
- deallocate(rho_x)
+ Voep_RL=matmul(Xo_inverse,rho_xc)
+ deallocate(rho_xc)
  !
- ! Calculate Vexx (DL)
+ ! Calculate Voep (DL)
  !
  allocate(Vx_dp(fft_size))
  Vx_dp = (0.,0.)
  do ig1=2,X%ng
-   Vx_dp(fft_g_table(ig1,1))= Vexx_RL(ig1-1)/(DL_vol*float(nkbz)) 
+   Vx_dp(fft_g_table(ig1,1))= Voep_RL(ig1-1)/(DL_vol*float(nkbz)) 
  enddo
 #if defined _FFTW
  fftw_plan = 0
@@ -214,11 +216,11 @@ subroutine V_exx(X,E,k,q,Vexx)
  call fft_3d(Vx_dp,fft_dim,1)
 #endif
  !
- Vexx = real(Vx_dp)
+ Voep = real(Vx_dp)
  !
  ! CLEAN
  !
- deallocate(Vexx_RL,Vx_dp)
+ deallocate(Voep_RL,Vx_dp)
  call collision_reset(isc)
  call W_reset(Xw)
  !
@@ -229,4 +231,4 @@ subroutine V_exx(X,E,k,q,Vexx)
  call mem_est("X_poles_tab RGi BGn CGp CGi")
  current_iq=0
  !
-end subroutine V_exx
+end subroutine V_oep

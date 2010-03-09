@@ -42,10 +42,6 @@ module real_time
  !
  logical           :: l_RT_no_diamagnetic
  !
- ! To exclude the intraband terms
- !
- logical           :: l_RT_no_intraband
- !
  ! To include the induced field in the coupling and current
  !
  logical           :: l_RT_induced_field

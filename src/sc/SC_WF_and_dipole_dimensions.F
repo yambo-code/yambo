@@ -21,7 +21,7 @@
 !
 subroutine SC_WF_and_dipole_dimensions(X)
  !
- use drivers,      ONLY:l_real_time,l_sc_hf,l_sc_exx,l_sc_cohsex
+ use drivers,      ONLY:l_real_time,l_sc_hf,l_sc_exx,l_sc_cohsex,l_sc_srpa
  use X_m,          ONLY:X_t,Eval_P_and_P2_only
  use wave_func,    ONLY:wf_ng
  use QP_m,         ONLY:QP_ng_Sx,QP_n_G_bands,COHSEX_use_empties
@@ -51,7 +51,7 @@ subroutine SC_WF_and_dipole_dimensions(X)
  !
  if ( l_sc_hf.or.l_sc_exx.or.l_sc_cohsex ) then
    WF_Go_indx=maxval(qindx_S(:,:,2)) ! Sigma_x/c
-   if (l_sc_cohsex) then
+   if (l_sc_cohsex.or.l_sc_srpa) then
      X(2)%ng=eval_G_minus_G(X(2)%ng,0)
      WF_G_max=max(QP_ng_Sx,maxval(G_m_G))
      QP_n_G_bands(2)=SC_bands

@@ -34,7 +34,8 @@ subroutine XCo_driver(E,k,Xk,q)
  use memory_m,      ONLY:mem_est
  use wave_func,     ONLY:WF_free
 #if defined _SC
- use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
+ use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional,&
+      &                        SC_SRPA
 #endif
  !
  implicit none
@@ -112,6 +113,7 @@ subroutine XCo_driver(E,k,Xk,q)
    ! XCo=HF        => QP_Vnl_xc=0.           & QP_Vxc= 0.
    ! XCo=EXX       => QP_Vnl_xc=HF           & QP_Vxc= EXX
    ! XCo=EXXC      => QP_Vnl_xc=HF           & QP_Vxc= EXXc
+   ! XCo=SRPA      => QP_Vnl_xc=HF-QP_COHSEX & QP_Vxc= SRPA
    !
    if (WF_kind==SC_COHSEX) call QP_load_SC_xc()
    !
@@ -149,6 +151,8 @@ subroutine XCo_driver(E,k,Xk,q)
        Vxc_kind='OEP-EXX'
      elseif  (WF_kind == SC_EXXC) then
        Vxc_kind='OEP-EXX+C'
+     elseif  (WF_kind == SC_SRPA) then
+       Vxc_kind='OEP-SRPA'
      else
        Vxc_kind='none'
      endif

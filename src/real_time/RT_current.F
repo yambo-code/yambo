@@ -19,78 +19,49 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine RT_current(Xk,G_lesser,A_vecpot)
+subroutine RT_current(Xk,G_input,A_input)
  !
  ! Evalute current including also the diamagnetic contribution
  !
- use pars,           ONLY:SP,DP,pi
+ use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT
- use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp,RL_vol
- use D_lattice,      ONLY:sop_inv,DL_sop
  use SC,             ONLY:SC_bands
- use electrons,      ONLY:nel,levels
+ use electrons,      ONLY:nel
+ use real_time,      ONLY:l_RT_no_diamagnetic,i_time,l_NE_with_fields,j_current, &
+&                         gauge_field,RT_average_operator 
  use X_m,            ONLY:DIP_iR_or_P
- use real_time,      ONLY:l_RT_no_diamagnetic,i_time,l_NE_with_fields,j_current,gauge_field 
+ use QP_m,           ONLY:QP_nk
  !
- implicit none
- type(bz_samp),     intent(in) ::Xk
- complex(SP),       intent(in) ::G_lesser(SC_bands,SC_bands,Xk%nibz)
- type(gauge_field), intent(in) ::A_vecpot
+ implicit none           
+ type(bz_samp),     intent(in) :: Xk
+ complex(SP),       intent(in) :: G_input(SC_bands,SC_bands,QP_nk)
+ type(gauge_field), intent(in) :: A_input
  !
  ! Work Space
  !
- integer       :: i1,i2,ik,is,SC_bands2
- complex(SP)   :: j_dir(3),j_dir_rot(3)
-#if defined _DOUBLE
- complex(DP)   :: zdotc
-#else
- complex(SP)   :: cdotc
-#endif
- !
- SC_bands2=SC_bands**2
+ integer       :: id
  !
  ! j(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) p \psi_j(k) - e^2/(cm) n(r) A(r,t)
  !
  ! j_current(t) = int dr j(r,t)
  !
- j_current(:)=(0._SP,0._SP)
- !
 #if defined _RT
  if(.not.l_NE_with_fields.or.i_time<0) return
 #endif
  !
- do i1=1,Xk%nbz
+ do id=1,3
    !
-   ik = Xk%sstar(i1,1)
-   is = sop_inv(Xk%sstar(i1,2))      
-   !
-   do i2=1,3
-     !
-#if defined _DOUBLE
-     j_dir(i2)=(0._SP,1._SP)*zdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1)
-#else
-     j_dir(i2)=(0._SP,1._SP)*cdotc(SC_bands2,DIP_iR_or_P(i2,:,:,ik,1),1,G_lesser(:,:,ik),1)
-#endif
-     !
-   enddo
-   !
-   ! Time-reversal is always excluded in the symmetries list!
-   !
-   j_dir_rot  =  matmul( DL_sop(:,:,is), j_dir )
-   !
-   j_current(:)=j_current(:)+j_dir_rot(:)
+   call RT_average_operator(VALUE=j_current(id),O_MATRIX=DIP_iR_or_P(id,:,:,:,:),G=G_input,k=Xk)
    !
  enddo
- !
- j_current(:)=j_current(:)/real(Xk%nbz,SP)
  !
  ! Diamagnetic term
  !
 #if defined _RT
  if(.not.l_RT_no_diamagnetic) then
    !
-   j_current(:)=j_current(:)-A_vecpot%vecpot(:)*real(nel,SP)/SPEED_OF_LIGHT
+   j_current(:)=j_current(:)-A_input%vecpot(:)*real(nel,SP)/SPEED_OF_LIGHT
    !
  endif
 #endif

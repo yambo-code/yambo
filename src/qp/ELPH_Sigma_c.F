@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_elph(en,k,q,qp)
+subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  ! This routine calculates the QP shifts due to el-ph intercation
  ! following the Allen-Cardona formulation (see for example 
@@ -193,13 +193,12 @@ subroutine QP_elph(en,k,q,qp)
  !
  ! Parallelization
  !
- distributed_Q=.FALSE.
+ distributed_Q= eval_G_using_KK.and.elph_nDBs_used>=ncpu.and.ncpu>1
  allocate(Q_map(elph_nDBs_used))
  forall (iq_loop=1:elph_nDBs_used) Q_map(iq_loop)=iq_loop
  !
- if (eval_G_using_KK.and.elph_nDBs_used>=ncpu.and.ncpu>1) then
+ if ( distributed_Q ) then
    call par_indexes(px,(/elph_nDBs_used/))
-   distributed_Q=.TRUE.
    live_timing_steps=px%n_of_element_1D(myid+1)*QP_n_states*QP_PH_n_G_bands
    nq_memory=0
    allocate(px%element_2D(elph_nDBs_used,QP_PH_n_G_bands))
@@ -326,6 +325,13 @@ subroutine QP_elph(en,k,q,qp)
          !
          elph_gkkp_sq=conjg(elph_gkkp(ik_bz_gkkp,il,ob_gkkp,ib_gkkp))*&
 &                           elph_gkkp(ik_bz_gkkp,il,ob_gkkp,ib_gkkp)/2./ph_E
+!
+!DEBUG<
+!if (abs(ph_qpt(iq_loop,1))<0.2.and.il<4) cycle
+!if ((abs(ph_qpt(iq_loop,1))>0.2.and.abs(ph_qpt(iq_loop,1))<0.9).and.(il<=2.or.il==4)) cycle
+!if (abs(ph_qpt(iq_loop,1))>0.95.and.(il==1.or.il>=3)) cycle
+!DEBUG>
+!
          !
          ! Frequency Loop
          !
@@ -468,8 +474,12 @@ subroutine QP_elph(en,k,q,qp)
              call QP_states_simmetrize(en,vec_2_sim=gsqF_fan(:,iq_loop,il,iw))
              call QP_states_simmetrize(en,vec_2_sim=gsqF_ca_corr(:,iq_loop,il,iw))
            endif
-           call QP_states_simmetrize(en,vec_2_sim=gsqF_life_bose(:,Q_map(iq_loop),il,iw))
-           call QP_states_simmetrize(en,vec_2_sim=gsqF_life_f(:,Q_map(iq_loop),il,iw))
+           !
+           if (distributed_Q.and.iq_loop>nq_memory) cycle
+           !
+           call QP_states_simmetrize(en,vec_2_sim=gsqF_life_bose(:,iq_loop,il,iw))
+           call QP_states_simmetrize(en,vec_2_sim=gsqF_life_f(:,iq_loop,il,iw))
+           !
          enddo
        enddo
      enddo
@@ -514,13 +524,6 @@ subroutine QP_elph(en,k,q,qp)
          if (distributed_Q.and..not.px%element_2D(iq_loop,1)) cycle
          !
          do il=1,ph_modes
-!
-!DEBUG<
-if (abs(ph_qpt(iq_loop,1))<0.2.and.il<4) cycle
-if ((abs(ph_qpt(iq_loop,1))>0.2.and.abs(ph_qpt(iq_loop,1))<0.9).and.(il<=2.or.il==4)) cycle
-if (abs(ph_qpt(iq_loop,1))>0.95.and.(il==1.or.il>=3)) cycle
-!DEBUG>
-!
            !
            if (.not.elph_use_q_grid) ph_freq=sqrt(ph_freqs_sq(iq_loop,il))
            if (     elph_use_q_grid) ph_freq=sqrt(ph_freqs_sq( q%sstar(iq_loop,1) ,il))

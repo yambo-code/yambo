@@ -1,6 +1,6 @@
 ELPH_objects =
 #if defined _ELPH 
-ELPH_objects = QP_elph.o
+ELPH_objects = ELPH_Sigma_c.o
 #endif
 #if defined _SC
 SC_objects = QP_load_SC_xc.o \

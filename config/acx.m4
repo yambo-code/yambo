@@ -208,7 +208,60 @@ if test -z "${FCFLAGS}"; then
       UFFLAGS="-O0"
     esac
     ;;
-  ia64*linux* | *x86*64* )
+  ia64*linux* )
+    case "${FC}" in
+    *gfortran*)
+      FCFLAGS="-O3 -mtune=native"
+      UFFLAGS="-O0 -mtune=native"
+      FCMFLAG=""
+      ;;
+    *g95*)
+      FCFLAGS="-O3 -fbackslash -fno-second-underscore"
+      UFFLAGS="-O0 -fbackslash -fno-second-underscore"
+      FCMFLAG=""
+      ;;
+    *pgf9*)
+      FCFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+      UFFLAGS="-O0 -Mbackslash"
+      FCMFLAG="-Mnomain"
+      ;;
+    *abf90*)
+      FCFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
+      ;;
+    *ifc*)
+      FCFLAGS="-O3 -w"
+      UFFLAGS="-O0 -w"
+      ;;
+    *ifort*)
+      CPU_FLAG=""
+      case "${FCVERSION}" in
+        *1*)
+         CPU_FLAG="-mtune=itanium"
+         ;;
+        *)
+         CPU_FLAG=""
+         ;;
+      esac
+      FCFLAGS="-assume bscc -O3 -ip $CPU_FLAG"
+      UFFLAGS="-assume bscc -O0 $CPU_FLAG"
+      FCMFLAG="-nofor_main"
+      ;;
+    *openf9*)
+      FCFLAGS="-O2 -fno-second-underscore"
+      UFFLAGS="-O0 -fno-second-underscore"
+      FCMFLAG=""
+      ;;
+    *pathf9*)
+      FCFLAGS="-O2 -fno-second-underscore"
+      UFFLAGS="-O0 -fno-second-underscore"
+      FCMFLAG=""
+      ;;
+    *)
+      FCFLAGS="-O"
+      UFFLAGS="-O0"
+    esac
+    ;;
+  *x86*64* )
     case "${FC}" in
     *gfortran*)
       FCFLAGS="-O3 -mtune=native"

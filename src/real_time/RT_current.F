@@ -53,7 +53,9 @@ subroutine RT_current(Xk,G_input,A_input)
    call RT_average_operator(VALUE=j_current(id),O_MATRIX=DIP_iR_or_P(id,:,:,:,:),G=G_input,k=Xk)
    !
  enddo
- write (100,*) i_time*RT_step/FS2AUT,real(j_current(2)),aimag(j_current(2))
+!DEBUG (TEST RT) >
+!write (100,*) i_time*RT_step/FS2AUT,real(j_current(2)),aimag(j_current(2))
+!DEBUG (TEST RT) <
  !
  ! Diamagnetic term
  !

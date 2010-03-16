@@ -196,8 +196,10 @@ subroutine Dipole_transverse(Xen,Xk,X)
            ! GPL_EXCLUDE_END SPIN_IGNORE
            !
            DIP_iR_or_P(:,ic,iv,ik,i_spin)=rho(:3)
-DIP_iR_or_P(:,ic,iv,ik,i_spin)=1.
-if (ic==iv)  DIP_iR_or_P(:,ic,iv,ik,i_spin)=0.
+!DEBUG (TEST RT) >
+!DIP_iR_or_P(:,ic,iv,ik,i_spin)=1.
+!if (ic==iv)  DIP_iR_or_P(:,ic,iv,ik,i_spin)=0.
+!DEBUG (TEST RT) <
            !
            ! GPL_EXCLUDE_START SPIN_IGNORE
            !

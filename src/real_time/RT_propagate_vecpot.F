@@ -32,7 +32,7 @@ subroutine RT_propagate_vecpot(A_new,A_old,T_step,RT_time)
  real(SP),             intent(in) :: T_step,RT_time
  type(gauge_field),    intent(in) :: A_old
  type(gauge_field), intent(inout) :: A_new
- ! 
+ !
  ! Integrate the eq. for the vector potential
  !
  ! d^2 A / d t^2 = 4 pi * c * J(t)  = 4 pi * c * ( J_ext(t) + J_induced(t) )

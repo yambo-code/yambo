@@ -24,12 +24,12 @@ subroutine RT_current(Xk,G_input,A_input)
  ! Evalute current including also the diamagnetic contribution
  !
  use pars,           ONLY:SP,pi
- use units,          ONLY:SPEED_OF_LIGHT
+ use units,          ONLY:SPEED_OF_LIGHT,FS2AUT
  use R_lattice,      ONLY:bz_samp,RL_vol
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel
  use real_time,      ONLY:l_RT_no_diamagnetic,i_time,l_NE_with_fields,j_current, &
-&                         gauge_field,RT_average_operator 
+&                         gauge_field,RT_average_operator,RT_step
  use X_m,            ONLY:DIP_iR_or_P
  use QP_m,           ONLY:QP_nk
  !
@@ -46,25 +46,22 @@ subroutine RT_current(Xk,G_input,A_input)
  !
  ! j_current(t) = int dr j(r,t)
  !
-#if defined _RT
  if(.not.l_NE_with_fields.or.i_time<0) return
-#endif
  !
  do id=1,3
    !
    call RT_average_operator(VALUE=j_current(id),O_MATRIX=DIP_iR_or_P(id,:,:,:,:),G=G_input,k=Xk)
    !
  enddo
+ write (100,*) i_time*RT_step/FS2AUT,real(j_current(2)),aimag(j_current(2))
  !
  ! Diamagnetic term
  !
-#if defined _RT
  if(.not.l_RT_no_diamagnetic) then
    !
    j_current(:)=j_current(:)-A_input%vecpot(:)*real(nel,SP)/SPEED_OF_LIGHT
    !
  endif
-#endif
  !
  j_current=j_current*RL_vol/(2._SP*pi)**3
  !

@@ -41,7 +41,6 @@ module UNITS
  !
  ! Frequencies
  !
- !
  real(SP), parameter :: HA2GHZ=HARTREE*241798.474_SP
  real(SP), parameter :: HA2THZ=HA2GHZ/1000._SP
  !

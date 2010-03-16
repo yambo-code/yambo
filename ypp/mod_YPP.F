@@ -135,8 +135,6 @@ module YPP
  real(SP) :: Gamma_radius
  character(lchlen) :: BZ_RIM_path
  !
-#if defined _YPP_RT
- !
  ! Reduce Symmetries
  !
  logical     :: l_rsymm
@@ -155,8 +153,6 @@ module YPP
  end type Xw_rt
  !
  type(Xw_rt) :: X_rt 
- !
-#endif
  !
  ! GPL_EXCLUDE_END RAS_IGNORE
  !

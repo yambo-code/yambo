@@ -35,9 +35,11 @@ subroutine RT_Ext_Current(time)
  !
  integer     :: i1
  complex(SP) :: j_norm
- real(SP)    :: sigma,t0
+ real(SP)    :: sigma,t0,j_current_versor(3)
  !
- j_current_ext=(0._SP,0._SP)
+ j_norm          =(0._SP,0._SP)
+ j_current_ext   =(0._SP,0._SP)
+ j_current_versor=Efield(i1)%versor(:)/(4._SP*pi)
  !
  do i1=1,n_ext_fields
    ! 
@@ -46,22 +48,20 @@ subroutine RT_Ext_Current(time)
    select case(trim(Efield(i1)%ef_name))
      case('SINUSOIDAL')
        j_norm=-Efield(i1)%amplitude*cos(Efield(i1)%frequency*time)*Efield(i1)%frequency 
-       j_current_ext=j_current_ext+j_norm*Efield(i1)%versor(:)/(4._SP*pi)
      case('ANTIRESONANT')
        j_norm=-Efield(i1)%amplitude*exp((0._SP,1._SP)*Efield(i1)%frequency*time)*Efield(i1)%frequency*(0._SP,1._SP)
-       j_current_ext=j_current_ext+j_norm*Efield(i1)%versor(:)/(4._SP*pi)
      case('RESONANT')
        j_norm=-Efield(i1)%amplitude*exp(-(0._SP,1._SP)*Efield(i1)%frequency*time)*Efield(i1)%frequency*(0._SP,-1._SP)
-       j_current_ext=j_current_ext+j_norm*Efield(i1)%versor(:)/(4._SP*pi)
      case('GAUSSIAN')
        sigma=1._SP/Efield(i1)%frequency ! the width of the Gaussian is      sigma = 1/frequency
        t0   =5.0/Efield(i1)%frequency   ! the center of the Gaussian is at     t0 = 5/frequency
-       j_norm=Efield(i1)%amplitude*exp(-(time-t0)**2/(2._SP*sigma**2))*(time-t0)/(2._SP*sigma**2)
-       j_current_ext=j_current_ext+j_norm*Efield(i1)%versor(:)/(4._SP*pi)
+       j_norm=Efield(i1)%amplitude*exp( -(time-t0)**2/(2._SP*sigma**2) )*(time-t0)/sigma**2
      case('DELTA')
      case default
      call error(" External Field "//trim(Efield(i1)%ef_name)//" not implemented ") 
    end select
+   !
+   j_current_ext=j_current_ext+j_norm*j_current_versor
    !
  enddo
  !

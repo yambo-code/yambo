@@ -54,7 +54,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
  integer                  :: it,ib
  logical                  :: Dynamics_is_over
- real(SP)                 :: RT_time ! The real time on the diagonal RTime = it*RT_step    
+ real(SP)                 :: RT_time ! The real time on the diagonal
  complex(SP)              :: RT_Energies(7)
  !
  call section('*',trim(SC_potential)//' Real-Time Dynamics')

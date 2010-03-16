@@ -252,7 +252,6 @@ subroutine RT_spectrum(en,k)
    fftw_plan=0
    fft_sign =-1
    !
-   !
    do i_c=1,3
      !
      EELS(:,i_c)          = current(:,i_c)
@@ -306,22 +305,21 @@ subroutine RT_spectrum(en,k)
    !
    W_reached = (i_w-1)*W_step+X_rt%energy_range(1)
    !
-   if ((trim(Efield(ref_efield)%ef_name) == 'DELTA')) then 
-      w_Aw=Efield(ref_efield)%amplitude                            
-   elseif ((trim(Efield(ref_efield)%ef_name) == 'RESONANT')) then 
-      w_Aw=Efield(ref_efield)%amplitude*cmplx(0.,-Efield(ref_efield)%frequency)/(4._SP*pi)
-      w_Aw=w_Aw/cmplx(0._SP,-W_reached)
-   elseif ((trim(Efield(ref_efield)%ef_name) == 'ANTIRESONANT')) then 
-      w_Aw=Efield(ref_efield)%amplitude*cmplx(0.,Efield(ref_efield)%frequency)/(4._SP*pi)
-      w_Aw=w_Aw/cmplx(0._SP,-W_reached)
-   elseif ((trim(Efield(ref_efield)%ef_name) == 'SINUSOIDAL')) then 
-      w_Aw=Efield(ref_efield)%amplitude*Efield(ref_efield)%frequency/(4._SP*pi)/2._SP
-      w_Aw=w_Aw/cmplx(0._SP,-W_reached)
-   else
-      w_Aw=-sum((Aw_vecpot_vel(i_w,:))*Efield(ref_efield)%versor(:))/W_reached/(4._SP*pi*SPEED_OF_LIGHT)
-   endif
+   select case ( trim(Efield(ref_efield)%ef_name) )
+     !
+     case('DELTA')
+       w_Aw=-(0._SP,1._SP)*SPEED_OF_LIGHT*Efield(ref_efield)%amplitude
+!     case('RESONANT')
+!       w_Aw=Efield(ref_efield)%amplitude*cmplx(0.,-Efield(ref_efield)%frequency)
+!     case('ANTIRESONANT')
+!       w_Aw=Efield(ref_efield)%amplitude*cmplx(0.,Efield(ref_efield)%frequency)/(4._SP*pi)
+!     case('SINUSOIDAL')
+!       w_Aw=Efield(ref_efield)%amplitude*Efield(ref_efield)%frequency/(4._SP*pi)/2._SP
+     case('GAUSSIAN')
+       w_Aw=-sum((Aw_vecpot_vel(i_w,:))*Efield(ref_efield)%versor(:))/W_reached/(4._SP*pi*SPEED_OF_LIGHT)
+   end select
    !
-   EELS(i_w,:) = EELS(i_w,:)/cmplx(0._SP,-W_reached)/w_Aw
+   EELS(i_w,:) = 1._SP+4._SP*pi*EELS(i_w,:)/W_reached/w_Aw
    !
  enddo
  !

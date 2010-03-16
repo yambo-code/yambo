@@ -53,7 +53,7 @@ subroutine RT_init_vecpot()
    !
    select case(trim(Efield(i1)%ef_name))
      case('SINUSOIDAL')
-       A_vecpot%vecpot(:)    =A_vecpot%vecpot(:)    -E_times_c(:)/( Efield(i1)%frequency )
+       A_vecpot%vecpot(:)    =A_vecpot%vecpot(:)    +E_times_c(:)/( Efield(i1)%frequency )
      case('ANTIRESONANT')
        A_vecpot%vecpot_vel(:)=A_vecpot%vecpot_vel(:)-E_times_c(:)
        A_vecpot%vecpot(:)    =A_vecpot%vecpot(:)    -E_times_c(:)/( Efield(i1)%frequency*(0._SP,1._SP) )

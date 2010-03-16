@@ -414,13 +414,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
      name='Probe'
      if (i_field==2) name='Pump'
      if (i_field==2) verbosity_here=V_real_time
-     call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] External Field Frequency',&
+     call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
 &    EField(i_field)%frequency,unit=E_unit,verb_level=verbosity_here)
-     call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] External Field Intensity',&
+     call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&
 &    EField(i_field)%intensity,unit=I_unit,verb_level=verbosity_here)
-     call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] External Field (SINUSOIDAL|RESONANT|DELTA|STEP)',&
+     call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] Kind (SINUSOIDAL|RESONANT|ANTIRESONANT|GAUSSIAN|DELTA)',&
 &    EField(i_field)%ef_name,verb_level=verbosity_here)
-     call it(defs,trim(name)//'_Dir',             '[RT '//trim(name)//'] Electric Field Versor',&
+     call it(defs,trim(name)//'_Dir',             '[RT '//trim(name)//'] Versor',&
 &    EField(i_field)%versor,verb_level=verbosity_here)
      call it(defs,trim(name)//'_Tstart',        '[RT '//trim(name)//'] Initial Time',&
 &    EField(i_field)%t_initial,unit=Time_unit,verb_level=verbosity_here)

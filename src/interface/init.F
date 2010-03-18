@@ -552,6 +552,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
  endif
  !
+ ! El-Ph: Frohlich Hamiltonian
+ !
+#if defined  _ELPH 
+ if (l_ElPh_Hamiltonian) then
+   call initactivate(1,'ElPhHBRnge ElPhHKpt')
+ endif
+#endif
+ !
  ! Optics + BS based TDDFT (BS fxc is only of q=0 0 0)
  !
  if (l_bs_fxc.and.l_optics.and.l_chi) call initactivate(1,'FxcGRLc FxcSVdig FxcCausal')
@@ -843,6 +851,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined  _ELPH  
        if (.not.CLOSE_Gs) l_ph_corr=runlevel_is_on('el_ph').and.ioELPH_err==0
        l_el_corr=runlevel_is_on('el_el')
+       l_ElPh_Hamiltonian=runlevel_is_on('ElPhHam').and.ioELPH_err==0
 #else
        l_el_corr=l_gw0.or.l_life
 #endif

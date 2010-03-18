@@ -39,6 +39,11 @@ module ELPH
  real(SP),    allocatable :: f_k_plus_q(:,:,:)
  complex(SP), allocatable :: elph_gkkp(:,:,:,:)
  complex(SP), allocatable :: pol_vector(:,:,:)
+ !
+ ! El_h Hamiltonian
+ !
+ integer   :: ElPh_Ham_bands(2)
+ integer   :: ElPh_Ham_ik
  ! 
  ! gFsq matrices
  !

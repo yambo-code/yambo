@@ -301,7 +301,9 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          if (iq_s>nsym/(i_time_rev+1)) then
            ib_gkkp   =ob
            ob_gkkp   =ib
-           ik_bz_gkkp=ik_is_table(ok,sop_inv(sop_tab(iq_s-nsym/2,os)))
+           !                                 R^-1                 S
+           !                                 -------------------- --
+           ik_bz_gkkp=ik_is_table(ok,sop_tab(sop_inv(iq_s-nsym/2),os))
          endif
          !
          ! k is in the IBZ and q is the PW_q (=-YAMBO_q)

@@ -31,7 +31,7 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  !
  use drivers,       ONLY:l_ppa,l_HF_and_locXC,l_sc_run,l_collisions_IO,l_real_time,&
 &                        l_optics,l_chi,l_em1s,l_ppa,l_cohsex,l_bss,l_bse,l_em1d,&
-&                        l_gw0,l_el_corr,l_life,l_acfdt
+&                        l_gw0,l_el_corr,l_life,l_acfdt,l_ElPh_Hamiltonian
  use X_m,           ONLY:X_t
  use par_proc_m,    ONLY:myid,ncpu,p_finalize
  use it_m,          ONLY:it_reset,infile
@@ -270,6 +270,12 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
 #endif
    !
  endif
+ !
+ ! Electron-Phonons Hamiltonian
+ !=============================
+#if defined _ELPH
+ if (l_ElPh_Hamiltonian) call ELPH_Hamiltonian()
+#endif
  !
  ! GAME OVER :(
  !==============

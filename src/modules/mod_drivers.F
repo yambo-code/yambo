@@ -46,6 +46,10 @@ module drivers
  logical :: l_el_corr
  logical :: l_ph_corr
  !
+ ! Electron-Phonon specific flags 
+ !
+ logical :: l_ElPh_Hamiltonian
+ !
  ! Real Axis non SC Self-energies
  !
  logical :: l_HF_and_locXC   ! HF + local XC

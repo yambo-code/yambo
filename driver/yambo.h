@@ -69,6 +69,7 @@
 #endif
 #if defined _ELPH 
   {"corrtp", "s","Correlation [opt=e(lectrons)/p(honons)/b(oth)]",0,0,1,0},    
+  {"ElPhHam","f","Electron-Phonon Hamiltonian",0,0,0,0},    
 #endif
 #if defined _SC | defined _MAGNETIC | defined _RT
   {"scpot",  "v","Self-Consistent Potential",0,0,1,0}, 

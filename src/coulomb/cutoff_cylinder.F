@@ -26,7 +26,7 @@ subroutine cutoff_cylinder(q,is_cut)
  use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:cyl_ph_radius,bare_qpg,cyl_length,cyl_cut,g_vec,&
 &                        bz_samp,cyl_vr_save,cyl_vz_save
- use par_proc_m,    ONLY:pp_indexes,myid,pp_indexes_reset
+ use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use timing,        ONLY:live_timing
  use com,           ONLY:msg,error
@@ -183,6 +183,10 @@ subroutine cutoff_cylinder(q,is_cut)
    enddo
    deallocate(iwork,work)
  endif
+ !
+ ! MPI 2 all
+ !
+ call pp_redux_wait(V_cut)
  !
  V_cut(1,1)=0.5*(-cyl_cut2+cyl_cut*sqrt(cyl_cut2+cyl_ph_radius2)+&
 &           cyl_ph_radius2*log((cyl_cut+sqrt(cyl_cut2+cyl_ph_radius2))/&

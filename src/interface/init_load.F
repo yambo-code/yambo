@@ -60,27 +60,27 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
 #endif
 #if defined _RAS
- use bulkeps,              ONLY: init_bulk
- use eels_kinematics,      ONLY: init_kinematics
- use eels_detector,        ONLY: init_detector
- use optcut,               ONLY: init_cutoff
- use surface_geometry,     ONLY: init_surface
- use analyse_peaks,        ONLY: init_analyse_peaks
- use model_loss_function,  ONLY: init_loss_function
- use convolute,            ONLY: init_convolute
- use ras_module,           ONLY: locfac, loctype
+ use bulkeps,              ONLY:init_bulk
+ use eels_kinematics,      ONLY:init_kinematics
+ use eels_detector,        ONLY:init_detector
+ use optcut,               ONLY:init_cutoff
+ use surface_geometry,     ONLY:init_surface
+ use analyse_peaks,        ONLY:init_analyse_peaks
+ use model_loss_function,  ONLY:init_loss_function
+ use convolute,            ONLY:init_convolute
+ use ras_module,           ONLY:locfac, loctype
 #endif
 #if defined _REELS
- use bulkeps,              ONLY: init_bulk
- use eels_kinematics,      ONLY: init_kinematics
- use eels_detector,        ONLY: init_detector
- use surface_geometry,     ONLY: init_surface
- use convolute,            ONLY: init_convolute
- use reels_module,         ONLY: init_reels
- use eels_integration,     ONLY: init_reels_integration
+ use bulkeps,              ONLY:init_bulk
+ use eels_kinematics,      ONLY:init_kinematics
+ use eels_detector,        ONLY:init_detector
+ use surface_geometry,     ONLY:init_surface
+ use convolute,            ONLY:init_convolute
+ use reels_module,         ONLY:init_reels
+ use eels_integration,     ONLY:init_reels_integration
 #endif
 #if defined _ELPH 
- use ELPH,                 ONLY : QP_PH_n_G_bands,elph_nDBs_used
+ use ELPH,                 ONLY:QP_PH_n_G_bands,elph_nDBs_used,ElPh_Ham_ik,ElPh_Ham_bands
 #endif
  !
  implicit none
@@ -146,6 +146,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _ELPH 
  call it('r',defs,'el_ph',   '[R] Electron-Phonon Correlation')   
  call it('r',defs,'el_el',   '[R] Electron-Electron Correlation') 
+ call it('r',defs,'ElPhHam', '[R] Frohlich Hamiltonian') 
 #endif
  !
  !================
@@ -355,6 +356,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
 #if defined _ELPH 
  call it(defs,'GphBRnge',  '[ELPH] G[W] bands range',QP_PH_n_G_bands)
+ call it(defs,'ElPhHBRnge','[ELPH] Hamiltonian bands range',ElPh_Ham_bands)
+ call it(defs,'ElPhHKpt',  '[ELPH] Hamiltonian k-point',ElPh_Ham_ik)
  call it('f',defs,'WRgFsq','[ELPH] Dump on file gFsq coefficients')
 #endif
  ! 

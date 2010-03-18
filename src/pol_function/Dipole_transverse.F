@@ -33,6 +33,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf,wf_ng,wf_state, WF_load
+#if defined _DISTRIBUTED
+ use com,                 ONLY:error
+#endif
  !
  implicit none
  type(bz_samp), intent(in)    :: Xk
@@ -87,7 +90,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
  ! Set up the parallel environment
  !
  call pp_indexes_reset(px)
+#if defined _DISTRIBUTED
+ call par_indexes(px,(/Xk%nibz,X%ib(2)/),(/1,ic_min/))
+#else
  call par_indexes(px,(/Xk%nibz,iv_max/),(/1,X%ib(1)/))
+#endif
  call live_timing('Dipole (T):',px%n_of_element_1D(myid+1)*n_spin)
  call pp_redux_wait
  !
@@ -127,11 +134,19 @@ subroutine Dipole_transverse(Xen,Xk,X)
      E_i_spin=i_spin
      if (n_spinor==2) E_i_spin=1
      !
+#if !defined _DISTRIBUTED
      do iv=X%ib(1),iv_max 
        !
        if (.not.px%element_2D(ik,iv)) cycle
        !
        do ic=ic_min,X%ib(2)
+#else
+     do ic=ic_min,X%ib(2)
+       !
+       if(.not.px%element_2D(ik,ic)) cycle
+       !
+       do iv=X%ib(1),iv_max 
+#endif
          !
          rho(:)=(0._SP,0._SP)
          !
@@ -144,6 +159,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
          if (abs(Ev_m_Ec)<=1.E-5_SP.and..not.Eval_P_and_P2_only) cycle
          !
          ivfft=wf_state(iv,ik,i_spin)
+#if defined _DISTRIBUTED
+         if(ivfft==0) call error(" Error in parallel wf distribution")
+#endif
          !
          ! wf_xyz = -i grad fdo(iv,ik)
          !
@@ -165,6 +183,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
          ! GPL_EXCLUDE_END 
          !
          icfft=wf_state(ic,ik,i_spin)
+#if defined _DISTRIBUTED
+         if(icfft==0) call error("Error distribution wave-function")
+#endif
          !
          ! rho = wf_xyz^* fdo(ic,ik)= - i < fdo(iv,ik)| grad |  fdo(ic,ik) > =
          !       \sum_G -i u^*_{iv ik}(G) i ( k + G ) u_{ic ik}(G)

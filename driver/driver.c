@@ -49,7 +49,7 @@ typedef struct
 /* 
  Yambo/Ypp driver flag
 */
-#if defined _yambo  || _RAS || _REELS || _ELPH || _SC  || _RT || _GAMMA
+#if defined _yambo  || _RAS || _REELS || _ELPH || _SC  || _RT || _DISTRIBUTED
  #define _YAMBO_MAIN
 #endif
 #if defined _MANYK || _DISTRO || _MAGNETIC || _PW_DIAGO || _TEST_1

@@ -51,8 +51,9 @@ CLEANS   = clean clean_all
 PROJECTS = yambo_ph yambo_sc yambo_ras yambo_reels \
 	       yambo_manyk yambo_ras_manyk yambo_distro \
            yambo_magnetic yambo_PWdiago \
-           yambo_rt ypp_rt ypp_ph ypp_ras ypp_sc ypp_magnetic 
-BROKEN   = yambo_gamma 
+           yambo_rt ypp_rt ypp_ph ypp_ras ypp_sc ypp_magnetic \
+           yambo_distributed
+BROKEN   = 
 DEBUG    = yambo_test_1
 TESTS    = test_all test_GoWo test_magnetic test_SC test_RT
 EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(DEBUG)
@@ -71,11 +72,11 @@ PJ_RASLIBS   = $(BASIC_LIBS) ras_reels_mods coulomb bz_ops qp_ctl ras \
 PJ_REELSLIBS = $(BASIC_LIBS) ras_reels_mods coulomb bz_ops qp_ctl reels \
                setup interface tddft pol_function qp acfdt bse
 
-PJ_SCLIBS       = $(MAIN_LIBS) sc 
-PJ_RTLIBS       = $(MAIN_LIBS) sc real_time
-PJ_MANYKLIBS    = $(MAIN_LIBS)
-PJ_PHLIBS       = $(MAIN_LIBS)
-GAMMA_LIBS      = $(MAIN_LIBS)
+PJ_SCLIBS          = $(MAIN_LIBS) sc 
+PJ_RTLIBS          = $(MAIN_LIBS) sc real_time
+PJ_MANYKLIBS       = $(MAIN_LIBS)
+PJ_PHLIBS          = $(MAIN_LIBS)
+PJ_DISTRIBUTEDLIBS = $(MAIN_LIBS)
 #
 # Interfaces
 #
@@ -111,9 +112,9 @@ yambo_PWdiago: libs
 yambo_magnetic: libs
 	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_MAGNETIC -D_SC"; $(mksrc)
 	@X2DO="yambo_magnetic"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_MAGNETIC -D_SC";$(mkx)
-yambo_gamma: libs
-	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_GAMMA"; $(mksrc)
-	@X2DO="yambo_gamma"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_GAMMA";$(mkx)
+yambo_distributed: libs
+	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_DISTRIBUTED"; $(mksrc)
+	@X2DO="yambo_distributed"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_DISTRIBUTED";$(mkx)
 yambo_distro: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_DISTRO"; $(mksrc)
 	@X2DO="yambo_distro"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_DISTRO";$(mkx)

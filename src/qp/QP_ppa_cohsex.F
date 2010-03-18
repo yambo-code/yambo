@@ -47,6 +47,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #if defined _RT         
  use collisions_IO, ONLY:TEMP_COLLISIONS_v
 #endif
+#if defined _DISTRIBUTED
+ use wf_distribute, ONLY:WF_states_setup
+#endif
 #if defined _SC
  use SC,            ONLY:it_now
  use fragments,     ONLY:fragment_status
@@ -123,6 +126,19 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  isc%ngrho=X%ng
  if ((l_sc_srpa.or.l_cohsex).and..not.COHSEX_use_empties) isc%ngrho=maxval(G_m_G)
  iscp%ngrho=isc%ngrho
+ !
+#if defined _DISTRIBUTED
+ !
+ ! Quasi-particle list
+ ! (all processors have all qp-states)
+ !
+ call WF_states_setup(qp_to_load=(/1,QP_n_states/),par_loop=.FALSE.)
+ !
+ ! Scattering states are distributed
+ ! 
+ call WF_states_setup(qp_to_load=(/1,QP_n_states/),b_to_load=QP_n_G_bands,q=q,k=k)
+ !
+#endif
  !
  ! WFs
  !

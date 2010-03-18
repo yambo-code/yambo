@@ -54,6 +54,8 @@ subroutine el_density(en,Xk,rho,force_si)
   use wave_func,     ONLY:wf_state,wf
 #if defined _RT
   use SC,            ONLY:SC_bands
+#endif
+#if defined _RT || defined _DISTRIBUTED
   use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
   use par_indexes_m, ONLY:par_indexes
 #endif
@@ -73,7 +75,8 @@ subroutine el_density(en,Xk,rho,force_si)
   integer :: i1,i2,ik,i_spin,ifft,rho_syms,ifft2
   real(SP):: rho_no_sym(fft_size),f_occ
   logical :: warn_done
-#if defined _RT
+  integer :: iv_max
+#if defined _RT || defined _DISTRIBUTED
   type(pp_indexes) ::px
 #endif
   !
@@ -82,17 +85,20 @@ subroutine el_density(en,Xk,rho,force_si)
   warn_done=.false.
   !
 #if defined _RT
-  !
-  call pp_indexes_reset(px)
-  call par_indexes(px,(/Xk%nibz,SC_bands/))
-  !
-  do i1=1,SC_bands
+  iv_max=SC_bands
 #else
-  do i1=1,en%nbm
+  iv_max=en%nbm
 #endif
+  !
+#if defined _RT || defined _DISTRIBUTED
+  call pp_indexes_reset(px)
+  call par_indexes(px,(/Xk%nibz,iv_max/))
+#endif
+  !
+  do i1=1,iv_max
     do i2=1,Xk%nibz
       !
-#if defined _RT
+#if defined _RT || defined _DISTRIBUTED
       if (.not.px%element_2D(i2,i1)) cycle
 #endif
       !        
@@ -165,10 +171,11 @@ subroutine el_density(en,Xk,rho,force_si)
     enddo
     !
   enddo
+#endif
   !
+#if defined _RT || defined _DISTRIBUTED
   call pp_redux_wait(rho_no_sym)
   call pp_indexes_reset(px)
-  !
 #endif
   !
   ! Simmetrization

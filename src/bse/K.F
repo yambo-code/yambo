@@ -91,7 +91,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  integer    :: O_x_dim,alloc_err(2),x_fft_size,c_fft_size
  logical    :: load_O_X
  complex(SP),allocatable::Ovv(:),Occ(:),Cc(:)
-#if defined _GAMMA
+#if defined _DISTRIBUTED
  complex(SP),target, allocatable::O2x(:,:)
  complex(SP),pointer            ::O1x(:,:)
 #else
@@ -391,14 +391,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (load_O_X) then
    allocate(O2x(BS_n_g_exch,O_x_dim),stat=alloc_err(2))
    call mem_est('O2x',(/size(O2x)/),errors=(/alloc_err(2)/))
-#if defined _GAMMA
+#if defined _DISTRIBUTED
    if(.not.l_col_cut) then
      O1x=>O2x
    else
 #endif
      allocate(O1x(BS_n_g_exch,O_x_dim),stat=alloc_err(1))
      call mem_est('O1x',(/size(O1x)/),errors=(/alloc_err(1)/))
-#if defined _GAMMA
+#if defined _DISTRIBUTED
    endif
 #endif
  endif
@@ -684,12 +684,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call mem_est("BS_mat")
  !
  if (load_O_X) then
-#if defined _GAMMA
+#if defined _DISTRIBUTED
    if(l_col_cut) then 
 #endif
      deallocate(O1x)
      call mem_est("O1x")
-#if defined _GAMMA
+#if defined _DISTRIBUTED
    else
      nullify(O1x)
    endif

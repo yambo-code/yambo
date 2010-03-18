@@ -47,6 +47,9 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  use optcut,        ONLY: loptcut, Xcut_rhoq0
  use ras_module,    ONLY: lras, lreels 
 #endif
+#if defined _DISTRIBUTED
+ use WF_distribute, ONLY: l_low_mem_usage,WF_states_setup
+#endif
  implicit none
  type(levels)         :: Xen
  type(bz_samp)        :: Xk
@@ -134,9 +137,11 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
    !
  endif
  !
+#if !defined _DISTRIBUTED
  ! WF load
  !=========
  if (.not.skip_WF_load) call WF_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
+#endif
  !
  ! Poles tabulation
  !==================
@@ -164,6 +169,19 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
 #  endif
    !
  endif 
+ !
+#if defined _DISTRIBUTED
+ ! WF load
+ !=========
+ if (.not.skip_WF_load) then
+    !
+    call WF_states_setup(cg_npts=cg_npts,bg_npts=bg_npts,k=Xk,qpoint=iq,Xw=Xw)
+    !
+    call WF_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
+    !
+ endif
+ !
+#endif
  !
 #if defined _ELPH
  !

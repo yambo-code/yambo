@@ -40,6 +40,9 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use collisions_IO, ONLY:TEMP_COLLISIONS_v
  use fragments,     ONLY:fragment_status
 #endif
+#if defined _DISTRIBUTED
+ use wf_distribute, ONLY:WF_states_setup
+#endif
  !
  implicit none
  type(levels) ::E       
@@ -102,6 +105,23 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
    call msg('r','')
    !
  endif
+ !
+#if defined _DISTRIBUTED
+ !
+ ! Quasi-particle list
+ ! (all processor have all qp-states)
+ !
+ call WF_states_setup(qp_to_load=(/1,QP_n_states/),par_loop=.FALSE.)
+ !
+ ! Exchange Scattering states are distributed
+ ! 
+ call WF_states_setup(qp_to_load=(/1,QP_n_states/),b_to_load=(/1,Sx_upper_band/),q=q,k=k)
+ !
+ ! States required by the density
+ !
+ call WF_states_setup(b_to_load=(/1,E%nbm/),k_to_load=(/1,Xk%nibz/))
+ !
+#endif
  !
  ! WFs
  !

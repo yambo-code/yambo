@@ -162,6 +162,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,verb_level=V_resp)
  call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_kpt)
  call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_kpt) 
+#if defined _DISTRIBUTED
+  call it('f',defs,'LowMemUsage', 'Distribute wave-function (use less memory but slower)',verb_level=V_general)
+#endif
  !
  ! S_xc
  !

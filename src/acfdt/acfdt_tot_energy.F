@@ -40,8 +40,10 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use collision,      ONLY:ggwinfo,collision_reset
  use matrix_operate, ONLY:mat_dia_inv,INV,USE_LK
  use IO_m,           ONLY:io_control,RD_CL_IF_END,OP_RD
+#if !defined _LIBXC
  use xc_functionals, ONLY:E_xc,XC_EXCHANGE_CORRELATION,XC_LDA_C_KP,XC_EXCHANGE,&
 &                         XC_LDA_X,XC_CORRELATION
+#endif
  use global_XC,      ONLY:WF_xc_functional
  implicit none
  type(levels) ::Xen,En
@@ -83,6 +85,8 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
 #else
  real(SP):: sdot
 #endif
+ !
+#if !defined _LIBXC
  !
  call section('*','ACFDT Total Energy')
  !
@@ -284,5 +288,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  if (do_Ec) deallocate(Xw%p)
  deallocate(QP_Vnl_xc,QP_Vxc,QP_table,QP_state)
  call mem_est("QP_table QP_state QP_Vnl_xc QP_Vxc W-p")
+#endif 
+ !
  !
 end subroutine

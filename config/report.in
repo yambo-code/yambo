@@ -13,6 +13,7 @@
 # [@PW_str@] PW (@PW_VER@) support
 # [@ETSF_str@] ETSF I/O support
 # [@SLK_str@] SCALAPACK
+# [@LIBXC_str@] LibXC
 # [@NETCDF_str@@NETCDF_LF_str@] NETCDF/Large Files 
 # [@BLAS_str@@LAPACK_str@@LOCAL_str@] Built-in BLAS/LAPACK/LOCAL
 #

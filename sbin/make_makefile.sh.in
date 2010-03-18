@@ -76,10 +76,10 @@ fi
 case $target in
   yambo*)
    llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
-   llibs="$llibs \$(lnetcdf) -lslatec \$(llocal) \$(lfftw) -lm $llmpi"
+   llibs="$llibs \$(lnetcdf) \$(llibxc) -lslatec \$(llocal) \$(lfftw) -lm $llmpi"
     ;;
   a2y|elk2y)
-   llibs="-lint_modules $llibs \$(lscalapack) \$(llapack)  \$(lblacs) \$(lblas) \$(lnetcdf) \$(llocal) \$(lfftw) -lm $llmpi"
+   llibs="-lint_modules $llibs \$(lscalapack) \$(llapack)  \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfftw) -lm $llmpi"
     ;;
   p2y*)
    llibs="-lint_modules $llibs -liotk  \$(lscalapack) \$(llapack)  \$(lblacs) \$(lblas) \$(lnetcdf) \$(llocal) \$(lfftw) -lm $llmpi"

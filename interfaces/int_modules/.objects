@@ -1,1 +1,5 @@
-objs = mod_com2y.o mod_wf2y.o
+LIBXC_objects =
+#if defined _LIBXC
+LIBXC_objects = mod_dftxc2libxc.o
+#endif
+objs = mod_com2y.o mod_wf2y.o $(LIBXC_objects)

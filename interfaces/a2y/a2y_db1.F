@@ -33,10 +33,14 @@ subroutine a2y_db1(en,k,KSS_file_name)
  use wave_func,             ONLY: wf_nc_k, wf_igk,wf_ncx,wf_ng
  use vec_operate,           ONLY: cross_product,v_is_zero
  use defs_datatypes,        ONLY: hdr_type, wffile_type
- use xc_functionals,        ONLY: XC_EXCHANGE_CORRELATION,GS_xc_KIND,GS_xc_FUNCTIONAL,&
-&                                 XC_LDA_C_PW,XC_LDA_C_PZ,XC_LDA_C_WIGNER,&
-&                                 XC_LDA_C_HL,XC_LDA_C_XALPHA,NONE,XC_LDA_X,&
-&                                  XC_EXCHANGE
+ use xc_functionals,        ONLY: GS_xc_KIND,GS_xc_FUNCTIONAL,XC_USED_LIBXC
+#if !defined _LIBXC 
+ use xc_functionals,        ONLY: XC_EXCHANGE_CORRELATION,XC_EXCHANGE,XC_LDA_C_PW,XC_LDA_C_PZ,
+&                                 XC_LDA_C_WIGNER,XC_LDA_C_HL,XC_LDA_C_XALPHA,NONE,XC_LDA_X
+#else
+ use xc_functionals,        ONLY: NOXC,XC_NOT_AVAILABLE
+ use dftxc2libxc,           ONLY: A2LIBXC
+#endif
  use mod_com2y,             ONLY: print_interface_dimensions,symmetries_check_and_load,&
 &                                 alat_mult_factor,artificial_spin_pol
  implicit none
@@ -87,6 +91,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  ! XC KIND/FUNCTIONAL
  !===================
  !
+#if !defined _LIBXC
  select case (ahdr%ixc)
   case (0)
    GS_xc_FUNCTIONAL=NONE
@@ -113,10 +118,17 @@ subroutine a2y_db1(en,k,KSS_file_name)
    GS_xc_FUNCTIONAL=XC_EXCHANGE
    GS_xc_KIND=XC_LDA_X
   case (9:)
-   call warning ('GGA not supported: switching to PZ')
-   GS_xc_FUNCTIONAL = XC_LDA_C_PZ
+   call warning ('GGA not supported: switching to LDA PW')
+   GS_xc_FUNCTIONAL = XC_LDA_C_PW
    GS_xc_KIND = XC_EXCHANGE_CORRELATION
  end select
+#else
+ GS_xc_KIND = XC_USED_LIBXC
+ if (ahdr%ixc==0) GS_xc_FUNCTIONAL = NOXC
+ if (ahdr%ixc>0)  GS_xc_FUNCTIONAL = A2LibXC(ahdr%ixc)
+ if (ahdr%ixc<0)  GS_xc_FUNCTIONAL = -ahdr%ixc 
+ if (GS_xc_FUNCTIONAL == XC_NOT_AVAILABLE) call error ('XC used in ABINIT not available')   
+#endif 
  !
  !
  ! GPL_INCLUDE_START SPIN_IGNORE

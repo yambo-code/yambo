@@ -19,11 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 3.2.1 r.566 , yambo@yambo-code.org)
+AC_INIT(Yambo, 3.2.2 r.567 , yambo@yambo-code.org)
 SVERSION="3"
 SPATCHLEVEL="2"
-SSUBLEVEL="1"
-SREVISION="566"
+SSUBLEVEL="2"
+SREVISION="567"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -36,6 +36,7 @@ m4_include([config/acx_blas.m4])
 m4_include([config/acx.m4])
 m4_include([config/acx_gmake.m4])
 m4_include([config/netcdf_f90.m4])
+m4_include([config/libxc.m4])
 m4_include([config/fftw.m4])
 m4_include([config/slk.m4])
 m4_include([config/acx_report.m4])
@@ -370,6 +371,9 @@ AC_ARG_ENABLE(largedb, AC_HELP_STRING([--enable-largedb],
 if test x"$enable_largedb" = "x"; then enable_largedb="no"; fi
 AC_SUBST(enable_largedb)
 KH_PATH_NETCDF_F90
+# ============================================================================
+# LIBXC
+KH_PATH_LIBXC_F90
 # ============================================================================
 # Prepare the REPORT file variables
 ACX_REPORT()

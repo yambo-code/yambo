@@ -296,7 +296,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (BS_K_is_ALDA) then
    allocate(F_xc(fft_size))
+#if !defined _LIBXC
    call xc_lda_driver(Ken,Xk,WF_KIND,WF_xc_functional,2)
+#else
+   call libxc_int(Ken,Xk,WF_xc_functional,2)
+#endif
  endif
  !
  if (BS_res_K_corr) then

@@ -80,7 +80,11 @@ subroutine XCo_local(E,Xk)
 #if defined _RT
    call xc_lda_driver(E,Xk,WF_KIND,WF_xc_functional,1,G_lesser)
 #else
+#if !defined _LIBXC
    call xc_lda_driver(E,Xk,WF_KIND,WF_xc_functional,1)
+#else
+   call libxc_int(E,Xk,WF_xc_functional,1)
+#endif
 #endif
 #if defined _SC
  else

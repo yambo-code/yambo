@@ -35,6 +35,9 @@ if test "$mpibuild" = "yes" ; then MPI_str="X"; fi
 NETCDF_str=" "
 if test "$netcdf" = "yes" ; then NETCDF_str="X"; fi
 
+LIBXC_str=" "
+if test "$libxc" = "yes" ; then LIBXC_str="X"; fi
+
 NETCDF_LF_str=" "
 if test "$enable_largedb" = "yes" ; then NETCDF_LF_str="X"; fi
 
@@ -61,6 +64,7 @@ AC_SUBST(DP_str)
 AC_SUBST(Red_str)
 AC_SUBST(MPI_str)
 AC_SUBST(NETCDF_str)
+AC_SUBST(LIBXC_str)
 AC_SUBST(NETCDF_LF_str)
 AC_SUBST(ETSF_str)
 AC_SUBST(PW_str)

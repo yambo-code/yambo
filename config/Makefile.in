@@ -23,10 +23,11 @@ cpu         = @build_cpu@
 os          = @build_os@
 mpi         = @mpi_cpp@
 netcdf      = @dnetcdf@
+libxc       = @dlibxc@
 scalapack   = @dscalapack@
 precision   = @dp_cpp@
 fft         = @FFT_CPP@
-xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@
+xcpp        = @dnetcdf@ @dlibxc@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@
 debug       = @enable_debug@
 do_blas     = @compile_blas@
 do_lapack   = @compile_lapack@
@@ -226,7 +227,7 @@ define mklib
   if test ! -f "$(libdir)/lib$$ldir.a" ; \
   echo " " ; \
   echo ">>>[Making $$ldir]<<<" ; \
-  then ./sbin/make_makefile.sh $$DIR2GO/$$ldir lib$$ldir.a .objects l $(precision) $$ADF ; \
+  then ./sbin/make_makefile.sh $$DIR2GO/$$ldir lib$$ldir.a .objects l $(precision) $(xcpp) $$ADF ; \
   cd $$DIR2GO/$$ldir ; $(make) VPATH=$$DIR2GO/$$ldir || exit "$$?" ; cd ../../; fi \
  done
 endef
@@ -255,7 +256,7 @@ define objects_clean
 endef
 define lib_mod_clean
  find . \( -name '*.a' -o -name '*.mod' \) -type f -print | \
-       grep -v netcdf | grep -v iotk | grep -v typesize | xargs rm -f 
+       grep -v netcdf | grep -v xc_ | grep -v libxc | grep -v iotk | grep -v typesize | xargs rm -f 
  echo "[CLEAN] Libraries ... done" 
  echo "[CLEAN] Modules ... done" 
 endef

@@ -23,6 +23,7 @@ integer function ioDB1(E,k,ID)
  !
  use pars,             ONLY:SP,IP
  use units,            ONLY:HARTREE
+ use com,              ONLY:error
  use memory_m,         ONLY:mem_est
  use LOGO,             ONLY:code_version,code_revision
  use electrons,        ONLY:levels,default_nel,n_spin,n_bands,nel,n_sp_pol,&
@@ -39,7 +40,7 @@ integer function ioDB1(E,k,ID)
 &                           DUMP,io_mode,write_is_on,io_code_version,ver_is_gt_or_eq
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_G_bands
  use BS,               ONLY:BS_bands
- use xc_functionals,   ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL 
+ use xc_functionals,   ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL,XC_USED_LIBXC 
  use global_XC,        ONLY:setup_global_XC,EXT_NONE
 #if defined _SC
  use SC,               ONLY:SC_bands
@@ -50,6 +51,7 @@ integer function ioDB1(E,k,ID)
  type(levels)  :: E
  type(bz_samp) :: k
  integer       :: ID,code_version_local(3),code_revision_local
+ logical       :: l_use_libxc
  !
  ioDB1 =io_connect(desc="db1",type=0,ID=ID)
  if (ioDB1/=0) goto 1
@@ -152,6 +154,18 @@ integer function ioDB1(E,k,ID)
      call io_elemental(ID,I0=wf_ng,CHECK=.true.,OP=(/"=="/),&
 &                      VAR=' WF G-vectors                    :')
    endif
+   !
+   ! Check (n)s.db1 was generated with a a2y linked or not to libxc 
+   ! If this is the case and yambo reading it is not, the program should stop
+   ! and viceversa if a2y was not linked to libxc and yambo it is, the program should stop 
+   !
+#if defined _LIBXC
+   l_use_libxc = .true.
+#else
+   l_use_libxc = .false.
+#endif
+   if (l_use_libxc.and.(GS_xc_KIND.ne.XC_USED_LIBXC)) &
+        &call error("ns.db1 not compatible with yambo executable [LIBXC]")
    !
    ! Atomic data
    !

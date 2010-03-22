@@ -30,6 +30,7 @@ module ELPH
  integer   :: elph_nDBs
  integer   :: elph_nDBs_used
  integer   :: nq_memory
+ integer   :: elph_branches(2)
  real(SP)  :: max_ph_freq
  logical   :: elph_use_q_grid
  real(SP),    allocatable :: ph_qpt(:,:)
@@ -42,8 +43,8 @@ module ELPH
  !
  ! El_h Hamiltonian
  !
- integer   :: ElPh_Ham_bands(2)
- integer   :: ElPh_Ham_ik
+ integer   :: elph_Ham_bands(2)
+ integer   :: elph_Ham_ik
  ! 
  ! gFsq matrices
  !

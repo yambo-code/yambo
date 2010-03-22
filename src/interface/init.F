@@ -544,7 +544,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined  _ELPH 
    if (l_ph_corr) then
      call initactivate(1,'DysSolver')
-     call initactivate(1,'GphBRnge GDamping dScStep ExtendOut ElPhRndNq')
+     call initactivate(1,'GphBRnge ElPhModes GDamping dScStep ExtendOut ElPhRndNq')
      call initactivate(1,'WRgFsq NewtDchk OnMassShell')
    endif
    if (trim(QP_solver)=="g".and.l_ph_corr) then
@@ -559,8 +559,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! El-Ph: Frohlich Hamiltonian
  !
 #if defined  _ELPH 
- if (l_ElPh_Hamiltonian) then
-   call initactivate(1,'ElPhHBRnge ElPhHKpt')
+ if (l_elph_Hamiltonian) then
+   call initactivate(1,'ElPhHBRnge ElPhModes ElPhHKpt')
  endif
 #endif
  !
@@ -853,9 +853,17 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        lreels=runlevel_is_on('reels')
 #endif
 #if defined  _ELPH  
-       if (.not.CLOSE_Gs) l_ph_corr=runlevel_is_on('el_ph').and.ioELPH_err==0
+       if (.not.CLOSE_Gs) then
+         !
+         ! Only in this case ioELPH_err is defined
+         !
+         l_ph_corr=runlevel_is_on('el_ph').and.ioELPH_err==0
+         l_elph_Hamiltonian=runlevel_is_on('ElPhHam').and.ioELPH_err==0
+       else
+         l_ph_corr=runlevel_is_on('el_ph')
+         l_elph_Hamiltonian=runlevel_is_on('ElPhHam')
+       endif
        l_el_corr=runlevel_is_on('el_el')
-       l_ElPh_Hamiltonian=runlevel_is_on('ElPhHam').and.ioELPH_err==0
 #else
        l_el_corr=l_gw0.or.l_life
 #endif

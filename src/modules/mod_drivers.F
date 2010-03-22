@@ -48,7 +48,7 @@ module drivers
  !
  ! Electron-Phonon specific flags 
  !
- logical :: l_ElPh_Hamiltonian
+ logical :: l_elph_Hamiltonian
  !
  ! Real Axis non SC Self-energies
  !

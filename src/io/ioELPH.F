@@ -30,7 +30,7 @@ integer function ioELPH(ID,what)
 &                         QP_PH_n_G_bands,max_ph_freq,elph_DW,elph_nDBs,&
 &                         elph_use_q_grid,E_k_plus_q,ph_qpt,elph_nDBs_used,&
 &                         gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f,&
-&                         pol_vector,ElPh_Ham_bands
+&                         pol_vector,elph_Ham_bands,elph_branches
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:nkbz,nqibz
  use D_lattice,      ONLY:n_atoms_species
@@ -91,7 +91,8 @@ integer function ioELPH(ID,what)
    !
    if (io_mode(ID)==DUMP.or.write_is_on(ID)) then
      QP_PH_n_G_bands=elph_nb
-     ElPh_Ham_bands =(/1,elph_nb/)
+     elph_Ham_bands =(/1,elph_nb/)
+     elph_branches  =(/1,ph_modes/)
    endif
    !
    ioELPH=io_status(ID)

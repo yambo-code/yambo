@@ -80,7 +80,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use eels_integration,     ONLY:init_reels_integration
 #endif
 #if defined _ELPH 
- use ELPH,                 ONLY:QP_PH_n_G_bands,elph_nDBs_used,ElPh_Ham_ik,ElPh_Ham_bands
+ use ELPH,                 ONLY:QP_PH_n_G_bands,elph_nDBs_used,elph_Ham_ik,elph_Ham_bands,elph_branches
 #endif
  !
  implicit none
@@ -359,8 +359,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
 #if defined _ELPH 
  call it(defs,'GphBRnge',  '[ELPH] G[W] bands range',QP_PH_n_G_bands)
- call it(defs,'ElPhHBRnge','[ELPH] Hamiltonian bands range',ElPh_Ham_bands)
- call it(defs,'ElPhHKpt',  '[ELPH] Hamiltonian k-point',ElPh_Ham_ik)
+ call it(defs,'ElPhModes', '[ELPH] Phonon modes included',elph_branches)
+ call it(defs,'ElPhHBRnge','[ELPH] Hamiltonian bands range',elph_Ham_bands)
+ call it(defs,'ElPhHKpt',  '[ELPH] Hamiltonian k-point',elph_Ham_ik)
  call it('f',defs,'WRgFsq','[ELPH] Dump on file gFsq coefficients')
 #endif
  ! 

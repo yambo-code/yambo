@@ -103,9 +103,7 @@ module xc_functionals
      !     
      integer        :: kind,functional
      character(4)   :: ch_kind
-     integer          :: i1,fun
-     character(*)     :: ch_fun
-     type(xc_fnctl_t) :: xcs
+     integer        :: i1,fun
      !
      select case (kind)
        case(-1,NONE)

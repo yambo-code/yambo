@@ -42,12 +42,13 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                        On_Mass_Shell_approx
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
  use R_lattice,     ONLY:qindx_S,bz_samp,ik_is_table
- use ELPH,          ONLY:ph_modes,elph_nb,ph_freqs_sq,elph_gkkp,&
+ use ELPH,          ONLY:elph_nb,ph_freqs_sq,elph_gkkp,&
 &                        elph_global_free,QP_PH_n_G_bands,max_ph_freq,elph_DW,&
 &                        elph_nDBs,E_k_plus_q,elph_use_q_grid,&
 &                        setup_k_plus_q_levels,f_k_plus_q,elph_nDBs_used,&
 &                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,&
-&                        elph_global_alloc,gsqF_energy_steps,eval_G_using_KK,nq_memory,ph_qpt
+&                        elph_global_alloc,gsqF_energy_steps,eval_G_using_KK,nq_memory,ph_qpt,&
+&                        elph_branches
  use functions,     ONLY:Fermi_fnc_derivative
  !
  implicit none
@@ -134,8 +135,11 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      if (l_GF_from_CA) then
        call FREQUENCIES_Green_Function(i_qp,Sc_W(i_qp),en%E)
      else
-       Sc_W(i_qp)%er=(/minval(en%E(:,:,:))-2.*max_ph_freq,&
-&                     maxval(en%E(:QP_PH_n_G_bands,:,:))+2.*max_ph_freq/) 
+#if defined _DEBUG
+       Sc_W(i_qp)%er=(/minval(en%E(:,:,:))-5./HARTREE,maxval(en%E(:QP_PH_n_G_bands,:,:))+5./HARTREE/)
+#else
+       Sc_W(i_qp)%er=(/minval(en%E(:,:,:))-2.*max_ph_freq,maxval(en%E(:QP_PH_n_G_bands,:,:))+2.*max_ph_freq/)
+#endif
        Sc_W(i_qp)%dr=QP_G_dr
        call FREQUENCIES_setup(Sc_W(i_qp))
      endif
@@ -309,7 +313,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          ! k is in the IBZ and q is the PW_q (=-YAMBO_q)
          !
        endif
-       do il=1,ph_modes
+       do il=elph_branches(1),elph_branches(2)
          !
          ph_E=sqrt(abs(ph_freqs_sq(iq_ibz,il)))
          !
@@ -327,13 +331,11 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          !
          elph_gkkp_sq=conjg(elph_gkkp(ik_bz_gkkp,il,ob_gkkp,ib_gkkp))*&
 &                           elph_gkkp(ik_bz_gkkp,il,ob_gkkp,ib_gkkp)/2./ph_E
-!
 !DEBUG<
 !if (abs(ph_qpt(iq_loop,1))<0.2.and.il<4) cycle
 !if ((abs(ph_qpt(iq_loop,1))>0.2.and.abs(ph_qpt(iq_loop,1))<0.9).and.(il<=2.or.il==4)) cycle
 !if (abs(ph_qpt(iq_loop,1))>0.95.and.(il==1.or.il>=3)) cycle
 !DEBUG>
-!
          !
          ! Frequency Loop
          !
@@ -366,10 +368,15 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
            !
            ! "f" Term
            !
+#if defined _DEBUG
+           gsqF_life_f(i_qp,Q_map(iq_ibz),il,iw)= gsqF_life_f(i_qp,Q_map(iq_ibz),il,iw)-&
+&                  pi*elph_gkkp_sq*q_weight*Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping)
+#else
            gsqF_life_f(i_qp,Q_map(iq_ibz),il,iw)= gsqF_life_f(i_qp,Q_map(iq_ibz),il,iw)+pi*elph_gkkp_sq*q_weight*&
 &            ( ( Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) - &
 &                time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping) )*f_occ-&
 &              Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) )
+#endif
            !
            if (eval_G_using_KK) cycle
            !
@@ -400,8 +407,10 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          !
          ! (b) Debye Waller Term
          !
+#if !defined _DEBUG
          gsqF_dw(i_qp,iq_ibz,il)=gsqF_dw(i_qp,iq_ibz,il)-1./2.*&
 &                                 2.*elph_DW(ik_bz,il,ib,ob)/delta_E_at_gamma*q_weight/2./ph_E
+#endif
          !                       /\
          !                        |
          !                        this 2 is to be consistent with AC definition (see Eq. 5, PRB 31, 2163)
@@ -469,7 +478,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      ! Degenerate bands average
      !
      do iq_loop=1,elph_nDBs_used
-       do il=1,ph_modes
+       do il=elph_branches(1),elph_branches(2)
          call QP_states_simmetrize(en,vec_2_sim=gsqF_dw(:,iq_loop,il))
          do iw=1,gsqF_energy_steps
            if (.not.eval_G_using_KK) then
@@ -502,18 +511,25 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      !
      coefficient=(0.,1.)
      !
-     ! Setup energy range for Sc/G plotting
+     ! Setup energy range for Sc/G plotting (I)
      !
      if ( trim(QP_solver)=='g' ) then
        coefficient=(1.,0.)
        call W_reset(Sc_local_W)
        Sc_local_W%n =QP_Sc_steps
-       Sc_local_W%dr=0.001/HARTREE
      endif
      !
      do i_qp=1,QP_n_states   
        !
-       if ( trim(QP_solver)=='g' ) call FREQUENCIES_Green_Function(i_qp,Sc_local_W,en%E)
+       ! Setup energy range for Sc/G plotting (II)
+       !
+       if ( trim(QP_solver)=='g' ) then
+         call FREQUENCIES_Green_Function(i_qp,Sc_local_W,en%E)
+         !
+         ! Overwrites the damping defined in FREQUENCIES_Green_Function
+         !
+         forall(iw=1:QP_Sc_steps) Sc_local_W%p(iw)= real( Sc_local_W%p(iw)) + cmplx(0.,0.00001/HARTREE)
+       endif
        !
        ib   =QP_table(i_qp,1)
        ik   =QP_table(i_qp,3)
@@ -525,7 +541,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          !
          if (distributed_Q.and..not.px%element_2D(iq_loop,1)) cycle
          !
-         do il=1,ph_modes
+         do il=elph_branches(1),elph_branches(2)
            !
            if (.not.elph_use_q_grid) ph_freq=sqrt(ph_freqs_sq(iq_loop,il))
            if (     elph_use_q_grid) ph_freq=sqrt(ph_freqs_sq( q%sstar(iq_loop,1) ,il))

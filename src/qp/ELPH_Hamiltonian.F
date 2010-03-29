@@ -21,17 +21,19 @@
 !
 subroutine ELPH_Hamiltonian(en,k,q)
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,lchlen
  use units,         ONLY:HARTREE
  use ELPH,          ONLY:elph_global_alloc,elph_global_free,elph_Ham_bands,elph_Ham_ik,&
 &                        ph_freqs_sq,elph_gkkp,elph_branches
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END
- use com,           ONLY:error,msg
+ use com,           ONLY:error,msg,of_open_close
  use R_lattice,     ONLY:nqibz,nqbz,bz_samp,qindx_S,ik_is_table
  use D_lattice,     ONLY:sop_inv,nsym,sop_tab,i_time_rev
  use electrons,     ONLY:levels
  use timing,        ONLY:live_timing
  use matrix_operate,ONLY:mat_dia_inv,DIAGO,USE_LK
+ use stderr,        ONLY:intc
+ use QP_m,          ONLY:QP_G_damp
  !
  implicit none
  !
@@ -41,12 +43,18 @@ subroutine ELPH_Hamiltonian(en,k,q)
  ! Work Space
  !
  integer              :: H_size,ib,iq_bz,iq_ibz,iq_s,ID,io_err,iH,il,ok_bz,ok_ibz,ok_s,No_PH_basis_size,&
-&                        iHp,ibp,iq_ibz_db,ik_bz_gkkp,ib_gkkp,ob_gkkp
+&                        iHp,ibp,iq_ibz_db,ik_bz_gkkp,ib_gkkp,ob_gkkp,iw
  real(SP)             :: ph_E
  integer, external    :: ioELPH
  integer,     allocatable :: elph_Ham_Table(:,:)
  real   (SP), allocatable :: elph_E(:)
  complex(SP), allocatable :: elph_Mat(:,:)
+ !
+ ! GF's
+ !
+ integer, parameter :: N_w=1000
+ complex(SP)        :: W(N_w),G(N_w)
+ character(lchlen)  :: file_name
  !
  call section('*','Correlation: Electron-Phonon Hamiltonian')
  !
@@ -101,7 +109,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  iq_ibz_db=0
  !
  do iH=1,No_PH_basis_size
-   ib   =elph_Ham_Table(iH,1)
+   ib             =elph_Ham_Table(iH,1)
    elph_Mat(iH,iH)=en%E(ib,elph_Ham_ik,1)
    do iHp=No_PH_basis_size+1,H_size
      ibp    =elph_Ham_Table(iHp,1)
@@ -113,19 +121,19 @@ subroutine ELPH_Hamiltonian(en,k,q)
      ok_ibz =k%sstar(ok_bz,1)
      ok_s   =k%sstar(ok_bz,2)
      !
-     ph_E=sqrt(abs(ph_freqs_sq(iq_ibz,il)))
-     !
-     if (iH==1) elph_Mat(iHp,iHp)=en%E(ib,ok_ibz,1)+ph_E
-     !
-     if (abs(ph_E)<epsilon(1._SP)) then
-       call live_timing(steps=1)
-       cycle
-     endif
-     !
      if (iq_ibz/=iq_ibz_db) then
        call io_control(ACTION=RD_CL_IF_END,SEC=(/iq_ibz+1/),ID=ID)
        io_err=ioELPH(ID,'gkkp')
        iq_ibz_db=iq_ibz
+     endif
+     !
+     ph_E=sqrt(abs(ph_freqs_sq(iq_ibz,il)))
+     !
+     if (iH==1) elph_Mat(iHp,iHp)=en%E(ibp,ok_ibz,1)+ph_E
+     !
+     if (abs(ph_E)<epsilon(1._SP)) then
+       call live_timing(steps=1)
+       cycle
      endif
      !
      ib_gkkp=ib
@@ -150,17 +158,31 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  ! Diagonalization 
  !=================
- ! 
+ !
  call live_timing('Diagonalization',1,SERIAL=.TRUE.)
  call mat_dia_inv(DIAGO,USE_LK,elph_Mat,E_real=elph_E)
  call live_timing(steps=1)
  call live_timing()
  !
+ do iw=1,N_w
+   W(iw)= (minval(elph_E)-2./HARTREE)+ ( maxval(elph_E) -  minval(elph_E) + 4./HARTREE )/real(N_w)*iw+cmplx(0.,QP_G_damp)
+ enddo
  do ib=elph_Ham_bands(1),elph_Ham_bands(2)
-   write (200,*) en%E(ib,elph_Ham_ik,1)*HARTREE,1
+   G(:)=(0.,0.)
    do iH=1,H_size
-     write (100+ib,*) elph_E(iH)*HARTREE,abs(elph_Mat(ib-elph_Ham_bands(1)+1,iH))**2.
+      write (*,*) ib,elph_E(iH)*HARTREE,abs(elph_Mat(ib-elph_Ham_bands(1)+1,iH))**2.
+     do iw=1,N_w
+       G(iw)=G(iw)+abs(elph_Mat(ib-elph_Ham_bands(1)+1,iH))**2./( conjg(W(iw)) - elph_E(iH) )
+     enddo
    enddo
+   !
+   file_name='GF_from_ElPh_Ham_k'//trim(intc( elph_Ham_ik ) )//'_b'//trim(intc(ib))
+   call of_open_close(file_name,'ot')
+   do iw=1,N_w
+     call msg('o GF','',(/real(W(iw))*HARTREE,real(G(iw))/HARTREE,aimag(G(iw))/HARTREE/),INDENT=-2,USE_TABS=.TRUE.)
+   enddo
+   call of_open_close(file_name)
+   !
  enddo
  !
  ! CLEAN

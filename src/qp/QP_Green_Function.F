@@ -36,6 +36,9 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
 &                        QP_n_states,use_GreenF_to_eval_QP,QP_Sc_steps,QP_G_dr,&
 &                        QP_dSc_delta,QP_G_Zoom_treshold,&
 &                        QP_G_amplitude_integral,QP_G_zoom_er,use_GreenF_Zoom
+#if defined _DEBUG
+ use QP_m,          ONLY:QP_G_damp
+#endif
  use electrons,     ONLY:spin,levels
  use frequency,     ONLY:w_samp,W_reset
  implicit none
@@ -93,7 +96,16 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
    endif
    !
    do iw=1,W%n(1) 
-     qp%GreenF(iqp,iw)=1./(real(qp%GreenF_W(iqp,iw))-Eo-qp%S_total(iqp,iw)) 
+#if defined _DEBUG
+     !
+     qp%GreenF(iqp,iw)=1./(real(qp%GreenF_W(iqp,iw))-Eo-qp%S_total(iqp,iw)-cmplx(0.,QP_G_damp))
+     ! DEBUG < ELPH_Ham
+     !write (200,'(3f20.10)')  real(qp%GreenF_W(iqp,iw))*HARTREE,qp%S_total(1,iw)*HARTREE
+     ! DEBUG > ELPH_Ham
+#else
+     qp%GreenF(iqp,iw)=1./(real(qp%GreenF_W(iqp,iw))-Eo-qp%S_total(iqp,iw))
+#endif
+     !
    enddo
    !
    ! Spectral Function Integral

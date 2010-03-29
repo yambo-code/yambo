@@ -36,7 +36,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  use electrons,     ONLY:BZ_RIM_tot_nkpts
  use IO_m,          ONLY:ver_is_gt_or_eq
 #if defined _ELPH 
- use ELPH,          ONLY:QP_PH_n_G_bands
+ use ELPH,          ONLY:QP_PH_n_G_bands,elph_branches
 #endif
  implicit none
  !
@@ -187,6 +187,14 @@ subroutine QP_descriptions(qp,X,Xw,Update)
      write (qp%description(qp%n_descs),trim(&
 &          string_pack('(a,2',gen_fmt( (/QP_PH_n_G_bands/) ),')'))) &
 &          ' El-Ph Sc. G bands      :',(/1,QP_PH_n_G_bands/)
+     !
+     if (ver_is_gt_or_eq(-1,(/3,2,2/))) then
+       qp%n_descs=qp%n_descs+1
+       write (qp%description(qp%n_descs),trim(&
+&            string_pack('(a,2',gen_fmt( elph_branches ),')'))) &
+&            ' El-Ph phonon branches  :',(/elph_branches/)
+     endif
+     !
    endif
    !
  endif

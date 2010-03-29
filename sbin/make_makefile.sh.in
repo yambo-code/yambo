@@ -82,7 +82,7 @@ case $target in
    llibs="-lint_modules $llibs \$(lscalapack) \$(llapack)  \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfftw) -lm $llmpi"
     ;;
   p2y*)
-   llibs="-lint_modules $llibs -liotk  \$(lscalapack) \$(llapack)  \$(lblacs) \$(lblas) \$(lnetcdf) \$(llocal) \$(lfftw) -lm $llmpi"
+   llibs="-lint_modules $llibs -liotk  \$(lscalapack) \$(llapack)  \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfftw) -lm $llmpi"
    linclude="$linclude -I\$(iotk_dir)"
     ;;
   e2y)
@@ -90,7 +90,7 @@ case $target in
    linclude="$linclude -I\$(etsf_dir)"
     ;;
   ypp*)
-   llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llocal) \$(lfftw) -lm $llmpi"
+   llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) \$(llocal) \$(lfftw) -lm $llmpi"
     ;;
 esac
 

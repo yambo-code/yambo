@@ -35,7 +35,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  use defs_datatypes,        ONLY: hdr_type, wffile_type
  use xc_functionals,        ONLY: GS_xc_KIND,GS_xc_FUNCTIONAL,XC_USED_LIBXC
 #if !defined _LIBXC 
- use xc_functionals,        ONLY: XC_EXCHANGE_CORRELATION,XC_EXCHANGE,XC_LDA_C_PW,XC_LDA_C_PZ,
+ use xc_functionals,        ONLY: XC_EXCHANGE_CORRELATION,XC_EXCHANGE,XC_LDA_C_PW,XC_LDA_C_PZ,&
 &                                 XC_LDA_C_WIGNER,XC_LDA_C_HL,XC_LDA_C_XALPHA,NONE,XC_LDA_X
 #else
  use xc_functionals,        ONLY: NOXC,XC_NOT_AVAILABLE

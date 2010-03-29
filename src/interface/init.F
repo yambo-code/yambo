@@ -560,7 +560,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined  _ELPH 
  if (l_elph_Hamiltonian) then
-   call initactivate(1,'ElPhHBRnge ElPhModes ElPhHKpt')
+   call initactivate(1,'ElPhHBRnge ElPhModes ElPhHKpt GDamping')
  endif
 #endif
  !

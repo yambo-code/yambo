@@ -31,6 +31,8 @@ integer function ioELPH(ID,what)
 &                         elph_use_q_grid,E_k_plus_q,ph_qpt,elph_nDBs_used,&
 &                         gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f,&
 &                         pol_vector,elph_Ham_bands,elph_branches
+ use QP_m, ONLY:QP_G_damp
+ use units
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:nkbz,nqibz
  use D_lattice,      ONLY:n_atoms_species
@@ -234,6 +236,12 @@ integer function ioELPH(ID,what)
      forall(im=1:ph_modes,i1=1:elph_nb,i2=1:elph_nb) &
 &          elph_gkkp(ik,im,i1,i2)=elph_gkkp_disk((i1-1)*elph_nb+i2,im,1)+&
 &                   (0._SP,1._SP)*elph_gkkp_disk((i1-1)*elph_nb+i2,im,2)
+#if defined _DEBUG
+!     elph_gkkp=(0.,0.)
+!     ph_freqs_sq(1,12)=(.5/HARTREE)**2.
+     elph_gkkp(1,:,:,:)= elph_gkkp(1,:,:,:)*10.
+!     elph_gkkp(1,12,2,1)= elph_gkkp(1,12,1,2)
+#endif
    endif
    !
  enddo

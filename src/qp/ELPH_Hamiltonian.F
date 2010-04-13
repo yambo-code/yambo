@@ -32,7 +32,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  use electrons,     ONLY:levels
  use timing,        ONLY:live_timing
  use matrix_operate,ONLY:mat_dia_inv,DIAGO,USE_LK
- use stderr,        ONLY:intc
+ use stderr,        ONLY:intc,set_real_printed_length
  use QP_m,          ONLY:QP_G_damp
  !
  implicit none
@@ -44,7 +44,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  integer              :: H_size,ib,iq_bz,iq_ibz,iq_s,ID,io_err,iH,il,ok_bz,ok_ibz,ok_s,No_PH_basis_size,&
 &                        iHp,ibp,iq_ibz_db,ik_bz_gkkp,ib_gkkp,ob_gkkp,iw
- real(SP)             :: ph_E
+ real(SP)             :: ph_E,residual
  integer, external    :: ioELPH
  integer,     allocatable :: elph_Ham_Table(:,:)
  real   (SP), allocatable :: elph_E(:)
@@ -167,23 +167,39 @@ subroutine ELPH_Hamiltonian(en,k,q)
  do iw=1,N_w
    W(iw)= (minval(elph_E)-2./HARTREE)+ ( maxval(elph_E) -  minval(elph_E) + 4./HARTREE )/real(N_w)*iw+cmplx(0.,QP_G_damp)
  enddo
+ !
+ call set_real_printed_length(f_length=12,g_length=12)
+ !
  do ib=elph_Ham_bands(1),elph_Ham_bands(2)
    G(:)=(0.,0.)
    do iH=1,H_size
-      write (*,*) ib,elph_E(iH)*HARTREE,abs(elph_Mat(ib-elph_Ham_bands(1)+1,iH))**2.
      do iw=1,N_w
        G(iw)=G(iw)+abs(elph_Mat(ib-elph_Ham_bands(1)+1,iH))**2./( conjg(W(iw)) - elph_E(iH) )
      enddo
    enddo
    !
-   file_name='GF_from_ElPh_Ham_k'//trim(intc( elph_Ham_ik ) )//'_b'//trim(intc(ib))
+   write (file_name,'(2(a,i3.3))') 'G_Ham_band_',elph_Ham_ik,'_k_',ib
    call of_open_close(file_name,'ot')
+   call msg('o Ham','# El-Ph Hamiltonian derived Green`s function')
+   !
+   call msg('o Ham','#')
+   call msg('o Ham','#',(/'Pole[eV]','Residual'/),INDENT=0,USE_TABS=.true.)
+   call msg('o Ham','#')
+   do iH=1,H_size
+     residual= abs(elph_Mat(ib-elph_Ham_bands(1)+1,iH))**2.
+     if (residual>1.E-2) call msg('o Ham','#',(/elph_E(iH)*HARTREE,residual/),INDENT=0,USE_TABS=.true.)
+   enddo
+   call msg('o Ham','#')
+   call msg('o Ham','#',(/'Energy [eV]','R(G)[eV^-1]','I(G)[eV^-1]'/),INDENT=0,USE_TABS=.TRUE.)
+   call msg('o Ham','#')
    do iw=1,N_w
-     call msg('o GF','',(/real(W(iw))*HARTREE,real(G(iw))/HARTREE,aimag(G(iw))/HARTREE/),INDENT=-2,USE_TABS=.TRUE.)
+     call msg('o Ham','',(/real(W(iw))*HARTREE,real(G(iw))/HARTREE,aimag(G(iw))/HARTREE/),INDENT=-2,USE_TABS=.TRUE.)
    enddo
    call of_open_close(file_name)
    !
  enddo
+ !
+ call set_real_printed_length()
  !
  ! CLEAN
  !

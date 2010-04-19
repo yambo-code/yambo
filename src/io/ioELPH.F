@@ -236,9 +236,6 @@ integer function ioELPH(ID,what)
      forall(im=1:ph_modes,i1=1:elph_nb,i2=1:elph_nb) &
 &          elph_gkkp(ik,im,i1,i2)=elph_gkkp_disk((i1-1)*elph_nb+i2,im,1)+&
 &                   (0._SP,1._SP)*elph_gkkp_disk((i1-1)*elph_nb+i2,im,2)
-#if defined _DEBUG
-      !elph_gkkp(1,:,:,:)= elph_gkkp(1,:,:,:)*10.
-#endif
    endif
    !
  enddo

@@ -24,11 +24,11 @@ subroutine ELPH_Hamiltonian(en,k,q)
  use pars,          ONLY:SP,lchlen
  use units,         ONLY:HARTREE
  use ELPH,          ONLY:elph_global_alloc,elph_global_free,elph_Ham_bands,elph_Ham_ik,&
-&                        ph_freqs_sq,elph_gkkp,elph_branches
- use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END
- use com,           ONLY:error,msg,of_open_close
+&                        ph_freqs_sq,elph_gkkp,elph_branches,pol_vector
+ use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,mk_dir
+ use com,           ONLY:error,msg,of_open_close,file_exists
  use R_lattice,     ONLY:nqibz,nqbz,bz_samp,qindx_S,ik_is_table
- use D_lattice,     ONLY:sop_inv,nsym,sop_tab,i_time_rev
+ use D_lattice,     ONLY:sop_inv,nsym,sop_tab,i_time_rev,n_atoms
  use electrons,     ONLY:levels
  use timing,        ONLY:live_timing
  use matrix_operate,ONLY:mat_dia_inv,DIAGO,USE_LK
@@ -44,7 +44,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  integer              :: H_size,ib,iq_bz,iq_ibz,iq_s,ID,io_err,iH,il,ok_bz,ok_ibz,ok_s,No_PH_basis_size,&
 &                        iHp,ibp,iq_ibz_db,ik_bz_gkkp,ib_gkkp,ob_gkkp,iw
- real(SP)             :: ph_E,residual
+ real(SP)             :: ph_E,residual,q_weight
  integer, external    :: ioELPH
  integer,     allocatable :: elph_Ham_Table(:,:)
  real   (SP), allocatable :: elph_E(:)
@@ -56,6 +56,16 @@ subroutine ELPH_Hamiltonian(en,k,q)
  complex(SP)        :: W(N_w),G(N_w)
  character(lchlen)  :: file_name
  !
+ ! Residuals
+ !
+ logical, allocatable :: top_residual(:)
+ !
+ ! Mean value of displacements
+ !
+ integer            :: ic,ia,Ham_Index
+ real(SP)           :: ph_E_gamma,mean,num,pol_vector_gamma(n_atoms*3,n_atoms,3)
+ complex(SP), allocatable :: mean_u(:,:,:)
+ !
  call section('*','Correlation: Electron-Phonon Hamiltonian')
  !
  call k_sym2sym(k,'k')
@@ -65,11 +75,14 @@ subroutine ELPH_Hamiltonian(en,k,q)
  H_size=No_PH_basis_size*(nqbz*(elph_branches(2)-elph_branches(1)+1)+1)
  call msg('rsn','[ElPh Ham] Hamiltonian size is:',H_size)
  !
- allocate(elph_Ham_Table(H_size,3),elph_Mat(H_size,H_size),elph_E(H_size)) 
+ allocate(elph_Ham_Table(H_size,3),elph_Mat(H_size,H_size),elph_E(H_size),mean_u(n_atoms,3,H_size)) 
+ allocate(top_residual(H_size))
+ top_residual=.FALSE.
  elph_Mat=(0._SP,0._SP)
  elph_Ham_Table=0
  !
  H_size=0
+ q_weight=1./sqrt(real(nqbz))
  !
  ! Basis ...
  !===========
@@ -125,6 +138,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
        call io_control(ACTION=RD_CL_IF_END,SEC=(/iq_ibz+1/),ID=ID)
        io_err=ioELPH(ID,'gkkp')
        iq_ibz_db=iq_ibz
+       if (iq_ibz==1) pol_vector_gamma=pol_vector
      endif
      !
      ph_E=sqrt(abs(ph_freqs_sq(iq_ibz,il)))
@@ -145,7 +159,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
        ik_bz_gkkp=ik_is_table(ok_ibz,sop_tab(sop_inv(iq_s-nsym/2),ok_s))
      endif
      !
-     elph_Mat(iH,iHp)=conjg(elph_gkkp(ik_bz_gkkp,il,ob_gkkp,ib_gkkp))/sqrt(2.*ph_E)
+     elph_Mat(iH,iHp)=q_weight*conjg(elph_gkkp(ik_bz_gkkp,il,ob_gkkp,ib_gkkp))/sqrt(2.*ph_E)
      !
      elph_Mat(iHp,iH)=conjg( elph_Mat(iH,iHp) )
      !
@@ -159,10 +173,27 @@ subroutine ELPH_Hamiltonian(en,k,q)
  ! Diagonalization 
  !=================
  !
- call live_timing('Diagonalization',1,SERIAL=.TRUE.)
- call mat_dia_inv(DIAGO,USE_LK,elph_Mat,E_real=elph_E)
- call live_timing(steps=1)
- call live_timing()
+ call mk_dir('ELPH_Ham')
+ !
+ file_name='ELPH_Ham/DIAGO_DB_k_'//trim(intc(elph_Ham_ik))
+ if (file_exists(file_name)) then
+   open(unit=1,file=trim(file_name),status='old',form='unformatted')
+   read(1) elph_E
+   read(1) elph_Mat
+   close(1)
+ else
+   call live_timing('Diagonalization',1,SERIAL=.TRUE.)
+   call mat_dia_inv(DIAGO,USE_LK,elph_Mat,E_real=elph_E)
+   call live_timing(steps=1)
+   call live_timing()
+   open(unit=100,file=trim(file_name),status='new',form='unformatted')
+   write(100) elph_E(:)
+   write(100) elph_Mat(:,:)
+   close(100)
+ endif
+ !
+ ! Green's Functions 
+ !===================
  !
  do iw=1,N_w
    W(iw)= (minval(elph_E)-2./HARTREE)+ ( maxval(elph_E) -  minval(elph_E) + 4./HARTREE )/real(N_w)*iw+cmplx(0.,QP_G_damp)
@@ -178,16 +209,19 @@ subroutine ELPH_Hamiltonian(en,k,q)
      enddo
    enddo
    !
-   write (file_name,'(2(a,i3.3))') 'G_Ham_band_',elph_Ham_ik,'_k_',ib
+   write (file_name,'(2(a,i3.3))') 'G_Ham_band_',ib,'_k_',elph_Ham_ik
    call of_open_close(file_name,'ot')
    call msg('o Ham','# El-Ph Hamiltonian derived Green`s function')
    !
    call msg('o Ham','#')
-   call msg('o Ham','#',(/'Pole[eV]','Residual'/),INDENT=0,USE_TABS=.true.)
+   call msg('o Ham','#',(/'Index','Pole[eV]','Residual'/),INDENT=0,USE_TABS=.true.)
    call msg('o Ham','#')
    do iH=1,H_size
      residual= abs(elph_Mat(ib-elph_Ham_bands(1)+1,iH))**2.
-     if (residual>1.E-2) call msg('o Ham','#',(/elph_E(iH)*HARTREE,residual/),INDENT=0,USE_TABS=.true.)
+     if (residual>1.E-2) then
+       call msg('o Ham','#',(/real(iH),elph_E(iH)*HARTREE,residual/),INDENT=0,USE_TABS=.true.)
+       top_residual(iH)=.TRUE.
+     endif
    enddo
    call msg('o Ham','#')
    call msg('o Ham','#',(/'Energy [eV]','R(G)[eV^-1]','I(G)[eV^-1]'/),INDENT=0,USE_TABS=.TRUE.)
@@ -199,11 +233,64 @@ subroutine ELPH_Hamiltonian(en,k,q)
    !
  enddo
  !
+ ! Eigenvectors written to DB for post-analysis
+ !============================
+ !
+ ! <r|I_k>= A_nk * <r|nk> + SUM_n_q_il ( B_n_q_il * <r|n,k-q> )
+ !
+ do iH=1,H_size
+   if (.not.top_residual(iH)) cycle
+   file_name='ELPH_Ham/EIGENV_'//trim(intc(iH))
+   open(unit=100,file=trim(file_name),form='unformatted')
+   do iHp=No_PH_basis_size+1,H_size
+     ibp    =elph_Ham_Table(iHp,1)
+     iq_bz  =elph_Ham_Table(iHp,2)
+     il     =elph_Ham_Table(iHp,3)
+     iq_s   =q%sstar(iq_bz,2)
+     ok_bz  =qindx_S(elph_Ham_ik,iq_bz,1)
+     ok_ibz =k%sstar(ok_bz,1)
+     ok_s   =k%sstar(ok_bz,2)
+     write(100) ibp,ok_ibz,il,ok_s,elph_Mat(iHp,iH) 
+   enddo
+   close(100)
+ enddo
+ !                                
+ ! Mean values of displacement <iH|u_alfa_i_s|iH>
+ ! ===========
+ !iH is the eigenvector of elph_Mat
+ !
+ mean_u=0.0
+ write (*,*)
+ do iH=1,H_size
+   if (.not.top_residual(iH)) cycle
+   do ia=1,n_atoms
+     do ic=1,3
+       Ham_Index=0
+       do il=elph_branches(1),elph_branches(2)
+         !
+         ph_E_gamma=sqrt( MAX ( ph_freqs_sq(1,il), 0.) )
+         if ( ph_E_gamma < epsilon(1._SP)) cycle
+         !
+         Ham_Index=Ham_Index+No_PH_basis_size
+         !
+         do ib=elph_Ham_bands(1),elph_Ham_bands(2)
+           mean_u(ia,ic,iH)=mean_u(ia,ic,iH)+&
+&            1/sqrt(real(2*nqbz*ph_E_gamma))*pol_vector_gamma(il,ia,ic)*(conjg(elph_Mat(ib,iH))*elph_Mat(Ham_Index+ib,iH)+&
+&                                                                  conjg(elph_Mat(Ham_Index+ib,iH))*elph_Mat(ib,iH))
+           mean_u(ia,ic,iH)=real( mean_u(ia,ic,iH) )
+         enddo
+       enddo
+     enddo
+   enddo
+   write (*,'(i3,12f5.2)') iH,real(mean_u(:,:,iH))
+ enddo
+ !
  call set_real_printed_length()
  !
  ! CLEAN
  !
  call elph_global_free( )
  deallocate(elph_Ham_Table,elph_Mat,elph_E)
+ deallocate(mean_u,top_residual)
  !
 end subroutine

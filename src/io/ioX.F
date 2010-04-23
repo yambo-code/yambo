@@ -44,7 +44,7 @@ integer function ioX(X,Xw,ID)
  !Work Space
  !
  integer             ::sec_size,i1,iq,i_err,io_com_save
- logical             ::different_db_RL_order
+ logical             ::different_db_RL_order,l_CUTOFF
  character (schlen)  ::ch,db_desc
  real(SP)            ::Wd_disk(2)
  real(SP),allocatable::X_disk(:,:,:),W_disk(:,:),RL_vecs_disk(:,:)
@@ -70,10 +70,15 @@ integer function ioX(X,Xw,ID)
    !
    ! Header
    !
-   if (X%whoami==1) ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND="Xx")
-   if (X%whoami==2) ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND="Xs")
-   if (X%whoami==3) ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND="Xd")
-   if (X%whoami==4) ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND="Xp")
+   l_CUTOFF=.FALSE.
+#if defined_TEST_2
+   l_CUTOFF=.TRUE.
+#endif
+   !
+   if (X%whoami==1) ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND="Xx",CUTOFF=l_CUTOFF)
+   if (X%whoami==2) ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND="Xs",CUTOFF=l_CUTOFF)
+   if (X%whoami==3) ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND="Xd",CUTOFF=l_CUTOFF)
+   if (X%whoami==4) ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND="Xp",CUTOFF=l_CUTOFF)
    if (ioX/=0) goto 1
    !
    ! PARS_1

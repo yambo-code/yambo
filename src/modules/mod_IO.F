@@ -127,10 +127,18 @@ module IO_m
      !
    end subroutine
    !
+#if defined _TEST_2
+   integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,&
+&                             T_EL,KPTS,D_LATT,XC_KIND,CUTOFF)
+#else
    integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,&
 &                             T_EL,KPTS,D_LATT,XC_KIND)
+#endif
      integer               :: ID
      logical,optional      :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT
+#if defined _TEST_2
+     logical,optional      ::CUTOFF
+#endif
      character(*),optional :: XC_KIND
    end function
    !

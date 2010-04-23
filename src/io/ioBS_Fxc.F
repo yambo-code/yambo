@@ -64,7 +64,14 @@ integer function ioBS_Fxc(iq,FXC_W,ID,X)
    ! As this DB must respect the BS identifier I only need to
    ! check the K QP corrections
    !
+#if defined _TEST_2
+   !
+   ! here I check also the coulomb cutoff
+   !
+   ioBS_Fxc=io_header(ID,XC_KIND="K_E force",CUTOFF=.true.)
+#else
    ioBS_Fxc=io_header(ID,XC_KIND="K_E force")
+#endif
    !
    ! Exit if header is wrong
    !

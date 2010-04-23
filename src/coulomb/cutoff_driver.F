@@ -45,6 +45,9 @@ subroutine cutoff_driver(q)
  use vec_operate,   ONLY:v_is_zero
  use com,           ONLY:msg
  use R_lattice,     ONLY:cyl_ph_radius,box_length,cyl_length,cut_geometry,bz_samp
+#if defined _TEST_2
+ use R_lattice,     ONLY:cut_description
+#endif
  use stderr,        ONLY:string_split,string_pack
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY,NONE
  use parser_m,      ONLY:parser
@@ -158,7 +161,12 @@ subroutine cutoff_driver(q)
  !
  !lengths
  !
- if (cut_is_sphere) call msg('r','Sphere radius   [au]:',cyl_ph_radius)
+ if (cut_is_sphere) then 
+   call msg('r','Sphere radius   [au]:',cyl_ph_radius)
+#if defined _TEST_2
+   write (cut_description,'(a,f6.3)') trim(cut_geometry)//' ', cyl_ph_radius
+#endif
+ endif
  if (cut_is_box) then
    i1=0
    if (is_cut(1)) i1=i1+1
@@ -168,6 +176,9 @@ subroutine cutoff_driver(q)
    if (is_cut(3)) i1=i1+1
    if (is_cut(3)) length(i1)=box_length(3)
    call msg('r','Box sides        [au]:',length(:i1))
+#if defined _TEST_2
+   write (cut_description,'(a,3f6.3)') trim(cut_geometry)//' ', length(:i1)
+#endif
  else if (cut_is_cyl) then
    if (cyl_length > 0.) then
      call msg('r','Cyl. length      [au]:',cyl_length)
@@ -175,6 +186,13 @@ subroutine cutoff_driver(q)
      call msg('r','Cyl. length          : infinite')
    endif
    call msg('r',  'Cyl. radius      [au]:',cyl_ph_radius)
+#if defined _TEST_2
+   if (cyl_length > 0.) then
+     write (cut_description,'(a,f6.3,a,f6.3)') trim(cut_geometry)//' ',cyl_length,' ',cyl_ph_radius 
+   else
+     write (cut_description,'(a,a,a,f6.3)') trim(cut_geometry)//' ','infinite',' ',cyl_ph_radius
+   endif
+#endif
  endif
  !
  ! Checking geometry symmetry

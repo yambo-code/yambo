@@ -49,7 +49,11 @@ integer function io_HF_and_locXC(ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
+#if defined _TEST_2
+   io_HF_and_locXC=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,XC_KIND="G_WF force",CUTOFF=.true.)
+#else
    io_HF_and_locXC=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,XC_KIND="G_WF force")
+#endif
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=8,MENU=0)
    !

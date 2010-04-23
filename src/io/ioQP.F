@@ -50,6 +50,7 @@ integer function ioQP(what,qp,ID)
  integer              ::i1,i2,iqbz,QP_n_G_bands_disk(2),i_found,&
 &                       QP_nk_disk,QP_nb_disk,QP_n_states_disk,n_descs_disk,var_size
  character(schlen)    ::ch
+ logical              ::l_CUTOFF
  character(2)         ::OP(1)
  integer ,    allocatable ::qp_table_disk(:,:)
  real(SP),    allocatable ::qp_DATA_disk(:,:,:),QP_W_disk(:,:,:)
@@ -89,9 +90,13 @@ integer function ioQP(what,qp,ID)
      endif
    endif
    !
+   l_CUTOFF=.FALSE.
+#if defined_TEST_2
+   l_CUTOFF=.TRUE.
+#endif
+   !
    if (what=="W") then
-     ioQP=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,&
-&                   D_LATT=.true.,XC_KIND="Xd")
+     ioQP=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,D_LATT=.true.,XC_KIND="Xd",CUTOFF=l_CUTOFF)
    else
      !
      ! QP_DB_kind points to the "type" of self-energy. This is used
@@ -100,15 +105,15 @@ integer function ioQP(what,qp,ID)
      !
      select case (QP_DB_kind)
        case(0,SE_NONE)
-         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.)
+         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,CUTOFF=l_CUTOFF)
        case(SE_COHSEX)
-         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G_WF Xs")
+         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G_WF Xs",CUTOFF=l_CUTOFF)
        case(SE_GoWo_PPA,SE_GWo_PPA)
-         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xp")
+         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xp",CUTOFF=l_CUTOFF)
        case(SE_GoWo,SE_GWo)
-         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xd")
+         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xd",CUTOFF=l_CUTOFF)
        case(SE_POLARON)
-         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G")
+         ioQP=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G",CUTOFF=l_CUTOFF)
      end select
    endif
    if (ioQP/=0) goto 1

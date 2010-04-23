@@ -79,7 +79,11 @@ integer function ioBS(iq,X,ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   ioBS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs")
+#if defined _TEST_2
+   ioBS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",CUTOFF=.true.)
+#else
+  ioBS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs")
+#endif
    if (ioBS/=0) then
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
      goto 1

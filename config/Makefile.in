@@ -163,7 +163,7 @@ yambo_test_1: libs
 	@X2DO="yambo_test_1"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_TEST_1";$(mkx)
 yambo_test_2: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_TEST_2"; $(mksrc)
-	@X2DO="yambo_test_1"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_TEST_2";$(mkx)
+	@X2DO="yambo_test_2"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_TEST_2";$(mkx)
 #
 # Interfaces & ypp #
 #

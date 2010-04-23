@@ -19,7 +19,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
+#if defined _TEST_2
+ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,CUTOFF)
+#else
+ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
+#endif
  !
  use pars,          ONLY:SP,schlen,lchlen
  use units,         ONLY:HARTREE,Kelvin
@@ -30,6 +34,9 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
  use D_lattice,     ONLY:Tel,a,alat,input_Tel_commands_over_header,Bose_Temp
  use electrons,     ONLY:n_sp_pol,n_spinor
  use R_lattice,     ONLY:nqibz,nqbz,nkibz,nkbz,q_pt,k_pt
+#if defined _TEST_2
+ use R_lattice,     ONLY:cut_description 
+#endif
  use wave_func,     ONLY:wf_ng
  use vec_operate,   ONLY:v_is_zero
  use IO_m,          ONLY:io_elemental,io_bulk,io_code_version,io_status,&
@@ -44,6 +51,10 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
  implicit none
  integer               :: ID
  logical,     optional :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT
+#if defined _TEST_2
+ logical,     optional :: CUTOFF
+#endif
+
  character(*),optional :: XC_KIND
  !
  ! Work Space
@@ -219,6 +230,21 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND)
    !
    deallocate(l_pt)
  endif
+ !
+ ! Cutoff
+ !
+#if defined _TEST_2
+ if (present(CUTOFF)) then
+   if (CUTOFF) then
+     call io_elemental(ID,VAR="CUTOFF",CH0='',VAR_SZ=1,MENU=MENU)
+     MENU=0
+     call io_elemental(ID,CH0=cut_description,VAR=" Coulomb cutoff potential         :",WARN=WARN,OP=(/"=="/))
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     io_header=io_status(ID)
+     if (io_header/=0) goto 1
+   endif
+ endif
+#endif 
  !
  ! Things that can be dumped
  !===========================

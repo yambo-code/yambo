@@ -66,15 +66,15 @@ module magnetic
  !
  contains
    !
-   subroutine load_cc(manage_zero)
+   subroutine load_cc(manage_zero,center_cc)
      use FFT_m,       ONLY:fft_size,fft_dim
      use D_lattice,   ONLY:a
      ! input variable
-     logical    :: manage_zero
+     logical    :: manage_zero,center_cc
      real(SP)   :: tmp_center(3),tmp_x(3)
      integer    :: ir,ir1,ir2,ir3,i_dir   
      !
-     call fft_setup(0,1,.false.)      ! FFT size
+     call fft_setup(0,1,.true.)      ! FFT size
      allocate(x(fft_size,3))
      cell_center(:)=0.
      !
@@ -96,6 +96,7 @@ module magnetic
            ! The differents "if" take into account how the supercell is "compound" around the
            ! supercell corner
            x(ir,:)=tmp_x(:)
+           if(.not.center_cc) cycle
            do i_dir=1,3
              if (tmp_x(i_dir)>tmp_center(i_dir)) x(ir,:)=x(ir,:)-a(i_dir,:)
            enddo

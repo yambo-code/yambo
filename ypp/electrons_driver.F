@@ -52,7 +52,10 @@ subroutine electrons_driver(Xk,Xen)
  !
  if (.not.any((/l_mag,l_density,l_sp_wf,l_dos&
 #if defined _YPP_MAGNETIC
-&    ,l_angular_momentum,l_position,l_current  &
+&    ,l_angular_momentum,l_position &
+#endif
+#if defined _YPP_BOLTZMANN
+&    ,l_current  &
 #endif
 &   /))) return
  !
@@ -299,14 +302,27 @@ subroutine electrons_driver(Xk,Xen)
    !
  endif
  !
- ! Angular momentum 
- !==================
+#if defined _YPP_BOLTZMANN
+ !
+ ! Current
+ !=========
+ !
+ if (l_current) then
+   call fft_setup(0,1,.true.)
+   call electrons_current(Xk,Xen)
+ endif
+#endif
  !
 #if defined _YPP_MAGNETIC
- if (l_current)          call fft_setup(0,1,.true.)
- if (l_current)          call electrons_current(Xk,Xen)
+ !
+ ! Angular momentum 
+ !==================
  if (l_angular_momentum) call electrons_angular_momentum(nkpt_to_load,nb_to_load)
+ !
+ ! <Mean> position
+ !=================
  if (l_position)         call electrons_position(nkpt_to_load,nb_to_load,1.,'cylindrical','2d')
+ !
 #endif
  !
  ! GPL_EXCLUDE_END

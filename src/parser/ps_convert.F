@@ -25,7 +25,7 @@ subroutine ps_convert(rvar,ivar,v_name)
  use units
  use it_m,  ONLY: nflines,flines,ni1v,ni2v,ni3v,nr1v,nr2v,nc1v,&
 &                 nr3v,i1vars,i2vars,i3vars,r1vars,r2vars,r3vars,c1vars,&
-&                 B_unit,Time_unit,I_unit,Angle_unit
+&                 Bfield_unit,Efield_unit,Time_unit,I_unit,Angle_unit
  implicit none
  !
  real(SP):: rvar
@@ -37,7 +37,7 @@ subroutine ps_convert(rvar,ivar,v_name)
  integer :: i1,ipos           
  character(lchlen) :: v_line  
  character(schlen) :: v_s_unit
- logical :: var_is_time,var_is_B,var_is_intensity,var_is_angle
+ logical :: var_is_time,var_is_B,var_is_E,var_is_intensity,var_is_angle
  !
  ! First I search for the variable name in the input file 
  !
@@ -66,7 +66,8 @@ subroutine ps_convert(rvar,ivar,v_name)
  ! check if the var is a Time variable (incompatible with energy types)
  !
  var_is_time     =trim(v_s_unit)==Time_unit
- var_is_B        =trim(v_s_unit)==B_unit
+ var_is_B        =trim(v_s_unit)==Bfield_unit
+ var_is_E        =trim(v_s_unit)==Efield_unit
  var_is_angle    =trim(v_s_unit)==Angle_unit
  var_is_intensity=trim(v_s_unit)==I_unit
  !
@@ -92,8 +93,7 @@ subroutine ps_convert(rvar,ivar,v_name)
    endif
    return
    !
- else if (abs(rvar)>1.E-10.and..not.var_is_time.and..not.var_is_B &
-&         .and..not.var_is_intensity.and..not.var_is_angle) then
+ else if (all((/abs(rvar)>1.E-10,.not.var_is_time,.not.var_is_B,.not.var_is_E,.not.var_is_intensity,.not.var_is_angle/))) then
    !
    ! REALS (ENERGY)
    !
@@ -174,6 +174,16 @@ subroutine ps_convert(rvar,ivar,v_name)
    if (index(v_line,'T')/=0) then
      rvar=rvar*Tesla2AU
      call set_itp_unit('T',1)
+     return
+   endif
+   !
+ else if (var_is_E) then
+   !
+   ! Electric Fields
+   !
+   if (index(v_line,'V/mm')/=0) then
+     rvar=rvar/AU2Vmm
+     call set_itp_unit('V/mm',1)
      return
    endif 
    !

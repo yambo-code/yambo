@@ -35,7 +35,9 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:k_pt
  use D_lattice,      ONLY:alat
+#if defined _MAGNETIC
  use SC,             ONLY:SC_bands,found_SC_DB
+#endif
  use com,            ONLY:warning
  !
  implicit none
@@ -60,10 +62,12 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  call fft_setup(0,1,.false.)
  call WF_load(0,1,bands_to_load,derivative_kpt,space='G',title='-DERIV',impose_free_and_alloc=.TRUE.)
  !
+#if defined _MAGNETIC
  if (found_SC_DB.and.any ( bands_to_load/=(/1,SC_bands/) )) then
    bands_to_load=(/1,SC_bands/)
    call warning(' [WF-DERIV] Forced '//trim(intc(SC_bands))//' bands to be derived')
  endif
+#endif
  !
  call WF_derivative_alloc(do_derivative)
  !

@@ -22,11 +22,13 @@ subroutine RT_initialize()
  use units,          ONLY:SPEED_OF_LIGHT,FS2AUT,HARTREE
  use com,            ONLY:msg,warning
  use vec_operate,    ONLY:normalize_v
+ use electrons,      ONLY:nel
  use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields,i_time, &
 &                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,    &
 &                         l_RT_no_diamagnetic,EField,n_ext_fields,max_rt_steps_disk,     &
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,         &
 &                         l_RT_induced_field,j_current_ext,Ext_fields_initial_time,RT_diagonalization_steps
+ use D_lattice,      ONLY:DL_vol
  use parser_m,       ONLY:parser
  implicit none
  !
@@ -97,8 +99,10 @@ subroutine RT_initialize()
  call msg( 'r', '[RT] NE Steps                   :',NE_steps)
  call msg( 'r', '[RT] Thermalization steps       :',Thermal_steps)
  call msg( 'r', '[RT] Step length            [fs]:',RT_step/FS2AUT)
- if(NE_steps>0) &
-&  call msg('sr', '[RT] Response energy window [eV]:',(/2.*pi/(RT_step*real(NE_steps)-Ext_fields_initial_time),pi/RT_step/)*HARTREE)
+ if(NE_steps>0) then
+   call msg('sr', '[RT] Response energy window        [eV]:',(/2.*pi/(RT_step*real(NE_steps)-Ext_fields_initial_time),pi/RT_step/)*HARTREE)
+   call msg('rsn','[RT] Electron-gas plasmon frequency[eV]:',sqrt(4._SP*pi*nel/DL_vol)*HARTREE)
+ endif
  call msg('rsn','[RT] Simulation time        [fs]:',(/-real(Thermal_steps)*RT_step,RT_step*real(NE_steps)/)/FS2AUT)
  !
 end subroutine RT_initialize

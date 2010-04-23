@@ -24,8 +24,8 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  ! Important:
  ! We are in presence of a potential vector field, so
  ! L = r x p                  is the quantized canonical momentum
- ! M = r x (p-1/c*A) = r x mv     is the mechanical angula momentum,
- !                            which is gauge invariant
+ ! M = r x (p+1/c*A) = r x mv     is the mechanical angula momentum,
+ !                                which is gauge invariant
  !
  use pars,           ONLY:SP,lchlen,schlen
  use xc_functionals, ONLY:two_spin_density
@@ -79,7 +79,7 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  ! 
  ! Build the vector potential
  call MAG_common_build_A(.true.)
- call load_cc(.false.)
+ call load_cc(.false.,.true.)
  ! 
  ! Choose which are the directions you are interested in
  angular_dir(:)=.false.
@@ -170,13 +170,13 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
        if(angular_dir(3)) L_tmp(3,:)=x(:,1)*wf_y(:,ifft)-x(:,2)*wf_x(:,ifft)
        !
        if(MAG_landau) then
-         ! Mi = [r x (p - A)]_i = Li - (r x A)_i for i=x,y,z
+         ! Mi = [r x (p + 1/c*A)]_i = Li +1/c*(r x A)_i for i=x,y,z
          ! These are the mechanicals momenta and are gauge independent
-         if(angular_dir(1)) M_tmp(1,:)=L_tmp(1,:)-1./SPEED_OF_LIGHT*(x(:,2)*A_magn_z(:)- &
+         if(angular_dir(1)) M_tmp(1,:)=L_tmp(1,:)+1./SPEED_OF_LIGHT*(x(:,2)*A_magn_z(:)- &
 &                             x(:,3)*A_magn_y(:))*wf(:,ifft)
-         if(angular_dir(2)) M_tmp(2,:)=L_tmp(2,:)-1./SPEED_OF_LIGHT*(x(:,3)*A_magn_x(:)- &
+         if(angular_dir(2)) M_tmp(2,:)=L_tmp(2,:)+1./SPEED_OF_LIGHT*(x(:,3)*A_magn_x(:)- &
 &                             x(:,1)*A_magn_z(:))*wf(:,ifft)
-         if(angular_dir(3)) M_tmp(3,:)=L_tmp(3,:)-1./SPEED_OF_LIGHT*(x(:,1)*A_magn_y(:)- &
+         if(angular_dir(3)) M_tmp(3,:)=L_tmp(3,:)+1./SPEED_OF_LIGHT*(x(:,1)*A_magn_y(:)- &
 &                             x(:,2)*A_magn_x(:))*wf(:,ifft)
        endif
        !

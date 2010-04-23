@@ -126,7 +126,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
        call warning('Pauli magnetism switched off (spin unpolarized system).')
      endif
      if(MAG_landau) MAG_hamiltonian_type='landau'
-     if(.not.MAG_landau) call error('You need a spin polarized system')
+!     if(.not.MAG_landau) call error('You need a spin polarized system')
    endif
    if(MAG_pauli .and. MAG_theta/=0.) &
      call warning('The B field is not along z => the spins are assumed to be aligned to B. Please check.')

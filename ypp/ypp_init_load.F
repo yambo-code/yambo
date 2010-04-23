@@ -21,7 +21,8 @@
 !
 subroutine ypp_init_load(defs)
  !
- use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,Time_unit,B_unit
+ use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,&
+&                        Time_unit,Bfield_unit,Efield_unit
  use wave_func,     ONLY:wf_ng
  use YPP
 #if defined _YPP_RAS
@@ -31,6 +32,11 @@ subroutine ypp_init_load(defs)
  use model_loss_function,  ONLY: init_loss_function
  use surface_geometry,     ONLY: init_surface
  use eels_detector,        ONLY: init_detector
+#endif
+#if defined _YPP_BOLTZMANN
+ use electrons,            ONLY: nel,Boltz_Efield,Boltz_tau
+ use D_lattice,            ONLY: Tel
+ use it_m,                 ONLY: T_unit
 #endif
  implicit none
  type(initdefs)::defs
@@ -61,8 +67,10 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'phonons',      '[R] Phonons')
  call it('r',defs,'gkkp',         '[R] Electron-Phonon databases')
 #endif
+#if defined _YPP_BOLTZMANN
+ call it('r',defs,'current',      '[R] Current')
+#endif
 #if defined _YPP_MAGNETIC
- call it('r',defs,'current',      '[R] Average current')
  call it('r',defs,'angular_m',    '[R] Canonical angular momentum')
  call it('r',defs,'position',     '[R] Average <r^n>, n given in the input')
 #endif
@@ -122,6 +130,15 @@ subroutine ypp_init_load(defs)
  call it(defs,'Cells', 'Number of cell repetitions (even or 1)',ncell)
  call it(defs,'Hole', '[cc] Hole position in unit cell',r_hole)
  call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier,verb_level=V_general)
+ !
+#if defined _YPP_BOLTZMANN
+ ! CURRENT & BOLTZMANN
+ !
+ call it(defs,'ElecTemp','Electronic Temperature',Tel,T_unit)
+ call it(defs,'Nelectro','Electrons number',nel)
+ call it(defs,'Tau','Electronic scattering-free time',Boltz_tau,unit=Time_unit)
+ call it(defs,'El_Field','Electric field',Boltz_Efield,unit=Efield_unit)
+#endif
  !
  ! PLOT
  !
@@ -191,7 +208,7 @@ subroutine ypp_init_load(defs)
  !
  call it(defs,'EField1','First external Electric Field',E_field(1,:))
  call it(defs,'EField2','Additional external Electric Field',E_field(2,:))
- call it(defs,'BField',    '[MAG] Magnetic field modulus',B_field,unit=B_unit)
+ call it(defs,'BField',    '[MAG] Magnetic field modulus',B_field,unit=Bfield_unit)
  call it(defs,'Bpsi',      '[MAG] Magnetic field psi angle [degree]',B_psi,unit='deg')
  call it(defs,'Btheta',    '[MAG] Magnetic field theta angle [degree]',B_theta,unit='deg')
  call it('f',defs,'RmAllSymm','Remove all symmetries') 

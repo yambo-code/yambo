@@ -127,7 +127,6 @@ subroutine WF_states_setup(k,q,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,bg_npts
     !
     if (.not.px%element_1D(i1).and.par_loops) cycle
     !
-    if(myid==1) writE(1001,*) ' idx ',i1,bg_npts(i1)
     do i2=1,bg_npts(i1)
       !
       n_poles=n_poles+1

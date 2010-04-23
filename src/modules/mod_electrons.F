@@ -47,6 +47,11 @@ module electrons
  integer  :: n_spinor
  logical  :: spin_orbit
  !
+ ! Boltzmann occupations
+ !
+ real(SP)          :: Boltz_Efield(3)
+ real(SP)          :: Boltz_tau
+ !
  type levels
    integer         :: nb
    integer         :: nk
@@ -63,6 +68,7 @@ module electrons
    real(SP),   pointer :: E(:,:,:)
    real(SP),   pointer :: Eo(:,:,:)
    real(SP),   pointer :: f(:,:,:)
+   real(SP),   pointer :: velocity(:,:,:,:)
    real(SP),   pointer :: W(:,:,:)
    complex(SP),pointer :: Z(:,:,:)
    !
@@ -167,8 +173,8 @@ module electrons
      E%kf=0 
      E%GreenF_n_E_steps=0 
      E%GreenF_is_causal=.FALSE. 
-     nullify(E%E,E%Eo,E%Z,E%W,E%f,E%QP_corrected,E%GreenF,E%GreenF_W)
-     call mem_est("E-E E-Eo E-f E-W E-Z E-QP_corrected E-GreenF E-GreenF_W")
+     nullify(E%E,E%Eo,E%Z,E%W,E%f,E%QP_corrected,E%GreenF,E%GreenF_W,E%velocity)
+     call mem_est("E-E E-Eo E-f E-W E-Z E-QP_corrected E-GreenF E-GreenF_W E-velocity")
      !
      nullify(E%E_RIM,E%f_RIM)
      call mem_est("E_RIM f_RIM")

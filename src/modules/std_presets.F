@@ -23,7 +23,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  use drivers
  use pars,       ONLY:SP
- use units,      ONLY:HARTREE,FS2AUT
+ use units,      ONLY:HARTREE,FS2AUT,AU2Vmm
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                      alpha_dim,use_X_RIM,long_path,X_RIM_nkpts,Dipole_bands_ordered,&
@@ -46,7 +46,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_RIM_nbands,BZ_RIM_tot_nkpts,&
-&                     filled_tresh, spin_orbit
+&                     filled_tresh, spin_orbit,Boltz_tau,Boltz_Efield
  use par_proc_m, ONLY:myid,master_cpu,ncpu,n_nodes,local_master_cpu
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,&
 &                     of_unit,write_to_of,write_to_report,max_open_ofs,&
@@ -90,7 +90,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 #endif
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
-&                      MAG_gauge,MAG_psi,MAG_theta,average_el_mag_rescaling,average_el_mag_dim
+&                      MAG_gauge,MAG_psi,MAG_theta,average_el_mag_rescaling,      &
+&                      average_el_mag_dim
 #endif
  !
  implicit none
@@ -473,6 +474,15 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  MAG_theta=0.
  average_el_mag_dim='Bohr_magneton/Bohr^3'
  average_el_mag_rescaling=1.
+ !
+#endif
+ !
+#if defined _BOLTZMANN || defined _MAGNETIC
+ !
+ ! Electric field and current
+ !
+ Boltz_Efield=1.E-3/AU2Vmm
+ Boltz_tau=10.*FS2AUT
  !
 #endif
  !

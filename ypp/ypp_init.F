@@ -209,9 +209,12 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  ! ANGULAR MOMENTUM & ELECTRON DISPLACEMENT
  !
+#if defined _YPP_BOLTZMANN
+ l_current=.false.
+#endif
+ !
 #if defined _YPP_MAGNETIC
  !
- l_current=.false.
  l_angular_momentum=.false.
  l_position=.false.
  !
@@ -336,7 +339,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #endif
        !
 #if defined _YPP_MAGNETIC
-       l_current          =trim(rstr_piece(i1+1))=='c'
        l_angular_momentum =trim(rstr_piece(i1+1))=='l'
        l_position         =trim(rstr_piece(i1+1))=='p'
 #endif
@@ -352,7 +354,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        if (l_gkkp)             call initactivate(1,'gkkp')
 #endif
 #if defined _YPP_MAGNETIC
-       if (l_current)          call initactivate(1,'current')
        if (l_angular_momentum) call initactivate(1,'angular_m')
        if (l_position)         call initactivate(1,'position')
 #endif
@@ -378,14 +379,20 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_phonons   =runlevel_is_on('phonons')
  l_gkkp      =runlevel_is_on('gkkp')
 #endif
-#if defined _YPP_MAGNETIC
+#if defined _YPP_BOLTZMANN
  l_current          = runlevel_is_on('current')
- l_angular_momentum = runlevel_is_on('angular_m')
- l_position         = runlevel_is_on('position')
+ if (l_current) call initactivate(1,'electrons')
+#endif
+#if defined _YPP_MAGNETIC
+ l_angular_momentum = runlevel_is_on('angular_m').and.runlevel_is_on('electrons')
+ l_position         = runlevel_is_on('position').and.runlevel_is_on('electrons')
 #endif
  l_excitons =runlevel_is_on('excitons')
  l_electrons=runlevel_is_on('electrons')
  l_plot=any((/runlevel_is_on('wavefunction'),runlevel_is_on('magnetization'),&
+#if defined _YPP_MAGNETIC
+&             runlevel_is_on('current'), &
+#endif
 &             runlevel_is_on('density')/))
  l_free_hole=runlevel_is_on('freehole')
  l_amplitude=runlevel_is_on('amplitude')
@@ -437,7 +444,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (l_electrons.and.l_dos) call initactivate(1,"DOS_broad DOS_bands")
 #if defined _YPP_MAGNETIC
- if (l_angular_momentum.or.l_position.or.l_current) call initactivate(1,"FFTGvecs")
+ if (l_angular_momentum.or.l_position) call initactivate(1,"FFTGvecs")
+#endif
+#if defined _YPP_BOLTZMANN
+ if (l_current) call initactivate(1,"FFTGvecs Nelectro ElecTemp Tau El_Field")
 #endif
  !
  if (l_plot) then
@@ -462,7 +472,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  if (l_phonons.and.l_eliashberg)   call initactivate(1,"EEfermi EfGbroad")
  if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) call initactivate(1,"PhBroad PhStps")
 #endif
-
+ !
 #if defined _YPP_RAS
  !
  lsurf =runlevel_is_on('surf')

@@ -1,12 +1,11 @@
-MAGNETIC_objects = 
 LIBXC_objects = xc_lda_driver.o 
-#if defined _MAGNETIC
-MAGNETIC_objects = el_current.o
+#if defined _BOLTZMANN 
+BOLTZMANN_objects = el_velocity.o el_current.o
 #endif
 #if defined _LIBXC
 LIBXC_objects =  libxc_int.o
 #endif
 objs =  mod_xc_costants.o  xc_rpa_kp.o \
         xcspol.o xcpzca.o xcwign.o xchelu.o xcxalp.o \
-        spin_density.o el_density.o $(MAGNETIC_objects)\
-	$(LIBXC_objects)
+        spin_density.o el_density.o \
+        $(LIBXC_objects) $(BOLTZMANN_objects)

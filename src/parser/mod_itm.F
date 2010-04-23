@@ -32,7 +32,8 @@ module it_m
  character(2),parameter :: G_unit='RL'
  character(2),parameter :: T_unit='eV'
  character(2),parameter :: Time_unit='fs'
- character(2),parameter :: B_unit='T'
+ character(2),parameter :: Bfield_unit='T'
+ character(4),parameter :: Efield_unit='V/mm'
  character(5),parameter :: I_unit='kWLm2'
  character(3),parameter :: Angle_unit='deg'
  ! 
@@ -820,7 +821,7 @@ module it_m
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(i3vars(i2,1))
            ch(2)=gen_fmt(defs%i3def(i2,:))
-           write (ch(1),'(3a)') '(3(',trim(ch(2)),',1x,a),t36,a,t40,2a)'
+           write (ch(1),'(3a)') '(3(',trim(ch(2)),',1x,a),t36,a,t42,2a)'
            nflines=nflines+1
            write (flines(nflines),trim(ch(1))) &
 &           defs%i3def(i2,1),'|',defs%i3def(i2,2),'|',defs%i3def(i2,3),'|',&
@@ -883,7 +884,7 @@ module it_m
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(r3vars(i2,1))
            ch(2)=gen_fmt(r_v=defs%r3def(i2,:)*unit_factor)
-           write (ch(1),'(3a)') '(3(',trim(ch(2)),',1x,a),t36,a,t40,2a)'
+           write (ch(1),'(3a)') '(3(',trim(ch(2)),',1x,a),t36,a,t42,2a)'
            nflines=nflines+1
            write (flines(nflines),trim(ch(1))) &
 &           defs%r3def(i2,1)*unit_factor,'|',defs%r3def(i2,2)*unit_factor,&

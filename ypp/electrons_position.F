@@ -68,8 +68,8 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
  !
  if(.not.any((/l_cartesian,l_cylindrical,l_spherical/)) ) return
  !
- if(power<0) call load_cc(.true.)
- if(power>0) call load_cc(.false.)
+ if(power<0) call load_cc(.true.,.true.)
+ if(power>0) call load_cc(.false.,.true.)
  call logical_init()
  call local_alloc()
  !

@@ -174,7 +174,7 @@ module YPP
      logical, optional  :: verbose
    end subroutine
    !
-   subroutine  elph_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
+   subroutine  ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
      use R_lattice,     ONLY:bz_samp
      use electrons,     ONLY:levels
      implicit none

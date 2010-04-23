@@ -51,7 +51,7 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  integer           :: ID,i_err
  integer, external :: ioDB1,ioQINDX,iogrot
 #if defined _YPP_ELPH
- integer, external :: elph_databases
+ integer, external :: ELPH_databases
 #endif
  !
  ! Presets
@@ -179,12 +179,12 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  if ((l_gkkp.and..not.l_excitons).or.l_phonons) then
    ! =====     ========
-   if (l_gkkp)                i_err=elph_databases(k,en,q)
-   if (l_eliashberg.or.l_dos) call elph_eliashberg_dos(k,en,q)
-   if (l_atomic_amplitude)    call elph_atomic_amplitude(q)
+   if (l_gkkp)                i_err=ELPH_databases(k,en,q)
+   if (l_eliashberg.or.l_dos) call ELPH_eliashberg_dos(k,en,q)
+   if (l_atomic_amplitude)    call ELPH_atomic_amplitude(q)
  endif
  !
- if (l_electrons.and.l_eliashberg) call elph_general_gFsq(k,en,Xk,Xen,q)
+ if (l_electrons.and.l_eliashberg) call ELPH_general_gFsq(k,en,Xk,Xen,q)
  !
 #endif
  !

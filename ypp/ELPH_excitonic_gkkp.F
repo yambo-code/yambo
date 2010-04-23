@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine elph_excitonic_gkkp(Xk,lambda_s)
+subroutine ELPH_excitonic_gkkp(Xk,lambda_s)
  !
  use pars,                ONLY:SP,schlen
  use units,               ONLY:HARTREE,HA2FSm1

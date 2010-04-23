@@ -57,4 +57,3 @@ subroutine RT_propagate_vecpot(A_new,A_old,T_step,RT_time)
  A_new%vecpot     =  A_old%vecpot     + A_new%vecpot_vel*T_step
  !
 end subroutine RT_propagate_vecpot
-

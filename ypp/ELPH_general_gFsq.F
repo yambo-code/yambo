@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine elph_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
+subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  !
  use pars,                ONLY:SP,schlen
  use units,               ONLY:HARTREE

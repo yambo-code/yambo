@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine elph_eliashberg_dos(k,en,q)
+subroutine ELPH_eliashberg_dos(k,en,q)
  !
  use pars,                ONLY:SP,schlen,pi
  use units,               ONLY:HARTREE,HA2GHZ,HA2THZ 

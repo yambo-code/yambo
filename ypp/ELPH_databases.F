@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function elph_databases(k,E,q)
+integer function ELPH_databases(k,E,q)
  !
  use pars,                ONLY:DP,SP
  use stderr,              ONLY:intc
@@ -67,11 +67,11 @@ integer function elph_databases(k,E,q)
  elph_use_q_grid=.true.
  elph_nDBs=0
  iq_db=0
- elph_databases=0
+ ELPH_databases=0
  !
  do while (.TRUE.)
    elph_nDBs=elph_nDBs+1
-   io_err=elph_databases_io(-elph_nDBs)
+   io_err=ELPH_databases_io(-elph_nDBs)
    if (io_err==-1) exit
    if (io_err==-2) then
      call msg("l","incorrect K-point correspondance")
@@ -136,7 +136,7 @@ integer function elph_databases(k,E,q)
    iq=idb
    if (elph_use_q_grid) iq=iq_db(idb)
    !
-   io_err=elph_databases_io(idb)
+   io_err=ELPH_databases_io(idb)
    !
    if (io_err==-1) then
      call live_timing(steps=1)
@@ -167,7 +167,7 @@ integer function elph_databases(k,E,q)
  !
  contains
    !
-   integer function elph_databases_io(idb_)
+   integer function ELPH_databases_io(idb_)
    !------------------------------------
    !
    ! s.dbph_ structure
@@ -219,7 +219,7 @@ integer function elph_databases(k,E,q)
    integer           :: i1,ik,k_found(k%nbz),k2k_tab(k%nbz),ikbz_rot,iq_check
    integer           :: nsmall,small(nsym)
    !
-   elph_databases_io=-1
+   ELPH_databases_io=-1
    !
    call io_control(ACTION=OP_RD,ID=ID)
    !
@@ -228,7 +228,7 @@ integer function elph_databases(k,E,q)
    write (db_name,'(a,i6.6)') 's.dbph_',iabs(idb_)
    io_err=io_connect(desc=trim(elph_dbs_path)//"/"//trim(db_name),type=-2,ID=ID)
    !
-   elph_databases_io=io_err
+   ELPH_databases_io=io_err
    if (io_err/=0) return  
    !
    ! HEADER 
@@ -238,7 +238,7 @@ integer function elph_databases(k,E,q)
    !
    abinit_DB=alat_DP<0._DP
    !
-   if (elph_nb>n_bands) elph_databases_io=-1
+   if (elph_nb>n_bands) ELPH_databases_io=-1
    if (elph_nb>n_bands) return
    !
    if (abinit_DB) then
@@ -268,7 +268,7 @@ integer function elph_databases(k,E,q)
        if (v_is_zero(ph_q_disk(:)+q%pt(i1,:),zero_=k_iku_zero)) iq_check=i1
      enddo
      if (iq_check==0) elph_use_q_grid=.false.
-     elph_databases_io=iq_check
+     ELPH_databases_io=iq_check
      !
      ! When elph_use_q_grid = .false. idb_ is the q-pt counter
      !
@@ -296,7 +296,7 @@ integer function elph_databases(k,E,q)
          exit
        endif
      enddo
-     if (k2k_tab(i1)==0) elph_databases_io=-2
+     if (k2k_tab(i1)==0) ELPH_databases_io=-2
    enddo
    !
    ! Phonon Frequencies
@@ -459,7 +459,7 @@ integer function elph_databases(k,E,q)
      enddo
    enddo
    !
-   if (any((/k_found==0/))) elph_databases_io=-4
+   if (any((/k_found==0/))) ELPH_databases_io=-4
    !
    ! CLEAN
    !

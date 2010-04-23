@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine elph_atomic_amplitude(q)
+subroutine ELPH_atomic_amplitude(q)
  !
  use pars,                ONLY:SP
  use com,                 ONLY:msg,of_open_close,warning

@@ -198,8 +198,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  if (l_eliashberg.or.l_gkkp) then
    allocate (lambda_s(n_lambda)) 
    n_lambda = get_lambda()
-   if (l_eliashberg) call elph_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
-   if (l_gkkp)       call elph_excitonic_gkkp(Xk,lambda_s)
+   if (l_eliashberg) call ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
+   if (l_gkkp)       call ELPH_excitonic_gkkp(Xk,lambda_s)
    return
  endif
 #endif

@@ -46,8 +46,8 @@ subroutine electrons_driver(Xk,Xen)
  !
  real(SP), allocatable :: el_den(:)
  real(SP)              :: el_dos(n_sp_pol),dos_E,delta_E,E_min,E_max
- integer               :: i1
- integer               :: i_qp,ik,ib,ir,i_wf,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2)
+ integer               :: i1,i_qp,ik,ib,ir,i_wf,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2)
+ logical               :: success
  character(schlen)     :: ch_ws,titles(4)
  !
  if (.not.any((/l_mag,l_density,l_sp_wf,l_dos&
@@ -312,9 +312,11 @@ subroutine electrons_driver(Xk,Xen)
  !
  if (l_current) then
    call fft_setup(0,1,.true.)
-   call electrons_current(Xk,Xen)
-   call plot_check_and_launch(.false.)
-   call of_open_close(trim(output_fname))
+   call electrons_current(Xk,Xen,success)
+   if (success) then
+     call plot_check_and_launch(.false.)
+     call of_open_close(trim(output_fname))
+   endif
  endif
 #endif
  !

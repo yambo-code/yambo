@@ -19,11 +19,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine electrons_current(Xk,Xen)
+subroutine electrons_current(Xk,Xen,success)
  !
  use pars,           ONLY:SP
  use units,          ONLY:AU2nAmpere
- use YPP,            ONLY:v2plot,output_fname,nr,l_norm_to_one
+ use YPP,            ONLY:v2plot,output_fname,nr,l_norm_to_one,use_xcrysden
  use com,            ONLY:msg,of_open_close,warning
  use electrons,      ONLY:n_sp_pol,levels,Boltz_Efield,Boltz_vel,Boltz_f
  use R_lattice,      ONLY:bz_samp
@@ -38,6 +38,7 @@ subroutine electrons_current(Xk,Xen)
  !
  type(bz_samp) ::Xk
  type(levels)  ::Xen
+ logical       ::success
  !
  real(SP)     :: r(fft_size),average_current(3),average_current_diam(3)
 #if defined _YPP_MAGNETIC
@@ -57,10 +58,15 @@ subroutine electrons_current(Xk,Xen)
    if(abs(Boltz_Efield(ic))>1.E-8) l_directions(ic)=.TRUE.
  enddo
  !
- if (.not.any(l_directions)) return
+ success=.TRUE.
+ if (.not.any(l_directions)) then
+   success=.FALSE.
+   return
+ endif
  !
  if ( Xen%nbf == Xen%nbm ) then
    call warning ('Gap present: current is zero')
+   success=.FALSE.
    return
  endif
  !
@@ -172,6 +178,7 @@ subroutine electrons_current(Xk,Xen)
  v2plot=(J(1,1,:)+J_diam(1,1,:))*AU2nAmpere
  !
  output_fname='el_current'
+ if (use_xcrysden) output_fname='el_current.xsf'
  call of_open_close(trim(output_fname),'ot')
  call msg('o curr',"#")
  call msg('o curr','# Mean param. current x , y , z [nanoAmpere]:',average_current*AU2nAmpere,INDENT=0)

@@ -56,8 +56,8 @@ subroutine OCCUPATIONS_Boltzmann(E,k,ik)
         !
         Boltz_f(ib,ik,is,i_spin)=f_occ
         !
-        rotated_v=matmul(rl_sop(:,:,is), k%pt(ik,:))
         ! DEBUG>
+        !rotated_v=matmul(rl_sop(:,:,is), k%pt(ik,:))
         !write (*,*) ik,ib,rotated_v(1),f_occ-E%f(ib,ik,i_spin)
         ! DEBUG<
       enddo

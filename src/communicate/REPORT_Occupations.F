@@ -19,11 +19,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine fermi_msg(E,mode)
+subroutine REPORT_Occupations(E,mode)
  !
  use pars,          ONLY:SP,lchlen
  use units,         ONLY:HARTREE,BOHR,Bohr_magneton
  use com,           ONLY:msg,warning
+#if defined _BOLTZMANN
+ use com,           ONLY:write_to_report
+#endif
  use electrons,     ONLY:levels,n_sp_pol,n_spin,filled_tresh
 #if defined _SC
  use magnetic,      ONLY:average_el_mag,average_el_mag_dim
@@ -81,6 +84,12 @@ subroutine fermi_msg(E,mode)
  E%Efermi(2:)=E%Efermi(1)+(/maxval(E%E(E%nbf,:,:)),minval(E%E(E%nbf+1,:,:))/)
  if (E%nbf/=E%nbm) E%Efermi(2:)=0.
  !
+#if defined _BOLTZMANN
+ if (.not.write_to_report) then
+   call msg('s',':: Full/Metallic bands :',(/E%nbf,E%nbm-E%nbf/))
+ endif
+#endif
+ !
  call msg('r','States summary         : Full        Metallic    Empty')
  !
  ! [1] States occupations
@@ -102,6 +111,7 @@ subroutine fermi_msg(E,mode)
      write (ch_,'(2(i4.4,a,i4.4,15x))') i1,'-',nbf_(i_s_pol),nbf_(i_s_pol)+1,'-',E%nb
      call msg('r',prefix_//'  '//trim(ch_))
    endif
+   !
  enddo
  !
  ! [2] Indirect Gaps (min/max)

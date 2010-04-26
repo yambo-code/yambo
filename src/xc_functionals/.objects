@@ -1,6 +1,6 @@
 LIBXC_objects = xc_lda_driver.o 
 #if defined _BOLTZMANN 
-BOLTZMANN_objects = el_velocity.o el_current.o
+BOLTZMANN_objects = el_current.o
 #endif
 #if defined _LIBXC
 LIBXC_objects =  libxc_int.o

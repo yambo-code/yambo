@@ -128,7 +128,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !  Ho (kinetic + potential)
  !---------------------------
  !
- call fermi_level(E,k,2)  
+ call OCCUPATIONS_Fermi(E,k,2)  
  call msg('r','')
  call SC_bare_Hamiltonian(E,Xk,k)
  !
@@ -303,7 +303,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
    end do
    !
-   if(l_NSC_shot) call fermi_level(E,k,1) 
+   if(l_NSC_shot) call OCCUPATIONS_Fermi(E,k,1) 
    !
    if (l_SC_cycle) then
      !
@@ -317,7 +317,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      forall (ib=SC_bands+1:E%nb) E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_bands,:,:)-E_previous(SC_bands,:,:)
      !
-     call fermi_level(E,k,1) 
+     call OCCUPATIONS_Fermi(E,k,1) 
      !
      ! New density 
      !=============
@@ -556,21 +556,21 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      ! Final occupations 
      !====================
-     if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle).or.l_NSC_shot) call fermi_level(E,k,2)  
+     if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle).or.l_NSC_shot) call OCCUPATIONS_Fermi(E,k,2)  
      !
      dE(:,:,:)=E%E(:SC_bands,:,:)-E_bare(:,:,:)
      !
      call msg('r',' ')
      !
      do ik=1,k%nibz
-       call report_energies(E%E(:SC_bands,:,:),k,Xk,SC_bands,(/ik,ik/),'E  ',.TRUE.)
+       call REPORT_Energies(E%E(:SC_bands,:,:),k,Xk,SC_bands,(/ik,ik/),'E  ',.TRUE.)
 #if defined _MAGNETIC
-       call report_energies(E%f(:SC_bands,:,:)/HARTREE,k,Xk,SC_bands,(/ik,ik/),'occ',.FALSE.)
+       call REPORT_Energies(E%f(:SC_bands,:,:)/HARTREE,k,Xk,SC_bands,(/ik,ik/),'occ',.FALSE.)
 #else
-       call report_energies(E_bare,k,Xk,SC_bands,(/ik,ik/),'E_o',.FALSE.)
-       call report_energies(dE,k,Xk,SC_bands,(/ik,ik/),'d_E',.FALSE.)
-       call report_energies(spread,k,Xk,SC_bands,(/ik,ik/),'Spr',.FALSE.)
-       call report_energies(real(b_of_max_proj)/HARTREE,k,Xk,SC_bands,(/ik,ik/),'Bnd',.FALSE.)
+       call REPORT_Energies(E_bare,k,Xk,SC_bands,(/ik,ik/),'E_o',.FALSE.)
+       call REPORT_Energies(dE,k,Xk,SC_bands,(/ik,ik/),'d_E',.FALSE.)
+       call REPORT_Energies(spread,k,Xk,SC_bands,(/ik,ik/),'Spr',.FALSE.)
+       call REPORT_Energies(real(b_of_max_proj)/HARTREE,k,Xk,SC_bands,(/ik,ik/),'Bnd',.FALSE.)
 #endif
      enddo
      !

@@ -24,7 +24,7 @@ subroutine electrons_driver(Xk,Xen)
  use units,          ONLY:HARTREE
  use pars,           ONLY:SP,schlen
  Use stderr,         ONLY:intc
- use wave_func,      ONLY:WF_load,wf,WF_free,wf_ng,wf_state,WF_derivative_free
+ use wave_func,      ONLY:WF_load,wf,WF_free,wf_ng,wf_state
  use FFT_m,          ONLY:fft_size,fft_dim
  use R_lattice,      ONLY:bz_samp,nkibz
  use D_lattice,      ONLY:DL_vol
@@ -77,7 +77,10 @@ subroutine electrons_driver(Xk,Xen)
  endif
  if(.not.l_dos &
 #if defined _YPP_MAGNETIC
-&   .and. .not. any((/l_angular_momentum,l_position,l_current/)) &
+&   .and. .not. any((/l_angular_momentum,l_position/)) &
+#endif
+#if defined _YPP_BOLTZMANN
+&   .and. .not. l_current &
 #endif
 &) then
    call WF_load(wf_ng,1,nb_to_load,nkpt_to_load,space='R',title='-WF')
@@ -310,6 +313,8 @@ subroutine electrons_driver(Xk,Xen)
  if (l_current) then
    call fft_setup(0,1,.true.)
    call electrons_current(Xk,Xen)
+   call plot_check_and_launch(.false.)
+   call of_open_close(trim(output_fname))
  endif
 #endif
  !

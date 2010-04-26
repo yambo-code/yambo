@@ -21,7 +21,7 @@
 !
 subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
  !
- use pars,           ONLY:SP,lchlen,schlen,pi
+ use pars,           ONLY:SP,schlen,pi
  use stderr,         ONLY:intc
  use FFT_m,          ONLY:fft_dim,fft_size
  use D_lattice,      ONLY:a
@@ -58,7 +58,7 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
  complex(SP),allocatable  :: r_tmp(:),theta_tmp(:),psi_tmp(:)
  complex(SP),allocatable  :: x_tmp(:,:)
  complex(SP),allocatable  :: rperp_tmp(:),z_tmp(:),phi_tmp(:)
- integer                  :: ir,ir1,ir2,ir3,i1
+ integer                  :: ir,ir3,i1
  !
 #if defined _DOUBLE
  complex(SP):: zdotc

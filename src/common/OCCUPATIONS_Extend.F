@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine extend_occupations(Xe,E)
+subroutine OCCUPATIONS_Extend(Xe,E)
  !
  ! The occupation of E levels are decided using 
  ! the Fermi "Levels" of Xe.
@@ -51,7 +51,7 @@ subroutine extend_occupations(Xe,E)
  !
  E%Efermi=Xe%Efermi
  call f_build(Xe%Efermi(1))
- call fermi_msg(E,0)
+ call REPORT_Occupations(E,0)
  !
  ! If Xe and E have same metallic character then
  ! simply shift E components (Xe have been already shifted
@@ -70,7 +70,7 @@ subroutine extend_occupations(Xe,E)
  Ef_test=Xe%Efermi(2)+Ef_step
  do while(Ef_test<Xe%Efermi(3))
    call f_build(Ef_test)
-   call fermi_msg(E,0)
+   call REPORT_Occupations(E,0)
    if (E%nbf==Xe%nbf.and.E%nbm==Xe%nbm) then
      E%Efermi(1)=Ef_test
      exit

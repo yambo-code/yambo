@@ -242,8 +242,8 @@ subroutine setup(en,Xen,Ken,k,Xk)
  input_Tel_commands_over_header=Tel<0.
  Tel=abs(Tel)
  !
- call fermi_level(Xen,Xk,2)
- call extend_occupations(Xen,en)
+ call OCCUPATIONS_Fermi(Xen,Xk,2)
+ call OCCUPATIONS_Extend(Xen,en)
  !
  n_met_bands =en%nbm
  n_full_bands=en%nbf
@@ -252,7 +252,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  call msg('rn','X BZ K-points :',Xk%nbz)
  !
- call report_energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'E',.TRUE.)
+ call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'E',.TRUE.)
  !
  ! Once the occupations have been evaluated I dump Xen in Ken
  !

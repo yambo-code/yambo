@@ -27,7 +27,7 @@ subroutine plot_gnuplot(use_1d,use_2d,eval_only)
  use FFT_m,       ONLY:fft_dim
  use D_lattice,   ONLY:a
  use YPP,         ONLY:nr,v2plot,r_hole,v2plot2D,l_norm_to_one,WF_multiplier,plot_dim,&
-&                      plot_title
+&                      plot_title,output_string,l_wavefunction,l_current
  use timing,      ONLY:live_timing
  !
  implicit none
@@ -48,7 +48,8 @@ subroutine plot_gnuplot(use_1d,use_2d,eval_only)
  if (.not.eval_only) then
    !
    titles(:3)=(/'||a1 [A]','||a2 [A]','||a3 [A]'/)
-   titles(4) = '|wf|^2 [1 at max]'
+   if (l_wavefunction) titles(4) = '|wf|^2 [1 at max]'
+   if (l_current)      titles(4) = 'J [nAmpere]'
    !
  endif
  !
@@ -61,9 +62,9 @@ subroutine plot_gnuplot(use_1d,use_2d,eval_only)
      do i1=1,3 
        if (use_1d(i1)) nr2plot=nr(i1)
        if (use_1d(i1)) dir2plot=i1
-       if (use_1d(i1)) call msg('o exc den mag wf',"#",(/titles(1),titles(4)/),INDENT=0,USE_TABS=.true.)
+       if (use_1d(i1)) call msg(output_string,"#",(/titles(1),titles(4)/),INDENT=0,USE_TABS=.true.)
      enddo
-     call msg('o exc den mag wf','#')
+     call msg(output_string,'#')
      allocate(v2plot2D(nr2plot(1),1))
      v2plot2D=0.
      ir=0
@@ -92,7 +93,7 @@ subroutine plot_gnuplot(use_1d,use_2d,eval_only)
      v2plot2D=v2plot2D*WF_multiplier
      !
      do i1=0,nr2plot(1)-1
-       call msg('o exc den mag wf','',(/projection_(i1,dir2plot(1)),&
+       call msg(output_string,'',(/projection_(i1,dir2plot(1)),&
 &                            v2plot2D(i1+1,1)/),INDENT=-2,USE_TABS=.true.)
      enddo
      !
@@ -126,16 +127,16 @@ subroutine plot_gnuplot(use_1d,use_2d,eval_only)
      v2plot2D=v2plot2D*WF_multiplier
      !
      if (.not.eval_only) then
-       if (use_2d(1)) call msg('o exc den mag wf',"#",&
+       if (use_2d(1)) call msg(output_string,"#",&
 &                             (/titles(1),titles(2),titles(4)/),INDENT=0,USE_TABS=.true.)
-       if (use_2d(2)) call msg('o exc den mag wf',"#",&
+       if (use_2d(2)) call msg(output_string,"#",&
 &                             (/titles(1),titles(3),titles(4)/),INDENT=0,USE_TABS=.true.)
-       if (use_2d(3)) call msg('o exc den mag wf',"#",&
+       if (use_2d(3)) call msg(output_string,"#",&
 &                             (/titles(2),titles(3),titles(4)/),INDENT=0,USE_TABS=.true.)
-       call msg('o exc den mag wf',"#")
+       call msg(output_string,"#")
        do i1=0,nr2plot(1)-1
          do i2=0,nr2plot(2)-1
-           call msg('o exc den mag wf','',(/projection_(i1,dir2plot(1)),&
+           call msg(output_string,'',(/projection_(i1,dir2plot(1)),&
 &                   projection_(i2,dir2plot(2)),v2plot2D(i1+1,i2+1)/),&
 &                   INDENT=-2,USE_TABS=.true.)
          enddo

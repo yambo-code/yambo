@@ -40,6 +40,7 @@ module YPP
  character(schlen) :: coo_in
  character(schlen) :: coo_out
  character(schlen) :: PtsPath
+ character(21), parameter :: output_string="o exc den mag wf curr"
  ! 
  ! DOS
  !

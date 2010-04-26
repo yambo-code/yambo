@@ -40,7 +40,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #if defined _YPP_RT
  use electrons,      ONLY:levels,E_reset
  use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
- use real_time,      ONLY:RT_step,NE_steps,Thermal_steps,n_ext_fields,Efield
+ use real_time,      ONLY:RT_step,NE_steps,Efield
 #endif
 #if defined _YPP_ELPH
  use ELPH,           ONLY:gsqF_energy_steps
@@ -390,7 +390,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_excitons =runlevel_is_on('excitons')
  l_electrons=runlevel_is_on('electrons')
  l_plot=any((/runlevel_is_on('wavefunction'),runlevel_is_on('magnetization'),&
-#if defined _YPP_MAGNETIC
+#if defined _YPP_MAGNETIC || _YPP_BOLTZMANN
 &             runlevel_is_on('current'), &
 #endif
 &             runlevel_is_on('density')/))

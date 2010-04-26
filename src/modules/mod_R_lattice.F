@@ -48,9 +48,9 @@ module R_lattice
  real(SP),allocatable :: q_norm(:)
  type bz_samp
    integer           :: nibz,nbz
-   integer, pointer  :: nstar(:)
-   integer, pointer  :: star(:,:)
-   integer, pointer  :: sstar(:,:)
+   integer,  pointer :: nstar(:)
+   integer,  pointer :: star(:,:)
+   integer,  pointer :: sstar(:,:)
    real(SP), pointer :: pt(:,:)
    real(SP), pointer :: ptbz(:,:)
    real(SP), pointer :: weights(:)

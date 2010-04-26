@@ -481,7 +481,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  ! Electric field and current
  !
- Boltz_Efield=1.E-3/AU2Vmm
+ Boltz_Efield=1./AU2Vmm
  Boltz_tau=10.*FS2AUT
  !
 #endif

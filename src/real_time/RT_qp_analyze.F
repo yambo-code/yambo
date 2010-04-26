@@ -77,7 +77,7 @@ subroutine RT_qp_analyze(it,en,k,xK,G_input)
    !
  enddo
  !
- call fermi_level(en,k,0)
+ call OCCUPATIONS_Fermi(en,k,0)
  !
  en%E(:SC_bands,:,:)=en%E(:SC_bands,:,:)-en%Efermi(1)
  !
@@ -86,10 +86,10 @@ subroutine RT_qp_analyze(it,en,k,xK,G_input)
    call msg('r',' ')
    call msg('r','Natural (O)ccupations, (E)nergies and (d_E) E-Eo.')
    do ik=1,QP_nk
-     call report_energies(en%E(:SC_bands,:,:),k,Xk,SC_bands,(/ik,ik/),'E  ',.TRUE.)
-     call report_energies(E_bare,k,Xk,SC_bands,(/ik,ik/),'E_o  ',.FALSE.)
-     call report_energies(en%E(:SC_bands,:,:)-E_bare,k,Xk,SC_bands,(/ik,ik/),'d_E',.FALSE.)
-     call report_energies(Occ_natural_orb(:SC_bands,:)/HARTREE,k,Xk,SC_bands,(/ik,ik/),'O  ',.FALSE.)
+     call REPORT_Energies(en%E(:SC_bands,:,:),k,Xk,SC_bands,(/ik,ik/),'E  ',.TRUE.)
+     call REPORT_Energies(E_bare,k,Xk,SC_bands,(/ik,ik/),'E_o  ',.FALSE.)
+     call REPORT_Energies(en%E(:SC_bands,:,:)-E_bare,k,Xk,SC_bands,(/ik,ik/),'d_E',.FALSE.)
+     call REPORT_Energies(Occ_natural_orb(:SC_bands,:)/HARTREE,k,Xk,SC_bands,(/ik,ik/),'O  ',.FALSE.)
    enddo
  endif
  !

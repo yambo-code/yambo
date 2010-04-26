@@ -40,9 +40,8 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  use SC,             ONLY:load_SC_components
  use electrons,      ONLY:n_sp_pol
  use timing,         ONLY:live_timing
- use units,          ONLY:BOHR,SPEED_OF_LIGHT
+ use units,          ONLY:SPEED_OF_LIGHT
  use com,            ONLY:msg,of_open_close
- use stderr,         ONLY:intc
  !
  implicit none
  !

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine report_energies(E,k,Xk,n_bands_,k_range,what,header)
+subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,header)
  !
  use pars,           ONLY:schlen,SP
  use units,          ONLY:HARTREE

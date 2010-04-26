@@ -59,8 +59,11 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  !
  ! Wavefunctions in G space 
  !==========================
- call fft_setup(0,1,.false.)
  call WF_load(0,1,bands_to_load,derivative_kpt,space='G',title='-DERIV',impose_free_and_alloc=.TRUE.)
+ !
+ ! Need to call fft_setup to know the size of the FFT mesh
+ ! 
+ call fft_setup(0,1,.false.)
  !
 #if defined _MAGNETIC
  if (found_SC_DB.and.any ( bands_to_load/=(/1,SC_bands/) )) then
@@ -78,7 +81,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  !
  use_live_timing=.false.
  if (derivative_kpt(1)==1 .and. derivative_kpt(2)==nkibz) use_live_timing=.true.
- if(use_live_timing) call live_timing('[WF-DERIV] Wf_derivatives (re)loading',wf_n_states)
+ if (use_live_timing) call live_timing('[WF-DERIV] Evaluation loop',wf_n_states)
 #if defined _FFTW
  fftw_plan = 0
 #endif
@@ -92,8 +95,9 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
        ! wf_derivative(:,i)=-i grad_i wf(:)=p_i wf(:)    i=x,y
        ! wf_derivative(G,i)= (k_i+G_i) wf(:)
        ! wf_z is not needed
+       !
        do i1=1,3
-         if(.not.do_derivative(i1)) cycle
+         if (.not.do_derivative(i1)) cycle
          wf_der=(0.,0.)
          wf_der(:)=wf(:,ifft)*(k_pt(ik,i1)+g_vec(: wf_ng ,i1))*2.0_SP*pi/alat(i1)
          !

@@ -290,7 +290,7 @@ module QP_CTL_m
        !
        ! GPL_EXCLUDE_END
        !
-       call fermi_level(en,k,1)
+       call OCCUPATIONS_Fermi(en,k,1)
        !
      endif
      !
@@ -305,8 +305,8 @@ module QP_CTL_m
        allocate(Fermi_en%E(Fermi_en%nb,Fermi_en%nk,n_sp_pol))
        Fermi_en%E(:,:,:)=en%E(:,:nXkibz,:)
        !
-       call fermi_level(Fermi_en,k,1)
-       call extend_occupations(Fermi_en,en)
+       call OCCUPATIONS_Fermi(Fermi_en,k,1)
+       call OCCUPATIONS_Extend(Fermi_en,en)
        !
        nullify(Fermi_en%E)
      endif

@@ -390,7 +390,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_excitons =runlevel_is_on('excitons')
  l_electrons=runlevel_is_on('electrons')
  l_plot=any((/runlevel_is_on('wavefunction'),runlevel_is_on('magnetization'),&
-#if defined _YPP_MAGNETIC || _YPP_BOLTZMANN
+#if defined _YPP_BOLTZMANN
 &             runlevel_is_on('current'), &
 #endif
 &             runlevel_is_on('density')/))

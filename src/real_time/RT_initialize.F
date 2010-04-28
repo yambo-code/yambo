@@ -100,7 +100,8 @@ subroutine RT_initialize()
  call msg( 'r', '[RT] Thermalization steps       :',Thermal_steps)
  call msg( 'r', '[RT] Step length            [fs]:',RT_step/FS2AUT)
  if(NE_steps>0) then
-   call msg('sr', '[RT] Response energy window        [eV]:',(/2.*pi/(RT_step*real(NE_steps)-Ext_fields_initial_time),pi/RT_step/)*HARTREE)
+   call msg('sr', '[RT] Response energy window        [eV]:',&
+&                  (/2.*pi/(RT_step*real(NE_steps)-Ext_fields_initial_time),pi/RT_step/)*HARTREE)
    call msg('rsn','[RT] Electron-gas plasmon frequency[eV]:',sqrt(4._SP*pi*nel/DL_vol)*HARTREE)
  endif
  call msg('rsn','[RT] Simulation time        [fs]:',(/-real(Thermal_steps)*RT_step,RT_step*real(NE_steps)/)/FS2AUT)

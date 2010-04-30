@@ -31,6 +31,10 @@ subroutine electrons_current(Xk,Xen,success)
 #if defined _YPP_MAGNETIC
  use magnetic,       ONLY:x,load_cc,free_cc
 #endif
+#if defined _YPP_ELPH
+ use R_lattice,      ONLY:nkibz
+ use electrons,      ONLY:n_bands
+#endif
  use timing,         ONLY:live_timing
  use wave_func,      ONLY:WF_load,WF_free,WF_derivative_free,wf_state,wf,wf_x,wf_y,wf_z
  !
@@ -76,17 +80,23 @@ subroutine electrons_current(Xk,Xen,success)
  allocate(Boltz_vel(3,Xen%nb,Xen%nk,n_sp_pol))
  Boltz_vel=0._SP
  !
- call live_timing('Velocities & Current',Xk%nibz)
- !
  do ik=1,Xk%nibz
    !
    call IO_and_Messaging_switch("-log")
    !
    ! NB Should I load more bands here to accomodate the new states created by Boltzmann ?
    !
+#if defined _YPP_ELPH
+   if (ik==1) then
+     call WF_derivative((/1,n_bands/),(/1,nkibz/),l_directions)
+     call WF_load(0,1,(/1,n_bands/),(/1,nkibz/),title='-WF',impose_free_and_alloc=.TRUE.)
+   endif
+#else
    call WF_derivative((/1,Xen%nbm/),(/ik,ik/),l_directions)
-   !
    call WF_load(0,1,(/1,Xen%nbm/),(/ik,ik/),title='-WF',impose_free_and_alloc=.TRUE.)
+#endif
+   !
+   if (ik==1) call live_timing('Velocities & Current',Xk%nibz)
    !
    ! Velocities
    !
@@ -128,8 +138,10 @@ subroutine electrons_current(Xk,Xen,success)
    !
    ! Local Clean
    !
+#if !defined _YPP_ELPH
    call WF_derivative_free()
    if (ik/=Xk%nibz) call WF_free()
+#endif
    !
    ! -report added beacuse a small bug in WF_load  (QUIET_alloc call to IO_and...)
    !
@@ -142,6 +154,9 @@ subroutine electrons_current(Xk,Xen,success)
  !
 #if defined _MAGNETIC
  if(MAG_landau) call MAG_common_build_A(.false.)
+#endif
+#if defined _YPP_ELPH
+ call WF_derivative_free()
 #endif
  !
  ! Mean current in cartesian coordinates

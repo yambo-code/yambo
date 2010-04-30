@@ -22,7 +22,7 @@
 subroutine electrons_driver(Xk,Xen)
  !
  use units,          ONLY:HARTREE
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP,schlen,lchlen
  Use stderr,         ONLY:intc
  use wave_func,      ONLY:WF_load,wf,WF_free,wf_ng,wf_state
  use FFT_m,          ONLY:fft_size,fft_dim
@@ -37,6 +37,11 @@ subroutine electrons_driver(Xk,Xen)
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:two_spin_density
+#if defined _YPP_ELPH
+ use electrons,      ONLY:n_bands
+ use com,            ONLY:file_exists
+ use FFT_m,          ONLY:fft_rot_r
+#endif
  implicit none
  !
  type(bz_samp) ::Xk
@@ -50,11 +55,21 @@ subroutine electrons_driver(Xk,Xen)
  logical               :: success
  character(schlen)     :: ch_ws,titles(4)
  !
+#if defined _YPP_ELPH
+ !
+ !Polaronic Wf
+ !
+ integer                :: n_top_residuals,top_residual(1000),i_st,H_size,i_c
+ character(lchlen)      :: db_name
+ integer                :: ibp,ok_ibz,il,ok_s
+ complex(SP)            :: B_n_ok
+ !
+#endif
  if (.not.any((/l_mag,l_density,l_sp_wf,l_dos&
 #if defined _YPP_MAGNETIC
 &    ,l_angular_momentum,l_position &
 #endif
-#if defined _YPP_BOLTZMANN
+#if defined _YPP_BOLTZMANN 
 &    ,l_current  &
 #endif
 &   /))) return
@@ -74,12 +89,16 @@ subroutine electrons_driver(Xk,Xen)
    call QP_state_table_setup(Xen)
    nb_to_load   =(/minval(QP_table(:,1)),maxval(QP_table(:,1))/)         !(/minval(QP_table(:,1)),maxval(QP_table(:,1))/)
    nkpt_to_load =(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)         !(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)  
+#if defined _YPP_ELPH
+   nb_to_load     =(/1,n_bands/)
+   nkpt_to_load   =(/1,nkibz/)
+#endif
  endif
  if(.not.l_dos &
 #if defined _YPP_MAGNETIC
 &   .and. .not. any((/l_angular_momentum,l_position/)) &
 #endif
-#if defined _YPP_BOLTZMANN
+#if defined _YPP_BOLTZMANN 
 &   .and. .not. l_current &
 #endif
 &) then
@@ -165,6 +184,75 @@ subroutine electrons_driver(Xk,Xen)
  !
  ! SYMMETRIZED WAVEFUNCTIONS (summed over all symmetries and degenerate states)
  !==============================================================================
+#if defined _YPP_ELPH
+ if (l_sp_wf) then
+   !
+   i_qp=1
+   !
+   l_norm_to_one=.false.
+   !
+   do while (i_qp<=QP_n_states) 
+     !
+     ! n   =QP_table(i_qp,1)
+     ! k   =QP_table(i_qp,3)
+     ! sp  =QP_table(i_qp,4)
+     !
+     ib    =QP_table(i_qp,1)
+     ik    =QP_table(i_qp,3)
+     i_spin=spin(QP_table(i_qp,:))
+     !
+     db_name='ELPH_Ham/TOP_RESIDUAL_'//trim(intc(ib))//'_'//trim(intc(ik))
+     !
+     i_qp=i_qp+1
+     !
+     if (.not.file_exists(trim(db_name))) cycle
+     !  
+     n_top_residuals=1
+     open(unit=100,name=trim(db_name),form='unformatted')
+     do while(.true.)
+       read(100,end=2) top_residual(n_top_residuals)
+       n_top_residuals=n_top_residuals+1
+     enddo
+2    n_top_residuals=n_top_residuals-1
+     call msg('s',':: Processing '//trim(intc(n_top_residuals))//' residuals@k'//trim(intc(ik))//'_b'//trim(intc(ib))//':', top_residual(:n_top_residuals))
+     close(100)
+     !
+     do i_st=1,n_top_residuals
+       !
+       v2plot=0.
+       !
+       db_name='ELPH_Ham/EIGENV_'//trim(intc(top_residual(i_st)))
+       open(unit=100,name=trim(db_name),form='unformatted')
+       read(100) H_size
+       do i_c=1,H_size
+         read(100) ibp,ok_ibz,il,ok_s,B_n_ok
+         !
+         if (il==0) cycle
+         !
+         i_wf=wf_state(ibp,ok_ibz,1)
+         !
+         forall(ir=1:fft_size) v2plot(ir)=v2plot(ir)+real( B_n_ok*wf(fft_rot_r(ok_s,ir),i_wf)*conjg( B_n_ok*wf(fft_rot_r(ok_s,ir),i_wf) ) )     
+       enddo
+       close(100)
+       !
+       ch_ws='sp_wf_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_'//trim(intc(plot_dim))//'_STATE'//trim(intc(top_residual(i_st)))//'_'//trim(intc(plot_dim))
+       if (use_xcrysden) output_fname=trim(ch_ws)//'d.xsf'
+       if (use_gnuplot)  output_fname=trim(ch_ws)//'d'
+       !
+       call of_open_close(trim(output_fname),'ot')
+       call msg('o wf',"#")
+       !
+       call plot_check_and_launch(.false.)
+       !
+       call of_open_close(trim(output_fname))
+       !
+     enddo
+     !
+   enddo
+   !
+ endif
+ !
+#else
  !
  if (l_sp_wf) then
    !
@@ -202,10 +290,8 @@ subroutine electrons_driver(Xk,Xen)
        ! GPL_EXCLUDE_START SPIN_IGNORE
        !
        if (n_spin==2) then
-         if (i_spin==1) ch_ws='sp_wf_k'//trim(intc(ik))//'_b'//&
-&              trim(intc(ib))//'_UP_'//trim(intc(plot_dim))
-         if (i_spin==2) ch_ws='sp_wf_k'//trim(intc(ik))//'_b'//&
-&              trim(intc(ib))//'_DN_'//trim(intc(plot_dim))
+         if (i_spin==1) ch_ws='sp_wf_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_UP_'//trim(intc(plot_dim))
+         if (i_spin==2) ch_ws='sp_wf_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_DN_'//trim(intc(plot_dim))
          if (i_spin==1) plot_title='k '//trim(intc(ik))//' b '//trim(intc(ib))//' UP'
          if (i_spin==2) plot_title='k '//trim(intc(ik))//' b '//trim(intc(ib))//' DN'
        else
@@ -235,6 +321,8 @@ subroutine electrons_driver(Xk,Xen)
    enddo
     !
  endif
+ !
+#endif
  !
  ! MAGNETIZATION GPL_EXCLUDE_START
  !=================================
@@ -305,7 +393,7 @@ subroutine electrons_driver(Xk,Xen)
    !
  endif
  !
-#if defined _YPP_BOLTZMANN
+#if defined _YPP_BOLTZMANN 
  !
  ! Current
  !=========

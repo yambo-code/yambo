@@ -228,7 +228,7 @@ integer function ioDB1(E,k,ID)
    !
    call mem_est("g_vec k_pt dl_sop wf_nc_k wf_igk",&
 &               (/size(g_vec),size(k%pt),size(dl_sop),size(wf_nc_k),size(wf_igk)/),&
-&               (/SP,        SP,        SP,           IP,         IP/) )
+&               (/SP,        SP,        SP,           IP,         IP/), quiet=.TRUE. )
    !
    if (ver_is_gt_or_eq(ID,(/3,0,4/))) then 
      allocate(n_atoms_species(n_atomic_species))
@@ -272,7 +272,11 @@ integer function ioDB1(E,k,ID)
  ! G-vectors
  !
  call io_bulk(ID, VAR="G-VECTORS", VAR_SZ=shape(g_vec) )
- call io_bulk(ID, R2=g_vec)
+ !
+ ! Andrea (May 2010): Note here that in p2y g_vec may be allocated bigger then
+ ! ng_vec*3 due to the larger charge RL vectors.
+ !
+ call io_bulk(ID, R2=g_vec(:ng_vec,:))
  !
  ! K-point grid
  !

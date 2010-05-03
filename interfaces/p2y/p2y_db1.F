@@ -23,10 +23,12 @@ subroutine p2y_db1(en,k)
  !
  use P2Y
  use com,                   ONLY : msg
- use mod_com2y,             ONLY : print_interface_dimensions
+ use mod_com2y,             ONLY : print_interface_dimensions,use_all_G_vectors
  use xc_functionals,        ONLY : xc_string,GS_xc_KIND,GS_xc_FUNCTIONAL
+ use R_lattice,             ONLY : ng_vec
+ use wave_func,             ONLY : wf_ng
 #if defined _LIBXC
-     use xc_functionals,        ONLY : xc_setup_fnctl,xc_fnctl_t
+ use xc_functionals,        ONLY : xc_setup_fnctl,xc_fnctl_t
 #endif
  implicit none
  type(levels),     intent(out)  :: en     ! Energies
@@ -115,6 +117,8 @@ subroutine p2y_db1(en,k)
  call msg('s','IGK arrays...')
  !
  call get_IGK(k)
+ !
+ if (.not.use_all_G_vectors) ng_vec=wf_ng
  !
  call msg('l','done')
  !---------------------------------------------------------------------*

@@ -539,7 +539,7 @@ contains
  subroutine get_IGK(k)
    use wave_func,             ONLY : wf_nc_k, wf_ncx, wf_igk, wf_ng
    use R_lattice,             ONLY : bz_samp, ng_vec
-   use mod_com2y,            only : force_noWFs
+   use mod_com2y,             ONLY : force_noWFs
    use com,                   ONLY : msg, error
    character(lchlen) :: lch
    type(bz_samp) :: k

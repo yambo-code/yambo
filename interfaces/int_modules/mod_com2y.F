@@ -27,6 +27,7 @@ module mod_com2y
  logical :: use_SI_instead_of_TR
  logical :: force_noWFs
  logical :: artificial_spin_pol
+ logical :: use_all_G_vectors
  !
  real(SP):: alat_mult_factor
  !
@@ -47,6 +48,7 @@ module mod_com2y
      use_SI_instead_of_TR =index(in_string,'notr')>0
      force_noWFs          =index(in_string,'nowf')>0
      artificial_spin_pol  =index(in_string,'dupl')>0
+     use_all_G_vectors    =index(in_string,'allG')>0
      !
      alat_mult_factor=1.
      do i1=1,100

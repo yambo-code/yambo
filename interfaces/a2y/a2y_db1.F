@@ -34,12 +34,12 @@ subroutine a2y_db1(en,k,KSS_file_name)
  use vec_operate,           ONLY: cross_product,v_is_zero
  use defs_datatypes,        ONLY: hdr_type, wffile_type
  use xc_functionals,        ONLY: GS_xc_KIND,GS_xc_FUNCTIONAL,XC_USED_LIBXC
-#if !defined _LIBXC 
- use xc_functionals,        ONLY: XC_EXCHANGE_CORRELATION,XC_EXCHANGE,XC_LDA_C_PW,XC_LDA_C_PZ,&
-&                                 XC_LDA_C_WIGNER,XC_LDA_C_HL,XC_LDA_C_XALPHA,NONE,XC_LDA_X
-#else
+#if defined _LIBXC 
  use xc_functionals,        ONLY: NOXC,XC_NOT_AVAILABLE
  use dftxc2libxc,           ONLY: A2LIBXC
+#else
+ use xc_functionals,        ONLY: XC_EXCHANGE_CORRELATION,XC_EXCHANGE,XC_LDA_C_PW,XC_LDA_C_PZ,&
+&                                 XC_LDA_C_WIGNER,XC_LDA_C_HL,XC_LDA_C_XALPHA,NONE,XC_LDA_X
 #endif
  use mod_com2y,             ONLY: print_interface_dimensions,symmetries_check_and_load,&
 &                                 alat_mult_factor,artificial_spin_pol
@@ -63,8 +63,6 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  call msg('s','KSS Header...')
  !
-#if !defined _ELK
- !
  ! ABINIT KSS FILE
  !
  open(unit=11,file=KSS_file_name,form='unformatted')
@@ -78,20 +76,16 @@ subroutine a2y_db1(en,k,KSS_file_name)
  read(11) ahdr%nsym, n_bands, ng_vec, ishm, pp_n_l_comp_max
  en%nb=n_bands
  !
-#else
- !
- ! ELK level 0
- !============
- !
- call elk_db1(ahdr,en,k,KSS_file_name,0)
- call msg('l','ELK version ',ahdr%codvsn)
- !
-#endif
- !
  ! XC KIND/FUNCTIONAL
  !===================
  !
-#if !defined _LIBXC
+#if defined _LIBXC
+ GS_xc_KIND = XC_USED_LIBXC
+ if (ahdr%ixc==0) GS_xc_FUNCTIONAL = NOXC
+ if (ahdr%ixc>0)  GS_xc_FUNCTIONAL = A2LibXC(ahdr%ixc)
+ if (ahdr%ixc<0)  GS_xc_FUNCTIONAL = -ahdr%ixc 
+ if (GS_xc_FUNCTIONAL == XC_NOT_AVAILABLE) call error ('XC used in ABINIT not available')   
+#else
  select case (ahdr%ixc)
   case (0)
    GS_xc_FUNCTIONAL=NONE
@@ -122,12 +116,6 @@ subroutine a2y_db1(en,k,KSS_file_name)
    GS_xc_FUNCTIONAL = XC_LDA_C_PW
    GS_xc_KIND = XC_EXCHANGE_CORRELATION
  end select
-#else
- GS_xc_KIND = XC_USED_LIBXC
- if (ahdr%ixc==0) GS_xc_FUNCTIONAL = NOXC
- if (ahdr%ixc>0)  GS_xc_FUNCTIONAL = A2LibXC(ahdr%ixc)
- if (ahdr%ixc<0)  GS_xc_FUNCTIONAL = -ahdr%ixc 
- if (GS_xc_FUNCTIONAL == XC_NOT_AVAILABLE) call error ('XC used in ABINIT not available')   
 #endif 
  !
  !
@@ -170,22 +158,6 @@ subroutine a2y_db1(en,k,KSS_file_name)
  b(1,:) = cross_product(a(2,:),a(3,:))*2.*pi/DL_vol
  b(2,:) = cross_product(a(3,:),a(1,:))*2.*pi/DL_vol
  b(3,:) = cross_product(a(1,:),a(2,:))*2.*pi/DL_vol
- !
-#if defined _ELK
- !
- ! ELK 
- !######
- !
- ! I/O level 1
- !============
- !
- call elk_db1(ahdr,en,k,KSS_file_name,1)
- !
- call msg('s','Symmetries...')
- !============================
- call symmetries_check_and_load(ahdr%symrel,ahdr%nsym)
- !
-#else
  !
  k%nibz      = ahdr%nkpt
  nkibz       = k%nibz
@@ -310,8 +282,6 @@ subroutine a2y_db1(en,k,KSS_file_name)
  close(11)
  !
  call msg('l','done')
- !
-#endif
  !
  call msg('s','Report:')
  !======================

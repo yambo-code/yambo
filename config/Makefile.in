@@ -58,7 +58,7 @@ BROKEN   =
 DEBUG    = yambo_test_1 yambo_test_2
 TESTS    = test_all test_GoWo test_magnetic test_SC test_RT
 EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(DEBUG)
-INTERFCS = a2y p2y e2y elk2y
+INTERFCS = a2y p2y e2y 
 #
 # Libraries (ordered for compiling & linking)
 #
@@ -101,7 +101,7 @@ libs:
 	@if test "$(do_local)" = yes ; then LIBS2DO="local" ; \
 	DIR2GO="lib" ; $(mklib); fi
 yambo: libs
-	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)
+	@LIBS2DO="$(MAIN_LIBS)" ; ADF="-D_TEST_1 -D_TEST_2 -D_LIBXC"; $(mksrc)
 	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
 # PROJECTS & BROKEN #
 yambo_PWdiago: libs
@@ -168,7 +168,6 @@ interfaces: libs
 	@LIBS2DO="$(2YLIBS)" ; $(mksrc)
 	@LIBS2DO="int_modules"; DIR2GO="interfaces" ; $(mklib)
 	@X2DO="a2y" ;XPATH="interfaces/a2y";XLIBS="$(2YLIBS)";$(mkx)
-	@X2DO="elk2y" ;XPATH="interfaces/a2y";XLIBS="$(2YLIBS)";ADF="-D_ELK";$(mkx)
 	@if test "$(do_p2y)" = yes ; then X2DO="p2y" ; XPATH="interfaces/p2y" ; \
 	XLIBS="$(2YLIBS)"; ADF="-D@PW_CPP@"; $(mkx) ; fi
 	@if test "$(do_e2y)" = yes ; then X2DO="e2y" ; XPATH="interfaces/e2y" ; \

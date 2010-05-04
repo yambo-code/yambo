@@ -134,18 +134,18 @@ subroutine Dipole_transverse(Xen,Xk,X)
      E_i_spin=i_spin
      if (n_spinor==2) E_i_spin=1
      !
-#if !defined _DISTRIBUTED
-     do iv=X%ib(1),iv_max 
-       !
-       if (.not.px%element_2D(ik,iv)) cycle
-       !
-       do ic=ic_min,X%ib(2)
-#else
+#if defined _DISTRIBUTED
      do ic=ic_min,X%ib(2)
        !
        if(.not.px%element_2D(ik,ic)) cycle
        !
        do iv=X%ib(1),iv_max 
+#else
+     do iv=X%ib(1),iv_max 
+       !
+       if (.not.px%element_2D(ik,iv)) cycle
+       !
+       do ic=ic_min,X%ib(2)
 #endif
          !
          rho(:)=(0._SP,0._SP)
@@ -217,10 +217,6 @@ subroutine Dipole_transverse(Xen,Xk,X)
            ! GPL_EXCLUDE_END SPIN_IGNORE
            !
            DIP_iR_or_P(:,ic,iv,ik,i_spin)=rho(:3)
-!DEBUG (TEST RT) >
-!DIP_iR_or_P(:,ic,iv,ik,i_spin)=1.
-!if (ic==iv)  DIP_iR_or_P(:,ic,iv,ik,i_spin)=0.
-!DEBUG (TEST RT) <
            !
            ! GPL_EXCLUDE_START SPIN_IGNORE
            !

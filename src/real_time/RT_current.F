@@ -25,7 +25,8 @@ subroutine RT_current(Xk,G_input,A_input)
  !
  use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT,FS2AUT
- use R_lattice,      ONLY:bz_samp,RL_vol
+ use R_lattice,      ONLY:bz_samp
+ use D_lattice,      ONLY:DL_vol
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel
  use real_time,      ONLY:l_RT_no_diamagnetic,i_time,l_NE_with_fields,j_current, &
@@ -53,9 +54,6 @@ subroutine RT_current(Xk,G_input,A_input)
    call RT_average_operator(VALUE=j_current(id),O_MATRIX=DIP_iR_or_P(id,:,:,:,:),G=G_input,k=Xk)
    !
  enddo
-!DEBUG (TEST RT) >
-!write (100,*) i_time*RT_step/FS2AUT,real(j_current(2)),aimag(j_current(2))
-!DEBUG (TEST RT) <
  !
  ! Diamagnetic term
  !
@@ -65,6 +63,6 @@ subroutine RT_current(Xk,G_input,A_input)
    !
  endif
  !
- j_current=j_current*RL_vol/(2._SP*pi)**3
+ j_current=j_current/DL_vol
  !
 end subroutine RT_current

@@ -86,8 +86,6 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  real(SP):: sdot
 #endif
  !
-#if !defined _LIBXC
- !
  call section('*','ACFDT Total Energy')
  !
  call collision_reset(isc)
@@ -288,7 +286,5 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  if (do_Ec) deallocate(Xw%p)
  deallocate(QP_Vnl_xc,QP_Vxc,QP_table,QP_state)
  call mem_est("QP_table QP_state QP_Vnl_xc QP_Vxc W-p")
-#endif 
- !
  !
 end subroutine

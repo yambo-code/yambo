@@ -39,11 +39,12 @@ subroutine RT_Ext_Current(time)
  !
  j_norm          =(0._SP,0._SP)
  j_current_ext   =(0._SP,0._SP)
- j_current_versor=Efield(i1)%versor(:)/(4._SP*pi)
  !
  do i1=1,n_ext_fields
    ! 
    if(Efield(i1)%ef_name=="none".or.Efield(i1)%t_initial>time) cycle
+   !
+   j_current_versor=Efield(i1)%versor(:)/(4._SP*pi)
    !
    select case(trim(Efield(i1)%ef_name))
      case('SINUSOIDAL')

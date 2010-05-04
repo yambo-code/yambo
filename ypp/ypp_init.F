@@ -201,7 +201,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  X_rt%time_range(:)  =(/-FS2AUT,-FS2AUT/)
  X_rt%energy_steps   =200
- X_rt%energy_range(:)=(/1./HARTREE,20./HARTREE/)
+ X_rt%energy_range(:)=(/0._SP,20./HARTREE/)
  X_rt%damp           ="LORENTZIAN"
  X_rt%damp_factor    =0.1/HARTREE
  !
@@ -242,9 +242,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
      ref_efield=2 
    endif
    !
-   X_rt%energy_range=(/2.*pi/(RT_step*real(NE_steps)-Efield(ref_efield)%t_initial),pi/RT_step/)
+   X_rt%energy_range=(/0._SP,pi/RT_step/)
    X_rt%time_range=(/Efield(ref_efield)%t_initial,NE_steps*RT_step/)
-   X_rt%damp_factor=X_rt%energy_range(1)
+   X_rt%damp_factor=2.*pi/(RT_step*real(NE_steps)-Efield(ref_efield)%t_initial)
    !
  endif
 #endif

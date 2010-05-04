@@ -45,11 +45,5 @@
   {"nowf",  "w","Force no wavefunctions",0,0,0,0},
   {NULL,NULL,NULL,0,0,0,0}
  };
-#if defined _ELK
- char *tool="elk2y";
- char *tdesc="Elk 2 Y(ambo) interface";
-#else
- char *tool="elk2y";
- char *tdesc="Elk 2 Y(ambo) interface";
-#endif
-
+ char *tool="a2y";
+ char *tdesc="A(binit) 2 Y(ambo) interface";

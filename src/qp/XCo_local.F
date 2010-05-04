@@ -33,7 +33,10 @@ subroutine XCo_local(E,Xk)
  use R_lattice,     ONLY:bz_samp
  use FFT_m,         ONLY:fft_size
  use wave_func,     ONLY:wf,wf_state
- use xc_functionals,ONLY:V_xc,xc_string,two_spin_density
+ use xc_functionals,ONLY:V_xc,xc_string
+ ! GPL_EXCLUDE_START  SPIN_IGNORE
+ use xc_functionals,ONLY:two_spin_density
+ ! GPL_EXCLUDE_END  SPIN_IGNORE
  use global_XC,     ONLY:WF_kind,WF_xc_functional
 #if defined _SC
  use com,           ONLY:error
@@ -63,11 +66,15 @@ subroutine XCo_local(E,Xk)
  !
  real(SP)    :: mod_mag,vxc_plus(fft_size),vxc_minus(fft_size)
  complex(SP) :: V_xc_mat(fft_size,n_spin,n_spin)
+ logical     :: l_call_the_driver
  !
  ! Allocation 
  !
  if (.not.allocated(V_xc))   allocate(V_xc(fft_size,n_spin))
+ !
+ ! GPL_EXCLUDE_START  SPIN_IGNORE
  if (.not.allocated(two_spin_density)) allocate(two_spin_density(fft_size,3))
+ ! GPL_EXCLUDE_END  SPIN_IGNORE
  !
  ! Precompiler options in case a non-DFT potential is required
  !
@@ -77,15 +84,21 @@ subroutine XCo_local(E,Xk)
    ! ...LDA (and more) Vxc
    !
 #endif
+   !
+   l_call_the_driver=.TRUE.
+   !
 #if defined _RT
    call xc_lda_driver(E,Xk,WF_KIND,WF_xc_functional,1,G_lesser)
-#else
-#if !defined _LIBXC
-   call xc_lda_driver(E,Xk,WF_KIND,WF_xc_functional,1)
-#else
-   call libxc_int(E,Xk,WF_xc_functional,1)
+   l_call_the_driver=.FALSE.
 #endif
+   if (l_call_the_driver) then
+#if defined _LIBXC
+      call libxc_int(E,Xk,WF_xc_functional,1)
+#else
+      call xc_lda_driver(E,Xk,WF_KIND,WF_xc_functional,1)
 #endif
+   endif
+   !
 #if defined _SC
  else
    !
@@ -124,7 +137,12 @@ subroutine XCo_local(E,Xk)
      !
    enddo
    !
+   ! GPL_EXCLUDE_START  SPIN_IGNORE
+   !
    deallocate(two_spin_density)
+   !
+   ! GPL_EXCLUDE_END  SPIN_IGNORE
+   !
    return
    !
  endif

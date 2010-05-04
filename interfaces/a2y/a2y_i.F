@@ -69,11 +69,7 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  write_to_report=.FALSE.
  !
-#if defined _ELK
- call section('*','Elk 2 Y(ambo)')
-#else
  call section('*','A(binit) 2 Y(ambo)')
-#endif
  !
  call msg('s','Checking input file ...')
  !
@@ -114,9 +110,6 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
    !
    do ib_grp=1,wf_nb_io_groups
      !
-#if defined _ELK
-     call elk_wf(wf_disk,ik,trim(KSS_file_name))
-#else
      call a2y_wf(wf_disk,ik,ib_grp,trim(KSS_file_name))
      !
      if (n_atoms_species_max>0.and.ib_grp==1) then
@@ -124,8 +117,6 @@ integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
        if (ik> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
        io_err=ioKB_PP(ID)
      endif
-     !
-#endif
      !
      if (ik==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
      if (ik> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)

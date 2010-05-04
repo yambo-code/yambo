@@ -70,7 +70,7 @@ typedef struct
 #if defined _YPP_MAIN
  #include "ypp_cpp.h"
 #endif
-#if defined _a2y || _elk2y
+#if defined _a2y
  #include "a2y.h"
 #endif
 #if defined _f2y
@@ -274,9 +274,9 @@ main(int argc, char *argv[])
  F90_FUNC(ypp_i,YPP_I)(
           rnstr2,&lni,inf,&iif,id,&iid,od,&iod,com_dir,&icd,js,&ijs,&np,&pid);
 #endif
-#if defined _a2y  || _elk2y
+#if defined _a2y 
  /* 
-   Running the Fortran a2y/elk2y driver
+   Running the Fortran a2y driver
  ===========================================================================
  */
  F90_FUNC(a2y_i,A2Y_I)(

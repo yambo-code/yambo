@@ -198,19 +198,19 @@ module global_XC
        case(0)
          global_XC_string='Hartree'
        case(1:300)
-#if !defined _LIBXC
-         global_XC_string=trim(xc_string(kind,xc_functional))
-#else
+#if defined _LIBXC
          global_XC_string=trim(xc_string(f(1)))
          global_XC_string=trim(xc_string(f(2)))
+#else
+         global_XC_string=trim(xc_string(kind,xc_functional))
 #endif
        case(SC_EXX)
          global_XC_string='SC Exact Exchange'
        case(SC_EXXC)
-#if !defined _LIBXC
-         global_XC_string='SC Exact Exchange +'//trim(xc_string(XC_CORRELATION,xc_functional))
-#else
+#if defined _LIBXC
          global_XC_string='SC Exact Exchange +'//trim(xc_string(f(2)))
+#else
+         global_XC_string='SC Exact Exchange +'//trim(xc_string(XC_CORRELATION,xc_functional))
 #endif
        case(SC_HF)
          global_XC_string='SC Hartree Fock'

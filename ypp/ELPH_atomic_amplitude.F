@@ -22,6 +22,7 @@
 subroutine ELPH_atomic_amplitude(q)
  !
  use pars,                ONLY:SP
+ use units,               ONLY:BOHR
  use com,                 ONLY:msg,of_open_close,warning
  use R_lattice,           ONLY:bz_samp
  use D_lattice,           ONLY:n_atoms_species,Z_species,n_atoms
@@ -80,7 +81,7 @@ subroutine ELPH_atomic_amplitude(q)
    io_err=ioELPH(ID,'no_gkkp')  
    !
    if (.not.allocated(pol_vector)) then
-     call warning('Polarization vectors not found in databse')
+     call warning('Polarization vectors not found!')
      call elph_global_free()
      return
    endif
@@ -116,41 +117,14 @@ subroutine ELPH_atomic_amplitude(q)
    call mat_dia_inv(DIAGO,USE_LK,mean_ui_uj(is,:,:),E_real=U_eigenvalues)
    !
    call msg('s','Atom '//trim(atom_name(is)))
-   call msg('s','Displacement [a.u.]: ', sqrt(U_eigenvalues(1)) )
-   call msg('s','Direction          : ',real(mean_ui_uj(is,:,1)))
-   call msg('s','Displacement [a.u.]: ', sqrt(U_eigenvalues(2)) )
-   call msg('s','Direction          : ',real(mean_ui_uj(is,:,2)))
-   call msg('s','Displacement [a.u.]: ', sqrt(U_eigenvalues(3)) )
-   call msg('s','Direction          : ',real(mean_ui_uj(is,:,3)))
+   call msg('s','Displacement  [a.u.]/A #1: ',sqrt(U_eigenvalues(1))*(/1.,BOHR/) )
+   call msg('s','Normalized direction   #1: ',real(mean_ui_uj(is,:,1)))
+   call msg('s','                       #2: ', sqrt(U_eigenvalues(2))*(/1.,BOHR/) )
+   call msg('s','                       #2: ',real(mean_ui_uj(is,:,2)))
+   call msg('s','                       #3: ', sqrt(U_eigenvalues(3))*(/1.,BOHR/) )
+   call msg('s','                       #3: ',real(mean_ui_uj(is,:,3)))
    !
  enddo
- !
- ! Output file
- !
- call set_real_printed_length(f_length=20,g_length=20)
- !
-! if (l_eliashberg) then
-!   o_file_name='eliashberg'
-!   call of_open_close(o_file_name,'ot')
-!   call msg('o eli','#',' Eliashberg Function & Gamma factors',INDENT=0)
-!   call msg('o eli','#','',INDENT=0)
-!   call msg('o eli',         '#  Bands              :',elph_nb,INDENT=0)
-!   call msg('o eli','#','',INDENT=0)
-!   do iq=1,nq_to_sum
-!     write (ch,'(a,i6.6,a)') '# Gamma (',iq,') [GHz]:'
-!     call msg('o eli',trim(ch),(/gamma(iq,:)*HA2GHZ/) ,INDENT=0)
-!   enddo
-!   call msg('o eli','#','',INDENT=0)
-!   call msg('o eli','#',(/'E(THz)','a_F(w)'/),USE_TABS=.true.)
-!   call msg('o eli','#','',INDENT=0)
-!   do i1=1,elph_steps
-!     aF(i1)=aF(i1)/pi
-!     call msg('o eli','',(/ph_energy(i1)*HA2THZ,aF(i1)/),USE_TABS=.true.)
-!   enddo
-!   call of_open_close(o_file_name)
-! endif
- !
- call set_real_printed_length()
  !
  !CLEAN
  !

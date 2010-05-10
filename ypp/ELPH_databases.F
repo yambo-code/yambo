@@ -368,7 +368,7 @@ integer function ELPH_databases(k,E,q)
      ! However YAMBO table describe the k->k-q transitions and not k+q. So we 
      ! define
      !
-     ! g_jik^{qI}|_YAMBO= g_jik^{-qI}|_GS = <k-q n_i|dV_{SCF}/du^-q_{i a}|k n_j>
+     ! g_ijk^{qI}|_YAMBO= g_ijk^{-qI}|_GS = <k-q n_i|dV_{SCF}/du^-q_{i a}|k n_j>
      !
      ! where k = k2k_tab(ik). Note that this procedure implies that YAMBO {q}'s
      ! are -{q}'s in GS (note the MinusQ flag).

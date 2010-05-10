@@ -47,16 +47,17 @@ subroutine RT_spectrum(en,k)
  !
  integer  :: io_J,io_G,ID(2)
  integer  :: i_t,i_w,i_c,i1
- real(SP) :: const(3),real_j0(3)
+ real(SP) :: const1(3),const2(3)
  integer  :: i_t_start,i_t_end
  logical  :: Prt_Current,Prt_Einduced,Use_FFT,l_no_remove_DC,l_use_gauge_field
  real(SP)           :: W_RT_induced_step,W_step,Time_reached,W_reached
- complex(SP)        :: w_Aw,Integral
+ complex(SP)        :: w_Aw,Integral,W_ieta
  real(SP),    allocatable :: damp_function(:)
  complex(DP),    allocatable :: current(:,:),current_ext_t(:,:),current_ext_w(:,:)
  complex(DP),    allocatable :: At_vecpot_vel(:,:),Aw_vecpot_vel(:,:)
  complex(DP), allocatable :: EELS(:,:),EPS(:,:)
  complex(DP),    allocatable :: E_induced(:,:)
+ complex(DP) :: alpha,t0
  integer     :: fft_sign
  integer(8)  :: fftw_plan
  integer, external  :: io_SC_components
@@ -306,19 +307,19 @@ subroutine RT_spectrum(en,k)
    call msg('s', 'Remove residual constant term in the current')
    !
    i1=0
-   real_j0(:)=0._SP
+   const1(:)=0._SP
    !
    do i_w=1,X_rt%energy_steps
      W_reached = (i_w-1)*W_step+X_rt%energy_range(1)
-     if(W_reached>=3._SP*X_rt%damp_factor.and.W_reached<=5._SP*X_rt%damp_factor) then
+     if(W_reached>=5._SP*X_rt%damp_factor.and.W_reached<=10._SP*X_rt%damp_factor) then
        i1=i1+1
-       real_j0(:)=real_j0(:)+real(EPS(i_w,1:3))
+       const1(:)=const1(:)+real(EPS(i_w,1:3))
      endif
    enddo
    !
-   if(i1>0) real_j0(:)=real_j0(:)/real(i1)
+   if(i1>0) const1(:)=const1(:)/real(i1)
    !
-   const(:)=-(real(EPS(1,:))-real_j0(:))*X_rt%damp_factor
+   const1(:)=-real(EPS(1,:))*X_rt%damp_factor
    !
  else
    call warning(" Cannot remove the residual constant term in the current set low limit energy range=0")
@@ -326,22 +327,79 @@ subroutine RT_spectrum(en,k)
  !
  do i_w=1,X_rt%energy_steps
    W_reached = (i_w-1)*W_step+X_rt%energy_range(1)
-   EPS(i_w,:)=EPS(i_w,:)-const(:)/((0._DP,1._DP)*W_reached-X_rt%damp_factor)
- enddo
+   EPS(i_w,:)=EPS(i_w,:)-const1(:)/((0._DP,1._DP)*W_reached-X_rt%damp_factor)
+ enddo                    
  !
  EField(ref_efield)%amplitude=sqrt(Efield(ref_efield)%intensity*(8._SP*pi)/SPEED_OF_LIGHT)   
  !
  do i_w=1,X_rt%energy_steps
    !
    W_reached = (i_w-1)*W_step+X_rt%energy_range(1)
+   W_ieta    = W_reached-(0._SP,1._SP)*X_rt%damp_factor
    !
    select case ( trim(Efield(ref_efield)%ef_name) )
      !
      case('DELTA')
        w_Aw=Efield(ref_efield)%amplitude
+     case('GAUSSIAN')      
+       !
+       alpha=Efield(ref_efield)%frequency**2/2._SP ! alpha=1/(2*sigma**2)
+       t0   =10.0/Efield(ref_efield)%frequency   
+       w_Aw=Efield(ref_efield)%amplitude*exp((0._SP,1._SP)*t0*W_ieta)*sqrt(pi/alpha)*exp(-W_ieta**2/(4._SP*alpha))
+     case default
+       w_Aw=-sum(Aw_vecpot_vel(i_w,:)*Efield(ref_efield)%versor(:))/SPEED_OF_LIGHT
+     !  
    end select
    !
-   EPS(i_w,:) = EPS(i_w,:)/cmplx(X_rt%damp_factor,-W_reached)/w_Aw
+   EPS(i_w,:) = EPS(i_w,:)/w_Aw 
+   !
+ enddo
+ !
+ ! Interpolate real imaginary part of J(w)/E(w) 
+ ! and rigid shift the real part to remove residual divergence
+ !
+ i1=0
+ const1(:)=0._SP
+ const2(:)=0._SP
+ !
+ do i_w=1,X_rt%energy_steps
+   W_reached = (i_w-1)*W_step+X_rt%energy_range(1)
+   if(W_reached>=4._SP*X_rt%damp_factor.and.W_reached<=10._SP*X_rt%damp_factor) then
+     i1=i1+1
+     const1(:)=const1(:)+real(EPS(i_w,1:3))
+     const2(:)=const2(:)+aimag(EPS(i_w,1:3))/W_reached
+   endif
+ enddo
+ !
+ if(i1/=0) then 
+   !
+   call msg('s', 'Interpolate eps for w<4*damp_factor (not valid for metals)')
+   !
+   const1(:)=const1(:)/real(i1)
+   const2(:)=const2(:)/real(i1)
+   !
+   ! Rigid shift
+   !
+   EPS(:,1)=EPS(:,1)-const1(1)
+   EPS(:,2)=EPS(:,2)-const1(2)
+   EPS(:,3)=EPS(:,3)-const1(3)
+   !
+   ! Linear interpolation
+   !
+   do i_w=1,X_rt%energy_steps
+     W_reached = (i_w-1)*W_step+X_rt%energy_range(1)
+     if(W_reached<=4._SP*X_rt%damp_factor) then
+       EPS(i_w,1:3)=cmplx(0._SP,const2(:)*W_reached)
+     endif
+   enddo
+   !
+ endif
+ !
+ do i_w=1,X_rt%energy_steps
+   !
+   W_reached = (i_w-1)*W_step+X_rt%energy_range(1)
+   EPS(i_w,1:3)=EPS(i_w,1:3)/cmplx(0._SP,-W_reached)
+   if(W_reached==0._SP) EPS(i_w,:)=EPS(i_w+1,:)/cmplx(0._SP,-W_step)
    !
  enddo
  !

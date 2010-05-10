@@ -99,11 +99,11 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
 #if defined _DEBUG
      !
      qp%GreenF(iqp,iw)=1./(real(qp%GreenF_W(iqp,iw))-Eo-qp%S_total(iqp,iw)-cmplx(0.,QP_G_damp))
-     ! DEBUG < ELPH_Ham
-     !write (200,'(3f20.10)')  real(qp%GreenF_W(iqp,iw))*HARTREE,qp%S_total(1,iw)*HARTREE
-     ! DEBUG > ELPH_Ham
+     !
 #else
+     !
      qp%GreenF(iqp,iw)=1./(real(qp%GreenF_W(iqp,iw))-Eo-qp%S_total(iqp,iw))
+     !
 #endif
      !
    enddo

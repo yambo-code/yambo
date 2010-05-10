@@ -257,7 +257,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (file_exists(trim(infile))) call infile_dump()
  !
- !RunLevels on
+ ! RunLevels on
  !
  call string_split(instr,rstr_piece)
  do i1=1,50
@@ -366,7 +366,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    enddo
  enddo
  !
- if (.not.l_sort) call call_init_load('parserload')
+ if (.not.l_sort.and..not.l_atomic_amplitude) call call_init_load('parserload')
  !
  l_bz_grids  = runlevel_is_on('bzgrids')
  l_k_grid    = runlevel_is_on('K_grid')

@@ -43,7 +43,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  ! Work Space
  !
  integer              :: H_size,ib,iq_bz,iq_ibz,iq_s,ID,io_err,iH,il,ok_bz,ok_ibz,ok_s,No_PH_basis_size,&
-&                        iHp,ibp,iq_ibz_db,ik_bz_gkkp,ib_gkkp,ob_gkkp,iw
+&                        iHp,ibp,iq_ibz_db,ik_bz_gkkp,ib_gkkp,ibp_gkkp,iw
  real(SP)             :: ph_E,residual,q_weight
  integer, external    :: ioELPH
  integer,     allocatable :: elph_Ham_Table(:,:)
@@ -165,16 +165,16 @@ subroutine ELPH_Hamiltonian(en,k,q)
        cycle
      endif
      !
-     ib_gkkp=ib
-     ob_gkkp=ibp
+     ib_gkkp =ib
+     ibp_gkkp=ibp
      ik_bz_gkkp=ik_is_table(elph_Ham_ik,sop_inv(iq_s))
      if (iq_s>nsym/(i_time_rev+1)) then
        ib_gkkp   =ib
-       ob_gkkp   =ibp
+       ibp_gkkp  =ibp
        ik_bz_gkkp=ik_is_table(ok_ibz,sop_tab(sop_inv(iq_s-nsym/2),ok_s))
      endif
      !
-     elph_Mat(iH,iHp)=q_weight*conjg(elph_gkkp(ik_bz_gkkp,il,ob_gkkp,ib_gkkp))/sqrt(2.*ph_E)
+     elph_Mat(iH,iHp)=q_weight*conjg(elph_gkkp(ik_bz_gkkp,il,ibp_gkkp,ib_gkkp))/sqrt(2.*ph_E)
      !
      elph_Mat(iHp,iH)=conjg( elph_Mat(iH,iHp) )
      !

@@ -101,7 +101,7 @@ libs:
 	@if test "$(do_local)" = yes ; then LIBS2DO="local" ; \
 	DIR2GO="lib" ; $(mklib); fi
 yambo: libs
-	@LIBS2DO="$(MAIN_LIBS)" ; ADF="-D_TEST_1 -D_TEST_2 -D_LIBXC"; $(mksrc)
+	@LIBS2DO="$(MAIN_LIBS)" ; ADF="-D_TEST_1 -D_TEST_2"; $(mksrc)
 	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
 # PROJECTS & BROKEN #
 yambo_PWdiago: libs
@@ -123,8 +123,8 @@ yambo_manyk: libs
 	@LIBS2DO="$(MAIN_LIBZ)";ADF="-D_MANYK"; $(mksrc)
 	@X2DO="yambo_manyk"; XPATH="driver";XLIBS="$(MAIN_LIBZ)";ADF="-D_MANYK";$(mkx)
 yambo_ph: libs
-	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_ELPH -D_DEBUG"; $(mksrc)
-	@X2DO="yambo_ph"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_ELPH -D_DEBUG";$(mkx)
+	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_ELPH"; $(mksrc)
+	@X2DO="yambo_ph"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_ELPH";$(mkx)
 yambo_ras: libs
 	@LIBS2DO="$(PJ_RASLIBS)";ADF="-D_RAS"; $(mksrc)
 	@X2DO="yambo_ras"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS";$(mkx)
@@ -173,7 +173,7 @@ interfaces: libs
 	@if test "$(do_e2y)" = yes ; then X2DO="e2y" ; XPATH="interfaces/e2y" ; \
 	XLIBS="$(2YLIBS)" ; $(mkx) ; fi
 ypp: libs
-	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
+	@LIBS2DO="$(YPPLIBS)" ; ADF="-D_TEST_1 -D_TEST_2"; $(mksrc)
 	@X2DO="ypp" ;XPATH="ypp";XLIBS="$(YPPLIBS)";$(mkx)
 #
 # TESTS #

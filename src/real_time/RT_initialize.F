@@ -87,6 +87,9 @@ subroutine RT_initialize()
      !
      call SC_check_symmetries(Efield(i1)%versor)
      !
+     if(Efield(i1)%ef_name/='DELTA'.and.Efield(i1)%frequency==0._SP) &
+&      call warning(" External field frequency is zero! ")
+     !
    endif
    !
  enddo

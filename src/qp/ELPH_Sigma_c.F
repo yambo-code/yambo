@@ -331,11 +331,6 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          !
          elph_gkkp_sq=conjg(elph_gkkp(ik_bz_gkkp,il,ob_gkkp,ib_gkkp))*&
 &                           elph_gkkp(ik_bz_gkkp,il,ob_gkkp,ib_gkkp)/2./ph_E
-!DEBUG<
-!if (abs(ph_qpt(iq_loop,1))<0.2.and.il<4) cycle
-!if ((abs(ph_qpt(iq_loop,1))>0.2.and.abs(ph_qpt(iq_loop,1))<0.9).and.(il<=2.or.il==4)) cycle
-!if (abs(ph_qpt(iq_loop,1))>0.95.and.(il==1.or.il>=3)) cycle
-!DEBUG>
          !
          ! Frequency Loop
          !

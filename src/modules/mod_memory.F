@@ -126,7 +126,8 @@ module memory_m
      endif
      !
      if(mem_moved.lt.0.0_SP.or.mem_sum.lt.0.0_SP) then
-       call warning( " Memory management of array "//trim(ch(1))//" failed.")
+       mem_moved=0._SP
+       mem_sum  =0._SP
      endif
      !
      stdout_report=master_cpu.and.mem_moved>mem_tresh.and..not.infile_editing

@@ -55,11 +55,6 @@ integer function ioQP(what,qp,ID)
  integer ,    allocatable ::qp_table_disk(:,:)
  real(SP),    allocatable ::qp_DATA_disk(:,:,:),QP_W_disk(:,:,:)
  !
-#if defined _DEBUG
- ioQP=-1
- return
-#endif
- !
  if (what=="QP".or.what=="W".or.what=="G") then
    ioQP=io_connect(desc=what,type=2,ID=ID)
  else

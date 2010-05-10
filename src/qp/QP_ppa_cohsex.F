@@ -404,7 +404,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #if !defined _RT
          if (COHSEX_use_empties) dc(2)=2._SP*pi*pre_factor
          !
-         QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)!+dc(2)
+         QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)+dc(2)
 #endif
          !
          ! GPL_EXCLUDE_END SC_IGNORE

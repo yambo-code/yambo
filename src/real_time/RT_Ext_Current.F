@@ -55,7 +55,7 @@ subroutine RT_Ext_Current(time)
        j_norm=-Efield(i1)%amplitude*exp(-(0._SP,1._SP)*Efield(i1)%frequency*time)*Efield(i1)%frequency*(0._SP,-1._SP)
      case('GAUSSIAN')
        sigma=1._SP/Efield(i1)%frequency ! the width of the Gaussian is      sigma = 1/frequency
-       t0   =5.0/Efield(i1)%frequency   ! the center of the Gaussian is at     t0 = 5/frequency
+       t0   =10.0/Efield(i1)%frequency   ! the center of the Gaussian is at     t0 = 5/frequency
        j_norm=Efield(i1)%amplitude*exp( -(time-t0)**2/(2._SP*sigma**2) )*(time-t0)/sigma**2
      case('DELTA')
      case default

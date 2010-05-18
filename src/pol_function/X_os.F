@@ -24,6 +24,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  ! Non interacting Xo
  !
  use pars,          ONLY:SP
+ use wrapper,       ONLY:V_by_V_plus_V,V_copy
  use units,         ONLY:HARTREE
  use collision,     ONLY:ggwinfo,collision_reset
  use timing,        ONLY:live_timing
@@ -307,11 +308,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
        ! Filling the upper triangular part of the residual here ! 
        !             ^^^^^
        do g2=g2_min,X%ng
-#if defined _DOUBLE
-         call zaxpy(g2,GreenF(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
-#else
-         call caxpy(g2,GreenF(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
-#endif
+         call V_by_V_plus_V(g2,GreenF(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),XoR(:g2,g2))
        enddo
      enddo
      !
@@ -319,15 +316,8 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
        iw=i2+fr(1)-1
        if (.not.force_bare_X_G.and.cg_pt(i1)/=0.) GreenF(i2)=X_simple_GreenF(Xw%p(iw),cg_pt(i1),X%ordering)
        do g2=1,X%ng
-#if defined _DOUBLE
-         call zaxpy(g2,GreenF(i2)/GreenF(1),XoR(:g2,g2),1,Xo(:g2,g2,i2),1)
-         if (g2<g2_max) call zaxpy(X%ng-g2,GreenF(i2)/conjg(GreenF(1)),conjg(XoR(g2,g2+1:)),&
-&                                  1,Xo(g2+1:,g2,i2),1)
-#else
-         call caxpy(g2,GreenF(i2)/GreenF(1),XoR(:g2,g2),1,Xo(:g2,g2,i2),1)
-         if (g2<g2_max) call caxpy(X%ng-g2,GreenF(i2)/conjg(GreenF(1)),conjg(XoR(g2,g2+1:)),&
-&                                  1,Xo(g2+1:,g2,i2),1)
-#endif
+         call V_by_V_plus_V(g2,GreenF(i2)/GreenF(1),XoR(:g2,g2),Xo(:g2,g2,i2))
+         if (g2<g2_max) call V_by_V_plus_V(X%ng-g2,GreenF(i2)/conjg(GreenF(1)),conjg(XoR(g2,g2+1:)),Xo(g2+1:,g2,i2))
        enddo
      enddo
      !
@@ -363,26 +353,15 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
 &             spin_occ/real(Xk%nbz)/DL_vol
        call scatterBamp(isc)
        do g2=1,X%ng
-#if defined _DOUBLE
-         call zaxpy(g2,GreenF(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
-#else
-         call caxpy(g2,GreenF(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),1,XoR(:g2,g2),1)
-#endif
+         call V_by_V_plus_V(g2,GreenF(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),XoR(:g2,g2))
        enddo
      enddo
      do i2=iwmax,Xw%n(2)
        iw=i2+fr(1)-1
        if (.not.force_bare_X_G) GreenF(i2)=X_simple_GreenF(Xw%p(iw),cg_pt(i1),X%ordering)
        do g2=1,X%ng
-#if defined _DOUBLE
-         call zaxpy(g2,GreenF(i2)/GreenF(1),XoR(:g2,g2),1,Xo(:g2,g2,i2),1)
-         if (g2<g2_max) call zaxpy(X%ng-g2,GreenF(i2)/conjg(GreenF(1)),conjg(XoR(g2,g2+1:)),&
-&                                  1,Xo(g2+1:,g2,i2),1)
-#else
-         call caxpy(g2,GreenF(i2)/GreenF(1),XoR(:g2,g2),1,Xo(:g2,g2,i2),1)
-         if (g2<g2_max) call caxpy(X%ng-g2,GreenF(i2)/conjg(GreenF(1)),conjg(XoR(g2,g2+1:)),&
-&                                  1,Xo(g2+1:,g2,i2),1)
-#endif
+         call V_by_V_plus_V(g2,GreenF(i2)/GreenF(1),XoR(:g2,g2),Xo(:g2,g2,i2))
+         if (g2<g2_max) call V_by_V_plus_V(X%ng-g2,GreenF(i2)/conjg(GreenF(1)),conjg(XoR(g2,g2+1:)),Xo(g2+1:,g2,i2))
        enddo
      enddo
      call live_timing(steps=Xw%n(2)+bg_npts(i1))
@@ -392,11 +371,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  if (iwmax==2) then
    do g2=1,X%ng
-#if defined _DOUBLE
-     call zcopy(g2,XoR(1,g2),1,Xo(1,g2,1),1)
-#else
-     call ccopy(g2,XoR(1,g2),1,Xo(1,g2,1),1)
-#endif
+     call V_copy(g2,XoR(:,g2),Xo(:,g2,1))
    enddo
  endif
  do i1=1,Xw%n(2)

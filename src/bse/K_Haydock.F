@@ -22,6 +22,7 @@
 subroutine K_Haydock(iq,W)
  !
  use pars,           ONLY:SP,pi,schlen
+ use wrapper,        ONLY:V_by_V_plus_V
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_epsilon
  use R_lattice,      ONLY:d3k_factor,q_norm
@@ -75,11 +76,9 @@ subroutine K_Haydock(iq,W)
    ! GPL_EXCLUDE_START
    !
 #if defined _TEST_1
-   allocate(Cf(Max_iterations+1),Vn(BS_K_dim),Vnm1(BS_K_dim),&
-&           Vnp1(BS_K_dim))
+   allocate(Cf(Max_iterations+1),Vn(BS_K_dim),Vnm1(BS_K_dim),Vnp1(BS_K_dim))
 #else
-   allocate(Cf(Max_iterations+1),Vn(2*BS_K_dim),Vnm1(2*BS_K_dim),&
-&           Vnp1(2*BS_K_dim))
+   allocate(Cf(Max_iterations+1),Vn(2*BS_K_dim),Vnm1(2*BS_K_dim),Vnp1(2*BS_K_dim))
 #endif
    !
    ! GPL_EXCLUDE_END
@@ -99,11 +98,9 @@ subroutine K_Haydock(iq,W)
    ! GPL_EXCLUDE_START
    !
 #if defined _TEST_1
-   io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),&
-&  Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1))   
+   io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1))   
 #else
-   io_err=ioBSS_Haydock(ID,1,2*BS_K_dim,reached_treshold,Af(1),Bf(1),&
-&  Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1))   
+   io_err=ioBSS_Haydock(ID,1,2*BS_K_dim,reached_treshold,Af(1),Bf(1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1))   
 #endif
    !
    ! GPL_EXCLUDE_END
@@ -233,13 +230,8 @@ subroutine K_Haydock(iq,W)
      !
      !|Vn+1> = |Vn+1> - A(n)|Vn> - B(n)|Vn-1>
      !
-#if defined _DOUBLE
-     call zaxpy(BS_K_dim,-Af(it)*(1._SP,0._SP),Vn,1,Vnp1,1)
-     call zaxpy(BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,1,Vnp1,1)
-#else
-     call caxpy(BS_K_dim,-Af(it)*(1._SP,0._SP),Vn,1,Vnp1,1)
-     call caxpy(BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,1,Vnp1,1)
-#endif
+     call V_by_V_plus_V(BS_K_dim,-Af(it)*(1._SP,0._SP),Vn,Vnp1)
+     call V_by_V_plus_V(BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,Vnp1)
      !
      ! B(n+1)= <Vn+1|Vn+1>^(1/2)
      !
@@ -268,19 +260,10 @@ subroutine K_Haydock(iq,W)
      !|Vn+1> = |Vn+1> - A(n)|Vn> - B(n)|Vn-1>
      !
 #if defined _TEST_1
-#if defined _DOUBLE
-     call zaxpy(BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,1,Vnp1,1)
+     call V_by_V_plus_V(BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,Vnp1)
 #else
-     call caxpy(BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,1,Vnp1,1) 
-#endif
-#else
-#if defined _DOUBLE
-     call zaxpy(2*BS_K_dim,-Af(it)*(1._SP,0._SP),Vn,1,Vnp1,1)
-     call zaxpy(2*BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,1,Vnp1,1)
-#else
-     call caxpy(2*BS_K_dim,-Af(it)*(1._SP,0._SP),Vn,1,Vnp1,1)
-     call caxpy(2*BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,1,Vnp1,1) 
-#endif
+     call V_by_V_plus_V(2*BS_K_dim,-Af(it)*(1._SP,0._SP),Vn,Vnp1)
+     call V_by_V_plus_V(2*BS_K_dim,-Bf(it)*(1._SP,0._SP),Vnm1,Vnp1) 
 #endif
      !
      ! |Vn-1> = |Vn> 

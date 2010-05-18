@@ -26,6 +26,7 @@
 subroutine Dipole_kb_sum(ivfft,icfft,rho,kbv)
  !
  use pars,          ONLY:SP,DP
+ use wrapper,       ONLY:Vstar_dot_V,V_dot_V,V_by_V_plus_V
  use wave_func,     ONLY:wf,wf_ng
  use pseudo,        ONLY:pp_kbv_dim
  implicit none
@@ -34,45 +35,26 @@ subroutine Dipole_kb_sum(ivfft,icfft,rho,kbv)
  ! 
  ! Work Space
  !
- integer :: i1,i2
-#if defined _DOUBLE
- complex(DP):: zdotc,zdotu
-#else 
- complex(SP):: cdotc,cdotu
-#endif
+ integer     :: i1,i2
  complex(SP) :: Cv,Cc,Kc(wf_ng,3),Kv(wf_ng,3),drho(3)
  !
  Kc=(0.,0.)
  Kv=(0.,0.)
  !
  do i1=1,pp_kbv_dim
-#if defined _DOUBLE
-   Cv=zdotu(wf_ng,wf(:,ivfft),1,kbv(:,i1,1),1)
-   Cc=zdotu(wf_ng,wf(:,icfft),1,kbv(:,i1,1),1)
-#else
-   Cv=cdotu(wf_ng,wf(:,ivfft),1,kbv(:,i1,1),1)
-   Cc=cdotu(wf_ng,wf(:,icfft),1,kbv(:,i1,1),1)
-#endif
+   !
+   Cv=V_dot_V(wf_ng,wf(:,ivfft),kbv(:,i1,1))
+   Cc=V_dot_V(wf_ng,wf(:,icfft),kbv(:,i1,1))
+   !
    if (Cc==(0.,0.)) cycle
    do i2=1,3
-#if defined _DOUBLE
-     call zaxpy(wf_ng,Cc,conjg(kbv(:,i1,1+i2)),1,Kc(:,i2),1)
-     call zaxpy(wf_ng,conjg(Cv),kbv(:,i1,1+i2),1,Kv(:,i2),1)
-#else
-     call caxpy(wf_ng,Cc,conjg(kbv(:,i1,1+i2)),1,Kc(:,i2),1)
-     call caxpy(wf_ng,conjg(Cv),kbv(:,i1,1+i2),1,Kv(:,i2),1)
-#endif
+     call V_by_V_plus_V(wf_ng,Cc,conjg(kbv(:,i1,1+i2)),Kc(:,i2))
+     call V_by_V_plus_V(wf_ng,conjg(Cv),kbv(:,i1,1+i2),Kv(:,i2))
    enddo
  enddo
  !
  do i1=1,3
-#if defined _DOUBLE
-   drho(i1)=zdotc(wf_ng,wf(:,ivfft),1,Kc(1,i1),1)+&
-&           zdotu(wf_ng,wf(:,icfft),1,Kv(1,i1),1)
-#else
-   drho(i1)=cdotc(wf_ng,wf(:,ivfft),1,Kc(1,i1),1)+&
-&           cdotu(wf_ng,wf(:,icfft),1,Kv(1,i1),1)
-#endif
+   drho(i1)=Vstar_dot_V(wf_ng,wf(:,ivfft),Kc(1,i1))+V_dot_V(wf_ng,wf(:,icfft),Kv(1,i1))
  enddo
  !
  rho=rho+drho

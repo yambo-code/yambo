@@ -143,6 +143,7 @@ module matrix_operate
    subroutine mat_dia_inv(idriver,lib_in,M,blt,V_left,V_right,&
 &                         E_real,E_cmpl,SVD_digits,fill)
      !
+     use wrapper,     ONLY:M_by_M
      use pars,        ONLY:SP
      use par_proc_m,  ONLY:pp_redux_wait,ncpu,myid
      integer                :: idriver,lib_in
@@ -234,11 +235,9 @@ module matrix_operate
            VH(i1,:)=VH(i1,:)/SV(i1)
          endif
        enddo
-#if defined _DOUBLE
-       call zgemm('c','c',M_size,M_size,M_size,(1._SP,0._SP),VH,M_size,U,M_size,(0._SP,0._SP),M,M_size)
-#else
-       call cgemm('c','c',M_size,M_size,M_size,(1._SP,0._SP),VH,M_size,U,M_size,(0._SP,0._SP),M,M_size)
-#endif
+       !
+       call M_by_M('c','c',M_size,VH,U,M)
+       !
        deallocate(r_WK,SV,U,VH,work)
        !
        return

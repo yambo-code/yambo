@@ -25,6 +25,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
  ! Actualy it works only for the diagonal I1(t_1,t_1), I2(t_1,t_1)
  !
  use pars,           ONLY:SP
+ use wrapper,        ONLY:M_by_M,V_by_V_plus_V
  use electrons,      ONLY:levels
  use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
@@ -51,10 +52,8 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
  !
  ! Work Space
  !
- integer     :: ik,iv,SC_bands2
- type(pp_indexes) ::px
- !
- SC_bands2=SC_bands**2
+ integer          :: ik,iv
+ type(pp_indexes) :: px
  !
  if(.not.Hfrozen.or..not.XCfrozen.or.i_time<0) call el_density(G_input,k,rho_n,.false.)
  !
@@ -106,11 +105,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
    !
    if(Thermal_steps/=0.and.Thermal_time/=0.0) then 
      !      
-#if defined _DOUBLE
-     call zaxpy(SC_bands2,(1._SP,0._SP),-XC0(:,:,ik,1),1,H_nl_sc(:,:,1),1)
-#else
-     call caxpy(SC_bands2,(1._SP,0._SP),-XC0(:,:,ik,1),1,H_nl_sc(:,:,1),1)
-#endif
+     call V_by_V_plus_V(SC_bands,(1._SP,0._SP),-XC0(:,:,ik,1),H_nl_sc(:,:,1))
      !
      H_nl_sc=H_nl_sc*(1._SP+tanh((RT_time+(RT_step*real(Thermal_steps))/2._SP) &
     &        /(RT_step*real(Thermal_steps))/Thermal_time))/2._SP
@@ -119,23 +114,11 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
    !
    call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,wf)
    !
-   if(l_RT_needs_XC0) then 
-     !   
-#if defined _DOUBLE
-     call zaxpy(SC_bands2,(1._SP,0._SP),XC0(:,:,ik,1),1,H_nl_sc(:,:,1),1)
-#else
-     call caxpy(SC_bands2,(1._SP,0._SP),XC0(:,:,ik,1),1,H_nl_sc(:,:,1),1)
-#endif
-     !
-   endif
+   if(l_RT_needs_XC0) call V_by_V_plus_V(SC_bands,(1._SP,0._SP),XC0(:,:,ik,1),H_nl_sc(:,:,1))
    !
    ! Add Ho = T+V_ion
    !
-#if defined _DOUBLE
-     call zaxpy(SC_bands2,(1._SP,0._SP),Ho(:,:,ik,1),1,H_nl_sc(:,:,1),1)
-#else
-     call caxpy(SC_bands2,(1._SP,0._SP),Ho(:,:,ik,1),1,H_nl_sc(:,:,1),1)
-#endif
+   call V_by_V_plus_V(SC_bands,(1._SP,0._SP),Ho(:,:,ik,1),H_nl_sc(:,:,1))
    !
    ! And the gauge field
    !
@@ -146,38 +129,20 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
    ! Now prepare I1 and I2 before the integration notice that 
    ! they contain also the external field
    !
-#if defined _DOUBLE
-   call zgemm('n','n',SC_bands,SC_bands,SC_bands,(1._SP,0._SP),H_nl_sc(:,:,1),&
-&             SC_bands,G_input(:,:,ik),SC_bands,(0._SP,0._SP),I1_lesser(:,:,ik),SC_bands)
-   call zgemm('n','n',SC_bands,SC_bands,SC_bands,(1._SP,0._SP),G_input(:,:,ik),&
-&             SC_bands,H_nl_sc(:,:,1),SC_bands,(0._SP,0._SP),I2_lesser(:,:,ik),SC_bands)
-#else
-   call cgemm('n','n',SC_bands,SC_bands,SC_bands,(1._SP,0._SP),H_nl_sc(:,:,1),&
-&             SC_bands,G_input(:,:,ik),SC_bands,(0._SP,0._SP),I1_lesser(:,:,ik),SC_bands)
-   call cgemm('n','n',SC_bands,SC_bands,SC_bands,(1._SP,0._SP),G_input(:,:,ik),&
-&             SC_bands,H_nl_sc(:,:,1),SC_bands,(0._SP,0._SP),I2_lesser(:,:,ik),SC_bands)
-#endif
+   call M_by_M('n','n',SC_bands,H_nl_sc(:,:,1),G_input(:,:,ik),I1_lesser(:,:,ik))
+   call M_by_M('n','n',SC_bands,G_input(:,:,ik),H_nl_sc(:,:,1),I2_lesser(:,:,ik))
    !
    ! Fictitious lifetime equivalent to the broadening
    ! in linear optics
+   !   
+   ! This term kill the induced polarization, namely off-diagonal term in the
+   ! Green function
    !
-   if(LifeTime/=0._SP) then
-     !   
-     ! This term kill the induced polarization, namely off-diagonal term in the
-     ! Green function
-     !
-     ! This term send the electron distribution into the initial one
-     ! G_lesser_refence(:,:,:) 
-     !
-#if defined _DOUBLE
-     call zaxpy(SC_bands2,dcmplx(0._SP,-1._SP/LifeTime), &
-             &  G_input(:,:,ik)-G_lesser_reference(:,:,ik),1,I1_lesser(:,:,ik),1)
-#else
-     call caxpy(SC_bands2, cmplx(0._SP,-1._SP/LifeTime), &
-             &  G_input(:,:,ik)-G_lesser_reference(:,:,ik),1,I1_lesser(:,:,ik),1)
-#endif
-     !
-   endif
+   ! This term send the electron distribution into the initial one
+   ! G_lesser_refence(:,:,:) 
+   !
+   if(LifeTime/=0._SP) call V_by_V_plus_V(SC_bands,cmplx(0._SP,-1._SP/LifeTime,SP),&
+&                                         G_input(:,:,ik)-G_lesser_reference(:,:,ik),I1_lesser(:,:,ik))
    !
  enddo  !---- loop on k-points
  !

@@ -25,6 +25,7 @@ subroutine K_diagonalization(iq,W)
  ! Hamiltonians.
  !
  use pars,           ONLY:SP,DP,pi
+ use wrapper,        ONLY:M_by_M,Vstar_dot_V,V_dot_V
  use X_m,            ONLY:X_epsilon
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_K_coupling,&
 &                         BSS_write_eig_2_db,BS_eh_f,BS_not_const_eh_f,&
@@ -49,11 +50,6 @@ subroutine K_diagonalization(iq,W)
  type(pp_indexes)     ::px
  integer              ::i1,lib_driver,BS_H_dim
  logical              ::K_is_not_hermitian
-#if defined _DOUBLE
- complex(DP)::zdotu,zdotc
-#else
- complex(SP)::cdotu,cdotc
-#endif
  !
  ! Residuals & Energies
  !
@@ -101,14 +97,10 @@ subroutine K_diagonalization(iq,W)
  call mem_est("BS_R BS_E",(/BS_H_dim,BS_H_dim/))
  !
  if (K_is_not_hermitian) then
-   allocate(BS_V_left(BS_H_dim,BS_H_dim),&
-&           BS_V_right(BS_H_dim,BS_H_dim))
-   call mem_est("BS_V_left BS_V_right",&
-&              (/BS_H_dim,size(BS_V_left),size(BS_V_right)/))
-   allocate(BS_R_left(BS_H_dim),BS_R_right(BS_H_dim),&
-&           BS_overlap(BS_H_dim,BS_H_dim))
-   call mem_est("BS_R_left BS_R_right BS_overlap",&
-&              (/BS_H_dim,BS_H_dim,size(BS_overlap)/))
+   allocate(BS_V_left(BS_H_dim,BS_H_dim),BS_V_right(BS_H_dim,BS_H_dim))
+   call mem_est("BS_V_left BS_V_right",(/BS_H_dim,size(BS_V_left),size(BS_V_right)/))
+   allocate(BS_R_left(BS_H_dim),BS_R_right(BS_H_dim),BS_overlap(BS_H_dim,BS_H_dim))
+   call mem_est("BS_R_left BS_R_right BS_overlap",(/BS_H_dim,BS_H_dim,size(BS_overlap)/))
  else
    allocate(BS_E_real(BS_H_dim))
    call mem_est("BS_E_real",(/BS_H_dim/),(/SP/))
@@ -195,11 +187,9 @@ subroutine K_diagonalization(iq,W)
      do i1=1,BS_H_dim
        BS_R_right(i1)=cmplx(0.,0.,SP)
        if (.not.px%element_1D(i1)) cycle
-#if defined _DOUBLE
-       BS_R_right(i1)=zdotc(BS_H_dim,BSS_rhoq0,1,BS_V_right(:,i1),1)
-#else
-       BS_R_right(i1)=cdotc(BS_H_dim,BSS_rhoq0,1,BS_V_right(:,i1),1)
-#endif
+       !
+       BS_R_right(i1)=Vstar_dot_V(BS_H_dim,BSS_rhoq0,BS_V_right(:,i1))
+       !
        call live_timing(steps=1)
      enddo
      call pp_redux_wait(BS_R_right)
@@ -221,11 +211,9 @@ subroutine K_diagonalization(iq,W)
      do i1=1,BS_H_dim
        BS_R(i1)=cmplx(0.,0.,SP)
        if (.not.px%element_1D(i1)) cycle
-#if defined _DOUBLE
-       BS_R(i1)=zdotc(BS_H_dim,BS_V_left(:,i1),1,BSS_rhoq0,1)
-#else
-       BS_R(i1)=cdotc(BS_H_dim,BS_V_left(:,i1),1,BSS_rhoq0,1)
-#endif
+       !
+       BS_R(i1)=Vstar_dot_V(BS_H_dim,BS_V_left(:,i1),BSS_rhoq0)
+       !
        call live_timing(steps=1)
      enddo
      call pp_redux_wait(BS_R)
@@ -241,15 +229,9 @@ subroutine K_diagonalization(iq,W)
      ! [3] BS_overlap(i,j)=conjg(BS_V_left(k,i))*BS_V_right(k,j)
      !
      call live_timing('BSK overlap mat',1)
-#if defined _DOUBLE
-     call zgemm('c','n',BS_H_dim,BS_H_dim,BS_H_dim,(1.,0.),&
-&               BS_V_left,BS_H_dim,BS_V_right,BS_H_dim,(0.,0.),&
-&               BS_overlap,BS_H_dim)
-#else
-     call cgemm('c','n',BS_H_dim,BS_H_dim,BS_H_dim,(1.,0.),&
-&               BS_V_left,BS_H_dim,BS_V_right,BS_H_dim,(0.,0.),&
-&               BS_overlap,BS_H_dim)
-#endif
+     !
+     call M_by_M('c','n',BS_H_dim,BS_V_left,BS_V_right,BS_overlap)
+     !
      call mat_dia_inv(INV,USE_SLK,BS_overlap)
      call live_timing(steps=1)
      call live_timing()
@@ -260,11 +242,9 @@ subroutine K_diagonalization(iq,W)
      do i1=1,BS_H_dim
        BS_R_left(i1)=cmplx(0.,0.,SP)
        if (.not.px%element_1D(i1)) cycle
-#if defined _DOUBLE
-       BS_R_left(i1)=zdotu(BS_H_dim,BS_overlap(i1,:),1,BS_R,1)
-#else
-       BS_R_left(i1)=cdotu(BS_H_dim,BS_overlap(i1,:),1,BS_R,1)
-#endif
+       !
+       BS_R_left(i1)=V_dot_V(BS_H_dim,BS_overlap(i1,:),BS_R)
+       !
        call live_timing(steps=1)
      enddo
      call pp_redux_wait(BS_R_left)
@@ -289,11 +269,9 @@ subroutine K_diagonalization(iq,W)
      !
      do i1=1,BS_K_dim
        if (.not.px%element_1D(i1)) cycle
-#if defined _DOUBLE
-       BS_R(i1)=zdotc(BS_K_dim,BSS_rhoq0,1,BS_mat(:,i1),1)
-#else
-       BS_R(i1)=cdotc(BS_K_dim,BSS_rhoq0,1,BS_mat(:,i1),1)
-#endif
+       !
+       BS_R(i1)=Vstar_dot_V(BS_K_dim,BSS_rhoq0,BS_mat(:,i1))
+       !
        call live_timing(steps=1)
      enddo
      call live_timing

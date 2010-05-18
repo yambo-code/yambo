@@ -228,6 +228,8 @@ module SC
      !                               sum_{m,p} R_(n,m) H(m',p') R^*(k,p) = 
      !                               sum_{m,p} R_(n,m) H(m',p') R^+(p,k)
      !
+     use wrapper,        ONLY:M_by_M
+     !
      integer     :: direction,N
      complex(SP) :: H(N,N),R(N,N)
      !
@@ -242,21 +244,13 @@ module SC
      ! [1] H_rot = (R_^{\dagger}) H
      !     H     = H_rot
      !
-#if defined _DOUBLE
-     call zgemm('c','n',N,N,N,(1._SP,0._SP),R_,N,H,N,(0._SP,0._SP),H_rot,N)
-#else
-     call cgemm('c','n',N,N,N,(1._SP,0._SP),R_,N,H,N,(0._SP,0._SP),H_rot,N)
-#endif
+     call M_by_M('c','n',N,R_,H,H_rot)
      H = H_rot
      !
      ! [2] H_rot = H R_
      !     H     = H_rot
      !
-#if defined _DOUBLE
-     call zgemm('n','n',N,N,N,(1._SP,0._SP),H,N,R_,N,(0._SP,0._SP),H_rot,N)
-#else
-     call cgemm('n','n',N,N,N,(1._SP,0._SP),H,N,R_,N,(0._SP,0._SP),H_rot,N)
-#endif
+     call M_by_M('n','n',N,H,R_,H_rot)
      H = H_rot
      !
    end subroutine 

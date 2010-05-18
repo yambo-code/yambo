@@ -29,6 +29,7 @@ subroutine WF_rotate(ik,WFo,wf_size)
  !
  ! Extended only to collinear case
  !
+ use wrapper,        ONLY:V_by_V_plus_V
  use electrons,      ONLY:n_sp_pol
  use pars,           ONLY:SP
  use wave_func,      ONLY:wf_state,wf_n_states,wf
@@ -53,11 +54,8 @@ subroutine WF_rotate(ik,WFo,wf_size)
        !
        if (ifft==0.or.ifftp==0) cycle
        !
-#if defined _DOUBLE
-       call zaxpy(wf_size,SC_R(ibp,ib,ik,i_spin),WFo(:,ifftp),1,WS_wf(:,ib),1)
-#else
-       call caxpy(wf_size,SC_R(ibp,ib,ik,i_spin),WFo(:,ifftp),1,WS_wf(:,ib),1)
-#endif
+       call V_by_V_plus_V(wf_size,SC_R(ibp,ib,ik,i_spin),WFo(:,ifftp),WS_wf(:,ib))
+       !
      end do
    end do
    !

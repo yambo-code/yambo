@@ -59,17 +59,17 @@ module UNITS
  !
  ! Magnetic fields
  !
- real(SP), parameter :: AU2Tesla=1.7152551_SP*10._SP**3               ! (Gaussian convention)
+ real(SP), parameter :: AU2Tesla=1.7152551_SP*10._SP**3        ! (A.U. + C.G.S.)
  real(SP), parameter :: Tesla2AU=1./AU2Tesla
  !
  ! Magnetization 
  !
- real(SP), parameter :: Bohr_magneton=9.24700915*10._SP**(-24)     ! [S.I.]
+ real(SP), parameter :: Bohr_magneton=9.24700915*10._SP**(-24) ! J * T^{-1} (A.U. +S.I.)
  !
  ! Electric fields and current
  !
- real(SP), parameter :: AU2Vmm=5.14220632*10._SP**(8)           !  [V/mm]
- real(SP), parameter :: AU2nAmpere=6.62361782*10._SP**(6)       !  [nano-Ampere]
+ real(SP), parameter :: AU2Vmm=5.14220632*10._SP**(8)          !  [V/mm]
+ real(SP), parameter :: AU2nAmpere=6.62361782*10._SP**(6)      !  [nano-Ampere]
  !
  ! From Octopus ( http://www.tddft.org/programs/octopus )
  !

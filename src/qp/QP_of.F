@@ -162,8 +162,6 @@ subroutine QP_of(qp,en,QPdb_read_err)
    !
    do  i1=1,QP_n_states
      !
-     if (.not.state_is_2do(i1)) cycle
-     !
      write (G_Sc_name,'(2(a,i3.3))') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3)
      call of_open_close(G_Sc_name,'ot')
      call msg('o G_Sc','# GW [Green`s function & Self-Energy]')

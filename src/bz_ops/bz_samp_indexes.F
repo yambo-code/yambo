@@ -41,7 +41,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  use drivers,        ONLY:l_bse
  use memory_m,       ONLY:mem_est
  use stderr,         ONLY:gen_fmt
- use com,            ONLY:msg,error
+ use com,            ONLY:msg,error,warning
  use par_proc_m,     ONLY:pp_redux_wait
  use timing,         ONLY:live_timing
  use matrix_operate, ONLY:m3inv,m3det
@@ -334,7 +334,9 @@ subroutine bz_samp_indexes(k,Xk,q)
        q_iptbz(i1,:)=nint(v1)
        call k_grid_shift(q_iptbz(i1,:))
        if (q_map(q_iptbz(i1,1),q_iptbz(i1,2),q_iptbz(i1,3))/=0) then
-         call error('[RL indx] 2 equivalent points in the rlu grid found')
+         call warning('[RL indx] 2 equivalent points in the rlu grid found')
+         q_map=0
+         return
        endif
        q_map(q_iptbz(i1,1),q_iptbz(i1,2),q_iptbz(i1,3))=i1
      enddo

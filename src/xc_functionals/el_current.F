@@ -88,9 +88,6 @@ subroutine el_current(en,Xk,ik,J,J_diam,l_directions)
       enddo
       !
     enddo
-    !DEBUG>
-    !write (*,*) i_b,ik,sum( J(1,1,:) ), sum( J(2,1,:)), sum( J(3,1,:) )
-    !DEBUG<
     !
   enddo
   !

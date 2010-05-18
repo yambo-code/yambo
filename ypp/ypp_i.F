@@ -26,7 +26,7 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  use par_proc_m,          ONLY:ncpu,myid,p_finalize
  use electrons,           ONLY:levels,E_reset,n_bands,default_nel
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,ng_vec,&
-&                              nXkibz,nqibz,k_pt
+&                              nXkibz,nqibz,k_pt,q_pt
  use D_lattice,           ONLY:input_GS_Tel,alat,nsym
  use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP
  use com,                 ONLY:msg,write_to_report
@@ -127,10 +127,13 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),MODE=DUMP,ID=ID)
  i_err=ioQINDX(k,q,ID)
  ! 
- ! Allocate and fill the k_pt array for the DBs header
+ ! Allocate and fill the k_pt/q_pt array for the DBs header
  !
  allocate(k_pt(k%nibz,3))
  k_pt=k%pt
+ !
+ allocate(q_pt(q%nibz,3))
+ q_pt=q%pt
  !
  if (i_err/=0) then
    call ypp_finalize()

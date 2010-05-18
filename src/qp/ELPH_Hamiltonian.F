@@ -59,6 +59,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  ! Residuals
  !
  logical, allocatable :: top_residual(:)
+ real(SP)             :: max_residual
  !
  ! Mean value of displacements
  !
@@ -227,7 +228,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
      enddo
    enddo
    !
-   db_name='ELPH_Ham/TOP_RESIDUAL_'//trim(intc(ib))//'_'//trim(intc(elph_Ham_ik))
+   db_name='ELPH_Ham/TOP_RESIDUAL_b'//trim(intc(ib))//'_k'//trim(intc(elph_Ham_ik))
    open(unit=100,file=trim(db_name),form='unformatted')
    write (file_name,'(2(a,i3.3))') 'G_Ham_band_',ib,'_k_',elph_Ham_ik
    call of_open_close(file_name,'ot')
@@ -236,14 +237,22 @@ subroutine ELPH_Hamiltonian(en,k,q)
    call msg('o Ham','#')
    call msg('o Ham','#',(/'Index','Pole[eV]','Residual'/),INDENT=0,USE_TABS=.true.)
    call msg('o Ham','#')
+   !
+   max_residual=0.
+   !
    do iH=1,H_size
      residual= abs(elph_Mat(ib-elph_Ham_bands(1)+1,iH))**2.
      if (residual>1.E-2) then
+       if (residual>max_residual) max_residual=residual
        call msg('o Ham','#',(/real(iH),elph_E(iH)*HARTREE,residual/),INDENT=0,USE_TABS=.true.)
        write (100) iH,residual
        top_residual(iH)=.TRUE.
      endif
    enddo
+   !
+   call msg('o Ham','#')
+   call msg('o Ham','# Maximum residual is ', max_residual,INDENT=0)
+   !
    call msg('o Ham','#')
    call msg('o Ham','#',(/'Energy [eV]','R(G)[eV^-1]','I(G)[eV^-1]'/),INDENT=0,USE_TABS=.TRUE.)
    call msg('o Ham','#')
@@ -259,29 +268,6 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  call live_timing()
  !
-!DEBUG<
-! do iH=No_PH_basis_size+1,H_size
-!   ibp    =elph_Ham_Table(iH,1)
-!   iq_bz  =elph_Ham_Table(iH,2)
-!   il     =elph_Ham_Table(iH,3)
-!   iq_s   =q%sstar(iq_bz,2)
-!   ok_bz  =qindx_S(elph_Ham_ik,iq_bz,1)
-!   ok_ibz =k%sstar(ok_bz,1)
-!   ok_s   =k%sstar(ok_bz,2)
-!   if (iq_bz==1.and.il==7) then
-!     write(456,'(4I5,2F15.9)') ibp,ok_ibz,il,ok_s,elph_Mat(iH,456) 
-!   endif
-!   if ((iq_bz==1.and.il==7).or.(iq_bz==1.and.il==9).or.(iq_bz==1.and.il==10)) then
-!     write(462,'(4I5,2F15.9)') ibp,ok_ibz,il,ok_s,elph_Mat(iH,462) 
-!   endif
-!   if ((iq_bz==1.and.il==7).or.(iq_bz==1.and.il==10)) then
-!     write(463,'(4I5,2F15.9)') ibp,ok_ibz,il,ok_s,elph_Mat(iH,463) 
-!   endif
-! enddo
-! stop
-!DEBUG>
- !
- !
  ! Eigenvectors written to DB for post-analysis
  !============================
  !
@@ -289,18 +275,19 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  do iH=1,H_size
    if (.not.top_residual(iH)) cycle
-   db_name='ELPH_Ham/EIGENV_'//trim(intc(iH))
+   db_name='ELPH_Ham/EIGENV_I'//trim(intc(iH))//'_k'//trim(intc(elph_Ham_ik))
    open(unit=100,file=trim(db_name),form='unformatted')
    write(100) H_size
    do iHp=1,H_size
      ibp    =elph_Ham_Table(iHp,1)
      iq_bz  =elph_Ham_Table(iHp,2)
      il     =elph_Ham_Table(iHp,3)
+     iq_ibz =q%sstar(iq_bz,1)
      iq_s   =q%sstar(iq_bz,2)
      ok_bz  =qindx_S(elph_Ham_ik,iq_bz,1)
      ok_ibz =k%sstar(ok_bz,1)
      ok_s   =k%sstar(ok_bz,2)
-     write(100) ibp,ok_ibz,il,ok_s,elph_Mat(iHp,iH) 
+     write(100) ibp,ok_ibz,ok_s,il,iq_ibz,iq_s,elph_Mat(iHp,iH) 
    enddo
    close(100)
  enddo

@@ -24,6 +24,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! K = <2V-W>
  !
  use pars,         ONLY:SP,pi,IP
+ use parser_m,     ONLY:parser
  use LOGO,         ONLY:pickup_a_random
  use memory_m,     ONLY:mem_est
  use drivers,      ONLY:l_bs_fxc,l_col_cut,l_td_hf
@@ -89,7 +90,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer    :: O_dim
  integer    :: O_x_dim,alloc_err(2),x_fft_size,c_fft_size
- logical    :: load_O_X
+ logical    :: load_O_X,l_USE_all_Gexx
  complex(SP),allocatable::Ovv(:),Occ(:),Cc(:)
 #if defined _DISTRIBUTED
  complex(SP),target, allocatable::O2x(:,:)
@@ -108,6 +109,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  Co=4._SP*pi/DL_vol/real(q%nbz,SP)
  !
  if (.not.l_bs_fxc) call section('*','Bethe-Salpeter Kernel')
+ !
+ call parser('FRUsNGexx',l_USE_all_Gexx)
  !
  ! GPL_EXCLUDE_START
  !
@@ -238,7 +241,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  c_fft_size=fft_size
  call fft_setup(BS_n_g_exch,maxval(qindx_X(iq,:,2)),.true.)
  x_fft_size=fft_size
- if (x_fft_size>c_fft_size) then
+ if (x_fft_size>c_fft_size.and..not.l_USE_all_Gexx) then
    call warning('Exchange FFT size is too big. RL vectors reduced to '//intc(O_ng))
    BS_n_g_exch=O_ng
  endif

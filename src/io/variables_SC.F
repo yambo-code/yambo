@@ -62,6 +62,8 @@ integer function variables_SC(ID,local_description,what)
 #endif
  !
  i_desc=0
+ CHECK_=.TRUE.
+ if (l_NSC_shot) CHECK_=.FALSE.
  !
  call io_elemental(ID,VAR='ATOMS_STRING',CH0="",VAR_SZ=1)
  i_desc=i_desc+1

@@ -469,7 +469,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call QP_ctl_switch('K')
    call initactivate(1,'LongPath')
    call initactivate(1,'BSresKmod BScplKmod BSEQptR BSEBands')
-   call initactivate(1,'BSENGBlk BSENGexx BSEEhEny BSEClmns BSehWind')
+   call initactivate(1,'BSENGBlk BSENGexx ALLGexx BSEEhEny BSEClmns BSehWind')
 #if defined _ELPH 
    if (l_ph_corr.and..not.elph_use_q_grid) call initactivate(1,'ElPhRndNq')
 #endif

@@ -39,7 +39,7 @@ subroutine SC_History(it,E)
  !
  ! Work Space
  !
- integer  :: ik,ib,i_spin,n_headers,i_d
+ integer  :: ik,ib,i_spin,n_headers,i_d,max_kpt
  real(SP) :: V(SC_bands)
  character(schlen), SAVE :: E_file_name(2)
  character(schlen)       :: headers(SC_bands*nkibz)
@@ -47,6 +47,8 @@ subroutine SC_History(it,E)
  character(schlen), SAVE :: F_file_name(2)
  character(schlen)       :: F_headers(SC_bands*nkibz)
 #endif
+ !
+ max_kpt=min(nkibz,6) ! print only the fist 6 kpoints
  !
  do i_spin=1,n_sp_pol
    !
@@ -60,7 +62,7 @@ subroutine SC_History(it,E)
      headers(1)='Iteration'
 #endif
      n_headers=1
-     do ik=1,nkibz
+     do ik=1,max_kpt
        do ib=n_met_bands-1,n_full_bands+1
          n_headers=n_headers+1
          headers(n_headers)='E_b'//trim(intc(ib))//'_k'//trim(intc(ik))
@@ -100,12 +102,12 @@ subroutine SC_History(it,E)
 #else
      call msg('o E_History','',(/real(it_now),&
 #endif
-&                             ((E%E(ib,ik,i_spin)*HARTREE,ib=n_met_bands-1,n_full_bands+1),ik=1,nkibz) &
+&                             ((E%E(ib,ik,i_spin)*HARTREE,ib=n_met_bands-1,n_full_bands+1),ik=1,max_kpt) &
 &                             /),INDENT=-2,USE_TABS=.true.)
      !
 #if defined _RT
      call msg('o Occ_History','',(/RT_step*real(it)/FS2AUT,&
-&                                ((Occ_natural_orb(ib,ik),ib=n_met_bands-1,n_full_bands+1),ik=1,nkibz) &
+&                                ((Occ_natural_orb(ib,ik),ib=n_met_bands-1,n_full_bands+1),ik=1,max_kpt) &
 &                                /),INDENT=-2,USE_TABS=.true.)
 #endif
    endif

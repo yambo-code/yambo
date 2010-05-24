@@ -19,11 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 3.2.2 r.594 , yambo@yambo-code.org)
+AC_INIT(Yambo, 3.2.2 r.598 , yambo@yambo-code.org)
 SVERSION="3"
 SPATCHLEVEL="2"
 SSUBLEVEL="2"
-SREVISION="594"
+SREVISION="598"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -185,7 +185,7 @@ AC_SUBST(etsf_dir)
 # Verbose compilation
 #
 AC_ARG_ENABLE(msgs-comps, AC_HELP_STRING([--enable-msgs-comps],
-              [Compress compilation messaging. Default is yes.]))
+              [Verbose compilation log]))
 if test x"$enable_msgs_comps" = "x"; then enable_msgs_comps="no"; fi
 MKMF_PREFIX=" "
 if test x"$enable_msgs_comps" = "xno"; then MKMF_PREFIX="@"; fi

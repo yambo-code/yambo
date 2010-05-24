@@ -102,7 +102,7 @@ subroutine electrons_driver(Xk,Xen)
 &   .and. .not. l_current &
 #endif
 &) then
-   call WF_load(wf_ng,1,nb_to_load,nkpt_to_load,space='R',title='-WF')
+   call WF_load(wf_ng,1,nb_to_load,nkpt_to_load,space='R',title='-WF',impose_free_and_alloc=.TRUE.)
    nr=fft_dim
    allocate(v2plot(fft_size))
  endif
@@ -277,11 +277,19 @@ subroutine electrons_driver(Xk,Xen)
      ik    =QP_table(i_qp,3)
      i_spin=spin(QP_table(i_qp,:))
      !
-     i_qp=i_qp+1
-     !
      i_wf=wf_state(ib,ik,i_spin)
      !
      forall(ir=1:fft_size) v2plot(ir)=real( wf(ir,i_wf)*conjg( wf(ir,i_wf) ) )
+     !
+     !DEBUG>
+     !call Zcharge(i_qp,ib,ik,v2plot,region)
+     !write(100+ib,'(I4,8F7.4)') ik,region(1),region(2),region(3),region(4),region(5),region(6),sum(region),region(7)
+     !DEBUG<
+     !
+     i_qp=i_qp+1
+     !DEBUG>
+     !cycle
+     !DEBUG<
      !
      if (ib/=Xen%nb.and.abs(Xen%E(ib,ik,i_spin)-Xen%E(ib+1,ik,i_spin))<deg_energy) then
        cycle

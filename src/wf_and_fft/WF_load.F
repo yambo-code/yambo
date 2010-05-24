@@ -168,10 +168,11 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    free_and_alloc =kpts_to_load(1)==1.or.nkibz==1
    QUIET_alloc    =kpts_to_load(1)>1
    QUIET_free     =kpts_to_load(2)<nkibz
-   if (QUIET_alloc) call IO_and_Messaging_switch("-report -log")
    if (present(impose_free_and_alloc)) then
      free_and_alloc=impose_free_and_alloc
+     if (free_and_alloc) QUIET_alloc=.FALSE.
    endif
+   if (QUIET_alloc) call IO_and_Messaging_switch("-report -log")
  endif
  !
  ! First WF_free then fft_setup.

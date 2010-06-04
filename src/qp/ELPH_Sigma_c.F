@@ -197,7 +197,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  ! Parallelization
  !
- distributed_Q= eval_G_using_KK.and.elph_nDBs_used>=ncpu.and.ncpu>1
+ distributed_Q=eval_G_using_KK.and.elph_nDBs_used>=ncpu.and.ncpu>1
  allocate(Q_map(elph_nDBs_used))
  forall (iq_loop=1:elph_nDBs_used) Q_map(iq_loop)=iq_loop
  !

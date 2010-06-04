@@ -19,11 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 3.2.2 r.598 , yambo@yambo-code.org)
+AC_INIT(Yambo, 3.2.2 r.600 , yambo@yambo-code.org)
 SVERSION="3"
 SPATCHLEVEL="2"
 SSUBLEVEL="2"
-SREVISION="598"
+SREVISION="600"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -43,6 +43,7 @@ m4_include([config/acx_report.m4])
 m4_include([config/acx_get_fc_version.m4])
 m4_include([config/acx_cpp.m4])
 m4_include([config/ax_f90_module_flag.m4])
+m4_include([config/acx_fortran_flags.m4])
 
 AC_PREFIX_DEFAULT($PWD)
 
@@ -234,11 +235,22 @@ AC_SUBST(F90SUFFIX)
 FCFLAGS="${acx_save_fcflags}"
 acx_save_fcflags="$FCFLAGS"
 ACX_GET_FC_VERSION()
+#
+# Fortran FLAGS
+#
 ACX_FCSETUP()
+#
 acx_save_fcflags="$FCFLAGS"
 FCFLAGS="$acx_save_fcflags $F90EXTFLAGS"
+#
+# Underscore options in subroutine naming
+#
 ACX_EXTUS
+#
+# Free Form sepcific options
+#
 AC_FC_FREEFORM
+#
 F90=$FC
 AC_SUBST(F90)
 AC_SUBST(AR_FLAGS)

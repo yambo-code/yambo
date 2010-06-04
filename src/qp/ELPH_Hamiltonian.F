@@ -213,7 +213,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !===================
  !
  do iw=1,N_w
-   W(iw)= (minval(elph_E)-2./HARTREE)+ ( maxval(elph_E) -  minval(elph_E) + 4./HARTREE )/real(N_w)*iw+cmplx(0.,QP_G_damp)
+   W(iw)= (minval(elph_E)-.1/HARTREE)+ ( maxval(elph_E) -  minval(elph_E) + .2/HARTREE )/real(N_w)*iw+cmplx(0.,QP_G_damp)
  enddo
  !
  call set_real_printed_length(f_length=12,g_length=12)
@@ -302,6 +302,9 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  call live_timing('MD evaluation',H_size,SERIAL=.TRUE.)
  !
+ call msg('r','Displacements:')
+ call msg('r','Index ',(/'C1(x)','C2(x)','H1(x)','H2(x)','C1(y)','C2(y)','H1(y)','H2(y)','C1(z)','C2(z)','H1(z)','H2(z)'/))
+ !
  do iH=1,H_size
    call live_timing(steps=1)
    if (.not.top_residual(iH)) cycle
@@ -324,6 +327,8 @@ subroutine ELPH_Hamiltonian(en,k,q)
        enddo
      enddo
    enddo
+   write (tmp_string,'(i5,12(1x,f5.3))') iH,real(mean_u(:,:,iH))
+   call msg('r',trim(tmp_string))
  enddo
  call live_timing()
  !                                
@@ -338,7 +343,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !
  call live_timing('MD square evaluation',H_size,SERIAL=.TRUE.)
  !
- call msg('r','MD square:')
+ call msg('r','sqrt(MD square):')
  call msg('r','Index ',(/'C1(x)','C2(x)','H1(x)','H2(x)','C1(y)','C2(y)','H1(y)','H2(y)','C1(z)','C2(z)','H1(z)','H2(z)'/))
  !
  do iH=1,H_size
@@ -379,7 +384,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
      enddo
    enddo 
    !
-   write (tmp_string,'(i5,12(1x,f5.3))') iH,real(mean_u_sq(:,:,iH))
+   write (tmp_string,'(i5,12(1x,f5.3))') iH,sqrt(real(mean_u_sq(:,:,iH)))
    call msg('r',trim(tmp_string))
  enddo
  call live_timing()

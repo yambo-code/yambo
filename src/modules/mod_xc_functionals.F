@@ -199,7 +199,7 @@ module xc_functionals
     case(XC_EXCHANGE_CORRELATION)
       ch_kind='XC=>'         
     end select
-!
+    !
     select case(f%family)
       case(XC_FAMILY_UNKNOWN)
         ch_fam  = ' [NONE]'

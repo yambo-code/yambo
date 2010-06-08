@@ -277,6 +277,7 @@ contains
    ! Work Space
    !
    integer, allocatable           :: ityp_(:)
+   CHARACTER(256), ALLOCATABLE :: psfile_(:)
    real(DP)                       :: tau_units
    integer                        :: i1,i2
 
@@ -309,7 +310,12 @@ contains
 
    tau_units = 1.0_DP
    allocate( atm_(n_atomic_species))
-   call qexml_read_ions( tau=tau_, ityp=ityp_, atm=atm_, ierr=ierr)
+   allocate( psfile_ (n_atomic_species))
+   call qexml_read_ions( atm=atm_, ityp=ityp_, psfile=psfile_, tau=tau_, ierr=ierr)
+
+   ! Check USPP/NC pseudopotential
+   call check_pseudo(n_atomic_species,psfile_)
+   deallocate(psfile_)
 
 #endif
 
@@ -331,7 +337,9 @@ contains
      Z_species(i1) = atomic_number(atm_(i1))
    enddo
 
+   
    deallocate(ityp_, tau_)
+
 
    return
  end subroutine get_atoms

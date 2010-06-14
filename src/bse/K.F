@@ -110,7 +110,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (.not.l_bs_fxc) call section('*','Bethe-Salpeter Kernel')
  !
- call parser('FRUsNGexx',l_USE_all_Gexx)
+ call parser('ALLGexx',l_USE_all_Gexx)
  !
  ! GPL_EXCLUDE_START
  !

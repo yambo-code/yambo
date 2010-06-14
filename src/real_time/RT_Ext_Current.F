@@ -46,17 +46,21 @@ subroutine RT_Ext_Current(time)
    !
    j_current_versor=Efield(i1)%versor(:)/(4._SP*pi)
    !
+   sigma=Efield(i1)%damping         ! the width of the Gaussian is     
+   t0   =10._SP*sigma               ! the center of the Gaussian is at     t0 = 10*sigma
+   !
    select case(trim(Efield(i1)%ef_name))
-     case('SINUSOIDAL')
+     case('SINL')
        j_norm=-Efield(i1)%amplitude*cos(Efield(i1)%frequency*time)*Efield(i1)%frequency 
-     case('ANTIRESONANT')
+     case('ANTIRES')
        j_norm=-Efield(i1)%amplitude*exp((0._SP,1._SP)*Efield(i1)%frequency*time)*Efield(i1)%frequency*(0._SP,1._SP)
-     case('RESONANT')
+     case('RES')
        j_norm=-Efield(i1)%amplitude*exp(-(0._SP,1._SP)*Efield(i1)%frequency*time)*Efield(i1)%frequency*(0._SP,-1._SP)
-     case('GAUSSIAN')
-       sigma=1._SP/Efield(i1)%frequency ! the width of the Gaussian is      sigma = 1/frequency
-       t0   =10.0/Efield(i1)%frequency   ! the center of the Gaussian is at     t0 = 5/frequency
-       j_norm=Efield(i1)%amplitude*exp( -(time-t0)**2/(2._SP*sigma**2) )*(time-t0)/sigma**2
+     case('GAUSS')
+       j_norm=Efield(i1)%amplitude*exp(-(time-t0)**2/(2._SP*sigma**2) )*(time-t0)/sigma**2
+     case('QSSIN')
+        j_norm=-Efield(i1)%amplitude*(cos(Efield(i1)%frequency*(time-t0))*Efield(i1)%frequency &
+              &-(time-t0)/sigma**2*sin(Efield(i1)%frequency*(time-t0)))*exp(-(time-t0)**2/(2._SP*sigma**2))   
      case('DELTA')
      case default
      call error(" External Field "//trim(Efield(i1)%ef_name)//" not implemented ") 

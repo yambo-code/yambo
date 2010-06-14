@@ -34,7 +34,7 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:G_lesser,ID,ID,NE_steps,G_lesser_previous,j_current,&
 &                         G_lesser_reference,Thermal_steps,LifeTime,XC0,      &
-&                         l_RT_needs_XC0,Hfrozen,   &
+&                         l_RT_needs_XC0,Hfrozen,it_start,   &
 &                         A_vecpot,A_vecpot_previous,l_NE_with_fields
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V, &
 &                         rho_convergence,H_rotate,local_V,V_hartree_sc,      &
@@ -181,7 +181,7 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  !
  ! Starting point 
  !
- it_now=1
+ it_start=1
  !
  if(RESTART) then
    !
@@ -203,7 +203,7 @@ subroutine RT_start_and_restart(Xen,Xk,k)
      !
    endif
    !
-   it_now=it_now+1
+   it_start=it_now+1
    !
  else
    !

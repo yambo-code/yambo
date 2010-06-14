@@ -279,6 +279,10 @@ integer function variables_SC(ID,local_description,what)
 &       DESCRIPTION=local_description(i_desc),UNIT=1./W2Au)
        i_desc=i_desc+1
        call io_elemental(ID,&
+&       VAR=" [FIELDs] Field damping     [eV]:",R0=Efield(i1)%damping,CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc),UNIT=HARTREE)
+       i_desc=i_desc+1
+       call io_elemental(ID,&
 &       VAR=" [FIELDs] Field frequency    [eV]:",R0=Efield(i1)%frequency,CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc),UNIT=HARTREE)
        i_desc=i_desc+1

@@ -24,7 +24,7 @@ subroutine RT_report(i_t,values)
  use pars,           ONLY:lchlen,schlen,SP
  use com,            ONLY:msg,of_open_close
  use SC,             ONLY:SC_description,n_SC_descriptions
- use real_time,      ONLY:l_NE_with_fields,A_vecpot
+ use real_time,      ONLY:l_NE_with_fields,A_vecpot,it_start
  use stderr,         ONLY:set_real_printed_length
  implicit none
  !
@@ -50,7 +50,7 @@ subroutine RT_report(i_t,values)
  output_file(1)=.true.  ! General dynamics output file
  if (l_NE_with_fields)  output_file(2)=.true.
  !
- if(i_t==1) then
+ if(i_t==it_start+1) then
    !      
    file_name(1)='RT-dynamics'
    file_name(2)="RT-gauge_field"

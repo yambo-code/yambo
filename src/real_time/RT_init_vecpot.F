@@ -52,17 +52,18 @@ subroutine RT_init_vecpot()
    !                           |t=0
    !
    select case(trim(Efield(i1)%ef_name))
-     case('SINUSOIDAL')
+     case('SIN')
        A_vecpot%vecpot(:)    =A_vecpot%vecpot(:)    +E_times_c(:)/( Efield(i1)%frequency )
-     case('ANTIRESONANT')
+     case('ANTIRES')
        A_vecpot%vecpot_vel(:)=A_vecpot%vecpot_vel(:)-E_times_c(:)
        A_vecpot%vecpot(:)    =A_vecpot%vecpot(:)    -E_times_c(:)/( Efield(i1)%frequency*(0._SP,1._SP) )
-     case('RESONANT')
+     case('RES')
        A_vecpot%vecpot_vel(:)=A_vecpot%vecpot_vel(:)-E_times_c(:)
        A_vecpot%vecpot(:)    =A_vecpot%vecpot(:)    +E_times_c(:)/( Efield(i1)%frequency*(0._SP,1._SP) )
      case('DELTA')
        A_vecpot%vecpot(:)    =A_vecpot%vecpot_vel(:)-E_times_c(:)
-     case('GAUSSIAN')
+     case('GAUSS')
+     case('QSSIN')
      case default
        call error(" External Field "//trim(Efield(i1)%ef_name)//" not implemented ") 
    end select

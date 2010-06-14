@@ -35,7 +35,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
 &                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,      &
 &                         i_time,Integrator_name,l_RT_diagonalize,        &
 &                         G_lesser_reference,LifeTime,RT_diagonalization_steps,     &
-&                         A_vecpot,A_vecpot_previous
+&                         A_vecpot,A_vecpot_previous,it_start
  use collisions_CACHE, ONLY:free_COLLISIONS_v
  !
  implicit none
@@ -100,7 +100,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
  ! Calculation already done
  !
- if(it_now>=Thermal_steps+NE_steps) then
+ if(it_start>=Thermal_steps+NE_steps) then
    !      
    call RT_free()
    !
@@ -114,13 +114,13 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
  if(.not.local_V) call load_COLLISIONS()
  !
- if(Thermal_steps/=0.and.it_now<=Thermal_steps) then
+ if(Thermal_steps/=0.and.it_start<=Thermal_steps) then
    ! 
-   call live_timing('[RT] Thermalization :',Thermal_steps-it_now+1,SERIAL=.true.)
+   call live_timing('[RT] Thermalization :',Thermal_steps-it_start+1,SERIAL=.true.)
    !
- elseif(it_now>Thermal_steps+1) then
+ elseif(it_start>Thermal_steps+1) then
    !
-   call live_timing('[RT] Dynamics :',NE_steps-it_now+1,SERIAL=.true.)
+   call live_timing('[RT] Dynamics :',NE_steps-it_start+1,SERIAL=.true.)
    !
  endif
  !
@@ -128,7 +128,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
  Dynamics_is_over=.FALSE.
  !
- it=it_now-1
+ it=it_start-1
  !
  do while (.not.Dynamics_is_over)
    !

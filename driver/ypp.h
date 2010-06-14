@@ -39,7 +39,7 @@
   {"help",  "h","Short Help",0,0,0,0}, 
   {"lhelp", "H","Long Help",0,0,0,0}, 
   {"jobstr","J","Job string identifier",0,0,1,0},   
-  {"infver", "V","Input file verbosity [opt=gen]",0,0,1,0},    
+  {"infver", "V","Input file verbosity [opt=gen,qp]",0,0,1,0},    
   {"ifile", "F","Input file",0,0,1,0},              
   {"idir",  "I","Core I/O directory",0,0,1,0},         
   {"odir",  "O","Additional I/O directory",0,0,1,0},        

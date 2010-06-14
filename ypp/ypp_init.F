@@ -29,7 +29,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
 &                         nrnlvls,rnlvls,runlevel_is_on,&
-&                         infile_verbosity,V_general
+&                         infile_verbosity,V_general,V_qp
  use drivers,        ONLY:infile_editing
  use com,            ONLY:file_exists
  use stderr,         ONLY:string_split
@@ -270,6 +270,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    !
    if (i1<50) then
      if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='gen' ) infile_verbosity=V_general
+     if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='qp' )  infile_verbosity=V_qp
    endif
    !
    do i2=1,nrnlvls
@@ -442,7 +443,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_END
  !
- if (l_electrons.and.l_dos) call initactivate(1,"DOS_broad DOS_bands")
+ if (l_electrons.and.l_dos) then
+    if(l_dos) call QP_ctl_switch('G')
+    call initactivate(1,"DOS_broad DOS_bands")
+ endif
 #if defined _YPP_MAGNETIC
  if (l_angular_momentum.or.l_position) call initactivate(1,"FFTGvecs")
 #endif

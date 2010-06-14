@@ -69,6 +69,7 @@ module real_time
    real(SP) :: t_initial
    integer  :: int_t_initial
    real(SP) :: frequency
+   real(SP) :: damping
    real(SP) :: intensity
    real(SP) :: amplitude
    real(SP) :: versor(3)
@@ -147,6 +148,7 @@ module real_time
  ! Databases input/output
  !
  integer                  :: ID(5)                
+ integer                  :: it_start ! restart point
  integer                  :: max_rt_steps_disk 
  integer, allocatable     :: kpoints_map(:,:)
  real(SP), allocatable    :: current_cache(:,:)

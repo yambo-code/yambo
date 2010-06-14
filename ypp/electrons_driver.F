@@ -37,6 +37,7 @@ subroutine electrons_driver(Xk,Xen)
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:two_spin_density
+ use QP_CTL_m,       ONLY:QP_apply
 #if defined _YPP_ELPH
  use electrons,      ONLY:n_bands
  use com,            ONLY:file_exists
@@ -113,6 +114,8 @@ subroutine electrons_driver(Xk,Xen)
  if (l_dos) then
    !
    call section('*','Electronic DOS')
+   !
+   call QP_apply((/1,DOS_bands/),Xen,Xk,3,msg_fmt='s')
    !
    output_fname='el_dos'
    call of_open_close(trim(output_fname),'ot')

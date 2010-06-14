@@ -752,30 +752,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  contains
    !
-   subroutine QP_ctl_switch(what)
-     !
-     use electrons,  ONLY:n_sp_pol
-     !
-     character(1)::what
-     !
-     ! Work Space
-     !
-     call initactivate(1,what//'fnQPdb '//what//'fnQP_N ')
-     if (n_sp_pol==1) then
-       call initactivate(1,what//'fnQP_E '//what//'fnQP_W '//what//'fnQP_Z') 
-     else
-       call initactivate(1,what//'fnQP_up_E '//what//'fnQP_up_W '//what//'fnQP_up_Z') 
-       call initactivate(1,what//'fnQP_dn_E '//what//'fnQP_dn_W '//what//'fnQP_dn_Z') 
-     endif
-     !
-   end subroutine
-   !
 #if defined _RT
    !
    subroutine Afield_activate(field)
      character(*)::field
      call initactivate(1,field//'_Freq')
      call initactivate(1,field//'_Int')
+     call initactivate(1,field//'_Damp')
      call initactivate(1,field//'_kind')
      call initactivate(1,field//'_Dir')
      if (l_RT_pump_and_probe.and.field=="Probe") call initactivate(1,field//'_Tstart')

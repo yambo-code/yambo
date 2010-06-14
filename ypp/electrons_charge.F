@@ -104,7 +104,7 @@ subroutine Zcharge(i_qp,iband,ikpt,sp_wf,charge_region)
 &            is_in_tube(atom_pos(:,1,2), (/atom_pos(1,1,2),atom_pos(2,1,2),a(3,3)/), PI_SIDE, PI_SIDE, el_pos,.TRUE.,.TRUE.)
        if (is_PI) ChargePIOrbital=ChargePIOrbital+sp_wf(ir)
        !
-       if ( count( (/is_1B,is_2B,is_CH,is_PI/)==.TRUE. ) >  1) then
+       if ( count( (/is_1B,is_2B,is_CH,is_PI/).eqv..TRUE. ) >  1) then
          if (all((/is_CH,is_PI/))) chargeCHPI=chargeCHPI+sp_wf(ir)
          if (all((/is_2B,is_PI/))) charge2BPI=charge2BPI+sp_wf(ir)
          if (all((/is_1B,is_PI/))) charge1BPI=charge1BPI+sp_wf(ir)

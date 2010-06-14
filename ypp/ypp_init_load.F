@@ -100,6 +100,7 @@ subroutine ypp_init_load(defs)
  !
  call it(defs,'DOS_broad', 'Broadening of the DOS',dos_broadening,E_unit) 
  call it(defs,'DOS_bands', 'DOS bands',dos_bands) 
+ call QP_ctl_load(defs,3)
  !
  ! BZ grids
  !

@@ -46,10 +46,6 @@ module functions
    !
    function Fermi_fnc_derivative(E,T)
      !
-#if defined _DEBUG
-     use pars, ONLY: pi
-#endif
-     !
      ! This is the energy derivative of the Fermi-Dirac function.
      ! It can be considered and approximation to the delta function.
      !
@@ -58,12 +54,8 @@ module functions
      real(SP) :: E,T,Fermi_fnc_derivative
      real(SP),parameter :: tresh=0.
      Fermi_fnc_derivative=0. 
-#if defined _DEBUG
-     Fermi_fnc_derivative=T/pi/(E**2+T**2)
-#else
      if (T/=0.) Fermi_fnc_derivative=1./(2.+exp(E/T)+exp(-E/T))/T
      if (Fermi_fnc_derivative<tresh)  Fermi_fnc_derivative=0.
-#endif
    end function
    !
    ! Bose functions

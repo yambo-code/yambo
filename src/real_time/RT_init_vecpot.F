@@ -28,6 +28,10 @@ subroutine RT_init_vecpot()
  use com,            ONLY:error
  use units,          ONLY:SPEED_OF_LIGHT
  use real_time,      ONLY:ext_field,A_vecpot,n_ext_fields,Efield
+#if defined _TWO_LEVELS
+ use X_m,            ONLY:DIP_iR_or_P
+ use real_time,      ONLY:W_photon,Wo,Rabi_freq,P,W_detuning
+#endif
  !
  implicit none
  ! 
@@ -38,6 +42,25 @@ subroutine RT_init_vecpot()
  !
  A_vecpot%vecpot    =(0._SP,0._SP)
  A_vecpot%vecpot_vel=(0._SP,0._SP)
+ !
+#if defined _TWO_LEVELS
+ !exact resonance
+ !Efield(1)%frequency = Wo
+ DIP_iR_or_P(1,1,1,1,1)=(0.,0.)
+ DIP_iR_or_P(1,2,2,1,1)=(0.,0.)
+ DIP_iR_or_P(1,2,1,1,1)=(0.,1.)
+ DIP_iR_or_P(1,1,2,1,1)=conjg( DIP_iR_or_P(1,2,1,1,1) )
+ P        = DIP_iR_or_P(1,1,2,1,1)  
+ select case(trim(Efield(1)%ef_name))
+   case('RES','ANTIRES')
+     W_photon=Efield(1)%frequency 
+     Rabi_freq=2.*P*Efield(1)%amplitude/W_photon
+   case('DELTA')
+     Rabi_freq=2.*P*Efield(1)%amplitude
+     W_photon=0.
+ end select
+ W_detuning=Wo-W_photon
+#endif
  !
  do i1=1,n_ext_fields
    ! 

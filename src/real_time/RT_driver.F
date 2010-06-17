@@ -34,7 +34,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser, &
 &                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,      &
 &                         i_time,Integrator_name,l_RT_diagonalize,        &
-&                         G_lesser_reference,LifeTime,RT_diagonalization_steps,     &
+&                         G_lesser_reference,RT_is_dumped,RT_diagonalization_steps,     &
 &                         A_vecpot,A_vecpot_previous,it_start
  use collisions_CACHE, ONLY:free_COLLISIONS_v
  !
@@ -142,7 +142,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    if(it==Thermal_steps+1) then
      call live_timing('[RT] NE Dynamics :',NE_steps,SERIAL=.true.)
-     if(LifeTime/=0.0) G_lesser_reference=G_lesser
+     if(RT_is_dumped) G_lesser_reference=G_lesser
    endif
    !
    ! Copy G_lesser in G_old before start collisin
@@ -157,13 +157,17 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    if(l_NE_with_fields.and.i_time>0)  then
      A_vecpot_previous=A_vecpot
      call RT_current(Xk,G_lesser_previous,A_vecpot)
-   endif
+   endif 
+   !
+#if defined _TWO_LEVELS
+   call RT_two_levels(G_lesser)
+#endif
    !
    call RT_Energy(Xen,k,RT_Energies)
    !
    if(l_RT_diagonalize) call RT_qp_analyze(it,en,k,Xk,G_lesser)
    !
-   if(LifeTime/=0.0.and.it<Thermal_steps.and.mod(it,RT_diagonalization_steps)==0) then
+   if(RT_is_dumped.and.it<Thermal_steps.and.mod(it,RT_diagonalization_steps)==0) then
      call RT_update_G_reference(Xen,G_lesser_reference)
    endif   
    !

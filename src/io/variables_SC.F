@@ -33,7 +33,7 @@ integer function variables_SC(ID,local_description,what)
 #if defined _RT
  use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,Hfrozen,XCfrozen,                      &
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
-&                         LifeTime,l_RT_no_diamagnetic,&
+&                         QP_LifeTime,Phase_LifeTime,l_RT_no_diamagnetic,&
 &                         n_ext_fields,Efield,max_rt_steps_disk,A_vecpot,l_RT_induced_field
 #endif                                
 #if defined _MAGNETIC
@@ -241,10 +241,16 @@ integer function variables_SC(ID,local_description,what)
 &    VAR=' [RT] Cache size                 :',CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
-   call io_elemental(ID,R0=LifeTime,&
+   call io_elemental(ID,R0=QP_LifeTime,&
 &    VAR=' [RT] Quasi-particle life time   :', CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
+   if (ver_is_gt_or_eq(ID,revision=605)) then
+     call io_elemental(ID,R0=Phase_LifeTime,&
+&      VAR=' [RT] Dephasing life time        :', CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc))
+     i_desc=i_desc+1
+   endif
    call io_elemental(ID,L0=l_NE_with_fields,DB_L0=l_NE_with_fields_disk,&
 &    VAR=' [RT] External Field             :', CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))

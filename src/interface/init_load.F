@@ -53,7 +53,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use collisions_CACHE, ONLY:COLLISIONS_cache_size
 #endif
 #if defined _RT
- use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, LifeTime, &
+ use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, QP_LifeTime, Phase_LifeTime, &
 &                        RT_diagonalization_steps,Thermal_time,EField,max_rt_steps_disk
 #endif
 #if defined _MAGNETIC
@@ -282,9 +282,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! Other parameters of RT
  !
- call it(defs,'Integrator',  '[RT] Integrator (RK2 | EULER | EXACT | RK2EXACT) ',Integrator_name)
- call it(defs,'SwitchOnTime','[RT Therm] Adiabatic switch on time ',Thermal_time,verb_level=V_real_time,unit=Time_unit)
- call it(defs,'LifeTime',  '[RT] Relaxation Time',LifeTime,verb_level=V_real_time,unit=Time_unit)
+ call it(defs,'Integrator',   '[RT] Integrator (RK2 | EULER | EXACT | RK2EXACT) ',Integrator_name)
+ call it(defs,'SwitchOnTime', '[RT Therm] Adiabatic switch on time ',Thermal_time,verb_level=V_real_time,unit=Time_unit)
+ call it(defs,'QPLifeTime',   '[RT] QP Relaxation Time',QP_LifeTime,verb_level=V_real_time,unit=Time_unit)
+ call it(defs,'PhLifeTime',   '[RT] Phase Relaxation Time',Phase_LifeTime,verb_level=V_real_time,unit=Time_unit)
  call it(defs,    'RTDiagoSteps',  '[RT] Digonalize the Hamiltonian',RT_diagonalization_steps,verb_level=V_real_time)
  call it('f',defs,'NoDiamagnetic', '[RT] Exclude the diamagnetic term in current and coupling',verb_level=V_real_time)
  call it('f',defs,'InducedField', '[RT] Include induced field in coupling and current',verb_level=V_real_time)

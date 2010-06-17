@@ -32,8 +32,11 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  use units,          ONLY:HARTREE
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
+#if defined _TWO_LEVELS
+ use real_time,      ONLY:Wo,W_photon
+#endif
  use real_time,      ONLY:G_lesser,ID,ID,NE_steps,G_lesser_previous,j_current,&
-&                         G_lesser_reference,Thermal_steps,LifeTime,XC0,      &
+&                         G_lesser_reference,Thermal_steps,RT_is_dumped,XC0,      &
 &                         l_RT_needs_XC0,Hfrozen,it_start,   &
 &                         A_vecpot,A_vecpot_previous,l_NE_with_fields
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V, &
@@ -78,6 +81,9 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  ! Build Ho and save initial energies
  !
  E_bare=Xen%E(:SC_bands,:,:)
+#if defined _TWO_LEVELS
+ Wo    =Xen%E(2,1,1)-Xen%E(1,1,1)
+#endif
  !
  call SC_bare_Hamiltonian(Xen,Xk,k)
  !
@@ -215,7 +221,7 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  !
  A_vecpot_previous =A_vecpot
  G_lesser_previous =G_lesser   
- if(LifeTime/=0.0) G_lesser_reference=G_lesser   
+ if(RT_is_dumped) G_lesser_reference=G_lesser   
  !
  call msg('r','')
  !

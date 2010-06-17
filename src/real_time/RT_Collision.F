@@ -24,16 +24,17 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
  ! This subroutine prepare I1(t_1,t_2) and I2(t_1,t_2) give a G^<(t_1,t_1) 
  ! Actualy it works only for the diagonal I1(t_1,t_1), I2(t_1,t_1)
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cI
  use wrapper,        ONLY:M_by_M,V_by_V_plus_V
  use electrons,      ONLY:levels
  use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
- use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_with_fields,LifeTime,H_t,      &
+ use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_with_fields,QP_LifeTime,H_t,      &
  &                        Thermal_steps,Thermal_time,RT_step,XC0,Hfrozen,XCfrozen,&
- &                        G_lesser_reference,l_RT_needs_XC0,i_time,gauge_field
+ &                        G_lesser_reference,l_RT_needs_XC0,i_time,gauge_field,Phase_LifeTime,&
+&                         RT_is_dumped
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
@@ -141,8 +142,22 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
    ! This term send the electron distribution into the initial one
    ! G_lesser_refence(:,:,:) 
    !
-   if(LifeTime/=0._SP) call V_by_V_plus_V(SC_bands,cmplx(0._SP,-1._SP/LifeTime,SP),&
-&                                         G_input(:,:,ik)-G_lesser_reference(:,:,ik),I1_lesser(:,:,ik))
+   if(RT_is_dumped) then
+#if defined _TWO_LEVELS
+     if ( QP_LifeTime > 1.E-5_SP) then
+!       I1_lesser(1,1,1)=I1_lesser(1,1,1)-cI/QP_LifeTime*G_input(1,1,1)
+!       I1_lesser(2,2,1)=I1_lesser(2,2,1)-cI/QP_LifeTime*G_input(2,2,1)
+       I1_lesser(1,1,1)=I1_lesser(1,1,1)+cI/QP_LifeTime*G_input(2,2,1)
+       I1_lesser(2,2,1)=I1_lesser(2,2,1)-cI/QP_LifeTime*G_input(2,2,1)
+     endif
+     if ( Phase_LifeTime > 1.E-5_SP) then
+       I1_lesser(1,2,1)=I1_lesser(1,2,1)-cI/Phase_LifeTime*G_input(1,2,1)
+       I1_lesser(2,1,1)=I1_lesser(2,1,1)-cI/Phase_LifeTime*G_input(2,1,1)
+     endif
+#else
+     call V_by_V_plus_V(SC_bands,cI/QP_LifeTime,G_input(:,:,ik)-G_lesser_reference(:,:,ik),I1_lesser(:,:,ik))
+#endif
+   endif
    !
  enddo  !---- loop on k-points
  !

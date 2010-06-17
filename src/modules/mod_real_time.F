@@ -26,6 +26,12 @@ module real_time
  !
  implicit none
  !
+#if defined _TWO_LEVELS
+ complex(SP) :: Rabi_freq
+ complex(SP) :: P
+ real(SP)    :: W_photon,W_Detuning,Wo
+#endif
+ !
  ! CORE LOGICALS
  !
  ! NE dynamics
@@ -108,9 +114,11 @@ module real_time
  !
  type(gauge_field) :: A_vecpot,A_vecpot_previous
  !
- ! Diagonal and off-diagonal relaxation time
+ ! Diagonal (QP) and off-diagonal (Phase) relaxation time
  !
- real(SP)    :: LifeTime
+ real(SP)    :: Phase_LifeTime
+ real(SP)    :: QP_LifeTime
+ logical     :: RT_is_dumped
  !
  ! GFs
  !
@@ -228,7 +236,7 @@ module real_time
      endif
      !
      if(l_RT_diagonalize.or.trim(Integrator_name)==EXACT.or.trim(Integrator_name)==RK2EXACT &
-&      .or.(LifeTime/=0.0.and.Thermal_Steps/=0)) then  
+&      .or.(RT_is_dumped.and.Thermal_Steps/=0)) then  
        allocate(H_t(SC_bands,SC_bands,QP_nk,n_sp_pol))
        call mem_est("H_t",(/size(H_t)/),(/2*SP/))
      endif
@@ -242,7 +250,7 @@ module real_time
      allocate(G_lesser_previous(SC_bands,SC_bands,QP_nk))
      call mem_est("Gf_l_old",(/size(G_lesser_previous)/),(/2*SP/))
      !
-     if(LifeTime/=0.) then
+     if(RT_is_dumped) then
        allocate(G_lesser_reference(SC_bands,SC_bands,QP_nk))
        call mem_est("Gf_l_old",(/size(G_lesser_reference)/),(/2*SP/))
      endif
@@ -308,7 +316,7 @@ module real_time
      deallocate(G_lesser_previous)
      call mem_est("G_lesser_previous")
      !
-     if(LifeTime/=0.) then
+     if(RT_is_dumped) then
        deallocate(G_lesser_reference)
        call mem_est("G_lesser_previous")
      endif

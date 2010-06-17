@@ -135,11 +135,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      if (l_GF_from_CA) then
        call FREQUENCIES_Green_Function(i_qp,Sc_W(i_qp),en%E)
      else
-#if defined _DEBUG
-       Sc_W(i_qp)%er=(/minval(en%E(:,:,:))-5./HARTREE,maxval(en%E(:QP_PH_n_G_bands,:,:))+5./HARTREE/)
-#else
        Sc_W(i_qp)%er=(/minval(en%E(:,:,:))-2.*max_ph_freq,maxval(en%E(:QP_PH_n_G_bands,:,:))+2.*max_ph_freq/)
-#endif
        Sc_W(i_qp)%dr=QP_G_dr
        call FREQUENCIES_setup(Sc_W(i_qp))
      endif
@@ -363,15 +359,10 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
            !
            ! "f" Term
            !
-#if defined _DEBUG
-           gsqF_life_f(i_qp,Q_map(iq_ibz),il,iw)= gsqF_life_f(i_qp,Q_map(iq_ibz),il,iw)-&
-&                  pi*elph_gkkp_sq*q_weight*Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping)
-#else
            gsqF_life_f(i_qp,Q_map(iq_ibz),il,iw)= gsqF_life_f(i_qp,Q_map(iq_ibz),il,iw)+pi*elph_gkkp_sq*q_weight*&
 &            ( ( Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) - &
 &                time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping) )*f_occ-&
 &              Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) )
-#endif
            !
            if (eval_G_using_KK) cycle
            !
@@ -402,10 +393,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          !
          ! (b) Debye Waller Term
          !
-#if !defined _DEBUG
          gsqF_dw(i_qp,iq_ibz,il)=gsqF_dw(i_qp,iq_ibz,il)-1./2.*&
 &                                 2.*elph_DW(ik_bz,il,ib,ob)/delta_E_at_gamma*q_weight/2./ph_E
-#endif
          !                       /\
          !                        |
          !                        this 2 is to be consistent with AC definition (see Eq. 5, PRB 31, 2163)

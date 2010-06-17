@@ -23,14 +23,14 @@ subroutine RT_current(Xk,G_input,A_input)
  !
  ! Evalute current including also the diamagnetic contribution
  !
- use pars,           ONLY:SP,pi
- use units,          ONLY:SPEED_OF_LIGHT,FS2AUT
+ use pars,           ONLY:SP
+ use units,          ONLY:SPEED_OF_LIGHT
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel
  use real_time,      ONLY:l_RT_no_diamagnetic,i_time,l_NE_with_fields,j_current, &
-&                         gauge_field,RT_average_operator,RT_step
+&                         gauge_field,RT_average_operator
  use X_m,            ONLY:DIP_iR_or_P
  use QP_m,           ONLY:QP_nk
  !

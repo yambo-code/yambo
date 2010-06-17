@@ -43,10 +43,8 @@ module pars
  !
  ! CONSTANTs
  !
- real(SP), parameter :: pi=3.141592653589793238462643383279502884197_SP
-#if defined _MAGNETIC
- real(SP), parameter :: alpha_m1=137.0359997_SP
-#endif
- real(SP), parameter :: zero_dfl=1.E-5
+ real(SP),    parameter :: pi=3.141592653589793238462643383279502884197_SP
+ real(SP),    parameter :: zero_dfl=1.E-5
+ complex(SP), parameter :: cI=(0._SP,1._SP)
  !
 end module 

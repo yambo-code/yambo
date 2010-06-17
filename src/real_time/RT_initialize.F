@@ -27,7 +27,8 @@ subroutine RT_initialize()
 &                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,    &
 &                         l_RT_no_diamagnetic,EField,n_ext_fields,max_rt_steps_disk,     &
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,         &
-&                         l_RT_induced_field,j_current_ext,Ext_fields_initial_time,RT_diagonalization_steps
+&                         l_RT_induced_field,j_current_ext,Ext_fields_initial_time,RT_diagonalization_steps,&
+&                         RT_is_dumped,QP_LifeTime,Phase_LifeTime
  use D_lattice,      ONLY:DL_vol
  use parser_m,       ONLY:parser
  implicit none
@@ -62,6 +63,10 @@ subroutine RT_initialize()
      Thermal_steps = Thermal_steps+max_rt_steps_disk-rest
    endif
  endif
+ !
+ ! QP and Phase Lifetimes
+ !
+ RT_is_dumped=any((/QP_LifeTime,Phase_LifeTime/)>1.E-8_SP)
  !
  ! Earliest time when the external field is switched on
  !

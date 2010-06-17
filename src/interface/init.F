@@ -613,7 +613,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (l_cohsex) call initactivate(1,'GbndRnge UseEbands')
    if (l_real_time) then
      call initactivate(-1,'SCmixing')
-     call initactivate(1,'Integrator LifeTime') 
+     call initactivate(1,'Integrator QPLifeTime PhLifeTime') 
      call initactivate(1,'RTstep NEsteps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
      call initactivate(1,'RTfreezeH RTfreezeXC NoDiamagnetic InducedField')
 #endif

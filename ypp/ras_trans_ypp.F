@@ -71,7 +71,7 @@ integer :: db_nbm,db_nbf,db_nb(2),nb(2), nbm, ixyz, i_spin, ib, i1, nbf
    write(Ewindow,'(a,f4.2,a,f4.2,a)') "[",Ecv_min*HARTREE,":",Ecv_max*HARTREE,"]eV"
    write(sch,'(a)') " Analysing transitions in range "//Ewindow
    call msg('ns', trim(sch))
-   write(sch,'(a,i1)') " Polarization || axis # ",idir
+   write(sch,'(a,3f6.3)') " Polarization direction [cc]: ",qdir
    call msg('ns', trim(sch))
    write(sch,'(a,i3,a,i3,a)') " From db.ostnts: iv range [",db_nb(1),":",db_nbm,"]"
    call msg('ns', trim(sch))
@@ -92,11 +92,10 @@ integer :: db_nbm,db_nbf,db_nb(2),nb(2), nbm, ixyz, i_spin, ib, i1, nbf
 
          if( Ec_m_Ev <= Ecv_max .and. Ec_m_Ev >= Ecv_min) then
 
-           P2 = DIP_iR_or_P(idir,ic,iv,ik,i_spin)
+           P2 = dot_product(qdir,DIP_iR_or_P(:,ic,iv,ik,i_spin))
            P1 = conjg(P2)
-           if(lusecut) P1 = conjg(Xcut_q0grad(idir,ic,iv,ik,i_spin))
+           if(lusecut) P1 = conjg(dot_product(qdir,Xcut_q0grad(:,ic,iv,ik,i_spin)))
            PP = abs(P1*P2)
- ! NEED TO ADD WEIGHTS
            k_int(ik) = k_int(ik)+PP
            ntrans = ntrans + 1
            if(ntrans.gt.maxt) call error('Too many transitions in this range')
@@ -116,7 +115,8 @@ integer :: db_nbm,db_nbf,db_nb(2),nb(2), nbm, ixyz, i_spin, ib, i1, nbf
    !
    tot = sum(k_int)
    call msg('ns',' ')
-   call msg('ns','    Transitions summed in k-space '//Ewindow//" Axis: "//intc(idir))
+   call msg('ns','    Transitions summed in k-space, window: '//Ewindow)
+   call msg('ns','    Polarization direction: ', qdir)
    call msg('ns','   ----------------------------------')
    do ik=1,nkibz
      call c2a(v_in=k%pt(ik,:),v_out=kv,mode="ki2a")
@@ -127,7 +127,8 @@ integer :: db_nbm,db_nbf,db_nb(2),nb(2), nbm, ixyz, i_spin, ib, i1, nbf
    ! Sort the transitions with respect to their oscillator weight
    !
    call msg('ns',' ')
-   call msg('ns','   Window: '//Ewindow//" Axis: "//intc(idir))
+   call msg('ns','    Transitions window: '//Ewindow)
+   call msg('ns','    Polarization direction: ', qdir)
    write(sch,'(a5,2a4,2a12)') "ik","iv","ic","Evc","|P|^2"
    call msg('ns', trim(sch))
    call msg('ns','   ----------------------------------')

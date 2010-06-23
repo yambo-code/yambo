@@ -495,7 +495,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 &       " E0 Theta0 Thetap Phi DetAngle "//&
 &       " LossForm ImpactFt DetIntMd NumIntPt GausConv")
    if(lloc) call initactivate(1,"NormDir LowerLim UpperLim NGLoc")
-   if(ltrans) call initactivate(1,"EcvMin EcvMax PolDir")
+   if(ltrans) call initactivate(1,"EcvMin EcvMax qdir")
  endif
  !
 #endif

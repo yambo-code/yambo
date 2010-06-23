@@ -125,6 +125,7 @@ module YPP
  !
  logical           :: ltrans
  real(SP)          :: Ecv_min, Ecv_max
+ real(SP)          :: qdir(3)
  integer           :: idir
  !
  ! GPL_EXCLUDE_START RAS_IGNORE

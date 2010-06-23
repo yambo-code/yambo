@@ -158,16 +158,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! ALLOCATION
  !------------
  !
- ! GPL_EXCLUDE_START SC_IGNORE
- !
  if (l_cohsex.or.l_sc_srpa) then
    !
    call X_alloc('X',(/X%ng,X%ng,1/))
    allocate(dc(2),PPaR_ws(X%ng,X%ng),PPaR(X%ng,X%ng),stat=alloc_err)
    call mem_est("PPaR",(/2*size(PPaR_ws)/),errors=(/alloc_err/))
  else
-   !
-   ! GPL_EXCLUDE_END SC_IGNORE
    !
    call X_alloc('X',(/X%ng,X%ng,2/))
    allocate(E_(QP_dSc_steps),dc(QP_dSc_steps),stat=alloc_err)
@@ -176,11 +172,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    call mem_est("PPaP",(/size(PPaP)+2*size(PPaR_ws),2*size(PPaR)/),&
 &               (/SP/),errors=(/alloc_err/))
    !
-   ! GPL_EXCLUDE_START SC_IGNORE
-   !
  endif
- !
- ! GPL_EXCLUDE_END SC_IGNORE
  !
  allocate(isc%gamp(X%ng,X%ng),isc%rhotw(isc%ngrho),iscp%rhotw(isc%ngrho),stat=alloc_err)
  call mem_est("ISC-GAMP",(/X%ng**2+2*isc%ngrho/),errors=(/alloc_err/))
@@ -305,8 +297,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! COH (using completeness relation)
      !
-     ! GPL_EXCLUDE_START SC_IGNORE
-     !
      if ((l_sc_srpa.or.l_cohsex).and..not.COHSEX_use_empties) then
        !
        iscs_save(1,: )=isc%os
@@ -326,8 +316,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        isc%qs=iscs_save(2,:3)
        !
      endif
-     !
-     ! GPL_EXCLUDE_END SC_IGNORE
      !
      do ib=QP_n_G_bands(1),QP_n_G_bands(2)
        !
@@ -376,8 +364,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          if(.not.l_collisions_IO) QP_Sc(i_qp,:2)=QP_Sc(i_qp,:2)+dc(:2)
          !
-         ! GPL_EXCLUDE_START SC_IGNORE
-         !
        else
 #if defined _DOUBLE
          call zgemv('N', X%ng, X%ng, (1._SP,0._SP), PPaR, X%ng, conjg(iscp%rhotw),1,(0._SP,0_SP), local_rhotw,1)
@@ -406,8 +392,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)+dc(2)
 #endif
-         !
-         ! GPL_EXCLUDE_END SC_IGNORE
          !
        endif
        !

@@ -107,12 +107,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('r',defs,'lrc_fxc', '[R TDDFT] The LRC TDDFT kernel')
  call it('r',defs,'rim_cut', '[R RIM CUT] Coulomb interaction')
  call it('r',defs,'tdhf',    '[R TDHF] Unscreened e-h interaction: TD Hartree-Fock')
- !
- ! GPL_EXCLUDE_START SC_IGNORE
- !
  call it('r',defs,'cohsex',  '[R Xp] COlumb Hole Screened EXchange')
- !
- ! GPL_EXCLUDE_END SC_IGNORE
  !
  ! GPL_EXCLUDE_START
  !

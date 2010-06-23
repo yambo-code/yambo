@@ -50,24 +50,16 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  !
  ! ... no energy dependence in GW COHSEX
  !
- ! GPL_EXCLUDE_START
- !
  if (l_cohsex) then
    !
    QP_dSc_steps=1
    !
  else
    !
-   ! GPL_EXCLUDE_END
-   !
    call msg('r', '[Newton] Sc step   [ev]:',QP_dSc_delta*HARTREE)
    call msg('r', '[Newton] Sc steps      :',QP_dSc_steps)
    !
-   ! GPL_EXCLUDE_START
-   !
  endif
- !
- ! GPL_EXCLUDE_END
  !
  call msg('rn','[Newton] SC iterations :',GWo_iterations)
  !

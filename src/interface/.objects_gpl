@@ -1,2 +1,3 @@
 objs = init_load.o init.o QP_init.o parse_K_list.o \
-       init_q_pts.o  stop_now.o barriers.o
+       init_q_pts.o  stop_now.o barriers.o QP_ctl_load.o QP_ctl_switch.o
+

@@ -95,29 +95,26 @@ subroutine barriers()
  !call switch_off_runlevel('bs_fxc',on_name=' ')
  ! GPL_INCLUDE_END
  !
- ! GPL_INCLUDE_START SC_IGNORE
- !call switch_off_runlevel('cohsex',on_name=' ')
- ! GPL_INCLUDE_END SC_IGNORE
- !
  ! RUNLEVELS
  !===========
- !
- ! GPL_EXCLUDE_START SC_IGNORE
  !
 #if defined _RT
  call switch_off_runlevel('gw0',on_name=' ')
 #endif
  !
+ ! GPL_EXCLUDE_START SC_IGNORE
+ !
  if (l_sc_run) then
    call switch_off_runlevel('all',on_name='scpot HF_and_locXC cohsex em1s negf collisions_IO magnetic '//trim(always_runlevels))
    goto 1
  endif
+ !
+ ! GPL_EXCLUDE_END SC_IGNORE
+ !
  if (gw0_cohsex) then
    call switch_off_runlevel('all',on_name='gw0 em1s cohsex el_el el_ph HF_and_locXC '//trim(always_runlevels))
    goto 1
  endif
- !
- ! GPL_EXCLUDE_END SC_IGNORE
  !
  ! GPL_EXCLUDE_START
  !

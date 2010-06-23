@@ -127,16 +127,12 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
  else if (l_cohsex) then
    !
-   ! GPL_EXCLUDE_START SC_IGNORE
-   !
    ! in COHSEX no SC possible
    !
    GWo_iterations=0
    !
    qp%description(2)=' == COHSEX GW =='
    QP_DB_kind=SE_COHSEX
-   !
-   ! GPL_EXCLUDE_END SC_IGNORE
    !
  else
    !

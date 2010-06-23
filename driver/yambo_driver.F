@@ -205,14 +205,10 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
    !
    if (l_cohsex) then
      !
-     ! GPL_EXCLUDE_START
-     !
      ! COHSEX 
      !========
      !
      call QP_driver(X(2),Xen,Xk,en,k,q,Xw(2))
-     !
-     ! GPL_EXCLUDE_END
      !
    else if (l_ppa) then
      !

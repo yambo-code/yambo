@@ -815,12 +815,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
        ! GPL_EXCLUDE_END
        !
-       ! GPL_EXCLUDE_START SC_IGNORE
-       ! 
        l_cohsex=runlevel_is_on('cohsex')
-       !
-       ! GPL_EXCLUDE_END SC_IGNORE
-       ! 
        ! 
 #if defined _SC
        l_sc_run=runlevel_is_on('scpot')
@@ -1108,13 +1103,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          l_el_corr=.true.
 #endif
          !
-         ! GPL_INCLUDE_START  GW_REAL_AXIS_IGNORE 
-         !
-         !infile_editing=.true.
-         !call initactivate(1,'ppa')
-         !
-         ! GPL_INCLUDE_END GW_REAL_AXIS_IGNORE
-         !
        endif
        !
        ! GW approximation 
@@ -1126,12 +1114,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            call initactivate(1,'ppa')
          else if (trim(rstr_piece(i1+1))=='c') then
            !
-           ! GPL_EXCLUDE_START SC_IGNORE
-           !
            infile_editing=.true.
            call initactivate(1,'cohsex gw0') 
-           !
-           ! GPL_EXCLUDE_END SC_IGNORE
            !
          endif
          !

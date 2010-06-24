@@ -419,17 +419,17 @@ subroutine init_load(defs,en,q,k,X,Xw)
      if (i_field==2) name='Pump'
      if (i_field==2) verbosity_here=V_real_time
      call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
-&    EField(i_field)%frequency,unit=E_unit,verb_level=verbosity_here)
+&    EField(i_field)%frequency,unit=E_unit,verb_level=0)
      call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&
-&    EField(i_field)%intensity,unit=I_unit,verb_level=verbosity_here)
+&    EField(i_field)%intensity,unit=I_unit,verb_level=0)
      call it(defs,trim(name)//'_Damp',             '[RT '//trim(name)//'] Damping',&
-&    EField(i_field)%damping,unit=Time_unit,verb_level=verbosity_here)
+&    EField(i_field)%damping,unit=Time_unit,verb_level=V_real_time)
      call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] Kind(SIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',&
-&    EField(i_field)%ef_name,verb_level=verbosity_here)
+&    EField(i_field)%ef_name,verb_level=0)
      call it(defs,trim(name)//'_Dir',             '[RT '//trim(name)//'] Versor',&
-&    EField(i_field)%versor,verb_level=verbosity_here)
+&    EField(i_field)%versor,verb_level=0)
      call it(defs,trim(name)//'_Tstart',        '[RT '//trim(name)//'] Initial Time',&
-&    EField(i_field)%t_initial,unit=Time_unit,verb_level=verbosity_here)
+&    EField(i_field)%t_initial,unit=Time_unit,verb_level=V_real_time)
    end subroutine
    !
 #endif

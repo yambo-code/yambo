@@ -29,8 +29,11 @@ subroutine RT_init_vecpot()
  use units,          ONLY:SPEED_OF_LIGHT
  use real_time,      ONLY:ext_field,A_vecpot,n_ext_fields,Efield
 #if defined _TWO_LEVELS
+ use pars,           ONLY:pi
+ use units,          ONLY:HARTREE,HA2FSm1,FS2AUT
+ use com,            ONLY:msg
  use X_m,            ONLY:DIP_iR_or_P
- use real_time,      ONLY:W_photon,Wo,Rabi_freq,P,W_detuning
+ use real_time,      ONLY:W_photon,Wo,Rabi_freq,P,W_detuning,delta,Rabi_nn_square
 #endif
  !
  implicit none
@@ -44,8 +47,6 @@ subroutine RT_init_vecpot()
  A_vecpot%vecpot_vel=(0._SP,0._SP)
  !
 #if defined _TWO_LEVELS
- !exact resonance
- !Efield(1)%frequency = Wo
  DIP_iR_or_P(1,1,1,1,1)=(0.,0.)
  DIP_iR_or_P(1,2,2,1,1)=(0.,0.)
  DIP_iR_or_P(1,2,1,1,1)=(0.,1.)
@@ -60,6 +61,16 @@ subroutine RT_init_vecpot()
      W_photon=0.
  end select
  W_detuning=Wo-W_photon
+ call msg('s','[2 LEVELS] Pump Rabi freq  [eV   ]',abs(Rabi_freq)*HARTREE)
+ call msg('s','[2 LEVELS] Pump freq       [eV/fs]',(/abs(W_photon)*HARTREE,2.*pi/W_photon/FS2AUT /))
+ delta=Efield(2)%frequency-Efield(1)%frequency
+ call msg('s','[2 LEVELS] Probe detuning  [eV/fs]',(/abs(delta)*HARTREE,2.*pi/abs(delta)/FS2AUT/))
+ !
+ Rabi_nn_square(1,1)=2.*abs(P)**2.*Efield(1)%amplitude*Efield(1)%amplitude
+ Rabi_nn_square(1,2)=2.*abs(P)**2.*Efield(1)%amplitude*Efield(2)%amplitude
+ Rabi_nn_square(2,1)=2.*abs(P)**2.*Efield(2)%amplitude*Efield(1)%amplitude
+ Rabi_nn_square(2,2)=2.*abs(P)**2.*Efield(2)%amplitude*Efield(2)%amplitude
+ !
 #endif
  !
  do i1=1,n_ext_fields

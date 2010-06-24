@@ -24,13 +24,11 @@ subroutine RT_two_levels(G_lesser)
  use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT,FS2AUT
  use SC,             ONLY:SC_bands
-! use real_time,      ONLY:l_RT_no_diamagnetic,i_time,l_NE_with_fields,j_current, &
-!&                         gauge_field,RT_average_operator,RT_step
  use QP_m,           ONLY:QP_nk
  use units,          ONLY:HARTREE
  use pars,           ONLY:cI
  use real_time,      ONLY:Wo,Rabi_freq,W_photon,Phase_LifeTime,RT_is_dumped,P,W_detuning,&
-&                         QP_LifeTime,RT_step,l_NE_with_fields,i_time
+&                         QP_LifeTime,RT_step,l_NE_with_fields,i_time,Efield
  !
  implicit none           
  complex(SP),       intent(in) :: G_lesser(SC_bands,SC_bands,QP_nk)
@@ -38,13 +36,12 @@ subroutine RT_two_levels(G_lesser)
  ! Work Space
  !
  integer       :: i_r
+ logical       :: P_and_P
  real(SP)      :: T,Rabi_test,Gamma_,delta_G_SS,Current_SS
  !
- ! j(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) p \psi_j(k) - e^2/(cm) n(r) A(r,t)
- !
- ! j_current(t) = int dr j(r,t)
- !
  if(.not.l_NE_with_fields.or.i_time<0) return
+ !
+ P_and_P=Efield(2)%ef_name/="none"
  !
  T= (i_time-1)*RT_step
  !
@@ -102,7 +99,7 @@ subroutine RT_two_levels(G_lesser)
      integer     ::unit_
      complex(SP) ::what
      write (unit_,'(10g20.10)') (i_time-1)*RT_step/FS2AUT,what
-     !write (unit_,'(10g20.10)') (i_time-1)*RT_step/pi*W_photon,what
+     !write (unit_,'(10g20.10)') (i_time-1)*RT_step/2./pi*W_photon,what
    end subroutine
    !
    subroutine open_it(unit_,where_)

@@ -28,8 +28,12 @@ module real_time
  !
 #if defined _TWO_LEVELS
  complex(SP) :: Rabi_freq
+ complex(SP) :: Rabi_nn_square(2,2)
  complex(SP) :: P
- real(SP)    :: W_photon,W_Detuning,Wo
+ real(SP)    :: W_photon
+ real(SP)    :: W_Detuning
+ real(SP)    :: delta
+ real(SP)    :: Wo
 #endif
  !
  ! CORE LOGICALS

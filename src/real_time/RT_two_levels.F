@@ -38,14 +38,13 @@ subroutine RT_two_levels(G_lesser)
  integer       :: i_r
  logical       :: P_and_P
  real(SP)      :: T,Rabi_test,Gamma_,delta_G_SS,Current_SS
+ complex(SP)   :: P(6)
  !
  if(.not.l_NE_with_fields.or.i_time<0) return
  !
  P_and_P=Efield(2)%ef_name/="none"
  !
  T= (i_time-1)*RT_step
- !
- Gamma_= abs(Rabi_freq)**2/(W_Detuning**2.+1./Phase_LifeTime**2.)*QP_LifeTime/Phase_LifeTime
  !
  if (i_time == 1) then
    open (unit=300,name='Weights_RES.dat',form='formatted')
@@ -60,6 +59,9 @@ subroutine RT_two_levels(G_lesser)
      write (301,*) Rabi_Test*HARTREE,delta_G_SS,Current_SS
    enddo
  endif
+ !
+ Gamma_= abs(Rabi_freq)**2/(W_Detuning**2.+1./Phase_LifeTime**2.)*QP_LifeTime/Phase_LifeTime
+ delta_G_SS=-2./(Gamma_+1.)
  !
  call open_it(103,"G12_delta")
  call open_it(104,"G12_res")
@@ -81,7 +83,7 @@ subroutine RT_two_levels(G_lesser)
  call open_it(107,"G22+G11")
  call write_it(107,-cI*(G_lesser(1,1,1)+G_lesser(2,2,1)))
  call open_it(108,"G22-G11")
- call write_it(108,-cI*(G_lesser(2,2,1)-G_lesser(1,1,1)))
+ call write_it(108,-cI*(G_lesser(2,2,1)-G_lesser(1,1,1))-delta_G_SS)
  call open_it(100,"G21")
  call write_it(100,G_lesser(2,1,1))
  call open_it(101,"G12")
@@ -117,6 +119,8 @@ subroutine RT_two_levels(G_lesser)
        local = trim(string_remove(file_name,' '))
        file_name=local
      enddo
+     if (P_and_P) local="PP_"//trim(file_name)
+     file_name=local
      open (unit=unit_,name=trim(file_name),form='formatted')
    end subroutine
    !

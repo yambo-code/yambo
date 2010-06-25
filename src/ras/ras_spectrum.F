@@ -30,13 +30,13 @@ subroutine CalcRAS(hw, eps_x, eps_y, eps_b, nw, d_surf)
 ! Local
   real(SP)                        :: Aw(nw), Bw(nw) 
   real(SP)                        :: Rdelta(nw), Idelta(nw)
-  real(SP)                        :: RAS(nw)
-  real(SP)                        :: denom, od(8), cost
+  real(SP)                        :: RAS(nw),SDR(nw)
+  real(SP)                        :: denom, od(9), cost
   real(SP)                        :: deltax,deltay,delta 
   integer                         :: i
   character(schlen)               :: of_name
-  character(10)                   :: headings(8)
-  
+  character(10)                   :: headings(9)
+
   cost = 4.0_SP/137.03604_SP ! 4/c in au
   do i = 1, nw
      denom     = (1.0_SP - real( eps_b(i) ) )**2 + (AIMAG( eps_b(i)) )**2
@@ -45,7 +45,10 @@ subroutine CalcRAS(hw, eps_x, eps_y, eps_b, nw, d_surf)
      Rdelta(i) =   real( eps_x(i) ) -  real( eps_y(i) )   
      Idelta(i) =  AIMAG( eps_x(i) ) - AIMAG( eps_y(i) )  
      RAS(i)    = cost * hw(i) * d_surf * ( Aw(i) * Idelta(i) - Bw(i) * Rdelta(i) )
-     write(72,*) hw(i)*HARTREE, Idelta(i),Rdelta(i),aimag(eps_b(i))
+     
+     SDR(i)    = cost * hw(i) * d_surf * &
+&           AIMAG( (1.0_SP - 0.5*(eps_x(i)+eps_y(i)))/(1.0_SP - eps_b(i)) )
+     write(72,*) hw(i)*HARTREE, Idelta(i),Rdelta(i),aimag(eps_b(i)),SDR(i)
   enddo
 
   write (of_name,'(a,a)') 'ras','-rpa'
@@ -53,16 +56,16 @@ subroutine CalcRAS(hw, eps_x, eps_y, eps_b, nw, d_surf)
 
 ! Output file titles
 !       1     2       3         4      5   6     7         8
-  headings(1:8) = (/' 1',' 2',' 3',' 4',' 5',' 6',' 7',' 8' /)
+  headings(1:9) = (/' 1',' 2',' 3',' 4',' 5',' 6',' 7',' 8',' 9'/)
   call msg('o ras','#',headings(1:8),INDENT=0,USE_TABS=.true.)
-  headings(1:8) = (/'hw (eV)','    RAS','e1(x-y)','e2(x-y)', &
- &                    '      A','      B',' A x e2',' B x e1' /)
-  call msg('o ras','#',headings(1:8),INDENT=0,USE_TABS=.true.)
+  headings(1:9) = (/'hw (eV)','    RAS','e1(x-y)','e2(x-y)', &
+ &                    '      A','      B',' A x e2',' B x e1','    SDR' /)
+  call msg('o ras','#',headings(1:9),INDENT=0,USE_TABS=.true.)
 
 ! Write data to file
   do i = 1, nw
      od = (/ hw(i)*HARTREE, RAS(i), Rdelta(i), Idelta(i), Aw(i), Bw(i), &
-&             Aw(i)*Idelta(i), Bw(i)*Rdelta(i) /)
+&             Aw(i)*Idelta(i), Bw(i)*Rdelta(i), SDR(i) /)
      call msg('o ras','',od,INDENT=0,USE_TABS=.true.)
   enddo 
   call of_open_close(of_name)

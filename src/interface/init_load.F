@@ -24,10 +24,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use pars,          ONLY:schlen
  use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
- use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,Efield_unit,&
+ use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,&
 &                        Time_unit,I_unit,Angle_unit,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
- use X_m,           ONLY:X_t,long_path,q_plus_G_direction,Q_Shift_Order
+ use X_m,           ONLY:X_t,long_path,q_plus_G_direction,Q_Shift_Order,gauge_type
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,SC_band_mixing,&
@@ -300,7 +300,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'B_Field',    '[MAG] Magnetic field modulus',MAG_B,unit=Bfield_unit)
  call it(defs,'B_psi',      '[MAG] Magnetic field psi angle',MAG_psi,unit=Angle_unit,verb_level=V_sc)
  call it(defs,'B_theta',    '[MAG] Magnetic field theta angle',MAG_theta,unit=Angle_unit,verb_level=V_sc)
- call it(defs,'Gauge',      '[MAG] Gauge ("SYMM"etric, "X_ASYMM", "Y_ASYMM" or "Z_ASYMM"etric)',MAG_gauge,verb_level=V_sc)
+ call it(defs,'B_Gauge',    '[MAG] Gauge ("SYMM"etric, "X_ASYMM", "Y_ASYMM" or "Z_ASYMM"etric)',MAG_gauge,verb_level=V_sc)
  call it(defs,'NonPerDir',  '[MAG] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions)
  call it(defs,'B_radius',   '[MAG] Magnetic flux radius',MAG_radius,verb_level=V_sc)
 #endif
@@ -372,6 +372,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! 
  ! SC [common with RT]
  !
+ call it(defs,'GaugeType', '[Xd] Gauge type (lenght|velocity|longitudinal)',gauge_type,verb_level=V_resp)
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_sc)
  call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)

@@ -21,9 +21,9 @@
 !
 subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
- use drivers,        ONLY:l_optics,l_real_time
+ use drivers,        ONLY:l_optics,l_real_time,l_sc_run
  use pars,           ONLY:SP
- use com,            ONLY:warning
+ use com,            ONLY:warning,error
 #if defined _RAS
  use ras_module,     ONLY:transloc, lras
 #endif
@@ -33,10 +33,13 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
  use X_m,            ONLY:DIP_iq_dot_r,X_alloc,X_t,DIP_iR_or_P,long_path,Dipole_bands_ordered,&
-&                         Vnl_commutator_warning,Eval_P_and_P2_only,P_square
+&                         Vnl_commutator_warning
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use wave_func,      ONLY:wf_ng,WF_load,WF_free
  use vec_operate,    ONLY:v_norm
+#if defined _SC      
+ use X_m,            ONLY:P_square,gauge_type
+#endif
 #if defined _DISTRIBUTED
  use wf_distribute,  ONLY:WF_states_setup
 #endif
@@ -70,7 +73,15 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! in real-time simulations P and P^2 are ALWAYS calculated => no band ordering
  !
 #if defined _SC 
- if (l_real_time)   Dipole_bands_ordered=.FALSE.
+ !
+ if(l_sc_run.or.l_real_time) Dipole_bands_ordered=.FALSE.
+ !
+ ! velocity only in _SC (imposed if non-local potentials)
+ ! longitudinal anywhere
+ !
+ if(trim(gauge_type)/='velocity'.and.trim(gauge_type)/='length'.and.&
+&   trim(gauge_type)/='longitudinal') call error(' Unknown GaugeType ')
+ !
 #endif
  !
  ! Check first if ostnts DB is already done
@@ -87,15 +98,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! GPL_EXCLUDE_END RAS_IGNORE
  !
- ! Swith off I/O in case gradient is calculated
- if (Eval_P_and_P2_only) call IO_and_Messaging_switch("-io_in -io_out")
- !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=ioOSTNTS(X,Xen,ID)
- !
-#if defined _SC 
- if (Eval_P_and_P2_only) call IO_and_Messaging_switch("+io_in +io_out ")
-#endif
  !
  if (io_err.ne.0) then
    !
@@ -108,15 +112,14 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      call X_alloc('OptGrad',(/3,X%ib(2),Xen%nbm,Xk%nibz/))
    else
      call X_alloc('OptGrad',(/3,X%ib(2),X%ib(2),Xk%nibz/))
-#if defined _SC 
-     if (Eval_P_and_P2_only) then
-       call X_alloc('P_square',(/X%ib(2),X%ib(2),Xk%nibz/))
-       P_square=(0.,0.)
-     endif
-#endif
    endif
    DIP_iR_or_P=(0.,0.)
    !
+#if defined _RT 
+   call X_alloc('P_square',(/X%ib(2),X%ib(2),Xk%nibz/))
+   P_square=(0.,0.)
+#endif
+   !   
 #if defined _DISTRIBUTED
    !
    if(trim(long_path)=='none'.and.Dipole_bands_ordered) then
@@ -166,15 +169,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    ! Free any loaded WFs
    !
    call WF_free()
-#if defined _SC 
-   !
-   ! Swith off I/O in case gradient is calculated
-   !
-   if (Eval_P_and_P2_only) call IO_and_Messaging_switch("-io_in -io_out")
-   !
-#endif
-   !
-   ! Write the DIP_iR_or_P to its database (Only in the case of "R")
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=ioOSTNTS(X,Xen,ID)
@@ -182,10 +176,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  end if
  !
 #if defined _SC 
- if (Eval_P_and_P2_only) then
-   call IO_and_Messaging_switch("+io_in +io_out ")
-   return
- endif
+ if (l_real_time) return
 #endif
  !
  ! The field direction and the gamma-point norm must be renormalized here in case the
@@ -242,7 +233,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
          if ( is > nsym/(i_time_rev+1) ) DIP_iq_dot_r(ic,iv,i1,i_spin) = &
 &          dot_product( DIP_iR_or_P(:,ic,iv,ik,i_spin), field_dir_rot ) 
          !
-         ! 
          ! GPL_EXCLUDE_START SPIN_IGNORE
          !
        enddo

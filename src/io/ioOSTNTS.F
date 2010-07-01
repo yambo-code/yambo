@@ -23,7 +23,7 @@ integer function ioOSTNTS(X,Xen,ID)
  !
  use pars,          ONLY:SP,schlen
  use units,         ONLY:HARTREE
- use X_m,           ONLY:X_t,DIP_iR_or_P,X_alloc,Dipole_bands_ordered
+ use X_m,           ONLY:X_t,DIP_iR_or_P,X_alloc,Dipole_bands_ordered,gauge_type 
  use electrons,     ONLY:levels,n_sp_pol
  use R_lattice,     ONLY:nXkibz,q0_def_norm
  use matrix_operate,ONLY:mat_c2r,mat_r2c
@@ -102,9 +102,18 @@ integer function ioOSTNTS(X,Xen,ID)
      !
    endif
    !
+   if (ver_is_gt_or_eq(ID,revision=614)) then
+     call io_elemental(ID,VAR='GAUGE_TYPE',CH0="",VAR_SZ=1,MENU=0)
+     call io_elemental(ID,CH0=gauge_type,&
+&         VAR=' Gauge Type             :',CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,VAR="",VAR_SZ=0)
+   endif
+   !
    ioOSTNTS=io_status(ID)
    if (ioOSTNTS/=0) goto 1
  endif
+ !
+ if (.not.Dipole_bands_ordered) db_nbm=db_nb(2)
  !
  ! On disk the size is DIP_iR_or_P(3,db_nb(2),db_nbm,nXkibz)
  !
@@ -113,7 +122,7 @@ integer function ioOSTNTS(X,Xen,ID)
    !
    allocate(DIP_iR_or_P_disk(db_nb(2),db_nbm,2))
    !
-   if (read_is_on(ID)) call X_alloc('OptGrad',(/3,X%ib(2),Xen%nbm,nXkibz/))
+   if(read_is_on(ID)) call X_alloc('OptGrad',(/3,X%ib(2),db_nbm,nXkibz/))
    !
    do i1=1,nXkibz
      !
@@ -138,6 +147,41 @@ integer function ioOSTNTS(X,Xen,ID)
    deallocate(DIP_iR_or_P_disk)
    !
  endif
+ !
+#if defined _RT
+ !
+ call io_disconnect(ID=ID)
+ !
+ ioOSTNTS=io_connect(desc='P_square',type=2,ID=ID)
+ if (ioOSTNTS/=0) goto 1
+ !
+ sec_size=db_nb(2)*db_nbm
+ if (any((/io_sec(ID,:)==2/))) then
+   !
+   allocate(DIP_iR_or_P_disk(db_nb(2),db_nbm,2))
+   !
+   if (read_is_on(ID)) call X_alloc('P_square',(/X%ib(2),X%ib(2),nXkibz/))
+   !
+   do i1=1,nXkibz
+     !
+     do i_spin=1,n_sp_pol
+       !
+       if (write_is_on(ID)) call mat_c2r(DIP_iR_or_P(4,:,:,i1,i_spin),DIP_iR_or_P_disk)
+       !
+       write (VAR_name,'(2(a,i4.4))') 'P_square_k_',i1,'_spin_',i_spin
+       call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(DIP_iR_or_P_disk))
+       call io_bulk(ID,R3=DIP_iR_or_P_disk)
+       !
+       if (read_is_on(ID)) call mat_r2c(DIP_iR_or_P_disk,DIP_iR_or_P(4,:,:,i1,i_spin))
+       !
+     enddo
+     !
+   enddo
+   !
+   deallocate(DIP_iR_or_P_disk)
+   !
+ endif
+#endif
  !
 1 call io_disconnect(ID=ID)
  !

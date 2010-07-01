@@ -128,7 +128,7 @@ subroutine electrons_driver(Xk,Xen)
      titles(2)='DOS [up]'
      titles(3)='DOS [dn]'
      titles(4)='DOS [up+dn]'
-     call msg('o dos','#',titles(:2),INDENT=0,USE_TABS=.true.)    
+     call msg('o dos','#',titles(:4),INDENT=0,USE_TABS=.true.)    
    endif
    call msg('o dos',"#")
    !

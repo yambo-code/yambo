@@ -457,6 +457,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_ppa)) then
    call QP_ctl_switch('X')
    call initactivate(1,'LongPath Qdirection QShiftOrder')
+#if defined _SC
+   call initactivate(1,'GaugeType')
+#endif
    call X_activate('Xd',(/'QpntsR','BndsRn','NGsBlk',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
@@ -608,7 +611,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _SC
  if (l_sc_run) then
-   call initactivate(1,'Potential FFTGvecs SCmixing SCBands BandMix')
+   call initactivate(1,'Potential FFTGvecs GaugeType SCmixing SCBands BandMix')
    if (l_collisions_IO) call initactivate(1,'CollCache')
    if (l_cohsex) call initactivate(1,'GbndRnge UseEbands')
    if (l_real_time) then
@@ -634,7 +637,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Magnetic
  !
  if (l_sc_magnetic) then
-   call initactivate(1,'Hamiltonian B_Field B_psi B_theta Gauge')
+   call initactivate(1,'Hamiltonian B_Field B_psi B_theta B_Gauge')
    if (n_sp_pol>1) call initactivate(1,'NonPerDir')
    if (MAG_landau) call initactivate(1,'B_radius')
  endif

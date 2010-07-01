@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine RT_current(Xk,G_input,A_input)
+subroutine RT_current_or_polarization(Xk,G_input,A_input)
  !
  ! Evalute current including also the diamagnetic contribution
  !
@@ -29,7 +29,7 @@ subroutine RT_current(Xk,G_input,A_input)
  use D_lattice,      ONLY:DL_vol
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel
- use real_time,      ONLY:l_RT_no_diamagnetic,i_time,l_NE_with_fields,j_current, &
+ use real_time,      ONLY:l_RT_no_diamagnetic,i_time,l_NE_with_fields,j_or_p, &
 &                         gauge_field,RT_average_operator
  use X_m,            ONLY:DIP_iR_or_P
  use QP_m,           ONLY:QP_nk
@@ -43,15 +43,21 @@ subroutine RT_current(Xk,G_input,A_input)
  !
  integer       :: id
  !
- ! j(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) p \psi_j(k) - e^2/(cm) n(r) A(r,t)
+ ! Velocity gauge
  !
- ! j_current(t) = int dr j(r,t)
+ ! j(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) p \psi_j(k) - e^2/(cm) n(r) A(r,t)
+ ! j_or_p(t) = int dr j(r,t) 
+ !
+ ! Lenght gauge
+ !
+ ! p(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) r \psi_j(k)
+ ! j_or_p(t) = int dr p(r,t) 
  !
  if(.not.l_NE_with_fields.or.i_time<0) return
  !
  do id=1,3
    !
-   call RT_average_operator(VALUE=j_current(id),O_MATRIX=DIP_iR_or_P(id,:,:,:,:),G=G_input,k=Xk)
+   call RT_average_operator(VALUE=j_or_p(id),O_MATRIX=DIP_iR_or_P(id,:,:,:,:),G=G_input,k=Xk)
    !
  enddo
  !
@@ -59,10 +65,10 @@ subroutine RT_current(Xk,G_input,A_input)
  !
  if(.not.l_RT_no_diamagnetic) then
    !
-   j_current(:)=j_current(:)-A_input%vecpot(:)*real(nel,SP)/SPEED_OF_LIGHT
+   j_or_p(:)=j_or_p(:)-A_input%vecpot(:)*real(nel,SP)/SPEED_OF_LIGHT
    !
  endif
  !
- j_current=j_current/DL_vol
+ j_or_p=j_or_p/DL_vol
  !
-end subroutine RT_current
+end subroutine RT_current_or_polarization

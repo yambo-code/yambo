@@ -123,7 +123,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
    !
    ! And the gauge field
    !
-   if(l_NE_with_fields.and.i_time>0) call RT_apply_gauge_field(ik,H_nl_sc,A_input)
+   if(l_NE_with_fields.and.i_time>0) call RT_apply_field(ik,H_nl_sc,A_input)
    !
    if(allocated(H_t))  H_t(:,:,ik,1)=H_nl_sc(:,:,1)
    !

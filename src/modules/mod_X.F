@@ -40,10 +40,9 @@ module X_m
  !
  logical                  :: Vnl_commutator_warning
  !
- ! Dipole M.E.: gauges and kinetic energy
+ ! Dipole M.E.
  !
  logical                  :: Dipole_bands_ordered
- logical                  :: Eval_P_and_P2_only
  complex(SP), allocatable :: DIP_iq_dot_r(:,:,:,:)
  complex(SP), allocatable :: DIP_iR_or_P(:,:,:,:,:)
  complex(SP), allocatable :: P_square(:,:,:,:)
@@ -64,7 +63,12 @@ module X_m
  logical :: half_X_mat_only
  logical :: self_detect_E_range
  logical :: use_X_RIM
+ !
+ ! Gauges
+ !
  character(lchlen) :: long_path
+ character(schlen) :: gauge_type
+ !
  type X_t
    integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp
    integer    :: ng

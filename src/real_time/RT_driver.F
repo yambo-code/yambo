@@ -112,7 +112,13 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
  endif
  !
- if(.not.local_V) call load_COLLISIONS()
+ if(.not.local_V) then
+   !
+   call COLLISIONS_IO_eval(en,X,k,k,q,Xw)
+   !
+   call load_COLLISIONS()
+   !
+ endif
  !
  if(Thermal_steps/=0.and.it_start<=Thermal_steps) then
    ! 
@@ -156,7 +162,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    if(l_NE_with_fields.and.i_time>0)  then
      A_vecpot_previous=A_vecpot
-     call RT_current(Xk,G_lesser_previous,A_vecpot)
+     call RT_current_or_polarization(Xk,G_lesser_previous,A_vecpot)
    endif 
    !
 #if defined _TWO_LEVELS

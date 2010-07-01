@@ -27,8 +27,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                      alpha_dim,use_X_RIM,long_path,X_RIM_nkpts,Dipole_bands_ordered,&
-&                      eval_alpha,Vnl_commutator_warning,Eval_P_and_P2_only,&
-&                      q_plus_G_direction,Q_Shift_Order
+&                      eval_alpha,Vnl_commutator_warning,&
+&                      q_plus_G_direction,Q_Shift_Order,gauge_type
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_W_er,QP_W_dr,QP_cg_percent,QP_n_states,&
@@ -300,14 +300,14 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  eps_2_alpha=1._SP
  alpha_dim='adim'
  long_path='none'
+ gauge_type='length'
+#if defined _RT
+ gauge_type='velocity'
+#endif
  eval_alpha=.FALSE.
  Vnl_commutator_warning=.FALSE.
  q_plus_G_direction=0.
  Q_Shift_Order=1
- !
- !Dipole
- !
- Eval_P_and_P2_only=.FALSE.
  !
  !QPm
  !

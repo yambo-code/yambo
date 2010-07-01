@@ -26,7 +26,7 @@ subroutine RT_Ext_Current(time)
  !
  use pars,           ONLY:SP,pi
  use com,            ONLY:error
- use real_time,      ONLY:ext_field,n_ext_fields,Efield,j_current_ext
+ use real_time,      ONLY:ext_field,n_ext_fields,Efield,j_current_ext,RT_step,i_time
  !
  implicit none
  real(SP),    intent(in)     :: time
@@ -59,9 +59,11 @@ subroutine RT_Ext_Current(time)
      case('GAUSS')
        j_norm=Efield(i1)%amplitude*exp(-(time-t0)**2/(2._SP*sigma**2) )*(time-t0)/sigma**2
      case('QSSIN')
-        j_norm=-Efield(i1)%amplitude*(cos(Efield(i1)%frequency*(time-t0))*Efield(i1)%frequency &
+       j_norm=-Efield(i1)%amplitude*(cos(Efield(i1)%frequency*(time-t0))*Efield(i1)%frequency &
               &-(time-t0)/sigma**2*sin(Efield(i1)%frequency*(time-t0)))*exp(-(time-t0)**2/(2._SP*sigma**2))   
      case('DELTA')
+       if(i_time==Efield(i1)%int_t_initial)     j_norm=-Efield(i1)%amplitude/RT_step**2
+       if(i_time==Efield(i1)%int_t_initial+1)   j_norm= Efield(i1)%amplitude/RT_step**2
      case default
      call error(" External Field "//trim(Efield(i1)%ef_name)//" not implemented ") 
    end select

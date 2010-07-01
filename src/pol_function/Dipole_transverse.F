@@ -29,10 +29,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use D_lattice,           ONLY:alat,n_atomic_species,n_atoms_species
  use pseudo,              ONLY:pp_kbv_dim,pp_n_l_comp,PP_free
  use R_lattice,           ONLY:g_vec,bz_samp
- use X_m,                 ONLY:X_t,DIP_iR_or_P,Dipole_bands_ordered,Eval_P_and_P2_only,P_square
+ use X_m,                 ONLY:X_t,DIP_iR_or_P,Dipole_bands_ordered,gauge_type,P_square
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf,wf_ng,wf_state, WF_load
+ use wrapper,             ONLY:M_by_V
 #if defined _DISTRIBUTED
  use com,                 ONLY:error
 #endif
@@ -99,8 +100,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
  call pp_redux_wait
  !
  wf_dim=3
-#if defined _SC
- if (Eval_P_and_P2_only) wf_dim=4
+#if defined _RT
+ wf_dim=4
 #endif
  allocate(wf_xyz(wf_ng,wf_dim))
  !
@@ -156,7 +157,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,&
 &                  -Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/))) cycle
          !
-         if (abs(Ev_m_Ec)<=1.E-5_SP.and..not.Eval_P_and_P2_only) cycle
+         if (abs(Ev_m_Ec)<=1.E-5_SP.and.trim(gauge_type)=='length') cycle
          !
          ivfft=wf_state(iv,ik,i_spin)
 #if defined _DISTRIBUTED
@@ -171,13 +172,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
          ! 
          ! GPL_EXCLUDE_START 
          !
-#if defined _SC 
-         if(Eval_P_and_P2_only) then
-           wf_xyz(:wf_ng,4) = wf(1:wf_ng,ivfft) *  & 
+#if defined _RT 
+         wf_xyz(:wf_ng,4) = wf(1:wf_ng,ivfft) *  & 
 &                          ( (Xk%pt(ik,1) + g_vec(:wf_ng,1))**2 * (2.0_SP*pi/alat(1))**2  &
 &                          + (Xk%pt(ik,2) + g_vec(:wf_ng,2))**2 * (2.0_SP*pi/alat(2))**2  &
 &                          + (Xk%pt(ik,3) + g_vec(:wf_ng,3))**2 * (2.0_SP*pi/alat(3))**2 )
-         endif
 #endif
          !
          ! GPL_EXCLUDE_END 
@@ -193,20 +192,16 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          ! rho(4) =  \sum_G u^*_{iv ik}(G) ( k + G )^2 u_{ic ik}(G)
          !
-#if defined _DOUBLE
-         call zgemv('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,wf(:,icfft),1,(0._SP,0._SP),rho,1)
-#else
-         call cgemv('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,wf(:,icfft),1,(0._SP,0._SP),rho,1)
-#endif
+         call M_by_V('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,wf(:,icfft),1,(0._SP,0._SP),rho,1)
          !
          if (ioKB_err==0) call Dipole_kb_sum(ivfft,icfft,rho(:3),kbv)
-         !
-         if ( .not.Eval_P_and_P2_only ) rho(:)=rho(:)/Ev_m_Ec
          !
          ! as [x,p_x]=i we get [x,H] = [x,p^2/2]= i p_x
          !
          !     DIP_iR_or_P(c,v) = i <v|r|c> = i <v|[r,H]|c>/(Ec-Ev) = i <v|i p|c>/(Ec-Ev) =
          !                   = - <v | -i grad |c> / (Ec-Ev) = <v|-i grad|c>/(Ev-Ec)
+         !
+         if (trim(gauge_type)=='length') rho(1:3)=rho(1:3)/Ev_m_Ec
          !
          ! GPL_EXCLUDE_START SPIN_IGNORE
          !
@@ -222,13 +217,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
            !
          endif
          !
-#if defined _SC 
-         if ( Eval_P_and_P2_only) then
-           if( n_spinor == 2 ) then
-             P_square(ic,iv,ik,1)= P_square(ic,iv,ik,1)+rho(4)
-           else
-             P_square(ic,iv,ik,i_spin)= rho(4)
-           endif
+#if defined _RT
+         if( n_spinor == 2 ) then
+           P_square(ic,iv,ik,1)= P_square(ic,iv,ik,1)+rho(4)
+         else
+           P_square(ic,iv,ik,i_spin)= rho(4)
          endif
 #endif
          !
@@ -262,8 +255,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  do i_spin=1,n_sp_pol
    call pp_redux_wait(DIP_iR_or_P(:,:,:,:,i_spin))
-#if defined _SC
-   if ( Eval_P_and_P2_only) call pp_redux_wait(P_square(:,:,:,i_spin))
+#if defined _RT
+   call pp_redux_wait(P_square(:,:,:,i_spin))
 #endif
  enddo
  !

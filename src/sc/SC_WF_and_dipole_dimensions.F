@@ -22,7 +22,7 @@
 subroutine SC_WF_and_dipole_dimensions(X)
  !
  use drivers,      ONLY:l_real_time,l_sc_hf,l_sc_exx,l_sc_cohsex,l_sc_srpa
- use X_m,          ONLY:X_t,Eval_P_and_P2_only
+ use X_m,          ONLY:X_t
  use wave_func,    ONLY:wf_ng
  use QP_m,         ONLY:QP_ng_Sx,QP_n_G_bands,COHSEX_use_empties
  use R_lattice,    ONLY:qindx_S,G_m_G
@@ -38,7 +38,6 @@ subroutine SC_WF_and_dipole_dimensions(X)
  X(1)%ib(2)=SC_bands
  if (l_real_time) then
    X(1)%ng=wf_ng
-   Eval_P_and_P2_only=.true.
  else
    X(1)%ng=QP_ng_Sx
  endif

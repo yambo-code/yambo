@@ -30,6 +30,7 @@ subroutine RT_initialize()
 &                         l_RT_induced_field,j_current_ext,Ext_fields_initial_time,RT_diagonalization_steps,&
 &                         RT_is_dumped,QP_LifeTime,Phase_LifeTime
  use D_lattice,      ONLY:DL_vol
+ use X_m,            ONLY:gauge_type
  use parser_m,       ONLY:parser
  implicit none
  !
@@ -101,7 +102,7 @@ subroutine RT_initialize()
  !
  if (.not.l_NE_with_fields) then
    NE_steps=0
-   if (Thermal_steps==0) call warning('Skipping simulation. No Ext fields ot thermalization provided')
+   if (Thermal_steps==0) call warning('Skipping simulation. No Ext fields or thermalization provided')
  endif
  !
  call msg( 'r', '[RT] NE Steps                   :',NE_steps)
@@ -113,5 +114,18 @@ subroutine RT_initialize()
    call msg('rsn','[RT] Electron-gas plasmon frequency[eV]:',sqrt(4._SP*pi*nel/DL_vol)*HARTREE)
  endif
  call msg('rsn','[RT] Simulation time        [fs]:',(/-real(Thermal_steps)*RT_step,RT_step*real(NE_steps)/)/FS2AUT)
+ !
+ if(l_NE_with_fields) &
+&   call msg('rsn','[RT] Gauge Type                 :',trim(gauge_type))
+ !
+ if(l_RT_induced_field.and.gauge_type/='velocity') then
+   call warning(" Induced field not included in Maxwell when the gauge is not 'velocity'")
+   l_RT_induced_field=.false.
+ endif
+ !
+ if(.not.l_RT_no_diamagnetic.and.gauge_type/='velocity') then
+   call warning(" Diamagnetic term not present when the gauge is not 'velocity'")
+   l_RT_no_diamagnetic=.true.
+ endif
  !
 end subroutine RT_initialize

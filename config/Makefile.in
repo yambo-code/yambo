@@ -50,11 +50,11 @@ TARGETS  = all yambo interfaces ypp
 UTILS    = changelog
 CLEANS   = clean clean_all
 PROJECTS = yambo_ph yambo_sc yambo_ras yambo_reels \
-	       yambo_manyk yambo_ras_manyk \
+	       yambo_ras_manyk \
            yambo_magnetic yambo_PWdiago \
            yambo_rt yambo_distributed yambo_2levels \
            ypp_rt ypp_ph ypp_ras ypp_sc ypp_magnetic ypp_boltzmann
-BROKEN   = 
+BROKEN   = yambo_manyk
 DEBUG    = yambo_test_1 yambo_test_2
 EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(DEBUG)
 INTERFCS = a2y p2y e2y 

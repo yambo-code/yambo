@@ -21,14 +21,13 @@
 !                  
 subroutine RT_two_levels(G_lesser)
  !
- use pars,           ONLY:SP,pi
+ use pars,           ONLY:SP,pi,cI
  use units,          ONLY:SPEED_OF_LIGHT,FS2AUT
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
  use units,          ONLY:HARTREE
- use pars,           ONLY:cI
- use real_time,      ONLY:Wo,Rabi_freq,W_photon,Phase_LifeTime,RT_is_dumped,P,W_detuning,&
-&                         QP_LifeTime,RT_step,l_NE_with_fields,i_time,Efield
+ use real_time,      ONLY:Wo,Rabi_freq,W_photon,Phase_LifeTime,RT_is_dumped,W_detuning,&
+&                         QP_LifeTime,RT_step,l_NE_with_fields,i_time,Efield,P
  !
  implicit none           
  complex(SP),       intent(in) :: G_lesser(SC_bands,SC_bands,QP_nk)
@@ -38,7 +37,6 @@ subroutine RT_two_levels(G_lesser)
  integer       :: i_r
  logical       :: P_and_P
  real(SP)      :: T,Rabi_test,Gamma_,delta_G_SS,Current_SS
- complex(SP)   :: P(6)
  !
  if(.not.l_NE_with_fields.or.i_time<0) return
  !
@@ -47,8 +45,8 @@ subroutine RT_two_levels(G_lesser)
  T= (i_time-1)*RT_step
  !
  if (i_time == 1) then
-   open (unit=300,name='Weights_RES.dat',form='formatted')
-   open (unit=301,name='Weights_DELTA.dat',form='formatted')
+   open(unit=300,file='Weights_RES.dat',form='formatted')
+   open(unit=301,file='Weights_DELTA.dat',form='formatted')
    do i_r=1,1000
      Rabi_test=0.+i_r*2./1000/HARTREE
      Gamma_= abs(Rabi_test)**2/(W_Detuning**2.+1./Phase_LifeTime**2.)*QP_LifeTime/Phase_LifeTime
@@ -121,7 +119,7 @@ subroutine RT_two_levels(G_lesser)
      enddo
      if (P_and_P) local="PP_"//trim(file_name)
      file_name=local
-     open (unit=unit_,name=trim(file_name),form='formatted')
+     open (unit=unit_,file=trim(file_name),form='formatted')
    end subroutine
    !
 end subroutine RT_two_levels

@@ -36,8 +36,9 @@ subroutine RT_spectrum(en,k)
  use parser_m,       ONLY:parser
  use timing,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP
- use real_time,      ONLY:NE_steps,RT_step,j_current,i_time,Efield,  &
+ use real_time,      ONLY:NE_steps,RT_step,j_or_p,i_time,Efield,  &
 &                         max_rt_steps_disk,current_cache,A_vecpot,j_current_ext
+ use X_m,            ONLY:gauge_type
  implicit none
  !
  type(levels)   :: en
@@ -53,7 +54,7 @@ subroutine RT_spectrum(en,k)
  real(SP)           :: W_RT_induced_step,W_step,Time_reached,W_reached
  complex(SP)        :: w_Aw,Integral,W_ieta
  real(SP),    allocatable :: damp_function(:)
- complex(DP),    allocatable :: current(:,:),current_ext_t(:,:),current_ext_w(:,:)
+ complex(DP),    allocatable :: cur_or_pol(:,:),current_ext_t(:,:),current_ext_w(:,:)
  complex(DP),    allocatable :: At_vecpot_vel(:,:),Aw_vecpot_vel(:,:)
  complex(DP), allocatable :: EELS(:,:),EPS(:,:)
  complex(DP),    allocatable :: E_induced(:,:)
@@ -101,8 +102,8 @@ subroutine RT_spectrum(en,k)
  ! I/O of Current and Vector Potential
  !=====================================
  !
- allocate(current(NE_steps,3),current_ext_t(NE_steps,3),current_ext_w(NE_steps,3))
- call mem_est("Current",(/size(current)/),(/2*SP/))
+ allocate(cur_or_pol(NE_steps,3),current_ext_t(NE_steps,3),current_ext_w(NE_steps,3))
+ call mem_est("Cur_or_Pol",(/size(cur_or_pol)/),(/2*SP/))
  call mem_est("Current_ext_t",(/size(current_ext_t)/),(/2*SP/))
  call mem_est("Current_ext_w",(/size(current_ext_w)/),(/2*SP/))
  allocate(Aw_vecpot_vel(NE_steps,3),At_vecpot_vel(NE_steps,3))
@@ -111,7 +112,7 @@ subroutine RT_spectrum(en,k)
  allocate(current_cache(18,max_rt_steps_disk))
  call mem_est("Current_Cache",(/size(current_cache)/),(/SP/))
  !
- current      =(0._SP,0._SP)
+ cur_or_pol      =(0._SP,0._SP)
  current_ext_t=(0._SP,0._SP)
  current_ext_w=(0._SP,0._SP)
  Aw_vecpot_vel=(0._SP,0._SP)
@@ -124,7 +125,7 @@ subroutine RT_spectrum(en,k)
    io_J=io_SC_components('J' ,en,ID(1))
    !
    if(i_time>=i_t_start.and.i_time<=i_t_end) then
-     current(i_time,:)       = j_current(:)
+     cur_or_pol(i_time,:)       = j_or_p(:)
      current_ext_t(i_time,:) = j_current_ext(:)
      At_vecpot_vel(i_time,:) = A_vecpot%vecpot_vel(:)
    endif           
@@ -167,7 +168,7 @@ subroutine RT_spectrum(en,k)
  ! Remove the dc component from current
  !--------------------------------------
  !
- if(.not.l_no_remove_dc) then
+ if(.not.l_no_remove_DC.and.trim(gauge_type)=='velocity') then
    !
    do i_c = 1, 3
      Integral = sum(At_vecpot_vel(:, i_c))
@@ -175,15 +176,15 @@ subroutine RT_spectrum(en,k)
    enddo
    !
    do i_c = 1, 3
-     Integral = sum(current( :, i_c))
-     current( :, i_c) = current(:,i_c) - Integral/real(NE_steps)
+     Integral = sum(cur_or_pol( :, i_c))
+     cur_or_pol( :, i_c) = cur_or_pol(:,i_c) - Integral/real(NE_steps)
    enddo
    !
  endif
  ! 
  ! apply the damping
  !
- forall(i_t=1:NE_steps) current(i_t,:)      =current(i_t,:)*damp_function(i_t)
+ forall(i_t=1:NE_steps) cur_or_pol(i_t,:)      =cur_or_pol(i_t,:)*damp_function(i_t)
  forall(i_t=1:NE_steps) At_vecpot_vel(i_t,:)=At_vecpot_vel(i_t,:)*damp_function(i_t)
  !
  ! Induced Electric Field
@@ -200,9 +201,9 @@ subroutine RT_spectrum(en,k)
    !
    call live_timing('Integration:',NE_steps)
    do i_t=1, NE_steps
-     E_induced(i_t,1)=-(2.d0*sum(current(:i_t,1))-current(1,1)-current(i_t,1))*RT_step/2.d0
-     E_induced(i_t,2)=-(2.d0*sum(current(:i_t,2))-current(1,2)-current(i_t,2))*RT_step/2.d0
-     E_induced(i_t,3)=-(2.d0*sum(current(:i_t,3))-current(1,3)-current(i_t,3))*RT_step/2.d0
+     E_induced(i_t,1)=-(2.d0*sum(cur_or_pol(:i_t,1))-cur_or_pol(1,1)-cur_or_pol(i_t,1))*RT_step/2.d0
+     E_induced(i_t,2)=-(2.d0*sum(cur_or_pol(:i_t,2))-cur_or_pol(1,2)-cur_or_pol(i_t,2))*RT_step/2.d0
+     E_induced(i_t,3)=-(2.d0*sum(cur_or_pol(:i_t,3))-cur_or_pol(1,3)-cur_or_pol(i_t,3))*RT_step/2.d0
     call live_timing(steps=1)
    enddo
    call live_timing()
@@ -254,7 +255,7 @@ subroutine RT_spectrum(en,k)
    !
    do i_c=1,3
      !
-     EPS(:,i_c)          = current(:,i_c)
+     EPS(:,i_c)          = cur_or_pol(:,i_c)
      Aw_vecpot_vel(:,i_c) = At_vecpot_vel(:,i_c)
      current_ext_w(:,i_c) = current_ext_t(:,i_c)
      !
@@ -287,7 +288,7 @@ subroutine RT_spectrum(en,k)
      !
      do i_t = 1, NE_steps
        Time_reached = i_t*RT_step
-       EPS(i_w,1:3)           = EPS(i_w,1:3)+current(i_t,1:3)*exp((0.,1.)*W_reached*Time_reached)*RT_step 
+       EPS(i_w,1:3)           = EPS(i_w,1:3)+cur_or_pol(i_t,1:3)*exp((0.,1.)*W_reached*Time_reached)*RT_step 
        Aw_vecpot_vel(i_w,1:3) = Aw_vecpot_vel(i_w,1:3)+At_vecpot_vel(i_t,1:3)*exp((0.,1.)*W_reached*Time_reached)*RT_step 
        current_ext_w(i_w,1:3) = current_ext_w(i_w,1:3)+current_ext_t(i_t,1:3)*exp((0.,1.)*W_reached*Time_reached)*RT_step 
      enddo
@@ -339,8 +340,8 @@ subroutine RT_spectrum(en,k)
    !
    select case ( trim(Efield(ref_efield)%ef_name) )
      !
-     case('DELTA')
-       w_Aw=Efield(ref_efield)%amplitude
+!     case('DELTA')
+!       w_Aw=Efield(ref_efield)%amplitude
      case('GAUSSIAN')      
        !
        alpha=Efield(ref_efield)%frequency**2/2._SP ! alpha=1/(2*sigma**2)
@@ -355,53 +356,59 @@ subroutine RT_spectrum(en,k)
    !
  enddo
  !
- ! Interpolate real imaginary part of J(w)/E(w) 
- ! and rigid shift the real part to remove residual divergence
- !
- i1=0
- const1(:)=0._SP
- const2(:)=0._SP
- !
- do i_w=1,X_rt%energy_steps
-   W_reached = (i_w-1)*W_step+X_rt%energy_range(1)
-   if(W_reached>=4._SP*X_rt%damp_factor.and.W_reached<=10._SP*X_rt%damp_factor) then
-     i1=i1+1
-     const1(:)=const1(:)+real(EPS(i_w,1:3))
-     const2(:)=const2(:)+aimag(EPS(i_w,1:3))/W_reached
-   endif
- enddo
- !
- if(i1/=0) then 
+ if(trim(gauge_type)=='velocity') then
    !
-   call msg('s', 'Interpolate eps for w<4*damp_factor (not valid for metals)')
+   ! Interpolate real imaginary part of J(w)/E(w) 
+   ! and rigid shift the real part to remove residual divergence
    !
-   const1(:)=const1(:)/real(i1)
-   const2(:)=const2(:)/real(i1)
-   !
-   ! Rigid shift
-   !
-   EPS(:,1)=EPS(:,1)-const1(1)
-   EPS(:,2)=EPS(:,2)-const1(2)
-   EPS(:,3)=EPS(:,3)-const1(3)
-   !
-   ! Linear interpolation
+   i1=0
+   const1(:)=0._SP
+   const2(:)=0._SP
    !
    do i_w=1,X_rt%energy_steps
      W_reached = (i_w-1)*W_step+X_rt%energy_range(1)
-     if(W_reached<=4._SP*X_rt%damp_factor) then
-       EPS(i_w,1:3)=cmplx(0._SP,const2(:)*W_reached)
+     if(W_reached>=4._SP*X_rt%damp_factor.and.W_reached<=10._SP*X_rt%damp_factor) then
+       i1=i1+1
+       const1(:)=const1(:)+real(EPS(i_w,1:3))
+       const2(:)=const2(:)+aimag(EPS(i_w,1:3))/W_reached
      endif
    enddo
    !
+   if(i1/=0) then 
+     !
+     call msg('s', 'Interpolate eps for w<4*damp_factor (not valid for metals)')
+     !
+     const1(:)=const1(:)/real(i1)
+     const2(:)=const2(:)/real(i1)
+     !
+     ! Rigid shift
+     !
+     EPS(:,1)=EPS(:,1)-const1(1)
+     EPS(:,2)=EPS(:,2)-const1(2)
+     EPS(:,3)=EPS(:,3)-const1(3)
+     !
+     ! Linear interpolation
+     !
+     do i_w=1,X_rt%energy_steps
+       W_reached = (i_w-1)*W_step+X_rt%energy_range(1)
+       if(W_reached<=4._SP*X_rt%damp_factor) then
+         EPS(i_w,1:3)=cmplx(0._SP,const2(:)*W_reached)
+       endif
+     enddo
+     !
+   endif
+   !
+   do i_w=1,X_rt%energy_steps
+     !
+     W_reached = (i_w-1)*W_step+X_rt%energy_range(1)
+     EPS(i_w,1:3)=EPS(i_w,1:3)/cmplx(0._SP,-W_reached)
+     if(W_reached==0._SP) EPS(i_w,:)=EPS(i_w+1,:)/cmplx(0._SP,-W_step)
+     !
+   enddo
+   !
+ else
+   EPS(:,:)=EPS(:,:)/cmplx(0._SP,-1._SP)
  endif
- !
- do i_w=1,X_rt%energy_steps
-   !
-   W_reached = (i_w-1)*W_step+X_rt%energy_range(1)
-   EPS(i_w,1:3)=EPS(i_w,1:3)/cmplx(0._SP,-W_reached)
-   if(W_reached==0._SP) EPS(i_w,:)=EPS(i_w+1,:)/cmplx(0._SP,-W_step)
-   !
- enddo
  !
  EPS(:,:) = 1._DP+4._SP*pi*EPS(:,:)
  EELS(:,:)=-1._DP/EPS(:,:)  ! Minus sign to compare with yambo linear optics 
@@ -409,10 +416,10 @@ subroutine RT_spectrum(en,k)
  call OutPut_File("eps")
  call OutPut_File("eels")
  !
- deallocate(E_induced,EELS,current,damp_function,At_vecpot_vel,Aw_vecpot_vel, &
+ deallocate(E_induced,EELS,cur_or_pol,damp_function,At_vecpot_vel,Aw_vecpot_vel, &
 &           current_cache,current_ext_w,current_ext_t)
  call mem_est("Current_Cache")
- call mem_est("Current")
+ call mem_est("Cur_or_Pol")
  call mem_est("Current_ext_w")
  call mem_est("Current_ext_t")
  call mem_est("Aw_vecpot_vel")
@@ -499,7 +506,7 @@ subroutine RT_spectrum(en,k)
        !
        if (trim(what)=="current") output_data(2:n_headings)=&
 &                (/real(At_vecpot_vel(i_s,1)),real(At_vecpot_vel(i_s,2)),real(At_vecpot_vel(i_s,3)), &
-&                  real(current(i_s,1)),real(current(i_s,2)),real(current(i_s,3)), &
+&                  real(cur_or_pol(i_s,1)),real(cur_or_pol(i_s,2)),real(cur_or_pol(i_s,3)), &
 &                  real(current_ext_t(i_s,1)),real(current_ext_t(i_s,2)),real(current_ext_t(i_s,3))/)
        if (trim(what)=="E_induced") output_data(2:n_headings)=(/&
 &                  real(E_induced(i_s,1),SP),real(E_induced(i_s,2),SP) , real(E_induced(i_s,3),SP)/)

@@ -70,8 +70,8 @@ module real_time
  !
  ! Frozen parts of self-energy
  !
- logical                  :: Hfrozen
- logical                  :: XCfrozen 
+ logical           :: Hfrozen
+ logical           :: XCfrozen 
  !
  ! External Field type
  ! 
@@ -100,9 +100,10 @@ module real_time
  integer, parameter  :: n_ext_fields=2
  type(ext_field)     :: EField(n_ext_fields)
  !
- ! Time dependent Hamiltonian, current and vec. potential
+ ! Time dependent Hamiltonian
+ ! macroscopic current or polarization
  !
- complex(SP) :: j_current(3)
+ complex(SP) :: j_or_p(3)
  !
  ! External current to generate a given vector potential
  !
@@ -116,7 +117,8 @@ module real_time
    complex(SP) :: vecpot_acc(3)
  end type gauge_field
  !
- type(gauge_field) :: A_vecpot,A_vecpot_previous
+ type(gauge_field) :: A_vecpot
+ type(gauge_field) :: A_vecpot_previous
  !
  ! Diagonal (QP) and off-diagonal (Phase) relaxation time
  !

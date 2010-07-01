@@ -21,7 +21,7 @@
 !
 integer function variables_SC(ID,local_description,what)
  !
- use pars,           ONLY:SP,lchlen
+ use pars,           ONLY:lchlen
  use units,          ONLY:AU2Tesla,radian,FS2AUT,W2Au,HARTREE
  use D_lattice,      ONLY:atoms_string
  use stderr,         ONLY:intc
@@ -34,13 +34,14 @@ integer function variables_SC(ID,local_description,what)
  use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,Hfrozen,XCfrozen,                      &
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
 &                         QP_LifeTime,Phase_LifeTime,l_RT_no_diamagnetic,&
-&                         n_ext_fields,Efield,max_rt_steps_disk,A_vecpot,l_RT_induced_field
+&                         n_ext_fields,Efield,max_rt_steps_disk,l_RT_induced_field
 #endif                                
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
 #endif
  use global_XC,      ONLY:SC_EXX,SC_HF,SC_COHSEX,SC_EXXC
+ use X_m,            ONLY:gauge_type
  implicit none
  !
  integer            ::ID
@@ -49,7 +50,7 @@ integer function variables_SC(ID,local_description,what)
  !
  ! Work Space
  !
- integer               :: ik,bands_to_load,ib,SC_kind_disk,SC_perturbation_disk,&
+ integer               :: SC_kind_disk,SC_perturbation_disk,&
 &                         io_status_save,i1,i_desc
  logical               :: CHECK_,Local_V
 #if defined _RT		
@@ -264,6 +265,14 @@ integer function variables_SC(ID,local_description,what)
 &     DESCRIPTION=local_description(i_desc))
    !
    if (l_NE_with_fields_disk) then
+     !
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     !
+     call io_elemental(ID,VAR="GAUGE_TYPE",CH0="",VAR_SZ=1,MENU=0)
+     i_desc=i_desc+1
+     call io_elemental(ID,CH0=gauge_type, &
+&       VAR='  [RT] Gauge Type                 :',CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
      do i1=1,n_ext_fields

@@ -50,7 +50,7 @@ subroutine RT_report(i_t,values)
  output_file(1)=.true.  ! General dynamics output file
  if (l_NE_with_fields)  output_file(2)=.true.
  !
- if(i_t==it_start+1) then
+ if(i_t==it_start) then
    !      
    file_name(1)='RT-dynamics'
    file_name(2)="RT-gauge_field"

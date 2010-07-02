@@ -84,11 +84,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Work Space
  !
- integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,&
+ integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,io_KB_PP_err,&
 &                     ioBS_Fxc_err,ioQINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err
  integer, external :: ioX,ioOSTNTS,ioGROT,ioQINDX,ioRIM,&
 &                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_PP,&
 &                     ioCOL_CUT
+ logical           :: OSTNTS_Vnl_included
 #if defined _SC
  integer, external :: io_COLLISIONS
 #endif
@@ -313,14 +314,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_err=ioOSTNTS(X(3),en,io_ID)
  !
+ OSTNTS_Vnl_included=io_err==0.and.X(3)%Vnl_included
+ !
  ! kb_pp
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=ioKB_PP(io_ID)
+ io_KB_PP_err=ioKB_PP(io_ID)
  !
- ! If the KB non local factors are found set to T the Vnl_included logical
- !
- if (io_err==0) forall(i1=1:4) X(i1)%Vnl_included=.true.
+ if (io_err/=0) OSTNTS_Vnl_included=io_KB_PP_err==0
  !
  ! I transfer to all X types the X(3) used in the previous io's 
  !
@@ -332,6 +333,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (nqibz>0) X(i1)%iq=(/1,nqibz/)
    if (io_X_err(i1)>0) X(i1)%iq(1)=io_X_err(i1)+1
  enddo
+ !
+ ! The GLOBAL vcalue of %Vnl_included is decided on the basis of the contents
+ ! of db.OSTENTS OR on the presence of the KB_PP. This means that if the
+ ! response functions DBs were made in presence of KB_PP and later this
+ ! DB is deleted the X dbs will be recalculated
+ !
+ forall(i1=1:4) X(i1)%Vnl_included=OSTNTS_Vnl_included
  !
  ! bs
  !
@@ -458,7 +466,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call QP_ctl_switch('X')
    call initactivate(1,'LongPath Qdirection QShiftOrder')
 #if defined _SC
-   call initactivate(1,'GaugeType')
+   call initactivate(1,'Gauge')
 #endif
    call X_activate('Xd',(/'QpntsR','BndsRn','NGsBlk',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
@@ -471,6 +479,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_optics.and.l_bse) then
    call QP_ctl_switch('K')
    call initactivate(1,'LongPath')
+#if defined _SC
+   call initactivate(1,'Gauge')
+#endif
    call initactivate(1,'BSresKmod BScplKmod BSEQptR BSEBands')
    call initactivate(1,'BSENGBlk BSENGexx ALLGexx BSEEhEny BSEClmns BSehWind')
 #if defined _ELPH 
@@ -611,7 +622,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _SC
  if (l_sc_run) then
-   call initactivate(1,'Potential FFTGvecs GaugeType SCmixing SCBands BandMix')
+   call initactivate(1,'Potential FFTGvecs Gauge SCmixing SCBands BandMix')
    if (l_collisions_IO) call initactivate(1,'CollCache')
    if (l_cohsex) call initactivate(1,'GbndRnge UseEbands')
    if (l_real_time) then

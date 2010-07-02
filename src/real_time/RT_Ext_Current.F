@@ -26,7 +26,8 @@ subroutine RT_Ext_Current(time)
  !
  use pars,           ONLY:SP,pi
  use com,            ONLY:error
- use real_time,      ONLY:ext_field,n_ext_fields,Efield,j_current_ext,RT_step,i_time
+ use real_time,      ONLY:j_current_ext,RT_step,i_time
+ use fields,         ONLY:ext_field,n_ext_fields,Efield
  !
  implicit none
  real(SP),    intent(in)     :: time

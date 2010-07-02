@@ -34,14 +34,15 @@ integer function variables_SC(ID,local_description,what)
  use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,Hfrozen,XCfrozen,                      &
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
 &                         QP_LifeTime,Phase_LifeTime,l_RT_no_diamagnetic,&
-&                         n_ext_fields,Efield,max_rt_steps_disk,l_RT_induced_field
+&                         max_rt_steps_disk,l_RT_induced_field
+ use fields,         ONLY:n_ext_fields,Efield
 #endif                                
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
 #endif
  use global_XC,      ONLY:SC_EXX,SC_HF,SC_COHSEX,SC_EXXC
- use X_m,            ONLY:gauge_type
+ use fields,         ONLY:global_gauge
  implicit none
  !
  integer            ::ID
@@ -270,7 +271,7 @@ integer function variables_SC(ID,local_description,what)
      !
      call io_elemental(ID,VAR="GAUGE_TYPE",CH0="",VAR_SZ=1,MENU=0)
      i_desc=i_desc+1
-     call io_elemental(ID,CH0=gauge_type, &
+     call io_elemental(ID,CH0=global_gauge, &
 &       VAR='  [RT] Gauge Type                 :',CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)

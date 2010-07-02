@@ -73,19 +73,6 @@ module real_time
  logical           :: Hfrozen
  logical           :: XCfrozen 
  !
- ! External Field type
- ! 
- type ext_field
-   real(SP) :: t_initial
-   integer  :: int_t_initial
-   real(SP) :: frequency
-   real(SP) :: damping
-   real(SP) :: intensity
-   real(SP) :: amplitude
-   real(SP) :: versor(3)
-   character(schlen) :: ef_name
- end type ext_field
- !
  ! Time steps and step length
  !
  real(SP) :: RT_step
@@ -95,11 +82,6 @@ module real_time
  integer  :: Thermal_steps
  integer  :: RT_memory_steps
  !
- ! External Fields
- !
- integer, parameter  :: n_ext_fields=2
- type(ext_field)     :: EField(n_ext_fields)
- !
  ! Time dependent Hamiltonian
  ! macroscopic current or polarization
  !
@@ -108,17 +90,6 @@ module real_time
  ! External current to generate a given vector potential
  !
  complex(SP) :: j_current_ext(3)
- !
- ! Gauge Field (Vector potential)
- ! 
- type gauge_field
-   complex(SP) :: vecpot(3)
-   complex(SP) :: vecpot_vel(3)
-   complex(SP) :: vecpot_acc(3)
- end type gauge_field
- !
- type(gauge_field) :: A_vecpot
- type(gauge_field) :: A_vecpot_previous
  !
  ! Diagonal (QP) and off-diagonal (Phase) relaxation time
  !

@@ -25,8 +25,8 @@ subroutine RT_propagate_vecpot(A_new,A_old,T_step,RT_time)
  !
  use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT
- use real_time,      ONLY:j_or_p,gauge_field,Ext_fields_initial_time,&
-&                         l_RT_induced_field,j_current_ext
+ use real_time,      ONLY:j_or_p,l_RT_induced_field,j_current_ext,Ext_fields_initial_time
+ use fields,         ONLY:gauge_field
  implicit none
  !
  real(SP),             intent(in) :: T_step,RT_time

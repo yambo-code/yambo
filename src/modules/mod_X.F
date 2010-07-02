@@ -64,11 +64,6 @@ module X_m
  logical :: self_detect_E_range
  logical :: use_X_RIM
  !
- ! Gauges
- !
- character(lchlen) :: long_path
- character(schlen) :: gauge_type
- !
  type X_t
    integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp
    integer    :: ng
@@ -82,7 +77,6 @@ module X_m
    real(SP)   :: ppaE
    complex(SP):: Wd
    logical          :: Vnl_included
-   logical          :: long_gauge
    character(1)     :: ordering
    character(schlen):: f_xc
  end type
@@ -166,7 +160,6 @@ module X_m
      Xo%ngostnts=Xi%ngostnts
      Xo%ordering=Xi%ordering
      Xo%Vnl_included=Xi%Vnl_included
-     Xo%long_gauge=Xi%long_gauge
      Xo%ehe=Xi%ehe
      Xo%q0=Xi%q0
      Xo%cg_percentual=Xi%cg_percentual
@@ -183,7 +176,6 @@ module X_m
      X%iq=(/1,-1/)
      X%whoami=0
      X%Vnl_included=.false.
-     X%long_gauge=.false.
      if (present(type)) X%whoami=type
      X%ehe=(/-1.,-1./)/HARTREE
      X%q0=(/1.,0.,0./)

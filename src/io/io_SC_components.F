@@ -34,7 +34,8 @@ integer function io_SC_components(what,E_sc,ID)
 &                         manage_RD_WR_CL_IF_END,io_reset
 #if defined _RT
  use real_time,      ONLY:l_NE_with_fields,NE_steps,j_current_ext, &
-&                         G_lesser,i_time,j_or_p,max_rt_steps_disk,current_cache,A_vecpot
+&                         G_lesser,i_time,j_or_p,max_rt_steps_disk,current_cache
+ use fields,         ONLY:A_vecpot
  use QP_m,           ONLY:QP_nk
 #endif                                
  use matrix_operate, ONLY:mat_c2r,mat_r2c

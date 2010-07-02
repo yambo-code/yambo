@@ -29,7 +29,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use D_lattice,           ONLY:alat,n_atomic_species,n_atoms_species
  use pseudo,              ONLY:pp_kbv_dim,pp_n_l_comp,PP_free
  use R_lattice,           ONLY:g_vec,bz_samp
- use X_m,                 ONLY:X_t,DIP_iR_or_P,Dipole_bands_ordered,gauge_type,P_square
+ use X_m,                 ONLY:X_t,DIP_iR_or_P,Dipole_bands_ordered,P_square
+ use fields,              ONLY:global_gauge
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf,wf_ng,wf_state, WF_load
@@ -76,6 +77,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
    enddo
    allocate(kbv(wf_ng,pp_kbv_dim,4),stat=alloc_err)
    call mem_est("KBV",(/size(kbv)/),errors=(/alloc_err/))
+ else
+   X%Vnl_included=.false.
  endif
  !
  ! Set up band limits
@@ -157,7 +160,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,&
 &                  -Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/))) cycle
          !
-         if (abs(Ev_m_Ec)<=1.E-5_SP.and.trim(gauge_type)=='length') cycle
+         if (abs(Ev_m_Ec)<=1.E-5_SP.and.trim(global_gauge)=='length') cycle
          !
          ivfft=wf_state(iv,ik,i_spin)
 #if defined _DISTRIBUTED
@@ -201,7 +204,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !     DIP_iR_or_P(c,v) = i <v|r|c> = i <v|[r,H]|c>/(Ec-Ev) = i <v|i p|c>/(Ec-Ev) =
          !                   = - <v | -i grad |c> / (Ec-Ev) = <v|-i grad|c>/(Ev-Ec)
          !
-         if (trim(gauge_type)=='length') rho(1:3)=rho(1:3)/Ev_m_Ec
+         if (trim(global_gauge)=='length') rho(1:3)=rho(1:3)/Ev_m_Ec
          !
          ! GPL_EXCLUDE_START SPIN_IGNORE
          !

@@ -27,7 +27,7 @@ subroutine RT_init_vecpot()
  use pars,           ONLY:SP
  use com,            ONLY:error
  use units,          ONLY:SPEED_OF_LIGHT
- use real_time,      ONLY:ext_field,A_vecpot,n_ext_fields,Efield
+ use fields,         ONLY:ext_field,A_vecpot,n_ext_fields,Efield
 #if defined _TWO_LEVELS
  use pars,           ONLY:pi
  use units,          ONLY:HARTREE,HA2FSm1,FS2AUT

@@ -23,12 +23,12 @@ integer function ioOSTNTS(X,Xen,ID)
  !
  use pars,          ONLY:SP,schlen
  use units,         ONLY:HARTREE
- use X_m,           ONLY:X_t,DIP_iR_or_P,X_alloc,Dipole_bands_ordered,gauge_type 
+ use X_m,           ONLY:X_t,DIP_iR_or_P,X_alloc,Dipole_bands_ordered
  use electrons,     ONLY:levels,n_sp_pol
  use R_lattice,     ONLY:nXkibz,q0_def_norm
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
-&                        io_elemental,io_status,io_bulk,&
+&                        io_elemental,io_status,io_bulk,IO_OUTDATED_DB,&
 &                        read_is_on,write_is_on,io_header,ver_is_gt_or_eq
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
  !
@@ -42,23 +42,27 @@ integer function ioOSTNTS(X,Xen,ID)
  integer :: i1,ixyz,sec_size,i_spin
  integer :: db_nbm,db_nbf,db_nb(2)
  character(schlen)    :: VAR_name
+ logical              :: local_long_gauge  
  real(SP),allocatable :: DIP_iR_or_P_disk(:,:,:)
  !
  ioOSTNTS=io_connect(desc='ostnts',type=2,ID=ID)
  if (ioOSTNTS/=0) goto 1
  !
- sec_size=8
- ! 
- ! In V 3.0.8 q0_def_norm is stored in case a longitudinal
- ! gauge grid has already redefined the q0 norm
- !
- if (ver_is_gt_or_eq(ID,(/3,0,9/)))  sec_size=10
- if (ver_is_gt_or_eq(ID,(/3,0,15/))) sec_size=11
- !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   ioOSTNTS=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.)
+   ioOSTNTS=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,GAUGE=.true.,IMPOSE_GAUGE=.true.)
    if (ioOSTNTS/=0) goto 1
+   !
+   ! July 2010. To avoid a too complicated structure beack-compatibility with versions
+   ! older then 3.0.15 has been removed
+   !
+   if (.not.ver_is_gt_or_eq(ID,(/3,0,16/))) then
+     ioOSTNTS=IO_OUTDATED_DB
+     goto 1
+   endif
+   !
+   sec_size=15
+   !
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=sec_size,MENU=0)
    call io_elemental(ID,DB_I1=db_nb,&
@@ -74,40 +78,26 @@ integer function ioOSTNTS(X,Xen,ID)
    call io_elemental(ID,&
 &       VAR=" [r,Vnl] included       :",L0=X%Vnl_included,CHECK=.true.,OP=(/"=="/))
    !
-   if (ver_is_gt_or_eq(ID,(/3,0,15/))) then
-     call io_elemental(ID,&
+   call io_elemental(ID,&
 &       VAR=" Transitions ordered    :",L0=Dipole_bands_ordered,CHECK=.true.,OP=(/"=="/))
+   !
+   ! Gauge
+   !
+   if (.not.ver_is_gt_or_eq(ID,revision=625).and.read_is_on(ID)) then
+     call io_elemental(ID,VAR=" Longitudinal Gauge     :",L0=local_long_gauge)
    endif
    !
-   if (ver_is_gt_or_eq(ID,(/3,0,9/))) then
-     call io_elemental(ID,&
-&       VAR=" Longitudinal Gauge     :",L0=X%long_gauge,CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,&
-&       VAR=" Field momentum norm    :",R0=q0_def_norm,CHECK=.true.,OP=(/"=="/))
-   endif
+   call io_elemental(ID,&
+&     VAR=" Field momentum norm    :",R0=q0_def_norm,CHECK=.true.,OP=(/"=="/))
    !
-   if (ver_is_gt_or_eq(ID,(/3,0,15/))) then
-     !
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-     !
-     ! Wavefunctions xc 
-     !
-     call io_elemental(ID,VAR='WAVE_FUNC_XC',CH0="",VAR_SZ=1,MENU=0)
-     call io_elemental(ID,DB_CH0=Dipole_WF_xc_string,CH0=loaded_WF_xc_string,&
-&         VAR=' Wavefunctions          :',CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,VAR="",VAR_SZ=0)
-   else
-     !
-     call io_elemental(ID,VAR="",VAR_SZ=0)
-     !
-   endif
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   if (ver_is_gt_or_eq(ID,revision=614)) then
-     call io_elemental(ID,VAR='GAUGE_TYPE',CH0="",VAR_SZ=1,MENU=0)
-     call io_elemental(ID,CH0=gauge_type,&
-&         VAR=' Gauge Type             :',CHECK=.true.,OP=(/"=="/))
-     call io_elemental(ID,VAR="",VAR_SZ=0)
-   endif
+   ! Wavefunctions xc 
+   !
+   call io_elemental(ID,VAR='WAVE_FUNC_XC',CH0="",VAR_SZ=1,MENU=0)
+   call io_elemental(ID,DB_CH0=Dipole_WF_xc_string,CH0=loaded_WF_xc_string,&
+&       VAR=' Wavefunctions          :',CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="",VAR_SZ=0)
    !
    ioOSTNTS=io_status(ID)
    if (ioOSTNTS/=0) goto 1

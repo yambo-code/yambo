@@ -25,10 +25,11 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use pars,       ONLY:SP
  use units,      ONLY:HARTREE,FS2AUT,AU2Vmm
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
+ use fields,     ONLY:global_gauge,long_path
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
-&                      alpha_dim,use_X_RIM,long_path,X_RIM_nkpts,Dipole_bands_ordered,&
+&                      alpha_dim,use_X_RIM,X_RIM_nkpts,Dipole_bands_ordered,&
 &                      eval_alpha,Vnl_commutator_warning,&
-&                      q_plus_G_direction,Q_Shift_Order,gauge_type
+&                      q_plus_G_direction,Q_Shift_Order
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_W_er,QP_W_dr,QP_cg_percent,QP_n_states,&
@@ -62,7 +63,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
 &                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_RIM,BSS_damp_reference,&
-&                     BS_columns,BSS_Vnl_included,BSS_long_gauge,BSS_uses_GreenF
+&                     BS_columns,BSS_Vnl_included,BSS_uses_GreenF
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_SVD_digits,&
 &                     FXC_is_causal
@@ -83,10 +84,11 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use real_time,  ONLY:l_RT_no_diamagnetic,l_RT_probe,l_RT_pump_and_probe
 #endif
 #if defined _RT
- use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Efield,Integrator_name,            &
-&                     RT_diagonalization_steps, l_NE_simulate_RPA, n_ext_fields, &
+ use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Integrator_name,            &
+&                     RT_diagonalization_steps, l_NE_simulate_RPA,  &
 &                     Thermal_time,max_rt_steps_disk,l_RT_induced_field,&
 &                     l_RT_diagonalize,Ext_fields_initial_time,RT_is_dumped,QP_LifeTime,Phase_LifeTime
+ use fields,     ONLY:Efield,n_ext_fields
 #endif
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
@@ -299,11 +301,11 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use_X_RIM=.false.
  eps_2_alpha=1._SP
  alpha_dim='adim'
- long_path='none'
- gauge_type='length'
+ global_gauge='length'
 #if defined _RT
- gauge_type='velocity'
+ global_gauge='velocity'
 #endif
+ long_path='none'
  eval_alpha=.FALSE.
  Vnl_commutator_warning=.FALSE.
  q_plus_G_direction=0.
@@ -367,7 +369,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  Haydock_treshold=-0.02
  BS_columns=0
  BSS_Vnl_included=.FALSE.
- BSS_long_gauge=.FALSE.
  BSS_uses_GreenF=.FALSE.
  !
  ! TDDFT

@@ -180,7 +180,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        !
        ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_os
        !
-       call X_write_messages_before_headers(iq,associated(Xen%GreenF),X%Vnl_included,X%long_gauge,X%ordering)
+       call X_write_messages_before_headers(iq,associated(Xen%GreenF),X%Vnl_included,X%ordering)
        !
        ! Titles 
        !

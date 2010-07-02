@@ -32,9 +32,10 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
  use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_with_fields,QP_LifeTime,H_t,      &
- &                        Thermal_steps,Thermal_time,RT_step,XC0,Hfrozen,XCfrozen,&
- &                        G_lesser_reference,l_RT_needs_XC0,i_time,gauge_field,Phase_LifeTime,&
+&                         Thermal_steps,Thermal_time,RT_step,XC0,Hfrozen,XCfrozen,&
+&                         G_lesser_reference,l_RT_needs_XC0,i_time,Phase_LifeTime,&
 &                         RT_is_dumped
+ use fields,         ONLY:gauge_field
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional 

@@ -28,8 +28,8 @@ subroutine RT_Energy(en,k,RT_Energies)
  use D_lattice,      ONLY:DL_vol
  use SC,             ONLY:V_hartree_sc,Ho
  use X_m,            ONLY:P_square
- use real_time,      ONLY:XC0,G_lesser,RT_average_operator,XCfrozen, &
-&                         l_NE_with_fields,A_vecpot
+ use real_time,      ONLY:XC0,G_lesser,RT_average_operator,XCfrozen,l_NE_with_fields
+ use fields,         ONLY:A_vecpot
  use electrons,      ONLY:levels
  use QP_m,           ONLY:QP_Vnl_xc,QP_Sc
  use xc_functionals, ONLY:E_xc

@@ -29,8 +29,8 @@ subroutine RT_current_or_polarization(Xk,G_input,A_input)
  use D_lattice,      ONLY:DL_vol
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel
- use real_time,      ONLY:l_RT_no_diamagnetic,i_time,l_NE_with_fields,j_or_p, &
-&                         gauge_field,RT_average_operator
+ use real_time,      ONLY:l_RT_no_diamagnetic,i_time,l_NE_with_fields,j_or_p,RT_average_operator
+ use fields,         ONLY:gauge_field
  use X_m,            ONLY:DIP_iR_or_P
  use QP_m,           ONLY:QP_nk
  !

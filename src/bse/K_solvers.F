@@ -27,13 +27,16 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 &                         alpha_dim,eps_2_alpha,X_duplicate
  use BS,             ONLY:BSS_n_freqs,BS_K_dim,BSS_rhoq0,BS_eh_f,BS_not_const_eh_f,&
 &                         BS_bands,BSS_q0,BS_eh_table,BSS_mode,BS_eh_E,&
-&                         BSS_n_descs,BS_K_coupling,BSS_Vnl_included,BSS_long_gauge
+&                         BSS_n_descs,BS_K_coupling,BSS_Vnl_included
  use com,            ONLY:msg,warning
  use drivers,        ONLY:l_bs_fxc
  use frequency,      ONLY:w_samp
  use electrons,      ONLY:levels,spin_occ,spin
  use R_lattice,      ONLY:d3k_factor,bz_samp,q_norm
  use IO_m,           ONLY:io_control,OP_RD_CL,NONE
+#if defined _SC
+ use fields,         ONLY:global_gauge
+#endif
  !
  implicit none
  type(levels) ::Ken
@@ -83,7 +86,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    X_oscillators%q0=BSS_q0
    call Dipole_driver(Ken,Xk,X_oscillators,BSS_q0)
    BSS_Vnl_included=X_oscillators%Vnl_included
-   BSS_long_gauge=X_oscillators%long_gauge
    do i1=1,BS_K_dim
      ik  =BS_eh_table(i1,1)
      iv  =BS_eh_table(i1,2)
@@ -128,12 +130,20 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! Solvers
  !
- run_Haydock         =index(BSS_mode,'h')/=0
  run_Diago           =index(BSS_mode,'d')/=0
+#if defined _SC
+ run_Haydock         =index(BSS_mode,'h')/=0.and.trim(global_gauge)/='velocity'
+#else
+ run_Haydock         =index(BSS_mode,'h')/=0
+#endif
  !
  ! GPL_EXCLUDE_START
  !
+#if defined _SC
+ Pert_inversion      =index(BSS_mode,'i')/=0.and.trim(global_gauge)/='velocity'
+#else
  Pert_inversion      =index(BSS_mode,'i')/=0
+#endif
  !
  ! GPL_EXCLUDE_END
  !

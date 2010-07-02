@@ -36,9 +36,9 @@ subroutine RT_spectrum(en,k)
  use parser_m,       ONLY:parser
  use timing,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP
- use real_time,      ONLY:NE_steps,RT_step,j_or_p,i_time,Efield,  &
-&                         max_rt_steps_disk,current_cache,A_vecpot,j_current_ext
- use X_m,            ONLY:gauge_type
+ use real_time,      ONLY:NE_steps,RT_step,j_or_p,i_time,  &
+&                         max_rt_steps_disk,current_cache,j_current_ext
+ use fields,         ONLY:Efield,A_vecpot,global_gauge 
  implicit none
  !
  type(levels)   :: en
@@ -168,7 +168,7 @@ subroutine RT_spectrum(en,k)
  ! Remove the dc component from current
  !--------------------------------------
  !
- if(.not.l_no_remove_DC.and.trim(gauge_type)=='velocity') then
+ if(.not.l_no_remove_DC.and.trim(global_gauge)=='velocity') then
    !
    do i_c = 1, 3
      Integral = sum(At_vecpot_vel(:, i_c))
@@ -331,7 +331,7 @@ subroutine RT_spectrum(en,k)
    EPS(i_w,:)=EPS(i_w,:)-const1(:)/((0._DP,1._DP)*W_reached-X_rt%damp_factor)
  enddo                    
  !
- EField(ref_efield)%amplitude=sqrt(Efield(ref_efield)%intensity*(8._SP*pi)/SPEED_OF_LIGHT)   
+ Efield(ref_efield)%amplitude=sqrt(Efield(ref_efield)%intensity*(8._SP*pi)/SPEED_OF_LIGHT)   
  !
  do i_w=1,X_rt%energy_steps
    !
@@ -356,7 +356,7 @@ subroutine RT_spectrum(en,k)
    !
  enddo
  !
- if(trim(gauge_type)=='velocity') then
+ if(trim(global_gauge)=='velocity') then
    !
    ! Interpolate real imaginary part of J(w)/E(w) 
    ! and rigid shift the real part to remove residual divergence

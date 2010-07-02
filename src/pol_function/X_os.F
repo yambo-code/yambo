@@ -43,6 +43,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
 #if defined _SC 
  use drivers,       ONLY:l_sc_run
  use SC,            ONLY:it_now
+ use fields,        ONLY:global_gauge
 #endif
 #if defined _RAS
  use optcut,        ONLY: loptcut, Xcut_rhoq0
@@ -390,6 +391,19 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
      enddo
    enddo
  endif
+ !
+#if defined _SC
+ !
+ ! Divide the head by w^2 in case a velocity gauge is used
+ !=========================================================
+ !
+ if (trim(global_gauge)=='velocity') then
+   do iw=fr(1),fr(2)
+     Xo(1,1,iw)=Xo(1,1,iw)/real(Xw%p(iw))**2
+   enddo
+ endif
+ !
+#endif
  !
  ! CLEAN
  !=======

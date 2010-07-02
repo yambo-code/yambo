@@ -91,7 +91,6 @@ module BS
  logical  :: BSS_uses_RIM
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF
- logical  :: BSS_long_gauge
  logical  :: BSS_uses_partial_diago
  complex(SP),allocatable :: BSS_rhoq0(:)
  !

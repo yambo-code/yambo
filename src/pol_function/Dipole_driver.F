@@ -32,13 +32,14 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use par_proc_m,     ONLY:pp_redux_wait
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
- use X_m,            ONLY:DIP_iq_dot_r,X_alloc,X_t,DIP_iR_or_P,long_path,Dipole_bands_ordered,&
+ use fields,         ONLY:long_path,global_gauge
+ use X_m,            ONLY:DIP_iq_dot_r,X_alloc,X_t,DIP_iR_or_P,Dipole_bands_ordered,&
 &                         Vnl_commutator_warning
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use wave_func,      ONLY:wf_ng,WF_load,WF_free
  use vec_operate,    ONLY:v_norm
 #if defined _SC      
- use X_m,            ONLY:P_square,gauge_type
+ use X_m,            ONLY:P_square
 #endif
 #if defined _DISTRIBUTED
  use wf_distribute,  ONLY:WF_states_setup
@@ -76,27 +77,24 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  if(l_sc_run.or.l_real_time) Dipole_bands_ordered=.FALSE.
  !
+#endif
+ !
+#if defined _SC 
+ !
+ ! GAUGE switch
+ !==============
+ !
  ! velocity only in _SC (imposed if non-local potentials)
  ! longitudinal anywhere
  !
- if(trim(gauge_type)/='velocity'.and.trim(gauge_type)/='length'.and.&
-&   trim(gauge_type)/='longitudinal') call error(' Unknown GaugeType ')
+! if(trim(gauge_type)/='velocity'.and.trim(gauge_type)/='length'.and.&
+!&   trim(gauge_type)/='longitudinal') call error(' Unknown GaugeType ')
  !
 #endif
  !
  ! Check first if ostnts DB is already done
  !
  X%ngostnts=wf_ng
- !
- ! GPL_EXCLUDE_START RAS_IGNORE
- !
- ! If I am trying to go from a transverse to a long. gauge
- ! calculation X%long_gauge will be false here even if a long_path is
- ! provided
- !
- if (.not.X%long_gauge) X%long_gauge=trim(long_path)/='none'
- !
- ! GPL_EXCLUDE_END RAS_IGNORE
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=ioOSTNTS(X,Xen,ID)
@@ -146,18 +144,14 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    ! Attempt calculation within longitudinal gauge if requested
    !
-   if(trim(long_path)/='none') then
+   if(trim(long_path)/='none'.and.trim(global_gauge)=='longitudinal') then
      !
      ! Use longitudinal gauge, supporting fallback to transverse gauge
      !
      call Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
      !
-     if(use_trans_gauge) then
-       call warning('Reverting to transverse gauge')
-       X%long_gauge=.false.
-     else
-       X%long_gauge=.true.
-     endif
+     if(use_trans_gauge) call warning('Reverting to transverse gauge')
+     !
    endif
    !
    ! Fallback to transverse

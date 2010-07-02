@@ -208,8 +208,8 @@ subroutine ypp_init_load(defs)
  !
 #if defined _YPP_RT
  !
- call it(defs,'EField1','First external Electric Field',E_field(1,:))
- call it(defs,'EField2','Additional external Electric Field',E_field(2,:))
+ call it(defs,'Efield1','First external Electric Field',E_field(1,:))
+ call it(defs,'Efield2','Additional external Electric Field',E_field(2,:))
  call it(defs,'BField',    '[MAG] Magnetic field modulus',B_field,unit=Bfield_unit)
  call it(defs,'Bpsi',      '[MAG] Magnetic field psi angle [degree]',B_psi,unit='deg')
  call it(defs,'Btheta',    '[MAG] Magnetic field theta angle [degree]',B_theta,unit='deg')

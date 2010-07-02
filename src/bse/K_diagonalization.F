@@ -41,6 +41,9 @@ subroutine K_diagonalization(iq,W)
  use par_indexes_m,  ONLY:par_indexes
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
+#if defined _SC
+ use fields,         ONLY:global_gauge
+#endif
  implicit none
  type(w_samp)  :: W
  integer       :: iq
@@ -297,10 +300,17 @@ subroutine K_diagonalization(iq,W)
    ! distinction between the resonant and antiresonant e/h Green's
    ! functions.
    !
-   if (K_is_not_hermitian)      X_epsilon(2,:)=&
-&                               X_epsilon(2,:)-BS_R(i1)/(W%p(:)-BS_E(i1))
-   if (.not.K_is_not_hermitian) X_epsilon(2,:)=&
-&                               X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-BS_E(i1))
+#if defined _SC
+   if (trim(global_gauge)=='velocity') then
+     if (K_is_not_hermitian)      X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)/(W%p(:)-BS_E(i1))/BS_E(i1)**2.
+     if (.not.K_is_not_hermitian) X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-BS_E(i1))/real(BS_E(i1))**2.
+  else
+#endif
+    if (K_is_not_hermitian)      X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)/(W%p(:)-BS_E(i1))
+    if (.not.K_is_not_hermitian) X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/(W%p(:)-BS_E(i1))
+#if defined _SC
+  endif
+#endif
    !
    call live_timing(steps=1)
  enddo

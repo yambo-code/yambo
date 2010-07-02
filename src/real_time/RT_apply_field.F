@@ -25,9 +25,11 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
  !
  use pars,           ONLY:SP
  use units,          ONLY:SPEED_OF_LIGHT
- use real_time,      ONLY:l_RT_no_diamagnetic,gauge_field
+ use real_time,      ONLY:l_RT_no_diamagnetic
+ use fields,         ONLY:gauge_field
  use electrons,      ONLY:n_sp_pol
- use X_m,            ONLY:gauge_type,DIP_iR_or_P
+ use fields,         ONLY:global_gauge
+ use X_m,            ONLY:DIP_iR_or_P
  use SC,             ONLY:SC_bands
  !
  implicit none
@@ -40,7 +42,7 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
  integer     :: i1,i2,is
  complex(SP) :: A_dot_P,E_dot_r,A_vec_pot(3),E_vec_pot(3)
  !
- if(trim(gauge_type)=='velocity') then
+ if(trim(global_gauge)=='velocity') then
    !
    ! Velocity gauge
    !================

@@ -37,8 +37,8 @@ subroutine RT_start_and_restart(Xen,Xk,k)
 #endif
  use real_time,      ONLY:G_lesser,ID,ID,NE_steps,G_lesser_previous,j_or_p,&
 &                         G_lesser_reference,Thermal_steps,RT_is_dumped,XC0,      &
-&                         l_RT_needs_XC0,Hfrozen,it_start,   &
-&                         A_vecpot,A_vecpot_previous,l_NE_with_fields
+&                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields
+ use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V, &
 &                         rho_convergence,H_rotate,local_V,V_hartree_sc,      &
 &                         E_bare,V_xc_sc,rho_n

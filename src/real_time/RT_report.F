@@ -24,7 +24,8 @@ subroutine RT_report(i_t,values)
  use pars,           ONLY:lchlen,schlen,SP
  use com,            ONLY:msg,of_open_close
  use SC,             ONLY:SC_description,n_SC_descriptions
- use real_time,      ONLY:l_NE_with_fields,A_vecpot,it_start
+ use real_time,      ONLY:l_NE_with_fields,it_start
+ use fields,         ONLY:A_vecpot
  use stderr,         ONLY:set_real_printed_length
  implicit none
  !

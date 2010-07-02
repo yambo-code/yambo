@@ -34,8 +34,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser, &
 &                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,      &
 &                         i_time,Integrator_name,l_RT_diagonalize,        &
-&                         G_lesser_reference,RT_is_dumped,RT_diagonalization_steps,     &
-&                         A_vecpot,A_vecpot_previous,it_start
+&                         G_lesser_reference,RT_is_dumped,RT_diagonalization_steps,it_start
+ use fields,         ONLY:A_vecpot,A_vecpot_previous
  use collisions_CACHE, ONLY:free_COLLISIONS_v
  !
  implicit none

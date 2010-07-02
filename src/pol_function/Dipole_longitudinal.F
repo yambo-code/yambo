@@ -35,7 +35,8 @@ subroutine Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
 &                               pp_indexes_reset
  use par_indexes_m,       ONLY: par_indexes
  use R_lattice,           ONLY: bz_samp,q0_def_norm,nkibz
- use X_m,                 ONLY: X_t,DIP_iR_or_P, long_path 
+ use X_m,                 ONLY: X_t,DIP_iR_or_P 
+ use fields,              ONLY: long_path 
  use memory_m,            ONLY: mem_est
  use wave_func,           ONLY: wf,wf_ng,wf_igk,wf_state,WF_load,WF_free , wf_ncx
 #if defined _RAS

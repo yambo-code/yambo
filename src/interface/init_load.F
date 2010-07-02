@@ -27,7 +27,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,&
 &                        Time_unit,I_unit,Angle_unit,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
- use X_m,           ONLY:X_t,long_path,q_plus_G_direction,Q_Shift_Order,gauge_type
+ use X_m,           ONLY:X_t,q_plus_G_direction,Q_Shift_Order
+ use fields,        ONLY:global_gauge,long_path
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,SC_band_mixing,&
@@ -54,7 +55,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, QP_LifeTime, Phase_LifeTime, &
-&                        RT_diagonalization_steps,Thermal_time,EField,max_rt_steps_disk
+&                        RT_diagonalization_steps,Thermal_time,max_rt_steps_disk
+ use fields,        ONLY:Efield
 #endif
 #if defined _MAGNETIC
  use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
@@ -190,7 +192,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &              Haydock_treshold,verb_level=V_resp)
  call it(defs,'BEnSteps','[BSS] Energy steps',BSS_n_freqs)
  call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the FWs',verb_level=V_resp)
- call it('f',defs,'ALLGexx', '[BSS] Use all Gexx when their FFT size is larger then the correlation part',verb_level=V_resp)
+ call it('f',defs,'ALLGexx', '[BSS] Impose the use of all BSENGexx regardless of the FFT size',verb_level=V_resp)
  call it('f',defs,'BSHayTer','[BSS] Terminate Haydock continuos fraction',verb_level=V_resp)
  !
  ! F_xc
@@ -372,7 +374,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! 
  ! SC [common with RT]
  !
- call it(defs,'GaugeType', '[Xd] Gauge type (lenght|velocity|longitudinal)',gauge_type,verb_level=V_resp)
+ call it(defs,'Gauge',     '[Xd,RT] Gauge type (lenght|velocity|longitudinal)',global_gauge,verb_level=V_resp)
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_sc)
  call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)
@@ -420,17 +422,17 @@ subroutine init_load(defs,en,q,k,X,Xw)
      if (i_field==2) name='Pump'
      if (i_field==2) verbosity_here=V_real_time
      call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
-&    EField(i_field)%frequency,unit=E_unit,verb_level=0)
+&    Efield(i_field)%frequency,unit=E_unit,verb_level=0)
      call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&
-&    EField(i_field)%intensity,unit=I_unit,verb_level=0)
+&    Efield(i_field)%intensity,unit=I_unit,verb_level=0)
      call it(defs,trim(name)//'_Damp',             '[RT '//trim(name)//'] Damping',&
-&    EField(i_field)%damping,unit=Time_unit,verb_level=V_real_time)
+&    Efield(i_field)%damping,unit=Time_unit,verb_level=V_real_time)
      call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] Kind(SIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',&
-&    EField(i_field)%ef_name,verb_level=0)
+&    Efield(i_field)%ef_name,verb_level=0)
      call it(defs,trim(name)//'_Dir',             '[RT '//trim(name)//'] Versor',&
-&    EField(i_field)%versor,verb_level=0)
+&    Efield(i_field)%versor,verb_level=0)
      call it(defs,trim(name)//'_Tstart',        '[RT '//trim(name)//'] Initial Time',&
-&    EField(i_field)%t_initial,unit=Time_unit,verb_level=V_real_time)
+&    Efield(i_field)%t_initial,unit=Time_unit,verb_level=V_real_time)
    end subroutine
    !
 #endif

@@ -40,7 +40,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #if defined _YPP_RT
  use electrons,      ONLY:levels,E_reset
  use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
- use real_time,      ONLY:RT_step,NE_steps,Efield
+ use real_time,      ONLY:RT_step,NE_steps
+ use fields,         ONLY:Efield
 #endif
 #if defined _YPP_ELPH
  use ELPH,           ONLY:gsqF_energy_steps
@@ -431,7 +432,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !             
  l_rtoptics  =runlevel_is_on('rtoptics')
  !
- if (l_rsymm) call initactivate(1,"EField1 EField2 BField Bpsi Btheta RmAllSymm RmTimeRev")
+ if (l_rsymm) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev")
  !
  if (l_rtoptics) then 
     call initactivate(1,"EnRngeRt ETStpsRt TmRngeRt DampMode DampFactor FourierDamp")

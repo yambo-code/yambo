@@ -69,14 +69,20 @@ while (my $entry = <>) {
 
     my @parts = split (/ /, $entry);
     $last_rev  = $parts[0];
-    my $hacker = $parts[2];
-    my $tstamp = $parts[4];
-    my $time   = $parts[5];
 
-    # Use alias if we can't resolve to name, email
-    $hacker = $hackers{$hacker} if defined $hackers{$hacker};
+    if($last_rev !~ /Yambo|Additions|\n/ ) {
 
-    printf "%s %s %s %s\n", $tstamp, $time, $last_rev, $hacker;
+       my $hacker = $parts[2];
+       my $tstamp = $parts[4];
+       my $time   = $parts[5];
+
+       # Use alias if we can't resolve to name, email
+       $hacker = $hackers{$hacker} if defined $hackers{$hacker};
+
+       printf "%s %s %s %s\n", $tstamp, $time, $last_rev, $hacker;
+    } else {
+      print "\t$entry";
+    }
 
   } elsif ($this_line_empty) {
 

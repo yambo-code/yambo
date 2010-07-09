@@ -22,7 +22,7 @@
 subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  use drivers,        ONLY:l_optics,l_real_time,l_sc_run
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cI
  use com,            ONLY:warning,error
 #if defined _RAS
  use ras_module,     ONLY:transloc, lras
@@ -32,9 +32,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use par_proc_m,     ONLY:pp_redux_wait
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
- use fields,         ONLY:long_path,global_gauge
- use X_m,            ONLY:DIP_iq_dot_r,X_alloc,X_t,DIP_iR_or_P,Dipole_bands_ordered,&
-&                         Vnl_commutator_warning
+ use fields,         ONLY:grid_path,global_gauge
+ use X_m,            ONLY:DIP_q_dot_iR,X_alloc,X_t,DIP_iR,Dipole_bands_ordered,&
+&                         Vnl_commutator_warning,Dipole_uses_shifted_grids,DIP_P
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use wave_func,      ONLY:wf_ng,WF_load,WF_free
  use vec_operate,    ONLY:v_norm
@@ -43,6 +43,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #endif
 #if defined _DISTRIBUTED
  use wf_distribute,  ONLY:WF_states_setup
+#endif
+#if defined _RT
+ use X_m,            ONLY:DIP_P
 #endif
  implicit none
  !
@@ -54,15 +57,15 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! Work Space
  !
  integer                   :: ik,i1,ic,iv,is,i_spin
- real(SP)                  :: field_dir_rot(3)
+ real(SP)                  :: field_dir_rot(3),E_m_Ep
  logical                   :: use_trans_gauge
  !
  !I/O
  !
  integer :: ID,io_err
- integer, external :: ioOSTNTS
+ integer, external :: io_DIPOLES
  !
- if (allocated(DIP_iq_dot_r)) return
+ if (allocated(DIP_q_dot_iR)) return
  !
  ! Transitions ordering
  !
@@ -79,16 +82,16 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
 #endif
  !
+ Dipole_uses_shifted_grids=trim(grid_path)/='none'
+ !
 #if defined _SC 
  !
  ! GAUGE switch
  !==============
  !
- ! velocity only in _SC (imposed if non-local potentials)
- ! longitudinal anywhere
+ ! velocity imposed in _SC (imposed if non-local potentials)
  !
 ! if(trim(gauge_type)/='velocity'.and.trim(gauge_type)/='length'.and.&
-!&   trim(gauge_type)/='longitudinal') call error(' Unknown GaugeType ')
  !
 #endif
  !
@@ -97,7 +100,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  X%ngostnts=wf_ng
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
- io_err=ioOSTNTS(X,Xen,ID)
+ io_err=io_DIPOLES(X,Xen,ID)
  !
  if (io_err.ne.0) then
    !
@@ -107,20 +110,20 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    ! in the new basis. So all transitions are needed
    !
    if (Dipole_bands_ordered) then
-     call X_alloc('OptGrad',(/3,X%ib(2),Xen%nbm,Xk%nibz/))
+     call X_alloc('DIP_iR',(/3,X%ib(2),Xen%nbm,Xk%nibz/))
    else
-     call X_alloc('OptGrad',(/3,X%ib(2),X%ib(2),Xk%nibz/))
+     call X_alloc('DIP_iR',(/3,X%ib(2),X%ib(2),Xk%nibz/))
    endif
-   DIP_iR_or_P=(0.,0.)
+   DIP_iR=(0.,0.)
    !
-#if defined _RT 
+#if defined _RT
    call X_alloc('P_square',(/X%ib(2),X%ib(2),Xk%nibz/))
    P_square=(0.,0.)
 #endif
    !   
 #if defined _DISTRIBUTED
    !
-   if(trim(long_path)=='none'.and.Dipole_bands_ordered) then
+   if(trim(grid_path)=='none'.and.Dipole_bands_ordered) then
      !
      ! Valence bands are loaded by all processors
      !
@@ -142,15 +145,16 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    ! GPL_EXCLUDE_START RAS_IGNORE
    !
-   ! Attempt calculation within longitudinal gauge if requested
+   ! Attempt calculation using shifted grids if requested
    !
-   if(trim(long_path)/='none'.and.trim(global_gauge)=='longitudinal') then
+   if(Dipole_uses_shifted_grids) then
      !
-     ! Use longitudinal gauge, supporting fallback to transverse gauge
+     ! Use shifted grids, supporting fallback to transverse gauge
      !
-     call Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
+     call Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
      !
-     if(use_trans_gauge) call warning('Reverting to transverse gauge')
+     if (use_trans_gauge) call warning('Reverting to transverse gauge')
+     if (use_trans_gauge) Dipole_uses_shifted_grids=.FALSE.
      !
    endif
    !
@@ -165,18 +169,42 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    call WF_free()
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
-   io_err=ioOSTNTS(X,Xen,ID)
+   io_err=io_DIPOLES(X,Xen,ID)
    !
  end if
  !
-#if defined _SC 
- if (l_real_time) return
+#if defined _RT  
+ if (l_real_time) then
+   !
+   call X_alloc('DIP_P',   (/3,X%ib(2),X%ib(2),Xk%nibz/))
+   !
+   do i1 = 1,Xk%nbz
+     !
+     ik = Xk%sstar(i1,1)
+     !
+     ! Calculate the <n|P|n'>= (E_n-E_n')* <n|iR|n'>
+     !
+     do iv = X%ib(1), X%ib(2)
+       do ic = X%ib(1), X%ib(2)
+         do i_spin=1,n_sp_pol
+           E_m_Ep=Xen%E(iv,ik,i_spin)-Xen%E(ic,ik,i_spin)
+           if (associated(Xen%Eo)) E_m_Ep=Xen%Eo(iv,ik,i_spin)-Xen%Eo(ic,ik,i_spin)
+           DIP_P(:,iv,ic,ik,i_spin)= DIP_iR(:,iv,ic,ik,i_spin)*E_m_Ep
+         enddo
+       enddo
+       DIP_P(:,iv,iv,ik,:)= (0.,0.)
+     enddo
+   enddo
+   ! 
+   return
+   !
+ endif
 #endif
  !
  ! The field direction and the gamma-point norm must be renormalized here in case the
- ! oscillator strengths have been calculated using the long. gauge.
+ ! oscillator strengths have been calculated using the shifted grids.
  ! In this case q0_def_norm is not the default one but corresponds
- ! to the norm of the longitudinal shift.
+ ! to the norm of the grid shift.
  !
  field_dir=field_dir*q0_def_norm/v_norm(field_dir)
  q_norm(1)=q0_def_norm
@@ -189,10 +217,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    Vnl_commutator_warning=.TRUE.
  endif
  !
- ! Calculate the q-dependent oscillators (OptOsc)
+ ! Calculate the q-dependent oscillators
  !
- call X_alloc('OptOsc',(/X%ib(2),Xen%nbm,Xk%nbz/))
- DIP_iq_dot_r = (0.0_SP,0.0_SP)
+ call X_alloc('DIP_q_dot_iR',(/X%ib(2),Xen%nbm,Xk%nbz/))
+ DIP_q_dot_iR = (0.0_SP,0.0_SP)
  !
  do i1 = 1,Xk%nbz
    !
@@ -222,10 +250,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
          !
          ! DIP_iq_dot_r = i q . < v k | r | c k >
          !
-         DIP_iq_dot_r(ic,iv,i1,i_spin) = & 
-&          dot_product( field_dir_rot, DIP_iR_or_P(:,ic,iv,ik,i_spin) )
-         if ( is > nsym/(i_time_rev+1) ) DIP_iq_dot_r(ic,iv,i1,i_spin) = &
-&          dot_product( DIP_iR_or_P(:,ic,iv,ik,i_spin), field_dir_rot ) 
+         DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( field_dir_rot, DIP_iR(:,ic,iv,ik,i_spin) )
+         if ( is > nsym/(i_time_rev+1) ) DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( DIP_iR(:,ic,iv,ik,i_spin), field_dir_rot ) 
          !
          ! GPL_EXCLUDE_START SPIN_IGNORE
          !
@@ -234,13 +260,14 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        ! GPL_EXCLUDE_END SPIN_IGNORE
        !
      enddo
-     DIP_iq_dot_r(iv,iv,i1,:) = (1.0_SP,0.0_SP)
+     DIP_q_dot_iR(iv,iv,i1,:) = (1.0_SP,0.0_SP)
    enddo
+   !
  enddo
  call pp_redux_wait()
  !
  ! Clean up
  !
- call X_alloc('OptGrad') ! Used in O_transverse/O_longitudinal/ioOSTNTS
+ call X_alloc('DIP_iR') 
  !
 end subroutine

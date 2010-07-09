@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine Dipole_longitudinal_cut(Xen, Xk, X, field_dir, use_trans_gauge)
+ subroutine Dipole_shifted_grids_cut(Xen, Xk, X, field_dir, use_trans_gauge)
 !====================================
    use pars
    use com,                     ONLY : msg, core_io_path, msg, error, warning
@@ -31,7 +31,7 @@
    use par_indexes_m,           ONLY : par_indexes
    use R_lattice,               ONLY : g_vec, bz_samp, bz_samp_duplicate,bz_samp_reset, q0_def_norm, nkibz
    use D_lattice,               ONLY : DL_sop, n_atoms_species, atom_pos, Z_species
-   use X_m,                     ONLY : X_alloc, X_t, long_path
+   use X_m,                     ONLY : X_alloc, X_t, grid_path
    use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP, ver_is_gt_or_eq
    use memory_m,                ONLY : mem_est
    use wave_func,               ONLY : wf, wf_ng, wf_state, WF_load, WF_free, wf_nc_k, wf_igk, wf_ncx
@@ -89,7 +89,7 @@
    !
    ! Read longitudinal grids from second ioDB1
    !
-   io_err=ioDB1_reload(E_shift,Xk_shift,trim(long_path))
+   io_err=ioDB1_reload(E_shift,Xk_shift,trim(grid_path))
    nkibz_long = nkibz
    wf_ncx_long = wf_ncx
 
@@ -144,7 +144,7 @@
    !
    ! Load WFs {k} + q_iq
    !
-   core_io_path = long_path
+   core_io_path = grid_path
    call WF_free()
    call WF_load(0,1,(/ X%ib(1), Xen%nbm /),&
 &                   (/ik_grid,ik_grid+Xk%nibz-1/),&
@@ -177,7 +177,7 @@
      !
      ! Load WFs {k} + q_iq
      !
-     core_io_path = long_path
+     core_io_path = grid_path
      nkibz = nkibz_long
      wf_ncx = wf_ncx_long
      wf_ng = wf_ng_save
@@ -283,4 +283,4 @@
     return
   end subroutine reset_DB1
 
- end subroutine Dipole_longitudinal_cut
+ end subroutine Dipole_shifted_grids_cut

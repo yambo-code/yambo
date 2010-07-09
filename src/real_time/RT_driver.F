@@ -34,7 +34,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser, &
 &                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,      &
 &                         i_time,Integrator_name,l_RT_diagonalize,        &
-&                         G_lesser_reference,RT_is_dumped,RT_diagonalization_steps,it_start
+&                         G_lesser_reference,RT_is_dumped,RT_diagonalization_steps,it_start,RT_output
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use collisions_CACHE, ONLY:free_COLLISIONS_v
  !
@@ -130,6 +130,12 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
  endif
  !
+ ! Initialize output files
+ !==========================
+ !
+ call RT_output(what="open dyn cur pol")
+ if(l_NE_with_fields) call RT_output(what="open pot")
+ !
  ! loop on time
  !
  Dynamics_is_over=.FALSE.
@@ -162,7 +168,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    if(l_NE_with_fields.and.i_time>0)  then
      A_vecpot_previous=A_vecpot
-     call RT_current_or_polarization(Xk,G_lesser_previous,A_vecpot)
+     call RT_current_AND_polarization(Xk,G_lesser_previous,A_vecpot)
    endif 
    !
 #if defined _TWO_LEVELS
@@ -185,17 +191,17 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    it_now=it ! used in RESTART
    !
-   call RT_write_dbs(Xen,it)
+   call RT_databases_IO(Xen,it)
    !
    ! History
    !
    if( mod(it,RT_diagonalization_steps)==0 .and. l_RT_diagonalize ) call SC_History(it,en)
    !
-   ! Now print the Energy and other stuff
+   ! Now print Energetics, current and (eventually) potential 
    !
-   call RT_report(it,(/RT_time/FS2AUT,real(RT_Energies(1),SP),real(RT_Energies(2),SP),&
-&                     real(RT_Energies(3),SP),real(RT_Energies(4),SP),real(RT_Energies(5),SP),&
-&                     real(RT_Energies(6),SP),real(RT_Energies(7),SP)/))
+   call RT_output('dyn',real(RT_Energies),RT_time/FS2AUT)
+   call RT_output('cur pol',TIME_or_E=RT_time/FS2AUT)
+   if(l_NE_with_fields) call RT_output('pot',TIME_or_E=RT_time/FS2AUT) 
    !
    call live_timing(steps=1)
    !
@@ -211,7 +217,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
  if(NE_steps/=0) call live_timing
  !
- call RT_report(-1,spread(0.,1,size(RT_Energies)+1))
+ call RT_output(what="close cur pol pot dyn")
+ !
  if (l_RT_diagonalize) call SC_History(-1,en)
  !
  ! Finalize

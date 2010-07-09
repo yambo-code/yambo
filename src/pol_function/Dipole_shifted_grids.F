@@ -19,10 +19,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
+subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  !
- ! In the longitudinal gauge we can use the wfc 
- ! at the k,k-q points to construct
+ ! Using the wfc at the k,k-q points to construct <r>
  !
  !  i q.<nk|r|mk> =  \sum_i=1,3 q(i) <u_n(k+q0(i))|u_mk>/q0(i)
  !
@@ -35,8 +34,8 @@ subroutine Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
 &                               pp_indexes_reset
  use par_indexes_m,       ONLY: par_indexes
  use R_lattice,           ONLY: bz_samp,q0_def_norm,nkibz
- use X_m,                 ONLY: X_t,DIP_iR_or_P 
- use fields,              ONLY: long_path 
+ use X_m,                 ONLY: X_t,DIP_iR 
+ use fields,              ONLY: grid_path 
  use memory_m,            ONLY: mem_est
  use wave_func,           ONLY: wf,wf_ng,wf_igk,wf_state,WF_load,WF_free , wf_ncx
 #if defined _RAS
@@ -93,9 +92,9 @@ subroutine Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  if (wf_ng.lt.0.8_SP*maxval(wf_igk)) &
 &   call warning('All/most WF G-vectors should be used in the long. gauge')
  !
- ! Read longitudinal k-point grids from second ioDB1
+ ! Read the k-point grids from second ioDB1
  !
- io_err=ioDB1_reload(E_shift,Xk_shift,trim(long_path))
+ io_err=ioDB1_reload(E_shift,Xk_shift,trim(grid_path))
  call set_parms(grid='shifted', command=' define')
  !
  if(io_err/=0) then
@@ -151,7 +150,7 @@ subroutine Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
    !
    ! Load WFs {k} + q_iq
    !
-   core_io_path = long_path
+   core_io_path = grid_path
    call WF_free()
    call WF_load(0,1,(/ X%ib(1), Xen%nbm /),&
 &                   (/ik_grid,ik_grid+Xk%nibz-1/),&
@@ -163,7 +162,7 @@ subroutine Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
    !
    call pp_indexes_reset(px)
    call par_indexes(px,(/Xk%nibz,Xen%nbm/),(/1,X%ib(1)/))
-   call live_timing('Optical strengths @ grid '//trim(intc(iq))//':',px%n_of_element_1D(myid+1))
+   call live_timing('Dipole @ grid '//trim(intc(iq))//':',px%n_of_element_1D(myid+1))
    call pp_redux_wait
    !
    do ik = 1, Xk%nibz   ! Loop over k's in IBZ [1:nkibz]
@@ -224,12 +223,12 @@ subroutine Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
          enddo    ! spin loop
          !
          if (n_sp_pol==2) then
-           DIP_iR_or_P(ir,ic,iv,ik,1)=rho(1)
-           DIP_iR_or_P(ir,ic,iv,ik,2)=rho(2)
+           DIP_iR(ir,ic,iv,ik,1)=rho(1)
+           DIP_iR(ir,ic,iv,ik,2)=rho(2)
          else if (n_spinor==2) then
-           DIP_iR_or_P(ir,ic,iv,ik,1)=(rho(1)+rho(2))
+           DIP_iR(ir,ic,iv,ik,1)=(rho(1)+rho(2))
          else if (n_spin==1) then
-           DIP_iR_or_P(ir,ic,iv,ik,1)=rho(1)
+           DIP_iR(ir,ic,iv,ik,1)=rho(1)
          endif
          !
        enddo  ! conduction band loop
@@ -244,7 +243,7 @@ subroutine Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
  !
  call WF_free()
  do i_spin=1,n_spin
-   call pp_redux_wait(DIP_iR_or_P(:,:,:,:,i_spin))
+   call pp_redux_wait(DIP_iR(:,:,:,:,i_spin))
  enddo
  !
  ! Switch off transverse calculation if successful 
@@ -285,7 +284,7 @@ subroutine Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
        wf_ncx  = wf_ncx_save
        wf_ng   = wf_ng_save
      else if( grid.eq.'shifted'.and. command.eq.'  reset') then
-       core_io_path = long_path
+       core_io_path = grid_path
        nkibz   = nkibz_long
        wf_ncx  = wf_ncx_long
        wf_ng   = wf_ng_long
@@ -293,4 +292,4 @@ subroutine Dipole_longitudinal(Xen,Xk,X,field_dir,use_trans_gauge)
      return
    end subroutine set_parms
    !
-end subroutine Dipole_longitudinal
+end subroutine Dipole_shifted_grids

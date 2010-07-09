@@ -25,10 +25,10 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use pars,       ONLY:SP
  use units,      ONLY:HARTREE,FS2AUT,AU2Vmm
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
- use fields,     ONLY:global_gauge,long_path
+ use fields,     ONLY:global_gauge,grid_path
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                      alpha_dim,use_X_RIM,X_RIM_nkpts,Dipole_bands_ordered,&
-&                      eval_alpha,Vnl_commutator_warning,&
+&                      eval_alpha,Vnl_commutator_warning,Dipole_uses_shifted_grids,&
 &                      q_plus_G_direction,Q_Shift_Order
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
@@ -298,6 +298,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  self_detect_E_range=.false.
  half_X_mat_only=.false.
  Dipole_bands_ordered=.true.
+ Dipole_uses_shifted_grids=.false.
  use_X_RIM=.false.
  eps_2_alpha=1._SP
  alpha_dim='adim'
@@ -305,7 +306,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 #if defined _RT
  global_gauge='velocity'
 #endif
- long_path='none'
+ grid_path='none'
  eval_alpha=.FALSE.
  Vnl_commutator_warning=.FALSE.
  q_plus_G_direction=0.

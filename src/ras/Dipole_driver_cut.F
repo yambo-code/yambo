@@ -30,7 +30,7 @@
  use par_indexes_m,           ONLY : par_indexes
  use D_lattice,               ONLY : nsym, i_time_rev, alat, dl_sop, sop_inv
  use R_lattice,               ONLY : g_vec, bz_samp, q0_def_norm,q_norm,bare_qpg
- use X_m,                     ONLY : X_alloc, X_t, long_path
+ use X_m,                     ONLY : X_alloc, X_t, grid_path
  use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP
  use memory_m,                ONLY : mem_est
  use wave_func,               ONLY : wf, wf_ng, wf_state, WF_load, WF_free
@@ -56,7 +56,7 @@
  character(schlen)                :: sch 
  logical                          :: use_trans_gauge
 !functions
- integer,  external               :: ioOSTNTS_cut
+ integer,  external               :: io_DIPOLES_cut
 
  call section('=','Optical oscillators with cut off')
 
@@ -64,7 +64,7 @@
  
  X%ngostnts = wf_ng
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=io_db)
- io_err = ioOSTNTS_cut(X, Xen, io_db)
+ io_err = io_DIPOLES_cut(X, Xen, io_db)
 
  if (io_err.ne.0) then
    !
@@ -87,11 +87,11 @@
    Xcut_q0grad = (0.,0.)
 
    use_trans_gauge = .true.
-   if(trim(long_path)/='none') then
+   if(trim(grid_path)/='none') then
      !
      ! Use longitudinal gauge, supporting fallback to transverse gauge
      !
-     call Dipole_longitudinal_cut(Xen,Xk,X,field_dir, use_trans_gauge)
+     call Dipole_shifted_grids_cut(Xen,Xk,X,field_dir, use_trans_gauge)
      !
      if(use_trans_gauge) call warning('Reverting to transverse gauge')
    endif
@@ -104,7 +104,7 @@
    call WF_free()
    !
    if (master_cpu) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=io_db)
-   io_err=ioOSTNTS_cut(X,Xen,io_db)
+   io_err=io_DIPOLES_cut(X,Xen,io_db)
  endif
  !
  ! The field direction and the gamma-point norm must be renormalized here in case the

@@ -86,7 +86,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,io_KB_PP_err,&
 &                     ioBS_Fxc_err,ioQINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err
- integer, external :: ioX,ioOSTNTS,ioGROT,ioQINDX,ioRIM,&
+ integer, external :: ioX,io_DIPOLES,ioGROT,ioQINDX,ioRIM,&
 &                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_PP,&
 &                     ioCOL_CUT
  logical           :: OSTNTS_Vnl_included
@@ -312,7 +312,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! ostnts
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=ioOSTNTS(X(3),en,io_ID)
+ io_err=io_DIPOLES(X(3),en,io_ID)
  !
  OSTNTS_Vnl_included=io_err==0.and.X(3)%Vnl_included
  !

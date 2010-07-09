@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine RT_write_dbs(Xen,it)
+subroutine RT_databases_IO(Xen,it)
  !
  use QP_m,           ONLY:QP_nk
  use real_time,      ONLY:ID,i_time,l_NE_with_fields,max_rt_steps_disk
@@ -54,7 +54,7 @@ subroutine RT_write_dbs(Xen,it)
    !
    io_J=0 
    !
-   ! Write current on disk
+   ! Write current and polarization on disk
    !
    if(i_time==1) then 
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
@@ -68,4 +68,4 @@ subroutine RT_write_dbs(Xen,it)
    !
  endif
  !
-end subroutine RT_write_dbs
+end subroutine RT_databases_IO

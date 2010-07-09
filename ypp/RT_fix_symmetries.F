@@ -21,7 +21,7 @@
 !
 subroutine RT_fix_symmetries(E,k)
  !
- use YPP
+ use YPP,                 ONLY:E_field,B_theta,B_psi,B_field
  use pars,                ONLY:SP,lchlen
  use com,                 ONLY:msg,warning,core_io_path,more_io_path
  use memory_m,            ONLY:mem_est

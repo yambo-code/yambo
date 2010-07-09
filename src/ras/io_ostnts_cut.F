@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- integer function ioOSTNTS_cut(X,Xen,io_db)
+ integer function io_DIPOLES_cut(X,Xen,io_db)
 !======================================
  use pars
  use units,            ONLY : Hartree
@@ -43,14 +43,14 @@
  real(SP), allocatable     :: Xcut_q0grad_disk(:,:,:)
 
  write(lch,'(a,f5.3,a,f5.3)') "ostnts_z",z0f,"_d",dcf
- ioOSTNTS_cut = io_connect(desc=trim(lch),type=1,ID=io_db)
- if (ioOSTNTS_cut/=0) goto 1
+ io_DIPOLES_cut = io_connect(desc=trim(lch),type=1,ID=io_db)
+ if (io_DIPOLES_cut/=0) goto 1
 
  sec_size=11
  if (any((/io_sec(io_db,:)==1/))) then
 
-   ioOSTNTS_cut=io_header(io_db,R_LATT=.true.,WF=.true.)
-   if (ioOSTNTS_cut/=0) goto 1
+   io_DIPOLES_cut=io_header(io_db,R_LATT=.true.,WF=.true.)
+   if (io_DIPOLES_cut/=0) goto 1
 
    call io_elemental(io_db,VAR="PARS",VAR_SZ=sec_size,MENU=0)
    call io_elemental(io_db,DB_I1=db_nb,&
@@ -72,8 +72,8 @@
    call io_elemental(io_db,&
 &       VAR=" Cutoff width           :",R0=dcf,CHECK=.true.,OP=(/"=="/))
    call io_elemental(io_db,VAR="",VAR_SZ=0)
-   ioOSTNTS_cut=io_status(io_db)
-   if (ioOSTNTS_cut/=0) goto 1
+   io_DIPOLES_cut=io_status(io_db)
+   if (io_DIPOLES_cut/=0) goto 1
  endif
 !
 ! On disk the size is DIP_iR_or_P(3,db_nb(2),db_nbm,nXkibz)
@@ -94,7 +94,7 @@
 
          if (write_is_on(io_db)) call mat_c2r(Xcut_q0grad(ixyz,:,:,i1,i_spin),Xcut_q0grad_disk)
 
-         write (VAR_name,'(3(a,i4.4))') 'OptGrad_k_',i1,'_xyz_',ixyz,'_spin_',i_spin
+         write (VAR_name,'(3(a,i4.4))') 'DIP_iR_k_',i1,'_xyz_',ixyz,'_spin_',i_spin
 
          call io_bulk(io_db,VAR=trim(VAR_name),VAR_SZ=shape(Xcut_q0grad_disk))
          call io_bulk(io_db,R3=Xcut_q0grad_disk)

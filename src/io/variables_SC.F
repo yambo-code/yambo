@@ -272,7 +272,7 @@ integer function variables_SC(ID,local_description,what)
      call io_elemental(ID,VAR="GAUGE_TYPE",CH0="",VAR_SZ=1,MENU=0)
      i_desc=i_desc+1
      call io_elemental(ID,CH0=global_gauge, &
-&       VAR='  [RT] Gauge Type                 :',CHECK=.true.,OP=(/"=="/),&
+&       VAR=' [RT] Gauge Type                 :',CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !

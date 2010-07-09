@@ -25,7 +25,7 @@ subroutine RT_propagate_vecpot(A_new,A_old,T_step,RT_time)
  !
  use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT
- use real_time,      ONLY:j_or_p,l_RT_induced_field,j_current_ext,Ext_fields_initial_time
+ use real_time,      ONLY:RT_ind_J,l_RT_induced_field,j_current_ext,Ext_fields_initial_time
  use fields,         ONLY:gauge_field
  implicit none
  !
@@ -50,7 +50,7 @@ subroutine RT_propagate_vecpot(A_new,A_old,T_step,RT_time)
  ! if l_RT_induced_field the induced field is included in Maxweel equations
  !
  if(l_RT_induced_field) then 
-   A_new%vecpot_acc = A_new%vecpot_acc + j_or_p*4._SP*pi*SPEED_OF_LIGHT
+   A_new%vecpot_acc = A_new%vecpot_acc + RT_ind_J*4._SP*pi*SPEED_OF_LIGHT
  endif
  !
  A_new%vecpot_vel =  A_old%vecpot_vel + (A_new%vecpot_acc+A_old%vecpot_acc)*T_step/2._SP

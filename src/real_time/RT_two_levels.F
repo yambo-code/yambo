@@ -25,9 +25,11 @@ subroutine RT_two_levels(G_lesser)
  use units,          ONLY:SPEED_OF_LIGHT,FS2AUT
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
+ use D_lattice,      ONLY:DL_vol
  use units,          ONLY:HARTREE
  use real_time,      ONLY:Wo,Rabi_freq,W_photon,Phase_LifeTime,RT_is_dumped,W_detuning,&
-&                         QP_LifeTime,RT_step,l_NE_with_fields,i_time,Efield,P
+&                         QP_LifeTime,RT_step,l_NE_with_fields,i_time,P,D
+ use fields,         ONLY:Efield
  !
  implicit none           
  complex(SP),       intent(in) :: G_lesser(SC_bands,SC_bands,QP_nk)
@@ -88,7 +90,14 @@ subroutine RT_two_levels(G_lesser)
  call write_it(101,G_lesser(1,2,1))
  !
  call open_it(110,"Current")
- call write_it(110, -cI*(P*G_lesser(2,1,1)+conjg(P)*G_lesser(1,2,1)))
+ call write_it(110, -cI*(-1)*(P*G_lesser(2,1,1)+conjg(P)*G_lesser(1,2,1))/DL_vol)
+ call open_it(111,"Current_delta")
+ call write_it(111, 2.*Rabi_freq*conjg(P)/Wo*(1.-cos(Wo*T))/DL_vol)
+ !
+ call open_it(120,"Polarization")
+ call write_it(120, -cI*(D*G_lesser(2,1,1)+conjg(D)*G_lesser(1,2,1))/DL_vol)
+ call open_it(121,"Polarization_delta")
+ call write_it(121, -2.*Rabi_freq*conjg(P)/Wo**2.*sin(Wo*T)/DL_vol)
  !
  contains
    !
@@ -99,7 +108,6 @@ subroutine RT_two_levels(G_lesser)
      integer     ::unit_
      complex(SP) ::what
      write (unit_,'(10g20.10)') (i_time-1)*RT_step/FS2AUT,what
-     !write (unit_,'(10g20.10)') (i_time-1)*RT_step/2./pi*W_photon,what
    end subroutine
    !
    subroutine open_it(unit_,where_)

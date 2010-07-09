@@ -1,3 +1,254 @@
+2010-07-02 14:53:51 r626 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc config/configure.ac pol_function/X_os.F pol_function/O_driver.F pol_function/Dipole_longitudinal.F pol_function/Dipole_driver.F pol_function/Dipole_transverse.F interface/init_load.F interface/init.F real_time/RT_apply_field.F real_time/RT_Energy.F real_time/RT_Collision.F real_time/RT_driver.F real_time/RT_initialize.F real_time/RT_Ext_Current.F real_time/RT_propagate_vecpot.F real_time/RT_report.F real_time/RT_current_or_polarization.F real_time/RT_Integrator.F real_time/RT_start_and_restart.F real_time/RT_init_vecpot.F io/variables_SC.F io/ioX.F io/io_SC_components.F io/variables_BS.F io/io_header.F io/ioBSS_Haydock.F io/ioOSTNTS.F modules/mod_real_time.F modules/mod_BS.F modules/mod_R_lattice.F modules/mod_fields.F modules/mod_X_output.F modules/std_presets.F modules/mod_X.F modules/mod_IO.F modules/.objects bse/K_solvers.F bse/K_output_file.F bse/K_diagonalization.F ypp/ypp_init.F ypp/RT_spectrum.F ypp/ypp_init_load.F
+
+	Bugs:
+	- Fixed the use of %Vnl_commutator.
+
+	Additions:
+	- [_SC] Xo now rescaled by w^2 in case of velocity gauge.
+	- [_SC] BSE within  velocity gauge added only using the diagonalization solver.
+	- New module fields.F to store informations about the external fields and gauge. Still to merge
+	  with the magnetic fields of mod_magnetic.
+	- Global_gauge added as optional in io_header => LOST BACK-COMPATIBILITY (ver <= 3.0.15) in db.OSTNTS.
+
+	Changes:
+	- Removed X%long_gauge also from databases.
+	- gauge_type => global_gauge.
+
+	Patch sent by: Andrea
+
+2010-07-01 18:30:21 r625 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc config/Makefile.in config/configure.ac pol_function/Dipole_driver.F pol_function/Dipole_transverse.F interface/init_load.F interface/init.F + real_time/RT_Collision.F real_time/RT_driver.F real_time/RT_apply_gauge_field.F real_time/RT_initialize.F real_time/RT_Ext_Current.F real_time/RT_propagate_vecpot.F real_time/RT_report.F + real_time/.objects real_time/RT_Integrator.F real_time/RT_current.F real_time/RT_start_and_restart.F real_time/RT_init_vecpot.F real_time/RT_two_levels.F sc/SC_WF_and_dipole_dimensions.F io/variables_SC.F io/io_SC_components.F io/ioOSTNTS.F modules/mod_real_time.F modules/std_presets.F modules/mod_X.F ypp/RT_spectrum.F ypp/electrons_driver.F
+
+	Version 3.2.2
+
+	Bugs:
+	 - wrong label in dos with spin in ypp/electrons_driver.F
+
+	Changes:
+	 -[RT] Delta function generated using the equation for A(t)
+	 -[RT]renamed file and variables related to current
+	      j_current=>j_or_p, current=>cur_or_p, ... etc.
+
+	Additions:
+	 -[RT/SC] RT and SC can work with 'length' or 'velocity' gauge
+	 -[RT/SC] removed variable Eval_P_and_P2, cleaned the Dipole_driver.F and Dipole_transverse.F
+	 -[RT/SC] ndb.ostnts stores dipoles in both gauge (only RT and SC)
+	 -[RT] added ndb.P_square to store <p^2>
+
+	Patch sent by: Claudio
+
+2010-06-25 14:30:16 r624 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	SVN repo test
+
+2010-06-25 12:47:48 r623 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  ras/ras_spectrum.F ras_reels_mods/mod_ras.F
+
+	Additions:
+	- [RAS] Computation of surface differential reflectivity (SDR), theory def
+	-
+
+2010-06-24 10:30:02 r622 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	SVN repo test
+
+2010-06-23 17:06:39 r616 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc config/configure.ac qp/QP_driver.F qp/QP_newton.F qp/QP_ppa_cohsex.F interface/init_load.F interface/init.F interface/.objects_gpl interface/barriers.F modules/.objects_gpl ypp/electrons_driver.F driver/yambo.h_gpl driver/yambo_driver.F
+
+	Additions:
+	- COHSEX support added to the GPL version
+	- Wrapper module for BLAS subroutines => Many (not all) caxpy,cgemm, cdotc calls replaced
+
+	Patch sent by: Claudio
+
+2010-06-23 14:53:00 r615 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  ypp/ypp_init.F ypp/mod_YPP.F ypp/ras_trans_ypp.F ypp/ypp_init_load.F
+
+	Changes:
+	- [RAS] Transitions analysed wrt q-direction
+
+2010-06-17 18:10:04 r614 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc config/Makefile.in config/configure.ac qp/QP_Green_Function.F qp/ELPH_Sigma_c.F interface/init_load.F interface/init.F real_time/RT_Collision.F real_time/RT_driver.F real_time/RT_initialize.F real_time/.objects real_time/RT_current.F real_time/RT_start_and_restart.F real_time/RT_init_vecpot.F real_time/RT_two_levels.F io/variables_SC.F modules/mod_real_time.F modules/mod_functions.F modules/std_presets.F modules/mod_pars.F
+
+	Additions:
+	- [_TWO_LEVELS] two levels subproject of _RT opened.
+	- [_DEBUG] debug project removed
+
+	Changes:
+	- [_RT]  LifeTime replaced with QPLifeTime and PhLifeTime (Phase)
+
+	Patch sent by: Andrea
+
+2010-06-14 09:50:33 r606 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc config/configure.ac interface/QP_ctl_load.F interface/init_load.F interface/.objects interface/init.F interface/QP_ctl_switch.F real_time/RT_driver.F real_time/RT_initialize.F real_time/RT_Ext_Current.F real_time/RT_report.F real_time/RT_start_and_restart.F real_time/RT_init_vecpot.F io/variables_SC.F modules/mod_real_time.F modules/std_presets.F bse/K.F ypp/ypp_init.F ypp/ypp_init_load.F ypp/electrons_charge.F ypp/electrons_driver.F driver/ypp.h sbin/make_makefile.sh.in
+
+	Changes:
+	 -[RT] Name of fields shortened
+	 - QP_ctl_switch.F and QP_ctl_load.F are now separated subroutines
+	 - slatec library added to ypp
+
+	Additions:
+	 -[RT] Added quasiharmonic field QSSIN=exp(-t^2/(2*sigma^2))*sin(w_o*t)
+	 - ypp can plot also the Quasi-Particle density of states (with verbosity V_qp)
+
+	Bugs:
+	 -[RT] Small bug in RT_report.F when job is restarted
+	 - small fortran problem with gfortran in ypp/electrons_charge.F
+	 - wrong parsing of variable ALLGexx in K.F
+
+	Patch sent by: Claudio
+
+2010-06-08 17:06:00 r602 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  p2y/qexml_v3.1.F p2y/qexml_v4.0.F p2y/qexml_v3.2.F p2y/mod_p2y.F
+
+	Additions:
+	- Added check for NC (norm conserving) keyword in pseudos, fails if USPP detected (p2y only).
+
+2010-06-04 18:22:50 r600 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc config/acx.m4 config/acx_fortran_flags.m4 config/configure.ac qp/ELPH_Sigma_c.F qp/ELPH_Hamiltonian.F io/io_header.F modules/mod_xc_functionals.F
+
+	Bugs:
+	- In src/io/io_header.F the CUTOFF field was read even for databases created before the
+	  field was coded.
+
+	Additions:
+	- Module to create the compiler optimized flags has been moved from config/acx.m4 to
+	  the new file config/acx_fortran_flags.m4
+
+	Changes:
+	-
+	Patch sent by: Andrea
+
+2010-05-24 14:24:14 r598 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc config/configure.ac wf_and_fft/WF_load.F ypp/electrons_charge.F ypp/electrons_driver.F ypp/.objects
+
+	Bugs:
+	- In WF_load when 1-kpt only is loaded
+
+	Additions:
+	- [ELPH] ypp/electrons_charge.F: tool to calculate the effective charge of a trans-PA chain.
+	  Temporary additiona. Will be removed/fixed later.
+	  Consequent call in ypp/electrons_driver.F added.
+
+	Changes:
+	- Description of --msgs-comps option of configure (made more clear)
+
+	Patch sent by: Andrea & Elena
+
+2010-05-18 12:49:06 r595 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure tests tests/test_magnetic.sh tests/load_paths_and_executables.sh.in tests/test_GoWo.sh tests/setup.sh tests/test_RT.sh tests/test_SC.sh include/version.inc config/Makefile.in config/configure.ac wf_and_fft/WF_rotate.F pol_function/X_os.F pol_function/Dipole_kb_sum.F real_time/RT_Collision.F modules/mod_SC.F modules/mod_wrapper.F modules/mod_matrix_operate.F modules/.objects bse/K_Haydock.F bse/K_diagonalization.F
+
+	Additions:
+	- Wrapper module for BLAS subroutines => Many (not all) caxpy,cgemm, cdotc calls replaced
+
+	Patch sent by: Andrea & Claudio
+
+2010-05-18 09:45:55 r593 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc config/configure.ac interface/init_load.F interface/init.F sc/SC_History.F io/variables_SC.F bse/K.F
+
+	Additions:
+	 -New flag in BSE, ALLGexx, to force to use all the echange components
+	  in the calculation
+
+	Bugs:
+	 -[SC] Bug in variables_SC.F, the variable CHECK_ was not initialized, set to .not.l_NSC_shot
+	 -[SC] Bug in SC_History.F, when there are too many k-points the string to print
+	       is larger than lchlen (set max kpoints to 6)
+
+	Patch sent by: Claudio
+
+2010-05-18 09:24:13 r592 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc config/configure.ac xc_functionals/el_current.F qp/QP_of.F qp/ELPH_Hamiltonian.F bz_ops/bz_samp_indexes.F modules/mod_units.F ypp/ypp_i.F
+
+	Changes:
+	- QP_of: removed cycle command in case of degenerate QP states in order to print ALL Green's functions.
+	- [ELPH]: several small style changes in the I/O of ELPH_Hamiltonian.F
+	- Changed error in warning in bz_samp_indexes.F with consequent switch to gamma-only mode
+	  in case of redundant K-grids  (when two ore more k-points are equivalent)
+
+	Patch sent by: Andrea
+
+2010-05-10 11:56:42 r591 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc config/Makefile.in config/configure.ac qp/QP_Green_Function.F qp/ELPH_Sigma_c.F qp/ELPH_Hamiltonian.F qp/QP_ppa_cohsex.F common/OCCUPATIONS_Boltzmann.F real_time/RT_initialize.F real_time/RT_Ext_Current.F io/ioQP.F modules/mod_memory.F bse/K_diagonalization.F ypp/ypp_init.F ypp/RT_spectrum.F ypp/ELPH_databases.F ypp/ELPH_atomic_amplitude.F
+
+	Changes:
+	 - [RT] improved the cure for the divergence at w=>0 (RT_spectrum.F) (Claudio)
+
+	Additions:
+	 - [RT] GAUSSIAN external field works (Claudio)
+
+	Bugs:
+	 - [SC] bug in QP_ppa_chosex.F when CHOSEX_use_empties=.true.
+	        the Coulomb hole was not added to QP_sc (Claudio)
+	 - Precompiler options fixed in Makefile, K_diagonalization.F (Andrea)
+	 - Erroneous warning messages in case of (small) negative memories in
+	   mod_memory removed (Andrea)
+
+	Patch sent by: Andrea & Claudio
+
+2010-05-04 09:45:15 r590 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc int_modules/.objects_gpl int_modules/mod_wf2y.F int_modules/mod_com2y.F p2y/mod_p2y.F a2y/a2y_db1.F a2y/elk_db1.F a2y/.objects a2y/a2y_i.F a2y/elk_wf.F config/Makefile.in config/Makefile.in_gpl config/configure.ac xc_functionals/.objects_gpl qp/XCo_local.F acfdt/acfdt_tot_energy.F pol_function/Dipole_transverse.F real_time/RT_Ext_Current.F real_time/RT_current.F tddft/tddft_alda_g_space.F modules/mod_global_XC.F bse/.objects_gpl bse/K.F ChangeLog ypp/ypp_init.F ypp/RT_spectrum.F driver/a2y.h driver/driver.c sbin/yamboo.pl
+
+	Changes:
+	 - ELK support completely removed from the trunk. Still available in the dedicated branch. (Andrea)
+	 - Some nested loops and tricky precompiler options dor LIBXC redefined to be more cpp-compatible (Andrea)
+
+	Additions:
+	 -[RT] filter to remove the residual constant term in the current (ypp_rt) (Claudio)
+
+	Bugs:
+	 -[RT] small bug in RT_Ext_current.F (Claudio)
+	 -[RT] wrong normalization of the FFT that by change was more or less
+	       equal to 2*pi (the integral had to multiplied for RT_step) (Claudio)
+
+	Patch sent by: Andrea & Claudio
+
 2010-05-03 11:08:14 r588 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Added -g option to force p2y to use ALL available RL vectors

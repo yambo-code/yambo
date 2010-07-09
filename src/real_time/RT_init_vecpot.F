@@ -24,16 +24,16 @@ subroutine RT_init_vecpot()
  ! This subroutine initialize the t=0 external vector potential 
  ! used as starting point for the EOM for A(t)
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cI
  use com,            ONLY:error
  use units,          ONLY:SPEED_OF_LIGHT
  use fields,         ONLY:ext_field,A_vecpot,n_ext_fields,Efield
 #if defined _TWO_LEVELS
- use pars,           ONLY:pi
+ use pars,           ONLY:pi,cI
  use units,          ONLY:HARTREE,HA2FSm1,FS2AUT
  use com,            ONLY:msg
- use X_m,            ONLY:DIP_iR_or_P
- use real_time,      ONLY:W_photon,Wo,Rabi_freq,P,W_detuning,delta,Rabi_nn_square
+ use X_m,            ONLY:DIP_iR,DIP_P
+ use real_time,      ONLY:W_photon,Wo,Rabi_freq,P,W_detuning,delta,Rabi_nn_square,D
 #endif
  !
  implicit none
@@ -47,11 +47,14 @@ subroutine RT_init_vecpot()
  A_vecpot%vecpot_vel=(0._SP,0._SP)
  !
 #if defined _TWO_LEVELS
- DIP_iR_or_P(1,1,1,1,1)=(0.,0.)
- DIP_iR_or_P(1,2,2,1,1)=(0.,0.)
- DIP_iR_or_P(1,2,1,1,1)=(0.,1.)
- DIP_iR_or_P(1,1,2,1,1)=conjg( DIP_iR_or_P(1,2,1,1,1) )
- P        = DIP_iR_or_P(1,1,2,1,1)  
+ DIP_iR=(0.,0.)
+ DIP_P=(0.,0.)
+ DIP_P(1,1,2,1,1)= cI
+ DIP_P(1,2,1,1,1)=-cI
+ DIP_iR(1,2,1,1,1)= DIP_P(1,2,1,1,1) /(+Wo)
+ DIP_iR(1,1,2,1,1)= DIP_P(1,1,2,1,1) /(-Wo)
+ P        =  DIP_P(1,1,2,1,1)
+ D        =  cI*DIP_iR(1,1,2,1,1)
  select case(trim(Efield(1)%ef_name))
    case('RES','ANTIRES')
      W_photon=Efield(1)%frequency 
@@ -90,10 +93,10 @@ subroutine RT_init_vecpot()
        A_vecpot%vecpot(:)    =A_vecpot%vecpot(:)    +E_times_c(:)/( Efield(i1)%frequency )
      case('ANTIRES')
        A_vecpot%vecpot_vel(:)=A_vecpot%vecpot_vel(:)-E_times_c(:)
-       A_vecpot%vecpot(:)    =A_vecpot%vecpot(:)    -E_times_c(:)/( Efield(i1)%frequency*(0._SP,1._SP) )
+       A_vecpot%vecpot(:)    =A_vecpot%vecpot(:)    -E_times_c(:)/( cI* Efield(i1)%frequency )
      case('RES')
        A_vecpot%vecpot_vel(:)=A_vecpot%vecpot_vel(:)-E_times_c(:)
-       A_vecpot%vecpot(:)    =A_vecpot%vecpot(:)    +E_times_c(:)/( Efield(i1)%frequency*(0._SP,1._SP) )
+       A_vecpot%vecpot(:)    =A_vecpot%vecpot(:)    +E_times_c(:)/( cI* Efield(i1)%frequency )
      case('DELTA')
      case('GAUSS')
      case('QSSIN')

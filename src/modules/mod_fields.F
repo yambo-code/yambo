@@ -54,8 +54,8 @@ module fields
  type(gauge_field) :: A_vecpot
  type(gauge_field) :: A_vecpot_previous
  !
- ! Path for the longitudinal gauge
+ ! Path for the shifted grids
  !
- character(lchlen) :: long_path
+ character(lchlen) :: grid_path
  !
 end module

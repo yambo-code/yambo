@@ -30,6 +30,7 @@ module real_time
  complex(SP) :: Rabi_freq
  complex(SP) :: Rabi_nn_square(2,2)
  complex(SP) :: P
+ complex(SP) :: D
  real(SP)    :: W_photon
  real(SP)    :: W_Detuning
  real(SP)    :: delta
@@ -82,10 +83,13 @@ module real_time
  integer  :: Thermal_steps
  integer  :: RT_memory_steps
  !
- ! Time dependent Hamiltonian
- ! macroscopic current or polarization
+ ! Macroscopic induced current ... 
  !
- complex(SP) :: j_or_p(3)
+ complex(SP) :: RT_ind_J(3)
+ !
+ ! ... and polarization
+ !
+ complex(SP) :: RT_P(3)
  !
  ! External current to generate a given vector potential
  !
@@ -132,34 +136,38 @@ module real_time
  !
  ! Databases input/output
  !
+ integer,  parameter      :: current_cache_size=24
+ !
  integer                  :: ID(5)                
  integer                  :: it_start ! restart point
  integer                  :: max_rt_steps_disk 
- integer, allocatable     :: kpoints_map(:,:)
+ integer,  allocatable    :: kpoints_map(:,:)
  real(SP), allocatable    :: current_cache(:,:)
  !
  ! Interface
  !
  interface
    !
+   subroutine RT_output(what,VALUEs,TIME_or_E)
+     use pars,       ONLY:SP
+     character(*),       intent(in) :: what
+     real(SP), optional, intent(in) :: VALUEs(:) 
+     real(SP), optional, intent(in) :: TIME_or_E
+   end subroutine
+   !
    subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k)
-     !
      use pars,       ONLY:SP
      use SC,         ONLY:SC_bands
      use R_lattice,  ONLY:bz_samp 
      use QP_m,       ONLY:QP_nk,QP_table,QP_n_states
      use electrons,  ONLY:n_sp_pol
      use FFT_m,      ONLY:fft_size
-     !
-     implicit none
-     !
      type(bz_samp), intent(in) :: k
      complex(SP),   intent(in) :: G(SC_bands,SC_bands,QP_nk)
      complex(SP),  intent(out) :: VALUE
      complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands,SC_bands,QP_nk,n_sp_pol)
      complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
      real(SP),        optional, intent(in) :: O_REAL(fft_size,n_sp_pol)
-     !
    end subroutine RT_average_operator
    !
    subroutine RT_Integrator(G_new,G_old,Avec,Avec_old,T_step,Xen,k,q,Integrator,RT_time)
@@ -195,7 +203,7 @@ module real_time
      endif
      !
      if(l_NE_with_fields) then
-       allocate(current_cache(18,max_rt_steps_disk))
+       allocate(current_cache(current_cache_size,max_rt_steps_disk))
        call mem_est('Current_Cache',(/size(current_cache)/),(/SP/))
      endif
      !

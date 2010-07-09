@@ -281,7 +281,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  !
  ! CLEAN
  !
- call X_alloc('OptOsc')
+ call X_alloc('DIP_q_dot_iR')
  call WF_free()
  call pp_redux_wait
  call set_real_printed_length()

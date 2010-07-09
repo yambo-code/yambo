@@ -1,6 +1,6 @@
 objs = ver_is_gt_or_eq.o IO_and_Messaging_switch.o \
        ioRIM.o        ioGROT.o     \
-       ioOSTNTS.o     ioQINDX.o    ioQP.o      ioX.o \
+       io_DIPOLES.o   ioQINDX.o    ioQP.o      ioX.o \
        ioDB1.o        ioWF.o       ioKB_PP.o   io_HF_and_locXC.o \
        ioBS.o         \
        ioBSS_diago.o  ioBSS_Haydock.o  \

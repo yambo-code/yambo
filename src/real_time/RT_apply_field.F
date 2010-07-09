@@ -23,13 +23,13 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
  !
  ! This subroutine add the vector potential to the Hamiltonian
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cI
  use units,          ONLY:SPEED_OF_LIGHT
  use real_time,      ONLY:l_RT_no_diamagnetic
  use fields,         ONLY:gauge_field
  use electrons,      ONLY:n_sp_pol
  use fields,         ONLY:global_gauge
- use X_m,            ONLY:DIP_iR_or_P
+ use X_m,            ONLY:DIP_iR,DIP_P
  use SC,             ONLY:SC_bands
  !
  implicit none
@@ -47,7 +47,6 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
    ! Velocity gauge
    !================
    !
-   !
    A_vec_pot=A_input%vecpot/SPEED_OF_LIGHT ! Gaussian units
    !
    ! Add the vector potential to the singular part of the Self-Energy
@@ -55,13 +54,13 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
    ! and the intraband optical matrix elements have been set to zero
    !
    do i1=1,SC_bands
-     H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)-real(sum(A_vec_pot(:)*DIP_iR_or_P(:,i1,i1,ik,1)))
+     H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)-real(sum(A_vec_pot(:)*DIP_P(:,i1,i1,ik,1)))
    enddo
    !
    do i1=1,SC_bands
      do i2=i1+1,SC_bands
         !     
-        A_dot_P=-sum(A_vec_pot(:)*DIP_iR_or_P(:,i1,i2,ik,1))
+        A_dot_P=-sum(A_vec_pot(:)*DIP_P(:,i1,i2,ik,1))
         H_nl_sc(i1,i2,1)=H_nl_sc(i1,i2,1)+A_dot_P
         H_nl_sc(i2,i1,1)=H_nl_sc(i2,i1,1)+conjg(A_dot_P)
         !
@@ -84,7 +83,7 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
    do i1=1,SC_bands
      do i2=i1+1,SC_bands
        !     
-       E_dot_r=-(0._SP,-1._SP)*sum(E_vec_pot(:)*DIP_iR_or_P(:,i1,i2,ik,1))
+       E_dot_r=cI*sum(E_vec_pot(:)*DIP_iR(:,i1,i2,ik,1))
        H_nl_sc(i1,i2,1)=H_nl_sc(i1,i2,1)+E_dot_r
        H_nl_sc(i2,i1,1)=H_nl_sc(i2,i1,1)+conjg(E_dot_r)
        !

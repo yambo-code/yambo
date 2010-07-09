@@ -21,7 +21,7 @@
 !
 module YPP
  !
- use pars,    ONLY:SP
+ use pars,    ONLY:SP,DP
  use pars,    ONLY:lchlen
  use pars,    ONLY:schlen
  implicit none
@@ -137,13 +137,24 @@ module YPP
  real(SP) :: Gamma_radius
  character(lchlen) :: BZ_RIM_path
  !
- ! Reduce Symmetries
+ ! (RT) Reduce Symmetries
  !
- logical     :: l_rsymm
- logical     :: l_rtoptics
+ logical     :: l_fix_syms
+ logical     :: l_RT_optics
  real(SP)    :: E_field(2,3)
  real(SP)    :: B_field,B_theta,B_psi
  integer     :: ref_efield
+ !
+ ! (RT) optics
+ !
+ logical  :: l_no_remove_DC
+ logical  :: Use_FFT
+ logical  :: Prt_Current
+ !
+ complex(DP),    allocatable :: RT_J_t(:,:)
+ complex(DP),    allocatable :: RT_P_t(:,:)
+ complex(DP),    allocatable :: current_ext_t(:,:)
+ complex(DP),    allocatable :: A_vecpot_vel_t(:,:)
  !
  type Xw_rt
    real(SP) :: time_range(2)       ! time windows for the transform
@@ -151,7 +162,6 @@ module YPP
    real(SP) :: energy_range(2)     ! energy range 
    character(schlen) :: damp       ! Damp type (none, lorentian or gaussian)
    real(SP) :: damp_factor         ! factor used in damping
-   real(SP) :: noise_ratio         ! remove noise in current less than < max/noise_ration
  end type Xw_rt
  !
  type(Xw_rt) :: X_rt 

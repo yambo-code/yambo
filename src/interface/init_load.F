@@ -28,7 +28,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        Time_unit,I_unit,Angle_unit,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
  use X_m,           ONLY:X_t,q_plus_G_direction,Q_Shift_Order
- use fields,        ONLY:global_gauge,long_path
+ use fields,        ONLY:global_gauge,grid_path
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,SC_band_mixing,&
@@ -192,7 +192,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &              Haydock_treshold,verb_level=V_resp)
  call it(defs,'BEnSteps','[BSS] Energy steps',BSS_n_freqs)
  call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the FWs',verb_level=V_resp)
- call it('f',defs,'ALLGexx', '[BSS] Impose the use of all BSENGexx regardless of the FFT size',verb_level=V_resp)
+ call it('f',defs,'ALLGexx', '[BSS] Force the use use all RL vectors for the exchange part',verb_level=V_resp)
  call it('f',defs,'BSHayTer','[BSS] Terminate Haydock continuos fraction',verb_level=V_resp)
  !
  ! F_xc
@@ -350,7 +350,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! Optics
  !
- call it(defs,'LongPath',    '[Xd] Longitudinal gauge path',long_path,verb_level=V_resp)
+ call it(defs,'LongPath',    '[Xd] Longitudinal gauge path',grid_path,verb_level=V_resp)
  !
  ! GPL_EXCLUDE_END
  !
@@ -374,7 +374,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! 
  ! SC [common with RT]
  !
- call it(defs,'Gauge',     '[Xd,RT] Gauge type (lenght|velocity|longitudinal)',global_gauge,verb_level=V_resp)
+ call it(defs,'Gauge',     '[Xd,RT] Gauge type (lenght|velocity)',global_gauge,verb_level=V_resp)
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_sc)
  call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)

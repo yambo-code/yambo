@@ -21,7 +21,7 @@
 !
 integer function io_SC_components(what,E_sc,ID)
  !
- ! what can be E WF V J G
+ ! what can be E WF V J_and_P G
  !
  use pars,           ONLY:SP,lchlen
  use R_lattice,      ONLY:nkibz
@@ -33,8 +33,8 @@ integer function io_SC_components(what,E_sc,ID)
 &                         io_sec,io_bulk,read_is_on,write_is_on,&
 &                         manage_RD_WR_CL_IF_END,io_reset
 #if defined _RT
- use real_time,      ONLY:l_NE_with_fields,NE_steps,j_current_ext, &
-&                         G_lesser,i_time,j_or_p,max_rt_steps_disk,current_cache
+ use real_time,      ONLY:l_NE_with_fields,NE_steps,j_current_ext,RT_P,current_cache_size, &
+&                         G_lesser,i_time,RT_ind_J,max_rt_steps_disk,current_cache
  use fields,         ONLY:A_vecpot
  use QP_m,           ONLY:QP_nk
 #endif                                
@@ -88,7 +88,7 @@ integer function io_SC_components(what,E_sc,ID)
    file_number=(i_time-1)/max_rt_steps_disk
    !      
    if(io_sec(ID,1)==1) then 
-     io_SC_components=io_connect(desc="rtJ",type=2,ID=ID)
+     io_SC_components=io_connect(desc="RT_current",type=2,ID=ID)
    else
      !      
      IO_current=.false.
@@ -96,7 +96,7 @@ integer function io_SC_components(what,E_sc,ID)
      if(mod(i_time-1,max_rt_steps_disk)==0.and.read_is_on(ID))   IO_current=.true.
      !
      if(IO_current) then
-       io_SC_components=io_connect(desc="rtJ_"//trim(intc(file_number)),type=2,ID=ID)
+       io_SC_components=io_connect(desc="RT_current_"//trim(intc(file_number)),type=2,ID=ID)
      else
        io_SC_components=0
      endif
@@ -111,7 +111,7 @@ integer function io_SC_components(what,E_sc,ID)
      call io_reset(ID)
      return
    endif
-   io_SC_components=io_connect(desc="rtG",type=2,ID=ID)
+   io_SC_components=io_connect(desc="RT_GreenF",type=2,ID=ID)
  endif
  !
 #endif
@@ -317,20 +317,21 @@ integer function io_SC_components(what,E_sc,ID)
      if(write_is_on(ID)) then
        !
        do i1=1,3
-         current_cache(  2*i1-1,  mod(i_time-1,max_rt_steps_disk)+1)= real(j_or_p(i1))
-         current_cache(  2*i1,    mod(i_time-1,max_rt_steps_disk)+1)=aimag(j_or_p(i1))
+         current_cache(  2*i1-1,  mod(i_time-1,max_rt_steps_disk)+1)= real(RT_ind_J(i1))
+         current_cache(  2*i1,    mod(i_time-1,max_rt_steps_disk)+1)=aimag(RT_ind_J(i1))
          current_cache(6+2*i1-1,  mod(i_time-1,max_rt_steps_disk)+1)= real(A_vecpot%vecpot_vel(i1))
          current_cache(6+2*i1  ,  mod(i_time-1,max_rt_steps_disk)+1)=aimag(A_vecpot%vecpot_vel(i1))
          current_cache(12+2*i1-1, mod(i_time-1,max_rt_steps_disk)+1)= real(j_current_ext(i1))
          current_cache(12+2*i1,   mod(i_time-1,max_rt_steps_disk)+1)=aimag(j_current_ext(i1))
+         current_cache(18+2*i1-1, mod(i_time-1,max_rt_steps_disk)+1)= real(RT_P(i1))
+         current_cache(18+2*i1,   mod(i_time-1,max_rt_steps_disk)+1)=aimag(RT_P(i1))
        enddo
        !
      endif
      !
      if (IO_current) then
        !                                
-       call io_bulk(ID,VAR="Current_and_Potential_TIME"//trim(intc(file_number)), &
-&                  VAR_SZ=(/18,max_rt_steps_disk/))
+       call io_bulk(ID,VAR="Current_Polarization_and_Potential_TIME"//trim(intc(file_number)),VAR_SZ=(/current_cache_size,max_rt_steps_disk/))
        !
        call io_bulk(ID,R2=current_cache)
        !
@@ -344,12 +345,14 @@ integer function io_SC_components(what,E_sc,ID)
        !
        !
        do i1=1,3
-         j_or_p(i1)             =cmplx(current_cache(   2*i1-1,mod(i_time-1,max_rt_steps_disk)+1), &
+         RT_ind_J(i1)           =cmplx(current_cache(   2*i1-1,mod(i_time-1,max_rt_steps_disk)+1), &
 &                                      current_cache(   2*i1,  mod(i_time-1,max_rt_steps_disk)+1),SP)
          A_vecpot%vecpot_vel(i1)=cmplx(current_cache(6 +2*i1-1,mod(i_time-1,max_rt_steps_disk)+1), &
 &                                      current_cache(6 +2*i1  ,mod(i_time-1,max_rt_steps_disk)+1),SP)
          j_current_ext(i1)      =cmplx(current_cache(12+2*i1-1,mod(i_time-1,max_rt_steps_disk)+1), &
 &                                      current_cache(12+2*i1  ,mod(i_time-1,max_rt_steps_disk)+1),SP)
+         RT_P(i1)               =cmplx(current_cache(18+2*i1-1,mod(i_time-1,max_rt_steps_disk)+1), &
+&                                      current_cache(18+2*i1  ,mod(i_time-1,max_rt_steps_disk)+1),SP)
        enddo
        !
      endif 

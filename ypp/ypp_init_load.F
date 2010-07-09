@@ -85,8 +85,9 @@ subroutine ypp_init_load(defs)
  !
  call it('r',defs,'bzrim',   '[R] BZ energy RIM analyzer')
 #if defined _YPP_RT
- call it('r',defs,'rsymm',   '[R] Reduce Symmetries')
- call it('r',defs,'rtoptics',   '[R] Real-Time Optics')
+ call it('r',defs,'fixsyms', '[R] Reduce Symmetries')
+ call it('r',defs,'RToptics','[R] Real-Time Optics')
+ call it('r',defs,'rtpp',    '[R] Real-Time Post-Processing')
 #endif
  call it('r',defs,'surf',    '[R] Surface spectroscopy postprocessor')
  call it('r',defs,'ras',     '[R] RAS spectra generator')
@@ -223,9 +224,6 @@ subroutine ypp_init_load(defs)
  call it(defs,'DampFactor','Damping parameter',X_rt%damp_factor,unit=E_unit) 
  !
  call it('f',defs,'NoRmDC','Do not Remove DC component from current')
- call it('f',defs,'UseGaugeField','Use the gauge field to define the induced electric field')
- call it('f',defs,'PrtCurrent','Print induced current')
- call it('f',defs,'PrtEinduced','Print induced electric field')
  call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics')
  !
 #endif

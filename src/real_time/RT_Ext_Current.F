@@ -24,7 +24,7 @@ subroutine RT_Ext_Current(time)
  ! This subroutine defines the external current that is then used
  ! to evolve the vector potential 
  !
- use pars,           ONLY:SP,pi
+ use pars,           ONLY:SP,pi,cI
  use com,            ONLY:error
  use real_time,      ONLY:j_current_ext,RT_step,i_time
  use fields,         ONLY:ext_field,n_ext_fields,Efield
@@ -54,14 +54,14 @@ subroutine RT_Ext_Current(time)
      case('SINL')
        j_norm=-Efield(i1)%amplitude*cos(Efield(i1)%frequency*time)*Efield(i1)%frequency 
      case('ANTIRES')
-       j_norm=-Efield(i1)%amplitude*exp((0._SP,1._SP)*Efield(i1)%frequency*time)*Efield(i1)%frequency*(0._SP,1._SP)
+       j_norm=-cI*Efield(i1)%amplitude*exp(cI*Efield(i1)%frequency*time)*Efield(i1)%frequency
      case('RES')
-       j_norm=-Efield(i1)%amplitude*exp(-(0._SP,1._SP)*Efield(i1)%frequency*time)*Efield(i1)%frequency*(0._SP,-1._SP)
+       j_norm= cI*Efield(i1)%amplitude*exp(-cI*Efield(i1)%frequency*time)*Efield(i1)%frequency
      case('GAUSS')
        j_norm=Efield(i1)%amplitude*exp(-(time-t0)**2/(2._SP*sigma**2) )*(time-t0)/sigma**2
      case('QSSIN')
        j_norm=-Efield(i1)%amplitude*(cos(Efield(i1)%frequency*(time-t0))*Efield(i1)%frequency &
-              &-(time-t0)/sigma**2*sin(Efield(i1)%frequency*(time-t0)))*exp(-(time-t0)**2/(2._SP*sigma**2))   
+&             -(time-t0)/sigma**2*sin(Efield(i1)%frequency*(time-t0)))*exp(-(time-t0)**2/(2._SP*sigma**2))   
      case('DELTA')
        if(i_time==Efield(i1)%int_t_initial)     j_norm=-Efield(i1)%amplitude/RT_step**2
        if(i_time==Efield(i1)%int_t_initial+1)   j_norm= Efield(i1)%amplitude/RT_step**2

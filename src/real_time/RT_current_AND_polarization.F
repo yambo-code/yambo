@@ -19,19 +19,22 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine RT_current_or_polarization(Xk,G_input,A_input)
+subroutine RT_current_AND_polarization(Xk,G_input,A_input)
  !
- ! Evalute current including also the diamagnetic contribution
+ ! Evalute current and polarization. The current includes the diamagnetic contribution.
  !
- use pars,           ONLY:SP
+ ! j(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) p \psi_j(k) - e^2/(cm) n(r) A(r,t)
+ ! p(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) r \psi_j(k)
+ !
+ use pars,           ONLY:SP,cI
  use units,          ONLY:SPEED_OF_LIGHT
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel
- use real_time,      ONLY:l_RT_no_diamagnetic,i_time,l_NE_with_fields,j_or_p,RT_average_operator
+ use real_time,      ONLY:l_RT_no_diamagnetic,i_time,l_NE_with_fields,RT_ind_J,RT_average_operator,RT_P
  use fields,         ONLY:gauge_field
- use X_m,            ONLY:DIP_iR_or_P
+ use X_m,            ONLY:DIP_iR,DIP_P
  use QP_m,           ONLY:QP_nk
  !
  implicit none           
@@ -43,21 +46,12 @@ subroutine RT_current_or_polarization(Xk,G_input,A_input)
  !
  integer       :: id
  !
- ! Velocity gauge
- !
- ! j(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) p \psi_j(k) - e^2/(cm) n(r) A(r,t)
- ! j_or_p(t) = int dr j(r,t) 
- !
- ! Lenght gauge
- !
- ! p(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) r \psi_j(k)
- ! j_or_p(t) = int dr p(r,t) 
- !
  if(.not.l_NE_with_fields.or.i_time<0) return
  !
  do id=1,3
    !
-   call RT_average_operator(VALUE=j_or_p(id),O_MATRIX=DIP_iR_or_P(id,:,:,:,:),G=G_input,k=Xk)
+   call RT_average_operator(VALUE=RT_ind_J(id),O_MATRIX=-DIP_P(id,:,:,:,:),   G=G_input,k=Xk)
+   call RT_average_operator(VALUE=RT_P(id),    O_MATRIX=cI*DIP_iR(id,:,:,:,:),G=G_input,k=Xk)
    !
  enddo
  !
@@ -65,10 +59,11 @@ subroutine RT_current_or_polarization(Xk,G_input,A_input)
  !
  if(.not.l_RT_no_diamagnetic) then
    !
-   j_or_p(:)=j_or_p(:)-A_input%vecpot(:)*real(nel,SP)/SPEED_OF_LIGHT
+   RT_ind_J(:)=RT_ind_J(:)-A_input%vecpot(:)*real(nel,SP)/SPEED_OF_LIGHT
    !
  endif
  !
- j_or_p=j_or_p/DL_vol
+ RT_ind_J=RT_ind_J/DL_vol
+ RT_P    =RT_P/DL_vol
  !
-end subroutine RT_current_or_polarization
+end subroutine RT_current_AND_polarization

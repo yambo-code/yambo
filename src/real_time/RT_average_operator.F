@@ -21,13 +21,14 @@
 !
 subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k)
  !
- use pars,       ONLY:SP,DP
+ use pars,       ONLY:SP,DP,cI
  use SC,         ONLY:SC_bands
  use R_lattice,  ONLY:bz_samp 
  use QP_m,       ONLY:QP_nk,QP_n_states
  use electrons,  ONLY:n_sp_pol
  use FFT_m,      ONLY:fft_size
  use wave_func,  ONLY:wf
+ use wrapper,    ONLY:Vstar_dot_V
  !
  implicit none
  !
@@ -43,12 +44,6 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k)
  integer     :: i1,ik
  complex(SP) :: Hk(SC_bands,SC_bands,n_sp_pol)
  !
-#if defined _DOUBLE
- complex(DP)   :: zdotc
-#else
- complex(SP)   :: cdotc
-#endif
- !
  VALUE=(0._SP,0._SP)
  !
  ! If not operator are present the subroutine returns the trace of the Green Function
@@ -58,7 +53,7 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k)
    ! Total number of electrons
    !
    do i1=1,SC_bands
-     VALUE=VALUE-(0._SP,1._SP)*sum(G(i1,i1,:)*k%weights(:))
+     VALUE=VALUE-cI*sum(G(i1,i1,:)*k%weights(:))
    enddo
    !
    return
@@ -73,11 +68,7 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k)
    if(present(O_QP))     call V_qp_basis_to_H(ik,O_QP,Hk)
    if(present(O_REAL))   call V_real_space_to_H(ik,O_REAL,Hk,wf)
    !
-#if defined _DOUBLE
-   VALUE=VALUE-(0._SP,1._SP)*zdotc(SC_bands**2,Hk,1,G(:,:,ik),1)*k%weights(ik)
-#else
-   VALUE=VALUE-(0._SP,1._SP)*cdotc(SC_bands**2,Hk,1,G(:,:,ik),1)*k%weights(ik)
-#endif
+   VALUE=VALUE-cI*Vstar_dot_V(SC_bands**2,Hk(:,:,1),G(:,:,ik))*k%weights(ik)
    !
  enddo
  !

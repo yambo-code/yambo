@@ -154,7 +154,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
    if (i_space_inv==1) call msg('r','[SYMs] Spatial inversion '//trim(intc(inv_index))//' is a symmetry')
    if (i_space_inv==0) call msg('r','[SYMs] Spatial inversion '//trim(intc(inv_index))//' is NOT a symmetry')
  else
+#if !defined _RT
    call warning('Spatial Inversion not found among the given symmetry list')
+#endif
  endif
  !
  ! Symmetries Multiplication Table

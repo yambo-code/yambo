@@ -202,10 +202,10 @@ subroutine k_grids(en,k,Xk,q)
  !
  if (l_long_grid) then
    !
-   ! Generate shifted k-points set for longitudinal gauge calculation
+   ! Generate shifted k-points set for dipole calculation
    !
-   call section('*',"== Longitudinal gauge grids generator ==")
-   !===========================================================
+   call section('*',"== Dipole grids generator ==")
+   !================================================
    !
    call parser('KShift1',qlong(1,:))
    call parser('KShift2',qlong(2,:))

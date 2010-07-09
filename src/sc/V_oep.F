@@ -184,7 +184,7 @@ subroutine V_oep(X,E,k,q,Voep)
    end do
  end do 
  deallocate(isc%rhotw,rhotw_save,rhotw_sum,rhotw_sum_TR,SigmaXC)
- call X_alloc('OptOsc')
+ call X_alloc('DIP_q_dot_iR')
  if (allocated(QP_Vnl_xc))  deallocate(QP_Vnl_xc)
  !
  ! Add c.c. contribution

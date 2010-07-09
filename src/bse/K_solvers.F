@@ -23,7 +23,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  use pars,           ONLY:SP,pi,schlen
  use memory_m,       ONLY:mem_est
- use X_m,            ONLY:X_t,X_epsilon,X_alloc,DIP_iq_dot_r,&
+ use X_m,            ONLY:X_t,X_epsilon,X_alloc,DIP_q_dot_iR,&
 &                         alpha_dim,eps_2_alpha,X_duplicate
  use BS,             ONLY:BSS_n_freqs,BS_K_dim,BSS_rhoq0,BS_eh_f,BS_not_const_eh_f,&
 &                         BS_bands,BSS_q0,BS_eh_table,BSS_mode,BS_eh_E,&
@@ -96,11 +96,11 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
      !
      !   iq . <c|r|v> = - conjg( iq . <v | r |c> )
      !
-     BSS_rhoq0(i1)=-conjg(DIP_iq_dot_r(ic,iv,ik,i_sp))
+     BSS_rhoq0(i1)=-conjg(DIP_q_dot_iR(ic,iv,ik,i_sp))
      !
      ! minus comes from the occupation factor 
      !
-     if (BS_K_coupling) BSS_rhoq0(BS_K_dim+i1)=DIP_iq_dot_r(ic,iv,ik,i_sp)
+     if (BS_K_coupling) BSS_rhoq0(BS_K_dim+i1)=DIP_q_dot_iR(ic,iv,ik,i_sp)
      !
      X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*BS_eh_f(i1)/&
 &                                  (W_bss%p(:)-BS_eh_E(i1))
@@ -175,6 +175,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  deallocate(BSS_rhoq0,X_epsilon)
  call mem_est("BSS_rhoq0")
- if (iq==1) call X_alloc('OptOsc')
+ if (iq==1) call X_alloc('DIP_q_dot_iR')
  !
 end subroutine

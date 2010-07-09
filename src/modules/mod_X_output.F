@@ -64,10 +64,11 @@ module X_output
      ! Gauges
      !
      if (iq==1) then
-       message='- Using the Length Gauge ([r,Vnl] is *NOT* included) -'
-       if (Vnl_included) message='- Using the Length Gauge ([r,Vnl] *is* included) -'
+       message='- Using the Length Gauge -'
        if (trim(global_gauge)=='velocity')       message='- Using the Velocity Gauge -'
-       if (trim(global_gauge)=='longitudinal')   message='- Using the Longitudinal Gauge -'
+       call msg('o eps eel alpha','# ',trim(message),INDENT=0)
+       message='- [r,Vnl] is *NOT* included -'
+       if (Vnl_included) message='- [r,Vnl] *is* included -'
        call msg('o eps eel alpha','# ',trim(message),INDENT=0)
      endif
      !

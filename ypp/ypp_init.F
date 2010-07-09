@@ -72,9 +72,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #if defined _YPP_MAGNETIC
  what_is_running='YPP_MAGNETIC'
 #endif
-#if defined _YPP_SC
- what_is_running='YPP_SC'
-#endif
 #if defined _YPP_ELPH
  what_is_running='YPP_PH'
 #endif
@@ -304,6 +301,12 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        if (l_eliashberg)   call initactivate(1,'eliashberg')
     endif
 #endif
+#if defined _YPP_RT
+     if ( trim(rstr_piece(i1)) == 'rtpp') then
+       l_RT_optics        =trim(rstr_piece(i1+1))=='o'
+       if (l_RT_optics)   call initactivate(1,'RToptics')
+    endif
+#endif
      if ( trim(rstr_piece(i1)) == 'excitons') then
        l_wavefunction   =trim(rstr_piece(i1+1))=='w'
        l_sort           =trim(rstr_piece(i1+1))=='s'
@@ -428,15 +431,15 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_bzrim     =runlevel_is_on('bzrim')
  !
 #if defined _YPP_RT
- l_rsymm     =runlevel_is_on('rsymm')
+ l_fix_syms   =runlevel_is_on('fixsyms')
  !             
- l_rtoptics  =runlevel_is_on('rtoptics')
+ l_RT_optics  =runlevel_is_on('RToptics')
  !
- if (l_rsymm) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev")
+ if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev")
  !
- if (l_rtoptics) then 
+ if (l_RT_optics) then 
     call initactivate(1,"EnRngeRt ETStpsRt TmRngeRt DampMode DampFactor FourierDamp")
-    call initactivate(1,"UseGaugeField NoRmDC PrtCurrent PrtEinduced UseFFT")
+    call initactivate(1,"NoRmDC UseFFT")
  endif
  ! 
 #endif

@@ -1,6 +1,6 @@
 RAS_objects = 
 #if defined _RAS
-RAS_objects =  Dipole_check_shifted_grids.o Dipole_longitudinal.o
+RAS_objects =  Dipole_check_shifted_grids.o Dipole_shifted_grids.o
 #endif
 objs = O_driver.o O_eels.o \
        Dipole_driver.o \

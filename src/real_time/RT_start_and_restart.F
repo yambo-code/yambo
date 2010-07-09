@@ -35,7 +35,7 @@ subroutine RT_start_and_restart(Xen,Xk,k)
 #if defined _TWO_LEVELS
  use real_time,      ONLY:Wo,W_photon
 #endif
- use real_time,      ONLY:G_lesser,ID,ID,NE_steps,G_lesser_previous,j_or_p,&
+ use real_time,      ONLY:G_lesser,ID,ID,NE_steps,G_lesser_previous,RT_ind_J,&
 &                         G_lesser_reference,Thermal_steps,RT_is_dumped,XC0,      &
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields
  use fields,         ONLY:A_vecpot,A_vecpot_previous
@@ -69,7 +69,7 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  !
  ! Set to zero current and fields
  !
- j_or_p             =(0._SP,0._SP)
+ RT_ind_J             =(0._SP,0._SP)
  A_vecpot%vecpot    =(0._SP,0._SP)
  A_vecpot%vecpot_vel=(0._SP,0._SP)
  A_vecpot%vecpot_acc=(0._SP,0._SP)

@@ -32,11 +32,11 @@
    use IO_m
    use optcut,                  ONLY : Xcut_q0grad, Xcut_rhoq0
    use R_lattice,               ONLY : nkibz, bz_samp, nXkibz
-   use X_m,           ONLY:X_t,DIP_iR_or_P,X_alloc
+   use X_m,           ONLY:X_t,DIP_iR,X_alloc
  use timing,              ONLY:live_timing_is_on
 
    implicit none
-   real(SP),allocatable :: DIP_iR_or_P_disk(:,:,:),Xcut_q0grad_disk(:,:,:)
+   real(SP),allocatable :: DIP_iR_disk(:,:,:),Xcut_q0grad_disk(:,:,:)
    real(SP),allocatable :: window(:,:)
    real(SP) :: k_int(nkibz), kv(3)
 !functions
@@ -92,7 +92,7 @@ integer :: db_nbm,db_nbf,db_nb(2),nb(2), nbm, ixyz, i_spin, ib, i1, nbf
 
          if( Ec_m_Ev <= Ecv_max .and. Ec_m_Ev >= Ecv_min) then
 
-           P2 = dot_product(qdir,DIP_iR_or_P(:,ic,iv,ik,i_spin))
+           P2 = dot_product(qdir,DIP_iR(:,ic,iv,ik,i_spin))
            P1 = conjg(P2)
            if(lusecut) P1 = conjg(dot_product(qdir,Xcut_q0grad(:,ic,iv,ik,i_spin)))
            PP = abs(P1*P2)
@@ -158,7 +158,7 @@ integer :: db_nbm,db_nbf,db_nb(2),nb(2), nbm, ixyz, i_spin, ib, i1, nbf
      do i1=1,nXkibz
        do ixyz=1,3
          do i_spin=1,n_sp_pol
-           write (VAR_name,'(3(a,i4.4))') 'OptGrad_k_',i1,'_xyz_',ixyz,'_spin_',i_spin
+           write (VAR_name,'(3(a,i4.4))') 'DIP_iR_k_',i1,'_xyz_',ixyz,'_spin_',i_spin
            call io_bulk(io_cut,VAR=trim(VAR_name),VAR_SZ=shape(Xcut_q0grad_disk))
            call io_bulk(io_cut,R3=Xcut_q0grad_disk)
            call mat_r2c(Xcut_q0grad_disk,Xcut_q0grad(ixyz,:,:,i1,i_spin))
@@ -184,16 +184,16 @@ integer :: db_nbm,db_nbf,db_nb(2),nb(2), nbm, ixyz, i_spin, ib, i1, nbf
      call io_elemental(io_db,DB_I0=db_nbf,I0=nbf)
      call io_elemental(io_db,VAR="",VAR_SZ=0)
 
-     allocate(DIP_iR_or_P_disk(db_nb(2),db_nbm,2))
-     call X_alloc('OptGrad',(/3,db_nb(2),db_nbm,nXkibz/))
+     allocate(DIP_iR_disk(db_nb(2),db_nbm,2))
+     call X_alloc('DIP_iR',(/3,db_nb(2),db_nbm,nXkibz/))
 
      do i1=1,nXkibz
        do ixyz=1,3
          do i_spin=1,n_sp_pol
-           write (VAR_name,'(3(a,i4.4))') 'OptGrad_k_',i1,'_xyz_',ixyz,'_spin_',i_spin
-           call io_bulk(io_db,VAR=trim(VAR_name),VAR_SZ=shape(DIP_iR_or_P_disk))
-           call io_bulk(io_db,R3=DIP_iR_or_P_disk)
-           call mat_r2c(DIP_iR_or_P_disk,DIP_iR_or_P(ixyz,:,:,i1,i_spin))
+           write (VAR_name,'(3(a,i4.4))') 'DIP_iR_k_',i1,'_xyz_',ixyz,'_spin_',i_spin
+           call io_bulk(io_db,VAR=trim(VAR_name),VAR_SZ=shape(DIP_iR_disk))
+           call io_bulk(io_db,R3=DIP_iR_disk)
+           call mat_r2c(DIP_iR_disk,DIP_iR(ixyz,:,:,i1,i_spin))
          enddo
        enddo
      enddo

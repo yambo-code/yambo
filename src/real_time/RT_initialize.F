@@ -115,17 +115,6 @@ subroutine RT_initialize()
  endif
  call msg('rsn','[RT] Simulation time        [fs]:',(/-real(Thermal_steps)*RT_step,RT_step*real(NE_steps)/)/FS2AUT)
  !
- if(l_NE_with_fields) &
-&   call msg('rsn','[RT] Gauge Type                 :',trim(global_gauge))
- !
- if(l_RT_induced_field.and.global_gauge/='velocity') then
-   call warning(" Induced field not included in Maxwell when the gauge is not 'velocity'")
-   l_RT_induced_field=.false.
- endif
- !
- if(.not.l_RT_no_diamagnetic.and.global_gauge/='velocity') then
-   call warning(" Diamagnetic term not present when the gauge is not 'velocity'")
-   l_RT_no_diamagnetic=.true.
- endif
+ if(l_NE_with_fields) call msg('rsn','[RT] Gauge Type                 :',trim(global_gauge))
  !
 end subroutine RT_initialize

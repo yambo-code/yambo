@@ -44,6 +44,8 @@ subroutine RT_two_levels(G_lesser)
  !
  P_and_P=Efield(2)%ef_name/="none"
  !
+ return
+ !
  T= (i_time-1)*RT_step
  !
  if (i_time == 1) then

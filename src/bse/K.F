@@ -399,7 +399,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    allocate(O2x(BS_n_g_exch,O_x_dim),stat=alloc_err(2))
    call mem_est('O2x',(/size(O2x)/),errors=(/alloc_err(2)/))
 #if defined _DISTRIBUTED
-   if(.not.l_col_cut) then
+   if(.not.l_col_cut.and.Xk%nibz==1) then
      O1x=>O2x
    else
 #endif
@@ -692,7 +692,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (load_O_X) then
 #if defined _DISTRIBUTED
-   if(l_col_cut) then 
+   if(l_col_cut.or.Xk%nibz/=1) then 
 #endif
      deallocate(O1x)
      call mem_est("O1x")

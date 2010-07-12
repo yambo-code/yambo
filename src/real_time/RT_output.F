@@ -123,7 +123,7 @@ subroutine RT_output(what,VALUEs,TIME_or_E)
    do i_f=1,n_output_files
      if (.not.file_is_todo(i_f)) cycle
      if (initialize) call of_open_close(file_name(i_f),'ot')
-     if (finalize)   call of_open_close(file_name(i_f))
+     if (finalize)   call of_open_close(trim(short_file_name(i_f)))
    enddo
    !
    return

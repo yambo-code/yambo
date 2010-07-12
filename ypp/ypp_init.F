@@ -465,6 +465,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  endif
  !
  if (l_excitons) then
+   if (l_amplitude) call QP_ctl_switch('G')
    call initactivate(1,"States")
    if (l_exc_wf.or.l_amplitude) call initactivate(1,"Degen_Step")
    if (l_exc_wf.and..not.l_free_hole) call initactivate(1,"Cells Hole Dimension") 

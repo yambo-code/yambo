@@ -51,7 +51,7 @@ subroutine RT_Ext_Current(time)
    t0   =10._SP*sigma               ! the center of the Gaussian is at     t0 = 10*sigma
    !
    select case(trim(Efield(i1)%ef_name))
-     case('SINL')
+     case('SIN')
        j_norm=-Efield(i1)%amplitude*cos(Efield(i1)%frequency*time)*Efield(i1)%frequency 
      case('ANTIRES')
        j_norm=-cI*Efield(i1)%amplitude*exp(cI*Efield(i1)%frequency*time)*Efield(i1)%frequency

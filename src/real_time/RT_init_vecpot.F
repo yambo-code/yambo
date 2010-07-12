@@ -47,12 +47,12 @@ subroutine RT_init_vecpot()
  A_vecpot%vecpot_vel=(0._SP,0._SP)
  !
 #if defined _TWO_LEVELS
- DIP_iR=(0.,0.)
- DIP_P=(0.,0.)
- DIP_P(1,1,2,1,1)= cI
- DIP_P(1,2,1,1,1)=-cI
- DIP_iR(1,2,1,1,1)= DIP_P(1,2,1,1,1) /(+Wo)
- DIP_iR(1,1,2,1,1)= DIP_P(1,1,2,1,1) /(-Wo)
+ !DIP_iR=(0.,0.)
+ !DIP_P=(0.,0.)
+ !DIP_P(1,1,2,1,1)= cI
+ !DIP_P(1,2,1,1,1)=-cI
+ !DIP_iR(1,2,1,1,1)= DIP_P(1,2,1,1,1) /(+Wo)
+ !DIP_iR(1,1,2,1,1)= DIP_P(1,1,2,1,1) /(-Wo)
  P        =  DIP_P(1,1,2,1,1)
  D        =  cI*DIP_iR(1,1,2,1,1)
  select case(trim(Efield(1)%ef_name))

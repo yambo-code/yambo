@@ -331,7 +331,8 @@ integer function io_SC_components(what,E_sc,ID)
      !
      if (IO_current) then
        !                                
-       call io_bulk(ID,VAR="Current_Polarization_and_Potential_TIME"//trim(intc(file_number)),VAR_SZ=(/current_cache_size,max_rt_steps_disk/))
+       call io_bulk(ID,VAR="Current_Polarization_and_Potential_TIME"//trim(intc(file_number)), &
+&                      VAR_SZ=(/current_cache_size,max_rt_steps_disk/))
        !
        call io_bulk(ID,R2=current_cache)
        !

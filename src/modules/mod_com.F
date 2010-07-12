@@ -183,6 +183,8 @@ module com
      integer          :: i2,i3,file_index
      character(lchlen):: local_file_name
      !
+     of_name=trim(of_name)
+     !
      if (len_trim(of_name)==0) return
      !
      if (present(mode)) then

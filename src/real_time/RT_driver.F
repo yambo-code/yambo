@@ -31,10 +31,11 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx
- use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser, &
+ use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,                  &
 &                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,      &
-&                         i_time,Integrator_name,l_RT_diagonalize,        &
-&                         G_lesser_reference,RT_is_dumped,RT_diagonalization_steps,it_start,RT_output
+&                         i_time,Integrator_name,l_RT_diagonalize,max_rt_steps_disk,&
+&                         G_lesser_reference,RT_is_dumped,RT_diagonalization_steps, &
+&                         it_start,RT_output
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use collisions_CACHE, ONLY:free_COLLISIONS_v
  !
@@ -49,6 +50,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  type(w_samp)  :: Xw(2) 
  type(bz_samp) :: k,Xk,q
  type(X_t):: X(4)
+ logical, external  ::stop_now
  ! 
  ! Work Space
  !
@@ -212,6 +214,13 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    ! End dynamics
    !
    if (it==Thermal_steps+NE_steps) Dynamics_is_over=.TRUE.
+   !
+   ! End dynamics, but empty the cache before
+   !
+   if (stop_now(.FALSE.)) then
+      NE_steps=it-Thermal_steps
+      NE_steps=(int(NE_steps/max_rt_steps_disk)+1)*max_rt_steps_disk
+   endif
    !
  enddo
  !

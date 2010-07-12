@@ -210,12 +210,14 @@ integer function variables_SC(ID,local_description,what)
    call io_elemental(ID,&
 &    VAR=" [RT] Time step              [fs]:",R0=RT_step,CHECK=.true.,OP=(/"=="/),UNIT=1./FS2AUT,&
 &    DESCRIPTION=local_description(i_desc))
+   !
    if(l_G) then
      i_desc=i_desc+1
      call io_elemental(ID, &
 &      VAR=" [RT] Time steps                 :",I0=NE_steps,CHECK=.true.,OP=(/">="/),&
 &      DESCRIPTION=local_description(i_desc))
    endif
+   !
    i_desc=i_desc+1
    call io_elemental(ID, &
 &    VAR=" [RT] Thermalization steps       :",I0=Thermal_steps,CHECK=.true.,OP=(/"=="/),&

@@ -22,7 +22,7 @@
 subroutine plot_check_and_launch(check_only)
  !
  use pars,        ONLY:SP
- use YPP,         ONLY:p_format,p_dir,plot_dim,use_gnuplot,use_xcrysden 
+ use YPP,         ONLY:p_format,p_dir,plot_dim,use_gnuplot,use_xcrysden,use_cube 
  use com,         ONLY:warning
  use D_lattice,   ONLY:a
  use vec_operate, ONLY:v_is_zero
@@ -44,10 +44,11 @@ subroutine plot_check_and_launch(check_only)
  !
  use_gnuplot=p_format=='g'
  use_xcrysden=p_format=='x'
+ use_cube=p_format=='c'
  switch_to_xcrysden=.false.
  switch_to_gnuplot=.false.
  !
- if (.not.use_gnuplot.and..not.use_xcrysden) use_gnuplot=.true.
+ if (.not.use_gnuplot.and..not.use_xcrysden.and..not.use_cube) use_gnuplot=.true.
  !
  use_1d(1) =p_dir(:1)=='1'
  use_1d(2) =p_dir(:1)=='2'
@@ -91,6 +92,8 @@ subroutine plot_check_and_launch(check_only)
  endif
  !
  if (plot_dim==1.and.use_xcrysden) switch_to_gnuplot=.true.
+ if (plot_dim==1.and.use_cube) switch_to_gnuplot=.true.
+ if (plot_dim==2.and.use_cube) switch_to_gnuplot=.true.
  if (plot_dim==3.and.use_gnuplot)  switch_to_xcrysden=.true.
  !
  if (switch_to_xcrysden.and.check_only) call warning('Switching to XCrySDen')
@@ -102,6 +105,7 @@ subroutine plot_check_and_launch(check_only)
  if (check_only) return
  !
  if (use_gnuplot)  call plot_gnuplot(use_1d,use_2d,.FALSE.)
+ if (use_cube)     call plot_cube()
  if (use_xcrysden) then
    if (plot_dim==2) call plot_gnuplot(use_1d,use_2d,.TRUE.)
    call plot_xcrysden(use_2d)

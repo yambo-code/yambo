@@ -28,7 +28,7 @@ subroutine RT_two_levels(G_lesser)
  use D_lattice,      ONLY:DL_vol
  use units,          ONLY:HARTREE
  use real_time,      ONLY:Wo,Rabi_freq,W_photon,Phase_LifeTime,RT_is_dumped,W_detuning,&
-&                         QP_LifeTime,RT_step,l_NE_with_fields,i_time,P,D
+&                         QP_LifeTime,RT_step,l_NE_with_fields,i_time,P,D,delta,Rabi_nn_square
  use fields,         ONLY:Efield
  !
  implicit none           
@@ -36,46 +36,78 @@ subroutine RT_two_levels(G_lesser)
  !
  ! Work Space
  !
- integer       :: i_r
+ integer       :: i_r,i_f
  logical       :: P_and_P
- real(SP)      :: T,Rabi_test,Gamma_,delta_G_SS,Current_SS
+ real(SP)      :: T,Rabi_test,Gamma_,dGo,Current_SS,W_step
+ integer, parameter :: N_W_delta_search=10000
+ complex(SP)   :: Poles_func(N_W_delta_search),Poles_func_deriv(N_W_delta_search),W_func(N_W_delta_search),Df(5),Pf(4),dG1_PP
+ complex(SP), save :: Elemental_Pole_delta
  !
  if(.not.l_NE_with_fields.or.i_time<0) return
  !
  P_and_P=Efield(2)%ef_name/="none"
  !
- return
- !
  T= (i_time-1)*RT_step
  !
  if (i_time == 1) then
+   open(unit=302,file='Pole_DELTA.dat',form='formatted')
+   do i_r=1,1000
+     Rabi_test=(i_r-1)*5./1000/HARTREE
+     if (i_r==1000) Rabi_test=abs(Rabi_freq)
+     W_step=5./HARTREE/real(N_W_delta_search)
+     do i_f=1,N_W_delta_search-1
+       W_func(i_f)=W_step*i_f
+       Poles_func(i_f)=DELTA_Pump_F(W_func(i_f))
+       Poles_func_deriv(i_f)=(DELTA_Pump_F(W_func(i_f)+W_step)-DELTA_Pump_F(W_func(i_f)))/W_step
+       if (i_f==1) cycle
+       if (real(Poles_func(i_f-1))<0..and.real(Poles_func(i_f))>0.) then
+         Elemental_Pole_delta= W_func(i_f-1) - cI*aimag(Poles_func(i_f-1))/Poles_func_deriv(i_f-1)
+       endif
+     enddo
+     if (i_r/=1000) write (302,'(3f20.10)') Rabi_test*HARTREE,real(Elemental_Pole_delta)/Wo,-1./aimag(Elemental_Pole_delta)/Phase_LifeTime
+     !if (i_r==1000) write (*,'(3f20.10)') real(Elemental_Pole_delta*HARTREE),1./aimag(Elemental_Pole_delta)/FS2AUT,Phase_LifeTime/FS2AUT
+   enddo
    open(unit=300,file='Weights_RES.dat',form='formatted')
    open(unit=301,file='Weights_DELTA.dat',form='formatted')
    do i_r=1,1000
      Rabi_test=0.+i_r*2./1000/HARTREE
      Gamma_= abs(Rabi_test)**2/(W_Detuning**2.+1./Phase_LifeTime**2.)*QP_LifeTime/Phase_LifeTime
-     delta_G_SS=-2./(Gamma_+1.)
+     dGo=-2./(Gamma_+1.)
      Current_SS=2.*abs(Rabi_test/(Wo+W_photon+cI/Phase_LifeTime)/(Gamma_+1.))
-     write (300,*) Rabi_Test*HARTREE,delta_G_SS,Current_SS
+     write (300,*) Rabi_Test*HARTREE,dGo,Current_SS
      Current_SS=2.*abs(Rabi_test/(W_photon+cI/Phase_LifeTime)/(Gamma_+1.))
-     write (301,*) Rabi_Test*HARTREE,delta_G_SS,Current_SS
+     write (301,*) Rabi_Test*HARTREE,dGo,Current_SS
    enddo
  endif
  !
  Gamma_= abs(Rabi_freq)**2/(W_Detuning**2.+1./Phase_LifeTime**2.)*QP_LifeTime/Phase_LifeTime
- delta_G_SS=-2./(Gamma_+1.)
+ dGo=-2./(Gamma_+1.)
  !
  call open_it(103,"G12_delta")
- call open_it(104,"G12_res")
+ !call open_it(104,"G12_res")
  call open_it(109,"G12_antires")
  if (Phase_LifeTime>1.E-5) then
     call write_it(103, -cI*Rabi_freq/(Wo+cI/Phase_LifeTime)*( 1- exp( cI*Wo*T -T/Phase_LifeTime ) ) )
-    call write_it(104, Rabi_freq/(Wo+W_photon+cI/Phase_LifeTime)*( exp(-cI*W_photon*T)- exp(cI*Wo*T-T/Phase_LifeTime) ) ) 
-    call write_it(109,-Rabi_freq/(Wo-W_photon+cI/Phase_LifeTime)*( exp( cI*W_photon*T)- exp(cI*Wo*T-T/Phase_LifeTime) ) ) 
+    !call write_it(104, Rabi_freq/(Wo+W_photon+cI/Phase_LifeTime)*( exp(-cI*W_photon*T)- exp(cI*Wo*T-T/Phase_LifeTime) ) ) 
+    call write_it(109,-Rabi_freq/(Gamma_+1.)/(Wo-W_photon+cI/Phase_LifeTime)*( exp( cI*W_photon*T)- exp(cI*Wo*T-T/Phase_LifeTime) ) ) 
  else
    call write_it(103, -cI*Rabi_freq/Wo*( 1- exp( cI*Wo*T ) ) )
-   call write_it(104, Rabi_freq/(Wo+W_photon)*( exp(-cI*W_photon*T)- exp(cI*Wo*T) ) ) 
-   call write_it(109,-Rabi_freq/(Wo-W_photon)*( exp( cI*W_photon*T)- exp(cI*Wo*T) ) ) 
+   !call write_it(104, Rabi_freq/(Wo+W_photon)*( exp(-cI*W_photon*T)- exp(cI*Wo*T) ) ) 
+   call write_it(109,-Rabi_freq/(Gamma_+1.)/(Wo-W_photon)*( exp( cI*W_photon*T)- exp(cI*Wo*T) ) ) 
+ endif
+ !
+ if (P_and_P) then
+   Pf(1)=cI/Phase_LifeTime-delta
+   Pf(2)=cI/QP_LifeTime-W_Detuning
+   Pf(3)=cI/Phase_LifeTime-W_Detuning
+   Pf(4)=cI/Phase_LifeTime-W_Detuning-delta
+   Pf(5)=cI/Phase_LifeTime-W_Detuning+delta
+   Df(1)=2.*Pf(1)/(Pf(1)**2.-W_Detuning**2.)
+   Df(2)=2./Pf(2)
+   Df(3)=2./Pf(3)
+   Df(4)=2./Pf(4)
+   Df(5)=2./Pf(5)
+   dG1_PP=Rabi_nn_square(1,2)*dGo*(Df(4)+Df(3))*Df(2)/(1.-Df(2)*Rabi_nn_square(1,1)*Df(1))
  endif
  !
  call open_it(105,"G22")
@@ -85,7 +117,13 @@ subroutine RT_two_levels(G_lesser)
  call open_it(107,"G22+G11")
  call write_it(107,-cI*(G_lesser(1,1,1)+G_lesser(2,2,1)))
  call open_it(108,"G22-G11")
- call write_it(108,-cI*(G_lesser(2,2,1)-G_lesser(1,1,1))-delta_G_SS)
+ call write_it(108,-cI*(G_lesser(2,2,1)-G_lesser(1,1,1))-dGo)
+ if (P_and_P) then
+   call open_it(122,"G22-G11_theo")
+   call write_it(122,-CI*(dG1_PP*exp(cI*delta*T)-conjg(dG1_PP)*exp(-cI*delta*T)))
+ endif
+ call open_it(112,"Elemental_oscillations_delta")
+ call write_it(112,-exp(-cI*Elemental_Pole_delta*T))
  call open_it(100,"G21")
  call write_it(100,G_lesser(2,1,1))
  call open_it(101,"G12")
@@ -131,5 +169,10 @@ subroutine RT_two_levels(G_lesser)
      file_name=local
      open (unit=unit_,file=trim(file_name),form='formatted')
    end subroutine
+   !
+   complex(SP) function DELTA_Pump_F(W)
+    complex(SP) :: W
+    DELTA_Pump_F=(W+cI/QP_LifeTime)*(W+Wo+cI/Phase_LifeTime)*(W-Wo+cI/Phase_LifeTime)-(W+cI/Phase_LifeTime)*abs(Rabi_test)**2.
+   end function
    !
 end subroutine RT_two_levels

@@ -25,9 +25,9 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  use pars,          ONLY:SP
  use drivers,       ONLY:l_alda_fxc,l_gw0
- use X_m,           ONLY:X_t,X_alloc,X_mat,X_poles_tab,self_detect_E_range
+ use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range
  use memory_m,      ONLY:mem_est
- use frequency,     ONLY:w_samp,rg_index_bg,bg_npts,cg_pt,cg_index_bg
+ use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels
  use par_proc_m,    ONLY:pp_redux_wait
@@ -144,13 +144,7 @@ integer function X_em1(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    ! CLEAN (1)
    !
-   if (associated(Xw%p)) then
-     deallocate(Xw%p)
-     call mem_est("W-p")
-   endif
-   if (allocated(rg_index_bg)) deallocate(rg_index_bg)
-   deallocate(X_poles_tab,bg_npts,cg_pt,cg_index_bg)
-   call mem_est("X_poles_tab RGi BGn CGp CGi")
+   call FREQUENCIES_reset(Xw)
    !
  enddo
  !

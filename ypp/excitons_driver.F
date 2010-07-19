@@ -31,7 +31,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use YPP,           ONLY:l_sort,l_exc_wf,l_spin,ncell,lambda,r_hole,&
 &                        nr,v2plot,nr_tot,state_ctl,BS_H_dim,n_lambda,&
 &                        excitons_sort_and_report,l_amplitude,l_free_hole,&
-&                        output_fname,use_xcrysden,use_gnuplot,plot_dim,l_norm_to_one
+&                        output_fname,use_xcrysden,use_gnuplot,use_cube,plot_dim,l_norm_to_one
 #if defined _YPP_ELPH
  use YPP,           ONLY:l_eliashberg,l_gkkp
 #endif
@@ -477,14 +477,19 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    !
    ! PLOT
    !
+   if (use_cube) output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(lambda))//'.cube'
    if (use_xcrysden) output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(lambda))//'.xsf'
    if (use_gnuplot)  output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(lambda))
    !
-   call of_open_close(trim(output_fname),'ot')
-   do i1=1,BSS_n_descs
-     call msg('o exc',"#",trim(BSS_description(i1)),INDENT=0)
-   enddo
-   call msg('o exc',"#")
+   if (use_cube) then 
+     call of_open_close(trim(output_fname),'o')
+   else
+    call of_open_close(trim(output_fname),'ot')
+    do i1=1,BSS_n_descs
+      call msg('o exc',"#",trim(BSS_description(i1)),INDENT=0)
+    enddo
+      call msg('o exc',"#")
+   endif
    !
    call plot_check_and_launch(.false.)
    !

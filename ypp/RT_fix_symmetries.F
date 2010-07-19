@@ -294,16 +294,28 @@ subroutine RT_fix_symmetries(E,k)
  deallocate(wf_nc_k,wf_igk)
  allocate(wf_nc_k(k%nibz),wf_igk(wf_ncx,k%nibz))
  !
+ wf_igk=0
  wf_igk(1:wf_ncx,1:k_save%nibz)       = wf_igk_save(1:wf_ncx,1:k_save%nibz)
- wf_nc_k(1:k_save%nibz)               = ng_closed
+ wf_nc_k(1:k_save%nibz)               = min(ng_closed,wf_nc_k_save(1:k_save%nibz))
  !
  do i1=k_save%nibz+1,k%nibz 
    !      
    is=sop_inv_save(kpoints_map(2,i1))
    ik=kpoints_map(1,i1)
    !
-   wf_igk (1:wf_nc_k(ik),i1) = wf_igk_save(g_rot(is,1:wf_nc_k(ik)),ik)
-   wf_nc_k(i1)               = wf_nc_k(ik)
+   do i2=1,wf_nc_k(ik)
+     if(g_rot(is,i2)<=wf_nc_k(ik)) then
+        wf_igk (i2,i1) = wf_igk_save(g_rot(is,i2),ik)
+     else
+        wf_igk (i2,i1) = 0
+     endif
+   enddo
+   !
+   if(any(wf_igk(1:wf_nc_k(ik),i1)==0)) then
+     wf_nc_k(i1)=minloc(wf_igk(:,i1),1)-1
+   else
+     wf_nc_k(i1)               = wf_nc_k(ik)
+   endif
    !
  enddo
  !

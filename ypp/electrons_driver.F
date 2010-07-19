@@ -31,7 +31,7 @@ subroutine electrons_driver(Xk,Xen)
  use electrons,      ONLY:levels,n_spin,n_spinor,spin,n_sp_pol
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
-&                         use_gnuplot,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
+&                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
 &                         plot_title,l_dos,dos_broadening,DOS_bands,l_angular_momentum,&
 &                         l_position,l_current
  use com,            ONLY:msg,of_open_close,warning
@@ -172,6 +172,7 @@ subroutine electrons_driver(Xk,Xen)
    v2plot=el_den
    !
    ch_ws='density_'//trim(intc(plot_dim))
+   if (use_cube) output_fname=trim(ch_ws)//'d.cube'
    if (use_xcrysden) output_fname=trim(ch_ws)//'d.xsf'
    if (use_gnuplot)  output_fname=trim(ch_ws)//'d'
    !
@@ -239,6 +240,7 @@ subroutine electrons_driver(Xk,Xen)
        close(100)
        !
        ch_ws='sp_wf_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_'//trim(intc(plot_dim))//'_STATE'//trim(intc(top_residual(i_st)))//'_'//trim(intc(plot_dim))
+       if (use_cube) output_fname=trim(ch_ws)//'d.cube'
        if (use_xcrysden) output_fname=trim(ch_ws)//'d.xsf'
        if (use_gnuplot)  output_fname=trim(ch_ws)//'d'
        !
@@ -309,6 +311,7 @@ subroutine electrons_driver(Xk,Xen)
        !
        ! GPL_EXCLUDE_END SPIN_IGNORE
        !
+       if (use_cube) output_fname=trim(ch_ws)//'d.cube'
        if (use_xcrysden) output_fname=trim(ch_ws)//'d.xsf'
        if (use_gnuplot)  output_fname=trim(ch_ws)//'d'
        !
@@ -346,6 +349,7 @@ subroutine electrons_driver(Xk,Xen)
    !
    v2plot=two_spin_density(:,mag_i_dir)
    !
+   if (use_cube) output_fname='mag_'//trim(mag_dir)//'_'//trim(intc(plot_dim))//'d.cube'
    if (use_xcrysden) output_fname='mag_'//trim(mag_dir)//'_'//trim(intc(plot_dim))//'d.xsf'
    if (use_gnuplot)  output_fname='mag_'//trim(mag_dir)//'_'//trim(intc(plot_dim))//'d'
    !
@@ -377,6 +381,7 @@ subroutine electrons_driver(Xk,Xen)
          ch_ws='density_UP_'//trim(intc(plot_dim))
        endif
        !
+       if (use_cube) output_fname=trim(ch_ws)//'d.cube'
        if (use_xcrysden) output_fname=trim(ch_ws)//'d.xsf'
        if (use_gnuplot)  output_fname=trim(ch_ws)//'d'
        !

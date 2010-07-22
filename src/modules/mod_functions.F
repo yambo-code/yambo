@@ -102,8 +102,6 @@ module functions
      !
    end function
    !
-   ! GPL_EXCLUDE_START GW_REAL_AXIS_IGNORE
-   !
    ! Lifetime functions e2et/h2ht
    !------------------------------
    !
@@ -156,14 +154,12 @@ module functions
      if (h2ht==0) F=0.
    end function
    !
-   ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
-   !
    logical function K_scatter(E,Ep,Er,Dr)
      !
      real(SP)::E,Ep,Er(2),Dr(2),D
      K_scatter=.false.
      D=Dr(1)+(E-Er(1))/(Er(2)-Er(1))*(Dr(2)-Dr(1))
-     D=max(D,0.)
+     D=max(D,0._SP)
      K_scatter=abs(E-Ep)<=D
    end function
    !

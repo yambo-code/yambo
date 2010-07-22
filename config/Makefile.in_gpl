@@ -44,11 +44,10 @@ includedir  = @includedir@
 CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
   	   sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
 	   src/external_c/.objects Makefile driver/version.h \
-       sbin/objects_debug.sh driver/editor.h  tests/load_paths_and_executables.sh
+       sbin/objects_debug.sh driver/editor.h 
 TARGETS  = all yambo interfaces ypp 
 CLEANS   = clean clean_all
 INTERFCS = a2y p2y e2y 
-TESTS    = test_GoWo 
 #
 # Libraries (ordered for compiling & linking)
 #
@@ -139,22 +138,16 @@ ypp: libs
 	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
 	@X2DO="ypp" ;XPATH="ypp";XLIBS="$(YPPLIBS)";$(mkx)
 #
-# TESTS #
-test_all: test_GoWo 
-test_GoWo: yambo interfaces
-	./tests/test_GoWo.sh
 clean: clean_fast
 clean_fast: 
 	@$(objects_clean)
 	@$(lib_mod_clean)
 	@$(xclean)
-	@$(tests_clean)
 clean_all: 
 	@$(objects_clean)
 	@$(lib_mod_netcdf_clean)
 	@$(conf_clean)
 	@$(xclean)
-	@$(tests_clean)
 
 # Functions
 define make_message
@@ -162,7 +155,6 @@ define make_message
  for target in $(TARGETS); do echo  " [stable] $$target" ; done;echo;\
  for target in $(PROJECTS); do echo " [devel] $$target" ; done;echo;\
  for target in $(UTILS); do echo  " [util] $$target" ; done;echo
- for target in $(TESTS); do echo  " [tests] $$target" ; done;echo
  for target in $(CLEANS); do echo  " [clean] $$target" ; done;echo
 endef
 define mksrc
@@ -209,7 +201,7 @@ define objects_clean
 endef
 define lib_mod_clean
  find . \( -name '*.a' -o -name '*.mod' \) -type f -print | \
-       grep -v netcdf | grep -v iotk | grep -v typesize | xargs rm -f 
+       grep -v netcdf | grep -v xc_ | grep -v libxc | grep -v iotk | grep -v typesize | xargs rm -f 
  echo "[CLEAN] Libraries ... done" 
  echo "[CLEAN] Modules ... done" 
 endef
@@ -224,11 +216,6 @@ define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
  for exe in $(INTERFCS); do rm -f $(bindir)/$$exe; done
  echo "[CLEAN] Targets ... done" 
-endef
-define tests_clean
- find tests/ -name '*dir' -type d -print | xargs rm -fr
- rm -fr tests/PPs
- echo "[CLEAN] Tests ... done" 
 endef
 define conf_clean
  rm -f $(CFGFILES)

@@ -180,16 +180,12 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
  !
  if (l_pp_em1)     i_err=X_em1(Xen,Xk,q,X(4),Xw(4),.false.)
  !
- ! GPL_EXCLUDE_START GW_REAL_AXIS_IGNORE
- ! 
  ! Dynamical 
  !-----------
  !
  l_dyn_em1= (.not.l_ppa.and..not.l_cohsex) .and. (l_em1d.or.(l_gw0.and.l_el_corr))
  !
  if (l_dyn_em1)    i_err=X_em1(Xen,Xk,q,X(3),Xw(3),.false.)
- !
- ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
  !
  ! EXTENDED COLLISIONS (HF & COHSEX)
  !===================================
@@ -219,14 +215,10 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
      !
    else 
      !
-     ! GPL_EXCLUDE_START GW_REAL_AXIS_IGNORE
-     !
      ! Real Axis 
      !============
      !
      call QP_driver(X(3),Xen,Xk,en,k,q,Xw(3))
-     !
-     ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
      !
    endif
    !

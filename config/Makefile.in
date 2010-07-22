@@ -57,7 +57,7 @@ PROJECTS = yambo_ph yambo_sc yambo_ras yambo_reels \
 BROKEN   = yambo_manyk
 DEBUG    = yambo_test_1 yambo_test_2
 EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(DEBUG)
-INTERFCS = a2y p2y e2y 
+INTERFCS = a2y p2y e2y c2y
 #
 # Libraries (ordered for compiling & linking)
 #
@@ -170,6 +170,7 @@ interfaces: libs
 	@LIBS2DO="$(2YLIBS)" ; $(mksrc)
 	@LIBS2DO="int_modules"; DIR2GO="interfaces" ; $(mklib)
 	@X2DO="a2y" ;XPATH="interfaces/a2y";XLIBS="$(2YLIBS)";$(mkx)
+	@X2DO="c2y" ;XPATH="interfaces/c2y";XLIBS="$(2YLIBS)";$(mkx)
 	@if test "$(do_p2y)" = yes ; then X2DO="p2y" ; XPATH="interfaces/p2y" ; \
 	XLIBS="$(2YLIBS)"; ADF="-D@PW_CPP@"; $(mkx) ; fi
 	@if test "$(do_e2y)" = yes ; then X2DO="e2y" ; XPATH="interfaces/e2y" ; \

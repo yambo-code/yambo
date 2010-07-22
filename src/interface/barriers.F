@@ -129,15 +129,14 @@ subroutine barriers()
  !
  ! GPL_EXCLUDE_END
  !
- !
- ! GPL_EXCLUDE_START GW_REAL_AXIS_IGNORE
- !
  if (gw0_raxis) then
-   call switch_off_runlevel('all',on_name='gw0 em1d el_el el_ph HF_and_locXC '//trim(always_runlevels))
+   on_runlevels='gw0 em1d el_el el_ph HF_and_locXC'
+   ! GPL_INCLUDE_START SC_IGNORE
+   !on_runlevels='gw0 em1d el_el HF_and_locXC'
+   ! GPL_INCLUDE_END SC_IGNORE
+   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
- !
- ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
  !
  if (gw0_ppa) then
    on_runlevels='gw0 ppa em1d el_el el_ph HF_and_locXC'
@@ -158,7 +157,7 @@ subroutine barriers()
  if (l_bss.or.l_bse) then
    on_runlevels='tdhf bs_fxc bse bss em1s em1d ppa optics'
    ! GPL_INCLUDE_START SC_IGNORE
-   !on_runlevels='tdhf bse bss em1s ppa optics'
+   !on_runlevels='tdhf bse bss em1s em1d ppa optics'
    ! GPL_INCLUDE_END SC_IGNORE
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1

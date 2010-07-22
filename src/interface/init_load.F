@@ -159,6 +159,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,verb_level=V_resp)
  call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_kpt)
  call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_kpt) 
+ call it(defs,'Nelectro','Electrons number',nel,verb_level=V_general)
 #if defined _DISTRIBUTED
  call it('f',defs,'LowMemUsage', 'Distribute wave-function (use less memory but slower)',verb_level=V_general)
 #endif
@@ -170,12 +171,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
  call it(defs,'dScStep',  '[GW] Energy step to evalute Z factors',QP_dSc_delta,E_unit)
- !
- ! GPL_EXCLUDE_START GW_REAL_AXIS_IGNORE
- !
  call it(defs,'DysSolver','[GW] Dyson Equation solver (`n`,`s`,`g`)',QP_solver,protect=.FALSE.)
- !
- ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
  !
  !
  ! BSE
@@ -242,7 +238,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! Basics
  !
- call it(defs,'Nelectro','Electrons number',nel,verb_level=V_general)
  call it(defs,'ElecTemp','Electronic Temperature',Tel,T_unit,verb_level=V_general)
  call it(defs,'BoseTemp','Bosonic Temperature',Bose_Temp,T_unit,verb_level=V_general)
  call it(defs,'OccTresh','Occupation treshold (metallic bands)',filled_tresh,verb_level=V_general)

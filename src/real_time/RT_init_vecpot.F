@@ -67,9 +67,12 @@ subroutine RT_init_vecpot()
  P        =  DIP_P(1,1,2,1,1)
  D        =  cI*DIP_iR(1,1,2,1,1)
  select case(trim(Efield(i_pump)%ef_name))
-   case('RES','ANTIRES')
+   case('ANTIRES')
      W_photon=Efield(i_pump)%frequency 
-     Rabi_freq=2.*P*Efield(i_pump)%amplitude/W_photon
+     Rabi_freq=2.*P*Efield(i_pump)%amplitude/cI/W_photon
+   case('RES')
+     W_photon=Efield(i_pump)%frequency 
+     Rabi_freq=-2.*P*Efield(i_pump)%amplitude/cI/W_photon
    case('DELTA')
      Rabi_freq=2.*P*Efield(i_pump)%amplitude
      W_photon=0.

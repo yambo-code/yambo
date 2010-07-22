@@ -77,11 +77,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
        call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
      else
        !
-       ! GPL_EXCLUDE_START GW_REAL_AXIS_IGNORE
-       !
        call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,iter)
-       !
-       ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
        !
      endif
    else

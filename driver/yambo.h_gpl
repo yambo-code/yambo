@@ -50,8 +50,10 @@
   {"rim_cut","c","Coulomb interaction",0,0,0,0},
   {"HF_and_locXC",  "x","Hartree-Fock Self-energy and local XC",0,0,0,0},
   {"em1s",   "b","Static Inverse Dielectric Matrix",0,0,0,0},  
+  {"em1d",   "d","Dynamical Inverse Dielectric Matrix",0,0,0,0}, 
   {"gwapprx","p","GW approximations [opt=(p)PA/c(HOSEX)]",0,0,1,0}, 
-  {"gw0",    "g","Dyson Equation solver [opt=n(ewton)]",0,0,1,0},
+  {"gw0",    "g","Dyson Equation solver",0,0,1,0},
+  {"DESC",   " ","opt=n(ewton)/s(ecant)/g(reen)",0,0,0,0},
   {"bss",    "y","BSE solver [opt=h/d]",0,0,1,0},   
 #if defined _SC
   {"scpot",  "v","Self-Consistent [opt=(h)hartree,(hf),(c)hosex,(exx),(exxc)]",0,0,1,0},

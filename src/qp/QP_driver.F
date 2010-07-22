@@ -71,10 +71,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !==============================================================
  if (.not.allocated(QP_Vnl_xc).and..not.allocated(QP_Vxc).and.l_el_corr.and..not.l_life) return
  !
- ! GPL_INCLUDE_START GW_REAL_AXIS_IGNORE
- !QP_solver='n'
- ! GPL_INCLUDE_END GW_REAL_AXIS_IGNORE
- !
  ! Head message
  !==============
  call QP_reset(qp)
@@ -85,17 +81,12 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    call section('*','Dyson equation: Newton solver')
  else if (trim(QP_solver)=='s') then
    !
-   ! GPL_EXCLUDE_START GW_REAL_AXIS_IGNORE
-   !
    ! When using secant no SC available
    !
    GWo_iterations=0
    !
    write (qp%description(1),'(a)') ' GW solver              : Secant'
    call section('*','Dyson equation: non perturbative secant method')
-   !
-   ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
-   !
    !
    ! GPL_EXCLUDE_START
    !
@@ -136,14 +127,15 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
  else
    !
-   ! GPL_EXCLUDE_START
-   !
    qp%description(2)=' == Real Axis GW =='
    !
    ! Here I am not considering the case where ELPH + GW is used.
    ! For this case I need to create a new global KIND.
    !
    QP_DB_kind=SE_GoWo
+   !
+   ! GPL_EXCLUDE_START
+   !
    if (l_ph_corr) QP_DB_kind=SE_POLARON 
    !
    if ( GWo_iterations > 0 ) QP_DB_kind=SE_GWo_PPA
@@ -293,13 +285,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    endif
  endif
  !
- ! GPL_EXCLUDE_START  GW_REAL_AXIS_IGNORE
- ! 
  ! SECANT
  !--------
  if (trim(QP_solver)=='s') call QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
- !
- ! GPL_EXCLUDE_END GW_REAL_AXIS_IGNORE
  !
  ! GREEN`s FUNCTIONS
  !-------------------

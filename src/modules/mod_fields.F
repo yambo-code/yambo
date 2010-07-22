@@ -27,6 +27,8 @@ module fields
  !
  character(schlen) :: global_gauge
  !
+ ! GPL_EXCLUDE_START
+ !
  ! Electric Field(s)
  ! 
  type ext_field
@@ -53,6 +55,8 @@ module fields
  !
  type(gauge_field) :: A_vecpot
  type(gauge_field) :: A_vecpot_previous
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Path for the shifted grids
  !

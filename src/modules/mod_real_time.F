@@ -27,12 +27,12 @@ module real_time
  implicit none
  !
 #if defined _TWO_LEVELS
- complex(SP) :: Rabi_freq
- complex(SP) :: Rabi_nn_square(2,2)
+ complex(SP) :: Rabi_freq_pump
+ complex(SP) :: Rabi_freq_probe
+ complex(SP) :: Rabi_nn(2,2)
  complex(SP) :: P
  complex(SP) :: D
- real(SP)    :: W_photon
- real(SP)    :: W_Detuning
+ real(SP)    :: W_pump
  real(SP)    :: delta
  real(SP)    :: Wo
 #endif

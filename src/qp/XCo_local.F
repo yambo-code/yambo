@@ -88,15 +88,11 @@ subroutine XCo_local(E,Xk)
    l_call_the_driver=.TRUE.
    !
 #if defined _RT
-   call xc_lda_driver(E,Xk,WF_KIND,WF_xc_functional,1,G_lesser)
+   call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1,G_lesser)
    l_call_the_driver=.FALSE.
 #endif
    if (l_call_the_driver) then
-#if defined _LIBXC
-      call libxc_int(E,Xk,WF_xc_functional,1)
-#else
-      call xc_lda_driver(E,Xk,WF_KIND,WF_xc_functional,1)
-#endif
+     call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1)
    endif
    !
 #if defined _SC

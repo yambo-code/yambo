@@ -27,16 +27,9 @@ subroutine p2y_db1(en,k)
  use xc_functionals,        ONLY : xc_string,GS_xc_KIND,GS_xc_FUNCTIONAL
  use R_lattice,             ONLY : ng_vec
  use wave_func,             ONLY : wf_ng
-#if defined _LIBXC
- use xc_functionals,        ONLY : xc_setup_fnctl,xc_fnctl_t
-#endif
  implicit none
  type(levels),     intent(out)  :: en     ! Energies
  type(bz_samp),    intent(out)  :: k      ! K/Q points
-#if defined _LIBXC
- type(xc_fnctl_t)               :: f(2)   ! xc functional info's (probably better as input)
-#endif
-
  !---------------------------------------------------------------------*
  !    Read dimensions                                                  *
  !---------------------------------------------------------------------*
@@ -76,14 +69,7 @@ subroutine p2y_db1(en,k)
  !---------------------------------------------------------------------*
  !
  call get_xc
-#if defined _LIBXC
- call xc_setup_fnctl(f,GS_xc_FUNCTIONAL,1)
- if (f(1)%id >0) call msg('s','XC functional...',xc_string(f(1)))
- if (f(2)%id >0) call msg('s','XC functional...',xc_string(f(2)))
- if (all(f%id==0)) call msg('s','XC functional...: None (only Hartree)')
-#else
  call msg('s','XC functional...'//xc_string(GS_xc_KIND,GS_xc_FUNCTIONAL))
-#endif
  !
  !
  !---------------------------------------------------------------------*

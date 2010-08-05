@@ -172,11 +172,7 @@ module global_XC
    !
    character(lchlen) function global_XC_string(kind,se_more,xc_functional,perturbation)
      !
-#if defined _LIBXC
-     use xc_functionals,  ONLY:xc_string,xc_setup_fnctl,xc_fnctl_t
-#else
      use xc_functionals,  ONLY:xc_string,XC_CORRELATION
-#endif
      !
      integer           :: kind          ! <300 (LDA's GGA's ...) >300 See above
      integer           :: se_more       ! scissor's and more
@@ -185,33 +181,16 @@ module global_XC
      ! 
      character(1)      :: ch_plus
      character(lchlen) :: ch
-#if defined _LIBXC
-     type(xc_fnctl_t)  :: f(2)
-     !
-     ! Note that this routine can be all rewritten consistently with libxc
-     ! Similarly to xc_string!! This is a fix to compile.
-     !
-     call xc_setup_fnctl(f,xc_functional,1)
-#endif
      global_XC_string=' '
      select case (kind)
        case(0)
          global_XC_string='Hartree'
        case(1:300)
-#if defined _LIBXC
-         global_XC_string=trim(xc_string(f(1)))
-         global_XC_string=trim(xc_string(f(2)))
-#else
          global_XC_string=trim(xc_string(kind,xc_functional))
-#endif
        case(SC_EXX)
          global_XC_string='SC Exact Exchange'
        case(SC_EXXC)
-#if defined _LIBXC
-         global_XC_string='SC Exact Exchange +'//trim(xc_string(f(2)))
-#else
          global_XC_string='SC Exact Exchange +'//trim(xc_string(XC_CORRELATION,xc_functional))
-#endif
        case(SC_HF)
          global_XC_string='SC Hartree Fock'
        case(SC_COHSEX)

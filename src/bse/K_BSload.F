@@ -70,7 +70,7 @@ subroutine K_BSload(iq)
      !
      ACTION=RD
      if (ik1==1.and.ik2==nXkibz) ACTION=RD_CL
-            !
+       !
        ! BS I/O
        ! 
        call io_control(ACTION=ACTION,COM=NONE,SEC=(/BS_IO_index(ik1,ik2)/),ID=ID)

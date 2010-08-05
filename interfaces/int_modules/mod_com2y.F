@@ -177,21 +177,10 @@ module mod_com2y
 &                                      Z_species
      use wave_func,             ONLY : wf_nc_k, wf_ncx, wf_igk, wf_ng,real_wavefunctions
      use xc_functionals,        ONLY : GS_xc_KIND,GS_xc_FUNCTIONAL,xc_string
-#if defined _LIBXC
-     use xc_functionals,        ONLY : xc_setup_fnctl,xc_fnctl_t
-#endif
      use vec_operate,           ONLY : v_is_zero
      implicit none
      type(levels),     intent(in)   :: en     ! Energies
      type(bz_samp),    intent(in)   :: k      ! K/Q points
-#if defined _LIBXC
-     type(xc_fnctl_t)               :: f(2)   ! xc functional info's (probably better as input)
-     !
-     ! I put this here now, while probably better somewhere else
-     !
-     call xc_setup_fnctl(f,GS_xc_FUNCTIONAL,n_spin)
-     !
-#endif
      ! 
      call msg('s',' :: Electrons             :',default_nel)
      call msg('s',' :: Temperature       [ev]:',input_GS_Tel)
@@ -206,13 +195,7 @@ module mod_com2y
      call msg('s',' :: Max WF components     :',wf_ncx)
      call msg('s',' :: RL vectors        (WF):',wf_ng)
      call msg('s',' :: RL vectors    (CHARGE):',ng_vec)
-#if defined _LIBXC
-     if (f(1)%id >0) call msg('s',' :: XC potential          : ',xc_string(f(1)))
-     if (f(2)%id >0) call msg('s',' :: XC potential          : ',xc_string(f(2)))
-     if (all(f%id==0)) call msg('s',' :: XC potential          : None (only Hartree)')
-#else
      call msg('s',' :: XC potential          : ',xc_string(GS_xc_KIND,GS_xc_FUNCTIONAL))
-#endif
      call msg('s',' :: Atomic species        :',n_atomic_species)
      call msg('s',' :: Max atoms/species     :',n_atoms_species_max)
      !

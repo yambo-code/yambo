@@ -40,10 +40,8 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use collision,      ONLY:ggwinfo,collision_reset
  use matrix_operate, ONLY:mat_dia_inv,INV,USE_LK
  use IO_m,           ONLY:io_control,RD_CL_IF_END,OP_RD
-#if !defined _LIBXC
  use xc_functionals, ONLY:E_xc,XC_EXCHANGE_CORRELATION,XC_LDA_C_KP,XC_EXCHANGE,&
 &                         XC_LDA_X,XC_CORRELATION
-#endif
  use global_XC,      ONLY:WF_xc_functional
  implicit none
  type(levels) ::Xen,En
@@ -98,21 +96,21 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  allocate(E_xc(fft_size),rho(fft_size))
  call el_density(Xen,Xk,rho,.false.)
  !
- call xc_lda_driver(Xen,Xk,XC_EXCHANGE_CORRELATION,XC_LDA_C_KP,0)
+ call XC_potential_driver(Xen,Xk,XC_EXCHANGE_CORRELATION,XC_LDA_C_KP,0)
 #if defined _DOUBLE
  dEc_LDA=ddot(fft_size,rho,1,E_xc,1)
 #else 
  dEc_LDA=sdot(fft_size,rho,1,E_xc,1)
 #endif
  !
- call xc_lda_driver(Xen,Xk,XC_EXCHANGE,XC_LDA_X,0)
+ call XC_potential_driver(Xen,Xk,XC_EXCHANGE,XC_LDA_X,0)
 #if defined _DOUBLE
  Ex_LDA=ddot(fft_size,rho,1,E_xc,1)
 #else 
  Ex_LDA=sdot(fft_size,rho,1,E_xc,1)
 #endif
  !
- call xc_lda_driver(Xen,Xk,XC_CORRELATION,WF_xc_functional,0)
+ call XC_potential_driver(Xen,Xk,XC_CORRELATION,WF_xc_functional,0)
 #if defined _DOUBLE
  Ec_LDA=ddot(fft_size,rho,1,E_xc,1)
 #else 

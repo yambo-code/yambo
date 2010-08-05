@@ -103,7 +103,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
    !
    call IO_and_Messaging_switch("-report -log -io_in -io_out")
    !
-   if (l_sc_contains_lda) call xc_lda_driver(E,Xk,SC_kind,SC_xc_functional,1)
+   if (l_sc_contains_lda) call XC_potential_driver(E,Xk,SC_kind,SC_xc_functional,1)
    if (l_sc_contains_lda.and..not.l_sc_exx) V_xc_sc(:,:)=V_xc(:,:)
    if (l_sc_contains_lda.and.     l_sc_exx) V_xc_sc(:,:)=V_xc(:,:)+V_xc_sc(:,:)
    !

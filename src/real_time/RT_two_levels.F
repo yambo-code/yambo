@@ -22,14 +22,14 @@
 subroutine RT_two_levels(G_lesser)
  !
  use pars,           ONLY:SP,pi,cI
- use units,          ONLY:SPEED_OF_LIGHT,FS2AUT
+ use units,          ONLY:FS2AUT
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
  use D_lattice,      ONLY:DL_vol
  use units,          ONLY:HARTREE
  use com,            ONLY:msg
- use real_time,      ONLY:Wo,Rabi_freq,W_photon,Phase_LifeTime,RT_is_dumped,W_detuning,&
-&                         QP_LifeTime,RT_step,l_NE_with_fields,i_time,P,D,delta,Rabi_nn_square
+ use real_time,      ONLY:Wo,Rabi_freq_pump,W_pump,Phase_LifeTime,&
+&                         QP_LifeTime,RT_step,l_NE_with_fields,i_time,P,D,delta,Rabi_nn,Rabi_freq_probe
  use fields,         ONLY:Efield
  !
  implicit none           
@@ -37,14 +37,14 @@ subroutine RT_two_levels(G_lesser)
  !
  ! Work Space
  !
- integer       :: i_r,i_f
+ integer       :: i_f
  logical       :: P_and_P
- real(SP)      :: T,Gamma_,Current_SS,W_step,Wo_here
+ real(SP)      :: T,W_step,Wo_here,W_range
  integer, parameter :: N_W_delta_search=100000
  complex(SP)        :: Poles_func(N_W_delta_search),Poles_func_deriv(N_W_delta_search),W_func(N_W_delta_search),&
-&                      G(2,2)
+&                      G(2,2),Gamma_mat(2,2),Gamma_delta_11
  complex(SP), save  :: W_bar,Beta_wbar,R_wbar,dGinfty,W_gamma,Beta_gamma,R_gamma,&
-&                      So,S_wo,S_wbar,S_minus_wbar_star,S_gamma
+&                      So,S_wo,S_wbar,S_minus_wbar_star,S_gamma,eta1_plus,eta1_minus,p1_plus,p1_minus,p0
  !
  if(.not.l_NE_with_fields.or.i_time<0) return
  !
@@ -52,24 +52,37 @@ subroutine RT_two_levels(G_lesser)
  !
  select case(trim(Efield(1)%ef_name))
    case('RES')
-     Wo_here=Wo+W_photon
+     Wo_here=Wo+W_pump
    case('ANTIRES')
-     Wo_here=Wo-W_photon
+     Wo_here=Wo-W_pump
    case('DELTA')
      Wo_here=Wo
  end select
  !
  T= (i_time-1)*RT_step
  !
+ W_range=10./HARTREE
+ if (P_and_P) W_range=2./HARTREE
+ !
  if (i_time == 1) then
-   W_step=10./HARTREE/real(N_W_delta_search)
+   W_step=W_range/real(N_W_delta_search)
    do i_f=1,N_W_delta_search-1
      W_func(i_f)=-0.1/HARTREE+W_step*i_f
-     Poles_func(i_f)=DELTA_Pump_F(W_func(i_f))
-     Poles_func_deriv(i_f)=(DELTA_Pump_F(W_func(i_f)+W_step)-DELTA_Pump_F(W_func(i_f)))/W_step
-     write (100,'(3f20.10)')  real(W_func(i_f)),DELTA_Pump_F(W_func(i_f))
+     if (P_and_P) then
+       Poles_func(i_f)=DELTA_Pump_F(-W_func(i_f))
+       Poles_func_deriv(i_f)=(DELTA_Pump_F(-W_func(i_f)+W_step)-DELTA_Pump_F(-W_func(i_f)))/W_step
+       write (100,'(3f20.10)')  real(W_func(i_f))*HARTREE,DELTA_Pump_F(-W_func(i_f))
+     else
+       Poles_func(i_f)=DELTA_Pump_F(W_func(i_f))
+       Poles_func_deriv(i_f)=(DELTA_Pump_F(W_func(i_f)+W_step)-DELTA_Pump_F(W_func(i_f)))/W_step
+       write (100,'(3f20.10)')  real(W_func(i_f))*HARTREE,DELTA_Pump_F(W_func(i_f))
+     endif
      if (i_f==1) cycle
      if ( (real(Poles_func(i_f-1))<0..and.real(Poles_func(i_f))>0. ) ) then
+       W_bar = W_func(i_f-1) - cI*aimag(Poles_func(i_f-1))/Poles_func_deriv(i_f-1)
+       Beta_wbar= Poles_func_deriv(i_f-1)
+     endif
+     if ( (real(Poles_func(i_f-1))>0..and.real(Poles_func(i_f))<0. ) ) then
        W_bar = W_func(i_f-1) - cI*aimag(Poles_func(i_f-1))/Poles_func_deriv(i_f-1)
        Beta_wbar= Poles_func_deriv(i_f-1)
      endif
@@ -82,16 +95,13 @@ subroutine RT_two_levels(G_lesser)
    call msg('s','[2 LEVELS] W bar           [eV   ]',real(W_bar)*HARTREE)
    !
  endif
+ stop
  !
- !
- Gamma_= abs(Rabi_freq)**2/(Wo_here**2.+1./Phase_LifeTime**2.)*QP_LifeTime/Phase_LifeTime
- dGinfty=-2.*cI/(Gamma_+1.)
+ Gamma_mat(1,1)=abs(Rabi_freq_pump)**2/(Wo_here**2.+1./Phase_LifeTime**2.)*QP_LifeTime/Phase_LifeTime
+ dGinfty=-2.*cI/(Gamma_mat(1,1)+1.)
  ! 
- R_wbar=2*abs(Rabi_freq)**2/W_bar/Beta_wbar* ( W_bar+cI/Phase_LifeTime )
- R_gamma=2*abs(Rabi_freq)**2/W_gamma/Beta_gamma*( W_gamma+cI/Phase_LifeTime )
- !
- call open_it(101,"dG_theo")
- call write_it(101,-2.*cI*real(R_wbar*exp(-cI*W_bar*T))+dGinfty-cI*R_gamma*exp(-cI*W_gamma*T) )
+ R_wbar=2*abs(Rabi_freq_pump)**2/W_bar/Beta_wbar* ( W_bar+cI/Phase_LifeTime )
+ R_gamma=2*abs(Rabi_freq_pump)**2/W_gamma/Beta_gamma*( W_gamma+cI/Phase_LifeTime )
  !
  So  =cI*dGinfty/(Wo_here+cI/Phase_LifeTime)
  S_wo=R_wbar/(W_bar+Wo_here+cI/Phase_LifeTime)
@@ -102,33 +112,60 @@ subroutine RT_two_levels(G_lesser)
  G(1,2)=exp_by_sigma_12(T)-exp_by_sigma_12(0.)*exp(cI*Wo_here*T-T/Phase_LifeTime)
  select case(trim(Efield(1)%ef_name))
    case('RES')
-     G(1,2)=G(1,2)*exp(-cI*W_photon*T)
+     G(1,2)=G(1,2)*exp(-cI*W_pump*T)
    case('ANTIRES')
-     G(1,2)=G(1,2)*exp( cI*W_photon*T)
+     G(1,2)=G(1,2)*exp( cI*W_pump*T)
  end select
  G(2,1)=-conjg(G(1,2))
+ !
+ ! P&P
+ !
+ if (.not.P_and_P) goto 1001
+ !
+ Gamma_mat(1,2)=Rabi_nn(1,2)/( Wo-W_pump-delta+cI/Phase_LifeTime )/( Wo-W_pump-cI/Phase_LifeTime )*QP_LifeTime/Phase_LifeTime
+ Gamma_mat(2,1)=conjg( Gamma_mat(1,2) )
+ Gamma_mat(2,2)=Rabi_nn(2,2)/((Wo-W_pump-delta)**2.+1./Phase_LifeTime**2.)*QP_LifeTime/Phase_LifeTime
+ Gamma_delta_11=abs(Rabi_freq_pump)**2/((Wo-W_pump)**2.-(delta-cI/Phase_LifeTime)**2.)*QP_LifeTime/Phase_LifeTime
+ !
+ eta1_plus=cI*Gamma_mat(1,2)*(delta*Phase_LifeTime-2.*cI)/(delta*QP_LifeTime-cI)
+ eta1_minus=-conjg(eta1_plus)
+ call open_it(101,"dG_theo_LLR")
+ call write_it(101,-cI*(eta1_plus*exp(cI*delta*T)+eta1_minus*exp(-cI*delta*T)-2.*cI*(1.-Gamma_mat(1,1)-Gamma_mat(2,2))))
+ call open_it(102,"G12_theo_LLR")
+ call write_it(102,G12_LRR(T,Rabi_freq_pump,W_pump)+G12_LRR(T,Rabi_freq_probe,W_pump+delta))
+ !
+ eta1_plus=-dGinfty/2.*Gamma_mat(1,2)*(delta*Phase_LifeTime-2.*cI)/(delta*QP_LifeTime-cI-Gamma_delta_11*(delta*QP_LifeTime-cI))
+ eta1_minus=-conjg(eta1_plus)
+ call open_it(103,"dG_theo")
+ call write_it(103,-cI*(eta1_plus*exp(cI*delta*T)+eta1_minus*exp(-cI*delta*T)+dGinfty))
+ !
+ p1_plus= (eta1_plus*Rabi_freq_pump/2.+dGinfty*Rabi_freq_probe)/2./(Wo+cI/Phase_LifeTime-W_pump-delta)
+ p1_minus=eta1_minus*Rabi_freq_pump/2./(Wo+cI/Phase_LifeTime-W_pump+delta)
+ p0= dGinfty*Rabi_freq_pump/2./(Wo+cI/Phase_LifeTime-W_pump)
+ call open_it(104,"G12_theo")
+ call write_it(104,(p0+p1_plus*exp(cI*delta*T)+p1_minus*exp(-cI*delta*T))*exp(cI*W_pump*T))
+ !
+ goto 1002
+ !
+1001 continue
  ! 
+ call open_it(101,"dG_theo")
+ call write_it(101,-cI*(-2.*cI*real(R_wbar*exp(-cI*W_bar*T))+dGinfty-cI*R_gamma*exp(-cI*W_gamma*T) ))
  call open_it(102,"G12_theo")
  call write_it(102,G(1,2))
  call open_it(103,"Polarization_theo")
  call write_it(103, -cI*(D*G(2,1)+conjg(D)*G(1,2))/DL_vol)
  !
+1002 continue
+ !
  call open_it(201,"dG_num")
- call write_it(201,G_lesser(2,2,1)-G_lesser(1,1,1))
+ call write_it(201,-cI*(G_lesser(2,2,1)-G_lesser(1,1,1)))
  call open_it(202,"Polarization_num")
  call write_it(202, -cI*(D*G_lesser(2,1,1)+conjg(D)*G_lesser(1,2,1))/DL_vol)
 ! call open_it(203,"Current_num")
 ! call write_it(203, -cI*(-1)*(P*G_lesser(2,1,1)+conjg(P)*G_lesser(1,2,1))/DL_vol)
-! call open_it(204,"G21_num")
-! call write_it(204,G_lesser(2,1,1))
  call open_it(205,"G12_num")
  call write_it(205,G_lesser(1,2,1))
-! call open_it(105,"G22_num")
-! call write_it(105,-cI*G_lesser(2,2,1))
-! call open_it(106,"G11_num")
-! call write_it(106,-cI*G_lesser(1,1,1))
-! call open_it(107,"G22+G11_num")
-! call write_it(107,-cI*(G_lesser(1,1,1)+G_lesser(2,2,1)))
  !
  contains
    !
@@ -163,17 +200,23 @@ subroutine RT_two_levels(G_lesser)
    !
    complex(SP) function DELTA_Pump_F(W)
     complex(SP) :: W
-    DELTA_Pump_F=(W+cI/QP_LifeTime)*(W+Wo_here+cI/Phase_LifeTime)*(W-Wo_here+cI/Phase_LifeTime)-(W+cI/Phase_LifeTime)*abs(Rabi_freq)**2.
+    DELTA_Pump_F=(W+cI/QP_LifeTime)*(W+Wo_here+cI/Phase_LifeTime)*(W-Wo_here+cI/Phase_LifeTime)-(W+cI/Phase_LifeTime)*abs(Rabi_freq_pump)**2.
    end function
    !
    complex(SP) function exp_by_sigma_12(Time)
     real(SP)    :: Time
-    exp_by_sigma_12=-cI*Rabi_freq/2.*(&
+    exp_by_sigma_12=-cI*Rabi_freq_pump/2.*(&
 &       So&
 &      +S_gamma*exp( -cI*W_gamma*Time)&
 &      +S_wbar*exp( -cI*W_bar*Time)&
 &      +S_minus_wbar_star*exp( cI*conjg(W_bar)*Time)&
 &       )
+   end function
+   !
+   complex(SP) function G12_LRR(Time,Rabi,W)
+    real(SP)    :: Time,W
+    complex(SP) :: Rabi
+    G12_LRR=-cI*Rabi/(Wo+cI/Phase_LifeTime-W)*exp(cI*W*Time)
    end function
    !
 end subroutine RT_two_levels

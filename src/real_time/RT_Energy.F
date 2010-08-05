@@ -88,7 +88,7 @@ subroutine RT_Energy(en,k,RT_Energies)
      ! E_xc Energy 
      !
      call IO_and_Messaging_switch("-report -log -io_in -io_out")
-     call xc_lda_driver(en,k,WF_KIND,WF_xc_functional,0,G_lesser)
+     call XC_potential_driver(en,k,WF_KIND,WF_xc_functional,0,G_lesser)
      call IO_and_Messaging_switch("+report +log +io_in +io_out")
      !
      call RT_average_operator(VALUE=Exc,O_REAL=E_xc,G=G_lesser,k=k)

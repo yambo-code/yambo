@@ -730,13 +730,6 @@ contains
    ! Default: GS_xc_KIND = -1 , GS_xc_FUNCTIONAL = -1
    !
    use xc_functionals
-#if defined _LIBXC
-   use dftxc2libxc, ONLY :N_PW_X, N_PW_C, N_PW_GX,&
-&                         N_PW_GC,PW_X,PW_C,PW_GX,PW_GC,&
-&                         PWX2LIBXC,PWC2LIBXC,PWGX2LIBXC,&
-&                         PWGC2LIBXC
-   use libxc_funcs_m, ONLY:XC_LDA_X,XC_LDA_C_PZ
-#endif  
    use com,             ONLY:warning
    implicit none
    character(256), intent(in)    :: pw_dft
@@ -754,31 +747,6 @@ contains
    !              "gl"     Gunnarson-Lunqvist             icorr=9
    !
    !
-#if defined _LIBXC
-   if (index(pw_dft,'NOGX')/=0) then
-     do ixc=1,N_PW_X
-       if (index(pw_dft,trim(PW_X(ixc)))/=0) GS_xc_FUNCTIONAL = PWX2LIBXC(ixc)
-     enddo
-   else    
-     do ixc=1,N_PW_GX
-       if (index(pw_dft,trim(PW_GX(ixc)))/=0) GS_xc_FUNCTIONAL = PWGX2LIBXC(ixc)
-     enddo
-   endif
-   !
-   if (index(pw_dft,'NOGC')/=0) then
-     do ixc=1,N_PW_C
-       if (index(pw_dft,trim(PW_X(ixc)))/=0) GS_xc_FUNCTIONAL = PWC2LIBXC(ixc)+&
-&                                            GS_xc_FUNCTIONAL*XC_FACTOR
-     enddo
-   else    
-     do ixc=1,N_PW_GC
-       if (index(pw_dft,trim(PW_GC(ixc)))/=0) GS_xc_FUNCTIONAL = PWGC2LIBXC(ixc)+&
-&                                             GS_xc_FUNCTIONAL*XC_FACTOR
-     enddo
-   endif
-   GS_xc_KIND = XC_USED_LIBXC
-   if (GS_xc_FUNCTIONAL<0) GS_xc_FUNCTIONAL = XC_LDA_X*XC_FACTOR+XC_LDA_C_PZ
-#else
    if (index(pw_dft,'PZ')/=0)  GS_xc_FUNCTIONAL = XC_LDA_C_PZ
    !if (index(pw_dft,'VWN')/=0) GS_xc_FUNCTIONAL = XC_LDA_C_VWN
    !if (index(pw_dft,'LYP')/=0) GS_xc_FUNCTIONAL = XC_LDA_C_LYP
@@ -828,7 +796,6 @@ contains
        GS_xc_KIND = XC_EXCHANGE_CORRELATION
      endif
    endif
-#endif
    !
    return
    !

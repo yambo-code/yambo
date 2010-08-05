@@ -33,7 +33,7 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
 #if defined _TWO_LEVELS
- use real_time,      ONLY:Wo,W_photon
+ use real_time,      ONLY:Wo,W_pump
 #endif
  use real_time,      ONLY:G_lesser,ID,ID,NE_steps,G_lesser_previous,RT_ind_J,&
 &                         G_lesser_reference,Thermal_steps,RT_is_dumped,XC0,      &
@@ -175,7 +175,7 @@ subroutine RT_start_and_restart(Xen,Xk,k)
    XC0=(0._SP,0._SP)
    !
    call IO_and_Messaging_switch("-report -log")
-   call xc_lda_driver(Xen,Xk,WF_KIND,WF_xc_functional,1,G_lesser)
+   call XC_potential_driver(Xen,Xk,WF_KIND,WF_xc_functional,1,G_lesser)
    call IO_and_Messaging_switch("+report +log")
    do ik=1,QP_nk
      call V_real_space_to_H(ik,V_xc,XC0(:,:,ik,:),wf) 

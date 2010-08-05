@@ -66,7 +66,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
    if(l_sc_contains_lda.and.SC_xc_functional/=0) then
      !
      call IO_and_Messaging_switch("-report -log -io_in -io_out")
-     call xc_lda_driver(Xen,k,WF_KIND,WF_xc_functional,1,G_input)
+     call XC_potential_driver(Xen,k,WF_KIND,WF_xc_functional,1,G_input)
      call IO_and_Messaging_switch("+report +log +io_in +io_out")
      V_xc_sc=V_xc
      !

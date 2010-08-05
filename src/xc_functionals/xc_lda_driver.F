@@ -107,16 +107,6 @@ subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  vx=0._DP
  dvx=0._DP
  !
- ! COM
- !
- if (KIND>0.and.FUNCTIONAL>0) then
-   call msg('rsn','[xc] Functional ',xc_string(KIND,FUNCTIONAL))
- else if (KIND<0.or.FUNCTIONAL<0) then
-   KIND=XC_EXCHANGE_CORRELATION
-   FUNCTIONAL=XC_LDA_C_PW
-   call msg('rsn','[xc] Functional unknown. Used ',xc_string(KIND,FUNCTIONAL))
- endif
- !
  ! Electronic density & Rs
  !
 #if defined _RT

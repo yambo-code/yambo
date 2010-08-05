@@ -33,14 +33,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
  use wave_func,             ONLY: wf_nc_k, wf_igk,wf_ncx,wf_ng
  use vec_operate,           ONLY: cross_product,v_is_zero
  use defs_datatypes,        ONLY: hdr_type, wffile_type
- use xc_functionals,        ONLY: GS_xc_KIND,GS_xc_FUNCTIONAL,XC_USED_LIBXC
-#if defined _LIBXC 
- use xc_functionals,        ONLY: NOXC,XC_NOT_AVAILABLE
- use dftxc2libxc,           ONLY: A2LIBXC
-#else
- use xc_functionals,        ONLY: XC_EXCHANGE_CORRELATION,XC_EXCHANGE,XC_LDA_C_PW,XC_LDA_C_PZ,&
-&                                 XC_LDA_C_WIGNER,XC_LDA_C_HL,XC_LDA_C_XALPHA,NONE,XC_LDA_X
-#endif
+ use xc_functionals,        ONLY: GS_xc_KIND,GS_xc_FUNCTIONAL
+ use mod_xc2y,                  ONLY: XC_Abinit2Yambo,XC_Libxc2Yambo
  use mod_com2y,             ONLY: print_interface_dimensions,symmetries_check_and_load,&
 &                                 alat_mult_factor,artificial_spin_pol
  implicit none
@@ -79,45 +73,11 @@ subroutine a2y_db1(en,k,KSS_file_name)
  ! XC KIND/FUNCTIONAL
  !===================
  !
-#if defined _LIBXC
- GS_xc_KIND = XC_USED_LIBXC
- if (ahdr%ixc==0) GS_xc_FUNCTIONAL = NOXC
- if (ahdr%ixc>0)  GS_xc_FUNCTIONAL = A2LibXC(ahdr%ixc)
- if (ahdr%ixc<0)  GS_xc_FUNCTIONAL = -ahdr%ixc 
- if (GS_xc_FUNCTIONAL == XC_NOT_AVAILABLE) call error ('XC used in ABINIT not available')   
-#else
- select case (ahdr%ixc)
-  case (0)
-   GS_xc_FUNCTIONAL=NONE
-   GS_xc_KIND=NONE
-  case (1,7)
-   GS_xc_FUNCTIONAL=XC_LDA_C_PW
-   GS_xc_KIND=XC_EXCHANGE_CORRELATION
-  case (2)
-   GS_xc_FUNCTIONAL=XC_LDA_C_PZ
-   GS_xc_KIND=XC_EXCHANGE_CORRELATION
-  case (3)
-   GS_xc_FUNCTIONAL=XC_LDA_C_PZ
-   GS_xc_KIND=XC_EXCHANGE_CORRELATION
-  case (4)
-   GS_xc_FUNCTIONAL=XC_LDA_C_WIGNER
-   GS_xc_KIND=XC_EXCHANGE_CORRELATION
-  case (5)
-   GS_xc_FUNCTIONAL=XC_LDA_C_HL
-   GS_xc_KIND=XC_EXCHANGE_CORRELATION
-  case (6)
-   GS_xc_FUNCTIONAL=XC_LDA_C_XALPHA
-   GS_xc_KIND=XC_EXCHANGE_CORRELATION
-  case (8)
-   GS_xc_FUNCTIONAL=XC_EXCHANGE
-   GS_xc_KIND=XC_LDA_X
-  case (9:)
-   call warning ('GGA not supported: switching to LDA PW')
-   GS_xc_FUNCTIONAL = XC_LDA_C_PW
-   GS_xc_KIND = XC_EXCHANGE_CORRELATION
- end select
-#endif 
- !
+ if (ahdr%ixc.ge. 0) then
+   call XC_Abinit2Yambo(ahdr%ixc,GS_xc_FUNCTIONAL,GS_xc_KIND)
+ else !negative ahdr%ixc means abinit used libxc
+   call XC_Libxc2Yambo(ahdr%ixc,GS_xc_FUNCTIONAL,GS_xc_KIND)
+ end if
  !
  ! GPL_INCLUDE_START SPIN_IGNORE
  !n_spinor=1

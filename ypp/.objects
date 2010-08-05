@@ -3,8 +3,8 @@ ELPH_objects = ELPH_databases.o ELPH_eliashberg_dos.o \
                ELPH_general_gFsq.o ELPH_excitonic_gkkp.o ELPH_atomic_amplitude.o
 #endif
 #if defined _YPP_RT
-RT_objects = RT_driver.o RT_databases.o RT_fix_symmetries.o RT_optics.o \
-             RT_init_optics.o RT_nonlinear.o fourier_transform.o apply_damping.o
+RT_objects = RT_driver.o RT_databases.o RT_fix_symmetries.o RT_X_one.o \
+             RT_init_X_one.o RT_X_two.o Fourier_Transform.o Damp_it.o
 #endif
 #if defined _YPP_RAS
 RAS_objects = ras_ypp.o ras_generate_epsdb.o reels_ypp.o ras_loc_ypp.o ras_trans_ypp.o

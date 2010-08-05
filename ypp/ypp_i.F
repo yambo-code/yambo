@@ -160,7 +160,7 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
 #if defined _YPP_RT
  !
- if (any((/l_fix_syms,l_RT_optics,l_RT_nonlinear/))) call RT_driver(en,k)
+ if (any((/l_fix_syms,l_RT_X_one,l_RT_X_two/))) call RT_driver(en,k)
  !         ==================
  !  
 #endif

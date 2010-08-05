@@ -20,9 +20,9 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 #if defined _RT
-subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER,G_lesser)
+subroutine XC_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER,G_lesser)
 #else
-subroutine xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
+subroutine XC_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
 #endif
  !
  ! These sources have been slightly adpated from Abinit 4.6.5.

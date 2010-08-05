@@ -97,25 +97,25 @@ module xc_functionals
  !
  integer, public, parameter :: N_Available_LDA = 19
  character(*), parameter, dimension( N_Available_LDA) :: XC_LDA_DESCRIPTION =&
-& (/"Exchange only ",&                 
-    "Wigner parametrization ",&    
-    "Random Phase Approximation ",&
-    "Hedin & Lundqvist ",&         
-    "Gunnarson & Lundqvist ",&    
-    "Slaters Xalpha ",&          
-    "Vosko, Wilk, & Nussair ",&   
-    "Perdew & Zunger ",&         
-    "Ortiz & Ballone(PZ) ",&      
-    "Perdew & Wang ",&           
-    "Ortiz & Ballone(PW) ",&     
-    "Lee, Yang, & Parr LDA ",&     
-    "Attacalite et al ",&
-    "Kurth & Perdew ",&
-    "Teter Parametrization(93) ",&
+& (/"Exchange only               ",&                 
+    "Wigner parametrization      ",&    
+    "Random Phase Approximation  ",&
+    "Hedin & Lundqvist           ",&         
+    "Gunnarson & Lundqvist       ",&    
+    "Slaters Xalpha              ",&          
+    "Vosko, Wilk, & Nussair      ",&   
+    "Perdew & Zunger             ",&         
+    "Ortiz & Ballone(PZ)         ",&      
+    "Perdew & Wang               ",&           
+    "Ortiz & Ballone(PW)         ",&     
+    "Lee, Yang, & Parr LDA       ",&     
+    "Attacalite et al            ",&
+    "Kurth & Perdew              ",&
+    "Teter Parametrization(93)   ",&
     "Vosko, Wilk, & Nussair(RPA) ",& 
-    "Perdew & Zunger (Modified) ",&
-    "Perdew & Wang (Modified) ",&
-    "von Barth & Hedin "/)
+    "Perdew & Zunger (Modified)  ",&
+    "Perdew & Wang (Modified)    ",&
+    "von Barth & Hedin           "/)
  !
  contains
    !

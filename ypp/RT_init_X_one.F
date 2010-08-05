@@ -19,11 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-! Partialy inspired from Octopus v. 3.1.0
-!
-! Copyright (C) 2002 M. Marques, A. Castro, A. Rubio, G. Bertsch
-!
-subroutine RT_init_optics()
+subroutine RT_init_X_one()
  !
  use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,RT_J_t,i_t_start,i_t_end,A_vecpot_vel_t
  use com,            ONLY:warning
@@ -39,7 +35,7 @@ subroutine RT_init_optics()
  real(SP) :: W_RT_induced_step
  !
  call section("=",'Current and Polarization')
- !=========================          
+ !============================================
  !
  !  Reduced Time range
  !====================
@@ -67,9 +63,9 @@ subroutine RT_init_optics()
  ! apply the damping
  !===================
  !
- call apply_damping(X_rt%damp,X_rt%damp_factor,RT_J_t,NE_steps,RT_step,3)
- call apply_damping(X_rt%damp,X_rt%damp_factor,RT_P_t,NE_steps,RT_step,3)
- call apply_damping(X_rt%damp,X_rt%damp_factor,A_vecpot_vel_t,NE_steps,RT_step,3)
+ call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_J_t,NE_steps,RT_step,3)
+ call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_P_t,NE_steps,RT_step,3)
+ call RT_damp_it(X_rt%damp,X_rt%damp_factor,A_vecpot_vel_t,NE_steps,RT_step,3)
  !
  ! Print the dumped current and polarization 
  !-------------------------------------------

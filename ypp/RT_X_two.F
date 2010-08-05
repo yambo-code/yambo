@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_nonlinear(en,k)
+subroutine RT_X_two(en,k)
  !
  use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,RT_J_t,A_vecpot_vel_t
  use pars,           ONLY:SP,DP,pi,cI
@@ -59,8 +59,8 @@ subroutine RT_nonlinear(en,k)
    freqs(i_w)=cmplx(Efield(1)%frequency*i_w,0._SP)
  enddo
  !
- call fourier_transform(freqs,A_vecpot_vel_w,1,A_vecpot_vel_t,NE_steps,RT_step,3)
- call fourier_transform(freqs,X_irrep,nfreqs,RT_P_t,NE_steps,RT_step,3)
+ call Fourier_Transform(freqs,A_vecpot_vel_w,1,A_vecpot_vel_t,NE_steps,RT_step,3)
+ call Fourier_Transform(freqs,X_irrep,nfreqs,RT_P_t,NE_steps,RT_step,3)
  !
  ! Due to the definition of FFT 
  !

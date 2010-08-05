@@ -21,8 +21,8 @@
 !
 subroutine RT_driver(en,k)
  !
- use YPP,            ONLY:l_fix_syms,l_RT_optics,Use_FFT,l_no_remove_DC,&
-&                         RT_P_t,RT_J_t,current_ext_t,A_vecpot_vel_t,l_RT_nonlinear
+ use YPP,            ONLY:l_fix_syms,l_RT_X_one,Use_FFT,l_no_remove_DC,&
+&                         RT_P_t,RT_J_t,current_ext_t,A_vecpot_vel_t,l_RT_X_two
  use R_lattice,      ONLY:bz_samp
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels
@@ -52,15 +52,15 @@ subroutine RT_driver(en,k)
  !
  !  Initialization for linear and non-linear optics
  !
- if (l_RT_optics.or.l_RT_nonlinear) then
+ if (l_RT_X_one.or.l_RT_X_two) then
    !
    call parser('NoRmDC',l_no_remove_DC)
    !
-   call RT_init_optics()
+   call RT_init_X_one()
    !
  endif
  !
- if (l_RT_optics) then
+ if (l_RT_X_one) then
    !
    ! CORE Logicals
    !---------------
@@ -70,11 +70,11 @@ subroutine RT_driver(en,k)
    ! OPTICS
    !--------
    !
-   call RT_optics(en,k)
+   call RT_X_one(en,k)
    !
- elseif(l_RT_nonlinear) then
+ elseif(l_RT_X_two) then
    !
-   call RT_nonlinear(en,k)
+   call RT_X_two(en,k)
    !
  endif
  !

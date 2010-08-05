@@ -74,9 +74,9 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  call XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
 #else
  #if defined _RT
- call xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER,G_lesser)
+ call XC_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER,G_lesser)
 #else
- call xc_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
+ call XC_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
 #endif
 #endif
  !

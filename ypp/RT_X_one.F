@@ -23,7 +23,7 @@
 !
 ! Copyright (C) 2002 M. Marques, A. Castro, A. Rubio, G. Bertsch
 !
-subroutine RT_optics(en,k)
+subroutine RT_X_one(en,k)
  !
  use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,RT_J_t,A_vecpot_vel_t
  use pars,           ONLY:SP,DP,pi,cI
@@ -123,8 +123,8 @@ subroutine RT_optics(en,k)
    !
  else
    ! 
-   call fourier_transform(freqs,X_irrep,X_rt%energy_steps,RT_P_t,NE_steps,RT_step,3)
-   call fourier_transform(freqs,A_vecpot_vel_w,X_rt%energy_steps,A_vecpot_vel_t,NE_steps,RT_step,3)
+   call Fourier_Transform(freqs,X_irrep,X_rt%energy_steps,RT_P_t,NE_steps,RT_step,3)
+   call Fourier_Transform(freqs,A_vecpot_vel_w,X_rt%energy_steps,A_vecpot_vel_t,NE_steps,RT_step,3)
    !
  endif
  !

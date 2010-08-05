@@ -20,39 +20,33 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !
-subroutine fourier_transform(freqs,fw,nw,ft,nt,dt,lda)
+subroutine RT_damp_it(damp_type,damp_factor,ft,nt,dt,lda)
  !
- use pars,           ONLY:SP,DP,cI
- use timing,         ONLY:live_timing
+ use pars,           ONLY:SP,DP
+ use com,            ONLY:warning
  implicit none
  !
- integer,     intent(in)   :: nw,nt,lda
- real(SP),    intent(in)   :: dt
- complex(SP), intent(in)   :: freqs(nw)
- complex(DP), intent(out)  :: fw(nw,lda)
- complex(DP), intent(in)   :: ft(nt,lda)
- !
+ integer,      intent(in)      :: nt,lda
+ real(SP),     intent(in)      :: dt,damp_factor
+ complex(DP),  intent(inout)   :: ft(nt,lda)
+ character(*), intent(in)      :: damp_type
+ !                          
  ! Work Space 
  !
- integer  :: i_w,i_t
- real(SP) :: Time_reached
+ integer  :: i_t
+ real(SP) :: damp_function(nt)
  !
- call live_timing('FFT:',nw)
+ select case ( trim(damp_type) )
+   case("LORENTZIAN")  
+     forall(i_t=1:nt) damp_function(i_t) = exp(-abs((i_t-1)*dt)*damp_factor)
+   case("GAUSSIAN") 
+     forall(i_t=1:nt) damp_function(i_t) = exp(-((i_t-1)*dt)**2*damp_factor**2)
+   case default
+     call warning(" Unknown damping! ")
+     return
+ end select
  !
- fw=(0._DP,0._DP)
+ forall(i_t=1:nt)  ft(i_t,:)=ft(i_t,:)*damp_function(i_t)
  !
- do i_w = 1, nw
-   !
-   do i_t = 1, nt
-     Time_reached = i_t*dt       
-     fw(i_w,:) = fw(i_w,:)+ft(i_t,:)*exp(cI*freqs(i_w)*Time_reached)
-   enddo
-   !
-   call live_timing(steps=1)
-   !
- enddo
- !
- call live_timing()
- !
-end subroutine fourier_transform
+end subroutine RT_damp_it
 

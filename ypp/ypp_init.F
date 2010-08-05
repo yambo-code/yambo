@@ -303,10 +303,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_RT
      if ( trim(rstr_piece(i1)) == 'rtpp') then
-       l_RT_optics        =trim(rstr_piece(i1+1))=='o'
-       l_RT_nonlinear     =trim(rstr_piece(i1+1))=='n'
-       if (l_RT_optics)    call initactivate(1,'RToptics')
-       if (l_RT_nonlinear) call initactivate(1,'RTnlo')
+       l_RT_X_one      =trim(rstr_piece(i1+1))=='o'
+       l_RT_X_two      =trim(rstr_piece(i1+1))=='t'
+       if (l_RT_X_one) call initactivate(1,'RToptics')
+       if (l_RT_X_two) call initactivate(1,'RTnlo')
     endif
 #endif
      if ( trim(rstr_piece(i1)) == 'excitons') then
@@ -435,17 +435,17 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #if defined _YPP_RT
  l_fix_syms   =runlevel_is_on('fixsyms')
  !             
- l_RT_optics  =runlevel_is_on('RToptics')
+ l_RT_X_one  =runlevel_is_on('RToptics')
  !
- l_RT_nonlinear =runlevel_is_on('RTnlo')
+ l_RT_X_two =runlevel_is_on('RTnlo')
  !
  if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev")
  !
- if (l_RT_optics.or.l_RT_nonlinear) then 
-    if (l_RT_optics) call initactivate(1,"EnRngeRt ETStpsRt")
+ if (l_RT_X_one.or.l_RT_X_two) then 
+    if (l_RT_X_one) call initactivate(1,"EnRngeRt ETStpsRt")
     call initactivate(1,"TmRngeRt DampMode DampFactor FourierDamp")
     call initactivate(1,"NoRmDC")
-    if (l_RT_optics) call initactivate(1,"UseFFT")
+    if (l_RT_X_one) call initactivate(1,"UseFFT")
  endif
  !
  ! 

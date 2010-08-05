@@ -1,4 +1,4 @@
-LIBXC_objects = xc_lda_driver.o 
+LIBXC_objects = XC_lda_driver.o 
 #if defined _BOLTZMANN 
 BOLTZMANN_objects = el_current.o
 #endif

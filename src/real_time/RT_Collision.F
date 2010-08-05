@@ -54,7 +54,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
  !
  ! Work Space
  !
- integer          :: ik,iv
+ integer          :: i1,i2,ik,iv
  type(pp_indexes) :: px
  !
  if(.not.Hfrozen.or..not.XCfrozen.or.i_time<0) call el_density(G_input,k,rho_n,.false.)
@@ -156,7 +156,21 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
        I1_lesser(2,1,1)=I1_lesser(2,1,1)-cI/Phase_LifeTime*G_input(2,1,1)
      endif
 #else
-     call V_by_V_plus_V(SC_bands,cI/QP_LifeTime,G_input(:,:,ik)-G_lesser_reference(:,:,ik),I1_lesser(:,:,ik))
+     !
+     if(QP_LifeTime > 1.E-5_SP) then
+       forall(i1=1:SC_bands) &
+         I1_lesser(i1,i1,ik)=I1_lesser(i1,i1,ik)-cI/QP_LifeTime*(G_input(i1,i1,ik)-G_lesser_reference(i1,i1,ik))
+     endif
+     !
+     if(Phase_LifeTime > 1.E-5_SP) then
+       do i1=1,SC_bands
+         do i2=i1+1,SC_bands
+           I1_lesser(i1,i2,ik)=I1_lesser(i1,i2,ik)-cI/Phase_LifeTime*(G_input(i1,i2,ik)-G_lesser_reference(i1,i2,ik))
+           I1_lesser(i2,i1,ik)=I1_lesser(i2,i1,ik)-cI/Phase_LifeTime*(G_input(i2,i1,ik)-G_lesser_reference(i2,i1,ik))
+         enddo 
+       enddo
+     endif
+     !
 #endif
    endif
    !

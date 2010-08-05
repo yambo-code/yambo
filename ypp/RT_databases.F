@@ -23,7 +23,7 @@ subroutine RT_databases(en)
  !
  use YPP,            ONLY:RT_J_t,current_ext_t,A_vecpot_vel_t,RT_P_t
  use units,          ONLY:SPEED_OF_LIGHT
- use pars,           ONLY:SP,pi
+ use pars,           ONLY:DP,SP,pi
  use electrons,      ONLY:levels
  use com,            ONLY:warning
  use memory_m,       ONLY:mem_est
@@ -71,13 +71,13 @@ subroutine RT_databases(en)
  call mem_est("RT_P_t",(/size(RT_J_t)/),(/2*SP/))
  call mem_est("RT_J_t",(/size(RT_J_t)/),(/2*SP/))
  call mem_est("Current_ext_t",(/size(current_ext_t)/),(/2*SP/))
- call mem_est("A_vecpot_vel_t",(/size(A_vecpot_vel_t)/),(/2*SP/))
+ call mem_est("A_vecpot_vel_t",(/size(A_vecpot_vel_t)/),(/2*DP/))
  call mem_est("Current_Cache",(/size(current_cache)/),(/SP/))
  !
- RT_J_t        =(0._SP,0._SP)
- RT_P_t        =(0._SP,0._SP)
+ RT_J_t        =(0._DP,0._DP)
+ RT_P_t        =(0._DP,0._DP)
  current_ext_t =(0._SP,0._SP)
- A_vecpot_vel_t=(0._SP,0._SP)
+ A_vecpot_vel_t=(0._DP,0._DP)
  !
  call live_timing('I/O:',NE_steps)
  do i_time=1,NE_steps

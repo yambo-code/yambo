@@ -36,7 +36,7 @@ subroutine RT_output(what,VALUEs,TIME_or_E)
  !
  ! Work space
  !
- integer, parameter       :: n_output_files=6
+ integer, parameter       :: n_output_files=7
  character(lchlen), save  :: file_name(n_output_files)
  character(schlen)        :: orders(n_output_files),short_file_name(n_output_files)
  integer                  :: i_f,i_fp,n_headings(n_output_files)
@@ -101,6 +101,11 @@ subroutine RT_output(what,VALUEs,TIME_or_E)
  short_file_name(6)=trim(append_ch)//'eels'
  n_headings(6)=3
  headings(6,2:3)=(/'eel/Im','eel/Re'/)
+ !
+ if (initialize) file_name(7)=trim(append_ch)//'nonlinear'
+ short_file_name(7)=trim(append_ch)//'nonlinear'
+ n_headings(7)=3
+ headings(7,2:3)=(/'X/Im','X/Re'/)
  !
  ! Check which files to write
  !----------------------------

@@ -28,9 +28,9 @@ integer function io_DIPOLES(X,Xen,ID)
  use electrons,     ONLY:levels,n_sp_pol
  use R_lattice,     ONLY:nXkibz,q0_def_norm
  use matrix_operate,ONLY:mat_c2r,mat_r2c
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
+ use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_control,&
 &                        io_elemental,io_status,io_bulk,IO_OUTDATED_DB,&
-&                        read_is_on,write_is_on,io_header
+&                        read_is_on,write_is_on,io_header,io_mode,io_com,io_action
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
  !
  implicit none
@@ -40,7 +40,7 @@ integer function io_DIPOLES(X,Xen,ID)
  !
  ! Work Space
  !
- integer :: i1,ixyz,sec_size,i_spin
+ integer :: i1,ixyz,sec_size,i_spin,IDP
  integer :: db_nbm,db_nbf,db_nb(2)
  character(schlen)    :: VAR_name
  logical              :: local_long_gauge  
@@ -127,10 +127,13 @@ integer function io_DIPOLES(X,Xen,ID)
  !
 #if defined _RT
  !
- call io_disconnect(ID=ID)
+ call io_control(ACTION=io_action(ID),COM=io_com(ID),SEC=io_sec(ID,:),MODE=io_mode(ID),ID=IDP) 
+ io_DIPOLES=io_connect(desc='P_square',type=2,ID=IDP)
  !
- io_DIPOLES=io_connect(desc='P_square',type=2,ID=ID)
- if (io_DIPOLES/=0) goto 1
+ if (io_DIPOLES/=0) then
+   call io_disconnect(ID=IDP)
+   goto 1
+ endif
  !
  sec_size=db_nb(2)*db_nbm
  if (any((/io_sec(ID,:)==2/))) then
@@ -146,8 +149,8 @@ integer function io_DIPOLES(X,Xen,ID)
        if (write_is_on(ID)) call mat_c2r(DIP_iR(4,:,:,i1,i_spin),DIP_iR_disk)
        !
        write (VAR_name,'(2(a,i4.4))') 'P_square_k_',i1,'_spin_',i_spin
-       call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(DIP_iR_disk))
-       call io_bulk(ID,R3=DIP_iR_disk)
+       call io_bulk(IDP,VAR=trim(VAR_name),VAR_SZ=shape(DIP_iR_disk))
+       call io_bulk(IDP,R3=DIP_iR_disk)
        !
        if (read_is_on(ID)) call mat_r2c(DIP_iR_disk,DIP_iR(4,:,:,i1,i_spin))
        !

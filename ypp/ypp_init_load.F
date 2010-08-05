@@ -88,6 +88,7 @@ subroutine ypp_init_load(defs)
 #if defined _YPP_RT
  call it('r',defs,'fixsyms', '[R] Reduce Symmetries')
  call it('r',defs,'RToptics','[R] Real-Time Optics')
+ call it('r',defs,'RTnlo'   ,'[R] Real-Time Non-Linear Optics')
  call it('r',defs,'rtpp',    '[R] Real-Time Post-Processing')
 #endif
  call it('r',defs,'surf',    '[R] Surface spectroscopy postprocessor')

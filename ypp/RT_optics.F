@@ -25,9 +25,9 @@
 !
 subroutine RT_optics(en,k)
  !
- use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,RT_J_t
+ use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,RT_J_t,A_vecpot_vel_t
  use pars,           ONLY:SP,DP,pi,cI
- use units,          ONLY:FS2AUT,HARTREE
+ use units,          ONLY:FS2AUT,HARTREE,SPEED_OF_LIGHT 
  use electrons,      ONLY:levels
  use com,            ONLY:warning
  use stderr,         ONLY:real2ch
@@ -45,8 +45,8 @@ subroutine RT_optics(en,k)
  !
  integer  :: i_t,i_w,i_c,i_t_start,i_t_end
  real(SP) :: W_RT_induced_step,W_step,Time_reached,W_reached
- real(SP),    allocatable :: damp_function(:)
- complex(SP), allocatable :: current_ext_w(:,:), A_vecpot_vel_w(:,:),EELS(:),EPS(:),E_induced_t(:,:),X_irrep(:,:)
+ complex(SP), allocatable :: EELS(:),EPS(:),freqs(:)
+ complex(DP), allocatable :: X_irrep(:,:),A_vecpot_vel_w(:,:)
  !
  ! FFT
  !
@@ -55,66 +55,6 @@ subroutine RT_optics(en,k)
  !
  call section("=",'Optics')
  !=========================
- !
- ! Allocations
- !
- allocate(current_ext_w(NE_steps,3))
- call mem_est("Current_ext_w",(/size(current_ext_w)/),(/2*SP/))
- allocate(A_vecpot_vel_w(NE_steps,3))
- call mem_est("A_vecpot_vel_w",(/size(A_vecpot_vel_w)/),(/2*SP/))
- allocate(damp_function(NE_steps))
- call mem_est("Damp_Function",(/NE_steps/),(/SP/))
- allocate(E_induced_t(NE_steps,3))
- call mem_est("E_induced_t",(/size(E_induced_t)/),(/2*SP/))
- current_ext_w =(0._SP,0._SP)
- A_vecpot_vel_w=(0._SP,0._SP)
- !
- ! Reduced Time range
- !====================
- !
- i_t_start=int(X_rt%time_range(1)/RT_step)
- i_t_end  =int(X_rt%time_range(2)/RT_step)
- !
- if(i_t_start<=0.or.i_t_start>NE_steps) i_t_start=1
- if(i_t_end<=0.or.i_t_end>NE_steps)     i_t_end  =NE_steps
- !
- W_RT_induced_step=2.*pi/(real(NE_steps,SP)*RT_step)  ! Frequency step in real-time dynamics
- ! 
- ! DAMPING
- !=========
- !
- ! If there is a time-windows the damping function
- ! has be applied also the initial part otherwise 
- ! there will problems doing FFT for the non-zero starting point 
- !
- if(X_rt%damp_factor<W_RT_induced_step) then
-   X_rt%damp_factor=W_RT_induced_step
-   call warning('Damping factor redefined to be '//trim(real2ch(W_RT_induced_step*HARTREE))//' eV')
- endif
- !
- damp_function(:) = 1.0
- select case ( trim(X_rt%damp) )
-   case("LORENTZIAN")  
-     forall(i_t=1:NE_steps) damp_function(i_t) = exp(-abs((i_t-1)*RT_step)*X_rt%damp_factor)
-   case("GAUSSIAN") 
-     forall(i_t=1:NE_steps) damp_function(i_t) =  exp(-((i_t-1)*RT_step)**2*X_rt%damp_factor**2)
- end select
- ! 
- ! apply the damping
- !===================
- !
- forall(i_t=1:NE_steps) RT_J_t(i_t,:)=RT_J_t(i_t,:)*damp_function(i_t)
- forall(i_t=1:NE_steps) RT_P_t(i_t,:)=RT_P_t(i_t,:)*damp_function(i_t)
- !
- ! Print the dumped current and polarization 
- !-------------------------------------------
- call RT_output("open cur pol")
- do i_t=1,NE_steps
-   RT_ind_J=RT_J_t(i_t,:)
-   RT_P    =RT_P_t(i_t,:)
-   call RT_output('cur pol',TIME_or_E=(i_t-1)*RT_step/FS2AUT)
- enddo
- call RT_output("close cur pol")
  !
  ! 1D FFT setup
  !--------------
@@ -129,23 +69,34 @@ subroutine RT_optics(en,k)
    X_rt%energy_range(2)=W_RT_induced_step*NE_steps/2.
    !
    allocate(EELS(NE_steps),EPS(NE_steps),X_irrep(NE_steps,3))  
+   allocate(A_vecpot_vel_w(NE_steps,3))
    !
  else
    !
-   allocate(EELS(X_rt%energy_steps),EPS(X_rt%energy_steps),X_irrep(NE_steps,3))  
+   allocate(EELS(X_rt%energy_steps),EPS(X_rt%energy_steps),X_irrep(NE_steps,3)) 
+   allocate(A_vecpot_vel_w(X_rt%energy_steps,3))
    !
  endif
  !
- call mem_est("EELS EPS X_irrep",(/size(EELS),size(EPS),size(X_irrep)/),(/2*SP,2*SP,2*SP/))
+ call mem_est("EELS EPS X_irrep",(/size(EELS),size(EPS),size(X_irrep)/),(/2*SP,2*SP,2*DP/))
+ call mem_est("A_vecpot_vel_w",(/size(A_vecpot_vel_w)/),(/2*DP/))
  !
  EELS   =(0._DP,0._DP)
  EPS    =(0._DP,0._DP)
  X_irrep=(0._DP,0._DP)
+ A_vecpot_vel_w=(0._DP,0._DP)
  !
  ! FFT 
  !=====
  !
  W_step=(X_rt%energy_range(2) - X_rt%energy_range(1))/X_rt%energy_steps
+ !
+ allocate(freqs(X_rt%energy_steps))
+ freqs=(0._SP,0._SP)
+ !
+ do i_w = 1, X_rt%energy_steps
+   freqs(i_w)=cmplx((i_w-1)*W_step+X_rt%energy_range(1),0._SP)
+ enddo
  !
  if(Use_FFT) then
    !
@@ -154,41 +105,44 @@ subroutine RT_optics(en,k)
    !
    do i_c=1,3
      !
-     X_irrep(:,i_c)  = RT_P_t(:,i_c)
+     X_irrep(:,i_c)        = RT_P_t(:,i_c)
+     A_vecpot_vel_w(:,i_c) = A_vecpot_vel_t(:,i_c)
      !
 #if defined _FFTW
     call fft_1d(X_irrep(:,i_c),NE_steps,fft_sign,fftw_plan)
+    call fft_1d(A_vecpot_vel_w(:,i_c),NE_steps,fft_sign,fftw_plan)
 #else
     call fft_1d(X_irrep(:,i_c),NE_steps,fft_sign)
+    call fft_1d(A_vecpot_vel_w(:,i_c),NE_steps,fft_sign)
 #endif
      !
    enddo
    !
    X_irrep(:,:)=conjg(X_irrep(:,:))
+   A_vecpot_vel_w(:,:)=conjg(A_vecpot_vel_w(:,:))
    !
  else
    ! 
-   call live_timing('FFT:', X_rt%energy_steps)
-   !
-   do i_w = 1, X_rt%energy_steps
-     W_reached = (i_w-1)*W_step+X_rt%energy_range(1)
-     !
-     do i_t = 1, NE_steps
-       Time_reached = i_t*RT_step
-       X_irrep(i_w,1:3) = X_irrep(i_w,1:3)+RT_P_t(i_t,1:3)*exp(cI*W_reached*Time_reached)
-     enddo
-     !
-     call live_timing(steps=1)
-     !
-   enddo
-   !
-   call live_timing()
+   call fourier_transform(freqs,X_irrep,X_rt%energy_steps,RT_P_t,NE_steps,RT_step,3)
+   call fourier_transform(freqs,A_vecpot_vel_w,X_rt%energy_steps,A_vecpot_vel_t,NE_steps,RT_step,3)
    !
  endif
  !
  ! Due to the definition of FFT 
  !
- X_irrep(:,:)=X_irrep(:,:)*RT_step/Efield(1)%amplitude
+ X_irrep(:,:)       =X_irrep(:,:)*RT_step
+ A_vecpot_vel_w(:,:)=A_vecpot_vel_w(:,:)*RT_step
+ !
+ select case ( trim(Efield(1)%ef_name))
+   !
+   case('DELTA')
+       X_irrep(:,:)=X_irrep(:,:)/Efield(1)%amplitude
+   case default
+     do i_w=1,X_rt%energy_steps
+       X_irrep(i_w,:)=-X_irrep(i_w,:)/(sum(A_vecpot_vel_w(i_w,:)*Efield(1)%versor(:))/SPEED_OF_LIGHT)
+     enddo
+   !  
+ end select
  !
  ! P(w)=\tilde(X(w))*E_tot(w)=X(w)*E_ext(w) 
  !
@@ -198,18 +152,17 @@ subroutine RT_optics(en,k)
  call RT_output("open eps eels")
  do i_w = 1, X_rt%energy_steps
    !
-   EPS(i_w) =1._DP-4._SP*pi* (X_irrep(i_w,1)*Efield(1)%versor(1)+ &
-                              X_irrep(i_w,2)*Efield(1)%versor(2)+X_irrep(i_w,3)*Efield(1)%versor(3))
+   EPS(i_w) =1._DP-4._SP*pi*sum(X_irrep(i_w,:)*Efield(1)%versor(:))
    EELS(i_w)=1._DP/EPS(i_w)
    !
-   W_reached = (i_w-1)*W_step+X_rt%energy_range(1)
+   W_reached = real(freqs(i_w))
    call RT_output('eps',(/ aimag(EPS(i_w)),real(EPS(i_w))/),TIME_or_E=W_reached*HARTREE)
    call RT_output('eel',(/-aimag(EELS(i_w)),real(EELS(i_w))/),TIME_or_E=W_reached*HARTREE)
    !
  enddo
  call RT_output("close eps eel")
  !
- deallocate(EELS,EPS,damp_function,A_vecpot_vel_w,current_ext_w,X_irrep)
- call mem_est("Current_ext_w A_vecpot_vel_w EELS EPS Damp_Function X_irrep")
+ deallocate(EELS,EPS,X_irrep,A_vecpot_vel_w)
+ call mem_est("EELS EPS X_irrep A_vecpot_vel_w")
  !
 end subroutine

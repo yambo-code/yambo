@@ -304,7 +304,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #if defined _YPP_RT
      if ( trim(rstr_piece(i1)) == 'rtpp') then
        l_RT_optics        =trim(rstr_piece(i1+1))=='o'
-       if (l_RT_optics)   call initactivate(1,'RToptics')
+       l_RT_nonlinear     =trim(rstr_piece(i1+1))=='n'
+       if (l_RT_optics)    call initactivate(1,'RToptics')
+       if (l_RT_nonlinear) call initactivate(1,'RTnlo')
     endif
 #endif
      if ( trim(rstr_piece(i1)) == 'excitons') then
@@ -435,12 +437,17 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !             
  l_RT_optics  =runlevel_is_on('RToptics')
  !
+ l_RT_nonlinear =runlevel_is_on('RTnlo')
+ !
  if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev")
  !
- if (l_RT_optics) then 
-    call initactivate(1,"EnRngeRt ETStpsRt TmRngeRt DampMode DampFactor FourierDamp")
-    call initactivate(1,"NoRmDC UseFFT")
+ if (l_RT_optics.or.l_RT_nonlinear) then 
+    if (l_RT_optics) call initactivate(1,"EnRngeRt ETStpsRt")
+    call initactivate(1,"TmRngeRt DampMode DampFactor FourierDamp")
+    call initactivate(1,"NoRmDC")
+    if (l_RT_optics) call initactivate(1,"UseFFT")
  endif
+ !
  ! 
 #endif
  if (l_bzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut OutputAlat GammaRadius")

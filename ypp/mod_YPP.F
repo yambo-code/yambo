@@ -142,6 +142,7 @@ module YPP
  !
  logical     :: l_fix_syms
  logical     :: l_RT_optics
+ logical     :: l_RT_nonlinear
  real(SP)    :: E_field(2,3)
  real(SP)    :: B_field,B_theta,B_psi
  integer     :: ref_efield
@@ -151,6 +152,7 @@ module YPP
  logical  :: l_no_remove_DC
  logical  :: Use_FFT
  logical  :: Prt_Current
+ integer  ::  i_t_start,i_t_end
  !
  complex(DP),    allocatable :: RT_J_t(:,:)
  complex(DP),    allocatable :: RT_P_t(:,:)

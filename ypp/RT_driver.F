@@ -22,7 +22,7 @@
 subroutine RT_driver(en,k)
  !
  use YPP,            ONLY:l_fix_syms,l_RT_optics,Use_FFT,l_no_remove_DC,&
-&                         RT_P_t,RT_J_t,current_ext_t,A_vecpot_vel_t
+&                         RT_P_t,RT_J_t,current_ext_t,A_vecpot_vel_t,l_RT_nonlinear
  use R_lattice,      ONLY:bz_samp
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels
@@ -50,18 +50,31 @@ subroutine RT_driver(en,k)
  !
  if (.not.allocated(RT_P_t)) return
  !
+ !  Initialization for linear and non-linear optics
+ !
+ if (l_RT_optics.or.l_RT_nonlinear) then
+   !
+   call parser('NoRmDC',l_no_remove_DC)
+   !
+   call RT_init_optics()
+   !
+ endif
+ !
  if (l_RT_optics) then
    !
    ! CORE Logicals
    !---------------
    ! 
    call parser('UseFFT',Use_FFT)
-   call parser('NoRmDC',l_no_remove_DC)
    !
    ! OPTICS
    !--------
    !
    call RT_optics(en,k)
+   !
+ elseif(l_RT_nonlinear) then
+   !
+   call RT_nonlinear(en,k)
    !
  endif
  !

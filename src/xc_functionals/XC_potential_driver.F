@@ -73,7 +73,7 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  call msg('rsn','[xc] LIBXC used to calculate xc functional ')
  call XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
 #else
- #if defined _RT
+#if defined _RT
  call XC_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER,G_lesser)
 #else
  call XC_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)

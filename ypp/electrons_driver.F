@@ -176,8 +176,12 @@ subroutine electrons_driver(Xk,Xen)
    if (use_xcrysden) output_fname=trim(ch_ws)//'d.xsf'
    if (use_gnuplot)  output_fname=trim(ch_ws)//'d'
    !
-   call of_open_close(trim(output_fname),'ot')
-   call msg('o den',"#")
+   if (use_cube) then 
+     call of_open_close(trim(output_fname),'o')
+   else
+     call of_open_close(trim(output_fname),'ot')
+     call msg('o den',"#")
+   endif
    !
    plot_title='density'
    call plot_check_and_launch(.false.)
@@ -244,8 +248,12 @@ subroutine electrons_driver(Xk,Xen)
        if (use_xcrysden) output_fname=trim(ch_ws)//'d.xsf'
        if (use_gnuplot)  output_fname=trim(ch_ws)//'d'
        !
-       call of_open_close(trim(output_fname),'ot')
-       call msg('o wf',"#")
+       if (use_cube) then 
+         call of_open_close(trim(output_fname),'o')
+       else
+         call of_open_close(trim(output_fname),'ot')
+         call msg('o wf',"#")
+       endif
        !
        call plot_check_and_launch(.false.)
        !
@@ -315,8 +323,12 @@ subroutine electrons_driver(Xk,Xen)
        if (use_xcrysden) output_fname=trim(ch_ws)//'d.xsf'
        if (use_gnuplot)  output_fname=trim(ch_ws)//'d'
        !
-       call of_open_close(trim(output_fname),'ot')
-       call msg('o wf',"#")
+       if (use_cube) then 
+         call of_open_close(trim(output_fname),'o')
+       else
+         call of_open_close(trim(output_fname),'ot')
+         call msg('o wf',"#")
+       endif
        !
        call plot_check_and_launch(.false.)
        !
@@ -355,8 +367,12 @@ subroutine electrons_driver(Xk,Xen)
    !
    l_norm_to_one=.false.
    !
-   call of_open_close(trim(output_fname),'ot')
-   call msg('o mag',"#")
+   if (use_cube) then 
+     call of_open_close(trim(output_fname),'o')
+   else
+     call of_open_close(trim(output_fname),'ot')
+     call msg('o mag',"#")
+   endif
    !
    plot_title='magnetization'
    !
@@ -385,8 +401,12 @@ subroutine electrons_driver(Xk,Xen)
        if (use_xcrysden) output_fname=trim(ch_ws)//'d.xsf'
        if (use_gnuplot)  output_fname=trim(ch_ws)//'d'
        !
-       call of_open_close(trim(output_fname),'ot')
-       call msg('o density_UP density_DN',"#")
+       if (use_cube) then 
+         call of_open_close(trim(output_fname),'o')
+       else
+         call of_open_close(trim(output_fname),'ot')
+         ctall msg('o density_UP density_DN',"#")
+       endif
        !
        if (i_spin==1) plot_title='den DN'
        if (i_spin==2) plot_title='den UP'

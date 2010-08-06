@@ -1,3 +1,0 @@
-objs =  mod_xc_costants.o  xc_rpa_kp.o \
-        xcspol.o xcpzca.o xcwign.o xchelu.o xcxalp.o \
-        el_density.o xc_lda_driver.o 

@@ -34,7 +34,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  use vec_operate,           ONLY: cross_product,v_is_zero
  use defs_datatypes,        ONLY: hdr_type, wffile_type
  use xc_functionals,        ONLY: GS_xc_KIND,GS_xc_FUNCTIONAL
- use mod_xc2y,                  ONLY: XC_Abinit2Yambo,XC_Libxc2Yambo
+ use mod_xc2y,              ONLY: XC_Abinit2Yambo,XC_Libxc2Yambo
  use mod_com2y,             ONLY: print_interface_dimensions,symmetries_check_and_load,&
 &                                 alat_mult_factor,artificial_spin_pol
  implicit none

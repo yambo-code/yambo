@@ -1,20 +1,14 @@
-RT_objects =
-SC_objects =
-MAGNETIC_objects =
 #if defined _SC
 SC_objects       = mod_SC.o
 RT_objects       = mod_collisions_IO.o mod_real_time.o mod_collisions_CACHE.o
 MAGNETIC_objects = mod_magnetic.o
 #endif
-ELPH_objects =
 #if defined _ELPH 
 ELPH_objects = mod_ELPH.o
 #endif
-DISTRIBUTED_objects =
 #if defined _DISTRIBUTED
 DISTRIBUTED_objects = mod_wf_distribute.o
 #endif
-LIBXC_objects=
 #if defined _LIBXC
 LIBXC_objects=mod_libxc_int.o
 #endif

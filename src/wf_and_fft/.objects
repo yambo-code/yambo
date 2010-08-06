@@ -1,6 +1,6 @@
 FFT_more =
 #if defined _RT
-FFT_more = fft_1d.o fft_1d_real.o rfft.o fft_singleton.o
+FFT_more = fft_1d.o fft_singleton.o
 #endif
 FFT_object = sgfft.o 
 #if defined _FFTW

@@ -20,7 +20,7 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
 /*
- Driver declaration
+  Driver
 */
 #if defined _FORTRAN_US
  int ypp_i
@@ -36,14 +36,14 @@
   {"help",  "h","Short Help",0,0,0,0}, 
   {"lhelp", "H","Long Help",0,0,0,0}, 
   {"jobstr","J","Job string identifier",0,0,1,0},   
-  {"infver", "V","Input file verbosity [opt=gen]",0,0,1,0},    
+  {"infver", "V","Input file verbosity [opt=gen,qp]",0,0,1,0},    
   {"ifile", "F","Input file",0,0,1,0},              
   {"idir",  "I","Core I/O directory",0,0,1,0},         
   {"odir",  "O","Additional I/O directory",0,0,1,0},        
-  {"cdir",   "C","Communications I/O directory",0,0,1,0},
+  {"cdir",  "C","Communications I/O directory",0,0,1,0},
   {"nompi", "N","Skip MPI initialization",0,0,0,0}, 
   {"dbfrag","S","DataBases fragmentation",0,0,0,0}, 
-  {"bzgrids","k","BZ Grid generator [(k)pt,(q)pt,(l)ongitudinal]",0,0,1,0}, 
+  {"bzgrids","k","BZ Grid generator [(k)pt,(q)pt]",0,0,1,0}, 
   {"excitons", "e","Excitons  [(s)ort,(a)mplitude,(w)ave]",0,0,1,0}, 
   {"electrons","s","Electrons [(w)ave,(d)ensity,do(s)]",0,0,1,0}, 
   {"freehole","f","Free hole position [excitons plot]",0,0,0,0}, 

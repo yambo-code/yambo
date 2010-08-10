@@ -152,7 +152,8 @@ module YPP
  logical  :: l_no_remove_DC
  logical  :: Use_FFT
  logical  :: Prt_Current
- integer  ::  i_t_start,i_t_end
+ integer  :: i_t_start,i_t_end
+ real(SP) :: W_RT_induced_step
  !
  complex(DP),    allocatable :: RT_J_t(:,:)
  complex(DP),    allocatable :: RT_P_t(:,:)

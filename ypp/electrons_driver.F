@@ -405,7 +405,7 @@ subroutine electrons_driver(Xk,Xen)
          call of_open_close(trim(output_fname),'o')
        else
          call of_open_close(trim(output_fname),'ot')
-         ctall msg('o density_UP density_DN',"#")
+         call msg('o density_UP density_DN',"#")
        endif
        !
        if (i_spin==1) plot_title='den DN'

@@ -21,7 +21,8 @@
 !
 subroutine RT_init_X_one()
  !
- use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,RT_J_t,i_t_start,i_t_end,A_vecpot_vel_t
+ use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,RT_J_t,i_t_start,i_t_end,A_vecpot_vel_t,&
+&                         W_RT_induced_step
  use com,            ONLY:warning
  use pars,           ONLY:pi,SP
  use units,          ONLY:FS2AUT,HARTREE
@@ -32,7 +33,6 @@ subroutine RT_init_X_one()
  ! Work Space
  !
  integer  :: i_t
- real(SP) :: W_RT_induced_step
  !
  call section("=",'Current and Polarization')
  !============================================

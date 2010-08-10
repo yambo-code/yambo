@@ -78,9 +78,9 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
 #else
  call   XC_lda_driver(&
 #endif
-&                     en,Xk,KIND,FUNCTIONAL,ORDER,&
+&                     en,Xk,KIND,FUNCTIONAL,ORDER&
 #if defined _RT
-&                     G_lesser,&
+&                     ,G_lesser&
 #endif
 &                    )
  !

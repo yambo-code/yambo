@@ -25,7 +25,7 @@
 !
 subroutine RT_X_one(en,k)
  !
- use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,RT_J_t,A_vecpot_vel_t
+ use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,RT_J_t,A_vecpot_vel_t,W_RT_induced_step
  use pars,           ONLY:SP,DP,pi,cI
  use units,          ONLY:FS2AUT,HARTREE,SPEED_OF_LIGHT 
  use electrons,      ONLY:levels
@@ -44,7 +44,7 @@ subroutine RT_X_one(en,k)
  ! Work Space
  !
  integer  :: i_t,i_w,i_c,i_t_start,i_t_end
- real(SP) :: W_RT_induced_step,W_step,Time_reached,W_reached
+ real(SP) :: W_step,Time_reached,W_reached
  complex(SP), allocatable :: EELS(:),EPS(:),freqs(:)
  complex(DP), allocatable :: X_irrep(:,:),A_vecpot_vel_w(:,:)
  !

@@ -1,5 +1,5 @@
 #if defined _LIBXC
-LIBXC_objects=mod_libxc_int.o
+LIBXC_objects = mod_libxc_int.o
 #endif
 objs = mod_pars.o mod_units.o  mod_stderr.o  mod_par_proc.o \
        mod_wrapper.o mod_fields.o mod_collision.o mod_drivers.o  mod_FFT.o \

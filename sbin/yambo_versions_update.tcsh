@@ -121,4 +121,4 @@ endif
 exit 0
 
 HELP:
-echo "yambo.tcsh [(save)/(r)evision/(v)ersion/(p)atchlevel/(s)ubversion]"
+echo "yambo_versions_update.tcsh [(save)/(r)evision/(v)ersion/(p)atchlevel/(s)ubversion]"

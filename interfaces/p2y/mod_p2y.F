@@ -35,6 +35,7 @@ module P2Y
  !
  logical :: verboseIO
  character(lchlen) :: index_filename
+!CHARACTER(256), ALLOCATABLE :: psfile_(:)
  !
  integer, public :: pw_unit 
  integer, private :: i1,i2,ierr
@@ -276,8 +277,6 @@ contains
    !
    ! Work Space
    !
-   integer, allocatable           :: ityp_(:)
-   CHARACTER(256), ALLOCATABLE :: psfile_(:)
    real(DP)                       :: tau_units
    integer                        :: i1,i2
 
@@ -310,12 +309,13 @@ contains
 
    tau_units = 1.0_DP
    allocate( atm_(n_atomic_species))
-   allocate( psfile_ (n_atomic_species))
-   call qexml_read_ions( atm=atm_, ityp=ityp_, psfile=psfile_, tau=tau_, ierr=ierr)
-
+   allocate( psfile (n_atomic_species))
+   allocate( nmesh (n_atomic_species), nbeta (n_atomic_species))
+   call qexml_read_ions( atm=atm_, ityp=ityp_, psfile=psfile, tau=tau_, ierr=ierr)
    ! Check USPP/NC pseudopotential
-   call check_pseudo(n_atomic_species,psfile_)
-   deallocate(psfile_)
+   do i1 =1,n_atomic_species
+     call read_pseudo_header(psfile(i1),nmesh(i1),nbeta(i1))
+   enddo
 
 #endif
 
@@ -336,10 +336,6 @@ contains
    do i1 = 1, n_atomic_species
      Z_species(i1) = atomic_number(atm_(i1))
    enddo
-
-   
-   deallocate(ityp_, tau_)
-
 
    return
  end subroutine get_atoms

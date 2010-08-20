@@ -42,13 +42,13 @@ MODULE qexml_module
   PUBLIC :: qexml_write_cell, qexml_write_ions, qexml_write_symmetry, &
             qexml_write_planewaves, qexml_write_spin, qexml_write_xc, &
             qexml_write_occ, qexml_write_bz, qexml_write_phonon,      &
-            qexml_write_rho, qexml_write_wfc, check_pseudo
+            qexml_write_rho, qexml_write_wfc
   !
   PUBLIC :: qexml_read_cell, qexml_read_ions, qexml_read_symmetry ,   &
             qexml_read_planewaves,  qexml_read_spin,  qexml_read_xc,  &
             qexml_read_occ,  qexml_read_bz,  qexml_read_phonon,       &
-            qexml_read_bands, qexml_read_gk, qexml_read_wfc
-!            qexml_read_rho
+            qexml_read_bands, qexml_read_gk, qexml_read_wfc,          &
+            read_pseudo_header, read_pseudo_data
 
  PUBLIC :: dbl, pwversion
 
@@ -2293,31 +2293,43 @@ CONTAINS
       !
     END SUBROUTINE qexml_read_wfc
 
-subroutine check_pseudo(nsp,psfile)
-  integer :: iostat
-  character(50) :: dummy
-
-  INTEGER        :: unit,i
-  INTEGER, intent(in)   :: nsp
+subroutine read_pseudo_header(psfile,nmesh,nbeta) 
+  IMPLICIT NONE
+  CHARACTER(LEN=*), INTENT(IN) :: psfile
+  INTEGER, INTENT(OUT) :: nmesh,nbeta
+  !
   CHARACTER(256) :: filename
-  CHARACTER(LEN=*), INTENT(IN) :: psfile(:)
-  do i = 1,nsp
+  character(50) :: dummy
+  logical       :: ldummy
+  INTEGER :: i,idummy,idummy2, unit, iostat
 
-  CALL iotk_free_unit(unit)
-  filename= TRIM(datadir_in)//trim(psfile(i))
-  open(unit, FILE = TRIM(filename))
-   rewind(unit)
+    CALL iotk_free_unit(unit)
+    filename= TRIM(datadir_in)//trim(psfile)
+    open(unit, FILE = TRIM(filename))
+    !
+    ! Header data
+    !
+    rewind(unit)
     call iotk_scan_begin(unit,"PP_HEADER")
     read(unit,*,iostat=iostat) dummy
     read(unit,*,iostat=iostat) dummy
     read(unit,*,iostat=iostat) dummy
-    if(trim(dummy) == "USPP") call errore( 'check_pseudo : ','Ultrasoft '//trim(psfile(i))//' not supported',1)
-    if(.not. trim(dummy) == "NC") call errore( 'check_pseudo : ',trim(psfile(i))//' file not norm conserving?',1)
-    rewind(unit)
+    if(trim(dummy) == "USPP") call errore( 'check_pseudo : ','Ultrasoft '//trim(psfile)//' not supported',1)
+    if(.not. trim(dummy) == "NC") call errore( 'check_pseudo : ',trim(psfile)//' file not norm conserving!',1)
+    read(unit,*,iostat=iostat) ldummy
+!   if(ldummy) WARNING("")
+    read(unit,*,iostat=iostat) dummy
+    read(unit,*,iostat=iostat) dummy ! z
+    read(unit,*,iostat=iostat) dummy
+    read(unit,*,iostat=iostat) dummy
+    read(unit,*,iostat=iostat) dummy
+    read(unit,*,iostat=iostat) nmesh
+    read(unit,*,iostat=iostat) idummy,nbeta
+    close(unit)
+    
+    return
+end subroutine read_pseudo_header
 
-  enddo
-
-end subroutine check_pseudo
 
     !
     !

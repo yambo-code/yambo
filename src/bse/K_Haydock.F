@@ -73,15 +73,11 @@ subroutine K_Haydock(iq,W)
  !
  if (BS_K_Coupling) then
    !
-   ! GPL_EXCLUDE_START
-   !
 #if defined _TEST_1
    allocate(Cf(Max_iterations+1),Vn(BS_K_dim),Vnm1(BS_K_dim),Vnp1(BS_K_dim))
 #else
    allocate(Cf(Max_iterations+1),Vn(2*BS_K_dim),Vnm1(2*BS_K_dim),Vnp1(2*BS_K_dim))
 #endif
-   !
-   ! GPL_EXCLUDE_END
    !
  else
    allocate(Vn(BS_K_dim),Vnm1(BS_K_dim),Vnp1(BS_K_dim))
@@ -95,15 +91,11 @@ subroutine K_Haydock(iq,W)
  !
  if (BS_K_Coupling) then 
    !
-   ! GPL_EXCLUDE_START
-   !
 #if defined _TEST_1
    io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1))   
 #else
    io_err=ioBSS_Haydock(ID,1,2*BS_K_dim,reached_treshold,Af(1),Bf(1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(1))   
 #endif
-   !
-   ! GPL_EXCLUDE_END
    !
  else
    io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(1),Vnm1,Vn)
@@ -115,8 +107,6 @@ subroutine K_Haydock(iq,W)
    it_on_disk=io_err 
    call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
    if (BS_K_Coupling) then 
-     !
-     ! GPL_EXCLUDE_START
 #if defined _TEST_1
      io_err=ioBSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),&
 &            Bf(:it_on_disk+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1))
@@ -124,9 +114,6 @@ subroutine K_Haydock(iq,W)
      io_err=ioBSS_Haydock(ID,it_on_disk,2*BS_K_dim,reached_treshold,Af(:it_on_disk),&
 &            Bf(:it_on_disk+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1))
 #endif
-     !
-     ! GPL_EXCLUDE_END
-     !
    else
      io_err=ioBSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),&
 &            Bf(:it_on_disk+1),Vnm1,Vn)
@@ -164,8 +151,6 @@ subroutine K_Haydock(iq,W)
  ! 
  if (BS_K_Coupling) then
    !
-   ! GPL_EXCLUDE_START
-   !
    ! Before starting iterate one needs
    !
    ! | Vn > =     |q->0>/(<q->0| F (H |q->0>))
@@ -191,8 +176,6 @@ subroutine K_Haydock(iq,W)
      Haydock_v0_mod = Bf(1)
      Bf(1) = 0._SP
    endif     
-   !
-   ! GPL_EXCLUDE_END
    !
  else
    !
@@ -248,8 +231,6 @@ subroutine K_Haydock(iq,W)
      ! Non-Hermitian case: 
      !
    else 
-     !
-     ! GPL_EXCLUDE_START
      !
      ! A(n) = <Vn+1|F|Vn+1> (that is <Vn|HFH|Vn>), 
      !      =  0   by symmetry 
@@ -309,20 +290,12 @@ subroutine K_Haydock(iq,W)
      Cf(it+1)= dot_product(BSS_rhoq0,Vn)/Haydock_v0_mod
 #endif
      !
-     ! GPL_EXCLUDE_END
-     !
    endif
    !
    if (it>2) then
      !
      if (BS_K_Coupling) then 
-       !
-       ! GPL_EXCLUDE_START
-       !
        call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,Cf(:it))
-       !
-       ! GPL_EXCLUDE_END
-       !
      else
        call build_L_and_check_convergence(Af(:it),Bf(:it+1),it)
      end if
@@ -350,9 +323,6 @@ subroutine K_Haydock(iq,W)
    !
    call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),ID=ID)
    if (BS_K_Coupling) then
-     !
-     ! GPL_EXCLUDE_START
-     !
      Bf(1) = Haydock_v0_mod
 #if defined _TEST_1
      io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_treshold,Af(:it),Bf(:it+1),   &
@@ -362,9 +332,6 @@ subroutine K_Haydock(iq,W)
 &       Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it+1))
 #endif
      Bf(1) = 0._SP
-     !
-     ! GPL_EXCLUDE_END
-     !
    else
      io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_treshold,Af(:it),Bf(:it+1),Vnm1,Vn)
    end if
@@ -381,13 +348,7 @@ subroutine K_Haydock(iq,W)
  ! CLEAN
  !
  if (allocated(BS_mat)) deallocate(BS_mat)
- !
- ! GPL_EXCLUDE_START
- !
  if (BS_K_Coupling) deallocate(Cf)
- !
- ! GPL_EXCLUDE_END
- !
  deallocate(Vn,Vnm1,Vnp1) 
  !
  ! Either if BS_mat is allocated (no fragments) or is not allocated
@@ -425,14 +386,7 @@ subroutine K_Haydock(iq,W)
      UseTerminator = .false.  
      !
      if (it > MIN_ITER.and.Haydock_terminator) UseTerminator = .true.
-     !
-     ! GPL_EXCLUDE_START
-     !
      if (BS_K_Coupling) allocate(X_i(2,it))
-     !
-     ! GPL_EXCLUDE_END
-     !
-     !
      if (Useterminator) then 
        if (.not.BS_K_Coupling) then
          Av1 = 0._SP
@@ -444,9 +398,6 @@ subroutine K_Haydock(iq,W)
          Av1 = Av1/it
          Av2 = Av2/it
        else
-       !
-       ! GPL_EXCLUDE_START
-       !
          Av1 = 0._SP
          Av2 = 0._SP
          do i1 = 2,it+1,2
@@ -455,9 +406,6 @@ subroutine K_Haydock(iq,W)
          end do
          Av1 = Av1/(it/2+mod(it,2))
          Av2 = Av2/(it/2)
-       !
-       ! GPL_EXCLUDE_END
-       !
        end if
      end if
      !
@@ -465,14 +413,8 @@ subroutine K_Haydock(iq,W)
        X_o=(0._SP,0._SP)
        if (UseTerminator) then 
          if (.not.BS_K_Coupling) X_t = terminator(W%p(iw),Av1,Av2,RES)
-       !
-       ! GPL_EXCLUDE_START
-       !
          if (BS_K_Coupling.and.(mod(it,2)==0)) X_t = terminator(W%p(iw),Av1,Av2,COUPL)
          if (BS_K_Coupling.and.(mod(it,2)==1)) X_t = terminator(W%p(iw),Av2,Av1,COUPL)
-       !
-       ! GPL_EXCLUDE_END
-       !
        endif
        X_o(:,it)=1._SP/(W%p(iw)-Af(it)-Bf(it+1)**2*X_t)
        do i1=it-1,1,-1
@@ -481,9 +423,6 @@ subroutine K_Haydock(iq,W)
        do i1=it-2,1,-1
          X_o(2,i1)=1._SP/(W%p(iw)-Af(i1)-Bf(i1+1)**2*X_o(2,i1+1))
        enddo
-       !
-       ! GPL_EXCLUDE_START
-       !
        if (BS_K_Coupling) then
          X_i(:,1) = X_o(:,1)
          X_i(:,2) = Bf(2)*X_o(:,2)*X_i(:,1)
@@ -498,9 +437,6 @@ subroutine K_Haydock(iq,W)
          end do
          X_o(:,1) = YbyX(:)
        endif
-       !
-       ! GPL_EXCLUDE_END
-       !
        X_epsilon(1,iw)=W%p(iw)
        X_epsilon(2,iw)=-X_o(1,1)*Co+1._SP
        X_epsilon(4,iw)=-X_o(2,1)*Co+1._SP
@@ -509,13 +445,7 @@ subroutine K_Haydock(iq,W)
        if (Haydock_treshold<0._SP) reached_treshold=reached_treshold+&
 &         abs(X_epsilon(2,iw)-X_epsilon(4,iw))/abs(X_epsilon(2,iw))/real(W%n(1))
      enddo
-     !
-     ! GPL_EXCLUDE_START
-     !
      if (BS_K_Coupling) deallocate(X_i)
-     !
-     ! GPL_EXCLUDE_END
-     !
    end subroutine
    !
 #if !defined _TEST_1
@@ -539,16 +469,10 @@ subroutine K_Haydock(iq,W)
      !
      select case(which)
      case (1) 
-     !
-     ! GPL_EXCLUDE_START
-     !
        f = x**2 - c1**2 + c2**2
        g = 2._SP*x*c2**2
        terminator = f + sqrt(f**2 -2._SP*x*g) 
        terminator = terminator/g
-     !
-     ! GPL_EXCLUDE_END
-     !
      case (2)
        f = (x-c1)
        terminator = f + sqrt(f**2 -4._SP*c2**2.)

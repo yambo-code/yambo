@@ -30,7 +30,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_sc_exx,l_sc_srpa,l_sc_cohsex,l_sc_contains_lda,&
-&                         l_collisions_IO
+&                         l_collisions_IO,l_oep_exact
  use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:QP_t,QP_nk,QP_reset
  use electrons,      ONLY:levels,n_spin
@@ -38,7 +38,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  use X_m,            ONLY:X_t
  use xc_functionals, ONLY:V_xc
  use SC,             ONLY:V_xc_sc,local_V,SC_kind,SC_xc_functional,SC_cycle_mixing,&
-&                         G_lesser,SC_bands,SC_R,H_rotate
+&                         G_lesser,SC_bands,SC_R,H_rotate,l_oep_iterative
  use FFT_m,          ONLY:fft_size
  !
  implicit none
@@ -56,7 +56,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  integer      :: ib,ik
  type(QP_t)   :: qp_dummy
  !
- if (.not.local_V.or.l_sc_exx) then
+ if (.not.local_V.or.(l_oep_exact.and..not.l_oep_iterative)) then
    !
    ! Hartee-Fock & COHSEX
    !======================
@@ -97,9 +97,9 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  !
  if (local_V) then
    !
-   V_xc_sc=(0.,0.)
+   if (.not.l_oep_iterative) V_xc_sc=(0.,0.)
    !
-   if (l_sc_exx) call V_oep(X(1),E,k,q,V_xc_sc)
+   if (l_sc_exx) call OEP_driver(X(1),E,k,q,V_xc_sc)
    !
    call IO_and_Messaging_switch("-report -log -io_in -io_out")
    !

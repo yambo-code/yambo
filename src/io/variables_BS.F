@@ -152,7 +152,7 @@ integer function variables_BS(ID,local_description,DB,X)
 &         VAR="    |[r,Vnl] included        :",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/),&
 &         DESCRIPTION=local_description(i_local_desc))
      !
-     if (ver_is_gt_or_eq(ID,(/3,0,9/)).and.read_is_on(ID)) then
+     if (ver_is_gt_or_eq(ID,(/3,0,9/)).and..not.ver_is_gt_or_eq(ID,revision=626)) then
        !
        ! v 3.0.8: Inclusion of %long_gauge 
        !
@@ -160,6 +160,7 @@ integer function variables_BS(ID,local_description,DB,X)
        call io_elemental(ID,&
 &           VAR="    |Longitudinal Gauge      :",L0=local_long_gauge,&
 &           DESCRIPTION=local_description(i_local_desc))
+       !
      endif
      !
      i_local_desc=i_local_desc+1

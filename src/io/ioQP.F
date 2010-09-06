@@ -74,15 +74,20 @@ integer function ioQP(what,qp,ID)
      ! reload to apply QP corrections. In this case QP_DB_kind must be 
      ! present to be transferred in the energy type by mod_qp_ctl
      !
+#if defined _NETCDF_IO
      if (variable_is_found(ID,"QP_DB_kind")==1.or.write_is_on(ID)) then
+#endif
        call io_elemental(ID,VAR="QP_DB_kind",VAR_SZ=1,MENU=0)
        call io_elemental(ID,I0=QP_DB_kind)
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+#if defined _NETCDF_IO
      else if (variable_is_found(ID,"QP_DB_kind")< 0.and.read_is_on(ID)) then
        QP_DB_kind=0
        ioQP=IO_INCOMPATIBLE_VAR
        return
      endif
+#endif
+     !
    endif
    !
    l_CUTOFF=.FALSE.

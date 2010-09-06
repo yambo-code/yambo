@@ -612,8 +612,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
   call initactivate(1,'BoseCut LongPath')
   call initactivate(1,'BSSmod BEnRange BDmRange BDmERef BEnSteps BLongDir')
   if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF')
-  if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs')
-  if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTer')
+  if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer')
   if (index(BSS_mode,'t')/=0)  call initactivate(1,'FxcGRLc FxcSVdig FxcMEStps FxcCausal')
   if (index(BSS_mode,'i')/=0)  call initactivate(1,'SkipFullInv')
  endif
@@ -638,7 +637,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SC
    else
      call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
-   endif
+     if (trim(SC_potential)=='EXX'.or.trim(SC_potential)=='EXXC'.or.&
+          &        trim(SC_potential)=='SRPA') call initactivate(1,'OEPapprox OEPItSolver') 
+   end if
    call initactivate(-1,'QpntsRXs')
  endif
 #endif

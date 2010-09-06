@@ -21,15 +21,17 @@
 !
 subroutine SC_start_and_restart(X,E,Xk)
  !
+ use pars,           ONLY:schlen
  use electrons,      ONLY:levels,n_sp_pol
  use parser_m,       ONLY:parser 
  use com,            ONLY:msg,warning
- use drivers,        ONLY:l_sc_exx,l_sc_hf,l_sc_cohsex,l_sc_magnetic,l_collisions_IO 
+ use drivers,        ONLY:l_sc_exx,l_sc_hf,l_sc_cohsex,l_sc_magnetic,l_collisions_IO,&
+&                         l_oep_exact,l_oep_kli,l_oep_slater
  use units,          ONLY:HARTREE
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:SC_E_threshold,SC_band_mixing,COHSEX_use_empties
  use SC,             ONLY:l_SC_RESTART,l_NSC_shot,SC_bands,&
-&                         SC_potential,E_bare,local_V,SC_iterations,l_TF_precond,&
+&                         SC_potential,E_bare,local_V,SC_iterations,l_TF_precond,l_oep_iterative,&
 &                         rho_convergence,E_convergence,SC_rho_threshold,&
 &                         SC_iterations,l_SC_cycle,SC_cycle_mixing,WF_G_max,WF_Go_indx,&
 &                         SC_fft_size
@@ -49,6 +51,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  ! Workspace I/O
  !
  integer                 :: ID(4),io_E,io_V,io_WF
+ character(schlen)       :: ch
  integer, external       :: io_SC_components,io_COLLISIONS
  !
  ! Extended collisions
@@ -59,7 +62,8 @@ subroutine SC_start_and_restart(X,E,Xk)
  !============
  !
  call parser('TF_precondition',l_TF_precond) 
- call parser('UseEbands',      COHSEX_use_empties)
+ call parser('OEPItSolver',l_oep_iterative) 
+ call parser('UseEbands', COHSEX_use_empties)
  !
  ! Magnetic logical setup
  !========================
@@ -150,6 +154,15 @@ subroutine SC_start_and_restart(X,E,Xk)
    call msg('r' ,'[SC] Imposed accuracy on density      :',SC_rho_threshold)
    call msg('rn','[SC]                  on energies [ev]:',SC_E_threshold*HARTREE)
  endif
+ if (l_sc_exx) then
+   if (.not.l_oep_slater) &
+&     call msg('rn' ,'[SC] Iterative solution of OEP :',l_oep_iterative)
+   if (.not.l_oep_exact) then
+     if (l_oep_kli) ch = 'KLI'
+     if (l_oep_slater) ch = 'SLATER'
+     call msg('rn' ,'[SC] Approximate solution of OEP :',ch)
+   end if
+ end if 
  !
  ! Reset WF sizes if not doing an SC_cycle
  !

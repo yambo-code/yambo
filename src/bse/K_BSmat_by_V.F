@@ -160,8 +160,6 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo)
 &                     Vo(frag_pointer(1)+1),1)
 #endif
            !
-           ! GPL_EXCLUDE_START
-           !
            if (BS_K_coupling) then
              !
              ! Calculate respectively: the diagonal anti-resonant, coupling, anti-coupling part
@@ -189,8 +187,6 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo)
 #endif       
            end if
            !
-           ! GPL_EXCLUDE_END
-           !
          end if
          !
        else
@@ -205,15 +201,11 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo)
 &                 i2=BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_blk_dim(ik2)) &
 &                 BS_mat(i2,i1)=conjg(BS_mat(i1,i2))
            !
-           ! GPL_EXCLUDE_START
-           !
            if (BS_K_coupling) then
              forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik1),&
 &                   i2=BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_blk_dim(ik2)) &
 &                   BS_mat(i2,BS_K_dim+i1)=BS_mat(i1,BS_K_dim+i2)
            endif
-           !
-           ! GPL_EXCLUDE_END
            !
          else
            !
@@ -232,8 +224,6 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo)
 &                     BS_mat,BS_blk_dim(ik1),Vi(frag_pointer(1)+1),1,(1._SP,0._SP),&
 &                     Vo(frag_pointer(2)+1),1)
 #endif
-           !
-           ! GPL_EXCLUDE_START
            !
            if (BS_K_coupling) then
              !
@@ -280,8 +270,6 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo)
 #endif       
            endif
            !
-           ! GPL_EXCLUDE_END
-           !
          endif
          !
        endif
@@ -292,8 +280,6 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo)
      enddo
    enddo
  endif
- !
- ! GPL_EXCLUDE_START
  !
  ! Filling the anti-resonant and anti-coupling parts
  !
@@ -312,9 +298,6 @@ subroutine K_BSmat_by_V(iq,iter,Vi,Vo)
 &        BS_mat(i1,i2)=-conjg(BS_mat(i1-BS_K_dim,i2+BS_K_dim))
    !
  endif
- !
- ! GPL_EXCLUDE_END
- !
  !
  ! No need to do any matrix X vector multiplication
  !

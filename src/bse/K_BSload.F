@@ -112,21 +112,15 @@ subroutine K_BSload(iq)
 &                i2=BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_blk_dim(ik2)) &
 &                BS_mat(i2,i1)=conjg(BS_mat(i1,i2))
          !
-         ! GPL_EXCLUDE_START
-         !
          if (BS_K_coupling) then
            forall(i1=BS_k_and_row_restart(1)+1:BS_k_and_row_restart(1)+BS_blk_dim(ik1),&
 &                  i2=BS_k_and_row_restart(2)+1:BS_k_and_row_restart(2)+BS_blk_dim(ik2)) &
 &                  BS_mat(i2,BS_K_dim+i1)=BS_mat(i1,BS_K_dim+i2)
          endif
            !
-           ! GPL_EXCLUDE_END
-           !
        end if
      end do
    end do
-   !
-   ! GPL_EXCLUDE_START
    !
    ! Filling the anti-resonant and anti-coupling parts
    !
@@ -145,9 +139,6 @@ subroutine K_BSload(iq)
 &         BS_mat(i1,i2)=-conjg(BS_mat(i1-BS_K_dim,i2+BS_K_dim))
      !
    endif
-   !
-   ! GPL_EXCLUDE_END
-   !
    !
  end subroutine K_BSload
  

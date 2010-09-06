@@ -57,6 +57,13 @@ module SC
  integer           :: SC_xc_functional
  integer           :: SC_perturbation
  !
+ ! OEP specific
+ !
+ integer,parameter    :: OEP_steps = 100 
+ real(SP),parameter   :: OEP_threshold = 1.E-5
+ character(schlen)    :: OEP_approx
+ logical              :: l_oep_iterative
+ !
  ! Rotation matrices and xc potential
  !
  complex(SP), allocatable :: SC_R(:,:,:,:)

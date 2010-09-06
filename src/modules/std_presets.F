@@ -77,7 +77,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND 
 #if defined _SC
- use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,&
+ use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,&
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB
  use collisions_IO,    ONLY:n_collisions,COLLISIONS_cutoff
  use collisions_CACHE, ONLY:COLLISIONS_cache_size
@@ -416,6 +416,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  SC_cycle_mixing=0.5
  SC_rho_threshold=1.E-5
  SC_potential='none'
+ OEP_approx='n'
  compatible_SC_DB=.FALSE.
  found_SC_DB=.FALSE.
  COLLISIONS_cutoff=0.001

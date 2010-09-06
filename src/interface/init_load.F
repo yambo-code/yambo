@@ -49,7 +49,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use functions,     ONLY:bose_E_cut
 #if defined _SC
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential,&
-&                        SC_rho_threshold,SC_cycle_mixing
+&                        SC_rho_threshold,SC_cycle_mixing,OEP_approx
  use collisions_IO, ONLY:COLLISIONS_cutoff
  use collisions_CACHE, ONLY:COLLISIONS_cache_size
 #endif
@@ -177,6 +177,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! BSE
  !
  call it(defs,'BSresKmod',  '[BSK] Resonant Kernel mode. (`x`;`c`;`d`)',BS_res_mode)
+ call it(defs,'BScplKmod',  '[BSK] Coupling Kernel mode. (`x`;`c`;`d`;`u`)',BS_cpl_mode)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
@@ -322,7 +323,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! BSE
  !
- call it(defs,'BScplKmod',  '[BSK] Coupling Kernel mode. (`x`;`c`;`d`;`u`)',BS_cpl_mode)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',&
 &        BS_eh_en,E_unit,verb_level=V_resp)
  call it(defs,'BSehWind','[BSK] [o/o] E/h coupling pairs energy window',&
@@ -376,6 +376,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)
  call it(defs,'EXXCut',    '[SC,RT] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
  call it(defs,'CollCache', '[SC,RT] Cache[Gb] for collisions (negative value = automatic)',COLLISIONS_cache_size,verb_level=V_sc)
+ call it('f',defs,'OEPItSolver','[SC] Iterative Kuemmel-Perdew solver for OEP')
+ call it(defs,'OEPapprox','[SC] OEP approximation, n=none s=Slater k=KLI',OEP_approx)
 #endif
  ! 
  ! RAS

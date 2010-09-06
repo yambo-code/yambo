@@ -22,7 +22,8 @@
 subroutine XC_switch()
  !
  use drivers
- use SC,             ONLY:SC_kind,SC_xc_functional,SC_potential,local_V,SC_perturbation 
+ use SC,             ONLY:SC_kind,SC_xc_functional,SC_potential,local_V,SC_perturbation,&
+&                         OEP_approx
  use xc_functionals, ONLY:XC_LDA_X,XC_LDA_C_PZ,XC_EXCHANGE_CORRELATION,XC_EXCHANGE,&
 &                         GS_xc_KIND,GS_xc_FUNCTIONAL
 #if defined _MAGNETIC
@@ -33,6 +34,8 @@ subroutine XC_switch()
  use electrons,      ONLY:n_full_bands,n_met_bands
  use com,            ONLY:error
  implicit none
+ !WorkPars:
+ integer, parameter :: KLI_APPRX = 10, SLT_APPRX = 20
  !
  local_V=.FALSE.
  !
@@ -88,6 +91,21 @@ subroutine XC_switch()
    case default
      call error("Unknown SC potential! ")
  end select
+ !
+ ! OEP approximation
+ !
+ if (l_sc_exx) then
+   select case (trim(OEP_approx))
+     case('n')
+       l_oep_exact=.true.
+     case('k')
+       l_oep_kli=.true.
+       SC_kind=SC_kind+KLI_APPRX 
+     case('s')
+       l_oep_slater=.true.
+       SC_kind=SC_kind+SLT_APPRX
+   end select
+ end if
  !
  SC_perturbation=EXT_NONE
  !

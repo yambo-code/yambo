@@ -201,7 +201,7 @@ subroutine RT_two_levels(G_lesser)
    complex(SP) function DELTA_Pump_F(W)
     complex(SP) :: W
     DELTA_Pump_F=(W+cI/QP_LifeTime)*(W+Wo_here+cI/Phase_LifeTime)* & 
-&                (W-Wo_here+cI/Phase_LifeTime)-(W+cI/Phase_LifeTime)*abs(Rabi_freq)**2.
+&                (W-Wo_here+cI/Phase_LifeTime)-(W+cI/Phase_LifeTime)*abs(Rabi_freq_pump)**2.
    end function
    !
    complex(SP) function exp_by_sigma_12(Time)

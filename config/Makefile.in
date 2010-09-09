@@ -51,7 +51,7 @@ UTILS    = changelog tests
 CLEANS   = clean clean_all
 PROJECTS = yambo_ph yambo_sc yambo_ras yambo_reels \
 	       yambo_ras_manyk \
-           yambo_magnetic yambo_PWdiago \
+           yambo_magnetic yambo_PWdiago yambo_auger \
            yambo_rt yambo_distributed yambo_2levels \
            ypp_rt ypp_ph ypp_ras ypp_sc ypp_magnetic ypp_boltzmann
 BROKEN   = yambo_manyk
@@ -102,7 +102,12 @@ libs:
 yambo: libs
 	@LIBS2DO="$(MAIN_LIBS)" ; ADF="-D_TEST_1 -D_TEST_2"; $(mksrc)
 	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
-# PROJECTS & BROKEN #
+#
+# PROJECTS #
+# 
+yambo_auger: libs
+	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_AUGER"; $(mksrc)
+	@X2DO="yambo_auger"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_AUGER";$(mkx)
 yambo_PWdiago: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_PW_DIAGO"; $(mksrc)
 	@X2DO="yambo_PWdiago"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_PW_DIAGO";$(mkx)
@@ -121,9 +126,6 @@ yambo_2levels: libs
 yambo_rt: libs
 	@LIBS2DO="$(PJ_RTLIBS)";ADF="-D_RT -D_SC"; $(mksrc)
 	@X2DO="yambo_rt"; XPATH="driver";XLIBS="$(PJ_RTLIBS)";ADF="-D_RT -D_SC";$(mkx)
-yambo_manyk: libs
-	@LIBS2DO="$(MAIN_LIBZ)";ADF="-D_MANYK"; $(mksrc)
-	@X2DO="yambo_manyk"; XPATH="driver";XLIBS="$(MAIN_LIBZ)";ADF="-D_MANYK";$(mkx)
 yambo_ph: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_ELPH"; $(mksrc)
 	@X2DO="yambo_ph"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_ELPH";$(mkx)
@@ -154,6 +156,12 @@ ypp_magnetic: libs
 ypp_boltzmann: libs
 	@LIBS2DO="$(YPPLIBS)" ; ADF="-D_BOLTZMANN";$(mksrc)
 	@X2DO="ypp_boltzmann" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_BOLTZMANN";$(mkx)
+#
+# BROKEN #
+# 
+yambo_manyk: libs
+	@LIBS2DO="$(MAIN_LIBZ)";ADF="-D_MANYK"; $(mksrc)
+	@X2DO="yambo_manyk"; XPATH="driver";XLIBS="$(MAIN_LIBZ)";ADF="-D_MANYK";$(mkx)
 #
 # DEBUG #
 #

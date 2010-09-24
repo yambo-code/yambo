@@ -27,6 +27,16 @@ module real_time
  implicit none
  !
 #if defined _TWO_LEVELS
+ !
+ ! Three-levels flags
+ !
+ logical  :: l_3levels
+ real(SP) :: en_levels(3)
+ real(SP) :: lambda_offdiag(3)  ! dephasing terms (lambda_12,lambda_13,lambda_23)
+ real(SP) :: lambda_diag(3)     ! diagonal terms  (lambda_11,lambda_22,lambda_33)
+ real(SP) :: dip(3)             ! dipoles (D_12, D_13, D_23) In principle they can be complex
+ real(SP) :: W1
+ !
  complex(SP) :: Rabi_freq_pump
  complex(SP) :: Rabi_freq_probe
  complex(SP) :: Rabi_nn(2,2)

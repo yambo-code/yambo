@@ -26,14 +26,14 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  ! XC0,V_xc_sc,V_hartree_sc
  !
  use pars,           ONLY:SP
- use com,            ONLY:msg,warning
+ use com,            ONLY:msg,warning,error
  use memory_m,       ONLY:mem_est
  use QP_m,           ONLY:QP_nk
  use units,          ONLY:HARTREE
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
 #if defined _TWO_LEVELS
- use real_time,      ONLY:Wo,W_pump
+ use real_time,      ONLY:Wo,W_pump,W1,l_3levels
 #endif
  use real_time,      ONLY:G_lesser,ID,ID,NE_steps,G_lesser_previous,RT_ind_J,&
 &                         G_lesser_reference,Thermal_steps,RT_is_dumped,XC0,      &
@@ -83,6 +83,10 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  E_bare=Xen%E(:SC_bands,:,:)
 #if defined _TWO_LEVELS
  Wo    =Xen%E(2,1,1)-Xen%E(1,1,1)
+ if(l_3levels) then
+   if(SC_bands/=3) call error(" Errore set SC_bands to 3 !! ")
+   W1=Xen%E(3,1,1)-Xen%E(1,1,1)
+ endif
 #endif
  !
  call SC_bare_Hamiltonian(Xen,Xk,k)
@@ -188,6 +192,13 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  ! Starting point 
  !
  it_start=1
+ !
+#if defined _TWO_LEVELS
+ if(RESTART) then
+   RESTART=.FALSE.
+   call warning(" Restart removed in few levels Hamiltonian! ")
+ endif
+#endif
  !
  if(RESTART) then
    !

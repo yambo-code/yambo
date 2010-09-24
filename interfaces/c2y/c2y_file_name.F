@@ -19,21 +19,21 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function c2y_KSS_file_name(inf,KSS_file_name)
+integer function c2y_file_name(inf,file_name_)
  !
  use pars,             ONLY:lchlen,schlen
  use com,              ONLY:file_exists 
  implicit none
  character(*)              :: inf
- character(lchlen)         :: KSS_file_name
+ character(lchlen)         :: file_name_
  !
  ! Work Space
  !
- c2y_KSS_file_name=0
+ c2y_file_name=0
  !
- KSS_file_name=inf
- if (file_exists (KSS_file_name) ) return
+ file_name_=inf
+ if (file_exists (file_name_) ) return
  !
- c2y_KSS_file_name=-1
+ c2y_file_name=-1
  !
 end function

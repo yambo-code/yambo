@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine c2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
+subroutine c2y_wf(wf_disk,ikibz,ib_grp,file_name_)
  !
  use pars,                  ONLY:SP,DP
  use electrons,             ONLY:n_bands,n_spin
@@ -28,7 +28,7 @@ subroutine c2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  implicit none
  !
  integer        :: ikibz,ib_grp
- character(*)   :: KSS_file_name
+ character(*)   :: file_name_
  real(SP)       :: wf_disk(2,wf_nb_io,wf_ncx,n_spin)
  ! 
  ! Workspace ...
@@ -43,7 +43,7 @@ subroutine c2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  integer            :: i_spin
  !
  !
-  open(unit=11,file=KSS_file_name,form='unformatted')
+  open(unit=11,file=file_name_,form='unformatted')
  !
  !     ==  Section  1: Header                                          ==
  !

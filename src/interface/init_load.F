@@ -58,6 +58,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        RT_diagonalization_steps,Thermal_time,max_rt_steps_disk
  use fields,        ONLY:Efield
 #endif
+#if defined _TWO_LEVELS
+ use real_time,     ONLY:l_3levels,en_levels,lambda_diag,lambda_offdiag,dip
+#endif
 #if defined _MAGNETIC
  use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
 #endif
@@ -291,6 +294,14 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call Afield(1) ! Probe
  call Afield(2) ! Pump
  !
+#endif
+ !
+#if defined _TWO_LEVELS
+ call it('f',defs,'RT3Levels',    '[RT] Three levels hamiltonian' ,verb_level=V_real_time)
+ call it(defs,    'RTEnLevels',   '[RT] Energy levels',en_levels,verb_level=V_real_time)
+ call it(defs,    'RTDephasing',  '[RT] Dephasing terms',lambda_offdiag,verb_level=V_real_time)
+ call it(defs,    'RTLifeTimes',  '[RT] Diagonal life-times',lambda_diag,verb_level=V_real_time)
+ call it(defs,    'RTDipoles',    '[RT] Dipoles',dip,verb_level=V_real_time)
 #endif
  !
 #if defined _MAGNETIC

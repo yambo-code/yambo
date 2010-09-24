@@ -45,9 +45,9 @@ integer function c2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  character(ijs),   intent(in) :: js
  character(icd),   intent(in) :: com_dir   
  !
- character(lchlen) :: KSS_file_name
+ character(lchlen) :: file_name_
  integer           :: ID,io_err,ik,ib_grp
- integer,     external :: c2y_KSS_file_name,ioDB1
+ integer,     external :: c2y_file_name,ioDB1
  real(SP), allocatable :: wf_disk(:,:,:,:)
  !
  ! Presets
@@ -72,16 +72,16 @@ integer function c2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
  !
  call msg('s','Checking input file ...')
  !
- if ( c2y_KSS_file_name(inf,KSS_file_name) < 0 ) then
+ if ( c2y_file_name(inf,file_name_) < 0 ) then
    call msg('ln','failed')
    call p_finalize
    return
  endif
- call msg('l',trim(KSS_file_name))
+ call msg('l',trim(file_name_))
  !
  call msg('s','DBs path set to :',trim(core_io_path))
  !
- call c2y_db1(en,k,trim(KSS_file_name))
+ call c2y_db1(en,k,trim(file_name_))
  !
  call msg('s','== DB1 ...')
  !
@@ -109,7 +109,7 @@ integer function c2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
    !
    do ib_grp=1,wf_nb_io_groups
      !
-     call c2y_wf(wf_disk,ik,ib_grp,trim(KSS_file_name))
+     call c2y_wf(wf_disk,ik,ib_grp,trim(file_name_))
      !
      if (ik==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
      if (ik> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)

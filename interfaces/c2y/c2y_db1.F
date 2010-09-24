@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine c2y_db1(en,k,KSS_file_name)
+subroutine c2y_db1(en,k,file_name_)
  !
  use pars,                  ONLY: SP, DP,pi
  use com,                   ONLY: msg,warning,error
@@ -36,7 +36,7 @@ subroutine c2y_db1(en,k,KSS_file_name)
  use mod_com2y,             ONLY: print_interface_dimensions,symmetries_check_and_load,&
 &                                 alat_mult_factor
  implicit none
- character(*)                   :: KSS_file_name
+ character(*)                   :: file_name_
  type(levels),     intent(out)  :: en
  type(bz_samp),    intent(out)  :: k  
  !
@@ -60,7 +60,7 @@ subroutine c2y_db1(en,k,KSS_file_name)
  !
  ! CPMD KSS FILE
  !
- open(unit=11,file=KSS_file_name,form='unformatted')
+ open(unit=11,file=file_name_,form='unformatted')
  !
  !     ==  Section  1: Header                                          ==
  !

@@ -36,6 +36,10 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
 &                         i_time,Integrator_name,l_RT_diagonalize,max_rt_steps_disk,&
 &                         G_lesser_reference,RT_is_dumped,RT_diagonalization_steps, &
 &                         it_start,RT_output
+#if defined _TWO_LEVELS
+ use real_time,      ONLY:l_3levels
+ use parser_m,       ONLY:parser
+#endif
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use collisions_CACHE, ONLY:free_COLLISIONS_v
  !
@@ -63,6 +67,10 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !##########################################################
  !
  call set_real_printed_length(f_length=10,g_length=10)  
+ !
+#if defined _TWO_LEVELS
+ call parser('RT3Levels',l_3levels)
+#endif
  !
  ! Dipoles & WF dimensions
  !=========================
@@ -174,7 +182,13 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    endif 
    !
 #if defined _TWO_LEVELS
-   call RT_two_levels(G_lesser)
+   !
+   if(l_3levels) then
+     call RT_three_levels(G_lesser,it)
+   else
+     call RT_two_levels(G_lesser)
+   endif
+   !
 #endif
    !
    call RT_Energy(Xen,k,RT_Energies)

@@ -90,6 +90,9 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     l_RT_diagonalize,Ext_fields_initial_time,RT_is_dumped,QP_LifeTime,Phase_LifeTime
  use fields,     ONLY:Efield,n_ext_fields
 #endif
+#if defined _TWO_LEVELS
+ use real_time,  ONLY:l_3levels,en_levels,dip,lambda_diag,lambda_offdiag
+#endif
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
 &                      MAG_gauge,MAG_psi,MAG_theta,average_el_mag_rescaling,      &
@@ -463,6 +466,16 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_RT_diagonalize=.FALSE.
  max_rt_steps_disk=200
  l_RT_induced_field=.FALSE.
+ !
+#endif
+ !
+#if defined _TWO_LEVELS
+ !
+ l_3levels     =.FALSE.
+ en_levels     =0._SP
+ lambda_offdiag=0._SP
+ lambda_diag   =0._SP    
+ dip           =0._SP            
  !
 #endif
  !

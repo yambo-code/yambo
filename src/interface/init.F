@@ -634,6 +634,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_RT_probe.or.l_RT_pump_and_probe) call Afield_activate('Probe')
      if (              l_RT_pump_and_probe) call Afield_activate('Pump')
 #endif
+#if defined _TWO_LEVELS
+ call initactivate(1,'RT3Levels RTEnLevels RTDephasing RTLifeTimes RTDipoles')
+#endif
 #if defined _SC
    else
      call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')

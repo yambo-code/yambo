@@ -144,34 +144,23 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
    ! G_lesser_refence(:,:,:) 
    !
    if(RT_is_dumped) then
-#if defined _TWO_LEVELS
-     if ( QP_LifeTime > 1.E-5_SP) then
-!       I1_lesser(1,1,1)=I1_lesser(1,1,1)-cI/QP_LifeTime*G_input(1,1,1)
-!       I1_lesser(2,2,1)=I1_lesser(2,2,1)-cI/QP_LifeTime*G_input(2,2,1)
-       I1_lesser(1,1,1)=I1_lesser(1,1,1)+cI/QP_LifeTime*G_input(2,2,1)
-       I1_lesser(2,2,1)=I1_lesser(2,2,1)-cI/QP_LifeTime*G_input(2,2,1)
-     endif
-     if ( Phase_LifeTime > 1.E-5_SP) then
-       I1_lesser(1,2,1)=I1_lesser(1,2,1)-cI/Phase_LifeTime*G_input(1,2,1)
-       I1_lesser(2,1,1)=I1_lesser(2,1,1)-cI/Phase_LifeTime*G_input(2,1,1)
-     endif
-#else
      !
-     if(QP_LifeTime > 1.E-5_SP) then
+     if ( QP_LifeTime > 1.E-5_SP) then
        forall(i1=1:SC_bands) &
          I1_lesser(i1,i1,ik)=I1_lesser(i1,i1,ik)-cI/QP_LifeTime*(G_input(i1,i1,ik)-G_lesser_reference(i1,i1,ik))
      endif
      !
      if(Phase_LifeTime > 1.E-5_SP) then
+       !
        do i1=1,SC_bands
          do i2=i1+1,SC_bands
            I1_lesser(i1,i2,ik)=I1_lesser(i1,i2,ik)-cI/Phase_LifeTime*(G_input(i1,i2,ik)-G_lesser_reference(i1,i2,ik))
            I1_lesser(i2,i1,ik)=I1_lesser(i2,i1,ik)-cI/Phase_LifeTime*(G_input(i2,i1,ik)-G_lesser_reference(i2,i1,ik))
          enddo 
        enddo
+       !
      endif
      !
-#endif
    endif
    !
  enddo  !---- loop on k-points

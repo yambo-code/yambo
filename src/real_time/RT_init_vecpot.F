@@ -34,6 +34,7 @@ subroutine RT_init_vecpot()
  use com,            ONLY:msg
  use X_m,            ONLY:DIP_iR,DIP_P
  use real_time,      ONLY:W_pump,Wo,Rabi_freq_pump,P,delta,Rabi_nn,D,Rabi_freq_probe
+ use real_time,      ONLY:l_3levels,dip,W1
 #endif
  !
  implicit none
@@ -59,50 +60,82 @@ subroutine RT_init_vecpot()
    i_probe=1
  endif
  !
- DIP_iR=(0.,0.)
- DIP_P =(0.,0.)
- DIP_P(1,1,2,1,1)= cI
- DIP_P(1,2,1,1,1)=-cI
- DIP_iR(1,2,1,1,1)= DIP_P(1,2,1,1,1) /(+Wo)
- DIP_iR(1,1,2,1,1)= DIP_P(1,1,2,1,1) /(-Wo)
- P        =  DIP_P(1,1,2,1,1)
- D        =  cI*DIP_iR(1,1,2,1,1)
- select case(trim(Efield(i_pump)%ef_name))
-   case('ANTIRES')
-     W_pump=Efield(i_pump)%frequency 
-     mu(i_pump) = P/cI/W_pump
-   case('RES')
-     W_pump=Efield(i_pump)%frequency 
-     mu(i_pump) =-P/cI/W_pump
-   case('DELTA')
-     mu(i_pump) =P
-     W_pump=0.
- end select
- !
- Rabi_freq_pump=2.*Efield(i_pump)%amplitude*mu(i_pump)
- !
- call msg('s','[2 LEVELS] Pump Rabi freq  [eV   ]',abs(Rabi_freq_pump)*HARTREE)
- call msg('s','[2 LEVELS] Pump freq       [eV/fs]',(/abs(W_pump)*HARTREE,2.*pi/W_pump/FS2AUT /))
- delta=0.
- !
- if (i_pump/=1) then
+ if(l_3levels) then
    !
-   delta=Efield(i_probe)%frequency-Efield(i_pump)%frequency
+   ! Three level case
    !
-   if ( trim(Efield(i_probe)%ef_name) == 'RES' ) mu(i_probe) =-P/cI/Efield(i_probe)%frequency
-   if ( trim(Efield(i_probe)%ef_name) == 'ANTIRES' ) mu(i_probe) =P/cI/Efield(i_probe)%frequency
-   if ( trim(Efield(i_probe)%ef_name) == 'DELTA' ) mu(i_probe) =P
+   DIP_iR=(0.,0.)
+   DIP_P =(0.,0.)
    !
-   Rabi_freq_probe=2.*Efield(i_probe)%amplitude*mu(i_probe)
+   DIP_P(1,1,2,1,1)= cmplx(0.,dip(1))
+   DIP_P(1,1,3,1,1)= cmplx(0.,dip(2))
+   DIP_P(1,2,3,1,1)= cmplx(0.,dip(3))
    !
-   call msg('s','[2 LEVELS] Probe Rabi freq [eV   ]',abs(Rabi_freq_probe)*HARTREE)
-   call msg('s','[2 LEVELS] Probe freq      [eV/fs]',(/abs(W_pump+delta)*HARTREE,2.*pi/(W_pump+delta)/FS2AUT /))
-   call msg('s','[2 LEVELS] Probe detuning  [eV/fs]',(/abs(delta)*HARTREE,2.*pi/abs(delta)/FS2AUT/))
+   DIP_P(1,2,1,1,1)=-cmplx(0.,dip(1))
+   DIP_P(1,3,1,1,1)=-cmplx(0.,dip(2))
+   DIP_P(1,3,2,1,1)=-cmplx(0.,dip(3))
    !
-   Rabi_nn(1,1)=4.*Efield(i_pump)%amplitude*Efield(i_pump)%amplitude*conjg(mu(i_pump))*mu(i_pump)
-   Rabi_nn(1,2)=4.*Efield(i_pump)%amplitude*Efield(i_probe)%amplitude*conjg(mu(i_pump))*mu(i_probe)
-   Rabi_nn(2,1)=4.*Efield(i_probe)%amplitude*Efield(i_pump)%amplitude*conjg(mu(i_probe))*mu(i_pump)
-   Rabi_nn(2,2)=4.*Efield(i_probe)%amplitude*Efield(i_probe)%amplitude*conjg(mu(i_probe))*mu(i_probe)
+   DIP_iR(1,1,2,1,1)= DIP_P(1,1,2,1,1) /(-Wo)
+   DIP_iR(1,1,3,1,1)= DIP_P(1,1,3,1,1) /(-W1)
+   DIP_iR(1,2,3,1,1)= DIP_P(1,2,3,1,1) /(-W1+Wo)
+   !
+   DIP_iR(1,2,1,1,1)= DIP_P(1,2,1,1,1) /(+Wo)
+   DIP_iR(1,3,1,1,1)= DIP_P(1,3,1,1,1) /(+W1)
+   DIP_iR(1,3,2,1,1)= DIP_P(1,3,2,1,1) /(+W1-Wo)
+   !
+   W_pump=Efield(i_pump)%frequency 
+   !
+ else
+   !
+   ! Two level case
+   !
+   DIP_iR=(0.,0.)
+   DIP_P =(0.,0.)
+   DIP_P(1,1,2,1,1)= cI
+   DIP_P(1,2,1,1,1)=-cI
+   DIP_iR(1,2,1,1,1)= DIP_P(1,2,1,1,1) /(+Wo)
+   DIP_iR(1,1,2,1,1)= DIP_P(1,1,2,1,1) /(-Wo)
+   P        =  DIP_P(1,1,2,1,1)
+   D        =  cI*DIP_iR(1,1,2,1,1)
+   !
+   select case(trim(Efield(i_pump)%ef_name))
+     case('ANTIRES')
+       W_pump=Efield(i_pump)%frequency 
+       mu(i_pump) = P/cI/W_pump
+     case('RES')
+       W_pump=Efield(i_pump)%frequency 
+       mu(i_pump) =-P/cI/W_pump
+     case('DELTA')
+       mu(i_pump) =P
+       W_pump=0.
+   end select
+   !
+   Rabi_freq_pump=2.*Efield(i_pump)%amplitude*mu(i_pump)
+   !
+   call msg('s','[2 LEVELS] Pump Rabi freq  [eV   ]',abs(Rabi_freq_pump)*HARTREE)
+   call msg('s','[2 LEVELS] Pump freq       [eV/fs]',(/abs(W_pump)*HARTREE,2.*pi/W_pump/FS2AUT /))
+   delta=0.
+   !
+   if (i_pump/=1) then
+     !
+     delta=Efield(i_probe)%frequency-Efield(i_pump)%frequency
+     !
+     if ( trim(Efield(i_probe)%ef_name) == 'RES' ) mu(i_probe) =-P/cI/Efield(i_probe)%frequency
+     if ( trim(Efield(i_probe)%ef_name) == 'ANTIRES' ) mu(i_probe) =P/cI/Efield(i_probe)%frequency
+     if ( trim(Efield(i_probe)%ef_name) == 'DELTA' ) mu(i_probe) =P
+     !
+     Rabi_freq_probe=2.*Efield(i_probe)%amplitude*mu(i_probe)
+     !
+     call msg('s','[2 LEVELS] Probe Rabi freq [eV   ]',abs(Rabi_freq_probe)*HARTREE)
+     call msg('s','[2 LEVELS] Probe freq      [eV/fs]',(/abs(W_pump+delta)*HARTREE,2.*pi/(W_pump+delta)/FS2AUT /))
+     call msg('s','[2 LEVELS] Probe detuning  [eV/fs]',(/abs(delta)*HARTREE,2.*pi/abs(delta)/FS2AUT/))
+     !
+     Rabi_nn(1,1)=4.*Efield(i_pump)%amplitude*Efield(i_pump)%amplitude*conjg(mu(i_pump))*mu(i_pump)
+     Rabi_nn(1,2)=4.*Efield(i_pump)%amplitude*Efield(i_probe)%amplitude*conjg(mu(i_pump))*mu(i_probe)
+     Rabi_nn(2,1)=4.*Efield(i_probe)%amplitude*Efield(i_pump)%amplitude*conjg(mu(i_probe))*mu(i_pump)
+     Rabi_nn(2,2)=4.*Efield(i_probe)%amplitude*Efield(i_probe)%amplitude*conjg(mu(i_probe))*mu(i_probe)
+   endif
+   !
  endif
  !
 #endif

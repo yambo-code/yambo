@@ -37,7 +37,7 @@
   {"lhelp",  "H","Long Help",0,0,0,0},               
   {"jobstr", "J","Job string identifier",0,0,1,0},   
   {"infver", "V","Input file verbosity",0,0,1,0},    
-  {"DESC",   " ","opt=RL,kpt,sc,qp,io,gen,resp,rt",0,0,0,0},
+  {"DESC",   " ","opt=RL,kpt,sc,qp,io,gen,resp,rt,all",0,0,0,0},
   {"ifile",  "F","Input file",0,0,1,0},              
   {"idir",   "I","Core I/O directory",0,0,1,0},         
   {"odir",   "O","Additional I/O directory",0,0,1,0},   

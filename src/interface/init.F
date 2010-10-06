@@ -984,7 +984,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    subroutine read_command_line(rstr,init_) 
      !
      use stderr, ONLY:string_split
-     use it_m,   ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
+     use it_m,   ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,&
+&                     V_real_time,V_all
      implicit none
      integer     :: init_
      character(*):: rstr
@@ -1036,6 +1037,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! V_general=6
        ! V_resp=7
        ! V_real_time=8
+       ! V_all=99
        !
        if ( trim(rstr_piece(i1)) == 'infver' ) then
          select case (trim(rstr_piece(i1+1)))
@@ -1055,6 +1057,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
              infile_verbosity=V_resp
            case ('rt')
              infile_verbosity=V_real_time
+           case ('all')
+             infile_verbosity=V_all
          end select
        endif
        !

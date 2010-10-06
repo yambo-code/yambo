@@ -48,6 +48,7 @@ module it_m
  integer, parameter :: V_general=6
  integer, parameter :: V_resp=7
  integer, parameter :: V_real_time=8
+ integer, parameter :: V_all=99
  !
  integer, parameter :: maxrnlvls=50
  integer, parameter :: maxflags =50
@@ -948,6 +949,7 @@ module it_m
        if (it_verbose_Ilevel(i1)==0) cycle
        if (trim(it_verbose_Ivars(i1))==trim(var_name))then
          if(all(var_val==it_verbose_Idefs(i1,:nvar)).and.&
+&           infile_verbosity/=V_all.and.&
 &           infile_verbosity/=it_verbose_Ilevel(i1)) return
        endif
      enddo
@@ -966,6 +968,7 @@ module it_m
        if (it_verbose_Rlevel(i1)==0) cycle
        if (trim(it_verbose_Rvars(i1))==trim(var_name))then
          if(all(var_val==it_verbose_Rdefs(i1,:nvar)).and.&
+&           infile_verbosity/=V_all.and.&
 &               infile_verbosity/=it_verbose_Rlevel(i1)) return
        endif
      enddo
@@ -984,6 +987,7 @@ module it_m
        if (it_verbose_Clevel(i1)==0) cycle
        if (trim(it_verbose_Cvars(i1))==trim(var_name))then
          if(var_val(1)==it_verbose_Cdefs(i1).and.&
+&           infile_verbosity/=V_all.and.&
 &           infile_verbosity/=it_verbose_Clevel(i1)) return
        endif
      enddo
@@ -999,6 +1003,7 @@ module it_m
        if (it_verbose_Chlevel(i1)==0) cycle
        if (trim(it_verbose_Chvars(i1))==trim(var_name))then
          if(var_val==it_verbose_Chdefs(i1).and.&
+&           infile_verbosity/=V_all.and.&
 &           infile_verbosity/=it_verbose_Chlevel(i1)) return
        endif
      enddo
@@ -1016,6 +1021,7 @@ module it_m
       if (it_verbose_Flevel(i1)==0) cycle
       if (trim(it_verbose_Fvars(i1))==trim(var_name))then
         if(fstatus(ivar)>0.and.&
+&           infile_verbosity/=V_all.and.&
 &          infile_verbosity/=it_verbose_Flevel(i1)) return
        endif
      enddo

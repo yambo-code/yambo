@@ -302,12 +302,12 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
  io_err=ioQP('G',qp,io_ID) 
  !
+ ! GPL_EXCLUDE_END
+ !
  ! W
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
  io_err=ioQP('W',qp,io_ID) 
- !
- ! GPL_EXCLUDE_END
  !
  ! ostnts
  !
@@ -824,11 +824,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_alda_fxc=runlevel_is_on('alda_fxc')
        l_lrc_fxc=runlevel_is_on('lrc_fxc')
        l_td_hf=runlevel_is_on('tdhf')
+       l_life=runlevel_is_on('life')
        !
        ! GPL_EXCLUDE_START
        ! 
        l_bs_fxc=runlevel_is_on('bs_fxc')
-       l_life=runlevel_is_on('life')
        l_acfdt=runlevel_is_on('acfdt')
        !
        ! GPL_EXCLUDE_END

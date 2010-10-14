@@ -170,6 +170,8 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
      endif
    endif 
    !
+   ! GPL_EXCLUDE_END
+   !
    if (l_life) then
      !
      ! Note the definition of Lifetime is
@@ -192,8 +194,6 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
      shadow_string(3)=' Gm='
      shadow_string(4)=' Gf='
    endif
-   !
-   ! GPL_EXCLUDE_END
    !
    ! Write to Report File
    !======================

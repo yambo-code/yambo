@@ -113,13 +113,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('r',defs,'rim_cut', '[R RIM CUT] Coulomb interaction')
  call it('r',defs,'tdhf',    '[R TDHF] Unscreened e-h interaction: TD Hartree-Fock')
  call it('r',defs,'cohsex',  '[R Xp] COlumb Hole Screened EXchange')
+ call it('r',defs,'life',    '[R GW] GoWo Quasiparticle lifetimes')
  !
  ! GPL_EXCLUDE_START
  !
  !===================
  ! NON GPL RUNLEVELS
  !===================
- call it('r',defs,'life',    '[R GW] GoWo Quasiparticle lifetimes')
  call it('r',defs,'acfdt',   '[R ETOT] ACFDT Total Energy')
  call it('r',defs,'bs_fxc',  '[R TDDFT] The BSE TDDFT kernel')
  !
@@ -169,6 +169,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! S_xc
  !
+ call it(defs,'LifeTrCG', '[GW] [o/o] Lifetime transitions reduction',QP_cg_percent)
  call it(defs,'EXXRLvcs', '[XX] Exchange RL components',QP_ng_Sx,G_unit)
  call it(defs,'GbndRnge', '[GW] G[W] bands range',QP_n_G_bands)
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
@@ -253,7 +254,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! S_xc
  !
- call it(defs,'LifeTrCG',   '[GW] [o/o] Lifetime transitions reduction',QP_cg_percent)
  call it(defs,'GEnSteps',   '[GW] G_gw energy steps',QP_Sc_steps)
  call it(defs,'GEnRnge',    '[GW] G_gw energy range (centered in the bare energy)',QP_G_er,E_unit)
  call it(defs,'GWoIter',    '[GW] GWo SC iterations',GWo_iterations,verb_level=V_qp)

@@ -75,11 +75,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  integer, allocatable::life_W_table(:,:)
  integer, external   ::ioX,QP_state_extract,ioQP,X_em1
  !
- ! GPL_EXCLUDE_START
- !
  integer, external   ::QP_life_transitions
- !
- ! GPL_EXCLUDE_END
  !
  character(schlen)   ::ch,Sc_name
  logical             ::X_is_TR_rotated
@@ -91,14 +87,10 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  call pp_indexes_reset(px)
  if (l_life) then
    !
-   ! GPL_EXCLUDE_START
-   !
    do i1=1,q%nibz
      call W_reset(X_life_W(i1))
      X_life_W(i1)%dr=Xw%dr
    enddo
-   !
-   ! GPL_EXCLUDE_END
    !
  else
    do i1=1,qp%n_states
@@ -193,8 +185,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  ! Lifetimes Transitions 
  !
- ! GPL_EXCLUDE_START
- !
  if (l_life) then
    !
    call section('=','Lifetimes Transitions Selector')
@@ -222,8 +212,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      if (i_err==0) exit
    enddo
  endif
- !
- ! GPL_EXCLUDE_END
  !
  ! WFs
  !
@@ -273,14 +261,10 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
 &                                SEC=(/2*iqibz,2*iqibz+1/),ID=XID)
      if (q%nbz==1) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),ID=XID)
      !
-     ! GPL_EXCLUDE_START
-     !
      if (l_life) then
        io_err=ioX(X,X_life_W(iqibz),XID)
        call X_delta_part(X,X_life_W(iqibz),isc%gamp)
      else
-       !
-       ! GPL_EXCLUDE_END
        !
        io_err=ioX(X,Xw,XID)
        !
@@ -291,13 +275,9 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
        Xw%dr=(/aimag(Xw%p(1)),aimag(Xw%p(Xw%n(1)))/)
        call X_delta_part(X,Xw,isc%gamp)
        !
-       ! GPL_EXCLUDE_START
-       !
      endif
      !
      if (l_life) QP_n_W_freqs=0
-     !
-     ! GPL_EXCLUDE_END
      !
      X_is_TR_rotated=.false.
      !
@@ -339,8 +319,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
        !
        if (any(isc%is/=iscp%is)) call scatterBamp(iscp)
        !
-       ! GPL_EXCLUDE_START
-       !
        if (l_life) then
          !
          i2=life_W_table(iqibz,QP_n_W_freqs)
@@ -370,8 +348,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
          !
        else ! .not.l_life
          !
-         ! GPL_EXCLUDE_END
-         !
          do i2=1,QP_n_W_freqs
            !
            do i3=1,X%ng
@@ -389,11 +365,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
 #endif
          enddo
          !
-         ! GPL_EXCLUDE_START
-         !
        endif
-       !
-       ! GPL_EXCLUDE_END
        !
      enddo
    enddo

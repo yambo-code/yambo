@@ -152,8 +152,6 @@ subroutine QP_of(qp,en,QPdb_read_err)
    enddo
    call of_open_close(file_name)
    !
-   ! GPL_EXCLUDE_START 
-   !
  else if (trim(QP_solver)=='g') then
    !
    call QP_states_simmetrize(en,state_is_2do=state_is_2do)
@@ -200,8 +198,6 @@ subroutine QP_of(qp,en,QPdb_read_err)
    enddo
    !
    call set_real_printed_length()
-   !
-   ! GPL_EXCLUDE_END 
    !
  endif
  !

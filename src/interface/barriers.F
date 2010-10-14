@@ -90,7 +90,6 @@ subroutine barriers()
  !====================================================================
  !
  ! GPL_INCLUDE_START
- !call switch_off_runlevel('life',on_name=' ')
  !call switch_off_runlevel('acfdt',on_name=' ')
  !call switch_off_runlevel('bs_fxc',on_name=' ')
  ! GPL_INCLUDE_END
@@ -122,12 +121,13 @@ subroutine barriers()
    call switch_off_runlevel('all',on_name='acfdt HF_and_locXC '//trim(always_runlevels))
    goto 1
  endif
+ !
+ ! GPL_EXCLUDE_END
+ !
  if (l_life) then
    call switch_off_runlevel('all',on_name='life em1d '//trim(always_runlevels))
    goto 1
  endif
- !
- ! GPL_EXCLUDE_END
  !
  if (gw0_raxis) then
    on_runlevels='gw0 em1d el_el el_ph HF_and_locXC'

@@ -88,8 +88,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    write (qp%description(1),'(a)') ' GW solver              : Secant'
    call section('*','Dyson equation: non perturbative secant method')
    !
-   ! GPL_EXCLUDE_START
-   !
  else if (trim(QP_solver)=='g') then
    write (qp%description(1),'(a)') ' GW solver              : Full Green`s function'
    call section('*','Dyson equation: full Green`s function')
@@ -101,8 +99,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
  else if (.not.l_life) then
    return
-   !
-   ! GPL_EXCLUDE_END
    !
  endif
  qp%n_descs=2
@@ -157,8 +153,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  qp%nb=QP_nb
  qp%n_states=QP_n_states
  !
- ! GPL_EXCLUDE_START
- !
  ! In lifetimes calculations  the X db may be not
  ! present. So I need to define some variables that 
  ! must be correctly written in the QP_description(s)
@@ -167,8 +161,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    call X_pre_setup(Xen,X)
    if (X%ng_db==0) X%ng_db=X%ng
  endif
- !
- ! GPL_EXCLUDE_END
  !
  ! Local Allocations
  !===================
@@ -207,8 +199,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
      call local_free()
      return
    endif
-   !
-   ! GPL_EXCLUDE_START
    !
    ! Green Functions I/O
    !=====================
@@ -252,8 +242,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
      !
    endif
    !
-   ! GPL_EXCLUDE_END
-   !
  endif
  !
  ! GPL_EXCLUDE_START
@@ -292,8 +280,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! GREEN`s FUNCTIONS
  !-------------------
  !
- ! GPL_EXCLUDE_START 
- !
  if (trim(QP_solver)=='g') then
    !
    if (l_el_corr.and.(.not.l_ppa.and..not.l_cohsex)) call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
@@ -325,8 +311,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    return
    !
  endif
- !
- ! GPL_EXCLUDE_END 
  !
  ! Reporting
  !

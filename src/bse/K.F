@@ -520,8 +520,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          if (BS_res_K_exchange) H_res_x=cdotc(BS_n_g_exch,O2x(1,icv2),1,O1x(1,icv1),1)
 #endif
          !
-         ! GPL_EXCLUDE_START
-         !
          ! :::Exchange    (coupling):::
          !
 #if defined _DOUBLE
@@ -532,23 +530,17 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                               O2x( g_rot(inv_index,1:BS_n_g_exch),icv2),1,O1x(1,icv1),1)
 #endif
          !
-         ! GPL_EXCLUDE_END
-         !
          ! :::ALDA        (resonant):::
          !
          if (BS_K_is_ALDA) H_res_x=H_res_x+&
 &                          tddft_alda_R_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
 &                                                (/iv1,iv2/),(/is1,is2,is1,is2/),1)
          !
-         ! GPL_EXCLUDE_START
-         !
          ! :::ALDA        (coupling):::
          !
          if (BS_K_is_ALDA) H_cpl_x=H_cpl_x+&
 &                          tddft_alda_R_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
 &                                                (/iv1,iv2/),(/is1,is2,is1,is2/),2)
-         !
-         ! GPL_EXCLUDE_END
          !
          ! :::Correlation (resonant):::
          !
@@ -590,8 +582,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            !
          endif
          !
-         ! GPL_EXCLUDE_START
-         !
          ! :::Correlation (coupling):::
          !
          if (BS_cpl_K_corr.and.i_sp1==i_sp2) then
@@ -631,20 +621,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            !
          endif
          !
-         ! GPL_EXCLUDE_END
-         !
-         ! Impose the kernel to be hermitian
+         ! Impose the resonant part of the kernel to be hermitian
          !
          if (ik1==ik2.and.icv1==icv2) H_res_c=real(H_res_c)
          !
          BS_mat(icv1,icv2)=H_res_x*real(spin_occ)*Co-H_res_c
          !
-         ! GPL_EXCLUDE_START
-         !
          if (BS_K_coupling) BS_cpl_mat(icv1,icv2)=H_cpl_x*real(spin_occ)*Co-H_cpl_c
-         !
-         ! GPL_EXCLUDE_END
-         !
        enddo
      enddo
      call pp_redux_wait(BS_mat)
@@ -710,16 +693,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call mem_est("O_RES_WS")
    deallocate(BS_O)
    call mem_est("BS_O")
-   !
-   ! GPL_EXCLUDE_START
-   !
    if (BS_cpl_K_corr) then
      deallocate(Ovc,Ocv)
      call mem_est("O_CPL_WS")
    endif
-   !
-   ! GPL_EXCLUDE_END
-   !
  endif
  !
  if (l_bs_fxc) then

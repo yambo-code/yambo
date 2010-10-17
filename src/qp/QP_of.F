@@ -188,7 +188,7 @@ subroutine QP_of(qp,en,QPdb_read_err)
        values(4:5)=(/real(qp%S_total(i1,i2)),aimag(qp%S_total(i1,i2))/)*HARTREE
        values(6)=values(4)
        if (report_Vnlxc) then
-         values(6)=values(6)-real(QP_Vnl_xc(i1)+QP_Vxc(i1))*HARTREE
+         values(6)=values(6)-real(QP_Vnl_xc(i1)-QP_Vxc(i1))*HARTREE
          call msg('o G_Sc','',values(:6),INDENT=-2,USE_TABS=.TRUE.)
        else
          call msg('o G_Sc','',values(:5),INDENT=-2,USE_TABS=.TRUE.)

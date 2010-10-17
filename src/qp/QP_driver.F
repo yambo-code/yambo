@@ -244,14 +244,10 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
  endif
  !
- ! GPL_EXCLUDE_START
- !
  ! Updated descriptions (needed in case of Zoomed GFs)
  !=======================
  !
  call QP_descriptions(qp,X,Xw,.TRUE.)
- !
- ! GPL_EXCLUDE_END
  !
  call mem_est("QP_Sc",(/size(QP_Sc)/))
  !
@@ -289,6 +285,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    if (l_ph_corr)                                    call ELPH_Sigma_c(en,k,q,qp)
    !
 #endif
+
    !
    call QP_Green_Function(qp,en,-1)
    !

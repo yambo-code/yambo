@@ -139,8 +139,6 @@ integer function ioQP(what,qp,ID)
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   ! GPL_EXCLUDE_START
-   !
    if (index(what,".G")/=0.or.what=="G") then
      !
      ! Tough the GF's parameters are already stored in the QP_descriptions
@@ -158,8 +156,6 @@ integer function ioQP(what,qp,ID)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
    endif
-   !
-   ! GPL_EXCLUDE_END
    !
    ioQP=io_status(ID)
    if (.not.DB_is_OK(ID)) goto 1
@@ -201,7 +197,9 @@ integer function ioQP(what,qp,ID)
        endif
      else if (what=="G") then
        call io_elemental(ID,CH0=qp%description(i1),VAR='',CHECK=.true.,OP=(/"=="/)) 
+ ! GPL_EXCLUDE_START
        if (index(qp%description(i1),'Zoom')>0.and.io_status(ID)<0)  io_status(ID)=IO_NO_BINDING_ERROR
+ ! GPL_EXCLUDE_END
      else
        if (index(qp%description(i1),'QP')>0) then
          call io_elemental(ID,CH0=qp%description(i1),VAR='')
@@ -333,8 +331,6 @@ integer function ioQP(what,qp,ID)
      !
    endif
    !
-   ! GPL_EXCLUDE_START
-   !
    if (index(what,".G")/=0.or.what=="G") then
      !
      allocate(qp_DATA_disk(qp%n_states,qp%GreenF_n_steps,6))
@@ -380,8 +376,6 @@ integer function ioQP(what,qp,ID)
    !
    ioQP=io_status(ID)
    if (.not.DB_is_OK(ID)) goto 1
-   !
-   ! GPL_EXCLUDE_END
    !
  endif
  !

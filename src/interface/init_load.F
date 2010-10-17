@@ -176,6 +176,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
  call it(defs,'dScStep',  '[GW] Energy step to evalute Z factors',QP_dSc_delta,E_unit)
  call it(defs,'DysSolver','[GW] Dyson Equation solver (`n`,`s`,`g`)',QP_solver,protect=.FALSE.)
+ call it(defs,'GEnSteps',   '[GW] G_gw energy steps',QP_Sc_steps)
+ call it(defs,'GEnRnge',    '[GW] G_gw energy range (centered in the bare energy)',QP_G_er,E_unit)
+ call it('f',defs,'NewtDchk',   '[F GW] Test dSc/dw convergence',verb_level=V_qp)
+ call it('f',defs,'ExtendOut',  '[F GW] Print all variables in the output file',verb_level=V_qp)
  !
  !
  ! BSE
@@ -254,14 +258,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! S_xc
  !
- call it(defs,'GEnSteps',   '[GW] G_gw energy steps',QP_Sc_steps)
- call it(defs,'GEnRnge',    '[GW] G_gw energy range (centered in the bare energy)',QP_G_er,E_unit)
  call it(defs,'GWoIter',    '[GW] GWo SC iterations',GWo_iterations,verb_level=V_qp)
  call it(defs,'GreenFTresh','[GW] [o/o] Treshold to define the new zoomed energy range',QP_G_Zoom_treshold,verb_level=V_qp)
- call it('f',defs,'NewtDchk',   '[F GW] Test dSc/dw convergence',verb_level=V_qp)
  call it('f',defs,'OnMassShell','[F GW] On mass shell approximation',verb_level=V_qp)
  call it('f',defs,'GreenF2QP',  '[F GW] Use real axis Green`s function to define the QPs',verb_level=V_qp)
- call it('f',defs,'ExtendOut',  '[F GW] Print all variables in the output file',verb_level=V_qp)
  !
  ! GPL_EXCLUDE_END
  !

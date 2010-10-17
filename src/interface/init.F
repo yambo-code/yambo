@@ -295,14 +295,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (associated(qp%table)) nullify(qp%table)
  !
- ! GPL_EXCLUDE_START
- !
  ! Green Functions
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
  io_err=ioQP('G',qp,io_ID) 
- !
- ! GPL_EXCLUDE_END
  !
  ! W
  !

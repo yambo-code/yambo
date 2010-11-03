@@ -240,11 +240,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! NON GPL VARIABLES
  !===================
  !
- ! I/O
- !
- call it(defs,'More_IO_Path', '[IO] Additional I/O directory',more_io_path,verb_level=V_io)
- call it(defs,'Com_Path',     '[IO] Communication directory',com_path,verb_level=V_io)
- !
  ! Basics
  !
  call it(defs,'ElecTemp','Electronic Temperature',Tel,T_unit,verb_level=V_general)

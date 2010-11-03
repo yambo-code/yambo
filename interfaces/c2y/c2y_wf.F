@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine c2y_wf(wf_disk,ikibz,ib_grp,file_name_)
+subroutine c2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  !
  use pars,                  ONLY:SP,DP
  use electrons,             ONLY:n_bands,n_spin
@@ -28,7 +28,7 @@ subroutine c2y_wf(wf_disk,ikibz,ib_grp,file_name_)
  implicit none
  !
  integer        :: ikibz,ib_grp
- character(*)   :: file_name_
+ character(*)   :: KSS_file_name
  real(SP)       :: wf_disk(2,wf_nb_io,wf_ncx,n_spin)
  ! 
  ! Workspace ...
@@ -43,36 +43,38 @@ subroutine c2y_wf(wf_disk,ikibz,ib_grp,file_name_)
  integer            :: i_spin
  !
  !
-  open(unit=11,file=file_name_,form='unformatted')
+ if (ib_grp==1) then
+ !
+   open(unit=11,file=KSS_file_name,form='unformatted')
  !
  !     ==  Section  1: Header                                          ==
  !
- read(11) str
+   read(11) str
  !
  ! Here I skip all the section till the wfs.
-  do isection =2,8 
-   read(11) irecord
-   call fskip(irecord)
-  enddo  
+   do isection =2,8 
+     read(11) irecord
+     call fskip(irecord)
+   enddo  
 !
- 
-  read(11) irecord
-  read(11) irecord
-  read(11) nb_to_read,idum,idum2,scale
-  read(11) ldum,idum,idum2
+   read(11) irecord
+   read(11) irecord
+   read(11) nb_to_read,idum,idum2,scale
+   read(11) ldum,idum,idum2
+ !
+ endif
  !
  wf_disk(:,:,:,:)=0.
  !
-  i_spin=1
+ i_spin=1
  ! 
-   ! Read all bands or only the remaining in the last block
-   !
-   nb_to_read=wf_nb_io
-   if (ib_grp*wf_nb_io>n_bands) nb_to_read=n_bands-wf_nb_io*(ib_grp-1) 
-   !
-    
+ ! Read all bands or only the remaining in the last block
+ !
+ nb_to_read=wf_nb_io
+ if (ib_grp*wf_nb_io>n_bands) nb_to_read=n_bands-wf_nb_io*(ib_grp-1) 
+ !
    do i1=1,nb_to_read
-     read(11) idum
+     read(11) idum 
      allocate (wfdum(idum))
      read(11) wfdum
      idum2=idum/2
@@ -90,4 +92,4 @@ subroutine c2y_wf(wf_disk,ikibz,ib_grp,file_name_)
  !
  if (ikibz==nkibz.and.ib_grp==wf_nb_io_groups) close(11)
  !
-end subroutine
+ end subroutine 

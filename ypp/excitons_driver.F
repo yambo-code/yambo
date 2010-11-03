@@ -169,7 +169,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Create the anti-resonant part of the eh_table
  !
- ! GPL_EXCLUDE_START
  !
  if (BS_K_coupling) then
    do neh=BS_K_dim+1,BS_H_dim
@@ -182,7 +181,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    enddo
  endif
  !
- ! GPL_EXCLUDE_END
  !
  if (.not.BSS_write_eig_2_db) call error('Diago database does not contain excitonic wfs')
  !

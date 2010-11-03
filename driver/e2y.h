@@ -32,14 +32,14 @@
 /*
  Command line structure
 */
- static Ldes opts[] = { /* Int Real Ch (Dummy)*/
-  {"help",  "h","Short Help",0,0,0,0}, 
-  {"lhelp", "H","Long Help",0,0,0,0}, 
-  {"nompi", "N","Skip MPI initialization",0,0,0,0},
-  {"ifile", "F","ETSF filename",0,0,1,0},
-  {"odir","O","Output directory",0,0,1,0},
-  {"dbfrag","S","DataBases fragmentation",0,0,0,0},
-  {NULL,NULL,NULL,0,0,0,0}
+ static Ldes opts[] = { /* Int Real Ch (dummy) Parallel_option*/
+  {"help",  "h","Short Help",0,0,0,0,0}, 
+  {"lhelp", "H","Long Help",0,0,0,0,0}, 
+  {"nompi", "N","Skip MPI initialization",0,0,0,0,0},
+  {"ifile", "F","ETSF filename",0,0,1,0,0},
+  {"odir","O","Output directory",0,0,1,0,0},
+  {"dbfrag","S","DataBases fragmentation",0,0,0,0,0},
+  {NULL,NULL,NULL,0,0,0,0,0}
  };
  char *tool="e2y";
  char *tdesc="E(TSF) 2 Y(ambo) interface (0.6)";

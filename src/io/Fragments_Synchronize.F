@@ -63,7 +63,6 @@ subroutine Fragments_Synchronize(ID,db_name,i_fragment,j_fragment)
    fragment_status(i_loop)=1
  enddo
  !
- !
  last_syncronized=hashes_now
  !
  contains

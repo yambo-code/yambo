@@ -279,7 +279,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  do ik2=1,BS_columns
    do ik1=ik2,1,-1
      !
-     if (any((/ik2<BS_k_and_row_restart(2),ik2==BS_k_and_row_restart(2).and.ik1>BS_k_and_row_restart(1)/))) cycle
+     if (ik2<BS_k_and_row_restart(2)) cycle
+     if (ik2==BS_k_and_row_restart(2).and.ik1>=BS_k_and_row_restart(1)) cycle
      !
      call K_scattering(iq,ik1,ik2,Xk,q)  
      O_dim=max(O_dim,O_n_scatt)

@@ -90,7 +90,8 @@ subroutine ELPH_Hamiltonian(en,k,q)
  H_size=No_PH_basis_size*(nqbz*(elph_branches(2)-elph_branches(1)+1)+1)
  call msg('rsn','[ElPh Ham] Hamiltonian size is:',H_size)
  !
- allocate(elph_Ham_Table(H_size,3),elph_Mat(H_size,H_size),elph_E(H_size),mean_u(n_atoms,3,H_size),num_of_ph(nqbz,Ph_branches,H_size)) 
+ allocate(elph_Ham_Table(H_size,3),elph_Mat(H_size,H_size),elph_E(H_size),&
+&         mean_u(n_atoms,3,H_size),num_of_ph(nqbz,Ph_branches,H_size)) 
  allocate(top_residual(H_size),top_ph_residual(nqbz,Ph_branches,H_size))
  allocate(mean_u_sq(n_atoms,3,H_size))
  top_residual=.FALSE.
@@ -235,7 +236,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
    call msg('o Ham','# El-Ph Hamiltonian derived Green`s function')
    !
    call msg('o Ham','#')
-   call msg('o Ham','#',(/'Index','Pole[eV]','Residual'/),INDENT=0,USE_TABS=.true.)
+   call msg('o Ham','#',(/' Index  ','Pole[eV]','Residual'/),INDENT=0,USE_TABS=.true.)
    call msg('o Ham','#')
    !
    max_residual=0.

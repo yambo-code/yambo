@@ -32,19 +32,19 @@
 /*
  Command line structure
 */
- static Ldes opts[] = { /* Int Real Ch (Dummy)*/
-  {"help",  "h","Short Help",0,0,0,0}, 
-  {"lhelp", "H","Long Help",0,0,0,0}, 
-  {"nompi", "N","Skip MPI initialization",0,0,0,0},
-  {"ifile", "F","XML index file name",0,0,1,0}, 
-  {"odir",  "O","Output directory",0,0,1,0}, 
-  {"dbfrag","S","DataBases fragmentation",0,0,0,0}, 
-  {"alat_f","a","Lattice constants rescaling factor",0,1,0,0},
-  {"notr",  "t","Force use of spatial Inv. instead of Time Rev.",0,0,0,0},
-  {"nowf",  "w","Force no wavefunctions",0,0,0,0},
-  {"allG",  "g","Force use of all available RL vectors",0,0,0,0},
-  {"verb",  "v","Verbose wfc I/O reporting",0,0,0,0}, 
-  {NULL,NULL,NULL,0,0,0,0}
+ static Ldes opts[] = { /* Int Real Ch (dummy) Parallel_option*/
+  {"help",  "h","Short Help",0,0,0,0,0}, 
+  {"lhelp", "H","Long Help",0,0,0,0,0}, 
+  {"nompi", "N","Skip MPI initialization",0,0,0,0,0},
+  {"ifile", "F","XML index file name",0,0,1,0,0}, 
+  {"odir",  "O","Output directory",0,0,1,0,0}, 
+  {"dbfrag","S","DataBases fragmentation",0,0,0,0,0}, 
+  {"alat_f","a","Lattice constants rescaling factor",0,1,0,0,0},
+  {"notr",  "t","Force use of spatial Inv. instead of Time Rev.",0,0,0,0,0},
+  {"nowf",  "w","Force no wavefunctions",0,0,0,0,0},
+  {"allG",  "g","Force use of all available RL vectors",0,0,0,0,0},
+  {"verb",  "v","Verbose wfc I/O reporting",0,0,0,0,0}, 
+  {NULL,NULL,NULL,0,0,0,0,0}
  };
  char *tool="p2y";
  char *tdesc="P(Wscf) 2 Y(ambo) interface";

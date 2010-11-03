@@ -83,6 +83,9 @@ module IO_m
  !
  ! Type & extension
  !
+ character(schlen)          :: io_raw_extension(max_io_units) ! Used to define the restart files.
+                                                              ! It differs from io_extension as it does not contain any
+                                                              ! i_fragment/j_fragment.
  character(schlen)          :: io_extension(max_io_units)
  integer                    :: io_type(max_io_units)
  !
@@ -210,7 +213,8 @@ module IO_m
      !
      ! Keep the extension for the fragment-related procedures
      !
-     io_extension(ID)=desc
+     if (len_trim(io_raw_extension(ID))==0) io_raw_extension(ID)=desc
+     io_extension(ID) =desc
      !
      ! Build the file name
      !
@@ -458,6 +462,7 @@ module IO_m
      io_sec(ID,:)=0
      io_com(ID)=NONE
      io_file(ID)=' ' 
+     io_raw_extension(ID)=' ' 
      io_extension(ID)=' ' 
      io_rec_pos(ID)=1
      io_restart_point(ID)=1

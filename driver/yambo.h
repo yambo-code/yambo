@@ -32,56 +32,56 @@
 /*
  Command line structure
 */
- static Ldes opts[] = { /* Int Real Ch (Dummy)*/
-  {"help",   "h","Short Help",0,0,0,0},              
-  {"lhelp",  "H","Long Help",0,0,0,0},               
-  {"jobstr", "J","Job string identifier",0,0,1,0},   
-  {"infver", "V","Input file verbosity",0,0,1,0},    
-  {"DESC",   " ","opt=RL,kpt,sc,qp,io,gen,resp,rt,all",0,0,0,0},
-  {"ifile",  "F","Input file",0,0,1,0},              
-  {"idir",   "I","Core I/O directory",0,0,1,0},         
-  {"odir",   "O","Additional I/O directory",0,0,1,0},   
-  {"cdir",   "C","Communications I/O directory",0,0,1,0},  
-  {"nompi",  "N","Skip MPI initialization",0,0,0,0}, 
-  {"dbpr",   "D","DataBases properties",0,0,0,0},    
-  {"dbfrag", "S","DataBases fragmentation",0,0,0,0}, 
-  {"setup",  "i","Initialization",0,0,0,0},          
-  {"optics", "o","Optics [opt=(c)hi/(b)se/(t)dhf]",0,0,1,0},    
-  {"tddft",  "t","The TDDFTs [opt=(a)LDA/(b)SE/(l)RC]",0,0,1,0},     
-  {"rim_cut","c","Coulomb interaction",0,0,0,0},  
-  {"HF_and_locXC",  "x","Hartree-Fock Self-energy and local XC",0,0,0,0},      
-  {"em1d",   "d","Dynamical Inverse Dielectric Matrix",0,0,0,0},     
-  {"em1s",   "b","Static Inverse Dielectric Matrix",0,0,0,0},        
-  {"gwapprx","p","GW approximations [opt=(p)PA/c(HOSEX)]",0,0,1,0},              
-  {"gw0",    "g","Dyson Equation solver",0,0,1,0}, 
-  {"DESC",   " ","opt=n(ewton)/s(ecant)/g(reen)",0,0,0,0},
-  {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0},                  
-  {"bss",    "y","BSE solver [opt=h/d/i/t]",0,0,1,0},                      
-  {"acfdt",  "a","ACFDT Total Energy",0,0,0,0},                            
+ static Ldes opts[] = { /* Int Real Ch (dummy) Parallel_option*/
+  {"help",   "h","Short Help",0,0,0,0,0},              
+  {"lhelp",  "H","Long Help",0,0,0,0,0},               
+  {"jobstr", "J","Job string identifier",0,0,1,0,1},   
+  {"infver", "V","Input file verbosity",0,0,1,0,0},    
+  {"DESC",   " ","opt=RL,kpt,sc,qp,io,gen,resp,rt,all",0,0,0,0,0},
+  {"ifile",  "F","Input file",0,0,1,0,1},              
+  {"idir",   "I","Core I/O directory",0,0,1,0,1},         
+  {"odir",   "O","Additional I/O directory",0,0,1,0,1},   
+  {"cdir",   "C","Communications I/O directory",0,0,1,0,1},  
+  {"nompi",  "N","Skip MPI initialization",0,0,0,0,0}, 
+  {"dbpr",   "D","DataBases properties",0,0,0,0,0},    
+  {"dbfrag", "S","DataBases fragmentation",0,0,0,0,1}, 
+  {"setup",  "i","Initialization",0,0,0,0,0},          
+  {"optics", "o","Optics [opt=(c)hi/(b)se/(t)dhf]",0,0,1,0,0},    
+  {"tddft",  "t","The TDDFTs [opt=(a)LDA/(b)SE/(l)RC]",0,0,1,0,0},     
+  {"rim_cut","c","Coulomb interaction",0,0,0,0,0},  
+  {"HF_and_locXC",  "x","Hartree-Fock Self-energy and local XC",0,0,0,0,0},      
+  {"em1d",   "d","Dynamical Inverse Dielectric Matrix",0,0,0,0,0},     
+  {"em1s",   "b","Static Inverse Dielectric Matrix",0,0,0,0,0},        
+  {"gwapprx","p","GW approximations [opt=(p)PA/c(HOSEX)]",0,0,1,0,0},              
+  {"gw0",    "g","Dyson Equation solver",0,0,1,0,0}, 
+  {"DESC",   " ","opt=n(ewton)/s(ecant)/g(reen)",0,0,0,0,0},
+  {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0,0},                  
+  {"bss",    "y","BSE solver [opt=h/d/i/t]",0,0,1,0,0},                      
+  {"acfdt",  "a","ACFDT Total Energy",0,0,0,0,0},                            
 #if defined _SC
-  {"collisions_IO",  "e","Use or eval(RT only) the extended Collisions",0,0,0,0}, 
+  {"collisions_IO",  "e","Use or eval(RT only) the extended Collisions",0,0,0,0,0}, 
 #endif
 #if defined _RAS 
-  {"sursp",  "s","Surface Spectroscopy [opt=r(as)/e(el)/b(oth)]",0,0,1,0}, 
+  {"sursp",  "s","Surface Spectroscopy [opt=r(as)/e(el)/b(oth)]",0,0,1,0,0}, 
 #endif
 #if defined _REELS
-  {"reels",  "r","Surface Spectroscopy (REELS)",0,0,0,0},                  
+  {"reels",  "r","Surface Spectroscopy (REELS)",0,0,0,0,0},                  
 #endif
 #if defined _ELPH 
-  {"corrtp", "s","Correlation [opt=e(lectrons)/p(honons)/b(oth)]",0,0,1,0},    
-  {"ElPhHam","f","Electron-Phonon Hamiltonian",0,0,0,0},    
+  {"corrtp", "s","Correlation [opt=e(lectrons)/p(honons)/b(oth)]",0,0,1,0,0},    
+  {"ElPhHam","f","Electron-Phonon Hamiltonian",0,0,0,0,0},    
 #endif
 #if defined _SC | defined _MAGNETIC | defined _RT
-  {"scpot",  "v","Self-Consistent Potential",0,0,1,0}, 
-  {"DESC",   " ","opt=(hf),(c)hosex,(exx),(exxc),(srpa),(h)artree,(d)ef",0,0,0,0},
+  {"scpot",  "v","Self-Consistent Potential",0,0,1,0,0}, 
+  {"DESC",   " ","opt=(hf),(c)hosex,(exx),(exxc),(srpa),(h)artree,(d)ef",0,0,0,0,0},
 #endif
 #if defined _RT 
-  {"negf",   "k","Real-time dynamic [opt=(n)one,(p)robe,(pp)ump & probe]",0,0,1,0}, 
+  {"negf",   "k","Real-time dynamic [opt=(n)one,(p)robe,(pp)ump & probe]",0,0,1,0,0}, 
 #endif
 #if defined _MAGNETIC 
-  {"magnetic", "m","Magnetic [opt=(p)auli,(l)andau,(a)ll]",0,0,1,0}, 
+  {"magnetic", "m","Magnetic [opt=(p)auli,(l)andau,(a)ll]",0,0,1,0,0}, 
 #endif
-  {NULL,NULL,NULL,0,0,0,0}
+  {NULL,NULL,NULL,0,0,0,0,0}
  };
  char *tool="yambo";
  char *tdesc="A shiny pot of fun and happiness [C.D.Hogan]";

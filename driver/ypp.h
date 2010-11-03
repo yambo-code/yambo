@@ -35,47 +35,47 @@
 /*
  Command line structure
 */
- static Ldes opts[] = { /* Int Real Ch (Dummy)*/
-  {"help",  "h","Short Help",0,0,0,0}, 
-  {"lhelp", "H","Long Help",0,0,0,0}, 
-  {"jobstr","J","Job string identifier",0,0,1,0},   
-  {"infver", "V","Input file verbosity [opt=gen,qp,all]",0,0,1,0},    
-  {"ifile", "F","Input file",0,0,1,0},              
-  {"idir",  "I","Core I/O directory",0,0,1,0},         
-  {"odir",  "O","Additional I/O directory",0,0,1,0},        
-  {"cdir",  "C","Communications I/O directory",0,0,1,0},
-  {"nompi", "N","Skip MPI initialization",0,0,0,0}, 
-  {"dbfrag","S","DataBases fragmentation",0,0,0,0}, 
-  {"bzgrids","k","BZ Grid generator [(k)pt,(q)pt,(l)ongitudinal,(h)igh symmetry]",0,0,1,0}, 
+ static Ldes opts[] = { /* Int Real Ch (dummy) Parallel_option*/
+  {"help",  "h","Short Help",0,0,0,0,0}, 
+  {"lhelp", "H","Long Help",0,0,0,0,0}, 
+  {"jobstr","J","Job string identifier",0,0,1,0,1},   
+  {"infver","V","Input file verbosity [opt=gen,qp,all]",0,0,1,0,0},    
+  {"ifile", "F","Input file",0,0,1,0,1},              
+  {"idir",  "I","Core I/O directory",0,0,1,0,1},         
+  {"odir",  "O","Additional I/O directory",0,0,1,0,1},        
+  {"cdir",  "C","Communications I/O directory",0,0,1,0,1},
+  {"nompi", "N","Skip MPI initialization",0,0,0,0,0}, 
+  {"dbfrag","S","DataBases fragmentation",0,0,0,0,1}, 
+  {"bzgrids","k","BZ Grid generator [(k)pt,(q)pt,(l)ongitudinal,(h)igh symmetry]",0,0,1,0,0}, 
 #if defined _YPP_BOLTZMANN 
-  {"current",  "j","Current",0,0,0,0}, 
+  {"current",  "j","Current",0,0,0,0,0}, 
 #endif
 #if defined _YPP_ELPH 
-  {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mp,(w)ave,(e)lias,(g)kkp,(m)ag]",0,0,1,0}, 
-  {"electrons","s","Electrons [(w)ave,(d)ensity,(e)lias,(m)ag,do(s)]",0,0,1,0}, 
+  {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mp,(w)ave,(e)lias,(g)kkp,(m)ag]",0,0,1,0,0}, 
+  {"electrons","s","Electrons [(w)ave,(d)ensity,(e)lias,(m)ag,do(s)]",0,0,1,0,0}, 
 #endif
 #if defined _YPP_MAGNETIC 
-  {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mp,(w)ave,(m)ag]",0,0,1,0}, 
-  {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s),angu(l)ar,(p)osition]",0,0,1,0}, 
+  {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mp,(w)ave,(m)ag]",0,0,1,0,0}, 
+  {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s),angu(l)ar,(p)osition]",0,0,1,0,0}, 
 #endif
 #if ! defined _YPP_ELPH && ! defined _YPP_MAGNETIC
-  {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mplitude,(w)ave,(m)ag]",0,0,1,0}, 
-  {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s)]",0,0,1,0}, 
+  {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mplitude,(w)ave,(m)ag]",0,0,1,0,0}, 
+  {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s)]",0,0,1,0,0}, 
 #endif
-  {"freehole","f","Free hole position [excitons plot]",0,0,0,0}, 
-  {"bzrim",   "r","BZ energy RIM analyzer",0,0,0,0}, 
+  {"freehole","f","Free hole position [excitons plot]",0,0,0,0,0}, 
+  {"bzrim",   "r","BZ energy RIM analyzer",0,0,0,0,0}, 
 #if defined _YPP_RT
-  {"fixsyms", "n","Remove symmetries not consistent with an external perturbation",0,0,0,0}, 
-  {"rtpp",    "t","Real-Time post/pre-processing [X_(o)ne,X_(t)wo]",0,0,1,0}, 
+  {"fixsyms", "n","Remove symmetries not consistent with an external perturbation",0,0,0,0,0}, 
+  {"rtpp",    "t","Real-Time post/pre-processing [X_(o)ne,X_(t)wo]",0,0,1,0,0}, 
 #endif
 #if defined _YPP_ELPH
-  {"phonons","p","Phonon [(d)os,(e)lias,(a)mplitude]",0,0,1,0}, 
-  {"gkkp"  , "g","gkkp databases",0,0,0,0}, 
+  {"phonons","p","Phonon [(d)os,(e)lias,(a)mplitude]",0,0,1,0,0}, 
+  {"gkkp"  , "g","gkkp databases",0,0,0,0,1}, 
 #endif
 #if defined _YPP_RAS
-  {"surf", "a","Surface spectroscopy postprocessor",0,0,1,0}, 
+  {"surf", "a","Surface spectroscopy postprocessor",0,0,1,0,0}, 
 #endif
-  {NULL,NULL,NULL,0,0,0,0}
+  {NULL,NULL,NULL,0,0,0,0,0}
  };
  char *tool="ypp";
  char *tdesc="Y(ambo) P(ost) P(rocessor)";

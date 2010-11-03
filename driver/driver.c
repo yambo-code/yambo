@@ -45,6 +45,7 @@ typedef struct
         int   nr;
         int   nc;
         int   st;
+        int   mp;
 } Ldes;
 /* 
  Yambo/Ypp driver flag
@@ -169,18 +170,9 @@ main(int argc, char *argv[])
      if (strcmp(opts[j].ln,"help")==0) {usage(1);exit(0);};
      if (strcmp(opts[j].ln,"lhelp")==0) {usage(2);exit(0);};
 /* 
- Switch off MPI_init as I have options used to create the input file...
+ Switch off MPI_init for non-prallel options ...
 */
-#if defined _YAMBO_MAIN
-     if (j> 10) {mpi_init=-1;};
-#endif
-#if defined  _YPP_MAIN
-     if (j> 6) {mpi_init=-1;};
-#endif
-/* 
- ... or if nompi is given 
-*/
-     if (strcmp(opts[j].ln,"nompi")==0) {mpi_init=-1;};
+     if (opts[j].mp==0)  {mpi_init=-1;};
 /* 
 */
      opts[j].st++; 

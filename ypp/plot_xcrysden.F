@@ -35,10 +35,11 @@ subroutine plot_xcrysden(use_2d)
  !
  ! Work Space...
  !
- integer  :: i1,i2,i3,ir,is,ia,dir2plot(2),nr2plot(2)
+ integer  :: i1,i2,i3,i4,i5,ir,is,ia,dir2plot(2),nr2plot(2)
  real(SP) :: a_angs(3,3)    !lattice vectors in Angstrom
  real(SP) :: rv(3),max_
  character(schlen) :: ch
+ real, allocatable :: v2plot_xc(:,:,:)
  ! 
  !the atomic cell is given in a.u. and I want
  !to write the output of xcrysden in \AA
@@ -87,9 +88,9 @@ subroutine plot_xcrysden(use_2d)
  select case(plot_dim)
    !
    case(2)
-     if (use_2d(1)) nr2plot=(/nr(1),nr(2)/)
-     if (use_2d(2)) nr2plot=(/nr(1),nr(3)/)
-     if (use_2d(3)) nr2plot=(/nr(2),nr(3)/)
+     if (use_2d(1)) nr2plot=(/nr(1)+1,nr(2)+1/)
+     if (use_2d(2)) nr2plot=(/nr(1)+1,nr(3)+1/)
+     if (use_2d(3)) nr2plot=(/nr(2)+1,nr(3)+1/)
      if (use_2d(1)) dir2plot=(/1,2/)
      if (use_2d(2)) dir2plot=(/1,3/)
      if (use_2d(3)) dir2plot=(/2,3/)
@@ -123,7 +124,7 @@ subroutine plot_xcrysden(use_2d)
        do i1=1,nr2plot(1)
          call msg(output_string,'',v2plot2D(i1,i2))
        enddo
-     enddo  
+     enddo
      !
      call msg(output_string,'','END_DATAGRID_2D')
      call msg(output_string,'','END_BLOCK_DATAGRID_2D')
@@ -136,7 +137,7 @@ subroutine plot_xcrysden(use_2d)
      call msg(output_string,'Generated with YPP',code_version)
      call msg(output_string,'BEGIN_DATAGRID_3D')
      !
-     call msg(output_string,'',nr)
+     call msg(output_string,'',(/nr(1)+1,nr(2)+1,nr(3)+1/))
      call msg(output_string,'',(/0._SP,0._SP,0._SP/))
      call msg(output_string,'',ncell(1)*a_angs(1,:))
      call msg(output_string,'',ncell(2)*a_angs(2,:))
@@ -152,11 +153,33 @@ subroutine plot_xcrysden(use_2d)
        call live_timing('3D Plot of '//trim(plot_title),nr(3),SERIAL=.true.)
      endif
      !
+     allocate(v2plot_xc(nr(1)+1,nr(2)+1,nr(3)+1))
+     !
      do i3 = 0, nr(3)-1
        do i2 = 0, nr(2)-1
          do i1 = 0, nr(1)-1
            ir = 1 + i1 + i2*nr(1) + i3*nr(1)*nr(2)
-           call msg(output_string,'',v2plot(ir)/max_*WF_multiplier)
+           v2plot_xc(i1+1,i2+1,i3+1)=v2plot(ir)/max_*WF_multiplier
+           call msg(output_string,'',v2plot_xc(i1+1,i2+1,i3+1))
+           if(i1==nr(1)-1) call msg(output_string,'',v2plot_xc(1,i2+1,i3+1))
+           if(i1==nr(1)-1.and.i2==nr(2)-1) then
+             do i4=1,nr(1)
+               call msg(output_string,'',v2plot_xc(i4,1,i3+1))
+             enddo
+             call msg(output_string,'',v2plot_xc(1,1,i3+1))
+           endif
+           if(i1==nr(1)-1.and.i2==nr(2)-1.and.i3==nr(3)-1) then 
+             do i5=1,nr(2)
+               do i4=1,nr(1)
+                 call msg(output_string,'',v2plot_xc(i4,i5,1))
+               enddo
+               call msg(output_string,'',v2plot_xc(1,i5,1))
+             enddo
+             do i4=1,nr(1)
+               call msg(output_string,'',v2plot_xc(i4,1,1))
+             enddo
+             call msg(output_string,'',v2plot_xc(1,1,1))
+           endif
          enddo
        enddo
        !
@@ -165,6 +188,7 @@ subroutine plot_xcrysden(use_2d)
      enddo
      !
      call live_timing()
+     deallocate(v2plot_xc)
      !
      call msg(output_string,'','END_DATAGRID_3D')
      call msg(output_string,'','END_BLOCK_DATAGRID_3D')

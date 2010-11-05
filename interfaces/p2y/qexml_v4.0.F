@@ -18,7 +18,7 @@ MODULE qexml_module
   ! (written by Carlo Sbraccia) in the Quantum-ESPRESSO distribution,
   ! under the GNU-GPL licensing:
   !
-  ! Copyright (C) 2005 Quantum-ESPRESSO group
+  ! Copyright (C) 2002--2008 Quantum-ESPRESSO group
   ! This file is distributed under the terms of the
   ! GNU General Public License. See the file `License'
   ! in the root directory of the present distribution,
@@ -2919,35 +2919,118 @@ subroutine read_pseudo_header(psfile,nmesh,nbeta)
   CHARACTER(256) :: filename
   character(50) :: dummy
   logical       :: ldummy
-  INTEGER :: i,idummy,idummy2, unit, iostat
+  INTEGER :: i,idummy,idummy2, unit, iostat, u,ierr
 
-    CALL iotk_free_unit(unit)
-    filename= TRIM(datadir_in)//trim(psfile)
-    open(unit, FILE = TRIM(filename))
-    !
-    ! Header data
-    !
-    rewind(unit)
-    call iotk_scan_begin(unit,"PP_HEADER")
-    read(unit,*,iostat=iostat) dummy
-    read(unit,*,iostat=iostat) dummy
-    read(unit,*,iostat=iostat) dummy
-    if(trim(dummy) == "USPP") call errore( 'check_pseudo : ','Ultrasoft '//trim(psfile)//' not supported',1)
-    if(.not. trim(dummy) == "NC") call errore( 'check_pseudo : ',trim(psfile)//' file not norm conserving!',1)
-    read(unit,*,iostat=iostat) ldummy
-!   if(ldummy) WARNING("")
-    read(unit,*,iostat=iostat) dummy
-    read(unit,*,iostat=iostat) dummy ! z
-    read(unit,*,iostat=iostat) dummy
-    read(unit,*,iostat=iostat) dummy
-    read(unit,*,iostat=iostat) dummy
-    read(unit,*,iostat=iostat) nmesh
-    read(unit,*,iostat=iostat) idummy,nbeta
-    close(unit)
-    
-    return
+
+  CALL iotk_free_unit(u)
+  filename= TRIM(datadir_in)//trim(psfile)
+  open (unit = u, file = filename, status = 'old', form = &
+      'formatted', iostat = ierr)
+  IF(ierr>0) CALL errore('read_pseudo_header', &
+&                 'Cannot open file: '//TRIM(filename),1)
+
+  CALL read_upf_header_v2( u, nmesh, nbeta, psfile, ierr )
+  if(ierr>0) THEN
+      REWIND(u)
+      CALL read_upf_header_v1( u, nmesh, nbeta, psfile, ierr )
+   ENDIF
+   return
 end subroutine read_pseudo_header
 
+subroutine read_upf_header_v2( u, nmesh, nbeta, psfile, ierr )
+  implicit none
+  INTEGER, INTENT(OUT) :: nmesh,nbeta
+  CHARACTER(LEN=*), INTENT(IN) :: psfile
+  INTEGER :: i,idummy,idummy2, unit, iostat, u,ios,ierr,ierr_
+  LOGICAL :: found, tvanp
+  CHARACTER(len=iotk_attlenx) :: attr
+  CHARACTER(len=iotk_namlenx) :: root
+  CHARACTER(LEN=20) :: typ=''      ! Pseudo type ( NC or US or PAW)
+
+  ierr=0
+  CALL iotk_open_read(u, attr=attr, root=root, ierr=ierr_)
+  IF((abs(ierr_)>0) .or. .not. matches('UPF',root) ) THEN
+       CALL iotk_close_read(u,ierr=ierr)
+       RETURN
+   ENDIF
+   CALL iotk_scan_begin(u,'PP_INFO',found=found)
+   if(found) CALL iotk_scan_end(u,'PP_INFO')
+   CALL iotk_scan_empty(u, 'PP_HEADER', attr=attr)
+   CALL iotk_scan_attr(attr, 'pseudo_type',    typ)
+    if(.not. trim(typ) == "NC") call errore( 'check_pseudo : ',trim(psfile)//' file not norm conserving!',1)
+   CALL iotk_scan_attr(attr, 'is_ultrasoft',   tvanp) 
+    if(tvanp) call errore( 'check_pseudo : ','Ultrasoft '//trim(psfile)//' not supported',1)
+    CALL iotk_scan_attr(attr, 'mesh_size',      nmesh)
+    CALL iotk_scan_attr(attr, 'number_of_proj', nbeta)
+    close(u)
+
+  return
+end subroutine read_upf_header_v2
+
+subroutine read_upf_header_v1( u, nmesh, nbeta, psfile, ierr )
+  implicit none
+  INTEGER, INTENT(OUT) :: nmesh,nbeta
+  CHARACTER(LEN=*), INTENT(IN) :: psfile
+  !
+  character(50) :: dummy
+  logical       :: ldummy
+  INTEGER :: i,idummy,idummy2, unit, iostat, u,ios,ierr
+
+  !------->Search for Header
+  !     This version doesn't use the new routine scan_begin
+  !     because this search must set extra flags for
+  !     compatibility with other pp format reading
+  ierr = 1
+  ios = 0
+  rewind(u)
+  header_loop: do while (ios == 0)
+     read (u, *, iostat = ios, err = 200) dummy
+     if (matches ("<PP_HEADER>", dummy) ) then
+        ierr = 0
+    read(u,*,iostat=iostat) dummy
+    read(u,*,iostat=iostat) dummy
+    read(u,*,iostat=iostat) dummy
+    if(trim(dummy) == "USPP") call errore( 'check_pseudo : ','Ultrasoft '//trim(psfile)//' not supported',1)
+    if(.not. trim(dummy) == "NC") call errore( 'check_pseudo : ',trim(psfile)//' file not norm conserving!',1)
+    read(u,*,iostat=iostat) ldummy
+    read(u,*,iostat=iostat) dummy
+    read(u,*,iostat=iostat) dummy ! z
+    read(u,*,iostat=iostat) dummy
+    read(u,*,iostat=iostat) dummy
+    read(u,*,iostat=iostat) dummy
+    read(u,*,iostat=iostat) nmesh
+    read(u,*,iostat=iostat) idummy,nbeta
+    close(u)
+        exit header_loop
+     endif
+  enddo header_loop
+     if(ierr.eq.1) write(*,*) "<PP_HEADER> not found! in"//trim(psfile)
+200  return
+end subroutine read_upf_header_v1
+
+ !-----------------------------------------------------------------------
+  logical function matches (string1, string2)
+    !-----------------------------------------------------------------------
+    !
+    ! .true. if string 1 is contained in string2, .false. otherwise
+    !
+    implicit none
+    character (len=*) :: string1, string2
+    integer :: len1, len2, l
+
+
+    len1 = len_trim(string1)
+    len2 = len_trim(string2)
+    do l = 1, len2 - len1 + 1
+       if (string1 (1:len1) .eq.string2 (l:l + len1 - 1) ) then
+          matches = .true.
+          return
+       endif
+    enddo
+
+    matches = .false.
+    return
+  end function matches
 
 subroutine read_pseudo_data(psfile,nmesh,nbeta,z,mesh,&
 &          wmesh,vloc,lbeta,mesh_beta,beta,d) 

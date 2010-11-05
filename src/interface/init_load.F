@@ -122,6 +122,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !===================
  call it('r',defs,'acfdt',   '[R ETOT] ACFDT Total Energy')
  call it('r',defs,'bs_fxc',  '[R TDDFT] The BSE TDDFT kernel')
+#if defined _ELPH 
+ call it('r',defs,'ElPhHam', '[R] Frohlich Hamiltonian') 
+#endif
  !
  ! GPL_EXCLUDE_END
  !
@@ -146,7 +149,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _ELPH 
  call it('r',defs,'el_ph',   '[R] Electron-Phonon Correlation')   
  call it('r',defs,'el_el',   '[R] Electron-Electron Correlation') 
- call it('r',defs,'ElPhHam', '[R] Frohlich Hamiltonian') 
 #endif
  !
  !================
@@ -360,8 +362,14 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _ELPH 
  call it(defs,'GphBRnge',  '[ELPH] G[W] bands range',QP_PH_n_G_bands)
  call it(defs,'ElPhModes', '[ELPH] Phonon modes included',elph_branches)
+ !
+ ! GPL_EXCLUDE_START
+ !
  call it(defs,'ElPhHBRnge','[ELPH] Hamiltonian bands range',elph_Ham_bands)
  call it(defs,'ElPhHKpt',  '[ELPH] Hamiltonian k-point',elph_Ham_ik)
+ !
+ ! GPL_EXCLUDE_END
+ !
  call it('f',defs,'WRgFsq','[ELPH] Dump on file gFsq coefficients')
 #endif
  ! 

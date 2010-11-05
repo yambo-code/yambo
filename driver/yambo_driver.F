@@ -259,11 +259,15 @@ integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
    !
  endif
  !
+ ! GPL_EXCLUDE_START
+ !
  ! Electron-Phonon Hamiltonian
  !=============================
 #if defined _ELPH
  if (l_elph_Hamiltonian) call ELPH_Hamiltonian(en,k,q)
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! GAME OVER :(
  !==============

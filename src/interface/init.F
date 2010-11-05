@@ -568,11 +568,17 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! El-Ph: Frohlich Hamiltonian
  !
-#if defined  _ELPH 
+ ! GPL_EXCLUDE_START
+ !
+#if defined _ELPH 
+ !
  if (l_elph_Hamiltonian) then
    call initactivate(1,'ElPhHBRnge ElPhModes ElPhHKpt GDamping')
  endif
+ !
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Optics + BS based TDDFT (BS fxc is only of q=0 0 0)
  !
@@ -850,10 +856,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          ! Only in this case ioELPH_err is defined
          !
          l_ph_corr=runlevel_is_on('el_ph').and.ioELPH_err==0
+         ! GPL_EXCLUDE_START
          l_elph_Hamiltonian=runlevel_is_on('ElPhHam').and.ioELPH_err==0
+         ! GPL_EXCLUDE_END
        else
          l_ph_corr=runlevel_is_on('el_ph')
+         ! GPL_EXCLUDE_START
          l_elph_Hamiltonian=runlevel_is_on('ElPhHam')
+         ! GPL_EXCLUDE_END
        endif
        l_el_corr=runlevel_is_on('el_el')
 #else

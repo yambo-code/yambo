@@ -1,5 +1,8 @@
+#if defined _ELPH 
+ELPH_objects = ioELPH.o
+#endif
 objs = ver_is_gt_or_eq.o IO_and_Messaging_switch.o \
-       ioRIM.o        ioGROT.o     \
+       ioRIM.o        ioGROT.o     $(ELPH_objects) \
        io_DIPOLES.o   ioQINDX.o    ioQP.o      ioX.o \
        ioDB1.o        ioWF.o       ioKB_PP.o   io_HF_and_locXC.o \
        ioBS.o         \

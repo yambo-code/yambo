@@ -185,6 +185,8 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
 #endif
  !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _ELPH
  !
  ! Green Functions must be all mapped to the Xw range so
@@ -193,6 +195,8 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  if (associated(Xen%GreenF).and.current_iq==0) call X_GreenF_remap(X%ib,Xen,Xw)
  !
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Time-Rev is Spatial Inv => only half X is eval
  !                            ===================

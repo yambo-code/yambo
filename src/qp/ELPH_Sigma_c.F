@@ -538,7 +538,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
                DP_FAN(iw)=DP_FAN(iw)+gsqF_fan(i_qp,iq_loop,il,iw)*(bose_f(ph_freq)+1.)/2.+&
 &                                    gsqF_ca_corr(i_qp,iq_loop,il,iw)
              else
-               DP_FAN(iw)=DP_FAN(iw)+coefficient*(gsqF_life_bose(i_qp,Q_map(iq_loop),il,iw)*(bose_f(ph_freq)+1.)/2.+&
+               DP_FAN(iw)=DP_FAN(iw)+coefficient*(gsqF_life_bose(i_qp,Q_map(iq_loop),il,iw)*(bose_f(ph_freq)/2+1.)/2.+&
 &                                    gsqF_life_f(i_qp,Q_map(iq_loop),il,iw))
              endif
              !

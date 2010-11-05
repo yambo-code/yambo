@@ -22,9 +22,11 @@
 subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
  !
  use pars,       ONLY:SP
+ ! GPL_EXCLUDE_START
 #if defined _ELPH
  use units,      ONLY:pi
 #endif
+ ! GPL_EXCLUDE_END
  use X_m,        ONLY:use_X_RIM
  use BS,         ONLY:BSS_uses_RIM
  use electrons,  ONLY:levels,BZ_RIM_table,BZ_RIM_nkpt,spin_occ,BZ_RIM_nbands
@@ -44,10 +46,12 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
  integer      ::i1,i2,iw,ikbz,ikpbz,iv,ic,i_spin,ik_rand,ikp_rand,ik,ikp
  real(SP)     ::ffac,f0fac,W_
  complex(SP)  ::Z_,pole
+ ! GPL_EXCLUDE_START
 #if defined _ELPH
  complex(SP), allocatable  ::Green_F_convoluted(:)
  real(SP)                  ::W_step
 #endif
+ ! GPL_EXCLUDE_END
  !
  GreenF  = cmplx(0.,0.,SP)
  !
@@ -61,6 +65,7 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
  ic     = transitions(3)
  i_spin = transitions(4)
  !
+ ! GPL_EXCLUDE_START
 #if defined _ELPH
  !
  ! Green Functions convolution
@@ -101,6 +106,7 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
  endif
  !
 #endif
+ ! GPL_EXCLUDE_END
  !
  W_=0.
  Z_=(1.,0.)

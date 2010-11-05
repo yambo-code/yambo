@@ -191,7 +191,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Excitonic Eliashberg function 
  !================================
- !
+ !GPL_EXCLUDE_START
 #if defined _YPP_ELPH
  if (l_eliashberg.or.l_gkkp) then
    allocate (lambda_s(n_lambda)) 
@@ -201,6 +201,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    return
  endif
 #endif
+ !GPL_EXCLUDE_END
  !
  ! GPL_EXCLUDE_START SPIN_IGNORE
  !

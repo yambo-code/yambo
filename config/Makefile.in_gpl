@@ -69,7 +69,7 @@ YPPLIBS      = $(BASIC_LIBS) bz_ops qp_ctl setup interface pol_function bse
 #
 PROJECTS = 
 #if defined _ELPH
-PROJECTS = yambo_ph
+PROJECTS = yambo_ph ypp_ph
 #endif
 #if defined _AUGER
 PROJECTS = yambo_auger
@@ -123,6 +123,9 @@ yambo_manyk: libs
 yambo_ph: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_ELPH"; $(mksrc)
 	@X2DO="yambo_ph"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_ELPH";$(mkx)
+ypp_ph: libs
+	@LIBS2DO="$(YPPLIBS)";ADF="-D_ELPH"; $(mksrc)
+	@X2DO="ypp_ph" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_ELPH";$(mkx)
 #endif
 #if defined _RAS
 yambo_ras: libs
@@ -136,9 +139,6 @@ ypp_ras: libs
 yambo_reels: libs
 	@LIBS2DO="$(PJ_REELSLIBS)";ADF="-D_REELS"; $(mksrc)
 	@X2DO="yambo_reels"; XPATH="driver";XLIBS="$(PJ_REELSLIBS)";ADF="-D_REELS";$(mkx)
-ypp_ph: libs
-	@LIBS2DO="$(YPPLIBS)" ; $(mksrc)
-	@X2DO="ypp_ph" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_ELPH";$(mkx)
 #endif
 interfaces: libs
 	@LIBS2DO="$(2YLIBS)" ; $(mksrc)

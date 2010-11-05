@@ -324,10 +324,12 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        l_mag   =trim(rstr_piece(i1+1))=='m'.and.n_spin>1
        !
        ! GPL_EXCLUDE_END SPIN_IGNORE
+       ! GPL_EXCLUDE_START
        !
 #if defined _YPP_ELPH
        l_eliashberg      =trim(rstr_piece(i1+1))=='e'
 #endif
+       ! GPL_EXCLUDE_END
        !
      endif
      if ( trim(rstr_piece(i1)) == 'electrons') then

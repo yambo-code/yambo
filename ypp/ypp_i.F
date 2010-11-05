@@ -183,7 +183,9 @@ integer function ypp_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
    ! =====     ========
    if (l_gkkp)                i_err=ELPH_databases(k,en,q)
    if (l_eliashberg.or.l_dos) call ELPH_eliashberg_dos(k,en,q)
+   ! GPL_EXCLUDE_START
    if (l_atomic_amplitude)    call ELPH_atomic_amplitude(q)
+   ! GPL_EXCLUDE_END
  endif
  !
  if (l_electrons.and.l_eliashberg) call ELPH_general_gFsq(k,en,Xk,Xen,q)

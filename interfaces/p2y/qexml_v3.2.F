@@ -1662,7 +1662,7 @@ subroutine read_pseudo_header(psfile,nmesh,nbeta)
   INTEGER :: i,idummy,idummy2, unit, iostat
 
     CALL iotk_free_unit(unit)
-    filename= TRIM(datadir_in)//trim(psfile)
+    filename= TRIM(datadir)//trim(psfile)
     open(unit, FILE = TRIM(filename))
     !
     ! Header data

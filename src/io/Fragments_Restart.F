@@ -30,7 +30,6 @@ subroutine Fragments_Restart(ID,current_fragment,fragments_todo)
  use timing,    ONLY:date_and_time_string
  use com,       ONLY:msg
  use fragments, ONLY:Parallel_Fragments,fragment_status
- use par_proc_m,ONLY:myid
  implicit none
  integer          ::ID
  integer, optional::current_fragment,fragments_todo
@@ -41,9 +40,9 @@ subroutine Fragments_Restart(ID,current_fragment,fragments_todo)
  !
  io_restart_point(ID)=0
  !
- if (.not.present(current_fragment).and..not.present(fragments_todo).and.io_mode(ID)/=VERIFY.and.io_mode(ID)/=DUMP) return
+ if (.not.any((/present(current_fragment),present(fragments_todo),io_mode(ID)==VERIFY,io_mode(ID)==DUMP/))) return
  !
- restart_file  =get_name(desc=trim(io_raw_extension(ID))//"_CPU"//trim(intc(myid)),&
+ restart_file  =get_name(desc=trim(io_raw_extension(ID)),&
 &                        type=4,CORE_IO=.false.,MORE_IO=.true.,COM_IO=.FALSE.,NETCDF=.false.)
  !
  restart_folder=trim(more_io_path)//"/RESTART"
@@ -73,7 +72,7 @@ subroutine Fragments_Restart(ID,current_fragment,fragments_todo)
    write (81,'(/2x,2(a,i6,1x))') 'Section Completed ',current_fragment,'. To reach ',fragments_todo
    close(81)
    !
- else
+ else 
    !
    local_string=" "
    !

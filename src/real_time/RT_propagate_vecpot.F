@@ -25,7 +25,7 @@ subroutine RT_propagate_vecpot(A_new,A_old,T_step,RT_time)
  !
  use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT
- use real_time,      ONLY:RT_ind_J,l_RT_induced_field,j_current_ext,Ext_fields_initial_time
+ use real_time,      ONLY:RT_ind_J,l_RT_induced_field,j_current_ext,Ext_fields_initial_itime,i_time
  use fields,         ONLY:gauge_field
  implicit none
  !
@@ -43,7 +43,7 @@ subroutine RT_propagate_vecpot(A_new,A_old,T_step,RT_time)
  ! A'(t + dt) = A'(t) + A''(t) * dt
  ! A(t + dt)  = A(t)  + A'(t)  * dt + A''(t) * dt^2/2
  !
- if(RT_time<Ext_fields_initial_time) return
+ if(i_time<Ext_fields_initial_itime) return
  !
  A_new%vecpot_acc =  j_current_ext*4._SP*pi*SPEED_OF_LIGHT
  !

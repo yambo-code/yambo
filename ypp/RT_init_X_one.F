@@ -22,12 +22,13 @@
 subroutine RT_init_X_one()
  !
  use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,RT_J_t,i_t_start,i_t_end,A_vecpot_vel_t,&
-&                         W_RT_induced_step
+&                         W_RT_induced_step,RED_steps,ref_efield
  use com,            ONLY:warning
  use pars,           ONLY:pi,SP
  use units,          ONLY:FS2AUT,HARTREE
  use stderr,         ONLY:real2ch
  use real_time,      ONLY:NE_steps,RT_step,RT_ind_J,RT_output,RT_P,RT_output
+ use fields,         ONLY:Efield
  implicit none
  !
  ! Work Space
@@ -40,13 +41,21 @@ subroutine RT_init_X_one()
  !  Reduced Time range
  !====================
  !
- i_t_start=int(X_rt%time_range(1)/RT_step)
+ i_t_start=int(X_rt%time_range(1)/RT_step)+1
  i_t_end  =int(X_rt%time_range(2)/RT_step)
  !
- if(i_t_start<=0.or.i_t_start>NE_steps) i_t_start=1
- if(i_t_end<=0.or.i_t_end>NE_steps)     i_t_end  =NE_steps
+ if(i_t_start<int(Efield(ref_efield)%t_initial/RT_step)+1.or.i_t_start>NE_steps) then
+    i_t_start=int(Efield(ref_efield)%t_initial/RT_step)+1
+    call warning('Initial time redefined to be '//trim(real2ch((i_t_start-1)*RT_step/FS2AUT))//' fs')
+ endif
+ if(i_t_end<=0.or.i_t_end>NE_steps) then
+   i_t_end  =NE_steps
+   call warning('Final time redefined to be '//trim(real2ch(i_t_end*RT_step/FS2AUT))//' fs')
+ endif
  !
- W_RT_induced_step=2.*pi/(real(NE_steps,SP)*RT_step)  ! Frequency step in real-time dynamics
+ RED_steps=i_t_end-i_t_start+1
+ !
+ W_RT_induced_step=2.*pi/(real(RED_steps,SP)*RT_step)  ! Frequency step in real-time dynamics
  ! 
  ! DAMPING
  !=========
@@ -63,9 +72,9 @@ subroutine RT_init_X_one()
  ! apply the damping
  !===================
  !
- call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_J_t,NE_steps,RT_step,3)
- call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_P_t,NE_steps,RT_step,3)
- call RT_damp_it(X_rt%damp,X_rt%damp_factor,A_vecpot_vel_t,NE_steps,RT_step,3)
+ call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_J_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
+ call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_P_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
+ call RT_damp_it(X_rt%damp,X_rt%damp_factor,A_vecpot_vel_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
  !
  ! Print the dumped current and polarization 
  !-------------------------------------------

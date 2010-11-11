@@ -31,9 +31,8 @@ module real_time
  ! Three-levels flags
  !
  logical  :: l_3levels
- real(SP) :: en_levels(3)
- real(SP) :: lambda_offdiag(3)  ! dephasing terms (lambda_12,lambda_13,lambda_23)
- real(SP) :: lambda_diag(3)     ! diagonal terms  (lambda_11,lambda_22,lambda_33)
+ real(SP) :: tau_offdiag(3)  ! dephasing terms (tau_12,tau_13,tau_23)
+ real(SP) :: tau_diag(3)     ! diagonal terms  (tau_11,tau_22,tau_33)
  real(SP) :: dip(3)             ! dipoles (D_12, D_13, D_23) In principle they can be complex
  real(SP) :: W1
  !
@@ -88,7 +87,7 @@ module real_time
  !
  real(SP) :: RT_step
  real(SP) :: Thermal_time
- real(SP) :: Ext_fields_initial_time
+ real(SP) :: Ext_fields_initial_itime
  integer  :: NE_steps
  integer  :: Thermal_steps
  integer  :: RT_memory_steps
@@ -137,7 +136,7 @@ module real_time
  !
  ! Hartree term
  !
- complex(SP), allocatable :: XC0(:,:,:,:)
+ complex(SP), allocatable :: XC0_and_HARTREE0(:,:,:,:)
  complex(SP), allocatable :: H_t(:,:,:,:)
  !
  ! Occupation natural orbitals
@@ -225,8 +224,8 @@ module real_time
      !
      if(l_RT_needs_XC0) then
        !
-       allocate(XC0(SC_bands,SC_bands,QP_nk,n_sp_pol))
-       call mem_est("XC0",(/size(XC0)/),(/2*SP/))
+       allocate(XC0_and_HARTREE0(SC_bands,SC_bands,QP_nk,n_sp_pol))
+       call mem_est("XC0_and_HARTREE0",(/size(XC0_and_HARTREE0)/),(/2*SP/))
        !
      endif
      !
@@ -287,10 +286,10 @@ module real_time
      deallocate(E_xc)
      call mem_est('Exc')
      !
-     if(allocated(XC0)) then
+     if(allocated(XC0_and_HARTREE0)) then
        !      
-       deallocate(XC0)
-       call mem_est("XC0")
+       deallocate(XC0_and_HARTREE0)
+       call mem_est("XC0_and_HARTREE0")
        !
      endif
      !

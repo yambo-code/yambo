@@ -197,7 +197,7 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,l_plan_todo_EWZI,&
      !
    end subroutine
    !
-   real function kmin_distance(k,p) ! k/p are iku
+   real(SP) function kmin_distance(k,p) ! k/p are iku
      use pars
      use vec_operate,  ONLY:iku_v_norm,c2a
      use R_lattice,    ONLY:b

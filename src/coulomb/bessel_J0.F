@@ -28,12 +28,25 @@ function bessel_J0(s)
  ! 
  ! Work Space
  !
- real(SP) ::  s,arg,BESJ0
+ real(SP) ::  s,arg
+#if defined _DOUBLE
+ real(SP) :: DBESJ0_
+#else
+ real(SP) :: BESJ0
+#endif
  !
  arg=cyl_vr_save*s
  if(cyl_zz_save==0) then
+#if defined _DOUBLE
+   bessel_J0=DBESJ0_(arg)
+#else
    bessel_J0=BESJ0(arg)
+#endif
  else
+#if defined _DOUBLE
+   bessel_J0=DBESJ0_(arg)*s/sqrt(s**2+cyl_zz_save**2)
+#else
    bessel_J0=BESJ0(arg)*s/sqrt(s**2+cyl_zz_save**2)
+#endif
  endif
 end function

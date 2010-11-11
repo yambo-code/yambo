@@ -28,7 +28,8 @@ subroutine RT_Energy(en,k,RT_Energies)
  use D_lattice,      ONLY:DL_vol
  use SC,             ONLY:V_hartree_sc,Ho
  use X_m,            ONLY:P_square
- use real_time,      ONLY:XC0,G_lesser,RT_average_operator,XCfrozen,l_NE_with_fields
+ use real_time,      ONLY:XC0_and_HARTREE0,G_lesser,RT_average_operator,XCfrozen,l_NE_with_fields, &
+&                         l_NE_simulate_IP 
  use fields,         ONLY:A_vecpot
  use electrons,      ONLY:levels
  use QP_m,           ONLY:QP_Vnl_xc,QP_Sc
@@ -45,6 +46,15 @@ subroutine RT_Energy(en,k,RT_Energies)
  !
  complex(SP)               :: E_kin,E_ion,E_h,Trace_Gf,Exc,Ex,E_mg
  !
+ !      
+ E_kin    =(0.,0.)
+ E_ion    =(0.,0.)
+ E_h      =(0.,0.)
+ Trace_Gf =(0.,0.)
+ Exc      =(0.,0.)
+ Ex       =(0.,0.)
+ E_mg     =(0.,0.)
+ !
  ! Non-interaction kinetc energy
  !
  ! E_Kin = - i Tr { P^2 G^<}/2  
@@ -59,11 +69,15 @@ subroutine RT_Energy(en,k,RT_Energies)
  !
  E_ion = E_ion - E_kin
  !
- ! Hartree potential Energy
- !
- call RT_average_operator(VALUE=E_h,O_REAL=V_hartree_sc,G=G_lesser,k=k)
- !
- E_h=E_h/2._SP
+ if(.not.l_NE_simulate_IP) then
+   !
+   ! Hartree potential Energy
+   !
+   call RT_average_operator(VALUE=E_h,O_REAL=V_hartree_sc,G=G_lesser,k=k)
+   !
+   E_h=E_h/2._SP
+   !
+ endif
  !
  if(l_sc_hf.or.l_sc_cohsex) then
    !
@@ -79,7 +93,10 @@ subroutine RT_Energy(en,k,RT_Energies)
  !
  if(XCfrozen) then
    !
-   call RT_average_operator(VALUE=Exc,O_MATRIX=XC0,G=G_lesser,k=k)
+   ! Notice that XC0_and_HARTREE0 contains the Hartree part only in case
+   ! of indipendent particles
+   !
+   call RT_average_operator(VALUE=Exc,O_MATRIX=XC0_and_HARTREE0,G=G_lesser,k=k)
    !
  else
    !

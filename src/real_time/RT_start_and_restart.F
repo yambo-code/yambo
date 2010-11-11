@@ -36,8 +36,8 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  use real_time,      ONLY:Wo,W_pump,W1,l_3levels
 #endif
  use real_time,      ONLY:G_lesser,ID,ID,NE_steps,G_lesser_previous,RT_ind_J,&
-&                         G_lesser_reference,Thermal_steps,RT_is_dumped,XC0,      &
-&                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields
+&                         G_lesser_reference,Thermal_steps,RT_is_dumped,l_NE_simulate_IP,&
+&                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V, &
 &                         rho_convergence,H_rotate,local_V,V_hartree_sc,      &
@@ -66,10 +66,11 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  G_lesser          =(0._SP,0._SP)
  V_xc_sc           =(0._SP)
  V_hartree_sc      =(0._SP)
+ H_nl_sc           =(0._SP,0._SP)
  !
  ! Set to zero current and fields
  !
- RT_ind_J             =(0._SP,0._SP)
+ RT_ind_J           =(0._SP,0._SP)
  A_vecpot%vecpot    =(0._SP,0._SP)
  A_vecpot%vecpot_vel=(0._SP,0._SP)
  A_vecpot%vecpot_acc=(0._SP,0._SP)
@@ -153,7 +154,7 @@ subroutine RT_start_and_restart(Xen,Xk,k)
    !
    if(l_RT_needs_XC0) then
      !
-     XC0=(0._SP,0._SP)
+     XC0_and_HARTREE0=(0._SP,0._SP)
      !
      if (local_V) then 
        call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID(3))  ! Local potential
@@ -165,27 +166,49 @@ subroutine RT_start_and_restart(Xen,Xk,k)
      !
      do ik=1,QP_nk
        if (local_V) then
-         call V_real_space_to_H(ik,V_hartree_sc+V_xc,XC0(:,:,ik,:),wf)
+         call V_real_space_to_H(ik,V_hartree_sc+V_xc,XC0_and_HARTREE0(:,:,ik,:),wf)
        else
          call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(3))
          io_V=io_SC_components('V',Xen,ID(3))
-         XC0(:,:,ik,:)=H_nl_sc(:,:,:)
+         XC0_and_HARTREE0(:,:,ik,:)=H_nl_sc(:,:,:)
        endif
      enddo
    endif
    !
+   if(l_NE_simulate_IP) then 
+     !
+     do ik=1,QP_nk
+       call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(:,:,ik,:),wf) 
+     enddo
+     !
+     V_xc_sc=(0._SP)
+     V_hartree_sc=(0._SP)
+     !
+   endif
+   !
  else if (l_RT_needs_XC0) then
    !
-   XC0=(0._SP,0._SP)
+   XC0_and_HARTREE0=(0._SP,0._SP)
    !
    call IO_and_Messaging_switch("-report -log")
    call XC_potential_driver(Xen,Xk,WF_KIND,WF_xc_functional,1,G_lesser)
    call IO_and_Messaging_switch("+report +log")
+   !
+   ! In the IP  case XC0_and_HARTREE0  contains <mk | Vxc(rho_0) + Vhartree(rho_0) | nk>
+   !
+   ! in the RPA case XC0_and_HARTREE0  contains only  <mk | Vxc(rho_0) | nk>
+   !
    do ik=1,QP_nk
-     call V_real_space_to_H(ik,V_xc,XC0(:,:,ik,:),wf) 
+     if(l_NE_simulate_IP) then   
+       call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(:,:,ik,:),wf) 
+       call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(:,:,ik,:),wf) 
+     else
+       call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(:,:,ik,:),wf) 
+     endif
    enddo
    !
    V_xc_sc=(0._SP)
+   if(l_NE_simulate_IP) V_hartree_sc=(0._SP)
    !
  endif
  !

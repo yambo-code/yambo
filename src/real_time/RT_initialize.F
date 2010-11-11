@@ -27,7 +27,7 @@ subroutine RT_initialize()
 &                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,    &
 &                         l_RT_no_diamagnetic,max_rt_steps_disk,     &
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,         &
-&                         l_RT_induced_field,j_current_ext,Ext_fields_initial_time,RT_diagonalization_steps,&
+&                         l_RT_induced_field,j_current_ext,Ext_fields_initial_itime,RT_diagonalization_steps,&
 &                         RT_is_dumped,QP_LifeTime,Phase_LifeTime
  use D_lattice,      ONLY:DL_vol
  use fields,         ONLY:global_gauge,Efield,n_ext_fields
@@ -71,7 +71,7 @@ subroutine RT_initialize()
  !
  ! Earliest time when the external field is switched on
  !
- Ext_fields_initial_time=1.E10
+ Ext_fields_initial_itime=1.E10
  !
  l_NE_with_fields=.false.
  !
@@ -81,7 +81,7 @@ subroutine RT_initialize()
    !
    if((Efield(i1)%ef_name/='none').and.Efield(i1)%intensity/=0.) then
      !      
-     Ext_fields_initial_time=min(Efield(i1)%t_initial,Ext_fields_initial_time)
+     Ext_fields_initial_itime=int(min(Efield(i1)%t_initial,Ext_fields_initial_itime*RT_step)/RT_step)
      !      
      l_NE_with_fields=.true.
      !
@@ -110,7 +110,7 @@ subroutine RT_initialize()
  call msg( 'r', '[RT] Step length            [fs]:',RT_step/FS2AUT)
  if(NE_steps>0) then
    call msg('sr', '[RT] Response energy window        [eV]:',&
-&                  (/2.*pi/(RT_step*real(NE_steps)-Ext_fields_initial_time),pi/RT_step/)*HARTREE)
+&                  (/2.*pi/real(NE_steps-Ext_fields_initial_itime)*RT_step,pi/RT_step/)*HARTREE)
    call msg('rsn','[RT] Electron-gas plasmon frequency[eV]:',sqrt(4._SP*pi*nel/DL_vol)*HARTREE)
  endif
  call msg('rsn','[RT] Simulation time        [fs]:',(/-real(Thermal_steps)*RT_step,RT_step*real(NE_steps)/)/FS2AUT)

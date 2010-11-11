@@ -34,7 +34,7 @@ subroutine RT_init_vecpot()
  use com,            ONLY:msg
  use X_m,            ONLY:DIP_iR,DIP_P
  use real_time,      ONLY:W_pump,Wo,Rabi_freq_pump,P,delta,Rabi_nn,D,Rabi_freq_probe
- use real_time,      ONLY:l_3levels,dip,W1
+ use real_time,      ONLY:l_3levels,dip,W1,tau_offdiag
 #endif
  !
  implicit none
@@ -83,7 +83,14 @@ subroutine RT_init_vecpot()
    DIP_iR(1,3,1,1,1)= DIP_P(1,3,1,1,1) /(+W1)
    DIP_iR(1,3,2,1,1)= DIP_P(1,3,2,1,1) /(+W1-Wo)
    !
-   W_pump=Efield(i_pump)%frequency 
+   select case(trim(Efield(i_pump)%ef_name))
+     case('ANTIRES')
+       W_pump=-Efield(i_pump)%frequency 
+     case('RES')
+       W_pump=Efield(i_pump)%frequency 
+   end select
+   !
+   call msg('s','[3 LEVELS] Energy Levels [eV]',(/Wo*HARTREE,W1*HARTREE/))
    !
  else
    !
@@ -112,6 +119,7 @@ subroutine RT_init_vecpot()
    !
    Rabi_freq_pump=2.*Efield(i_pump)%amplitude*mu(i_pump)
    !
+   call msg('s','[2 LEVELS] Wo              [eV   ]',abs(Wo)*HARTREE)
    call msg('s','[2 LEVELS] Pump Rabi freq  [eV   ]',abs(Rabi_freq_pump)*HARTREE)
    call msg('s','[2 LEVELS] Pump freq       [eV/fs]',(/abs(W_pump)*HARTREE,2.*pi/W_pump/FS2AUT /))
    delta=0.

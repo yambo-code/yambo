@@ -25,7 +25,8 @@
 !
 subroutine RT_X_one(en,k)
  !
- use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,RT_J_t,A_vecpot_vel_t,W_RT_induced_step
+ use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,RT_J_t,A_vecpot_vel_t,W_RT_induced_step, &
+&                         i_t_start,i_t_end,RED_steps
  use pars,           ONLY:SP,DP,pi,cI
  use units,          ONLY:FS2AUT,HARTREE,SPEED_OF_LIGHT 
  use electrons,      ONLY:levels
@@ -34,7 +35,7 @@ subroutine RT_X_one(en,k)
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:bz_samp
  use timing,         ONLY:live_timing
- use real_time,      ONLY:NE_steps,RT_step,RT_ind_J,RT_output,RT_P,RT_output
+ use real_time,      ONLY:RT_step,RT_ind_J,RT_output,RT_P,RT_output
  use fields,         ONLY:Efield,A_vecpot,global_gauge 
  implicit none
  !
@@ -43,7 +44,7 @@ subroutine RT_X_one(en,k)
  !
  ! Work Space
  !
- integer  :: i_t,i_w,i_c,i_t_start,i_t_end
+ integer  :: i_t,i_w,i_c
  real(SP) :: W_step,Time_reached,W_reached
  complex(SP), allocatable :: EELS(:),EPS(:),freqs(:)
  complex(DP), allocatable :: X_irrep(:,:),A_vecpot_vel_w(:,:)
@@ -64,16 +65,16 @@ subroutine RT_X_one(en,k)
    ! I want to print only the positive frequencies
    ! i_w > energy_steps/2 correspond to the negative ones
    !
-   X_rt%energy_steps   =NE_steps/2
+   X_rt%energy_steps   =RED_steps/2
    X_rt%energy_range(1)=0.
-   X_rt%energy_range(2)=W_RT_induced_step*NE_steps/2.
+   X_rt%energy_range(2)=W_RT_induced_step*RED_steps/2.
    !
-   allocate(EELS(NE_steps),EPS(NE_steps),X_irrep(NE_steps,3))  
-   allocate(A_vecpot_vel_w(NE_steps,3))
+   allocate(EELS(RED_steps),EPS(RED_steps),X_irrep(RED_steps,3))  
+   allocate(A_vecpot_vel_w(RED_steps,3))
    !
  else
    !
-   allocate(EELS(X_rt%energy_steps),EPS(X_rt%energy_steps),X_irrep(NE_steps,3)) 
+   allocate(EELS(X_rt%energy_steps),EPS(X_rt%energy_steps),X_irrep(X_rt%energy_steps,3)) 
    allocate(A_vecpot_vel_w(X_rt%energy_steps,3))
    !
  endif
@@ -105,15 +106,15 @@ subroutine RT_X_one(en,k)
    !
    do i_c=1,3
      !
-     X_irrep(:,i_c)        = RT_P_t(:,i_c)
-     A_vecpot_vel_w(:,i_c) = A_vecpot_vel_t(:,i_c)
+     X_irrep(:,i_c)        = RT_P_t(i_t_start:i_t_end,i_c)
+     A_vecpot_vel_w(:,i_c) = A_vecpot_vel_t(i_t_start:i_t_end,i_c)
      !
 #if defined _FFTW
-    call fft_1d(X_irrep(:,i_c),NE_steps,fft_sign,fftw_plan)
-    call fft_1d(A_vecpot_vel_w(:,i_c),NE_steps,fft_sign,fftw_plan)
+    call fft_1d(X_irrep(:,i_c),RED_steps,fft_sign,fftw_plan)
+    call fft_1d(A_vecpot_vel_w(:,i_c),RED_steps,fft_sign,fftw_plan)
 #else
-    call fft_1d(X_irrep(:,i_c),NE_steps,fft_sign)
-    call fft_1d(A_vecpot_vel_w(:,i_c),NE_steps,fft_sign)
+    call fft_1d(X_irrep(:,i_c),RED_steps,fft_sign)
+    call fft_1d(A_vecpot_vel_w(:,i_c),RED_steps,fft_sign)
 #endif
      !
    enddo
@@ -123,8 +124,8 @@ subroutine RT_X_one(en,k)
    !
  else
    ! 
-   call Fourier_Transform(freqs,X_irrep,X_rt%energy_steps,RT_P_t,NE_steps,RT_step,3)
-   call Fourier_Transform(freqs,A_vecpot_vel_w,X_rt%energy_steps,A_vecpot_vel_t,NE_steps,RT_step,3)
+   call Fourier_Transform(freqs,X_irrep,X_rt%energy_steps,RT_P_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
+   call Fourier_Transform(freqs,A_vecpot_vel_w,X_rt%energy_steps,A_vecpot_vel_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
    !
  endif
  !

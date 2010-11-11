@@ -30,7 +30,7 @@ subroutine RT_three_levels(G_lesser,it)
  use com,            ONLY:msg
  use X_m,            ONLY:DIP_iR,DIP_P
  use real_time,      ONLY:it_start,RT_step,Thermal_steps,NE_steps,Wo,W1,&
-&                         W_pump,Rabi_freq_pump,Phase_LifeTime 
+&                         W_pump,Rabi_freq_pump,Phase_LifeTime,tau_offdiag 
  use fields,         ONLY:Efield
  !
  implicit none
@@ -84,10 +84,11 @@ subroutine RT_three_levels(G_lesser,it)
  !
  ! Rabi freq 2._SP*Efied(1)%amplitude*DIP_P/W_pump
  !
- G12=2._SP*Efield(1)%amplitude*DIP_P(1,1,2,1,1)/W_pump/(Wo+cI/Phase_LifeTime+W_pump)* & 
-&    (exp(-cI*W_pump*Time)-exp(cI*(Wo+cI/Phase_LifeTime)*Time))
- G13=2._SP*Efield(1)%amplitude*DIP_P(1,1,3,1,1)/W_pump/(W1+cI/Phase_LifeTime+W_pump)* & 
-&    (exp(-cI*W_pump*Time)-exp(cI*(W1+cI/Phase_LifeTime)*Time))
+ G12=2._SP*Efield(1)%amplitude*DIP_P(1,1,2,1,1)/W_pump/(Wo+cI/tau_offdiag(1)+W_pump)* & 
+&    (exp(-cI*W_pump*Time)-exp(cI*(Wo+cI/tau_offdiag(1))*Time))
+
+ G13=2._SP*Efield(1)%amplitude*DIP_P(1,1,3,1,1)/W_pump/(W1+cI/tau_offdiag(2)+W_pump)* & 
+&    (exp(-cI*W_pump*Time)-exp(cI*(W1+cI/tau_offdiag(2))*Time))
  !
  i_f=1
  data_to_dump(2)= real(G12)

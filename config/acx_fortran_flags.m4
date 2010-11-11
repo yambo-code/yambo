@@ -31,7 +31,7 @@ if test -z "${CFLAGS}"; then CFLAGS="-O2"; fi
 case "${host}" in
 i?86*linux*)
   case "${FC}" in
-  *pgf9*)
+  *pgf9* | *ftn* )
     SYSFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     UFFLAGS="-O0 -Mbackslash"
     FCMFLAG="-Mnomain"
@@ -121,7 +121,7 @@ ia64*linux* )
     UFFLAGS="-O0 -fbackslash -fno-second-underscore"
     FCMFLAG=""
     ;;
-  *pgf9*)
+  *pgf9* | *ftn* )
     SYSFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     UFFLAGS="-O0 -Mbackslash"
     FCMFLAG="-Mnomain"
@@ -174,7 +174,7 @@ ia64*linux* )
     UFFLAGS="-O0 -fbackslash -fno-second-underscore"
     FCMFLAG=""
     ;;
-  *pgf9*)
+  *pgf9* | *ftn* )
     SYSFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     UFFLAGS="-O0 -Mbackslash"
     FCMFLAG="-Mnomain"

@@ -624,7 +624,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SC
  if (l_sc_run) then
    call initactivate(1,'Potential FFTGvecs Gauge SCmixing SCBands BandMix')
-   if (l_collisions_IO) call initactivate(1,'CollCache')
+   if (l_collisions_IO) call initactivate(1,'EXXCut CollCache')
    if (l_cohsex) call initactivate(1,'GbndRnge UseEbands')
    if (l_real_time) then
      call initactivate(-1,'SCmixing')
@@ -637,7 +637,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (              l_RT_pump_and_probe) call Afield_activate('Pump')
 #endif
 #if defined _TWO_LEVELS
- call initactivate(1,'RT3Levels RTEnLevels RTDephasing RTLifeTimes RTDipoles')
+ call initactivate(1,'RT3Levels RTDephasing RTLifeTimes RTDipoles')
 #endif
 #if defined _SC
    else

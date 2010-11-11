@@ -24,6 +24,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  ! This routine returns <iR> and <P^2>.
  !
  use pars,                ONLY:SP,pi
+ use drivers,             ONLY:l_real_time
  use timing,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spin, n_spinor, n_sp_pol
  use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
@@ -160,7 +161,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,-Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/))) cycle
          !
-         if (abs(Ev_m_Ec)<=1.E-5_SP) cycle
+         if (abs(Ev_m_Ec)<=1.E-5_SP.and..not.l_real_time) cycle
          !
          ivfft=wf_state(iv,ik,i_spin)
 #if defined _DISTRIBUTED
@@ -205,6 +206,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !                   = - <v | -i grad |c> / (Ec-Ev) = <v|-i grad|c>/(Ev-Ec)
          !
          rho(1:3)=rho(1:3)/Ev_m_Ec
+         !
+         if (abs(Ev_m_Ec)<=1.E-5_SP) rho(1:3)=(0._SP,0._SP)
          !
          ! GPL_EXCLUDE_START SPIN_IGNORE
          !

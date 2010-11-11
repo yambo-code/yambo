@@ -24,7 +24,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
  !
  use pars,          ONLY:SP,schlen,pi
  use units,         ONLY:HARTREE
- use electrons,     ONLY:spin_occ,levels,spin
+ use electrons,     ONLY:spin_occ,levels,spin,n_sp_pol
  use stderr,        ONLY:intc
  use BS,            ONLY:BSS_description,BSS_n_descs,BS_eh_table,BS_bands
  use com,           ONLY:msg,of_open_close
@@ -51,8 +51,8 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
  integer               ::j1,j2,ia,is,i_mode,ikbz,ikibz,iv,ic,neh,i_spin
  integer,  allocatable ::S_indx(:)
  real(SP), allocatable ::R(:),v2sort(:)
- real(SP)              ::Rmax,rv(10),K_weight(Xk%nibz)
- character(schlen) ::titles(6),ch_dummy(2)
+ real(SP)              ::Rmax,rv(10),K_weight(Xk%nibz),value
+ character(schlen) ::titles(7),ch_dummy(2)
  logical           ::write_widths,write_spin,verbose_
  !
  ! Excitonc amplitude
@@ -153,8 +153,13 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
    !
    call msg('o weight','#','',INDENT=0,USE_TABS=.true.)
    titles(1:4)=(/'Band_V','Band_C','K  ibz','Symm. '/)
-   titles(5:6)=(/'Weight','Energy'/)
-   call msg('o weight','#',titles(:6),INDENT=0,USE_TABS=.true.)
+   if(n_sp_pol==1) then
+     titles(5:6)=(/'Weight','Energy'/)
+     call msg('o weight','#',titles(:6),INDENT=0,USE_TABS=.true.)
+   else
+     titles(5:7)=(/'Spin  ','Weight','Energy'/)
+     call msg('o weight','#',titles(:7),INDENT=0,USE_TABS=.true.)
+   endif
    titles(1:2)=(/'E    [eV]','Amplitude'/)
    call msg('o amp','#',titles(:2),INDENT=0,USE_TABS=.true.)
    call msg('o weight amp','#','',INDENT=0,USE_TABS=.true.)
@@ -171,7 +176,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
      ic = BS_eh_table(S_indx(neh),3)
      ! GPL_EXCLUDE_START SPIN_IGNORE
      !
-     i_spin= spin(BS_eh_table(neh,:))
+     i_spin= spin(BS_eh_table(S_indx(neh),:))
      !
      ! GPL_EXCLUDE_END SPIN_IGNORE
      ! GPL_INCLUDE_START SPIN_IGNORE
@@ -187,9 +192,17 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
      !
      if (A_weight(neh)<0.05) cycle
      !
-     call msg('o weight','',(/real(iv,SP),real(ic,SP),real(ikibz,SP),real(is,SP),&
+     if(n_sp_pol==1) then
+       call msg('o weight','',(/real(iv,SP),real(ic,SP),real(ikibz,SP),real(is,SP),&
 &                             A_weight(neh),amp_trans(amp_n_trans,1)*HARTREE/),&
 &            INDENT=-2,USE_TABS=.FALSE.)
+     else
+       if(i_spin==1) value= 1.
+       if(i_spin==2) value=-1.
+       call msg('o weight','',(/real(iv,SP),real(ic,SP),real(ikibz,SP),real(is,SP),&
+&                           value,A_weight(neh),amp_trans(amp_n_trans,1)*HARTREE/),&
+&                 INDENT=-2,USE_TABS=.FALSE.)
+     endif
    enddo
    !
    ! Excitonic Amplitude

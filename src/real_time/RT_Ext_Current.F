@@ -43,7 +43,7 @@ subroutine RT_Ext_Current(time)
  !
  do i1=1,n_ext_fields
    ! 
-   if(Efield(i1)%ef_name=="none".or.Efield(i1)%t_initial>time) cycle
+   if(Efield(i1)%ef_name=="none".or.Efield(i1)%int_t_initial>i_time) cycle
    !
    j_current_versor=Efield(i1)%versor(:)/(4._SP*pi)
    !

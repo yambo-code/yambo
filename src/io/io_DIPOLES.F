@@ -24,7 +24,7 @@ integer function io_DIPOLES(X,Xen,ID)
  use pars,          ONLY:SP,schlen
  use units,         ONLY:HARTREE
  use X_m,           ONLY:X_t,DIP_iR,X_alloc,Dipole_bands_ordered,&
-&                        Dipole_uses_shifted_grids
+&                        Dipole_uses_shifted_grids,P_square
  use electrons,     ONLY:levels,n_sp_pol
  use R_lattice,     ONLY:nXkibz,q0_def_norm
  use matrix_operate,ONLY:mat_c2r,mat_r2c
@@ -146,13 +146,13 @@ integer function io_DIPOLES(X,Xen,ID)
      !
      do i_spin=1,n_sp_pol
        !
-       if (write_is_on(ID)) call mat_c2r(DIP_iR(4,:,:,i1,i_spin),DIP_iR_disk)
+       if (write_is_on(ID)) call mat_c2r(P_square(:,:,i1,i_spin),DIP_iR_disk)
        !
        write (VAR_name,'(2(a,i4.4))') 'P_square_k_',i1,'_spin_',i_spin
        call io_bulk(IDP,VAR=trim(VAR_name),VAR_SZ=shape(DIP_iR_disk))
        call io_bulk(IDP,R3=DIP_iR_disk)
        !
-       if (read_is_on(ID)) call mat_r2c(DIP_iR_disk,DIP_iR(4,:,:,i1,i_spin))
+       if (read_is_on(ID)) call mat_r2c(DIP_iR_disk,P_square(:,:,i1,i_spin))
        !
      enddo
      !

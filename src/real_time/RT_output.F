@@ -26,7 +26,7 @@ subroutine RT_output(what,VALUEs,TIME_or_E)
  use SC,             ONLY:SC_description,n_SC_descriptions
  use fields,         ONLY:A_vecpot
  use stderr,         ONLY:set_real_printed_length,string_split
- use real_time,      ONLY:RT_ind_J,RT_P
+ use real_time,      ONLY:RT_ind_J,RT_P,l_NE_simulate_IP
  use timing,         ONLY:what_is_running
  implicit none
  !
@@ -84,7 +84,11 @@ subroutine RT_output(what,VALUEs,TIME_or_E)
  short_file_name(4)=trim(append_ch)//'dynamics'
  n_headings(4)=8
  headings(4,2:3)=(/"E_kin[eV]","E_ion[eV]"/)
- headings(4,4:6)=(/"Hartree [eV]","Exchange[eV]","Correlat[eV]"/)
+ if(l_NE_simulate_IP) then
+   headings(4,4:6)=(/"       -       ","       -       ","Hartree+Vxc[eV]"/)
+ else
+   headings(4,4:6)=(/"Hartree [eV]","Exchange[eV]","Correlat[eV]"/)
+ endif
  headings(4,7)="E_mg[eV]"
  headings(4,8)="N" 
  !

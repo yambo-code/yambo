@@ -31,7 +31,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx
- use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,                  &
+ use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &
 &                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,      &
 &                         i_time,Integrator_name,l_RT_diagonalize,max_rt_steps_disk,&
 &                         G_lesser_reference,RT_is_dumped,RT_diagonalization_steps, &
@@ -122,7 +122,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
  endif
  !
- if(.not.local_V) then
+ if(.not.local_V.and..not.l_NE_simulate_IP) then
    !
    call COLLISIONS_IO_eval(en,X,k,k,q,Xw)
    !
@@ -145,6 +145,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
  call RT_output(what="open dyn cur pol")
  if(l_NE_with_fields) call RT_output(what="open pot")
+ !
+ if(l_NE_simulate_IP) call WF_free()
  !
  ! loop on time
  !
@@ -251,7 +253,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
  call WF_free()
  !
- if(.not.local_V) call free_COLLISIONS_v()
+ if(.not.local_V.and..not.l_NE_simulate_IP) call free_COLLISIONS_v()
  !
  call X_alloc("P_square")
  !

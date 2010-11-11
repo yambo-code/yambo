@@ -87,11 +87,11 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Integrator_name,            &
 &                     RT_diagonalization_steps, l_NE_simulate_RPA,  &
 &                     Thermal_time,max_rt_steps_disk,l_RT_induced_field,&
-&                     l_RT_diagonalize,Ext_fields_initial_time,RT_is_dumped,QP_LifeTime,Phase_LifeTime
+&                     l_RT_diagonalize,Ext_fields_initial_itime,RT_is_dumped,QP_LifeTime,Phase_LifeTime
  use fields,     ONLY:Efield,n_ext_fields
 #endif
 #if defined _TWO_LEVELS
- use real_time,  ONLY:l_3levels,en_levels,dip,lambda_diag,lambda_offdiag
+ use real_time,  ONLY:l_3levels,dip,tau_diag,tau_offdiag
 #endif
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
@@ -455,7 +455,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  RT_step=0.002*FS2AUT
  NE_steps=1000
  Thermal_steps=4000
- Ext_fields_initial_time=0.
+ Ext_fields_initial_itime=0
  Thermal_time = 1./8.
  Integrator_name='RK2'
  QP_LifeTime = 0.0*FS2AUT
@@ -472,9 +472,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 #if defined _TWO_LEVELS
  !
  l_3levels     =.FALSE.
- en_levels     =0._SP
- lambda_offdiag=0._SP
- lambda_diag   =0._SP    
+ tau_offdiag   =0._SP
+ tau_diag      =0._SP    
  dip           =0._SP            
  !
 #endif

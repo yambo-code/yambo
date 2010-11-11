@@ -31,10 +31,13 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
- use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_with_fields,QP_LifeTime,H_t,      &
-&                         Thermal_steps,Thermal_time,RT_step,XC0,Hfrozen,XCfrozen,&
+ use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_with_fields,QP_LifeTime,H_t,   &
+&                         Thermal_steps,Thermal_time,RT_step,XC0_and_HARTREE0,    & 
 &                         G_lesser_reference,l_RT_needs_XC0,i_time,Phase_LifeTime,&
-&                         RT_is_dumped
+&                         RT_is_dumped,l_NE_simulate_IP,Hfrozen,XCfrozen
+#if defined _TWO_LEVELS
+ use real_time,      ONLY:tau_diag,tau_offdiag,l_3levels
+#endif
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
@@ -76,7 +79,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
    !
  else
    !  
-   if(.not.local_V) QP_Vnl_xc=(0._SP,0._SP)
+   if(.not.local_V.and..not.l_NE_simulate_IP) QP_Vnl_xc=(0._SP,0._SP)
    if(l_sc_cohsex)      QP_Sc=(0._SP,0._SP)
    !
  endif
@@ -96,27 +99,27 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
    !
    H_nl_sc=(0._SP,0._SP)
    !
-   if(.not.local_V) then
+   if(.not.local_V.and..not.l_NE_simulate_IP) then
      call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 
      if(l_sc_cohsex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc) 
    endif
    !  
    ! Adiabatic Switching
    ! (for all the parts of self-energy different from V_h + V_xc)
-   ! I have to subtruct XC0
+   ! I have to subtruct XC0_and_HARTREE0 that contains <mk|Vxc(rho0) |nk>
    !
    if(Thermal_steps/=0.and.Thermal_time/=0.0) then 
      !      
-     call V_by_V_plus_V(SC_bands,(1._SP,0._SP),-XC0(:,:,ik,1),H_nl_sc(:,:,1))
+     call V_by_V_plus_V(SC_bands,(1._SP,0._SP),-XC0_and_HARTREE0(:,:,ik,1),H_nl_sc(:,:,1))
      !
      H_nl_sc=H_nl_sc*(1._SP+tanh((RT_time+(RT_step*real(Thermal_steps))/2._SP) &
     &        /(RT_step*real(Thermal_steps))/Thermal_time))/2._SP
      !
    endif
    !
-   call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,wf)
+   if(.not.l_NE_simulate_IP) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,wf)
    !
-   if(l_RT_needs_XC0) call V_by_V_plus_V(SC_bands,(1._SP,0._SP),XC0(:,:,ik,1),H_nl_sc(:,:,1))
+   if(l_RT_needs_XC0) call V_by_V_plus_V(SC_bands,(1._SP,0._SP),XC0_and_HARTREE0(:,:,ik,1),H_nl_sc(:,:,1))
    !
    ! Add Ho = T+V_ion
    !
@@ -145,6 +148,24 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
    !
    if(RT_is_dumped) then
      !
+#if defined _TWO_LEVELS
+     if(l_3levels) then
+       if(any(tau_diag> 1.E-5_SP)) then
+         I1_lesser(1,1,ik)=I1_lesser(1,1,ik)-cI/tau_diag(1)*(G_input(1,1,ik)-G_lesser_reference(1,1,ik))
+         I1_lesser(2,2,ik)=I1_lesser(2,2,ik)-cI/tau_diag(2)*(G_input(2,2,ik)-G_lesser_reference(2,2,ik))
+         I1_lesser(3,3,ik)=I1_lesser(3,3,ik)-cI/tau_diag(3)*(G_input(3,3,ik)-G_lesser_reference(3,3,ik))
+       endif
+       if(any(tau_offdiag> 1.E-5_SP)) then
+         I1_lesser(1,2,ik)=I1_lesser(1,2,ik)-cI/tau_offdiag(1)*G_input(1,2,ik)
+         I1_lesser(1,3,ik)=I1_lesser(1,3,ik)-cI/tau_offdiag(2)*G_input(1,3,ik)
+         I1_lesser(2,3,ik)=I1_lesser(2,3,ik)-cI/tau_offdiag(3)*G_input(2,3,ik)
+         I1_lesser(2,1,ik)=I1_lesser(2,1,ik)-cI/tau_offdiag(1)*G_input(2,1,ik)
+         I1_lesser(3,1,ik)=I1_lesser(3,1,ik)-cI/tau_offdiag(2)*G_input(3,1,ik)
+         I1_lesser(3,2,ik)=I1_lesser(3,2,ik)-cI/tau_offdiag(3)*G_input(3,2,ik)
+       endif
+     else
+#endif
+     !
      if ( QP_LifeTime > 1.E-5_SP) then
        forall(i1=1:SC_bands) &
          I1_lesser(i1,i1,ik)=I1_lesser(i1,i1,ik)-cI/QP_LifeTime*(G_input(i1,i1,ik)-G_lesser_reference(i1,i1,ik))
@@ -161,6 +182,10 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
        !
      endif
      !
+#if defined _TWO_LEVELS
+     endif
+#endif
+   !
    endif
    !
  enddo  !---- loop on k-points

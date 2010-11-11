@@ -71,11 +71,11 @@ subroutine RT_two_levels(G_lesser)
      if (P_and_P) then
        Poles_func(i_f)=DELTA_Pump_F(-W_func(i_f))
        Poles_func_deriv(i_f)=(DELTA_Pump_F(-W_func(i_f)+W_step)-DELTA_Pump_F(-W_func(i_f)))/W_step
-       write (100,'(3f20.10)')  real(W_func(i_f))*HARTREE,DELTA_Pump_F(-W_func(i_f))
+       !write (100,'(3f20.10)')  real(W_func(i_f))*HARTREE,DELTA_Pump_F(-W_func(i_f))
      else
        Poles_func(i_f)=DELTA_Pump_F(W_func(i_f))
        Poles_func_deriv(i_f)=(DELTA_Pump_F(W_func(i_f)+W_step)-DELTA_Pump_F(W_func(i_f)))/W_step
-       write (100,'(3f20.10)')  real(W_func(i_f))*HARTREE,DELTA_Pump_F(W_func(i_f))
+       !write (100,'(3f20.10)')  real(W_func(i_f))*HARTREE,DELTA_Pump_F(W_func(i_f))
      endif
      if (i_f==1) cycle
      if ( (real(Poles_func(i_f-1))<0..and.real(Poles_func(i_f))>0. ) ) then
@@ -92,10 +92,11 @@ subroutine RT_two_levels(G_lesser)
      endif
    enddo
    !
-   call msg('s','[2 LEVELS] W bar           [eV   ]',real(W_bar)*HARTREE)
+   call msg('s','[2 LEVELS] W bar           [eV/fs]',(/real(W_bar)*HARTREE,-2.*pi/aimag(W_bar)/FS2AUT/))
+   call msg('s','[2 LEVELS] W gamma         [fs   ]',-2.*pi/FS2AUT/aimag(W_gamma))
+   call msg('s',' ')
    !
  endif
- stop
  !
  Gamma_mat(1,1)=abs(Rabi_freq_pump)**2/(Wo_here**2.+1./Phase_LifeTime**2.)*QP_LifeTime/Phase_LifeTime
  dGinfty=-2.*cI/(Gamma_mat(1,1)+1.)
@@ -129,10 +130,10 @@ subroutine RT_two_levels(G_lesser)
  !
  eta1_plus=cI*Gamma_mat(1,2)*(delta*Phase_LifeTime-2.*cI)/(delta*QP_LifeTime-cI)
  eta1_minus=-conjg(eta1_plus)
- call open_it(101,"dG_theo_LLR")
+ call open_it(101,"dG_theo_LRR")
  call write_it(101,-cI*(eta1_plus*exp(cI*delta*T)+eta1_minus*exp(-cI*delta*T)-2.*cI*(1.-Gamma_mat(1,1)-Gamma_mat(2,2))))
- call open_it(102,"G12_theo_LLR")
- call write_it(102,G12_LRR(T,Rabi_freq_pump,W_pump)+G12_LRR(T,Rabi_freq_probe,W_pump+delta))
+ call open_it(102,"G12_theo_LRR")
+ call write_it(102,G12_LRR_PP(T,Rabi_freq_pump,W_pump)+G12_LRR_PP(T,Rabi_freq_probe,W_pump+delta))
  !
  eta1_plus=-dGinfty/2.*Gamma_mat(1,2)*(delta*Phase_LifeTime-2.*cI)/(delta*QP_LifeTime-cI-Gamma_delta_11*(delta*QP_LifeTime-cI))
  eta1_minus=-conjg(eta1_plus)
@@ -153,6 +154,8 @@ subroutine RT_two_levels(G_lesser)
  call write_it(101,-cI*(-2.*cI*real(R_wbar*exp(-cI*W_bar*T))+dGinfty-cI*R_gamma*exp(-cI*W_gamma*T) ))
  call open_it(102,"G12_theo")
  call write_it(102,G(1,2))
+ call open_it(104,"G12_theo_LRR")
+ call write_it(104,G12_LRR(T,Rabi_freq_pump,Wo_here))
  call open_it(103,"Polarization_theo")
  call write_it(103, -cI*(D*G(2,1)+conjg(D)*G(1,2))/DL_vol)
  !
@@ -217,7 +220,13 @@ subroutine RT_two_levels(G_lesser)
    complex(SP) function G12_LRR(Time,Rabi,W)
     real(SP)    :: Time,W
     complex(SP) :: Rabi
-    G12_LRR=-cI*Rabi/(Wo+cI/Phase_LifeTime-W)*exp(cI*W*Time)
+    G12_LRR=-cI*Rabi/(W+cI/Phase_LifeTime)*(1.-exp(cI*(W+cI/Phase_Lifetime)*Time))
+   end function
+   !
+   complex(SP) function G12_LRR_PP(Time,Rabi,W)
+    real(SP)    :: Time,W
+    complex(SP) :: Rabi
+    G12_LRR_PP=-cI*Rabi/(Wo+cI/Phase_LifeTime-W)*exp(cI*W*Time)
    end function
    !
 end subroutine RT_two_levels

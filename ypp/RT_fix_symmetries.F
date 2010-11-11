@@ -22,23 +22,25 @@
 subroutine RT_fix_symmetries(E,k)
  !
  use YPP,                 ONLY:E_field,B_theta,B_psi,B_field
+ use drivers,             ONLY:l_sc_run
  use pars,                ONLY:SP,lchlen
  use com,                 ONLY:msg,warning,core_io_path,more_io_path
  use memory_m,            ONLY:mem_est
- use electrons,           ONLY:levels,E_reset,n_spin
+ use electrons,           ONLY:levels,E_reset,n_spin,n_sp_pol
  use vec_operate,         ONLY:v_norm,v_is_zero
  use matrix_operate,      ONLY:m3det
  use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,a,alat,&
 &                              i_space_inv,sop_inv,inv_index,symmetry_group_table
- use R_lattice,           ONLY:bz_samp,bz_samp_reset,&
+ use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,&
 &                              g_rot,ng_closed,bz_samp_duplicate,rl_sop
- use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,&
+ use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,VERIFY,&
 &                              OP_APP,cp_file,rm_file,cp_directory,Fragmented_IO, &
-&                              io_fragmented,OP_RD_CL,RD_CL,RD,DUMP
+&                              io_fragmented,OP_RD_CL,RD_CL,RD,DUMP,RD_CL_IF_END,WR_CL_IF_END
  use wave_func,           ONLY:ioWF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io, &
 &                              wf_ng,wf_state,WF_load,wf_state,wf,WF_free,wf_ng ,wf_nb_io_groups
  use real_time,           ONLY:kpoints_map
  use pseudo,              ONLY:pp_kb,pp_kbd,n_atomic_species,pp_n_l_comp_max,PP_free
+ use SC,                  ONLY:local_V,SC_R,H_nl_sc,SC_bands
  use stderr,              ONLY:intc,set_real_printed_length
  use parser_m,            ONLY:parser
  use zeros,               ONLY:k_iku_zero
@@ -47,7 +49,7 @@ subroutine RT_fix_symmetries(E,k)
  type(levels)                 :: E,E_expanded
  type(bz_samp)                :: k
  !
- integer, external :: ioDB1
+ integer, external :: ioDB1,io_SC_components,ioKB_PP
  !
  ! Work Space
  !
@@ -59,12 +61,12 @@ subroutine RT_fix_symmetries(E,k)
  integer               :: det
  real(SP), allocatable :: wf_disk(:,:,:,:)
  real(SP), allocatable :: pp_kb_store(:,:,:,:,:),pp_kbd_store(:,:,:,:,:)
- logical               :: Rm_all_symm,use_E_field,use_B_field,reject_symmetry,Rm_TR,&
-&                         S_contains_TR(nsym)
+ logical               :: Rm_all_symm,use_E_field,use_B_field,reject_symmetry,Rm_TR,S_contains_TR(nsym)
  type(bz_samp)         :: k_save
+ type(levels)          :: en_sc,en_sc_expanded
  character(lchlen)     :: core_io_path_save,wf_fragment
- integer               :: ACTION_,ioKB_err
- integer, external     :: ioKB_PP
+ integer               :: ACTION_,ioKB_err,io_SC_E_err,io_SC_V_err,io_SC_WF_err
+ complex(SP), allocatable :: full_H(:,:,:,:)
  !
  use_E_field=.FALSE.
  use_B_field=.FALSE.
@@ -105,6 +107,19 @@ subroutine RT_fix_symmetries(E,k)
  !
  call bz_samp_reset(k_save)
  call bz_samp_duplicate(k,k_save)
+ !
+ ! Check presence of SC wave-functions
+ !
+ call E_reset(en_sc)
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
+ io_SC_WF_err=io_SC_components('WF',en_sc,ID)
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
+ io_SC_E_err=io_SC_components('E',en_sc,ID)
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
+ io_SC_V_err=io_SC_components('V',en_sc,ID)
+ !
+ if (io_SC_E_err/=0.or.io_SC_WF_err/=0.or.io_SC_V_err/=0) io_SC_E_err=-1 
  !
  ! Read PseudoPotentials
  !
@@ -246,17 +261,117 @@ subroutine RT_fix_symmetries(E,k)
  call section('=',"Energies")
  !===========================
  !
- call E_reset(E_expanded)
- E_expanded%nb=E%nb
- E_expanded%nk=k%nibz
- allocate(E_expanded%E(E%nb,k%nibz,n_spin))
+ call map_energies(E,E_expanded,k,kpoints_map)
  !
- do ik=1,k%nibz
-   E_expanded%E(:,ik,:)=E%E(:,kpoints_map(1,ik),:)
- enddo
+ if(io_SC_E_err/=-1) then
+   call section('=',"SC wavefunctions and energies")
+   !===============================
+   !
+   ! Energies
+   !
+   en_sc%nb=SC_bands
+   en_sc%nk=k_save%nibz
+   allocate(en_sc%E(en_sc%nb,en_sc%nk,n_spin))  
+   !
+   nkibz=k_save%nibz
+   !
+   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1,2/),ID=ID)
+   io_SC_E_err=io_SC_components('E',en_sc,ID)
+   !
+   call map_energies(en_sc,en_sc_expanded,k,kpoints_map)
+   !
+   nkibz=k%nibz
+   !
+   call io_control(ACTION=OP_WR_CL,COM=NONE,MODE=DUMP,SEC=(/1,2/),ID=ID)
+   io_SC_E_err=io_SC_components('E',en_sc_expanded,ID)
+   !
+   !  Wave-function
+   !
+   allocate(SC_R(SC_bands,SC_bands,k%nibz,n_sp_pol))
+   call mem_est("SC_R",(/size(SC_R)/))
+   !
+   nkibz=k_save%nibz
+   !
+   call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
+   io_SC_WF_err=io_SC_components('WF',en_sc,ID)
+   !
+   do ik=1,k_save%nibz
+     call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID)
+     io_SC_WF_err=io_SC_components('WF',en_sc,ID)
+   enddo
+   !
+   nkibz=k%nibz
+   !
+   call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID)
+   io_SC_WF_err=io_SC_components('WF',en_sc,ID)
+   !
+   do ik=1,k_save%nibz
+     call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1/),ID=ID)
+     io_SC_WF_err=io_SC_components('WF',en_sc,ID)
+   enddo
+   !
+   do ik=k_save%nibz+1,k%nibz
+     SC_R(:,:,ik,:)=SC_R(:,:,kpoints_map(1,ik),:)
+     call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1/),ID=ID)
+     io_SC_WF_err=io_SC_components('WF',en_sc,ID)
+   enddo
+   !
+   deallocate(SC_R)
+   call mem_est("SC_R")
+   !
+   ! Copy the potential
+   !
+   call XC_switch()
+   if(.not.local_V) then
+     !
+     allocate(H_nl_sc(SC_bands,SC_bands,n_sp_pol))
+     call mem_est("H_nl_sc",(/size(H_nl_sc)/))
+     !
+     allocate(full_H(SC_bands,SC_bands,k_save%nibz,n_sp_pol))
+     call mem_est("full_H",(/size(full_H)/))
+     !
+     nkibz=k_save%nibz
+     !
+     call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
+     io_SC_V_err=io_SC_components('V',en_sc,ID)
+     !
+     do ik=1,k_save%nibz
+       call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID)
+       io_SC_V_err=io_SC_components('V',en_sc,ID)
+       full_H(:,:,ik,:)=H_nl_sc(:,:,:)
+     enddo
+     !
+     nkibz=k%nibz
+     !
+     call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID)
+     io_SC_V_err=io_SC_components('V',en_sc,ID)
+     !
+     do ik=1,k_save%nibz
+       H_nl_sc(:,:,:)=full_H(:,:,ik,:)
+       call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1/),ID=ID)
+       io_SC_V_err=io_SC_components('V',en_sc,ID)
+     enddo
+     !
+     do ik=k_save%nibz+1,k%nibz
+       H_nl_sc(:,:,:)=full_H(:,:,kpoints_map(1,ik),:)
+       call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1/),ID=ID)
+       io_SC_V_err=io_SC_components('V',en_sc,ID)
+     enddo    
+     !
+     deallocate(H_nl_sc)
+     call mem_est("H_nl_sc")
+     !
+     deallocate(full_H)
+     call mem_est("full_H")
+     !
+   endif
+   !
+ endif
  !
  call section('=',"Wavefunctions")
  !===============================
+ !
+ if(io_SC_E_err/=-1) l_sc_run=.true. ! to not read again SC wavefunctions
  !
  call WF_load(wf_ng,1,(/1,E%nb/),(/1,k_save%nibz/),space='C',title='')
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)  
@@ -400,8 +515,10 @@ subroutine RT_fix_symmetries(E,k)
    call msg('s',':: Cleaning ...')
    call rm_file((trim(core_io_path))//"/SAVE/ndb.kindx")
    call rm_file((trim(core_io_path))//"/SAVE/ndb.gops")
-   call rm_file((trim(core_io_path))//"/SAVE/ndb.ostnts")
-   call rm_file((trim(core_io_path))//"/SAVE/db.ostnts")
+   call rm_file((trim(core_io_path))//"/SAVE/ndb.dipoles")
+   call rm_file((trim(core_io_path))//"/SAVE/db.dipoles")
+   call rm_file((trim(core_io_path))//"/SAVE/ndb.P_square")
+   call rm_file((trim(core_io_path))//"/SAVE/db.P_square")
    call rm_file((trim(core_io_path))//"/SAVE/db.kindx")
    call rm_file((trim(core_io_path))//"/SAVE/db.gops")
    call msg('l','done')
@@ -416,3 +533,30 @@ subroutine RT_fix_symmetries(E,k)
  call mem_est("wf_disk")
  !
 end subroutine
+ 
+subroutine map_energies(E,E_expanded,k,kpoints_map)
+ !
+ use electrons,           ONLY:levels,E_reset,n_spin
+ use R_lattice,           ONLY:bz_samp
+ !
+ implicit none
+ !
+ type(levels), intent(in)     :: E
+ type(levels), intent(out)    :: E_expanded
+ type(bz_samp)                :: k
+ integer,       intent(in)    :: kpoints_map(2,k%nibz)
+ !
+ ! Work Space
+ !
+ integer :: ik
+ !
+ call E_reset(E_expanded)
+ E_expanded%nb=E%nb
+ E_expanded%nk=k%nibz
+ allocate(E_expanded%E(E%nb,k%nibz,n_spin))
+ !
+ do ik=1,k%nibz
+   E_expanded%E(:,ik,:)=E%E(:,kpoints_map(1,ik),:)
+ enddo
+ !
+end subroutine map_energies

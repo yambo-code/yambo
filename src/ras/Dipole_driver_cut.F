@@ -30,7 +30,8 @@
  use par_indexes_m,           ONLY : par_indexes
  use D_lattice,               ONLY : nsym, i_time_rev, alat, dl_sop, sop_inv
  use R_lattice,               ONLY : g_vec, bz_samp, q0_def_norm,q_norm,bare_qpg
- use X_m,                     ONLY : X_alloc, X_t, grid_path
+ use X_m,                     ONLY : X_alloc, X_t
+ use fields,                  ONLY : grid_path
  use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP
  use memory_m,                ONLY : mem_est
  use wave_func,               ONLY : wf, wf_ng, wf_state, WF_load, WF_free
@@ -89,7 +90,7 @@
    use_trans_gauge = .true.
    if(trim(grid_path)/='none') then
      !
-     ! Use longitudinal gauge, supporting fallback to transverse gauge
+     ! Use shifted grids, supporting fallback to transverse gauge
      !
      call Dipole_shifted_grids_cut(Xen,Xk,X,field_dir, use_trans_gauge)
      !
@@ -108,9 +109,9 @@
  endif
  !
  ! The field direction and the gamma-point norm must be renormalized here in case the
- ! oscillator strengths have been calculated using the long. gauge.
+ ! oscillator strengths have been calculated using the shifted grids.
  ! In this case q0_def_norm is not the default one but corresponds
- ! to the norm of the longitudinal shift.
+ ! to the norm of the grid shift.
  !
 
 ! THIS MUST BE CHECKED FOR LONG GAUGE + CUT

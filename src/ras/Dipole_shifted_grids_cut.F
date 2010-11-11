@@ -31,7 +31,8 @@
    use par_indexes_m,           ONLY : par_indexes
    use R_lattice,               ONLY : g_vec, bz_samp, bz_samp_duplicate,bz_samp_reset, q0_def_norm, nkibz
    use D_lattice,               ONLY : DL_sop, n_atoms_species, atom_pos, Z_species
-   use X_m,                     ONLY : X_alloc, X_t, grid_path
+   use X_m,                     ONLY : X_alloc, X_t
+   use fields,                  ONLY : grid_path
    use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP, ver_is_gt_or_eq
    use memory_m,                ONLY : mem_est
    use wave_func,               ONLY : wf, wf_ng, wf_state, WF_load, WF_free, wf_nc_k, wf_igk, wf_ncx
@@ -84,10 +85,10 @@
    core_io_path_save = core_io_path
    !
    if (wf_ng.lt.0.8_SP*maxval(wf_igk)) &
-&   call warning('All/most WF G-vectors should be used in the long. gauge')
+&   call warning('All/most WF G-vectors should be used with shifted grids')
 
    !
-   ! Read longitudinal grids from second ioDB1
+   ! Read shifted grids from second ioDB1
    !
    io_err=ioDB1_reload(E_shift,Xk_shift,trim(grid_path))
    nkibz_long = nkibz

@@ -20,8 +20,7 @@ objs = pw_errore.o mod_pw_data.o qexml_v3.2.o \
 
 objs = pw_errore.o mod_pw_data.o qexml_v4.0.o \
        mod_p2y.o \
-	   pw_pseudo_module.o mod_sax.o \
-       Vnl_driver.o p2y_db1.o p2y_wf.o p2y_i.o
+       p2y_db1.o p2y_wf.o p2y_i.o
 
 #endif
 

@@ -188,14 +188,14 @@ module IO_m
      !
    end function
    !
-   integer function io_connect(desc,subfolder,type,ENABLE_LARGE_FILE,no_full_RESET,ID)
+   integer function io_connect(desc,subfolder,type,no_full_RESET,ID)
      !
      use stderr,        ONLY:string_pack
      use com,           ONLY:get_name,jobstr,file_exists,more_io_path,all_locations
      character(*)           :: desc
      integer                :: type,ID
      character(*), optional :: subfolder
-     logical,      optional :: ENABLE_LARGE_FILE,no_full_RESET
+     logical,      optional :: no_full_RESET
      !
      ! Work Space
      !
@@ -269,7 +269,12 @@ module IO_m
      !
      if (open_is_on(ID).and.write_is_on(ID)) then
        if (io_netcdf_support(ID)) then
+         !
 #if defined _NETCDF_IO
+         !
+         CREATE_MODE=nf90_share
+         !
+#endif
          !
          ! Setting NF90_64BIT_OFFSET causes netCDF to create a 64-bit 
          ! offset format file, instead of a netCDF classic format file. 
@@ -279,8 +284,36 @@ module IO_m
          ! http://www.unidata.ucar.edu/software/netcdf/docs/netcdf/Large-File-Support.html
          ! http://www.unidata.ucar.edu/software/netcdf/faq-lfs.html
          !
-         CREATE_MODE=nf90_share
-         if ( present(ENABLE_LARGE_FILE)) CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
+#if defined _NETCDF_IO && defined _64BIT_OFFSET
+         !
+         ! List of (some) character patterns
+         !
+         ! BS_Q
+         ! BS_FXC_Q
+         ! BS_diago_Q
+         ! Haydock_restart
+         ! BS_invert_Q
+         ! cutoff
+         ! COLLISIONS
+         ! db1
+         ! dipoles
+         ! elph
+         ! RIM
+         ! gops
+         ! HF_and_locXC
+         ! kindx
+         ! scE/scWF/scV
+         ! wf
+         !
+         if (any((/index(desc,'BS_Q')/=0,index(desc,'BS_diago')/=0,&
+&                  index(desc,'db1')/=0,index(desc,'dipoles')/=0, & 
+&                  index(desc,'elph')/=0,index(desc,'gops')/=0, & 
+&                  index(desc,'kindx')/=0/))) & 
+&                  CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
+         !
+#endif
+         !
+#if defined _NETCDF_IO
          !
          if ( (io_action(ID)==OP_APP_WR_CL.or.io_action(ID)==OP_APP) ) then
            !

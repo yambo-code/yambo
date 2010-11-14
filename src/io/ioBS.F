@@ -61,9 +61,6 @@ integer function ioBS(iq,X,ID)
  ! This is because io_fragmented(ID) is defined in reading but not
  ! in writing where it keep the default (dbs_fragment) value.
  !
- ! Note that io_connect supports the ENABLE_LARGE_FILE logical when
- ! using NETCDF support.
- !
  ! Update [27/6/07]: NETCDF performance increase drammatically
  ! when using fragmentation. So I lowered the treshold to enable 
  ! fragmentation to matrices >= 6000x6000

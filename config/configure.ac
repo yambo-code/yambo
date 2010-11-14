@@ -19,11 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 3.2.3 r.690 , yambo@yambo-code.org)
+AC_INIT(Yambo, 3.2.3 r.696 , yambo@yambo-code.org)
 SVERSION="3"
 SPATCHLEVEL="2"
 SSUBLEVEL="3"
-SREVISION="690"
+SREVISION="696"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -377,11 +377,7 @@ AC_HAVE_FFTW
 # SCALAPACK/BLACS
 SLK_SETUP
 # ============================================================================
-# NETCDF
-AC_ARG_ENABLE(largedb, AC_HELP_STRING([--enable-largedb],
- [Enable NetCDF large file support. Default is no.]))
-if test x"$enable_largedb" = "x"; then enable_largedb="no"; fi
-AC_SUBST(enable_largedb)
+# NETCDF 
 KH_PATH_NETCDF_F90
 # ============================================================================
 # LIBXC

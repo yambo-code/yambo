@@ -39,7 +39,7 @@ LIBXC_str=" "
 if test "$libxc" = "yes" ; then LIBXC_str="X"; fi
 
 NETCDF_LF_str=" "
-if test "$enable_largedb" = "yes" ; then NETCDF_LF_str="X"; fi
+if test "$enable_netcdf_LFS" = "yes" ; then NETCDF_LF_str="X"; fi
 
 PW_str=" "
 if test "$compile_p2y" = "yes" ; then PW_str="X"; fi

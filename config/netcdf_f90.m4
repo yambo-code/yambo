@@ -28,6 +28,12 @@ AC_ARG_WITH(netcdf_include,AC_HELP_STRING([--with-netcdf-include=<path>],
                                   [Path of the NetCDF include directory]))
 AC_ARG_WITH(netcdf_lib,AC_HELP_STRING([--with-netcdf-lib=<path>],
                                   [Path of the NetCDF lib directory]))
+#
+# LARGE DATABASES SUPPORT
+#
+AC_ARG_ENABLE(netcdf-LFS, AC_HELP_STRING([--enable-netcdf-LFS],
+             [Enable NetCDF Large File Support. Default is no.]))
+#
 netcdf="no"
 dnetcdf=""
 NCLIBS=""
@@ -51,6 +57,7 @@ if test -d "$with_netcdf_include" && test -d "$with_netcdf_lib" ; then
      AC_MSG_RESULT([yes])
      NCLIBS="-lnetcdf"
      dnetcdf="-D_NETCDF_IO"
+     if test x"$enable_netcdf_LFS" = "xyes"; then dnetcdf="-D_NETCDF_IO -D_64BIT_OFFSET"; fi
      break
     fi
  done

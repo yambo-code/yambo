@@ -51,7 +51,7 @@
 #if defined _YPP_ELPH 
   {"electrons","s","Electrons [(w)ave,(d)ensity,(e)lias,do(s)]",0,0,1,0,0}, 
 #endif
-#if ! defined _YPP_ELPH 
+#if !defined _YPP_ELPH 
   {"electrons","s","Electrons [(w)ave,(d)ensity,do(s)]",0,0,1,0,0}, 
 #endif
   {"freehole","f","Free hole position [excitons plot]",0,0,0,0,0}, 

@@ -612,6 +612,8 @@ srcdir_path
 dlibxc
 libxc
 XCLIBS
+etsf_dir
+compile_e2y
 dnetcdf
 netcdf
 NCLIBS
@@ -659,8 +661,6 @@ ac_ct_FC
 FCFLAGS
 FC
 MKMF_PREFIX
-etsf_dir
-compile_e2y
 PW_CPP
 PW_VER
 iotk_dir
@@ -744,7 +744,6 @@ enable_debug
 enable_dp
 with_iotk
 with_p2y
-with_etsf
 enable_msgs_comps
 enable_options_check
 with_f90ext
@@ -758,6 +757,8 @@ with_scalapack
 with_netcdf_include
 with_netcdf_lib
 enable_netcdf_LFS
+with_etsf_io_include
+with_etsf_io_lib
 with_libxc_include
 with_libxc_lib
 '
@@ -1404,7 +1405,6 @@ Optional Packages:
   --with-iotk=<path>      Path of the IOTK library directory
   --with-p2y=<mode>       Interface mode in PW 2 YAMBO : <export> <3.1>
                           <3.1.1> <3.2> <4.0>
-  --with-etsf=<path>      Path of the ETSF I/O library directory
   --with-f90ext=<ext>     Use .<ext> Fortran 90 extension
   --with-blas=<lib>       Use BLAS library <lib>
   --with-lapack=<lib>     Use LAPACK library <lib>
@@ -1417,6 +1417,10 @@ Optional Packages:
                           Path of the NetCDF include directory
   --with-netcdf-lib=<path>
                           Path of the NetCDF lib directory
+  --with-etsf-io-include=<path>
+                          Path of the ETSF_IO include directory
+  --with-etsf-io-lib=<path>
+                          Path of the ETSF_IO lib directory
   --with-libxc-include=<path>
                           Path of the LibXC include directory
   --with-libxc-lib=<path> Path of the LibXC lib directory
@@ -5417,35 +5421,6 @@ if test "$compile_p2y" = "yes"; then
  if test "$with_p2y" = "4.0"; then
   PW_VER="4.0"
   PW_CPP="_P2Y_V40"
- fi
-fi
-
-
-
-# ============================================================================
-# check for ETSF library
-
-# Check whether --with-etsf was given.
-if test "${with_etsf+set}" = set; then :
-  withval=$with_etsf;
-fi
-
-compile_e2y="no"
-etsf_io_dir=""
-if ! test "$with_etsf" = "" ; then
- { $as_echo "$as_me:${as_lineno-$LINENO}: checking $with_etsf for the ETSF I/O library" >&5
-$as_echo_n "checking $with_etsf for the ETSF I/O library... " >&6; }
- if test -r $with_etsf/lib/libetsf_io.a ; then
-  compile_e2y="yes"
-  etsf_dir="$with_etsf/include/intel"
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-  cp "$with_etsf/lib/libetsf_io.a" lib/
-  cp "$with_etsf/lib/libetsf_io_low_level.a" lib/
-  cp "$with_etsf/lib/libetsf_io_utils.a" lib/
- else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
  fi
 fi
 
@@ -10188,6 +10163,48 @@ fi
 
 
 
+# ============================================================================
+# ETSF_IO
+
+# Check whether --with-etsf_io_include was given.
+if test "${with_etsf_io_include+set}" = set; then :
+  withval=$with_etsf_io_include;
+fi
+
+
+# Check whether --with-etsf_io_lib was given.
+if test "${with_etsf_io_lib+set}" = set; then :
+  withval=$with_etsf_io_lib;
+fi
+
+compile_e2y="no"
+etsf_dir=""
+if test -d "$with_etsf_io_include" && test -d "$with_etsf_io_lib" ; then
+  if test "$netcdf" = "yes"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ETSF_IO in $with_etsf_io_lib and $with_etsf_io_include" >&5
+$as_echo_n "checking for ETSF_IO in $with_etsf_io_lib and $with_etsf_io_include... " >&6; }
+    if test -r $with_etsf_io_lib/libetsf_io.a ; then
+      compile_e2y="yes"
+      etsf_dir="$with_etsf_io_lib"
+      for file in `find $with_etsf_io_include \( -name '*etsf_io*' -o -name '*typesizes*' \) `; do
+        cp $file include/
+      done
+      for file in `find $with_etsf_io_lib -name '*etsf_io*.a'`; do
+        cp $file lib/
+      done
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    fi
+
+
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: ETSF_IO requires NETCDF. ETSF_IO support removed." >&5
+$as_echo "$as_me: WARNING: ETSF_IO requires NETCDF. ETSF_IO support removed." >&2;}
+  fi
+fi
 # ============================================================================
 # LIBXC
 

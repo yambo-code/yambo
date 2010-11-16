@@ -21,7 +21,8 @@
 !
 subroutine e2y_db1(en,k,ncid)
  !
- ! For version 0.8 of ETSF library
+ ! For version 1.0.3 of ETSF library, downloadable from
+ ! http://www.etsf.eu/system/files/etsf_io-1.0.3.tar.gz
  !
  ! Note: Current version returns only double precision 
  ! reals, hence local copies are required. Later version
@@ -375,7 +376,7 @@ contains
     !
     call etsf_io_low_read_var(ncid, "tphysel", temperature_, lstat)
     if(lstat) then
-      default_Tel = temperature_ ! type conversion
+      input_GS_Tel = temperature_ ! type conversion
     else
       input_GS_Tel = 0.0_SP
     endif

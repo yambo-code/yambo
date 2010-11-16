@@ -160,28 +160,6 @@ AC_SUBST(PW_VER)
 AC_SUBST(PW_CPP)
 
 # ============================================================================
-# check for ETSF library
-AC_ARG_WITH(etsf, AC_HELP_STRING([--with-etsf=<path>],
- [Path of the ETSF I/O library directory]))
-compile_e2y="no"
-etsf_io_dir=""
-if ! test "$with_etsf" = "" ; then
- AC_MSG_CHECKING([$with_etsf for the ETSF I/O library])
- if test -r $with_etsf/lib/libetsf_io.a ; then
-  compile_e2y="yes"
-  etsf_dir="$with_etsf/include/intel"
-  AC_MSG_RESULT([yes])
-  cp "$with_etsf/lib/libetsf_io.a" lib/
-  cp "$with_etsf/lib/libetsf_io_low_level.a" lib/
-  cp "$with_etsf/lib/libetsf_io_utils.a" lib/
- else
-  AC_MSG_RESULT([no])
- fi
-fi
-AC_SUBST(compile_e2y)
-AC_SUBST(etsf_dir)
-
-# ============================================================================
 #
 # Verbose compilation
 #
@@ -379,6 +357,36 @@ SLK_SETUP
 # ============================================================================
 # NETCDF 
 KH_PATH_NETCDF_F90
+# ============================================================================
+# ETSF_IO
+AC_ARG_WITH(etsf_io_include, AC_HELP_STRING([--with-etsf-io-include=<path>],
+   [Path of the ETSF_IO include directory]))
+AC_ARG_WITH(etsf_io_lib, AC_HELP_STRING([--with-etsf-io-lib=<path>],
+   [Path of the ETSF_IO lib directory]))
+compile_e2y="no"
+etsf_dir=""
+if test -d "$with_etsf_io_include" && test -d "$with_etsf_io_lib" ; then
+  if test "$netcdf" = "yes"; then
+    AC_MSG_CHECKING([for ETSF_IO in $with_etsf_io_lib and $with_etsf_io_include])
+    if test -r $with_etsf_io_lib/libetsf_io.a ; then
+      compile_e2y="yes"
+      etsf_dir="$with_etsf_io_lib"
+      for file in `find $with_etsf_io_include \( -name '*etsf_io*' -o -name '*typesizes*' \) `; do
+        cp $file include/ 
+      done
+      for file in `find $with_etsf_io_lib -name '*etsf_io*.a'`; do
+        cp $file lib/ 
+      done
+      AC_MSG_RESULT([yes])
+    else
+      AC_MSG_RESULT([no])
+    fi
+    AC_SUBST(compile_e2y)
+    AC_SUBST(etsf_dir)
+  else
+    AC_MSG_WARN([ETSF_IO requires NETCDF. ETSF_IO support removed.])
+  fi
+fi
 # ============================================================================
 # LIBXC
 KH_PATH_LIBXC_F90

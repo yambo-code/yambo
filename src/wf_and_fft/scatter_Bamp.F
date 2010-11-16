@@ -40,9 +40,6 @@ subroutine scatterBamp(isc)
  use R_lattice,      ONLY:g_rot
  use wave_func,      ONLY:wf,wf_state
  use FFT_m,          ONLY:fft_size,fft_rot_r,fft_dim,fftw_plan,fft_g_table
-#if defined _DISTRIBUTED
- use com,            ONLY:error
-#endif
  implicit none
  type(ggwinfo)::isc
  !
@@ -94,12 +91,6 @@ subroutine scatterBamp(isc)
    !
    ifft=wf_state(ib,ik,i_sp+i_spr-1)
    offt=wf_state(ob,ok,o_sp+i_spr-1)
-   !
-#if defined _DISTRIBUTED
-   if(ifft==0.or.offt==0) then
-     call error(" Error in parallel wave-function distribution")
-   endif
-#endif
    !
    rho_tw_rs(:,i_spr)=wf(fft_rot_r(is,:),ifft)
    if (.not.litr) rho_tw_rs(:,i_spr)=conjg(rho_tw_rs(:,i_spr))

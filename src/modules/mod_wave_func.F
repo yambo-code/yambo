@@ -54,9 +54,10 @@ module wave_func
  integer    ,allocatable:: wf_state(:,:,:)
  !
 #if defined _DISTRIBUTED
+ !
  ! Parallel wave-function distribution
  !
- logical    ,allocatable:: loaded_states(:,:,:) 
+ logical    ,allocatable:: states_loaded(:,:,:) 
  logical    ,allocatable:: states_to_load(:,:,:) 
 #endif
  !
@@ -120,9 +121,9 @@ module wave_func
        !
      else
 #endif
-     !
-     wf_n_states=(wf_b(2)-wf_b(1)+1)*(wf_k(2)-wf_k(1)+1)*(wf_s(2)-wf_s(1)+1)
-     !
+       !
+       wf_n_states=(wf_b(2)-wf_b(1)+1)*(wf_k(2)-wf_k(1)+1)*(wf_s(2)-wf_s(1)+1)
+       !
 #if defined _DISTRIBUTED
      endif
 #endif

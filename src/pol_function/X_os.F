@@ -50,7 +50,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  use ras_module,    ONLY: lras, lreels 
 #endif
 #if defined _DISTRIBUTED
- use WF_distribute, ONLY: l_low_mem_usage,WF_states_setup
+ use WF_distribute, ONLY: Distributed_Memory,WF_states_setup
 #endif
  implicit none
  type(levels)         :: Xen
@@ -94,6 +94,9 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  ! Project's dependent presets
  !=============================
+#if defined _DISTRIBUTED
+ if (Distributed_Memory) force_bare_X_G=.TRUE.
+#endif
 #if defined _MANYK
  if(iq.ne.1) force_bare_X_G=.true.
 #endif
@@ -168,7 +171,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
    !  the q-loop of X_em1
    !
    call FREQUENCIES_setup(Xw)
-#  endif
+#endif
    !
  endif 
  !
@@ -178,6 +181,8 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  if (.not.skip_WF_load) then
     !
     call WF_states_setup(cg_npts=cg_npts,bg_npts=bg_npts,k=Xk,qpoint=iq,Xw=Xw)
+    !
+    call WF_states_setup(report=.TRUE.)
     !
     call WF_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
     !

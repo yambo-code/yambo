@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2009 C. Attaccalite and the YAMBO team 
+! Copyright (C) 2000-2010 C. Attaccalite and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -19,13 +19,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module wf_distribute
+module WF_distribute
  !
- logical     :: l_low_mem_usage
+ logical     :: Distributed_Memory
  !
  interface
    !
-   subroutine WF_states_setup(k,q,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,bg_npts,qpoint,par_loop)
+   subroutine WF_states_setup(k,q,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
+&                             bg_npts,qpoint,par_loop,report)
      !
      use R_lattice,       ONLY:bz_samp
      use frequency,       ONLY:w_samp
@@ -34,7 +35,7 @@ module wf_distribute
      !
      type(bz_samp), optional       :: k,q
      type(w_samp),  optional       :: Xw
-     logical, intent(in), optional :: par_loop
+     logical, intent(in), optional :: par_loop,report
      integer, intent(in), optional :: k_to_load(2),b_to_load(2),qp_to_load(2)
      integer, intent(in), optional :: qpoint,cg_npts,bg_npts(*)
      !

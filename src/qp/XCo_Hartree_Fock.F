@@ -41,7 +41,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use fragments,     ONLY:fragment_status
 #endif
 #if defined _DISTRIBUTED
- use wf_distribute, ONLY:WF_states_setup
+ use WF_distribute, ONLY:WF_states_setup
 #endif
  !
  implicit none
@@ -97,6 +97,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
    !
    ! QP_table -> report
    !
+   call msg('r','')
    i4=(/1,1,0,0/)
    do while(QP_state_extract(i4)>0)
      write (ch,'(4(a,i3.3))') 'QP @ K ',i4(1),' - ',i4(2),' : b ',i4(3),' - ',i4(4)
@@ -120,6 +121,10 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  ! States required by the density
  !
  call WF_states_setup(b_to_load=(/1,E%nbm/),k_to_load=(/1,Xk%nibz/))
+ !
+ ! Report
+ !
+ call WF_states_setup(report=.TRUE.)
  !
 #endif
  !

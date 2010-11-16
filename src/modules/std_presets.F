@@ -56,6 +56,9 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use timing,     ONLY:log_line_to_dump,log_line,nhash,live_timing_is_on,&
 &                     parallel_timing,ct
  use wave_func,  ONLY:wf_b,wf_k,wf_ng,wf_space,wf_norm_test,wf_nb_io,wf_nb_io_groups
+#if defined _DISTRIBUTED 
+ use WF_distribute, ONLY:Distributed_Memory
+#endif
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,IO_write,serial_number,IO_read,mk_dir,&
 &                     Fragmented_IO,Fragmented_IO_save 
@@ -289,6 +292,9 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  Parallel_Fragments=.FALSE.
  Fragmented_IO=index(INSTR,'dbfrag')>0
  Fragmented_IO_save=Fragmented_IO
+#if defined _DISTRIBUTED
+ Distributed_Memory=index(INSTR,'parmem')>0.and.ncpu>1
+#endif
  !
  do i1=1,max_io_units
    call io_reset(i1)

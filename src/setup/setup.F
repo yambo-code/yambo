@@ -42,10 +42,6 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         X_xc_functional,setup_global_XC,MORE_NONE,K_kind,K_xc_functional,loaded_WF_xc_string,&
 &                         X_perturbation,G_perturbation,K_perturbation,WF_kind,WF_xc_functional,WF_perturbation
 #endif
-#if defined _DISTRIBUTED
- use WF_distribute,  ONLY:l_low_mem_usage
- use parser_m,       ONLY:parser
-#endif
  !
  implicit none
  type(levels)    ::en,Xen,Ken
@@ -60,10 +56,6 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  call section('*','CORE Variables Setup') 
  !########################################
-#if defined _DISTRIBUTED
- call parser('LowMemUsage',l_low_mem_usage)
- if(l_low_mem_usage) call msg('r','Parallel memory distribution')
-#endif
  !
  call section('+','Unit cells') 
  !=============================

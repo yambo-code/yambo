@@ -48,7 +48,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use collisions_IO, ONLY:TEMP_COLLISIONS_v
 #endif
 #if defined _DISTRIBUTED
- use wf_distribute, ONLY:WF_states_setup
+ use WF_distribute, ONLY:WF_states_setup
 #endif
 #if defined _SC
  use SC,            ONLY:it_now
@@ -137,6 +137,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! Scattering states are distributed
  ! 
  call WF_states_setup(qp_to_load=(/1,QP_n_states/),b_to_load=QP_n_G_bands,q=q,k=k)
+ !
+ ! Report
+ !
+ call WF_states_setup(report=.TRUE.)
  !
 #endif
  !

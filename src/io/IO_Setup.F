@@ -29,6 +29,9 @@ subroutine IO_Setup(en,k)
  use electrons,      ONLY:levels
  use par_proc_m,     ONLY:n_nodes,ncpu,check_for_a_redundant_IO,pp_redux_wait,myid,&
 &                         local_master_cpu,master_cpu
+#if defined _DISTRIBUTED
+ use WF_distribute,  ONLY:Distributed_Memory
+#endif
  implicit none
  !
  type(levels)  :: en
@@ -85,6 +88,10 @@ subroutine IO_Setup(en,k)
  IO_write=local_master_cpu(myid+1)
  ! 
  ! GPL_EXCLUDE_END 
+ !
+#if defined _DISTRIBUTED
+ if(Distributed_Memory) call msg('rn','** Distributed Memory Run **')
+#endif
  ! 
  call msg('r','CORE databases in ',trim(core_io_path))
  call msg('r','Additional I/O in ',trim(more_io_path))

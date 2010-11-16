@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2009 C. Attaccalite and the YAMBO team 
+! Copyright (C) 2000-2010 C. Attaccalite and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -19,39 +19,53 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine WF_states_setup(k,q,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,bg_npts,qpoint,par_loop)                     
+subroutine WF_states_setup(k,q,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
+&                          bg_npts,qpoint,par_loop,report)
  !
  ! Generic subroutine to distribute WF among different processors
+ !
  ! it supports parallelilzation on: 
+ !
  ! 1) quasiparticles; 2) bands and kpoints; 3) elctrong-hole poles;
  !
  !
+ use pars,            ONLY:SP
  use wave_func,       ONLY:states_to_load
  use QP_m,            ONLY:QP_nb,QP_nk,QP_table,QP_n_states
  use electrons,       ONLY:n_bands,n_spin
  use R_lattice,       ONLY:nkibz,qindx_X    
- use par_proc_m,      ONLY:pp_indexes,ncpu,pp_indexes_reset,myid
+ use par_proc_m,      ONLY:pp_indexes,pp_indexes_reset,myid,pp_redux_wait,ncpu
  use par_indexes_m,   ONLY:par_indexes
  use R_lattice,       ONLY:bz_samp,qindx_S
  use X_m,             ONLY:X_poles_tab
- use wf_distribute,   ONLY:l_low_mem_usage
+ use WF_distribute,   ONLY:Distributed_Memory
  use frequency,       ONLY:w_samp
+ use com,             ONLY:msg
  !
  implicit none
  !
  type(bz_samp), intent(in),optional :: k,q
  type(w_samp),  intent(in),optional :: Xw
- logical, intent(in), optional :: par_loop
+ logical, intent(in), optional :: par_loop,report
  integer, intent(in), optional :: k_to_load(2),b_to_load(2),qp_to_load(2)
  integer, intent(in), optional :: qpoint,cg_npts,bg_npts(*)
  !
  ! Work Space
  !
  integer :: i1,i2,iq,i_qp,ib,ik,is,iv,ic,ikp,ikbz,ikpbz,n_poles
+ real(SP):: N_loaded(ncpu)
  logical :: par_loops
  type(pp_indexes) ::px
  !                                 
- if(.not.l_low_mem_usage.or.ncpu==1) return
+ if(.not.Distributed_Memory) return
+ !
+ if (present(report)) then
+   N_loaded=0.
+   N_loaded(myid+1)=real(count(states_to_load==.TRUE.))/real(size(states_to_load))*100.
+   call pp_redux_wait(N_loaded) 
+   call msg('rs','[Distribute] Average allocated memory is [o/o]:',sum(N_loaded)/real(ncpu))
+   return
+ endif
  !
  par_loops=.TRUE.
  if(present(par_loop)) par_loops=par_loop

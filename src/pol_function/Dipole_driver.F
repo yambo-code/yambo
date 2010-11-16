@@ -42,7 +42,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use X_m,            ONLY:P_square
 #endif
 #if defined _DISTRIBUTED
- use wf_distribute,  ONLY:WF_states_setup
+ use WF_distribute,  ONLY:WF_states_setup
 #endif
 #if defined _RT
  use X_m,            ONLY:DIP_P

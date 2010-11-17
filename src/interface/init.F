@@ -417,10 +417,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh')
  !
-#if defined _DISTRIBUTED
- call initactivate(1,'LowMemUsage')
-#endif
- !
  !FFT
  !
  if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse),l_em1d,&

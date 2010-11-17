@@ -3,5 +3,8 @@ FFT_object =
 #else
 FFT_object = sgfft.o
 #endif
+#if defined _DISTRIBUTED
+DISTRIBUTED_objects = WF_states_setup.o
+#endif
 objs = fft_setup.o fft_3d.o $(FFT_object)  \
-       scatter_Bamp.o scatter_Gamp.o WF_spatial_invertion.o WF_load.o
+       scatter_Bamp.o scatter_Gamp.o WF_spatial_invertion.o WF_load.o $(DISTRIBUTED_objects)

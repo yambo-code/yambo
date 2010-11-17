@@ -390,7 +390,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 &                                   trim(intc(BS_E_degs(lambda)))//' -> '//&
 &                                   trim(intc(BS_E_degs(lambda)+n_lambda_deg-1)))
    !
-   call live_timing('ExcWF@'//trim(intc(lambda)),px%n_of_element_1D(myid+1))  
+   call live_timing('ExcWF@'//trim(intc(lambda)),px%n_of_elements(myid+1))  
    !
    v2plot  =0._SP
    wf_vc   =(0._SP,0._SP)

@@ -238,7 +238,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
    if( any(px%element_2D(ik,:)) ) then
      if (MAG_landau) call WF_derivative((/1,SC_bands/),(/ik,ik/),do_derivatives)
      call WF_load(0,1,(/1,SC_bands/),(/ik,ik/),title='-MAG',impose_free_and_alloc=.TRUE.)
-     if(timing_init) call live_timing('MAG-Hamiltonian',px%n_of_element_1D(myid+1))
+     if(timing_init) call live_timing('MAG-Hamiltonian',px%n_of_elements(myid+1))
      timing_init=.false.
    endif
    !

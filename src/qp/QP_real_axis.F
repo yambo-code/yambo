@@ -240,7 +240,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !===========
  !
  call pp_redux_wait
- call live_timing(trim(Sc_name)//'W0',px%n_of_element_1D(myid+1)*(q%nbz-iq_to_start+1))
+ call live_timing(trim(Sc_name)//'W0',px%n_of_elements(myid+1)*(q%nbz-iq_to_start+1))
  !
  do iqbz=iq_to_start,q%nbz
    !

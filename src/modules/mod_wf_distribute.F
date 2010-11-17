@@ -25,7 +25,7 @@ module WF_distribute
  !
  interface
    !
-   subroutine WF_states_setup(k,q,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
+   subroutine WF_states_setup(k,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
 &                             bg_npts,qpoint,par_loop,report)
      !
      use R_lattice,       ONLY:bz_samp
@@ -33,7 +33,7 @@ module WF_distribute
      !
      implicit none
      !
-     type(bz_samp), optional       :: k,q
+     type(bz_samp), optional       :: k
      type(w_samp),  optional       :: Xw
      logical, intent(in), optional :: par_loop,report
      integer, intent(in), optional :: k_to_load(2),b_to_load(2),qp_to_load(2)

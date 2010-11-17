@@ -151,7 +151,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  call par_indexes(px,(/QP_n_states_2do,elph_nDBs_used/))
  call pp_redux_wait
  !
- call live_timing('gF^2 [el]',px%n_of_element_1D(myid+1))
+ call live_timing('gF^2 [el]',px%n_of_elements(myid+1))
  !
  do i1=1,QP_n_states_DB
    !
@@ -276,7 +276,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
 &                                     trim(intc(BS_E_degs(lambda)))//' -> '//&
 &                                     trim(intc(BS_E_degs(lambda)+n_lambda_deg-1)))
      !
-     call live_timing('gF^2 [exc] @ state '//trim(intc(lambda)),px%n_of_element_1D(myid+1))
+     call live_timing('gF^2 [exc] @ state '//trim(intc(lambda)),px%n_of_elements(myid+1))
      !
      do neh = 1,BS_K_dim
        !

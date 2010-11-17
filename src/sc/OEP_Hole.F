@@ -82,7 +82,7 @@ subroutine OEP_Hole(E,k,q,Vslt,U_x)
  call par_indexes(px,(/q%nbz,E%nbm/))
  call pp_redux_wait
  ch="Vhole@it"//trim(intc(it_now))
- call live_timing(trim(ch),px%n_of_element_1D(myid+1)*E%nbm*&
+ call live_timing(trim(ch),px%n_of_elements(myid+1)*E%nbm*&
         &*k%nibz)
  do iq=1,q%nbz
    isc%qs(2:)=(/q%sstar(iq,1),q%sstar(iq,2)/)

@@ -136,11 +136,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Scattering states are distributed
  ! 
- call WF_states_setup(qp_to_load=(/1,QP_n_states/),b_to_load=QP_n_G_bands,q=q,k=k)
+ call WF_states_setup(qp_to_load=(/1,QP_n_states/),b_to_load=QP_n_G_bands,k=k)
  !
  ! Report
  !
- call WF_states_setup(report=.TRUE.)
+ call WF_states_setup(b_to_load=QP_n_G_bands,report=.TRUE.)
  !
 #endif
  !
@@ -201,17 +201,17 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    if (l_sc_srpa) timing_states=E%nbf*(maxval(QP_table(:,2))-E%nbf)*&
         &maxval(QP_table(:,3))
    call live_timing(trim(Sc_name)//'@it'//&
-        &trim(intc(it_now)),px%n_of_element_1D(myid+1)*timing_states) 
+        &trim(intc(it_now)),px%n_of_elements(myid+1)*timing_states) 
  else if (.not.l_collisions_IO) then
 #endif
 #if defined _RT
  if (l_collisions_IO) then
-   call live_timing("COHSEX collisions",px%n_of_element_1D(myid+1)) 
+   call live_timing("COHSEX collisions",px%n_of_elements(myid+1)) 
  else
 #endif
-   if (l_ppa)    call live_timing(trim(Sc_name)//'W0 PPA',px%n_of_element_1D(myid+1)*QP_n_states) 
+   if (l_ppa)    call live_timing(trim(Sc_name)//'W0 PPA',px%n_of_elements(myid+1)*QP_n_states) 
    if (l_cohsex) call live_timing&
-&                             (trim(Sc_name)//'W0 COHSEX',px%n_of_element_1D(myid+1)*QP_n_states) 
+&                             (trim(Sc_name)//'W0 COHSEX',px%n_of_elements(myid+1)*QP_n_states) 
 #if defined _SC
  endif
 #endif

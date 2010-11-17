@@ -135,7 +135,7 @@ subroutine rim()
  call mem_est("RIM_qpg",(/size(RIM_qpg)/),(/SP/))
  !
  call par_indexes(px,(/nqibz/))
- call live_timing('Momenta loop',px%n_of_element_1D(myid+1))
+ call live_timing('Momenta loop',px%n_of_elements(myid+1))
  do iq=1,nqibz
    if (.not.px%element_1D(iq)) cycle
    !

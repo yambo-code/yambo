@@ -199,7 +199,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  if ( distributed_Q ) then
    call par_indexes(px,(/elph_nDBs_used/))
-   live_timing_steps=px%n_of_element_1D(myid+1)*QP_n_states*QP_PH_n_G_bands
+   live_timing_steps=px%n_of_elements(myid+1)*QP_n_states*QP_PH_n_G_bands
    nq_memory=0
    allocate(px%element_2D(elph_nDBs_used,QP_PH_n_G_bands))
    px%element_2D=.FALSE.
@@ -211,7 +211,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    call msg('r', '[GW/El-Ph] Q-points distributed among the CPUs')
  else
    call par_indexes(px,(/nq_to_sum,QP_PH_n_G_bands/))
-   live_timing_steps=px%n_of_element_1D(myid+1)*QP_n_states
+   live_timing_steps=px%n_of_elements(myid+1)*QP_n_states
  endif
  !
  call pp_redux_wait
@@ -482,7 +482,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      if (trim(QP_solver)=='n') call live_timing('El-Ph Sc   [sum]',elph_nDBs_used*QP_n_states)
      if (trim(QP_solver)=='g') then
        if (distributed_Q) then
-         call live_timing('El-Ph Sc[sum+KK]',px%n_of_element_1D(myid+1)*QP_n_states+QP_n_states)
+         call live_timing('El-Ph Sc[sum+KK]',px%n_of_elements(myid+1)*QP_n_states+QP_n_states)
        else
          call live_timing('El-Ph Sc[sum+KK]',elph_nDBs_used*QP_n_states+QP_n_states)
        endif

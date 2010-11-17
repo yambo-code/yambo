@@ -119,9 +119,9 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  endif
  !
  call par_indexes(px,(/nq_todo/))
- if (l_eliashberg.and..not.l_dos) call live_timing('Eliashberg',px%n_of_element_1D(myid+1))
- if (.not.l_eliashberg.and.l_dos) call live_timing('ph DOS',px%n_of_element_1D(myid+1))
- if (l_dos.and.l_eliashberg)      call live_timing('Eliashberg & DOS',px%n_of_element_1D(myid+1))
+ if (l_eliashberg.and..not.l_dos) call live_timing('Eliashberg',px%n_of_elements(myid+1))
+ if (.not.l_eliashberg.and.l_dos) call live_timing('ph DOS',px%n_of_elements(myid+1))
+ if (l_dos.and.l_eliashberg)      call live_timing('Eliashberg & DOS',px%n_of_elements(myid+1))
  !
  ! calculate q%weights
  !

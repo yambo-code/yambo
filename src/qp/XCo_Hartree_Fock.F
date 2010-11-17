@@ -116,7 +116,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  ! Exchange Scattering states are distributed
  ! 
- call WF_states_setup(qp_to_load=(/1,QP_n_states/),b_to_load=(/1,Sx_upper_band/),q=q,k=k)
+ call WF_states_setup(qp_to_load=(/1,QP_n_states/),b_to_load=(/1,Sx_upper_band/),k=k)
  !
  ! States required by the density
  !
@@ -124,7 +124,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  ! Report
  !
- call WF_states_setup(report=.TRUE.)
+ call WF_states_setup(b_to_load=(/1,Sx_upper_band/),report=.TRUE.)
  !
 #endif
  !
@@ -158,13 +158,13 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
 #endif
  !
 #if defined _RT
- call live_timing(trim(ch),px%n_of_element_1D(myid+1))
+ call live_timing(trim(ch),px%n_of_elements(myid+1))
 #else
  if (l_sc_exx) then
-   call live_timing(trim(ch),px%n_of_element_1D(myid+1)*E%nbf*&
+   call live_timing(trim(ch),px%n_of_elements(myid+1)*E%nbf*&
         &(maxval(QP_table(:,2))-E%nbf)*maxval(QP_table(:,3)))
  else  
-   call live_timing(trim(ch),px%n_of_element_1D(myid+1)*QP_n_states)
+   call live_timing(trim(ch),px%n_of_elements(myid+1)*QP_n_states)
  endif
 #endif
  !

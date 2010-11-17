@@ -58,7 +58,7 @@
 
    call pp_indexes_reset(px)
    call par_indexes(px, (/ Xk%nibz, Xen%nbm /),(/ 1, X%ib(1) /))
-   call live_timing('Dipole, cut (T):',px%n_of_element_1D(myid+1))
+   call live_timing('Dipole, cut (T):',px%n_of_elements(myid+1))
    call pp_redux_wait
 
    do ik = 1, Xk%nibz

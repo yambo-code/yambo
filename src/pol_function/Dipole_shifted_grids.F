@@ -162,7 +162,7 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
    !
    call pp_indexes_reset(px)
    call par_indexes(px,(/Xk%nibz,Xen%nbm/),(/1,X%ib(1)/))
-   call live_timing('Dipole @ grid '//trim(intc(iq))//':',px%n_of_element_1D(myid+1))
+   call live_timing('Dipole @ grid '//trim(intc(iq))//':',px%n_of_elements(myid+1))
    call pp_redux_wait
    !
    do ik = 1, Xk%nibz   ! Loop over k's in IBZ [1:nkibz]

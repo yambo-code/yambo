@@ -70,14 +70,14 @@ subroutine X_s(iq,fr,X,wv)
  call par_indexes(px,(/wv%n(2)/))
  if (nw_max_par<wv%n(2)) px%element_1D(nw_max_par+1:)=.true.
  call pp_redux_wait
- px%n_of_element_1D(myid+1)=0
+ px%n_of_elements(myid+1)=0
  do iw=1,wv%n(2)
    if (iw<=nw_max_par.and..not.px%element_1D(iw)) X_mat(:,:,iw)=(0.,0.)
-   if (px%element_1D(iw)) px%n_of_element_1D(myid+1)=px%n_of_element_1D(myid+1)+1
+   if (px%element_1D(iw)) px%n_of_elements(myid+1)=px%n_of_elements(myid+1)+1
  enddo
  !
  call live_timing(&
-&   'X @q['//trim(intc(iq))//'] '//trim(intc(fr(1)))//'-'//trim(intc(fr(2))),px%n_of_element_1D(myid+1))
+&   'X @q['//trim(intc(iq))//'] '//trim(intc(fr(1)))//'-'//trim(intc(fr(2))),px%n_of_elements(myid+1))
  do iw=1,wv%n(2)
    !
    INV_MODE=USE_LK

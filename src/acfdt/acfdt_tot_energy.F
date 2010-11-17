@@ -190,7 +190,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    ACFDT_Ec=0.
    !
    call par_indexes(plw,(/ACFDT_n_lambda,ACFDT_n_freqs/))
-   call live_timing('Ec',plw%n_of_element_1D(myid+1)*q%nibz)
+   call live_timing('Ec',plw%n_of_elements(myid+1)*q%nibz)
    !
    ! X I/O (section 1)
    !

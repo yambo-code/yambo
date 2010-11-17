@@ -77,7 +77,7 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s)
    call io_control(ACTION=RD_CL_IF_END,SEC=(/iq+1/),ID=ID)
    io_err=ioELPH(ID,'gkkp')
    !
-   if (iq==1) call live_timing('GKKP factors',px%n_of_element_1D(myid+1))
+   if (iq==1) call live_timing('GKKP factors',px%n_of_elements(myid+1))
    if (iq==1) cycle
    !
    do i_l=1,ph_modes

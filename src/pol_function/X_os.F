@@ -182,7 +182,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
     !
     call WF_states_setup(cg_npts=cg_npts,bg_npts=bg_npts,k=Xk,qpoint=iq,Xw=Xw)
     !
-    call WF_states_setup(report=.TRUE.)
+    call WF_states_setup(b_to_load=X%ib,report=.TRUE.)
     !
     call WF_load(X%ng,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
     !
@@ -227,14 +227,14 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !==================
 #if defined _SC 
  if (l_sc_run) then
-   call live_timing('Xo @it'//trim(intc(it_now)),px%n_of_element_1D(myid+1))
+   call live_timing('Xo @it'//trim(intc(it_now)),px%n_of_elements(myid+1))
  else
    call live_timing('Xo@q['//trim(intc(iq))//'] '//&
-&                    trim(intc(fr(1)))//'-'//trim(intc(fr(2))),px%n_of_element_1D(myid+1))
+&                    trim(intc(fr(1)))//'-'//trim(intc(fr(2))),px%n_of_elements(myid+1))
  endif
 #else
  call live_timing('Xo@q['//trim(intc(iq))//'] '//&
-&                  trim(intc(fr(1)))//'-'//trim(intc(fr(2))),px%n_of_element_1D(myid+1))
+&                  trim(intc(fr(1)))//'-'//trim(intc(fr(2))),px%n_of_elements(myid+1))
 #endif
  !
  n_poles=0

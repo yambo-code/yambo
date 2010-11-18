@@ -1,4 +1,4 @@
-
+!
 ! Copyright (C) 2000-2010 A. Marini, M. Gruening and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
@@ -39,7 +39,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use X_m,            ONLY:X_t
  use timing,         ONLY:live_time_msg
  use stderr,         ONLY:tty_size,intc,real2ch
- use xc_functionals, ONLY:V_xc
+ use xc_functionals, ONLY:V_xc,E_xc
  use frequency,      ONLY:w_samp
  use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,&
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL
@@ -61,7 +61,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  integer                  :: it
  real(SP)                 :: spread(SC_bands,k%nibz,n_sp_pol),&
 &                            E_previous(SC_bands,k%nibz,n_sp_pol),dE(SC_bands,k%nibz,n_sp_pol),&
-&                            E_conv(n_sp_pol)
+&                            E_conv(n_sp_pol),E_total
  real(SP),    allocatable :: V_xc_nm1(:,:),rho_nm1(:)
  real(SP),    allocatable :: delta_rho(:)
  complex(SP), allocatable :: WFo(:,:)
@@ -128,7 +128,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !  Ho (kinetic + potential)
  !---------------------------
  !
- call OCCUPATIONS_Fermi(E,k,2)  
  call msg('r','')
  call SC_bare_Hamiltonian(E,Xk,k)
  !
@@ -326,6 +325,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      call el_density(E,k,rho_n,.false.)
      !
+     ! Total Energy 
+     !==============
+     !
+     call SC_Energy(E_total,E,k,rho_n)
+     !
 #if defined _MAGNETIC
      ! New spin density 
      !===================
@@ -359,7 +363,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      else
 #endif
      dumb_ch='[SC] Iteration '//trim(intc(it_now))//' Accuracies rho(%) - E(ev) :'//&
-&            trim(real2ch(rho_convergence))//'% - '//trim(real2ch(E_convergence*HARTREE))
+&            trim(real2ch(rho_convergence))//'% - '//trim(real2ch(E_convergence*HARTREE))//&
+&            '  E_tot(Ha)= '//trim(real2ch(E_total))
 #if defined _MAGNETIC
      endif
 #endif
@@ -438,6 +443,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      allocate(rho_nm1(fft_size))
      call mem_est("rho_nm1",(/fft_size/),(/SP/))
+     !
+     allocate(E_xc(fft_size))
+     call mem_est("E_xc",(/fft_size/),(/SP/))
      !
      allocate(V_xc_nm1(fft_size,n_spin))
      call mem_est("V_xc_nm1",(/size(V_xc_nm1)/))

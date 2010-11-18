@@ -33,22 +33,24 @@ subroutine OEP_kli_inversion(E,k,Vkli,Vslt,U,rho)
  !  rho_{xc}(G)= W(G) - 2*int_k sum_{v} rho_{v,v}(k,G) [SigmaXC_{v,v}(k)]^* +c.c.  
  !  where W(G) is the Hole/Slater part of the potential multiplied by the density
  !
- use pars,            ONLY:SP,DP
+ use pars,            ONLY:SP,DP,SCHLEN
  use D_lattice,       ONLY:DL_vol,sop_inv,i_time_rev,nsym
  use electrons,       ONLY:levels,n_met_bands
  use R_lattice,       ONLY:bz_samp,g_rot,nkibz,nkbz
- use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan
+ use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan,fft_rot_r
  use frequency,       ONLY:w_samp,W_reset,bg_npts,cg_pt,cg_index_bg,rg_index_bg
  use matrix_operate,  ONLY:mat_dia_inv,INV,USE_LK
  use collision,       ONLY:ggwinfo,collision_reset
  use QP_m,            ONLY:QP_Vnl_xc,QP_n_states,QP_table,QP_ng_Sx
  use memory_m,        ONLY:mem_est
- use SC,              ONLY:SC_bands,SC_R,H_rotate
+ use SC,              ONLY:SC_bands,SC_R,H_rotate,it_now
  use drivers,         ONLY:l_collisions_IO
  use memory_m,        ONLY:mem_est
  use par_proc_m,      ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m,   ONLY:par_indexes
  use wave_func,       ONLY:wf_state,wf
+ use timing,          ONLY:live_timing
+ use stderr,          ONLY:intc
  !
  ! I/O
  !
@@ -62,9 +64,11 @@ subroutine OEP_kli_inversion(E,k,Vkli,Vslt,U,rho)
  ! Work Space
  !
  integer                  :: i1,ik,iv1,iv2,is,ig1,ig2,ifft,ir
- complex(SP), allocatable :: SigmaXC(:),rhotw_sum(:),rho_xc(:),Vkli_RL(:),&
+ complex(SP), allocatable :: rhotw_sum(:),rho_xc(:),Vkli_RL(:),&
 &                            Ko(:,:),rhotw_prd(:,:),rhotw_rs(:)
+ complex(SP)              :: SigmaXC
  complex(DP), allocatable :: Vx_dp(:),W_tmp(:),rhotw_ds(:)
+ character(schlen)        :: ch
  type(ggwinfo)            :: isc
  type(pp_indexes)         :: px
  !
@@ -89,91 +93,86 @@ subroutine OEP_kli_inversion(E,k,Vkli,Vslt,U,rho)
  ! Calculate Ko(G,G') and rho_xc
  !     =>1 - initialize vars/dim
  !       for each k in IBZ:
- !       2 - retabulate SigmaXC elements
- !       for each v,k: 
- !       3 - calculate  rhotw_sum (G) = sum{R} Rho^*_{v}(k,R^-1 G)
- !       4 - accumulate Ko(G,G') = Ko(G,G') - occ* sum{R} Rho^*_{v}(k,R^-1 G)*rho_{v}(k,R^-1 G')
- !       5 - accumulate rho_xc
+ !       for each v: 
+ !       2 - calculate  rhotw_sum (G) = sum{R} Rho^*_{v}(k,R^-1 G)
+ !       3 - accumulate Ko(G,G') = Ko(G,G') - occ* sum{R} Rho^*_{v}(k,R^-1 G)*rho_{v}(k,R^-1 G')
+ !       4 - accumulate rho_xc
  ! -----------------------------------------------
- ! NB:   it does not work for metallic systems
+ ! NB:   not tested for metallic systems, might not work
  ! -----------------------------------------------
- !1:
- Ko = (0._SP,0._SP)
- forall(ig1=1:QP_ng_Sx-1) Ko(ig1,ig1) = (1._SP,0._SP)  
  call collision_reset(isc)
  call pp_indexes_reset(px)
  isc%ngrho=QP_ng_Sx
  allocate(isc%rhotw(QP_ng_Sx),rhotw_sum(QP_ng_Sx-1),rhotw_prd(QP_ng_Sx,QP_ng_Sx))
- allocate(rhotw_ds(fft_size),rhotw_rs(QP_ng_Sx),SigmaXC(E%nbf))
- ! 2:
+ allocate(rhotw_ds(fft_size),rhotw_rs(QP_ng_Sx))
  call par_indexes(px,(/nkibz,E%nbf/))
  call pp_redux_wait
+ ch="Vkli@it"//trim(intc(it_now))
+ call live_timing(trim(ch),px%n_of_element_1D(myid+1))
+ rhotw_prd = (0._SP,0._SP)
  do ik = 1, nkibz
-   rhotw_prd = (0._SP,0._SP)
-   SigmaXC = (0._SP,0._SP)
-   ! 3:
    do iv1 = 1 ,E%nbf
-     isc%is = (/iv1,ik,1,1/)
-     isc%os = (/iv1,ik,1,1/)
-     isc%qs = (/1,1,1/)
-     !
+     rhotw_sum = (0._SP,0._SP)
+     SigmaXC = (0._SP,0._SP)
      do ir = 1,fft_size
-       SigmaXC(iv1) = SigmaXC(iv1) + U(ik,iv1,ir)
+       SigmaXC = SigmaXC + U(ik,iv1,ir)
      end do
-     !
-     call scatterBamp(isc)
-     ifft=wf_state(iv1,ik,1)
-     rhotw_ds(:)=conjg(wf(:,ifft))*wf(:,ifft)/rho(:)*real(fft_size,DP) 
-#if defined _FFTW
-     fftw_plan = 0
-     call fft_3d(rhotw_ds,fft_dim,+1,fftw_plan)
-#else
-     call fft_3d(rhotw_ds,fft_dim,+1)
-#endif
-     rhotw_rs(1:QP_ng_Sx) = rhotw_ds(fft_g_table(1:QP_ng_Sx,1))/real(fft_size,SP) 
-     forall(ig1=2:QP_ng_Sx,ig2=2:QP_ng_Sx) rhotw_prd(ig1,ig2) = E%f(iv1,ik,1)*conjg(rhotw_rs(ig1))*isc%rhotw(ig2)
-     !
-     rhotw_sum    = (0.,0.)
-     !
      do i1 = 1,k%nstar(ik)
        is  = k%star(ik,i1)
+       isc%is = (/iv1,ik,is,1/)
+       isc%os = (/iv1,ik,is,1/)
+       isc%qs = (/1,1,1/)
+       call scatterBamp(isc)
        if (is>nsym/(i_time_rev+1)) is=is-nsym/(i_time_rev+1)
-       !
-       forall(ig1 = 2:QP_ng_Sx)       Ko(ig1-1,1:QP_ng_Sx-1) = Ko(ig1-1,1:QP_ng_Sx-1) -&
-           & rhotw_prd(g_rot(sop_inv(is),ig1),g_rot(sop_inv(is),2:QP_ng_Sx)) +&
-           & conjg(rhotw_prd(g_rot(sop_inv(is),ig1),g_rot(sop_inv(is),2:QP_ng_Sx)))
-       !
-       forall(ig1=2:QP_ng_Sx) rhotw_sum(ig1-1)=rhotw_sum(ig1-1)+rhotw_rs(g_rot(sop_inv(is),ig1))
+       ifft=wf_state(iv1,ik,1)
+       rhotw_ds(:)=conjg(wf(fft_rot_r(is,:),ifft))*wf(fft_rot_r(is,:),ifft)
+       rhotw_ds =rhotw_ds/(rho*real(fft_size,SP)) 
+       rhotw_rs = (0._SP,0._SP)
+#if defined _FFTW
+       fftw_plan = 0
+       call fft_3d(rhotw_ds,fft_dim,+1,fftw_plan)
+#else
+       call fft_3d(rhotw_ds,fft_dim,+1)
+#endif
+       rhotw_rs(1:QP_ng_Sx) = rhotw_ds(fft_g_table(1:QP_ng_Sx,1))
+       forall(ig1=2:QP_ng_Sx,ig2=2:QP_ng_Sx) rhotw_prd(ig1,ig2) = rhotw_prd(ig1,ig2) + 0.5_SP*&
+           & E%f(iv1,ik,1)*(conjg(rhotw_rs(ig1))*isc%rhotw(ig2) + rhotw_rs(ig1)*conjg(isc%rhotw(ig2)))
+       forall(ig1=2:QP_ng_Sx) rhotw_sum(ig1-1)=rhotw_sum(ig1-1)+rhotw_rs(ig1)
        !
      end do
-     ! 4:
-     rho_xc(1:QP_ng_Sx-1) =  rho_xc(1:QP_ng_Sx-1) - E%f(iv1,ik,1)*(conjg(rhotw_sum(2:QP_ng_Sx))*SigmaXC(iv1)&
-          &+rhotw_sum(2:QP_ng_Sx)*conjg(SigmaXC(iv1)))
+     rho_xc(1:QP_ng_Sx-1) =  rho_xc(1:QP_ng_Sx-1) - 0.5_SP*E%f(iv1,ik,1)*(conjg(rhotw_sum(1:QP_ng_Sx-1))*SigmaXC&
+          &+rhotw_sum(1:QP_ng_Sx-1)*conjg(SigmaXC))/real(nkbz,SP) 
+     call live_timing(steps=1)
      !
    end do
  end do
+ call live_timing()
  !
- deallocate(isc%rhotw,rhotw_sum,rhotw_prd,SigmaXC,rhotw_ds,rhotw_rs)!,rho)
- if (allocated(QP_Vnl_xc))  deallocate(QP_Vnl_xc)
+ Ko = (0._SP,0._SP)
+ do ig1 = 1,QP_ng_Sx-1
+   Ko(ig1,ig1) = (1._SP,0._SP)  
+   Ko(ig1, 1:QP_ng_Sx-1) = Ko(ig1, 1:QP_ng_Sx-1) - rhotw_prd(ig1+1,2:QP_ng_Sx)/float(nkbz)
+ end do
+ !
+ deallocate(isc%rhotw,rhotw_sum,rhotw_prd,rhotw_ds,rhotw_rs)
  !
  ! Calculate Vkli (RL) 
  !
- allocate(Vkli_RL(QP_ng_Sx-1))!DEBUG
+ allocate(Vkli_RL(QP_ng_Sx-1))
  call mat_dia_inv(INV,USE_LK,Ko)
- !
+ ! 
  Vkli_RL=matmul(Ko,rho_xc)
-  !
+ !
  deallocate(rho_xc)
  !
  ! Calculate Vkli (DL)
  !
  allocate(Vx_dp(fft_size))
  Vx_dp = (0._DP,0._DP)
- Vx_dp(fft_g_table(1:QP_ng_Sx-1,1))= Vkli_RL(1:QP_ng_Sx-1)/(DL_vol*float(nkbz))
+ Vx_dp(fft_g_table(2:QP_ng_Sx,1))= Vkli_RL(1:QP_ng_Sx-1)
 #if defined _FFTW
  fftw_plan = 0
  call fft_3d(Vx_dp,fft_dim,1,fftw_plan)
- fftw_plan = 0
 #else
  call fft_3d(Vx_dp,fft_dim,1)
 #endif

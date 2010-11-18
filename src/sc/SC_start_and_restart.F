@@ -156,7 +156,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  endif
  if (l_sc_exx) then
    if (.not.l_oep_slater) &
-&     call msg('rn' ,'[SC] Iterative solution of OEP :',l_oep_iterative)
+&     call msg('r' ,'[SC] Iterative solution of OEP :',l_oep_iterative)
    if (.not.l_oep_exact) then
      if (l_oep_kli) ch = 'KLI'
      if (l_oep_slater) ch = 'SLATER'

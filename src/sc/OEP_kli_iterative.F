@@ -25,7 +25,7 @@ subroutine OEP_kli_iterative(E,k,Vkli,Vslt,U,rho)
   ! approach ?? la Kummel-Perdew with the only difference that in KLI orbital 
   ! shifts are always 0.  
   !
- use pars,            ONLY:SP,DP,SCHLEN
+ use pars,            ONLY:SP,DP,LCHLEN
  use com,             ONLY:error
  use electrons,       ONLY:levels,n_met_bands
  use R_lattice,       ONLY:bz_samp,nkibz
@@ -58,7 +58,7 @@ subroutine OEP_kli_iterative(E,k,Vkli,Vslt,U,rho)
  real DeltaEps, V_resp(fft_size),reached_treshold
  integer ir,ifft,is,rho_sym
  logical          ::lerr
- character(schlen)  ::dumb_ch
+ character(lchlen)  ::dumb_ch
  !
  call live_time_msg("n","","","%s")
  V_io = Vkli
@@ -68,6 +68,7 @@ subroutine OEP_kli_iterative(E,k,Vkli,Vslt,U,rho)
      V_resp = 0._SP
      do ik = 1, nkibz 
        do iv1 = 1, E%nbf-1 ! -1 to fix the additive constant of the potential
+         if (abs(E%E(iv1,ik,1)-E%E(E%nbf,ik,1)).lt.0.0001_SP) cycle
          ifft = wf_state(iv1,ik,1)
          DeltaEps = 0._SP
          do ir = 1, fft_size
@@ -86,7 +87,7 @@ subroutine OEP_kli_iterative(E,k,Vkli,Vslt,U,rho)
      V_io = V_io/rho
      !
      reached_treshold=maxval(abs(V_io(1:)-V_nm1(1:)))
-     dumb_ch='[KLI] Iteration '//trim(intc(ii))//' Accuracy :'//&
+     dumb_ch='[KLI] Cycle '//trim(intc(ii))//' Accuracy :'//&
 &            trim(real2ch(reached_treshold))//'|'//trim(real2ch(OEP_threshold))
      call live_time_msg("r",dumb_ch,"","%s")
    if (reached_treshold<OEP_threshold) exit

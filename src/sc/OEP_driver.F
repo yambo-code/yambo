@@ -23,20 +23,20 @@ subroutine OEP_driver(X,E,k,q,V_oep)
   !
   ! Driver for OEP potentials. Variables: 
   !  * the approximation for the OEP eq. (Exact, Slater, KLI) 
-  !  * the solution method (iterative ?? la Kuemmel-Perdew or by Chi inversion) 
+  !  * the solution method (iterative Kuemmel-Perdew way or by Chi inversion) 
   !  * the approximation for correlation (nothing, LDA, static RPA)
   !
-  ! STATUS (23/08/10)
+  ! STATUS (15/09/10)
   !
   ! sRPA available only for OEP_exact_inversion
   ! Collisions available only for OEP_exact_inversion
-  ! OEP_kli_inversion, do not work, missing timing/parall
-  ! OEP_exact_iterative, do not work
+  ! OEP_kli_inversion, partially tested
+  ! OEP_exact_iterative, works but results diff from inv
   ! OEP_kli_iterative, partially tested, missing parallel
-  ! OEP_Hole, partially tested, missing timing 
+  ! OEP_Hole, partially tested 
   ! NOTES:
   ! In the future also CEDA might be included
-  ! In the future we might choose just the iterative option. Now both for testing prupose. 
+  ! In the future we might choose just the iterative option. Now both for testing purpose. 
   ! Later should also distiguish in case of real time evolution between memory/not memory 
   !
   use pars,            ONLY:SP,DP
@@ -68,8 +68,8 @@ subroutine OEP_driver(X,E,k,q,V_oep)
      !   
      call el_density(E,k,rho,.false.)   ! Density and Slater potential, needed always but 
      call OEP_Hole(E,k,q,V_slt,W_x)     ! for the exact oep with Chi inversion
-     if (l_oep_slater.or.it_now==1) V_io = V_slt/rho
-     if (l_oep_kli.or.(it_now==1.and.l_oep_exact)) then
+     if (l_oep_slater) V_io = V_slt/rho
+     if ((l_oep_kli) .or.(it_now==1.and.l_oep_exact)) then
        if (l_oep_iterative) then
          call OEP_kli_iterative(E,k,V_io,V_slt,W_x,rho)
        else
@@ -81,7 +81,6 @@ subroutine OEP_driver(X,E,k,q,V_oep)
      call OEP_exact_inversion(X,E,k,q,V_oep)
    end if
    if (l_oep_iterative.or.l_oep_slater) V_oep = V_io
+   if (l_oep_iterative.or.l_oep_kli.or.l_oep_slater) deallocate(rho,V_slt,W_x)
    !
-end subroutine OEP_driver
-
-
+   end subroutine OEP_driver

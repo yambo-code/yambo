@@ -116,7 +116,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
    ! The mixing of the potential has been eliminated for HF and COHSEX, for
    ! V_xc_sc case tests are needed.
    ! 
-   if (iteration>1) V_xc_sc = SC_cycle_mixing*V_xc_sc + (1.-SC_cycle_mixing)*V_xc_nm1 
+   if (iteration>1.and..not.l_sc_exx) V_xc_sc = SC_cycle_mixing*V_xc_sc + (1.-SC_cycle_mixing)*V_xc_nm1 
    !
    V_xc_nm1=V_xc_sc
    !

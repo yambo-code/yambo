@@ -467,6 +467,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #if defined _YPP_BOLTZMANN
  if (l_current) call initactivate(1,"FFTGvecs Nelectro ElecTemp Tau El_Field")
 #endif
+#if defined _YPP_MAGNETIC
+ if (l_current) call initactivate(1,'PhaseTrick')
+#endif
  !
  if (l_plot) then
    call initactivate(1,"Format Direction FFTGvecs") 

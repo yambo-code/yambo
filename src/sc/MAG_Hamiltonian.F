@@ -61,6 +61,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
  !
  !
  use pars,           ONLY:SP,pi
+ use parser_m,       ONLY:parser
  use units,          ONLY:SPEED_OF_LIGHT
  use SC,             ONLY:Ho
  use memory_m,       ONLY:mem_est
@@ -69,8 +70,8 @@ subroutine MAG_Hamiltonian(initial_check_only)
  use D_lattice,      ONLY:a
  use R_lattice,      ONLY:nkibz
  use magnetic,       ONLY:MAG_radius,MAG_B,MAG_hamiltonian_type,MAG_landau,MAG_pauli, &
-&                         MAG_gauge,A_magn_x,A_magn_y,A_magn_z,  &
-&                         Bx,By,Bz,MAG_theta,MAG_psi,ir_table
+&                         MAG_gauge,A_magn_x,A_magn_y,A_magn_z,        &
+&                         Bx,By,Bz,MAG_theta,MAG_psi,ir_table,phase_trick
  use electrons,      ONLY:n_sp_pol
  use SC,             ONLY:SC_bands,SC_potential
  use wave_func,      ONLY:wf,wf_state,wf_x,wf_y,wf_z,WF_load,WF_free,WF_derivative_free
@@ -150,6 +151,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
        endif
      endif
    endif
+   call parser('PhaseTrick',phase_trick)
    return
  endif
  !

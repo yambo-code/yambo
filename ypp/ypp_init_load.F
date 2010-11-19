@@ -142,6 +142,9 @@ subroutine ypp_init_load(defs)
  call it(defs,'Tau','Electronic scattering-free time',Boltz_tau,unit=Time_unit)
  call it(defs,'El_Field','Electric field',Boltz_Efield,unit=Efield_unit)
 #endif
+#if defined _YPP_MAGNETIC
+ call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization')
+#endif
  !
  ! PLOT
  !

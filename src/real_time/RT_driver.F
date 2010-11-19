@@ -148,6 +148,10 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
  if(l_NE_simulate_IP) call WF_free()
  !
+#if !defined _TWO_LEVELS
+ call RT_update_dipoles(G_lesser_reference,Xen,k,q)
+#endif
+ !
  ! loop on time
  !
  Dynamics_is_over=.FALSE.
@@ -166,7 +170,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    if(it==Thermal_steps+1) then
      call live_timing('[RT] NE Dynamics :',NE_steps,SERIAL=.true.)
-     if(RT_is_dumped) G_lesser_reference=G_lesser
+     G_lesser_reference=G_lesser
    endif
    !
    ! Copy G_lesser in G_old before start collisin

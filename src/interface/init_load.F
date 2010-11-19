@@ -59,7 +59,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use fields,        ONLY:Efield
 #endif
 #if defined _TWO_LEVELS
- use real_time,     ONLY:l_3levels,en_levels,lambda_diag,lambda_offdiag,dip
+ use real_time,     ONLY:l_3levels,tau_offdiag,tau_diag,dip
 #endif
 #if defined _MAGNETIC
  use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
@@ -292,20 +292,20 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
 #if defined _TWO_LEVELS
  call it('f',defs,'RT3Levels',    '[RT] Three levels hamiltonian' ,verb_level=V_real_time)
- call it(defs,    'RTEnLevels',   '[RT] Energy levels',en_levels,verb_level=V_real_time)
- call it(defs,    'RTDephasing',  '[RT] Dephasing terms',lambda_offdiag,verb_level=V_real_time)
- call it(defs,    'RTLifeTimes',  '[RT] Diagonal life-times',lambda_diag,verb_level=V_real_time)
- call it(defs,    'RTDipoles',    '[RT] Dipoles',dip,verb_level=V_real_time)
+ call it(defs,    'RTDephasing',  '[RT] Dephasing terms (l12,l13,l23)',tau_offdiag,verb_level=V_real_time)
+ call it(defs,    'RTLifeTimes',  '[RT] Diagonal life-times (l11,l22,l33)',tau_diag,verb_level=V_real_time)
+ call it(defs,    'RTDipoles',    '[RT] Dipoles (d12,d13,d23)',dip,verb_level=V_real_time)
 #endif
  !
 #if defined _MAGNETIC
- call it(defs,'Hamiltonian','[MAG] Hamiltonian kind [pauli,landau]',MAG_hamiltonian_type,protect=.FALSE.)
- call it(defs,'B_Field',    '[MAG] Magnetic field modulus',MAG_B,unit=Bfield_unit)
- call it(defs,'B_psi',      '[MAG] Magnetic field psi angle',MAG_psi,unit=Angle_unit,verb_level=V_sc)
- call it(defs,'B_theta',    '[MAG] Magnetic field theta angle',MAG_theta,unit=Angle_unit,verb_level=V_sc)
- call it(defs,'B_Gauge',    '[MAG] Gauge ("SYMM"etric, "X_ASYMM", "Y_ASYMM" or "Z_ASYMM"etric)',MAG_gauge,verb_level=V_sc)
- call it(defs,'NonPerDir',  '[MAG] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions)
- call it(defs,'B_radius',   '[MAG] Magnetic flux radius',MAG_radius,verb_level=V_sc)
+ call it(defs,'Hamiltonian',   '[MAG] Hamiltonian kind [pauli,landau]',MAG_hamiltonian_type,protect=.FALSE.)
+ call it(defs,'B_Field',       '[MAG] Magnetic field modulus',MAG_B,unit=Bfield_unit)
+ call it(defs,'B_psi',         '[MAG] Magnetic field psi angle',MAG_psi,unit=Angle_unit,verb_level=V_sc)
+ call it(defs,'B_theta',       '[MAG] Magnetic field theta angle',MAG_theta,unit=Angle_unit,verb_level=V_sc)
+ call it(defs,'B_Gauge',       '[MAG] Gauge ("SYMM"etric, "X_ASYMM", "Y_ASYMM" or "Z_ASYMM"etric)',MAG_gauge,verb_level=V_sc)
+ call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization',verb_level=V_sc)
+ call it(defs,'NonPerDir',     '[MAG] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions)
+ call it(defs,'B_radius',      '[MAG] Magnetic flux radius',MAG_radius,verb_level=V_sc)
 #endif
  !
  ! GPL_EXCLUDE_END SC_IGNORE

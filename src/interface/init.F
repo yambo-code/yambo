@@ -650,7 +650,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Magnetic
  !
  if (l_sc_magnetic) then
-   call initactivate(1,'Hamiltonian B_Field B_psi B_theta B_Gauge')
+   call initactivate(1,'Hamiltonian B_Field B_psi B_theta B_Gauge PhaseTrick')
    if (n_sp_pol>1) call initactivate(1,'NonPerDir')
    if (MAG_landau) call initactivate(1,'B_radius')
  endif

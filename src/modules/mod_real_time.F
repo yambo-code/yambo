@@ -33,7 +33,7 @@ module real_time
  logical  :: l_3levels
  real(SP) :: tau_offdiag(3)  ! dephasing terms (tau_12,tau_13,tau_23)
  real(SP) :: tau_diag(3)     ! diagonal terms  (tau_11,tau_22,tau_33)
- real(SP) :: dip(3)             ! dipoles (D_12, D_13, D_23) In principle they can be complex
+ real(SP) :: dip(3)          ! dipoles (D_12, D_13, D_23) In principle they can be complex
  real(SP) :: W1
  !
  complex(SP) :: Rabi_freq_pump
@@ -244,10 +244,8 @@ module real_time
      allocate(G_lesser_previous(SC_bands,SC_bands,QP_nk))
      call mem_est("Gf_l_old",(/size(G_lesser_previous)/),(/2*SP/))
      !
-     if(RT_is_dumped) then
-       allocate(G_lesser_reference(SC_bands,SC_bands,QP_nk))
-       call mem_est("Gf_l_old",(/size(G_lesser_reference)/),(/2*SP/))
-     endif
+     allocate(G_lesser_reference(SC_bands,SC_bands,QP_nk))
+     call mem_est("Gf_l_ref",(/size(G_lesser_reference)/),(/2*SP/))
      !
      ! Reference energies
      !
@@ -308,12 +306,10 @@ module real_time
      call mem_est("I2_lesser")
      !
      deallocate(G_lesser_previous)
-     call mem_est("G_lesser_previous")
+     call mem_est("Gf_l_old")
      !
-     if(RT_is_dumped) then
-       deallocate(G_lesser_reference)
-       call mem_est("G_lesser_previous")
-     endif
+     deallocate(G_lesser_reference)
+     call mem_est("Gf_l_ref")
      !
      deallocate(E_bare)
      call mem_est("E_bare")

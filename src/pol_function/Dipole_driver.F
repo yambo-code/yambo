@@ -44,9 +44,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if defined _DISTRIBUTED
  use WF_distribute,  ONLY:WF_states_setup
 #endif
-#if defined _RT
- use X_m,            ONLY:DIP_P
-#endif
  implicit none
  !
  type(bz_samp), intent(inout) :: Xk
@@ -114,11 +111,13 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    else
      call X_alloc('DIP_iR',(/3,X%ib(2),X%ib(2),Xk%nibz/))
    endif
-   DIP_iR=(0.,0.)
+   DIP_iR=(0._SP,0._SP)
    !
 #if defined _RT
+   call X_alloc('DIP_P'   ,(/3,X%ib(2),X%ib(2),Xk%nibz/))
    call X_alloc('P_square',(/X%ib(2),X%ib(2),Xk%nibz/))
-   P_square=(0.,0.)
+   DIP_P=(0._SP,0._SP)
+   P_square=(0._SP,0._SP)
 #endif
    !   
 #if defined _DISTRIBUTED
@@ -174,31 +173,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  end if
  !
 #if defined _RT  
- if (l_real_time) then
-   !
-   call X_alloc('DIP_P',   (/3,X%ib(2),X%ib(2),Xk%nibz/))
-   !
-   do i1 = 1,Xk%nbz
-     !
-     ik = Xk%sstar(i1,1)
-     !
-     ! Calculate the <n|P|n'>= (E_n-E_n')* <n|iR|n'>
-     !
-     do iv = X%ib(1), X%ib(2)
-       do ic = X%ib(1), X%ib(2)
-         do i_spin=1,n_sp_pol
-           E_m_Ep=Xen%E(iv,ik,i_spin)-Xen%E(ic,ik,i_spin)
-           if (associated(Xen%Eo)) E_m_Ep=Xen%Eo(iv,ik,i_spin)-Xen%Eo(ic,ik,i_spin)
-           DIP_P(:,iv,ic,ik,i_spin)= DIP_iR(:,iv,ic,ik,i_spin)*E_m_Ep
-         enddo
-       enddo
-       DIP_P(:,iv,iv,ik,:)= (0.,0.)
-     enddo
-   enddo
-   ! 
-   return
-   !
- endif
+ if (l_real_time) return
 #endif
  !
  ! The field direction and the gamma-point norm must be renormalized here in case the

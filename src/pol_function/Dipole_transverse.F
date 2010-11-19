@@ -32,7 +32,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use D_lattice,           ONLY:alat,n_atomic_species,n_atoms_species
  use pseudo,              ONLY:pp_kbv_dim,pp_n_l_comp,PP_free
  use R_lattice,           ONLY:g_vec,bz_samp
- use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square
+ use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square,DIP_P
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf,wf_ng,wf_state, WF_load
@@ -204,6 +204,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          !     DIP_iR_or_P(c,v) = i <v|r|c> = i <v|[r,H]|c>/(Ec-Ev) = i <v|i p|c>/(Ec-Ev) =
          !                   = - <v | -i grad |c> / (Ec-Ev) = <v|-i grad|c>/(Ev-Ec)
+#if defined _RT
+         DIP_P(:,ic,iv,ik,i_spin)=DIP_P(:,ic,iv,ik,i_spin)+rho(:3)
+#endif        
          !
          rho(1:3)=rho(1:3)/Ev_m_Ec
          !
@@ -262,6 +265,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  do i_spin=1,n_sp_pol
    call pp_redux_wait(DIP_iR(:,:,:,:,i_spin))
 #if defined _RT
+   call pp_redux_wait(DIP_P(:,:,:,:,i_spin))
    call pp_redux_wait(P_square(:,:,:,i_spin))
 #endif
  enddo

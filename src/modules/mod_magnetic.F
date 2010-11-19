@@ -53,6 +53,12 @@ module magnetic
  real(SP),    allocatable :: A_magn_z(:)
  integer                  :: gauge_factors(2,3)
  !
+ ! Phase trick phasctors
+ !
+ logical                  :: phase_trick
+ real(SP), parameter      :: phase_radius=0.01
+ integer                  :: n_loops
+ !
  ! Average magnetization density
  !
  real(SP)                 :: average_el_mag(3)
@@ -63,6 +69,8 @@ module magnetic
  !
  real(SP),    allocatable :: x(:,:)
  real(SP)                 :: cell_center(3)
+ !
+ complex(SP), allocatable :: new_pp(:,:),old_pp(:,:)
  !
  contains
    !

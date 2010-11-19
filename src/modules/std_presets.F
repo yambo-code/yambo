@@ -99,7 +99,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
 &                      MAG_gauge,MAG_psi,MAG_theta,average_el_mag_rescaling,      &
-&                      average_el_mag_dim
+&                      average_el_mag_dim,phase_trick
 #endif
  !
  implicit none
@@ -498,6 +498,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  MAG_theta=0.
  average_el_mag_dim='Bohr_magneton/Bohr^3'
  average_el_mag_rescaling=1.
+ phase_trick=.false.
  !
 #endif
  !

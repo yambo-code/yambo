@@ -32,6 +32,9 @@ integer function io_DIPOLES(X,Xen,ID)
 &                        io_elemental,io_status,io_bulk,IO_OUTDATED_DB,&
 &                        read_is_on,write_is_on,io_header,io_mode,io_com,io_action
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
+#if defined _RT
+ use X_m,           ONLY:DIP_P
+#endif
  !
  implicit none
  type(X_t)::X
@@ -128,14 +131,13 @@ integer function io_DIPOLES(X,Xen,ID)
 #if defined _RT
  !
  call io_control(ACTION=io_action(ID),COM=io_com(ID),SEC=io_sec(ID,:),MODE=io_mode(ID),ID=IDP) 
- io_DIPOLES=io_connect(desc='P_square',type=2,ID=IDP)
+ io_DIPOLES=io_connect(desc='P_and_P2',type=2,ID=IDP)
  !
  if (io_DIPOLES/=0) then
    call io_disconnect(ID=IDP)
    goto 1
  endif
  !
- sec_size=db_nb(2)*db_nbm
  if (any((/io_sec(ID,:)==2/))) then
    !
    allocate(DIP_iR_disk(db_nb(2),db_nbm,2))
@@ -153,6 +155,28 @@ integer function io_DIPOLES(X,Xen,ID)
        call io_bulk(IDP,R3=DIP_iR_disk)
        !
        if (read_is_on(ID)) call mat_r2c(DIP_iR_disk,P_square(:,:,i1,i_spin))
+       !
+     enddo
+     !
+   enddo
+   !
+   if(read_is_on(ID)) call X_alloc('DIP_P',(/3,X%ib(2),db_nbm,nXkibz/))
+   !
+   do i1=1,nXkibz
+     !
+     do ixyz=1,3
+       !
+       do i_spin=1,n_sp_pol
+         !
+         if (write_is_on(ID)) call mat_c2r(DIP_P(ixyz,:,:,i1,i_spin),DIP_iR_disk)
+         !
+         write (VAR_name,'(3(a,i4.4))') 'DIP_P_k_',i1,'_xyz_',ixyz,'_spin_',i_spin
+         call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(DIP_iR_disk))
+         call io_bulk(ID,R3=DIP_iR_disk)
+         !
+         if (read_is_on(ID)) call mat_r2c(DIP_iR_disk,DIP_P(ixyz,:,:,i1,i_spin))
+         !
+       enddo
        !
      enddo
      !

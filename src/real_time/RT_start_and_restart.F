@@ -34,6 +34,7 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  use R_lattice,      ONLY:bz_samp
 #if defined _TWO_LEVELS
  use real_time,      ONLY:Wo,W_pump,W1,l_3levels
+ use electrons,      ONLY:nel
 #endif
  use real_time,      ONLY:G_lesser,ID,ID,NE_steps,G_lesser_previous,RT_ind_J,&
 &                         G_lesser_reference,Thermal_steps,RT_is_dumped,l_NE_simulate_IP,&
@@ -85,8 +86,9 @@ subroutine RT_start_and_restart(Xen,Xk,k)
 #if defined _TWO_LEVELS
  Wo    =Xen%E(2,1,1)-Xen%E(1,1,1)
  if(l_3levels) then
-   if(SC_bands/=3) call error(" Errore set SC_bands to 3 !! ")
+   if(SC_bands/=3) call error(" Error set SCBands=3 !! ")
    W1=Xen%E(3,1,1)-Xen%E(1,1,1)
+   if(nel/=2) call error(" Error set Nelectro=2 !! ")
  endif
 #endif
  !
@@ -255,7 +257,7 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  !
  A_vecpot_previous =A_vecpot
  G_lesser_previous =G_lesser   
- if(RT_is_dumped) G_lesser_reference=G_lesser   
+ G_lesser_reference=G_lesser   
  !
  call msg('r','')
  !

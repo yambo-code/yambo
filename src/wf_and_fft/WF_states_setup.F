@@ -61,7 +61,7 @@ subroutine WF_states_setup(k,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
  !
  if (present(report)) then
    N_loaded=0.
-   N_loaded(myid+1)=real(count(states_to_load==.TRUE.))/real(n_sp_pol*nkibz* (b_to_load(2)-b_to_load(1)+1))*100.
+   N_loaded(myid+1)=real(count(states_to_load.eqv..TRUE.))/real(n_sp_pol*nkibz* (b_to_load(2)-b_to_load(1)+1))*100.
    call pp_redux_wait(N_loaded) 
    call msg('rs','[Distribute] Average allocated memory is [o/o]:',sum(N_loaded)/real(ncpu))
    return

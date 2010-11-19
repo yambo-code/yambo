@@ -195,6 +195,9 @@ subroutine SC_start_and_restart(X,E,Xk)
    !
    call MAG_Hamiltonian(.FALSE.)
    !
+   ! If exist the non local part of the pseudo then construct kbv
+   call MAG_H_pseudo(Xk)
+   !
  endif
  !
 #endif

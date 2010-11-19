@@ -47,21 +47,23 @@ subroutine MAG_common_build_A(build)
  ! If we have x or y component the procedure is the same
  !
  use pars,           ONLY:SP
+ use units,          ONLY:SPEED_OF_LIGHT
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size,fft_dim
  use D_lattice,      ONLY:a
  use magnetic,       ONLY:MAG_radius,MAG_B,MAG_landau,MAG_psi,MAG_theta,  &
 &                         MAG_gauge,Bx,By,Bz,ir_table,load_cc,free_cc,    &
-&                         A_magn_x,A_magn_y,A_magn_z,gauge_factors,x
+&                         A_magn_x,A_magn_y,A_magn_z,gauge_factors,x,     &
+&                         phase_trick,phase_radius,n_loops
  use vec_operate,    ONLY:v_norm
  implicit none
  !
  ! Input variables
  logical   :: build
  !
- ! Dummies
+ ! Work space
  integer   :: ir,ir1,ir2,ir3
- real(SP)  :: radius, r_mod
+ real(SP)  :: radius, r_mod, B_loops
  !
  !
  ! Allocation 
@@ -73,9 +75,9 @@ subroutine MAG_common_build_A(build)
  !
  ! MAG field components
  !=====================
- Bx=MAG_B*sin(MAG_theta)*cos(MAG_psi)
- By=MAG_B*sin(MAG_theta)*sin(MAG_psi)
- Bz=MAG_B*cos(MAG_theta)
+ Bx=SPEED_OF_LIGHT*MAG_B*sin(MAG_theta)*cos(MAG_psi)
+ By=SPEED_OF_LIGHT*MAG_B*sin(MAG_theta)*sin(MAG_psi)
+ Bz=SPEED_OF_LIGHT*MAG_B*cos(MAG_theta)
  !
  if(allocated(x)) call free_cc()
  call load_cc(.false.,.true.)
@@ -103,6 +105,9 @@ subroutine MAG_common_build_A(build)
    gauge_factors(1,2)=2         ! Az for By ~ -x
    gauge_factors(2,2)=0         ! Ax for By ~  z <--
  endif
+ !
+ if(phase_trick) call MAG_A_phase(n_loops)
+ call fft_setup(0,1,.true.)
  !
  ! A(r) Build-Up
  ! Ax , Ay , Az   
@@ -145,6 +150,10 @@ subroutine MAG_common_build_A(build)
              A_magn_x(ir)=A_magn_x(ir)-0.5*Bz*MAG_radius**2*x(ir,2)/r_mod**2
              A_magn_y(ir)=A_magn_y(ir)+0.5*Bz*MAG_radius**2*x(ir,1)/r_mod**2
            endif
+         endif
+         if(phase_trick .and. r_mod>phase_radius.and.Bz/=0.) then
+           A_magn_x(ir)=A_magn_x(ir)+SPEED_OF_LIGHT*n_loops*x(ir,2)/r_mod**2
+           A_magn_y(ir)=A_magn_y(ir)-SPEED_OF_LIGHT*n_loops*x(ir,1)/r_mod**2
          endif
        endif
      enddo

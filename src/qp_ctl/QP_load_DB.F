@@ -109,7 +109,7 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
    n_qp_db=0
    do i1=1,n_pieces
      if (trim(db_piece(i1))=="<") then
-       do i2=1,min(n_pieces-i2,max_n_of_dbs)
+       do i2=1,min(n_pieces-i1,max_n_of_dbs)
          dummy_db_name=db_piece(i1+i2)
          !
          if (len_trim(dummy_db_name)==0) cycle

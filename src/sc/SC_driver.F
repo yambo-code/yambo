@@ -23,7 +23,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  use pars,           ONLY:SP,schlen
  use units,          ONLY:HARTREE
- use drivers,        ONLY:l_sc_cohsex,l_collisions_IO 
+ use drivers,        ONLY:l_sc_cohsex,l_collisions_IO,l_sc_contains_lda
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin
  use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
@@ -61,7 +61,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  integer                  :: it
  real(SP)                 :: spread(SC_bands,k%nibz,n_sp_pol),&
 &                            E_previous(SC_bands,k%nibz,n_sp_pol),dE(SC_bands,k%nibz,n_sp_pol),&
-&                            E_conv(n_sp_pol),E_total
+&                            E_conv(n_sp_pol),E_total,E_fermi_0,E_H,Exc
  real(SP),    allocatable :: V_xc_nm1(:,:),rho_nm1(:)
  real(SP),    allocatable :: delta_rho(:)
  complex(SP), allocatable :: WFo(:,:)
@@ -70,7 +70,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_spin
  real(SP)                 :: max_proj,V_xc_sc_shift(n_spin)
- character(schlen)        :: dumb_ch
+ character(schlen)        :: dumb_ch,E_kind
  integer, external        :: io_SC_components
  logical, external        :: stop_now
  !
@@ -97,6 +97,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !============
  !
  call load_COLLISIONS()
+ !
+ ! Starting point fermi level...
+ if (l_sc_contains_lda.and. local_V) E_fermi_0=E%Efermi(1)
  !
  ! Initialize SC_R matrix
  !========================
@@ -328,7 +331,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      ! Total Energy 
      !==============
      !
-     call SC_Energy(E_total,E,k,rho_n)
+     E_kind='Total E'
+     call SC_Energy(E_total,E_fermi_0,E,k,rho_n,E_kind)
      !
 #if defined _MAGNETIC
      ! New spin density 
@@ -355,18 +359,13 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        rho_convergence = rho_convergence + abs(rho_n(ir)-rho_nm1(ir))/nel
      enddo
      !
-#if defined _MAGNETIC
-     if(n_sp_pol>1) then
-       dumb_ch='[SC] Iteration '//trim(intc(it_now))//' Accuracies rho(%) - E(ev) :'//&
-&            trim(real2ch(rho_convergence))//'% - '//trim(real2ch(E_convergence*HARTREE))//&
-&            '  (Mz='//trim(real2ch(average_el_mag(3)))//')'
-     else
-#endif
      dumb_ch='[SC] Iteration '//trim(intc(it_now))//' Accuracies rho(%) - E(ev) :'//&
-&            trim(real2ch(rho_convergence))//'% - '//trim(real2ch(E_convergence*HARTREE))//&
-&            '  E_tot(Ha)= '//trim(real2ch(E_total))
+&            trim(real2ch(rho_convergence))//'% - '//trim(real2ch(E_convergence*HARTREE))
+     if (l_sc_contains_lda.and. local_V)&
+&      dumb_ch=trim(dumb_ch)//'  E_tot(Ha)= '//trim(real2ch(E_total))
 #if defined _MAGNETIC
-     endif
+     if(n_sp_pol>1)&
+&      dumb_ch=trim(dumb_ch)//'  (Mz='//trim(real2ch(average_el_mag(3)))//')'
 #endif
      !
      if (tty_size>0.or.it_now==1) then
@@ -413,13 +412,28 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
  end do
  !
+ ! Hartree and xc Energy 
+ !=======================
+ !
+ E_kind='Hartree E'
+ call SC_Energy(E_H,E_fermi_0,E,k,rho_n,E_kind)
+ E_kind='xc      E'
+ call SC_Energy(Exc,E_fermi_0,E,k,rho_n,E_kind)
+ !
  if (l_SC_cycle) then
    !
    ! exit SCF cycle and report
    !
    call msg('nr','[SC] Iterations               :',it_now)
    call msg('r' ,'[SC] Accuracy on density      :',rho_convergence)
-   call msg('rn','[SC]          on energies [ev]:',E_convergence*HARTREE)
+   call msg('r' ,'[SC]          on energies [ev]:',E_convergence*HARTREE)
+   if (l_sc_contains_lda.and. local_V) then
+     call msg('r' ,'[SC] Total Energy         [Ha]:',E_total)
+     call msg('r' ,'[SC] Hartree Energy       [Ha]:',E_H    )
+     call msg('rn','[SC] xc Energy            [Ha]:',Exc    )
+   else
+     call msg('r','')
+   endif
    !
  else
    call msg('r','')
@@ -476,6 +490,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      deallocate(rho_nm1)
      call mem_est("rho_nm1")
+     !
+     deallocate(E_xc)
+     call mem_est("E_xc")
      !
      deallocate(V_xc_nm1)
      call mem_est("V_xc_nm1")

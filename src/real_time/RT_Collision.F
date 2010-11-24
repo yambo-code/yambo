@@ -77,11 +77,6 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
    !
    if(l_sc_hf.or.l_sc_cohsex) call COLLISIONS_IO_compose(G_input)
    !
- else
-   !  
-   if(.not.local_V.and..not.l_NE_simulate_IP) QP_Vnl_xc=(0._SP,0._SP)
-   if(l_sc_cohsex)      QP_Sc=(0._SP,0._SP)
-   !
  endif
  !
  I1_lesser=(0._SP,0._SP)
@@ -99,7 +94,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
    !
    H_nl_sc=(0._SP,0._SP)
    !
-   if(.not.local_V.and..not.l_NE_simulate_IP) then
+   if(.not.local_V.and..not.XCfrozen) then
      call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 
      if(l_sc_cohsex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc) 
    endif

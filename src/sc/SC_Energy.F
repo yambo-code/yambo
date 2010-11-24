@@ -48,7 +48,7 @@ subroutine SC_Energy(E_total,E_fermi_0,E,k,rho,E_kind)
  if (n_sp_pol ==2 ) return
  !
  if(trim(E_kind)=='Total E') then
-   E_total=-(E%Efermi(1)+E_fermi_0)*nel
+   E_total=(E%Efermi(1)+E_fermi_0)*nel
    do ik=1,k%nibz
      do i_spin=1,n_sp_pol
        do ib=1,E%nbm

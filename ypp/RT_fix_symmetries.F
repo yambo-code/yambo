@@ -34,7 +34,7 @@ subroutine RT_fix_symmetries(E,k)
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,&
 &                              g_rot,ng_closed,bz_samp_duplicate,rl_sop
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,VERIFY,&
-&                              OP_APP,cp_file,rm_file,cp_directory,Fragmented_IO, &
+&                              OP_APP,cp_file,rm_file,cp_directory,Fragmented_IO,mk_dir, &
 &                              io_fragmented,OP_RD_CL,RD_CL,RD,DUMP,RD_CL_IF_END,WR_CL_IF_END
  use wave_func,           ONLY:ioWF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io, &
 &                              wf_ng,wf_state,WF_load,wf_state,wf,WF_free,wf_ng ,wf_nb_io_groups
@@ -262,6 +262,11 @@ subroutine RT_fix_symmetries(E,k)
  !===========================
  !
  call map_energies(E,E_expanded,k,kpoints_map)
+ !
+ if (trim(core_io_path)/=trim(more_io_path)) then
+   call mk_dir(more_io_path)
+   call mk_dir(trim(more_io_path)//'/SAVE')
+ endif
  !
  if(io_SC_E_err/=-1) then
    call section('=',"SC wavefunctions and energies")

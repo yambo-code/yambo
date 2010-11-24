@@ -372,13 +372,8 @@ module timing
      external cclock
      call cclock(tcpu)      
 #endif 
-#if defined _linux 
-     real(4) tmp(2) 
-     real(DP) etime
-     tcpu=etime(tmp)
-#endif
-#if defined _apple
-     call cpu_time(tcpu)
+#if defined _linux || defined _apple
+     call cpu_time(tcpu)  ! standard fortran 95 function
 #endif
 #if defined _ibm || defined _aix || defined _ppc_linux
      integer :: mclock

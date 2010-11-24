@@ -18,9 +18,11 @@
 !
 subroutine RT_initialize()
  ! 
+ use drivers,        ONLY:l_collisions_IO
+ use SC,             ONLY:local_V
  use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT,FS2AUT,HARTREE
- use com,            ONLY:msg,warning
+ use com,            ONLY:msg,warning,error
  use vec_operate,    ONLY:normalize_v
  use electrons,      ONLY:nel
  use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields,i_time, &
@@ -50,6 +52,11 @@ subroutine RT_initialize()
  l_NE_simulate_Irredux =Hfrozen.and..not.XCfrozen
  !
  l_RT_needs_XC0=l_NE_simulate_IP.or.l_NE_simulate_RPA.or.Thermal_steps>0
+ !
+ ! Check if Collisions are required
+ !
+ if(.not.local_V.and..not.l_NE_simulate_IP.and..not.l_collisions_IO) &
+&  call error(" Real-time works only with collisions, turn them on 'yambo -e' !")
  !
  j_current_ext=(0._SP,0._SP)
  i_time=0

@@ -108,7 +108,7 @@ subroutine OEP_kli_inversion(E,k,Vkli,Vslt,U,rho)
  call par_indexes(px,(/nkibz,E%nbf/))
  call pp_redux_wait
  ch="Vkli@it"//trim(intc(it_now))
- call live_timing(trim(ch),px%n_of_element_1D(myid+1))
+ call live_timing(trim(ch),px%n_of_elements(myid+1))
  rhotw_prd = (0._SP,0._SP)
  do ik = 1, nkibz
    do iv1 = 1 ,E%nbf

@@ -171,6 +171,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    if(it==Thermal_steps+1) then
      call live_timing('[RT] NE Dynamics :',NE_steps,SERIAL=.true.)
      G_lesser_reference=G_lesser
+     if(Thermal_steps/=0) call RT_update_dipoles(G_lesser_reference,Xen,k,q)
    endif
    !
    ! Copy G_lesser in G_old before start collisin

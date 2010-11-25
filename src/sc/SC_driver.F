@@ -61,7 +61,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  integer                  :: it
  real(SP)                 :: spread(SC_bands,k%nibz,n_sp_pol),&
 &                            E_previous(SC_bands,k%nibz,n_sp_pol),dE(SC_bands,k%nibz,n_sp_pol),&
-&                            E_conv(n_sp_pol),E_total,E_fermi_0,E_H,Exc
+&                            E_conv(n_sp_pol),E_total,E_tot_Hartree,E_tot_xc
  real(SP),    allocatable :: V_xc_nm1(:,:),rho_nm1(:)
  real(SP),    allocatable :: delta_rho(:)
  complex(SP), allocatable :: WFo(:,:)
@@ -70,7 +70,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_spin
  real(SP)                 :: max_proj,V_xc_sc_shift(n_spin)
- character(schlen)        :: dumb_ch,E_kind
+ character(schlen)        :: dumb_ch
  integer, external        :: io_SC_components
  logical, external        :: stop_now
  !
@@ -97,9 +97,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !============
  !
  call load_COLLISIONS()
- !
- ! Starting point fermi level...
- if (l_sc_contains_lda.and. local_V) E_fermi_0=E%Efermi(1)
  !
  ! Initialize SC_R matrix
  !========================
@@ -331,8 +328,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      ! Total Energy 
      !==============
      !
-     E_kind='Total E'
-     call SC_Energy(E_total,E_fermi_0,E,k,rho_n,E_kind)
+     call SC_Energy(E_total,E_tot_Hartree,E_tot_xc,E,k,rho_n)
      !
 #if defined _MAGNETIC
      ! New spin density 
@@ -361,11 +357,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      dumb_ch='[SC] Iteration '//trim(intc(it_now))//' Accuracies rho(%) - E(ev) :'//&
 &            trim(real2ch(rho_convergence))//'% - '//trim(real2ch(E_convergence*HARTREE))
-     if (l_sc_contains_lda.and. local_V)&
-&      dumb_ch=trim(dumb_ch)//'  E_tot(Ha)= '//trim(real2ch(E_total))
+     if (l_sc_contains_lda.and. local_V) dumb_ch=trim(dumb_ch)//'  E_tot(Ha)= '//trim(real2ch(E_total))
 #if defined _MAGNETIC
-     if(n_sp_pol>1)&
-&      dumb_ch=trim(dumb_ch)//'  (Mz='//trim(real2ch(average_el_mag(3)))//')'
+     if(n_sp_pol>1) dumb_ch=trim(dumb_ch)//'  (Mz='//trim(real2ch(average_el_mag(3)))//')'
 #endif
      !
      if (tty_size>0.or.it_now==1) then
@@ -415,10 +409,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! Hartree and xc Energy 
  !=======================
  !
- E_kind='Hartree E'
- call SC_Energy(E_H,E_fermi_0,E,k,rho_n,E_kind)
- E_kind='xc      E'
- call SC_Energy(Exc,E_fermi_0,E,k,rho_n,E_kind)
+ call SC_Energy(E_total,E_tot_Hartree,E_tot_xc,E,k,rho_n)
  !
  if (l_SC_cycle) then
    !
@@ -428,9 +419,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    call msg('r' ,'[SC] Accuracy on density      :',rho_convergence)
    call msg('r' ,'[SC]          on energies [ev]:',E_convergence*HARTREE)
    if (l_sc_contains_lda.and. local_V) then
-     call msg('r' ,'[SC] Total Energy         [Ha]:',E_total)
-     call msg('r' ,'[SC] Hartree Energy       [Ha]:',E_H    )
-     call msg('rn','[SC] xc Energy            [Ha]:',Exc    )
+     call msg('r' ,'[SC] Total Energy (no Ewald) [Ha/Ry]:',E_total*(/1.,2./))
+     call msg('r' ,'[SC] Hartree Energy          [Ha/Ry]:',E_tot_Hartree*(/1.,2./))
+     call msg('rn','[SC] xc Energy               [Ha/Ry]:',E_tot_xc*(/1.,2./))
    else
      call msg('r','')
    endif

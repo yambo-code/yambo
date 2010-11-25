@@ -34,7 +34,7 @@ subroutine SC_start_and_restart(X,E,Xk)
 &                         SC_potential,E_bare,local_V,SC_iterations,l_TF_precond,l_oep_iterative,&
 &                         rho_convergence,E_convergence,SC_rho_threshold,&
 &                         SC_iterations,l_SC_cycle,SC_cycle_mixing,WF_G_max,WF_Go_indx,&
-&                         SC_fft_size
+&                         SC_fft_size,E_bare_Ef
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE
@@ -89,12 +89,13 @@ subroutine SC_start_and_restart(X,E,Xk)
  !
  if (trim(SC_potential)/='none'.and.trim(SC_potential)/='default') call section('*','Self-Consistent '//trim(SC_potential))
  !
- ! Reference energies
- !====================
+ ! Reference energies & Fermi Level
+ !==================================
  !
  allocate(E_bare(SC_bands,nkibz,n_sp_pol))
  call mem_est("E_bare ",(/size(E_bare)/))
  E_bare=E%E(:SC_bands,:,:)
+ E_bare_Ef=E%Efermi(1)
  !
  ! Perform a first I/O to check which DBs are present. In this VERIFY call
  !=====================

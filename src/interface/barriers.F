@@ -131,9 +131,9 @@ subroutine barriers()
  !
  if (gw0_raxis) then
    on_runlevels='gw0 em1d el_el el_ph HF_and_locXC'
-   ! GPL_INCLUDE_START SC_IGNORE
+   ! GPL_INCLUDE_START ELPH_IGNORE
    !on_runlevels='gw0 em1d el_el HF_and_locXC'
-   ! GPL_INCLUDE_END SC_IGNORE
+   ! GPL_INCLUDE_END ELPH_IGNORE
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif

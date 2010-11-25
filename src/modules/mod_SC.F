@@ -32,6 +32,7 @@ module SC
  integer           :: SC_X_bands(2)
  integer           :: SC_X_size
  integer           :: n_SC_descriptions
+ real(SP)          :: E_bare_Ef
  real(SP)          :: rho_convergence
  real(SP)          :: E_convergence
  real(SP)          :: SC_rho_threshold

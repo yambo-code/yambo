@@ -84,7 +84,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
      QP_Sc=cmplx(0.,0.,SP)
    endif
    !
-   ! GPL_EXCLUDE_START
+   ! GPL_EXCLUDE_START ELPH_EXCLUDE
    !
 # if defined _ELPH 
    !
@@ -92,7 +92,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
    !
 #endif
    !
-   ! GPL_EXCLUDE_END
+   ! GPL_EXCLUDE_END ELPH_EXCLUDE
    !
    do i1=1,QP_n_states
      !

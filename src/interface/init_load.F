@@ -165,6 +165,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_kpt)
  call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_kpt) 
  call it(defs,'Nelectro','Electrons number',nel,verb_level=V_general)
+#if defined _ELPH 
+ call it('f',defs,'MinusQ', '[KPT] Use -{q} grid',verb_level=V_kpt)
+ call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nDBs_used,verb_level=V_kpt) 
+#endif
  !
  ! S_xc
  !
@@ -245,10 +249,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BoseTemp','Bosonic Temperature',Bose_Temp,T_unit,verb_level=V_general)
  call it(defs,'OccTresh','Occupation treshold (metallic bands)',filled_tresh,verb_level=V_general)
  call it(defs,'BoseCut', '[BOSE] Finite T Bose function cutoff',bose_E_cut,verb_level=V_general)
-#if defined _ELPH 
- call it('f',defs,'MinusQ', '[KPT] Use -{q} grid',verb_level=V_kpt)
- call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nDBs_used,verb_level=V_kpt) 
-#endif
  !
  ! S_xc
  !

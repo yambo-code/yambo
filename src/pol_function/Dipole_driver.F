@@ -132,6 +132,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      !
      call WF_states_setup(k_to_load=(/1,Xk%nibz/),b_to_load=(/Xen%nbf+1,X%ib(2)/))
      !
+     ! Report
+     !
+     call WF_states_setup(b_to_load=(/1,X%ib(2)/),report=.true.)
+     !
    endif
    !
 #endif

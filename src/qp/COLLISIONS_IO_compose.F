@@ -81,6 +81,8 @@ subroutine COLLISIONS_IO_compose(G_input)
  ! .. then read the remaning collisions from disk
  ! On disk each contributions is stored in a different database
  !
+ call IO_and_Messaging_switch("+DB_is_fragmented")
+ !
  do i_qp=last_QP_mem+1,QP_n_states
    !
    if(.not.px%element_1D(i_qp)) cycle  
@@ -142,6 +144,8 @@ subroutine COLLISIONS_IO_compose(G_input)
    endif
    !
  enddo
+ !
+ call IO_and_Messaging_switch("-DB_is_fragmented")
  !
  ! When the Cache is used all the QP correction are put together
  ! in QP_Vnl_xc

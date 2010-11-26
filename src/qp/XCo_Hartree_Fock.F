@@ -124,7 +124,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  ! Report
  !
- call WF_states_setup(b_to_load=(/1,Sx_upper_band/),report=.TRUE.)
+ call WF_states_setup(b_to_load=(/1,max(E%nbm,QP_nb)/),report=.TRUE.)
  !
 #endif
  !

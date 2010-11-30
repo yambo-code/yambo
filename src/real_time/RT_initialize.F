@@ -29,8 +29,11 @@ subroutine RT_initialize()
 &                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,    &
 &                         l_RT_no_diamagnetic,max_rt_steps_disk,     &
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,         &
-&                         l_RT_induced_field,j_current_ext,Ext_fields_initial_itime,RT_diagonalization_steps,&
-&                         RT_is_dumped,QP_LifeTime,Phase_LifeTime
+&                         l_RT_induced_field,j_current_ext,Ext_fields_initial_itime,     &
+&                         RT_diagonalization_steps,RT_is_dumped,QP_LifeTime,Phase_LifeTime
+#if defined _TWO_LEVELS
+ use real_time,      ONLY:tau_offdiag,tau_diag,l_3levels
+#endif
  use D_lattice,      ONLY:DL_vol
  use fields,         ONLY:global_gauge,Efield,n_ext_fields
  use parser_m,       ONLY:parser
@@ -75,6 +78,10 @@ subroutine RT_initialize()
  ! QP and Phase Lifetimes
  !
  RT_is_dumped=any((/QP_LifeTime,Phase_LifeTime/)>1.E-8_SP)
+#if defined _TWO_LEVELS
+ if((any(tau_offdiag>1.E-8_SP).or.any(tau_diag>1.E-8_SP)).and.l_3levels) &
+&  RT_is_dumped=.true.
+#endif
  !
  ! Earliest time when the external field is switched on
  !

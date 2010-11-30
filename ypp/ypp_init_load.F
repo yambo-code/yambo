@@ -228,6 +228,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'DampFactor','Damping parameter',X_rt%damp_factor,unit=E_unit) 
  !
  call it('f',defs,'NoRmDC','Do not Remove DC component from current')
+ call it('f',defs,'FrNoDamp','Force the damping to be zero')
  call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics')
  !
 #endif

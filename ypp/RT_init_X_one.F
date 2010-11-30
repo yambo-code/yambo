@@ -28,12 +28,16 @@ subroutine RT_init_X_one()
  use units,          ONLY:FS2AUT,HARTREE
  use stderr,         ONLY:real2ch
  use real_time,      ONLY:NE_steps,RT_step,RT_ind_J,RT_output,RT_P,RT_output
+ use parser_m,       ONLY:parser
  use fields,         ONLY:Efield
  implicit none
  !
  ! Work Space
  !
  integer  :: i_t
+ logical  :: l_no_damping
+ !
+ call parser('FrNoDamp',l_no_damping)
  !
  call section("=",'Current and Polarization')
  !============================================
@@ -56,25 +60,31 @@ subroutine RT_init_X_one()
  RED_steps=i_t_end-i_t_start+1
  !
  W_RT_induced_step=2.*pi/(real(RED_steps,SP)*RT_step)  ! Frequency step in real-time dynamics
- ! 
- ! DAMPING
- !=========
  !
- ! If there is a time-windows the damping function
- ! has be applied also the initial part otherwise 
- ! there will problems doing FFT for the non-zero starting point 
- !
- if(X_rt%damp_factor<W_RT_induced_step) then
-   X_rt%damp_factor=W_RT_induced_step
-   call warning('Damping factor redefined to be '//trim(real2ch(W_RT_induced_step*HARTREE))//' eV')
+ if(l_no_damping) then
+   X_rt%damp_factor=0._SP
+ else
+   ! 
+   ! DAMPING
+   !=========
+   !
+   ! If there is a time-windows the damping function
+   ! has be applied also the initial part otherwise 
+   ! there will problems doing FFT for the non-zero starting point 
+   !
+   if(X_rt%damp_factor<W_RT_induced_step) then
+     X_rt%damp_factor=W_RT_induced_step
+     call warning('Damping factor redefined to be '//trim(real2ch(W_RT_induced_step*HARTREE))//' eV')
+   endif
+   ! 
+   ! apply the damping
+   !===================
+   !
+   call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_J_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
+   call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_P_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
+   call RT_damp_it(X_rt%damp,X_rt%damp_factor,A_vecpot_vel_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
+   !
  endif
- ! 
- ! apply the damping
- !===================
- !
- call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_J_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
- call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_P_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
- call RT_damp_it(X_rt%damp,X_rt%damp_factor,A_vecpot_vel_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
  !
  ! Print the dumped current and polarization 
  !-------------------------------------------

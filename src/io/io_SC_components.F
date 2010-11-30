@@ -125,11 +125,8 @@ integer function io_SC_components(what,E_sc,ID)
    !
    l_IMPOSE_SN=.not.l_V 
    !
-#if defined _TEST_2
    io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.)
-#else
-   io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN)
-#endif
+   !
    if (io_SC_components/=0) goto 1
    !
    io_SC_components=variables_SC(ID,local_description,what)

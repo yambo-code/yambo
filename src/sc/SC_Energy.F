@@ -48,7 +48,6 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  E_xc_=0.
  !
  if (.not.l_sc_contains_lda.and..not. local_V) return
- if (n_sp_pol ==2 ) return
  !
  call V_Hartree(rho,V_hartree_sc)                           ! V_Hartree
  call IO_and_Messaging_switch("-report -log -io_in -io_out")
@@ -62,22 +61,25 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  ! E_xc=  \int rho(r) E_xc(r)
  !
  E_Hartree=real_V_dot_V(fft_size,rho,(0.5_SP*V_hartree_sc(:,1)))
- E_xc_=E_total+real_V_dot_V(fft_size,rho,E_xc(:))
+ E_xc_=real_V_dot_V(fft_size,rho,E_xc(:))
  !
  ! Fermi level contribution to E_totoal
  !
  E_total=(E%Efermi(1)+E_bare_Ef)*nel
  !
- do ik=1,k%nibz
-   do i_spin=1,n_sp_pol
+ do i_spin=1,n_sp_pol
+   do ik=1,k%nibz
      do ib=1,E%nbm
        E_total=E_total+E%E(ib,ik,i_spin)*E%f(ib,ik,i_spin)*k%weights(ik)
      enddo
    enddo
+   !
+   E_total=E_total-real_V_dot_V(fft_size,rho,V_xc(:,i_spin))
+   !
  enddo
  !
  ! E_total =  \sum_v E_v -E_Hartree +E_xc -\int rho(r) V_xc(r)
  !
- E_total=E_total-E_Hartree+E_xc_-real_V_dot_V(fft_size,rho,V_xc(:,1))
+ E_total=E_total-E_Hartree+E_xc_
  !
 end subroutine SC_Energy

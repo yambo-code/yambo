@@ -49,11 +49,7 @@ integer function io_HF_and_locXC(ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-#if defined _TEST_2
    io_HF_and_locXC=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,XC_KIND="G_WF force",CUTOFF=.true.)
-#else
-   io_HF_and_locXC=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,XC_KIND="G_WF force")
-#endif
    !
    if (io_HF_and_locXC/=0) goto 1
    !

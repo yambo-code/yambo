@@ -47,13 +47,13 @@ subroutine RT_Energy(en,k,RT_Energies)
  complex(SP)               :: E_kin,E_ion,E_h,Trace_Gf,Exc,Ex,E_mg
  !
  !      
- E_kin    =(0.,0.)
- E_ion    =(0.,0.)
- E_h      =(0.,0.)
- Trace_Gf =(0.,0.)
- Exc      =(0.,0.)
- Ex       =(0.,0.)
- E_mg     =(0.,0.)
+ E_kin    =(0._SP,0._SP)
+ E_ion    =(0._SP,0._SP)
+ E_h      =(0._SP,0._SP)
+ Trace_Gf =(0._SP,0._SP)
+ Exc      =(0._SP,0._SP)
+ Ex       =(0._SP,0._SP)
+ E_mg     =(0._SP,0._SP)
  !
  ! Non-interaction kinetc energy
  !
@@ -79,15 +79,11 @@ subroutine RT_Energy(en,k,RT_Energies)
    !
  endif
  !
- if(l_sc_hf.or.l_sc_cohsex) then
+ if(l_sc_hf.or.l_sc_cohsex.and..not.l_NE_simulate_IP) then
    !
    call RT_average_operator(VALUE=Ex,O_QP=QP_Vnl_xc,G=G_lesser,k=k)
    !
    Ex=Ex/2._SP
-   !
- else
-   !
-   Ex=(0._SP,0._SP)
    !
  endif
  !
@@ -114,10 +110,6 @@ subroutine RT_Energy(en,k,RT_Energies)
      !      
      call RT_average_operator(VALUE=Exc,O_QP=QP_Sc,G=G_lesser,k=k)
      !
-   else
-     !
-     Exc=(0._SP,0._SP)
-     !
    endif
    !
  endif
@@ -128,8 +120,6 @@ subroutine RT_Energy(en,k,RT_Energies)
    !                    
    E_mg=DL_vol/(8._SP*pi*SPEED_OF_LIGHT**2)*abs(sum(A_vecpot%vecpot))
    !
- else
-   E_mg=(0._SP,0._SP)
  endif
  !
  ! Total number of electrons

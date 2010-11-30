@@ -97,11 +97,13 @@ subroutine load_COLLISIONS()
    V_kinds(n_V_kinds) =SC_COHSEX
  endif
  !
- i_qp=1
+ i_qp=0
  !
  allocate(CACHE(QP_n_states))
  !
- do while(cache_memory<COLLISIONS_cache_size.and.i_qp<=QP_n_states)  
+ do while(cache_memory<COLLISIONS_cache_size.and.i_qp<QP_n_states)  
+   !
+   i_qp=i_qp+1
    !
    if(.not.px%element_1D(i_qp)) cycle  
    !
@@ -155,13 +157,11 @@ subroutine load_COLLISIONS()
      enddo
    enddo
    !
-   i_qp=i_qp+1
-   !
    cache_memory=mem_sum-mem_before_cache
    !
  end do
  !
- last_QP_mem=i_qp-1
+ last_QP_mem=i_qp
  !
  deallocate(COLLISIONS_disk)
  call mem_est("COLLISIONS_disk")

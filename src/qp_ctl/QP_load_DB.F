@@ -138,9 +138,17 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
      endif
    enddo
    !
-   call QP_merge_DBs(n_qp_db,qp_from_dbs,qp)
+   if (n_qp_db>0) io_err=0
+   !
+   ! If at least 1 DB is read io_err=0. In this case the database(s)
+   ! are flagged to be QP-like (QPs_DB=.TRUE.) or GF-related (GFs_DB=.TRUE.)
+   !
+   ! If no DB are read both logicals are .FALSE. .
    !
    if (len_trim(qp_db_name)/=0.and.io_err==0) then
+     !
+     call QP_merge_DBs(n_qp_db,qp_from_dbs,qp)
+     !
      QPs_DB=index(trim(qp_db_name),'.QP')/=0
      !
      ! GPL_EXCLUDE_START

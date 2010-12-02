@@ -428,8 +428,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  deallocate(isc%gamp,isc%rhotw,iscp%rhotw,dc,PPaR_ws,PPaR)
  if (l_ppa) deallocate(E_,PPaP)
- call mem_est("PPaP ISC-GAMP GW-E")
+ call mem_est("ISC-GAMP GW-E")
  call X_alloc('X')
+ if (l_cohsex.or.l_sc_srpa) then
+    call mem_est("PPaR")
+ else
+    call mem_est("PPaP")
+ endif
  !
 #if !defined _SC
  !

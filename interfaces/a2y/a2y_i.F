@@ -19,8 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function a2y_i(instr,lnstr,inf,iinf,ind,iind,od,iod,&
-&                      com_dir,icd,js,ijs,np,pid)
+integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
  use pars,                ONLY:SP,lchlen
  use LOGO,                ONLY:pickup_a_random

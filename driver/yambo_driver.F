@@ -19,8 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function yambo_driver(instr,lnstr,inf,iinf,ind,&
-&                             iind,od,iod,com_dir,icd,js,ijs,np,pid)
+integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
  !Y88b    /   e           e    e      888~~'    ,88~-_   
  ! Y88b  /   d8b         d8b  d8b     888   |  d888   '  

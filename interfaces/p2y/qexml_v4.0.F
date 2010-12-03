@@ -2934,6 +2934,7 @@ subroutine read_pseudo_header(psfile,nmesh,nbeta)
       REWIND(u)
       CALL read_upf_header_v1( u, nmesh, nbeta, psfile, ierr )
    ENDIF
+   close(unit=u)
    return
 end subroutine read_pseudo_header
 
@@ -2962,7 +2963,6 @@ subroutine read_upf_header_v2( u, nmesh, nbeta, psfile, ierr )
     if(tvanp) call errore( 'check_pseudo : ','Ultrasoft '//trim(psfile)//' not supported',1)
     CALL iotk_scan_attr(attr, 'mesh_size',      nmesh)
     CALL iotk_scan_attr(attr, 'number_of_proj', nbeta)
-    close(u)
 
   return
 end subroutine read_upf_header_v2
@@ -3000,11 +3000,10 @@ subroutine read_upf_header_v1( u, nmesh, nbeta, psfile, ierr )
     read(u,*,iostat=iostat) dummy
     read(u,*,iostat=iostat) nmesh
     read(u,*,iostat=iostat) idummy,nbeta
-    close(u)
         exit header_loop
      endif
   enddo header_loop
-     if(ierr.eq.1) write(*,*) "<PP_HEADER> not found! in"//trim(psfile)
+!    if(ierr.eq.1) write(*,*) "<PP_HEADER> not found! in"//trim(psfile)
 200  return
 end subroutine read_upf_header_v1
 
@@ -3110,7 +3109,8 @@ subroutine read_pseudo_data(psfile,nmesh,nbeta,z,mesh,&
 !     if(idummy/=ibeta) ERROR("")
 !     if(idummy2/=ibeta) ERROR("")
     end do
-    rewind(unit)
+    close(unit)
+    
 
    return 
 end subroutine read_pseudo_data

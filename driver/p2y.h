@@ -27,8 +27,9 @@
 #else
  int p2y_i
 #endif
- (char *str1,int *,char *inf,int *,char* id,
-  int *,char *od,int *,char *com_dir,int *,char *js,int *,int *,int *); 
+ (int *, int *,int *,int *,int *,int *,int *,int *,
+  char *rnstr2, char *inf, char *id, char *od, char *com_dir, char *js,
+  int lni,int iif,int iid,int iod,int icd,int ijs);
 /*
  Command line structure
 */

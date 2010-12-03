@@ -23,27 +23,33 @@
    use YPP
    use com,                     ONLY : error, msg
    use pars,                    ONLY : SP, pi, schlen
+   use parser_m,                ONLY : parser
    use surface_geometry,        ONLY : setup_gvecaff, gvecaff
    use wave_func,               ONLY : wf, wf_ng, wf_state, WF_load, WF_free, wf_norm_test
    use D_lattice,               ONLY : alat, DL_vol
    use R_lattice,               ONLY : g_vec, nkibz
    use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP, NONE
    use electrons,               ONLY : n_bands,n_spin,n_spinor,n_sp_pol
- use timing,              ONLY:live_timing_is_on
+   use timing,                  ONLY : live_timing,live_timing_is_on
+   use stderr,                  ONLY : intc
+   use par_proc_m,              ONLY : pp_redux_wait,pp_indexes,myid,pp_indexes_reset
+   use par_indexes_m,           ONLY : par_indexes
    implicit none
    ! 
    ! Work Space
    !
-!  type(bz_samp),  intent(in) :: Xk
-   real(SP)                 :: loc(n_bands,nkibz)
-   real(SP)                 :: kg(wf_ng)
-   real(SP)                 :: tpiba
-   integer                  :: ib, ik, ig, ix,iy,iz, ID
+   real(SP)                 :: loc(n_bands,nkibz), scal, kg(wf_ng), tpiba
+   integer                  :: ib, ik, ig, ix,iy,iz, ID, nk_loc
    integer                  :: ibfft, io_err, ig1, ig2, ngz
    integer, external        :: io_loc
+   logical                  :: WrtLocDB
    complex(SP)              :: rhoint, int, gz
    complex(SP), parameter   :: ci=cmplx(0.0_SP,1.0_SP)
    character(schlen)        :: sch
+   type(pp_indexes)             :: px
+
+   call section('*',"== Slab state localization ==")
+   call parser('WrtLocDB',WrtLocDB)
    !
    ! Define ix,iy, iz = normal
    ! 
@@ -56,22 +62,25 @@
    case(3)
      ix = 1; iy = 2
    end select
+   loc(:,:) = 0.0_SP
+   nk_loc = loc_kpts(2)-loc_kpts(1)+1
  
    call setup_gvecaff
 
+
    wf_norm_test = .true.
 
-   do ik=1,nkibz
-     call WF_load(ngloc,1,(/1,n_bands/),(/ik,ik/),space='G',&
-&                 title='-Localization/G space')
-     do ib=1,n_bands
+   do ik=loc_kpts(1),loc_kpts(2)
+     call WF_load(ngloc,1,loc_bands,(/ik,ik/),space='G',impose_free_and_alloc=.TRUE.,title='-LOC')
+ 
+     call live_timing('Localization k('//trim(intc(ik))//')',loc_bands(2)-loc_bands(1)+1,SERIAL=.true.)
+     do ib=loc_bands(1),loc_bands(2)
        ibfft=wf_state(ib,ik,1)
        rhoint = 0.0_SP
        do ig1=1,ngloc
          do ig2=1,ngloc
            if(gvecaff(ig1,ix).ne.gvecaff(ig2,ix).or. &
 &             gvecaff(ig1,iy).ne.gvecaff(ig2,iy)) cycle
-
            ngz = gvecaff(ig2,iz) - gvecaff(ig1,iz)
            if(ngz.eq.0) then
              rhoint = rhoint + real(upperlim-lowerlim) * conjg(wf(ig2,ibfft))*wf(ig1,ibfft)
@@ -83,32 +92,36 @@
 
          enddo
        enddo
+       call live_timing(steps=1)
 
        loc(ib,ik) = real(rhoint)
-!<--- DEBUG
-!      write(87,'(i4,i4,2f15.9)') ik,ib,real(rhoint),aimag(rhoint)
-!---> DEBUG
      enddo
+     call live_timing
    enddo
 
-   call section('=','Create localization database.')
-   call io_control(ACTION=OP_WR_CL, COM=NONE, SEC=(/1/), ID=ID) 
-   io_err = io_loc(loc,upperlim, lowerlim, ID)
-   if(io_err/=0) call error('Failed to write localization DB.')
-
-   call section('=','State localization.')
+   scal = 1.d0/maxval(loc)
 
    live_timing_is_on = .false.
-   call msg("ns","",nkibz)
-   call msg("s","",n_bands)
-   do ik=1,nkibz
-     do ib=1,n_bands
-       write(sch,'(i7,i7,f9.4)') ik,ib,loc(ib,ik)
+   call section('=','State localization.')
+
+   call msg("ns","",loc_kpts(2)-loc_kpts(1)+1)
+   call msg("s","",loc_bands(2)-loc_bands(1)+1)
+   do ik=loc_kpts(1),loc_kpts(2)
+     do ib=loc_bands(1),loc_bands(2)
+       write(sch,'(i7,i7,f10.5,f9.4)') ik,ib,loc(ib,ik),loc(ib,ik)*scal
        call msg("s",trim(sch))
-       loc(ib,ik) = real(rhoint)
      enddo
    enddo 
    live_timing_is_on = .true.
+
+   if(WrtLocDB) then
+
+     call section('=','Create localization database.')
+     call io_control(ACTION=OP_WR_CL, COM=NONE, SEC=(/1/), ID=ID) 
+     io_err = io_loc(loc,upperlim, lowerlim, ID)
+     if(io_err/=0) call error('Failed to write localization DB.')
+   
+   endif
 
    return
  end subroutine ras_loc_ypp

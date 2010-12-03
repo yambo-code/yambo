@@ -69,8 +69,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  if (allocated(Z_species)) then
    do is=1,n_atomic_species
-     dumb_ch1=trim(intc(n_atoms_species(is)))//'--'
-     if (Z_species(is)/=0) dumb_ch1=trim(intc(n_atoms_species(is)))//PT_elements(Z_species(is))
+     dumb_ch1=trim(intc(n_atoms_species(is)))//PT_elements(Z_species(is))
      atoms_string=trim(atoms_string)//trim(dumb_ch1)
    enddo
    call msg('rn','... containing '//trim(atoms_string)//' atoms')

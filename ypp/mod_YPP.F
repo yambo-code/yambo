@@ -121,6 +121,8 @@ module YPP
  logical           :: lloc
  real(SP)          :: lowerlim, upperlim
  integer           :: normdir, ngloc
+ integer           :: loc_bands(2)
+ integer           :: loc_kpts(2)
  !
  ! Transition Analysis
  !

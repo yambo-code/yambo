@@ -73,7 +73,7 @@
   {"gkkp"  , "g","gkkp databases",0,0,0,0,1}, 
 #endif
 #if defined _YPP_RAS
-  {"surf", "a","Surface spectroscopy postprocessor",0,0,1,0,0}, 
+  {"surf", "a","Surface spectroscopy postprocessor [loc,trans]",0,0,1,0,0}, 
 #endif
   {NULL,NULL,NULL,0,0,0,0,0}
  };

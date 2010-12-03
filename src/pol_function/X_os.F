@@ -90,7 +90,6 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !==========
  force_bare_X_G=associated(Xen%W).or.associated(Xen%Z).or.use_X_RIM.or.associated(Xen%GreenF)
  skip_WF_load=.false.
- g2_min=1
  !
  ! Project's dependent presets
  !=============================
@@ -99,12 +98,10 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
 #endif
 #if defined _MANYK
  if(iq.ne.1) force_bare_X_G=.true.
-#endif
-#if defined _RAS || _MANYK
- skip_WF_load = iq==1.and.X%ng==1 
+ skip_WF_load = iq==1.and.X%ng==1
 #endif
 #if defined _RAS
- g2_min=2
+ if(lras.or.lreels) skip_WF_load = iq==1.and.X%ng==1
 #endif
  !
  call mem_est("Xo_WS",(/size(XoR)+2*X%ng/))
@@ -266,7 +263,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
        if (.not.force_bare_X_G) GreenF(1) = X_simple_GreenF(Xw%p(fr(1)),cg_pt(i1),X%ordering)
        if (force_bare_X_G) call X_bare_RIM_GreenF(iq,X_poles_tab(i1,:),fr,Xw,Xen,Xk,GreenF,X%ordering)
      endif
-     do i2 = 1,bg_npts(i1)
+loop_bg: do i2 = 1,bg_npts(i1)
        n_poles = n_poles+1
        ikbz   = X_poles_tab(n_poles,1)
        iv     = X_poles_tab(n_poles,2)
@@ -289,7 +286,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
        eh_occ = Xen%f(iv,ik,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))/&
 &               spin_occ/real(Xk%nbz)/DL_vol
 #if defined _RAS
-       if(iq==1 .and. X%ng==1 ) isave=(/iv,ic,ik,i_spin/)
+       if((lras.or.lreels).and.skip_WF_load) isave=(/iv,ic,ik,i_spin/)
 #endif
        if (any((/isave(1)/=iv,isave(2)/=ic,isave(3)/=ik,isave(4)/=i_spin/))) then
          call scatterBamp(isc)
@@ -305,22 +302,23 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
        !
 #if defined _RAS 
        !-----------------------------------------------------------------------------
-       if((lras.or.lreels).and.loptcut) then
-         iscut= -conjg( Xcut_rhoq0(ic,iv,ikbz,i_spin) )
-       else
-         iscut= -conjg( DIP_q_dot_iR(ic,iv,ikbz,i_spin) )
+       if(lras.or.lreels) then
+         if(loptcut) then
+           iscut= -conjg( Xcut_rhoq0(ic,iv,ikbz,i_spin) )
+         else
+           iscut= -conjg( DIP_q_dot_iR(ic,iv,ikbz,i_spin) )
+         endif
+         XoR(1,1)=XoR(1,1)+GreenF(1)*eh_occ*iscut*conjg(isc%rhotw(1))
+         cycle loop_bg   ! Only supports calculation of head
        endif
-       !
-       XoR(1,1)=XoR(1,1)+GreenF(1)*eh_occ*iscut*conjg(isc%rhotw(1))
-       !-----------------------------------------------------------------------------
 #endif 
        !
        ! Filling the upper triangular part of the residual here ! 
        !             ^^^^^
-       do g2=g2_min,X%ng
+       do g2=1,X%ng
          call V_by_V_plus_V(g2,GreenF(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),XoR(:g2,g2))
        enddo
-     enddo
+     enddo loop_bg
      !
      do i2=iwmax,Xw%n(2)
        iw=i2+fr(1)-1

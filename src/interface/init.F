@@ -131,7 +131,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _RT
  what_is_running='YAMBO_RT'
 #endif
-#if defined _MANYK || _RAS
+#if defined _MANYK && _RAS
  what_is_running='YAMBO_RAS_MANYK'
 #endif
 #if defined _MANYK 

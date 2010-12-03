@@ -21,11 +21,12 @@
 !
 subroutine ypp_init(instr,lnstr,FINALIZE)
  !
+ use YPP
  use pars,           ONLY:pi
  use units,          ONLY:HARTREE,FS2AUT
  use wave_func,      ONLY:wf_ng 
  use D_lattice,      ONLY:alat
- use R_lattice,      ONLY:ng_vec
+ use R_lattice,      ONLY:ng_vec,nkibz
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
 &                         nrnlvls,rnlvls,runlevel_is_on,&
@@ -33,7 +34,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  use drivers,        ONLY:infile_editing
  use com,            ONLY:file_exists
  use stderr,         ONLY:string_split
- use YPP
  use electrons,      ONLY:n_spin,n_bands
  use par_proc_m,     ONLY:master_cpu,pp_redux_wait
  use timing,         ONLY:what_is_running
@@ -156,6 +156,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  lowerlim = 0
  upperlim = 1
  ngloc = 0
+ loc_bands = (/ 1, n_bands /)
+ loc_kpts  = (/ 1, nkibz /)
  ! 
  ! Transition analysis
  ! 
@@ -512,7 +514,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 &       " DataType SrfShift d_cell "//&
 &       " E0 Theta0 Thetap Phi DetAngle "//&
 &       " LossForm ImpactFt DetIntMd NumIntPt GausConv")
-   if(lloc) call initactivate(1,"NormDir LowerLim UpperLim NGLoc")
+   if(lloc) call initactivate(1,"NormDir LowerLim UpperLim NGLoc LbndRnge KptRange WrtLocDB")
    if(ltrans) call initactivate(1,"EcvMin EcvMax qdir")
  endif
  !

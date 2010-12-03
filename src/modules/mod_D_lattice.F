@@ -64,7 +64,7 @@ module D_lattice
  !
  ! Periodic Table
  !
- character(len=2)      :: PT_elements(103)
+ character(len=2)      :: PT_elements(0:103)
  !
  contains
    !
@@ -149,15 +149,17 @@ module D_lattice
      character(len=2) :: atom_name
      integer  :: ia ! Work Space
      call load_PT_elements()
-     do ia = 1, 103
+     do ia = 0, 103
       if ( trim(atom_name) == trim(PT_elements(ia)) ) then
         atomic_number = ia
         return
       end if
      end do
+     atomic_number = 0
    end function
    !
    subroutine load_PT_elements()
+     PT_elements(0)    ='**'
      PT_elements(1:2)  =(/'H ',                              'He'/)
      PT_elements(3:10) =(/'Li','Be','B ','C ','N ','O ','F ','Ne'/)
      PT_elements(11:18)=(/'Na','Mg','Al','Si','P ','S ','Cl','Ar'/)

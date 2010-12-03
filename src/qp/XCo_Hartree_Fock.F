@@ -24,7 +24,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  ! Hartree-Fock
  !
  use pars,          ONLY:SP,schlen,DP,pi
- use drivers,       ONLY:l_sc_run,l_sc_exx,l_collisions_IO,l_real_time
+ use drivers,       ONLY:l_sc_run,l_sc_exx,l_collisions_IO
  use com,           ONLY:msg
  use timing,        ONLY:live_timing
  use stderr,        ONLY:intc
@@ -299,6 +299,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  call collision_reset(iscp) 
  call pp_indexes_reset(px)
  !
- if (.not.l_real_time) call pp_redux_wait(QP_Vnl_xc)
+#if !defined _RT
+ call pp_redux_wait(QP_Vnl_xc)
+#endif
  !
 end subroutine

@@ -161,10 +161,10 @@ subroutine XCo_local(E,Xk)
    ! Vxc^+=(Vxc_up+Vxc_down)/2
    ! Vxc^+=(Vxc_up-Vxc_down)/2
    !
-   vxc_plus(:) =(V_xc(:,1)+V_xc(:,2))/2.
-   vxc_minus(:)=(V_xc(:,1)-V_xc(:,2))/2.
+   vxc_plus(:) =(V_xc(:,1)+V_xc(:,2))/2._SP
+   vxc_minus(:)=(V_xc(:,1)-V_xc(:,2))/2._SP
    !
-   V_xc_mat=(0.,0.)
+   V_xc_mat=(0._SP,0._SP)
    !
    do ifft=1,fft_size 
      !

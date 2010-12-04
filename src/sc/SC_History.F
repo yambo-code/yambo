@@ -98,15 +98,15 @@ subroutine SC_History(it,E)
    !
    if ( it >  0 ) then
 #if defined _RT
-     call msg('o E_History','',(/RT_step*real(it)/FS2AUT,&
+     call msg('o E_History','',(/RT_step*real(it,SP)/FS2AUT,&
 #else
-     call msg('o E_History','',(/real(it_now),&
+     call msg('o E_History','',(/real(it_now,SP),&
 #endif
 &                             ((E%E(ib,ik,i_spin)*HARTREE,ib=n_met_bands-1,n_full_bands+1),ik=1,max_kpt) &
 &                             /),INDENT=-2,USE_TABS=.true.)
      !
 #if defined _RT
-     call msg('o Occ_History','',(/RT_step*real(it)/FS2AUT,&
+     call msg('o Occ_History','',(/RT_step*real(it,SP)/FS2AUT,&
 &                                ((Occ_natural_orb(ib,ik),ib=n_met_bands-1,n_full_bands+1),ik=1,max_kpt) &
 &                                /),INDENT=-2,USE_TABS=.true.)
 #endif

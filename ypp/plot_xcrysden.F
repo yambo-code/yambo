@@ -39,7 +39,7 @@ subroutine plot_xcrysden(use_2d)
  real(SP) :: a_angs(3,3)    !lattice vectors in Angstrom
  real(SP) :: rv(3),max_
  character(schlen) :: ch
- real, allocatable :: v2plot_xc(:,:,:)
+ real(SP), allocatable :: v2plot_xc(:,:,:)
  ! 
  !the atomic cell is given in a.u. and I want
  !to write the output of xcrysden in \AA

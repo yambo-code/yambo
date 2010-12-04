@@ -94,6 +94,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  ! WFs loading
  !=============
  !
+ call SC_WF_and_dipole_dimensions(X)
  call WF_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),space='R',title=' ')  
  !
  ! Core initialization

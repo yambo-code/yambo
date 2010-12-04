@@ -292,11 +292,11 @@ integer function io_SC_components(what,E_sc,ID)
    if(l_NE_with_fields.and.ik==QP_nk) then
      call io_bulk(ID,VAR="A_vecpot",VAR_SZ=(/3,3,2/))
      if (write_is_on(ID)) then
-       A_vecpot_disk(:,1,1)= real(A_vecpot%vecpot(:))
+       A_vecpot_disk(:,1,1)= real(A_vecpot%vecpot(:),SP)
        A_vecpot_disk(:,1,2)=aimag(A_vecpot%vecpot(:))
-       A_vecpot_disk(:,2,1)= real(A_vecpot%vecpot_vel(:))
+       A_vecpot_disk(:,2,1)= real(A_vecpot%vecpot_vel(:),SP)
        A_vecpot_disk(:,2,2)=aimag(A_vecpot%vecpot_vel(:))
-       A_vecpot_disk(:,3,1)= real(A_vecpot%vecpot_acc(:))
+       A_vecpot_disk(:,3,1)= real(A_vecpot%vecpot_acc(:),SP)
        A_vecpot_disk(:,3,2)=aimag(A_vecpot%vecpot_acc(:))
      endif
      call io_bulk(ID,R3=A_vecpot_disk)

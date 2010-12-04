@@ -157,7 +157,7 @@ subroutine REPORT_Occupations(E,mode)
  ! [4] Report the value of the mean magnetization
  !
  if(n_sp_pol>1 .and. l_sc_magnetic) then
-   call msg('r','Mean magnetization (x,y,z) ['//trim(average_el_mag_dim)//'] :',real(average_el_mag(:)))
+   call msg('r','Mean magnetization (x,y,z) ['//trim(average_el_mag_dim)//'] :',real(average_el_mag(:),SP))
  endif
 #endif
  !

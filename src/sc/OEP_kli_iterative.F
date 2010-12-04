@@ -55,7 +55,7 @@ subroutine OEP_kli_iterative(E,k,Vkli,Vslt,U,rho)
  type(pp_indexes) ::px
  integer          ::ii,iv1,iv2,ik
  real(SP)         ::V_io(fft_size),V_nm1(fft_size)
- real DeltaEps, V_resp(fft_size),reached_treshold
+ real(SP)         ::DeltaEps,V_resp(fft_size),reached_treshold
  integer ir,ifft,is,rho_sym
  logical          ::lerr
  character(lchlen)  ::dumb_ch

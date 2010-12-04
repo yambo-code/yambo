@@ -99,7 +99,7 @@ module matrix_operate
      mc_shp=shape(mc)
      do i1=1,min(mr_shp(1),mc_shp(1))
        do i2=1,min(mr_shp(2),mc_shp(2))
-         mr(i1,i2,1)=real(mc(i1,i2))
+         mr(i1,i2,1)=real(mc(i1,i2),SP)
          mr(i1,i2,2)=aimag(mc(i1,i2))
        enddo
      enddo

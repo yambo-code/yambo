@@ -77,6 +77,7 @@ module real_time
  logical           :: l_NE_simulate_RPA
  logical           :: l_NE_simulate_IP
  logical           :: l_NE_simulate_Irredux
+ logical           :: l_NE_simulate_BSE
  !
  ! Frozen parts of self-energy
  !

@@ -34,7 +34,7 @@ integer function variables_SC(ID,local_description,what)
  use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,Hfrozen,XCfrozen,                      &
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
 &                         QP_LifeTime,Phase_LifeTime,l_RT_no_diamagnetic,&
-&                         max_rt_steps_disk,l_RT_induced_field
+&                         max_rt_steps_disk,l_RT_induced_field,l_NE_simulate_BSE
  use fields,         ONLY:n_ext_fields,Efield
 #endif                                
 #if defined _MAGNETIC
@@ -197,7 +197,7 @@ integer function variables_SC(ID,local_description,what)
 #if defined _RT
  !
  if(any((/l_J,l_G/))) then
-   call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=5,MENU=0) 
+   call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=6,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,L0=Hfrozen,&
 &    VAR=" [RT] Hartree not updated        :", CHECK=.true.,OP=(/"=="/),&
@@ -205,6 +205,10 @@ integer function variables_SC(ID,local_description,what)
    i_desc=i_desc+1
    call io_elemental(ID,L0=XCfrozen,&
 &    VAR=" [RT] XC term frozen             :", CHECK=.true.,OP=(/"=="/),&
+&    DESCRIPTION=local_description(i_desc))
+   i_desc=i_desc+1
+   call io_elemental(ID,L0=l_NE_simulate_BSE,&
+&    VAR=" [RT] Simulate Bethe-Salpeter eq.:", CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&

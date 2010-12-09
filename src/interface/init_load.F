@@ -281,6 +281,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'InducedField', '[RT] Include induced field in coupling and current',verb_level=V_real_time)
  call it('f',defs,'RTfreezeH', '[RT] Hartree not updated during RT',verb_level=V_real_time)
  call it('f',defs,'RTfreezeXC','[RT] XC potential/self-energy not updated during RT',verb_level=V_real_time)
+ call it('f',defs,'RTBSEOnly','[RT] Simulate BSE only without include single particle effects',verb_level=V_real_time)
  call it(defs,'DiskSteps',     '[RT] Numer of steps stored in memory before I/O',max_rt_steps_disk,verb_level=V_real_time)
  !
  ! External fields

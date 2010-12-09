@@ -626,7 +626,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call initactivate(-1,'SCmixing')
      call initactivate(1,'Integrator QPLifeTime PhLifeTime') 
      call initactivate(1,'RTstep NEsteps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
-     call initactivate(1,'RTfreezeH RTfreezeXC NoDiamagnetic InducedField')
+     call initactivate(1,'RTfreezeH RTfreezeXC RTBSEOnly NoDiamagnetic InducedField')
 #endif
 #if defined _RT
      if (l_RT_probe.or.l_RT_pump_and_probe) call Afield_activate('Probe')

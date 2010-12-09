@@ -26,9 +26,10 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  ! XC0,V_xc_sc,V_hartree_sc
  !
  use pars,           ONLY:SP
+ use drivers,        ONLY:l_sc_cohsex,l_sc_hf
  use com,            ONLY:msg,warning,error
  use memory_m,       ONLY:mem_est
- use QP_m,           ONLY:QP_nk
+ use QP_m,           ONLY:QP_nk,QP_Sc,QP_Vnl_xc
  use units,          ONLY:HARTREE
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
@@ -38,7 +39,8 @@ subroutine RT_start_and_restart(Xen,Xk,k)
 #endif
  use real_time,      ONLY:G_lesser,ID,ID,NE_steps,G_lesser_previous,RT_ind_J,&
 &                         G_lesser_reference,Thermal_steps,RT_is_dumped,l_NE_simulate_IP,&
-&                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0
+&                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
+&                         l_NE_simulate_BSE
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V, &
 &                         rho_convergence,H_rotate,local_V,V_hartree_sc,      &
@@ -177,11 +179,15 @@ subroutine RT_start_and_restart(Xen,Xk,k)
      enddo
    endif
    !
-   if(l_NE_simulate_IP) then 
+   if(l_NE_simulate_IP.or.l_NE_simulate_BSE) then 
      !
      do ik=1,QP_nk
        call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(:,:,ik,:),wf) 
      enddo
+     !
+   endif
+   !
+   if(l_NE_simulate_IP) then 
      !
      V_xc_sc=(0._SP)
      V_hartree_sc=(0._SP)
@@ -211,6 +217,17 @@ subroutine RT_start_and_restart(Xen,Xk,k)
    !
    V_xc_sc=(0._SP)
    if(l_NE_simulate_IP) V_hartree_sc=(0._SP)
+   !
+   if(l_NE_simulate_BSE) then
+     !
+     call COLLISIONS_IO_compose(G_lesser) 
+     !
+     do ik=1,QP_nk
+       call V_qp_basis_to_H(ik,-QP_Vnl_xc,XC0_and_HARTREE0(:,:,ik,:)) 
+       if(l_sc_cohsex) call V_qp_basis_to_H(ik,-QP_Sc,XC0_and_HARTREE0(:,:,ik,:))
+     enddo
+     !
+   endif
    !
  endif
  !

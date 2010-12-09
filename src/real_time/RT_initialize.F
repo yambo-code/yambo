@@ -27,7 +27,7 @@ subroutine RT_initialize()
  use electrons,      ONLY:nel
  use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields,i_time, &
 &                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,    &
-&                         l_RT_no_diamagnetic,max_rt_steps_disk,     &
+&                         l_RT_no_diamagnetic,max_rt_steps_disk,l_NE_simulate_BSE,       &
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,         &
 &                         l_RT_induced_field,j_current_ext,Ext_fields_initial_itime,     &
 &                         RT_diagonalization_steps,RT_is_dumped,QP_LifeTime,Phase_LifeTime
@@ -47,14 +47,17 @@ subroutine RT_initialize()
  !----------
  call parser('NoDiamagnetic',l_RT_no_diamagnetic)
  call parser('InducedField' ,l_RT_induced_field)
+ call parser('RTBSEOnly',l_NE_simulate_BSE)
  call parser('RTfreezeH',    Hfrozen)
  call parser('RTfreezeXC',   XCfrozen)
+ !
  l_RT_diagonalize=RT_diagonalization_steps>1
  l_NE_simulate_RPA=.not.Hfrozen.and.XCfrozen
  l_NE_simulate_IP =     Hfrozen.and.XCfrozen
  l_NE_simulate_Irredux =Hfrozen.and..not.XCfrozen
+ l_NE_simulate_BSE     =.not.Hfrozen.and..not.XCfrozen.and.l_NE_simulate_BSE
  !
- l_RT_needs_XC0=l_NE_simulate_IP.or.l_NE_simulate_RPA.or.Thermal_steps>0
+ l_RT_needs_XC0=l_NE_simulate_IP.or.l_NE_simulate_RPA.or.l_NE_simulate_BSE.or.Thermal_steps>0
  !
  ! Check if Collisions are required
  !

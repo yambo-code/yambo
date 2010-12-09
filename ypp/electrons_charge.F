@@ -83,8 +83,10 @@ subroutine Zcharge(i_qp,iband,ikpt,sp_wf,charge_region)
        !
        ! C-C
        !
-       is_1B=is_in_tube( atom_pos(:,2,2), (/a(1,1),a(2,2)/2._SP,a(3,3)/2._SP/) , C1B_SIDE_xy, C1B_SIDE_z, el_pos,.TRUE.,.FALSE.).or.&
-&            is_in_tube( atom_pos(:,1,2), (/0._SP ,a(2,2)/2._SP,a(3,3)/2._SP/) , C1B_SIDE_xy, C1B_SIDE_z, el_pos,.TRUE.,.FALSE.)
+       is_1B=is_in_tube( atom_pos(:,2,2), (/a(1,1),a(2,2)/2._SP,a(3,3)/2._SP/) ,&
+&                        C1B_SIDE_xy, C1B_SIDE_z, el_pos,.TRUE.,.FALSE.).or.&
+&            is_in_tube( atom_pos(:,1,2), (/0._SP ,a(2,2)/2._SP,a(3,3)/2._SP/) ,& 
+&                        C1B_SIDE_xy, C1B_SIDE_z, el_pos,.TRUE.,.FALSE.)
        if (is_1B) Charge1Bond=Charge1Bond+sp_wf(ir)
        !
        ! C=C

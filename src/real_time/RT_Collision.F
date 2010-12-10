@@ -105,7 +105,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
    !
    if(Thermal_steps/=0.and.Thermal_time/=0.0) then 
      !      
-     call V_by_V_plus_V(SC_bands,(1._SP,0._SP),-XC0_and_HARTREE0(:,:,ik,1),H_nl_sc(:,:,1))
+     call V_by_V_plus_V(SC_bands,(1._SP,0._SP),-XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1),H_nl_sc(1:SC_bands,1:SC_bands,1))
      !
      H_nl_sc=H_nl_sc*(1._SP+tanh((RT_time+(RT_step*real(Thermal_steps))/2._SP) &
     &        /(RT_step*real(Thermal_steps))/Thermal_time))/2._SP
@@ -114,23 +114,26 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
    !
    if(.not.l_NE_simulate_IP) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,wf)
    !
-   if(l_RT_needs_XC0) call V_by_V_plus_V(SC_bands,(1._SP,0._SP),XC0_and_HARTREE0(:,:,ik,1),H_nl_sc(:,:,1))
+   if(l_RT_needs_XC0) &
+     & call V_by_V_plus_V(SC_bands,(1._SP,0._SP),XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1),H_nl_sc(1:SC_bands,1:SC_bands,1))
    !
    ! Add Ho = T+V_ion
    !
-   call V_by_V_plus_V(SC_bands,(1._SP,0._SP),Ho(:,:,ik,1),H_nl_sc(:,:,1))
+   call V_by_V_plus_V(SC_bands,(1._SP,0._SP),Ho(1:SC_bands,1:SC_bands,ik,1),H_nl_sc(1:SC_bands,1:SC_bands,1))
    !
    ! And the gauge field
    !
    if(l_NE_with_fields.and.i_time>0) call RT_apply_field(ik,H_nl_sc,A_input)
    !
-   if(allocated(H_t))  H_t(:,:,ik,1)=H_nl_sc(:,:,1)
+   if(allocated(H_t))  H_t(1:SC_bands,1:SC_bands,ik,1)=H_nl_sc(1:SC_bands,1:SC_bands,1)
    !
    ! Now prepare I1 and I2 before the integration notice that 
    ! they contain also the external field
    !
-   call M_by_M('n','n',SC_bands,H_nl_sc(:,:,1),G_input(:,:,ik),I1_lesser(:,:,ik))
-   call M_by_M('n','n',SC_bands,G_input(:,:,ik),H_nl_sc(:,:,1),I2_lesser(:,:,ik))
+   call M_by_M('n','n',SC_bands,H_nl_sc(1:SC_bands,1:SC_bands,1), & 
+        &      G_input(1:SC_bands,1:SC_bands,ik),I1_lesser(1:SC_bands,1:SC_bands,ik))
+   call M_by_M('n','n',SC_bands,G_input(1:SC_bands,1:SC_bands,ik),&
+        &      H_nl_sc(1:SC_bands,1:SC_bands,1),I2_lesser(1:SC_bands,1:SC_bands,ik))
    !
    ! Fictitious lifetime equivalent to the broadening
    ! in linear optics

@@ -28,6 +28,7 @@ subroutine RT_current_AND_polarization(Xk,G_input,A_input)
  !
  use pars,           ONLY:SP,cI
  use units,          ONLY:SPEED_OF_LIGHT
+ use electrons,      ONLY:n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
  use SC,             ONLY:SC_bands
@@ -50,8 +51,8 @@ subroutine RT_current_AND_polarization(Xk,G_input,A_input)
  !
  do id=1,3
    !
-   call RT_average_operator(VALUE=RT_ind_J(id),O_MATRIX=-DIP_P(id,:,:,:,:),   G=G_input,k=Xk)
-   call RT_average_operator(VALUE=RT_P(id),    O_MATRIX=cI*DIP_iR(id,:,:,:,:),G=G_input,k=Xk)
+   call RT_average_operator(VALUE=RT_ind_J(id),O_MATRIX=-DIP_P(id,1:SC_bands,1:SC_bands,1:QP_nk,1:n_sp_pol),   G=G_input,k=Xk)
+   call RT_average_operator(VALUE=RT_P(id),    O_MATRIX=cI*DIP_iR(id,1:SC_bands,1:SC_bands,1:QP_nk,1:n_sp_pol),G=G_input,k=Xk)
    !
  enddo
  !

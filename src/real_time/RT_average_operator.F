@@ -64,11 +64,11 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k)
    !
    Hk=(0._SP,0._SP)
    !
-   if(present(O_MATRIX)) Hk(:,:,:)=O_MATRIX(:,:,ik,:)
+   if(present(O_MATRIX)) Hk(1:SC_bands,1:SC_bands,1:n_sp_pol)=O_MATRIX(1:SC_bands,1:SC_bands,ik,1:n_sp_pol)
    if(present(O_QP))     call V_qp_basis_to_H(ik,O_QP,Hk)
    if(present(O_REAL))   call V_real_space_to_H(ik,O_REAL,Hk,wf)
    !
-   VALUE=VALUE-cI*Vstar_dot_V(SC_bands**2,Hk(:,:,1),G(:,:,ik))*k%weights(ik)
+   VALUE=VALUE-cI*Vstar_dot_V(SC_bands**2,Hk(1:SC_bands,1:SC_bands,1),G(1:SC_bands,1:SC_bands,ik))*k%weights(ik)
    !
  enddo
  !

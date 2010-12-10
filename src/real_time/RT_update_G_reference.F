@@ -42,7 +42,7 @@ subroutine RT_update_G_reference(Xen,G_lesser_reference)
  !
  do ik=1,Xen%nk
     !
-    call mat_dia_inv(DIAGO,USE_LK,H_t(:,:,ik,1),E_real=Xen%E(:SC_bands,ik,1))
+    call mat_dia_inv(DIAGO,USE_LK,H_t(1:SC_bands,1:SC_bands,ik,1),E_real=Xen%E(:SC_bands,ik,1))
     !
     ! It works only at T=0 ! 
     !
@@ -52,7 +52,7 @@ subroutine RT_update_G_reference(Xen,G_lesser_reference)
       G_lesser_reference(ib,ib,ik)=(0._SP,1._SP)*spin_occ
     end forall   
     !
-    call H_rotate(H_t(:,:,ik,1),G_lesser_reference(:,:,ik),SC_bands,-1)
+    call H_rotate(H_t(1:SC_bands,1:SC_bands,ik,1),G_lesser_reference(1:SC_bands,1:SC_bands,ik),SC_bands,-1)
     !
   enddo
   !

@@ -71,10 +71,10 @@ subroutine RT_update_dipoles(G_input,Xen,k,q)
  !
  do ik=1,Xen%nk
    !
-   call mat_dia_inv(DIAGO,USE_LK,H_t(:,:,ik,1),E_real=Xen%Eo(:SC_bands,ik,1))
+   call mat_dia_inv(DIAGO,USE_LK,H_t(1:SC_bands,1:SC_bands,ik,1),E_real=Xen%Eo(:SC_bands,ik,1))
    !
    do id=1,3
-     call H_rotate(H_t(:,:,ik,1),DIP_P(id,:,:,ik,1),SC_bands,1)
+     call H_rotate(H_t(1:SC_bands,1:SC_bands,ik,1),DIP_P(id,1:SC_bands,1:SC_bands,ik,1),SC_bands,1)
    enddo
    !
    do iv=1,SC_bands
@@ -86,8 +86,8 @@ subroutine RT_update_dipoles(G_input,Xen,k,q)
    enddo
    !
    do id=1,3
-     call H_rotate(H_t(:,:,ik,1),DIP_P(id,:,:,ik,1),SC_bands,-1)
-     call H_rotate(H_t(:,:,ik,1),DIP_iR(id,:,:,ik,1),SC_bands,-1)
+     call H_rotate(H_t(1:SC_bands,1:SC_bands,ik,1),DIP_P(id,1:SC_bands,1:SC_bands,ik,1),SC_bands,-1)
+     call H_rotate(H_t(1:SC_bands,1:SC_bands,ik,1),DIP_iR(id,1:SC_bands,1:SC_bands,ik,1),SC_bands,-1)
    enddo
    !
  enddo

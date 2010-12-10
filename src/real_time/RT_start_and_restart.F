@@ -145,7 +145,7 @@ subroutine RT_start_and_restart(Xen,Xk,k)
    ! G_lesser(i1,i1,ik)=(0.,1)*en%f(i1,ik)
    !
    do ik=1,QP_nk
-     call H_rotate(SC_R(:,:,ik,1),G_lesser(:,:,ik),SC_bands,-1)
+     call H_rotate(SC_R(1:SC_bands,1:SC_bands,ik,1),G_lesser(1:SC_bands,1:SC_bands,ik),SC_bands,-1)
    enddo
    !
    deallocate(SC_R)
@@ -170,11 +170,11 @@ subroutine RT_start_and_restart(Xen,Xk,k)
      !
      do ik=1,QP_nk
        if (local_V) then
-         call V_real_space_to_H(ik,V_hartree_sc+V_xc,XC0_and_HARTREE0(:,:,ik,:),wf)
+         call V_real_space_to_H(ik,V_hartree_sc+V_xc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf)
        else
          call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(3))
          io_V=io_SC_components('V',Xen,ID(3))
-         XC0_and_HARTREE0(:,:,ik,:)=H_nl_sc(:,:,:)
+         XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol)=H_nl_sc(1:SC_bands,1:SC_bands,1:n_sp_pol)
        endif
      enddo
    endif
@@ -182,7 +182,7 @@ subroutine RT_start_and_restart(Xen,Xk,k)
    if(l_NE_simulate_IP.or.l_NE_simulate_BSE) then 
      !
      do ik=1,QP_nk
-       call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(:,:,ik,:),wf) 
+       call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf) 
      enddo
      !
    endif
@@ -208,10 +208,10 @@ subroutine RT_start_and_restart(Xen,Xk,k)
    !
    do ik=1,QP_nk
      if(l_NE_simulate_IP) then   
-       call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(:,:,ik,:),wf) 
-       call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(:,:,ik,:),wf) 
+       call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf) 
+       call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf) 
      else
-       call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(:,:,ik,:),wf) 
+       call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf) 
      endif
    enddo
    !
@@ -223,8 +223,8 @@ subroutine RT_start_and_restart(Xen,Xk,k)
      call COLLISIONS_IO_compose(G_lesser) 
      !
      do ik=1,QP_nk
-       call V_qp_basis_to_H(ik,-QP_Vnl_xc,XC0_and_HARTREE0(:,:,ik,:)) 
-       if(l_sc_cohsex) call V_qp_basis_to_H(ik,-QP_Sc,XC0_and_HARTREE0(:,:,ik,:))
+       call V_qp_basis_to_H(ik,-QP_Vnl_xc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol)) 
+       if(l_sc_cohsex) call V_qp_basis_to_H(ik,-QP_Sc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol))
      enddo
      !
    endif

@@ -71,11 +71,16 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
 #if defined _TWO_LEVELS
  call parser('RT3Levels',l_3levels)
 #endif
+ ! 
+ ! Switch 
+ !=======
+ !
+ call XC_switch()
  !
  ! Dipoles & WF dimensions
  !=========================
- ! 
- call SC_WF_and_dipole_dimensions(X(:2))
+ !
+ call SC_WF_and_dipole_dimensions(X)
  !
  ! Dipoles
  !========
@@ -86,15 +91,9 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
  call Dipole_driver(Xen, Xk, X(1), X(1)%q0)
  !
- ! Switch 
- !=======
- !
- call XC_switch()
- !
  ! WFs loading
  !=============
  !
- call SC_WF_and_dipole_dimensions(X)
  call WF_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),space='R',title=' ')  
  !
  ! Core initialization
@@ -104,6 +103,14 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  ! Core allocations
  !
  call RT_alloc(Xen)
+ !
+ if(.not.local_V.and..not.l_NE_simulate_IP) then
+   !
+   call COLLISIONS_IO_eval(en,X,k,k,q,Xw)
+   !
+   call load_COLLISIONS()
+   !
+ endif
  !
  ! Restart from a previous RT run or from a SC calculation
  ! 
@@ -120,14 +127,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    call X_alloc("P_square")
    !
    return
-   !
- endif
- !
- if(.not.local_V.and..not.l_NE_simulate_IP) then
-   !
-   call COLLISIONS_IO_eval(en,X,k,k,q,Xw)
-   !
-   call load_COLLISIONS()
    !
  endif
  !

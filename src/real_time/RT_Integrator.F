@@ -78,16 +78,16 @@ recursive subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,Xen,k,q,Integr
    !
    ! Gf_{n,m}(T+dt) = G_{n,m}(T) 
    !
-   G_new(:,:,:)=G_old(:,:,:)
+   G_new=G_old
    !
    ! G(T+dt) = G(T) - i dt *(I1(T) - I2(T))
    !
 #if defined _DOUBLE
-   call zaxpy(SC_bands2_dot_nibz,dcmplx(0._SP,-T_step),I1_lesser(:,:,:),1,G_new(:,:,:),1)
-   call zaxpy(SC_bands2_dot_nibz,dcmplx(0._SP,+T_step),I2_lesser(:,:,:),1,G_new(:,:,:),1)
+   call zaxpy(SC_bands2_dot_nibz,dcmplx(0._SP,-T_step),I1_lesser,1,G_new,1)
+   call zaxpy(SC_bands2_dot_nibz,dcmplx(0._SP,+T_step),I2_lesser,1,G_new,1)
 #else
-   call caxpy(SC_bands2_dot_nibz,cmplx(0._SP,-T_step),I1_lesser(:,:,:),1,G_new(:,:,:),1)
-   call caxpy(SC_bands2_dot_nibz,cmplx(0._SP,+T_step),I2_lesser(:,:,:),1,G_new(:,:,:),1)
+   call caxpy(SC_bands2_dot_nibz,cmplx(0._SP,-T_step),I1_lesser,1,G_new,1)
+   call caxpy(SC_bands2_dot_nibz,cmplx(0._SP,+T_step),I2_lesser,1,G_new,1)
 #endif
    !
    if(l_NE_with_fields) call RT_propagate_vecpot(A_new,A_old,T_step,RT_time)
@@ -116,17 +116,17 @@ recursive subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,Xen,k,q,Integr
    !
    do ik=1,Xen%nk
      !
-     TmpMatrix(:,:)=H_t(:,:,ik,1)
+     TmpMatrix(1:SC_bands,1:SC_bands)=H_t(1:SC_bands,1:SC_bands,ik,1)
      !
      call mat_dia_inv(DIAGO,USE_LK,TmpMatrix,E_real=Xen%E(:SC_bands,ik,1))
      !
-     call H_rotate(TmpMatrix,G_new(:,:,ik),SC_bands,1)
+     call H_rotate(TmpMatrix,G_new(1:SC_bands,1:SC_bands,ik),SC_bands,1)
      !
      forall(i1=1:SC_bands,i2=1:SC_bands)
        G_new(i1,i2,ik)=G_new(i1,i2,ik)*exp(-(0._SP,1._SP)*(Xen%E(i1,ik,1)-Xen%E(i2,ik,1))*T_step)
      end forall
      !
-     call H_rotate(TmpMatrix,G_new(:,:,ik),SC_bands,-1)
+     call H_rotate(TmpMatrix,G_new(1:SC_bands,1:SC_bands,ik),SC_bands,-1)
      !
      ! Symmetrization
      !

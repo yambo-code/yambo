@@ -54,13 +54,13 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
    ! and the intraband optical matrix elements have been set to zero
    !
    do i1=1,SC_bands
-     H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)-real(sum(A_vec_pot(:)*DIP_P(:,i1,i1,ik,1)))
+     H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)-real(sum(A_vec_pot(1:3)*DIP_P(1:3,i1,i1,ik,1)),SP)
    enddo
    !
    do i1=1,SC_bands
      do i2=i1+1,SC_bands
         !     
-        A_dot_P=-sum(A_vec_pot(:)*DIP_P(:,i1,i2,ik,1))
+        A_dot_P=-sum(A_vec_pot(1:3)*DIP_P(1:3,i1,i2,ik,1))
         H_nl_sc(i1,i2,1)=H_nl_sc(i1,i2,1)+A_dot_P
         H_nl_sc(i2,i1,1)=H_nl_sc(i2,i1,1)+conjg(A_dot_P)
         !
@@ -69,7 +69,7 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
    !
    if(.not.l_RT_no_diamagnetic) then
      forall(i1=1:SC_bands,is=1:n_sp_pol) 
-       H_nl_sc(i1,i1,is)=H_nl_sc(i1,i1,is)+0.5_SP*sum(A_vec_pot(:)**2)
+       H_nl_sc(i1,i1,is)=H_nl_sc(i1,i1,is)+0.5_SP*sum(A_vec_pot(1:3)**2)
      end forall
    endif
    !
@@ -83,7 +83,7 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
    do i1=1,SC_bands
      do i2=i1+1,SC_bands
        !     
-       E_dot_r=cI*sum(E_vec_pot(:)*DIP_iR(:,i1,i2,ik,1))
+       E_dot_r=cI*sum(E_vec_pot(1:3)*DIP_iR(1:3,i1,i2,ik,1))
        H_nl_sc(i1,i2,1)=H_nl_sc(i1,i2,1)+E_dot_r
        H_nl_sc(i2,i1,1)=H_nl_sc(i2,i1,1)+conjg(E_dot_r)
        !

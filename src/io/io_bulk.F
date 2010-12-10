@@ -22,11 +22,11 @@
 subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,&
 &                  C1,L1,L3,IPOS)
  !
- use pars,    ONLY:SP,LP,lchlen
+ use pars,    ONLY:SP,LP,lchlen,nf90_SP
 #if defined _NETCDF_IO
  use netcdf
 #endif
- use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,&
+ use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
 &                  netcdf_dim,io_rec_pos,read_is_on,io_netcdf_support
  implicit none
  integer      :: ID
@@ -60,8 +60,13 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,&
        var_dim(j1)=netcdf_dim(ID,VAR_SZ(j1))
      enddo
      io_rec_pos(ID)=1
-     call netcdf_call(nf90_def_var(io_unit(ID),VAR,&
+     if (ver_is_gt_or_eq(ID,revision=723)) then
+       call netcdf_call(nf90_def_var(io_unit(ID),VAR,&
+&                     nf90_SP,var_dim(:size(VAR_SZ)),io_netcdf_var(ID)))
+     else
+       call netcdf_call(nf90_def_var(io_unit(ID),VAR,&
 &                     nf90_real,var_dim(:size(VAR_SZ)),io_netcdf_var(ID)))
+     endif
      call netcdf_call(nf90_enddef(io_unit(ID))) 
    else if (read_is_on(ID)) then
      call netcdf_call(nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID)))

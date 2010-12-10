@@ -21,6 +21,10 @@
 !
 module pars
  !
+#if defined _NETCDF_IO
+ use netcdf
+#endif  
+ !
  implicit none
  !
  ! KINDS
@@ -32,6 +36,14 @@ module pars
  integer, parameter  :: SP = selected_real_kind(6,30)
 #endif
  integer, parameter  :: IP = selected_int_kind(9)
+ !
+ ! NetCDF types
+ !
+#if defined _NETCDF_IO && defined _DOUBLE
+ integer, parameter  :: nf90_SP = nf90_double
+#else
+ integer, parameter  :: nf90_SP = nf90_real
+#endif
  !
  ! Equivalent to OneByteInt in NetCdf (normal integer is 4 byte)
  integer, parameter  :: LP = selected_int_kind(2)

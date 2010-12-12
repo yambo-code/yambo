@@ -26,12 +26,13 @@ subroutine tddft_do_X_W_typs(iq,X,wv)
  use pars,          ONLY:SP
  use drivers,       ONLY:l_bs_fxc,l_bss,l_alda_fxc,l_lrc_fxc
  use memory_m,      ONLY:mem_est
+ use stderr,        ONLY:real2ch,intc
  use frequency,     ONLY:w_samp
  use X_m,           ONLY:X_t,X_poles
  use BS,            ONLY:BS_bands,BS_eh_en,BSS_q0,BS_K_dim
  use TDDFT,         ONLY:FXC_type,FXC_K_diagonal,FXC,FXC_n_g_corr,&
 &                        FXC_per_memstps,FXC_n_mem_freqs,FXC_is_causal,&
-&                        FXC_LRC_alpha,ioBS_Fxc
+&                        FXC_LRC_alpha,FXC_LRC_beta,ioBS_Fxc
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP
  implicit none
  type(X_t)   :: X
@@ -53,7 +54,7 @@ subroutine tddft_do_X_W_typs(iq,X,wv)
  !
  if (l_lrc_fxc) then
    FXC_type='LRC'
-   write (X%f_xc,'(a,1x,f10.4)') 'LRC ',FXC_LRC_alpha
+   X%f_xc='LRC '//trim(real2ch(FXC_LRC_alpha))//'(alpha) '//trim(real2ch(FXC_LRC_beta))//'(beta)'
    return
  endif
  !
@@ -61,7 +62,7 @@ subroutine tddft_do_X_W_typs(iq,X,wv)
  !
  if (l_alda_fxc) then
    FXC_type='alda'
-   write (X%f_xc,'(a,1x,i4.4,a)') 'ALDA',FXC_n_g_corr,'G`s'
+   X%f_xc='ALDA '//trim(intc(FXC_n_g_corr))//'(Gs)'
    return
  endif
  !

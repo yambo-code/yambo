@@ -93,9 +93,6 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  ! Project's dependent presets
  !=============================
-#if defined _DISTRIBUTED
- if (Distributed_Memory) force_bare_X_G=.TRUE.
-#endif
 #if defined _MANYK
  if(iq.ne.1) force_bare_X_G=.true.
  skip_WF_load = iq==1.and.X%ng==1

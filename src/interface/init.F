@@ -585,9 +585,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_alda_fxc.and.&
 &    any((/l_optics.and.l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,l_cohsex,l_gw0/))) &
 &    call initactivate(1,'FxcGRLc')
- if (l_lrc_fxc.and.&
-&    any((/l_optics.and.l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,l_cohsex,l_gw0/))) &
-&    call initactivate(1,'LRC_alpha')
+ if (l_lrc_fxc.and.any((/l_optics.and.l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,&
+&                        l_cohsex,l_gw0/))) call initactivate(1,'LRC_alpha LRC_beta')
  !
  ! BSE + TDDFT = no BS db, Fxc + LF on-fly
  !
@@ -1078,7 +1077,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          l_lrc_fxc= trim(rstr_piece(i1+1)) == 'l'
          if (.not.l_alda_fxc.and..not.l_bs_fxc.and..not.l_lrc_fxc) l_alda_fxc=.true.
          if (l_alda_fxc)  call initactivate(1,'alda_fxc optics')
-         if (l_lrc_fxc)  call initactivate(1,'lrc_fxc chi optics')
+         if (l_lrc_fxc)   call initactivate(1,'lrc_fxc chi optics')
          !
          ! GPL_EXCLUDE_START
          !

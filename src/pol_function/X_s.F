@@ -33,7 +33,7 @@ subroutine X_s(iq,fr,X,wv)
  use X_m,           ONLY:X_t,X_mat,X_fxc
  use matrix_operate,ONLY:mat_dia_inv,INV,USE_LK,USE_SLK,USE_SVD
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_n_mem_freqs,&
-&                        FXC_LRC_alpha,FXC_SVD_digits,ioBS_Fxc
+&                        FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,ioBS_Fxc
  use IO_m,          ONLY:io_control,OP_RD_CL,NONE
  !
  implicit none
@@ -139,7 +139,7 @@ subroutine X_s(iq,fr,X,wv)
      !
      ! LRC Fxc
      !
-     tddftk(1,1)=-Xo(1,1)*FXC_LRC_alpha/q_norm(iq)**2
+     tddftk(1,1)=-Xo(1,1)*(FXC_LRC_alpha + FXC_LRC_beta*abs(wv%p(iw))**2)/q_norm(iq)**2
      !
    else if (l_alda_fxc) then
      !

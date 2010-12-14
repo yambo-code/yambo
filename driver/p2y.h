@@ -42,6 +42,7 @@
   {"dbfrag","S","DataBases fragmentation",0,0,0,0,0}, 
   {"alat_f","a","Lattice constants rescaling factor",0,1,0,0,0},
   {"notr",  "t","Force use of spatial Inv. instead of Time Rev.",0,0,0,0,0},
+  {"nosy",  "n","Force no symmetries",0,0,0,0,0},
   {"nowf",  "w","Force no wavefunctions",0,0,0,0,0},
   {"allG",  "g","Force use of all available RL vectors",0,0,0,0,0},
   {"verb",  "v","Verbose wfc I/O reporting",0,0,0,0,0}, 

@@ -98,7 +98,7 @@ subroutine RT_initialize()
    !
    if((Efield(i1)%ef_name/='none')) then 
      ! 
-     if(Efield(i1)%intensity/=0._SP) &
+     if(Efield(i1)%intensity==0._SP) &
 &      call warning(" External field with zero intensity! ")
      !      
      Ext_fields_initial_itime=int(min(Efield(i1)%t_initial,Ext_fields_initial_itime*RT_step)/RT_step)

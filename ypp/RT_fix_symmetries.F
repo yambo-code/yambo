@@ -23,7 +23,7 @@ subroutine RT_fix_symmetries(E,k)
  !
  use YPP,                 ONLY:E_field,B_theta,B_psi,B_field
  use drivers,             ONLY:l_sc_run
- use pars,                ONLY:SP,lchlen
+ use pars,                ONLY:SP,DP,lchlen
  use com,                 ONLY:msg,warning,core_io_path,more_io_path
  use memory_m,            ONLY:mem_est
  use electrons,           ONLY:levels,E_reset,n_spin,n_sp_pol
@@ -44,6 +44,7 @@ subroutine RT_fix_symmetries(E,k)
  use stderr,              ONLY:intc,set_real_printed_length
  use parser_m,            ONLY:parser
  use zeros,               ONLY:k_iku_zero
+ use FFT_m,               ONLY:fft_size,fft_rot_r,fft_dim,fftw_plan,fft_g_table,fft_norm
  !
  implicit none
  type(levels)                 :: E,E_expanded
@@ -58,8 +59,7 @@ subroutine RT_fix_symmetries(E,k)
  integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:)
  real(SP)              :: v1(3),v2(3),m(3,3)
  real(SP)              :: B_cart(3)
- integer               :: det
- real(SP), allocatable :: wf_disk(:,:,:,:)
+ integer               :: det,nsym_save,igfft,ig,ic
  real(SP), allocatable :: pp_kb_store(:,:,:,:,:),pp_kbd_store(:,:,:,:,:)
  logical               :: Rm_all_symm,use_E_field,use_B_field,reject_symmetry,Rm_TR,S_contains_TR(nsym)
  type(bz_samp)         :: k_save
@@ -67,6 +67,10 @@ subroutine RT_fix_symmetries(E,k)
  character(lchlen)     :: core_io_path_save,wf_fragment
  integer               :: ACTION_,ioKB_err,io_SC_E_err,io_SC_V_err,io_SC_WF_err
  complex(SP), allocatable :: full_H(:,:,:,:)
+ real(SP),    allocatable :: wf_disk(:,:,:,:)
+ real(SP),    allocatable :: dl_sop_tmp(:,:,:)
+ complex(DP), allocatable :: wf_DP(:),wf_DP_rot(:)
+ !
  !
  use_E_field=.FALSE.
  use_B_field=.FALSE.
@@ -75,6 +79,11 @@ subroutine RT_fix_symmetries(E,k)
  !
  call parser('RmAllSymm',Rm_all_symm)
  call parser('RmTimeRev',Rm_TR)
+ !
+ call fft_setup(wf_ng,1,.false.)
+ allocate(wf_DP(fft_size),wf_DP_rot(fft_size))
+ call mem_est("wf_DP wf_DP_rot",(/size(wf_DP),size(wf_DP_rot)/),elements_kind=(/DP,DP/))
+ !
  !
  if (use_E_field) call section('*',"== Electric Fields in real time: BZ sampling remapping ==")
  if (use_B_field) call section('*',"== Magnetic field: BZ sampling remapping ==")
@@ -152,6 +161,7 @@ subroutine RT_fix_symmetries(E,k)
  !
  ! Remove Symmetries
  !
+ nsym_save      =nsym
  nsym=nsym/(1+i_time_rev)
  call msg('s',trim(intc(nsym))//' spatial symmetries reduced to ...')
  i_time_rev=0 
@@ -193,9 +203,16 @@ subroutine RT_fix_symmetries(E,k)
    enddo
  endif
  !
+ allocate(dl_sop_tmp(3,3,nsym))
+ dl_sop_tmp(1:3,1:3,1:nsym)=dl_sop(1:3,1:3,1:nsym)
+ deallocate(dl_sop)
+ allocate(dl_sop(3,3,nsym))
+ dl_sop=dl_sop_tmp
+ deallocate(dl_sop_tmp)
+ !
  call msg('l'," "//trim(intc(nsym)))
  !
- call set_real_printed_length(f_length=7,g_length=7)
+ call set_real_printed_length(f_length=7,g_length=8)
  do is=1,nsym
    call msg('s','[S'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))  
  enddo
@@ -405,8 +422,6 @@ subroutine RT_fix_symmetries(E,k)
  !
  ! Rotating wavefunctions components
  !
- call msg('s',':: Rotating wavefunctions ...')
- !
  allocate(wf_nc_k_save(k_save%nibz),wf_igk_save(wf_ncx,k_save%nibz))
  wf_nc_k_save=wf_nc_k
  wf_igk_save =wf_igk
@@ -420,16 +435,9 @@ subroutine RT_fix_symmetries(E,k)
  !
  do i1=k_save%nibz+1,k%nibz 
    !      
-   is=sop_inv_save(kpoints_map(2,i1))
    ik=kpoints_map(1,i1)
    !
-   do i2=1,wf_nc_k(ik)
-     if(g_rot(is,i2)<=wf_nc_k(ik)) then
-        wf_igk (i2,i1) = wf_igk_save(g_rot(is,i2),ik)
-     else
-        wf_igk (i2,i1) = 0
-     endif
-   enddo
+   wf_igk(1:wf_nc_k(ik),i1)=wf_igk_save(1:wf_nc_k(ik),ik)
    !
    if(any(wf_igk(1:wf_nc_k(ik),i1)==0)) then
      wf_nc_k(i1)=minloc(wf_igk(:,i1),1)-1
@@ -439,18 +447,16 @@ subroutine RT_fix_symmetries(E,k)
    !
  enddo
  !
- allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
- call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
- !
- call msg('l','done')
- !
  call section('=',"Final I/O")
  !============================
  !
  core_io_path_save=core_io_path
  core_io_path=more_io_path
  !
- call msg('s',':: Wavefunctions ...')
+ call msg('s',':: Rotating the wavefunctions ...')
+ !
+ allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
+ call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
  !
  ACTION_=OP_APP_WR_CL
  if(Fragmented_IO) ACTION_=OP_WR_CL
@@ -463,11 +469,39 @@ subroutine RT_fix_symmetries(E,k)
    call io_control(ACTION=ACTION_,COM=NONE,SEC=(/i1+1,1/),ID=ID)
    !
    do ib=1,E%nb
+     !
      do i_spin=1,n_spin
-       i_wf=wf_state(ib,ik,i_spin)
-       wf_disk(1,ib,:,i_spin)= real(wf(:,i_wf))
-       wf_disk(2,ib,:,i_spin)=aimag(wf(:,i_wf))
-       if ( S_contains_TR(is) ) wf_disk(2,ib,:,i_spin)=-aimag(wf(:,i_wf))
+       !
+       WF_DP=(0._DP,0._DP)
+       !
+       do ic=1,wf_nc_k(ik)
+         ig=wf_igk(ic,ik)     
+         if(ig>wf_ng) cycle
+         igfft=fft_g_table(ig,1)
+         i_wf=wf_state(ib,ik,i_spin)
+         wf_DP(igfft)=wf(ic,i_wf)
+       enddo
+       !
+#if defined _FFTW
+       call fft_3d(wf_DP,fft_dim,+1,fftw_plan)
+#else
+       call fft_3d(wf_DP,fft_dim,+1)
+#endif
+       wf_DP_rot(:)=wf_DP(fft_rot_r(is,:))*dble(fft_norm)
+       !
+#if defined _FFTW
+       call fft_3d(wf_DP_rot,fft_dim,-1,fftw_plan)
+#else
+       call fft_3d(wf_DP_rot,fft_dim,-1)
+#endif  
+       !
+       wf_disk(:,ib,:,i_spin)=0._SP
+       !
+       wf_disk(1,ib,1:wf_ng,i_spin)=  real(wf_DP_rot(fft_g_table(1:wf_ng,1)))*fft_norm
+       wf_disk(2,ib,1:wf_ng,i_spin)= aimag(wf_DP_rot(fft_g_table(1:wf_ng,1)))*fft_norm
+       !
+       if ( S_contains_TR(is) ) wf_disk(2,ib,:,i_spin)=-wf_disk(2,ib,:,i_spin)
+       !
      enddo
    enddo
    !
@@ -481,6 +515,9 @@ subroutine RT_fix_symmetries(E,k)
  endif
  !
  call msg('l','done')
+ !
+ deallocate(wf_DP,wf_DP_rot,wf_disk)
+ call mem_est("wf_DP wf_DP_rot wf_disk")
  !
  if(ioKB_err==0) then 
    !
@@ -531,11 +568,10 @@ subroutine RT_fix_symmetries(E,k)
  !
  ! CLEAN
  !=======
- deallocate(wf_nc_k_save,wf_igk_save,wf_disk,kpoints_map)
+ deallocate(wf_nc_k_save,wf_igk_save,kpoints_map)
  call bz_samp_reset(k_save)
  call E_reset(E_expanded)
  call WF_free()
- call mem_est("wf_disk")
  !
 end subroutine
  

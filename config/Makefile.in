@@ -49,7 +49,7 @@ CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
 TARGETS  = all yambo interfaces ypp 
 UTILS    = changelog
 CLEANS   = clean clean_all
-PROJECTS = yambo_ph yambo_sc yambo_ras yambo_reels \
+PROJECTS = yambo_ph yambo_sc yambo_ras yambo_ras_distributed yambo_reels \
 	       yambo_ras_manyk \
            yambo_magnetic yambo_PWdiago yambo_auger \
            yambo_rt yambo_distributed yambo_2levels \
@@ -132,6 +132,9 @@ yambo_ph: libs
 yambo_ras: libs
 	@LIBS2DO="$(PJ_RASLIBS)";ADF="-D_RAS"; $(mksrc)
 	@X2DO="yambo_ras"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS";$(mkx)
+yambo_ras_distributed: libs
+	@LIBS2DO="$(PJ_RASLIBS)";ADF="-D_RAS -D_DISTRIBUTED"; $(mksrc)
+	@X2DO="yambo_ras_distributed"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS -D_DISTRIBUTED";$(mkx)
 yambo_ras_manyk: libs
 	@LIBS2DO="$(PJ_RASLIBS)";ADF="-D_RAS -D_MANYK"; $(mksrc)
 	@X2DO="yambo_ras_manyk"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS -D_MANYK";$(mkx)

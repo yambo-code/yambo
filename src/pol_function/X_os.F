@@ -98,7 +98,10 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  skip_WF_load = iq==1.and.X%ng==1
 #endif
 #if defined _RAS
- if(lras.or.lreels) skip_WF_load = iq==1.and.X%ng==1
+ if(lras.or.lreels) then
+    skip_WF_load = iq==1.and.X%ng==1
+    force_bare_X_G=.false.
+ endif
 #endif
  !
  call mem_est("Xo_WS",(/size(XoR)+2*X%ng/))

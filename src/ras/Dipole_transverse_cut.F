@@ -22,7 +22,7 @@
  subroutine Dipole_transverse_cut(Xen,Xk,X)
 !====================================
    use pars
-   use com,                     ONLY : msg 
+   use com,                     ONLY : msg, error
    use timing,                  ONLY : live_timing
    use electrons,               ONLY : levels, n_spin, n_spinor, n_sp_pol
    use par_proc_m,              ONLY : pp_redux_wait, pp_indexes, myid, &
@@ -30,7 +30,7 @@
    use par_indexes_m,           ONLY : par_indexes
    use D_lattice,               ONLY : alat
    use R_lattice,               ONLY : g_vec, bz_samp
-   use X_m,                     ONLY : X_t
+   use X_m,                     ONLY : X_t, Dipole_bands_ordered
    use memory_m,                ONLY : mem_est
    use wave_func,               ONLY : wf, wf_ng, wf_state, WF_load
    use optcut,                  ONLY : Xcut_q0grad, ng_limits, setup_optcut, pscut, PScut_slow
@@ -43,23 +43,49 @@
    ! Work Space
    !
    integer                          :: ik, i1, icfft, ivfft, ic, iv, is, i_spin, E_i_spin
+   integer                          :: iv_max, ic_min
    real(SP)                         :: Ev_m_Ec, field_dir_rot(3)
    type(pp_indexes)                 :: px
    real(SP), allocatable            :: kg(:,:)
-   complex(SP)                      :: PS(3), spinor_avg(3), rho(3,n_spin)
+   complex(SP)                      :: PS(3), spinor_avg(3)
+   complex(SP)                      :: rho(4)
    character(schlen)                :: sch 
 !  real(SP), parameter          :: fac = 0.70710678118654752440_SP
 
 !    call setup_gvecaff
 !    call nG_limits( Xk%nibz )
 
-
    allocate( kg(3,wf_ng) )
 
-   call pp_indexes_reset(px)
-   call par_indexes(px, (/ Xk%nibz, Xen%nbm /),(/ 1, X%ib(1) /))
-   call live_timing('Dipole, cut (T):',px%n_of_elements(myid+1))
-   call pp_redux_wait
+! OLD
+!  call pp_indexes_reset(px)
+!  call par_indexes(px, (/ Xk%nibz, Xen%nbm /),(/ 1, X%ib(1) /))
+!  call live_timing('Dipole, cut (T):',px%n_of_elements(myid+1))
+!  call pp_redux_wait
+
+ !
+ ! Set up band limits
+ !
+ if (Dipole_bands_ordered) then
+   iv_max=Xen%nbm
+   ic_min=Xen%nbf+1
+ else
+   iv_max=X%ib(2)
+   ic_min=X%ib(1)
+ endif
+ !
+ ! Set up the parallel environment
+ !
+ call pp_indexes_reset(px)
+#if defined _DISTRIBUTED
+ call par_indexes(px,(/Xk%nibz,X%ib(2)/),(/1,ic_min/))
+#else
+ call par_indexes(px,(/Xk%nibz,iv_max/),(/1,X%ib(1)/))
+#endif
+ call live_timing('Dipole, cut (T):',px%n_of_elements(myid+1)*n_spin)
+ call pp_redux_wait
+ !
+
 
    do ik = 1, Xk%nibz
 
@@ -76,51 +102,71 @@
      enddo
      call setup_optcut( ik )
 
-     do iv = X%ib(1), Xen%nbm
-       if (.not.px%element_2D(ik,iv)) cycle
-       do ic = Xen%nbf+1, X%ib(2)
-         do i_spin   = 1, n_spin
+     do i_spin   = 1, n_spin
+       E_i_spin=i_spin
+       if (n_spinor==2) E_i_spin=1
+#if defined _DISTRIBUTED
+       do ic=ic_min,X%ib(2)
+         !
+         if(.not.px%element_2D(ik,ic)) cycle
+         !
+         do iv=X%ib(1),iv_max
+#else
+       do iv=X%ib(1),iv_max
+         !
+         if (.not.px%element_2D(ik,iv)) cycle
+         !
+         do ic=ic_min,X%ib(2)
+#endif
            !
-           rho(:,i_spin)=(0.,0.)
+           rho(:)=(0._SP,0._SP)
            !
-           E_i_spin=i_spin
-           if (n_sp_pol/=2) E_i_spin=1
            Ev_m_Ec = Xen%E(iv,ik,E_i_spin)-Xen%E(ic,ik,E_i_spin)
 
            if (associated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,E_i_spin)-Xen%Eo(ic,ik,E_i_spin)
-           if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.,-Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0./))) cycle
-           if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,&
-&                    -Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/))) cycle
+           if (any((/-Ev_m_Ec<X%ehe(1).and.X%ehe(1)>0.0_SP,-Ev_m_Ec>X%ehe(2).and.X%ehe(2)>0.0_SP/))) cycle
            if (abs(Ev_m_Ec)<=1.E-5) cycle
 
            ivfft=wf_state(iv,ik,i_spin)
            icfft=wf_state(ic,ik,i_spin)
+#if defined _DISTRIBUTED
+         if(ivfft==0) call error(" Error in parallel wf distribution iv")
+         if(icfft==0) call error(" Error in parallel wf distribution ic")
+#endif
 
            call PScut(PS, wf(:,ivfft), wf(:,icfft), kg = kg )
 !          call PScut_slow(PS, wf(:,ivfft), wf(:,icfft), kg )
 
 !          Xcut_q0grad(:,ic,iv,ik,i_spin) = PS(:)/Ev_m_Ec
-           rho(:,i_spin) = PS(:)/Ev_m_Ec
-         enddo   ! spin
+!          rho(:,i_spin) = PS(:)/Ev_m_Ec
+           rho(1:3) = PS(:)/Ev_m_Ec
+           if (abs(Ev_m_Ec)<=1.E-5_SP) rho(1:3)=(0._SP,0._SP)
+           if (n_spinor==2) then
+             Xcut_q0grad(:,ic,iv,ik,1)=Xcut_q0grad(:,ic,iv,ik,1)+rho(:3)
+           else
+             Xcut_q0grad(:,ic,iv,ik,i_spin) = rho(:3)
+           endif
          !
          ! Correct for spin case
          !
-         if (n_sp_pol==2) then
-           Xcut_q0grad(:,ic,iv,ik,1)=rho(:,1)
-           Xcut_q0grad(:,ic,iv,ik,2)=rho(:,2)
-         else if (n_spinor==2) then
-           Xcut_q0grad(:,ic,iv,ik,1)=(rho(:,1)+rho(:,2))
-         else if (n_spin==1) then
-           Xcut_q0grad(:,ic,iv,ik,1)=rho(:,1)
-         endif
+!        if (n_sp_pol==2) then
+!          Xcut_q0grad(:,ic,iv,ik,1)=rho(:,1)
+!          Xcut_q0grad(:,ic,iv,ik,2)=rho(:,2)
+!        else if (n_spinor==2) then
+!          Xcut_q0grad(:,ic,iv,ik,1)=(rho(:,1)+rho(:,2))
+!        else if (n_spin==1) then
+!          Xcut_q0grad(:,ic,iv,ik,1)=rho(:,1)
+!        endif
 
-       enddo ! cond. bands
-       call live_timing(steps=1)
-     enddo   ! valence bands
-   enddo     ! k-points
-
+         enddo ! cond. bands
+         call live_timing(steps=1)
+       enddo   ! valence bands
+     enddo     ! spin loop
+   enddo       ! k-points
+!DIP_iR = Xcut_q0grad
    call live_timing
    deallocate(kg)
+   call pp_indexes_reset(px)
    !
    do i_spin=1,n_sp_pol
      call pp_redux_wait(Xcut_q0grad(:,:,:,:,i_spin))

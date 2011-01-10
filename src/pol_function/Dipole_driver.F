@@ -62,7 +62,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  integer :: ID,io_err
  integer, external :: io_DIPOLES
  !
+#if !defined _RAS
  if (allocated(DIP_q_dot_iR)) return
+#endif
  !
  ! Transitions ordering
  !
@@ -126,7 +128,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      !
      ! Valence bands are loaded by all processors
      !
-     call WF_states_setup(k_to_load=(/1,Xk%nibz/),b_to_load=(/1,Xen%nbf/),par_loop=.FALSE.)
+     call WF_states_setup(k_to_load=(/1,Xk%nibz/),b_to_load=(/1,Xen%nbm/),par_loop=.FALSE.)
      !
      ! Parallelization on conductions bands and k-points
      !

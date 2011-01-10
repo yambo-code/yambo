@@ -30,7 +30,7 @@
  use par_indexes_m,           ONLY : par_indexes
  use D_lattice,               ONLY : nsym, i_time_rev, alat, dl_sop, sop_inv
  use R_lattice,               ONLY : g_vec, bz_samp, q0_def_norm,q_norm,bare_qpg
- use X_m,                     ONLY : X_alloc, X_t
+ use X_m,                     ONLY : X_alloc, X_t, Dipole_bands_ordered
  use fields,                  ONLY : grid_path
  use IO_m,                    ONLY : io_control, OP_RD_CL, OP_WR_CL, VERIFY, REP
  use memory_m,                ONLY : mem_est
@@ -41,6 +41,9 @@
  use ras_module,              ONLY : transloc, lras
 #endif
   use vec_operate,    ONLY:v_norm
+#if defined _DISTRIBUTED
+ use WF_distribute,  ONLY:WF_states_setup
+#endif
  implicit none
  type(bz_samp),  intent(in)       :: Xk
  type(levels),   intent(in)       :: Xen
@@ -62,6 +65,7 @@
  call section('=','Optical oscillators with cut off')
 
  if (allocated(Xcut_rhoq0)) return
+ Dipole_bands_ordered=.true.
  
  X%ngostnts = wf_ng
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=io_db)
@@ -69,7 +73,26 @@
 
  if (io_err.ne.0) then
    !
-   call pp_indexes_reset(px)
+#if defined _DISTRIBUTED
+   !
+   if(trim(grid_path)=='none'.and.Dipole_bands_ordered) then
+     !
+     ! Valence bands are loaded by all processors
+     !
+     call WF_states_setup(k_to_load=(/1,Xk%nibz/),b_to_load=(/1,Xen%nbm/),par_loop=.FALSE.)
+     !
+     ! Parallelization on conductions bands and k-points
+     !
+     call WF_states_setup(k_to_load=(/1,Xk%nibz/),b_to_load=(/Xen%nbf+1,X%ib(2)/))
+     !
+     ! Report
+     !
+     call WF_states_setup(b_to_load=(/1,X%ib(2)/),report=.true.)
+     !
+   endif
+   !
+#endif
+!  call pp_indexes_reset(px)
    !
    ! WF loading (needed in both cases)
    !
@@ -98,13 +121,12 @@
    endif
    !
    if(use_trans_gauge) call Dipole_transverse_cut(Xen,Xk,X)
-
    !
    ! Free any loaded WFs
    !
    call WF_free()
    !
-   if (master_cpu) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=io_db)
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=io_db)
    io_err=io_DIPOLES_cut(X,Xen,io_db)
  endif
  !
@@ -113,8 +135,6 @@
  ! In this case q0_def_norm is not the default one but corresponds
  ! to the norm of the grid shift.
  !
-
-! THIS MUST BE CHECKED FOR LONG GAUGE + CUT
 
  field_dir=field_dir*q0_def_norm/v_norm(field_dir)
  q_norm(1)=q0_def_norm

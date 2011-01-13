@@ -41,7 +41,7 @@ module pars
  !
 #if defined _NETCDF_IO && defined _DOUBLE
  integer, parameter  :: nf90_SP = nf90_double
-#else
+#elif defined _NETCDF_IO 
  integer, parameter  :: nf90_SP = nf90_real
 #endif
  !

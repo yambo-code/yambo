@@ -101,7 +101,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
 #if defined _DISTRIBUTED
  !
- if(loaded_bounds_ok.and.allocated(states_to_load)) then
+ if(loaded_bounds_ok.and.allocated(states_to_load).and.allocated(states_loaded)) then
    !
    if(allocated(states_loaded)) then
      !
@@ -111,7 +111,7 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
        do while(is<=wf_s(2).and.loaded_bounds_ok) 
           ib   =wf_b(1)
           do while(ib<=wf_b(2).and.loaded_bounds_ok) 
-            loaded_bounds_ok=states_to_load(ib,ikibz,is).and..not.states_loaded(ib,ikibz,is)
+            loaded_bounds_ok=states_to_load(ib,ikibz,is).eqv.states_loaded(ib,ikibz,is)
             ib=ib+1
           enddo
           is=is+1

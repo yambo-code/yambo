@@ -23,8 +23,9 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
 &                       DB_R0,R0,R1,DB_R1,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
 &                       DESCRIPTION,DO_NOT_DUMP)
  !
- use pars,    ONLY:SP,schlen,lchlen,nf90_SP
+ use pars,    ONLY:SP,schlen,lchlen
 #if defined _NETCDF_IO
+ use pars,    ONLY:nf90_SP
  use netcdf
 #endif
  use drivers, ONLY:list_dbs

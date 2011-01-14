@@ -65,6 +65,7 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
  integer            :: if,c_pos
  character(lchlen)  :: field(n_fields,2)
  !
+ ID(:) = 0
  field(1,1)="X G`s            [used]"
  field(1,2)="XG"
  field(2,1)="X bands"

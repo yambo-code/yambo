@@ -84,26 +84,47 @@ module real_time
  logical           :: Hfrozen
  logical           :: XCfrozen 
  !
- ! Time steps and step length
+ ! Time steps and step length...
+ !------------------------------
+ ! 
+ !   Thermal_steps   NE_steps
+ ! --------------- 0 ---------------------------- (end)
+ !                 ^   ^
+ !                 |   |
+ !                 Thermal_steps+1
+ !                     |__ ef1/2_i_time
+ ! 
+ ! NE_time is negative during the Thermal steps. When NE_time is positive
+ ! NE_dynamics=.TRUE.
+ !
+ ! ... core step length ...
  !
  real(SP) :: RT_step
- real(SP) :: Thermal_time
- real(SP) :: Ext_fields_initial_itime
- integer  :: NE_steps
+ ! 
+ ! ... thermalization ...
+ !
  integer  :: Thermal_steps
- integer  :: RT_memory_steps
+ ! 
+ ! ... Switch On Time (adiabatic switch on) ...
+ !
+ real(SP) :: SwitchOnTime
+ !
+ ! ... NE dynamics ...
+ !
+ logical  :: NE_dynamics
+ real(SP) :: NE_time ! <- incremented
+ real(SP) :: NE_tot_time ! Total (fixed)
+ integer  :: NE_i_time ! = (NE_time-1)/RT_step
+ integer  :: NE_steps
  !
  ! Macroscopic induced current ... 
+ !--------------------------------
  !
  complex(SP) :: RT_ind_J(3)
  !
  ! ... and polarization
  !
  complex(SP) :: RT_P(3)
- !
- ! External current to generate a given vector potential
- !
- complex(SP) :: j_current_ext(3)
  !
  ! Diagonal (QP) and off-diagonal (Phase) relaxation time
  !
@@ -119,10 +140,6 @@ module real_time
  complex(SP), allocatable :: I2_lesser(:,:,:)
  !
  ! Integrator Variables
- !
- integer                      :: i_time   ! full time index
- integer                      :: ef1_time ! time index for extern field one
- integer                      :: ef2_time ! time index for extern field two
  !
  character(schlen), parameter :: EULER    = "EULER"
  character(schlen), parameter :: RK2      = "RK2"
@@ -146,7 +163,7 @@ module real_time
  !
  ! Databases input/output
  !
- integer,  parameter      :: current_cache_size=24
+ integer,  parameter      :: current_cache_size=12
  !
  integer                  :: ID(5)                
  integer                  :: it_start ! restart point
@@ -165,7 +182,7 @@ module real_time
      real(SP), optional, intent(in) :: TIME_or_E
    end subroutine
    !
-   subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k)
+   subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,TRANS)
      use pars,       ONLY:SP
      use SC,         ONLY:SC_bands
      use R_lattice,  ONLY:bz_samp 
@@ -178,9 +195,10 @@ module real_time
      complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands,SC_bands,QP_nk,n_sp_pol)
      complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
      real(SP),        optional, intent(in) :: O_REAL(fft_size,n_sp_pol)
+     logical,         optional, intent(in) :: TRANS
    end subroutine RT_average_operator
    !
-   subroutine RT_Integrator(G_new,G_old,Avec,Avec_old,T_step,Xen,k,q,Integrator,RT_time)
+   subroutine RT_Integrator(G_new,G_old,Avec,Avec_old,T_step,Xen,k,q,Integrator,Time)
    end subroutine RT_Integrator
    !
  end interface

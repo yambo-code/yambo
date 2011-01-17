@@ -202,8 +202,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  X_rt%time_range(:)  =(/-FS2AUT,-FS2AUT/)
  X_rt%energy_steps   =200
  X_rt%energy_range(:)=(/0._SP,20./HARTREE/)
- X_rt%damp           ="LORENTZIAN"
- X_rt%damp_factor    =0.1/HARTREE
+ X_rt%damp           ="NONE"
+ X_rt%damp_factor    =0.
  !
 #endif
  !
@@ -448,8 +448,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (l_RT_X_one.or.l_RT_X_two) then 
     if (l_RT_X_one) call initactivate(1,"EnRngeRt ETStpsRt")
-    call initactivate(1,"TmRngeRt DampMode DampFactor FourierDamp")
-    call initactivate(1,"NoRmDC FrNoDamp")
+    call initactivate(1,"TmRngeRt DampMode DampFactor")
     if (l_RT_X_one) call initactivate(1,"UseFFT")
  endif
  !

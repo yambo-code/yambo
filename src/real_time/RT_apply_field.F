@@ -59,11 +59,13 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
    !
    do i1=1,SC_bands
      do i2=i1+1,SC_bands
-        !     
-        A_dot_P=-sum(A_vec_pot(1:3)*DIP_P(1:3,i1,i2,ik,1))
-        H_nl_sc(i1,i2,1)=H_nl_sc(i1,i2,1)+A_dot_P
-        H_nl_sc(i2,i1,1)=H_nl_sc(i2,i1,1)+conjg(A_dot_P)
-        !
+       !     
+       ! Note that (P)_cv = DIP_P (:,iv,ic,:,:)
+       !     
+       A_dot_P=-sum(A_vec_pot(1:3)*DIP_P(1:3,i2,i1,ik,1))
+       H_nl_sc(i1,i2,1)=H_nl_sc(i1,i2,1)+A_dot_P
+       H_nl_sc(i2,i1,1)=H_nl_sc(i2,i1,1)+conjg(A_dot_P)
+       !
      enddo
    enddo
    !
@@ -82,8 +84,10 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
    !
    do i1=1,SC_bands
      do i2=i1+1,SC_bands
+       !
+       ! Note that (iR)_cv = DIP_iR (:,iv,ic,:,:)
        !     
-       E_dot_r=cI*sum(E_vec_pot(1:3)*DIP_iR(1:3,i1,i2,ik,1))
+       E_dot_r=cI*sum(E_vec_pot(1:3)*DIP_iR(1:3,i2,i1,ik,1))
        H_nl_sc(i1,i2,1)=H_nl_sc(i1,i2,1)+E_dot_r
        H_nl_sc(i2,i1,1)=H_nl_sc(i2,i1,1)+conjg(E_dot_r)
        !

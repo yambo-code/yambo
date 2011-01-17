@@ -59,7 +59,7 @@ subroutine RT_Energy(en,k,RT_Energies)
  !
  ! E_Kin = - i Tr { P^2 G^<}/2  
  !
- call RT_average_operator(VALUE=E_kin,O_MATRIX=P_square,G=G_lesser,k=k)
+ call RT_average_operator(VALUE=E_kin,O_MATRIX=P_square,G=G_lesser,k=k,TRANS=.TRUE.)
  !
  E_kin=E_kin/2.
  !  

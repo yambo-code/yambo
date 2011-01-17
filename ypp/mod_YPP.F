@@ -151,17 +151,13 @@ module YPP
  !
  ! (RT) optics
  !
- logical  :: l_no_remove_DC
  logical  :: Use_FFT
- logical  :: Prt_Current
  integer  :: i_t_start,i_t_end  ! time window
  integer  :: RED_steps ! reduced number of steps
  real(SP) :: W_RT_induced_step
  !
  complex(DP),    allocatable :: RT_J_t(:,:)
  complex(DP),    allocatable :: RT_P_t(:,:)
- complex(DP),    allocatable :: current_ext_t(:,:)
- complex(DP),    allocatable :: A_vecpot_vel_t(:,:)
  !
  type Xw_rt
    real(SP) :: time_range(2)       ! time windows for the transform

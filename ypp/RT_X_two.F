@@ -21,7 +21,7 @@
 !
 subroutine RT_X_two(en,k)
  !
- use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,RT_J_t,A_vecpot_vel_t,W_RT_induced_step
+ use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,RT_J_t,W_RT_induced_step
  use pars,           ONLY:SP,DP,pi,cI
  use units,          ONLY:HARTREE,SPEED_OF_LIGHT
  use electrons,      ONLY:levels
@@ -74,7 +74,7 @@ subroutine RT_X_two(en,k)
  do i_w = 1, X_rt%energy_steps
    freqs(i_w)=cmplx(Efield(1)%frequency-((i_w-1)*W_step+X_rt%energy_range(1)),0._SP)
  enddo
- call Fourier_Transform(freqs,A_vecpot_vel_w,X_rt%energy_steps,A_vecpot_vel_t,NE_steps,RT_step,3)
+ !call Fourier_Transform(freqs,A_vecpot_vel_w,X_rt%energy_steps,A_vecpot_vel_t,NE_steps,RT_step,3)
  A_vecpot_vel_w(:,:)=A_vecpot_vel_w(:,:)*RT_step 
  forall(i_w=1:X_rt%energy_steps) F_m(i_w) = &
       &sum(A_vecpot_vel_w(i_w,:)*Efield(1)%versor(:))*SPEED_OF_LIGHT
@@ -84,7 +84,7 @@ subroutine RT_X_two(en,k)
  do i_w = 1, X_rt%energy_steps
    freqs(i_w)=cmplx(Efield(1)%frequency+(i_w-1)*W_step+X_rt%energy_range(1),0._SP)
  enddo
- call Fourier_Transform(freqs,A_vecpot_vel_w,X_rt%energy_steps,A_vecpot_vel_t,NE_steps,RT_step,3)
+ !call Fourier_Transform(freqs,A_vecpot_vel_w,X_rt%energy_steps,A_vecpot_vel_t,NE_steps,RT_step,3)
  A_vecpot_vel_w(:,:)=A_vecpot_vel_w(:,:)*RT_step 
  forall(i_w=1:X_rt%energy_steps) F_p(i_w) = &
       &sum(A_vecpot_vel_w(i_w,:)*Efield(1)%versor(:))*SPEED_OF_LIGHT
@@ -109,7 +109,7 @@ subroutine RT_X_two(en,k)
  !
  outfreqs(1)=(0._SP,0._SP)                           ! Optical rectification
  outfreqs(2)=cmplx(Efield(1)%frequency*2._SP,0._SP)  ! SHG
- call Fourier_Transform(outfreqs,X_irrep,nfreqs,RT_P_t,NE_steps,RT_step,3)
+ !call Fourier_Transform(outfreqs,X_irrep,nfreqs,RT_P_t,NE_steps,RT_step,3)
  X_irrep(:,:)=X_irrep(:,:)*RT_step
  !
  X_irrep(1,:)=PI*X_irrep(1,:)/F_2plus

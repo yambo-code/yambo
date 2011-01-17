@@ -4,7 +4,7 @@ ELPH_objects = ELPH_databases.o ELPH_eliashberg_dos.o \
 #endif
 #if defined _YPP_RT
 RT_objects = RT_driver.o RT_databases.o RT_fix_symmetries.o RT_X_one.o \
-             RT_init_X_one.o RT_X_two.o Fourier_Transform.o RT_damp_it.o
+             RT_init_X_one.o RT_X_two.o RT_1D_Fourier_Transform.o RT_damp_it.o
 #endif
 #if defined _YPP_RAS
 RAS_objects = ras_ypp.o ras_generate_epsdb.o reels_ypp.o ras_loc_ypp.o ras_trans_ypp.o

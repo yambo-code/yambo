@@ -21,21 +21,21 @@ subroutine RT_initialize()
  use drivers,        ONLY:l_collisions_IO
  use SC,             ONLY:local_V
  use pars,           ONLY:SP,pi
- use units,          ONLY:SPEED_OF_LIGHT,FS2AUT,HARTREE
+ use units,          ONLY:SPEED_OF_LIGHT,FS2AUT,HARTREE,HA2FSm1,HARTREE
  use com,            ONLY:msg,warning,error
  use vec_operate,    ONLY:normalize_v
  use electrons,      ONLY:nel
- use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields,i_time, &
-&                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,    &
+ use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields, &
+&                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,NE_tot_time,    &
 &                         l_RT_no_diamagnetic,max_rt_steps_disk,l_NE_simulate_BSE,       &
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,         &
-&                         l_RT_induced_field,j_current_ext,Ext_fields_initial_itime,     &
+&                         l_RT_induced_field,     &
 &                         RT_diagonalization_steps,RT_is_dumped,QP_LifeTime,Phase_LifeTime
 #if defined _TWO_LEVELS
  use real_time,      ONLY:tau_offdiag,tau_diag,l_3levels
 #endif
  use D_lattice,      ONLY:DL_vol
- use fields,         ONLY:global_gauge,Efield,n_ext_fields
+ use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time
  use parser_m,       ONLY:parser
  implicit none
  !
@@ -44,7 +44,8 @@ subroutine RT_initialize()
  integer                  :: i1,rest
  !
  ! Logicals
- !----------
+ !==========
+ !
  call parser('NoDiamagnetic',l_RT_no_diamagnetic)
  call parser('InducedField' ,l_RT_induced_field)
  call parser('RTBSEOnly',l_NE_simulate_BSE)
@@ -60,14 +61,17 @@ subroutine RT_initialize()
  l_RT_needs_XC0=l_NE_simulate_IP.or.l_NE_simulate_RPA.or.l_NE_simulate_BSE.or.Thermal_steps>0
  !
  ! Check if Collisions are required
+ !==================================
  !
  if(.not.local_V.and..not.l_NE_simulate_IP.and..not.l_collisions_IO) &
 &  call error(" Real-time works only with collisions, turn them on 'yambo -e' !")
  !
- j_current_ext=(0._SP,0._SP)
- i_time=0
- !
  ! Set a number of steps compatible with the cache 
+ !=================================================
+ !
+ ! Use NE_tot_time if provide
+ !
+ if (NE_tot_time>0.) NE_steps=max(NE_steps,int(NE_tot_time/RT_step))
  !
  if(mod(Thermal_steps+NE_steps,max_rt_steps_disk)/=0) then
    rest=mod(Thermal_steps+NE_steps,max_rt_steps_disk)
@@ -79,6 +83,7 @@ subroutine RT_initialize()
  endif
  !
  ! QP and Phase Lifetimes
+ !========================
  !
  RT_is_dumped=any((/QP_LifeTime,Phase_LifeTime/)>1.E-8_SP)
 #if defined _TWO_LEVELS
@@ -86,22 +91,21 @@ subroutine RT_initialize()
 &  RT_is_dumped=.true.
 #endif
  !
- ! Earliest time when the external field is switched on
- !
- Ext_fields_initial_itime=1.E10
+ ! External fields checks
+ !========================
  !
  l_NE_with_fields=.false.
+ ef_i_time=0
  !
  do i1=1,n_ext_fields
    !      
    Efield(i1)%ef_name=trim(Efield(i1)%ef_name)      
    !
    if((Efield(i1)%ef_name/='none')) then 
-     ! 
-     if(Efield(i1)%intensity==0._SP) &
-&      call warning(" External field with zero intensity! ")
+     !
+     if (.not.field_is_ok( Efield(i1)) ) call error('Field '//trim(Efield(i1)%ef_name)//' not supported')
      !      
-     Ext_fields_initial_itime=int(min(Efield(i1)%t_initial,Ext_fields_initial_itime*RT_step)/RT_step)
+     ef_i_time(i1)=Efield(i1)%t_initial/RT_step
      !      
      l_NE_with_fields=.true.
      !
@@ -114,7 +118,10 @@ subroutine RT_initialize()
      call SC_check_symmetries(Efield(i1)%versor)
      !
      if(Efield(i1)%ef_name/='DELTA'.and.(Efield(i1)%frequency==0._SP.and.Efield(i1)%damping==0)) &
-&      call warning(" External field frequency and damping are zero! ")
+&      call warning(" External "//trim(Efield(i1)%ef_name)//" field has zero frequency and damping.")
+     ! 
+     if(Efield(i1)%intensity==0._SP) &
+&      call warning(" External "//trim(Efield(i1)%ef_name)//" field has zero intensity.")
      !
    endif
    !
@@ -125,16 +132,22 @@ subroutine RT_initialize()
    if (Thermal_steps==0) call warning('Skipping simulation. No Ext fields or thermalization provided')
  endif
  !
+ ! LOG
+ !=====
+ !
  call msg( 'r', '[RT] NE Steps                   :',NE_steps)
+ call msg( 'r', '[RT] NE time                [fs]:',NE_steps*RT_step/FS2AUT)
  call msg( 'r', '[RT] Thermalization steps       :',Thermal_steps)
  call msg( 'r', '[RT] Step length            [fs]:',RT_step/FS2AUT)
+ call msg( 'r', '[RT] Damping (Phase)    [fs/meV]:',(/Phase_LifeTime/FS2AUT,1000.*HARTREE/Phase_LifeTime/))
+ call msg( 'r', '[RT] Damping (QP)       [fs/meV]:',(/QP_LifeTime/FS2AUT,1000.*HARTREE/QP_LifeTime/))
  if(NE_steps>0) then
-   call msg('sr', '[RT] Response energy window        [eV]:',&
-&                  (/2.*pi/real(NE_steps-Ext_fields_initial_itime)*RT_step,pi/RT_step/)*HARTREE)
-   call msg('rsn','[RT] Electron-gas plasmon frequency[eV]:',sqrt(4._SP*pi*nel/DL_vol)*HARTREE)
+   call msg('rn','[RT] Simulation time        [fs]:',(/-real(Thermal_steps)*RT_step,RT_step*real(NE_steps)/)/FS2AUT)
+   call msg('r', '[RT] Response energy window        [eV]:',&
+&                  (/2.*pi/real(NE_steps-minval(ef_i_time))*RT_step,pi/RT_step/)*HARTREE)
+   call msg('rn','[RT] Electron-gas plasma frequency [eV]:',sqrt(4._SP*pi*nel/DL_vol)*HARTREE)
  endif
- call msg('rsn','[RT] Simulation time        [fs]:',(/-real(Thermal_steps)*RT_step,RT_step*real(NE_steps)/)/FS2AUT)
  !
- if(l_NE_with_fields) call msg('rsn','[RT] Gauge Type                 :',trim(global_gauge))
+ if(l_NE_with_fields) call msg('rn','[RT] Gauge                      :',trim(global_gauge))
  !
 end subroutine RT_initialize

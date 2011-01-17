@@ -20,39 +20,64 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !
-subroutine Fourier_Transform(freqs,fw,nw,ft,nt,dt,lda)
+subroutine RT_1D_Fourier_Transform(title,freqs,fw,nw,ft,nt,dt,T0,USE_FFT)
+ !
+ ! Here I calculate 
+ !
+ ! \tilde{FT}[ft] = \int_{T0}{\infty} ft(t) exp^(i w t) = exp^(i w T0) * FT[ft]
  !
  use pars,           ONLY:SP,DP,cI
  use timing,         ONLY:live_timing
  implicit none
  !
- integer,     intent(in)   :: nw,nt,lda
- real(SP),    intent(in)   :: dt
+ integer,     intent(in)   :: nw,nt
+ logical,     intent(in)   :: USE_FFT
+ real(SP),    intent(in)   :: dt,T0
  complex(SP), intent(in)   :: freqs(nw)
- complex(DP), intent(out)  :: fw(nw,lda)
- complex(DP), intent(in)   :: ft(nt,lda)
+ character(*),intent(in)   :: title
+ complex(DP), intent(in)   :: ft(nt)
+ complex(DP), intent(out)  :: fw(nw)
  !
  ! Work Space 
  !
- integer  :: i_w,i_t
- real(SP) :: Time_reached
- !
- call live_timing('FFT:',nw)
+ integer    :: i_w,i_t,fft_sign
+ integer(8) :: fftw_plan
+ real(SP)   :: Time_reached
  !
  fw=(0._DP,0._DP)
  !
- do i_w = 1, nw
+ ! Numerical FT
+ !
+ if (USE_FFT) then
    !
-   do i_t = 1, nt
-     Time_reached = i_t*dt       
-     fw(i_w,:) = fw(i_w,:)+ft(i_t,:)*exp(cI*freqs(i_w)*Time_reached)
+   fftw_plan= 0
+   fft_sign =-1
+   !
+#if defined _FFTW
+    call fft_1d(ft,nt,fft_sign,fftw_plan)
+#else
+    call fft_1d(ft,nt,fft_sign)
+#endif
+   !
+   fw(:)=conjg(ft(:nw))
+   !
+ else
+   !
+   call live_timing('FT'//title//':',nw)
+   do i_w = 1, nw
+     do i_t = 1, nt
+       Time_reached = i_t*dt       
+       fw(i_w) = fw(i_w)+ft(i_t)*exp(cI*freqs(i_w)*Time_reached)
+     enddo
+     call live_timing(steps=1)
    enddo
+   call live_timing()
    !
-   call live_timing(steps=1)
-   !
+ endif
+ !
+ do i_w = 1, nw
+   fw(i_w)=fw(i_w)*dt*exp(cI*freqs(i_w)*T0) 
  enddo
  !
- call live_timing()
- !
-end subroutine Fourier_Transform
+end subroutine RT_1D_Fourier_Transform
 

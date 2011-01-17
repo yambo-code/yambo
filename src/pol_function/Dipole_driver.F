@@ -178,6 +178,33 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
  end if
  !
+#if defined _TWO_LEVELS
+ !
+ !DIP_iR=(0.,0.)
+ !
+ ! < n | iR | m > = < n | P | m > / (E_n-E_n)
+ !
+ !
+ !P_12= i
+ !
+ !DIP_iR(1-3,n,m,k,s) =  < m | iR | n >
+ !
+ do ik = 1,Xk%nibz
+   do iv = 1, X%ib(2)
+     do ic = iv+1,X%ib(2)
+       !
+       DIP_P(:,ic,iv,ik,1)=cI
+       DIP_iR(:,ic,iv,ik,1)=  DIP_P(:,ic,iv,ik,1)/(Xen%E(iv,ik,1)-Xen%E(ic,ik,1))
+       !
+       if (abs(Xen%E(iv,ik,1)-Xen%E(ic,ik,1))<=1.E-5_SP)  DIP_iR(:,ic,iv,ik,1)=0.
+       !
+       DIP_P(:,iv,ic,ik,1) =  conjg( DIP_P(:,ic,iv,ik,1) )
+       DIP_iR(:,iv,ic,ik,1)= -conjg( DIP_IR(:,ic,iv,ik,1) )
+     enddo
+   enddo
+ enddo
+#endif
+ !
 #if defined _RT  
  if (l_real_time) return
 #endif

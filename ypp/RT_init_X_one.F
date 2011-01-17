@@ -21,14 +21,13 @@
 !
 subroutine RT_init_X_one()
  !
- use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,RT_J_t,i_t_start,i_t_end,A_vecpot_vel_t,&
+ use YPP,            ONLY:RT_P_t,X_rt,RT_J_t,i_t_start,i_t_end,&
 &                         W_RT_induced_step,RED_steps,ref_efield
  use com,            ONLY:warning
  use pars,           ONLY:pi,SP
  use units,          ONLY:FS2AUT,HARTREE
  use stderr,         ONLY:real2ch
  use real_time,      ONLY:NE_steps,RT_step,RT_ind_J,RT_output,RT_P,RT_output
- use parser_m,       ONLY:parser
  use fields,         ONLY:Efield
  implicit none
  !
@@ -37,7 +36,7 @@ subroutine RT_init_X_one()
  integer  :: i_t
  logical  :: l_no_damping
  !
- call parser('FrNoDamp',l_no_damping)
+ l_no_damping= trim(X_rt%damp) == "NONE"
  !
  call section("=",'Current and Polarization')
  !============================================
@@ -82,7 +81,6 @@ subroutine RT_init_X_one()
    !
    call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_J_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
    call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_P_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
-   call RT_damp_it(X_rt%damp,X_rt%damp_factor,A_vecpot_vel_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
    !
  endif
  !

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
+subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  !
  ! This subroutine prepare I1(t_1,t_2) and I2(t_1,t_2) give a G^<(t_1,t_1) 
  ! Actualy it works only for the diagonal I1(t_1,t_1), I2(t_1,t_1)
@@ -32,9 +32,9 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
  use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_with_fields,QP_LifeTime,H_t,   &
-&                         Thermal_steps,Thermal_time,RT_step,XC0_and_HARTREE0,    & 
-&                         G_lesser_reference,l_RT_needs_XC0,i_time,Phase_LifeTime,&
-&                         RT_is_dumped,l_NE_simulate_IP,Hfrozen,XCfrozen
+&                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,    & 
+&                         G_lesser_reference,l_RT_needs_XC0,Phase_LifeTime,&
+&                         RT_is_dumped,l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics
 #if defined _TWO_LEVELS
  use real_time,      ONLY:tau_diag,tau_offdiag,l_3levels
 #endif
@@ -49,22 +49,25 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
  !
  implicit none
  !
- real(SP),      intent(in)    :: RT_time
  type(levels),  intent(in)    :: Xen
  type(bz_samp), intent(in)    :: k,q
+ real(SP),      intent(in)    :: Time
  complex(SP),   intent(in)    :: G_input(SC_bands,SC_bands,QP_nk)
  type(gauge_field), intent(in):: A_input
  !
  ! Work Space
  !
- integer          :: i1,i2,ik,iv
+ integer          :: i1,i2,ik
  type(pp_indexes) :: px
+ !DEBUG>
+ !complex(SP)      :: H_ext(SC_bands,SC_bands,1)
+ !DEBUG<
  !
- if(.not.Hfrozen.or..not.XCfrozen.or.i_time<0) call el_density(G_input,k,rho_n,.false.)
+ if(.not.Hfrozen.or..not.XCfrozen.or..not.NE_dynamics) call el_density(G_input,k,rho_n,.false.)
  !
- if(.not.Hfrozen.or.i_time<0) call V_Hartree(rho_n,V_hartree_sc)
+ if(.not.Hfrozen.or..not.NE_dynamics) call V_Hartree(rho_n,V_hartree_sc)
  !
- if(.not.XCfrozen.or.i_time<0) then
+ if(.not.XCfrozen.or..not.NE_dynamics) then
    !
    if(l_sc_contains_lda.and.SC_xc_functional/=0) then
      !
@@ -82,8 +85,6 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
  I1_lesser=(0._SP,0._SP)
  I2_lesser=(0._SP,0._SP)
  if(allocated(H_t)) H_t =  (0._SP,0._SP) 
- !
- if(l_NE_with_fields) call RT_Ext_Current(RT_time)
  !
  call pp_indexes_reset(px)
  call par_indexes(px,(/QP_nk/))
@@ -103,12 +104,12 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
    ! (for all the parts of self-energy different from V_h + V_xc)
    ! I have to subtruct XC0_and_HARTREE0 that contains <mk|Vxc(rho0) |nk>
    !
-   if(Thermal_steps/=0.and.Thermal_time/=0.0) then 
+   if(Thermal_steps/=0.and.SwitchOnTime/=0.0) then 
      !      
      call V_by_V_plus_V(SC_bands,(1._SP,0._SP),-XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1),H_nl_sc(1:SC_bands,1:SC_bands,1))
      !
-     H_nl_sc=H_nl_sc*(1._SP+tanh((RT_time+(RT_step*real(Thermal_steps))/2._SP) &
-    &        /(RT_step*real(Thermal_steps))/Thermal_time))/2._SP
+     H_nl_sc=H_nl_sc*(1._SP+tanh((Time+(RT_step*real(Thermal_steps))/2._SP)/ &
+&            (RT_step*real(Thermal_steps))/SwitchOnTime))/2._SP
      !
    endif
    !
@@ -123,7 +124,12 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
    !
    ! And the gauge field
    !
-   if(l_NE_with_fields.and.i_time>0) call RT_apply_field(ik,H_nl_sc,A_input)
+   if(l_NE_with_fields.and.NE_dynamics) call RT_apply_field(ik,H_nl_sc,A_input)
+   !
+   !DEBUG>
+   !H_ext=(0._SP,0._SP)
+   !if(l_NE_with_fields.and.NE_dynamics) call RT_apply_field(ik,H_ext,A_input)
+   !DEBUG<
    !
    if(allocated(H_t))  H_t(1:SC_bands,1:SC_bands,ik,1)=H_nl_sc(1:SC_bands,1:SC_bands,1)
    !
@@ -131,9 +137,20 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,RT_time)
    ! they contain also the external field
    !
    call M_by_M('n','n',SC_bands,H_nl_sc(1:SC_bands,1:SC_bands,1), & 
-        &      G_input(1:SC_bands,1:SC_bands,ik),I1_lesser(1:SC_bands,1:SC_bands,ik))
+&              G_input(1:SC_bands,1:SC_bands,ik),I1_lesser(1:SC_bands,1:SC_bands,ik))
    call M_by_M('n','n',SC_bands,G_input(1:SC_bands,1:SC_bands,ik),&
-        &      H_nl_sc(1:SC_bands,1:SC_bands,1),I2_lesser(1:SC_bands,1:SC_bands,ik))
+&              H_nl_sc(1:SC_bands,1:SC_bands,1),I2_lesser(1:SC_bands,1:SC_bands,ik))
+   !
+   !DEBUG>
+   !do i1=1,SC_bands
+   !  do i2=i1+1,SC_bands
+   !    I2_lesser(i1,i2,ik)=I2_lesser(i1,i2,ik)+G_input(i1,i1,ik)*H_ext(i1,i2,1)
+   !    I2_lesser(i2,i1,ik)=I2_lesser(i2,i1,ik)+G_input(i2,i2,ik)*H_ext(i2,i1,1)
+   !    I1_lesser(i1,i2,ik)=I1_lesser(i1,i2,ik)+H_ext(i1,i2,1)*G_input(i2,i2,ik)
+   !    I1_lesser(i2,i1,ik)=I1_lesser(i2,i1,ik)+H_ext(i2,i1,1)*G_input(i1,i1,ik)
+   !  enddo 
+   !enddo
+   !DEBUG<
    !
    ! Fictitious lifetime equivalent to the broadening
    ! in linear optics

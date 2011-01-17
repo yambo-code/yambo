@@ -89,8 +89,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 #if defined _RT
  use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Integrator_name,            &
 &                     RT_diagonalization_steps, l_NE_simulate_RPA,  &
-&                     Thermal_time,max_rt_steps_disk,l_RT_induced_field,&
-&                     l_RT_diagonalize,Ext_fields_initial_itime,RT_is_dumped,QP_LifeTime,Phase_LifeTime
+&                     SwitchOnTime,max_rt_steps_disk,l_RT_induced_field,&
+&                     l_RT_diagonalize,RT_is_dumped,QP_LifeTime,Phase_LifeTime
  use fields,     ONLY:Efield,n_ext_fields
 #endif
 #if defined _TWO_LEVELS
@@ -462,8 +462,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  RT_step=0.002*FS2AUT
  NE_steps=1000
  Thermal_steps=4000
- Ext_fields_initial_itime=0
- Thermal_time = 1./8.
+ SwitchOnTime = 1./8.
  Integrator_name='RK2'
  QP_LifeTime = 0.0*FS2AUT
  Phase_LifeTime = 0.0*FS2AUT

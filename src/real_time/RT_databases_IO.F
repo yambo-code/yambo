@@ -22,7 +22,7 @@
 subroutine RT_databases_IO(Xen,it)
  !
  use QP_m,           ONLY:QP_nk
- use real_time,      ONLY:ID,i_time,l_NE_with_fields,max_rt_steps_disk
+ use real_time,      ONLY:ID,NE_dynamics,l_NE_with_fields,max_rt_steps_disk,NE_i_time
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL
  use electrons,      ONLY:levels
  !
@@ -39,7 +39,7 @@ subroutine RT_databases_IO(Xen,it)
  io_G=0
  !
  if (it==1.or.it==max_rt_steps_disk) call io_control(ACTION=OP_WR,COM=REP, SEC=(/1/),ID=ID(5))
- if (it> 1) call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(5))
+ if (it> 1)                          call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(5))
  io_G=io_SC_components('G' ,Xen,ID(5))
  !
  do ik = 1, QP_nk 
@@ -47,7 +47,7 @@ subroutine RT_databases_IO(Xen,it)
    io_G=io_SC_components('G',Xen,ID(5))
  enddo
  !
- if(l_NE_with_fields.and.i_time>0) then
+ if(l_NE_with_fields.and.NE_dynamics) then
    !
    ! Remember that negative time = adiabatic switching
    ! no need to store current
@@ -56,13 +56,13 @@ subroutine RT_databases_IO(Xen,it)
    !
    ! Write current and polarization on disk
    !
-   if(i_time==1) then 
+   if(NE_i_time==1) then 
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
      io_J=io_SC_components('J' ,Xen,ID(4))
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/2/),ID=ID(4)) 
      io_J=io_SC_components('J' ,Xen,ID(4))
    else
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/i_time+1/),ID=ID(4)) 
+     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(4)) 
      io_J=io_SC_components('J' ,Xen,ID(4))
    endif
    !

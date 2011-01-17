@@ -19,9 +19,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k)
+subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,TRANS)
  !
- use pars,       ONLY:SP,DP,cI
+ use pars,       ONLY:SP,cI
  use SC,         ONLY:SC_bands
  use R_lattice,  ONLY:bz_samp 
  use QP_m,       ONLY:QP_nk,QP_n_states
@@ -38,10 +38,11 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k)
  complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands,SC_bands,QP_nk,n_sp_pol)
  complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
  real(SP),        optional, intent(in) :: O_REAL(fft_size,n_sp_pol)
+ logical,         optional, intent(in) :: TRANS
  !
  ! Work Space
  !
- integer     :: i1,ik
+ integer     :: i1,i2,ik
  complex(SP) :: Hk(SC_bands,SC_bands,n_sp_pol)
  !
  VALUE=(0._SP,0._SP)
@@ -64,7 +65,10 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k)
    !
    Hk=(0._SP,0._SP)
    !
-   if(present(O_MATRIX)) Hk(1:SC_bands,1:SC_bands,1:n_sp_pol)=O_MATRIX(1:SC_bands,1:SC_bands,ik,1:n_sp_pol)
+   if(present(O_MATRIX)) then
+     forall(i1=1:SC_bands,i2=1:SC_bands) Hk(i1,i2,1:n_sp_pol)=O_MATRIX(i1,i2,ik,1:n_sp_pol)
+     if (present(TRANS)) forall(i1=1:SC_bands,i2=1:SC_bands) Hk(i1,i2,1:n_sp_pol)=O_MATRIX(i2,i1,ik,1:n_sp_pol)
+   endif
    if(present(O_QP))     call V_qp_basis_to_H(ik,O_QP,Hk)
    if(present(O_REAL))   call V_real_space_to_H(ik,O_REAL,Hk,wf)
    !

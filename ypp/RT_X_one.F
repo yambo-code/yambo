@@ -25,18 +25,15 @@
 !
 subroutine RT_X_one(en,k)
  !
- use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,RT_J_t,A_vecpot_vel_t,W_RT_induced_step, &
+ use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,W_RT_induced_step, &
 &                         i_t_start,i_t_end,RED_steps
- use pars,           ONLY:SP,DP,pi,cI
- use units,          ONLY:FS2AUT,HARTREE,SPEED_OF_LIGHT 
+ use pars,           ONLY:SP,DP,pi,schlen,zero_dfl
+ use units,          ONLY:HARTREE,SPEED_OF_LIGHT
  use electrons,      ONLY:levels
- use com,            ONLY:warning
- use stderr,         ONLY:real2ch
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:bz_samp
- use timing,         ONLY:live_timing
- use real_time,      ONLY:RT_step,RT_ind_J,RT_output,RT_P,RT_output
- use fields,         ONLY:Efield,A_vecpot,global_gauge 
+ use real_time,      ONLY:RT_step,RT_output,RT_P,RT_output,NE_steps
+ use fields,         ONLY:Efield,small_a,A_vecpot
  implicit none
  !
  type(levels)  :: en
@@ -44,15 +41,12 @@ subroutine RT_X_one(en,k)
  !
  ! Work Space
  !
- integer  :: i_t,i_w,i_c
- real(SP) :: W_step,Time_reached,W_reached
+ integer  :: i_t,i_w,i_c,iE_err
+ character(9) :: FT_title
+ logical      :: E_from_FT
+ real(SP)     :: W_step,W_reached
  complex(SP), allocatable :: EELS(:),EPS(:),freqs(:)
- complex(DP), allocatable :: X_irrep(:,:),A_vecpot_vel_w(:,:)
- !
- ! FFT
- !
- integer     :: fft_sign
- integer(8)  :: fftw_plan
+ complex(DP), allocatable :: X_irrep(:,:),E_w(:),E_t(:)
  !
  call section("=",'Optics')
  !=========================
@@ -65,30 +59,28 @@ subroutine RT_X_one(en,k)
    ! I want to print only the positive frequencies
    ! i_w > energy_steps/2 correspond to the negative ones
    !
-   X_rt%energy_steps   =RED_steps/2
-   X_rt%energy_range(1)=0.
-   X_rt%energy_range(2)=W_RT_induced_step*RED_steps/2.
+   X_rt%energy_steps=RED_steps/2
+   X_rt%energy_range=(/0.,W_RT_induced_step*RED_steps/2./)
    !
-   allocate(EELS(RED_steps),EPS(RED_steps),X_irrep(RED_steps,3))  
-   allocate(A_vecpot_vel_w(RED_steps,3))
+   allocate(EELS(RED_steps),EPS(RED_steps),X_irrep(RED_steps,3),E_w(RED_steps))
    !
  else
    !
    allocate(EELS(X_rt%energy_steps),EPS(X_rt%energy_steps),X_irrep(X_rt%energy_steps,3)) 
-   allocate(A_vecpot_vel_w(X_rt%energy_steps,3))
+   allocate(E_w(X_rt%energy_steps))
    !
  endif
  !
  call mem_est("EELS EPS X_irrep",(/size(EELS),size(EPS),size(X_irrep)/),(/2*SP,2*SP,2*DP/))
- call mem_est("A_vecpot_vel_w",(/size(A_vecpot_vel_w)/),(/2*DP/))
+ call mem_est("E_w",(/size(E_w)/),(/2*DP/))
  !
  EELS   =(0._DP,0._DP)
  EPS    =(0._DP,0._DP)
  X_irrep=(0._DP,0._DP)
- A_vecpot_vel_w=(0._DP,0._DP)
+ E_w    =(0._DP,0._DP)
  !
- ! FFT 
- !=====
+ ! Fourier Transform 
+ !====================
  !
  W_step=(X_rt%energy_range(2) - X_rt%energy_range(1))/X_rt%energy_steps
  !
@@ -99,61 +91,61 @@ subroutine RT_X_one(en,k)
    freqs(i_w)=cmplx((i_w-1)*W_step+X_rt%energy_range(1),0._SP)
  enddo
  !
- if(Use_FFT) then
+ ! Electric Field
+ !
+ iE_err=-1
+ do i_w = 1, X_rt%energy_steps
+   E_w(i_w)=Efield(1)%amplitude*small_a(real(freqs(i_w)),Efield(1),iE_err)
+   if (iE_err==-2) exit
+ enddo
+ E_from_FT=iE_err==-2
+ if (E_from_FT) then
    !
-   fftw_plan=0
-   fft_sign =-1
-   !
-   do i_c=1,3
-     !
-     X_irrep(:,i_c)        = RT_P_t(i_t_start:i_t_end,i_c)
-     A_vecpot_vel_w(:,i_c) = A_vecpot_vel_t(i_t_start:i_t_end,i_c)
-     !
-#if defined _FFTW
-    call fft_1d(X_irrep(:,i_c),RED_steps,fft_sign,fftw_plan)
-    call fft_1d(A_vecpot_vel_w(:,i_c),RED_steps,fft_sign,fftw_plan)
-#else
-    call fft_1d(X_irrep(:,i_c),RED_steps,fft_sign)
-    call fft_1d(A_vecpot_vel_w(:,i_c),RED_steps,fft_sign)
-#endif
-     !
+   allocate(E_t(NE_steps))
+   do i_t=1,NE_steps
+     E_t(i_t)=Efield(1)%amplitude*small_a((i_t-1)*RT_step,Efield(1),1)
    enddo
-   !
-   X_irrep(:,:)=conjg(X_irrep(:,:))
-   A_vecpot_vel_w(:,:)=conjg(A_vecpot_vel_w(:,:))
-   !
- else
-   ! 
-   call Fourier_Transform(freqs,X_irrep,X_rt%energy_steps,RT_P_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
-   call Fourier_Transform(freqs,A_vecpot_vel_w,X_rt%energy_steps,A_vecpot_vel_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
+   call RT_1D_Fourier_Transform(' (E field)',freqs,E_w(:),X_rt%energy_steps,&
+&                               E_t(i_t_start:i_t_end),RED_steps,RT_step,&
+&                               i_t_start*RT_step,USE_FFT)
+   deallocate(E_t)
    !
  endif
  !
- ! Due to the definition of FFT 
- !
- X_irrep(:,:)       =X_irrep(:,:)*RT_step
- A_vecpot_vel_w(:,:)=A_vecpot_vel_w(:,:)*RT_step
- !
- select case ( trim(Efield(1)%ef_name))
+ do i_c=1,3
    !
-   case('DELTA')
-       X_irrep(:,:)=X_irrep(:,:)/Efield(1)%amplitude
-   case default
-     do i_w=1,X_rt%energy_steps
-       X_irrep(i_w,:)=-X_irrep(i_w,:)/(sum(A_vecpot_vel_w(i_w,:)*Efield(1)%versor(:))/SPEED_OF_LIGHT)
-     enddo
-   !  
- end select
+   if (i_c==1) FT_title=' (X axis)'
+   if (i_c==2) FT_title=' (Y axis)'
+   if (i_c==3) FT_title=' (Z axis)'
+   !
+   ! Polarization
+   !
+   call RT_1D_Fourier_Transform(FT_title,freqs,X_irrep(:,i_c),X_rt%energy_steps,&
+&                               RT_P_t(i_t_start:i_t_end,i_c),RED_steps,RT_step,&
+&                               i_t_start*RT_step,USE_FFT)
+   !
+ enddo
  !
- ! P(w)=\tilde(X(w))*E_tot(w)=X(w)*E_ext(w) 
+ ! P(w,ic)=E_ext(w,ic) \tilde X(w,ic)=|E_ext(w)| E_versor(ic) \tilde X(w,ic)
  !
- ! => EELS=1+4pi*P(w)/E_ext(w)
- ! => EPS=1./EELS
+ ! Now I want to calculate
+ !
+ ! EPS(w) = 1-4 pi dot_product ( \tilde X(w,:) , E_versor(:) ) = 
+ !          1-4 pi \sum_ic \tilde P(w,ic)/|E_ext(w)| 
+ !
+ ! to calculate EELS I use
+ !
+ ! EPS=1./EELS
+ !
+ EPS=1._DP
  !
  call RT_output("open eps eels")
  do i_w = 1, X_rt%energy_steps
    !
-   EPS(i_w) =1._DP-4._SP*pi*sum(X_irrep(i_w,:)*Efield(1)%versor(:))
+   do i_c=1,3
+     if ( abs(Efield(1)%versor(i_c))>zero_dfl ) EPS(i_w) = EPS(i_w)-4._SP*pi*X_irrep(i_w,i_c)/E_w(i_w)
+   enddo
+   !
    EELS(i_w)=1._DP/EPS(i_w)
    !
    W_reached = real(freqs(i_w))
@@ -163,7 +155,7 @@ subroutine RT_X_one(en,k)
  enddo
  call RT_output("close eps eel")
  !
- deallocate(EELS,EPS,X_irrep,A_vecpot_vel_w)
- call mem_est("EELS EPS X_irrep A_vecpot_vel_w")
+ deallocate(EELS,EPS,X_irrep,E_w)
+ call mem_est("EELS EPS X_irrep E_w")
  !
 end subroutine

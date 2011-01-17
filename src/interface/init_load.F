@@ -55,7 +55,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, QP_LifeTime, Phase_LifeTime, &
-&                        RT_diagonalization_steps,Thermal_time,max_rt_steps_disk
+&                        RT_diagonalization_steps,SwitchOnTime,max_rt_steps_disk,NE_tot_time
  use fields,        ONLY:Efield
 #endif
 #if defined _TWO_LEVELS
@@ -269,12 +269,13 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _RT
  call it(defs,'RTstep',    '[RT] Real Time step length',RT_step,unit=Time_unit)
  call it(defs,'NEsteps',   '[RT] Non-equilibrium Time steps',NE_steps)
+ call it(defs,'NETime',    '[RT] Non-equilibrium  max Time (alternative to NEsteps)',NE_tot_time,unit=Time_unit)
  call it(defs,'ThermSteps','[RT Therm] Thermal Steps',Thermal_steps,Verb_level=V_real_time)
  !
  ! Other parameters of RT
  !
  call it(defs,'Integrator',   '[RT] Integrator (RK2 | EULER | EXACT | RK2EXACT) ',Integrator_name)
- call it(defs,'SwitchOnTime', '[RT Therm] Adiabatic switch on time ',Thermal_time,verb_level=V_real_time,unit=Time_unit)
+ call it(defs,'SwitchOnTime', '[RT Therm] Adiabatic switch on time ',SwitchOnTime,verb_level=V_real_time,unit=Time_unit)
  call it(defs,'QPLifeTime',   '[RT] QP Relaxation Time',QP_LifeTime,verb_level=V_real_time,unit=Time_unit)
  call it(defs,'PhLifeTime',   '[RT] Phase Relaxation Time',Phase_LifeTime,verb_level=V_real_time,unit=Time_unit)
  call it(defs,    'RTDiagoSteps',  '[RT] Digonalize the Hamiltonian',RT_diagonalization_steps,verb_level=V_real_time)

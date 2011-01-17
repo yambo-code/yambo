@@ -19,39 +19,23 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_init_vecpot()
- !
- ! This subroutine initialize the t=0 external vector potential 
- ! used as starting point for the EOM for A(t)
+subroutine RT_init_two_levels()
  !
  use pars,           ONLY:SP,cI
- use com,            ONLY:error
- use units,          ONLY:SPEED_OF_LIGHT
- use fields,         ONLY:ext_field,A_vecpot,n_ext_fields,Efield
-#if defined _TWO_LEVELS
+ use fields,         ONLY:Efield
  use pars,           ONLY:pi,cI
- use units,          ONLY:HARTREE,HA2FSm1,FS2AUT
+ use units,          ONLY:HARTREE,FS2AUT
  use com,            ONLY:msg
  use X_m,            ONLY:DIP_iR,DIP_P
  use real_time,      ONLY:W_pump,Wo,Rabi_freq_pump,P,delta,Rabi_nn,D,Rabi_freq_probe
- use real_time,      ONLY:l_3levels,dip,W1,tau_offdiag
-#endif
+ use real_time,      ONLY:l_3levels,dip,W1
  !
  implicit none
  ! 
  ! Work Space
  !
- integer     :: i1
- complex(SP) :: E_times_c(3)
-#if defined _TWO_LEVELS
  integer     :: i_pump,i_probe
  complex(SP) :: mu(2)
-#endif
- !
- A_vecpot%vecpot    =(0._SP,0._SP)
- A_vecpot%vecpot_vel=(0._SP,0._SP)
- !
-#if defined _TWO_LEVELS
  !
  i_probe=2
  i_pump =1
@@ -96,14 +80,8 @@ subroutine RT_init_vecpot()
    !
    ! Two level case
    !
-   DIP_iR=(0.,0.)
-   DIP_P =(0.,0.)
-   DIP_P(1,1,2,1,1)= cI
-   DIP_P(1,2,1,1,1)=-cI
-   DIP_iR(1,2,1,1,1)= DIP_P(1,2,1,1,1) /(+Wo)
-   DIP_iR(1,1,2,1,1)= DIP_P(1,1,2,1,1) /(-Wo)
-   P        =  DIP_P(1,1,2,1,1)
-   D        =  cI*DIP_iR(1,1,2,1,1)
+   P        =  DIP_P(1,2,1,1,1)
+   D        =  cI*DIP_iR(1,2,1,1,1)
    !
    select case(trim(Efield(i_pump)%ef_name))
      case('ANTIRES')
@@ -146,36 +124,4 @@ subroutine RT_init_vecpot()
    !
  endif
  !
-#endif
- !
- do i1=1,n_ext_fields
-   ! 
-   if(Efield(i1)%ef_name=="none") cycle
-   !
-   E_times_c=Efield(i1)%amplitude*Efield(i1)%versor(:)*SPEED_OF_LIGHT
-   !
-   ! Formally speaking:
-   !
-   !   A'(t=0) = -c E(t=0)
-   !   A(t=0)  = -c [\int E(t)]|
-   !                           |t=0
-   !
-   select case(trim(Efield(i1)%ef_name))
-     case('SIN')
-       A_vecpot%vecpot(:)    =A_vecpot%vecpot(:)    +E_times_c(:)/( Efield(i1)%frequency )
-     case('ANTIRES')
-       A_vecpot%vecpot_vel(:)=A_vecpot%vecpot_vel(:)-E_times_c(:)
-       A_vecpot%vecpot(:)    =A_vecpot%vecpot(:)    -E_times_c(:)/( cI* Efield(i1)%frequency )
-     case('RES')
-       A_vecpot%vecpot_vel(:)=A_vecpot%vecpot_vel(:)-E_times_c(:)
-       A_vecpot%vecpot(:)    =A_vecpot%vecpot(:)    +E_times_c(:)/( cI* Efield(i1)%frequency )
-     case('DELTA')
-     case('GAUSS')
-     case('QSSIN')
-     case default
-       call error(" External Field "//trim(Efield(i1)%ef_name)//" not implemented ") 
-   end select
-   !
- enddo
- !
-end subroutine RT_init_vecpot
+end subroutine RT_init_two_levels

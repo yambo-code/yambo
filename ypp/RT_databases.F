@@ -21,74 +21,60 @@
 !
 subroutine RT_databases(en)
  !
- use YPP,            ONLY:RT_J_t,current_ext_t,A_vecpot_vel_t,RT_P_t
+ use YPP,            ONLY:RT_J_t,RT_P_t
  use units,          ONLY:SPEED_OF_LIGHT
  use pars,           ONLY:DP,SP,pi
  use electrons,      ONLY:levels
  use com,            ONLY:warning
  use memory_m,       ONLY:mem_est
  use timing,         ONLY:live_timing
- use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP
- use real_time,      ONLY:NE_steps,i_time,current_cache,RT_ind_J,j_current_ext,max_rt_steps_disk,&
+ use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG
+ use real_time,      ONLY:NE_steps,NE_i_time,current_cache,RT_ind_J,max_rt_steps_disk,&
 &                         current_cache_size,RT_P
- use fields,         ONLY:A_vecpot,Efield,n_ext_fields
+ use fields,         ONLY:Efield,n_ext_fields
  implicit none
  !
  type(levels)  :: en
  !
  ! Work Space
  !
- integer            :: io_J,io_G,ID(2),i_f
+ integer            :: io_J,ID,i_f
  integer, external  :: io_SC_components
  !
- call section("+",'RT Databases')
- !===============================
+ call section("+",'Current and Polarization Database')
+ !====================================================
  !
- ! Check for saved current/G_lesser and vector potential
- !-----------------
+ ! Check for saved current and polarization database
+ !---------------------------------------------------
  !
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID(1)) ! Current response
- io_J=io_SC_components('J' ,en,ID(1))
- !
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID(2)) 
- io_G=io_SC_components('G' ,en,ID(2))
- !
- if(io_J/=0) then
-   call warning(" Error while reading J database")
-   return
- else if(io_G/=0) then
-   call warning(" Error while reading G lesser database")
+ call io_control(ACTION=OP_RD_CL,COM=LOG,MODE=DUMP,SEC=(/1/),ID=ID)
+ io_J=io_SC_components('J' ,en,ID)
+ if( io_J/=0 ) then
+   call warning(" Error while reading databases")
    return
  endif
- !
- if(any((/io_G,io_J/)/=0)) return
  !
  ! I/O of Current and Vector Potential
  !=====================================
  !
- allocate(RT_J_t(NE_steps,3),current_ext_t(NE_steps,3),RT_P_t(NE_steps,3))
- allocate(A_vecpot_vel_t(NE_steps,3),current_cache(current_cache_size,max_rt_steps_disk))
+ allocate(RT_J_t(NE_steps,3),RT_P_t(NE_steps,3))
+ allocate(current_cache(current_cache_size,max_rt_steps_disk))
  call mem_est("RT_P_t",(/size(RT_J_t)/),(/2*SP/))
  call mem_est("RT_J_t",(/size(RT_J_t)/),(/2*SP/))
- call mem_est("Current_ext_t",(/size(current_ext_t)/),(/2*SP/))
- call mem_est("A_vecpot_vel_t",(/size(A_vecpot_vel_t)/),(/2*DP/))
  call mem_est("Current_Cache",(/size(current_cache)/),(/SP/))
  !
  RT_J_t        =(0._DP,0._DP)
  RT_P_t        =(0._DP,0._DP)
- current_ext_t =(0._SP,0._SP)
- A_vecpot_vel_t=(0._DP,0._DP)
  !
  call live_timing('I/O:',NE_steps)
- do i_time=1,NE_steps
+ !
+ do NE_i_time=1,NE_steps
    !      
-   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/i_time+1/),ID=ID(1)) 
-   io_J=io_SC_components('J' ,en,ID(1))
+   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/NE_i_time+1/),ID=ID) 
+   io_J=io_SC_components('J' ,en,ID)
    !
-   RT_J_t(i_time,:)        = RT_ind_J(:)
-   RT_P_t(i_time,:)        = RT_P(:)
-   current_ext_t(i_time,:) = j_current_ext(:)
-   A_vecpot_vel_t(i_time,:)= A_vecpot%vecpot_vel(:)
+   RT_J_t(NE_i_time,:) = RT_ind_J(:)
+   RT_P_t(NE_i_time,:) = RT_P(:)
    !
    call live_timing(steps=1)
    !

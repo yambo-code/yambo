@@ -41,6 +41,8 @@ subroutine RT_damp_it(damp_type,damp_factor,ft,nt,dt,lda)
      forall(i_t=1:nt) damp_function(i_t) = exp(-abs((i_t-1)*dt)*damp_factor)
    case("GAUSSIAN") 
      forall(i_t=1:nt) damp_function(i_t) = exp(-((i_t-1)*dt)**2*damp_factor**2)
+   case("NONE") 
+     forall(i_t=1:nt) damp_function(i_t) = 1._SP
    case default
      call warning(" Unknown damping! ")
      return

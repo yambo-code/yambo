@@ -1,15 +1,14 @@
 objs = 
+TWO_objs = 
+#if defined _TWO_LEVELS
+TWO_objs = RT_init_two_levels.o RT_two_levels.o RT_three_levels.o
+#endif
 #if defined _RT
 objs = RT_initialize.o RT_start_and_restart.o RT_update_G_reference.o \
        RT_driver.o RT_apply_field.o RT_Collision.o RT_Integrator.o \
-       RT_Energy.o RT_qp_analyze.o RT_output.o RT_propagate_vecpot.o \
+       RT_Energy.o RT_qp_analyze.o RT_output.o RT_propagate_fields.o \
        RT_current_AND_polarization.o RT_update_dipoles.o \
-       RT_average_operator.o RT_databases_IO.o RT_Ext_Current.o RT_init_vecpot.o
-#endif
-#if defined _TWO_LEVELS
-objs = RT_initialize.o RT_start_and_restart.o RT_update_G_reference.o RT_update_dipoles.o \
-       RT_driver.o RT_apply_field.o RT_Collision.o RT_Integrator.o RT_three_levels.o \
-       RT_Energy.o RT_current_AND_polarization.o RT_qp_analyze.o RT_output.o RT_propagate_vecpot.o \
-       RT_two_levels.o RT_average_operator.o RT_databases_IO.o RT_Ext_Current.o RT_init_vecpot.o
+       $(TWO_objs) \
+       RT_average_operator.o RT_databases_IO.o RT_Ext_fields.o 
 #endif
 

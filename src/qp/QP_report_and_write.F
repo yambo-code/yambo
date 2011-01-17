@@ -22,7 +22,7 @@
 subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !
  use drivers,       ONLY:l_ph_corr,l_el_corr,l_life
- use units,         ONLY:HARTREE,HA2FSm1
+ use units,         ONLY:HARTREE,HA2FSm1,FS2AUT
  use pars,          ONLY:SP,schlen,pi,lchlen
  use com,           ONLY:msg
  use stderr,        ONLY:intc
@@ -188,7 +188,19 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
      shadow(:2)=(/qp%E_bare(iqp)*HARTREE,real(qp%Z(iqp))/)
      shadow(3)=aimag(qp%E(iqp))*HARTREE/1.E-3
      shadow(4)=0.
+     !
+     !DEBUG>
+     !
+     !  tau[au] = 1/(2 pi Sigma_2[au])
+     !  tau[au] = FS2AUT  * tau[fs]
+     !
+     !  tau[fs] = 1/(2 pi Sigma_2[au])/FS2AUT
+     !  
+     !   FS2AUT=10^2/2.418884326505=10^4/241.89
+     !if (shadow(3)>0.) shadow(4)=1./(2.*pi*aimag(qp%E(iqp)))/FS2AUT
+     !DEBUG<
      if (shadow(3)>0.) shadow(4)=1./(HA2FSm1*2*pi*aimag(qp%E(iqp)))
+     !
      shadow_string(2)=' Z='
      shadow_fmt(2)   ='(a,f4.2)'
      shadow_string(3)=' Gm='

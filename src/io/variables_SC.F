@@ -28,7 +28,7 @@ integer function variables_SC(ID,local_description,what)
  use QP_m,           ONLY:SC_band_mixing
  use SC,             ONLY:SC_bands,it_now,SC_potential,SC_kind,SC_perturbation,&
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,&
-&                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions
+&                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions,local_V
  use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR
 #if defined _RT
  use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,Hfrozen,XCfrozen,                      &
@@ -53,7 +53,7 @@ integer function variables_SC(ID,local_description,what)
  !
  integer               :: SC_kind_disk,SC_perturbation_disk,&
 &                         io_status_save,i1,i_desc
- logical               :: CHECK_,Local_V
+ logical               :: CHECK_
 #if defined _RT		
  logical               :: l_J,l_G,l_NE_with_fields_disk
 #endif
@@ -67,7 +67,7 @@ integer function variables_SC(ID,local_description,what)
  CHECK_=.TRUE.
  if (l_NSC_shot) CHECK_=.FALSE.
  !
- call io_elemental(ID,VAR='ATOMS_STRING',CH0="",VAR_SZ=1)
+ call io_elemental(ID,VAR='ATOMS_STRING',CH0="",VAR_SZ=1,MENU=0)
  i_desc=i_desc+1
  call io_elemental(ID,CH0=atoms_string,&
 &     VAR=' Unit cell atoms                 :',CHECK=CHECK_,OP=(/"=="/),&
@@ -94,7 +94,7 @@ integer function variables_SC(ID,local_description,what)
  io_status_save=io_status(ID)
  call io_elemental(ID,VAR="LOCAL_ITER_BANDS_MIX",VAR_SZ=4,MENU=0) 
  i_desc=i_desc+1
- call io_elemental(ID,L0=Local_V,&
+ call io_elemental(ID,L0=local_V,&
 &     VAR=' The potential is local          :',DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
  call io_elemental(ID,I0=it_now,DB_I0=it_now,&
@@ -250,13 +250,13 @@ integer function variables_SC(ID,local_description,what)
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,R0=QP_LifeTime,&
-&    VAR=' [RT] Quasi-particle life time   :', CHECK=.true.,OP=(/"=="/),&
-&     DESCRIPTION=local_description(i_desc))
+&    VAR=' [RT] QP life time            [fs]:', CHECK=.true.,OP=(/"=="/),&
+&     DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
    i_desc=i_desc+1
    if (ver_is_gt_or_eq(ID,revision=605)) then
      call io_elemental(ID,R0=Phase_LifeTime,&
-&      VAR=' [RT] Dephasing life time        :', CHECK=.true.,OP=(/"=="/),&
-&       DESCRIPTION=local_description(i_desc))
+&      VAR=' [RT] Dephasing life time    [fs]:', CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
      i_desc=i_desc+1
    endif
    call io_elemental(ID,L0=l_NE_with_fields,DB_L0=l_NE_with_fields_disk,&
@@ -301,7 +301,7 @@ integer function variables_SC(ID,local_description,what)
 &       DESCRIPTION=local_description(i_desc),UNIT=1./W2Au)
        i_desc=i_desc+1
        call io_elemental(ID,&
-&       VAR=" [FIELDs] Field damping     [eV]:",R0=Efield(i1)%damping,CHECK=.true.,OP=(/"=="/),&
+&       VAR=" [FIELDs] Field damping      [eV]:",R0=Efield(i1)%damping,CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc),UNIT=HARTREE)
        i_desc=i_desc+1
        call io_elemental(ID,&

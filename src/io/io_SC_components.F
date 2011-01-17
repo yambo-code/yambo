@@ -33,8 +33,8 @@ integer function io_SC_components(what,E_sc,ID)
 &                         io_sec,io_bulk,read_is_on,write_is_on,&
 &                         manage_RD_WR_CL_IF_END,io_reset
 #if defined _RT
- use real_time,      ONLY:l_NE_with_fields,NE_steps,j_current_ext,RT_P,current_cache_size, &
-&                         G_lesser,i_time,RT_ind_J,max_rt_steps_disk,current_cache,        &
+ use real_time,      ONLY:l_NE_with_fields,NE_steps,RT_P,current_cache_size, &
+&                         G_lesser,NE_i_time,NE_dynamics,RT_ind_J,max_rt_steps_disk,current_cache,        &
 &                         G_lesser_reference
  use fields,         ONLY:A_vecpot
  use QP_m,           ONLY:QP_nk
@@ -86,15 +86,15 @@ integer function io_SC_components(what,E_sc,ID)
  !
  if(l_J)then
    !      
-   file_number=(i_time-1)/max_rt_steps_disk
+   file_number=(NE_i_time-1)/max_rt_steps_disk
    !      
    if(io_sec(ID,1)==1) then 
      io_SC_components=io_connect(desc="RT_current",type=2,ID=ID)
    else
      !      
      IO_current=.false.
-     if(mod(i_time,max_rt_steps_disk)  ==0.and.write_is_on(ID))  IO_current=.true.
-     if(mod(i_time-1,max_rt_steps_disk)==0.and.read_is_on(ID))   IO_current=.true.
+     if(mod(NE_i_time,max_rt_steps_disk)  ==0.and.write_is_on(ID))  IO_current=.true.
+     if(mod(NE_i_time-1,max_rt_steps_disk)==0.and.read_is_on(ID))   IO_current=.true.
      !
      if(IO_current) then
        io_SC_components=io_connect(desc="RT_current_"//trim(intc(file_number)),type=2,ID=ID)
@@ -107,7 +107,7 @@ integer function io_SC_components(what,E_sc,ID)
  endif
  !
  if(l_G) then
-   if( mod(i_time,max_rt_steps_disk)/=0.and.i_time>1 .and.write_is_on(ID)) then
+   if( (mod(NE_i_time,max_rt_steps_disk)/=0.and.NE_i_time/=1) .and.NE_dynamics.and.write_is_on(ID)) then
      io_SC_components=0
      call io_reset(ID)
      return
@@ -125,7 +125,10 @@ integer function io_SC_components(what,E_sc,ID)
    !
    l_IMPOSE_SN=.not.l_V 
    !
-   io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.)
+   if (any((/l_E,l_V,l_wf/))) io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.)
+#if defined _RT		
+   if (any((/l_J,l_G/)))      io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.)
+#endif
    !
    if (io_SC_components/=0) goto 1
    !
@@ -268,7 +271,7 @@ integer function io_SC_components(what,E_sc,ID)
  if ( l_G ) then
    !
    ! lesser Green Function
-   !=================
+   !=======================
    !
    if (io_SC_components/=0) goto 1  
    !
@@ -314,21 +317,17 @@ integer function io_SC_components(what,E_sc,ID)
  if ( l_J ) then
    !
    ! Current and Vector Potential
-   !=================
+   !==============================
    !        
    if(io_sec(ID,1)/=1) then
      !
      if(write_is_on(ID)) then
        !
        do i1=1,3
-         current_cache(  2*i1-1,  mod(i_time-1,max_rt_steps_disk)+1)= real(RT_ind_J(i1))
-         current_cache(  2*i1,    mod(i_time-1,max_rt_steps_disk)+1)=aimag(RT_ind_J(i1))
-         current_cache(6+2*i1-1,  mod(i_time-1,max_rt_steps_disk)+1)= real(A_vecpot%vecpot_vel(i1))
-         current_cache(6+2*i1  ,  mod(i_time-1,max_rt_steps_disk)+1)=aimag(A_vecpot%vecpot_vel(i1))
-         current_cache(12+2*i1-1, mod(i_time-1,max_rt_steps_disk)+1)= real(j_current_ext(i1))
-         current_cache(12+2*i1,   mod(i_time-1,max_rt_steps_disk)+1)=aimag(j_current_ext(i1))
-         current_cache(18+2*i1-1, mod(i_time-1,max_rt_steps_disk)+1)= real(RT_P(i1))
-         current_cache(18+2*i1,   mod(i_time-1,max_rt_steps_disk)+1)=aimag(RT_P(i1))
+         current_cache( 2*i1-1,  mod(NE_i_time-1,max_rt_steps_disk)+1)= real(RT_ind_J(i1))
+         current_cache( 2*i1,    mod(NE_i_time-1,max_rt_steps_disk)+1)=aimag(RT_ind_J(i1))
+         current_cache(6+2*i1-1, mod(NE_i_time-1,max_rt_steps_disk)+1)= real(RT_P(i1))
+         current_cache(6+2*i1,   mod(NE_i_time-1,max_rt_steps_disk)+1)=aimag(RT_P(i1))
        enddo
        !
      endif
@@ -350,14 +349,10 @@ integer function io_SC_components(what,E_sc,ID)
        !
        !
        do i1=1,3
-         RT_ind_J(i1)           =cmplx(current_cache(   2*i1-1,mod(i_time-1,max_rt_steps_disk)+1), &
-&                                      current_cache(   2*i1,  mod(i_time-1,max_rt_steps_disk)+1),SP)
-         A_vecpot%vecpot_vel(i1)=cmplx(current_cache(6 +2*i1-1,mod(i_time-1,max_rt_steps_disk)+1), &
-&                                      current_cache(6 +2*i1  ,mod(i_time-1,max_rt_steps_disk)+1),SP)
-         j_current_ext(i1)      =cmplx(current_cache(12+2*i1-1,mod(i_time-1,max_rt_steps_disk)+1), &
-&                                      current_cache(12+2*i1  ,mod(i_time-1,max_rt_steps_disk)+1),SP)
-         RT_P(i1)               =cmplx(current_cache(18+2*i1-1,mod(i_time-1,max_rt_steps_disk)+1), &
-&                                      current_cache(18+2*i1  ,mod(i_time-1,max_rt_steps_disk)+1),SP)
+         RT_ind_J(i1)           =cmplx(current_cache(  2*i1-1,mod(NE_i_time-1,max_rt_steps_disk)+1), &
+&                                      current_cache(  2*i1,  mod(NE_i_time-1,max_rt_steps_disk)+1),SP)
+         RT_P(i1)               =cmplx(current_cache(6+2*i1-1,mod(NE_i_time-1,max_rt_steps_disk)+1), &
+&                                      current_cache(6+2*i1  ,mod(NE_i_time-1,max_rt_steps_disk)+1),SP)
        enddo
        !
      endif 

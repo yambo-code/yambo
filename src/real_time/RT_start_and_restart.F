@@ -19,14 +19,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_start_and_restart(Xen,Xk,k)
+subroutine RT_start_and_restart(Xen,Xk,k,q)
  !
  ! This subroutine fills: 
  ! G_lesser,G_lesser_previsous,G_lesser_reference,
  ! XC0,V_xc_sc,V_hartree_sc
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_sc_cohsex,l_sc_hf
+ use drivers,        ONLY:l_sc_cohsex
  use com,            ONLY:msg,warning,error
  use memory_m,       ONLY:mem_est
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_Vnl_xc
@@ -34,13 +34,13 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
 #if defined _TWO_LEVELS
- use real_time,      ONLY:Wo,W_pump,W1,l_3levels
+ use real_time,      ONLY:Wo,W1,l_3levels
  use electrons,      ONLY:nel
 #endif
  use real_time,      ONLY:G_lesser,ID,ID,NE_steps,G_lesser_previous,RT_ind_J,&
-&                         G_lesser_reference,Thermal_steps,RT_is_dumped,l_NE_simulate_IP,&
+&                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,&
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
-&                         l_NE_simulate_BSE
+&                         l_NE_simulate_BSE,RT_P
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V, &
 &                         rho_convergence,H_rotate,local_V,V_hartree_sc,      &
@@ -52,7 +52,7 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  implicit none
  !
  type(levels)      :: Xen
- type(bz_samp)     :: Xk,k
+ type(bz_samp)     :: Xk,k,q
  integer, external :: io_SC_components
  !
  ! Work Space
@@ -73,10 +73,8 @@ subroutine RT_start_and_restart(Xen,Xk,k)
  !
  ! Set to zero current and fields
  !
+ RT_P               =(0._SP,0._SP)
  RT_ind_J           =(0._SP,0._SP)
- A_vecpot%vecpot    =(0._SP,0._SP)
- A_vecpot%vecpot_vel=(0._SP,0._SP)
- A_vecpot%vecpot_acc=(0._SP,0._SP)
  ! 
  forall(i1=1:SC_bands,ik=1:Xen%nk)
    G_lesser(i1,i1,ik)=(0._SP,1._SP)*Xen%f(i1,ik,1)
@@ -147,6 +145,11 @@ subroutine RT_start_and_restart(Xen,Xk,k)
    do ik=1,QP_nk
      call H_rotate(SC_R(1:SC_bands,1:SC_bands,ik,1),G_lesser(1:SC_bands,1:SC_bands,ik),SC_bands,-1)
    enddo
+   !
+   ! Now I update <i|r|j> dipoles using G_lesser_reference as
+   ! Green function to construct the Hamiltonian
+   !
+   call RT_update_dipoles(G_lesser,Xen,k,q)
    !
    deallocate(SC_R)
    call mem_est("SC_R ")
@@ -266,7 +269,13 @@ subroutine RT_start_and_restart(Xen,Xk,k)
    !
  else
    !
-   if(l_NE_with_fields) call RT_init_vecpot()
+   ! Initializations
+   !
+   if (l_NE_with_fields) call RT_Ext_fields(A_vecpot,0._SP)
+   !
+#if defined _TWO_LEVELS
+   call RT_init_two_levels()
+#endif
    !
  endif
  !

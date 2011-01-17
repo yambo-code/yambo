@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !
-subroutine RT_qp_analyze(it,en,k,xK,G_input)
+subroutine RT_qp_analyze(it,en,k,Xk,G_input)
  !
  ! Evaluate quasi-particle energies and occupations
  ! and write them in en%E, en%f
@@ -94,5 +94,9 @@ subroutine RT_qp_analyze(it,en,k,xK,G_input)
  endif
  !
  call set_real_printed_length(f_length=15,g_length=15)
+ !
+ ! History
+ !
+ call  SC_History(it,en)
  !
 end subroutine RT_qp_analyze

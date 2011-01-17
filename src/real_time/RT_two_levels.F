@@ -29,8 +29,8 @@ subroutine RT_two_levels(G_lesser)
  use units,          ONLY:HARTREE
  use com,            ONLY:msg
  use real_time,      ONLY:Wo,Rabi_freq_pump,W_pump,Phase_LifeTime,&
-&                         QP_LifeTime,RT_step,l_NE_with_fields,i_time,P,D,delta,Rabi_nn,Rabi_freq_probe
- use fields,         ONLY:Efield
+&                         QP_LifeTime,RT_step,l_NE_with_fields,NE_time,NE_i_time,P,D,delta,Rabi_nn,Rabi_freq_probe
+ use fields,         ONLY:Efield,global_gauge
  !
  implicit none           
  complex(SP),       intent(in) :: G_lesser(SC_bands,SC_bands,QP_nk)
@@ -46,7 +46,7 @@ subroutine RT_two_levels(G_lesser)
  complex(SP), save  :: W_bar,Beta_wbar,R_wbar,dGinfty,W_gamma,Beta_gamma,R_gamma,&
 &                      So,S_wo,S_wbar,S_minus_wbar_star,S_gamma,eta1_plus,eta1_minus,p1_plus,p1_minus,p0
  !
- if(.not.l_NE_with_fields.or.i_time<0) return
+ if(.not.l_NE_with_fields.or.NE_i_time<0) return
  !
  P_and_P=Efield(2)%ef_name/="none"
  !
@@ -59,12 +59,12 @@ subroutine RT_two_levels(G_lesser)
      Wo_here=Wo
  end select
  !
- T= (i_time-1)*RT_step
+ T=NE_time
  !
  W_range=10./HARTREE
  if (P_and_P) W_range=2./HARTREE
  !
- if (i_time == 1) then
+ if (NE_i_time == 1) then
    W_step=W_range/real(N_W_delta_search)
    do i_f=1,N_W_delta_search-1
      W_func(i_f)=-0.1/HARTREE+W_step*i_f
@@ -154,6 +154,8 @@ subroutine RT_two_levels(G_lesser)
  call write_it(101,-cI*(-2.*cI*real(R_wbar*exp(-cI*W_bar*T))+dGinfty-cI*R_gamma*exp(-cI*W_gamma*T) ))
  call open_it(102,"G12_theo")
  call write_it(102,G(1,2))
+ call open_it(104,"G21_theo")
+ call write_it(104,G(2,1))
  call open_it(104,"G12_theo_LRR")
  call write_it(104,G12_LRR(T,Rabi_freq_pump,Wo_here))
  call open_it(103,"Polarization_theo")
@@ -169,6 +171,8 @@ subroutine RT_two_levels(G_lesser)
 ! call write_it(203, -cI*(-1)*(P*G_lesser(2,1,1)+conjg(P)*G_lesser(1,2,1))/DL_vol)
  call open_it(205,"G12_num")
  call write_it(205,G_lesser(1,2,1))
+ call open_it(206,"G21_num")
+ call write_it(206,G_lesser(2,1,1))
  !
  contains
    !
@@ -177,7 +181,7 @@ subroutine RT_two_levels(G_lesser)
      use pars,        ONLY:pi
      integer     ::unit_
      complex(SP) ::what
-     write (unit_,'(10g20.10)') (i_time-1)*RT_step/FS2AUT,what
+     write (unit_,'(10g20.10)') (NE_i_time-1)*RT_step/FS2AUT,what
    end subroutine
    !
    subroutine open_it(unit_,where_)
@@ -188,7 +192,7 @@ subroutine RT_two_levels(G_lesser)
      integer      ::unit_,ierr,i1
      character(*)   ::where_
      character(200) ::file_name,local
-     if (i_time/=1) return
+     if (NE_i_time/=1) return
 !     write (file_name,'(a,a,f10.5,a,f3.1,2(a,f5.2),a)')  where_,"_Rabi_",abs(Rabi_freq)*HARTREE,"_Wph_",W_photon*HARTREE,&
 !&       "_Lrad_",QP_LifeTime/FS2AUT,"_Lphase_",Phase_LifeTime/FS2AUT,".dat"
      file_name=trim(where_)
@@ -221,6 +225,7 @@ subroutine RT_two_levels(G_lesser)
     real(SP)    :: Time,W
     complex(SP) :: Rabi
     G12_LRR=-cI*Rabi/(W+cI/Phase_LifeTime)*(1.-exp(cI*(W+cI/Phase_Lifetime)*Time))
+    if (trim(global_gauge)=="length") G12_LRR=cI*Rabi/Wo*exp(cI*(W+cI/Phase_Lifetime)*Time)
    end function
    !
    complex(SP) function G12_LRR_PP(Time,Rabi,W)

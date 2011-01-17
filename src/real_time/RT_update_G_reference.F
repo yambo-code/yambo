@@ -19,26 +19,29 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_update_G_reference(Xen,G_lesser_reference)
+subroutine RT_update_G_reference(it,Xen,G_lesser_reference)
  !
  ! This subroutine update G_reference in order to converge
  ! to the groud state G_lesser of a given Hamiltonian
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels,spin_occ
- use real_time,      ONLY:H_t
+ use real_time,      ONLY:H_t,RT_is_dumped,NE_i_time,RT_diagonalization_steps
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK 
  use SC,             ONLY:SC_bands,H_rotate
  use QP_m,           ONLY:QP_nk
  !
  implicit none
  !
+ integer,       intent(in)     :: it
  type(levels),  intent(inout)  :: Xen
  complex(SP) ,  intent(out)    :: G_lesser_reference(SC_bands,SC_bands,QP_nk)
  !
  ! Work Space
  !
  integer :: ik,ib
+ !
+ if(any((/.not.mod(it,RT_diagonalization_steps)==0,.not.RT_is_dumped,NE_i_time>=0/))) return
  !
  do ik=1,Xen%nk
     !

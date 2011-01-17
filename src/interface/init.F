@@ -624,7 +624,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (l_real_time) then
      call initactivate(-1,'SCmixing')
      call initactivate(1,'Integrator QPLifeTime PhLifeTime') 
-     call initactivate(1,'RTstep NEsteps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
+     call initactivate(1,'RTstep NEsteps NETime ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
      call initactivate(1,'RTfreezeH RTfreezeXC RTBSEOnly NoDiamagnetic InducedField')
 #endif
 #if defined _RT

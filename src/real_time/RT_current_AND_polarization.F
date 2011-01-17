@@ -33,7 +33,7 @@ subroutine RT_current_AND_polarization(Xk,G_input,A_input)
  use D_lattice,      ONLY:DL_vol
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel
- use real_time,      ONLY:l_RT_no_diamagnetic,i_time,l_NE_with_fields,RT_ind_J,RT_average_operator,RT_P
+ use real_time,      ONLY:l_RT_no_diamagnetic,NE_dynamics,l_NE_with_fields,RT_ind_J,RT_average_operator,RT_P
  use fields,         ONLY:gauge_field
  use X_m,            ONLY:DIP_iR,DIP_P
  use QP_m,           ONLY:QP_nk
@@ -47,12 +47,14 @@ subroutine RT_current_AND_polarization(Xk,G_input,A_input)
  !
  integer       :: id
  !
- if(.not.l_NE_with_fields.or.i_time<0) return
+ if(.not.l_NE_with_fields.or..not.NE_dynamics) return
  !
  do id=1,3
    !
-   call RT_average_operator(VALUE=RT_ind_J(id),O_MATRIX=-DIP_P(id,1:SC_bands,1:SC_bands,1:QP_nk,1:n_sp_pol),   G=G_input,k=Xk)
-   call RT_average_operator(VALUE=RT_P(id),    O_MATRIX=cI*DIP_iR(id,1:SC_bands,1:SC_bands,1:QP_nk,1:n_sp_pol),G=G_input,k=Xk)
+   call RT_average_operator(VALUE=RT_ind_J(id),O_MATRIX=-DIP_P(id,1:SC_bands,1:SC_bands,1:QP_nk,1:n_sp_pol),&
+&                           G=G_input,k=Xk,TRANS=.TRUE.)
+   call RT_average_operator(VALUE=RT_P(id),    O_MATRIX=cI*DIP_iR(id,1:SC_bands,1:SC_bands,1:QP_nk,1:n_sp_pol),&
+&                           G=G_input,k=Xk,TRANS=.TRUE.)
    !
  enddo
  !

@@ -101,13 +101,16 @@ subroutine Dipole_transverse(Xen,Xk,X)
 #else
  call par_indexes(px,(/Xk%nibz,iv_max/),(/1,X%ib(1)/))
 #endif
+ !
+#if defined _RT
+ call live_timing('P and P^2 (T):',px%n_of_elements(myid+1)*n_spin)
+ wf_dim=4
+#else
  call live_timing('Dipole (T):',px%n_of_elements(myid+1)*n_spin)
+ wf_dim=3
+#endif
  call pp_redux_wait
  !
- wf_dim=3
-#if defined _RT
- wf_dim=4
-#endif
  allocate(wf_xyz(wf_ng,wf_dim))
  !
  ! Main loop over k in IBZ
@@ -190,7 +193,17 @@ subroutine Dipole_transverse(Xen,Xk,X)
          if(icfft==0) call error("Error distribution wave-function")
 #endif
          !
-         ! rho = wf_xyz^* fdo(ic,ik)= - i < fdo(iv,ik)| grad |  fdo(ic,ik) > =
+         ! WARNING !!!!!!!! The convention is to revert the order of the bands indexes
+         !==================
+         ! in the definition of DIP_P and DIP_iR
+         !
+         ! DIP_P(iv,ic)  = P_cv
+         ! DIP_iR(iv,ic) = (iR)_cv 
+         !
+         ! Note that P is Hermitian and iR anti-hermitian.
+         !
+         ! rho = <v|p|c> = P_vc =
+         !     = wf_xyz^* fdo(ic,ik)= - i < fdo(iv,ik)| grad |  fdo(ic,ik) > =
          !       \sum_G -i u^*_{iv ik}(G) i ( k + G ) u_{ic ik}(G)
          !     = \sum_G u^*_{iv ik}(G) ( k + G ) u_{ic ik}(G)
          !
@@ -199,14 +212,20 @@ subroutine Dipole_transverse(Xen,Xk,X)
          call M_by_V('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,wf(:,icfft),1,(0._SP,0._SP),rho,1)
          !
          if (ioKB_err==0) call Dipole_kb_sum(ivfft,icfft,rho(:3),kbv)
-         !
-         ! as [x,p_x]=i we get [x,H] = [x,p^2/2]= i p_x
-         !
-         !     DIP_iR_or_P(c,v) = i <v|r|c> = i <v|[r,H]|c>/(Ec-Ev) = i <v|i p|c>/(Ec-Ev) =
-         !                   = - <v | -i grad |c> / (Ec-Ev) = <v|-i grad|c>/(Ev-Ec)
+         !=====
+         ! <P>
+         !=====
+         ! P_vc=rho(:3)
 #if defined _RT
          DIP_P(:,ic,iv,ik,i_spin)=DIP_P(:,ic,iv,ik,i_spin)+rho(:3)
 #endif        
+         !======
+         ! <iR>
+         !======
+         ! as [x,p_x]=i we get [x,H] = [x,p^2/2]= i p_x. So from rho (that is P_vc) we can extract
+         !
+         ! DIP_iR(c,v) = i <v|r|c> = i <v|[r,H]|c>/(Ec-Ev) = i <v|i p|c>/(Ec-Ev) =
+         !             = - <v | -i grad |c> / (Ec-Ev) = <v|-i grad|c>/(Ev-Ec) = P_vc/(Ev-Ec)
          !
          rho(1:3)=rho(1:3)/Ev_m_Ec
          !
@@ -227,6 +246,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
          endif
          !
 #if defined _RT
+         !======
+         ! <P^2>
+         !======
          if( n_spinor == 2 ) then
            P_square(ic,iv,ik,1)= P_square(ic,iv,ik,1)+rho(4)
          else
@@ -247,6 +269,24 @@ subroutine Dipole_transverse(Xen,Xk,X)
    enddo        ! spin loop
    ! 
    ! GPL_EXCLUDE_END SPIN_IGNORE
+   !
+   ! Symmetrization 
+   !================
+   !
+   ! To avoid numerical noise in the real-time evolution we need to impose
+   ! P (iR) to be Hermitian (anti-Hermitian)
+   !
+   if (.not.Dipole_bands_ordered) then
+     do iv=X%ib(1),X%ib(2)
+       do ic=iv+1,X%ib(2)
+         DIP_iR(:,ic,iv,ik,:)=-conjg(DIP_iR(:,iv,ic,ik,:))
+#if defined _RT
+         DIP_P(:,ic,iv,ik,:) = conjg(DIP_P(:,iv,ic,ik,:))
+         P_square(ic,iv,ik,:)= conjg(P_square(iv,ic,ik,:))
+#endif        
+       enddo
+     enddo
+   endif
    !
  enddo          ! k-points
  !

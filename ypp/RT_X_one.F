@@ -59,8 +59,8 @@ subroutine RT_X_one(en,k)
    ! I want to print only the positive frequencies
    ! i_w > energy_steps/2 correspond to the negative ones
    !
-   X_rt%energy_steps=RED_steps/2
-   X_rt%energy_range=(/0.,W_RT_induced_step*RED_steps/2./)
+   X_rt%energy_steps=RED_steps/2._SP
+   X_rt%energy_range=(/0._SP,W_RT_induced_step*RED_steps/2._SP/)
    !
    allocate(EELS(RED_steps),EPS(RED_steps),X_irrep(RED_steps,3),E_w(RED_steps))
    !

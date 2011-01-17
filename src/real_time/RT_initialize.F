@@ -56,9 +56,12 @@ subroutine RT_initialize()
  l_NE_simulate_RPA=.not.Hfrozen.and.XCfrozen
  l_NE_simulate_IP =     Hfrozen.and.XCfrozen
  l_NE_simulate_Irredux =Hfrozen.and..not.XCfrozen
- l_NE_simulate_BSE     =.not.Hfrozen.and..not.XCfrozen.and.l_NE_simulate_BSE
+ if(l_NE_simulate_BSE.and.XCfrozen) &
+&      call warning(" BSE turned off because  XC is frozen! ")
+ l_NE_simulate_BSE     =.not.XCfrozen.and.l_NE_simulate_BSE
  !
- l_RT_needs_XC0=l_NE_simulate_IP.or.l_NE_simulate_RPA.or.l_NE_simulate_BSE.or.Thermal_steps>0
+ l_RT_needs_XC0=l_NE_simulate_IP.or.l_NE_simulate_RPA.or.l_NE_simulate_BSE.or.l_NE_simulate_Irredux &
+&                               .or.Thermal_steps>0
  !
  ! Check if Collisions are required
  !==================================

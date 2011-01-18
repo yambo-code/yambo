@@ -19,11 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-#if defined _RT
-subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,G_lesser)
-#else
 subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
-#endif
  !
  ! Wrapper for calculation of the XC potential. If available libxc,
  ! will be used instead of internal routines
@@ -32,18 +28,12 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels
  use com,           ONLY:msg,warning
-#if defined _RT
- use SC,            ONLY:SC_bands
-#endif
  use xc_functionals,ONLY:XC_EXCHANGE_CORRELATION,XC_LDA_C_PW,xc_string,&
       & XC_NOT_AVAILABLE,xc_OnlyInLibxc
  implicit none
  type(levels) ::en
  type(bz_samp)::Xk
  integer      ::KIND,FUNCTIONAL,ORDER
-#if defined _RT
- complex(SP), intent(in) :: G_lesser(SC_bands,SC_bands,en%nk)
-#endif
 !
 ! COM
 !
@@ -78,11 +68,7 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
 #else
  call   XC_lda_driver(&
 #endif
-&                     en,Xk,KIND,FUNCTIONAL,ORDER&
-#if defined _RT
-&                     ,G_lesser&
-#endif
-&                    )
+&                     en,Xk,KIND,FUNCTIONAL,ORDER)
  !
 end subroutine XC_potential_driver
 

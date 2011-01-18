@@ -22,7 +22,7 @@
 subroutine ypp_init_load(defs)
  !
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,&
-&                        Time_unit,Bfield_unit,Efield_unit
+&                        Time_unit,Bfield_unit,Efield_unit,V_real_time
  use wave_func,     ONLY:wf_ng
  use YPP
 #if defined _YPP_RAS
@@ -226,11 +226,11 @@ subroutine ypp_init_load(defs)
  !
  call it(defs,'EnRngeRt','Energy range',X_rt%energy_range,unit=E_unit)
  call it(defs,'ETStpsRt','Total Energy steps',X_rt%energy_steps)
- call it(defs,'TmRngeRt','Time-window where processing is done',X_rt%time_range,unit=Time_unit)
- call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',X_rt%damp)
- call it(defs,'DampFactor','Damping parameter',X_rt%damp_factor,unit=E_unit) 
+ call it(defs,'TmRngeRt','Time-window where processing is done',X_rt%time_range,unit=Time_unit,verb_level=V_real_time)
+ call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',X_rt%damp,verb_level=V_real_time)
+ call it(defs,'DampFactor','Damping parameter',X_rt%damp_factor,unit=E_unit,verb_level=V_real_time) 
  !
- call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics')
+ call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics',verb_level=V_real_time)
  !
 #endif
  !

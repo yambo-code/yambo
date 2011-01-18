@@ -135,16 +135,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
  if(l_NE_simulate_IP) call WF_free()
  !
- if(Thermal_steps/=0.and.it_start<=Thermal_steps) then
-   ! 
-   call live_timing('[RT] Thermalization :',Thermal_steps-it_start+1,SERIAL=.true.)
-   !
- elseif(it_start>Thermal_steps+1) then
-   !
-   call live_timing('[RT] Dynamics :',NE_steps-it_start+1,SERIAL=.true.)
-   !
- endif
- !
  ! Initialize output files
  !==========================
  !
@@ -173,10 +163,13 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    NE_time=(NE_i_time-1)*RT_step
    NE_dynamics=NE_i_time>=1
    !
-   ! Start-Up
-   !==========
-   if(NE_i_time==1) then
-     call live_timing('[RT] NE Dynamics :',NE_steps,SERIAL=.true.)
+   ! Start-Up & Timing
+   !===================
+   !
+   if(it==it_start) then
+     !
+     if (NE_i_time<0 ) call live_timing('[RT] Thermalization :',Thermal_steps-it_start+1,SERIAL=.true.)
+     if (NE_i_time>=0) call live_timing('[RT] Dynamics :',NE_steps-it_start+1,SERIAL=.true.)
      !
      ! Use the (eventually) thermalized G_lesser as a reference...
      !
@@ -233,12 +226,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    call RT_output('cur pol',TIME_or_E=NE_time/FS2AUT)
    if(l_NE_with_fields) call RT_output('pot',TIME_or_E=NE_time/FS2AUT) 
    !
-   call live_timing(steps=1)
-   !
-   ! End Thermalization Live-Timing
-   !================================
-   if (it==Thermal_steps) call live_timing()
-   !
    ! End dynamics
    !===============
    if (it==Thermal_steps+NE_steps) Dynamics_is_over=.TRUE.
@@ -257,6 +244,13 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    call RT_Collision(G_lesser_previous,A_vecpot_previous,Xen,k,q,NE_time)
    !
    call RT_Integrator(G_lesser,G_lesser_previous,A_vecpot,A_vecpot_previous,RT_step,Xen,k,q,Integrator_name,NE_time)
+   !
+   ! Timing
+   !========
+   !
+   call live_timing(steps=1)
+   !
+   if (it==Thermal_steps) call live_timing()
    !
  enddo
  !

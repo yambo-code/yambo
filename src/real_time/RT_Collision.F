@@ -59,9 +59,11 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  !
  integer          :: i1,i2,ik
  type(pp_indexes) :: px
- !DEBUG>
- !complex(SP)      :: H_ext(SC_bands,SC_bands,1)
- !DEBUG<
+ !
+ ! Density (needed bu Hartree and local XCs)
+ !=========
+ !
+ ! NE_dynamics=.FALSE. corresponds to Thermalization where the density must be updated
  !
  if(.not.Hfrozen.or..not.XCfrozen.or..not.NE_dynamics) call el_density(G_input,k,rho_n,.false.)
  !
@@ -72,7 +74,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    if(l_sc_contains_lda.and.SC_xc_functional/=0) then
      !
      call IO_and_Messaging_switch("-report -log -io_in -io_out")
-     call XC_potential_driver(Xen,k,WF_KIND,WF_xc_functional,1,G_input)
+     call XC_potential_driver(Xen,k,WF_KIND,WF_xc_functional,1)
      call IO_and_Messaging_switch("+report +log +io_in +io_out")
      V_xc_sc=V_xc
      !
@@ -93,14 +95,27 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !
    if (.not.px%element_1D(ik)) cycle
    !
+   ! Here I fill H_nl_sc (which defined I1 and I2) with...
+   !
    H_nl_sc=(0._SP,0._SP)
    !
+   ! Non-local XC potentials (like CHOSEX)
+   !=========================
    if(.not.local_V.and..not.XCfrozen) then
      call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 
-     if(l_sc_cohsex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc) 
+     if (l_sc_cohsex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc) 
    endif
+   !
+   ! Local XC potentials (like CHOSEX) and Hartree
+   !=====================
+   if(.not.l_NE_simulate_IP) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,wf)
    !  
+   ! The bare, frozed VHxc 
+   !=======================
+   if(l_RT_needs_XC0) call V_by_V_plus_V(SC_bands,(1._SP,0._SP),&
+&                                        XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1),H_nl_sc(1:SC_bands,1:SC_bands,1))
    ! Adiabatic Switching
+   !=====================
    ! (for all the parts of self-energy different from V_h + V_xc)
    ! I have to subtruct XC0_and_HARTREE0 that contains <mk|Vxc(rho0) |nk>
    !
@@ -113,44 +128,26 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
      !
    endif
    !
-   if(.not.l_NE_simulate_IP) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,wf)
-   !
-   if(l_RT_needs_XC0) &
-     & call V_by_V_plus_V(SC_bands,(1._SP,0._SP),XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1),H_nl_sc(1:SC_bands,1:SC_bands,1))
-   !
    ! Add Ho = T+V_ion
-   !
+   !==================
    call V_by_V_plus_V(SC_bands,(1._SP,0._SP),Ho(1:SC_bands,1:SC_bands,ik,1),H_nl_sc(1:SC_bands,1:SC_bands,1))
    !
    ! And the gauge field
-   !
+   !=====================
    if(l_NE_with_fields.and.NE_dynamics) call RT_apply_field(ik,H_nl_sc,A_input)
-   !
-   !DEBUG>
-   !H_ext=(0._SP,0._SP)
-   !if(l_NE_with_fields.and.NE_dynamics) call RT_apply_field(ik,H_ext,A_input)
-   !DEBUG<
    !
    if(allocated(H_t))  H_t(1:SC_bands,1:SC_bands,ik,1)=H_nl_sc(1:SC_bands,1:SC_bands,1)
    !
-   ! Now prepare I1 and I2 before the integration notice that 
-   ! they contain also the external field
+   ! Now I1 and I2 
+   !===============
    !
    call M_by_M('n','n',SC_bands,H_nl_sc(1:SC_bands,1:SC_bands,1), & 
 &              G_input(1:SC_bands,1:SC_bands,ik),I1_lesser(1:SC_bands,1:SC_bands,ik))
    call M_by_M('n','n',SC_bands,G_input(1:SC_bands,1:SC_bands,ik),&
 &              H_nl_sc(1:SC_bands,1:SC_bands,1),I2_lesser(1:SC_bands,1:SC_bands,ik))
    !
-   !DEBUG>
-   !do i1=1,SC_bands
-   !  do i2=i1+1,SC_bands
-   !    I2_lesser(i1,i2,ik)=I2_lesser(i1,i2,ik)+G_input(i1,i1,ik)*H_ext(i1,i2,1)
-   !    I2_lesser(i2,i1,ik)=I2_lesser(i2,i1,ik)+G_input(i2,i2,ik)*H_ext(i2,i1,1)
-   !    I1_lesser(i1,i2,ik)=I1_lesser(i1,i2,ik)+H_ext(i1,i2,1)*G_input(i2,i2,ik)
-   !    I1_lesser(i2,i1,ik)=I1_lesser(i2,i1,ik)+H_ext(i2,i1,1)*G_input(i1,i1,ik)
-   !  enddo 
-   !enddo
-   !DEBUG<
+   ! Damping
+   !=========
    !
    ! Fictitious lifetime equivalent to the broadening
    ! in linear optics

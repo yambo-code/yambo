@@ -31,9 +31,9 @@ integer function variables_SC(ID,local_description,what)
 &                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions,local_V
  use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR
 #if defined _RT
- use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,Hfrozen,XCfrozen,                      &
+ use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,NE_tot_time,Hfrozen,XCfrozen,                      &
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
-&                         QP_LifeTime,Phase_LifeTime,l_RT_no_diamagnetic,&
+&                         QP_LifeTime,Phase_LifeTime,l_RT_diamagnetic,&
 &                         max_rt_steps_disk,l_RT_induced_field,l_NE_simulate_BSE
  use fields,         ONLY:n_ext_fields,Efield
 #endif                                
@@ -197,31 +197,31 @@ integer function variables_SC(ID,local_description,what)
 #if defined _RT
  !
  if(any((/l_J,l_G/))) then
-   call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=6,MENU=0) 
+   call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=7,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,L0=Hfrozen,&
-&    VAR=" [RT] Hartree not updated        :", CHECK=.true.,OP=(/"=="/),&
+&    VAR=" [RT] Hartree frozen             :", CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,L0=XCfrozen,&
-&    VAR=" [RT] XC term frozen             :", CHECK=.true.,OP=(/"=="/),&
+&    VAR=" [RT] XC frozen                  :", CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_NE_simulate_BSE,&
-&    VAR=" [RT] Simulate Bethe-Salpeter eq.:", CHECK=.true.,OP=(/"=="/),&
+&    VAR=" [RT] Simulate Bethe-Salpeter    :", CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&
 &    VAR=" [RT] Time step              [fs]:",R0=RT_step,CHECK=.true.,OP=(/"=="/),UNIT=1./FS2AUT,&
 &    DESCRIPTION=local_description(i_desc))
-   !
-   if(l_G) then
-     i_desc=i_desc+1
-     call io_elemental(ID, &
-&      VAR=" [RT] Time steps                 :",I0=NE_steps,CHECK=.true.,OP=(/">="/),&
-&      DESCRIPTION=local_description(i_desc))
-   endif
-   !
+   i_desc=i_desc+1
+   call io_elemental(ID,&
+&    VAR=" [RT] Time steps                 :",I0=NE_steps,WARN=.true.,OP=(/"=="/),&
+&    DESCRIPTION=local_description(i_desc))
+   i_desc=i_desc+1
+   call io_elemental(ID,&
+&    VAR=" [RT] NE simulation time     [fs]:",R0=NE_tot_time,WARN=.true.,OP=(/"=="/),UNIT=1./FS2AUT,&
+&    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID, &
 &    VAR=" [RT] Thermalization steps       :",I0=Thermal_steps,CHECK=.true.,OP=(/"=="/),&
@@ -263,12 +263,12 @@ integer function variables_SC(ID,local_description,what)
 &    VAR=' [RT] External Field             :', CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
-   call io_elemental(ID,L0=l_RT_no_diamagnetic,&
-&    VAR=' [RT] No diamagnetic term        :',  CHECK=.true.,OP=(/"=="/),&
+   call io_elemental(ID,L0=l_RT_diamagnetic,&
+&    VAR=' [RT] Diamagnetic term           :',  CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_RT_induced_field,&
-&    VAR=' [RT] Include induced field      :',  CHECK=.true.,OP=(/"=="/),&
+&    VAR=' [RT] Induced field              :',  CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    !
    if (l_NE_with_fields_disk) then
@@ -301,8 +301,8 @@ integer function variables_SC(ID,local_description,what)
 &       DESCRIPTION=local_description(i_desc),UNIT=1./W2Au)
        i_desc=i_desc+1
        call io_elemental(ID,&
-&       VAR=" [FIELDs] Field damping      [eV]:",R0=Efield(i1)%damping,CHECK=.true.,OP=(/"=="/),&
-&       DESCRIPTION=local_description(i_desc),UNIT=HARTREE)
+&       VAR=" [FIELDs] Field damping      [fs]:",R0=Efield(i1)%damping,CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
        i_desc=i_desc+1
        call io_elemental(ID,&
 &       VAR=" [FIELDs] Field frequency    [eV]:",R0=Efield(i1)%frequency,CHECK=.true.,OP=(/"=="/),&

@@ -27,7 +27,7 @@ subroutine RT_initialize()
  use electrons,      ONLY:nel
  use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields, &
 &                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,NE_tot_time,    &
-&                         l_RT_no_diamagnetic,max_rt_steps_disk,l_NE_simulate_BSE,       &
+&                         l_RT_diamagnetic,max_rt_steps_disk,l_NE_simulate_BSE,       &
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,         &
 &                         l_RT_induced_field,     &
 &                         RT_diagonalization_steps,RT_is_dumped,QP_LifeTime,Phase_LifeTime
@@ -46,9 +46,9 @@ subroutine RT_initialize()
  ! Logicals
  !==========
  !
- call parser('NoDiamagnetic',l_RT_no_diamagnetic)
+ call parser('Diamagnetic',  l_RT_diamagnetic)
  call parser('InducedField' ,l_RT_induced_field)
- call parser('RTBSEOnly',l_NE_simulate_BSE)
+ call parser('RTBSEOnly',    l_NE_simulate_BSE)
  call parser('RTfreezeH',    Hfrozen)
  call parser('RTfreezeXC',   XCfrozen)
  !
@@ -56,12 +56,15 @@ subroutine RT_initialize()
  l_NE_simulate_RPA=.not.Hfrozen.and.XCfrozen
  l_NE_simulate_IP =     Hfrozen.and.XCfrozen
  l_NE_simulate_Irredux =Hfrozen.and..not.XCfrozen
- if(l_NE_simulate_BSE.and.XCfrozen) &
-&      call warning(" BSE turned off because  XC is frozen! ")
+ !
+ if(l_NE_simulate_BSE.and.XCfrozen) call warning(" BSE turned off because  XC is frozen! ")
  l_NE_simulate_BSE     =.not.XCfrozen.and.l_NE_simulate_BSE
  !
- l_RT_needs_XC0=l_NE_simulate_IP.or.l_NE_simulate_RPA.or.l_NE_simulate_BSE.or.l_NE_simulate_Irredux &
-&                               .or.Thermal_steps>0
+ ! In some cases I need to freeze XC or Hartree. In these cases I initialize here
+ ! the scattering term. No updates will follow in RT_Collision
+ !
+ l_RT_needs_XC0=any((/l_NE_simulate_IP,l_NE_simulate_RPA,l_NE_simulate_BSE,&
+&                     l_NE_simulate_Irredux,Thermal_steps>0/))
  !
  ! Check if Collisions are required
  !==================================
@@ -84,6 +87,8 @@ subroutine RT_initialize()
      Thermal_steps = Thermal_steps+max_rt_steps_disk-rest
    endif
  endif
+ !
+ NE_tot_time=RT_step*NE_steps
  !
  ! QP and Phase Lifetimes
  !========================

@@ -21,9 +21,18 @@
 !
 subroutine RT_start_and_restart(Xen,Xk,k,q)
  !
- ! This subroutine fills: 
- ! G_lesser,G_lesser_previsous,G_lesser_reference,
- ! XC0,V_xc_sc,V_hartree_sc
+ ! This subroutine initialize some variables and restart from SC
+ ! or from a previous RT calculation:
+ !
+ ! [1] Initialize the Gf and potentials
+ ! [2] Build Ho
+ ! [3] Check for SC and RESTART DBs
+ !  |
+ !  .> Use SC as a starting point
+ !  |
+ !  .> RESTART from a previous run
+ ! [4] Initialize the bare Hartree and XC
+ ! [5] Initialize the fields
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_sc_cohsex
@@ -40,7 +49,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q)
  use real_time,      ONLY:G_lesser,ID,ID,NE_steps,G_lesser_previous,RT_ind_J,&
 &                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,&
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
-&                         l_NE_simulate_BSE,RT_P
+&                         l_NE_simulate_BSE,RT_P,RT_step
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V, &
 &                         rho_convergence,H_rotate,local_V,V_hartree_sc,      &
@@ -63,7 +72,8 @@ subroutine RT_start_and_restart(Xen,Xk,k,q)
  logical :: SC_DB_present
  !
  ! Initialize the Gf and potentials
- !----------------------------------
+ !==================================
+ !
  ! G_lesser(T=0,T=0)=Go and G_lesser_old(T=0,T=0)=Go
  !
  G_lesser          =(0._SP,0._SP)
@@ -80,7 +90,8 @@ subroutine RT_start_and_restart(Xen,Xk,k,q)
    G_lesser(i1,i1,ik)=(0._SP,1._SP)*Xen%f(i1,ik,1)
  end forall
  !
- ! Build Ho and save initial energies
+ ! Build Ho and save initial energies 
+ !==========
  !
  E_bare=Xen%E(:SC_bands,:,:)
 #if defined _TWO_LEVELS
@@ -95,6 +106,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q)
  call SC_bare_Hamiltonian(Xen,Xk,k)
  !
  ! Perform a first I/O to check which DBs are present. 
+ !=====================
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(1)) ! Energies
  io_E=io_SC_components('E' ,Xen,ID(1))
@@ -117,6 +129,9 @@ subroutine RT_start_and_restart(Xen,Xk,k,q)
  SC_DB_present =  all((/io_E==0,io_WF==0,io_V==0/))
  !
  if(SC_DB_present) then
+   !
+   ! RESTART FROM SC
+   !=================
    !
    call msg('snr','[RT] Restart from a Self-Consistent Calculation ')
    call msg('nr' ,'[RT] Found   accuracy on density      :',rho_convergence)
@@ -154,8 +169,8 @@ subroutine RT_start_and_restart(Xen,Xk,k,q)
    deallocate(SC_R)
    call mem_est("SC_R ")
    !
-   if(Hfrozen) call el_density(G_lesser,k,rho_n,.false.)
-   if(Hfrozen) call V_Hartree(rho_n,V_hartree_sc)
+   if (Hfrozen) call el_density(G_lesser,k,rho_n,.false.)
+   if (Hfrozen) call V_Hartree(rho_n,V_hartree_sc)
    !
    V_xc_sc=(0._SP)
    !
@@ -197,12 +212,19 @@ subroutine RT_start_and_restart(Xen,Xk,k,q)
      !
    endif
    !
- else if (l_RT_needs_XC0) then
+ endif
+ !
+ if(.not.SC_DB_present.and.l_RT_needs_XC0) then
+   !
+   ! Build Hartree and XCo 
+   !=======================
    !
    XC0_and_HARTREE0=(0._SP,0._SP)
+   ! 
+   call el_density(G_lesser,Xk,rho_n,.false.)
    !
    call IO_and_Messaging_switch("-report -log")
-   call XC_potential_driver(Xen,Xk,WF_KIND,WF_xc_functional,1,G_lesser)
+   call XC_potential_driver(Xen,Xk,WF_KIND,WF_xc_functional,1)
    call IO_and_Messaging_switch("+report +log")
    !
    ! In the IP  case XC0_and_HARTREE0  contains <mk | Vxc(rho_0) + Vhartree(rho_0) | nk>
@@ -243,6 +265,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q)
    RESTART=.FALSE.
    call warning(" Restart removed in few levels Hamiltonian! ")
  endif
+ call RT_init_two_levels()
 #endif
  !
  if(RESTART) then
@@ -259,27 +282,16 @@ subroutine RT_start_and_restart(Xen,Xk,k,q)
    enddo
    !
    if(io_G==0.and.it_now<NE_steps+Thermal_steps) then
-     !
-     call msg('snr','[RT] Restart from a Real-Time Calculation ')
-     call msg('snr','[RT] Number of steps done         :',it_now)
-     !
+     call msg('snr','[RT] Number of steps done    [o/o]:',real(it_now)/real(NE_steps)*100.)
    endif
    !
    it_start=it_now+1
    !
- else
-   !
-   ! Initializations
-   !
-   if (l_NE_with_fields) call RT_Ext_fields(A_vecpot,0._SP)
-   !
-#if defined _TWO_LEVELS
-   call RT_init_two_levels()
-#endif
-   !
  endif
  !
  ! Initialize G_lesser_previous and G_lesser_reference
+ !
+ if (l_NE_with_fields) call RT_Ext_fields(A_vecpot,(it_start-1)*RT_step)
  !
  A_vecpot_previous =A_vecpot
  G_lesser_previous =G_lesser   

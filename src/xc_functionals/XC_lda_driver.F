@@ -19,11 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-#if defined _RT
-subroutine XC_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER,G_lesser)
-#else
 subroutine XC_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
-#endif
  !
  ! These sources have been slightly adpated from Abinit 4.6.5.
  !
@@ -68,7 +64,7 @@ subroutine XC_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  use electrons,     ONLY:levels,n_spin
  use FFT_m,         ONLY:fft_size
 #if defined _RT
- use SC,            ONLY:SC_bands
+ use SC,            ONLY:rho_n
 #endif
  use xc_functionals,ONLY:XC_EXCHANGE,XC_EXCHANGE_CORRELATION,XC_CORRELATION,&
 &                        E_xc,F_xc,V_xc,XC_LDA_X,&
@@ -79,9 +75,6 @@ subroutine XC_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  type(levels) ::en
  type(bz_samp)::Xk
  integer      ::KIND,FUNCTIONAL,ORDER
-#if defined _RT
- complex(SP), intent(in) :: G_lesser(SC_bands,SC_bands,en%nk)
-#endif
  !
  ! Work Space
  !
@@ -110,7 +103,7 @@ subroutine XC_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  ! Electronic density & Rs
  !
 #if defined _RT
- call el_density(G_lesser,Xk,rho_sp,.false.)
+ rho_sp=rho_n
 #else
  call el_density(en,Xk,rho_sp,.false.)
 #endif

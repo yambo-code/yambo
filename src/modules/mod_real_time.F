@@ -60,7 +60,7 @@ module real_time
  !
  ! To exclude the Diamagnetic term 
  !
- logical           :: l_RT_no_diamagnetic
+ logical           :: l_RT_diamagnetic
  !
  ! To include the induced field in the coupling and current
  !

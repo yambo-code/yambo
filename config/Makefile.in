@@ -55,7 +55,7 @@ PROJECTS = yambo_ph yambo_sc yambo_ras yambo_ras_distributed yambo_reels \
            yambo_rt yambo_distributed yambo_2levels \
            ypp_rt ypp_ph ypp_ras ypp_sc ypp_magnetic ypp_boltzmann
 BROKEN   = yambo_manyk
-DEBUG    = yambo_test_1 yambo_test_2
+DEBUG    = yambo_test_1 
 EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(DEBUG)
 INTERFCS = a2y p2y e2y c2y
 #

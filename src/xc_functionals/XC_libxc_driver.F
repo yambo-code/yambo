@@ -28,6 +28,9 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:DL_vol
  use com,           ONLY:msg,warning
+#if defined _RT
+ use SC,            ONLY:rho_n
+#endif
  use electrons,     ONLY:levels,n_spin
  use FFT_m,         ONLY:fft_size
  use libxc_int,     ONLY:xc_fnctl_t,XC_y2libxc,xc_setup_fnctl
@@ -70,7 +73,11 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  ! Electronic/spin density 
  !===============================
  !
+#if defined _RT
+ rho_sp=rho_n
+#else
  call el_density(en,Xk,rho_sp,.false.)
+#endif
  !
  forall(i1=1:fft_size,i2=1:n_spin)  tmp_rho(i2,i1)=rho_sp(i1,i2)*real(fft_size,DP)/real(DL_vol,DP)
  !

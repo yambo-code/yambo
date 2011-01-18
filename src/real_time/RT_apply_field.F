@@ -25,7 +25,7 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
  !
  use pars,           ONLY:SP,cI
  use units,          ONLY:SPEED_OF_LIGHT
- use real_time,      ONLY:l_RT_no_diamagnetic
+ use real_time,      ONLY:l_RT_diamagnetic
  use fields,         ONLY:gauge_field
  use electrons,      ONLY:n_sp_pol
  use fields,         ONLY:global_gauge
@@ -69,7 +69,7 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
      enddo
    enddo
    !
-   if(.not.l_RT_no_diamagnetic) then
+   if(l_RT_diamagnetic) then
      forall(i1=1:SC_bands,is=1:n_sp_pol) 
        H_nl_sc(i1,i1,is)=H_nl_sc(i1,i1,is)+0.5_SP*sum(A_vec_pot(1:3)**2)
      end forall

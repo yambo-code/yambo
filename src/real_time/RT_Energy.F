@@ -26,7 +26,7 @@ subroutine RT_Energy(en,k,RT_Energies)
  use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
- use SC,             ONLY:V_hartree_sc,Ho
+ use SC,             ONLY:V_hartree_sc,Ho,rho_n
  use X_m,            ONLY:P_square
  use real_time,      ONLY:XC0_and_HARTREE0,G_lesser,RT_average_operator,XCfrozen,l_NE_with_fields, &
 &                         l_NE_simulate_IP 
@@ -100,8 +100,10 @@ subroutine RT_Energy(en,k,RT_Energies)
      !        
      ! E_xc Energy 
      !
+     call el_density(G_lesser,k,rho_n,.false.)
+     !
      call IO_and_Messaging_switch("-report -log -io_in -io_out")
-     call XC_potential_driver(en,k,WF_KIND,WF_xc_functional,0,G_lesser)
+     call XC_potential_driver(en,k,WF_KIND,WF_xc_functional,0)
      call IO_and_Messaging_switch("+report +log +io_in +io_out")
      !
      call RT_average_operator(VALUE=Exc,O_REAL=E_xc,G=G_lesser,k=k)

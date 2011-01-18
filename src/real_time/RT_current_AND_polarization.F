@@ -33,7 +33,7 @@ subroutine RT_current_AND_polarization(Xk,G_input,A_input)
  use D_lattice,      ONLY:DL_vol
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:nel
- use real_time,      ONLY:l_RT_no_diamagnetic,NE_dynamics,l_NE_with_fields,RT_ind_J,RT_average_operator,RT_P
+ use real_time,      ONLY:l_RT_diamagnetic,NE_dynamics,l_NE_with_fields,RT_ind_J,RT_average_operator,RT_P
  use fields,         ONLY:gauge_field
  use X_m,            ONLY:DIP_iR,DIP_P
  use QP_m,           ONLY:QP_nk
@@ -60,7 +60,7 @@ subroutine RT_current_AND_polarization(Xk,G_input,A_input)
  !
  ! Diamagnetic term
  !
- if(.not.l_RT_no_diamagnetic) then
+ if(l_RT_diamagnetic) then
    !
    RT_ind_J(:)=RT_ind_J(:)-A_input%vecpot(:)*real(nel,SP)/SPEED_OF_LIGHT
    !

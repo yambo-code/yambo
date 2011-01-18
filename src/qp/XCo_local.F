@@ -19,11 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-#if defined _RT
-subroutine XCo_local(E,Xk,G_lesser)
-#else
 subroutine XCo_local(E,Xk)
-#endif
  !
  ! Local V_xc
  !
@@ -48,9 +44,6 @@ subroutine XCo_local(E,Xk)
  implicit none
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
-#if defined _RT
- complex(SP),   intent(in) :: G_lesser(SC_bands,SC_bands,QP_nk)
-#endif
  !
  ! Work Space
  !
@@ -88,7 +81,7 @@ subroutine XCo_local(E,Xk)
    l_call_the_driver=.TRUE.
    !
 #if defined _RT
-   call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1,G_lesser)
+   call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1)
    l_call_the_driver=.FALSE.
 #endif
    if (l_call_the_driver) then

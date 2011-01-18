@@ -47,13 +47,12 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  call mem_est("QP_Vxc",(/QP_n_states/))    
  !
 #if defined _RT
- call XCo_local(E,k,G_lesser)
  call el_density(G_lesser,Xk,rho_n,.false.)
 #else
- call XCo_local(E,k)
  call el_density(E,Xk,rho_n,.false.)
  V_xc_sc=V_xc 
 #endif
+ call XCo_local(E,k)
  !
  if(SC_bands==0) call error(' Error SCBands==0 ')
  !

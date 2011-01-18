@@ -115,6 +115,7 @@ module real_time
  real(SP) :: NE_time ! <- incremented
  real(SP) :: NE_tot_time ! Total (fixed)
  integer  :: NE_i_time ! = (NE_time-1)/RT_step
+ integer  :: NE_Hxc_jumps
  integer  :: NE_steps
  !
  ! Macroscopic induced current ... 

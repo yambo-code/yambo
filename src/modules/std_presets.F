@@ -84,13 +84,14 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB
  use collisions_IO,    ONLY:n_collisions,COLLISIONS_cutoff
  use collisions_CACHE, ONLY:COLLISIONS_cache_size
- use real_time,  ONLY:l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe,NE_tot_time
 #endif
 #if defined _RT
  use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Integrator_name,            &
 &                     RT_diagonalization_steps, l_NE_simulate_RPA,  &
 &                     SwitchOnTime,max_rt_steps_disk,l_RT_induced_field,&
-&                     l_RT_diagonalize,RT_is_dumped,QP_LifeTime,Phase_LifeTime
+&                     l_RT_diagonalize,RT_is_dumped,QP_LifeTime,Phase_LifeTime,&
+&                     NE_Hxc_jumps,NE_tot_time,&
+&                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe,NE_tot_time,NE_Hxc_jumps
  use fields,     ONLY:Efield,n_ext_fields
 #endif
 #if defined _TWO_LEVELS
@@ -461,6 +462,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  RT_step=0.002*FS2AUT
  NE_steps=1
+ NE_Hxc_jumps=0
  Thermal_steps=0
  SwitchOnTime = 1./8.
  Integrator_name='RK2'

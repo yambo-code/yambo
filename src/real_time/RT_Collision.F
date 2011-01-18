@@ -29,12 +29,12 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  use electrons,      ONLY:levels
  use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V
+ use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
  use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_with_fields,QP_LifeTime,H_t,   &
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,    & 
-&                         G_lesser_reference,l_RT_needs_XC0,Phase_LifeTime,&
-&                         RT_is_dumped,l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics
+&                         G_lesser_reference,l_RT_needs_XC0,Phase_LifeTime,NE_Hxc_jumps,&
+&                         RT_is_dumped,l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start
 #if defined _TWO_LEVELS
  use real_time,      ONLY:tau_diag,tau_offdiag,l_3levels
 #endif
@@ -65,6 +65,8 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  !
  ! NE_dynamics=.FALSE. corresponds to Thermalization where the density must be updated
  !
+ if (it_now==it_start.or.mod(it_now-it_start+1,NE_Hxc_jumps)==0) then
+ !
  if(.not.Hfrozen.or..not.XCfrozen.or..not.NE_dynamics) call el_density(G_input,k,rho_n,.false.)
  !
  if(.not.Hfrozen.or..not.NE_dynamics) call V_Hartree(rho_n,V_hartree_sc)
@@ -82,6 +84,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !
    if(l_sc_hf.or.l_sc_cohsex) call COLLISIONS_IO_compose(G_input)
    !
+ endif
  endif
  !
  I1_lesser=(0._SP,0._SP)

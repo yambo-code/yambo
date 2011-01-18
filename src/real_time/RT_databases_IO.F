@@ -34,12 +34,14 @@ subroutine RT_databases_IO(Xen,it)
  !
  ! Work Space
  !
- integer :: ik,io_G,io_J
+ integer :: ik,io_G,io_J,COM_
+ !
+ ! Write G_lesser (always)
  !
  io_G=0
- !
- if (it==1.or.it==max_rt_steps_disk) call io_control(ACTION=OP_WR,COM=REP, SEC=(/1/),ID=ID(5))
- if (it> 1)                          call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(5))
+ COM_=NONE
+ if (it==1.or.it==max_rt_steps_disk) COM_=REP
+ call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(5))
  io_G=io_SC_components('G' ,Xen,ID(5))
  !
  do ik = 1, QP_nk 
@@ -56,15 +58,15 @@ subroutine RT_databases_IO(Xen,it)
    !
    ! Write current and polarization on disk
    !
-   if(NE_i_time==1) then 
+!   if(NE_i_time==1) then 
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
      io_J=io_SC_components('J' ,Xen,ID(4))
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/2/),ID=ID(4)) 
-     io_J=io_SC_components('J' ,Xen,ID(4))
-   else
+!     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/2/),ID=ID(4)) 
+!     io_J=io_SC_components('J' ,Xen,ID(4))
+!   else
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(4)) 
      io_J=io_SC_components('J' ,Xen,ID(4))
-   endif
+!   endif
    !
  endif
  !

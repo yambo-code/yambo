@@ -55,7 +55,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, QP_LifeTime, Phase_LifeTime, &
-&                        RT_diagonalization_steps,SwitchOnTime,max_rt_steps_disk,NE_tot_time
+&                        RT_diagonalization_steps,SwitchOnTime,max_rt_steps_disk,NE_tot_time,NE_Hxc_jumps
  use fields,        ONLY:Efield
 #endif
 #if defined _TWO_LEVELS
@@ -269,6 +269,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _RT
  call it(defs,'RTstep',    '[RT] Real Time step length',RT_step,unit=Time_unit)
  call it(defs,'NEsteps',   '[RT] Non-equilibrium Time steps',NE_steps)
+ call it(defs,'HXCjumps',  '[RT] Steps jumped between two Hartree+XC updates',NE_Hxc_jumps,Verb_level=V_real_time)
  call it(defs,'NETime',    '[RT] Non-equilibrium  max Time (alternative to NEsteps)',NE_tot_time,unit=Time_unit)
  call it(defs,'ThermSteps','[RT Therm] Thermal Steps',Thermal_steps,Verb_level=V_real_time)
  !

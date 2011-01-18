@@ -58,15 +58,10 @@ subroutine RT_databases_IO(Xen,it)
    !
    ! Write current and polarization on disk
    !
-!   if(NE_i_time==1) then 
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
-     io_J=io_SC_components('J' ,Xen,ID(4))
-!     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/2/),ID=ID(4)) 
-!     io_J=io_SC_components('J' ,Xen,ID(4))
-!   else
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(4)) 
-     io_J=io_SC_components('J' ,Xen,ID(4))
-!   endif
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
+   io_J=io_SC_components('J' ,Xen,ID(4))
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(4)) 
+   io_J=io_SC_components('J' ,Xen,ID(4))
    !
  endif
  !

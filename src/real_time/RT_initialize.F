@@ -29,7 +29,7 @@ subroutine RT_initialize()
 &                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,NE_tot_time,    &
 &                         l_RT_diamagnetic,max_rt_steps_disk,l_NE_simulate_BSE,       &
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,         &
-&                         l_RT_induced_field,     &
+&                         l_RT_induced_field,NE_Hxc_jumps,     &
 &                         RT_diagonalization_steps,RT_is_dumped,QP_LifeTime,Phase_LifeTime
 #if defined _TWO_LEVELS
  use real_time,      ONLY:tau_offdiag,tau_diag,l_3levels
@@ -89,6 +89,8 @@ subroutine RT_initialize()
  endif
  !
  NE_tot_time=RT_step*NE_steps
+ !
+ if (NE_Hxc_jumps<=0) NE_Hxc_jumps=1
  !
  ! QP and Phase Lifetimes
  !========================

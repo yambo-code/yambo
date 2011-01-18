@@ -91,7 +91,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     SwitchOnTime,max_rt_steps_disk,l_RT_induced_field,&
 &                     l_RT_diagonalize,RT_is_dumped,QP_LifeTime,Phase_LifeTime,&
 &                     NE_Hxc_jumps,NE_tot_time,&
-&                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe,NE_tot_time,NE_Hxc_jumps
+&                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe
  use fields,     ONLY:Efield,n_ext_fields
 #endif
 #if defined _TWO_LEVELS
@@ -462,7 +462,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  RT_step=0.002*FS2AUT
  NE_steps=1
- NE_Hxc_jumps=0
+ NE_Hxc_jumps=1
  Thermal_steps=0
  SwitchOnTime = 1./8.
  Integrator_name='RK2'

@@ -66,25 +66,26 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  ! NE_dynamics=.FALSE. corresponds to Thermalization where the density must be updated
  !
  if (it_now==it_start.or.mod(it_now-it_start+1,NE_Hxc_jumps)==0) then
- !
- if(.not.Hfrozen.or..not.XCfrozen.or..not.NE_dynamics) call el_density(G_input,k,rho_n,.false.)
- !
- if(.not.Hfrozen.or..not.NE_dynamics) call V_Hartree(rho_n,V_hartree_sc)
- !
- if(.not.XCfrozen.or..not.NE_dynamics) then
    !
-   if(l_sc_contains_lda.and.SC_xc_functional/=0) then
+   if(.not.Hfrozen.or..not.XCfrozen.or..not.NE_dynamics) call el_density(G_input,k,rho_n,.false.)
+   !
+   if(.not.Hfrozen.or..not.NE_dynamics) call V_Hartree(rho_n,V_hartree_sc)
+   !
+   if(.not.XCfrozen.or..not.NE_dynamics) then
      !
-     call IO_and_Messaging_switch("-report -log -io_in -io_out")
-     call XC_potential_driver(Xen,k,WF_KIND,WF_xc_functional,1)
-     call IO_and_Messaging_switch("+report +log +io_in +io_out")
-     V_xc_sc=V_xc
+     if(l_sc_contains_lda.and.SC_xc_functional/=0) then
+       !
+       call IO_and_Messaging_switch("-report -log -io_in -io_out")
+       call XC_potential_driver(Xen,k,WF_KIND,WF_xc_functional,1)
+       call IO_and_Messaging_switch("+report +log +io_in +io_out")
+       V_xc_sc=V_xc
+       !
+     endif
+     !
+     if(l_sc_hf.or.l_sc_cohsex) call COLLISIONS_IO_compose(G_input)
      !
    endif
    !
-   if(l_sc_hf.or.l_sc_cohsex) call COLLISIONS_IO_compose(G_input)
-   !
- endif
  endif
  !
  I1_lesser=(0._SP,0._SP)

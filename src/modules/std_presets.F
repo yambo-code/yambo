@@ -438,12 +438,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  COLLISIONS_cache_size=-1.0
  COLLISIONS_cutoff=0.0005
  !
- ! RT current (in use in SC_driver)
- !
- l_RT_diamagnetic=.FALSE.
- l_RT_probe=.FALSE.
- l_RT_pump_and_probe=.FALSE.
- !
 #endif
 #if defined _RT
  !
@@ -459,6 +453,11 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
    Efield(i1)%versor       =(/1.0,0.0,0.0/)
  enddo
  !
+ ! RT current 
+ !
+ l_RT_diamagnetic=.FALSE.
+ l_RT_probe=.FALSE.
+ l_RT_pump_and_probe=.FALSE.
  !
  RT_step=0.002*FS2AUT
  NE_steps=1

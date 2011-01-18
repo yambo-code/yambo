@@ -110,14 +110,6 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
      if (l_sc_cohsex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc) 
    endif
    !
-   ! Local XC potentials (like CHOSEX) and Hartree
-   !=====================
-   if(.not.l_NE_simulate_IP) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,wf)
-   !  
-   ! The bare, frozed VHxc 
-   !=======================
-   if(l_RT_needs_XC0) call V_by_V_plus_V(SC_bands,(1._SP,0._SP),&
-&                                        XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1),H_nl_sc(1:SC_bands,1:SC_bands,1))
    ! Adiabatic Switching
    !=====================
    ! (for all the parts of self-energy different from V_h + V_xc)
@@ -132,6 +124,15 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
      !
    endif
    !
+   ! The bare, frozed VHxc 
+   !=======================
+   if(l_RT_needs_XC0) call V_by_V_plus_V(SC_bands,(1._SP,0._SP),&
+&                                        XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1),H_nl_sc(1:SC_bands,1:SC_bands,1))
+   !
+   ! Local XC potentials (like CHOSEX) and Hartree
+   !=====================
+   if(.not.l_NE_simulate_IP) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,wf)
+   !  
    ! Add Ho = T+V_ion
    !==================
    call V_by_V_plus_V(SC_bands,(1._SP,0._SP),Ho(1:SC_bands,1:SC_bands,ik,1),H_nl_sc(1:SC_bands,1:SC_bands,1))

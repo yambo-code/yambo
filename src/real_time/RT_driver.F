@@ -35,7 +35,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
 &                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,      &
 &                         NE_i_time,Integrator_name,l_RT_diagonalize,max_rt_steps_disk,&
 &                         G_lesser_reference,RT_is_dumped,RT_diagonalization_steps, &
-&                         it_start,RT_output,NE_time,NE_dynamics
+&                         it_start,RT_output,NE_time,NE_dynamics,l_NE_simulate_BSE
 #if defined _TWO_LEVELS
  use real_time,      ONLY:l_3levels
  use parser_m,       ONLY:parser
@@ -177,7 +177,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
      !
      ! ... and use it to update the dipoles
      !
-     if (Thermal_steps/=0) call RT_update_dipoles(G_lesser_reference,Xen,k,q)
+     if (Thermal_steps/=0.and..not.l_NE_simulate_BSE) call RT_update_dipoles(G_lesser_reference,Xen,k,q)
      !
    endif
    !

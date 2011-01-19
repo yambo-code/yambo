@@ -35,7 +35,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q)
  ! [5] Initialize the fields
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_sc_cohsex
+ use drivers,        ONLY:l_sc_cohsex,l_sc_hf
  use com,            ONLY:msg,warning,error
  use memory_m,       ONLY:mem_est
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_Vnl_xc
@@ -244,6 +244,8 @@ subroutine RT_start_and_restart(Xen,Xk,k,q)
    if(l_NE_simulate_IP) V_hartree_sc=(0._SP)
    !
    if(l_NE_simulate_BSE) then
+     !
+     if(.not.l_sc_cohsex.and..not.l_sc_hf) call error(" RTBSEOnly works only with Potantial=COHSEX or HARTREE-FOCK !! ")
      !
      call COLLISIONS_IO_compose(G_lesser) 
      !

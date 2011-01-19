@@ -208,6 +208,14 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
      call RT_update_G_reference(it,Xen,G_lesser_reference)
    endif   
    !
+   ! End dynamics ?
+   !===============
+   if (it==Thermal_steps+NE_steps) Dynamics_is_over=.TRUE.
+   if (stop_now(.FALSE.)) then
+      NE_steps=(int((it-Thermal_steps)/max_rt_steps_disk)+1)*max_rt_steps_disk
+      Dynamics_is_over=.TRUE.
+   endif
+   !
    ! Write DBs
    !===========
    it_now=it ! used in RESTART
@@ -225,17 +233,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    call RT_output('dyn',real(RT_Energies),NE_time/FS2AUT)
    call RT_output('cur pol',TIME_or_E=NE_time/FS2AUT)
    if(l_NE_with_fields) call RT_output('pot',TIME_or_E=NE_time/FS2AUT) 
-   !
-   ! End dynamics
-   !===============
-   if (it==Thermal_steps+NE_steps) Dynamics_is_over=.TRUE.
-   !
-   ! STOP dynamics, but empty the cache before
-   !===============
-   if (stop_now(.FALSE.)) then
-      NE_steps=it-Thermal_steps
-      NE_steps=(int(NE_steps/max_rt_steps_disk)+1)*max_rt_steps_disk
-   endif
    !
    ! Integrate equation of motion
    !==============================

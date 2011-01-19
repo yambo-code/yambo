@@ -22,7 +22,7 @@
 subroutine RT_databases_IO(Xen,it)
  !
  use QP_m,           ONLY:QP_nk
- use real_time,      ONLY:ID,NE_dynamics,l_NE_with_fields,max_rt_steps_disk,NE_i_time
+ use real_time,      ONLY:ID,NE_dynamics,l_NE_with_fields,NE_i_time,it_start
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL
  use electrons,      ONLY:levels
  !
@@ -40,7 +40,7 @@ subroutine RT_databases_IO(Xen,it)
  !
  io_G=0
  COM_=NONE
- if (it==1.or.it==max_rt_steps_disk) COM_=REP
+ if (it==it_start) COM_=REP
  call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(5))
  io_G=io_SC_components('G' ,Xen,ID(5))
  !

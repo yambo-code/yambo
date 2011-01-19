@@ -30,7 +30,7 @@ subroutine RT_databases(en)
  use timing,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG
  use real_time,      ONLY:NE_steps,NE_i_time,current_cache,RT_ind_J,max_rt_steps_disk,&
-&                         current_cache_size,RT_P
+&                         current_cache_size,RT_P,NE_time,RT_step
  use fields,         ONLY:Efield,n_ext_fields
  implicit none
  !
@@ -56,6 +56,11 @@ subroutine RT_databases(en)
  !
  ! I/O of Current and Vector Potential
  !=====================================
+ !
+ if (nint(NE_time/RT_step)+1/=NE_steps) then
+   call warning(" Interrupted DB found. Time steps reduced.")
+   NE_steps=NE_time/RT_step+1
+ endif
  !
  allocate(RT_J_t(NE_steps,3),RT_P_t(NE_steps,3))
  allocate(current_cache(current_cache_size,max_rt_steps_disk))

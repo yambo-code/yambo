@@ -31,7 +31,7 @@ integer function variables_SC(ID,local_description,what)
 &                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions,local_V
  use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR
 #if defined _RT
- use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,NE_tot_time,Hfrozen,XCfrozen,                      &
+ use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,NE_time,Hfrozen,XCfrozen,                      &
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
 &                         QP_LifeTime,Phase_LifeTime,l_RT_diamagnetic,&
 &                         max_rt_steps_disk,l_RT_induced_field,l_NE_simulate_BSE
@@ -220,7 +220,7 @@ integer function variables_SC(ID,local_description,what)
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,&
-&    VAR=" [RT] NE simulation time     [fs]:",R0=NE_tot_time,WARN=.true.,OP=(/"=="/),UNIT=1./FS2AUT,&
+&    VAR=" [RT] NE time (reached)      [fs]:",R0=NE_time,WARN=.true.,OP=(/"=="/),UNIT=1./FS2AUT,&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID, &

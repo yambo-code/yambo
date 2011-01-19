@@ -497,8 +497,8 @@ subroutine RT_fix_symmetries(E,k)
        !
        wf_disk(:,ib,:,i_spin)=0._SP
        !
-       wf_disk(1,ib,1:wf_ng,i_spin)=  real(wf_DP_rot(fft_g_table(1:wf_ng,1)))*fft_norm
-       wf_disk(2,ib,1:wf_ng,i_spin)= aimag(wf_DP_rot(fft_g_table(1:wf_ng,1)))*fft_norm
+       wf_disk(1,ib,1:wf_ncx,i_spin)=  real(wf_DP_rot(fft_g_table(1:wf_ncx,1)))*fft_norm
+       wf_disk(2,ib,1:wf_ncx,i_spin)= aimag(wf_DP_rot(fft_g_table(1:wf_ncx,1)))*fft_norm
        !
        if ( S_contains_TR(is) ) wf_disk(2,ib,:,i_spin)=-wf_disk(2,ib,:,i_spin)
        !

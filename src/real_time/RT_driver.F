@@ -95,7 +95,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  ! WFs loading
  !=============
  !
- call WF_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),space='R',title=' ')  
+ call WF_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),space='R',title='-RT')  
  !
  ! Core initialization
  !

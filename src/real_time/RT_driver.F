@@ -168,16 +168,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    if(it==it_start) then
      !
-     if (NE_i_time<0 ) call live_timing('[RT] Thermalization :',Thermal_steps-it_start+1,SERIAL=.true.)
-     if (NE_i_time>=0) call live_timing('[RT] Dynamics :',NE_steps-it_start+1,SERIAL=.true.)
-     !
-     ! Use the (eventually) thermalized G_lesser as a reference...
-     !
-     G_lesser_reference=G_lesser
-     !
-     ! ... and use it to update the dipoles
-     !
-     if (Thermal_steps/=0.and..not.l_NE_simulate_BSE) call RT_update_dipoles(G_lesser_reference,Xen,k,q)
+     if (.not.NE_dynamics) call live_timing('[RT] Thermalization :',Thermal_steps-it_start+1,SERIAL=.true.)
+     if (     NE_dynamics) call live_timing('[RT] Dynamics :',NE_steps-it_start+1,SERIAL=.true.)
      !
    endif
    !
@@ -203,10 +195,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    ! Diagonalization
    !================
-   if(l_RT_diagonalize) then
-     call RT_qp_analyze(it,en,k,Xk,G_lesser)
-     call RT_update_G_reference(it,Xen,G_lesser_reference)
-   endif   
+   if(l_RT_diagonalize) call RT_qp_analyze(it,en,k,Xk,G_lesser)
    !
    ! End dynamics ?
    !===============
@@ -239,6 +228,13 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    ! T -> T+dT step 
    !
    call RT_Collision(G_lesser_previous,A_vecpot_previous,Xen,k,q,NE_time)
+   !
+   ! At the end of the thermalization update the reference G_lesser and dipoles
+   !
+   if (it==Thermal_steps) then
+     call RT_update_G_reference(Xen,G_lesser_reference)
+     if (l_NE_simulate_BSE) call RT_update_dipoles(G_lesser_reference,Xen,k,q)
+   endif
    !
    call RT_Integrator(G_lesser,G_lesser_previous,A_vecpot,A_vecpot_previous,RT_step,Xen,k,q,Integrator_name,NE_time)
    !

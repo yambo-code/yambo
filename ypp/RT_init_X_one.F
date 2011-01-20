@@ -48,10 +48,10 @@ subroutine RT_init_X_one()
  i_t_end  =int(X_rt%time_range(2)/RT_step)
  !
  if(i_t_start<int(Efield(ref_efield)%t_initial/RT_step)+1.or.i_t_start>NE_steps) then
-    i_t_start=int(Efield(ref_efield)%t_initial/RT_step)+1
-    call warning('Initial time redefined to be '//trim(real2ch((i_t_start-1)*RT_step/FS2AUT))//' fs')
+   i_t_start=int(Efield(ref_efield)%t_initial/RT_step)+1
+   call warning('Initial time redefined to be '//trim(real2ch((i_t_start-1)*RT_step/FS2AUT))//' fs')
  endif
- if(i_t_end<=0.or.i_t_end>NE_steps) then
+ if(i_t_end>NE_steps) then
    i_t_end  =NE_steps
    call warning('Final time redefined to be '//trim(real2ch(i_t_end*RT_step/FS2AUT))//' fs')
  endif
@@ -70,14 +70,6 @@ subroutine RT_init_X_one()
    ! If there is a time-windows the damping function
    ! has be applied also the initial part otherwise 
    ! there will problems doing FFT for the non-zero starting point 
-   !
-   if(X_rt%damp_factor<W_RT_induced_step) then
-     X_rt%damp_factor=W_RT_induced_step
-     call warning('Damping factor redefined to be '//trim(real2ch(W_RT_induced_step*HARTREE))//' eV')
-   endif
-   ! 
-   ! apply the damping
-   !===================
    !
    call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_J_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
    call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_P_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)

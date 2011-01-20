@@ -250,7 +250,7 @@ integer function variables_SC(ID,local_description,what)
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,R0=QP_LifeTime,&
-&    VAR=' [RT] QP life time            [fs]:', CHECK=.true.,OP=(/"=="/),&
+&    VAR=' [RT] QP life time           [fs]:', CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
    i_desc=i_desc+1
    if (ver_is_gt_or_eq(ID,revision=605)) then
@@ -286,7 +286,7 @@ integer function variables_SC(ID,local_description,what)
        call io_elemental(ID,VAR="FIELD_NAME"//trim(intc(i1)),CH0="",VAR_SZ=1,MENU=0)
        i_desc=i_desc+1
        call io_elemental(ID,CH0=Efield(i1)%ef_name, &
-&       VAR=' [FIELDs] Field                 :',CHECK=.true.,OP=(/"=="/),&
+&       VAR=' [FIELDs] Field                  :',CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc))
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
        !

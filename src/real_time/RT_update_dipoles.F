@@ -21,6 +21,9 @@
 !
 subroutine RT_update_dipoles(G_input,Xen,k,q)
  !
+ ! This routine is needed to mimic a yambo_sc calculation done in length gauge, where
+ ! the [r,Sigma_cohosex] is neglected.
+ !
  ! This subroutine update <i|r|j> dipoles using G_lesser_reference as
  ! Green function to construct the Hamiltonian
  ! disregarding the commutator with any nonlocal-part of the Hamiltonian except pseudo

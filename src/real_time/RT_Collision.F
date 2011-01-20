@@ -163,7 +163,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    ! This term send the electron distribution into the initial one
    ! G_lesser_refence(:,:,:) 
    !
-   if(RT_is_dumped) then
+   if(RT_is_dumped.and.NE_dynamics) then
      !
 #if defined _TWO_LEVELS
      if(l_3levels) then

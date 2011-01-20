@@ -465,8 +465,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  Thermal_steps=0
  SwitchOnTime = 1./8.
  Integrator_name='RK2'
- QP_LifeTime = 10.0*FS2AUT
- Phase_LifeTime = 10.0*FS2AUT
+ QP_LifeTime = 0.
+ Phase_LifeTime = 0.
  RT_is_dumped=.FALSE.
  l_NE_simulate_RPA=.FALSE.
  RT_diagonalization_steps=-1

@@ -102,7 +102,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  call par_indexes(px,(/Xk%nibz,iv_max/),(/1,X%ib(1)/))
 #endif
  !
-#if defined _RT
+#if defined _SC
  call live_timing('P and P^2 (T):',px%n_of_elements(myid+1)*n_spin)
  wf_dim=4
 #else
@@ -179,7 +179,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          ! 
          ! GPL_EXCLUDE_START 
          !
-#if defined _RT 
+#if defined _SC
          wf_xyz(:wf_ng,4) = wf(1:wf_ng,ivfft) *  & 
 &                          ( (Xk%pt(ik,1) + g_vec(:wf_ng,1))**2 * (2.0_SP*pi/alat(1))**2  &
 &                          + (Xk%pt(ik,2) + g_vec(:wf_ng,2))**2 * (2.0_SP*pi/alat(2))**2  &
@@ -216,7 +216,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          ! <P>
          !=====
          ! P_vc=rho(:3)
-#if defined _RT
+#if defined _SC
          DIP_P(:,ic,iv,ik,i_spin)=DIP_P(:,ic,iv,ik,i_spin)+rho(:3)
 #endif        
          !======
@@ -245,7 +245,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
            !
          endif
          !
-#if defined _RT
+#if defined _SC
          !======
          ! <P^2>
          !======
@@ -304,7 +304,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  do i_spin=1,n_sp_pol
    call pp_redux_wait(DIP_iR(:,:,:,:,i_spin))
-#if defined _RT
+#if defined _SC
    call pp_redux_wait(DIP_P(:,:,:,:,i_spin))
    call pp_redux_wait(P_square(:,:,:,i_spin))
 #endif

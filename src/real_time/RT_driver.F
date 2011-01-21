@@ -30,20 +30,19 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  use wave_func,      ONLY:WF_load,WF_free
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx
+ use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx,SC_R
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &
 &                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,      &
 &                         NE_i_time,Integrator_name,l_RT_diagonalize,max_rt_steps_disk,&
 &                         G_lesser_reference,RT_is_dumped,RT_diagonalization_steps, &
-&                         it_start,RT_output,NE_time,NE_dynamics,l_NE_simulate_BSE
+&                         it_start,RT_output,NE_time,NE_dynamics,RT_update
+ use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
 #if defined _TWO_LEVELS
  use real_time,      ONLY:l_3levels
  use parser_m,       ONLY:parser
 #endif
  use fields,           ONLY:A_vecpot,A_vecpot_previous
  use collisions_CACHE, ONLY:free_COLLISIONS_v
-
- use real_time, ONLY: I1_lesser,I2_lesser
  !
  implicit none
  !
@@ -60,7 +59,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  ! 
  ! Work Space
  !
- integer                  :: it,ib
+ integer                  :: it,ik,ib
  logical                  :: Dynamics_is_over
  complex(SP)              :: RT_Energies(7)
  !
@@ -115,7 +114,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
  ! Restart from a previous RT run or from a SC calculation
  ! 
- call RT_start_and_restart(Xen,Xk,k,q)
+ call RT_start_and_restart(Xen,Xk,k,q,X)
  !
  ! Calculation already done
  !
@@ -193,10 +192,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    call RT_Energy(Xen,k,RT_Energies)
    !
-   ! Diagonalization
-   !================
-   if(l_RT_diagonalize) call RT_qp_analyze(it,en,k,Xk,G_lesser)
-   !
    ! End dynamics ?
    !===============
    if (it==Thermal_steps+NE_steps) Dynamics_is_over=.TRUE.
@@ -223,18 +218,31 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    call RT_output('cur pol',TIME_or_E=NE_time/FS2AUT)
    if(l_NE_with_fields) call RT_output('pot',TIME_or_E=NE_time/FS2AUT) 
    !
-   ! Integrate equation of motion
+   ! Calculate Collisions and fill SC_R
    !==============================
-   ! T -> T+dT step 
    !
    call RT_Collision(G_lesser_previous,A_vecpot_previous,Xen,k,q,NE_time)
    !
-   ! At the end of the thermalization update the reference G_lesser and dipoles
-   !
-   if (it==Thermal_steps) then
-     call RT_update_G_reference(Xen,G_lesser_reference)
-     if (l_NE_simulate_BSE) call RT_update_dipoles(G_lesser_reference,Xen,k,q)
+   ! Diagonalization
+   ! =====================
+   if(it==Thermal_steps.or.mod(it,RT_diagonalization_steps)==0) then
+     do ik=1,Xen%nk
+       call mat_dia_inv(DIAGO,USE_LK,SC_R(1:SC_bands,1:SC_bands,ik,1),E_real=Xen%E(:SC_bands,ik,1))
+     enddo
    endif
+   !
+   ! Updating
+   !===========
+   !
+   ! At the end of the thermalization update the reference G_lesser and dipoles
+   if (it==Thermal_steps) call RT_update(G_lesser_reference,SC_R,it,Xen,k,Xk,X(1),up_Gref=.true.,up_DIP=.true.)
+   !
+   ! Analize quasi-particles
+   if(l_RT_diagonalize) call RT_update(G_lesser,SC_R,it,Xen,k,Xk,X(1),an_QP=.true.)
+   !
+   ! Integration
+   !=============
+   ! T -> T+dT step 
    !
    call RT_Integrator(G_lesser,G_lesser_previous,A_vecpot,A_vecpot_previous,RT_step,Xen,k,q,Integrator_name,NE_time)
    !

@@ -21,7 +21,7 @@
 !
 module real_time
  !
- use SC,        ONLY:G_lesser
+ use SC,        ONLY:G_lesser,SC_R
  use pars,      ONLY:DP,SP,schlen
  !
  implicit none
@@ -156,7 +156,6 @@ module real_time
  ! Hartree term
  !
  complex(SP), allocatable :: XC0_and_HARTREE0(:,:,:,:)
- complex(SP), allocatable :: H_t(:,:,:,:)
  !
  ! Occupation natural orbitals
  !
@@ -198,6 +197,25 @@ module real_time
      real(SP),        optional, intent(in) :: O_REAL(fft_size,n_sp_pol)
      logical,         optional, intent(in) :: TRANS
    end subroutine RT_average_operator
+   !
+   subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
+     use pars,       ONLY:SP
+     use SC,         ONLY:SC_bands
+     use R_lattice,  ONLY:bz_samp
+     use QP_m,       ONLY:QP_nk
+     use electrons,  ONLY:levels,n_sp_pol
+     use X_m,        ONLY:X_t
+     !
+     implicit none
+     type(X_t),      intent(inout)        :: X
+     complex(SP),    intent(inout)        :: G_input(SC_bands,SC_bands,QP_nk)
+     complex(SP),    intent(in)           :: SC_R(SC_bands,SC_bands,QP_nk,n_sp_pol)
+     type(bz_samp),  intent(in)           :: k,Xk
+     type(levels),   intent(in)           :: Xen
+     integer,        intent(in)           :: it
+     logical,        optional, intent(in) :: up_Gref,up_DIP,an_QP
+     !
+   end subroutine RT_update
    !
    subroutine RT_Integrator(G_new,G_old,Avec,Avec_old,T_step,Xen,k,q,Integrator,Time)
    end subroutine RT_Integrator
@@ -249,11 +267,8 @@ module real_time
        !
      endif
      !
-     if(l_RT_diagonalize.or.trim(Integrator_name)==EXACT.or.trim(Integrator_name)==RK2EXACT &
-&      .or.(RT_is_dumped.and.Thermal_Steps/=0)) then  
-       allocate(H_t(SC_bands,SC_bands,QP_nk,n_sp_pol))
-       call mem_est("H_t",(/size(H_t)/),(/2*SP/))
-     endif
+     allocate(SC_R(SC_bands,SC_bands,QP_nk,n_sp_pol))
+     call mem_est("SC_R",(/size(SC_R)/),(/2*SP/))
      !
      allocate(I1_lesser(SC_bands,SC_bands,QP_nk))
      call mem_est("I1_lesser",(/size(I1_lesser)/),(/2*SP/))
@@ -311,9 +326,9 @@ module real_time
        !
      endif
      !
-     if(allocated(H_t)) then
-       deallocate(H_t)
-       call mem_est("H_t")
+     if(allocated(SC_R)) then
+       deallocate(SC_R)
+       call mem_est("SC_R")
      endif
      !
      deallocate(G_lesser)

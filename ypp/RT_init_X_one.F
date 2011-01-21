@@ -66,6 +66,8 @@ subroutine RT_init_X_one()
    ! has be applied also the initial part otherwise 
    ! there will problems doing FFT for the non-zero starting point 
    !
+   call msg('r','[RT] Optimal damping factor: '//trim(real2ch(W_RT_induced_step*HARTREE))//' eV')
+   !
    call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_J_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
    call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_P_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
    !

@@ -24,14 +24,16 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  ! This subroutine prepare I1(t_1,t_2) and I2(t_1,t_2) give a G^<(t_1,t_1) 
  ! Actualy it works only for the diagonal I1(t_1,t_1), I2(t_1,t_1)
  !
+ ! This subroutine put the full Hamiltonian in SC_R if it is allocated
+ !
  use pars,           ONLY:SP,cI
  use wrapper,        ONLY:M_by_M,V_by_V_plus_V
  use electrons,      ONLY:levels
  use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now
+ use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
- use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_with_fields,QP_LifeTime,H_t,   &
+ use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_with_fields,QP_LifeTime,   &
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,    & 
 &                         G_lesser_reference,l_RT_needs_XC0,Phase_LifeTime,NE_Hxc_jumps,&
 &                         RT_is_dumped,l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start
@@ -90,7 +92,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  !
  I1_lesser=(0._SP,0._SP)
  I2_lesser=(0._SP,0._SP)
- if(allocated(H_t)) H_t =  (0._SP,0._SP) 
+ if(allocated(SC_R)) SC_R =  (0._SP,0._SP) 
  !
  call pp_indexes_reset(px)
  call par_indexes(px,(/QP_nk/))
@@ -141,7 +143,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !=====================
    if(l_NE_with_fields.and.NE_dynamics) call RT_apply_field(ik,H_nl_sc,A_input)
    !
-   if(allocated(H_t))  H_t(1:SC_bands,1:SC_bands,ik,1)=H_nl_sc(1:SC_bands,1:SC_bands,1)
+   if(allocated(SC_R))  SC_R(1:SC_bands,1:SC_bands,ik,1)=H_nl_sc(1:SC_bands,1:SC_bands,1)
    !
    ! Now I1 and I2 
    !===============
@@ -207,7 +209,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !
  enddo  !---- loop on k-points
  !
- if(allocated(H_t)) call pp_redux_wait(H_t(:,:,:,1))
+ if(allocated(SC_R)) call pp_redux_wait(SC_R(:,:,:,1))
  call pp_redux_wait(I1_lesser)
  call pp_redux_wait(I2_lesser)
  call pp_indexes_reset(px) 

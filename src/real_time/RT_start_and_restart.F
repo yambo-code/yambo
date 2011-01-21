@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_start_and_restart(Xen,Xk,k,q)
+subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  !
  ! This subroutine initialize some variables and restart from SC
  ! or from a previous RT calculation:
@@ -49,12 +49,13 @@ subroutine RT_start_and_restart(Xen,Xk,k,q)
  use real_time,      ONLY:G_lesser,ID,ID,NE_steps,G_lesser_previous,RT_ind_J,&
 &                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,&
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
-&                         l_NE_simulate_BSE,RT_P,RT_step
+&                         l_NE_simulate_BSE,RT_P,RT_step,RT_update
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V, &
 &                         rho_convergence,H_rotate,local_V,V_hartree_sc,      &
 &                         E_bare,V_xc_sc,rho_n
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE
+ use X_m,            ONLY:X_t
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
@@ -62,6 +63,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q)
  !
  type(levels)      :: Xen
  type(bz_samp)     :: Xk,k,q
+ type(X_t)         :: X
  integer, external :: io_SC_components
  !
  ! Work Space
@@ -143,9 +145,6 @@ subroutine RT_start_and_restart(Xen,Xk,k,q)
    !  I only need SC_R than I can reconstruct G_lesser(:,:,:)
    !  rotating the non-integrating G_lesser
    !
-   allocate(SC_R(SC_bands,SC_bands,QP_nk,n_sp_pol))
-   call mem_est("SC_R ",(/size(SC_R)/))
-   !
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2))
    io_WF=io_SC_components('WF',Xen,ID(2))
    !
@@ -160,14 +159,6 @@ subroutine RT_start_and_restart(Xen,Xk,k,q)
    do ik=1,QP_nk
      call H_rotate(SC_R(1:SC_bands,1:SC_bands,ik,1),G_lesser(1:SC_bands,1:SC_bands,ik),SC_bands,-1)
    enddo
-   !
-   ! Now I update <i|r|j> dipoles using G_lesser_reference as
-   ! Green function to construct the Hamiltonian
-   !
-   call RT_update_dipoles(G_lesser,Xen,k,q)
-   !
-   deallocate(SC_R)
-   call mem_est("SC_R ")
    !
    if (Hfrozen) call el_density(G_lesser,k,rho_n,.false.)
    if (Hfrozen) call V_Hartree(rho_n,V_hartree_sc)
@@ -196,6 +187,12 @@ subroutine RT_start_and_restart(Xen,Xk,k,q)
        endif
      enddo
    endif
+   !
+   ! Now I update <i|r|j> dipoles using G_lesser_reference as
+   ! Green function to construct the Hamiltonian
+   !
+   if(.not.l_NE_simulate_BSE) call RT_update(G_lesser,SC_R,-1,Xen,k,Xk,X,up_DIP=.true.)
+   call RT_update(G_lesser_reference,SC_R,-1,Xen,k,Xk,X,up_Gref=.true.)
    !
    if(l_NE_simulate_IP.or.l_NE_simulate_BSE) then 
      !

@@ -49,9 +49,9 @@ recursive subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,Xen,k,q,Integr
  !
  use pars,           ONLY:SP,schlen
  use com,            ONLY:error
- use SC,             ONLY:SC_bands,H_rotate
+ use SC,             ONLY:SC_bands,H_rotate,SC_R
  use R_lattice,      ONLY:bz_samp  
- use real_time,      ONLY:I1_lesser,I2_lesser,H_t,EULER,RK2,EXACT,RK2EXACT, &
+ use real_time,      ONLY:I1_lesser,I2_lesser,EULER,RK2,EXACT,RK2EXACT, &
 &                         NE_dynamics,l_NE_with_fields
  use fields,         ONLY:gauge_field
  use electrons,      ONLY:levels
@@ -108,14 +108,14 @@ recursive subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,Xen,k,q,Integr
    !
  elseif(trim(Integrator)==EXACT) then
    !
-   ! Diagonalize the Self-Energy (H_t) and make a step 
+   ! Diagonalize the Self-Energy SC_R and make a step 
    ! in the space of its eigenstates
    !
    G_new=G_old
    !
    do ik=1,Xen%nk
      !
-     TmpMatrix(1:SC_bands,1:SC_bands)=H_t(1:SC_bands,1:SC_bands,ik,1)
+     TmpMatrix(1:SC_bands,1:SC_bands)=SC_R(1:SC_bands,1:SC_bands,ik,1)
      !
      call mat_dia_inv(DIAGO,USE_LK,TmpMatrix,E_real=Xen%E(:SC_bands,ik,1))
      !

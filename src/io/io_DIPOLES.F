@@ -32,7 +32,7 @@ integer function io_DIPOLES(X,Xen,ID)
 &                        io_elemental,io_status,io_bulk,IO_OUTDATED_DB,&
 &                        read_is_on,write_is_on,io_header,io_mode,io_com,io_action
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
-#if defined _RT
+#if defined _SC
  use X_m,           ONLY:DIP_P
 #endif
  !
@@ -128,7 +128,7 @@ integer function io_DIPOLES(X,Xen,ID)
    !
  endif
  !
-#if defined _RT
+#if defined _SC
  !
  call io_control(ACTION=io_action(ID),COM=io_com(ID),SEC=io_sec(ID,:),MODE=io_mode(ID),ID=IDP) 
  io_DIPOLES=io_connect(desc='P_and_P2',type=2,ID=IDP)

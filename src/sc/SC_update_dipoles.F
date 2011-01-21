@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_update_dipoles(G_input,Xen,k,q)
+subroutine SC_update_dipoles(SC_R,Xen,Xk,X)
  !
  ! This routine is needed to mimic a yambo_sc calculation done in length gauge, where
  ! the [r,Sigma_cohosex] is neglected.
@@ -31,75 +31,45 @@ subroutine RT_update_dipoles(G_input,Xen,k,q)
  ! due to the rotation of an incomplete matrix
  !
  use pars,           ONLY:SP
- use memory_m,       ONLY:mem_est
  use com,            ONLY:warning
- use electrons,      ONLY:levels,spin_occ,n_sp_pol
- use real_time,      ONLY:H_t,l_NE_with_fields
- use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK 
+ use drivers,        ONLY:l_sc_run
+ use electrons,      ONLY:levels,n_sp_pol
  use SC,             ONLY:SC_bands,H_rotate
  use QP_m,           ONLY:QP_nk
- use global_XC,      ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
- use X_m,            ONLY:DIP_P,DIP_iR
- use fields,         ONLY:ext_field
+ use X_m,            ONLY:DIP_P,DIP_iR,X_t
  use R_lattice,      ONLY:bz_samp 
  !
  implicit none
  !
- type(levels),  intent(inout) :: Xen
- type(bz_samp), intent(in)    :: k,q
- complex(SP),   intent(in)    :: G_input(SC_bands,SC_bands,QP_nk)
+ type(levels),  intent(in) :: Xen
+ type(bz_samp), intent(in) :: Xk
+ complex(SP),   intent(in) :: SC_R(SC_bands,SC_bands,QP_nk,n_sp_pol)
+ type(X_t),     intent(inout) :: X
  !
  ! Work Space
  !
  integer  :: ik,id,iv,ic
  real(SP) :: E_m_Ep
- logical  :: H_t_allocated,l_fields
- type(ext_field) :: dummy_field
- !
- H_t_allocated   =allocated(H_t)
- l_fields        =l_NE_with_fields
- l_NE_with_fields=.false.
  !
  call warning("Optical matrix elements updated according to the new WF")
  !
- if(.not.H_t_allocated) then
-   allocate(H_t(SC_bands,SC_bands,QP_nk,n_sp_pol))
-   call mem_est("H_t",(/size(H_t)/),(/2*SP/))         
- endif
- !
- if(associated(Xen%Eo)) deallocate(Xen%Eo)
- allocate(Xen%Eo(SC_bands,QP_nk,n_sp_pol))
- !
- call RT_Collision(G_input,dummy_field,Xen,k,q,0._SP)
- !
  do ik=1,Xen%nk
-   !
-   call mat_dia_inv(DIAGO,USE_LK,H_t(1:SC_bands,1:SC_bands,ik,1),E_real=Xen%Eo(:SC_bands,ik,1))
-   !
-   do id=1,3
-     call H_rotate(H_t(1:SC_bands,1:SC_bands,ik,1),DIP_P(id,1:SC_bands,1:SC_bands,ik,1),SC_bands,1)
-   enddo
    !
    do iv=1,SC_bands
      do ic=1,SC_bands
-       E_m_Ep=Xen%Eo(iv,ik,1)-Xen%Eo(ic,ik,1)
+       E_m_Ep=Xen%E(iv,ik,1)-Xen%E(ic,ik,1)
        DIP_iR(:,iv,ic,ik,1)=DIP_P(:,iv,ic,ik,1)/E_m_Ep
        if(abs(E_m_Ep)<1.E-5) DIP_iR(:,iv,ic,ik,1)=(0._SP,0._SP)
      enddo
    enddo
    !
    do id=1,3
-     call H_rotate(H_t(1:SC_bands,1:SC_bands,ik,1),DIP_P(id,1:SC_bands,1:SC_bands,ik,1),SC_bands,-1)
-     call H_rotate(H_t(1:SC_bands,1:SC_bands,ik,1),DIP_iR(id,1:SC_bands,1:SC_bands,ik,1),SC_bands,-1)
+     call H_rotate(SC_R(1:SC_bands,1:SC_bands,ik,1),DIP_P(id,1:SC_bands,1:SC_bands,ik,1),SC_bands,-1)
+     call H_rotate(SC_R(1:SC_bands,1:SC_bands,ik,1),DIP_iR(id,1:SC_bands,1:SC_bands,ik,1),SC_bands,-1)
    enddo
    !
  enddo
  !
- if(.not.H_t_allocated) then
-   deallocate(H_t)
-   call mem_est("H_t")
- endif
+ if(l_sc_run) call Dipole_dip_dot_field(Xen,Xk,X,X%q0)
  !
- l_NE_with_fields=l_fields
- !
-end subroutine RT_update_dipoles
+end subroutine SC_update_dipoles

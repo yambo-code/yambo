@@ -1,6 +1,6 @@
 #if defined _SC
 objs =	SC_driver.o V_Hartree.o V_exx.o V_real_space_to_H.o V_qp_basis_to_H.o \
-	SC_common_build_Ho.o XC_switch.o SC_precondition.o 
+	SC_common_build_Ho.o XC_switch.o SC_precondition.o SC_update_dipoles.o 
 #else
 objs =
 #endif

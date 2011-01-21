@@ -49,6 +49,7 @@ module fields
  !
  ! ... switch on time of external field
  !
+ integer  :: theta_function_iTo_ref
  integer  :: ef_i_time(n_ext_fields) ! time index of extern field switch on
  !
  ! Vector potential
@@ -147,24 +148,22 @@ module fields
      ! This is an easy numerical implementation of the
      ! theta function and its derivatives (the delta and the sign).
      !
-     integer :: iT,order,iTo
+     integer :: iT,order
      real(SP):: T,step
-     !
-     iTo=-2
      !
      theta_function=0.
      iT=nint(T/step)
      !
-     if (iT==iTo) then
+     if (iT==theta_function_iTo_ref) then
        if (order==2) theta_function= 1./step**2.
      endif
      !
-     if (iT==iTo+1) then
+     if (iT==theta_function_iTo_ref+1) then
        if (order==1) theta_function= 1./step
        if (order==2) theta_function=-1./step**2.
      endif
      !
-     if (iT>=iTo+2) then
+     if (iT>=theta_function_iTo_ref+2) then
        if (order==0) theta_function= 1.
      endif
      !

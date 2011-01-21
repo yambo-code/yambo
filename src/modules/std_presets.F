@@ -92,7 +92,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     l_RT_diagonalize,RT_is_dumped,QP_LifeTime,Phase_LifeTime,&
 &                     NE_Hxc_jumps,NE_tot_time,&
 &                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe
- use fields,     ONLY:Efield,n_ext_fields
+ use fields,     ONLY:Efield,n_ext_fields,theta_function_iTo_ref
 #endif
 #if defined _TWO_LEVELS
  use real_time,  ONLY:l_3levels,dip,tau_diag,tau_offdiag
@@ -452,6 +452,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
    Efield(i1)%ef_name      ='none'
    Efield(i1)%versor       =(/1.0,0.0,0.0/)
  enddo
+ theta_function_iTo_ref=-2
  !
  ! RT current 
  !

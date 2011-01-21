@@ -23,7 +23,7 @@ subroutine RT_init_X_one()
  !
  use YPP,            ONLY:RT_P_t,X_rt,RT_J_t,i_t_start,i_t_end,&
 &                         W_RT_induced_step,RED_steps,ref_efield
- use com,            ONLY:warning
+ use com,            ONLY:msg
  use pars,           ONLY:pi,SP
  use units,          ONLY:FS2AUT,HARTREE
  use stderr,         ONLY:real2ch
@@ -33,13 +33,10 @@ subroutine RT_init_X_one()
  !
  ! Work Space
  !
- integer  :: i_t
+ integer  :: i_t,i_t_field_range(2)
  logical  :: l_no_damping
  !
  l_no_damping= trim(X_rt%damp) == "NONE"
- !
- call section("=",'Current and Polarization')
- !============================================
  !
  !  Reduced Time range
  !====================
@@ -47,14 +44,12 @@ subroutine RT_init_X_one()
  i_t_start=int(X_rt%time_range(1)/RT_step)+1
  i_t_end  =int(X_rt%time_range(2)/RT_step)
  !
- if(i_t_start<int(Efield(ref_efield)%t_initial/RT_step)+1.or.i_t_start>NE_steps) then
-   i_t_start=int(Efield(ref_efield)%t_initial/RT_step)+1
-   call warning('Initial time redefined to be '//trim(real2ch((i_t_start-1)*RT_step/FS2AUT))//' fs')
- endif
- if(i_t_end>NE_steps) then
-   i_t_end  =NE_steps
-   call warning('Final time redefined to be '//trim(real2ch(i_t_end*RT_step/FS2AUT))//' fs')
- endif
+ i_t_field_range= (/int(Efield(ref_efield)%t_initial/RT_step)+1,NE_steps/)
+ !
+ if (i_t_start<=0.or.i_t_start> i_t_field_range(1)) i_t_start=i_t_field_range(1)
+ if (i_t_end<=0  .or.i_t_end>   i_t_field_range(2)) i_t_end  =i_t_field_range(2)
+ !
+ call msg('s','[RT] Time range [fs]:',(/real(i_t_start),real(i_t_end)/)*RT_step/FS2AUT)
  !
  RED_steps=i_t_end-i_t_start+1
  !
@@ -76,8 +71,8 @@ subroutine RT_init_X_one()
    !
  endif
  !
- ! Print the dumped current and polarization 
- !-------------------------------------------
+ call section("=",'Writing input current and Polarization')
+ !=========================================================
  call RT_output("open cur pol")
  !
  do i_t=1,NE_steps

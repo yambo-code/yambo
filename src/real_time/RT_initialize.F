@@ -35,7 +35,7 @@ subroutine RT_initialize()
  use real_time,      ONLY:tau_offdiag,tau_diag,l_3levels
 #endif
  use D_lattice,      ONLY:DL_vol
- use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time
+ use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,theta_function_iTo_ref
  use parser_m,       ONLY:parser
  implicit none
  !
@@ -159,5 +159,14 @@ subroutine RT_initialize()
  endif
  !
  if(l_NE_with_fields) call msg('rn','[RT] Gauge                      :',trim(global_gauge))
+ !
+ ! If the gauge is length I need E(t) whose definition includes a delta(t). 
+ ! The numerical definition of delta(t) in mod_fields depends on the 
+ ! definition of a refence time theta_function_iTo_ref. Using a small time step
+ ! or an A(t) that is zero at the start-up of the field 
+ ! this parameter does not make any difference. However in the case of a DELTA field
+ ! a correct definition is needed to obtain the same result in both gauges.
+ ! 
+ if (trim(global_gauge) == 'length' ) theta_function_iTo_ref=0
  !
 end subroutine RT_initialize

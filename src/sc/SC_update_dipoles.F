@@ -58,14 +58,18 @@ subroutine SC_update_dipoles(SC_R,Xen,Xk,X)
    do iv=1,SC_bands
      do ic=1,SC_bands
        E_m_Ep=Xen%E(iv,ik,1)-Xen%E(ic,ik,1)
-       DIP_iR(:,iv,ic,ik,1)=DIP_P(:,iv,ic,ik,1)/E_m_Ep
-       if(abs(E_m_Ep)<1.E-5) DIP_iR(:,iv,ic,ik,1)=(0._SP,0._SP)
+       DIP_iR(:,ic,iv,ik,1)=DIP_P(:,ic,iv,ik,1)/E_m_Ep
+       if(abs(E_m_Ep)<1.E-5) DIP_iR(:,ic,iv,ik,1)=(0._SP,0._SP)
      enddo
    enddo
    !
    do id=1,3
+     DIP_P(id,1:SC_bands,1:SC_bands,ik,1) =transpose(DIP_P(id,1:SC_bands,1:SC_bands,ik,1))
+     DIP_iR(id,1:SC_bands,1:SC_bands,ik,1)=transpose(DIP_iR(id,1:SC_bands,1:SC_bands,ik,1))
      call H_rotate(SC_R(1:SC_bands,1:SC_bands,ik,1),DIP_P(id,1:SC_bands,1:SC_bands,ik,1),SC_bands,-1)
      call H_rotate(SC_R(1:SC_bands,1:SC_bands,ik,1),DIP_iR(id,1:SC_bands,1:SC_bands,ik,1),SC_bands,-1)
+     DIP_P(id,1:SC_bands,1:SC_bands,ik,1) =transpose(DIP_P(id,1:SC_bands,1:SC_bands,ik,1))
+     DIP_iR(id,1:SC_bands,1:SC_bands,ik,1)=transpose(DIP_iR(id,1:SC_bands,1:SC_bands,ik,1))
    enddo
    !
  enddo

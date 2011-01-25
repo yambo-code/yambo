@@ -37,7 +37,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  use pars,           ONLY:SP
  use drivers,        ONLY:l_sc_cohsex,l_sc_hf
  use com,            ONLY:msg,warning,error
- use QP_m,           ONLY:QP_nk,QP_Sc,QP_Vnl_xc
+ use QP_m,           ONLY:QP_nk,QP_Sc,QP_Vnl_xc,COHSEX_use_empties
  use units,          ONLY:HARTREE
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
@@ -129,6 +129,9 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    !
    if ( E_convergence>0.01.and.rho_convergence>1e-4) &
 &    call warning(" Restart from a non-converged Self-Consistent calculation! ")
+   !
+   if(.not.COHSEX_use_empties) &
+&    call warning(" Set UseEbands=.true. to be full compatible with RT!! ")
    !
    !  I only need SC_R than I can reconstruct G_lesser(:,:,:)
    !  rotating the non-integrating G_lesser

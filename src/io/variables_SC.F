@@ -25,7 +25,7 @@ integer function variables_SC(ID,local_description,what)
  use units,          ONLY:AU2Tesla,radian,FS2AUT,W2Au,HARTREE
  use D_lattice,      ONLY:atoms_string
  use stderr,         ONLY:intc
- use QP_m,           ONLY:SC_band_mixing
+ use QP_m,           ONLY:SC_band_mixing,COHSEX_use_empties
  use SC,             ONLY:SC_bands,it_now,SC_potential,SC_kind,SC_perturbation,&
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,&
 &                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions,local_V
@@ -121,7 +121,11 @@ integer function variables_SC(ID,local_description,what)
  endif
  !
  if ( SC_kind_disk==SC_COHSEX   ) then
-   call io_elemental(ID,VAR="X_bands_size",VAR_SZ=3,MENU=0) 
+   if (ver_is_gt_or_eq(ID,revision=761)) then
+     call io_elemental(ID,VAR="X_bands_size",VAR_SZ=4,MENU=0) 
+   else
+     call io_elemental(ID,VAR="X_bands_size",VAR_SZ=3,MENU=0) 
+   endif
    i_desc=i_desc+1
    call io_elemental(ID,I1=SC_X_bands,&
 &       VAR=' Response function bands         :',CHECK=CHECK_,OP=(/"==","=="/),&
@@ -130,6 +134,12 @@ integer function variables_SC(ID,local_description,what)
    call io_elemental(ID,I0=SC_X_size,&
 &       VAR='                   size          :',CHECK=CHECK_,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc))
+   if (ver_is_gt_or_eq(ID,revision=761)) then
+     call io_elemental(ID,L0=COHSEX_use_empties,&
+&      VAR=" COHSEX use empty bands           :", CHECK=.true.,OP=(/"=="/),&
+&      DESCRIPTION=local_description(i_desc))
+    i_desc=i_desc+1
+   endif
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  endif
  !

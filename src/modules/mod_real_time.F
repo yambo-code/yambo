@@ -123,9 +123,18 @@ module real_time
  !
  complex(SP) :: RT_ind_J(3)
  !
- ! ... and polarization
+ ! ... and polarization ...
+ !
+ ! the calculated one ...
  !
  complex(SP) :: RT_P(3)
+ !
+ ! and the analytic obtained summing all 
+ ! single-e/h-pair GFs 
+ !
+ logical     :: P_2levels_is_done
+ complex(SP) :: RT_P_2levels(3)
+ complex(SP), allocatable :: Poles_2levels_save(:,:,:,:)
  !
  ! Diagonal (QP) and off-diagonal (Phase) relaxation time
  !
@@ -163,13 +172,13 @@ module real_time
  !
  ! Databases input/output
  !
- integer,  parameter      :: current_cache_size=12
+ integer,  parameter      :: J_and_P_cache_size=18
  !
  integer                  :: ID(5)                
  integer                  :: it_start ! restart point
  integer                  :: max_rt_steps_disk 
  integer,  allocatable    :: kpoints_map(:,:)
- real(SP), allocatable    :: current_cache(:,:)
+ real(SP), allocatable    :: J_and_P_cache(:,:)
  !
  ! Interface
  !
@@ -250,8 +259,8 @@ module real_time
      endif
      !
      if(l_NE_with_fields) then
-       allocate(current_cache(current_cache_size,max_rt_steps_disk))
-       call mem_est('Current_Cache',(/size(current_cache)/),(/SP/))
+       allocate(J_and_P_cache(J_and_P_cache_size,max_rt_steps_disk))
+       call mem_est('Current_Cache',(/size(J_and_P_cache)/),(/SP/))
      endif
      !
      allocate(E_xc(fft_size))
@@ -355,8 +364,13 @@ module real_time
      endif
      !
      if(l_NE_with_fields) then
-       deallocate(current_cache)
+       deallocate(J_and_P_cache)
        call mem_est('Current_Cache')
+     endif
+     !
+     if (allocated(Poles_2levels_save)) then
+       deallocate(Poles_2levels_save)
+       call mem_est("Poles_2levels_save")
      endif
      !
      call collisions_IO_free() 

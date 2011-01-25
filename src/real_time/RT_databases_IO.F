@@ -34,7 +34,7 @@ subroutine RT_databases_IO(Xen,it)
  !
  ! Work Space
  !
- integer :: ik,io_G,io_J,COM_
+ integer :: ik,io_G,io_J_and_P,COM_
  !
  ! Write G_lesser (always)
  !
@@ -54,14 +54,14 @@ subroutine RT_databases_IO(Xen,it)
    ! Remember that negative time = adiabatic switching
    ! no need to store current
    !
-   io_J=0 
+   io_J_and_P=0 
    !
    ! Write current and polarization on disk
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
-   io_J=io_SC_components('J' ,Xen,ID(4))
+   io_J_and_P=io_SC_components('J_and_P' ,Xen,ID(4))
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(4)) 
-   io_J=io_SC_components('J' ,Xen,ID(4))
+   io_J_and_P=io_SC_components('J_and_P' ,Xen,ID(4))
    !
  endif
  !

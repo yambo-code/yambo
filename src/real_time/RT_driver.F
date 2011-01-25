@@ -34,12 +34,11 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &
 &                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,      &
 &                         NE_i_time,Integrator_name,l_RT_diagonalize,max_rt_steps_disk,&
-&                         G_lesser_reference,RT_is_dumped,RT_diagonalization_steps, &
+&                         G_lesser_reference,RT_diagonalization_steps, &
 &                         it_start,RT_output,NE_time,NE_dynamics,RT_update
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
 #if defined _TWO_LEVELS
  use real_time,      ONLY:l_3levels
- use parser_m,       ONLY:parser
 #endif
  use fields,           ONLY:A_vecpot,A_vecpot_previous
  use collisions_CACHE, ONLY:free_COLLISIONS_v
@@ -68,10 +67,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
  call set_real_printed_length(f_length=10,g_length=10)  
  !
-#if defined _TWO_LEVELS
- call parser('RT3Levels',l_3levels)
-#endif
- ! 
  ! Switch 
  !=======
  !
@@ -98,7 +93,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
  ! Core initialization
  !
- call RT_initialize()
+ call RT_initialize(Xen)
  !
  ! Core allocations
  !
@@ -211,6 +206,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    ! Current and Polarization
    !==========================
    call RT_current_AND_polarization(Xk,G_lesser,A_vecpot)
+   call RT_TwoL_Polarization(Xen,k,.TRUE.)
    !
    ! Now print Energetics, current and (eventually) potential 
    !=========================================================
@@ -219,13 +215,13 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    if(l_NE_with_fields) call RT_output('pot',TIME_or_E=NE_time/FS2AUT) 
    !
    ! Calculate Collisions and fill SC_R
-   !==============================
+   !====================================
    !
    call RT_Collision(G_lesser_previous,A_vecpot_previous,Xen,k,q,NE_time)
    !
    ! Diagonalization
    ! =====================
-   if(it==Thermal_steps.or.mod(it,RT_diagonalization_steps)==0) then
+   if(it==Thermal_steps.or. (mod(it,RT_diagonalization_steps)==0.and.RT_diagonalization_steps>0) ) then
      do ik=1,Xen%nk
        call mat_dia_inv(DIAGO,USE_LK,SC_R(1:SC_bands,1:SC_bands,ik,1),E_real=Xen%E(:SC_bands,ik,1))
      enddo

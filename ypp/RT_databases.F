@@ -29,8 +29,8 @@ subroutine RT_databases(en)
  use memory_m,       ONLY:mem_est
  use timing,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG
- use real_time,      ONLY:NE_steps,NE_i_time,current_cache,RT_ind_J,max_rt_steps_disk,&
-&                         current_cache_size,RT_P,NE_time,RT_step
+ use real_time,      ONLY:NE_steps,NE_i_time,J_and_P_cache,RT_ind_J,max_rt_steps_disk,&
+&                         J_and_P_cache_size,RT_P,NE_time,RT_step,RT_P_2levels,P_2levels_is_done
  use fields,         ONLY:Efield,n_ext_fields
  implicit none
  !
@@ -38,7 +38,7 @@ subroutine RT_databases(en)
  !
  ! Work Space
  !
- integer            :: io_J,ID,i_f
+ integer            :: io_J_and_P,ID,i_f
  integer, external  :: io_SC_components
  !
  call section("+",'Current and Polarization Database')
@@ -48,8 +48,8 @@ subroutine RT_databases(en)
  !---------------------------------------------------
  !
  call io_control(ACTION=OP_RD_CL,COM=LOG,MODE=DUMP,SEC=(/1/),ID=ID)
- io_J=io_SC_components('J' ,en,ID)
- if( io_J/=0 ) then
+ io_J_and_P=io_SC_components('J_and_P' ,en,ID)
+ if( io_J_and_P/=0 ) then
    call warning(" Error while reading databases")
    return
  endif
@@ -62,11 +62,11 @@ subroutine RT_databases(en)
    NE_steps=NE_time/RT_step+1
  endif
  !
- allocate(RT_J_t(NE_steps,3),RT_P_t(NE_steps,3))
- allocate(current_cache(current_cache_size,max_rt_steps_disk))
+ allocate(RT_J_t(NE_steps,3),RT_P_t(NE_steps,6))
+ allocate(J_and_P_cache(J_and_P_cache_size,max_rt_steps_disk))
  call mem_est("RT_P_t",(/size(RT_J_t)/),(/2*SP/))
  call mem_est("RT_J_t",(/size(RT_J_t)/),(/2*SP/))
- call mem_est("Current_Cache",(/size(current_cache)/),(/SP/))
+ call mem_est("Current_Cache",(/size(J_and_P_cache)/),(/SP/))
  !
  RT_J_t        =(0._DP,0._DP)
  RT_P_t        =(0._DP,0._DP)
@@ -76,10 +76,11 @@ subroutine RT_databases(en)
  do NE_i_time=1,NE_steps
    !      
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/NE_i_time+1/),ID=ID) 
-   io_J=io_SC_components('J' ,en,ID)
+   io_J_and_P=io_SC_components('J_and_P' ,en,ID)
    !
-   RT_J_t(NE_i_time,:) = RT_ind_J(:)
-   RT_P_t(NE_i_time,:) = RT_P(:)
+   RT_J_t(NE_i_time,1:3) = RT_ind_J(:)
+   RT_P_t(NE_i_time,1:3) = RT_P(:)
+   if (P_2levels_is_done) RT_P_t(NE_i_time,4:6) = RT_P_2levels(:)
    !
    call live_timing(steps=1)
    !
@@ -92,7 +93,7 @@ subroutine RT_databases(en)
    Efield(i_f)%amplitude=sqrt(Efield(i_f)%intensity*(8._SP*pi)/SPEED_OF_LIGHT)
  enddo
  !
- deallocate(current_cache)
+ deallocate(J_and_P_cache)
  call mem_est("Current_Cache")
  !
 end subroutine

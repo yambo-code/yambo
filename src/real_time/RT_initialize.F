@@ -16,15 +16,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_initialize()
+subroutine RT_initialize(Xen)
  ! 
  use drivers,        ONLY:l_collisions_IO
  use SC,             ONLY:local_V
  use pars,           ONLY:SP,pi
- use units,          ONLY:SPEED_OF_LIGHT,FS2AUT,HARTREE,HA2FSm1,HARTREE
+ use units,          ONLY:SPEED_OF_LIGHT,FS2AUT,HARTREE
  use com,            ONLY:msg,warning,error
  use vec_operate,    ONLY:normalize_v
- use electrons,      ONLY:nel
+ use electrons,      ONLY:nel,levels
  use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields, &
 &                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,NE_tot_time,    &
 &                         l_RT_diamagnetic,max_rt_steps_disk,l_NE_simulate_BSE,       &
@@ -35,9 +35,12 @@ subroutine RT_initialize()
  use real_time,      ONLY:tau_offdiag,tau_diag,l_3levels
 #endif
  use D_lattice,      ONLY:DL_vol
- use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,theta_function_iTo_ref
+ use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,&
+&                         theta_function_iTo_ref,i_Pump,i_Probe
  use parser_m,       ONLY:parser
  implicit none
+ !
+ type(levels), intent(in) :: Xen
  !
  ! Work space
  !
@@ -51,6 +54,9 @@ subroutine RT_initialize()
  call parser('RTBSEOnly',    l_NE_simulate_BSE)
  call parser('RTfreezeH',    Hfrozen)
  call parser('RTfreezeXC',   XCfrozen)
+#if defined _TWO_LEVELS
+ call parser('RT3Levels',    l_3levels)
+#endif
  !
  l_RT_diagonalize=RT_diagonalization_steps>1
  l_NE_simulate_RPA=.not.Hfrozen.and.XCfrozen
@@ -107,11 +113,15 @@ subroutine RT_initialize()
  l_NE_with_fields=.false.
  ef_i_time=0
  !
+ i_Pump=1
+ i_Probe=1
+ if ( Efield(1)%ef_name/='none' .and. Efield(2)%ef_name/='none' ) i_Probe=2
+ !
  do i1=1,n_ext_fields
    !      
    Efield(i1)%ef_name=trim(Efield(i1)%ef_name)      
    !
-   if((Efield(i1)%ef_name/='none')) then 
+   if((Efield(i1)%ef_name/='none')) then
      !
      if (.not.field_is_ok( Efield(i1)) ) call error('Field '//trim(Efield(i1)%ef_name)//' not supported')
      !      
@@ -159,6 +169,10 @@ subroutine RT_initialize()
  endif
  !
  if(l_NE_with_fields) call msg('rn','[RT] Gauge                      :',trim(global_gauge))
+ !
+ ! Generalized Rabi Frequency
+ !============================
+ if(l_NE_with_fields) call RT_TwoL_Polarization(Xen,.FALSE.)
  !
  ! If the gauge is length I need E(t) whose definition includes a delta(t). 
  ! The numerical definition of delta(t) in mod_fields depends on the 

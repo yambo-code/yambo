@@ -41,7 +41,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  use electrons,      ONLY:levels,E_reset
  use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
  use real_time,      ONLY:RT_step,NE_steps
- use fields,         ONLY:Efield
+ use fields,         ONLY:Efield,i_Probe
 #endif
 #if defined _YPP_ELPH
  use ELPH,           ONLY:gsqF_energy_steps
@@ -193,10 +193,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  B_theta=0._SP
  B_psi=0._SP
  !
- ! Probe external field to calcualted dielectric constant
- ! 
- ref_efield=1
- !
  !ANALIZE RESPONSE
  !
  X_rt%time_range(:)  =(/-FS2AUT,-FS2AUT/)
@@ -234,17 +230,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  ! 
  if (io_G==0) then
    !
-   ! Re-define defaults based on DB
-   !
-   if ( trim(Efield(1)%ef_name)/='none' .and.  trim(Efield(2)%ef_name)/='none' ) then
-     if (Efield(2)%t_initial > Efield(1)%t_initial ) ref_efield=2
-   else if ( trim(Efield(1)%ef_name)=='none' ) then
-     ref_efield=2 
-   endif
-   !
    X_rt%energy_range=(/0._SP,pi/RT_step/)
-   X_rt%time_range=(/Efield(ref_efield)%t_initial,NE_steps*RT_step/)
-   X_rt%damp_factor=2.*pi/(RT_step*real(NE_steps)-Efield(ref_efield)%t_initial)
+   X_rt%time_range=(/Efield(i_Probe)%t_initial,NE_steps*RT_step/)
+   X_rt%damp_factor=2.*pi/(RT_step*real(NE_steps)-Efield(i_Probe)%t_initial)
    !
  endif
 #endif

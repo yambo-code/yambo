@@ -52,7 +52,7 @@ recursive subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,Xen,k,q,Integr
  use SC,             ONLY:SC_bands,H_rotate,SC_R
  use R_lattice,      ONLY:bz_samp  
  use real_time,      ONLY:I1_lesser,I2_lesser,EULER,RK2,EXACT,RK2EXACT, &
-&                         NE_dynamics,l_NE_with_fields
+&                         l_NE_with_fields
  use fields,         ONLY:gauge_field
  use electrons,      ONLY:levels
  use matrix_operate, ONLY:mat_dia_inv,USE_LK,DIAGO

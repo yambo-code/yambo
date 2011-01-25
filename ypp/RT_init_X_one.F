@@ -22,13 +22,13 @@
 subroutine RT_init_X_one()
  !
  use YPP,            ONLY:RT_P_t,X_rt,RT_J_t,i_t_start,i_t_end,&
-&                         W_RT_induced_step,RED_steps,ref_efield
+&                         W_RT_induced_step,RED_steps
  use com,            ONLY:msg
  use pars,           ONLY:pi,SP
  use units,          ONLY:FS2AUT,HARTREE
  use stderr,         ONLY:real2ch
- use real_time,      ONLY:NE_steps,RT_step,RT_ind_J,RT_output,RT_P,RT_output
- use fields,         ONLY:Efield
+ use real_time,      ONLY:NE_steps,RT_step,RT_ind_J,RT_output,RT_P,RT_output,RT_P_2levels
+ use fields,         ONLY:Efield,i_Probe
  implicit none
  !
  ! Work Space
@@ -44,7 +44,7 @@ subroutine RT_init_X_one()
  i_t_start=int(X_rt%time_range(1)/RT_step)+1
  i_t_end  =int(X_rt%time_range(2)/RT_step)
  !
- i_t_field_range= (/int(Efield(ref_efield)%t_initial/RT_step)+1,NE_steps/)
+ i_t_field_range= (/int(Efield(i_Probe)%t_initial/RT_step)+1,NE_steps/)
  !
  if (i_t_start<=0.or.i_t_start> i_t_field_range(1)) i_t_start=i_t_field_range(1)
  if (i_t_end<=0  .or.i_t_end>   i_t_field_range(2)) i_t_end  =i_t_field_range(2)
@@ -69,7 +69,7 @@ subroutine RT_init_X_one()
    call msg('r','[RT] Optimal damping factor: '//trim(real2ch(W_RT_induced_step*HARTREE))//' eV')
    !
    call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_J_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
-   call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_P_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
+   call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_P_t(i_t_start:i_t_end,:),RED_steps,RT_step,6)
    !
  endif
  !
@@ -78,8 +78,9 @@ subroutine RT_init_X_one()
  call RT_output("open cur pol")
  !
  do i_t=1,NE_steps
-   RT_ind_J=RT_J_t(i_t,:)
-   RT_P    =RT_P_t(i_t,:)
+   RT_ind_J    =RT_J_t(i_t,:)
+   RT_P        =RT_P_t(i_t,1:3)
+   RT_P_2levels=RT_P_t(i_t,4:6)
    call RT_output('cur pol',TIME_or_E=(i_t-1)*RT_step/FS2AUT)
  enddo
  !

@@ -33,10 +33,10 @@ integer function io_SC_components(what,E_sc,ID)
 &                         io_sec,io_bulk,read_is_on,write_is_on,&
 &                         manage_RD_WR_CL_IF_END,io_reset
 #if defined _RT
- use real_time,      ONLY:l_NE_with_fields,NE_steps,RT_P,current_cache_size, &
-&                         G_lesser,NE_i_time,NE_dynamics,RT_ind_J,max_rt_steps_disk,current_cache,        &
-&                         G_lesser_reference
- use fields,         ONLY:A_vecpot
+ use real_time,      ONLY:l_NE_with_fields,NE_steps,RT_P,J_and_P_cache_size, &
+&                         G_lesser,NE_i_time,NE_dynamics,RT_ind_J,max_rt_steps_disk,J_and_P_cache,&
+&                         G_lesser_reference,P_2levels_is_done,RT_P_2levels
+ use fields,         ONLY:A_vecpot,i_Probe,i_Pump
  use QP_m,           ONLY:QP_nk
 #endif                                
  use matrix_operate, ONLY:mat_c2r,mat_r2c
@@ -58,7 +58,7 @@ integer function io_SC_components(what,E_sc,ID)
  logical               :: l_wf,l_V,l_E,l_IMPOSE_SN,CHECK_
 #if defined _RT		
  integer               :: file_number
- logical               :: l_J,l_G,IO_current
+ logical               :: l_J_and_P,l_G,IO_current
  real(SP)              :: A_vecpot_disk(3,3,2)
 #endif
  !
@@ -66,8 +66,8 @@ integer function io_SC_components(what,E_sc,ID)
  l_wf=what=="WF"
  l_V =what=="V"
 #if defined _RT		
- l_J =what=="J"
- l_G =what=="G"
+ l_J_and_P =what=="J_and_P"
+ l_G       =what=="G"
 #endif
  !
  ! When the db.scV is used for single non-SC shot the number
@@ -84,12 +84,12 @@ integer function io_SC_components(what,E_sc,ID)
  !
  ! Write only every max_rt_steps_disk
  !
- if(l_J)then
+ if (l_J_and_P) then
    !      
    file_number=(NE_i_time-1)/max_rt_steps_disk
    !      
    if(io_sec(ID,1)==1) then 
-     io_SC_components=io_connect(desc="RT_current",type=2,ID=ID)
+     io_SC_components=io_connect(desc="RT_J_and_P",type=2,ID=ID)
    else
      !      
      IO_current=.false.
@@ -97,7 +97,7 @@ integer function io_SC_components(what,E_sc,ID)
      if(mod(NE_i_time-1,max_rt_steps_disk)==0.and.read_is_on(ID))   IO_current=.true.
      !
      if(IO_current) then
-       io_SC_components=io_connect(desc="RT_current_"//trim(intc(file_number)),type=2,ID=ID)
+       io_SC_components=io_connect(desc="RT_J_and_P_"//trim(intc(file_number)),type=2,ID=ID)
      else
        io_SC_components=0
      endif
@@ -125,9 +125,9 @@ integer function io_SC_components(what,E_sc,ID)
    !
    l_IMPOSE_SN=.not.l_V 
    !
-   if (any((/l_E,l_V,l_wf/))) io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.)
+   if (any((/l_E,l_V,l_wf/)))  io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.)
 #if defined _RT		
-   if (any((/l_J,l_G/)))      io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.)
+   if (any((/l_J_and_P,l_G/))) io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.)
 #endif
    !
    if (io_SC_components/=0) goto 1
@@ -147,6 +147,19 @@ integer function io_SC_components(what,E_sc,ID)
    !
 #if defined _RT
    endif
+   !
+   if (l_G) then
+     call io_elemental(ID,VAR="Probe_and_Pump_index",VAR_SZ=2,MENU=0) 
+     call io_elemental(ID,I0=i_Probe)
+     call io_elemental(ID,I0=i_Pump)
+     call io_elemental(ID,VAR="",VAR_SZ=0)
+   endif
+   if (l_J_and_P) then
+     call io_elemental(ID,VAR="P2l_is_done",VAR_SZ=1,MENU=0) 
+     call io_elemental(ID,L0=P_2levels_is_done)
+     call io_elemental(ID,VAR="",VAR_SZ=0)
+   endif
+   !
 #endif
    !
    io_SC_components=io_status(ID)
@@ -155,7 +168,7 @@ integer function io_SC_components(what,E_sc,ID)
  endif
  ! 
 #if defined _RT
- if(l_J) then
+ if(l_J_and_P) then
    call manage_RD_WR_CL_IF_END(ID,ik,NE_steps)
  else
 #endif
@@ -314,7 +327,7 @@ integer function io_SC_components(what,E_sc,ID)
    !
  endif
  !
- if ( l_J ) then
+ if ( l_J_and_P ) then
    !
    ! Current and Vector Potential
    !==============================
@@ -324,10 +337,17 @@ integer function io_SC_components(what,E_sc,ID)
      if(write_is_on(ID)) then
        !
        do i1=1,3
-         current_cache( 2*i1-1,  mod(NE_i_time-1,max_rt_steps_disk)+1)= real(RT_ind_J(i1))
-         current_cache( 2*i1,    mod(NE_i_time-1,max_rt_steps_disk)+1)=aimag(RT_ind_J(i1))
-         current_cache(6+2*i1-1, mod(NE_i_time-1,max_rt_steps_disk)+1)= real(RT_P(i1))
-         current_cache(6+2*i1,   mod(NE_i_time-1,max_rt_steps_disk)+1)=aimag(RT_P(i1))
+         J_and_P_cache( 2*i1-1,  mod(NE_i_time-1,max_rt_steps_disk)+1)= real(RT_ind_J(i1))
+         J_and_P_cache( 2*i1,    mod(NE_i_time-1,max_rt_steps_disk)+1)=aimag(RT_ind_J(i1))
+         J_and_P_cache(6+2*i1-1, mod(NE_i_time-1,max_rt_steps_disk)+1)= real(RT_P(i1))
+         J_and_P_cache(6+2*i1,   mod(NE_i_time-1,max_rt_steps_disk)+1)=aimag(RT_P(i1))
+         if (P_2levels_is_done) then
+           J_and_P_cache(12+2*i1-1, mod(NE_i_time-1,max_rt_steps_disk)+1)= real(RT_P_2levels(i1))
+           J_and_P_cache(12+2*i1,   mod(NE_i_time-1,max_rt_steps_disk)+1)=aimag(RT_P_2levels(i1))
+         else
+           J_and_P_cache(12+2*i1-1, mod(NE_i_time-1,max_rt_steps_disk)+1)= 0.
+           J_and_P_cache(12+2*i1,   mod(NE_i_time-1,max_rt_steps_disk)+1)= 0.
+         endif
        enddo
        !
      endif
@@ -335,9 +355,9 @@ integer function io_SC_components(what,E_sc,ID)
      if (IO_current) then
        !                                
        call io_bulk(ID,VAR="Current_Polarization_and_Potential_TIME"//trim(intc(file_number)), &
-&                      VAR_SZ=(/current_cache_size,max_rt_steps_disk/))
+&                      VAR_SZ=(/J_and_P_cache_size,max_rt_steps_disk/))
        !
-       call io_bulk(ID,R2=current_cache)
+       call io_bulk(ID,R2=J_and_P_cache)
        !
        call io_disconnect(ID)
        !
@@ -349,10 +369,12 @@ integer function io_SC_components(what,E_sc,ID)
        !
        !
        do i1=1,3
-         RT_ind_J(i1)           =cmplx(current_cache(  2*i1-1,mod(NE_i_time-1,max_rt_steps_disk)+1), &
-&                                      current_cache(  2*i1,  mod(NE_i_time-1,max_rt_steps_disk)+1),SP)
-         RT_P(i1)               =cmplx(current_cache(6+2*i1-1,mod(NE_i_time-1,max_rt_steps_disk)+1), &
-&                                      current_cache(6+2*i1  ,mod(NE_i_time-1,max_rt_steps_disk)+1),SP)
+         RT_ind_J(i1)           =cmplx(J_and_P_cache(   2*i1-1,mod(NE_i_time-1,max_rt_steps_disk)+1), &
+&                                      J_and_P_cache(   2*i1,  mod(NE_i_time-1,max_rt_steps_disk)+1),SP)
+         RT_P(i1)               =cmplx(J_and_P_cache( 6+2*i1-1,mod(NE_i_time-1,max_rt_steps_disk)+1), &
+&                                      J_and_P_cache( 6+2*i1  ,mod(NE_i_time-1,max_rt_steps_disk)+1),SP)
+         RT_P_2levels(i1)       =cmplx(J_and_P_cache(12+2*i1-1,mod(NE_i_time-1,max_rt_steps_disk)+1), &
+&                                      J_and_P_cache(12+2*i1  ,mod(NE_i_time-1,max_rt_steps_disk)+1),SP)
        enddo
        !
      endif 

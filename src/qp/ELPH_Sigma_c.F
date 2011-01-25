@@ -41,7 +41,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,QP_G_dr,&
 &                        On_Mass_Shell_approx
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
- use R_lattice,     ONLY:qindx_S,bz_samp,ik_is_table
+ use R_lattice,     ONLY:qindx_S,bz_samp,ik_is_table,RL_vol
  use ELPH,          ONLY:elph_nb,ph_freqs_sq,elph_gkkp,&
 &                        elph_global_free,QP_PH_n_G_bands,max_ph_freq,elph_DW,&
 &                        elph_nDBs,E_k_plus_q,elph_use_q_grid,&
@@ -65,10 +65,11 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  integer          ::io_err,ID,iv4(4)
  integer, external::ioELPH,QP_state_extract
  character(schlen)::ch
- real(SP)         ::q_weight,ph_E,delta_E_at_gamma,one_minus_2f_occ,f_occ,&
+ real(SP)         ::ph_E,delta_E_at_gamma,one_minus_2f_occ,f_occ,&
 &                   E_k_plus_q_at_gamma(elph_nb,k%nbz),elph_gkkp_sq,gsqF_damping
  complex(SP)      ::delta_E
  logical          ::l_WRgFsq,l_GF_from_CA
+ real(SP), allocatable :: q_weight(:)
  !
  ! Parallelization
  !
@@ -189,7 +190,13 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  nq_to_sum=elph_nDBs_used
  if (elph_use_q_grid) nq_to_sum=q%nbz
- q_weight=1./real(nq_to_sum)
+ !
+ allocate(q_weight(nq_to_sum))
+ !
+ ! Spherical RIM
+ !===============
+ !
+ call rim_spherical(nq_to_sum,ph_qpt(1:nq_to_sum,1:3),q_weight,(3.*RL_vol/nq_to_sum/4./pi)**(1./3.))
  !
  ! Parallelization
  !
@@ -353,13 +360,13 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
            !
            ! "Bose" Term
            !
-           gsqF_life_bose(i_qp,Q_map(iq_ibz),il,iw)= gsqF_life_bose(i_qp,Q_map(iq_ibz),il,iw)+2.*pi*elph_gkkp_sq*q_weight*&
+           gsqF_life_bose(i_qp,Q_map(iq_ibz),il,iw)= gsqF_life_bose(i_qp,Q_map(iq_ibz),il,iw)+2.*pi*elph_gkkp_sq*q_weight(iq_loop)*&
 &            ( Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) + &
 &              time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping) )
            !
            ! "f" Term
            !
-           gsqF_life_f(i_qp,Q_map(iq_ibz),il,iw)= gsqF_life_f(i_qp,Q_map(iq_ibz),il,iw)+pi*elph_gkkp_sq*q_weight*&
+           gsqF_life_f(i_qp,Q_map(iq_ibz),il,iw)= gsqF_life_f(i_qp,Q_map(iq_ibz),il,iw)+pi*elph_gkkp_sq*q_weight(iq_loop)*&
 &            ( ( Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) - &
 &                time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping) )*f_occ-&
 &              Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) )
@@ -373,7 +380,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
            ! important for metals).
            !
            gsqF_ca_corr(i_qp,iq_ibz,il,iw)=gsqF_ca_corr(i_qp,iq_ibz,il,iw)+elph_gkkp_sq*&
-&                                          ph_E*one_minus_2f_occ/(delta_E**2.-ph_E**2.)*q_weight
+&                                          ph_E*one_minus_2f_occ/(delta_E**2.-ph_E**2.)*q_weight(iq_loop)
            !
            ! Cardona-Allen formulation
            !
@@ -381,7 +388,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
            !                                                       |
            !                                                      \/
            gsqF_fan(i_qp,iq_ibz,il,iw)=gsqF_fan(i_qp,iq_ibz,il,iw)+2.*elph_gkkp_sq*&
-&                                      delta_E/(delta_E**2.-ph_E**2.)*q_weight
+&                                      delta_E/(delta_E**2.-ph_E**2.)*q_weight(iq_loop)
            !
          enddo
          !
@@ -394,7 +401,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          ! (b) Debye Waller Term
          !
          gsqF_dw(i_qp,iq_ibz,il)=gsqF_dw(i_qp,iq_ibz,il)-1./2.*&
-&                                 2.*elph_DW(ik_bz,il,ib,ob)/delta_E_at_gamma*q_weight/2./ph_E
+&                                 2.*elph_DW(ik_bz,il,ib,ob)/delta_E_at_gamma*q_weight(iq_loop)/2./ph_E
          !                       /\
          !                        |
          !                        this 2 is to be consistent with AC definition (see Eq. 5, PRB 31, 2163)
@@ -444,6 +451,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  call elph_global_free()
  call pp_indexes_reset(px)
  if (allocated(Q_map)) deallocate(Q_map)
+ deallocate(q_weight)
  do i_qp=1,qp%n_states
    call W_reset(Sc_W(i_qp))
  enddo

@@ -37,19 +37,14 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  use pars,           ONLY:SP
  use drivers,        ONLY:l_sc_cohsex,l_sc_hf
  use com,            ONLY:msg,warning,error
- use memory_m,       ONLY:mem_est
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_Vnl_xc
  use units,          ONLY:HARTREE
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
-#if defined _TWO_LEVELS
- use real_time,      ONLY:Wo,W1,l_3levels
- use electrons,      ONLY:nel
-#endif
  use real_time,      ONLY:G_lesser,ID,ID,NE_steps,G_lesser_previous,RT_ind_J,&
 &                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,&
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
-&                         l_NE_simulate_BSE,RT_P,RT_step,RT_update
+&                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,RT_P_2levels
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V, &
 &                         rho_convergence,H_rotate,local_V,V_hartree_sc,      &
@@ -69,7 +64,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  ! Work Space
  !
  integer :: ik,it,i1,COM_
- integer :: io_E,io_V,io_WF,io_G,io_J
+ integer :: io_E,io_V,io_WF,io_G,io_J_and_P
  logical :: RESTART
  logical :: SC_DB_present
  !
@@ -86,6 +81,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  ! Set to zero current and fields
  !
  RT_P               =(0._SP,0._SP)
+ RT_P_2levels       =(0._SP,0._SP)
  RT_ind_J           =(0._SP,0._SP)
  ! 
  forall(i1=1:SC_bands,ik=1:Xen%nk)
@@ -96,14 +92,6 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  !==========
  !
  E_bare=Xen%E(:SC_bands,:,:)
-#if defined _TWO_LEVELS
- Wo    =Xen%E(2,1,1)-Xen%E(1,1,1)
- if(l_3levels) then
-   if(SC_bands/=3) call error(" Error set SCBands=3 !! ")
-   W1=Xen%E(3,1,1)-Xen%E(1,1,1)
-   if(nel/=2) call error(" Error set Nelectro=2 !! ")
- endif
-#endif
  !
  call SC_bare_Hamiltonian(Xen,Xk,k)
  !
@@ -119,8 +107,8 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  !
  COM_=REP
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
- io_J=io_SC_components('J' ,Xen,ID(4))
- if (io_J==0) COM_=NONE
+ io_J_and_P=io_SC_components('J_and_P' ,Xen,ID(4))
+ if (io_J_and_P==0) COM_=NONE
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(5)) ! G_lesser
  io_G=io_SC_components('G' ,Xen,ID(5))
  !
@@ -259,14 +247,6 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  !
  it_start=1
  !
-#if defined _TWO_LEVELS
- if(RESTART) then
-   RESTART=.FALSE.
-   call warning(" Restart removed in few levels Hamiltonian! ")
- endif
- call RT_init_two_levels()
-#endif
- !
  if(RESTART) then
    !
    !  I use G_lesser(:,:,:) to reconstruct everything
@@ -297,5 +277,12 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  G_lesser_reference=G_lesser   
  !
  call msg('r','')
+ !
+ ! Two Levels related initializations
+ !====================================
+#if defined _TWO_LEVELS
+ if(RESTART) RESTART=.FALSE.
+ call RT_init_two_levels(Xen)
+#endif
  !
 end subroutine RT_start_and_restart

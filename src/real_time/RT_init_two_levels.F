@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_init_two_levels()
+subroutine RT_init_two_levels(Xen)
  !
  use pars,           ONLY:SP,cI
  use fields,         ONLY:Efield
@@ -27,15 +27,25 @@ subroutine RT_init_two_levels()
  use units,          ONLY:HARTREE,FS2AUT
  use com,            ONLY:msg
  use X_m,            ONLY:DIP_iR,DIP_P
- use real_time,      ONLY:W_pump,Wo,Rabi_freq_pump,P,delta,Rabi_nn,D,Rabi_freq_probe
- use real_time,      ONLY:l_3levels,dip,W1
+ use real_time,      ONLY:W_pump,Wo,Rabi_freq_pump,P,delta,Rabi_nn,D,Rabi_freq_probe,l_3levels,dip,W1
+ use SC,             ONLY:SC_bands
+ use electrons,      ONLY:levels,nel
+ use com,            ONLY:error
  !
  implicit none
+ type(levels), intent(in) :: Xen
  ! 
  ! Work Space
  !
  integer     :: i_pump,i_probe
  complex(SP) :: mu(2)
+ !
+ Wo    =Xen%E(2,1,1)-Xen%E(1,1,1)
+ if(l_3levels) then
+   if(SC_bands/=3) call error(" Error set SCBands=3 !! ")
+   W1=Xen%E(3,1,1)-Xen%E(1,1,1)
+   if(nel/=2) call error(" Error set Nelectro=2 !! ")
+ endif
  !
  i_probe=2
  i_pump =1

@@ -32,7 +32,7 @@ subroutine RT_fix_symmetries(E,k)
  use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,a,alat,&
 &                              i_space_inv,sop_inv,inv_index,symmetry_group_table
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,&
-&                              g_rot,ng_closed,bz_samp_duplicate,rl_sop
+&                              ng_closed,bz_samp_duplicate,rl_sop
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,VERIFY,&
 &                              OP_APP,cp_file,rm_file,cp_directory,Fragmented_IO,mk_dir, &
 &                              io_fragmented,OP_RD_CL,RD_CL,RD,DUMP,RD_CL_IF_END,WR_CL_IF_END

@@ -147,7 +147,6 @@ module YPP
  logical     :: l_RT_X_two
  real(SP)    :: E_field(2,3)
  real(SP)    :: B_field,B_theta,B_psi
- integer     :: ref_efield
  !
  ! (RT) optics
  !

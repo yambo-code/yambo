@@ -30,7 +30,7 @@ subroutine RT_two_levels(G_lesser)
  use com,            ONLY:msg
  use real_time,      ONLY:Wo,Rabi_freq_pump,W_pump,Phase_LifeTime,&
 &                         QP_LifeTime,RT_step,l_NE_with_fields,NE_time,NE_i_time,P,D,delta,Rabi_nn,Rabi_freq_probe
- use fields,         ONLY:Efield,global_gauge
+ use fields,         ONLY:Efield,global_gauge,i_Probe
  !
  implicit none           
  complex(SP),       intent(in) :: G_lesser(SC_bands,SC_bands,QP_nk)
@@ -40,7 +40,7 @@ subroutine RT_two_levels(G_lesser)
  integer       :: i_f
  logical       :: P_and_P
  real(SP)      :: T,W_step,Wo_here,W_range
- integer, parameter :: N_W_delta_search=100000
+ integer, parameter :: N_W_delta_search=1000000
  complex(SP)        :: Poles_func(N_W_delta_search),Poles_func_deriv(N_W_delta_search),W_func(N_W_delta_search),&
 &                      G(2,2),Gamma_mat(2,2),Gamma_delta_11
  complex(SP), save  :: W_bar,Beta_wbar,R_wbar,dGinfty,W_gamma,Beta_gamma,R_gamma,&
@@ -156,17 +156,17 @@ subroutine RT_two_levels(G_lesser)
  call write_it(102,G(1,2))
  call open_it(104,"G21_theo")
  call write_it(104,G(2,1))
- call open_it(104,"G12_theo_LRR")
- call write_it(104,G12_LRR(T,Rabi_freq_pump,Wo_here))
+ call open_it(105,"G12_theo_LRR")
+ call write_it(105,G12_LRR(T,Rabi_freq_pump,Wo_here))
  call open_it(103,"Polarization_theo")
- call write_it(103, -cI*(D*G(2,1)+conjg(D)*G(1,2))/DL_vol)
+ call write_it(103, -cI*(D*G(2,1)+conjg(D)*G(1,2))/DL_vol/Efield(i_Probe)%amplitude)
  !
 1002 continue
  !
  call open_it(201,"dG_num")
  call write_it(201,-cI*(G_lesser(2,2,1)-G_lesser(1,1,1)))
  call open_it(202,"Polarization_num")
- call write_it(202, -cI*(D*G_lesser(2,1,1)+conjg(D)*G_lesser(1,2,1))/DL_vol)
+ call write_it(202, -cI*(D*G_lesser(2,1,1)+conjg(D)*G_lesser(1,2,1))/DL_vol/Efield(i_Probe)%amplitude)
 ! call open_it(203,"Current_num")
 ! call write_it(203, -cI*(-1)*(P*G_lesser(2,1,1)+conjg(P)*G_lesser(1,2,1))/DL_vol)
  call open_it(205,"G12_num")

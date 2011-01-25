@@ -27,13 +27,13 @@ subroutine RT_X_one(en,k)
  !
  use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,W_RT_induced_step, &
 &                         i_t_start,i_t_end,RED_steps
- use pars,           ONLY:SP,DP,pi,schlen,zero_dfl
- use units,          ONLY:HARTREE,SPEED_OF_LIGHT
+ use pars,           ONLY:SP,DP,pi,zero_dfl
+ use units,          ONLY:HARTREE
  use electrons,      ONLY:levels
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:bz_samp
- use real_time,      ONLY:RT_step,RT_output,RT_P,RT_output,NE_steps
- use fields,         ONLY:Efield,small_a,A_vecpot
+ use real_time,      ONLY:RT_step,RT_output,RT_P,RT_output,NE_steps,P_2levels_is_done
+ use fields,         ONLY:Efield,small_a
  implicit none
  !
  type(levels)  :: en
@@ -45,7 +45,7 @@ subroutine RT_X_one(en,k)
  character(9) :: FT_title
  logical      :: E_from_FT
  real(SP)     :: W_step,W_reached
- complex(SP), allocatable :: EELS(:),EPS(:),freqs(:)
+ complex(SP), allocatable :: EELS(:,:),EPS(:,:),freqs(:)
  complex(DP), allocatable :: X_irrep(:,:),E_w(:),E_t(:)
  !
  call section("=",'Optics')
@@ -62,11 +62,11 @@ subroutine RT_X_one(en,k)
    X_rt%energy_steps=RED_steps/2._SP
    X_rt%energy_range=(/0._SP,W_RT_induced_step*RED_steps/2._SP/)
    !
-   allocate(EELS(RED_steps),EPS(RED_steps),X_irrep(RED_steps,3),E_w(RED_steps))
+   allocate(EELS(RED_steps,2),EPS(RED_steps,2),X_irrep(RED_steps,6),E_w(RED_steps))
    !
  else
    !
-   allocate(EELS(X_rt%energy_steps),EPS(X_rt%energy_steps),X_irrep(X_rt%energy_steps,3)) 
+   allocate(EELS(X_rt%energy_steps,2),EPS(X_rt%energy_steps,2),X_irrep(X_rt%energy_steps,6)) 
    allocate(E_w(X_rt%energy_steps))
    !
  endif
@@ -124,6 +124,13 @@ subroutine RT_X_one(en,k)
 &                               RT_P_t(i_t_start:i_t_end,i_c),RED_steps,RT_step,&
 &                               i_t_start*RT_step,USE_FFT)
    !
+   if (P_2levels_is_done) then
+     FT_title=' 2 levels'
+     call RT_1D_Fourier_Transform(FT_title,freqs,X_irrep(:,i_c+3),X_rt%energy_steps,&
+&                                 RT_P_t(i_t_start:i_t_end,i_c+3),RED_steps,RT_step,&
+&                                 i_t_start*RT_step,USE_FFT)
+   endif
+   !
  enddo
  !
  ! P(w,ic)=E_ext(w,ic) \tilde X(w,ic)=|E_ext(w)| E_versor(ic) \tilde X(w,ic)
@@ -143,14 +150,19 @@ subroutine RT_X_one(en,k)
  do i_w = 1, X_rt%energy_steps
    !
    do i_c=1,3
-     if ( abs(Efield(1)%versor(i_c))>zero_dfl ) EPS(i_w) = EPS(i_w)-4._SP*pi*X_irrep(i_w,i_c)/E_w(i_w)
+     if ( abs(Efield(1)%versor(i_c))>zero_dfl ) then
+       EPS(i_w,1) = EPS(i_w,1)-4._SP*pi*X_irrep(i_w,i_c)/E_w(i_w)
+       if (P_2levels_is_done) EPS(i_w,2) = EPS(i_w,2)-4._SP*pi*X_irrep(i_w,i_c+3)/E_w(i_w)
+     endif
    enddo
    !
-   EELS(i_w)=1._DP/EPS(i_w)
+   EELS(i_w,:)=1._DP/EPS(i_w,:)
    !
    W_reached = real(freqs(i_w))
-   call RT_output('eps',(/ aimag(EPS(i_w)),real(EPS(i_w))/),TIME_or_E=W_reached*HARTREE)
-   call RT_output('eel',(/-aimag(EELS(i_w)),real(EELS(i_w))/),TIME_or_E=W_reached*HARTREE)
+   call RT_output('eps',(/ aimag(EPS(i_w,1)),real(EPS(i_w,1)),&
+&                          aimag(EPS(i_w,2)),real(EPS(i_w,2))/),TIME_or_E=W_reached*HARTREE)
+   call RT_output('eel',(/-aimag(EELS(i_w,:)),real(EELS(i_w,:)),&
+&                         -aimag(EELS(i_w,:)),real(EELS(i_w,:))/),TIME_or_E=W_reached*HARTREE)
    !
  enddo
  call RT_output("close eps eel")

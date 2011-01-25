@@ -85,7 +85,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Work Space
  !
  integer           :: io_err,ioWF_err,io_X_err(4),io_ID,ioBS_err,io_KB_PP_err,&
-&                     ioBS_Fxc_err,ioQINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err,io_J,io_G
+&                     ioBS_Fxc_err,ioQINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err,io_J_and_P,io_G
  integer, external :: ioX,io_DIPOLES,ioGROT,ioQINDX,ioRIM,&
 &                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_PP,&
 &                     ioCOL_CUT
@@ -362,7 +362,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_J=io_SC_components('J' ,en,io_ID)
+ io_J_and_P=io_SC_components('J_and_P' ,en,io_ID)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_G=io_SC_components('G' ,en,io_ID)
 #endif
@@ -559,7 +559,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined  _ELPH 
    if (l_ph_corr) then
      call initactivate(1,'DysSolver')
-     call initactivate(1,'GphBRnge ElPhModes GDamping dScStep ExtendOut ElPhRndNq')
+     call initactivate(1,'GphBRnge ElPhModes GDamping dScStep ExtendOut ElPhRndNq RandQpts')
      call initactivate(1,'WRgFsq NewtDchk OnMassShell')
    endif
    if (trim(QP_solver)=="g".and.l_ph_corr) then

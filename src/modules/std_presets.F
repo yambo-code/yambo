@@ -90,7 +90,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     RT_diagonalization_steps, l_NE_simulate_RPA,  &
 &                     SwitchOnTime,max_rt_steps_disk,l_RT_induced_field,&
 &                     l_RT_diagonalize,RT_is_dumped,QP_LifeTime,Phase_LifeTime,&
-&                     NE_Hxc_jumps,NE_tot_time,&
+&                     NE_Hxc_jumps,NE_tot_time,P_2levels_is_done,&
 &                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe
  use fields,     ONLY:Efield,n_ext_fields,theta_function_iTo_ref
 #endif
@@ -475,6 +475,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  max_rt_steps_disk=200
  l_RT_induced_field=.FALSE.
  NE_tot_time= 5*QP_LifeTime
+ P_2levels_is_done=.FALSE.
  !
 #endif
  !

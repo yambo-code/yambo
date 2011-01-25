@@ -45,6 +45,8 @@ module fields
  end type ext_field
  !
  integer, parameter  :: n_ext_fields=2
+ integer             :: i_Probe
+ integer             :: i_Pump
  type(ext_field)     :: Efield(n_ext_fields)
  !
  ! ... switch on time of external field

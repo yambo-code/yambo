@@ -30,7 +30,8 @@ subroutine RT_initialize(Xen)
 &                         l_RT_diamagnetic,max_rt_steps_disk,l_NE_simulate_BSE,       &
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,         &
 &                         l_RT_induced_field,NE_Hxc_jumps,     &
-&                         RT_diagonalization_steps,RT_is_dumped,QP_LifeTime,Phase_LifeTime
+&                         RT_diagonalization_steps,RT_is_dumped,QP_LifeTime,Phase_LifeTime, &
+&                         RT_TwoL_Polarization
 #if defined _TWO_LEVELS
  use real_time,      ONLY:tau_offdiag,tau_diag,l_3levels
 #endif

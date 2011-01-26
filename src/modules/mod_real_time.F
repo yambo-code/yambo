@@ -191,6 +191,14 @@ module real_time
      real(SP), optional, intent(in) :: TIME_or_E
    end subroutine
    !
+   subroutine RT_TwoL_Polarization(E,eval_P,k)
+     use R_lattice,  ONLY:bz_samp
+     use electrons,  ONLY:levels
+     logical,       intent(in)           :: eval_P
+     type(levels),  intent(in)           :: E
+     type(bz_samp), optional, intent(in) :: k
+   end subroutine
+   !
    subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,TRANS)
      use pars,       ONLY:SP
      use SC,         ONLY:SC_bands
@@ -215,7 +223,6 @@ module real_time
      use electrons,  ONLY:levels,n_sp_pol
      use X_m,        ONLY:X_t
      !
-     implicit none
      type(X_t),      intent(inout)        :: X
      complex(SP),    intent(inout)        :: G_input(SC_bands,SC_bands,QP_nk)
      complex(SP),    intent(in)           :: SC_R(SC_bands,SC_bands,QP_nk,n_sp_pol)
@@ -244,8 +251,6 @@ module real_time
      use xc_functionals, ONLY:E_xc
      use QP_m,           ONLY:QP_nk,QP_n_states,QP_Vnl_xc
      use collisions_IO,  ONLY:collisions_IO_alloc
-     !
-     implicit none
      !
      type(levels), intent(in) :: en
      !
@@ -314,7 +319,6 @@ module real_time
      use QP_m,           ONLY:QP_Vnl_xc
      use xc_functionals, ONLY:E_xc
      use collisions_IO,  ONLY:collisions_IO_free
-     implicit none
      !
      call SC_free()
      !

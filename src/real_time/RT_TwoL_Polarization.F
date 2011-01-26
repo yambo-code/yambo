@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_TwoL_Polarization(E,k,eval_P)
+subroutine RT_TwoL_Polarization(E,eval_P,k)
  !
  use pars,           ONLY:SP,cI
  use units,          ONLY:HARTREE
@@ -34,9 +34,9 @@ subroutine RT_TwoL_Polarization(E,k,eval_P)
  use memory_m,       ONLY:mem_est
  !
  implicit none
- type(bz_samp),intent(in) :: k
- type(levels), intent(in) :: E
- logical     , intent(in) :: eval_P
+ type(levels),            intent(in) :: E
+ logical     ,            intent(in) :: eval_P
+ type(bz_samp), optional, intent(in) :: k
  ! 
  ! Work Space
  !

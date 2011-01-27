@@ -44,7 +44,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  use real_time,      ONLY:G_lesser,ID,ID,NE_steps,G_lesser_previous,RT_ind_J,&
 &                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,&
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
-&                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,RT_P_2levels
+&                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,RT_P_2levels,l_NE_simulate_Irredux
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V, &
 &                         rho_convergence,H_rotate,local_V,V_hartree_sc,      &
@@ -131,7 +131,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
 &    call warning(" Restart from a non-converged Self-Consistent calculation! ")
    !
    if(.not.COHSEX_use_empties) &
-&    call warning(" Set UseEbands=.true. to be full compatible with RT!! ")
+&    call error(" Set UseEbands=.true. in self-consistent GW to be full compatible with RT!! ")
    !
    !  I only need SC_R than I can reconstruct G_lesser(:,:,:)
    !  rotating the non-integrating G_lesser
@@ -169,14 +169,21 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
      endif
      !
      do ik=1,QP_nk
-       if (local_V) then
-         call V_real_space_to_H(ik,V_hartree_sc+V_xc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf)
-       else
+       if (local_V.and..not.l_NE_simulate_Irredux) then
+         call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf)
+       elseif(.not.l_NE_simulate_Irredux) then
          call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(3))
          io_V=io_SC_components('V',Xen,ID(3))
          XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol)=H_nl_sc(1:SC_bands,1:SC_bands,1:n_sp_pol)
        endif
+       !
+       ! If IP or Irreduxible the hartree term is fixed and stored in XC0_and_HARTREE0
+       ! if I simulate BSE I have to remove the self-energy sigma(G_0)
+       !
+       if(l_NE_simulate_IP.or.l_NE_simulate_Irredux.or.l_NE_simulate_BSE) &
+&         call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf) 
      enddo
+     !
    endif
    !
    ! Now I update <i|r|j> dipoles using G_lesser_reference as
@@ -185,20 +192,8 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    if(.not.l_NE_simulate_BSE) call RT_update(G_lesser,SC_R,-1,Xen,k,Xk,X,up_DIP=.true.)
    call RT_update(G_lesser_reference,SC_R,-1,Xen,k,Xk,X,up_Gref=.true.)
    !
-   if(l_NE_simulate_IP.or.l_NE_simulate_BSE) then 
-     !
-     do ik=1,QP_nk
-       call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf) 
-     enddo
-     !
-   endif
-   !
-   if(l_NE_simulate_IP) then 
-     !
-     V_xc_sc=(0._SP)
-     V_hartree_sc=(0._SP)
-     !
-   endif
+   V_xc_sc=(0._SP)
+   if(l_NE_simulate_IP.or.l_NE_simulate_Irredux) V_hartree_sc=(0._SP) 
    !
  endif
  !
@@ -229,7 +224,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    enddo
    !
    V_xc_sc=(0._SP)
-   if(l_NE_simulate_IP) V_hartree_sc=(0._SP)
+   if(l_NE_simulate_IP.or.l_NE_simulate_Irredux) V_hartree_sc=(0._SP)
    !
    if(l_NE_simulate_BSE) then
      !

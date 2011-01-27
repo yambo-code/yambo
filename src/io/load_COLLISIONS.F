@@ -117,8 +117,7 @@ subroutine load_COLLISIONS()
      !
      V_kind=V_kinds(i1)
      !
-     if (i_qp==1) call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
-     if (i_qp> 1) call io_control(ACTION=OP_RD_CL,SEC=(/2/),ID=ID)
+     call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
      io_err=io_COLLISIONS(i_qp,ID)
      !
      ic=0

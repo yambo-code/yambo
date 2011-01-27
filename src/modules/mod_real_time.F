@@ -149,6 +149,8 @@ module real_time
  complex(SP), allocatable :: I1_lesser(:,:,:)
  complex(SP), allocatable :: I2_lesser(:,:,:)
  !
+ real(SP),    allocatable :: rho_reference(:)
+ !
  ! Integrator Variables
  !
  character(schlen), parameter :: EULER    = "EULER"
@@ -296,6 +298,9 @@ module real_time
      allocate(G_lesser_reference(SC_bands,SC_bands,QP_nk))
      call mem_est("Gf_l_ref",(/size(G_lesser_reference)/),(/2*SP/))
      !
+     allocate(rho_reference(fft_size))
+     call mem_est("rho_reference",(/fft_size/),(/SP/))
+     !
      ! Reference energies
      !
      allocate(E_bare(SC_bands,QP_nk,n_sp_pol))
@@ -358,6 +363,11 @@ module real_time
      !
      deallocate(G_lesser_reference)
      call mem_est("Gf_l_ref")
+     !
+     if(allocated(rho_reference)) then
+       deallocate(rho_reference)
+       call mem_est("rho_reference")
+     endif
      !
      deallocate(E_bare)
      call mem_est("E_bare")

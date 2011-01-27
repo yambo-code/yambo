@@ -30,13 +30,14 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  use wave_func,      ONLY:WF_load,WF_free
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx,SC_R
+ use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx,SC_R,rho_n
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &
 &                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,      &
 &                         NE_i_time,Integrator_name,l_RT_diagonalize,max_rt_steps_disk,&
-&                         G_lesser_reference,RT_diagonalization_steps, &
+&                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
 &                         it_start,RT_output,NE_time,NE_dynamics,RT_update,RT_TwoL_Polarization
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
+ use memory_m,       ONLY:mem_est
 #if defined _TWO_LEVELS
  use real_time,      ONLY:l_3levels
 #endif
@@ -125,9 +126,13 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
  endif
  !
- ! IP calculation => No need of WFs
+ ! IP calculation => No need of WFs and Density
  !
- if(l_NE_simulate_IP) call WF_free()
+ if(l_NE_simulate_IP) then  
+    call WF_free()
+    call mem_est("rho_reference rho")
+    deallocate(rho_n,rho_reference)
+ endif
  !
  ! Initialize output files
  !==========================

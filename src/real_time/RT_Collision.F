@@ -34,7 +34,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
  use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_with_fields,QP_LifeTime,   &
-&                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,    & 
+&                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference, & 
 &                         G_lesser_reference,l_RT_needs_XC0,Phase_LifeTime,NE_Hxc_jumps,&
 &                         RT_is_dumped,l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start
 #if defined _TWO_LEVELS
@@ -74,7 +74,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !
    if(.not.Hfrozen.or.XC_needs_density.or..not.NE_dynamics) call el_density(G_input,k,rho_n,.false.)
    !
-   if(.not.Hfrozen.or..not.NE_dynamics) call V_Hartree(rho_n,V_hartree_sc)
+   if(.not.Hfrozen.or..not.NE_dynamics) call V_Hartree(rho_n-rho_reference,V_hartree_sc)
    !
    if(.not.XCfrozen.or..not.NE_dynamics) then
      !

@@ -188,8 +188,10 @@ module SC
      deallocate(H_nl_sc)
      call mem_est("H_nl_sc")
      !
-     deallocate(rho_n)
-     call mem_est("rho")
+     if(allocated(rho_n)) then
+       deallocate(rho_n)
+       call mem_est("rho")
+     endif
      !
      if(allocated(two_spin_density)) then
        deallocate(two_spin_density)

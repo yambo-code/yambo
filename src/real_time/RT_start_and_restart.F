@@ -42,9 +42,10 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:G_lesser,ID,ID,NE_steps,G_lesser_previous,RT_ind_J,&
-&                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,&
+&                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,rho_reference,&
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
-&                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,RT_P_2levels,l_NE_simulate_Irredux
+&                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,RT_P_2levels,            &
+&                         l_NE_simulate_Irredux,l_NE_simulate_RPA
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V, &
 &                         rho_convergence,H_rotate,local_V,V_hartree_sc,      &
@@ -74,6 +75,8 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  ! G_lesser(T=0,T=0)=Go and G_lesser_old(T=0,T=0)=Go
  !
  G_lesser          =(0._SP,0._SP)
+ G_lesser_reference=(0._SP,0._SP)
+ rho_reference     =(0._SP)
  V_xc_sc           =(0._SP)
  V_hartree_sc      =(0._SP)
  H_nl_sc           =(0._SP,0._SP)
@@ -205,22 +208,20 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    XC0_and_HARTREE0=(0._SP,0._SP)
    ! 
    call el_density(G_lesser,Xk,rho_n,.false.)
+   rho_reference=rho_n
    !
    call IO_and_Messaging_switch("-report -log")
    call XC_potential_driver(Xen,Xk,WF_KIND,WF_xc_functional,1)
    call IO_and_Messaging_switch("+report +log")
    !
-   ! In the IP  case XC0_and_HARTREE0  contains <mk | Vxc(rho_0) + Vhartree(rho_0) | nk>
+   ! In the IP or RPA case XC0_and_HARTREE0  contains <mk | Vxc(rho_0) + Vhartree(rho_0) | nk>
    !
-   ! in the RPA case XC0_and_HARTREE0  contains only  <mk | Vxc(rho_0) | nk>
+   ! in the IRREDUX case XC0_and_HARTREE0  contains only  <mk | Vhartree(rho_0) | nk>
    !
    do ik=1,QP_nk
-     if(l_NE_simulate_IP) then   
-       call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf) 
-       call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf) 
-     else
-       call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf) 
-     endif
+     if(.not.l_NE_simulate_Irredux) &
+&      call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf) 
+     call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf) 
    enddo
    !
    V_xc_sc=(0._SP)

@@ -102,11 +102,11 @@ subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
    G_input=(0._SP,0._SP)
    !
    do ik=1,Xen%nk
-      !
-      forall(ib=1:Xen%nbm)
-        G_input(ib,ib,ik)=(0._SP,1._SP)*Xen%f(ib,ik,1)
-      end forall   
-      !
+     !
+     forall(ib=1:Xen%nbm)
+       G_input(ib,ib,ik)=(0._SP,1._SP)*Xen%f(ib,ik,1)
+     end forall   
+     !
      call H_rotate(SC_R(1:SC_bands,1:SC_bands,ik,1),G_input(1:SC_bands,1:SC_bands,ik),SC_bands,-1)
     !
   enddo

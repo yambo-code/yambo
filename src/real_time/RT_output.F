@@ -37,7 +37,7 @@ subroutine RT_output(what,VALUEs,TIME_or_E)
  !
  ! Work space
  !
- integer, parameter       :: n_output_files=7
+ integer, parameter       :: n_output_files=8
  character(lchlen), save  :: file_name(n_output_files)
  character(schlen)        :: orders(n_output_files),short_file_name(n_output_files)
  integer                  :: i_f,i_fp,n_headings(n_output_files)
@@ -88,7 +88,7 @@ subroutine RT_output(what,VALUEs,TIME_or_E)
  !
  if (initialize) file_name(4)=trim(append_ch)//'dynamics'
  short_file_name(4)=trim(append_ch)//'dynamics'
- n_headings(4)=8
+ n_headings(4)=9
  headings(4,2:3)=(/"E_kin[eV]","E_ion[eV]"/)
  if(l_NE_simulate_IP) then
    headings(4,4:6)=(/"       -       ","       -       ","Hartree+Vxc[eV]"/)
@@ -97,6 +97,7 @@ subroutine RT_output(what,VALUEs,TIME_or_E)
  endif
  headings(4,7)="E_mg[eV]"
  headings(4,8)="N" 
+ headings(4,9)="dG" 
  !
  ! ... and energy resolved
  !
@@ -124,6 +125,11 @@ subroutine RT_output(what,VALUEs,TIME_or_E)
  short_file_name(7)=trim(append_ch)//'nonlinear'
  n_headings(7)=3
  headings(7,2:3)=(/'X/Im','X/Re'/)
+ !
+ if (initialize) file_name(8)=trim(append_ch)//'occupations'
+ short_file_name(8)=trim(append_ch)//'occupations'
+ n_headings(8)=2
+ headings(8,1:2)=(/'E','Occ'/)
  !
  ! Check which files to write
  !----------------------------

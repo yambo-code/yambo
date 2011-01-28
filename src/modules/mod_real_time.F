@@ -53,6 +53,7 @@ module real_time
  logical           :: l_NE_with_fields  
  logical           :: l_RT_probe  
  logical           :: l_RT_pump_and_probe  
+ logical           :: l_Dynamics_is_over  
  !
  ! Inital XC (SC or default) are requested
  !

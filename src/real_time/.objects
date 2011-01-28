@@ -6,7 +6,7 @@ TWO_objs = RT_init_two_levels.o RT_two_levels.o RT_three_levels.o
 #if defined _RT
 objs = RT_initialize.o RT_start_and_restart.o RT_update.o \
        RT_driver.o RT_apply_field.o RT_Collision.o RT_Integrator.o \
-       RT_Energy.o RT_output.o RT_propagate_fields.o \
+       RT_observables.o RT_output.o RT_propagate_fields.o \
        RT_current_AND_polarization.o $(TWO_objs) \
        RT_average_operator.o RT_databases_IO.o RT_Ext_fields.o  \
        RT_TwoL_Polarization.o RT_TwoL_Glesser.o

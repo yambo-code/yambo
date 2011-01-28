@@ -19,32 +19,39 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Energy(en,k,RT_Energies)
+subroutine RT_Observables(en,k,on_the_fly_operators)
  !
- use pars,           ONLY:SP,pi
- use units,          ONLY:SPEED_OF_LIGHT
+ use pars,           ONLY:SP,pi,cI
+ use units,          ONLY:SPEED_OF_LIGHT,HARTREE
  use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex
- use R_lattice,      ONLY:bz_samp
+ use R_lattice,      ONLY:bz_samp,nkibz
  use D_lattice,      ONLY:DL_vol
- use SC,             ONLY:V_hartree_sc,Ho,rho_n
+ use SC,             ONLY:V_hartree_sc,Ho,rho_n,SC_bands
  use X_m,            ONLY:P_square
  use real_time,      ONLY:XC0_and_HARTREE0,G_lesser,RT_average_operator,XCfrozen,l_NE_with_fields, &
-&                         l_NE_simulate_IP 
+&                         l_NE_simulate_IP ,l_Dynamics_is_over,RT_output
  use fields,         ONLY:A_vecpot
  use electrons,      ONLY:levels
  use QP_m,           ONLY:QP_Vnl_xc,QP_Sc
  use xc_functionals, ONLY:E_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional
+ use vec_operate,    ONLY:sort
  !
  implicit none 
  !
  type(levels),  intent(in) :: en
  type(bz_samp), intent(in) :: k
- complex(SP),   intent(out):: RT_Energies(7)
+ complex(SP),   intent(out):: on_the_fly_operators(8)
+ !
+ ! WorkSpace
+ !
+ integer     :: i1,indexes(SC_bands*nkibz)
+ real(SP)    :: Energies_and_occupations(SC_bands*nkibz,2)
  !
  ! Shadows
  !
- complex(SP)               :: E_kin,E_ion,E_h,Trace_Gf,Exc,Ex,E_mg
+ integer     :: ib,ik
+ complex(SP) :: E_kin,E_ion,E_h,Trace_Gf,Exc,Ex,E_mg,delta_G
  !
  !      
  E_kin    =(0._SP,0._SP)
@@ -54,6 +61,7 @@ subroutine RT_Energy(en,k,RT_Energies)
  Exc      =(0._SP,0._SP)
  Ex       =(0._SP,0._SP)
  E_mg     =(0._SP,0._SP)
+ delta_G  =(0._SP,0._SP)
  !
  ! Non-interaction kinetc energy
  !
@@ -128,9 +136,43 @@ subroutine RT_Energy(en,k,RT_Energies)
  !
  call RT_average_operator(VALUE=Trace_Gf,G=G_lesser,k=k)
  !
+ ! delta_G=\sum_c (-i G_lesser(c,c,k) + i G_lesser(v,v,k)) w_k
+ ! where conduction and valence are defined with reference to the unperturbed
+ ! system.
+ !
+ ! Note that this definition is faulty in the case of metals where a different
+ ! quantity must be defined.
+ !
+ do ik=1,en%nk
+   do ib=1,Sc_bands
+     if (ib<=en%nbf) delta_G=delta_G-cI*G_lesser(ib,ib,ik)*k%weights(ik)
+     if (ib> en%nbf) delta_G=delta_G+cI*G_lesser(ib,ib,ik)*k%weights(ik)
+   enddo
+ enddo
+ !
+ if (l_Dynamics_is_over.and.l_NE_with_fields) then
+   !
+   i1=1
+   do ik=1,en%nk
+     do ib=1,Sc_bands
+       Energies_and_occupations(i1,1)=en%E(ib,ik,1)
+       Energies_and_occupations(i1,2)=real(-cI*G_lesser(ib,ib,ik))
+       i1=i1+1
+     enddo
+   enddo
+   !
+   call sort(Energies_and_occupations(:,1),indx=indexes)
+   !
+   do i1=1,SC_bands*en%nk
+     call RT_output('occ',(/Energies_and_occupations(indexes(i1),2)/),TIME_or_E=Energies_and_occupations(i1,1)*HARTREE)
+   enddo
+   !
+ endif
+ !
  ! Transfer the shadow variables
  !
- RT_Energies=(/E_kin,E_ion,E_h,Ex,Exc,E_mg,Trace_Gf/)
+ on_the_fly_operators=(/E_kin,E_ion,E_h,Ex,Exc,E_mg,Trace_Gf,delta_G/)
  !
-end subroutine RT_Energy
+ !
+end subroutine RT_Observables
 

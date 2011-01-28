@@ -35,7 +35,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
 &                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
 &                         NE_i_time,Integrator_name,l_RT_diagonalize,max_rt_steps_disk,&
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
-&                         it_start,RT_output,NE_time,NE_dynamics,RT_update,RT_TwoL_Polarization
+&                         it_start,RT_output,NE_time,NE_dynamics,RT_update,RT_TwoL_Polarization,&
+&                         l_Dynamics_is_over
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
  use memory_m,       ONLY:mem_est
 #if defined _TWO_LEVELS
@@ -60,8 +61,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  ! Work Space
  !
  integer                  :: it,ik,ib
- logical                  :: Dynamics_is_over
- complex(SP)              :: RT_Energies(7)
+ complex(SP)              :: on_the_fly_operators(8)
  !
  call section('*',trim(SC_potential)//' Real-Time Dynamics')
  !##########################################################
@@ -138,15 +138,15 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !==========================
  !
  call RT_output(what="open dyn cur pol")
- if(l_NE_with_fields) call RT_output(what="open pot")
+ if(l_NE_with_fields) call RT_output(what="open pot occ")
  !
  ! Loop on time
  !==============
- Dynamics_is_over=.FALSE.
+ l_Dynamics_is_over=.FALSE.
  !
  it=it_start-1
  !
- do while (.not.Dynamics_is_over)
+ do while (.not.l_Dynamics_is_over)
    !
    it=it+1
    !
@@ -190,14 +190,12 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    endif
 #endif
    !
-   call RT_Energy(Xen,k,RT_Energies)
-   !
    ! End dynamics ?
    !===============
-   if (it==Thermal_steps+NE_steps) Dynamics_is_over=.TRUE.
+   if (it==Thermal_steps+NE_steps) l_Dynamics_is_over=.TRUE.
    if (stop_now(.FALSE.)) then
       NE_steps=(int((it-Thermal_steps)/max_rt_steps_disk)+1)*max_rt_steps_disk
-      Dynamics_is_over=.TRUE.
+      l_Dynamics_is_over=.TRUE.
    endif
    !
    ! Write DBs
@@ -215,7 +213,10 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    ! Now print Energetics, current and (eventually) potential 
    !=========================================================
-   call RT_output('dyn',real(RT_Energies),NE_time/FS2AUT)
+   !
+   call RT_Observables(Xen,k,on_the_fly_operators)
+   !
+   call RT_output('dyn',real(on_the_fly_operators),NE_time/FS2AUT)
    call RT_output('cur pol',TIME_or_E=NE_time/FS2AUT)
    if(l_NE_with_fields) call RT_output('pot',TIME_or_E=NE_time/FS2AUT) 
    !
@@ -230,8 +231,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    call RT_Integrator(G_lesser,G_lesser_previous,A_vecpot,A_vecpot_previous,RT_step,Xen,k,q,Integrator_name,NE_time)
    !
-   ! Diagonalization
-   ! =====================
    if(it==Thermal_steps) then
      !
      ! I freeze the last self-energy + hartree in XC0_and_HARTREE and I work
@@ -242,20 +241,24 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
      !
    endif
    !
+   ! Diagonalization
+   ! ===============
    if(it==Thermal_steps.or. (mod(it,RT_diagonalization_steps)==0.and.RT_diagonalization_steps>0) ) then
+     !
      do ik=1,Xen%nk
        call mat_dia_inv(DIAGO,USE_LK,SC_R(1:SC_bands,1:SC_bands,ik,1),E_real=Xen%E(:SC_bands,ik,1))
      enddo
+     !
+     ! Updating
+     !===========
+     !
+     ! At the end of the thermalization update the reference G_lesser and dipoles
+     if (it==Thermal_steps) call RT_update(G_lesser_reference,SC_R,it,Xen,k,Xk,X(1),up_Gref=.true.,up_DIP=.true.)
+     !
+     ! Analize quasi-particles
+     if (l_RT_diagonalize) call RT_update(G_lesser,SC_R,it,Xen,k,Xk,X(1),an_QP=.true.)
+     !
    endif
-   !
-   ! Updating
-   !===========
-   !
-   ! At the end of the thermalization update the reference G_lesser and dipoles
-   if (it==Thermal_steps) call RT_update(G_lesser_reference,SC_R,it,Xen,k,Xk,X(1),up_Gref=.true.,up_DIP=.true.)
-   !
-   ! Analize quasi-particles
-   if(l_RT_diagonalize) call RT_update(G_lesser,SC_R,it,Xen,k,Xk,X(1),an_QP=.true.)
    !
    ! Timing
    !========
@@ -268,7 +271,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
  if(NE_steps/=0) call live_timing
  !
- call RT_output(what="close cur pol pot dyn")
+ call RT_output(what="close cur pol pot dyn occ")
  !
  if (l_RT_diagonalize) call SC_History(-1,en)
  !

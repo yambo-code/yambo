@@ -224,8 +224,8 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
                (/real(g_sq_F_E%p(iw))*HARTREE*1000.,&
                  g_sq_F(iqp,iw,1)+g_sq_F(iqp,iw,2)+g_sq_F(iqp,iw,3),&
                  g_sq_F(iqp,iw,1),g_sq_F(iqp,iw,2),g_sq_F(iqp,iw,3),&
-                 g_sq_F(iqp,iw,4)+g_sq_F(iqp,iw,5),&
-                 g_sq_F(iqp,iw,4),g_sq_F(iqp,iw,5)/),&
+                 g_sq_F(iqp,iw,4)/2.+g_sq_F(iqp,iw,5),&
+                 g_sq_F(iqp,iw,4)/2.,g_sq_F(iqp,iw,5)/),&
                INDENT=-2,USE_TABS=.TRUE.)
      enddo
      call of_open_close(trim(ch))

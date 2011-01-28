@@ -136,6 +136,11 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    if(.not.COHSEX_use_empties) &
 &    call error(" Set UseEbands=.true. in self-consistent GW to be full compatible with RT!! ")
    !
+   if(l_NE_simulate_BSE) then
+     l_NE_simulate_BSE=.true.
+     call warning(" Real-time BSE not compatible with SC restart yet, turned off! ")
+   endif
+   !
    !  I only need SC_R than I can reconstruct G_lesser(:,:,:)
    !  rotating the non-integrating G_lesser
    !
@@ -192,7 +197,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    ! Now I update <i|r|j> dipoles using G_lesser_reference as
    ! Green function to construct the Hamiltonian
    !
-   if(.not.l_NE_simulate_BSE) call RT_update(G_lesser,SC_R,-1,Xen,k,Xk,X,up_DIP=.true.)
+   call RT_update(G_lesser,SC_R,-1,Xen,k,Xk,X,up_DIP=.true.)
    call RT_update(G_lesser_reference,SC_R,-1,Xen,k,Xk,X,up_Gref=.true.)
    !
    V_xc_sc=(0._SP)
@@ -208,7 +213,10 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    XC0_and_HARTREE0=(0._SP,0._SP)
    ! 
    call el_density(G_lesser,Xk,rho_n,.false.)
-   rho_reference=rho_n
+   !
+   ! During Thermalization rho_reference is always zero
+   !
+   if(Thermal_steps==0)rho_reference=rho_n
    !
    call IO_and_Messaging_switch("-report -log")
    call XC_potential_driver(Xen,Xk,WF_KIND,WF_xc_functional,1)
@@ -216,29 +224,20 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    !
    ! In the IP or RPA case XC0_and_HARTREE0  contains <mk | Vxc(rho_0) + Vhartree(rho_0) | nk>
    !
-   ! in the IRREDUX case XC0_and_HARTREE0  contains only  <mk | Vhartree(rho_0) | nk>
+   ! in the IRREDUX case   XC0_and_HARTREE0  contains <mk | Vhartree(rho_0) | nk>
    !
    do ik=1,QP_nk
      if(.not.l_NE_simulate_Irredux) &
 &      call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf) 
-     call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf) 
+     if(Thermal_steps==0) &
+&      call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf) 
    enddo
    !
    V_xc_sc=(0._SP)
    if(l_NE_simulate_IP.or.l_NE_simulate_Irredux) V_hartree_sc=(0._SP)
    !
-   if(l_NE_simulate_BSE) then
-     !
-     if(.not.l_sc_cohsex.and..not.l_sc_hf) call error(" RTBSEOnly works only with Potantial=COHSEX or HARTREE-FOCK !! ")
-     !
-     call COLLISIONS_IO_compose(G_lesser) 
-     !
-     do ik=1,QP_nk
-       call V_qp_basis_to_H(ik,-QP_Vnl_xc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol)) 
-       if(l_sc_cohsex) call V_qp_basis_to_H(ik,-QP_Sc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol))
-     enddo
-     !
-   endif
+   if(l_NE_simulate_BSE.and..not.l_sc_cohsex.and..not.l_sc_hf) &
+&    call error(" RTBSEOnly works only with Potantial=COHSEX or HARTREE-FOCK !! ")
    !
  endif
  !
@@ -265,6 +264,10 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    !
    it_start=it_now+1
    !
+   ! If I'm doing the response to an external field I need rho_reference and G_lesser_reference
+   !
+   if(it_start>Thermal_steps.and..not.l_NE_simulate_IP) call el_density(G_lesser_reference,Xk,rho_reference,.false.)
+   !
  endif
  !
  ! Initialize G_lesser_previous and G_lesser_reference
@@ -273,7 +276,10 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  !
  A_vecpot_previous =A_vecpot
  G_lesser_previous =G_lesser   
- G_lesser_reference=G_lesser   
+ !
+ ! During Thermalization G_lesser_reference must be zero
+ !
+ if(Thermal_steps==0) G_lesser_reference=G_lesser   
  !
  call msg('r','')
  !

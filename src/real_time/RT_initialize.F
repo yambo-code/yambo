@@ -59,13 +59,13 @@ subroutine RT_initialize(Xen)
  call parser('RT3Levels',    l_3levels)
 #endif
  !
- l_RT_diagonalize=RT_diagonalization_steps>1
- l_NE_simulate_RPA=.not.Hfrozen.and.XCfrozen
- l_NE_simulate_IP =     Hfrozen.and.XCfrozen
+ l_RT_diagonalize      =RT_diagonalization_steps>1
+ l_NE_simulate_RPA     =.not.Hfrozen.and.XCfrozen
+ l_NE_simulate_IP      =Hfrozen.and.XCfrozen
  l_NE_simulate_Irredux =Hfrozen.and..not.XCfrozen
- !
- if(l_NE_simulate_BSE.and.XCfrozen) call warning(" BSE turned off because  XC is frozen! ")
+ if(l_NE_simulate_BSE.and.XCfrozen) call warning(" BSE turned off because XC is frozen! ")
  l_NE_simulate_BSE     =.not.XCfrozen.and.l_NE_simulate_BSE
+ !
  !
  ! In some cases I need to freeze XC or Hartree. In these cases I initialize here
  ! the scattering term. No updates will follow in RT_Collision

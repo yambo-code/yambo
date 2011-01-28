@@ -24,6 +24,9 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  ! This subroutine prepare I1(t_1,t_2) and I2(t_1,t_2) give a G^<(t_1,t_1) 
  ! Actualy it works only for the diagonal I1(t_1,t_1), I2(t_1,t_1)
  !
+ ! Notice that G_lesser_reference and rho_reference are zero during
+ ! the thermalization
+ !
  ! This subroutine put the full Hamiltonian in SC_R if it is allocated
  !
  use pars,           ONLY:SP,cI
@@ -74,6 +77,12 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !
    if(.not.Hfrozen.or.XC_needs_density.or..not.NE_dynamics) call el_density(G_input,k,rho_n,.false.)
    !
+   ! The Hartree term is written as
+   !
+   ! V_hartree(G) = V_hartree(rho-rho_0) + V_hartree(rho_0)
+   !
+   ! where V_hartree(rho_0) is stored in XC0_and_HARTREE0
+   !
    if(.not.Hfrozen.or..not.NE_dynamics) call V_Hartree(rho_n-rho_reference,V_hartree_sc)
    !
    if(.not.XCfrozen.or..not.NE_dynamics) then
@@ -87,7 +96,11 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
        !
      endif
      !
-     if(l_sc_hf.or.l_sc_cohsex) call COLLISIONS_IO_compose(G_input)
+     ! The exchange/cohsex term is writted as Sigma(G - G_0) - Sigma(G)
+     ! NOTICE THAT: this approximation is valid only for linear self-energies 
+     !              in G_lesser as exchange or COHSEX(with W fixed) 
+     !
+     if(l_sc_hf.or.l_sc_cohsex) call COLLISIONS_IO_compose(G_input-G_lesser_reference)
      !
    endif
    !
@@ -120,7 +133,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    ! (for all the parts of self-energy different from V_h + V_xc)
    ! I have to subtruct XC0_and_HARTREE0 that contains <mk|Vxc(rho0) |nk>
    !
-   if(Thermal_steps/=0.and.SwitchOnTime/=0.0) then 
+   if(Thermal_steps/=0.and.SwitchOnTime/=0.0.and..not.NE_dynamics) then 
      !      
      call V_by_V_plus_V(SC_bands,(1._SP,0._SP),-XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1),H_nl_sc(1:SC_bands,1:SC_bands,1))
      !

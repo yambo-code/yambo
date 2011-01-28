@@ -71,8 +71,8 @@ subroutine RT_TwoL_Glesser(Poles_and_derivatives,Eo,Rabi,G_lesser)
 !     do i_f=1,N_W_delta_search-1
 !       write (100,'(4f20.10)') real(W_func(i_f))*HARTREE,Poles_func(i_f)
 !     enddo
-     write (*,*) i_found,Eo*HARTREE,W_func(N_W_delta_search-1)*HARTREE
-     stop
+!     write (*,*) i_found,Eo*HARTREE,W_func(N_W_delta_search-1)*HARTREE
+!     stop
    endif
    !
    Poles_and_derivatives=(/W_bar,Beta_wbar,W_gamma,Beta_gamma/)

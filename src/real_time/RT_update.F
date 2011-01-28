@@ -33,7 +33,7 @@ subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
  use R_lattice,  ONLY:bz_samp
  use QP_m,       ONLY:QP_nk
  use electrons,  ONLY:levels,n_sp_pol
- use real_time,  ONLY:RT_diagonalization_steps,Occ_natural_orb,Thermal_steps
+ use real_time,  ONLY:RT_diagonalization_steps,Occ_natural_orb,Thermal_steps,rho_reference
  use wrapper,    ONLY:Vstar_dot_V,M_by_V
  use X_m,        ONLY:X_t
  !
@@ -95,7 +95,7 @@ subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
    !
  endif
  !
- ! Update G_lesser
+ ! Update G_lesser and rho_reference
  !
  if(present(up_Gref)) then
    !
@@ -110,6 +110,8 @@ subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
      call H_rotate(SC_R(1:SC_bands,1:SC_bands,ik,1),G_input(1:SC_bands,1:SC_bands,ik),SC_bands,-1)
     !
   enddo
+  !
+  if(allocated(rho_reference)) call el_density(G_input,Xk,rho_reference,.false.)  
   !
  endif 
  !

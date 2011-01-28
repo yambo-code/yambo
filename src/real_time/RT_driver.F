@@ -30,9 +30,9 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  use wave_func,      ONLY:WF_load,WF_free
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx,SC_R,rho_n
+ use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx,SC_R,rho_n,Ho
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &
-&                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,      &
+&                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
 &                         NE_i_time,Integrator_name,l_RT_diagonalize,max_rt_steps_disk,&
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
 &                         it_start,RT_output,NE_time,NE_dynamics,RT_update,RT_TwoL_Polarization
@@ -165,7 +165,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    ! Start-Up & Timing
    !===================
    !
-   if(it==it_start) then
+   if(it==it_start.or.it==Thermal_steps+1) then
      !
      if (.not.NE_dynamics) call live_timing('[RT] Thermalization :',Thermal_steps-it_start+1,SERIAL=.true.)
      if (     NE_dynamics) call live_timing('[RT] Dynamics :',NE_steps-it_start+1,SERIAL=.true.)
@@ -224,8 +224,24 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    call RT_Collision(G_lesser_previous,A_vecpot_previous,Xen,k,q,NE_time)
    !
+   ! Integration
+   !=============
+   ! T -> T+dT step 
+   !
+   call RT_Integrator(G_lesser,G_lesser_previous,A_vecpot,A_vecpot_previous,RT_step,Xen,k,q,Integrator_name,NE_time)
+   !
    ! Diagonalization
    ! =====================
+   if(it==Thermal_steps) then
+     !
+     ! I freeze the last self-energy + hartree in XC0_and_HARTREE and I work
+     ! only with the differences rho-rho_reference and G_lesser-G_lesser_reference
+     ! 
+     call RT_Collision(G_lesser_previous,A_vecpot_previous,Xen,k,q,NE_time)
+     XC0_and_HARTREE0=SC_R-Ho
+     !
+   endif
+   !
    if(it==Thermal_steps.or. (mod(it,RT_diagonalization_steps)==0.and.RT_diagonalization_steps>0) ) then
      do ik=1,Xen%nk
        call mat_dia_inv(DIAGO,USE_LK,SC_R(1:SC_bands,1:SC_bands,ik,1),E_real=Xen%E(:SC_bands,ik,1))
@@ -240,12 +256,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    ! Analize quasi-particles
    if(l_RT_diagonalize) call RT_update(G_lesser,SC_R,it,Xen,k,Xk,X(1),an_QP=.true.)
-   !
-   ! Integration
-   !=============
-   ! T -> T+dT step 
-   !
-   call RT_Integrator(G_lesser,G_lesser_previous,A_vecpot,A_vecpot_previous,RT_step,Xen,k,q,Integrator_name,NE_time)
    !
    ! Timing
    !========

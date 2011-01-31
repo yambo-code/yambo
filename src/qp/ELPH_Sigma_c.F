@@ -132,17 +132,14 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  if (trim(QP_solver)=='g') then
    !
    do i_qp=1,qp%n_states
+     !
      Sc_W(i_qp)%n =QP_Sc_steps
-     if (l_GF_from_CA) then
-       call FREQUENCIES_Green_Function(i_qp,Sc_W(i_qp),en%E)
-     else
-       Sc_W(i_qp)%er=(/minval(en%E(:,:,:))-2.*max_ph_freq,maxval(en%E(:QP_PH_n_G_bands,:,:))+2.*max_ph_freq/)
-       Sc_W(i_qp)%dr=QP_G_dr
-       call FREQUENCIES_setup(Sc_W(i_qp))
-     endif
-     QP_Sc_steps=Sc_W(i_qp)%n(1)
+     !
+     call FREQUENCIES_Green_Function(i_qp,Sc_W(i_qp),en%E,.not.l_GF_from_CA)
+     !
    enddo
-   gsqF_energy_steps=QP_Sc_steps
+   QP_Sc_steps      =Sc_W(1)%n(1)
+   gsqF_energy_steps=Sc_W(1)%n(1)
    !
    if (.not.l_el_corr) QP_Sc=cmplx(0.,0.)  
    !
@@ -516,7 +513,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        ! Setup energy range for Sc/G plotting (II)
        !
        if ( trim(QP_solver)=='g' ) then
-         call FREQUENCIES_Green_Function(i_qp,Sc_local_W,en%E)
+         call FREQUENCIES_Green_Function(i_qp,Sc_local_W,en%E,.FALSE.)
          !
          ! Overwrites the damping defined in FREQUENCIES_Green_Function
          !
@@ -591,7 +588,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
            !
            Sc_local=(0.,0.)
            !
-           call Kramers_Kronig(cmplx(DP_FAN(:))/pi,real(Sc_W(1)%p)    ,QP_Sc_steps,&
+           call Kramers_Kronig(cmplx(DP_FAN(:))/pi,real(Sc_W(i_qp)%p) ,QP_Sc_steps,&
 &                              Sc_local           ,conjg(Sc_local_W%p),QP_Sc_steps,(0.,0.))
            !
            QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+Sc_local(:)+DP_DW

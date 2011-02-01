@@ -233,7 +233,7 @@ powerpc64*linux* )
   ;;
 powerpc-ibm* )
   CFLAGS="-O -q64"
-  SYSFLAGS="-O3 -q64 -qstrict -qarch=pwr5 -qtune=pwr5 -qmaxmem=-1"
+  SYSFLAGS="-O3 -q64 -qstrict -qarch=auto -qtune=auto -qmaxmem=-1"
   UFFLAGS="-q64"
   ;;
 mips-sgi-irix*)

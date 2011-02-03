@@ -104,7 +104,7 @@ static void title(FILE *file_name,char *cmnt);
  #define F90_FUNC_(name,NAME) name
 #endif
 /* */
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
  int io,i,c,j,k,nf,lni,lnr,lnc,ttd,
      iif=0,iid=1,iod=1,icd=1,nr=0,ijs=0,np=1,pid=0;

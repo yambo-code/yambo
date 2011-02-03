@@ -511,11 +511,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          ! 
          ! :::Exchange    (resonant):::
          !
-         if (BS_res_K_exchange) H_res_x=Vstar_dot_V(BS_n_g_exch,O2x(1,icv2),O1x(1,icv1))
+         if (BS_res_K_exchange) H_res_x=Vstar_dot_V(BS_n_g_exch,O2x(:,icv2),O1x(:,icv1))
          !
          ! :::Exchange    (coupling):::
          !
-         if (BS_cpl_K_exchange) H_cpl_x=V_dot_V(BS_n_g_exch,O2x(g_rot(inv_index,1:BS_n_g_exch),icv2),O1x(1,icv1))
+         if (BS_cpl_K_exchange) H_cpl_x=V_dot_V(BS_n_g_exch,O2x(g_rot(inv_index,1:BS_n_g_exch),icv2),O1x(:,icv1))
          !
          ! :::ALDA        (resonant):::
          !

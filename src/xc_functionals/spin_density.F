@@ -75,7 +75,7 @@ subroutine spin_density(en,Xk)
        !
        ! my
        !
-       cv(:,2)=cv(:,2)+Xk%weights(i2)*(0.,-1.d0)*(&
+       cv(:,2)=cv(:,2)+Xk%weights(i2)*(0._SP,-1._SP)*(&
 &              en%f(i1,i2,1)*conjg(wf(:,ifft_up))*wf(:,ifft_dn)&
 &             -en%f(i1,i2,2)*conjg(wf(:,ifft_dn))*wf(:,ifft_up) )
      endif

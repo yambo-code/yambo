@@ -113,6 +113,20 @@ subroutine WF_states_setup(k,Xw,b_to_load,k_to_load,qp_to_load,cg_npts,&
      !
    enddo
    !
+  elseif(.not.present(qp_to_load).and.present(b_to_load).and..not.present(k)) then
+   ! 
+   ! Parallelization on bands only
+   !
+   call par_indexes(px,(/b_to_load(2)/),(/b_to_load(1)/))
+   !
+   do ib=b_to_load(1),b_to_load(2)
+     !
+     if(.not.px%element_1D(ib).and.par_loops) cycle 
+     ! 
+     states_to_load(ib,:,:)=.TRUE.
+     !
+   enddo 
+   !
  elseif(present(b_to_load).and.present(k_to_load)) then
    !
    ! Parallelization on bands and k-points

@@ -54,7 +54,7 @@ subroutine COLLISIONS_IO_compose(G_input)
  !
  if (.not.allocated(QP_Vnl_xc))  allocate(QP_Vnl_xc(QP_n_states))
  if(l_sc_hf.or.l_sc_cohsex.or.l_sc_exx.or.last_QP_mem/=0) QP_Vnl_xc=(0._SP,0._SP)
- if(l_sc_cohsex.or.l_sc_srpa) QP_sc=(0._SP,0._SP)
+ if(l_sc_cohsex.or.l_sc_srpa) QP_Sc=(0._SP,0._SP)
  !
  ! First loop on collisions in the Cache
  ! notice that in memory all collisions are sum together

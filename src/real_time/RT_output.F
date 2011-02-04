@@ -129,7 +129,7 @@ subroutine RT_output(what,VALUEs,TIME_or_E)
  if (initialize) file_name(8)=trim(append_ch)//'occupations'
  short_file_name(8)=trim(append_ch)//'occupations'
  n_headings(8)=2
- headings(8,1:2)=(/'E','Occ'/)
+ headings(8,1:2)=(/'E  ','Occ'/)
  !
  ! Check which files to write
  !----------------------------

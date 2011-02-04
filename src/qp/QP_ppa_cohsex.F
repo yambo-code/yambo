@@ -443,7 +443,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
      enddo ! loop on the band ib2
 #endif
-     enddo
+     enddo ! loop on scattering states
 #if !defined _RT
      !
      ! ALL 2 ALL of QP_Sc
@@ -462,18 +462,21 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      if (stop_now(.FALSE.)) exit Q_loop
      !
-#endif
-   enddo
+   enddo ! loop on quasi-particles
    !
-#if defined _RT
+ enddo Q_loop 
+ ! 
+#else
+   !
+   enddo Q_loop 
    !
    if(l_collisions_IO) call COLLISIONS_IO_store(i_qp)
    !
    call live_timing(steps=1)
    !
+ enddo ! loop in quasi-particles
+ !
 #endif
-   !
- enddo Q_loop
  !
  call live_timing()
  !

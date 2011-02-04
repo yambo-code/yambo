@@ -46,7 +46,14 @@ subroutine RT_three_levels(G_lesser,it)
  complex(SP)              :: G12,G13,G23
  character(schlen)        :: headings(n_files,10)
  character(lchlen), save  :: file_name(n_files)
- integer                  :: i_f
+ integer                  :: i_f,i_pump,i_probe
+ !
+ i_probe=2
+ i_pump =1
+ if (Efield(2)%ef_name/="none") then
+   i_pump=2
+   i_probe=1
+ endif
  !
  if(it==it_start) then
    !
@@ -84,10 +91,10 @@ subroutine RT_three_levels(G_lesser,it)
  !
  ! Rabi freq 2._SP*Efied(1)%amplitude*DIP_P/W_pump
  !
- G12=2._SP*Efield(1)%amplitude*DIP_P(1,1,2,1,1)/W_pump/(Wo+cI/tau_offdiag(1)+W_pump)* & 
+ G12=-2._SP*Efield(i_pump)%amplitude*DIP_iR(1,2,1,1,1)/(W_pump+Wo+cI/tau_offdiag(1))* & 
 &    (exp(-cI*W_pump*Time)-exp(cI*(Wo+cI/tau_offdiag(1))*Time))
 
- G13=2._SP*Efield(1)%amplitude*DIP_P(1,1,3,1,1)/W_pump/(W1+cI/tau_offdiag(2)+W_pump)* & 
+ G13=2._SP*Efield(i_pump)%amplitude*DIP_iR(1,3,1,1,1)/(W1+cI/tau_offdiag(2)+W_pump)* & 
 &    (exp(-cI*W_pump*Time)-exp(cI*(W1+cI/tau_offdiag(2))*Time))
  !
  i_f=1

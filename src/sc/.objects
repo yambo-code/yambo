@@ -9,4 +9,4 @@ objs =	SC_driver.o SC_start_and_restart.o SC_Energy.o \
         V_qp_basis_to_H.o SC_check_symmetries.o \
         SC_precondition.o XC_switch.o SC_WF_and_dipole_dimensions.o \
         $(MAGNETIC_objects) SC_History.o OEP_driver.o OEP_Hole.o \
-	    OEP_kli_iterative.o OEP_kli_inversion.o OEP_exact_iterative.o
+	OEP_iterative.o OEP_app_inversion.o

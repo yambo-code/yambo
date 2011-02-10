@@ -26,9 +26,13 @@ subroutine OEP_Hole(E,k,q,Vslt,U_x)
  !  
  !  Found as 
  !
- !  v(r) = \sum_k \sum_q \sum_n,m rho_rs_{n,m}(k,q,r)*u_rs_{n,m}(k,q,r)
+ !  v_s(r) = \sum_k \sum_q \sum_n,m rho_rs_{n,m}(k,q,r)*u_rs_{n,m}(k,q,r)
  !
  !  where u_rs_{n,m}(k,q,r) = FT[rho_{m,n}(k,q,G)/|q+G|**2] (EXX case)
+ !
+ !  it outputs v_s(r) and u_x^{nk}(r) = -\sum_m\int dq  u_rs_{n,m}(k,q,r)
+ !  
+ !  note that \int dr  u_x^{nk}(r) = \langle nk |\Sigma_x | nk \rangle  
  !
  !  ==> UP TO NOW WORKS ONLY FOR EXX <==
  !      NO SPIN/PARALLEL EXECUTION NOT TESTED  
@@ -82,8 +86,7 @@ subroutine OEP_Hole(E,k,q,Vslt,U_x)
  call par_indexes(px,(/q%nbz,E%nbm/))
  call pp_redux_wait
  ch="Vhole@it"//trim(intc(it_now))
- call live_timing(trim(ch),px%n_of_elements(myid+1)*E%nbm*&
-        &*k%nibz)
+ call live_timing(trim(ch),px%n_of_elements(myid+1)*E%nbm*k%nibz)
  do iq=1,q%nbz
    isc%qs(2:)=(/q%sstar(iq,1),q%sstar(iq,2)/)
    if (isc%qs(2)/=isc%iqref)    call scatterGamp(isc,'x')

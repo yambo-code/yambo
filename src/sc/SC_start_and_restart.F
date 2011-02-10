@@ -26,7 +26,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  use parser_m,       ONLY:parser 
  use com,            ONLY:msg,warning
  use drivers,        ONLY:l_sc_exx,l_sc_hf,l_sc_cohsex,l_sc_magnetic,l_collisions_IO,&
-&                         l_oep_exact,l_oep_kli,l_oep_slater
+&                         l_oep_exact,l_oep_kli,l_oep_slater, l_oep_ceda
  use units,          ONLY:HARTREE
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:SC_E_threshold,SC_band_mixing,COHSEX_use_empties
@@ -161,6 +161,7 @@ subroutine SC_start_and_restart(X,E,Xk)
    if (.not.l_oep_exact) then
      if (l_oep_kli) ch = 'KLI'
      if (l_oep_slater) ch = 'SLATER'
+     if (l_oep_ceda) ch = 'CEDA'
      call msg('rn' ,'[SC] Approximate solution of OEP :',ch)
    end if
  end if 

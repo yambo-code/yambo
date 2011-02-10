@@ -19,9 +19,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OEP_kli_inversion(E,k,Vkli,Vslt,U,rho)
+subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  !
- !  Exchange KLI
+ !  Exchange KLI/CEDA
  !
  !  Found in reciprocal space as:
  !  vkli_RL(G) = Ko^{-1}(G,G')rho_{xc}(G')
@@ -34,7 +34,7 @@ subroutine OEP_kli_inversion(E,k,Vkli,Vslt,U,rho)
  !  where W(G) is the Hole/Slater part of the potential multiplied by the density
  !
  use pars,            ONLY:SP,DP,SCHLEN
- use D_lattice,       ONLY:DL_vol,sop_inv,i_time_rev,nsym
+ use D_lattice,       ONLY:DL_vol,i_time_rev,nsym
  use electrons,       ONLY:levels,n_met_bands
  use R_lattice,       ONLY:bz_samp,g_rot,nkibz,nkbz
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan,fft_rot_r
@@ -43,8 +43,8 @@ subroutine OEP_kli_inversion(E,k,Vkli,Vslt,U,rho)
  use collision,       ONLY:ggwinfo,collision_reset
  use QP_m,            ONLY:QP_Vnl_xc,QP_n_states,QP_table,QP_ng_Sx
  use memory_m,        ONLY:mem_est
- use SC,              ONLY:SC_bands,SC_R,H_rotate,it_now
- use drivers,         ONLY:l_collisions_IO
+ use SC,              ONLY:it_now
+ use drivers,         ONLY:l_collisions_IO,l_oep_kli,l_oep_ceda
  use memory_m,        ONLY:mem_est
  use par_proc_m,      ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m,   ONLY:par_indexes
@@ -63,7 +63,7 @@ subroutine OEP_kli_inversion(E,k,Vkli,Vslt,U,rho)
  !
  ! Work Space
  !
- integer                  :: i1,ik,iv1,iv2,is,ig1,ig2,ifft,ir
+ integer                  :: i1,ik,iv1,iv2,is,ig1,ig2,ifft,offt,ir
  complex(SP), allocatable :: rhotw_sum(:),rho_xc(:),Vkli_RL(:),&
 &                            Ko(:,:),rhotw_prd(:,:),rhotw_rs(:)
  complex(SP)              :: SigmaXC
@@ -107,45 +107,49 @@ subroutine OEP_kli_inversion(E,k,Vkli,Vslt,U,rho)
  allocate(rhotw_ds(fft_size),rhotw_rs(QP_ng_Sx))
  call par_indexes(px,(/nkibz,E%nbf/))
  call pp_redux_wait
- ch="Vkli@it"//trim(intc(it_now))
+ if (l_oep_kli) ch="KLI@it"//trim(intc(it_now))
+ if (l_oep_ceda) ch="CED@it"//trim(intc(it_now))
  call live_timing(trim(ch),px%n_of_elements(myid+1))
  rhotw_prd = (0._SP,0._SP)
  do ik = 1, nkibz
-   do iv1 = 1 ,E%nbf
-     rhotw_sum = (0._SP,0._SP)
-     SigmaXC = (0._SP,0._SP)
-     do ir = 1,fft_size
-       SigmaXC = SigmaXC + U(ik,iv1,ir)
-     end do
-     do i1 = 1,k%nstar(ik)
-       is  = k%star(ik,i1)
-       isc%is = (/iv1,ik,is,1/)
-       isc%os = (/iv1,ik,is,1/)
-       isc%qs = (/1,1,1/)
-       call scatterBamp(isc)
-       if (is>nsym/(i_time_rev+1)) is=is-nsym/(i_time_rev+1)
+   do iv1 = 1, E%nbf
+     do iv2 = iv1, E%nbf
+       if (l_oep_kli.and.(iv2.ne.iv1)) cycle
        ifft=wf_state(iv1,ik,1)
-       rhotw_ds(:)=conjg(wf(fft_rot_r(is,:),ifft))*wf(fft_rot_r(is,:),ifft)
-       rhotw_ds =rhotw_ds/(rho*real(fft_size,SP)) 
-       rhotw_rs = (0._SP,0._SP)
+       offt=wf_state(iv2,ik,1)
+       rhotw_sum = (0._SP,0._SP)
+       SigmaXC = (0._SP,0._SP)
+       do ir = 1,fft_size
+         SigmaXC = SigmaXC + U(ik,iv1,ir)*wf(ir,offt)/wf(ir,ifft) !<iv1|Sigma_xc|iv2>
+       end do
+       do i1 = 1,k%nstar(ik)
+         is  = k%star(ik,i1)
+         isc%is = (/iv1,ik,is,1/)
+         isc%os = (/iv2,ik,is,1/)
+         isc%qs = (/1,1,1/)
+         call scatterBamp(isc)
+         if (is>nsym/(i_time_rev+1)) is=is-nsym/(i_time_rev+1)       
+         rhotw_ds(:)=conjg(wf(fft_rot_r(is,:),ifft))*wf(fft_rot_r(is,:),offt)
+         rhotw_ds =rhotw_ds/(rho*real(fft_size,SP)) 
+         rhotw_rs = (0._SP,0._SP)
 #if defined _FFTW
-       fftw_plan = 0
-       call fft_3d(rhotw_ds,fft_dim,+1,fftw_plan)
+         fftw_plan = 0
+         call fft_3d(rhotw_ds,fft_dim,+1,fftw_plan)
 #else
-       call fft_3d(rhotw_ds,fft_dim,+1)
+         call fft_3d(rhotw_ds,fft_dim,+1)
 #endif
-       rhotw_rs(1:QP_ng_Sx) = rhotw_ds(fft_g_table(1:QP_ng_Sx,1))
-       forall(ig1=2:QP_ng_Sx,ig2=2:QP_ng_Sx) rhotw_prd(ig1,ig2) = rhotw_prd(ig1,ig2) + 0.5_SP*&
+         rhotw_rs(1:QP_ng_Sx) = rhotw_ds(fft_g_table(1:QP_ng_Sx,1))
+         forall(ig1=2:QP_ng_Sx,ig2=2:QP_ng_Sx) rhotw_prd(ig1,ig2) = rhotw_prd(ig1,ig2) + &
            & E%f(iv1,ik,1)*(conjg(rhotw_rs(ig1))*isc%rhotw(ig2) + rhotw_rs(ig1)*conjg(isc%rhotw(ig2)))
-       forall(ig1=2:QP_ng_Sx) rhotw_sum(ig1-1)=rhotw_sum(ig1-1)+rhotw_rs(ig1)
-       !
-     end do
-     rho_xc(1:QP_ng_Sx-1) =  rho_xc(1:QP_ng_Sx-1) - 0.5_SP*E%f(iv1,ik,1)*(conjg(rhotw_sum(1:QP_ng_Sx-1))*SigmaXC&
+         forall(ig1=2:QP_ng_Sx) rhotw_sum(ig1-1)=rhotw_sum(ig1-1)+rhotw_rs(ig1)
+       end do
+       rho_xc(1:QP_ng_Sx-1) =  rho_xc(1:QP_ng_Sx-1) - E%f(iv1,ik,1)*(conjg(rhotw_sum(1:QP_ng_Sx-1))*SigmaXC&
           &+rhotw_sum(1:QP_ng_Sx-1)*conjg(SigmaXC))/real(nkbz,SP) 
-     call live_timing(steps=1)
-     !
+       call live_timing(steps=1)
+     end do
    end do
  end do
+ !
  call live_timing()
  !
  Ko = (0._SP,0._SP)
@@ -185,4 +189,4 @@ subroutine OEP_kli_inversion(E,k,Vkli,Vslt,U,rho)
  call collision_reset(isc)
  call pp_indexes_reset(px)
   !
-end subroutine OEP_kli_inversion
+end subroutine OEP_app_inversion

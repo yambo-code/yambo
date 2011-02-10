@@ -22,20 +22,19 @@
 subroutine OEP_driver(X,E,k,q,V_oep)
   !
   ! Driver for OEP potentials. Variables: 
-  !  * the approximation for the OEP eq. (Exact, Slater, KLI) 
+  !  * the approximation for the OEP eq. (Exact, Slater, CEDA, KLI) 
   !  * the solution method (iterative Kuemmel-Perdew way or by Chi inversion) 
   !  * the approximation for correlation (nothing, LDA, static RPA)
   !
-  ! STATUS (15/09/10)
+  ! STATUS (7/02/11)
   !
   ! sRPA available only for OEP_exact_inversion
   ! Collisions available only for OEP_exact_inversion
-  ! OEP_kli_inversion, partially tested
-  ! OEP_exact_iterative, works but results diff from inv
-  ! OEP_kli_iterative, partially tested, missing parallel
+  ! OEP_app_inversion, partially tested/CEDA scf does not converge well
+  ! OEP_exact_inversion, results are far from reasonable, something is broken(!?)
+  ! OEP_iterative, partially tested, missing parallel
   ! OEP_Hole, partially tested 
   ! NOTES:
-  ! In the future also CEDA might be included
   ! In the future we might choose just the iterative option. Now both for testing purpose. 
   ! Later should also distiguish in case of real time evolution between memory/not memory 
   !
@@ -44,7 +43,7 @@ subroutine OEP_driver(X,E,k,q,V_oep)
   use electrons,       ONLY:levels,n_met_bands
   use R_lattice,       ONLY:bz_samp,nkibz
   use FFT_m,           ONLY:fft_size
-  use drivers,         ONLY:l_oep_exact,l_oep_slater,l_oep_kli
+  use drivers,         ONLY:l_oep_exact,l_oep_slater,l_oep_kli,l_oep_ceda
   use SC,              ONLY:it_now,l_oep_iterative 
   !
   implicit none
@@ -62,25 +61,23 @@ subroutine OEP_driver(X,E,k,q,V_oep)
   V_io = V_oep
   V_oep= 0._SP
   !
-  if (l_oep_iterative.or.l_oep_kli.or.l_oep_slater) then
-     allocate(rho(fft_size),V_slt(fft_size))
-     allocate(W_x(nkibz,n_met_bands,fft_size))
-     !   
-     call el_density(E,k,rho,.false.)   ! Density and Slater potential, needed always but 
-     call OEP_Hole(E,k,q,V_slt,W_x)     ! for the exact oep with Chi inversion
-     if (l_oep_slater) V_io = V_slt/rho
-     if ((l_oep_kli) .or.(it_now==1.and.l_oep_exact)) then
-       if (l_oep_iterative) then
-         call OEP_kli_iterative(E,k,V_io,V_slt,W_x,rho)
-       else
-         call OEP_kli_inversion(E,k,V_oep,V_slt,W_x,rho)
-       endif
-     end if
-     if (it_now>1.and.l_oep_exact) call OEP_exact_iterative(E,k,V_io,W_x,rho)
-   else
-     call OEP_exact_inversion(X,E,k,q,V_oep)
+  allocate(rho(fft_size),V_slt(fft_size))
+  allocate(W_x(nkibz,n_met_bands,fft_size))
+  if (l_oep_iterative.or.(l_oep_kli.or.l_oep_ceda)) then
+    call el_density(E,k,rho,.false.)     
+    call OEP_Hole(E,k,q,V_slt,W_x)   !this can be changed, W_x can be used in case of exact/noniterative oep  
+  endif
+  if (l_oep_slater .or. it_now==1) V_io = V_slt/rho
+  !
+  if (l_oep_iterative) call OEP_iterative(E,k,V_io,V_slt,W_x,rho)
+  if (.not.l_oep_iterative.and..not.l_oep_slater) then
+     if (.not.l_oep_exact) then
+       call OEP_app_inversion(E,k,V_oep,V_slt,W_x,rho)
+     else
+       call OEP_exact_inversion(X,E,k,q,W_x,V_oep)
+     endif	
    end if
+   deallocate(rho,V_slt,W_x)
    if (l_oep_iterative.or.l_oep_slater) V_oep = V_io
-   if (l_oep_iterative.or.l_oep_kli.or.l_oep_slater) deallocate(rho,V_slt,W_x)
    !
-   end subroutine OEP_driver
+ end subroutine OEP_driver

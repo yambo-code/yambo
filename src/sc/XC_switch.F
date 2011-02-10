@@ -35,7 +35,7 @@ subroutine XC_switch()
  use com,            ONLY:error
  implicit none
  !WorkPars:
- integer, parameter :: KLI_APPRX = 10, SLT_APPRX = 20
+ integer, parameter :: KLI_APPRX = 10, SLT_APPRX = 20, CED_APPRX = 30
  !
  local_V=.FALSE.
  !
@@ -104,6 +104,9 @@ subroutine XC_switch()
      case('s')
        l_oep_slater=.true.
        SC_kind=SC_kind+SLT_APPRX
+     case('c')
+       l_oep_ceda=.true.
+       SC_kind=SC_kind+CED_APPRX
    end select
  end if
  !

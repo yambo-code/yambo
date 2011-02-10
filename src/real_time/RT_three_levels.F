@@ -43,6 +43,7 @@ subroutine RT_three_levels(G_lesser,it)
  integer, parameter       :: n_files=2
  integer, save            :: n_headings(n_files)
  real(SP)                 :: data_to_dump(10),Time
+ real(SP)                 :: rabi12,rabi13,rabi23
  complex(SP)              :: G12,G13,G23
  character(schlen)        :: headings(n_files,10)
  character(lchlen), save  :: file_name(n_files)
@@ -64,7 +65,7 @@ subroutine RT_three_levels(G_lesser,it)
    !
    n_headings(2)=7
    headings(2,1)="Time[fs]"
-   headings(1,2:7)=(/'G_12/Im','G_12/Re','G_13/Im','G_13/Re','G_23/Im','G_23/Re'/)
+   headings(2,2:7)=(/'G_12/Im','G_12/Re','G_13/Im','G_13/Re','G_23/Im','G_23/Re'/)
    file_name(2)="G_num"
    !
    do i_f=1,n_files
@@ -91,11 +92,28 @@ subroutine RT_three_levels(G_lesser,it)
  !
  ! Rabi freq 2._SP*Efied(1)%amplitude*DIP_P/W_pump
  !
- G12=-2._SP*Efield(i_pump)%amplitude*DIP_iR(1,2,1,1,1)/(W_pump+Wo+cI/tau_offdiag(1))* & 
-&    (exp(-cI*W_pump*Time)-exp(cI*(Wo+cI/tau_offdiag(1))*Time))
-
- G13=2._SP*Efield(i_pump)%amplitude*DIP_iR(1,3,1,1,1)/(W1+cI/tau_offdiag(2)+W_pump)* & 
-&    (exp(-cI*W_pump*Time)-exp(cI*(W1+cI/tau_offdiag(2))*Time))
+ rabi12=cI*Efield(i_pump)%amplitude*sum(Efield(i_pump)%versor(:)*DIP_P(:,2,1,1,1))/W_pump
+ rabi13=cI*Efield(i_pump)%amplitude*sum(Efield(i_pump)%versor(:)*DIP_P(:,3,1,1,1))/W_pump
+ rabi23=cI*Efield(i_pump)%amplitude*sum(Efield(i_pump)%versor(:)*DIP_P(:,3,2,1,1))/W_pump
+ !
+ G12=-2._SP*cI*rabi12/(W_pump+Wo+cI/tau_offdiag(1))*(exp(-cI*W_pump*Time)-exp(cI*(Wo+cI/tau_offdiag(1))*Time))
+ G13=-2._SP*cI*rabi13/(W_pump+W1+cI/tau_offdiag(2))*(exp(-cI*W_pump*Time)-exp(cI*(W1+cI/tau_offdiag(2))*Time))
+ !
+ if(trim(Efield(i_pump)%ef_name)=="SIN") then
+   !
+   W_pump=-W_pump
+   !
+   G12=G12-2._SP*cI*rabi12 &
+&      /(W_pump+Wo+cI/tau_offdiag(1))*(exp(-cI*W_pump*Time)-exp(cI*(Wo+cI/tau_offdiag(1))*Time))
+   G13=G13-2._SP*cI*rabi13 &
+&      /(W_pump+W1+cI/tau_offdiag(2))*(exp(-cI*W_pump*Time)-exp(cI*(W1+cI/tau_offdiag(2))*Time))
+   !
+   G12=G12/(0._SP,2._SP)
+   G13=G13/(0._SP,2._SP)
+   !
+   W_pump=-W_pump
+   !
+ endif
  !
  i_f=1
  data_to_dump(2)= real(G12)

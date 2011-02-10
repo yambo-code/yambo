@@ -631,6 +631,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (l_collisions_IO) call initactivate(1,'EXXCut CollCache')
    if (l_cohsex) call initactivate(1,'GbndRnge UseEbands')
    if (l_real_time) then
+     call QP_ctl_switch('G')
      call initactivate(-1,'SCmixing')
      call initactivate(1,'Integrator QPLifeTime PhLifeTime') 
      call initactivate(1,'RTstep NEsteps NETime HXCjumps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')

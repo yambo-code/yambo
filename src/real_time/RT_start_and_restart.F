@@ -49,12 +49,13 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V, &
 &                         rho_convergence,H_rotate,local_V,V_hartree_sc,      &
-&                         E_bare,V_xc_sc,rho_n
+&                         E_bare,V_xc_sc,rho_n,Ho
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE
  use X_m,            ONLY:X_t
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
+ use QP_CTL_m,       ONLY:QP_apply
  implicit none
  !
  type(levels)      :: Xen
@@ -64,7 +65,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  !
  ! Work Space
  !
- integer :: ik,it,i1,COM_
+ integer :: ik,it,i1,COM_,ib
  integer :: io_E,io_V,io_WF,io_G,io_J_and_P
  logical :: RESTART
  logical :: SC_DB_present
@@ -282,6 +283,14 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  if(Thermal_steps==0) G_lesser_reference=G_lesser   
  !
  call msg('r','')
+ !
+ ! Apply QP-corrections if present
+ !==========
+ call QP_apply((/1,SC_bands/),Xen,Xk,3,msg_fmt='s')  
+ do ib=1,SC_bands
+   Ho(ib,ib,1:QP_nk,1:n_sp_pol)=Ho(ib,ib,1:QP_nk,1:n_sp_pol) &
+&                              -E_bare(ib,1:QP_nk,1:n_sp_pol)+Xen%E(ib,1:QP_nk,1:n_sp_pol)
+ enddo
  !
  ! Two Levels related initializations
  !====================================

@@ -78,7 +78,7 @@ subroutine RT_init_two_levels(Xen)
    DIP_iR(1,3,2,1,1)= DIP_P(1,3,2,1,1) /(+W1-Wo)
    !
    select case(trim(Efield(i_pump)%ef_name))
-     case('ANTIRES')
+     case('ANTIRES','SIN')
        W_pump=-Efield(i_pump)%frequency 
      case('RES')
        W_pump=Efield(i_pump)%frequency 

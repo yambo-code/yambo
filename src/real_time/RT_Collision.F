@@ -185,17 +185,20 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
      !
 #if defined _TWO_LEVELS
      if(l_3levels) then
-       if(any(tau_diag> 1.E-5_SP)) then
-         I1_lesser(1,1,ik)=I1_lesser(1,1,ik)-cI/tau_diag(1)*(G_input(1,1,ik)-G_lesser_reference(1,1,ik))
-         I1_lesser(2,2,ik)=I1_lesser(2,2,ik)-cI/tau_diag(2)*(G_input(2,2,ik)-G_lesser_reference(2,2,ik))
-         I1_lesser(3,3,ik)=I1_lesser(3,3,ik)-cI/tau_diag(3)*(G_input(3,3,ik)-G_lesser_reference(3,3,ik))
-       endif
-       if(any(tau_offdiag> 1.E-5_SP)) then
+       do i1=1,3
+         if(tau_diag(i1)> 1.E-5_SP) &
+           I1_lesser(i1,i1,ik)=I1_lesser(i1,i1,ik)-cI/tau_diag(i1)*(G_input(i1,i1,ik)-G_lesser_reference(i1,i1,ik))
+       enddo
+       if(tau_offdiag(1)> 1.E-5_SP) then
          I1_lesser(1,2,ik)=I1_lesser(1,2,ik)-cI/tau_offdiag(1)*G_input(1,2,ik)
-         I1_lesser(1,3,ik)=I1_lesser(1,3,ik)-cI/tau_offdiag(2)*G_input(1,3,ik)
-         I1_lesser(2,3,ik)=I1_lesser(2,3,ik)-cI/tau_offdiag(3)*G_input(2,3,ik)
          I1_lesser(2,1,ik)=I1_lesser(2,1,ik)-cI/tau_offdiag(1)*G_input(2,1,ik)
+       endif
+       if(tau_offdiag(2)> 1.E-5_SP) then
+         I1_lesser(1,3,ik)=I1_lesser(1,3,ik)-cI/tau_offdiag(2)*G_input(1,3,ik)
          I1_lesser(3,1,ik)=I1_lesser(3,1,ik)-cI/tau_offdiag(2)*G_input(3,1,ik)
+       endif
+       if(tau_offdiag(3)> 1.E-5_SP) then
+         I1_lesser(2,3,ik)=I1_lesser(2,3,ik)-cI/tau_offdiag(3)*G_input(2,3,ik)
          I1_lesser(3,2,ik)=I1_lesser(3,2,ik)-cI/tau_offdiag(3)*G_input(3,2,ik)
        endif
      else

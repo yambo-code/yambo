@@ -27,7 +27,7 @@ subroutine RT_X_one(en,k)
  !
  use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,W_RT_induced_step, &
 &                         i_t_start,i_t_end,RED_steps
- use pars,           ONLY:SP,DP,pi,zero_dfl
+ use pars,           ONLY:SP,DP,pi,zero_dfl,cI
  use units,          ONLY:HARTREE
  use electrons,      ONLY:levels
  use memory_m,       ONLY:mem_est
@@ -96,6 +96,7 @@ subroutine RT_X_one(en,k)
  iE_err=-1
  do i_w = 1, X_rt%energy_steps
    E_w(i_w)=Efield(1)%amplitude*small_a(real(freqs(i_w)),Efield(1),iE_err)
+   E_w(i_w)=E_w(i_w)*exp(cI*freqs(i_w)*i_t_start*RT_step)  
    if (iE_err==-2) exit
  enddo
  E_from_FT=iE_err==-2
@@ -105,6 +106,13 @@ subroutine RT_X_one(en,k)
    do i_t=1,NE_steps
      E_t(i_t)=Efield(1)%amplitude*small_a((i_t-1)*RT_step,Efield(1),1)
    enddo
+   !
+   if(trim(X_rt%damp) == "NONE") then
+     call RT_damp_it("LORENTZIAN",W_RT_induced_step,E_t(i_t_start:i_t_end),RED_steps,RT_step,1)
+   else
+     call RT_damp_it(X_rt%damp,X_rt%damp_factor,E_t(i_t_start:i_t_end),RED_steps,RT_step,1)
+   endif
+   !
    call RT_1D_Fourier_Transform(' (E field)',freqs,E_w(:),X_rt%energy_steps,&
 &                               E_t(i_t_start:i_t_end),RED_steps,RT_step,&
 &                               i_t_start*RT_step,USE_FFT)

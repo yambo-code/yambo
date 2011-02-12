@@ -113,6 +113,9 @@ yambo: libs
 #if defined _AUGER
 	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)
 	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
+yambo_sc: libs
+	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_SC"; $(mksrc)
+	@X2DO="yambo_sc"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_SC";$(mkx)
 yambo_auger: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_AUGER"; $(mksrc)
 	@X2DO="yambo_auger"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_AUGER";$(mkx)

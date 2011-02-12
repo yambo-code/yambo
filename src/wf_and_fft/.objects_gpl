@@ -6,5 +6,10 @@ FFT_object = sgfft.o
 #if defined _DISTRIBUTED
 DISTRIBUTED_objects = WF_states_setup.o
 #endif
+WF_rot_object =
+#if defined _SC
+WF_rot_object = WF_rotate.o
+#endif
 objs = fft_setup.o fft_3d.o $(FFT_object)  \
-       scatter_Bamp.o scatter_Gamp.o WF_spatial_invertion.o WF_load.o $(DISTRIBUTED_objects)
+       scatter_Bamp.o scatter_Gamp.o WF_spatial_invertion.o WF_load.o \
+       $(WF_rot_object) $(DISTRIBUTED_objects)

@@ -99,7 +99,11 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
    !
    if (.not.l_oep_iterative) V_xc_sc=(0.,0.)
    !
+   ! GPL_EXCLUDE_START
+   !
    if (l_sc_exx) call OEP_driver(X(1),E,k,q,V_xc_sc)
+   !
+   ! GPL_EXCLUDE_END
    !
    call IO_and_Messaging_switch("-report -log -io_in -io_out")
    !

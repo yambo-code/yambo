@@ -28,10 +28,16 @@ subroutine REPORT_Occupations(E,mode)
  use com,           ONLY:write_to_report
 #endif
  use electrons,     ONLY:levels,n_sp_pol,n_spin,filled_tresh
+ !
+ ! GPL_EXCLUDE_START SPIN_IGNORE
+ !
 #if defined _SC
  use magnetic,      ONLY:average_el_mag,average_el_mag_dim
  use drivers,       ONLY:l_sc_magnetic
 #endif
+ !
+ ! GPL_EXCLUDE_END SPIN_IGNORE
+ !
  implicit none
  type(levels)::E
  integer     ::mode
@@ -153,6 +159,8 @@ subroutine REPORT_Occupations(E,mode)
  !
  if (E%nbf/=E%nbm.and..not.any(nbf_/=nbm_)) call warning('Merged spin levels are metallic')
  !
+ ! GPL_EXCLUDE_START SPIN_IGNORE
+ !
 #if defined _SC
  ! [4] Report the value of the mean magnetization
  !
@@ -160,5 +168,7 @@ subroutine REPORT_Occupations(E,mode)
    call msg('r','Mean magnetization (x,y,z) ['//trim(average_el_mag_dim)//'] :',real(average_el_mag(:),SP))
  endif
 #endif
+ !
+ ! GPL_EXCLUDE_END SPIN_IGNORE
  !
 end subroutine

@@ -29,6 +29,10 @@ module fields
  !
  character(schlen) :: global_gauge
  !
+ ! Path for the shifted grids
+ !
+ character(lchlen) :: grid_path
+ !
  ! GPL_EXCLUDE_START
  !
  ! Electric Field(s)
@@ -64,12 +68,6 @@ module fields
  !
  type(gauge_field) :: A_vecpot
  type(gauge_field) :: A_vecpot_previous
- !
- ! GPL_EXCLUDE_END
- !
- ! Path for the shifted grids
- !
- character(lchlen) :: grid_path
  !
  contains
    !
@@ -170,5 +168,7 @@ module fields
      endif
      !
    end function
+   !
+   ! GPL_EXCLUDE_END
    !
 end module

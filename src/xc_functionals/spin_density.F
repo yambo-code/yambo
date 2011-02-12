@@ -35,10 +35,16 @@ subroutine spin_density(en,Xk)
  use FFT_m,          ONLY:fft_size,fft_rot_r
  use wave_func,      ONLY:wf_state,wf
  use xc_functionals, ONLY:two_spin_density
+ !
+ ! GPL_EXCLUDE_START SPIN_IGNORE
+ !
 #if defined _SC
  use magnetic,       ONLY:average_el_mag,average_el_mag_rescaling
  use D_lattice,      ONLY:DL_vol
 #endif
+ !
+ ! GPL_EXCLUDE_END SPIN_IGNORE
+ !
  implicit none
  type(levels) ::en
  type(bz_samp)::Xk
@@ -50,9 +56,15 @@ subroutine spin_density(en,Xk)
  !
  two_spin_density=0.
  cv=0.
+ !
+ ! GPL_EXCLUDE_START SPIN_IGNORE
+ !
 #if defined _SC
  average_el_mag=0.
 #endif
+ !
+ ! GPL_EXCLUDE_END SPIN_IGNORE
+ !
  !
  if (n_spin==1) return
  !

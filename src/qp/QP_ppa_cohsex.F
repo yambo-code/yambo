@@ -97,7 +97,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Restart
  !
-#if !defined _RT
+#if defined _RT
+ !
+ if (.not.l_collisions_IO) return
+ !
+#else
+ !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=VERIFY,ID=qp_ID)
  io_err=ioQP('QP',qp,qp_ID)
  !
@@ -124,6 +129,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    if(.not.master_cpu) QP_Sc=(0._SP,0._SP)
    !
  endif
+ !
 #endif
  !
  ! Section
@@ -216,7 +222,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  allocate(isc%gamp(X%ng,X%ng),isc%rhotw(isc%ngrho),iscp%rhotw(isc%ngrho),stat=alloc_err)
  call mem_est("ISC-GAMP",(/X%ng**2+2*isc%ngrho/),errors=(/alloc_err/))
  !
- ! Parallel Indexes
+ ! Parallel Indexes & LIVE-TIMING STEPS
  !
 #if defined _RT
  call par_indexes(px,(/QP_n_states/))
@@ -226,20 +232,28 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call pp_redux_wait
  !
- ! LIVE-TIMING message
+ !_RT (COLLISIONS)
+ !do i_qp=1,QP_n_states
+ ! if (.not.px%element_1D(i_qp)) cycle
+ ! do iqbz=iq_to_start,q%nbz 
+ !  do ib=QP_n_G_bands(1),QP_n_G_bands(2)
+ !   do ib2=QP_n_G_bands(1),QP_n_G_bands(2)
  !
-#if defined _SC && !defined _RT
- if (l_sc_run) then
-   timing_states=QP_n_states
-   if (l_sc_srpa) timing_states=E%nbf*(maxval(QP_table(:,2))-E%nbf)*&
-        &maxval(QP_table(:,3))
-   call live_timing(trim(Sc_name)//'@it'//&
-        &trim(intc(it_now)),px%n_of_elements(myid+1)*timing_states) 
- else if (.not.l_collisions_IO) then
-#endif
+ !any other
+ !do iqbz=iq_to_start,q%nbz 
+ ! do i_qp=1,QP_n_states
+ !  do ib=QP_n_G_bands(1),QP_n_G_bands(2)
+ !   if (.not.px%element_1D(ib)) cycle
+ !
 #if defined _RT
- if (l_collisions_IO) then
-   call live_timing("COHSEX collisions",px%n_of_elements(myid+1)) 
+ call live_timing("COHSEX collisions",px%n_of_elements(myid+1)) 
+#endif
+#if defined _SC
+ if (l_sc_run) then
+   timing_states=QP_n_states*q%nbz*px%n_of_elements(myid+1)
+   if (l_sc_srpa) timing_states=E%nbf*(maxval(QP_table(:,2))-E%nbf)*maxval(QP_table(:,3))*&
+&                               q%nbz*px%n_of_elements(myid+1)
+   call live_timing(trim(Sc_name)//'@it'//trim(intc(it_now)),timing_states) 
  else
 #endif
    !
@@ -247,7 +261,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
    if (l_ppa)    call live_timing(trim(Sc_name)//'W0 PPA',timing_states)
    if (l_cohsex) call live_timing(trim(Sc_name)//'W0 COHSEX',timing_states)
-   !
 #if defined _SC
  endif
 #endif
@@ -325,7 +338,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! In OEP only vc matrix elements so ... no cc' no vv' 
      ! (cv is not permitted by the order in QP_table)
-     !                   (c)         (v)
+     !                       (c)         (v)
      if (l_sc_srpa.and.(QP_table(i_qp,1)>E%nbf.or.QP_table(i_qp,2)<=E%nbf)) cycle
 #endif
      !

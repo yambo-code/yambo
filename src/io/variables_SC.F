@@ -132,13 +132,13 @@ integer function variables_SC(ID,local_description,what)
 &       DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,I0=SC_X_size,&
-&       VAR='                   size          :',CHECK=CHECK_,OP=(/"=="/),&
+&       VAR=' Response function size          :',CHECK=CHECK_,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc))
    if (ver_is_gt_or_eq(ID,revision=761)) then
+     i_desc=i_desc+1
      call io_elemental(ID,L0=COHSEX_use_empties,&
-&      VAR=" COHSEX use empty bands           :", CHECK=.true.,OP=(/"=="/),&
-&      DESCRIPTION=local_description(i_desc))
-    i_desc=i_desc+1
+&       VAR=" COHSEX use empty bands          :", CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc))
    endif
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  endif

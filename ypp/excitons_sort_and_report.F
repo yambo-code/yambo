@@ -217,7 +217,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
    !
    amp_range=(/minval(amp_trans(:amp_n_trans,1))-0.5/HARTREE,&
 &              maxval(amp_trans(:amp_n_trans,1))+0.5/HARTREE/)
-   amp_damping=(amp_range(2)-amp_range(1))/50. 
+   amp_damping=(amp_range(2)-amp_range(1))/100. 
    amp_I=0.
    do j2=1,amp_steps
      amp_E(j2)=amp_range(1)+(j2-1)*(amp_range(2)-amp_range(1))/real(amp_steps,SP)+&

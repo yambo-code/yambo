@@ -399,12 +399,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    enddo
    !
    if ( (E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold) .or.&
-&       stop_now(.FALSE.) ) then
-     call SC_History(-1,E)
-     exit
-   endif
+&       stop_now(.FALSE.) ) exit
    !
  end do
+ !
+ call SC_History(-1,E)
  !
  ! Hartree and xc Energy 
  !=======================

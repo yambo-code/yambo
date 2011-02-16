@@ -77,7 +77,7 @@
 #endif
 #if defined _SC | defined _MAGNETIC | defined _RT
   {"scpot",  "v","Self-Consistent Potential",0,0,1,0,0}, 
-  {"DESC",   " ","opt=(hf),(c)hosex,(exx),(exxc),(srpa),(h)artree,(d)ef",0,0,0,0,0},
+  {"DESC",   " ","opt=(hf),(c)ohsex,(exx),(exxc),(srpa),(h)artree,(d)ef",0,0,0,0,0},
 #endif
 #if defined _RT 
   {"negf",   "k","Real-time dynamic [opt=(n)one,(p)robe,(pp)ump & probe]",0,0,1,0,0}, 

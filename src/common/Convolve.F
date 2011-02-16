@@ -21,6 +21,13 @@
 !
 subroutine Convolve(f,g,f_times_g,N,step,Eo)
  !
+ ! f(x) = \sum_i f_i delta(x-i * step-Eo)
+ ! g(x) = \sum_i g_i delta(x-i * step-Eo)
+ !
+ ! Eo=No*step
+ !
+ ! fxg(x) =  \sum_{k,j} f_(k-j-No) g_j delta(x-k * step-Eo)
+ !
  use pars,    ONLY:SP
  implicit none
  integer,     intent(in)  :: N

@@ -167,10 +167,10 @@ subroutine RT_X_one(en,k)
    EELS(i_w,:)=1._DP/EPS(i_w,:)
    !
    W_reached = real(freqs(i_w))
-   call RT_output('eps',(/ aimag(EPS(i_w,1)),real(EPS(i_w,1)),&
+   call RT_output('eps',VALUEs=(/ aimag(EPS(i_w,1)),real(EPS(i_w,1)),&
 &                          aimag(EPS(i_w,2)),real(EPS(i_w,2))/),TIME_or_E=W_reached*HARTREE)
-   call RT_output('eel',(/-aimag(EELS(i_w,:)),real(EELS(i_w,:)),&
-&                         -aimag(EELS(i_w,:)),real(EELS(i_w,:))/),TIME_or_E=W_reached*HARTREE)
+   call RT_output('eel',VALUEs=(/-aimag(EELS(i_w,1)),real(EELS(i_w,1)),&
+&                         -aimag(EELS(i_w,2)),real(EELS(i_w,2))/),TIME_or_E=W_reached*HARTREE)
    !
  enddo
  call RT_output("close eps eel")

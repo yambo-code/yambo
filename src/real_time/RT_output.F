@@ -190,7 +190,7 @@ subroutine RT_output(what,VALUEs,TIME_or_E)
        data_to_dump(5:7) =real(A_vecpot%vecpot_vel(:))
        data_to_dump(8:10)=real(A_vecpot%vecpot_acc(:))
      case(4:)
-       data_to_dump(2:n_headings(i_f)) = VALUES
+       data_to_dump(2:n_headings(i_f)) = VALUES(1:n_headings(i_f)-1)
    end select
    !
    call msg('o '//trim(short_file_name(i_f)),'',data_to_dump(1:n_headings(i_f)),USE_TABS=.TRUE.)

@@ -100,7 +100,7 @@ subroutine RT_TwoL_Glesser(Poles_and_derivatives,Eo,Rabi,G_lesser)
  S_minus_wbar_star=conjg(R_wbar)/(-conjg(W_bar)+Eo+cI/Phase_LifeTime)
  S_gamma=R_gamma/(Eo+W_gamma+cI/Phase_LifeTime)
  !
- G_lesser=exp_by_sigma_12(NE_time)-exp_by_sigma_12(0.)*exp(cI*Eo*NE_time-NE_time/Phase_LifeTime)
+ G_lesser=exp_by_sigma_12(NE_time)-exp_by_sigma_12(0._SP)*exp(cI*Eo*NE_time-NE_time/Phase_LifeTime)
  !
  !G_lesser=-cI*Rabi/(Eo+cI/Phase_LifeTime)*(1.-exp(cI*(Eo+cI/Phase_Lifetime)*NE_time))
  !if (trim(global_gauge)=="length") G_lesser=cI*Rabi/Eo*exp(cI*(Eo+cI/Phase_Lifetime)*NE_time)

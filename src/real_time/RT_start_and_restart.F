@@ -260,7 +260,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    enddo
    !
    if(io_G==0.and.it_now<NE_steps+Thermal_steps) then
-     call msg('snr','[RT] Number of steps done    [o/o]:',real(it_now)/real(NE_steps)*100.)
+     call msg('snr','[RT] Number of steps done    [o/o]:',real(it_now)/real(NE_steps)*100._SP)
    endif
    !
    it_start=it_now+1

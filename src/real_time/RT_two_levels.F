@@ -110,7 +110,7 @@ subroutine RT_two_levels(G_lesser)
  S_minus_wbar_star=conjg(R_wbar)/(-conjg(W_bar)+Wo_here+cI/Phase_LifeTime)
  S_gamma=R_gamma/(Wo_here+W_gamma+cI/Phase_LifeTime)
  !
- G(1,2)=exp_by_sigma_12(T)-exp_by_sigma_12(0.)*exp(cI*Wo_here*T-T/Phase_LifeTime)
+ G(1,2)=exp_by_sigma_12(T)-exp_by_sigma_12(0._SP)*exp(cI*Wo_here*T-T/Phase_LifeTime)
  select case(trim(Efield(1)%ef_name))
    case('RES')
      G(1,2)=G(1,2)*exp(-cI*W_pump*T)

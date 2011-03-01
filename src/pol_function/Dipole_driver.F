@@ -41,6 +41,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if defined _SC      
  use X_m,            ONLY:P_square
 #endif
+#if defined _TWO_LEVELS
+ use real_time,     ONLY:l_3levels
+ use parser_m,      ONLY:parser
+#endif
 #if defined _DISTRIBUTED
  use WF_distribute,  ONLY:WF_states_setup
 #endif
@@ -189,20 +193,25 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  !DIP_iR(1-3,n,m,k,s) =  < m | iR | n >
  !
- do ik = 1,Xk%nibz
-   do iv = 1, X%ib(2)
-     do ic = iv+1,X%ib(2)
-       !
-       DIP_P(:,ic,iv,ik,1)=cI
-       DIP_iR(:,ic,iv,ik,1)=  DIP_P(:,ic,iv,ik,1)/(Xen%E(iv,ik,1)-Xen%E(ic,ik,1))
-       !
-       if (abs(Xen%E(iv,ik,1)-Xen%E(ic,ik,1))<=1.E-5_SP)  DIP_iR(:,ic,iv,ik,1)=0.
-       !
-       DIP_P(:,iv,ic,ik,1) =  conjg( DIP_P(:,ic,iv,ik,1) )
-       DIP_iR(:,iv,ic,ik,1)= -conjg( DIP_IR(:,ic,iv,ik,1) )
+ call parser('RT3Levels',l_3levels)
+ if(.not.l_3levels) then 
+   !
+   do ik = 1,Xk%nibz
+     do iv = 1, X%ib(2)
+       do ic = iv+1,X%ib(2)
+         !
+         DIP_P(:,ic,iv,ik,1)=cI
+         DIP_iR(:,ic,iv,ik,1)=  DIP_P(:,ic,iv,ik,1)/(Xen%E(iv,ik,1)-Xen%E(ic,ik,1))
+         !
+         if (abs(Xen%E(iv,ik,1)-Xen%E(ic,ik,1))<=1.E-5_SP)  DIP_iR(:,ic,iv,ik,1)=0.
+         !
+         DIP_P(:,iv,ic,ik,1) =  conjg( DIP_P(:,ic,iv,ik,1) )
+         DIP_iR(:,iv,ic,ik,1)= -conjg( DIP_IR(:,ic,iv,ik,1) )
+       enddo
      enddo
    enddo
- enddo
+   !
+ endif
 #endif
  !
 #if defined _RT  

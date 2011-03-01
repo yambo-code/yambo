@@ -30,7 +30,7 @@ subroutine RT_init_two_levels(Xen)
  use real_time,      ONLY:W_pump,Wo,Rabi_freq_pump,P,delta,Rabi_nn,D,Rabi_freq_probe,l_3levels,dip,W1
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:levels,nel
- use com,            ONLY:error
+ use com,            ONLY:error,warning
  !
  implicit none
  type(levels), intent(in) :: Xen
@@ -58,24 +58,32 @@ subroutine RT_init_two_levels(Xen)
    !
    ! Three level case
    !
-   DIP_iR=(0.,0.)
-   DIP_P =(0.,0.)
-   !
-   DIP_P(1,1,2,1,1)= cmplx(0._SP,dip(1))
-   DIP_P(1,1,3,1,1)= cmplx(0._SP,dip(2))
-   DIP_P(1,2,3,1,1)= cmplx(0._SP,dip(3))
-   !
-   DIP_P(1,2,1,1,1)=conjg( DIP_P(1,1,2,1,1))
-   DIP_P(1,3,1,1,1)=conjg( DIP_P(1,1,3,1,1))
-   DIP_P(1,3,2,1,1)=conjg( DIP_P(1,2,3,1,1))
-   !
-   DIP_iR(1,1,2,1,1)= DIP_P(1,1,2,1,1) /(Wo)
-   DIP_iR(1,1,3,1,1)= DIP_P(1,1,3,1,1) /(W1)
-   DIP_iR(1,2,3,1,1)= DIP_P(1,2,3,1,1) /(W1-Wo)
-   !
-   DIP_iR(1,2,1,1,1)= -conjg(DIP_iR(1,1,2,1,1))
-   DIP_iR(1,3,1,1,1)= -conjg(DIP_iR(1,1,3,1,1))
-   DIP_iR(1,3,2,1,1)= -conjg(DIP_iR(1,2,3,1,1))
+   if(any(dip(:)/=0._SP)) then
+     !
+     DIP_iR=(0._SP,0._SP)
+     DIP_P =(0._SP,0._SP)
+     !
+     DIP_P(1,1,2,1,1)= cmplx(0._SP,dip(1))
+     DIP_P(1,1,3,1,1)= cmplx(0._SP,dip(2))
+     DIP_P(1,2,3,1,1)= cmplx(0._SP,dip(3))
+     !
+     DIP_P(1,2,1,1,1)=conjg( DIP_P(1,1,2,1,1))
+     DIP_P(1,3,1,1,1)=conjg( DIP_P(1,1,3,1,1))
+     DIP_P(1,3,2,1,1)=conjg( DIP_P(1,2,3,1,1))
+     !
+     DIP_iR(1,1,2,1,1)= DIP_P(1,1,2,1,1) /(Wo)
+     DIP_iR(1,1,3,1,1)= DIP_P(1,1,3,1,1) /(W1)
+     DIP_iR(1,2,3,1,1)= DIP_P(1,2,3,1,1) /(W1-Wo)
+     !
+     DIP_iR(1,2,1,1,1)= -conjg(DIP_iR(1,1,2,1,1))
+     DIP_iR(1,3,1,1,1)= -conjg(DIP_iR(1,1,3,1,1))
+     DIP_iR(1,3,2,1,1)= -conjg(DIP_iR(1,2,3,1,1))
+     !
+   else
+     call warning(" Using intrinsic dipoles ")
+     call msg('s','[2 LEVELS] DipR (12,13,23)',(/abs(DIP_iR(1,1,2,1,1)),abs(DIP_iR(1,1,3,1,1)),abs(DIP_iR(1,2,3,1,1))/))
+     call msg('s','[2 LEVELS] DipP (12,13,23)',(/abs(DIP_P(1,1,2,1,1)),abs(DIP_P(1,1,3,1,1)),abs(DIP_P(1,2,3,1,1))/))
+   endif
    !
    select case(trim(Efield(i_pump)%ef_name))
      case('ANTIRES','SIN')

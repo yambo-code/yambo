@@ -311,6 +311,8 @@ module IO_m
 &                  index(desc,'kindx')/=0/))) & 
 &                  CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
          !
+#elif defined _NETCDF_IO && defined _HDF5_IO
+         CREATE_MODE=ior(nf90_share,nf90_hdf5)
 #endif
          !
 #if defined _NETCDF_IO

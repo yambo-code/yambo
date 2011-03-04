@@ -35,11 +35,14 @@ if test "$mpibuild" = "yes" ; then MPI_str="X"; fi
 NETCDF_str=" "
 if test "$netcdf" = "yes" ; then NETCDF_str="X"; fi
 
+HDF5_str=" "
+if test "$hdf5" = "yes" ; then HDF5_str="X"; fi
+
 LIBXC_str=" "
 if test "$libxc" = "yes" ; then LIBXC_str="X"; fi
 
 NETCDF_LF_str=" "
-if test "$enable_netcdf_LFS" = "yes" ; then NETCDF_LF_str="X"; fi
+if test "$enable_netcdf_LFS" = "yes" &&  test "$netcdf" = "yes" ; then NETCDF_LF_str="X"; fi
 
 PW_str=" "
 if test "$compile_p2y" = "yes" ; then PW_str="X"; fi
@@ -63,6 +66,7 @@ AC_SUBST(srcdir_path)
 AC_SUBST(DP_str)
 AC_SUBST(Red_str)
 AC_SUBST(MPI_str)
+AC_SUBST(HDF5_str)
 AC_SUBST(NETCDF_str)
 AC_SUBST(LIBXC_str)
 AC_SUBST(NETCDF_LF_str)

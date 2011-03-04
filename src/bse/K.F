@@ -416,6 +416,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call pp_redux_wait
  do ik2=1,BS_columns
+   !
    ikk2=sum(BS_blk_dim(:ik2-1))
    !
    if (load_O_X) call K_exchange(.not.l_col_cut,iq,ik2,Xk,O2x,O_x_dim) 

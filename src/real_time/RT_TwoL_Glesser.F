@@ -22,6 +22,7 @@
 subroutine RT_TwoL_Glesser(Poles_and_derivatives,Eo,Rabi,G_lesser)
  !
  use pars,           ONLY:SP,cI
+ use com,            ONLY:error
  use units,          ONLY:HARTREE
  use real_time,      ONLY:NE_time,Phase_Lifetime,QP_LifeTime,it_start,NE_i_time
  use fields,         ONLY:global_gauge
@@ -44,38 +45,46 @@ subroutine RT_TwoL_Glesser(Poles_and_derivatives,Eo,Rabi,G_lesser)
  !
  G_lesser=(0.,0.)
  !
+ W_step=Eo/real(N_W_delta_search)
+ !
  if (NE_i_time==1.or.it_now==it_start) then
    !
-   i_found=0
-   !
-   W_step=2.*Eo/real(N_W_delta_search)
+1  i_found=0
    !
    do i_f=1,N_W_delta_search-1
      W_func(i_f)=-0.1/HARTREE+W_step*i_f
      Poles_func(i_f)=DELTA_Pump_F(W_func(i_f))
      Poles_func_deriv(i_f)=(DELTA_Pump_F(W_func(i_f)+W_step)-DELTA_Pump_F(W_func(i_f)))/W_step
+     !
      if (i_f==1) cycle
+     !
      if ( (real(Poles_func(i_f-1))<0..and.real(Poles_func(i_f))>0. ) ) then
        W_bar    = W_func(i_f-1) - cI*aimag(Poles_func(i_f-1))/Poles_func_deriv(i_f-1)
        Beta_wbar= Poles_func_deriv(i_f-1)
        i_found(1)=1
      endif
+     !
      if ( (real(W_func(i_f-1))<0..and.real(W_func(i_f))>0. ) ) then
        W_gamma   = W_func(i_f-1) - cI*aimag(Poles_func(i_f-1))/Poles_func_deriv(i_f-1)
        Beta_gamma= Poles_func_deriv(i_f-1)
        i_found(2)=1 
      endif
+     !
    enddo
    !
    if (.not.all(i_found==1)) then 
-!     do i_f=1,N_W_delta_search-1
-!       write (100,'(4f20.10)') real(W_func(i_f))*HARTREE,Poles_func(i_f)
-!     enddo
-!     write (*,*) i_found,Eo*HARTREE,W_func(N_W_delta_search-1)*HARTREE
-!     stop
+     if (W_step>10.*Eo/real(N_W_delta_search)) then
+       Poles_and_derivatives(1)=-1.
+       i_found=1
+       goto 2
+     endif
+     W_step=2*W_step
+     goto 1
+   else
+     Poles_and_derivatives=(/W_bar,Beta_wbar,W_gamma,Beta_gamma/)
    endif
    !
-   Poles_and_derivatives=(/W_bar,Beta_wbar,W_gamma,Beta_gamma/)
+2  continue
    !
  else
    !
@@ -86,7 +95,7 @@ subroutine RT_TwoL_Glesser(Poles_and_derivatives,Eo,Rabi,G_lesser)
    !
  endif
  !
- if (NE_i_time==1) return
+ if (NE_i_time==1.or.W_bar==-1.) return
  !
  Gamma_mat=abs(Rabi)**2/(Eo**2.+1./Phase_LifeTime**2.)*QP_LifeTime/Phase_LifeTime
  dGinfty=-2.*cI/(Gamma_mat+1.)

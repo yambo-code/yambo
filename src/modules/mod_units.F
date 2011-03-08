@@ -56,6 +56,10 @@ module UNITS
  real(SP), parameter :: AUT2SEC=2.418884326505_SP*10._SP**(-17)
  real(SP), parameter :: SEC2AUT=1._SP/AUT2SEC
  real(SP), parameter :: FS2AUT =10.**2/2.418884326505_SP
+ !
+ ! The convertion factor between eV and fs is \hbar = 6.58211899(16)*10^-1 eV * fs
+ ! from wiki http://en.wikipedia.org/wiki/Electronvolt
+ !
  real(SP), parameter :: PS2AUT =10.**5/2.418884326505_SP
  !
  ! Magnetic fields

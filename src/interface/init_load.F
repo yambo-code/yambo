@@ -296,7 +296,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
 #if defined _TWO_LEVELS
  call it('f',defs,'RT3Levels',    '[RT] Three levels hamiltonian' ,verb_level=V_real_time)
- call it(defs,    'RTDephasing',  '[RT] Dephasing terms (l12,l13,l23)',tau_offdiag,verb_level=V_real_time)
+ call it(defs,    'RTDephasing',  '[RT] Dephasing terms (l12,l13,l23)',tau_offdiag,verb_level=V_real_time,unit=Time_unit)
  call it(defs,    'RTLifeTimes',  '[RT] Diagonal life-times (l11,l22,l33)',tau_diag,verb_level=V_real_time)
  call it(defs,    'RTDipoles',    '[RT] Dipoles (d12,d13,d23)',dip,verb_level=V_real_time)
 #endif

@@ -116,7 +116,7 @@ subroutine RT_initialize(Xen)
  !
  i_Pump=1
  i_Probe=1
- if ( Efield(1)%ef_name/='none' .and. Efield(2)%ef_name/='none' ) i_Probe=2
+ if ( Efield(1)%ef_name/='none' .and. Efield(2)%ef_name/='none' ) i_Pump=2
  !
  do i1=1,n_ext_fields
    !      

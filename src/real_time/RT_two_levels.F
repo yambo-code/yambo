@@ -42,7 +42,7 @@ subroutine RT_two_levels(G_lesser)
  real(SP)      :: T,W_step,Wo_here,W_range
  integer, parameter :: N_W_delta_search=1000000
  complex(SP)        :: Poles_func(N_W_delta_search),Poles_func_deriv(N_W_delta_search),W_func(N_W_delta_search),&
-&                      G(2,2),Gamma_mat(2,2),Gamma_delta_11
+&                      G(2,2),Gamma_mat(2,2),Gamma_delta_11,Polarization,Current
  complex(SP), save  :: W_bar,Beta_wbar,R_wbar,dGinfty,W_gamma,Beta_gamma,R_gamma,&
 &                      So,S_wo,S_wbar,S_minus_wbar_star,S_gamma,eta1_plus,eta1_minus,p1_plus,p1_minus,p0
  !
@@ -159,7 +159,13 @@ subroutine RT_two_levels(G_lesser)
  call open_it(105,"G12_theo_LRR")
  call write_it(105,G12_LRR(T,Rabi_freq_pump,Wo_here))
  call open_it(103,"Polarization_theo")
- call write_it(103, -cI*(D*G(2,1)+conjg(D)*G(1,2))/DL_vol/Efield(i_Probe)%amplitude)
+ Polarization=-cI*(D*G(2,1)+conjg(D)*G(1,2))/DL_vol/Efield(i_Probe)%amplitude
+ call write_it(103, Polarization)
+ Current=-cI*(-1)*(P*G(2,1)+conjg(P)*G(1,2))/DL_vol/Efield(i_Probe)%amplitude
+ call open_it(106,"Current_theo")
+ call write_it(106, Current)
+ call open_it(107,"X_theo")
+ call write_it(107, exp(cI*W_pump*T)*(Polarization+cI*Current/Wo))
  !
 1002 continue
  !
@@ -167,8 +173,8 @@ subroutine RT_two_levels(G_lesser)
  call write_it(201,-cI*(G_lesser(2,2,1)-G_lesser(1,1,1)))
  call open_it(202,"Polarization_num")
  call write_it(202, -cI*(D*G_lesser(2,1,1)+conjg(D)*G_lesser(1,2,1))/DL_vol/Efield(i_Probe)%amplitude)
-! call open_it(203,"Current_num")
-! call write_it(203, -cI*(-1)*(P*G_lesser(2,1,1)+conjg(P)*G_lesser(1,2,1))/DL_vol)
+ call open_it(203,"Current_num")
+ call write_it(203, -cI*(-1)*(P*G_lesser(2,1,1)+conjg(P)*G_lesser(1,2,1))/DL_vol/Efield(i_Probe)%amplitude)
  call open_it(205,"G12_num")
  call write_it(205,G_lesser(1,2,1))
  call open_it(206,"G21_num")

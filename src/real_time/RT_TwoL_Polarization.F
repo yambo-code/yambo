@@ -41,10 +41,9 @@ subroutine RT_TwoL_Polarization(E,eval_P,k)
  ! Work Space
  !
  integer      :: iv,ic,ik,i_ref(3)
- complex(SP)  :: Rabi,Rabi_tilde,G_lesser,D(3)
- real(SP)     :: Rabi_max,Rabi_tilde_max,E_field(3)
+ complex(SP)  :: Rabi,G_lesser,D(3),Rabi_prefactor
+ real(SP)     :: Rabi_max,E_field(3)
  !
- if (trim(Efield(i_Pump)%ef_name)/='DELTA') return
  if (i_Pump/=i_Probe) return
  !
  if (.not.allocated(Poles_2levels_save)) then
@@ -54,10 +53,17 @@ subroutine RT_TwoL_Polarization(E,eval_P,k)
  !
  P_2levels_is_done=.TRUE.
  !
- E_field = Efield(i_Pump)%versor(:)* Efield(i_Pump)%amplitude
+ E_field(:) = Efield(i_Pump)%versor(:)* Efield(i_Pump)%amplitude
  !
  Rabi_max=-1.
- Rabi_tilde_max=-1.
+ Rabi_prefactor=(1.,0.)
+ !
+ select case(trim(Efield(i_Pump)%ef_name))
+   case('ANTIRES')
+     Rabi_prefactor=1./Efield(i_Pump)%frequency/cI
+   case('RES')
+     Rabi_prefactor=-1./Efield(i_Pump)%frequency/cI
+ end select
  !
  if (eval_P) RT_P_2levels(:)=(0.,0.)
  !
@@ -67,12 +73,10 @@ subroutine RT_TwoL_Polarization(E,eval_P,k)
        !
        if (abs(E%E(iv,ik,1)-E%E(ic,ik,1))<=1.E-5_SP) cycle
        !
-       Rabi =  2. * sum(DIP_P(:,ic,iv,ik,1) * E_field(:)) 
-       Rabi_tilde =  Rabi/ ( E%E(ic,ik,1)-E%E(iv,ik,1 ) )
+       Rabi =  2. * sum(DIP_P(:,ic,iv,ik,1) * E_field(:)) *Rabi_prefactor
        !
        if (abs(Rabi) > Rabi_max) then
          Rabi_max=abs(Rabi)
-         Rabi_tilde_max=abs(Rabi_tilde)
          i_ref(:)=(/iv,ic,ik/)
        endif
        !

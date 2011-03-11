@@ -87,7 +87,7 @@ PJ_REELSLIBS = $(BASIC_LIBS) ras_reels_mods coulomb bz_ops qp_ctl reels \
                interface tddft pol_function qp bse
 #endif
 #if defined _SC
-PROJECTS = yambo_sc
+PROJECTS = yambo_sc ypp_sc
 PJ_SCLIBS       = $(MAIN_LIBS) sc
 #endif
 #if defined _DISTRIBUTED
@@ -110,12 +110,17 @@ libs:
 	@if test "$(do_local)" = yes ; then LIBS2DO="local" ; \
 	DIR2GO="lib" ; $(mklib); fi
 yambo: libs
-#if defined _AUGER
 	@LIBS2DO="$(MAIN_LIBS)" ; $(mksrc)
 	@X2DO="yambo"; XPATH="driver";XLIBS="$(MAIN_LIBS)";$(mkx)
+#if defined _SC
 yambo_sc: libs
 	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_SC"; $(mksrc)
 	@X2DO="yambo_sc"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_SC";$(mkx)
+ypp_sc: libs
+	@LIBS2DO="$(YPPLIBS)";ADF="-D_SC"; $(mksrc)
+	@X2DO="ypp_sc" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_SC";$(mkx)
+#endif
+#if defined _AUGER
 yambo_auger: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_AUGER"; $(mksrc)
 	@X2DO="yambo_auger"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_AUGER";$(mkx)

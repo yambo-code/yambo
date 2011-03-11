@@ -143,7 +143,7 @@ integer function io_SC_components(what,E_sc,ID)
    call io_elemental(ID,VAR="RHOCONV_ECONV",VAR_SZ=2,MENU=0) 
    call io_elemental(ID,R0=rho_convergence)
    call io_elemental(ID,R0=E_convergence)
-   call io_elemental(ID,VAR="",VAR_SZ=0)
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
 #if defined _RT
    endif
@@ -152,12 +152,12 @@ integer function io_SC_components(what,E_sc,ID)
      call io_elemental(ID,VAR="Probe_and_Pump_index",VAR_SZ=2,MENU=0) 
      call io_elemental(ID,I0=i_Probe)
      call io_elemental(ID,I0=i_Pump)
-     call io_elemental(ID,VAR="",VAR_SZ=0)
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif
    if (l_J_and_P) then
      call io_elemental(ID,VAR="P2l_is_done",VAR_SZ=1,MENU=0) 
      call io_elemental(ID,L0=P_2levels_is_done)
-     call io_elemental(ID,VAR="",VAR_SZ=0)
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif
    !
 #endif

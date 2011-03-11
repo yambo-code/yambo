@@ -38,16 +38,19 @@ subroutine RT_databases(en)
  !
  ! Work Space
  !
- integer            :: io_J_and_P,ID,i_f
+ integer            :: io_J_and_P,ID,i_f,io_G
  integer, external  :: io_SC_components
  !
  call section("+",'Current and Polarization Database')
  !====================================================
  !
+ call io_control(ACTION=OP_RD_CL,COM=LOG,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
+ io_G=io_SC_components('G' ,En,ID)
+ !
  ! Check for saved current and polarization database
  !---------------------------------------------------
  !
- call io_control(ACTION=OP_RD_CL,COM=LOG,MODE=DUMP,SEC=(/1/),ID=ID)
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
  io_J_and_P=io_SC_components('J_and_P' ,en,ID)
  if( io_J_and_P/=0 ) then
    call warning(" Error while reading databases")
@@ -62,7 +65,7 @@ subroutine RT_databases(en)
    NE_steps=NE_time/RT_step+1
  endif
  !
- allocate(RT_J_t(NE_steps,3),RT_P_t(NE_steps,6))
+ if (.not.allocated(RT_J_t)) allocate(RT_J_t(NE_steps,3),RT_P_t(NE_steps,6))
  allocate(J_and_P_cache(J_and_P_cache_size,max_rt_steps_disk))
  call mem_est("RT_P_t",(/size(RT_J_t)/),(/2*SP/))
  call mem_est("RT_J_t",(/size(RT_J_t)/),(/2*SP/))

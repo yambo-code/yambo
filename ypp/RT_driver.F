@@ -21,7 +21,8 @@
 !
 subroutine RT_driver(en,k)
  !
- use YPP,            ONLY:l_fix_syms,l_RT_X_one,Use_FFT,RT_P_t,RT_J_t,l_RT_X_two
+ use YPP,            ONLY:l_fix_syms,l_RT_X_one,Use_FFT,RT_P_t,RT_J_t,l_RT_X_two,&
+&                         l_effective_X
  use R_lattice,      ONLY:bz_samp
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels
@@ -67,7 +68,9 @@ subroutine RT_driver(en,k)
    ! OPTICS
    !--------
    !
-   call RT_X_one(en,k)
+   if (.not.l_effective_X) call RT_X_one(en,k)
+   !
+   if (     l_effective_X) call RT_X_effective(en,k)
    !
  elseif(l_RT_X_two) then
    !

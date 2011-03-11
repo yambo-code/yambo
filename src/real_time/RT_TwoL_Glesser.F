@@ -22,11 +22,13 @@
 subroutine RT_TwoL_Glesser(Poles_and_derivatives,Eo,Rabi,G_lesser)
  !
  use pars,           ONLY:SP,cI
- use com,            ONLY:error
  use units,          ONLY:HARTREE
  use real_time,      ONLY:NE_time,Phase_Lifetime,QP_LifeTime,it_start,NE_i_time
- use fields,         ONLY:global_gauge
  use SC,             ONLY:it_now
+ use fields,         ONLY:Efield,global_gauge
+ !
+! use real_time,      ONLY:P,W_pump
+! use stderr,         ONLY:real2ch
  !
  implicit none
  real(SP),    intent(in)   :: Eo
@@ -37,15 +39,33 @@ subroutine RT_TwoL_Glesser(Poles_and_derivatives,Eo,Rabi,G_lesser)
  ! Work Space
  !
  integer,parameter :: N_W_delta_search=100000
- integer           :: i_f,i_found(2)
- real(SP)          :: W_step
+ integer           :: i_f,i_found(2),i_r
+ real(SP)          :: W_step,Eo_,W_pump
  complex(SP)       :: Poles_func(N_W_delta_search),Poles_func_deriv(N_W_delta_search),W_func(N_W_delta_search),&
-&                     Gamma_mat,dGinfty,So,S_wo,S_wbar,S_minus_wbar_star,S_gamma,R_gamma,R_wbar,&
+&                     Gamma_mat,dGinfty,R_gamma,R_wbar,G_lesser_prefactor,&
 &                     W_bar,Beta_wbar,W_gamma,Beta_gamma
+ complex(SP)       :: dG_residuals(4),G_residuals(4),Omega(4)
  !
  G_lesser=(0.,0.)
  !
- W_step=Eo/real(N_W_delta_search)
+ if (trim(global_gauge)=="length")    return
+ !
+ Eo_=Eo
+ W_pump=0.
+ G_lesser_prefactor=(1.,0.)
+ !
+ select case(trim(Efield(1)%ef_name))
+   case('RES')
+     W_pump=Efield(1)%frequency
+     Eo_=Eo+W_pump
+     G_lesser_prefactor=exp(-cI*W_pump*NE_time)
+   case('ANTIRES')
+     W_pump=Efield(1)%frequency
+     Eo_=Eo-W_pump
+     G_lesser_prefactor=exp( cI*W_pump*NE_time)
+ end select
+ !
+ W_step=10.*Eo/real(N_W_delta_search)
  !
  if (NE_i_time==1.or.it_now==it_start) then
    !
@@ -55,6 +75,7 @@ subroutine RT_TwoL_Glesser(Poles_and_derivatives,Eo,Rabi,G_lesser)
      W_func(i_f)=-0.1/HARTREE+W_step*i_f
      Poles_func(i_f)=DELTA_Pump_F(W_func(i_f))
      Poles_func_deriv(i_f)=(DELTA_Pump_F(W_func(i_f)+W_step)-DELTA_Pump_F(W_func(i_f)))/W_step
+     write (100,'(3f20.10)')  real(W_func(i_f))*HARTREE,DELTA_Pump_F(W_func(i_f))
      !
      if (i_f==1) cycle
      !
@@ -73,7 +94,7 @@ subroutine RT_TwoL_Glesser(Poles_and_derivatives,Eo,Rabi,G_lesser)
    enddo
    !
    if (.not.all(i_found==1)) then 
-     if (W_step>10.*Eo/real(N_W_delta_search)) then
+     if (W_step>10.*Eo_/real(N_W_delta_search)) then
        Poles_and_derivatives(1)=-1.
        i_found=1
        goto 2
@@ -81,7 +102,9 @@ subroutine RT_TwoL_Glesser(Poles_and_derivatives,Eo,Rabi,G_lesser)
      W_step=2*W_step
      goto 1
    else
+     !
      Poles_and_derivatives=(/W_bar,Beta_wbar,W_gamma,Beta_gamma/)
+     !
    endif
    !
 2  continue
@@ -97,39 +120,43 @@ subroutine RT_TwoL_Glesser(Poles_and_derivatives,Eo,Rabi,G_lesser)
  !
  if (NE_i_time==1.or.W_bar==-1.) return
  !
- Gamma_mat=abs(Rabi)**2/(Eo**2.+1./Phase_LifeTime**2.)*QP_LifeTime/Phase_LifeTime
+ Gamma_mat=abs(Rabi)**2/(Eo_**2.+1./Phase_LifeTime**2.)*QP_LifeTime/Phase_LifeTime
  dGinfty=-2.*cI/(Gamma_mat+1.)
- !
  R_wbar=2*abs(Rabi)**2/W_bar/Beta_wbar*( W_bar+cI/Phase_LifeTime )
  R_gamma=2*abs(Rabi)**2/W_gamma/Beta_gamma*( W_gamma+cI/Phase_LifeTime )
  !
- So  =cI*dGinfty/(Eo+cI/Phase_LifeTime)
- S_wo=R_wbar/(W_bar+Eo+cI/Phase_LifeTime)
- S_wbar=R_wbar/(W_bar+Eo+cI/Phase_LifeTime)
- S_minus_wbar_star=conjg(R_wbar)/(-conjg(W_bar)+Eo+cI/Phase_LifeTime)
- S_gamma=R_gamma/(Eo+W_gamma+cI/Phase_LifeTime)
+ dG_residuals=(/ cI*dGinfty, R_wbar, conjg(R_wbar), R_gamma/)
+ Omega=       (/ (0.,0.)   , -W_bar, conjg(W_bar), -W_gamma/)
  !
- G_lesser=exp_by_sigma_12(NE_time)-exp_by_sigma_12(0._SP)*exp(cI*Eo*NE_time-NE_time/Phase_LifeTime)
+! open (unit=1,file='X_RabisqTT_'//trim(real2ch(abs(Rabi)**2.*Phase_LifeTime*QP_LifeTime)),form='formatted')
+! do i_f=1,N_W_delta_search-1
+!   Eo_=(real(W_func(i_f))-Eo)
+!   Gamma_mat=abs(Rabi)**2/(Eo_**2.+1./Phase_LifeTime**2.)*QP_LifeTime/Phase_LifeTime
+!   dGinfty=-2.*cI/(Gamma_mat+1.)
+!   write (1,'(2f20.10)') real(W_func(i_f)*HARTREE),aimag(abs(P)**2./Eo/W_pump*cI*dGinfty/&
+!&                         ( Eo_-cI/Phase_LifeTime) )
+! enddo
+! close(1)
+! stop
  !
- !G_lesser=-cI*Rabi/(Eo+cI/Phase_LifeTime)*(1.-exp(cI*(Eo+cI/Phase_Lifetime)*NE_time))
- !if (trim(global_gauge)=="length") G_lesser=cI*Rabi/Eo*exp(cI*(Eo+cI/Phase_Lifetime)*NE_time)
+ !
+ do i_r=1,4
+   G_residuals(i_r)=dG_residuals(i_r)/(Omega(i_r)-Eo_-cI/Phase_LifeTime)
+ enddo
+ !
+ G_lesser=(0.,0.)
+ !
+ do i_r=1,4
+   G_lesser=G_lesser+G_lesser_prefactor*cI*Rabi/2.*G_residuals(i_r)*&
+&           ( exp(cI*Omega(i_r)*NE_time) - exp(cI*(Eo_+cI/Phase_Lifetime)*NE_time))
+ enddo
  !
  contains
    !
    complex(SP) function DELTA_Pump_F(W)
      complex(SP) :: W
-     DELTA_Pump_F=(W+cI/QP_LifeTime)*(W+Eo+cI/Phase_LifeTime)* & 
-&                 (W-Eo+cI/Phase_LifeTime)-(W+cI/Phase_LifeTime)*abs(Rabi)**2.
-   end function
-   !
-   complex(SP) function exp_by_sigma_12(Time)
-    real(SP)    :: Time
-    exp_by_sigma_12=-cI*Rabi/2.*(&
-&       So&
-&      +S_gamma*exp( -cI*W_gamma*Time)&
-&      +S_wbar*exp( -cI*W_bar*Time)&
-&      +S_minus_wbar_star*exp( cI*conjg(W_bar)*Time)&
-&       )
+     DELTA_Pump_F=(W+cI/QP_LifeTime)*(W+Eo_+cI/Phase_LifeTime)* & 
+&                 (W-Eo_+cI/Phase_LifeTime)-(W+cI/Phase_LifeTime)*abs(Rabi)**2.
    end function
    !
 end subroutine RT_TwoL_Glesser

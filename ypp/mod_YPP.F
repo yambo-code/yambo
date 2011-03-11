@@ -151,6 +151,7 @@ module YPP
  ! (RT) optics
  !
  logical  :: Use_FFT
+ logical  :: l_effective_X
  integer  :: i_t_start,i_t_end  ! time window
  integer  :: RED_steps ! reduced number of steps
  real(SP) :: W_RT_induced_step

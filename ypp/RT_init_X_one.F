@@ -22,19 +22,23 @@
 subroutine RT_init_X_one()
  !
  use YPP,            ONLY:RT_P_t,X_rt,RT_J_t,i_t_start,i_t_end,&
-&                         W_RT_induced_step,RED_steps
+&                         W_RT_induced_step,RED_steps,l_effective_X
  use com,            ONLY:msg
  use pars,           ONLY:pi,SP
  use units,          ONLY:FS2AUT,HARTREE
  use stderr,         ONLY:real2ch
  use real_time,      ONLY:NE_steps,RT_step,RT_ind_J,RT_output,RT_P,RT_output,RT_P_2levels
- use fields,         ONLY:Efield,i_Probe
+ use fields,         ONLY:Efield,i_Probe,i_Pump
  implicit none
  !
  ! Work Space
  !
  integer  :: i_t,i_t_field_range(2)
  logical  :: l_no_damping
+ !
+ l_effective_X= i_Pump/=i_Probe.or.&
+&               trim(Efield(i_Probe)%ef_name)=='RES'.or.&
+&               trim(Efield(i_Probe)%ef_name)=='ANTIRES'
  !
  l_no_damping= trim(X_rt%damp) == "NONE"
  !
@@ -72,6 +76,8 @@ subroutine RT_init_X_one()
    call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_P_t(i_t_start:i_t_end,:),RED_steps,RT_step,6)
    !
  endif
+ !
+ if (l_effective_X) return
  !
  call section("=",'Writing input current and Polarization')
  !=========================================================

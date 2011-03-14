@@ -111,7 +111,7 @@ module fields
      !
      select case( trim(E_field%ef_name) )
        case('SIN')
-         if (order==0 ) small_a=-cos(freq*T_or_W)/freq
+         if (order==0 ) small_a=-(cos(freq*T_or_W)-1._SP)/freq
          if (order==1 ) small_a= sin(freq*T_or_W)
          if (order==2 ) small_a=freq*cos(freq*T_or_W)
          if (order==-1) small_a=1._SP/2._SP/(T_or_W-freq)-1._SP/2._SP/(T_or_W+freq)-1._SP/freq

@@ -145,6 +145,7 @@ module YPP
  logical     :: l_fix_syms
  logical     :: l_RT_X_one
  logical     :: l_RT_X_two
+ logical     :: l_force_min_damp
  real(SP)    :: E_field(2,3)
  real(SP)    :: B_field,B_theta,B_psi
  !

@@ -26,7 +26,7 @@
 subroutine RT_X_one(en,k)
  !
  use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,W_RT_induced_step, &
-&                         i_t_start,i_t_end,RED_steps
+&                         i_t_start,i_t_end,RED_steps,l_force_min_damp
  use pars,           ONLY:SP,DP,pi,zero_dfl,cI
  use units,          ONLY:HARTREE
  use electrons,      ONLY:levels
@@ -107,7 +107,7 @@ subroutine RT_X_one(en,k)
      E_t(i_t)=Efield(1)%amplitude*small_a((i_t-1)*RT_step,Efield(1),1)
    enddo
    !
-   if(trim(X_rt%damp) == "NONE") then
+   if(trim(X_rt%damp) == "NONE".and.l_force_min_damp) then
      call RT_damp_it("LORENTZIAN",W_RT_induced_step,E_t(i_t_start:i_t_end),RED_steps,RT_step,1)
    else
      call RT_damp_it(X_rt%damp,X_rt%damp_factor,E_t(i_t_start:i_t_end),RED_steps,RT_step,1)

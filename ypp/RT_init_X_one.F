@@ -22,13 +22,14 @@
 subroutine RT_init_X_one()
  !
  use YPP,            ONLY:RT_P_t,X_rt,RT_J_t,i_t_start,i_t_end,&
-&                         W_RT_induced_step,RED_steps,l_effective_X
+&                         W_RT_induced_step,RED_steps,l_effective_X,l_force_min_damp
  use com,            ONLY:msg
  use pars,           ONLY:pi,SP
  use units,          ONLY:FS2AUT,HARTREE
  use stderr,         ONLY:real2ch
  use real_time,      ONLY:NE_steps,RT_step,RT_ind_J,RT_output,RT_P,RT_output,RT_P_2levels
  use fields,         ONLY:Efield,i_Probe,i_Pump
+ use parser_m,       ONLY:parser
  implicit none
  !
  ! Work Space
@@ -41,6 +42,7 @@ subroutine RT_init_X_one()
 &               trim(Efield(i_Probe)%ef_name)=='ANTIRES'
  !
  l_no_damping= trim(X_rt%damp) == "NONE"
+ call parser('FrMinDamp',l_force_min_damp)
  !
  !  Reduced Time range
  !====================
@@ -60,7 +62,16 @@ subroutine RT_init_X_one()
  W_RT_induced_step=2.*pi/(real(RED_steps,SP)*RT_step)  ! Frequency step in real-time dynamics
  !
  if(l_no_damping) then
+   !
    X_rt%damp_factor=0._SP
+   !
+   ! Force the minimal damping to make finite the Fourier Transform
+   !
+   if(l_force_min_damp) then
+     call RT_damp_it("LORENTZIAN",W_RT_induced_step,RT_J_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
+     call RT_damp_it("LORENTZIAN",W_RT_induced_step,RT_P_t(i_t_start:i_t_end,:),RED_steps,RT_step,6)
+   endif
+   !
  else
    ! 
    ! DAMPING

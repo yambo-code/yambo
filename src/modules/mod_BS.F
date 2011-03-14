@@ -96,6 +96,15 @@ module BS
  !
  interface 
    !
+#if defined _TEST_2
+   integer function ioBS_TEST_2(iq,X,ID,blk_only)
+     use X_m,           ONLY:X_t
+     type(X_t):: X 
+     logical, optional :: blk_only
+     integer  :: iq,ID  
+   end function
+#endif
+   !
 #if defined _TEST_1
    subroutine K_BSmat_by_V(iq,iter,Vi,Vo,iter_par)
      use pars,          ONLY:SP

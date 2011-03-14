@@ -37,7 +37,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv,inv_index
  use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,qindx_X,bz_samp,RIM_qpg,&
 &                       RIM_anisotropy,ik_is_table,bare_qpg
- use par_proc_m,   ONLY:pp_redux_wait,myid,ncpu
+ use par_proc_m,   ONLY:pp_redux_wait,myid,ncpu,master_cpu
  use com,          ONLY:msg,warning,error
  use timing,       ONLY:live_timing
  use X_m,          ONLY:X_alloc,X_t,X_mat
@@ -49,7 +49,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_K_dim,BS_eh_win,BS_k_and_row_restart,&
 &                       BS_IO_index,BS_K_is_ALDA,BS_cpl_mat,&
 &                       BS_cpl_K_exchange,BSS_q0,&
-&                       O_n_scatt,BS_O,BS_cpl_K_corr
+&                       O_n_scatt,BS_O,BS_cpl_K_corr,ioBS_TEST_2
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,RD_CL,OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END
@@ -88,18 +88,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  integer    :: O_x_dim,alloc_err(2),x_fft_size,c_fft_size
  logical    :: load_O_X,l_USE_all_Gexx
  complex(SP),allocatable::Ovv(:),Occ(:),Cc(:)
-#if defined _DISTRIBUTED
- complex(SP),target, allocatable::O2x(:,:)
- complex(SP),pointer            ::O1x(:,:)
-#else
  complex(SP),        allocatable::O1x(:,:),O2x(:,:)
-#endif
  complex(SP),allocatable::Ovc(:),Ocv(:)
  type(ggwinfo)          ::isc
  !
  ! I/O
  !
- integer           ::ioX_err,ioBS_Fxc_err,XID,ID
+ integer           ::ioX_err,ioBS_Fxc_err,XID,ID,ID_read,ACTION_
  integer, external ::ioX,ioBS
  !
  Co=4._SP*pi/DL_vol/real(q%nbz,SP)
@@ -375,9 +370,158 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call section('+','Main loop')
  !
- !allocations
- !***********
- if (BS_res_K_corr.or.BS_cpl_K_corr) then
+ if (load_O_X) then
+   allocate(O2x(BS_n_g_exch,O_x_dim),stat=alloc_err(2))
+   call mem_est('O2x',(/size(O2x)/),errors=(/alloc_err(2)/))
+   allocate(O1x(BS_n_g_exch,O_x_dim),stat=alloc_err(1))
+   call mem_est('O1x',(/size(O1x)/),errors=(/alloc_err(1)/))
+ endif
+ !
+ i8nc=ncpu
+ i8id=myid
+ !
+ ! ::: Exchange Part or TD-DFT ::::
+ !
+ if(BS_res_K_exchange.or.BS_cpl_K_exchange.or.BS_K_is_ALDA.or.l_bs_fxc) then
+   !
+   !
+   if (.not.BS_K_coupling) call mem_est('BS_mat',(/O_x_dim**2/))
+   if (BS_K_coupling) call mem_est('BS_mat',(/2*O_x_dim**2/)) 
+   !
+   if (.not.l_bs_fxc) call live_timing('BSK_EX',live_timing_steps)
+   if (l_bs_fxc) call live_timing('BSK->Fxc',live_timing_steps)
+   !
+   tot_n_K_elements=0
+   live_timing_accumulate=0
+   !
+   call pp_redux_wait
+   do ik2=1,BS_columns
+     !
+     ikk2=sum(BS_blk_dim(:ik2-1))
+     !
+     if (load_O_X) call K_exchange(.not.l_col_cut,iq,ik2,Xk,O2x,O_x_dim) 
+     !
+     do ik1=ik2,1,-1
+       !
+       if (any((/ik2<BS_k_and_row_restart(2),ik2==BS_k_and_row_restart(2).and.ik1>BS_k_and_row_restart(1)/))) cycle
+       !
+       ikk1=sum(BS_blk_dim(:ik1-1))
+       !
+       allocate(BS_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
+       if (BS_K_coupling) allocate(BS_cpl_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
+       !
+       if (load_O_X) then
+         !
+         if (ik1/=ik2) call K_exchange(.not.l_col_cut,iq,ik1,Xk,O1x,O_x_dim)  
+         if (ik1==ik2) O1x=O2x
+         !
+         ! When a cutoffed coulomb interaction is used bare_qpg(:,:) elements
+         ! may be complex. In this case I cannot multiply both O1x and O2x by
+         ! 1./bare_qpg as O2x is conjugated in the cdotc call.
+         !
+         if(l_col_cut) then 
+           do i1=1,BS_blk_dim(ik1)
+             do i2=1,BS_n_g_exch
+               O1x(i2,i1)=O1x(i2,i1)/bare_qpg(iq,i2)**2
+             enddo
+           enddo
+         endif 
+         !
+         ! Even if the cutoff coulomb interaction is used and this term should
+         ! be in principle included, they are vanishing due to the q->0 in the
+         ! oscillator and the finitness of qpg(1,1) term.
+         !
+         O1x(1,:)=(0.,0.)
+         O2x(1,:)=(0.,0.)
+         !
+       endif
+       !
+       BS_mat=(0.,0.)
+       if (BS_K_coupling) BS_cpl_mat=(0.,0.)
+       !
+       call pp_redux_wait
+       do icv1=1,BS_blk_dim(ik1)
+         !
+         do icv2=1,BS_blk_dim(ik2)
+           !
+           if(.not.build_BS_indexes(ikk1,ikk2,icv1,icv2)) cycle
+           !
+           H_res_x=(0.,0.)
+           H_cpl_x=(0.,0.)
+           ! 
+           ! :::Exchange    (resonant):::
+           !
+           if (BS_res_K_exchange) H_res_x=Vstar_dot_V(BS_n_g_exch,O2x(:,icv2),O1x(:,icv1))
+           !
+           ! :::Exchange    (coupling):::
+           !
+           if (BS_cpl_K_exchange) H_cpl_x=V_dot_V(BS_n_g_exch,O2x(g_rot(inv_index,1:BS_n_g_exch),icv2),O1x(:,icv1))
+           !
+           ! :::ALDA        (resonant):::
+           !
+           if (BS_K_is_ALDA) H_res_x=H_res_x+&
+&                            tddft_alda_R_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
+&                                                  (/iv1,iv2/),(/is1,is2,is1,is2/),1)
+           !
+           ! :::ALDA        (coupling):::
+           !
+           if (BS_K_is_ALDA) H_cpl_x=H_cpl_x+&
+&                            tddft_alda_R_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
+&                                                  (/iv1,iv2/),(/is1,is2,is1,is2/),2)
+           !
+           BS_mat(icv1,icv2)=H_res_x*real(spin_occ)*Co
+           !
+           if (BS_K_coupling) BS_cpl_mat(icv1,icv2)=H_cpl_x*real(spin_occ)*Co
+         enddo
+       enddo
+       call pp_redux_wait(BS_mat)
+       if (BS_K_coupling) call pp_redux_wait(BS_cpl_mat)
+       !
+       if (l_bs_fxc) then
+         !
+         ! GPL_EXCLUDE_START
+         !
+         call TDDFT_BSK_2_FXC(iq,ik1,ik2,&
+&                             O1x(:FXC_n_g_corr,:),O2x(:FXC_n_g_corr,:),O_x_dim,W_bss,X)
+         !
+         ! GPL_EXCLUDE_END
+         !
+       else
+         if (ik2==1.and.ik1==1) then
+           call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,BS_IO_index(1,1)/),ID=ID)
+         else
+           call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/BS_IO_index(ik1,ik2)/),ID=ID)
+         endif
+         ioBS_Fxc_err=ioBS(iq,X,ID)
+       endif
+       !
+       deallocate(BS_mat)
+       if (BS_K_coupling) deallocate(BS_cpl_mat)
+     enddo
+   enddo
+   !
+   ! Live Timing finalize
+   !
+   if (mod(n_K_elements(myid+1),int(live_timing_step_size,8))/=0) call live_timing(steps=1)
+   call live_timing()
+   call pp_redux_wait
+   !
+ endif
+ !
+ !
+ if (load_O_X) then
+   deallocate(O1x)
+   call mem_est("O1x")
+   deallocate(O2x)
+   call mem_est("O2x")
+ endif
+ !
+ ! ::: Correlation Part ::::
+ !
+ if(BS_res_K_corr.or.BS_cpl_K_corr) then
+   !
+   !allocations
+   !***********
    allocate(BS_O(O_ng,O_dim),stat=alloc_err(1))
    call mem_est('BS_O',(/size(BS_O)/),errors=(/alloc_err(1)/))
    allocate(Ovv(BS_n_g_W),Occ(BS_n_g_W),Cc(BS_n_g_W))
@@ -386,253 +530,146 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      allocate(Ovc(BS_n_g_W),Ocv(BS_n_g_W))
      call mem_est('O_CPL_WS',(/2*BS_n_g_W/))
    endif
- endif
- !
- if (load_O_X) then
-   allocate(O2x(BS_n_g_exch,O_x_dim),stat=alloc_err(2))
-   call mem_est('O2x',(/size(O2x)/),errors=(/alloc_err(2)/))
-#if defined _DISTRIBUTED
-   if(.not.l_col_cut.and.Xk%nibz==1) then
-     O1x=>O2x
-   else
-#endif
-     allocate(O1x(BS_n_g_exch,O_x_dim),stat=alloc_err(1))
-     call mem_est('O1x',(/size(O1x)/),errors=(/alloc_err(1)/))
-#if defined _DISTRIBUTED
-   endif
-#endif
- endif
- !
- if (.not.BS_K_coupling) call mem_est('BS_mat',(/O_x_dim**2/))
- if (BS_K_coupling) call mem_est('BS_mat',(/2*O_x_dim**2/)) 
- !
- if (.not.l_bs_fxc) call live_timing('BSK',live_timing_steps)
- if (l_bs_fxc) call live_timing('BSK->Fxc',live_timing_steps)
- !
- tot_n_K_elements=0
- live_timing_accumulate=0
- i8nc=ncpu
- i8id=myid
- !
- call pp_redux_wait
- do ik2=1,BS_columns
    !
-   ikk2=sum(BS_blk_dim(:ik2-1))
+   if (.not.l_bs_fxc) call live_timing('BSK_CO',live_timing_steps)
    !
-   if (load_O_X) call K_exchange(.not.l_col_cut,iq,ik2,Xk,O2x,O_x_dim) 
+   BS_k_and_row_restart=0
+   tot_n_K_elements=0
+   live_timing_accumulate=0
    !
-   do ik1=ik2,1,-1
-     !
-     if (any((/ik2<BS_k_and_row_restart(2),ik2==BS_k_and_row_restart(2).and.ik1>BS_k_and_row_restart(1)/))) cycle
-     !
-     ikk1=sum(BS_blk_dim(:ik1-1))
-     !
-     allocate(BS_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
-     if (BS_K_coupling) allocate(BS_cpl_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
-     !
-     if (BS_res_K_corr) call K_scattering(iq,ik1,ik2,Xk,q)  
-     !
-     if (load_O_X) then
+   do ik2=1,BS_columns
+     ikk2=sum(BS_blk_dim(:ik2-1))
+     do ik1=ik2,1,-1
        !
-       if (ik1/=ik2) call K_exchange(.not.l_col_cut,iq,ik1,Xk,O1x,O_x_dim)  
-       if (ik1==ik2) O1x=O2x
+       if (any((/ik2<BS_k_and_row_restart(2),ik2==BS_k_and_row_restart(2).and.ik1>BS_k_and_row_restart(1)/))) cycle
        !
-       ! When a cutoffed coulomb interaction is used bare_qpg(:,:) elements
-       ! may be complex. In this case I cannot multiply both O1x and O2x by
-       ! 1./bare_qpg as O2x is conjugated in the cdotc call.
+       ikk1=sum(BS_blk_dim(:ik1-1))
        !
-       if(l_col_cut) then 
-         do i1=1,BS_blk_dim(ik1)
-           do i2=1,BS_n_g_exch
-             O1x(i2,i1)=O1x(i2,i1)/bare_qpg(iq,i2)**2
-           enddo
-         enddo
-       endif 
+       allocate(BS_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
+       if (BS_K_coupling) allocate(BS_cpl_mat(BS_blk_dim(ik1),BS_blk_dim(ik2)))
        !
-       ! Even if the cutoff coulomb interaction is used and this term should
-       ! be in principle included, they are vanishing due to the q->0 in the
-       ! oscillator and the finitness of qpg(1,1) term.
+       if (BS_res_K_corr) call K_scattering(iq,ik1,ik2,Xk,q)  
        !
-       O1x(1,:)=(0.,0.)
-       O2x(1,:)=(0.,0.)
+       ! Read the exchange part
        !
-     endif
-     !
-     BS_mat=(0.,0.)
-     if (BS_K_coupling) BS_cpl_mat=(0.,0.)
-     !
-     call pp_redux_wait
-     do icv1=1,BS_blk_dim(ik1)
-       ik1bz=BS_eh_table(ikk1+icv1,1)
-       iv1=BS_eh_table(ikk1+icv1,2)
-       ic1=BS_eh_table(ikk1+icv1,3)
-       i_sp1=spin(BS_eh_table(ikk1+icv1,:))
-       is1=Xk%sstar(ik1bz,2)
-       !
-       is1p=Xk%sstar( qindx_X(iq,ik1bz,1) ,2)
-       !
-       do icv2=1,BS_blk_dim(ik2)
-         !
-         if (ik1==ik2.and.icv2<icv1) cycle
-         !
-         ! ::: E/h energy window :::
-         !
-         if (.not.K_scatter(abs(BS_eh_E(ikk1+icv1)),abs(BS_eh_E(ikk2+icv2)),&
-&                           E_eh_range,S_eh_range)) cycle
-         !
-         ! ::: Parallel Switch :::
-         !
-         tot_n_K_elements=tot_n_K_elements+1
-         if (mod(tot_n_K_elements-i8id,i8nc)/=1.and.ncpu>1)  cycle
-         !
-         ! ::: Timing START :::
-         !
-         live_timing_accumulate=live_timing_accumulate+1
-         if (live_timing_accumulate==live_timing_step_size) then
-           call live_timing(steps=1)
-           live_timing_accumulate=0
-         endif
-         !
-         ! ::: Timing END :::
-         !
-         ik2bz=BS_eh_table(ikk2+icv2,1)
-         iv2=BS_eh_table(ikk2+icv2,2)
-         ic2=BS_eh_table(ikk2+icv2,3)
-         i_sp2=spin(BS_eh_table(ikk2+icv2,:))
-         is2 =Xk%sstar(ik2bz,2)
-         is2p=Xk%sstar( qindx_X(iq,ik2bz,1) ,2)
-         ig0 =qindx_B(ik1bz,ik2bz,2)
-         iq_W=q%sstar( qindx_B(ik1bz,ik2bz,1) ,1)
-         iqs =q%sstar( qindx_B(ik1bz,ik2bz,1) ,2)
-         !
-         H_res_x=(0.,0.)
-         H_res_c=(0.,0.)
-         H_cpl_x=(0.,0.)
-         H_cpl_c=(0.,0.)
-         ! 
-         ! :::Exchange    (resonant):::
-         !
-         if (BS_res_K_exchange) H_res_x=Vstar_dot_V(BS_n_g_exch,O2x(:,icv2),O1x(:,icv1))
-         !
-         ! :::Exchange    (coupling):::
-         !
-         if (BS_cpl_K_exchange) H_cpl_x=V_dot_V(BS_n_g_exch,O2x(g_rot(inv_index,1:BS_n_g_exch),icv2),O1x(:,icv1))
-         !
-         ! :::ALDA        (resonant):::
-         !
-         if (BS_K_is_ALDA) H_res_x=H_res_x+&
-&                          tddft_alda_R_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
-&                                                (/iv1,iv2/),(/is1,is2,is1,is2/),1)
-         !
-         ! :::ALDA        (coupling):::
-         !
-         if (BS_K_is_ALDA) H_cpl_x=H_cpl_x+&
-&                          tddft_alda_R_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
-&                                                (/iv1,iv2/),(/is1,is2,is1,is2/),2)
-         !
-         ! :::Correlation (resonant):::
-         !
-         if (BS_res_K_corr.and.i_sp1==i_sp2) then
-           iOcc=O_table(ic1-BS_bands(1)+1,is1, ic2-BS_bands(1)+1,is2,i_sp1)
-           iOvv=O_table(iv1-BS_bands(1)+1,is1p,iv2-BS_bands(1)+1,is2p,i_sp2)
-           inv_s1=sop_inv(is1)
-           is1xis2=sop_tab(sop_inv(is1),is2)
-           !
-           forall(i1=1:BS_n_g_W) Occ(i1)=&
-&                BS_O(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOcc)*O_phase(is1xis2,ic2,i_sp1)
-           forall(i1=1:BS_n_g_W) Ovv(i1)=&
-&                BS_O(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOvv)*O_phase(is1xis2,iv2,i_sp2)
-           !
-           if (is1>nsym/(i_time_rev+1)) Ovv=conjg(Ovv)
-           if (is1>nsym/(i_time_rev+1)) Occ=conjg(Occ)
-           if (BS_W_is_diagonal) then
-             !
-             forall(i1=1:BS_n_g_W) Cc(i1)=Occ(i1)*BS_W(i1,1,iq_W)
-             !
-           else
-             !
-             if (iqs>nsym/(i_time_rev+1) .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
-             !
-             do i1=1,BS_n_g_W 
-               Cc(i1)=V_dot_V(BS_n_g_W,Occ,BS_W(1,i1,iq_W))
-             enddo
-           endif
-           !
-           H_res_c=Vstar_dot_V(BS_n_g_W,Ovv,Cc)*4._SP*pi
-           !
-         endif
-         !
-         ! :::Correlation (coupling):::
-         !
-         if (BS_cpl_K_corr.and.i_sp1==i_sp2) then
-           !
-           iOcv=O_table(ic1-BS_bands(1)+1,is1, iv2-BS_bands(1)+1,is2,i_sp1)
-           iOvc=O_table(iv1-BS_bands(1)+1,is1p,ic2-BS_bands(1)+1,is2p,i_sp2)
-           inv_s1=sop_inv(is1)
-           is1xis2=sop_tab(sop_inv(is1),is2)
-           !
-           forall(i1=1:BS_n_g_W) Ocv(i1)=&
- &         BS_O(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOcv)*O_phase(is1xis2,iv2,i_sp1)
-           forall(i1=1:BS_n_g_W) Ovc(i1)=&
- &         BS_O(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOvc)*O_phase(is1xis2,ic2,i_sp2)
-           !
-           if (is1>nsym/(i_time_rev+1)) Ocv=conjg(Ocv)
-           if (is1>nsym/(i_time_rev+1)) Ovc=conjg(Ovc)
-           if (BS_W_is_diagonal) then
-             !
-             forall(i1=1:BS_n_g_W) Cc(i1)=Ocv(i1)*BS_W(i1,1,iq_W)
-             !
-           else
-             !
-             do i1=1,BS_n_g_W
-               Cc(i1)=V_dot_V(BS_n_g_W,Ocv,BS_W(1,i1,iq_W))
-             enddo
-           endif
-           !
-           H_cpl_c=Vstar_dot_V(BS_n_g_W,Ovc,Cc)*4._SP*pi
-           !
-         endif
-         !
-         ! Impose the resonant part of the kernel to be hermitian
-         !
-         if (ik1==ik2.and.icv1==icv2) H_res_c=real(H_res_c)
-         !
-         BS_mat(icv1,icv2)=H_res_x*real(spin_occ)*Co-H_res_c
-         !
-         if (BS_K_coupling) BS_cpl_mat(icv1,icv2)=H_cpl_x*real(spin_occ)*Co-H_cpl_c
-       enddo
-     enddo
-     call pp_redux_wait(BS_mat)
-     if (BS_K_coupling) call pp_redux_wait(BS_cpl_mat)
-     !
-     if (l_bs_fxc) then
-       !
-       ! GPL_EXCLUDE_START
-       !
-       call TDDFT_BSK_2_FXC(iq,ik1,ik2,&
-&                           O1x(:FXC_n_g_corr,:),O2x(:FXC_n_g_corr,:),O_x_dim,W_bss,X)
-       !
-       ! GPL_EXCLUDE_END
-       !
-     else
        if (ik2==1.and.ik1==1) then
-         call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,BS_IO_index(1,1)/),ID=ID)
+          call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1,BS_IO_index(1,1)/),ID=ID_read)
        else
-         call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/BS_IO_index(ik1,ik2)/),ID=ID)
+          ACTION_=RD     
+          if(ik1==1.and.ik2==BS_columns) ACTION_=RD_CL
+          call io_control(ACTION=ACTION_,COM=NONE,SEC=(/BS_IO_index(ik1,ik2)/),ID=ID_read)
+       endif
+       ioBS_Fxc_err=ioBS_TEST_2(iq,X,ID_read,blk_only=.true.)
+       !
+       if(.not.master_cpu) then
+         BS_mat=(0.,0.)
+         if (BS_K_coupling) BS_cpl_mat=(0.,0.)
+       endif
+       !
+       call pp_redux_wait
+       do icv1=1,BS_blk_dim(ik1)
+         !
+         do icv2=1,BS_blk_dim(ik2)
+           !
+           if(.not.build_BS_indexes(ikk1,ikk2,icv1,icv2)) cycle
+           !
+           H_res_c=(0.,0.)
+           H_cpl_c=(0.,0.)
+           ! 
+           ! :::Correlation (resonant):::
+           !
+           if (BS_res_K_corr.and.i_sp1==i_sp2) then
+             iOcc=O_table(ic1-BS_bands(1)+1,is1, ic2-BS_bands(1)+1,is2,i_sp1)
+             iOvv=O_table(iv1-BS_bands(1)+1,is1p,iv2-BS_bands(1)+1,is2p,i_sp2)
+             inv_s1=sop_inv(is1)
+             is1xis2=sop_tab(sop_inv(is1),is2)
+             !
+             forall(i1=1:BS_n_g_W) Occ(i1)=&
+&                  BS_O(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOcc)*O_phase(is1xis2,ic2,i_sp1)
+             forall(i1=1:BS_n_g_W) Ovv(i1)=&
+&                  BS_O(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOvv)*O_phase(is1xis2,iv2,i_sp2)
+             !
+             if (is1>nsym/(i_time_rev+1)) Ovv=conjg(Ovv)
+             if (is1>nsym/(i_time_rev+1)) Occ=conjg(Occ)
+             if (BS_W_is_diagonal) then
+               !
+               forall(i1=1:BS_n_g_W) Cc(i1)=Occ(i1)*BS_W(i1,1,iq_W)
+               !
+             else
+               !
+               if (iqs>nsym/(i_time_rev+1) .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
+               !
+               do i1=1,BS_n_g_W 
+                 Cc(i1)=V_dot_V(BS_n_g_W,Occ,BS_W(1,i1,iq_W))
+               enddo
+             endif
+             !
+             H_res_c=Vstar_dot_V(BS_n_g_W,Ovv,Cc)*4._SP*pi
+             !
+           endif
+           !
+           ! :::Correlation (coupling):::
+           !
+           if (BS_cpl_K_corr.and.i_sp1==i_sp2) then
+             !
+             iOcv=O_table(ic1-BS_bands(1)+1,is1, iv2-BS_bands(1)+1,is2,i_sp1)
+             iOvc=O_table(iv1-BS_bands(1)+1,is1p,ic2-BS_bands(1)+1,is2p,i_sp2)
+             inv_s1=sop_inv(is1)
+             is1xis2=sop_tab(sop_inv(is1),is2)
+             !
+             forall(i1=1:BS_n_g_W) Ocv(i1)=&
+ &           BS_O(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOcv)*O_phase(is1xis2,iv2,i_sp1)
+             forall(i1=1:BS_n_g_W) Ovc(i1)=&
+ &           BS_O(g_rot(inv_s1,G_m_G(g_rot(iqs,i1),ig0)),iOvc)*O_phase(is1xis2,ic2,i_sp2)
+             !
+             if (is1>nsym/(i_time_rev+1)) Ocv=conjg(Ocv)
+             if (is1>nsym/(i_time_rev+1)) Ovc=conjg(Ovc)
+             if (BS_W_is_diagonal) then
+               !
+               forall(i1=1:BS_n_g_W) Cc(i1)=Ocv(i1)*BS_W(i1,1,iq_W)
+               !
+             else
+               !
+               do i1=1,BS_n_g_W
+                 Cc(i1)=V_dot_V(BS_n_g_W,Ocv,BS_W(1,i1,iq_W))
+               enddo
+             endif
+             !
+             H_cpl_c=Vstar_dot_V(BS_n_g_W,Ovc,Cc)*4._SP*pi
+             !
+           endif
+           !
+           ! Impose the resonant part of the kernel to be hermitian
+           !
+           if (ik1==ik2.and.icv1==icv2) H_res_c=real(H_res_c)
+           !
+           BS_mat(icv1,icv2)=BS_mat(icv1,icv2)-H_res_c
+           !
+           if (BS_K_coupling) BS_cpl_mat(icv1,icv2)=BS_cpl_mat(icv1,icv2)-H_cpl_c
+         enddo
+       enddo
+       call pp_redux_wait(BS_mat)
+       if (BS_K_coupling) call pp_redux_wait(BS_cpl_mat)
+       !
+       if (ik2==1.and.ik1==1) then
+          call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,BS_IO_index(1,1)/),ID=ID)
+       else
+          call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/BS_IO_index(ik1,ik2)/),ID=ID)
        endif
        ioBS_Fxc_err=ioBS(iq,X,ID)
-     endif
-     !
-     deallocate(BS_mat)
-     if (BS_K_coupling) deallocate(BS_cpl_mat)
+       !
+       deallocate(BS_mat)
+       if (BS_K_coupling) deallocate(BS_cpl_mat)
+     enddo
    enddo
- enddo
- !
- ! Live Timing finalize
- !
- if (mod(n_K_elements(myid+1),int(live_timing_step_size,8))/=0) call live_timing(steps=1)
- call live_timing()
- call pp_redux_wait
+   !
+   ! Live Timing finalize
+   !
+   if (mod(n_K_elements(myid+1),int(live_timing_step_size,8))/=0) call live_timing(steps=1)
+   call live_timing()
+   call pp_redux_wait
+   !
+ endif
  !
  ! GLOBAL CLEANING 
  !=================
@@ -640,21 +677,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  deallocate(O_table)
  call mem_est("O_table")
  call mem_est("BS_mat")
- !
- if (load_O_X) then
-#if defined _DISTRIBUTED
-   if(l_col_cut.or.Xk%nibz/=1) then 
-#endif
-     deallocate(O1x)
-     call mem_est("O1x")
-#if defined _DISTRIBUTED
-   else
-     nullify(O1x)
-   endif
-#endif
-   deallocate(O2x)
-   call mem_est("O2x")
- endif
  !
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
    deallocate(O_v_state,O_c_state,O_n_c_states,O_n_v_states)
@@ -689,4 +711,60 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call WF_free()
  !
+ contains
+  !
+  function build_BS_indexes(ikk1,ikk2,icv1,icv2)
+    implicit none
+    integer, intent(in) :: ikk1,ikk2,icv1,icv2
+    logical             :: build_BS_indexes
+    !
+    build_BS_indexes=.TRUE.
+    !
+    if (ik1==ik2.and.icv2<icv1) build_BS_indexes=.FALSE.
+    !
+    ! ::: E/h energy window :::
+    !
+    if(.not.K_scatter(abs(BS_eh_E(ikk1+icv1)),abs(BS_eh_E(ikk2+icv2)),E_eh_range,S_eh_range)) &
+&     build_BS_indexes=.FALSE.
+    !
+    ! ::: Parallel Switch :::
+    !
+    tot_n_K_elements=tot_n_K_elements+1
+    if (mod(tot_n_K_elements-i8id,i8nc)/=1.and.ncpu>1)  build_BS_indexes=.FALSE.
+    !
+    ! ::: Timing START :::
+    !
+    live_timing_accumulate=live_timing_accumulate+1
+    if (live_timing_accumulate==live_timing_step_size) then
+      call live_timing(steps=1)
+      live_timing_accumulate=0
+    endif
+    !
+    ! ::: Timing END :::
+    !
+    ! ::: Build BS indexes :::
+    !
+    ! First electron-hole pair
+    !
+    ik1bz=BS_eh_table(ikk1+icv1,1)
+    iv1  =BS_eh_table(ikk1+icv1,2)
+    ic1  =BS_eh_table(ikk1+icv1,3)
+    i_sp1=spin(BS_eh_table(ikk1+icv1,:))
+    is1  =Xk%sstar(ik1bz,2)
+    is1p =Xk%sstar( qindx_X(iq,ik1bz,1) ,2) 
+    ik2bz=BS_eh_table(ikk2+icv2,1)
+    !
+    ! Second electron-hole pair
+    !
+    iv2  =BS_eh_table(ikk2+icv2,2)
+    ic2  =BS_eh_table(ikk2+icv2,3)
+    i_sp2=spin(BS_eh_table(ikk2+icv2,:))
+    is2  =Xk%sstar(ik2bz,2)
+    is2p =Xk%sstar( qindx_X(iq,ik2bz,1) ,2)
+    ig0  =qindx_B(ik1bz,ik2bz,2)
+    iq_W =q%sstar( qindx_B(ik1bz,ik2bz,1) ,1)
+    iqs  =q%sstar( qindx_B(ik1bz,ik2bz,1) ,2)
+    !
+  end function build_BS_indexes
+  !
 end subroutine

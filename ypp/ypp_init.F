@@ -437,7 +437,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (l_RT_X_one.or.l_RT_X_two) then 
     if (l_RT_X_one) call initactivate(1,"EnRngeRt ETStpsRt")
-    call initactivate(1,"TmRngeRt DampMode DampFactor")
+    call initactivate(1,"TmRngeRt DampMode DampFactor FrMinDamp")
     if (l_RT_X_one) call initactivate(1,"UseFFT")
  endif
  !

@@ -48,7 +48,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_n_g_exch,BS_identifier,BS_K_coupling,O_n_v_states,&
 &                       BS_K_dim,BS_eh_win,BS_k_and_row_restart,&
 &                       BS_IO_index,BS_K_is_ALDA,BS_cpl_mat,&
-&                       BS_cpl_K_exchange,BSS_q0,&
+&                       BS_cpl_K_exchange,BSS_q0,BS_exchange_done,&
 &                       O_n_scatt,BS_O,BS_cpl_K_corr,ioBS_TEST_2
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
@@ -113,6 +113,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (BS_columns<=0.or.BS_columns>Xk%nibz) BS_columns=Xk%nibz
  BS_k_and_row_restart=0
+ BS_exchange_done=.FALSE.
  !
  ! Dimensions and Tables
  ! 
@@ -146,7 +147,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! GPL_EXCLUDE_END
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
-   ioBS_Fxc_err=ioBS(iq,X,ID)
+   ioBS_Fxc_err=ioBS_TEST_2(iq,X,ID)
    !
    ! GPL_EXCLUDE_START
    !
@@ -294,75 +295,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call XC_potential_driver(Ken,Xk,WF_KIND,WF_xc_functional,2)
  endif
  !
- if (BS_res_K_corr) then
-   call collision_reset(isc)
-   !
-   ! Screneed interaction
-   !
-   X%ng=BS_n_g_W
-   if (.not.l_td_hf) then
-     if (W_is_em1s) call X_alloc('X',(/BS_n_g_W,BS_n_g_W,1/))
-     if (W_is_pp)   call X_alloc('X',(/BS_n_g_W,BS_n_g_W,2/))
-   endif
-   !
-   i1=BS_n_g_W
-   if (BS_W_is_diagonal) i1=1
-   !
-   ! When TR is present but not the SI X_mat indexes need to be exchanged 
-   ! when the TR is applied
-   !
-   if (i_space_inv==0.and.i_time_rev==1.and..not.BS_W_is_diagonal) then
-     allocate(BS_W(BS_n_g_W,i1,2*q%nibz),stat=alloc_err(1))
-   else
-     allocate(BS_W(BS_n_g_W,i1,q%nibz),stat=alloc_err(1))
-   endif
-   call mem_est('BS_W',(/size(BS_W)/),errors=(/alloc_err(1)/))
-   !
-   allocate(isc%gamp(i1,BS_n_g_W))
-   !
-   if (.not.l_td_hf) then
-     call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
-     ioX_err=ioX(X,Xw,XID)
-   endif
-   !
-   do iq_W=1,q%nibz
-     !
-     isc%qs(2)=iq_W
-     call scatterGamp(isc,'c')
-     !
-     if (.not.l_td_hf) then
-       call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
-       ioX_err=ioX(X,Xw,XID)
-       !
-       forall(i2=1:BS_n_g_W) X_mat(i2,i2,1)=X_mat(i2,i2,1)+1.
-       do i2=1,BS_n_g_W
-         do i3=1,BS_n_g_W
-           if (.not.BS_W_is_diagonal) then
-             BS_W(i2,i3,iq_W)=X_mat(i2,i3,1)*isc%gamp(i2,i3)
-             if (i_space_inv==0.and.i_time_rev==1) &
-&               BS_W(i2,i3,q%nibz+iq_W)=X_mat(i3,i2,1)*isc%gamp(i2,i3)
-           endif
-           if (BS_W_is_diagonal.and.i2==i3) BS_W(i2,1,iq_W)=real(X_mat(i2,i2,1))*isc%gamp(1,i2)
-         enddo
-       enddo
-     else
-       forall(i2=1:BS_n_g_W) BS_W(i2,1,iq_W)=isc%gamp(1,i2)
-     endif
-     ! 
-   enddo
-   !
-   ! Anisotropy correction. Note that isc%gamp(1,1)=RIM_anisotropy while
-   ! the \delta(G,G') term must be multiplied by the standard RIM_qpg(1,1)
-   !
-   if (RIM_anisotropy/=0.) BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2.-RIM_anisotropy/2.
-   !
-   deallocate(isc%gamp)
-   !
-   if (.not.l_td_hf) call X_alloc('X')
-   !
-   X%ng=X%ng_db
-   call collision_reset(isc)
- endif
+ 
  !
  ! DB identifier 
  !
@@ -380,13 +313,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  i8nc=ncpu
  i8id=myid
  !
+ if (.not.BS_K_coupling) call mem_est('BS_mat',(/O_x_dim**2/))
+ if (BS_K_coupling) call mem_est('BS_mat',(/2*O_x_dim**2/)) 
+ !
  ! ::: Exchange Part or TD-DFT ::::
  !
- if(BS_res_K_exchange.or.BS_cpl_K_exchange.or.BS_K_is_ALDA.or.l_bs_fxc) then
-   !
-   !
-   if (.not.BS_K_coupling) call mem_est('BS_mat',(/O_x_dim**2/))
-   if (BS_K_coupling) call mem_est('BS_mat',(/2*O_x_dim**2/)) 
+ if(BS_res_K_exchange.or.BS_cpl_K_exchange.or.BS_K_is_ALDA.or.l_bs_fxc.and..not.BS_exchange_done) then
    !
    if (.not.l_bs_fxc) call live_timing('BSK_EX',live_timing_steps)
    if (l_bs_fxc) call live_timing('BSK->Fxc',live_timing_steps)
@@ -492,7 +424,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          else
            call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/BS_IO_index(ik1,ik2)/),ID=ID)
          endif
-         ioBS_Fxc_err=ioBS(iq,X,ID)
+         ioBS_Fxc_err=ioBS_TEST_2(iq,X,ID)
        endif
        !
        deallocate(BS_mat)
@@ -516,6 +448,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call mem_est("O2x")
  endif
  !
+ BS_exchange_done=.TRUE.
+ !
  ! ::: Correlation Part ::::
  !
  if(BS_res_K_corr.or.BS_cpl_K_corr) then
@@ -531,9 +465,76 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      call mem_est('O_CPL_WS',(/2*BS_n_g_W/))
    endif
    !
-   if (.not.l_bs_fxc) call live_timing('BSK_CO',live_timing_steps)
+   call collision_reset(isc)
    !
-   BS_k_and_row_restart=0
+   ! Screneed interaction
+   !
+   X%ng=BS_n_g_W
+   if (.not.l_td_hf) then
+     if (W_is_em1s) call X_alloc('X',(/BS_n_g_W,BS_n_g_W,1/))
+     if (W_is_pp)   call X_alloc('X',(/BS_n_g_W,BS_n_g_W,2/))
+   endif
+   !
+   i1=BS_n_g_W
+   if (BS_W_is_diagonal) i1=1
+   !
+   ! When TR is present but not the SI X_mat indexes need to be exchanged 
+   ! when the TR is applied
+   !
+   if (i_space_inv==0.and.i_time_rev==1.and..not.BS_W_is_diagonal) then
+     allocate(BS_W(BS_n_g_W,i1,2*q%nibz),stat=alloc_err(1))
+   else
+     allocate(BS_W(BS_n_g_W,i1,q%nibz),stat=alloc_err(1))
+   endif
+   call mem_est('BS_W',(/size(BS_W)/),errors=(/alloc_err(1)/))
+   !
+   allocate(isc%gamp(i1,BS_n_g_W))
+   !
+   if (.not.l_td_hf) then
+     call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
+     ioX_err=ioX(X,Xw,XID)
+   endif
+   !
+   do iq_W=1,q%nibz
+     !
+     isc%qs(2)=iq_W
+     call scatterGamp(isc,'c')
+     !
+     if (.not.l_td_hf) then
+       call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
+       ioX_err=ioX(X,Xw,XID)
+       !
+       forall(i2=1:BS_n_g_W) X_mat(i2,i2,1)=X_mat(i2,i2,1)+1.
+       do i2=1,BS_n_g_W
+         do i3=1,BS_n_g_W
+           if (.not.BS_W_is_diagonal) then
+             BS_W(i2,i3,iq_W)=X_mat(i2,i3,1)*isc%gamp(i2,i3)
+             if (i_space_inv==0.and.i_time_rev==1) &
+&               BS_W(i2,i3,q%nibz+iq_W)=X_mat(i3,i2,1)*isc%gamp(i2,i3)
+           endif
+           if (BS_W_is_diagonal.and.i2==i3) BS_W(i2,1,iq_W)=real(X_mat(i2,i2,1))*isc%gamp(1,i2)
+         enddo
+       enddo
+     else
+       forall(i2=1:BS_n_g_W) BS_W(i2,1,iq_W)=isc%gamp(1,i2)
+     endif
+     ! 
+   enddo
+   !
+   ! Anisotropy correction. Note that isc%gamp(1,1)=RIM_anisotropy while
+   ! the \delta(G,G') term must be multiplied by the standard RIM_qpg(1,1)
+   !
+   if (RIM_anisotropy/=0.) BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2.-RIM_anisotropy/2.
+   !
+   deallocate(isc%gamp)
+   !
+   if (.not.l_td_hf) call X_alloc('X')
+   !
+   X%ng=X%ng_db
+   call collision_reset(isc)
+   !
+   call live_timing('BSK_CO',live_timing_steps)
+   !
    tot_n_K_elements=0
    live_timing_accumulate=0
    !
@@ -656,7 +657,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        else
           call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/BS_IO_index(ik1,ik2)/),ID=ID)
        endif
-       ioBS_Fxc_err=ioBS(iq,X,ID)
+       ioBS_Fxc_err=ioBS_TEST_2(iq,X,ID)
        !
        deallocate(BS_mat)
        if (BS_K_coupling) deallocate(BS_cpl_mat)
@@ -734,10 +735,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
     !
     ! ::: Timing START :::
     !
-    live_timing_accumulate=live_timing_accumulate+1
-    if (live_timing_accumulate==live_timing_step_size) then
-      call live_timing(steps=1)
-      live_timing_accumulate=0
+    if(build_BS_indexes) then
+      !
+      live_timing_accumulate=live_timing_accumulate+1
+      if (live_timing_accumulate==live_timing_step_size) then
+        call live_timing(steps=1)
+        live_timing_accumulate=0
+      endif
+      !
     endif
     !
     ! ::: Timing END :::

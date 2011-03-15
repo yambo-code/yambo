@@ -92,6 +92,9 @@ module BS
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF
  logical  :: BSS_uses_partial_diago
+#if defined _TEST_2
+ logical  :: BS_exchange_done
+#endif
  complex(SP),allocatable :: BSS_rhoq0(:)
  !
  interface 

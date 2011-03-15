@@ -40,7 +40,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #if defined _YPP_RT
  use electrons,      ONLY:levels,E_reset
  use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
- use real_time,      ONLY:RT_step,NE_steps
+ use real_time,      ONLY:RT_step,NE_steps,X_effective_keyword
  use fields,         ONLY:Efield,i_Probe
 #endif
 #if defined _YPP_ELPH
@@ -186,6 +186,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
 #if defined _YPP_RT
  !
+ t_jump=0.
+ !
  !REMOVE SYMMETRIES
  !
  E_field=0._SP
@@ -200,6 +202,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  X_rt%energy_range(:)=(/0._SP,20./HARTREE/)
  X_rt%damp           ="NONE"
  X_rt%damp_factor    =0.
+ X_effective_keyword ="none"
  !
 #endif
  !
@@ -436,8 +439,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev")
  !
  if (l_RT_X_one.or.l_RT_X_two) then 
+    call initactivate(1,"RTKey")
     if (l_RT_X_one) call initactivate(1,"EnRngeRt ETStpsRt")
-    call initactivate(1,"TmRngeRt DampMode DampFactor FrMinDamp")
+    call initactivate(1,"TmRngeRt TmJumps DampMode DampFactor FrMinDamp")
     if (l_RT_X_one) call initactivate(1,"UseFFT")
  endif
  !

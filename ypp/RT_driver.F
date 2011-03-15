@@ -27,10 +27,15 @@ subroutine RT_driver(en,k)
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
+ use com,            ONLY:error
  implicit none
  !
  type(levels)  :: en
  type(bz_samp) :: k
+ !
+ ! Work Space
+ !
+ logical       :: IO_error
  !
  call section("*",'RT Post/Pre processing')
  !
@@ -46,41 +51,41 @@ subroutine RT_driver(en,k)
  ! DATABASES
  !-----------
  !
- call RT_databases(en)
+ call RT_databases(en,IO_error)
  !
- if (.not.allocated(RT_P_t)) return
- !
- !  Initialization for linear and non-linear optics
- !
- if (l_RT_X_one.or.l_RT_X_two) then
+ if (.not.IO_error) then
    !
-   call RT_init_X_one()
+   !  Initialization 
    !
- endif
- !
- if (l_RT_X_one) then
+   call RT_init_X_one(IO_error)
    !
-   ! CORE Logicals
-   !---------------
-   ! 
-   call parser('UseFFT',Use_FFT)
+   if (l_RT_X_one) then
+     !
+     ! CORE Logicals
+     !---------------
+     ! 
+     call parser('UseFFT',Use_FFT)
+     !
+     ! OPTICS
+     !--------
+     !
+     call RT_X_one(en)
+     !
+   elseif (l_RT_X_two) then
+     !
+     call RT_X_two(en)
+     !
+   endif
    !
-   ! OPTICS
-   !--------
+ else
    !
-   if (.not.l_effective_X) call RT_X_one(en,k)
-   !
-   if (     l_effective_X) call RT_X_effective(en,k)
-   !
- elseif(l_RT_X_two) then
-   !
-   call RT_X_two(en,k)
+   call RT_X_effective(en)
    !
  endif
  !
  ! CLEAN
  !
- deallocate(RT_P_t,RT_J_t)
+ if (allocated(RT_P_t)) deallocate(RT_P_t,RT_J_t)
  call mem_est("RT_P_t RT_J_t")
  !
 end subroutine

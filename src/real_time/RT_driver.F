@@ -216,9 +216,9 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    call RT_Observables(Xen,k,on_the_fly_operators)
    !
-   call RT_output('dyn',real(on_the_fly_operators),NE_time/FS2AUT)
-   call RT_output('cur pol',TIME_or_E=NE_time/FS2AUT)
-   if(l_NE_with_fields) call RT_output('pot',TIME_or_E=NE_time/FS2AUT) 
+   call RT_output('dyn',real(on_the_fly_operators),TIME=NE_time/FS2AUT)
+   call RT_output('cur pol',TIME=NE_time/FS2AUT)
+   if(l_NE_with_fields) call RT_output('pot',TIME=NE_time/FS2AUT) 
    !
    ! Calculate Collisions and fill SC_R
    !====================================

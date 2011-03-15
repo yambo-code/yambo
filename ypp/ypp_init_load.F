@@ -216,6 +216,8 @@ subroutine ypp_init_load(defs)
  !
 #if defined _YPP_RT
  !
+ call it(defs,'RTKey','Keyword to be used to select groups of databases (X effective)',X_effective_keyword)
+ !
  call it(defs,'Efield1','First external Electric Field',E_field(1,:))
  call it(defs,'Efield2','Additional external Electric Field',E_field(2,:))
  call it(defs,'BField',    '[MAG] Magnetic field modulus',B_field,unit=Bfield_unit)
@@ -226,6 +228,7 @@ subroutine ypp_init_load(defs)
  !
  call it(defs,'EnRngeRt','Energy range',X_rt%energy_range,unit=E_unit)
  call it(defs,'ETStpsRt','Total Energy steps',X_rt%energy_steps)
+ call it(defs,'TmJump'  ,'Time jump (X effective)',t_jump,unit=Time_unit,verb_level=V_real_time)
  call it(defs,'TmRngeRt','Time-window where processing is done',X_rt%time_range,unit=Time_unit,verb_level=V_real_time)
  call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',X_rt%damp,verb_level=V_real_time)
  call it(defs,'DampFactor','Damping parameter',X_rt%damp_factor,unit=E_unit,verb_level=V_real_time) 

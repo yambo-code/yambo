@@ -19,27 +19,25 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_init_X_one()
+subroutine RT_init_X_one(DB_IO_error)
  !
  use YPP,            ONLY:RT_P_t,X_rt,RT_J_t,i_t_start,i_t_end,&
-&                         W_RT_induced_step,RED_steps,l_effective_X,l_force_min_damp
+&                         W_RT_induced_step,RED_steps,l_force_min_damp,t_jump,i_t_jump
  use com,            ONLY:msg
  use pars,           ONLY:pi,SP
  use units,          ONLY:FS2AUT,HARTREE
  use stderr,         ONLY:real2ch
- use real_time,      ONLY:NE_steps,RT_step,RT_ind_J,RT_output,RT_P,RT_output,RT_P_2levels
+ use real_time,      ONLY:NE_steps,RT_step,RT_ind_J,RT_output,RT_P,RT_P_2levels
  use fields,         ONLY:Efield,i_Probe,i_Pump
  use parser_m,       ONLY:parser
  implicit none
+ !
+ logical  :: DB_IO_error
  !
  ! Work Space
  !
  integer  :: i_t,i_t_field_range(2)
  logical  :: l_no_damping
- !
- l_effective_X= i_Pump/=i_Probe.or.&
-&               trim(Efield(i_Probe)%ef_name)=='RES'.or.&
-&               trim(Efield(i_Probe)%ef_name)=='ANTIRES'
  !
  l_no_damping= trim(X_rt%damp) == "NONE"
  call parser('FrMinDamp',l_force_min_damp)
@@ -49,13 +47,20 @@ subroutine RT_init_X_one()
  !
  i_t_start=int(X_rt%time_range(1)/RT_step)+1
  i_t_end  =int(X_rt%time_range(2)/RT_step)
+ i_t_jump =int(t_jump/RT_step)
  !
  i_t_field_range= (/int(Efield(i_Probe)%t_initial/RT_step)+1,NE_steps/)
  !
- if (i_t_start<=0.or.i_t_start> i_t_field_range(1)) i_t_start=i_t_field_range(1)
+ if (i_t_start<=0.or.i_t_start> i_t_field_range(2)) i_t_start=i_t_field_range(1)
  if (i_t_end<=0  .or.i_t_end>   i_t_field_range(2)) i_t_end  =i_t_field_range(2)
  !
  call msg('s','[RT] Time range [fs]:',(/real(i_t_start),real(i_t_end)/)*RT_step/FS2AUT)
+ call msg('s','[RT] Time jumps [fs]:',t_jump/FS2AUT)
+ !
+ if (DB_IO_error) return
+ !
+ ! DAMPING
+ !=========
  !
  RED_steps=i_t_end-i_t_start+1
  !
@@ -73,9 +78,6 @@ subroutine RT_init_X_one()
    endif
    !
  else
-   ! 
-   ! DAMPING
-   !=========
    !
    ! If there is a time-windows the damping function
    ! has be applied also the initial part otherwise 
@@ -88,8 +90,6 @@ subroutine RT_init_X_one()
    !
  endif
  !
- if (l_effective_X) return
- !
  call section("=",'Writing input current and Polarization')
  !=========================================================
  call RT_output("open cur pol")
@@ -98,7 +98,7 @@ subroutine RT_init_X_one()
    RT_ind_J    =RT_J_t(i_t,:)
    RT_P        =RT_P_t(i_t,1:3)
    RT_P_2levels=RT_P_t(i_t,4:6)
-   call RT_output('cur pol',TIME_or_E=(i_t-1)*RT_step/FS2AUT)
+   call RT_output('cur pol',TIME=(i_t-1)*RT_step/FS2AUT)
  enddo
  !
  call RT_output("close cur pol")

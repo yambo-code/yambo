@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_output(what,VALUEs,TIME_or_E)
+subroutine RT_output(what,VALUEs,TIME,E)
  ! 
  use pars,           ONLY:lchlen,SP,schlen
  use com,            ONLY:msg,of_open_close,opened_of
@@ -33,11 +33,12 @@ subroutine RT_output(what,VALUEs,TIME_or_E)
  !
  character(*),       intent(in) :: what
  real(SP), optional, intent(in) :: VALUEs(:) 
- real(SP), optional, intent(in) :: TIME_or_E
+ real(SP), optional, intent(in) :: TIME
+ real(SP), optional, intent(in) :: E
  !
  ! Work space
  !
- integer, parameter       :: n_output_files=8
+ integer, parameter       :: n_output_files=9
  character(lchlen), save  :: file_name(n_output_files)
  character(schlen)        :: orders(n_output_files),short_file_name(n_output_files)
  integer                  :: i_f,i_fp,n_headings(n_output_files)
@@ -99,9 +100,9 @@ subroutine RT_output(what,VALUEs,TIME_or_E)
  headings(4,8)="N" 
  headings(4,9)="dG" 
  !
- ! ... and energy resolved
+ ! ... energy resolved ...
  !
- headings(5:6,1)="E [eV]"
+ headings(5:7,1)="E [eV]"
  !
  if (initialize) file_name(5)=trim(append_ch)//'eps'
  short_file_name(5)=trim(append_ch)//'eps'
@@ -130,6 +131,14 @@ subroutine RT_output(what,VALUEs,TIME_or_E)
  short_file_name(8)=trim(append_ch)//'occupations'
  n_headings(8)=2
  headings(8,1:2)=(/'E  ','Occ'/)
+ !
+ ! ... and time/energy resolved ...
+ !
+ if (initialize) file_name(9)=trim(append_ch)//'X_effective'
+ short_file_name(9)=trim(append_ch)//'X_effective'
+ n_headings(9)=4
+ headings(9,1:2)=(/'T [fs]','E [eV]'/)
+ headings(9,3:4)=(/'X/Im','X/Re'/)
  !
  ! Check which files to write
  !----------------------------
@@ -178,7 +187,8 @@ subroutine RT_output(what,VALUEs,TIME_or_E)
    !
    ! Values
    !--------
-   data_to_dump(1)=TIME_or_E
+   if (present(TIME)) data_to_dump(1)=TIME
+   if (present(E))    data_to_dump(1)=E
    select case (i_f)
      case(1)
        data_to_dump(2:4) =real(RT_ind_J)/Efield(i_Probe)%amplitude
@@ -189,8 +199,11 @@ subroutine RT_output(what,VALUEs,TIME_or_E)
        data_to_dump(2:4) =real(A_vecpot%vecpot(:))
        data_to_dump(5:7) =real(A_vecpot%vecpot_vel(:))
        data_to_dump(8:10)=real(A_vecpot%vecpot_acc(:))
-     case(4:)
+     case(4:8)
        data_to_dump(2:n_headings(i_f)) = VALUES(1:n_headings(i_f)-1)
+     case(9)
+       data_to_dump(1:2)=(/Time,E/)
+       data_to_dump(3:n_headings(i_f)) = VALUES(1:n_headings(i_f)-1)
    end select
    !
    call msg('o '//trim(short_file_name(i_f)),'',data_to_dump(1:n_headings(i_f)),USE_TABS=.TRUE.)

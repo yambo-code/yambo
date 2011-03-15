@@ -159,13 +159,13 @@ subroutine RT_two_levels(G_lesser)
  call open_it(105,"G12_theo_LRR")
  call write_it(105,G12_LRR(T,Rabi_freq_pump,Wo_here))
  call open_it(103,"Polarization_theo")
- Polarization=-cI*(D*G(2,1)+conjg(D)*G(1,2))/DL_vol/Efield(i_Probe)%amplitude
+ Polarization=-cI*( D*G(2,1)+conjg(D)*G(1,2))/DL_vol/Efield(i_Probe)%amplitude
  call write_it(103, Polarization)
- Current=-cI*(-1)*(P*G(2,1)+conjg(P)*G(1,2))/DL_vol/Efield(i_Probe)%amplitude
+ Current=     -cI*(-P*G(2,1)-conjg(P)*G(1,2))/DL_vol/Efield(i_Probe)%amplitude
  call open_it(106,"Current_theo")
  call write_it(106, Current)
- call open_it(107,"X_theo")
- call write_it(107, exp(cI*W_pump*T)*(Polarization+cI*Current/Wo))
+ !call open_it(107,"X_theo")
+ !call write_it(107, exp(-cI*W_pump*T)*(cI*Polarization+Current/Wo))
  !
 1002 continue
  !

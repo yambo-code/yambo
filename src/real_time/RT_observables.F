@@ -164,7 +164,7 @@ subroutine RT_Observables(en,k,on_the_fly_operators)
    call sort(Energies_and_occupations(:,1),indx=indexes)
    !
    do i1=1,SC_bands*en%nk
-     call RT_output('occ',(/Energies_and_occupations(indexes(i1),2)/),TIME_or_E=Energies_and_occupations(i1,1)*HARTREE)
+     call RT_output('occ',(/Energies_and_occupations(indexes(i1),2)/),E=Energies_and_occupations(i1,1)*HARTREE)
    enddo
    !
  endif

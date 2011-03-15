@@ -75,7 +75,6 @@ subroutine RT_TwoL_Glesser(Poles_and_derivatives,Eo,Rabi,G_lesser)
      W_func(i_f)=-0.1/HARTREE+W_step*i_f
      Poles_func(i_f)=DELTA_Pump_F(W_func(i_f))
      Poles_func_deriv(i_f)=(DELTA_Pump_F(W_func(i_f)+W_step)-DELTA_Pump_F(W_func(i_f)))/W_step
-     write (100,'(3f20.10)')  real(W_func(i_f))*HARTREE,DELTA_Pump_F(W_func(i_f))
      !
      if (i_f==1) cycle
      !

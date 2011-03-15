@@ -187,11 +187,12 @@ module real_time
  !
  interface
    !
-   subroutine RT_output(what,VALUEs,TIME_or_E)
+   subroutine RT_output(what,VALUEs,TIME,E)
      use pars,       ONLY:SP
      character(*),       intent(in) :: what
      real(SP), optional, intent(in) :: VALUEs(:) 
-     real(SP), optional, intent(in) :: TIME_or_E
+     real(SP), optional, intent(in) :: TIME
+     real(SP), optional, intent(in) :: E
    end subroutine
    !
    subroutine RT_TwoL_Polarization(E,eval_P,k)

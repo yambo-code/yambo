@@ -26,6 +26,8 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <dirent.h>
+#include <stdio.h>
 
 void F90_FUNC_(imkdir, IMKDIR)
                  (char *name) 
@@ -71,5 +73,30 @@ void F90_FUNC_(igethname, IGETHNAME)
 {
   gethostname(name,256);
   *ln=strlen(name);
+}
+
+void F90_FUNC_(ifolder_list, IFOLDER_LIST)
+                 (char* folder, char* list, int* ln)
+{
+ DIR *dir,*subdir;
+ struct dirent *ent;
+ char the_list[10000]={'\0'};
+ char  PWD[256] = ".";
+ *ln=0;
+ getcwd(PWD,256);
+ chdir(folder);
+ dir = opendir (".");
+ if (dir != NULL) {
+   while ((ent = readdir (dir)) != NULL) 
+    if ( (subdir = opendir (ent->d_name)) != NULL) {
+      strcat(the_list," ");
+      strcat(the_list,ent->d_name);
+      closedir (subdir);
+    }
+   closedir (dir);
+   *ln=strlen(the_list);
+   sprintf(list,"%s",the_list);
+ }
+ chdir(PWD);
 }
 

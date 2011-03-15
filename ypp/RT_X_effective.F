@@ -19,80 +19,126 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_X_effective(en,k)
+subroutine RT_X_effective(en)
  !
- use pars,           ONLY:SP,lchlen,cI
- use YPP,            ONLY:RT_J_t,RT_P_t
- use units,          ONLY:HARTREE
+ use pars,           ONLY:SP,lchlen,cI,schlen,pi
+ use YPP,            ONLY:RT_J_t,RT_P_t,X_effective_keyword,i_t_start,i_t_end,i_t_jump
+ use units,          ONLY:HARTREE,FS2AUT 
  use electrons,      ONLY:levels
- use R_lattice,      ONLY:bz_samp
  use com,            ONLY:core_io_path,jobstr,msg,file_exists
  use fields,         ONLY:Efield,i_Probe
- use real_time,      ONLY:NE_steps,RT_step
+ use real_time,      ONLY:NE_steps,RT_step,RT_output
+ use stderr,         ONLY:string_split,cstr
+ use vec_operate,    ONLY:sort
+ use timing,         ONLY:live_timing
  implicit none
  !
  type(levels)  :: en
- type(bz_samp) :: k
  !
- integer,     parameter   :: N_max_freqs=100
- integer                  :: i1,N_freqs,i_t
- real(SP),    parameter   :: W_step=0.05
- character(lchlen)        :: jobstr_save
- real(SP)                 :: Frequency(N_max_freqs),Wo,Time
- real(SP), allocatable    :: RT_J_freq(:,:),RT_P_freq(:,:)
- complex(SP)              :: X_effective(N_max_freqs),prefactor
+ integer, parameter :: N_max_folders=10000
+ !
+ character(lchlen) :: jobstr_save
+ character(schlen) :: folder(N_max_folders)
+ integer           :: nf,N_freqs,i_t,i_f,i_fp,f_indx(N_max_folders)
+ real(SP)          :: Wo,TIME
+ complex(SP)       :: EPS
+ logical           :: IO_error
+ character(10*N_max_folders) :: folder_list
+ real(SP),    allocatable    :: RT_J_freq(:,:),RT_P_freq(:,:),Frequency(:)
+ complex(SP), allocatable    :: X_effective(:)
  !
  call section("=",'Effective Response function ')
  !===============================================
  !
- jobstr_save=jobstr
+ call ifolder_list(cstr(trim(core_io_path)),folder_list,nf)
+ !
+ call string_split(folder_list(:nf),folder)
+ !
+ nf=count( len_trim(folder(:)) > 0 ) 
  !
  N_freqs=0
- do i1=1,N_max_freqs
-   write (jobstr,'(a,f3.2)') 't1_',W_step*i1
-   if (file_exists(trim(jobstr)//'/ndb.RT_GreenF')) then
+ do i_f=1,nf
+1  if (file_exists(trim(core_io_path)//"/"//trim(folder(i_f))//'/ndb.RT_GreenF').and.&
+&      ( trim(X_effective_keyword)=="none".or.index(trim(folder(i_f)),trim(X_effective_keyword))>0 ) ) then
      N_freqs=N_freqs+1
-     Frequency(N_freqs)=W_step*i1
+   else
+     forall (i_fp=i_f+1:nf) folder(i_fp-1)=folder(i_fp)
+     nf=nf-1
+     if (nf<=0) exit
+     goto 1
    endif
  enddo
  !
  if (N_freqs==0) return
- !N_freqs=1
  !
- call msg('s',':: Frequency range   [eV]:',(/minval(Frequency(:N_freqs)),maxval(Frequency(:N_freqs))/))
- call msg('s','')
+ jobstr_save=jobstr
  !
- allocate(RT_J_freq(NE_steps,N_freqs),RT_P_freq(NE_steps,N_freqs))
- !
- do i1=1,N_freqs
-   write (jobstr,'(a,f3.2)') 't1_',Frequency(i1)
+ do i_f=1,N_freqs
+   !
+   jobstr=trim(folder(i_f))
    call IO_and_Messaging_switch("-log")
-   call RT_databases(en)
+   call RT_databases(en,IO_error)
    call IO_and_Messaging_switch("+log")
-   call msg('s','')
    !
-   Frequency(i1)=Efield(i_Probe)%frequency
+   if (i_f==1) then
+     !
+     !  Initialization 
+     !
+     call RT_init_X_one(.TRUE.)
+     !
+     allocate(RT_J_freq(NE_steps,N_freqs),RT_P_freq(NE_steps,N_freqs),&
+&             X_effective(N_freqs),Frequency(N_freqs))
+   endif
+   if (i_f/=N_freqs) call msg('s','')
    !
-   RT_J_freq(:,i1)=real(RT_J_t(:,1))
-   RT_P_freq(:,i1)=real(RT_P_t(:,1))
+   Frequency(i_f)=Efield(i_Probe)%frequency
+   !
+   RT_J_freq(:,i_f)=real(RT_J_t(:,1))
+   RT_P_freq(:,i_f)=real(RT_P_t(:,1))
    !
  enddo
+ !
+ call msg('s',':: Frequency range   [eV]:',(/minval(Frequency),maxval(Frequency)/)*HARTREE)
+ !
+ jobstr=jobstr_save
+ !
+ call sort(Frequency,indx=f_indx(:N_freqs))
  !
  Wo    =en%E(2,1,1)-en%E(1,1,1)
  !
- do i_t=1,NE_steps
+ call RT_output("open X_effective eps")
+ !
+ call live_timing('Output:',(i_t_end-i_t_start+1)/(i_t_jump+1)+1)
+ !
+ do i_t=i_t_start,i_t_end,i_t_jump+1
    !
-   Time=i_t*RT_step
+   TIME=(i_t-1)*RT_step
    !
-   do i1=1,N_freqs
+   do i_fp=1,N_freqs
      !
-     prefactor=exp(cI*Frequency(i1)*Time)/2./Efield(i_Probe)%amplitude
-     X_effective(i1)=prefactor*( RT_P_freq(i_t,i1)+cI*RT_J_t(i_t,i1)/Wo)
+     i_f=f_indx(i_fp)
      !
-     if (i1==1) write (100,'(i5,2f20.10)') i_t,X_effective(i1)
-     !if (mod(i_t,1000)==0.or.i_t==1) write (100+i_t,'(2f20.10)') real(Frequency(i1))*HARTREE,real(X_effective(i1))
+     X_effective(i_fp)=cI*exp(-cI*Frequency(i_fp)*TIME)/2./Efield(i_Probe)%amplitude*&
+&                      ( cI*RT_P_freq(i_t,i_f)+RT_J_freq(i_t,i_f)/Wo )
+     !
+     EPS=1.-4.*pi*X_effective(i_fp)
+     !
+     call RT_output('X_effective',VALUEs=(/aimag(EPS),real(EPS)/),E=real(Frequency(i_fp))*HARTREE,TIME=TIME/FS2AUT)
+     !
+     if (i_t+i_t_jump>i_t_end) call RT_output('eps',VALUEs=(/aimag(EPS),real(EPS),0.,0./),E=real(Frequency(i_fp))*HARTREE)
      !
    enddo
+   !
+   call msg('o X_effective',' ',' ',INDENT=0)
+   !
+   call live_timing(steps=1)
+   ! eps
  enddo
+ !
+ call live_timing()
+ !
+ call RT_output("close X_effective eps")
+ !
+ deallocate(RT_J_freq,RT_P_freq,X_effective,Frequency)
  !
 end subroutine

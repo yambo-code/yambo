@@ -153,9 +153,11 @@ module YPP
  !
  logical  :: Use_FFT
  logical  :: l_effective_X
- integer  :: i_t_start,i_t_end  ! time window
+ integer  :: i_t_start,i_t_end,i_t_jump ! time window
  integer  :: RED_steps ! reduced number of steps
+ real(SP) :: t_jump
  real(SP) :: W_RT_induced_step
+ character(schlen) :: X_effective_keyword
  !
  complex(DP),    allocatable :: RT_J_t(:,:)
  complex(DP),    allocatable :: RT_P_t(:,:)

@@ -59,7 +59,7 @@ integer function variables_SC(ID,local_description,what)
 #endif
  !
 #if defined _RT		
- l_J =what=="J"
+ l_J =what=="J_and_P"
  l_G =what=="G"
 #endif
  !

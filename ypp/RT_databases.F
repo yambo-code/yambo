@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_databases(en)
+subroutine RT_databases(en,io_error)
  !
  use YPP,            ONLY:RT_J_t,RT_P_t
  use units,          ONLY:SPEED_OF_LIGHT
@@ -35,6 +35,7 @@ subroutine RT_databases(en)
  implicit none
  !
  type(levels)  :: en
+ logical       :: io_error
  !
  ! Work Space
  !
@@ -50,10 +51,12 @@ subroutine RT_databases(en)
  ! Check for saved current and polarization database
  !---------------------------------------------------
  !
+ io_error=.FALSE.
+ !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
  io_J_and_P=io_SC_components('J_and_P' ,en,ID)
  if( io_J_and_P/=0 ) then
-   call warning(" Error while reading databases")
+   io_error=.TRUE.
    return
  endif
  !
@@ -65,10 +68,12 @@ subroutine RT_databases(en)
    NE_steps=NE_time/RT_step+1
  endif
  !
- if (.not.allocated(RT_J_t)) allocate(RT_J_t(NE_steps,3),RT_P_t(NE_steps,6))
+ if (.not.allocated(RT_J_t)) then
+   allocate(RT_J_t(NE_steps,3),RT_P_t(NE_steps,6))
+   call mem_est("RT_P_t",(/size(RT_J_t)/),(/2*SP/))
+   call mem_est("RT_J_t",(/size(RT_J_t)/),(/2*SP/))
+ endif
  allocate(J_and_P_cache(J_and_P_cache_size,max_rt_steps_disk))
- call mem_est("RT_P_t",(/size(RT_J_t)/),(/2*SP/))
- call mem_est("RT_J_t",(/size(RT_J_t)/),(/2*SP/))
  call mem_est("Current_Cache",(/size(J_and_P_cache)/),(/SP/))
  !
  RT_J_t        =(0._DP,0._DP)

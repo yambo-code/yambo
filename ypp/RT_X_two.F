@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_X_two(en,k)
+subroutine RT_X_two(en)
  !
  use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,RT_J_t,W_RT_induced_step
  use pars,           ONLY:SP,DP,pi,cI
@@ -28,12 +28,11 @@ subroutine RT_X_two(en,k)
  use com,            ONLY:error
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:bz_samp
- use real_time,      ONLY:NE_steps,RT_step,RT_ind_J,RT_output,RT_P,RT_output
+ use real_time,      ONLY:NE_steps,RT_step,RT_ind_J,RT_output,RT_P
  use fields,         ONLY:Efield
  implicit none
  !
  type(levels)  :: en
- type(bz_samp) :: k
  !
  ! Work Space
  !
@@ -121,7 +120,7 @@ subroutine RT_X_two(en,k)
    !
    W_reached = real(outfreqs(i_w))
    X_tot=sum(X_irrep(i_w,:)*Efield(1)%versor(:))
-   call RT_output('nonlinear',(/aimag(X_tot),real(X_tot)/),TIME_or_E=W_reached*HARTREE)
+   call RT_output('nonlinear',(/aimag(X_tot),real(X_tot)/),E=W_reached*HARTREE)
    !
  enddo
  call RT_output("close nonlinear")

@@ -99,7 +99,7 @@ module fields
      !
      use pars,      ONLY:cI,pi
      type(ext_field)   ::E_field
-     real(SP)          ::T_or_W
+     complex(SP)       ::T_or_W
      integer           ::order
      !
      real(SP)          ::T_0,freq,sigma
@@ -130,7 +130,7 @@ module fields
          if (order> 0 ) small_a=0.
          if (order==-1) small_a=1.
        case('GAUSS')
-         if (order==0 ) small_a= sigma*sqrt(pi/2._SP)* ( erf( (T_or_W-T_0)/(sigma*sqrt(2._SP)) )+1._SP )
+         if (order==0 ) small_a= sigma*sqrt(pi/2._SP)* ( erf( (real(T_or_W,SP)-T_0)/(sigma*sqrt(2._SP)) )+1._SP )
          if (order==1 ) small_a= exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )
          if (order==2 ) small_a=-exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )*(T_or_W-T_0)/sigma**2
          if (order==-1) order=-2

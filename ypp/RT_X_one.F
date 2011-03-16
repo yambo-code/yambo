@@ -45,6 +45,7 @@ subroutine RT_X_one(en)
  logical      :: E_from_FT
  real(SP)     :: W_step,W_reached
  complex(SP), allocatable :: EELS(:,:),EPS(:,:),freqs(:)
+ complex(SP)  :: Field_time,Field_freq
  complex(DP), allocatable :: X_irrep(:,:),E_w(:),E_t(:)
  !
  call section("=",'Optics')
@@ -94,16 +95,23 @@ subroutine RT_X_one(en)
  !
  iE_err=-1
  do i_w = 1, X_rt%energy_steps
-   E_w(i_w)=Efield(1)%amplitude*small_a(real(freqs(i_w)),Efield(1),iE_err)
+   !
+   if(trim(X_rt%damp) /= "NONE")                      Field_freq=freqs(i_w)-(0._SP,1._SP)*X_rt%damp_factor
+   if(trim(X_rt%damp) == "NONE".and.l_force_min_damp) Field_freq=freqs(i_w)-(0._SP,1._SP)*W_RT_induced_step
+   !
+   E_w(i_w)=Efield(1)%amplitude*small_a(Field_freq,Efield(1),iE_err)
    E_w(i_w)=E_w(i_w)*exp(cI*freqs(i_w)*i_t_start*RT_step)  
+   !
    if (iE_err==-2) exit
+   !
  enddo
  E_from_FT=iE_err==-2
  if (E_from_FT) then
    !
    allocate(E_t(NE_steps))
    do i_t=1,NE_steps
-     E_t(i_t)=Efield(1)%amplitude*small_a((i_t-1)*RT_step,Efield(1),1)
+     Field_time=cmplx((i_t-1)*RT_step,0._SP)
+     E_t(i_t)=Efield(1)%amplitude*small_a(Field_time,Efield(1),1)
    enddo
    !
    if(trim(X_rt%damp) == "NONE".and.l_force_min_damp) then

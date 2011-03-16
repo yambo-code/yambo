@@ -40,7 +40,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #if defined _YPP_RT
  use electrons,      ONLY:levels,E_reset
  use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
- use real_time,      ONLY:RT_step,NE_steps,X_effective_keyword
+ use real_time,      ONLY:RT_step,NE_steps
  use fields,         ONLY:Efield,i_Probe
 #endif
 #if defined _YPP_ELPH

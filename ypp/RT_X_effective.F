@@ -125,7 +125,7 @@ subroutine RT_X_effective(en)
      !
      call RT_output('X_effective',VALUEs=(/aimag(EPS),real(EPS)/),E=real(Frequency(i_fp))*HARTREE,TIME=TIME/FS2AUT)
      !
-     if (i_t+i_t_jump>i_t_end) call RT_output('eps',VALUEs=(/aimag(EPS),real(EPS),0.,0./),E=real(Frequency(i_fp))*HARTREE)
+     if (i_t+i_t_jump>i_t_end) call RT_output('eps',VALUEs=(/aimag(EPS),real(EPS),0._SP,0._SP/),E=real(Frequency(i_fp))*HARTREE)
      !
    enddo
    !

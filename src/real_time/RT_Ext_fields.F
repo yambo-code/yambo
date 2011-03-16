@@ -51,7 +51,7 @@ subroutine RT_Ext_fields(A,time)
  ! Work Space
  !
  integer     :: i_f
- real(SP)    :: Field_time
+ complex(SP)    :: Field_time
  complex(SP) :: E_times_c(3)
  !
  A%vecpot    =(0._SP,0._SP)
@@ -64,19 +64,19 @@ subroutine RT_Ext_fields(A,time)
    !
    E_times_c=Efield(i_f)%amplitude*Efield(i_f)%versor(:)*SPEED_OF_LIGHT
    !
-   Field_time=time-ef_i_time(i_f)*RT_step
+   Field_time=cmplx(time-ef_i_time(i_f)*RT_step,0._SP)
    !
    A%vecpot(:)=A%vecpot(:)-E_times_c(:)*&
-&                     small_a(Field_time,Efield(i_f),0)*theta_function(Field_time,RT_step,0)
+&                     small_a(Field_time,Efield(i_f),0)*theta_function(real(Field_time),RT_step,0)
    !
    A%vecpot_vel(:)=A%vecpot_vel(:)-E_times_c(:)*&
-&                         (small_a(Field_time,Efield(i_f),1)*theta_function(Field_time,RT_step,0)+&
-&                          small_a(Field_time,Efield(i_f),0)*theta_function(Field_time,RT_step,1))
+&                         (small_a(Field_time,Efield(i_f),1)*theta_function(real(Field_time),RT_step,0)+&
+&                          small_a(Field_time,Efield(i_f),0)*theta_function(real(Field_time),RT_step,1))
    !
    A%vecpot_acc(:)=A%vecpot_vel(:)-E_times_c(:)*&
-&                         (small_a(Field_time,Efield(i_f),2)*theta_function(Field_time,RT_step,0)+&
-&                          small_a(Field_time,Efield(i_f),1)*theta_function(Field_time,RT_step,1)+&
-&                          small_a(Field_time,Efield(i_f),0)*theta_function(Field_time,RT_step,2))
+&                         (small_a(Field_time,Efield(i_f),2)*theta_function(real(Field_time),RT_step,0)+&
+&                          small_a(Field_time,Efield(i_f),1)*theta_function(real(Field_time),RT_step,1)+&
+&                          small_a(Field_time,Efield(i_f),0)*theta_function(real(Field_time),RT_step,2))
    !
  enddo
  !

@@ -125,7 +125,7 @@ subroutine RT_TwoL_Glesser(Poles_and_derivatives,Eo,Rabi,G_lesser)
  R_gamma=2*abs(Rabi)**2/W_gamma/Beta_gamma*( W_gamma+cI/Phase_LifeTime )
  !
  dG_residuals=(/ cI*dGinfty, R_wbar, conjg(R_wbar), R_gamma/)
- Omega=       (/ (0.,0.)   , -W_bar, conjg(W_bar), -W_gamma/)
+ Omega=       (/ (0._SP,0._SP)   , -W_bar, conjg(W_bar), -W_gamma/)
  !
 ! open (unit=1,file='X_RabisqTT_'//trim(real2ch(abs(Rabi)**2.*Phase_LifeTime*QP_LifeTime)),form='formatted')
 ! do i_f=1,N_W_delta_search-1

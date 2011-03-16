@@ -55,7 +55,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       RD,RD_CL,OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,ioBS_Fxc
  use xc_functionals,ONLY:F_xc
- use wrapper,       ONLY:V_dot_V,Vstar_dot_V
+ use wrapper,       ONLY:V_dot_V,Vstar_dot_V,M_by_V
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  implicit none
  type(levels)  ::Ken 
@@ -600,9 +600,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
                !
                if (iqs>nsym/(i_time_rev+1) .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
                !
-               do i1=1,BS_n_g_W 
-                 Cc(i1)=V_dot_V(BS_n_g_W,Occ,BS_W(1,i1,iq_W))
-               enddo
+               call M_by_V('T',BS_n_g_W,BS_W(:,:,iq_W),Occ(:),Cc)
+               !       
              endif
              !
              H_res_c=Vstar_dot_V(BS_n_g_W,Ovv,Cc)*4._SP*pi
@@ -631,9 +630,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
                !
              else
                !
-               do i1=1,BS_n_g_W
-                 Cc(i1)=V_dot_V(BS_n_g_W,Ocv,BS_W(1,i1,iq_W))
-               enddo
+               call M_by_V('T',BS_n_g_W,BS_W(:,:,iq_W),Ocv(:),Cc)
+               !       
              endif
              !
              H_cpl_c=Vstar_dot_V(BS_n_g_W,Ovc,Cc)*4._SP*pi

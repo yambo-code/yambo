@@ -160,15 +160,15 @@ subroutine K_Haydock(iq,W)
    if (it_on_disk==0) then
      Cf= (0.,0.)
      Vn(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)  *BS_eh_f(:BS_K_dim)
-#if !defined _TEST_1
+#if defined _TEST_1
+     call K_BSmat_by_V(iq,it_on_disk,Vn,Vnp1,iter_par=ItParity)
+     Haydock_v0_mod=sqrt(2._SP*real(dot_product(Vn,Vnp1)))
+     Cf(1) = 2._SP*aimag(dot_product(BSS_rhoq0,Vn))/Haydock_v0_mod
+#else
      Vn(BS_K_dim+1:)=-BSS_rhoq0(BS_K_dim+1:)*BS_eh_f(:BS_K_dim)
      call K_BSmat_by_V(iq,iter=it_on_disk,Vi=Vn,Vo=Vnp1)
      Haydock_v0_mod=sqrt(fdot_product(Vn,Vnp1))
      Cf(1) = dot_product(BSS_rhoq0,Vn)/Haydock_v0_mod
-#else
-     call K_BSmat_by_V(iq,it_on_disk,Vn,Vnp1,iter_par=ItParity)
-     Haydock_v0_mod=sqrt(2._SP*real(dot_product(Vn,Vnp1)))
-     Cf(1) = 2._SP*aimag(dot_product(BSS_rhoq0,Vn))/Haydock_v0_mod
 #endif
      Vnp1(:) = Vnp1(:)/Haydock_v0_mod
      Vn(:)   = Vn(:)/Haydock_v0_mod

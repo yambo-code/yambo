@@ -28,6 +28,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use BS,             ONLY:BSS_n_freqs,BS_K_dim,BSS_rhoq0,BS_eh_f,BS_not_const_eh_f,&
 &                         BS_bands,BSS_q0,BS_eh_table,BSS_mode,BS_eh_E,&
 &                         BSS_n_descs,BS_K_coupling,BSS_Vnl_included
+#if defined _DISTRIBUTED
+ use BS,             ONLY:ioBS_DISTRIBUTED
+#endif
  use com,            ONLY:msg,warning
  use drivers,        ONLY:l_bs_fxc
  use frequency,      ONLY:w_samp
@@ -57,7 +60,11 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  call section('*','BSE solver(s)')
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)
+#if defined _DISTRIBUTED
+ ioBS_err=ioBS_DISTRIBUTED(iq,X_static,ID)
+#else
  ioBS_err=ioBS(iq,X_static,ID)
+#endif
  if (ioBS_err/=0) return
  !
  ! Polarizability ?

@@ -31,8 +31,8 @@ integer function variables_BS(ID,local_description,DB,X)
 &                        BS_n_g_exch,BS_n_g_W,BS_eh_en,BS_eh_win,BS_W_is_diagonal,&
 &                        BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                        BS_cpl_K_corr
-#if defined _TEST_2
- use BS,            ONLY:BS_exchange_done
+#if defined _DISTRIBUTED
+ use BS,            ONLY:BS_exchange_done,BS_exchange_db
 #endif
  use IO_m,          ONLY: io_elemental,io_status,ver_is_gt_or_eq,read_is_on
  implicit none
@@ -52,7 +52,7 @@ integer function variables_BS(ID,local_description,DB,X)
  !
  var_size=29
  if (ver_is_gt_or_eq(ID,(/3,0,9/))) var_size=30
-#if defined _TEST_2
+#if defined _DISTRIBUTED
  var_size=var_size+1
 #endif
  !
@@ -120,9 +120,9 @@ integer function variables_BS(ID,local_description,DB,X)
  call io_elemental(ID,&
 &     VAR="    |Coupling range     [o/o]:",R1=BS_eh_win,CHECK=.true.,OP=(/"==","=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
-#if defined _TEST_2
+#if defined _DISTRIBUTED
  i_local_desc=i_local_desc+1
- call io_elemental(ID,&
+ call io_elemental(ID,DB_L0=BS_exchange_db,&
 &     VAR="    |Exchange completed flag :",L0=BS_exchange_done,CHECK=.false.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
 #endif

@@ -92,15 +92,15 @@ module BS
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF
  logical  :: BSS_uses_partial_diago
-#if defined _TEST_2
- logical  :: BS_exchange_done
+#if defined _DISTRIBUTED
+ logical  :: BS_exchange_done,BS_exchange_db
 #endif
  complex(SP),allocatable :: BSS_rhoq0(:)
  !
  interface 
    !
-#if defined _TEST_2
-   integer function ioBS_TEST_2(iq,X,ID,blk_only)
+#if defined _DISTRIBUTED
+   integer function ioBS_DISTRIBUTED(iq,X,ID,blk_only)
      use X_m,           ONLY:X_t
      type(X_t):: X 
      logical, optional :: blk_only

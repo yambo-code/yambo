@@ -49,7 +49,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_K_dim,BS_eh_win,BS_k_and_row_restart,&
 &                       BS_IO_index,BS_K_is_ALDA,BS_cpl_mat,&
 &                       BS_cpl_K_exchange,BSS_q0,BS_exchange_done,&
-&                       O_n_scatt,BS_O,BS_cpl_K_corr,ioBS_TEST_2
+&                       O_n_scatt,BS_O,BS_cpl_K_corr,ioBS_DISTRIBUTED
  use collision,    ONLY:ggwinfo,collision_reset
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,RD_CL,OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END
@@ -72,6 +72,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &              icv1,icv2,iOvv,iOcc,i1,i2,i3,iqs,iq_W,ig0,bands_to_load(2)
  integer    :: iOcv, iOvc
  complex(SP):: Co,H_res_x,H_res_c,H_cpl_x,H_cpl_c
+ logical    :: BSK_CO_first_step 
  !
  ! Kernel
  !
@@ -147,7 +148,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! GPL_EXCLUDE_END
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
-   ioBS_Fxc_err=ioBS_TEST_2(iq,X,ID)
+   ioBS_Fxc_err=ioBS_DISTRIBUTED(iq,X,ID)
    !
    ! GPL_EXCLUDE_START
    !
@@ -271,8 +272,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  do ik2=1,BS_columns
    do ik1=ik2,1,-1
      !
-     if (ik2<BS_k_and_row_restart(2)) cycle
-     if (ik2==BS_k_and_row_restart(2).and.ik1>=BS_k_and_row_restart(1)) cycle
+     if (ik2<BS_k_and_row_restart(2).and.BS_exchange_done) cycle
+     if (ik2==BS_k_and_row_restart(2).and.ik1>=BS_k_and_row_restart(1).and.BS_exchange_done) cycle
      !
      call K_scattering(iq,ik1,ik2,Xk,q)  
      O_dim=max(O_dim,O_n_scatt)
@@ -295,8 +296,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call XC_potential_driver(Ken,Xk,WF_KIND,WF_xc_functional,2)
  endif
  !
- 
- !
  ! DB identifier 
  !
  BS_identifier=pickup_a_random(10000._SP)
@@ -318,7 +317,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! ::: Exchange Part or TD-DFT ::::
  !
- if(BS_res_K_exchange.or.BS_cpl_K_exchange.or.BS_K_is_ALDA.or.l_bs_fxc.and..not.BS_exchange_done) then
+ if((BS_res_K_exchange.or.BS_cpl_K_exchange.or.BS_K_is_ALDA.or.l_bs_fxc).and..not.BS_exchange_done) then
    !
    if (.not.l_bs_fxc) call live_timing('BSK_EX',live_timing_steps)
    if (l_bs_fxc) call live_timing('BSK->Fxc',live_timing_steps)
@@ -424,7 +423,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          else
            call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/BS_IO_index(ik1,ik2)/),ID=ID)
          endif
-         ioBS_Fxc_err=ioBS_TEST_2(iq,X,ID)
+         ioBS_Fxc_err=ioBS_DISTRIBUTED(iq,X,ID)
        endif
        !
        deallocate(BS_mat)
@@ -446,6 +445,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call mem_est("O1x")
    deallocate(O2x)
    call mem_est("O2x")
+ endif
+ !
+ ! If I restarted BSK_EX I have to reset indexes for the Correlation part
+ !
+ if(any(BS_k_and_row_restart/=0).and..not.BS_exchange_done) then
+   !
+   BS_k_and_row_restart=0
+   call K_filling(E_eh_range,S_eh_range,n_K_elements,tot_n_K_elements,&
+&               live_timing_steps,live_timing_step_size)
  endif
  !
  BS_exchange_done=.TRUE.
@@ -542,7 +550,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      ikk2=sum(BS_blk_dim(:ik2-1))
      do ik1=ik2,1,-1
        !
-       if (any((/ik2<BS_k_and_row_restart(2),ik2==BS_k_and_row_restart(2).and.ik1>BS_k_and_row_restart(1)/))) cycle
+       if (any((/ik2<BS_k_and_row_restart(2),ik2==BS_k_and_row_restart(2).and.ik1>=BS_k_and_row_restart(1)/))) cycle
        !
        ikk1=sum(BS_blk_dim(:ik1-1))
        !
@@ -553,14 +561,17 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        ! Read the exchange part
        !
-       if (ik2==1.and.ik1==1) then
-          call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1,BS_IO_index(1,1)/),ID=ID_read)
+       BSK_CO_first_step=((ik2==1.and.ik1==1).or.(ik1==BS_k_and_row_restart(1)-1.and.ik2==BS_k_and_row_restart(2))    &
+&                                            .or.(ik1==BS_k_and_row_restart(1)  .and.ik2==BS_k_and_row_restart(2)+1)) 
+       !
+       if (BSK_CO_first_step) then
+          call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1,BS_IO_index(ik1,ik2)/),ID=ID_read)
        else
-          ACTION_=RD     
+          ACTION_=RD      
           if(ik1==1.and.ik2==BS_columns) ACTION_=RD_CL
           call io_control(ACTION=ACTION_,COM=NONE,SEC=(/BS_IO_index(ik1,ik2)/),ID=ID_read)
        endif
-       ioBS_Fxc_err=ioBS_TEST_2(iq,X,ID_read,blk_only=.true.)
+       ioBS_Fxc_err=ioBS_DISTRIBUTED(iq,X,ID_read,blk_only=.true.)
        !
        if(.not.master_cpu) then
          BS_mat=(0.,0.)
@@ -655,7 +666,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        else
           call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/BS_IO_index(ik1,ik2)/),ID=ID)
        endif
-       ioBS_Fxc_err=ioBS_TEST_2(iq,X,ID)
+       ioBS_Fxc_err=ioBS_DISTRIBUTED(iq,X,ID)
        !
        deallocate(BS_mat)
        if (BS_K_coupling) deallocate(BS_cpl_mat)

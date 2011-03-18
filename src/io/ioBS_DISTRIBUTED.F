@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function ioBS_TEST_2(iq,X,ID,blk_only)
+integer function ioBS_DISTRIBUTED(iq,X,ID,blk_only)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use X_m,           ONLY:X_t
@@ -28,7 +28,7 @@ integer function ioBS_TEST_2(iq,X,ID,blk_only)
  use matrix_operate,ONLY:mat_c2r,mat_r2c
  use BS,            ONLY:BS_mat,BS_K_dim,BS_K_coupling,&
 &                        BS_blk_dim,BS_k_and_row_restart,BS_res_mode,BS_IO_index,BS_blocks,&
-&                        BS_DB_is_fragmented,&
+&                        BS_DB_is_fragmented,BS_exchange_db,BS_exchange_done,&
 &                        BS_cpl_mat,BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_bulk,io_restart_point,&
@@ -51,8 +51,8 @@ integer function ioBS_TEST_2(iq,X,ID,blk_only)
  !
  db_name='BS_Q'//trim(intc(iq))
  !
- ioBS_TEST_2=io_connect(desc=trim(db_name),type=2,ID=ID)
- if (ioBS_TEST_2/=0) goto 1
+ ioBS_DISTRIBUTED=io_connect(desc=trim(db_name),type=2,ID=ID)
+ if (ioBS_DISTRIBUTED/=0) goto 1
  !
  call Fragments_Restart(ID)
  !
@@ -63,8 +63,8 @@ integer function ioBS_TEST_2(iq,X,ID,blk_only)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   ioBS_TEST_2=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",CUTOFF=.true.)
-   if (ioBS_TEST_2/=0) then
+   ioBS_DISTRIBUTED=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",CUTOFF=.true.)
+   if (ioBS_DISTRIBUTED/=0) then
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
      goto 1
    endif
@@ -72,7 +72,7 @@ integer function ioBS_TEST_2(iq,X,ID,blk_only)
    ! v 3.0.5: Inclusion of %f_xc 
    !
    if (.not.ver_is_gt_or_eq(ID,(/3,0,5/))) then
-     ioBS_TEST_2=-1
+     ioBS_DISTRIBUTED=-1
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
      goto 1
    endif
@@ -87,9 +87,11 @@ integer function ioBS_TEST_2(iq,X,ID,blk_only)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif
    !
-   ioBS_TEST_2=variables_BS(ID,local_description,'BSK',X=X)
+   ioBS_DISTRIBUTED=variables_BS(ID,local_description,'BSK',X=X)
    !
-   if (ioBS_TEST_2/=0) then
+   if (io_restart_point(ID)>0.and.io_mode(ID)==VERIFY) BS_exchange_done=BS_exchange_db
+   !
+   if (ioBS_DISTRIBUTED/=0) then
      !
      ! reset the descriptions...
      !
@@ -119,8 +121,8 @@ integer function ioBS_TEST_2(iq,X,ID,blk_only)
  ! one written in the RESTART directory
  !
  if (io_restart_point(ID)>0.and.io_mode(ID)==VERIFY) then
-   ioBS_TEST_2=io_restart_point(ID)-1
-   BS_k_and_row_restart=BS_blocks(ioBS_TEST_2)
+   ioBS_DISTRIBUTED=io_restart_point(ID)-1
+   BS_k_and_row_restart=BS_blocks(ioBS_DISTRIBUTED)
  endif
  !
  i_fragment=maxval(io_sec(ID,:))
@@ -178,7 +180,7 @@ integer function ioBS_TEST_2(iq,X,ID,blk_only)
  deallocate(BS_mat_disk)
  !
  call Fragments_Restart(ID,current_fragment=i_fragment,fragments_todo=BS_IO_index(1,nXkibz))
- ioBS_TEST_2=io_restart_point(ID)
+ ioBS_DISTRIBUTED=io_restart_point(ID)
  !
 1 call io_disconnect(ID)
  !

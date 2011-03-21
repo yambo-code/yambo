@@ -87,9 +87,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer    :: O_dim
  integer    :: O_x_dim,alloc_err(2),x_fft_size,c_fft_size
- logical    :: load_O_X,l_USE_all_Gexx
+ logical    :: load_O_X,l_USE_all_Gexx,l_half_Ox
  complex(SP),allocatable::Ovv(:),Occ(:),Cc(:)
- complex(SP),        allocatable::O1x(:,:),O2x(:,:)
+ complex(SP),        allocatable::O1x(:,:),O2x(:,:),O1x_small(:)
  complex(SP),allocatable::Ovc(:),Ocv(:)
  type(ggwinfo)          ::isc
  !
@@ -115,6 +115,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (BS_columns<=0.or.BS_columns>Xk%nibz) BS_columns=Xk%nibz
  BS_k_and_row_restart=0
  BS_exchange_done=.FALSE.
+ l_half_Ox  =(BS_columns==1.and..not.l_bs_fxc) ! if .TRUE., gamma point case, it  allocates only O1x
  !
  ! Dimensions and Tables
  ! 
@@ -305,8 +306,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (load_O_X) then
    allocate(O2x(BS_n_g_exch,O_x_dim),stat=alloc_err(2))
    call mem_est('O2x',(/size(O2x)/),errors=(/alloc_err(2)/))
-   allocate(O1x(BS_n_g_exch,O_x_dim),stat=alloc_err(1))
-   call mem_est('O1x',(/size(O1x)/),errors=(/alloc_err(1)/))
+   if(l_half_Ox) then
+     allocate(O1x_small(BS_n_g_exch),stat=alloc_err(1))
+     call mem_est('O1xSmall',(/size(O1x_small)/),errors=(/alloc_err(1)/))
+   else
+     allocate(O1x(BS_n_g_exch,O_x_dim),stat=alloc_err(1))
+     call mem_est('O1x',(/size(O1x)/),errors=(/alloc_err(1)/))
+   endif
  endif
  !
  i8nc=ncpu
@@ -344,13 +350,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        if (load_O_X) then
          !
          if (ik1/=ik2) call K_exchange(.not.l_col_cut,iq,ik1,Xk,O1x,O_x_dim)  
-         if (ik1==ik2) O1x=O2x
+         if (ik1==ik2.and..not.l_half_Ox) O1x=O2x
          !
          ! When a cutoffed coulomb interaction is used bare_qpg(:,:) elements
          ! may be complex. In this case I cannot multiply both O1x and O2x by
          ! 1./bare_qpg as O2x is conjugated in the cdotc call.
          !
-         if(l_col_cut) then 
+         if(l_col_cut.and..not.l_half_Ox) then 
            do i1=1,BS_blk_dim(ik1)
              do i2=1,BS_n_g_exch
                O1x(i2,i1)=O1x(i2,i1)/bare_qpg(iq,i2)**2
@@ -362,7 +368,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          ! be in principle included, they are vanishing due to the q->0 in the
          ! oscillator and the finitness of qpg(1,1) term.
          !
-         O1x(1,:)=(0.,0.)
+         if(.not.l_half_Ox) O1x(1,:)=(0.,0.)
          O2x(1,:)=(0.,0.)
          !
        endif
@@ -379,16 +385,36 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            !
            H_res_x=(0.,0.)
            H_cpl_x=(0.,0.)
-           ! 
-           ! :::Exchange    (resonant):::
            !
-           if (BS_res_K_exchange) H_res_x=Vstar_dot_V(BS_n_g_exch,O2x(:,icv2),O1x(:,icv1))
-           !
-           ! :::Exchange    (coupling):::
-           !
-           if (BS_cpl_K_exchange) H_cpl_x=V_dot_V(BS_n_g_exch,O2x(g_rot(inv_index,1:BS_n_g_exch),icv2),O1x(:,icv1))
-           !
-           ! :::ALDA        (resonant):::
+           if(l_half_Ox) then
+             !
+             O1x_small=O2x(:,icv1)     
+             !
+             if(l_col_cut) O1x_small(1:BS_n_g_exch)=O1x_small(1:BS_n_g_exch)/bare_qpg(iq,1:BS_n_g_exch)**2
+             ! 
+             ! :::Exchange    (resonant):::
+             !
+             if (BS_res_K_exchange) H_res_x=Vstar_dot_V(BS_n_g_exch,O2x(:,icv2),O1x_small)
+             !
+             ! :::Exchange    (coupling):::
+             !
+             if (BS_cpl_K_exchange) H_cpl_x=V_dot_V(BS_n_g_exch,O2x(g_rot(inv_index,1:BS_n_g_exch),icv2),O1x_small)
+             !
+             ! :::ALDA        (resonant):::
+             ! 
+           else
+             ! 
+             ! :::Exchange    (resonant):::
+             !
+             if (BS_res_K_exchange) H_res_x=Vstar_dot_V(BS_n_g_exch,O2x(:,icv2),O1x(:,icv1))
+             !
+             ! :::Exchange    (coupling):::
+             !
+             if (BS_cpl_K_exchange) H_cpl_x=V_dot_V(BS_n_g_exch,O2x(g_rot(inv_index,1:BS_n_g_exch),icv2),O1x(:,icv1))
+             !
+             ! :::ALDA        (resonant):::
+             ! 
+           endif
            !
            if (BS_K_is_ALDA) H_res_x=H_res_x+&
 &                            tddft_alda_R_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
@@ -440,9 +466,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  endif
  !
  !
- if (load_O_X) then
-   deallocate(O1x)
-   call mem_est("O1x")
+ if (load_O_X) then 
+   if(l_half_Ox) then
+     deallocate(O1x_small)
+     call mem_est("O1x_small")
+   else
+     deallocate(O1x)
+     call mem_est("O1x")
+   endif
    deallocate(O2x)
    call mem_est("O2x")
  endif

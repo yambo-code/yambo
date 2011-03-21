@@ -388,7 +388,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            !
            if(l_half_Ox) then
              !
-             O1x_small=O2x(:,icv1)     
+             O1x_small(1:BS_n_g_exch)=O2x(1:BS_n_g_exch,icv1)     
              !
              if(l_col_cut) O1x_small(1:BS_n_g_exch)=O1x_small(1:BS_n_g_exch)/bare_qpg(iq,1:BS_n_g_exch)**2
              ! 
@@ -400,8 +400,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
              !
              if (BS_cpl_K_exchange) H_cpl_x=V_dot_V(BS_n_g_exch,O2x(g_rot(inv_index,1:BS_n_g_exch),icv2),O1x_small)
              !
-             ! :::ALDA        (resonant):::
-             ! 
            else
              ! 
              ! :::Exchange    (resonant):::
@@ -412,10 +410,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
              !
              if (BS_cpl_K_exchange) H_cpl_x=V_dot_V(BS_n_g_exch,O2x(g_rot(inv_index,1:BS_n_g_exch),icv2),O1x(:,icv1))
              !
-             ! :::ALDA        (resonant):::
-             ! 
            endif
            !
+           ! :::ALDA        (resonant):::
+           ! 
            if (BS_K_is_ALDA) H_res_x=H_res_x+&
 &                            tddft_alda_R_space(iq,(/ic1,ic2/),(/ik1,ik2,ik1,ik2/),&
 &                                                  (/iv1,iv2/),(/is1,is2,is1,is2/),1)
@@ -773,16 +771,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
     tot_n_K_elements=tot_n_K_elements+1
     if (mod(tot_n_K_elements-i8id,i8nc)/=1.and.ncpu>1)  build_BS_indexes=.FALSE.
     !
+    if(.not.build_BS_indexes) return
+    !
     ! ::: Timing START :::
     !
-    if(build_BS_indexes) then
-      !
-      live_timing_accumulate=live_timing_accumulate+1
-      if (live_timing_accumulate==live_timing_step_size) then
-        call live_timing(steps=1)
-        live_timing_accumulate=0
-      endif
-      !
+    live_timing_accumulate=live_timing_accumulate+1
+    if (live_timing_accumulate==live_timing_step_size) then
+      call live_timing(steps=1)
+      live_timing_accumulate=0
     endif
     !
     ! ::: Timing END :::

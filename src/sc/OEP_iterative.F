@@ -22,18 +22,21 @@
 subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
   !
   ! Iteratively calculate the OEP potential (or one of its approximations) 
-  ! see PRA 80, 052510 (2009)
+  ! see PRA 80, 052510 (2009)/PRB 68, 03510 (2003)
   !
   ! v_x = v_kli = v_hole + \sum_i^N P_{ii} D_{ii}/\rho 
   ! v_x = v_ced = v_kli + \sum_{i,j\=i}^N P_{ij} D_{ij}/\rho 
-  ! v_x = v_oep = v_ced +  \sum_{i,j=cond} P_{ij} D_{ij}/\rho 
+  ! v_x = v_wkli = v_whole + \sum_i^N \tilde P_{ii} D_{ii}/\tilde\rho 
+  ! v_x = v_wced = v_kli + \sum_{i,j\=i}^N \tilde P_{ij} D_{ij}/\tilde\rho 
+  !
   !
   ! P_{ij} = (\phi_i)^*\phi_j, D_{ij} = \langle \phi_i |  v_x - v_x^{NL} | \phi_j\rangle 
+  ! \tilde P_{ij} = (\phi_i)^*\phi_j
   !
   ! where   v_x^{NL} is the nonlocal(state-dependent) exchange potential
   !
  use pars,            ONLY:SP,DP,LCHLEN
- use com,             ONLY:error
+ use com,             ONLY:error,warning
  use electrons,       ONLY:levels,n_met_bands
  use R_lattice,       ONLY:bz_samp,nkibz
  use D_lattice,       ONLY:nsym,i_time_rev
@@ -44,10 +47,10 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
  use par_proc_m,      ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m,   ONLY:par_indexes
  use wave_func,       ONLY:WF_load,wf,wf_state
- use SC,              ONLY:it_now,OEP_steps,OEP_threshold,SC_bands
+ use SC,              ONLY:it_now,OEP_steps,OEP_threshold,SC_bands,l_oep_EWeight,E_bare
  use drivers,         ONLY:l_oep_exact,l_oep_slater,l_oep_kli,l_oep_ceda
  use timing,          ONLY:live_time_msg
- use stderr,          ONLY:intc,real2ch
+ use stderr,          ONLY:intc,real2ch,tty_size
  !
  ! I/O
  !
@@ -61,12 +64,23 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
  ! Work space
  !
  type(pp_indexes) ::px
- integer          ::ii,iv1,iv2,ik,ir,ifft,offt,is,rho_sym,max_bands
+ integer          ::ii,iv1,iv2,ik,ir,ifft,offt,is,rho_sym,max_bands,ik_max
  real(SP)         ::V_io(fft_size),V_nm1(fft_size)
- real(SP)         ::V_resp(fft_size),reached_treshold
+ real(SP)         ::V_resp(fft_size),reached_treshold,EWeight,ev_max
  complex(SP)      ::DeltaEps
  logical          ::lerr
  character(lchlen)  ::dumb_ch, timing_str
+ !
+ ! Find top of valence
+ !
+ ik_max = 0
+ ev_max = -1000._SP
+ do ik = 1, nkibz 
+   if (E%E(E%nbf,ik,1).gt.ev_max) then
+     ev_max = E%E(E%nbf,ik,1)
+     ik_max = ik
+   endif
+ enddo
  !
  ! Set values depending on approximation level
  !
@@ -80,6 +94,7 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
    timing_str='[OEP] Cycle'
    max_bands = SC_bands
  endif
+ EWeight = 1._SP
  !
  call live_time_msg("n","","","%s")
  V_io = Voep
@@ -90,18 +105,21 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
      do ik = 1, nkibz 
        do iv1 = 1, E%nbf 
          ifft = wf_state(iv1,ik,1)
-         do iv2 = iv1, max_bands
+         if (l_oep_EWeight) EWeight = E%E(iv1,ik,1)+ E%Efermi(1) 
+         do iv2 = 1, max_bands
            if  (l_oep_kli.and.(iv1.ne.iv2)) cycle
-           if  ((abs(E%E(iv1,ik,1)-E%E(E%nbf,ik,1)).lt.0.0001_SP).and.&
-                &(abs(E%E(iv2,ik,1)-E%E(E%nbf,ik,1)).lt.0.0001_SP)) cycle
+           if  ((iv1.eq.iv2).and.(ik.eq.ik_max).and.&
+                &((iv2.eq.E%nbf).or.(abs(E%E(iv2,ik_max,1)-E%E(E%nbf,ik_max,1)).lt.1.e-4))) cycle 
            offt = wf_state(iv2,ik,1)
            DeltaEps = 0._SP
            do ir = 1, fft_size
              DeltaEps = DeltaEps + conjg(wf(ir,ifft))*wf(ir,offt)*V_nm1(ir)-&
 &             U(ik,iv1,ir)/wf(ir,ifft)*wf(ir,offt)
            end do
+           if ((l_oep_EWeight).and.(iv2.gt.E%nbf)) &
+           &EWeight = EWeight*((E%E(iv2,ik,1)-E%E(iv1,ik,1))/(E%E(iv2,ik,1)+ E%Efermi(1)))    
            V_resp(:) = V_resp(:) + E%f(iv1,ik,1)*k%weights(ik)*real(conjg(DeltaEps)*&
-                &conjg(wf(:,ifft))*wf(:,offt))
+                &conjg(wf(:,ifft))*wf(:,offt))/EWeight
          end do
        end do
      end do
@@ -115,12 +133,13 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
      !
      reached_treshold=maxval(abs(V_io(1:)-V_nm1(1:)))
      dumb_ch=trim(timing_str)//' '//trim(intc(ii))//' Accuracy :'//&
-&            trim(real2ch(reached_treshold))//'|'//trim(real2ch(OEP_threshold/100._SP))
-     call live_time_msg("r",dumb_ch,"","%s")
-   if (reached_treshold<(OEP_threshold/100._SP)) exit
+&            trim(real2ch(reached_treshold))//'|'//trim(real2ch(OEP_threshold))
+     if (tty_size >0) call live_time_msg("r",dumb_ch,"","%s")
+     if (tty_size <0) call live_time_msg("n",dumb_ch,"","%s")
+   if (reached_treshold<(OEP_threshold)) exit
    lerr=(ii==OEP_steps)
  end do
- if (lerr) call error('Procedure to calculate potential did not converge')
+ if (lerr) call warning('Procedure to calculate potential did not converge')
  Voep=V_io
  !
 end subroutine OEP_iterative

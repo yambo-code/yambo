@@ -23,7 +23,7 @@ subroutine XC_switch()
  !
  use drivers
  use SC,             ONLY:SC_kind,SC_xc_functional,SC_potential,local_V,SC_perturbation,&
-&                         OEP_approx
+&                         OEP_approx,l_oep_EWeight,l_oep_iterative
  use xc_functionals, ONLY:XC_LDA_X,XC_LDA_C_PZ,XC_EXCHANGE_CORRELATION,XC_EXCHANGE,&
 &                         GS_xc_KIND,GS_xc_FUNCTIONAL
 #if defined _MAGNETIC
@@ -35,7 +35,7 @@ subroutine XC_switch()
  use com,            ONLY:error
  implicit none
  !WorkPars:
- integer, parameter :: KLI_APPRX = 10, SLT_APPRX = 20, CED_APPRX = 30
+ integer, parameter :: KLI_APPRX = 10, SLT_APPRX = 20, CED_APPRX = 30, LEVY_APPRX = 40
  !
  local_V=.FALSE.
  !
@@ -98,15 +98,32 @@ subroutine XC_switch()
    select case (trim(OEP_approx))
      case('n')
        l_oep_exact=.true.
+       if (l_oep_iterative) l_oep_EWeight=.true.
      case('k')
        l_oep_kli=.true.
        SC_kind=SC_kind+KLI_APPRX 
      case('s')
        l_oep_slater=.true.
+       l_oep_iterative=.false.
        SC_kind=SC_kind+SLT_APPRX
      case('c')
        l_oep_ceda=.true.
        SC_kind=SC_kind+CED_APPRX
+     case('sw')
+       l_oep_slater=.true.
+       l_oep_EWeight=.true.
+       l_oep_iterative=.false.
+       SC_kind=SC_kind+LEVY_APPRX
+     case('kw')
+       l_oep_kli=.true.
+       l_oep_EWeight=.true.
+       SC_kind=SC_kind+LEVY_APPRX
+     case('cw')
+       l_oep_ceda=.true.
+       l_oep_EWeight=.true.
+       SC_kind=SC_kind+LEVY_APPRX
+     case default
+       call error("Unknown EXX approximation! ")
    end select
  end if
  !

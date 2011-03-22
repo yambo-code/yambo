@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OEP_exact_inversion(X,E,k,q,Voep)
+subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  !
  !  Exact exchange/static RPA potential (voep in direct space)
  !
@@ -34,32 +34,35 @@ subroutine OEP_exact_inversion(X,E,k,q,Voep)
  use pars,            ONLY:SP,DP
  use D_lattice,       ONLY:DL_vol,i_time_rev,sop_inv,nsym,i_space_inv
  use X_m,             ONLY:X_t, X_alloc,X_mat,X_poles_tab,current_iq 
- use electrons,       ONLY:levels
+ use electrons,       ONLY:levels,n_met_bands
  use R_lattice,       ONLY:bz_samp,g_rot,nkibz,nkbz
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan
  use frequency,       ONLY:w_samp,W_reset,bg_npts,cg_pt,cg_index_bg,rg_index_bg
  use matrix_operate,  ONLY:mat_dia_inv,INV,USE_LK
  use collision,       ONLY:ggwinfo,collision_reset
- use QP_m,            ONLY:QP_Vnl_xc,QP_n_states,QP_table,QP_Sc
+ use QP_m,            ONLY:QP_ng_Sx !QP_Vnl_xc,QP_n_states,QP_table,QP_Sc
  use memory_m,        ONLY:mem_est
- use SC,              ONLY:SC_bands,SC_R,H_rotate
+ use SC,              ONLY:SC_bands,SC_R,H_rotate,it_now
  use drivers,         ONLY:l_collisions_IO,l_sc_srpa
+ use wave_func,       ONLY:wf_state,wf
  !
  ! I/O
  !
  implicit none
- real(SP) :: Voep(fft_size)
+ real(SP)     :: Voep(fft_size)
+ complex(SP)  :: W_x(nkibz,n_met_bands,fft_size)
  type(X_t)    :: X
  type(levels) :: E
- type(bz_samp):: k,q
+ type(bz_samp):: k
  !
  ! Work Space
  !
- integer                  :: i1,ik,ic,iv,is,ig1,ig2,ikbz
+ integer                  :: i1,ik,ic,iv,is,ig1,ig2,ikbz,ifft,offt,ir
  logical                  :: l_is_TR
- complex(SP), allocatable :: Xo_inverse(:,:), SigmaXC(:,:,:),rhotw_save(:,:),&
+ complex(SP), allocatable :: Xo_inverse(:,:),rhotw_save(:,:),&
 &                            rhotw_sum(:),rhotw_sum_TR(:),rho_xc(:),Voep_RL(:)
  complex(DP), allocatable :: Vx_dp(:)
+ complex(SP)              :: SigmaXC
  type(w_samp)             :: Xw
  type(ggwinfo)            :: isc
  !
@@ -78,7 +81,7 @@ subroutine OEP_exact_inversion(X,E,k,q,Voep)
  call X_alloc('X',(/X%ng,X%ng,Xw%n(2)/))
  call IO_and_Messaging_switch("-report") 
  call X_os(X_mat,1,(/1,Xw%n(1)/),E,k,Xw,X)
- call IO_and_Messaging_switch("+report") 
+ call IO_and_Messaging_switch("+report")
  ! 3:
  allocate(Xo_inverse(X%ng-1,X%ng-1))
  Xo_inverse(:X%ng-1,:X%ng-1) =  X_mat(2:X%ng,2:X%ng,1) 
@@ -88,7 +91,7 @@ subroutine OEP_exact_inversion(X,E,k,q,Voep)
  !
  ! Calculate rho_xc(G) =>  1 - initialize vars/dim
  !                        for each k in IBZ:
- !                        2 - retabulate SigmaXC elements
+ !                        2 - retabulate SigmaXC elements  ! This has now changed
  !                        for each c,v,k: 
  !                        3 - calculate  rhotw_sum (G) = sum{R} rho^*_{v,c}(k,R^-1 G)
  !                                       rhotw_sum_TR (G) = sum{I R} rho_{v,c}(k,(IR)^-1 G)
@@ -99,39 +102,26 @@ subroutine OEP_exact_inversion(X,E,k,q,Voep)
  ! 1:
  call collision_reset(isc)
  isc%ngrho=X%ng
- allocate(isc%rhotw(X%ng),rhotw_sum(X%ng-1),rhotw_sum_TR(X%ng-1),&
-&         SigmaXC(X%ib(2),X%ib(2),1),rho_xc(X%ng-1))
+ allocate(isc%rhotw(X%ng),rhotw_sum(X%ng-1),&
+      &rhotw_sum_TR(X%ng-1),rho_xc(X%ng-1))
  if (i_time_rev/=0.or.i_space_inv/=0) then
    allocate(rhotw_save(X%ng,1))
  else
    allocate(rhotw_save(X%ng,2))
  endif
- ! 2:
+ !
  rho_xc = (0.,0.)
  !
  do ik = 1, nkibz 
-   !
-   ! Accumulate QP_Vnl_xc in a local SigmaXC array
-   ! If COLLISIONS_IO_compose was used, I need also to rotate the matrix elements
-   !
-   SigmaXC = (0.,0.)
-    if (l_collisions_IO)  then
-      call V_qp_basis_to_H(ik,QP_Vnl_xc,SigmaXC)
-      if (l_sc_srpa) call V_qp_basis_to_H(ik,QP_Sc,SigmaXC)
-      call H_rotate(SC_R(:,:,ik,1),SigmaXC,SC_bands,1)
-      forall (iv=E%nbf+1:X%ib(2),ic=1:E%nbf) SigmaXC(iv,ic,1)= (0.,0.)
-    else
-     do i1 = 1,QP_n_states
-       iv = QP_table(i1,1)
-       ic = QP_table(i1,2)
-       if (QP_table(i1,3)/=ik.or.iv>E%nbf.or.ic<=E%nbf) cycle
-       SigmaXC(iv,ic,1) = QP_Vnl_xc(i1)
-       if (l_sc_srpa) SigmaXC(iv,ic,1) = SigmaXC(iv,ic,1)+ QP_Sc(i1,1) 
-     enddo
-   endif
    ! 3:
    do ic = E%nbf+1, X%ib(2)
      do iv = 1 ,E%nbf
+       ifft=wf_state(iv,ik,1)
+       offt=wf_state(ic,ik,1)
+       SigmaXC = (0.,0.)
+       do ir = 1,fft_size
+         SigmaXC = SigmaXC  + W_x(ik,iv,ir)*wf(ir,offt)/wf(ir,ifft) !<iv|Sigma_xc|ic>
+       end do
        isc%is = (/iv,ik,1,1/)
        isc%os = (/ic,ik,1,1/)
        isc%qs = (/1,1,1/)
@@ -176,16 +166,15 @@ subroutine OEP_exact_inversion(X,E,k,q,Voep)
          !
        end do
        ! 4:
-       rho_xc(:) =  rho_xc(:) + E%f(iv,ik,1)*(2.-E%f(ic,ik,1))/2.*&
-&                  (rhotw_sum(:)*SigmaXC(iv,ic,1)+rhotw_sum_TR(:)*conjg(SigmaXC(iv,ic,1)))/&
-&                  (E%E(iv,ik,1)-E%E(ic,ik,1)) 
+       rho_xc(:) =  rho_xc(:) + E%f(iv,ik,1)*(rhotw_sum(:)*SigmaXC+rhotw_sum_TR(:)*conjg(SigmaXC))/&
+&                  (E%E(iv,ik,1)-E%E(ic,ik,1))
        !
      end do
    end do
  end do 
- deallocate(isc%rhotw,rhotw_save,rhotw_sum,rhotw_sum_TR,SigmaXC)
+ deallocate(isc%rhotw,rhotw_save,rhotw_sum,rhotw_sum_TR)
  call X_alloc('DIP_q_dot_iR')
- if (allocated(QP_Vnl_xc))  deallocate(QP_Vnl_xc)
+! if (allocated(QP_Vnl_xc))  deallocate(QP_Vnl_xc)
  !
  ! Add c.c. contribution
  !
@@ -199,7 +188,7 @@ subroutine OEP_exact_inversion(X,E,k,q,Voep)
  ! Calculate Voep_RL
  !
  Voep_RL=matmul(Xo_inverse,rho_xc)
- deallocate(rho_xc)
+ deallocate(rho_xc,Xo_inverse)
  !
  ! Calculate Voep (DL)
  !

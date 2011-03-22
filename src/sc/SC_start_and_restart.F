@@ -34,7 +34,7 @@ subroutine SC_start_and_restart(X,E,Xk)
 &                         SC_potential,E_bare,local_V,SC_iterations,l_TF_precond,l_oep_iterative,&
 &                         rho_convergence,E_convergence,SC_rho_threshold,&
 &                         SC_iterations,l_SC_cycle,SC_cycle_mixing,WF_G_max,WF_Go_indx,&
-&                         SC_fft_size,E_bare_Ef
+&                         SC_fft_size,E_bare_Ef,l_oep_EWeight
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE
@@ -51,7 +51,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  ! Workspace I/O
  !
  integer                 :: ID(4),io_E,io_V,io_WF
- character(schlen)       :: ch
+ character(schlen)       :: ch,ch1
  integer, external       :: io_SC_components,io_COLLISIONS
  !
  ! Extended collisions
@@ -126,7 +126,7 @@ subroutine SC_start_and_restart(X,E,Xk)
    l_SC_cycle=.not.(E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold)
    !
    ! Even if the accuracy on DB is not small enough with 0 iterations
-   ! I can skeep the SC cycle
+   ! I can skip the SC cycle
    !
    if (l_SC_cycle) l_SC_cycle=SC_iterations>0
    !
@@ -157,12 +157,14 @@ subroutine SC_start_and_restart(X,E,Xk)
  endif
  if (l_sc_exx) then
    if (.not.l_oep_slater) &
-&     call msg('r' ,'[SC] Iterative solution of OEP :',l_oep_iterative)
+&     call msg('r' ,'[SC] Iterative solution of OEP        :',l_oep_iterative)
    if (.not.l_oep_exact) then
      if (l_oep_kli) ch = 'KLI'
      if (l_oep_slater) ch = 'SLATER'
      if (l_oep_ceda) ch = 'CEDA'
-     call msg('rn' ,'[SC] Approximate solution of OEP :',ch)
+     ch1 = trim(ch)
+     if (l_oep_EWeight) write(ch,'(a,a)') 'W-',trim(ch1)
+     call msg('rn' ,'[SC] Approximate solution of OEP      : ',ch)
    end if
  end if 
  !

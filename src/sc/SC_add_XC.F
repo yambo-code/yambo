@@ -56,7 +56,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  integer      :: ib,ik
  type(QP_t)   :: qp_dummy
  !
- if (.not.local_V.or.(l_oep_exact.and..not.l_oep_iterative)) then
+ if (.not.local_V) then
    !
    ! Hartee-Fock & COHSEX
    !======================

@@ -50,7 +50,7 @@ subroutine OEP_Hole(E,k,q,Vslt,U_x)
  use wave_func,       ONLY:WF_load,wf,wf_state
  use timing,          ONLY:live_timing
  use stderr,          ONLY:intc
- use SC,              ONLY:it_now
+ use SC,              ONLY:it_now,l_oep_EWeight
  !
  ! I/O
  !
@@ -66,6 +66,7 @@ subroutine OEP_Hole(E,k,q,Vslt,U_x)
  type(pp_indexes) ::px
  integer          ::iv1,iv2,ir,ig,i1,ikbz,ik,iq,ifft,offt,tr_syms,os,is,iGo,qs
  real(DP)         ::Vslt_DP(fft_size)
+ real(SP)         ::EWeight
  character(schlen)::ch
  logical          ::lostr, listr     
  complex(DP),allocatable ::u(:),rhotw_rs(:),u_rs(:),local_u(:)
@@ -78,6 +79,7 @@ subroutine OEP_Hole(E,k,q,Vslt,U_x)
  allocate(isc%gamp(QP_ng_Sx,1),isc%rhotw(QP_ng_Sx),local_u(fft_size),u(fft_size),&
       &u_rs(fft_size),rhotw_rs(fft_size))
  !
+ EWeight = 1._SP 
  isc%qs=1
  isc%ngrho=QP_ng_Sx
  call scatterGamp(isc,'x')
@@ -94,6 +96,7 @@ subroutine OEP_Hole(E,k,q,Vslt,U_x)
      if (.not.px%element_2D(iq,iv1)) cycle
      do ik = 1,k%nibz
        is = k%sstar(ik,2)
+       if (l_oep_EWeight) EWeight = E%E(iv1,ik,1)+E%Efermi(1)
        do iv2 = 1 ,E%nbm
          u =(0._DP,0._DP)
          u_rs =(0._DP,0._DP) 
@@ -123,7 +126,7 @@ subroutine OEP_Hole(E,k,q,Vslt,U_x)
          if (.not.lostr) rhotw_rs(1:fft_size)=rhotw_rs(:)*wf(fft_rot_r(os,1:fft_size),offt)
          local_u(:) =  u_rs(fft_rot_r(qs,:))*rhotw_rs(:)
          U_x(ik,iv1,:) = U_x(ik,iv1,:)-local_u(:)
-         Vslt_DP = Vslt_DP - E%f(iv1,ik,1)*real(local_u,DP)*k%weights(ik)
+         Vslt_DP = Vslt_DP - E%f(iv1,ik,1)*real(local_u,DP)*k%weights(ik)/EWeight
          call live_timing(steps=1)
          !
        end do
@@ -143,5 +146,3 @@ subroutine OEP_Hole(E,k,q,Vslt,U_x)
  call pp_indexes_reset(px)
  !
 end subroutine OEP_Hole
-
-   

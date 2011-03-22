@@ -391,8 +391,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)
  call it(defs,'EXXCut',    '[SC,RT] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
  call it(defs,'CollCache', '[SC,RT] Cache[Gb] for collisions (negative value = automatic)',COLLISIONS_cache_size,verb_level=V_sc)
- call it('f',defs,'OEPItSolver','[SC] Iterative Kuemmel-Perdew solver for OEP')
- call it(defs,'OEPapprox','[SC] OEP approximation, n=none s=Slater k=KLI c=CEDA',OEP_approx)
+ call it('f',defs,'OEPItSolver','[SC] Iterative solution instead of inversion of OEP')
+ call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)
 #endif
  ! 
  ! RAS

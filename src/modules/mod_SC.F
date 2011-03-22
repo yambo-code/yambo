@@ -60,10 +60,10 @@ module SC
  !
  ! OEP specific
  !
- integer,parameter    :: OEP_steps = 100 
+ integer,parameter    :: OEP_steps = 1000 
  real(SP),parameter   :: OEP_threshold = 1.E-5
  character(schlen)    :: OEP_approx
- logical              :: l_oep_iterative
+ logical              :: l_oep_iterative,l_oep_EWeight
  !
  ! Rotation matrices and xc potential
  !

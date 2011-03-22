@@ -43,7 +43,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  use collision,       ONLY:ggwinfo,collision_reset
  use QP_m,            ONLY:QP_Vnl_xc,QP_n_states,QP_table,QP_ng_Sx
  use memory_m,        ONLY:mem_est
- use SC,              ONLY:it_now
+ use SC,              ONLY:it_now,l_oep_EWeight
  use drivers,         ONLY:l_collisions_IO,l_oep_kli,l_oep_ceda
  use memory_m,        ONLY:mem_est
  use par_proc_m,      ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
@@ -64,6 +64,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  ! Work Space
  !
  integer                  :: i1,ik,iv1,iv2,is,ig1,ig2,ifft,offt,ir
+ real(SP)                 :: EWeight
  complex(SP), allocatable :: rhotw_sum(:),rho_xc(:),Vkli_RL(:),&
 &                            Ko(:,:),rhotw_prd(:,:),rhotw_rs(:)
  complex(SP)              :: SigmaXC
@@ -110,10 +111,12 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  if (l_oep_kli) ch="KLI@it"//trim(intc(it_now))
  if (l_oep_ceda) ch="CED@it"//trim(intc(it_now))
  call live_timing(trim(ch),px%n_of_elements(myid+1))
+ EWeight = 1._SP
  rhotw_prd = (0._SP,0._SP)
  do ik = 1, nkibz
    do iv1 = 1, E%nbf
-     do iv2 = iv1, E%nbf
+     if (l_oep_EWeight) EWeight = E%E(iv1,ik,1)+ E%Efermi(1) 
+     do iv2 = 1, E%nbf
        if (l_oep_kli.and.(iv2.ne.iv1)) cycle
        ifft=wf_state(iv1,ik,1)
        offt=wf_state(iv2,ik,1)
@@ -129,7 +132,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
          isc%qs = (/1,1,1/)
          call scatterBamp(isc)
          if (is>nsym/(i_time_rev+1)) is=is-nsym/(i_time_rev+1)       
-         rhotw_ds(:)=conjg(wf(fft_rot_r(is,:),ifft))*wf(fft_rot_r(is,:),offt)
+         rhotw_ds(:)=conjg(wf(fft_rot_r(is,:),ifft))*wf(fft_rot_r(is,:),offt)/EWeight
          rhotw_ds =rhotw_ds/(rho*real(fft_size,SP)) 
          rhotw_rs = (0._SP,0._SP)
 #if defined _FFTW
@@ -140,11 +143,11 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
 #endif
          rhotw_rs(1:QP_ng_Sx) = rhotw_ds(fft_g_table(1:QP_ng_Sx,1))
          forall(ig1=2:QP_ng_Sx,ig2=2:QP_ng_Sx) rhotw_prd(ig1,ig2) = rhotw_prd(ig1,ig2) + &
-           & E%f(iv1,ik,1)*(conjg(rhotw_rs(ig1))*isc%rhotw(ig2) + rhotw_rs(ig1)*conjg(isc%rhotw(ig2)))
+           & E%f(iv1,ik,1)*real(conjg(rhotw_rs(ig1))*isc%rhotw(ig2))
          forall(ig1=2:QP_ng_Sx) rhotw_sum(ig1-1)=rhotw_sum(ig1-1)+rhotw_rs(ig1)
        end do
-       rho_xc(1:QP_ng_Sx-1) =  rho_xc(1:QP_ng_Sx-1) - E%f(iv1,ik,1)*(conjg(rhotw_sum(1:QP_ng_Sx-1))*SigmaXC&
-          &+rhotw_sum(1:QP_ng_Sx-1)*conjg(SigmaXC))/real(nkbz,SP) 
+       rho_xc(1:QP_ng_Sx-1) =  rho_xc(1:QP_ng_Sx-1) - E%f(iv1,ik,1)*&
+            &real(conjg(rhotw_sum(1:QP_ng_Sx-1))*SigmaXC)/(real(nkbz,SP)) 
        call live_timing(steps=1)
      end do
    end do
@@ -155,7 +158,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  Ko = (0._SP,0._SP)
  do ig1 = 1,QP_ng_Sx-1
    Ko(ig1,ig1) = (1._SP,0._SP)  
-   Ko(ig1, 1:QP_ng_Sx-1) = Ko(ig1, 1:QP_ng_Sx-1) - rhotw_prd(ig1+1,2:QP_ng_Sx)/float(nkbz)
+   Ko(ig1,1:QP_ng_Sx-1) = Ko(ig1,1:QP_ng_Sx-1) - rhotw_prd(ig1+1,2:QP_ng_Sx)/float(nkbz)
  end do
  !
  deallocate(isc%rhotw,rhotw_sum,rhotw_prd,rhotw_ds,rhotw_rs)
@@ -167,7 +170,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  ! 
  Vkli_RL=matmul(Ko,rho_xc)
  !
- deallocate(rho_xc)
+ deallocate(rho_xc,Ko)
  !
  ! Calculate Vkli (DL)
  !

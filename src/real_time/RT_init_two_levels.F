@@ -27,7 +27,7 @@ subroutine RT_init_two_levels(Xen)
  use units,          ONLY:HARTREE,FS2AUT
  use com,            ONLY:msg
  use X_m,            ONLY:DIP_iR,DIP_P
- use real_time,      ONLY:W_pump,Wo,Rabi_freq_pump,P,delta,Rabi_nn,D,Rabi_freq_probe,l_3levels,dip,W1
+ use real_time,      ONLY:W_pump,Wo,Rabi_freq_pump,P,W_probe,Rabi_nn,D,Rabi_freq_probe,l_3levels,dip,W1
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:levels,nel
  use com,            ONLY:error,warning
@@ -37,7 +37,7 @@ subroutine RT_init_two_levels(Xen)
  ! 
  ! Work Space
  !
- integer     :: i_pump,i_probe
+ integer     :: i_Pump,i_Probe
  complex(SP) :: mu(2)
  !
  Wo    =Xen%E(2,1,1)-Xen%E(1,1,1)
@@ -47,11 +47,11 @@ subroutine RT_init_two_levels(Xen)
    if(nel/=2) call error(" Error set Nelectro=2 !! ")
  endif
  !
- i_probe=2
- i_pump =1
+ i_Probe=2
+ i_Pump =1
  if (Efield(2)%ef_name/="none") then
-   i_pump=2
-   i_probe=1
+   i_Pump=2
+   i_Probe=1
  endif
  !
  if(l_3levels) then
@@ -85,11 +85,11 @@ subroutine RT_init_two_levels(Xen)
      call msg('s','[2 LEVELS] DipP (12,13,23)',(/abs(DIP_P(1,1,2,1,1)),abs(DIP_P(1,1,3,1,1)),abs(DIP_P(1,2,3,1,1))/))
    endif
    !
-   select case(trim(Efield(i_pump)%ef_name))
+   select case(trim(Efield(i_Pump)%ef_name))
      case('ANTIRES','SIN')
-       W_pump=-Efield(i_pump)%frequency 
+       W_pump=-Efield(i_Pump)%frequency 
      case('RES')
-       W_pump=Efield(i_pump)%frequency 
+       W_pump=Efield(i_Pump)%frequency 
    end select
    !
    call msg('s','[3 LEVELS] Energy Levels [eV]',(/Wo*HARTREE,W1*HARTREE/))
@@ -101,43 +101,43 @@ subroutine RT_init_two_levels(Xen)
    P        =  DIP_P(1,2,1,1,1)
    D        =  cI*DIP_iR(1,2,1,1,1)
    !
-   select case(trim(Efield(i_pump)%ef_name))
+   select case(trim(Efield(i_Pump)%ef_name))
      case('ANTIRES')
-       W_pump=Efield(i_pump)%frequency 
-       mu(i_pump) = P/cI/W_pump
+       W_pump=Efield(i_Pump)%frequency 
+       mu(i_Pump) = P/cI/W_pump
      case('RES')
-       W_pump=Efield(i_pump)%frequency 
-       mu(i_pump) =-P/cI/W_pump
+       W_pump=Efield(i_Pump)%frequency 
+       mu(i_Pump) =-P/cI/W_pump
      case('DELTA')
-       mu(i_pump) =P
+       mu(i_Pump) =P
        W_pump=0.
    end select
    !
-   Rabi_freq_pump=2.*Efield(i_pump)%amplitude*mu(i_pump)
+   Rabi_freq_pump=2.*Efield(i_Pump)%amplitude*mu(i_Pump)
    !
    call msg('s','[2 LEVELS] Wo              [eV   ]',abs(Wo)*HARTREE)
+   !
    call msg('s','[2 LEVELS] Pump Rabi freq  [eV   ]',abs(Rabi_freq_pump)*HARTREE)
    call msg('s','[2 LEVELS] Pump freq       [eV/fs]',(/abs(W_pump)*HARTREE,2.*pi/W_pump/FS2AUT /))
-   delta=0.
+   W_probe=0.
    !
-   if (i_pump/=1) then
+   if (i_Pump/=i_Probe) then
      !
-     delta=Efield(i_probe)%frequency-Efield(i_pump)%frequency
+     W_probe=Efield(i_Probe)%frequency
      !
-     if ( trim(Efield(i_probe)%ef_name) == 'RES' ) mu(i_probe) =-P/cI/Efield(i_probe)%frequency
-     if ( trim(Efield(i_probe)%ef_name) == 'ANTIRES' ) mu(i_probe) =P/cI/Efield(i_probe)%frequency
-     if ( trim(Efield(i_probe)%ef_name) == 'DELTA' ) mu(i_probe) =P
+     if ( trim(Efield(i_Probe)%ef_name) == 'RES' ) mu(i_Probe) =-P/cI/Efield(i_Probe)%frequency
+     if ( trim(Efield(i_Probe)%ef_name) == 'ANTIRES' ) mu(i_Probe) =P/cI/Efield(i_Probe)%frequency
+     if ( trim(Efield(i_Probe)%ef_name) == 'DELTA' ) mu(i_Probe) =P
      !
-     Rabi_freq_probe=2.*Efield(i_probe)%amplitude*mu(i_probe)
+     Rabi_freq_probe=2.*Efield(i_Probe)%amplitude*mu(i_Probe)
      !
      call msg('s','[2 LEVELS] Probe Rabi freq [eV   ]',abs(Rabi_freq_probe)*HARTREE)
-     call msg('s','[2 LEVELS] Probe freq      [eV/fs]',(/abs(W_pump+delta)*HARTREE,2.*pi/(W_pump+delta)/FS2AUT /))
-     call msg('s','[2 LEVELS] Probe detuning  [eV/fs]',(/abs(delta)*HARTREE,2.*pi/abs(delta)/FS2AUT/))
+     call msg('s','[2 LEVELS] Probe freq      [eV/fs]',(/abs(W_probe)*HARTREE,2.*pi/(W_probe)/FS2AUT /))
      !
-     Rabi_nn(1,1)=4.*Efield(i_pump)%amplitude*Efield(i_pump)%amplitude*conjg(mu(i_pump))*mu(i_pump)
-     Rabi_nn(1,2)=4.*Efield(i_pump)%amplitude*Efield(i_probe)%amplitude*conjg(mu(i_pump))*mu(i_probe)
-     Rabi_nn(2,1)=4.*Efield(i_probe)%amplitude*Efield(i_pump)%amplitude*conjg(mu(i_probe))*mu(i_pump)
-     Rabi_nn(2,2)=4.*Efield(i_probe)%amplitude*Efield(i_probe)%amplitude*conjg(mu(i_probe))*mu(i_probe)
+     Rabi_nn(1,1)=4.*Efield(i_Pump)%amplitude*Efield(i_Pump)%amplitude*conjg(mu(i_Pump))*mu(i_Pump)
+     Rabi_nn(1,2)=4.*Efield(i_Pump)%amplitude*Efield(i_Probe)%amplitude*conjg(mu(i_Pump))*mu(i_Probe)
+     Rabi_nn(2,1)=4.*Efield(i_Probe)%amplitude*Efield(i_Pump)%amplitude*conjg(mu(i_Probe))*mu(i_Pump)
+     Rabi_nn(2,2)=4.*Efield(i_Probe)%amplitude*Efield(i_Probe)%amplitude*conjg(mu(i_Probe))*mu(i_Probe)
    endif
    !
  endif

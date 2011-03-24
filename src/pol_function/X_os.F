@@ -63,7 +63,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  ! Work Space
  !
  integer                 :: i1,i2,ik,is,ikp,ikbz,ikpbz,i_spin,&
-&                           isp,iv,ic,g1,g2,g2_max,g2_min,iw,iwmax,isave(4),n_poles 
+&                           isp,iv,ic,g1,g2,g2_max,iw,iwmax,isave(4),n_poles 
  logical                 :: force_bare_X_G,skip_WF_load,Drude_term
  real(SP)                :: minmax_ehe(2),drude_factor,eh_occ
  type(pp_indexes)        :: px

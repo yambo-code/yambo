@@ -24,7 +24,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
  use pars,           ONLY:lchlen,SP,schlen
  use com,            ONLY:msg,of_open_close,opened_of
  use SC,             ONLY:SC_description,n_SC_descriptions
- use fields,         ONLY:A_vecpot,Efield,i_Probe
+ use fields,         ONLY:A_vecpot
  use stderr,         ONLY:set_real_printed_length,string_split
  use real_time,      ONLY:RT_ind_J,RT_P,l_NE_simulate_IP,P_2levels_is_done,&
 &                         RT_P_2levels,P_2levels_is_done
@@ -68,16 +68,16 @@ subroutine RT_output(what,VALUEs,TIME,E)
  if (initialize) file_name(1)=trim(append_ch)//'current'
  short_file_name(1)=trim(append_ch)//'current'
  n_headings(1)=4
- headings(1,2:4)=(/"j_x/E","j_y/E","j_z/E"/)
+ headings(1,2:4)=(/"j_x","j_y","j_z"/)
  !
  if (initialize) file_name(2)=trim(append_ch)//'polarization'
  short_file_name(2)=trim(append_ch)//'polarization'
  n_headings(2)=4
- headings(2,2:4)=(/"Pol_x/E","Pol_y/E","Pol_z/E"/)
+ headings(2,2:4)=(/"Pol_x","Pol_y","Pol_z"/)
  if (P_2levels_is_done) then
    n_headings(2)=7
-   headings(2,2:4)=(/"Pol_x/E","Pol_y/E","Pol_z/E"/)
-   headings(2,5:7)=(/"Pol2l_x/E","Pol2l_y/E","Pol2l_z/E"/)
+   headings(2,2:4)=(/"Pol_x","Pol_y","Pol_z"/)
+   headings(2,5:7)=(/"Pol2l_x","Pol2l_y","Pol2l_z"/)
  endif
  !
  if (initialize) file_name(3)=trim(append_ch)//'vector_potential'
@@ -191,10 +191,10 @@ subroutine RT_output(what,VALUEs,TIME,E)
    if (present(E))    data_to_dump(1)=E
    select case (i_f)
      case(1)
-       data_to_dump(2:4) =real(RT_ind_J)/Efield(i_Probe)%amplitude
+       data_to_dump(2:4) =real(RT_ind_J)
      case(2)
-       data_to_dump(2:4) =real(RT_P)/Efield(i_Probe)%amplitude
-       if (P_2levels_is_done) data_to_dump(5:7) =real(RT_P_2levels)/Efield(i_Probe)%amplitude
+       data_to_dump(2:4) =real(RT_P)
+       if (P_2levels_is_done) data_to_dump(5:7) =real(RT_P_2levels)
      case(3)
        data_to_dump(2:4) =real(A_vecpot%vecpot(:))
        data_to_dump(5:7) =real(A_vecpot%vecpot_vel(:))

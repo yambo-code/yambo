@@ -42,7 +42,7 @@ module real_time
  complex(SP) :: P
  complex(SP) :: D
  real(SP)    :: W_pump
- real(SP)    :: delta
+ real(SP)    :: W_probe
  real(SP)    :: Wo
 #endif
  !

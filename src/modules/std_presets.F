@@ -140,8 +140,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  ! PAR PROC Setup
  !
  master_cpu          =myid==0
- local_master_cpu(1) =.TRUE.
- local_master_cpu(2:)=.TRUE.
+ local_master_cpu    =myid==0
  !
  ! TTY size 
  !

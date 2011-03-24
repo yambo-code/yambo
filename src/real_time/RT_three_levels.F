@@ -47,13 +47,13 @@ subroutine RT_three_levels(G_lesser,it)
  complex(SP)              :: G12,G13,G23
  character(schlen)        :: headings(n_files,10)
  character(lchlen), save  :: file_name(n_files)
- integer                  :: i_f,i_pump,i_probe
+ integer                  :: i_f,i_Pump,i_Probe
  !
- i_probe=2
- i_pump =1
+ i_Probe=2
+ i_Pump =1
  if (Efield(2)%ef_name/="none") then
-   i_pump=2
-   i_probe=1
+   i_Pump=2
+   i_Probe=1
  endif
  !
  if(it==it_start) then
@@ -92,14 +92,14 @@ subroutine RT_three_levels(G_lesser,it)
  !
  ! Rabi freq 2._SP*Efied(1)%amplitude*DIP_P/W_pump
  !
- rabi12=cI*Efield(i_pump)%amplitude*sum(Efield(i_pump)%versor(:)*DIP_P(:,2,1,1,1))/W_pump
- rabi13=cI*Efield(i_pump)%amplitude*sum(Efield(i_pump)%versor(:)*DIP_P(:,3,1,1,1))/W_pump
- rabi23=cI*Efield(i_pump)%amplitude*sum(Efield(i_pump)%versor(:)*DIP_P(:,3,2,1,1))/W_pump
+ rabi12=cI*Efield(i_Pump)%amplitude*sum(Efield(i_Pump)%versor(:)*DIP_P(:,2,1,1,1))/W_pump
+ rabi13=cI*Efield(i_Pump)%amplitude*sum(Efield(i_Pump)%versor(:)*DIP_P(:,3,1,1,1))/W_pump
+ rabi23=cI*Efield(i_Pump)%amplitude*sum(Efield(i_Pump)%versor(:)*DIP_P(:,3,2,1,1))/W_pump
  !
  G12=-2._SP*cI*rabi12/(W_pump+Wo+cI/tau_offdiag(1))*(exp(-cI*W_pump*Time)-exp(cI*(Wo+cI/tau_offdiag(1))*Time))
  G13=-2._SP*cI*rabi13/(W_pump+W1+cI/tau_offdiag(2))*(exp(-cI*W_pump*Time)-exp(cI*(W1+cI/tau_offdiag(2))*Time))
  !
- if(trim(Efield(i_pump)%ef_name)=="SIN") then
+ if(trim(Efield(i_Pump)%ef_name)=="SIN") then
    !
    W_pump=-W_pump
    !

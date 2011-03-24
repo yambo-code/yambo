@@ -25,7 +25,7 @@ subroutine RT_TwoL_Glesser(Poles_and_derivatives,Eo,Rabi,G_lesser)
  use units,          ONLY:HARTREE
  use real_time,      ONLY:NE_time,Phase_Lifetime,QP_LifeTime,it_start,NE_i_time
  use SC,             ONLY:it_now
- use fields,         ONLY:Efield,global_gauge
+ use fields,         ONLY:Efield,global_gauge,i_Probe,i_Pump
  !
 ! use real_time,      ONLY:P,W_pump
 ! use stderr,         ONLY:real2ch
@@ -48,19 +48,19 @@ subroutine RT_TwoL_Glesser(Poles_and_derivatives,Eo,Rabi,G_lesser)
  !
  G_lesser=(0.,0.)
  !
- if (trim(global_gauge)=="length")    return
+ if (trim(global_gauge)=="length".or.i_Probe/=i_Pump) return
  !
  Eo_=Eo
  W_pump=0.
  G_lesser_prefactor=(1.,0.)
  !
- select case(trim(Efield(1)%ef_name))
+ select case(trim(Efield(i_Probe)%ef_name))
    case('RES')
-     W_pump=Efield(1)%frequency
+     W_pump=Efield(i_Probe)%frequency
      Eo_=Eo+W_pump
      G_lesser_prefactor=exp(-cI*W_pump*NE_time)
    case('ANTIRES')
-     W_pump=Efield(1)%frequency
+     W_pump=Efield(i_Probe)%frequency
      Eo_=Eo-W_pump
      G_lesser_prefactor=exp( cI*W_pump*NE_time)
  end select
@@ -126,18 +126,6 @@ subroutine RT_TwoL_Glesser(Poles_and_derivatives,Eo,Rabi,G_lesser)
  !
  dG_residuals=(/ cI*dGinfty, R_wbar, conjg(R_wbar), R_gamma/)
  Omega=       (/ (0._SP,0._SP)   , -W_bar, conjg(W_bar), -W_gamma/)
- !
-! open (unit=1,file='X_RabisqTT_'//trim(real2ch(abs(Rabi)**2.*Phase_LifeTime*QP_LifeTime)),form='formatted')
-! do i_f=1,N_W_delta_search-1
-!   Eo_=(real(W_func(i_f))-Eo)
-!   Gamma_mat=abs(Rabi)**2/(Eo_**2.+1./Phase_LifeTime**2.)*QP_LifeTime/Phase_LifeTime
-!   dGinfty=-2.*cI/(Gamma_mat+1.)
-!   write (1,'(2f20.10)') real(W_func(i_f)*HARTREE),aimag(abs(P)**2./Eo/W_pump*cI*dGinfty/&
-!&                         ( Eo_-cI/Phase_LifeTime) )
-! enddo
-! close(1)
-! stop
- !
  !
  do i_r=1,4
    G_residuals(i_r)=dG_residuals(i_r)/(Omega(i_r)-Eo_-cI/Phase_LifeTime)

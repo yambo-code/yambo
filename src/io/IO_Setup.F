@@ -46,11 +46,11 @@ subroutine IO_Setup(en,k)
  !
  call section('*','Files & I/O Directories') 
  !
- ! GPL_EXCLUDE_START
- !
  ! CPU's structure
  !
  local_master_cpu(myid+1)=master_cpu
+ !
+ ! GPL_EXCLUDE_START
  !
  if (ncpu>1.and.more_IO_path/=core_IO_path) then
    !

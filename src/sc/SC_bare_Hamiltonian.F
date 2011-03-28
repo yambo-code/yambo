@@ -49,7 +49,7 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  call mem_est("QP_Vxc",(/QP_n_states/))    
  !
 #if defined _RT
- call el_density(G_lesser,Xk,rho_n,.false.)
+ call el_density(G_lesser,Xk,rho_n,1,.false.)
 #else
  call el_density(E,Xk,rho_n,.false.)
  V_xc_sc=V_xc 

@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 #if defined _RT
-subroutine el_density(G_lesser,Xk,rho,force_si)
+subroutine el_density(G_lesser,Xk,rho,lowest_band,force_si)
 #else
 subroutine el_density(en,Xk,rho,force_si)
 #endif
@@ -64,6 +64,7 @@ subroutine el_density(en,Xk,rho,force_si)
   type(bz_samp)::Xk
 #if defined _RT
   complex(SP), intent(in), optional :: G_lesser(SC_bands,SC_bands,Xk%nibz)
+  integer,     intent(in) :: lowest_band
 #else
   type(levels) ::en       
 #endif
@@ -75,7 +76,7 @@ subroutine el_density(en,Xk,rho,force_si)
   integer :: i1,i2,ik,i_spin,ifft,rho_syms,ifft2
   real(SP):: rho_no_sym(fft_size),f_occ
   logical :: warn_done
-  integer :: iv_max
+  integer :: iv_max,iv_min
 #if defined _RT || defined _DISTRIBUTED
   type(pp_indexes) ::px
 #endif
@@ -86,16 +87,18 @@ subroutine el_density(en,Xk,rho,force_si)
   !
 #if defined _RT
   iv_max=SC_bands
+  iv_min=lowest_band
 #else
   iv_max=en%nbm
+  iv_min=1
 #endif
   !
 #if defined _RT || defined _DISTRIBUTED
   call pp_indexes_reset(px)
-  call par_indexes(px,(/Xk%nibz,iv_max/))
+  call par_indexes(px,(/Xk%nibz,iv_max/),low_range=(/1,iv_min/))
 #endif
   !
-  do i1=1,iv_max
+  do i1=iv_min,iv_max
     do i2=1,Xk%nibz
       !
 #if defined _RT || defined _DISTRIBUTED
@@ -152,7 +155,7 @@ subroutine el_density(en,Xk,rho,force_si)
   !
   do ik=1,Xk%nibz
     !      
-    do i1=1,SC_bands
+    do i1=iv_min,iv_max
       !
       if (.not.px%element_2D(ik,i1)) cycle
       !

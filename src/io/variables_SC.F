@@ -31,9 +31,9 @@ integer function variables_SC(ID,local_description,what)
 &                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions,local_V
  use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR
 #if defined _RT
- use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,NE_time,Hfrozen,XCfrozen,                      &
+ use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,NE_time,Hfrozen,XCfrozen,              &
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
-&                         QP_LifeTime,Phase_LifeTime,l_RT_diamagnetic,&
+&                         QP_LifeTime,Phase_LifeTime,l_RT_diamagnetic,RT_lw_band, &
 &                         max_rt_steps_disk,l_RT_induced_field,l_NE_simulate_BSE
  use fields,         ONLY:n_ext_fields,Efield
 #endif                                
@@ -245,7 +245,7 @@ integer function variables_SC(ID,local_description,what)
 &    DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   call io_elemental(ID,VAR="RT_OTHERS",VAR_SZ=9,MENU=0) 
+   call io_elemental(ID,VAR="RT_OTHERS",VAR_SZ=10,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_RT_diagonalize,&
 &    VAR=' [RT] QP analysis                :',CHECK=.true.,OP=(/"=="/),&
@@ -254,6 +254,10 @@ integer function variables_SC(ID,local_description,what)
    call io_elemental(ID,I0=RT_diagonalization_steps,&
 &    VAR=' [RT] Diagonalization steps      :',CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
+   i_desc=i_desc+1
+   call io_elemental(ID,I0=RT_lw_band,&
+&    VAR=' [RT] Lowest band                 :',CHECK=.true.,OP=(/"=="/),&
+&     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,I0=max_rt_steps_disk,&
 &    VAR=' [RT] Cache size                 :',CHECK=.true.,OP=(/"=="/),&

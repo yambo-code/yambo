@@ -108,8 +108,6 @@ subroutine RT_Observables(en,k,on_the_fly_operators)
      !        
      ! E_xc Energy 
      !
-     call el_density(G_lesser,k,rho_n,.false.)
-     !
      call IO_and_Messaging_switch("-report -log -io_in -io_out")
      call XC_potential_driver(en,k,WF_KIND,WF_xc_functional,0)
      call IO_and_Messaging_switch("+report +log +io_in +io_out")

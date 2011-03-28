@@ -63,9 +63,10 @@ subroutine RT_three_levels(G_lesser,it)
    headings(1,2:7)=(/'G_12/Im','G_12/Re','G_13/Im','G_13/Re','G_23/Im','G_23/Re'/)
    file_name(1)="G_theo"
    !
-   n_headings(2)=7
+   n_headings(2)=10
    headings(2,1)="Time[fs]"
-   headings(2,2:7)=(/'G_12/Im','G_12/Re','G_13/Im','G_13/Re','G_23/Im','G_23/Re'/)
+   headings(2,2:10)=(/'G_12/Im','G_12/Re','G_13/Im','G_13/Re','G_23/Im','G_23/Re',& 
+&                     'G_11   ','G22    ','G33    '/)
    file_name(2)="G_num"
    !
    do i_f=1,n_files
@@ -132,6 +133,9 @@ subroutine RT_three_levels(G_lesser,it)
  data_to_dump(5)=aimag(G_lesser(1,3,1))
  data_to_dump(6)= real(G_lesser(2,3,1))
  data_to_dump(7)=aimag(G_lesser(2,3,1))
+ data_to_dump(8)  = real((0._SP,-1._SP)*G_lesser(1,1,1))
+ data_to_dump(9)  = real((0._SP,-1._SP)*G_lesser(2,2,1))
+ data_to_dump(10) = real((0._SP,-1._SP)*G_lesser(3,3,1))
  call msg('o '//trim(file_name(i_f)),'',data_to_dump(1:n_headings(i_f)),INDENT=0,USE_TABS=.TRUE.)
  !
  contains

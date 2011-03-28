@@ -18,7 +18,7 @@
 !
 subroutine RT_initialize(Xen)
  ! 
- use drivers,        ONLY:l_collisions_IO
+ use drivers,        ONLY:l_collisions_IO,l_sc_contains_lda
  use SC,             ONLY:local_V
  use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT,FS2AUT,HARTREE
@@ -26,10 +26,10 @@ subroutine RT_initialize(Xen)
  use vec_operate,    ONLY:normalize_v
  use electrons,      ONLY:nel,levels
  use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields, &
-&                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,NE_tot_time,    &
-&                         l_RT_diamagnetic,max_rt_steps_disk,l_NE_simulate_BSE,       &
-&                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,         &
-&                         l_RT_induced_field,NE_Hxc_jumps,     &
+&                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,NE_tot_time,   &
+&                         l_RT_diamagnetic,max_rt_steps_disk,l_NE_simulate_BSE,     &
+&                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,    &
+&                         l_RT_induced_field,NE_Hxc_jumps,l_NE_simulate_TDDFT,      &
 &                         RT_diagonalization_steps,RT_is_dumped,QP_LifeTime,Phase_LifeTime, &
 &                         RT_TwoL_Polarization
 #if defined _TWO_LEVELS
@@ -65,13 +65,14 @@ subroutine RT_initialize(Xen)
  l_NE_simulate_Irredux =Hfrozen.and..not.XCfrozen
  if(l_NE_simulate_BSE.and.XCfrozen) call warning(" BSE turned off because XC is frozen! ")
  l_NE_simulate_BSE     =.not.XCfrozen.and.l_NE_simulate_BSE
+ l_NE_simulate_TDDFT   =.not.XCfrozen.and..not.Hfrozen.and.l_sc_contains_lda
  !
  !
  ! In some cases I need to freeze XC or Hartree. In these cases I initialize here
  ! the scattering term. No updates will follow in RT_Collision
  !
  l_RT_needs_XC0=any((/l_NE_simulate_IP,l_NE_simulate_RPA,l_NE_simulate_BSE,&
-&                     l_NE_simulate_Irredux,Thermal_steps>0/))
+&                     l_NE_simulate_Irredux,l_NE_simulate_TDDFT,Thermal_steps>0/))
  !
  ! Check if Collisions are required
  !==================================

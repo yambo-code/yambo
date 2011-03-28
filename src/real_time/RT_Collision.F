@@ -36,9 +36,9 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
- use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_with_fields,QP_LifeTime,   &
-&                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference, & 
-&                         G_lesser_reference,l_RT_needs_XC0,Phase_LifeTime,NE_Hxc_jumps,&
+ use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_with_fields,QP_LifeTime,RT_lw_band,full_rho,&
+&                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
+&                         G_lesser_reference,l_RT_needs_XC0,Phase_LifeTime,NE_Hxc_jumps,       &
 &                         RT_is_dumped,l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start
 #if defined _TWO_LEVELS
  use real_time,      ONLY:tau_diag,tau_offdiag,l_3levels
@@ -75,7 +75,8 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  !
  if (it_now==it_start.or.mod(it_now-it_start+1,NE_Hxc_jumps)==0) then
    !
-   if(.not.Hfrozen.or.XC_needs_density.or..not.NE_dynamics) call el_density(G_input,k,rho_n,.false.)
+   if(.not.Hfrozen.or.XC_needs_density.or..not.NE_dynamics) &
+&    call el_density(G_input,k,rho_n,RT_lw_band,.false.)
    !
    ! The Hartree term is written as
    !
@@ -88,6 +89,10 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    if(.not.XCfrozen.or..not.NE_dynamics) then
      !
      if(l_sc_contains_lda.and.SC_xc_functional/=0) then
+       !
+       ! Reconstruct the full density
+       !
+       if(RT_lw_band>1) rho_n=full_rho+rho_n-rho_reference
        !
        call IO_and_Messaging_switch("-report -log -io_in -io_out")
        call XC_potential_driver(Xen,k,WF_KIND,WF_xc_functional,1)
@@ -205,13 +210,13 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
 #endif
      !
      if ( QP_LifeTime > 1.E-5_SP) then
-       forall(i1=1:SC_bands) &
+       forall(i1=RT_lw_band:SC_bands) &
          I1_lesser(i1,i1,ik)=I1_lesser(i1,i1,ik)-cI/QP_LifeTime*(G_input(i1,i1,ik)-G_lesser_reference(i1,i1,ik))
      endif
      !
      if(Phase_LifeTime > 1.E-5_SP) then
        !
-       do i1=1,SC_bands
+       do i1=RT_lw_band,SC_bands
          do i2=i1+1,SC_bands
            I1_lesser(i1,i2,ik)=I1_lesser(i1,i2,ik)-cI/Phase_LifeTime*(G_input(i1,i2,ik)-G_lesser_reference(i1,i2,ik))
            I1_lesser(i2,i1,ik)=I1_lesser(i2,i1,ik)-cI/Phase_LifeTime*(G_input(i2,i1,ik)-G_lesser_reference(i2,i1,ik))
@@ -223,6 +228,20 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
 #if defined _TWO_LEVELS
      endif
 #endif
+   !
+   if(RT_lw_band>1) then
+     !
+     ! The I1 and I2 matrices have the structure
+     !
+     ! | 1:RT_lw_band  RT_lw_bnd+1:SC_bands  
+     ! |   0                   0           | 1:RT_lw_band
+     ! |   0                   =/0         | RT_lw_band+1:SC_bands
+     !
+     I1_lesser(1:RT_lw_band,  1:SC_bands,ik)=(0._SP,0._SP)
+     I1_lesser(1:SC_bands  ,1:RT_lw_band,ik)=(0._SP,0._SP)
+     I2_lesser(1:RT_lw_band,  1:SC_bands,ik)=(0._SP,0._SP)
+     I2_lesser(1:SC_bands  ,1:RT_lw_band,ik)=(0._SP,0._SP)
+   endif
    !
    endif
    !

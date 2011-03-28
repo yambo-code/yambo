@@ -40,6 +40,9 @@ subroutine QP_state_table_setup(en)
  use QP_m,          ONLY:QP_nk,QP_nb,QP_state,QP_n_states,QP_table,SC_bands_mixed,SC_band_mixing 
  use electrons,     ONLY:levels,n_sp_pol
  use parser_m,      ONLY:parser
+#if defined _RT
+ use real_time,     ONLY:RT_lw_band
+#endif
  implicit none
  type(levels)::en
  !
@@ -209,6 +212,10 @@ subroutine QP_state_table_setup(en)
        do i3=0,bands_mixed-1
          !
          if (i2+i3>QP_nb.or.i2+i3<1) cycle
+         !
+#if defined _RT
+         if(i2<RT_lw_band) cycle
+#endif
          !
          QP_n_states=QP_n_states+1
          QP_table(QP_n_states,1)=i2

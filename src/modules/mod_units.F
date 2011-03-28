@@ -60,6 +60,8 @@ module UNITS
  ! The convertion factor between eV and fs is \hbar = 6.58211899(16)*10^-1 eV * fs
  ! from wiki http://en.wikipedia.org/wiki/Electronvolt
  !
+ real(SP), parameter :: HBAR_eVfs = 6.58211899_SP*10._SP**(-1._SP) ! eV*fs
+ !
  real(SP), parameter :: PS2AUT =10.**5/2.418884326505_SP
  !
  ! Magnetic fields

@@ -115,7 +115,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (BS_columns<=0.or.BS_columns>Xk%nibz) BS_columns=Xk%nibz
  BS_k_and_row_restart=0
  BS_exchange_done=.FALSE.
- l_half_Ox  =(BS_columns==1.and..not.l_bs_fxc) ! if .TRUE., gamma point case, it  allocates only O1x
+ l_half_Ox  =(BS_columns==1.and..not.l_bs_fxc) ! if .TRUE., gamma point case, it allocates only O1x_small
  !
  ! Dimensions and Tables
  ! 

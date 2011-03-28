@@ -35,21 +35,21 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  ! [5] Initialize the fields
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_sc_cohsex,l_sc_hf
+ use drivers,        ONLY:l_sc_cohsex,l_sc_hf,l_sc_contains_lda
  use com,            ONLY:msg,warning,error
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_Vnl_xc,COHSEX_use_empties
  use units,          ONLY:HARTREE
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
- use real_time,      ONLY:G_lesser,ID,ID,NE_steps,G_lesser_previous,RT_ind_J,&
-&                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,rho_reference,&
+ use real_time,      ONLY:G_lesser,ID,ID,NE_steps,G_lesser_previous,RT_ind_J,RT_lw_band,    &
+&                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,rho_reference,  &
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
-&                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,RT_P_2levels,            &
-&                         l_NE_simulate_Irredux,l_NE_simulate_RPA
+&                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,RT_P_2levels,full_rho,   &
+&                         l_NE_simulate_Irredux,l_NE_simulate_RPA,l_NE_simulate_TDDFT
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V, &
 &                         rho_convergence,H_rotate,local_V,V_hartree_sc,      &
-&                         E_bare,V_xc_sc,rho_n,Ho
+&                         E_bare,V_xc_sc,rho_n,Ho,SC_xc_functional
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE
  use X_m,            ONLY:X_t
  use global_XC,      ONLY:WF_kind,WF_xc_functional
@@ -78,6 +78,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  G_lesser          =(0._SP,0._SP)
  G_lesser_reference=(0._SP,0._SP)
  rho_reference     =(0._SP)
+ if(allocated(full_rho)) full_rho=(0._SP,0._SP)
  V_xc_sc           =(0._SP)
  V_hartree_sc      =(0._SP)
  H_nl_sc           =(0._SP,0._SP)
@@ -160,7 +161,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
      call H_rotate(SC_R(1:SC_bands,1:SC_bands,ik,1),G_lesser(1:SC_bands,1:SC_bands,ik),SC_bands,-1)
    enddo
    !
-   if (Hfrozen) call el_density(G_lesser,k,rho_n,.false.)
+   if (Hfrozen) call el_density(G_lesser,k,rho_n,1,.false.)
    if (Hfrozen) call V_Hartree(rho_n,V_hartree_sc)
    !
    V_xc_sc=(0._SP)
@@ -213,22 +214,32 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    !
    XC0_and_HARTREE0=(0._SP,0._SP)
    ! 
-   call el_density(G_lesser,Xk,rho_n,.false.)
+   call el_density(G_lesser,Xk,rho_n,RT_lw_band,.false.)
    !
    ! During Thermalization rho_reference is always zero
    !
-   if(Thermal_steps==0)rho_reference=rho_n
+   if(Thermal_steps==0) rho_reference=rho_n
    !
-   call IO_and_Messaging_switch("-report -log")
-   call XC_potential_driver(Xen,Xk,WF_KIND,WF_xc_functional,1)
-   call IO_and_Messaging_switch("+report +log")
+   if(l_sc_contains_lda.and.SC_xc_functional/=0) then
+     !
+     ! Calculate the full density
+     !
+     call el_density(G_lesser,Xk,rho_n,1,.false.)
+     !
+     if(RT_lw_band>1) full_rho=rho_n
+     !
+     call IO_and_Messaging_switch("-report -log")
+     call XC_potential_driver(Xen,Xk,WF_KIND,WF_xc_functional,1)
+     call IO_and_Messaging_switch("+report +log")
+     !
+   endif
    !
    ! In the IP or RPA case XC0_and_HARTREE0  contains <mk | Vxc(rho_0) + Vhartree(rho_0) | nk>
    !
-   ! in the IRREDUX case   XC0_and_HARTREE0  contains <mk | Vhartree(rho_0) | nk>
+   ! in the IRREDUX or TDDFT case   XC0_and_HARTREE0  contains <mk | Vhartree(rho_0) | nk>
    !
    do ik=1,QP_nk
-     if(.not.l_NE_simulate_Irredux) &
+     if(.not.l_NE_simulate_Irredux.and..not.l_NE_simulate_TDDFT) &
 &      call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf) 
      if(Thermal_steps==0) &
 &      call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf) 
@@ -267,7 +278,8 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    !
    ! If I'm doing the response to an external field I need rho_reference and G_lesser_reference
    !
-   if(it_start>Thermal_steps.and..not.l_NE_simulate_IP) call el_density(G_lesser_reference,Xk,rho_reference,.false.)
+   if(it_start>Thermal_steps.and..not.l_NE_simulate_IP) & 
+&     call el_density(G_lesser_reference,Xk,rho_reference,RT_lw_band,.false.)
    !
  endif
  !

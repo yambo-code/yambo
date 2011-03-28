@@ -24,10 +24,10 @@ subroutine RT_init_two_levels(Xen)
  use pars,           ONLY:SP,cI
  use fields,         ONLY:Efield
  use pars,           ONLY:pi,cI
- use units,          ONLY:HARTREE,FS2AUT
+ use units,          ONLY:HARTREE,FS2AUT,HBAR_eVfs
  use com,            ONLY:msg
  use X_m,            ONLY:DIP_iR,DIP_P
- use real_time,      ONLY:W_pump,Wo,Rabi_freq_pump,P,W_probe,Rabi_nn,D,Rabi_freq_probe,l_3levels,dip,W1
+ use real_time,      ONLY:W_pump,Wo,Rabi_freq_pump,P,W_probe,Rabi_nn,D,Rabi_freq_probe,l_3levels,dip,W1,tau_offdiag
  use SC,             ONLY:SC_bands
  use electrons,      ONLY:levels,nel
  use com,            ONLY:error,warning
@@ -66,23 +66,31 @@ subroutine RT_init_two_levels(Xen)
      DIP_P(1,1,2,1,1)= cmplx(0._SP,dip(1))
      DIP_P(1,1,3,1,1)= cmplx(0._SP,dip(2))
      DIP_P(1,2,3,1,1)= cmplx(0._SP,dip(3))
+!     DIP_P(3,2,3,1,1)= cmplx(0._SP,dip(3))
      !
      DIP_P(1,2,1,1,1)=conjg( DIP_P(1,1,2,1,1))
      DIP_P(1,3,1,1,1)=conjg( DIP_P(1,1,3,1,1))
      DIP_P(1,3,2,1,1)=conjg( DIP_P(1,2,3,1,1))
+!     DIP_P(3,3,2,1,1)=conjg( DIP_P(3,2,3,1,1))
      !
      DIP_iR(1,1,2,1,1)= DIP_P(1,1,2,1,1) /(Wo)
      DIP_iR(1,1,3,1,1)= DIP_P(1,1,3,1,1) /(W1)
      DIP_iR(1,2,3,1,1)= DIP_P(1,2,3,1,1) /(W1-Wo)
+!     DIP_iR(3,2,3,1,1)= DIP_P(3,2,3,1,1) /(W1-Wo)
      !
      DIP_iR(1,2,1,1,1)= -conjg(DIP_iR(1,1,2,1,1))
      DIP_iR(1,3,1,1,1)= -conjg(DIP_iR(1,1,3,1,1))
      DIP_iR(1,3,2,1,1)= -conjg(DIP_iR(1,2,3,1,1))
+!     DIP_iR(3,3,2,1,1)= -conjg(DIP_iR(3,2,3,1,1))
      !
    else
      call warning(" Using intrinsic dipoles ")
-     call msg('s','[2 LEVELS] DipR (12,13,23)',(/abs(DIP_iR(1,1,2,1,1)),abs(DIP_iR(1,1,3,1,1)),abs(DIP_iR(1,2,3,1,1))/))
-     call msg('s','[2 LEVELS] DipP (12,13,23)',(/abs(DIP_P(1,1,2,1,1)),abs(DIP_P(1,1,3,1,1)),abs(DIP_P(1,2,3,1,1))/))
+     call msg('s','[3 LEVELS] DipR (12,13,23) x',(/abs(DIP_iR(1,1,2,1,1)),abs(DIP_iR(1,1,3,1,1)),abs(DIP_iR(1,2,3,1,1))/))
+     call msg('s','[3 LEVELS] DipP (12,13,23) x',(/abs(DIP_P(1,1,2,1,1)),abs(DIP_P(1,1,3,1,1)),abs(DIP_P(1,2,3,1,1))/))
+     call msg('s','[3 LEVELS] DipR (12,13,23) y',(/abs(DIP_iR(2,1,2,1,1)),abs(DIP_iR(2,1,3,1,1)),abs(DIP_iR(2,2,3,1,1))/))
+     call msg('s','[3 LEVELS] DipP (12,13,23) y',(/abs(DIP_P(2,1,2,1,1)),abs(DIP_P(2,1,3,1,1)),abs(DIP_P(2,2,3,1,1))/))
+     call msg('s','[3 LEVELS] DipR (12,13,23) z',(/abs(DIP_iR(3,1,2,1,1)),abs(DIP_iR(3,1,3,1,1)),abs(DIP_iR(3,2,3,1,1))/))
+     call msg('s','[3 LEVELS] DipP (12,13,23) z',(/abs(DIP_P(3,1,2,1,1)),abs(DIP_P(3,1,3,1,1)),abs(DIP_P(3,2,3,1,1))/))  
    endif
    !
    select case(trim(Efield(i_Pump)%ef_name))
@@ -93,6 +101,9 @@ subroutine RT_init_two_levels(Xen)
    end select
    !
    call msg('s','[3 LEVELS] Energy Levels [eV]',(/Wo*HARTREE,W1*HARTREE/))
+   call msg('s','[3 LEVELS] Pump Rabi freq[eV] ', &
+&           abs(2.*Efield(i_pump)%amplitude*sum(DIP_P(:,2,3,1,1)*Efield(i_pump)%versor(:))/W_pump/cI*HARTREE)) 
+   call msg('s','[3 LEVELS] Damping [eV] ',HBAR_eVfs/tau_offdiag(1:3)*FS2AUT)
    !
  else
    !

@@ -54,8 +54,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use collisions_CACHE, ONLY:COLLISIONS_cache_size
 #endif
 #if defined _RT
- use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, QP_LifeTime, Phase_LifeTime, &
-&                        RT_diagonalization_steps,SwitchOnTime,max_rt_steps_disk,NE_tot_time,NE_Hxc_jumps
+ use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, QP_LifeTime, Phase_LifeTime,  &
+&                        RT_diagonalization_steps,SwitchOnTime,max_rt_steps_disk,NE_tot_time,NE_Hxc_jumps,&
+&                        RT_lw_band
  use fields,        ONLY:Efield
 #endif
 #if defined _TWO_LEVELS
@@ -285,6 +286,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'RTfreezeH', '[RT] Hartree not updated during RT',verb_level=V_real_time)
  call it('f',defs,'RTfreezeXC','[RT] XC potential/self-energy not updated during RT',verb_level=V_real_time)
  call it('f',defs,'RTBSEOnly','[RT] Simulate BSE only without include single particle effects',verb_level=V_real_time)
+ call it(defs,'RTLowestBnd',   '[RT] Lowest Band',RT_lw_band)
  call it(defs,'DiskSteps',     '[RT] Numer of steps stored in memory before I/O',max_rt_steps_disk,verb_level=V_real_time)
  !
  ! External fields

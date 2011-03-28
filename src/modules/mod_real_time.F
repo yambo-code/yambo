@@ -79,6 +79,7 @@ module real_time
  logical           :: l_NE_simulate_IP
  logical           :: l_NE_simulate_Irredux
  logical           :: l_NE_simulate_BSE
+ logical           :: l_NE_simulate_TDDFT
  !
  ! Frozen parts of self-energy
  !
@@ -118,6 +119,7 @@ module real_time
  integer  :: NE_i_time ! = (NE_time-1)/RT_step
  integer  :: NE_Hxc_jumps
  integer  :: NE_steps
+ integer  :: RT_lw_band
  !
  ! Macroscopic induced current ... 
  !--------------------------------
@@ -150,7 +152,8 @@ module real_time
  complex(SP), allocatable :: I1_lesser(:,:,:)
  complex(SP), allocatable :: I2_lesser(:,:,:)
  !
- real(SP),    allocatable :: rho_reference(:)
+ real(SP),    allocatable :: rho_reference(:) ! reference density from RT_lw_band:SC_bands
+ real(SP),    allocatable :: full_rho(:)      ! density of all bands from 1:SC_bands
  !
  ! Integrator Variables
  !
@@ -247,9 +250,10 @@ module real_time
    subroutine RT_alloc(en)
      !
      use pars,           ONLY:SP,schlen
-     use drivers,        ONLY:l_sc_hf,l_HF_and_locXC
+     use drivers,        ONLY:l_sc_hf,l_HF_and_locXC,l_sc_contains_lda
      use memory_m,       ONLY:mem_est
-     use SC,             ONLY:SC_bands,V_hartree_sc,local_V,SC_alloc,E_bare,rho_n
+     use SC,             ONLY:SC_bands,V_hartree_sc,local_V,SC_alloc,E_bare,rho_n, &
+&                             SC_xc_functional,SC_xc_functional
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
@@ -302,6 +306,11 @@ module real_time
      !
      allocate(rho_reference(fft_size))
      call mem_est("rho_reference",(/fft_size/),(/SP/))
+     !
+     if(l_sc_contains_lda.and.SC_xc_functional/=0.and.RT_lw_band>1) then
+       allocate(full_rho(fft_size))
+       call mem_est("full_rho",(/fft_size/),(/SP/))
+     endif
      !
      ! Reference energies
      !
@@ -369,6 +378,11 @@ module real_time
      if(allocated(rho_reference)) then
        deallocate(rho_reference)
        call mem_est("rho_reference")
+     endif
+     !
+     if(allocated(full_rho)) then
+       deallocate(full_rho)
+       call mem_est("full_rho")
      endif
      !
      deallocate(E_bare)

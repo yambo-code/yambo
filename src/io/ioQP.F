@@ -270,6 +270,7 @@ integer function ioQP(what,qp,ID)
    ioQP=io_restart_point(ID)
    if (ioQP/=0.and.io_netcdf_support(ID)) then
      QP_W_partially_done=.true.
+     if(qp_n_states_disk/=qp%n_states) QP_W_partially_done=.false.
      goto 1
    endif
  endif

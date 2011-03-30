@@ -106,7 +106,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=VERIFY,ID=qp_ID)
  io_err=ioQP('QP',qp,qp_ID)
  !
- if (QP_W_partially_done) then
+ if (QP_W_partially_done.and.io_err>0) then
    !
    ! Assuming i_qp_to_start=QP_n_states I get ...
    !

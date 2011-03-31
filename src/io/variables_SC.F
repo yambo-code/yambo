@@ -27,13 +27,13 @@ integer function variables_SC(ID,local_description,what)
  use stderr,         ONLY:intc
  use QP_m,           ONLY:SC_band_mixing,COHSEX_use_empties
  use SC,             ONLY:SC_bands,it_now,SC_potential,SC_kind,SC_perturbation,&
-&                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,&
+&                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,SC_lw_band,      &
 &                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions,local_V
  use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR
 #if defined _RT
  use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,NE_time,Hfrozen,XCfrozen,              &
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
-&                         QP_LifeTime,Phase_LifeTime,l_RT_diamagnetic,RT_lw_band, &
+&                         QP_LifeTime,Phase_LifeTime,l_RT_diamagnetic,                             &
 &                         max_rt_steps_disk,l_RT_induced_field,l_NE_simulate_BSE
  use fields,         ONLY:n_ext_fields,Efield
 #endif                                
@@ -92,7 +92,11 @@ integer function variables_SC(ID,local_description,what)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  io_status_save=io_status(ID)
- call io_elemental(ID,VAR="LOCAL_ITER_BANDS_MIX",VAR_SZ=4,MENU=0) 
+ if (ver_is_gt_or_eq(ID,revision=828)) then
+   call io_elemental(ID,VAR="LOCAL_ITER_BANDS_MIX",VAR_SZ=5,MENU=0) 
+ else
+   call io_elemental(ID,VAR="LOCAL_ITER_BANDS_MIX",VAR_SZ=4,MENU=0) 
+ endif
  i_desc=i_desc+1
  call io_elemental(ID,L0=local_V,&
 &     VAR=' The potential is local          :',DESCRIPTION=local_description(i_desc))
@@ -104,6 +108,12 @@ integer function variables_SC(ID,local_description,what)
  call io_elemental(ID,I0=SC_bands,&
 &     VAR=' Total number of bands           :',CHECK=CHECK_,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
+ if (ver_is_gt_or_eq(ID,revision=828)) then
+ i_desc=i_desc+1
+ call io_elemental(ID,I0=SC_lw_band,&
+&     VAR=' Lowest band                     :',CHECK=CHECK_,OP=(/"=="/),&
+&     DESCRIPTION=local_description(i_desc))
+ endif
  !
  i_desc=i_desc+1
  call io_elemental(ID,R0=SC_band_mixing,&
@@ -245,7 +255,7 @@ integer function variables_SC(ID,local_description,what)
 &    DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   call io_elemental(ID,VAR="RT_OTHERS",VAR_SZ=10,MENU=0) 
+   call io_elemental(ID,VAR="RT_OTHERS",VAR_SZ=9,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_RT_diagonalize,&
 &    VAR=' [RT] QP analysis                :',CHECK=.true.,OP=(/"=="/),&
@@ -254,10 +264,6 @@ integer function variables_SC(ID,local_description,what)
    call io_elemental(ID,I0=RT_diagonalization_steps,&
 &    VAR=' [RT] Diagonalization steps      :',CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
-   i_desc=i_desc+1
-   call io_elemental(ID,I0=RT_lw_band,&
-&    VAR=' [RT] Lowest band                 :',CHECK=.true.,OP=(/"=="/),&
-&     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
    call io_elemental(ID,I0=max_rt_steps_disk,&
 &    VAR=' [RT] Cache size                 :',CHECK=.true.,OP=(/"=="/),&

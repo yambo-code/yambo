@@ -27,8 +27,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin
  use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
- use SC,             ONLY:SC_bands,SC_iterations,rho_n,SC_rho_threshold,it_now,E_convergence,&
-&                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,&
+ use SC,             ONLY:SC_bands,SC_iterations,rho_n,SC_rho_threshold,it_now,E_convergence, &
+&                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,SC_lw_band,   &
 &                         l_SC_cycle,SC_cycle_mixing,V_hartree_sc,Ho,E_bare,SC_alloc,SC_free, &
 &                         WF_G_max,WF_Go_indx,SC_kind,SC_xc_functional,G_lesser,l_SC_RESTART,l_NSC_shot,l_TF_precond
  use wave_func,      ONLY:wf,wf_n_states,WF_free
@@ -315,6 +315,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      ! occupations.
      !
      forall (ib=SC_bands+1:E%nb) E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_bands,:,:)-E_previous(SC_bands,:,:)
+     !
+     ! The same for the bands below SC_lw_band
+     !
+     forall (ib=1:SC_lw_band-1) E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_lw_band,:,:)-E_previous(SC_lw_band,:,:)
      !
      call OCCUPATIONS_Fermi(E,k,1) 
      !

@@ -458,7 +458,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _RT
  if (l_collisions_IO) then
-   if ( l_HF_and_locXC.or.l_cohsex  ) call initactivate(1,'SCBands BandMix')
+   if ( l_HF_and_locXC.or.l_cohsex  ) call initactivate(1,'SCBands SClwBand BandMix')
    if ( l_HF_and_locXC)               call initactivate(1,'EXXCut')
  endif
 #endif
@@ -629,13 +629,13 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _SC
  if (l_sc_run) then
-   call initactivate(1,'Potential FFTGvecs Gauge SCmixing SCBands BandMix')
+   call initactivate(1,'Potential FFTGvecs Gauge SCmixing SCBands SClwBand BandMix')
    if (l_collisions_IO) call initactivate(1,'EXXCut CollCache')
    if (l_cohsex) call initactivate(1,'GbndRnge UseEbands')
    if (l_real_time) then
      call QP_ctl_switch('G')
      call initactivate(-1,'SCmixing')
-     call initactivate(1,'Integrator QPLifeTime PhLifeTime RTLowestBnd') 
+     call initactivate(1,'Integrator QPLifeTime PhLifeTime') 
      call initactivate(1,'RTstep NEsteps NETime HXCjumps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
      call initactivate(1,'RTfreezeH RTfreezeXC RTBSEOnly Diamagnetic InducedField')
 #endif

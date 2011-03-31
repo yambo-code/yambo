@@ -81,7 +81,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND 
 #if defined _SC
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,&
-&                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB
+&                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,SC_lw_band
  use collisions_IO,    ONLY:n_collisions,COLLISIONS_cutoff
  use collisions_CACHE, ONLY:COLLISIONS_cache_size
 #endif
@@ -90,7 +90,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     RT_diagonalization_steps, l_NE_simulate_RPA,  &
 &                     SwitchOnTime,max_rt_steps_disk,l_RT_induced_field,&
 &                     l_RT_diagonalize,RT_is_dumped,QP_LifeTime,Phase_LifeTime,&
-&                     NE_Hxc_jumps,NE_tot_time,P_2levels_is_done,RT_lw_band,&
+&                     NE_Hxc_jumps,NE_tot_time,P_2levels_is_done,&
 &                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe
  use fields,     ONLY:Efield,n_ext_fields,theta_function_iTo_ref
 #endif
@@ -426,6 +426,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  SC_cycle_mixing=0.5
  SC_rho_threshold=1.E-5
  SC_potential='none'
+ SC_lw_band=1
  OEP_approx='n'
  compatible_SC_DB=.FALSE.
  found_SC_DB=.FALSE.
@@ -463,7 +464,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  NE_steps=1
  NE_Hxc_jumps=1
  Thermal_steps=0
- RT_lw_band=1
  SwitchOnTime = 1./8.
  Integrator_name='RK2'
  QP_LifeTime = 0.

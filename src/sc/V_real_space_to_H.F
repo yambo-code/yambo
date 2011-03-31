@@ -26,6 +26,7 @@ subroutine V_real_space_to_H(ik,V,H,wf)
  use FFT_m,          ONLY:fft_size
  use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
  use wave_func,      ONLY:wf_state,wf_n_states
+ use wrapper,        ONLY:Vstar_dot_V
  implicit none
  !
  integer     :: ik,i_spin
@@ -36,12 +37,6 @@ subroutine V_real_space_to_H(ik,V,H,wf)
  !
  integer    :: i1,ib,ibp,ifft,ifftp
  complex(SP):: c_ws(fft_size)
- !
-#if defined _DOUBLE
- complex(DP):: zdotc
-#else
- complex(SP):: cdotc
-#endif
  !
  ! Fill ...
  !
@@ -59,11 +54,7 @@ subroutine V_real_space_to_H(ik,V,H,wf)
    ifftp=wf_state(ibp,ik,i_spin)
    c_ws(:)=V(:,i_spin)*wf(:,ifftp)
    !
-#if defined _DOUBLE
-   H(ib,ibp,i_spin) = H(ib,ibp,i_spin) + zdotc(fft_size,wf(:,ifft),1,c_ws(:),1)
-#else
-   H(ib,ibp,i_spin) = H(ib,ibp,i_spin) + cdotc(fft_size,wf(:,ifft),1,c_ws(:),1)
-#endif
+   H(ib,ibp,i_spin) = H(ib,ibp,i_spin) + Vstar_dot_V(fft_size,wf(:,ifft),c_ws(:))
    !
  end do
  !

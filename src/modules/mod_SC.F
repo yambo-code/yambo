@@ -25,6 +25,7 @@ module SC
  implicit none
  !
  integer           :: SC_bands
+ integer           :: SC_lw_band
  integer           :: it_now
  integer           :: SC_iterations
  integer           :: SC_fft_size

@@ -25,12 +25,12 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
  !
  use pars,           ONLY:SP,cI
  use units,          ONLY:SPEED_OF_LIGHT
- use real_time,      ONLY:l_RT_diamagnetic,RT_lw_band,RT_lw_band
+ use real_time,      ONLY:l_RT_diamagnetic
  use fields,         ONLY:gauge_field
  use electrons,      ONLY:n_sp_pol
  use fields,         ONLY:global_gauge
  use X_m,            ONLY:DIP_iR,DIP_P
- use SC,             ONLY:SC_bands
+ use SC,             ONLY:SC_bands,SC_lw_band
  !
  implicit none
  integer,     intent(in)       :: ik
@@ -57,7 +57,7 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
      H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)-real(sum(A_vec_pot(1:3)*DIP_P(1:3,i1,i1,ik,1)),SP)
    enddo
    !
-   do i1=RT_lw_band,SC_bands
+   do i1=SC_lw_band,SC_bands
      do i2=i1+1,SC_bands
        !
        ! Note that (P)_cv = DIP_P (:,iv,ic,:,:)
@@ -70,7 +70,7 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
    enddo
    !
    if(l_RT_diamagnetic) then
-     forall(i1=RT_lw_band:SC_bands,is=1:n_sp_pol) 
+     forall(i1=SC_lw_band:SC_bands,is=1:n_sp_pol) 
        H_nl_sc(i1,i1,is)=H_nl_sc(i1,i1,is)+0.5_SP*sum(A_vec_pot(1:3)**2)
      end forall
    endif
@@ -82,7 +82,7 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
    !
    E_vec_pot=-A_input%vecpot_vel/SPEED_OF_LIGHT ! Gaussian units
    !
-   do i1=RT_lw_band,SC_bands
+   do i1=SC_lw_band,SC_bands
      do i2=i1+1,SC_bands
        !
        ! Note that (iR)_cv = DIP_iR (:,iv,ic,:,:)

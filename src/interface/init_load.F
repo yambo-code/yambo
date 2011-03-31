@@ -48,15 +48,14 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use com,           ONLY:more_io_path,com_path
  use functions,     ONLY:bose_E_cut
 #if defined _SC
- use SC,            ONLY:SC_bands,SC_iterations,SC_potential,&
+ use SC,            ONLY:SC_bands,SC_iterations,SC_potential,SC_lw_band,&
 &                        SC_rho_threshold,SC_cycle_mixing,OEP_approx
  use collisions_IO, ONLY:COLLISIONS_cutoff
  use collisions_CACHE, ONLY:COLLISIONS_cache_size
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, QP_LifeTime, Phase_LifeTime,  &
-&                        RT_diagonalization_steps,SwitchOnTime,max_rt_steps_disk,NE_tot_time,NE_Hxc_jumps,&
-&                        RT_lw_band
+&                        RT_diagonalization_steps,SwitchOnTime,max_rt_steps_disk,NE_tot_time,NE_Hxc_jumps
  use fields,        ONLY:Efield
 #endif
 #if defined _TWO_LEVELS
@@ -286,7 +285,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'RTfreezeH', '[RT] Hartree not updated during RT',verb_level=V_real_time)
  call it('f',defs,'RTfreezeXC','[RT] XC potential/self-energy not updated during RT',verb_level=V_real_time)
  call it('f',defs,'RTBSEOnly','[RT] Simulate BSE only without include single particle effects',verb_level=V_real_time)
- call it(defs,'RTLowestBnd',   '[RT] Lowest Band',RT_lw_band)
  call it(defs,'DiskSteps',     '[RT] Numer of steps stored in memory before I/O',max_rt_steps_disk,verb_level=V_real_time)
  !
  ! External fields
@@ -388,6 +386,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'Gauge',     '[Xd,RT] Gauge type (lenght|velocity)',global_gauge,verb_level=V_resp)
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
+ call it(defs,'SClwBand',  '[SC] Lowest Band',SC_lw_band,verb_level=V_sc)
  call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_sc)
  call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)
  call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)

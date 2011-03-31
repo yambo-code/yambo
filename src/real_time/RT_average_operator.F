@@ -66,8 +66,11 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,TRANS)
    Hk=(0._SP,0._SP)
    !
    if(present(O_MATRIX)) then
-     forall(i1=1:SC_bands,i2=1:SC_bands) Hk(i1,i2,1:n_sp_pol)=O_MATRIX(i1,i2,ik,1:n_sp_pol)
-     if (present(TRANS)) forall(i1=1:SC_bands,i2=1:SC_bands) Hk(i1,i2,1:n_sp_pol)=O_MATRIX(i2,i1,ik,1:n_sp_pol)
+     if(present(TRANS)) then 
+        forall(i1=1:n_sp_pol) Hk(1:SC_bands,1:SC_bands,i1)=transpose(O_MATRIX(1:SC_bands,1:SC_bands,ik,i1))
+     else
+        forall(i1=1:n_sp_pol) Hk(1:SC_bands,1:SC_bands,i1)=O_MATRIX(1:SC_bands,1:SC_bands,ik,i1)
+     endif
    endif
    if(present(O_QP))     call V_qp_basis_to_H(ik,O_QP,Hk)
    if(present(O_REAL))   call V_real_space_to_H(ik,O_REAL,Hk,wf)

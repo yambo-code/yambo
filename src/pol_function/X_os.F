@@ -41,7 +41,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  use X_m,           ONLY:X_t,X_poles,DIP_q_dot_iR,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_RIM
 #if defined _SC 
- use drivers,       ONLY:l_sc_run
+ use drivers,       ONLY:l_sc_run,l_collisions_IO
  use SC,            ONLY:it_now
  use fields,        ONLY:global_gauge
 #endif
@@ -223,7 +223,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  ! LiveTiming Title
  !==================
 #if defined _SC 
- if (l_sc_run) then
+ if (l_sc_run.and..not.l_collisions_IO) then
    call live_timing('Xo @it'//trim(intc(it_now)),px%n_of_elements(myid+1))
  else
    call live_timing('Xo@q['//trim(intc(iq))//'] '//&

@@ -51,7 +51,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use WF_distribute, ONLY:WF_states_setup
 #endif
 #if defined _SC
- use SC,            ONLY:it_now
+ use SC,            ONLY:it_now,SC_lw_band
  use fragments,     ONLY:fragment_status
 #endif
  !
@@ -88,7 +88,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call pp_indexes_reset(px)
  i_qp_to_start=1
  iq_to_start  =1
- QP_Sc        =cmplx(0.,0.,SP)
+ if(.not.l_collisions_IO) QP_Sc        =cmplx(0.,0.,SP)
  !
  ! COHSEX: bands setup
  !
@@ -100,6 +100,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #if defined _RT
  !
  if (.not.l_collisions_IO) return
+ QP_n_G_bands(1)=SC_lw_band
  !
 #else
  !
@@ -249,12 +250,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call live_timing("COHSEX collisions",px%n_of_elements(myid+1)) 
 #endif
 #if defined _SC
- if (l_sc_run) then
+ if (l_sc_run.and..not.l_collisions_IO) then
    timing_states=QP_n_states*q%nbz*px%n_of_elements(myid+1)
    if (l_sc_srpa) timing_states=E%nbf*(maxval(QP_table(:,2))-E%nbf)*maxval(QP_table(:,3))*&
 &                               q%nbz*px%n_of_elements(myid+1)
    call live_timing(trim(Sc_name)//'@it'//trim(intc(it_now)),timing_states) 
- else
+ else if(.not.l_collisions_IO) then
 #endif
    !
    timing_states=px%n_of_elements(myid+1)*(QP_n_states*(q%nbz-iq_to_start)+QP_n_states-i_qp_to_start+1)

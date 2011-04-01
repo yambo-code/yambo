@@ -36,7 +36,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use R_lattice,     ONLY:qindx_S,bz_samp
  use wave_func,     ONLY:WF_load
 #if defined _SC
- use SC,            ONLY:it_now,SC_bands
+ use SC,            ONLY:it_now,SC_bands,SC_lw_band
  use collisions_IO, ONLY:TEMP_COLLISIONS_v
  use fragments,     ONLY:fragment_status
 #endif
@@ -52,7 +52,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  !
  type(ggwinfo)    ::isc,iscp
  type(pp_indexes) ::px
- integer                 ::i2,iq,ib,ibp,jb,ik,Sx_upper_band,i_qp
+ integer                 :: i2,iq,ib,ibp,jb,ik,i_qp
+ integer                 :: Sx_lower_band,Sx_upper_band
 #if defined _RT
  integer                 :: jb2,ik_minus_q,COM_
 #endif
@@ -81,13 +82,17 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  call collision_reset(iscp) 
  call pp_indexes_reset(px)
  !
+ Sx_lower_band=1
  Sx_upper_band=E%nbm
  !
-#if defined _RT
+#if defined _SC
  !
  ! COLLISIONS 
  !
- if(l_collisions_IO) Sx_upper_band=SC_bands
+ if(l_collisions_IO) then
+   Sx_upper_band=SC_bands
+   Sx_lower_band=SC_lw_band
+ endif
  !
 #endif
  !
@@ -220,7 +225,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
      ik_minus_q=isc%os(2)
 #endif
      !
-     do jb=1,Sx_upper_band
+     do jb=Sx_lower_band,Sx_upper_band
        !      
 #if !defined _RT
        if (.not.px%element_2D(iq,jb)) cycle
@@ -239,7 +244,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
        !
        ! rho_rho_gamp(n,n',qp_n_states) = \sum_{G,q} ( rho(m,n,G,q,k) x rho*(m',n',G,q,k) /|q+G|^2 )
        !
-       do jb2=1,SC_bands
+       do jb2=Sx_lower_band,SC_bands
          !      
          iscp%os(1)=jb2
          if (any(isc%is/=iscp%is).or.any(isc%os/=iscp%os)) then

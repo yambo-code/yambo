@@ -28,7 +28,7 @@ integer function io_COLLISIONS(i_qp,ID)
 &                        io_bulk,write_is_on,io_disconnect,io_restart_point
  use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_COHSEX
  use com,           ONLY:error
- use SC,            ONLY:SC_bands
+ use SC,            ONLY:SC_bands,SC_lw_band
  use QP_m,          ONLY:QP_ng_Sx,QP_n_states,QP_nb,QP_nk,SC_band_mixing
  use fragments,     ONLY:io_fragment,Fragments_Restart,Fragments_Synchronize
  !
@@ -68,9 +68,11 @@ integer function io_COLLISIONS(i_qp,ID)
    !
    io_COLLISIONS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.)
    !
-   call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=3,MENU=0)
+   call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=4,MENU=0)
    call io_elemental(ID,I0=SC_bands,&
 &       VAR=' Bands                           :',CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,I0=SC_lw_band,&
+&       VAR=' Lower Band                      :',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,R0=SC_band_mixing,&
 &       VAR=' Bands mixing                    :',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,I0=V_kind,DB_I0=V_kind_disk,CHECK=.true.,OP=(/"=="/))

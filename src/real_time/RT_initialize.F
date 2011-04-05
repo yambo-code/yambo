@@ -21,7 +21,7 @@ subroutine RT_initialize(Xen)
  use drivers,        ONLY:l_collisions_IO,l_sc_contains_lda
  use SC,             ONLY:local_V
  use pars,           ONLY:SP,pi
- use units,          ONLY:SPEED_OF_LIGHT,FS2AUT,HARTREE
+ use units,          ONLY:SPEED_OF_LIGHT,FS2AUT,HARTREE,HBAR_eVfs
  use com,            ONLY:msg,warning,error
  use vec_operate,    ONLY:normalize_v
  use electrons,      ONLY:nel,levels
@@ -161,8 +161,8 @@ subroutine RT_initialize(Xen)
  call msg( 'r', '[RT] NE time                [fs]:',NE_steps*RT_step/FS2AUT)
  call msg( 'r', '[RT] Thermalization steps       :',Thermal_steps)
  call msg( 'r', '[RT] Step length            [fs]:',RT_step/FS2AUT)
- call msg( 'r', '[RT] Damping (Phase)    [fs/meV]:',(/Phase_LifeTime/FS2AUT,1000.*HARTREE/Phase_LifeTime/))
- call msg( 'r', '[RT] Damping (QP)       [fs/meV]:',(/QP_LifeTime/FS2AUT,1000.*HARTREE/QP_LifeTime/))
+ call msg( 'sr', '[RT] Damping (Phase)    [fs/meV]:',(/Phase_LifeTime/FS2AUT,HBAR_eVfs/Phase_LifeTime*FS2AUT*1000./))
+ call msg( 'sr', '[RT] Damping (QP)       [fs/meV]:',(/QP_LifeTime/FS2AUT,   HBAR_eVfs/QP_LifeTime*FS2AUT*1000./))
  if(NE_steps>0) then
    call msg('rn','[RT] Simulation time        [fs]:',(/-real(Thermal_steps)*RT_step,RT_step*real(NE_steps)/)/FS2AUT)
    call msg('r', '[RT] Response energy window        [eV]:',&

@@ -21,8 +21,8 @@
 !
 subroutine QP_of(qp,en,QPdb_read_err)
  !
- use pars,      ONLY:SP,lchlen,schlen,pi
- use units,     ONLY:HARTREE,HA2FSM1
+ use pars,      ONLY:SP,lchlen,schlen
+ use units,     ONLY:HARTREE,HBAR_eVfs
  use drivers,   ONLY:l_life,l_ph_corr
  use com,       ONLY:msg,of_open_close
  use electrons, ONLY:levels,spin,n_sp_pol
@@ -144,7 +144,7 @@ subroutine QP_of(qp,en,QPdb_read_err)
      endif
      values(4:6)=(/qp%E_bare(i1)*HARTREE,real(qp%E(i1)*HARTREE),real(qp%Z(i1))/)
      values(9:10)=(/real(qp_k),real(qp_b)/)
-     values(12:13)=(/aimag(qp%E(i1)*HARTREE/1.E-3),1./(HA2FSM1*2*pi*aimag(qp%E(i1)))/)
+     values(12:13)=(/aimag(qp%E(i1)*HARTREE/1.E-3),HBAR_eVfs/aimag(qp%E(i1))/HARTREE/)
      if (qp_isp==1) values(14)= 1.
      if (qp_isp==2) values(14)=-1.
      if (aimag(qp%E(i1))==0.) values(12:13)=0.

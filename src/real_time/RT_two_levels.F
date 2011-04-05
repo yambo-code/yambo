@@ -22,7 +22,7 @@
 subroutine RT_two_levels(G_lesser)
  !
  use pars,           ONLY:SP,pi,cI
- use units,          ONLY:FS2AUT
+ use units,          ONLY:FS2AUT,HBAR_eVfs
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
  use D_lattice,      ONLY:DL_vol
@@ -89,8 +89,8 @@ subroutine RT_two_levels(G_lesser)
      endif
    enddo
    !
-   call msg('s','[2 LEVELS] W bar           [eV/fs]',(/real(W_bar)*HARTREE,-2.*pi/aimag(W_bar)/FS2AUT/))
-   call msg('s','[2 LEVELS] W gamma         [fs   ]',-2.*pi/FS2AUT/aimag(W_gamma))
+   call msg('s','[2 LEVELS] W bar           [eV/fs]',(/real(W_bar)*HARTREE,-HBAR_eVfs/aimag(W_bar*HARTREE)/))
+   call msg('s','[2 LEVELS] W gamma         [fs   ]',-HBAR_eVfs/aimag(W_gamma*HARTREE))
    call msg('s',' ')
    !
  !stop

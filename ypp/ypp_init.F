@@ -202,7 +202,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  X_rt%energy_range(:)=(/0._SP,20./HARTREE/)
  X_rt%damp           ="NONE"
  X_rt%damp_factor    =0.
- X_effective_keyword ="none"
+ Probe_Keyword ="none"
+ Pump_Keyword ="none"
  !
 #endif
  !
@@ -439,7 +440,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev")
  !
  if (l_RT_X_one.or.l_RT_X_two) then 
-    call initactivate(1,"RTKey")
+    call initactivate(1,"ProbeKey PumpKey")
     if (l_RT_X_one) call initactivate(1,"EnRngeRt ETStpsRt")
     call initactivate(1,"TmRngeRt TmJumps DampMode DampFactor FrMinDamp")
     if (l_RT_X_one) call initactivate(1,"UseFFT")

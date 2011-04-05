@@ -216,7 +216,8 @@ subroutine ypp_init_load(defs)
  !
 #if defined _YPP_RT
  !
- call it(defs,'RTKey','Keyword to be used to select groups of databases (X effective)',X_effective_keyword)
+ call it(defs,'ProbeKey','Keyword to select groups of PROBE databases',Probe_Keyword)
+ call it(defs,'PumpKey','Keyword to select groups of PUMP databases',Pump_Keyword)
  !
  call it(defs,'Efield1','First external Electric Field',E_field(1,:))
  call it(defs,'Efield2','Additional external Electric Field',E_field(2,:))

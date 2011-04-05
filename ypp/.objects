@@ -3,7 +3,7 @@ ELPH_objects = ELPH_databases.o ELPH_eliashberg_dos.o \
                ELPH_general_gFsq.o ELPH_excitonic_gkkp.o ELPH_atomic_amplitude.o
 #endif
 #if defined _YPP_RT
-RT_objects = RT_driver.o RT_databases.o RT_fix_symmetries.o RT_X_one.o \
+RT_objects = RT_driver.o RT_paths.o RT_databases.o RT_fix_symmetries.o RT_X_one.o \
              RT_init_X_one.o RT_X_two.o RT_1D_Fourier_Transform.o RT_damp_it.o \
              RT_X_effective.o
 #endif

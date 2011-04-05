@@ -104,7 +104,8 @@ subroutine RT_X_one(en)
    !
    if (iE_err==-2) exit
    !
- enddo
+ enddo 
+ !
  E_from_FT=iE_err==-2
  if (E_from_FT) then
    !

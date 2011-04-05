@@ -22,79 +22,50 @@
 subroutine RT_X_effective(en)
  !
  use pars,           ONLY:SP,lchlen,cI,schlen,pi
- use YPP,            ONLY:RT_P_t,X_effective_keyword,i_t_start,i_t_end,i_t_jump
+ use YPP,            ONLY:RT_P_t,i_t_start,i_t_end,i_t_jump,Pump_path,Probe_Path,N_probes,&
+&                         RT_databases,RT_init_X_one,max_n_of_paths
  use units,          ONLY:HARTREE,FS2AUT 
  use electrons,      ONLY:levels
- use com,            ONLY:core_io_path,jobstr,msg,file_exists
+ use com,            ONLY:jobstr,msg
+ use IO_m,           ONLY:NONE
  use fields,         ONLY:Efield,i_Probe
  use real_time,      ONLY:NE_steps,RT_step,RT_output
- use stderr,         ONLY:string_split,cstr
  use vec_operate,    ONLY:sort
  use timing,         ONLY:live_timing
  implicit none
  !
  type(levels)  :: en
  !
- integer, parameter :: N_max_folders=10000
- !
  character(lchlen) :: jobstr_save
- character(schlen) :: folder(N_max_folders),pump_folder
- integer           :: nf,N_freqs,i_t,i_f,i_fp,f_indx(N_max_folders)
- real(SP)          :: Wo,TIME
+ integer           :: nf,N_freqs,i_t,i_f,i_fp,f_indx(max_n_of_paths)
+ real(SP)          :: TIME
  complex(SP)       :: EPS,RT_P_freq_derivative
  logical           :: IO_error
- character(10*N_max_folders) :: folder_list
  real(SP),    allocatable    :: RT_P_freq(:,:),Frequency(:)
  complex(SP), allocatable    :: X_effective(:)
  !
  call section("=",'Effective Response function ')
  !===============================================
  !
- call ifolder_list(cstr(trim(core_io_path)),folder_list,nf)
- !
- call string_split(folder_list(:nf),folder)
- !
- nf=count( len_trim(folder(:)) > 0 ) 
- !
- pump_folder="none"
- !
- N_freqs=0
- do i_f=1,nf
-1  if (file_exists(trim(core_io_path)//"/"//trim(folder(i_f))//'/ndb.RT_GreenF').and.&
-&      ( trim(X_effective_keyword)=="none".or.index(trim(folder(i_f)),trim(X_effective_keyword))>0 ) ) then
-     N_freqs=N_freqs+1
-   else
-     if ( index(trim(folder(i_f)),"PUMP_only")  >0 ) pump_folder=folder(i_f)
-     forall (i_fp=i_f+1:nf) folder(i_fp-1)=folder(i_fp)
-     nf=nf-1
-     if (nf<=0) exit
-     goto 1
-   endif
- enddo
- !
- if (N_freqs==0) return
- !
  jobstr_save=jobstr
  !
  ! Pump+Probe Databases
  !======================
  !
- do i_f=1,N_freqs
+ do i_f=1,N_probes
    !
-   jobstr=trim(folder(i_f))
-   call IO_and_Messaging_switch("-log")
-   call RT_databases(en,IO_error)
-   call IO_and_Messaging_switch("+log")
+   jobstr=trim(Probe_path(i_f))
+   call RT_databases(en,COM_=NONE)
    !
    if (i_f==1) then
      !
      !  Initialization 
      !
-     call RT_init_X_one(.TRUE.)
+     call RT_init_X_one(dump_and_write=.FALSE.)
      !
-     allocate(RT_P_freq(NE_steps,N_freqs),X_effective(N_freqs),Frequency(N_freqs))
+     allocate(RT_P_freq(NE_steps,N_probes),X_effective(N_probes),Frequency(N_probes))
+     !
    endif
-   if (i_f/=N_freqs) call msg('s','')
    !
    Frequency(i_f)=Efield(i_Probe)%frequency
    !
@@ -107,24 +78,16 @@ subroutine RT_X_effective(en)
  ! Pump only
  !===========
  !
- if (trim(pump_folder)/="none") then
-   call msg('s','')
-   jobstr=trim(pump_folder)
-   call IO_and_Messaging_switch("-log")
-   call RT_databases(en,IO_error)
-   call IO_and_Messaging_switch("+log")
-   !
-   do i_f=1,N_freqs
-     RT_P_freq(:,i_f)=RT_P_freq(:,i_f)-real(RT_P_t(:,1))
-   enddo
-   !
- endif
+ jobstr=trim(Pump_path)
+ call RT_databases(en,COM_=NONE)
+ !
+ do i_f=1,N_probes
+   RT_P_freq(:,i_f)=RT_P_freq(:,i_f)-real(RT_P_t(:,1))
+ enddo
  !
  jobstr=jobstr_save
  !
- call sort(Frequency,indx=f_indx(:N_freqs))
- !
- Wo    =en%E(2,1,1)-en%E(1,1,1)
+ call sort(Frequency,indx=f_indx(:N_probes))
  !
  call RT_output("open X_effective eps")
  !
@@ -134,7 +97,7 @@ subroutine RT_X_effective(en)
    !
    TIME=(i_t-1)*RT_step
    !
-   do i_fp=1,N_freqs
+   do i_fp=1,N_probes
      !
      i_f=f_indx(i_fp)
      !

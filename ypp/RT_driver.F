@@ -22,7 +22,7 @@
 subroutine RT_driver(en,k)
  !
  use YPP,            ONLY:l_fix_syms,l_RT_X_one,Use_FFT,RT_P_t,RT_J_t,l_RT_X_two,&
-&                         l_effective_X
+&                         l_effective_X,N_probes,N_pumps,RT_init_X_one,RT_databases
  use R_lattice,      ONLY:bz_samp
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels
@@ -37,9 +37,9 @@ subroutine RT_driver(en,k)
  !
  logical       :: IO_error
  !
- call section("*",'RT Post/Pre processing')
- !
  if (l_fix_syms) then
+   !
+   call section("*",'RT Pre Processing')
    !
    ! SYMMERIES removal
    !-------------------
@@ -48,16 +48,20 @@ subroutine RT_driver(en,k)
    return
  endif
  !
- ! DATABASES
- !-----------
+ call section("*",'RT Post Processing')
  !
- call RT_databases(en,IO_error)
+ call RT_paths(en)
  !
- if (.not.IO_error) then
+ !
+ if (N_pumps==0.and.N_probes==1) then
+   !
+   ! Database
+   !
+   call RT_databases(en)
    !
    !  Initialization 
    !
-   call RT_init_X_one(IO_error)
+   call RT_init_X_one(dump_and_write=.TRUE.)
    !
    if (l_RT_X_one) then
      !
@@ -77,7 +81,7 @@ subroutine RT_driver(en,k)
      !
    endif
    !
- else
+ else if (N_pumps==1.and.N_probes>=1) then
    !
    call RT_X_effective(en)
    !

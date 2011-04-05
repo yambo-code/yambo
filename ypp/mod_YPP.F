@@ -155,9 +155,14 @@ module YPP
  logical  :: l_effective_X
  integer  :: i_t_start,i_t_end,i_t_jump ! time window
  integer  :: RED_steps ! reduced number of steps
+ integer  :: N_probes,N_pumps
  real(SP) :: t_jump
  real(SP) :: W_RT_induced_step
- character(schlen) :: X_effective_keyword
+ character(schlen) :: Probe_Keyword
+ character(schlen) :: Pump_Keyword
+ integer, parameter:: max_n_of_paths=10000
+ character(schlen) :: Pump_path
+ character(schlen) :: Probe_path(max_n_of_paths)
  !
  complex(DP),    allocatable :: RT_J_t(:,:)
  complex(DP),    allocatable :: RT_P_t(:,:)
@@ -200,6 +205,20 @@ module YPP
      type(levels)       :: en,Xen
      integer, optional  :: lambda_s(:)
      integer, optional  :: BS_E_degs(:)
+   end subroutine
+   !
+   subroutine  RT_init_X_one(dump_and_write)
+     implicit none
+     logical, optional  :: dump_and_write
+   end subroutine
+   !
+   subroutine  RT_databases(en,IO_error,first_sec_only,COM_)
+     use electrons,     ONLY:levels
+     implicit none
+     type(levels)       :: en
+     logical, optional  :: IO_error
+     logical, optional  :: first_sec_only
+     integer, optional  :: COM_
    end subroutine
    !
  end interface

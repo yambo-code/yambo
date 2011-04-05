@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_databases(en,io_error)
+subroutine RT_databases(en,IO_error,first_sec_only,COM_)
  !
  use YPP,            ONLY:RT_J_t,RT_P_t
  use units,          ONLY:SPEED_OF_LIGHT
@@ -34,30 +34,48 @@ subroutine RT_databases(en,io_error)
  use fields,         ONLY:Efield,n_ext_fields
  implicit none
  !
- type(levels)  :: en
- logical       :: io_error
+ type(levels)      :: en
+ logical, optional :: IO_error
+ logical, optional :: first_sec_only
+ integer, optional :: COM_
  !
  ! Work Space
  !
- integer            :: io_J_and_P,ID,i_f,io_G
+ integer            :: io_J_and_P,ID,i_f,io_G,COM_here
  integer, external  :: io_SC_components
  !
- call section("+",'Current and Polarization Database')
- !====================================================
+ COM_here=LOG
+ if (present(COM_)) COM_here=COM_
  !
- call io_control(ACTION=OP_RD_CL,COM=LOG,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
+ if (COM_here==LOG) call section("+",'Current and Polarization Database')
+ !=======================================================================
+ !
+ call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
  io_G=io_SC_components('G' ,En,ID)
+ !
+ COM_here=NONE
  !
  ! Check for saved current and polarization database
  !---------------------------------------------------
  !
- io_error=.FALSE.
+ if (present(IO_error)) then
+   IO_error=.FALSE.
+ endif
  !
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
+ call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID)
  io_J_and_P=io_SC_components('J_and_P' ,en,ID)
  if( io_J_and_P/=0 ) then
-   io_error=.TRUE.
+   if (present(IO_error)) then
+     IO_error=.FALSE.
+   endif
    return
+ endif
+ !
+ ! Only first section I/O
+ !------------------------
+ !
+ if (present(first_sec_only)) then
+   if (first_sec_only) return
  endif
  !
  ! I/O of Current and Vector Potential
@@ -83,7 +101,7 @@ subroutine RT_databases(en,io_error)
  !
  do NE_i_time=1,NE_steps
    !      
-   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/NE_i_time+1/),ID=ID) 
+   call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/NE_i_time+1/),ID=ID) 
    io_J_and_P=io_SC_components('J_and_P' ,en,ID)
    !
    RT_J_t(NE_i_time,1:3) = RT_ind_J(:)

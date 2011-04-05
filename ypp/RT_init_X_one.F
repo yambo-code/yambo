@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_init_X_one(DB_IO_error)
+subroutine RT_init_X_one(dump_and_write)
  !
  use YPP,            ONLY:RT_P_t,X_rt,RT_J_t,i_t_start,i_t_end,&
 &                         W_RT_induced_step,RED_steps,l_force_min_damp,t_jump,i_t_jump
@@ -32,7 +32,7 @@ subroutine RT_init_X_one(DB_IO_error)
  use parser_m,       ONLY:parser
  implicit none
  !
- logical  :: DB_IO_error
+ logical, optional  :: dump_and_write
  !
  ! Work Space
  !
@@ -57,7 +57,9 @@ subroutine RT_init_X_one(DB_IO_error)
  call msg('s','[RT] Time range [fs]:',(/real(i_t_start),real(i_t_end)/)*RT_step/FS2AUT)
  call msg('s','[RT] Time jumps [fs]:',t_jump/FS2AUT)
  !
- if (DB_IO_error) return
+ if (present(dump_and_write)) then
+   if (.not.dump_and_write) return
+ endif
  !
  ! DAMPING
  !=========

@@ -81,7 +81,7 @@ subroutine RT_driver(en,k)
      !
    endif
    !
- else if (N_pumps==1.and.N_probes>=1) then
+ else if ( (N_pumps==1.and.N_probes>=1).or.(N_pumps==0.and.N_probes>=1)) then
    !
    call RT_X_effective(en)
    !
@@ -89,7 +89,8 @@ subroutine RT_driver(en,k)
  !
  ! CLEAN
  !
- if (allocated(RT_P_t)) deallocate(RT_P_t,RT_J_t)
+ if (allocated(RT_P_t)) deallocate(RT_P_t)
+ if (allocated(RT_J_t)) deallocate(RT_J_t)
  call mem_est("RT_P_t RT_J_t")
  !
 end subroutine

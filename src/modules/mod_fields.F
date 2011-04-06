@@ -169,6 +169,18 @@ module fields
      !
    end function
    !
+   subroutine Efield_duplicate(E1,E2)
+     type(ext_field) :: E1,E2
+     E2%t_initial=E1%t_initial  
+     E2%int_t_initial=E1%int_t_initial  
+     E2%frequency=E1%frequency  
+     E2%damping=E1%damping  
+     E2%intensity=E1%intensity  
+     E2%amplitude=E1%amplitude  
+     E2%versor=E1%versor
+     E2%ef_name=E1%ef_name
+   end subroutine
+   !
    ! GPL_EXCLUDE_END
    !
 end module

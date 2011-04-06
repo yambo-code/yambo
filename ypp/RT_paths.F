@@ -50,10 +50,12 @@ subroutine RT_paths(en)
  !
  Pump_path="none"
  !
- do i_f=1,nf
-1  if (file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/ndb.RT_GreenF').and.&
+ i_f=1
+ do while (i_f<nf)
+   if (file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/ndb.RT_GreenF').and.&
 &      index(trim(Probe_path(i_f)),trim(Probe_Keyword))>0  ) then
-     N_probes=N_probes+1
+     N_probes =N_probes+1
+     i_f=i_f+1
    else
      if ( index(trim(Probe_path(i_f)),trim(Pump_Keyword))>0 ) then
        Pump_path=Probe_path(i_f)
@@ -61,12 +63,8 @@ subroutine RT_paths(en)
      endif
      forall (i_fp=i_f+1:nf) Probe_path(i_fp-1)=Probe_path(i_fp)
      nf=nf-1
-     if (nf<=0) exit
-     goto 1
    endif
  enddo
- !
- N_probes=nf
  !
  jobstr_save=jobstr
  !

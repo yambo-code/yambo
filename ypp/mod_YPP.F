@@ -212,13 +212,14 @@ module YPP
      logical, optional  :: dump_and_write
    end subroutine
    !
-   subroutine  RT_databases(en,IO_error,first_sec_only,COM_)
+   subroutine  RT_databases(en,IO_error,first_sec_only,COM_,mesg)
      use electrons,     ONLY:levels
      implicit none
      type(levels)       :: en
      logical, optional  :: IO_error
      logical, optional  :: first_sec_only
      integer, optional  :: COM_
+     character(*), optional  :: mesg
    end subroutine
    !
  end interface

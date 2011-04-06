@@ -26,14 +26,14 @@
 subroutine RT_X_one(en)
  !
  use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,W_RT_induced_step, &
-&                         i_t_start,i_t_end,RED_steps,l_force_min_damp
+&                         i_t_start,i_t_end,RED_steps,l_force_min_damp,N_pumps
  use pars,           ONLY:SP,DP,pi,zero_dfl,cI
  use units,          ONLY:HARTREE
  use electrons,      ONLY:levels
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:RT_step,RT_output,RT_P,NE_steps,P_2levels_is_done
- use fields,         ONLY:Efield,small_a
+ use fields,         ONLY:Efield,small_a,i_Probe
  implicit none
  !
  type(levels)  :: en
@@ -99,7 +99,7 @@ subroutine RT_X_one(en)
    if(trim(X_rt%damp) /= "NONE")                      Field_freq=freqs(i_w)-(0._SP,1._SP)*X_rt%damp_factor
    if(trim(X_rt%damp) == "NONE".and.l_force_min_damp) Field_freq=freqs(i_w)-(0._SP,1._SP)*W_RT_induced_step
    !
-   E_w(i_w)=Efield(1)%amplitude*small_a(Field_freq,Efield(1),iE_err)
+   E_w(i_w)=Efield(i_Probe)%amplitude*small_a(Field_freq,Efield(i_Probe),iE_err)
    E_w(i_w)=E_w(i_w)*exp(cI*freqs(i_w)*i_t_start*RT_step)  
    !
    if (iE_err==-2) exit
@@ -112,7 +112,7 @@ subroutine RT_X_one(en)
    allocate(E_t(NE_steps))
    do i_t=1,NE_steps
      Field_time=cmplx((i_t-1)*RT_step,0._SP)
-     E_t(i_t)=Efield(1)%amplitude*small_a(Field_time,Efield(1),1)
+     E_t(i_t)=Efield(i_Probe)%amplitude*small_a(Field_time,Efield(i_Probe),1)
    enddo
    !
    if(trim(X_rt%damp) == "NONE".and.l_force_min_damp) then
@@ -166,7 +166,7 @@ subroutine RT_X_one(en)
  do i_w = 1, X_rt%energy_steps
    !
    do i_c=1,3
-     if ( abs(Efield(1)%versor(i_c))>zero_dfl ) then
+     if ( abs(Efield(i_Probe)%versor(i_c))>zero_dfl ) then
        EPS(i_w,1) = EPS(i_w,1)-4._SP*pi*X_irrep(i_w,i_c)/E_w(i_w)
        if (P_2levels_is_done) EPS(i_w,2) = EPS(i_w,2)-4._SP*pi*X_irrep(i_w,i_c+3)/E_w(i_w)
      endif

@@ -19,11 +19,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_databases(en,IO_error,first_sec_only,COM_)
+subroutine RT_databases(en,IO_error,first_sec_only,COM_,mesg)
  !
  use YPP,            ONLY:RT_J_t,RT_P_t
  use units,          ONLY:SPEED_OF_LIGHT
- use pars,           ONLY:DP,SP,pi
+ use pars,           ONLY:DP,SP,pi,schlen
  use electrons,      ONLY:levels
  use com,            ONLY:warning
  use memory_m,       ONLY:mem_est
@@ -38,14 +38,18 @@ subroutine RT_databases(en,IO_error,first_sec_only,COM_)
  logical, optional :: IO_error
  logical, optional :: first_sec_only
  integer, optional :: COM_
+ character(*), optional :: mesg
  !
  ! Work Space
  !
  integer            :: io_J_and_P,ID,i_f,io_G,COM_here
  integer, external  :: io_SC_components
+ character(schlen)  :: mesg_
  !
  COM_here=LOG
  if (present(COM_)) COM_here=COM_
+ mesg_=" "
+ if (present(mesg)) mesg_="["//trim(mesg)//"]"
  !
  if (COM_here==LOG) call section("+",'Current and Polarization Database')
  !=======================================================================
@@ -97,7 +101,7 @@ subroutine RT_databases(en,IO_error,first_sec_only,COM_)
  RT_J_t        =(0._DP,0._DP)
  RT_P_t        =(0._DP,0._DP)
  !
- call live_timing('I/O:',NE_steps)
+ call live_timing('I/O'//trim(mesg_)//':',NE_steps)
  !
  do NE_i_time=1,NE_steps
    !      

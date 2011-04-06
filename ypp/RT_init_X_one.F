@@ -22,7 +22,7 @@
 subroutine RT_init_X_one(dump_and_write)
  !
  use YPP,            ONLY:RT_P_t,X_rt,RT_J_t,i_t_start,i_t_end,&
-&                         W_RT_induced_step,RED_steps,l_force_min_damp,t_jump,i_t_jump
+&                         W_RT_induced_step,RED_steps,l_force_min_damp,t_jump,i_t_jump,N_pumps
  use com,            ONLY:msg
  use pars,           ONLY:pi,SP
  use units,          ONLY:FS2AUT,HARTREE
@@ -50,6 +50,8 @@ subroutine RT_init_X_one(dump_and_write)
  i_t_jump =int(t_jump/RT_step)
  !
  i_t_field_range= (/int(Efield(i_Probe)%t_initial/RT_step)+1,NE_steps/)
+ !
+ if (N_pumps>0) i_t_start=i_t_field_range(1)
  !
  if (i_t_start<=0.or.i_t_start> i_t_field_range(2)) i_t_start=i_t_field_range(1)
  if (i_t_end<=0  .or.i_t_end>   i_t_field_range(2)) i_t_end  =i_t_field_range(2)
@@ -100,7 +102,8 @@ subroutine RT_init_X_one(dump_and_write)
    RT_ind_J    =RT_J_t(i_t,:)
    RT_P        =RT_P_t(i_t,1:3)
    RT_P_2levels=RT_P_t(i_t,4:6)
-   call RT_output('cur pol',TIME=(i_t-1)*RT_step/FS2AUT)
+   call RT_output('pol',TIME=(i_t-1)*RT_step/FS2AUT)
+   if (allocated(RT_J_t)) call RT_output('cur',TIME=(i_t-1)*RT_step/FS2AUT)
  enddo
  !
  call RT_output("close cur pol")

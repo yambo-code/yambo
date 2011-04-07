@@ -90,7 +90,7 @@ subroutine RT_X_effective(en)
  !
  if (Probe_consistency_error) call error('Not all probes have consistent parameters')
  !
- if (trim( Efield_probe%ef_name ) == 'RES') then
+ if (trim( Efield_probe%ef_name ) == 'ANTIRES') then
    call msg('s',':: Frequency range   [eV]:',(/minval(Frequency),maxval(Frequency)/)*HARTREE)
  endif
  !
@@ -131,7 +131,7 @@ subroutine RT_X_effective(en)
  !
  call RT_output("open X_effective eps")
  !
- call live_timing('Output:',(i_t_end-i_t_start+1)/(i_t_jump+1)+1)
+ call live_timing('X effective:',int((i_t_end-i_t_start+1)/(i_t_jump+1))*N_probes)
  !
  do i_t=i_t_start,i_t_end,i_t_jump+1
    !
@@ -153,11 +153,11 @@ subroutine RT_X_effective(en)
      !
      if (i_t+i_t_jump>=i_t_end) call RT_output('eps',VALUEs=(/aimag(EPS),real(EPS),0._SP,0._SP/),E=real(Frequency(i_fp))*HARTREE)
      !
+     call live_timing(steps=1)
+     !
    enddo
    !
    call msg('o X_effective',' ',' ',INDENT=0)
-   !
-   call live_timing(steps=1)
    ! 
  enddo
  !

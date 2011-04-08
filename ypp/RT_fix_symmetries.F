@@ -483,6 +483,7 @@ subroutine RT_fix_symmetries(E,k)
        enddo
        !
 #if defined _FFTW
+       fftw_plan=0
        call fft_3d(wf_DP,fft_dim,+1,fftw_plan)
 #else
        call fft_3d(wf_DP,fft_dim,+1)
@@ -490,6 +491,7 @@ subroutine RT_fix_symmetries(E,k)
        wf_DP_rot(:)=wf_DP(fft_rot_r(is,:))*dble(fft_norm)
        !
 #if defined _FFTW
+       fftw_plan=0
        call fft_3d(wf_DP_rot,fft_dim,-1,fftw_plan)
 #else
        call fft_3d(wf_DP_rot,fft_dim,-1)

@@ -72,7 +72,7 @@ subroutine RT_two_levels(G_lesser)
      W_func(i_f)=W_start+W_step*i_f
      Poles_func(i_f)=DELTA_Pump_F(W_func(i_f))
      Poles_func_deriv(i_f)=(DELTA_Pump_F(W_func(i_f)+W_step)-DELTA_Pump_F(W_func(i_f)))/W_step
-     !write (100,'(3f20.10)')  real(W_func(i_f))*HARTREE,DELTA_Pump_D(W_func(i_f))/DELTA_Pump_F(-W_func(i_f))
+     !write (100,'(3f20.10)')  real(W_func(i_f))*HARTREE,DELTA_Pump_D(W_func(i_f))/2./conjg(DELTA_Pump_F(W_func(i_f)))/W_func(i_f)/Wo
      !write (200,'(3f20.10)')  real(W_func(i_f))*HARTREE,DELTA_Pump_D(W_func(i_f))
      if (i_f==1) cycle
      if ( (real(Poles_func(i_f-1))<0..and.real(Poles_func(i_f))>0. ) ) then

@@ -90,7 +90,7 @@ subroutine RT_paths(en)
  !=============
  !
  if (N_probes==0.and.N_pumps==0) then
-   call RT_databases(en,IO_error=IO_error,first_sec_only=.TRUE.,COM_=LOG)
+   call RT_databases(en,IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
    if (.not.IO_error) N_probes=1
  endif
  !

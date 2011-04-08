@@ -128,6 +128,12 @@ subroutine RT_X_one(en)
    !
  endif
  !
+ ! Remove the asymptotic limit of RT_P_t
+ !
+ do i_c=1,3
+   RT_P_t(:,i_c)= RT_P_t(:,i_c)-RT_P_t(NE_steps,i_c)
+ enddo
+ !
  do i_c=1,3
    !
    if (i_c==1) FT_title=' (X axis)'

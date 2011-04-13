@@ -122,8 +122,8 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
        offt=wf_state(iv2,ik,1)
        rhotw_sum = (0._SP,0._SP)
        SigmaXC = (0._SP,0._SP)
-       do ir = 1,fft_size
-         SigmaXC = SigmaXC + U(ik,iv1,ir)*wf(ir,offt)/wf(ir,ifft) !<iv1|Sigma_xc|iv2>
+       do ir = 1,fft_size 
+         SigmaXC = SigmaXC + conjg(U(ik,iv1,ir))*wf(ir,offt)/wf(ir,ifft) !<iv1|Sigma_xc|iv2>
        end do
        do i1 = 1,k%nstar(ik)
          is  = k%star(ik,i1)

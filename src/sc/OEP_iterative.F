@@ -114,7 +114,7 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
            DeltaEps = 0._SP
            do ir = 1, fft_size
              DeltaEps = DeltaEps + conjg(wf(ir,ifft))*wf(ir,offt)*V_nm1(ir)-&
-&             U(ik,iv1,ir)/wf(ir,ifft)*wf(ir,offt)
+&             conjg(U(ik,iv1,ir))/wf(ir,ifft)*wf(ir,offt)
            end do
            if ((l_oep_EWeight).and.(iv2.gt.E%nbf)) &
            &EWeight = EWeight*((E%E(iv2,ik,1)-E%E(iv1,ik,1))/(E%E(iv2,ik,1)+ E%Efermi(1)))    

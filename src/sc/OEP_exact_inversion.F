@@ -40,7 +40,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  use frequency,       ONLY:w_samp,W_reset,bg_npts,cg_pt,cg_index_bg,rg_index_bg
  use matrix_operate,  ONLY:mat_dia_inv,INV,USE_LK
  use collision,       ONLY:ggwinfo,collision_reset
- use QP_m,            ONLY:QP_ng_Sx !QP_Vnl_xc,QP_n_states,QP_table,QP_Sc
+ use QP_m,            ONLY:QP_ng_Sx,QP_Vnl_xc,QP_n_states,QP_table,QP_Sc
  use memory_m,        ONLY:mem_est
  use SC,              ONLY:SC_bands,SC_R,H_rotate,it_now
  use drivers,         ONLY:l_collisions_IO,l_sc_srpa
@@ -57,11 +57,11 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  !
  ! Work Space
  !
- integer                  :: i1,ik,ic,iv,is,ig1,ig2,ikbz,ifft,offt,ir
+ integer                  :: i1,ik,ic,iv,is,ig1,ig2,ifft,offt,ir
  logical                  :: l_is_TR
  complex(SP), allocatable :: Xo_inverse(:,:),rhotw_save(:,:),&
 &                            rhotw_sum(:),rhotw_sum_TR(:),rho_xc(:),Voep_RL(:)
- complex(DP), allocatable :: Vx_dp(:)
+ complex(DP), allocatable :: Vx_dp(:),rho_tw_rs(:)
  complex(SP)              :: SigmaXC
  type(w_samp)             :: Xw
  type(ggwinfo)            :: isc
@@ -76,9 +76,10 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  Xw%n = 1
  call FREQUENCIES_setup(Xw)
  Xw%p(1)=real(Xw%p(1))+(0.,1.)*epsilon(1._SP)
+ call X_alloc('X',(/X%ng,X%ng,Xw%n(2)/))
+ X%ordering='c'
  !
  ! 2:
- call X_alloc('X',(/X%ng,X%ng,Xw%n(2)/))
  call IO_and_Messaging_switch("-report") 
  call X_os(X_mat,1,(/1,Xw%n(1)/),E,k,Xw,X)
  call IO_and_Messaging_switch("+report")
@@ -88,6 +89,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  call X_alloc('X')
  ! 4:
  call mat_dia_inv(INV,USE_LK,Xo_inverse)
+ !
  !
  ! Calculate rho_xc(G) =>  1 - initialize vars/dim
  !                        for each k in IBZ:
@@ -102,79 +104,52 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  ! 1:
  call collision_reset(isc)
  isc%ngrho=X%ng
- allocate(isc%rhotw(X%ng),rhotw_sum(X%ng-1),&
-      &rhotw_sum_TR(X%ng-1),rho_xc(X%ng-1))
- if (i_time_rev/=0.or.i_space_inv/=0) then
-   allocate(rhotw_save(X%ng,1))
- else
-   allocate(rhotw_save(X%ng,2))
- endif
+ allocate(rhotw_sum(X%ng),rhotw_sum_TR(X%ng),rho_xc(X%ng),rho_tw_rs(fft_size))
  !
  rho_xc = (0.,0.)
  !
+ ! 3:
  do ik = 1, nkibz 
-   ! 3:
-   do ic = E%nbf+1, X%ib(2)
-     do iv = 1 ,E%nbf
+   do iv = 1 ,E%nbf
+     do ic = E%nbf+1, X%ib(2)
        ifft=wf_state(iv,ik,1)
        offt=wf_state(ic,ik,1)
        SigmaXC = (0.,0.)
        do ir = 1,fft_size
-         SigmaXC = SigmaXC  + W_x(ik,iv,ir)*wf(ir,offt)/wf(ir,ifft) !<iv|Sigma_xc|ic>
+         SigmaXC = SigmaXC  + W_x(ik,iv,ir)*conjg(wf(ir,offt))/conjg(wf(ir,ifft)) !<ic|Sigma_xc|iv>
        end do
-       isc%is = (/iv,ik,1,1/)
-       isc%os = (/ic,ik,1,1/)
-       isc%qs = (/1,1,1/)
        !
-       call scatterBamp(isc)
-       rhotw_save(:,1) = isc%rhotw(:)
-       if (i_time_rev==0.and.i_space_inv==0) then
-         isc%is = (/ic,ik,1,1/)
-         isc%os = (/iv,ik,1,1/)
-         isc%qs = (/1,1,1/)
-         call scatterBamp(isc)
-         rhotw_save(:,2) = isc%rhotw(:)
-       endif
-       !
+       rho_tw_rs(:) = conjg(wf(:,ifft))*wf(:,offt)
+#if defined _FFTW
+   call fft_3d(rho_tw_rs(:),fft_dim,+1,fftw_plan)
+#else
+   call fft_3d(rho_tw_rs(:),fft_dim,+1)
+#endif
        rhotw_sum    = (0.,0.)
        rhotw_sum_TR = (0.,0.)
        !
        do i1 = 1,k%nstar(ik)
          !
-         is      = k%star(ik,i1)
+         is      = sop_inv(k%star(ik,i1))
          l_is_TR = is>nsym/(i_time_rev+1)
-         ikbz    = sum(k%nstar(:ik-1))+i1
          !
-         do ig1=1,X%ng
-           ig2 = g_rot(sop_inv(is),ig1)
-           isc%rhotw(ig1) = rhotw_save(ig2,1)
-         enddo
+         rho_tw_rs(fft_g_table(g_rot(1,1),1)) = (0.,0.)
          if (l_is_TR) then
-           forall(ig1=2:X%ng) rhotw_sum_TR(ig1-1)=rhotw_sum_TR(ig1-1)+isc%rhotw(ig1)
+           rhotw_sum_TR(:)=rhotw_sum_TR(:)+rho_tw_rs(fft_g_table(g_rot(is,:),1))
          else
-           forall(ig1=2:X%ng) rhotw_sum(ig1-1)=rhotw_sum(ig1-1)+conjg(isc%rhotw(ig1))
-         endif
-         !
-         if (i_time_rev==0.and.i_space_inv==0) then
-           !
-           do ig1=1,X%ng
-             ig2 = g_rot(sop_inv(is),ig1)
-             isc%rhotw(ig1) = rhotw_save(ig2,2)
-           enddo
-           forall(ig1=2:X%ng) rhotw_sum_TR(ig1-1)=rhotw_sum_TR(ig1-1)+conjg(isc%rhotw(ig1))
+           rhotw_sum(:)=rhotw_sum(:)+conjg(rho_tw_rs(fft_g_table(g_rot(is,:),1)))
          endif
          !
        end do
        ! 4:
-       rho_xc(:) =  rho_xc(:) + E%f(iv,ik,1)*(rhotw_sum(:)*SigmaXC+rhotw_sum_TR(:)*conjg(SigmaXC))/&
+       rho_xc(:) =  rho_xc(:) + E%f(iv,ik,1)*(rhotw_sum(:)*conjg(SigmaXC)+rhotw_sum_TR(:)*SigmaXC)/&
 &                  (E%E(iv,ik,1)-E%E(ic,ik,1))
        !
      end do
    end do
  end do 
- deallocate(isc%rhotw,rhotw_save,rhotw_sum,rhotw_sum_TR)
+ deallocate(rhotw_sum,rhotw_sum_TR,rho_tw_rs)
  call X_alloc('DIP_q_dot_iR')
-! if (allocated(QP_Vnl_xc))  deallocate(QP_Vnl_xc)
  !
  ! Add c.c. contribution
  !
@@ -187,7 +162,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  !
  ! Calculate Voep_RL
  !
- Voep_RL=matmul(Xo_inverse,rho_xc)
+ Voep_RL=matmul(Xo_inverse,rho_xc(2:))
  deallocate(rho_xc,Xo_inverse)
  !
  ! Calculate Voep (DL)

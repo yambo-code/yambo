@@ -61,7 +61,7 @@ module SC
  !
  ! OEP specific
  !
- integer,parameter    :: OEP_steps = 1000 
+ integer,parameter    :: OEP_steps = 100 
  real(SP),parameter   :: OEP_threshold = 1.E-5
  character(schlen)    :: OEP_approx
  logical              :: l_oep_iterative,l_oep_EWeight

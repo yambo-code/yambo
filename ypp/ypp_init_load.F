@@ -235,7 +235,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'DampFactor','Damping parameter',X_rt%damp_factor,unit=E_unit,verb_level=V_real_time) 
  !
  call it('f',defs,'FrMinDamp','Force minimal damping',verb_level=V_real_time)
- !
+ call it('f',defs,'RmAsymLim','Remove Asymptotic limit from P or J',verb_level=V_real_time) 
  call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics',verb_level=V_real_time)
  !
 #endif

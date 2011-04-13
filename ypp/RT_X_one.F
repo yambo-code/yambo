@@ -34,6 +34,7 @@ subroutine RT_X_one(en)
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:RT_step,RT_output,RT_P,NE_steps,P_2levels_is_done
  use fields,         ONLY:Efield,small_a,i_Probe
+ use parser_m,       ONLY:parser
  implicit none
  !
  type(levels)  :: en
@@ -42,7 +43,7 @@ subroutine RT_X_one(en)
  !
  integer  :: i_t,i_w,i_c,iE_err
  character(9) :: FT_title
- logical      :: E_from_FT
+ logical      :: E_from_FT,l_rm_asympt_limit
  real(SP)     :: W_step,W_reached
  complex(SP), allocatable :: EELS(:,:),EPS(:,:),freqs(:)
  complex(SP)  :: Field_time,Field_freq
@@ -50,6 +51,8 @@ subroutine RT_X_one(en)
  !
  call section("=",'Optics')
  !=========================
+ !
+ call parser('RmAsymLim',l_rm_asympt_limit)
  !
  ! 1D FFT setup
  !--------------
@@ -128,11 +131,15 @@ subroutine RT_X_one(en)
    !
  endif
  !
- ! Remove the asymptotic limit of RT_P_t
- !
- do i_c=1,3
-   RT_P_t(:,i_c)= RT_P_t(:,i_c)-RT_P_t(NE_steps,i_c)
- enddo
+ if(l_rm_asympt_limit) then
+   !
+   ! Remove the asymptotic limit of RT_P_t
+   !
+   do i_c=1,3
+     RT_P_t(:,i_c)= RT_P_t(:,i_c)-RT_P_t(NE_steps,i_c)
+   enddo
+   !
+ endif
  !
  do i_c=1,3
    !

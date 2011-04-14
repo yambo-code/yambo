@@ -49,7 +49,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,       &
 &                         rho_convergence,H_rotate,local_V,V_hartree_sc,SC_lw_band, &
-&                         E_bare,V_xc_sc,rho_n,Ho,SC_xc_functional
+&                         E_bare,V_xc_sc,rho_n,Ho,SC_xc_functional,SC_lw_band
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE
  use X_m,            ONLY:X_t
  use global_XC,      ONLY:WF_kind,WF_xc_functional
@@ -140,7 +140,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    !
    if(l_NE_simulate_BSE) then
      l_NE_simulate_BSE=.true.
-     call warning(" Real-time BSE not compatible with SC restart yet, turned off! ")
+     call error(" Real-time BSE not compatible with SC restart yet! ")
    endif
    !
    !  I only need SC_R than I can reconstruct G_lesser(:,:,:)
@@ -298,10 +298,15 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  !
  ! Apply QP-corrections if present
  !==========
- call QP_apply((/1,SC_bands/),Xen,Xk,3,msg_fmt='s')  
- do ib=1,SC_bands
+ call QP_apply((/SC_lw_band,SC_bands/),Xen,Xk,3,msg_fmt='s')  
+ do ib=SC_lw_band,SC_bands
    Ho(ib,ib,1:QP_nk,1:n_sp_pol)=Ho(ib,ib,1:QP_nk,1:n_sp_pol) &
 &                              -E_bare(ib,1:QP_nk,1:n_sp_pol)+Xen%E(ib,1:QP_nk,1:n_sp_pol)
+ enddo
+ !
+ do ib=1,SC_lw_band-1
+   Ho(ib,ib,1:QP_nk,1:n_sp_pol)=Ho(ib,ib,1:QP_nk,1:n_sp_pol) &
+&                              -E_bare(SC_lw_band,1:QP_nk,1:n_sp_pol)+Xen%E(SC_lw_band,1:QP_nk,1:n_sp_pol)
  enddo
  !
  ! Two Levels related initializations

@@ -168,6 +168,12 @@ subroutine RT_initialize(Xen)
    call msg('r', '[RT] Response energy window        [eV]:',&
 &                  (/2.*pi/real(NE_steps-minval(ef_i_time))*RT_step,pi/RT_step/)*HARTREE)
    call msg('rn','[RT] Electron-gas plasma frequency [eV]:',sqrt(4._SP*pi*nel/DL_vol)*HARTREE)
+   !
+   call msg( 'r','[RT] Simulate IP                :',l_NE_simulate_IP)
+   call msg( 'r','[RT] Simulate RPA               :',l_NE_simulate_RPA)
+   call msg( 'r','[RT] Simulate BSE               :',l_NE_simulate_BSE)
+   call msg( 'r','[RT] Simulate TD-DFT            :',l_NE_simulate_TDDFT)
+   !
  endif
  !
  if(l_NE_with_fields) call msg('rn','[RT] Gauge                      :',trim(global_gauge))

@@ -21,15 +21,15 @@
 !
 subroutine RT_X_effective(en)
  !
- use pars,           ONLY:SP,lchlen,cI,schlen,pi
- use YPP,            ONLY:RT_P_t,i_t_start,i_t_end,i_t_jump,Pump_path,Probe_Path,N_probes,&
-&                         RT_databases,RT_init_X_one,max_n_of_paths,Use_FFT,X_rt,N_pumps
- use units,          ONLY:HARTREE,FS2AUT 
+ use pars,           ONLY:SP,lchlen,pi
+ use YPP,            ONLY:RT_P_t,Pump_path,N_probes,Probe_path,RT_databases,RT_init_X_one,&
+&                         max_n_of_paths,Use_FFT,X_rt,N_pumps,N_probe_frequencies
+ use units,          ONLY:HARTREE
  use electrons,      ONLY:levels
  use com,            ONLY:jobstr,msg,error
  use IO_m,           ONLY:NONE,LOG
  use fields,         ONLY:Efield,i_Probe,ext_field,Efield_duplicate
- use real_time,      ONLY:NE_steps,RT_step,RT_output
+ use real_time,      ONLY:NE_steps,RT_output
  use vec_operate,    ONLY:sort
  use timing,         ONLY:live_timing
  implicit none
@@ -37,11 +37,11 @@ subroutine RT_X_effective(en)
  type(levels)  :: en
  !
  character(lchlen) :: jobstr_save
- integer           :: nf,N_freqs,i_t,i_f,i_fp,f_indx(max_n_of_paths)
- real(SP)          :: TIME
- complex(SP)       :: EPS,RT_P_probe_derivative
- logical           :: IO_error,Probe_consistency_error
- real(SP),    allocatable    :: RT_P_probe(:,:),Frequency(:),RT_P_pump(:,:)
+ integer           :: i_t,i_f,i_fp,f_indx(max_n_of_paths)
+ real(SP)          :: deltaW
+ complex(SP)       :: EPS
+ logical           :: Probe_consistency_error
+ real(SP),    allocatable    :: RT_P_probe(:,:),RT_P_pump(:,:),Frequency(:)
  complex(SP), allocatable    :: X_effective(:)
  type(ext_field)   :: Efield_probe
  !
@@ -50,7 +50,9 @@ subroutine RT_X_effective(en)
  !
  jobstr_save=jobstr
  !
- allocate(RT_P_probe(NE_steps,N_probes),RT_P_pump(NE_steps,3),Frequency(N_probes))
+ allocate(RT_P_probe(NE_steps,N_probes),RT_P_pump(NE_steps,3))
+ allocate(X_effective(max(N_probes,N_probe_frequencies)))
+ allocate(Frequency(max(N_probes,N_probe_frequencies)))
  !
  ! Pump only
  !===========
@@ -68,6 +70,9 @@ subroutine RT_X_effective(en)
  !
  Probe_consistency_error=.FALSE.
  !
+ RT_P_probe=(0.,0.)
+ deltaW=0.
+ !
  do i_f=1,N_probes
    !
    jobstr=trim(Probe_path(i_f))
@@ -84,20 +89,35 @@ subroutine RT_X_effective(en)
    endif
    !
    RT_P_probe(:,i_f)=real(RT_P_t(:,1))-RT_P_pump(:,1)
-   Frequency(i_f)   =Efield(i_Probe)%frequency
+   !DEBUG>
+   !RT_P_probe(:,1)=RT_P_probe(:,1)+real(RT_P_t(:,1))-RT_P_pump(:,1)
+   !DEBUG<
+   if (N_probe_frequencies >1 ) then  
+     deltaW=(Efield(i_Probe)%frequency(2)-Efield(i_Probe)%frequency(1))/(Efield(i_Probe)%freq_steps-1)
+     do i_fp=1,N_probe_frequencies
+       Frequency(i_fp)=Efield(i_Probe)%frequency(1)+deltaW*(i_fp-1)
+     enddo
+   else
+     Frequency(i_f)   =Efield(i_Probe)%frequency(1)
+   endif
    !
+!DEBUG>
+!   do i_t=1,NE_steps
+!     write (100+i_f,*) i_t,RT_P_probe(i_t,i_f)
+!   enddo
+!DEBUG<
  enddo
  !
  if (Probe_consistency_error) call error('Not all probes have consistent parameters')
  !
- if (trim( Efield_probe%ef_name ) == 'ANTIRES') then
+ if (trim( Efield_probe%ef_name ) == 'ANTIRES'.and.N_probes>1) then
    call msg('s',':: Frequency range   [eV]:',(/minval(Frequency),maxval(Frequency)/)*HARTREE)
  endif
  !
  jobstr=jobstr_save
  !
- ! If the Probe is DELTA then I use RT_X_one to Fourier trasnform
- !=======================
+ ! [A] If the Probe is DELTA I use RT_X_one to Fourier trasnform
+ !     =====================
  ! the polarization purged of the pump part.
  !
  if ( trim( Efield_probe%ef_name ) == 'DELTA' ) then
@@ -114,57 +134,61 @@ subroutine RT_X_effective(en)
    !
    call RT_X_one(en)
    !
-   deallocate(RT_P_probe,Frequency,RT_P_pump)
+   deallocate(RT_P_probe,Frequency,RT_P_pump,X_effective)
    !
    return
    !
  endif
  !
- ! X effective
- !=============
- !
- allocate(X_effective(N_probes))
+ call RT_output("open eps")
  !
  call RT_init_X_one(dump_and_write=.FALSE.)
  !
- call sort(Frequency,indx=f_indx(:N_probes))
+ ! [B] X effective (several Probes, 1 frequency each)
+ !     ===========
  !
- call RT_output("open X_effective eps")
- !
- call live_timing('X effective:',int((i_t_end-i_t_start+1)/(i_t_jump+1))*N_probes)
- !
- do i_t=i_t_start,i_t_end,i_t_jump+1
+ if (N_probes>1) then
    !
-   TIME=(i_t-1)*RT_step
+   call sort(Frequency,indx=f_indx(:N_probes))
+   !
+   call live_timing('X effective:',N_probes)
+   !
+   !DEBUG>
+   !call RT_Fourier_Coefficients(NE_steps,RT_P_probe(i_t,1),N_probes,Frequency,X_effective)
+   !DEBUG<
    !
    do i_fp=1,N_probes
      !
      i_f=f_indx(i_fp)
      !
-     RT_P_probe_derivative=(0.,0.)
-     if (i_t<i_t_end) RT_P_probe_derivative=(RT_P_probe(i_t+1,i_f)-RT_P_probe(i_t,i_f))/RT_step
-     !
-     X_effective(i_fp)=exp(-cI*Frequency(i_fp)*TIME)/2./Efield(i_Probe)%amplitude*&
-&                      ( RT_P_probe(i_t,i_f)-cI/Frequency(i_fp)*RT_P_probe_derivative)
+     call RT_Fourier_Coefficients(NE_steps,RT_P_probe(i_t,i_f),1,(/Frequency(i_fp)/),X_effective(i_fp))
      !
      EPS=1.+4.*pi*X_effective(i_fp)
      !
-     call RT_output('X_effective',VALUEs=(/aimag(EPS),real(EPS)/),E=real(Frequency(i_fp))*HARTREE,TIME=TIME/FS2AUT)
-     !
-     if (i_t+i_t_jump>=i_t_end) call RT_output('eps',VALUEs=(/aimag(EPS),real(EPS),0._SP,0._SP/),E=real(Frequency(i_fp))*HARTREE)
+     call RT_output('eps',VALUEs=(/aimag(EPS),real(EPS),0._SP,0._SP/),E=Frequency(i_fp)*HARTREE)
      !
      call live_timing(steps=1)
+     ! 
+   enddo
+   !
+   call live_timing()
+   !
+ else
+   !
+   call RT_Fourier_Coefficients(NE_steps,RT_P_probe(i_t,1),N_probe_frequencies,Frequency,X_effective)
+   !
+   do i_f=1,N_probe_frequencies
+     !
+     EPS=1.+4.*pi*X_effective(i_f)
+     !
+     call RT_output('eps',VALUEs=(/aimag(EPS),real(EPS),0._SP,0._SP/),E=Frequency(i_f)*HARTREE)
      !
    enddo
    !
-   call msg('o X_effective',' ',' ',INDENT=0)
-   ! 
- enddo
+ endif
  !
- call live_timing()
+ call RT_output("close eps")
  !
- call RT_output("close X_effective eps")
- !
- deallocate(RT_P_probe,X_effective,Frequency,RT_P_pump)
+ deallocate(RT_P_probe,Frequency,RT_P_pump,X_effective)
  !
 end subroutine

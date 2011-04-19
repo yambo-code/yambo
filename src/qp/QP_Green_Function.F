@@ -50,7 +50,7 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
  integer          ::iqp,ib,ik,i_spin,iw,iw_start,iw_end
  real(SP)         ::Eo,Amp_Peak,old_min_max_step(2),new_min_max_step(2),W_step
  !
- real(SP), external :: Integrate
+ real(SP), external :: RIntegrate
  !
  ! The Green's function
  !
@@ -100,7 +100,7 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
    !
    ! Spectral Function Integral
    !
-   QP_G_amplitude_integral(iqp)=Integrate(aimag(qp%GreenF(iqp,:)),real(qp%GreenF_W(iqp,:)),W%n(1))/pi
+   QP_G_amplitude_integral(iqp)=RIntegrate(aimag(qp%GreenF(iqp,:)),real(qp%GreenF_W(iqp,:)),W%n(1))/pi
    !
    ! Search for a finer energy range 
    !

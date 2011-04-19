@@ -22,7 +22,8 @@
 subroutine RT_driver(en,k)
  !
  use YPP,            ONLY:l_fix_syms,l_RT_X_one,Use_FFT,RT_P_t,RT_J_t,l_RT_X_two,&
-&                         l_effective_X,N_probes,N_pumps,RT_init_X_one,RT_databases
+&                         l_effective_X,N_probes,N_pumps,RT_init_X_one,RT_databases,&
+&                         N_probe_frequencies
  use R_lattice,      ONLY:bz_samp
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels
@@ -53,7 +54,7 @@ subroutine RT_driver(en,k)
  call RT_paths(en)
  !
  !
- if (N_pumps==0.and.N_probes==1) then
+ if ( N_pumps==0.and.N_probes==1.and.N_probe_frequencies==0) then
    !
    ! Database
    !
@@ -81,7 +82,7 @@ subroutine RT_driver(en,k)
      !
    endif
    !
- else if ( (N_pumps==1.and.N_probes>=1).or.(N_pumps==0.and.N_probes>=1)) then
+ else if ( (N_pumps==1.and.N_probes>=1) .or. (N_pumps==0.and.N_probes>=1)) then
    !
    call RT_X_effective(en)
    !

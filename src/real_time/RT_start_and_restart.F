@@ -37,7 +37,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  use pars,           ONLY:SP
  use drivers,        ONLY:l_sc_cohsex,l_sc_hf,l_sc_contains_lda
  use com,            ONLY:msg,warning,error
- use QP_m,           ONLY:QP_nk,QP_Sc,QP_Vnl_xc,COHSEX_use_empties
+ use QP_m,           ONLY:QP_nk,COHSEX_use_empties
  use units,          ONLY:HARTREE
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
@@ -45,7 +45,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
 &                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,rho_reference,  &
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
 &                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,RT_P_2levels,full_rho,   &
-&                         l_NE_simulate_Irredux,l_NE_simulate_RPA,l_NE_simulate_TDDFT
+&                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,       &
 &                         rho_convergence,H_rotate,local_V,V_hartree_sc,SC_lw_band, &

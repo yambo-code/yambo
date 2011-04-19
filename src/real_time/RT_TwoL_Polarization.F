@@ -60,9 +60,9 @@ subroutine RT_TwoL_Polarization(E,eval_P,k)
  !
  select case(trim(Efield(i_Pump)%ef_name))
    case('ANTIRES')
-     Rabi_prefactor=1./Efield(i_Pump)%frequency/cI
+     Rabi_prefactor=1./Efield(i_Pump)%frequency(1)/cI
    case('RES')
-     Rabi_prefactor=-1./Efield(i_Pump)%frequency/cI
+     Rabi_prefactor=-1./Efield(i_Pump)%frequency(1)/cI
  end select
  !
  if (eval_P) RT_P_2levels(:)=(0.,0.)

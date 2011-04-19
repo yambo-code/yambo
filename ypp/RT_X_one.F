@@ -126,7 +126,7 @@ subroutine RT_X_one(en)
    !
    call RT_1D_Fourier_Transform(' (E field)',freqs,E_w(:),X_rt%energy_steps,&
 &                               E_t(i_t_start:i_t_end),RED_steps,RT_step,&
-&                               i_t_start*RT_step,USE_FFT)
+&                               i_t_start*RT_step,USE_FFT,1)
    deallocate(E_t)
    !
  endif
@@ -151,13 +151,13 @@ subroutine RT_X_one(en)
    !
    call RT_1D_Fourier_Transform(FT_title,freqs,X_irrep(:,i_c),X_rt%energy_steps,&
 &                               RT_P_t(i_t_start:i_t_end,i_c),RED_steps,RT_step,&
-&                               i_t_start*RT_step,USE_FFT)
+&                               i_t_start*RT_step,USE_FFT,1)
    !
    if (P_2levels_is_done) then
      FT_title=' 2 levels'
      call RT_1D_Fourier_Transform(FT_title,freqs,X_irrep(:,i_c+3),X_rt%energy_steps,&
 &                                 RT_P_t(i_t_start:i_t_end,i_c+3),RED_steps,RT_step,&
-&                                 i_t_start*RT_step,USE_FFT)
+&                                 i_t_start*RT_step,USE_FFT,1)
    endif
    !
  enddo

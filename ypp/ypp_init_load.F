@@ -229,7 +229,9 @@ subroutine ypp_init_load(defs)
  !
  call it(defs,'EnRngeRt','Energy range',X_rt%energy_range,unit=E_unit)
  call it(defs,'ETStpsRt','Total Energy steps',X_rt%energy_steps)
- call it(defs,'TmJump'  ,'Time jump (X effective)',t_jump,unit=Time_unit,verb_level=V_real_time)
+ ! DEBUG>
+ !call it(defs,'TmJump'  ,'Time jump (X effective)',t_jump,unit=Time_unit,verb_level=V_real_time)
+ ! DEBUG<
  call it(defs,'TmRngeRt','Time-window where processing is done',X_rt%time_range,unit=Time_unit,verb_level=V_real_time)
  call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',X_rt%damp,verb_level=V_real_time)
  call it(defs,'DampFactor','Damping parameter',X_rt%damp_factor,unit=E_unit,verb_level=V_real_time) 

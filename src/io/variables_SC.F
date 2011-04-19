@@ -310,7 +310,11 @@ integer function variables_SC(ID,local_description,what)
 &       DESCRIPTION=local_description(i_desc))
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
        !
-       call io_elemental(ID,VAR="EXTERNAL_FIELD"//trim(intc(i1)),VAR_SZ=7,MENU=0)
+       if (ver_is_gt_or_eq(ID,revision=846)) then
+          call io_elemental(ID,VAR="EXTERNAL_FIELD"//trim(intc(i1)),VAR_SZ=9,MENU=0)
+       else
+          call io_elemental(ID,VAR="EXTERNAL_FIELD"//trim(intc(i1)),VAR_SZ=7,MENU=0)
+       endif
        i_desc=i_desc+1
        call io_elemental(ID,R1=Efield(i1)%versor,CHECK=.true., &
 &       VAR=" [FIELDs] Field versor           :",OP=(/"==","==","=="/),&
@@ -324,9 +328,19 @@ integer function variables_SC(ID,local_description,what)
 &       VAR=" [FIELDs] Field damping      [fs]:",R0=Efield(i1)%damping,CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
        i_desc=i_desc+1
-       call io_elemental(ID,&
-&       VAR=" [FIELDs] Field frequency    [eV]:",R0=Efield(i1)%frequency,CHECK=.true.,OP=(/"=="/),&
-&       DESCRIPTION=local_description(i_desc),UNIT=HARTREE)
+       if (ver_is_gt_or_eq(ID,revision=846)) then
+         call io_elemental(ID,&
+&         VAR=" [FIELDs] Field frequencies  [eV]:",R1=Efield(i1)%frequency,CHECK=.true.,OP=(/"==","=="/),&
+&         DESCRIPTION=local_description(i_desc),UNIT=HARTREE)
+          i_desc=i_desc+1
+         call io_elemental(ID,&
+&         VAR=" [FIELDs] Field freq. steps      :",I0=Efield(i1)%freq_steps,CHECK=.true.,OP=(/"=="/),&
+&         DESCRIPTION=local_description(i_desc))
+       else
+         call io_elemental(ID,&
+&         VAR=" [FIELDs] Field frequency    [eV]:",R0=Efield(i1)%frequency(1),CHECK=.true.,OP=(/"=="/),&
+&         DESCRIPTION=local_description(i_desc),UNIT=HARTREE)
+       endif
        i_desc=i_desc+1
        call io_elemental(ID,R0=Efield(i1)%t_initial,&
 &       VAR=' [FIELDs] Initial time       [fs]:',CHECK=.true.,OP=(/"=="/),&

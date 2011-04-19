@@ -155,7 +155,7 @@ module YPP
  logical  :: l_effective_X
  integer  :: i_t_start,i_t_end,i_t_jump ! time window
  integer  :: RED_steps ! reduced number of steps
- integer  :: N_probes,N_pumps
+ integer  :: N_probes,N_pumps,N_probe_frequencies
  real(SP) :: t_jump
  real(SP) :: W_RT_induced_step
  character(schlen) :: Probe_Keyword

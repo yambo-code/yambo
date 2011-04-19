@@ -9,7 +9,7 @@ BOLTZMANN_objects= OCCUPATIONS_Boltzmann.o
 objs = eval_G_minus_G.o \
        FREQUENCIES_damping.o FREQUENCIES_setup.o FREQUENCIES_coarse_grid.o \
        FREQUENCIES_Green_Function.o FREQUENCIES_reset.o \
-       Kramers_Kronig.o $(ELPH_objects) Integrate.o QPartilize.o \
+       Kramers_Kronig.o $(ELPH_objects) RIntegrate.o CIntegrate.o QPartilize.o \
        OCCUPATIONS_Fermi.o OCCUPATIONS_Extend.o \
        crystal_lattice.o QP_state_extract.o \
        pert_inversion.o pol_fit.o $(BOLTZMANN_objects)

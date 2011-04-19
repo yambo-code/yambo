@@ -436,6 +436,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
      if (i_field==2) verbosity_here=V_real_time
      call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
 &    Efield(i_field)%frequency,unit=E_unit,verb_level=0)
+     call it(defs,trim(name)//'_NFreqs',          '[RT '//trim(name)//'] Frequency steps',&
+&    Efield(i_field)%freq_steps,verb_level=V_real_time)
      call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&
 &    Efield(i_field)%intensity,unit=I_unit,verb_level=0)
      call it(defs,trim(name)//'_Damp',             '[RT '//trim(name)//'] Damping',&

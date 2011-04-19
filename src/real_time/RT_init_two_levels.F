@@ -95,9 +95,9 @@ subroutine RT_init_two_levels(Xen)
    !
    select case(trim(Efield(i_Pump)%ef_name))
      case('ANTIRES','SIN')
-       W_pump=-Efield(i_Pump)%frequency 
+       W_pump=-Efield(i_Pump)%frequency(1)
      case('RES')
-       W_pump=Efield(i_Pump)%frequency 
+       W_pump=Efield(i_Pump)%frequency(1)
    end select
    !
    call msg('s','[3 LEVELS] Energy Levels [eV]',(/Wo*HARTREE,W1*HARTREE/))
@@ -114,10 +114,10 @@ subroutine RT_init_two_levels(Xen)
    !
    select case(trim(Efield(i_Pump)%ef_name))
      case('ANTIRES')
-       W_pump=Efield(i_Pump)%frequency 
+       W_pump=Efield(i_Pump)%frequency(1)
        mu(i_Pump) = P/cI/W_pump
      case('RES')
-       W_pump=Efield(i_Pump)%frequency 
+       W_pump=Efield(i_Pump)%frequency(1)
        mu(i_Pump) =-P/cI/W_pump
      case('DELTA')
        mu(i_Pump) =P
@@ -134,10 +134,10 @@ subroutine RT_init_two_levels(Xen)
    !
    if (i_Pump/=i_Probe) then
      !
-     W_probe=Efield(i_Probe)%frequency
+     W_probe=Efield(i_Probe)%frequency(1)
      !
-     if ( trim(Efield(i_Probe)%ef_name) == 'RES' ) mu(i_Probe) =-P/cI/Efield(i_Probe)%frequency
-     if ( trim(Efield(i_Probe)%ef_name) == 'ANTIRES' ) mu(i_Probe) =P/cI/Efield(i_Probe)%frequency
+     if ( trim(Efield(i_Probe)%ef_name) == 'RES' ) mu(i_Probe) =-P/cI/Efield(i_Probe)%frequency(1)
+     if ( trim(Efield(i_Probe)%ef_name) == 'ANTIRES' ) mu(i_Probe) =P/cI/Efield(i_Probe)%frequency(1)
      if ( trim(Efield(i_Probe)%ef_name) == 'DELTA' ) mu(i_Probe) =P
      !
      Rabi_freq_probe=2.*Efield(i_Probe)%amplitude*mu(i_Probe)

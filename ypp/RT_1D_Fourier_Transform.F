@@ -20,17 +20,19 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !
-subroutine RT_1D_Fourier_Transform(title,freqs,fw,nw,ft,nt,dt,T0,USE_FFT)
+subroutine RT_1D_Fourier_Transform(title,freqs,fw,nw,ft,nt,dt,T0,USE_FFT,I_sign)
  !
  ! Here I calculate 
  !
- ! \tilde{FT}[ft] = \int_{T0}{\infty} ft(t) exp^(i w t) = exp^(i w T0) * FT[ft]
+ ! \tilde{FT}[ft] = \int_{T0}{\infty} ft(t) exp^(i w t) = exp^(i w T0) * FT[ft]   (USE_FFT=.TRUE.)
+ !
+ ! \tilde{FT}[ft] = \int_{T0}{\infty} ft(t) exp^(i w t) = exp^(i I_sign w T0) * FT[ft]   (USE_FFT=.FALSE.)
  !
  use pars,           ONLY:SP,DP,cI
  use timing,         ONLY:live_timing
  implicit none
  !
- integer,     intent(in)   :: nw,nt
+ integer,     intent(in)   :: nw,nt,I_sign
  logical,     intent(in)   :: USE_FFT
  real(SP),    intent(in)   :: dt,T0
  complex(SP), intent(in)   :: freqs(nw)
@@ -67,7 +69,7 @@ subroutine RT_1D_Fourier_Transform(title,freqs,fw,nw,ft,nt,dt,T0,USE_FFT)
    do i_w = 1, nw
      do i_t = 1, nt
        Time_reached = i_t*dt       
-       fw(i_w) = fw(i_w)+ft(i_t)*exp(cI*freqs(i_w)*Time_reached)
+       fw(i_w) = fw(i_w)+ft(i_t)*exp(cI*I_sign*freqs(i_w)*Time_reached)
      enddo
      call live_timing(steps=1)
    enddo

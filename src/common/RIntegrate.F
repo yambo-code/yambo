@@ -19,25 +19,25 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-function Integrate(F,W,N)
+function RIntegrate(F,W,N)
  !
  use pars,    ONLY:SP
  implicit none
  integer,     intent(in)  :: N
  real(SP),    intent(in)  :: W(N),F(N)
- real(SP)                 :: Integrate
+ real(SP)                 :: RIntegrate
  !
  ! Work Space
  !
  integer      :: i_w
  real(SP)     :: M,Q
  !
- Integrate=0._SP
+ RIntegrate=0._SP
  !
  do i_w=1,N-1
    M=(F(i_w)-F(i_w+1))/(W(i_w)-W(i_w+1))
    Q=F(i_w)-M*W(i_w)
-   Integrate=Integrate+1./2.*M*(W(i_w+1)**2.-W(i_w)**2.)+Q*(W(i_w+1)-W(i_w))
+   RIntegrate=RIntegrate+1./2.*M*(W(i_w+1)**2.-W(i_w)**2.)+Q*(W(i_w+1)-W(i_w))
  enddo
  !
 end function

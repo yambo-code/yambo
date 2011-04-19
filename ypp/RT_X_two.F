@@ -53,8 +53,8 @@ subroutine RT_X_two(en)
  ! Field: Allocation
  !
  delta = 1._SP/Efield(1)%damping
- X_rt%energy_range(1)=-4._SP*(Efield(1)%frequency)
- X_rt%energy_range(2)=4._SP*(Efield(1)%frequency)
+ X_rt%energy_range(1)=-4._SP*(Efield(1)%frequency(1))
+ X_rt%energy_range(2)=4._SP*(Efield(1)%frequency(1))
  W_step=W_RT_induced_step
  X_rt%energy_steps= (X_rt%energy_range(2))/W_step
  X_rt%energy_steps= 2*X_rt%energy_steps
@@ -71,7 +71,7 @@ subroutine RT_X_two(en)
  A_vecpot_vel_w=(0._DP,0._DP)
  freqs=(0._SP,0._SP)
  do i_w = 1, X_rt%energy_steps
-   freqs(i_w)=cmplx(Efield(1)%frequency-((i_w-1)*W_step+X_rt%energy_range(1)),0._SP)
+   freqs(i_w)=cmplx(Efield(1)%frequency(1)-((i_w-1)*W_step+X_rt%energy_range(1)),0._SP)
  enddo
  !call Fourier_Transform(freqs,A_vecpot_vel_w,X_rt%energy_steps,A_vecpot_vel_t,NE_steps,RT_step,3)
  A_vecpot_vel_w(:,:)=A_vecpot_vel_w(:,:)*RT_step 
@@ -81,7 +81,7 @@ subroutine RT_X_two(en)
  A_vecpot_vel_w=(0._DP,0._DP)
  freqs=(0._SP,0._SP)
  do i_w = 1, X_rt%energy_steps
-   freqs(i_w)=cmplx(Efield(1)%frequency+(i_w-1)*W_step+X_rt%energy_range(1),0._SP)
+   freqs(i_w)=cmplx(Efield(1)%frequency(1)+(i_w-1)*W_step+X_rt%energy_range(1),0._SP)
  enddo
  !call Fourier_Transform(freqs,A_vecpot_vel_w,X_rt%energy_steps,A_vecpot_vel_t,NE_steps,RT_step,3)
  A_vecpot_vel_w(:,:)=A_vecpot_vel_w(:,:)*RT_step 
@@ -107,7 +107,7 @@ subroutine RT_X_two(en)
  ! Polarization: FT at 0 and twice the field frequency
  !
  outfreqs(1)=(0._SP,0._SP)                           ! Optical rectification
- outfreqs(2)=cmplx(Efield(1)%frequency*2._SP,0._SP)  ! SHG
+ outfreqs(2)=cmplx(Efield(1)%frequency(1)*2._SP,0._SP)  ! SHG
  !call Fourier_Transform(outfreqs,X_irrep,nfreqs,RT_P_t,NE_steps,RT_step,3)
  X_irrep(:,:)=X_irrep(:,:)*RT_step
  !

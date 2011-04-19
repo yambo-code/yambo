@@ -40,7 +40,8 @@ module fields
  type ext_field
    real(SP) :: t_initial
    integer  :: int_t_initial
-   real(SP) :: frequency
+   integer  :: freq_steps
+   real(SP) :: frequency(2)
    real(SP) :: damping
    real(SP) :: intensity
    real(SP) :: amplitude
@@ -102,44 +103,55 @@ module fields
      complex(SP)       ::T_or_W
      integer           ::order
      !
+     integer           ::i_f
      real(SP)          ::T_0,freq,sigma
+     complex(SP)       ::local_a
      !
-     freq=E_field%frequency
+     freq=E_field%frequency(1)
      sigma=E_field%damping
      T_0=10.*sigma
-     small_a=(0._SP,0._SP)
+     local_a=(0._SP,0._SP)
      !
      select case( trim(E_field%ef_name) )
        case('SIN')
-         if (order==0 ) small_a=-(cos(freq*T_or_W)-1._SP)/freq
-         if (order==1 ) small_a= sin(freq*T_or_W)
-         if (order==2 ) small_a=freq*cos(freq*T_or_W)
-         if (order==-1) small_a=1._SP/2._SP/(T_or_W-freq)-1._SP/2._SP/(T_or_W+freq)-1._SP/freq
+         if (order==0 ) local_a=-(cos(freq*T_or_W)-1._SP)/freq
+         if (order==1 ) local_a= sin(freq*T_or_W)
+         if (order==2 ) local_a=freq*cos(freq*T_or_W)
+         if (order==-1) local_a=1._SP/2._SP/(T_or_W-freq)-1._SP/2._SP/(T_or_W+freq)-1._SP/freq
        case('ANTIRES')
-         if (order==0 ) small_a=-cI*exp(cI*freq*T_or_W)/freq
-         if (order==1 ) small_a=    exp(cI*freq*T_or_W)
-         if (order==2 ) small_a=cI*freq*exp(cI*freq*T_or_W)
-         if (order==-1) small_a=-cI*(1._SP/(T_or_W+freq)+1._SP/freq)
+         do i_f=1,E_field%freq_steps
+           !
+           freq=E_field%frequency(1)
+           if (i_f>1) freq=E_field%frequency(1)+(E_field%frequency(2)-E_field%frequency(1))/(E_field%freq_steps-1)*(i_f-1)
+           !
+           if (order==0 ) local_a=local_a+-cI*exp(cI*freq*T_or_W)/freq
+           if (order==1 ) local_a=local_a+    exp(cI*freq*T_or_W)
+           if (order==2 ) local_a=local_a+cI*freq*exp(cI*freq*T_or_W)
+           if (order==-1) local_a=local_a+-cI*(1._SP/(T_or_W+freq)+1._SP/freq)
+           !
+         enddo
        case('RES')
-         if (order==0 ) small_a= cI*exp(-cI*freq*T_or_W)/freq
-         if (order==1 ) small_a=    exp(-cI*freq*T_or_W)
-         if (order==2 ) small_a=-cI*freq*exp(-cI*freq*T_or_W)
-         if (order==-1) small_a=-cI*(1._SP/(T_or_W-freq)-1._SP/freq)
+         if (order==0 ) local_a= cI*exp(-cI*freq*T_or_W)/freq
+         if (order==1 ) local_a=    exp(-cI*freq*T_or_W)
+         if (order==2 ) local_a=-cI*freq*exp(-cI*freq*T_or_W)
+         if (order==-1) local_a=-cI*(1._SP/(T_or_W-freq)-1._SP/freq)
        case('DELTA')
-         if (order==0 ) small_a=1.
-         if (order> 0 ) small_a=0.
-         if (order==-1) small_a=1.
+         if (order==0 ) local_a=1.
+         if (order> 0 ) local_a=0.
+         if (order==-1) local_a=1.
        case('GAUSS')
-         if (order==0 ) small_a= sigma*sqrt(pi/2._SP)* ( erf( (real(T_or_W,SP)-T_0)/(sigma*sqrt(2._SP)) )+1._SP )
-         if (order==1 ) small_a= exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )
-         if (order==2 ) small_a=-exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )*(T_or_W-T_0)/sigma**2
+         if (order==0 ) local_a= sigma*sqrt(pi/2._SP)* ( erf( (real(T_or_W,SP)-T_0)/(sigma*sqrt(2._SP)) )+1._SP )
+         if (order==1 ) local_a= exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )
+         if (order==2 ) local_a=-exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )*(T_or_W-T_0)/sigma**2
          if (order==-1) order=-2
        case('QSSIN')
-         if (order==0 ) small_a= 0.
-         if (order==1 ) small_a= sin(freq*(T_or_W-T_0))*exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )
-         if (order==2 ) small_a= (freq*cos(freq*(T_or_W-T_0))-(T_or_W-T_0)/sigma**2)*exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )
+         if (order==0 ) local_a= 0.
+         if (order==1 ) local_a= sin(freq*(T_or_W-T_0))*exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )
+         if (order==2 ) local_a= (freq*cos(freq*(T_or_W-T_0))-(T_or_W-T_0)/sigma**2)*exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )
          if (order==-1) order=-2
      end select
+     !
+     small_a=local_a
      !
    end function
    !
@@ -174,6 +186,7 @@ module fields
      E2%t_initial=E1%t_initial  
      E2%int_t_initial=E1%int_t_initial  
      E2%frequency=E1%frequency  
+     E2%freq_steps=E1%freq_steps  
      E2%damping=E1%damping  
      E2%intensity=E1%intensity  
      E2%amplitude=E1%amplitude  

@@ -23,9 +23,10 @@ subroutine RT_paths(en)
  !
  use pars,           ONLY:lchlen
  use YPP,            ONLY:Probe_Keyword,Pump_Keyword,max_n_of_paths,Pump_path,Probe_path,RT_databases,&
-&                         N_pumps,N_probes
+&                         N_pumps,N_probes,N_probe_frequencies
  use com,            ONLY:core_io_path,jobstr,file_exists,msg
  use IO_m,           ONLY:NONE,LOG
+ use fields,         ONLY:Efield,i_Probe
  use stderr,         ONLY:string_split,cstr
  use electrons,      ONLY:levels
  implicit none
@@ -74,7 +75,12 @@ subroutine RT_paths(en)
  do i_f=1,N_probes
    jobstr=trim(Probe_path(i_f))
    call RT_databases(en,IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
+   N_probe_frequencies= Efield(i_Probe)%freq_steps
  enddo
+ !
+ ! In case of several probe_frequencies only one probe is supported
+ !
+ if (N_probes>1.and.N_probe_frequencies>1) N_probes=0
  !
  ! Pump only
  !===========
@@ -91,10 +97,16 @@ subroutine RT_paths(en)
  !
  if (N_probes==0.and.N_pumps==0) then
    call RT_databases(en,IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
+   !
+   ! I can use ANTIRES/RES probes with multiple frequencies only by using
+   ! ProbeKey in the input file. This is because of the procedures defined in X_effective.
+   !
+   if (Efield(i_Probe)%freq_steps>1) IO_error=.TRUE.
    if (.not.IO_error) N_probes=1
  endif
  !
- call msg('s',':: Pump   found:',N_pumps)
- call msg('s',':: Probes found:',N_probes)
+ call msg('s',':: Pump   found      :',N_pumps)
+ call msg('s',':: Probes found      :',N_probes)
+ call msg('s',':: Probe  frequencies:',N_probe_frequencies)
  !
 end subroutine

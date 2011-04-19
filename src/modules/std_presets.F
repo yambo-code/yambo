@@ -447,6 +447,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
    Efield(i1)%t_initial    =0.*FS2AUT
    Efield(i1)%int_t_initial=0
    Efield(i1)%frequency    =0.
+   Efield(i1)%freq_steps   =1
    Efield(i1)%intensity    =0.
    Efield(i1)%damping      =0.
    Efield(i1)%ef_name      ='none'

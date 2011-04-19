@@ -46,6 +46,7 @@ subroutine RT_initialize(Xen)
  ! Work space
  !
  integer                  :: i1,rest
+ real(SP)                 :: W_step
  !
  ! Logicals
  !==========
@@ -80,12 +81,12 @@ subroutine RT_initialize(Xen)
  if(.not.local_V.and..not.l_NE_simulate_IP.and..not.l_collisions_IO) &
 &  call error(" Real-time works only with collisions, turn them on 'yambo -e' !")
  !
- ! Set a number of steps compatible with the cache 
- !=================================================
- !
- ! Use NE_tot_time if provide
+ ! Use NE_tot_time if provided
  !
  if (NE_tot_time>0.) NE_steps=max(NE_steps,int(NE_tot_time/RT_step))
+ !
+ ! Set a number of steps compatible with the cache 
+ !=================================================
  !
  if(mod(Thermal_steps+NE_steps,max_rt_steps_disk)/=0) then
    rest=mod(Thermal_steps+NE_steps,max_rt_steps_disk)
@@ -139,7 +140,7 @@ subroutine RT_initialize(Xen)
      !
      call SC_check_symmetries(Efield(i1)%versor)
      !
-     if(Efield(i1)%ef_name/='DELTA'.and.(Efield(i1)%frequency==0._SP.and.Efield(i1)%damping==0)) &
+     if(Efield(i1)%ef_name/='DELTA'.and.(Efield(i1)%frequency(1)==0._SP.and.Efield(i1)%damping==0)) &
 &      call warning(" External "//trim(Efield(i1)%ef_name)//" field has zero frequency and damping.")
      ! 
      if(Efield(i1)%intensity==0._SP) &
@@ -149,10 +150,33 @@ subroutine RT_initialize(Xen)
    !
  enddo
  !
+ ! Check on the PROBE frequencies. To be possible to find, in ypp_rt, the coefficients of the 
+ ! Fourier series I need the frequencies to be Wn=n deltaW. Therefore frequency(1) and
+ ! frequency(2) must be choosed accordingly.
+ ! 
+ ! Moreover to extract the Fourier coefficients I need to integrate over aa Time range
+ ! equal to 2*pi/deltaW. This must be not larger then  X % of NE_steps*RT_step 
+ !
+ if (Efield(i_Probe)%freq_steps > 1) then
+   W_step=(Efield(i_Probe)%frequency(2)-Efield(i_Probe)%frequency(1))/(Efield(i_Probe)%freq_steps-1)
+   !
+   if (2.*pi*HBAR_eVfs/(W_step*HARTREE)*FS2AUT > .5*NE_steps*RT_step) then
+     W_step= 2.*pi*HBAR_eVfs/(.5*NE_steps*RT_step*HARTREE)*FS2AUT
+   endif
+   !
+   Efield(i_Probe)%frequency(1)=nint(Efield(i_Probe)%frequency(1)/W_step)*W_step
+   Efield(i_Probe)%frequency(2)=nint(Efield(i_Probe)%frequency(2)/W_step)*W_step
+   !
+   Efield(i_Probe)%freq_steps=(Efield(i_Probe)%frequency(2)-Efield(i_Probe)%frequency(1))/W_step+1
+   !
+ endif
+ !
  if (.not.l_NE_with_fields) then
    NE_steps=0
    if (Thermal_steps==0) call warning('Skipping simulation. No Ext fields or thermalization provided')
  endif
+ !
+ !call RT_step_test()
  !
  ! LOG
  !=====
@@ -165,8 +189,6 @@ subroutine RT_initialize(Xen)
  call msg( 'sr', '[RT] Damping (QP)       [fs/meV]:',(/QP_LifeTime/FS2AUT,   HBAR_eVfs/QP_LifeTime*FS2AUT*1000./))
  if(NE_steps>0) then
    call msg('rn','[RT] Simulation time        [fs]:',(/-real(Thermal_steps)*RT_step,RT_step*real(NE_steps)/)/FS2AUT)
-   call msg('r', '[RT] Response energy window        [eV]:',&
-&                  (/2.*pi/real(NE_steps-minval(ef_i_time))*RT_step,pi/RT_step/)*HARTREE)
    call msg('rn','[RT] Electron-gas plasma frequency [eV]:',sqrt(4._SP*pi*nel/DL_vol)*HARTREE)
    !
    call msg( 'r','[RT] Simulate IP                :',l_NE_simulate_IP)
@@ -174,6 +196,15 @@ subroutine RT_initialize(Xen)
    call msg( 'r','[RT] Simulate BSE               :',l_NE_simulate_BSE)
    call msg( 'r','[RT] Simulate TD-DFT            :',l_NE_simulate_TDDFT)
    !
+ endif
+ if (Efield(i_Probe)%freq_steps > 1) then
+   call msg('sr', '[RT] Response energy window        [eV]:',Efield(i_Probe)%frequency*HARTREE)
+   call msg('sr', '[RT]          time periodicity     [fs]:',2.*pi*HBAR_eVfs/(W_step*HARTREE))
+   call msg('sr', '[RT]          energy step          [eV]:',W_step*HARTREE)
+   call msg('sr', '[RT]          energy steps         [eV]:',Efield(i_Probe)%freq_steps)
+ else
+   call msg('r', '[RT] Response energy window        [eV]:',&
+&                (/2.*pi/real(NE_steps-minval(ef_i_time))*RT_step,pi/RT_step/)*HARTREE)
  endif
  !
  if(l_NE_with_fields) call msg('rn','[RT] Gauge                      :',trim(global_gauge))

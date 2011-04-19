@@ -56,11 +56,11 @@ subroutine RT_TwoL_Glesser(Poles_and_derivatives,Eo,Rabi,G_lesser)
  !
  select case(trim(Efield(i_Probe)%ef_name))
    case('RES')
-     W_pump=Efield(i_Probe)%frequency
+     W_pump=Efield(i_Probe)%frequency(1)
      Eo_=Eo+W_pump
      G_lesser_prefactor=exp(-cI*W_pump*NE_time)
    case('ANTIRES')
-     W_pump=Efield(i_Probe)%frequency
+     W_pump=Efield(i_Probe)%frequency(1)
      Eo_=Eo-W_pump
      G_lesser_prefactor=exp( cI*W_pump*NE_time)
  end select

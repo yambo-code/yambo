@@ -70,7 +70,7 @@ subroutine RT_databases(en,IO_error,first_sec_only,COM_,mesg)
  io_J_and_P=io_SC_components('J_and_P' ,en,ID)
  if( io_J_and_P/=0 ) then
    if (present(IO_error)) then
-     IO_error=.FALSE.
+     IO_error=.TRUE.
    endif
    return
  endif

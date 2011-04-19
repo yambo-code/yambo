@@ -21,7 +21,7 @@
 !
 subroutine RT_init_X_one(dump_and_write)
  !
- use YPP,            ONLY:RT_P_t,X_rt,RT_J_t,i_t_start,i_t_end,&
+ use YPP,            ONLY:RT_P_t,X_rt,RT_J_t,i_t_start,i_t_end,N_probes,N_probe_frequencies,&
 &                         W_RT_induced_step,RED_steps,l_force_min_damp,t_jump,i_t_jump,N_pumps
  use com,            ONLY:msg
  use pars,           ONLY:pi,SP
@@ -51,16 +51,15 @@ subroutine RT_init_X_one(dump_and_write)
  !
  i_t_field_range= (/int(Efield(i_Probe)%t_initial/RT_step)+1,NE_steps/)
  !
- if (N_pumps>0) i_t_start=i_t_field_range(1)
+ if (N_pumps>0.and.trim(Efield(i_Probe)%ef_name)=='DELTA') i_t_start=i_t_field_range(1)
  !
  if (i_t_start<=0.or.i_t_start> i_t_field_range(2)) i_t_start=i_t_field_range(1)
  if (i_t_end<=0  .or.i_t_end>   i_t_field_range(2)) i_t_end  =i_t_field_range(2)
  !
- call msg('s','[RT] Time range [fs]:',(/real(i_t_start),real(i_t_end)/)*RT_step/FS2AUT)
- call msg('s','[RT] Time jumps [fs]:',t_jump/FS2AUT)
- !
- if (present(dump_and_write)) then
-   if (.not.dump_and_write) return
+ if ( (N_pumps==0.and.N_probes==1.and.N_probe_frequencies==0) .or. (N_pumps>0.and.trim(Efield(i_Probe)%ef_name)=='DELTA')) then
+    call msg('s','[RT] Time range [fs]:',(/real(i_t_start),real(i_t_end)/)*RT_step/FS2AUT)
+ else if (  N_probe_frequencies>1.or. N_probes>1) then
+    call msg('s','[RT] Time reference [fs]:',real(i_t_start)*RT_step/FS2AUT)
  endif
  !
  ! DAMPING

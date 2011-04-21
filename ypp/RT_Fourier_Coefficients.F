@@ -27,7 +27,7 @@ subroutine RT_Fourier_Coefficients(nt,P,nw,W,X)
  use YPP,            ONLY:i_t_start
  use units,          ONLY:FS2AUT,HARTREE,HBAR_eVfs
  use timing,         ONLY:live_timing
- use real_time,      ONLY:RT_step,NE_steps,i_t_start
+ use real_time,      ONLY:RT_step,NE_steps
  use fields,         ONLY:Efield,i_Probe
  use com,            ONLY:msg
  implicit none

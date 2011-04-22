@@ -26,6 +26,7 @@ subroutine COLLISIONS_IO_store(i_qp)
  use collisions_IO,   ONLY:COLLISIONS_cutoff,TEMP_COLLISIONS_v,COLLISIONS_table,&
 &                          COLLISIONS_v,n_collisions
  use IO_m,            ONLY:io_control,REP,OP_WR_CL,OP_APP_WR_CL
+ use SC,              ONLY:SC_lw_band
  !
  implicit none                                              
  !
@@ -44,8 +45,8 @@ subroutine COLLISIONS_IO_store(i_qp)
  !
  ic=0
  !
- do jb=1,QP_nb
-   do jb2=1,QP_nb
+ do jb=SC_lw_band,QP_nb
+   do jb2=SC_lw_band,QP_nb
      do ik=1,QP_nk
        if(abs(TEMP_COLLISIONS_v(jb,jb2,ik))>=COLLISIONS_max*COLLISIONS_cutoff.or.COLLISIONS_cutoff<0.0)  ic=ic+1
      enddo
@@ -56,8 +57,8 @@ subroutine COLLISIONS_IO_store(i_qp)
  COLLISIONS_table(:,:,:)=0
  ic=0
  !
- do jb=1,QP_nb
-   do jb2=1,QP_nb
+ do jb=SC_lw_band,QP_nb
+   do jb2=SC_lw_band,QP_nb
      do ik=1,QP_nk
        if(abs(TEMP_COLLISIONS_v(jb,jb2,ik))>=COLLISIONS_max*COLLISIONS_cutoff.or.COLLISIONS_cutoff<0.0)  then
          ic=ic+1

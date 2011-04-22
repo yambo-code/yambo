@@ -29,9 +29,9 @@ subroutine load_COLLISIONS()
  use com,             ONLY:warning,msg
  use global_XC,       ONLY:SC_HF,SC_COHSEX
  use QP_m,            ONLY:QP_n_states,QP_nb,QP_nk
+ use SC,              ONLY:SC_lw_band
  use memory_m,        ONLY:mem_sum,mem_est
- use collisions_IO,   ONLY:COLLISIONS_v,COLLISIONS_table,V_kind,&
-&                          collisions_IO_free
+ use collisions_IO,   ONLY:COLLISIONS_v,COLLISIONS_table,V_kind,collisions_IO_free
  use stderr,          ONLY:intc
  use IO_m,            ONLY:OP_RD_CL,io_control
  use par_proc_m,      ONLY:pp_indexes,pp_indexes_reset
@@ -84,8 +84,8 @@ subroutine load_COLLISIONS()
  !
  max_COLLISION_cache=QP_nb**2*QP_nk
  !
- allocate(COLLISIONS_disk(QP_nb,QP_nb,QP_nk))
- call mem_est("COLLISIONS_disk",(/QP_nb,QP_nb,QP_nk/),(/2*SP/))
+ allocate(COLLISIONS_disk(SC_lw_band:QP_nb,SC_lw_band:QP_nb,QP_nk))
+ call mem_est("COLLISIONS_disk",(/QP_nb-SC_lw_band+1,QP_nb-SC_lw_band+1,QP_nk/),(/2*SP/))
  !
  if(l_sc_hf.or.l_sc_cohsex.or.l_sc_exx) then
    n_V_kinds          =n_V_kinds+1
@@ -107,7 +107,7 @@ subroutine load_COLLISIONS()
    !
    if(.not.px%element_1D(i_qp)) cycle  
    !
-   allocate(CACHE(i_qp)%COLLISIONS_table(QP_nb,QP_nb,QP_nk))
+   allocate(CACHE(i_qp)%COLLISIONS_table(SC_lw_band:QP_nb,SC_lw_band:QP_nb,QP_nk))
    call mem_est(" QP_COLLISIONS_table_"//trim(intc(i_qp)),(/LP/))
    !
    CACHE(i_qp)%COLLISIONS_table(:,:,:)=0
@@ -122,8 +122,8 @@ subroutine load_COLLISIONS()
      !
      ic=0
      !
-     do ib=1,QP_nb
-       do ibp=1,QP_nb
+     do ib=SC_lw_band,QP_nb
+       do ibp=SC_lw_band,QP_nb
          do ik=1,QP_nk
            !
            if(COLLISIONS_table(ib,ibp,ik)==1) then
@@ -145,8 +145,8 @@ subroutine load_COLLISIONS()
    !
    ic=0
    !
-   do ib=1,QP_nb
-     do ibp=1,QP_nb
+   do ib=SC_lw_band,QP_nb
+     do ibp=SC_lw_band,QP_nb
        do ik=1,QP_nk
          if(CACHE(i_qp)%COLLISIONS_table(ib,ibp,ik)==1) then
            ic=ic+1

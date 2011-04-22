@@ -117,8 +117,8 @@ integer function io_COLLISIONS(i_qp,ID)
    !
    call io_bulk(ID,VAR='N_COLLISIONS_STATES',VAR_SZ=(/1/))
    call io_bulk(ID,I0=n_collisions)
-   call io_bulk(ID,VAR='COLLISIONS_TABLE',VAR_SZ=(/QP_nb,QP_nb,QP_nk/))
-   call io_bulk(ID,L3=COLLISIONS_table)
+   call io_bulk(ID,VAR='COLLISIONS_TABLE',VAR_SZ=(/QP_nb-SC_lw_band+1,QP_nb-SC_lw_band+1,QP_nk/))
+   call io_bulk(ID,L3=COLLISIONS_table(SC_lw_band:QP_nb,SC_lw_band:QP_nb,1:QP_nk))
    !
    allocate(COLLISIONS_v_disk(n_collisions,2))      
    !

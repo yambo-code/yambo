@@ -30,7 +30,7 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  use QP_m,          ONLY:QP_nb,QP_n_states,QP_nk
  use wave_func,     ONLY:WF_free
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
- use SC,            ONLY:SC_bands
+ use SC,            ONLY:SC_bands,SC_lw_band
  use QP_m,          ONLY:QP_nb,COHSEX_use_empties,QP_n_G_bands,QP_t
  use SC,            ONLY:SC_bands
  use global_XC,     ONLY:SC_HF,SC_COHSEX
@@ -116,7 +116,7 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
      COHSEX_use_empties=.TRUE.
      !
      if (.not.allocated(TEMP_COLLISIONS_v)) then
-       allocate(TEMP_COLLISIONS_v(QP_nb,QP_nb,QP_nk))
+       allocate(TEMP_COLLISIONS_v(SC_lw_band:QP_nb,SC_lw_band:QP_nb,QP_nk))
        call mem_est("TEMP_COLLISIONS_v",(/size(TEMP_COLLISIONS_v)/),(/2*SP/))
        call collisions_IO_alloc()
      endif
@@ -152,7 +152,7 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
      real(SP)     :: disk_space
      character(*) :: what
      !
-     disk_space=real(QP_n_states*QP_nb**2*QP_nk*SP)/1.E9
+     disk_space=real(QP_n_states*(QP_nb-SC_lw_band+1)**2*QP_nk*SP)/1.E9
      if (disk_space > 0.05) call msg('s','[COLLISIONS I/O] '//what//' Disk space required [Gb]:',disk_space)  
      !
    end subroutine

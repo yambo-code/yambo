@@ -299,6 +299,9 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  ! Apply QP-corrections if present
  !==========
  call QP_apply((/SC_lw_band,SC_bands/),Xen,Xk,3,msg_fmt='s')  
+ !
+ if(associated(Xen%W)) call msg('snr','[RT] Dephasing read from QP database')
+ !
  do ib=SC_lw_band,SC_bands
    Ho(ib,ib,1:QP_nk,1:n_sp_pol)=Ho(ib,ib,1:QP_nk,1:n_sp_pol) &
 &                              -E_bare(ib,1:QP_nk,1:n_sp_pol)+Xen%E(ib,1:QP_nk,1:n_sp_pol)

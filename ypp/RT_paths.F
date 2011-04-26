@@ -49,10 +49,21 @@ subroutine RT_paths(en)
  !
  nf=count( len_trim(Probe_path(:)) > 0 ) 
  !
- Pump_path="none"
+ ! Remove "." and ".."
  !
  i_f=1
  do while (i_f<nf)
+   if ( trim(Probe_path(i_f)) == "." .or. trim(Probe_path(i_f)) == ".." ) then
+     forall (i_fp=i_f+1:nf) Probe_path(i_fp-1)=Probe_path(i_fp)
+     nf=nf-1
+   endif
+   i_f=i_f+1
+ enddo
+ !
+ Pump_path="none"
+ !
+ i_f=1
+ do while (i_f<=nf)
    if (file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/ndb.RT_GreenF').and.&
 &      index(trim(Probe_path(i_f)),trim(Probe_Keyword))>0  ) then
      N_probes =N_probes+1

@@ -67,6 +67,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _RT
  use real_time,      ONLY:l_RT_probe,l_RT_pump_and_probe
+ use fields,         ONLY:Efield,i_Pump,i_Probe,Efield_reset,Efield_duplicate
 #endif
 #if defined _MAGNETIC
  use magnetic,        ONLY:MAG_hamiltonian_type,MAG_pauli,MAG_landau
@@ -992,6 +993,23 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      endif
 #if !defined _ELPH 
      if (l_gw0) l_el_corr=.true.
+#endif
+     !
+#if defined _RT 
+     !
+     ! The logicals l_RT_pump_and_probe and l_RT_probe are defined by read_command_line
+     ! if infile_editing=T or here when infile_editing=F and yambo is running
+     !
+     if (.not.infile_editing) then
+       !
+       if (trim(Efield(1)%ef_name)/='none'.and.trim(Efield(2)%ef_name)/='none') i_Pump=2
+       if (trim(Efield(1)%ef_name)=='none'.and.trim(Efield(2)%ef_name)/='none') then
+         call Efield_duplicate(Efield(2),Efield(1))
+         call Efield_reset(Efield(2))
+       endif
+       l_RT_probe         =i_Pump==i_Probe
+       l_RT_pump_and_probe=i_Pump/=i_Probe
+     endif
 #endif
      !
    end subroutine varsetup2

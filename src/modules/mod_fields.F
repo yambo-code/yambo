@@ -194,6 +194,18 @@ module fields
      E2%ef_name=E1%ef_name
    end subroutine
    !
+   subroutine Efield_reset(E)
+     type(ext_field) :: E
+     E%t_initial    =0.
+     E%int_t_initial=0
+     E%frequency    =0.
+     E%freq_steps   =1
+     E%intensity    =0.
+     E%damping      =0.
+     E%ef_name      ='none'
+     E%versor       =(/1.0,0.0,0.0/)
+   end subroutine
+   !
    ! GPL_EXCLUDE_END
    !
 end module

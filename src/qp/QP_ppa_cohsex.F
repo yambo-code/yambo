@@ -228,7 +228,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #if defined _RT
  call par_indexes(px,(/QP_n_states/))
 #else
- call par_indexes(px,(/QP_n_G_bands(2)/),(/QP_n_G_bands(1)/))
+ call par_indexes(px,(/q%nbz,QP_n_G_bands(2)/),(/iq_to_start,QP_n_G_bands(1)/))
 #endif
  !
  call pp_redux_wait
@@ -251,9 +251,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #endif
 #if defined _SC
  if (l_sc_run.and..not.l_collisions_IO) then
-   timing_states=QP_n_states*q%nbz*px%n_of_elements(myid+1)
-   if (l_sc_srpa) timing_states=E%nbf*(maxval(QP_table(:,2))-E%nbf)*maxval(QP_table(:,3))*&
-&                               q%nbz*px%n_of_elements(myid+1)
+   timing_states=QP_n_states*px%n_of_elements(myid+1)
+   if (l_sc_srpa) timing_states=E%nbf*(maxval(QP_table(:,2))-E%nbf)*maxval(QP_table(:,3))*px%n_of_elements(myid+1)
    call live_timing(trim(Sc_name)//'@it'//trim(intc(it_now)),timing_states) 
  else if(.not.l_collisions_IO) then
 #endif
@@ -377,7 +376,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      do ib=QP_n_G_bands(1),QP_n_G_bands(2)
        !
 #if !defined _RT
-       if (.not.px%element_1D(ib)) cycle
+       if (.not.px%element_2D(iqbz,ib)) cycle
        call live_timing(steps=1)
 #endif
        !
@@ -468,6 +467,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
  enddo ! loop in quasi-particles
  !
+#endif
+ !
+#if defined _SC
+     !
 #else
      !
      ! ALL 2 ALL of QP_Sc
@@ -485,11 +488,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      if (i_qp==QP_n_states.and.iqbz==q%nbz) QP_W_partially_done=.false.
      !
      if (stop_now(.FALSE.)) exit Q_loop
+#endif
+     !
+#if !defined _RT
      !
    enddo ! loop on quasi-particles
    !
  enddo Q_loop 
- ! 
 #endif
  !
  call live_timing()
@@ -501,12 +506,18 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call mem_est("ISC-GAMP GW-E")
  call X_alloc('X')
  if (l_cohsex.or.l_sc_srpa) then
-    call mem_est("PPaR")
+   call mem_est("PPaR")
  else
-    call mem_est("PPaP")
+   call mem_est("PPaP")
  endif
  !
-#if !defined _SC
+#if defined _SC
+ !
+ ! ALL 2 ALL of QP_Sc
+ !
+ call pp_redux_wait(QP_Sc)
+ !
+#else
  !
  call WF_free()
  !

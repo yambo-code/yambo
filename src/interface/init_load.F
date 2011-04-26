@@ -431,8 +431,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
      character(5) :: name
      integer      :: verbosity_here,i_field
      verbosity_here=0
-     name='Probe'
-     if (i_field==2) name='Pump'
+     if (i_field==1) name='Probe'
+     if (i_field==2)  name='Pump'
      if (i_field==2) verbosity_here=V_real_time
      call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
 &    Efield(i_field)%frequency,unit=E_unit,verb_level=0)

@@ -116,10 +116,6 @@ subroutine RT_initialize(Xen)
  l_NE_with_fields=.false.
  ef_i_time=0
  !
- i_Pump=1
- i_Probe=1
- if ( Efield(2)%ef_name/='none') i_Pump=2
- !
  do i1=1,n_ext_fields
    !      
    Efield(i1)%ef_name=trim(Efield(i1)%ef_name)      
@@ -166,6 +162,8 @@ subroutine RT_initialize(Xen)
    !
    Efield(i_Probe)%frequency(1)=nint(Efield(i_Probe)%frequency(1)/W_step)*W_step
    Efield(i_Probe)%frequency(2)=nint(Efield(i_Probe)%frequency(2)/W_step)*W_step
+   !
+   if ( abs(Efield(i_Probe)%frequency(1)) < 1.E-5 ) Efield(i_Probe)%frequency(1)=W_step
    !
    Efield(i_Probe)%freq_steps=(Efield(i_Probe)%frequency(2)-Efield(i_Probe)%frequency(1))/W_step+1
    !

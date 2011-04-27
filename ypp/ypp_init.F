@@ -430,6 +430,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  l_bzrim     =runlevel_is_on('bzrim')
  !
+ l_qpdb = runlevel_is_on('qpdb')
+ !
 #if defined _YPP_RT
  l_fix_syms   =runlevel_is_on('fixsyms')
  !             
@@ -520,6 +522,12 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    call pp_redux_wait
  endif
  !
+ ! GPL_EXCLUDE_START
+ !
+ if(l_qpdb) call qpdb_init()
+ !
+ ! GPL_EXCLUDE_END
+ ! 
 #if defined _YPP_ELPH
  if ((l_plot.and.l_sp_wf).or.(l_electrons.and.l_eliashberg)) &
 #else

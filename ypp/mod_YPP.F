@@ -140,6 +140,10 @@ module YPP
  real(SP) :: Gamma_radius
  character(lchlen) :: BZ_RIM_path
  !
+ ! Quasi-Particles
+ !
+ logical     :: l_qpdb
+ !
  ! (RT) Reduce Symmetries
  !
  logical     :: l_fix_syms

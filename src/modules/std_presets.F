@@ -312,9 +312,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  eps_2_alpha=1._SP
  alpha_dim='adim'
  global_gauge='length'
-#if defined _RT
- global_gauge='velocity'
-#endif
  grid_path='none'
  eval_alpha=.FALSE.
  Vnl_commutator_warning=.FALSE.

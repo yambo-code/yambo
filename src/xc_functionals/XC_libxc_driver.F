@@ -74,7 +74,9 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !===============================
  !
 #if defined _RT
- rho_sp=rho_n
+ do i1=1,n_spin
+   rho_sp(:,i1)=rho_n(:)
+ enddo
 #else
  call el_density(en,Xk,rho_sp,.false.)
 #endif

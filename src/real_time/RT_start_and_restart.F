@@ -34,18 +34,18 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  ! [4] Initialize the bare Hartree and XC
  ! [5] Initialize the fields
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,schlen
  use drivers,        ONLY:l_sc_cohsex,l_sc_hf,l_sc_contains_lda
  use com,            ONLY:msg,warning,error
  use QP_m,           ONLY:QP_nk,COHSEX_use_empties
- use units,          ONLY:HARTREE
+ use units,          ONLY:HARTREE,HBAR_eVfs
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:G_lesser,ID,ID,NE_steps,G_lesser_previous,RT_ind_J,    &
 &                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,rho_reference,  &
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
 &                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,RT_P_2levels,full_rho,   &
-&                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT
+&                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,RT_is_dumped
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,       &
 &                         rho_convergence,H_rotate,local_V,V_hartree_sc,SC_lw_band, &
@@ -69,6 +69,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  integer :: io_E,io_V,io_WF,io_G,io_J_and_P
  logical :: RESTART
  logical :: SC_DB_present
+ character(schlen)       :: dump_ch
  !
  ! Initialize the Gf and potentials
  !==================================
@@ -300,7 +301,13 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  !==========
  call QP_apply((/SC_lw_band,SC_bands/),Xen,Xk,3,msg_fmt='s')  
  !
- if(associated(Xen%W)) call msg('snr','[RT] Dephasing read from QP database')
+ if(associated(Xen%W)) then
+   RT_is_dumped=.true.
+   call msg('snr','[RT] Dephasing read from QP database')
+   write(dump_ch,'(a,f10.6,a,f10.6,a)') '[RT] Life-time range:',HBAR_eVfs/maxval(HARTREE*abs(Xen%W(SC_lw_band:SC_bands,:,1))),' -'&
+                                ,HBAR_eVfs/minval(HARTREE*abs(Xen%W(SC_lw_band:SC_bands,:,1))),' [fs]'
+   call msg('snr',dump_ch)
+ endif
  !
  do ib=SC_lw_band,SC_bands
    Ho(ib,ib,1:QP_nk,1:n_sp_pol)=Ho(ib,ib,1:QP_nk,1:n_sp_pol) &

@@ -230,9 +230,9 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
         do i1=SC_lw_band,SC_bands
           do i2=i1+1,SC_bands
             I1_lesser(i1,i2,ik)=I1_lesser(i1,i2,ik)-cI*(Xen%W(i1,ik,1)-Xen%W(i2,ik,1)) &
-&                   *(G_input(i1,i2,ik)-G_lesser_reference(i1,i2,ik))/HBAR_eVfs*HARTREE*FS2AUT
-            I1_lesser(i2,i1,ik)=I1_lesser(i2,i1,ik)-cI*(Xen%W(i2,ik,1)-Xen%W(i1,ik,1)) &
-&                   *(G_input(i2,i1,ik)-G_lesser_reference(i2,i1,ik))/HBAR_eVfs*HARTREE*FS2AUT
+&                   *(G_input(i1,i2,ik)-G_lesser_reference(i1,i2,ik))*HARTREE/HBAR_eVfs/FS2AUT
+            I1_lesser(i2,i1,ik)=I1_lesser(i2,i1,ik)+cI*(Xen%W(i2,ik,1)-Xen%W(i1,ik,1)) &
+&                   *(G_input(i2,i1,ik)-G_lesser_reference(i2,i1,ik))*HARTREE/HBAR_eVfs/FS2AUT
           enddo
         enddo
       endif

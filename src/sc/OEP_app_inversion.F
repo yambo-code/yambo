@@ -64,14 +64,15 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  ! Work Space
  !
  integer                  :: i1,ik,iv1,iv2,is,ig1,ig2,ifft,offt,ir
- real(SP)                 :: EWeight
- complex(SP), allocatable :: rhotw_sum(:),rho_xc(:),Vkli_RL(:),&
-&                            Ko(:,:),rhotw_prd(:,:),rhotw_rs(:)
+ real(SP)                 :: EWeight, Prefactor
+ complex(SP), allocatable :: rhotw_sum(:),rhotw_sum_TR(:),rho_xc(:),&
+&                            Vkli_RL(:),Ko(:,:),rhotw_prd(:,:),rhotw_rs(:)
  complex(SP)              :: SigmaXC
  complex(DP), allocatable :: Vx_dp(:),W_tmp(:),rhotw_ds(:)
  character(schlen)        :: ch
  type(ggwinfo)            :: isc
  type(pp_indexes)         :: px
+ logical                  :: l_is_TR
  !
  ! allocation
  ! 
@@ -104,7 +105,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  call collision_reset(isc)
  call pp_indexes_reset(px)
  isc%ngrho=QP_ng_Sx
- allocate(isc%rhotw(QP_ng_Sx),rhotw_sum(QP_ng_Sx-1),rhotw_prd(QP_ng_Sx,QP_ng_Sx))
+ allocate(isc%rhotw(QP_ng_Sx),rhotw_sum(QP_ng_Sx-1),rhotw_sum_TR(QP_ng_Sx-1),rhotw_prd(QP_ng_Sx,QP_ng_Sx))
  allocate(rhotw_ds(fft_size),rhotw_rs(QP_ng_Sx))
  call par_indexes(px,(/nkibz,E%nbf/))
  call pp_redux_wait
@@ -116,17 +117,18 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  do ik = 1, nkibz
    do iv1 = 1, E%nbf
      if (l_oep_EWeight) EWeight = E%E(iv1,ik,1)+ E%Efermi(1) 
-     do iv2 = 1, E%nbf
+     do iv2 = 1, iv1!E%nbf
        if (l_oep_kli.and.(iv2.ne.iv1)) cycle
        ifft=wf_state(iv1,ik,1)
        offt=wf_state(iv2,ik,1)
        rhotw_sum = (0._SP,0._SP)
-       SigmaXC = (0._SP,0._SP)
-       do ir = 1,fft_size 
-         SigmaXC = SigmaXC + conjg(U(ik,iv1,ir))*wf(ir,offt)/wf(ir,ifft) !<iv1|Sigma_xc|iv2>
-       end do
+       rhotw_sum_TR = (0._SP,0._SP)
+       Prefactor = 1.0_SP
+       if (iv1.ne.iv2) Prefactor = 2.0_SP
+       SigmaXC = dot_product(wf(:,ifft),U(ik,iv2,:)) 
        do i1 = 1,k%nstar(ik)
          is  = k%star(ik,i1)
+         l_is_TR = is>nsym/(i_time_rev+1)
          isc%is = (/iv1,ik,is,1/)
          isc%os = (/iv2,ik,is,1/)
          isc%qs = (/1,1,1/)
@@ -143,11 +145,15 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
 #endif
          rhotw_rs(1:QP_ng_Sx) = rhotw_ds(fft_g_table(1:QP_ng_Sx,1))
          forall(ig1=2:QP_ng_Sx,ig2=2:QP_ng_Sx) rhotw_prd(ig1,ig2) = rhotw_prd(ig1,ig2) + &
-           & E%f(iv1,ik,1)*real(conjg(rhotw_rs(ig1))*isc%rhotw(ig2))
-         forall(ig1=2:QP_ng_Sx) rhotw_sum(ig1-1)=rhotw_sum(ig1-1)+rhotw_rs(ig1)
+           & Prefactor*E%f(iv1,ik,1)*conjg(rhotw_rs(ig1))*isc%rhotw(ig2)
+         if (l_is_TR) then
+           rhotw_sum_TR(1:QP_ng_Sx-1)=rhotw_sum_TR(1:QP_ng_Sx-1)+rhotw_rs(2:QP_ng_Sx)
+         else
+           rhotw_sum(1:QP_ng_Sx-1)=rhotw_sum(1:QP_ng_Sx-1)+conjg(rhotw_rs(2:QP_ng_Sx))
+         end if         
        end do
-       rho_xc(1:QP_ng_Sx-1) =  rho_xc(1:QP_ng_Sx-1) - E%f(iv1,ik,1)*&
-            &real(conjg(rhotw_sum(1:QP_ng_Sx-1))*SigmaXC)/(real(nkbz,SP)) 
+       rho_xc(:) =  rho_xc(:) + Prefactor*E%f(iv1,ik,1)*& 
+            &(rhotw_sum(:)*SigmaXC+rhotw_sum_TR*conjg(SigmaXC))/(real(nkbz,SP)) 
        call live_timing(steps=1)
      end do
    end do
@@ -161,7 +167,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
    Ko(ig1,1:QP_ng_Sx-1) = Ko(ig1,1:QP_ng_Sx-1) - rhotw_prd(ig1+1,2:QP_ng_Sx)/float(nkbz)
  end do
  !
- deallocate(isc%rhotw,rhotw_sum,rhotw_prd,rhotw_ds,rhotw_rs)
+ deallocate(isc%rhotw,rhotw_sum,rhotw_sum_TR,rhotw_prd,rhotw_ds,rhotw_rs)
  !
  ! Calculate Vkli (RL) 
  !

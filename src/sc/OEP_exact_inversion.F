@@ -49,11 +49,11 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  ! I/O
  !
  implicit none
- real(SP)     :: Voep(fft_size)
- complex(SP)  :: W_x(nkibz,n_met_bands,fft_size)
+ real(SP),intent(out)    :: Voep(fft_size)
+ complex(SP),intent(in)  :: W_x(nkibz,n_met_bands,fft_size)
  type(X_t)    :: X
- type(levels) :: E
- type(bz_samp):: k
+ type(levels),intent(in) :: E
+ type(bz_samp),intent(in):: k
  !
  ! Work Space
  !
@@ -114,10 +114,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
      do ic = E%nbf+1, X%ib(2)
        ifft=wf_state(iv,ik,1)
        offt=wf_state(ic,ik,1)
-       SigmaXC = (0.,0.)
-       do ir = 1,fft_size
-         SigmaXC = SigmaXC  + W_x(ik,iv,ir)*conjg(wf(ir,offt))/conjg(wf(ir,ifft)) !<ic|Sigma_xc|iv>
-       end do
+       SigmaXC = dot_product(wf(:,offt),W_x(ik,iv,:)) !<ic|Sigma_xc|iv>
        !
        rho_tw_rs(:) = conjg(wf(:,ifft))*wf(:,offt)
 #if defined _FFTW
@@ -135,9 +132,9 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
          !
          rho_tw_rs(fft_g_table(g_rot(1,1),1)) = (0.,0.)
          if (l_is_TR) then
-           rhotw_sum_TR(:)=rhotw_sum_TR(:)+rho_tw_rs(fft_g_table(g_rot(is,:),1))
-         else
-           rhotw_sum(:)=rhotw_sum(:)+conjg(rho_tw_rs(fft_g_table(g_rot(is,:),1)))
+            rhotw_sum_TR(:X%ng)=rhotw_sum_TR(:X%ng)+rho_tw_rs(fft_g_table(g_rot(is,:X%ng),1))
+          else
+           rhotw_sum(:X%ng)=rhotw_sum(:X%ng)+conjg(rho_tw_rs(fft_g_table(g_rot(is,:X%ng),1)))
          endif
          !
        end do

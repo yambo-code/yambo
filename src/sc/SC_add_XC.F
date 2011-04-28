@@ -86,7 +86,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
      !
      call IO_and_Messaging_switch("+io_in")
      !
-     if (l_sc_cohsex.or.l_sc_srpa) call QP_ppa_cohsex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1)
+     if (l_sc_cohsex) call QP_ppa_cohsex(X,E,k,q,qp_dummy,Xw(2),-1)
      !
      call IO_and_Messaging_switch("+report +io_out")
      !
@@ -101,15 +101,15 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
    !
    ! GPL_EXCLUDE_START
    !
-   if (l_sc_exx) call OEP_driver(X(1),E,k,q,V_xc_sc)
+   if (l_sc_exx.or.l_sc_srpa) call OEP_driver(X,Xw(2),E,k,q,V_xc_sc)
    !
    ! GPL_EXCLUDE_END
    !
    call IO_and_Messaging_switch("-report -log -io_in -io_out")
    !
    if (l_sc_contains_lda) call XC_potential_driver(E,Xk,SC_kind,SC_xc_functional,1)
-   if (l_sc_contains_lda.and..not.l_sc_exx) V_xc_sc(:,:)=V_xc(:,:)
-   if (l_sc_contains_lda.and.     l_sc_exx) V_xc_sc(:,:)=V_xc(:,:)+V_xc_sc(:,:)
+   if (l_sc_contains_lda.and..not.(l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)
+   if (l_sc_contains_lda.and.     (l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)+V_xc_sc(:,:)
    !
    call IO_and_Messaging_switch("+report +log +io_in +io_out")
    !
@@ -120,7 +120,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
    ! The mixing of the potential has been eliminated for HF and COHSEX, for
    ! V_xc_sc case tests are needed.
    ! 
-   if (iteration>1.and..not.l_sc_exx) V_xc_sc = SC_cycle_mixing*V_xc_sc + (1.-SC_cycle_mixing)*V_xc_nm1 
+   if (iteration>1.and..not.(l_sc_exx.or.l_sc_srpa)) V_xc_sc = SC_cycle_mixing*V_xc_sc + (1.-SC_cycle_mixing)*V_xc_nm1 
    !
    V_xc_nm1=V_xc_sc
    !

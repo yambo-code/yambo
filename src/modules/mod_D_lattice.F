@@ -62,6 +62,11 @@ module D_lattice
  character(lchlen)     :: atoms_string
  character(7)          :: lattice
  !
+ ! Gradients
+ !
+ integer, allocatable  :: R_m_R(:,:)
+ complex, allocatable  :: Grad_R(:,:,:)
+ !
  ! Periodic Table
  !
  character(len=2)      :: PT_elements(0:103)

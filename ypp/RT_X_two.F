@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 C. Attaccalite, M. Gruning, A. Marini and the YAMBO team 
+! Copyright (C) 2000-2010 M. Gruning, C. Attaccalite, A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -19,107 +19,127 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_X_two(en)
+subroutine RT_X_two
  !
- use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,RT_J_t,W_RT_induced_step
- use pars,           ONLY:SP,DP,pi,cI
- use units,          ONLY:HARTREE,SPEED_OF_LIGHT
- use electrons,      ONLY:levels
+ use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,W_RT_induced_step, &
+&                         i_t_start,i_t_end,RED_steps
+ use pars,           ONLY:SP,DP,pi
+ use units,          ONLY:HARTREE
  use com,            ONLY:error
  use memory_m,       ONLY:mem_est
- use R_lattice,      ONLY:bz_samp
- use real_time,      ONLY:NE_steps,RT_step,RT_ind_J,RT_output,RT_P
- use fields,         ONLY:Efield
+ use real_time,      ONLY:NE_steps,RT_step,RT_output
+ use fields,         ONLY:Efield,small_a,i_probe
+ use timing,         ONLY:live_timing
  implicit none
- !
- type(levels)  :: en
  !
  ! Work Space
  !
  integer, parameter :: nfreqs=2
- complex(DP), allocatable :: A_vecpot_vel_w(:,:),F_m(:),F_p(:)
+ complex(DP), allocatable :: E_m(:),E_p(:),E_t(:)
  complex(SP), allocatable :: freqs(:)
- complex(SP) :: X_tot,outfreqs(nfreqs)
- complex(DP) :: F_2plus,F_2minus,X_irrep(nfreqs,3)
- integer     :: i_w
- real(SP)    :: W_step, W_reached, delta,W_reached2
+ complex(SP) :: X_tot,outfreqs(nfreqs),Field_time
+ complex(DP) :: E_2plus,E_2minus,X_irrep(nfreqs,3)
+ integer     :: i_w, i_t, i_c
+ real(SP)    :: W_step, W_reached
+ character(9) :: FT_title
  !
- if(trim(Efield(1)%ef_name)/="QSSIN") &
+ if(trim(Efield(i_probe)%ef_name)/="QSSIN") &
 &  call error(" Non linear optics only with QSSIN field! ")
  !
  call section("=",'Second order susceptibility')
+ !
+ ! Implementation based on JCP 127, 154114 (2007)
+ !
  !=========================
  !
- ! Field: Allocation
+ ! Field: Definitions & Allocation
  !
- delta = 1._SP/Efield(1)%damping
- X_rt%energy_range(1)=-4._SP*(Efield(1)%frequency(1))
- X_rt%energy_range(2)=4._SP*(Efield(1)%frequency(1))
+ X_rt%energy_range(1)=-4._SP*(Efield(i_probe)%frequency(1)) ! Here I define the integration cutoff
+ X_rt%energy_range(2)=4._SP*(Efield(i_probe)%frequency(1))  ! in Eqs 20-22 as 4 time the field freq. TEST?!?
  W_step=W_RT_induced_step
- X_rt%energy_steps= (X_rt%energy_range(2))/W_step
- X_rt%energy_steps= 2*X_rt%energy_steps
-! print*, "#", X_rt%energy_range, W_step, X_rt%energy_steps, delta
-! stop
+ X_rt%energy_steps= (X_rt%energy_range(2))/W_step  ! and I define the number of freq step
+ X_rt%energy_steps= 2*X_rt%energy_steps            ! as a consequence
  !
+ allocate(E_t(NE_steps))
+ do i_t=1,NE_steps
+   Field_time=cmplx((i_t-1)*RT_step,0._SP)
+   E_t(i_t)=Efield(i_probe)%amplitude*small_a(Field_time,Efield(i_probe),1)
+ enddo
  allocate(freqs(X_rt%energy_steps))
- allocate(A_vecpot_vel_w(X_rt%energy_steps,3),F_m(X_rt%energy_steps),F_p(X_rt%energy_steps))
- call mem_est("A_vecpot_vel_w F_m F_p",&
-      &(/size(A_vecpot_vel_w),size(F_m),size(F_p)/),(/2*DP,2*DP,2*DP/))
+ allocate(E_m(X_rt%energy_steps),E_p(X_rt%energy_steps))
+ call mem_est("E_m E_p",&
+      &(/size(E_m),size(E_p)/),(/2*DP,2*DP/))
  !
  ! Field: FFT
  !
- A_vecpot_vel_w=(0._DP,0._DP)
+ E_m=(0._DP,0._DP) ! E(Wo-W), where Wo is the field frequency   
  freqs=(0._SP,0._SP)
  do i_w = 1, X_rt%energy_steps
-   freqs(i_w)=cmplx(Efield(1)%frequency(1)-((i_w-1)*W_step+X_rt%energy_range(1)),0._SP)
+   freqs(i_w)=cmplx(Efield(i_probe)%frequency(1)-((i_w-1)*W_step+X_rt%energy_range(1)),0._SP)
  enddo
- !call Fourier_Transform(freqs,A_vecpot_vel_w,X_rt%energy_steps,A_vecpot_vel_t,NE_steps,RT_step,3)
- A_vecpot_vel_w(:,:)=A_vecpot_vel_w(:,:)*RT_step 
- forall(i_w=1:X_rt%energy_steps) F_m(i_w) = &
-      &sum(A_vecpot_vel_w(i_w,:)*Efield(1)%versor(:))*SPEED_OF_LIGHT
+ call RT_1D_Fourier_Transform(' (E_m field)',freqs,E_m(:),X_rt%energy_steps,&
+&                               E_t(i_t_start:i_t_end),RED_steps,RT_step,&
+&                               i_t_start*RT_step,Use_FFT,1)
  !
- A_vecpot_vel_w=(0._DP,0._DP)
+ E_p=(0._DP,0._DP) ! E(Wo+W), where Wo is the field frequency   
  freqs=(0._SP,0._SP)
  do i_w = 1, X_rt%energy_steps
-   freqs(i_w)=cmplx(Efield(1)%frequency(1)+(i_w-1)*W_step+X_rt%energy_range(1),0._SP)
+   freqs(i_w)=cmplx(Efield(i_probe)%frequency(1)+(i_w-1)*W_step+X_rt%energy_range(1),0._SP)
  enddo
- !call Fourier_Transform(freqs,A_vecpot_vel_w,X_rt%energy_steps,A_vecpot_vel_t,NE_steps,RT_step,3)
- A_vecpot_vel_w(:,:)=A_vecpot_vel_w(:,:)*RT_step 
- forall(i_w=1:X_rt%energy_steps) F_p(i_w) = &
-      &sum(A_vecpot_vel_w(i_w,:)*Efield(1)%versor(:))*SPEED_OF_LIGHT
- !
+ call RT_1D_Fourier_Transform(' (E_p field)',freqs,E_p(:),X_rt%energy_steps,&
+&                               E_t(i_t_start:i_t_end),RED_steps,RT_step,&
+&                               i_t_start*RT_step,Use_FFT,1)
  !
  ! Field: Convolution
  !
- F_2plus = (0._DP,0._DP)
- F_2minus = (0._DP,0._DP)
+ E_2plus = (0._DP,0._DP)
+ E_2minus = (0._DP,0._DP)
+ call live_timing('Fields Convolution:',X_rt%energy_steps)
  do i_w = 1, X_rt%energy_steps
-   F_2plus = F_2plus + F_p(i_w)*conjg(F_p(i_w))*W_step
-   F_2minus = F_2minus + F_m(i_w)*F_p(i_w)*W_step
+   E_2plus = E_2plus + E_p(i_w)*conjg(E_p(i_w))*W_step
+   E_2minus = E_2minus + E_m(i_w)*E_p(i_w)*W_step
+   call live_timing(steps=1)
  end do
-! print*, "#", F_2plus, F_2minus
+ call live_timing()
  !
  ! Field: Deallocation
  !
- deallocate(A_vecpot_vel_w,F_p,F_m,freqs)
- call mem_est("A_vecpot_vel_w F_m F_p")
+ deallocate(E_p,E_m,E_t,freqs)
+ call mem_est("E_m E_p E_t freqs")
  !
  ! Polarization: FT at 0 and twice the field frequency
  !
  outfreqs(1)=(0._SP,0._SP)                           ! Optical rectification
- outfreqs(2)=cmplx(Efield(1)%frequency(1)*2._SP,0._SP)  ! SHG
- !call Fourier_Transform(outfreqs,X_irrep,nfreqs,RT_P_t,NE_steps,RT_step,3)
- X_irrep(:,:)=X_irrep(:,:)*RT_step
+ outfreqs(2)=cmplx(Efield(i_probe)%frequency(1)*2._SP,0._SP)  ! SHG
+ do i_c=1,3
+   !
+   if (i_c==1) FT_title=' (X axis)'
+   if (i_c==2) FT_title=' (Y axis)'
+   if (i_c==3) FT_title=' (Z axis)'
+   !
+   call RT_1D_Fourier_Transform(FT_title,outfreqs,X_irrep(:,i_c),nfreqs,&
+&                               RT_P_t(i_t_start:i_t_end,i_c),RED_steps,RT_step,&
+&                               i_t_start*RT_step,Use_FFT,1)
+   !
+ enddo
  !
- X_irrep(1,:)=PI*X_irrep(1,:)/F_2plus
- X_irrep(2,:)=2_DP*PI*X_irrep(2,:)/F_2minus
- ! 
+ ! P(2wo,ic)=2 \pi E_2minus \sum_{ij} E_versor(i) E_versor(j)\tilde X_ij(2wo,ic)
+ ! P(0,ic)  = 2\pi E_2plus \sum_{ij} E_versor(i) E_versor(j)\tilde X_ij(0,ic)
+ !
+ ! so what I get is  \sum_{ij} E_versor(i) E_versor(j) \tilde X_ij(W,ic), W=0,2wo
+ ! depending on the symmetry of the system I device calcs so to get the desired X_ij(W,ic)
+ !
+ X_irrep(1,:)=PI*X_irrep(1,:)/E_2plus
+ X_irrep(2,:)=2_DP*PI*X_irrep(2,:)/E_2minus
+ !
+ ! Output results
+ !
  call RT_output("open nonlinear")
  !
  do i_w = 1, nfreqs
    !
    W_reached = real(outfreqs(i_w))
-   X_tot=sum(X_irrep(i_w,:)*Efield(1)%versor(:))
+   X_tot=sum(X_irrep(i_w,:)*Efield(i_probe)%versor(:))
    call RT_output('nonlinear',(/aimag(X_tot),real(X_tot)/),E=W_reached*HARTREE)
    !
  enddo

@@ -42,7 +42,7 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,TRANS)
  !
  ! Work Space
  !
- integer     :: i1,i2,ik
+ integer     :: i1,ik
  complex(SP) :: Hk(SC_bands,SC_bands,n_sp_pol)
  !
  VALUE=(0._SP,0._SP)

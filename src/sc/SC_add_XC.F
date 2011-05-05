@@ -97,7 +97,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  !
  if (local_V) then
    !
-   if (.not.l_oep_iterative) V_xc_sc=(0.,0.)
+   if (.not.l_oep_iterative) V_xc_sc=0._SP
    !
    ! GPL_EXCLUDE_START
    !

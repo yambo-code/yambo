@@ -511,7 +511,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    call mem_est("PPaP")
  endif
  !
-#if defined _SC
+#if defined _SC && !defined _RT
  !
  ! ALL 2 ALL of QP_Sc
  !

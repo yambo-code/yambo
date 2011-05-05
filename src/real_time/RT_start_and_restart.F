@@ -65,7 +65,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  !
  ! Work Space
  !
- integer :: ik,it,i1,COM_,ib
+ integer :: ik,i1,COM_,ib
  integer :: io_E,io_V,io_WF,io_G,io_J_and_P
  logical :: RESTART
  logical :: SC_DB_present

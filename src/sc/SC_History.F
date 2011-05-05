@@ -40,7 +40,6 @@ subroutine SC_History(it,E)
  ! Work Space
  !
  integer  :: ik,ib,i_spin,n_headers,i_d,max_kpt
- real(SP) :: V(SC_bands)
  character(schlen), SAVE :: E_file_name(2)
  character(schlen)       :: headers(SC_bands*nkibz)
 #if defined _RT

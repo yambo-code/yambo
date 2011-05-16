@@ -34,10 +34,11 @@ subroutine qpdb_setup(en)
  !
  ! Work Space
  !
- integer  :: io_QP,ID,icheck,i1,ib,ik,ic
+ integer  :: io_QP,ID,icheck,i1,ib,ik,ic,is
  integer  :: k_rng_lines,ikrange(2),ibrange(2)
  integer, external :: ioQP
  real(SP), allocatable :: QP_r_corrections(:,:)
+ logical,  allocatable :: QP_done(:,:,:,:)
  type(QP_t) :: qp
  !
  call QP_reset(qp)
@@ -64,7 +65,11 @@ subroutine qpdb_setup(en)
  enddo
  k_rng_lines=k_rng_lines-2
  !
+ allocate(QP_done(QP_nb,QP_nb,QP_nk,n_sp_pol))
+ QP_done=.FALSE.
+ !
  ic=1
+ is=1
  do i1=1,k_rng_lines
    ikrange(1:2)=int(QP_r_corrections(i1,1:2))
    ibrange(1:2)=int(QP_r_corrections(i1,3:4))
@@ -76,11 +81,15 @@ subroutine qpdb_setup(en)
        qp%table(ic,1)=ib
        qp%table(ic,2)=ib
        qp%table(ic,3)=ik
-       qp%table(ic,3+1:3+n_sp_pol-1)=1
+       qp%table(ic,3+1:3+n_sp_pol-1)=is
+       if(QP_done(ib,ib,ik,is)) call error("Duplicate quasi-particle indexes! ")
+       QP_done(ib,ib,ik,is)=.TRUE.
        ic=ic+1   
      enddo
    enddo
  enddo
+ !
+ deallocate(QP_done)
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1,2,3/),COM=REP,ID=ID)
  io_QP=ioQP("QP",qp,ID)

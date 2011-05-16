@@ -125,7 +125,12 @@ if test "x$netcdf" = xyes; then
 fi
 
 if test "x$netcdf" = xyes; then  
-     NCLIBS="-lnetcdf ${NCLIBS}"
+     if test "`nc-config --flibs`"; then
+       NCLIBS="`nc-config --flibs`"
+       NCLIBS="${NCLIBS} `nc-config --libs`"
+     else
+       NCLIBS="-lnetcdf ${NCLIBS}"
+     fi
      if test "x$hdf5" = xyes; then
        NCLIBS="${NCLIBS} ${NETCDF_LINKS}"
      fi

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine qpdb_setup(en)
+subroutine qpdb_setup(en,k)
  !
  use pars,          ONLY:SP,IP,DP
  use units,         ONLY:HARTREE
@@ -29,8 +29,10 @@ subroutine qpdb_setup(en)
  use parser_m,      ONLY:parser
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
  use QP_m,          ONLY:QP_t,QP_reset,QP_state,QP_nb,QP_nk,QP_n_states
+ use R_lattice,     ONLY:bz_samp
  implicit none
  type(levels), intent(in) :: en
+ type(bz_samp),intent(in) :: k
  !
  ! Work Space
  !
@@ -50,7 +52,7 @@ subroutine qpdb_setup(en)
  qp%nb      =QP_nb
  qp%nk      =QP_nk
  !
- allocate(qp%table(QP_n_states,3+n_sp_pol-1),qp%Z(QP_n_states),qp%E(QP_n_states),qp%E_bare(QP_n_states))
+ allocate(qp%table(QP_n_states,3+n_sp_pol-1),qp%Z(QP_n_states),qp%E(QP_n_states),qp%E_bare(QP_n_states),qp%k(qp%nk,3))
  !
  k_rng_lines=1
  icheck=1
@@ -82,6 +84,7 @@ subroutine qpdb_setup(en)
        qp%table(ic,2)=ib
        qp%table(ic,3)=ik
        qp%table(ic,3+1:3+n_sp_pol-1)=is
+       qp%k(qp%table(ic,3),:)       =k%pt(qp%table(ic,3),:)
        if(QP_done(ib,ib,ik,is)) call error("Duplicate quasi-particle indexes! ")
        QP_done(ib,ib,ik,is)=.TRUE.
        ic=ic+1   
@@ -94,6 +97,6 @@ subroutine qpdb_setup(en)
  call io_control(ACTION=OP_WR_CL,SEC=(/1,2,3/),COM=REP,ID=ID)
  io_QP=ioQP("QP",qp,ID)
  !
- deallocate(QP_r_corrections)
+ deallocate(QP_r_corrections,qp%k,qp%table,qp%Z,qp%E_bare,qp%E)
  !
 end subroutine

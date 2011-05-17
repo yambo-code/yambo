@@ -157,7 +157,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (l_bzrim) call k_random(Xk,Xen)
  !
- if (l_qpdb)  call qpdb_setup(en)
+ if (l_qpdb)  call qpdb_setup(en,k)
  !
 #if defined _YPP_RT
  !

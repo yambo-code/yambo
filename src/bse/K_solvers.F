@@ -27,7 +27,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 &                         alpha_dim,eps_2_alpha,X_duplicate
  use BS,             ONLY:BSS_n_freqs,BS_K_dim,BSS_rhoq0,BS_eh_f,BS_not_const_eh_f,&
 &                         BS_bands,BSS_q0,BS_eh_table,BSS_mode,BS_eh_E,&
-&                         BSS_n_descs,BS_K_coupling,BSS_Vnl_included
+&                         BSS_n_descs,BS_K_coupling,BSS_Vnl_included,BS_eh_W
 #if defined _DISTRIBUTED
  use BS,             ONLY:ioBS_DISTRIBUTED
 #endif
@@ -82,7 +82,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  call X_duplicate(X_static,X_oscillators) 
  !
  X_oscillators%ib=BS_bands
- if (BS_K_coupling) then
+ if (BS_K_coupling.or.allocated(BS_eh_W)) then
    allocate(BSS_rhoq0(2*BS_K_dim)) 
    call mem_est("BSS_rhoq0",(/2*BS_K_dim/))
  else

@@ -131,10 +131,16 @@ module fields
            !
          enddo
        case('RES')
-         if (order==0 ) local_a= cI*exp(-cI*freq*T_or_W)/freq
-         if (order==1 ) local_a=    exp(-cI*freq*T_or_W)
-         if (order==2 ) local_a=-cI*freq*exp(-cI*freq*T_or_W)
-         if (order==-1) local_a=-cI*(1._SP/(T_or_W-freq)-1._SP/freq)
+         do i_f=1,E_field%freq_steps
+           !
+           freq=E_field%frequency(1)
+           !
+           if (order==0 ) local_a= cI*exp(-cI*freq*T_or_W)/freq
+           if (order==1 ) local_a=    exp(-cI*freq*T_or_W)
+           if (order==2 ) local_a=-cI*freq*exp(-cI*freq*T_or_W)
+           if (order==-1) local_a=-cI*(1._SP/(T_or_W-freq)-1._SP/freq)
+           !
+         enddo
        case('DELTA')
          if (order==0 ) local_a=1.
          if (order> 0 ) local_a=0.

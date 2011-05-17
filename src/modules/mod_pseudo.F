@@ -26,6 +26,7 @@ module pseudo
  use D_lattice, ONLY:n_atomic_species
  implicit none
  !
+ logical :: l_a2y_KBPP
  integer :: pp_n_l_comp_max
  integer :: pp_kbv_dim
  integer,  allocatable:: pp_n_l_comp(:)

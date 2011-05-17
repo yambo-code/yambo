@@ -384,7 +384,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! 
  ! SC [common with RT]
  !
- call it(defs,'Gauge',     '[Xd,RT] Gauge type (lenght|velocity)',global_gauge,verb_level=V_resp)
+ call it(defs,'Gauge',     '[Xd,RT] Gauge type (lenght|velocity)',global_gauge,verb_level=V_real_time)
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
  call it(defs,'SClwBand',  '[SC] Lowest Band',SC_lw_band,verb_level=V_sc)
  call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_sc)

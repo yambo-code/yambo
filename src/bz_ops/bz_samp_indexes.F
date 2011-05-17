@@ -333,6 +333,7 @@ subroutine bz_samp_indexes(k,Xk,q)
        v1=matmul(k_b_m1,qpt_map(i1,:)-q_ref)
        q_iptbz(i1,:)=nint(v1)
        call k_grid_shift(q_iptbz(i1,:))
+       write (*,*) qpt_map(i1,:),q_ref
        if (q_map(q_iptbz(i1,1),q_iptbz(i1,2),q_iptbz(i1,3))/=0) then
          call warning('[RL indx] 2 equivalent points in the rlu grid found')
          q_map=0

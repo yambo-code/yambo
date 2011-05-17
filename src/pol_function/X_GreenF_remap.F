@@ -42,7 +42,7 @@ subroutine X_GreenF_remap(bands,E,W)
  !
  real(SP)           ::W_sign,A_sign,max_GF_E_range(2),proposed_GF_E_range(2),E_step,Ao_norm
  complex(SP)        ::Ao(E%GreenF_n_E_steps),zero_plus
- real, external     ::Integrate
+ real, external     ::RIntegrate
  !
  ! Resets
  !
@@ -146,7 +146,7 @@ subroutine X_GreenF_remap(bands,E,W)
      do i_spin=1,n_sp_pol
        E%GreenF(i_b,i_k,i_spin,:)  =aimag(E_map%GreenF(i_b,i_k,i_spin,:))
        E%GreenF_W(i_b,i_k,i_spin,:)=W_A%p
-       Ao_norm=Integrate(real(E%GreenF(i_b,i_k,i_spin,:) ),real(E%GreenF_W(i_b,i_k,i_spin,:)),E%GreenF_n_E_steps) !should be pi
+       Ao_norm=RIntegrate(real(E%GreenF(i_b,i_k,i_spin,:) ),real(E%GreenF_W(i_b,i_k,i_spin,:)),E%GreenF_n_E_steps) !should be pi
        E%GreenF(i_b,i_k,i_spin,:)  =aimag(E_map%GreenF(i_b,i_k,i_spin,:))*pi/Ao_norm
      enddo
    enddo

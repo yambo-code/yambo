@@ -177,12 +177,12 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  N_path_pts=0
  alat_used_for_output=alat(1)
  !
- ! GPL_EXCLUDE_START
- !
  !BZ RIM
  !
  BZ_RIM_path="."
  gamma_radius=0.
+ !
+ ! GPL_EXCLUDE_START
  !
 #if defined _YPP_RT
  !
@@ -426,11 +426,11 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    endif
  endif
  !
- ! GPL_EXCLUDE_START
- !
  l_bzrim     =runlevel_is_on('bzrim')
  !
  l_qpdb = runlevel_is_on('qpdb')
+ !
+ ! GPL_EXCLUDE_START
  !
 #if defined _YPP_RT
  l_fix_syms   =runlevel_is_on('fixsyms')

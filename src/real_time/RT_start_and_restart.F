@@ -304,9 +304,12 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  if(associated(Xen%W)) then
    RT_is_dumped=.true.
    call msg('snr','[RT] Dephasing read from QP database')
-   write(dump_ch,'(a,f10.6,a,f10.6,a)') '[RT] Life-time range:',HBAR_eVfs/maxval(HARTREE*abs(Xen%W(SC_lw_band:SC_bands,:,1))),' -'&
+   write(dump_ch,'(a,f10.6,a,f10.6,a)') '[RT] Life-time range:',HBAR_eVfs/maxval(HARTREE*abs(Xen%W(SC_lw_band:SC_bands,:,1))),' - '&
                                 ,HBAR_eVfs/minval(HARTREE*abs(Xen%W(SC_lw_band:SC_bands,:,1))),' [fs]'
-   call msg('snr',dump_ch)
+   call msg('snr',dump_ch)            
+   write(dump_ch,'(a,f10.6,a,f10.6,a)') '[RT] Life-time range:',HARTREE*maxval(abs(Xen%W(SC_lw_band:SC_bands,:,1))),' - '&
+                                ,HARTREE*minval(abs(Xen%W(SC_lw_band:SC_bands,:,1))),' [eV]'
+   call msg('snr',dump_ch)            
  endif
  !
  do ib=SC_lw_band,SC_bands

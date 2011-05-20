@@ -241,6 +241,8 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
      endif
 #endif
    !
+   endif
+   !
    if(SC_lw_band>1) then
      !
      ! The I1 and I2 matrices have the structure
@@ -250,11 +252,9 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
      ! |   0                   =/0         | SC_lw_band:SC_bands
      !
      I1_lesser(1:SC_lw_band-1,1:SC_bands     ,ik)=(0._SP,0._SP)
-     I1_lesser(1:SC_bands    ,1:SC_lw_band   ,ik)=(0._SP,0._SP)
+     I1_lesser(1:SC_bands    ,1:SC_lw_band-1 ,ik)=(0._SP,0._SP)
      I2_lesser(1:SC_lw_band-1,1:SC_bands     ,ik)=(0._SP,0._SP)
      I2_lesser(1:SC_bands    ,1:SC_lw_band-1 ,ik)=(0._SP,0._SP)
-   endif
-   !
    endif
    !
  enddo  !---- loop on k-points

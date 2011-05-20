@@ -131,8 +131,6 @@ module YPP
  real(SP)          :: qdir(3)
  integer           :: idir
  !
- ! GPL_EXCLUDE_START RAS_IGNORE
- !
  ! BZ RIM
  !
  integer  :: BZ_RIM_nkpts
@@ -143,6 +141,8 @@ module YPP
  ! Quasi-Particles
  !
  logical     :: l_qpdb
+ !
+ ! GPL_EXCLUDE_START RAS_IGNORE
  !
  ! (RT) Reduce Symmetries
  !

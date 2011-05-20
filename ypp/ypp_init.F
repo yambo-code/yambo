@@ -450,9 +450,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  ! 
 #endif
- if (l_bzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut OutputAlat GammaRadius")
  !
  ! GPL_EXCLUDE_END
+ !
+ if (l_bzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut OutputAlat GammaRadius")
  !
  if (l_electrons.and.l_dos) then
     if(l_dos) call QP_ctl_switch('G')
@@ -522,12 +523,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    call pp_redux_wait
  endif
  !
- ! GPL_EXCLUDE_START
- !
  if(l_qpdb) call qpdb_init()
  !
- ! GPL_EXCLUDE_END
- ! 
 #if defined _YPP_ELPH
  if ((l_plot.and.l_sp_wf).or.(l_electrons.and.l_eliashberg)) &
 #else

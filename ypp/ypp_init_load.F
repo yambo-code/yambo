@@ -82,10 +82,11 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'magnetization','[R] Magnetization')
  !
  ! GPL_EXCLUDE_END SPIN_IGNORE
- ! GPL_EXCLUDE_START 
  !
  call it('r',defs,'bzrim',   '[R] BZ energy RIM analyzer')
  call it('r',defs,'qpdb',    '[R] Quasi-particle database manager')
+ !
+ ! GPL_EXCLUDE_START 
  !
 #if defined _YPP_RT
  call it('r',defs,'fixsyms', '[R] Reduce Symmetries')

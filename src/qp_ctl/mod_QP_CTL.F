@@ -260,8 +260,6 @@ module QP_CTL_m
      !
      if ((Eid<3.and.associated(en%Eo)).and..not.associated(en%GreenF)) then
        !
-       ! GPL_EXCLUDE_START
-       !
        if (associated(en%E_RIM)) then
          !
          allocate(RIM_k_done(BZ_RIM_tot_nkpts))
@@ -287,8 +285,6 @@ module QP_CTL_m
          deallocate(RIM_k_done)
          !
        endif
-       !
-       ! GPL_EXCLUDE_END
        !
        call OCCUPATIONS_Fermi(en,k,1)
        !

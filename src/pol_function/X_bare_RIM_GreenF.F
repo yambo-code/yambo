@@ -130,8 +130,6 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
    !
  endif
  !
- ! GPL_EXCLUDE_START
- !
  ! In the X_o loop the GreenF is multiplied by 
  !
  !  f0fac/spin_occ/real(Xk%nbz)/DL_vol
@@ -194,7 +192,5 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
    enddo
    !
  endif
- !
- ! GPL_EXCLUDE_END
  !
 end subroutine

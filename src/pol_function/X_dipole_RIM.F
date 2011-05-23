@@ -54,8 +54,6 @@ subroutine X_dipole_RIM(iq,transitions,fr,Xw,Xen,Xk,Gf_rhoq0,ordering)
  ic     = transitions(3)
  i_spin = transitions(4)
  !
- ! GPL_EXCLUDE_START
- !
  W_=0.
  Z_=(1.,0.)
  !
@@ -114,7 +112,5 @@ subroutine X_dipole_RIM(iq,transitions,fr,Xw,Xen,Xk,Gf_rhoq0,ordering)
    enddo
    !
  enddo
- !
- ! GPL_EXCLUDE_END
  !
 end subroutine

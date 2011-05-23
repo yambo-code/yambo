@@ -208,12 +208,13 @@ subroutine ypp_init_load(defs)
  !
 #endif
  !
- ! GPL_EXCLUDE_START
- !
  !BZ E RIM
  !
  call it(defs,'BZ_RIM_Nk','BZ Random Integration points',BZ_RIM_nkpts)
  call it(defs,'BZ_RIM_path','Path to the SAVE folder with the RIM DB1',BZ_RIM_path)
+ !
+ ! GPL_EXCLUDE_START
+ !
  call it(defs,'GammaRadius','[a.u.] Maximum distance from gamma',gamma_radius,verb_level=V_general)
  call it(defs,'OutputAlat','[a.u.] Lattice constant used for "alat" ouput format',alat_used_for_output,verb_level=V_general)
  !

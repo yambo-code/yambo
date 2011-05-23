@@ -49,6 +49,7 @@
   {"dbfrag","S","DataBases fragmentation",0,0,0,0,1}, 
   {"bzgrids","k","BZ Grid generator [(k)pt,(q)pt,(l)ongitudinal,(h)igh symmetry]",0,0,1,0,0}, 
   {"excitons", "e","Excitons  [(s)ort,(a)mp,(w)ave]",0,0,1,0,0}, 
+  {"qpdb",   "q","Generate/modify a quasi-particle database",0,0,0,0,0}, 
 #if defined _YPP_ELPH 
   {"electrons","s","Electrons [(w)ave,(d)ensity,(e)lias,do(s)]",0,0,1,0,0}, 
 #endif

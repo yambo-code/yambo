@@ -97,9 +97,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer, external :: io_COLLISIONS
 #endif
  !
- ! GPL_EXCLUDE_START
  integer, external :: ioE_RIM
- ! GPL_EXCLUDE_END
  !
 #if defined _SC || defined _RT
  integer, external :: io_SC_components 
@@ -274,14 +272,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_err=ioCOL_CUT(io_ID) 
  !
- ! GPL_EXCLUDE_START
- !
  ! e_rim
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_err=ioE_RIM(en,io_ID) 
- !
- ! GPL_EXCLUDE_END
  !
  ! xxvxc
  !

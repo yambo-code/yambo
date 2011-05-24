@@ -23,15 +23,14 @@
 !
 ! Copyright (C) 2002 M. Marques, A. Castro, A. Rubio, G. Bertsch
 !
-subroutine RT_X_one(en)
+subroutine RT_X_LRR_real_field(en)
  !
  use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,W_RT_induced_step, &
-&                         i_t_start,i_t_end,RED_steps,l_force_min_damp,N_pumps
+&                         i_t_start,i_t_end,RED_steps,l_force_min_damp
  use pars,           ONLY:SP,DP,pi,zero_dfl,cI
  use units,          ONLY:HARTREE
  use electrons,      ONLY:levels
  use memory_m,       ONLY:mem_est
- use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:RT_step,RT_output,RT_P,NE_steps,P_2levels_is_done
  use fields,         ONLY:Efield,small_a,i_Probe
  use parser_m,       ONLY:parser

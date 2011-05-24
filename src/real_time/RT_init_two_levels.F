@@ -22,7 +22,7 @@
 subroutine RT_init_two_levels(Xen)
  !
  use pars,           ONLY:SP,cI
- use fields,         ONLY:Efield
+ use fields,         ONLY:Efield,global_gauge
  use pars,           ONLY:pi,cI
  use units,          ONLY:HARTREE,FS2AUT,HBAR_eVfs
  use com,            ONLY:msg
@@ -109,16 +109,17 @@ subroutine RT_init_two_levels(Xen)
    !
    ! Two level case
    !
-   P        =  DIP_P(1,2,1,1,1)
-   D        =  cI*DIP_iR(1,2,1,1,1)
+   P          =DIP_P(1,2,1,1,1)
+   D          =cI*DIP_iR(1,2,1,1,1)
+   mu(i_Pump) =P
    !
    select case(trim(Efield(i_Pump)%ef_name))
      case('ANTIRES')
        W_pump=Efield(i_Pump)%frequency(1)
-       mu(i_Pump) = P/cI/W_pump
+       If ( trim(global_gauge)=="velocity") mu(i_Pump) =P/cI/W_pump
      case('RES')
        W_pump=Efield(i_Pump)%frequency(1)
-       mu(i_Pump) =-P/cI/W_pump
+       If ( trim(global_gauge)=="velocity") mu(i_Pump) =-P/cI/W_pump
      case('DELTA')
        mu(i_Pump) =P
        W_pump=0.

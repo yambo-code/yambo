@@ -203,7 +203,8 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  X_rt%damp           ="NONE"
  X_rt%damp_factor    =0.
  Probe_Keyword ="none"
- Pump_Keyword ="none"
+ Pump_Keyword  ="none"
+ X_order       =1
  !
 #endif
  !
@@ -297,14 +298,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        if (l_eliashberg)   call initactivate(1,'eliashberg')
     endif
 #endif
-#if defined _YPP_RT
-     if ( trim(rstr_piece(i1)) == 'rtpp') then
-       l_RT_X_one      =trim(rstr_piece(i1+1))=='o'
-       l_RT_X_two      =trim(rstr_piece(i1+1))=='t'
-       if (l_RT_X_one) call initactivate(1,'RToptics')
-       if (l_RT_X_two) call initactivate(1,'RTnlo')
-    endif
-#endif
      if ( trim(rstr_piece(i1)) == 'excitons') then
        l_wavefunction   =trim(rstr_piece(i1+1))=='w'
        l_sort           =trim(rstr_piece(i1+1))=='s'
@@ -388,6 +381,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_current          = runlevel_is_on('current')
  if (l_current) call initactivate(1,'electrons')
 #endif
+#if defined _YPP_RT
+ l_fix_syms         = runlevel_is_on('fixsyms')
+ l_RT_X             = runlevel_is_on('rtX')
+#endif
 #if defined _YPP_MAGNETIC
  l_angular_momentum = runlevel_is_on('angular_m').and.runlevel_is_on('electrons')
  l_position         = runlevel_is_on('position').and.runlevel_is_on('electrons')
@@ -433,21 +430,13 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  ! GPL_EXCLUDE_START
  !
 #if defined _YPP_RT
- l_fix_syms   =runlevel_is_on('fixsyms')
  !             
- l_RT_X_one  =runlevel_is_on('RToptics')
- !
- l_RT_X_two =runlevel_is_on('RTnlo')
- !
  if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev")
  !
- if (l_RT_X_one.or.l_RT_X_two) then 
-    call initactivate(1,"ProbeKey PumpKey")
-    if (l_RT_X_one) call initactivate(1,"EnRngeRt ETStpsRt")
-    call initactivate(1,"TmRngeRt TmJumps DampMode DampFactor FrMinDamp RmAsymLim")
-    if (l_RT_X_one) call initactivate(1,"UseFFT")
+ if (l_RT_X) then 
+   call initactivate(1,"Xorder ProbeKey PumpKey EnRngeRt ETStpsRt")
+   call initactivate(1,"TmRngeRt TmJumps DampMode DampFactor FrMinDamp RmAsymLim UseFFT")
  endif
- !
  ! 
 #endif
  !

@@ -780,7 +780,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      character(*)::field
      call initactivate(1,field//'_Freq')
      call initactivate(1,field//'_MaxFreq')
-     call initactivate(1,field//'_NFreqs')
+     call initactivate(1,field//'_FrStep')
      call initactivate(1,field//'_Int')
      call initactivate(1,field//'_Damp')
      call initactivate(1,field//'_kind')

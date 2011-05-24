@@ -147,19 +147,20 @@ module YPP
  ! (RT) Reduce Symmetries
  !
  logical     :: l_fix_syms
- logical     :: l_RT_X_one
- logical     :: l_RT_X_two
- logical     :: l_force_min_damp
  real(SP)    :: E_field(2,3)
  real(SP)    :: B_field,B_theta,B_psi
  !
  ! (RT) optics
  !
  logical  :: Use_FFT
- logical  :: l_effective_X
- integer  :: i_t_start,i_t_end,i_t_jump ! time window
+ logical  :: l_force_min_damp
+ logical  :: l_RT_X
+ integer  :: i_t_start,i_t_end ! time window
  integer  :: RED_steps ! reduced number of steps
- integer  :: N_probes,N_pumps,N_probe_frequencies
+ integer  :: N_probes
+ integer  :: N_pumps
+ integer  :: N_probe_frequencies
+ integer  :: X_order
  real(SP) :: t_jump
  real(SP) :: W_RT_induced_step
  character(schlen) :: Probe_Keyword
@@ -211,7 +212,7 @@ module YPP
      integer, optional  :: BS_E_degs(:)
    end subroutine
    !
-   subroutine  RT_init_X_one(dump_and_write)
+   subroutine  RT_initialize(dump_and_write)
      implicit none
      logical, optional  :: dump_and_write
    end subroutine

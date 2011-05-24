@@ -24,17 +24,19 @@ subroutine RT_paths(en)
  use pars,           ONLY:lchlen
  use YPP,            ONLY:Probe_Keyword,Pump_Keyword,max_n_of_paths,Pump_path,Probe_path,RT_databases,&
 &                         N_pumps,N_probes,N_probe_frequencies
- use com,            ONLY:core_io_path,jobstr,file_exists,msg
- use IO_m,           ONLY:NONE,LOG
- use fields,         ONLY:Efield,i_Probe
+ use com,            ONLY:core_io_path,jobstr,file_exists,msg,error
+ use IO_m,           ONLY:NONE
+ use fields,         ONLY:Efield,i_Probe,i_Pump
  use stderr,         ONLY:string_split,cstr
  use electrons,      ONLY:levels
  implicit none
  !
  type(levels)      :: en
  !
+ ! Work Space
+ !
  character(lchlen) :: jobstr_save
- integer           :: i_f,i_fp,nf
+ integer           :: i_f,i_fp,nf,N_pump_frequencies
  logical           :: IO_error
  character(10*max_n_of_paths) :: folder_list
  !
@@ -86,7 +88,7 @@ subroutine RT_paths(en)
  do i_f=1,N_probes
    jobstr=trim(Probe_path(i_f))
    call RT_databases(en,IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
-   N_probe_frequencies= Efield(i_Probe)%freq_steps
+   N_probe_frequencies= Efield(i_Probe)%n_frequencies
  enddo
  !
  ! In case of several probe_frequencies only one probe is supported
@@ -99,6 +101,12 @@ subroutine RT_paths(en)
  if (N_pumps==1) then
    jobstr=trim(Pump_path)
    call RT_databases(en,IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
+   if (.not.IO_error) then
+     N_pump_frequencies= Efield(i_Pump)%n_frequencies
+     if (N_pump_frequencies>1) call error('Pumps with multiple frequencies still not supported')
+   else
+     N_pumps=0
+   endif
  endif
  !
  jobstr=jobstr_save
@@ -112,12 +120,15 @@ subroutine RT_paths(en)
    ! I can use ANTIRES/RES probes with multiple frequencies only by using
    ! ProbeKey in the input file. This is because of the procedures defined in X_effective.
    !
-   if (Efield(i_Probe)%freq_steps>1) IO_error=.TRUE.
+   if (Efield(i_Probe)%n_frequencies>1) IO_error=.TRUE.
    if (.not.IO_error) N_probes=1
  endif
  !
  call msg('s',':: Pump   found      :',N_pumps)
  call msg('s',':: Probes found      :',N_probes)
  call msg('s',':: Probe  frequencies:',N_probe_frequencies)
+ !
+ if (N_pumps>1  ) call error('Multiple Pumps still not supported')
+ if (N_probes==0) call error('No probes found')
  !
 end subroutine

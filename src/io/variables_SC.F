@@ -52,7 +52,7 @@ integer function variables_SC(ID,local_description,what)
  ! Work Space
  !
  integer               :: SC_kind_disk,SC_perturbation_disk,&
-&                         io_status_save,i1,i_desc
+&                         io_status_save,i1,i_desc,local_size
  logical               :: CHECK_
 #if defined _RT		
  logical               :: l_J,l_G,l_NE_with_fields_disk
@@ -306,39 +306,45 @@ integer function variables_SC(ID,local_description,what)
        call io_elemental(ID,VAR="FIELD_NAME"//trim(intc(i1)),CH0="",VAR_SZ=1,MENU=0)
        i_desc=i_desc+1
        call io_elemental(ID,CH0=Efield(i1)%ef_name, &
-&       VAR=' [FIELDs] Field                  :',CHECK=.true.,OP=(/"=="/),&
+&       VAR=' [FIELDs] Type                   :',CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc))
        call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
        !
-       if (ver_is_gt_or_eq(ID,revision=846)) then
-          call io_elemental(ID,VAR="EXTERNAL_FIELD"//trim(intc(i1)),VAR_SZ=9,MENU=0)
-       else
-          call io_elemental(ID,VAR="EXTERNAL_FIELD"//trim(intc(i1)),VAR_SZ=7,MENU=0)
-       endif
+       local_size=7
+       if (ver_is_gt_or_eq(ID,revision=846)) local_size=9
+       if (ver_is_gt_or_eq(ID,revision=871)) local_size=10
+       call io_elemental(ID,VAR="EXTERNAL_FIELD"//trim(intc(i1)),VAR_SZ=local_size,MENU=0)
+       !
        i_desc=i_desc+1
        call io_elemental(ID,R1=Efield(i1)%versor,CHECK=.true., &
-&       VAR=" [FIELDs] Field versor           :",OP=(/"==","==","=="/),&
+&       VAR=" [FIELDs] Versor                 :",OP=(/"==","==","=="/),&
 &       DESCRIPTION=local_description(i_desc))
        i_desc=i_desc+1
        call io_elemental(ID,&
-&       VAR=" [FIELDs] Field intensity [kWLm2]:",R0=Efield(i1)%intensity,CHECK=.true.,OP=(/"=="/),&
+&       VAR=" [FIELDs] Intensity       [kWLm2]:",R0=Efield(i1)%intensity,CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc),UNIT=1./W2Au)
        i_desc=i_desc+1
        call io_elemental(ID,&
-&       VAR=" [FIELDs] Field damping      [fs]:",R0=Efield(i1)%damping,CHECK=.true.,OP=(/"=="/),&
+&       VAR=" [FIELDs] Damping            [fs]:",R0=Efield(i1)%damping,CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
        i_desc=i_desc+1
        if (ver_is_gt_or_eq(ID,revision=846)) then
          call io_elemental(ID,&
-&         VAR=" [FIELDs] Field frequencies  [eV]:",R1=Efield(i1)%frequency,CHECK=.true.,OP=(/"==","=="/),&
+&         VAR=" [FIELDs] Frequency range    [eV]:",R1=Efield(i1)%frequency,CHECK=.true.,OP=(/"==","=="/),&
 &         DESCRIPTION=local_description(i_desc),UNIT=HARTREE)
           i_desc=i_desc+1
          call io_elemental(ID,&
-&         VAR=" [FIELDs] Field freq. steps      :",I0=Efield(i1)%freq_steps,CHECK=.true.,OP=(/"=="/),&
+&         VAR=" [FIELDs] Frequency steps        :",I0=Efield(i1)%n_frequencies,CHECK=.true.,OP=(/"=="/),&
 &         DESCRIPTION=local_description(i_desc))
+          if (ver_is_gt_or_eq(ID,revision=871)) then
+            i_desc=i_desc+1
+            call io_elemental(ID,&
+&            VAR=" [FIELDs] Frequency step     [eV]:",R0=Efield(i1)%W_step,CHECK=.true.,OP=(/"=="/),&
+&            DESCRIPTION=local_description(i_desc),UNIT=HARTREE)
+          endif
        else
          call io_elemental(ID,&
-&         VAR=" [FIELDs] Field frequency    [eV]:",R0=Efield(i1)%frequency(1),CHECK=.true.,OP=(/"=="/),&
+&         VAR=" [FIELDs] Frequency          [eV]:",R0=Efield(i1)%frequency(1),CHECK=.true.,OP=(/"=="/),&
 &         DESCRIPTION=local_description(i_desc),UNIT=HARTREE)
        endif
        i_desc=i_desc+1

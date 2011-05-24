@@ -68,7 +68,7 @@
   {"bzrim",   "r","BZ energy RIM analyzer",0,0,0,0,0}, 
 #if defined _YPP_RT
   {"fixsyms", "n","Remove symmetries not consistent with an external perturbation",0,0,0,0,0}, 
-  {"rtpp",    "t","Real-Time post/pre-processing [X_(o)ne,X_(t)wo]",0,0,1,0,0}, 
+  {"rtX",     "t","Real-Time Response function post-processing",0,0,0,0,0}, 
 #endif
 #if defined _YPP_ELPH
   {"phonons","p","Phonon [(d)os,(e)lias,(a)mplitude]",0,0,1,0,0}, 

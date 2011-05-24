@@ -21,27 +21,28 @@
 !
 subroutine RT_X_effective(en)
  !
- use pars,           ONLY:SP,lchlen,pi
- use YPP,            ONLY:RT_P_t,Pump_path,N_probes,Probe_path,RT_databases,RT_init_X_one,&
-&                         max_n_of_paths,Use_FFT,X_rt,N_pumps,N_probe_frequencies
+ use pars,           ONLY:SP,lchlen,pi,schlen
+ use YPP,            ONLY:RT_P_t,Pump_path,N_probes,Probe_path,RT_databases,RT_initialize,&
+&                         max_n_of_paths,Use_FFT,X_rt,N_pumps,N_probe_frequencies,X_order
  use units,          ONLY:HARTREE
  use electrons,      ONLY:levels
  use com,            ONLY:jobstr,msg,error
  use IO_m,           ONLY:NONE,LOG
- use fields,         ONLY:Efield,i_Probe,ext_field,Efield_duplicate
- use real_time,      ONLY:NE_steps,RT_output
+ use fields,         ONLY:Efield,i_Probe,ext_field,Efield_duplicate,field_frequency,i_Pump,EtoT
+ use real_time,      ONLY:NE_steps,RT_output,RT_step
  use vec_operate,    ONLY:sort
  use timing,         ONLY:live_timing
+ use stderr,         ONLY:intc
  implicit none
  !
  type(levels)  :: en
  !
  character(lchlen) :: jobstr_save
- integer           :: i_t,i_f,i_fp,f_indx(max_n_of_paths)
- real(SP)          :: deltaW
- complex(SP)       :: EPS
+ character(schlen) :: X_file_name
+ integer           :: i_f,i_fp,f_indx(max_n_of_paths),i_order,min_X_order
+ real(SP)          :: Pump_Frequency(1)
  logical           :: Probe_consistency_error
- real(SP),    allocatable    :: RT_P_probe(:,:),RT_P_pump(:,:),Frequency(:)
+ real(SP),    allocatable    :: RT_P_probe(:,:),RT_P_pump(:,:),Probe_Frequency(:),Fourier_Frequency(:)
  complex(SP), allocatable    :: X_effective(:)
  type(ext_field)   :: Efield_probe
  !
@@ -50,19 +51,23 @@ subroutine RT_X_effective(en)
  !
  jobstr_save=jobstr
  !
- allocate(RT_P_probe(NE_steps,N_probes),RT_P_pump(NE_steps,3))
- allocate(X_effective(max(N_probes,N_probe_frequencies)))
- allocate(Frequency(max(N_probes,N_probe_frequencies)))
+ N_probe_frequencies=max(N_probes,N_probe_frequencies) 
+ !
+ allocate(RT_P_probe(NE_steps,N_probes),RT_P_pump(NE_steps,3),X_effective(N_probe_frequencies))
+ allocate(Probe_Frequency(N_probe_frequencies))
  !
  ! Pump only
  !===========
  !
+ RT_P_pump=0.
+ Pump_Frequency=0.
+ min_X_order=1
  if (N_pumps>0) then
    jobstr=trim(Pump_path)
-   call RT_databases(en,COM_=NONE,mesg="pump")
+   call RT_databases(en,COM_=NONE,mesg=trim(Pump_path))
    RT_P_pump=real(RT_P_t)
- else
-   RT_P_pump=0.
+   Pump_Frequency=Efield(i_Pump)%frequency(1)
+   min_X_order=0
  endif
  !
  ! Probe Databases
@@ -71,13 +76,12 @@ subroutine RT_X_effective(en)
  Probe_consistency_error=.FALSE.
  !
  RT_P_probe=(0.,0.)
- deltaW=0.
  !
  do i_f=1,N_probes
    !
    jobstr=trim(Probe_path(i_f))
-   if (i_f==1) call RT_databases(en,COM_=LOG,mesg="probe")
-   if (i_f> 1) call RT_databases(en,COM_=NONE,mesg="probe")
+   if (i_f==1) call RT_databases(en,COM_=LOG, mesg=trim(jobstr))
+   if (i_f> 1) call RT_databases(en,COM_=NONE,mesg=trim(jobstr))
    !
    if (i_f==1) then
      call Efield_duplicate(Efield(i_Probe),Efield_probe)
@@ -89,29 +93,19 @@ subroutine RT_X_effective(en)
    endif
    !
    RT_P_probe(:,i_f)=real(RT_P_t(:,1))-RT_P_pump(:,1)
-   !DEBUG>
-   !RT_P_probe(:,1)=RT_P_probe(:,1)+real(RT_P_t(:,1))-RT_P_pump(:,1)
-   !DEBUG<
-   if (N_probe_frequencies >1 ) then  
-     deltaW=(Efield(i_Probe)%frequency(2)-Efield(i_Probe)%frequency(1))/(Efield(i_Probe)%freq_steps-1)
-     do i_fp=1,N_probe_frequencies
-       Frequency(i_fp)=Efield(i_Probe)%frequency(1)+deltaW*(i_fp-1)
-     enddo
-   else
-     Frequency(i_f)   =Efield(i_Probe)%frequency(1)
-   endif
    !
-!DEBUG>
-!   do i_t=1,NE_steps
-!     write (100+i_f,*) i_t,RT_P_probe(i_t,i_f)
-!   enddo
-!DEBUG<
+   do i_fp=1,Efield(i_Probe)%n_frequencies
+     if (N_probes==1) Probe_Frequency(i_fp)=field_frequency(Efield(i_Probe),i_fp)
+     if (N_probes>1 ) Probe_Frequency(i_f)=field_frequency(Efield(i_Probe),1)
+   enddo
+   !
  enddo
  !
  if (Probe_consistency_error) call error('Not all probes have consistent parameters')
  !
  if (trim( Efield_probe%ef_name ) == 'ANTIRES'.and.N_probes>1) then
-   call msg('s',':: Frequency range   [eV]:',(/minval(Frequency),maxval(Frequency)/)*HARTREE)
+   call msg('s',':: Pump  frequency range   [eV]:',(/minval(Pump_Frequency),maxval(Pump_Frequency)/)*HARTREE)
+   call msg('s',':: Probe                   [eV]:',(/minval(Probe_Frequency),maxval(Probe_Frequency)/)*HARTREE)
  endif
  !
  jobstr=jobstr_save
@@ -130,65 +124,110 @@ subroutine RT_X_effective(en)
    !
    RT_P_t(:,1)=RT_P_probe(:,1)
    !
-   call RT_init_X_one(dump_and_write=.TRUE.)
+   call RT_initialize(dump_and_write=.TRUE.)
    !
-   call RT_X_one(en)
+   call RT_X_LRR_real_field(en)
    !
-   deallocate(RT_P_probe,Frequency,RT_P_pump,X_effective)
+   deallocate(RT_P_probe,Probe_Frequency,RT_P_pump,X_effective)
    !
    return
    !
  endif
  !
- call RT_output("open eps")
+ ! Time step & Time Range
+ !========================
+ if (Efield_Probe%W_step<epsilon(1._SP)) then
+   Efield_Probe%W_step=1.
+   do i_f=2,N_probe_frequencies
+     Efield_Probe%W_step=min( Efield_Probe%W_step, abs(Probe_frequency(1) - Probe_frequency(i_f))) 
+   enddo
+ endif
  !
- call RT_init_X_one(dump_and_write=.FALSE.)
+ ! Time Range
  !
- ! [B] X effective (several Probes, 1 frequency each)
- !     ===========
+ X_rt%time_range(2)= X_rt%time_range(1)+EtoT(E=Efield_Probe%W_step)
  !
- if (N_probes>1) then
+ if ( X_rt%time_range(2)> NE_steps*RT_step) then
+   X_rt%time_range(2)= NE_steps*RT_step
+   X_rt%time_range(1)= X_rt%time_range(2)-EtoT(E=Efield_Probe%W_step)
+ endif
+ !
+ call RT_initialize(dump_and_write=.FALSE.)
+ call msg('s','[RT] Energy step[eV]:',Efield_Probe%W_step*HARTREE)
+ !
+ do i_order=min_X_order,X_order,1
    !
-   call sort(Frequency,indx=f_indx(:N_probes))
+   X_file_name="X_probe_order_"//trim(intc(i_order))
    !
-   call live_timing('X effective:',N_probes)
+   ! Note that the X are plotted as a function of the DETUNING=W_probe-W_pump
    !
-   !DEBUG>
-   !call RT_Fourier_Coefficients(NE_steps,RT_P_probe(i_t,1),N_probes,Frequency,X_effective)
-   !DEBUG<
+   call RT_output( "open "//trim(X_file_name) )
    !
-   do i_fp=1,N_probes
+   ! FREQUENCIES
+   !=============
+   ! Depending on the order and if there is a steady pump applied
+   ! the frequencies on which the Fourier analysis must be done are:
+   !
+   ! N_pumps=1
+   !   |
+   !   X_order=0 => Probe_Frequency(i_f)
+   !   X_order=n => (n+1)*Pump_requency-Probe_Frequency(i_f)
+   !
+   ! N_pumps=0
+   !   |
+   !   X_order=n => n*Probe_Frequency(i_f)
+   !
+   if (N_pumps==1) then
+     if (i_order==0) Fourier_Frequency(:)=Probe_Frequency(:)
+     if (i_order >0) Fourier_Frequency(:)=(i_order+1)*Pump_Frequency(1)-Probe_Frequency(:)
+   else if (N_pumps==0) then
+     Fourier_Frequency(:)=i_order*Probe_Frequency(:)
+   endif
+   !
+   ! [B] X effective (several Probes, 1 frequency each)
+   !     ===========
+   !
+   if (N_probes>1) then
+     !
+     call live_timing('X effective@order '//trim(intc(i_order))//':',N_probe_frequencies)
+     !
+     do i_f=1,N_probe_frequencies
+       !
+       call RT_Fourier_Coefficients(NE_steps,RT_P_probe(:,i_f),1,(/Fourier_Frequency(i_f)/),X_effective(i_f),Efield_Probe%W_step)
+       !
+       call live_timing(steps=1)
+       ! 
+     enddo
+     !
+     call live_timing()
+     !
+   else
+     !
+     ! [C] X effective (1 Probs, several frequencies)
+     !     ===========
+     !
+     call RT_Fourier_Coefficients(NE_steps,RT_P_probe(:,1),N_probe_frequencies,Fourier_Frequency,X_effective,Efield_Probe%W_step)
+     !
+   endif
+   !
+   ! ... ordering and frequency step (defines the P(t) periodicity)
+   !
+   Fourier_Frequency(:)=Probe_Frequency(:)
+   call sort(Fourier_Frequency,indx=f_indx(:N_probe_frequencies))
+   !
+   do i_fp=1,N_probe_frequencies
      !
      i_f=f_indx(i_fp)
      !
-     call RT_Fourier_Coefficients(NE_steps,RT_P_probe(i_t,i_f),1,(/Frequency(i_fp)/),X_effective(i_fp))
-     !
-     EPS=1.+4.*pi*X_effective(i_fp)
-     !
-     call RT_output('eps',VALUEs=(/aimag(EPS),real(EPS),0._SP,0._SP/),E=Frequency(i_fp)*HARTREE)
-     !
-     call live_timing(steps=1)
-     ! 
-   enddo
-   !
-   call live_timing()
-   !
- else
-   !
-   call RT_Fourier_Coefficients(NE_steps,RT_P_probe(i_t,1),N_probe_frequencies,Frequency,X_effective)
-   !
-   do i_f=1,N_probe_frequencies
-     !
-     EPS=1.+4.*pi*X_effective(i_f)
-     !
-     call RT_output('eps',VALUEs=(/aimag(EPS),real(EPS),0._SP,0._SP/),E=Frequency(i_f)*HARTREE)
+     call RT_output(trim(X_file_name),VALUEs=(/aimag(X_effective(i_f)),real(X_effective(i_f))/),&
+&                   E=(Probe_Frequency(i_f)-Pump_Frequency(1))*HARTREE)
      !
    enddo
    !
- endif
+   call RT_output("close "//trim(X_file_name))
+   !
+ enddo
  !
- call RT_output("close eps")
- !
- deallocate(RT_P_probe,Frequency,RT_P_pump,X_effective)
+ deallocate(RT_P_probe,Probe_Frequency,RT_P_pump,X_effective,Fourier_Frequency)
  !
 end subroutine

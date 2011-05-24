@@ -21,7 +21,8 @@
 !
 module fields
  !
- use pars, ONLY:SP,schlen,lchlen
+ use pars, ONLY:SP,schlen,lchlen,pi
+ use units,ONLY:HARTREE,FS2AUT,HBAR_eVfs
  !
  implicit none
  !
@@ -40,11 +41,12 @@ module fields
  type ext_field
    real(SP) :: t_initial
    integer  :: int_t_initial
-   integer  :: freq_steps
+   integer  :: n_frequencies
    real(SP) :: frequency(2)
    real(SP) :: damping
    real(SP) :: intensity
    real(SP) :: amplitude
+   real(SP) :: W_step
    real(SP) :: versor(3)
    character(schlen) :: ef_name
  end type ext_field
@@ -80,6 +82,21 @@ module fields
 &                        trim(E_field%ef_name) == 'DELTA' ,& 
 &                        trim(E_field%ef_name) == 'GAUSS' ,& 
 &                        trim(E_field%ef_name) == 'QSSIN' /))
+   end function
+   !
+   real(SP) function EtoT(E,T)
+     real(SP), optional ::T
+     real(SP), optional ::E
+     if (present(T)) EtoT=2._SP*pi*HBAR_eVfs/(T*HARTREE)*FS2AUT
+     if (present(E)) EtoT=2._SP*pi*HBAR_eVfs/(E*HARTREE)*FS2AUT
+   end function
+   !
+   real(SP) function field_frequency(E_field,i_f)
+     integer           ::i_f
+     type(ext_field)   ::E_field
+     field_frequency=E_field%frequency(1)
+     if (i_f>1.and.E_field%n_frequencies>1) field_frequency=E_field%frequency(1)+&
+&       (E_field%frequency(2)-E_field%frequency(1))/(E_field%n_frequencies-1)*(i_f-1)
    end function
    !
    complex(SP) function small_a(T_or_W,E_field,order)
@@ -119,10 +136,9 @@ module fields
          if (order==2 ) local_a=freq*cos(freq*T_or_W)
          if (order==-1) local_a=1._SP/2._SP/(T_or_W-freq)-1._SP/2._SP/(T_or_W+freq)-1._SP/freq
        case('ANTIRES')
-         do i_f=1,E_field%freq_steps
+         do i_f=1,E_field%n_frequencies
            !
-           freq=E_field%frequency(1)
-           if (i_f>1) freq=E_field%frequency(1)+(E_field%frequency(2)-E_field%frequency(1))/(E_field%freq_steps-1)*(i_f-1)
+           freq=field_frequency(E_field,i_f)
            !
            if (order==0 ) local_a=local_a-cI*exp(cI*freq*T_or_W)/freq
            if (order==1 ) local_a=local_a+    exp(cI*freq*T_or_W)
@@ -131,9 +147,9 @@ module fields
            !
          enddo
        case('RES')
-         do i_f=1,E_field%freq_steps
+         do i_f=1,E_field%n_frequencies
            !
-           freq=E_field%frequency(1)
+           freq=field_frequency(E_field,i_f)
            !
            if (order==0 ) local_a= cI*exp(-cI*freq*T_or_W)/freq
            if (order==1 ) local_a=    exp(-cI*freq*T_or_W)
@@ -192,7 +208,8 @@ module fields
      E2%t_initial=E1%t_initial  
      E2%int_t_initial=E1%int_t_initial  
      E2%frequency=E1%frequency  
-     E2%freq_steps=E1%freq_steps  
+     E2%n_frequencies=E1%n_frequencies  
+     E2%W_step=E1%W_step  
      E2%damping=E1%damping  
      E2%intensity=E1%intensity  
      E2%amplitude=E1%amplitude  
@@ -205,7 +222,8 @@ module fields
      E%t_initial    =0.
      E%int_t_initial=0
      E%frequency    =0.
-     E%freq_steps   =1
+     E%n_frequencies=1
+     E%W_step       =0.
      E%intensity    =0.
      E%damping      =0.
      E%ef_name      ='none'

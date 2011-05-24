@@ -25,7 +25,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
  use com,            ONLY:msg,of_open_close,opened_of
  use SC,             ONLY:SC_description,n_SC_descriptions
  use fields,         ONLY:A_vecpot
- use stderr,         ONLY:set_real_printed_length,string_split
+ use stderr,         ONLY:set_real_printed_length,string_split,intc
  use real_time,      ONLY:RT_ind_J,RT_P,l_NE_simulate_IP,P_2levels_is_done,&
 &                         RT_P_2levels,P_2levels_is_done
  use timing,         ONLY:what_is_running
@@ -38,10 +38,10 @@ subroutine RT_output(what,VALUEs,TIME,E)
  !
  ! Work space
  !
- integer, parameter       :: n_output_files=9
+ integer, parameter       :: n_output_files=30,max_X_order=3
  character(lchlen), save  :: file_name(n_output_files)
  character(schlen)        :: orders(n_output_files),short_file_name(n_output_files)
- integer                  :: i_f,i_fp,n_headings(n_output_files)
+ integer                  :: i_f,i_fp,n_headings(n_output_files),next_file,i_order
  logical                  :: file_is_todo(n_output_files),initialize,finalize
  logical,           save  :: SC_descriptions_dumped(n_output_files)
  character(schlen)        :: headings(n_output_files,10),append_ch
@@ -60,85 +60,108 @@ subroutine RT_output(what,VALUEs,TIME,E)
  ! Time Resolved...
  !
  headings=" "
+ if (initialize) file_name=" "
+ short_file_name=" "
  headings(1:4,1)="Time[fs]"
+ next_file=1
  !
  append_ch=' '
  if (index(what_is_running,'YPP')>0) append_ch='YPP-'
  !
- if (initialize) file_name(1)=trim(append_ch)//'current'
- short_file_name(1)=trim(append_ch)//'current'
- n_headings(1)=4
- headings(1,2:4)=(/"j_x","j_y","j_z"/)
+ if (initialize) file_name(next_file)=trim(append_ch)//'current'
+ short_file_name(next_file)=trim(append_ch)//'current'
+ n_headings(next_file)=4
+ headings(next_file,2:4)=(/"j_x","j_y","j_z"/)
+ next_file=next_file+1
  !
- if (initialize) file_name(2)=trim(append_ch)//'polarization'
- short_file_name(2)=trim(append_ch)//'polarization'
- n_headings(2)=4
- headings(2,2:4)=(/"Pol_x","Pol_y","Pol_z"/)
+ if (initialize) file_name(next_file)=trim(append_ch)//'polarization'
+ short_file_name(next_file)=trim(append_ch)//'polarization'
+ n_headings(next_file)=4
+ headings(next_file,2:4)=(/"Pol_x","Pol_y","Pol_z"/)
  if (P_2levels_is_done) then
-   n_headings(2)=7
-   headings(2,2:4)=(/"Pol_x","Pol_y","Pol_z"/)
-   headings(2,5:7)=(/"Pol2l_x","Pol2l_y","Pol2l_z"/)
+   n_headings(next_file)=7
+   headings(next_file,2:4)=(/"Pol_x","Pol_y","Pol_z"/)
+   headings(next_file,5:7)=(/"Pol2l_x","Pol2l_y","Pol2l_z"/)
  endif
+ next_file=next_file+1
  !
- if (initialize) file_name(3)=trim(append_ch)//'vector_potential'
- short_file_name(3)=trim(append_ch)//'vector_potential'
- n_headings(3)=10
- headings(3,2:4 )=(/"A_x","A_y","A_z"/)
- headings(3,5:7 )=(/"A'_x","A'_y","A'_z"/)
- headings(3,8:10)=(/"A''_x","A''_y","A''_z"/)
+ if (initialize) file_name(next_file)=trim(append_ch)//'vector_potential'
+ short_file_name(next_file)=trim(append_ch)//'vector_potential'
+ n_headings(next_file)=10
+ headings(next_file,2:4 )=(/"A_x","A_y","A_z"/)
+ headings(next_file,5:7 )=(/"A'_x","A'_y","A'_z"/)
+ headings(next_file,8:10)=(/"A''_x","A''_y","A''_z"/)
+ next_file=next_file+1
  !
- if (initialize) file_name(4)=trim(append_ch)//'dynamics'
- short_file_name(4)=trim(append_ch)//'dynamics'
- n_headings(4)=9
- headings(4,2:3)=(/"E_kin[eV]","E_ion[eV]"/)
+ if (initialize) file_name(next_file)=trim(append_ch)//'dynamics'
+ short_file_name(next_file)=trim(append_ch)//'dynamics'
+ n_headings(next_file)=9
+ headings(next_file,2:3)=(/"E_kin[eV]","E_ion[eV]"/)
  if(l_NE_simulate_IP) then
-   headings(4,4:6)=(/"       -       ","       -       ","Hartree+Vxc[eV]"/)
+   headings(next_file,4:6)=(/"       -       ","       -       ","Hartree+Vxc[eV]"/)
  else
-   headings(4,4:6)=(/"Hartree [eV]","Exchange[eV]","Correlat[eV]"/)
+   headings(next_file,4:6)=(/"Hartree [eV]","Exchange[eV]","Correlat[eV]"/)
  endif
- headings(4,7)="E_mg[eV]"
- headings(4,8)="N" 
- headings(4,9)="dG" 
+ headings(next_file,7)="E_mg[eV]"
+ headings(next_file,8)="N" 
+ headings(next_file,9)="dG" 
+ next_file=next_file+1
  !
  ! ... energy resolved ...
  !
- headings(5:7,1)="E [eV]"
  !
- if (initialize) file_name(5)=trim(append_ch)//'eps'
- short_file_name(5)=trim(append_ch)//'eps'
- n_headings(5)=3
- headings(5,2:3)=(/'eps/Im','eps/Re'/)
+ if (initialize) file_name(next_file)=trim(append_ch)//'eps'
+ short_file_name(next_file)=trim(append_ch)//'eps'
+ n_headings(next_file)=3
+ headings(next_file,2:3)=(/'eps/Im','eps/Re'/)
+ headings(next_file,1)="E [eV]"
  if (P_2levels_is_done) then
-   n_headings(5)=5
-   headings(5,4:5)=(/'eps2l/Im','eps2l/Re'/)
+   n_headings(next_file)=5
+   headings(next_file,4:5)=(/'eps2l/Im','eps2l/Re'/)
  endif
+ next_file=next_file+1
  !
- if (initialize) file_name(6)=trim(append_ch)//'eels'
- short_file_name(6)=trim(append_ch)//'eels'
- n_headings(6)=3
- headings(6,2:3)=(/'eel/Im','eel/Re'/)
+ if (initialize) file_name(next_file)=trim(append_ch)//'eels'
+ short_file_name(next_file)=trim(append_ch)//'eels'
+ n_headings(next_file)=3
+ headings(next_file,2:3)=(/'eel/Im','eel/Re'/)
+ headings(next_file,1)="E [eV]"
  if (P_2levels_is_done) then
-   n_headings(6)=5
-   headings(6,4:5)=(/'eel2l/Im','eel2l/Re'/)
+   n_headings(next_file)=5
+   headings(next_file,4:5)=(/'eel2l/Im','eel2l/Re'/)
  endif
+ next_file=next_file+1
  !
- if (initialize) file_name(7)=trim(append_ch)//'nonlinear'
- short_file_name(7)=trim(append_ch)//'nonlinear'
- n_headings(7)=3
- headings(7,2:3)=(/'X/Im','X/Re'/)
+ if (initialize) file_name(next_file)=trim(append_ch)//'SHG_qssin'
+ short_file_name(next_file)=trim(append_ch)//'SHG_qssin'
+ n_headings(next_file)=3
+ headings(next_file,2:3)=(/'X/Im','X/Re'/)
+ headings(next_file,1)="E [eV]"
+ next_file=next_file+1
  !
- if (initialize) file_name(8)=trim(append_ch)//'occupations'
- short_file_name(8)=trim(append_ch)//'occupations'
- n_headings(8)=2
- headings(8,1:2)=(/'E  ','Occ'/)
+ if (initialize) file_name(next_file)=trim(append_ch)//'occupations'
+ short_file_name(next_file)=trim(append_ch)//'occupations'
+ n_headings(next_file)=9
+ headings(next_file,1:2)=(/'E  ','Occ'/)
+ next_file=next_file+1
+ !
+ do i_order=0,max_X_order,1
+   if (initialize) file_name(next_file)=trim(append_ch)//'X_probe_order_'//trim(intc(i_order))
+   short_file_name(next_file)=trim(append_ch)//'X_probe_order_'//trim(intc(i_order))
+   n_headings(next_file)=3
+   headings(next_file,1)="E [eV]"
+   headings(next_file,2:3)=(/'X/Im','X/Re'/)
+   next_file=next_file+1
+ enddo
  !
  ! ... and time/energy resolved ...
  !
- if (initialize) file_name(9)=trim(append_ch)//'X_effective'
- short_file_name(9)=trim(append_ch)//'X_effective'
- n_headings(9)=4
- headings(9,1:2)=(/'T [fs]','E [eV]'/)
- headings(9,3:4)=(/'X/Im','X/Re'/)
+ if (initialize) file_name(next_file)=trim(append_ch)//'X_effective'
+ short_file_name(next_file)=trim(append_ch)//'X_effective'
+ n_headings(next_file)=4
+ headings(next_file,1:2)=(/'T [fs]','E [eV]'/)
+ headings(next_file,3:4)=(/'X/Im','X/Re'/)
+ next_file=next_file+1
  !
  ! Check which files to write
  !----------------------------
@@ -163,6 +186,8 @@ subroutine RT_output(what,VALUEs,TIME,E)
      if (initialize) call of_open_close(file_name(i_f),'ot')
      if (finalize)   call of_open_close(trim(short_file_name(i_f)))
    enddo
+   !
+   call set_real_printed_length( )
    !
    return
    !
@@ -189,19 +214,20 @@ subroutine RT_output(what,VALUEs,TIME,E)
    !--------
    if (present(TIME)) data_to_dump(1)=TIME
    if (present(E))    data_to_dump(1)=E
-   select case (i_f)
-     case(1)
+   select case (trim(short_file_name(i_f)))
+     case('current')
        data_to_dump(2:4) =real(RT_ind_J)
-     case(2)
+     case('polarization')
        data_to_dump(2:4) =real(RT_P)
        if (P_2levels_is_done) data_to_dump(5:7) =real(RT_P_2levels)
-     case(3)
+     case('vector_potential')
        data_to_dump(2:4) =real(A_vecpot%vecpot(:))
        data_to_dump(5:7) =real(A_vecpot%vecpot_vel(:))
        data_to_dump(8:10)=real(A_vecpot%vecpot_acc(:))
-     case(4:8)
+     case('dynamics','YPP-eps','YPP-eels','YPP-SHG_qssin','occupations',&
+&         'YPP-X_probe_order_0','YPP-X_probe_order_1','YPP-X_probe_order_2','YPP-X_probe_order_3')
        data_to_dump(2:n_headings(i_f)) = VALUES(1:n_headings(i_f)-1)
-     case(9)
+     case('YPP-X_effective')
        data_to_dump(1:2)=(/Time,E/)
        data_to_dump(3:n_headings(i_f)) = VALUES(1:n_headings(i_f)-1)
    end select

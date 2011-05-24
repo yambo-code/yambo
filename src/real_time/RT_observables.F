@@ -26,7 +26,7 @@ subroutine RT_Observables(en,k,on_the_fly_operators)
  use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp,nkibz
  use D_lattice,      ONLY:DL_vol
- use SC,             ONLY:V_hartree_sc,Ho,rho_n,SC_bands
+ use SC,             ONLY:V_hartree_sc,Ho,SC_bands
  use X_m,            ONLY:P_square
  use real_time,      ONLY:XC0_and_HARTREE0,G_lesser,RT_average_operator,XCfrozen,l_NE_with_fields, &
 &                         l_NE_simulate_IP ,l_Dynamics_is_over,RT_output

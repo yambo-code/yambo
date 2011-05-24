@@ -19,13 +19,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_X_two
+subroutine RT_X_SHG
  !
  use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,W_RT_induced_step, &
 &                         i_t_start,i_t_end,RED_steps
  use pars,           ONLY:SP,DP,pi
  use units,          ONLY:HARTREE
- use com,            ONLY:error
  use memory_m,       ONLY:mem_est
  use real_time,      ONLY:NE_steps,RT_step,RT_output
  use fields,         ONLY:Efield,small_a,i_probe
@@ -43,9 +42,6 @@ subroutine RT_X_two
  real(SP)    :: W_step, W_reached
  character(9) :: FT_title
  !
- if(trim(Efield(i_probe)%ef_name)/="QSSIN") &
-&  call error(" Non linear optics only with QSSIN field! ")
- !
  call section("=",'Second order susceptibility')
  !
  ! Implementation based on JCP 127, 154114 (2007)
@@ -55,7 +51,7 @@ subroutine RT_X_two
  ! Field: Definitions & Allocation
  !
  X_rt%energy_range(1)=-4._SP*(Efield(i_probe)%frequency(1)) ! Here I define the integration cutoff
- X_rt%energy_range(2)=4._SP*(Efield(i_probe)%frequency(1))  ! in Eqs 20-22 as 4 time the field freq. TEST?!?
+ X_rt%energy_range(2)= 4._SP*(Efield(i_probe)%frequency(1)) ! in Eqs 20-22 as 4 time the field freq. TEST?!?
  W_step=W_RT_induced_step
  X_rt%energy_steps= (X_rt%energy_range(2))/W_step  ! and I define the number of freq step
  X_rt%energy_steps= 2*X_rt%energy_steps            ! as a consequence
@@ -129,20 +125,20 @@ subroutine RT_X_two
  ! so what I get is  \sum_{ij} E_versor(i) E_versor(j) \tilde X_ij(W,ic), W=0,2wo
  ! depending on the symmetry of the system I device calcs so to get the desired X_ij(W,ic)
  !
- X_irrep(1,:)=PI*X_irrep(1,:)/E_2plus
- X_irrep(2,:)=2_DP*PI*X_irrep(2,:)/E_2minus
+ X_irrep(1,:)=pi*X_irrep(1,:)/E_2plus
+ X_irrep(2,:)=2_DP*pi*X_irrep(2,:)/E_2minus
  !
  ! Output results
  !
- call RT_output("open nonlinear")
+ call RT_output("open SHG_qssin")
  !
  do i_w = 1, nfreqs
    !
    W_reached = real(outfreqs(i_w))
    X_tot=sum(X_irrep(i_w,:)*Efield(i_probe)%versor(:))
-   call RT_output('nonlinear',(/aimag(X_tot),real(X_tot)/),E=W_reached*HARTREE)
+   call RT_output('SHG_qssin',(/aimag(X_tot),real(X_tot)/),E=W_reached*HARTREE)
    !
  enddo
- call RT_output("close nonlinear")
+ call RT_output("close SHG_qssin")
  !
-end subroutine RT_X_two
+end subroutine RT_X_SHG

@@ -27,10 +27,10 @@ subroutine RT_TwoL_Polarization(E,eval_P,k)
  use R_lattice,      ONLY:nkibz,bz_samp 
  use D_lattice,      ONLY:DL_vol
  use X_m,            ONLY:DIP_P,DIP_iR
- use fields,         ONLY:Efield,i_Pump,global_gauge,i_Probe
+ use fields,         ONLY:Efield,i_Pump,i_Probe
  use SC,             ONLY:SC_bands
  use com,            ONLY:msg
- use real_time,      ONLY:RT_P_2levels,P_2levels_is_done,NE_i_time,Poles_2levels_save
+ use real_time,      ONLY:RT_P_2levels,P_2levels_is_done,Poles_2levels_save
  use memory_m,       ONLY:mem_est
  !
  implicit none

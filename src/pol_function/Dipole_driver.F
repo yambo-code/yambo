@@ -188,7 +188,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! < n | iR | m > = < n | P | m > / (E_n-E_n)
  !
- !
  !P_12= i
  !
  !DIP_iR(1-3,n,m,k,s) =  < m | iR | n >
@@ -209,6 +208,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
          DIP_iR(:,iv,ic,ik,1)= -conjg( DIP_IR(:,ic,iv,ik,1) )
        enddo
      enddo
+     !
+     ! SHG
+     !
+     !DIP_iR(:,2,2,ik,1)=10000./2.
    enddo
    !
  endif

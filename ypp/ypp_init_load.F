@@ -90,9 +90,7 @@ subroutine ypp_init_load(defs)
  !
 #if defined _YPP_RT
  call it('r',defs,'fixsyms', '[R] Reduce Symmetries')
- call it('r',defs,'RToptics','[R] Real-Time Optics')
- call it('r',defs,'RTnlo'   ,'[R] Real-Time Non-Linear Optics')
- call it('r',defs,'rtpp',    '[R] Real-Time Post-Processing')
+ call it('r',defs,'rtX',     '[R] Real-Time Response functions Post-Processing')
 #endif
  call it('r',defs,'surf',    '[R] Surface spectroscopy postprocessor')
  call it('r',defs,'ras',     '[R] RAS spectra generator')
@@ -220,6 +218,7 @@ subroutine ypp_init_load(defs)
  !
 #if defined _YPP_RT
  !
+ call it(defs,'Xorder','Max order of the response functions',X_order)
  call it(defs,'ProbeKey','Keyword to select groups of PROBE databases',Probe_Keyword)
  call it(defs,'PumpKey','Keyword to select groups of PUMP databases',Pump_Keyword)
  !
@@ -236,7 +235,7 @@ subroutine ypp_init_load(defs)
  ! DEBUG>
  !call it(defs,'TmJump'  ,'Time jump (X effective)',t_jump,unit=Time_unit,verb_level=V_real_time)
  ! DEBUG<
- call it(defs,'TmRngeRt','Time-window where processing is done',X_rt%time_range,unit=Time_unit,verb_level=V_real_time)
+ call it(defs,'TmRngeRt','Time-window where processing is done',X_rt%time_range,unit=Time_unit)
  call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',X_rt%damp,verb_level=V_real_time)
  call it(defs,'DampFactor','Damping parameter',X_rt%damp_factor,unit=E_unit,verb_level=V_real_time) 
  !

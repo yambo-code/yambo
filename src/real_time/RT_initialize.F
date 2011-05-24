@@ -1,3 +1,6 @@
+!
+!         Copyright (C) 2000-2010 the YAMBO team 
+!              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -37,7 +40,7 @@ subroutine RT_initialize(Xen)
 #endif
  use D_lattice,      ONLY:DL_vol
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,&
-&                         theta_function_iTo_ref,i_Pump,i_Probe
+&                         theta_function_iTo_ref,i_Pump,i_Probe,EtoT
  use parser_m,       ONLY:parser
  implicit none
  !
@@ -46,7 +49,7 @@ subroutine RT_initialize(Xen)
  ! Work space
  !
  integer                  :: i1,rest
- real(SP)                 :: W_step
+ character(5)             :: MSG_ch
  !
  ! Logicals
  !==========
@@ -146,28 +149,9 @@ subroutine RT_initialize(Xen)
    !
  enddo
  !
- ! Check on the PROBE frequencies. To be possible to find, in ypp_rt, the coefficients of the 
- ! Fourier series I need the frequencies to be Wn=n deltaW. Therefore frequency(1) and
- ! frequency(2) must be choosed accordingly.
- ! 
- ! Moreover to extract the Fourier coefficients I need to integrate over aa Time range
- ! equal to 2*pi/deltaW. This must be not larger then  X % of NE_steps*RT_step 
- !
- if (Efield(i_Probe)%freq_steps > 1) then
-   W_step=(Efield(i_Probe)%frequency(2)-Efield(i_Probe)%frequency(1))/(Efield(i_Probe)%freq_steps-1)
-   !
-   if (2.*pi*HBAR_eVfs/(W_step*HARTREE)*FS2AUT > .5*NE_steps*RT_step) then
-     W_step= 2.*pi*HBAR_eVfs/(.5*NE_steps*RT_step*HARTREE)*FS2AUT
-   endif
-   !
-   Efield(i_Probe)%frequency(1)=nint(Efield(i_Probe)%frequency(1)/W_step)*W_step
-   Efield(i_Probe)%frequency(2)=nint(Efield(i_Probe)%frequency(2)/W_step)*W_step
-   !
-   if ( abs(Efield(i_Probe)%frequency(1)) < 1.E-5 ) Efield(i_Probe)%frequency(1)=W_step
-   !
-   Efield(i_Probe)%freq_steps=(Efield(i_Probe)%frequency(2)-Efield(i_Probe)%frequency(1))/W_step+1
-   !
- endif
+ ! Check on the PROBE/PUMP frequencies
+ !==============================================
+ call RT_Field_Commensurable_Frequencies()
  !
  if (.not.l_NE_with_fields) then
    NE_steps=0
@@ -183,8 +167,8 @@ subroutine RT_initialize(Xen)
  call msg( 'r', '[RT] NE time                [fs]:',NE_steps*RT_step/FS2AUT)
  call msg( 'r', '[RT] Thermalization steps       :',Thermal_steps)
  call msg( 'r', '[RT] Step length            [fs]:',RT_step/FS2AUT)
- call msg( 'sr', '[RT] Damping (Phase)    [fs/meV]:',(/Phase_LifeTime/FS2AUT,HBAR_eVfs/Phase_LifeTime*FS2AUT*1000./))
- call msg( 'sr', '[RT] Damping (QP)       [fs/meV]:',(/QP_LifeTime/FS2AUT,   HBAR_eVfs/QP_LifeTime*FS2AUT*1000./))
+ call msg( 'r', '[RT] Damping (Phase)    [fs/meV]:',(/Phase_LifeTime/FS2AUT,HBAR_eVfs/Phase_LifeTime*FS2AUT*1000./))
+ call msg( 'r', '[RT] Damping (QP)       [fs/meV]:',(/QP_LifeTime/FS2AUT,   HBAR_eVfs/QP_LifeTime*FS2AUT*1000./))
  if(NE_steps>0) then
    call msg('rn','[RT] Simulation time        [fs]:',(/-real(Thermal_steps)*RT_step,RT_step*real(NE_steps)/)/FS2AUT)
    call msg('rn','[RT] Electron-gas plasma frequency [eV]:',sqrt(4._SP*pi*nel/DL_vol)*HARTREE)
@@ -195,15 +179,16 @@ subroutine RT_initialize(Xen)
    call msg( 'r','[RT] Simulate TD-DFT            :',l_NE_simulate_TDDFT)
    !
  endif
- if (Efield(i_Probe)%freq_steps > 1) then
-   call msg('sr', '[RT] Response energy window        [eV]:',Efield(i_Probe)%frequency*HARTREE)
-   call msg('sr', '[RT]          time periodicity     [fs]:',2.*pi*HBAR_eVfs/(W_step*HARTREE))
-   call msg('sr', '[RT]          energy step          [eV]:',W_step*HARTREE)
-   call msg('sr', '[RT]          energy steps         [eV]:',Efield(i_Probe)%freq_steps)
- else
-   call msg('r', '[RT] Response energy window        [eV]:',&
-&                (/2.*pi/real(NE_steps-minval(ef_i_time))*RT_step,pi/RT_step/)*HARTREE)
- endif
+ call msg('sr', '[RT] Pump/Probe periodicity     [fs]:',EtoT(E=maxval(Efield(:)%W_step))/FS2AUT)
+ call msg('sr', '[RT]            energy step     [eV]:',maxval(Efield(:)%W_step)*HARTREE)
+ !
+ do i1=1,n_ext_fields
+   !
+   MSG_ch="Pump"
+   if (i1==i_Probe) MSG_ch="Probe"
+   call msg('sr', '[RT] '//MSG_ch//' energy window        [eV]:',Efield(i1)%frequency*HARTREE)
+   call msg('sr', '[RT] '//MSG_ch//' energy steps             :',Efield(i1)%n_frequencies)
+ enddo
  !
  if(l_NE_with_fields) call msg('rn','[RT] Gauge                      :',trim(global_gauge))
  !

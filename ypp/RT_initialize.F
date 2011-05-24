@@ -19,16 +19,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_init_X_one(dump_and_write)
+subroutine RT_initialize(dump_and_write)
  !
- use YPP,            ONLY:RT_P_t,X_rt,RT_J_t,i_t_start,i_t_end,N_probes,N_probe_frequencies,&
-&                         W_RT_induced_step,RED_steps,l_force_min_damp,t_jump,i_t_jump,N_pumps
+ use YPP,            ONLY:RT_P_t,X_rt,RT_J_t,i_t_start,i_t_end,&
+&                         W_RT_induced_step,RED_steps,l_force_min_damp,N_pumps
  use com,            ONLY:msg
  use pars,           ONLY:pi,SP
  use units,          ONLY:FS2AUT,HARTREE
  use stderr,         ONLY:real2ch
  use real_time,      ONLY:NE_steps,RT_step,RT_ind_J,RT_output,RT_P,RT_P_2levels
- use fields,         ONLY:Efield,i_Probe,i_Pump
+ use fields,         ONLY:Efield,i_Probe
  use parser_m,       ONLY:parser
  implicit none
  !
@@ -47,7 +47,6 @@ subroutine RT_init_X_one(dump_and_write)
  !
  i_t_start=int(X_rt%time_range(1)/RT_step)+1
  i_t_end  =int(X_rt%time_range(2)/RT_step)
- i_t_jump =int(t_jump/RT_step)
  !
  i_t_field_range= (/int(Efield(i_Probe)%t_initial/RT_step)+1,NE_steps/)
  !
@@ -56,10 +55,10 @@ subroutine RT_init_X_one(dump_and_write)
  if (i_t_start<=0.or.i_t_start> i_t_field_range(2)) i_t_start=i_t_field_range(1)
  if (i_t_end<=0  .or.i_t_end>   i_t_field_range(2)) i_t_end  =i_t_field_range(2)
  !
- if ( (N_pumps==0.and.N_probes==1.and.N_probe_frequencies==0) .or. (N_pumps>0.and.trim(Efield(i_Probe)%ef_name)=='DELTA')) then
-    call msg('s','[RT] Time range [fs]:',(/real(i_t_start),real(i_t_end)/)*RT_step/FS2AUT)
- else if (  N_probe_frequencies>1.or. N_probes>1) then
-    call msg('s','[RT] Time reference [fs]:',real(i_t_start)*RT_step/FS2AUT)
+ call msg('s','[RT] Time range [fs]:',(/real(i_t_start),real(i_t_end)/)*RT_step/FS2AUT)
+ !
+ if (present(dump_and_write)) then
+   if (.not.dump_and_write) return
  endif
  !
  ! DAMPING

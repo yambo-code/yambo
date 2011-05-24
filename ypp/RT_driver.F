@@ -21,14 +21,13 @@
 !
 subroutine RT_driver(en,k)
  !
- use YPP,            ONLY:l_fix_syms,l_RT_X_one,Use_FFT,RT_P_t,RT_J_t,l_RT_X_two,&
-&                         l_effective_X,N_probes,N_pumps,RT_init_X_one,RT_databases,&
-&                         N_probe_frequencies
+ use YPP,            ONLY:l_fix_syms,Use_FFT,RT_P_t,RT_J_t,&
+&                         N_probes,N_pumps,RT_initialize,RT_databases,X_order
  use R_lattice,      ONLY:bz_samp
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
- use com,            ONLY:error
+ use fields,         ONLY:Efield,i_probe
  implicit none
  !
  type(levels)  :: en
@@ -36,7 +35,7 @@ subroutine RT_driver(en,k)
  !
  ! Work Space
  !
- logical       :: IO_error
+ logical       :: l_RT_LRR_real_field,l_RT_X_effective,l_RT_SHG_qssin
  !
  if (l_fix_syms) then
    !
@@ -53,8 +52,21 @@ subroutine RT_driver(en,k)
  !
  call RT_paths(en)
  !
+ ! LOGICALS
+ !----------
+ ! Max order implemented in RT_output (simple to increase).
  !
- if ( N_pumps==0.and.N_probes==1.and.N_probe_frequencies==0) then
+ if (X_order>3) X_order=3
+ !
+ l_RT_LRR_real_field= all( (/ trim(Efield(i_probe)%ef_name)/="ANTIRES" , trim(Efield(i_probe)%ef_name)/="RES",&
+&                             N_pumps==0, N_probes==1, X_order==1/) )
+ l_RT_SHG_qssin     = all( (/ trim(Efield(i_probe)%ef_name)=="QSSIN" , N_pumps==0, N_probes==1, X_order==2/) )
+ !
+ l_RT_X_effective   = trim(Efield(i_probe)%ef_name)=="ANTIRES".and.X_order>0
+ !
+ if ( .not.any((/l_RT_LRR_real_field,l_RT_SHG_qssin,l_RT_X_effective/)) ) return
+ !
+ if ( l_RT_LRR_real_field .or. l_RT_SHG_qssin ) then
    !
    ! Database
    !
@@ -62,9 +74,9 @@ subroutine RT_driver(en,k)
    !
    !  Initialization 
    !
-   call RT_init_X_one(dump_and_write=.TRUE.)
+   call RT_initialize(dump_and_write=.TRUE.)
    !
-   if (l_RT_X_one) then
+   if ( l_RT_LRR_real_field ) then
      !
      ! CORE Logicals
      !---------------
@@ -74,15 +86,15 @@ subroutine RT_driver(en,k)
      ! OPTICS
      !--------
      !
-     call RT_X_one(en)
+     call RT_X_LRR_real_field(en)
      !
-   elseif (l_RT_X_two) then
+   else if ( l_RT_SHG_qssin ) then
      !
-     call RT_X_two(en)
+     call RT_X_SHG(en)
      !
    endif
    !
- else if ( (N_pumps==1.and.N_probes>=1) .or. (N_pumps==0.and.N_probes>=1)) then
+ else if ( l_RT_X_effective ) then
    !
    call RT_X_effective(en)
    !

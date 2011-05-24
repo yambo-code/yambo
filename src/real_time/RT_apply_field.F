@@ -93,7 +93,6 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
        !
      enddo
    enddo
-   !
  endif
  !
 end subroutine RT_apply_field

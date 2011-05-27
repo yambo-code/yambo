@@ -75,6 +75,9 @@ subroutine qpdb_setup(en,k)
  do i1=1,k_rng_lines
    ikrange(1:2)=int(QP_r_corrections(i1,1:2))
    ibrange(1:2)=int(QP_r_corrections(i1,3:4))
+   !
+   if(ikrange(2)>en%nk.or.ibrange(2)>en%nk) call error("Indices out of the range!")
+   !
    do ik=ikrange(1),ikrange(2)
      do ib=ibrange(1),ibrange(2)
        qp%E(ic)      =cmplx(QP_r_corrections(i1,5)/HARTREE+en%E(ib,ik,1),QP_r_corrections(i1,6)/HARTREE)

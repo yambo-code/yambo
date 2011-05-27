@@ -43,7 +43,7 @@ subroutine qpdb_init()
  !
  !If there are already the QP lines or there's not the input file todo return
  !
- if (l_lines_in_input.and..not.infile_editing) return 
+ if (.not.infile_editing) return 
  !
  call QP_reset(qp)
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2,3/),COM=NONE,MODE=DUMP,ID=ID)

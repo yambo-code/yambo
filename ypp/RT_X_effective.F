@@ -54,7 +54,7 @@ subroutine RT_X_effective(en)
  N_probe_frequencies=max(N_probes,N_probe_frequencies) 
  !
  allocate(RT_P_probe(NE_steps,N_probes),RT_P_pump(NE_steps,3),X_effective(N_probe_frequencies))
- allocate(Probe_Frequency(N_probe_frequencies))
+ allocate(Probe_Frequency(N_probe_frequencies),Fourier_Frequency(N_probe_frequencies))
  !
  ! Pump only
  !===========
@@ -158,10 +158,11 @@ subroutine RT_X_effective(en)
  do i_order=min_X_order,X_order,1
    !
    X_file_name="X_probe_order_"//trim(intc(i_order))
+   if (N_pumps==0.and.i_order==1) X_file_name="eps"
    !
    ! Note that the X are plotted as a function of the DETUNING=W_probe-W_pump
    !
-   call RT_output( "open "//trim(X_file_name) )
+   call RT_output("open "//trim(X_file_name) )
    !
    ! FREQUENCIES
    !=============
@@ -219,6 +220,10 @@ subroutine RT_X_effective(en)
      !
      i_f=f_indx(i_fp)
      !
+     if (N_pumps==0.and.i_order==1) X_effective(i_f)=4.*pi*X_effective(i_f)
+     !
+     X_effective(i_f)=X_effective(i_f)/Efield_Probe%amplitude**i_order
+     ! 
      call RT_output(trim(X_file_name),VALUEs=(/aimag(X_effective(i_f)),real(X_effective(i_f))/),&
 &                   E=(Probe_Frequency(i_f)-Pump_Frequency(1))*HARTREE)
      !

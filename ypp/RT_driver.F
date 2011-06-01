@@ -62,7 +62,7 @@ subroutine RT_driver(en,k)
 &                             N_pumps==0, N_probes==1, X_order==1/) )
  l_RT_SHG_qssin     = all( (/ trim(Efield(i_probe)%ef_name)=="QSSIN" , N_pumps==0, N_probes==1, X_order==2/) )
  !
- l_RT_X_effective   = trim(Efield(i_probe)%ef_name)=="ANTIRES".and.X_order>0
+ l_RT_X_effective   = trim(Efield(i_probe)%ef_name)=="ANTIRES".and.X_order>=0
  !
  if ( .not.any((/l_RT_LRR_real_field,l_RT_SHG_qssin,l_RT_X_effective/)) ) return
  !

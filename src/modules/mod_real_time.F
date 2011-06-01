@@ -197,14 +197,6 @@ module real_time
      real(SP), optional, intent(in) :: E
    end subroutine
    !
-   subroutine RT_TwoL_Polarization(E,eval_P,k)
-     use R_lattice,  ONLY:bz_samp
-     use electrons,  ONLY:levels
-     logical,       intent(in)           :: eval_P
-     type(levels),  intent(in)           :: E
-     type(bz_samp), optional, intent(in) :: k
-   end subroutine
-   !
    subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,TRANS)
      use pars,       ONLY:SP
      use SC,         ONLY:SC_bands

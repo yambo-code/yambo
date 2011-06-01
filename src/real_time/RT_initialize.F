@@ -33,8 +33,7 @@ subroutine RT_initialize(Xen)
 &                         l_RT_diamagnetic,max_rt_steps_disk,l_NE_simulate_BSE,     &
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,    &
 &                         l_RT_induced_field,NE_Hxc_jumps,l_NE_simulate_TDDFT,      &
-&                         RT_diagonalization_steps,RT_is_dumped,QP_LifeTime,Phase_LifeTime, &
-&                         RT_TwoL_Polarization
+&                         RT_diagonalization_steps,RT_is_dumped,QP_LifeTime,Phase_LifeTime
 #if defined _TWO_LEVELS
  use real_time,      ONLY:tau_offdiag,tau_diag,l_3levels
 #endif
@@ -184,17 +183,20 @@ subroutine RT_initialize(Xen)
  !
  do i1=1,n_ext_fields
    !
+   if (i_Pump==i_Probe.and.i1/=i_Probe) cycle
+   !
    MSG_ch="Pump"
    if (i1==i_Probe) MSG_ch="Probe"
    call msg('sr', '[RT] '//MSG_ch//' energy window        [eV]:',Efield(i1)%frequency*HARTREE)
+   call msg('sr', '[RT] '//MSG_ch//' oscillation periods  [fs]:',(/EtoT(E=Efield(i1)%frequency(1))/FS2AUT,EtoT(E=Efield(i1)%frequency(2))/FS2AUT/))
    call msg('sr', '[RT] '//MSG_ch//' energy steps             :',Efield(i1)%n_frequencies)
  enddo
  !
  if(l_NE_with_fields) call msg('rn','[RT] Gauge                      :',trim(global_gauge))
  !
- ! Generalized Rabi Frequency
+ ! Generalized Rabi Fucntion
  !============================
- if(l_NE_with_fields) call RT_TwoL_Polarization(Xen,.FALSE.)
+ if (l_NE_with_fields) call RT_Rabi_Function(Xen,Efield(i_Pump))
  !
  ! If the gauge is length I need E(t) whose definition includes a delta(t). 
  ! The numerical definition of delta(t) in mod_fields depends on the 

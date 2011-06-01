@@ -19,30 +19,26 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_TwoL_Polarization(E,eval_P,k)
+subroutine RT_TwoL_Polarization(E,k)
  !
  use pars,           ONLY:SP,cI
- use units,          ONLY:HARTREE
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:nkibz,bz_samp 
  use D_lattice,      ONLY:DL_vol
  use X_m,            ONLY:DIP_P,DIP_iR
- use fields,         ONLY:Efield,i_Pump,i_Probe
+ use fields,         ONLY:Efield,i_Pump,i_Probe,Rabi_Factor
  use SC,             ONLY:SC_bands
- use com,            ONLY:msg
  use real_time,      ONLY:RT_P_2levels,P_2levels_is_done,Poles_2levels_save
  use memory_m,       ONLY:mem_est
  !
  implicit none
  type(levels),            intent(in) :: E
- logical     ,            intent(in) :: eval_P
- type(bz_samp), optional, intent(in) :: k
+ type(bz_samp),           intent(in) :: k
  ! 
  ! Work Space
  !
- integer      :: iv,ic,ik,i_ref(3)
- complex(SP)  :: Rabi,G_lesser,D(3),Rabi_prefactor
- real(SP)     :: Rabi_max,E_field(3)
+ integer      :: iv,ic,ik
+ complex(SP)  :: Rabi,G_lesser,D(3)
  !
  if (i_Pump/=i_Probe) return
  !
@@ -53,19 +49,7 @@ subroutine RT_TwoL_Polarization(E,eval_P,k)
  !
  P_2levels_is_done=.TRUE.
  !
- E_field(:) = Efield(i_Pump)%versor(:)* Efield(i_Pump)%amplitude
- !
- Rabi_max=-1.
- Rabi_prefactor=(1.,0.)
- !
- select case(trim(Efield(i_Pump)%ef_name))
-   case('ANTIRES')
-     Rabi_prefactor=1./Efield(i_Pump)%frequency(1)/cI
-   case('RES')
-     Rabi_prefactor=-1./Efield(i_Pump)%frequency(1)/cI
- end select
- !
- if (eval_P) RT_P_2levels(:)=(0.,0.)
+ RT_P_2levels(:)=(0.,0.)
  !
  do ik=1,nkibz
    do iv=1,E%nbm
@@ -73,26 +57,14 @@ subroutine RT_TwoL_Polarization(E,eval_P,k)
        !
        if (abs(E%E(iv,ik,1)-E%E(ic,ik,1))<=1.E-5_SP) cycle
        !
-       Rabi =  2. * sum(DIP_P(:,ic,iv,ik,1) * E_field(:)) *Rabi_prefactor
+       Rabi=Rabi_Factor(Efield(i_Pump), DIP_P(:,ic,iv,ik,1),-cI*DIP_iR(:,ic,iv,ik,1))
        !
-       if (abs(Rabi) > Rabi_max) then
-         Rabi_max=abs(Rabi)
-         i_ref(:)=(/iv,ic,ik/)
-       endif
-       !
-       if (eval_P) then
-         call RT_TwoL_Glesser(Poles_2levels_save(iv,ic,ik,:),E%E(ic,ik,1)-E%E(iv,ik,1),Rabi,G_lesser)
-         D(:)=cI*DIP_iR(:,ic,iv,ik,1)
-         RT_P_2levels(:)=RT_P_2levels(:)-cI*(-D(:)*conjg(G_lesser)+conjg(D(:))*G_lesser)/DL_vol*k%weights(ik)
-       endif
+       call RT_TwoL_Glesser(Poles_2levels_save(iv,ic,ik,:),E%E(ic,ik,1)-E%E(iv,ik,1),Rabi,G_lesser)
+       D(:)=cI*DIP_iR(:,ic,iv,ik,1)
+       RT_P_2levels(:)=RT_P_2levels(:)-cI*(-D(:)*conjg(G_lesser)+conjg(D(:))*G_lesser)/DL_vol*k%weights(ik)
        !
      enddo
    enddo
  enddo
- !
- if (.not.eval_P) then
-   call msg( 'r', '[RT] Max Rabi frequency            [eV]:',Rabi_max*HARTREE)
-   return
- endif
  !
 end subroutine RT_TwoL_Polarization

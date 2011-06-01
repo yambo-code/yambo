@@ -27,7 +27,6 @@ subroutine RT_Fourier_Coefficients(nt,P,nw,W,X,deltaW)
  use YPP,            ONLY:i_t_start
  use units,          ONLY:FS2AUT,HARTREE,HBAR_eVfs
  use real_time,      ONLY:RT_step
- use fields,         ONLY:Efield,i_Probe
  implicit none
  !
  integer,     intent(in)   :: nw,nt
@@ -55,7 +54,7 @@ subroutine RT_Fourier_Coefficients(nt,P,nw,W,X,deltaW)
      !
    enddo
    !
-   X(i_f)=deltaW/2./pi*CIntegrate(P_times_exp(:iT_range),T(:iT_range),iT_range)/Efield(i_Probe)%amplitude
+   X(i_f)=deltaW/2./pi*CIntegrate(P_times_exp(:iT_range),T(:iT_range),iT_range)
    !
  enddo
  !

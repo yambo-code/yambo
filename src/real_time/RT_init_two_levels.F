@@ -81,6 +81,7 @@ subroutine RT_init_two_levels(Xen)
      DIP_iR(1,2,1,1,1)= -conjg(DIP_iR(1,1,2,1,1))
      DIP_iR(1,3,1,1,1)= -conjg(DIP_iR(1,1,3,1,1))
      DIP_iR(1,3,2,1,1)= -conjg(DIP_iR(1,2,3,1,1))
+
 !     DIP_iR(3,3,2,1,1)= -conjg(DIP_iR(3,2,3,1,1))
      !
    else

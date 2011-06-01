@@ -35,7 +35,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
 &                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
 &                         NE_i_time,Integrator_name,l_RT_diagonalize,max_rt_steps_disk,&
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
-&                         it_start,RT_output,NE_time,NE_dynamics,RT_update,RT_TwoL_Polarization,&
+&                         it_start,RT_output,NE_time,NE_dynamics,RT_update,&
 &                         l_Dynamics_is_over
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
  use memory_m,       ONLY:mem_est
@@ -209,7 +209,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    ! Current and Polarization
    !==========================
    call RT_current_AND_polarization(Xk,G_lesser,A_vecpot)
-   call RT_TwoL_Polarization(Xen,.TRUE.,k)
+   call RT_TwoL_Polarization(Xen,k)
    !
    ! Now print Energetics, current and (eventually) potential 
    !=========================================================

@@ -230,6 +230,26 @@ module fields
      E%versor       =(/1.0,0.0,0.0/)
    end subroutine
    !
+   complex(SP) function Rabi_Factor(Field,P,R)
+     !
+     ! Rabi=2 * \mu.E
+     !
+     ! E is the field amplitude = sqrt ( I *8*pi/c  ) 
+     !
+     ! I is given in the input file
+     !
+     use pars, ONLY: cI
+     type(ext_field), intent(in) :: Field
+     complex(SP)                 :: P(3),R(3)
+     if ( trim(global_gauge)=='length' ) then
+       Rabi_Factor=2.*sum(R(:)*Field%versor(:))*Field%amplitude
+     else 
+       Rabi_Factor=2.*sum(P(:)*Field%versor(:))*Field%amplitude
+       if( any( trim(Field%ef_name)==(/'ANTIRES','SIN'/)) ) Rabi_Factor=-cI*Rabi_Factor/Field%frequency(1)
+       if( any( trim(Field%ef_name)==(/'RES'/)) )           Rabi_Factor= cI*Rabi_Factor/Field%frequency(1)
+     endif
+   end function Rabi_Factor
+   !
    ! GPL_EXCLUDE_END
    !
 end module

@@ -66,7 +66,7 @@ subroutine RT_Field_Commensurable_Frequencies()
    !
    if ( abs(Efield(i_f)%frequency(1)) < 1.E-5 ) Efield(i_f)%frequency(1)=W_step
    !
-   Efield(i_f)%n_frequencies=(Efield(i_f)%frequency(2)-Efield(i_f)%frequency(1))/W_step+1
+   Efield(i_f)%n_frequencies=nint((Efield(i_f)%frequency(2)-Efield(i_f)%frequency(1))/W_step)+1
    !
    if ( Efield(i_f)%n_frequencies == 1) Efield(i_f)%W_step=0.
    !

@@ -86,7 +86,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
      !
      call IO_and_Messaging_switch("+io_in")
      !
-     if (l_sc_cohsex) call QP_ppa_cohsex(X,E,k,q,qp_dummy,Xw(2),-1)
+     if (l_sc_cohsex) call QP_ppa_cohsex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1)
      !
      call IO_and_Messaging_switch("+report +io_out")
      !

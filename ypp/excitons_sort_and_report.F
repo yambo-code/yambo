@@ -28,7 +28,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
  use stderr,        ONLY:intc
  use BS,            ONLY:BSS_description,BSS_n_descs,BS_eh_table,BS_bands
  use com,           ONLY:msg,of_open_close
- use YPP,           ONLY:deg_energy,lambda
+ use YPP,           ONLY:deg_energy,lambda,min_weight
  use R_lattice,     ONLY:d3k_factor,q0_def_norm,bz_samp
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,atom_pos,Z_species
  use vec_operate,   ONLY:sort
@@ -144,7 +144,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
    titles(1:4)=(/'             ','K-point [iku]','             ','Weight       '/)
    call msg('o weight','#',titles(:4),INDENT=0,USE_TABS=.true.)
    do ikibz=1,Xk%nibz
-     if (K_weight(ikibz)>0.05) then
+     if (K_weight(ikibz)>min_weight*5._SP) then
        call msg('o weight','# ',(/Xk%pt(ikibz,:),K_weight(ikibz)/),INDENT=0,USE_TABS=.true.)
      endif
    enddo
@@ -173,7 +173,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
    !
    do neh = BS_H_dim,1,-1
      !
-     if (A_weight(neh)/maxval(A_weight)<0.01) cycle
+     if (A_weight(neh)/maxval(A_weight)<min_wieght) cycle
      !
      ikbz = BS_eh_table(S_indx(neh),1)
      iv = BS_eh_table(S_indx(neh),2)
@@ -194,7 +194,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
      amp_trans(amp_n_trans,1)=E%E(ic,ikibz,i_spin)-E%E(iv,ikibz,i_spin)
      amp_trans(amp_n_trans,2)=A_weight(neh)
      !
-     if (A_weight(neh)<0.05) cycle
+     if (A_weight(neh)<min_weight*5._SP) cycle
      !
      ! GPL_EXCLUDE_START SPIN_IGNORE
      if(n_sp_pol==1) then

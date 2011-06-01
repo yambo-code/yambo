@@ -76,7 +76,7 @@ subroutine qpdb_setup(en,k)
    ikrange(1:2)=int(QP_r_corrections(i1,1:2))
    ibrange(1:2)=int(QP_r_corrections(i1,3:4))
    !
-   if(ikrange(2)>en%nk.or.ibrange(2)>en%nk) call error("Indices out of the range!")
+   if(ikrange(2)>en%nk.or.ibrange(2)>en%nb) call error("Indices out of the range!")
    !
    do ik=ikrange(1),ikrange(2)
      do ib=ibrange(1),ibrange(2)

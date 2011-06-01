@@ -61,7 +61,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  integer                  :: it
  real(SP)                 :: spread(SC_bands,k%nibz,n_sp_pol),&
 &                            E_previous(SC_bands,k%nibz,n_sp_pol),dE(SC_bands,k%nibz,n_sp_pol),&
-&                            E_conv(n_sp_pol),E_total,E_tot_Hartree,E_tot_xc
+&                            E_conv(n_sp_pol),E_total,E_tot_Hartree,E_tot_xc,max_overlap(SC_bands,k%nibz,n_sp_pol)
  real(SP),    allocatable :: V_xc_nm1(:,:),rho_nm1(:)
  real(SP),    allocatable :: delta_rho(:)
  complex(SP), allocatable :: WFo(:,:)
@@ -546,6 +546,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
                max_proj=abs(SC_R(i1,ib,ik,i_spin))**2.
              endif
            enddo
+           !
+           ! Max Overlap
+           !
+           max_overlap(ib,ik,i_spin)=maxloc(abs(SC_R(ib,1:SC_bands,ik,i_spin)),1)
            ! 
            ! simmetrize the spreads summing over all possible degenerate
            ! bands
@@ -589,6 +593,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        call REPORT_Energies(E_bare,k,Xk,SC_bands,(/ik,ik/),'E_o',.FALSE.)
        call REPORT_Energies(dE,k,Xk,SC_bands,(/ik,ik/),'d_E',.FALSE.)
        call REPORT_Energies(spread,k,Xk,SC_bands,(/ik,ik/),'Spr',.FALSE.)
+       call REPORT_Energies(max_overlap/HARTREE,k,Xk,SC_bands,(/ik,ik/),'MxO',.FALSE.)
        call REPORT_Energies(real(b_of_max_proj)/HARTREE,k,Xk,SC_bands,(/ik,ik/),'Bnd',.FALSE.)
 #endif
      enddo

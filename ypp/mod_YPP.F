@@ -88,6 +88,7 @@ module YPP
  integer      ::ncell(3)     
  real(SP)     ::r_hole(3)    
  real(SP)     ::deg_energy   
+ real(SP)     ::min_weight   
  real(SP)     ::WF_multiplier   
  character(schlen) ::state_ctl 
  !

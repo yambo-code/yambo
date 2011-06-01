@@ -130,6 +130,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit)
  call it(defs,'Degen_Step', 'Maximum energy separation of two degenerate states',&
 &                           deg_energy,E_unit)
+ call it(defs,'MinWeight', 'Print transitions with weight => MinWeight',min_weight,verb_level=V_general)
  call it(defs,'States','Index of the BS state(s)',state_ctl)
  call it(defs,'Cells', 'Number of cell repetitions (even or 1)',ncell)
  call it(defs,'Hole', '[cc] Hole position in unit cell',r_hole)

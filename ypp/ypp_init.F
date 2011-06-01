@@ -118,6 +118,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  lambda = 1          
  state_ctl = '1 - 1'
  deg_energy =0.01/HARTREE
+ min_weight =0.01
  WF_multiplier=1.
  !
 #if defined _YPP_ELPH
@@ -467,7 +468,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  if (l_excitons) then
    if (l_amplitude) call QP_ctl_switch('G')
    call initactivate(1,"States")
-   if (l_exc_wf.or.l_amplitude) call initactivate(1,"Degen_Step")
+   if (l_exc_wf.or.l_amplitude) call initactivate(1,"Degen_Step MinWeight")
    if (l_exc_wf.and..not.l_free_hole) call initactivate(1,"Cells Hole Dimension") 
    if (l_exc_wf.and.l_free_hole) call initactivate(1,"WFMult") 
    if (l_spin) call initactivate(1,"Degen_Step")

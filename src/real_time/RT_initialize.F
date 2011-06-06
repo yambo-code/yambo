@@ -188,7 +188,8 @@ subroutine RT_initialize(Xen)
    MSG_ch="Pump"
    if (i1==i_Probe) MSG_ch="Probe"
    call msg('sr', '[RT] '//MSG_ch//' energy window        [eV]:',Efield(i1)%frequency*HARTREE)
-   call msg('sr', '[RT] '//MSG_ch//' oscillation periods  [fs]:',(/EtoT(E=Efield(i1)%frequency(1))/FS2AUT,EtoT(E=Efield(i1)%frequency(2))/FS2AUT/))
+   call msg('sr', '[RT] '//MSG_ch//' oscillation periods  [fs]:',(/EtoT(E=Efield(i1)%frequency(1))/FS2AUT  &
+&                                                               ,EtoT(E=Efield(i1)%frequency(2))/FS2AUT/))
    call msg('sr', '[RT] '//MSG_ch//' energy steps             :',Efield(i1)%n_frequencies)
  enddo
  !

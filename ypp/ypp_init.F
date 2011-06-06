@@ -443,7 +443,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_END
  !
- if (l_bzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut OutputAlat GammaRadius")
+ if (l_bzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut OutputAlat NoWeights GammaRadius")
  !
  if (l_electrons.and.l_dos) then
     if(l_dos) call QP_ctl_switch('G')

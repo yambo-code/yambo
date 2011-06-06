@@ -21,10 +21,11 @@
 !
 subroutine k_random(Xk,Xen)
  !
- use pars,                ONLY:SP,DP,lchlen
+ use pars,                ONLY:SP,DP,lchlen,schlen
  use units,               ONLY:HARTREE
  use stderr,              ONLY:set_real_printed_length
  use R_lattice,           ONLY:bz_samp,nkibz
+ use parser_m,            ONLY:parser
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a
  use com,                 ONLY:msg,of_open_close
  use vec_operate,         ONLY:ak2bz,v_norm,c2a
@@ -46,6 +47,8 @@ subroutine k_random(Xk,Xen)
  integer      ::i1,ikbz
  integer, external :: k_the_nearest
  character(lchlen) :: k_rand_fname
+ character(schlen) :: dump
+ logical           :: No_Weight
  !
  ! Random Generator
  !
@@ -80,6 +83,8 @@ subroutine k_random(Xk,Xen)
    i_err=-1
  endif
  !
+ call parser('NoWeights',No_Weight)
+ !
  impose_gamma_radius=gamma_radius>0.
  !
  if (i_err/=0.or.trim(BZ_RIM_path)==".") then
@@ -97,7 +102,11 @@ subroutine k_random(Xk,Xen)
    !
    k_rand_fname="random_k_pts"
    call of_open_close(k_rand_fname,'ot')
-   call msg('o random',"#",(/"c1","c2","c3"/),INDENT=0,USE_TABS=.true.)
+   if(No_Weight) then
+     call msg('o random',"#",(/"c1","c2","c3"/),INDENT=0,USE_TABS=.true.)
+   else 
+     call msg('o random',"#",(/"c1","c2","c3","wt"/),INDENT=0,USE_TABS=.true.)
+   endif
    !
    k_counter=0
    !
@@ -117,7 +126,12 @@ subroutine k_random(Xk,Xen)
      !
      call K_transform(rand_kpt(k_counter+1,:),'iku')
      !
-     call msg('o random',"",rand_kpt(k_counter+1,:),USE_TABS=.true.)
+     if(No_Weight) then
+       write (dump,'(3f12.7)') rand_kpt(k_counter+1,:)
+     else
+       write (dump,'(4f12.7)') rand_kpt(k_counter+1,:),1._SP/real(BZ_RIM_nkpts)     
+     endif
+     call msg('o random',"",trim(dump),USE_TABS=.true.)
      !
      k_counter=k_counter+1
      !

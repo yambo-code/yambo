@@ -245,7 +245,7 @@ module fields
        Rabi_Factor=2.*sum(R(:)*Field%versor(:))*Field%amplitude
      else 
        Rabi_Factor=2.*sum(P(:)*Field%versor(:))*Field%amplitude
-       if( any( trim(Field%ef_name)==(/'ANTIRES','SIN'/)) ) Rabi_Factor=-cI*Rabi_Factor/Field%frequency(1)
+       if( any( trim(Field%ef_name)==(/'ANTIRES','SIN    '/)) ) Rabi_Factor=-cI*Rabi_Factor/Field%frequency(1)
        if( any( trim(Field%ef_name)==(/'RES'/)) )           Rabi_Factor= cI*Rabi_Factor/Field%frequency(1)
      endif
    end function Rabi_Factor

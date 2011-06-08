@@ -144,6 +144,11 @@ module real_time
  real(SP)    :: QP_LifeTime
  logical     :: RT_is_dumped
  !
+ ! Relaxation: Dephasing Matrix
+ !
+ real(SP)    :: RT_ave_dephasing
+ real(SP),    allocatable :: RT_Deph_Matrix(:,:,:)
+ !
  ! GFs
  !
  complex(SP), allocatable :: G_lesser_previous(:,:,:)
@@ -394,6 +399,11 @@ module real_time
        call mem_est("Poles_2levels_save")
      endif
      !
+     if(allocated(RT_Deph_Matrix)) then
+       deallocate(RT_Deph_Matrix)
+       call mem_est("DephMatrix")
+     endif
+
      call collisions_IO_free() 
      !
    end subroutine RT_free

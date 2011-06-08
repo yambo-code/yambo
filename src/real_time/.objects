@@ -10,6 +10,6 @@ objs = RT_initialize.o RT_start_and_restart.o RT_update.o \
        RT_current_AND_polarization.o $(TWO_objs) \
        RT_average_operator.o RT_databases_IO.o RT_Ext_fields.o  \
        RT_TwoL_Polarization.o RT_TwoL_Glesser.o RT_Field_Commensurable_Frequencies.o \
-       RT_Rabi_Function.o
+       RT_Rabi_Function.o DephMatrix_setup.o
 #endif
 

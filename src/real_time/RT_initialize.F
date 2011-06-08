@@ -33,7 +33,8 @@ subroutine RT_initialize(Xen)
 &                         l_RT_diamagnetic,max_rt_steps_disk,l_NE_simulate_BSE,     &
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,    &
 &                         l_RT_induced_field,NE_Hxc_jumps,l_NE_simulate_TDDFT,      &
-&                         RT_diagonalization_steps,RT_is_dumped,QP_LifeTime,Phase_LifeTime
+&                         RT_diagonalization_steps,RT_is_dumped,QP_LifeTime,        &
+&                         Phase_LifeTime,RT_ave_dephasing
 #if defined _TWO_LEVELS
  use real_time,      ONLY:tau_offdiag,tau_diag,l_3levels
 #endif
@@ -207,5 +208,7 @@ subroutine RT_initialize(Xen)
  ! a correct definition is needed to obtain the same result in both gauges.
  ! 
  if (trim(global_gauge) == 'length' ) theta_function_iTo_ref=0
+ !
+ if(RT_ave_dephasing/=0._SP) call DephMatrix_setup() 
  !
 end subroutine RT_initialize

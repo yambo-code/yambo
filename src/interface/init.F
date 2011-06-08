@@ -36,6 +36,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
 &                         infile,infile_dump,ofiles_append,runlevel_is_on,&
 &                         switch_off_runlevel
+#if defined _RT 
+ use it_m,           ONLY:V_real_time
+#endif
  use par_proc_m,     ONLY:pp_redux_wait,master_cpu
  use com,            ONLY:msg,repfile,com_path,jobstr,more_io_path,core_io_path,&
 &                         write_the_logo,file_exists,rename_file,write_to_report
@@ -637,6 +640,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _RT
      if (l_RT_probe.or.l_RT_pump_and_probe) call Afield_activate('Probe')
      if (              l_RT_pump_and_probe) call Afield_activate('Pump')
+     !
+     call initactivate(1,'RTAveDeph')
+     !
 #endif
 #if defined _TWO_LEVELS
  call initactivate(1,'RT3Levels RTDephasing RTLifeTimes RTDipoles')
@@ -742,6 +748,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (allocated(QP_table)) deallocate(QP_table)
    !
  endif
+ !
+#if defined _RT
+ if(infile_verbosity==V_real_time.and.l_real_time) call DephMatrix_init()
+#endif
  !
  if (infile_editing) return
  !

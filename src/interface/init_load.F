@@ -55,7 +55,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, QP_LifeTime, Phase_LifeTime,  &
-&                        RT_diagonalization_steps,SwitchOnTime,max_rt_steps_disk,NE_tot_time,NE_Hxc_jumps
+&                        RT_diagonalization_steps,SwitchOnTime,max_rt_steps_disk,NE_tot_time,NE_Hxc_jumps,&
+&                        RT_ave_dephasing 
  use fields,        ONLY:Efield
 #endif
 #if defined _TWO_LEVELS
@@ -281,6 +282,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'QPLifeTime',   '[RT] QP Relaxation Time',QP_LifeTime,verb_level=V_real_time,unit=Time_unit)
  call it(defs,'PhLifeTime',   '[RT] Phase Relaxation Time',Phase_LifeTime,verb_level=V_real_time,unit=Time_unit)
  call it(defs,'RTDiagoSteps', '[RT] Digonalize the Hamiltonian',RT_diagonalization_steps,verb_level=V_real_time)
+ call it(defs,'RTAveDeph','[RT] Dephasing for all elements not included in RTDePhMatrix' &
+&                        ,RT_ave_dephasing,verb_level=V_real_time,unit=Time_unit)
  call it('f',defs,'Diamagnetic', '[RT] Include the diamagnetic term in current and coupling',verb_level=V_real_time)
  call it('f',defs,'InducedField', '[RT] Include induced field in coupling and current',verb_level=V_real_time)
  call it('f',defs,'RTfreezeH', '[RT] Hartree not updated during RT',verb_level=V_real_time)

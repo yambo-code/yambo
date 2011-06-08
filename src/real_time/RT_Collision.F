@@ -40,7 +40,8 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_with_fields,QP_LifeTime,full_rho,           &
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
 &                         G_lesser_reference,l_RT_needs_XC0,Phase_LifeTime,NE_Hxc_jumps,       &
-&                         RT_is_dumped,l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start
+&                         RT_is_dumped,l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start, &
+&                         RT_Deph_Matrix
 #if defined _TWO_LEVELS
  use real_time,      ONLY:tau_diag,tau_offdiag,l_3levels
 #endif
@@ -224,6 +225,14 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
          enddo 
        enddo
        !
+     endif
+     !
+     if(allocated(RT_Deph_Matrix)) then
+        do i1=SC_lw_band,SC_bands
+          do i2=SC_lw_band,SC_bands
+            I1_lesser(i1,i2,:)=I1_lesser(i1,i2,:)-cI/RT_Deph_Matrix(i1,i2,:)*(G_input(i1,i2,:)-G_lesser_reference(i1,i2,:))
+          enddo
+        enddo
      endif
      !
      if(associated(Xen%W)) then

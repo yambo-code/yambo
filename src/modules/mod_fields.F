@@ -126,15 +126,21 @@ module fields
      !
      freq=E_field%frequency(1)
      sigma=E_field%damping
-     T_0=10.*sigma
+     T_0=2._SP*sigma
      local_a=(0._SP,0._SP)
      !
      select case( trim(E_field%ef_name) )
        case('SIN')
-         if (order==0 ) local_a=-(cos(freq*T_or_W)-1._SP)/freq
-         if (order==1 ) local_a= sin(freq*T_or_W)
-         if (order==2 ) local_a=freq*cos(freq*T_or_W)
-         if (order==-1) local_a=1._SP/2._SP/(T_or_W-freq)-1._SP/2._SP/(T_or_W+freq)-1._SP/freq
+	do i_f=1,E_field%n_frequencies	
+         !
+         freq=field_frequency(E_field,i_f)
+         !
+         if (order==0 ) local_a=local_a-(cos(freq*T_or_W)-1._SP)/freq
+         if (order==1 ) local_a=local_a+ sin(freq*T_or_W)
+         if (order==2 ) local_a=local_a+freq*cos(freq*T_or_W)
+         if (order==-1) local_a=local_a+1._SP/2._SP/(T_or_W-freq)-1._SP/2._SP/(T_or_W+freq)-1._SP/freq
+	 !
+	enddo 
        case('ANTIRES')
          do i_f=1,E_field%n_frequencies
            !
@@ -169,7 +175,7 @@ module fields
        case('QSSIN')
          if (order==0 ) local_a= 0.
          if (order==1 ) local_a= sin(freq*(T_or_W-T_0))*exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )
-         if (order==2 ) local_a= (freq*cos(freq*(T_or_W-T_0))-(T_or_W-T_0)/sigma**2)*exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )
+         if (order==2 ) local_a= (freq*cos(freq*(T_or_W-T_0))-(T_or_W-T_0)* sin(freq*(T_or_W-T_0))/sigma**2)*exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )
          if (order==-1) order=-2
      end select
      !

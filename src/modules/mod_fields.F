@@ -175,7 +175,8 @@ module fields
        case('QSSIN')
          if (order==0 ) local_a= 0.
          if (order==1 ) local_a= sin(freq*(T_or_W-T_0))*exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )
-         if (order==2 ) local_a= (freq*cos(freq*(T_or_W-T_0))-(T_or_W-T_0)* sin(freq*(T_or_W-T_0))/sigma**2)*exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )
+         if (order==2 ) local_a= (freq*cos(freq*(T_or_W-T_0)) &
+&            -(T_or_W-T_0)* sin(freq*(T_or_W-T_0))/sigma**2)*exp(-(T_or_W-T_0)**2/(2._SP*sigma**2) )
          if (order==-1) order=-2
      end select
      !

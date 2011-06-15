@@ -1,9 +1,5 @@
 !
-<<<<<<< .mine
-! Copyright (C) 2000-2010 M. Gruning and the YAMBO team 
-=======
 ! Copyright (C) 2000-2011 M. Gruning, A. Marini and the YAMBO team 
->>>>>>> .r885
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -31,7 +27,7 @@ subroutine RT_X_inversion(en)
  use units,          ONLY:HARTREE,AU2Vmm,sVcm2Vmm
  use electrons,      ONLY:levels
  use IO_m,           ONLY:LOG
- use fields,         ONLY:Efield,EtoT,Divide_by_Field
+ use fields,         ONLY:Efield,EtoT,Divide_by_Field,i_Probe
  use real_time,      ONLY:NE_steps,RT_output,RT_step
  use stderr,         ONLY:intc
  implicit none
@@ -39,7 +35,7 @@ subroutine RT_X_inversion(en)
  type(levels)  :: en
  !
  character(schlen) :: X_file_name
- integer           :: i_order,min_X_order
+ integer           :: i_order,min_X_order,i_c
  real(SP)          :: Period,Unit_of_Measure
  complex(SP)       :: X_tot
  real(SP),    allocatable    :: RT_P_probe(:)
@@ -90,7 +86,7 @@ subroutine RT_X_inversion(en)
    if (i_order.eq.0) Unit_of_Measure = sVcm2Vmm/AU2Vmm
    if (i_order.lt.1) Unit_of_Measure = (sVcm2Vmm/AU2Vmm)**(i_order-1)  
    X_tot = X_tot*Unit_of_Measure
-   call RT_output(trim(X_file_name),VALUEs=(/aimag(X_tot,real(X_tot)/), E=Efield(1)%frequency(1)*HARTREE)
+   call RT_output(trim(X_file_name),VALUES=(/aimag(X_tot),real(X_tot)/), E=Efield(1)%frequency(1)*HARTREE)
    !
    call RT_output("close "//trim(X_file_name))
  enddo

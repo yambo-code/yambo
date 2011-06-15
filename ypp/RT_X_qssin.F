@@ -19,12 +19,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_X_SHG
+subroutine RT_X_qssin
  !
- use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,W_RT_induced_step, &
-&                         i_t_start,i_t_end,RED_steps
- use pars,           ONLY:SP,DP,pi
- use units,          ONLY:HARTREE
+ use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,i_t_start,i_t_end,&
+&                         W_RT_induced_step,RED_steps
+ use pars,           ONLY:SP,DP,pi,SCHLEN
+ use units,          ONLY:HARTREE,sVcm2Vmm,AU2Vmm
  use memory_m,       ONLY:mem_est
  use real_time,      ONLY:NE_steps,RT_step,RT_output
  use fields,         ONLY:Efield,small_a,i_probe
@@ -39,8 +39,9 @@ subroutine RT_X_SHG
  complex(SP) :: X_tot,outfreqs(nfreqs),Field_time
  complex(DP) :: E_2plus,E_2minus,X_irrep(nfreqs,3)
  integer     :: i_w, i_t, i_c
- real(SP)    :: W_step, W_reached
+ real(SP)    :: W_step
  character(9) :: FT_title
+ character(schlen) :: X_file_name
  !
  call section("=",'Second order susceptibility')
  !
@@ -105,7 +106,7 @@ subroutine RT_X_SHG
  !
  ! Polarization: FT at 0 and twice the field frequency
  !
- outfreqs(1)=(0._SP,0._SP)                           ! Optical rectification
+ outfreqs(1)=(0._SP,0._SP)                                    ! Optical rectification
  outfreqs(2)=cmplx(Efield(i_probe)%frequency(1)*2._SP,0._SP)  ! SHG
  do i_c=1,3
    !
@@ -119,8 +120,8 @@ subroutine RT_X_SHG
    !
  enddo
  !
- ! P(2wo,ic)=2 \pi E_2minus \sum_{ij} E_versor(i) E_versor(j)\tilde X_ij(2wo,ic)
- ! P(0,ic)  = 2\pi E_2plus \sum_{ij} E_versor(i) E_versor(j)\tilde X_ij(0,ic)
+ ! P(2wo,ic)= 2\pi E_2minus \sum_{ij} E_versor(i) E_versor(j)\tilde X_ij(2wo,ic)
+ ! P(0,ic)  = 2\pi E_2plus  \sum_{ij} E_versor(i) E_versor(j)\tilde X_ij(0,ic)
  !
  ! so what I get is  \sum_{ij} E_versor(i) E_versor(j) \tilde X_ij(W,ic), W=0,2wo
  ! depending on the symmetry of the system I device calcs so to get the desired X_ij(W,ic)
@@ -130,15 +131,17 @@ subroutine RT_X_SHG
  !
  ! Output results
  !
- call RT_output("open SHG_qssin")
- !
  do i_w = 1, nfreqs
+   if (i_w==1) X_file_name="X_probe_order_0"
+   if (i_w==2) X_file_name="X_probe_order_2"
    !
-   W_reached = real(outfreqs(i_w))
-   X_tot=sum(X_irrep(i_w,:)*Efield(i_probe)%versor(:))
-   call RT_output('SHG_qssin',(/aimag(X_tot),real(X_tot)/),E=W_reached*HARTREE)
+   call RT_output("open "//trim(X_file_name))
    !
+   X_tot=4._SP*pi*sum(X_irrep(i_w,:)*Efield(i_probe)%versor(:))
+   call RT_output(trim(X_file_name),VALUEs=(/aimag(X_tot*sVcm2Vmm/AU2Vmm),real(X_tot*sVcm2Vmm/AU2Vmm)/),&
+&                      E=Efield(i_probe)%frequency(1)*HARTREE)
+   !
+   call RT_output("close "//trim(X_file_name))
  enddo
- call RT_output("close SHG_qssin")
- !
-end subroutine RT_X_SHG
+  !
+end subroutine RT_X_QSSIN

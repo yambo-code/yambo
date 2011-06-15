@@ -39,7 +39,9 @@ subroutine RT_Field_Commensurable_Frequencies()
  real(SP) :: W_step,T_treshold,T_step
  real(SP), parameter :: treshold=0.8
  !
- if (.not.any ( (/trim(Efield(i_Pump)%ef_name)=='ANTIRES',trim(Efield(i_Probe)%ef_name)=='ANTIRES'/))) return
+ if (.not.any ((/trim(Efield(i_Pump)%ef_name)=='ANTIRES',&
+&               trim(Efield(i_Probe)%ef_name)=='ANTIRES',&
+&               trim(Efield(i_Probe)%ef_name)=='SIN'/))) return
  !
  i_master_field=0
  if ( abs( Efield(i_Pump)%frequency(2) -Efield(i_Pump)%frequency(1) ) > epsilon(1._SP)  )  i_master_field=i_Pump

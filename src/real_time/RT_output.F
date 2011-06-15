@@ -132,13 +132,6 @@ subroutine RT_output(what,VALUEs,TIME,E)
  endif
  next_file=next_file+1
  !
- if (initialize) file_name(next_file)=trim(append_ch)//'SHG_qssin'
- short_file_name(next_file)=trim(append_ch)//'SHG_qssin'
- n_headings(next_file)=3
- headings(next_file,2:3)=(/'X/Im','X/Re'/)
- headings(next_file,1)="E [eV]"
- next_file=next_file+1
- !
  if (initialize) file_name(next_file)=trim(append_ch)//'occupations'
  short_file_name(next_file)=trim(append_ch)//'occupations'
  n_headings(next_file)=9
@@ -151,6 +144,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
    n_headings(next_file)=3
    headings(next_file,1)="E [eV]"
    headings(next_file,2:3)=(/'X/Im','X/Re'/)
+   if (i_order.ne.1) headings(next_file,2:3)=(/'X/Im[cm/statV]','X/Re[cm/statV]'/)
    next_file=next_file+1
  enddo
  !

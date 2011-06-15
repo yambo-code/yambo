@@ -126,7 +126,7 @@ module fields
      !
      freq=E_field%frequency(1)
      sigma=E_field%damping
-     T_0=2._SP*sigma
+     T_0=10._SP*sigma
      local_a=(0._SP,0._SP)
      !
      select case( trim(E_field%ef_name) )
@@ -252,10 +252,39 @@ module fields
        Rabi_Factor=2.*sum(R(:)*Field%versor(:))*Field%amplitude
      else 
        Rabi_Factor=2.*sum(P(:)*Field%versor(:))*Field%amplitude
-       if( any( trim(Field%ef_name)==(/'ANTIRES','SIN    '/)) ) Rabi_Factor=-cI*Rabi_Factor/Field%frequency(1)
+       if( any( trim(Field%ef_name)==(/'ANTIRES','SIN'/)) ) Rabi_Factor=-cI*Rabi_Factor/Field%frequency(1)
        if( any( trim(Field%ef_name)==(/'RES'/)) )           Rabi_Factor= cI*Rabi_Factor/Field%frequency(1)
      endif
    end function Rabi_Factor
+   !
+   complex(SP) function Divide_by_Field(Field,order)
+     !
+     use pars, ONLY: cI,pi
+     type(ext_field):: Field
+     integer        :: order
+     ! work space
+     complex :: E_w
+     real(SP):: T_0, sigma, W_0, T
+     !
+     select case(Field%ef_name)
+       case('ANTIRES')
+         Divide_by_Field = (1._SP,0._SP)/Field%amplitude**order
+         if (order==0) Divide_by_Field =(1._SP,0._SP)/Field%amplitude**2
+       case('SIN')
+         Divide_by_Field =  (2._SP*cI/Field%amplitude)**order
+         if (order==0) Divide_by_Field =  (4._SP,0._SP)/Field%amplitude**2
+       case('QSSIN') !Approximate relations/does not work yet
+         sigma=Field%damping
+         T_0=10._SP*sigma
+         W_0=Field%frequency(1)
+         T = 2._SP*pi/W_0
+         E_w= sqrt(pi/2.)*Field%amplitude*sigma*exp(-cI*W_0*T_0)*&
+              &(erf((T-T_0)/sqrt(2.)/sigma)+erf(T_0/sqrt(2.)/sigma))
+         Divide_by_Field = (2._SP*cI/E_w)**order
+         if (order==0) Divide_by_Field =  (4._SP,0._SP)/(E_w*conjg(E_w))
+       end select
+       !
+   end function Divide_by_Field
    !
    ! GPL_EXCLUDE_END
    !

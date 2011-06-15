@@ -55,6 +55,9 @@ subroutine RT_initialize(dump_and_write)
  if (i_t_start<=0.or.i_t_start> i_t_field_range(2)) i_t_start=i_t_field_range(1)
  if (i_t_end<=0  .or.i_t_end>   i_t_field_range(2)) i_t_end  =i_t_field_range(2)
  !
+ RED_steps=i_t_end-i_t_start+1
+ W_RT_induced_step=2.*pi/(real(RED_steps,SP)*RT_step)  ! Frequency step in real-time dynamics
+ !
  call msg('s','[RT] Time range [fs]:',(/real(i_t_start),real(i_t_end)/)*RT_step/FS2AUT)
  !
  if (present(dump_and_write)) then
@@ -63,10 +66,6 @@ subroutine RT_initialize(dump_and_write)
  !
  ! DAMPING
  !=========
- !
- RED_steps=i_t_end-i_t_start+1
- !
- W_RT_induced_step=2.*pi/(real(RED_steps,SP)*RT_step)  ! Frequency step in real-time dynamics
  !
  if(l_no_damping) then
    !

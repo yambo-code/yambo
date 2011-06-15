@@ -24,11 +24,12 @@ subroutine RT_X_effective(en)
  use pars,           ONLY:SP,lchlen,pi,schlen
  use YPP,            ONLY:RT_P_t,Pump_path,N_probes,Probe_path,RT_databases,RT_initialize,&
 &                         max_n_of_paths,Use_FFT,X_rt,N_pumps,N_probe_frequencies,X_order
- use units,          ONLY:HARTREE
+ use units,          ONLY:HARTREE,sVcm2Vmm,AU2Vmm 
  use electrons,      ONLY:levels
  use com,            ONLY:jobstr,msg,error
  use IO_m,           ONLY:NONE,LOG
- use fields,         ONLY:Efield,i_Probe,ext_field,Efield_duplicate,field_frequency,i_Pump,EtoT
+ use fields,         ONLY:Efield,i_Probe,ext_field,Efield_duplicate,field_frequency,&
+&                         i_Pump,EtoT,Divide_by_Field
  use real_time,      ONLY:NE_steps,RT_output,RT_step
  use vec_operate,    ONLY:sort
  use timing,         ONLY:live_timing
@@ -40,7 +41,7 @@ subroutine RT_X_effective(en)
  character(lchlen) :: jobstr_save
  character(schlen) :: X_file_name
  integer           :: i_f,i_fp,f_indx(max_n_of_paths),i_order,min_X_order
- real(SP)          :: Pump_Frequency(1)
+ real(SP)          :: Pump_Frequency(1),Unit_of_Measure
  logical           :: Probe_consistency_error
  real(SP),    allocatable    :: RT_P_probe(:,:),RT_P_pump(:,:),Probe_Frequency(:),Fourier_Frequency(:)
  complex(SP), allocatable    :: X_effective(:)
@@ -62,6 +63,7 @@ subroutine RT_X_effective(en)
  RT_P_pump=0.
  Pump_Frequency=0.
  min_X_order=1
+ if (X_order==2) min_X_order = 0 
  if (N_pumps>0) then
    jobstr=trim(Pump_path)
    call RT_databases(en,COM_=NONE,mesg=trim(Pump_path))
@@ -182,7 +184,7 @@ subroutine RT_X_effective(en)
      if (i_order==0) Fourier_Frequency(:)=Probe_Frequency(:)
      if (i_order >0) Fourier_Frequency(:)=(i_order+1)*Pump_Frequency(1)-Probe_Frequency(:)
    else if (N_pumps==0) then
-     Fourier_Frequency(:)=i_order*Probe_Frequency(:)
+     Fourier_Frequency(:)=real(i_order,SP)*Probe_Frequency(:)
    endif
    !
    ! [B] X effective (several Probes, 1 frequency each)
@@ -220,11 +222,13 @@ subroutine RT_X_effective(en)
      !
      i_f=f_indx(i_fp)
      !
-     if (N_pumps==0.and.i_order==1) X_effective(i_f)=4.*pi*X_effective(i_f)
+     if (N_pumps==0) X_effective(i_f)=4.*pi*X_effective(i_f)
      !
-     X_effective(i_f)=X_effective(i_f)/Efield_Probe%amplitude**i_order
+     X_effective(i_f)=X_effective(i_f)*Divide_by_Field(Efield_Probe,i_order)
      ! 
-     call RT_output(trim(X_file_name),VALUEs=(/aimag(X_effective(i_f)),real(X_effective(i_f))/),&
+     Unit_of_Measure = 1._SP
+     if (N_pumps==0.and.i_order.ne.1) Unit_of_Measure = sVcm2Vmm/AU2Vmm ! NB Just for SHG and OptRect, orders>2 need generalization
+     call RT_output(trim(X_file_name),VALUEs=(/aimag(X_effective(i_f))*Unit_of_Measure,real(X_effective(i_f)*Unit_of_Measure)/),&
 &                   E=(Probe_Frequency(i_f)-Pump_Frequency(1))*HARTREE)
      !
    enddo

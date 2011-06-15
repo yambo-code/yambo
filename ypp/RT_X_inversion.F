@@ -84,7 +84,7 @@ subroutine RT_X_inversion(en)
    ! 
    Unit_of_Measure = 1._SP
    if (i_order.eq.0) Unit_of_Measure = sVcm2Vmm/AU2Vmm
-   if (i_order.lt.1) Unit_of_Measure = (sVcm2Vmm/AU2Vmm)**(i_order-1)  
+   if (i_order.gt.1) Unit_of_Measure = (sVcm2Vmm/AU2Vmm)**(i_order-1)  
    X_tot = X_tot*Unit_of_Measure
    call RT_output(trim(X_file_name),VALUES=(/aimag(X_tot),real(X_tot)/), E=Efield(1)%frequency(1)*HARTREE)
    !

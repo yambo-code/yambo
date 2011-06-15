@@ -274,21 +274,21 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'HXCjumps',  '[RT] Steps jumped between two Hartree+XC updates',NE_Hxc_jumps,Verb_level=V_real_time)
  call it(defs,'NETime',    '[RT] Non-equilibrium  max Time (alternative to NEsteps)',NE_tot_time,unit=Time_unit)
  call it(defs,'ThermSteps','[RT Therm] Thermal Steps',Thermal_steps,Verb_level=V_real_time)
- !
- ! Other parameters of RT
- !
  call it(defs,'Integrator',   '[RT] Integrator (RK2 | EULER | EXACT | RK2EXACT) ',Integrator_name)
+ call it(defs,'QPLifeTime',   '[RT] QP Relaxation Time',QP_LifeTime,unit=Time_unit)
+ call it(defs,'PhLifeTime',   '[RT] Phase Relaxation Time',Phase_LifeTime,unit=Time_unit)
+ call it('f',defs,'RTfreezeH', '[RT] Hartree not updated during RT')
+ call it('f',defs,'RTfreezeXC','[RT] XC potential/self-energy not updated during RT')
+ call it('f',defs,'RTBSEOnly','[RT] Simulate BSE only without include single particle effects')
+ !
+ ! Other parameters of RT (to be switched on using the verbosity)
+ !
  call it(defs,'SwitchOnTime', '[RT Therm] Adiabatic switch on time ',SwitchOnTime,verb_level=V_real_time,unit=Time_unit)
- call it(defs,'QPLifeTime',   '[RT] QP Relaxation Time',QP_LifeTime,verb_level=V_real_time,unit=Time_unit)
- call it(defs,'PhLifeTime',   '[RT] Phase Relaxation Time',Phase_LifeTime,verb_level=V_real_time,unit=Time_unit)
  call it(defs,'RTDiagoSteps', '[RT] Digonalize the Hamiltonian',RT_diagonalization_steps,verb_level=V_real_time)
  call it(defs,'RTAveDeph','[RT] Dephasing for all elements not included in RTDePhMatrix' &
 &                        ,RT_ave_dephasing,verb_level=V_real_time,unit=Time_unit)
  call it('f',defs,'Diamagnetic', '[RT] Include the diamagnetic term in current and coupling',verb_level=V_real_time)
  call it('f',defs,'InducedField', '[RT] Include induced field in coupling and current',verb_level=V_real_time)
- call it('f',defs,'RTfreezeH', '[RT] Hartree not updated during RT',verb_level=V_real_time)
- call it('f',defs,'RTfreezeXC','[RT] XC potential/self-energy not updated during RT',verb_level=V_real_time)
- call it('f',defs,'RTBSEOnly','[RT] Simulate BSE only without include single particle effects',verb_level=V_real_time)
  call it(defs,'DiskSteps',     '[RT] Numer of steps stored in memory before I/O',max_rt_steps_disk,verb_level=V_real_time)
  !
  ! External fields
@@ -437,11 +437,11 @@ subroutine init_load(defs,en,q,k,X,Xw)
      if (i_field==2)  name='Pump'
      if (i_field==2) verbosity_here=V_real_time
      call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
-&    Efield(i_field)%frequency,unit=E_unit,verb_level=0)
+&    Efield(i_field)%frequency,unit=E_unit)
      call it(defs,trim(name)//'_FrStep',          '[RT '//trim(name)//'] Frequency step',&
-&    Efield(i_field)%W_step,unit=E_unit,verb_level=V_real_time)
+&    Efield(i_field)%W_step,unit=E_unit)
      call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&
-&    Efield(i_field)%intensity,unit=I_unit,verb_level=0)
+&    Efield(i_field)%intensity,unit=I_unit)
      call it(defs,trim(name)//'_Damp',             '[RT '//trim(name)//'] Damping',&
 &    Efield(i_field)%damping,unit=Time_unit,verb_level=V_real_time)
      call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] Kind(SIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',&

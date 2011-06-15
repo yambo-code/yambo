@@ -1,5 +1,9 @@
 !
+<<<<<<< .mine
+! Copyright (C) 2000-2010 M. Gruning and the YAMBO team 
+=======
 ! Copyright (C) 2000-2011 M. Gruning, A. Marini and the YAMBO team 
+>>>>>>> .r885
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -21,25 +25,21 @@
 !
 subroutine RT_X_inversion(en)
  !
- use pars,           ONLY:SP,lchlen,pi,schlen
+ use pars,           ONLY:SP,pi,schlen
  use YPP,            ONLY:RT_P_t,N_probes,Probe_path,RT_databases,RT_initialize,&
-&                         max_n_of_paths,Use_FFT,X_rt,N_probe_frequencies,X_order
+&                         X_rt,N_probe_frequencies,X_order
  use units,          ONLY:HARTREE,AU2Vmm,sVcm2Vmm
  use electrons,      ONLY:levels
- use com,            ONLY:jobstr,msg,error
- use IO_m,           ONLY:NONE,LOG
- use fields,         ONLY:Efield,i_Probe,ext_field,Efield_duplicate,field_frequency,&
-&                         EtoT,Divide_by_Field
+ use IO_m,           ONLY:LOG
+ use fields,         ONLY:Efield,EtoT,Divide_by_Field
  use real_time,      ONLY:NE_steps,RT_output,RT_step
- use vec_operate,    ONLY:sort
- use timing,         ONLY:live_timing
  use stderr,         ONLY:intc
  implicit none
  !
  type(levels)  :: en
  !
  character(schlen) :: X_file_name
- integer           :: i_f,i_fp,f_indx(max_n_of_paths),i_order,min_X_order
+ integer           :: i_order,min_X_order
  real(SP)          :: Period,Unit_of_Measure
  complex(SP)       :: X_tot
  real(SP),    allocatable    :: RT_P_probe(:)
@@ -48,8 +48,8 @@ subroutine RT_X_inversion(en)
  N_probe_frequencies=max(N_probes,N_probe_frequencies) 
  if (N_probe_frequencies.ne.1) return
  !
- call section("=",'Response function by Inversion')
- !===============================================
+ call section("=",'Response function(s) by Inversion')
+ !====================================================
  !
  allocate(RT_P_probe(NE_steps),X_effective(X_order+1,3))
  RT_P_probe=(0.,0.)
@@ -68,9 +68,8 @@ subroutine RT_X_inversion(en)
  !
  call RT_initialize(dump_and_write=.FALSE.)
  !
- !
- ! [C] X effective (1 Probe, 1 frequency)
- !     ===========
+ ! X effective (1 Probe, 1 frequency)
+ ! ===========
  !
  do i_c = 1,3
    RT_P_probe(:)=real(RT_P_t(:,i_c))

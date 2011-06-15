@@ -77,8 +77,7 @@ subroutine RT_driver(en,k)
    !
    !  Initialization 
    !
-!   call RT_initialize(dump_and_write=.TRUE.)
-   call RT_initialize(dump_and_write=.FALSE.)
+   call RT_initialize(dump_and_write=.TRUE.)
    !
    if ( l_RT_LRR_real_field ) then
      !

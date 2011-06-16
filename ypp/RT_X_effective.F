@@ -40,11 +40,11 @@ subroutine RT_X_effective(en)
  !
  character(lchlen) :: jobstr_save
  character(schlen) :: X_file_name
- integer           :: i_f,i_fp,f_indx(max_n_of_paths),i_order,min_X_order
+ integer           :: i_f,i_fp,f_indx(max_n_of_paths),i_order,min_X_order,i_c
  real(SP)          :: Pump_Frequency(1),Unit_of_Measure
  logical           :: Probe_consistency_error
- real(SP),    allocatable    :: RT_P_probe(:,:),RT_P_pump(:,:),Probe_Frequency(:),Fourier_Frequency(:)
- complex(SP), allocatable    :: X_effective(:)
+ real(SP),    allocatable    :: RT_P_probe(:,:,:),RT_P_pump(:,:),Probe_Frequency(:),Fourier_Frequency(:)
+ complex(SP), allocatable    :: X_effective(:,:),Susceptibility(:)
  type(ext_field)   :: Efield_probe
  !
  call section("=",'Effective Response function ')
@@ -54,7 +54,7 @@ subroutine RT_X_effective(en)
  !
  N_probe_frequencies=max(N_probes,N_probe_frequencies) 
  !
- allocate(RT_P_probe(NE_steps,N_probes),RT_P_pump(NE_steps,3),X_effective(N_probe_frequencies))
+ allocate(RT_P_probe(NE_steps,N_probes,3),RT_P_pump(NE_steps,3),X_effective(N_probe_frequencies,3),Susceptibility(N_probe_frequencies))
  allocate(Probe_Frequency(N_probe_frequencies),Fourier_Frequency(N_probe_frequencies))
  !
  ! Pump only
@@ -94,7 +94,7 @@ subroutine RT_X_effective(en)
 &                 abs(Efield_probe%intensity-Efield(i_Probe)%intensity)>1.E-5/))) Probe_consistency_error=.TRUE.
    endif
    !
-   RT_P_probe(:,i_f)=real(RT_P_t(:,1))-RT_P_pump(:,1)
+   RT_P_probe(:,i_f,:)=real(RT_P_t(:,:))-RT_P_pump(:,:)
    !
    do i_fp=1,Efield(i_Probe)%n_frequencies
      if (N_probes==1) Probe_Frequency(i_fp)=field_frequency(Efield(i_Probe),i_fp)
@@ -124,7 +124,7 @@ subroutine RT_X_effective(en)
    !
    X_rt%energy_range=X_rt%energy_range(2)*(/-1.,1./)
    !
-   RT_P_t(:,1)=RT_P_probe(:,1)
+   RT_P_t(:,:)=RT_P_probe(:,1,:)
    !
    call RT_initialize(dump_and_write=.TRUE.)
    !
@@ -196,7 +196,9 @@ subroutine RT_X_effective(en)
      !
      do i_f=1,N_probe_frequencies
        !
-       call RT_Fourier_Coefficients(NE_steps,RT_P_probe(:,i_f),1,(/Fourier_Frequency(i_f)/),X_effective(i_f),Efield_Probe%W_step)
+       do i_c=1,3
+         call RT_Fourier_Coefficients(NE_steps,RT_P_probe(:,i_f,i_c),1,(/Fourier_Frequency(i_f)/),X_effective(i_f,i_c),Efield_Probe%W_step)
+       enddo
        !
        call live_timing(steps=1)
        ! 
@@ -209,7 +211,9 @@ subroutine RT_X_effective(en)
      ! [C] X effective (1 Probs, several frequencies)
      !     ===========
      !
-     call RT_Fourier_Coefficients(NE_steps,RT_P_probe(:,1),N_probe_frequencies,Fourier_Frequency,X_effective,Efield_Probe%W_step)
+     do i_c=1,3
+       call RT_Fourier_Coefficients(NE_steps,RT_P_probe(:,1,i_c),N_probe_frequencies,Fourier_Frequency,X_effective(:,i_c),Efield_Probe%W_step)
+     enddo
      !
    endif
    !
@@ -222,13 +226,13 @@ subroutine RT_X_effective(en)
      !
      i_f=f_indx(i_fp)
      !
-     if (N_pumps==0) X_effective(i_f)=4.*pi*X_effective(i_f)
+     if (N_pumps==0) X_effective(i_f,:)=4.*pi*X_effective(i_f,:)
      !
-     X_effective(i_f)=X_effective(i_f)*Divide_by_Field(Efield_Probe,i_order)
+     Susceptibility(i_f)=dot_product( Efield_Probe%versor(:),X_effective(i_f,:) ) *Divide_by_Field(Efield_Probe,i_order)
      ! 
      Unit_of_Measure = 1._SP
      if (N_pumps==0.and.i_order.ne.1) Unit_of_Measure = sVcm2Vmm/AU2Vmm ! NB Just for SHG and OptRect, orders>2 need generalization
-     call RT_output(trim(X_file_name),VALUEs=(/aimag(X_effective(i_f))*Unit_of_Measure,real(X_effective(i_f)*Unit_of_Measure)/),&
+     call RT_output(trim(X_file_name),VALUEs=(/aimag(Susceptibility(i_f))*Unit_of_Measure,real(Susceptibility(i_f)*Unit_of_Measure)/),&
 &                   E=(Probe_Frequency(i_f)-Pump_Frequency(1))*HARTREE)
      !
    enddo

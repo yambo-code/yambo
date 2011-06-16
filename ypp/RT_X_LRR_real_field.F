@@ -177,12 +177,9 @@ subroutine RT_X_LRR_real_field(en)
  call RT_output("open eps eels")
  do i_w = 1, X_rt%energy_steps
    !
-   do i_c=1,3
-     if ( abs(Efield(i_Probe)%versor(i_c))>zero_dfl ) then
-       EPS(i_w,1) = EPS(i_w,1)-4._SP*pi*X_irrep(i_w,i_c)/E_w(i_w)
-       if (P_2levels_is_done) EPS(i_w,2) = EPS(i_w,2)-4._SP*pi*X_irrep(i_w,i_c+3)/E_w(i_w)
-     endif
-   enddo
+   EPS(i_w,1) = EPS(i_w,1)-4._SP*pi*dot_product(Efield(i_Probe)%versor(:),X_irrep(i_w,:3))/E_w(i_w)
+   !
+   if (P_2levels_is_done) EPS(i_w,2) = EPS(i_w,1)-4._SP*pi*dot_product(Efield(i_Probe)%versor(:),X_irrep(i_w,4:6))/E_w(i_w)
    !
    EELS(i_w,:)=1._DP/EPS(i_w,:)
    !

@@ -237,10 +237,11 @@ subroutine ypp_init_load(defs)
  !call it(defs,'TmJump'  ,'Time jump (X effective)',t_jump,unit=Time_unit,verb_level=V_real_time)
  ! DEBUG<
  call it(defs,'TmRngeRt','Time-window where processing is done',X_rt%time_range,unit=Time_unit)
- call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',X_rt%damp,verb_level=V_real_time)
- call it(defs,'DampFactor','Damping parameter',X_rt%damp_factor,unit=E_unit,verb_level=V_real_time) 
+ call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',X_rt%damp)
+ call it(defs,'DampFactor','Damping parameter',X_rt%damp_factor,unit=E_unit) 
  !
  call it('f',defs,'FrMinDamp','Force minimal damping',verb_level=V_real_time)
+ call it('f',defs,'SkipJP_IO','Do not write P(t) and J(t)',verb_level=V_real_time)
  call it('f',defs,'RmAsymLim','Remove Asymptotic limit from P or J',verb_level=V_real_time) 
  call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics',verb_level=V_real_time)
  !

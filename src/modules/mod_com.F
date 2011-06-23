@@ -97,9 +97,10 @@ module com
          folder="."
          if (present(subfolder)) folder=subfolder
          !
-         ! No inpath/outpath must pre-appended when an explicit path is given
+         ! As I want the path to be relative to the working directory I need to set ch(1)=".". In case 
+         ! the path shpuld be absolute ch(1) must be " " 
          !
-         ch(1)=' '
+         ch(1)='.'
          !
        case(0)
          ch(2)="s."//trim(desc)

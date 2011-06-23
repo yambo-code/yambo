@@ -30,11 +30,11 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
  use electrons,      ONLY:n_sp_pol
  use fields,         ONLY:global_gauge
  use X_m,            ONLY:DIP_iR,DIP_P
- use SC,             ONLY:SC_bands,SC_lw_band
+ use SC,             ONLY:SC_bands
  !
  implicit none
  integer,     intent(in)       :: ik
- complex(SP), intent(inout)    :: H_nl_sc(SC_bands,SC_bands,n_sp_pol)
+ complex(SP), intent(inout)    :: H_nl_sc(SC_bands(2),SC_bands(2),n_sp_pol)
  type(gauge_field), intent(in) :: A_input
  ! 
  ! Work Space
@@ -53,12 +53,12 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
    ! in case of complex Efield puts the correct Hermitian matrix
    ! and the intraband optical matrix elements have been set to zero
    !
-   do i1=1,SC_bands
+   do i1=1,SC_bands(2)
      H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)-real(sum(A_vec_pot(1:3)*DIP_P(1:3,i1,i1,ik,1)),SP)
    enddo
    !
-   do i1=SC_lw_band,SC_bands
-     do i2=i1+1,SC_bands
+   do i1=SC_bands(1),SC_bands(2)
+     do i2=i1+1,SC_bands(2)
        !
        ! Note that (P)_cv = DIP_P (:,iv,ic,:,:)
        !     
@@ -70,7 +70,7 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
    enddo
    !
    if(l_RT_diamagnetic) then
-     forall(i1=SC_lw_band:SC_bands,is=1:n_sp_pol) 
+     forall(i1=SC_bands(1):SC_bands(2),is=1:n_sp_pol) 
        H_nl_sc(i1,i1,is)=H_nl_sc(i1,i1,is)+0.5_SP*sum(A_vec_pot(1:3)**2)
      end forall
    endif
@@ -82,8 +82,8 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
    !
    E_vec_pot=-A_input%vecpot_vel/SPEED_OF_LIGHT ! Gaussian units
    !
-   do i1=SC_lw_band,SC_bands
-     do i2=i1+1,SC_bands
+   do i1=SC_bands(1),SC_bands(2)
+     do i2=i1+1,SC_bands(2)
        !
        ! Note that (iR)_cv = DIP_iR (:,iv,ic,:,:)
        !

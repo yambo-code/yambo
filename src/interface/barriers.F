@@ -103,8 +103,13 @@ subroutine barriers()
  !
  ! GPL_EXCLUDE_START SC_IGNORE
  !
+ if (l_real_time) then
+   call switch_off_runlevel('all',on_name='scpot negf '//trim(always_runlevels))
+   goto 1
+ endif
+ !
  if (l_sc_run) then
-   call switch_off_runlevel('all',on_name='scpot HF_and_locXC cohsex em1s negf collisions_IO magnetic '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='scpot HF_and_locXC cohsex em1s negf magnetic collisions_IO '//trim(always_runlevels))
    goto 1
  endif
  !

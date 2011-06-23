@@ -49,7 +49,7 @@ subroutine QP_load_SC_xc()
      !
      do i_spin=1,n_sp_pol
        call mat_dia_inv(INV,USE_LK,SC_R(:,:,i_k,i_spin))
-       call H_rotate(SC_R(:,:,i_k,i_spin),H_nl_sc(:,:,i_spin),SC_bands,-1)
+       call H_rotate(SC_R(:,:,i_k,i_spin),H_nl_sc(:,:,i_spin),SC_bands(2),-1)
      enddo
      !
      do i_qp=1,QP_n_states

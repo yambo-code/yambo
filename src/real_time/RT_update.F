@@ -29,7 +29,7 @@ subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
  use units,      ONLY:HARTREE 
  use com,        ONLY:msg
  use stderr,     ONLY:set_real_printed_length
- use SC,         ONLY:SC_bands,E_bare,H_rotate,SC_lw_band
+ use SC,         ONLY:SC_bands,E_bare,H_rotate
  use R_lattice,  ONLY:bz_samp
  use QP_m,       ONLY:QP_nk
  use electrons,  ONLY:levels,n_sp_pol
@@ -41,8 +41,8 @@ subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
  implicit none
  !
  type(X_t),      intent(inout)        :: X
- complex(SP),    intent(inout)        :: G_input(SC_bands,SC_bands,QP_nk)
- complex(SP) ,   intent(in)           :: SC_R(SC_bands,SC_bands,QP_nk,n_sp_pol)
+ complex(SP),    intent(inout)        :: G_input(SC_bands(2),SC_bands(2),QP_nk)
+ complex(SP) ,   intent(in)           :: SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol)
  type(bz_samp),  intent(in)           :: k,Xk
  integer,        intent(in)           :: it
  type(levels),   intent(in)           :: Xen
@@ -51,7 +51,7 @@ subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
  ! Work Space
  !
  integer :: ik,ib
- complex(SP) :: tmp_v(SC_bands)
+ complex(SP) :: tmp_v(SC_bands(2))
  !
  ! Update Dipoles
  !
@@ -67,24 +67,24 @@ subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
      !
      ! natural orbitals
      !
-     do ib=1,SC_bands
-       call M_by_V('N',SC_bands,SC_bands,(0._SP,-1._SP),G_input(:,:,ik),SC_bands,SC_R(:,ib,ik,1),1,(0._SP,0._SP),tmp_v,1)
-       Occ_natural_orb(ib,ik)=real(Vstar_dot_V(SC_bands,SC_R(:,ib,ik,1),tmp_v))
+     do ib=1,SC_bands(2)
+       call M_by_V('N',SC_bands(2),SC_bands(2),(0._SP,-1._SP),G_input(:,:,ik),SC_bands(2),SC_R(:,ib,ik,1),1,(0._SP,0._SP),tmp_v,1)
+       Occ_natural_orb(ib,ik)=real(Vstar_dot_V(SC_bands(2),SC_R(:,ib,ik,1),tmp_v))
      enddo
      !
    enddo
    !
    call OCCUPATIONS_Fermi(Xen,k,0)
-   Xen%E(:SC_bands,:,:)=Xen%E(:SC_bands,:,:)-Xen%Efermi(1)
+   Xen%E(:SC_bands(2),:,:)=Xen%E(:SC_bands(2),:,:)-Xen%Efermi(1)
    !
    if(it==Thermal_steps) then
      call msg('r',' ')
      call msg('r','Natural (O)ccupations, (E)nergies and (d_E) E-Eo.')
      do ik=1,QP_nk
-       call REPORT_Energies(Xen%E(:SC_bands,:,:),k,Xk,SC_bands,(/ik,ik/),'E  ',.TRUE.)
-       call REPORT_Energies(E_bare,k,Xk,SC_bands,(/ik,ik/),'E_o  ',.FALSE.)
-       call REPORT_Energies(Xen%E(:SC_bands,:,:)-E_bare,k,Xk,SC_bands,(/ik,ik/),'d_E',.FALSE.)
-       call REPORT_Energies(Occ_natural_orb(:SC_bands,:)/HARTREE,k,Xk,SC_bands,(/ik,ik/),'O  ',.FALSE.)
+       call REPORT_Energies(Xen%E(:SC_bands(2),:,:),k,Xk,SC_bands(2),(/ik,ik/),'E  ',.TRUE.)
+       call REPORT_Energies(E_bare,k,Xk,SC_bands(2),(/ik,ik/),'E_o  ',.FALSE.)
+       call REPORT_Energies(Xen%E(:SC_bands(2),:,:)-E_bare,k,Xk,SC_bands(2),(/ik,ik/),'d_E',.FALSE.)
+       call REPORT_Energies(Occ_natural_orb(:SC_bands(2),:)/HARTREE,k,Xk,SC_bands(2),(/ik,ik/),'O  ',.FALSE.)
      enddo
    endif
    !
@@ -108,13 +108,13 @@ subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
        G_input(ib,ib,ik)=(0._SP,1._SP)*Xen%f(ib,ik,1)
      end forall   
      !
-     call H_rotate(SC_R(1:SC_bands,1:SC_bands,ik,1),G_input(1:SC_bands,1:SC_bands,ik),SC_bands,-1)
+     call H_rotate(SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),G_input(1:SC_bands(2),1:SC_bands(2),ik),SC_bands(2),-1)
     !
   enddo
   !
-  ! Update the full density and the one between SC_lw_band:SC_bands
+  ! Update the full density and the one between SC_lw_band:SC_bands(2)
   !
-  if(allocated(rho_reference)) call el_density(G_input,Xk,rho_reference,SC_lw_band,.false.)  
+  if(allocated(rho_reference)) call el_density(G_input,Xk,rho_reference,SC_bands(1),.false.)  
   if(allocated(full_rho))      call el_density(G_input,Xk,full_rho     ,1         ,.false.)  
   !
  endif 

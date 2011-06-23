@@ -24,8 +24,7 @@ module SC
  use pars,            ONLY:SP,schlen,lchlen
  implicit none
  !
- integer           :: SC_bands
- integer           :: SC_lw_band
+ integer           :: SC_bands(2)
  integer           :: it_now
  integer           :: SC_iterations
  integer           :: SC_fft_size
@@ -125,7 +124,7 @@ module SC
      !
      ! Build-up QP table
      !
-     QP_nb=SC_bands
+     QP_nb=SC_bands(2)
      QP_nk=nkibz
      ! 
      ! QP_state my be read from DBs at start-up
@@ -140,7 +139,7 @@ module SC
      ! In the magnetic project Ho has already been allocated
      !
      if (.not.allocated(Ho)) then
-       allocate(Ho(SC_bands,SC_bands,E%nk,n_sp_pol))
+       allocate(Ho(SC_bands(2),SC_bands(2),E%nk,n_sp_pol))
        call mem_est("Ho",(/size(Ho)/),(/2*SP/))
      endif
      !
@@ -161,7 +160,7 @@ module SC
      allocate(V_hartree_sc(fft_size,n_spin))
      call mem_est("Hartree_Potential",(/size(V_hartree_sc)/))
      !
-     allocate(H_nl_sc(SC_bands,SC_bands,n_sp_pol))
+     allocate(H_nl_sc(SC_bands(2),SC_bands(2),n_sp_pol))
      call mem_est("H_nl_sc",(/size(H_nl_sc)/),(/2*SP/))
      !
      if (l_sc_cohsex.or.l_sc_srpa) then
@@ -170,7 +169,7 @@ module SC
      endif
      !
      if (.not.l_real_time) then
-       allocate(SC_R(SC_bands,SC_bands,QP_nk,n_sp_pol))
+       allocate(SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
        call mem_est("SC_R",(/size(SC_R)/))
      endif
      !

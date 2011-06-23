@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine load_COLLISIONS()
+subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
  !
  ! Load all collisions contribution from any kind of self-energy 
  ! exchange, COHSEX etc.. and store them together in QP_rho(i_qp)
@@ -29,16 +29,19 @@ subroutine load_COLLISIONS()
  use com,             ONLY:warning,msg
  use global_XC,       ONLY:SC_HF,SC_COHSEX
  use QP_m,            ONLY:QP_n_states,QP_nb,QP_nk
- use SC,              ONLY:SC_lw_band
+ use SC,              ONLY:SC_bands
  use memory_m,        ONLY:mem_sum,mem_est
- use collisions_IO,   ONLY:COLLISIONS_v,COLLISIONS_table,V_kind,collisions_IO_free
+ use collisions_IO,   ONLY:COLLISIONS_v,COLLISIONS_table,V_kind,collisions_IO_free,&
+&                          COLLISIONS_path
  use stderr,          ONLY:intc
- use IO_m,            ONLY:OP_RD_CL,io_control
+ use IO_m,            ONLY:OP_RD_CL,io_control,VERIFY,REP,io_file
  use par_proc_m,      ONLY:pp_indexes,pp_indexes_reset
  use par_indexes_m,   ONLY:par_indexes
  use collisions_CACHE,ONLY:COLLISIONS_cache_size,last_QP_mem,cache_memory,CACHE
  !
  implicit none
+ !
+ logical            :: CHECK_EXISTENCE_ONLY
  !
  ! Parameters
  !
@@ -51,22 +54,51 @@ subroutine load_COLLISIONS()
  !
  ! Work Space
  !
- integer            :: i1,ic,i_qp,ib,ibp,ik,io_err,ID,n_tot_rho_states
- integer            :: V_kinds(max_V_kinds),n_V_kinds
- integer            :: max_COLLISION_cache
- integer,external   :: io_COLLISIONS
+ integer            :: i1,ic,i_qp,ib,ibp,ik,ID,n_tot_rho_states,io_err(max_V_kinds),V_kinds(max_V_kinds),n_V_kinds,&
+&                      max_COLLISION_cache
+ integer, external  :: io_COLLISIONS
  real(SP)           :: mem_before_cache
  type(pp_indexes)   :: px
  character(schlen)  :: dump_ch 
  complex(SP), allocatable :: COLLISIONS_disk(:,:,:)
  !
- if (.not.l_collisions_IO) return
- !
  last_QP_mem =0
  n_V_kinds   =0
  cache_memory=0
+ io_err      =0
  !
- if(COLLISIONS_cache_size==0.) return
+ if(l_sc_hf.or.l_sc_cohsex.or.l_sc_exx) then
+   n_V_kinds          =n_V_kinds+1
+   V_kinds(n_V_kinds) =SC_HF
+ endif
+ !
+ if(l_sc_cohsex.or.l_sc_srpa) then
+   n_V_kinds          =n_V_kinds+1
+   V_kinds(n_V_kinds) =SC_COHSEX
+ endif
+ !
+ ! Check only if the DB exist and are readable
+ !
+ if (CHECK_EXISTENCE_ONLY) then
+   !
+   do i1=1,n_V_kinds
+     !
+     V_kind=V_kinds(i1)
+     !
+     call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
+     io_err(i1)=io_COLLISIONS(0,ID)
+     !
+   enddo
+   !
+   l_collisions_IO=all(io_err==0)
+   !
+   if (.not.l_collisions_IO) COLLISIONS_path=" "
+   !
+   return
+   !
+ endif
+ !
+ if (COLLISIONS_cache_size==0..or..not.l_collisions_IO) return
  !
  call pp_indexes_reset(px)
  !
@@ -84,18 +116,8 @@ subroutine load_COLLISIONS()
  !
  max_COLLISION_cache=QP_nb**2*QP_nk
  !
- allocate(COLLISIONS_disk(SC_lw_band:QP_nb,SC_lw_band:QP_nb,QP_nk))
- call mem_est("COLLISIONS_disk",(/QP_nb-SC_lw_band+1,QP_nb-SC_lw_band+1,QP_nk/),(/2*SP/))
- !
- if(l_sc_hf.or.l_sc_cohsex.or.l_sc_exx) then
-   n_V_kinds          =n_V_kinds+1
-   V_kinds(n_V_kinds) =SC_HF
- endif
- !
- if(l_sc_cohsex.or.l_sc_srpa) then
-   n_V_kinds          =n_V_kinds+1
-   V_kinds(n_V_kinds) =SC_COHSEX
- endif
+ allocate(COLLISIONS_disk(SC_bands(1):QP_nb,SC_bands(1):QP_nb,QP_nk))
+ call mem_est("COLLISIONS_disk",(/QP_nb-SC_bands(1)+1,QP_nb-SC_bands(1)+1,QP_nk/),(/2*SP/))
  !
  i_qp=0
  !
@@ -107,7 +129,7 @@ subroutine load_COLLISIONS()
    !
    if(.not.px%element_1D(i_qp)) cycle  
    !
-   allocate(CACHE(i_qp)%COLLISIONS_table(SC_lw_band:QP_nb,SC_lw_band:QP_nb,QP_nk))
+   allocate(CACHE(i_qp)%COLLISIONS_table(SC_bands(1):QP_nb,SC_bands(1):QP_nb,QP_nk))
    call mem_est(" QP_COLLISIONS_table_"//trim(intc(i_qp)),(/LP/))
    !
    CACHE(i_qp)%COLLISIONS_table(:,:,:)=0
@@ -118,12 +140,12 @@ subroutine load_COLLISIONS()
      V_kind=V_kinds(i1)
      !
      call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
-     io_err=io_COLLISIONS(i_qp,ID)
+     io_err(1)=io_COLLISIONS(i_qp,ID)
      !
      ic=0
      !
-     do ib=SC_lw_band,QP_nb
-       do ibp=SC_lw_band,QP_nb
+     do ib=SC_bands(1),QP_nb
+       do ibp=SC_bands(1),QP_nb
          do ik=1,QP_nk
            !
            if(COLLISIONS_table(ib,ibp,ik)==1) then
@@ -145,8 +167,8 @@ subroutine load_COLLISIONS()
    !
    ic=0
    !
-   do ib=SC_lw_band,QP_nb
-     do ibp=SC_lw_band,QP_nb
+   do ib=SC_bands(1),QP_nb
+     do ibp=SC_bands(1),QP_nb
        do ik=1,QP_nk
          if(CACHE(i_qp)%COLLISIONS_table(ib,ibp,ik)==1) then
            ic=ic+1
@@ -176,4 +198,4 @@ subroutine load_COLLISIONS()
  write (dump_ch,'(a,f10.5)')   '[COLLISIONS] Collisions Cache use [Gb]:',cache_memory
  call msg('s',dump_ch)
  !
-end subroutine load_COLLISIONS
+end subroutine COLLISIONS_IO_load

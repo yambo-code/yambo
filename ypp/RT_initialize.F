@@ -38,9 +38,11 @@ subroutine RT_initialize(dump_and_write)
  !
  integer  :: i_t,i_t_field_range(2)
  logical  :: l_no_damping
+ logical  :: l_skip_pol_and_curr_IO
  !
  l_no_damping= trim(X_rt%damp) == "NONE"
  call parser('FrMinDamp',l_force_min_damp)
+ call parser('SkipJP_IO',l_skip_pol_and_curr_IO)
  !
  !  Reduced Time range
  !====================
@@ -90,6 +92,8 @@ subroutine RT_initialize(dump_and_write)
    call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_P_t(i_t_start:i_t_end,:),RED_steps,RT_step,6)
    !
  endif
+ !
+ if (l_skip_pol_and_curr_IO) return
  !
  call section("=",'Writing input current and Polarization')
  !=========================================================

@@ -23,19 +23,21 @@ integer function io_COLLISIONS(i_qp,ID)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
- use collisions_IO, ONLY:COLLISIONS_table,n_collisions,V_kind,COLLISIONS_v,COLLISIONS_cutoff
+ use collisions_IO, ONLY:COLLISIONS_table,n_collisions,V_kind,COLLISIONS_v,COLLISIONS_cutoff,&
+&                        COLLISIONS_path
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
-&                        io_bulk,write_is_on,io_disconnect,io_restart_point
+&                        io_bulk,write_is_on,io_disconnect,io_restart_point,io_file,&
+&                        ver_is_gt_or_eq
  use global_XC,     ONLY:SC_HF,global_XC_string,EXT_NONE,SE_NONE,SC_COHSEX
  use com,           ONLY:error
- use SC,            ONLY:SC_bands,SC_lw_band
+ use SC,            ONLY:SC_bands
  use QP_m,          ONLY:QP_ng_Sx,QP_n_states,QP_nb,QP_nk,SC_band_mixing
  use fragments,     ONLY:io_fragment,Fragments_Restart,Fragments_Synchronize
  !
  implicit none
  !
- integer, intent(inout)         :: ID
- integer, intent(in)            :: i_qp
+ integer, intent(inout)                :: ID
+ integer, intent(in)                   :: i_qp
  !
  ! Work Space
  !
@@ -43,17 +45,24 @@ integer function io_COLLISIONS(i_qp,ID)
  real(SP), allocatable :: COLLISIONS_v_disk(:,:)
  integer               :: V_kind_disk
  character(lchlen)     :: V_kind_string
- character(schlen)     :: desc
+ character(schlen)     :: desc,db_string
+ !
+ db_string=" "
+ if (len_trim(COLLISIONS_path)>1) db_string="db."
  !
  if(V_kind==SC_HF) then
-   db_name     = "COLLISIONS_Vbare"
+   db_name     = trim(db_string)//"COLLISIONS_Vbare"
  elseif(V_kind==SC_COHSEX) then
-   db_name     = "COLLISIONS_Wstatic"
+   db_name     = trim(db_string)//"COLLISIONS_Wstatic"
  else
    call error("COLLISIONS I/O : Unknown database type ")
  endif
  !
- io_COLLISIONS=io_connect(desc=db_name,type=2,ID=ID)
+ if (len_trim(COLLISIONS_path)>1) then
+   io_COLLISIONS=io_connect(desc=db_name,subfolder=trim(COLLISIONS_path),type=-1,ID=ID)
+ else
+   io_COLLISIONS=io_connect(desc=db_name,type=2,ID=ID)
+ endif
  if(io_COLLISIONS/=0) goto 1
  !
  ! Previous Fragments are syncronized (copied in the MORE_IO)
@@ -69,10 +78,21 @@ integer function io_COLLISIONS(i_qp,ID)
    io_COLLISIONS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.)
    !
    call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=4,MENU=0)
-   call io_elemental(ID,I0=SC_bands,&
-&       VAR=' Bands                           :',CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,I0=SC_lw_band,&
-&       VAR=' Lower Band                      :',CHECK=.true.,OP=(/"=="/))
+   !
+   if (ver_is_gt_or_eq(ID,revision=891)) then
+     !
+     call io_elemental(ID,I1=SC_bands,&
+&         VAR=' Bands                           :',CHECK=.true.,OP=(/"==","=="/))
+     !
+   else  
+     !
+     call io_elemental(ID,I0=SC_bands(2),&
+&         VAR=' Upper Band                      :',CHECK=.true.,OP=(/"=="/))
+     call io_elemental(ID,I0=SC_bands(1),&
+&         VAR=' Lower Band                      :',CHECK=.true.,OP=(/"=="/))
+     !
+   endif
+   !
    call io_elemental(ID,R0=SC_band_mixing,&
 &       VAR=' Bands mixing                    :',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,I0=V_kind,DB_I0=V_kind_disk,CHECK=.true.,OP=(/"=="/))
@@ -105,11 +125,7 @@ integer function io_COLLISIONS(i_qp,ID)
    !
  endif
  !
- if (.not.any(io_sec(ID,:)==2)) then     
-   !
-   goto 1
-   !
- else 
+ if (any(io_sec(ID,:)==2)) then     
    !
    ! QP-based fragmentation
    !
@@ -117,8 +133,8 @@ integer function io_COLLISIONS(i_qp,ID)
    !
    call io_bulk(ID,VAR='N_COLLISIONS_STATES',VAR_SZ=(/1/))
    call io_bulk(ID,I0=n_collisions)
-   call io_bulk(ID,VAR='COLLISIONS_TABLE',VAR_SZ=(/QP_nb-SC_lw_band+1,QP_nb-SC_lw_band+1,QP_nk/))
-   call io_bulk(ID,L3=COLLISIONS_table(SC_lw_band:QP_nb,SC_lw_band:QP_nb,1:QP_nk))
+   call io_bulk(ID,VAR='COLLISIONS_TABLE',VAR_SZ=(/QP_nb-SC_bands(1)+1,QP_nb-SC_bands(1)+1,QP_nk/))
+   call io_bulk(ID,L3=COLLISIONS_table(SC_bands(1):QP_nb,SC_bands(1):QP_nb,1:QP_nk))
    !
    allocate(COLLISIONS_v_disk(n_collisions,2))      
    !

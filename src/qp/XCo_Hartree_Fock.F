@@ -36,7 +36,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use R_lattice,     ONLY:qindx_S,bz_samp
  use wave_func,     ONLY:WF_load
 #if defined _SC
- use SC,            ONLY:it_now,SC_bands,SC_lw_band
+ use SC,            ONLY:it_now,SC_bands
  use collisions_IO, ONLY:TEMP_COLLISIONS_v
  use fragments,     ONLY:fragment_status
 #endif
@@ -90,8 +90,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  ! COLLISIONS 
  !
  if(l_collisions_IO) then
-   Sx_upper_band=SC_bands
-   Sx_lower_band=SC_lw_band
+   Sx_upper_band=SC_bands(2)
+   Sx_lower_band=SC_bands(1)
  endif
  !
 #endif
@@ -244,7 +244,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
        !
        ! rho_rho_gamp(n,n',qp_n_states) = \sum_{G,q} ( rho(m,n,G,q,k) x rho*(m',n',G,q,k) /|q+G|^2 )
        !
-       do jb2=Sx_lower_band,SC_bands
+       do jb2=Sx_lower_band,SC_bands(2)
          !      
          iscp%os(1)=jb2
          if (any(isc%is/=iscp%is).or.any(isc%os/=iscp%os)) then

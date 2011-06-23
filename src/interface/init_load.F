@@ -48,9 +48,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use com,           ONLY:more_io_path,com_path
  use functions,     ONLY:bose_E_cut
 #if defined _SC
- use SC,            ONLY:SC_bands,SC_iterations,SC_potential,SC_lw_band,&
+ use SC,            ONLY:SC_bands,SC_iterations,SC_potential,&
 &                        SC_rho_threshold,SC_cycle_mixing,OEP_approx
- use collisions_IO, ONLY:COLLISIONS_cutoff
+ use collisions_IO, ONLY:COLLISIONS_cutoff,COLLISIONS_path
  use collisions_CACHE, ONLY:COLLISIONS_cache_size
 #endif
 #if defined _RT
@@ -131,9 +131,9 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
 #if defined _SC 
  call it('r',defs,'scpot',   '[R] Self-Consistent potentials') 
- call it('r',defs,'collisions_IO',   '[R] Use or eval(RT only) the extended Collisions')
 #endif
 #if defined _RT
+ call it('r',defs,'collisions_IO',   '[R] Eval the extended Collisions')
  call it('r',defs,'negf',            '[R] Real-Time dynamics') 
 #endif
 #if defined _MAGNETIC
@@ -279,7 +279,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'PhLifeTime',   '[RT] Phase Relaxation Time',Phase_LifeTime,unit=Time_unit)
  call it('f',defs,'RTfreezeH', '[RT] Hartree not updated during RT')
  call it('f',defs,'RTfreezeXC','[RT] XC potential/self-energy not updated during RT')
- call it('f',defs,'RTBSEOnly','[RT] Simulate BSE only without include single particle effects')
  !
  ! Other parameters of RT (to be switched on using the verbosity)
  !
@@ -388,12 +387,12 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'Gauge',     '[Xd,RT] Gauge type (lenght|velocity)',global_gauge,verb_level=V_real_time)
  call it(defs,'SCBands',   '[SC] Bands',SC_bands)
- call it(defs,'SClwBand',  '[SC] Lowest Band',SC_lw_band,verb_level=V_sc)
  call it(defs,'SCmixing',  '[SC] SC Cycle Mixing (< 1.)',SC_cycle_mixing,verb_level=V_sc)
  call it(defs,'Potential', '[SC] SC Potential',SC_potential,protect=.FALSE.)
  call it(defs,'BandMix',   '[SC] Band mixing',SC_band_mixing)
  call it(defs,'EXXCut',    '[SC,RT] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
  call it(defs,'CollCache', '[SC,RT] Cache[Gb] for collisions (negative value = automatic)',COLLISIONS_cache_size,verb_level=V_sc)
+ call it(defs,'CollPath',  '[SC,RT] Path to the collisions databases',COLLISIONS_path)
  call it('f',defs,'OEPItSolver','[SC] Iterative solution instead of inversion of OEP')
  call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)
 #endif

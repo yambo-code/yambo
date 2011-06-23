@@ -41,7 +41,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  use FFT_m,          ONLY:fft_size
  use wave_func,      ONLY:WF_load,WF_free
  use global_XC,      ONLY:SC_HF,SC_COHSEX,SC_HF
- use collisions_IO,  ONLY:V_kind  
+ use collisions_IO,  ONLY:V_kind
  !
  implicit none
  type(bz_samp)::Xk
@@ -52,12 +52,8 @@ subroutine SC_start_and_restart(X,E,Xk)
  !
  integer                 :: ID(4),io_E,io_V,io_WF
  character(schlen)       :: ch,ch1
- integer, external       :: io_SC_components,io_COLLISIONS
+ integer, external       :: io_SC_components
  !
- ! Extended collisions
- ! 
- integer                 :: io_COLLISIONS_err(2)
- ! 
  ! Parsering
  !============
  !
@@ -92,9 +88,9 @@ subroutine SC_start_and_restart(X,E,Xk)
  ! Reference energies & Fermi Level
  !==================================
  !
- allocate(E_bare(SC_bands,nkibz,n_sp_pol))
+ allocate(E_bare(SC_bands(2),nkibz,n_sp_pol))
  call mem_est("E_bare ",(/size(E_bare)/))
- E_bare=E%E(:SC_bands,:,:)
+ E_bare=E%E(:SC_bands(2),:,:)
  E_bare_Ef=E%Efermi(1)
  !
  ! Perform a first I/O to check which DBs are present. In this VERIFY call
@@ -209,7 +205,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  ! WF Loading
  !============
  !
- call WF_load(WF_G_max,WF_Go_indx,(/1,max(SC_bands,E%nbm)/),(/1,nkibz/),title='-SC')
+ call WF_load(WF_G_max,WF_Go_indx,(/1,max(SC_bands(2),E%nbm)/),(/1,nkibz/),title='-SC')
  !
  ! Check FFT size to be consistent with local V in NSC shot
  !       --------
@@ -226,19 +222,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  ! Checking extended COLLISIONS
  !==============================
  !
- if(l_collisions_IO) then
-   !
-   V_kind=SC_HF
-   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID(1))
-   io_COLLISIONS_err(1)=io_COLLISIONS(0,ID(1))
-   V_kind=SC_COHSEX
-   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID(1))
-   io_COLLISIONS_err(2)=io_COLLISIONS(0,ID(1))
-   !
-   if (l_sc_hf)     l_collisions_IO=io_COLLISIONS_err(1)==0
-   if (l_sc_cohsex) l_collisions_IO=all(io_COLLISIONS_err==0) 
-   !
- endif
+ call COLLISIONS_IO_load(.TRUE.)
  !
  if (l_collisions_IO) call msg('s' ,'[SC] Extented collisions I/O Used')
  call msg('r' ,'[SC] Extented collisions I/O          :',l_collisions_IO)

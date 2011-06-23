@@ -63,8 +63,11 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  !I/O
  !
- integer :: ID,io_err
+ integer :: ID,io_err(2)
  integer, external :: io_DIPOLES
+#if defined _SC 
+ integer, external :: io_P_and_P2
+#endif
  !
 #if !defined _RAS
  if (allocated(DIP_q_dot_iR)) return
@@ -87,25 +90,22 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  Dipole_uses_shifted_grids=trim(grid_path)/='none'
  !
-#if defined _SC 
- !
- ! GAUGE switch
- !==============
- !
- ! velocity imposed in _SC (imposed if non-local potentials)
- !
-! if(trim(gauge_type)/='velocity'.and.trim(gauge_type)/='length'.and.&
- !
-#endif
- !
  ! Check first if ostnts DB is already done
  !
  X%ngostnts=wf_ng
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
- io_err=io_DIPOLES(X,Xen,ID)
+ io_err(1)=io_DIPOLES(X,Xen,ID)
  !
- if (io_err.ne.0) then
+ io_err(2)=0
+#if defined _SC 
+ !
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
+ io_err(2)=io_P_and_P2(X,Xen,ID)
+ !
+#endif
+ !
+ if (any(io_err/=0)) then
    !
    ! OptGrad allocation...
    !
@@ -178,7 +178,12 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    call WF_free()
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
-   io_err=io_DIPOLES(X,Xen,ID)
+   io_err(1)=io_DIPOLES(X,Xen,ID)
+   !
+#if defined _SC 
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
+   io_err(2)=io_P_and_P2(X,Xen,ID)
+#endif
    !
  end if
  !

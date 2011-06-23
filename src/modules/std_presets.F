@@ -81,8 +81,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND 
 #if defined _SC
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,&
-&                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,SC_lw_band
- use collisions_IO,    ONLY:n_collisions,COLLISIONS_cutoff
+&                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB
+ use collisions_IO,    ONLY:n_collisions,COLLISIONS_cutoff,COLLISIONS_path
  use collisions_CACHE, ONLY:COLLISIONS_cache_size
 #endif
 #if defined _RT
@@ -423,7 +423,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  SC_cycle_mixing=0.5
  SC_rho_threshold=1.E-5
  SC_potential='none'
- SC_lw_band=1
  OEP_approx='n'
  compatible_SC_DB=.FALSE.
  found_SC_DB=.FALSE.
@@ -432,6 +431,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  ! COLLISIONS I/O
  !
  n_collisions=0
+ COLLISIONS_path=" "
  COLLISIONS_cache_size=-1.0
  COLLISIONS_cutoff=0.0005
  !

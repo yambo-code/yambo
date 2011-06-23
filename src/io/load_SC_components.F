@@ -83,7 +83,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,&
      io_err=io_SC_components('V',E_dummy,ID)
      if (io_err==0.and.ik>0) then
        if (ik==1) then
-         allocate(H_nl_sc(SC_bands,SC_bands,n_sp_pol))
+         allocate(H_nl_sc(SC_bands(2),SC_bands(2),n_sp_pol))
          call mem_est("H_nl_sc",(/size(H_nl_sc)/))
        endif
        do ip=1,ik
@@ -96,7 +96,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,&
    case("WF")
      io_err=io_SC_components('WF',E_dummy,ID)
      if (io_err==0) then
-       allocate(SC_R(SC_bands,SC_bands,nkibz,n_sp_pol))
+       allocate(SC_R(SC_bands(2),SC_bands(2),nkibz,n_sp_pol))
        call mem_est("SC_R",(/size(SC_R)/))
        do ip=1,nkibz
          call io_control(ACTION=RD_CL_IF_END,SEC=(/ip+1/),ID=ID)
@@ -125,7 +125,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,&
  found_SC_DB      = .not.(io_err==IO_NO_DATABASE)
  compatible_SC_DB = io_err == 0
  !
- if (what=="check_WF_DB")  compatible_SC_DB = n_bands<= SC_bands
+ if (what=="check_WF_DB")  compatible_SC_DB = n_bands<= SC_bands(2)
  !
  if (io_err==0.and.present(kind)) then
    kind=SC_kind

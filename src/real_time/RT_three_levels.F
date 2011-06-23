@@ -36,7 +36,7 @@ subroutine RT_three_levels(G_lesser,it)
  implicit none
  !
  integer,     intent(in)   :: it
- complex(SP), intent(in)   :: G_lesser(SC_bands,SC_bands,QP_nk) 
+ complex(SP), intent(in)   :: G_lesser(SC_bands(2),SC_bands(2),QP_nk) 
  !
  ! work space
  !

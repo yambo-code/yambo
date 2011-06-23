@@ -41,7 +41,7 @@ subroutine QP_state_table_setup(en)
  use electrons,     ONLY:levels,n_sp_pol
  use parser_m,      ONLY:parser
 #if defined _SC
- use SC,            ONLY:SC_lw_band
+ use SC,            ONLY:SC_bands
 #endif
  implicit none
  type(levels)::en
@@ -214,7 +214,7 @@ subroutine QP_state_table_setup(en)
          if (i2+i3>QP_nb.or.i2+i3<1) cycle
          !
 #if defined _SC
-         if(i2<SC_lw_band) cycle
+         if(i2<SC_bands(1)) cycle
 #endif
          !
          QP_n_states=QP_n_states+1

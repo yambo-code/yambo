@@ -62,17 +62,17 @@ recursive subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,Xen,k,q,Integr
  type(bz_samp),        intent(in) :: k,q
  type(levels),         intent(in) :: Xen
  real(SP),             intent(in) :: T_step,Time
- complex(SP),          intent(in) :: G_old(SC_bands,SC_bands,k%nibz)
- complex(SP),       intent(inout) :: G_new(SC_bands,SC_bands,k%nibz)
+ complex(SP),          intent(in) :: G_old(SC_bands(2),SC_bands(2),k%nibz)
+ complex(SP),       intent(inout) :: G_new(SC_bands(2),SC_bands(2),k%nibz)
  type(gauge_field),    intent(in) :: A_old
  type(gauge_field), intent(inout) :: A_new
  ! 
  ! Work Space
  !
- complex(SP) :: TmpMatrix(SC_bands,SC_bands)
+ complex(SP) :: TmpMatrix(SC_bands(2),SC_bands(2))
  integer     :: ik,i1,i2,SC_bands2_dot_nibz
  !
- SC_bands2_dot_nibz=SC_bands**2*k%nibz
+ SC_bands2_dot_nibz=SC_bands(2)**2*k%nibz
  !
  if(trim(Integrator)==EULER) then
    !
@@ -115,24 +115,24 @@ recursive subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,Xen,k,q,Integr
    !
    do ik=1,Xen%nk
      !
-     TmpMatrix(1:SC_bands,1:SC_bands)=SC_R(1:SC_bands,1:SC_bands,ik,1)
+     TmpMatrix(1:SC_bands(2),1:SC_bands(2))=SC_R(1:SC_bands(2),1:SC_bands(2),ik,1)
      !
-     call mat_dia_inv(DIAGO,USE_LK,TmpMatrix,E_real=Xen%E(:SC_bands,ik,1))
+     call mat_dia_inv(DIAGO,USE_LK,TmpMatrix,E_real=Xen%E(:SC_bands(2),ik,1))
      !
-     call H_rotate(TmpMatrix,G_new(1:SC_bands,1:SC_bands,ik),SC_bands,1)
+     call H_rotate(TmpMatrix,G_new(1:SC_bands(2),1:SC_bands(2),ik),SC_bands(2),1)
      !
-     forall(i1=1:SC_bands,i2=1:SC_bands)
+     forall(i1=1:SC_bands(2),i2=1:SC_bands(2))
        G_new(i1,i2,ik)=G_new(i1,i2,ik)*exp(-(0._SP,1._SP)*(Xen%E(i1,ik,1)-Xen%E(i2,ik,1))*T_step)
      end forall
      !
-     call H_rotate(TmpMatrix,G_new(1:SC_bands,1:SC_bands,ik),SC_bands,-1)
+     call H_rotate(TmpMatrix,G_new(1:SC_bands(2),1:SC_bands(2),ik),SC_bands(2),-1)
      !
      ! Symmetrization
      !
-     do i1=1,SC_bands
+     do i1=1,SC_bands(2)
        G_new(i1,i1,ik)=(0._SP,1._SP)*aimag(G_new(i1,i1,ik))
        !
-       do i2=i1+1,SC_bands
+       do i2=i1+1,SC_bands(2)
          G_new(i1,i2,ik)=(G_new(i1,i2,ik)-conjg(G_new(i2,i1,ik)))/2._SP
          G_new(i2,i1,ik)=-conjg(G_new(i1,i2,ik))
        enddo

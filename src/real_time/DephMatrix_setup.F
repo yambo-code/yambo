@@ -27,7 +27,7 @@ subroutine DephMatrix_setup()
  use memory_m,      ONLY:mem_est
  use electrons,     ONLY:levels
  use parser_m,      ONLY:parser
- use SC,            ONLY:SC_bands,SC_lw_band
+ use SC,            ONLY:SC_bands
  use QP_m,          ONLY:QP_nk
  use real_time,     ONLY:RT_Deph_Matrix,RT_ave_dephasing,RT_is_dumped
  implicit none
@@ -63,7 +63,7 @@ subroutine DephMatrix_setup()
    !
    RT_is_dumped=.true.
    !
-   allocate(RT_Deph_Matrix(SC_lw_band:SC_bands,SC_lw_band:SC_bands,QP_nk))
+   allocate(RT_Deph_Matrix(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk))
    call mem_est("DephMatrix",(/size(RT_Deph_Matrix)/))
    RT_Deph_Matrix=RT_ave_dephasing
    !
@@ -71,7 +71,7 @@ subroutine DephMatrix_setup()
      ib(1)=int(DephM_r_limits(i1,1))
      ib(2)=int(DephM_r_limits(i1,2))
      ik=int(DephM_r_limits(i1,3))
-     if(any(ib(:)>SC_bands).or.any(ib(:)<SC_lw_band)) &
+     if(any(ib(:)>SC_bands(2)).or.any(ib(:)<SC_bands(1))) &
 &                          call error("DephMatrix indexes out of the range! Wrong band assignment") 
      if(ik<=0.or.ik>QP_nk) call error("DephMatrix indexes out of the range! Wrong kpoint assignment") 
      RT_Deph_Matrix(ib(1),ib(2),ik)  =DephM_r_limits(i1,4)*FS2AUT

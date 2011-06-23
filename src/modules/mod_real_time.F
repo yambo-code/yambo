@@ -156,8 +156,8 @@ module real_time
  complex(SP), allocatable :: I1_lesser(:,:,:)
  complex(SP), allocatable :: I2_lesser(:,:,:)
  !
- real(SP),    allocatable :: rho_reference(:) ! reference density from SC_lw_band:SC_bands
- real(SP),    allocatable :: full_rho(:)      ! density of all bands from 1:SC_bands
+ real(SP),    allocatable :: rho_reference(:) ! reference density from SC_lw_band:SC_bands(2)
+ real(SP),    allocatable :: full_rho(:)      ! density of all bands from 1:SC_bands(2)
  !
  ! Integrator Variables
  !
@@ -210,9 +210,9 @@ module real_time
      use electrons,  ONLY:n_sp_pol
      use FFT_m,      ONLY:fft_size
      type(bz_samp), intent(in) :: k
-     complex(SP),   intent(in) :: G(SC_bands,SC_bands,QP_nk)
+     complex(SP),   intent(in) :: G(SC_bands(2),SC_bands(2),QP_nk)
      complex(SP),  intent(out) :: VALUE
-     complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands,SC_bands,QP_nk,n_sp_pol)
+     complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol)
      complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
      real(SP),        optional, intent(in) :: O_REAL(fft_size,n_sp_pol)
      logical,         optional, intent(in) :: TRANS
@@ -227,8 +227,8 @@ module real_time
      use X_m,        ONLY:X_t
      !
      type(X_t),      intent(inout)        :: X
-     complex(SP),    intent(inout)        :: G_input(SC_bands,SC_bands,QP_nk)
-     complex(SP),    intent(in)           :: SC_R(SC_bands,SC_bands,QP_nk,n_sp_pol)
+     complex(SP),    intent(inout)        :: G_input(SC_bands(2),SC_bands(2),QP_nk)
+     complex(SP),    intent(in)           :: SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol)
      type(bz_samp),  intent(in)           :: k,Xk
      type(levels),   intent(in)           :: Xen
      integer,        intent(in)           :: it
@@ -249,7 +249,7 @@ module real_time
      use drivers,        ONLY:l_sc_hf,l_HF_and_locXC,l_sc_contains_lda
      use memory_m,       ONLY:mem_est
      use SC,             ONLY:SC_bands,V_hartree_sc,local_V,SC_alloc,E_bare,rho_n, &
-&                             SC_xc_functional,SC_xc_functional,SC_lw_band
+&                             SC_xc_functional,SC_xc_functional
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
@@ -275,47 +275,47 @@ module real_time
      allocate(E_xc(fft_size))
      call mem_est('Exc',(/fft_size/),(/SP/))
      !
-     allocate(G_lesser(SC_bands,SC_bands,QP_nk))
+     allocate(G_lesser(SC_bands(2),SC_bands(2),QP_nk))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
      !
      if(l_RT_needs_XC0) then
        !
-       allocate(XC0_and_HARTREE0(SC_bands,SC_bands,QP_nk,n_sp_pol))
+       allocate(XC0_and_HARTREE0(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
        call mem_est("XC0_and_HARTREE0",(/size(XC0_and_HARTREE0)/),(/2*SP/))
        !
      endif
      !
-     allocate(SC_R(SC_bands,SC_bands,QP_nk,n_sp_pol))
+     allocate(SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
      call mem_est("SC_R",(/size(SC_R)/),(/2*SP/))
      !
-     allocate(I1_lesser(SC_bands,SC_bands,QP_nk))
+     allocate(I1_lesser(SC_bands(2),SC_bands(2),QP_nk))
      call mem_est("I1_lesser",(/size(I1_lesser)/),(/2*SP/))
      !
-     allocate(I2_lesser(SC_bands,SC_bands,QP_nk))
+     allocate(I2_lesser(SC_bands(2),SC_bands(2),QP_nk))
      call mem_est("I2_lesser",(/size(I2_lesser)/),(/2*SP/))
      !
-     allocate(G_lesser_previous(SC_bands,SC_bands,QP_nk))
+     allocate(G_lesser_previous(SC_bands(2),SC_bands(2),QP_nk))
      call mem_est("Gf_l_old",(/size(G_lesser_previous)/),(/2*SP/))
      !
-     allocate(G_lesser_reference(SC_bands,SC_bands,QP_nk))
+     allocate(G_lesser_reference(SC_bands(2),SC_bands(2),QP_nk))
      call mem_est("Gf_l_ref",(/size(G_lesser_reference)/),(/2*SP/))
      !
      allocate(rho_reference(fft_size))
      call mem_est("rho_reference",(/fft_size/),(/SP/))
      !
-     if(l_sc_contains_lda.and.SC_xc_functional/=0.and.SC_lw_band>1) then
+     if(l_sc_contains_lda.and.SC_xc_functional/=0.and.SC_bands(1)>1) then
        allocate(full_rho(fft_size))
        call mem_est("full_rho",(/fft_size/),(/SP/))
      endif
      !
      ! Reference energies
      !
-     allocate(E_bare(SC_bands,QP_nk,n_sp_pol))
+     allocate(E_bare(SC_bands(2),QP_nk,n_sp_pol))
      call mem_est("E_bare",(/size(E_bare)/))
-     E_bare=en%E(:SC_bands,:,:)
+     E_bare=en%E(:SC_bands(2),:,:)
      !
      if(l_RT_diagonalize) then
-       allocate(Occ_natural_orb(SC_bands,QP_nk))
+       allocate(Occ_natural_orb(SC_bands(2),QP_nk))
        call mem_est("Occ_natural",(/size(Occ_natural_orb)/))
      endif
      !

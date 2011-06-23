@@ -43,7 +43,7 @@ subroutine RT_TwoL_Polarization(E,k)
  if (i_Pump/=i_Probe) return
  !
  if (.not.allocated(Poles_2levels_save)) then
-   allocate(Poles_2levels_save(SC_bands,SC_bands,nkibz,4))
+   allocate(Poles_2levels_save(SC_bands(2),SC_bands(2),nkibz,4))
    call mem_est("Poles_2levels_save",(/size(Poles_2levels_save)/),(/2*SP/))
  endif
  !
@@ -53,7 +53,7 @@ subroutine RT_TwoL_Polarization(E,k)
  !
  do ik=1,nkibz
    do iv=1,E%nbm
-     do ic=E%nbf+1,SC_bands
+     do ic=E%nbf+1,SC_bands(2)
        !
        if (abs(E%E(iv,ik,1)-E%E(ic,ik,1))<=1.E-5_SP) cycle
        !

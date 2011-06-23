@@ -80,6 +80,7 @@ module IO_m
  logical :: io_resetable(max_io_units)
  logical :: io_netcdf_support(max_io_units)
  character(lchlen)          :: io_file(max_io_units)
+ character(lchlen)          :: io_folder(max_io_units)
  !
  ! Type & extension
  !
@@ -211,11 +212,6 @@ module IO_m
        return
      endif
      !
-     ! Keep the extension for the fragment-related procedures
-     !
-     if (len_trim(io_raw_extension(ID))==0) io_raw_extension(ID)=desc
-     io_extension(ID) =desc
-     !
      ! Build the file name
      !
      subfolder_=' '
@@ -254,6 +250,12 @@ module IO_m
        endif
        !
      endif
+     !
+     ! Keep the extension for the fragment-related procedures
+     !
+     if (len_trim(io_raw_extension(ID))==0) io_raw_extension(ID)=desc
+     io_extension(ID) =desc
+     io_folder(ID)    =trim(subfolder_)
      !
      ! Create Directories 
      !
@@ -497,6 +499,7 @@ module IO_m
      io_sec(ID,:)=0
      io_com(ID)=NONE
      io_file(ID)=' ' 
+     io_folder(ID)=' ' 
      io_raw_extension(ID)=' ' 
      io_extension(ID)=' ' 
      io_rec_pos(ID)=1

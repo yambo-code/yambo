@@ -184,7 +184,7 @@ integer function ioDB1(E,k,ID)
      QP_n_G_bands=(/1,E%nb/)
      BS_bands=(/1,E%nb/)
 #if defined _SC
-     SC_bands=E%nb
+     SC_bands=(/1,E%nb/)
 #endif
      !
      Tel=input_GS_Tel

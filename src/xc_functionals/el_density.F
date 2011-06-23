@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 D. De Fausti and the YAMBO team
+! Copyright (C) 2000-2010 F. De Fausti and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! This file is distributed under the terms of the GNU
@@ -63,7 +63,7 @@ subroutine el_density(en,Xk,rho,force_si)
   implicit none
   type(bz_samp)::Xk
 #if defined _RT
-  complex(SP), intent(in), optional :: G_lesser(SC_bands,SC_bands,Xk%nibz)
+  complex(SP), intent(in), optional :: G_lesser(SC_bands(2),SC_bands(2),Xk%nibz)
   integer,     intent(in) :: lowest_band
 #else
   type(levels) ::en       
@@ -86,7 +86,7 @@ subroutine el_density(en,Xk,rho,force_si)
   warn_done=.false.
   !
 #if defined _RT
-  iv_max=SC_bands
+  iv_max=SC_bands(2)
   iv_min=lowest_band
 #else
   iv_max=en%nbm
@@ -159,7 +159,7 @@ subroutine el_density(en,Xk,rho,force_si)
       !
       if (.not.px%element_2D(ik,i1)) cycle
       !
-      do i2=i1+1,SC_bands
+      do i2=i1+1,SC_bands(2)
         !      
         !
         ifft=wf_state(i1,ik,1)

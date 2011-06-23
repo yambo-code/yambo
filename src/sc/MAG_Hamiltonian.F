@@ -221,7 +221,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
  ! Parallel indexes
  !
  call pp_indexes_reset(px)
- call par_indexes(px,(/nkibz,SC_bands/))
+ call par_indexes(px,(/nkibz,SC_bands(2)/))
  call pp_redux_wait
  !==================================================
  !
@@ -238,17 +238,17 @@ subroutine MAG_Hamiltonian(initial_check_only)
  do ik=1,nkibz   
    ! 
    if( any(px%element_2D(ik,:)) ) then
-     if (MAG_landau) call WF_derivative((/1,SC_bands/),(/ik,ik/),do_derivatives)
-     call WF_load(0,1,(/1,SC_bands/),(/ik,ik/),title='-MAG',impose_free_and_alloc=.TRUE.)
+     if (MAG_landau) call WF_derivative((/1,SC_bands(2)/),(/ik,ik/),do_derivatives)
+     call WF_load(0,1,(/1,SC_bands(2)/),(/ik,ik/),title='-MAG',impose_free_and_alloc=.TRUE.)
      if(timing_init) call live_timing('MAG-Hamiltonian',px%n_of_elements(myid+1))
      timing_init=.false.
    endif
    !
-   do ib=1,SC_bands
+   do ib=1,SC_bands(2)
      !
      if (.not.px%element_2D(ik,ib)) cycle
      !
-     do ibp=1,SC_bands
+     do ibp=1,SC_bands(2)
        do i_spin=1,n_sp_pol   
          ifft=wf_state(ib,ik,i_spin)
          jfft=wf_state(ibp,ik,i_spin)
@@ -326,7 +326,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
        case(1)
          allocate(H_tmp(fft_size))
          call mem_est("H_tmp",(/fft_size/)*2)
-         allocate(Ho(SC_bands,SC_bands,nkibz,n_sp_pol))
+         allocate(Ho(SC_bands(2),SC_bands(2),nkibz,n_sp_pol))
          call mem_est("Ho",(/size(Ho)/),(/2*SP/))
          Ho=(0.,0.)
          H_tmp=(0.,0.)

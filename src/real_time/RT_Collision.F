@@ -35,13 +35,13 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  use electrons,      ONLY:levels
  use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
- use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R,SC_lw_band
+ use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
  use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_with_fields,QP_LifeTime,full_rho,           &
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
-&                         G_lesser_reference,l_RT_needs_XC0,Phase_LifeTime,NE_Hxc_jumps,       &
+&                         G_lesser_reference,Phase_LifeTime,NE_Hxc_jumps,       &
 &                         RT_is_dumped,l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start, &
-&                         RT_Deph_Matrix
+&                         RT_Deph_Matrix,l_RT_needs_XC0
 #if defined _TWO_LEVELS
  use real_time,      ONLY:tau_diag,tau_offdiag,l_3levels
 #endif
@@ -59,7 +59,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  type(levels),  intent(in)    :: Xen
  type(bz_samp), intent(in)    :: k,q
  real(SP),      intent(in)    :: Time
- complex(SP),   intent(in)    :: G_input(SC_bands,SC_bands,QP_nk)
+ complex(SP),   intent(in)    :: G_input(SC_bands(2),SC_bands(2),QP_nk)
  type(gauge_field), intent(in):: A_input
  !
  ! Work Space
@@ -77,8 +77,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  !
  if (it_now==it_start.or.mod(it_now-it_start+1,NE_Hxc_jumps)==0) then
    !
-   if(.not.Hfrozen.or.XC_needs_density.or..not.NE_dynamics) &
-&    call el_density(G_input,k,rho_n,SC_lw_band,.false.)
+   if(.not.Hfrozen.or.XC_needs_density.or..not.NE_dynamics) call el_density(G_input,k,rho_n,SC_bands(1),.false.)
    !
    ! The Hartree term is written as
    !
@@ -86,7 +85,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !
    ! where V_hartree(rho_0) is stored in XC0_and_HARTREE0
    !
-   if(.not.Hfrozen.or..not.NE_dynamics) call V_Hartree(rho_n-rho_reference,V_hartree_sc)
+   if (.not.Hfrozen.or..not.NE_dynamics) call V_Hartree(rho_n-rho_reference,V_hartree_sc)
    !
    if(.not.XCfrozen.or..not.NE_dynamics) then
      !
@@ -94,7 +93,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
        !
        ! Reconstruct the full density
        !
-       if(SC_lw_band>1) rho_n=full_rho+rho_n-rho_reference
+       if (SC_bands(1)>1) rho_n=full_rho+rho_n-rho_reference
        !
        call IO_and_Messaging_switch("-report -log -io_in -io_out")
        call XC_potential_driver(Xen,k,WF_KIND,WF_xc_functional,1)
@@ -103,7 +102,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
        !
      endif
      !
-     ! The exchange/cohsex term is writted as Sigma(G - G_0) - Sigma(G)
+     ! The exchange/cohsex term is written as Sigma(G - G_0) - Sigma(G)
      ! NOTICE THAT: this approximation is valid only for linear self-energies 
      !              in G_lesser as exchange or COHSEX(with W fixed) 
      !
@@ -131,7 +130,9 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    ! Non-local XC potentials (like CHOSEX)
    !=========================
    if(.not.local_V.and..not.XCfrozen) then
+     ! HF
      call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 
+     ! CHOSEX
      if (l_sc_cohsex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc) 
    endif
    !
@@ -142,7 +143,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !
    if(Thermal_steps/=0.and.SwitchOnTime/=0.0.and..not.NE_dynamics) then 
      !      
-     call V_by_V_plus_V(SC_bands,(1._SP,0._SP),-XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1),H_nl_sc(1:SC_bands,1:SC_bands,1))
+     call V_by_V_plus_V(SC_bands(2),(1._SP,0._SP),-XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1),H_nl_sc(1:SC_bands(2),1:SC_bands(2),1))
      !
      H_nl_sc=H_nl_sc*(1._SP+tanh((Time+(RT_step*real(Thermal_steps))/2._SP)/ &
 &            (RT_step*real(Thermal_steps))/SwitchOnTime))/2._SP
@@ -151,30 +152,30 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !
    ! The bare, frozed VHxc 
    !=======================
-   if(l_RT_needs_XC0) call V_by_V_plus_V(SC_bands,(1._SP,0._SP),&
-&                                        XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1),H_nl_sc(1:SC_bands,1:SC_bands,1))
+   if (l_RT_needs_XC0) call V_by_V_plus_V(SC_bands(2),(1._SP,0._SP),&
+&                                         XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1),H_nl_sc(1:SC_bands(2),1:SC_bands(2),1))
    !
-   ! Local XC potentials (like CHOSEX) and Hartree
+   ! Local XC potentials 
    !=====================
    if(.not.l_NE_simulate_IP) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,wf)
    !  
    ! Add Ho = T+V_ion
    !==================
-   call V_by_V_plus_V(SC_bands,(1._SP,0._SP),Ho(1:SC_bands,1:SC_bands,ik,1),H_nl_sc(1:SC_bands,1:SC_bands,1))
+   call V_by_V_plus_V(SC_bands(2),(1._SP,0._SP),Ho(1:SC_bands(2),1:SC_bands(2),ik,1),H_nl_sc(1:SC_bands(2),1:SC_bands(2),1))
    !
    ! And the gauge field
    !=====================
    if(l_NE_with_fields.and.NE_dynamics) call RT_apply_field(ik,H_nl_sc,A_input)
    !
-   if(allocated(SC_R))  SC_R(1:SC_bands,1:SC_bands,ik,1)=H_nl_sc(1:SC_bands,1:SC_bands,1)
+   if(allocated(SC_R))  SC_R(1:SC_bands(2),1:SC_bands(2),ik,1)=H_nl_sc(1:SC_bands(2),1:SC_bands(2),1)
    !
    ! Now I1 and I2 
    !===============
    !
-   call M_by_M('n','n',SC_bands,H_nl_sc(1:SC_bands,1:SC_bands,1), & 
-&              G_input(1:SC_bands,1:SC_bands,ik),I1_lesser(1:SC_bands,1:SC_bands,ik))
-   call M_by_M('n','n',SC_bands,G_input(1:SC_bands,1:SC_bands,ik),&
-&              H_nl_sc(1:SC_bands,1:SC_bands,1),I2_lesser(1:SC_bands,1:SC_bands,ik))
+   call M_by_M('n','n',SC_bands(2),H_nl_sc(1:SC_bands(2),1:SC_bands(2),1), & 
+&              G_input(1:SC_bands(2),1:SC_bands(2),ik),I1_lesser(1:SC_bands(2),1:SC_bands(2),ik))
+   call M_by_M('n','n',SC_bands(2),G_input(1:SC_bands(2),1:SC_bands(2),ik),&
+&              H_nl_sc(1:SC_bands(2),1:SC_bands(2),1),I2_lesser(1:SC_bands(2),1:SC_bands(2),ik))
    !
    ! Damping
    !=========
@@ -212,14 +213,14 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
 #endif
      !
      if ( QP_LifeTime > 1.E-5_SP) then
-       forall(i1=SC_lw_band:SC_bands) &
+       forall(i1=SC_bands(1):SC_bands(2)) &
          I1_lesser(i1,i1,ik)=I1_lesser(i1,i1,ik)-cI/QP_LifeTime*(G_input(i1,i1,ik)-G_lesser_reference(i1,i1,ik))
      endif
      !
      if(Phase_LifeTime > 1.E-5_SP) then
        !
-       do i1=SC_lw_band,SC_bands
-         do i2=i1+1,SC_bands
+       do i1=SC_bands(1),SC_bands(2)
+         do i2=i1+1,SC_bands(2)
            I1_lesser(i1,i2,ik)=I1_lesser(i1,i2,ik)-cI/Phase_LifeTime*(G_input(i1,i2,ik)-G_lesser_reference(i1,i2,ik))
            I1_lesser(i2,i1,ik)=I1_lesser(i2,i1,ik)-cI/Phase_LifeTime*(G_input(i2,i1,ik)-G_lesser_reference(i2,i1,ik))
          enddo 
@@ -228,16 +229,16 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
      endif
      !
      if(allocated(RT_Deph_Matrix)) then
-        do i1=SC_lw_band,SC_bands
-          do i2=SC_lw_band,SC_bands
+        do i1=SC_bands(1),SC_bands(2)
+          do i2=SC_bands(1),SC_bands(2)
             I1_lesser(i1,i2,:)=I1_lesser(i1,i2,:)-cI/RT_Deph_Matrix(i1,i2,:)*(G_input(i1,i2,:)-G_lesser_reference(i1,i2,:))
           enddo
         enddo
      endif
      !
      if(associated(Xen%W)) then
-        do i1=SC_lw_band,SC_bands
-          do i2=i1+1,SC_bands
+        do i1=SC_bands(1),SC_bands(2)
+          do i2=i1+1,SC_bands(2)
             I1_lesser(i1,i2,ik)=I1_lesser(i1,i2,ik)-cI*(Xen%W(i1,ik,1)-Xen%W(i2,ik,1)) &
 &                   *(G_input(i1,i2,ik)-G_lesser_reference(i1,i2,ik))*HARTREE/HBAR_eVfs/FS2AUT
             I1_lesser(i2,i1,ik)=I1_lesser(i2,i1,ik)+cI*(Xen%W(i2,ik,1)-Xen%W(i1,ik,1)) &
@@ -252,18 +253,18 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !
    endif
    !
-   if(SC_lw_band>1) then
+   if(SC_bands(1)>1) then
      !
      ! The I1 and I2 matrices have the structure
      !
-     ! | 1:SC_lw_band-1    SC_lw_bnd:SC_bands  
+     ! | 1:SC_lw_band-1    SC_lw_bnd:SC_bands(2)  
      ! |   0                   0           | 1:SC_lw_band-1
-     ! |   0                   =/0         | SC_lw_band:SC_bands
+     ! |   0                   =/0         | SC_lw_band:SC_bands(2)
      !
-     I1_lesser(1:SC_lw_band-1,1:SC_bands     ,ik)=(0._SP,0._SP)
-     I1_lesser(1:SC_bands    ,1:SC_lw_band-1 ,ik)=(0._SP,0._SP)
-     I2_lesser(1:SC_lw_band-1,1:SC_bands     ,ik)=(0._SP,0._SP)
-     I2_lesser(1:SC_bands    ,1:SC_lw_band-1 ,ik)=(0._SP,0._SP)
+     I1_lesser(1:SC_bands(1)-1,1:SC_bands(2)     ,ik)=(0._SP,0._SP)
+     I1_lesser(1:SC_bands(2)    ,1:SC_bands(1)-1 ,ik)=(0._SP,0._SP)
+     I2_lesser(1:SC_bands(1)-1,1:SC_bands(2)     ,ik)=(0._SP,0._SP)
+     I2_lesser(1:SC_bands(2)    ,1:SC_bands(1)-1 ,ik)=(0._SP,0._SP)
    endif
    !
  enddo  !---- loop on k-points

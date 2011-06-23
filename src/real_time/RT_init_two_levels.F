@@ -42,7 +42,7 @@ subroutine RT_init_two_levels(Xen)
  !
  Wo    =Xen%E(2,1,1)-Xen%E(1,1,1)
  if(l_3levels) then
-   if(SC_bands/=3) call error(" Error set SCBands=3 !! ")
+   if(SC_bands(2)/=3) call error(" Error set SCBands=3 !! ")
    W1=Xen%E(3,1,1)-Xen%E(1,1,1)
    if(nel/=2) call error(" Error set Nelectro=2 !! ")
  endif

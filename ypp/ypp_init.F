@@ -436,7 +436,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (l_RT_X) then 
    call initactivate(1,"Xorder ProbeKey PumpKey EnRngeRt ETStpsRt")
-   call initactivate(1,"TmRngeRt TmJumps DampMode DampFactor FrMinDamp RmAsymLim UseFFT")
+   call initactivate(1,"TmRngeRt TmJumps DampMode DampFactor SkipJP_IO FrMinDamp RmAsymLim UseFFT")
  endif
  ! 
 #endif

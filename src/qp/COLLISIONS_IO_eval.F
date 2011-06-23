@@ -27,11 +27,9 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:i_time_rev
- use QP_m,          ONLY:QP_nb,QP_n_states,QP_nk
+ use QP_m,          ONLY:QP_nb,QP_n_states,QP_nk,COHSEX_use_empties,QP_n_G_bands,QP_t
  use wave_func,     ONLY:WF_free
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
- use SC,            ONLY:SC_bands,SC_lw_band
- use QP_m,          ONLY:QP_nb,COHSEX_use_empties,QP_n_G_bands,QP_t
  use SC,            ONLY:SC_bands
  use global_XC,     ONLY:SC_HF,SC_COHSEX
  use collisions_IO, ONLY:V_kind,collisions_IO_alloc,collisions_IO_free,TEMP_COLLISIONS_v
@@ -49,8 +47,7 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  !
  ! WorkSpace
  !
- integer, external ::eval_G_minus_G
- integer, external ::io_COLLISIONS
+ integer, external ::eval_G_minus_G,io_COLLISIONS
  integer           ::ID
  type(QP_t)        ::qp_dummy
  character(schlen) ::ch
@@ -62,13 +59,12 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  !
  ! When storing all collisions on file I need all SC bands
  !
- QP_nb=SC_bands
+ QP_nb=SC_bands(2)
  call QP_state_table_setup(E)
  !
  ! Check for the Time Reversal Symmetry
  !
- if(i_time_rev==1) &
-&  call error(" COLLISIONS not compatible with Time Reversal Symmetry! ")
+ if(i_time_rev==1) call error(" COLLISIONS not compatible with Time Reversal Symmetry! ")
  !
  ! No DB => EVAL
  !===============
@@ -112,11 +108,11 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
    if (io_COLLISIONS(0,ID)/=0) then
      !
      X(2)%ng=eval_G_minus_G(X(2)%ng,0)
-     QP_n_G_bands(2)=SC_bands
+     QP_n_G_bands(2)=SC_bands(2)
      COHSEX_use_empties=.TRUE.
      !
      if (.not.allocated(TEMP_COLLISIONS_v)) then
-       allocate(TEMP_COLLISIONS_v(SC_lw_band:QP_nb,SC_lw_band:QP_nb,QP_nk))
+       allocate(TEMP_COLLISIONS_v(SC_bands(1):QP_nb,SC_bands(1):QP_nb,QP_nk))
        call mem_est("TEMP_COLLISIONS_v",(/size(TEMP_COLLISIONS_v)/),(/2*SP/))
        call collisions_IO_alloc()
      endif
@@ -152,7 +148,7 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
      real(SP)     :: disk_space
      character(*) :: what
      !
-     disk_space=real(QP_n_states*(QP_nb-SC_lw_band+1)**2*QP_nk*SP)/1.E9
+     disk_space=real(QP_n_states*(QP_nb-SC_bands(1)+1)**2*QP_nk*SP)/1.E9
      if (disk_space > 0.05) call msg('s','[COLLISIONS I/O] '//what//' Disk space required [Gb]:',disk_space)  
      !
    end subroutine

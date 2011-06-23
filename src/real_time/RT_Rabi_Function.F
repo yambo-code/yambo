@@ -61,7 +61,7 @@ subroutine RT_Rabi_Function(E,Field)
  !
  do ik=1,nkibz
    do iv=1,E%nbm
-     do ic=E%nbf+1,SC_bands
+     do ic=E%nbf+1,SC_bands(2)
        !
        if (abs(E%E(iv,ik,1)-E%E(ic,ik,1))<=1.E-5_SP) cycle
        !
@@ -83,10 +83,10 @@ subroutine RT_Rabi_Function(E,Field)
  !
  call set_real_printed_length(g_length=15)
  !
- call msg( 'sr', '[RT] I when Rabi=1meV           [kWLm2]:',I_ref(1)/W2Au)
- call msg( 'sr', '[RT] I when Rabi=10meV          [kWLm2]:',I_ref(2)/W2Au)
- call msg( 'sr', '[RT] I when Rabi=100meV         [kWLm2]:',I_ref(3)/W2Au)
- call msg( 'sr', '[RT] I when Rabi=1eV            [kWLm2]:',I_ref(4)/W2Au)
+ call msg( 'r', '[RT] I when Rabi=1meV           [kWLm2]:',I_ref(1)/W2Au)
+ call msg( 'r', '[RT] I when Rabi=10meV          [kWLm2]:',I_ref(2)/W2Au)
+ call msg( 'r', '[RT] I when Rabi=100meV         [kWLm2]:',I_ref(3)/W2Au)
+ call msg( 'r', '[RT] I when Rabi=1eV            [kWLm2]:',I_ref(4)/W2Au)
  !
  call set_real_printed_length()
  !

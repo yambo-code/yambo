@@ -48,8 +48,8 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
 &                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,RT_is_dumped
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,       &
-&                         rho_convergence,H_rotate,local_V,V_hartree_sc,SC_lw_band, &
-&                         E_bare,V_xc_sc,rho_n,Ho,SC_xc_functional,SC_lw_band
+&                         rho_convergence,H_rotate,local_V,V_hartree_sc,&
+&                         E_bare,V_xc_sc,rho_n,Ho,SC_xc_functional
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE
  use X_m,            ONLY:X_t
  use global_XC,      ONLY:WF_kind,WF_xc_functional
@@ -90,14 +90,14 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  RT_P_2levels       =(0._SP,0._SP)
  RT_ind_J           =(0._SP,0._SP)
  ! 
- forall(i1=1:SC_bands,ik=1:Xen%nk)
+ forall(i1=1:SC_bands(2),ik=1:Xen%nk)
    G_lesser(i1,i1,ik)=(0._SP,1._SP)*Xen%f(i1,ik,1)
  end forall
  !
  ! Build Ho and save initial energies 
  !==========
  !
- E_bare=Xen%E(:SC_bands,:,:)
+ E_bare=Xen%E(:SC_bands(2),:,:)
  !
  call SC_bare_Hamiltonian(Xen,Xk,k)
  !
@@ -126,8 +126,8 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  !
  if(SC_DB_present) then
    !
-   ! RESTART FROM SC
-   !=================
+   ! BEGIN RESTART FROM SC
+   !=======================
    !
    call msg('snr','[RT] Restart from a Self-Consistent Calculation ')
    call msg('nr' ,'[RT] Found   accuracy on density      :',rho_convergence)
@@ -139,10 +139,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    if(.not.COHSEX_use_empties) &
 &    call error(" Set UseEbands=.true. in self-consistent GW to be full compatible with RT!! ")
    !
-   if(l_NE_simulate_BSE) then
-     l_NE_simulate_BSE=.true.
-     call error(" Real-time BSE not compatible with SC restart yet! ")
-   endif
+   if(l_NE_simulate_BSE) call error(" Real-time BSE not compatible with SC restart yet! ")
    !
    !  I only need SC_R than I can reconstruct G_lesser(:,:,:)
    !  rotating the non-integrating G_lesser
@@ -159,7 +156,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    ! G_lesser(i1,i1,ik)=(0.,1)*en%f(i1,ik)
    !
    do ik=1,QP_nk
-     call H_rotate(SC_R(1:SC_bands,1:SC_bands,ik,1),G_lesser(1:SC_bands,1:SC_bands,ik),SC_bands,-1)
+     call H_rotate(SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),G_lesser(1:SC_bands(2),1:SC_bands(2),ik),SC_bands(2),-1)
    enddo
    !
    if (Hfrozen) call el_density(G_lesser,k,rho_n,1,.false.)
@@ -181,18 +178,18 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
      !
      do ik=1,QP_nk
        if (local_V.and..not.l_NE_simulate_Irredux) then
-         call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf)
+         call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),wf)
        elseif(.not.l_NE_simulate_Irredux) then
          call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(3))
          io_V=io_SC_components('V',Xen,ID(3))
-         XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol)=H_nl_sc(1:SC_bands,1:SC_bands,1:n_sp_pol)
+         XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol)=H_nl_sc(1:SC_bands(2),1:SC_bands(2),1:n_sp_pol)
        endif
        !
        ! If IP or Irreduxible the hartree term is fixed and stored in XC0_and_HARTREE0
        ! if I simulate BSE I have to remove the self-energy sigma(G_0)
        !
        if(l_NE_simulate_IP.or.l_NE_simulate_Irredux.or.l_NE_simulate_BSE) &
-&         call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf) 
+&         call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),wf) 
      enddo
      !
    endif
@@ -206,6 +203,9 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    V_xc_sc=(0._SP)
    if(l_NE_simulate_IP.or.l_NE_simulate_Irredux) V_hartree_sc=(0._SP) 
    !
+   ! END RESTART FROM SC
+   !=====================
+   !
  endif
  !
  if(.not.SC_DB_present.and.l_RT_needs_XC0) then
@@ -213,44 +213,73 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    ! Build Hartree and XCo 
    !=======================
    !
+   ! Note that 
+   !  1. l_RT_needs_XC0 is .TRUE. only when we are starting a NE loop
+   !  2. V_hartree and rho_full have been already calculated in SC_bare_Hamiltonian
+   !
+   ! The time evolution is done updating only the contribution
+   ! coming from the bands above SC_lw_band in the density.
+   ! Therefore we calculate:
+   !
+   ! (1) a density containing ALL levels (full_rho)
+   ! (2) a density containing only levels above SC_lw_band (rho_reference)
+   !
+   ! in RT_Collision 
+   !   V_h/xc[n]=V_h/xc[full_rho]+V_h/xc[rho-rho_reference]
+   !
+   ! When SC_lw_band=1 full_rho=rho_reference
+   !
+   ! The first term is stored here in XC0_and_HARTREE0
+   !
    XC0_and_HARTREE0=(0._SP,0._SP)
+   !
+   ! Rho_reference. Note that altough rh_n has been already calcualted 
+   ! in sc_bare_Hamiltonian I need to recalculate it here when SC_lw_band>1
+   ! as it it is also used in XC_potential_driver
    ! 
-   call el_density(G_lesser,Xk,rho_n,SC_lw_band,.false.)
+   call el_density(G_lesser,Xk,rho_n,SC_bands(1),.false.)
+   rho_reference=rho_n
    !
-   ! During Thermalization rho_reference is always zero
+   if (allocated(full_rho)) then
+     call el_density(G_lesser,Xk,rho_n,1,.false.)
+     full_rho=rho_n
+   endif
    !
-   if(Thermal_steps==0) rho_reference=rho_n
+   ! Calculate V_xc
    !
    if(l_sc_contains_lda.and.SC_xc_functional/=0) then
-     !
-     ! Calculate the full density
-     !
-     call el_density(G_lesser,Xk,rho_n,1,.false.)
-     !
-     if(SC_lw_band>1) full_rho=rho_n
-     !
      call IO_and_Messaging_switch("-report -log")
      call XC_potential_driver(Xen,Xk,WF_KIND,WF_xc_functional,1)
      call IO_and_Messaging_switch("+report +log")
-     !
    endif
    !
-   ! In the IP or RPA case XC0_and_HARTREE0  contains <mk | Vxc(rho_0) + Vhartree(rho_0) | nk>
+   ! In all cases where Vxc is frozen and we are not doing BSE
    !
-   ! in the IRREDUX or TDDFT case   XC0_and_HARTREE0  contains <mk | Vhartree(rho_0) | nk>
+   !   XC0_and_HARTREE0  contains <mk | Vxc(rho_full) + Vhartree(rho_full) | nk>
+   !
+   ! in all other cases (IRREDUX and TDDFT)
+   !
+   !   XC0_and_HARTREE0  contains <mk | Vhartree(rho_full) | nk>
+   !
+   ! ****NOTE**** This procedure is restruicted to the use of the same Vxc (the one
+   ! corresponding to the GS) in the basis and in the time-evolution. To do a TDDFT
+   ! using a different Vxc in the GS and in the evolution Vxc should be always stored 
+   ! in XC0_and_HARTREE0
    !
    do ik=1,QP_nk
-     if(.not.l_NE_simulate_Irredux.and..not.l_NE_simulate_TDDFT) &
-&      call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf) 
-     if(Thermal_steps==0) &
-&      call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf) 
+     !
+     if(.not.l_NE_simulate_Irredux.and..not.l_NE_simulate_TDDFT) then
+       !
+       call V_real_space_to_H(ik,V_xc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),wf) 
+       !
+     endif
+     !
+     call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),wf) 
+     !
    enddo
    !
    V_xc_sc=(0._SP)
-   if(l_NE_simulate_IP.or.l_NE_simulate_Irredux) V_hartree_sc=(0._SP)
-   !
-   if(l_NE_simulate_BSE.and..not.l_sc_cohsex.and..not.l_sc_hf) &
-&    call error(" RTBSEOnly works only with Potantial=COHSEX or HARTREE-FOCK !! ")
+   if (l_NE_simulate_IP.or.l_NE_simulate_Irredux) V_hartree_sc=(0._SP)
    !
  endif
  !
@@ -280,7 +309,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    ! If I'm doing the response to an external field I need rho_reference and G_lesser_reference
    !
    if(it_start>Thermal_steps.and..not.l_NE_simulate_IP) & 
-&     call el_density(G_lesser_reference,Xk,rho_reference,SC_lw_band,.false.)
+&     call el_density(G_lesser_reference,Xk,rho_reference,SC_bands(1),.false.)
    !
  endif
  !
@@ -299,27 +328,27 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  !
  ! Apply QP-corrections if present
  !==========
- call QP_apply((/SC_lw_band,SC_bands/),Xen,Xk,3,msg_fmt='s')  
+ call QP_apply(SC_bands,Xen,Xk,3,msg_fmt='s')  
  !
  if(associated(Xen%W)) then
    RT_is_dumped=.true.
    call msg('snr','[RT] Dephasing read from QP database')
-   write(dump_ch,'(a,f10.6,a,f10.6,a)') '[RT] Life-time range:',HBAR_eVfs/maxval(HARTREE*abs(Xen%W(SC_lw_band:SC_bands,:,1))),' - '&
-                                ,HBAR_eVfs/minval(HARTREE*abs(Xen%W(SC_lw_band:SC_bands,:,1))),' [fs]'
+   write(dump_ch,'(a,f10.6,a,f10.6,a)') '[RT] Life-time range:',HBAR_eVfs/maxval(HARTREE*abs(Xen%W(SC_bands(1):SC_bands(2),:,1))),' - '&
+                                ,HBAR_eVfs/minval(HARTREE*abs(Xen%W(SC_bands(1):SC_bands(2),:,1))),' [fs]'
    call msg('snr',dump_ch)            
-   write(dump_ch,'(a,f10.6,a,f10.6,a)') '[RT] Life-time range:',HARTREE*maxval(abs(Xen%W(SC_lw_band:SC_bands,:,1))),' - '&
-                                ,HARTREE*minval(abs(Xen%W(SC_lw_band:SC_bands,:,1))),' [eV]'
+   write(dump_ch,'(a,f10.6,a,f10.6,a)') '[RT] Life-time range:',HARTREE*maxval(abs(Xen%W(SC_bands(1):SC_bands(2),:,1))),' - '&
+                                ,HARTREE*minval(abs(Xen%W(SC_bands(1):SC_bands(2),:,1))),' [eV]'
    call msg('snr',dump_ch)            
  endif
  !
- do ib=SC_lw_band,SC_bands
+ do ib=SC_bands(1),SC_bands(2)
    Ho(ib,ib,1:QP_nk,1:n_sp_pol)=Ho(ib,ib,1:QP_nk,1:n_sp_pol) &
 &                              -E_bare(ib,1:QP_nk,1:n_sp_pol)+Xen%E(ib,1:QP_nk,1:n_sp_pol)
  enddo
  !
- do ib=1,SC_lw_band-1
+ do ib=1,SC_bands(1)-1
    Ho(ib,ib,1:QP_nk,1:n_sp_pol)=Ho(ib,ib,1:QP_nk,1:n_sp_pol) &
-&                              -E_bare(SC_lw_band,1:QP_nk,1:n_sp_pol)+Xen%E(SC_lw_band,1:QP_nk,1:n_sp_pol)
+&                              -E_bare(SC_bands(1),1:QP_nk,1:n_sp_pol)+Xen%E(SC_bands(1),1:QP_nk,1:n_sp_pol)
  enddo
  !
  ! Two Levels related initializations

@@ -28,7 +28,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
  use SC,             ONLY:SC_bands,SC_iterations,rho_n,SC_rho_threshold,it_now,E_convergence, &
-&                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,SC_lw_band,   &
+&                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,&
 &                         l_SC_cycle,SC_cycle_mixing,V_hartree_sc,Ho,E_bare,SC_alloc,SC_free, &
 &                         WF_G_max,WF_Go_indx,SC_kind,SC_xc_functional,G_lesser,l_SC_RESTART,l_NSC_shot,l_TF_precond
  use wave_func,      ONLY:wf,wf_n_states,WF_free
@@ -59,16 +59,16 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! Iterations
  !
  integer                  :: it
- real(SP)                 :: spread(SC_bands,k%nibz,n_sp_pol),&
-&                            E_previous(SC_bands,k%nibz,n_sp_pol),dE(SC_bands,k%nibz,n_sp_pol),&
-&                            E_conv(n_sp_pol),E_total,E_tot_Hartree,E_tot_xc,max_overlap(SC_bands,k%nibz,n_sp_pol)
+ real(SP)                 :: spread(SC_bands(2),k%nibz,n_sp_pol),&
+&                            E_previous(SC_bands(2),k%nibz,n_sp_pol),dE(SC_bands(2),k%nibz,n_sp_pol),&
+&                            E_conv(n_sp_pol),E_total,E_tot_Hartree,E_tot_xc,max_overlap(SC_bands(2),k%nibz,n_sp_pol)
  real(SP),    allocatable :: V_xc_nm1(:,:),rho_nm1(:)
  real(SP),    allocatable :: delta_rho(:)
  complex(SP), allocatable :: WFo(:,:)
  ! 
  ! Work Space
  !
- integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_spin
+ integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_spin,io_err
  real(SP)                 :: max_proj,V_xc_sc_shift(n_spin)
  character(schlen)        :: dumb_ch
  integer, external        :: io_SC_components
@@ -76,9 +76,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  ! ws for states spread evaluation
  !
- real(SP)                 :: WS_spread(SC_bands)
- integer                  :: first_el(SC_bands),n_of_el(SC_bands),n_deg_grp,&
-&                            b_of_max_proj(SC_bands,k%nibz,n_sp_pol)
+ real(SP)                 :: WS_spread(SC_bands(2))
+ integer                  :: first_el(SC_bands(2)),n_of_el(SC_bands(2)),n_deg_grp,&
+&                            b_of_max_proj(SC_bands(2),k%nibz,n_sp_pol)
  !
  ! Initial Start & Restart 
  !==========================
@@ -96,7 +96,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! COLLISIONS
  !============
  !
- call load_COLLISIONS()
+ if (l_collisions_IO) call COLLISIONS_IO_load(.FALSE.)
  !
  ! Initialize SC_R matrix
  !========================
@@ -104,7 +104,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  if(.not.l_SC_RESTART.and.l_collisions_IO) then
    !      
    SC_R=(0.,0.)
-   forall(i1=1:SC_bands)
+   forall(i1=1:SC_bands(2))
      SC_R(i1,i1,:,:)=1.
    end forall
    !
@@ -200,7 +200,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  do it = 1, SC_iterations
    !
-   E_previous(:,:,:) = E%E(:SC_bands,:,:)
+   E_previous(:,:,:) = E%E(:SC_bands(2),:,:)
    !
    it_now=it_now+1
    !
@@ -262,7 +262,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
          ! Rotate H_nl_sc in the WFo basis.
          !
          do i_spin=1,n_sp_pol
-           call H_rotate(SC_R(:,:,ik,i_spin),H_nl_sc(:,:,i_spin),SC_bands,-1)
+           call H_rotate(SC_R(:,:,ik,i_spin),H_nl_sc(:,:,i_spin),SC_bands(2),-1)
          end do
        endif
        ! 
@@ -285,7 +285,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      do i_spin=1,n_sp_pol
        !
-       call mat_dia_inv(DIAGO,USE_LK,H_nl_sc(:,:,i_spin),E_real=E%E(:SC_bands,ik,i_spin))
+       call mat_dia_inv(DIAGO,USE_LK,H_nl_sc(:,:,i_spin),E_real=E%E(:SC_bands(2),ik,i_spin))
        !
        ! Rotation (WFo->wf) matrix
        !
@@ -309,16 +309,16 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      ! New occupations 
      !=================
      !
-     ! 21/01/2010 (Andrea): All bands above SC_bands must be shifted
+     ! 21/01/2010 (Andrea): All bands above SC_bands(2) must be shifted
      ! in order to be consistent with the SC values. Otherwise these
-     ! bands could interfere with the SC_bands yielding non physical
+     ! bands could interfere with the SC_bands(2) yielding non physical
      ! occupations.
      !
-     forall (ib=SC_bands+1:E%nb) E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_bands,:,:)-E_previous(SC_bands,:,:)
+     forall (ib=SC_bands(2)+1:E%nb) E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_bands(2),:,:)-E_previous(SC_bands(2),:,:)
      !
      ! The same for the bands below SC_lw_band
      !
-     forall (ib=1:SC_lw_band-1) E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_lw_band,:,:)-E_previous(SC_lw_band,:,:)
+     forall (ib=1:SC_bands(1)-1) E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_bands(1),:,:)-E_previous(SC_bands(1),:,:)
      !
      call OCCUPATIONS_Fermi(E,k,1) 
      !
@@ -348,7 +348,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      do ik=1,k%nibz
        do i_spin=1,n_sp_pol
          E_conv(i_spin) = max( E_conv(i_spin),&
-&                         maxval(abs(E%E(:SC_bands,ik,i_spin)-E_previous(:,ik,i_spin)-&
+&                         maxval(abs(E%E(:SC_bands(2),ik,i_spin)-E_previous(:,ik,i_spin)-&
 &                                    E%E(1,ik,i_spin)+E_previous(1,ik,i_spin)       )))
        enddo
        E_convergence=max(E_convergence,maxval(E_conv))
@@ -468,7 +468,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      if(l_collisions_IO) then
        !
-       allocate(G_lesser(SC_bands,SC_bands,QP_nk))
+       allocate(G_lesser(SC_bands(2),SC_bands(2),QP_nk))
        call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
        !
        allocate(QP_Vnl_xc(QP_n_states))
@@ -533,14 +533,14 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
          !
          ! Check for degenrate bands in the bare energies
          !
-         call degeneration_finder(E_bare(:,ik,i_spin),SC_bands,first_el,n_of_el,n_deg_grp,0.0001/HARTREE)
+         call degeneration_finder(E_bare(:,ik,i_spin),SC_bands(2),first_el,n_of_el,n_deg_grp,0.0001/HARTREE)
          !
-         do ib=1,SC_bands
+         do ib=1,SC_bands(2)
            !
            ! Then search for the max projection   
            ! 
            max_proj=-1.
-           do i1=1,SC_bands
+           do i1=1,SC_bands(2)
              if (abs(SC_R(i1,ib,ik,i_spin))**2.>max_proj) then
                b_of_max_proj(ib,ik,i_spin)=i1
                max_proj=abs(SC_R(i1,ib,ik,i_spin))**2.
@@ -549,12 +549,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
            !
            ! Max Overlap
            !
-           max_overlap(ib,ik,i_spin)=maxloc(abs(SC_R(ib,1:SC_bands,ik,i_spin)),1)
+           max_overlap(ib,ik,i_spin)=maxloc(abs(SC_R(ib,1:SC_bands(2),ik,i_spin)),1)
            ! 
            ! simmetrize the spreads summing over all possible degenerate
            ! bands
            !
-           forall (ibp=1:SC_bands) WS_spread(ibp)=abs(SC_R(ibp,ib,ik,i_spin))**2.*100./HARTREE
+           forall (ibp=1:SC_bands(2)) WS_spread(ibp)=abs(SC_R(ibp,ib,ik,i_spin))**2.*100./HARTREE
            !
            ibp=b_of_max_proj(ib,ik,i_spin)
            spread(ib,ik,i_spin)=WS_spread( ibp )
@@ -569,9 +569,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
            enddo
          enddo
          !
-         ! end do SC_bands
+         ! end do SC_bands(2)
          !
-         dE(:,ik,i_spin)=E%E(:SC_bands,ik,i_spin)-E_bare(:,ik,i_spin)
+         dE(:,ik,i_spin)=E%E(:SC_bands(2),ik,i_spin)-E_bare(:,ik,i_spin)
          !
        enddo
        !
@@ -581,20 +581,20 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !====================
      if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle).or.l_NSC_shot) call OCCUPATIONS_Fermi(E,k,2)  
      !
-     dE(:,:,:)=E%E(:SC_bands,:,:)-E_bare(:,:,:)
+     dE(:,:,:)=E%E(:SC_bands(2),:,:)-E_bare(:,:,:)
      !
      call msg('r',' ')
      !
      do ik=1,k%nibz
-       call REPORT_Energies(E%E(:SC_bands,:,:),k,Xk,SC_bands,(/ik,ik/),'E  ',.TRUE.)
+       call REPORT_Energies(E%E(:SC_bands(2),:,:),k,Xk,SC_bands(2),(/ik,ik/),'E  ',.TRUE.)
 #if defined _MAGNETIC
-       call REPORT_Energies(E%f(:SC_bands,:,:)/HARTREE,k,Xk,SC_bands,(/ik,ik/),'occ',.FALSE.)
+       call REPORT_Energies(E%f(:SC_bands(2),:,:)/HARTREE,k,Xk,SC_bands(2),(/ik,ik/),'occ',.FALSE.)
 #else
-       call REPORT_Energies(E_bare,k,Xk,SC_bands,(/ik,ik/),'E_o',.FALSE.)
-       call REPORT_Energies(dE,k,Xk,SC_bands,(/ik,ik/),'d_E',.FALSE.)
-       call REPORT_Energies(spread,k,Xk,SC_bands,(/ik,ik/),'Spr',.FALSE.)
-       call REPORT_Energies(max_overlap/HARTREE,k,Xk,SC_bands,(/ik,ik/),'MxO',.FALSE.)
-       call REPORT_Energies(real(b_of_max_proj)/HARTREE,k,Xk,SC_bands,(/ik,ik/),'Bnd',.FALSE.)
+       call REPORT_Energies(E_bare,k,Xk,SC_bands(2),(/ik,ik/),'E_o',.FALSE.)
+       call REPORT_Energies(dE,k,Xk,SC_bands(2),(/ik,ik/),'d_E',.FALSE.)
+       call REPORT_Energies(spread,k,Xk,SC_bands(2),(/ik,ik/),'Spr',.FALSE.)
+       call REPORT_Energies(max_overlap/HARTREE,k,Xk,SC_bands(2),(/ik,ik/),'MxO',.FALSE.)
+       call REPORT_Energies(real(b_of_max_proj)/HARTREE,k,Xk,SC_bands(2),(/ik,ik/),'Bnd',.FALSE.)
 #endif
      enddo
      !

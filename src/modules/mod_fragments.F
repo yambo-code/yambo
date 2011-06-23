@@ -24,7 +24,7 @@ module fragments
  use pars,   ONLY:schlen
  use IO_m,   ONLY:close_is_on,io_connect,ver_is_gt_or_eq,io_resetable,io_file,&
 &                 io_sec,io_extension,io_action,io_fragmented,read_is_on,write_is_on,&
-&                 OP_RD_CL,OP_WR_CL,io_type,io_disconnect,io_netcdf_support
+&                 OP_RD_CL,OP_WR_CL,io_type,io_disconnect,io_netcdf_support,io_folder
  use stderr, ONLY:intc
  !
  implicit none
@@ -125,7 +125,7 @@ module fragments
          fragment_filename=trim(io_extension(ID)) &
 &                          //"_fragments_"//trim(intc(i_frag))//"_"//trim(intc(j_fragment))
        endif
-       ierr_=io_connect(fragment_filename,type=io_type(ID),ID=ID)
+       ierr_=io_connect(fragment_filename,type=io_type(ID),subfolder=trim(io_folder(ID)),ID=ID)
        !
      else
        write (subfolder,'(2a,i5.5)') trim(io_extension(ID)),'_',i_frag

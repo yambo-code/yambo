@@ -21,7 +21,7 @@
 !
 subroutine RT_initialize(Xen)
  ! 
- use drivers,        ONLY:l_collisions_IO,l_sc_contains_lda
+ use drivers,        ONLY:l_collisions_IO
  use SC,             ONLY:local_V
  use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT,FS2AUT,HARTREE,HBAR_eVfs
@@ -56,33 +56,29 @@ subroutine RT_initialize(Xen)
  !
  call parser('Diamagnetic',  l_RT_diamagnetic)
  call parser('InducedField' ,l_RT_induced_field)
- call parser('RTBSEOnly',    l_NE_simulate_BSE)
  call parser('RTfreezeH',    Hfrozen)
  call parser('RTfreezeXC',   XCfrozen)
 #if defined _TWO_LEVELS
  call parser('RT3Levels',    l_3levels)
 #endif
  !
+ l_NE_simulate_BSE     =.FALSE.
+ l_NE_simulate_TDDFT   =.FALSE.
+ !
  l_RT_diagonalize      =RT_diagonalization_steps>1
- l_NE_simulate_RPA     =.not.Hfrozen.and.XCfrozen
- l_NE_simulate_IP      =Hfrozen.and.XCfrozen
- l_NE_simulate_Irredux =Hfrozen.and..not.XCfrozen
- if(l_NE_simulate_BSE.and.XCfrozen) call warning(" BSE turned off because XC is frozen! ")
- l_NE_simulate_BSE     =.not.XCfrozen.and.l_NE_simulate_BSE
- l_NE_simulate_TDDFT   =.not.XCfrozen.and..not.Hfrozen.and.l_sc_contains_lda
+ l_NE_simulate_RPA     =.not.Hfrozen.and.     XCfrozen
+ l_NE_simulate_IP      =     Hfrozen.and.     XCfrozen
+ l_NE_simulate_Irredux =     Hfrozen.and..not.XCfrozen
+ if (                   .not.Hfrozen.and..not.XCfrozen) then
+   l_NE_simulate_BSE     =.not.local_V
+   l_NE_simulate_TDDFT   =local_V
+ endif
  !
+ ! If I am doing a NE loop in all cases I need to evaluate XC or Hartree correspoding to the
+ ! starting basis. During the thermalization, instead, the potentials are updated
+ ! and only T+V_ion must be stored in Ho.
  !
- ! In some cases I need to freeze XC or Hartree. In these cases I initialize here
- ! the scattering term. No updates will follow in RT_Collision
- !
- l_RT_needs_XC0=any((/l_NE_simulate_IP,l_NE_simulate_RPA,l_NE_simulate_BSE,&
-&                     l_NE_simulate_Irredux,l_NE_simulate_TDDFT,Thermal_steps>0/))
- !
- ! Check if Collisions are required
- !==================================
- !
- if(.not.local_V.and..not.l_NE_simulate_IP.and..not.l_collisions_IO) &
-&  call error(" Real-time works only with collisions, turn them on 'yambo -e' !")
+ l_RT_needs_XC0=Thermal_steps==0
  !
  ! Use NE_tot_time if provided
  !
@@ -158,8 +154,6 @@ subroutine RT_initialize(Xen)
    if (Thermal_steps==0) call warning('Skipping simulation. No Ext fields or thermalization provided')
  endif
  !
- !call RT_step_test()
- !
  ! LOG
  !=====
  !
@@ -179,24 +173,23 @@ subroutine RT_initialize(Xen)
    call msg( 'r','[RT] Simulate TD-DFT            :',l_NE_simulate_TDDFT)
    !
  endif
- call msg('sr', '[RT] Pump/Probe periodicity     [fs]:',EtoT(E=maxval(Efield(:)%W_step))/FS2AUT)
- call msg('sr', '[RT]            energy step     [eV]:',maxval(Efield(:)%W_step)*HARTREE)
+ call msg('r', '[RT] Pump/Probe periodicity     [fs]:',EtoT(E=maxval(Efield(:)%W_step))/FS2AUT)
+ call msg('r', '[RT]            energy step     [eV]:',maxval(Efield(:)%W_step)*HARTREE)
  !
  do i1=1,n_ext_fields
    !
-   if (i_Pump==i_Probe.and.i1/=i_Probe) cycle
+   if (i_Pump==i_Probe.and.i1/=i_Probe.and..not.any(trim(Efield(i1)%ef_name)==(/'SIN','ANTIRES','RES'/)) ) cycle
    !
    MSG_ch="Pump"
    if (i1==i_Probe) MSG_ch="Probe"
-   call msg('sr', '[RT] '//MSG_ch//' energy window        [eV]:',Efield(i1)%frequency*HARTREE)
-   call msg('sr', '[RT] '//MSG_ch//' oscillation periods  [fs]:',(/EtoT(E=Efield(i1)%frequency(1))/FS2AUT  &
-&                                                               ,EtoT(E=Efield(i1)%frequency(2))/FS2AUT/))
-   call msg('sr', '[RT] '//MSG_ch//' energy steps             :',Efield(i1)%n_frequencies)
+   call msg('r', '[RT] '//MSG_ch//' energy window        [eV]:',Efield(i1)%frequency*HARTREE)
+   call msg('r', '[RT] '//MSG_ch//' elemental oscillation[fs]:',EtoT(E=Efield(i1)%frequency(2)-Efield(i1)%frequency(2))/FS2AUT)
+   call msg('r', '[RT] '//MSG_ch//' energy steps             :',Efield(i1)%n_frequencies)
  enddo
  !
  if(l_NE_with_fields) call msg('rn','[RT] Gauge                      :',trim(global_gauge))
  !
- ! Generalized Rabi Fucntion
+ ! Generalized Rabi Function
  !============================
  if (l_NE_with_fields) call RT_Rabi_Function(Xen,Efield(i_Pump))
  !
@@ -210,5 +203,13 @@ subroutine RT_initialize(Xen)
  if (trim(global_gauge) == 'length' ) theta_function_iTo_ref=0
  !
  if(RT_ave_dephasing/=0._SP) call DephMatrix_setup() 
+ !
+ ! Checking extended COLLISIONS
+ !==============================
+ !
+ call COLLISIONS_IO_load(.TRUE.)
+ !
+ if (l_collisions_IO) call msg('s' ,'[SC] Extented collisions I/O Used')
+ call msg('r' ,'[SC] Extented collisions I/O          :',l_collisions_IO)
  !
 end subroutine RT_initialize

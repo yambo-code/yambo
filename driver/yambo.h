@@ -62,8 +62,8 @@
   {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0,0},                  
   {"bss",    "y","BSE solver [opt=h/d/i/t]",0,0,1,0,0},                      
   {"acfdt",  "a","ACFDT Total Energy",0,0,0,0,0},                            
-#if defined _SC
-  {"collisions_IO",  "e","Use or eval(RT only) the extended Collisions",0,0,0,0,0}, 
+#if defined _RT
+  {"collisions_IO",  "e","Evaluate the extended Collisions",0,0,0,0,0}, 
 #endif
 #if defined _RAS 
   {"sursp",  "s","Surface Spectroscopy [opt=r(as)/e(el)/b(oth)]",0,0,1,0,0}, 

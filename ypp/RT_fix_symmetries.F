@@ -291,7 +291,7 @@ subroutine RT_fix_symmetries(E,k)
    !
    ! Energies
    !
-   en_sc%nb=SC_bands
+   en_sc%nb=SC_bands(2)
    en_sc%nk=k_save%nibz
    allocate(en_sc%E(en_sc%nb,en_sc%nk,n_spin))  
    !
@@ -309,7 +309,7 @@ subroutine RT_fix_symmetries(E,k)
    !
    !  Wave-function
    !
-   allocate(SC_R(SC_bands,SC_bands,k%nibz,n_sp_pol))
+   allocate(SC_R(SC_bands(2),SC_bands(2),k%nibz,n_sp_pol))
    call mem_est("SC_R",(/size(SC_R)/))
    !
    nkibz=k_save%nibz
@@ -346,10 +346,10 @@ subroutine RT_fix_symmetries(E,k)
    call XC_switch()
    if(.not.local_V) then
      !
-     allocate(H_nl_sc(SC_bands,SC_bands,n_sp_pol))
+     allocate(H_nl_sc(SC_bands(2),SC_bands(2),n_sp_pol))
      call mem_est("H_nl_sc",(/size(H_nl_sc)/))
      !
-     allocate(full_H(SC_bands,SC_bands,k_save%nibz,n_sp_pol))
+     allocate(full_H(SC_bands(2),SC_bands(2),k_save%nibz,n_sp_pol))
      call mem_est("full_H",(/size(full_H)/))
      !
      nkibz=k_save%nibz

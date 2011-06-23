@@ -26,9 +26,9 @@ subroutine COLLISIONS_IO_compose(G_input)
  use drivers,          ONLY:l_sc_hf,l_sc_cohsex,l_sc_exx,l_sc_srpa
  use pars,             ONLY:SP
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_states,QP_Vnl_xc,QP_Sc
- use SC,               ONLY:SC_bands,SC_lw_band
+ use SC,               ONLY:SC_bands
  use global_XC,        ONLY:SC_HF,SC_COHSEX
- use collisions_IO,    ONLY:COLLISIONS_v,COLLISIONS_table,V_kind 
+ use collisions_IO,    ONLY:COLLISIONS_v,COLLISIONS_table,V_kind
  use par_proc_m,       ONLY:pp_indexes,pp_redux_wait,pp_indexes_reset,myid
  use par_indexes_m,    ONLY:par_indexes
  use IO_m,             ONLY:io_control,OP_RD_CL,NONE
@@ -36,15 +36,15 @@ subroutine COLLISIONS_IO_compose(G_input)
  !
  implicit none
  !       
- complex(SP), intent(in)   :: G_input(SC_bands,SC_bands,QP_nk)
+ complex(SP), intent(in)   :: G_input(SC_bands(2),SC_bands(2),QP_nk)
  !
  ! Work Space
  !
- integer, external :: io_COLLISIONS
  integer           :: i_qp,ib,ibp,ik,ic
  integer           :: io_err,ID       
  type(pp_indexes)  :: px
  complex(SP)       :: CHO_factor
+ integer, external :: io_COLLISIONS
  !
  if(.not.l_sc_hf.and..not.l_sc_cohsex.and..not.l_sc_exx) return
  !
@@ -65,8 +65,8 @@ subroutine COLLISIONS_IO_compose(G_input)
    if(.not.px%element_1D(i_qp)) cycle  
    ic=1
    !
-   do ib=SC_lw_band,QP_nb
-     do ibp=SC_lw_band,QP_nb
+   do ib=SC_bands(1),QP_nb
+     do ibp=SC_bands(1),QP_nb
        do ik=1,QP_nk
          if(CACHE(i_qp)%COLLISIONS_table(ib,ibp,ik)/=0) then
            QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-(0._SP,1._SP)*CACHE(i_qp)%COLLISIONS_v(ic)*G_input(ib,ibp,ik)
@@ -100,8 +100,8 @@ subroutine COLLISIONS_IO_compose(G_input)
      !
      ic=1
      !
-     do ib=SC_lw_band,QP_nb
-       do ibp=SC_lw_band,QP_nb
+     do ib=SC_bands(1),QP_nb
+       do ibp=SC_bands(1),QP_nb
          do ik=1,QP_nk
            if(COLLISIONS_table(ib,ibp,ik)/=0) then
              QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-(0._SP,1._SP)*COLLISIONS_v(ic)*G_input(ib,ibp,ik)
@@ -126,8 +126,8 @@ subroutine COLLISIONS_IO_compose(G_input)
      !
      ic=1
      !
-     do ib=SC_lw_band,QP_nb
-       do ibp=SC_lw_band,QP_nb
+     do ib=SC_bands(1),QP_nb
+       do ibp=SC_bands(1),QP_nb
          do ik=1,QP_nk
            if(COLLISIONS_table(ib,ibp,ik)/=0) then
              !

@@ -51,7 +51,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use WF_distribute, ONLY:WF_states_setup
 #endif
 #if defined _SC
- use SC,            ONLY:it_now,SC_lw_band
+ use SC,            ONLY:it_now,SC_bands
  use fragments,     ONLY:fragment_status
 #endif
  !
@@ -100,7 +100,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #if defined _RT
  !
  if (.not.l_collisions_IO) return
- QP_n_G_bands(1)=SC_lw_band
+ QP_n_G_bands(1)=SC_bands(1)
  !
 #else
  !

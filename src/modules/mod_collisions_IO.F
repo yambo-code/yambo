@@ -21,13 +21,14 @@
 !
 module collisions_IO
  !
- use pars,            ONLY:SP,LP,schlen
+ use pars,            ONLY:SP,LP,schlen,lchlen
  implicit none
  !
  complex(SP), allocatable :: COLLISIONS_v(:)
  integer(LP), allocatable :: COLLISIONS_table(:,:,:) 
  integer                  :: n_collisions
  integer                  :: V_kind 
+ character(lchlen)        :: COLLISIONS_path
  !
  ! Cut off on exchange matrix elements
  ! Sx_cutoff=0 all, (Sx_cutoff>1 or Sx_cutoff<0)=none

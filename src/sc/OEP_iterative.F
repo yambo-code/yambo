@@ -92,7 +92,7 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
    max_bands = E%nbf 
  elseif (l_oep_exact) then
    timing_str='[OEP] Cycle'
-   max_bands = SC_bands
+   max_bands = SC_bands(2)
  endif
  EWeight = 1._SP
  !

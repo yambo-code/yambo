@@ -45,8 +45,8 @@ subroutine RT_Observables(en,k,on_the_fly_operators)
  !
  ! WorkSpace
  !
- integer     :: i1,indexes(SC_bands*nkibz)
- real(SP)    :: Energies_and_occupations(SC_bands*nkibz,2)
+ integer     :: i1,indexes(SC_bands(2)*nkibz)
+ real(SP)    :: Energies_and_occupations(SC_bands(2)*nkibz,2)
  !
  ! Shadows
  !
@@ -142,7 +142,7 @@ subroutine RT_Observables(en,k,on_the_fly_operators)
  ! quantity must be defined.
  !
  do ik=1,en%nk
-   do ib=1,Sc_bands
+   do ib=1,SC_bands(2)
      if (ib<=en%nbf) delta_G=delta_G-cI*G_lesser(ib,ib,ik)*k%weights(ik)
      if (ib> en%nbf) delta_G=delta_G+cI*G_lesser(ib,ib,ik)*k%weights(ik)
    enddo
@@ -152,7 +152,7 @@ subroutine RT_Observables(en,k,on_the_fly_operators)
    !
    i1=1
    do ik=1,en%nk
-     do ib=1,Sc_bands
+     do ib=1,SC_bands(2)
        Energies_and_occupations(i1,1)=en%E(ib,ik,1)
        Energies_and_occupations(i1,2)=real(-cI*G_lesser(ib,ib,ik))
        i1=i1+1
@@ -161,7 +161,7 @@ subroutine RT_Observables(en,k,on_the_fly_operators)
    !
    call sort(Energies_and_occupations(:,1),indx=indexes)
    !
-   do i1=1,SC_bands*en%nk
+   do i1=1,SC_bands(2)*en%nk
      call RT_output('occ',(/Energies_and_occupations(indexes(i1),2)/),E=Energies_and_occupations(i1,1)*HARTREE)
    enddo
    !

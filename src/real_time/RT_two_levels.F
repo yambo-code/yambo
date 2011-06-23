@@ -23,7 +23,7 @@ subroutine RT_two_levels(G_lesser)
  !
  use pars,           ONLY:SP,pi,cI
  use units,          ONLY:FS2AUT,HBAR_eVfs
- use SC,             ONLY:SC_bands
+ use SC,             ONLY:SC_bands(2)
  use QP_m,           ONLY:QP_nk
  use D_lattice,      ONLY:DL_vol
  use units,          ONLY:HARTREE
@@ -33,7 +33,7 @@ subroutine RT_two_levels(G_lesser)
  use fields,         ONLY:Efield,global_gauge,i_Probe,i_Pump
  !
  implicit none           
- complex(SP),       intent(in) :: G_lesser(SC_bands,SC_bands,QP_nk)
+ complex(SP),       intent(in) :: G_lesser(SC_bands(2),SC_bands(2),QP_nk)
  !
  ! Work Space
  !

@@ -41,10 +41,10 @@ subroutine SC_History(it,E)
  !
  integer  :: ik,ib,i_spin,n_headers,i_d,max_kpt
  character(schlen), SAVE :: E_file_name(2)
- character(schlen)       :: headers(SC_bands*nkibz)
+ character(schlen)       :: headers(SC_bands(2)*nkibz)
 #if defined _RT
  character(schlen), SAVE :: F_file_name(2)
- character(schlen)       :: F_headers(SC_bands*nkibz)
+ character(schlen)       :: F_headers(SC_bands(2)*nkibz)
 #endif
  !
  max_kpt=min(nkibz,6) ! print only the fist 6 kpoints

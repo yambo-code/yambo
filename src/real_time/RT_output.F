@@ -209,9 +209,9 @@ subroutine RT_output(what,VALUEs,TIME,E)
    if (present(TIME)) data_to_dump(1)=TIME
    if (present(E))    data_to_dump(1)=E
    select case (trim(short_file_name(i_f)))
-     case('current')
+     case('current','YPP-current')
        data_to_dump(2:4) =real(RT_ind_J)
-     case('polarization')
+     case('polarization','YPP-polarization')
        data_to_dump(2:4) =real(RT_P)
        if (P_2levels_is_done) data_to_dump(5:7) =real(RT_P_2levels)
      case('vector_potential')

@@ -24,7 +24,6 @@ subroutine MAG_A_phase()
  use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT,AU2Tesla,BOHR
  use R_lattice,      ONLY:nkibz
- use SC,             ONLY:SC_bands
  use com,            ONLY:msg,error
  use stderr,         ONLY:intc
  use magnetic,       ONLY:Bz,x,MAG_radius,phase_radius,n_loops

@@ -25,7 +25,7 @@ subroutine XCo_local(E,Xk)
  !
  use pars,          ONLY:SP,DP,pi
  use electrons,     ONLY:levels,n_spin,n_spinor,n_sp_pol,spin
- use QP_m,          ONLY:QP_Vxc,QP_n_states,QP_table,QP_nk
+ use QP_m,          ONLY:QP_Vxc,QP_n_states,QP_table
  use R_lattice,     ONLY:bz_samp
  use FFT_m,         ONLY:fft_size
  use wave_func,     ONLY:wf,wf_state
@@ -37,8 +37,7 @@ subroutine XCo_local(E,Xk)
 #if defined _SC
  use com,           ONLY:error
  use IO_m,          ONLY:REP,VERIFY
- use SC,            ONLY:load_SC_components,V_xc_sc,V_hartree_sc,SC_fft_size, &
- &                       SC_bands,compatible_SC_DB
+ use SC,            ONLY:load_SC_components,V_xc_sc,V_hartree_sc,SC_fft_size,compatible_SC_DB
 #endif
  !
  implicit none
@@ -49,9 +48,9 @@ subroutine XCo_local(E,Xk)
  !
  integer     ::i1,ifft,ifftp,ifft_sp1,ifftp_sp1,ifft_sp2,ib,ibp,ik,i_sp1
 #if defined _DOUBLE
- complex(DP) ::zdotc,zdotu
+ complex(DP) ::zdotc
 #else 
- complex(SP) ::cdotc,cdotu
+ complex(SP) ::cdotc
 #endif
  complex(SP) ::c_ws(fft_size,n_spin)
  !

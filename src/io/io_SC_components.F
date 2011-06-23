@@ -196,24 +196,24 @@ integer function io_SC_components(what,E_sc,ID)
    ! Energies
    !==========
    !
-   call io_bulk(ID,VAR="E_sc",VAR_SZ=(/SC_bands,nkibz,n_sp_pol/))
+   call io_bulk(ID,VAR="E_sc",VAR_SZ=(/SC_bands(2),nkibz,n_sp_pol/))
    if (write_is_on(ID)) then
-     call io_bulk(ID,R3=E_sc%E(:SC_bands,:,:))
+     call io_bulk(ID,R3=E_sc%E(:SC_bands(2),:,:))
    else
-     allocate(E_disk(SC_bands,nkibz,n_sp_pol))
+     allocate(E_disk(SC_bands(2),nkibz,n_sp_pol))
      call io_bulk(ID,R3=E_disk)
      !
      bands_to_load=size(E_sc%E,1)
      !
-     if (bands_to_load>SC_bands) then
+     if (bands_to_load>SC_bands(2)) then
        !
        ! For either the H_sc and WFs I first check to 
        ! have enough bands (in wf_load and X_O_strengths).
-       ! For the energies instead I need to shift the levels > SC_bands (if any).
+       ! For the energies instead I need to shift the levels > SC_bands(2) (if any).
        !
-       forall (ib=SC_bands+1:bands_to_load) E_sc%E(ib,:,:)=E_sc%E(ib,:,:)-E_sc%E(SC_bands,:,:)
-       E_sc%E(:SC_bands,:,:)=E_disk(:SC_bands,:,:)
-       forall (ib=SC_bands+1:bands_to_load) E_sc%E(ib,:,:)=E_sc%E(ib,:,:)+E_sc%E(SC_bands,:,:)
+       forall (ib=SC_bands(2)+1:bands_to_load) E_sc%E(ib,:,:)=E_sc%E(ib,:,:)-E_sc%E(SC_bands(2),:,:)
+       E_sc%E(:SC_bands(2),:,:)=E_disk(:SC_bands(2),:,:)
+       forall (ib=SC_bands(2)+1:bands_to_load) E_sc%E(ib,:,:)=E_sc%E(ib,:,:)+E_sc%E(SC_bands(2),:,:)
        !
      else
        E_sc%E(:bands_to_load,:,:)=E_disk(:bands_to_load,:,:)
@@ -243,12 +243,12 @@ integer function io_SC_components(what,E_sc,ID)
    ! H_sc
    !======
    !
-   allocate(R_H_G_disk(SC_bands,SC_bands,2))
+   allocate(R_H_G_disk(SC_bands(2),SC_bands(2),2))
    !
    do i_spin=1,n_sp_pol
      !
      call io_bulk(ID,VAR="H_nl_sc_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
-&                 VAR_SZ=(/SC_bands,SC_bands,2/))
+&                 VAR_SZ=(/SC_bands(2),SC_bands(2),2/))
      !
      if (write_is_on(ID)) call mat_c2r(H_nl_sc(:,:,i_spin),R_H_G_disk)
      call io_bulk(ID,R3=R_H_G_disk)
@@ -265,11 +265,11 @@ integer function io_SC_components(what,E_sc,ID)
    ! Rotation matrix 
    !=================
    !
-   allocate(R_H_G_disk(SC_bands,SC_bands,2))
+   allocate(R_H_G_disk(SC_bands(2),SC_bands(2),2))
    !
    do i_spin=1,n_sp_pol
      call io_bulk(ID,VAR="Rotation_Matrix_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
-&                 VAR_SZ=(/SC_bands,SC_bands,2/))
+&                 VAR_SZ=(/SC_bands(2),SC_bands(2),2/))
      !
      if (write_is_on(ID)) call mat_c2r(SC_R(:,:,ik,i_spin),R_H_G_disk)
      call io_bulk(ID,R3=R_H_G_disk)
@@ -288,19 +288,19 @@ integer function io_SC_components(what,E_sc,ID)
    !
    if (io_SC_components/=0) goto 1  
    !
-   allocate(R_H_G_disk(SC_bands,SC_bands,2))
+   allocate(R_H_G_disk(SC_bands(2),SC_bands(2),2))
    !
    i_spin=1
    !
    call io_bulk(ID,VAR="G_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
-&       VAR_SZ=(/SC_bands,SC_bands,2/))
+&       VAR_SZ=(/SC_bands(2),SC_bands(2),2/))
    !
    if (write_is_on(ID)) call mat_c2r(G_lesser(:,:,ik),R_H_G_disk)
    call io_bulk(ID,R3=R_H_G_disk)
    if (read_is_on(ID))  call mat_r2c(R_H_G_disk,G_lesser(:,:,ik))
    !
    call io_bulk(ID,VAR="G_lesser_ref_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
-&       VAR_SZ=(/SC_bands,SC_bands,2/))
+&       VAR_SZ=(/SC_bands(2),SC_bands(2),2/))
    if (write_is_on(ID)) call mat_c2r(G_lesser_reference(:,:,ik),R_H_G_disk)
    call io_bulk(ID,R3=R_H_G_disk)
    if (read_is_on(ID))  call mat_r2c(R_H_G_disk,G_lesser_reference(:,:,ik))

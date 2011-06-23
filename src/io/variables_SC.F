@@ -27,7 +27,7 @@ integer function variables_SC(ID,local_description,what)
  use stderr,         ONLY:intc
  use QP_m,           ONLY:SC_band_mixing,COHSEX_use_empties
  use SC,             ONLY:SC_bands,it_now,SC_potential,SC_kind,SC_perturbation,&
-&                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,SC_lw_band,      &
+&                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,&
 &                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions,local_V
  use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR
 #if defined _RT
@@ -52,12 +52,14 @@ integer function variables_SC(ID,local_description,what)
  ! Work Space
  !
  integer               :: SC_kind_disk,SC_perturbation_disk,&
-&                         io_status_save,i1,i_desc,local_size
- logical               :: CHECK_
+&                         io_status_save,i1,i_desc,local_size,VAR_SIZE
+ logical               :: CHECK_,l_J,l_G
 #if defined _RT		
- logical               :: l_J,l_G,l_NE_with_fields_disk
+ logical               :: l_NE_with_fields_disk
 #endif
  !
+ l_J =.FALSE.
+ l_G =.FALSE.
 #if defined _RT		
  l_J =what=="J_and_P"
  l_G =what=="G"
@@ -104,15 +106,26 @@ integer function variables_SC(ID,local_description,what)
  call io_elemental(ID,I0=it_now,DB_I0=it_now,&
 &     VAR=' Iteration                       :',DESCRIPTION=local_description(i_desc))
  !
- i_desc=i_desc+1
- call io_elemental(ID,I0=SC_bands,&
-&     VAR=' Total number of bands           :',CHECK=CHECK_,OP=(/"=="/),&
-&     DESCRIPTION=local_description(i_desc))
- if (ver_is_gt_or_eq(ID,revision=828)) then
- i_desc=i_desc+1
- call io_elemental(ID,I0=SC_lw_band,&
-&     VAR=' Lowest band                     :',CHECK=CHECK_,OP=(/"=="/),&
-&     DESCRIPTION=local_description(i_desc))
+ if (ver_is_gt_or_eq(ID,revision=890)) then
+   !
+   i_desc=i_desc+1
+   call io_elemental(ID,I1=SC_bands,&
+&       VAR=' Bands                           :',CHECK=CHECK_,OP=(/"==","=="/),&
+&       DESCRIPTION=local_description(i_desc))
+   !
+ else
+   i_desc=i_desc+1
+   call io_elemental(ID,I0=SC_bands(2),&
+&       VAR=' Upper band                      :',CHECK=CHECK_,OP=(/"==","=="/),&
+&       DESCRIPTION=local_description(i_desc))
+   !
+   if (ver_is_gt_or_eq(ID,revision=828)) then
+     i_desc=i_desc+1
+     call io_elemental(ID,I0=SC_bands(1),&
+&         VAR=' Lowest band                     :',CHECK=CHECK_,OP=(/"=="/),&
+&         DESCRIPTION=local_description(i_desc))
+   endif
+   !
  endif
  !
  i_desc=i_desc+1
@@ -214,10 +227,16 @@ integer function variables_SC(ID,local_description,what)
  !
 #endif
  !
+ if(.not.any((/l_J,l_G/))) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
+ !
 #if defined _RT
  !
  if(any((/l_J,l_G/))) then
-   call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=7,MENU=0) 
+   !
+   VAR_SIZE=8
+   if (ver_is_gt_or_eq(ID,revision=890)) VAR_SIZE=7
+   call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=VAR_SIZE,MENU=0) 
+   !
    i_desc=i_desc+1
    call io_elemental(ID,L0=Hfrozen,&
 &    VAR=" [RT] Hartree frozen             :", CHECK=.true.,OP=(/"=="/),&
@@ -226,10 +245,14 @@ integer function variables_SC(ID,local_description,what)
    call io_elemental(ID,L0=XCfrozen,&
 &    VAR=" [RT] XC frozen                  :", CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
-   i_desc=i_desc+1
-   call io_elemental(ID,L0=l_NE_simulate_BSE,&
-&    VAR=" [RT] Simulate Bethe-Salpeter    :", CHECK=.true.,OP=(/"=="/),&
-&    DESCRIPTION=local_description(i_desc))
+   !
+   if (.not.ver_is_gt_or_eq(ID,revision=890)) then
+     i_desc=i_desc+1
+     call io_elemental(ID,L0=l_NE_simulate_BSE,&
+&      VAR=" [RT] Time-Dependent COHSEX/GW   :", CHECK=.true.,OP=(/"=="/),&
+&      DESCRIPTION=local_description(i_desc))
+   endif
+   !
    i_desc=i_desc+1
    call io_elemental(ID,&
 &    VAR=" [RT] Time step              [fs]:",R0=RT_step,CHECK=.true.,OP=(/"=="/),UNIT=1./FS2AUT,&

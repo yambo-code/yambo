@@ -21,7 +21,7 @@
 !
 subroutine RT_driver(en,k)
  !
- use YPP,            ONLY:l_fix_syms,Use_FFT,RT_P_t,RT_J_t,&
+ use YPP,            ONLY:l_fix_syms,Use_FFT,RT_P_t,RT_J_t,N_probe_frequencies,&
 &                         N_probes,N_pumps,RT_initialize,RT_databases,X_order
  use R_lattice,      ONLY:bz_samp
  use memory_m,       ONLY:mem_est
@@ -63,7 +63,7 @@ subroutine RT_driver(en,k)
  l_RT_SHG_qssin     = all( (/ trim(Efield(i_probe)%ef_name)=="QSSIN" , N_pumps==0, N_probes==1, X_order==2/) )
  !
  l_RT_X_inversion   = all( (/ any( (/trim(Efield(i_probe)%ef_name)=="ANTIRES",trim(Efield(i_probe)%ef_name)=="SIN" /)),&
-&                         X_order>=0, N_pumps==0, N_probes==1/))
+&                         X_order>=0, N_pumps==0, N_probes==1,N_probe_frequencies==1/))
  !
  l_RT_X_effective   = all((/any((/trim(Efield(i_probe)%ef_name)=="ANTIRES",trim(Efield(i_probe)%ef_name)=="SIN"/)),X_order>=0/))
  !

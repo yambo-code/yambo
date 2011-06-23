@@ -43,7 +43,7 @@ subroutine SC_update_dipoles(SC_R,Xen,Xk,X)
  !
  type(levels),  intent(in) :: Xen
  type(bz_samp), intent(in) :: Xk
- complex(SP),   intent(in) :: SC_R(SC_bands,SC_bands,QP_nk,n_sp_pol)
+ complex(SP),   intent(in) :: SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol)
  type(X_t),     intent(inout) :: X
  !
  ! Work Space
@@ -56,13 +56,13 @@ subroutine SC_update_dipoles(SC_R,Xen,Xk,X)
  do ik=1,Xen%nk
    !
    do id=1,3
-     DIP_P(id,1:SC_bands,1:SC_bands,ik,1) =transpose(DIP_P(id,1:SC_bands,1:SC_bands,ik,1))
-     call H_rotate(SC_R(1:SC_bands,1:SC_bands,ik,1),DIP_P(id,1:SC_bands,1:SC_bands,ik,1),SC_bands,1)
-     DIP_P(id,1:SC_bands,1:SC_bands,ik,1) =transpose(DIP_P(id,1:SC_bands,1:SC_bands,ik,1))
+     DIP_P(id,1:SC_bands(2),1:SC_bands(2),ik,1) =transpose(DIP_P(id,1:SC_bands(2),1:SC_bands(2),ik,1))
+     call H_rotate(SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),DIP_P(id,1:SC_bands(2),1:SC_bands(2),ik,1),SC_bands(2),1)
+     DIP_P(id,1:SC_bands(2),1:SC_bands(2),ik,1) =transpose(DIP_P(id,1:SC_bands(2),1:SC_bands(2),ik,1))
    enddo
    !
-   do iv=1,SC_bands
-     do ic=1,SC_bands
+   do iv=1,SC_bands(2)
+     do ic=1,SC_bands(2)
        E_m_Ep=Xen%E(iv,ik,1)-Xen%E(ic,ik,1)
        DIP_iR(:,ic,iv,ik,1)=DIP_P(:,ic,iv,ik,1)/E_m_Ep
        if(abs(E_m_Ep)<1.E-5) DIP_iR(:,ic,iv,ik,1)=(0._SP,0._SP)
@@ -70,12 +70,12 @@ subroutine SC_update_dipoles(SC_R,Xen,Xk,X)
    enddo
    !
    do id=1,3
-     DIP_P(id,1:SC_bands,1:SC_bands,ik,1) =transpose(DIP_P(id,1:SC_bands,1:SC_bands,ik,1))
-     DIP_iR(id,1:SC_bands,1:SC_bands,ik,1)=transpose(DIP_iR(id,1:SC_bands,1:SC_bands,ik,1))
-     call H_rotate(SC_R(1:SC_bands,1:SC_bands,ik,1),DIP_P(id,1:SC_bands,1:SC_bands,ik,1),SC_bands,-1)
-     call H_rotate(SC_R(1:SC_bands,1:SC_bands,ik,1),DIP_iR(id,1:SC_bands,1:SC_bands,ik,1),SC_bands,-1)
-     DIP_P(id,1:SC_bands,1:SC_bands,ik,1) =transpose(DIP_P(id,1:SC_bands,1:SC_bands,ik,1))
-     DIP_iR(id,1:SC_bands,1:SC_bands,ik,1)=transpose(DIP_iR(id,1:SC_bands,1:SC_bands,ik,1))
+     DIP_P(id,1:SC_bands(2),1:SC_bands(2),ik,1) =transpose(DIP_P(id,1:SC_bands(2),1:SC_bands(2),ik,1))
+     DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1)=transpose(DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1))
+     call H_rotate(SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),DIP_P(id,1:SC_bands(2),1:SC_bands(2),ik,1),SC_bands(2),-1)
+     call H_rotate(SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1),SC_bands(2),-1)
+     DIP_P(id,1:SC_bands(2),1:SC_bands(2),ik,1) =transpose(DIP_P(id,1:SC_bands(2),1:SC_bands(2),ik,1))
+     DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1)=transpose(DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1))
    enddo
    !
  enddo

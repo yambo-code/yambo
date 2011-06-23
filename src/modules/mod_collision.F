@@ -22,6 +22,7 @@
 module collision
  !
  use pars, ONLY :SP
+ !
  implicit none
  !
  type ggwinfo

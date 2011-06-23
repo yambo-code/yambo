@@ -42,8 +42,8 @@ subroutine MAG_H_pseudo(Xk)
  ! Work Space
  !
  complex(SP),allocatable :: kbv(:,:,:),kbv_ks_space(:,:)
- complex(SP)             :: H_pseudo(SC_bands,SC_bands)
- complex(SP)             :: H_pseudo_tot(SC_bands,SC_bands,Xk%nibz,n_spin)
+ complex(SP)             :: H_pseudo(SC_bands(2),SC_bands(2))
+ complex(SP)             :: H_pseudo_tot(SC_bands(2),SC_bands(2),Xk%nibz,n_spin)
  !
  ! Dummies
  integer                 :: i1,ib,ibp,ik,i_spin,iwf,iwfp,ifft,is,ia,il,im
@@ -79,8 +79,8 @@ subroutine MAG_H_pseudo(Xk)
  allocate(new_pp(fft_size,pp_kbv_dim),old_pp(fft_size,pp_kbv_dim))
  call mem_est('new_pp old_pp',(/fft_size,fft_size,fft_size,fft_size/))
  !
- allocate(kbv_ks_space(SC_bands,2))
- call mem_est('kbv_ks_space',(/2*SC_bands/))
+ allocate(kbv_ks_space(SC_bands(2),2))
+ call mem_est('kbv_ks_space',(/2*SC_bands(2)/))
  !
  H_pseudo_tot=(0._SP,0._SP)
  !
@@ -88,7 +88,7 @@ subroutine MAG_H_pseudo(Xk)
  !
  do ik=1,Xk%nibz
    !
-   call WF_load(0,1,(/1,SC_bands/),(/ik,ik/),title='-Pseudo',impose_free_and_alloc=.TRUE.)
+   call WF_load(0,1,(/1,SC_bands(2)/),(/ik,ik/),title='-Pseudo',impose_free_and_alloc=.TRUE.)
    !
    do i_spin=1,n_spin
      !  
@@ -104,7 +104,7 @@ subroutine MAG_H_pseudo(Xk)
      !
      do i1=1,pp_kbv_dim
        !     
-       do ib=1,SC_bands
+       do ib=1,SC_bands(2)
          !
          iwf=wf_state(ib,ik,i_spin)
          !

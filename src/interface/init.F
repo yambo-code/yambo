@@ -66,7 +66,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SC
  use global_XC,      ONLY:SC_HF,SC_COHSEX,SC_HF
  use SC,             ONLY:SC_potential,SC_ng_Sx,SC_X_bands,SC_X_size
- use collisions_IO,  ONLY:V_kind  
+ use collisions_IO,  ONLY:V_kind
 #endif
 #if defined _RT
  use real_time,      ONLY:l_RT_probe,l_RT_pump_and_probe
@@ -94,11 +94,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                     ioBS_Fxc_err,ioQINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err,io_J_and_P,io_G
  integer, external :: ioX,io_DIPOLES,ioGROT,ioQINDX,ioRIM,&
 &                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_PP,&
-&                     ioCOL_CUT
+&                     ioCOL_CUT,io_COLLISIONS
  logical           :: OSTNTS_Vnl_included
-#if defined _SC
- integer, external :: io_COLLISIONS
-#endif
  !
  integer, external :: ioE_RIM
  !
@@ -452,15 +449,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs')  
  !
- !COLLISIONS
- !
-#if defined _RT
- if (l_collisions_IO) then
-   if ( l_HF_and_locXC.or.l_cohsex  ) call initactivate(1,'SCBands SClwBand BandMix')
-   if ( l_HF_and_locXC)               call initactivate(1,'EXXCut')
- endif
-#endif
- !
  ! Optics(not bse) nor GW (no PP)
  !
  if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_ppa)) then
@@ -625,36 +613,44 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! DFT
  !
-#if defined _SC
+#if defined _SC 
  if (l_sc_run) then
-   call initactivate(1,'Potential FFTGvecs Gauge SCmixing SCBands SClwBand BandMix')
-   if (l_collisions_IO) call initactivate(1,'EXXCut CollCache')
+   call initactivate(1,'Potential FFTGvecs Gauge SCmixing SCBands SClwBand BandMix EXXCut')
+   call initactivate(-1,'QpntsRXs')
    if (l_cohsex) call initactivate(1,'GbndRnge UseEbands')
-   if (l_real_time) then
-     call QP_ctl_switch('G')
-     call initactivate(-1,'SCmixing')
-     call initactivate(1,'Integrator QPLifeTime PhLifeTime') 
-     call initactivate(1,'RTstep NEsteps NETime HXCjumps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
-     call initactivate(1,'RTfreezeH RTfreezeXC RTBSEOnly Diamagnetic InducedField')
+   if (.not.l_collisions_IO) call initactivate(1,'CollPath CollCache')
+   if (.not.l_real_time.and..not.l_collisions_IO) then
+     call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
+     if (trim(SC_potential)=='EXX'.or.trim(SC_potential)=='EXXC'.or.&
+&        trim(SC_potential)=='SRPA') call initactivate(1,'OEPapprox OEPItSolver') 
+   endif
+ endif
 #endif
+ !
 #if defined _RT
-     if (l_RT_probe.or.l_RT_pump_and_probe) call Afield_activate('Probe')
-     if (              l_RT_pump_and_probe) call Afield_activate('Pump')
-     !
-     call initactivate(1,'RTAveDeph')
-     !
+ !
+ ! REAL-TIME specific: (i) Time-Evolution (ii) Collisions
+ !
+ ! (i) Time Evolution
+ !
+ if (l_real_time) then
+   call QP_ctl_switch('G')
+   call initactivate(-1,'SCmixing')
+   call initactivate(1,'Integrator QPLifeTime PhLifeTime') 
+   call initactivate(1,'RTstep NEsteps NETime HXCjumps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
+   call initactivate(1,'RTfreezeH RTfreezeXC Diamagnetic InducedField')
+   if (l_RT_probe.or.l_RT_pump_and_probe) call Afield_activate('Probe')
+   if (              l_RT_pump_and_probe) call Afield_activate('Pump')
+   !
+   call initactivate(1,'RTAveDeph')
+   !
+ endif
+ !
+ ! (ii) COLLISIONS: no additional variables required
+ !
 #endif
 #if defined _TWO_LEVELS
  call initactivate(1,'RT3Levels RTDephasing RTLifeTimes RTDipoles')
-#endif
-#if defined _SC
-   else
-     call initactivate(1,'SCIter SCEtresh SCRhoTresh TF_precondition')
-     if (trim(SC_potential)=='EXX'.or.trim(SC_potential)=='EXXC'.or.&
-          &        trim(SC_potential)=='SRPA') call initactivate(1,'OEPapprox OEPItSolver') 
-   end if
-   call initactivate(-1,'QpntsRXs')
- endif
 #endif
  !
 #if defined _MAGNETIC
@@ -855,6 +851,8 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_sc_run=runlevel_is_on('scpot')
        l_real_time=runlevel_is_on('negf')
        l_sc_magnetic=runlevel_is_on('magnetic')
+#endif
+#if defined _RT
        l_collisions_IO=runlevel_is_on('collisions_IO')
 #endif
 #if defined  _RAS
@@ -959,9 +957,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        X(2)%ib=SC_X_bands
        X(2)%ng=SC_X_size
      endif
-#endif
-#if defined _RT
-     if (l_HF_and_locXC.or.l_cohsex) call initactivate(1,'collisions_IO') 
 #endif
      !
    end subroutine varsetup1 

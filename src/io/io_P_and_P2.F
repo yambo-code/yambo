@@ -19,10 +19,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_DIPOLES(X,Xen,ID)
+integer function io_P_and_P2(X,Xen,ID)
  !
  use pars,          ONLY:SP,schlen
- use X_m,           ONLY:X_t,DIP_iR,X_alloc,Dipole_bands_ordered
+ use X_m,           ONLY:X_t,X_alloc,P_square,DIP_P
  use electrons,     ONLY:levels,n_sp_pol
  use R_lattice,     ONLY:nXkibz
  use matrix_operate,ONLY:mat_c2r,mat_r2c
@@ -37,53 +37,61 @@ integer function io_DIPOLES(X,Xen,ID)
  !
  ! Work Space
  !
- integer :: i1,ixyz,sec_size,i_spin,db_nbm,db_nb(2)
- integer, external    :: variables_DIPOLES
+ integer :: i1,ixyz,i_spin,db_nbm,db_nb(2)
  character(schlen)    :: VAR_name
- real(SP),allocatable :: DIP_iR_disk(:,:,:)
+ real(SP),allocatable :: disk_data(:,:,:)
+ integer, external    :: variables_DIPOLES
  !
- io_DIPOLES=io_connect(desc='dipoles',type=2,ID=ID)
- if (io_DIPOLES/=0) goto 1
+ io_P_and_P2=io_connect(desc='P_and_P2',type=2,ID=ID)
+ if (io_P_and_P2/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   io_DIPOLES=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.)
-   if (io_DIPOLES/=0) goto 1
+   io_P_and_P2=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.)
+   if (io_P_and_P2/=0) goto 1
    !
-   io_DIPOLES=variables_DIPOLES(X,Xen,ID,db_nbm,db_nb)
-   if (io_DIPOLES/=0) goto 1
+   io_P_and_P2=variables_DIPOLES(X,Xen,ID,db_nbm,db_nb)
+   if (io_P_and_P2/=0) goto 1
    !
  endif
  !
- if (.not.Dipole_bands_ordered) db_nbm=db_nb(2)
- !
- ! On disk the size is DIP_iR_or_P(3,db_nb(2),db_nbm,nXkibz)
- !
- sec_size=3*db_nb(2)*db_nbm
  if (any((/io_sec(ID,:)==2/))) then
    !
-   allocate(DIP_iR_disk(db_nb(2),db_nbm,2))
+   allocate(disk_data(db_nb(2),db_nbm,2))
    !
-   if (read_is_on(ID)) call X_alloc('DIP_iR',(/3,X%ib(2),db_nbm,nXkibz/))
+   if (read_is_on(ID)) call X_alloc('P_square',(/X%ib(2),X%ib(2),nXkibz/))
+   if (read_is_on(ID)) call X_alloc('DIP_P',(/3,X%ib(2),db_nbm,nXkibz/))
    !
    do i1=1,nXkibz
      !
      ! Fragmentation
      !
-     io_extension(ID)='dipoles'
+     io_extension(ID)='P_and_P2'
      if (io_fragmented(ID)) call io_fragment(ID,i_fragment=i1)
+     !
+     do i_spin=1,n_sp_pol
+       !
+       if (write_is_on(ID)) call mat_c2r(P_square(:,:,i1,i_spin),disk_data)
+       !
+       write (VAR_name,'(2(a,i4.4))') 'P_square_k_',i1,'_spin_',i_spin
+       call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(disk_data))
+       call io_bulk(ID,R3=disk_data)
+       !
+       if (read_is_on(ID)) call mat_r2c(disk_data,P_square(:,:,i1,i_spin))
+       !
+     enddo
      !
      do ixyz=1,3
        !
        do i_spin=1,n_sp_pol
          !
-         if (write_is_on(ID)) call mat_c2r(DIP_iR(ixyz,:,:,i1,i_spin),DIP_iR_disk)
+         if (write_is_on(ID)) call mat_c2r(DIP_P(ixyz,:,:,i1,i_spin),disk_data)
          !
-         write (VAR_name,'(3(a,i4.4))') 'DIP_iR_k_',i1,'_xyz_',ixyz,'_spin_',i_spin
-         call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(DIP_iR_disk))
-         call io_bulk(ID,R3=DIP_iR_disk)
+         write (VAR_name,'(3(a,i4.4))') 'DIP_P_k_',i1,'_xyz_',ixyz,'_spin_',i_spin
+         call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(disk_data))
+         call io_bulk(ID,R3=disk_data)
          !
-         if (read_is_on(ID)) call mat_r2c(DIP_iR_disk,DIP_iR(ixyz,:,:,i1,i_spin))
+         if (read_is_on(ID)) call mat_r2c(disk_data,DIP_P(ixyz,:,:,i1,i_spin))
          !
        enddo
        !
@@ -91,7 +99,7 @@ integer function io_DIPOLES(X,Xen,ID)
      !
    enddo
    !
-   deallocate(DIP_iR_disk)
+   deallocate(disk_data)
    !
  endif
  !

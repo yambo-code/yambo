@@ -22,6 +22,7 @@
 subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
  use pars,           ONLY:SP
+ use drivers,        ONLY:l_collisions_IO
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:FS2AUT
  use timing,         ONLY:live_timing 
@@ -39,6 +40,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
 &                         l_Dynamics_is_over
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
  use memory_m,       ONLY:mem_est
+ use com,            ONLY:error
 #if defined _TWO_LEVELS
  use real_time,      ONLY:l_3levels
 #endif
@@ -90,7 +92,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  ! WFs loading
  !=============
  !
- call WF_load(WF_G_max,WF_Go_indx,(/1,SC_bands/),(/1,k%nibz/),space='R',title='-RT')  
+ call WF_load(WF_G_max,WF_Go_indx,(/1,SC_bands(2)/),(/1,k%nibz/),space='R',title='-RT')  
  !
  ! Core initialization
  !
@@ -100,17 +102,19 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
  call RT_alloc(Xen)
  !
- if(.not.local_V.and..not.l_NE_simulate_IP) then
-   !
-   call COLLISIONS_IO_eval(en,X,k,k,q,Xw)
-   !
-   call load_COLLISIONS()
-   !
- endif
- !
  ! Restart from a previous RT run or from a SC calculation
  ! 
  call RT_start_and_restart(Xen,Xk,k,q,X)
+ !
+ ! Collisions
+ !
+ if(.not.local_V.and..not.l_NE_simulate_IP) then
+   !
+   if (.not.l_collisions_IO) call error('COLLISIONs database missing')
+   !
+   call COLLISIONS_IO_load(.FALSE.)
+   !
+ endif
  !
  ! Calculation already done
  !
@@ -180,7 +184,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    ! Simmetrization
    !
-   forall( ib=1:SC_bands )  G_lesser_previous(ib,ib,:)=(0._SP,1._SP)*aimag(G_lesser(ib,ib,:))
+   forall( ib=1:SC_bands(2) )  G_lesser_previous(ib,ib,:)=(0._SP,1._SP)*aimag(G_lesser(ib,ib,:))
    !
 #if defined _TWO_LEVELS
    if(l_3levels) then
@@ -246,7 +250,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    if(it==Thermal_steps.or. (mod(it,RT_diagonalization_steps)==0.and.RT_diagonalization_steps>0) ) then
      !
      do ik=1,Xen%nk
-       call mat_dia_inv(DIAGO,USE_LK,SC_R(1:SC_bands,1:SC_bands,ik,1),E_real=Xen%E(:SC_bands,ik,1))
+       call mat_dia_inv(DIAGO,USE_LK,SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),E_real=Xen%E(:SC_bands(2),ik,1))
      enddo
      !
      ! Updating

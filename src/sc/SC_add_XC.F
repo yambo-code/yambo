@@ -64,13 +64,13 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
    if(l_collisions_IO) then
      !     
      G_lesser=(0.,0.)
-     forall(ib=1:SC_bands,ik=1:E%nk) G_lesser(ib,ib,ik)=(0._SP,1._SP)*E%f(ib,ik,1)
+     forall(ib=1:SC_bands(2),ik=1:E%nk) G_lesser(ib,ib,ik)=(0._SP,1._SP)*E%f(ib,ik,1)
      !
      ! Now I build the G_lesser rotating the non interaction one
      ! G_lesser(ib,ib,ik)=(0.,1)*en%f(ib,ik)
      !  
      do ik=1,QP_nk
-       call H_rotate(SC_R(:,:,ik,1),G_lesser(:,:,ik),SC_bands,-1)
+       call H_rotate(SC_R(:,:,ik,1),G_lesser(:,:,ik),SC_bands(2),-1)
      enddo
      call COLLISIONS_IO_compose(G_lesser)
      !    ==========

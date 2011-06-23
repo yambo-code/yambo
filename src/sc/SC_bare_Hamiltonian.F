@@ -49,14 +49,15 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  call mem_est("QP_Vxc",(/QP_n_states/))    
  !
 #if defined _RT
+ !
+ ! Note that G_lesser here is the non-interacting one (occupations on the diagonal) only
+ !
  call el_density(G_lesser,Xk,rho_n,1,.false.)
 #else
  call el_density(E,Xk,rho_n,.false.)
  V_xc_sc=V_xc 
 #endif
  call XCo_local(E,k)
- !
- if(SC_bands==0) call error(' Error SCBands==0 ')
  !
  ! The Ho = -nabla**2. + V_ext is deduced from the input energies en0:
  !
@@ -88,7 +89,7 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  V_hartree_sc(:,n_sp_pol)=V_hartree_sc(:,1)
  !
  do ik=1,QP_nk
-   call V_real_space_to_H(ik,-V_hartree_sc,Ho(1:SC_bands,1:SC_bands,ik,1:n_sp_pol),wf)
+   call V_real_space_to_H(ik,-V_hartree_sc,Ho(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),wf)
  enddo
  !
  forall (ib=1:QP_nb,ik=1:QP_nk,i_spin=1:n_sp_pol) Ho(ib,ib,ik,i_spin) = Ho(ib,ib,ik,i_spin) + E_bare(ib,ik,i_spin)  
@@ -97,7 +98,7 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  !=================================
  !
  do ik=1,QP_nk
-   call V_qp_basis_to_H(ik,-QP_Vxc,Ho(1:SC_bands,1:SC_bands,ik,1:n_sp_pol))
+   call V_qp_basis_to_H(ik,-QP_Vxc,Ho(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol))
  enddo
  !
  deallocate(QP_Vxc)

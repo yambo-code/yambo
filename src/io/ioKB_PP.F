@@ -30,9 +30,10 @@ integer function ioKB_PP(ID)
  use memory_m,         ONLY:mem_est
  use wave_func,        ONLY:wf_ncx,wf_igk,wf_nc_k,wf_ng
  use IO_m,             ONLY:io_connect,io_disconnect,io_sec, &
-&                           io_elemental,io_bulk,io_header,&
-&                           read_is_on,write_is_on,ver_is_gt_or_eq
+&                           io_elemental,io_bulk,io_header,io_fragmented,&
+&                           read_is_on,write_is_on,ver_is_gt_or_eq,io_extension
  use electrons,        ONLY:n_spin
+ use fragments,        ONLY:io_fragment
  implicit none
  integer,       intent(in) :: ID
  character(schlen)         :: VAR_NAME
@@ -101,6 +102,8 @@ integer function ioKB_PP(ID)
  endif
  !
  allocate(pp_disk(wf_ncx,n_atomic_species,pp_n_l_comp_max))
+ !
+ if (io_fragmented(ID)) call io_fragment(ID,i_fragment=ik)
  !
  if (read_is_on(ID)) then
    pp_kb=0._SP

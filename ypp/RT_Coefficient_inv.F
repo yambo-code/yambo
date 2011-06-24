@@ -65,7 +65,7 @@ subroutine RT_Coefficients_inv(nt,P,X,N_order,Wo)
    end do
  end do
  !
- deallocate(M)
+ deallocate(P_i,M)
  ! 
 end subroutine RT_Coefficients_inv
 

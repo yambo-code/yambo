@@ -143,7 +143,8 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !
    if(Thermal_steps/=0.and.SwitchOnTime/=0.0.and..not.NE_dynamics) then 
      !      
-     call V_by_V_plus_V(SC_bands(2),(1._SP,0._SP),-XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1),H_nl_sc(1:SC_bands(2),1:SC_bands(2),1))
+     call V_by_V_plus_V(SC_bands(2),(1._SP,0._SP), &
+&         -XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1),H_nl_sc(1:SC_bands(2),1:SC_bands(2),1))
      !
      H_nl_sc=H_nl_sc*(1._SP+tanh((Time+(RT_step*real(Thermal_steps))/2._SP)/ &
 &            (RT_step*real(Thermal_steps))/SwitchOnTime))/2._SP
@@ -153,7 +154,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    ! The bare, frozed VHxc 
    !=======================
    if (l_RT_needs_XC0) call V_by_V_plus_V(SC_bands(2),(1._SP,0._SP),&
-&                                         XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1),H_nl_sc(1:SC_bands(2),1:SC_bands(2),1))
+&                           XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1),H_nl_sc(1:SC_bands(2),1:SC_bands(2),1))
    !
    ! Local XC potentials 
    !=====================

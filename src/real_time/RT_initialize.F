@@ -178,7 +178,7 @@ subroutine RT_initialize(Xen)
  !
  do i1=1,n_ext_fields
    !
-   if (i_Pump==i_Probe.and.i1/=i_Probe.and..not.any(trim(Efield(i1)%ef_name)==(/'SIN','ANTIRES','RES'/)) ) cycle
+   if (i_Pump==i_Probe.and.i1/=i_Probe.and..not.any(trim(Efield(i1)%ef_name)==(/'SIN    ','ANTIRES','RES    '/)) ) cycle
    !
    MSG_ch="Pump"
    if (i1==i_Probe) MSG_ch="Probe"

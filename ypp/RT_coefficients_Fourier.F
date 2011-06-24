@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Fourier_Coefficients(nt,P,nw,W,X,deltaW)
+subroutine RT_coefficients_Fourier(nt,P,nw,W,X,deltaW)
  !
  ! Here I calculate the coefficients of a given Fourier series
  !
@@ -58,4 +58,4 @@ subroutine RT_Fourier_Coefficients(nt,P,nw,W,X,deltaW)
    !
  enddo
  !
-end subroutine RT_Fourier_Coefficients
+end subroutine RT_coefficients_Fourier

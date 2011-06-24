@@ -209,7 +209,7 @@ subroutine RT_initialize(Xen)
  !
  call COLLISIONS_IO_load(.TRUE.)
  !
- if (l_collisions_IO) call msg('s' ,'[SC] Extented collisions I/O Used')
- call msg('r' ,'[SC] Extented collisions I/O          :',l_collisions_IO)
+ if (l_collisions_IO) call msg('s' ,'[SC] Extended collisions I/O Used')
+ call msg('r' ,'[SC] Extended collisions I/O          :',l_collisions_IO)
  !
 end subroutine RT_initialize

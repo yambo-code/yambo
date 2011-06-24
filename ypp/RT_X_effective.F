@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_X_effective(en)
+subroutine RT_X_effective(en,l_RT_X_inversion)
  !
  use pars,           ONLY:SP,lchlen,pi,schlen
  use YPP,            ONLY:RT_P_t,Pump_path,N_probes,Probe_path,RT_databases,RT_initialize,&
@@ -37,6 +37,7 @@ subroutine RT_X_effective(en)
  implicit none
  !
  type(levels)  :: en
+ logical       :: l_RT_X_inversion
  !
  character(lchlen) :: jobstr_save
  character(schlen) :: X_file_name
@@ -44,26 +45,37 @@ subroutine RT_X_effective(en)
  real(SP)          :: Pump_Frequency(1),Unit_of_Measure
  logical           :: Probe_consistency_error
  real(SP),    allocatable    :: RT_P_probe(:,:,:),RT_P_pump(:,:),Probe_Frequency(:),Fourier_Frequency(:)
- complex(SP), allocatable    :: X_effective(:,:),Susceptibility(:)
+ complex(SP), allocatable    :: X_effective(:,:),Susceptibility(:,:)
  type(ext_field)   :: Efield_probe
  !
  call section("=",'Effective Response function ')
  !===============================================
  !
+ !DEBUG>
+ !l_RT_X_inversion=.FALSE.
+ !DEBUG<
  jobstr_save=jobstr
+ min_X_order=1
+ if (X_order>1) min_X_order = 0 
+ !
+ if (N_probe_frequencies>1.and.l_RT_X_inversion) then
+   min_X_order=1
+   X_order=1
+ endif
  !
  N_probe_frequencies=max(N_probes,N_probe_frequencies) 
  !
- allocate(RT_P_probe(NE_steps,N_probes,3),RT_P_pump(NE_steps,3),X_effective(N_probe_frequencies,3),Susceptibility(N_probe_frequencies))
+ allocate(RT_P_probe(NE_steps,N_probes,3),RT_P_pump(NE_steps,3),X_effective(N_probe_frequencies,3))
+ allocate(Susceptibility(X_order+1,N_probe_frequencies))
  allocate(Probe_Frequency(N_probe_frequencies),Fourier_Frequency(N_probe_frequencies))
  !
  ! Pump only
  !===========
  !
- RT_P_pump=0.
+ RT_P_pump     =0.
+ Susceptibility=(0.,0.)
  Pump_Frequency=0.
- min_X_order=1
- if (X_order==2) min_X_order = 0 
+ !
  if (N_pumps>0) then
    jobstr=trim(Pump_path)
    call RT_databases(en,COM_=NONE,mesg=trim(Pump_path))
@@ -105,7 +117,7 @@ subroutine RT_X_effective(en)
  !
  if (Probe_consistency_error) call error('Not all probes have consistent parameters')
  !
- if (trim( Efield_probe%ef_name ) == 'ANTIRES'.and.N_probes>1) then
+ if (trim(Efield_probe%ef_name)=='ANTIRES'.and.N_probes>1) then
    call msg('s',':: Pump  frequency range   [eV]:',(/minval(Pump_Frequency),maxval(Pump_Frequency)/)*HARTREE)
    call msg('s',':: Probe                   [eV]:',(/minval(Probe_Frequency),maxval(Probe_Frequency)/)*HARTREE)
  endif
@@ -130,7 +142,23 @@ subroutine RT_X_effective(en)
    !
    call RT_X_LRR_real_field(en)
    !
-   deallocate(RT_P_probe,Probe_Frequency,RT_P_pump,X_effective)
+   deallocate(RT_P_probe,RT_P_pump,X_effective,Susceptibility,Probe_Frequency,Fourier_Frequency)
+   !
+   return
+   !
+ endif
+ !
+ ! [B] The inversion method
+ !
+ if ( l_RT_X_inversion ) then
+   !
+   call RT_initialize(dump_and_write=.TRUE.)
+   !
+   call RT_X_inversion(RT_P_probe,Susceptibility,Probe_Frequency)
+   !
+   call plot_X_effective()
+   !
+   deallocate(RT_P_probe,RT_P_pump,X_effective,Susceptibility,Probe_Frequency,Fourier_Frequency)
    !
    return
    !
@@ -159,13 +187,6 @@ subroutine RT_X_effective(en)
  !
  do i_order=min_X_order,X_order,1
    !
-   X_file_name="X_probe_order_"//trim(intc(i_order))
-   if (N_pumps==0.and.i_order==1) X_file_name="eps"
-   !
-   ! Note that the X are plotted as a function of the DETUNING=W_probe-W_pump
-   !
-   call RT_output("open "//trim(X_file_name) )
-   !
    ! FREQUENCIES
    !=============
    ! Depending on the order and if there is a steady pump applied
@@ -187,7 +208,7 @@ subroutine RT_X_effective(en)
      Fourier_Frequency(:)=real(i_order,SP)*Probe_Frequency(:)
    endif
    !
-   ! [B] X effective (several Probes, 1 frequency each)
+   ! [C] X effective (several Probes, 1 frequency each)
    !     ===========
    !
    if (N_probes>1) then
@@ -197,7 +218,7 @@ subroutine RT_X_effective(en)
      do i_f=1,N_probe_frequencies
        !
        do i_c=1,3
-         call RT_Fourier_Coefficients(NE_steps,RT_P_probe(:,i_f,i_c),1,(/Fourier_Frequency(i_f)/),X_effective(i_f,i_c),Efield_Probe%W_step)
+         call RT_coefficients_Fourier(NE_steps,RT_P_probe(:,i_f,i_c),1,(/Fourier_Frequency(i_f)/),X_effective(i_f,i_c),Efield_Probe%W_step)
        enddo
        !
        call live_timing(steps=1)
@@ -208,39 +229,64 @@ subroutine RT_X_effective(en)
      !
    else
      !
-     ! [C] X effective (1 Probs, several frequencies)
+     ! [D] X effective (1 Probs, several frequencies)
      !     ===========
      !
      do i_c=1,3
-       call RT_Fourier_Coefficients(NE_steps,RT_P_probe(:,1,i_c),N_probe_frequencies,Fourier_Frequency,X_effective(:,i_c),Efield_Probe%W_step)
+       call RT_coefficients_Fourier(NE_steps,RT_P_probe(:,1,i_c),N_probe_frequencies,Fourier_Frequency,X_effective(:,i_c),Efield_Probe%W_step)
      enddo
      !
    endif
    !
-   ! ... ordering and frequency step (defines the P(t) periodicity)
-   !
-   Fourier_Frequency(:)=Probe_Frequency(:)
-   call sort(Fourier_Frequency,indx=f_indx(:N_probe_frequencies))
-   !
-   do i_fp=1,N_probe_frequencies
-     !
-     i_f=f_indx(i_fp)
+   do i_f=1,N_probe_frequencies
      !
      if (N_pumps==0) X_effective(i_f,:)=4.*pi*X_effective(i_f,:)
      !
-     Susceptibility(i_f)=dot_product( Efield_Probe%versor(:),X_effective(i_f,:) ) *Divide_by_Field(Efield_Probe,i_order)
-     ! 
-     Unit_of_Measure = 1._SP
-     if (N_pumps==0.and.i_order.ne.1) Unit_of_Measure = sVcm2Vmm/AU2Vmm ! NB Just for SHG and OptRect, orders>2 need generalization
-     call RT_output(trim(X_file_name),VALUEs=(/aimag(Susceptibility(i_f))*Unit_of_Measure,real(Susceptibility(i_f)*Unit_of_Measure)/),&
-&                   E=(Probe_Frequency(i_f)-Pump_Frequency(1))*HARTREE)
+     Susceptibility(i_order+1,i_f)=dot_product( Efield_Probe%versor(:),X_effective(i_f,:) ) *Divide_by_Field(Efield_Probe,i_order)
      !
    enddo
    !
-   call RT_output("close "//trim(X_file_name))
-   !
  enddo
  !
- deallocate(RT_P_probe,Probe_Frequency,RT_P_pump,X_effective,Fourier_Frequency)
+ call plot_X_effective()
  !
-end subroutine
+ deallocate(RT_P_probe,RT_P_pump,X_effective,Susceptibility,Probe_Frequency,Fourier_Frequency)
+ !
+ contains
+   !
+   subroutine plot_X_effective()
+     !
+     ! ... ordering and frequency step (defines the P(t) periodicity)
+     !
+     Fourier_Frequency(:)=Probe_Frequency(:)
+     call sort(Fourier_Frequency,indx=f_indx(:N_probe_frequencies))
+     !
+     do i_order=min_X_order,X_order,1
+       !
+       X_file_name="X_probe_order_"//trim(intc(i_order))
+       if (N_pumps==0.and.i_order==1) X_file_name="eps"
+       !
+       ! Note that the X are plotted as a function of the DETUNING=W_probe-W_pump
+       !
+       call RT_output("open "//trim(X_file_name) )
+       !
+       do i_fp=1,N_probe_frequencies
+         !
+         i_f=f_indx(i_fp)
+         !
+         Unit_of_Measure = 1._SP
+         if (i_order==0) Unit_of_Measure = sVcm2Vmm/AU2Vmm
+         if (i_order> 1) Unit_of_Measure = (sVcm2Vmm/AU2Vmm)**(i_order-1)  
+         !
+         call RT_output(trim(X_file_name),VALUEs=(/aimag(Susceptibility(i_order+1,i_f))*Unit_of_Measure,&
+&                                                  real( Susceptibility(i_order+1,i_f))*Unit_of_Measure/),&
+&                                                  E=(Probe_Frequency(i_f)-Pump_Frequency(1))*HARTREE)
+         !
+       enddo
+       !
+       call RT_output("close "//trim(X_file_name))
+       !
+     enddo
+   end subroutine
+   !
+ end subroutine

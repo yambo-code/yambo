@@ -118,10 +118,10 @@ subroutine RT_paths(en)
    call RT_databases(en,IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
    !
    ! I can use ANTIRES/RES probes with multiple frequencies only by using
-   ! ProbeKey in the input file. This is because of the procedures defined in X_effective.
+   ! ProbeKey in the input file. This is because of the procedures defined in X_effective/X_inversion.
    !
    if (Efield(i_Probe)%n_frequencies>1) IO_error=.TRUE.
-   if (.not.IO_error) N_probes=1
+   if (.not.IO_error)                   N_probes=1
  endif
  !
  call msg('s',':: Pump   found      :',N_pumps)

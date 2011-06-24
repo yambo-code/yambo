@@ -62,14 +62,13 @@ subroutine RT_driver(en,k)
 &                             N_pumps==0, N_probes==1, X_order==1/) )
  l_RT_SHG_qssin     = all( (/ trim(Efield(i_probe)%ef_name)=="QSSIN" , N_pumps==0, N_probes==1, X_order==2/) )
  !
- l_RT_X_inversion   = all( (/ any( (/trim(Efield(i_probe)%ef_name)=="ANTIRES",trim(Efield(i_probe)%ef_name)=="SIN" /)),&
-&                         X_order>=0, N_pumps==0, N_probes==1,N_probe_frequencies==1/))
- !
  l_RT_X_effective   = all((/any((/trim(Efield(i_probe)%ef_name)=="ANTIRES",trim(Efield(i_probe)%ef_name)=="SIN"/)),X_order>=0/))
+ !
+ if (l_RT_X_effective) l_RT_X_inversion=all((/ X_order>=0, N_pumps==0, N_probes==1.or.(N_probes>1.and.N_probe_frequencies==1) /))
  !
  if ( .not.any((/l_RT_LRR_real_field,l_RT_SHG_qssin,l_RT_X_effective/)) ) return
  !
- if ( l_RT_LRR_real_field .or. l_RT_SHG_qssin ) then
+ if ( any((/l_RT_LRR_real_field,l_RT_SHG_qssin/)) ) then
    !
    ! Database
    !
@@ -77,7 +76,7 @@ subroutine RT_driver(en,k)
    !
    !  Initialization 
    !
-   call RT_initialize(dump_and_write=.TRUE.)
+   if ( l_RT_LRR_real_field.or. l_RT_SHG_qssin) call RT_initialize(dump_and_write=.TRUE.)
    !
    if ( l_RT_LRR_real_field ) then
      !
@@ -97,13 +96,9 @@ subroutine RT_driver(en,k)
      !
    endif
    !
- else if ( l_RT_X_inversion ) then
-   !
-   call RT_X_inversion(en)
-   !
  else if ( l_RT_X_effective ) then
    !
-   call RT_X_effective(en)
+   call RT_X_effective(en, l_RT_X_inversion )
    !
  endif
  !

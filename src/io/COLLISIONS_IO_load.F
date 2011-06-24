@@ -77,6 +77,8 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
    V_kinds(n_V_kinds) =SC_COHSEX
  endif
  !
+ if (n_V_kinds==0) return
+ !
  ! Check only if the DB exist and are readable
  !
  if (CHECK_EXISTENCE_ONLY) then

@@ -19,78 +19,118 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_X_inversion(en)
+subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Probe_Frequency)
  !
- use pars,           ONLY:SP,pi,schlen
- use YPP,            ONLY:RT_P_t,N_probes,Probe_path,RT_databases,RT_initialize,&
-&                         X_rt,N_probe_frequencies,X_order
- use units,          ONLY:HARTREE,AU2Vmm,sVcm2Vmm
- use electrons,      ONLY:levels
- use IO_m,           ONLY:LOG
- use fields,         ONLY:Efield,EtoT,Divide_by_Field,i_Probe
- use real_time,      ONLY:NE_steps,RT_output,RT_step
- use stderr,         ONLY:intc
+ use pars,           ONLY:SP,pi
+ use YPP,            ONLY:N_probes,X_order,N_probe_frequencies,X_rt,RT_initialize,i_t_start,i_t_end
+ use fields,         ONLY:EtoT,Efield,Divide_by_Field,i_Probe
+ use real_time,      ONLY:NE_steps,RT_step
+ use units,          ONLY:FS2AUT
+ use com,            ONLY:msg
+ use timing,         ONLY:live_timing
  implicit none
  !
- type(levels)  :: en
+ real(SP)      :: RT_P_probe(NE_steps,N_probes,3),Probe_Frequency(N_probe_frequencies)
+ complex(SP)   :: Susceptibility(X_order+1,N_probe_frequencies)
  !
- character(schlen) :: X_file_name
- integer           :: i_order,min_X_order,i_c
- real(SP)          :: Period,Unit_of_Measure
- complex(SP)       :: X_tot
- real(SP),    allocatable    :: RT_P_probe(:)
- complex(SP), allocatable    :: X_effective(:,:)
+ ! Work Space
  !
- N_probe_frequencies=max(N_probes,N_probe_frequencies) 
- if (N_probe_frequencies.ne.1) return
+ real(SP)          :: T_period,time_range_save(2)
+ integer           :: i_c,i_p,i_f,i_order
+ complex(SP), allocatable :: X_effective(:,:,:)
  !
  call section("=",'Response function(s) by Inversion')
  !====================================================
  !
- allocate(RT_P_probe(NE_steps),X_effective(X_order+1,3))
- RT_P_probe=(0.,0.)
- call RT_databases(en,COM_=LOG, mesg=trim(Probe_path(1)))
+ allocate(X_effective(X_order+1,N_probe_frequencies,3))
  !
- ! Time Range
- !========================
+ X_effective=(0.,0.)
  !
- Period = EtoT(E=Efield(1)%frequency(1))
- X_rt%time_range(2)= X_rt%time_range(1)+ Period
+ time_range_save=X_rt%time_range
  !
- if (X_rt%time_range(2)> NE_steps*RT_step) then
-   X_rt%time_range(2)= NE_steps*RT_step
-   X_rt%time_range(1)= X_rt%time_range(2)-Period
+ if (N_probes>1) then
+   !==================================
+   ! SEVERAL PROBES/ 1 FREQUENCY each
+   !==================================
+   !
+   call live_timing('X effective :',N_probes)
+   !
+   do i_p=1,N_probes
+     !
+     T_period=T_range(i_p)
+     !
+     !call msg('s','[RT] Time range [fs]:',(/real(i_t_start),real(i_t_end)/)*RT_step/FS2AUT)
+     !
+     do i_c = 1,3
+       !
+       call RT_coefficients_Inversion(1,X_order+1,RT_P_probe(:,i_p,i_c),X_effective(:,i_p,i_c),&
+&                                     (/Probe_Frequency(i_p)/),T_period)
+       !
+     end do
+     !
+     call live_timing(steps=1)
+     !
+   enddo
+   !
+   call live_timing()
+   !
+ else
+   !
+   !===============================
+   ! 1 PROBE/ SEVERAL FREQUENCIES
+   !===============================
+   !
+   T_period=T_range(-1)
+   !
+   call msg('s','[RT] Time range [fs]:',(/real(i_t_start),real(i_t_end)/)*RT_step/FS2AUT)
+   !
+   do i_c = 1,3
+     !
+     call RT_coefficients_Inversion(N_probe_frequencies,N_probe_frequencies,&
+&                                   RT_P_probe(:,1,i_c),X_effective(2,:,i_c),Probe_Frequency,T_period)
+     !
+   end do
+   !
  endif
  !
- call RT_initialize(dump_and_write=.FALSE.)
- !
- ! X effective (1 Probe, 1 frequency)
- ! ===========
- !
- do i_c = 1,3
-   RT_P_probe(:)=real(RT_P_t(:,i_c))
+ do i_order=1,X_order
    !
-   call RT_Coefficients_inv(NE_steps,RT_P_probe(:),X_effective(:,i_c),X_order,Efield(1)%frequency(1))
-   !
- end do
- !
- do i_order=min_X_order,X_order,1
-   X_file_name="X_probe_order_"//trim(intc(i_order))
-   if (i_order==1) X_file_name="eps"
-   !
-   call RT_output("open "//trim(X_file_name) )
-   !
-   X_tot=4.*pi*sum(X_effective(i_order+1,:)*Efield(i_probe)%versor(:))*Divide_by_Field(Efield(1),i_order)
+   do i_f=1,N_probe_frequencies
+     !
+     Susceptibility(i_order+1,i_f)=4.*pi*dot_product( Efield(i_Probe)%versor(:),X_effective(i_order+1,i_f,:) )*&
+&                                                     Divide_by_Field(Efield(i_Probe),i_order)
+     !
+   enddo
    ! 
-   Unit_of_Measure = 1._SP
-   if (i_order.eq.0) Unit_of_Measure = sVcm2Vmm/AU2Vmm
-   if (i_order.gt.1) Unit_of_Measure = (sVcm2Vmm/AU2Vmm)**(i_order-1)  
-   X_tot = X_tot*Unit_of_Measure
-   call RT_output(trim(X_file_name),VALUES=(/aimag(X_tot),real(X_tot)/), E=Efield(1)%frequency(1)*HARTREE)
-   !
-   call RT_output("close "//trim(X_file_name))
  enddo
  !
- deallocate(RT_P_probe,X_effective)
+ deallocate(X_effective)
  !
+ contains 
+   !
+   real(SP) function T_range(i_f)
+     !
+     integer :: i_f
+     !
+     X_rt%time_range=time_range_save
+     !
+     if (i_f>  0) T_range = EtoT(E=Probe_Frequency(i_p))
+     if (i_f== 0) T_range = EtoT(E=minval(Probe_Frequency))
+     if (i_f==-1) then
+       T_range = X_rt%time_range(2)- X_rt%time_range(1)
+       return
+     endif
+     !
+     X_rt%time_range(2)  = X_rt%time_range(1)+ T_range
+     !
+     if (X_rt%time_range(2)> NE_steps*RT_step) then
+       X_rt%time_range(2)  = NE_steps*RT_step
+       X_rt%time_range(1)  = X_rt%time_range(2)-T_range
+     endif 
+     !
+     i_t_start=int(X_rt%time_range(1)/RT_step)+1
+     i_t_end  =int(X_rt%time_range(2)/RT_step)
+     !
+   end function 
+   !
 end subroutine RT_X_inversion

@@ -152,7 +152,7 @@ subroutine RT_X_effective(en,l_RT_X_inversion)
  !
  if ( l_RT_X_inversion ) then
    !
-   call RT_initialize(dump_and_write=.TRUE.)
+   call RT_initialize(dump_and_write=.FALSE.)
    !
    call RT_X_inversion(RT_P_probe,Susceptibility,Probe_Frequency)
    !

@@ -93,7 +93,7 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Probe_Frequency)
    !
  endif
  !
- do i_order=1,X_order
+ do i_order=0,X_order
    !
    do i_f=1,N_probe_frequencies
      !

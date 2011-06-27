@@ -36,8 +36,7 @@ subroutine V_Hartree(rho,vhr)
  !
  ! Work Space
  !
- complex(DP) :: rhog(fft_size), vhtmp(fft_size) 
- complex(DP) :: vhg(wf_ng)
+ complex(DP) :: rhog(fft_size),vhtmp(fft_size),vhg(wf_ng)
  !
  vhg   = (0._DP,0._DP)
  vhtmp = (0._DP,0._DP)
@@ -46,11 +45,12 @@ subroutine V_Hartree(rho,vhr)
  ! FFT call: rho in reciprocal space
  !
 #if defined _FFTW
- fftw_plan = 0
+! fftw_plan = 0
  call fft_3d(rhog,fft_dim,-1,fftw_plan)
 #else
  call fft_3d(rhog,fft_dim,-1)
 #endif
+ return
  !
  vhg(2:wf_ng)=((4._DP*pi/DL_vol)*(rhog(fft_g_table(2:wf_ng,1))))&
 &              /bare_qpg(1,2:wf_ng)**2.
@@ -60,13 +60,17 @@ subroutine V_Hartree(rho,vhr)
  ! FFT call: vhr in direct space
  !
 #if defined _FFTW
- fftw_plan = 0
+! fftw_plan = 0
  call fft_3d(vhtmp,fft_dim,1,fftw_plan)
 #else
  call fft_3d(vhtmp,fft_dim,1)
 #endif
  !
- fftw_plan = 0
+#if defined _FFTW
+! fftw_plan = 0
+! call dfftw_destroy_plan(fftw_plan)
+#endif
+ !
  !
  vhr = real(vhtmp,SP)
  !

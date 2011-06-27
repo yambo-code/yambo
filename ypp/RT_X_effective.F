@@ -51,16 +51,18 @@ subroutine RT_X_effective(en,l_RT_X_inversion)
  call section("=",'Effective Response function ')
  !===============================================
  !
- !DEBUG>
- !l_RT_X_inversion=.FALSE.
- !DEBUG<
  jobstr_save=jobstr
- min_X_order=1
- if (X_order>1) min_X_order = 0 
  !
- if (N_probe_frequencies>1.and.l_RT_X_inversion) then
+ if (l_RT_X_inversion) then
+   if (N_probe_frequencies>1) then
+     min_X_order=1
+     X_order=1
+   else
+     min_X_order=0
+   endif
+ else
    min_X_order=1
-   X_order=1
+   if (X_order>1) min_X_order = 0 
  endif
  !
  N_probe_frequencies=max(N_probes,N_probe_frequencies) 

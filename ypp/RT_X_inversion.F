@@ -36,11 +36,18 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Probe_Frequency)
  ! Work Space
  !
  real(SP)          :: T_period,time_range_save(2)
+ logical           :: use_LRR
  integer           :: i_c,i_p,i_f,i_order
  complex(SP), allocatable :: X_effective(:,:,:)
  !
  call section("=",'Response function(s) by Inversion')
  !====================================================
+ !
+ use_LRR=.FALSE.
+ !
+ !DEBUG>
+ !case with N_probe_frequencies> 1 still experimental
+ !DEBUG<
  !
  allocate(X_effective(X_order+1,N_probe_frequencies,3))
  !
@@ -48,7 +55,7 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Probe_Frequency)
  !
  time_range_save=X_rt%time_range
  !
- if (N_probe_frequencies==1) then
+ if (.not.use_LRR) then
    !==================================
    ! 1 OR SEVERAL PROBES/ 1 FREQUENCY each
    !==================================
@@ -114,7 +121,7 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Probe_Frequency)
      !
      X_rt%time_range=time_range_save
      !
-     if (i_f>  0) T_range = EtoT(E=Probe_Frequency(i_p))
+     if (i_f>  0) T_range = EtoT(E=Probe_Frequency(i_f))
      if (i_f== 0) T_range = EtoT(E=minval(Probe_Frequency))
      if (i_f==-1) then
        T_range = X_rt%time_range(2)- X_rt%time_range(1)

@@ -34,29 +34,41 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
  !
  ! Work space
  !
- integer                 :: i_t,i_n,i_deltaT,nP_components
- integer                 :: M_size
+ integer                 :: i_t,i_n,i_deltaT,nP_components,M_size
+ logical                 :: use_LRR
  real(SP)   ,allocatable :: P_i(:),T_i(:)
- complex(SP),allocatable :: M(:,:)
+ complex(SP),allocatable :: M(:,:),X_here(:)
  !
- if (NW==1) then
+ use_LRR=NW> 1
+ !
+ if (use_LRR) then
+   M_size        =2*NW+1
+   nP_components =NW+1
+ else
    M_size        =2*X_order+1
    nP_components =X_order+1 
- else
-   M_size        =2*NW
-   nP_components =NW
  endif
  !
  i_deltaT=int(T_period/RT_step)/M_size
  !
- allocate(M(M_size,M_size),P_i(M_size),T_i(M_size))
+ allocate(M(M_size,M_size),P_i(M_size),T_i(M_size),X_here(nP_components))
+ !
+ M=(0._SP,0._SP)
  !
  do i_t=1,M_size
    T_i(i_t)= (i_t_start+i_deltaT*(i_t-1))*RT_step
    P_i(i_t)=P(i_t_start+i_deltaT*(i_t-1))
  enddo
  !
- if (NW==1) then
+ if (use_LRR) then
+   do i_t=1,M_size
+     M(i_t,1) = 2.
+     do i_n=2,nP_components
+       M(i_t,i_n   ) = exp( cI*W(i_n-1)*T_i(i_t))
+       M(i_t,i_n+NW) = exp(-cI*W(i_n-1)*T_i(i_t))
+     end do
+   end do
+ else
    do i_t=1,M_size
      M(i_t,1) = 2.
      do i_n=2, nP_components
@@ -64,25 +76,22 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
        M(i_t,i_n+X_order) = exp(-cI*W(1)*(i_n-1)*T_i(i_t))
      end do
    end do
- else
-   do i_t=1,M_size
-     do i_n=1,nP_components
-       M(i_t,i_n              ) = exp( cI*W(i_n)*T_i(i_t))
-       M(i_t,i_n+nP_components) = exp(-cI*W(i_n)*T_i(i_t))
-     end do
-   end do
  endif
  !
  call mat_dia_inv(INV,USE_LK,M)
  !
  X = (0._SP,0._SP)
+ X_here = (0._SP,0._SP)
  do i_n =1, nP_components
    do i_t = 1,M_size
-     X(i_n)=X(i_n)+M(i_n,i_t)*P_i(i_t)
+     X_here(i_n)=X_here(i_n)+M(i_n,i_t)*P_i(i_t)
    end do
  end do
  !
- deallocate(M,P_i,T_i)
+ if (use_LRR     ) X(:)=X_here(2:)
+ if (.not.use_LRR) X(:)=X_here(:)
+ !
+ deallocate(M,P_i,T_i,X_here)
  ! 
 end subroutine RT_coefficients_Inversion
 

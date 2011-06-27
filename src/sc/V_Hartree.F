@@ -51,7 +51,6 @@ subroutine V_Hartree(rho,vhr)
 #else
  call fft_3d(rhog,fft_dim,-1)
 #endif
- return
  !
  vhg(2:wf_ng)=((4._DP*pi/DL_vol)*(rhog(fft_g_table(2:wf_ng,1))))&
 &              /bare_qpg(1,2:wf_ng)**2.
@@ -67,7 +66,6 @@ subroutine V_Hartree(rho,vhr)
 #else
  call fft_3d(vhtmp,fft_dim,1)
 #endif
- !
  !
  vhr = real(vhtmp,SP)
  !

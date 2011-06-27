@@ -48,9 +48,9 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Probe_Frequency)
  !
  time_range_save=X_rt%time_range
  !
- if (N_probes>1) then
+ if (N_probe_frequencies==1) then
    !==================================
-   ! SEVERAL PROBES/ 1 FREQUENCY each
+   ! 1 OR SEVERAL PROBES/ 1 FREQUENCY each
    !==================================
    !
    call live_timing('X effective :',N_probes)

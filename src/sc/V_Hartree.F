@@ -45,7 +45,8 @@ subroutine V_Hartree(rho,vhr)
  ! FFT call: rho in reciprocal space
  !
 #if defined _FFTW
-! fftw_plan = 0
+ call dfftw_destroy_plan(fftw_plan)
+ fftw_plan = 0
  call fft_3d(rhog,fft_dim,-1,fftw_plan)
 #else
  call fft_3d(rhog,fft_dim,-1)
@@ -60,15 +61,11 @@ subroutine V_Hartree(rho,vhr)
  ! FFT call: vhr in direct space
  !
 #if defined _FFTW
-! fftw_plan = 0
+ call dfftw_destroy_plan(fftw_plan)
+ fftw_plan = 0
  call fft_3d(vhtmp,fft_dim,1,fftw_plan)
 #else
  call fft_3d(vhtmp,fft_dim,1)
-#endif
- !
-#if defined _FFTW
-! fftw_plan = 0
-! call dfftw_destroy_plan(fftw_plan)
 #endif
  !
  !

@@ -41,6 +41,7 @@ module pw_data
 
 ! Planewaves
   integer                    :: ngm_, npwx_
+  real(DP)                   :: ecutwfc_
   integer, allocatable       :: igv_(:,:)
   logical                    :: gamma_only_
 

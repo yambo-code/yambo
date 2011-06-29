@@ -52,7 +52,7 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  use pars,                  ONLY:SP,DP
  use electrons,             ONLY:n_bands,n_spin,n_spinor,n_sp_pol
  use D_lattice,             ONLY:n_atomic_species
- use pseudo,                ONLY:pp_n_l_comp_max,PP_alloc,pp_kbs,pp_kb,pp_kbd,l_a2y_KBPP
+ use pseudo,                ONLY:pp_n_l_times_proj_max,PP_alloc,pp_kbs,pp_kb,pp_kbd,l_a2y_KBPP
  use R_lattice,             ONLY:nkibz
  use wave_func,             ONLY:wf_ncx,wf_nb_io,wf_nb_io_groups
  use defs_datatypes,        ONLY:hdr_type, wffile_type
@@ -72,13 +72,13 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  type(hdr_type)     :: ahdr
  type(wffile_type)  :: wff
  real(DP)           :: pp_kb_kdb_disk(wf_ncx),&
-&                      pp_kbs_disk(n_atomic_species,pp_n_l_comp_max)
+&                      pp_kbs_disk(n_atomic_species,pp_n_l_times_proj_max)
  complex(DP)        :: wf_disk_DP(wf_ncx,n_spinor)
  integer            :: fform,i_spin,i_spinor
  !
  ! Number of records for each k-point
  !
- number_of_records_each_k=n_atomic_species*pp_n_l_comp_max*2+1+wf_nb_io
+ number_of_records_each_k=n_atomic_species*pp_n_l_times_proj_max*2+1+wf_nb_io
  if(.not.l_a2y_KBPP) number_of_records_each_k=1+wf_nb_io
  !
  if (ikibz==1.and.ib_grp==1) then
@@ -91,7 +91,7 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
      read(11)
    enddo
    call PP_alloc()
-   if(l_a2y_KBPP) read(11) ((pp_kbs_disk(i1,i2),i2=1,pp_n_l_comp_max),i1=1,n_atomic_species)
+   if(l_a2y_KBPP) read(11) ((pp_kbs_disk(i1,i2),i2=1,pp_n_l_times_proj_max),i1=1,n_atomic_species)
    if(.not.l_a2y_KBPP) pp_kbs_disk=0.
    pp_kbs=pp_kbs_disk
  endif
@@ -119,7 +119,7 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
    pp_kbd=0.
    if (ib_grp==1.and.l_a2y_KBPP) then
      do i1=1,n_atomic_species
-       do i2=1,pp_n_l_comp_max
+       do i2=1,pp_n_l_times_proj_max
          read(11) pp_kb_kdb_disk
          pp_kb(:,i1,i2,i_spin)=pp_kb_kdb_disk
          read(11) pp_kb_kdb_disk

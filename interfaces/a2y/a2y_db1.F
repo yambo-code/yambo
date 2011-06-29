@@ -29,7 +29,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
  use D_lattice,             ONLY: DL_vol, a, alat, input_GS_Tel,&
 &                                 n_atomic_species,n_atoms_species,&
 &                                 n_atoms_species_max,atom_pos,Z_species,lattice
- use pseudo,                ONLY: pp_n_l_comp_max,pp_n_l_comp,l_a2y_KBPP
+ use pseudo,                ONLY: pp_n_l_times_proj_max,pp_n_l_comp,l_a2y_KBPP,&
+&                                 pp_n_l_max,pp_table
  use wave_func,             ONLY: wf_nc_k, wf_igk,wf_ncx,wf_ng
  use vec_operate,           ONLY: cross_product,v_is_zero
  use defs_datatypes,        ONLY: hdr_type, wffile_type
@@ -67,14 +68,14 @@ subroutine a2y_db1(en,k,KSS_file_name)
  call msg('l','abinit version ',ahdr%codvsn)
  read(11)
  read(11) 
- read(11) ahdr%nsym, n_bands, ng_vec, ishm, pp_n_l_comp_max
+ read(11) ahdr%nsym, n_bands, ng_vec, ishm, pp_n_l_times_proj_max
  en%nb=n_bands
  !
  call msg('s','Pseudo Potential KB form factors...')
- l_a2y_KBPP=pp_n_l_comp_max>=0
+ l_a2y_KBPP=pp_n_l_times_proj_max>=0
  if (     l_a2y_KBPP)  call msg('l','yes')
  if (.not.l_a2y_KBPP)  call msg('l','no')
- if (.not.l_a2y_KBPP)  pp_n_l_comp_max=-pp_n_l_comp_max
+ if (.not.l_a2y_KBPP)  pp_n_l_times_proj_max=-pp_n_l_times_proj_max
  !
  ! XC KIND/FUNCTIONAL
  !===================
@@ -149,8 +150,13 @@ subroutine a2y_db1(en,k,KSS_file_name)
  enddo
  !
  n_atomic_species=ahdr%ntypat
- allocate(n_atoms_species(n_atomic_species),pp_n_l_comp(n_atomic_species))
- pp_n_l_comp=pp_n_l_comp_max
+ pp_n_l_max =pp_n_l_times_proj_max
+ allocate(n_atoms_species(n_atomic_species),pp_n_l_comp(n_atomic_species),&
+&         pp_table(n_atomic_species,pp_n_l_times_proj_max))
+ pp_n_l_comp(:)=pp_n_l_max
+ do i1=1,pp_n_l_times_proj_max
+   pp_table(:,i1)=i1
+ enddo
  n_atoms_species(:)=0
  do i1=1,ahdr%natom
    n_atoms_species( ahdr%typat(i1) ) = n_atoms_species( ahdr%typat(i1) ) +1
@@ -224,7 +230,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
    do ik=1,k%nibz
      if (l_a2y_KBPP) then
        do i1=1,n_atomic_species
-         do i2=1,pp_n_l_comp_max
+         do i2=1,pp_n_l_times_proj_max
            read(11)
            read(11) 
          enddo

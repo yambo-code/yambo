@@ -336,12 +336,12 @@ contains
   !
   subroutine import_gwdata_group
     use D_lattice,             only : n_atomic_species
-    use pseudo,                only : pp_n_l_comp_max,&
+    use pseudo,                only : pp_n_l_times_proj_max,&
 &                                  pp_n_l_comp, pp_kbs,pp_kb,pp_kbd
     implicit none
     type(etsf_gwdata)            :: gwdata_group
 
-    pp_n_l_comp_max = dims%max_number_of_angular_momenta
+    pp_n_l_times_proj_max = dims%max_number_of_angular_momenta
 
 !   call allocate_gwdata_group
 
@@ -352,7 +352,7 @@ contains
 !   call etsf_io_gwdata_get(ncid, gwdata_group, lstat, error_data)
 
     allocate(pp_n_l_comp(n_atomic_species))
-    pp_n_l_comp = pp_n_l_comp_max
+    pp_n_l_comp = pp_n_l_times_proj_max
     !
     call deallocate_gwdata_group
     return

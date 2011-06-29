@@ -30,14 +30,13 @@ module P2Y
  use pars,                  ONLY : lchlen,SP, DP
  use electrons,             ONLY : levels
  use R_lattice,             ONLY : bz_samp
+ use mod_com2y,             ONLY : verboseIO
  ! 
  implicit none
  !
- logical :: verboseIO
  character(lchlen) :: index_filename
-!CHARACTER(256), ALLOCATABLE :: psfile_(:)
  !
- integer, public :: pw_unit 
+ integer, public  :: pw_unit 
  integer, private :: i1,i2,ierr
  !
  ! Memory saving tools
@@ -460,7 +459,7 @@ contains
    do i1=1,k%nibz
      k%pt(i1,:)=xk_(:,i1) * alat(:)/alat_ 
    enddo
-   deallocate(xk_)
+!  deallocate(xk_)
 
 #if defined _P2Y_EXPORT
  
@@ -508,7 +507,7 @@ contains
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
 
    allocate(igv_(3,ngm_))    ! The PWscf array (ngm = ng_vec if not gamma_only)
-   call qexml_read_planewaves(igv=igv_, ierr=ierr)
+   call qexml_read_planewaves(ecutwfc=ecutwfc_,igv=igv_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_planewaves','IOTK error',ABS(ierr))
 
 #endif
@@ -532,7 +531,7 @@ contains
      !
    endif
 
-   deallocate(igv_)
+!  deallocate(igv_)
    !
  end subroutine get_R_vectors
  !

@@ -23,7 +23,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  use pars,                ONLY:SP,lchlen
  use LOGO,                ONLY:pickup_a_random
- use com,                 ONLY:msg,write_to_report,core_io_path
+ use com,                 ONLY:msg,write_to_report,core_io_path,write_the_logo
  use par_proc_m,          ONLY:ncpu,myid,p_finalize
  use electrons,           ONLY:levels,E_reset,n_spin
  use D_lattice,           ONLY:n_atoms_species_max
@@ -69,7 +69,11 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  write_to_report=.FALSE.
  !
- call section('*','A(binit) 2 Y(ambo)')
+ ! LOGO
+ !
+ call write_the_logo(6,' ')
+ !
+ call msg('s','A(binit) 2 Y(ambo)')
  !
  call msg('s','Checking input file ...')
  !

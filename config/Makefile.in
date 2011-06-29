@@ -77,7 +77,7 @@ PJ_RTLIBS          = $(MAIN_LIBS) sc real_time
 #
 # Interfaces
 #
-2YLIBS       = external_c modules parser communicate common io 
+2YLIBS       = external_c modules parser communicate common io bz_ops
 #
 # YPP
 #

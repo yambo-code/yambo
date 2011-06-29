@@ -41,7 +41,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,n_atoms_species_max,n_atomic_species,&
 &                     input_Tel_commands_over_header,non_periodic_directions,lattice,Bose_Temp
- use pseudo,     ONLY:pp_n_l_comp_max,pp_kbv_dim
+ use pseudo,     ONLY:pp_n_l_times_proj_max,pp_kbv_dim
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
@@ -218,7 +218,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  ! Pseudo
  !
- pp_n_l_comp_max=0
+ pp_n_l_times_proj_max=0
  pp_kbv_dim=0
  !
  !drivers

@@ -30,10 +30,10 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m,       ONLY:par_indexes
  use D_lattice,           ONLY:alat,n_atomic_species,n_atoms_species
- use pseudo,              ONLY:pp_kbv_dim,pp_n_l_comp,PP_free
+ use pseudo,              ONLY:pp_kbv_dim,pp_n_l_comp,PP_free,pp_table,Vnl
  use R_lattice,           ONLY:g_vec,bz_samp
  use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square,DIP_P
- use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD
+ use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD,OP_RD_CL
  use memory_m,            ONLY:mem_est
  use wave_func,           ONLY:wf,wf_ng,wf_state, WF_load
  use wrapper,             ONLY:M_by_V
@@ -57,16 +57,24 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  !I/O and external functions
  !
- integer                      :: ID,io_err,ioKB_err
- integer, external            :: ioKB_PP
+ integer                      :: ID,io_err,ioKB_err, io_Vnl_err
+ integer, external            :: ioKB_PP, io_Vnl
+ !
+ X%Vnl_included=.false.
+ !
+ ! Check for the Vnl DB
+ !
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
+ io_Vnl_err=io_Vnl(X,Xen,ID)
  !
  ! Check for the KB PP DB 
  !
  call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
  ioKB_err=ioKB_PP(ID)
  !
+ X%Vnl_included= ioKB_err==0 .or. io_Vnl_err==0
+ !
  if (ioKB_err==0) then
-   X%Vnl_included=.true.
    pp_kbv_dim=0
    do is = 1,n_atomic_species
      do ia = 1,n_atoms_species(is)
@@ -79,8 +87,6 @@ subroutine Dipole_transverse(Xen,Xk,X)
    enddo
    allocate(kbv(wf_ng,pp_kbv_dim,4),stat=alloc_err)
    call mem_est("KBV",(/size(kbv)/),errors=(/alloc_err/))
- else
-   X%Vnl_included=.false.
  endif
  !
  ! Set up band limits
@@ -227,6 +233,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
          ! DIP_iR(c,v) = i <v|r|c> = i <v|[r,H]|c>/(Ec-Ev) = i <v|i p|c>/(Ec-Ev) =
          !             = - <v | -i grad |c> / (Ec-Ev) = <v|-i grad|c>/(Ev-Ec) = P_vc/(Ev-Ec)
          !
+         if(io_Vnl_err==0) rho(1:3) = rho(1:3) + Vnl(1:3,ic,iv,ik,1)*0.5
+         !
          rho(1:3)=rho(1:3)/Ev_m_Ec
          !
          if (abs(Ev_m_Ec)<=1.E-5_SP) rho(1:3)=(0._SP,0._SP)
@@ -297,9 +305,12 @@ subroutine Dipole_transverse(Xen,Xk,X)
  deallocate(wf_xyz)
  call pp_indexes_reset(px)
  if (ioKB_err==0) then
-   deallocate(kbv)
-   call mem_est("KBV")
+   deallocate(kbv,pp_n_l_comp)
+   if (allocated(pp_table)) deallocate(pp_table)
    call PP_free()
+   call mem_est("KBV pp_n_l_comp pp_table")
+ else if (io_Vnl_err==0) then
+   if (allocated(Vnl)) deallocate(Vnl)
  endif 
  !
  do i_spin=1,n_sp_pol

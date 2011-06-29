@@ -39,7 +39,7 @@ subroutine RT_fix_symmetries(E,k)
  use wave_func,           ONLY:ioWF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io, &
 &                              wf_ng,wf_state,WF_load,wf_state,wf,WF_free,wf_ng ,wf_nb_io_groups
  use real_time,           ONLY:kpoints_map
- use pseudo,              ONLY:pp_kb,pp_kbd,n_atomic_species,pp_n_l_comp_max,PP_free
+ use pseudo,              ONLY:pp_kb,pp_kbd,n_atomic_species,pp_n_l_times_proj_max,PP_free
  use SC,                  ONLY:local_V,SC_R,H_nl_sc,SC_bands
  use stderr,              ONLY:intc,set_real_printed_length
  use parser_m,            ONLY:parser
@@ -138,8 +138,8 @@ subroutine RT_fix_symmetries(E,k)
  if(ioKB_err==0) then
    ! 
    call section('=',"PseudoPotentials")
-   allocate(pp_kb_store(wf_ng,n_atomic_species,pp_n_l_comp_max,n_spin,k%nibz))
-   allocate(pp_kbd_store(wf_ng,n_atomic_species,pp_n_l_comp_max,n_spin,k%nibz))
+   allocate(pp_kb_store(wf_ng,n_atomic_species,pp_n_l_times_proj_max,n_spin,k%nibz))
+   allocate(pp_kbd_store(wf_ng,n_atomic_species,pp_n_l_times_proj_max,n_spin,k%nibz))
    call mem_est("pp_kb_store pp_kbd_store",(/size(pp_kb),size(pp_kbd)/),elements_kind=(/SP,SP/))
    !
    do ik=1,k_save%nibz

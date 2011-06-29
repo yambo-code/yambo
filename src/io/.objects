@@ -11,6 +11,7 @@ DISTRIBUTED_objects = ioBS.o
 DISTRIBUTED_objects = ioBS.o ioBS_DISTRIBUTED.o
 #endif
 objs = ver_is_gt_or_eq.o IO_and_Messaging_switch.o \
+       io_Vnl.o \
        ioRIM.o        ioGROT.o     $(ELPH_objects) \
        io_DIPOLES.o   ioQINDX.o    ioQP.o      ioX.o \
        ioDB1.o        ioWF.o       ioKB_PP.o   io_HF_and_locXC.o \

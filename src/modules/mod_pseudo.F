@@ -32,10 +32,11 @@ module pseudo
  !=========
  !
  logical :: l_a2y_KBPP
+ logical :: l_many_proj
  integer :: pp_n_l_max
  integer :: pp_n_l_times_proj_max
  integer :: pp_kbv_dim
- integer,  allocatable:: pp_table(:,:)
+ integer,  allocatable:: pp_table(:,:,:)
  integer,  allocatable:: pp_n_l_comp(:)
  real(SP), allocatable:: pp_kbs(:,:)
  real(SP), allocatable:: pp_kb(:,:,:,:)

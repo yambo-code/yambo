@@ -32,7 +32,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
  use mod_com2y,           ONLY:interface_presets,force_noWFs
  use mod_wf2y,            ONLY:wf_splitter
- use pseudo,              ONLY:l_a2y_KBPP
+ use pseudo,              ONLY:l_a2y_KBPP,PP_free
  !
  implicit none
  type(levels)                 :: en 
@@ -131,6 +131,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    !
  enddo
  deallocate(wf_disk)
+ call PP_free()
  !
  call msg('ln','done ==')
  !

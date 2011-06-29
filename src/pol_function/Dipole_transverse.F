@@ -30,7 +30,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m,       ONLY:par_indexes
  use D_lattice,           ONLY:alat,n_atomic_species,n_atoms_species
- use pseudo,              ONLY:pp_kbv_dim,pp_n_l_comp,PP_free,pp_table,Vnl
+ use pseudo,              ONLY:pp_kbv_dim,pp_n_l_times_proj_max,PP_free,pp_table,Vnl,pp_n_l_comp
  use R_lattice,           ONLY:g_vec,bz_samp
  use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square,DIP_P
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD,OP_RD_CL
@@ -48,7 +48,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  ! Work Space
  !
- integer                      :: ik,i1,icfft,ivfft,ic,iv,iv_max,ic_min
+ integer                      :: ik,i1,icfft,ivfft,ic,iv,iv_max,ic_min,i_pp,pp_spin
  integer                      :: is,ia,il,im,alloc_err,i_spin,E_i_spin,wf_dim
  complex(SP), allocatable     :: wf_xyz(:,:), kbv(:,:,:)
  complex(SP)                  :: rho(4)
@@ -78,7 +78,10 @@ subroutine Dipole_transverse(Xen,Xk,X)
    pp_kbv_dim=0
    do is = 1,n_atomic_species
      do ia = 1,n_atoms_species(is)
-       do il = 1, pp_n_l_comp(is)
+       do i_pp = 1, pp_n_l_times_proj_max
+         il = pp_table(1,is,i_pp)
+         pp_spin = pp_table(3,is,i_pp)
+         if(pp_spin>1) cycle
          do im = 1,2*(il-1)+1
            pp_kbv_dim=pp_kbv_dim+1
          enddo
@@ -144,7 +147,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
      ! 
      ! GPL_EXCLUDE_END SPIN_IGNORE
      !
-     if (ioKB_err==0) call Dipole_kb_pp_comp(ik,i_spin,Xk,kbv)
+     pp_spin=i_spin
+     if (n_spinor==2) pp_spin=1
+     if (ioKB_err==0) call Dipole_kb_pp_comp(ik,pp_spin,Xk,kbv)
      !
      E_i_spin=i_spin
      if (n_spinor==2) E_i_spin=1

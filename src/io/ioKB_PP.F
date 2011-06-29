@@ -90,7 +90,7 @@ integer function ioKB_PP(ID)
        call mem_est("pp_n_l_comp",(/n_atomic_species/),(/IP/))
      endif
      if (.not.allocated(pp_table)) then
-       allocate(pp_table(n_atomic_species,pp_n_l_times_proj_max))
+       allocate(pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
        call mem_est("pp_table",(/size(pp_table)/),(/IP/))
      endif
      !
@@ -101,8 +101,14 @@ integer function ioKB_PP(ID)
    call io_bulk(ID,VAR="ATOM_L_COMP",VAR_SZ=(/n_atomic_species/))
    call io_bulk(ID,I1=pp_n_l_comp)
    if (ver_is_gt_or_eq(ID,revision=898)) then
-     call io_bulk(ID,VAR="PP_TABLE",VAR_SZ=(/n_atomic_species,pp_n_l_times_proj_max/))
-     call io_bulk(ID,I2=pp_table)
+     call io_bulk(ID,VAR="PP_TABLE",VAR_SZ=(/3,n_atomic_species,pp_n_l_times_proj_max/))
+     call io_bulk(ID,I3=pp_table)
+   else
+     do i1=1,pp_n_l_times_proj_max
+       pp_table(1,i1,:)=i1
+       pp_table(2,i1,:)=1
+       pp_table(3,i1,:)=1
+     enddo
    endif
    !
    call io_bulk(ID,VAR="ATOM_POS",VAR_SZ=shape(atom_pos))

@@ -52,7 +52,8 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  use pars,                  ONLY:SP,DP
  use electrons,             ONLY:n_bands,n_spin,n_spinor,n_sp_pol
  use D_lattice,             ONLY:n_atomic_species
- use pseudo,                ONLY:pp_n_l_times_proj_max,PP_alloc,pp_kbs,pp_kb,pp_kbd,l_a2y_KBPP
+ use pseudo,                ONLY:pp_n_l_times_proj_max,PP_alloc,pp_kbs,pp_kb,pp_kbd,&
+&                                l_a2y_KBPP,l_many_proj,pp_table
  use R_lattice,             ONLY:nkibz
  use wave_func,             ONLY:wf_ncx,wf_nb_io,wf_nb_io_groups
  use defs_datatypes,        ONLY:hdr_type, wffile_type
@@ -87,9 +88,24 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
    wff%accesswff=0
    fform=1
    call hdr_io_wfftype(fform,ahdr,5,wff)
-   do i1=1,7
+   do i1=1,3
      read(11)
    enddo
+   !
+   if(l_many_proj) then
+     read(11)
+     read(11) ((pp_table(1,i2,i1),i2=1,pp_n_l_times_proj_max),i1=1,n_atomic_species)
+     read(11) ((pp_table(2,i2,i1),i2=1,pp_n_l_times_proj_max),i1=1,n_atomic_species)
+     read(11) ((pp_table(3,i2,i1),i2=1,pp_n_l_times_proj_max),i1=1,n_atomic_species)
+     !
+     pp_table(1,:,:)=pp_table(1,:,:)+1  ! l+1 , not l
+     !
+   endif
+   !
+   do i1=1,4
+     read(11)
+   enddo
+   !
    call PP_alloc()
    if(l_a2y_KBPP) read(11) ((pp_kbs_disk(i1,i2),i2=1,pp_n_l_times_proj_max),i1=1,n_atomic_species)
    if(.not.l_a2y_KBPP) pp_kbs_disk=0.

@@ -39,7 +39,7 @@ subroutine Dipole_kb_pp_comp(ik,i_spin,Xk,kbv)
  ! 
  ! Work Space
  !
- integer     :: ig,igm,i1,is,ia,il,il_times_n,im
+ integer     :: ig,igm,i1,is,ia,il,i_pp,im,pp_spin
  complex(SP) :: Ylm(pp_n_l_max,2*pp_n_l_max+1),&
 &               dYlm(2,pp_n_l_max,2*pp_n_l_max+1),c1(n_atomic_species),c2(4)
  real(SP)    :: Ygrad(2,3),v1(3),v2(3),r1,r2
@@ -57,17 +57,19 @@ subroutine Dipole_kb_pp_comp(ik,i_spin,Xk,kbv)
      do ia = 1,n_atoms_species(is)
        r2 = dot_product(v2,atom_pos(:,ia,is))
        c1(is) = cmplx(cos(r2),sin(r2))
-       do il_times_n = 1,pp_n_l_times_proj_max
-         il = pp_table(is,il_times_n)
+       do i_pp=1,pp_n_l_times_proj_max
+         il = pp_table(1,is,i_pp)
+         pp_spin = pp_table(3,is,i_pp)
+         if(pp_spin>1) cycle
          do im = 1,2*(il-1)+1
            i1=i1+1
            c2(1)=sqrt(4.*pi/(2.*(il-1.)+1.))*Ylm(il,im)
            c2(2:4)=sqrt(4.*pi/(2.*(il-1.)+1.))*&
 &                    (dYlm(1,il,im)*Ygrad(1,:)+dYlm(2,il,im)*Ygrad(2,:))
-           kbv(ig,i1,1)=kbv(ig,i1,1)+c2(1)*&
-&                        pp_kbs(is,il)*pp_kb(ig,is,il,i_spin)*c1(is)
+           kbv(ig,i1,1)=kbv(ig,i1,1)+c2(1)*&                                       !(-1.)**(il-1)*& (?think no?)
+&                        pp_kbs(is,i_pp)*pp_kb(ig,is,i_pp,i_spin)*c1(is)
            kbv(ig,i1,2:4)=kbv(ig,i1,2:4)+c1(is)*&
-&            (v1(:)/r1*pp_kbd(ig,is,il,i_spin)*c2(1)+pp_kb(ig,is,il,i_spin)*c2(2:4))
+&            (v1(:)/r1*pp_kbd(ig,is,i_pp,i_spin)*c2(1)+pp_kb(ig,is,i_pp,i_spin)*c2(2:4))
          enddo
        enddo
      enddo

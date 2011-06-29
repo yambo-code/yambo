@@ -26,10 +26,6 @@ subroutine RT_TwoL_Glesser(Poles_and_derivatives,Eo,Rabi,G_lesser)
  use real_time,      ONLY:NE_time,Phase_Lifetime,QP_LifeTime,it_start,NE_i_time
  use SC,             ONLY:it_now
  use fields,         ONLY:Efield,global_gauge,i_Probe,i_Pump
- !
-! use real_time,      ONLY:P,W_pump
-! use stderr,         ONLY:real2ch
- !
  implicit none
  real(SP),    intent(in)   :: Eo
  complex(SP), intent(in)   :: Rabi

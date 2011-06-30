@@ -107,6 +107,14 @@ subroutine RT_output(what,VALUEs,TIME,E)
  headings(next_file,9)="dG" 
  next_file=next_file+1
  !
+ do i_order=0,max_X_order,1
+   if (initialize) file_name(next_file)=trim(append_ch)//'P_order_'//trim(intc(i_order))
+   short_file_name(next_file)=trim(append_ch)//'P_order_'//trim(intc(i_order))
+   n_headings(next_file)=4
+   headings(next_file,2:4)=(/"Pol_x","Pol_y","Pol_z"/)
+   next_file=next_file+1
+ enddo
+ !
  ! ... energy resolved ...
  !
  !
@@ -211,7 +219,8 @@ subroutine RT_output(what,VALUEs,TIME,E)
    select case (trim(short_file_name(i_f)))
      case('current','YPP-current')
        data_to_dump(2:4) =real(RT_ind_J)
-     case('polarization','YPP-polarization')
+     case('polarization','YPP-polarization','YPP-P_order_0',&
+&         'YPP-P_order_1','YPP-P_order_2','YPP-P_order_3')
        data_to_dump(2:4) =real(RT_P)
        if (P_2levels_is_done) data_to_dump(5:7) =real(RT_P_2levels)
      case('vector_potential')

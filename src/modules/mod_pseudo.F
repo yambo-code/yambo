@@ -31,7 +31,6 @@ module pseudo
  ! ABINIT
  !=========
  !
- logical :: l_a2y_KBPP
  logical :: l_many_proj
  integer :: pp_n_l_max
  integer :: pp_n_l_times_proj_max

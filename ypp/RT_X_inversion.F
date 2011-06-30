@@ -35,7 +35,7 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Probe_Frequency)
  !
  ! Work Space
  !
- real(SP)          :: T_period,time_range_save(2)
+ real(SP)          :: T_period,time_range_save(2),T_period_max
  logical           :: use_LRR
  integer           :: i_c,i_p,i_f,i_order
  complex(SP), allocatable :: X_effective(:,:,:)
@@ -59,14 +59,24 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Probe_Frequency)
    !==================================
    ! 1 OR SEVERAL PROBES/ 1 FREQUENCY each
    !==================================
+   ! 
+   T_period_max=-1.
+   !
+   do i_p=1,N_probes
+     !
+     T_period=T_range(i_p)
+     !
+     if (T_period>T_period_max) T_period_max=T_period
+     !
+   enddo
+   !
+   call msg('s','[RT] Effective max time range [fs]:',(real(i_t_start)*RT_step+(/0._SP,T_period_max/))/FS2AUT)
    !
    call live_timing('X effective :',N_probes)
    !
    do i_p=1,N_probes
      !
      T_period=T_range(i_p)
-     !
-     !call msg('s','[RT] Time range [fs]:',(/real(i_t_start),real(i_t_end)/)*RT_step/FS2AUT)
      !
      do i_c = 1,3
        !

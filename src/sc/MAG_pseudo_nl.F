@@ -29,7 +29,7 @@ subroutine MAG_pseudo_nl(kbv)
  use units,         ONLY:SPEED_OF_LIGHT,Au2Tesla
  use wave_func,     ONLY:wf_ng
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
- use pseudo,        ONLY:pp_n_l_comp,pp_kbv_dim
+ use pseudo,        ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,n_atoms,atom_pos
  use memory_m,      ONLY:mem_est
@@ -50,7 +50,7 @@ subroutine MAG_pseudo_nl(kbv)
  real(SP)                :: Phi_over_Phio
  !
  ! Dummies
- integer                 :: i1,is,ia,il,im
+ integer                 :: i1,is,ia,il,im,i_pp,pp_spin
  !
  call load_cc(.true.,.true.)
  !
@@ -59,7 +59,6 @@ subroutine MAG_pseudo_nl(kbv)
  do is = 1,n_atomic_species
    do ia = 1,n_atoms_species(is)
      !
-     ! Here I need to change the implementation for phase_trick
      if(MAG_radius==0) then
        ! int_A_dl (R-->r') = 0.5 B_0/c (x_R y' - y_R x') (landau)
        int_A_dl(:)= 0.5*Bz/SPEED_OF_LIGHT*(x(:,2)*atom_pos(1,ia,is)-atom_pos(2,ia,is)*x(:,1))
@@ -82,7 +81,11 @@ subroutine MAG_pseudo_nl(kbv)
      endif
      ! 
      !
-     do il = 1, pp_n_l_comp(is)
+     do i_pp = 1, pp_n_l_times_proj_max
+       il = pp_table(1,is,i_pp)
+       pp_spin = pp_table(3,is,i_pp)
+       if(pp_spin>1) cycle
+       !
        do im = 1,2*(il-1)+1
          !
          i1=i1+1
@@ -102,7 +105,7 @@ subroutine MAG_pseudo_nl(kbv)
          new_pp(:,i1)=conjg(kbv_DP(:))*gauge_factor(:)
          !       
        enddo   ! im
-     enddo   ! il
+     enddo   ! i_pp
    enddo   ! ia
  enddo   ! is
  !

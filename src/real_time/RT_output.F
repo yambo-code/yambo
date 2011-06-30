@@ -38,7 +38,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
  !
  ! Work space
  !
- integer, parameter       :: n_output_files=30,max_X_order=3
+ integer, parameter       :: n_output_files=30,max_X_order=9
  character(lchlen), save  :: file_name(n_output_files)
  character(schlen)        :: orders(n_output_files),short_file_name(n_output_files)
  integer                  :: i_f,i_fp,n_headings(n_output_files),next_file,i_order

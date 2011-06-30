@@ -29,7 +29,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  use D_lattice,             ONLY: DL_vol, a, alat, input_GS_Tel,&
 &                                 n_atomic_species,n_atoms_species,&
 &                                 n_atoms_species_max,atom_pos,Z_species,lattice
- use pseudo,                ONLY: pp_n_l_times_proj_max,pp_n_l_comp,l_a2y_KBPP,&
+ use pseudo,                ONLY: pp_n_l_times_proj_max,pp_n_l_comp,&
 &                                 pp_n_l_max,pp_table,l_many_proj
  use wave_func,             ONLY: wf_nc_k, wf_igk,wf_ncx,wf_ng
  use vec_operate,           ONLY: cross_product,v_is_zero
@@ -83,10 +83,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  en%nb=n_bands
  !
  call msg('s','Pseudo Potential KB form factors...')
- l_a2y_KBPP=pp_n_l_times_proj_max>=0
- if (     l_a2y_KBPP)  call msg('l','yes')
- if (.not.l_a2y_KBPP)  call msg('l','no')
- if (.not.l_a2y_KBPP)  pp_n_l_times_proj_max=-pp_n_l_times_proj_max
+ call msg('l','yes')
  !
  ! XC KIND/FUNCTIONAL
  !===================
@@ -216,7 +213,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  read(11) (rel_gvec(:,i1),i1=1,ng_vec)
  read(11) 
- if (l_a2y_KBPP) read(11) 
+ read(11) 
  do i1=1,ng_vec
    g_vec(i1,:)=matmul(transpose(b),rel_gvec(:,i1))*alat(:)/2./pi
  enddo
@@ -246,14 +243,12 @@ subroutine a2y_db1(en,k,KSS_file_name)
    ! GPL_EXCLUDE_END SPIN_IGNORE
    !
    do ik=1,k%nibz
-     if (l_a2y_KBPP) then
-       do i1=1,n_atomic_species
-         do i2=1,pp_n_l_times_proj_max
-           read(11)
-           read(11) 
-         enddo
+     do i1=1,n_atomic_species
+       do i2=1,pp_n_l_times_proj_max
+         read(11)
+         read(11) 
        enddo
-     endif
+     enddo
      read(11) rstr
      en%E(:,ik,i_spin)=rstr(:)
      do i1=1,en%nb

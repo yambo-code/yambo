@@ -54,9 +54,6 @@ subroutine RT_driver(en,k)
  !
  ! LOGICALS
  !----------
- ! Max order implemented in RT_output (simple to increase).
- !
- if (X_order>3) X_order=3
  !
  l_RT_LRR_real_field= all((/&
 &   .not.any((/trim(Efield(i_probe)%ef_name)=="ANTIRES",trim(Efield(i_probe)%ef_name)=="RES",trim(Efield(i_probe)%ef_name)=="SIN"/)),&

@@ -108,15 +108,20 @@ subroutine RT_output(what,VALUEs,TIME,E)
  next_file=next_file+1
  !
  do i_order=0,max_X_order,1
-   if (initialize) file_name(next_file)=trim(append_ch)//'P_order_'//trim(intc(i_order))
-   short_file_name(next_file)=trim(append_ch)//'P_order_'//trim(intc(i_order))
+   if (initialize) file_name(next_file)=trim(append_ch)//'dP_order_'//trim(intc(i_order))
+   short_file_name(next_file)=trim(append_ch)//'dP_order_'//trim(intc(i_order))
    n_headings(next_file)=4
-   headings(next_file,2:4)=(/"Pol_x","Pol_y","Pol_z"/)
+   headings(next_file,2:4)=(/"dPol_x","dPol_y","dPol_z"/)
    next_file=next_file+1
  enddo
  !
- ! ... energy resolved ...
+ if (initialize) file_name(next_file)=trim(append_ch)//'P_minus_P_pump'
+ short_file_name(next_file)=trim(append_ch)//'P_minus_P_pump'
+ n_headings(next_file)=4
+ headings(next_file,2:4)=(/"dPol_x","dPol_y","dPol_z"/)
+ next_file=next_file+1
  !
+ ! ... energy resolved ...
  !
  if (initialize) file_name(next_file)=trim(append_ch)//'eps'
  short_file_name(next_file)=trim(append_ch)//'eps'
@@ -219,8 +224,8 @@ subroutine RT_output(what,VALUEs,TIME,E)
    select case (trim(short_file_name(i_f)))
      case('current','YPP-current')
        data_to_dump(2:4) =real(RT_ind_J)
-     case('polarization','YPP-polarization','YPP-P_order_0',&
-&         'YPP-P_order_1','YPP-P_order_2','YPP-P_order_3')
+     case('polarization','YPP-polarization','YPP-dP_order_0',&
+&         'YPP-dP_order_1','YPP-dP_order_2','YPP-dP_order_3','YPP-P_minus_P_pump')
        data_to_dump(2:4) =real(RT_P)
        if (P_2levels_is_done) data_to_dump(5:7) =real(RT_P_2levels)
      case('vector_potential')

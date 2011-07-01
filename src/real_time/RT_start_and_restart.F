@@ -45,7 +45,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
 &                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,rho_reference,  &
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
 &                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,RT_P_2levels,full_rho,   &
-&                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,RT_is_dumped
+&                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,RT_is_dumped,NE_i_time
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,       &
 &                         rho_convergence,H_rotate,local_V,V_hartree_sc,&
@@ -206,6 +206,12 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    ! END RESTART FROM SC
    !=====================
    !
+ else if (Thermal_steps==0) then
+   !
+   ! During Thermalization G_lesser_reference must be zero
+   !
+   G_lesser_reference=G_lesser   
+   !
  endif
  !
  if(.not.SC_DB_present.and.l_RT_needs_XC0) then
@@ -304,7 +310,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
      call msg('snr','[RT] Number of steps done    [o/o]:',real(it_now)/real(NE_steps)*100._SP)
    endif
    !
-   it_start=it_now+1
+   it_start=it_now
    !
    ! If I'm doing the response to an external field I need rho_reference and G_lesser_reference
    !
@@ -315,14 +321,13 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  !
  ! Initialize G_lesser_previous and G_lesser_reference
  !
- if (l_NE_with_fields) call RT_Ext_fields(A_vecpot,(it_start-1)*RT_step)
+ if (l_NE_with_fields) then
+   NE_i_time=it_start-Thermal_steps
+   call RT_Ext_fields(A_vecpot,(it_start-1)*RT_step)
+ endif
  !
  A_vecpot_previous =A_vecpot
  G_lesser_previous =G_lesser   
- !
- ! During Thermalization G_lesser_reference must be zero
- !
- if(Thermal_steps==0) G_lesser_reference=G_lesser   
  !
  call msg('r','')
  !

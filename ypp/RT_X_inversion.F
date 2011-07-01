@@ -21,14 +21,13 @@
 !
 subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Probe_Frequency)
  !
- use pars,           ONLY:SP,pi,cI,SCHLEN
- use YPP,            ONLY:N_probes,X_order,N_probe_frequencies,X_rt,RT_initialize,i_t_start,i_t_end
+ use pars,           ONLY:SP,pi
+ use YPP,            ONLY:N_probes,X_order,N_probe_frequencies,X_rt,i_t_start,i_t_end
  use fields,         ONLY:EtoT,Efield,Divide_by_Field,i_Probe
- use real_time,      ONLY:NE_steps,RT_step,NE_time,RT_output,RT_P
+ use real_time,      ONLY:NE_steps,RT_step,RT_P
  use units,          ONLY:FS2AUT
  use com,            ONLY:msg
  use timing,         ONLY:live_timing
- use stderr,         ONLY:intc
  implicit none
  !
  real(SP)      :: RT_P_probe(NE_steps,N_probes,3),Probe_Frequency(N_probe_frequencies)
@@ -85,7 +84,13 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Probe_Frequency)
 &                                     (/Probe_Frequency(i_p)/),T_period)
        !
      end do
-     if (N_probes==1) call plot_decomposed_Polarizability(X_order+1,Probe_Frequency(i_p),X_effective(:,i_p,:))       
+     !
+     if (N_probes==1) then
+       !
+       call RT_split_Polarization(X_order+1,NE_steps,Probe_Frequency(i_p),&
+&                                 X_effective(:,i_p,:),RT_P_probe(:,i_p,:),"dump")
+       !
+     endif
      !
      call live_timing(steps=1)
      !
@@ -151,30 +156,5 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Probe_Frequency)
      i_t_end  =int(X_rt%time_range(2)/RT_step)
      !
    end function 
-   !
-   subroutine plot_decomposed_Polarizability(N,W,X)
-     !
-     integer           :: N
-     real(SP)          :: W
-     complex(SP)       :: X(N,3)
-     !
-     integer           :: i_n,i_t,i_c
-     character(schlen) :: P_file_name
-     real(SP)          :: T_i        
-     real(SP)          :: P_j(3,NE_steps)
-     !
-     do i_n=1,N,1
-       P_file_name="P_order_"//trim(intc(i_n-1))
-       call RT_output("open "//trim(P_file_name) )
-       do i_t = 1,NE_steps
-         T_i = (i_t-1)*RT_step
-         RT_P = X(i_n,1:3)*exp((i_n-1)*cI*W*T_i)+&
-&               conjg(X(i_n,1:3))*exp(-(i_n-1)*cI*W*T_i)
-         call RT_output(trim(P_file_name),TIME=(i_t-1)*RT_step/FS2AUT)
-       enddo
-       call RT_output("close "//trim(P_file_name))
-     end do
-     !
-   end subroutine plot_decomposed_Polarizability
    !
 end subroutine RT_X_inversion

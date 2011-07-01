@@ -41,7 +41,7 @@ subroutine RT_Ext_fields(A,time)
  !
  use pars,           ONLY:SP
  use units,          ONLY:SPEED_OF_LIGHT
- use real_time,      ONLY:RT_step,NE_i_time,NE_dynamics
+ use real_time,      ONLY:RT_step,NE_i_time
  use fields,         ONLY:n_ext_fields,Efield,small_a,theta_function,ef_i_time,gauge_field
  !
  implicit none
@@ -51,7 +51,7 @@ subroutine RT_Ext_fields(A,time)
  ! Work Space
  !
  integer     :: i_f
- complex(SP)    :: Field_time
+ complex(SP) :: Field_time
  complex(SP) :: E_times_c(3)
  !
  A%vecpot    =(0._SP,0._SP)
@@ -60,7 +60,7 @@ subroutine RT_Ext_fields(A,time)
  !
  do i_f=1,n_ext_fields
    !
-   if(Efield(i_f)%ef_name=="none".or.ef_i_time(i_f)> NE_i_time.or..not.NE_dynamics) cycle
+   if(Efield(i_f)%ef_name=="none".or.ef_i_time(i_f)> NE_i_time.or.NE_i_time<1) cycle
    !
    E_times_c=Efield(i_f)%amplitude*Efield(i_f)%versor(:)*SPEED_OF_LIGHT
    !

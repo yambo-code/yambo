@@ -36,7 +36,7 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  ! do isppol=1,nsppol
  !  do ikpt=1,nkpt
  !    do is=1,ntypat
- !     do il=1,mpsang
+ !     do il=1,mpsang   (or mpsang*m_proj*n_spinor for HGH)
  !      write(untkss) (vkb (trsl(ig),is,il),ig=1,npwkss)
  !      write(untkss) (vkbd(trsl(ig),is,il),ig=1,npwkss)
  !     end do
@@ -111,7 +111,9 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
    !
  endif
  !
- wf_disk(:,:,:,:)=0.
+ wf_disk=0.
+ pp_kb=0.
+ pp_kbd=0.
  !
  ! GPL_INCLUDE_START SPIN_IGNORE
  ! i_spin=1
@@ -130,8 +132,6 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
    ! 
    ! GPL_EXCLUDE_END SPIN_IGNORE
    !
-   pp_kb=0.
-   pp_kbd=0.
    if (ib_grp==1) then
      do i1=1,n_atomic_species
        do i2=1,pp_n_l_times_proj_max

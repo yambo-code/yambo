@@ -70,13 +70,13 @@ module mod_com2y
      use com,       ONLY:msg,error
      use electrons, ONLY:spin_orbit
      use D_lattice, ONLY:nsym,dl_sop,i_time_rev,a,&
-&                        atoms_spatial_invertion,i_space_inv
-     use R_lattice, ONLY:b
+&                        atoms_spatial_invertion,i_space_inv,alat
+     use R_lattice, ONLY:b,rl_sop
      !
      integer :: nsym_
      integer :: int_sop(3,3,nsym_) ! Symmetries in RLU
      !
-     integer :: is,is_inv
+     integer :: is,is_inv,i2,i3
      logical :: l_identity,l_inversion
      logical :: double_symmetries
      real(SP):: sop_mat(3,3)
@@ -183,6 +183,12 @@ module mod_com2y
        sop_mat=matmul(transpose(a),int_sop(:,:,is))
        dl_sop(:,:,is)=matmul(sop_mat,b)/2._SP/pi
        if (double_symmetries) dl_sop(:,:,is+nsym_)=-dl_sop(:,:,is)
+     enddo
+
+
+     allocate(rl_sop(3,3,nsym))
+     do is=1,nsym
+       forall (i2=1:3,i3=1:3) rl_sop(i2,i3,is)=dl_sop(i2,i3,is)*alat(i2)/alat(i3)
      enddo
      !
    end subroutine

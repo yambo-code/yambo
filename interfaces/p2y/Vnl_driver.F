@@ -60,6 +60,17 @@ subroutine Vnl_driver(en,k)
  ! Holds wfc(k) from disk
  !
  complex(SP),allocatable,target  :: wf_disk_SP(:,:)
+
+ interface
+    subroutine fill_basis(basis,struct,ik,ngmax)
+    use pw_struct_module
+    use pw_basis_module
+    type(pw_struct), target :: struct
+    type(pw_basis)  :: basis
+    integer, intent(in) :: ik, ngmax
+    end subroutine fill_basis
+ end interface
+
  !
  call pp_indexes_reset(px)
  !

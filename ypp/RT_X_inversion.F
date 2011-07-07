@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Probe_Frequency)
+subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effective)
  !
  use pars,           ONLY:SP,pi
  use YPP,            ONLY:N_probes,X_order,N_probe_frequencies,X_rt,i_t_start,i_t_end
@@ -30,41 +30,39 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Probe_Frequency)
  use timing,         ONLY:live_timing
  implicit none
  !
- real(SP)      :: RT_P_probe(NE_steps,N_probes,3),Probe_Frequency(N_probe_frequencies)
- complex(SP)   :: Susceptibility(X_order+1,N_probe_frequencies)
+ real(SP)      :: RT_P_probe(NE_steps,N_probes,3),Harmonic_Frequency(0:X_order,N_probe_frequencies)
+ complex(SP)   :: Susceptibility(0:X_order,N_probe_frequencies),X_effective(0:X_order,N_probe_frequencies,3)
  !
  ! Work Space
  !
  real(SP)          :: T_period,time_range_save(2),T_period_max
  logical           :: use_LRR
  integer           :: i_c,i_p,i_f,i_order
- complex(SP), allocatable :: X_effective(:,:,:)
+ real(SP),    allocatable :: X_w(:)
  !
  call section("=",'Response function(s) by Inversion')
  !====================================================
  !
- use_LRR=.FALSE.
- !
  !DEBUG>
  !case with N_probe_frequencies> 1 still experimental
  !DEBUG<
+ !use_LRR=N_probe_frequencies>1.and.N_probes==1
+ use_LRR=.FALSE.
  !
- allocate(X_effective(X_order+1,N_probe_frequencies,3))
- !
- X_effective=(0.,0.)
+ allocate(X_w(X_order+1))
  !
  time_range_save=X_rt%time_range
  !
  if (.not.use_LRR) then
-   !==================================
+   !=======================================
    ! 1 OR SEVERAL PROBES/ 1 FREQUENCY each
-   !==================================
+   !=======================================
    ! 
    T_period_max=-1.
    !
    do i_p=1,N_probes
      !
-     T_period=T_range(i_p)
+     T_period=T_range(1,i_p)
      !
      if (T_period>T_period_max) T_period_max=T_period
      !
@@ -76,21 +74,14 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Probe_Frequency)
    !
    do i_p=1,N_probes
      !
-     T_period=T_range(i_p)
+     T_period=T_range(1,i_p)
      !
      do i_c = 1,3
        !
-       call RT_coefficients_Inversion(1,X_order+1,RT_P_probe(:,i_p,i_c),X_effective(:,i_p,i_c),&
-&                                     (/Probe_Frequency(i_p)/),T_period)
+       call RT_coefficients_Inversion(X_order+1,X_order+1,RT_P_probe(:,i_p,i_c),X_effective(0:,i_p,i_c),&
+&                                     Harmonic_Frequency(0:,i_p),T_period,use_LRR)
        !
      end do
-     !
-     if (N_probes==1) then
-       !
-       call RT_split_Polarization(X_order+1,NE_steps,Probe_Frequency(i_p),&
-&                                 X_effective(:,i_p,:),RT_P_probe(:,i_p,:),"dump")
-       !
-     endif
      !
      call live_timing(steps=1)
      !
@@ -98,20 +89,32 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Probe_Frequency)
    !
    call live_timing()
    !
+   if (N_probes==1) then
+     !
+     do i_p=1,N_probes
+       !
+       X_w(:)=Harmonic_Frequency(0:,1)
+       !
+       call RT_split_Polarization(X_order+1,NE_steps,X_w,X_effective(0:,i_p,:),RT_P_probe(:,i_p,:),"dump")
+       !
+     enddo
+     !
+   endif
+   !
  else
    !
    !===============================
    ! 1 PROBE/ SEVERAL FREQUENCIES
    !===============================
    !
-   T_period=T_range(-1)
+   T_period=T_range(1,0)
    !
    call msg('s','[RT] Time range [fs]:',(/real(i_t_start),real(i_t_end)/)*RT_step/FS2AUT)
    !
    do i_c = 1,3
      !
      call RT_coefficients_Inversion(N_probe_frequencies,N_probe_frequencies,&
-&                                   RT_P_probe(:,1,i_c),X_effective(2,:,i_c),Probe_Frequency,T_period)
+&                                   RT_P_probe(:,1,i_c),X_effective(1,:,i_c),Harmonic_Frequency(1,:),T_period,use_LRR)
      !
    end do
    !
@@ -121,25 +124,26 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Probe_Frequency)
    !
    do i_f=1,N_probe_frequencies
      !
-     Susceptibility(i_order+1,i_f)=4.*pi*dot_product( Efield(i_Probe)%versor(:),X_effective(i_order+1,i_f,:) )*&
-&                                                     Divide_by_Field(Efield(i_Probe),i_order)
+     Susceptibility(i_order,i_f)=4.*pi*dot_product( Efield(i_Probe)%versor(:),X_effective(i_order,i_f,:) )*&
+&                                                   Divide_by_Field(Efield(i_Probe),i_order)
      !
    enddo
    ! 
  enddo
  !
- deallocate(X_effective)
+ deallocate(X_w)
  !
  contains 
    !
-   real(SP) function T_range(i_f)
+   real(SP) function T_range(i_n,i_f)
      !
-     integer :: i_f
+     integer :: i_n,i_f
      !
      X_rt%time_range=time_range_save
      !
-     if (i_f>  0) T_range = EtoT(E=Probe_Frequency(i_f))
-     if (i_f== 0) T_range = EtoT(E=minval(Probe_Frequency))
+     if (i_f>  0) T_range = EtoT(E=Harmonic_Frequency(i_n,i_f))
+     if (i_f== 0) T_range = EtoT(E=minval(Harmonic_Frequency(i_n,:)))
+     !
      if (i_f==-1) then
        T_range = X_rt%time_range(2)- X_rt%time_range(1)
        return

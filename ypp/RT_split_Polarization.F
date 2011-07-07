@@ -21,28 +21,42 @@
 !
 subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  !
- use pars,           ONLY:SP,cI,pi,schlen
- use YPP,            ONLY:i_t_start
- use units,          ONLY:FS2AUT,HARTREE,HBAR_eVfs
- use real_time,      ONLY:RT_step,RT_P,RT_output
+ use pars,           ONLY:SP,cI,schlen,DP
+ use YPP,            ONLY:l_RT_X_inversion
+ use units,          ONLY:FS2AUT,HARTREE
+ use real_time,      ONLY:RT_step,RT_P,RT_output,QP_LifeTime,Phase_LifeTime
  use stderr,         ONLY:intc
  use timing,         ONLY:live_timing
+ !
+ ! Fourier
+ !
+ use real_time,      ONLY:NE_steps
+ use YPP,            ONLY:X_rt
  implicit none
  !
  integer,     intent(in)   :: nt,nh
- real(SP),    intent(inout):: P(nt,3),W
- complex(SP), intent(in)   :: X(nh,3)
+ real(SP),    intent(inout):: P(nt,3),W(nh)
+ complex(SP), intent(inout):: X(nh,3)
  character(*),intent(in)   :: what
  !
  ! Work Space
  !
- integer   :: i_n,i_t,i_c,nh_min
- real(SP)  :: P_num(nh,nt,3),T_i
- character(schlen) :: P_file_name
+ integer          :: i_n,i_t,i_c,nh_min
+ real(SP)         :: P_num(nh,nt,3),T_i
+ character(schlen):: P_file_name
+ ! 
+ ! Fourier 
+ ! 
+ integer                 :: i_w,iT_o
+ complex(SP),allocatable :: freqs(:)
+ complex(DP),allocatable :: P_DP(:,:),P_W(:)
+ real(SP)                :: T_o,P_W_SP(2)
+ real(SP),   parameter   :: F_damp=0.2/HARTREE
+ character(schlen)       :: FT_title
  !
  nh_min=1
  if (what=="subtract") nh_min=nh
- if (what=="dump") call live_timing('Partial P(t):',nt*nh)
+ if (what=="dump".and..not.l_RT_X_inversion) call live_timing('Partial P(t):',nt*nh)
  !
  do i_n=nh_min,nh
    !
@@ -54,24 +68,74 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
    do i_t=1,nt
      !
      T_i = (i_t-1)*RT_step
-     P_num(i_n,i_t,:)=X(i_n,:)*exp((i_n-1)*cI*W*T_i)+conjg(X(i_n,:))*exp(-(i_n-1)*cI*W*T_i)
+     P_num(i_n,i_t,:)=X(i_n,:)*exp(cI*W(i_n)*T_i)+conjg(X(i_n,:))*exp(-cI*W(i_n)*T_i)
+     if (W(i_n)<1.E-5) P_num(i_n,i_t,:)=real(X(i_n,:))
      !
      if (what=="dump") then
        do i_c=1,3
          RT_P(i_c) = P(i_t,i_c)-sum( P_num(:i_n,i_t,i_c) )
        enddo
-       call RT_output(trim(P_file_name),TIME=(i_t-1)*RT_step/FS2AUT)
+       call RT_output(trim(p_file_name),time=(i_t-1)*rt_step/fs2aut)
      endif
      !
-     if (what=="subtract") P(i_t,:)=P(i_t,:)-P_num(i_n,i_t,:) 
-     if (what=="dump") call live_timing(steps=1)
+     if (what=="subtract") P(i_t,:)=P(i_t,:)-P_num(i_n,i_t,:)
+     if (what=="dump".and..not.l_rt_x_inversion) call live_timing(steps=1)
      !
    enddo
    !
-   if (what=="dump") call RT_output("close "//trim(P_file_name))
+   if (what=="dump".and..not.l_rt_x_inversion) call RT_output("close "//trim(p_file_name))
    !
  enddo
  !
- if (what=="dump") call live_timing()
+ if (what=="dump".and..not.l_rt_x_inversion) call live_timing()
+ if (what/="dump") return
+ !
+ ! Fourier Transformation
+ !========================
+ !
+ T_o=5.*max(QP_LifeTime,Phase_LifeTime)
+ iT_o=int(T_o/RT_step)+1
+ !
+ allocate(P_DP(nt,3),P_W(X_rt%energy_steps),freqs(X_rt%energy_steps))
+ !
+ do i_w = 1, X_rt%energy_steps
+   freqs(i_w)=cmplx((i_w-1)*(X_rt%energy_range(2)-X_rt%energy_range(1))/X_rt%energy_steps+X_rt%energy_range(1),0._SP)
+ enddo
+ !
+ do i_n=0,nh
+   !
+   if (i_n==0) P_file_name="polarization_W"
+   if (i_n/=0) P_file_name="dP_W_order_"//trim(intc(i_n-1))
+   call RT_output("open "//trim(P_file_name) )
+   !
+   do i_t=1,nt
+     do i_c=1,3
+       if (i_n==0) P_DP(i_t,i_c)=P(i_t,i_c)
+       if (i_n/=0) P_DP(i_t,i_c)=P(i_t,i_c)-sum(P_num(:i_n,i_t,i_c))
+     enddo
+   enddo
+   call RT_damp_it("LORENTZIAN",F_damp,P_DP,nt,RT_step,3)
+   !
+   if (i_n==0) FT_title="P(t)"
+   if (i_n/=0) FT_title="P(t)-Sum[P_harm^(n<"//trim(intc(i_n))//"])"
+   !
+   call RT_1D_Fourier_Transform(" "//trim(FT_title),freqs,P_W,X_rt%energy_steps,P_DP(iT_o:,1),NE_steps-iT_o+1,&
+&                               RT_step,iT_o*RT_step,.FALSE.,1)
+   !
+   do i_w=1,X_rt%energy_steps
+     !
+     P_W(i_w)=cI*exp(-cI*(freqs(i_w)+cI*F_damp)*T_o)*P_W(i_w)
+     !
+     P_W_SP=(/aimag(P_W(i_w)),real(P_W(i_w))/)
+     !
+     call RT_output(trim(P_file_name),VALUEs=P_W_SP,E=real(freqs(i_w))*HARTREE)
+     !
+   enddo
+   !
+   call RT_output("close "//trim(P_file_name))
+   !
+ enddo
+ !
+ deallocate(P_DP,P_W,freqs)
  !
 end subroutine RT_split_Polarization

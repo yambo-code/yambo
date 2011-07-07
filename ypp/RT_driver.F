@@ -22,7 +22,7 @@
 subroutine RT_driver(en,k)
  !
  use YPP,            ONLY:l_fix_syms,Use_FFT,RT_P_t,RT_J_t,N_probe_frequencies,&
-&                         N_probes,N_pumps,RT_initialize,RT_databases,X_order
+&                         N_probes,N_pumps,RT_initialize,RT_databases,X_order,l_RT_X_inversion 
  use R_lattice,      ONLY:bz_samp
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels
@@ -35,7 +35,7 @@ subroutine RT_driver(en,k)
  !
  ! Work Space
  !
- logical       :: l_RT_LRR_real_field,l_RT_X_effective,l_RT_SHG_qssin,l_RT_X_inversion
+ logical       :: l_RT_LRR_real_field,l_RT_X_effective,l_RT_SHG_qssin
  !
  if (l_fix_syms) then
    !
@@ -56,13 +56,13 @@ subroutine RT_driver(en,k)
  !----------
  !
  l_RT_LRR_real_field= all((/&
-&   .not.any((/trim(Efield(i_probe)%ef_name)=="ANTIRES",trim(Efield(i_probe)%ef_name)=="RES",trim(Efield(i_probe)%ef_name)=="SIN"/)),&
-&   N_pumps==0, N_probes==1, X_order==1/) )
+&   .not.any((/trim(Efield(i_probe)%ef_name)=="ANTIRES",trim(Efield(i_probe)%ef_name)=="RES",&
+&   trim(Efield(i_probe)%ef_name)=="SIN"/)),N_pumps==0, N_probes==1, X_order==1/) )
  l_RT_SHG_qssin     = all( (/ trim(Efield(i_probe)%ef_name)=="QSSIN" , N_pumps==0, N_probes==1, X_order==2/) )
  !
  l_RT_X_effective   = all((/any((/trim(Efield(i_probe)%ef_name)=="ANTIRES",trim(Efield(i_probe)%ef_name)=="SIN"/)),X_order>=0/))
  !
- if (l_RT_X_effective) l_RT_X_inversion=all((/ X_order>=0, N_pumps==0, N_probe_frequencies==1/))
+ if (l_RT_X_effective) l_RT_X_inversion=all((/ X_order>=0, N_probe_frequencies==1/))
  !
  if ( .not.any((/l_RT_LRR_real_field,l_RT_SHG_qssin,l_RT_X_effective/)) ) return
  !
@@ -96,7 +96,7 @@ subroutine RT_driver(en,k)
    !
  else if ( l_RT_X_effective ) then
    !
-   call RT_X_effective(en, l_RT_X_inversion )
+   call RT_X_effective(en)
    !
  endif
  !

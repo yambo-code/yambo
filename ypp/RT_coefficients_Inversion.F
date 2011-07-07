@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
+subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period,use_LRR)
  !
  use pars,            ONLY:SP,cI,pi
  use YPP,             ONLY:i_t_start,X_order
@@ -31,15 +31,13 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
  integer,     intent(in)   :: NW,NX
  real(SP),    intent(in)   :: P(NE_steps),W(NW),T_period
  complex(SP), intent(out)  :: X(NX)
+ logical,     intent(in)   :: use_LRR
  !
  ! Work space
  !
  integer                 :: i_t,i_n,i_deltaT,nP_components,M_size
- logical                 :: use_LRR
  real(SP)   ,allocatable :: P_i(:),T_i(:)
  complex(SP),allocatable :: M(:,:),X_here(:)
- !
- use_LRR=NW> 1
  !
  if (use_LRR) then
    M_size        =2*NW+1
@@ -56,13 +54,13 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
  M=(0._SP,0._SP)
  !
  do i_t=1,M_size
-   T_i(i_t)= (i_t_start+i_deltaT*(i_t-1))*RT_step
+   T_i(i_t)= ((i_t_start-1)+i_deltaT*(i_t-1))*RT_step
    P_i(i_t)=P(i_t_start+i_deltaT*(i_t-1))
  enddo
  !
  if (use_LRR) then
    do i_t=1,M_size
-     M(i_t,1) = 2.
+     M(i_t,1) = 1.
      do i_n=2,nP_components
        M(i_t,i_n   ) = exp( cI*W(i_n-1)*T_i(i_t))
        M(i_t,i_n+NW) = exp(-cI*W(i_n-1)*T_i(i_t))
@@ -70,10 +68,10 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
    end do
  else
    do i_t=1,M_size
-     M(i_t,1) = 2.
+     M(i_t,1) = 1.
      do i_n=2, nP_components
-       M(i_t,i_n        ) = exp( cI*W(1)*(i_n-1)*T_i(i_t))
-       M(i_t,i_n+X_order) = exp(-cI*W(1)*(i_n-1)*T_i(i_t))
+       M(i_t,i_n        ) = exp( cI*W(i_n)*T_i(i_t))
+       M(i_t,i_n+X_order) = exp(-cI*W(i_n)*T_i(i_t))
      end do
    end do
  endif

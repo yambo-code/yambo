@@ -38,7 +38,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
  !
  ! Work space
  !
- integer, parameter       :: n_output_files=30,max_X_order=9
+ integer, parameter       :: n_output_files=50,max_X_order=9
  character(lchlen), save  :: file_name(n_output_files)
  character(schlen)        :: orders(n_output_files),short_file_name(n_output_files)
  integer                  :: i_f,i_fp,n_headings(n_output_files),next_file,i_order
@@ -151,7 +151,15 @@ subroutine RT_output(what,VALUEs,TIME,E)
  headings(next_file,1:2)=(/'E  ','Occ'/)
  next_file=next_file+1
  !
+ if (initialize) file_name(next_file)=trim(append_ch)//'polarization_W'
+ short_file_name(next_file)=trim(append_ch)//'polarization_W'
+ n_headings(next_file)=3
+ headings(next_file,1)="E [eV]"
+ headings(next_file,2:3)=(/'X/Im','X/Re'/)
+ next_file=next_file+1
+ !
  do i_order=0,max_X_order,1
+   !
    if (initialize) file_name(next_file)=trim(append_ch)//'X_probe_order_'//trim(intc(i_order))
    short_file_name(next_file)=trim(append_ch)//'X_probe_order_'//trim(intc(i_order))
    n_headings(next_file)=3
@@ -159,6 +167,14 @@ subroutine RT_output(what,VALUEs,TIME,E)
    headings(next_file,2:3)=(/'X/Im','X/Re'/)
    if (i_order.ne.1) headings(next_file,2:3)=(/'X/Im[cm/statV]','X/Re[cm/statV]'/)
    next_file=next_file+1
+   !
+   if (initialize) file_name(next_file)=trim(append_ch)//'dP_W_order_'//trim(intc(i_order))
+   short_file_name(next_file)=trim(append_ch)//'dP_W_order_'//trim(intc(i_order))
+   n_headings(next_file)=3
+   headings(next_file,1)="E [eV]"
+   headings(next_file,2:3)=(/'P/Im','P/Re'/)
+   next_file=next_file+1
+   !
  enddo
  !
  ! ... and time/energy resolved ...
@@ -233,7 +249,9 @@ subroutine RT_output(what,VALUEs,TIME,E)
        data_to_dump(5:7) =real(A_vecpot%vecpot_vel(:))
        data_to_dump(8:10)=real(A_vecpot%vecpot_acc(:))
      case('dynamics','YPP-eps','YPP-eels','YPP-SHG_qssin','occupations',&
-&         'YPP-X_probe_order_0','YPP-X_probe_order_1','YPP-X_probe_order_2','YPP-X_probe_order_3')
+&         'YPP-X_probe_order_0','YPP-X_probe_order_1','YPP-X_probe_order_2','YPP-X_probe_order_3',&
+&         'YPP-dP_W_order_1','YPP-dP_W_order_2','YPP-dP_W_order_3','YPP-dP_W_order_4',&
+&         'YPP-polarization_W')
        data_to_dump(2:n_headings(i_f)) = VALUES(1:n_headings(i_f)-1)
      case('YPP-X_effective')
        data_to_dump(1:2)=(/Time,E/)

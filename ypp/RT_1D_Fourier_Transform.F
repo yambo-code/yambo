@@ -26,7 +26,7 @@ subroutine RT_1D_Fourier_Transform(title,freqs,fw,nw,ft,nt,dt,T0,USE_FFT,I_sign)
  !
  ! \tilde{FT}[ft] = \int_{T0}{\infty} ft(t) exp^(i w t) = exp^(i w T0) * FT[ft]   (USE_FFT=.TRUE.)
  !
- ! \tilde{FT}[ft] = \int_{T0}{\infty} ft(t) exp^(i w t) = exp^(i I_sign w T0) * FT[ft]   (USE_FFT=.FALSE.)
+ ! \tilde{FT}[ft] = \int_{T0}{\infty} ft(t) exp^(i I_sign w t) = exp^(i I_sign w T0) * FT[ft]   (USE_FFT=.FALSE.)
  !
  use pars,           ONLY:SP,DP,cI
  use timing,         ONLY:live_timing

@@ -156,6 +156,7 @@ module YPP
  logical  :: Use_FFT
  logical  :: l_force_min_damp
  logical  :: l_RT_X
+ logical  :: l_RT_X_inversion
  integer  :: i_t_start,i_t_end ! time window
  integer  :: RED_steps ! reduced number of steps
  integer  :: N_probes

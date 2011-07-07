@@ -66,10 +66,8 @@ subroutine Dipole_kb_pp_comp(ik,i_spin,Xk,kbv)
            c2(1)=sqrt(4.*pi/(2.*(il-1.)+1.))*Ylm(il,im)
            c2(2:4)=sqrt(4.*pi/(2.*(il-1.)+1.))*&
 &                    (dYlm(1,il,im)*Ygrad(1,:)+dYlm(2,il,im)*Ygrad(2,:))
-           kbv(ig,i1,1)=kbv(ig,i1,1)+c2(1)*&                                       !(-1.)**(il-1)*& (?think no?)
-&                        pp_kbs(is,i_pp)*pp_kb(ig,is,i_pp,i_spin)*c1(is)
-           kbv(ig,i1,2:4)=kbv(ig,i1,2:4)+c1(is)*&
-&            (v1(:)/r1*pp_kbd(ig,is,i_pp,i_spin)*c2(1)+pp_kb(ig,is,i_pp,i_spin)*c2(2:4))
+           kbv(ig,i1,1)=c2(1)*pp_kbs(is,i_pp)*pp_kb(ig,is,i_pp,i_spin)*c1(is)
+           kbv(ig,i1,2:4)=c1(is)*(v1(:)/r1*pp_kbd(ig,is,i_pp,i_spin)*c2(1)+pp_kb(ig,is,i_pp,i_spin)*c2(2:4))
          enddo
        enddo
      enddo

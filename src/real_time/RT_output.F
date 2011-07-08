@@ -151,8 +151,8 @@ subroutine RT_output(what,VALUEs,TIME,E)
  headings(next_file,1:2)=(/'E  ','Occ'/)
  next_file=next_file+1
  !
- if (initialize) file_name(next_file)=trim(append_ch)//'polarization_W'
- short_file_name(next_file)=trim(append_ch)//'polarization_W'
+ if (initialize) file_name(next_file)=trim(append_ch)//'Polarization_W'
+ short_file_name(next_file)=trim(append_ch)//'Polarization_W'
  n_headings(next_file)=3
  headings(next_file,1)="E [eV]"
  headings(next_file,2:3)=(/'X/Im','X/Re'/)
@@ -251,7 +251,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
      case('dynamics','YPP-eps','YPP-eels','YPP-SHG_qssin','occupations',&
 &         'YPP-X_probe_order_0','YPP-X_probe_order_1','YPP-X_probe_order_2','YPP-X_probe_order_3',&
 &         'YPP-dP_W_order_0','YPP-dP_W_order_1','YPP-dP_W_order_2','YPP-dP_W_order_3','YPP-dP_W_order_4',&
-&         'YPP-polarization_W')
+&         'YPP-Polarization_W')
        data_to_dump(2:n_headings(i_f)) = VALUES(1:n_headings(i_f)-1)
      case('YPP-X_effective')
        data_to_dump(1:2)=(/Time,E/)

@@ -104,7 +104,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  !
  do i_n=0,nh,1
    !
-   if (i_n==0) P_file_name="polarization_W"
+   if (i_n==0) P_file_name="Polarization_W"
    if (i_n/=0) P_file_name="dP_W_order_"//trim(intc(i_n-1))
    call RT_output("open "//trim(P_file_name) )
    !

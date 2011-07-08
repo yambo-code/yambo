@@ -59,6 +59,8 @@ subroutine RT_Rabi_Function(E,Field)
  !
  ! Max Rabi factor
  !
+ Rabi_max=0._SP
+ !
  do ik=1,nkibz
    do iv=1,E%nbm
      do ic=E%nbf+1,SC_bands(2)

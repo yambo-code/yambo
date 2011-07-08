@@ -24,8 +24,9 @@ subroutine RT_coefficients_Fourier(nt,P,nw,W,X,deltaW)
  ! Here I calculate the coefficients of a given Fourier series
  !
  use pars,           ONLY:SP,cI,pi
- use YPP,            ONLY:i_t_start
- use units,          ONLY:FS2AUT,HARTREE,HBAR_eVfs
+ use YPP,            ONLY:i_t_start,X_rt
+ use units,          ONLY:FS2AUT
+ use fields,         ONLY:EtoT
  use real_time,      ONLY:RT_step
  implicit none
  !
@@ -37,11 +38,12 @@ subroutine RT_coefficients_Fourier(nt,P,nw,W,X,deltaW)
  !
  real(SP)    :: T_range,T(nt)
  complex(SP) :: P_times_exp(nt)
- integer     :: iT_range,i_f,i_t
+ integer     :: iT_range,i_f,i_t,N_periods
  !
  complex(SP),    external    :: CIntegrate
  !
- T_range=2.*pi*HBAR_eVfs/(deltaW*HARTREE)*FS2AUT
+ N_periods=int( (X_rt%time_range(2) - X_rt%time_range(1))/EtoT(E=deltaW) )
+ T_range=N_periods*EtoT(E=deltaW)
  iT_range=T_range/RT_step
  !
  do i_f=1,nw
@@ -54,7 +56,7 @@ subroutine RT_coefficients_Fourier(nt,P,nw,W,X,deltaW)
      !
    enddo
    !
-   X(i_f)=deltaW/2./pi*CIntegrate(P_times_exp(:iT_range),T(:iT_range),iT_range)
+   X(i_f)=deltaW/2./pi/N_periods*CIntegrate(P_times_exp(:iT_range),T(:iT_range),iT_range)
    !
  enddo
  !

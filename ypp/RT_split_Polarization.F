@@ -102,7 +102,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
    freqs(i_w)=cmplx((i_w-1)*(X_rt%energy_range(2)-X_rt%energy_range(1))/X_rt%energy_steps+X_rt%energy_range(1),0._SP)
  enddo
  !
- do i_n=0,nh
+ do i_n=0,nh,1
    !
    if (i_n==0) P_file_name="polarization_W"
    if (i_n/=0) P_file_name="dP_W_order_"//trim(intc(i_n-1))

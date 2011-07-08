@@ -40,7 +40,8 @@ subroutine RT_X_effective(en)
  !
  character(lchlen) :: jobstr_save
  character(schlen) :: X_file_name
- integer           :: i_f,i_fp,f_indx(max_n_of_paths),i_order,min_X_order,i_c,i_t,i_conv,i_p
+ integer           :: i_f,i_fp,f_indx(max_n_of_paths),i_order,min_X_order,i_c,i_t,i_conv,&
+&                     i_p,n_periods
  real(SP)          :: Pump_Frequency(1),Unit_of_Measure
  complex(SP)       :: running_X(0:X_order,3)
  logical           :: Probe_consistency_error,CONVERGENCE_is_reached,Iterative_analysis,dump_dP,&
@@ -49,6 +50,7 @@ subroutine RT_X_effective(en)
 &                               Harmonic_Frequency(:,:),RT_P_save(:,:,:)
  complex(SP), allocatable    :: X_effective(:,:,:),Susceptibility(:,:)
  type(ext_field)   :: Efield_probe
+ real(SP),parameter:: ZERO=1.E-15_SP
  !
  call section("=",'Effective Response function ')
  !===============================================
@@ -191,8 +193,7 @@ subroutine RT_X_effective(en)
      !
    else if (N_pumps==0) then
      !
-     if (i_order==0) Harmonic_Frequency(i_order,:)=0.
-     if (i_order >0) Harmonic_Frequency(i_order,:)=real(i_order,SP)*Probe_Frequency(:)
+     Harmonic_Frequency(i_order,:)=real(i_order,SP)*Probe_Frequency(:)
      !
    endif
    !
@@ -261,10 +262,10 @@ subroutine RT_X_effective(en)
  !
  ! Time Range
  !
- if ( X_rt%time_range(2)> NE_steps*RT_step.or.X_rt%time_range(2)<0) then
-   X_rt%time_range(2)= NE_steps*RT_step
-   X_rt%time_range(1)= X_rt%time_range(2)-EtoT(E=Efield_Probe%W_step)
- endif
+ X_rt%time_range(2)= NE_steps*RT_step
+ N_periods=int( (X_rt%time_range(2) - X_rt%time_range(1))/EtoT(E=Efield_Probe%W_step) )
+ X_rt%time_range(1)= X_rt%time_range(2)-N_periods*EtoT(E=Efield_Probe%W_step)
+ !
  if ( X_rt%time_range(1) < 0.) call error(&
 &   'Simulation time not long enough. Period is'//trim(real2ch( EtoT(E=Efield_Probe%W_step)/FS2AUT ))//' fs')
  !
@@ -304,8 +305,8 @@ subroutine RT_X_effective(en)
        !
        X_effective(i_order,i_f,:)=X_effective(i_order,i_f,:)+running_X(i_order,:)
        !
-       CONVERGENCE_is_reached=all((/abs(running_X(i_order,1))<1.E-15,abs(running_X(i_order,2))<1.E-15,&
-&                                  abs(running_X(i_order,3))<1.E-15/)).or.i_conv==9.or..not.Iterative_analysis
+       CONVERGENCE_is_reached=all((/abs(running_X(i_order,1))<ZERO,abs(running_X(i_order,2))<ZERO,&
+&                                  abs(running_X(i_order,3)) <ZERO/)).or.i_conv==9.or..not.Iterative_analysis
        !
      enddo
      !

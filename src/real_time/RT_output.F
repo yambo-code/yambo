@@ -250,7 +250,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
        data_to_dump(8:10)=real(A_vecpot%vecpot_acc(:))
      case('dynamics','YPP-eps','YPP-eels','YPP-SHG_qssin','occupations',&
 &         'YPP-X_probe_order_0','YPP-X_probe_order_1','YPP-X_probe_order_2','YPP-X_probe_order_3',&
-&         'YPP-dP_W_order_1','YPP-dP_W_order_2','YPP-dP_W_order_3','YPP-dP_W_order_4',&
+&         'YPP-dP_W_order_0','YPP-dP_W_order_1','YPP-dP_W_order_2','YPP-dP_W_order_3','YPP-dP_W_order_4',&
 &         'YPP-polarization_W')
        data_to_dump(2:n_headings(i_f)) = VALUES(1:n_headings(i_f)-1)
      case('YPP-X_effective')

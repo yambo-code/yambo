@@ -22,7 +22,8 @@
 subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effective)
  !
  use pars,           ONLY:SP,pi
- use YPP,            ONLY:N_probes,X_order,N_probe_frequencies,X_rt,i_t_start,i_t_end
+ use YPP,            ONLY:N_probes,X_order,N_probe_frequencies,X_rt,i_t_start,&
+&                         i_t_end,N_pumps
  use fields,         ONLY:EtoT,Efield,Divide_by_Field,i_Probe
  use real_time,      ONLY:NE_steps,RT_step,RT_P
  use units,          ONLY:FS2AUT
@@ -62,19 +63,21 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
    !
    do i_p=1,N_probes
      !
-     T_period=T_range(1,i_p)
+     if (N_pumps==1) T_period=T_range(0,0)
+     if (N_pumps==0) T_period=T_range(1,i_p)
      !
      if (T_period>T_period_max) T_period_max=T_period
      !
    enddo
    !
-   call msg('s','[RT] Effective max time range [fs]:',(real(i_t_start)*RT_step+(/0._SP,T_period_max/))/FS2AUT)
+   call msg('s','[RT] Effective max time period [fs]:',T_period_max/FS2AUT)
    !
    call live_timing('X effective :',N_probes)
    !
    do i_p=1,N_probes
      !
-     T_period=T_range(1,i_p)
+     if (N_pumps==1) T_period=T_range(0,0)
+     if (N_pumps==0) T_period=T_range(1,i_p)
      !
      do i_c = 1,3
        !
@@ -95,7 +98,7 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
        !
        X_w(:)=Harmonic_Frequency(0:,1)
        !
-       call RT_split_Polarization(X_order+1,NE_steps,X_w,X_effective(0:,i_p,:),RT_P_probe(:,i_p,:),"dump")
+       call RT_split_Polarization(X_order+1,NE_steps,X_w,X_effective(:,i_p,:),RT_P_probe(:,i_p,:),"dump")
        !
      enddo
      !
@@ -142,7 +145,7 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
      X_rt%time_range=time_range_save
      !
      if (i_f>  0) T_range = EtoT(E=Harmonic_Frequency(i_n,i_f))
-     if (i_f== 0) T_range = EtoT(E=minval(Harmonic_Frequency(i_n,:)))
+     if (i_f== 0) T_range = EtoT(E=maxval(Harmonic_Frequency(:,:)))
      !
      if (i_f==-1) then
        T_range = X_rt%time_range(2)- X_rt%time_range(1)

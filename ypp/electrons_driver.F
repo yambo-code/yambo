@@ -38,6 +38,12 @@ subroutine electrons_driver(Xk,Xen)
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:two_spin_density
  use QP_CTL_m,       ONLY:QP_apply
+#if defined _YPP_RT
+ use pars,           ONLY:cI
+ use real_time,      ONLY:G_lesser
+ use YPP,            ONLY:RT_databases
+ use IO_m,           ONLY:NONE,LOG
+#endif
 #if defined _YPP_ELPH
  use electrons,      ONLY:n_bands
  use com,            ONLY:file_exists
@@ -51,11 +57,14 @@ subroutine electrons_driver(Xk,Xen)
  ! Work Space
  !
  real(SP), allocatable :: el_den(:)
- real(SP)              :: el_dos(n_sp_pol),dos_E,delta_E,E_min,E_max
+ real(SP)              :: el_dos(n_sp_pol),dos_E,delta_E,E_min,E_max,f_occ
  integer               :: i1,i_qp,ik,ib,ir,i_wf,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2)
  logical               :: success
  character(schlen)     :: ch_ws,titles(4)
  !GPL_EXCLUDE_START
+#if defined _YPP_RT
+ logical               :: IO_error
+#endif
 #if defined _YPP_ELPH
  !
  !Polaronic Wf
@@ -118,6 +127,10 @@ subroutine electrons_driver(Xk,Xen)
    !
    call QP_apply((/1,DOS_bands/),Xen,Xk,3,msg_fmt='s')
    !
+#if defined _YPP_RT
+   call RT_databases(Xen,IO_error=IO_error,G_lesser_only=.TRUE.,COM_=LOG)
+#endif
+   !
    output_fname='el_dos'
    call of_open_close(trim(output_fname),'ot')
    if (n_sp_pol==1) then
@@ -144,7 +157,12 @@ subroutine electrons_driver(Xk,Xen)
        do ik=1,nkibz
          do i_spin=1,n_sp_pol
            !
-           el_dos(i_spin)=el_dos(i_spin)+&
+           f_occ=1.
+#if defined _YPP_RT
+           if (.not.IO_error) f_occ= real(-cI*G_lesser(ib,ib,ik))/2.
+#endif
+           !
+           el_dos(i_spin)=el_dos(i_spin)+f_occ*&
 &                         Fermi_fnc_derivative(Xen%E(ib,ik,i_spin)-dos_E,dos_broadening)*Xk%weights(ik)/DL_vol
            !
          enddo

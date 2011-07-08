@@ -19,30 +19,32 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_databases(en,IO_error,first_sec_only,COM_,mesg)
+subroutine RT_databases(en,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
  use YPP,            ONLY:RT_J_t,RT_P_t
  use units,          ONLY:SPEED_OF_LIGHT
  use pars,           ONLY:DP,SP,pi,schlen
  use electrons,      ONLY:levels
+ use R_lattice,      ONLY:nkibz
  use com,            ONLY:warning
  use memory_m,       ONLY:mem_est
+ use SC,             ONLY:SC_bands
  use timing,         ONLY:live_timing
- use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG
+ use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG,RD_CL_IF_END
  use real_time,      ONLY:NE_steps,NE_i_time,J_and_P_cache,RT_ind_J,max_rt_steps_disk,&
-&                         J_and_P_cache_size,RT_P,NE_time,RT_step,RT_P_2levels,P_2levels_is_done
+&                         J_and_P_cache_size,RT_P,NE_time,RT_step,RT_P_2levels,P_2levels_is_done,&
+&                         G_lesser,G_lesser_reference
  use fields,         ONLY:Efield,n_ext_fields
  implicit none
  !
  type(levels)      :: en
- logical, optional :: IO_error
- logical, optional :: first_sec_only
+ logical, optional :: IO_error,first_sec_only,G_lesser_only
  integer, optional :: COM_
  character(*), optional :: mesg
  !
  ! Work Space
  !
- integer            :: io_J_and_P,ID,i_f,io_G,COM_here
+ integer            :: io_J_and_P,ID,i_f,io_G,COM_here,ik
  integer, external  :: io_SC_components
  character(schlen)  :: mesg_
  !
@@ -54,8 +56,36 @@ subroutine RT_databases(en,IO_error,first_sec_only,COM_,mesg)
  if (COM_here==LOG) call section("+",'Current and Polarization Database')
  !=======================================================================
  !
- call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
- io_G=io_SC_components('G' ,En,ID)
+ if (present(G_lesser_only)) then
+   if (G_lesser_only) then
+     !
+     allocate(G_lesser(SC_bands(2),SC_bands(2),nkibz))
+     call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
+     !
+     allocate(G_lesser_reference(SC_bands(2),SC_bands(2),nkibz))
+     call mem_est("Gf_l_ref",(/size(G_lesser_reference)/),(/2*SP/))
+     !
+     call io_control(ACTION=OP_RD,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
+     io_G=io_SC_components('G' ,En,ID)
+     !
+     if (present(IO_error)) then
+       IO_error=io_G/=0
+     endif
+     if (io_G/=0) return
+     !
+     do ik=1,nkibz
+       call io_control(ACTION=RD_CL_IF_END,COM=COM_here,SEC=(/ik+1/),MODE=DUMP,ID=ID)
+       io_G=io_SC_components('G',En,ID)
+     enddo
+     !
+   endif
+   !
+   return
+   !
+ else
+   call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
+   io_G=io_SC_components('G' ,En,ID)
+ endif
  !
  COM_here=NONE
  !

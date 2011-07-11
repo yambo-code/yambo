@@ -22,7 +22,8 @@
 subroutine RT_initialize(dump_and_write)
  !
  use YPP,            ONLY:RT_P_t,X_rt,RT_J_t,i_t_start,i_t_end,&
-&                         W_RT_induced_step,RED_steps,l_force_min_damp,N_pumps
+&                         W_RT_induced_step,RED_steps,l_force_min_damp,&
+&                         N_pumps,l_skip_pol_and_curr_IO
  use com,            ONLY:msg
  use pars,           ONLY:pi,SP
  use units,          ONLY:FS2AUT,HARTREE
@@ -38,11 +39,8 @@ subroutine RT_initialize(dump_and_write)
  !
  integer  :: i_t,i_t_field_range(2)
  logical  :: l_no_damping
- logical  :: l_skip_pol_and_curr_IO
  !
  l_no_damping= trim(X_rt%damp) == "NONE"
- call parser('FrMinDamp',l_force_min_damp)
- call parser('SkipJP_IO',l_skip_pol_and_curr_IO)
  !
  !  Reduced Time range
  !====================

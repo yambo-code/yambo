@@ -23,7 +23,8 @@ subroutine RT_X_effective(en)
  !
  use pars,           ONLY:SP,lchlen,pi,schlen
  use YPP,            ONLY:RT_P_t,Pump_path,N_probes,Probe_path,RT_databases,RT_initialize,&
-&                         max_n_of_paths,Use_FFT,X_rt,N_pumps,N_probe_frequencies,X_order,l_RT_X_inversion
+&                         max_n_of_paths,Use_FFT,X_rt,N_pumps,N_probe_frequencies,X_order,&
+&                         l_RT_X_inversion,l_skip_pol_and_curr_IO
  use units,          ONLY:HARTREE,sVcm2Vmm,AU2Vmm,FS2AUT
  use electrons,      ONLY:levels
  use com,            ONLY:jobstr,msg,error
@@ -135,7 +136,7 @@ subroutine RT_X_effective(en)
  ! In the case of a PUMPED P(t) I rwite on file the difference
  ! P(t)-P_pump(t) to see the oscillations of the Probe induced component
  !
- if (N_pumps>0.and.N_probes==1) then
+ if (N_pumps>0.and.N_probes==1.and..not.l_skip_pol_and_curr_IO) then
    !
    call RT_output("open P_minus")
    !
@@ -186,10 +187,7 @@ subroutine RT_X_effective(en)
    !
    if (N_pumps==1) then
      !
-     if (i_order==0) Harmonic_Frequency(i_order,:)=Probe_Frequency(:)
-     if (i_order==1) Harmonic_Frequency(i_order,:)=2.*Pump_Frequency(1)+Probe_Frequency(:)
-     if (i_order==2) Harmonic_Frequency(i_order,:)=2.*Pump_Frequency(1)-Probe_Frequency(:)
-     if (i_order==3) Harmonic_Frequency(i_order,:)=4.*Pump_Frequency(1)-Probe_Frequency(:)
+     Harmonic_Frequency(i_order,:)=abs( real(i_order)*Pump_Frequency(1)-Probe_Frequency(:) )
      !
    else if (N_pumps==0) then
      !
@@ -262,7 +260,7 @@ subroutine RT_X_effective(en)
  !
  ! Time Range
  !
- X_rt%time_range(2)= NE_steps*RT_step
+ if (X_rt%time_range(2)<0.) X_rt%time_range(2)= NE_steps*RT_step
  N_periods=int( (X_rt%time_range(2) - X_rt%time_range(1))/EtoT(E=Efield_Probe%W_step) )
  X_rt%time_range(1)= X_rt%time_range(2)-N_periods*EtoT(E=Efield_Probe%W_step)
  !

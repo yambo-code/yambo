@@ -241,7 +241,9 @@ subroutine RT_output(what,VALUEs,TIME,E)
      case('current','YPP-current')
        data_to_dump(2:4) =real(RT_ind_J)
      case('polarization','YPP-polarization','YPP-dP_order_0',&
-&         'YPP-dP_order_1','YPP-dP_order_2','YPP-dP_order_3','YPP-P_minus_P_pump')
+&         'YPP-dP_order_1','YPP-dP_order_2','YPP-dP_order_3','YPP-dP_order_4',&
+&         'YPP-dP_order_5','YPP-dP_order_6','YPP-dP_order_7','YPP-dP_order_8','YPP-dP_order_9',&
+&         'YPP-P_minus_P_pump')
        data_to_dump(2:4) =real(RT_P)
        if (P_2levels_is_done) data_to_dump(5:7) =real(RT_P_2levels)
      case('vector_potential')
@@ -250,7 +252,10 @@ subroutine RT_output(what,VALUEs,TIME,E)
        data_to_dump(8:10)=real(A_vecpot%vecpot_acc(:))
      case('dynamics','YPP-eps','YPP-eels','YPP-SHG_qssin','occupations',&
 &         'YPP-X_probe_order_0','YPP-X_probe_order_1','YPP-X_probe_order_2','YPP-X_probe_order_3',&
+&         'YPP-X_probe_order_4','YPP-X_probe_order_5','YPP-X_probe_order_6','YPP-X_probe_order_7',&
+&         'YPP-X_probe_order_8','YPP-X_probe_order_9',&
 &         'YPP-dP_W_order_0','YPP-dP_W_order_1','YPP-dP_W_order_2','YPP-dP_W_order_3','YPP-dP_W_order_4',&
+&         'YPP-dP_W_order_5','YPP-dP_W_order_6','YPP-dP_W_order_7','YPP-dP_W_order_8','YPP-dP_W_order_9',&
 &         'YPP-Polarization_W')
        data_to_dump(2:n_headings(i_f)) = VALUES(1:n_headings(i_f)-1)
      case('YPP-X_effective')

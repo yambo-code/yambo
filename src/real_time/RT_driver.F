@@ -30,7 +30,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  use X_m,            ONLY:X_t,X_alloc
  use wave_func,      ONLY:WF_load,WF_free
  use frequency,      ONLY:w_samp
- use R_lattice,      ONLY:bz_samp
+ use R_lattice,      ONLY:bz_samp,qindx_free
  use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx,SC_R,rho_n,Ho
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &
 &                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
@@ -115,6 +115,11 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    call COLLISIONS_IO_load(.FALSE.)
    !
  endif
+ !
+ ! qindx_X and qindx_S not needed in real-time 
+ ! they are used only in dipoles and collisions calculations
+ !
+ call qindx_free()
  !
  ! Calculation already done
  !

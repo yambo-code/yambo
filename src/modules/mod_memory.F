@@ -134,7 +134,7 @@ module memory_m
      if (stdout_report.and.present(quiet)) stdout_report=.not.quiet
      if (.not.stdout_report) return
      !
-     write (ch(2),'(a,f5.3,4a,f5.3,a)') "[M ",mem_sum," Gb] ",trim(action),&
+     write (ch(2),'(a,f6.3,4a,f6.3,a)') "[M ",mem_sum," Gb] ",trim(action),&
 &                                       trim(ch(1))," (",mem_moved,")"
      call msg('s',trim(ch(2)))
      !

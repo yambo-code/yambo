@@ -66,16 +66,14 @@ integer function ioKB_PP(ID)
    !
    call io_elemental(ID,I0=n_atoms_species_max)
    call io_elemental(ID,I0=n_atomic_species)
-   !
    call io_elemental(ID,I0=pp_n_l_times_proj_max)
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    if (ver_is_gt_or_eq(ID,revision=898)) then
      call io_elemental(ID,I0=pp_n_l_max)
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    else
      pp_n_l_max=pp_n_l_times_proj_max
    endif
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    if (read_is_on(ID)) then
      ! 

@@ -187,7 +187,11 @@ subroutine RT_X_effective(en)
    !
    if (N_pumps==1) then
      !
-     Harmonic_Frequency(i_order,:)=abs( real(i_order)*Pump_Frequency(1)-Probe_Frequency(:) )
+     if (i_order==0) then
+       Harmonic_Frequency(i_order,:)=Probe_Frequency(:)
+     else
+       Harmonic_Frequency(i_order,:)=abs( real(i_order+1)*Pump_Frequency(1)-Probe_Frequency(:) )
+     endif
      !
    else if (N_pumps==0) then
      !
@@ -197,8 +201,14 @@ subroutine RT_X_effective(en)
    !
  enddo
  !
- if (N_pumps==1.and.(many_P_one_W.or.one_P_one_W)) then
-   call msg('s',':: Harmonic frequencies    [eV]:',(/Harmonic_Frequency(0:,1)/)*HARTREE)
+ if (N_pumps==1) then
+   !
+   if (one_P_one_W) then
+     call msg('s',':: Harmonic frequencies    [eV]:',(/Harmonic_Frequency(0:,1)/)*HARTREE)
+   else
+     call msg('s',':: Harmonic frequencies    [eV]:',(/minval(Harmonic_Frequency),maxval(Harmonic_Frequency)/)*HARTREE)
+   endif
+   !
  endif
  !
  ! [A] If the Probe is DELTA I use RT_X_one to Fourier trasnform
@@ -365,8 +375,13 @@ subroutine RT_X_effective(en)
          i_f=f_indx(i_fp)
          !
          Unit_of_Measure = 1._SP
-         if (i_order==0) Unit_of_Measure = sVcm2Vmm/AU2Vmm
-         if (i_order> 1) Unit_of_Measure = (sVcm2Vmm/AU2Vmm)**(i_order-1)  
+         !
+         if (N_pumps==0) then
+           if (i_order==0) Unit_of_Measure = sVcm2Vmm/AU2Vmm
+           if (i_order> 1) Unit_of_Measure = (sVcm2Vmm/AU2Vmm)**(i_order-1)  
+         else if (N_pumps==1) then
+           if (i_order> 1) Unit_of_Measure = (sVcm2Vmm/AU2Vmm)**(i_order+1)  
+         endif
          !
          call RT_output(trim(X_file_name),VALUEs=(/aimag(Susceptibility(i_order,i_f))*Unit_of_Measure,&
 &                                                  real( Susceptibility(i_order,i_f))*Unit_of_Measure/),&

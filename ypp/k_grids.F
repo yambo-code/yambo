@@ -113,10 +113,10 @@ subroutine k_grids(en,k,Xk,q)
    !
    do i1=1,USER_K%nibz
      !      
-     v=USER_K%pt(USER_K%nibz,:)
-     if (trim(coo_in)=="cc")  call c2a(v_in=USER_K%pt(USER_K%nibz,:),v_out=v,mode="kc2i")
-     if (trim(coo_in)=="rlu") call c2a(v_in=USER_K%pt(USER_K%nibz,:),v_out=v,mode="ka2i")
-     USER_K%pt(USER_K%nibz,:)=v      
+     v=USER_K%pt(i1,:)
+     if (trim(coo_in)=="cc")  call c2a(v_in=USER_K%pt(i1,:),v_out=v,mode="kc2i")
+     if (trim(coo_in)=="rlu") call c2a(v_in=USER_K%pt(i1,:),v_out=v,mode="ka2i")
+     USER_K%pt(i1,:)=v      
      !
    enddo
    !

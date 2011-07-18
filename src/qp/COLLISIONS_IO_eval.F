@@ -27,7 +27,7 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:i_time_rev
- use QP_m,          ONLY:QP_nb,QP_n_states,QP_nk,COHSEX_use_empties,QP_n_G_bands,QP_t
+ use QP_m,          ONLY:QP_nb,QP_n_states,QP_nk,COHSEX_use_empties,QP_n_G_bands,QP_t,QP_state
  use wave_func,     ONLY:WF_free
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
  use SC,            ONLY:SC_bands
@@ -59,6 +59,7 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  !
  ! When storing all collisions on file I need all SC bands
  !
+ if(allocated(QP_state)) deallocate(QP_state)
  QP_nb=SC_bands(2)
  call QP_state_table_setup(E)
  !

@@ -257,7 +257,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  else if(.not.l_collisions_IO) then
 #endif
    !
-   timing_states=px%n_of_elements(myid+1)*(QP_n_states*(q%nbz-iq_to_start)+QP_n_states-i_qp_to_start+1)
+   timing_states=(px%n_of_elements(myid+1)-1)*QP_n_states+(QP_n_states-i_qp_to_start+1)
    !
    if (l_ppa)    call live_timing(trim(Sc_name)//'W0 PPA',timing_states)
    if (l_cohsex) call live_timing(trim(Sc_name)//'W0 COHSEX',timing_states)

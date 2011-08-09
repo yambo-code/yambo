@@ -105,8 +105,7 @@ subroutine Dipole_kb_Ylm(Ylm,dYlm,Ygrad,lang,k)
  dYlm(2,lindx(2),mindx(2,2))=(0.,2.)*ch*sinth**2.*eiphi**2.
  ! M < 0
  Ylm(lindx(2),mindx(2,-2))=conjg(Ylm(lindx(2),mindx(2,2)))
- dYlm(1,lindx(2),mindx(2,-2))=conjg(dYlm(1,lindx(2),mindx(2,2)))
- dYlm(2,lindx(2),mindx(2,-2))=-conjg(dYlm(2,lindx(2),mindx(2,2)))
+ dYlm(:,lindx(2),mindx(2,-2))=conjg(dYlm(:,lindx(2),mindx(2,2)))
  Ylm(lindx(2),mindx(2,-1))=-conjg(Ylm(lindx(2),mindx(2,1)))
  dYlm(:,lindx(2),mindx(2,-1))=-conjg(dYlm(:,lindx(2),mindx(2,1)))
  if (lang.eq.3) return

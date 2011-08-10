@@ -64,7 +64,7 @@ subroutine RT_fix_symmetries(E,k)
  logical               :: Rm_all_symm,use_E_field,use_B_field,reject_symmetry,Rm_TR,S_contains_TR(nsym)
  type(bz_samp)         :: k_save
  type(levels)          :: en_sc,en_sc_expanded
- character(lchlen)     :: core_io_path_save,wf_fragment
+ character(lchlen)     :: core_io_path_save,fragment_name
  integer               :: ACTION_,ioKB_err,io_SC_E_err,io_SC_V_err,io_SC_WF_err
  complex(SP), allocatable :: full_H(:,:,:,:)
  real(SP),    allocatable :: wf_disk(:,:,:,:)
@@ -404,13 +404,20 @@ subroutine RT_fix_symmetries(E,k)
    !
    call msg('s',':: Copying existing database ...')
    !
+   call cp_file(trim(core_io_path)//"/SAVE/s.kb_pp",trim(more_io_path)//"/SAVE",ierr)
    call cp_file(trim(core_io_path)//"/SAVE/ns.kb_pp",trim(more_io_path)//"/SAVE",ierr)
-   call cp_file(trim(core_io_path)//"/SAVE/ns.wf",trim(more_io_path)//"/SAVE",ierr)
    call cp_file(trim(core_io_path)//"/SAVE/s.wf",trim(more_io_path)//"/SAVE",ierr)
+   call cp_file(trim(core_io_path)//"/SAVE/ns.wf",trim(more_io_path)//"/SAVE",ierr)
    do ik=1,k%nibz
      do i1=1,wf_nb_io_groups
-        write (wf_fragment,'(a,i5.5,a,i5.5)') 'wf_',ik,'_',i1
-        call cp_directory(trim(core_io_path)//"/SAVE/"//trim(wf_fragment),trim(more_io_path)//"/SAVE",ierr)
+       fragment_name='ns.wf_fragments_'//trim(intc(ik))//'_'//trim(intc(i1))
+       call cp_directory(trim(core_io_path)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
+       fragment_name='s.wf_fragments_'//trim(intc(ik))//'_'//trim(intc(i1))
+       call cp_directory(trim(core_io_path)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
+       fragment_name='ns.kb_pp_fragments_'//trim(intc(ik))//'_'//trim(intc(i1))
+       call cp_directory(trim(core_io_path)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
+       fragment_name='s.kb_pp_fragments_'//trim(intc(ik))//'_'//trim(intc(i1))
+       call cp_directory(trim(core_io_path)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
      enddo
    enddo
    !

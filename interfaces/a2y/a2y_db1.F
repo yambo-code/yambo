@@ -24,7 +24,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  use pars,                  ONLY: SP, DP,pi
  use com,                   ONLY: msg,warning,error
  use electrons,             ONLY: levels, default_nel,n_bands,n_spin,n_sp_pol,&
-&                                 n_spinor 
+&                                 n_spinor,spin_orbit 
  use R_lattice,             ONLY: bz_samp, ng_vec, g_vec,nkibz, b
  use D_lattice,             ONLY: DL_vol, a, alat, input_GS_Tel,&
 &                                 n_atomic_species,n_atoms_species,&
@@ -52,6 +52,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  type(hdr_type)                 :: ahdr
  type(wffile_type)              :: wff
+ integer                        :: psp_so
  integer                        :: fform,ishm
  integer,  allocatable          :: rel_gvec(:,:)
  real(DP), allocatable          :: rstr(:)
@@ -73,10 +74,12 @@ subroutine a2y_db1(en,k,KSS_file_name)
  l_many_proj= (ishm==-1)
  !
  if(     l_many_proj) then
-   read(11)  pp_n_l_max
+   read(11)  pp_n_l_max, psp_so
    read(11) 
    read(11) 
    read(11) 
+   !
+   spin_orbit=(psp_so>1)
  else
    pp_n_l_max=abs(pp_n_l_times_proj_max)
  endif
@@ -163,7 +166,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
 &         pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
  pp_n_l_comp(:)=pp_n_l_max
  !
- ! if "l_many_proj" the table is readen in a2y_db1
+ ! if "l_many_proj" the table is readen in a2y_wf
  if(.not.l_many_proj) then
    do i1=1,pp_n_l_times_proj_max
      pp_table(1,:,i1)=i1  !  l+1

@@ -275,7 +275,7 @@ module stderr
          !  g_format_length-6: 6 because of '-1.','E00'
          !
          if (iexp<10) write (gen_fmt,'(2(a,i2.2),a)')  'G',g_format_length,'.',g_format_length-5,'E1'
-         if (iexp> 9) write (gen_fmt,'(2(a,i2.2),a)')  'G',g_format_length,'.',g_format_length-6,'E2'
+         if (iexp> 9) write (gen_fmt,'(2(a,i2.2),a)')  'G',g_format_length,'.',g_format_length-6,''
        endif
      endif
      !

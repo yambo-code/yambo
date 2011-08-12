@@ -171,6 +171,5 @@ subroutine RT_Observables(en,k,on_the_fly_operators)
  !
  on_the_fly_operators=(/E_kin,E_ion,E_h,Ex,Exc,E_mg,Trace_Gf,delta_G/)
  !
- !
 end subroutine RT_Observables
 

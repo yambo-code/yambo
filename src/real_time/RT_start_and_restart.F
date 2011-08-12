@@ -322,8 +322,11 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  ! Initialize G_lesser_previous and G_lesser_reference
  !
  if (l_NE_with_fields) then
+   !
    NE_i_time=it_start-Thermal_steps
+   !
    call RT_Ext_fields(A_vecpot,(it_start-1)*RT_step)
+   !
  endif
  !
  A_vecpot_previous =A_vecpot

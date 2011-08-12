@@ -50,6 +50,7 @@ subroutine RT_initialize(Xen)
  !
  integer                  :: i1,rest
  character(5)             :: MSG_ch
+ real(SP)                 :: Fluence
  !
  ! Logicals
  !==========
@@ -157,6 +158,8 @@ subroutine RT_initialize(Xen)
  ! LOG
  !=====
  !
+ if(l_NE_with_fields) call msg('rn','[RT] Gauge                      :',trim(global_gauge))
+ !
  call msg( 'r', '[RT] NE Steps                   :',NE_steps)
  call msg( 'r', '[RT] NE time                [fs]:',NE_steps*RT_step/FS2AUT)
  call msg( 'r', '[RT] Thermalization steps       :',Thermal_steps)
@@ -187,7 +190,12 @@ subroutine RT_initialize(Xen)
    call msg('r', '[RT] '//MSG_ch//' energy steps             :',Efield(i1)%n_frequencies)
  enddo
  !
- if(l_NE_with_fields) call msg('rn','[RT] Gauge                      :',trim(global_gauge))
+ ! Fluence
+ !=========
+ if (l_NE_with_fields) then
+   call RT_Fluence(Fluence)
+   call msg('rn','[RT] Fluence           [kJ/cm^2]:',Fluence)
+ endif
  !
  ! Generalized Rabi Function
  !============================

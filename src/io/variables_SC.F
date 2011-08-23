@@ -28,21 +28,18 @@ integer function variables_SC(ID,local_description,what)
  use QP_m,           ONLY:SC_band_mixing,COHSEX_use_empties
  use SC,             ONLY:SC_bands,it_now,SC_potential,SC_kind,SC_perturbation,&
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,&
-&                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions,local_V
+&                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions,local_V,RT_nk
  use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR
-#if defined _RT
  use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,NE_time,Hfrozen,XCfrozen,              &
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
 &                         QP_LifeTime,Phase_LifeTime,l_RT_diamagnetic,                             &
 &                         max_rt_steps_disk,l_RT_induced_field,l_NE_simulate_BSE
- use fields,         ONLY:n_ext_fields,Efield
-#endif                                
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
 #endif
  use global_XC,      ONLY:SC_EXX,SC_HF,SC_COHSEX,SC_EXXC
- use fields,         ONLY:global_gauge
+ use fields,         ONLY:global_gauge,n_ext_fields,Efield
  implicit none
  !
  integer            ::ID
@@ -53,14 +50,12 @@ integer function variables_SC(ID,local_description,what)
  !
  integer               :: SC_kind_disk,SC_perturbation_disk,&
 &                         io_status_save,i1,i_desc,local_size,VAR_SIZE
- logical               :: CHECK_,l_J,l_G
-#if defined _RT		
- logical               :: l_NE_with_fields_disk
-#endif
+ logical               :: CHECK_,l_J,l_G,l_occupations,l_NE_with_fields_disk
  !
  l_J =.FALSE.
  l_G =.FALSE.
-#if defined _RT		
+ l_occupations =what=="occupations"
+#if defined _RT || defined _YPP_RT 
  l_J =what=="J_and_P"
  l_G =what=="G"
 #endif
@@ -94,11 +89,12 @@ integer function variables_SC(ID,local_description,what)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  io_status_save=io_status(ID)
- if (ver_is_gt_or_eq(ID,revision=828)) then
-   call io_elemental(ID,VAR="LOCAL_ITER_BANDS_MIX",VAR_SZ=5,MENU=0) 
- else
-   call io_elemental(ID,VAR="LOCAL_ITER_BANDS_MIX",VAR_SZ=4,MENU=0) 
- endif
+ !
+ VAR_SIZE=4
+ if (ver_is_gt_or_eq(ID,revision=828)) VAR_SIZE=5
+ if (ver_is_gt_or_eq(ID,revision=914)) VAR_SIZE=6
+ call io_elemental(ID,VAR="LOCAL_ITER_BANDS_MIX",VAR_SZ=VAR_SIZE,MENU=0) 
+ !
  i_desc=i_desc+1
  call io_elemental(ID,L0=local_V,&
 &     VAR=' The potential is local          :',DESCRIPTION=local_description(i_desc))
@@ -126,6 +122,13 @@ integer function variables_SC(ID,local_description,what)
 &         DESCRIPTION=local_description(i_desc))
    endif
    !
+ endif
+ !
+ if (ver_is_gt_or_eq(ID,revision=914)) then
+   i_desc=i_desc+1
+   call io_elemental(ID,I0=RT_nk,&
+&       VAR=' Number of K-points              :',CHECK=CHECK_,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc))
  endif
  !
  i_desc=i_desc+1
@@ -227,11 +230,9 @@ integer function variables_SC(ID,local_description,what)
  !
 #endif
  !
- if(.not.any((/l_J,l_G/))) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
+ if(.not.any((/l_J,l_G,l_occupations/))) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
-#if defined _RT
- !
- if(any((/l_J,l_G/))) then
+ if(any((/l_J,l_G,l_occupations/))) then
    !
    VAR_SIZE=8
    if (ver_is_gt_or_eq(ID,revision=890)) VAR_SIZE=7
@@ -383,8 +384,6 @@ integer function variables_SC(ID,local_description,what)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    endif
  endif
- !
-#endif
  !
  variables_SC=io_status(ID)
  n_SC_descriptions=i_desc

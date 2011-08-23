@@ -37,7 +37,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
 &                     QP_W_partially_done,GWo_SC_done,GWo_iterations,&
 &                     COHSEX_use_empties,QP_ctl_E,QP_ctl_W,QP_ctl_Z,On_Mass_Shell_approx,&
-&                     Vnlxc_kind,Vxc_kind,l_extended_output 
+&                     Vnlxc_kind,Vxc_kind,l_extended_output,OCC_ctl,OCC_T_ref
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,n_atoms_species_max,n_atomic_species,&
 &                     input_Tel_commands_over_header,non_periodic_directions,lattice,Bose_Temp
@@ -81,7 +81,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND 
 #if defined _SC
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,&
-&                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB
+&                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,RT_nk 
  use collisions_IO,    ONLY:n_collisions,COLLISIONS_cutoff,COLLISIONS_path
  use collisions_CACHE, ONLY:COLLISIONS_cache_size
 #endif
@@ -353,6 +353,11 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  forall (i1=1:3,i2=1:2) QP_ctl_W(i1,:,i2)=0.
  forall (i1=1:3,i2=1:2) QP_ctl_Z(i1,i2)=(1.,0.)
  !
+ ! Occupations control
+ !
+ OCC_ctl="none"
+ OCC_T_ref=0.
+ !
  ! BS/BSS
  !
  BS_n_g_W=1
@@ -469,6 +474,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_RT_induced_field=.FALSE.
  NE_tot_time= 5*QP_LifeTime
  P_2levels_is_done=.FALSE.
+ RT_nk=0
  !
 #endif
  !

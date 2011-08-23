@@ -89,6 +89,16 @@ module SC
  !
  complex(SP), allocatable :: G_lesser(:,:,:)
  !
+ ! Real-Time occupations
+ !
+ real(SP),    allocatable :: RT_occupations(:,:) 
+ !
+ ! K-points: In case I want to use the G_lesser to define the occupations
+ ! of a post-run I need to store in the database a copy of the K grid uses
+ !
+ integer                 :: RT_nk
+ real(SP), allocatable   :: RT_k(:,:)
+ !
  interface
    !
    subroutine load_SC_components(what,E,COM_,MODE_,ik,n_bands,kind,xc_functional,&

@@ -156,8 +156,8 @@ module real_time
  complex(SP), allocatable :: I1_lesser(:,:,:)
  complex(SP), allocatable :: I2_lesser(:,:,:)
  !
- real(SP),    allocatable :: rho_reference(:) ! reference density from SC_lw_band:SC_bands(2)
- real(SP),    allocatable :: full_rho(:)      ! density of all bands from 1:SC_bands(2)
+ real(SP),    allocatable :: rho_reference(:)    ! reference density from SC_lw_band:SC_bands(2)
+ real(SP),    allocatable :: full_rho(:)         ! density of all bands from 1:SC_bands(2)
  !
  ! Integrator Variables
  !
@@ -184,7 +184,7 @@ module real_time
  !
  integer,  parameter      :: J_and_P_cache_size=18
  !
- integer                  :: ID(5)                
+ integer                  :: ID(6)
  integer                  :: it_start ! restart point
  integer                  :: max_rt_steps_disk 
  integer,  allocatable    :: kpoints_map(:,:)
@@ -225,7 +225,6 @@ module real_time
      use QP_m,       ONLY:QP_nk
      use electrons,  ONLY:levels,n_sp_pol
      use X_m,        ONLY:X_t
-     !
      type(X_t),      intent(inout)        :: X
      complex(SP),    intent(inout)        :: G_input(SC_bands(2),SC_bands(2),QP_nk)
      complex(SP),    intent(in)           :: SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol)
@@ -233,8 +232,18 @@ module real_time
      type(levels),   intent(in)           :: Xen
      integer,        intent(in)           :: it
      logical,        optional, intent(in) :: up_Gref,up_DIP,an_QP
-     !
    end subroutine RT_update
+   !
+   subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
+     use pars,       ONLY:SP
+     use electrons,  ONLY:levels
+     use R_lattice,  ONLY:bz_samp
+     type(levels),       intent(in)    :: E
+     character(1)                      :: what ! G,X,K
+     type(bz_samp),optional,intent(in) :: k
+     real(SP), optional, intent(inout) :: Time
+     integer , optional, intent(in)    :: imposed_COM
+   end subroutine OCCUPATIONS_IO_and_interpolate
    !
    subroutine RT_Integrator(G_new,G_old,Avec,Avec_old,T_step,Xen,k,q,Integrator,Time)
    end subroutine RT_Integrator
@@ -249,7 +258,7 @@ module real_time
      use drivers,        ONLY:l_sc_hf,l_HF_and_locXC,l_sc_contains_lda
      use memory_m,       ONLY:mem_est
      use SC,             ONLY:SC_bands,V_hartree_sc,local_V,SC_alloc,E_bare,rho_n, &
-&                             SC_xc_functional,SC_xc_functional
+&                             SC_xc_functional,SC_xc_functional,RT_occupations
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
@@ -277,6 +286,9 @@ module real_time
      !
      allocate(G_lesser(SC_bands(2),SC_bands(2),QP_nk))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
+     !
+     allocate(RT_occupations(SC_bands(2),QP_nk))
+     call mem_est("RT_occupations",(/size(RT_occupations)/),(/SP/))
      !
      if(l_RT_needs_XC0) then
        !
@@ -326,7 +338,7 @@ module real_time
    subroutine RT_free
      !
      use drivers,        ONLY:l_sc_hf,l_HF_and_locXC
-     use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare,rho_n
+     use SC,             ONLY:V_hartree_sc,Ho,SC_free,E_bare,rho_n,RT_k,RT_occupations
      use memory_m,       ONLY:mem_est
      use QP_m,           ONLY:QP_Vnl_xc
      use xc_functionals, ONLY:E_xc
@@ -356,6 +368,9 @@ module real_time
        call mem_est("SC_R")
      endif
      !
+     deallocate(RT_occupations)
+     call mem_est("RT_occupations")
+     !
      deallocate(G_lesser)
      call mem_est("G_lesser")
      !
@@ -384,6 +399,8 @@ module real_time
      deallocate(E_bare)
      call mem_est("E_bare")
      !
+     deallocate(RT_k)
+     !
      if(l_RT_diagonalize) then
        deallocate(Occ_natural_orb)
        call mem_est("Occ_natural")
@@ -403,7 +420,7 @@ module real_time
        deallocate(RT_Deph_Matrix)
        call mem_est("DephMatrix")
      endif
-
+     !
      call collisions_IO_free() 
      !
    end subroutine RT_free

@@ -35,7 +35,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  ! [5] Initialize the fields
  !
  use pars,           ONLY:SP,schlen
- use drivers,        ONLY:l_sc_cohsex,l_sc_hf,l_sc_contains_lda
+ use drivers,        ONLY:l_sc_contains_lda
  use com,            ONLY:msg,warning,error
  use QP_m,           ONLY:QP_nk,COHSEX_use_empties
  use units,          ONLY:HARTREE,HBAR_eVfs
@@ -49,7 +49,8 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,       &
 &                         rho_convergence,H_rotate,local_V,V_hartree_sc,&
-&                         E_bare,V_xc_sc,rho_n,Ho,SC_xc_functional
+&                         E_bare,V_xc_sc,rho_n,Ho,SC_xc_functional,&
+&                         RT_nk,RT_k,RT_occupations
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE
  use X_m,            ONLY:X_t
  use global_XC,      ONLY:WF_kind,WF_xc_functional
@@ -91,18 +92,26 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  RT_ind_J           =(0._SP,0._SP)
  ! 
  forall(i1=1:SC_bands(2),ik=1:Xen%nk)
-   G_lesser(i1,i1,ik)=(0._SP,1._SP)*Xen%f(i1,ik,1)
+   G_lesser(i1,i1,ik)   =(0._SP,1._SP)*Xen%f(i1,ik,1)
+   RT_occupations(i1,ik)=Xen%f(i1,ik,1)
  end forall
  !
  ! Build Ho and save initial energies 
- !==========
+ !====================================
  !
  E_bare=Xen%E(:SC_bands(2),:,:)
  !
  call SC_bare_Hamiltonian(Xen,Xk,k)
  !
+ ! Save a copy of the k-grid
+ !===========================
+ ! 
+ RT_nk=Xk%nibz
+ allocate(RT_k(RT_nk,3))
+ RT_k=Xk%pt
+ !
  ! Perform a first I/O to check which DBs are present. 
- !=====================
+ !=====================================================
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(1)) ! Energies
  io_E=io_SC_components('E' ,Xen,ID(1))
@@ -336,7 +345,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  !
  ! Apply QP-corrections if present
  !==========
- call QP_apply(SC_bands,Xen,Xk,3,msg_fmt='s')  
+ call QP_apply(SC_bands,Xen,Xk,"G",msg_fmt='s')  
  !
  if(associated(Xen%W)) then
    RT_is_dumped=.true.

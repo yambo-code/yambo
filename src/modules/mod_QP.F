@@ -126,6 +126,13 @@ module QP_m
  complex(SP)             :: QP_ctl_Z(3,2)
  logical                 :: QP_ctl_applied
  !
+ ! NEGF Occupations I/O. The general format is
+ !
+ ! ??nOcc= "DIR"
+ !
+ character(schlen)       :: OCC_ctl(3) ! Database directory
+ real(SP)                :: OCC_T_ref  ! Occupations loaded at this time
+ !
  contains
    !
    subroutine QP_reset(qp)

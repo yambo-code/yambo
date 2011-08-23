@@ -51,7 +51,10 @@ integer function k_the_nearest(ko_,k,n_k,be_carefull,i_err)
        k_distance=iku_v_norm(v)
        k_the_nearest=i1
      endif
-     if (k_distance<zero_dfl) exit
+     if (k_distance<zero_dfl) then
+       i_err=0
+       exit 
+     endif
    enddo
    return
  endif

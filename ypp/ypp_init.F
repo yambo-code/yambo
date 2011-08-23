@@ -92,7 +92,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  l_dos=.false.
  dos_broadening=0.1/HARTREE
- dos_bands=n_bands
+ dos_bands=(/1,n_bands/)
+ dos_E_range=(/1.,-1./)/HARTREE
+ dos_E_steps=500
  !
  ! PLOT
  !
@@ -446,17 +448,19 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  if (l_bzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut OutputAlat NoWeights GammaRadius")
  !
  if (l_electrons.and.l_dos) then
-    if(l_dos) call QP_ctl_switch('G')
-    call initactivate(1,"DOS_broad DOS_bands")
+    if (l_dos) then
+      call QP_ctl_switch('G')
+      call initactivate(1,"OCCdT OCCTime")
+    endif
+    call initactivate(1,"DOS_bands DOSERange DOSESteps DOS_broad")
  endif
+ !
 #if defined _YPP_MAGNETIC
  if (l_angular_momentum.or.l_position) call initactivate(1,"FFTGvecs")
+ if (l_current) call initactivate(1,'PhaseTrick')
 #endif
 #if defined _YPP_BOLTZMANN
  if (l_current) call initactivate(1,"FFTGvecs Nelectro ElecTemp Tau El_Field")
-#endif
-#if defined _YPP_MAGNETIC
- if (l_current) call initactivate(1,'PhaseTrick')
 #endif
  !
  if (l_plot) then

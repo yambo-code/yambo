@@ -72,7 +72,7 @@ subroutine RT_Fluence(Fluence)
  ! the integration more stable I multiply I by 10^-15
  !
  T=T/FS2AUT ! au -> fs
- I=I*10.E-15_SP
+ I=I*1.E-15_SP
  !
  Fluence=RIntegrate(I,T,NE_steps)
  !

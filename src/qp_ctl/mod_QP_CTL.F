@@ -69,7 +69,7 @@ module QP_CTL_m
      QP_ctl%fit_scissor=0.
    end subroutine
    !
-   subroutine QP_apply(band_range,en,k,Eid,msg_fmt,qp_impose,QP_ctl_impose)
+   subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
      !
      ! This routine manages the external qp corrections.
      ! The task is tricky, as YAMBO has three different energy
@@ -86,9 +86,9 @@ module QP_CTL_m
      !
      ! Eid
      !::::::
-     ! 1 : X
-     ! 2 : BSK
-     ! 3 : G
+     ! 1 : X (object = "X")
+     ! 2 : BSK (object = "K")
+     ! 3 : G (object = "G")
      !
      use memory_m,      ONLY:mem_est
      use QP_m,          ONLY:QP_t,QP_reset,QP_ctl_E,QP_ctl_W,QP_ctl_Z,&
@@ -101,10 +101,11 @@ module QP_CTL_m
      use global_XC,     ONLY:setup_global_XC,MORE_SCISSOR,MORE_SCIS_AND_STRE,MORE_STRETCH,&
 &                            K_kind,K_xc_functional,MORE_NONE,G_kind,G_xc_functional,&
 &                            X_kind,X_xc_functional,QP_DB_kind,SE_NONE
-     integer       ::Eid,band_range(2)
+     integer       ::band_range(2)
      type(levels)  ::en
      type(bz_samp) ::k
      character(*)  ::msg_fmt
+     character(1)  ::object
      type(QP_t),       optional::qp_impose
      type(QP_ctl_t),   optional::QP_ctl_impose(n_sp_pol)
      !
@@ -119,10 +120,15 @@ module QP_CTL_m
      character(1)     ::what
      character(11)    ::spin_ch(2)
      logical          ::is_def(4),GFs_from_DB
+     integer          ::Eid
      integer, allocatable :: RIM_k_done(:)
      integer, external    :: QP_load_DB
      !
      ! Resets
+     !
+     if (object=="X") Eid=1
+     if (object=="K") Eid=2
+     if (object=="G") Eid=3
      !
      call QP_reset(qp)
      do i_spin=1,n_sp_pol

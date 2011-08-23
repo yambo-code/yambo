@@ -21,34 +21,20 @@
 !
 subroutine electrons_driver(Xk,Xen)
  !
- use units,          ONLY:HARTREE
- use pars,           ONLY:SP,schlen,lchlen
+ use pars,           ONLY:SP,schlen
  Use stderr,         ONLY:intc
  use wave_func,      ONLY:WF_load,wf,WF_free,wf_ng,wf_state
  use FFT_m,          ONLY:fft_size,fft_dim
  use R_lattice,      ONLY:bz_samp,nkibz
- use D_lattice,      ONLY:DL_vol
  use electrons,      ONLY:levels,n_spin,n_spinor,spin,n_sp_pol
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
-&                         plot_title,l_dos,dos_broadening,DOS_bands,l_angular_momentum,&
+&                         plot_title,l_dos,l_angular_momentum,&
 &                         l_position,l_current
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:two_spin_density
- use QP_CTL_m,       ONLY:QP_apply
-#if defined _YPP_RT
- use pars,           ONLY:cI
- use real_time,      ONLY:G_lesser
- use YPP,            ONLY:RT_databases
- use IO_m,           ONLY:NONE,LOG
-#endif
-#if defined _YPP_ELPH
- use electrons,      ONLY:n_bands
- use com,            ONLY:file_exists
- use FFT_m,          ONLY:fft_rot_r
-#endif
  implicit none
  !
  type(bz_samp) ::Xk
@@ -57,25 +43,10 @@ subroutine electrons_driver(Xk,Xen)
  ! Work Space
  !
  real(SP), allocatable :: el_den(:)
- real(SP)              :: el_dos(n_sp_pol),dos_E,delta_E,E_min,E_max,f_occ
- integer               :: i1,i_qp,ik,ib,ir,i_wf,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2)
+ integer               :: i_qp,ik,ib,ir,i_wf,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2)
  logical               :: success
- character(schlen)     :: ch_ws,titles(4)
- !GPL_EXCLUDE_START
-#if defined _YPP_RT
- logical               :: IO_error
-#endif
-#if defined _YPP_ELPH
+ character(schlen)     :: ch_ws
  !
- !Polaronic Wf
- !
- integer                :: n_top_residuals,top_residual(1000),i_st,H_size,i_c
- character(lchlen)      :: db_name
- integer                :: ibp,ok_ibz,il,ok_s
- complex(SP)            :: B_n_ok
- !
-#endif
- !GPL_EXCLUDE_END
  if (.not.any((/l_mag,l_density,l_sp_wf,l_dos&
 #if defined _YPP_MAGNETIC
 &    ,l_angular_momentum,l_position &
@@ -118,175 +89,13 @@ subroutine electrons_driver(Xk,Xen)
    allocate(v2plot(fft_size))
  endif
  !
- ! DOS
- !=====
+ ! DOS & DENSITY
+ !===============
  !
- if (l_dos) then
-   !
-   call section('*','Electronic DOS')
-   !
-   call QP_apply((/1,DOS_bands/),Xen,Xk,3,msg_fmt='s')
-   !
-#if defined _YPP_RT
-   call RT_databases(Xen,IO_error=IO_error,G_lesser_only=.TRUE.,COM_=LOG)
-#endif
-   !
-   output_fname='el_dos'
-   call of_open_close(trim(output_fname),'ot')
-   if (n_sp_pol==1) then
-     titles(1)='E[eV]'
-     titles(2)='DOS'
-     call msg('o dos','#',titles(:2),INDENT=0,USE_TABS=.true.)    
-   else
-     titles(1)='E[eV]'
-     titles(2)='DOS [up]'
-     titles(3)='DOS [dn]'
-     titles(4)='DOS [up+dn]'
-     call msg('o dos','#',titles(:4),INDENT=0,USE_TABS=.true.)    
-   endif
-   call msg('o dos',"#")
-   !
-   E_min=minval(Xen%E(:DOS_bands,:,:))-5.*dos_broadening
-   E_max=maxval(Xen%E(:DOS_bands,:,:))+5.*dos_broadening
-   delta_E=(E_max-E_min)/int((E_max-E_min)/dos_broadening)
-   !
-   do i1=1,int((E_max-E_min)/dos_broadening)
-     dos_E=E_min+(i1-0.5)*delta_E
-     el_dos(:)=0.
-     do ib=1,DOS_bands
-       do ik=1,nkibz
-         do i_spin=1,n_sp_pol
-           !
-           f_occ=1.
-#if defined _YPP_RT
-           if (.not.IO_error) f_occ= real(-cI*G_lesser(ib,ib,ik))/2.
-#endif
-           !
-           el_dos(i_spin)=el_dos(i_spin)+f_occ*&
-&                         Fermi_fnc_derivative(Xen%E(ib,ik,i_spin)-dos_E,dos_broadening)*Xk%weights(ik)/DL_vol
-           !
-         enddo
-       enddo
-     enddo
-     !
-     if (n_sp_pol==1) call msg('o dos','',(/dos_E*HARTREE,el_dos(1)/),INDENT=-2,USE_TABS=.true.)
-     if (n_sp_pol==2) call msg('o dos','',(/dos_E*HARTREE,el_dos(:),el_dos(1)+el_dos(2)/),INDENT=-2,USE_TABS=.true.)
-     !
-   enddo
-   !
-   call of_open_close(trim(output_fname))
-   !
- endif
- !
- ! DENSITY
- !=========
- !
- if (l_density) then
-   !
-   call section('*','Density Plot')
-   !
-   allocate(el_den(fft_size))
-   !
-   call el_density(Xen,Xk,el_den,.FALSE.) 
-   v2plot=el_den
-   !
-   ch_ws='density_'//trim(intc(plot_dim))
-   if (use_cube) output_fname=trim(ch_ws)//'d.cube'
-   if (use_xcrysden) output_fname=trim(ch_ws)//'d.xsf'
-   if (use_gnuplot)  output_fname=trim(ch_ws)//'d'
-   !
-   if (use_cube) then 
-     call of_open_close(trim(output_fname),'o')
-   else
-     call of_open_close(trim(output_fname),'ot')
-     call msg('o den',"#")
-   endif
-   !
-   plot_title='density'
-   call plot_check_and_launch(.false.)
-   !
-   call of_open_close(trim(output_fname))
-   !
- endif
+ if (l_dos.or.l_density)  call electrons_dos_and_charge(Xk,Xen)
  !
  ! SYMMETRIZED WAVEFUNCTIONS (summed over all symmetries and degenerate states)
  !==============================================================================
- !GPL_EXCLUDE_START
-#if defined _YPP_ELPH
- if (l_sp_wf) then
-   !
-   i_qp=1
-   !
-   l_norm_to_one=.false.
-   !
-   do while (i_qp<=QP_n_states) 
-     !
-     ! n   =QP_table(i_qp,1)
-     ! k   =QP_table(i_qp,3)
-     ! sp  =QP_table(i_qp,4)
-     !
-     ib    =QP_table(i_qp,1)
-     ik    =QP_table(i_qp,3)
-     i_spin=spin(QP_table(i_qp,:))
-     !
-     db_name='ELPH_Ham/TOP_RESIDUAL_'//trim(intc(ib))//'_'//trim(intc(ik))
-     !
-     i_qp=i_qp+1
-     !
-     if (.not.file_exists(trim(db_name))) cycle
-     !  
-     n_top_residuals=1
-     open(unit=100,name=trim(db_name),form='unformatted')
-     do while(.true.)
-       read(100,end=2) top_residual(n_top_residuals)
-       n_top_residuals=n_top_residuals+1
-     enddo
-2    n_top_residuals=n_top_residuals-1
-     call msg('s',':: Processing '//trim(intc(n_top_residuals))//' residuals@k'//trim(intc(ik))//'_b'//trim(intc(ib))//':', top_residual(:n_top_residuals))
-     close(100)
-     !
-     do i_st=1,n_top_residuals
-       !
-       v2plot=0.
-       !
-       db_name='ELPH_Ham/EIGENV_'//trim(intc(top_residual(i_st)))
-       open(unit=100,name=trim(db_name),form='unformatted')
-       read(100) H_size
-       do i_c=1,H_size
-         read(100) ibp,ok_ibz,il,ok_s,B_n_ok
-         !
-         if (il==0) cycle
-         !
-         i_wf=wf_state(ibp,ok_ibz,1)
-         !
-         forall(ir=1:fft_size) v2plot(ir)=v2plot(ir)+real( B_n_ok*wf(fft_rot_r(ok_s,ir),i_wf)*conjg( B_n_ok*wf(fft_rot_r(ok_s,ir),i_wf) ) )     
-       enddo
-       close(100)
-       !
-       ch_ws='sp_wf_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_'//trim(intc(plot_dim))//'_STATE'//trim(intc(top_residual(i_st)))//'_'//trim(intc(plot_dim))
-       if (use_cube) output_fname=trim(ch_ws)//'d.cube'
-       if (use_xcrysden) output_fname=trim(ch_ws)//'d.xsf'
-       if (use_gnuplot)  output_fname=trim(ch_ws)//'d'
-       !
-       if (use_cube) then 
-         call of_open_close(trim(output_fname),'o')
-       else
-         call of_open_close(trim(output_fname),'ot')
-         call msg('o wf',"#")
-       endif
-       !
-       call plot_check_and_launch(.false.)
-       !
-       call of_open_close(trim(output_fname))
-       !
-     enddo
-     !
-   enddo
-   !
- endif
- !
-#else
- !GPL_EXCLUDE_END
  !
  if (l_sp_wf) then
    !
@@ -360,10 +169,6 @@ subroutine electrons_driver(Xk,Xen)
    enddo
     !
  endif
- !
- !GPL_EXCLUDE_START
-#endif
- !GPL_EXCLUDE_END
  !
  ! MAGNETIZATION GPL_EXCLUDE_START
  !=================================

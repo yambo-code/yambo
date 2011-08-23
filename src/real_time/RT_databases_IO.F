@@ -22,7 +22,8 @@
 subroutine RT_databases_IO(Xen,it)
  !
  use QP_m,           ONLY:QP_nk
- use real_time,      ONLY:ID,NE_dynamics,l_NE_with_fields,NE_i_time,it_start
+ use real_time,      ONLY:ID,NE_dynamics,l_NE_with_fields,NE_i_time,it_start,&
+&                         OCCUPATIONS_IO_and_interpolate
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL
  use electrons,      ONLY:levels
  !
@@ -48,6 +49,10 @@ subroutine RT_databases_IO(Xen,it)
    call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
    io_G=io_SC_components('G',Xen,ID(5))
  enddo
+ !
+ ! Occupations
+ !
+ call OCCUPATIONS_IO_and_interpolate(Xen,'G')
  !
  if(l_NE_with_fields.and.NE_dynamics) then
    !

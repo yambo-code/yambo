@@ -27,16 +27,18 @@ integer function io_SC_components(what,E_sc,ID)
  use R_lattice,      ONLY:nkibz
  use stderr,         ONLY:intc
  use SC,             ONLY:SC_bands,rho_convergence,E_convergence,&
-&                         SC_R,V_xc_sc,local_V,H_nl_sc,&
+&                         SC_R,V_xc_sc,local_V,H_nl_sc,RT_k,RT_nk,RT_occupations,&
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,write_is_on,&
 &                         manage_RD_WR_CL_IF_END,io_reset
+ use fields,         ONLY:i_Probe,i_Pump
+ use real_time,      ONLY:max_rt_steps_disk,NE_i_time
 #if defined _RT
  use real_time,      ONLY:l_NE_with_fields,NE_steps,RT_P,J_and_P_cache_size, &
-&                         G_lesser,NE_i_time,NE_dynamics,RT_ind_J,max_rt_steps_disk,J_and_P_cache,&
+&                         G_lesser,NE_dynamics,RT_ind_J,J_and_P_cache,&
 &                         G_lesser_reference,P_2levels_is_done,RT_P_2levels
- use fields,         ONLY:A_vecpot,i_Probe,i_Pump
+ use fields,         ONLY:A_vecpot
  use QP_m,           ONLY:QP_nk
 #endif                                
  use matrix_operate, ONLY:mat_c2r,mat_r2c
@@ -55,19 +57,22 @@ integer function io_SC_components(what,E_sc,ID)
  !
  real(SP), allocatable :: R_H_G_disk(:,:,:),E_disk(:,:,:)
  integer               :: ik,bands_to_load,ib,i_spin,i1
- logical               :: l_wf,l_V,l_E,l_IMPOSE_SN,CHECK_
+ logical               :: l_wf,l_V,l_E,l_IMPOSE_SN,CHECK_,l_occupations,l_G,l_J_and_P
 #if defined _RT		
  integer               :: file_number
- logical               :: l_J_and_P,l_G,IO_current
+ logical               :: IO_current
  real(SP)              :: A_vecpot_disk(3,3,2)
 #endif
  !
  l_E =what=="E"
  l_wf=what=="WF"
  l_V =what=="V"
+ l_G =.FALSE.
+ l_J_and_P =.FALSE.
+ l_occupations=what=="occupations"
 #if defined _RT		
- l_J_and_P =what=="J_and_P"
- l_G       =what=="G"
+ l_J_and_P    =what=="J_and_P"
+ l_G          =what=="G"
 #endif
  !
  ! When the db.scV is used for single non-SC shot the number
@@ -106,16 +111,18 @@ integer function io_SC_components(what,E_sc,ID)
    !
  endif
  !
- if(l_G) then
+ if(l_G.or.l_occupations) then
    if( (mod(NE_i_time,max_rt_steps_disk)/=0.and.NE_i_time/=1) .and.NE_dynamics.and.write_is_on(ID)) then
      io_SC_components=0
      call io_reset(ID)
      return
    endif
-   io_SC_components=io_connect(desc="RT_GreenF",type=2,ID=ID)
  endif
+ if (l_G)           io_SC_components=io_connect(desc="RT_GreenF",type=2,ID=ID)
  !
 #endif
+ !
+ if (l_occupations) io_SC_components=io_connect(desc="RT_occupations",type=2,ID=ID)
  !
  if (io_SC_components/=0) goto 1
  !
@@ -125,10 +132,8 @@ integer function io_SC_components(what,E_sc,ID)
    !
    l_IMPOSE_SN=.not.l_V 
    !
-   if (any((/l_E,l_V,l_wf/)))  io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.)
-#if defined _RT		
-   if (any((/l_J_and_P,l_G/))) io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.)
-#endif
+   if (any((/l_E,l_V,l_wf,l_occupations,&
+&            l_J_and_P,l_G/)))  io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.)
    !
    if (io_SC_components/=0) goto 1
    !
@@ -136,30 +141,27 @@ integer function io_SC_components(what,E_sc,ID)
    !=======================================================
    if (io_SC_components/=0) goto 1
    !
-#if defined _RT
    if(any((/l_E,l_V,l_wf/))) then
-#endif
-   !
-   call io_elemental(ID,VAR="RHOCONV_ECONV",VAR_SZ=2,MENU=0) 
-   call io_elemental(ID,R0=rho_convergence)
-   call io_elemental(ID,R0=E_convergence)
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   !
-#if defined _RT
+     !
+     call io_elemental(ID,VAR="RHOCONV_ECONV",VAR_SZ=2,MENU=0) 
+     call io_elemental(ID,R0=rho_convergence)
+     call io_elemental(ID,R0=E_convergence)
+     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+     !
    endif
    !
-   if (l_G) then
+   if (l_G.or.l_occupations) then
      call io_elemental(ID,VAR="Probe_and_Pump_index",VAR_SZ=2,MENU=0) 
      call io_elemental(ID,I0=i_Probe)
      call io_elemental(ID,I0=i_Pump)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif
+#if defined _RT
    if (l_J_and_P) then
      call io_elemental(ID,VAR="P2l_is_done",VAR_SZ=1,MENU=0) 
      call io_elemental(ID,L0=P_2levels_is_done)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif
-   !
 #endif
    !
    io_SC_components=io_status(ID)
@@ -223,20 +225,16 @@ integer function io_SC_components(what,E_sc,ID)
    !
  endif
  !
-#if defined _RT
- if(any((/l_E,l_V,l_wf,l_G/))) then
-#endif
- !
- if (ik==0) goto 1
- !
- ! Fragmentation
- !===============
- !
- call io_fragment(ID,i_fragment=ik)
- !
-#if defined _RT
+ if(any((/l_E,l_V,l_wf,l_G,l_occupations/))) then
+   !
+   if (ik==0) goto 1
+   !
+   ! Fragmentation
+   !===============
+   !
+   call io_fragment(ID,i_fragment=ik)
+   !
  endif
-#endif
  !
  if (l_V.and..not.local_V) then
    !
@@ -277,6 +275,23 @@ integer function io_SC_components(what,E_sc,ID)
      !
    enddo
    deallocate(R_H_G_disk)
+ endif
+ !
+ if ( l_occupations ) then
+   !
+   ! lesser Green Function diagonal
+   !===============================
+   !
+   if (io_SC_components/=0) goto 1  
+   !
+   if (NE_i_time==max_rt_steps_disk.or.read_is_on(ID)) then
+     call io_bulk(ID,VAR="RT_Kpts",VAR_SZ=(/RT_nk,3/))
+     call io_bulk(ID,R2=RT_k)
+   endif
+   !
+   call io_bulk(ID,VAR="RT_occupations_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2),RT_nk/))
+   call io_bulk(ID,R2=RT_occupations)
+   !
  endif
  !
 #if defined _RT

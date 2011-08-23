@@ -46,7 +46,9 @@ module YPP
  !
  logical      ::l_dos ! electrons and phonons
  real(SP)     ::dos_broadening ! electrons
- integer      ::dos_bands      ! electrons
+ real(SP)     ::dos_E_range(2) ! Energy Range
+ integer      ::dos_bands(2)   ! Bands Range
+ integer      ::dos_E_steps    ! Energy steps
  !
  ! REAL SPACE PLOT
  !
@@ -166,6 +168,8 @@ module YPP
  integer  :: X_order
  real(SP) :: t_jump
  real(SP) :: W_RT_induced_step
+ real(SP) :: OCC_T_range(2) ! Time range to plot the dos
+ real(SP) :: OCC_deltaT     ! Time step to plot the dos
  character(schlen) :: Probe_Keyword
  character(schlen) :: Pump_Keyword
  integer, parameter:: max_n_of_paths=10000

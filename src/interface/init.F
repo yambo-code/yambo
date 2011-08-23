@@ -455,7 +455,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call QP_ctl_switch('X')
    call initactivate(1,'LongPath Qdirection QShiftOrder')
 #if defined _SC
-   call initactivate(1,'Gauge')
+   call initactivate(1,'Gauge OCCTime')
 #endif
    call X_activate('Xd',(/'QpntsR','BndsRn','NGsBlk',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&

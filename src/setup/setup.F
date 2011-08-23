@@ -250,6 +250,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! Once the occupations have been evaluated I dump Xen in Ken
  !
  call E_duplicate(Xen,Ken)
+ !
 #if defined _SC
  K_kind=X_kind
  K_xc_functional=X_xc_functional

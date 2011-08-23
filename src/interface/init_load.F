@@ -32,7 +32,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,SC_band_mixing,&
-&                        SC_E_threshold,QP_dSc_delta,QP_G_Zoom_treshold
+&                        SC_E_threshold,QP_dSc_delta,QP_G_Zoom_treshold,OCC_T_ref
  use timing,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,non_periodic_directions,Bose_Temp
@@ -45,7 +45,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
 &                        FXC_SVD_digits
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
- use com,           ONLY:more_io_path,com_path
  use functions,     ONLY:bose_E_cut
 #if defined _SC
  use SC,            ONLY:SC_bands,SC_iterations,SC_potential,&
@@ -60,7 +59,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  use fields,        ONLY:Efield
 #endif
 #if defined _TWO_LEVELS
- use real_time,     ONLY:l_3levels,tau_offdiag,tau_diag,dip
+ use real_time,     ONLY:tau_offdiag,tau_diag,dip
 #endif
 #if defined _MAGNETIC
  use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
@@ -324,6 +323,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call QP_ctl_load(defs,3)
  !
  ! GPL_EXCLUDE_START
+ !
+ ! Occupations (NEGF) loader
+ !
+ call it(defs,'OCCTime','NEGF Occupations loading time',OCC_T_ref,verb_level=V_real_time,unit=Time_unit)
  !
  ! F_xc
  !

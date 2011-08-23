@@ -29,12 +29,19 @@ subroutine QP_ctl_switch(what)
  !
  ! Work Space
  !
- call initactivate(1,what//'fnQPdb '//what//'fnQP_N ')
+ call initactivate(1,what//'fnQPdb '//what//'fnQP_N '//what//'fnFdb')
  if (n_sp_pol==1) then
    call initactivate(1,what//'fnQP_E '//what//'fnQP_W '//what//'fnQP_Z') 
  else
    call initactivate(1,what//'fnQP_up_E '//what//'fnQP_up_W '//what//'fnQP_up_Z') 
    call initactivate(1,what//'fnQP_dn_E '//what//'fnQP_dn_W '//what//'fnQP_dn_Z') 
  endif
+ !
+ ! GPL_EXCLUDE_START
+ ! 
+ call initactivate(1,'OCCTime')
+ !
+ ! GPL_EXCLUDE_END
+ !
  !
 end subroutine

@@ -32,6 +32,11 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
  use electrons,     ONLY:levels,n_bands
  use R_lattice,     ONLY:bz_samp
  use QP_CTL_m,      ONLY:QP_apply
+#if defined _SC
+ use real_time,     ONLY:OCCUPATIONS_IO_and_interpolate
+ use IO_m,          ONLY:REP
+ use QP_m,          ONLY:OCC_T_ref
+#endif
  implicit none
  !
  type(levels) ::en,Xen
@@ -46,7 +51,7 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
  !
  ! - Xo -
  !
- if (l_acfdt)   call QP_apply(X(1)%ib,Xen,Xk,1,msg_fmt='s')
+ if (l_acfdt)   call QP_apply(X(1)%ib,Xen,Xk,"X",msg_fmt='s')
  !
  ! GPL_EXCLUDE_END
  !
@@ -60,20 +65,32 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
         lras.or.lreels.or.&
 #endif
         (l_gw0.and..not.l_ppa.and.l_el_corr).or.l_life
- if (apply_QP)  call QP_apply(X(3)%ib,Xen,Xk,1,msg_fmt='s')
+ if (apply_QP)  call QP_apply(X(3)%ib,Xen,Xk,"X",msg_fmt='s')
+#if defined _SC
+ if (apply_QP)  call OCCUPATIONS_IO_and_interpolate(Xen,'X',Xk,Time=OCC_T_ref,imposed_COM=REP)
+#endif
  !
  ! - Static X -
  !
  apply_QP=l_em1s.or.(l_optics.and.l_bse.and..not.l_ppa).or.l_bss.or.(l_em1d.and.l_cohsex)
- if (apply_QP)  call QP_apply(X(2)%ib,Xen,Xk,1,msg_fmt='s')
+ if (apply_QP)  call QP_apply(X(2)%ib,Xen,Xk,"X",msg_fmt='s')
+#if defined _SC
+ if (apply_QP)  call OCCUPATIONS_IO_and_interpolate(Xen,'X',Xk,Time=OCC_T_ref,imposed_COM=REP)
+#endif
  !
  ! - Plasmon Pole X -
  !
  apply_QP=(l_em1d.and.l_ppa).or.(l_gw0.and.l_ppa.and.l_el_corr)
- if (apply_QP)  call QP_apply(X(4)%ib,Xen,Xk,1,msg_fmt='s')
+ if (apply_QP)  call QP_apply(X(4)%ib,Xen,Xk,"X",msg_fmt='s')
+#if defined _SC
+ if (apply_QP)  call OCCUPATIONS_IO_and_interpolate(Xen,'X',Xk,Time=OCC_T_ref,imposed_COM=REP)
+#endif
  !
  ! - Green's Function (not the one used in the BSE -
  !
- if (l_gw0)     call QP_apply((/1,n_bands/),en,k,3,msg_fmt='s')
+ if (l_gw0)     call QP_apply((/1,n_bands/),en,k,"G",msg_fmt='s')
+#if defined _SC
+ if (apply_QP)  call OCCUPATIONS_IO_and_interpolate(en,'G',k,Time=OCC_T_ref,imposed_COM=REP)
+#endif
  !
 end subroutine

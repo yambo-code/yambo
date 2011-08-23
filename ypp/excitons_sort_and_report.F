@@ -111,7 +111,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
    !
    ! Apply quasi-particle correction if presents
    ! 
-   call QP_apply(BS_bands,E,Xk,3,msg_fmt='s')
+   call QP_apply(BS_bands,E,Xk,'G',msg_fmt='s')
    !
    ! report on file the weights and the amplitude
    ! of the excitonic state...

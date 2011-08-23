@@ -186,6 +186,13 @@ subroutine RT_output(what,VALUEs,TIME,E)
  headings(next_file,3:4)=(/'X/Im','X/Re'/)
  next_file=next_file+1
  !
+ if (initialize) file_name(next_file)=trim(append_ch)//'el_dos'
+ short_file_name(next_file)=trim(append_ch)//'el_dos'
+ n_headings(next_file)=3
+ headings(next_file,1:2)=(/'T [fs]','E [eV]'/)
+ headings(next_file,3  )='DOS'
+ next_file=next_file+1
+ !
  ! Check which files to write
  !----------------------------
  !
@@ -258,7 +265,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
 &         'YPP-dP_W_order_5','YPP-dP_W_order_6','YPP-dP_W_order_7','YPP-dP_W_order_8','YPP-dP_W_order_9',&
 &         'YPP-Polarization_W')
        data_to_dump(2:n_headings(i_f)) = VALUES(1:n_headings(i_f)-1)
-     case('YPP-X_effective')
+     case('YPP-X_effective','YPP-el_dos')
        data_to_dump(1:2)=(/Time,E/)
        data_to_dump(3:n_headings(i_f)) = VALUES(1:n_headings(i_f)-1)
    end select

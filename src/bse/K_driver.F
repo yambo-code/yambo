@@ -43,6 +43,11 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use par_proc_m,     ONLY:pp_redux_wait
  use R_lattice,      ONLY:bz_samp,qindx_B
  use parser_m,       ONLY:parser
+#if defined _SC
+ use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate
+ use QP_m,           ONLY:OCC_T_ref
+ use IO_m,           ONLY:REP
+#endif
  implicit none
  type(levels)  ::Xen,Ken
  type(bz_samp) ::Xk,q
@@ -72,7 +77,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! ... and the QP corrections
  !
- call QP_apply(bands_to_correct,Ken,Xk,2,msg_fmt='s')
+ call QP_apply(bands_to_correct,Ken,Xk,"K",msg_fmt='s')
+#if defined _SC
+ call OCCUPATIONS_IO_and_interpolate(Ken,'K',k=Xk,Time=OCC_T_ref,imposed_COM=REP)
+#endif
  !
  ! GPL_EXCLUDE_START
  !

@@ -27,7 +27,7 @@ subroutine RT_X_LRR_real_field(en)
  !
  use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,W_RT_induced_step, &
 &                         i_t_start,i_t_end,RED_steps,l_force_min_damp
- use pars,           ONLY:SP,DP,pi,zero_dfl,cI
+ use pars,           ONLY:SP,DP,pi,cI
  use units,          ONLY:HARTREE
  use electrons,      ONLY:levels
  use memory_m,       ONLY:mem_est
@@ -126,6 +126,9 @@ subroutine RT_X_LRR_real_field(en)
    call RT_1D_Fourier_Transform(' (E field)',freqs,E_w(:),X_rt%energy_steps,&
 &                               E_t(i_t_start:i_t_end),RED_steps,RT_step,&
 &                               i_t_start*RT_step,USE_FFT,1)
+   !do i_w = 1, X_rt%energy_steps
+   !  write (100,'(3f20.10)') real(freqs(i_w))*HARTREE,E_w(i_w)
+   !enddo
    deallocate(E_t)
    !
  endif

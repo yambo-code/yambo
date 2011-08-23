@@ -35,8 +35,6 @@ subroutine RT_Rabi_Function(E,Field)
  !
  ! I is given in the input file and I[au]=I[kWLm2]*W2Au
  !
- ! I also
- !
  use pars,           ONLY:SP,cI,pi
  use units,          ONLY:HARTREE,SPEED_OF_LIGHT,W2Au
  use electrons,      ONLY:levels

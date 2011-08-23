@@ -124,8 +124,6 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    call msg('r','')
    call REPORT_Occupations(E,2)
    !
-#endif
-   !
  endif
  !
 end subroutine OCCUPATIONS_IO_and_interpolate

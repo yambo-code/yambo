@@ -329,9 +329,9 @@ module fields
        !
        SPEED=SPEED_OF_LIGHT_SI
        !
-       ! I = 2 FREE_SPACE_PERM SPEED_OF_LIGHT |E|^2 
+       ! I = 1 FREE_SPACE_PERM SPEED_OF_LIGHT |E|^2 
        !
-       Efield_strength= sqrt(I/2./FREE_SPACE_PERM/SPEED)*VMm12AU
+       Efield_strength= sqrt(I/1./FREE_SPACE_PERM/SPEED)*VMm12AU
        !
      endif
      !
@@ -341,9 +341,9 @@ module fields
        !
        SPEED=SPEED_OF_LIGHT_SI*100. ! cm/sec
        !
-       ! I = SPEED_OF_LIGHT/2/pi |E|^2 
+       ! I = SPEED_OF_LIGHT/4/pi |E|^2 
        !
-       Efield_strength= sqrt(I*2.*pi/SPEED)*SVCMm12VMm1*VMm12AU
+       Efield_strength= sqrt(I*4.*pi/SPEED)*SVCMm12VMm1*VMm12AU
        !
      endif
      !
@@ -353,9 +353,9 @@ module fields
        !
        SPEED=SPEED_OF_LIGHT
        !
-       ! I = SPEED_OF_LIGHT/8/pi |E|^2 
+       ! I = SPEED_OF_LIGHT/4/pi |E|^2 
        !
-       Efield_strength= sqrt(I*2.*pi/SPEED)
+       Efield_strength= sqrt(I*4.*pi/SPEED)
        !
      endif
      !

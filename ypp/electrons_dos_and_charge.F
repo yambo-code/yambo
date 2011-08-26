@@ -21,7 +21,7 @@
 !
 subroutine electrons_dos_and_charge(Xk,Xen)
  !
- use units,          ONLY:HARTREE,FS2AUT
+ use units,          ONLY:HA2EV,FS2AUT
  use pars,           ONLY:SP,schlen
  Use stderr,         ONLY:intc
  use R_lattice,      ONLY:bz_samp,nkibz
@@ -151,12 +151,12 @@ subroutine electrons_dos_and_charge(Xk,Xen)
        !
        if (l_3D_plot) then
 #if defined _YPP_RT
-         call RT_output("el_dos",VALUEs=(/el_dos(1)/),E=dos_E*HARTREE,TIME=io_Time/FS2AUT)
+         call RT_output("el_dos",VALUEs=(/el_dos(1)/),E=dos_E*HA2EV,TIME=io_Time/FS2AUT)
          !call msg('o dos','',(/io_Time/FS2AUT,dos_E*HARTREE,el_dos(1)/),INDENT=-2,USE_TABS=.true.)
 #endif
        else
-         if (n_sp_pol==1) call msg('o dos','',(/dos_E*HARTREE,el_dos(1)/),INDENT=-2,USE_TABS=.true.)
-         if (n_sp_pol==2) call msg('o dos','',(/dos_E*HARTREE,el_dos(:),el_dos(1)+el_dos(2)/),INDENT=-2,USE_TABS=.true.)
+         if (n_sp_pol==1) call msg('o dos','',(/dos_E*HA2EV,el_dos(1)/),INDENT=-2,USE_TABS=.true.)
+         if (n_sp_pol==2) call msg('o dos','',(/dos_E*HA2EV,el_dos(:),el_dos(1)+el_dos(2)/),INDENT=-2,USE_TABS=.true.)
        endif
        !
      enddo

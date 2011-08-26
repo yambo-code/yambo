@@ -25,7 +25,7 @@ subroutine RT_X_effective(en)
  use YPP,            ONLY:RT_P_t,Pump_path,N_probes,Probe_path,RT_databases,RT_initialize,&
 &                         max_n_of_paths,Use_FFT,X_rt,N_pumps,N_probe_frequencies,X_order,&
 &                         l_RT_X_inversion,l_skip_pol_and_curr_IO
- use units,          ONLY:HARTREE,sVcm2Vmm,AU2Vmm,FS2AUT
+ use units,          ONLY:HA2EV,SVCMm12VMm1,AU2VMm1,FS2AUT
  use electrons,      ONLY:levels
  use com,            ONLY:jobstr,msg,error
  use IO_m,           ONLY:NONE,LOG
@@ -161,9 +161,9 @@ subroutine RT_X_effective(en)
  !
  if (trim(Efield_probe%ef_name)=='ANTIRES'.and.one_P_many_W) then
    if (N_pumps==1) then
-     call msg('s',':: Pump  frequency range   [eV]:',(/minval(Pump_Frequency), maxval(Pump_Frequency)/)*HARTREE)
+     call msg('s',':: Pump  frequency range   [eV]:',(/minval(Pump_Frequency), maxval(Pump_Frequency)/)*HA2EV)
    else
-     call msg('s',':: Probe                   [eV]:',(/minval(Probe_Frequency),maxval(Probe_Frequency)/)*HARTREE)
+     call msg('s',':: Probe                   [eV]:',(/minval(Probe_Frequency),maxval(Probe_Frequency)/)*HA2EV)
    endif
  endif
  !
@@ -204,9 +204,9 @@ subroutine RT_X_effective(en)
  if (N_pumps==1) then
    !
    if (one_P_one_W) then
-     call msg('s',':: Harmonic frequencies    [eV]:',(/Harmonic_Frequency(0:,1)/)*HARTREE)
+     call msg('s',':: Harmonic frequencies    [eV]:',(/Harmonic_Frequency(0:,1)/)*HA2EV)
    else
-     call msg('s',':: Harmonic frequencies    [eV]:',(/minval(Harmonic_Frequency),maxval(Harmonic_Frequency)/)*HARTREE)
+     call msg('s',':: Harmonic frequencies    [eV]:',(/minval(Harmonic_Frequency),maxval(Harmonic_Frequency)/)*HA2EV)
    endif
    !
  endif
@@ -281,7 +281,7 @@ subroutine RT_X_effective(en)
  !
  call RT_initialize(dump_and_write=.FALSE.)
  !
- if (one_P_many_W) call msg('s','[RT] Energy step[eV]:',Efield_Probe%W_step*HARTREE)
+ if (one_P_many_W) call msg('s','[RT] Energy step[eV]:',Efield_Probe%W_step*HA2EV)
  !
  do i_order=min_X_order,X_order,1
    !
@@ -377,15 +377,15 @@ subroutine RT_X_effective(en)
          Unit_of_Measure = 1._SP
          !
          if (N_pumps==0) then
-           if (i_order==0) Unit_of_Measure = sVcm2Vmm/AU2Vmm
-           if (i_order> 1) Unit_of_Measure = (sVcm2Vmm/AU2Vmm)**(i_order-1)  
+           if (i_order==0) Unit_of_Measure = SVCMm12VMm1/AU2VMm1
+           if (i_order> 1) Unit_of_Measure = (SVCMm12VMm1/AU2VMm1)**(i_order-1)  
          else if (N_pumps==1) then
-           if (i_order> 1) Unit_of_Measure = (sVcm2Vmm/AU2Vmm)**(i_order+1)  
+           if (i_order> 1) Unit_of_Measure = (SVCMm12VMm1/AU2VMm1)**(i_order+1)  
          endif
          !
          call RT_output(trim(X_file_name),VALUEs=(/aimag(Susceptibility(i_order,i_f))*Unit_of_Measure,&
 &                                                  real( Susceptibility(i_order,i_f))*Unit_of_Measure/),&
-&                                                  E=Probe_Frequency(i_f)*HARTREE)
+&                                                  E=Probe_Frequency(i_f)*HA2EV)
          !
        enddo
        !

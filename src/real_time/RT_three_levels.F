@@ -26,7 +26,7 @@ subroutine RT_three_levels(G_lesser,it)
  use units,          ONLY:FS2AUT
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
- use units,          ONLY:HARTREE
+ use units,          ONLY:HA2EV
  use com,            ONLY:msg
  use X_m,            ONLY:DIP_iR,DIP_P
  use real_time,      ONLY:it_start,RT_step,Thermal_steps,NE_steps,Wo,W1,&

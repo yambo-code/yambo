@@ -24,7 +24,7 @@ subroutine RT_X_qssin
  use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,i_t_start,i_t_end,&
 &                         W_RT_induced_step,RED_steps
  use pars,           ONLY:SP,DP,pi,SCHLEN
- use units,          ONLY:HARTREE,sVcm2Vmm,AU2Vmm
+ use units,          ONLY:HA2EV,SVCMm12VMm1,AU2VMm1
  use memory_m,       ONLY:mem_est
  use real_time,      ONLY:NE_steps,RT_step,RT_output
  use fields,         ONLY:Efield,small_a,i_probe
@@ -138,8 +138,8 @@ subroutine RT_X_qssin
    call RT_output("open "//trim(X_file_name))
    !
    X_tot=4._SP*pi*sum(X_irrep(i_w,:)*Efield(i_probe)%versor(:))
-   call RT_output(trim(X_file_name),VALUEs=(/aimag(X_tot*sVcm2Vmm/AU2Vmm),real(X_tot*sVcm2Vmm/AU2Vmm)/),&
-&                      E=Efield(i_probe)%frequency(1)*HARTREE)
+   call RT_output(trim(X_file_name),VALUEs=(/aimag(X_tot*SVCMm12VMm1/AU2VMm1),real(X_tot*SVCMm12VMm1/AU2VMm1)/),&
+&                      E=Efield(i_probe)%frequency(1)*HA2EV)
    !
    call RT_output("close "//trim(X_file_name))
  enddo

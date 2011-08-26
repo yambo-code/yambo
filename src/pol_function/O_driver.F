@@ -26,7 +26,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  ! Calculates dielectric function for a generic q vector.
  ! 
  use pars,          ONLY:pi,SP
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use memory_m,      ONLY:mem_est
  use stderr,        ONLY:intc,set_real_printed_length
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc
@@ -202,7 +202,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        !
        ! Eps
        !
-       output_data=(/real(wv%p(i2))*HARTREE,aimag(X_epsilon(2,i2)),real(X_epsilon(2,i2)),&
+       output_data=(/real(wv%p(i2))*HA2EV,aimag(X_epsilon(2,i2)),real(X_epsilon(2,i2)),&
 &                    aimag(X_epsilon(1,i2)),real(X_epsilon(1,i2))/)
        if (l_skip_non_int_eps)      call msg('o eps','',output_data(:3),INDENT=-2,USE_TABS=.true.)
        if (.not.l_skip_non_int_eps) call msg('o eps','',output_data,INDENT=-2,USE_TABS=.true.)
@@ -236,14 +236,14 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        !
        ! EEL
        !
-       output_data=(/real(wv%p(iw))*HARTREE,aimag(X_epsilon(4,iw)),real(X_epsilon(4,iw)),&
+       output_data=(/real(wv%p(iw))*HA2EV,aimag(X_epsilon(4,iw)),real(X_epsilon(4,iw)),&
 &                    aimag(X_epsilon(3,iw)),real(X_epsilon(3,iw))/)
        if (l_skip_non_int_eps)      call msg('o eel','',output_data(:3),INDENT=-2,USE_TABS=.true.)
        if (.not.l_skip_non_int_eps) call msg('o eel','',output_data,INDENT=-2,USE_TABS=.true.)
        !
        ! Alpha
        !
-       output_data=(/real(wv%p(iw))*HARTREE,aimag(X_epsilon(6,iw)),real(X_epsilon(6,iw)),&
+       output_data=(/real(wv%p(iw))*HA2EV,aimag(X_epsilon(6,iw)),real(X_epsilon(6,iw)),&
 &                    aimag(X_epsilon(5,iw)),real(X_epsilon(5,iw))/)
        !
        if (l_skip_non_int_eps)      call msg('o alpha','',output_data(:3),INDENT=-2,USE_TABS=.true.)
@@ -261,7 +261,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      call pp_redux_wait(X_fxc)
      call of_open_close(fxc_file_name,'oa')
      do iw=1,wv%n(1)
-       call msg('o fxc','',(/real(wv%p(iw))*HARTREE,real(X_fxc(iw)*q_norm(iq)**2.),&
+       call msg('o fxc','',(/real(wv%p(iw))*HA2EV,real(X_fxc(iw)*q_norm(iq)**2.),&
 &                           aimag(X_fxc(iw)*q_norm(iq)**2.)/),INDENT=-2,USE_TABS=.true.)
      enddo
      call of_open_close(fxc_file_name)

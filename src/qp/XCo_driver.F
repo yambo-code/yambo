@@ -24,7 +24,7 @@ subroutine XCo_driver(E,k,Xk,q)
  use drivers,       ONLY:l_acfdt,l_sc_run,l_real_time
  use pars,          ONLY:schlen
  use com,           ONLY:msg
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:intc,real2ch
  use R_lattice,     ONLY:bz_samp
@@ -189,11 +189,11 @@ subroutine XCo_driver(E,k,Xk,q)
 &         //trim(ch_spin)//'> ='
        !
        ch=trim(nloc_fmt)//' '//&
-&        trim(real2ch(real(QP_Vnl_xc(i_qp)*HARTREE)))//' '//&
-&        trim(real2ch(aimag(QP_Vnl_xc(i_qp)*HARTREE)))//' '//&
+&        trim(real2ch(real(QP_Vnl_xc(i_qp)*HA2EV)))//' '//&
+&        trim(real2ch(aimag(QP_Vnl_xc(i_qp)*HA2EV)))//' '//&
 &        trim(loc_fmt)//' '//&
-&        trim(real2ch(real(QP_Vxc(i_qp)*HARTREE)))//' '//&
-&        trim(real2ch(aimag(QP_Vxc(i_qp)*HARTREE)))
+&        trim(real2ch(real(QP_Vxc(i_qp)*HA2EV)))//' '//&
+&        trim(real2ch(aimag(QP_Vxc(i_qp)*HA2EV)))
        !
        if (i_qp/=QP_n_states) call msg('r',trim(ch))
        if (i_qp==QP_n_states) call msg('rn',trim(ch))

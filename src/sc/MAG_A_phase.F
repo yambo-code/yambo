@@ -22,7 +22,7 @@
 subroutine MAG_A_phase()
  !
  use pars,           ONLY:SP,pi
- use units,          ONLY:SPEED_OF_LIGHT,AU2Tesla,BOHR
+ use units,          ONLY:SPEED_OF_LIGHT,AU2Tesla,BO2ARM
  use R_lattice,      ONLY:nkibz
  use com,            ONLY:msg,error
  use stderr,         ONLY:intc

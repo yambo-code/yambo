@@ -22,7 +22,7 @@
 subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  use pars,          ONLY:SP,IP,pi
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use memory_m,      ONLY:mem_est
  use drivers,       ONLY:l_life,l_ppa,l_el_corr,l_ph_corr,l_cohsex,Finite_Tel
  use electrons,     ONLY:levels,n_sp_pol,spin
@@ -92,8 +92,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    write (qp%description(1),'(a)') ' GW solver              : Full Green`s function'
    call section('*','Dyson equation: full Green`s function')
    call msg('r', '[Green] Sc steps                                         :',QP_Sc_steps)
-   call msg('r', '[Green] Sc energy range (centered in the bare value) [ev]:',QP_G_er*HARTREE)
-   call msg('rn','[Green] Sc damping range                             [ev]:',QP_G_dr*HARTREE)
+   call msg('r', '[Green] Sc energy range (centered in the bare value) [ev]:',QP_G_er*HA2EV)
+   call msg('rn','[Green] Sc damping range                             [ev]:',QP_G_dr*HA2EV)
    !
    GF_is_causal=Finite_Tel.or.l_ph_corr 
    !
@@ -103,7 +103,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  endif
  qp%n_descs=2
  if (l_ppa) then
-   qp%description(2)=' PPA imaginary pt   [ev]:'//trim(real2ch(X%ppaE*HARTREE))
+   qp%description(2)=' PPA imaginary pt   [ev]:'//trim(real2ch(X%ppaE*HA2EV))
    QP_DB_kind=SE_GoWo_PPA
    !
    ! GPL_EXCLUDE_START

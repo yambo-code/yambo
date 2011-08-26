@@ -23,7 +23,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  ! 
  ! WARNING ! Changes here must be updated in ioQP as well.
  !
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use X_m,           ONLY:X_t,use_X_RIM
  use QP_m,          ONLY:QP_t,QP_ng_Sx,QP_n_G_bands,QP_cg_percent,&
 &                        QP_dSc_delta,QP_G_damp,QP_dSc_steps,GWo_iterations,&
@@ -78,8 +78,8 @@ subroutine QP_descriptions(qp,X,Xw,Update)
 &          ' dS/dw steps            :',QP_dSc_steps
      qp%n_descs=qp%n_descs+1
      write (qp%description(qp%n_descs),trim(&
-&          string_pack('(a,',gen_fmt( r_v=(/QP_dSc_delta*HARTREE /) ),')'))) &
-&          ' dS/dw step         [ev]:',QP_dSc_delta*HARTREE
+&          string_pack('(a,',gen_fmt( r_v=(/QP_dSc_delta*HA2EV /) ),')'))) &
+&          ' dS/dw step         [ev]:',QP_dSc_delta*HA2EV
    endif
  endif
  !
@@ -101,8 +101,8 @@ subroutine QP_descriptions(qp,X,Xw,Update)
 &      ' X poles           [o/o]:',X%cg_percentual
  qp%n_descs=qp%n_descs+1
  write (qp%description(qp%n_descs),trim(&
-&     string_pack('(a,2(',gen_fmt( r_v=X%ehe*HARTREE ),',1x))'))) &
-&     ' X e/h E range      [ev]:',X%ehe*HARTREE
+&     string_pack('(a,2(',gen_fmt( r_v=X%ehe*HA2EV ),',1x))'))) &
+&     ' X e/h E range      [ev]:',X%ehe*HA2EV
  !
  if (ver_is_gt_or_eq(-1,(/3,0,5/))) then
    qp%n_descs=qp%n_descs+1
@@ -112,8 +112,8 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  if (.not.l_ppa.and..not.l_cohsex) then
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),trim(&
-&        string_pack('(a,2(',gen_fmt( r_v = Xw%dr*HARTREE ),',1x))')))&
-&        ' X damping range    [ev]:',Xw%dr*HARTREE
+&        string_pack('(a,2(',gen_fmt( r_v = Xw%dr*HA2EV ),',1x))')))&
+&        ' X damping range    [ev]:',Xw%dr*HA2EV
    if (.not.l_life) then
      qp%n_descs=qp%n_descs+1
      write (qp%description(qp%n_descs),trim(&
@@ -146,8 +146,8 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    if (.not.l_cohsex) then
      qp%n_descs=qp%n_descs+1
      write (qp%description(qp%n_descs),trim(&
-&         string_pack('(a,',gen_fmt( r_v=(/QP_G_damp*HARTREE /) ),')')))&
-&         ' Sc/G damping       [ev]:',QP_G_damp*HARTREE
+&         string_pack('(a,',gen_fmt( r_v=(/QP_G_damp*HA2EV /) ),')')))&
+&         ' Sc/G damping       [ev]:',QP_G_damp*HA2EV
    endif
    !
    qp%n_descs=qp%n_descs+1
@@ -173,12 +173,12 @@ subroutine QP_descriptions(qp,X,Xw,Update)
 &            ' [ph] dS/dw steps        :',QP_dSc_steps
        qp%n_descs=qp%n_descs+1
        write (qp%description(qp%n_descs),trim(&
-&            string_pack('(a,',gen_fmt( r_v=(/QP_dSc_delta*HARTREE /) ),')'))) &
-&            ' [ph] dS/dw step     [ev]:',QP_dSc_delta*HARTREE
+&            string_pack('(a,',gen_fmt( r_v=(/QP_dSc_delta*HA2EV /) ),')'))) &
+&            ' [ph] dS/dw step     [ev]:',QP_dSc_delta*HA2EV
        qp%n_descs=qp%n_descs+1
        write (qp%description(qp%n_descs),trim(&
-&           string_pack('(a,',gen_fmt( r_v=(/QP_G_damp*HARTREE /) ),')')))&
-&           ' [ph] Sc/G damping   [ev]:',QP_G_damp*HARTREE
+&           string_pack('(a,',gen_fmt( r_v=(/QP_G_damp*HA2EV /) ),')')))&
+&           ' [ph] Sc/G damping   [ev]:',QP_G_damp*HA2EV
      endif
      !
      qp%n_descs=qp%n_descs+1
@@ -214,8 +214,8 @@ subroutine QP_descriptions(qp,X,Xw,Update)
 &        ' [GF] Real-axis steps    :',QP_Sc_steps
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),trim(&
-&     string_pack('(a,2(',gen_fmt( r_v=QP_G_er*HARTREE ),',1x))'))) &
-&      ' [GF] Initial E range  [eV]:',QP_G_er*HARTREE
+&     string_pack('(a,2(',gen_fmt( r_v=QP_G_er*HA2EV ),',1x))'))) &
+&      ' [GF] Initial E range  [eV]:',QP_G_er*HA2EV
    if (ver_is_gt_or_eq(-1,revision=530)) then
      qp%n_descs=qp%n_descs+1
      write (qp%description(qp%n_descs),trim(&
@@ -224,8 +224,8 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    endif
    qp%n_descs=qp%n_descs+1
    write (qp%description(qp%n_descs),trim(&
-&       string_pack('(a,2(',gen_fmt( r_v=QP_G_dr*HARTREE ),',1x))'))) &
-&        ' [GF] Damping          [eV]:',QP_G_dr*HARTREE
+&       string_pack('(a,2(',gen_fmt( r_v=QP_G_dr*HA2EV ),',1x))'))) &
+&        ' [GF] Damping          [eV]:',QP_G_dr*HA2EV
  endif
  !
  ! QP states

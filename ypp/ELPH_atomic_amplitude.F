@@ -22,7 +22,7 @@
 subroutine ELPH_atomic_amplitude(q)
  !
  use pars,                ONLY:SP
- use units,               ONLY:BOHR,pi
+ use units,               ONLY:BO2ARM,pi
  use com,                 ONLY:msg,of_open_close,warning
  use R_lattice,           ONLY:bz_samp,RL_vol,RIM_n_rand_pts
  use D_lattice,           ONLY:n_atoms_species,Z_species,n_atoms
@@ -125,11 +125,11 @@ subroutine ELPH_atomic_amplitude(q)
    call mat_dia_inv(DIAGO,USE_LK,mean_ui_uj(is,:,:),E_real=U_eigenvalues)
    !
    call msg('s','Atom '//trim(atom_name(is)))
-   call msg('s','Displacement  [a.u.]/A #1: ',sqrt(U_eigenvalues(1))*(/1.,BOHR/) )
+   call msg('s','Displacement  [a.u.]/A #1: ',sqrt(U_eigenvalues(1))*(/1.,BO2ARM/) )
    call msg('s','Normalized direction   #1: ',real(mean_ui_uj(is,:,1)))
-   call msg('s','                       #2: ', sqrt(U_eigenvalues(2))*(/1.,BOHR/) )
+   call msg('s','                       #2: ', sqrt(U_eigenvalues(2))*(/1.,BO2ARM/) )
    call msg('s','                       #2: ',real(mean_ui_uj(is,:,2)))
-   call msg('s','                       #3: ', sqrt(U_eigenvalues(3))*(/1.,BOHR/) )
+   call msg('s','                       #3: ', sqrt(U_eigenvalues(3))*(/1.,BO2ARM/) )
    call msg('s','                       #3: ',real(mean_ui_uj(is,:,3)))
    !
  enddo

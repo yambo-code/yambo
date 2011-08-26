@@ -146,7 +146,7 @@ module QP_m
    subroutine QP_states_simmetrize(en,vec_2_sim,state_is_2do)
      !
      use pars,          ONLY:SP
-     use units,         ONLY:HARTREE
+     use units,         ONLY:HA2EV
      use vec_operate,   ONLY:sort,degeneration_finder
      use electrons,     ONLY:levels
      !
@@ -167,7 +167,7 @@ module QP_m
      forall(i1=1:QP_n_states) Eo_sorted(i1)=en%E(QP_table(i1,1),QP_table(i1,3),1)
      !
      call sort(Eo_sorted,indx=Eo_sorted_index)
-     call degeneration_finder(Eo_sorted,QP_n_states,first_el,n_of_el,n_deg_grp,0.0001/HARTREE)
+     call degeneration_finder(Eo_sorted,QP_n_states,first_el,n_of_el,n_deg_grp,0.0001/HA2EV)
      !
      if (present(state_is_2do)) then
        state_is_2do=.TRUE.

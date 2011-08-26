@@ -34,7 +34,7 @@ subroutine QP_state_table_setup(en)
  !       QP_state
  !
  use pars,          ONLY:SP,IP
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use drivers,       ONLY:l_sc_run,l_real_time,l_collisions_IO
  use memory_m,      ONLY:mem_est
  use QP_m,          ONLY:QP_nk,QP_nb,QP_state,QP_n_states,QP_table,SC_bands_mixed,SC_band_mixing 
@@ -89,7 +89,7 @@ subroutine QP_state_table_setup(en)
      rcheck=QP_r_limits(e_rng_lines,4)-QP_r_limits(e_rng_lines,3)
      e_rng_lines=e_rng_lines+1
    enddo
-   QP_r_limits(:,3:4)=QP_r_limits(:,3:4)/HARTREE
+   QP_r_limits(:,3:4)=QP_r_limits(:,3:4)/HA2EV
    e_rng_lines=e_rng_lines-2
    !
    ! Non null %QPerange/%QPkrange fields

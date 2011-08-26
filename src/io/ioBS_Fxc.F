@@ -22,7 +22,7 @@
 integer function ioBS_Fxc(iq,FXC_W,ID,X)
  !
  use pars,           ONLY:SP,schlen,lchlen
- use units,          ONLY:HARTREE
+ use units,          ONLY:HA2EV
  use memory_m,       ONLY:mem_est
  use stderr,         ONLY:intc
  use BS,             ONLY:BSS_q0,BS_K_dim,variables_BS
@@ -78,10 +78,10 @@ integer function ioBS_Fxc(iq,FXC_W,ID,X)
    call io_elemental(ID,&
 &       VAR="    |Kernel is causal        :",L0=FXC_is_causal,CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTION=FXC_description(2))
-   call io_elemental(ID,UNIT=HARTREE,&
+   call io_elemental(ID,UNIT=HA2EV,&
 &       VAR="    |Energy range        [ev]:",R1=FXC_W%er,CHECK=.true.,OP=(/"==","=="/),&
 &       DESCRIPTION=FXC_description(3))
-   call io_elemental(ID,UNIT=HARTREE,&
+   call io_elemental(ID,UNIT=HA2EV,&
 &       VAR="    |Damping range       [ev]:",R1=FXC_W%dr,CHECK=.true.,OP=(/"==","=="/),&
 &       DESCRIPTION=FXC_description(4))
    call io_elemental(ID,&

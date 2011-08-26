@@ -22,7 +22,7 @@
 subroutine ELPH_eliashberg_dos(k,en,q)
  !
  use pars,                ONLY:SP,schlen,pi
- use units,               ONLY:HARTREE,HA2GHZ,HA2THZ 
+ use units,               ONLY:HA2EV,HA2GHZ,HA2THZ 
  use com,                 ONLY:msg,of_open_close
  use electrons,           ONLY:levels,n_met_bands,n_full_bands
  use R_lattice,           ONLY:bz_samp
@@ -217,7 +217,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    call msg('o dos','#','',INDENT=0)
    do i1=1,elph_steps
      ph_dos(i1)=ph_dos(i1)/pi
-     call msg('o dos','',(/ph_energy(i1)*HARTREE*1000.,ph_dos(i1)/),USE_TABS=.true.)
+     call msg('o dos','',(/ph_energy(i1)*HA2EV*1000.,ph_dos(i1)/),USE_TABS=.true.)
    enddo
    call of_open_close(o_file_name)
  endif

@@ -1,6 +1,6 @@
 subroutine write_reelsdiff(lossf, hw, nw )
   use pars,                   ONLY : PI, SP, schlen
-  use units,                  ONLY : HARTREE
+  use units,                  ONLY : HA2EV
   use com,                    ONLY : msg, of_open_close
   use convolute
   implicit none
@@ -36,7 +36,7 @@ subroutine write_reelsdiff(lossf, hw, nw )
   call convolute_gaussian(lossg(:,2), hw, nw)
   !
   ! Calculate derivative spectra
-  forall(iw=1:nw) hwev(iw) = hw(iw)*HARTREE
+  forall(iw=1:nw) hwev(iw) = hw(iw)*HA2EV
   call second_derivative(d2x,lossg(:,1),hwev,nw) 
   call second_derivative(d2y,lossg(:,2),hwev,nw) 
   !

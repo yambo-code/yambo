@@ -23,7 +23,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  use drivers
  use pars,       ONLY:SP
- use units,      ONLY:HARTREE,FS2AUT,AU2Vmm
+ use units,      ONLY:HA2EV,FS2AUT,AU2VMm1
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use fields,     ONLY:global_gauge,grid_path
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
@@ -187,7 +187,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  input_Tel_commands_over_header=.false.
  non_periodic_directions='none'
  lattice='Unknown'
- Bose_Temp=-1./HARTREE
+ Bose_Temp=-1./HA2EV
  !
  ! R_lattice
  !
@@ -327,19 +327,19 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  QP_n_W_freqs=100
  QP_dSc_test=.false.
  QP_solver=' '
- QP_G_damp=0.1/HARTREE
- QP_dSc_delta=0.1/HARTREE
+ QP_G_damp=0.1/HA2EV
+ QP_dSc_delta=0.1/HA2EV
  QP_W_er=0.
- QP_W_dr=0.1/HARTREE
+ QP_W_dr=0.1/HA2EV
  QP_W_partially_done=.false.
- QP_G_er=(/-10._SP/HARTREE,10._SP/HARTREE/)
- QP_G_dr=0.1/HARTREE
+ QP_G_er=(/-10._SP/HA2EV,10._SP/HA2EV/)
+ QP_G_dr=0.1/HA2EV
  QP_cg_percent=100.
  GWo_iterations=0
  GWo_SC_done=.false.
  COHSEX_use_empties=.false.
  On_Mass_Shell_approx=.false.
- SC_E_threshold=0.01/HARTREE
+ SC_E_threshold=0.01/HA2EV
  SC_band_mixing=100.
  Vnlxc_kind='HF'
  Vxc_kind='LDA'
@@ -361,7 +361,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  ! BS/BSS
  !
  BS_n_g_W=1
- BS_eh_en=(/-1.,-1./)/HARTREE
+ BS_eh_en=(/-1.,-1./)/HA2EV
  BS_identifier=0
  BS_q=1
  BS_eh_win=100.
@@ -371,8 +371,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  BSS_mode=' '
  BSS_n_freqs=100
  BSS_n_descs=0
- BSS_er=(/0.,10./)/HARTREE
- BSS_dr=.1/HARTREE
+ BSS_er=(/0.,10./)/HA2EV
+ BSS_dr=.1/HA2EV
  BSS_q0=(/1.,0.,0./)
  BSS_uses_RIM=.FALSE.
  BSS_damp_reference=0.
@@ -399,7 +399,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  ACFDT_n_lambda=1
  ACFDT_n_freqs=10
- ACFDT_E_range=(/100.,1000./)/HARTREE
+ ACFDT_E_range=(/100.,1000./)/HA2EV
  !
  ! xc_functionals  
  !
@@ -509,7 +509,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  ! Electric field and current
  !
- Boltz_Efield=1./AU2Vmm
+ Boltz_Efield=1./AU2VMm1
  Boltz_tau=10.*FS2AUT
  !
 #endif

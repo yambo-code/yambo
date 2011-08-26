@@ -22,7 +22,7 @@
 module QP_CTL_m
  !
  use pars,  ONLY:SP,schlen,IP
- use units, ONLY:HARTREE
+ use units, ONLY:HA2EV
  !
  implicit none
  !
@@ -207,7 +207,7 @@ module QP_CTL_m
        ! being careful that the scissor must go in QP_ctl_input_or_impose%E(1)
        !
        do i_spin=1,n_sp_pol
-         QP_ctl_input_or_impose(i_spin)%E=(/QP_ctl_E(Eid,1,i_spin)/HARTREE,&
+         QP_ctl_input_or_impose(i_spin)%E=(/QP_ctl_E(Eid,1,i_spin)/HA2EV,&
 &                                           QP_ctl_E(Eid,2,i_spin),0._SP,QP_ctl_E(Eid,3,i_spin)/)
        enddo
        !
@@ -229,8 +229,8 @@ module QP_CTL_m
        !
        do i_spin=1,n_sp_pol
          QP_ctl_input_or_impose(i_spin)%W=&
-&                     (/0._SP,QP_ctl_W(Eid,1,i_spin)/HARTREE,QP_ctl_W(Eid,2,i_spin)/HARTREE**2.,&
-&                       0._SP,QP_ctl_W(Eid,3,i_spin)/HARTREE,QP_ctl_W(Eid,4,i_spin)/HARTREE**2./)
+&                     (/0._SP,QP_ctl_W(Eid,1,i_spin)/HA2EV,QP_ctl_W(Eid,2,i_spin)/HA2EV**2.,&
+&                       0._SP,QP_ctl_W(Eid,3,i_spin)/HA2EV,QP_ctl_W(Eid,4,i_spin)/HA2EV**2./)
          QP_ctl_input_or_impose(i_spin)%Z=QP_ctl_Z(Eid,i_spin)
        enddo
        !
@@ -322,23 +322,23 @@ module QP_CTL_m
      !
      ! Reporting
      !
-     call msg('r', '[QP] Fermi level variation [ev]:',en%Efermi(1)*HARTREE)
+     call msg('r', '[QP] Fermi level variation [ev]:',en%Efermi(1)*HA2EV)
      call msg('r',   '[QP] Last Filled/Metallic band :',(/en%nbf,en%nbm/))
      if (en%nbf==en%nbm) then
        if (n_sp_pol==1) then
          call msg('r','[QP] Ind. Gap Correction  [ev]:',&
 &                  (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
-&                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HARTREE)
+&                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HA2EV)
          !
          ! GPL_EXCLUDE_START SPIN_IGNORE
          !
        else
          call msg('r','[QP] Ind. Gap Correction  (up) [ev]:',&
 &                  (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
-&                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HARTREE)
+&                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HA2EV)
          call msg('r','                        (down) [ev]:',&
 &                  (minval(en%E(en%nbf+1,:,2))-maxval(en%E(en%nbf,:,2)) &
-&                  -minval(en%Eo(en%nbf+1,:,2))+maxval(en%Eo(en%nbf,:,2)) )*HARTREE)
+&                  -minval(en%Eo(en%nbf+1,:,2))+maxval(en%Eo(en%nbf,:,2)) )*HA2EV)
          !
          ! GPL_EXCLUDE_END SPIN_IGNORE
          !

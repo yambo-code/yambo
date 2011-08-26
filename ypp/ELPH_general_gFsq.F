@@ -22,7 +22,7 @@
 subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
  !
  use pars,                ONLY:SP,schlen
- use units,               ONLY:HARTREE
+ use units,               ONLY:HA2EV
  use com,                 ONLY:msg,of_open_close
  use electrons,           ONLY:levels,n_sp_pol
  use R_lattice,           ONLY:bz_samp
@@ -221,7 +221,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
      !
      do iw=1,elph_steps
        call msg('o g_sq','',&
-               (/real(g_sq_F_E%p(iw))*HARTREE*1000.,&
+               (/real(g_sq_F_E%p(iw))*HA2EV*1000.,&
                  g_sq_F(iqp,iw,1)+g_sq_F(iqp,iw,2)+g_sq_F(iqp,iw,3),&
                  g_sq_F(iqp,iw,1),g_sq_F(iqp,iw,2),g_sq_F(iqp,iw,3),&
                  g_sq_F(iqp,iw,4)/2.+g_sq_F(iqp,iw,5),&
@@ -305,7 +305,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,lambda_s,BS_E_degs)
      !
      do iw=1,elph_steps
        call msg('o g_sq','',&
-               (/real(g_sq_F_E%p(iw))*HARTREE*1000.,g_sq_F_exciton(iw)/),&
+               (/real(g_sq_F_E%p(iw))*HA2EV*1000.,g_sq_F_exciton(iw)/),&
 &              INDENT=-2,USE_TABS=.TRUE.)
      enddo
      call of_open_close(trim(ch))

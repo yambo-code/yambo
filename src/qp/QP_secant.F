@@ -46,7 +46,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  ! 2. SECANT SOLUTION: see "Numerical Recipes (Fortran version)", Pag. 248
  !
  use pars,          ONLY:SP,IP
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use memory_m,      ONLY:mem_est
  use timing,        ONLY:live_timing
  use electrons,     ONLY:levels
@@ -72,7 +72,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  type(w_samp) :: Sc_W(qp%n_states)
  real(SP)     :: Eqp_raxis(qp%n_states,2),dQP_raxis(qp%n_states,2)
  complex(SP)  :: Z(QP_dSc_steps-1),Eqp(QP_dSc_steps-1)
- real(SP),parameter :: root_acc=0.001/HARTREE
+ real(SP),parameter :: root_acc=0.001/HA2EV
  !
  integer, external  :: ioQP,secant,bracket
  !
@@ -104,7 +104,7 @@ subroutine QP_secant(X,Xen,Xk,en,k,q,qp,Xw)
  !Brackets
  !
  forall(i1=1:qp%n_states) Eqp_raxis(i1,1)=qp%E_bare(i1)
- forall(i1=1:qp%n_states) Eqp_raxis(i1,2)=Eqp_raxis(i1,1)+1./HARTREE
+ forall(i1=1:qp%n_states) Eqp_raxis(i1,2)=Eqp_raxis(i1,1)+1./HA2EV
  !
  QP_solver_state=1
  call W2Sc_local_call()

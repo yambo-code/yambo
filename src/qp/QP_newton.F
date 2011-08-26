@@ -22,7 +22,7 @@
 subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  !
  use pars,          ONLY:SP
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use drivers,       ONLY:l_ppa,l_el_corr,l_ph_corr,l_cohsex
  use com,           ONLY:msg
  use X_m,           ONLY:X_t
@@ -50,7 +50,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
  !
  if (l_cohsex) then
    !
-   call msg('r', '[Newton] Sc step   [ev]:',QP_dSc_delta*HARTREE)
+   call msg('r', '[Newton] Sc step   [ev]:',QP_dSc_delta*HA2EV)
    call msg('r', '[Newton] Sc steps      :',QP_dSc_steps)
    !
  endif
@@ -127,7 +127,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
    ! GPL_EXCLUDE_START
    !
    if (iter>0) call msg('rs','[SC] Max corrections at prev/current cycle [ev]',&
-&                      (/SC_corr_prev,SC_corr_now/)*HARTREE)
+&                      (/SC_corr_prev,SC_corr_now/)*HA2EV)
    SC_corr_prev=SC_corr_now
    !
    if (.not.GWo_SC_done.and.GWo_iterations/=0) then

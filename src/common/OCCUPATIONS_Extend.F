@@ -33,7 +33,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  ! If this is not possible a warning message is reported. 
  !
  use pars,       ONLY:SP
- use units,      ONLY:HARTREE
+ use units,      ONLY:HA2EV
  use electrons,  ONLY:levels,n_sp_pol,spin_occ,BZ_RIM_nbands,&
 &                     BZ_RIM_tot_nkpts
  use com,        ONLY:msg,warning
@@ -45,7 +45,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  !Work Space
  !
  real(SP) :: Ef_test
- real(SP),parameter :: Ef_step=0.1/HARTREE
+ real(SP),parameter :: Ef_step=0.1/HA2EV
  !
  if (.not.associated(E%f)) allocate(E%f(E%nb,E%nk,n_sp_pol))
  !

@@ -22,7 +22,7 @@
 integer function ioX(X,Xw,ID)
  !
  use pars,          ONLY:SP,schlen
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:nqibz,g_vec
  use matrix_operate,ONLY:mat_c2r,mat_r2c,mat_r2c_ordered
@@ -85,7 +85,7 @@ integer function ioX(X,Xw,ID)
 &       VAR=" X matrix size          :",I0=X%ng,CHECK=.true.,OP=(/"<="/))
    call io_elemental(ID,&
 &       VAR=" X band range           :",I1=X%ib,CHECK=.true.,OP=(/"==","=="/))
-   call io_elemental(ID,UNIT=HARTREE,&
+   call io_elemental(ID,UNIT=HA2EV,&
 &       VAR=" X e/h energy range [ev]:",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
@@ -108,7 +108,7 @@ integer function ioX(X,Xw,ID)
      !
      call io_elemental(ID,VAR="DRUDE",VAR_SZ=2,MENU=0)
      Wd_disk=(/real(X%Wd),aimag(X%Wd)/)
-     call io_elemental(ID,UNIT=HARTREE,&
+     call io_elemental(ID,UNIT=HA2EV,&
 &       VAR=" X Drude frequency      :",R1=Wd_disk,CHECK=.true.,OP=(/"==","=="/))
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      X%Wd=Wd_disk(1)+(0.,1.)*Wd_disk(2)
@@ -206,15 +206,15 @@ integer function ioX(X,Xw,ID)
    if (io_sec(ID,1)/=1) call io_elemental(ID,VAR=trim(ch),VAR_SZ=sec_size,MENU=1)
    !
    if (X%whoami==4) then
-     call io_elemental(ID,UNIT=HARTREE,&
+     call io_elemental(ID,UNIT=HA2EV,&
 &         VAR=" PPA Im  energy     [ev]:",R0=X%ppaE,CHECK=.true.,OP=(/"=="/))
    endif
    if (X%whoami/=4) then
      call io_elemental(ID,&
 &         VAR=" :: Current Q-pt index     :",I0=iq)
-     call io_elemental(ID,UNIT=HARTREE,&
+     call io_elemental(ID,UNIT=HA2EV,&
 &         VAR=" :: X energy range     [ev]:",R1=Xw%er,CHECK=.true.,OP=(/"==","=="/))
-     call io_elemental(ID,UNIT=HARTREE,&
+     call io_elemental(ID,UNIT=HA2EV,&
 &         VAR=" :: X damping range    [ev]:",R1=Xw%dr,CHECK=.true.,OP=(/"==","=="/))
      call io_elemental(ID,&
 &           VAR=" :: Number of frequencies  :",I0=Xw%n(1),CHECK=.true.,OP=(/"=="/))

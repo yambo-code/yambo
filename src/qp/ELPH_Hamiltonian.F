@@ -22,7 +22,7 @@
 subroutine ELPH_Hamiltonian(en,k,q)
  !
  use pars,          ONLY:SP,lchlen
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use ELPH,          ONLY:elph_global_alloc,elph_global_free,elph_Ham_bands,elph_Ham_ik,&
 &                        ph_freqs_sq,elph_gkkp,elph_branches,pol_vector
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,mk_dir
@@ -214,7 +214,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  !===================
  !
  do iw=1,N_w
-   W(iw)= (minval(elph_E)-.1/HARTREE)+ ( maxval(elph_E) -  minval(elph_E) + .2/HARTREE )/real(N_w)*iw+cmplx(0.,QP_G_damp)
+   W(iw)= (minval(elph_E)-.1/HA2EV)+ ( maxval(elph_E) -  minval(elph_E) + .2/HA2EV )/real(N_w)*iw+cmplx(0.,QP_G_damp)
  enddo
  !
  call set_real_printed_length(f_length=12,g_length=12)
@@ -245,7 +245,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
      residual= abs(elph_Mat(ib-elph_Ham_bands(1)+1,iH))**2.
      if (residual>1.E-2) then
        if (residual>max_residual) max_residual=residual
-       call msg('o Ham','#',(/real(iH),elph_E(iH)*HARTREE,residual/),INDENT=0,USE_TABS=.true.)
+       call msg('o Ham','#',(/real(iH),elph_E(iH)*HA2EV,residual/),INDENT=0,USE_TABS=.true.)
        write (100) iH,residual
        top_residual(iH)=.TRUE.
      endif
@@ -258,7 +258,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
    call msg('o Ham','#',(/'Energy [eV]','R(G)[eV^-1]','I(G)[eV^-1]'/),INDENT=0,USE_TABS=.TRUE.)
    call msg('o Ham','#')
    do iw=1,N_w
-     call msg('o Ham','',(/real(W(iw))*HARTREE,real(G(iw))/HARTREE,aimag(G(iw))/HARTREE/),INDENT=-2,USE_TABS=.TRUE.)
+     call msg('o Ham','',(/real(W(iw))*HA2EV,real(G(iw))/HA2EV,aimag(G(iw))/HA2EV/),INDENT=-2,USE_TABS=.TRUE.)
    enddo
    call of_open_close(file_name)
    close(100)

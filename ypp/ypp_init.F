@@ -23,7 +23,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  use YPP
  use pars,           ONLY:pi
- use units,          ONLY:HARTREE,FS2AUT
+ use units,          ONLY:HA2EV,FS2AUT
  use wave_func,      ONLY:wf_ng 
  use D_lattice,      ONLY:alat
  use R_lattice,      ONLY:ng_vec,nkibz
@@ -91,9 +91,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  ! DOS
  !
  l_dos=.false.
- dos_broadening=0.1/HARTREE
+ dos_broadening=0.1/HA2EV
  dos_bands=(/1,n_bands/)
- dos_E_range=(/1.,-1./)/HARTREE
+ dos_E_range=(/1.,-1./)/HA2EV
  dos_E_steps=500
  !
  ! PLOT
@@ -119,7 +119,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  r_hole= (/0.,0.,0./)
  lambda = 1          
  state_ctl = '1 - 1'
- deg_energy =0.01/HARTREE
+ deg_energy =0.01/HA2EV
  min_weight =0.01
  WF_multiplier=1.
  !
@@ -132,7 +132,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_eliashberg=.false.
  l_atomic_amplitude=.false.
  elph_steps=200
- ph_broad=0.01/HARTREE
+ ph_broad=0.01/HA2EV
  elph_gamma_broad=0.0
  elph_Ef=0.
  elph_dbs_path='.'
@@ -165,7 +165,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  ! Transition analysis
  ! 
  Ecv_min = 0.0
- Ecv_max = -1.0/HARTREE
+ Ecv_max = -1.0/HA2EV
  idir = 1
  !
 #endif
@@ -202,7 +202,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  X_rt%time_range(:)  =(/-FS2AUT,-FS2AUT/)
  X_rt%energy_steps   =200
- X_rt%energy_range(:)=(/0._SP,20./HARTREE/)
+ X_rt%energy_range(:)=(/0._SP,20./HA2EV/)
  X_rt%damp           ="NONE"
  X_rt%damp_factor    =0.
  Probe_Keyword ="none"

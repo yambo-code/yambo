@@ -22,7 +22,7 @@
 subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,header)
  !
  use pars,           ONLY:schlen,SP
- use units,          ONLY:HARTREE
+ use units,          ONLY:HA2EV
  use R_lattice,      ONLY:bz_samp,nXkibz
  use electrons,      ONLY:n_sp_pol,nel,n_full_bands
  use stderr,         ONLY:intc,real2ch
@@ -60,7 +60,7 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,header)
      endif
    endif
    !
-   E_(:,:)=E(:,ik,:)*HARTREE
+   E_(:,:)=E(:,ik,:)*HA2EV
    !
    do is_pol=1,n_sp_pol
      !

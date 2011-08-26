@@ -22,7 +22,7 @@
 integer function variables_BS(ID,local_description,DB,X)
  !
  use pars,          ONLY:lchlen
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use drivers,       ONLY:l_td_hf
  use X_m,           ONLY:X_t
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts,cut_geometry
@@ -113,7 +113,7 @@ integer function variables_BS(ID,local_description,DB,X)
 &     DESCRIPTION=local_description(i_local_desc))
  endif
  i_local_desc=i_local_desc+1
- call io_elemental(ID,UNIT=HARTREE,&
+ call io_elemental(ID,UNIT=HA2EV,&
 &     VAR="    |E/h energy range    [ev]:",R1=BS_eh_en,CHECK=.true.,OP=(/"==","=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
  i_local_desc=i_local_desc+1
@@ -148,7 +148,7 @@ integer function variables_BS(ID,local_description,DB,X)
 &         VAR="    |Bands                   :",I1=X%ib,CHECK=.true.,OP=(/"==","=="/),&
 &         DESCRIPTION=local_description(i_local_desc))
      i_local_desc=i_local_desc+1
-     call io_elemental(ID,UNIT=HARTREE,&
+     call io_elemental(ID,UNIT=HA2EV,&
 &         VAR="    |e/h energy range    [ev]:",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/),&
 &         DESCRIPTION=local_description(i_local_desc))
      i_local_desc=i_local_desc+1

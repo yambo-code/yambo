@@ -33,7 +33,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !  Full report of system electronic character
  !
  use pars,          ONLY:SP,DP
- use units,         ONLY:HARTREE,Kelvin
+ use units,         ONLY:HA2EV,HA2KEL
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Tel,Bose_Temp
  use electrons,     ONLY:levels,nel,n_sp_pol,spin_occ,filled_tresh,&
@@ -56,7 +56,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  integer :: index(E%nk*E%nb*n_sp_pol,3),index_E_sorted(E%nk*E%nb*n_sp_pol)
  real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),f_met,n_of_el_from_zero(2),Ef(2),Efdist,local_Tel
  logical :: Fermi_is_converged
- real(SP),parameter :: Telstep=0.0001/HARTREE
+ real(SP),parameter :: Telstep=0.0001/HA2EV
  real(SP),parameter :: nel_diff_zero=1.E-5
  !
  !     n_spin n_sp_pol n_spinor  spin_occ 
@@ -245,9 +245,9 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  ! Complete Report
  !
- call msg('r',  'Fermi Level        [ev]:',E%Efermi(1)*HARTREE)
- call msg('r',  'Electronic Temp. [ev K]:',(/Tel*HARTREE,Tel*Kelvin/))
- call msg('r',  'Bosonic    Temp. [ev K]:',(/Bose_Temp*HARTREE,Bose_Temp*Kelvin/))
+ call msg('r',  'Fermi Level        [ev]:',E%Efermi(1)*HA2EV)
+ call msg('r',  'Electronic Temp. [ev K]:',(/Tel*HA2EV,Tel*HA2KEL/))
+ call msg('r',  'Bosonic    Temp. [ev K]:',(/Bose_Temp*HA2EV,Bose_Temp*HA2KEL/))
  !
  call REPORT_Occupations(E,mode)
  !
@@ -258,7 +258,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
 #if defined _BOLTZMANN
    if (.not.write_to_report) then
-     call msg('s',':: Fermi E/Temp. [eV/K]:',(/E%Efermi(1)*HARTREE,Tel*Kelvin/))
+     call msg('s',':: Fermi E/Temp. [eV/K]:',(/E%Efermi(1)*HA2EV,Tel*HA2KEL/))
    endif
 #endif
  !

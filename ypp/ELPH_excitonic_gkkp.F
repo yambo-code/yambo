@@ -22,7 +22,7 @@
 subroutine ELPH_excitonic_gkkp(Xk,lambda_s)
  !
  use pars,                ONLY:SP,schlen
- use units,               ONLY:HARTREE,HA2FSm1
+ use units,               ONLY:HA2EV,HA2FSm1
  use BS,                  ONLY:BS_mat,BS_K_dim,BS_eh_table,BS_blk_dim
  use R_lattice,           ONLY:bz_samp
  use YPP,                 ONLY:n_lambda
@@ -155,11 +155,11 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s)
      ph_freqs(i_l)=sqrt(ph_freqs_sq(iq,i_l))
      !
      gkkp_fs=0.
-     if (abs(diagonal_xhi(iq,i_l,1))>0.) gkkp_fs=1./(abs(diagonal_xhi(iq,i_l,1))*HARTREE*HA2FSm1) 
+     if (abs(diagonal_xhi(iq,i_l,1))>0.) gkkp_fs=1./(abs(diagonal_xhi(iq,i_l,1))*HA2EV*HA2FSm1) 
      if (gkkp_fs==0.) cycle
      !
-     call msg('o gkkp','',(/ph_freqs(i_l)*HARTREE*1000.,&
-&                           abs(diagonal_xhi(iq,i_l,1))*HARTREE*1000.,&
+     call msg('o gkkp','',(/ph_freqs(i_l)*HA2EV*1000.,&
+&                           abs(diagonal_xhi(iq,i_l,1))*HA2EV*1000.,&
 &                           gkkp_fs/),USE_TABS=.true.)
      !
      call live_timing(steps=1)

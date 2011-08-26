@@ -22,7 +22,7 @@
 subroutine k_random(Xk,Xen)
  !
  use pars,                ONLY:SP,DP,lchlen,schlen
- use units,               ONLY:HARTREE
+ use units,               ONLY:HA2EV
  use stderr,              ONLY:set_real_printed_length
  use R_lattice,           ONLY:bz_samp,nkibz
  use parser_m,            ONLY:parser
@@ -163,8 +163,8 @@ subroutine k_random(Xk,Xen)
  call msg('s',':: Bands                 :',n_bands)
  call msg('s',':: Symmmetries           :',nsym)
  if (Xen%nbf==Xen%nbm) then
-   call msg('s',':: Gap indirect      [ev]:',gap(1)*HARTREE)
-   call msg('s','::     direct        [ev]:',gap(2)*HARTREE)
+   call msg('s',':: Gap indirect      [ev]:',gap(1)*HA2EV)
+   call msg('s','::     direct        [ev]:',gap(2)*HA2EV)
  endif
  !
  call section('+','BZ RIM K-points expansion ...')

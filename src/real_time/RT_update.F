@@ -26,7 +26,7 @@ subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
  ! to update G_lesser_reference,Dipoles and anlize quasi-paricles
  !
  use pars,       ONLY:SP
- use units,      ONLY:HARTREE 
+ use units,      ONLY:HA2EV 
  use com,        ONLY:msg
  use stderr,     ONLY:set_real_printed_length
  use SC,         ONLY:SC_bands,E_bare,H_rotate
@@ -84,7 +84,7 @@ subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
        call REPORT_Energies(Xen%E(:SC_bands(2),:,:),k,Xk,SC_bands(2),(/ik,ik/),'E  ',.TRUE.)
        call REPORT_Energies(E_bare,k,Xk,SC_bands(2),(/ik,ik/),'E_o  ',.FALSE.)
        call REPORT_Energies(Xen%E(:SC_bands(2),:,:)-E_bare,k,Xk,SC_bands(2),(/ik,ik/),'d_E',.FALSE.)
-       call REPORT_Energies(Occ_natural_orb(:SC_bands(2),:)/HARTREE,k,Xk,SC_bands(2),(/ik,ik/),'O  ',.FALSE.)
+       call REPORT_Energies(Occ_natural_orb(:SC_bands(2),:)/HA2EV,k,Xk,SC_bands(2),(/ik,ik/),'O  ',.FALSE.)
      enddo
    endif
    !

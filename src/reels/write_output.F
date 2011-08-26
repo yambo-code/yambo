@@ -2,7 +2,7 @@
 subroutine write_reels_sec( hw, loss, nw, ipol, q0, imode)
   use com,                    only : msg, of_open_close
   use pars,                   only : SP, schlen, lchlen
-  use units,                  ONLY : HARTREE
+  use units,                  ONLY : HA2EV
   use reels_module,           only : npol
   use surface_geometry,       only : q0x, q0y, qname
   use vec_operate,            only : v_norm
@@ -48,7 +48,7 @@ subroutine write_reels_sec( hw, loss, nw, ipol, q0, imode)
 
     call of_open_close(of_name,'a')
     do iw = 1, nw
-      od(1:5) = (/ hw(iw)*HARTREE, &
+      od(1:5) = (/ hw(iw)*HA2EV, &
 &             loss(1,iw), loss(2,iw), loss(3,iw), &
 &             loss(4,iw) /) 
       call msg('o reels_sec','',od(1:5), INDENT=0, USE_TABS=.true.)
@@ -83,7 +83,7 @@ end subroutine write_reels_sec
 subroutine write_reels_x( loss, hw, nw)
   use com,                    only : msg, of_open_close
   use pars,                   only : SP, schlen
-  use units,                  only : HARTREE
+  use units,                  only : HA2EV
   implicit none
   integer,          intent(in)    :: nw
   real(SP),         intent(in)    :: loss(nw), hw(nw)
@@ -97,7 +97,7 @@ subroutine write_reels_x( loss, hw, nw)
   call of_open_close(of_name,'ot')
 
   do iw = 1, nw
-    od(1:2) = (/ hw(iw)*HARTREE, &
+    od(1:2) = (/ hw(iw)*HA2EV, &
 &           loss(iw) /)
     call msg('o reels','',od(1:2), INDENT=0, USE_TABS=.true.)
 !    od(1:5) = (/ hw(iw)*HARTREE, &
@@ -117,7 +117,7 @@ end subroutine write_reels_x
 
 subroutine write_reelsdiff(lossf, hw, nw )
   use pars,                   ONLY : PI, SP, schlen
-  use units,                  ONLY : HARTREE
+  use units,                  ONLY : HA2EV
   use com,                    ONLY : msg, of_open_close
   use convolute
   implicit none
@@ -161,7 +161,7 @@ subroutine write_reelsdiff(lossf, hw, nw )
     avg   = ( lossx + lossy ) * 0.5_SP
     if(abs(avg).le.small) avg = small
     rdiff = ( lossx - lossy ) / avg
-    od = (/ hw(iw)*HARTREE, lossx, lossy, diff, rdiff /)
+    od = (/ hw(iw)*HA2EV, lossx, lossy, diff, rdiff /)
     call msg('o reels','',od, INDENT=0, USE_TABS=.true.)
   enddo
   !

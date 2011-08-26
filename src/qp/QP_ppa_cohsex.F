@@ -24,7 +24,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! Plasmon Pole Correlation Self-Energy
  !
  use pars,          ONLY:SP,pi,schlen
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use memory_m,      ONLY:mem_est
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
@@ -150,7 +150,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  if (GW_iter==0) then
    call msg('r', '[GW/PPA] Bands range     :',QP_n_G_bands)
    if (l_ppa) then
-     call msg('r', '[GW/PPA] G damping   [ev]:',QP_G_damp*HARTREE)
+     call msg('r', '[GW/PPA] G damping   [ev]:',QP_G_damp*HA2EV)
      call msg('r','')
    endif
    iv4=(/1,1,0,0/)

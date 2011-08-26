@@ -25,7 +25,7 @@ module eels_wgrid
   !
   use com,                    only : msg
   use pars,                   only : schlen, SP, PI
-  use units,                  only : HARTREE
+  use units,                  only : HA2EV
   use frequency,              only : w_samp
   use eels_qpt,               only : iqmin, iqmax, nqpar
   implicit none
@@ -179,7 +179,7 @@ contains
 !
     if(ldebug) then
     write(*,*) "Make wgrid: nw = ",nw," nqpar = ",nqpar
-    write(*,*) "Make wgrid: wmin = ",wmin*HARTREE," wmax = ",wmax*HARTREE
+    write(*,*) "Make wgrid: wmin = ",wmin*HA2EV," wmax = ",wmax*HA2EV
     endif
 
 !nqpar, iqmin
@@ -242,8 +242,8 @@ contains
       do iw = 1,ist-1
         hwqgrid(ist+iw,iq) = qGwx(iq) + iw*dw1  ! interval [   :...)
         hwqgrid(iw,iq+1)   = qGwx(iq) + iw*dw1  ! interval (...:   ]
-        if(ldebug) write(*,*) "hwqgridA",ist+iw,iq,hwqgrid(ist+iw,iq)*HARTREE
-        if(ldebug) write(*,*) "hwqgridB",iw,iq+1,hwqgrid(ist+iw,iq)*HARTREE
+        if(ldebug) write(*,*) "hwqgridA",ist+iw,iq,hwqgrid(ist+iw,iq)*HA2EV
+        if(ldebug) write(*,*) "hwqgridB",iw,iq+1,hwqgrid(ist+iw,iq)*HA2EV
       enddo
     enddo
 
@@ -251,7 +251,7 @@ contains
 
     do iq = iqmin, iqmax
       hwqgrid(ist,iq) =  qGwx(iq)
-      if(ldebug) write(*,*) "hwqgridC",ist,iq,hwqgrid(ist,iq)*HARTREE
+      if(ldebug) write(*,*) "hwqgridC",ist,iq,hwqgrid(ist,iq)*HA2EV
     enddo
 
 !   Points at lower end. Two cases:
@@ -266,7 +266,7 @@ contains
       dw1 = (qGwx(iqmin) - wmin)/(ist-1) ! ist-1 intervals
       do iw = 1,ist-1
         hwqgrid(iw,iqmin) = wmin + (iw-1)*dw1
-        if(ldebug) write(*,*) "hwqgridD",iw,iqmin,hwqgrid(iw,iqmin)*HARTREE
+        if(ldebug) write(*,*) "hwqgridD",iw,iqmin,hwqgrid(iw,iqmin)*HA2EV
       enddo
     else if(wmin.ge.qGwx(iqmin)) then
       !
@@ -283,7 +283,7 @@ contains
       do iw = 1, ist-1
 !       hwqgrid(ist-iw,iqmin) = qGwx(iqmin) - (iw)*dw1
         hwqgrid(iw,iqmin) = qGwx(iqmin) - (ist-iw)*dw1
-        if(ldebug) write(*,*) "hwqgridE",iw,iqmin,hwqgrid(iw,iqmin)*HARTREE,dw1
+        if(ldebug) write(*,*) "hwqgridE",iw,iqmin,hwqgrid(iw,iqmin)*HA2EV,dw1
       enddo
     endif
  
@@ -337,7 +337,7 @@ contains
     ! Report some of the grid parameters
     !
     call msg('rs','Energy points per q [full/step]: ',wq%n)
-    call msg('r','Full energy range (eV): ',wq%er*HARTREE)
+    call msg('r','Full energy range (eV): ',wq%er*HA2EV)
 
     call msg('nr','Large overlapping grid:')
     write(lch,'(a5,a8,a9,a10)') "iq","nwmin","nwmax","nwp"
@@ -346,8 +346,8 @@ contains
     call msg('r',trim(lch))
 
     do iq = iqmin, iqmax
-      write(lch,'(i3, 3(a,f8.3))') iq," [",hwqgrid(1,iq)*HARTREE,":",&
-&            hwqgrid(nw,iq)*HARTREE," ]",hwqgrid(nwp,iq)*HARTREE
+      write(lch,'(i3, 3(a,f8.3))') iq," [",hwqgrid(1,iq)*HA2EV,":",&
+&            hwqgrid(nw,iq)*HA2EV," ]",hwqgrid(nwp,iq)*HA2EV
       call msg('r',trim(lch))
     enddo
 
@@ -376,7 +376,7 @@ contains
     do iq = iqmin, iqmax
       nwsec = get_nwsec(iq)
       do iw = 1, nwsec
-         write(80,121) hwqgrid(iw,iq)*HARTREE,qGwx(iq),iw,iq,wqtab(iw,iq)
+         write(80,121) hwqgrid(iw,iq)*HA2EV,qGwx(iq),iw,iq,wqtab(iw,iq)
       enddo
          write(80,*) 
          write(80,*) 

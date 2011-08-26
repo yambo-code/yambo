@@ -26,7 +26,7 @@ subroutine RT_two_levels(G_lesser)
  use SC,             ONLY:SC_bands(2)
  use QP_m,           ONLY:QP_nk
  use D_lattice,      ONLY:DL_vol
- use units,          ONLY:HARTREE
+ use units,          ONLY:HA2EV
  use com,            ONLY:msg
  use real_time,      ONLY:Wo,Rabi_freq_pump,W_pump,Phase_LifeTime,&
 &                         QP_LifeTime,RT_step,l_NE_with_fields,NE_time,NE_i_time,P,D,W_probe,Rabi_nn,Rabi_freq_probe
@@ -61,9 +61,9 @@ subroutine RT_two_levels(G_lesser)
  !
  T=NE_time
  !
- W_range=10./HARTREE
- if (P_and_P) W_range=2./HARTREE
- W_start=-.1/HARTREE
+ W_range=10./HA2EV
+ if (P_and_P) W_range=2./HA2EV
+ W_start=-.1/HA2EV
  !W_start=-2./HARTREE
  !
  if (NE_i_time == 1) then
@@ -89,8 +89,8 @@ subroutine RT_two_levels(G_lesser)
      endif
    enddo
    !
-   call msg('s','[2 LEVELS] W bar           [eV/fs]',(/real(W_bar)*HARTREE,-HBAR_eVfs/aimag(W_bar*HARTREE)/))
-   call msg('s','[2 LEVELS] W gamma         [fs   ]',-HBAR_eVfs/aimag(W_gamma*HARTREE))
+   call msg('s','[2 LEVELS] W bar           [eV/fs]',(/real(W_bar)*HA2EV,-HBAR_eVfs/aimag(W_bar*HA2EV)/))
+   call msg('s','[2 LEVELS] W gamma         [fs   ]',-HBAR_eVfs/aimag(W_gamma*HA2EV))
    call msg('s',' ')
    !
  !stop

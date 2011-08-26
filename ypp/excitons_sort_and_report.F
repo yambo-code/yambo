@@ -23,7 +23,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
 &                                   A_weight,S_z,S_sq,verbose)
  !
  use pars,          ONLY:SP,schlen,pi
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use electrons,     ONLY:spin_occ,levels,spin,n_sp_pol
  use stderr,        ONLY:intc
  use BS,            ONLY:BSS_description,BSS_n_descs,BS_eh_table,BS_bands
@@ -200,14 +200,14 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
      if(n_sp_pol==1) then
        ! GPL_EXCLUDE_END SPIN_IGNORE
        call msg('o weight','',(/real(iv,SP),real(ic,SP),real(ikibz,SP),real(is,SP),&
-&                             A_weight(neh),amp_trans(amp_n_trans,1)*HARTREE/),&
+&                             A_weight(neh),amp_trans(amp_n_trans,1)*HA2EV/),&
 &            INDENT=-2,USE_TABS=.FALSE.)
        ! GPL_EXCLUDE_START SPIN_IGNORE
      else
        if(i_spin==1) value= 1.
        if(i_spin==2) value=-1.
        call msg('o weight','',(/real(iv,SP),real(ic,SP),real(ikibz,SP),real(is,SP),&
-&                           value,A_weight(neh),amp_trans(amp_n_trans,1)*HARTREE/),&
+&                           value,A_weight(neh),amp_trans(amp_n_trans,1)*HA2EV/),&
 &                 INDENT=-2,USE_TABS=.FALSE.)
      endif
      ! GPL_EXCLUDE_END SPIN_IGNORE
@@ -215,8 +215,8 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
    !
    ! Excitonic Amplitude
    !
-   amp_range=(/minval(amp_trans(:amp_n_trans,1))-0.5/HARTREE,&
-&              maxval(amp_trans(:amp_n_trans,1))+0.5/HARTREE/)
+   amp_range=(/minval(amp_trans(:amp_n_trans,1))-0.5/HA2EV,&
+&              maxval(amp_trans(:amp_n_trans,1))+0.5/HA2EV/)
    amp_damping=(amp_range(2)-amp_range(1))/100. 
    amp_I=0.
    do j2=1,amp_steps
@@ -228,7 +228,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
    enddo
    amp_I=amp_I/maxval(amp_I)
    do j1=1,amp_steps
-     call msg('o amp','',(/real(amp_E(j1),SP)*HARTREE,amp_I(j1)/),INDENT=-2,USE_TABS=.FALSE.)
+     call msg('o amp','',(/real(amp_E(j1),SP)*HA2EV,amp_I(j1)/),INDENT=-2,USE_TABS=.FALSE.)
    enddo
    !
    call of_open_close(ch_dummy(1))
@@ -296,7 +296,7 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
    R(:) = BS_R(:)*conjg(BS_R(:))
    if (write_widths)  R(:) = abs(BS_R(:))
    R(:) = R(:)*real(spin_occ,SP)/(2.*pi)**3.*&
-&         d3k_factor*4.*pi/q0_def_norm**2*HARTREE
+&         d3k_factor*4.*pi/q0_def_norm**2*HA2EV
    Rmax = maxval(R)
    !
    if (trim(R_normalize)=='yes') R=R/Rmax
@@ -311,10 +311,10 @@ subroutine excitons_sort_and_report(BS_H_dim,Xk,E,BS_R,BS_E,BS_E_degs,&
      if (i_mode == 1) j2=S_indx(BS_H_dim-j1+1)
      if (i_mode == 2) j2=S_indx(j1)
      !
-     rv(:3)=(/real(BS_E(j2),SP)*HARTREE,R(j2),real(j2,SP)/)
+     rv(:3)=(/real(BS_E(j2),SP)*HA2EV,R(j2),real(j2,SP)/)
      !
      if (write_widths) then
-       rv(4)=abs(aimag(BS_E(j2)))*HARTREE*1000.
+       rv(4)=abs(aimag(BS_E(j2)))*HA2EV*1000.
        call msg('o sort','',rv(:4),INDENT=-2,USE_TABS=.TRUE.)
      else if (write_spin) then
        rv(4:5)=(/S_z(j2),S_sq(j2)/)

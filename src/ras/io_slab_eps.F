@@ -22,7 +22,7 @@
  integer function ioslabeps(eps_i_r, X, Xk, Xen, wv, q0v, npol, io_db)
 !======================================
  use pars
- use units,             ONLY : HARTREE
+ use units,             ONLY : HA2EV
  use X_m,               ONLY : X_t
  use electrons,         ONLY : levels
  use IO_m,              ONLY : io_connect,io_disconnect,io_sec,&
@@ -59,7 +59,7 @@
    call io_elemental(io_db,VAR="Parameters",VAR_SZ=12,MENU=0)
    call io_elemental(io_db,DB_I1=db_nb,&
 &       VAR=" X band range           :",I1=X%ib,CHECK=.true.,OP=(/">=","<="/))
-   call io_elemental(io_db,UNIT=HARTREE,&
+   call io_elemental(io_db,UNIT=HA2EV,&
 &       VAR=" X e/h energy range [ev]:",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/))
    call io_elemental(io_db,DB_I0=db_nbm,&
 &       VAR=" Metallic bands         :",I0=Xen%nbm,CHECK=.true.,OP=(/"=="/))

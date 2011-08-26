@@ -22,7 +22,7 @@
 subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  !
  use pars,           ONLY:SP,schlen,pi,DP
- use units,          ONLY:HARTREE
+ use units,          ONLY:HA2EV
  use ACFDT,          ONLY:ACFDT_n_freqs,ACFDT_n_lambda,ACFDT_E_range
  use FFT_m,          ONLY:fft_size
  use frequency,      ONLY:w_samp,W_reset
@@ -152,11 +152,11 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    !
    ! Report
    !
-   sug_E_rng=(nel/DL_vol)**(2./3.)*HARTREE
+   sug_E_rng=(nel/DL_vol)**(2./3.)*HA2EV
    call msg('r','[E] Energy borders [ev][suggested]:',(/25.*sug_E_rng,250*sug_E_rng/))
-   call msg('r','                            [used]:',(/ACFDT_E_range*HARTREE/))
+   call msg('r','                            [used]:',(/ACFDT_E_range*HA2EV/))
    call msg('r','    Energy points                 :',(/(ACFDT_n_freqs-1)/2+1,ACFDT_n_freqs/))
-   call msg('r','    First point               [ev]:',(/freq(1)*HARTREE/))
+   call msg('r','    First point               [ev]:',(/freq(1)*HA2EV/))
    call msg('nr','[L] Pts(1-5):',(/lambda(1:min(5,ACFDT_n_lambda))/))
    call msg(' r','    Wgs(1-5):',(/lambda_weight(1:min(5,ACFDT_n_lambda))/))
    call msg(' r','    Points  :',(/ACFDT_n_lambda/))
@@ -267,7 +267,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  Er(8)=Er(5)+Er(7)
  Er(9)=Er(6)+Er(7)
  ttl=(/'[meV/Vol]',' [eV/Vol]','[mHa/Vol]',' [mHa/el]'/)
- rfac=(/HARTREE*1000.d0/DL_vol,HARTREE/dble(nel),&
+ rfac=(/HA2EV*1000.d0/DL_vol,HA2EV/dble(nel),&
 &       1000.d0/dble(DL_vol),1000.d0/dble(nel)/)
  do i1=1,4
    write (ch,'(2a)') ttl(i1),' Ex         LDA-EXX    :'

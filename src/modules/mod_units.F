@@ -25,40 +25,69 @@ module UNITS
  !
  implicit none
  !
- ! UNITs CONVERSION
+ ! [25/8/2011]
  !
- real(SP), parameter :: BOHR=0.52917721_SP            ! Armstrongs
- real(SP), parameter :: radian=pi/180.0_SP  
+ ! To organize better units and convertions the
+ ! formato of the variables given here is
+ !
+ ! Format :  U = U2P * P
+ ! 
+ ! Note that complex units, like, W/cm^(-2) must be written as WATTCMm2 
+ ! 
+ ! For example:
+ !  
+ !   1 Hartree = 27.21 eV => AU2EV = 27.21 
+ !   1 Bohr = 0.53 A      => AU2ARM= 0.53
+ ! 
+ ! PREFIXES
+ !==========
+ real(SP), parameter :: ATTO  =1E-18_SP
+ real(SP), parameter :: FEMTO =1E-15_SP
+ real(SP), parameter :: PICO  =1E-12_SP
+ real(SP), parameter :: NANO  =1E-9_SP
+ real(SP), parameter :: MICRO =1E-6_SP
+ real(SP), parameter :: MILLI =1E-3_SP
+ real(SP), parameter :: KILO  =1E3_SP
+ real(SP), parameter :: MEGA  =1E6_SP
+ real(SP), parameter :: GIGA  =1E9_SP
+ real(SP), parameter :: TERA  =1E12_SP
+ real(SP), parameter :: PETA  =1E12_SP
+ !
+ ! LENGTHS
+ !=========
+ !
+ real(SP), parameter :: BO2ARM    =0.52917721_SP        ! BOHR = AU2ARM Armstrongs
+ real(SP), parameter :: DEG2RAD   =pi/180.0_SP          ! DEGREE = DEG2RAD radiants
  !
  ! Energies
+ !==========
  !
- real(SP), parameter :: HARTREE=27.2113834_SP         ! EV2HA, 1 HA = HA2EV eV
- real(SP), parameter :: Kelvin=11604.5077_SP*HARTREE  ! EV2K,  1 K = KE2EV eV
- !
- ! Format :  U2 = U1_2_U2 * U1
- ! 
- ! remember: G=10^9 T=10^12
+ real(SP), parameter :: HA2EV     =27.2113834_SP        ! HA  = HA2EV eV
+ real(SP), parameter :: HA2KEL    =11604.5077_SP*HA2EV  ! HA  = HA2KEL K
  !
  ! Frequencies
+ !=============
  !
- real(SP), parameter :: CORE_CNST=2.418884326505_SP
- !
- real(SP), parameter :: HA2GHZ=HARTREE*CORE_CNST*10._SP**5
- real(SP), parameter :: HA2THZ=HA2GHZ/1000._SP
+ real(SP), parameter :: CORE_CNST =2.418884326505_SP
+ real(SP), parameter :: HA2GHZ    =HA2EV*CORE_CNST*10._SP**5  ! HA = HA2GHZ GHz
+ real(SP), parameter :: HA2THZ    =HA2GHZ/1000._SP            ! HA = HA2THZ THz
  !
  ! wavelength
+ !============
  !
- real(SP), parameter :: HA2CM1=HARTREE*8065.5_SP
+ real(SP), parameter :: HA2CMm1   =HA2EV*8065.5_SP            ! HA = HA2CMm1 cm^(-1)
  !
  ! Time
+ !======
  !
- real(SP), parameter :: HA2PSm1=HA2THZ
- real(SP), parameter :: HA2FSm1=HA2THZ/1000._SP       ! Note that 1 THz = 10^-3 / fs
- !
- real(SP), parameter :: FS2AUT =10.**2/CORE_CNST
- real(SP), parameter :: PS2AUT =10.**5/CORE_CNST
+ real(SP), parameter :: HA2PSm1   =HA2THZ                     ! HA = HA2PSm1 pico-SEC^(-1)
+ real(SP), parameter :: HA2FSm1   =HA2THZ/1000._SP            ! HA = HA2FSm1 femto-SEC^(-1)
+ !                                                              Note that 1 THz = 10^-3 / fs
+ real(SP), parameter :: FS2AUT    =10.**2/CORE_CNST           ! femto-SEC = FS2AUT unit of Time in A.U. (2.4189 10^(-17) sec)
+ real(SP), parameter :: PS2AUT    =10.**5/CORE_CNST           ! pico-SEC  = PS2AUT unit of Time in A.U.
  !
  ! LifeTimes
+ !===========
  !
  ! To express the mean lifetime \tau (fs) in terms of its decay width \gamma (in eV) 
  ! one uses
@@ -72,39 +101,45 @@ module UNITS
  real(SP), parameter :: HBAR_eVfs = 6.58211899_SP*10._SP**(-1._SP) ! eV*fs
  !
  ! Magnetic fields
+ !=================
  !
- real(SP), parameter :: AU2Tesla=1.7152551_SP*10._SP**3        ! (A.U. + C.G.S.)
- real(SP), parameter :: Tesla2AU=1./AU2Tesla
- !
- ! Magnetization 
- !
- real(SP), parameter :: Bohr_magneton=9.24700915*10._SP**(-24) ! J * T^{-1} (A.U. +S.I.)
+ real(SP), parameter :: AU2Tesla      =1.7152551_SP*10._SP**3   ! (A.U. + C.G.S.)
+ real(SP), parameter :: Tesla2AU      =1./AU2Tesla
+ real(SP), parameter :: Bohr_magneton =9.24700915*10._SP**(-24) ! Joule * SEC^{-1} (S.I.). The 
+ !                                                                Bohr magneton is also the A.U. unit for the 
+ !                                                                electron magnetic dipole moment.
  !
  ! Electric fields and current
+ !=============================
  !
- real(SP), parameter :: AU2Vmm=5.14220632*10._SP**(8)          !  [V/mm]
- real(SP), parameter :: sVcm2Vmm= 29.98                        !  from [statV/cm] to [V/mm]
- real(SP), parameter :: AU2nAmpere=6.62361782*10._SP**(6)      !  [nano-Ampere]
+ ! NOTE that in the S.I. the unit for the electric field is V/mm. statV/cm is the unit
+ ! of E fields in C.G.S (Gaussian units)
+ !
+ real(SP), parameter :: SVCMm12VMm1=29.98E3_SP                  !  from [statV/cm] to [V/mm]
+ real(SP), parameter :: VMm12SVCMm1 =1./SVCMm12VMm1
+ real(SP), parameter :: AU2nAmpere =6.62361782E6_SP             !  [nano-Ampere]
  ! 
- ! From Octopus ( http://www.tddft.org/programs/octopus )
+ real(SP), parameter  :: WMm22kWCMm2      =1E-7 ! W/m^2 = WMm22kWCMm2 kW/cm^2
+ real(SP), parameter  :: WMm22ERGCMm2SECm1=1E-3 ! W/m^2 = WMm22ERGCMm2SECm1 erg/cm^2/sec
  !
- ! It is very common to describe the strength of a laser field by it intensity, 
- ! rather than using the electric field amplitude. In atomic units, the relationship 
- ! between instantaneous electric field and intensity is:
+ real(SP), parameter  :: AU2J   =4.3597482E-18  ! Ha = AU2J Joule
+ real(SP), parameter  :: J2AU   =1./AU2J        ! J  = J2AU Ha
  !
- ! I(t) = \frac{c}{8\pi} E^2(t)
+ real(SP), parameter  :: AU2M  =5.2917720859E-11 ! Bohr = AU2M m
+ real(SP), parameter  :: M2AU  =1./AU2M          ! m    = M2AU Bohr
  !
- ! It is common to read intensities in kW cm^-2. The dimensions of intensities are [W]/(L^2T), 
- ! where [W] are the dimensions of energy. The relevant conversion factors are:
+ real(SP), parameter  :: AU2SEC =2.418884326505E-17  ! Tau = AU2SEC sec
+ real(SP), parameter  :: SEC2AU =1./AU2SEC           ! sec = SEC2AU Tau
  !
- ! Hartree / (a_0^2 atomic_time) = 6.4364086e+09 kW cm^-2
+ real(SP), parameter  :: AU2VMm1=5.14220632E11_SP    ! V/m = AU2VMm1 AU
+ real(SP), parameter  :: VMm12AU=1./AU2VMm1          ! Au  = VMm12AU AU
  !
- ! If, in atomic units, we set the electric field amplitude to E_0, then the intensity is:
+ real(SP), parameter  :: SPEED_OF_LIGHT_SI = 2.99792458E8 ! m/sec
+ real(SP), parameter  :: SPEED_OF_LIGHT    = 137.03599911 ! a.u.
  !
- ! I_0 = \frac{c}{8 \pi}  1./W2Au kW cm^-2 (E_0^2)
+ real(SP), parameter  :: FREE_SPACE_PERM   = 1E7/4./pi/SPEED_OF_LIGHT_SI**2 ! Farad=Coulomb/Volt 
  !
- real(SP), parameter :: SPEED_OF_LIGHT = 137.03599911
- !
- real(SP), parameter :: W2Au = 1./6.4364086E+09 
+ real(SP), parameter  :: kWCMm22AU=1E7*J2AU/(M2AU**2 * SEC2AU)  ! kW/cm^2 = kWCMm22AU * AU
+ real(SP), parameter  :: AU2KWCMm2=1./kWCMm22AU                 ! AU      = AU2KWCMm2 kW/cm^2
  !
 end module 

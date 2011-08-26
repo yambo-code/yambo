@@ -64,13 +64,13 @@ subroutine init_detector(defs)
 end subroutine init_detector
 
   subroutine setup_eels_det( lfail )
-    use units,               only  : radian
+    use units,               only  : DEG2RAD
     implicit none
     logical, intent(out)           :: lfail
 
     lfail = .false.
 
-    thetadet = thetadet*radian
+    thetadet = thetadet*DEG2RAD
     if(det_int_type.eq."av") n_det_pt = 1
     if(det_int_type.eq."no") n_det_pt = 1
 
@@ -128,14 +128,14 @@ end subroutine init_detector
   
   subroutine print_eels_det(where)
     use com,   ONLY:msg
-    use units, only : radian
+    use units, only : DEG2RAD
     implicit none
     character(*), optional  :: where
 
     if(.not.present(where)) where = 'r'
     ldetector = .false.
     call msg('n'//where,'Detector integration factors:')
-    call msg(where,'Detector   angle (deg) :',thetadet/radian )
+    call msg(where,'Detector   angle (deg) :',thetadet/DEG2RAD )
     if(det_int_type.eq."av") call msg(where,'Simple averaging over detector window.' )
     if(det_int_type.eq."no") call msg(where,'No integration over detector window.' )
     if(det_int_type.eq."nu") then 
@@ -190,7 +190,7 @@ end subroutine init_detector
   end subroutine reset_trig_det
 
   subroutine setup_det
-    use units, only : radian
+    use units, only : DEG2RAD
     implicit none
     integer                         :: i, j, ii
     !

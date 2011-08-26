@@ -30,7 +30,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  ! This subroutine put the full Hamiltonian in SC_R if it is allocated
  !
  use pars,           ONLY:SP,cI
- use units,          ONLY:HBAR_eVfs,FS2AUT,HARTREE
+ use units,          ONLY:HBAR_eVfs,FS2AUT,HA2EV
  use wrapper,        ONLY:M_by_M,V_by_V_plus_V
  use electrons,      ONLY:levels
  use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex
@@ -241,9 +241,9 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
         do i1=SC_bands(1),SC_bands(2)
           do i2=i1+1,SC_bands(2)
             I1_lesser(i1,i2,ik)=I1_lesser(i1,i2,ik)-cI*(Xen%W(i1,ik,1)-Xen%W(i2,ik,1)) &
-&                   *(G_input(i1,i2,ik)-G_lesser_reference(i1,i2,ik))*HARTREE/HBAR_eVfs/FS2AUT
+&                   *(G_input(i1,i2,ik)-G_lesser_reference(i1,i2,ik))*HA2EV/HBAR_eVfs/FS2AUT
             I1_lesser(i2,i1,ik)=I1_lesser(i2,i1,ik)+cI*(Xen%W(i2,ik,1)-Xen%W(i1,ik,1)) &
-&                   *(G_input(i2,i1,ik)-G_lesser_reference(i2,i1,ik))*HARTREE/HBAR_eVfs/FS2AUT
+&                   *(G_input(i2,i1,ik)-G_lesser_reference(i2,i1,ik))*HA2EV/HBAR_eVfs/FS2AUT
           enddo
         enddo
       endif

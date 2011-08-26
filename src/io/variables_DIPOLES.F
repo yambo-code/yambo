@@ -21,7 +21,7 @@
 !
 integer function variables_DIPOLES(X,Xen,ID,db_nbm,db_nb)
  !
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use X_m,           ONLY:X_t,Dipole_bands_ordered,&
 &                        Dipole_uses_shifted_grids
  use electrons,     ONLY:levels
@@ -46,7 +46,7 @@ integer function variables_DIPOLES(X,Xen,ID,db_nbm,db_nb)
  call io_elemental(ID,VAR="PARS",VAR_SZ=sec_size,MENU=0)
  call io_elemental(ID,DB_I1=db_nb,&
 &     VAR=" X band range           :",I1=X%ib,CHECK=.true.,OP=(/">=","<="/))
- call io_elemental(ID,UNIT=HARTREE,&
+ call io_elemental(ID,UNIT=HA2EV,&
 &     VAR=" X e/h energy range [ev]:",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/))
  call io_elemental(ID,DB_I0=db_nbm,&
 &     VAR=" Metallic bands         :",I0=Xen%nbm,CHECK=.true.,OP=(/"=="/))

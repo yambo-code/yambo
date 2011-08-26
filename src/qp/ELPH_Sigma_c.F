@@ -26,7 +26,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  ! PRB 23, 1495 (1981) )
  !
  use pars,          ONLY:SP,DP,schlen,pi
- use units,         ONLY:HARTREE,HA2THZ
+ use units,         ONLY:HA2EV,HA2THZ
  use parser_m,      ONLY:parser
  use frequency,     ONLY:w_samp,W_reset
  use electrons,     ONLY:levels,spin_occ
@@ -110,7 +110,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  call msg('r', '[GW/El-Ph] Bands range       :',(/1,QP_PH_n_G_bands/))
  if (trim(QP_solver)=='n') &
-&  call msg('r', '[GW/El-Ph] G damping     [ev]:',QP_G_damp*HARTREE)
+&  call msg('r', '[GW/El-Ph] G damping     [ev]:',QP_G_damp*HA2EV)
  call msg('r','')
  !
  iv4=(/1,1,0,0/)
@@ -143,7 +143,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    !
    if (.not.l_el_corr) QP_Sc=cmplx(0.,0.)  
    !
-   call msg('nr', '[GW/El-Ph] gsqF E range  [ev]:',Sc_W(1)%er*HARTREE)
+   call msg('nr', '[GW/El-Ph] gsqF E range  [ev]:',Sc_W(1)%er*HA2EV)
    !
  else if (trim(QP_solver)=='n') then
    !
@@ -415,7 +415,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  ! Debye energy
  !
- call msg('nr','[Ph] Debye energy [ev/ThZ]:',(/max_ph_freq*HARTREE,max_ph_freq*HA2THZ/))
+ call msg('nr','[Ph] Debye energy [ev/ThZ]:',(/max_ph_freq*HA2EV,max_ph_freq*HA2THZ/))
  !
  ! All 2 All
  !
@@ -517,7 +517,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          !
          ! Overwrites the damping defined in FREQUENCIES_Green_Function
          !
-         forall(iw=1:QP_Sc_steps) Sc_local_W%p(iw)= real( Sc_local_W%p(iw)) + cmplx(0.,0.00001/HARTREE)
+         forall(iw=1:QP_Sc_steps) Sc_local_W%p(iw)= real( Sc_local_W%p(iw)) + cmplx(0.,0.00001/HA2EV)
        endif
        !
        ib   =QP_table(i_qp,1)

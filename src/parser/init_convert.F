@@ -52,9 +52,9 @@ subroutine init_convert(rfac,ivar,v_descr,force_RL)
  !
  if (rfac>0.) then
    if (index(trim(v_descr),'meV')/=0) then
-     rfac=HARTREE*1000.
+     rfac=HA2EV*1000.
    else if (index(trim(v_descr),'eV')/=0) then
-     rfac=HARTREE
+     rfac=HA2EV
    else if (index(trim(v_descr),'mHa')/=0) then
      rfac=1.*1000.
    else if (index(trim(v_descr),'Ha')/=0) then
@@ -64,7 +64,7 @@ subroutine init_convert(rfac,ivar,v_descr,force_RL)
    else if (index(trim(v_descr),'Ry')/=0) then
      rfac=2.
    else if (index(trim(v_descr),'K')/=0) then
-     rfac=11604.*HARTREE
+     rfac=11604.*HA2EV
    else if (index(trim(v_descr),'GHz')/=0) then
      rfac=HA2GHZ
    else if (index(trim(v_descr),'THz')/=0) then
@@ -76,11 +76,11 @@ subroutine init_convert(rfac,ivar,v_descr,force_RL)
    else if (index(trim(v_descr),'T')/=0) then
      rfac=AU2Tesla
    else if (index(trim(v_descr),'V/mm')/=0) then
-     rfac=AU2Vmm
+     rfac=AU2VMm1
    else if (index(trim(v_descr),'deg')/=0) then
-     rfac=1./radian
+     rfac=1./DEG2RAD
    else if (index(trim(v_descr),'kWLm2')/=0) then
-     rfac=1./W2Au
+     rfac=AU2KWCMm2
    endif
  endif
  !

@@ -22,7 +22,7 @@
 subroutine RT_TwoL_Glesser(Poles_and_derivatives,Eo,Rabi,G_lesser)
  !
  use pars,           ONLY:SP,cI
- use units,          ONLY:HARTREE
+ use units,          ONLY:HA2EV
  use real_time,      ONLY:NE_time,Phase_Lifetime,QP_LifeTime,it_start,NE_i_time
  use SC,             ONLY:it_now
  use fields,         ONLY:Efield,global_gauge,i_Probe,i_Pump
@@ -68,7 +68,7 @@ subroutine RT_TwoL_Glesser(Poles_and_derivatives,Eo,Rabi,G_lesser)
 1  i_found=0
    !
    do i_f=1,N_W_delta_search-1
-     W_func(i_f)=-0.1/HARTREE+W_step*i_f
+     W_func(i_f)=-0.1/HA2EV+W_step*i_f
      Poles_func(i_f)=DELTA_Pump_F(W_func(i_f))
      Poles_func_deriv(i_f)=(DELTA_Pump_F(W_func(i_f)+W_step)-DELTA_Pump_F(W_func(i_f)))/W_step
      !

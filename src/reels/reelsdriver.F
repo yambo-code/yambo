@@ -21,7 +21,7 @@
 !
 subroutine reelsdriver(Xen,Xk,q,wv,X)
   use pars,                    only : SP, lchlen
-  use units,                   only : HARTREE
+  use units,                   only : HA2EV
   use memory_m,                only : mem_est
   use com,                     only : msg
   use X_m,                     only : X_t
@@ -130,7 +130,7 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
 ! Write loss to file just for checking grids
     open(unit=56,file="loss.dat")
     do iw=1,nwtot
-      write(56,*) hwgrid(iw)*HARTREE,loss(1,iw)
+      write(56,*) hwgrid(iw)*HA2EV,loss(1,iw)
     enddo
 ! End check
     !
@@ -140,7 +140,7 @@ subroutine reelsdriver(Xen,Xk,q,wv,X)
 ! Write loss to file just for checking regrids
     open(unit=57,file="lossxy.dat")
     do iw=1,nfull
-      write(57,*) real(wfull%p(iw))*HARTREE,lossxy(iw,1)
+      write(57,*) real(wfull%p(iw))*HA2EV,lossxy(iw,1)
     enddo
 ! End check
 

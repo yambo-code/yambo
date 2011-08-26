@@ -22,7 +22,7 @@
 subroutine RT_Fluence(Fluence)
  !
  use pars,           ONLY:SP,pi
- use units,          ONLY:SPEED_OF_LIGHT,W2Au,FS2AUT
+ use units,          ONLY:SPEED_OF_LIGHT,AU2KWCMm2,FS2AUT
  use real_time,      ONLY:RT_step,NE_steps
  use fields,         ONLY:Efield,small_a,theta_function,ef_i_time,i_Pump
  !
@@ -66,7 +66,7 @@ subroutine RT_Fluence(Fluence)
  !
  ! From au to kW/cm^2
  !
- I=I/W2Au
+ I=I*AU2KWCMm2
  ! 
  ! To get the fluence in kJ/cm^2 I should translate T in secs. However to get 
  ! the integration more stable I multiply I by 10^-15

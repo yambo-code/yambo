@@ -42,7 +42,7 @@
  ! give incorrect eps_x-eps_y in the output file.
  !
  use pars,                ONLY:DP, lchlen,schlen, PI
- use units,               ONLY:HARTREE
+ use units,               ONLY:HA2EV
  use com,                 ONLY:msg, error
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,&
 &                              OP_RD_CL,VERIFY

@@ -40,12 +40,12 @@ subroutine XC_switch()
  local_V=.FALSE.
  !
  select case (trim(SC_potential))
-   case('HARTREE')
+   case('HA2EV')
      l_sc_contains_lda=.true.
      local_V=.true.
      SC_kind=0
      SC_xc_functional=0          
-   case('HARTREE-FOCK')
+   case('HA2EV-FOCK')
      l_sc_hf=.true.
      SC_kind=SC_HF
      SC_xc_functional=0

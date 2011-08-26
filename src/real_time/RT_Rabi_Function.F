@@ -33,10 +33,10 @@ subroutine RT_Rabi_Function(E,Field)
  ! 
  ! I(Rabi)=c/(8 pi) * 4 * (Rabi/|\mu.\versor{E}|)^2
  !
- ! I is given in the input file and I[au]=I[kWLm2]*W2Au
+ ! I is given in the input file and I[au]=I[kWLm2]*AU2KWCMm2
  !
  use pars,           ONLY:SP,cI,pi
- use units,          ONLY:HARTREE,SPEED_OF_LIGHT,W2Au
+ use units,          ONLY:HA2EV,SPEED_OF_LIGHT,AU2KWCMm2
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:nkibz,bz_samp 
  use X_m,            ONLY:DIP_P,DIP_iR
@@ -73,20 +73,20 @@ subroutine RT_Rabi_Function(E,Field)
    enddo
  enddo
  !
- call msg( 'sr', '[RT] Max Rabi frequency            [eV]:',Rabi_max*HARTREE)
+ call msg( 'sr', '[RT] Max Rabi frequency            [eV]:',Rabi_max*HA2EV)
  !
  two_mu=Rabi_max/Field%amplitude
  !
- Rabi_ref=(/0.001,0.01,0.1,1./)/HARTREE
+ Rabi_ref=(/0.001,0.01,0.1,1./)/HA2EV
  !
  I_ref(:)=SPEED_OF_LIGHT/(8.*pi)*(Rabi_ref(:)/two_mu)**2.
  !
  call set_real_printed_length(g_length=15)
  !
- call msg( 'r', '[RT] I when Rabi=1meV           [kWLm2]:',I_ref(1)/W2Au)
- call msg( 'r', '[RT] I when Rabi=10meV          [kWLm2]:',I_ref(2)/W2Au)
- call msg( 'r', '[RT] I when Rabi=100meV         [kWLm2]:',I_ref(3)/W2Au)
- call msg( 'r', '[RT] I when Rabi=1eV            [kWLm2]:',I_ref(4)/W2Au)
+ call msg( 'r', '[RT] I when Rabi=1meV           [kWCMm2]:',I_ref(1)*AU2KWCMm2)
+ call msg( 'r', '[RT] I when Rabi=10meV          [kWCMm2]:',I_ref(2)*AU2KWCMm2)
+ call msg( 'r', '[RT] I when Rabi=100meV         [kWCMm2]:',I_ref(3)*AU2KWCMm2)
+ call msg( 'r', '[RT] I when Rabi=1eV            [kWCMm2]:',I_ref(4)*AU2KWCMm2)
  !
  call set_real_printed_length()
  !

@@ -25,7 +25,7 @@ module eels_scattering
   !
   use com,             ONLY : msg
   Use pars,            only : SP, PI
-  Use units,           only : HARTREE
+  Use units,           only : HA2EV
   use surface_geometry
   use eels_kinematics
 
@@ -233,7 +233,7 @@ contains
     open(unit=95,file="prefactors.dat")
     write(95,100) "# iw","hw","|k'|","|qpar|","bpar  ","bqfac"
     do iw = 1, nwtot
-      write(95,101)  iw,hwgrid(iw)*HARTREE,kpmag_w(iw),qparm_w(iw),&
+      write(95,101)  iw,hwgrid(iw)*HA2EV,kpmag_w(iw),qparm_w(iw),&
 &     bpar_w(iw), bqfac_w(iw)
     enddo
     close(95)

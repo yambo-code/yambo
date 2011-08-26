@@ -184,7 +184,7 @@ integer function ELPH_databases(k,E,q)
    !   ENDDO
    !
    use pars,           ONLY:SP,DP,schlen
-   use units,          ONLY:HA2CM1
+   use units,          ONLY:HA2CMm1
    use D_lattice,      ONLY:nsym,sop_inv,alat,n_atoms_species
    use R_lattice,      ONLY:nqibz
    use IO_m,           ONLY:io_control,OP_RD,RD_CL,io_connect,io_unit,&
@@ -330,7 +330,7 @@ integer function ELPH_databases(k,E,q)
      do i1=1,ph_modes,6
        read(99,*) ph_freqs_sq(iq,i1:min(i1+5,ph_modes))
      enddo
-     ph_freqs_sq(iq,:)=(abs(ph_freqs_sq(iq,:))/HA2CM1)**2.
+     ph_freqs_sq(iq,:)=(abs(ph_freqs_sq(iq,:))/HA2CMm1)**2.
    else
      do il=1,ph_modes
        ph_freqs_sq(iq,il)=max( real(ph_freqs_sq_disk(il)),0._SP)

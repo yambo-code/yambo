@@ -22,7 +22,7 @@
 integer function ioBSS_invert(iq,n_,inv_err,eps,W_disk,ID)
  !
  use pars,          ONLY:SP
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
  use BS,            ONLY:BS_identifier,BSS_q0,BSS_uses_RIM,BSS_dr,&
@@ -60,11 +60,11 @@ integer function ioBSS_invert(iq,n_,inv_err,eps,W_disk,ID)
 &       " Using energy RIM                :",L0=BSS_uses_RIM,CHECK=.TRUE.,OP=(/"=="/))
    call io_elemental(ID,VAR=&
 &       " Number of frequencies           :",I0=W_disk%n(1))
-   call io_elemental(ID,UNIT=HARTREE,VAR=&
+   call io_elemental(ID,UNIT=HA2EV,VAR=&
 &       " Energy range                [ev]:",R1=W_disk%er)
-   call io_elemental(ID,UNIT=HARTREE,VAR=&
+   call io_elemental(ID,UNIT=HA2EV,VAR=&
 &       " Damping range               [ev]:",R1=BSS_dr,CHECK=.true.,OP=(/"==","=="/))
-   call io_elemental(ID,UNIT=HARTREE,VAR=&
+   call io_elemental(ID,UNIT=HA2EV,VAR=&
 &       " Damping reference energy    [ev]:",R0=BSS_damp_reference,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !

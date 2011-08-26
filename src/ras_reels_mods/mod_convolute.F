@@ -24,7 +24,7 @@ module convolute
   ! Routines for convoluting functions 
   !
   use pars,                ONLY : PI, SP
-  use units,               ONLY : HARTREE
+  use units,               ONLY : HA2EV
   use numerical_integration, ONLY : simpson
   implicit none
   real(SP)                     :: gbroad ! The FWHM
@@ -41,7 +41,7 @@ subroutine print_convolute
   implicit none
 
   if(abs(gbroad).gt.0.0001) call msg('rs',&
-&   'Gaussian broadening applied to spectra (FWHM, eV):',gbroad*HARTREE)
+&   'Gaussian broadening applied to spectra (FWHM, eV):',gbroad*HA2EV)
   return
 end subroutine print_convolute
 

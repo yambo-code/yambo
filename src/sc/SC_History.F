@@ -22,7 +22,7 @@
 subroutine SC_History(it,E)
  !
  use pars,           ONLY:schlen,SP
- use units,          ONLY:HARTREE
+ use units,          ONLY:HA2EV
  use electrons,      ONLY:n_met_bands,n_full_bands,levels,n_sp_pol
  use R_lattice,      ONLY:nkibz
  use com,            ONLY:of_open_close,msg,OF_exists
@@ -103,7 +103,7 @@ subroutine SC_History(it,E)
 #else
      call msg('o E_History','',(/real(it_now,SP),&
 #endif
-&                             ((E%E(ib,ik,i_spin)*HARTREE,ib=n_met_bands-1,n_full_bands+1),ik=1,max_kpt) &
+&                             ((E%E(ib,ik,i_spin)*HA2EV,ib=n_met_bands-1,n_full_bands+1),ik=1,max_kpt) &
 &                             /),INDENT=-2,USE_TABS=.true.)
      !
 #if defined _RT

@@ -23,7 +23,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  !
  use pars,           ONLY:SP,cI,schlen,DP
  use YPP,            ONLY:l_RT_X_inversion,l_skip_pol_and_curr_IO
- use units,          ONLY:FS2AUT,HARTREE
+ use units,          ONLY:FS2AUT,HA2EV
  use real_time,      ONLY:RT_step,RT_P,RT_output,QP_LifeTime,Phase_LifeTime
  use stderr,         ONLY:intc
  use timing,         ONLY:live_timing
@@ -51,7 +51,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  complex(SP),allocatable :: freqs(:)
  complex(DP),allocatable :: P_DP(:,:),P_W(:)
  real(SP)                :: T_o,P_W_SP(2)
- real(SP),   parameter   :: F_damp=0.2/HARTREE
+ real(SP),   parameter   :: F_damp=0.2/HA2EV
  character(schlen)       :: FT_title
  !
  nh_min=1
@@ -128,7 +128,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
      !
      P_W_SP=(/aimag(P_W(i_w)),real(P_W(i_w))/)
      !
-     call RT_output(trim(P_file_name),VALUEs=P_W_SP,E=real(freqs(i_w))*HARTREE)
+     call RT_output(trim(P_file_name),VALUEs=P_W_SP,E=real(freqs(i_w))*HA2EV)
      !
    enddo
    !

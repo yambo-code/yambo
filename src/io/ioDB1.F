@@ -22,7 +22,7 @@
 integer function ioDB1(E,k,ID)
  !
  use pars,             ONLY:SP,IP
- use units,            ONLY:HARTREE
+ use units,            ONLY:HA2EV
  use com,              ONLY:error
  use memory_m,         ONLY:mem_est
  use LOGO,             ONLY:code_version,code_revision
@@ -130,7 +130,7 @@ integer function ioDB1(E,k,ID)
    !
    n_spin=max(n_sp_pol,n_spinor,1)
    !
-   call io_elemental(ID, UNIT=HARTREE,R0=input_GS_Tel,CHECK=.true.,OP=(/"=="/),&
+   call io_elemental(ID, UNIT=HA2EV,R0=input_GS_Tel,CHECK=.true.,OP=(/"=="/),&
 &                    VAR=' Temperature                 [ev]:')
    call io_elemental(ID, R0=default_nel,CHECK=.true.,OP=(/"=="/),&
 &                    VAR=' Electrons                       :')

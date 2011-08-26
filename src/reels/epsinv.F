@@ -35,7 +35,7 @@ subroutine calc_eps( iq,  Xen,Xk, X, q, wq, epsm1, ngblk, nw ,iqf )
   ! eps(hw) is calculated on the input mesh wq(1:nw)
   !
   use pars,                  only : PI, lchlen
-  use units,                 only : HARTREE
+  use units,                 only : HA2EV
   use com,                   only : msg
   use parser_m,              only : parser
   use X_m,                   only : X_t, X_mat, X_epsilon, X_alloc
@@ -120,16 +120,16 @@ subroutine calc_eps( iq,  Xen,Xk, X, q, wq, epsm1, ngblk, nw ,iqf )
   !-> print eps block for iw* <----------------------------
   !
   call sort_eps(iGtmp,epstmp,iGz0indx,gvecaff,eps(:,:,ist),ngblk)
-  if(lorderG) write(prmsg,101) ist, real(wq%p(ist))*HARTREE,q%ptbz(iqf,1:3)
-  if(.not.lorderG) write(prmsg,102) ist, real(wq%p(ist))*HARTREE,q%pt(iq,1:3)
+  if(lorderG) write(prmsg,101) ist, real(wq%p(ist))*HA2EV,q%ptbz(iqf,1:3)
+  if(.not.lorderG) write(prmsg,102) ist, real(wq%p(ist))*HA2EV,q%pt(iq,1:3)
   call print_eps(iGtmp,epstmp,ngblk,prmsg)
   !--------------------------------------------------------
   !
   !-> print epsm1 block for iw*
   !
   call sort_eps(iGtmp,epstmp,iGz0indx,gvecaff,epsm1(:,:,ist),ngblk)
-  if(lorderG) write(prmsg,103) ist, real(wq%p(ist))*HARTREE,q%ptbz(iqf,1:3)
-  if(.not.lorderG) write(prmsg,104) ist, real(wq%p(ist))*HARTREE,q%pt(iq,1:3)
+  if(lorderG) write(prmsg,103) ist, real(wq%p(ist))*HA2EV,q%ptbz(iqf,1:3)
+  if(.not.lorderG) write(prmsg,104) ist, real(wq%p(ist))*HA2EV,q%pt(iq,1:3)
   call print_eps(iGtmp,epstmp,ngblk,prmsg)
   !--------------------------------------------------------
   !

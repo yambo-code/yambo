@@ -22,7 +22,7 @@
 subroutine K_output_file(iq,mode)
  !
  use pars,      ONLY:pi,SP
- use units,     ONLY:HARTREE
+ use units,     ONLY:HA2EV
  use BS,        ONLY:BSS_description, BSS_uses_GreenF,BSS_Vnl_included,&
 &                    BSS_n_descs,BS_K_coupling,BS_K_is_ALDA,BSS_n_freqs,BSS_q0
  use X_m,       ONLY:X_epsilon,eval_alpha,eps_2_alpha,O_eels
@@ -110,7 +110,7 @@ subroutine K_output_file(iq,mode)
      !
      ! X_epsilon: 2 (int) 3 (non int) 4 (n-1 Haydock)
      !
-     output_data(1:5)=(/real(X_epsilon(1,iw))*HARTREE,aimag(X_epsilon(2,iw)),real(X_epsilon(2,iw)),&
+     output_data(1:5)=(/real(X_epsilon(1,iw))*HA2EV,aimag(X_epsilon(2,iw)),real(X_epsilon(2,iw)),&
 &              aimag(X_epsilon(3,iw)),real(X_epsilon(3,iw))/)
      !
      ! Haydock n-1 iteration
@@ -140,7 +140,7 @@ subroutine K_output_file(iq,mode)
        !
        ! EELS
        !
-       output_data(1:5)=(/real(X_epsilon(1,iw))*HARTREE,aimag(eels(1,iw)),real(eels(1,iw)),&
+       output_data(1:5)=(/real(X_epsilon(1,iw))*HA2EV,aimag(eels(1,iw)),real(eels(1,iw)),&
 &                aimag(eels(2,iw)),real(eels(2,iw))/)
        n_output_data=5
        if (mode==1) n_output_data=7
@@ -149,7 +149,7 @@ subroutine K_output_file(iq,mode)
        !
        ! ALPHA
        !
-       output_data(1:5)=(/real(X_epsilon(1,iw))*HARTREE,aimag(alpha(1,iw)),real(alpha(1,iw)),&
+       output_data(1:5)=(/real(X_epsilon(1,iw))*HA2EV,aimag(alpha(1,iw)),real(alpha(1,iw)),&
 &                aimag(alpha(2,iw)),real(alpha(2,iw))/)
        n_output_data=5
        if (mode==1) n_output_data=7

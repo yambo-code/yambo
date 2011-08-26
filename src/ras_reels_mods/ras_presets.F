@@ -21,7 +21,7 @@
 !
  subroutine ras_presets()
    use pars,                  only : SP, schlen
-   use units,                 only : HARTREE
+   use units,                 only : HA2EV
    use surface_geometry,      only : q0x, q0y, nlayers
    use analyse_peaks,         only : lAnalysePeaks
    use eels_kinematics,       only : E0, theta0_in, thetap_in, phi_in, bimp
@@ -62,7 +62,7 @@
    !
    ! mod_eels_kinematics
    !
-   E0  = 15.0/HARTREE
+   E0  = 15.0/HA2EV
    theta0_in  = 45.0
    thetap_in  =  0.0
    phi_in  =  0.0

@@ -21,7 +21,7 @@
 !
 subroutine CalcREELS(lossf, hw, surf_i, eps_b, nw, qpard)
   use pars,                 ONLY : schlen, SP,PI
-  use units,                ONLY : HARTREE
+  use units,                ONLY : HA2EV
   use surface_geometry
   use eels_kinematics
   use eels_detector

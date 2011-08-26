@@ -22,7 +22,7 @@
  subroutine ras_trans_ypp(en,k)
    use pars                    
    use YPP
-   use units,                   ONLY : HARTREE
+   use units,                   ONLY : HA2EV
    use com,                     ONLY : error, msg
    use stderr,       ONLY: intc
    use electrons,               ONLY : levels, n_sp_pol
@@ -68,7 +68,7 @@ integer :: db_nbm,db_nbf,db_nb(2),nb(2), nbm, ixyz, i_spin, ib, i1, nbf
    !
    live_timing_is_on=.false.
 
-   write(Ewindow,'(a,f4.2,a,f4.2,a)') "[",Ecv_min*HARTREE,":",Ecv_max*HARTREE,"]eV"
+   write(Ewindow,'(a,f4.2,a,f4.2,a)') "[",Ecv_min*HA2EV,":",Ecv_max*HA2EV,"]eV"
    write(sch,'(a)') " Analysing transitions in range "//Ewindow
    call msg('ns', trim(sch))
    write(sch,'(a,3f6.3)') " Polarization direction [cc]: ",qdir
@@ -100,7 +100,7 @@ integer :: db_nbm,db_nbf,db_nb(2),nb(2), nbm, ixyz, i_spin, ib, i1, nbf
            ntrans = ntrans + 1
            if(ntrans.gt.maxt) call error('Too many transitions in this range')
            trans_index(:,ntrans) = (/ik,iv,ic/)
-           trans_energy(ntrans)  = Ec_m_Ev*HARTREE
+           trans_energy(ntrans)  = Ec_m_Ev*HA2EV
            trans_value(ntrans)   = PP
 
 !          write(42,100) ik,iv,ic,Ec_m_Ev*HARTREE,PP

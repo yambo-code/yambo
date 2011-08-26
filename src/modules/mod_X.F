@@ -22,7 +22,7 @@
 module X_m
  !
  use pars,  ONLY:SP,lchlen,schlen
- use units, ONLY:HARTREE
+ use units, ONLY:HA2EV
  implicit none
  !
  ! Polarizability
@@ -185,7 +185,7 @@ module X_m
      X%whoami=0
      X%Vnl_included=.false.
      if (present(type)) X%whoami=type
-     X%ehe=(/-1.,-1./)/HARTREE
+     X%ehe=(/-1.,-1./)/HA2EV
      X%q0=(/1.,0.,0./)
      X%Wd=cmplx(0.,0.,SP)
      X%cg_percentual=100.

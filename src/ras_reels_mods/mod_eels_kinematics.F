@@ -22,7 +22,7 @@
 module eels_kinematics
 
   use pars,                   ONLY : schlen, SP, pi
-  use units,                  ONLY : HARTREE
+  use units,                  ONLY : HA2EV
 
   real(SP)                  :: theta0_in, thetap_in, thetas_in, phi_in
   real(SP)                  :: theta0, thetap, thetas, phi
@@ -50,7 +50,7 @@ contains
 
 subroutine init_kinematics(defs) ! only those common to RAS and REELS runlevels
   use pars,                  ONLY : SP
-  use units,                 ONLY : HARTREE
+  use units,                 ONLY : HA2EV
   use it_m,                  ONLY : it, initdefs, E_unit,G_unit,T_unit, V_general
   implicit none
   type(initdefs), intent(inout)  :: defs
@@ -78,7 +78,7 @@ end subroutine init_kinematics
 
     if(.not.present(where)) where = 'r'
     call msg('n'//where,'Kinematic settings for EELS calculation:')
-    call msg(where,'Incident  energy (eV)  :',E0*HARTREE )
+    call msg(where,'Incident  energy (eV)  :',E0*HA2EV )
     call msg(where,'Incident   angle (deg) :',theta0*fac )
     call msg(where,'Deflection angle (deg) :',thetap*fac )
     call msg(where,'Scattering angle (deg) :',thetas*fac )

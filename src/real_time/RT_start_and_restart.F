@@ -34,11 +34,11 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  ! [4] Initialize the bare Hartree and XC
  ! [5] Initialize the fields
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP,schlen,pi
  use drivers,        ONLY:l_sc_contains_lda
  use com,            ONLY:msg,warning,error
  use QP_m,           ONLY:QP_nk,COHSEX_use_empties
- use units,          ONLY:HARTREE,HBAR_eVfs
+ use units,          ONLY:HA2EV,HBAR_eVfs
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:G_lesser,ID,ID,NE_steps,G_lesser_previous,RT_ind_J,    &
@@ -140,7 +140,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    !
    call msg('snr','[RT] Restart from a Self-Consistent Calculation ')
    call msg('nr' ,'[RT] Found   accuracy on density      :',rho_convergence)
-   call msg('rn' ,'[RT]                  on energies [ev]:',E_convergence*HARTREE)
+   call msg('rn' ,'[RT]                  on energies [ev]:',E_convergence*HA2EV)
    !
    if ( E_convergence>0.01.and.rho_convergence>1e-4) &
 &    call warning(" Restart from a non-converged Self-Consistent calculation! ")
@@ -351,12 +351,12 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    RT_is_dumped=.true.
    call msg('snr','[RT] Dephasing read from QP database')
    write(dump_ch,'(a,f10.6,a,f10.6,a)') '[RT] Life-time range:' &
-&                               ,HBAR_eVfs/maxval(HARTREE*abs(Xen%W(SC_bands(1):SC_bands(2),:,1))),' - '&
-&                               ,HBAR_eVfs/minval(HARTREE*abs(Xen%W(SC_bands(1):SC_bands(2),:,1))),' [fs]'
+&                               ,HBAR_eVfs/maxval(HA2EV*abs(Xen%W(SC_bands(1):SC_bands(2),:,1))),' - '&
+&                               ,HBAR_eVfs/minval(HA2EV*abs(Xen%W(SC_bands(1):SC_bands(2),:,1))),' [fs]'
    call msg('snr',dump_ch)            
    write(dump_ch,'(a,f10.6,a,f10.6,a)') '[RT] Life-time range:' &
-&                                ,HARTREE*maxval(abs(Xen%W(SC_bands(1):SC_bands(2),:,1))),' - '&
-&                                ,HARTREE*minval(abs(Xen%W(SC_bands(1):SC_bands(2),:,1))),' [eV]'
+&                                ,HA2EV*maxval(abs(Xen%W(SC_bands(1):SC_bands(2),:,1))),' - '&
+&                                ,HA2EV*minval(abs(Xen%W(SC_bands(1):SC_bands(2),:,1))),' [eV]'
    call msg('snr',dump_ch)            
  endif
  !

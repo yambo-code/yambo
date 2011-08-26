@@ -22,7 +22,7 @@
 subroutine X_GreenF_remap(bands,E,W)
  !
  use pars,          ONLY:SP,pi
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use timing,        ONLY:live_timing
  use electrons,     ONLY:levels,n_sp_pol
  use frequency,     ONLY:w_samp,W_reset
@@ -113,7 +113,7 @@ subroutine X_GreenF_remap(bands,E,W)
        Ao=A_sign/pi*aimag(E%GreenF(i_b,i_k,i_spin,:))
        Ao(1)                  = (0.,0.)
        Ao(E%GreenF_n_E_steps) = (0.,0.)
-       zero_plus=cmplx(0.,0.00001/HARTREE)
+       zero_plus=cmplx(0.,0.00001/HA2EV)
        !
        call Kramers_Kronig(Ao,&
 &                          real(E%GreenF_W(i_b,i_k,i_spin,:)),E%GreenF_n_E_steps,&

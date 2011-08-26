@@ -29,7 +29,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  use drivers
  use pars,           ONLY:schlen,lchlen
- use units,          ONLY:HARTREE
+ use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,E_reset,n_sp_pol
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&
@@ -978,7 +978,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      X(2)%q0(:)=X(2)%q0(:)*q0_def_norm/v_norm(X(2)%q0)
      X(3)%q0(:)=X(3)%q0(:)*q0_def_norm/v_norm(X(3)%q0)
      X(4)%q0(:)=X(4)%q0(:)*q0_def_norm/v_norm(X(4)%q0)
-     if (l_em1s) Xw(2)%dr=0.001/HARTREE
+     if (l_em1s) Xw(2)%dr=0.001/HA2EV
      !
      if (len_trim(BS_cpl_mode)==0) BS_cpl_mode="none"
      if (len_trim(BS_res_mode)==0) BS_res_mode="none"
@@ -1202,10 +1202,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            SC_potential='COHSEX'
            call initactivate(1,'cohsex HF_and_locXC')
          else if ( trim(rstr_piece(i1+1)) == 'hf') then
-           SC_potential='HARTREE-FOCK'
+           SC_potential='HA2EV-FOCK'
            call initactivate(1,'HF_and_locXC')
          else if ( trim(rstr_piece(i1+1)) == 'h') then
-           SC_potential='HARTREE'
+           SC_potential='HA2EV'
          else if ( trim(rstr_piece(i1+1)) == 'd') then
            SC_potential='default'
          endif

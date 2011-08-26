@@ -25,7 +25,7 @@ subroutine write_loss( hw, nw, ipol )
   !
   use com,                    only : msg, of_open_close
   use pars,                   only : SP, schlen
-  use units,                  only : HARTREE
+  use units,                  only : HA2EV
   implicit none
   integer,          intent(in)    :: nw, ipol
   real(SP),         intent(in)    :: hw(nw)
@@ -43,7 +43,7 @@ subroutine write_loss( hw, nw, ipol )
   call of_open_close(of_name,'ot')
 
   do iw = 1, nw
-    od = (/ hw(iw)*HARTREE, &
+    od = (/ hw(iw)*HA2EV, &
 &           loss(1,iw), loss(2,iw), loss(3,iw), &
 &           loss(4,iw), loss(5,iw), loss(5,iw), &
 &           loss(5,iw) /)

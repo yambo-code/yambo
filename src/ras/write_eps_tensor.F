@@ -1,6 +1,6 @@
 subroutine write_eps_tensor( q0v, eps_i, hw, nw, npol, epstype ) 
   use pars,                  only : SP, schlen
-  use units,                 only : HARTREE
+  use units,                 only : HA2EV
   use com,                   only : msg, of_open_close
   use vec_operate,           only : v_norm
   implicit none
@@ -36,7 +36,7 @@ subroutine write_eps_tensor( q0v, eps_i, hw, nw, npol, epstype )
   call of_open_close(of_name,'oa')
   do iw = 1, nw
 
-    od(1:5) = (/ hw(iw) *HARTREE, &
+    od(1:5) = (/ hw(iw) *HA2EV, &
 &         aimag( eps_i(iw,1)), real( eps_i(iw, 1) ), &
 &         aimag( eps_i(iw,2)), real( eps_i(iw, 2) ) /)
     if(npol.eq.3) od(6:7) = (/ aimag( eps_i(iw, npol)), real( eps_i(iw, npol) ) /)

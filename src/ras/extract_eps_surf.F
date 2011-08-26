@@ -21,7 +21,7 @@
 !
 subroutine extract_eps_surf(surf_i, cell_i, npol, eps_b, nw, lbulkerr, lsurferr)
   use pars,                   ONLY : lchlen, schlen, SP
-  use units,                  ONLY : HARTREE
+  use units,                  ONLY : HA2EV
   use surface_geometry,       only : d_surf, az, nlcell, nlslab, nlbulk, lsymslab, d_vac
   use optcut,                 ONLY : loptcut, dc
   use com,                    ONLY : msg

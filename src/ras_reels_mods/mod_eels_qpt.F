@@ -24,7 +24,7 @@ module eels_qpt
   ! q-point manipulations for HREELS
   !
   use pars,             ONLY : lchlen, SP
-  use units,            ONLY : HARTREE
+  use units,            ONLY : HA2EV
   use com,              ONLY : msg
   use R_lattice,        ONLY : bz_samp
   use surface_geometry
@@ -99,7 +99,7 @@ contains
       if(hwq_ <= wmax) iqmax = min(i1+1,nqpar)
     enddo
 
-    write(lch1,102) "Requested range: min=", wmin*HARTREE," max=", wmax*HARTREE
+    write(lch1,102) "Requested range: min=", wmin*HA2EV," max=", wmax*HA2EV
     call msg('nr',trim(lch1))
     write(lch1,101) "iq ","iqpar","qpar","qpar","qpar","qGwx(eV)"
     write(lch2,'(5x,20("-"))') 
@@ -107,7 +107,7 @@ contains
     do i1=1,nqpar
       if(i1.eq.iqmin) call msg('r',trim(lch2),"-> iqmin <-----")
       q1(:) = qpar(i1,:)
-      write(lch1,100) i1,iqpar(i1),q1(:),qGwx(i1)*HARTREE
+      write(lch1,100) i1,iqpar(i1),q1(:),qGwx(i1)*HA2EV
       call msg('r',trim(lch1))
       if(i1.eq.iqmax) call msg('r',trim(lch2),"-> iqmax <-----")
     enddo

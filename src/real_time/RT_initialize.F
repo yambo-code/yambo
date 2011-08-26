@@ -24,7 +24,7 @@ subroutine RT_initialize(Xen)
  use drivers,        ONLY:l_collisions_IO
  use SC,             ONLY:local_V
  use pars,           ONLY:SP,pi
- use units,          ONLY:SPEED_OF_LIGHT,FS2AUT,HARTREE,HBAR_eVfs
+ use units,          ONLY:SPEED_OF_LIGHT,FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
  use com,            ONLY:msg,warning,error
  use vec_operate,    ONLY:normalize_v
  use electrons,      ONLY:nel,levels
@@ -40,7 +40,7 @@ subroutine RT_initialize(Xen)
 #endif
  use D_lattice,      ONLY:DL_vol
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,&
-&                         theta_function_iTo_ref,i_Pump,i_Probe,EtoT
+&                         theta_function_iTo_ref,i_Pump,i_Probe,EtoT,Efield_strength
  use parser_m,       ONLY:parser
  implicit none
  !
@@ -132,7 +132,7 @@ subroutine RT_initialize(Xen)
      !
      Efield(i1)%int_t_initial  =int(Efield(i1)%t_initial/RT_step)+1
      !
-     Efield(i1)%amplitude=sqrt(Efield(i1)%intensity*(8._SP*pi)/SPEED_OF_LIGHT) 
+     Efield(i1)%amplitude=Efield_strength(Efield(i1)%intensity,'AU')
      !
      call SC_check_symmetries(Efield(i1)%versor)
      !
@@ -168,7 +168,7 @@ subroutine RT_initialize(Xen)
  call msg( 'r', '[RT] Damping (QP)       [fs/meV]:',(/QP_LifeTime/FS2AUT,   HBAR_eVfs/QP_LifeTime*FS2AUT*1000./))
  if(NE_steps>0) then
    call msg('rn','[RT] Simulation time        [fs]:',(/-real(Thermal_steps)*RT_step,RT_step*real(NE_steps)/)/FS2AUT)
-   call msg('rn','[RT] Electron-gas plasma frequency [eV]:',sqrt(4._SP*pi*nel/DL_vol)*HARTREE)
+   call msg('rn','[RT] Electron-gas plasma frequency [eV]:',sqrt(4._SP*pi*nel/DL_vol)*HA2EV)
    !
    call msg( 'r','[RT] Simulate IP                :',l_NE_simulate_IP)
    call msg( 'r','[RT] Simulate RPA               :',l_NE_simulate_RPA)
@@ -177,7 +177,7 @@ subroutine RT_initialize(Xen)
    !
  endif
  call msg('r', '[RT] Pump/Probe periodicity     [fs]:',EtoT(E=maxval(Efield(:)%W_step))/FS2AUT)
- call msg('r', '[RT]            energy step     [eV]:',maxval(Efield(:)%W_step)*HARTREE)
+ call msg('r', '[RT]            energy step     [eV]:',maxval(Efield(:)%W_step)*HA2EV)
  !
  do i1=1,n_ext_fields
    !
@@ -185,9 +185,11 @@ subroutine RT_initialize(Xen)
    !
    MSG_ch="Pump"
    if (i1==i_Probe) MSG_ch="Probe"
-   call msg('r', '[RT] '//MSG_ch//' energy window        [eV]:',Efield(i1)%frequency*HARTREE)
+   call msg('r', '[RT] '//MSG_ch//' energy window        [eV]:',Efield(i1)%frequency*HA2EV)
    call msg('r', '[RT] '//MSG_ch//' elemental oscillation[fs]:',EtoT(E=Efield(i1)%frequency(2)-Efield(i1)%frequency(2))/FS2AUT)
    call msg('r', '[RT] '//MSG_ch//' energy steps             :',Efield(i1)%n_frequencies)
+   call msg('r', '[RT] '//MSG_ch//' electric field      [V/m]:',Efield(i1)%amplitude*AU2VMm1)
+   call msg('s', '[RT] '//MSG_ch//' electric field      [V/m]:',Efield(i1)%amplitude*AU2VMm1)
  enddo
  !
  ! Fluence

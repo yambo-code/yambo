@@ -24,7 +24,7 @@ subroutine RT_init_two_levels(Xen)
  use pars,           ONLY:SP,cI
  use fields,         ONLY:Efield,global_gauge
  use pars,           ONLY:pi,cI
- use units,          ONLY:HARTREE,FS2AUT,HBAR_eVfs
+ use units,          ONLY:HA2EV,FS2AUT,HBAR_eVfs
  use com,            ONLY:msg
  use X_m,            ONLY:DIP_iR,DIP_P
  use real_time,      ONLY:W_pump,Wo,Rabi_freq_pump,P,W_probe,Rabi_nn,D,Rabi_freq_probe,l_3levels,dip,W1,tau_offdiag
@@ -101,9 +101,9 @@ subroutine RT_init_two_levels(Xen)
        W_pump=Efield(i_Pump)%frequency(1)
    end select
    !
-   call msg('s','[3 LEVELS] Energy Levels [eV]',(/Wo*HARTREE,W1*HARTREE/))
+   call msg('s','[3 LEVELS] Energy Levels [eV]',(/Wo*HA2EV,W1*HA2EV/))
    call msg('s','[3 LEVELS] Pump Rabi freq[eV] ', &
-&           abs(2.*Efield(i_pump)%amplitude*sum(DIP_P(:,2,3,1,1)*Efield(i_pump)%versor(:))/W_pump/cI*HARTREE)) 
+&           abs(2.*Efield(i_pump)%amplitude*sum(DIP_P(:,2,3,1,1)*Efield(i_pump)%versor(:))/W_pump/cI*HA2EV)) 
    call msg('s','[3 LEVELS] Damping [eV] ',HBAR_eVfs/tau_offdiag(1:3)*FS2AUT)
    !
  else
@@ -128,10 +128,10 @@ subroutine RT_init_two_levels(Xen)
    !
    Rabi_freq_pump=2.*Efield(i_Pump)%amplitude*mu(i_Pump)
    !
-   call msg('s','[2 LEVELS] Wo              [eV   ]',abs(Wo)*HARTREE)
+   call msg('s','[2 LEVELS] Wo              [eV   ]',abs(Wo)*HA2EV)
    !
-   call msg('s','[2 LEVELS] Pump Rabi freq  [eV   ]',abs(Rabi_freq_pump)*HARTREE)
-   call msg('s','[2 LEVELS] Pump freq       [eV/fs]',(/abs(W_pump)*HARTREE,HBAR_eVfs/(W_pump*HARTREE) /))
+   call msg('s','[2 LEVELS] Pump Rabi freq  [eV   ]',abs(Rabi_freq_pump)*HA2EV)
+   call msg('s','[2 LEVELS] Pump freq       [eV/fs]',(/abs(W_pump)*HA2EV,HBAR_eVfs/(W_pump*HA2EV) /))
    W_probe=0.
    !
    if (i_Pump/=i_Probe) then
@@ -144,8 +144,8 @@ subroutine RT_init_two_levels(Xen)
      !
      Rabi_freq_probe=2.*Efield(i_Probe)%amplitude*mu(i_Probe)
      !
-     call msg('s','[2 LEVELS] Probe Rabi freq [eV   ]',abs(Rabi_freq_probe)*HARTREE)
-     call msg('s','[2 LEVELS] Probe freq      [eV/fs]',(/abs(W_probe)*HARTREE,HBAR_eVfs/(W_probe*HARTREE) /))
+     call msg('s','[2 LEVELS] Probe Rabi freq [eV   ]',abs(Rabi_freq_probe)*HA2EV)
+     call msg('s','[2 LEVELS] Probe freq      [eV/fs]',(/abs(W_probe)*HA2EV,HBAR_eVfs/(W_probe*HA2EV) /))
      !
      Rabi_nn(1,1)=4.*Efield(i_Pump)%amplitude*Efield(i_Pump)%amplitude*conjg(mu(i_Pump))*mu(i_Pump)
      Rabi_nn(1,2)=4.*Efield(i_Pump)%amplitude*Efield(i_Probe)%amplitude*conjg(mu(i_Pump))*mu(i_Probe)

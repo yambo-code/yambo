@@ -22,7 +22,7 @@
 subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  use pars,           ONLY:SP,schlen
- use units,          ONLY:HARTREE
+ use units,          ONLY:HA2EV
  use drivers,        ONLY:l_sc_cohsex,l_collisions_IO,l_sc_contains_lda
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin
  use R_lattice,      ONLY:bz_samp
@@ -360,7 +360,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      enddo
      !
      dumb_ch='[SC] Iteration '//trim(intc(it_now))//' Accuracies rho(%) - E(ev) :'//&
-&            trim(real2ch(rho_convergence))//'% - '//trim(real2ch(E_convergence*HARTREE))
+&            trim(real2ch(rho_convergence))//'% - '//trim(real2ch(E_convergence*HA2EV))
      if (l_sc_contains_lda.and. local_V) dumb_ch=trim(dumb_ch)//'  E_tot(Ha)= '//trim(real2ch(E_total))
 #if defined _MAGNETIC
      if(n_sp_pol>1) dumb_ch=trim(dumb_ch)//'  (Mz='//trim(real2ch(average_el_mag(3)))//')'
@@ -420,7 +420,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    call msg('nr','[SC] Iterations               :',it_now)
    call msg('r' ,'[SC] Accuracy on density      :',rho_convergence)
-   call msg('r' ,'[SC]          on energies [ev]:',E_convergence*HARTREE)
+   call msg('r' ,'[SC]          on energies [ev]:',E_convergence*HA2EV)
    if (l_sc_contains_lda.and. local_V) then
      call msg('r' ,'[SC] Total Energy (no Ewald) [Ha/Ry]:',E_total*(/1.,2./))
      call msg('r' ,'[SC] Hartree Energy          [Ha/Ry]:',E_tot_Hartree*(/1.,2./))
@@ -533,7 +533,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
          !
          ! Check for degenrate bands in the bare energies
          !
-         call degeneration_finder(E_bare(:,ik,i_spin),SC_bands(2),first_el,n_of_el,n_deg_grp,0.0001/HARTREE)
+         call degeneration_finder(E_bare(:,ik,i_spin),SC_bands(2),first_el,n_of_el,n_deg_grp,0.0001/HA2EV)
          !
          do ib=1,SC_bands(2)
            !
@@ -554,7 +554,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
            ! simmetrize the spreads summing over all possible degenerate
            ! bands
            !
-           forall (ibp=1:SC_bands(2)) WS_spread(ibp)=abs(SC_R(ibp,ib,ik,i_spin))**2.*100./HARTREE
+           forall (ibp=1:SC_bands(2)) WS_spread(ibp)=abs(SC_R(ibp,ib,ik,i_spin))**2.*100./HA2EV
            !
            ibp=b_of_max_proj(ib,ik,i_spin)
            spread(ib,ik,i_spin)=WS_spread( ibp )
@@ -588,13 +588,13 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      do ik=1,k%nibz
        call REPORT_Energies(E%E(:SC_bands(2),:,:),k,Xk,SC_bands(2),(/ik,ik/),'E  ',.TRUE.)
 #if defined _MAGNETIC
-       call REPORT_Energies(E%f(:SC_bands(2),:,:)/HARTREE,k,Xk,SC_bands(2),(/ik,ik/),'occ',.FALSE.)
+       call REPORT_Energies(E%f(:SC_bands(2),:,:)/HA2EV,k,Xk,SC_bands(2),(/ik,ik/),'occ',.FALSE.)
 #else
        call REPORT_Energies(E_bare,k,Xk,SC_bands(2),(/ik,ik/),'E_o',.FALSE.)
        call REPORT_Energies(dE,k,Xk,SC_bands(2),(/ik,ik/),'d_E',.FALSE.)
        call REPORT_Energies(spread,k,Xk,SC_bands(2),(/ik,ik/),'Spr',.FALSE.)
-       call REPORT_Energies(max_overlap/HARTREE,k,Xk,SC_bands(2),(/ik,ik/),'MxO',.FALSE.)
-       call REPORT_Energies(real(b_of_max_proj)/HARTREE,k,Xk,SC_bands(2),(/ik,ik/),'Bnd',.FALSE.)
+       call REPORT_Energies(max_overlap/HA2EV,k,Xk,SC_bands(2),(/ik,ik/),'MxO',.FALSE.)
+       call REPORT_Energies(real(b_of_max_proj)/HA2EV,k,Xk,SC_bands(2),(/ik,ik/),'Bnd',.FALSE.)
 #endif
      enddo
      !

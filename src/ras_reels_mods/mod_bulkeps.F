@@ -25,7 +25,7 @@ module bulkeps
   ! the bulk dielectric function
   !
   use pars,                 ONLY : schlen, lchlen, SP, PI
-  use units,                ONLY : HARTREE
+  use units,                ONLY : HA2EV
   save
   private
 
@@ -141,7 +141,7 @@ end subroutine init_bulk
       if(trim(btype).eq."3KK") read(un,*,err=999, end=999) hwin(i),dum,e2in(i)
       if(trim(btype).eq."3ri") read(un,*,err=999, end=999) hwin(i), e1in(i), e2in(i)
       if(trim(btype).eq."3ir") read(un,*,err=999, end=999) hwin(i), e2in(i), e1in(i)
-      hwin(i) = hwin(i)/HARTREE
+      hwin(i) = hwin(i)/HA2EV
 !     write(73,*) hwin(i)*HARTREE,e2in(i),e1in(i)
     enddo
     close(un)
@@ -209,15 +209,15 @@ end subroutine init_bulk
 !   !
     open(unit=81,file = "bulk.out")
     do i = 1, nw
-      write(81,102) hw(i)*HARTREE, real(eps_b(i)), AIMAG(eps_b(i))
+      write(81,102) hw(i)*HA2EV, real(eps_b(i)), AIMAG(eps_b(i))
     enddo
     close(81)
     !
     !   Successful generation of bulk data
     !
     write(errmsg,103) 'Processed ',nw,' data [',&
-&   hw(1)*HARTREE,'-',hw(nw)*HARTREE,'eV] from',nline,' records [',&
-&   hwin(1)*HARTREE,'-',hwin(nline)*HARTREE,'eV]'
+&   hw(1)*HA2EV,'-',hw(nw)*HA2EV,'eV] from',nline,' records [',&
+&   hwin(1)*HA2EV,'-',hwin(nline)*HA2EV,'eV]'
     return
 
 102   format(f8.3,2f9.4)
@@ -317,15 +317,15 @@ end subroutine init_bulk
 !   ! 
     open(unit=81,file = "bulk.out")
     do i = 1, nw
-      write(81,102) hw(i)*HARTREE, real(eps_b(i)), AIMAG(eps_b(i))
+      write(81,102) hw(i)*HA2EV, real(eps_b(i)), AIMAG(eps_b(i))
     enddo
     close(81)
     !
     !   Successful generation of bulk data
     !
     write(errmsg,103) 'Processed ',nw,' data [',&
-&   hw(1)*HARTREE,'-',hw(nw)*HARTREE,'eV] from',nline,' records [',&
-&   hwin(1)*HARTREE,'-',hwin(nline)*HARTREE,'eV]'
+&   hw(1)*HA2EV,'-',hw(nw)*HA2EV,'eV] from',nline,' records [',&
+&   hwin(1)*HA2EV,'-',hwin(nline)*HA2EV,'eV]'
     return
 
 102   format(f8.3,2f9.4)

@@ -55,7 +55,7 @@
    call io_elemental(io_db,VAR="PARS",VAR_SZ=sec_size,MENU=0)
    call io_elemental(io_db,DB_I1=db_nb,&
 &       VAR=" X band range           :",I1=X%ib,CHECK=.true.,OP=(/">=","<="/))
-   call io_elemental(io_db,UNIT=HARTREE,&
+   call io_elemental(io_db,UNIT=HA2EV,&
 &       VAR=" X e/h energy range [ev]:",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/))
    call io_elemental(io_db,DB_I0=db_nspin,&
 &       VAR=" Spin multiplicity      :",I0=n_spin,CHECK=.true.,OP=(/"=="/))

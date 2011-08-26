@@ -22,7 +22,7 @@
 module fields
  !
  use pars, ONLY:SP,schlen,lchlen,pi
- use units,ONLY:HARTREE,FS2AUT,HBAR_eVfs
+ use units,ONLY:HA2EV,FS2AUT,HBAR_eVfs
  !
  implicit none
  !
@@ -87,8 +87,8 @@ module fields
    real(SP) function EtoT(E,T)
      real(SP), optional ::T
      real(SP), optional ::E
-     if (present(T)) EtoT=2._SP*pi*HBAR_eVfs/(T*HARTREE)*FS2AUT
-     if (present(E)) EtoT=2._SP*pi*HBAR_eVfs/(E*HARTREE)*FS2AUT
+     if (present(T)) EtoT=2._SP*pi*HBAR_eVfs/(T*HA2EV)*FS2AUT
+     if (present(E)) EtoT=2._SP*pi*HBAR_eVfs/(E*HA2EV)*FS2AUT
    end function
    !
    real(SP) function field_frequency(E_field,i_f)
@@ -285,6 +285,81 @@ module fields
        end select
        !
    end function Divide_by_Field
+   !
+   real(SP) function Efield_strength(Intensity,unit_system)
+     ! 
+     ! From Octopus ( http://www.tddft.org/programs/octopus )
+     !
+     ! It is very common to describe the strength of a laser field by it intensity, 
+     ! rather than using the electric field amplitude. In atomic units, the relationship 
+     ! between instantaneous electric field and intensity is:
+     !
+     ! I(t) = \frac{c}{8\pi} E^2(t)
+     !
+     ! It is common to read intensities in kW cm^-2. The dimensions of intensities are [W]/(L^2T), 
+     ! where [W] are the dimensions of energy. The relevant conversion factors are:
+     !
+     ! Hartree / (a_0^2 atomic_time) = 6.4364086e+15 W / cm^2 = 6.4364086e+12 kW / cm^2
+     !
+     ! In Yambo AU2KWCMm2=6.4364086e+12
+     !
+     !--------------------------------------------------------------------------------------------
+     !
+     ! This simple function uses the formula valid in SI and CGS to extract 
+     ! the Field intensity given in au
+     !
+     use units,ONLY:AU2KWCMm2,SPEED_OF_LIGHT_SI,FREE_SPACE_PERM,VMm12AU,WMm22KWCMm2,&
+&                   WMm22ERGCMm2SECm1,SVCMm12VMm1,SPEED_OF_LIGHT
+     implicit none
+     !
+     real(SP)     :: Intensity
+     character(*) :: unit_system
+     !
+     ! Work Space
+     !
+     real(SP) :: SPEED,I
+     !
+     ! From Boyd, "Non linear optics", 3rd edition, page 602,603
+     !
+     ! Assuming n=1 (epsilon=1)
+     !
+     if (unit_system=="SI") then
+       !
+       I=Intensity*AU2KWCMm2/WMm22kWCMm2
+       !
+       SPEED=SPEED_OF_LIGHT_SI
+       !
+       ! I = 2 FREE_SPACE_PERM SPEED_OF_LIGHT |E|^2 
+       !
+       Efield_strength= sqrt(I/2./FREE_SPACE_PERM/SPEED)*VMm12AU
+       !
+     endif
+     !
+     if (unit_system=="CGS") then
+       !
+       I=Intensity*AU2KWCMm2/WMm22kWCMm2/WMm22ERGCMm2SECm1
+       !
+       SPEED=SPEED_OF_LIGHT_SI*100. ! cm/sec
+       !
+       ! I = SPEED_OF_LIGHT/2/pi |E|^2 
+       !
+       Efield_strength= sqrt(I*2.*pi/SPEED)*SVCMm12VMm1*VMm12AU
+       !
+     endif
+     !
+     if (unit_system=="AU") then
+       !
+       I=Intensity
+       !
+       SPEED=SPEED_OF_LIGHT
+       !
+       ! I = SPEED_OF_LIGHT/8/pi |E|^2 
+       !
+       Efield_strength= sqrt(I*2.*pi/SPEED)
+       !
+     endif
+     !
+   end function
    !
    ! GPL_EXCLUDE_END
    !

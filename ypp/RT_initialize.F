@@ -26,7 +26,7 @@ subroutine RT_initialize(dump_and_write)
 &                         N_pumps,l_skip_pol_and_curr_IO
  use com,            ONLY:msg
  use pars,           ONLY:pi,SP
- use units,          ONLY:FS2AUT,HARTREE
+ use units,          ONLY:FS2AUT,HA2EV
  use stderr,         ONLY:real2ch
  use real_time,      ONLY:NE_steps,RT_step,RT_ind_J,RT_output,RT_P,RT_P_2levels
  use fields,         ONLY:Efield,i_Probe
@@ -86,7 +86,7 @@ subroutine RT_initialize(dump_and_write)
    ! has be applied also the initial part otherwise 
    ! there will problems doing FFT for the non-zero starting point 
    !
-   call msg('r','[RT] Optimal damping factor: '//trim(real2ch(W_RT_induced_step*HARTREE))//' eV')
+   call msg('r','[RT] Optimal damping factor: '//trim(real2ch(W_RT_induced_step*HA2EV))//' eV')
    !
    call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_J_t(i_t_start:i_t_end,:),RED_steps,RT_step,3)
    call RT_damp_it(X_rt%damp,X_rt%damp_factor,RT_P_t(i_t_start:i_t_end,:),RED_steps,RT_step,6)

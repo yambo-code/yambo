@@ -22,7 +22,7 @@
 logical function O_eels(wv,nw,be_verbose,ordering,eps,eel)
  ! 
  use pars,          ONLY:SP,pi
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use com,           ONLY:warning
  implicit none
  !
@@ -65,13 +65,13 @@ logical function O_eels(wv,nw,be_verbose,ordering,eps,eel)
  eps_kk(1)      =(0.,0.)
  eps_kk(nw)     =(0.,0.)
  eps_extended   =(0.,0.)
- call Kramers_Kronig(eps_kk,real(wv),nw,eps_extended,real(wv)+(0.,0.0001)/HARTREE,nw,(0.,0.))
+ call Kramers_Kronig(eps_kk,real(wv),nw,eps_extended,real(wv)+(0.,0.0001)/HA2EV,nw,(0.,0.))
  !
  forall(iw=1:nw) eps_kk(iw)=1./pi*aimag(eps(nw-iw+1))
  forall(iw=1:nw) wv_kk(iw)=-wv(nw-iw+1)
  eps_kk(1)      =(0.,0.)
  eps_kk(nw)     =(0.,0.)
- call Kramers_Kronig(eps_kk,real(wv_kk),nw,eps_extended,real(wv)+(0.,0.0001)/HARTREE,nw,(0.,0.))
+ call Kramers_Kronig(eps_kk,real(wv_kk),nw,eps_extended,real(wv)+(0.,0.0001)/HA2EV,nw,(0.,0.))
  !
  eel=-1./(eps_extended+1.)
  !

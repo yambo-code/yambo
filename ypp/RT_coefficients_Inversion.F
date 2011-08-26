@@ -23,7 +23,7 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period,use_LRR)
  !
  use pars,            ONLY:SP,cI,pi
  use YPP,             ONLY:i_t_start,X_order
- use units,           ONLY:FS2AUT,HARTREE,HBAR_eVfs
+ use units,           ONLY:FS2AUT,HA2EV,HBAR_eVfs
  use real_time,       ONLY:RT_step,NE_steps
  use matrix_operate,  ONLY:mat_dia_inv,INV,USE_LK
  implicit none

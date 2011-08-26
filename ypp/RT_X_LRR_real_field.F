@@ -28,7 +28,7 @@ subroutine RT_X_LRR_real_field(en)
  use YPP,            ONLY:RT_P_t,X_rt,Use_FFT,W_RT_induced_step, &
 &                         i_t_start,i_t_end,RED_steps,l_force_min_damp
  use pars,           ONLY:SP,DP,pi,cI
- use units,          ONLY:HARTREE
+ use units,          ONLY:HA2EV
  use electrons,      ONLY:levels
  use memory_m,       ONLY:mem_est
  use real_time,      ONLY:RT_step,RT_output,RT_P,NE_steps,P_2levels_is_done
@@ -188,9 +188,9 @@ subroutine RT_X_LRR_real_field(en)
    !
    W_reached = real(freqs(i_w))
    call RT_output('eps',VALUEs=(/ aimag(EPS(i_w,1)),real(EPS(i_w,1)),&
-&                          aimag(EPS(i_w,2)),real(EPS(i_w,2))/),E=W_reached*HARTREE)
+&                          aimag(EPS(i_w,2)),real(EPS(i_w,2))/),E=W_reached*HA2EV)
    call RT_output('eel',VALUEs=(/-aimag(EELS(i_w,1)),real(EELS(i_w,1)),&
-&                         -aimag(EELS(i_w,2)),real(EELS(i_w,2))/),E=W_reached*HARTREE)
+&                         -aimag(EELS(i_w,2)),real(EELS(i_w,2))/),E=W_reached*HA2EV)
    !
  enddo
  call RT_output("close eps eel")

@@ -22,7 +22,7 @@
 subroutine QP_of(qp,en,QPdb_read_err)
  !
  use pars,      ONLY:SP,lchlen,schlen
- use units,     ONLY:HARTREE,HBAR_eVfs
+ use units,     ONLY:HA2EV,HBAR_eVfs
  use drivers,   ONLY:l_life,l_ph_corr
  use com,       ONLY:msg,of_open_close
  use electrons, ONLY:levels,spin,n_sp_pol
@@ -130,21 +130,21 @@ subroutine QP_of(qp,en,QPdb_read_err)
      qp_isp=spin(QP_table(i1,:))
      !
      if (.not.l_life) then
-       if (report_Sc) values(2)=real(QP_Sc(i1,1))*HARTREE
+       if (report_Sc) values(2)=real(QP_Sc(i1,1))*HA2EV
        if (report_dSc) then
-         values(7:8)=(/real(QP_dSc(i1,1)),real((qp%E(i1)-qp%E_bare(i1))*HARTREE)/) 
-         values(3  )=real(QP_Sc(i1,1)+QP_dSc(i1,1)*(qp%E(i1)-qp%E_bare(i1)))*HARTREE
+         values(7:8)=(/real(QP_dSc(i1,1)),real((qp%E(i1)-qp%E_bare(i1))*HA2EV)/) 
+         values(3  )=real(QP_Sc(i1,1)+QP_dSc(i1,1)*(qp%E(i1)-qp%E_bare(i1)))*HA2EV
        else
-         values(8)=real(qp%E(i1)-qp%E_bare(i1))*HARTREE
+         values(8)=real(qp%E(i1)-qp%E_bare(i1))*HA2EV
        endif
        if (report_Vnlxc) then
-         values(1)=real(QP_Vxc(i1))*HARTREE
-         values(11)=real(QP_Vnl_xc(i1))*HARTREE
+         values(1)=real(QP_Vxc(i1))*HA2EV
+         values(11)=real(QP_Vnl_xc(i1))*HA2EV
        endif
      endif
-     values(4:6)=(/qp%E_bare(i1)*HARTREE,real(qp%E(i1)*HARTREE),real(qp%Z(i1))/)
+     values(4:6)=(/qp%E_bare(i1)*HA2EV,real(qp%E(i1)*HA2EV),real(qp%Z(i1))/)
      values(9:10)=(/real(qp_k),real(qp_b)/)
-     values(12:13)=(/aimag(qp%E(i1)*HARTREE/1.E-3),HBAR_eVfs/aimag(qp%E(i1))/HARTREE/)
+     values(12:13)=(/aimag(qp%E(i1)*HA2EV/1.E-3),HBAR_eVfs/aimag(qp%E(i1))/HA2EV/)
      if (qp_isp==1) values(14)= 1.
      if (qp_isp==2) values(14)=-1.
      if (aimag(qp%E(i1))==0.) values(12:13)=0.
@@ -183,12 +183,12 @@ subroutine QP_of(qp,en,QPdb_read_err)
      call msg('o G_Sc','#')
      do i2=1,QP_Sc_steps
        values=0.
-       values(1)  =real(qp%GreenF_W(i1,i2))*HARTREE
-       values(2:3)=(/real(qp%GreenF(i1,i2)),aimag(qp%GreenF(i1,i2))/)/HARTREE
-       values(4:5)=(/real(qp%S_total(i1,i2)),aimag(qp%S_total(i1,i2))/)*HARTREE
+       values(1)  =real(qp%GreenF_W(i1,i2))*HA2EV
+       values(2:3)=(/real(qp%GreenF(i1,i2)),aimag(qp%GreenF(i1,i2))/)/HA2EV
+       values(4:5)=(/real(qp%S_total(i1,i2)),aimag(qp%S_total(i1,i2))/)*HA2EV
        values(6)=values(4)
        if (report_Vnlxc) then
-         values(6)=values(6)-real(QP_Vnl_xc(i1)-QP_Vxc(i1))*HARTREE
+         values(6)=values(6)-real(QP_Vnl_xc(i1)-QP_Vxc(i1))*HA2EV
          call msg('o G_Sc','',values(:6),INDENT=-2,USE_TABS=.TRUE.)
        else
          call msg('o G_Sc','',values(:5),INDENT=-2,USE_TABS=.TRUE.)

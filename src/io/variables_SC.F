@@ -22,7 +22,7 @@
 integer function variables_SC(ID,local_description,what)
  !
  use pars,           ONLY:lchlen
- use units,          ONLY:AU2Tesla,radian,FS2AUT,W2Au,HARTREE
+ use units,          ONLY:AU2Tesla,DEG2RAD,FS2AUT,AU2KWCMm2,HA2EV
  use D_lattice,      ONLY:atoms_string
  use stderr,         ONLY:intc
  use QP_m,           ONLY:SC_band_mixing,COHSEX_use_empties
@@ -202,11 +202,11 @@ integer function variables_SC(ID,local_description,what)
    !
    if (ver_is_gt_or_eq(ID,revision=492)) then
      i_desc=i_desc+1
-     call io_elemental(ID,UNIT=(1./radian),R0=MAG_theta,& 
+     call io_elemental(ID,UNIT=(1./DEG2RAD),R0=MAG_theta,& 
 &         VAR=' [MAG] B theta angle    [degrees]:',CHECK=.true.,OP=(/"=="/),&
 &         DESCRIPTION=local_description(i_desc))
      i_desc=i_desc+1
-     call io_elemental(ID,UNIT=(1./radian),R0=MAG_psi,& 
+     call io_elemental(ID,UNIT=(1./DEG2RAD),R0=MAG_psi,& 
 &         VAR=' [MAG] B psi angle      [degrees]:',CHECK=.true.,OP=(/"=="/),&
 &         DESCRIPTION=local_description(i_desc))
    endif
@@ -345,8 +345,8 @@ integer function variables_SC(ID,local_description,what)
 &       DESCRIPTION=local_description(i_desc))
        i_desc=i_desc+1
        call io_elemental(ID,&
-&       VAR=" [FIELDs] Intensity       [kWLm2]:",R0=Efield(i1)%intensity,CHECK=.true.,OP=(/"=="/),&
-&       DESCRIPTION=local_description(i_desc),UNIT=1./W2Au)
+&       VAR=" [FIELDs] Intensity      [kWCMm2]:",R0=Efield(i1)%intensity,CHECK=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc),UNIT=AU2KWCMm2)
        i_desc=i_desc+1
        call io_elemental(ID,&
 &       VAR=" [FIELDs] Damping            [fs]:",R0=Efield(i1)%damping,CHECK=.true.,OP=(/"=="/),&
@@ -355,7 +355,7 @@ integer function variables_SC(ID,local_description,what)
        if (ver_is_gt_or_eq(ID,revision=846)) then
          call io_elemental(ID,&
 &         VAR=" [FIELDs] Frequency range    [eV]:",R1=Efield(i1)%frequency,CHECK=.true.,OP=(/"==","=="/),&
-&         DESCRIPTION=local_description(i_desc),UNIT=HARTREE)
+&         DESCRIPTION=local_description(i_desc),UNIT=HA2EV)
           i_desc=i_desc+1
          call io_elemental(ID,&
 &         VAR=" [FIELDs] Frequency steps        :",I0=Efield(i1)%n_frequencies,CHECK=.true.,OP=(/"=="/),&
@@ -364,12 +364,12 @@ integer function variables_SC(ID,local_description,what)
             i_desc=i_desc+1
             call io_elemental(ID,&
 &            VAR=" [FIELDs] Frequency step     [eV]:",R0=Efield(i1)%W_step,CHECK=.true.,OP=(/"=="/),&
-&            DESCRIPTION=local_description(i_desc),UNIT=HARTREE)
+&            DESCRIPTION=local_description(i_desc),UNIT=HA2EV)
           endif
        else
          call io_elemental(ID,&
 &         VAR=" [FIELDs] Frequency          [eV]:",R0=Efield(i1)%frequency(1),CHECK=.true.,OP=(/"=="/),&
-&         DESCRIPTION=local_description(i_desc),UNIT=HARTREE)
+&         DESCRIPTION=local_description(i_desc),UNIT=HA2EV)
        endif
        i_desc=i_desc+1
        call io_elemental(ID,R0=Efield(i1)%t_initial,&

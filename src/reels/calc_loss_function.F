@@ -21,7 +21,7 @@
 !
 subroutine calc_loss_function(ipol, Xen, Xk, X, q, wq)
   use pars,                    only : SP, lchlen 
-  use units,                   ONLY : HARTREE
+  use units,                   ONLY : HA2EV
   use memory_m,                only : mem_est
   use com,                     only : msg
   Use electrons,               only : levels
@@ -122,7 +122,7 @@ subroutine calc_loss_function(ipol, Xen, Xk, X, q, wq)
 
     write(*,*) "call average epsm1"
     call average_epsm1_q(epsm1_av, iq, Xen, Xk, X, q, wq)
-    write(*,*) "call average epsm1 done",wq%p(1)*HARTREE
+    write(*,*) "call average epsm1 done",wq%p(1)*HA2EV
     ! The correct grid should now be in wq!
     !
     if(lanalytical)      call calc_loss_analytical(lossqw,iq,epsm1_av)
@@ -175,7 +175,7 @@ contains
 subroutine write_loss_sec( imode )
   use com,                    only : msg, of_open_close
   use pars,                   only : schlen, lchlen
-  use units,                  only : HARTREE 
+  use units,                  only : HA2EV 
   use eels_wgrid,             only : hwqgrid
 ! use reels_module,           only : npol
   use surface_geometry,       only : qname
@@ -225,7 +225,7 @@ subroutine write_loss_sec( imode )
 
     call of_open_close(of_name,'oa')
     do iw = 1, nwsec
-      od(1:5) = (/ hw(iw)*HARTREE, &
+      od(1:5) = (/ hw(iw)*HA2EV, &
 &             lossqw(1,iw), lossqw(2,iw), lossqw(3,iw), &
 &             lossqw(4,iw) /)
       call msg('o reels_sec','',od(1:5), INDENT=0, USE_TABS=.true.)

@@ -25,7 +25,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  use pars,          ONLY:SP
  use wrapper,       ONLY:V_by_V_plus_V,V_copy
- use units,         ONLY:HARTREE
+ use units,         ONLY:HA2EV
  use collision,     ONLY:ggwinfo,collision_reset
  use timing,        ONLY:live_timing
  use com,           ONLY:msg
@@ -125,7 +125,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
  if ( Drude_term ) then
    !
-   call msg('nrs','[X] Drude contribution @[ev]:',(/real(X%Wd),aimag(X%Wd)/)*HARTREE)
+   call msg('nrs','[X] Drude contribution @[ev]:',(/real(X%Wd),aimag(X%Wd)/)*HA2EV)
    !
    ! drude_factor is the eh_occ factor calculated in the Xo loop
    ! evaluated at the fermi state

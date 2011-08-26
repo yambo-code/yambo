@@ -25,7 +25,7 @@ subroutine average_epsm1_q(epsm1_av, iq, Xen, Xk, X, q, wq)
   !
   use X_m,                     only : X_t
   use pars,                    only : SP
-  use units,                   only : HARTREE
+  use units,                   only : HA2EV
   use R_lattice,               only : bz_samp
   use frequency,               only : w_samp
   use electrons,               only : levels

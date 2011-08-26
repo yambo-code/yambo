@@ -24,7 +24,7 @@ module eels_gvec
   ! G vector manipulation for HREELS code
   !
   use pars,             ONLY : lchlen, SP
-  use units,            ONLY : HARTREE
+  use units,            ONLY : HA2EV
   use com,              ONLY : msg
   use surface_geometry
   use eels_qpt

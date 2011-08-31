@@ -112,10 +112,10 @@ module UNITS
  ! Electric fields and current
  !=============================
  !
- ! NOTE that in the S.I. the unit for the electric field is V/mm. statV/cm is the unit
+ ! NOTE that in the S.I. the unit for the electric field is V/m. statV/cm is the unit
  ! of E fields in C.G.S (Gaussian units)
  !
- real(SP), parameter :: SVCMm12VMm1=29.98E3_SP                  !  from [statV/cm] to [V/mm]
+ real(SP), parameter :: SVCMm12VMm1=29.98E3_SP                  !  from [statV/cm] to [V/m]
  real(SP), parameter :: VMm12SVCMm1 =1./SVCMm12VMm1
  real(SP), parameter :: AU2nAmpere =6.62361782E6_SP             !  [nano-Ampere]
  ! 

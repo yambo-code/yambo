@@ -34,6 +34,7 @@ subroutine XCo_local(E,Xk)
  use xc_functionals,ONLY:two_spin_density
  ! GPL_EXCLUDE_END  SPIN_IGNORE
  use global_XC,     ONLY:WF_kind,WF_xc_functional
+ use wrapper,       ONLY:Vstar_dot_V
 #if defined _SC
  use com,           ONLY:error
  use IO_m,          ONLY:REP,VERIFY
@@ -47,11 +48,6 @@ subroutine XCo_local(E,Xk)
  ! Work Space
  !
  integer     ::i1,ifft,ifftp,ifft_sp1,ifftp_sp1,ifft_sp2,ib,ibp,ik,i_sp1
-#if defined _DOUBLE
- complex(DP) ::zdotc
-#else 
- complex(SP) ::cdotc
-#endif
  complex(SP) ::c_ws(fft_size,n_spin)
  !
  ! Spin support (collinear and not collinear)
@@ -117,11 +113,7 @@ subroutine XCo_local(E,Xk)
      ifftp=wf_state(ibp,ik,1)
      c_ws(:,1)=V_xc(:,1)*wf(:,ifftp)
      !
-#if defined _DOUBLE
-     QP_Vxc(i1)=zdotc(fft_size,wf(:,ifft),1,c_ws(:,1),1)
-#else 
-     QP_Vxc(i1)=cdotc(fft_size,wf(:,ifft),1,c_ws(:,1),1)
-#endif
+     QP_Vxc(i1)=Vstar_dot_V(fft_size,wf(:,ifft),c_ws(:,1))
      !
    enddo
    !
@@ -189,11 +181,7 @@ subroutine XCo_local(E,Xk)
        !
        c_ws(:,1)=wf(:,ifftp_sp1)*V_xc_mat(:,i_sp1,i_sp1)
        !
-#if defined _DOUBLE
-       QP_Vxc(i1)=zdotc(fft_size,wf(:,ifft_sp1),1,c_ws(:,1),1)
-#else 
-       QP_Vxc(i1)=cdotc(fft_size,wf(:,ifft_sp1),1,c_ws(:,1),1)
-#endif
+       QP_Vxc(i1)=Vstar_dot_V(fft_size,wf(:,ifft_sp1),c_ws(:,1))
        !
      else
        !
@@ -203,13 +191,8 @@ subroutine XCo_local(E,Xk)
        c_ws(:,1)=V_xc_mat(:,1,1)*wf(:,ifft_sp1)+V_xc_mat(:,1,2)*wf(:,ifft_sp2)
        c_ws(:,2)=V_xc_mat(:,2,1)*wf(:,ifft_sp1)+V_xc_mat(:,2,2)*wf(:,ifft_sp2)
        !
-#if defined _DOUBLE
-       QP_Vxc(i1)=zdotc(fft_size,wf(:,ifft_sp1),1,c_ws(:,1),1)+&
-&                 zdotc(fft_size,wf(:,ifft_sp2),1,c_ws(:,2),1)
-#else 
-       QP_Vxc(i1)=cdotc(fft_size,wf(:,ifft_sp1),1,c_ws(:,1),1)+&
-&                 cdotc(fft_size,wf(:,ifft_sp2),1,c_ws(:,2),1)
-#endif
+       QP_Vxc(i1)=Vstar_dot_V(fft_size,wf(:,ifft_sp1),c_ws(:,1))+&
+&                 Vstar_dot_V(fft_size,wf(:,ifft_sp2),c_ws(:,2))
        !
      endif
      !

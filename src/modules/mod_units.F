@@ -142,4 +142,12 @@ module UNITS
  real(SP), parameter  :: kWCMm22AU=1E7*J2AU/(M2AU**2 * SEC2AU)  ! kW/cm^2 = kWCMm22AU * AU
  real(SP), parameter  :: AU2KWCMm2=1./kWCMm22AU                 ! AU      = AU2KWCMm2 kW/cm^2
  !
+ !
+ ! Computer Units
+ ! ===============
+ !
+ real(SP), parameter  :: Kilobyte = 1024._SP
+ real(SP), parameter  :: Megabyte = 1048576._SP
+ real(SP), parameter  :: Gigabyte = 1073741824._SP
+ !
 end module 

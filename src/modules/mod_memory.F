@@ -45,6 +45,7 @@ module memory_m
      use drivers,      ONLY:infile_editing
      use com,          ONLY:msg,error,warning
      use par_proc_m,   ONLY:master_cpu
+     use units,        ONLY:Gigabyte
      character(*)         :: what
      integer,optional     :: elements_size(:)
      integer,optional     :: elements_kind(:)
@@ -81,7 +82,7 @@ module memory_m
          mem_element(i2)=trim(input_name(i1))
          local_kind=preset_kind
          if (present(elements_kind)) local_kind=elements_kind(i1)
-         mem_element_size(i2)=mem_element_size(i2)+real(elements_size(i1))*real(local_kind)/1.E9
+         mem_element_size(i2)=mem_element_size(i2)+real(elements_size(i1))*real(local_kind)/Gigabyte
          if (present(errors)) then
            if (errors(i1)/=0) then
              write (ch(1),'(3a,f10.5,a)') 'Mem All. failed. Element ',trim(mem_element(i2)),&

@@ -144,12 +144,13 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
    !
    subroutine report_disk_usage(what)
      !
-     use com, ONLY:msg
+     use com,   ONLY:msg
+     use units, ONLY:Gigabyte
      !
      real(SP)     :: disk_space
      character(*) :: what
      !
-     disk_space=real(QP_n_states*(QP_nb-SC_bands(1)+1)**2*QP_nk*SP)/1.E9
+     disk_space=real(QP_n_states*(QP_nb-SC_bands(1)+1)**2*QP_nk*SP)/Gigabyte
      if (disk_space > 0.05) call msg('s','[COLLISIONS I/O] '//what//' Disk space required [Gb]:',disk_space)  
      !
    end subroutine

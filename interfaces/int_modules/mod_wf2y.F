@@ -28,6 +28,7 @@ module mod_wf2y
    subroutine wf_splitter()
      !
      use pars,           ONLY:SP,DP
+     use units,          ONLY:Megabyte
      use com,            ONLY:msg
      use wave_func,      ONLY:wf_nb_io,wf_nb_io_groups,wf_ncx
      use electrons,      ONLY:n_bands
@@ -35,13 +36,12 @@ module mod_wf2y
      ! Work Space
      !
      real(SP),parameter :: max_wf_block_size=400. ! MB
-     real(SP),parameter :: kb = 1024.0_SP
      real(SP) :: array_sz
      !
      wf_nb_io_groups=1
      wf_nb_io=n_bands
      !
-     array_sz = DP*n_bands*real(wf_ncx)/kb/kb ! wf_disk_DP
+     array_sz = DP*n_bands*real(wf_ncx)/Megabyte ! wf_disk_DP
      !
      ! No memory problems: no blocks
      ! 
@@ -56,7 +56,7 @@ module mod_wf2y
        return
      endif
      !
-     array_sz = DP*wf_nb_io*real(wf_ncx)/kb/kb
+     array_sz = DP*wf_nb_io*real(wf_ncx)/Megabyte
      !
      call msg('s',':: WF splitter Blocks/bands/block size(Mb):',&
 &                     (/wf_nb_io_groups,wf_nb_io,int(array_sz)/))

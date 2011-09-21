@@ -319,7 +319,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
      call msg('snr','[RT] Number of steps done    [o/o]:',real(it_now)/real(NE_steps)*100._SP)
    endif
    !
-   it_start=it_now
+   it_start=it_now+1
    !
    ! If I'm doing the response to an external field I need rho_reference and G_lesser_reference
    !

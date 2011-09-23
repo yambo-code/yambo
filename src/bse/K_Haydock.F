@@ -159,7 +159,7 @@ subroutine K_Haydock(iq,W)
    ItParity = (-1._SP)**it_on_disk
    if (it_on_disk==0) then
      Cf= (0.,0.)
-     Vn(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)  *BS_eh_f(:BS_K_dim)
+     Vn(:BS_K_dim)  = BSS_rhoq0(:BS_K_dim)*BS_eh_f(:BS_K_dim)
 #if defined _TEST_1
      call K_BSmat_by_V(iq,it_on_disk,Vn,Vnp1,iter_par=ItParity)
      Haydock_v0_mod=sqrt(2._SP*real(dot_product(Vn,Vnp1)))

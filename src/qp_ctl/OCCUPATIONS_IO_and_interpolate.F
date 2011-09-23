@@ -78,7 +78,10 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    if (what=="K") jobstr=trim(OCC_ctl(2))
    if (what=="G") jobstr=trim(OCC_ctl(3))
    call parser(what//'fnFdb',is_def)
-   if (.not.is_def) return
+   if (.not.is_def) then
+     jobstr=jobstr_save
+     return
+   endif
    !  
    COM_=NONE 
    if (present(imposed_COM)) then

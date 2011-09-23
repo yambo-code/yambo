@@ -24,9 +24,9 @@ subroutine K_inversion(iq,W,E,k,q)
  use pars,           ONLY:SP,pi,DP
  use X_m,            ONLY:X_epsilon
  use stderr,         ONLY:intc,real2ch
- use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_not_const_eh_f,&
-&                         BS_K_coupling,BS_eh_table,BS_eh_E,BS_bands,BSS_uses_GreenF,&
-&                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,&
+ use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BSS_uses_GreenF,&
+&                         BS_K_coupling,BS_eh_table,BS_eh_E,BS_bands,&
+&                         BSS_uses_RIM,BSS_er,BSS_dr,BSS_n_freqs,BS_eh_f,&
 #if defined _TEST_1
 &                         BSS_n_descs,BSS_description,BS_eh_W,BS_eh_Z
 #else
@@ -37,7 +37,7 @@ subroutine K_inversion(iq,W,E,k,q)
  use electrons,      ONLY:spin_occ,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,spin
  use frequency,      ONLY:w_samp,W_reset,W_merge,W_duplicate
  use R_lattice,      ONLY:d3k_factor,q_norm,bz_samp
- use com,            ONLY:isec,warning,msg
+ use com,            ONLY:isec,msg
  use timing,         ONLY:live_timing
  use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset,ncpu
  use par_indexes_m,  ONLY:par_indexes
@@ -54,7 +54,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  type(pp_indexes) ::px
  type(w_samp)     ::W_shifted
- integer          ::i1,i2,ik_bz,iv,ic,iw,of_mode,i_sp,ik_ibz
+ integer          ::i1,i2,ik_bz,iv,ic,iw,of_mode,i_sp,ik_ibz,BS_H_dim
  integer, external::pert_inversion
  logical, external::stop_now
  complex(SP)      ::Co,QP_Z,QP_width
@@ -85,9 +85,8 @@ subroutine K_inversion(iq,W,E,k,q)
    call section('+','Inversion solver')
  endif
  !
- if (BS_not_const_eh_f) call warning('Inversion solver: fractional occupations unsupported')
- if (BS_K_coupling)     call warning('Inversion solver: unsupported for non-resonant K')
- if (any((/BS_not_const_eh_f,BS_K_coupling/))) return
+ BS_H_dim=BS_K_dim
+ if (BS_K_coupling) BS_H_dim=2*BS_K_dim
  !
  ! RIM support ? Full invertion ?
  !
@@ -155,7 +154,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  !  mem est
  !
- call mem_est("Lo",(/BS_K_dim*W%n(1),BS_K_dim**2/))
+ call mem_est("Lo",(/BS_H_dim*W%n(1),BS_H_dim**2/))
  !
  ! Kernel loading
  !
@@ -165,6 +164,15 @@ subroutine K_inversion(iq,W,E,k,q)
    call K_BSmat_by_V(iq)
 #endif
  forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)-BS_eh_E(i1)
+ if (BS_K_coupling) then
+   forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,i1)=BS_mat(i1,i1)+BS_eh_E(i1-BS_K_dim)
+   !
+   ! I need to remove the -1 in the coupling part due to the change of sign of the occupations. This -1 
+   ! is now embodied in the Green's function
+   !
+   forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,:)=-BS_mat(i1,:)
+   !
+ endif
  !
  ! Initialize the output file 
  !
@@ -175,7 +183,7 @@ subroutine K_inversion(iq,W,E,k,q)
  !
  Co=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/q_norm(1)**2
  !
- allocate(Lo(BS_K_dim,W%n(1)))
+ allocate(Lo(BS_H_dim,W%n(1)))
  Lo=(0.,0.)
  call W_reset(W_shifted)
  call W_duplicate(W,W_shifted)
@@ -208,21 +216,32 @@ subroutine K_inversion(iq,W,E,k,q)
      if (allocated(BS_eh_W)) QP_width=BS_eh_W(i1)
      if (allocated(BS_eh_Z)) QP_Z=BS_eh_Z(i1)
      if (associated(E%GreenF)) then
-       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1,:),"r")
+       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1,:),"c")
      else
-       Lo(i1,:)=QP_Z/(W%p(:)-BS_eh_E(i1)-(0.,1.)*QP_width)
+       Lo(i1,:)=QP_Z*BS_eh_f(i1)/(W%p(:)-BS_eh_E(i1)-(0.,1.)*QP_width)
+       if (BS_K_coupling) Lo(i1+BS_K_dim,:)=-QP_Z*BS_eh_f(i1)/(W%p(:)+BS_eh_E(i1)-(0.,1.)*QP_width)
      endif
    else
-     call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1,:),"r")
+     call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1,:),"c")
+     if (BS_K_coupling) then
+       call X_bare_RIM_GreenF(1,(/ik_bz,ic,iv,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1+BS_K_dim,:),"c")
+     endif
    endif
+   !
    X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0(i1))*Lo(i1,:)*Co
+   if (BS_K_coupling) then
+     X_epsilon(3,:)=X_epsilon(3,:)-BSS_rhoq0(i1+BS_K_dim)*conjg(BSS_rhoq0(i1+BS_K_dim))*Lo(i1+BS_K_dim,:)*Co
+   endif
    !
    ! Include the Kernel diagonal as a rigid shift
    !==============================================
    !
    if (BSS_uses_RIM) then
      forall(iw=1:W%n(1)) W_shifted%p(iw)=W%p(iw)-BS_mat(i1,i1)
-     call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W_shifted,E,k,Lo(i1,:),"r")
+     call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W_shifted,E,k,Lo(i1,:),"c")
+     if (BS_K_coupling) then
+       call X_bare_RIM_GreenF(1,(/ik_bz,ic,iv,i_sp/),(/1,W%n(1)/),W_shifted,E,k,Lo(i1+BS_K_dim,:),"c")
+     endif
      BS_mat(i1,i1)=(0.,0.)
    endif
    !
@@ -311,7 +330,7 @@ subroutine K_inversion(iq,W,E,k,q)
    full_diago=.true.
    do i1=1,full_inf_freqs
      !
-     if (STOP_NOW(.FALSE.)) then
+     if (stop_now(.FALSE.)) then
        call live_timing()
        exit
      endif
@@ -381,7 +400,7 @@ subroutine K_inversion(iq,W,E,k,q)
        if (.not.full_diago) perform_inv=inv_err(i2+iw_2start-1)==-1
        !
        if (perform_inv) &
-&        inv_err(i2+iw_2start-1)=pert_inversion(BS_K_dim,BSS_rhoq0,-1.*Co,&
+&        inv_err(i2+iw_2start-1)=pert_inversion(BS_H_dim,BSS_rhoq0,-1.*Co,&
 &               X_epsilon(2,i2+iw_2start-1),Lo(:,i2+iw_2start-1),BS_mat,full_diago)
        !
        if (.not.full_diago) call live_timing(steps=1)

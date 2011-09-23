@@ -90,7 +90,6 @@ subroutine K_eh_setup(iq,Ken,Xk)
            !
            f_eh=Ken%f(iv,ikp,i_sp)*(spin_occ-Ken%f(ic,ik,i_sp))
            if (abs(f_eh)<epsilon(1._SP)) cycle
-           f_eh=f_eh/spin_occ/spin_occ          
            !
            ! Additional (?) condition for spin-resolved calculations
            !
@@ -101,7 +100,8 @@ subroutine K_eh_setup(iq,Ken,Xk)
            ! A 5% fractional occupation swiches on the particular
            ! treatment of finite temp. BSE 
            !
-           if ( abs(f_eh-1.)> 0.05) BS_not_const_eh_f=.TRUE.
+           f_eh=f_eh/spin_occ/spin_occ          
+           if ( abs(f_eh-1.)> filled_tresh) BS_not_const_eh_f=.TRUE.
            !
            ! The e/h occ must be 1. in the T=0 case as the spin factor (spin_occ)
            ! would erronously increase the e-e scattering
@@ -118,7 +118,7 @@ subroutine K_eh_setup(iq,Ken,Xk)
            endif
            !
            if (allocated(BS_eh_E)) BS_eh_E(BS_K_dim)=E_eh
-           if (allocated(BS_eh_f)) BS_eh_f(BS_K_dim)=f_eh
+           if (allocated(BS_eh_f)) BS_eh_f(BS_K_dim)=(Ken%f(iv,ikp,i_sp)-Ken%f(ic,ik,i_sp))/spin_occ
            if (allocated(BS_eh_W)) BS_eh_W(BS_K_dim)=Ken%W(ic,ik,i_sp)-Ken%W(iv,ikp,i_sp)
            if (allocated(BS_eh_Z)) BS_eh_Z(BS_K_dim)=Ken%Z(ic,ik,i_sp)*Ken%Z(iv,ikp,i_sp)
            !

@@ -29,7 +29,7 @@ subroutine K_diagonalization(iq,W)
  use X_m,            ONLY:X_epsilon
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_K_coupling,&
 &                         BSS_write_eig_2_db,BS_eh_f,BS_not_const_eh_f,&
-&                         BS_eh_W,K_BSmat_by_V
+&                         BS_eh_W,K_BSmat_by_V,BS_eh_E
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:spin_occ
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK,USE_SLK,INV
@@ -127,21 +127,35 @@ subroutine K_diagonalization(iq,W)
    call K_BSmat_by_V(iq)
 #endif
    !
+   if (BS_not_const_eh_f) then
+     !
+     ! In case the f_i-f_j occupation factors are state-dependent
+     ! here I multiply the kernel by BS_eh_f
+     !
+     do i1=1,BS_H_dim
+       !
+       if (i1<=BS_K_dim) then
+         BS_mat(i1,i1)=BS_mat(i1,i1)-BS_eh_E(i1)
+         BS_mat(i1,:) =BS_mat(i1,:)*BS_eh_f(i1)
+         BS_mat(i1,i1)=BS_mat(i1,i1)+BS_eh_E(i1)
+       else
+         !
+         ! Note that the -1 coming from the change in the sign of BS_eh_f
+         ! is already embodied in BS_mat.
+         !
+         BS_mat(i1,i1)=BS_mat(i1,i1)+BS_eh_E(i1-BS_K_dim)
+         BS_mat(i1,:) =BS_mat(i1,:)*BS_eh_f(i1-BS_K_dim)
+         BS_mat(i1,i1)=BS_mat(i1,i1)-BS_eh_E(i1-BS_K_dim)
+         !
+       endif
+       !
+     enddo
+   endif
+   !
    ! eh damping 
    !
    if (allocated(BS_eh_W)) &
 &     forall(i1=1:BS_K_dim) BS_mat(i1,i1)=BS_mat(i1,i1)+(0.,1.)*BS_eh_W(i1)
-   !
-   if (BS_not_const_eh_f) then
-     !
-     ! In case the f_i(1-f_j) occupation factors are state-dependent
-     ! here I multiply the kernel by BS_eh_f
-     !
-     forall(i1=1:BS_K_dim) BS_mat(i1,:)=BS_mat(i1,:)*BS_eh_f(i1)
-     if (K_is_not_hermitian) then
-       forall(i1=BS_K_dim+1:BS_H_dim) BS_mat(i1,:)=BS_mat(i1,:)*BS_eh_f(i1-BS_K_dim)
-     endif
-   endif
    !
  endif
  !

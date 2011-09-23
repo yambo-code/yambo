@@ -68,6 +68,7 @@ subroutine K_eh_setup(iq,Ken,Xk)
    BS_blk_dim=0
    !
    do ikbz=1,Xk%nbz
+     !
      Iic=0
      Iiv=0
      !

@@ -242,9 +242,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  !any other
  !do iqbz=iq_to_start,q%nbz 
- ! do i_qp=1,QP_n_states
+ ! do i_qp=i_qp_to_start,QP_n_states
  !  do ib=QP_n_G_bands(1),QP_n_G_bands(2)
- !   if (.not.px%element_1D(ib)) cycle
+ !   if (.not.px%element_2D(iqbz,ib)) cycle
  !
 #if defined _RT
  call live_timing("COHSEX collisions",px%n_of_elements(myid+1)) 
@@ -257,7 +257,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  else if(.not.l_collisions_IO) then
 #endif
    !
-   timing_states=(px%n_of_elements(myid+1)-1)*QP_n_states+(QP_n_states-i_qp_to_start+1)
+   timing_states=px%n_of_elements(myid+1)*(QP_n_states-i_qp_to_start+1)
    !
    if (l_ppa)    call live_timing(trim(Sc_name)//'W0 PPA',timing_states)
    if (l_cohsex) call live_timing(trim(Sc_name)//'W0 COHSEX',timing_states)

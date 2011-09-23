@@ -34,9 +34,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use stderr,       ONLY:intc
  use wave_func,    ONLY:WF_load,WF_free
  use functions,    ONLY:K_scatter
- use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv,inv_index
+ use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv
  use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,qindx_X,bz_samp,RIM_qpg,&
-&                       RIM_anisotropy,ik_is_table,bare_qpg
+&                       RIM_anisotropy,ik_is_table,bare_qpg,minus_G
  use par_proc_m,   ONLY:pp_redux_wait,myid,ncpu
  use com,          ONLY:msg,warning,error
  use timing,       ONLY:live_timing
@@ -516,7 +516,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
          ! :::Exchange    (coupling):::
          !
-         if (BS_cpl_K_exchange) H_cpl_x=V_dot_V(BS_n_g_exch,O2x(g_rot(inv_index,1:BS_n_g_exch),icv2),O1x(:,icv1))
+         if (BS_cpl_K_exchange) H_cpl_x=V_dot_V(BS_n_g_exch,O2x(minus_G(1:BS_n_g_exch),icv2),O1x(:,icv1))
          !
          ! :::ALDA        (resonant):::
          !

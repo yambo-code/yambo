@@ -21,15 +21,19 @@
 !                  
 subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  !
+ use units,          ONLY:BO2ARM,FS2AUT
  use pars,           ONLY:SP,lchlen
+ use parser_m,       ONLY:parser
  use real_time,      ONLY:ID,G_lesser,NE_i_time,max_rt_steps_disk,RT_step
  use SC,             ONLY:SC_bands,RT_occupations,RT_nk,RT_k 
  use IO_m,           ONLY:io_control,NONE,OP_APP_WR_CL,OP_RD,RD_CL,DUMP
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_nbands,n_sp_pol,n_met_bands,&
+&                         n_full_bands,nel,filled_tresh
  use com,            ONLY:jobstr,msg
  use QP_m,           ONLY:OCC_ctl
  use memory_m,       ONLY:mem_est
- use R_lattice,      ONLY:bz_samp
+ use R_lattice,      ONLY:bz_samp,nXkibz
+ use D_lattice,      ONLY:DL_vol
  use timing,         ONLY:what_is_running
  !
  implicit none
@@ -42,10 +46,11 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  !
  ! Work Space
  !
- integer           :: ib,io_err,COM_,ik,i_err,ik_near
+ real(SP)          :: PE_nel
+ integer           :: ib,io_err,COM_,ik,i_err,ik_near,is,ik_bz,ik_r,i1,i_spin
  integer, external :: io_SC_components
  character(lchlen) :: jobstr_save
- real(SP)          :: k_diff(3)
+ logical           :: is_def
  !
  integer, external :: k_the_nearest
  !
@@ -67,18 +72,20 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    io_err=io_SC_components('occupations',E,ID(6))
    ! 
  else
-   ! 
-   if (index(what_is_running,'YPP')==0) call section('p','NEGF Occupations I/O and interpolation')
    !
    jobstr_save=jobstr
    if (what=="X") jobstr=trim(OCC_ctl(1))
    if (what=="K") jobstr=trim(OCC_ctl(2))
    if (what=="G") jobstr=trim(OCC_ctl(3))
+   call parser(what//'fnFdb',is_def)
+   if (.not.is_def) return
    !  
    COM_=NONE 
    if (present(imposed_COM)) then
      COM_=imposed_COM
    endif
+   ! 
+   if (index(what_is_running,'YPP')==0) call section('p','NEGF Occupations I/O and interpolation ('//trim(what)//')')
    !  
    call io_control(ACTION=OP_RD,COM=COM_,SEC=(/1/),MODE=DUMP,ID=ID(6))
    io_err=io_SC_components('occupations',E,ID(6))
@@ -105,6 +112,24 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    !
    if (index(what_is_running,'YPP')>0) return
    !
+   ! Occupation factors analysis (TODO)
+   !
+   !
+   ! do ik=1,RT_nk
+   !   do ikp=1,RT_nk
+   !     if (ikp==ik) cycle
+   !     k_diff=RT_k(ikp,:)+RT_k(ik,:)
+   !     call c2a(v_in=k_diff,mode='ki2a')
+   !     if (rlu_v_is_zero(k_diff,zero_=k_rlu_zero)) then
+   !       do ib=SC_bands(1),SC_bands(2)
+   !         write (100,*) E%E(ik,ib,1)*HA2EV,RT_occupations(ib,ik)-RT_occupations(ib,ikp),ik,ib
+   !       enddo
+   !       exit
+   !     endif
+   !   enddo
+   ! enddo
+   ! stop
+   !
    ! Interpolation
    !===============
    !
@@ -112,8 +137,19 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
      ik_near=k_the_nearest(k%pt(ik,:),RT_k,RT_nk,.FALSE.,i_err)
      do ib=SC_bands(1),SC_bands(2)
        E%f(ib,ik,:)=RT_occupations(ib,ik_near)
+       if ( E%f(ib,ik,1) < filled_tresh )  E%f(ib,ik,:)=0._SP
      enddo
    enddo
+   !
+   if (associated(E%f_RIM)) then
+     do ik_bz=1,k%nbz
+       ik=k%sstar(ik_bz,1)
+       do i1=1,BZ_RIM_nkpt(ik_bz)
+         ik_r=BZ_RIM_table(ik_bz,i1)
+         forall (ib=1:BZ_RIM_nbands,i_spin=1:n_sp_pol) E%f_RIM(ib,ik_r,i_spin)=E%f(ib,ik,i_spin)
+       enddo
+     enddo
+   endif
    !
    deallocate(RT_occupations,RT_k)
    call mem_est("RT_occupations")
@@ -121,8 +157,19 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    ! I need to redefine here several quantities related to the occupations
    ! using REPORT_Occupations
    !
+   PE_nel=nel-sum(E%f(:n_met_bands,:,:))/real(nXkibz)
+   !
+   call msg('nr','Snapshot time            [fs]:',Time/FS2AUT)
+   call msg(' r','Photoexcited electrons       :',PE_nel)
+   call msg(' r','                          [%]:',PE_nel/nel*100._SP)
+   call msg(' r','                      [cm^-3]:',PE_nel/(DL_vol*BO2ARM**3*1.E-24))
+   !
    call msg('r','')
    call REPORT_Occupations(E,2)
+   call msg('r','Integarted N. of e-    :',sum(E%f(:,:,:))/real(nXkibz))
+   !
+   n_met_bands =E%nbm
+   n_full_bands=E%nbf
    !
  endif
  !

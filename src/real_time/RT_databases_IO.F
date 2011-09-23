@@ -37,6 +37,12 @@ subroutine RT_databases_IO(Xen,it)
  !
  integer :: ik,io_G,io_J_and_P,COM_
  !
+ ! When the simulation has been restarted the first step (it==it_start)
+ ! corresponds to the latest of the previous simulation. Therefore
+ ! databases must not be written
+ !
+ if (it==it_start.and.it_start>1) return
+ !
  ! Write G_lesser (always)
  !
  io_G=0

@@ -83,6 +83,7 @@ module R_lattice
  integer ,allocatable :: ng_in_shell(:)
  integer ,allocatable :: g_rot(:,:)
  integer ,allocatable :: G_m_G(:,:)
+ integer ,allocatable :: minus_G(:)
  real(SP),allocatable :: g_vec(:,:)
  real(SP),allocatable :: E_of_shell(:)
  !

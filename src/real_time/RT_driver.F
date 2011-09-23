@@ -153,6 +153,8 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !==============
  l_Dynamics_is_over=.FALSE.
  !
+ ! See [23/9/2011] comments in RT_start_and_restart regarding the value of it_start
+ !
  it=it_start-1
  !
  do while (.not.l_Dynamics_is_over)
@@ -207,7 +209,13 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
       l_Dynamics_is_over=.TRUE.
    endif
    !
+   ! Write DBs
+   !===========
    it_now=it ! used in RESTART
+   !
+   call set_real_printed_length()
+   call RT_databases_IO(Xen,it)
+   call set_real_printed_length(f_length=10,g_length=10)  
    !
    ! Current and Polarization
    !==========================
@@ -216,16 +224,9 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    ! Now print Energetics, current and (eventually) potential 
    !=========================================================
+   !
    call RT_Observables(Xen,k,on_the_fly_operators)
    !
-   ! Write DBs
-   !===========
-   call set_real_printed_length()
-   call RT_databases_IO(Xen,it)
-   call set_real_printed_length(f_length=10,g_length=10)  
-   !
-   ! Write output files
-   !===========
    call RT_output('dyn',real(on_the_fly_operators),TIME=NE_time/FS2AUT)
    call RT_output('cur pol',TIME=NE_time/FS2AUT)
    if(l_NE_with_fields) call RT_output('pot',TIME=NE_time/FS2AUT) 

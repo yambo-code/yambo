@@ -319,7 +319,16 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
      call msg('snr','[RT] Number of steps done    [o/o]:',real(it_now)/real(NE_steps)*100._SP)
    endif
    !
-   it_start=it_now+1
+   ! [Andrea 23/9/2011] The RESTART value for it_start is tricky.
+   ! The order in which DBs are written in RT_driver makes in such a way
+   ! that the latest step written i it_now-1. This is beacause RT_databases_IO is called BEFORE RT_Collision.
+   !
+   ! it_start is used here to call RT_Ext_fields that must evalute the vector potential@it_now-1. 
+   ! This MUST be consistent with the restart density and G_lesser that are known@it_now-1.
+   !
+   ! This is way it_start=it_now. In RT_driver the step is done from it_now to it_now+1.
+   !
+   it_start=it_now
    !
    ! If I'm doing the response to an external field I need rho_reference and G_lesser_reference
    !

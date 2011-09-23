@@ -73,7 +73,7 @@ subroutine RT_Rabi_Function(E,Field)
    enddo
  enddo
  !
- call msg( 'sr', '[RT] Max Rabi frequency            [eV]:',Rabi_max*HA2EV)
+ call msg( 'r', '[RT] Max Rabi frequency            [eV]:',Rabi_max*HA2EV)
  !
  two_mu=Rabi_max/Field%amplitude
  !

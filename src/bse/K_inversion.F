@@ -86,7 +86,7 @@ subroutine K_inversion(iq,W,E,k,q)
  endif
  !
  if (BS_not_const_eh_f) call warning('Inversion solver: fractional occupations unsupported')
- if (BS_K_coupling) call warning('Inversion solver: unsupported for non-resonant K')
+ if (BS_K_coupling)     call warning('Inversion solver: unsupported for non-resonant K')
  if (any((/BS_not_const_eh_f,BS_K_coupling/))) return
  !
  ! RIM support ? Full invertion ?

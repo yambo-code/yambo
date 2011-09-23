@@ -189,7 +189,6 @@ subroutine RT_initialize(Xen)
    call msg('r', '[RT] '//MSG_ch//' elemental oscillation[fs]:',EtoT(E=Efield(i1)%frequency(2)-Efield(i1)%frequency(2))/FS2AUT)
    call msg('r', '[RT] '//MSG_ch//' energy steps             :',Efield(i1)%n_frequencies)
    call msg('r', '[RT] '//MSG_ch//' electric field      [V/m]:',Efield(i1)%amplitude*AU2VMm1)
-   call msg('s', '[RT] '//MSG_ch//' electric field      [V/m]:',Efield(i1)%amplitude*AU2VMm1)
  enddo
  !
  ! Fluence

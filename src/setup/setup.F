@@ -150,6 +150,10 @@ subroutine setup(en,Xen,Ken,k,Xk)
 #endif
  endif
  !
+ ! Indexes of -G. minus_G_index(iG)| G_{minus_G_index(iG)}=-G
+ !
+ call eval_minus_G()
+ !
  ! Symmetries Multiplication Table
  !
  call symmetry_group_table('r')

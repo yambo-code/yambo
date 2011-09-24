@@ -44,7 +44,7 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
  !Work Space
  !
  integer      ::i1,i2,iw,ikbz,ikpbz,iv,ic,i_spin,ik_rand,ikp_rand,ik,ikp
- real(SP)     ::ffac,f0fac,W_,sc_ffac
+ real(SP)     ::ffac,f0fac,W_,s_ffac
  complex(SP)  ::Z_,pole
  ! GPL_EXCLUDE_START
 #if defined _ELPH
@@ -146,8 +146,8 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
      !
      pole=Xen%E_RIM(ic,ik_rand,i_spin)-Xen%E_RIM(iv,ik_rand,i_spin)+(0.,1.)*W_
      !
-     ffac=Z_*Xen%f_RIM(iv,ik_rand,i_spin)*(spin_occ-Xen%f_RIM(ic,ik_rand,i_spin))/real(BZ_RIM_nkpt(ikbz))/f0fac
-     sc_ffac=Z_*(Xen%f_RIM(iv,ik_rand,i_spin)-Xen%f_RIM(ic,ik_rand,i_spin))/real(BZ_RIM_nkpt(ikbz))/spin_occ
+     s_ffac=Z_*Xen%f_RIM(iv,ik_rand,i_spin)*(spin_occ-Xen%f_RIM(ic,ik_rand,i_spin))/real(BZ_RIM_nkpt(ikbz))
+     ffac=s_ffac/f0fac
      !
      do iw=fr(1),fr(2)
        !
@@ -159,8 +159,10 @@ subroutine X_bare_RIM_GreenF(iq,transitions,fr,Xw,Xen,Xk,GreenF,ordering)
 &                                             +ffac/(Xw%p(iw)-pole)
        if (ordering=="a" ) GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)&
 &                                             -ffac/(conjg(Xw%p(iw))+pole)
-       if (ordering=="sc") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)&
-&                                             +sc_ffac/(Xw%p(iw)-pole)
+       if (ordering=="sr") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)&
+&                                             +s_ffac/(Xw%p(iw)-pole)/spin_occ**2.
+       if (ordering=="sa") GreenF(iw-fr(1)+1)=GreenF(iw-fr(1)+1)&
+&                                             -s_ffac/(Xw%p(iw)+pole)/spin_occ**2.
      enddo
      !
    enddo

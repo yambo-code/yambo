@@ -32,6 +32,7 @@ subroutine K_inversion(iq,W,E,k,q)
 #else
 &                         BSS_n_descs,BSS_description,BS_eh_W,BS_eh_Z,K_BSmat_by_V
 #endif
+ use units
  use memory_m,       ONLY:mem_est
  use parser_m,       ONLY:parser
  use electrons,      ONLY:spin_occ,levels,BZ_RIM_nbands,BZ_RIM_tot_nkpts,spin
@@ -222,9 +223,9 @@ subroutine K_inversion(iq,W,E,k,q)
        if (BS_K_coupling) Lo(i1+BS_K_dim,:)=-QP_Z*BS_eh_f(i1)/(W%p(:)+BS_eh_E(i1)-(0.,1.)*QP_width)
      endif
    else
-     call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1,:),"sc")
+     call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1,:),"sr")
      if (BS_K_coupling) then
-       call X_bare_RIM_GreenF(1,(/ik_bz,ic,iv,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1+BS_K_dim,:),"sc")
+       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W,E,k,Lo(i1+BS_K_dim,:),"sa")
      endif
    endif
    !
@@ -238,9 +239,9 @@ subroutine K_inversion(iq,W,E,k,q)
    !
    if (BSS_uses_RIM) then
      forall(iw=1:W%n(1)) W_shifted%p(iw)=W%p(iw)-BS_mat(i1,i1)
-     call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W_shifted,E,k,Lo(i1,:),"sc")
+     call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W_shifted,E,k,Lo(i1,:),"sr")
      if (BS_K_coupling) then
-       call X_bare_RIM_GreenF(1,(/ik_bz,ic,iv,i_sp/),(/1,W%n(1)/),W_shifted,E,k,Lo(i1+BS_K_dim,:),"sc")
+       call X_bare_RIM_GreenF(1,(/ik_bz,iv,ic,i_sp/),(/1,W%n(1)/),W_shifted,E,k,Lo(i1+BS_K_dim,:),"sa")
      endif
      BS_mat(i1,i1)=(0.,0.)
    endif

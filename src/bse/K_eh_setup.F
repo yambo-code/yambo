@@ -119,7 +119,7 @@ subroutine K_eh_setup(iq,Ken,Xk)
            endif
            !
            if (allocated(BS_eh_E)) BS_eh_E(BS_K_dim)=E_eh
-           if (allocated(BS_eh_f)) BS_eh_f(BS_K_dim)=(Ken%f(iv,ikp,i_sp)-Ken%f(ic,ik,i_sp))/spin_occ
+           if (allocated(BS_eh_f)) BS_eh_f(BS_K_dim)=f_eh
            if (allocated(BS_eh_W)) BS_eh_W(BS_K_dim)=Ken%W(ic,ik,i_sp)-Ken%W(iv,ikp,i_sp)
            if (allocated(BS_eh_Z)) BS_eh_Z(BS_K_dim)=Ken%Z(ic,ik,i_sp)*Ken%Z(iv,ikp,i_sp)
            !

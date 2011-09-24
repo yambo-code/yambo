@@ -131,6 +131,9 @@ integer function io_SC_components(what,E_sc,ID)
  if (any((/io_sec(ID,:)==1/))) then
    !
    l_IMPOSE_SN=.not.l_V 
+#if defined _SC
+   if (l_occupations) l_IMPOSE_SN=.FALSE.
+#endif
    !
    if (any((/l_E,l_V,l_wf,l_occupations,&
 &            l_J_and_P,l_G/)))  io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.)

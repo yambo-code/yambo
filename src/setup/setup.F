@@ -148,11 +148,12 @@ subroutine setup(en,Xen,Ken,k,Xk)
 #if !defined _RT
    call warning('Spatial Inversion not found among the given symmetry list')
 #endif
+   !
+   ! Indexes of -G. minus_G_index(iG)| G_{minus_G_index(iG)}=-G
+   !
+   call eval_minus_G()
+   !
  endif
- !
- ! Indexes of -G. minus_G_index(iG)| G_{minus_G_index(iG)}=-G
- !
- call eval_minus_G()
  !
  ! Symmetries Multiplication Table
  !

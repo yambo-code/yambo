@@ -35,6 +35,9 @@ subroutine electrons_driver(Xk,Xen)
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:two_spin_density
+#if defined _YPP_ELPH
+ use electrons,      ONLY:n_bands
+#endif
  implicit none
  !
  type(bz_samp) ::Xk

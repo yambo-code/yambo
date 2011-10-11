@@ -21,7 +21,7 @@
 !                  
 subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  !
- use units,          ONLY:BO2ARM,FS2AUT
+ use units,          ONLY:BO2ARM,FS2AUT,HA2EV
  use pars,           ONLY:SP,lchlen
  use parser_m,       ONLY:parser
  use real_time,      ONLY:ID,G_lesser,NE_i_time,max_rt_steps_disk,RT_step
@@ -35,6 +35,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  use R_lattice,      ONLY:bz_samp,nXkibz
  use D_lattice,      ONLY:DL_vol
  use timing,         ONLY:what_is_running
+ use stderr,         ONLY:set_real_printed_length
  !
  implicit none
  !
@@ -57,9 +58,10 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  ! Real-Time occupations
  !=======================
  !
- ! (a) Load
- !
  if (.not.present(Time)) then
+   !
+   ! (a) Write
+   !
    do ib=1,SC_bands(2)
      RT_occupations(ib,:)=-real((0._SP,1._SP)*G_lesser(ib,ib,:))
    enddo
@@ -72,6 +74,8 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    io_err=io_SC_components('occupations',E,ID(6))
    ! 
  else
+   !
+   ! (b) Load
    !
    jobstr_save=jobstr
    if (what=="X") jobstr=trim(OCC_ctl(1))
@@ -115,24 +119,6 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    !
    if (index(what_is_running,'YPP')>0) return
    !
-   ! Occupation factors analysis (TODO)
-   !
-   !
-   ! do ik=1,RT_nk
-   !   do ikp=1,RT_nk
-   !     if (ikp==ik) cycle
-   !     k_diff=RT_k(ikp,:)+RT_k(ik,:)
-   !     call c2a(v_in=k_diff,mode='ki2a')
-   !     if (rlu_v_is_zero(k_diff,zero_=k_rlu_zero)) then
-   !       do ib=SC_bands(1),SC_bands(2)
-   !         write (100,*) E%E(ik,ib,1)*HA2EV,RT_occupations(ib,ik)-RT_occupations(ib,ikp),ik,ib
-   !       enddo
-   !       exit
-   !     endif
-   !   enddo
-   ! enddo
-   ! stop
-   !
    ! Interpolation
    !===============
    !
@@ -168,11 +154,16 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    call msg(' r','                      [cm^-3]:',PE_nel/(DL_vol*BO2ARM**3*1.E-24))
    !
    call msg('r','')
-   call REPORT_Occupations(E,2)
+   call REPORT_Occupations(E,2,.TRUE.)
    call msg('r','Integarted N. of e-    :',sum(E%f(:,:,:))/real(nXkibz))
    !
    n_met_bands =E%nbm
    n_full_bands=E%nbf
+   !
+   do ik=1,k%nibz
+     call REPORT_Energies(E%E(:SC_bands(2),:,:),k,k,SC_bands(2),(/ik,ik/),      'E  ',.TRUE.)
+     call REPORT_Energies(E%f(:SC_bands(2),:,:)/HA2EV,k,k,SC_bands(2),(/ik,ik/),'occ',.FALSE.)
+   enddo
    !
  endif
  !

@@ -152,7 +152,6 @@ subroutine electrons_dos_and_charge(Xk,Xen)
        if (l_3D_plot) then
 #if defined _YPP_RT
          call RT_output("el_dos",VALUEs=(/el_dos(1)/),E=dos_E*HA2EV,TIME=io_Time/FS2AUT)
-         !call msg('o dos','',(/io_Time/FS2AUT,dos_E*HARTREE,el_dos(1)/),INDENT=-2,USE_TABS=.true.)
 #endif
        else
          if (n_sp_pol==1) call msg('o dos','',(/dos_E*HA2EV,el_dos(1)/),INDENT=-2,USE_TABS=.true.)

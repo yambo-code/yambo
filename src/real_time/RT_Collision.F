@@ -42,9 +42,6 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
 &                         G_lesser_reference,Phase_LifeTime,NE_Hxc_jumps,       &
 &                         RT_is_dumped,l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start, &
 &                         RT_Deph_Matrix,l_RT_needs_XC0
-#if defined _TWO_LEVELS
- use real_time,      ONLY:tau_diag,tau_offdiag,l_3levels
-#endif
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
@@ -192,27 +189,6 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !
    if(RT_is_dumped.and.NE_dynamics) then
      !
-#if defined _TWO_LEVELS
-     if(l_3levels) then
-       do i1=1,3
-         if(tau_diag(i1)> 1.E-5_SP) &
-           I1_lesser(i1,i1,ik)=I1_lesser(i1,i1,ik)-cI/tau_diag(i1)*(G_input(i1,i1,ik)-G_lesser_reference(i1,i1,ik))
-       enddo
-       if(tau_offdiag(1)> 1.E-5_SP) then
-         I1_lesser(1,2,ik)=I1_lesser(1,2,ik)-cI/tau_offdiag(1)*G_input(1,2,ik)
-         I1_lesser(2,1,ik)=I1_lesser(2,1,ik)-cI/tau_offdiag(1)*G_input(2,1,ik)
-       endif
-       if(tau_offdiag(2)> 1.E-5_SP) then
-         I1_lesser(1,3,ik)=I1_lesser(1,3,ik)-cI/tau_offdiag(2)*G_input(1,3,ik)
-         I1_lesser(3,1,ik)=I1_lesser(3,1,ik)-cI/tau_offdiag(2)*G_input(3,1,ik)
-       endif
-       if(tau_offdiag(3)> 1.E-5_SP) then
-         I1_lesser(2,3,ik)=I1_lesser(2,3,ik)-cI/tau_offdiag(3)*G_input(2,3,ik)
-         I1_lesser(3,2,ik)=I1_lesser(3,2,ik)-cI/tau_offdiag(3)*G_input(3,2,ik)
-       endif
-     else
-#endif
-     !
      if ( QP_LifeTime > 1.E-5_SP) then
        forall(i1=SC_bands(1):SC_bands(2)) &
          I1_lesser(i1,i1,ik)=I1_lesser(i1,i1,ik)-cI/QP_LifeTime*(G_input(i1,i1,ik)-G_lesser_reference(i1,i1,ik))
@@ -238,20 +214,16 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
      endif
      !
      if(associated(Xen%W)) then
-        do i1=SC_bands(1),SC_bands(2)
-          do i2=i1+1,SC_bands(2)
-            I1_lesser(i1,i2,ik)=I1_lesser(i1,i2,ik)-cI*(Xen%W(i1,ik,1)-Xen%W(i2,ik,1)) &
-&                   *(G_input(i1,i2,ik)-G_lesser_reference(i1,i2,ik))*HA2EV/HBAR_eVfs/FS2AUT
-            I1_lesser(i2,i1,ik)=I1_lesser(i2,i1,ik)+cI*(Xen%W(i2,ik,1)-Xen%W(i1,ik,1)) &
-&                   *(G_input(i2,i1,ik)-G_lesser_reference(i2,i1,ik))*HA2EV/HBAR_eVfs/FS2AUT
-          enddo
-        enddo
-      endif
-      !    
-#if defined _TWO_LEVELS
+       do i1=SC_bands(1),SC_bands(2)
+         do i2=i1+1,SC_bands(2)
+           I1_lesser(i1,i2,ik)=I1_lesser(i1,i2,ik)-cI*(Xen%W(i1,ik,1)-Xen%W(i2,ik,1)) &
+&                  *(G_input(i1,i2,ik)-G_lesser_reference(i1,i2,ik))*HA2EV/HBAR_eVfs/FS2AUT
+           I1_lesser(i2,i1,ik)=I1_lesser(i2,i1,ik)+cI*(Xen%W(i2,ik,1)-Xen%W(i1,ik,1)) &
+&                  *(G_input(i2,i1,ik)-G_lesser_reference(i2,i1,ik))*HA2EV/HBAR_eVfs/FS2AUT
+         enddo
+       enddo
      endif
-#endif
-   !
+     !
    endif
    !
    if(SC_bands(1)>1) then

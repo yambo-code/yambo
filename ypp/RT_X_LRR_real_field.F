@@ -31,7 +31,7 @@ subroutine RT_X_LRR_real_field(en)
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels
  use memory_m,       ONLY:mem_est
- use real_time,      ONLY:RT_step,RT_output,RT_P,NE_steps,P_2levels_is_done
+ use real_time,      ONLY:RT_step,RT_output,RT_P,NE_steps
  use fields,         ONLY:Efield,small_a,i_Probe
  use parser_m,       ONLY:parser
  implicit none
@@ -152,13 +152,6 @@ subroutine RT_X_LRR_real_field(en)
 &                               RT_P_t(i_t_start:i_t_end,i_c),RED_steps,RT_step,&
 &                               i_t_start*RT_step,USE_FFT,1)
    !
-   if (P_2levels_is_done) then
-     FT_title=' 2 levels'
-     call RT_1D_Fourier_Transform(FT_title,freqs,X_irrep(:,i_c+3),X_rt%energy_steps,&
-&                                 RT_P_t(i_t_start:i_t_end,i_c+3),RED_steps,RT_step,&
-&                                 i_t_start*RT_step,USE_FFT,1)
-   endif
-   !
  enddo
  !
  ! P(w,ic)=E_ext(w,ic) \tilde X(w,ic)=|E_ext(w)| E_versor(ic) \tilde X(w,ic)
@@ -178,8 +171,6 @@ subroutine RT_X_LRR_real_field(en)
  do i_w = 1, X_rt%energy_steps
    !
    EPS(i_w,1) = EPS(i_w,1)-4._SP*pi*dot_product(Efield(i_Probe)%versor(:),X_irrep(i_w,:3))/E_w(i_w)
-   !
-   if (P_2levels_is_done) EPS(i_w,2) = EPS(i_w,1)-4._SP*pi*dot_product(Efield(i_Probe)%versor(:),X_irrep(i_w,4:6))/E_w(i_w)
    !
    EELS(i_w,:)=1._DP/EPS(i_w,:)
    !

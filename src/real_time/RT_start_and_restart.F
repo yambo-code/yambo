@@ -44,7 +44,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  use real_time,      ONLY:G_lesser,ID,ID,NE_steps,G_lesser_previous,RT_ind_J,    &
 &                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,rho_reference,  &
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
-&                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,RT_P_2levels,full_rho,   &
+&                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,full_rho,   &
 &                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,RT_is_dumped,NE_i_time
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,       &
@@ -88,7 +88,6 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  ! Set to zero current and fields
  !
  RT_P               =(0._SP,0._SP)
- RT_P_2levels       =(0._SP,0._SP)
  RT_ind_J           =(0._SP,0._SP)
  ! 
  forall(i1=1:SC_bands(2),ik=1:Xen%nk)
@@ -381,9 +380,5 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  !
  ! Two Levels related initializations
  !====================================
-#if defined _TWO_LEVELS
- if(RESTART) RESTART=.FALSE.
- call RT_init_two_levels(Xen)
-#endif
  !
 end subroutine RT_start_and_restart

@@ -52,7 +52,7 @@ CLEANS   = clean clean_all
 PROJECTS = yambo_ph yambo_sc yambo_ras yambo_ras_distributed yambo_reels \
 	       yambo_ras_manyk \
            yambo_magnetic yambo_PWdiago yambo_auger \
-           yambo_rt yambo_distributed yambo_2levels \
+           yambo_rt yambo_distributed \
            ypp_rt ypp_ph ypp_ras ypp_sc ypp_magnetic ypp_boltzmann
 BROKEN   = yambo_manyk
 DEBUG    = yambo_test_1 
@@ -120,12 +120,9 @@ yambo_distributed: libs
 yambo_sc: libs
 	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_SC"; $(mksrc)
 	@X2DO="yambo_sc"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_SC";$(mkx)
-yambo_2levels: libs
-	@LIBS2DO="$(PJ_RTLIBS)";ADF="-D_RT -D_SC -D_TWO_LEVELS"; $(mksrc)
-	@X2DO="yambo_2levels"; XPATH="driver";XLIBS="$(PJ_RTLIBS)";ADF="-D_RT -D_SC -D_TWO_LEVELS";$(mkx)
 yambo_rt: libs
-	@LIBS2DO="$(PJ_RTLIBS)";ADF="-D_RT -D_SC"; $(mksrc)
-	@X2DO="yambo_rt"; XPATH="driver";XLIBS="$(PJ_RTLIBS)";ADF="-D_RT -D_SC";$(mkx)
+	@LIBS2DO="$(PJ_RTLIBS)";ADF="-D_RT -D_SC -D_ELPH"; $(mksrc)
+	@X2DO="yambo_rt"; XPATH="driver";XLIBS="$(PJ_RTLIBS)";ADF="-D_RT -D_SC -D_ELPH";$(mkx)
 yambo_ph: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_ELPH"; $(mksrc)
 	@X2DO="yambo_ph"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_ELPH";$(mkx)

@@ -58,9 +58,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        RT_ave_dephasing 
  use fields,        ONLY:Efield
 #endif
-#if defined _TWO_LEVELS
- use real_time,     ONLY:tau_offdiag,tau_diag,dip
-#endif
 #if defined _MAGNETIC
  use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
 #endif
@@ -294,13 +291,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call Afield(1) ! Probe
  call Afield(2) ! Pump
  !
-#endif
- !
-#if defined _TWO_LEVELS
- call it('f',defs,'RT3Levels',    '[RT] Three levels hamiltonian' ,verb_level=V_real_time)
- call it(defs,    'RTDephasing',  '[RT] Dephasing terms (l12,l13,l23)',tau_offdiag,verb_level=V_real_time,unit=Time_unit)
- call it(defs,    'RTLifeTimes',  '[RT] Diagonal life-times (l11,l22,l33)',tau_diag,verb_level=V_real_time,unit=Time_unit)
- call it(defs,    'RTDipoles',    '[RT] Dipoles (d12,d13,d23)',dip,verb_level=V_real_time)
 #endif
  !
 #if defined _MAGNETIC

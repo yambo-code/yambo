@@ -37,7 +37,7 @@ integer function io_SC_components(what,E_sc,ID)
 #if defined _RT
  use real_time,      ONLY:l_NE_with_fields,NE_steps,RT_P,J_and_P_cache_size, &
 &                         G_lesser,NE_dynamics,RT_ind_J,J_and_P_cache,&
-&                         G_lesser_reference,P_2levels_is_done,RT_P_2levels
+&                         G_lesser_reference
  use fields,         ONLY:A_vecpot
  use QP_m,           ONLY:QP_nk
 #endif                                
@@ -159,13 +159,6 @@ integer function io_SC_components(what,E_sc,ID)
      call io_elemental(ID,I0=i_Pump)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif
-#if defined _RT
-   if (l_J_and_P) then
-     call io_elemental(ID,VAR="P2l_is_done",VAR_SZ=1,MENU=0) 
-     call io_elemental(ID,L0=P_2levels_is_done)
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   endif
-#endif
    !
    io_SC_components=io_status(ID)
    if (io_SC_components/=0) goto 1
@@ -359,13 +352,8 @@ integer function io_SC_components(what,E_sc,ID)
          J_and_P_cache( 2*i1,    mod(NE_i_time-1,max_rt_steps_disk)+1)=aimag(RT_ind_J(i1))
          J_and_P_cache(6+2*i1-1, mod(NE_i_time-1,max_rt_steps_disk)+1)= real(RT_P(i1))
          J_and_P_cache(6+2*i1,   mod(NE_i_time-1,max_rt_steps_disk)+1)=aimag(RT_P(i1))
-         if (P_2levels_is_done) then
-           J_and_P_cache(12+2*i1-1, mod(NE_i_time-1,max_rt_steps_disk)+1)= real(RT_P_2levels(i1))
-           J_and_P_cache(12+2*i1,   mod(NE_i_time-1,max_rt_steps_disk)+1)=aimag(RT_P_2levels(i1))
-         else
-           J_and_P_cache(12+2*i1-1, mod(NE_i_time-1,max_rt_steps_disk)+1)= 0.
-           J_and_P_cache(12+2*i1,   mod(NE_i_time-1,max_rt_steps_disk)+1)= 0.
-         endif
+         J_and_P_cache(12+2*i1-1, mod(NE_i_time-1,max_rt_steps_disk)+1)= 0.
+         J_and_P_cache(12+2*i1,   mod(NE_i_time-1,max_rt_steps_disk)+1)= 0.
        enddo
        !
      endif
@@ -391,8 +379,6 @@ integer function io_SC_components(what,E_sc,ID)
 &                                      J_and_P_cache(   2*i1,  mod(NE_i_time-1,max_rt_steps_disk)+1),SP)
          RT_P(i1)               =cmplx(J_and_P_cache( 6+2*i1-1,mod(NE_i_time-1,max_rt_steps_disk)+1), &
 &                                      J_and_P_cache( 6+2*i1  ,mod(NE_i_time-1,max_rt_steps_disk)+1),SP)
-         RT_P_2levels(i1)       =cmplx(J_and_P_cache(12+2*i1-1,mod(NE_i_time-1,max_rt_steps_disk)+1), &
-&                                      J_and_P_cache(12+2*i1  ,mod(NE_i_time-1,max_rt_steps_disk)+1),SP)
        enddo
        !
      endif 

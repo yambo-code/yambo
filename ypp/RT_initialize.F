@@ -28,7 +28,7 @@ subroutine RT_initialize(dump_and_write)
  use pars,           ONLY:pi,SP
  use units,          ONLY:FS2AUT,HA2EV
  use stderr,         ONLY:real2ch
- use real_time,      ONLY:NE_steps,RT_step,RT_ind_J,RT_output,RT_P,RT_P_2levels
+ use real_time,      ONLY:NE_steps,RT_step,RT_ind_J,RT_output,RT_P
  use fields,         ONLY:Efield,i_Probe
  use parser_m,       ONLY:parser
  implicit none
@@ -102,7 +102,6 @@ subroutine RT_initialize(dump_and_write)
  do i_t=1,NE_steps
    RT_ind_J    =RT_J_t(i_t,:)
    RT_P        =RT_P_t(i_t,1:3)
-   RT_P_2levels=RT_P_t(i_t,4:6)
    call RT_output('pol',TIME=(i_t-1)*RT_step/FS2AUT)
    if (allocated(RT_J_t)) call RT_output('cur',TIME=(i_t-1)*RT_step/FS2AUT)
  enddo

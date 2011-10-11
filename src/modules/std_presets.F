@@ -90,12 +90,9 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     RT_diagonalization_steps, l_NE_simulate_RPA,  &
 &                     SwitchOnTime,max_rt_steps_disk,l_RT_induced_field,&
 &                     l_RT_diagonalize,RT_is_dumped,QP_LifeTime,Phase_LifeTime,&
-&                     NE_Hxc_jumps,NE_tot_time,P_2levels_is_done,&
+&                     NE_Hxc_jumps,NE_tot_time,NE_MEM_steps,&
 &                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields,theta_function_iTo_ref,i_Pump,i_Probe
-#endif
-#if defined _TWO_LEVELS
- use real_time,  ONLY:l_3levels,dip,tau_diag,tau_offdiag
 #endif
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
@@ -473,17 +470,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  max_rt_steps_disk=200
  l_RT_induced_field=.FALSE.
  NE_tot_time= 5*QP_LifeTime
- P_2levels_is_done=.FALSE.
+ NE_MEM_steps=2  ! By default only G_lesser and G_lesser_previous
  RT_nk=0
- !
-#endif
- !
-#if defined _TWO_LEVELS
- !
- l_3levels     =.FALSE.
- tau_offdiag   =0._SP
- tau_diag      =0._SP    
- dip           =0._SP            
  !
 #endif
  !

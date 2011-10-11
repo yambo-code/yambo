@@ -38,14 +38,11 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
 &                         it_start,RT_output,NE_time,NE_dynamics,RT_update,&
 &                         l_Dynamics_is_over
- use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK
- use memory_m,       ONLY:mem_est
- use com,            ONLY:error
-#if defined _TWO_LEVELS
- use real_time,      ONLY:l_3levels
-#endif
- use fields,           ONLY:A_vecpot,A_vecpot_previous
- use collisions_CACHE, ONLY:free_COLLISIONS_v
+ use matrix_operate,  ONLY:mat_dia_inv,DIAGO,USE_LK
+ use memory_m,        ONLY:mem_est
+ use com,             ONLY:error
+ use fields,          ONLY:A_vecpot,A_vecpot_previous
+ use collisions_CACHE,ONLY:free_COLLISIONS_v
  !
  implicit none
  !
@@ -163,11 +160,19 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    ! Steps & times ...
    !===================
+   ! 
+   !   Thermal_steps   NE_steps
+   ! --------------- 0 ---------------------------- t
+   ! ^               ^                            ^
+   ! |               |                            NE_i_time=NE_steps
+   ! it=1            |    
+   !                 it=Thermal_steps+1          
+   ! NE_i_time<0     NE_i_time=1
    !
    ! 1 .... Thermal_steps (Thermal period) => NE_time=-Thermal_steps*RT_step ... -RT_step
    ! it = Thermal_steps+1                  => NE_time =0 (NE_i_time = 1)
    !
-   ! at  it = Thermal_steps+1 NE_dynamics=.TRUE.
+   ! at  it = Thermal_steps+1    NE_dynamics=.TRUE.
    !
    NE_i_time=it-Thermal_steps
    NE_time=(NE_i_time-1)*RT_step
@@ -193,14 +198,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    forall( ib=1:SC_bands(2) )  G_lesser_previous(ib,ib,:)=(0._SP,1._SP)*aimag(G_lesser(ib,ib,:))
    !
-#if defined _TWO_LEVELS
-   if(l_3levels) then
-     call RT_three_levels(G_lesser,it)
-   else
-     call RT_two_levels(G_lesser)
-   endif
-#endif
-   !
    ! End dynamics ?
    !===============
    if (it==Thermal_steps+NE_steps) l_Dynamics_is_over=.TRUE.
@@ -220,7 +217,6 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    ! Current and Polarization
    !==========================
    call RT_current_AND_polarization(Xk,G_lesser,A_vecpot)
-   call RT_TwoL_Polarization(Xen,k)
    !
    ! Now print Energetics, current and (eventually) potential 
    !=========================================================

@@ -26,26 +26,6 @@ module real_time
  !
  implicit none
  !
-#if defined _TWO_LEVELS
- !
- ! Three-levels flags
- !
- logical  :: l_3levels
- real(SP) :: tau_offdiag(3)  ! dephasing terms (tau_12,tau_13,tau_23)
- real(SP) :: tau_diag(3)     ! diagonal terms  (tau_11,tau_22,tau_33)
- real(SP) :: dip(3)          ! dipoles (D_12, D_13, D_23) In principle they can be complex
- real(SP) :: W1
- !
- complex(SP) :: Rabi_freq_pump
- complex(SP) :: Rabi_freq_probe
- complex(SP) :: Rabi_nn(2,2)
- complex(SP) :: P
- complex(SP) :: D
- real(SP)    :: W_pump
- real(SP)    :: W_probe
- real(SP)    :: Wo
-#endif
- !
  ! CORE LOGICALS
  !
  ! NE dynamics
@@ -120,6 +100,10 @@ module real_time
  integer  :: NE_Hxc_jumps
  integer  :: NE_steps
  !
+ ! ... Memory depth ...
+ !
+ integer  :: NE_MEM_steps
+ !
  ! Macroscopic induced current ... 
  !--------------------------------
  !
@@ -130,13 +114,6 @@ module real_time
  ! the calculated one ...
  !
  complex(SP) :: RT_P(3)
- !
- ! and the analytic obtained summing all 
- ! single-e/h-pair GFs 
- !
- logical     :: P_2levels_is_done
- complex(SP) :: RT_P_2levels(3)
- complex(SP), allocatable :: Poles_2levels_save(:,:,:,:)
  !
  ! Diagonal (QP) and off-diagonal (Phase) relaxation time
  !
@@ -411,11 +388,6 @@ module real_time
        call mem_est('Current_Cache')
      endif
      !
-     if (allocated(Poles_2levels_save)) then
-       deallocate(Poles_2levels_save)
-       call mem_est("Poles_2levels_save")
-     endif
-     !
      if(allocated(RT_Deph_Matrix)) then
        deallocate(RT_Deph_Matrix)
        call mem_est("DephMatrix")
@@ -424,5 +396,14 @@ module real_time
      call collisions_IO_free() 
      !
    end subroutine RT_free
+   !
+   integer function MEM_index(it)
+     !
+     integer :: it
+     MEM_index=mod(it,NE_MEM_steps)
+     if (MEM_index==0) MEM_index=NE_MEM_steps
+     if (it       <=0) MEM_index=1
+     !
+   end function
    !
 end module

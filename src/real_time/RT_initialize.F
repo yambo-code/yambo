@@ -35,9 +35,6 @@ subroutine RT_initialize(Xen)
 &                         l_RT_induced_field,NE_Hxc_jumps,l_NE_simulate_TDDFT,      &
 &                         RT_diagonalization_steps,RT_is_dumped,QP_LifeTime,        &
 &                         Phase_LifeTime,RT_ave_dephasing
-#if defined _TWO_LEVELS
- use real_time,      ONLY:tau_offdiag,tau_diag,l_3levels
-#endif
  use D_lattice,      ONLY:DL_vol
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,&
 &                         theta_function_iTo_ref,i_Pump,i_Probe,EtoT,Efield_strength
@@ -59,9 +56,6 @@ subroutine RT_initialize(Xen)
  call parser('InducedField' ,l_RT_induced_field)
  call parser('RTfreezeH',    Hfrozen)
  call parser('RTfreezeXC',   XCfrozen)
-#if defined _TWO_LEVELS
- call parser('RT3Levels',    l_3levels)
-#endif
  !
  l_NE_simulate_BSE     =.FALSE.
  l_NE_simulate_TDDFT   =.FALSE.
@@ -105,10 +99,6 @@ subroutine RT_initialize(Xen)
  !========================
  !
  RT_is_dumped=any((/QP_LifeTime,Phase_LifeTime/)>1.E-8_SP)
-#if defined _TWO_LEVELS
- if((any(tau_offdiag>1.E-8_SP).or.any(tau_diag>1.E-8_SP)).and.l_3levels) &
-&  RT_is_dumped=.true.
-#endif
  !
  ! External fields checks
  !========================

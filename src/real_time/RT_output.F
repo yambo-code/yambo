@@ -26,8 +26,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
  use SC,             ONLY:SC_description,n_SC_descriptions
  use fields,         ONLY:A_vecpot
  use stderr,         ONLY:set_real_printed_length,string_split,intc
- use real_time,      ONLY:RT_ind_J,RT_P,l_NE_simulate_IP,P_2levels_is_done,&
-&                         RT_P_2levels,P_2levels_is_done
+ use real_time,      ONLY:RT_ind_J,RT_P,l_NE_simulate_IP
  use timing,         ONLY:what_is_running
  implicit none
  !
@@ -78,11 +77,6 @@ subroutine RT_output(what,VALUEs,TIME,E)
  short_file_name(next_file)=trim(append_ch)//'polarization'
  n_headings(next_file)=4
  headings(next_file,2:4)=(/"Pol_x","Pol_y","Pol_z"/)
- if (P_2levels_is_done) then
-   n_headings(next_file)=7
-   headings(next_file,2:4)=(/"Pol_x","Pol_y","Pol_z"/)
-   headings(next_file,5:7)=(/"Pol2l_x","Pol2l_y","Pol2l_z"/)
- endif
  next_file=next_file+1
  !
  if (initialize) file_name(next_file)=trim(append_ch)//'vector_potential'
@@ -128,10 +122,6 @@ subroutine RT_output(what,VALUEs,TIME,E)
  n_headings(next_file)=3
  headings(next_file,2:3)=(/'eps/Im','eps/Re'/)
  headings(next_file,1)="E [eV]"
- if (P_2levels_is_done) then
-   n_headings(next_file)=5
-   headings(next_file,4:5)=(/'eps2l/Im','eps2l/Re'/)
- endif
  next_file=next_file+1
  !
  if (initialize) file_name(next_file)=trim(append_ch)//'eels'
@@ -139,10 +129,6 @@ subroutine RT_output(what,VALUEs,TIME,E)
  n_headings(next_file)=3
  headings(next_file,2:3)=(/'eel/Im','eel/Re'/)
  headings(next_file,1)="E [eV]"
- if (P_2levels_is_done) then
-   n_headings(next_file)=5
-   headings(next_file,4:5)=(/'eel2l/Im','eel2l/Re'/)
- endif
  next_file=next_file+1
  !
  if (initialize) file_name(next_file)=trim(append_ch)//'occupations'
@@ -252,7 +238,6 @@ subroutine RT_output(what,VALUEs,TIME,E)
 &         'YPP-dP_order_5','YPP-dP_order_6','YPP-dP_order_7','YPP-dP_order_8','YPP-dP_order_9',&
 &         'YPP-P_minus_P_pump')
        data_to_dump(2:4) =real(RT_P)
-       if (P_2levels_is_done) data_to_dump(5:7) =real(RT_P_2levels)
      case('vector_potential')
        data_to_dump(2:4) =real(A_vecpot%vecpot(:))
        data_to_dump(5:7) =real(A_vecpot%vecpot_vel(:))

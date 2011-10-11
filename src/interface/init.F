@@ -649,9 +649,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! (ii) COLLISIONS: no additional variables required
  !
 #endif
-#if defined _TWO_LEVELS
- call initactivate(1,'RT3Levels RTDephasing RTLifeTimes RTDipoles')
-#endif
  !
 #if defined _MAGNETIC
  !

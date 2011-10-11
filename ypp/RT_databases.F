@@ -32,7 +32,7 @@ subroutine RT_databases(en,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  use timing,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG,RD_CL_IF_END
  use real_time,      ONLY:NE_steps,NE_i_time,J_and_P_cache,RT_ind_J,max_rt_steps_disk,&
-&                         J_and_P_cache_size,RT_P,NE_time,RT_step,RT_P_2levels,P_2levels_is_done,&
+&                         J_and_P_cache_size,RT_P,NE_time,RT_step,&
 &                         G_lesser,G_lesser_reference
  use fields,         ONLY:Efield,n_ext_fields
  implicit none
@@ -140,7 +140,6 @@ subroutine RT_databases(en,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
    !
    RT_J_t(NE_i_time,1:3) = RT_ind_J(:)
    RT_P_t(NE_i_time,1:3) = RT_P(:)
-   if (P_2levels_is_done) RT_P_t(NE_i_time,4:6) = RT_P_2levels(:)
    !
    call live_timing(steps=1)
    !

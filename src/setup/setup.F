@@ -148,11 +148,6 @@ subroutine setup(en,Xen,Ken,k,Xk)
 #if !defined _RT
    call warning('Spatial Inversion not found among the given symmetry list')
 #endif
-   !
-   ! Indexes of -G. minus_G_index(iG)| G_{minus_G_index(iG)}=-G
-   !
-   call eval_minus_G()
-   !
  endif
  !
  ! Symmetries Multiplication Table
@@ -164,6 +159,10 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  call G_shells_finder()
  call msg('rn','Shells, format: [S#] G_RL(mHa)')
+ !
+ ! Indexes of -G. minus_G_index(iG)| G_{minus_G_index(iG)}=-G
+ !
+ call eval_minus_G()
  !
  do i1=n_g_shells,max(n_g_shells-27,1),-4
    dumb_ch1=' '

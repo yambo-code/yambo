@@ -468,7 +468,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      if(l_collisions_IO) then
        !
-       allocate(G_lesser(SC_bands(2),SC_bands(2),QP_nk))
+       allocate(G_lesser(SC_bands(2),SC_bands(2),QP_nk,1))
        call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
        !
        allocate(QP_Vnl_xc(QP_n_states))

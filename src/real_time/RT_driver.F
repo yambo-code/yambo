@@ -37,7 +37,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
 &                         NE_i_time,Integrator_name,l_RT_diagonalize,max_rt_steps_disk,&
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
 &                         it_start,RT_output,NE_time,NE_dynamics,RT_update,&
-&                         l_Dynamics_is_over
+&                         l_Dynamics_is_over,MEM_index
  use matrix_operate,  ONLY:mat_dia_inv,DIAGO,USE_LK
  use memory_m,        ONLY:mem_est
  use com,             ONLY:error
@@ -59,7 +59,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  ! 
  ! Work Space
  !
- integer                  :: it,ik,ib
+ integer                  :: it,ik,ib,it_mem
  complex(SP)              :: on_the_fly_operators(8)
  !
  call section('*',trim(SC_potential)//' Real-Time Dynamics')
@@ -177,6 +177,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    NE_i_time=it-Thermal_steps
    NE_time=(NE_i_time-1)*RT_step
    NE_dynamics=NE_i_time>=1
+   it_mem=MEM_index(NE_i_time)
    !
    ! Start-Up & Timing
    !===================
@@ -191,12 +192,12 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    ! Keep a copy of G_lesser and A_vecpot before starting the collisions
    ! ===========
    !
-   G_lesser_previous=G_lesser
+   G_lesser_previous=G_lesser(:,:,:,it_mem)
    A_vecpot_previous=A_vecpot
    !
    ! Simmetrization
    !
-   forall( ib=1:SC_bands(2) )  G_lesser_previous(ib,ib,:)=(0._SP,1._SP)*aimag(G_lesser(ib,ib,:))
+   forall( ib=1:SC_bands(2) )  G_lesser_previous(ib,ib,:)=(0._SP,1._SP)*aimag(G_lesser(ib,ib,:,it_mem))
    !
    ! End dynamics ?
    !===============
@@ -216,7 +217,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    ! Current and Polarization
    !==========================
-   call RT_current_AND_polarization(Xk,G_lesser,A_vecpot)
+   call RT_current_AND_polarization(Xk,G_lesser(:,:,:,it_mem),A_vecpot)
    !
    ! Now print Energetics, current and (eventually) potential 
    !=========================================================
@@ -236,7 +237,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !=============
    ! T -> T+dT step 
    !
-   call RT_Integrator(G_lesser,G_lesser_previous,A_vecpot,A_vecpot_previous,RT_step,Xen,k,q,Integrator_name,NE_time)
+   call RT_Integrator(G_lesser(:,:,:,it_mem),G_lesser_previous,A_vecpot,A_vecpot_previous,RT_step,Xen,k,q,Integrator_name,NE_time)
    !
    if(it==Thermal_steps) then
      !
@@ -263,7 +264,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
      if (it==Thermal_steps) call RT_update(G_lesser_reference,SC_R,it,Xen,k,Xk,X(1),up_Gref=.true.,up_DIP=.true.)
      !
      ! Analize quasi-particles
-     if (l_RT_diagonalize) call RT_update(G_lesser,SC_R,it,Xen,k,Xk,X(1),an_QP=.true.)
+     if (l_RT_diagonalize) call RT_update(G_lesser(:,:,:,it_mem),SC_R,it,Xen,k,Xk,X(1),an_QP=.true.)
      !
    endif
    !

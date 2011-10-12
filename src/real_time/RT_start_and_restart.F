@@ -91,7 +91,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  RT_ind_J           =(0._SP,0._SP)
  ! 
  forall(i1=1:SC_bands(2),ik=1:Xen%nk)
-   G_lesser(i1,i1,ik)   =(0._SP,1._SP)*Xen%f(i1,ik,1)
+   G_lesser(i1,i1,ik,1) =(0._SP,1._SP)*Xen%f(i1,ik,1)
    RT_occupations(i1,ik)=Xen%f(i1,ik,1)
  end forall
  !
@@ -164,10 +164,10 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    ! G_lesser(i1,i1,ik)=(0.,1)*en%f(i1,ik)
    !
    do ik=1,QP_nk
-     call H_rotate(SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),G_lesser(1:SC_bands(2),1:SC_bands(2),ik),SC_bands(2),-1)
+     call H_rotate(SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),G_lesser(1:SC_bands(2),1:SC_bands(2),ik,1),SC_bands(2),-1)
    enddo
    !
-   if (Hfrozen) call el_density(G_lesser,k,rho_n,1,.false.)
+   if (Hfrozen) call el_density(G_lesser(:,:,:,1),k,rho_n,1,.false.)
    if (Hfrozen) call V_Hartree(rho_n,V_hartree_sc)
    !
    V_xc_sc=(0._SP)
@@ -205,7 +205,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    ! Now I update <i|r|j> dipoles using G_lesser_reference as
    ! Green function to construct the Hamiltonian
    !
-   call RT_update(G_lesser,SC_R,-1,Xen,k,Xk,X,up_DIP=.true.)
+   call RT_update(G_lesser(:,:,:,1),SC_R,-1,Xen,k,Xk,X,up_DIP=.true.)
    call RT_update(G_lesser_reference,SC_R,-1,Xen,k,Xk,X,up_Gref=.true.)
    !
    V_xc_sc=(0._SP)
@@ -218,7 +218,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    !
    ! During Thermalization G_lesser_reference must be zero
    !
-   G_lesser_reference=G_lesser   
+   G_lesser_reference=G_lesser(:,:,:,1)
    !
  endif
  !
@@ -251,11 +251,11 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    ! in sc_bare_Hamiltonian I need to recalculate it here when SC_lw_band>1
    ! as it it is also used in XC_potential_driver
    ! 
-   call el_density(G_lesser,Xk,rho_n,SC_bands(1),.false.)
+   call el_density(G_lesser(:,:,:,1),Xk,rho_n,SC_bands(1),.false.)
    rho_reference=rho_n
    !
    if (allocated(full_rho)) then
-     call el_density(G_lesser,Xk,rho_n,1,.false.)
+     call el_density(G_lesser(:,:,:,1),Xk,rho_n,1,.false.)
      full_rho=rho_n
    endif
    !
@@ -347,7 +347,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  endif
  !
  A_vecpot_previous =A_vecpot
- G_lesser_previous =G_lesser   
+ G_lesser_previous =G_lesser(:,:,:,1)
  !
  call msg('r','')
  !

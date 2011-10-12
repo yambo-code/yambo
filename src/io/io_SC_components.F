@@ -37,7 +37,7 @@ integer function io_SC_components(what,E_sc,ID)
 #if defined _RT
  use real_time,      ONLY:l_NE_with_fields,NE_steps,RT_P,J_and_P_cache_size, &
 &                         G_lesser,NE_dynamics,RT_ind_J,J_and_P_cache,&
-&                         G_lesser_reference
+&                         G_lesser_reference,MEM_index
  use fields,         ONLY:A_vecpot
  use QP_m,           ONLY:QP_nk
 #endif                                
@@ -306,9 +306,9 @@ integer function io_SC_components(what,E_sc,ID)
    call io_bulk(ID,VAR="G_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
 &       VAR_SZ=(/SC_bands(2),SC_bands(2),2/))
    !
-   if (write_is_on(ID)) call mat_c2r(G_lesser(:,:,ik),R_H_G_disk)
+   if (write_is_on(ID)) call mat_c2r(G_lesser(:,:,ik,MEM_index(NE_i_time)),R_H_G_disk)
    call io_bulk(ID,R3=R_H_G_disk)
-   if (read_is_on(ID))  call mat_r2c(R_H_G_disk,G_lesser(:,:,ik))
+   if (read_is_on(ID))  call mat_r2c(R_H_G_disk,G_lesser(:,:,ik,MEM_index(NE_i_time)))
    !
    call io_bulk(ID,VAR="G_lesser_ref_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
 &       VAR_SZ=(/SC_bands(2),SC_bands(2),2/))

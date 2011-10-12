@@ -470,7 +470,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  max_rt_steps_disk=200
  l_RT_induced_field=.FALSE.
  NE_tot_time= 5*QP_LifeTime
- NE_MEM_steps=2  ! By default only G_lesser and G_lesser_previous
+ NE_MEM_steps=1  ! By default only G_lesser and G_lesser_previous
  RT_nk=0
  !
 #endif

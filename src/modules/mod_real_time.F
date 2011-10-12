@@ -261,7 +261,7 @@ module real_time
      allocate(E_xc(fft_size))
      call mem_est('Exc',(/fft_size/),(/SP/))
      !
-     allocate(G_lesser(SC_bands(2),SC_bands(2),QP_nk))
+     allocate(G_lesser(SC_bands(2),SC_bands(2),QP_nk,NE_MEM_steps))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
      !
      allocate(RT_occupations(SC_bands(2),QP_nk))

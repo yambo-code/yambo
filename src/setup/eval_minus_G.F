@@ -32,7 +32,6 @@ subroutine eval_minus_G()
  use vec_operate,  ONLY:v_is_zero
  use R_lattice,    ONLY:ng_closed,g_vec,g_rot,minus_G
  use zeros,        ONLY:G_iku_zero
- use com,          ONLY:error
  !
  implicit none
  !
@@ -40,8 +39,15 @@ subroutine eval_minus_G()
  !
  integer  :: ig,igp
  !
+ if (allocated(minus_G)) then
+   deallocate(minus_G)
+   call mem_est("minus_G")
+ endif
  allocate(minus_G(ng_closed))
  call mem_est("minus_G",(/ng_closed/),(/IP/))
+ !
+ minus_G=0
+ !
  if (inv_index>0) then
    do ig=1,ng_closed
      minus_G(ig)=g_rot(inv_index,ig)
@@ -65,8 +71,6 @@ subroutine eval_minus_G()
    enddo
    !
  endif
- !
- if (count(minus_G==0)>0) call error(' ')
  !
  call live_timing()
  !

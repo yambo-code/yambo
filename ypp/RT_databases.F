@@ -34,7 +34,7 @@ subroutine RT_databases(en,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  use real_time,      ONLY:NE_steps,NE_i_time,J_and_P_cache,RT_ind_J,max_rt_steps_disk,&
 &                         J_and_P_cache_size,RT_P,NE_time,RT_step,&
 &                         G_lesser,G_lesser_reference
- use fields,         ONLY:Efield,n_ext_fields
+ use fields,         ONLY:Efield,n_ext_fields,Efield_strength
  implicit none
  !
  type(levels)      :: en
@@ -59,7 +59,7 @@ subroutine RT_databases(en,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  if (present(G_lesser_only)) then
    if (G_lesser_only) then
      !
-     allocate(G_lesser(SC_bands(2),SC_bands(2),nkibz))
+     allocate(G_lesser(SC_bands(2),SC_bands(2),nkibz,1))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
      !
      allocate(G_lesser_reference(SC_bands(2),SC_bands(2),nkibz))
@@ -149,7 +149,7 @@ subroutine RT_databases(en,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  ! Define Efield amplitude
  !
  do i_f=1,n_ext_fields
-   Efield(i_f)%amplitude=sqrt(Efield(i_f)%intensity*(8._SP*pi)/SPEED_OF_LIGHT)
+   Efield(i_f)%amplitude=Efield_strength(Efield(i_f)%intensity,'AU')
  enddo
  !
  deallocate(J_and_P_cache)

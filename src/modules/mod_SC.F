@@ -87,7 +87,7 @@ module SC
  !
  ! G_lesser ( = density matrix) to use extended collisions
  !
- complex(SP), allocatable :: G_lesser(:,:,:)
+ complex(SP), allocatable :: G_lesser(:,:,:,:) ! Band, Band, K, Time
  !
  ! Real-Time occupations
  !

@@ -24,7 +24,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  use units,          ONLY:BO2ARM,FS2AUT,HA2EV
  use pars,           ONLY:SP,lchlen
  use parser_m,       ONLY:parser
- use real_time,      ONLY:ID,G_lesser,NE_i_time,max_rt_steps_disk,RT_step
+ use real_time,      ONLY:ID,G_lesser,NE_i_time,max_rt_steps_disk,RT_step,MEM_index
  use SC,             ONLY:SC_bands,RT_occupations,RT_nk,RT_k 
  use IO_m,           ONLY:io_control,NONE,OP_APP_WR_CL,OP_RD,RD_CL,DUMP
  use electrons,      ONLY:levels,BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_nbands,n_sp_pol,n_met_bands,&
@@ -63,7 +63,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    ! (a) Write
    !
    do ib=1,SC_bands(2)
-     RT_occupations(ib,:)=-real((0._SP,1._SP)*G_lesser(ib,ib,:))
+     RT_occupations(ib,:)=-real((0._SP,1._SP)*G_lesser(ib,ib,:,MEM_index(NE_i_time)))
    enddo
    ! 
    ! Note that here as well as in ndb.GreenF the SEC is used only to

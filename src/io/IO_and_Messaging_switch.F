@@ -27,6 +27,7 @@ subroutine IO_and_Messaging_switch(what)
  use par_proc_m,     ONLY:local_master_cpu,myid,master_cpu
  use stderr,         ONLY:string_split,write_to_log
  use fragments,      ONLY:Parallel_Fragments,last_syncronized
+ use timing,         ONLY:live_timing_is_on
  implicit none
  !
  character(*) :: what
@@ -50,6 +51,7 @@ subroutine IO_and_Messaging_switch(what)
        Fragmented_IO  =Fragmented_IO_save
        Parallel_Fragments  =.FALSE.
        last_syncronized    =0
+       live_timing_is_on   =.TRUE.
        return
      endif
      !
@@ -57,8 +59,10 @@ subroutine IO_and_Messaging_switch(what)
      !
      if (trim(ch_piece(ich))=="-report") write_to_report=.false.
      if (trim(ch_piece(ich))=="-log"   ) write_to_log=.false.
+     if (trim(ch_piece(ich))=="-timing") live_timing_is_on=.false.
      if (trim(ch_piece(ich))=="+report") write_to_report=master_cpu
      if (trim(ch_piece(ich))=="+log"   ) write_to_log=master_cpu
+     if (trim(ch_piece(ich))=="+timing") live_timing_is_on=.true.
      !
      ! I/O
      !

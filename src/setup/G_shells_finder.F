@@ -149,15 +149,15 @@ subroutine G_shells_finder()
  ! However if the inversion symmetry is not used here the eval_minus_G routine
  ! will fail as the shells are not closed anymore with respect to the inversion.
  !
- if (inv_index==0) then
-   call IO_and_Messaging_switch("-log")
+ if (inv_index<0) then
+   call IO_and_Messaging_switch("-timing")
    call eval_minus_G()
    do while (  count(minus_G==0)>0 ) 
      n_g_shells=n_g_shells-1 
      ng_closed=ng_in_shell(n_g_shells)
      call eval_minus_G()
    enddo
-   call IO_and_Messaging_switch("+log")
+   call IO_and_Messaging_switch("+timing")
    ng_in_shell=ng_in_shell_TMP(:n_g_shells)
  endif
  !

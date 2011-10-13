@@ -97,7 +97,7 @@ module X_output
        message(2) = '# EELS @ Q('//trim(intc(iq))//')  [q->0 direction]:'
        message(3) = '# Polarizability ( -<<X>> ) ['//trim(alpha_dim)//' @ Q('//trim(intc(iq))//') [q->0 direction]'
        message(4) = '# F_xc @ Q('//trim(intc(iq))//')  [q->0 direction]:'
-       message(5) = '# off-diagonal Absorption @ Q('//trim(intc(iq))//') [q->0 direction] :'
+       message(5) = '# Off-diagonal Absorption @ Q('//trim(intc(iq))//') [q->0 direction] :'
        message(6) = '# Kerr parameters @ Q('//trim(intc(iq))//') [q->0 direction] :'
      else  if (iq/=1.and.ig==1) then
        message(1) = '# Absorption @ Q('//trim(intc(iq))//') [iku] :'

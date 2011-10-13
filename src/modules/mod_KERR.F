@@ -25,11 +25,21 @@ module KERR
  !
  implicit none
  !
- complex(SP), allocatable :: X_epsilon_xy(:,:)
- complex(SP), allocatable :: X_Kerr_par(:,:)
  complex(SP), allocatable :: DIP_q_dot_iR_kerr(:,:,:,:)
  complex(SP), allocatable :: X_mat_wing_right(:,:)
  complex(SP), allocatable :: X_mat_wing_left(:,:)
+ !
+ interface
+   !
+   subroutine O_kerr_shadow(what,l_flag,n1,n2,c1)
+     use pars,  ONLY:SP
+     character(*)     :: what    
+     integer,optional :: n1,n2
+     complex,optional :: c1(:)
+     logical,optional :: l_flag
+   end subroutine
+   !
+ end interface
  !
  contains
    !

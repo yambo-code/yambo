@@ -50,11 +50,17 @@ module YPP
  integer      ::dos_bands(2)   ! Bands Range
  integer      ::dos_E_steps    ! Energy steps
  !
+ ! BANDS
+ !
+ integer               ::BANDS_steps
+ integer               ::BANDS_range(2)
+ !
  ! REAL SPACE PLOT
  !
  logical      ::l_plot
  logical      ::l_wavefunction
  logical      ::l_density
+ logical      ::l_bands
  logical      ::l_mag
  logical      ::l_current
  logical      ::l_sp_wf

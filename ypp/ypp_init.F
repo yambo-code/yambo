@@ -96,6 +96,14 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  dos_E_range=(/1.,-1./)/HA2EV
  dos_E_steps=500
  !
+#if defined _YPP_TEST_2
+ ! BANDS
+ !
+ BANDS_steps=0
+ BANDS_range=0
+ !
+#endif
+ !
  ! PLOT
  !
  p_dir      ='1'
@@ -104,6 +112,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  wf_ng      =ng_vec
  l_exc_wf=.false.
  l_density=.false.
+#if defined _YPP_TEST_2
+ l_bands=.false.
+#endif
  l_mag=.false.
  l_sp_wf=.false.
  l_norm_to_one=.true.
@@ -328,6 +339,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        l_density        =trim(rstr_piece(i1+1))=='d'
        l_dos            =trim(rstr_piece(i1+1))=='s'
        l_wavefunction   =trim(rstr_piece(i1+1))=='w'
+#if defined _YPP_TEST_2
+       l_bands          =trim(rstr_piece(i1+1))=='b'
+#endif
        !
        ! GPL_EXCLUDE_START SPIN_IGNORE
        !
@@ -364,6 +378,11 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
      if ( trim(rstr_piece(i1)) == 'phonons'.or. trim(rstr_piece(i1)) == 'electrons') then
        if (l_dos)            call initactivate(1,'dos')
      endif
+     if ( trim(rstr_piece(i1)) == 'electrons') then
+#if defined _YPP_TEST_2	     
+       if (l_bands)          call initactivate(1,'bands')
+#endif	       
+     endif
    enddo
  enddo
  !
@@ -399,6 +418,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 &             runlevel_is_on('current'), &
 #endif
 &             runlevel_is_on('density')/))
+#if defined _YPP_TEST_2 
+ l_bands     =runlevel_is_on('bands')
+#endif 
  l_free_hole=runlevel_is_on('freehole')
  l_amplitude=runlevel_is_on('amplitude')
  l_exc_wf   =runlevel_is_on('wavefunction').and.runlevel_is_on('excitons')
@@ -426,6 +448,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    endif
  endif
  !
+#if defined _YPP_TEST_2
+ if (l_bands) call initactivate(1,"cooIn BKpts BANDS_steps BANDS_range")
+#endif	 
+ !	   
  l_bzrim     =runlevel_is_on('bzrim')
  !
  l_qpdb = runlevel_is_on('qpdb')
@@ -447,12 +473,12 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (l_bzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut OutputAlat NoWeights GammaRadius")
  !
- if (l_electrons.and.l_dos) then
+ if (l_electrons) then
+    if (l_dos.or.l_bands) call QP_ctl_switch('G')
     if (l_dos) then
-      call QP_ctl_switch('G')
       call initactivate(1,"OCCdT OCCTime")
+      call initactivate(1,"DOS_bands DOSERange DOSESteps DOS_broad")
     endif
-    call initactivate(1,"DOS_bands DOSERange DOSESteps DOS_broad")
  endif
  !
 #if defined _YPP_MAGNETIC

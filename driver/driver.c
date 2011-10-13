@@ -59,7 +59,7 @@ typedef struct
 #if defined _BOLTZMANN  || _AUGER
  #define _YAMBO_MAIN
 #endif
-#if defined _ypp  || _YPP_ELPH || _YPP_RAS || _YPP_RT || _YPP_SC || _YPP_MAGNETIC || _YPP_BOLTZMANN
+#if defined _ypp  || _YPP_ELPH || _YPP_RAS || _YPP_RT || _YPP_SC || _YPP_MAGNETIC || _YPP_BOLTZMANN || _YPP_TEST_2
  #define _YPP_MAIN
 #endif
 /* 

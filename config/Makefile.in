@@ -53,9 +53,9 @@ PROJECTS = yambo_ph yambo_sc yambo_ras yambo_ras_distributed yambo_reels \
 	       yambo_ras_manyk \
            yambo_magnetic yambo_PWdiago yambo_auger \
            yambo_rt yambo_distributed \
-           ypp_rt ypp_ph ypp_ras ypp_sc ypp_magnetic ypp_boltzmann
+           ypp_rt ypp_ph ypp_ras ypp_sc ypp_magnetic ypp_boltzmann ypp_test_2
 BROKEN   = yambo_manyk
-DEBUG    = yambo_test_1 
+DEBUG    = yambo_test_1 yambo_test_2
 EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(DEBUG)
 INTERFCS = a2y p2y e2y c2y
 #
@@ -64,7 +64,7 @@ INTERFCS = a2y p2y e2y c2y
 BASIC_LIBS   = external_c modules xc_functionals parser communicate common io wf_and_fft 
 
 MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface \
-               tddft pol_function qp acfdt bse
+               interpolate tddft pol_function qp acfdt bse
 
 PJ_RASLIBS   = $(BASIC_LIBS) ras_reels_mods coulomb bz_ops qp_ctl ras \
                setup interface tddft pol_function qp acfdt bse
@@ -77,7 +77,7 @@ PJ_RTLIBS          = $(MAIN_LIBS) sc real_time
 #
 # Interfaces
 #
-2YLIBS       = external_c modules parser communicate common io bz_ops
+2YLIBS       = external_c modules parser communicate common io bz_ops 
 #
 # YPP
 #
@@ -85,6 +85,7 @@ YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface pol_function 
 YPPSCLIBS    = $(YPPLIBS) sc
 YPPRTLIBS    = $(YPPLIBS) sc real_time
 YPPRASLIBS   = $(BASIC_LIBS) ras_reels_mods bz_ops qp_ctl setup interface ras pol_function bse
+YPPTEST2     = $(YPPLIBS) interpolate
 
 nothing: 
 	@$(make_message)
@@ -156,6 +157,9 @@ ypp_magnetic: libs
 ypp_boltzmann: libs
 	@LIBS2DO="$(YPPLIBS)" ; ADF="-D_BOLTZMANN";$(mksrc)
 	@X2DO="ypp_boltzmann" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_BOLTZMANN";$(mkx)
+ypp_test_2: libs
+	@LIBS2DO="$(YPPTEST2)" ; ADF="-D_TEST_2";$(mksrc)
+	@X2DO="ypp_test_2" ;XPATH="ypp";XLIBS="$(YPPTEST2)"; ADF="-D_YPP_TEST_2";$(mkx)
 #
 # BROKEN #
 # 

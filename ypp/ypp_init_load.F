@@ -61,6 +61,9 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'amplitude', '[R] Amplitude')
  call it('r',defs,'plot',         '[R] Plot')
  call it('r',defs,'density',      '[R] Density')
+#if defined _YPP_TEST_2
+ call it('r',defs,'bands',        '[R] Bands')
+#endif
  call it('r',defs,'wavefunction', '[R] Wavefunction')
 #if defined _YPP_ELPH
  call it('r',defs,'eliashberg',   '[R] Eliashberg')
@@ -110,6 +113,14 @@ subroutine ypp_init_load(defs)
  call it(defs,'OCCdT','NEGF Occupations time step',OCC_deltaT,unit=Time_unit,verb_level=V_real_time)
  call it(defs,'OCCTime','NEGF Occupations loading time',OCC_T_range,unit=Time_unit,verb_level=V_real_time)
 #endif
+ !
+ ! BANDS
+ !
+#if defined _YPP_TEST_2
+ call it(defs,'BANDS_steps', 'Number of divisions',BANDS_steps) 
+ call it(defs,'BANDS_range', 'Bands Range',BANDS_range) 
+ call it(defs,'BKpts','Bands circuit',Kgw_1)
+#endif 
  !
  ! BZ grids
  !

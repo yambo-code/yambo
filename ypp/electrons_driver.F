@@ -31,7 +31,7 @@ subroutine electrons_driver(Xk,Xen)
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
 &                         plot_title,l_dos,l_angular_momentum,&
-&                         l_position,l_current
+&                         l_position,l_current,l_bands
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:two_spin_density
@@ -50,7 +50,7 @@ subroutine electrons_driver(Xk,Xen)
  logical               :: success
  character(schlen)     :: ch_ws
  !
- if (.not.any((/l_mag,l_density,l_sp_wf,l_dos&
+ if (.not.any((/l_mag,l_density,l_sp_wf,l_dos,l_bands&
 #if defined _YPP_MAGNETIC
 &    ,l_angular_momentum,l_position &
 #endif
@@ -96,6 +96,13 @@ subroutine electrons_driver(Xk,Xen)
  !===============
  !
  if (l_dos.or.l_density)  call electrons_dos_and_charge(Xk,Xen)
+ !
+ ! BANDS interpolation
+ !======================
+ !
+#if defined _YPP_TEST_2
+ if(l_bands) call electrons_bands(Xk,Xen)
+#endif
  !
  ! SYMMETRIZED WAVEFUNCTIONS (summed over all symmetries and degenerate states)
  !==============================================================================

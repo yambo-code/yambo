@@ -24,7 +24,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  use pars,           ONLY:SP,cI,schlen,DP
  use YPP,            ONLY:l_RT_X_inversion,l_skip_pol_and_curr_IO
  use units,          ONLY:FS2AUT,HA2EV
- use real_time,      ONLY:RT_step,RT_P,RT_output,QP_LifeTime,Phase_LifeTime
+ use real_time,      ONLY:RT_step,RT_P,RT_output,RAD_LifeTime,Phase_LifeTime
  use stderr,         ONLY:intc
  use timing,         ONLY:live_timing
  !
@@ -93,7 +93,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  ! Fourier Transformation
  !========================
  !
- T_o=5.*max(QP_LifeTime,Phase_LifeTime)
+ T_o=5.*max(RAD_LifeTime,Phase_LifeTime)
  iT_o=int(T_o/RT_step)+1
  !
  allocate(P_DP(nt,3),P_W(X_rt%energy_steps),freqs(X_rt%energy_steps))

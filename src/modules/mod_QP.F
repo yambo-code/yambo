@@ -106,8 +106,11 @@ module QP_m
  !% ?fnQP_E
  !  0 |  0 | 0 |               # [?] QP parameters (E).
  !% 
- !% ?fnQP_W
- !  0 |  0 | 0 | 0 |           # [?] QP parameters (W).
+ !% ?fnQP_Wc
+ !  0 |  0 | 0 |               # [?] QP parameters (W) conduction.
+ !%
+ !% ?fnQP_Wv
+ !  0 |  0 | 0 |               # [?] QP parameters (W) valence.
  !%
  !?fbQP_Z= (  0.00000 ,  0.00000 )  eV  # [?] QP parameters (Z).
  !  
@@ -122,7 +125,8 @@ module QP_m
  ! is not used in non-collinear or scalar cases.
  !
  real(SP)                :: QP_ctl_E(3,3,2)
- real(SP)                :: QP_ctl_W(3,4,2)
+ real(SP)                :: QP_ctl_Wc(3,3,2)
+ real(SP)                :: QP_ctl_Wv(3,3,2)
  complex(SP)             :: QP_ctl_Z(3,2)
  logical                 :: QP_ctl_applied
  !

@@ -36,7 +36,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     QP_ctl_db,QP_ctl_interp_neigh,SC_E_threshold, &
 &                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
 &                     QP_W_partially_done,GWo_SC_done,GWo_iterations,&
-&                     COHSEX_use_empties,QP_ctl_E,QP_ctl_W,QP_ctl_Z,On_Mass_Shell_approx,&
+&                     COHSEX_use_empties,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,On_Mass_Shell_approx,&
 &                     Vnlxc_kind,Vxc_kind,l_extended_output,OCC_ctl,OCC_T_ref
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,n_atoms_species_max,n_atomic_species,&
@@ -89,8 +89,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Integrator_name,            &
 &                     RT_diagonalization_steps, l_NE_simulate_RPA,  &
 &                     SwitchOnTime,max_rt_steps_disk,l_RT_induced_field,&
-&                     l_RT_diagonalize,RT_is_dumped,QP_LifeTime,Phase_LifeTime,&
-&                     NE_Hxc_jumps,NE_tot_time,NE_MEM_steps,&
+&                     l_RT_diagonalize,RT_is_dumped,RAD_LifeTime,Phase_LifeTime,&
+&                     NE_Hxc_jumps,NE_tot_time,NE_MEM_steps,NE_MEM_treshold,&
 &                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields,theta_function_iTo_ref,i_Pump,i_Probe
 #endif
@@ -247,6 +247,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_sc_magnetic=.false.
  l_collisions_IO=.false.
  l_elph_Hamiltonian=.false.
+ l_kerr=.false.
  !
  !electrons
  !
@@ -347,7 +348,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  QP_ctl_db="none"
  QP_ctl_interp_neigh=1
  forall (i1=1:3,i2=1:2) QP_ctl_E(i1,:,i2)=(/0.,1.,1./)
- forall (i1=1:3,i2=1:2) QP_ctl_W(i1,:,i2)=0.
+ forall (i1=1:3,i2=1:2) QP_ctl_Wc(i1,:,i2)=0.
+ forall (i1=1:3,i2=1:2) QP_ctl_Wv(i1,:,i2)=0.
  forall (i1=1:3,i2=1:2) QP_ctl_Z(i1,i2)=(1.,0.)
  !
  ! Occupations control
@@ -461,7 +463,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  Thermal_steps=0
  SwitchOnTime = 1./8.
  Integrator_name='RK2'
- QP_LifeTime = 0.
+ RAD_LifeTime = 0.
  Phase_LifeTime = 0.
  RT_is_dumped=.FALSE.
  l_NE_simulate_RPA=.FALSE.
@@ -469,8 +471,9 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_RT_diagonalize=.FALSE.
  max_rt_steps_disk=200
  l_RT_induced_field=.FALSE.
- NE_tot_time= 5*QP_LifeTime
- NE_MEM_steps=1  ! By default only G_lesser and G_lesser_previous
+ NE_tot_time= 5*RAD_LifeTime
+ NE_MEM_treshold=0.05
+ NE_MEM_steps=2  ! By default only G_lesser@t and @t+1
  RT_nk=0
  !
 #endif

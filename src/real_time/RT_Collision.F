@@ -33,11 +33,11 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  use units,          ONLY:HBAR_eVfs,FS2AUT,HA2EV
  use wrapper,        ONLY:M_by_M,V_by_V_plus_V
  use electrons,      ONLY:levels
- use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex
+ use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex,l_ph_corr
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
- use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_with_fields,QP_LifeTime,full_rho,           &
+ use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_with_fields,RAD_LifeTime,full_rho,           &
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
 &                         G_lesser_reference,Phase_LifeTime,NE_Hxc_jumps,       &
 &                         RT_is_dumped,l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start, &
@@ -125,7 +125,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    H_nl_sc=(0._SP,0._SP)
    !
    ! Non-local XC potentials (like CHOSEX)
-   !=========================
+   !=======================================
    if(.not.local_V.and..not.XCfrozen) then
      ! HF
      call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc) 
@@ -175,6 +175,15 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    call M_by_M('n','n',SC_bands(2),G_input(1:SC_bands(2),1:SC_bands(2),ik),&
 &              H_nl_sc(1:SC_bands(2),1:SC_bands(2),1),I2_lesser(1:SC_bands(2),1:SC_bands(2),ik))
    !
+#if defined _ELPH
+   !
+   ! El-Ph
+   !=======
+   !if (l_ph_corr) call RT_elph_Kernel(ik,Xen,k,q,Time)
+   !if (it_now==100.and.l_ph_corr) call RT_elph_Kernel(ik,Xen,k,q,Time)
+   !
+#endif
+   !
    ! Damping
    !=========
    !
@@ -189,9 +198,9 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !
    if(RT_is_dumped.and.NE_dynamics) then
      !
-     if ( QP_LifeTime > 1.E-5_SP) then
+     if ( RAD_LifeTime > 1.E-5_SP) then
        forall(i1=SC_bands(1):SC_bands(2)) &
-         I1_lesser(i1,i1,ik)=I1_lesser(i1,i1,ik)-cI/QP_LifeTime*(G_input(i1,i1,ik)-G_lesser_reference(i1,i1,ik))
+         I1_lesser(i1,i1,ik)=I1_lesser(i1,i1,ik)-cI/RAD_LifeTime*(G_input(i1,i1,ik)-G_lesser_reference(i1,i1,ik))
      endif
      !
      if(Phase_LifeTime > 1.E-5_SP) then
@@ -213,16 +222,18 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
         enddo
      endif
      !
-     if(associated(Xen%W)) then
-       do i1=SC_bands(1),SC_bands(2)
-         do i2=i1+1,SC_bands(2)
-           I1_lesser(i1,i2,ik)=I1_lesser(i1,i2,ik)-cI*(Xen%W(i1,ik,1)-Xen%W(i2,ik,1)) &
-&                  *(G_input(i1,i2,ik)-G_lesser_reference(i1,i2,ik))*HA2EV/HBAR_eVfs/FS2AUT
-           I1_lesser(i2,i1,ik)=I1_lesser(i2,i1,ik)+cI*(Xen%W(i2,ik,1)-Xen%W(i1,ik,1)) &
-&                  *(G_input(i2,i1,ik)-G_lesser_reference(i2,i1,ik))*HA2EV/HBAR_eVfs/FS2AUT
-         enddo
-       enddo
-     endif
+     ! The %W components of E are now used to define the long range damping of the G_retarded
+     !
+!     if(associated(Xen%W)) then
+!       do i1=SC_bands(1),SC_bands(2)
+!         do i2=i1+1,SC_bands(2)
+!           I1_lesser(i1,i2,ik)=I1_lesser(i1,i2,ik)-cI*(Xen%W(i1,ik,1)-Xen%W(i2,ik,1)) &
+!&                  *(G_input(i1,i2,ik)-G_lesser_reference(i1,i2,ik))*HA2EV/HBAR_eVfs/FS2AUT
+!           I1_lesser(i2,i1,ik)=I1_lesser(i2,i1,ik)+cI*(Xen%W(i2,ik,1)-Xen%W(i1,ik,1)) &
+!&                  *(G_input(i2,i1,ik)-G_lesser_reference(i2,i1,ik))*HA2EV/HBAR_eVfs/FS2AUT
+!         enddo
+!       enddo
+!     endif
      !
    endif
    !

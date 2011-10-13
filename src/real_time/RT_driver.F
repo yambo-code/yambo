@@ -19,10 +19,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
+subroutine RT_driver(en,Xen,X,k,Xk,q,Xw)
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_collisions_IO
+ use drivers,        ONLY:l_collisions_IO,l_ph_corr
  use stderr,         ONLY:set_real_printed_length
  use units,          ONLY:FS2AUT
  use timing,         ONLY:live_timing 
@@ -33,7 +33,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  use R_lattice,      ONLY:bz_samp,qindx_free
  use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx,SC_R,rho_n,Ho
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &
-&                         G_lesser_previous,l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
+&                         l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
 &                         NE_i_time,Integrator_name,l_RT_diagonalize,max_rt_steps_disk,&
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
 &                         it_start,RT_output,NE_time,NE_dynamics,RT_update,&
@@ -43,6 +43,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  use com,             ONLY:error
  use fields,          ONLY:A_vecpot,A_vecpot_previous
  use collisions_CACHE,ONLY:free_COLLISIONS_v
+ use QP_CTL_m,        ONLY:QP_apply
  !
  implicit none
  !
@@ -59,11 +60,17 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  ! 
  ! Work Space
  !
- integer                  :: it,ik,ib,it_mem
+ integer                  :: it,ik,ib,it_mem,it_mem_p1
  complex(SP)              :: on_the_fly_operators(8)
  !
- call section('*',trim(SC_potential)//' Real-Time Dynamics')
- !##########################################################
+ if (l_ph_corr) then
+   call section('*',trim(SC_potential)//' Real-Time Dynamics including el-ph scattering')
+ else
+   call section('*',trim(SC_potential)//' Real-Time Dynamics')
+ endif
+ !
+ call section('+','Initialization')
+ !########################################################################################
  !
  call set_real_printed_length(f_length=10,g_length=10)  
  !
@@ -84,12 +91,17 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  ! the optical collisions that are done in G-space and would
  ! force the reloading of the WFs
  !
- call Dipole_driver(Xen, Xk, X(1), X(1)%q0)
+ call Dipole_driver(Xen,Xk,X(1),X(1)%q0)
  !
  ! WFs loading
  !=============
  !
  call WF_load(WF_G_max,WF_Go_indx,(/1,SC_bands(2)/),(/1,k%nibz/),space='R',title='-RT')  
+ !
+ ! QP-corrections 
+ !================
+ !
+ call QP_apply(SC_bands,Xen,Xk,"G",msg_fmt='s')
  !
  ! Core initialization
  !
@@ -101,6 +113,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  !
  ! Restart from a previous RT run or from a SC calculation
  ! 
+ call section('=','Start and Restart')
  call RT_start_and_restart(Xen,Xk,k,q,X)
  !
  ! Collisions
@@ -116,7 +129,7 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
  ! qindx_X and qindx_S not needed in real-time 
  ! they are used only in dipoles and collisions calculations
  !
- call qindx_free()
+ if (.not.l_ph_corr) call qindx_free()
  !
  ! Calculation already done
  !
@@ -174,10 +187,11 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    !
    ! at  it = Thermal_steps+1    NE_dynamics=.TRUE.
    !
-   NE_i_time=it-Thermal_steps
-   NE_time=(NE_i_time-1)*RT_step
+   NE_i_time  =it-Thermal_steps
+   NE_time    =(NE_i_time-1)*RT_step
    NE_dynamics=NE_i_time>=1
-   it_mem=MEM_index(NE_i_time)
+   it_mem     =MEM_index(NE_i_time)
+   it_mem_p1  =MEM_index(NE_i_time+1)
    !
    ! Start-Up & Timing
    !===================
@@ -189,15 +203,14 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
      !
    endif
    !
-   ! Keep a copy of G_lesser and A_vecpot before starting the collisions
+   ! Keep a copy of A_vecpot before starting the collisions
    ! ===========
    !
-   G_lesser_previous=G_lesser(:,:,:,it_mem)
    A_vecpot_previous=A_vecpot
    !
    ! Simmetrization
    !
-   forall( ib=1:SC_bands(2) )  G_lesser_previous(ib,ib,:)=(0._SP,1._SP)*aimag(G_lesser(ib,ib,:,it_mem))
+   forall( ib=1:SC_bands(2) )  G_lesser(ib,ib,:,it_mem)=(0._SP,1._SP)*aimag(G_lesser(ib,ib,:,it_mem))
    !
    ! End dynamics ?
    !===============
@@ -231,20 +244,21 @@ subroutine RT_driver(en,Xen,X,k,xk,q,Xw)
    ! Calculate Collisions and fill SC_R
    !====================================
    !
-   call RT_Collision(G_lesser_previous,A_vecpot_previous,Xen,k,q,NE_time)
+   call RT_Collision(G_lesser(:,:,:,it_mem),A_vecpot_previous,Xen,k,q,NE_time)
    !
    ! Integration
    !=============
    ! T -> T+dT step 
    !
-   call RT_Integrator(G_lesser(:,:,:,it_mem),G_lesser_previous,A_vecpot,A_vecpot_previous,RT_step,Xen,k,q,Integrator_name,NE_time)
+   call RT_Integrator(G_lesser(:,:,:,it_mem_p1),G_lesser(:,:,:,it_mem),A_vecpot,A_vecpot_previous,&
+&                     RT_step,Xen,k,q,Integrator_name,NE_time)
    !
    if(it==Thermal_steps) then
      !
      ! I freeze the last self-energy + hartree in XC0_and_HARTREE and I work
      ! only with the differences rho-rho_reference and G_lesser-G_lesser_reference
      ! 
-     call RT_Collision(G_lesser_previous,A_vecpot_previous,Xen,k,q,NE_time)
+     call RT_Collision(G_lesser(:,:,:,it_mem),A_vecpot_previous,Xen,k,q,NE_time)
      XC0_and_HARTREE0=SC_R-Ho
      !
    endif

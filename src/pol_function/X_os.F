@@ -40,6 +40,11 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  use memory_m,      ONLY:mem_est
  use X_m,           ONLY:X_t,X_poles,DIP_q_dot_iR,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_RIM
+#if defined _KERR
+ use drivers,       ONLY:l_kerr
+ use electrons,     ONLY:spin_orbit
+ use KERR,          ONLY:X_mat_wing_right,X_mat_wing_left,DIP_q_dot_iR_kerr
+#endif
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_collisions_IO
  use SC,            ONLY:it_now
@@ -75,6 +80,9 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
 #if defined _RAS
  complex(SP)             :: iscut
 #endif
+#if defined _KERR
+ complex(SP),allocatable :: XoR_wing(:)
+#endif
  !
  ! Defaults & Setups
  !===================
@@ -85,6 +93,15 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  XoR = cmplx(0.,0.,SP)
  GreenF  = cmplx(0.,0.,SP)
  drude_GreenF = cmplx(0.,0.,SP)
+ !
+#if defined _KERR
+ if(l_kerr) then
+   allocate(XoR_wing(X%ng))
+   XoR_wing= cmplx(0.,0.,SP)
+   X_mat_wing_right= cmplx(0.,0.,SP)
+   X_mat_wing_left=  cmplx(0.,0.,SP)
+ endif
+#endif
  !
  ! Logicals  to skip wf_load and/or to use bare or RIM GF (no poles accumulation)
  !==========
@@ -208,6 +225,10 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  if (.not.half_X_mat_only) then
    half_X_mat_only= all( aimag(Xw%p(:))<1.E-4 ).and. all( real(Xw%p(:))<1.E-4 )
  endif
+#if defined _KERR
+ half_X_mat_only=.not.spin_orbit
+#endif
+ !
  g2_max=X%ng
  iwmax=1
  if (half_X_mat_only) g2_max=-1
@@ -257,6 +278,9 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
      n_poles = sum(bg_npts(1:i1-1))
      if (.not.px%element_1D(i1)) cycle
      if (iwmax==1) XoR=(0.,0.)
+#if defined _KERR
+     if (iwmax==1.and.l_kerr) XoR_wing=(0.,0.)
+#endif
      if (cg_pt(i1)==0.) then
        GreenF=drude_GreenF/real(bg_npts(i1))
      else
@@ -318,6 +342,13 @@ loop_bg: do i2 = 1,bg_npts(i1)
        do g2=1,X%ng
          call V_by_V_plus_V(g2,GreenF(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),XoR(:g2,g2))
        enddo
+       !
+#if defined _KERR
+       ! Evaluate head and wings for other direction
+       ! XoR2(1,G')=XoR_wing(G') G'=1,ng
+       if(l_kerr) XoR_wing(:)=XoR_wing(:) &
+&                 -GreenF(1)*eh_occ*isc%rhotw(:)*DIP_q_dot_iR_kerr(ic,iv,ikbz,i_spin)
+#endif
      enddo loop_bg
      !
      do i2=iwmax,Xw%n(2)
@@ -326,7 +357,14 @@ loop_bg: do i2 = 1,bg_npts(i1)
        do g2=1,X%ng
          call V_by_V_plus_V(g2,GreenF(i2)/GreenF(1),XoR(:g2,g2),Xo(:g2,g2,i2))
          if (g2<g2_max) call V_by_V_plus_V(X%ng-g2,GreenF(i2)/conjg(GreenF(1)),conjg(XoR(g2,g2+1:)),Xo(g2+1:,g2,i2))
+         !
        enddo
+#if defined _KERR
+       if (l_kerr) then
+         X_mat_wing_right(:,i2)=X_mat_wing_right(:,i2)+XoR_wing(:)*GreenF(i2)/GreenF(1)               ! right wing
+         X_mat_wing_left(:,i2)=X_mat_wing_left(:,i2)+conjg(XoR_wing(:))*GreenF(i2)/conjg(GreenF(1))   ! left wing
+       endif
+#endif
      enddo
      !
      call live_timing(steps=Xw%n(2)+bg_npts(i1))
@@ -407,6 +445,10 @@ loop_bg: do i2 = 1,bg_npts(i1)
  if (trim(global_gauge)=='velocity') then
    do iw=fr(1),fr(2)
      Xo(1,1,iw)=Xo(1,1,iw)/real(Xw%p(iw))**2
+#if defined _KERR
+     if(l_kerr) X_mat_wing_right(1,iw)=X_mat_wing_right(1,iw)/real(Xw%p(iw))**2
+     if(l_kerr) X_mat_wing_left(1,iw) =X_mat_wing_left(1,iw) /real(Xw%p(iw))**2
+#endif
    enddo
  endif
  !
@@ -418,6 +460,9 @@ loop_bg: do i2 = 1,bg_npts(i1)
  call pp_indexes_reset(px) 
  if (iq==1) deallocate(rhotw_save)
  deallocate(isc%rhotw,XoR)
+#if defined _KERR
+ if (l_kerr) deallocate(XoR_wing)
+#endif
  call mem_est("Xo_WS")
  call collision_reset(isc)
  !

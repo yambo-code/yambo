@@ -1,6 +1,8 @@
-ELPH_objects =
 #if defined _ELPH
 ELPH_objects = X_GreenF_remap.o
+#endif
+#if defined _KERR
+KERR_objects = O_kerr.o O_kerr_shadow.o
 #endif
 objs = O_driver.o O_eels.o \
        Dipole_driver.o Dipole_dip_dot_field.o \

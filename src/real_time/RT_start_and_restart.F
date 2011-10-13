@@ -34,18 +34,18 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  ! [4] Initialize the bare Hartree and XC
  ! [5] Initialize the fields
  !
- use pars,           ONLY:SP,schlen,pi
+ use pars,           ONLY:SP
  use drivers,        ONLY:l_sc_contains_lda
  use com,            ONLY:msg,warning,error
  use QP_m,           ONLY:QP_nk,COHSEX_use_empties
- use units,          ONLY:HA2EV,HBAR_eVfs
+ use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
- use real_time,      ONLY:G_lesser,ID,ID,NE_steps,G_lesser_previous,RT_ind_J,    &
+ use real_time,      ONLY:G_lesser,ID,ID,NE_steps,RT_ind_J,    &
 &                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,rho_reference,  &
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
 &                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,full_rho,   &
-&                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,RT_is_dumped,NE_i_time
+&                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,       &
 &                         rho_convergence,H_rotate,local_V,V_hartree_sc,&
@@ -56,7 +56,6 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
- use QP_CTL_m,       ONLY:QP_apply
  implicit none
  !
  type(levels)      :: Xen
@@ -66,11 +65,8 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  !
  ! Work Space
  !
- integer :: ik,i1,COM_,ib
- integer :: io_E,io_V,io_WF,io_G,io_J_and_P
- logical :: RESTART
- logical :: SC_DB_present
- character(schlen)       :: dump_ch
+ integer :: ik,i1,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P
+ logical :: RESTART,SC_DB_present
  !
  ! Initialize the Gf and potentials
  !==================================
@@ -303,11 +299,15 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  !
  if(RESTART) then
    !
-   !  I use G_lesser(:,:,:) to reconstruct everything
-   !  and I read it_now from the databases
+   ! I use G_lesser(:,:,:) to reconstruct everything
+   ! and I read it_now from the databases. 
    !
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(5))
    io_G=io_SC_components('G',Xen,ID(5))
+   !
+   !Note that the G_lesser must be loaded at the correct time:
+   !
+   NE_i_time=it_now
    !
    do ik=1,QP_nk
      call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(5))
@@ -336,8 +336,6 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    !
  endif
  !
- ! Initialize G_lesser_previous and G_lesser_reference
- !
  if (l_NE_with_fields) then
    !
    NE_i_time=it_start-Thermal_steps
@@ -347,26 +345,11 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  endif
  !
  A_vecpot_previous =A_vecpot
- G_lesser_previous =G_lesser(:,:,:,1)
  !
  call msg('r','')
  !
- ! Apply QP-corrections if present
- !==========
- call QP_apply(SC_bands,Xen,Xk,"G",msg_fmt='s')  
- !
- if(associated(Xen%W)) then
-   RT_is_dumped=.true.
-   call msg('snr','[RT] Dephasing read from QP database')
-   write(dump_ch,'(a,f10.6,a,f10.6,a)') '[RT] Life-time range:' &
-&                               ,HBAR_eVfs/maxval(HA2EV*abs(Xen%W(SC_bands(1):SC_bands(2),:,1))),' - '&
-&                               ,HBAR_eVfs/minval(HA2EV*abs(Xen%W(SC_bands(1):SC_bands(2),:,1))),' [fs]'
-   call msg('snr',dump_ch)            
-   write(dump_ch,'(a,f10.6,a,f10.6,a)') '[RT] Life-time range:' &
-&                                ,HA2EV*maxval(abs(Xen%W(SC_bands(1):SC_bands(2),:,1))),' - '&
-&                                ,HA2EV*minval(abs(Xen%W(SC_bands(1):SC_bands(2),:,1))),' [eV]'
-   call msg('snr',dump_ch)            
- endif
+ ! Apply QP-corrections 
+ !======================
  !
  do ib=SC_bands(1),SC_bands(2)
    Ho(ib,ib,1:QP_nk,1:n_sp_pol)=Ho(ib,ib,1:QP_nk,1:n_sp_pol) &
@@ -377,8 +360,5 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    Ho(ib,ib,1:QP_nk,1:n_sp_pol)=Ho(ib,ib,1:QP_nk,1:n_sp_pol) &
 &                              -E_bare(SC_bands(1),1:QP_nk,1:n_sp_pol)+Xen%E(SC_bands(1),1:QP_nk,1:n_sp_pol)
  enddo
- !
- ! Two Levels related initializations
- !====================================
  !
 end subroutine RT_start_and_restart

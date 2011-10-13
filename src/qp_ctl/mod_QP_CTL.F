@@ -91,7 +91,7 @@ module QP_CTL_m
      ! 3 : G (object = "G")
      !
      use memory_m,      ONLY:mem_est
-     use QP_m,          ONLY:QP_t,QP_reset,QP_ctl_E,QP_ctl_W,QP_ctl_Z,&
+     use QP_m,          ONLY:QP_t,QP_reset,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,&
 &                            QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db
      use com,           ONLY:msg,depth
      use electrons,     ONLY:levels,E_reset,n_sp_pol,&
@@ -224,13 +224,17 @@ module QP_CTL_m
        !
        QP_ctl_db(Eid)=trim(QP_ctl_from_DB(1)%db)
        !
-       ! Note the QP_ctl_W(Eid,1/3) is in ev^{-1} while QP_ctl_W(Eid,2/4) is in
-       !  ev^{-2}
+       ! Note the units of QP_ctl_W:
+       !
+       !   QP_ctl_Wc/v(Eid,1,:) is in ev
+       !   QP_ctl_Wc/v(Eid,2,:) is adim
+       !   QP_ctl_Wc/v(Eid,3,:) is ev^{-1}
        !
        do i_spin=1,n_sp_pol
-         QP_ctl_input_or_impose(i_spin)%W=&
-&                     (/0._SP,QP_ctl_W(Eid,1,i_spin)/HA2EV,QP_ctl_W(Eid,2,i_spin)/HA2EV**2.,&
-&                       0._SP,QP_ctl_W(Eid,3,i_spin)/HA2EV,QP_ctl_W(Eid,4,i_spin)/HA2EV**2./)
+         QP_ctl_input_or_impose(i_spin)%W(1:3)=(/QP_ctl_Wc(Eid,1,i_spin)/HA2EV,&
+&                                                QP_ctl_Wc(Eid,2,i_spin),QP_ctl_Wc(Eid,3,i_spin)*HA2EV/)
+         QP_ctl_input_or_impose(i_spin)%W(4:6)=(/QP_ctl_Wv(Eid,1,i_spin)/HA2EV,&
+&                                                QP_ctl_Wv(Eid,2,i_spin),QP_ctl_Wv(Eid,3,i_spin)*HA2EV/)
          QP_ctl_input_or_impose(i_spin)%Z=QP_ctl_Z(Eid,i_spin)
        enddo
        !
@@ -257,7 +261,7 @@ module QP_CTL_m
      !
      ! Finally I apply the generalized stretch
      !
-     call QP_apply_stretch(band_range,en,QP_ctl_from_DB,QP_ctl_input_or_impose,DB_corrected)
+     call QP_apply_global_stretch(band_range,en,QP_ctl_from_DB,QP_ctl_input_or_impose,DB_corrected)
      !
      ! Fermi Level Updates
      !=====================

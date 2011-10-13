@@ -50,13 +50,13 @@ typedef struct
 /* 
  Yambo/Ypp driver flag
 */
-#if defined _yambo  || _RAS || _REELS || _ELPH || _SC  || _RT || _DISTRIBUTED
+#if defined _yambo  || _RAS || _REELS || _ELPH || _SC  || _RT || _DISTRIBUTED 
  #define _YAMBO_MAIN
 #endif
 #if defined _MANYK || _MAGNETIC || _PW_DIAGO || _TEST_1 || _TEST_2
  #define _YAMBO_MAIN
 #endif
-#if defined _BOLTZMANN  || _AUGER
+#if defined _BOLTZMANN  || _AUGER || _KERR
  #define _YAMBO_MAIN
 #endif
 #if defined _ypp  || _YPP_ELPH || _YPP_RAS || _YPP_RT || _YPP_SC || _YPP_MAGNETIC || _YPP_BOLTZMANN || _YPP_TEST_2

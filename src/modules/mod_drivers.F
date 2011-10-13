@@ -61,6 +61,7 @@ module drivers
  ! The optical runlevels ...
  !
  logical :: l_optics
+ logical :: l_kerr
  logical :: l_chi
  logical :: l_em1d
  logical :: l_em1s

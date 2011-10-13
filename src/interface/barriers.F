@@ -104,7 +104,7 @@ subroutine barriers()
  ! GPL_EXCLUDE_START SC_IGNORE
  !
  if (l_real_time) then
-   call switch_off_runlevel('all',on_name='scpot negf '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='scpot negf el_ph '//trim(always_runlevels))
    goto 1
  endif
  !

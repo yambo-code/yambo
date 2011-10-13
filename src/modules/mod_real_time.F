@@ -102,6 +102,7 @@ module real_time
  !
  ! ... Memory depth ...
  !
+ real(SP) :: NE_MEM_treshold
  integer  :: NE_MEM_steps
  !
  ! Macroscopic induced current ... 
@@ -118,7 +119,7 @@ module real_time
  ! Diagonal (QP) and off-diagonal (Phase) relaxation time
  !
  real(SP)    :: Phase_LifeTime
- real(SP)    :: QP_LifeTime
+ real(SP)    :: RAD_LifeTime
  logical     :: RT_is_dumped
  !
  ! Relaxation: Dephasing Matrix
@@ -128,7 +129,6 @@ module real_time
  !
  ! GFs
  !
- complex(SP), allocatable :: G_lesser_previous(:,:,:)
  complex(SP), allocatable :: G_lesser_reference(:,:,:)
  complex(SP), allocatable :: I1_lesser(:,:,:)
  complex(SP), allocatable :: I2_lesser(:,:,:)
@@ -283,9 +283,6 @@ module real_time
      allocate(I2_lesser(SC_bands(2),SC_bands(2),QP_nk))
      call mem_est("I2_lesser",(/size(I2_lesser)/),(/2*SP/))
      !
-     allocate(G_lesser_previous(SC_bands(2),SC_bands(2),QP_nk))
-     call mem_est("Gf_l_old",(/size(G_lesser_previous)/),(/2*SP/))
-     !
      allocate(G_lesser_reference(SC_bands(2),SC_bands(2),QP_nk))
      call mem_est("Gf_l_ref",(/size(G_lesser_reference)/),(/2*SP/))
      !
@@ -357,9 +354,6 @@ module real_time
      deallocate(I2_lesser)
      call mem_est("I2_lesser")
      !
-     deallocate(G_lesser_previous)
-     call mem_est("Gf_l_old")
-     !
      deallocate(G_lesser_reference)
      call mem_est("Gf_l_ref")
      !
@@ -402,7 +396,7 @@ module real_time
      integer :: it
      MEM_index=mod(it,NE_MEM_steps)
      if (MEM_index==0) MEM_index=NE_MEM_steps
-     if (it       <=0) MEM_index=1
+     if (it        <0) MEM_index=1
      !
    end function
    !

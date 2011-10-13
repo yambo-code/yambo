@@ -32,8 +32,8 @@ integer function variables_SC(ID,local_description,what)
  use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR
  use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,NE_time,Hfrozen,XCfrozen,              &
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
-&                         QP_LifeTime,Phase_LifeTime,l_RT_diamagnetic,                             &
-&                         max_rt_steps_disk,l_RT_induced_field,l_NE_simulate_BSE
+&                         RAD_LifeTime,Phase_LifeTime,l_RT_diamagnetic,                             &
+&                         max_rt_steps_disk,l_RT_induced_field,l_NE_simulate_BSE,NE_MEM_steps
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
@@ -236,6 +236,7 @@ integer function variables_SC(ID,local_description,what)
    !
    VAR_SIZE=8
    if (ver_is_gt_or_eq(ID,revision=890)) VAR_SIZE=7
+   if (ver_is_gt_or_eq(ID,revision=944)) VAR_SIZE=8
    call io_elemental(ID,VAR="RT_DYNAMICS",VAR_SZ=VAR_SIZE,MENU=0) 
    !
    i_desc=i_desc+1
@@ -270,6 +271,14 @@ integer function variables_SC(ID,local_description,what)
    call io_elemental(ID, &
 &    VAR=" [RT] Thermalization steps       :",I0=Thermal_steps,CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
+   !
+   if (ver_is_gt_or_eq(ID,revision=944)) then
+     i_desc=i_desc+1
+     call io_elemental(ID, &
+&      VAR=" [RT] Memory steps               :",I0=NE_MEM_steps,CHECK=.true.,OP=(/"=="/),&
+&      DESCRIPTION=local_description(i_desc))
+   endif
+   !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    call io_elemental(ID,VAR="INTEGRATOR",CH0="",VAR_SZ=1,MENU=0) 
@@ -293,7 +302,7 @@ integer function variables_SC(ID,local_description,what)
 &    VAR=' [RT] Cache size                 :',CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
-   call io_elemental(ID,R0=QP_LifeTime,&
+   call io_elemental(ID,R0=RAD_LifeTime,&
 &    VAR=' [RT] QP life time           [fs]:', CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc),UNIT=1./FS2AUT)
    i_desc=i_desc+1

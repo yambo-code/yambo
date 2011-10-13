@@ -31,13 +31,13 @@ integer function io_SC_components(what,E_sc,ID)
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,write_is_on,&
-&                         manage_RD_WR_CL_IF_END,io_reset
+&                         manage_RD_WR_CL_IF_END,io_reset,ver_is_gt_or_eq
  use fields,         ONLY:i_Probe,i_Pump
  use real_time,      ONLY:max_rt_steps_disk,NE_i_time
 #if defined _RT
  use real_time,      ONLY:l_NE_with_fields,NE_steps,RT_P,J_and_P_cache_size, &
 &                         G_lesser,NE_dynamics,RT_ind_J,J_and_P_cache,&
-&                         G_lesser_reference,MEM_index
+&                         G_lesser_reference,MEM_index,NE_MEM_steps
  use fields,         ONLY:A_vecpot
  use QP_m,           ONLY:QP_nk
 #endif                                
@@ -59,7 +59,7 @@ integer function io_SC_components(what,E_sc,ID)
  integer               :: ik,bands_to_load,ib,i_spin,i1
  logical               :: l_wf,l_V,l_E,l_IMPOSE_SN,CHECK_,l_occupations,l_G,l_J_and_P
 #if defined _RT		
- integer               :: file_number
+ integer               :: file_number,i_time,i_time_range(2)
  logical               :: IO_current
  real(SP)              :: A_vecpot_disk(3,3,2)
 #endif
@@ -303,12 +303,23 @@ integer function io_SC_components(what,E_sc,ID)
    !
    i_spin=1
    !
-   call io_bulk(ID,VAR="G_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
-&       VAR_SZ=(/SC_bands(2),SC_bands(2),2/))
-   !
-   if (write_is_on(ID)) call mat_c2r(G_lesser(:,:,ik,MEM_index(NE_i_time)),R_H_G_disk)
-   call io_bulk(ID,R3=R_H_G_disk)
-   if (read_is_on(ID))  call mat_r2c(R_H_G_disk,G_lesser(:,:,ik,MEM_index(NE_i_time)))
+   if (ver_is_gt_or_eq(ID,revision=944)) then
+     i_time_range=(/NE_i_time-NE_MEM_steps+1,NE_i_time/)
+     if (i_time_range(1)<=0) i_time_range(1)=1
+     do i_time=i_time_range(1),i_time_range(2)
+       call io_bulk(ID,VAR="G_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//"_ITIME"//trim(intc(i_time)),&
+&           VAR_SZ=(/SC_bands(2),SC_bands(2),2/))
+       if (write_is_on(ID)) call mat_c2r(G_lesser(:,:,ik,MEM_index(i_time)),R_H_G_disk)
+       call io_bulk(ID,R3=R_H_G_disk)
+       if (read_is_on(ID))  call mat_r2c(R_H_G_disk,G_lesser(:,:,ik,MEM_index(i_time)))
+     enddo
+   else
+     call io_bulk(ID,VAR="G_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
+&         VAR_SZ=(/SC_bands(2),SC_bands(2),2/))
+     if (write_is_on(ID)) call mat_c2r(G_lesser(:,:,ik,MEM_index(NE_i_time)),R_H_G_disk)
+     call io_bulk(ID,R3=R_H_G_disk)
+     if (read_is_on(ID))  call mat_r2c(R_H_G_disk,G_lesser(:,:,ik,MEM_index(NE_i_time)))
+   endif
    !
    call io_bulk(ID,VAR="G_lesser_ref_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
 &       VAR_SZ=(/SC_bands(2),SC_bands(2),2/))

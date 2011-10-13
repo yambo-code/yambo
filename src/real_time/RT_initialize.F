@@ -21,10 +21,10 @@
 !
 subroutine RT_initialize(Xen)
  ! 
- use drivers,        ONLY:l_collisions_IO
- use SC,             ONLY:local_V
+ use drivers,        ONLY:l_collisions_IO,l_ph_corr 
+ use SC,             ONLY:local_V,SC_bands
  use pars,           ONLY:SP,pi
- use units,          ONLY:SPEED_OF_LIGHT,FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
+ use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
  use com,            ONLY:msg,warning,error
  use vec_operate,    ONLY:normalize_v
  use electrons,      ONLY:nel,levels
@@ -33,8 +33,8 @@ subroutine RT_initialize(Xen)
 &                         l_RT_diamagnetic,max_rt_steps_disk,l_NE_simulate_BSE,     &
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,    &
 &                         l_RT_induced_field,NE_Hxc_jumps,l_NE_simulate_TDDFT,      &
-&                         RT_diagonalization_steps,RT_is_dumped,QP_LifeTime,        &
-&                         Phase_LifeTime,RT_ave_dephasing
+&                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
+&                         Phase_LifeTime,RT_ave_dephasing,NE_MEM_Treshold,NE_MEM_steps
  use D_lattice,      ONLY:DL_vol
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,&
 &                         theta_function_iTo_ref,i_Pump,i_Probe,EtoT,Efield_strength
@@ -47,7 +47,7 @@ subroutine RT_initialize(Xen)
  !
  integer                  :: i1,rest
  character(5)             :: MSG_ch
- real(SP)                 :: Fluence
+ real(SP)                 :: Fluence,T_memory
  !
  ! Logicals
  !==========
@@ -95,10 +95,22 @@ subroutine RT_initialize(Xen)
  !
  if (NE_Hxc_jumps<=0) NE_Hxc_jumps=1
  !
- ! QP and Phase Lifetimes
- !========================
+ ! Lifetimes
+ !===========
  !
- RT_is_dumped=any((/QP_LifeTime,Phase_LifeTime/)>1.E-8_SP)
+ RT_is_dumped=any((/RAD_LifeTime,Phase_LifeTime/)>1.E-8_SP,associated(Xen%W))
+ if (.not.associated(Xen%W).and.l_ph_corr) then
+  l_ph_corr=.FALSE.
+  call warning('No QP lifetime provided. El-Ph scattering switched off')
+ endif
+ !
+ ! Memory Depth
+ !============== 
+ !
+ if (l_ph_corr) then
+   T_memory=-1./minval( abs(Xen%W(SC_bands(1):SC_bands(2),:,:)))*log(NE_MEM_Treshold)
+   NE_MEM_steps=T_memory/RT_step
+ endif
  !
  ! External fields checks
  !========================
@@ -148,14 +160,18 @@ subroutine RT_initialize(Xen)
  ! LOG
  !=====
  !
+ call section('=','Messaging')
+ !
  if(l_NE_with_fields) call msg('rn','[RT] Gauge                      :',trim(global_gauge))
  !
  call msg( 'r', '[RT] NE Steps                   :',NE_steps)
  call msg( 'r', '[RT] NE time                [fs]:',NE_steps*RT_step/FS2AUT)
+ call msg( 'r', '[RT] Memory depth           [fs]:',T_memory/FS2AUT)
+ call msg( 'r', '[RT] Memory steps               :',NE_MEM_steps)
  call msg( 'r', '[RT] Thermalization steps       :',Thermal_steps)
  call msg( 'r', '[RT] Step length            [fs]:',RT_step/FS2AUT)
  call msg( 'r', '[RT] Damping (Phase)    [fs/meV]:',(/Phase_LifeTime/FS2AUT,HBAR_eVfs/Phase_LifeTime*FS2AUT*1000./))
- call msg( 'r', '[RT] Damping (QP)       [fs/meV]:',(/QP_LifeTime/FS2AUT,   HBAR_eVfs/QP_LifeTime*FS2AUT*1000./))
+ call msg( 'r', '[RT] Damping (Radiative)[fs/meV]:',(/RAD_LifeTime/FS2AUT,   HBAR_eVfs/RAD_LifeTime*FS2AUT*1000./))
  if(NE_steps>0) then
    call msg('rn','[RT] Simulation time        [fs]:',(/-real(Thermal_steps)*RT_step,RT_step*real(NE_steps)/)/FS2AUT)
    call msg('rn','[RT] Electron-gas plasma frequency [eV]:',sqrt(4._SP*pi*nel/DL_vol)*HA2EV)

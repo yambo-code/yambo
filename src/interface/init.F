@@ -460,6 +460,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call X_activate('Xd',(/'QpntsR','BndsRn','NGsBlk',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
+#if defined _KERR
+   call initactivate(1,'EvalKerr')
+#endif
    !
  endif
  !
@@ -637,7 +640,9 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call QP_ctl_switch('G')
    call initactivate(-1,'SCmixing')
    call initactivate(1,'Integrator QPLifeTime PhLifeTime') 
-   call initactivate(1,'RTstep NEsteps NETime HXCjumps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
+   call initactivate(1,'RTstep NEsteps NETime')
+   if (l_ph_corr) call initactivate(1,'MemTresh')
+   call initactivate(1,'HXCjumps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
    call initactivate(1,'RTfreezeH RTfreezeXC Diamagnetic InducedField')
    if (l_RT_probe.or.l_RT_pump_and_probe) call Afield_activate('Probe')
    if (              l_RT_pump_and_probe) call Afield_activate('Pump')
@@ -864,7 +869,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          ! Only in this case ioELPH_err is defined
          !
-         l_ph_corr=runlevel_is_on('el_ph').and.ioELPH_err==0
+         l_ph_corr=runlevel_is_on('el_ph').and.(ioELPH_err==0.or.l_real_time)
          ! GPL_EXCLUDE_START
          l_elph_Hamiltonian=runlevel_is_on('ElPhHam').and.ioELPH_err==0
          ! GPL_EXCLUDE_END

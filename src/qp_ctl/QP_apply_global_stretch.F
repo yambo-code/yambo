@@ -19,14 +19,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_apply_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
-&                           DB_corrected)
+subroutine QP_apply_global_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
+&                                  DB_corrected)
  !
  ! Here I apply the strecth for both QP_ctl_from_DB (respecting the 
  ! qp_done array) and QP_ctl_add (everywhere)
  !
  use pars,          ONLY:SP,lchlen
- use units,         ONLY:HA2EV
+ use units,         ONLY:HA2EV,HBAR_eVfs
  use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
  use electrons,     ONLY:levels,n_sp_pol
@@ -78,10 +78,7 @@ subroutine QP_apply_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
    endif
    if (.not.any((/do_E,do_W,do_Z/))) return
    !
-   if (.not.QP_ctl_applied) then
-     QP_ctl_applied=.true.
-     call section('p','QP Corrections extrapolation')
-   endif
+   if (.not.QP_ctl_applied) QP_ctl_applied=.true.
    !
    ! Backup (only once)
    !
@@ -174,21 +171,15 @@ subroutine QP_apply_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
          !
          do i3=1,n_of_coeff-1
            M_factor_local=M_factors_free(iref+1+i3)
-           if (what=='E') then
-             M_factor_local=M_factor_local-1.
-             delta=delta+M_factor_local*(E%Eo(ib,ik,i_spin)-rref)**i3
-           endif
-           if (what=='W') delta=delta+M_factor_local*(E%Eo(ib,ik,i_spin)-rref)**(i3+1)
+           if (what=='E') M_factor_local=M_factor_local-1.
+           delta=delta+M_factor_local*(E%Eo(ib,ik,i_spin)-rref)**i3
          enddo
          if (DB_corrected(ib,ik,i_spin)/=1) then
            delta=delta+M_factors_base(iref+1)
            do i3=1,n_of_coeff-1
              M_factor_local=M_factors_base(iref+1+i3)
-             if (what=='E') then
-               M_factor_local=M_factor_local-1.
-               delta=delta+M_factor_local*(E%Eo(ib,ik,i_spin)-rref)**i3
-             endif
-             if (what=='W') delta=delta+M_factor_local*(E%Eo(ib,ik,i_spin)-rref)**(i3+1)
+             if (what=='E') M_factor_local=M_factor_local-1.
+             delta=delta+M_factor_local*(E%Eo(ib,ik,i_spin)-rref)**i3
            enddo
          endif
          !
@@ -219,8 +210,9 @@ subroutine QP_apply_stretch(band_range,E,QP_ctl_from_DB,QP_ctl_add,&
      endif
      if (any((/qpfit%W/=0./))) then
        call msg(' r',' Widths 0th order c/v [ev]:',(/qpfit%W(1),qpfit%W(4)/)*HA2EV)
+       call msg(' r','                      [fs]:',(/1./qpfit%W(1),1./qpfit%W(4)/)*HBAR_eVfs/HA2EV)
        call msg(' r',' Widths 1st order         :',(/qpfit%W(2),qpfit%W(5)/))
-       call msg(' r',' Widths 2st order         :',(/qpfit%W(3),qpfit%W(6)/))
+       call msg(' r',' Widths 2st order         :',(/qpfit%W(3),qpfit%W(6)/)/HA2EV)
        if (any((/qpfit%W_err/=0./))) call msg(' r','                       Error:',qpfit%W_err)
      endif
      if (qpfit%Z/=(1.,0.)) &

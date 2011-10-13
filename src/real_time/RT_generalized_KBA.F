@@ -19,29 +19,34 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_ctl_switch(what)
+subroutine RT_generalized_KBA(L,ik,ikp,Time,left_kind,right_kind)
  !
- use it_m,       ONLY:initactivate
- use electrons,  ONLY:n_sp_pol
+ use pars,           ONLY:SP
+ use SC,             ONLY:SC_bands
+ use real_time,      ONLY:G_lesser,NE_MEM_steps,RT_step
  implicit none
  !
- character(1)::what
+ complex(SP)   :: L(SC_bands(2),SC_bands(2),NE_MEM_steps)
+ integer       :: ik,ikp
+ character(1)  :: left_kind,right_kind
+ real(SP)      :: Time
  !
  ! Work Space
  !
- call initactivate(1,what//'fnQPdb '//what//'fnQP_N '//what//'fnFdb')
- if (n_sp_pol==1) then
-   call initactivate(1,what//'fnQP_E '//what//'fnQP_Wv '//what//'fnQP_Wc '//what//'fnQP_Z')   
- else
-   call initactivate(1,what//'fnQP_up_E '//what//'fnQP_up_Wv '//what//'fnQP_up_Wc '//what//'fnQP_up_Z')   
-   call initactivate(1,what//'fnQP_dn_E '//what//'fnQP_dn_Wv '//what//'fnQP_dn_Wc '//what//'fnQP_dn_Z')   
+ integer               :: it,it_now
+ complex(SP), external :: RT_G_retarded
+ !
+ it_now=Time/RT_step
+ !
+ ! L^{><}_{kp,nm}(t,t')=-i G^r_nk(t-t')(delta_{nm}+i G^<_{n n' k}(t')) G^<_{n' m p}(t') [G^r_mp(t-t')]^*
+ !
+ if (left_kind==">".and.right_kind=="<") then
+ !
+ do it=max(it_now-NE_MEM_steps+1,0),it_now
+ enddo
+ !
  endif
  !
- ! GPL_EXCLUDE_START
- ! 
- call initactivate(1,'OCCTime')
+ stop
  !
- ! GPL_EXCLUDE_END
- !
- !
-end subroutine
+end subroutine RT_generalized_KBA

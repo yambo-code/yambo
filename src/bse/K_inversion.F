@@ -127,7 +127,7 @@ subroutine K_inversion(iq,W,E,k,q)
    BSS_er=W%er
    BSS_dr=W%dr
    !
-   ALLOCate(X_epsilon(4,BSS_n_freqs))
+   allocate(X_epsilon(4,BSS_n_freqs))
    allocate(inv_err(W%n(1)),iw_full(W%n(1)))
    X_epsilon=(0.,0.)
    inv_err=-1

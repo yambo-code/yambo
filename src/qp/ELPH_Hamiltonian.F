@@ -390,50 +390,6 @@ subroutine ELPH_Hamiltonian(en,k,q)
  enddo
  call live_timing()
  !
- !Mean value of Phonon Number <iH|N_q_lambda|iH>
- !===========
- !iH is the eigenvector of elph_Mat
-!DEBUG>
- !
-! num_of_ph=0.0
-! !
-! !Open and close a file where info about more contributing phonons are given
-! !
-! write (file_name,'(1(a,i3.3))') 'Ph_k_',elph_Ham_ik
-! call of_open_close(file_name,'ot')
-! call msg('o Ph','# El-Ph Hamiltonian derived Green`s function')
-! !
-! call msg('o Ph','#')
-! call msg('o Ph','#',(/'Index', 'Q point','Branch', 'Residual (Phonon Part)'/),INDENT=0,USE_TABS=.true.)
-! call msg('o Ph','#')
-! !
-! do iH=1,H_size
-!   if (.not.top_residual(iH)) cycle
-!   !
-!   Ham_Index=No_PH_basis_size
-!   !
-!   do iq_bz=1,nqbz
-!     do il=1,Ph_branches
-!       !
-!       do ib=elph_Ham_bands(1),elph_Ham_bands(2)
-!         Ham_Index=Ham_Index+1
-!         num_of_ph(iq_bz,il,iH)=num_of_ph(iq_bz,il,iH)+conjg(elph_Mat(Ham_Index,iH))*elph_Mat(Ham_Index,iH)
-!         num_of_ph(iq_bz,il,iH)=  real( num_of_ph(iq_bz,il,iH) )
-!       enddo
-!       ph_residual=real( num_of_ph(iq_bz,il,iH) )
-!       if (ph_residual>5.E-2) then
-!         top_ph_residual(iq_bz,il,iH)=num_of_ph(iq_bz,il,iH)
-!         call msg('o Ph','#',(/real(iH),real(iq_bz),real(il+elph_branches(1)-1),top_ph_residual(iq_bz,il,iH)/),INDENT=0,USE_TABS=.true.)
-!       endif
-!       !
-!     enddo
-!   enddo
-!   !
-! enddo   
-! call msg('o Ph','#')
-! call of_open_close(file_name)
-!DEBUG<
- !
  call set_real_printed_length()
  !
  ! CLEAN

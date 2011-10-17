@@ -30,9 +30,10 @@ subroutine electrons_bands(Xk,Xen)
  use vec_operate,    ONLY:c2a,v_norm
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
+ use interpolate,    ONLY:eval_interpolation_coeff,bz_interpolation
  implicit none
  !
- type(bz_samp), intent(in) ::Xk
+ type(bz_samp), intent(inout) ::Xk
  type(levels),  intent(in) ::Xen
  !
  ! Work Space
@@ -40,7 +41,7 @@ subroutine electrons_bands(Xk,Xen)
  type(bz_samp)         :: USER_K,CIRCUIT_K
  real(SP)              :: real_ctl,v(3),max_dist
  real(SP), allocatable :: distances(:),values(:),bands(:,:)
- integer               :: i1,i2,ic
+ integer               :: i1,i2,ic,ID_interp
  integer,  allocatable :: int_distances(:)
  character(schlen)     :: bands_f_name
  character(schlen), allocatable :: headings(:)
@@ -117,8 +118,7 @@ subroutine electrons_bands(Xk,Xen)
  enddo
  !
  call bz_interp_setup(Xk)
- !
- call bz_interp_coeff(Xk,Xen,BANDS_range(1),BANDS_range(2))
+ call eval_interpolation_coeff(R1D=Xen%E(BANDS_range(1):BANDS_range(2),1:Xk%nibz,1),k=Xk,ID=ID_interp)
  !
  do i1=1,Xk%nibz
    v=Xk%pt(i1,:)
@@ -129,7 +129,7 @@ subroutine electrons_bands(Xk,Xen)
  allocate(values(3+BANDS_range(2)-BANDS_range(1)+1),headings(3+BANDS_range(2)-BANDS_range(1)+1))
  allocate(bands(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nibz))
  !
- call bz_interpolation(CIRCUIT_k,bands,BANDS_range(1),BANDS_range(2))
+ call bz_interpolation(USER_k=CIRCUIT_k,R1D=bands,ID=ID_interp)
  !
  bands_f_name="bands"
  call of_open_close(bands_f_name,'ot')

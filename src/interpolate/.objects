@@ -1,5 +1,6 @@
 objs = 
 #if defined _TEST_2
-objs = bz_interp_coeff.o  bz_interpolation.o  bz_interp_setup.o
+objs = bz_interp_coeff.o  bz_interpolation.o  bz_interp_setup.o eval_interpolation_coeff.o \
+       fourier_interpolation.o
 #endif
 

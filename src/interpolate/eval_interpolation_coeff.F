@@ -19,21 +19,29 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine bz_interpolation(R1D,R2D,C1D,C2D,USER_k,ID)
+subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,k,ID)
   use pars,        ONLY:SP
   use R_lattice,   ONLY:bz_samp
-  use com,         ONLY:error
   use interpolate, ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D,nwave,get_ID
   implicit none
-  type(bz_samp), intent(in)            :: USER_k
-  real(SP),      intent(out), optional :: R1D(:,:),R2D(:,:,:)
-  real(SP),      intent(out), optional :: C1D(:,:),C2D(:,:,:)
-  integer,       intent(in)            :: ID
+  type(bz_samp), intent(in)           :: k
+  real(SP),      intent(in), optional :: R1D(:,:),R2D(:,:,:)
+  real(SP),      intent(in), optional :: C1D(:,:),C2D(:,:,:)
+  integer,       intent(inout)        :: ID
   !
-  if(interpls(ID)%ndim==0) call error("Interpolation coefficients not present!")
+  ! Work Space
   !
-  if(interpls(ID)%interp_type==REAL1D.and.present(R1D)) then
-    call fourier_interpolation(USER_k,R1D,interpls(ID)%engre,interpls(ID)%ndim)
+  real(SP), allocatable :: RDATA(:,:)
+  !
+  call get_ID(ID)
+  !
+  if(present(R1D)) then
+    !
+    interpls(ID)%interp_type=REAL1D
+    interpls(ID)%ndim       =size(R1D(:,1))
+    allocate(interpls(ID)%engre(nwave,interpls(ID)%ndim))
+    call bz_interp_coeff(k,R1D,interpls(ID)%engre,interpls(ID)%ndim)
+    !
   endif
-  !
-end subroutine bz_interpolation
+  !  
+ end subroutine  eval_interpolation_coeff

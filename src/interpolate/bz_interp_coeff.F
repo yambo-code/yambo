@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine bz_interp_coeff(Xk,Xen,icut1,icut2)
+subroutine bz_interp_coeff(Xk,R1D,engre,ndim)
   ! Interpolation scheme (PRB 38 p2721)
   ! Aug2002 Georg Madsen : First version based on subroutine from D.Singh
   ! Apr2004 Georg Madsen : blocked dgemm version
@@ -27,17 +27,17 @@ subroutine bz_interp_coeff(Xk,Xen,icut1,icut2)
   ! http://www.icams.de/content/departments/ams/madsen/boltztrap.html
   !
   use pars,           ONLY:SP,pi
-  use interpolate,    ONLY:nwave,lattice_vectors,lpfac,STERN1,engre,int_sop
+  use interpolate,    ONLY:nwave,lattice_vectors,lpfac,stern1,int_sop
   use D_lattice,      ONLY:nsym,a
   use R_lattice,      ONLY:bz_samp
-  use electrons,      ONLY:levels
   IMPLICIT NONE
   !
   INTEGER,PARAMETER         :: IBLOCK=128
   REAL(SP),PARAMETER        :: C1=0.75_SP,C2=0.75_SP
-  INTEGER,INTENT(IN)        :: icut1,icut2
+  INTEGER,INTENT(IN)        :: ndim
   type(bz_samp), intent(in) :: Xk
-  type(levels),  intent(in) :: Xen
+  real(SP), intent(in)      :: R1D(ndim,Xk%nibz)
+  real(SP), intent(inout)   :: engre(nwave,ndim)
 
  ! local vars
   INTEGER                 :: i,k,nw,inf,ibb,inw,idimk
@@ -54,15 +54,10 @@ subroutine bz_interp_coeff(Xk,Xen,icut1,icut2)
   !
   nkpt=Xk%nibz
   !
-  write(*,*) ' nwave ',nwave
-  !
-  if(allocated(engre)) deallocate(engre)
-  allocate(engre(nwave,icut1:icut2))
-  !
   allocate(ipiv(nkpt-1))
   allocate(rho(nwave))
   allocate(hmat(nkpt-1,nkpt-1))
-  allocate(lambda(nkpt-1,icut1:icut2))
+  allocate(lambda(nkpt-1,ndim))
   allocate(spw1(nkpt,IBLOCK))
   allocate(spw2(IBLOCK,nkpt))
   allocate(spwn(nwave))
@@ -70,7 +65,7 @@ subroutine bz_interp_coeff(Xk,Xen,icut1,icut2)
   metten1_dir=MATMUL(a,TRANSPOSE(a))
   !
   !  prepare vector of energies in complex array 
-  forall(i=icut1:icut2,k=1:nkpt-1) lambda(k,i)=Xen%E(i,k,1)-Xen%E(i,nkpt,1)
+  forall(i=1:ndim,k=1:nkpt-1) lambda(k,i)=R1D(i,k)-R1D(i,nkpt)
   !
   !  prepare array of factors rho for smoothing 
   rho(1) = 0._SP
@@ -119,17 +114,18 @@ subroutine bz_interp_coeff(Xk,Xen,icut1,icut2)
 #else
   CALL SGETRF(nkpt-1,nkpt-1,hmat,nkpt-1,ipiv,inf)
 #endif
-!  print*,'xx',SUM(hmat)
-!  write (6,*) 'inf = ', inf
-  IF(inf/=0) STOP 'error in factorization'
-! Solve all the equations for all the bands at once (eq. 10 of Ref 1 = PRB 38 2721)
+  !
+  if(inf/=0) stop 'error in factorization'
+  !
+  ! Solve all the equations for all the bands at once (eq. 10 of Ref 1 = PRB 38 2721)
+  !
 #if defined _DOUBLE
-  CALL DGETRS('N',nkpt-1,icut2-icut1+1,hmat,nkpt-1,ipiv,lambda(1,icut1),nkpt-1,inf)
+  CALL DGETRS('N',nkpt-1,ndim,hmat,nkpt-1,ipiv,lambda,nkpt-1,inf)
 #else
-  CALL SGETRS('N',nkpt-1,icut2-icut1+1,hmat,nkpt-1,ipiv,lambda(1,icut1),nkpt-1,inf)
+  CALL SGETRS('N',nkpt-1,ndim,hmat,nkpt-1,ipiv,lambda,nkpt-1,inf)
 #endif
   !
-  ENGRE(1:nwave,icut1:icut2)=0._SP 
+  engre=0._SP
   !
   DO nw=1,nwave
      Rdum(1:3)=lattice_vectors(1:3,nw)
@@ -144,16 +140,16 @@ subroutine bz_interp_coeff(Xk,Xen,icut1,icut2)
      DO K=1,nkpt-1
         spw=sum(cos(TWOPI*(Xk%pt(k,1)*stg(1,1:nst)+Xk%pt(k,2)*stg(2,1:nst)+Xk%pt(k,3)*stg(3,1:nst))))
         spw=spw/nst
-        forall(i=icut1:icut2) engre(nw,i)=engre(nw,i)+ lambda(k,i)*(spw-spwn(nw))*rho(nw)
+        forall(i=1:ndim) engre(nw,i)=engre(nw,i)+ lambda(k,i)*(spw-spwn(nw))*rho(nw)
      ENDDO
   ENDDO
   !
-  DO i=icut1,icut2
-    engre(1,i)=engre(1,i)+sum(engre(2:nwave,I)*spwn(2:nwave))
-    engre(1,i)=Xen%E(i,nkpt,1)-engre(1,i)
+  DO i=1,ndim
+    engre(1,i)=engre(1,i)+sum(engre(2:nwave,i)*spwn(2:nwave))
+    engre(1,i)=R1D(i,nkpt)-engre(1,i)
   ENDDO
   !
-  CALL kcomp(Xk,Xen,engre,icut1,icut2)
+  CALL kcomp(Xk,R1D,engre,ndim)
   !
   deallocate(ipiv)
   deallocate(rho)
@@ -163,41 +159,39 @@ subroutine bz_interp_coeff(Xk,Xen,icut1,icut2)
   deallocate(spw2)
   deallocate(spwn)
 
-END SUBROUTINE bz_interp_coeff
+end subroutine bz_interp_coeff
 
 
-SUBROUTINE kcomp(Xk,Xen,engre,icut1,icut2)
+SUBROUTINE kcomp(Xk,R1D,engre,ndim)
   use units,          ONLY:HA2EV
   use pars,           ONLY:SP
-  use electrons,      ONLY:levels
   use R_lattice,      ONLY:bz_samp
   use interpolate,    ONLY:lattice_vectors,nwave,STERN1,int_sop
   !
   IMPLICIT NONE
   type(bz_samp), intent(in) :: Xk
-  type(levels),  intent(in) :: Xen
-  INTEGER,INTENT(IN)      :: icut1,icut2
-  REAL(SP),INTENT(IN)     :: engre(nwave,icut1:icut2)
+  INTEGER,INTENT(IN)      :: ndim
+  REAL(SP),INTENT(IN)     :: engre(nwave,ndim)
+  real(SP),intent(in)     :: R1D(ndim,Xk%nibz)
   !
   ! Work Space
   !
   INTEGER                  :: ikpt,iband
   REAL(SP), allocatable    :: ene(:,:)
   !
-  allocate (ene(icut1:icut2,Xk%nibz))
+  allocate (ene(ndim,Xk%nibz))
   !
-  call bz_interpolation(Xk,ene,icut1,icut2)
+  call fourier_interpolation(Xk,ene,engre,ndim)
   !
   DO ikpt=1,Xk%nibz
-     write(*,*) ' ik ',ikpt
-     DO iband=icut1,icut2
-!        IF(ABS(ene(iband)-Xen%E(iband,ikpt,1))>.0001) THEN
-!           WRITE(6,*) 'WARNING'              
+     DO iband=1,ndim
+       IF(ABS(ene(iband,ikpt)-R1D(iband,ikpt))>.0001) THEN
+           WRITE(6,*) 'WARNING'              
        WRITE(6,'(A,3e14.4,A,i4,2(A,f14.6))') 'K=',Xk%pt(ikpt,1:3),' band:',iband, &
-&                       ' ~e:',ene(iband,ikpt)*HA2EV,' e',Xen%E(iband,ikpt,1)*HA2EV
-!           WRITE(6,*) ' Increase LPFAC'
-!        ENDIF
+&                       ' ~e:',ene(iband,ikpt)*HA2EV,' e',R1D(iband,ikpt)*HA2EV
+           WRITE(6,*) ' Increase LPFAC'
+        ENDIF
      ENDDO
   ENDDO
   deallocate (ene)
-END SUBROUTINE kcomp
+end subroutine kcomp

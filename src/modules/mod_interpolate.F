@@ -22,6 +22,7 @@
 module interpolate
  !
  use pars,       ONLY:SP,schlen
+ use com,        ONLY:error
  !
  ! Interpolation according to PRB 38 p2721
  ! Code copied from BolzTraP 
@@ -33,59 +34,102 @@ module interpolate
  real(SP), pointer     :: lattice_vectors(:,:)
  real(SP), parameter   :: lpfac = 5.0_SP  ! Use 5 times more waves than nkibz
  real(SP), allocatable :: engre(:,:)
+ !
+ ! Interpolation type
+ !
+ character(schlen), parameter :: REAL1D   = "REAL1D"
+ character(schlen), parameter :: REAL2D   = "REAL2D"
+ character(schlen), parameter :: CMPLX1D  = "CMPLX1D"
+ character(schlen), parameter :: CMPLX2D  = "CMPLX2D"
  ! 
  type interp_coeff
-   character(schlen)     :: interp_name
+   character(schlen)     :: interp_type
    real(SP), allocatable :: engre(:,:)
+   integer               :: ndim
  end type interp_coeff
+ !
+ integer, parameter :: max_interpls=10
+ !
+ type(interp_coeff) :: interpls(max_interpls)
  !
  interface
    !
-   subroutine eval_interpolation_coeff(RVALUES,CVALUES,k)
+   subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,k,ID)
      use pars,       ONLY:SP
      use R_lattice,  ONLY:bz_samp
      implicit none
-     type(bz_samp), intent(in) :: k
-     real(SP),      optional, intent(in) :: RVALUES(:,:)
-     complex(SP),   optional, intent(in) :: CVALUES(:,:)
-     !
-   end subroutine eval_interpolation_coeff
+     type(bz_samp), intent(in)           :: k
+     real(SP),      intent(in), optional :: R1D(:,:),R2D(:,:,:)
+     real(SP),      intent(in), optional :: C1D(:,:),C2D(:,:,:)
+     integer,       intent(out)          :: ID
+   end subroutine  eval_interpolation_coeff
    !
- end interface
- !
+   subroutine bz_interpolation(R1D,R2D,C1D,C2D,USER_k,ID)
+     use pars,       ONLY:SP
+     use R_lattice,  ONLY:bz_samp
+     implicit none
+     type(bz_samp), intent(in)            :: USER_k
+     real(SP),      intent(out), optional :: R1D(:,:),R2D(:,:,:)
+     real(SP),      intent(out), optional :: C1D(:,:),C2D(:,:,:)
+     integer,       intent(in)            :: ID
+   end subroutine bz_interpolation
+   !
+ end interface  
+ !  
  contains
    !
-   SUBROUTINE STERN1(G,nsym,symop,nst,stg)
+   subroutine get_ID(ID)
+     implicit none
+     integer, intent(out) :: ID
+     integer :: i1
+     logical :: done
+     !
+     done=.false.
+     i1=1
+     !
+     do while(.not.done.and.i1<max_interpls)
+       if(interpls(i1)%ndim==0) then
+         ID=i1
+         done=.true.
+       endif
+       i1=i1+1
+     enddo
+     !
+     if(.not.done) call error("Error too many interpolations!!! ")
+     !
+   end subroutine get_ID
+   !
+   subroutine stern1(G,nsym,symop,nst,stg)
      !.... GENERATE STAR OF G
      ! note: this is the only place symop is used
      use pars,           ONLY:SP
-     USE vec_operate,    ONLY:v_is_zero
-     IMPLICIT NONE
+     use vec_operate,    ONLY:v_is_zero
+     implicit none
      !
-     INTEGER,INTENT(IN)     :: nsym
-     REAL(SP),INTENT(IN)    :: g(3),symop(3,3,nsym) ! input vector and symmetry operations
-     REAL(SP),INTENT(OUT)   :: stg(3,nsym)          ! star vectors - maximum number is nsym
-     INTEGER,INTENT(OUT)    :: nst                  ! number of vectors in star
+     integer, intent(in)    :: nsym
+     real(SP),INTENT(in)    :: g(3),symop(3,3,nsym) ! input vector and symmetry operations
+     real(SP),INTENT(out)   :: stg(3,nsym)          ! star vectors - maximum number is nsym
+     integer, intent(out)   :: nst                  ! number of vectors in star
      !
-     INTEGER          :: I,M
-     REAL(SP)          :: try(1:3)
-     LOGICAL          :: add
+     integer           :: I,M
+     real(SP)          :: try(1:3)
+     logical           :: add
      !
      nst=1
      stg(1:3,1)=g(1:3)
      !
-     DO I=1,nsym
+     do I=1,nsym
        try(1:3)=MATMUL(symop(1:3,1:3,i),G(1:3))
        add=.TRUE.
-       DO m=1,nst
-! could use a hash table to do this with integer compares instead of math operations
+       do m=1,nst
          if(v_is_zero(try(:)-stg(:,m))) add=.FALSE.
-       ENDDO
-     IF(add) THEN
+       enddo
+       !
+     if(add) then
        nst=nst+1                                                      
        stg(1:3,nst)=try(1:3)
-     ENDIF
-   ENDDO
- END SUBROUTINE STERN1
+     endif
+   enddo
+ end subroutine stern1
  !
 end module interpolate

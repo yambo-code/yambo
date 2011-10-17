@@ -98,7 +98,7 @@ subroutine RT_initialize(Xen)
  ! Lifetimes
  !===========
  !
- RT_is_dumped=any((/RAD_LifeTime,Phase_LifeTime/)>1.E-8_SP,associated(Xen%W))
+ RT_is_dumped=RAD_LifeTime>1.E-8_SP.or.Phase_LifeTime>1.E-8_SP.or.associated(Xen%W)
  if (.not.associated(Xen%W).and.l_ph_corr) then
   l_ph_corr=.FALSE.
   call warning('No QP lifetime provided. El-Ph scattering switched off')

@@ -30,29 +30,33 @@ subroutine bz_interp_coeff(Xk,R1D,engre,ndim)
   use interpolate,    ONLY:nwave,lattice_vectors,lpfac,stern1,int_sop
   use D_lattice,      ONLY:nsym,a
   use R_lattice,      ONLY:bz_samp
-  IMPLICIT NONE
+  use stderr,         ONLY:intc
+  implicit none
   !
-  INTEGER,PARAMETER         :: IBLOCK=128
-  REAL(SP),PARAMETER        :: C1=0.75_SP,C2=0.75_SP
-  INTEGER,INTENT(IN)        :: ndim
-  type(bz_samp), intent(in) :: Xk
-  real(SP), intent(in)      :: R1D(ndim,Xk%nibz)
-  real(SP), intent(inout)   :: engre(nwave,ndim)
-
- ! local vars
-  INTEGER                 :: i,k,nw,inf,ibb,inw,idimk
-  INTEGER                 :: nst,nkpt
-  REAL(SP)                 :: metten1_dir(3,3)
-  REAL(SP)                 :: rnot2,xx2
-  REAL(SP)                 :: spw
-  REAL(SP)                 :: stg(3,nsym),Rdum(3)
-  REAL(SP), allocatable    :: spwn(:)
-  REAL(SP), allocatable    :: spw1(:,:), spw2(:,:)
-  REAL(SP), allocatable    :: lambda(:,:), hmat(:,:)
-  REAL(SP), allocatable    :: rho(:), ipiv(:)
-  real(SP), parameter      :: twopi=2._SP*pi
+ ! integer,parameter         :: iblock=128
+  integer :: iblock
+  real(sp),parameter        :: C1=0.75_SP,C2=0.75_SP
+  integer,intent(in)        :: ndim
+  type(bz_samp), intent(in) :: xk
+  real(sp), intent(in)      :: r1d(ndim,xk%nibz)
+  real(sp), intent(inout)   :: engre(nwave,ndim)
+  !
+  ! Work Space
+  !
+  integer                  :: i,k,nw,inf,ibb,inw,idimk,i1
+  integer                  :: nst,nkpt
+  real(SP)                 :: metten1_dir(3,3)
+  real(SP)                 :: rnot2,xx2
+  real(SP)                 :: spw
+  real(SP)                 :: stg(3,nsym),rdum(3)
+  real(SP), allocatable    :: spwn(:)
+  real(SP), allocatable    :: spw1(:,:), spw2(:,:)
+  real(SP), allocatable    :: lambda(:,:), hmat(:,:)
+  real(SP), allocatable    :: rho(:), ipiv(:)
+  real(SP), parameter      :: twopi=2._sp*pi
   !
   nkpt=Xk%nibz
+  iblock=nkpt-1
   !
   allocate(ipiv(nkpt-1))
   allocate(rho(nwave))
@@ -62,94 +66,95 @@ subroutine bz_interp_coeff(Xk,R1D,engre,ndim)
   allocate(spw2(IBLOCK,nkpt))
   allocate(spwn(nwave))
   !
-  metten1_dir=MATMUL(a,TRANSPOSE(a))
+  metten1_dir=matmul(a,transpose(a))
   !
   !  prepare vector of energies in complex array 
   forall(i=1:ndim,k=1:nkpt-1) lambda(k,i)=R1D(i,k)-R1D(i,nkpt)
   !
   !  prepare array of factors rho for smoothing 
-  rho(1) = 0._SP
-  rnot2 = 1._SP/DOT_PRODUCT(lattice_vectors(1:3,2),MATMUL(lattice_vectors(1:3,2),metten1_dir(1:3,1:3)))
+  rho(1)= 0._SP
+  rnot2 = 1._SP/dot_product(lattice_vectors(1:3,2),matmul(lattice_vectors(1:3,2),metten1_dir(1:3,1:3)))
   rho(2)= 1._SP/((1._SP-C1)**2 + C2)
   !
-  DO nw=3,nwave 
-     xx2 = rnot2*DOT_PRODUCT(lattice_vectors(1:3,nw),MATMUL(lattice_vectors(1:3,nw),metten1_dir(1:3,1:3)))
+  do nw=3,nwave 
+     xx2 = rnot2*dot_product(lattice_vectors(1:3,nw),matmul(lattice_vectors(1:3,nw),metten1_dir(1:3,1:3)))
      rho(nw)=1._SP/((1._SP-C1*xx2)**2 + C2*xx2**3)
-  ENDDO
+  enddo
   !  prepare matrix H(I,J) 
   hmat=0._SP
-  DO ibb=0,(nwave-1)/iblock
+  do ibb=0,(nwave-1)/iblock
      spw1=0._SP
-     idimk=MIN(iblock,nwave-iblock*ibb)
-     DO inw=1,idimk
+     idimk=min(iblock,nwave-iblock*ibb)
+     do inw=1,idimk
         nw=inw+iblock*ibb
         Rdum(1:3)=lattice_vectors(1:3,nw)
-        CALL stern1(Rdum,nsym,int_sop,nst,stg)
-        DO i=1,nst
-          forall(k=1:nkpt) spw1(k,inw)=spw1(k,inw)+COS(TWOPI*DOT_PRODUCT(Xk%pt(k,1:3),stg(1:3,i)))
-        ENDDO
+        call stern1(rdum,nsym,int_sop,nst,stg)
+        do i=1,nst
+          forall(k=1:nkpt) spw1(k,inw)=spw1(k,inw)+cos(twopi*dot_product(xk%pt(k,1:3),stg(1:3,i)))
+        enddo
         spw1(:,inw)=spw1(:,inw)/nst
-     ENDDO
+     enddo
      !
      forall(k=1:nkpt-1,inw=1:idimk) spw1(k,inw)=spw1(k,inw)-spw1(nkpt,inw)
      !
-     DO inw=1,idimk
-        DO k=1,nkpt-1
+     do inw=1,idimk
+        do k=1,nkpt-1
            nw=inw+iblock*ibb
            spw2(inw,k)=spw1(k,inw)*rho(nw)
-        ENDDO
-     ENDDO
+        enddo
+     enddo
 #if defined _DOUBLE
-     CALL dgemm('N','N',nkpt-1,nkpt-1,idimk,1._SP,spw1,nkpt,spw2,IBLOCK,1._SP,hmat,nkpt-1)
+     call dgemm('N','N',nkpt-1,nkpt-1,idimk,1._SP,spw1,nkpt,spw2,iblock,1._SP,hmat,nkpt-1)
 #else
-     CALL sgemm('N','N',nkpt-1,nkpt-1,idimk,1._SP,spw1,nkpt,spw2,IBLOCK,1._SP,hmat,nkpt-1)
+     call sgemm('N','N',nkpt-1,nkpt-1,idimk,1._SP,spw1,nkpt,spw2,iblock,1._SP,hmat,nkpt-1)
 #endif
      !                   M       N     K        A    LDA  B    LDB        C    LDC
-  ENDDO     
-
-!  print*,'xx',SUM(hmat)
-!  stop
+  enddo     
+  !
 #if defined _DOUBLE
-  CALL DGETRF(nkpt-1,nkpt-1,hmat,nkpt-1,ipiv,inf)
+  call dgetrf(nkpt-1,nkpt-1,hmat,nkpt-1,ipiv,inf)
 #else
-  CALL SGETRF(nkpt-1,nkpt-1,hmat,nkpt-1,ipiv,inf)
+  call sgetrf(nkpt-1,nkpt-1,hmat,nkpt-1,ipiv,inf)
 #endif
   !
-  if(inf/=0) stop 'error in factorization'
+  if(inf/=0) stop 'error in factorization '
   !
   ! Solve all the equations for all the bands at once (eq. 10 of Ref 1 = PRB 38 2721)
   !
 #if defined _DOUBLE
-  CALL DGETRS('N',nkpt-1,ndim,hmat,nkpt-1,ipiv,lambda,nkpt-1,inf)
+  call dgetrs('N',nkpt-1,ndim,hmat,nkpt-1,ipiv,lambda,nkpt-1,inf)
 #else
-  CALL SGETRS('N',nkpt-1,ndim,hmat,nkpt-1,ipiv,lambda,nkpt-1,inf)
+  call sgetrs('N',nkpt-1,ndim,hmat,nkpt-1,ipiv,lambda,nkpt-1,inf)
 #endif
   !
+  if(inf/=0) stop 'error in diagonalization '
+  !	  
   engre=0._SP
   !
-  DO nw=1,nwave
+  do nw=1,nwave
      Rdum(1:3)=lattice_vectors(1:3,nw)
-     CALL stern1(Rdum,nsym,int_sop,nst,stg)
-     spwn(nw)=sum(cos(TWOPI*(Xk%pt(k,1)*stg(1,1:nst)+Xk%pt(k,2)*stg(2,1:nst)+Xk%pt(k,3)*stg(3,1:nst))))
+     call stern1(Rdum,nsym,int_sop,nst,stg)
+     spwn(nw)=sum(cos(twopi*(Xk%pt(nkpt,1)*stg(1,1:nst)+Xk%pt(nkpt,2)*stg(2,1:nst) &
+&                           +Xk%pt(nkpt,3)*stg(3,1:nst))))
      spwn(nw)=spwn(nw)/nst
-  ENDDO
+  enddo
   !
-  DO nw=2,nwave
+  do nw=2,nwave
      Rdum(1:3)=lattice_vectors(1:3,nw)
-     CALL stern1(Rdum,nsym,int_sop,nst,stg)
-     DO K=1,nkpt-1
-        spw=sum(cos(TWOPI*(Xk%pt(k,1)*stg(1,1:nst)+Xk%pt(k,2)*stg(2,1:nst)+Xk%pt(k,3)*stg(3,1:nst))))
+     call stern1(Rdum,nsym,int_sop,nst,stg)
+     do k=1,nkpt-1
+        spw=sum(cos(twopi*(Xk%pt(k,1)*stg(1,1:nst)+Xk%pt(k,2)*stg(2,1:nst)+Xk%pt(k,3)*stg(3,1:nst))))
         spw=spw/nst
         forall(i=1:ndim) engre(nw,i)=engre(nw,i)+ lambda(k,i)*(spw-spwn(nw))*rho(nw)
-     ENDDO
-  ENDDO
+     enddo
+  enddo
   !
-  DO i=1,ndim
+  do i=1,ndim
     engre(1,i)=engre(1,i)+sum(engre(2:nwave,i)*spwn(2:nwave))
     engre(1,i)=R1D(i,nkpt)-engre(1,i)
-  ENDDO
+  enddo
   !
-  CALL kcomp(Xk,R1D,engre,ndim)
+  call kcomp(Xk,R1D,engre,ndim)
   !
   deallocate(ipiv)
   deallocate(rho)
@@ -162,36 +167,36 @@ subroutine bz_interp_coeff(Xk,R1D,engre,ndim)
 end subroutine bz_interp_coeff
 
 
-SUBROUTINE kcomp(Xk,R1D,engre,ndim)
+subroutine kcomp(Xk,R1D,engre,ndim)
   use units,          ONLY:HA2EV
   use pars,           ONLY:SP
   use R_lattice,      ONLY:bz_samp
-  use interpolate,    ONLY:lattice_vectors,nwave,STERN1,int_sop
+  use interpolate,    ONLY:nwave
   !
-  IMPLICIT NONE
+  implicit none
   type(bz_samp), intent(in) :: Xk
-  INTEGER,INTENT(IN)      :: ndim
-  REAL(SP),INTENT(IN)     :: engre(nwave,ndim)
-  real(SP),intent(in)     :: R1D(ndim,Xk%nibz)
+  integer,intent(in)        :: ndim
+  real(SP),intent(in)       :: engre(nwave,ndim)
+  real(SP),intent(in)       :: R1D(ndim,Xk%nibz)
   !
   ! Work Space
   !
-  INTEGER                  :: ikpt,iband
-  REAL(SP), allocatable    :: ene(:,:)
+  integer                  :: ikpt,iband
+  real(SP), allocatable    :: ene(:,:)
   !
   allocate (ene(ndim,Xk%nibz))
   !
   call fourier_interpolation(Xk,ene,engre,ndim)
   !
-  DO ikpt=1,Xk%nibz
-     DO iband=1,ndim
-       IF(ABS(ene(iband,ikpt)-R1D(iband,ikpt))>.0001) THEN
-           WRITE(6,*) 'WARNING'              
-       WRITE(6,'(A,3e14.4,A,i4,2(A,f14.6))') 'K=',Xk%pt(ikpt,1:3),' band:',iband, &
+  do ikpt=1,Xk%nibz
+     do iband=1,ndim
+       if(abs(ene(iband,ikpt)-R1D(iband,ikpt))>.0001) then
+           write(6,*) 'WARNING'              
+       write(6,'(A,3e14.4,A,i4,2(A,f14.6))') 'K=',Xk%pt(ikpt,1:3),' band:',iband, &
 &                       ' ~e:',ene(iband,ikpt)*HA2EV,' e',R1D(iband,ikpt)*HA2EV
-           WRITE(6,*) ' Increase LPFAC'
-        ENDIF
-     ENDDO
-  ENDDO
+           write(6,*) ' Increase LPFAC'
+        endif
+     enddo
+  enddo
   deallocate (ene)
 end subroutine kcomp

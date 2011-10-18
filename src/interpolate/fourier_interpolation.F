@@ -26,23 +26,23 @@ subroutine fourier_interpolation(USER_k,VALUES,engre,ndim)
   use R_lattice,      ONLY:bz_samp
   use D_lattice,      ONLY:nsym
   use vec_operate,    ONLY:c2a
-  IMPLICIT NONE
+  implicit none
   !
-  INTEGER,INTENT(IN)        :: ndim
+  integer, intent(in)       :: ndim
   type(bz_samp), intent(in) :: USER_k
   real(SP), intent(out)     :: VALUES(ndim,USER_k%nibz)
   real(SP), intent(in)      :: engre(nwave,ndim)
   !
   ! Work Space
   !
-  REAL(SP)                 :: arg,tempc
-  INTEGER                  :: ikpt,i,nw
-  INTEGER                  :: iband
-  REAL(SP)                 :: Rdum(3)
-  REAL(SP)                 :: stg(3,nsym)
+  real(SP)                 :: arg,tempc
+  integer                  :: ikpt,i,nw
+  integer                  :: iband
+  real(SP)                 :: Rdum(3)
+  real(SP)                 :: stg(3,nsym)
   integer, allocatable     :: nstv(:)
-  REAL(SP), allocatable    :: spwre(:)
-  REAL(SP), allocatable    :: vec(:,:,:)
+  real(SP), allocatable    :: spwre(:)
+  real(SP), allocatable    :: vec(:,:,:)
   !
   allocate (nstv(nwave))
   allocate (spwre(nwave))
@@ -50,26 +50,26 @@ subroutine fourier_interpolation(USER_k,VALUES,engre,ndim)
   !
   !precalc vec 
   !
-  DO nw=1,nwave
-     Rdum(1:3)=lattice_vectors(1:3,nw)
-     CALL stern1(Rdum,nsym,int_sop,nstv(nw),stg)
+  do nw=1,nwave
+     rdum(1:3)=lattice_vectors(1:3,nw)
+     call stern1(rdum,nsym,int_sop,nstv(nw),stg)
      forall(i=1:nstv(nw)) vec(1:3,i,nw)=stg(1:3,i)
-  ENDDO
+  enddo
   !
-  DO ikpt=1,USER_k%nibz
-     DO nw=1,nwave
-       spwre(nw)=sum(cos(2._SP*pi*(USER_k%pt(ikpt,1)*vec(1,1:nstv(nw),nw) &
-&                                 +USER_k%pt(ikpt,2)*vec(2,1:nstv(nw),nw) &
-&                                 +USER_k%pt(ikpt,3)*vec(2,1:nstv(nw),nw))))
-     ENDDO
+  do ikpt=1,user_k%nibz
+     do nw=1,nwave
+       spwre(nw)=sum(cos(2._sp*pi*(user_k%pt(ikpt,1)*vec(1,1:nstv(nw),nw) &
+&                                 +user_k%pt(ikpt,2)*vec(2,1:nstv(nw),nw) &
+&                                 +user_k%pt(ikpt,3)*vec(2,1:nstv(nw),nw))))
+     enddo
      !
      spwre(1:nwave)=spwre(1:nwave)/nstv(1:nwave)
      !
      forall(iband=1:ndim) VALUES(iband,ikpt) = sum(spwre(1:nwave)*engre(1:nwave,iband))
      !
-  ENDDO
+  enddo
   !
   deallocate (nstv)
   deallocate (spwre)
   deallocate (vec)
-END SUBROUTINE fourier_interpolation
+end subroutine fourier_interpolation

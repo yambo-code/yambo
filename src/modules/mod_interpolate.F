@@ -32,7 +32,7 @@ module interpolate
  integer               :: nwave
  real(SP), allocatable :: int_sop(:,:,:)
  real(SP), pointer     :: lattice_vectors(:,:)
- real(SP), parameter   :: lpfac = 5.0_SP  ! Use 5 times more waves than nkibz
+ real(SP), parameter   :: lpfac = 3.0_SP  ! Use 5 times more waves than nkibz
  real(SP), allocatable :: engre(:,:)
  !
  ! Interpolation type
@@ -60,7 +60,7 @@ module interpolate
      implicit none
      type(bz_samp), intent(in)           :: k
      real(SP),      intent(in), optional :: R1D(:,:),R2D(:,:,:)
-     real(SP),      intent(in), optional :: C1D(:,:),C2D(:,:,:)
+     complex(SP),   intent(in), optional :: C1D(:,:),C2D(:,:,:)
      integer,       intent(out)          :: ID
    end subroutine  eval_interpolation_coeff
    !
@@ -77,6 +77,16 @@ module interpolate
  end interface  
  !  
  contains
+   !
+   subroutine reset_interpolation(ID)
+     implicit none
+     integer, intent(in) :: ID
+     !
+     interpls(ID)%ndim=0
+     interpls(ID)%interp_type=""
+     if(allocated(interpls(ID)%engre)) deallocate(interpls(ID)%engre)
+     !
+   end subroutine reset_interpolation
    !
    subroutine get_ID(ID)
      implicit none

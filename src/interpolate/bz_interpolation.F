@@ -27,13 +27,54 @@ subroutine bz_interpolation(R1D,R2D,C1D,C2D,USER_k,ID)
   implicit none
   type(bz_samp), intent(in)            :: USER_k
   real(SP),      intent(out), optional :: R1D(:,:),R2D(:,:,:)
-  real(SP),      intent(out), optional :: C1D(:,:),C2D(:,:,:)
+  complex(SP),   intent(out), optional :: C1D(:,:),C2D(:,:,:)
   integer,       intent(in)            :: ID
+  !
+  ! Work Space
+  !
+  real(SP), allocatable :: RDATA(:,:)
+  integer               :: outdim(2),ik,i1,twoi1
   !
   if(interpls(ID)%ndim==0) call error("Interpolation coefficients not present!")
   !
   if(interpls(ID)%interp_type==REAL1D.and.present(R1D)) then
     call fourier_interpolation(USER_k,R1D,interpls(ID)%engre,interpls(ID)%ndim)
+    return
   endif
+  !
+  allocate(RDATA(interpls(ID)%ndim,USER_k%nibz))
+  call fourier_interpolation(USER_k,R1D,interpls(ID)%engre,interpls(ID)%ndim)
+  !
+  if(interpls(ID)%interp_type==CMPLX1D.and.present(C1D)) then
+    !   
+    outdim(1)=interpls(ID)%ndim/2
+    !
+    do ik=1,USER_k%nibz
+      C1D(1:outdim(1),ik)=CMPLX(RDATA(1:outdim(1),ik),RDATA(outdim(1)+1:2*outdim(1),ik))
+    enddo
+    !
+  elseif(interpls(ID)%interp_type==REAL2D.and.present(R2D)) then
+    !
+    outdim(1)               =size(R2D(:,1,1))
+    outdim(2)               =size(R2D(1,:,1))
+    do i1=1,outdim(2)
+      R2D(1:outdim(1),i1,1:USER_k%nibz)=RDATA((i1-1)*outdim(1)+1:i1*outdim(1),1:USER_k%nibz)
+    enddo
+    !
+  elseif(interpls(ID)%interp_type==CMPLX2D.and.present(C2D)) then
+    !
+    outdim(1)               =size(C2D(:,1,1))
+    outdim(2)               =size(C2D(1,:,1))
+    !
+    do i1=1,outdim(2)
+      twoi1=i1+outdim(2)
+      do ik=1,USER_k%nibz
+        C2D(1:outdim(1),i1,ik)   =cmplx(RDATA((i1-1)*outdim(1)+1:i1*outdim(1),ik),RDATA((twoi1-1)*outdim(1)+1:twoi1*outdim(1),ik)) 
+      enddo
+    enddo
+    !
+  endif
+  !
+  deallocate(RDATA)
   !
 end subroutine bz_interpolation

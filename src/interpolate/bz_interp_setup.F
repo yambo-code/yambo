@@ -30,6 +30,7 @@ subroutine bz_interp_setup(Xk)
  use R_lattice,      ONLY:bz_samp,b
  use vec_operate,    ONLY:sort
  use matrix_operate, ONLY:m3inv
+ use timing,         ONLY:live_timing
  !
  implicit none
  type(bz_samp) :: Xk
@@ -65,87 +66,80 @@ subroutine bz_interp_setup(Xk)
    int_sop(:,:,is)=matmul(int_sop(:,:,is),b_inv)
    !
  enddo
-!     WRITE(6,*) ' KXMAX,KYMAX,KZMAX',kmax1(1:3)
-!     WRITE(6,*) ' Sphere_radius',sphere_radius
  !
  metten=matmul(a,transpose(a))
- nradm=PRODUCT(2*kmax1+1)
- ALLOCATE(icnt(nradm),radii(nradm),ihkl1(3,nradm))
+ nradm=product(2*kmax1+1)
+ allocate(icnt(nradm),radii(nradm),ihkl1(3,nradm))
  irad=0
- DO I3=-kmax1(3),kmax1(3)
-   M(3)=I3
-   DO I2=-kmax1(2),kmax1(2)
-     M(2)=I2
-     DO I1=-kmax1(1),kmax1(1)
-       M(1)=I1
+ call live_timing('BZ-INT',kmax1(3)*2+1)
+ do i3=-kmax1(3),kmax1(3)
+   M(3)=i3
+   do i2=-kmax1(2),kmax1(2)
+     M(2)=i2
+     do i1=-kmax1(1),kmax1(1)
+       M(1)=i1
        m2=m
-       absm=DOT_PRODUCT(m2(1:3),MATMUL(m2(1:3),metten(1:3,1:3)))
-       absm=SQRT(absm)
-       if(absm>sphere_radius) CYCLE
+       absm=dot_product(m2(1:3),matmul(m2(1:3),metten(1:3,1:3)))
+       absm=sqrt(absm)
+       if(absm>sphere_radius) cycle
        irad=irad+1
        icnt(irad)=irad
        radii(irad)=absm
        ihkl1(1:3,irad)=m(1:3)
-     ENDDO
-   ENDDO
- ENDDO
+     enddo
+   enddo
+   call live_timing(steps=1)
+ enddo
+ call live_timing
  ! 
  ! Quicksort over radii
+ !
  call sort(arrin=radii(1:irad),indx=icnt(1:irad))
+ !
  !     Now re-order equal radii
  !     Copy a sorted hkl list from ihkl1 to ihkl2
- !
-! do i1=1,irad
-!   write(*,*) ' radi ',i1,icnt(i1),radii(i1)
-! enddo
  !
  allocate (ihkl2(3,irad))
  do j=1,irad
    i=icnt(j)
    ihkl2(1:3,j)=ihkl1(1:3,i)
-!   write(*,*) ' l vec ',j,matmul(ihkl2(1:3,j),a(1:3,1:3))
  enddo
  deallocate (ihkl1)
  !
  allocate(lattice_vectors(3,irad), absk(irad))
  absk=0._SP
- NWAVE=1
+ nwave=1
  m2(1:3)=ihkl2(1:3,1)
  lattice_vectors(1:3,nwave)=ihkl2(1:3,1)
  absk(nwave)=radii(1)
- DO j=2,irad      
+ do j=2,irad      
    m2(1:3)=ihkl2(1:3,j)
    absm=radii(j)
-   addvec=.FALSE.
-!  NEW vector of diffent length
-   IF(ABSM-ABSK(nwave)>0.0001) THEN
+   addvec=.false.
+!  new vector of diffent length
+   if(absm-absk(nwave)>0.0001) then
      istart=nwave+1
      addvec=.true.
-   ENDIF
+   endif
 ! .... NEW VECTOR EQU. OLD ONE
-   IF(.NOT.addvec) THEN
-     CALL STERN1(m2,nsym,int_sop,nst,stg)
-     DO I=istart,islut
+   if(.not.addvec) then
+     call stern1(m2,nsym,int_sop,nst,stg)
+     do i=istart,islut
        kdum(1:3)=lattice_vectors(1:3,I)
-       IF(kdelta(kdum,nst,stg)) GOTO 1
-     ENDDO
+       if(kdelta(kdum,nst,stg)) goto 1
+     enddo
      addvec=.TRUE.
-1  CONTINUE
-   ENDIF
+1  continue
+   endif
 ! .... PUT NEW VECTOR IN LIST
-   IF(addvec) THEN
+   if(addvec) then
      nwave=nwave+1
      lattice_vectors(1:3,nwave)=m2
      absk(nwave)=absm
      islut=nwave
-   ENDIF
- ENDDO
-!    
-! WRITE(6,*) 'Nwave' ,nwave
-!  do i1=1,nwave
-!    write(*,*) ' lattice_vectors ',lattice_vectors(:,i1),absk(i1)
-!  enddo
-
+   endif
+ enddo
+ !    
  deallocate(absk,icnt,radii,ihkl2)
  !
  allocate(tmp_vec(3,nwave))
@@ -157,17 +151,17 @@ subroutine bz_interp_setup(Xk)
  !
 end subroutine
 
-LOGICAL FUNCTION kdelta(k,nst,stg)
-  !.... TEST, IF K IS IN STAR OF G  (GENERATED IN STERN)                  
-  USE pars,         ONLY:SP
-  USE vec_operate,  ONLY:v_is_zero
-  IMPLICIT NONE
-  INTEGER          :: nst
-  REAL(SP)         :: k(3),stg(3,nst)
-  INTEGER          :: i
+logical function kdelta(k,nst,stg)
+  !.... test, if k is in star of g  (generated in stern)                  
+  use pars,         only:sp
+  use vec_operate,  only:v_is_zero
+  implicit none
+  integer          :: nst
+  real(sp)         :: k(3),stg(3,nst)
+  integer          :: i
   !---------------------------------------------------------------------  
-  KDELTA=.FALSE.
-  DO I=1,NST
-     IF(v_is_zero(stg(:,i)-k(:))) kdelta=.TRUE.
-  ENDDO
-END FUNCTION kdelta
+  kdelta=.false.
+  do i=1,nst
+     if(v_is_zero(stg(:,i)-k(:))) kdelta=.true.
+  enddo
+end function kdelta

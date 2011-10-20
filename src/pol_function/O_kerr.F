@@ -77,7 +77,7 @@ subroutine O_kerr(iq,i_G_shift,Q_plus_G_sq_modulus,frequencies_range,Xen,Xk,wv,X
 !   X_mat(:,1,iw)=X_mat_wing_left(:,iw)
 ! enddo
 ! X_mat(1,1,:)=X_mat_wing_right(1,:)
- X_mat(1,:,1)=X_mat_wing_right(1,:)
+ X_mat(1,1,:)=X_mat_wing_right(1,:)
  !
  X_epsilon(3,frequencies_range(1):frequencies_range(2))=&
 &                        -X_mat(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus

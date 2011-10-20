@@ -231,7 +231,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        call msg('o eps eel alpha','#')
        !
 #if defined _KERR
-       call O_kerr_shadow('files_header')
+       call O_kerr_shadow('files_header',l_flag=l_skip_non_int_eps)
 #endif
        !
      endif

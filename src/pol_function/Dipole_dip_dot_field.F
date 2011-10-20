@@ -65,12 +65,12 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
 #if defined _KERR
  if(l_kerr) then ! if field=(0,1,0) dipole=(1,0,0) OK  p_x=\aplha_xy E_y
    if(field_dir(2).ne.0) then
-     dipole_dir(1)=1.
+     dipole_dir(1)=-1.
      dipole_dir(2)=-dipole_dir(1)*(field_dir(1)/field_dir(2))
-     dipole_dir(3)=0.
+     dipole_dir(3)= 0.
    else
      dipole_dir(3)= 0.
-     dipole_dir(2)=-1.
+     dipole_dir(2)= 1.
      dipole_dir(1)=-dipole_dir(2)*(field_dir(2)/field_dir(1))
    endif
  endif

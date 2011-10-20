@@ -445,10 +445,6 @@ loop_bg: do i2 = 1,bg_npts(i1)
  if (trim(global_gauge)=='velocity') then
    do iw=fr(1),fr(2)
      Xo(1,1,iw)=Xo(1,1,iw)/real(Xw%p(iw))**2
-#if defined _KERR
-     if(l_kerr) X_mat_wing_right(1,iw)=X_mat_wing_right(1,iw)/real(Xw%p(iw))**2
-     if(l_kerr) X_mat_wing_left(1,iw) =X_mat_wing_left(1,iw) /real(Xw%p(iw))**2
-#endif
    enddo
  endif
  !

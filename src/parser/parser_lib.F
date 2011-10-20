@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2010 A. Marini and the YAMBO team
+! Copyright (C) 2000-2011 A. Marini and the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Copyright (C) 2002 M. Marques, A. Castro, A. Rubio, G. Bertsch

@@ -79,16 +79,19 @@ subroutine RT_initialize(Xen)
  !
  if (NE_tot_time>0.) NE_steps=max(NE_steps,int(NE_tot_time/RT_step))
  !
- ! Set a number of steps compatible with the cache 
+ ! Set a number of steps compatible with the cache.
+ ! Negative max_rt_steps_disk means no I/O
  !=================================================
  !
- if(mod(Thermal_steps+NE_steps,max_rt_steps_disk)/=0) then
+ if(max_rt_steps_disk>0.and.mod(Thermal_steps+NE_steps,max_rt_steps_disk)/=0) then
    rest=mod(Thermal_steps+NE_steps,max_rt_steps_disk)
    if(NE_steps/=0) then
      NE_steps = NE_steps+max_rt_steps_disk-rest
    elseif (NE_steps==0.and.Thermal_steps/=0) then
      Thermal_steps = Thermal_steps+max_rt_steps_disk-rest
    endif
+ else if (max_rt_steps_disk<0) then
+   max_rt_steps_disk=NE_steps+1
  endif
  !
  NE_tot_time=RT_step*NE_steps

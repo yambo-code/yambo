@@ -22,6 +22,7 @@
 subroutine O_kerr(iq,i_G_shift,Q_plus_G_sq_modulus,frequencies_range,Xen,Xk,wv,X)
  ! 
  use pars,            ONLY:pi,SP
+ use units,           ONLY:DEG2RAD
  use com,             ONLY:msg
  use matrix_operate,  ONLY:m3inv
  use X_m,             ONLY:X_t,X_mat,X_epsilon,X_alloc
@@ -76,7 +77,7 @@ subroutine O_kerr(iq,i_G_shift,Q_plus_G_sq_modulus,frequencies_range,Xen,Xk,wv,X
 !   X_mat(:,1,iw)=X_mat_wing_left(:,iw)
 ! enddo
 ! X_mat(1,1,:)=X_mat_wing_right(1,:)
- X_mat(1,1,:)=X_mat_wing_left(1,:)
+ X_mat(1,:,1)=X_mat_wing_right(1,:)
  !
  X_epsilon(3,frequencies_range(1):frequencies_range(2))=&
 &                        -X_mat(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
@@ -125,14 +126,14 @@ subroutine O_kerr(iq,i_G_shift,Q_plus_G_sq_modulus,frequencies_range,Xen,Xk,wv,X
    eps_tens(:,:,iw)=(M1(:,:)+(0.,1.)*M2(:,:))/10.**6
  enddo
  !
-! X_epsilon(2,frequencies_range(1):frequencies_range(2))=1./eps_m1_tens(1,1,:)        ! xx
- X_epsilon(2,frequencies_range(1):frequencies_range(2))=eps_tens(1,1,:)        ! xx
- X_epsilon(4,frequencies_range(1):frequencies_range(2))=eps_tens(1,2,:)     ! xy
+ X_epsilon(2,frequencies_range(1):frequencies_range(2))=1./eps_m1_tens(1,1,:)   ! xx
+! X_epsilon(2,frequencies_range(1):frequencies_range(2))=eps_tens(1,1,:)        ! xx
+ X_epsilon(4,frequencies_range(1):frequencies_range(2))=eps_tens(1,2,:)         ! xy
  !
  do i1=1,2
-   X_epsilon(4+i1,frequencies_range(1):frequencies_range(2))=-X_epsilon(2+i1,frequencies_range(1):frequencies_range(2))/ &
-&               (X_epsilon(i1,frequencies_range(1):frequencies_range(2))-1.0_SP)*                                &
-&                 sqrt(X_epsilon(i1,frequencies_range(1):frequencies_range(2)))
+   X_epsilon(i1+4,frequencies_range(1):frequencies_range(2))=-X_epsilon(i1+2,frequencies_range(1):frequencies_range(2))/ &
+&              ( (X_epsilon(i1,frequencies_range(1):frequencies_range(2))-1.0_SP)*                                       &
+&                 sqrt(X_epsilon(i1,frequencies_range(1):frequencies_range(2))) ) /DEG2RAD
  enddo
  !
 end subroutine 

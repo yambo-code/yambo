@@ -21,7 +21,7 @@
 !
 subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
- ! Plasmon Pole Correlation Self-Energy
+ ! Plasmon Pole & COHSEX Correlation Self-Energy
  !
  use pars,          ONLY:SP,pi,schlen
  use units,         ONLY:HA2EV

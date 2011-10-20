@@ -21,27 +21,12 @@
 !
 subroutine RT_elph_kernel(ik,E,k,q,Time)
  !  
- use pars,           ONLY:SP
- use units,          ONLY:HBAR_eVfs,FS2AUT,HA2EV
-! use wrapper,        ONLY:M_by_M,V_by_V_plus_V
+ use pars,           ONLY:SP,cI
+ use units,          ONLY:HA2EV
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp,qindx_S
- use SC,             ONLY:SC_bands
-!,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R
- use real_time,      ONLY:NE_MEM_steps
-!I1_lesser,I2_lesser,l_NE_with_fields,RAD_LifeTime,full_rho,           &
-!&                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
-!&                         G_lesser_reference,Phase_LifeTime,NE_Hxc_jumps,       &
-!&                         RT_is_dumped,l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start, &
-!&                         RT_Deph_Matrix,l_RT_needs_XC0
-! use fields,         ONLY:gauge_field
-! use wave_func,      ONLY:wf
-! use xc_functionals, ONLY:V_xc
-! use global_XC,      ONLY:WF_kind,WF_xc_functional 
-! use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
-! use par_indexes_m,  ONLY:par_indexes  
-! use SC,             ONLY:SC_xc_functional
-! use xc_functionals, ONLY:XC_LDA_C_PZ
+ use SC,             ONLY:SC_bands,it_now
+ use real_time,      ONLY:NE_MEM_steps,RT_step,S_matrix,I1_lesser
  !
  implicit none
  !
@@ -52,22 +37,60 @@ subroutine RT_elph_kernel(ik,E,k,q,Time)
  !
  ! Work Space
  !
- integer       :: iqbz,iq,iqs,ik_m_q
- complex(SP)   :: L_gl(SC_bands(2),SC_bands(2),NE_MEM_steps)
- complex(SP)   :: L_lg(SC_bands(2),SC_bands(2),NE_MEM_steps)
- complex(SP), external :: RT_G_retarded
+ integer               :: iqbz,iq,iqs,ik_m_q,MEM_steps,i_t,ib,ibp,i_sign(2),i_s,i_map(-1:1)
+ real(SP)              :: Time_vector(NE_MEM_steps),w_ph,g_q,N_q(2)
+ complex(SP)           :: L_gl(SC_bands(2),SC_bands(2),NE_MEM_steps)
+ complex(SP)           :: L_lg(SC_bands(2),SC_bands(2),NE_MEM_steps)
+ complex(SP)           :: V_dummy(NE_MEM_steps)
+ complex(SP), external :: CIntegrate
  !
- !write (100,'(3f20.10)') Time/FS2AUT,RT_G_retarded(E,SC_bands(1),1,Time)
- !return
+ MEM_steps=NE_MEM_steps
+ if (it_now-NE_MEM_steps+1<=0) MEM_steps=it_now
+ !
+ forall (i_t=it_now-MEM_steps+1:it_now) Time_vector(i_t)=i_t*RT_step
+ !
+ i_sign=(/-1,1/)
+ N_q   =(/ 0.,2./)
+ i_map(-1)=1
+ i_map( 0)=1
+ i_map( 1)=2
  !
  do iqbz=1,q%nbz
+   !
+   g_q=1./100.
+   w_ph=3/HA2EV
    !
    iq =q%sstar(iqbz,1)
    iqs=q%sstar(iqbz,2)
    ik_m_q=qindx_S(ik,iqbz,1)
    !
-   call RT_generalized_KBA(L_gl,ik,ik_m_q,Time,'>','<')
-   call RT_generalized_KBA(L_lg,ik,ik_m_q,Time,'<','>')
+   call RT_generalized_KBA(E,L_gl,ik_m_q,ik,Time,'><')
+   call RT_generalized_KBA(E,L_lg,ik_m_q,ik,Time,'<>')
+   !
+   do ib=SC_bands(1),SC_bands(2)
+     do ibp=SC_bands(1),SC_bands(2)
+       !
+       do i_s=-1,1,2
+         !
+         ! S^{I}_{nmk}(t)=\int_0^t dt' e^{-i I w_q t'}[ N_q^{-I} L^{><}_{k-qk,nm}(t,t') - N_q^{I} L^{<>}_{k-qk,nm}(t,t')]
+         !
+         !                             ---------------------- V_dummy ---------------------------------------------------
+         do i_t=1,MEM_steps
+           !
+           V_dummy(i_t)=exp(-cI*i_s*w_ph*Time_vector(i_t))*( N_q(i_map(-i_s))*L_gl(ib,ibp,i_t) +&
+&                                                          - N_q(i_map( i_s))*L_lg(ib,ibp,i_t) )
+           !
+         enddo
+         !
+         S_matrix(i_map(i_s),ib,ibp,ik,iqbz)=CIntegrate(V_dummy(:MEM_steps),Time_vector(:MEM_steps),MEM_steps)
+         !
+         I1_lesser(ib,ibp,ik)=I1_lesser(ib,ibp,ik)+exp(cI*i_s*w_ph*TIME)*&
+&                             (S_matrix(i_map(i_s),ib,ibp,ik,iqbz) - S_matrix(i_map(-i_s),ib,ibp,ik,iqbz))
+         !
+       enddo ! i_s
+       !
+     enddo ! ibp
+   enddo ! ib
    !
  enddo
  !

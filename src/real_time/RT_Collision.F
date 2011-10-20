@@ -21,13 +21,31 @@
 !
 subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  !
- ! This subroutine prepare I1(t_1,t_2) and I2(t_1,t_2) give a G^<(t_1,t_1) 
- ! Actualy it works only for the diagonal I1(t_1,t_1), I2(t_1,t_1)
+ ! The BKE is coded in terms of I1(T) (left time) and I2(T) (right time) kernels.
+ ! In the TD-COHSEX we have that
  !
- ! Notice that G_lesser_reference and rho_reference are zero during
+ !  i\partial_T G_k^<(T) = I1(T)-I2(T)
+ !
+ ! where
+ !
+ !  I1(T)=O_k G_^k + S_matrix_k(T)
+ !  I2(T)=-G_^k O_k
+ !
+ ! and 
+ !
+ !   O_k=h_k+U_k+ V_k^H-V_k^H[G_ref]+\Sigma_k^{SEX}-\Sigma_k^{SEX}[G_ref]
+ !                ------ A --------- -------- B -------------------------
+ !
+ ! Note that IP\equiv A=0 & B=0
+ ! Note that TDLDA\equiv A=0 &  \Sigma=V_xc
+ ! Note that TDH\equiv B=0
+ !
+ ! S_matrix_k(T) is the el-ph term that includes memory.
+ !
+ ! Note that G_lesser_reference and rho_reference are zero during
  ! the thermalization
  !
- ! This subroutine put the full Hamiltonian in SC_R if it is allocated
+ ! This subroutine also fills SC_R with the full Hamiltonian if this is allocated
  !
  use pars,           ONLY:SP,cI
  use units,          ONLY:HBAR_eVfs,FS2AUT,HA2EV
@@ -179,8 +197,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !
    ! El-Ph
    !=======
-   !if (l_ph_corr) call RT_elph_Kernel(ik,Xen,k,q,Time)
-   !if (it_now==100.and.l_ph_corr) call RT_elph_Kernel(ik,Xen,k,q,Time)
+   if (l_ph_corr) call RT_elph_Kernel(ik,Xen,k,q,Time)
    !
 #endif
    !

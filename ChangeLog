@@ -1,3 +1,2435 @@
+2011-10-18 16:04:51 r952 attacc
+
+	Version 3.2.4
+
+	*  interpolate/bz_interp_setup.F interpolate/bz_interp_coeff.F interpolate/eval_interpolation_coeff.F interpolate/bz_interpolation.F interpolate/fourier_interpolation.F modules/mod_interpolate.F
+
+	Changes:
+	 -[_TEST_2] Interface to interpolate done
+
+2011-10-17 19:13:17 r951 attacc
+
+	Version 3.2.4
+
+	*  interpolate/bz_interp_coeff.F interpolate/eval_interpolation_coeff.F interpolate/bz_interpolation.F interpolate/fourier_interpolation.F interpolate/.objects modules/mod_interpolate.F modules/std_presets.F ypp/electrons_bands.F
+
+	Changes:
+	 -[_TEST_2] Generic interface to the BZ interpolation
+
+2011-10-17 09:46:33 r950 attacc
+
+	small incompatibility with gfortran
+
+2011-10-13 18:45:17 r948 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Missing patch do mod_KERR and mod_X_output (Davide)
+
+2011-10-13 16:56:11 r947 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/Makefile.in config/configure.ac qp/ELPH_Hamiltonian.F qp_ctl/QP_apply_global_stretch.F qp_ctl/mod_QP_CTL.F pol_function/X_os.F pol_function/O_driver.F pol_function/Dipole_dip_dot_field.F pol_function/O_kerr.F pol_function/.objects pol_function/O_kerr_shadow.F interface/QP_ctl_load.F interface/init_load.F interface/QP_ctl_switch.F interface/init.F interface/barriers.F real_time/RT_elph_Kernel.F real_time/RT_driver.F real_time/RT_Collision.F real_time/RT_G_retarded.F real_time/RT_initialize.F real_time/RT_generalized_KBA.F real_time/.objects real_time/RT_start_and_restart.F io/variables_SC.F io/io_SC_components.F modules/mod_real_time.F modules/mod_KERR.F modules/mod_drivers.F modules/mod_X_output.F modules/std_presets.F modules/mod_QP.F modules/.objects bse/K_inversion.F ypp/RT_split_Polarization.F driver/driver.c sbin/yamboo.pl
+
+	Additions:
+	- [KERR] Kerr project opened (Davide)
+	- Added a constant broadening to the user defined QP-corrections. This to simulate
+	  a flat el-ph induced broadening
+	- [RT] Time index in G_lesser.
+	- [RT] Memory treshold
+	- [RT] Preliminar routines added: RT_elph_kernel,RT_G_retarded,RT_generalized_KBA
+
+	Changes:
+	- [RT] yambo_rt is now compiled with _ELPH support
+	- [RT] G_lesser_previous removed
+
+	Patch sent by: Andrea & Davide
+
+2011-10-13 15:19:09 r946 attacc
+
+	Version 3.2.4
+
+	*  config/Makefile.in lib/blas/sswap.f lib/blas/sgemm.f lib/blas/strsm.f lib/blas/dswap.f lib/blas/sger.f lib/blas/dger.f lib/blas/dtrsm.f lib/blas/dgemm.f lib/blas/.objects lib/lapack/sgetrf.f lib/lapack/dlaswp.f lib/lapack/dgetf2.f lib/lapack/dgetrs.f lib/lapack/slaswp.f lib/lapack/sgetf2.f lib/lapack/sgetrs.f lib/lapack/dgetrf.f lib/lapack/.objects interpolate interpolate/bz_interp_setup.F interpolate/bz_interp_coeff.F interpolate/bz_interpolation.F interpolate/.objects interpolate/.objects_gpl modules/mod_interpolate.F modules/.objects ypp/ypp_init.F ypp/electrons_bands.F ypp/mod_YPP.F ypp/ypp_init_load.F ypp/electrons_driver.F ypp/.objects driver/ypp.h driver/driver.c
+
+	Additions:
+	 -[TEST_2] Added subroutine for interpolation in the BZ, using symmetries (PRB 38 p2721)
+	 -[YPP_TEST_2] QP bands structure can be interpolated along lines in the BZ
+	-
+
+2011-10-12 13:54:02 r945 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Wrong condition in G_shells_finder
+
+2011-10-12 13:27:53 r944 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac qp_ctl/OCCUPATIONS_IO_and_interpolate.F setup/setup.F setup/G_shells_finder.F setup/eval_minus_G.F real_time/RT_driver.F real_time/RT_observables.F real_time/RT_start_and_restart.F sc/SC_add_XC.F sc/SC_driver.F io/io_SC_components.F modules/mod_real_time.F modules/std_presets.F modules/mod_SC.F ypp/RT_databases.F
+
+	*** DEBUG revision. Under major maintenance ***
+
+	Bugs:
+	- eval_minus_G() was called BEFORE G_shells_finder() leading to a seg. fault.
+	- When the inversion symmetry is not included the shells are not properly closed. This induces
+	  a consequent seg. fault. in the BSE calculation WITH coupling.
+
+	Changes:
+	- [RT] Added time index to G_lesser.
+
+	Patch sent by: Andrea
+
+2011-10-11 15:17:26 r942 attacc
+
+	Version 3.2.4
+
+	*  config/Makefile.in_gpl io/.objects_gpl ypp/electrons_dos_and_charge.F ypp/.objects_gpl
+
+	Bugs:
+	 -Small fixes for the GPL
+
+2011-10-11 11:36:02 r941 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/Makefile.in config/configure.ac pol_function/Dipole_driver.F interface/init_load.F interface/init.F real_time/RT_driver.F real_time/RT_Collision.F real_time/RT_output.F real_time/RT_initialize.F real_time/RT_init_two_levels.F real_time/RT_TwoL_Glesser.F real_time/.objects real_time/RT_TwoL_Polarization.F real_time/RT_three_levels.F real_time/RT_start_and_restart.F real_time/RT_two_levels.F io/io_SC_components.F modules/mod_real_time.F modules/std_presets.F ypp/RT_databases.F ypp/RT_initialize.F ypp/RT_X_LRR_real_field.F sbin/yamboo.pl
+
+	*** DEBUG revision. Under major maintenance ***
+
+	Additions:
+	- [RT] NE_MEM_depth and a simple routine to map the time steps
+
+	Changes:
+	- [RT] TWO_LEVELS project removed => RT_init_two_levels.F, RT_TwoL_Glesser.F, RT_TwoL_Polarization.F, RT_three_levels.F, RT_two_levels.F
+	  removed.
+	- [RT] Added _ELPH flag to _rt compilation
+
+	Patch sent by: Andrea
+
+2011-10-11 08:55:06 r940 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Small changes and added full occupations report in OCCUPATIONS_IO_and_interpolate. Preparing removal of TWO_LEVELS project
+
+2011-10-04 17:59:18 r939 attacc
+
+	-[ELPH] Forgotten n_bands in ypp/electron_driver.F
+
+2011-09-28 09:53:07 r938 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug in setup. Added flag to make db.RT_occupations globally readable
+
+2011-09-24 22:44:02 r937 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	io_SC_components changed in order to make RT_occupations globally readable
+
+2011-09-24 03:48:33 r936 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug fix in the evaluation of the causal Green's function in K_inversion (again)
+
+2011-09-24 00:38:14 r935 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Small bug fix in the evaluation of the causal Green's function in K_inversion
+
+2011-09-23 17:58:18 r934 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac qp_ctl/OCCUPATIONS_IO_and_interpolate.F bse/K_Haydock.F bse/K_inversion.F bse/K_eh_setup.F bse/K_diagonalization.F
+
+	Changes:
+	- First candidate version to implement the BSE solvers (diago and inversion) in the case
+	  of levels with fractional occupations. This includes finite temperature and NE occupations.
+
+	*** Deep testing needed ***
+
+	Patch sent by: Andrea
+
+2011-09-23 11:54:54 r933 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac qp/QP_ppa_cohsex.F qp_ctl/OCCUPATIONS_IO_and_interpolate.F setup/setup.F setup/.objects setup/eval_minus_G.F real_time/RT_driver.F real_time/RT_initialize.F real_time/RT_databases_IO.F real_time/RT_Rabi_Function.F real_time/RT_start_and_restart.F modules/mod_R_lattice.F modules/mod_stderr.F bse/K_DISTRIBUTED.F bse/K_driver.F bse/K_inversion.F bse/K.F ypp/k_random.F
+
+	Bugs:
+	- In QP_ppa_cohsex wrong number of elements in the live_timing call. This bug was already spotted in previous commits. Therefore
+	  this new bug-fix must be checked carefully.
+	- [RT] I have changed again the definition of it_start to the previous overwritting the previous commit changes. I have
+	  added a comment to explain the motivation. Accordingly to fix the restart RT_databases_IO has been changed.
+	- [YPP] The RIM k-points was failing in the case of a different number of symmetries between the ground state
+	  calculation and the Yambo databases. Fixed.
+
+	Additions:
+	- eval_minus_G.F. In order to do BSE calculations with fractional occupations the coupling is necessary. Before this
+	  commit, however, non-resonant calculations were possibile only by using the Time-Reversal. This condition has been
+	  removed by introducing a table to find the indexes of the -G vectors.
+
+	Changes:
+	- [RT,SC] OCCUPATIONS_IO_and_interpolate.F: Added RIM support. More informations are now written in the report.
+
+	Patch sent by: Andrea
+
+2011-09-21 11:45:07 r931 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_driver.F real_time/RT_start_and_restart.F
+
+	Bugs:
+	 -[RT] Fixed restart with occupations
+
+2011-09-15 10:57:11 r930 attacc
+
+	Version 3.2.4
+
+	*  int_modules/mod_wf2y.F qp/COLLISIONS_IO_eval.F modules/mod_units.F modules/mod_memory.F
+
+	Additions:
+	 - Introduced computer space unts: Kilobyte, Megabyte, Gigabyte
+
+2011-09-07 10:39:53 r929 attacc
+
+	Version 3.2.4
+
+	*  qp/XCo_local.F
+
+	Changes:
+	 -Added the call to the Blas wrapper to avoid problems with stupid compilers
+
+2011-08-31 10:58:58 r928 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Comments in mod_units changed (Myrta)
+
+2011-08-26 09:19:40 r927 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Corrected some factors in mod_fields. Possibly this is a more consisten choice.
+
+2011-08-26 09:08:16 r926 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac qp/QP_driver.F qp/XCo_driver.F qp/QP_of.F qp/QP_Green_Function.F qp/QP_descriptions.F qp/QP_report_and_write.F qp/QP_real_axis.F qp/ELPH_Sigma_c.F qp/QP_newton.F qp/ELPH_Hamiltonian.F qp/QP_secant.F qp/QP_ppa_cohsex.F acfdt/acfdt_tot_energy.F qp_ctl/QP_apply_global_stretch.F qp_ctl/mod_QP_CTL.F ras/write_eps_tensor.F ras/io_ostnts_cut.F ras/reels_spectrum.F ras/write_reelsdiff.F ras/io_slab_eps.F ras/extract_eps_surf.F ras/rasdriver.F ras/ras_spectrum.F common/OCCUPATIONS_Extend.F common/OCCUPATIONS_Fermi.F parser/ps_convert.F parser/init_convert.F pol_function/O_eels.F pol_function/X_os.F pol_function/O_driver.F pol_function/X_GreenF_remap.F interface/init.F setup/QP_state_table_setup.F ras_reels_mods/mod_eels_gvec.F ras_reels_mods/mod_eels_kinematics.F ras_reels_mods/mod_bulkeps.F ras_reels_mods/mod_eels_scattering.F ras_reels_mods/mod_eels_qpt.F ras_reels_mods/mod_convolute.F ras_reels_mods/reels_presets.F ras_reels_mods/mod_eels_detector.F ras_reels_mods/mod_eels_wgrid.F ras_reels_mods/mod_loss_module.F ras_reels_mods/mod_ras.F ras_reels_mods/ras_presets.F real_time/RT_Field_Commensurable_Frequencies.F real_time/RT_Collision.F real_time/RT_initialize.F real_time/RT_init_two_levels.F real_time/RT_observables.F real_time/RT_TwoL_Glesser.F real_time/RT_three_levels.F real_time/RT_Fluence.F real_time/RT_update.F real_time/RT_Rabi_Function.F real_time/RT_start_and_restart.F real_time/RT_two_levels.F communicate/REPORT_Energies.F communicate/REPORT_Occupations.F sc/XC_switch.F sc/SC_start_and_restart.F sc/SC_driver.F sc/MAG_A_phase.F sc/SC_History.F io/variables_SC.F io/ioX.F io/ioBSS_invert.F io/ioBS_Fxc.F io/variables_BS.F io/ioDB1.F io/io_header.F io/variables_DIPOLES.F modules/mod_frequency.F modules/mod_units.F modules/mod_fields.F modules/std_presets.F modules/mod_X.F modules/mod_QP.F bse/K_output_file.F reels/average_epsm1_q.F reels/epsinv.F reels/reelsdriver.F reels/calc_loss_function.F reels/write_output.F ypp/ypp_init.F ypp/RT_split_Polarization.F ypp/RT_X_effective.F ypp/plot_xcrysden.F ypp/reels_ypp.F ypp/RT_coefficients_Inversion.F ypp/RT_initialize.F ypp/ELPH_eliashberg_dos.F ypp/ras_trans_ypp.F ypp/RT_X_qssin.F ypp/electrons_dos_and_charge.F ypp/ELPH_databases.F ypp/RT_X_LRR_real_field.F ypp/ELPH_general_gFsq.F ypp/qpdb_setup.F ypp/excitons_driver.F ypp/ELPH_excitonic_gkkp.F ypp/qpdb_init.F ypp/ras_generate_epsdb.F ypp/ras_ypp.F ypp/excitons_sort_and_report.F ypp/plot_gnuplot.F ypp/ELPH_atomic_amplitude.F ypp/k_random.F
+
+	*** MAJOR UPDATE ***
+
+	Changes:
+	-  I have GLOBALLY renamed the unit convertion factors following a pre-estabilished
+	   format: U = U2P * P
+
+	   So, for example,
+
+	    1 Hartree = 27.21 eV => AU2EV = 27.21
+	    1 Bohr = 0.53 A      => AU2ARM= 0.53
+
+	   and so on.
+
+	   These changes have particularly affected the units of the electromagnetic fields (electric field,
+	   field intensity, Poynting vector and so on). The correctness of these choices has been verified
+	   by testing that, given a cartain intensity in kW/cm^2, the same electric field (in V/m) is obtained
+	   using the expression of the Poynting in the S.I., in the C.G.S and in the A.U.
+	   These values, moreover, quite well agree with the numbers given in the table D.1 of "Nonlinear optics",
+	   R.W. Boyd, 3rd edition.
+
+	   With respect to the previous revisions these changes have dramatically reduced the strength of the
+	   electric field. I trace back this change in a POSSIBLY wrong definition of the Poynting vector and
+	   of the convertion factor between kW/cm^2 and AU.
+
+	Patch sent by: Andrea
+
+2011-08-23 16:48:49 r925 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Small bug in OCCUPATIONS_IO_and_interpolate fixed
+
+2011-08-23 15:28:08 r924 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac qp/QP_newton.F qp_ctl/mod_QP_CTL.F qp_ctl/.objects qp_ctl/OCCUPATIONS_IO_and_interpolate.F bz_ops/k_the_nearest.F interface/QP_ctl_load.F interface/init_load.F interface/QP_ctl_switch.F interface/init.F setup/QP_external_corrections.F setup/setup.F real_time/RT_output.F real_time/.objects real_time/RT_databases_IO.F real_time/RT_Fluence.F real_time/RT_start_and_restart.F io/variables_SC.F io/io_SC_components.F modules/mod_real_time.F modules/mod_fields.F modules/std_presets.F modules/mod_SC.F modules/mod_QP.F bse/K_driver.F ypp/ypp_init.F ypp/mod_YPP.F ypp/ypp_init_load.F ypp/electrons_dos_and_charge.F ypp/RT_X_LRR_real_field.F ypp/electrons_driver.F ypp/excitons_sort_and_report.F ypp/.objects driver/ypp.h
+
+	Bugs:
+	- [RT] Factor 10 spotted by Myrta fixed in RT_Fluence
+
+	Additions:
+	- [RT,SC] OCCUPATIONS_IO_and_interpolate.F: This routine stores on a DB the time-dependent occupations
+	  that can be read and interpolated by the same routine when called by yambo_sc. In this case the occupations
+	  act as "QP-related" correction allowing post linear-response/GW calculations out-of-the-equilibrium
+	- [RT,SC,YPP_RT] Added occupations related variables to fix a loading time and (in the case of ypp_rt) a time step
+	  used to plot the DOS
+	- [YPP,YPP_RT] electrons_dos_and_charge.F: moved in this routine the calculation of the DOS and of the charge
+	  density. When time-dependent occupations are read teh output is a 3D plot (Energy,Time,DOS).
+	- [YPP,YPP_RT] Added several input variables to ypp in order to have a fine control of the DOS calculation
+
+	Changes:
+	- Numerical input variable of QP_apply changed in character
+
+	Patch sent by: Andrea
+
+2011-08-12 12:45:54 r923 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac real_time/RT_initialize.F real_time/RT_observables.F real_time/.objects real_time/RT_Fluence.F real_time/RT_start_and_restart.F modules/mod_fields.F modules/mod_stderr.F
+
+	Bugs:
+	- In the msg routine large real numbers with exponents larger then 10 were uncorrectly printed
+
+	Additions:
+	- [RT] Routine to calculate the fluence
+
+	Changes:
+	- [RT] Central time of QSSIN reduced
+
+	Patch sent by: Andrea
+
+2011-08-11 11:40:02 r922 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	[a2y] Change: with the HGH pseudo a2y now checks if the spin--orbit is used. (Davide)
+
+2011-08-10 11:25:52 r921 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug fix in RT_fix_symmetries when fragmented databases are present
+
+2011-08-09 17:37:21 r920 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac pol_function/Dipole_kb_Ylm.F
+
+	Bugs:
+	- Wrong minus in the definition of dYlm(2,l,m)= for m < 0
+
+	Patch sent by: Davide
+
+2011-08-09 11:42:58 r919 gruning
+
+	Version 3.2.4
+
+	*  qp/QP_ppa_cohsex.F
+
+	Bugs: [GW] the expected time in the log was not computed correctly so the live timing was not working for the G0W0 PPA part
+	      (bug encountered by Ivan Santos, see Yambo Forum)
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+2011-07-18 17:37:45 r918 attacc
+
+	Version 3.2.4
+
+	*  qp/COLLISIONS_IO_eval.F
+
+	Bugs:
+	 -[RT] QP_state recalculated with COLLISION_io_eval is called
+
+2011-07-18 16:09:39 r917 attacc
+
+	Version 3.2.4
+
+	*  ypp/k_grids.F
+
+	Bugs:
+	 -Bug in k_grid generator when the number of k-point > 1
+
+2011-07-13 15:57:48 r915 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_driver.F modules/mod_memory.F
+
+	Additions:
+	 -[RT] deallocated qindx_X and qindx_S not used real-time dynamics
+
+	Changes:
+	 -More digits in memory report
+
+2011-07-13 15:17:22 r914 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Fixed units in X_effective (P&P case) and fixed a BUG in ioKB_PP.F
+
+2011-07-11 16:46:36 r913 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac real_time/RT_output.F ypp/RT_split_Polarization.F ypp/RT_X_effective.F ypp/RT_driver.F ypp/RT_initialize.F ypp/mod_YPP.F
+
+	Additions:
+	- [RT] Support for the ouput of harmonics in P&p up to 9th order
+	- [YPP_RT] Global logical to avoid J/P I/O
+
+	Patch sent by: Andrea
+
+2011-07-09 00:42:53 r912 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	[YPP_RT] Added option to calculate the DOS using the G_lesser diagonal
+
+2011-07-08 17:05:54 r910 attacc
+
+	Version 3.2.4
+
+	*  wf_and_fft/WF_states_setup.F
+
+	Bugs:
+	 -[DISTRIBUTED] Corrected bug in dielectric constant calculation found by Amilcare
+
+2011-07-08 16:32:23 r909 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Double filename assigned to time and energy resolved polarization. Fixed
+
+2011-07-08 16:06:11 r908 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac real_time/RT_output.F real_time/RT_Rabi_Function.F ypp/RT_split_Polarization.F ypp/RT_X_effective.F ypp/RT_driver.F ypp/RT_coefficients_Fourier.F ypp/RT_X_inversion.F
+
+	Bugs:
+	- [RT] In maximum Rabi frequency evaluation
+
+	Additions:
+	- [YPP_RT] Fourier analysis changed in order to use the maximum available time period.
+	  This results in a much better performance, at least for absorption and SHG. OR still too noisy. In this
+	  case the inversion method is beter.
+
+	Changes:
+	- [YPP_RT] For clarity all X_order+1 arrays allocated using 0 as lower range
+
+	Patch sent by: Andrea
+
+2011-07-07 14:36:26 r907 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac real_time/RT_output.F ypp/RT_split_Polarization.F ypp/RT_X_effective.F ypp/RT_driver.F ypp/RT_coefficients_Inversion.F ypp/mod_YPP.F ypp/RT_1D_Fourier_Transform.F ypp/RT_X_inversion.F
+
+	Bugs:
+	- [YPP_RT]: In ypp/RT_coefficients_Inversion.F (bug-fix sent by Myrta)
+
+	Additions:
+	- [RT]: Added output files used to plot P(w) and its partial components (generated by ypp_rt)
+	- [YPP_RT]: Now P(t) and its partial components can be Fourier transformed to verify possible
+	            residual harmonics
+
+	Changes:
+	- [YPP_RT]: RT_X_inversion.F changed in order to support generic Harmonic analisys. This in order
+	  to make it applicable to Pump&Probe signals
+
+	Patch sent by: Andrea
+
+2011-07-07 14:05:55 r906 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	The subroutine was accumulating on kbv. It was useless. Removed (Davide)
+
+2011-07-04 17:19:28 r905 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  int_modules/mod_com2y.F p2y/Vnl_driver.F
+
+	Bugs:
+	- Fixed bug compiling Vnl driver with gfortran
+	- Fixed bug due to use of undefined rl_sop in calculating occupations inside Vnl driver
+
+2011-07-04 10:28:44 r904 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	[a2y]  pp_kbs and pp_kb were set to zero two times after reading spin_somponent 1 (Davide)
+
+2011-07-02 00:40:00 r903 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac real_time/RT_Ext_fields.F real_time/RT_output.F real_time/RT_start_and_restart.F ypp/RT_split_Polarization.F ypp/RT_X_effective.F ypp/RT_X_inversion.F ypp/.objects
+
+	Bugs:
+	- [RT] Wrong initialization of the vector potential and of G_lesser_reference
+	  in the case of a RESTARTED real-time simulation caused discontinuities in the
+	  polarization.
+
+	Additions:
+	- [YPP_RT] Routine to split the components of the polarization due to
+	  different hamornics.
+	- [YPP_RT] Iterative analysis of the polarization function using the Fourier
+	  method
+
+	Patch sent by: Andrea
+
+2011-06-30 16:02:44 r902 gruning
+
+	Version 3.2.4
+
+	*  external_c/io.c real_time/RT_output.F ypp/RT_X_inversion.F
+
+	Bugs: [IO] For dirs with a lot of subdirs ifolder_list gave a segfault
+	-
+	Additions: [RT] Added plot of P^{n}, n=0,1,2,3 obtained by using the coefficient from the inversion analysis
+	-
+	Changes:
+	-
+
+2011-06-30 09:17:28 r901 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc a2y/a2y_db1.F a2y/a2y_i.F a2y/a2y_wf.F config/configure.ac real_time/RT_output.F sc/MAG_pseudo_nl.F sc/MAG_H_pseudo.F modules/mod_pseudo.F ypp/RT_driver.F ypp/RT_X_inversion.F
+
+	Changes:
+	- src/sc/MAG_H_pseudo.F adapted to new structure of the KB form factors
+	- Removed logical l_a2y_KBPP from a2y interface for reading KSS without psps now that a new version able to
+	  read also pseudo with many projectors exist.
+
+	Patch sent by: Davide
+
+2011-06-29 16:48:28 r900 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc a2y/a2y_db1.F a2y/a2y_i.F a2y/a2y_wf.F config/configure.ac pol_function/Dipole_kb_pp_comp.F pol_function/Dipole_transverse.F real_time/RT_TwoL_Glesser.F io/ioKB_PP.F modules/mod_pseudo.F
+
+	Additions:
+	- [a2Y] Support to read infos for HGH psps from a patched version of abinit.
+
+	Patch sent by: Davide
+
+2011-06-29 13:26:46 r899 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc e2y/e2y_db1.F e2y/e2y_i.F e2y/e2y_kb_pp.F int_modules/mod_com2y.F p2y/numrec_polcof.F p2y/qexml_v4.0.F p2y/pw_atoms_module.F p2y/numrec_module.F p2y/pw_struct_module.F p2y/p2y_db1.F p2y/numrec_ddpoly.F p2y/p2y_wf.F p2y/mod_p2y.F p2y/Vnl_driver.F p2y/pw_pseudo_module.F p2y/num_interpolation_module.F p2y/pw_basis_module.F p2y/mod_pw_data.F p2y/mod_numerical.F p2y/numrec_polint.F p2y/numrec_locate.F p2y/numrec_kinds.F p2y/p2y_i.F p2y/.objects p2y/pw_pseudovelocity_module.F p2y/pw_wfc_module.F a2y/a2y_db1.F a2y/a2y_i.F a2y/a2y_wf.F c2y/c2y_i.F config/Makefile.in config/configure.ac pol_function/Dipole_kb_pp_comp.F pol_function/Dipole_transverse.F io/io_Vnl.F io/ioKB_PP.F io/.objects modules/mod_pseudo.F modules/std_presets.F ypp/RT_fix_symmetries.F driver/p2y.h
+
+	***** MAJOR UPDATE: [r,Vnl] support added in p2y ******
+
+	Thanks to Conor. Andrea did only the final mergering and added the parallel support.
+
+	Additions:
+	- [A2Y] Added support to pseudopotential projectors.
+	  Davide will shortly extend the non-local commutator to the relativistic case.
+	  * pp_n_l_comp_max -> pp_n_l_times_proj_max
+	  * Added a new table (pp_table)
+
+	- Added PARALLEL support to p2y. It can now run in parallel.
+
+	- [P2Y] Added **SEVERAL** PW-based routines to import the commutator of the non-local pseudo.
+	  Some cleaning still todo. In many cases the License header is missing.
+
+	- A new core database: (n)s.Vnl
+
+	- A new option for p2y (-c)
+
+	Changes:
+	- Interfaces do not call section at the beginning. Instead a simple msg is used.
+	- The old flag of p2y (-g, Force use of all available RL vectors) now changed so
+	  to load a certain number of G-vectors.
+
+	Patch sent by: Andrea, Davide & Conor
+
+2011-06-27 17:15:24 r898 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Oops... forgotten return
+
+2011-06-27 17:08:32 r897 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug in V_Hartree which causes memory explosion fixed
+
+2011-06-27 16:04:24 r896 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	X_inversion modified
+
+2011-06-27 15:05:03 r895 gruning
+
+	Version 3.2.4
+
+	*  ypp/RT_X_inversion.F
+
+	Bugs: [RT] In the case with one probe and one frequencies eps was wrong and X_order_? were 0.
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+2011-06-26 18:46:26 r894 gruning
+
+	Version 3.2.4
+
+	*  ypp/RT_X_inversion.F ypp/RT_X_effective.F
+
+	Bugs: [RT] Optical rectification was plotted as all zero's
+	      [RT] Dump and write put to false in the RT_initialize call before X_inversion call
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+2011-06-25 00:17:58 r893 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac real_time/RT_initialize.F io/COLLISIONS_IO_load.F ypp/RT_X_effective.F ypp/RT_driver.F ypp/RT_Fourier_Coefficients.F + + ypp/RT_initialize.F ypp/RT_paths.F ypp/RT_Coefficient_inv.F ypp/RT_X_inversion.F ypp/.objects
+
+	Bugs:
+	- [RT] COLLISIONS_IO_load.F. return added when n_V_kinds==0
+
+	Additions:
+	- [YPP_RT] Inversion procedure extended to calculate Linear Response with multiple frequencies
+	  (STILL NOT WORKING)
+
+	Changes:
+	- [YPP_RT] Inversion procedure to extract effective response function embodied in RT_X_effective
+
+	Patch sent by: Andrea
+
+2011-06-24 19:29:48 r892 gruning
+
+	Version 3.2.4
+
+	*  io/ioKB_PP.F ypp/RT_Coefficient_inv.F
+
+	Bugs: ypp/RT_Coefficient_inv.F: deallocation of an allocated variable. Nothing critical.
+	-
+	Additions:
+	-
+	Changes: ioKB_PP.F: the db kp_bb is fragmented when -S is given in the command line. Needed to overcome netcdf limitation in max # of vars (8129).
+	         Also found that for large grid calculations (though below the netcdf restrictions) are speed up by this option.
+	-
+
+2011-06-24 10:38:28 r891 attacc
+
+	Fixed some issues compiling with gfortran
+
+2011-06-23 23:47:26 r890 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/netcdf_f90.m4 config/configure.ac xc_functionals/el_density.F qp/QP_load_SC_xc.F qp/XCo_local.F qp/XCo_Hartree_Fock.F qp/COLLISIONS_IO_eval.F qp/COLLISIONS_IO_store.F qp/QP_ppa_cohsex.F qp/COLLISIONS_IO_compose.F wf_and_fft/WF_derivative.F wf_and_fft/WF_load.F wf_and_fft/WF_rotate.F pol_function/Dipole_driver.F setup/QP_state_table_setup.F interface/init_load.F interface/init.F interface/barriers.F real_time/RT_apply_field.F real_time/RT_Collision.F real_time/RT_driver.F real_time/RT_current_AND_polarization.F real_time/RT_output.F real_time/RT_initialize.F real_time/RT_init_two_levels.F real_time/RT_observables.F real_time/RT_Integrator.F real_time/RT_TwoL_Polarization.F real_time/DephMatrix_setup.F real_time/RT_three_levels.F real_time/RT_update.F real_time/RT_Rabi_Function.F real_time/RT_start_and_restart.F real_time/RT_two_levels.F real_time/RT_average_operator.F sc/OEP_iterative.F sc/OEP_exact_inversion.F sc/SC_add_XC.F sc/SC_WF_and_dipole_dimensions.F sc/SC_start_and_restart.F sc/SC_driver.F sc/SC_bare_Hamiltonian.F sc/MAG_A_phase.F sc/SC_History.F sc/SC_update_dipoles.F sc/MAG_Hamiltonian.F sc/MAG_H_pseudo.F io/variables_SC.F io/io_SC_components.F io/load_SC_components.F io/ioQINDX.F io/io_DIPOLES.F io/ioDB1.F + io/io_COLLISIONS.F io/io_P_and_P2.F io/load_COLLISIONS.F io/.objects io/variables_DIPOLES.F modules/mod_real_time.F modules/mod_fragments.F modules/std_presets.F modules/mod_collisions_IO.F modules/mod_SC.F modules/mod_IO.F modules/mod_com.F modules/mod_collision.F ypp/ypp_init.F ypp/RT_driver.F ypp/RT_initialize.F ypp/ypp_init_load.F ypp/RT_fix_symmetries.F driver/yambo.h driver/yambo_driver.F
+
+	Bugs:
+	- [SC] in variables_SC: added call with MENU=1 to close the menu in the report file
+
+	Additions:
+	- [RT,SC] TO use the COLLISIONS an explicit path has been added (COLLISIONS_path)
+	- Fragmentation of db.dipoles and db.kindx.
+
+	Changes:
+	- [RT,SC] SC_bands -> SC_bands(2). SC_lw_band removed. Back-compatibility with previous COLLISIONS and db.sc* preserved.
+
+	**** This means that by replacing the fields SC_bands and SClwBand with
+
+	% SCBands
+	   1 | 100 |                 # [SC] Bands
+	%
+
+	all input/databases should still work ****
+
+	- [RT,SC] Now COLLISIONS are evaluated ONLY by yambo_rt
+	- [RT] RT_start_and_restart partially rewritten. RTBSEOnly flag removed.
+	- [RT] Added a specific io routine for db.P_and_P2
+
+	Patch sent by: Andrea
+
+2011-06-16 08:55:40 r889 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Added support in ypp_rt for fields aligned to generic directions
+
+2011-06-15 17:53:15 r888 gruning
+
+	Version 3.2.4
+
+	*  ypp/RT_X_inversion.F
+
+	Bugs: [YPP_RT] Corrected bug in unit of measure definition
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+2011-06-15 16:47:13 r887 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Minor bugs fixed in ypp/RT_X_inversion.F
+
+2011-06-15 16:38:10 r886 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Changed verbosity in real time variables and cleaned up ypp/RT_X_inversion.F
+
+2011-06-15 15:59:58 r885 gruning
+
+	Version 3.2.3
+
+	*  ypp/RT_driver.F ypp/RT_X_qssin.F ypp/RT_Coefficient_inv.F ypp/RT_X_inversion.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes:[YPP_RT] Generalized unit of measures for response > 2; generalized to arbitrary direction of field (ypp/RT_X_inversion.F)
+	-
+
+2011-06-15 11:55:08 r884 gruning
+
+	Version 3.2.3
+
+	*  real_time/RT_Field_Commensurable_Frequencies.F real_time/RT_output.F modules/mod_units.F modules/mod_fields.F ypp/RT_X_effective.F ypp/RT_driver.F ypp/RT_initialize.F ypp/RT_X_SHG.F + ypp/RT_Coefficient_inv.F ypp/RT_X_inversion.F ypp/.objects
+
+	Bugs:
+	-
+	Additions: [YPP_RT] post processing of rt signal using the "inversion method" to obtain Fourier coefficients (ypp/RT_Coefficient_inv.F, ypp/RT_X_inversion.F, ypp/RT_driver.F ypp/.objects)
+	           [RT]     added functions that divide by the field given the field and the order in perturbative expansion (modules/mod_fields.F)
+	-
+	Changes: [YPP_RT] units for SHG chosen cgs (modules/mod_units.F, real_time/RT_output.F, ypp/RT_X_effective.F)
+		 [YPP_RT] Fourier analysis extended to SIN (ypp/RT_X_effective.F, ypp/RT_driver.F)
+		 [RT]     Multiple frequencies extended to SIN (modules/mod_fields.F)
+	-
+	Known problems: [YPP_RT] Sign of imginary part of SHG (?)
+	                [RT] Divide by field not (yet) working for QSSIN field
+
+2011-06-09 12:32:27 r883 attacc
+
+	problem compiling with gfortran
+
+2011-06-08 18:35:50 r881 gruning
+
+	Version 3.2.3
+
+	*  mod_fields.F
+
+	Bugs: Definition derivative of QSSIN
+	-
+	Additions: SIN as sum of SIN at difference frequencies
+	-
+	Changes:
+	-
+
+2011-06-08 14:26:45 r880 attacc
+
+	Version 3.2.4
+
+	*  interface/init_load.F interface/.objects interface/init.F interface/DephMatrix_init.F real_time/RT_Collision.F real_time/RT_initialize.F real_time/.objects real_time/DephMatrix_setup.F modules/mod_real_time.F
+
+	Additions:
+	 -[RT] Added the possibility to pass a Dephasing Matrix in input
+
+2011-06-06 19:28:34 r879 attacc
+
+	Version 3.2.3
+
+	*  qp/QP_report_and_write.F qp/QP_newton.F interface/init_load.F
+
+	Bugs:
+	 -Fixed COHSEX in GoWo
+
+	Changes:
+	 -BSEEhEny moved in GPL
+
+2011-06-06 09:56:36 r876 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_initialize.F modules/mod_fields.F ypp/ypp_init.F ypp/k_random.F
+
+	Bugs:
+	 -[RT]  Small bugs compiling with gfortran
+
+	Additions:
+	 -Added NoWeight flas  to ypp -r too
+
+2011-06-01 16:42:36 r875 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac real_time/RT_Field_Commensurable_Frequencies.F real_time/RT_driver.F real_time/RT_initialize.F real_time/RT_init_two_levels.F real_time/.objects real_time/RT_TwoL_Polarization.F real_time/RT_Rabi_Function.F modules/mod_real_time.F modules/mod_fields.F ypp/RT_X_effective.F ypp/RT_driver.F ypp/RT_Fourier_Coefficients.F
+
+	Bugs:
+	- [RT] In RT_Field_Commensurable_Frequencies.F. A missing "nint" was causing the use of non commensurable number
+	  of frequencies
+	- [YPP_RT] Moved the division by the Field amplitude from RT_Fourier_Coefficients.F to RT_X_effective.F. Still
+	  the units of the SHG signal must be defined.
+
+	Additions:
+	- [RT] RT_Rabi_Function.F to evaluate the Rabi Frequency based on a 2-level system. Note that the value
+	  is somehow underestimated in the case of a 3-levels. I still have to understand why.
+	- [RT] Simple Rabi_function in mod_fields
+
+	Changes:
+	- [RT] The evaluation of the max Rabi frequency moved outside RT_TwoL_Polarization.F
+
+	Patch sent by: Andrea
+
+2011-06-01 10:56:39 r874 attacc
+
+	small correction
+
+2011-06-01 10:48:33 r873 attacc
+
+	Version 3.2.4
+
+	*  sc/SC_add_XC.F sc/SC_driver.F ypp/ypp_init.F ypp/mod_YPP.F ypp/ypp_init_load.F ypp/qpdb_setup.F ypp/excitons_sort_and_report.F
+
+	Bugs:
+	 -[SC] Bug in SC with COHSEX fixed (found by Maurizia)
+
+	Additions:
+	 -Possibility to choose the minimal weight to print electron-hole pair in excitons ypp -e a -V gen
+	 -[SC] Plot the overlap of bands at the end of SC
+
+2011-05-27 11:13:06 r872 attacc
+
+	Version 3.2.4
+
+	*  ypp/qpdb_setup.F ypp/qpdb_init.F
+
+	Bugs:
+	 -Small bugs in qpdb writer
+
+2011-05-24 18:47:41 r871 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac pol_function/Dipole_driver.F interface/init_load.F interface/init.F real_time/RT_apply_field.F real_time/RT_Field_Commensurable_Frequencies.F real_time/RT_output.F real_time/RT_initialize.F real_time/RT_init_two_levels.F real_time/RT_observables.F real_time/.objects real_time/RT_TwoL_Polarization.F io/variables_SC.F modules/mod_fields.F ypp/ypp_init.F ypp/RT_X_effective.F ypp/RT_init_X_one.F ypp/RT_driver.F ypp/RT_Fourier_Coefficients.F + ypp/mod_YPP.F + ypp/RT_paths.F ypp/ypp_init_load.F + ypp/RT_X_two.F ypp/RT_X_one.F ypp/ypp_i.F ypp/.objects driver/ypp.h
+
+	Additions:
+	- [RT] Added routine RT_Field_Commensurable_Frequencies.F that redefines the energy range of ANTIRES pulses in
+	  order to be commensurable to the frequency step. Also the frequency step is increased depending on the length
+	  of the simulation.
+	- [RT] Added the frequency step to variables_SC.F
+
+	Changes:
+	- [RT] Number of frequencies in the definition of the fields replaced by the frequency step.
+	- [RT] RT_output changed in order to write the harmonics X_effective. Also the indexes have
+	  been re-ordered
+	- [YPP_RT] ypp_rt globally modified: command-line, structure of RT_driver. Routines for
+	  linear response and SHG renamed.
+
+	Patch sent by: Andrea
+
+2011-05-23 10:56:36 r869 attacc
+
+	Version 3.2.4
+
+	*  qp_ctl/mod_QP_CTL.F pol_function/X_bare_RIM_GreenF.F pol_function/X_dipole_RIM.F interface/init.F ypp/ypp_init_load.F driver/ypp.h_gpl
+
+	Bugs:
+	 -Fixed ERIM in the GPL
+
+2011-05-20 17:45:44 r868 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_Collision.F ypp/ypp_init.F ypp/mod_YPP.F ypp/ypp_init_load.F
+
+	Bugs:
+	 -[RT] Bug in TD Bethe-Salpeter fixed
+
+	Changes:
+	 -Some changes to fix the GPL
+
+2011-05-20 14:04:19 r865 attacc
+
+	Version 3.2.4
+
+	*  configure qp_ctl/QP_apply_DB_interpolation.F bz_ops/bz_samp_indexes.F real_time/RT_start_and_restart.F ypp/ypp_init.F ypp/ypp_i.F ypp/.objects_gpl
+
+	Changes:
+	 - E-RIM moved in GPL
+	 - ypp -q moved in GPL
+	 - QP interpolation E W Z indipendent one from each other
+	 - configure updated
+
+2011-05-17 17:40:02 r864 attacc
+
+	Version 3.2.4
+
+	*  bse/K_solvers.F ypp/qpdb_setup.F ypp/ypp_i.F
+
+	Bugs:
+	 -Wrong allocation of BSS_rhoq0 when present BS_eh_W
+	 -Wrong qp%k from ypp -q
+
+2011-05-17 11:29:46 r863 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Added spinor support to a2y. Added option to skip the I/O of the KB form factors database
+
+2011-05-16 16:53:51 r862 attacc
+
+	Version 3.2.4
+
+	*  config/netcdf_f90.m4 ypp/qpdb_setup.F
+
+	Additions:
+	 -Use nc-config for library flags in order to fixed incompatibility with NetCDF 4.12
+	 -Added check on QP indexes in ypp -q
+
+2011-05-05 11:45:48 r861 attacc
+
+	Version 3.2.4
+
+	*  qp/QP_ppa_cohsex.F real_time/RT_start_and_restart.F real_time/RT_average_operator.F sc/SC_add_XC.F sc/SC_History.F
+
+	Bugs:
+	 -[RT] Bug in parallel calculations of COLLISIONS
+
+	Changes:
+	 -[SC/RT] Removed unused variables
+
+2011-05-05 00:07:00 r860 gruning
+
+	Version 3.2.3
+
+	*  ypp/RT_X_two.F
+
+	Bugs:
+	-
+	Additions:
+	-
+	Changes: [RT] Postprocessing for SHG and OR. Length gauge instead of velocity.
+	-
+
+2011-05-02 18:06:47 r859 gruning
+
+	Version 3.2.4
+
+	*  wf_and_fft/fft_setup.F wf_and_fft/eval_GradOperator.F wf_and_fft/eval_R_minus_R.F wf_and_fft/.objects modules/mod_FFT.F modules/mod_D_lattice.F
+
+	Bugs:
+	-
+	Additions: Evaluation of the gradient operator on the FFT grid
+	-
+	Changes:
+	-
+
+2011-04-28 11:08:25 r858 gruning
+
+	Version 3.2.4
+
+	*  sc/OEP_driver.F sc/OEP_iterative.F sc/OEP_ApplySigmaX.F sc/OEP_exact_inversion.F sc/SC_add_XC.F sc/OEP_app_inversion.F sc/.objects sc/OEP_ApplySigmaCSX.F sc/OEP_Hole.F
+
+	Bugs:
+	-
+	Additions: OEP: I put back screened exchange (Coulomb Hole part not working thus not included yet) [sc/OEP_ApplySigmaCSX.F]
+		   OEP: Added file sc/OEP_ApplySigmaX.F. This part was before in OEP_Hole. Separated to allow generalization to screened exchange [sc/OEP_ApplySigmaX.F]
+	-
+	Changes: OEP: Structure has been changed to put back screened exchange
+	             [sc/OEP_driver.F sc/OEP_iterative.F sc/OEP_exact_inversion.F sc/SC_add_XC.F sc/OEP_app_inversion.F sc/.objects sc/OEP_Hole.F]
+	-
+
+2011-04-27 16:54:57 r857 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_Collision.F real_time/RT_start_and_restart.F
+
+	Bugs:
+	 -[RT] Fixed sign and units of lifetimes, read from ndb.QP, in real-time
+
+2011-04-27 14:05:44 r856 attacc
+
+	Version 3.2.4
+
+	*  xc_functionals/XC_libxc_driver.F modules/std_presets.F ypp/ypp_init.F ypp/mod_YPP.F ypp/ypp_init_load.F ypp/qpdb_setup.F ypp/qpdb_init.F ypp/ypp_i.F ypp/.objects driver/ypp.h
+
+	Bugs:
+	 -[RT] Fixed incompatibility between libxc and RT
+
+	Additions:
+	 -New tool to create and manage ndb.QP, ypp -q
+
+	Changes:
+	 -[RT] Default gauge changed to "length"
+
+2011-04-26 22:08:29 r855 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac qp/QP_ppa_cohsex.F interface/init_load.F interface/init.F real_time/RT_initialize.F modules/mod_fields.F modules/std_presets.F ypp/RT_paths.F
+
+	Bugs:
+	- [RT] No parameters related to fields was appearing at the end of output files. This was due to
+	  a wrong initialization in init_load.F/init.F
+	- [YPP_RT] Wrong search for paths in RT_paths.F when only 1 subdirectory was found
+
+	Changes:
+	- Parallelization of QP_ppa_cohsex.F changed in order to work also for cohsex done with only full bands
+
+	Patch sent by: Andrea
+
+2011-04-22 14:08:39 r852 attacc
+
+	Version 3.2.4
+
+	*  qp/COLLISIONS_IO_eval.F qp/COLLISIONS_IO_store.F qp/COLLISIONS_IO_compose.F real_time/RT_Collision.F real_time/RT_start_and_restart.F io/io_COLLISIONS.F io/load_COLLISIONS.F modules/mod_fields.F
+
+	Additions:
+	 -[RT] Disk space reduced in COLLISIONS using SC_lw_band
+	 -[RT] Life-times can be read from db.QP
+
+2011-04-21 16:53:07 r851 attacc
+
+	Version 3.2.4
+
+	*  modules/mod_memory.F ypp/RT_Fourier_Coefficients.F
+
+	Bugs:
+	 -[RT] Small bug compiling RT_Fourier_Coefficients.F
+
+	Changes:
+	 -max_mem_elements increased to 5000
+
+2011-04-19 12:55:47 r849 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac qp/QP_Green_Function.F + common/Integrate.F common/.objects common/.objects_gpl common/CIntegrate.F interface/init_load.F interface/init.F real_time/RT_initialize.F real_time/RT_init_two_levels.F real_time/RT_TwoL_Glesser.F real_time/.objects real_time/RT_TwoL_Polarization.F real_time/RT_start_and_restart.F io/variables_SC.F modules/mod_fields.F modules/std_presets.F ypp/RT_databases.F ypp/RT_X_effective.F ypp/RT_driver.F ypp/RT_init_X_one.F ypp/RT_Fourier_Coefficients.F ypp/mod_YPP.F ypp/RT_paths.F ypp/ypp_init_load.F ypp/RT_1D_Fourier_Transform.F ypp/RT_X_two.F ypp/RT_X_one.F ypp/.objects
+
+	Bugs:
+	-
+	Additions:
+	- CIntegrate function to integrate complex functions.
+	- [RT] Second frequency in ANTIRES probe to define the field as a sum of
+	  monocromatic antiresonant components. RES still to implement.
+
+	Changes:
+	- [YPP_RT] Added support to a genralized ANTIRES probe defined as a sum of several compatible
+	  frequencies.
+
+	Patch sent by: Andrea
+
+2011-04-14 16:05:41 r848 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_initialize.F real_time/RT_start_and_restart.F
+
+	Additions:
+	 -[RT] More info in the report
+
+	Changes:
+	 -[RT] Quasi-particle corrections only on bands in the interval from SC_lw_band to SC_bands
+
+2011-04-13 16:56:44 r847 attacc
+
+	Version 3.2.4
+
+	*  ypp/ypp_init.F ypp/ypp_init_load.F ypp/RT_X_one.F
+
+	Changes:
+	 -[RT] Asymptotic limit removed only on request (flag RmAsymLim)
+
+2011-04-13 15:23:58 r846 gruning
+
+	Version 3.2.4
+
+	*  sc/OEP_iterative.F sc/OEP_exact_inversion.F sc/OEP_app_inversion.F modules/mod_SC.F
+
+	Bugs: OEP: Error in a formula compromised results (sc/OEP_iterative.F sc/OEP_exact_inversion.F sc/OEP_app_inversion.F) -- TESTS IN PROGRESS
+	-
+	Additions:
+	-
+	Changes: OEP: Lowered the number of maximum number of iteration for OEP (modules/mod_SC.F)
+	-
+
+2011-04-08 17:17:25 r843 attacc
+
+	Version 3.2.4
+
+	*  ypp/RT_fix_symmetries.F
+
+	Bugs:
+	 -[RT] Bug in RT_fix_symmetries.F when compiled with FFTW, fftw_plan undefined
+
+2011-04-08 11:28:42 r842 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	[YPP_RT] Less verbosity in DB I/O. (Too ?) easy removal of asymptotic limit of P(t)
+
+2011-04-07 18:08:43 r841 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Minor change in ypp/RT_X_effective.F
+
+2011-04-06 14:49:37 r840 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	ypp_rt fixed to work with arbitrary number of probes and 1 or 0 pumps
+
+2011-04-05 16:52:57 r839 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac ypp/ypp_init.F ypp/RT_databases.F ypp/RT_X_effective.F ypp/RT_driver.F ypp/RT_init_X_one.F ypp/mod_YPP.F ypp/RT_paths.F ypp/ypp_init_load.F ypp/RT_X_one.F ypp/.objects
+
+	Additions:
+	- [YPP_RT] RT_driver changed in order to avoid DB loading at the beginning
+	- [YPP_RT] Databases paths are now searched in RT_paths. This routine returns
+	  the number of Pumps and Probes found. On this basis RT_driver decides what to do.
+	- [YPP_RT] Added Kwywords in input file: ProbeKey PumpKey
+
+	Now ypp_rt works (ss before) with any hermitian single probe or with a pump (any) plus several resonant probes.
+	I will add shortly the possibility of using a single pump plus a single probe (pulse-like).
+
+	Patch sent by: Andrea
+
+2011-04-05 14:56:46 r838 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	fs<->meV convertion factors fixed all over the code
+
+2011-04-01 18:49:37 r836 attacc
+
+	Version 3.2.4
+
+	*  qp/XCo_Hartree_Fock.F qp/QP_ppa_cohsex.F pol_function/X_os.F io/io_COLLISIONS.F
+
+	Bugs:
+	 -[RT/SC] Small bugs in COLLISIONS calculations
+
+	Additions:
+	 -[RT/SC] SC_lw_band stored in COLLISIONS too
+
+2011-03-31 14:28:27 r834 attacc
+
+	Version 3.2.4
+
+	*  interface/init_load.F interface/init.F setup/QP_state_table_setup.F real_time/RT_apply_field.F real_time/RT_Collision.F real_time/RT_update.F real_time/RT_start_and_restart.F real_time/RT_average_operator.F sc/V_real_space_to_H.F sc/SC_driver.F io/variables_SC.F modules/mod_real_time.F modules/std_presets.F modules/mod_SC.F
+
+	Bugs:
+	 -[RT] small bug in RT_Collisions for SClwBand/=1
+
+	Additions:
+	 -[SC/RT] SClwBand limit can be used both in SC and RT
+
+	Changes:
+	 -[SC/RT] Renaminig RT_lw_band in SC_lw_band
+	 -[SC/RT] Use of mod_wrapper in sc/V_real_space_to_H.F
+
+2011-03-30 11:43:15 r833 attacc
+
+	Version 3.2.4
+
+	*  qp/QP_ppa_cohsex.F io/ioQP.F
+
+	Bugs:
+	 -Wrong restart in QP calculations when io_err<0 or qp_n_states_disk/=qp%n_states
+
+2011-03-28 19:15:29 r832 attacc
+
+	Version 3.2.4
+
+	*  xc_functionals/el_density.F interface/init_load.F interface/init.F setup/QP_state_table_setup.F real_time/RT_apply_field.F real_time/RT_Collision.F real_time/RT_initialize.F real_time/RT_init_two_levels.F real_time/RT_observables.F real_time/RT_three_levels.F real_time/RT_update.F real_time/RT_start_and_restart.F sc/SC_bare_Hamiltonian.F io/variables_SC.F modules/mod_real_time.F modules/mod_units.F modules/std_presets.F bse/K_DISTRIBUTED.F
+
+	Bugs:
+	-
+	Additions:
+	 -[RT] Added possibility to define the lowest band in the dynamics, RTLowestBnd
+	 -[2LEVELS] More info in 3 level case
+	 -[RT] TDDFT precision improved
+
+2011-03-24 10:13:05 r828 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Some cleaning around. Algorithm in X_effective extended beyond 2 levels system
+
+2011-03-22 16:47:02 r824 gruning
+
+	Version 3.2.4
+
+	*  interface/init_load.F sc/XC_switch.F sc/OEP_driver.F sc/OEP_iterative.F sc/OEP_Weighted_Density.F sc/OEP_exact_inversion.F sc/SC_add_XC.F sc/SC_start_and_restart.F sc/OEP_app_inversion.F sc/.objects sc/OEP_Hole.F modules/mod_SC.F
+
+	Bugs: [SC/OEP] sc/OEP_exact_inversion and OEP_app_inversion: fixed leak
+	      [SC/OEP] sc/OEP_app_inversion: fixed a factor 2
+	-
+	Additions: [SC/OEP] Weighted approximations (interface/init_load.F sc/XC_switch.F sc/OEP_driver.F sc/OEP_iterative.F sc/OEP_Weighted_Density.F sc/OEP_exact_inversion.F sc/SC_start_and_restart.F sc/OEP_app_inversion.F sc/.objects sc/OEP_Hole.F modules/mod_SC.F)
+	-
+	Changes: [SC/OEP] Computation of <v|Sigma_x|c> in sc/OEP_exact_inversion (temporary does not work with collisions and sRPA)
+	         [SC/OEP] How the exact OEP is evaluated (Eq 12 PRA 52510) in sc/OEP_iterative.F (previous way was wrong)
+	-
+	Known problems: [SC/OEP] Iterative exact OEP can be unstable
+	                [SC/OEP] Exact OEP with inversion seg faults after 9 iterations
+	                [SC/OEP] Leak in OEP_Hole when combined with FFTW
+	                [SC/OEP] It does not work with (semi)metalic systems (see e.g. sc/XC_switch)
+	-
+
+2011-03-21 21:55:40 r823 attacc
+
+	Version 3.2.4
+
+	*  bse/K_DISTRIBUTED.F
+
+	Bugs:
+	 -[DISTRIBUTED] Small bug
+	-
+
+2011-03-21 19:22:29 r822 attacc
+
+	Version 3.2.4
+
+	*  bse/K_DISTRIBUTED.F
+
+	Additions:
+	 -[DISTRIBUTED] Reduced memory for the Gamma point case
+
+2011-03-18 16:00:34 r819 attacc
+
+	Version 3.2.4
+
+	*  io/.objects_gpl bse/K_Haydock.F bse/.objects_gpl
+
+	Bugs:
+	 -[DISTRIBUTED] Fixed object_gpl
+	 -[_TEST_1] Fixed _TEST_1 flag in K_Haydock.F
+
+2011-03-18 14:42:29 r817 attacc
+
+	Version 3.2.4
+
+	*  config/Makefile.in + io/ioBS_TEST_2.F io/variables_BS.F io/.objects modules/mod_BS.F + bse/K_solvers.F bse/K_TEST_2.F bse/.objects bse/K.F
+
+	Bugs:
+	 -To be checked TDLDA, TDDFT fxc kernel
+	 -[DISTRIBUTED] Restart for Exchange an Correlation part in BSE fixed
+	 -[DISTRIBUTED] Coupling distributed BSE works
+
+	Changes:
+	 -[DISTRIBUTED] TEST_2 moved in DISTRIBUTED
+	 -More lapack wrappers in K.F
+
+2011-03-16 11:51:21 r813 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_Ext_fields.F real_time/RT_TwoL_Glesser.F modules/mod_fields.F bse/K_TEST_2.F ypp/ypp_init.F ypp/RT_X_effective.F ypp/RT_X_one.F
+
+	Bugs:
+	 -[2LEVELS] Small bugs compiling with gfortran
+
+	Changes:
+	 -[RT] Complex frequency in mod_fields.F
+	 -[TEST_2] Use of M_by_V instead of a fortran loop
+
+2011-03-15 15:55:52 r812 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac external_c/io.c real_time/RT_driver.F real_time/RT_output.F real_time/RT_observables.F real_time/RT_TwoL_Glesser.F real_time/RT_two_levels.F io/variables_SC.F modules/mod_real_time.F ypp/ypp_init.F ypp/RT_databases.F ypp/RT_X_effective.F ypp/RT_driver.F ypp/RT_init_X_one.F ypp/mod_YPP.F ypp/ypp_init_load.F ypp/RT_X_two.F ypp/RT_X_one.F
+
+	Bugs:
+	- [RT] in variables_SC: wrong definition of l_J. Note that this induce an incompatibility
+	  with previous databases.
+
+	Additions:
+	- In io.c a function to list the contents of a given folder
+	- [RT] Support in ypp_rt to calculate the time and energy resolved
+	  dielectric function. Espression still implemented in the 2 level case
+	  only. The procedure can be generalized to find the steady-state absorption
+	  in the general case. Still under development the application to P&P.
+	- [YPP_RT] New variables added.
+
+	Changes:
+	- [RT] RT_ouput arguments modified.
+
+	Patch sent by: Andrea
+
+2011-03-15 12:09:42 r811 attacc
+
+	Version 3.2.4
+
+	*  io/variables_BS.F modules/mod_BS.F bse/K_TEST_2.F
+
+	Bugs:
+	 -[TEST_2] Fixed fragmentation and live_timing
+
+	Additions:
+	 -[TEST_2] Added restart for exchange and corrlation part
+
+2011-03-14 18:00:19 r809 attacc
+
+	Version 3.2.4
+
+	*  io/ioBS_TEST_2.F io/.objects modules/mod_BS.F modules/mod_fields.F bse/K_TEST_2.F ypp/ypp_init.F ypp/RT_init_X_one.F ypp/mod_YPP.F ypp/ypp_init_load.F ypp/RT_X_one.F
+
+	Additions:
+	 -[RT] ypp_rt added flag to force minimal damping in order to have well defined FFT
+	 -[TEST_2] BSE with less memory works (to be fixed coupling case and restart)
+
+	Changes:
+	 -[RT] for field SIN redefined A(t) in such a way to be zero at t=0
+
+2011-03-11 18:35:27 r807 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	[RT] Working on the definition of the effective response function
+
+2011-03-10 15:54:13 r803 attacc
+
+	Version 3.2.4
+
+	*  interface/init_load.F real_time/RT_initialize.F
+
+	Bugs:
+	 -[RT] Also lifetime in fs for the 3levels case
+	 -[RT] Wrong index in pump and probe case
+
+2011-03-08 14:10:18 r800 attacc
+
+	Version 3.2.4
+
+	*  config/Makefile.in interface/init_load.F modules/mod_units.F + bse/.objects driver/driver.c
+
+	Bugs:
+	 -[RT] Wrong units for the dephasing the 3level
+
+	Additions:
+	 -[_TEST_2] Added test file K_TEST_2.F for BSE with less memory
+
+2011-03-04 12:26:51 r796 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/report.in config/acx_report.m4 config/netcdf_f90.m4 config/configure.ac real_time/RT_TwoL_Glesser.F modules/mod_IO.F
+
+	Additions:
+	- HDF5 support in the configure
+	- [_RT] Loop in RT_TwoL_Glesser.F changed to find the poles in strong fields
+
+	Patch sent by: Claudio, Myrta, Andrea
+
+2011-03-01 16:11:42 r790 attacc
+
+	Version 3.2.4
+
+	*  pol_function/Dipole_driver.F real_time/RT_output.F real_time/RT_init_two_levels.F real_time/RT_TwoL_Glesser.F real_time/RT_start_and_restart.F real_time/RT_two_levels.F ypp/RT_X_one.F
+
+	Bugs:
+	 -[RT] Small bugs in three-levels and compiling with gfortran
+	-
+
+2011-02-16 16:14:30 r788 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	GPL+SC branch syncronized
+
+2011-02-16 13:25:44 r785 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bugs introduced in QP_ppa_cohsex.F fixed to make yambo_sc working
+
+2011-02-12 13:57:05 r784 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	SC flags updated for the GPL+SC branch
+
+2011-02-11 18:44:56 r779 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_Collision.F real_time/RT_init_two_levels.F ypp/RT_X_one.F
+
+	Bugs:
+	-[RT] Missing phase factor for pump and probe in ypp
+	-[RT] When damping added using ypp also the external field has
+	      to be damped in linear optics
+	-[RT] Fixed 3 levels
+
+2011-02-10 19:15:52 r778 gruning
+
+	Version 3.2.4
+
+	*  interface/init_load.F  sc/XC_switch.F sc/OEP_kli_iterative.F sc/OEP_driver.F sc/OEP_iterative.F sc/V_oep.F sc/SC_start_and_restart.F sc/OEP_kli_inversion.F sc/OEP_app_inversion.F sc/.objects sc/OEP_exact_iterative.F sc/OEP_Hole.F modules/mod_drivers.F
+
+	Bugs:[OEP] Corrected deleterious typo in OEP_Hole.F
+	-
+	Additions:[OEP] Introduced the CEDA option (sc/OEP_iterative.F and sc/OEP_app_inversion.F)
+	-
+	Changes:[OEP] Iterative procedure from Bulat-Levy paper instead of Kuemmel-Perdew one.
+		This allowed to merge sc/OEP_exact_iterative.F and sc/OEP_kli_iterative.F in sc/OEP_iterative.F
+	-
+
+2011-02-10 16:57:14 r777 attacc
+
+	Version 3.2.4
+
+	*  interface/init.F real_time/RT_init_two_levels.F real_time/RT_three_levels.F real_time/RT_start_and_restart.F
+
+	Bugs:
+	 -[RT] Fixed 3 levels linear optics in velocity gauge
+
+	Additions:
+	 -[RT] Can read QP correction from input
+	-
+
+2011-02-06 22:17:03 r776 attacc
+
+	Version 3.2.4
+
+	*  qp/QP_ppa_cohsex.F
+
+	Bugs:
+	 - Wrong number of timing states
+
+2011-02-04 10:38:31 r775 attacc
+
+	Version 3.2.4
+
+	*  qp/QP_ppa_cohsex.F real_time/RT_output.F real_time/RT_three_levels.F
+
+	Bugs:
+	 -Fixed some precompiler flags and compilation errors
+
+2011-02-03 17:56:09 r774 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac qp/QP_driver.F qp/QP_real_axis.F qp/QP_newton.F qp/QP_secant.F qp/QP_ppa_cohsex.F qp/COLLISIONS_IO_compose.F wf_and_fft/WF_states_setup.F interface/init_load.F io/ioQP.F
+
+	Bugs:
+	- Erroneous frequency steps in the QP_Sc allocation (Andrea)
+	- Fixed bug in real_axis restart (Andrea)
+
+	Additions:
+	- Restart of PPA and COHSEX calculations (Claudio)
+
+	Patch sent by: Claudio & Andrea
+
+2011-02-03 13:48:34 r773 attacc
+
+	Version 3.2.4
+
+	*  xc_functionals/spin_density.F modules/mod_wrapper.F bse/K.F driver/driver.c
+
+	Bugs:
+	 -Stupid issues with xlf compiler
+
+2011-02-01 18:08:54 r772 attacc
+
+	Version 3.2.4
+
+	*  config/acx_fortran_flags.m4 bse/K.F
+
+	Additions:
+	 -Added support for generic Power PC
+
+	Changes:
+	 -BLAS wrapper in Bethe-Salpeter
+
+2011-01-31 23:17:11 r771 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  qp/QP_Green_Function.F qp/QP_real_axis.F qp/ELPH_Sigma_c.F common/FREQUENCIES_Green_Function.F
+
+	Changes:
+	- [ELPH]: Frequency sampling for the spectral function changed in order
+	  to have more points around the bare energy. Hopefully this should speed up
+	  the convergence.
+
+	Patch sent by: Andrea
+
+2011-01-28 18:35:57 r770 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac real_time/RT_Energy.F real_time/RT_driver.F real_time/RT_output.F + real_time/.objects real_time/RT_update.F modules/mod_real_time.F ypp/ELPH_general_gFsq.F
+
+	Bugs:
+	- [ELPH] Bug in the plot of the generalized Eliashberg functions
+
+	Additions:
+	- [RT] Added the plot of the occupations of the unperturbed levels at the end
+	  of the time loop
+
+	Changes:
+	- [RT] RT_Energies renamed in RT_observables.F
+
+	Patch sent by: Andrea
+
+2011-01-28 14:28:37 r769 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_Ext_fields.F real_time/RT_driver.F real_time/RT_Collision.F real_time/RT_initialize.F real_time/RT_TwoL_Glesser.F real_time/RT_update.F real_time/RT_start_and_restart.F
+
+	Bugs:
+	 -[RT] Fixed Thermalization, rho_reference and G_lesser_reference always zero
+	                             during thermalization
+	 -[RT] Fixed restart, rho_reference is recalcualted if necessary
+	 -[RT] Fixed Thermalization + optics
+
+	Additions:
+	 -[RT] Added many comments,warning and checks
+
+	Changes:
+	 -[RT] RT_update.F updates also the rho_reference together with the G_lesser_reference
+	 -[RT] Also COHSEX and HARTREE-FOCK are calculated for the deltaG=G_lesser_reference-G_lesser
+
+2011-01-27 17:45:21 r767 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Spherical RIM implemented in the sigma^2 calculation in ypp_ph
+
+2011-01-27 15:36:36 r766 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_driver.F real_time/RT_Collision.F real_time/RT_TwoL_Glesser.F real_time/RT_start_and_restart.F modules/mod_real_time.F modules/mod_SC.F
+
+	Changes:
+	 -[RT] Introduced reference density, code stabilized!
+
+2011-01-27 11:29:41 r765 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_Collision.F real_time/RT_start_and_restart.F io/load_COLLISIONS.F
+
+	Bugs:
+	 -[SC/RT] Bug reading collisions in parallel
+	 -[RT] Fixed irreducible dielectric constant
+
+	Additions:
+	-
+	Changes:
+	 -[RT] Speed up when XCfrozen=false and  Hfrozen=true
+
+2011-01-26 16:16:34 r764 attacc
+
+	Version 3.2.4
+
+	*  sc/SC_update_dipoles.F
+
+	Bugs:
+	-[SC/RT] Small bug in dipoles rotation
+
+2011-01-26 14:36:01 r763 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug fix in RT_TwoL_Polarization.F
+
+2011-01-25 18:28:26 r762 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_start_and_restart.F io/variables_SC.F
+
+	Changes:
+	 -[SC/RT] COHSEX_use_empties flag is stored in the databases
+
+2011-01-25 16:47:01 r761 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac qp/ELPH_Sigma_c.F coulomb/rim_spherical.F coulomb/.objects coulomb/col_driver.F interface/init.F real_time/RT_driver.F real_time/RT_output.F real_time/RT_initialize.F real_time/RT_init_two_levels.F real_time/RT_TwoL_Glesser.F real_time/.objects real_time/RT_databases_IO.F real_time/RT_Integrator.F real_time/RT_TwoL_Polarization.F real_time/RT_start_and_restart.F real_time/RT_two_levels.F io/io_SC_components.F modules/mod_real_time.F modules/mod_fields.F modules/std_presets.F ypp/ypp_init.F ypp/RT_databases.F ypp/RT_init_X_one.F ypp/mod_YPP.F ypp/RT_fix_symmetries.F ypp/RT_X_one.F
+
+	Bugs:
+	- [RT] In RT_driver mat_dia_inv was called also when RT_diagonalization_steps=0
+
+	Additions:
+	- [ELPH] Added simple spherical implementation of the RIM to weight
+	  correctly the contribution near the gamma-point
+	- [RT] Added the 2levels P(t) in RT. This is calculated on-the-fly and it is not restricted
+	  to the linear response regime. It yields the exact non-interacting P(t) at low-fields.
+	- [YPP_RT] Added the possiblity to use the 2levels P(t) to calculate the non-interacting
+	  eps(w)
+	- [RT] i_Pump, i_Probe and a logical to say if the two-levels P(t) is available is now written
+	  in the DBs.
+
+	Changes:
+	- [RT] ndb.RT_current => ndb.RT_J_and_P
+
+	Patch sent by: Andrea
+
+2011-01-24 18:25:19 r760 attacc
+
+	Version 3.2.4
+
+	*  sc/SC_update_dipoles.F
+
+	Bugs:
+	 -[RT/SC] Dipole were not transposed
+
+2011-01-21 18:08:57 r759 attacc
+
+	Version 3.2.4
+
+	*  pol_function/.objects_gpl sc/.objects_gpl
+
+	forgot gpl object files
+
+2011-01-21 17:47:37 r758 attacc
+
+	Version 3.2.4
+
+	*  pol_function/Dipole_dip_dot_field.F pol_function/.objects pol_function/Dipole_driver.F pol_function/Dipole_transverse.F real_time/RT_Collision.F real_time/RT_driver.F real_time/RT_update_dipoles.F real_time/RT_qp_analyze.F real_time/RT_update_G_reference.F real_time/RT_Integrator.F real_time/.objects real_time/RT_update.F real_time/RT_start_and_restart.F sc/.objects sc/SC_update_dipoles.F io/io_DIPOLES.F modules/mod_real_time.F ypp/RT_init_X_one.F
+
+	Additions:
+	 -[RT/SC] Dipoles can be updated in RT and SC by SC_update_dipoles.F
+	 -[SC] DIP_P and DIP_iR are calculated also in SC
+
+	Changes:
+	 -[RT] Removed RT_qp_analyse.F RT_update_dipoles.F, RT_G_reference_update.F, merged
+	       in RT_update.F
+	 -[RT] SC_R instead of H_t as in SC
+	 -Product of dipole dot field_dir is calculated in a new subroutine Dipole_dip_dot_field.F
+
+2011-01-21 11:27:11 r757 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	DELTA field in length gauge fixed
+
+2011-01-20 16:48:22 r756 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Calls to RT_update_G/dipoles moved. Removed renormalization of damping from ypp_rt
+
+2011-01-19 18:09:00 r755 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_driver.F real_time/RT_start_and_restart.F
+
+	Bugs:
+	 -[RT] Bug dipoles have not to be updated in BSE case
+
+2011-01-19 13:24:57 r754 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_driver.F ypp/RT_fix_symmetries.F
+
+	Bugs:
+	 -[RT] wrong size for wf_disk in RT_fix_symmetries
+
+2011-01-19 09:28:09 r751 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Restart from interrupted/completed RT run fixed
+
+2011-01-18 23:18:47 r750 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_Collision.F modules/std_presets.F
+
+	Bugs:
+	 -[RT] Bug in Thermalization and compiling yambo_sc
+	-
+
+2011-01-18 15:17:31 r749 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug fix due to removal of G_lesser from the variables list of XCo_local
+
+2011-01-18 14:34:51 r748 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Few typos of the previous commit corrected
+
+2011-01-18 14:22:58 r747 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Added possibility to jump for a few steps the evaluation of Hxc. Speed greatly improved
+
+2011-01-18 13:28:40 r746 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/Makefile.in config/configure.ac xc_functionals/XC_potential_driver.F xc_functionals/XC_lda_driver.F xc_functionals/XC_libxc_driver.F interface/init_load.F interface/init.F real_time/RT_apply_field.F real_time/RT_Energy.F real_time/RT_Collision.F real_time/RT_driver.F real_time/RT_current_AND_polarization.F real_time/RT_initialize.F real_time/RT_start_and_restart.F io/variables_SC.F modules/mod_real_time.F modules/std_presets.F ypp/ypp_init.F ypp/ypp_init_load.F
+
+	Additions:
+	- [RT] Add compatibility with LIBXC
+	- [RT] Comments
+	- [RT] variables_SC in what regards J and G_lesser
+
+	Changes:
+	- [RT] G_lesser removed from arguments of src/xc_functionals/ interfaces and routines. rho_n (mod_SC) used
+	  in _RT project. rho_n is calculated on-the-fly during the RT cycle.
+	- [RT] Diamagnetic flag changed
+	- [YPP_RT] Verbosity of few variables
+
+	Patch sent by: Andrea
+
+2011-01-17 15:35:58 r744 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_initialize.F ypp/RT_X_one.F
+
+	Bugs:
+	 -[RT] Small bug compiling with gfortran
+
+	Additions:
+	 -[RT] Possibility to do BSE with only exchange part
+
+2011-01-17 14:27:21 r743 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac qp/QP_report_and_write.F parser/mod_itm.F pol_function/Dipole_driver.F pol_function/Dipole_transverse.F interface/init_load.F interface/init.F real_time/RT_Ext_fields.F real_time/RT_apply_field.F real_time/RT_Energy.F real_time/RT_Collision.F real_time/RT_driver.F real_time/RT_current_AND_polarization.F real_time/RT_initialize.F real_time/RT_Ext_Current.F real_time/RT_propagate_vecpot.F real_time/RT_qp_analyze.F real_time/RT_update_G_reference.F real_time/RT_init_two_levels.F real_time/RT_propagate_fields.F real_time/RT_databases_IO.F real_time/.objects real_time/RT_Integrator.F real_time/RT_start_and_restart.F real_time/RT_init_vecpot.F real_time/RT_two_levels.F real_time/RT_average_operator.F io/variables_SC.F io/io_SC_components.F modules/mod_real_time.F modules/mod_units.F modules/mod_fields.F modules/std_presets.F ypp/ypp_init.F ypp/RT_databases.F ypp/RT_driver.F ypp/RT_init_X_one.F ypp/Fourier_Transform.F ypp/mod_YPP.F ypp/ypp_init_load.F + ypp/RT_X_two.F ypp/RT_X_one.F ypp/RT_damp_it.F ypp/.objects
+
+	*** MAJOR [_RT] Version UPDATE: moved to 3.2.4 ***
+
+	Bugs:
+	- [RT] DIP_P and DIP_iR have transposed band indexes. This was not
+	  taken in account in RT. So bugs were introduced in RT_apply_field.F and
+	  RT_current_AND_polarization. RT_average_operator changed accordingly adding a
+	  flag to perform the transpose.
+
+	Additions:
+	- [RT] Several new variables and subroutine have been added.
+
+	Changes:
+	- [RT] RT_driver cleaned and re-organized
+	- [RT] External fields routines and module revised. Now the external field
+	  is defined in RT_Ext_Fields and propagated in RT_propagate_fields. The propagation, however,
+	  is actually done only if the induced current is considered.
+	- [YPP_RT] RT_databases.F cleaned.
+	- [YPP_RT] Calls to FT unified in RT_1D_Fourier_Transform.F
+
+	Patch sent by: Andrea
+
+2011-01-14 15:43:40 r742 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.3
+
+	*  qp_ctl/QP_load_DB.F
+
+	Bugs:
+	- Seg. fault due to noninitialization of ID(:) when adding QP shifts through KfnQP_E corrected.
+
+2011-01-13 13:59:19 r741 attacc
+
+	Version 3.2.3
+
+	*  wf_and_fft/WF_load.F io/io_elemental.F io/io_bulk.F modules/mod_pars.F
+
+	Bugs:
+	 -[DISTRIBUTED] fixed check for loaded wave-function
+	 - small bug compiling without NetCDF
+
+2011-01-11 15:15:53 r740 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	configure created including changes in config files of r738
+
+2011-01-10 17:06:06 r739 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.3
+
+	*  config/Makefile.in ras/Dipole_driver_cut.F ras/Dipole_transverse_cut.F pol_function/X_os.F pol_function/Dipole_driver.F
+
+	Bugs:
+	- [DISTRIBUTED] Error in Dipole for metals (nbf instead of nbf)
+	Additions:
+	- [RAS] Added yambo_ras_distributed executable, modified code appropriately
+
+	Patch sent by: Conor
+
+2011-01-10 09:38:32 r738 attacc
+
+	Version 3.2.3
+
+	*  config/acx_fortran_flags.m4 config/acx_get_fc_version.m4
+
+	Additions:
+	 -Added support for intel fortran compiler 12
+
+2011-01-07 15:45:19 r737 attacc
+
+	Version 3.2.3
+
+	*  ypp/RT_fix_symmetries.F
+
+	Bugs:
+	 -[RT] fixed but rotating the wave-functions (copied from scatter_Bamp)
+
+2011-01-03 09:53:52 r736 attacc
+
+	Version 3.2.3
+
+	*  real_time/RT_initialize.F
+
+	Bugs:
+	 -[RT] Wrong warning with zero intensity external field
+
+2010-12-14 13:48:07 r735 attacc
+
+	Version 3.2.3
+
+	*  int_modules/mod_com2y.F driver/a2y.h driver/c2y.h driver/p2y.h
+
+	Additions:
+	 -[GPL] possibility to skip symmetries while importing the wave-function
+
+2010-12-12 17:15:19 r734 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.3
+
+	*  configure include/version.inc config/configure.ac pol_function/X_os.F pol_function/X_s.F interface/init_load.F interface/init.F tddft/tddft_do_X_W_typs.F modules/mod_TDDFT.F modules/std_presets.F
+
+	Additions: [TDDFT] added term proportional to the square of the frequence in LRC kernel (M Marques)
+
+	Patch sent by: Myrta
+
+2010-12-10 15:47:54 r733 attacc
+
+	Version 3.2.3
+
+	*  real_time/RT_apply_field.F io/io_elemental.F io/io_bulk.F modules/mod_pars.F
+
+	Bugs:
+	 -[RT] small corrections in double precision
+
+	Additions:
+	 -[GPL] defined nf90_SP to deal with single/double precision in NetCDF
+
+2010-12-10 10:56:49 r732 attacc
+
+	Version 3.2.3
+
+	*  real_time/RT_driver.F real_time/RT_Collision.F real_time/RT_current_AND_polarization.F real_time/RT_update_dipoles.F real_time/RT_update_G_reference.F real_time/RT_Integrator.F real_time/RT_start_and_restart.F real_time/RT_average_operator.F sc/SC_bare_Hamiltonian.F
+
+	Bugs:
+	 -[RT] small bug calling subroutine in wrong order (RT_driver.F)
+	 -[RT/SC] changed the way in which matrices are passed to subroutines
+	          not well supported by some compiler
+
+2010-12-09 15:38:08 r731 attacc
+
+	Version 3.2.3
+
+	*  interface/init_load.F interface/init.F real_time/RT_initialize.F real_time/RT_start_and_restart.F io/variables_SC.F modules/mod_real_time.F ypp/electrons_charge.F
+
+	Bugs:
+	 -ypp small bug compiling with gfrotran
+
+	Additions:
+	 -[RT] possibility to simulate Bethe-Salpter only without including
+	       single particle effects RTBSEOnly flag + SC_Potential=COHSEX
+
+	Changes:
+	 -
+
+2010-12-04 11:16:24 r730 attacc
+
+	Version 3.2.3
+
+	*  qp/XCo_local.F real_time/RT_driver.F real_time/RT_initialize.F communicate/REPORT_Occupations.F sc/OEP_kli_iterative.F sc/SC_History.F io/io_SC_components.F modules/mod_matrix_operate.F ypp/plot_xcrysden.F ypp/electrons_charge.F
+
+	Bugs:
+	 - fixed problems compiling in double precision
+	 -[RT] number of G vectors for the WF different in SC and RT fixed
+
+2010-12-03 20:29:44 r729 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.3
+
+	*  e2y/e2y_i.F p2y/qexml_v4.0.F p2y/p2y_i.F a2y/a2y_i.F c2y/c2y_i.F ypp/ypp_i.F driver/a2y.h driver/c2y.h driver/e2y.h driver/yambo.h driver/ypp.h driver/p2y.h driver/yambo_driver.F driver/driver.c
+
+	Bugs:
+	- [GPL] Order of passing strings from driver.c to _i.F causing problems on SP6, fixed.
+	        Needs checking on more architectures!
+	  [GPL] Bug in not closing pseudo files in p2y fixed.
+
+2010-12-03 19:49:16 r728 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.3
+
+	*  pol_function/X_os.F interface/init.F setup/setup.F modules/mod_D_lattice.F ypp/ypp_init.F ypp/mod_YPP.F ypp/ras_loc_ypp.F ypp/ypp_init_load.F driver/ypp.h
+
+	Bugs:
+	- [GPL] Fixed bug occurring for fictitious atoms (e.g. pseudohydrogen)
+	- [RAS] Fixed bugs introduced into RAS project with changes in X_os.F
+	Changes:
+	- [RAS] Localization routine spread over k and band
+
+2010-12-03 17:13:46 r727 attacc
+
+	Version 3.2.3
+
+	*  qp/XCo_Hartree_Fock.F
+
+	Bugs:
+	 -[RT] Small bug calculating Collisions
+
+2010-12-02 10:05:38 r726 attacc
+
+	Bugs:
+	 -[SC] wrong memory report in self-consistent GW
+
+	Patch sent by: Claudio
+
+2010-12-02 10:03:16 r725 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug fix in src/qp_ctl/QP_load_DB.F
+
+2010-11-30 21:57:38 r723 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.3
+
+	*  configure include/version.inc config/Makefile.in config/configure.ac coulomb/cutoff_driver.F sc/SC_Energy.F io/ioBS.F io/io_HF_and_locXC.F io/ioX.F io/io_SC_components.F io/ioBS_Fxc.F io/ioQP.F io/io_header.F io/ioCOL_CUT.F driver/driver.c sbin/yamboo.pl
+
+	Changes:
+	- removed the TEST_2 project, cutoff description in the databases included in the trunk
+	- [SC] sc/SC_Energy.F : Now the total energy is computed also for spin polarized systems
+
+	Patch sent by: Davide & Daniele
+
+2010-11-30 16:34:48 r721 attacc
+
+	Version 3.2.3
+
+	*  real_time/RT_initialize.F ypp/ypp_init.F ypp/RT_init_X_one.F ypp/ypp_init_load.F
+
+	Bugs:
+	 -[TWOLEVELS] damping was erroneously not used in 3levels
+
+	Additions:
+	 -[RT] in ypp_rt FrNoDamp to not use damping
+
+	Patch sent by: Claudio
+
+2010-11-30 08:54:48 r720 attacc
+
+	Version 3.2.3
+
+	*  qp/COLLISIONS_IO_eval.F real_time/RT_Energy.F io/load_COLLISIONS.F
+
+	Bugs:
+	 -[SC/RT] problem loading COLLISION in parallel fixed
+	 -[RT] small bug printing energies
+
+	Additions:
+	 -[SC/RT] check for Time-Reversal Symmetry in COLLISIONS added
+
+	Patch sent by: Claudio
+
+2010-11-26 14:18:12 r718 attacc
+
+	Version 3.2.3
+
+	*  qp/XCo_Hartree_Fock.F qp/COLLISIONS_IO_compose.F pol_function/Dipole_driver.F
+	Bugs:
+	 -[SC/RT] Bug reading COLLISIONS when cache/=0
+	 -[DISTRIBUTED] Wrong report in Hartree-Fock
+
+	Additions:
+	 -[DISTRIBUTED] Added report for Dipoles too
+
+	Changes:
+
+2010-11-25 14:18:40 r717 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Minor changes to export the ELPH+GPL source. SC_Energy modified
+
+2010-11-24 09:57:29 r713 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.3
+
+	*  configure include/version.inc config/configure.ac real_time/RT_driver.F real_time/RT_Collision.F real_time/RT_initialize.F real_time/.objects sc/SC_Energy.F sc/OEP_kli_inversion.F modules/mod_timing.F ypp/RT_fix_symmetries.F
+
+	Bugs:
+	 -[SC] small bug compiling OEP_kli_inversion.F
+	 -[RT] bug with flags XCfrozen=.true. but Hfrozen=.false.
+	- [RT] ypp/RT_fix_symmetries.F : now RT_fix_symmetries.F create the forlders "more_io_path" and "more_io_path/SAVE" when
+	                                 the option -O "path" is specified
+
+	Additions:
+	 -[RT] Dipoles are updated also after thermalization
+	 -[RT] check if l_collision_IO is on in real-time
+
+	Changes:
+	 - time function, in mod_timing.F, changed to the fortran95 standard
+	   for linux and apple systems. Now timing works also with gfortran
+
+	Patch sent by: Davide & Claudio
+
+2010-11-22 09:57:06 r712 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.3
+
+	*  qp_ctl/QP_load_DB.F sc/SC_Energy.F sc/SC_driver.F
+
+	Bugs:
+	- In QP_load_DB. Wrong loop index.
+
+	Changes:
+	- sc/SC_Energy.F : possibility to compute E_tot, E_H, Exc
+	                   take into account for the shift in the Efermi. Total Energy now
+	                   can be compared with abinit
+	- sc/SC_driver   : calls to SC_energy for E_H and Exc at the end of the SC_cycle
+
+	Patch sent by: Andrea & Davide
+
+2010-11-19 11:56:40 r711 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.3
+
+	*  configure include/version.inc config/configure.ac wf_and_fft/WF_states_setup.F pol_function/Dipole_driver.F pol_function/Dipole_transverse.F interface/init_load.F interface/init.F real_time/RT_driver.F real_time/RT_update_dipoles.F real_time/.objects real_time/RT_start_and_restart.F sc/MAG_common_build_A.F sc/SC_start_and_restart.F sc/MAG_pseudo_nl.F sc/.objects sc/MAG_A_phase.F sc/MAG_Hamiltonian.F sc/MAG_H_pseudo.F io/io_SC_components.F io/io_DIPOLES.F modules/mod_real_time.F modules/std_presets.F modules/mod_magnetic.F ypp/ypp_init.F ypp/ypp_init_load.F ypp/RT_fix_symmetries.F
+
+	Bugs:
+	- [DISTRIBUTED] small bug compiling with gfortran
+	- [2LEVELS] small bug in variables names for the 3levels
+
+	Additions:
+	- [MAGNETIC]  sc/MAG_pseudo_nl.F  sc/MAG_H_pseudo.F : transform the non local part of the pseudo
+	- [MAGNETIC] sc/MAG_A_phase.F : change gauge to match the closest integer flux
+	- [RT] All the elements of <p> are calculated and stored in ndb.P_and_P2
+	- [RT] <r> dipoles are calculated starting from the rotate <p> setting to zero
+	       the <i|r|i> terms and disregarding the commutator with non-local Hamiltonians
+
+	Changes:
+	- [MAGNETIC] interface/init_load.F interface/init.F modules/std_presets.F: variable Phase_trick
+	- [MAGNETIC] sc/MAG_common_build_A.F                : call to MAG_A_phase.F
+	- [MAGNETIC] sc/.objects                            : MAG_A_pahse.o
+	- [MAGNETIC] sc/MAG_Hamiltonian.F                   : MAG_initialization, check Phase_trick variable
+	- [MAGNETIC] modules/mod_magnetic.F                 : Phase trick variables
+	- [MAGNETIC]  sc/.objects:                sc/MAG_pseudo_nl.F  sc/MAG_H_pseudo.F
+	- [MAGNETIC]  sc/SC_start_and_restart.F : call to sc/MAG_H_pseudo.F in _MAGNETIC project
+	- [MAGNETIC]  modules/mod_magnetic.F :    new_pp and old_pp vectors
+	- [RT] G_lesser_reference is always allocated and store
+	- [RT] database edb.P_square renamed in db.P_and_P2
+
+	Patch sent by: Davide & Claudio
+
+2010-11-18 17:22:09 r710 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.3
+
+	*  configure include/version.inc config/configure.ac sc/OEP_driver.F sc/OEP_kli_iterative.F sc/SC_add_XC.F sc/SC_start_and_restart.F sc/OEP_kli_inversion.F sc/OEP_exact_iterative.F
+
+	Bugs: [SC/OEP] Fixed several bugs. KLI with iteration and inversion are working and giving the same results.
+	               OEP_exact_iterative gives physical results, but test are needed. NB All functionalities are under implementation/not for use
+
+	Patch sent by: Myrta
+
+2010-11-18 17:09:10 r709 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Total energy calculation (Davide) in _SC added. Bug fixed in k_grids (Andrea)
+
+2010-11-17 20:42:26 r707 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	gpl+distributed branch updated with the latest _DISTRIBUTION project of the trunk
+
+2010-11-17 20:08:33 r704 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Distributed project Updated. Small bug in mod_par_indexes fixed. Global renaming %n_of_element_1D
+
+2010-11-16 16:29:06 r701 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Configure including Conor's changes added
+
+2010-11-16 16:26:14 r700 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.3
+
+	*  configure include/version.inc config/Makefile.in config/Makefile.in_gpl config/configure.ac qp/XCo_Hartree_Fock.F qp/QP_ppa_cohsex.F qp_ctl/.objects qp_ctl/QP_load_DB.F qp_ctl/.objects_gpl qp_ctl/QP_merge_DBs.F common/FREQUENCIES_coarse_grid.F wf_and_fft/WF_load.F wf_and_fft/WF_states_setup.F wf_and_fft/scatter_Bamp.F pol_function/X_os.F pol_function/Dipole_driver.F setup/setup.F interface/init_q_pts.F io/IO_Setup.F modules/mod_wave_func.F modules/std_presets.F modules/mod_wf_distribute.F driver/yambo.h
+
+	Bugs:
+	- Restored cg_percentual=100 procedure in FREQUENCIES_coarse_grid.F
+	- init_q_pts.F not called when verbosity=all
+
+	Additions:
+	- [DISTRIBUTED] Option report for WF_states_setup
+	- Possibility of reading simultaneously more than one external QP databases
+
+	Changes:
+	- Tests removed in Makefile. To be shortly replaced by the test-suite.
+	- [DISTRIBUTED] Global renaming of loaded_states->states_loaded
+	- [DISTRIBUTED] Option to distribute the memory (-M) added and removed from the input file
+
+	Patch sent by: Andrea
+
+2010-11-16 12:04:03 r699 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.3
+
+	*  e2y/e2y_db1.F config/configure.ac
+
+	Bugs:
+	- [GPL] e2y configure options changed to --with-etsf-io-lib and --with-etsf-io-include
+	        Bug fixed in e2y_db1.F.
+
+2010-11-14 12:22:52 r696 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.3
+
+	*  configure include/version.inc config/acx_report.m4 config/netcdf_f90.m4 config/configure.ac io/ioBS.F modules/mod_IO.F ypp/excitons_sort_and_report.F driver/ypp.h_gpl sbin/yamboo.pl sbin/make_makefile.sh.in
+
+	Bugs:
+	- NETCDF LARGE FILES Support fixed. It must be enabled by using  the --enable-netcdf-LFS=yes option of configure
+
+	Patch sent by: Andrea
+
+2010-11-12 13:02:44 r693 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.3
+
+	*  p2y/p2y_i.F p2y/.objects p2y/mod_sax.F p2y/Vnl_driver.F p2y/pw_pseudo_module.F
+
+	Changes:
+	- Vnl stuff removed to devel-conor branch
+
+2010-11-11 16:34:49 r691 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.3
+
+	*  ras/Dipole_longitudinal_cut.F ras/Dipole_driver_cut.F ras/.objects ras/.objects_gpl ras/Dipole_shifted_grids_cut.F
+
+	Changes:
+	- [RAS] 'Longitudinal' modified to 'shifted grid' (finally!).
+
+2010-11-11 16:13:36 r690 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.3
+
+	*  configure include/version.inc config/acx_fortran_flags.m4 config/configure.ac config/acx_get_fc_version.m4 qp_ctl/QP_apply_DB_interpolation.F qp_ctl/QP_fit_DB_values.F common/FREQUENCIES_coarse_grid.F pol_function/Dipole_transverse.F interface/init.F coulomb/bessel_J0.F real_time/RT_Energy.F real_time/RT_driver.F real_time/RT_Collision.F real_time/RT_output.F real_time/RT_initialize.F real_time/RT_propagate_vecpot.F real_time/RT_Ext_Current.F real_time/RT_three_levels.F real_time/RT_start_and_restart.F real_time/RT_init_vecpot.F real_time/RT_two_levels.F io/io_DIPOLES.F modules/mod_real_time.F modules/std_presets.F ypp/RT_init_X_one.F ypp/mod_YPP.F ypp/RT_fix_symmetries.F ypp/RT_X_one.F ypp/excitons_sort_and_report.F
+
+	Bugs:
+	 -excitons amplitudes and weights were wrong with spin in ypp, fixed
+	 -small bugs compiling with xlf double precision fixed
+	 -[RT] Fixed 3 levels system
+	 -[RT] Fixed ypp_rt and yambo_rt for Probe_Tstart/=0
+	 -[RT/SC] Bug in calculation and in writing <p^2>
+	 -[RT] Fixed IP case, starting from a SC calculation
+
+	Additions:
+	 -ypp writes also the spin in the exciton weight file
+	 -[RT] intrinsic symmetries are stored in a database
+	 -[RT] speed up, and less memory usage for the IP case
+	 -[RT] ypp_rt removes symmetries also in the self-consistent wave-function
+	 -Devel support to ftn compiler added
+
+	Changes:
+	 - 100% coarse grid does nothing as zero coarse grid
+
+	Patch sent by: Claudio & Andrea
+
+2010-11-09 16:35:19 r688 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug when using Fragmented databases + MPI fixed (already exported to the GPL trunk)
+
+2010-11-09 12:59:18 r687 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.3
+
+	*  configure config/configure.ac
+
+	Changes:
+	- [GPL] Default version of p2y changed from 3.2.3 to 4.0
+
+2010-11-08 13:24:09 r686 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.3
+
+	*  p2y/qexml_v3.1.F p2y/qexml_v3.2.F
+
+	Bugs:
+	- [GPL] Fixed error with undefined datadir_in for p2y 3.1/3.2, from Jianwei Dian
+
+2010-11-05 20:16:29 r685 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.3
+
+	*  p2y/qexml_v4.0.F
+
+	Bugs:
+	- p2y should now be compatible with all versions of UPF files.
+	  Thanks to Andrea Ferretti for the heads-up.
+
+	Patch sent by: Conor
+
+2010-11-05 15:35:04 r683 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	YPP+ELPH support in branches/gpl+elph/ added. Trunk changed accordingly
+
+2010-11-05 10:38:23 r682 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	GPL+ELPH patched (ypp still missing). Fixed .h files in GPL
+
+2010-11-03 16:09:45 r680 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.3
+
+	*  configure include/version.inc config/configure.ac interface/init_load.F interface/init.F io/Fragments_Restart.F io/Fragments_Synchronize.F modules/mod_IO.F bse/K_filling.F bse/K.F driver/a2y.h driver/c2y.h driver/e2y.h driver/yambo.h driver/ypp.h driver/p2y.h driver/driver.c
+
+	Bugs:
+	- [CPMD] Removed bug in c2y when treating big databases (fragmentation) (Daniele)
+	- [GPL] Missing construction of BS table in ypp when the BSE coupling is switched on (Daniele)
+	- Wrong MPI initialization when -S option is used. To avoid future confusion I added to *ALL* .h files that
+	  define the command line structure an integer to decide whether or not that variable is compatible with a
+	  parallel run of the driver.
+	- Wrong definition of the restart files in the case of a fragmented BS database. Now the restart file has been changed to be
+	  the same in case of fragmented/non-fragmented databases.
+	  *** Still to check the fragments syncronization in distributed runs ***
+	- Wrong checks in K.F and K_filling.F to restart the loop using the fragments.
+	- [ELPH] Small problem compiling with gfortran in qp/ELPH_Hamiltonian.F (Elena)
+	- Wrong boundary conditions in ypp fixed. Removed discontinuity observed at the cell boundaries (Davide)
+
+	Patch sent by: Andrea, Daniele, Davide & Elena
+
+2010-10-17 17:45:04 r676 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	New subversion level released
+
+2010-10-17 17:38:44 r675 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Internal revision number updated
+
+2010-10-17 17:37:28 r674 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Removed wrong barriers for GPL lifetimes & CPL BSE
+
+2010-10-14 14:03:19 r669 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	GPL-branch. Lifetimes fixed. Added option to plit GFs and Self-energy.
+
+2010-10-06 18:44:04 r668 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  parser/mod_itm.F interface/init.F ypp/ypp_init.F driver/yambo.h driver/ypp.h
+
+	Changes:
+	- Verbosity option "-V all" added: switches on all input file variables/flags.
+
+	Patch sent by: Conor
+
+2010-09-24 17:54:48 r666 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc c2y/c2y_KSS_file_name.F + c2y/.objects c2y/c2y_db1.F c2y/c2y_i.F c2y/c2y_wf.F config/configure.ac interface/init_load.F interface/init.F real_time/RT_driver.F real_time/RT_Collision.F real_time/.objects real_time/RT_three_levels.F real_time/RT_start_and_restart.F real_time/RT_init_vecpot.F modules/mod_real_time.F modules/std_presets.F ypp/RT_X_two.F
+
+	Changes:
+	- [RT] Inserted expressions for calculating SHG and OR from polarization, JCP 127,1541140 (Myrta)
+
+	Additions:
+	- [TWO_LEVELS] added the three levels case (Claudio)
+
+	Patch sent by: Myrta & Claudio
+
+2010-09-09 10:17:29 r662 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  trunk/configure trunk/include/version.inc trunk/p2y/.objects trunk/config/Makefile.in trunk/config/Makefile.in_gpl trunk/config/configure.ac trunk/real_time/RT_two_levels.F trunk/driver/driver.c trunk/sbin/yamboo.pl branches/gpl/configure branches/gpl/include/version.inc branches/gpl/config/configure.ac branches/gpl/setup/G_shells_finder.F branches/gpl/interface/init_load.F branches/gpl/interface/init.F branches/gpl/io/variables_BS.F branches/gpl/io/ioQP.F branches/gpl/modules/mod_drivers.F branches/gpl/modules/mod_global_XC.F branches/gpl/bse/K_Haydock.F branches/gpl/bse/K_BSmat_by_V.F
+
+	*** WARNING *** Commit message of revision 661 is wrong (My mistake :(, Andrea)
+
+	Additions:
+	- [GPL branch]: *** BSE/TDDFT beyond the TDA ***
+	  It is now possible to calculate TDDFT and BSE response functions beyond the
+	  Tamm-Dancoff approximation. The antiresonant and coupling blocks of the
+	  Hamiltonians can be computed.
+	  The final Dyson equation is, then. solved using diagonalization or the
+	  quasi-Hermitian Haydock algorithm proposed in Nano Letters, 9, 2820 (2009)
+	- AUGER project opened.
+
+	Patch sent by: The Team
+
+2010-09-09 10:16:23 r661 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc config/configure.ac interface/init_load.F interface/init.F setup/G_shells_finder.F real_time/RT_two_levels.F sc/XC_switch.F sc/OEP_kli_iterative.F sc/OEP_driver.F sc/OEP_exact_inversion.F sc/SC_add_XC.F sc/V_oep.F sc/SC_start_and_restart.F sc/OEP_kli_inversion.F sc/.objects sc/OEP_exact_iterative.F sc/OEP_Hole.F io/variables_BS.F io/ioQP.F modules/mod_drivers.F modules/std_presets.F modules/mod_SC.F modules/mod_global_XC.F bse/K_Haydock.F bse/K_BSmat_by_V.F bse/K_BSload.F
+
+	Bugs:
+	- Kinetic energy cutoff wrongly defined (Claudio)
+	- [RT] compiling with gfortran (Claudio)
+
+	Additions:
+	- [SC] Slater potential for the only X case (tested only for few cases, more/rigorous tests needed)
+	- [SC] Kli potential for the only X case both with iterative and standard solution (from few tests iterative version seems to work) (Myrta)
+	- [SC] Iterative solution of OEP equation only X (does not work yet) (Myrta)
+	- [SC] "Driver" for managing all OEP options/subroutines   (Myrta)
+
+	Changes:
+	- Removed NONGPL barriers for BSE with Coupling (Myrta)
+	- [SC] V_oep changed to sc/OEP_exact_inversion.F to conform to new subroutines naming (Myrta)
+	- [SC] changes in interfaces/modules/sc routines to introduce new OEP options/drivers (Myrta)
+
+	Patch sent by: Myrta & Claudio
+
+2010-09-06 12:12:58 r659 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc config/configure.ac interface/init_load.F interface/init.F setup/G_shells_finder.F real_time/RT_two_levels.F sc/XC_switch.F sc/OEP_kli_iterative.F sc/OEP_driver.F sc/OEP_exact_inversion.F sc/SC_add_XC.F sc/V_oep.F sc/SC_start_and_restart.F sc/OEP_kli_inversion.F sc/.objects sc/OEP_exact_iterative.F sc/OEP_Hole.F io/variables_BS.F io/ioQP.F modules/mod_drivers.F modules/std_presets.F modules/mod_SC.F modules/mod_global_XC.F bse/K_Haydock.F bse/K_BSmat_by_V.F bse/K_BSload.F
+
+	Bugs:
+	- Kinetic energy cutoff wrongly defined (Claudio)
+	- [RT] compiling with gfortran (Claudio)
+
+	Additions:
+	- [SC] Slater potential for the only X case (tested only for few cases, more/rigorous tests needed)
+	- [SC] Kli potential for the only X case both with iterative and standard solution (from few tests iterative version seems to work) (Myrta)
+	- [SC] Iterative solution of OEP equation only X (does not work yet) (Myrta)
+	- [SC] "Driver" for managing all OEP options/subroutines   (Myrta)
+
+	Changes:
+	- Removed NONGPL barriers for BSE with Coupling (Myrta)
+	- [SC] V_oep changed to sc/OEP_exact_inversion.F to conform to new subroutines naming (Myrta)
+	- [SC] changes in interfaces/modules/sc routines to introduce new OEP options/drivers (Myrta)
+
+	Patch sent by: Myrta & Claudio
+
+2010-08-20 17:35:36 r658 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  p2y/qexml_v3.1.F p2y/qexml_v4.0.F p2y/mod_pw_data.F p2y/qexml_v3.2.F p2y/p2y_i.F p2y/.objects p2y/mod_p2y.F p2y/mod_sax.F p2y/Vnl_driver.F p2y/pw_pseudo_module.F
+
+	Additions:
+	- New qexml routines added to read the contents of UPF pseudopotential files.
+
+	Patch sent by: Conor
+
+2010-08-10 22:28:32 r657 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  trunk/configure trunk/include/version.inc trunk/config/Makefile.in_gpl trunk/config/configure.ac trunk/xc_functionals/XC_potential_driver.F trunk/modules/.objects trunk/modules/.objects_gpl trunk/ypp/RT_init_X_one.F trunk/ypp/mod_YPP.F trunk/ypp/plot_cube.F trunk/ypp/electrons_driver.F trunk/ypp/RT_X_one.F trunk/sbin/yambo_versions_update.tcsh branches/gpl/configure branches/gpl/include/version.inc branches/gpl/config/configure.ac branches/gpl/xc_functionals/XC_potential_driver.F branches/gpl/ypp/plot_cube.F branches/gpl/sbin/make_makefile.sh.in
+
+	Changes:
+	- Small change to the cube format: now it is read by more visualization software
+
+	Bugs:
+	- XC_potential_driver.F did not compile with gfortran
+	- Due to a typo the subroutine ypp/electrons_driver.F did not compile
+
+	Patch sent by: The Team
+
+2010-08-06 12:23:45 r653 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc int_modules/.objects_gpl a2y/a2y_db1.F config/Makefile.in config/Makefile.in_gpl config/configure.ac xc_functionals/el_current.F xc_functionals/XC_potential_driver.F xc_functionals/.objects_gpl wf_and_fft/rfft.f wf_and_fft/fft_1d_real.F wf_and_fft/.objects modules/.objects modules/.objects_gpl ypp/.objects ypp/.objects_gpl driver/ypp.h_gpl
+
+	Additions:
+	- make tests in Makefile
+
+	Changes:
+	- Use of precompiler flags in XC_potential_driver.F
+	- rfft.f and fft_1d_real.F removed
+	- ypp.h (GPL) updated
+
+	Patch sent by: Andrea
+
+2010-08-06 09:43:53 r652 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	[ypp] Small correction in the cube format (Daniele)
+
+2010-08-05 15:55:03 r651 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Some global renaming
+
+2010-08-05 15:00:59 r650 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc config/configure.ac real_time/RT_Energy.F real_time/RT_Collision.F real_time/RT_output.F io/io_DIPOLES.F ypp/ypp_init.F ypp/RT_databases.F ypp/RT_driver.F ypp/RT_optics.F ypp/fourier_transform.F ypp/mod_YPP.F ypp/apply_damping.F ypp/ypp_init_load.F ypp/RT_nonlinear.F ypp/ypp_i.F ypp/.objects ypp/RT_init_optics.F driver/ypp.h
+
+	Bugs:
+	 -[RT] X_irrep changed to DP to be compatible with FFT
+	 -[RT] bug reading ndb.P_square
+
+	Additions:
+	 -[RT] added subroutine to analize non linear optics RT_nonlinear.F
+
+	Changes:
+	 -[RT] first part of RT_optics.F moved in RT_init_optics.F
+
+	Patch sent by: Claudio
+
+2010-08-05 14:54:34 r649 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc int_modules/mod_dftxc2libxc.F int_modules/.objects int_modules/mod_xc2y.F int_modules/mod_com2y.F p2y/p2y_db1.F p2y/mod_p2y.F a2y/a2y_db1.F config/configure.ac xc_functionals/XC_potential_driver.F xc_functionals/xc_lda_driver.F xc_functionals/XC_libxc_driver.F xc_functionals/libxc_int.F xc_functionals/.objects qp/XCo_local.F acfdt/acfdt_tot_energy.F real_time/RT_Energy.F real_time/RT_Collision.F real_time/RT_start_and_restart.F real_time/RT_init_vecpot.F real_time/RT_two_levels.F sc/SC_add_XC.F tddft/tddft_alda_g_space.F io/ioDB1.F modules/mod_real_time.F modules/mod_libxc_int.F modules/mod_xc_functionals.F modules/.objects modules/mod_global_XC.F bse/K_BSload.F bse/K.F
+
+	Additions:
+	- xc_functionals/XC_potential_driver.F, see Changes
+	- modules/mod_libxc_int.F, see changes
+	- int_modules/mod_xc2y.F: this module should contain all
+	  convertion between xc conventions in the DFT code and the one in yambo.
+	  For the moment it contains utilities for xc from abinit and fron abinit linked to LIBXC. Everything is restricted to LDA.
+
+	Changes:
+	- The interface to libxc has been changed to localize it and to ensure compability. Most of the files are reverted to their pre-LIBXC status
+	  (for what concern LIBXC use) and the interface to libxc is contained in xc_functionals/XC_potential_driver.F (to be used
+	  instead of the xc_lda_driver, the call to xc_lda_driver have been changed all along the code).
+	  The calls to LIBXC are done by xc_functionals/libxc_int.F using modules/mod_libxc_int.F
+
+	Patch sent by: Myrta
+
+2010-07-22 14:15:31 r648 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc c2y c2y/c2y_KSS_file_name.F c2y/c2y_db1.F c2y/.objects c2y/c2y_i.F c2y/.objects_gpl c2y/c2y_wf.F config/Makefile.in config/Makefile.in_gpl config/configure.ac qp/QP_driver.F qp/QP_newton.F qp/.objects_gpl common/.objects_gpl pol_function/X_em1.F interface/init_load.F interface/barriers.F real_time/RT_init_vecpot.F real_time/RT_two_levels.F modules/mod_fields.F modules/mod_functions.F modules/.objects_gpl driver/c2y.h driver/yambo.h_gpl driver/yambo_driver.F driver/driver.c sbin/make_makefile.sh.in
+
+	Additions:
+	 -Removed GPL barriers to  real axis GW  (Claudio)
+	 -The number of electrons can be changed also in the GPL (Claudio)
+	 -C(pmd)2Y(ambo) interface (Daniele)
+
+	Patch sent by: Claudio & Daniele
+
+2010-07-19 10:44:55 r644 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc config/configure.ac common/FREQUENCIES_reset.F common/.objects pol_function/X_em1.F pol_function/O_driver.F real_time/RT_init_vecpot.F real_time/RT_two_levels.F ypp/mod_YPP.F ypp/plot_cube.F ypp/ypp_init_load.F ypp/excitons_driver.F ypp/electrons_driver.F ypp/RT_fix_symmetries.F ypp/.objects ypp/plot_check_and_launch.F
+
+	Bugs:
+	- [RT] Error rotating WF, some holes were present in wf_igk, fixed  (Claudio)
+
+	Additions:
+	- Added plot_cube subroutine to plot 3D isosurfaces in Gaussian cube format. (Daniele)
+	- REQUENCIES_reset.F to clean coarse grid -related variables (Claudio)
+
+	Patch sent by: Daniele & Claudio
+
+2010-07-12 09:33:04 r635 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc config/configure.ac real_time/RT_driver.F real_time/RT_output.F real_time/RT_Ext_Current.F real_time/RT_init_vecpot.F real_time/RT_two_levels.F io/variables_SC.F io/io_HF_and_locXC.F io/io_SC_components.F modules/mod_com.F bse/K.F ypp/ypp_init.F ypp/ypp_init_load.F ypp/excitons_sort_and_report.F
+
+	Changes:
+	 -energies in excitonic weights are now plotted in eV instead of Hartree
+
+	Additions:
+	 - excitonic amplitude and weights can be calculated with QP energies verbosity -V qp
+	 -[RT] real time dynamics can be stopped safely, and the cache is correctly written
+
+	Bugs:
+	 -[DISTRIBUTED] bug in BSE for calculations not at gamma point
+	 -[RT] problem compiling io_SC_components.F with gfortran
+	 -[RT] wrong field name in RT_Ext_Current.F
+	 -[RT] file are correctly closed, added of_name=trim(of_name) in mod_com.F
+	 -in io_HF_and_locXC.F the io_header was read but not used
+
+	Patch sent by: Claudio
+
+2010-07-09 16:33:31 r634 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  configure include/version.inc config/configure.ac ras/io_ostnts_cut.F ras/Dipole_longitudinal_cut.F ras/Dipole_driver_cut.F pol_function/X_os.F pol_function/O_driver.F pol_function/X_em1.F + pol_function/.objects pol_function/Dipole_longitudinal.F pol_function/.objects_gpl pol_function/Dipole_driver.F pol_function/Dipole_transverse.F setup/setup.F interface/init_load.F interface/init.F real_time/RT_apply_field.F real_time/RT_driver.F + real_time/RT_output.F real_time/RT_initialize.F real_time/RT_Ext_Current.F real_time/RT_propagate_vecpot.F real_time/RT_report.F real_time/RT_current_or_polarization.F real_time/.objects real_time/RT_Integrator.F + real_time/RT_write_dbs.F real_time/RT_start_and_restart.F real_time/RT_init_vecpot.F real_time/RT_two_levels.F real_time/RT_average_operator.F sc/V_oep.F tddft/tddft_BSK_2_FXC.F io/variables_SC.F io/io_SC_components.F + io/ioOSTNTS.F io/.objects io/.objects_gpl modules/mod_real_time.F modules/mod_fields.F modules/mod_X_output.F modules/std_presets.F modules/mod_X.F bse/K_solvers.F ChangeLog ypp/ypp_init.F ypp/RT_databases.F ypp/RT_driver.F + ypp/mod_YPP.F ypp/RT_spectrum.F ypp/ras_trans_ypp.F ypp/ypp_init_load.F ypp/RT_fix_symmetries.F ypp/ypp_i.F ypp/k_grids.F ypp/.objects driver/ypp.h
+
+	Bugs:
+	- In init_load due to a too long variable description
+
+	Additions:
+	- New array for <n|p|n'>: DIP_P
+	- RT_ouput to write real-time and energy resolved A,P,J ... eps, eels
+	- Added polarization in io_SC_components
+
+	Changes:
+	- ioOSTNTS renamed in io_DIPOLES (DB name changed as well)
+	- Removed back-compatibility of OSTENTS databases
+	- **GLOBAL** renaming of:
+	   DIP_iq_dot_r -> DIP_q_dot_iR
+	   DIP_iR_or_P  -> DIP_iR
+	- Removed dependence on gauge of Dipole_transverse. Now DIP_iR is filled with <iR> while
+	  Dipole_driver fills DIP_P at the occurrence
+	- Changed the way output files are written by RT_driver in order to be compatible with ypp_rt
+	- RT_current_AND_polarization now calculated current AND polarization at the same time
+	- **GLOBAL** restyling of ypp_rt. Old RT_spectrum splitted in RT_databases.F, RT_driver.F and
+	  RT_optics.F. Note that RT_optics has been deeply revised in order to use Polarization instead
+	  of current to evaluate optical properties
+
+	Patch sent by: Andrea
+
+2010-07-05 13:29:45 r629 Conor Hogan <conor.hogan@roma2.infn.it>
+
+	Version 3.2.2
+
+	*  sbin/svn2cl.pl
+
+	Bugs:
+	- Fixed bug in svn2cl.pl script for GPL repos log
+
+	Patch sent by: Conor
+
 2010-07-02 14:53:51 r626 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	Version 3.2.2

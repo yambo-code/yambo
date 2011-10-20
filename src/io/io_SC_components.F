@@ -86,12 +86,12 @@ integer function io_SC_components(what,E_sc,ID)
  if (l_V)  io_SC_components=io_connect(desc="scV",type=2,ID=ID)
  !
 #if defined _RT
+ !      
+ file_number=(NE_i_time-1)/max_rt_steps_disk
  !
  ! Write only every max_rt_steps_disk
  !
  if (l_J_and_P) then
-   !      
-   file_number=(NE_i_time-1)/max_rt_steps_disk
    !      
    if(io_sec(ID,1)==1) then 
      io_SC_components=io_connect(desc="RT_J_and_P",type=2,ID=ID)
@@ -118,7 +118,11 @@ integer function io_SC_components(what,E_sc,ID)
      return
    endif
  endif
- if (l_G)           io_SC_components=io_connect(desc="RT_GreenF",type=2,ID=ID)
+ if (.not.ver_is_gt_or_eq(ID,revision=944).or.NE_MEM_steps==2.or.io_sec(ID,1)==1) then
+   if (l_G)           io_SC_components=io_connect(desc="RT_GreenF",type=2,ID=ID)
+ else
+   if (l_G)           io_SC_components=io_connect(desc="RT_GreenF_"//trim(intc(file_number)),type=2,ID=ID)
+ endif
  !
 #endif
  !

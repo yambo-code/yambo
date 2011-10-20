@@ -99,7 +99,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
    allocate(XoR_wing(X%ng))
    XoR_wing= cmplx(0.,0.,SP)
    X_mat_wing_right= cmplx(0.,0.,SP)
-   X_mat_wing_left=  cmplx(0.,0.,SP)
+   X_mat_wing_left = cmplx(0.,0.,SP)
  endif
 #endif
  !
@@ -346,7 +346,7 @@ loop_bg: do i2 = 1,bg_npts(i1)
 #if defined _KERR
        ! Evaluate head and wings for other direction
        ! XoR2(1,G')=XoR_wing(G') G'=1,ng
-       if(l_kerr) XoR_wing(:)=XoR_wing(:) &
+       if(l_kerr.and.cg_pt(i1)/=0.) XoR_wing(:)=XoR_wing(:) &
 &                 -GreenF(1)*eh_occ*isc%rhotw(:)*DIP_q_dot_iR_kerr(ic,iv,ikbz,i_spin)
 #endif
      enddo loop_bg
@@ -360,7 +360,7 @@ loop_bg: do i2 = 1,bg_npts(i1)
          !
        enddo
 #if defined _KERR
-       if (l_kerr) then
+       if (l_kerr.and.cg_pt(i1)/=0.) then
          X_mat_wing_right(:,i2)=X_mat_wing_right(:,i2)+XoR_wing(:)*GreenF(i2)/GreenF(1)               ! right wing
          X_mat_wing_left(:,i2)=X_mat_wing_left(:,i2)+conjg(XoR_wing(:))*GreenF(i2)/conjg(GreenF(1))   ! left wing
        endif

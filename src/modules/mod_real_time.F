@@ -100,7 +100,7 @@ module real_time
  integer  :: NE_Hxc_jumps
  integer  :: NE_steps
  !
- ! ... Memory depth ...
+ ! ... Memory ...
  !
  real(SP) :: NE_MEM_treshold
  integer  :: NE_MEM_steps
@@ -126,6 +126,7 @@ module real_time
  !
  real(SP)    :: RT_ave_dephasing
  real(SP),    allocatable :: RT_Deph_Matrix(:,:,:)
+ complex(SP), allocatable :: S_matrix(:,:,:,:,:)
  !
  ! GFs
  !
@@ -232,7 +233,7 @@ module real_time
    subroutine RT_alloc(en)
      !
      use pars,           ONLY:SP,schlen
-     use drivers,        ONLY:l_sc_hf,l_HF_and_locXC,l_sc_contains_lda
+     use drivers,        ONLY:l_sc_hf,l_HF_and_locXC,l_sc_contains_lda,l_ph_corr
      use memory_m,       ONLY:mem_est
      use SC,             ONLY:SC_bands,V_hartree_sc,local_V,SC_alloc,E_bare,rho_n, &
 &                             SC_xc_functional,SC_xc_functional,RT_occupations
@@ -240,6 +241,7 @@ module real_time
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
      use QP_m,           ONLY:QP_nk,QP_n_states,QP_Vnl_xc
+     use R_lattice,      ONLY:nqbz
      use collisions_IO,  ONLY:collisions_IO_alloc
      !
      type(levels), intent(in) :: en
@@ -282,6 +284,11 @@ module real_time
      !
      allocate(I2_lesser(SC_bands(2),SC_bands(2),QP_nk))
      call mem_est("I2_lesser",(/size(I2_lesser)/),(/2*SP/))
+     !
+     if (l_ph_corr) then
+       allocate(S_matrix(2,SC_bands(2),SC_bands(2),QP_nk,nqbz))
+       call mem_est("S_matrix",(/size(S_matrix)/),(/2*SP/))
+     endif
      !
      allocate(G_lesser_reference(SC_bands(2),SC_bands(2),QP_nk))
      call mem_est("Gf_l_ref",(/size(G_lesser_reference)/),(/2*SP/))
@@ -350,6 +357,11 @@ module real_time
      !
      deallocate(I1_lesser)
      call mem_est("I1_lesser")
+     !
+     if (allocated(S_matrix)) then
+       deallocate(S_matrix)
+       call mem_est("S_matrix")
+     endif
      !
      deallocate(I2_lesser)
      call mem_est("I2_lesser")

@@ -141,7 +141,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    do i1=i_Ef(1),i_Ef(2),1
      call ef2nel(Tel,E_sorted(i1),n_of_el_from_zero(1))
      if ( abs(n_of_el_from_zero(1)) < nel_diff_zero) then
-#if defined _BOLTZMANN
+#if defined _BOLTZMANN || defined _MAGNETIC
        E%Efermi(1)=(E_sorted(i1)+E_sorted(i1+1))/2.
 #else
        E%Efermi(1)=E_sorted(i1)

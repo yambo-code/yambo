@@ -89,13 +89,13 @@ subroutine O_kerr_shadow(what,l_flag,n1,n2,c1)
      !
    case('write_data')
      ! epsilon_xy
-     output_data=(/real(c1(n1))*HA2EV,aimag(X_epsilon(3,n1)),real(X_epsilon(4,n1)),&
-&                  aimag(X_epsilon(3,n1)),real(X_epsilon(4,n1))/)
+     output_data=(/real(c1(n1))*HA2EV,aimag(X_epsilon(4,n1)),real(X_epsilon(4,n1)),&
+&                  aimag(X_epsilon(3,n1)),real(X_epsilon(3,n1))/)
      if (l_flag)      call msg('o off','',output_data(:3),INDENT=-2,USE_TABS=.true.)
      if (.not.l_flag) call msg('o off','',output_data,INDENT=-2,USE_TABS=.true.)
      ! kerr_parameters
-     output_data=(/real(c1(n1))*HA2EV,aimag(X_epsilon(5,n1)),real(X_epsilon(6,n1)),&
-&                  aimag(X_epsilon(5,n1)),real(X_epsilon(6,n1))/)
+     output_data=(/real(c1(n1))*HA2EV,aimag(X_epsilon(6,n1)),real(X_epsilon(6,n1)),&
+&                  aimag(X_epsilon(5,n1)),real(X_epsilon(5,n1))/)
      if (l_flag)      call msg('o kerr','',output_data(:3),INDENT=-2,USE_TABS=.true.)
      if (.not.l_flag) call msg('o kerr','',output_data,INDENT=-2,USE_TABS=.true.)
      !

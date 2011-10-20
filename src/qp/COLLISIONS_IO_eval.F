@@ -32,7 +32,8 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  use global_XC,     ONLY:SC_HF,SC_COHSEX,SC_EXX,SC_EXXC,WF_kind,WF_xc_functional
  use SC,            ONLY:SC_bands
  use global_XC,     ONLY:SC_HF,SC_COHSEX
- use collisions_IO, ONLY:V_kind,collisions_IO_alloc,collisions_IO_free,TEMP_COLLISIONS_v
+ use collisions_IO, ONLY:V_kind,collisions_IO_alloc,collisions_IO_free,TEMP_COLLISIONS_v,&
+&                        io_COLLISIONS 
  use X_m,           ONLY:X_t
  use frequency,     ONLY:w_samp
  use memory_m,      ONLY:mem_est
@@ -47,7 +48,7 @@ subroutine COLLISIONS_IO_eval(E,X,k,xk,q,Xw)
  !
  ! WorkSpace
  !
- integer, external ::eval_G_minus_G,io_COLLISIONS
+ integer, external ::eval_G_minus_G
  integer           ::ID
  type(QP_t)        ::qp_dummy
  character(schlen) ::ch

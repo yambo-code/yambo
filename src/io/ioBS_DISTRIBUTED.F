@@ -87,7 +87,7 @@ integer function ioBS_DISTRIBUTED(iq,X,ID,blk_only)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif
    !
-   ioBS_DISTRIBUTED=variables_BS(ID,local_description,'BSK',X=X)
+   ioBS_DISTRIBUTED=variables_BS(ID,local_description,X=X)
    !
    if (io_restart_point(ID)>0.and.io_mode(ID)==VERIFY) BS_exchange_done=BS_exchange_db
    !

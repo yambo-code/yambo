@@ -125,12 +125,11 @@ module BS
    end subroutine
 #endif
    !
-   integer function variables_BS(ID,local_description,DB,X)
+   integer function variables_BS(ID,local_description,X)
      use pars,       ONLY:lchlen
      use X_m,        ONLY:X_t
      integer            ::ID
      character(lchlen)  ::local_description(100)
-     character(*)       ::DB
      type(X_t), optional::X
    end function
    !

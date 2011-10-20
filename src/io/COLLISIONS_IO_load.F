@@ -32,7 +32,7 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
  use SC,              ONLY:SC_bands
  use memory_m,        ONLY:mem_sum,mem_est
  use collisions_IO,   ONLY:COLLISIONS_v,COLLISIONS_table,V_kind,collisions_IO_free,&
-&                          COLLISIONS_path
+&                          COLLISIONS_path,io_COLLISIONS
  use stderr,          ONLY:intc
  use IO_m,            ONLY:OP_RD_CL,io_control,VERIFY,REP,io_file
  use par_proc_m,      ONLY:pp_indexes,pp_indexes_reset
@@ -56,7 +56,6 @@ subroutine COLLISIONS_IO_load(CHECK_EXISTENCE_ONLY)
  !
  integer            :: i1,ic,i_qp,ib,ibp,ik,ID,n_tot_rho_states,io_err(max_V_kinds),V_kinds(max_V_kinds),n_V_kinds,&
 &                      max_COLLISION_cache
- integer, external  :: io_COLLISIONS
  real(SP)           :: mem_before_cache
  type(pp_indexes)   :: px
  character(schlen)  :: dump_ch 

@@ -66,7 +66,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SC
  use global_XC,      ONLY:SC_HF,SC_COHSEX,SC_HF
  use SC,             ONLY:SC_potential,SC_ng_Sx,SC_X_bands,SC_X_size
- use collisions_IO,  ONLY:V_kind
+ use collisions_IO,  ONLY:io_COLLISIONS,V_kind
 #endif
 #if defined _RT
  use real_time,      ONLY:l_RT_probe,l_RT_pump_and_probe
@@ -94,7 +94,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                     ioBS_Fxc_err,ioQINDX_err,io_SC_E_err,io_SC_V_err,io_COLLISIONS_err,io_J_and_P,io_G
  integer, external :: ioX,io_DIPOLES,ioGROT,ioQINDX,ioRIM,&
 &                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_PP,&
-&                     ioCOL_CUT,io_COLLISIONS
+&                     ioCOL_CUT
  logical           :: OSTNTS_Vnl_included
  !
  integer, external :: ioE_RIM
@@ -1204,10 +1204,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            SC_potential='COHSEX'
            call initactivate(1,'cohsex HF_and_locXC')
          else if ( trim(rstr_piece(i1+1)) == 'hf') then
-           SC_potential='HA2EV-FOCK'
+           SC_potential='HARTREE-FOCK'
            call initactivate(1,'HF_and_locXC')
          else if ( trim(rstr_piece(i1+1)) == 'h') then
-           SC_potential='HA2EV'
+           SC_potential='HARTREE'
          else if ( trim(rstr_piece(i1+1)) == 'd') then
            SC_potential='default'
          endif

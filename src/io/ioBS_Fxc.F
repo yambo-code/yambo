@@ -105,11 +105,11 @@ integer function ioBS_Fxc(iq,FXC_W,ID,X)
    !
    if (ioBS_Fxc==0) then
      if (present(X)) then
-       ioBS_Fxc=variables_BS(ID,local_description,'Fxc',X=X) 
+       ioBS_Fxc=variables_BS(ID,local_description,X=X) 
      else
        i1=io_mode(ID)
        io_mode(ID)=DUMP
-       ioBS_Fxc=variables_BS(ID,local_description,'Fxc',X=X_dummy) 
+       ioBS_Fxc=variables_BS(ID,local_description,X=X_dummy) 
        io_mode(ID)=i1
      endif
    endif

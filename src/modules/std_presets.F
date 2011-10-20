@@ -29,7 +29,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,&
 &                      alpha_dim,use_X_RIM,X_RIM_nkpts,Dipole_bands_ordered,&
 &                      eval_alpha,Vnl_commutator_warning,Dipole_uses_shifted_grids,&
-&                      q_plus_G_direction,Q_Shift_Order
+&                      q_plus_G_direction,Q_Shift_Order,n_X_descs
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_W_er,QP_W_dr,QP_cg_percent,QP_n_states,&
@@ -326,6 +326,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  Vnl_commutator_warning=.FALSE.
  q_plus_G_direction=0.
  Q_Shift_Order=1
+ n_X_descs=0
  !
  !QPm
  !

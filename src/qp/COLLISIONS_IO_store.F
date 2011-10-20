@@ -24,7 +24,7 @@ subroutine COLLISIONS_IO_store(i_qp)
  use pars,            ONLY:SP
  use QP_m,            ONLY:QP_nk,QP_nb,QP_n_states
  use collisions_IO,   ONLY:COLLISIONS_cutoff,TEMP_COLLISIONS_v,COLLISIONS_table,&
-&                          COLLISIONS_v,n_collisions
+&                          COLLISIONS_v,n_collisions,io_COLLISIONS
  use IO_m,            ONLY:io_control,REP,OP_WR_CL,OP_APP_WR_CL
  use SC,              ONLY:SC_bands
  !
@@ -37,7 +37,6 @@ subroutine COLLISIONS_IO_store(i_qp)
  integer   :: ic,jb,jb2,ik
  integer   :: io_err,ID
  real(SP)  :: COLLISIONS_max
- integer, external :: io_COLLISIONS
  !
  ! Reduction of tiny elements of tmp_sx.
  !

@@ -37,6 +37,21 @@ module collisions_IO
  real(SP)                 :: COLLISIONS_max
  complex(SP), allocatable :: TEMP_COLLISIONS_v(:,:,:)
  !
+ ! I/O descriptions
+ !
+ character(lchlen):: COLLISION_description(100)
+ !
+ interface
+   !
+   integer function io_COLLISIONS(i_qp,ID,X)
+     use X_m,        ONLY:X_t
+     integer, intent(inout) ::ID
+     integer, intent(in)    ::i_qp
+     type(X_t), optional    ::X
+   end function
+   !
+ end interface
+ !
  contains
    !
    subroutine collisions_IO_alloc(V_size_input)

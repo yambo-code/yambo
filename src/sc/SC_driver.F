@@ -82,6 +82,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  ! Initial Start & Restart 
  !==========================
+ !
+ if (SC_bands(1)/=1) then
+   SC_bands(1)=1
+   call warning('Lower bound of band indexes forced to be 1')
+ endif
  ! 
  call SC_start_and_restart(X,E,Xk)
  !

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function variables_BS(ID,local_description,DB,X)
+integer function variables_BS(ID,local_description,X)
  !
  use pars,          ONLY:lchlen
  use units,         ONLY:HA2EV
@@ -34,12 +34,11 @@ integer function variables_BS(ID,local_description,DB,X)
 #if defined _DISTRIBUTED
  use BS,            ONLY:BS_exchange_done,BS_exchange_db
 #endif
- use IO_m,          ONLY: io_elemental,io_status,ver_is_gt_or_eq,read_is_on
+ use IO_m,          ONLY: io_elemental,io_status,ver_is_gt_or_eq
  implicit none
  !
  integer            ::ID
  character(lchlen)  ::local_description(100)
- character(*)       ::DB
  type(X_t), optional::X
  !
  ! Work Space

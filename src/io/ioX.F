@@ -26,7 +26,7 @@ integer function ioX(X,Xw,ID)
  use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:nqibz,g_vec
  use matrix_operate,ONLY:mat_c2r,mat_r2c,mat_r2c_ordered
- use X_m,           ONLY:X_t,X_mat,use_X_RIM,X_RLcomp_ig,X_RIM_nkpts
+ use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_description
  use frequency,     ONLY:w_samp
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_com,&
 &                        io_elemental,io_status,io_bulk,io_restart_point,&
@@ -44,10 +44,9 @@ integer function ioX(X,Xw,ID)
  !Work Space
  !
  integer             ::sec_size,i1,iq,i_err,io_com_save
- logical             ::different_db_RL_order,local_long_gauge
+ logical             ::different_db_RL_order
  character (schlen)  ::ch,db_desc
  character (2)       ::local_XC_KIND
- real(SP)            ::Wd_disk(2)
  real(SP),allocatable::X_disk(:,:,:),W_disk(:,:),RL_vecs_disk(:,:)
  !
  ! I assume that he RL ordering used to build X is not different
@@ -78,69 +77,10 @@ integer function ioX(X,Xw,ID)
    ioX=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND=local_XC_KIND,CUTOFF=.true.,GAUGE=.TRUE.)
    if (ioX/=0) goto 1
    !
-   ! PARS_1
+   ! Global Descriptions
+   !=====================
    !
-   call io_elemental(ID,VAR="PARS_1",VAR_SZ=5,MENU=0)
-   call io_elemental(ID,DB_I0=X%ng_db,&
-&       VAR=" X matrix size          :",I0=X%ng,CHECK=.true.,OP=(/"<="/))
-   call io_elemental(ID,&
-&       VAR=" X band range           :",I1=X%ib,CHECK=.true.,OP=(/"==","=="/))
-   call io_elemental(ID,UNIT=HA2EV,&
-&       VAR=" X e/h energy range [ev]:",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/))
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   !
-   ! PARS_2
-   !
-   call io_elemental(ID,VAR="PARS_2",VAR_SZ=1,CH0="",MENU=0)
-   call io_elemental(ID,&
-&       VAR=" X Time ordering        :",CH0=X%ordering,CHECK=.true.)
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   if (ver_is_gt_or_eq(ID,(/3,0,5/))) then
-     !
-     ! TDDFT_KERNEL
-     !
-     call io_elemental(ID,VAR="TDDFT_KERNEL",VAR_SZ=1,CH0="",MENU=0)
-     call io_elemental(ID,&
-&       VAR=" X xc-Kernel            :",CH0=X%f_xc,CHECK=.true.)
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-     !
-     ! DRUDE
-     !
-     call io_elemental(ID,VAR="DRUDE",VAR_SZ=2,MENU=0)
-     Wd_disk=(/real(X%Wd),aimag(X%Wd)/)
-     call io_elemental(ID,UNIT=HA2EV,&
-&       VAR=" X Drude frequency      :",R1=Wd_disk,CHECK=.true.,OP=(/"==","=="/))
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-     X%Wd=Wd_disk(1)+(0.,1.)*Wd_disk(2)
-     !
-   endif
-   !
-   ! PARS_3
-   !
-   sec_size=6
-   if (ver_is_gt_or_eq(ID,(/3,0,1/))) sec_size=8
-   if (ver_is_gt_or_eq(ID,(/3,0,9/))) sec_size=9
-   call io_elemental(ID,VAR="PARS_3",VAR_SZ=sec_size,MENU=0)
-   call io_elemental(ID,&
-&       VAR=" X poles           [o/o]:",R0=X%cg_percentual,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,&
-&       VAR=" Rl vectors in the sum  :",I0=X%ngostnts,WARN=.true.,OP=(/"<="/))
-   call io_elemental(ID,&
-&       VAR=" [r,Vnl] included       :",L0=X%Vnl_included,WARN=.true.,OP=(/"=="/))
-   !
-   if (.not.ver_is_gt_or_eq(ID,(/3,0,9/)).and.read_is_on(ID)) then
-     call io_elemental(ID,VAR=" Longitudinal Gauge     :",L0=local_long_gauge)
-   endif
-   !
-   call io_elemental(ID,&
-&       VAR=" Field direction        :",R1=X%q0,CHECK=.true.,OP=(/"==","==","=="/))
-   !
-   if (ver_is_gt_or_eq(ID,(/3,0,1/))) then
-     call io_elemental(ID,&
-&         VAR=" BZ energy Random IM    :",L0=use_X_RIM,WARN=.true.,OP=(/"=="/))
-     call io_elemental(ID,&
-&         VAR=" BZ energy RIM points   :",I0=X_RIM_nkpts,CHECK=.true.,OP=(/"=="/))
-   endif
+   call variables_X(ID,X_description,X)
    !
    ! When the SN is different and I am importing this DB 
    ! from a different calculation I check the RL vectors

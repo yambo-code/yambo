@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_COLLISIONS(i_qp,ID)
+integer function io_COLLISIONS(i_qp,ID,X)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
@@ -33,17 +33,20 @@ integer function io_COLLISIONS(i_qp,ID)
  use SC,            ONLY:SC_bands
  use QP_m,          ONLY:QP_ng_Sx,QP_n_states,QP_nb,QP_nk,SC_band_mixing
  use fragments,     ONLY:io_fragment,Fragments_Restart,Fragments_Synchronize
+ use X_m,           ONLY:X_t,n_X_descs,X_description
+ use stderr,        ONLY:intc
  !
  implicit none
  !
- integer, intent(inout)                :: ID
- integer, intent(in)                   :: i_qp
+ integer, intent(inout)                ::ID
+ integer, intent(in)                   ::i_qp
+ type(X_t),optional                    ::X
  !
  ! Work Space
  !
  character(schlen)     :: db_name
  real(SP), allocatable :: COLLISIONS_v_disk(:,:)
- integer               :: V_kind_disk
+ integer               :: V_kind_disk,i_desc
  character(lchlen)     :: V_kind_string
  character(schlen)     :: desc,db_string
  !
@@ -112,8 +115,34 @@ integer function io_COLLISIONS(i_qp,ID)
      call io_elemental(ID,R0=COLLISIONS_cutoff,&
 &         VAR=' Exchange Cutoff                 :',CHECK=.true.,OP=(/"=="/))
    else
+     !
+     if (ver_is_gt_or_eq(ID,revision=955)) then
+       !
+       ! Global Response Descriptions
+       !==============================
+       call io_elemental(ID,VAR="N_X_descriptions",VAR_SZ=1,MENU=0)
+       if (n_X_descs> 0) call io_elemental(ID,I0=n_X_descs,CHECK=.true.,OP=(/"=="/))
+       if (n_X_descs==0) then
+         call io_elemental(ID,DB_I0=n_X_descs,I0=n_X_descs)
+         n_X_descs=-n_X_descs
+       endif
+       call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+       !
+       ! In this case I have loaded the em1s DB and I know the parameters.
+       ! I can, therefor, write/read and/or VERIFIY the values
+       !
+       do i_desc=1,iabs(n_X_descs)
+         call io_elemental(ID,VAR='X_descriptions_'//trim(intc(i_desc)),CH0="",VAR_SZ=1,MENU=0)
+         call io_elemental(ID,CH0=X_description(i_desc),VAR='',CHECK=n_X_descs>0,OP=(/"=="/))
+         call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+       enddo
+       !
+     endif
+     !
      call io_elemental(ID,VAR="INTERACTION_PARAMETERS",VAR_SZ=2,MENU=0)
+     !
    endif
+   !
    call io_elemental(ID,I0=RIM_ng,&
 &       VAR=' RIM RL components               :',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,I0=RIM_n_rand_pts,&

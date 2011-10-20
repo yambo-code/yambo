@@ -66,6 +66,11 @@ module X_m
  logical :: self_detect_E_range
  logical :: use_X_RIM
  !
+ ! I/O descriptions
+ !
+ integer          :: n_X_descs
+ character(lchlen):: X_description(100)
+ !
  type X_t
    integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp
    integer    :: ng

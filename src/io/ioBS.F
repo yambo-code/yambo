@@ -100,7 +100,7 @@ integer function ioBS(iq,X,ID)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif
    !
-   ioBS=variables_BS(ID,local_description,'BSK',X=X)
+   ioBS=variables_BS(ID,local_description,X=X)
    !
    if (ioBS/=0) then
      !

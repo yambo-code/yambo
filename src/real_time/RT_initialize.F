@@ -61,13 +61,8 @@ subroutine RT_initialize(Xen)
  l_NE_simulate_TDDFT   =.FALSE.
  !
  l_RT_diagonalize      =RT_diagonalization_steps>1
- l_NE_simulate_RPA     =.not.Hfrozen.and.     XCfrozen
- l_NE_simulate_IP      =     Hfrozen.and.     XCfrozen
- l_NE_simulate_Irredux =     Hfrozen.and..not.XCfrozen
- if (                   .not.Hfrozen.and..not.XCfrozen) then
-   l_NE_simulate_BSE     =.not.local_V
-   l_NE_simulate_TDDFT   =local_V
- endif
+ !
+ call UPDATE_flags()
  !
  ! If I am doing a NE loop in all cases I need to evaluate XC or Hartree correspoding to the
  ! starting basis. During the thermalization, instead, the potentials are updated
@@ -178,12 +173,6 @@ subroutine RT_initialize(Xen)
  if(NE_steps>0) then
    call msg('rn','[RT] Simulation time        [fs]:',(/-real(Thermal_steps)*RT_step,RT_step*real(NE_steps)/)/FS2AUT)
    call msg('rn','[RT] Electron-gas plasma frequency [eV]:',sqrt(4._SP*pi*nel/DL_vol)*HA2EV)
-   !
-   call msg( 'r','[RT] Simulate IP                :',l_NE_simulate_IP)
-   call msg( 'r','[RT] Simulate RPA               :',l_NE_simulate_RPA)
-   call msg( 'r','[RT] Simulate BSE               :',l_NE_simulate_BSE)
-   call msg( 'r','[RT] Simulate TD-DFT            :',l_NE_simulate_TDDFT)
-   !
  endif
  call msg('r', '[RT] Pump/Probe periodicity     [fs]:',EtoT(E=maxval(Efield(:)%W_step))/FS2AUT)
  call msg('r', '[RT]            energy step     [eV]:',maxval(Efield(:)%W_step)*HA2EV)
@@ -225,9 +214,36 @@ subroutine RT_initialize(Xen)
  ! Checking extended COLLISIONS
  !==============================
  !
+ call msg('r',' ')
+ !
  call COLLISIONS_IO_load(.TRUE.)
  !
- if (l_collisions_IO) call msg('s' ,'[SC] Extended collisions I/O Used')
- call msg('r' ,'[SC] Extended collisions I/O          :',l_collisions_IO)
+ call UPDATE_flags()
  !
+ if(NE_steps>0) then
+   call msg('nr','[RT] Simulate IP                :',l_NE_simulate_IP)
+   call msg( 'r','[RT] Simulate RPA               :',l_NE_simulate_RPA)
+   call msg( 'r','[RT] Simulate BSE               :',l_NE_simulate_BSE)
+   call msg( 'r','[RT] Simulate TD-DFT            :',l_NE_simulate_TDDFT)
+   call msg( 'r','[SC] Extended collisions I/O    :',l_collisions_IO)
+ endif
+ !
+ contains
+   !
+   subroutine UPDATE_flags()
+     !
+     if (l_collisions_IO) then
+       XCfrozen=.FALSE.
+       if (Hfrozen) call warning('COLLISIONS used but Hartree frozen')
+     endif
+     !
+     l_NE_simulate_RPA     =.not.Hfrozen.and.     XCfrozen
+     l_NE_simulate_IP      =     Hfrozen.and.     XCfrozen
+     l_NE_simulate_Irredux =     Hfrozen.and..not.XCfrozen
+     if (                   .not.Hfrozen.and..not.XCfrozen) then
+       l_NE_simulate_BSE     =.not.local_V
+       l_NE_simulate_TDDFT   =local_V
+     endif
+   end subroutine
+   !
 end subroutine RT_initialize

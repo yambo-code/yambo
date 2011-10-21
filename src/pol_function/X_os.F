@@ -422,6 +422,12 @@ loop_bg: do i2 = 1,bg_npts(i1)
  endif
  do i1=1,Xw%n(2)
    call pp_redux_wait(Xo(:,:,i1))
+#if defined _KERR
+   if (l_kerr) then
+     call pp_redux_wait(X_mat_wing_left(:,i1))
+     call pp_redux_wait(X_mat_wing_right(:,i1))
+   endif
+#endif
  enddo
  call live_timing
  !

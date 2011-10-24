@@ -193,7 +193,7 @@ subroutine RT_initialize(Xen)
  !=========
  if (l_NE_with_fields) then
    call RT_Fluence(Fluence)
-   call msg('rn','[RT] Fluence           [kJ/cm^2]:',Fluence)
+   call msg('rn','[RT] Fluence               [kJ/cm^2]:',Fluence)
  endif
  !
  ! Generalized Rabi Function

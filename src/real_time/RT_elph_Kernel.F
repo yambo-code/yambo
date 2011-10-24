@@ -57,8 +57,8 @@ subroutine RT_elph_kernel(ik,E,k,q,Time)
  !
  do iqbz=1,q%nbz
    !
-   g_q=1./100.
-   w_ph=3/HA2EV
+   g_q=1.E-2
+   w_ph=.2/HA2EV
    !
    iq =q%sstar(iqbz,1)
    iqs=q%sstar(iqbz,2)
@@ -82,12 +82,14 @@ subroutine RT_elph_kernel(ik,E,k,q,Time)
            !
          enddo
          !
-         S_matrix(i_map(i_s),ib,ibp,ik,iqbz)=CIntegrate(V_dummy(:MEM_steps),Time_vector(:MEM_steps),MEM_steps)
-         !
-         I1_lesser(ib,ibp,ik)=I1_lesser(ib,ibp,ik)+exp(cI*i_s*w_ph*TIME)*&
-&                             (S_matrix(i_map(i_s),ib,ibp,ik,iqbz) - S_matrix(i_map(-i_s),ib,ibp,ik,iqbz))
+         S_matrix(i_map(i_s),ib,ibp,ik,iqbz)=g_q**2*CIntegrate(V_dummy(:MEM_steps),Time_vector(:MEM_steps),MEM_steps)
          !
        enddo ! i_s
+       !
+       do i_s=-1,1,2
+         I1_lesser(ib,ibp,ik)=I1_lesser(ib,ibp,ik)+exp(cI*i_s*w_ph*TIME)*&
+&                             (S_matrix(i_map(i_s),ib,ibp,ik,iqbz) + conjg(S_matrix(i_map(-i_s),ibp,ib,ik,iqbz)))
+       enddo
        !
      enddo ! ibp
    enddo ! ib

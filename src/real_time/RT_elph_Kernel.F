@@ -77,7 +77,7 @@ subroutine RT_elph_kernel(ik,E,k,q,Time)
          !                             ---------------------- V_dummy ---------------------------------------------------
          do i_t=1,MEM_steps
            !
-           V_dummy(i_t)=exp(-cI*i_s*w_ph*Time_vector(i_t))*( N_q(i_map(-i_s))*L_gl(ib,ibp,i_t) +&
+           V_dummy(i_t)=exp(-cI*i_s*w_ph*Time_vector(i_t))*( N_q(i_map(-i_s))*L_gl(ib,ibp,i_t) &
 &                                                          - N_q(i_map( i_s))*L_lg(ib,ibp,i_t) )
            !
          enddo

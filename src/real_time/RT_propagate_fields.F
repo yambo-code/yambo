@@ -70,7 +70,7 @@ subroutine RT_propagate_fields(A_new,A_old,T,T_step)
    !
    ! Induced current
    !
-   !  call RT_current_AND_polarization(Xk,G_lesser_previous,A_vecpot)
+   !  call RT_current_AND_polarization(Xk,Xen,G_lesser_previous,A_vecpot)
    !
    ! Integrate the eq. for the vector potential
    !

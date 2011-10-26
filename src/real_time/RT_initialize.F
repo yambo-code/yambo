@@ -27,7 +27,7 @@ subroutine RT_initialize(Xen)
  use units,          ONLY:FS2AUT,HA2EV,HBAR_eVfs,AU2VMm1
  use com,            ONLY:msg,warning,error
  use vec_operate,    ONLY:normalize_v
- use electrons,      ONLY:nel,levels
+ use electrons,      ONLY:nel,levels,BZ_RIM_nbands
  use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields, &
 &                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,NE_tot_time,   &
 &                         l_RT_diamagnetic,max_rt_steps_disk,l_NE_simulate_BSE,     &
@@ -38,6 +38,7 @@ subroutine RT_initialize(Xen)
  use D_lattice,      ONLY:DL_vol
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,&
 &                         theta_function_iTo_ref,i_Pump,i_Probe,EtoT,Efield_strength
+ use X_m,            ONLY:use_X_RIM
  use parser_m,       ONLY:parser
  implicit none
  !
@@ -154,6 +155,11 @@ subroutine RT_initialize(Xen)
    NE_steps=0
    if (Thermal_steps==0) call warning('Skipping simulation. No Ext fields or thermalization provided')
  endif
+ !
+ ! E_RIM
+ ! ==============
+ ! IP phase factores averaged  with E_RIM
+ use_X_RIM=BZ_RIM_nbands/=0.and.SC_bands(1)<BZ_RIM_nbands               
  !
  ! LOG
  !=====

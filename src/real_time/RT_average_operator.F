@@ -19,16 +19,18 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,TRANS)
+subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,USE_ERIM)
  !
  use pars,       ONLY:SP,cI
  use SC,         ONLY:SC_bands
  use R_lattice,  ONLY:bz_samp 
  use QP_m,       ONLY:QP_nk,QP_n_states
- use electrons,  ONLY:n_sp_pol
+ use electrons,  ONLY:n_sp_pol,levels,BZ_RIM_table,BZ_RIM_nkpt,BZ_RIM_nbands
  use FFT_m,      ONLY:fft_size
  use wave_func,  ONLY:wf
  use wrapper,    ONLY:Vstar_dot_V
+ use X_m,        ONLY:use_X_RIM
+ use real_time,  ONLY:NE_time
  !
  implicit none
  !
@@ -38,12 +40,15 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,TRANS)
  complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol)
  complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
  real(SP),        optional, intent(in) :: O_REAL(fft_size,n_sp_pol)
- logical,         optional, intent(in) :: TRANS
+ logical,         optional, intent(in) :: TRANS,USE_ERIM
+ type(levels),    optional, intent(in) :: en
  !
  ! Work Space
  !
- integer     :: i1,ik
+ integer     :: i1,i2,ikbz,ik,ik_rand
  complex(SP) :: Hk(SC_bands(2),SC_bands(2),n_sp_pol)
+ complex(SP) :: G_k_rand(SC_bands(2),SC_bands(2))
+ complex(SP) :: AVE_k_VALUE
  !
  VALUE=(0._SP,0._SP)
  !
@@ -61,21 +66,44 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,TRANS)
    !
  endif 
  !
- do ik=1,QP_nk
+ do ikbz=1,QP_nk
    !
    Hk=(0._SP,0._SP)
    !
    if(present(O_MATRIX)) then
      if(present(TRANS)) then 
-        forall(i1=1:n_sp_pol) Hk(1:SC_bands(2),1:SC_bands(2),i1)=transpose(O_MATRIX(1:SC_bands(2),1:SC_bands(2),ik,i1))
+        forall(i1=1:n_sp_pol) Hk(1:SC_bands(2),1:SC_bands(2),i1)=transpose(O_MATRIX(1:SC_bands(2),1:SC_bands(2),ikbz,i1))
      else
-        forall(i1=1:n_sp_pol) Hk(1:SC_bands(2),1:SC_bands(2),i1)=O_MATRIX(1:SC_bands(2),1:SC_bands(2),ik,i1)
+        forall(i1=1:n_sp_pol) Hk(1:SC_bands(2),1:SC_bands(2),i1)=O_MATRIX(1:SC_bands(2),1:SC_bands(2),ikbz,i1)
      endif
    endif
-   if(present(O_QP))     call V_qp_basis_to_H(ik,O_QP,Hk)
-   if(present(O_REAL))   call V_real_space_to_H(ik,O_REAL,Hk,wf)
+   if(present(O_QP))     call V_qp_basis_to_H(ikbz,O_QP,Hk)
+   if(present(O_REAL))   call V_real_space_to_H(ikbz,O_REAL,Hk,wf)
    !
-   VALUE=VALUE-cI*Vstar_dot_V(SC_bands(2)**2,Hk(1:SC_bands(2),1:SC_bands(2),1),G(1:SC_bands(2),1:SC_bands(2),ik))*k%weights(ik)
+   if(present(USE_ERIM).and.use_X_RIM) then
+     !
+     AVE_k_VALUE=(0.,0.)
+     !
+     do ik=1,BZ_RIM_nkpt(ikbz)
+       !
+       ik_rand=BZ_RIM_table(ikbz,ik)
+       !
+       forall(i1=1:SC_bands(2),i2=1:SC_bands(2))
+         G_k_rand(i1,i2)=  G(i1,i2,ikbz)*exp( (0._SP,1._SP)*(en%Eo(i1,ikbz,1)-en%Eo(i2,ikbz,1))*NE_time)
+         G_k_rand(i1,i2)=G_k_rand(i1,i2)*exp(-(0._SP,1._SP)*(en%E_RIM(i1,ik_rand,1)-en%E_RIM(i2,ik_rand,1))*NE_time)
+       end forall
+       !
+       AVE_k_VALUE=AVE_k_VALUE+Vstar_dot_V(SC_bands(2)**2,Hk(1:SC_bands(2),1:SC_bands(2),1),G_k_rand(1:SC_bands(2),1:SC_bands(2)))
+       !
+     enddo
+     !
+     AVE_k_VALUE=AVE_k_VALUE/real(BZ_RIM_nkpt(ikbz))
+     !
+   else
+     AVE_k_VALUE=Vstar_dot_V(SC_bands(2)**2,Hk(1:SC_bands(2),1:SC_bands(2),1),G(1:SC_bands(2),1:SC_bands(2),ikbz))
+   endif
+   !
+   VALUE=VALUE-cI*AVE_k_VALUE*k%weights(ikbz)
    !
  enddo
  !

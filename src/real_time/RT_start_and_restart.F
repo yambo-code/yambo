@@ -361,4 +361,10 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
 &                              -E_bare(SC_bands(1),1:QP_nk,1:n_sp_pol)+Xen%E(SC_bands(1),1:QP_nk,1:n_sp_pol)
  enddo
  !
+ ! Store the starting Eigenvalues in Eo
+ !======================================
+ !
+ if(.not.associated(Xen%Eo)) allocate(Xen%Eo(SC_bands(2),QP_nk,n_sp_pol))
+ Xen%Eo(1:SC_bands(2),1:QP_nk,1:n_sp_pol)=Xen%E(1:SC_bands(2),1:QP_nk,1:n_sp_pol)
+ !
 end subroutine RT_start_and_restart

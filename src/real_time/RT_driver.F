@@ -230,7 +230,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q,Xw)
    !
    ! Current and Polarization
    !==========================
-   call RT_current_AND_polarization(Xk,G_lesser(:,:,:,it_mem),A_vecpot)
+   call RT_current_AND_polarization(Xk,Xen,G_lesser(:,:,:,it_mem),A_vecpot)
    !
    ! Now print Energetics, current and (eventually) potential 
    !=========================================================

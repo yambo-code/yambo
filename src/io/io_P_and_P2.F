@@ -22,7 +22,7 @@
 integer function io_P_and_P2(X,Xen,ID)
  !
  use pars,          ONLY:SP,schlen
- use X_m,           ONLY:X_t,X_alloc,P_square,DIP_P
+ use X_m,           ONLY:X_t,X_alloc,P_square,DIP_P,Dipole_bands_ordered
  use electrons,     ONLY:levels,n_sp_pol
  use R_lattice,     ONLY:nXkibz
  use matrix_operate,ONLY:mat_c2r,mat_r2c
@@ -54,6 +54,8 @@ integer function io_P_and_P2(X,Xen,ID)
    if (io_P_and_P2/=0) goto 1
    !
  endif
+ !
+ if (.not.Dipole_bands_ordered) db_nbm=db_nb(2)
  !
  if (any((/io_sec(ID,:)==2/))) then
    !

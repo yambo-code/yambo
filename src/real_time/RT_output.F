@@ -133,7 +133,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
  !
  if (initialize) file_name(next_file)=trim(append_ch)//'occupations'
  short_file_name(next_file)=trim(append_ch)//'occupations'
- n_headings(next_file)=9
+ n_headings(next_file)=2
  headings(next_file,1:2)=(/'E  ','Occ'/)
  next_file=next_file+1
  !

@@ -50,8 +50,7 @@ TARGETS  = all yambo interfaces ypp
 UTILS    = changelog
 CLEANS   = clean clean_all
 PROJECTS = yambo_ph yambo_sc yambo_ras yambo_ras_distributed yambo_reels \
-	       yambo_ras_manyk \
-           yambo_magnetic yambo_PWdiago yambo_auger \
+	       yambo_ras_manyk yambo_magnetic yambo_auger \
            yambo_rt yambo_distributed yambo_kerr \
            ypp_rt ypp_ph ypp_ras ypp_sc ypp_magnetic ypp_boltzmann ypp_test_2
 BROKEN   = yambo_manyk
@@ -109,9 +108,6 @@ yambo: libs
 yambo_auger: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_AUGER"; $(mksrc)
 	@X2DO="yambo_auger"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_AUGER";$(mkx)
-yambo_PWdiago: libs
-	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_PW_DIAGO"; $(mksrc)
-	@X2DO="yambo_PWdiago"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_PW_DIAGO";$(mkx)
 yambo_magnetic: libs
 	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_MAGNETIC -D_SC"; $(mksrc)
 	@X2DO="yambo_magnetic"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_MAGNETIC -D_SC";$(mkx)

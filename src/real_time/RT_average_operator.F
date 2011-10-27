@@ -21,16 +21,18 @@
 !
 subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,USE_ERIM)
  !
- use pars,       ONLY:SP,cI
- use SC,         ONLY:SC_bands
- use R_lattice,  ONLY:bz_samp 
- use QP_m,       ONLY:QP_nk,QP_n_states
- use electrons,  ONLY:n_sp_pol,levels,BZ_RIM_table,BZ_RIM_nkpt,BZ_RIM_nbands
- use FFT_m,      ONLY:fft_size
- use wave_func,  ONLY:wf
- use wrapper,    ONLY:Vstar_dot_V
- use X_m,        ONLY:use_X_RIM
- use real_time,  ONLY:NE_time
+ use pars,           ONLY:SP,cI
+ use SC,             ONLY:SC_bands
+ use R_lattice,      ONLY:bz_samp 
+ use QP_m,           ONLY:QP_nk,QP_n_states
+ use electrons,      ONLY:n_sp_pol,levels,BZ_RIM_table,BZ_RIM_nkpt,BZ_RIM_nbands
+ use FFT_m,          ONLY:fft_size
+ use wave_func,      ONLY:wf
+ use wrapper,        ONLY:Vstar_dot_V
+ use X_m,            ONLY:use_X_RIM
+ use real_time,      ONLY:NE_time
+ use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
+ use par_indexes_m,  ONLY:par_indexes
  !
  implicit none
  !
@@ -47,8 +49,9 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,USE_ERIM)
  !
  integer     :: i1,i2,ikbz,ik,ik_rand
  complex(SP) :: Hk(SC_bands(2),SC_bands(2),n_sp_pol)
- complex(SP) :: G_k_rand(SC_bands(2),SC_bands(2))
+ complex(SP) :: G_k_rand
  complex(SP) :: AVE_k_VALUE
+ type(pp_indexes) :: px
  !
  VALUE=(0._SP,0._SP)
  !
@@ -66,7 +69,12 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,USE_ERIM)
    !
  endif 
  !
+ call pp_indexes_reset(px)
+ call par_indexes(px,(/QP_nk/))
+ !
  do ikbz=1,QP_nk
+   ! 
+   if (.not.px%element_1D(ikbz)) cycle   
    !
    Hk=(0._SP,0._SP)
    !
@@ -84,20 +92,25 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,USE_ERIM)
      !
      AVE_k_VALUE=(0.,0.)
      !
-     do ik=1,BZ_RIM_nkpt(ikbz)
-       !
-       ik_rand=BZ_RIM_table(ikbz,ik)
-       !
-       forall(i1=1:SC_bands(2),i2=1:SC_bands(2))
-         G_k_rand(i1,i2)=  G(i1,i2,ikbz)*exp( (0._SP,1._SP)*(en%Eo(i1,ikbz,1)-en%Eo(i2,ikbz,1))*NE_time)
-         G_k_rand(i1,i2)=G_k_rand(i1,i2)*exp(-(0._SP,1._SP)*(en%E_RIM(i1,ik_rand,1)-en%E_RIM(i2,ik_rand,1))*NE_time)
-       end forall
-       !
-       AVE_k_VALUE=AVE_k_VALUE+Vstar_dot_V(SC_bands(2)**2,Hk(1:SC_bands(2),1:SC_bands(2),1),G_k_rand(1:SC_bands(2),1:SC_bands(2)))
-       !
+     do i1=1,SC_bands(2)
+       do i2=i1+1,SC_bands(2)
+         G_k_rand=(0.,0.)
+         do ik=1,BZ_RIM_nkpt(ikbz)
+            ik_rand=BZ_RIM_table(ikbz,ik)
+            G_k_rand= G_k_rand+exp((0._SP,1._SP)* &
+&                   ((en%Eo(i1,ikbz,1)-en%Eo(i2,ikbz,1))-(en%E_RIM(i1,ik_rand,1)-en%E_RIM(i2,ik_rand,1)))*NE_time)
+         enddo
+         !
+         AVE_k_VALUE=AVE_k_VALUE+aimag(conjg(Hk(i1,i2,1))*G_k_rand*G(i1,i2,ikbz))
+         !
+       enddo
      enddo
      !
-     AVE_k_VALUE=AVE_k_VALUE/real(BZ_RIM_nkpt(ikbz))
+     do i1=1,SC_bands(2)
+         AVE_k_VALUE=AVE_k_VALUE+aimag(conjg(Hk(i1,i1,1))*G(i1,i1,ikbz))
+     enddo     
+     !
+     AVE_k_VALUE=(0.,2._SP)*AVE_k_VALUE/real(BZ_RIM_nkpt(ikbz))
      !
    else
      AVE_k_VALUE=Vstar_dot_V(SC_bands(2)**2,Hk(1:SC_bands(2),1:SC_bands(2),1),G(1:SC_bands(2),1:SC_bands(2),ikbz))
@@ -106,6 +119,9 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,USE_ERIM)
    VALUE=VALUE-cI*AVE_k_VALUE*k%weights(ikbz)
    !
  enddo
+ !
+ call pp_redux_wait(VALUE)
+ call pp_indexes_reset(px)
  !
 end subroutine RT_average_operator
 

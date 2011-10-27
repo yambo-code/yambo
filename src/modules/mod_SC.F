@@ -51,6 +51,7 @@ module SC
  logical           :: l_SC_cycle
  logical           :: l_TF_precond
  logical           :: l_write_qp_histo
+ logical           :: l_Mean_Potential
  !
  ! Possible Kinds, functionals and external perturbations
  !
@@ -68,6 +69,7 @@ module SC
  ! Rotation matrices and xc potential
  !
  complex(SP), allocatable :: SC_R(:,:,:,:)
+ complex(SP), allocatable :: V_mean(:,:)
  real(SP),    allocatable :: V_xc_sc(:,:)
  real(SP),    allocatable :: V_hartree_sc(:,:)
  real(SP),    allocatable :: rho_n(:)

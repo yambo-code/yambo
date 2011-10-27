@@ -47,6 +47,8 @@ subroutine plot_gnuplot(use_1d,use_2d,eval_only)
  !
  if (.not.eval_only) then
    !
+   titles=" "
+   !
    titles(:3)=(/'||a1 [A]','||a2 [A]','||a3 [A]'/)
    if (l_wavefunction) titles(4) = '|wf|^2 [1 at max]'
    if (l_current)      titles(4) = 'J [nAmpere]'

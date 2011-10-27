@@ -198,7 +198,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      call X_s(iq,frequencies_range,X,wv)
      !
      X_epsilon(2,frequencies_range(1):frequencies_range(2))=1./(X_mat(i_G_shift,i_G_shift,:)*&
-&                                                           bare_qpg(iq,1)**2/Q_plus_G_sq_modulus+1.)
+&                                                           bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1.)
      !
 #endif
      !

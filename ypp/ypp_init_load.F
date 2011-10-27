@@ -95,6 +95,9 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'fixsyms', '[R] Reduce Symmetries')
  call it('r',defs,'rtX',     '[R] Real-Time Response functions Post-Processing')
 #endif
+#if defined _YPP_SC
+ call it('r',defs,'MeanPot', '[R] Mean Potential')
+#endif
  call it('r',defs,'surf',    '[R] Surface spectroscopy postprocessor')
  call it('r',defs,'ras',     '[R] RAS spectra generator')
  call it('r',defs,'reels',   '[R] REELS spectra generator')
@@ -180,6 +183,9 @@ subroutine ypp_init_load(defs)
  !
  ! GPL_EXCLUDE_END SPIN_IGNORE
  !
+#if defined _YPP_SC
+ call it(defs,'PotValue',  'REal/IMaginary part of the mean potential',V_value)
+#endif
 #if defined _YPP_ELPH
  !
  !EL-PH

@@ -289,7 +289,7 @@ contains
 
    call pw_atoms(pw_unit)
 
-   n_atom_species = nsp_     ! n_atom_species only read here
+   n_atomic_species = nsp_     ! n_atom_species only read here
    allocate( atm_(n_atomic_species)) 
    atm_(1:n_atomic_species) = species_type_(1:n_atomic_species)
    do i1=1, nat_

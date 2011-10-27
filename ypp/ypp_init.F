@@ -37,9 +37,15 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  use electrons,      ONLY:n_spin,n_bands
  use par_proc_m,     ONLY:master_cpu,pp_redux_wait
  use timing,         ONLY:what_is_running
-#if defined _YPP_RT
+#if defined _YPP_SC
+ use SC,             ONLY:SC_bands
+ use QP_m,           ONLY:QP_nb
+#endif
+#if defined _YPP_RT || defined _YPP_SC
  use electrons,      ONLY:levels,E_reset
  use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
+#endif
+#if defined _YPP_RT 
  use real_time,      ONLY:RT_step,NE_steps
  use fields,         ONLY:Efield,i_Probe
 #endif
@@ -53,13 +59,14 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  ! Work Space
  !
+ logical          ::l_QP_init
  type(initdefs)   ::defs
  integer          ::i1,i2
  character(schlen)::rstr_piece(60) 
  !
-#if defined _YPP_RT
- type(levels)     ::E_rt
- integer          ::io_G,ID
+#if defined _YPP_RT || defined _YPP_SC
+ type(levels)     ::E_dummy
+ integer          ::io_SC_err,ID
  integer, external::io_SC_components
 #endif
  !
@@ -110,13 +117,15 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  mag_dir    ='X'
  p_format   ='g'
  wf_ng      =ng_vec
- l_exc_wf=.false.
- l_density=.false.
+ l_exc_wf   =.false.
+ l_density  =.false.
+ V_value    ='RE'
 #if defined _YPP_TEST_2
  l_bands=.false.
 #endif
  l_mag=.false.
  l_sp_wf=.false.
+ l_mean_potential=.false.
  l_norm_to_one=.true.
  output_fname=' '
  plot_title=' '
@@ -240,14 +249,25 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  ! DATABASES 
  !===========
  !
-#if defined _YPP_RT
+#if defined _YPP_SC
  ! 
- call E_reset(E_rt) 
+ call E_reset(E_dummy) 
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
- io_G=io_SC_components('G' ,E_rt,ID)
+ io_SC_err=io_SC_components('WF' ,E_dummy,ID)
+ !
+ if (io_SC_err==0) QP_nb=SC_bands(2)
+ !
+#endif
+ !
+#if defined _YPP_RT
  ! 
- if (io_G==0) then
+ call E_reset(E_dummy) 
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
+ io_SC_err=io_SC_components('G' ,E_dummy,ID)
+ ! 
+ if (io_SC_err==0) then
    !
    X_rt%energy_range=(/0._SP,pi/RT_step/)
    X_rt%time_range=(/Efield(i_Probe)%t_initial,NE_steps*RT_step/)
@@ -394,6 +414,13 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_long_grid = runlevel_is_on('Long_Gauge')
  l_high_sym_pts = runlevel_is_on('High_Symm')
  l_dos       =runlevel_is_on('dos')
+#if defined _YPP_SC
+ l_mean_potential=runlevel_is_on('MeanPot')
+ if (l_mean_potential) then
+    call initactivate(1,'plot')
+    call initactivate(1,'electrons')
+ endif
+#endif
 #if defined _YPP_ELPH
  l_eliashberg=runlevel_is_on('eliashberg')
  l_phonons   =runlevel_is_on('phonons')
@@ -416,6 +443,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_plot=any((/runlevel_is_on('wavefunction'),runlevel_is_on('magnetization'),&
 #if defined _YPP_BOLTZMANN
 &             runlevel_is_on('current'), &
+#endif
+#if defined _YPP_SC
+&             runlevel_is_on('MeanPot'), &
 #endif
 &             runlevel_is_on('density')/))
 #if defined _YPP_TEST_2 
@@ -457,6 +487,12 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_qpdb = runlevel_is_on('qpdb')
  !
  ! GPL_EXCLUDE_START
+ !
+#if defined _YPP_SC
+ if (l_mean_potential) then
+   call initactivate(1,"PotValue")
+ endif
+#endif
  !
 #if defined _YPP_RT
  !             
@@ -545,15 +581,18 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if(l_qpdb) call qpdb_init()
  !
+ l_QP_init=l_plot.and.l_sp_wf
 #if defined _YPP_ELPH
- if ((l_plot.and.l_sp_wf).or.(l_electrons.and.l_eliashberg)) &
-#else
- if (l_plot.and.l_sp_wf) &
+ if (.not.l_QP_init) l_QP_init=l_electrons.and.l_eliashberg
 #endif
-&                        call QP_init(.FALSE.,.FALSE.)
+#if defined _YPP_SC
+ if (.not.l_QP_init) l_QP_init=l_electrons.and.l_mean_potential
+#endif
 #if defined _YPP_MAGNETIC
- if (l_angular_momentum.or.l_position) call QP_init(.FALSE.,.FALSE.)
+ if (.not.l_QP_init) l_QP_init=l_angular_momentum.or.l_position)
 #endif
+ !
+ if (l_QP_init) call QP_init(.FALSE.,.FALSE.)
  !
 contains
  !

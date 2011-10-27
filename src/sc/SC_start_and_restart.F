@@ -34,7 +34,7 @@ subroutine SC_start_and_restart(X,E,Xk)
 &                         SC_potential,E_bare,local_V,SC_iterations,l_TF_precond,l_oep_iterative,&
 &                         rho_convergence,E_convergence,SC_rho_threshold,&
 &                         SC_iterations,l_SC_cycle,SC_cycle_mixing,WF_G_max,WF_Go_indx,&
-&                         SC_fft_size,E_bare_Ef,l_oep_EWeight
+&                         SC_fft_size,E_bare_Ef,l_oep_EWeight,l_Mean_Potential
  use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE
@@ -60,6 +60,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  call parser('TF_precondition',l_TF_precond) 
  call parser('OEPItSolver',l_oep_iterative) 
  call parser('UseEbands', COHSEX_use_empties)
+ call parser('MeanPotential', l_Mean_Potential)
  !
  ! Magnetic logical setup
  !========================

@@ -31,10 +31,18 @@ subroutine electrons_driver(Xk,Xen)
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
 &                         plot_title,l_dos,l_angular_momentum,&
-&                         l_position,l_current,l_bands
+&                         l_position,l_current,l_bands,l_mean_potential
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:two_spin_density
+#if defined _YPP_SC
+ use YPP,            ONLY:V_value
+ use wave_func,      ONLY:wf_ng
+ use IO_m,           ONLY:OP_RD,RD_CL_IF_END,LOG,NONE,io_control,DUMP
+ use SC,             ONLY:V_mean,SC_bands,SC_fft_size
+ use R_lattice,      ONLY:qindx_S
+ use com,            ONLY:error
+#endif
 #if defined _YPP_ELPH
  use electrons,      ONLY:n_bands
 #endif
@@ -46,18 +54,27 @@ subroutine electrons_driver(Xk,Xen)
  ! Work Space
  !
  real(SP), allocatable :: el_den(:)
- integer               :: i_qp,ik,ib,ir,i_wf,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2)
- logical               :: success
- character(schlen)     :: ch_ws
+ integer               :: i_qp,ik,ib,ir,i_wf,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2),ik_ref
+ logical               :: success,flag
+ character(schlen)     :: ch_ws(2)
+#if defined _YPP_SC
+ integer               :: ID,io_V
+ integer, external     :: io_SC_components
+#endif
  !
- if (.not.any((/l_mag,l_density,l_sp_wf,l_dos,l_bands&
+ flag=any((/l_mag,l_density,l_sp_wf,l_dos,l_bands/))
+ !===
 #if defined _YPP_MAGNETIC
-&    ,l_angular_momentum,l_position &
+ if (.not.flag) flag=any((/l_angular_momentum,l_position/))
+#endif
+#if defined _YPP_SC
+ if (.not.flag) flag=l_mean_potential
 #endif
 #if defined _YPP_BOLTZMANN 
-&    ,l_current  &
+ if (.not.flag) flag=l_curr
 #endif
-&   /))) return
+ !
+ if (.not.flag) return
  !
  call plot_check_and_launch(.true.)
  !
@@ -66,11 +83,16 @@ subroutine electrons_driver(Xk,Xen)
  nb_to_load=(/1,Xen%nbm/)
  nkpt_to_load=(/1,Xk%nibz/)
  !
- if (l_sp_wf &
+ flag=l_sp_wf
+ !===
 #if defined _YPP_MAGNETIC
-&   .or. l_angular_momentum.or.l_position &
+ if (.not.flag) flag=any((/l_angular_momentum,l_position/))
 #endif
-&) then
+#if defined _YPP_SC
+ if (.not.flag) flag=l_mean_potential
+#endif
+ !
+ if (flag) then
    call QP_state_table_setup(Xen)
    nb_to_load   =(/minval(QP_table(:,1)),maxval(QP_table(:,1))/)         !(/minval(QP_table(:,1)),maxval(QP_table(:,1))/)
    nkpt_to_load =(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)         !(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)  
@@ -79,18 +101,41 @@ subroutine electrons_driver(Xk,Xen)
    nkpt_to_load   =(/1,nkibz/)
 #endif
  endif
- if(.not.l_dos &
+ !
+ flag=.not.l_dos
+ !===
 #if defined _YPP_MAGNETIC
-&   .and. .not. any((/l_angular_momentum,l_position/)) &
+ if (flag) flag=.not.any((/l_angular_momentum,l_position/))
+#endif
+#if defined _YPP_SC
+ if (flag) flag=.not.l_mean_potential
 #endif
 #if defined _YPP_BOLTZMANN 
-&   .and. .not. l_current &
+ if (flag) flag=.not.l_current
 #endif
-&) then
+ !
+ if(flag) then
    call WF_load(wf_ng,1,nb_to_load,nkpt_to_load,space='R',title='-WF',impose_free_and_alloc=.TRUE.)
    nr=fft_dim
    allocate(v2plot(fft_size))
  endif
+ !
+#if defined _YPP_SC 
+ if (l_mean_potential) then
+   call io_control(ACTION=OP_RD,COM=LOG,MODE=DUMP, SEC=(/1/),ID=ID)
+   io_V=io_SC_components('MP',Xen,ID)
+   !
+   ! The SC FFT size is decided in SC_WF_and_dipole_dimensions. I dunno why
+   ! QP_ng_Sx is not used there.
+   !
+   call msg("s",'FFT size evaluation...')
+   call fft_setup(wf_ng,maxval(qindx_S(:,:,2)),.true.)
+   if (SC_fft_size/=fft_size) call error('Mismatch in FFT size')
+   call msg("l",'done')
+   nr=fft_dim
+   allocate(V_mean(fft_size,SC_bands(2)),v2plot(fft_size))
+ endif
+#endif
  !
  ! DOS & DENSITY
  !===============
@@ -107,11 +152,25 @@ subroutine electrons_driver(Xk,Xen)
  ! SYMMETRIZED WAVEFUNCTIONS (summed over all symmetries and degenerate states)
  !==============================================================================
  !
- if (l_sp_wf) then
+ ik_ref=-1
+ ch_ws(2)='sp_wf'
+#if defined _YPP_SC
+ if (l_mean_potential) then
+   if (trim(V_value)=="RE".or.trim(V_value)=="re") ch_ws(2)='V_re'
+   if (trim(V_value)=="IM".or.trim(V_value)=="im") ch_ws(2)='V_im'
+ endif
+#endif
+ !
+ if (l_sp_wf &
+#if defined _YPP_SC
+&    .or.l_mean_potential &
+#endif
+&   ) then
    !
    v2plot=0.
    !
-   call section('*','Single Particle wavefunction Plot')
+   if (l_sp_wf)          call section('*','Single Particle wavefunction Plot')
+   if (l_mean_potential) call section('*','Mean Potential Plot')
    !
    if (n_spinor==2) then
      call warning ('Non collinear spin support still not implemented')
@@ -130,11 +189,28 @@ subroutine electrons_driver(Xk,Xen)
      ik    =QP_table(i_qp,3)
      i_spin=spin(QP_table(i_qp,:))
      !
-     i_wf=wf_state(ib,ik,i_spin)
-     !
-     forall(ir=1:fft_size) v2plot(ir)=real( wf(ir,i_wf)*conjg( wf(ir,i_wf) ) )
-     !
      i_qp=i_qp+1
+     !
+#if defined _YPP_SC
+     if (l_mean_potential.and.ik/ik_ref) then
+       call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID)
+       io_V=io_SC_components('MP',Xen,ID)
+       ik_ref=ik
+     endif
+#endif
+     !
+     if (.not.l_mean_potential) then
+       i_wf=wf_state(ib,ik,i_spin)
+     endif
+     !
+#if defined _YPP_SC
+     if (l_mean_potential) then
+       v2plot=0._SP
+       if (trim(V_value)=="RE".or.trim(V_value)=="re") forall(ir=1:fft_size) v2plot(ir)=real ( V_mean(ir,ib) )
+       if (trim(V_value)=="IM".or.trim(V_value)=="im") forall(ir=1:fft_size) v2plot(ir)=aimag( V_mean(ir,ib) )
+     endif
+#endif
+     if (.not.l_mean_potential) forall(ir=1:fft_size) v2plot(ir)=real( wf(ir,i_wf)*conjg( wf(ir,i_wf) ) )
      !
      if (ib/=Xen%nb.and.abs(Xen%E(ib,ik,i_spin)-Xen%E(ib+1,ik,i_spin))<deg_energy) then
        cycle
@@ -143,15 +219,15 @@ subroutine electrons_driver(Xk,Xen)
        ! GPL_EXCLUDE_START SPIN_IGNORE
        !
        if (n_spin==2) then
-         if (i_spin==1) ch_ws='sp_wf_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_UP_'//trim(intc(plot_dim))
-         if (i_spin==2) ch_ws='sp_wf_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_DN_'//trim(intc(plot_dim))
+         if (i_spin==1) ch_ws(1)=trim(ch_ws(2))//'_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_UP_'//trim(intc(plot_dim))
+         if (i_spin==2) ch_ws(1)=trim(ch_ws(2))//'_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_DN_'//trim(intc(plot_dim))
          if (i_spin==1) plot_title='k '//trim(intc(ik))//' b '//trim(intc(ib))//' UP'
          if (i_spin==2) plot_title='k '//trim(intc(ik))//' b '//trim(intc(ib))//' DN'
        else
          !
          ! GPL_EXCLUDE_END SPIN_IGNORE
          !
-         ch_ws='sp_wf_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_'//trim(intc(plot_dim)) 
+         ch_ws(1)=trim(ch_ws(2))//'_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_'//trim(intc(plot_dim)) 
          !
          ! GPL_EXCLUDE_START SPIN_IGNORE
          !
@@ -159,9 +235,9 @@ subroutine electrons_driver(Xk,Xen)
        !
        ! GPL_EXCLUDE_END SPIN_IGNORE
        !
-       if (use_cube) output_fname=trim(ch_ws)//'d.cube'
-       if (use_xcrysden) output_fname=trim(ch_ws)//'d.xsf'
-       if (use_gnuplot)  output_fname=trim(ch_ws)//'d'
+       if (use_cube) output_fname=trim(ch_ws(1))//'d.cube'
+       if (use_xcrysden) output_fname=trim(ch_ws(1))//'d.xsf'
+       if (use_gnuplot)  output_fname=trim(ch_ws(1))//'d'
        !
        if (use_cube) then 
          call of_open_close(trim(output_fname),'o')
@@ -227,17 +303,17 @@ subroutine electrons_driver(Xk,Xen)
        ! rho DN
        if (i_spin==1) then
          v2plot=(el_den(:)-two_spin_density(:,3))/2.
-         ch_ws='density_DN_'//trim(intc(plot_dim))
+         ch_ws(1)='density_DN_'//trim(intc(plot_dim))
        else
          !
          ! rho UP
          v2plot=(el_den(:)+two_spin_density(:,3))/2.
-         ch_ws='density_UP_'//trim(intc(plot_dim))
+         ch_ws(1)='density_UP_'//trim(intc(plot_dim))
        endif
        !
-       if (use_cube) output_fname=trim(ch_ws)//'d.cube'
-       if (use_xcrysden) output_fname=trim(ch_ws)//'d.xsf'
-       if (use_gnuplot)  output_fname=trim(ch_ws)//'d'
+       if (use_cube) output_fname=trim(ch_ws(1))//'d.cube'
+       if (use_xcrysden) output_fname=trim(ch_ws(1))//'d.xsf'
+       if (use_gnuplot)  output_fname=trim(ch_ws(1))//'d'
        !
        if (use_cube) then 
          call of_open_close(trim(output_fname),'o')
@@ -294,6 +370,9 @@ subroutine electrons_driver(Xk,Xen)
  if (allocated(QP_table)) deallocate(QP_table,QP_state)
  if (allocated(two_spin_density))   deallocate(two_spin_density)
  if (allocated(el_den))   deallocate(el_den)
+#if defined _YPP_SC 
+ if (allocated(V_mean))   deallocate(V_mean)
+#endif
  plot_title=' '
  !
 end subroutine

@@ -39,7 +39,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  !
  implicit none
  !
- type(levels),       intent(in)    :: E
+ type(levels),       intent(inout) :: E
  character(1)                      :: what
  type(bz_samp),optional,intent(in) :: k
  real(SP), optional, intent(inout) :: Time

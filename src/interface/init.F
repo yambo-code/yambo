@@ -627,6 +627,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (trim(SC_potential)=='EXX'.or.trim(SC_potential)=='EXXC'.or.&
 &        trim(SC_potential)=='SRPA') call initactivate(1,'OEPapprox OEPItSolver') 
    endif
+   call initactivate(1,'MeanPotential')
  endif
 #endif
  !

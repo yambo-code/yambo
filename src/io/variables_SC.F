@@ -50,11 +50,12 @@ integer function variables_SC(ID,local_description,what)
  !
  integer               :: SC_kind_disk,SC_perturbation_disk,&
 &                         io_status_save,i1,i_desc,local_size,VAR_SIZE
- logical               :: CHECK_,l_J,l_G,l_occupations,l_NE_with_fields_disk
+ logical               :: CHECK_,l_J,l_G,l_occupations,l_NE_with_fields_disk,l_MP
  !
  l_J =.FALSE.
  l_G =.FALSE.
  l_occupations =what=="occupations"
+ l_MP =what=="MP"
 #if defined _RT || defined _YPP_RT 
  l_J =what=="J_and_P"
  l_G =what=="G"
@@ -174,7 +175,7 @@ integer function variables_SC(ID,local_description,what)
    if (l_NSC_shot) io_status(ID)=0
  endif
  !
- if (all((/SC_kind_disk/=SC_HF,SC_kind_disk/=SC_COHSEX/))) then
+ if (all((/SC_kind_disk/=SC_HF,SC_kind_disk/=SC_COHSEX/)).or.l_MP) then
    call io_elemental(ID,VAR="FFT_SIZE",VAR_SZ=1,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,I0=SC_fft_size,&

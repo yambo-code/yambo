@@ -28,7 +28,7 @@ integer function io_SC_components(what,E_sc,ID)
  use stderr,         ONLY:intc
  use SC,             ONLY:SC_bands,rho_convergence,E_convergence,&
 &                         SC_R,V_xc_sc,local_V,H_nl_sc,RT_k,RT_nk,RT_occupations,&
-&                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size
+&                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,write_is_on,&
 &                         manage_RD_WR_CL_IF_END,io_reset,ver_is_gt_or_eq
@@ -41,6 +41,7 @@ integer function io_SC_components(what,E_sc,ID)
  use fields,         ONLY:A_vecpot
  use QP_m,           ONLY:QP_nk
 #endif                                
+ use FFT_m,          ONLY:fft_size
  use matrix_operate, ONLY:mat_c2r,mat_r2c
  use electrons,      ONLY:levels,n_sp_pol,n_spin
  use fragments,      ONLY:io_fragment
@@ -55,9 +56,9 @@ integer function io_SC_components(what,E_sc,ID)
  integer, external     :: variables_SC
  character(lchlen)     :: local_description(100)
  !
- real(SP), allocatable :: R_H_G_disk(:,:,:),E_disk(:,:,:)
+ real(SP), allocatable :: TMP_matrix(:,:,:),E_disk(:,:,:)
  integer               :: ik,bands_to_load,ib,i_spin,i1
- logical               :: l_wf,l_V,l_E,l_IMPOSE_SN,CHECK_,l_occupations,l_G,l_J_and_P
+ logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_occupations,l_G,l_J_and_P,l_MP
 #if defined _RT		
  integer               :: file_number,i_time,i_time_range(2)
  logical               :: IO_current
@@ -65,7 +66,8 @@ integer function io_SC_components(what,E_sc,ID)
 #endif
  !
  l_E =what=="E"
- l_wf=what=="WF"
+ l_MP=what=="MP"
+ l_WF=what=="WF"
  l_V =what=="V"
  l_G =.FALSE.
  l_J_and_P =.FALSE.
@@ -81,7 +83,8 @@ integer function io_SC_components(what,E_sc,ID)
  CHECK_=.TRUE.
  if (l_NSC_shot) CHECK_=.FALSE.
  !
- if (l_wf) io_SC_components=io_connect(desc="scWFs",type=2,ID=ID)
+ if (l_MP) io_SC_components=io_connect(desc="sc_MeanPotential",type=2,ID=ID)
+ if (l_WF) io_SC_components=io_connect(desc="scWFs",type=2,ID=ID)
  if (l_E)  io_SC_components=io_connect(desc="scE",type=2,ID=ID)
  if (l_V)  io_SC_components=io_connect(desc="scV",type=2,ID=ID)
  !
@@ -139,8 +142,8 @@ integer function io_SC_components(what,E_sc,ID)
    if (l_occupations) l_IMPOSE_SN=.FALSE.
 #endif
    !
-   if (any((/l_E,l_V,l_wf,l_occupations,&
-&            l_J_and_P,l_G/)))  io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.)
+   if (any((/l_E,l_V,l_WF,l_occupations,&
+&            l_J_and_P,l_G,l_MP/)))  io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.)
    !
    if (io_SC_components/=0) goto 1
    !
@@ -148,7 +151,7 @@ integer function io_SC_components(what,E_sc,ID)
    !=======================================================
    if (io_SC_components/=0) goto 1
    !
-   if(any((/l_E,l_V,l_wf/))) then
+   if(any((/l_E,l_V,l_WF,l_MP/))) then
      !
      call io_elemental(ID,VAR="RHOCONV_ECONV",VAR_SZ=2,MENU=0) 
      call io_elemental(ID,R0=rho_convergence)
@@ -225,7 +228,7 @@ integer function io_SC_components(what,E_sc,ID)
    !
  endif
  !
- if(any((/l_E,l_V,l_wf,l_G,l_occupations/))) then
+ if(any((/l_E,l_V,l_WF,l_MP,l_G,l_occupations/))) then
    !
    if (ik==0) goto 1
    !
@@ -241,20 +244,20 @@ integer function io_SC_components(what,E_sc,ID)
    ! H_sc
    !======
    !
-   allocate(R_H_G_disk(SC_bands(2),SC_bands(2),2))
+   allocate(TMP_matrix(SC_bands(2),SC_bands(2),2))
    !
    do i_spin=1,n_sp_pol
      !
      call io_bulk(ID,VAR="H_nl_sc_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
 &                 VAR_SZ=(/SC_bands(2),SC_bands(2),2/))
      !
-     if (write_is_on(ID)) call mat_c2r(H_nl_sc(:,:,i_spin),R_H_G_disk)
-     call io_bulk(ID,R3=R_H_G_disk)
-     if (read_is_on(ID))  call mat_r2c(R_H_G_disk,H_nl_sc(:,:,i_spin))
+     if (write_is_on(ID)) call mat_c2r(H_nl_sc(:,:,i_spin),TMP_matrix)
+     call io_bulk(ID,R3=TMP_matrix)
+     if (read_is_on(ID))  call mat_r2c(TMP_matrix,H_nl_sc(:,:,i_spin))
      !
    enddo
    !
-   deallocate(R_H_G_disk)
+   deallocate(TMP_matrix)
    !
  endif
  !
@@ -263,18 +266,37 @@ integer function io_SC_components(what,E_sc,ID)
    ! Rotation matrix 
    !=================
    !
-   allocate(R_H_G_disk(SC_bands(2),SC_bands(2),2))
+   allocate(TMP_matrix(SC_bands(2),SC_bands(2),2))
    !
    do i_spin=1,n_sp_pol
      call io_bulk(ID,VAR="Rotation_Matrix_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
 &                 VAR_SZ=(/SC_bands(2),SC_bands(2),2/))
      !
-     if (write_is_on(ID)) call mat_c2r(SC_R(:,:,ik,i_spin),R_H_G_disk)
-     call io_bulk(ID,R3=R_H_G_disk)
-     if (read_is_on(ID))  call mat_r2c(R_H_G_disk,SC_R(:,:,ik,i_spin))
+     if (write_is_on(ID)) call mat_c2r(SC_R(:,:,ik,i_spin),TMP_matrix)
+     call io_bulk(ID,R3=TMP_matrix)
+     if (read_is_on(ID))  call mat_r2c(TMP_matrix,SC_R(:,:,ik,i_spin))
      !
    enddo
-   deallocate(R_H_G_disk)
+   deallocate(TMP_matrix)
+ endif
+ !
+ if ( l_MP ) then
+   !
+   ! Mean Field Potential 
+   !======================
+   !
+   allocate(TMP_matrix(fft_size,SC_bands(2),2))
+   !
+   do i_spin=1,n_sp_pol
+     call io_bulk(ID,VAR="Mean_Field_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
+&                 VAR_SZ=(/fft_size,SC_bands(2),2/))
+     !
+     if (write_is_on(ID)) call mat_c2r(V_mean(:,:),TMP_matrix)
+     call io_bulk(ID,R3=TMP_matrix)
+     if (read_is_on(ID))  call mat_r2c(TMP_matrix,V_mean)
+     !
+   enddo
+   deallocate(TMP_matrix)
  endif
  !
  if ( l_occupations ) then
@@ -303,7 +325,7 @@ integer function io_SC_components(what,E_sc,ID)
    !
    if (io_SC_components/=0) goto 1  
    !
-   allocate(R_H_G_disk(SC_bands(2),SC_bands(2),2))
+   allocate(TMP_matrix(SC_bands(2),SC_bands(2),2))
    !
    i_spin=1
    !
@@ -313,23 +335,23 @@ integer function io_SC_components(what,E_sc,ID)
      do i_time=i_time_range(1),i_time_range(2)
        call io_bulk(ID,VAR="G_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//"_ITIME"//trim(intc(i_time)),&
 &           VAR_SZ=(/SC_bands(2),SC_bands(2),2/))
-       if (write_is_on(ID)) call mat_c2r(G_lesser(:,:,ik,MEM_index(i_time)),R_H_G_disk)
-       call io_bulk(ID,R3=R_H_G_disk)
-       if (read_is_on(ID))  call mat_r2c(R_H_G_disk,G_lesser(:,:,ik,MEM_index(i_time)))
+       if (write_is_on(ID)) call mat_c2r(G_lesser(:,:,ik,MEM_index(i_time)),TMP_matrix)
+       call io_bulk(ID,R3=TMP_matrix)
+       if (read_is_on(ID))  call mat_r2c(TMP_matrix,G_lesser(:,:,ik,MEM_index(i_time)))
      enddo
    else
      call io_bulk(ID,VAR="G_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
 &         VAR_SZ=(/SC_bands(2),SC_bands(2),2/))
-     if (write_is_on(ID)) call mat_c2r(G_lesser(:,:,ik,MEM_index(NE_i_time)),R_H_G_disk)
-     call io_bulk(ID,R3=R_H_G_disk)
-     if (read_is_on(ID))  call mat_r2c(R_H_G_disk,G_lesser(:,:,ik,MEM_index(NE_i_time)))
+     if (write_is_on(ID)) call mat_c2r(G_lesser(:,:,ik,MEM_index(NE_i_time)),TMP_matrix)
+     call io_bulk(ID,R3=TMP_matrix)
+     if (read_is_on(ID))  call mat_r2c(TMP_matrix,G_lesser(:,:,ik,MEM_index(NE_i_time)))
    endif
    !
    call io_bulk(ID,VAR="G_lesser_ref_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
 &       VAR_SZ=(/SC_bands(2),SC_bands(2),2/))
-   if (write_is_on(ID)) call mat_c2r(G_lesser_reference(:,:,ik),R_H_G_disk)
-   call io_bulk(ID,R3=R_H_G_disk)
-   if (read_is_on(ID))  call mat_r2c(R_H_G_disk,G_lesser_reference(:,:,ik))
+   if (write_is_on(ID)) call mat_c2r(G_lesser_reference(:,:,ik),TMP_matrix)
+   call io_bulk(ID,R3=TMP_matrix)
+   if (read_is_on(ID))  call mat_r2c(TMP_matrix,G_lesser_reference(:,:,ik))
    !
    if(l_NE_with_fields.and.ik==QP_nk) then
      call io_bulk(ID,VAR="A_vecpot",VAR_SZ=(/3,3,2/))
@@ -349,7 +371,7 @@ integer function io_SC_components(what,E_sc,ID)
      endif
    endif
    !
-   deallocate(R_H_G_disk)
+   deallocate(TMP_matrix)
    !
  endif
  !

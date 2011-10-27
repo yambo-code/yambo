@@ -26,7 +26,7 @@ subroutine SC_History(it,E)
  use electrons,      ONLY:n_met_bands,n_full_bands,levels,n_sp_pol
  use R_lattice,      ONLY:nkibz
  use com,            ONLY:of_open_close,msg,OF_exists
- use stderr,         ONLY:intc,set_real_printed_length
+ use stderr,         ONLY:intc
  use SC,             ONLY:SC_bands,it_now,SC_description,n_SC_descriptions
 #if defined _RT
  use real_time,      ONLY:RT_step,Occ_natural_orb
@@ -39,7 +39,7 @@ subroutine SC_History(it,E)
  !
  ! Work Space
  !
- integer  :: ik,ib,i_spin,n_headers,i_d,max_kpt
+ integer  :: ik,ib,i_spin,n_headers,i_d,max_kpt,b_range(2)
  character(schlen), SAVE :: E_file_name(2)
  character(schlen)       :: headers(SC_bands(2)*nkibz)
 #if defined _RT
@@ -47,6 +47,8 @@ subroutine SC_History(it,E)
  character(schlen)       :: F_headers(SC_bands(2)*nkibz)
 #endif
  !
+ b_range(1)=max(n_full_bands-1,1)
+ b_range(2)=b_range(1)+2
  max_kpt=min(nkibz,6) ! print only the fist 6 kpoints
  !
  do i_spin=1,n_sp_pol
@@ -64,7 +66,7 @@ subroutine SC_History(it,E)
 #endif
      n_headers=1
      do ik=1,max_kpt
-       do ib=n_met_bands-1,n_full_bands+1
+       do ib=b_range(1),b_range(2)
          n_headers=n_headers+1
          headers(n_headers)='E_b'//trim(intc(ib))//'_k'//trim(intc(ik))
 #if defined _RT
@@ -103,7 +105,7 @@ subroutine SC_History(it,E)
 #else
      call msg('o E_History','',(/real(it_now,SP),&
 #endif
-&                             ((E%E(ib,ik,i_spin)*HA2EV,ib=n_met_bands-1,n_full_bands+1),ik=1,max_kpt) &
+&                             ((E%E(ib,ik,i_spin)*HA2EV,ib=b_range(1),b_range(2)),ik=1,max_kpt) &
 &                             /),INDENT=-2,USE_TABS=.true.)
      !
 #if defined _RT

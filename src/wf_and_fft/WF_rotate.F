@@ -23,9 +23,10 @@ subroutine WF_rotate(ik,WFo,wf_size)
  !
  ! <r|n'>= <m|n'><r|m>
  !
- ! with <:|n'>=H_sc(:,n')
+ ! with <m|n'>=SC_R(m,n')
+ !      <:|m>=WFo(:,m)
  !
- ! wf(:,n')= sum_m WFo(:,m) H_sc(m,n')
+ ! wf(:,n')= sum_m WFo(:,m) SC_R(m,n')
  !
  ! Extended only to collinear case
  !

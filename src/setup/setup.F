@@ -160,9 +160,10 @@ subroutine setup(en,Xen,Ken,k,Xk)
  call G_shells_finder()
  call msg('rn','Shells, format: [S#] G_RL(mHa)')
  !
- ! Indexes of -G. minus_G_index(iG)| G_{minus_G_index(iG)}=-G
+ ! Indexes of -G. minus_G_index(iG)| G_{minus_G_index(iG)}=-G. When there is no Spatial inversion
+ ! the map is built in G_shells_finder
  !
- call eval_minus_G()
+ if (inv_index>0) call eval_minus_G()
  !
  do i1=n_g_shells,max(n_g_shells-27,1),-4
    dumb_ch1=' '

@@ -28,9 +28,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
  use SC,             ONLY:SC_bands,SC_iterations,rho_n,SC_rho_threshold,it_now,E_convergence, &
-&                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,&
+&                         rho_convergence,SC_R,V_xc_sc,local_V,H_nl_sc,H_rotate,l_Mean_Potential,&
 &                         l_SC_cycle,SC_cycle_mixing,V_hartree_sc,Ho,E_bare,SC_alloc,SC_free, &
-&                         WF_G_max,WF_Go_indx,SC_kind,SC_xc_functional,G_lesser,l_SC_RESTART,l_NSC_shot,l_TF_precond
+&                         WF_G_max,WF_Go_indx,SC_kind,SC_xc_functional,G_lesser,l_SC_RESTART,&
+&                         l_NSC_shot,l_TF_precond,V_mean
  use wave_func,      ONLY:wf,wf_n_states,WF_free
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
@@ -68,7 +69,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! 
  ! Work Space
  !
- integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_spin,io_err
+ integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_spin,i_io
  real(SP)                 :: max_proj,V_xc_sc_shift(n_spin)
  character(schlen)        :: dumb_ch
  integer, external        :: io_SC_components
@@ -260,7 +261,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        call V_qp_basis_to_H(ik,QP_Vnl_xc,H_nl_sc)
        !
-       if(l_sc_cohsex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc)
+       if (l_sc_cohsex) call V_qp_basis_to_H(ik,QP_Sc,H_nl_sc)
        !
        if (.not.l_collisions_IO.and.it_now>1) then
          !
@@ -269,6 +270,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
          do i_spin=1,n_sp_pol
            call H_rotate(SC_R(:,:,ik,i_spin),H_nl_sc(:,:,i_spin),SC_bands(2),-1)
          end do
+         !
        endif
        ! 
        ! IO [H_nl_sc]
@@ -304,6 +306,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      call WF_rotate(ik,WFo,fft_size)
      !
      if (l_NSC_shot) call live_timing(steps=1)
+     ! 
+     ! Mean Potential 
+     !================
+     !
+     if (l_Mean_Potential) call V_Mean_Potential(ik,WFo)
      !
    end do
    !
@@ -395,16 +402,24 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(1))
    io_E=io_SC_components('E' ,E,ID(1))
    !
+   ! IO [SC_R & Mean Potential]
+   !============================
    !
-   ! IO [SC_R]
-   !===========
-   !
-   if (it==1) call io_control(ACTION=OP_WR,COM=REP, SEC=(/1/),ID=ID(2))
-   if (it> 1) call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(2))
-   io_WF=io_SC_components('WF',E,ID(2))
-   do ik = 1, QP_nk 
-     call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(2))
-     io_WF=io_SC_components('WF',E,ID(2))
+   do i_io=1,2
+     !
+     if (.not.l_Mean_Potential.and.i_io==2) cycle
+     !
+     dumb_ch='WF'
+     if ( i_io==2 ) dumb_ch='MP'
+     !
+     if (it==1) call io_control(ACTION=OP_WR,COM=REP, SEC=(/1/),ID=ID(2))
+     if (it> 1) call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(2))
+     io_WF=io_SC_components(trim(dumb_ch),E,ID(2))
+     do ik = 1, QP_nk 
+       call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(2))
+       io_WF=io_SC_components(trim(dumb_ch),E,ID(2))
+     enddo
+     !
    enddo
    !
    if ( (E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold) .or.&
@@ -471,6 +486,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      allocate(WFo(fft_size,wf_n_states))
      call mem_est("WFo",(/fft_size*wf_n_states/))
      !
+     if (l_Mean_Potential) then
+       allocate(V_mean(fft_size,SC_bands(2)))
+       call mem_est("V_mean",(/fft_size*SC_bands(2)/))
+     endif
+     !
      if(l_collisions_IO) then
        !
        allocate(G_lesser(SC_bands(2),SC_bands(2),QP_nk,1))
@@ -501,6 +521,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      deallocate(WFo)
      call mem_est("WFo")
+     !
+     if (l_Mean_Potential) then
+       deallocate(V_mean)
+       call mem_est("V_mean")
+     endif
      !
      if(l_collisions_IO) then
        !

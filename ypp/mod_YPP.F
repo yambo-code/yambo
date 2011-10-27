@@ -40,7 +40,7 @@ module YPP
  character(schlen) :: coo_in
  character(schlen) :: coo_out
  character(schlen) :: PtsPath
- character(21), parameter :: output_string="o exc den mag wf curr"
+ character(23), parameter :: output_string="o exc den mag wf curr V"
  ! 
  ! DOS
  !
@@ -74,6 +74,7 @@ module YPP
  character(3) ::p_dir        
  character(lchlen) ::output_fname 
  character(schlen) ::plot_title 
+ character(schlen) ::V_value 
  integer               ::nr(3)
  integer               ::nr_tot
  integer               ::plot_dim
@@ -158,6 +159,10 @@ module YPP
  logical     :: l_fix_syms
  real(SP)    :: E_field(2,3)
  real(SP)    :: B_field,B_theta,B_psi
+ !
+ ! SC
+ !
+ logical  :: l_mean_potential
  !
  ! (RT) optics
  !

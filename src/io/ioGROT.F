@@ -24,10 +24,11 @@ integer function ioGROT(io_db)
  use pars,           ONLY:SP,IP
  use it_m,           ONLY:initactivate
  use memory_m,       ONLY:mem_est
- use D_lattice,      ONLY:nsym
- use R_lattice,      ONLY:n_g_shells,ng_closed,ng_in_shell,E_of_shell,g_rot
+ use D_lattice,      ONLY:nsym,inv_index
+ use R_lattice,      ONLY:n_g_shells,ng_closed,ng_in_shell,E_of_shell,g_rot,&
+&                         minus_G
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
-&                         io_status,io_bulk,io_header,io_sec
+&                         io_status,io_bulk,io_header,io_sec,ver_is_gt_or_eq
  implicit none
  integer :: io_db,nsym_db
  !
@@ -36,6 +37,11 @@ integer function ioGROT(io_db)
  !
  ioGROT=io_header(io_db,IMPOSE_SN=.true.)
  if (ioGROT/=0) goto 1
+ !
+ if (.not.ver_is_gt_or_eq(io_db,revision=955).and.inv_index<0) then
+   ioGROT=-1 
+   goto 1
+ endif
  !
  if (any((/io_sec(io_db,:)==1/))) then
    call io_elemental(io_db,VAR="PARS",VAR_SZ=3,MENU=0)
@@ -51,7 +57,7 @@ integer function ioGROT(io_db)
  !
  if (read_is_on(io_db)) then
    allocate(ng_in_shell(n_g_shells),E_of_shell(n_g_shells))
-   allocate(g_rot(nsym_db,ng_closed))
+   allocate(g_rot(nsym_db,ng_closed),minus_G(ng_closed))
    call mem_est("RL_Gshells RL_Eshells",&
 &               (/n_g_shells+nsym*ng_closed,n_g_shells/),(/IP,SP/))
  endif
@@ -62,6 +68,11 @@ integer function ioGROT(io_db)
  !
  call io_bulk(io_db,VAR="GROT",VAR_SZ=(/nsym_db,ng_closed/))
  call io_bulk(io_db,I2=g_rot(:,:ng_closed))
+ !
+ if (ver_is_gt_or_eq(io_db,revision=955).and.inv_index<0) then
+   call io_bulk(io_db,VAR="minusG",VAR_SZ=(/ng_closed/))
+   call io_bulk(io_db,I1=minus_G(:ng_closed))
+ endif
  !
  call initactivate(1,'Gmode')
  !

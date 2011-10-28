@@ -33,8 +33,7 @@ subroutine bz_interp_coeff(Xk,R1D,engre,ndim)
   use stderr,         ONLY:intc
   implicit none
   !
- ! integer,parameter         :: iblock=128
-  integer :: iblock
+  integer,parameter         :: iblock=128
   real(sp),parameter        :: C1=0.75_SP,C2=0.75_SP
   integer,intent(in)        :: ndim
   type(bz_samp), intent(in) :: xk
@@ -56,7 +55,6 @@ subroutine bz_interp_coeff(Xk,R1D,engre,ndim)
   real(SP), parameter      :: twopi=2._sp*pi
   !
   nkpt=Xk%nibz
-  iblock=nkpt-1
   !
   allocate(ipiv(nkpt-1))
   allocate(rho(nwave))
@@ -90,7 +88,7 @@ subroutine bz_interp_coeff(Xk,R1D,engre,ndim)
         Rdum(1:3)=lattice_vectors(1:3,nw)
         call stern1(rdum,nsym,int_sop,nst,stg)
         do i=1,nst
-          forall(k=1:nkpt) spw1(k,inw)=spw1(k,inw)+cos(twopi*dot_product(xk%pt(k,1:3),stg(1:3,i)))
+          forall(k=1:nkpt) spw1(k,inw)=spw1(k,inw)+cos(twopi*dot_product(Xk%pt(k,1:3),stg(1:3,i)))
         enddo
         spw1(:,inw)=spw1(:,inw)/nst
      enddo

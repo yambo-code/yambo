@@ -92,8 +92,8 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,USE_ERIM)
      !
      AVE_k_VALUE=(0.,0.)
      !
-     do i1=1,SC_bands(2)
-       do i2=i1+1,SC_bands(2)
+     do i1=1,min(SC_bands(2),BZ_RIM_nbands)
+       do i2=i1+1,min(SC_bands(2),BZ_RIM_nbands)
          G_k_rand=(0.,0.)
          do ik=1,BZ_RIM_nkpt(ikbz)
             ik_rand=BZ_RIM_table(ikbz,ik)
@@ -106,9 +106,25 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,USE_ERIM)
        enddo
      enddo
      !
+     ! Diagonal
+     !
      do i1=1,SC_bands(2)
          AVE_k_VALUE=AVE_k_VALUE+aimag(conjg(Hk(i1,i1,1))*G(i1,i1,ikbz))
      enddo     
+     !
+     ! Terms between BZ_RIM_nbands and SC_bands(2)
+     !
+     do i1=BZ_RIM_nbands+1,SC_bands(2)
+       do i2=i1+1,SC_bands(2)
+         AVE_k_VALUE=AVE_k_VALUE+aimag(conjg(Hk(i1,i2,1))*G(i1,i2,ikbz))
+       enddo
+     enddo
+     !
+     do i1=1,SC_bands(2)
+       do i2=max(BZ_RIM_nbands,i1)+1,SC_bands(2)
+         AVE_k_VALUE=AVE_k_VALUE+aimag(conjg(Hk(i1,i2,1))*G(i1,i2,ikbz))
+       enddo
+     enddo
      !
      AVE_k_VALUE=(0.,2._SP)*AVE_k_VALUE/real(BZ_RIM_nkpt(ikbz))
      !

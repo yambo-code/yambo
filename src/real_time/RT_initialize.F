@@ -160,6 +160,10 @@ subroutine RT_initialize(Xen)
  ! ==============
  ! IP phase factores averaged  with E_RIM
  use_X_RIM=BZ_RIM_nbands/=0.and.SC_bands(1)<BZ_RIM_nbands               
+ if(RT_is_dumped) then
+   call warning('E_RIM not compatible with dumping, turned off!')
+   use_X_RIM=.false.
+ endif
  !
  ! LOG
  !=====

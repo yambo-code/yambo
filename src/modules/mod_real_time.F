@@ -289,6 +289,7 @@ module real_time
      if (l_ph_corr) then
        allocate(S_matrix(2,SC_bands(2),SC_bands(2),QP_nk,nqbz))
        call mem_est("S_matrix",(/size(S_matrix)/),(/2*SP/))
+       S_matrix=(0._SP,0._SP)
      endif
      !
      allocate(G_lesser_reference(SC_bands(2),SC_bands(2),QP_nk))

@@ -52,9 +52,17 @@ complex(SP) function RT_G_retarded(E,ib,ik,Time,delta_T)
  ! See Haug, H. & Jauho, A.-P. Springer (ed.) "Quantum Kinetics in Transport and Optics of Semiconductors" 2008.
  ! Page 277.
  !
- exp_up  = 2.**exponent_*exp(-Gamma_factor*Time)
- exp_dn  = (1.+exp(-2.*C_factor/Gamma_factor*Time))**exponent_
- P_delta = ((1.+exp(-2.*C_factor/Gamma_factor*delta_T))/2.)**exponent_
+ ! Hyperbolic cosine
+ !
+ !exp_up  = 2.**exponent_*exp(-Gamma_factor*Time)
+ !exp_dn  = (1.+exp(-2.*C_factor/Gamma_factor*Time))**exponent_
+ !P_delta = ((1.+exp(-2.*C_factor/Gamma_factor*delta_T))/2.)**exponent_
+ !
+ ! Pure Lorentzian dynamics
+ !
+ exp_up  = 1._SP
+ exp_dn  = 1._SP
+ P_delta = 1._SP
  !
  RT_G_retarded                =-cI*exp(-cI*eps*Time)*exp(-Gamma_factor*Time)*exp_up/exp_dn
  if (delta_T>0.) RT_G_retarded=exp(-cI*eps*delta_T)*exp(-Gamma_factor*delta_T)/P_delta

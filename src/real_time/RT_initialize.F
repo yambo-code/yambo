@@ -106,7 +106,7 @@ subroutine RT_initialize(Xen)
  ! Memory Depth
  !============== 
  !
- if (l_ph_corr) then
+ if (l_ph_corr.and.NE_MEM_Treshold>0.) then
    T_memory=-1./minval( abs(Xen%W(SC_bands(1):SC_bands(2),:,:)))*log(NE_MEM_Treshold)
    NE_MEM_steps=T_memory/RT_step
  endif

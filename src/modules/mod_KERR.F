@@ -26,6 +26,7 @@ module KERR
  implicit none
  !
  complex(SP), allocatable :: DIP_q_dot_iR_kerr(:,:,:,:)
+ complex(SP), allocatable :: X_mat_head(:)
  complex(SP), allocatable :: X_mat_wing_right(:,:)
  complex(SP), allocatable :: X_mat_wing_left(:,:)
  !
@@ -57,10 +58,13 @@ module KERR
      if (present(d)) then
        select case(what)
        case('X')
-         if (allocated(X_mat_wing_right)) return
-         allocate(X_mat_wing_right(d(1),d(2)),stat=err)
-         allocate(X_mat_wing_left(d(1),d(2)),stat=err)
-         call mem_est(what,(/2*product(d)/),errors=(/err/))
+         if (allocated(X_mat_head)) return
+         allocate(X_mat_head(d(2)),stat=err)
+         if(d(1)>1) then
+           allocate(X_mat_wing_right(d(1)-1,d(2)),stat=err)
+           allocate(X_mat_wing_left(d(1)-1,d(2)),stat=err)
+           call mem_est(what,(/2*product(d)-d(1)/),errors=(/err/))
+         endif
        case('DIP_q_dot_iR')
          if (allocated(DIP_q_dot_iR_kerr)) return
          allocate(DIP_q_dot_iR_kerr(d(1),d(2),d(3),n_sp_pol),stat=err)
@@ -69,9 +73,10 @@ module KERR
      else
        select case(what)
        case('X')
-         if (.not.allocated(X_mat_wing_right)) return
-         deallocate(X_mat_wing_right)
-         deallocate(X_mat_wing_left)
+         if (.not.allocated(X_mat_head)) return
+         deallocate(X_mat_head)
+         if(allocated(X_mat_wing_right)) deallocate(X_mat_wing_right)
+         if(allocated(X_mat_wing_left))  deallocate(X_mat_wing_left)
        case('DIP_q_dot_iR')
          if (.not.allocated(DIP_q_dot_iR_kerr)) return
          deallocate(DIP_q_dot_iR_kerr)

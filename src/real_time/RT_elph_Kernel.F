@@ -88,8 +88,8 @@ subroutine RT_elph_kernel(ik,E,k,q,Time)
  !
  do iqbz=1,q%nbz
    !
-   g_q=1.E-2
-   w_ph=.2/HA2EV
+   g_q=sqrt(0.01/HA2EV)
+   w_ph=1./HA2EV
    !
    iq =q%sstar(iqbz,1)
    iqs=q%sstar(iqbz,2)
@@ -110,13 +110,11 @@ subroutine RT_elph_kernel(ik,E,k,q,Time)
          !
          if (Iterative) then
            !
-           DELTA_matrix=&
-&                            g_q**2.*exp(-cI*i_s*w_ph*Time_vector(MEM_steps))*&
-&                            (  N_q(i_map(-i_s))*L_gl(ib,ibp,MEM_steps)-N_q(i_map( i_s))*L_lg(ib,ibp,MEM_steps) )
+           DELTA_matrix=g_q**2.*exp(-cI*i_s*w_ph*Time_vector(MEM_steps))*&
+&                       (  N_q(i_map(-i_s))*L_gl(ib,ibp,MEM_steps)-N_q(i_map( i_s))*L_lg(ib,ibp,MEM_steps) )
            !
-           S_matrix(i_map(i_s),ib,ibp,ik,iqbz)=  Xi_factor*conjg(Xi_factor_prime)*&
-&                                                ( S_matrix(i_map(i_s),ib,ibp,ik,iqbz)+&
-&                                                  DELTA_T*DELTA_matrix)
+           S_matrix(i_map(i_s),ib,ibp,ik,iqbz)= Xi_factor*conjg(Xi_factor_prime)*&
+&                                               ( S_matrix(i_map(i_s),ib,ibp,ik,iqbz)+DELTA_T*DELTA_matrix)
            !
          else
            !

@@ -43,7 +43,7 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
 #if defined _KERR
  use drivers,       ONLY:l_kerr
  use electrons,     ONLY:spin_orbit
- use KERR,          ONLY:X_mat_wing_right,X_mat_wing_left,DIP_q_dot_iR_kerr
+ use KERR,          ONLY:X_mat_head,X_mat_wing_right,X_mat_wing_left,DIP_q_dot_iR_kerr
 #endif
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_collisions_IO
@@ -81,7 +81,8 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  complex(SP)             :: iscut
 #endif
 #if defined _KERR
- complex(SP),allocatable :: XoR_wing(:)
+ complex(SP),allocatable :: XoR_wing(:),XoL_wing(:)
+ complex(SP)             :: Xo_head
 #endif
  !
  ! Defaults & Setups
@@ -96,10 +97,15 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  !
 #if defined _KERR
  if(l_kerr) then
-   allocate(XoR_wing(X%ng))
-   XoR_wing= cmplx(0.,0.,SP)
-   X_mat_wing_right= cmplx(0.,0.,SP)
-   X_mat_wing_left = cmplx(0.,0.,SP)
+   Xo_head  = cmplx(0.,0.,SP)
+   X_mat_head       = cmplx(0.,0.,SP)
+   if(X%ng>1) then
+     allocate(XoR_wing(X%ng-1),XoL_wing(X%ng-1))
+     XoR_wing = cmplx(0.,0.,SP)
+     XoL_wing = cmplx(0.,0.,SP)
+     X_mat_wing_right = cmplx(0.,0.,SP)
+     X_mat_wing_left  = cmplx(0.,0.,SP)
+   endif
  endif
 #endif
  !
@@ -279,7 +285,13 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
      if (.not.px%element_1D(i1)) cycle
      if (iwmax==1) XoR=(0.,0.)
 #if defined _KERR
-     if (iwmax==1.and.l_kerr) XoR_wing=(0.,0.)
+     if (iwmax==1.and.l_kerr) then
+       Xo_head=(0.,0.)
+       if(X%ng>1) then
+         XoR_wing=(0.,0.)
+         XoL_wing=(0.,0.)
+       endif
+     endif
 #endif
      if (cg_pt(i1)==0.) then
        GreenF=drude_GreenF/real(bg_npts(i1))
@@ -346,8 +358,13 @@ loop_bg: do i2 = 1,bg_npts(i1)
 #if defined _KERR
        ! Evaluate head and wings for other direction
        ! XoR2(1,G')=XoR_wing(G') G'=1,ng
-       if(l_kerr.and.cg_pt(i1)/=0.) XoR_wing(:)=XoR_wing(:) &
-&                 -GreenF(1)*eh_occ*isc%rhotw(:)*DIP_q_dot_iR_kerr(ic,iv,ikbz,i_spin)
+       if(l_kerr.and.cg_pt(i1)/=0.) then
+         Xo_head=Xo_head+GreenF(1)*eh_occ*conjg(DIP_q_dot_iR(ic,iv,ikbz,i_spin))*DIP_q_dot_iR_kerr(ic,iv,ikbz,i_spin)
+         if(X%ng>1) then
+           XoR_wing(:)=XoR_wing(:)-GreenF(1)*eh_occ*isc%rhotw(2:)*DIP_q_dot_iR_kerr(ic,iv,ikbz,i_spin)
+           XoL_wing(:)=XoL_wing(:)-GreenF(1)*eh_occ*conjg(DIP_q_dot_iR(ic,iv,ikbz,i_spin))*conjg(isc%rhotw(2:))
+         endif
+       endif
 #endif
      enddo loop_bg
      !
@@ -361,8 +378,11 @@ loop_bg: do i2 = 1,bg_npts(i1)
        enddo
 #if defined _KERR
        if (l_kerr.and.cg_pt(i1)/=0.) then
-         X_mat_wing_right(:,i2)=X_mat_wing_right(:,i2)+XoR_wing(:)*GreenF(i2)/GreenF(1)               ! right wing
-         X_mat_wing_left(:,i2)=X_mat_wing_left(:,i2)+conjg(XoR_wing(:))*GreenF(i2)/conjg(GreenF(1))   ! left wing
+         X_mat_head(i2)         = X_mat_head(i2)+Xo_head*GreenF(i2)/GreenF(1)                ! head
+         if(X%ng>1) then
+           X_mat_wing_right(:,i2) = X_mat_wing_right(:,i2)+XoR_wing(:)*GreenF(i2)/GreenF(1)    ! right wing
+           X_mat_wing_left(:,i2)  = X_mat_wing_left(:,i2) +XoL_wing(:)*GreenF(i2)/GreenF(1)    ! left wing
+         endif
        endif
 #endif
      enddo
@@ -424,8 +444,11 @@ loop_bg: do i2 = 1,bg_npts(i1)
    call pp_redux_wait(Xo(:,:,i1))
 #if defined _KERR
    if (l_kerr) then
-     call pp_redux_wait(X_mat_wing_left(:,i1))
-     call pp_redux_wait(X_mat_wing_right(:,i1))
+     call pp_redux_wait(X_mat_head(i1))
+     if(X%ng>1) then
+       call pp_redux_wait(X_mat_wing_left(:,i1))
+       call pp_redux_wait(X_mat_wing_right(:,i1))
+     endif
    endif
 #endif
  enddo
@@ -463,7 +486,10 @@ loop_bg: do i2 = 1,bg_npts(i1)
  if (iq==1) deallocate(rhotw_save)
  deallocate(isc%rhotw,XoR)
 #if defined _KERR
- if (l_kerr) deallocate(XoR_wing)
+ if (l_kerr.and.X%ng>1) then 
+   deallocate(XoR_wing)
+   deallocate(XoL_wing)
+ endif
 #endif
  call mem_est("Xo_WS")
  call collision_reset(isc)

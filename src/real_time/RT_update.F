@@ -45,7 +45,7 @@ subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
  complex(SP) ,   intent(in)           :: SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol)
  type(bz_samp),  intent(in)           :: k,Xk
  integer,        intent(in)           :: it
- type(levels),   intent(in)           :: Xen
+ type(levels),   intent(inout)        :: Xen
  logical,        optional, intent(in) :: up_Gref,up_DIP,an_QP
  !
  ! Work Space

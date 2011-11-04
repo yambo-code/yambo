@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,USE_ERIM)
+subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS)
  !
  use pars,           ONLY:SP,cI
  use SC,             ONLY:SC_bands
@@ -42,15 +42,13 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,USE_ERIM)
  complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol)
  complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
  real(SP),        optional, intent(in) :: O_REAL(fft_size,n_sp_pol)
- logical,         optional, intent(in) :: TRANS,USE_ERIM
+ logical,         optional, intent(in) :: TRANS
  type(levels),    optional, intent(in) :: en
  !
  ! Work Space
  !
- integer     :: i1,i2,i3,ikbz,ik,ik_rand,SC_bands2
+ integer     :: i1,i2,ik,SC_bands2
  complex(SP) :: Hk(SC_bands(2),SC_bands(2),n_sp_pol)
- complex(SP) :: G_k_rand
- complex(SP) :: AVE_k_VALUE
  type(pp_indexes) :: px
  !
  SC_bands2=SC_bands(2)**2
@@ -71,80 +69,15 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,USE_ERIM)
  endif 
  !
  call pp_indexes_reset(px)
+ call par_indexes(px,(/QP_nk/))
  !
- if(present(USE_ERIM).and.use_X_RIM) then
+ do ik=1,QP_nk
+   ! 
+   if (.not.px%element_1D(ik)) cycle   
+   call make_Hk_matrix(ik)
+   VALUE=VALUE-cI*Vstar_dot_V(SC_bands2,Hk(:,:,1),G(:,:,ik))*k%weights(ik)
    !
-   call par_indexes(px,(/k%nbz/))
-   !
-   do ikbz=1,k%nbz
-     !
-     if (.not.px%element_1D(ikbz)) cycle   
-     !
-     ik=k%sstar(ikbz,1)
-     call make_Hk_matrix(ik)
-     !
-     AVE_k_VALUE=(0.,0.)
-     !
-     do i1=1,min(SC_bands(2),BZ_RIM_nbands)
-       do i2=i1+1,min(SC_bands(2),BZ_RIM_nbands)
-         G_k_rand=(0.,0.)
-         do i3=1,BZ_RIM_nkpt(ikbz)
-            ik_rand=BZ_RIM_table(ikbz,i3)
-            G_k_rand= G_k_rand+exp((0._SP,1._SP)* &
-&                   ((en%Eo(i1,ik,1)-en%Eo(i2,ik,1))-(en%E_RIM(i1,ik_rand,1)-en%E_RIM(i2,ik_rand,1)))*NE_time)
-         enddo
-         !
-         AVE_k_VALUE=AVE_k_VALUE+aimag(conjg(Hk(i1,i2,1))*G_k_rand*G(i1,i2,ik))
-         !
-       enddo
-     enddo
-     !
-     AVE_k_VALUE=AVE_k_VALUE/real(BZ_RIM_nkpt(ikbz))
-     !
-     ! Terms between BZ_RIM_nbands and SC_bands(2)
-     !
-     do i1=BZ_RIM_nbands+1,SC_bands(2)
-       do i2=i1+1,SC_bands(2)
-         AVE_k_VALUE=AVE_k_VALUE+aimag(conjg(Hk(i1,i2,1))*G(i1,i2,ik))
-       enddo
-     enddo
-     !
-     do i1=1,SC_bands(2)
-       do i2=max(BZ_RIM_nbands,i1)+1,SC_bands(2)
-         AVE_k_VALUE=AVE_k_VALUE+aimag(conjg(Hk(i1,i2,1))*G(i1,i2,ik))
-       enddo
-     enddo
-     !
-     ! Off-diagonal elements counted 2 times (i,j) and (j,i)
-     AVE_k_VALUE=(0.,2._SP)*AVE_k_VALUE
-     !
-     ! Diagonal
-     !
-     do i1=1,SC_bands(2)
-         AVE_k_VALUE=AVE_k_VALUE+(0._SP,1._SP)*aimag(conjg(Hk(i1,i1,1))*G(i1,i1,ik))
-     enddo     
-     !
-     VALUE=VALUE-cI*AVE_k_VALUE
-     !
-   enddo
-   !
-   VALUE=VALUE/real(k%nbz)
-   !
- else
-   !
-   call par_indexes(px,(/QP_nk/))
-   !
-   do ik=1,QP_nk
-     ! 
-     if (.not.px%element_1D(ik)) cycle   
-     !
-     call make_Hk_matrix(ik)
-     !
-     VALUE=VALUE-cI*Vstar_dot_V(SC_bands2,Hk(1:SC_bands(2),1:SC_bands(2),1),G(1:SC_bands(2),1:SC_bands(2),ik))*k%weights(ik)
-     !
-   enddo
-   !
- endif
+ enddo
  !
  call pp_redux_wait(VALUE)
  call pp_indexes_reset(px)

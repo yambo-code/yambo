@@ -180,7 +180,7 @@ module real_time
      real(SP), optional, intent(in) :: E
    end subroutine
    !
-   subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS,USE_ERIM)
+   subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS)
      use pars,       ONLY:SP
      use SC,         ONLY:SC_bands
      use R_lattice,  ONLY:bz_samp 
@@ -193,7 +193,7 @@ module real_time
      complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol)
      complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
      real(SP),        optional, intent(in) :: O_REAL(fft_size,n_sp_pol)
-     logical,         optional, intent(in) :: TRANS,USE_ERIM
+     logical,         optional, intent(in) :: TRANS
      type(levels),    optional, intent(in) :: en
    end subroutine RT_average_operator
    !

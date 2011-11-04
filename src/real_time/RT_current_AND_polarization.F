@@ -53,9 +53,9 @@ subroutine RT_current_AND_polarization(Xk,Xen,G_input,A_input)
  do id=1,3
    !
    call RT_average_operator(VALUE=RT_ind_J(id),O_MATRIX=-DIP_P(id,1:SC_bands(2),1:SC_bands(2),1:QP_nk,1:n_sp_pol),&
-&                           G=G_input,k=Xk,en=Xen,TRANS=.TRUE.,USE_ERIM=.TRUE.)
+&                           G=G_input,k=Xk,en=Xen,TRANS=.TRUE.)
    call RT_average_operator(VALUE=RT_P(id),    O_MATRIX=cI*DIP_iR(id,1:SC_bands(2),1:SC_bands(2),1:QP_nk,1:n_sp_pol),&
-&                           G=G_input,k=Xk,en=Xen,TRANS=.TRUE.,USE_ERIM=.TRUE.)
+&                           G=G_input,k=Xk,en=Xen,TRANS=.TRUE.)
 
  enddo
  !

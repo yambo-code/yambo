@@ -158,10 +158,10 @@ subroutine G_shells_finder()
      call eval_minus_G()
    enddo
    call IO_and_Messaging_switch("+timing")
-   ng_in_shell=ng_in_shell_TMP(:n_g_shells)
+   ng_in_shell(:n_g_shells)=ng_in_shell_TMP(:n_g_shells)
  endif
  !
- E_of_shell=E_of_shell_TMP(:n_g_shells)
+ E_of_shell(:n_g_shells)=E_of_shell_TMP(:n_g_shells)
  !
  !I/O
  !

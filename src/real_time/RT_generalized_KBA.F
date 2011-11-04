@@ -19,89 +19,60 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_generalized_KBA(E,L,ik,ikp,Time,L_kind)
+subroutine RT_generalized_KBA(E,Gkkp,L,ik,ikp,L_kind,i_t_range,MEM_steps)
+ !
+ ! L^{><}_{kp,nm}(t,t')=(spin_occ*delta_{nu}+i G^<_{n u k}(t')) Gkkp(u v) G^<_{v m p}(t')
+ !
+ !                      ----- G_left --------------------------           --- G_right ---
+ !
+ ! L^{<>}_{kp,nm}(t,t')=G^<_{n u k}(t') Gkkp(u,v) (spin_occ*delta_{vm}+i G^<_{v m p}(t'))
+ !
+ !                      ----- G_left ---           ----- G_right ------------------------
  !
  use electrons,      ONLY:levels,spin_occ
  use pars,           ONLY:SP,cI
- use wrapper,        ONLY:M_by_M
  use SC,             ONLY:SC_bands,it_now
- use real_time,      ONLY:G_lesser,NE_MEM_steps,RT_step,MEM_index
+ use real_time,      ONLY:G_lesser,NE_MEM_steps,MEM_index
+ use wrapper,        ONLY:M_by_M
  implicit none
  !
  type(levels),intent(in):: E
+ complex(SP)   :: Gkkp(SC_bands(2),SC_bands(2))
  complex(SP)   :: L(SC_bands(2),SC_bands(2),NE_MEM_steps)
- integer       :: ik,ikp
+ integer       :: ik,ikp,MEM_steps,i_t_range(2)
  character(2)  :: L_kind
- real(SP)      :: Time
  !
  ! Work Space
  !
- integer               :: it,ib,ibp,MEM_steps,it_mem
- real(SP)              :: Time_difference
- complex(SP)           :: G_tmp(SC_bands(2),SC_bands(2)),G_by_G(SC_bands(2),SC_bands(2),NE_MEM_steps)
- complex(SP), external :: RT_G_retarded
+ integer               :: i_t,i_n,i_t_mem
+ complex(SP)           :: G_g(SC_bands(2),SC_bands(2))
+ complex(SP)           :: G_by_Gkkp(SC_bands(2),SC_bands(2))
  !
- MEM_steps = NE_MEM_steps
- if (it_now-NE_MEM_steps+1<=0) MEM_steps=it_now
- !
- if (L_kind=="><") then
+ do i_t=i_t_range(1),i_t_range(2)
    !
-   ! L^{><}_{kp,nm}(t,t')=-i G^r_nk(t-t')(spin_occ*delta_{nm}+i G^<_{n n' k}(t')) G^<_{n' m p}(t') [G^r_mp(t-t')]^*
+   i_t_mem=i_t-it_now+MEM_steps
    !
-   ! t'=T-T_mem, T => t-t'=T_mem,0
-   !
-   do it=it_now-MEM_steps+1,it_now
+   if (L_kind=="><") then
      !
-     it_mem=it-it_now+MEM_steps
+     !  i G_greater @ ik
      !
-     ! G_greater@ik
+     G_g(:,:)=cI*G_lesser(:,:,ik,MEM_index(i_t)) 
+     forall (i_n=1:SC_bands(2)) G_g(i_n,i_n)=G_g(i_n,i_n)+spin_occ
      !
-     G_tmp(:,:)=cI*G_lesser(:,:,ik,MEM_index(it)) 
-     forall (ib=1:SC_bands(2)) G_tmp(ib,ib)=G_tmp(ib,ib)+spin_occ
+     call M_by_M('n','n',SC_bands(2),G_g,Gkkp,G_by_Gkkp(:,:))
+     call M_by_M('n','n',SC_bands(2),G_by_Gkkp(:,:),G_lesser(:,:,ikp,MEM_index(i_t)),L(:,:,i_t_mem))
      !
-     ! G_greater@ik x G_lesser@ikp
+   else
      !
-     call M_by_M('n','n',SC_bands(2),G_tmp,G_lesser(:,:,ikp,MEM_index(it)),G_by_G(:,:,it_mem))
+     !  i G_greater @ ikp
      !
-   enddo
- endif
- !
- if (L_kind=="<>") then
-   !
-   ! L^{<>}_{kp,nm}(t,t')=-i G^r_nk(t-t') G^<_{n n' k}(t') (spin_occ*delta_{n'm}+i G^<_{n' m p}(t')) [G^r_mp(t-t')]^*
-   !
-   do it=it_now-MEM_steps+1,it_now
+     G_g(:,:)=cI*G_lesser(:,:,ikp,MEM_index(i_t)) 
+     forall (i_n=1:SC_bands(2)) G_g(i_n,i_n)=G_g(i_n,i_n)+spin_occ
      !
-     it_mem=it-it_now+MEM_steps
+     call M_by_M('n','n',SC_bands(2),G_lesser(:,:,ik,MEM_index(i_t)),Gkkp,G_by_Gkkp(:,:))
+     call M_by_M('n','n',SC_bands(2),G_by_Gkkp(:,:),G_g(:,:),L(:,:,i_t_mem))
      !
-     ! G_greater@ikp
-     !
-     G_tmp(:,:)=cI*G_lesser(:,:,ikp,MEM_index(it)) 
-     forall (ib=1:SC_bands(2)) G_tmp(ib,ib)=G_tmp(ib,ib)+spin_occ
-     !
-     ! G_lesser@ik x G_greater@ikp
-     !
-     call M_by_M('n','n',SC_bands(2),G_lesser(:,:,ik,MEM_index(it)),G_tmp,G_by_G(:,:,it_mem))
-     !
-   enddo
- endif
- !
- L(:,:,:)=(0.,0.)
- !
- do it=1,MEM_steps
-   !
-   ! t'=T-T_mem, T => t-t'=T_mem,0
-   !
-   Time_difference=(MEM_steps-it+1)*RT_step
-   !
-   ! L=-i Gr G_greater G_lesser (Gr)^*
-   !
-   do ib=1,SC_bands(2)
-     do ibp=1,SC_bands(2)
-       L(ib,ibp,it)=-cI*RT_G_retarded(E,ib,ik,Time_difference,0.)*G_by_G(ib,ibp,it)*&
-&                 conjg(RT_G_retarded(E,ibp,ikp,Time_difference,0.))
-     enddo
-   enddo
+   endif
    !
  enddo
  !

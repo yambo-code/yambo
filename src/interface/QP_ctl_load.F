@@ -43,10 +43,11 @@ subroutine QP_ctl_load(defs,i_type)
  character(1)      ::prefix(3)
  character(3)      ::spin_ch(3)
  character(7)      ::description_ch(3)
- character(9)      ::spin_description_ch(3)
+ character(4)      ::spin_description_ch(3)
  !
  spin_ch=(/'   ','_up','_dn'/)
- spin_description_ch=(/'       ','spin up','spin dn'/)
+ spin_description_ch= ' '
+ spin_description_ch=(/'    ','UP  ','DOWN'/)
  prefix=(/'X','K','G'/)
  description_ch(1)='Xd'
  description_ch(2)='BSK BSS'

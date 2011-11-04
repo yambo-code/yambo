@@ -41,11 +41,11 @@ subroutine RT_elph_kernel(ik,E,k,q,Time)
  !  Iteration: in this case I ***think*** (even if I am not completely sure) that everything is ok.
  !  
  use pars,           ONLY:SP,cI
- use units,          ONLY:HA2EV
+ use units,          ONLY:HA2EV,FS2AUT
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp,qindx_S
  use SC,             ONLY:SC_bands,it_now
- use real_time,      ONLY:NE_MEM_steps,RT_step,S_matrix,I1_lesser,NE_MEM_Treshold,Integrator_name
+ use real_time,      ONLY:NE_MEM_steps,RT_step,S_matrix,I1_lesser,NE_MEM_Treshold,Integrator_name,G_lesser,MEM_index
  !
  implicit none
  !
@@ -86,10 +86,21 @@ subroutine RT_elph_kernel(ik,E,k,q,Time)
  i_map( 0)=1
  i_map( 1)=2
  !
+ !if (ik/=2) return
+ !
+ write (100*ik+7,'(3f20.10)') TIME/FS2AUT,aimag(G_lesser(7,7,ik,MEM_index(MEM_steps)))
+ write (100*ik+8,'(3f20.10)') TIME/FS2AUT,aimag(G_lesser(8,8,ik,MEM_index(MEM_steps)))
+ write (100*ik+9,'(3f20.10)') TIME/FS2AUT,aimag(G_lesser(9,9,ik,MEM_index(MEM_steps)))
+ !write (101,'(3f20.10)') TIME/FS2AUT,aimag(G_lesser(8,8,ik,MEM_index(MEM_steps)))
+ !write (102,'(3f20.10)') TIME/FS2AUT,aimag(G_lesser(9,9,ik,MEM_index(MEM_steps)))
+ !write (103,'(3f20.10)') TIME/FS2AUT,G_lesser(9,7,ik,MEM_index(MEM_steps))
+ !write (200,'(3f20.10)') TIME/FS2AUT,G_lesser(9,7,qindx_S(ik,4,1),MEM_index(MEM_steps))
+ !return
+ !
  do iqbz=1,q%nbz
    !
    g_q=sqrt(0.01/HA2EV)
-   w_ph=1./HA2EV
+   w_ph=5./HA2EV
    !
    iq =q%sstar(iqbz,1)
    iqs=q%sstar(iqbz,2)

@@ -126,7 +126,7 @@ module real_time
  !
  real(SP)    :: RT_ave_dephasing
  real(SP),    allocatable :: RT_Deph_Matrix(:,:,:)
- complex(SP), allocatable :: S_matrix(:,:,:,:,:)
+ complex(SP), allocatable :: THETA_matrix(:,:,:,:,:,:,:)
  !
  ! GFs
  !
@@ -244,6 +244,7 @@ module real_time
      use QP_m,           ONLY:QP_nk,QP_n_states,QP_Vnl_xc
      use R_lattice,      ONLY:nqbz
      use collisions_IO,  ONLY:collisions_IO_alloc
+     use ELPH,           ONLY:ph_modes
      !
      type(levels), intent(in) :: en
      !
@@ -287,9 +288,9 @@ module real_time
      call mem_est("I2_lesser",(/size(I2_lesser)/),(/2*SP/))
      !
      if (l_ph_corr) then
-       allocate(S_matrix(2,SC_bands(2),SC_bands(2),QP_nk,nqbz))
-       call mem_est("S_matrix",(/size(S_matrix)/),(/2*SP/))
-       S_matrix=(0._SP,0._SP)
+       allocate(THETA_matrix(2,SC_bands(2),SC_bands(2),SC_bands(2),QP_nk,nqbz,ph_modes))
+       call mem_est("THETA_matrix",(/size(THETA_matrix)/),(/2*SP/))
+       THETA_matrix=(0._SP,0._SP)
      endif
      !
      allocate(G_lesser_reference(SC_bands(2),SC_bands(2),QP_nk))
@@ -360,9 +361,9 @@ module real_time
      deallocate(I1_lesser)
      call mem_est("I1_lesser")
      !
-     if (allocated(S_matrix)) then
-       deallocate(S_matrix)
-       call mem_est("S_matrix")
+     if (allocated(THETA_matrix)) then
+       deallocate(THETA_matrix)
+       call mem_est("THETA_matrix")
      endif
      !
      deallocate(I2_lesser)

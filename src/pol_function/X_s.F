@@ -89,8 +89,9 @@ subroutine X_s(iq,fr,X,wv)
    !
    if (iw>nw_max_par.or.FXC_SVD_digits>0) INV_MODE=USE_SLK
    !
-   ! TDDFT Kernel. Differente procedure depending on the kernel 
-   !  kind: BS,ALDA,LRC.
+   ! TDDFT Kernel. Different procedure depending on the kernel 
+   !
+   ! Kind: BS,ALDA,LRC.
    !
    if (l_bs_fxc) then
      !

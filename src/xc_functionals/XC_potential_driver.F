@@ -29,14 +29,14 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  use electrons,     ONLY:levels
  use com,           ONLY:msg,warning
  use xc_functionals,ONLY:XC_EXCHANGE_CORRELATION,XC_LDA_C_PW,xc_string,&
-      & XC_NOT_AVAILABLE,xc_OnlyInLibxc
+&                        XC_NOT_AVAILABLE,xc_OnlyInLibxc
  implicit none
  type(levels) ::en
  type(bz_samp)::Xk
  integer      ::KIND,FUNCTIONAL,ORDER
-!
-! COM
-!
+ !
+ ! COM
+ !
 #if defined _LIBXC
  if (KIND>0.and.FUNCTIONAL>0) then
 #else 

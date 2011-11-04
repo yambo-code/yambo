@@ -197,7 +197,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !
    ! El-Ph
    !=======
-   if (l_ph_corr) call RT_elph_Kernel(ik,Xen,k,q,Time)
+   if (l_ph_corr) call RT_ELPH_Kernel(ik,Xen,k,q,Time)
    !
 #endif
    !

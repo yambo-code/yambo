@@ -1,6 +1,6 @@
 !
-!         Copyright (C) 2000-2011 the YAMBO team 
-!              http://www.yambo-code.org
+!       Copyright (C) 2000-2011 the YAMBO team 
+!            http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -165,6 +165,11 @@ subroutine RT_initialize(Xen)
    use_X_RIM=.false.
  endif
  !
+ ! Electron-phonon
+ ! ===============
+ !
+ call RT_ELPH_initialize()
+ !
  ! LOG
  !=====
  !
@@ -236,6 +241,7 @@ subroutine RT_initialize(Xen)
    call msg( 'r','[RT] Simulate BSE               :',l_NE_simulate_BSE)
    call msg( 'r','[RT] Simulate TD-DFT            :',l_NE_simulate_TDDFT)
    call msg( 'r','[SC] Extended collisions I/O    :',l_collisions_IO)
+   call msg( 'r','[SC] Electron-phonon scattering :',l_ph_corr)
  endif
  !
  contains

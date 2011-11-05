@@ -244,7 +244,10 @@ module real_time
      use QP_m,           ONLY:QP_nk,QP_n_states,QP_Vnl_xc
      use R_lattice,      ONLY:nqbz
      use collisions_IO,  ONLY:collisions_IO_alloc
+#if defined _ELPH
      use ELPH,           ONLY:ph_modes
+#endif
+
      !
      type(levels), intent(in) :: en
      !
@@ -286,12 +289,13 @@ module real_time
      !
      allocate(I2_lesser(SC_bands(2),SC_bands(2),QP_nk))
      call mem_est("I2_lesser",(/size(I2_lesser)/),(/2*SP/))
-     !
+#if  defined _ELPH   
      if (l_ph_corr) then
        allocate(THETA_matrix(2,SC_bands(2),SC_bands(2),SC_bands(2),QP_nk,nqbz,ph_modes))
        call mem_est("THETA_matrix",(/size(THETA_matrix)/),(/2*SP/))
        THETA_matrix=(0._SP,0._SP)
      endif
+#endif
      !
      allocate(G_lesser_reference(SC_bands(2),SC_bands(2),QP_nk))
      call mem_est("Gf_l_ref",(/size(G_lesser_reference)/),(/2*SP/))

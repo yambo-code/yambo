@@ -164,11 +164,13 @@ subroutine RT_initialize(Xen)
    call warning('E_RIM not compatible with dumping, turned off!')
    use_X_RIM=.false.
  endif
+#if defined _ELPH
  !
  ! Electron-phonon
  ! ===============
  !
  call RT_ELPH_initialize()
+#endif
  !
  ! LOG
  !=====

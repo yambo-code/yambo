@@ -40,6 +40,9 @@ subroutine QP_ctl_switch(what)
  ! GPL_EXCLUDE_START
  ! 
  call initactivate(1,'OCCTime')
+#if defined _RT
+ call initactivate(1,'Scale_DIP')
+#endif
  !
  ! GPL_EXCLUDE_END
  !

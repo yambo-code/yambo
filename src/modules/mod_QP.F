@@ -129,6 +129,9 @@ module QP_m
  real(SP)                :: QP_ctl_Wv(3,3,2)
  complex(SP)             :: QP_ctl_Z(3,2)
  logical                 :: QP_ctl_applied
+#if defined _RT
+ logical                 :: QP_ctl_scale_dip
+#endif
  !
  ! NEGF Occupations I/O. The general format is
  !

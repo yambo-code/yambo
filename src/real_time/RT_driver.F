@@ -44,6 +44,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q,Xw)
  use fields,          ONLY:A_vecpot,A_vecpot_previous
  use collisions_CACHE,ONLY:free_COLLISIONS_v
  use QP_CTL_m,        ONLY:QP_apply
+ use QP_m,            ONLY:QP_ctl_scale_dip
  !
  implicit none
  !
@@ -93,6 +94,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q,Xw)
  !
  call Dipole_driver(Xen,Xk,X(1),X(1)%q0)
  !
+ !
  ! WFs loading
  !=============
  !
@@ -102,6 +104,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q,Xw)
  !================
  !
  call QP_apply(SC_bands,Xen,Xk,"G",msg_fmt='s')
+ if (QP_ctl_scale_dip) call RT_scale_DIP_by_QP(Xen) 
  !
  ! Core initialization
  !

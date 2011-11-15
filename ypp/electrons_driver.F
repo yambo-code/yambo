@@ -31,12 +31,12 @@ subroutine electrons_driver(Xk,Xen)
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
 &                         plot_title,l_dos,l_angular_momentum,&
-&                         l_position,l_current,l_bands,l_mean_potential
+&                         l_position,l_current,l_bands
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:two_spin_density
 #if defined _YPP_SC
- use YPP,            ONLY:V_value
+ use YPP,            ONLY:V_value,l_mean_potential
  use wave_func,      ONLY:wf_ng
  use IO_m,           ONLY:OP_RD,RD_CL_IF_END,LOG,NONE,io_control,DUMP
  use SC,             ONLY:V_mean,SC_bands,SC_fft_size
@@ -170,7 +170,9 @@ subroutine electrons_driver(Xk,Xen)
    v2plot=0.
    !
    if (l_sp_wf)          call section('*','Single Particle wavefunction Plot')
+#if defined _YPP_SC
    if (l_mean_potential) call section('*','Mean Potential Plot')
+#endif
    !
    if (n_spinor==2) then
      call warning ('Non collinear spin support still not implemented')
@@ -199,9 +201,13 @@ subroutine electrons_driver(Xk,Xen)
      endif
 #endif
      !
+#if defined _YPP_SC
      if (.not.l_mean_potential) then
+#endif
        i_wf=wf_state(ib,ik,i_spin)
+#if defined _YPP_SC
      endif
+#endif
      !
 #if defined _YPP_SC
      if (l_mean_potential) then
@@ -210,7 +216,13 @@ subroutine electrons_driver(Xk,Xen)
        if (trim(V_value)=="IM".or.trim(V_value)=="im") forall(ir=1:fft_size) v2plot(ir)=aimag( V_mean(ir,ib) )
      endif
 #endif
-     if (.not.l_mean_potential) forall(ir=1:fft_size) v2plot(ir)=real( wf(ir,i_wf)*conjg( wf(ir,i_wf) ) )
+#if defined _YPP_SC
+     if (.not.l_mean_potential) then 
+#endif
+       forall(ir=1:fft_size) v2plot(ir)=real( wf(ir,i_wf)*conjg( wf(ir,i_wf) ) )
+#if defined _YPP_SC
+     endif
+#endif
      !
      if (ib/=Xen%nb.and.abs(Xen%E(ib,ik,i_spin)-Xen%E(ib+1,ik,i_spin))<deg_energy) then
        cycle

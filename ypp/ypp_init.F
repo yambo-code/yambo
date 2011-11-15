@@ -125,7 +125,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #endif
  l_mag=.false.
  l_sp_wf=.false.
+#if defined _YPP_SC
  l_mean_potential=.false.
+#endif
  l_norm_to_one=.true.
  output_fname=' '
  plot_title=' '

@@ -92,7 +92,10 @@ module QP_CTL_m
      !
      use memory_m,      ONLY:mem_est
      use QP_m,          ONLY:QP_t,QP_reset,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,&
-&                            QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db,QP_ctl_scale_dip
+&                            QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db
+#if defined _RT
+     use QP_m,          ONLY:QP_ctl_scale_dip
+#endif
      use com,           ONLY:msg,depth
      use electrons,     ONLY:levels,E_reset,n_sp_pol,&
 &                            BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_nbands,BZ_RIM_tot_nkpts
@@ -148,7 +151,9 @@ module QP_CTL_m
        call parser(what//'fnQP_up_E',is_def(2))
        call parser(what//'fnQP_dn_E',is_def(3))
        call parser(what//'fnQPdb',is_def(4))
+#if defined _RT
        call parser('Scale_DIP', QP_ctl_scale_dip)
+#endif       
        if (.not.any((/is_def/))) return
      endif
      !

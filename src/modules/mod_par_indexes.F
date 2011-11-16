@@ -42,8 +42,6 @@ module par_indexes_m
      lowlim=1
      if (present(low_range))  lowlim=low_range
      !
-     px%pp_allocated=.true.
-     !
      allocate(px%n_of_elements(ncpu))
      px%n_of_elements=0
      select case (nindxs)

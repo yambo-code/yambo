@@ -84,7 +84,7 @@ subroutine RT_Rabi_Function(E,Field)
  enddo
  !
  call msg( 'r', '[RT] Max Rabi frequency            [eV]:',Rabi_max*HA2EV)
- if (Critical_min.lt.1000._SP) then  
+ if (Critical_min.lt.1000._SP.and.Field%frequency(1)/=0._SP) then  
    call msg( 'r', '[RT] Max cutoff frequency          [eV]:',Cutoff_max*HA2EV)
    nh = floor(Cutoff_max/Field%frequency(1))
    call msg( 'r', '[RT] Max cutoff harmonic               :',nh)

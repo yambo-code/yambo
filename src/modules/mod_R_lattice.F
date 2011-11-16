@@ -48,12 +48,12 @@ module R_lattice
  real(SP),allocatable :: q_norm(:)
  type bz_samp
    integer           :: nibz,nbz
-   integer,  pointer :: nstar(:)
-   integer,  pointer :: star(:,:)
-   integer,  pointer :: sstar(:,:)
-   real(SP), pointer :: pt(:,:)
-   real(SP), pointer :: ptbz(:,:)
-   real(SP), pointer :: weights(:)
+   integer,  pointer :: nstar(:)   => null()
+   integer,  pointer :: star(:,:)  => null()
+   integer,  pointer :: sstar(:,:) => null() 
+   real(SP), pointer :: pt(:,:)    => null()
+   real(SP), pointer :: ptbz(:,:)  => null()
+   real(SP), pointer :: weights(:) => null()
    character(6)      :: description
    character(1)      :: units
  end type bz_samp
@@ -154,6 +154,12 @@ module R_lattice
      k%units=' '
      k%description=' '
      !
+     if(associated(k%nstar))    deallocate(k%nstar)
+     if(associated(k%star))     deallocate(k%star)
+     if(associated(k%sstar))    deallocate(k%sstar)
+     if(associated(k%pt))       deallocate(k%pt)
+     if(associated(k%ptbz))     deallocate(k%ptbz)
+     if(associated(k%weights))  deallocate(k%weights)
      nullify(k%nstar,k%star,k%sstar,k%pt,k%ptbz,k%weights)
      !
    end subroutine bz_samp_reset

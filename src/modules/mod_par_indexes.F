@@ -94,6 +94,8 @@ module par_indexes_m
          enddo
      end select
      !
+     deallocate(lowlim,i_done)
+     !
    end subroutine
    !
 end module par_indexes_m

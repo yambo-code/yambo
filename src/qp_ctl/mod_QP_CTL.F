@@ -320,6 +320,7 @@ module QP_CTL_m
        call OCCUPATIONS_Fermi(Fermi_en,k,1)
        call OCCUPATIONS_Extend(Fermi_en,en)
        !
+       if(associated(Fermi_en%E)) deallocate(Fermi_en%E)
        nullify(Fermi_en%E)
      endif
      !

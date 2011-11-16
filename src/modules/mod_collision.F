@@ -45,6 +45,8 @@ module collision
    !
    subroutine collision_reset(ggw)
      type(ggwinfo)::ggw
+     if(associated(ggw%gamp))  deallocate(ggw%gamp)
+     if(associated(ggw%rhotw)) deallocate(ggw%rhotw)
      nullify(ggw%gamp,ggw%rhotw)
    end subroutine
    !

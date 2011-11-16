@@ -1,4 +1,8 @@
 objs = 
+ELPH_objs =
+#if defined _ELPH
+ELPH_objs = RT_ELPH_initialize.o RT_ELPH_Kernel.o 
+#endif
 #if defined _RT
 objs = RT_initialize.o RT_start_and_restart.o RT_update.o \
        RT_driver.o RT_apply_field.o RT_Collision.o RT_Integrator.o \
@@ -8,8 +12,5 @@ objs = RT_initialize.o RT_start_and_restart.o RT_update.o \
        RT_Field_Commensurable_Frequencies.o \
        RT_generalized_KBA.o RT_G_retarded.o \
        RT_Rabi_Function.o DephMatrix_setup.o RT_Fluence.o \
-       RT_scale_DIP_by_QP.o
-#endif
-#if defined _ELPH
-       RT_ELPH_initialize.o RT_ELPH_Kernel.o 
+       RT_scale_DIP_by_QP.o $(ELPH_objs)
 #endif

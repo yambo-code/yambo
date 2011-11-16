@@ -290,7 +290,10 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !In DUMP mode qp%table is dumped as well (to be used in QP_apply).
  !Here, however, qp%table is not needed
  !
- if (associated(qp%table)) nullify(qp%table)
+ if (associated(qp%table)) then
+   deallocate(qp%table)
+   nullify(qp%table)
+ endif
  !
  ! Green Functions
  !

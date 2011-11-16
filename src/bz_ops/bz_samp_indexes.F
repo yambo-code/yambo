@@ -369,7 +369,10 @@ subroutine bz_samp_indexes(k,Xk,q)
        if (allocated(q_pt)) deallocate(q_pt)
        if (allocated(q_norm)) deallocate(q_norm)
        if (allocated(q_sstar)) deallocate(q_sstar)
-       if (associated(q%pt)) nullify(q%pt)
+       if (associated(q%pt)) then
+         deallocate(q%pt)      
+         nullify(q%pt)
+       endif
        call mem_est("k_pt q_pt q_norm q_sstar q-pt")
        allocate(q%pt(1,3),q_pt(1,3),k_pt(1,3),q_norm(1),q_sstar(1,2)) 
        q%pt=0.

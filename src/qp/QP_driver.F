@@ -306,7 +306,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
    !
-   qp%Z=1.
+   qp%Z=(1._SP,0._SP)
    !
    call QP_report_and_write(k,qp,en,-1)
    call local_free()
@@ -331,7 +331,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
 &        (/QP_n_states,QP_n_states,QP_n_states,3*qp%nk,QP_n_states*(3+n_sp_pol-1)/),&
 &        (/2*SP,       2*SP,       SP,         SP,           IP/))
      qp%table=QP_table
-     qp%E=0.
+     qp%E=(0._SP,0._SP)
      !
      ! Sc energy steps. 2/3 If Newton/Secant. QP_Sc_steps 
      ! the full Green`s function is requested.
@@ -370,9 +370,18 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
      if (allocated(QP_Sc))        deallocate(QP_Sc)
      if (allocated(QP_dSc))       deallocate(QP_dSc)
      if (allocated(QP_Vnl_xc))    deallocate(QP_Vnl_xc,QP_Vxc)
-     if (associated(qp%GreenF))   nullify(qp%GreenF)
-     if (associated(qp%GreenF_W)) nullify(qp%GreenF_W)
-     if (associated(qp%S_total))  nullify(qp%S_total)
+     if (associated(qp%GreenF))   then
+       deallocate(qp%GreenF)
+       nullify(qp%GreenF)
+     endif
+     if (associated(qp%GreenF_W)) then
+       deallocate(qp%GreenF_W)
+       nullify(qp%GreenF_W)
+     endif
+     if (associated(qp%S_total))  then
+       deallocate(qp%S_total)
+       nullify(qp%S_total)
+     endif
      if (allocated(QP_G_amplitude_integral)) deallocate(QP_G_amplitude_integral)
      if (allocated(QP_G_zoom_er))  deallocate(QP_G_zoom_er)
      call mem_est("QP_G_amplitude_integral")

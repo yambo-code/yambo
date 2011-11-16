@@ -153,7 +153,15 @@ module R_lattice
      k%nbz=0
      k%units=' '
      k%description=' '
+     if(associated(k%nstar))    deallocate(k%nstar)
+     if(associated(k%star))     deallocate(k%star)
+     if(associated(k%sstar))    deallocate(k%sstar)
+     if(associated(k%pt))       deallocate(k%pt)
+     if(associated(k%ptbz))     deallocate(k%ptbz)
+     if(associated(k%weights))  deallocate(k%weights)
+     !
      nullify(k%nstar,k%star,k%sstar,k%pt,k%ptbz,k%weights)
+     !
    end subroutine bz_samp_reset
    !
    subroutine bz_samp_duplicate(BZi, BZo)

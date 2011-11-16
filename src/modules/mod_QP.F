@@ -147,13 +147,6 @@ module QP_m
      qp%description=' '
      qp%n_descs=0
      qp%n_states=0
-     if(associated(qp%table))      deallocate(qp%table)
-     if(associated(qp%E))          deallocate(qp%E)
-     if(associated(qp%Z))          deallocate(qp%Z)
-     if(associated(qp%E_bare))     deallocate(qp%E_bare)
-     if(associated(qp%S_total))    deallocate(qp%S_total)
-     if(associated(qp%GreenF))     deallocate(qp%GreenF)
-     if(associated(qp%GreenF_W))   deallocate(qp%GreenF_W)
      nullify(qp%table,qp%k,qp%E,qp%Z,qp%E_bare,qp%S_total,qp%GreenF,qp%GreenF_W)
    end subroutine
    !

@@ -45,6 +45,7 @@ module par_proc_m
    integer, pointer :: n_of_elements(:)
    integer, pointer :: weight_1D(:)
    integer, pointer :: first_of_1D(:)
+   logical  :: pp_allocated = .false.
  end type pp_indexes
  !
  integer, private :: local_type
@@ -107,10 +108,14 @@ module par_proc_m
    !
    subroutine pp_indexes_reset(ip)
      type(pp_indexes)::ip
-     if(associated(ip%element_1D))  deallocate(ip%element_1D)
-     if(associated(ip%element_2D))  deallocate(ip%element_2D)
-     if(associated(ip%weight_1D))   deallocate(ip%weight_1D)
-     if(associated(ip%first_of_1D)) deallocate(ip%first_of_1D)
+     if(ip%pp_allocated) then
+       if(associated(ip%element_1D))    deallocate(ip%element_1D)
+       if(associated(ip%element_2D))    deallocate(ip%element_2D)
+       if(associated(ip%weight_1D))     deallocate(ip%weight_1D)
+       if(associated(ip%n_of_elements)) deallocate(ip%n_of_elements)
+       if(associated(ip%first_of_1D))   deallocate(ip%first_of_1D)
+       ip%pp_allocated=.false.       
+     endif
      nullify(ip%element_1D,ip%element_2D,ip%n_of_elements,ip%weight_1D,ip%first_of_1D)
    end subroutine
    !

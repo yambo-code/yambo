@@ -116,6 +116,8 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !
  forall (iqp=1:QP_n_states) i_k(iqp)=QP_table(iqp,3)
  !
+ i_spin=0
+ !
  do iqp=1,QP_n_states
    !
    i_band=QP_table(iqp,1)

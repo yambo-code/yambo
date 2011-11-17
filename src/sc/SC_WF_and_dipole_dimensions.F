@@ -53,6 +53,7 @@ subroutine SC_WF_and_dipole_dimensions(X)
    if (l_sc_cohsex.or.l_sc_srpa) then
      X(2)%ng=eval_G_minus_G(X(2)%ng,0)
      WF_G_max=max(QP_ng_Sx,maxval(G_m_G))
+     if(l_real_time.and..not.(l_sc_exx.or.l_sc_srpa)) WF_G_max=wf_ng
      QP_n_G_bands(2)=SC_bands(2)
      !
 !DEBUG>

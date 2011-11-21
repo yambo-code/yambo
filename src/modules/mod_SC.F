@@ -192,7 +192,12 @@ module SC
      use QP_m,           ONLY:QP_Sc
      use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:two_spin_density,V_xc
+     use X_m,            ONLY:X_alloc
      implicit none
+     !
+     call X_alloc('DIP_P')
+     call X_alloc('DIP_iR')
+     call X_alloc('P_square')
      !
      deallocate(Ho)
      call mem_est("Ho")

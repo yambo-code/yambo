@@ -37,14 +37,16 @@ module collision
    integer :: os(4)
    integer :: qs(3)
    integer :: ngrho,iqref
-   complex(SP), pointer :: gamp(:,:)
-   complex(SP), pointer :: rhotw(:)
+   complex(SP), pointer :: gamp(:,:) => null()
+   complex(SP), pointer :: rhotw(:)  => null()
  end type ggwinfo
  !
  contains
    !
    subroutine collision_reset(ggw)
      type(ggwinfo)::ggw
+     if(associated(ggw%gamp))  deallocate(ggw%gamp)
+     if(associated(ggw%rhotw)) deallocate(ggw%rhotw)
      nullify(ggw%gamp,ggw%rhotw)
    end subroutine
    !

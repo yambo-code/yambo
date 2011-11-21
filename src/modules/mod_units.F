@@ -37,7 +37,7 @@ module UNITS
  ! For example:
  !  
  !   1 Hartree = 27.21 eV => AU2EV = 27.21 
- !   1 Bohr = 0.53 A      => AU2ARM= 0.53
+ !   1 Bohr = 0.53 A      => AU2ANG= 0.53
  ! 
  ! PREFIXES
  !==========
@@ -56,7 +56,7 @@ module UNITS
  ! LENGTHS
  !=========
  !
- real(SP), parameter :: BO2ARM    =0.52917721_SP        ! BOHR = AU2ARM Armstrongs
+ real(SP), parameter :: BO2ANG    =0.52917721_SP        ! BOHR = AU2ANG Angstroms
  real(SP), parameter :: DEG2RAD   =pi/180.0_SP          ! DEGREE = DEG2RAD radiants
  !
  ! Energies

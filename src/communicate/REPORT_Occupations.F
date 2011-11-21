@@ -22,7 +22,7 @@
 subroutine REPORT_Occupations(E,mode)
  !
  use pars,          ONLY:SP,lchlen
- use units,         ONLY:HA2EV,BO2ARM,Bohr_magneton
+ use units,         ONLY:HA2EV,BO2ANG,Bohr_magneton
  use com,           ONLY:msg,warning
 #if defined _BOLTZMANN
  use com,           ONLY:write_to_report

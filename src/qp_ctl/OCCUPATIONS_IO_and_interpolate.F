@@ -21,7 +21,7 @@
 !                  
 subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  !
- use units,          ONLY:BO2ARM,FS2AUT,HA2EV
+ use units,          ONLY:BO2ANG,FS2AUT,HA2EV
  use pars,           ONLY:SP,lchlen
  use parser_m,       ONLY:parser
  use real_time,      ONLY:ID,G_lesser,NE_i_time,max_rt_steps_disk,RT_step,MEM_index
@@ -151,7 +151,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    call msg('nr','Snapshot time            [fs]:',Time/FS2AUT)
    call msg(' r','Photoexcited electrons       :',PE_nel)
    call msg(' r','                          [%]:',PE_nel/nel*100._SP)
-   call msg(' r','                      [cm^-3]:',PE_nel/(DL_vol*BO2ARM**3*1.E-24))
+   call msg(' r','                      [cm^-3]:',PE_nel/(DL_vol*BO2ANG**3*1.E-24))
    !
    call msg('r','')
    call REPORT_Occupations(E,2,.TRUE.)

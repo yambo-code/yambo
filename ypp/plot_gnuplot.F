@@ -22,7 +22,7 @@
 subroutine plot_gnuplot(use_1d,use_2d,eval_only)
  !
  use pars,        ONLY:SP,schlen
- use units,       ONLY:BO2ARM
+ use units,       ONLY:BO2ANG
  use com,         ONLY:msg
  use FFT_m,       ONLY:fft_dim
  use D_lattice,   ONLY:a
@@ -170,7 +170,7 @@ subroutine plot_gnuplot(use_1d,use_2d,eval_only)
      real(SP):: rv(3)
      !
      rv(:)=I*a(dir,:)/fft_dim(dir)-r_hole(:)
-     projection_=dot_product(rv,a(dir,:))/v_norm(a(dir,:))*BO2ARM
+     projection_=dot_product(rv,a(dir,:))/v_norm(a(dir,:))*BO2ANG
      !
    end function
    !

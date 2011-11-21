@@ -22,7 +22,7 @@
 subroutine plot_xcrysden(use_2d)
  !
  use pars,        ONLY:SP,schlen
- use units,       ONLY:BO2ARM
+ use units,       ONLY:BO2ANG
  use LOGO,        ONLY:code_version
  use com,         ONLY:msg
  use YPP,         ONLY:nr,v2plot,ncell,v2plot2D,r_hole,plot_dim,l_free_hole,&
@@ -44,7 +44,7 @@ subroutine plot_xcrysden(use_2d)
  !the atomic cell is given in a.u. and I want
  !to write the output of xcrysden in \AA
  !
- a_angs(:,:) = a(:,:)*BO2ARM
+ a_angs(:,:) = a(:,:)*BO2ANG
  !
  !This is the output file common at both grids
  !
@@ -59,7 +59,7 @@ subroutine plot_xcrysden(use_2d)
    !
    ! write Hole position
    ! 
-   write(ch,'(i2,f10.5,f10.5,f10.5)') -1,r_hole*BO2ARM
+   write(ch,'(i2,f10.5,f10.5,f10.5)') -1,r_hole*BO2ANG
    call msg(output_string,'',ch,INDENT=0,USE_TABS=.FALSE.)
  else
    call msg(output_string,'',(/n_atoms*ncell(1)*ncell(2)*ncell(3),1/))
@@ -72,9 +72,9 @@ subroutine plot_xcrysden(use_2d)
      do i1=0,ncell(1)-1
        do i2=0,ncell(2)-1
          do i3=0,ncell(3)-1
-           rv(1)=atom_pos(1,ia,is)*BO2ARM+i1*a_angs(1,1)+i2*a_angs(2,1)+i3*a_angs(3,1)
-           rv(2)=atom_pos(2,ia,is)*BO2ARM+i1*a_angs(1,2)+i2*a_angs(2,2)+i3*a_angs(3,2)
-           rv(3)=atom_pos(3,ia,is)*BO2ARM+i1*a_angs(1,3)+i2*a_angs(2,3)+i3*a_angs(3,3)   
+           rv(1)=atom_pos(1,ia,is)*BO2ANG+i1*a_angs(1,1)+i2*a_angs(2,1)+i3*a_angs(3,1)
+           rv(2)=atom_pos(2,ia,is)*BO2ANG+i1*a_angs(1,2)+i2*a_angs(2,2)+i3*a_angs(3,2)
+           rv(3)=atom_pos(3,ia,is)*BO2ANG+i1*a_angs(1,3)+i2*a_angs(2,3)+i3*a_angs(3,3)   
            write(ch,'(i5,3f10.5)') Z_species(is),rv(:)
            call msg(output_string,'',ch,INDENT=0,USE_TABS=.FALSE.)
          enddo

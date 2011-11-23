@@ -96,7 +96,9 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    call QP_apply(dos_bands,Xen,Xk,'G',msg_fmt='s')
    !
    if (l_3D_plot) then
+#if defined _YPP_RT
      call RT_output("open el_dos")
+#endif
    else
      output_fname='el_dos'
      call of_open_close(trim(output_fname),'ot')

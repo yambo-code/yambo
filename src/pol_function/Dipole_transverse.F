@@ -222,6 +222,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          call M_by_V('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,wf(:,icfft),1,(0._SP,0._SP),rho,1)
          !
+         if (ioKB_err==0) call Dipole_kb_sum(ivfft,icfft,rho(:3),kbv)
+         if(io_Vnl_err==0) rho(1:3) = rho(1:3) + Vnl(1:3,ic,iv,ik,1)*0.5
+         !
          !=====
          ! <P>
          !=====
@@ -236,9 +239,6 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          ! DIP_iR(c,v) = i <v|r|c> = i <v|[r,H]|c>/(Ec-Ev) = i <v|i p|c>/(Ec-Ev) =
          !             = - <v | -i grad |c> / (Ec-Ev) = <v|-i grad|c>/(Ev-Ec) = P_vc/(Ev-Ec)
-         !
-         if (ioKB_err==0) call Dipole_kb_sum(ivfft,icfft,rho(:3),kbv)
-         if(io_Vnl_err==0) rho(1:3) = rho(1:3) + Vnl(1:3,ic,iv,ik,1)*0.5
          !
          rho(1:3)=rho(1:3)/Ev_m_Ec
          !

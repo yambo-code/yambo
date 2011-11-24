@@ -26,7 +26,7 @@ integer function k_the_nearest(ko_,k,n_k,be_carefull,i_err)
  !
  use com,            ONLY:error
  use pars,           ONLY:SP,zero_dfl
- use vec_operate,    ONLY:iku_v_norm,c2a
+ use vec_operate,    ONLY:iku_v_norm,c2a,k2bz
  use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:rl_sop
  implicit none
@@ -47,6 +47,7 @@ integer function k_the_nearest(ko_,k,n_k,be_carefull,i_err)
  if (.not.be_carefull) then
    do i1=1,n_k
      v=ko_-k(i1,:)
+     call k2bz(v)
      if (iku_v_norm(v)<k_distance) then
        k_distance=iku_v_norm(v)
        k_the_nearest=i1

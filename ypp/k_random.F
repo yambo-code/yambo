@@ -172,7 +172,7 @@ subroutine k_random(Xk,Xen)
  call msg('s',':: Lattice factors [a.u.]:',alat)
  call msg('s',':: K points              :',nkibz)
  call msg('s',':: Bands                 :',n_bands)
- call msg('s',':: Symmmetries           :',nsym_RIM_DB)
+ call msg('s',':: Symmetries            :',nsym_RIM_DB)
  if (Xen%nbf==Xen%nbm) then
    call msg('s',':: Gap indirect      [ev]:',gap(1)*HA2EV)
    call msg('s','::     direct        [ev]:',gap(2)*HA2EV)

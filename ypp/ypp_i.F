@@ -117,7 +117,7 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  call msg('s',':: Lattice factors [a.u.]:',alat)
  call msg('s',':: K points              :',nkibz)
  call msg('s',':: Bands                 :',n_bands)
- call msg('s',':: Symmmetries           :',nsym)
+ call msg('s',':: Symmetries            :',nsym)
  call msg('s',':: RL vectors            :',ng_vec)
  !
  ! BZ sampling index 

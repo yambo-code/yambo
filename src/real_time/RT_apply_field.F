@@ -53,7 +53,7 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
    ! in case of complex Efield puts the correct Hermitian matrix
    ! and the intraband optical matrix elements have been set to zero
    !
-   do i1=1,SC_bands(2)
+   do i1=SC_bands(1),SC_bands(2)
      H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)-real(sum(A_vec_pot(1:3)*DIP_P(1:3,i1,i1,ik,1)),SP)
    enddo
    !
@@ -81,6 +81,12 @@ subroutine RT_apply_field(ik,H_nl_sc,A_input)
    !===============
    !
    E_vec_pot=-A_input%vecpot_vel/SPEED_OF_LIGHT ! Gaussian units
+   !
+   ! Intraband terms
+   !
+   do i1=SC_bands(1),SC_bands(2)
+     H_nl_sc(i1,i1,1)=H_nl_sc(i1,i1,1)+real(cI*sum(E_vec_pot(1:3)*DIP_iR(1:3,i1,i1,ik,1)),SP)
+   enddo
    !
    do i1=SC_bands(1),SC_bands(2)
      do i2=i1+1,SC_bands(2)

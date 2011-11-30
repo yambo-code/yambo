@@ -201,7 +201,8 @@ subroutine RT_initialize(Xen)
    !
    MSG_ch="Pump"
    if (i1==i_Probe) MSG_ch="Probe"
-   call msg('r', '[RT] '//MSG_ch//' energy window        [eV]:',Efield(i1)%frequency*HA2EV)
+   call msg('r', '[RT] '//MSG_ch//' energy window/period [eV/fs]:' &
+&     ,(/Efield(i1)%frequency*HA2EV,2._SP*pi*HBAR_evfs/(Efield(i1)%frequency*HA2EV)/))
    call msg('r', '[RT] '//MSG_ch//' elemental oscillation[fs]:',EtoT(E=Efield(i1)%frequency(2)-Efield(i1)%frequency(2))/FS2AUT)
    call msg('r', '[RT] '//MSG_ch//' energy steps             :',Efield(i1)%n_frequencies)
    call msg('r', '[RT] '//MSG_ch//' electric field      [V/m]:',Efield(i1)%amplitude*AU2VMm1)

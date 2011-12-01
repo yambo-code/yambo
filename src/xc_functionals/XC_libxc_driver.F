@@ -47,7 +47,7 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
  ! XC routines arrays
  !
- real(SP) :: rho_sp(fft_size,n_spin),rspts(fft_size)
+ real(SP) :: rho_sp(fft_size,n_spin),rspts(fft_size),rho_tmp(fft_size)
  real(DP) :: tmp_rho(n_spin,fft_size)
  !
  ! note that multidimensional dvxc & vxc is allowed only in xcspol
@@ -78,7 +78,13 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
    rho_sp(:,i1)=rho_n(:)
  enddo
 #else
- call el_density(en,Xk,rho_sp,.false.)
+ call el_density(en,Xk,rho_tmp,.false.)
+ if(n_spin==1) rho_sp(:,1)=rho_tmp(:)
+ if(n_spin> 1) then
+   call spin_density(en,Xk)
+   rho_sp(:,1)=0.5*(rho_tmp(:)+two_spin_density(:,3))
+   rho_sp(:,2)=0.5*(rho_tmp(:)-two_spin_density(:,3))
+ endif
 #endif
  !
  forall(i1=1:fft_size,i2=1:n_spin)  tmp_rho(i2,i1)=rho_sp(i1,i2)*real(fft_size,DP)/real(DL_vol,DP)

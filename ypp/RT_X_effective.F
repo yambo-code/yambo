@@ -201,7 +201,7 @@ subroutine RT_X_effective(en)
    !
  enddo
  !
- if (N_pumps==1) then
+ if (N_pumps==1.or.N_pumps==0) then
    !
    if (one_P_one_W) then
      call msg('s',':: Harmonic frequencies    [eV]:',(/Harmonic_Frequency(0:,1)/)*HA2EV)
@@ -266,6 +266,8 @@ subroutine RT_X_effective(en)
  !
  if (N_pumps==1) then
    Efield_Probe%W_step=minval( abs(Harmonic_Frequency) )
+ else if (N_pumps==0) then
+   Efield_Probe%W_step=abs(Harmonic_Frequency(1,1))
  endif
  !
  ! Time Range

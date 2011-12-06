@@ -23,7 +23,7 @@ subroutine RT_fix_symmetries(E,k)
  !
  use YPP,                 ONLY:E_field,B_theta,B_psi,B_field
  use drivers,             ONLY:l_sc_run
- use pars,                ONLY:SP,DP,lchlen
+ use pars,                ONLY:IP,SP,DP,lchlen
  use com,                 ONLY:msg,warning,core_io_path,more_io_path
  use memory_m,            ONLY:mem_est
  use electrons,           ONLY:levels,E_reset,n_spin,n_sp_pol
@@ -430,6 +430,7 @@ subroutine RT_fix_symmetries(E,k)
  ! Rotating wavefunctions components
  !
  allocate(wf_nc_k_save(k_save%nibz),wf_igk_save(wf_ncx,k_save%nibz))
+ call mem_est("wf_nc_k_save wf_igk_save",(/size(wf_nc_k_save),size(wf_igk_save)/),(/IP,IP/))
  wf_nc_k_save=wf_nc_k
  wf_igk_save =wf_igk
  !
@@ -440,11 +441,14 @@ subroutine RT_fix_symmetries(E,k)
  wf_igk(1:wf_ncx,1:k_save%nibz)       = wf_igk_save(1:wf_ncx,1:k_save%nibz)
  wf_nc_k(1:k_save%nibz)               = min(ng_closed,wf_nc_k_save(1:k_save%nibz))
  !
+ deallocate(wf_igk_save,wf_nc_k_save)
+ call mem_est("wf_nc_k_save wf_igk_save")
+ !
  do i1=k_save%nibz+1,k%nibz 
    !      
    ik=kpoints_map(1,i1)
    !
-   wf_igk(1:wf_nc_k(ik),i1)=wf_igk_save(1:wf_nc_k(ik),ik)
+   wf_igk(1:wf_nc_k(ik),i1)=wf_igk(1:wf_nc_k(ik),ik)
    !
    if(any(wf_igk(1:wf_nc_k(ik),i1)==0)) then
      wf_nc_k(i1)=minloc(wf_igk(:,i1),1)-1
@@ -577,7 +581,7 @@ subroutine RT_fix_symmetries(E,k)
  !
  ! CLEAN
  !=======
- deallocate(wf_nc_k_save,wf_igk_save,kpoints_map)
+ deallocate(kpoints_map)
  call bz_samp_reset(k_save)
  call E_reset(E_expanded)
  call WF_free()

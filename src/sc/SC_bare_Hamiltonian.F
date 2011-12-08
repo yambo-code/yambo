@@ -52,7 +52,7 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  !
  ! Note that G_lesser here is the non-interacting one (occupations on the diagonal) only
  !
- call el_density(G_lesser,Xk,rho_n,1,.false.)
+ call el_density(G_lesser,E,Xk,rho_n,1,.false.)
 #else
  call el_density(E,Xk,rho_n,.false.)
  V_xc_sc=V_xc 

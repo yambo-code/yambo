@@ -59,10 +59,10 @@ subroutine RT_databases(en,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  if (present(G_lesser_only)) then
    if (G_lesser_only) then
      !
-     allocate(G_lesser(SC_bands(2),SC_bands(2),nkibz,1))
+     allocate(G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),nkibz,1))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
      !
-     allocate(G_lesser_reference(SC_bands(2),SC_bands(2),nkibz))
+     allocate(G_lesser_reference(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),nkibz))
      call mem_est("Gf_l_ref",(/size(G_lesser_reference)/),(/2*SP/))
      !
      call io_control(ACTION=OP_RD,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response

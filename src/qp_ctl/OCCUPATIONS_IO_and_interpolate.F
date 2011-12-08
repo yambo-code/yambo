@@ -62,7 +62,11 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    !
    ! (a) Write
    !
-   do ib=1,SC_bands(2)
+   do ib=1,SC_bands(1)-1
+     RT_occupations(ib,:)=E%f(ib,:,1)
+   enddo
+   !
+   do ib=SC_bands(1),SC_bands(2)
      RT_occupations(ib,:)=-real((0._SP,1._SP)*G_lesser(ib,ib,:,MEM_index(NE_i_time)))
    enddo
    ! 

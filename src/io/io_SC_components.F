@@ -26,7 +26,7 @@ integer function io_SC_components(what,E_sc,ID)
  use pars,           ONLY:SP,lchlen
  use R_lattice,      ONLY:nkibz
  use stderr,         ONLY:intc
- use SC,             ONLY:SC_bands,rho_convergence,E_convergence,&
+ use SC,             ONLY:SC_bands,rho_convergence,E_convergence,SC_nbands,&
 &                         SC_R,V_xc_sc,local_V,H_nl_sc,RT_k,RT_nk,RT_occupations,&
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
@@ -325,7 +325,7 @@ integer function io_SC_components(what,E_sc,ID)
    !
    if (io_SC_components/=0) goto 1  
    !
-   allocate(TMP_matrix(SC_bands(2),SC_bands(2),2))
+   allocate(TMP_matrix(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),2))
    !
    i_spin=1
    !
@@ -334,21 +334,21 @@ integer function io_SC_components(what,E_sc,ID)
      if (i_time_range(1)<=0) i_time_range(1)=1
      do i_time=i_time_range(1),i_time_range(2)
        call io_bulk(ID,VAR="G_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//"_ITIME"//trim(intc(i_time)),&
-&           VAR_SZ=(/SC_bands(2),SC_bands(2),2/))
+&           VAR_SZ=(/SC_nbands,SC_nbands,2/))
        if (write_is_on(ID)) call mat_c2r(G_lesser(:,:,ik,MEM_index(i_time)),TMP_matrix)
        call io_bulk(ID,R3=TMP_matrix)
        if (read_is_on(ID))  call mat_r2c(TMP_matrix,G_lesser(:,:,ik,MEM_index(i_time)))
      enddo
    else
      call io_bulk(ID,VAR="G_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
-&         VAR_SZ=(/SC_bands(2),SC_bands(2),2/))
+&         VAR_SZ=(/SC_nbands,SC_nbands,2/))
      if (write_is_on(ID)) call mat_c2r(G_lesser(:,:,ik,MEM_index(NE_i_time)),TMP_matrix)
      call io_bulk(ID,R3=TMP_matrix)
      if (read_is_on(ID))  call mat_r2c(TMP_matrix,G_lesser(:,:,ik,MEM_index(NE_i_time)))
    endif
    !
    call io_bulk(ID,VAR="G_lesser_ref_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
-&       VAR_SZ=(/SC_bands(2),SC_bands(2),2/))
+&       VAR_SZ=(/SC_nbands,SC_nbands,2/))
    if (write_is_on(ID)) call mat_c2r(G_lesser_reference(:,:,ik),TMP_matrix)
    call io_bulk(ID,R3=TMP_matrix)
    if (read_is_on(ID))  call mat_r2c(TMP_matrix,G_lesser_reference(:,:,ik))
@@ -403,7 +403,7 @@ integer function io_SC_components(what,E_sc,ID)
        call io_bulk(ID,R2=J_and_P_cache)
        !
        call io_disconnect(ID)
-       !
+       !                       
      endif
      !
      if(read_is_on(ID)) then

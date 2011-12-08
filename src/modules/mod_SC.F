@@ -25,6 +25,7 @@ module SC
  implicit none
  !
  integer           :: SC_bands(2)
+ integer           :: SC_nbands
  integer           :: it_now
  integer           :: SC_iterations
  integer           :: SC_fft_size
@@ -133,6 +134,8 @@ module SC
      implicit none
      !
      type(levels) :: E
+     !
+     SC_nbands=SC_bands(2)-SC_bands(1)+1
      !
      ! Build-up QP table
      !

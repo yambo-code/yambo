@@ -188,13 +188,13 @@ module real_time
      use electrons,  ONLY:n_sp_pol,levels
      use FFT_m,      ONLY:fft_size
      type(bz_samp), intent(in) :: k
-     complex(SP),   intent(in) :: G(SC_bands(2),SC_bands(2),QP_nk)
+     complex(SP),   intent(in) :: G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
+     type(levels),  intent(in) :: en
      complex(SP),  intent(out) :: VALUE
      complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol)
      complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
      real(SP),        optional, intent(in) :: O_REAL(fft_size,n_sp_pol)
      logical,         optional, intent(in) :: TRANS
-     type(levels),    optional, intent(in) :: en
    end subroutine RT_average_operator
    !
    subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
@@ -205,7 +205,7 @@ module real_time
      use electrons,  ONLY:levels,n_sp_pol
      use X_m,        ONLY:X_t
      type(X_t),      intent(inout)        :: X
-     complex(SP),    intent(inout)        :: G_input(SC_bands(2),SC_bands(2),QP_nk)
+     complex(SP),    intent(inout)        :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
      complex(SP),    intent(in)           :: SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol)
      type(bz_samp),  intent(in)           :: k,Xk
      type(levels),   intent(in)           :: Xen
@@ -268,26 +268,26 @@ module real_time
      allocate(E_xc(fft_size))
      call mem_est('Exc',(/fft_size/),(/SP/))
      !
-     allocate(G_lesser(SC_bands(2),SC_bands(2),QP_nk,NE_MEM_steps))
+     allocate(G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,NE_MEM_steps))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
      !
-     allocate(RT_occupations(SC_bands(2),QP_nk))
+     allocate(RT_occupations(1:SC_bands(2),QP_nk))
      call mem_est("RT_occupations",(/size(RT_occupations)/),(/SP/))
      !
      if(l_RT_needs_XC0) then
        !
-       allocate(XC0_and_HARTREE0(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
+       allocate(XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),QP_nk,n_sp_pol))
        call mem_est("XC0_and_HARTREE0",(/size(XC0_and_HARTREE0)/),(/2*SP/))
        !
      endif
      !
-     allocate(SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
+     allocate(SC_R(1:SC_bands(2),1:SC_bands(2),QP_nk,n_sp_pol))
      call mem_est("SC_R",(/size(SC_R)/),(/2*SP/))
      !
-     allocate(I1_lesser(SC_bands(2),SC_bands(2),QP_nk))
+     allocate(I1_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk))
      call mem_est("I1_lesser",(/size(I1_lesser)/),(/2*SP/))
      !
-     allocate(I2_lesser(SC_bands(2),SC_bands(2),QP_nk))
+     allocate(I2_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk))
      call mem_est("I2_lesser",(/size(I2_lesser)/),(/2*SP/))
 #if  defined _ELPH   
      if (l_ph_corr) then
@@ -297,7 +297,7 @@ module real_time
      endif
 #endif
      !
-     allocate(G_lesser_reference(SC_bands(2),SC_bands(2),QP_nk))
+     allocate(G_lesser_reference(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk))
      call mem_est("Gf_l_ref",(/size(G_lesser_reference)/),(/2*SP/))
      !
      allocate(rho_reference(fft_size))
@@ -310,12 +310,12 @@ module real_time
      !
      ! Reference energies
      !
-     allocate(E_bare(SC_bands(2),QP_nk,n_sp_pol))
+     allocate(E_bare(1:SC_bands(2),QP_nk,n_sp_pol))
      call mem_est("E_bare",(/size(E_bare)/))
      E_bare=en%E(:SC_bands(2),:,:)
      !
      if(l_RT_diagonalize) then
-       allocate(Occ_natural_orb(SC_bands(2),QP_nk))
+       allocate(Occ_natural_orb(1:SC_bands(2),QP_nk))
        call mem_est("Occ_natural",(/size(Occ_natural_orb)/))
      endif
      !

@@ -29,7 +29,7 @@ subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
  use units,      ONLY:HA2EV 
  use com,        ONLY:msg
  use stderr,     ONLY:set_real_printed_length
- use SC,         ONLY:SC_bands,E_bare,H_rotate
+ use SC,         ONLY:SC_bands,E_bare,H_rotate,SC_nbands
  use R_lattice,  ONLY:bz_samp
  use QP_m,       ONLY:QP_nk
  use electrons,  ONLY:levels,n_sp_pol
@@ -41,7 +41,7 @@ subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
  implicit none
  !
  type(X_t),      intent(inout)        :: X
- complex(SP),    intent(inout)        :: G_input(SC_bands(2),SC_bands(2),QP_nk)
+ complex(SP),    intent(inout)        :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
  complex(SP) ,   intent(in)           :: SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol)
  type(bz_samp),  intent(in)           :: k,Xk
  integer,        intent(in)           :: it
@@ -67,9 +67,13 @@ subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
      !
      ! natural orbitals
      !
-     do ib=1,SC_bands(2)
-       call M_by_V('N',SC_bands(2),SC_bands(2),(0._SP,-1._SP),G_input(:,:,ik),SC_bands(2),SC_R(:,ib,ik,1),1,(0._SP,0._SP),tmp_v,1)
-       Occ_natural_orb(ib,ik)=real(Vstar_dot_V(SC_bands(2),SC_R(:,ib,ik,1),tmp_v))
+     do ib=1,SC_bands(1)-1
+       Occ_natural_orb(ib,ik)=cmplx(2._SP,0._SP)
+     enddo
+     do ib=SC_bands(1),SC_bands(2)
+       call M_by_V('N',SC_nbands,SC_nbands,(0._SP,-1._SP),G_input(:,:,ik),SC_nbands,SC_R(SC_bands(1):SC_bands(2),ib,ik,1), &
+&                  1,(0._SP,0._SP),tmp_v,1)
+       Occ_natural_orb(ib,ik)=real(Vstar_dot_V(SC_nbands,SC_R(SC_bands(1):SC_bands(2),ib,ik,1),tmp_v))
      enddo
      !
    enddo
@@ -104,18 +108,18 @@ subroutine RT_update(G_input,SC_R,it,Xen,k,Xk,X,up_Gref,up_DIP,an_QP)
    !
    do ik=1,Xen%nk
      !
-     forall(ib=1:Xen%nbm)
+     forall(ib=SC_bands(1):SC_bands(2))
        G_input(ib,ib,ik)=(0._SP,1._SP)*Xen%f(ib,ik,1)
      end forall   
      !
-     call H_rotate(SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),G_input(1:SC_bands(2),1:SC_bands(2),ik),SC_bands(2),-1)
+     call H_rotate(SC_R(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1),G_input(:,:,ik),SC_nbands,-1)
     !
   enddo
   !
   ! Update the full density and the one between SC_lw_band:SC_bands(2)
   !
-  if(allocated(rho_reference)) call el_density(G_input,Xk,rho_reference,SC_bands(1),.false.)  
-  if(allocated(full_rho))      call el_density(G_input,Xk,full_rho     ,1         ,.false.)  
+  if(allocated(rho_reference)) call el_density(G_input,Xen,Xk,rho_reference,SC_bands(1),.false.)  
+  if(allocated(full_rho))      call el_density(G_input,Xen,Xk,full_rho     ,1         ,.false.)  
   !
  endif 
  !

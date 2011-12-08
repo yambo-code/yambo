@@ -22,7 +22,7 @@
 subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS)
  !
  use pars,           ONLY:SP,cI
- use SC,             ONLY:SC_bands
+ use SC,             ONLY:SC_bands,SC_nbands
  use R_lattice,      ONLY:bz_samp 
  use QP_m,           ONLY:QP_nk,QP_n_states
  use electrons,      ONLY:n_sp_pol,levels,BZ_RIM_table,BZ_RIM_nkpt,BZ_RIM_nbands
@@ -37,7 +37,7 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS)
  implicit none
  !
  type(bz_samp), intent(in) :: k
- complex(SP),   intent(in) :: G(SC_bands(2),SC_bands(2),QP_nk)
+ complex(SP),   intent(in) :: G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
  complex(SP),  intent(out) :: VALUE
  complex(SP),     optional, intent(in) :: O_MATRIX(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol)
  complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
@@ -47,11 +47,11 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS)
  !
  ! Work Space
  !
- integer     :: i1,i2,ik,SC_bands2
+ integer     :: i1,ik,SC_bands2
  complex(SP) :: Hk(SC_bands(2),SC_bands(2),n_sp_pol)
  type(pp_indexes) :: px
  !
- SC_bands2=SC_bands(2)**2
+ SC_bands2=SC_nbands**2
  VALUE=(0._SP,0._SP)
  !
  ! If not operator are present the subroutine returns the trace of the Green Function
@@ -60,7 +60,10 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS)
    !
    ! Total number of electrons
    !
-   do i1=1,SC_bands(2)
+   do i1=1,SC_bands(1)-1
+     VALUE=VALUE+sum(en%f(i1,:,1)*k%weights(:))
+   enddo
+   do i1=SC_bands(1),SC_bands(2)
      VALUE=VALUE-cI*sum(G(i1,i1,:)*k%weights(:))
    enddo
    !
@@ -74,8 +77,15 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS)
  do ik=1,QP_nk
    ! 
    if (.not.px%element_1D(ik)) cycle   
+   !
    call make_Hk_matrix(ik)
-   VALUE=VALUE-cI*Vstar_dot_V(SC_bands2,Hk(:,:,1),G(:,:,ik))*k%weights(ik)
+   !
+   do i1=1,SC_bands(1)-1
+     VALUE=VALUE+conjg(Hk(i1,i1,1))*en%f(i1,ik,1)*k%weights(ik)
+   enddo
+   !
+   VALUE=VALUE-cI*Vstar_dot_V(SC_bands2,Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1), & 
+&                                        G(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik))*k%weights(ik)
    !
  enddo
  !

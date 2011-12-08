@@ -41,7 +41,7 @@ subroutine RT_current_AND_polarization(Xk,Xen,G_input,A_input)
  implicit none           
  type(bz_samp),     intent(in) :: Xk
  type(levels),      intent(in) :: Xen
- complex(SP),       intent(in) :: G_input(SC_bands(2),SC_bands(2),QP_nk)
+ complex(SP),       intent(in) :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
  type(gauge_field), intent(in) :: A_input
  !
  ! Work Space

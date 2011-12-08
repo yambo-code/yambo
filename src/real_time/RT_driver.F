@@ -213,7 +213,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q,Xw)
    !
    ! Simmetrization
    !
-   forall( ib=1:SC_bands(2) )  G_lesser(ib,ib,:,it_mem)=(0._SP,1._SP)*aimag(G_lesser(ib,ib,:,it_mem))
+   forall( ib=SC_bands(1):SC_bands(2) )  G_lesser(ib,ib,:,it_mem)=(0._SP,1._SP)*aimag(G_lesser(ib,ib,:,it_mem))
    !
    ! End dynamics ?
    !===============
@@ -238,7 +238,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q,Xw)
    ! Now print Energetics, current and (eventually) potential 
    !=========================================================
    !
-   call RT_Observables(Xen,k,on_the_fly_operators)
+   call RT_Observables(Xen,k,G_lesser(:,:,:,it_mem),on_the_fly_operators)
    !
    call RT_output('dyn',real(on_the_fly_operators),TIME=NE_time/FS2AUT)
    call RT_output('cur pol',TIME=NE_time/FS2AUT)

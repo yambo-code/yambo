@@ -50,7 +50,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,       &
 &                         rho_convergence,H_rotate,local_V,V_hartree_sc,&
 &                         E_bare,V_xc_sc,rho_n,Ho,SC_xc_functional,&
-&                         RT_nk,RT_k,RT_occupations
+&                         RT_nk,RT_k,RT_occupations,SC_nbands
  use IO_m,           ONLY:OP_RD,OP_RD_CL,RD_CL_IF_END,io_control,REP,VERIFY,NONE
  use X_m,            ONLY:X_t
  use global_XC,      ONLY:WF_kind,WF_xc_functional
@@ -86,7 +86,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  RT_P               =(0._SP,0._SP)
  RT_ind_J           =(0._SP,0._SP)
  ! 
- forall(i1=1:SC_bands(2),ik=1:Xen%nk)
+ forall(i1=SC_bands(1):SC_bands(2),ik=1:Xen%nk)
    G_lesser(i1,i1,ik,1) =(0._SP,1._SP)*Xen%f(i1,ik,1)
    RT_occupations(i1,ik)=Xen%f(i1,ik,1)
  end forall
@@ -160,10 +160,10 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    ! G_lesser(i1,i1,ik)=(0.,1)*en%f(i1,ik)
    !
    do ik=1,QP_nk
-     call H_rotate(SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),G_lesser(1:SC_bands(2),1:SC_bands(2),ik,1),SC_bands(2),-1)
+     call H_rotate(SC_R(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1),G_lesser(:,:,ik,1),SC_nbands,-1)
    enddo
    !
-   if (Hfrozen) call el_density(G_lesser(:,:,:,1),k,rho_n,1,.false.)
+   if (Hfrozen) call el_density(G_lesser(:,:,:,1),Xen,k,rho_n,1,.false.)
    if (Hfrozen) call V_Hartree(rho_n,V_hartree_sc)
    !
    V_xc_sc=(0._SP)
@@ -186,14 +186,16 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
        elseif(.not.l_NE_simulate_Irredux) then
          call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID(3))
          io_V=io_SC_components('V',Xen,ID(3))
-         XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol)=H_nl_sc(1:SC_bands(2),1:SC_bands(2),1:n_sp_pol)
+         XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1:n_sp_pol)=  &
+&                         H_nl_sc(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),1:n_sp_pol)
        endif
        !
        ! If IP or Irreduxible the hartree term is fixed and stored in XC0_and_HARTREE0
        ! if I simulate BSE I have to remove the self-energy sigma(G_0)
        !
        if(l_NE_simulate_IP.or.l_NE_simulate_Irredux.or.l_NE_simulate_BSE) &
-&         call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),ik,1:n_sp_pol),wf) 
+&         call V_real_space_to_H(ik,V_hartree_sc,XC0_and_HARTREE0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2), &
+&                                ik,1:n_sp_pol),wf) 
      enddo
      !
    endif
@@ -247,11 +249,11 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    ! in sc_bare_Hamiltonian I need to recalculate it here when SC_lw_band>1
    ! as it it is also used in XC_potential_driver
    ! 
-   call el_density(G_lesser(:,:,:,1),Xk,rho_n,SC_bands(1),.false.)
+   call el_density(G_lesser(:,:,:,1),Xen,Xk,rho_n,SC_bands(1),.false.)
    rho_reference=rho_n
    !
    if (allocated(full_rho)) then
-     call el_density(G_lesser(:,:,:,1),Xk,rho_n,1,.false.)
+     call el_density(G_lesser(:,:,:,1),Xen,Xk,rho_n,1,.false.)
      full_rho=rho_n
    endif
    !
@@ -332,7 +334,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    ! If I'm doing the response to an external field I need rho_reference and G_lesser_reference
    !
    if(it_start>Thermal_steps.and..not.l_NE_simulate_IP) & 
-&     call el_density(G_lesser_reference,Xk,rho_reference,SC_bands(1),.false.)
+&     call el_density(G_lesser_reference,Xen,Xk,rho_reference,SC_bands(1),.false.)
    !
  endif
  !

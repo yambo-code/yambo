@@ -25,6 +25,7 @@ integer function pert_inversion(N,W,C,f,V,M,use_full_inv)
  !
  use pars,           ONLY:SP
  use matrix_operate, ONLY:mat_dia_inv,USE_LK,INV
+ use wrapper,        ONLY:Vstar_dot_V,M_by_V
  !
  implicit none
  integer      ::N
@@ -39,20 +40,11 @@ integer function pert_inversion(N,W,C,f,V,M,use_full_inv)
  complex(SP), allocatable ::wk(:,:)
  integer     ::it,i1,i2
  complex(SP) ::A_nm1(N),A_n(N),delta_f,fo
-#if defined _DOUBLE
- complex(SP):: zdotc
-#else
- complex(SP):: cdotc
-#endif
  !
  pert_inversion=0
  !
  A_nm1(:)=V(:)*W(:)
-#if defined _DOUBLE
- fo=C*zdotc(N,W,1,A_nm1,1)
-#else
- fo=C*cdotc(N,W,1,A_nm1,1)
-#endif
+ fo=C*Vstar_dot_V(N,W,A_nm1)
  !
  if (abs(f)==0.) f=fo
  !
@@ -64,17 +56,9 @@ integer function pert_inversion(N,W,C,f,V,M,use_full_inv)
    !
    do while (it<=max_it) 
      !
-#if defined _DOUBLE
-     call zgemv('n',N,N,(1._SP,0._SP),M,N,A_nm1,1,(0._SP,0._SP),A_n,1)
-#else
-     call cgemv('n',N,N,(1._SP,0._SP),M,N,A_nm1,1,(0._SP,0._SP),A_n,1)
-#endif
+     call M_by_V('n',N,M,A_nm1,A_n)
      A_n(:)=V(:)*A_n(:)
-#if defined _DOUBLE
-     delta_f=C*zdotc(N,W,1,A_n,1)
-#else
-     delta_f=C*cdotc(N,W,1,A_n,1)
-#endif
+     delta_f=C*Vstar_dot_V(N,W,A_n)
      !
      f=f+delta_f
      !
@@ -101,16 +85,9 @@ integer function pert_inversion(N,W,C,f,V,M,use_full_inv)
      enddo
    enddo
    call mat_dia_inv(INV,USE_LK,wk)
-#if defined _DOUBLE
-   call zgemv('n',N,N,(1._SP,0._SP),wk,N,W,1,(0._SP,0._SP),A_n,1)
-#else
-   call cgemv('n',N,N,(1._SP,0._SP),wk,N,W,1,(0._SP,0._SP),A_n,1)
-#endif
-#if defined _DOUBLE
-   f=C*zdotc(N,W,1,A_n,1)
-#else
-   f=C*cdotc(N,W,1,A_n,1)
-#endif
+   call M_by_V('n',N,wk,W,A_n)
+   f=C*Vstar_dot_V(N,W,A_n)
+   !
    deallocate(wk)
    !
  endif

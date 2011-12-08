@@ -20,7 +20,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 #if defined _RT
-subroutine el_density(G_lesser,Xk,rho,lowest_band,force_si)
+subroutine el_density(G_lesser,en,Xk,rho,lowest_band,force_si)
 #else
 subroutine el_density(en,Xk,rho,force_si)
 #endif
@@ -63,11 +63,10 @@ subroutine el_density(en,Xk,rho,force_si)
   implicit none
   type(bz_samp)::Xk
 #if defined _RT
-  complex(SP), intent(in), optional :: G_lesser(SC_bands(2),SC_bands(2),Xk%nibz)
+  complex(SP), intent(in), optional :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),Xk%nibz)
   integer,     intent(in) :: lowest_band
-#else
-  type(levels) ::en       
 #endif
+  type(levels) ::en       
   real(SP)     ::rho(fft_size)
   logical,     intent(in) :: force_si
   !
@@ -127,7 +126,11 @@ subroutine el_density(en,Xk,rho,force_si)
         endif
         !
 #if defined _RT
-        f_occ=real(-(0._SP,1._SP)*G_lesser(i1,i1,i2),SP)
+        if(i1<SC_bands(1)) then
+          f_occ=en%f(i1,i2,1)
+        else
+          f_occ=real(-(0._SP,1._SP)*G_lesser(i1,i1,i2),SP)
+        endif
 #else
         f_occ=en%f(i1,i2,1)
         !
@@ -161,6 +164,7 @@ subroutine el_density(en,Xk,rho,force_si)
       !
       do i2=i1+1,SC_bands(2)
         !      
+        if(i1<SC_bands(1).or.i2<SC_bands(1)) cycle
         !
         ifft=wf_state(i1,ik,1)
         ifft2=wf_state(i2,ik,1)

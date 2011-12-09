@@ -12,5 +12,5 @@ objs = RT_initialize.o RT_start_and_restart.o RT_update.o \
        RT_Field_Commensurable_Frequencies.o \
        RT_generalized_KBA.o RT_G_retarded.o \
        RT_Rabi_Function.o DephMatrix_setup.o RT_Fluence.o \
-       RT_scale_DIP_by_QP.o $(ELPH_objs)
+       $(ELPH_objs)
 #endif

@@ -97,15 +97,23 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS)
    subroutine make_Hk_matrix(ik)
      implicit none
      integer, intent(in) :: ik
+     integer :: i1
      !
      Hk=(0._SP,0._SP)
      !
      if(present(O_MATRIX)) then
        if(present(TRANS)) then 
-          forall(i1=1:n_sp_pol) Hk(1:SC_bands(2),1:SC_bands(2),i1)=transpose(O_MATRIX(1:SC_bands(2),1:SC_bands(2),ik,i1))
+          forall(i1=1:n_sp_pol) Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),i1)= &
+&                                 transpose(O_MATRIX(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,i1))
        else
-          forall(i1=1:n_sp_pol) Hk(1:SC_bands(2),1:SC_bands(2),i1)=O_MATRIX(1:SC_bands(2),1:SC_bands(2),ik,i1)
+          forall(i1=1:n_sp_pol) Hk(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),i1)= &
+&                                 O_MATRIX(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,i1)
        endif
+       !
+       do i1=1,SC_bands(1)-1
+         Hk(i1,i1,1:n_sp_pol)=O_MATRIX(i1,i1,ik,1:n_sp_pol)       
+       enddo
+       !
      endif
      !
      if(present(O_QP))     call V_qp_basis_to_H(ik,O_QP,Hk)

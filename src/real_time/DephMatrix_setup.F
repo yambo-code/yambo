@@ -36,7 +36,7 @@ subroutine DephMatrix_setup()
  !
  integer :: dm_rng_lines,ik,ib(2),i1
  real(SP):: rcheck
- real, allocatable :: DephM_r_limits(:,:)
+ real(SP), allocatable :: DephM_r_limits(:,:)
  !
  ! %DephMatrix fields
  !

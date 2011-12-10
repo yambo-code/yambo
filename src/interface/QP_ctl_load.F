@@ -32,9 +32,6 @@ subroutine QP_ctl_load(defs,i_type)
  use it_m,          ONLY:it,initmode,initdefs,V_qp,V_real_time
  use QP_m,          ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_Wv,&
 &                        QP_ctl_Wc,QP_ctl_Z,OCC_ctl
-#if defined _RT
- use QP_m,          ONLY:QP_ctl_scale_dip
-#endif
  !
  implicit none
  integer, intent(in) :: i_type

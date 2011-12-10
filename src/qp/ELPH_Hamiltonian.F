@@ -245,7 +245,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
      residual= abs(elph_Mat(ib-elph_Ham_bands(1)+1,iH))**2.
      if (residual>1.E-2) then
        if (residual>max_residual) max_residual=residual
-       call msg('o Ham','#',(/real(iH),elph_E(iH)*HA2EV,residual/),INDENT=0,USE_TABS=.true.)
+       call msg('o Ham','#',(/real(iH,SP),elph_E(iH)*HA2EV,residual/),INDENT=0,USE_TABS=.true.)
        write (100) iH,residual
        top_residual(iH)=.TRUE.
      endif

@@ -86,6 +86,7 @@ subroutine RT_X_effective(en)
  allocate(Probe_Frequency(N_probe_frequencies),Harmonic_Frequency(0:X_order,N_probe_frequencies))
  !
  X_effective=(0._SP,0._SP)
+ X_eff_err  =(0._SP,0._SP)
  !
  ! Pump only
  !===========
@@ -327,6 +328,9 @@ subroutine RT_X_effective(en)
      call live_timing(steps=1) 
      !
    enddo
+   !
+   call live_timing() 
+   !
  enddo
  !
  if (dump_dP) then

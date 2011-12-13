@@ -1,4 +1,5 @@
 module pw_wfc_module
+use pars,        ONLY:SP
 use pw_basis_module
 implicit none
 private
@@ -16,7 +17,7 @@ public :: pw_wfc,           &
 type pw_wfc
   type(pw_basis), pointer :: basis
   integer                 :: npw
-  complex,        pointer :: val(:)
+  complex(SP),    pointer :: val(:)
 ! This object contains a wavefunction in reciprocal space
 ! basis :: pointer to the associated basis grid
 ! npw   :: number of plane waves; redundant (it is size(%val))

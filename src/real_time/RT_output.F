@@ -151,7 +151,10 @@ subroutine RT_output(what,VALUEs,TIME,E)
    n_headings(next_file)=3
    headings(next_file,1)="E [eV]"
    headings(next_file,2:3)=(/'X/Im','X/Re'/)
-   if (i_order.ne.1) headings(next_file,2:3)=(/'X/Im[cm/statV]','X/Re[cm/statV]'/)
+   if (i_order.ne.1) then
+      n_headings(next_file)=5
+      headings(next_file,2:5)=(/'X/Im[cm/statV]','X/Re[cm/statV]','err(X/Im)','err(X/Re)'/)
+   endif
    next_file=next_file+1
    !
    if (initialize) file_name(next_file)=trim(append_ch)//'dP_W_order_'//trim(intc(i_order))
@@ -249,6 +252,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
 &         'YPP-dP_W_order_0','YPP-dP_W_order_1','YPP-dP_W_order_2','YPP-dP_W_order_3','YPP-dP_W_order_4',&
 &         'YPP-dP_W_order_5','YPP-dP_W_order_6','YPP-dP_W_order_7','YPP-dP_W_order_8','YPP-dP_W_order_9',&
 &         'YPP-Polarization_W')
+       if(.not.present(VALUES)) cycle
        data_to_dump(2:n_headings(i_f)) = VALUES(1:n_headings(i_f)-1)
      case('YPP-X_effective','YPP-el_dos')
        data_to_dump(1:2)=(/Time,E/)

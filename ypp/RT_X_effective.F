@@ -44,12 +44,13 @@ subroutine RT_X_effective(en)
  integer           :: i_f,i_fp,f_indx(max_n_of_paths),i_order,min_X_order,i_c,i_t,i_conv,&
 &                     i_p,n_periods
  real(SP)          :: Pump_Frequency(1),Unit_of_Measure
- complex(SP)       :: running_X(0:X_order,3)
+ complex(SP)       :: running_X(0:X_order,3),runn_err(0:X_order,3)
  logical           :: Probe_consistency_error,CONVERGENCE_is_reached,Iterative_analysis,dump_dP,&
 &                     one_P_many_W,many_P_one_W,one_P_one_W
  real(SP),    allocatable    :: RT_P_probe(:,:,:),RT_P_pump(:,:),Probe_Frequency(:),&
 &                               Harmonic_Frequency(:,:),RT_P_save(:,:,:)
- complex(SP), allocatable    :: X_effective(:,:,:),Susceptibility(:,:)
+ complex(SP), allocatable    :: X_effective(:,:,:),Susceptibility(:,:,:)
+ complex(SP), allocatable    :: X_eff_err(:,:,:),Susc_err(:,:,:)
  type(ext_field)   :: Efield_probe
  real(SP),parameter:: ZERO=1.E-15_SP
  !
@@ -79,7 +80,8 @@ subroutine RT_X_effective(en)
  N_probe_frequencies=max(N_probes,N_probe_frequencies) 
  !
  allocate(RT_P_probe(NE_steps,N_probes,3),RT_P_pump(NE_steps,3),X_effective(0:X_order,N_probe_frequencies,3))
- allocate(Susceptibility(0:X_order,N_probe_frequencies))
+ allocate(Susceptibility(0:X_order,N_probe_frequencies,3),Susc_err(0:X_order,N_probe_frequencies,3), &
+&         X_eff_err(0:X_order,N_probe_frequencies,3))
  if (dump_dP) allocate(RT_P_save(NE_steps,N_probes,3))
  allocate(Probe_Frequency(N_probe_frequencies),Harmonic_Frequency(0:X_order,N_probe_frequencies))
  !
@@ -300,6 +302,7 @@ subroutine RT_X_effective(en)
      CONVERGENCE_is_reached=.FALSE.
      i_conv   =0
      running_X=(0.,0.)
+     runn_err =(0.,0.)
      !
      do while (.not.CONVERGENCE_is_reached)
        !
@@ -307,13 +310,14 @@ subroutine RT_X_effective(en)
        !
        do i_c=1,3
          call RT_coefficients_Fourier(NE_steps,RT_P_probe(:,i_p,i_c),1,(/Harmonic_Frequency(i_order,i_f)/),&
-&                                     running_X(i_order,i_c),Efield_Probe%W_step)
+&                                     running_X(i_order,i_c),runn_err(i_order,i_c),Efield_Probe%W_step)
        enddo
        !
        call RT_split_Polarization(i_order+1,NE_steps,Harmonic_Frequency(0:i_order,i_f),&
 &                                 running_X(:i_order,:),RT_P_probe(:,i_p,:),"subtract")
        !
        X_effective(i_order,i_f,:)=X_effective(i_order,i_f,:)+running_X(i_order,:)
+       X_eff_err(i_order,i_f,:)  =X_eff_err(i_order,i_f,:)+runn_err(i_order,:)
        !
        CONVERGENCE_is_reached=all((/abs(running_X(i_order,1))<ZERO,abs(running_X(i_order,2))<ZERO,&
 &                                  abs(running_X(i_order,3)) <ZERO/)).or.i_conv==9.or..not.Iterative_analysis
@@ -337,8 +341,8 @@ subroutine RT_X_effective(en)
      !
      if (N_pumps==0) X_effective(i_order,i_f,:)=4.*pi*X_effective(i_order,i_f,:)
      !
-     Susceptibility(i_order,i_f)=dot_product( Efield_Probe%versor(:),X_effective(i_order,i_f,:) )*&
-&                                Divide_by_Field(Efield_Probe,i_order)
+     Susceptibility(i_order,i_f,:)=X_effective(i_order,i_f,:)*Divide_by_Field(Efield_Probe,i_order)
+     Susc_err(i_order,i_f,:)      =X_eff_err(i_order,i_f,:)*  Divide_by_Field(Efield_Probe,i_order)
      !
    enddo
    !
@@ -371,25 +375,35 @@ subroutine RT_X_effective(en)
        ! Note that the X are plotted as a function of the DETUNING=W_probe-W_pump
        !
        call RT_output("open "//trim(X_file_name) )
+       call RT_output(trim(X_file_name))
        !
-       do i_fp=1,N_probe_frequencies
+       do i_c=1,3
          !
-         i_f=f_indx(i_fp)
+         call msg('o '//trim(X_file_name),'#')
+         call msg('o '//trim(X_file_name),'#',' Direction '//intc(i_c),INDENT=0)
+         call msg('o '//trim(X_file_name),'#')
          !
-         Unit_of_Measure = 1._SP
-         !
-         if (N_pumps==0) then
-           if (i_order==0) Unit_of_Measure = SVCMm12VMm1/AU2VMm1
-           if (i_order> 1) Unit_of_Measure = (SVCMm12VMm1/AU2VMm1)**(i_order-1)  
-         else if (N_pumps==1) then
-           if (i_order> 1) Unit_of_Measure = (SVCMm12VMm1/AU2VMm1)**(i_order+1)  
-         endif
-         !
-         call RT_output(trim(X_file_name),VALUEs=(/aimag(Susceptibility(i_order,i_f))*Unit_of_Measure,&
-&                                                  real( Susceptibility(i_order,i_f))*Unit_of_Measure/),&
+         do i_fp=1,N_probe_frequencies
+           !
+           i_f=f_indx(i_fp)
+           !
+           Unit_of_Measure = 1._SP
+           !
+           if (N_pumps==0) then
+             if (i_order==0) Unit_of_Measure = SVCMm12VMm1/AU2VMm1
+             if (i_order> 1) Unit_of_Measure = (SVCMm12VMm1/AU2VMm1)**(i_order-1)  
+           else if (N_pumps==1) then
+             if (i_order> 1) Unit_of_Measure = (SVCMm12VMm1/AU2VMm1)**(i_order+1)  
+           endif
+             !
+             call RT_output(trim(X_file_name),VALUEs=(/aimag(Susceptibility(i_order,i_f,i_c))*Unit_of_Measure,&
+&                                                  real( Susceptibility(i_order,i_f,i_c))*Unit_of_Measure,&
+&                                                  abs(aimag(Susc_err(i_order,i_f,i_c))*Unit_of_Measure),&
+&                                                  abs(real( Susc_err(i_order,i_f,i_c))*Unit_of_Measure)/),&
 &                                                  E=Probe_Frequency(i_f)*HA2EV)
-         !
-       enddo
+           !
+         enddo
+       enddo 
        !
        call RT_output("close "//trim(X_file_name))
        !

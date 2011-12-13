@@ -153,7 +153,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
    headings(next_file,2:3)=(/'X/Im','X/Re'/)
    if (i_order.ne.1) then
       n_headings(next_file)=5
-      headings(next_file,2:5)=(/'X/Im[cm/statV]','X/Re[cm/statV]','err(X/Im)','err(X/Re)'/)
+      headings(next_file,2:5)=(/'X/Im[cm/statV]','X/Re[cm/statV]','err(X/Im)     ','err(X/Re)     '/)
    endif
    next_file=next_file+1
    !

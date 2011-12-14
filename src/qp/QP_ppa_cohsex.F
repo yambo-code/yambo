@@ -438,7 +438,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          TEMP_COLLISIONS_v(ib,ib2,isc%os(2))=TEMP_COLLISIONS_v(ib,ib2,isc%os(2))+dc(1)
          !
 #else
-         dc(1)=dc(1)*e%f(isc%os(1),isc%os(2),1) 
+         dc(1)=dc(1)*e%f(isc%os(1),isc%os(2),isc%os(4))
 #endif
          !
          ! COH

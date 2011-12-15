@@ -21,26 +21,68 @@
 !
 subroutine RT_ELPH_initialize()
  ! 
+ use pars,           ONLY:SP
  use drivers,        ONLY:l_ph_corr 
  use units,          ONLY:HA2EV
  use ELPH,           ONLY:ph_modes,elph_nb,elph_nDBs,elph_nDBs_used,nq_memory,elph_branches,&
 &                         elph_global_alloc,ph_freqs_sq
  use SC,             ONLY:SC_bands
- use R_lattice,      ONLY:nqbz
+ use R_lattice,      ONLY:nqbz,q_pt
+ use vec_operate,    ONLY:iku_v_norm
  !
  implicit none
  !
+ ! Work Space
+ !
+ integer             :: iq,il
+ real(SP), parameter :: Q_critical=0.4,Q_border=0.9
+ real(SP)            :: FIT_coefficients(6,12) ! 1-3 around Gamma, 4-6 near the BZ border
+ real(SP)            :: Q_mod
+ !
  if (.not.l_ph_corr) return
  !
- ph_modes=1
+ FIT_coefficients(:,1) =(/1.71265,42.5313,-15.6902,39.6942,3.83583,-90.6768/)
+ FIT_coefficients(:,2) =(/5.13637,75.8111,-112.057,40.0783,7.61683,-76.7238/)
+ FIT_coefficients(:,3) =(/1.19975,109.794,37.974,65.1302,-73.2227,-199.2/)
+ FIT_coefficients(:,4) =(/6.76183,75.0173,94.1604,65.6299,-81.8142,-220.957/)
+ FIT_coefficients(:,5) =(/4.1194,153.752,98.1517,107.457,186.22,289.338/)
+ FIT_coefficients(:,6) =(/10.5744,107.279,181.17,106.791,178.163,294.323/)
+ FIT_coefficients(:,7) =(/89.8843,-8.55514,-5.74619,131.951,-39.605,-280.053/)
+ FIT_coefficients(:,8) =(/94.4763,4.18746,-51.6884,132.234,-39.4876,-280.003/)
+ FIT_coefficients(:,9) =(/166.756,0.0396949,-37.6847,146.437,-55.9147,-64.0451/)
+ FIT_coefficients(:,10)=(/167.087,-0.560888,-37.9211,147.055,-54.6055,-63.6376/)
+ FIT_coefficients(:,11)=(/163.521,68.3978,-62.9593,153.591,-29.9826,58.2015/)
+ FIT_coefficients(:,12)=(/179.849,51.0177,-102.749,153.415,-34.5894,66.9633/)
+ !
+ ph_modes=12
  elph_nb=SC_bands(2)
  elph_nDBs=nqbz
  elph_nDBs_used=nqbz
  nq_memory=nqbz
- elph_branches=(/1,1/)
+ elph_branches=(/1,12/)
  !
  call elph_global_alloc(' ')
  !
- ph_freqs_sq=(5./HA2EV)**2.
+ do iq=1,nqbz
+   !
+   Q_mod=iku_v_norm(q_pt(iq,:))
+   !
+   do il=1,ph_modes
+     if (Q_mod<Q_critical) then
+       ph_freqs_sq(iq,il)=FIT_coefficients(1,il)+FIT_coefficients(2,il)*Q_mod+FIT_coefficients(3,il)*Q_mod**2.
+     else
+       ph_freqs_sq(iq,il)=FIT_coefficients(4,il)+FIT_coefficients(5,il)*(Q_mod-Q_border)+&
+&                         FIT_coefficients(6,il)*(Q_mod-Q_border)**2.
+     endif
+     !
+     ph_freqs_sq(iq,il)=(ph_freqs_sq(iq,il)/HA2EV)**2.
+     !
+   enddo
+   !
+ enddo
+ !
+ !write (*,*) sqrt(ph_freqs_sq(:,12))*HA2EV
+ !
+ !ph_freqs_sq=(5./HA2EV)**2.
  !
 end subroutine RT_ELPH_initialize

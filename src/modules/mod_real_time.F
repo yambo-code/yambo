@@ -126,7 +126,7 @@ module real_time
  !
  real(SP)    :: RT_ave_dephasing
  real(SP),    allocatable :: RT_Deph_Matrix(:,:,:)
- complex(SP), allocatable :: THETA_matrix(:,:,:,:,:,:,:)
+ complex(SP), allocatable :: THETA_matrix(:,:,:,:,:)
  !
  ! GFs
  !
@@ -231,6 +231,13 @@ module real_time
  !
  contains
    !
+   integer function index_3b(i_n1,i_n2,i_n3)
+     use SC,         ONLY:SC_bands
+     integer            ::border,i_n1,i_n2,i_n3
+     border=SC_bands(2)-SC_bands(1)+1
+     index_3b= (i_n1-SC_bands(1)+1) + border * (i_n2-SC_bands(1)) + border**2 * (i_n3-SC_bands(1))
+   end function
+   !
    subroutine RT_alloc(en)
      !
      use pars,           ONLY:SP,schlen
@@ -291,7 +298,7 @@ module real_time
      call mem_est("I2_lesser",(/size(I2_lesser)/),(/2*SP/))
 #if  defined _ELPH   
      if (l_ph_corr) then
-       allocate(THETA_matrix(2,SC_bands(2),SC_bands(2),SC_bands(2),QP_nk,nqbz,ph_modes))
+       allocate(THETA_matrix(2,(SC_bands(2)-SC_bands(1)+1)**3,QP_nk,nqbz,ph_modes))
        call mem_est("THETA_matrix",(/size(THETA_matrix)/),(/2*SP/))
        THETA_matrix=(0._SP,0._SP)
      endif

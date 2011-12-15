@@ -71,7 +71,7 @@ subroutine electrons_driver(Xk,Xen)
  if (.not.flag) flag=l_mean_potential
 #endif
 #if defined _YPP_BOLTZMANN 
- if (.not.flag) flag=l_curr
+ if (.not.flag) flag=l_current
 #endif
  !
  if (.not.flag) return

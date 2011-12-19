@@ -752,6 +752,7 @@ with_blas
 with_lapack
 with_mpi
 with_fftw
+with_fftw_lib
 with_fftfac
 with_blacs
 with_scalapack
@@ -1415,6 +1416,7 @@ Optional Packages:
   --with-lapack=<lib>     Use LAPACK library <lib>
   --with-mpi=<lib>        Use MPI library <lib>
   --with-fftw=<path>      Path of the FFTW library directory
+  --with-fftw-lib=<lib>   FFTW library name
   --with-sgfftfac=<fac>   Change default Goedecker FFT cache factor
   --with-blacs=<path>     Path of the BLACS library directory
   --with-scalapack=<path> Path of the SCALAPACK library directory
@@ -9966,36 +9968,70 @@ if test "${with_fftw+set}" = set; then :
   withval=$with_fftw;
 fi
 
+
+# Check whether --with-fftw_lib was given.
+if test "${with_fftw_lib+set}" = set; then :
+  withval=$with_fftw_lib;
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FFTW" >&5
 $as_echo_n "checking for FFTW... " >&6; }
-FFTW_LIBS="-lfftw3"
 FFTW_PATH=""
 case $with_fftw in
   no )
     FFTW_LIBS=""
     ;;
-  "" ) ;;
-  *)
+  "" | * )
     FFTW_PATH="-L$with_fftw"
     ;;
 esac
 save_ldflags="$LDFLAGS"
-if test "$FFTW_LIBS"; then :
+
+case $with_fftw_lib in
+  no | "" )
+    EXTERNAL_FFTW="-lfftw3";
+  ;;
+  *)
+    EXTERNAL_FFTW="$with_fftw_lib";
+  ;;
+esac
+
+if test -d "$with_fftw" ; then
+  for FFTW_LIBS in "$EXTERNAL_FFTW" ; do
+    if test "$FFTW_LIBS"; then :
   LIBS="${FFTW_PATH} ${FFTW_LIBS}"
 fi
-cat > conftest.$ac_ext <<_ACEOF
+    cat > conftest.$ac_ext <<_ACEOF
       program main
       call dfftw_destroy_plan(1)
       end
 _ACEOF
 if ac_fn_fc_try_link "$LINENO"; then :
-  HAVE_FFTW="yes"; FFT_CPP="-D_FFTW";
- FFT_DESCRIPTION="FFTW Fast Fourier transform";LDFLAGS="$FFTW_PATH"
+  HAVE_FFTW="yes";
 else
-  HAVE_FFTW="no"; FFT_CPP=""; FFTW_LIBS="";LDFLAGS="$save_ldflags"
+  HAVE_FFTW="no";
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
+    if test "$HAVE_FFTW" = "yes" ; then
+      break;
+    fi
+  done
+  if test "$HAVE_FFTW" = "yes" ; then
+    FFT_CPP="-D_FFTW"
+    if test "$FFTW_LIBS" = "-lfftw3" ; then
+      FFT_DESCRIPTION="FFTW Fast Fourier transform";
+    else
+      FFT_DESCRIPTION="External Fast Fourier transform";
+    fi
+    LDFLAGS="$FFTW_PATH";
+  else
+    FFT_CPP="";
+    FFTW_LIBS="";
+    LDFLAGS="$save_ldflags";
+  fi
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $HAVE_FFTW" >&5
 $as_echo "$HAVE_FFTW" >&6; }
 if test "$HAVE_FFTW" = "no" ; then

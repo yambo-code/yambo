@@ -67,6 +67,8 @@ if test -d "$with_fftw" ; then
     FFTW_LIBS="";
     LDFLAGS="$save_ldflags";
   fi
+else
+ HAVE_FFTW="no";
 fi
 
 AC_MSG_RESULT($HAVE_FFTW)

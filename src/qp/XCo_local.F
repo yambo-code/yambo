@@ -150,22 +150,21 @@ subroutine XCo_local(E,Xk)
    !
    V_xc_mat=(0._SP,0._SP)
    !
-   do ifft=1,fft_size 
-     !
-     ! V_xc_mat ( 1 , 1 ) = up up
-     ! V_xc_mat ( 1 , 2 ) = up dn
-     ! V_xc_mat ( 2 , 1 ) = dn up
-     ! V_xc_mat ( 2 , 2 ) = dn dn
-     !
-     V_xc_mat(:,1,1)= (vxc_plus(:)+vxc_minus(:)*two_spin_density(:,3))
-     V_xc_mat(:,2,2)= (vxc_plus(:)-vxc_minus(:)*two_spin_density(:,3))
-     !
-     if (n_spinor==1) cycle
+   !
+   ! V_xc_mat ( 1 , 1 ) = up up
+   ! V_xc_mat ( 1 , 2 ) = up dn
+   ! V_xc_mat ( 2 , 1 ) = dn up
+   ! V_xc_mat ( 2 , 2 ) = dn dn
+   !
+   V_xc_mat(:,1,1)= (vxc_plus(:)+vxc_minus(:)*two_spin_density(:,3))
+   V_xc_mat(:,2,2)= (vxc_plus(:)-vxc_minus(:)*two_spin_density(:,3))
+   !
+   if (n_spinor>1) then
      !
      V_xc_mat(:,1,2)= vxc_minus(:)*(two_spin_density(:,1)-(0.,1.)*two_spin_density(:,2))
      V_xc_mat(:,2,1)= vxc_minus(:)*(two_spin_density(:,1)+(0.,1.)*two_spin_density(:,2))
      !
-   enddo
+   endif
    !
    do i1=1,QP_n_states
      !

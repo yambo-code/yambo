@@ -71,7 +71,7 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  integer               :: iqbz,iq,iqs,ik_m_q
  !
  real(SP),  parameter  :: g_q_diagonal=sqrt(.01/HA2EV)
- real(SP),  parameter  :: g_q_off_diagonal=-sqrt(0.001/HA2EV)
+ real(SP),  parameter  :: g_q_off_diagonal=sqrt(0.00/HA2EV)
  !
  ! Time step
  !===========

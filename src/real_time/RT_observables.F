@@ -28,6 +28,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  use D_lattice,      ONLY:DL_vol
  use SC,             ONLY:V_hartree_sc,Ho,SC_bands
  use X_m,            ONLY:P_square
+ use electrons,      ONLY:spin_occ
  use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen,l_NE_with_fields, &
 &                         l_NE_simulate_IP ,l_Dynamics_is_over,RT_output,NE_i_time
  use fields,         ONLY:A_vecpot
@@ -133,21 +134,26 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  call RT_average_operator(VALUE=Trace_Gf,G=G_lesser(:,:,:),en=en,k=k)
  !
- ! delta_G=\sum_c (-i G_lesser(c,c,k) + i G_lesser(v,v,k)) w_k
+ ! Andrea [21/12/2011]
+ ! 
+ ! In a semiconductor/isolant delta_G is defined as:
+ !
+ !  delta_G=\sum_c,k (-i G_lesser(c,c,k) + i G_lesser(v,v,k)) w_k
+ !
  ! where conduction and valence are defined with reference to the unperturbed
  ! system.
  !
- ! Note that this definition is faulty in the case of metals where a different
- ! quantity must be defined.
+ ! This definition can be extended to metals 
+ !
+ !  delta_G=\sum_n,k (-i) G_lesser(n,n,k) w_k ( 1 - 2 f_nk/spin_occ )
  !
  do ik=1,en%nk
-   do ib=1,SC_bands(1)-1
-     if (ib<=en%nbf) delta_G=delta_G+en%f(ib,ik,1)*k%weights(ik)
-     if (ib> en%nbf) delta_G=delta_G-en%f(ib,ik,1)*k%weights(ik)
-   enddo
-   do ib=SC_bands(1),SC_bands(2)
-     if (ib<=en%nbf) delta_G=delta_G-cI*G_lesser(ib,ib,ik)*k%weights(ik)
-     if (ib> en%nbf) delta_G=delta_G+cI*G_lesser(ib,ib,ik)*k%weights(ik)
+   do ib=1,SC_bands(2)
+     if (ib<SC_bands(1)) then
+       delta_G=delta_G-en%f(ib,ik,1)*k%weights(ik)*(1.-2.*en%f(ib,ik,1)/spin_occ)
+     else
+       delta_G=delta_G+cI*G_lesser(ib,ib,ik)*k%weights(ik)*(1.-2.*en%f(ib,ik,1)/spin_occ)
+     endif
    enddo
  enddo
  !

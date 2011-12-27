@@ -119,7 +119,7 @@ module QP_CTL_m
      character(schlen)::ch
      character(1)     ::what
      character(11)    ::spin_ch(2)
-     logical          ::is_def(4),GFs_from_DB
+     logical          ::is_def(4),GFs_from_DB,W_def(2)
      integer          ::Eid
      integer, allocatable :: RIM_k_done(:)
      integer, external    :: QP_load_DB
@@ -148,7 +148,9 @@ module QP_CTL_m
        call parser(what//'fnQP_up_E',is_def(2))
        call parser(what//'fnQP_dn_E',is_def(3))
        call parser(what//'fnQPdb',is_def(4))
-       if (.not.any((/is_def/))) return
+       call parser(what//'fnQP_Wv',W_def(1))
+       call parser(what//'fnQP_Wc',W_def(2))
+       if (.not.any((/is_def,W_def/))) return
      endif
      !
      ! Allocation of qp_done table to keep track of the corrections

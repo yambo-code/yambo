@@ -43,6 +43,7 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp,qindx_S
  use SC,             ONLY:SC_bands,it_now
+ use parser_m,       ONLY:parser
  use real_time,      ONLY:RT_step,THETA_matrix,I1_lesser,Integrator_name,G_lesser,MEM_index,index_3b
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
@@ -61,17 +62,23 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  complex(SP)           :: L_gl(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP)           :: L_lg(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP)           :: DELTA(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP)           :: Gkkp(SC_bands(1):SC_bands(2),SC_bands(1):Sc_bands(2))
+ complex(SP)           :: Gkkp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  complex(SP)           :: Xi_n,Xi_np,Xi_eta
  complex(SP), external :: RT_G_retarded
  !
  ! ... band index ...
  integer               :: i_n,i_np,i_e,i_m,i_nnpe,i_npne
  ! ... BZ index ...
- integer               :: iqbz,iq,iqs,ik_m_q
+ integer               :: iqbz,iq,iqs,ik_m_q,ik_m_qs
  !
- real(SP),  parameter  :: g_q_diagonal=sqrt(.01/HA2EV)
- real(SP),  parameter  :: g_q_off_diagonal=sqrt(0.00/HA2EV)
+ real(SP)              :: g_q_diagonal_sq,g_q_off_diagonal_sq
+ real(SP)              :: g_q_diagonal,g_q_off_diagonal
+ !
+ call parser('G_diagonal_sq',g_q_diagonal_sq )
+ call parser('G_off_diagonal_sq',g_q_off_diagonal_sq )
+ !
+ g_q_diagonal=sqrt(g_q_diagonal_sq/HA2EV)
+ g_q_off_diagonal=sqrt(g_q_off_diagonal_sq/HA2EV)
  !
  ! Time step
  !===========
@@ -94,15 +101,16 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
    enddo 
  enddo
  !
- do i_n=SC_bands(1),SC_bands(2)
-   write (100*ik+i_n,'(3f20.10)') TIME/FS2AUT,aimag(G_lesser(i_n,i_n,ik,MEM_index(it_now)))
- enddo
+! do i_n=SC_bands(1),SC_bands(2)
+!   write (100*ik+i_n,'(3f20.10)') TIME/FS2AUT,aimag(G_lesser(i_n,i_n,ik,MEM_index(it_now)))
+! enddo
  !
  do iqbz=1,q%nbz
    !
    iq =q%sstar(iqbz,1)
    iqs=q%sstar(iqbz,2)
-   ik_m_q=qindx_S(ik,iqbz,1)
+   ik_m_q =k%sstar(qindx_S(ik,iqbz,1),1)
+   ik_m_qs=k%sstar(qindx_S(ik,iqbz,1),2)
    !
    call RT_generalized_KBA(E,Gkkp,L_gl,ik_m_q,ik,'><')
    call RT_generalized_KBA(E,Gkkp,L_lg,ik_m_q,ik,'<>')
@@ -120,9 +128,10 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
        DELTA(:,:)= (N_q(i_map(-i_s))*L_gl(:,:)-N_q(i_map(i_s))*L_lg(:,:))*exp(-cI*i_s*ph_freq*TIME)
        !
        do i_np=SC_bands(1),SC_bands(2)
+         !
+         Xi_np =RT_G_retarded(E,i_np,ik    ,0.,DELTA_T)
+         !
          do i_n=SC_bands(1),SC_bands(2)
-           !
-           Xi_np =RT_G_retarded(E,i_np,ik    ,0.,DELTA_T)
            !
            do i_e=SC_bands(1),SC_bands(2)
              !

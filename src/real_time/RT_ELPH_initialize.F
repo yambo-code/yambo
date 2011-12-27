@@ -27,7 +27,7 @@ subroutine RT_ELPH_initialize()
  use ELPH,           ONLY:ph_modes,elph_nb,elph_nDBs,elph_nDBs_used,nq_memory,elph_branches,&
 &                         elph_global_alloc,ph_freqs_sq
  use SC,             ONLY:SC_bands
- use R_lattice,      ONLY:nqbz,q_pt
+ use R_lattice,      ONLY:nqbz,q_pt,nqibz
  use vec_operate,    ONLY:iku_v_norm
  !
  implicit none
@@ -59,11 +59,11 @@ subroutine RT_ELPH_initialize()
  elph_nDBs=nqbz
  elph_nDBs_used=nqbz
  nq_memory=nqbz
- elph_branches=(/1,12/)
+ elph_branches=(/1,4/)
  !
  call elph_global_alloc(' ')
  !
- do iq=1,nqbz
+ do iq=1,nqibz
    !
    Q_mod=iku_v_norm(q_pt(iq,:))
    !
@@ -78,6 +78,8 @@ subroutine RT_ELPH_initialize()
      ph_freqs_sq(iq,il)=(ph_freqs_sq(iq,il)/HA2EV)**2.
      !
    enddo
+   !
+   !write (100,'(20f10.5)') Q_mod,sqrt(ph_freqs_sq(iq,:))*HA2EV
    !
  enddo
  !

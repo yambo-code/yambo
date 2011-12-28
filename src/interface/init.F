@@ -456,7 +456,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_ppa)) then
    call QP_ctl_switch('X')
-   call initactivate(1,'LongPath Qdirection QShiftOrder')
+   call initactivate(1,'ShiftedPath Qdirection QShiftOrder')
 #if defined _SC
    call initactivate(1,'Gauge OCCTime')
 #endif
@@ -473,7 +473,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_optics.and.l_bse) then
    call QP_ctl_switch('K')
-   call initactivate(1,'LongPath')
+   call initactivate(1,'ShiftedPath')
 #if defined _SC
    call initactivate(1,'Gauge')
 #endif
@@ -488,7 +488,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_em1s) then
    call QP_ctl_switch('X')
-   call initactivate(1,'LongPath')
+   call initactivate(1,'ShiftedPath')
    call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy',&
 &                  'LongDr','DrudeW'/))
  endif
@@ -497,7 +497,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_cohsex)) then
    call QP_ctl_switch('X')
-   call initactivate(1,'LongPath')
+   call initactivate(1,'ShiftedPath')
    if (l_ppa) call X_activate('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
 &                      'EhEngy','LongDr','PPAPnt'/))
    if (l_cohsex) call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk',&
@@ -508,7 +508,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_acfdt) then
    call QP_ctl_switch('X')
-   call initactivate(1,'LongPath')
+   call initactivate(1,'ShiftedPath')
    call initactivate(1,'EXXRLvcs AC_n_LAM AC_n_FR AC_E_Rng')
    call X_activate('Xx',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy','LongDr'/))
  endif
@@ -521,7 +521,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      call QP_ctl_switch('X')
      call QP_ctl_switch('G')
-     call initactivate(1,'BoseCut LongPath')
+     call initactivate(1,'BoseCut ShiftedPath')
      !
      if (l_gw0) then
        call initactivate(1,'GbndRnge') 
@@ -609,7 +609,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_bss) then
   call QP_ctl_switch('K')
-  call initactivate(1,'BoseCut LongPath')
+  call initactivate(1,'BoseCut ShiftedPath')
   call initactivate(1,'BSSmod BEnRange BDmRange BDmERef BEnSteps BLongDir')
   if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF')
   if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer')
@@ -681,7 +681,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
     call initactivate(1,'FFTGvecs XfnQP_E'//&
 &     ' BulkFile BulkForm BlkShift BlkBroad Layers'//&  ! Bulk eps data
 &     ' q0x q0y'//&                                     ! Polarizations
-&     ' Cutoff CutZero CutStep LongPath')               ! Cut off fn
+&     ' Cutoff CutZero CutStep ShiftedPath')               ! Cut off fn
  endif
  if (lras) then
     call initactivate(1,&
@@ -709,7 +709,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &     ' E0 Theta0 Thetap Phi DetAngle '//&             ! Kinematics
 &     ' DetIntMd NumIntPt'//&                          ! Det. integration
 &     ' EELIntMd IntLimit EpsMix'//&                   ! REELS integration
-&     ' ETStpsLs GausConv LongPath')                    ! General flags
+&     ' ETStpsLs GausConv ShiftedPath')                ! General flags
  endif
 #endif
  !

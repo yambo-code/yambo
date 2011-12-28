@@ -52,13 +52,13 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  !
  integer                      :: wf_ng_save
  character(lchlen)            :: core_io_path_save
- integer                      :: nkibz_save, wf_ncx_save, wf_ncx_long, nkibz_long
- integer                      :: wf_ng_eff, wf_ng_long
+ integer                      :: nkibz_save, wf_ncx_save, wf_ncx_shifted, nkibz_shifted
+ integer                      :: wf_ng_eff, wf_ng_shifted
  !
  ! Work Space
  !
  integer                      :: ik,icfft,ivfft,ic,iv, ik_grid, iq, ikpq
- integer                      :: i_spin, err, ifail, ir, num_long_grid
+ integer                      :: i_spin, err, ifail, ir, num_shifted_grid
  complex(SP)                  :: rho(2)
  real(SP)                     :: Ev_m_Ec
  type(pp_indexes)             :: px
@@ -90,7 +90,7 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  call set_parms(grid='  local', command=' define')
  !
  if (wf_ng.lt.0.8_SP*maxval(wf_igk)) &
-&   call warning('All/most WF G-vectors should be used in the long. gauge')
+&   call warning('All/most WF G-vectors should be used in the case of shifted grids')
  !
  ! Read the k-point grids from second ioDB1
  !
@@ -106,18 +106,18 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  ! Determine grid displacement
  !
  ifail = 0
- call Dipole_check_shifted_grids( Xk_shift, Xk, ifail, num_long_grid)
+ call Dipole_check_shifted_grids( Xk_shift, Xk, ifail, num_shifted_grid)
 #if defined _RAS
- call select_field_dir(ifail, field_dir, num_long_grid)
+ call select_field_dir(ifail, field_dir, num_shifted_grid)
 #endif
  if(ifail>0) then
    call warning('Error in new grids. Switch to transverse.')
    call DB1_reset()
    return
  endif
-
- wf_ng_eff = min(wf_ng_save,wf_ng_long)
-
+ !
+ wf_ng_eff = min(wf_ng_save,wf_ng_shifted)
+ !
 #if defined _MANYK
  !
  ! {k} Allocate k-dependent local copies of unshifted WF grid. 
@@ -130,32 +130,28 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  ! {k} Save local copy of unshifted WF grid. 
  !
  allocate(wf_local( size(wf,1), size(wf,2) ), stat=err )
- call mem_est('WFlong0',(/ size(wf,1), size(wf,2) /), errors=(/err/))
+ call mem_est('WFshifted0',(/ size(wf,1), size(wf,2) /), errors=(/err/))
  allocate(wf_state_local( size(wf_state,1), size(wf_state,2), size(wf_state,3) ), stat=err )
  call mem_est('WFstate0',(/ size(wf,1), size(wf,2) /), errors=(/err/))
  wf_local(:,:)         = wf(:,:)
  wf_state_local(:,:,:) = wf_state(:,:,:)
+ !
+ ! Load WFs {k} + q_iq
+ !
+ core_io_path = grid_path
+ call WF_free()
+ call WF_load(0,1,(/ X%ib(1), Xen%nbm /),&
+&                 (/1,num_shifted_grid*Xk%nibz/),&
+&                 space='G',title='-Oscillators/G space (shifted grid)') 
 #endif
  !
  ! Main loop over cartesian directions
  !
- do iq = 1, num_long_grid
+ do iq = 1, num_shifted_grid
    ik_grid = (iq-1)*Xk%nibz + 1 ! The index of the first k point for each grid
    ir = iq
 #if defined _RAS
    ir = grid_dir(iq)
-#endif
-
-#if !defined _MANYK
-   !
-   ! Load WFs {k} + q_iq
-   !
-   core_io_path = grid_path
-   call WF_free()
-   call WF_load(0,1,(/ X%ib(1), Xen%nbm /),&
-&                   (/ik_grid,ik_grid+Xk%nibz-1/),&
-&                   space='G',title='-Oscillators/G space') 
-!  wf_ng_eff = min(wf_ng_save,wf_ng_long)
 #endif
    !
    ! Set up the parallel environment 
@@ -166,8 +162,9 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
    call pp_redux_wait
    !
    do ik = 1, Xk%nibz   ! Loop over k's in IBZ [1:nkibz]
+     !
      ikpq = ik_grid + ik - 1 ! Corresponding k in set of shifted grids
-
+     !
 #if defined _MANYK
      !
      ! Load WFs {k} 
@@ -185,7 +182,7 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
      call WF_load(wf_ng_eff,1,(/X%ib(1), Xen%nbm /),&
 &                   (/ikpq,ikpq/),space='G',title='-Oscillators/G space')
 #endif
-
+     !
      do iv = X%ib(1),Xen%nbm
        if (.not.px%element_2D(ik,iv)) cycle
        do ic = Xen%nbf+1, X%ib(2)
@@ -261,7 +258,7 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
      !
      core_io_path = core_io_path_save
      io_err=ioDB1_reload(E_shift,Xk_shift,trim(core_io_path))
-     wf_ng=wf_ng_long
+     wf_ng=wf_ng_shifted
      !
    end subroutine
    !
@@ -275,9 +272,9 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
        wf_ng_save   = wf_ng
        core_io_path_save = core_io_path
      else if( grid.eq.'shifted'.and. command.eq.' define') then
-       nkibz_long  = nkibz
-       wf_ncx_long = wf_ncx
-       wf_ng_long  = wf_ng
+       nkibz_shifted  = nkibz
+       wf_ncx_shifted = wf_ncx
+       wf_ng_shifted  = wf_ng
      else if( grid.eq.'  local'.and. command.eq.'  reset') then
        core_io_path = core_io_path_save
        nkibz   = nkibz_save
@@ -285,9 +282,9 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
        wf_ng   = wf_ng_save
      else if( grid.eq.'shifted'.and. command.eq.'  reset') then
        core_io_path = grid_path
-       nkibz   = nkibz_long
-       wf_ncx  = wf_ncx_long
-       wf_ng   = wf_ng_long
+       nkibz   = nkibz_shifted
+       wf_ncx  = wf_ncx_shifted
+       wf_ng   = wf_ng_shifted
      endif
      return
    end subroutine set_parms

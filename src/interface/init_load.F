@@ -357,7 +357,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! Optics
  !
- call it(defs,'LongPath',    '[Xd] Longitudinal gauge path',grid_path,verb_level=V_resp)
+ call it(defs,'ShiftedPath',    '[Xd] Shifted grids path',grid_path,verb_level=V_resp)
  !
  ! GPL_EXCLUDE_END
  !

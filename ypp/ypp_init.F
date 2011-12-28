@@ -197,7 +197,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  coo_in="iku"
  coo_out="rlu"
  Kgw_1=0.
- qlong= 0.0_SP
+ q_shift= 0.0_SP
  PtsPath= ' '
  N_path_pts=0
  alat_used_for_output=alat(1)
@@ -312,7 +312,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
      if ( trim(rstr_piece(i1)) == 'bzgrids') then
        l_k_grid=trim(rstr_piece(i1+1))=='k'
        l_q_grid=trim(rstr_piece(i1+1))=='q'
-       l_long_grid=trim(rstr_piece(i1+1))=='l'
+       l_shifted_grid=trim(rstr_piece(i1+1))=='s'
        !
        ! GPL_EXCLUDE_START 
        !
@@ -322,7 +322,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        !
        if (l_k_grid) call initactivate(1,"K_grid")
        if (l_q_grid) call initactivate(1,"Q_grid")
-       if (l_long_grid) call initactivate(1,"Long_Gauge")
+       if (l_shifted_grid) call initactivate(1,"Shifted_Grid")
        if (l_high_sym_pts) call initactivate(1,"High_Symm")
     endif
 #if defined _YPP_ELPH
@@ -413,7 +413,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_bz_grids  = runlevel_is_on('bzgrids')
  l_k_grid    = runlevel_is_on('K_grid')
  l_q_grid    = runlevel_is_on('Q_grid')
- l_long_grid = runlevel_is_on('Long_Gauge')
+ l_shifted_grid = runlevel_is_on('Shifted_Grid')
  l_high_sym_pts = runlevel_is_on('High_Symm')
  l_dos       =runlevel_is_on('dos')
 #if defined _YPP_SC
@@ -471,7 +471,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
    call initactivate(1,"cooIn cooOut")
    if (l_k_grid) call initactivate(1,"GWKpts")
    if (l_q_grid) call initactivate(1,"Qpts")
-   if (l_long_grid) call initactivate(1,"KShift1 KShift2 KShift3")
+   if (l_shifted_grid) call initactivate(1,"KShift1 KShift2 KShift3")
    if (l_high_sym_pts) then
      call initactivate(1,"PtsPath NPtsPath")
      call initactivate(-1,"NoWeights ForceUserPts cooIn")

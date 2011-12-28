@@ -101,10 +101,6 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
    enddo 
  enddo
  !
-! do i_n=SC_bands(1),SC_bands(2)
-!   write (100*ik+i_n,'(3f20.10)') TIME/FS2AUT,aimag(G_lesser(i_n,i_n,ik,MEM_index(it_now)))
-! enddo
- !
  do iqbz=1,q%nbz
    !
    iq =q%sstar(iqbz,1)

@@ -31,11 +31,11 @@ module YPP
  logical  :: l_bz_grids
  logical  :: l_k_grid
  logical  :: l_q_grid
- logical  :: l_long_grid
+ logical  :: l_shifted_grid
  logical  :: l_high_sym_pts
  integer  :: n_path_pts
  real(SP) :: Kgw_1(3)
- real(SP) :: qlong(3,3)
+ real(SP) :: q_shift(3,3)
  real(SP) :: alat_used_for_output
  character(schlen) :: coo_in
  character(schlen) :: coo_out

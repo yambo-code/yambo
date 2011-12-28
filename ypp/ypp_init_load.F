@@ -50,7 +50,7 @@ subroutine ypp_init_load(defs)
  !
  ! GPL_EXCLUDE_START
  !
- call it('r',defs,'Long_Gauge','[R] Longitudinal gauge grids') 
+ call it('r',defs,'Shifted_Grid','[R] Shifted grids') 
  !
  ! GPL_EXCLUDE_END
  !
@@ -131,9 +131,9 @@ subroutine ypp_init_load(defs)
  call it(defs,'cooOut','Points coordinates (out) cc/rlu/iku/alat',coo_out)
  call it(defs,'GWKpts','GW K-point grid',Kgw_1)
  call it(defs,'Qpts',  'Q-point grid',   Kgw_1)
- call it(defs,'KShift1','K-grid shift vector[1] ',qlong(1,:))
- call it(defs,'KShift2','K-grid shift vector[2] ',qlong(2,:))
- call it(defs,'KShift3','K-grid shift vector[3] ',qlong(3,:))
+ call it(defs,'KShift1','K-grid shift vector[1] ',q_shift(1,:))
+ call it(defs,'KShift2','K-grid shift vector[2] ',q_shift(2,:))
+ call it(defs,'KShift3','K-grid shift vector[3] ',q_shift(3,:))
  !
  ! GPL_EXCLUDE_START 
  !

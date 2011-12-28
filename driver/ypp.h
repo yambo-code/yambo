@@ -47,7 +47,7 @@
   {"cdir",  "C","Communications I/O directory",0,0,1,0,1},
   {"nompi", "N","Skip MPI initialization",0,0,0,0,0}, 
   {"dbfrag","S","DataBases fragmentation",0,0,0,0,1}, 
-  {"bzgrids","k","BZ Grid generator [(k)pt,(q)pt,(l)ongitudinal,(h)igh symmetry]",0,0,1,0,0}, 
+  {"bzgrids","k","BZ Grid generator [(k)pt,(q)pt,(s)hifted,(h)igh symmetry]",0,0,1,0,0}, 
   {"qpdb",   "q","Generate/modify a quasi-particle database",0,0,0,0,0}, 
 #if defined _YPP_SC 
   {"MeanPot",  "v","Mean Potential",0,0,0,0,0}, 

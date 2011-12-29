@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2011 C. Attaccalite and the YAMBO team 
+! Copyright (C) 2000-2012 C. Attaccalite and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 

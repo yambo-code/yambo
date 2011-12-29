@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2011 D. Varsano, A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 D. Varsano, A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 

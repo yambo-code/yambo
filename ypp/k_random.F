@@ -1,5 +1,5 @@
 !
-! Copyright (C) 2000-2011 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -28,7 +28,7 @@ subroutine k_random(Xk,Xen)
  use parser_m,            ONLY:parser
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop
  use com,                 ONLY:msg,of_open_close
- use vec_operate,         ONLY:ak2bz,v_norm,c2a
+ use vec_operate,         ONLY:rlu_v_norm,v_norm,c2a
  use YPP,                 ONLY:BZ_RIM_nkpts,BZ_RIM_path,gamma_radius,K_transform
  use electrons,           ONLY:levels,default_nel,n_bands,&
 &                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
@@ -255,7 +255,7 @@ subroutine k_random(Xk,Xen)
      do i1=1,3
        rand_kpt(k_counter+1,i1)=(2.*dlaran(iseed(4:))-1.)
      enddo
-     dummy=ak2bz(rand_kpt(k_counter+1,:))
+     dummy=rlu_v_norm(rand_kpt(k_counter+1,:))
      call c2a(v_in=rand_kpt(k_counter+1,:),mode="ka2i")
    end subroutine
    !
@@ -269,7 +269,7 @@ subroutine k_random(Xk,Xen)
        enddo
        k_module=v_norm(rand_kpt(k_counter+1,:))
        call c2a(v_in=rand_kpt(k_counter+1,:),mode="kc2a")
-       dummy=ak2bz(rand_kpt(k_counter+1,:))
+       dummy=rlu_v_norm(rand_kpt(k_counter+1,:))
        call c2a(v_in=rand_kpt(k_counter+1,:),mode="ka2i")
      enddo
    end subroutine

@@ -2,7 +2,7 @@
 # Original version Available from the GNU Autoconf Macro Archive at:
 # http://autoconf-archive.cryp.to/macros-by-category.html
 #
-# Copyright (C) 2000-2011 A. Marini and the YAMBO team
+# Copyright (C) 2000-2012 A. Marini and the YAMBO team
 #              http://www.yambo-code.org
 #
 # This file is distributed under the terms of the GNU

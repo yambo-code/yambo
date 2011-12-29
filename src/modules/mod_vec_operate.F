@@ -1,5 +1,5 @@
 
-! Copyright (C) 2000-2011 A. Marini and the YAMBO team 
+! Copyright (C) 2000-2012 A. Marini and the YAMBO team 
 !              http://www.yambo-code.org
 ! 
 ! This file is distributed under the terms of the GNU 
@@ -171,21 +171,21 @@ module vec_operate
      !
    end subroutine k2bz
    !
-   real(SP) function ak2bz(k) 
+   real(SP) function rlu_v_norm(k) 
      !
      ! k is rlu 
      !
-     ! Output is the module the k in the IBZ, ak2bz=|k|
+     ! Output is the module of the k shifted in the IBZ, ak2bz=|k|
      !
      real(SP) :: k(3)
      real(SP) :: k_i(3) !ws
      !
      call c2a(v_in=k,v_out=k_i,mode='ka2i')
      call k2bz(v_in=k_i)
-     ak2bz=iku_v_norm(k_i)
+     rlu_v_norm=iku_v_norm(k_i)
      call c2a(v_in=k_i,v_out=k,mode='ki2a')
      !
-   end function ak2bz
+   end function rlu_v_norm
    !
    subroutine sort(arrin,arrout,indx)                             
      !

@@ -122,11 +122,18 @@ module real_time
  real(SP)    :: RAD_LifeTime
  logical     :: RT_is_dumped
  !
+ ! ELPH kernel...
+ !
+ ! ... Q weights calculated using RIM in order to evaluate the ELPH kernel
+ !
+ real(SP),    allocatable :: Q_weight(:)
+ ! ... THETA matrix
+ complex(SP), allocatable :: THETA_matrix(:,:,:,:,:)
+ !
  ! Relaxation: Dephasing Matrix
  !
  real(SP)    :: RT_ave_dephasing
  real(SP),    allocatable :: RT_Deph_Matrix(:,:,:)
- complex(SP), allocatable :: THETA_matrix(:,:,:,:,:)
  !
  ! GFs
  !
@@ -282,10 +289,8 @@ module real_time
      call mem_est("RT_occupations",(/size(RT_occupations)/),(/SP/))
      !
      if(l_RT_needs_XC0) then
-       !
        allocate(XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),QP_nk,n_sp_pol))
        call mem_est("XC0_and_HARTREE0",(/size(XC0_and_HARTREE0)/),(/2*SP/))
-       !
      endif
      !
      allocate(SC_R(1:SC_bands(2),1:SC_bands(2),QP_nk,n_sp_pol))
@@ -296,8 +301,10 @@ module real_time
      !
      allocate(I2_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk))
      call mem_est("I2_lesser",(/size(I2_lesser)/),(/2*SP/))
-#if  defined _ELPH   
+     !
+#if defined _ELPH   
      if (l_ph_corr) then
+       call mem_est("THETA_matrix",(/size(THETA_matrix)/),(/2*SP/))
        allocate(THETA_matrix(2,(SC_bands(2)-SC_bands(1)+1)**3,QP_nk,nqbz,ph_modes))
        call mem_est("THETA_matrix",(/size(THETA_matrix)/),(/2*SP/))
        THETA_matrix=(0._SP,0._SP)
@@ -371,6 +378,8 @@ module real_time
      !
      deallocate(I1_lesser)
      call mem_est("I1_lesser")
+     !
+     if (allocated(q_weight)) deallocate(q_weight)
      !
      if (allocated(THETA_matrix)) then
        deallocate(THETA_matrix)

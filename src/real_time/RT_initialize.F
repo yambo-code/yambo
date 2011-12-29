@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_initialize(Xen)
+subroutine RT_initialize(Xen,q)
  ! 
  use drivers,        ONLY:l_collisions_IO,l_ph_corr 
  use SC,             ONLY:local_V,SC_bands
@@ -36,6 +36,7 @@ subroutine RT_initialize(Xen)
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
 &                         Phase_LifeTime,RT_ave_dephasing,NE_MEM_Treshold,NE_MEM_steps
  use D_lattice,      ONLY:DL_vol
+ use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,&
 &                         theta_function_iTo_ref,i_Pump,i_Probe,EtoT,Efield_strength
  use X_m,            ONLY:use_X_RIM
@@ -43,6 +44,7 @@ subroutine RT_initialize(Xen)
  implicit none
  !
  type(levels), intent(in) :: Xen
+ type(bz_samp),intent(in) :: q
  !
  ! Work space
  !
@@ -165,12 +167,14 @@ subroutine RT_initialize(Xen)
    call warning('E_RIM and damping not compatible. Switching off E_RIM')
    use_X_RIM=.false.
  endif
+ !
 #if defined _ELPH
  !
  ! Electron-phonon
  ! ===============
  !
- call RT_ELPH_initialize()
+ call RT_ELPH_initialize(q)
+ !
 #endif
  !
  ! LOG

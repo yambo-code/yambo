@@ -38,13 +38,13 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  !  
  !  Iteration: in this case I ***think*** (even if I am not completely sure) that everything is ok.
  !  
- use pars,           ONLY:SP,cI
- use units,          ONLY:HA2EV,FS2AUT
+ use pars,           ONLY:SP,cI,pi
+ use units,          ONLY:HA2EV
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp,qindx_S
- use SC,             ONLY:SC_bands,it_now
+ use SC,             ONLY:SC_bands
  use parser_m,       ONLY:parser
- use real_time,      ONLY:RT_step,THETA_matrix,I1_lesser,Integrator_name,G_lesser,MEM_index,index_3b
+ use real_time,      ONLY:RT_step,THETA_matrix,I1_lesser,Integrator_name,index_3b,q_weight
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
  !
@@ -71,14 +71,19 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  ! ... BZ index ...
  integer               :: iqbz,iq,iqs,ik_m_q,ik_m_qs
  !
- real(SP)              :: g_q_diagonal_sq,g_q_off_diagonal_sq
+ real(SP)              :: g_q_diagonal_sq,g_q_off_diagonal_sq,alpha
  real(SP)              :: g_q_diagonal,g_q_off_diagonal
+ logical               :: g_off_diagonal_used
  !
- call parser('G_diagonal_sq',g_q_diagonal_sq )
- call parser('G_off_diagonal_sq',g_q_off_diagonal_sq )
+ call parser('alpha',alpha)
  !
- g_q_diagonal=sqrt(g_q_diagonal_sq/HA2EV)
- g_q_off_diagonal=sqrt(g_q_off_diagonal_sq/HA2EV)
+ !call parser('G_diagonal_sq',g_q_diagonal_sq )
+ !call parser('G_off_diagonal_sq',g_q_off_diagonal_sq )
+ !!
+ !g_q_diagonal=sqrt(g_q_diagonal_sq/HA2EV)
+ !g_q_off_diagonal=sqrt(g_q_off_diagonal_sq/HA2EV)
+ g_q_off_diagonal=0.
+ g_off_diagonal_used=.FALSE.
  !
  ! Time step
  !===========
@@ -94,12 +99,7 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  !
  ! Note the m.e. in Gkkp are stored with indexes order exchanged
  !
- do i_n=SC_bands(1),SC_bands(2)
-   do i_np=SC_bands(1),SC_bands(2)
-     if (i_n==i_np) Gkkp(i_n,i_np)=g_q_diagonal
-     if (i_n/=i_np) Gkkp(i_n,i_np)=g_q_off_diagonal
-   enddo 
- enddo
+ Gkkp=(0.,0.)
  !
  do iqbz=1,q%nbz
    !
@@ -108,8 +108,23 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
    ik_m_q =k%sstar(qindx_S(ik,iqbz,1),1)
    ik_m_qs=k%sstar(qindx_S(ik,iqbz,1),2)
    !
+   do i_n=SC_bands(1),SC_bands(2)
+      Gkkp(i_n,i_n)=g_q_diagonal
+      if (g_off_diagonal_used) then
+        do i_np=SC_bands(1),SC_bands(2)
+          if (i_n/=i_np) Gkkp(i_n,i_np)=g_q_off_diagonal
+        enddo 
+      endif
+   enddo
+   !
    call RT_generalized_KBA(E,Gkkp,L_gl,ik_m_q,ik,'><')
    call RT_generalized_KBA(E,Gkkp,L_lg,ik_m_q,ik,'<>')
+   !
+   call get_g_diagonal(g_q_diagonal_sq,alpha)
+   !
+   g_q_diagonal_sq=g_q_diagonal_sq*q_weight(iqbz)
+   g_q_diagonal=sqrt(g_q_diagonal_sq)
+   g_q_off_diagonal=0.
    !
    do il=elph_branches(1),elph_branches(2)
      !
@@ -130,6 +145,8 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
          do i_n=SC_bands(1),SC_bands(2)
            !
            do i_e=SC_bands(1),SC_bands(2)
+             !
+             if (.not.g_off_diagonal_used.and.i_e/=i_n) cycle
              !
              Xi_eta=RT_G_retarded(E,i_e ,ik_m_q,0.,DELTA_T)
              !
@@ -153,6 +170,8 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
              !
              i_npne=index_3b(i_np,i_n,i_e)
              !
+             if (.not.g_off_diagonal_used.and.i_e/=i_n) cycle
+             !
              I1_lesser(i_n,i_np,ik)=I1_lesser(i_n,i_np,ik)+exp(cI*i_s*ph_freq*TIME)*&
 &                                   (       THETA_matrix(i_map(i_s),i_nnpe,ik,iqbz,il) + &
 &                                     conjg(THETA_matrix(i_map(-i_s),i_npne,ik,iqbz,il)) )
@@ -168,3 +187,20 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  !
 end subroutine RT_ELPH_kernel
 !
+subroutine get_g_diagonal(g_q_diagonal_sq,alpha)
+  !
+  use pars,           ONLY:SP,pi
+  use vec_operate,    ONLY:iku_v_norm
+  use ELPH,           ONLY:ph_freqs_sq
+  use D_lattice,      ONLY:DL_vol
+  implicit none
+  !
+  real(SP)::g_q_diagonal_sq,alpha,reduced_mass,alpha_tilde
+  !
+  ! GaAs (adim)
+  !
+  reduced_mass=.0591
+  !
+  g_q_diagonal_sq=alpha*4.*pi*sqrt( ph_freqs_sq(1,1) )**3./2. / ( sqrt(2.*reduced_mass)*DL_vol )
+  !
+end subroutine

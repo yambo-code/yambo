@@ -19,25 +19,29 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_initialize()
+subroutine RT_ELPH_initialize(q)
  ! 
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,pi
  use drivers,        ONLY:l_ph_corr 
  use units,          ONLY:HA2EV
+ use com,            ONLY:depth
  use ELPH,           ONLY:ph_modes,elph_nb,elph_nDBs,elph_nDBs_used,nq_memory,elph_branches,&
 &                         elph_global_alloc,ph_freqs_sq
  use SC,             ONLY:SC_bands
- use R_lattice,      ONLY:nqbz,q_pt,nqibz
+ use real_time,      ONLY:q_weight
+ use R_lattice,      ONLY:nqbz,q_pt,nqibz,RL_vol,q_pt,RIM_n_rand_pts,bz_samp
  use vec_operate,    ONLY:iku_v_norm
  !
  implicit none
+ !
+ type(bz_samp),intent(in) :: q
  !
  ! Work Space
  !
  integer             :: iq,il
  real(SP), parameter :: Q_critical=0.4,Q_border=0.9
  real(SP)            :: FIT_coefficients(6,12) ! 1-3 around Gamma, 4-6 near the BZ border
- real(SP)            :: Q_mod
+ real(SP)            :: Q_mod,VOL_sphere,RADIUS_sphere,BARE_integral
  !
  if (.not.l_ph_corr) return
  !
@@ -54,37 +58,58 @@ subroutine RT_ELPH_initialize()
  FIT_coefficients(:,11)=(/163.521,68.3978,-62.9593,153.591,-29.9826,58.2015/)
  FIT_coefficients(:,12)=(/179.849,51.0177,-102.749,153.415,-34.5894,66.9633/)
  !
- ph_modes=12
+ ph_modes=1
  elph_nb=SC_bands(2)
  elph_nDBs=nqbz
  elph_nDBs_used=nqbz
  nq_memory=nqbz
- elph_branches=(/1,4/)
+ elph_branches=(/1,1/)
  !
  call elph_global_alloc(' ')
  !
- do iq=1,nqibz
-   !
-   Q_mod=iku_v_norm(q_pt(iq,:))
-   !
-   do il=1,ph_modes
-     if (Q_mod<Q_critical) then
-       ph_freqs_sq(iq,il)=FIT_coefficients(1,il)+FIT_coefficients(2,il)*Q_mod+FIT_coefficients(3,il)*Q_mod**2.
-     else
-       ph_freqs_sq(iq,il)=FIT_coefficients(4,il)+FIT_coefficients(5,il)*(Q_mod-Q_border)+&
-&                         FIT_coefficients(6,il)*(Q_mod-Q_border)**2.
-     endif
-     !
-     ph_freqs_sq(iq,il)=(ph_freqs_sq(iq,il)/HA2EV)**2.
-     !
-   enddo
-   !
-   !write (100,'(20f10.5)') Q_mod,sqrt(ph_freqs_sq(iq,:))*HA2EV
-   !
- enddo
+! do iq=1,nqibz
+!   !
+!   Q_mod=iku_v_norm(q_pt(iq,:))
+!   !
+!   do il=1,ph_modes
+!     if (Q_mod<Q_critical) then
+!       ph_freqs_sq(iq,il)=FIT_coefficients(1,il)+FIT_coefficients(2,il)*Q_mod+FIT_coefficients(3,il)*Q_mod**2.
+!     else
+!       ph_freqs_sq(iq,il)=FIT_coefficients(4,il)+FIT_coefficients(5,il)*(Q_mod-Q_border)+&
+!&                         FIT_coefficients(6,il)*(Q_mod-Q_border)**2.
+!     endif
+!     !
+!     ph_freqs_sq(iq,il)=(ph_freqs_sq(iq,il)/HA2EV)**2.
+!     !
+!   enddo
+!   !
+!   !write (100,'(20f10.5)') Q_mod,sqrt(ph_freqs_sq(iq,:))*HA2EV
+!   !
+! enddo
  !
- !write (*,*) sqrt(ph_freqs_sq(:,12))*HA2EV
+ ph_freqs_sq=(36/1000./HA2EV)**2.
  !
- !ph_freqs_sq=(5./HA2EV)**2.
+ ! Reset the sections depth in order to not pop-out the messages in rim_spherical in the wrong
+ ! section level
+ !
+ depth=0
+ !
+ ! RIM
+ !
+ allocate(q_weight(nqbz))
+ !
+ call k_ibz2bz(q,'i',.TRUE.)  
+ !
+ RIM_n_rand_pts=100000
+ !
+ RADIUS_sphere=(3.*RL_vol/nqbz/4./pi)**(1./3.)
+ VOL_sphere=4./3.*pi*RADIUS_sphere**3.
+ !
+ call rim_spherical(nqbz,q%ptbz,q_weight,RADIUS_sphere,.FALSE.)
+ !
+! do iq=1,nqbz
+!   BARE_integral=1./float(nqbz)/iku_v_norm(q%ptbz(iq,:))**2.
+!   write (*,*)  iku_v_norm(q%ptbz(iq,:)),q_weight(iq),BARE_integral
+! enddo
  !
 end subroutine RT_ELPH_initialize

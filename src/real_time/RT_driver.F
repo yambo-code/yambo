@@ -106,7 +106,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q,Xw)
  !
  ! Core initialization
  !
- call RT_initialize(Xen)
+ call RT_initialize(Xen,q)
  !
  ! Core allocations
  !

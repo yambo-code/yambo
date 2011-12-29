@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine rim_spherical(Np,points,p_weight,radius)
+subroutine rim_spherical(Np,points,p_weight,radius,MULTIPLY_BY_Q)
  !
  ! Here I want to approx the integral
  !
@@ -29,9 +29,17 @@ subroutine rim_spherical(Np,points,p_weight,radius)
  !
  ! with Si a sphere of radius "radius" and volume vol/Np
  !
- ! Finally I will rewrite 1/vol \int_vol F(q) d3q ~ \sum_{Qi} Wi F(Qi)
+ ! Finally I will rewrite 
  !
- ! with Wi = Qi^2/vol*\int_Si d3q/q^
+ ! MULTIPLY_BY_Q=.TRUE. 
+ !
+ !   1/vol \int_vol F(q) d3q ~ \sum_{Qi} Wi F(Qi)
+ !   with Wi = Qi^2/vol*\int_Si d3q/q^2
+ !
+ ! MULTIPLY_BY_Q=.FALSE. 
+ !
+ !   1/vol \int_vol F(q) d3q ~ \sum_{Qi} Wi Qi^2 F(Qi)
+ !   with Wi = 1/vol*\int_Si d3q/q^2
  !
  use pars,          ONLY:SP,pi,DP
  use com,           ONLY:msg
@@ -44,6 +52,7 @@ subroutine rim_spherical(Np,points,p_weight,radius)
  integer,  intent(in)    :: Np
  real(SP), intent(in)    :: points(Np,3),radius
  real(SP), intent(inout) :: p_weight(Np)
+ logical , intent(in)    :: MULTIPLY_BY_Q
  !
  ! Work Space
  !
@@ -69,6 +78,7 @@ subroutine rim_spherical(Np,points,p_weight,radius)
  iseed=iabs(iseed)
  !
  ! iseed(4) must be odd
+ !
  iseed(4)=2*(iseed(4)/2)+1
  !
  ! Loop setup
@@ -85,31 +95,37 @@ subroutine rim_spherical(Np,points,p_weight,radius)
    N_out=N_out+1
    !
    if (v_norm(v_rand)>radius) cycle loop
-   qr(N_in,:)=v_rand*alat(:)/2./pi
+   qr(N_in,:)=v_rand
    N_in=N_in+1
    call live_timing(steps=1)
+   !
  enddo loop
  call live_timing()
  call msg('r','Points outside the Sphere  :',N_out)
  !  
  !Integrated Sphere VOLUME 
  !
- box_vol=(2.*radius*1.2)**3.
+ box_vol   =(2.*radius*1.2)**3.
  sphere_vol=4./3.*pi*radius**3.
  !
  call msg('r', 'Sphere volume       [au]:',sphere_vol)
  call msg('rn','Integrated volume   [au]:',box_vol*real(RIM_n_rand_pts)/real(N_out))
  !
  call live_timing('Integrals',Np,SERIAL=.true.)
+ !
  do ip=1,Np
    p_weight(ip)=0.
-   pt_cc=points(ip,:)*alat(:)/2./pi
+   pt_cc=points(ip,:)*2.*pi/alat(:)
    do ir=1,RIM_n_rand_pts
      p_weight(ip)=p_weight(ip)+1./v_norm(qr(ir,:)+pt_cc(:))**2.*box_vol/real(N_out)
    enddo
-   p_weight(ip)=p_weight(ip)* v_norm(pt_cc)**2./sphere_vol/real(Np)
+   p_weight(ip)=p_weight(ip)/sphere_vol/real(Np)
+   !
+   if (MULTIPLY_BY_Q) p_weight(ip)=p_weight(ip)*v_norm(pt_cc)**2
+   !
    call live_timing(steps=1)
  enddo
+ !
  call live_timing()
  !
 end subroutine

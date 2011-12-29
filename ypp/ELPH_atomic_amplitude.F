@@ -81,7 +81,7 @@ subroutine ELPH_atomic_amplitude(q)
    q_weight=q%weights(iq)
  else
    if (RIM_n_rand_pts>0) call msg('s','Using RIM with '//trim(intc(RIM_n_rand_pts))//' point')
-   call rim_spherical(nq_to_sum,ph_qpt(1:nq_to_sum,1:3),q_weight,(3.*RL_vol/nq_to_sum/4./pi)**(1./3.))
+   call rim_spherical(nq_to_sum,ph_qpt(1:nq_to_sum,1:3),q_weight,(3.*RL_vol/nq_to_sum/4./pi)**(1./3.),.TRUE.)
  endif
  !
  mean_ui_uj=(0.,0.)

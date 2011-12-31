@@ -207,6 +207,13 @@ subroutine k_grids(en,k,Xk,q)
    !
    ! Generate shifted k-points set for dipole calculation
    !
+  call section('=',"== Shifted grids generator ==")
+   !================================================
+   !
+   call parser('KShift1',q_shift(1,:))
+   call parser('KShift2',q_shift(2,:))
+   call parser('KShift3',q_shift(3,:))
+   !
    if(any(abs(q_shift)/=0.)) then
      !
      kout(:,:) = Xk%pt(:,:)
@@ -220,46 +227,48 @@ subroutine k_grids(en,k,Xk,q)
      i2=0
      do i1=1,3
        !
-       if (v_norm(q_shift(i1,:))>1.E-4) then
-         !
+       if (v_norm(q_shift(i1,:))>1.E-4.or.v_norm(q_shift(i1,:))<1.E-6) then
          q0 = q_shift(i1,:)*1.E-4/v_norm(q_shift(i1,:))
-         !
-         i2 = i2 + 1
-         !
-         ! Convert q0[iku] to coo_out
-         !
-         call K_transform(q0,trim(coo_in))
-         !
-         ! Print shift vector in new basis
-         !
-         write(ch,'(a,i1,a,3(f13.10,a),2a)') "Shifted K-grid[",i2,"]: {K} + (",q0(1),",",q0(2),",",q0(3),") [",trim(coo_out),"]"
-         call section("=",trim(ch))
-         !
-         ! Apply the shift
-         !
-         do ik=1,Xk%nibz
-           !
-           k_plus_q(ik,:)=kout(ik,:)+q0(:)
-           !
-           if (v_norm(k_plus_q(ik,:)).lt.1.E-7) k_plus_q(ik,:) = 0.0_SP ! remove SP error k points
-           !
-         enddo
-         !
-         ! Print the shifted mesh
-         ! Ensure 7 *significant figures*, otherwise round off errors may occur later
-         !
-         call set_real_printed_length(f_length=10,g_length=10)
-         !
-         call print_the_grid(k_plus_q,Xk%nibz,coo_out,.FALSE.)
-         !
-         call set_real_printed_length( )
-         !
+         call msg("s","Renormalizing shift to :",v_norm(q0))
+       else 
+         q0 = q_shift(i1,:)
        endif
+       !
+       i2 = i2 + 1
+       !
+       ! Convert q_shift[iku] to coo_in
+       !
+       call K_transform(q0,trim(coo_in))
+       !
+       ! Print shift vector in new basis
+       !
+       write(ch,'(a,i1,a,3(f13.10,a),2a)') "Shifted K-grid[",i2,"]: {K} + (",q0(1),",",q0(2),",",q0(3),") [",trim(coo_out),"]"
+       call section("=",trim(ch))
+       !
+       ! Apply the shift
+       !
+       do ik=1,Xk%nibz
+         !
+         k_plus_q(ik,:)=kout(ik,:)+q0(:)
+         !
+         if (v_norm(k_plus_q(ik,:)).lt.1.E-7) k_plus_q(ik,:) = 0.0_SP ! remove SP error k points
+         !
+       enddo
+       !
+       ! Print the shifted mesh
+       ! Ensure 7 *significant figures*, otherwise round off errors may occur later
+       !
+       call set_real_printed_length(f_length=10,g_length=10)
+       !
+       call print_the_grid(k_plus_q,Xk%nibz,coo_out,.FALSE.)
+       !
+       call set_real_printed_length( )
+       !
      enddo
-     !
+      !
    endif
    !
- endif
+ end if
  !
  ! GPL_EXCLUDE_START
  !

@@ -652,6 +652,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (              l_RT_pump_and_probe) call Afield_activate('Pump')
    !
    call initactivate(1,'RTAveDeph')
+   call initactivate(1,'ShiftedPath')
    !
  endif
  !

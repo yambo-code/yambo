@@ -33,7 +33,7 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  use par_proc_m,          ONLY: pp_redux_wait,pp_indexes,myid,&
 &                               pp_indexes_reset
  use par_indexes_m,       ONLY: par_indexes
- use R_lattice,           ONLY: bz_samp,q0_def_norm,nkibz
+ use R_lattice,           ONLY: bz_samp,nkibz,q0_shift_norm
  use X_m,                 ONLY: X_t,DIP_iR 
  use fields,              ONLY: grid_path 
  use memory_m,            ONLY: mem_est
@@ -211,10 +211,10 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
            !
 #if defined _DOUBLE
            rho(i_spin) = zdotc( wf_ng_eff, wf(1:wf_ng_eff,ivfft), &
-&                               1, wf_local(1:wf_ng_eff,icfft),1 ) /q0_def_norm
+&                               1, wf_local(1:wf_ng_eff,icfft),1 ) /q0_shift_norm
 #else
            rho(i_spin) = cdotc( wf_ng_eff, wf(1:wf_ng_eff,ivfft), &
-&                               1, wf_local(1:wf_ng_eff,icfft),1 ) /q0_def_norm
+&                               1, wf_local(1:wf_ng_eff,icfft),1 ) /q0_shift_norm
 #endif
            !
          enddo    ! spin loop

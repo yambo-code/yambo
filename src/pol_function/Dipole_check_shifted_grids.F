@@ -24,8 +24,8 @@ subroutine Dipole_check_shifted_grids( Xk_shift, Xk, ifail, num_shifted_grid )
  use pars,            ONLY: SP
  use stderr,          ONLY: intc
  use com,             ONLY: msg,warning
- use vec_operate,     ONLY: v_is_zero, v_norm, c2a
- use R_lattice,       ONLY: bz_samp,q0_def_norm
+ use vec_operate,     ONLY: v_is_zero, iku_v_norm, c2a
+ use R_lattice,       ONLY: bz_samp,q0_shift_norm
 #if defined _RAS
  use ras_long,        ONLY: q_long
 #endif
@@ -97,7 +97,7 @@ subroutine Dipole_check_shifted_grids( Xk_shift, Xk, ifail, num_shifted_grid )
    q_long_tmp(:,iq) = q_init(:)
    call c2a(v_in=q_long_tmp(:,iq), v_out=qtemp, mode="ki2c")
    call msg('r','Grid '//trim(intc(iq))//' has shift vector [c.c.]: ',qtemp )
-   q_mod(iq) = v_norm(q_long_tmp(:,iq))
+   q_mod(iq) = iku_v_norm(q_long_tmp(:,iq))
    call msg('r','            and modulus [a.u.]: ',q_mod(iq))
    if (iq==num_shifted_grid) call msg('r','')
  enddo
@@ -105,8 +105,8 @@ subroutine Dipole_check_shifted_grids( Xk_shift, Xk, ifail, num_shifted_grid )
  ! Check the lengths are compatible (not abolutely required)
  ! CDH 270907 This is not clear...
  !
- q0_def_norm = q_mod(1)  ! a.u. 
- q_mod(1:num_shifted_grid) = q_mod(1:num_shifted_grid) - q0_def_norm
+ q0_shift_norm = q_mod(1)  ! a.u. 
+ q_mod(1:num_shifted_grid) = q_mod(1:num_shifted_grid) - q0_shift_norm
  if(.not.all( abs(q_mod).lt. 1.0e-5_SP )) then
    call msg('r','Shifts are not uniform for all {k}.')
    ifail = ifail + 1

@@ -173,7 +173,7 @@ module vec_operate
    !
    real(SP) function rlu_v_norm(k) 
      !
-     ! k is rlu 
+     ! Input k is rlu 
      !
      ! Output is the module of the k shifted in the IBZ, ak2bz=|k|
      !
@@ -183,7 +183,6 @@ module vec_operate
      call c2a(v_in=k,v_out=k_i,mode='ka2i')
      call k2bz(v_in=k_i)
      rlu_v_norm=iku_v_norm(k_i)
-     call c2a(v_in=k_i,v_out=k,mode='ki2a')
      !
    end function rlu_v_norm
    !

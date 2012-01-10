@@ -31,6 +31,7 @@ subroutine electrons_bands(Xk,Xen)
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
  use interpolate,    ONLY:eval_interpolation_coeff,bz_interpolation
+ use QP_CTL_m,       ONLY:QP_apply
  implicit none
  !
  type(bz_samp), intent(inout) ::Xk
@@ -97,7 +98,7 @@ subroutine electrons_bands(Xk,Xen)
    int_distances(i1)=maxval((/nint(BANDS_steps*distances(i1)/max_dist),1/))
  enddo
  !
- CIRCUIT_K%nibz=sum(int_distances)
+ CIRCUIT_K%nibz=sum(int_distances)+1
  allocate(CIRCUIT_K%pt(CIRCUIT_K%nibz,3))
  !
  ic=1
@@ -108,6 +109,7 @@ subroutine electrons_bands(Xk,Xen)
      ic=ic+1
    enddo
  enddo
+ CIRCUIT_K%pt(ic,:)=USER_K%pt(USER_K%nibz,:)
  !
  deallocate(distances,int_distances)
  !
@@ -117,6 +119,7 @@ subroutine electrons_bands(Xk,Xen)
    Xk%pt(i1,:)=v
  enddo
  !
+ call QP_apply(BANDS_range,Xen,Xk,'G',msg_fmt='s')
  call bz_interp_setup(Xk)
  call eval_interpolation_coeff(R1D=Xen%E(BANDS_range(1):BANDS_range(2),1:Xk%nibz,1),k=Xk,ID=ID_interp)
  !

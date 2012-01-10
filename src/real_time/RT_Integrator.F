@@ -116,7 +116,7 @@ recursive subroutine RT_Integrator(G_new,G_old,A_new,A_old,T_step,Xen,k,q,Integr
      !
      TmpMatrix(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))=SC_R(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,1)
      !
-     call mat_dia_inv(DIAGO,USE_LK,TmpMatrix,E_real=Xen%E(:SC_bands(2),ik,1))
+     call mat_dia_inv(DIAGO,USE_LK,TmpMatrix,E_real=Xen%E(SC_bands(1):SC_bands(2),ik,1))
      !
      call H_rotate(TmpMatrix,G_new(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik),SC_nbands,1)
      !

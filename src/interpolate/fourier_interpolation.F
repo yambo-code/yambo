@@ -36,10 +36,8 @@ subroutine fourier_interpolation(USER_k,VALUES,engre,ndim)
   ! Work Space
   !
   real(SP)                 :: arg,tempc
-  integer                  :: ikpt,i,nw
-  integer                  :: iband
-  real(SP)                 :: Rdum(3)
-  real(SP)                 :: stg(3,nsym)
+  integer                  :: ikpt,nw,iband,i1
+  real(SP)                 :: Rdum(3),stg(3,nsym)
   integer, allocatable     :: nstv(:)
   real(SP), allocatable    :: spwre(:)
   real(SP), allocatable    :: vec(:,:,:)
@@ -53,14 +51,17 @@ subroutine fourier_interpolation(USER_k,VALUES,engre,ndim)
   do nw=1,nwave
      rdum(1:3)=lattice_vectors(1:3,nw)
      call stern1(rdum,nsym,int_sop,nstv(nw),stg)
-     forall(i=1:nstv(nw)) vec(1:3,i,nw)=stg(1:3,i)
+     forall(i1=1:nstv(nw)) vec(1:3,i1,nw)=stg(1:3,i1)
   enddo
   !
   do ikpt=1,user_k%nibz
+     spwre=0._SP
      do nw=1,nwave
-       spwre(nw)=sum(cos(2._sp*pi*(user_k%pt(ikpt,1)*vec(1,1:nstv(nw),nw) &
-&                                 +user_k%pt(ikpt,2)*vec(2,1:nstv(nw),nw) &
-&                                 +user_k%pt(ikpt,3)*vec(2,1:nstv(nw),nw))))
+       do i1=1,nstv(nw)     
+         arg=sum(2._SP*pi*user_k%pt(ikpt,1:3)*vec(1:3,i1,nw))      
+         tempc=cos(arg)
+         spwre(nw)=spwre(nw)+tempc
+       enddo
      enddo
      !
      spwre(1:nwave)=spwre(1:nwave)/nstv(1:nwave)

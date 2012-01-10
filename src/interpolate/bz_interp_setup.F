@@ -52,22 +52,23 @@ subroutine bz_interp_setup(Xk)
  !
  allocate(int_sop(3,3,nsym))
  !
- do i1=1,3
-   kmax1(i1)=sphere_radius*sqrt(dot_product(a(i1,:),a(i1,:)))+1
- enddo
- !
+ metten=matmul(a,transpose(a))
  call m3inv(transpose(a),a_inv)
+ a_inv=transpose(a_inv)
  call m3inv(b,b_inv)
+ !
+ do i1=1,3
+   kmax1(i1)=sphere_radius*sqrt(dot_product(a_inv(:,i1),a_inv(:,i1)))+1
+ enddo
  !
  do is=1,nsym
    !
    int_sop(:,:,is)=dl_sop(:,:,is)*(2._SP*pi)
-   int_sop(:,:,is)=matmul(a_inv,int_sop(:,:,is))
-   int_sop(:,:,is)=matmul(int_sop(:,:,is),b_inv)
+   int_sop(:,:,is)=matmul(transpose(a_inv),int_sop(:,:,is))
+   int_sop(:,:,is)=nint(matmul(int_sop(:,:,is),b_inv))
    !
  enddo
  !
- metten=matmul(a,transpose(a))
  nradm=product(2*kmax1+1)
  allocate(icnt(nradm),radii(nradm),ihkl1(3,nradm))
  irad=0
@@ -139,7 +140,7 @@ subroutine bz_interp_setup(Xk)
      islut=nwave
    endif
  enddo
- !    
+ !   
  deallocate(absk,icnt,radii,ihkl2)
  !
  allocate(tmp_vec(3,nwave))

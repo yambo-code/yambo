@@ -128,7 +128,7 @@ module real_time
  !
  real(SP),    allocatable :: Q_weight(:)
  ! ... THETA matrix
- complex(SP), allocatable :: THETA_matrix(:,:,:,:,:)
+ complex(SP), allocatable :: THETA_matrix(:,:,:,:)
  !
  ! Relaxation: Dephasing Matrix
  !
@@ -238,13 +238,6 @@ module real_time
  !
  contains
    !
-   integer function index_3b(i_n1,i_n2,i_n3)
-     use SC,         ONLY:SC_bands
-     integer            ::border,i_n1,i_n2,i_n3
-     border=SC_bands(2)-SC_bands(1)+1
-     index_3b= (i_n1-SC_bands(1)+1) + border * (i_n2-SC_bands(1)) + border**2 * (i_n3-SC_bands(1))
-   end function
-   !
    subroutine RT_alloc(en)
      !
      use pars,           ONLY:SP,schlen
@@ -304,8 +297,7 @@ module real_time
      !
 #if defined _ELPH   
      if (l_ph_corr) then
-       call mem_est("THETA_matrix",(/size(THETA_matrix)/),(/2*SP/))
-       allocate(THETA_matrix(2,(SC_bands(2)-SC_bands(1)+1)**3,QP_nk,nqbz,ph_modes))
+       allocate(THETA_matrix(2*nqbz*ph_modes,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1,QP_nk))
        call mem_est("THETA_matrix",(/size(THETA_matrix)/),(/2*SP/))
        THETA_matrix=(0._SP,0._SP)
      endif

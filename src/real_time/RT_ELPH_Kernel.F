@@ -26,8 +26,7 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  !  
  ! EULER: 
  !  
- ! In the EULER scheme everything is extremely easy. G_lesser is G(t<=TIME) and  
- ! I simply use it to integrate the THETA_matrix. In the iterative scheme
+ ! In the EULER scheme everything is extremely easy. G_lesser is G(TIME) and  
  ! I use the saved THETA_matrix (that in EULER is saved at TIME-RT_step) and the newly calculated
  ! DELTA matrix to get the new THETA_matrix.
  !  
@@ -36,17 +35,19 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  ! In RK2 everything is much more complicated because RT_elph_kernel is called at NE_time and
  ! at NE_time+RT_step/2 and in the two cases a different strategy ***should*** be applied.
  !  
- !  Iteration: in this case I ***think*** (even if I am not completely sure) that everything is ok.
+ ! Iteration: in this case I ***think*** (even if I am not completely sure) that everything is ok.
  !  
  use pars,           ONLY:SP,cI,pi
- use units,          ONLY:HA2EV
- use electrons,      ONLY:levels
+ use units,          ONLY:HA2EV,FS2AUT
+ use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
- use SC,             ONLY:SC_bands
+ use SC,             ONLY:SC_bands,it_now
  use parser_m,       ONLY:parser
- use real_time,      ONLY:RT_step,THETA_matrix,I1_lesser,Integrator_name,index_3b,q_weight
- use ELPH,           ONLY:ph_freqs_sq,elph_branches
+ use real_time,      ONLY:RT_step,THETA_matrix,I1_lesser,Integrator_name,q_weight,&
+&                         G_lesser,MEM_index
+ use ELPH,           ONLY:ph_freqs_sq,elph_branches,ph_modes
  use functions,      ONLY:bose_f
+ use wrapper,        ONLY:M_by_M
  !
  implicit none
  !
@@ -57,33 +58,37 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  !
  ! Work Space ...
  !
- integer               :: i_s,i_map(-1:1),il
+ integer               :: i_s,i_map(-1:1),il,i_counter
  real(SP)              :: ph_freq,N_q(2),DELTA_T
- complex(SP)           :: L_gl(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP)           :: L_lg(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP)           :: DELTA(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP)           :: Gkkp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
- complex(SP)           :: Xi_n,Xi_np,Xi_eta
+ !
+ complex(SP)           :: DELTA_matrix
+ complex(SP)           :: M1(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
+ complex(SP)           :: M2(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
+ complex(SP)           :: M3(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
+ complex(SP)           :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
+ complex(SP)           :: S_mat(2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
+ complex(SP)           :: Xi_eta,Xi_np
  complex(SP), external :: RT_G_retarded
  !
  ! ... band index ...
- integer               :: i_n,i_np,i_e,i_m,i_nnpe,i_npne
+ integer               :: i_n,i_np,i_e,i_m,i_nnpe,i_npne,B_dim,i_e_m,i_np_m,i_n_m
  ! ... BZ index ...
  integer               :: iqbz,iq,iqs,ik_m_q,ik_m_qs
  !
  real(SP)              :: g_q_diagonal_sq,g_q_off_diagonal_sq,alpha
  real(SP)              :: g_q_diagonal,g_q_off_diagonal
- logical               :: g_off_diagonal_used
  !
  call parser('alpha',alpha)
+ ! 
+ B_dim=SC_bands(2)-SC_bands(1)+1
  !
  !call parser('G_diagonal_sq',g_q_diagonal_sq )
  !call parser('G_off_diagonal_sq',g_q_off_diagonal_sq )
  !!
  !g_q_diagonal=sqrt(g_q_diagonal_sq/HA2EV)
  !g_q_off_diagonal=sqrt(g_q_off_diagonal_sq/HA2EV)
+ !
  g_q_off_diagonal=0.
- g_off_diagonal_used=.FALSE.
  !
  ! Time step
  !===========
@@ -94,12 +99,7 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  i_map( 0)=1
  i_map( 1)=2
  !
- ! Gkkp
- !======
- !
- ! Note the m.e. in Gkkp are stored with indexes order exchanged
- !
- Gkkp=(0.,0.)
+ i_counter=0
  !
  do iqbz=1,q%nbz
    !
@@ -107,24 +107,6 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
    iqs=q%sstar(iqbz,2)
    ik_m_q =k%sstar(qindx_S(ik,iqbz,1),1)
    ik_m_qs=k%sstar(qindx_S(ik,iqbz,1),2)
-   !
-   do i_n=SC_bands(1),SC_bands(2)
-      Gkkp(i_n,i_n)=g_q_diagonal
-      if (g_off_diagonal_used) then
-        do i_np=SC_bands(1),SC_bands(2)
-          if (i_n/=i_np) Gkkp(i_n,i_np)=g_q_off_diagonal
-        enddo 
-      endif
-   enddo
-   !
-   call RT_generalized_KBA(E,Gkkp,L_gl,ik_m_q,ik,'><')
-   call RT_generalized_KBA(E,Gkkp,L_lg,ik_m_q,ik,'<>')
-   !
-   call get_g_diagonal(g_q_diagonal_sq,alpha)
-   !
-   g_q_diagonal_sq=g_q_diagonal_sq*q_weight(iqbz)
-   g_q_diagonal=sqrt(g_q_diagonal_sq)
-   g_q_off_diagonal=0.
    !
    do il=elph_branches(1),elph_branches(2)
      !
@@ -134,50 +116,72 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
      !
      N_q    = bose_f(ph_freq)+(/0.,2./)
      !
-     do i_s=-1,1,2
-       !
-       DELTA(:,:)= (N_q(i_map(-i_s))*L_gl(:,:)-N_q(i_map(i_s))*L_lg(:,:))*exp(-cI*i_s*ph_freq*TIME)
-       !
+     call get_g_diagonal(g_q_diagonal_sq,alpha)
+     !
+     g_q_diagonal_sq=g_q_diagonal_sq*q_weight(iqbz)
+     !g_q_diagonal=sqrt(0.01/HA2EV)
+     g_q_diagonal=sqrt(g_q_diagonal_sq)
+     g_q_off_diagonal=0.
+     !
+     !
+     ! Note the m.e. in Gkkp are stored with indexes order exchanged
+     !
+     do i_n=SC_bands(1),SC_bands(2)
+       i_n_m=i_n-SC_bands(1)+1
+       Gkkp(i_n_m,i_n_m)=g_q_diagonal 
        do i_np=SC_bands(1),SC_bands(2)
-         !
-         Xi_np =RT_G_retarded(E,i_np,ik    ,0.,DELTA_T)
-         !
-         do i_n=SC_bands(1),SC_bands(2)
-           !
-           do i_e=SC_bands(1),SC_bands(2)
-             !
-             if (.not.g_off_diagonal_used.and.i_e/=i_n) cycle
-             !
-             Xi_eta=RT_G_retarded(E,i_e ,ik_m_q,0.,DELTA_T)
-             !
-             i_nnpe=index_3b(i_n,i_np,i_e)
-             !
-             THETA_matrix(i_map(i_s),i_nnpe,ik,iqbz,il)=Xi_eta*conjg(Xi_np)*&
-&                        ( THETA_matrix(i_map(i_s),i_nnpe,ik,iqbz,il)-cI*DELTA_T*conjg(Gkkp(i_e,i_n))*DELTA(i_e,i_np))
-             !
-           enddo ! i_e
-         enddo ! i_n
-       enddo ! i_np
-       !
-     enddo ! i_s
+         i_np_m=i_np-SC_bands(1)+1
+         if (i_n/=i_np) Gkkp(i_n_m,i_np_m)=g_q_off_diagonal
+       enddo 
+     enddo
+     !
+     M1=(0.,0.)
+     M2=(0.,0.)
+     M3=(0.,0.)
+     !
+     S_mat=(0.,0.)
+     !
+     call M_by_M('n','n',B_dim,G_lesser(:,:,ik_m_q,MEM_index(it_now)),Gkkp,M1)
+     !
+     call M_by_M('n','n',B_dim,Gkkp,G_lesser(:,:,ik,MEM_index(it_now)),M2)
+     !
+     call M_by_M('n','n',B_dim,M1,G_lesser(:,:,ik,MEM_index(it_now)), M3)
      !
      do i_s=-1,1,2
-       do i_np=SC_bands(1),SC_bands(2)
-         do i_n=SC_bands(1),SC_bands(2)
-           do i_e=SC_bands(1),SC_bands(2)
-             !
-             i_nnpe=index_3b(i_n,i_np,i_e)
-             !
-             i_npne=index_3b(i_np,i_n,i_e)
-             !
-             if (.not.g_off_diagonal_used.and.i_e/=i_n) cycle
-             !
-             I1_lesser(i_n,i_np,ik)=I1_lesser(i_n,i_np,ik)+exp(cI*i_s*ph_freq*TIME)*&
-&                                   (       THETA_matrix(i_map(i_s),i_nnpe,ik,iqbz,il) + &
-&                                     conjg(THETA_matrix(i_map(-i_s),i_npne,ik,iqbz,il)) )
-           enddo ! i_e
-         enddo ! i_n
-       enddo ! i_np
+       !
+       i_counter=i_counter+1
+       !
+       do i_e=1,B_dim
+         !
+         Xi_eta=RT_G_retarded(E,i_e+SC_bands(1)-1,ik_m_q,0.,DELTA_T)
+         !
+         do i_np=1,B_dim
+           !
+           Xi_np=RT_G_retarded(E,i_np+SC_bands(1)-1,ik    ,0.,DELTA_T)
+           !
+           DELTA_matrix=-cI*exp(-cI*i_s*ph_freq*TIME)*&
+&                       ( ( N_q(i_map(-i_s))-N_q(i_map(i_s)) )*cI*M3(i_e,i_np) +&
+&              spin_occ*( N_q(i_map(-i_s))*M2(i_e,i_np)-N_q(i_map(i_s))*M1(i_e,i_np) ) ) 
+           !
+           THETA_matrix(i_counter,i_e,i_np,ik)=Xi_eta*conjg(Xi_np)*( THETA_matrix(i_counter,i_e,i_np,ik)+DELTA_T*DELTA_matrix )
+           !
+         enddo ! i_np
+       enddo ! i_e
+       !
+       call M_by_M('c','n',B_dim,Gkkp,THETA_matrix(i_counter,:,:,ik),S_mat(i_map(i_s),:,:))
+       !
+     enddo
+     !
+     do i_s=-1,1,2
+       !
+       do i_n=SC_bands(1),SC_bands(2)
+         do i_np=SC_bands(1),SC_bands(2)
+           i_n_m=i_n-SC_bands(1)+1
+           i_np_m=i_np-SC_bands(1)+1
+           I1_lesser(i_n,i_np,ik)=I1_lesser(i_n,i_np,ik)+exp(cI*i_s*ph_freq*TIME)*(S_mat(i_map(i_s),i_n_m,i_np_m)+&
+&                                                                            conjg(S_mat(i_map(-i_s),i_np_m,i_n_m)))
+         enddo 
+       enddo
        !
      enddo ! i_s
      !

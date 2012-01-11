@@ -88,6 +88,7 @@ subroutine RT_ELPH_initialize(q)
 ! enddo
  !
  ph_freqs_sq=(36/1000./HA2EV)**2.
+ !ph_freqs_sq=(5./HA2EV)**2.
  !
  ! Reset the sections depth in order to not pop-out the messages in rim_spherical in the wrong
  ! section level

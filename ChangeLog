@@ -1,3 +1,663 @@
+2012-01-12 10:46:46 r1015 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	New version (subversion increased)
+
+2012-01-11 13:31:18 r1011 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac real_time/RT_ELPH_Kernel.F real_time/RT_generalized_KBA.F real_time/RT_ELPH_initialize.F real_time/.objects modules/mod_real_time.F bse/K_diagonalization.F
+
+	Changes:
+	- [RT] Working version of el-ph scattering in BKE including off-diagonal matrix elements.
+
+	Patch sent by: Andrea
+
+2012-01-10 16:07:50 r1009 attacc
+
+	Version 3.2.4
+
+	*  interpolate/bz_interp_setup.F interpolate/fourier_interpolation.F real_time/RT_Integrator.F ypp/electrons_bands.F
+
+	Bugs:
+	 -[RT] Small bug in EXACT integrator
+
+	Additions:
+	 -[YPP_TEST_2] Band structure interpolation (DFT or GoWo)
+	 -[TEST_2] Generic Brillouin zone interpolation scheme (PRB 38 p2721)
+
+2012-01-05 11:38:07 r1008 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug in rlu_v_norm fixed
+
+2012-01-02 16:18:10 r1007 gruning
+
+	Version 3.2.4
+
+	*   pol_function/Dipole_check_shifted_grids.F pol_function/Dipole_shifted_grids.F interface/init.F modules/mod_R_lattice.F
+
+	Bugs: Found a couple of bugs responsible for a factor between dipoles calculated numerically and using momentum formula
+	      Note that the behavior of the subroutine pol_function/Dipole_check_shifted_grids.F  has changed slightly.
+	-
+	Additions: [RT] Activated possibility of using shifted grid to calculate dipole (interface/init.F)
+	-
+
+2011-12-31 13:09:56 r1006 gruning
+
+	Version 3.2.4
+
+	*  ypp/k_grids.F
+
+	Bugs: The shifted grid generator utility was broken after rev.1002.
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+2011-12-29 18:10:44 r1005 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc e2y/e2y_wf.F e2y/e2y_db1.F e2y/e2y_i.F e2y/e2y_kb_pp.F e2y/etsf_data.F int_modules/mod_xc2y.F int_modules/mod_wf2y.F int_modules/mod_com2y.F p2y/p2y_db1.F p2y/pw_errore.F p2y/p2y_wf.F p2y/mod_p2y.F p2y/Vnl_driver.F p2y/mod_pw_data.F p2y/p2y_i.F p2y/mod_pw_export.F p2y/pw_wfc_module.F a2y/a2y_db1.F a2y/a2y_i.F a2y/a2y_wf.F a2y/a2y_KSS_file_name.F config/Makefile.in config/fftw.m4 config/acx_report.m4 config/acx.m4 config/acx_cpp.m4 config/acx_mpi.m4 config/netcdf_f90.m4 config/acx_fortran_flags.m4 config/configure.ac config/acx_get_fc_version.m4 lib/blas/sswap.f lib/blas/sgemm.f lib/blas/strsm.f lib/blas/dswap.f lib/blas/sger.f lib/blas/dger.f lib/blas/dtrsm.f lib/blas/dgemm.f lib/blas/.objects lib/lapack/sgetrf.f lib/lapack/dlaswp.f lib/lapack/dgetf2.f lib/lapack/dgetrs.f lib/lapack/slaswp.f lib/lapack/sgetf2.f lib/lapack/sgetrs.f lib/lapack/dgetrf.f lib/lapack/.objects xc_functionals/el_density.F xc_functionals/xcxalp.F xc_functionals/el_current.F xc_functionals/XC_potential_driver.F xc_functionals/XC_lda_driver.F xc_functionals/XC_libxc_driver.F xc_functionals/xc_rpa_kp.F xc_functionals/spin_density.F xc_functionals/mod_xc_costants.F qp/QP_driver.F qp/XCo_local.F qp/XCo_driver.F qp/QP_of.F qp/XCo_Hartree_Fock.F qp/QP_Green_Function.F qp/QP_descriptions.F qp/QP_report_and_write.F qp/QP_real_axis.F qp/QP_newton.F qp/bracket.F qp/QP_life_transitions.F qp/QP_secant.F qp/secant.F qp/QP_W2Sc.F qp/.objects qp/QP_ppa_cohsex.F qp_ctl/QP_apply_DB_interpolation.F qp_ctl/QP_apply_global_stretch.F qp_ctl/mod_QP_CTL.F qp_ctl/.objects qp_ctl/QP_load_DB.F qp_ctl/QP_check_if_corrected.F qp_ctl/QP_fit_DB_values.F qp_ctl/QP_merge_DBs.F external_c/c_printing.c common/pol_fit.F common/FREQUENCIES_Green_Function.F common/OCCUPATIONS_Extend.F common/RIntegrate.F common/pert_inversion.F common/FREQUENCIES_damping.F common/OCCUPATIONS_Fermi.F common/FREQUENCIES_coarse_grid.F common/QP_state_extract.F common/FREQUENCIES_reset.F common/Kramers_Kronig.F common/eval_G_minus_G.F common/.objects common/QPartilize.F common/CIntegrate.F common/crystal_lattice.F common/FREQUENCIES_setup.F parser/Gclose.F parser/parser_lib.F parser/ps_convert.F parser/init_convert.F parser/mod_parser_m.F parser/mod_itm.F bz_ops/k_the_nearest.F bz_ops/k_ibz2bz.F bz_ops/k_sym2sym.F bz_ops/k_lattice.F bz_ops/k_reduce.F bz_ops/.objects bz_ops/k_expand.F bz_ops/bz_samp_indexes.F wf_and_fft/WF_load.F wf_and_fft/fft_setup.F wf_and_fft/.objects wf_and_fft/scatter_Bamp.F wf_and_fft/fft_3d.F wf_and_fft/WF_spatial_invertion.F wf_and_fft/scatter_Gamp.F pol_function/X_bare_RIM_GreenF.F pol_function/X_pre_setup.F pol_function/X_eh_setup.F pol_function/O_select_q_and_G.F pol_function/Dipole_kb_pp_comp.F pol_function/X_delta_part.F pol_function/O_eels.F pol_function/X_simple_GreenF.F pol_function/X_os.F pol_function/X_em1.F pol_function/O_driver.F pol_function/Dipole_kb_Ylm.F pol_function/Dipole_kb_sum.F pol_function/Dipole_dip_dot_field.F pol_function/.objects pol_function/Dipole_driver.F pol_function/Dipole_transverse.F pol_function/X_s.F pol_function/X_drude.F setup/QP_external_corrections.F setup/check_periodic_directions.F setup/setup.F setup/G_shells_finder.F setup/QP_state_table_setup.F setup/eval_minus_G.F interface/parse_K_list.F interface/QP_ctl_load.F interface/init_load.F interface/.objects interface/QP_ctl_switch.F interface/QP_init.F interface/init.F interface/stop_now.F interface/barriers.F interface/init_q_pts.F coulomb/cutoff_sphere.F coulomb/cutoff_box.F coulomb/cutoff_driver.F coulomb/bessel_F2.F coulomb/bessel_F3.F coulomb/bessel_J0.F coulomb/bessel_F4.F coulomb/bessel_F5.F coulomb/bessel_F6.F coulomb/cutoff_cylinder.F coulomb/rim_spherical.F coulomb/cutoff_test.F coulomb/rim.F coulomb/col_driver.F coulomb/rim_integrate.F communicate/REPORT_Energies.F communicate/REPORT_Occupations.F communicate/section.F communicate/acknowledge_yambo.F tddft/tddft_alda_r_space.F tddft/.objects tddft/tddft_do_X_W_typs.F tddft/tddft_alda_g_space.F io/ioBS.F io/variables_BS.F io/io_elemental.F io/ioDB1.F io/io_HF_and_locXC.F io/ioX.F io/variables_X.F io/ioGROT.F io/ioWF.F io/ioBSS_invert.F io/ver_is_gt_or_eq.F io/IO_and_Messaging_switch.F io/ioQP.F io/ioQINDX.F io/io_header.F io/ioRIM.F io/ioCOL_CUT.F io/ioBSS_Haydock.F io/Fragments_Synchronize.F io/ioBSS_diago.F io/ioKB_PP.F io/ioE_RIM.F io/.objects io/ioDB1_reload.F io/io_bulk.F io/io_DIPOLES.F io/io_Vnl.F io/IO_Setup.F io/variables_DIPOLES.F io/Fragments_Restart.F modules/mod_electrons.F modules/mod_logo.F modules/mod_frequency.F modules/mod_units.F modules/mod_zeros.F modules/mod_BS.F modules/mod_TDDFT.F modules/mod_R_lattice.F modules/mod_fields.F modules/mod_memory.F modules/mod_functions.F modules/mod_libxc_int.F modules/mod_wave_func.F modules/mod_drivers.F modules/mod_xc_functionals.F modules/mod_ACFDT.F modules/mod_fragments.F modules/mod_timing.F modules/mod_X_output.F modules/mod_vec_operate.F modules/mod_pseudo.F modules/std_presets.F modules/mod_par_indexes.F modules/mod_stderr.F modules/mod_pars.F modules/mod_par_proc.F modules/mod_IO.F modules/mod_X.F modules/mod_com.F modules/mod_FFT.F modules/mod_QP.F modules/mod_wrapper.F modules/mod_matrix_operate.F modules/.objects modules/mod_D_lattice.F modules/mod_global_XC.F modules/mod_collision.F bse/K_Haydock.F bse/K_exchange.F bse/K_scattering.F bse/K_filling.F bse/K_BSmat_by_V.F bse/.objects bse/K_driver.F bse/K_diagonalization.F bse/K_eh_setup.F bse/K_inversion.F bse/K_solvers.F bse/K_eps_interpolate.F bse/K_output_file.F bse/K.F ypp/ypp_init.F ypp/plot_xcrysden.F ypp/electrons_dos_and_charge.F ypp/qpdb_setup.F ypp/mod_YPP.F ypp/excitons_driver.F ypp/electrons_charge.F ypp/qpdb_init.F ypp/electrons_driver.F ypp/plot_cube.F ypp/ypp_i.F ypp/excitons_sort_and_report.F ypp/k_grids.F ypp/.objects ypp/plot_gnuplot.F ypp/plot_check_and_launch.F ypp/k_random.F ypp/ypp_init_load.F driver/p2y.h driver/a2y.h driver/editor.h.in driver/codever.h.in driver/e2y.h driver/yambo_driver.F driver/driver.c driver/yambo.h driver/ypp.h sbin/make_message.pl.in sbin/make_makefile.sh.in sbin/objects_debug.sh.in
+
+	*** GLOBAL UPDATE from revision 949 to revision 1004 ***
+
+	Bugs:
+	- Small bug fix in O_driver for out-of-the BZ calculations (PJ + Claudio)
+	- Fixed flags and compilation problems
+	- Memory leaks due to nullify of pointers fixed
+	- Small bug in QP report
+	- Bug searching the nearest k-point without symmetries, be_carefull=.FALSE (Davide)
+	- In k_lattice. This is an old issue related to the search of the unit vectors of the BZ grid. I already had changed this part in 2010 but,
+	  apparently, it does not work always, like in the surface case of the Fantastic Dimensions tutorial. Therefore I decided to merge the old
+	  and new method in a new procedure that, hopefully, will work always.
+
+	Additions:
+	- Added a routine (variables_X) to handle the description strings of the response function
+	- ERIM for the BSE added
+	- Possibility to link FFT different from FFTW for example MKL one
+	  see http://www.yambo-code.org/doc/compiling.php
+
+	Changes:
+	- GLOBAL COPYRIGHT YEAR RANGE change
+	- Changed the singer "Armstrong" for the unit "Angstroms" (Davide)
+	- Typos in Bethe-Salpter output (Davide)
+	- Partial Fix of optical calculations using shifted grids. Eps0 calculated with the shifted grids agree with the calculation with
+	  the non-local part of the pseudo. There is still  a large prefactor (~70) I could not find the reason of. Also the
+	  generation of the grids by ypp has been changed.
+	  *** this piece of code is still to test and improve ***
+
+	Patch sent by: Andrea
+
+2011-12-29 17:14:01 r1004 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc e2y/e2y_wf.F e2y/e2y_db1.F e2y/e2y_i.F e2y/e2y_kb_pp.F e2y/etsf_data.F int_modules/mod_xc2y.F int_modules/mod_wf2y.F int_modules/mod_com2y.F p2y/p2y_db1.F p2y/pw_errore.F p2y/p2y_wf.F p2y/mod_p2y.F p2y/Vnl_driver.F p2y/mod_pw_data.F p2y/p2y_i.F p2y/mod_pw_export.F a2y/a2y_db1.F a2y/a2y_i.F a2y/a2y_wf.F a2y/a2y_KSS_file_name.F c2y/c2y_file_name.F c2y/c2y_db1.F c2y/c2y_i.F c2y/c2y_wf.F config/Makefile.in config/Makefile.in_gpl config/acx_report.m4 config/fftw.m4 config/acx.m4 config/acx_cpp.m4 config/acx_mpi.m4 config/netcdf_f90.m4 config/acx_fortran_flags.m4 config/configure.ac config/acx_get_fc_version.m4 doc/sample/bulk_silicon/SAVE/database_DB1_NETCDF_format.gz doc/sample/bulk_silicon/SAVE/database_WF_NETCDF_format.gz xc_functionals/el_density.F xc_functionals/xcxalp.F xc_functionals/el_current.F xc_functionals/XC_potential_driver.F xc_functionals/XC_lda_driver.F xc_functionals/XC_libxc_driver.F xc_functionals/xc_rpa_kp.F xc_functionals/spin_density.F xc_functionals/mod_xc_costants.F qp/QP_driver.F qp/QP_load_SC_xc.F qp/XCo_local.F qp/QP_of.F qp/XCo_driver.F qp/QP_Green_Function.F qp/XCo_Hartree_Fock.F qp/QP_descriptions.F qp/QP_real_axis.F qp/QP_report_and_write.F qp/QP_newton.F qp/ELPH_Sigma_c.F qp/ELPH_Hamiltonian.F qp/bracket.F qp/QP_life_transitions.F qp/COLLISIONS_IO_eval.F qp/QP_secant.F qp/secant.F qp/QP_W2Sc.F qp/COLLISIONS_IO_store.F qp/QP_ppa_cohsex.F qp/COLLISIONS_IO_compose.F acfdt/gauss_leg_grid.F acfdt/acfdt_tot_energy.F qp_ctl/QP_apply_DB_interpolation.F qp_ctl/QP_apply_global_stretch.F qp_ctl/mod_QP_CTL.F qp_ctl/QP_load_DB.F qp_ctl/QP_check_if_corrected.F qp_ctl/QP_fit_DB_values.F qp_ctl/OCCUPATIONS_IO_and_interpolate.F qp_ctl/Load_Green_Functions.F qp_ctl/QP_merge_DBs.F external_c/c_printing.c ras/io_ostnts_cut.F ras/reels_spectrum.F ras/io_slab_eps.F ras/extract_eps_surf.F ras/rasdriver.F ras/Dipole_driver_cut.F ras/Dipole_transverse_cut.F ras/Dipole_shifted_grids_cut.F ras/ras_spectrum.F interpolate/bz_interp_setup.F interpolate/bz_interp_coeff.F interpolate/eval_interpolation_coeff.F interpolate/bz_interpolation.F interpolate/fourier_interpolation.F common/Convolve.F common/pol_fit.F common/OCCUPATIONS_Extend.F common/FREQUENCIES_Green_Function.F common/RIntegrate.F common/pert_inversion.F common/FREQUENCIES_damping.F common/OCCUPATIONS_Fermi.F common/QP_state_extract.F common/FREQUENCIES_coarse_grid.F common/OCCUPATIONS_Boltzmann.F common/FREQUENCIES_reset.F common/Kramers_Kronig.F common/eval_G_minus_G.F common/QPartilize.F common/CIntegrate.F common/crystal_lattice.F common/FREQUENCIES_setup.F bz_ops/k_the_nearest.F bz_ops/k_ibz2bz.F bz_ops/k_sym2sym.F bz_ops/k_lattice.F bz_ops/k_reduce.F bz_ops/k_expand.F bz_ops/bz_samp_indexes.F parser/Gclose.F parser/parser_lib.F parser/ps_convert.F parser/init_convert.F parser/mod_parser_m.F parser/mod_itm.F wf_and_fft/WF_derivative.F wf_and_fft/fft_setup.F wf_and_fft/eval_GradOperator.F wf_and_fft/fft_1d.F wf_and_fft/scatter_Bamp.F wf_and_fft/eval_R_minus_R.F wf_and_fft/fft_3d.F wf_and_fft/scatter_Gamp.F wf_and_fft/WF_load.F wf_and_fft/WF_states_setup.F wf_and_fft/WF_spatial_invertion.F wf_and_fft/WF_rotate.F pol_function/X_bare_RIM_GreenF.F pol_function/X_pre_setup.F pol_function/X_eh_setup.F pol_function/O_select_q_and_G.F pol_function/Dipole_kb_pp_comp.F pol_function/X_delta_part.F pol_function/O_eels.F pol_function/X_simple_GreenF.F pol_function/Dipole_check_shifted_grids.F pol_function/X_os.F pol_function/O_driver.F pol_function/Dipole_kb_Ylm.F pol_function/X_em1.F pol_function/Dipole_shifted_grids.F pol_function/X_dipole_RIM.F pol_function/Dipole_kb_sum.F pol_function/X_GreenF_remap.F pol_function/Dipole_dip_dot_field.F pol_function/O_kerr.F pol_function/O_kerr_shadow.F pol_function/Dipole_driver.F pol_function/Dipole_transverse.F pol_function/X_s.F pol_function/X_drude.F setup/QP_external_corrections.F setup/check_periodic_directions.F setup/setup.F setup/G_shells_finder.F setup/QP_state_table_setup.F setup/eval_minus_G.F coulomb/cutoff_sphere.F coulomb/cutoff_box.F coulomb/cutoff_driver.F coulomb/bessel_F2.F coulomb/bessel_F3.F coulomb/bessel_J0.F coulomb/bessel_F4.F coulomb/bessel_F5.F coulomb/bessel_F6.F coulomb/cutoff_cylinder.F coulomb/rim_spherical.F coulomb/cutoff_test.F coulomb/rim.F coulomb/col_driver.F coulomb/rim_integrate.F interface/parse_K_list.F interface/QP_ctl_load.F interface/init_load.F interface/QP_ctl_switch.F interface/QP_init.F interface/init.F interface/stop_now.F interface/DephMatrix_init.F interface/barriers.F interface/init_q_pts.F ras_reels_mods/mod_eels_gvec.F ras_reels_mods/mod_eels_kinematics.F ras_reels_mods/mod_surface_geometry.F ras_reels_mods/mod_bulkeps.F ras_reels_mods/io_loc.F ras_reels_mods/mod_model_loss_function.F ras_reels_mods/mod_eels_global.F ras_reels_mods/mod_eels_scattering.F ras_reels_mods/mod_eels_qpt.F ras_reels_mods/mod_eels_inveps.F ras_reels_mods/mod_convolute.F ras_reels_mods/mod_optcut.F ras_reels_mods/mod_analyse_peaks.F ras_reels_mods/reels_presets.F ras_reels_mods/mod_eels_detector.F ras_reels_mods/mod_numerical_integration.F ras_reels_mods/mod_eels_wgrid.F ras_reels_mods/mod_allocate.F ras_reels_mods/mod_ras.F ras_reels_mods/mod_intchar.F ras_reels_mods/mod_eels_integration.F ras_reels_mods/ras_presets.F real_time/RT_Ext_fields.F real_time/RT_ELPH_Kernel.F real_time/RT_apply_field.F real_time/RT_Field_Commensurable_Frequencies.F real_time/RT_driver.F real_time/RT_Collision.F real_time/RT_current_AND_polarization.F real_time/RT_G_retarded.F real_time/RT_output.F real_time/RT_initialize.F real_time/RT_generalized_KBA.F real_time/RT_observables.F real_time/RT_propagate_fields.F real_time/RT_ELPH_initialize.F real_time/RT_Integrator.F real_time/RT_databases_IO.F real_time/DephMatrix_setup.F real_time/RT_Fluence.F real_time/RT_Rabi_Function.F real_time/RT_update.F real_time/RT_start_and_restart.F real_time/RT_average_operator.F communicate/REPORT_Energies.F communicate/REPORT_Occupations.F communicate/section.F communicate/acknowledge_yambo.F sc/MAG_common_build_A.F sc/XC_switch.F sc/V_real_space_to_H.F sc/OEP_driver.F sc/OEP_iterative.F sc/V_qp_basis_to_H.F sc/OEP_ApplySigmaX.F sc/OEP_Weighted_Density.F sc/OEP_exact_inversion.F sc/SC_WF_and_dipole_dimensions.F sc/SC_add_XC.F sc/SC_start_and_restart.F sc/MAG_pseudo_nl.F sc/SC_Energy.F sc/OEP_app_inversion.F sc/V_Hartree.F sc/SC_driver.F sc/SC_bare_Hamiltonian.F sc/SC_precondition.F sc/SC_check_symmetries.F sc/MAG_A_phase.F sc/V_Mean_Potential.F sc/SC_History.F sc/SC_update_dipoles.F sc/OEP_ApplySigmaCSX.F sc/MAG_Hamiltonian.F sc/OEP_Hole.F sc/MAG_H_pseudo.F tddft/tddft_BSK_disk_2_FXC.F tddft/tddft_alda_r_space.F tddft/tddft_do_X_W_typs.F tddft/tddft_BSK_2_FXC.F tddft/tddft_alda_g_space.F io/ioBS.F io/variables_SC.F io/io_HF_and_locXC.F io/ioBS_DISTRIBUTED.F io/ioX.F io/io_SC_components.F io/ioBSS_invert.F io/IO_and_Messaging_switch.F io/load_SC_components.F io/ioQINDX.F io/io_DIPOLES.F io/io_Vnl.F io/Fragments_Restart.F io/ioBS_Fxc.F io/variables_BS.F io/io_elemental.F io/ioDB1.F io/variables_X.F io/ioGROT.F io/ioWF.F io/COLLISIONS_IO_load.F io/io_COLLISIONS.F io/ver_is_gt_or_eq.F io/ioQP.F io/io_P_and_P2.F io/io_header.F io/ioRIM.F io/ioCOL_CUT.F io/ioELPH.F io/Fragments_Synchronize.F io/ioBSS_Haydock.F io/ioBSS_diago.F io/ioKB_PP.F io/ioE_RIM.F io/io_bulk.F io/ioDB1_reload.F io/IO_Setup.F io/variables_DIPOLES.F modules/mod_electrons.F modules/mod_logo.F modules/mod_frequency.F modules/mod_collisions_CACHE.F modules/mod_real_time.F modules/mod_units.F modules/mod_zeros.F modules/mod_KERR.F modules/mod_BS.F modules/mod_TDDFT.F modules/mod_fields.F modules/mod_R_lattice.F modules/mod_memory.F modules/mod_functions.F modules/mod_libxc_int.F modules/mod_wave_func.F modules/mod_drivers.F modules/mod_xc_functionals.F modules/mod_ACFDT.F modules/mod_interpolate.F modules/mod_fragments.F modules/mod_timing.F modules/mod_X_output.F modules/mod_vec_operate.F modules/mod_pseudo.F modules/std_presets.F modules/mod_par_indexes.F modules/mod_stderr.F modules/mod_SC.F modules/mod_collisions_IO.F modules/mod_par_proc.F modules/mod_pars.F modules/mod_IO.F modules/mod_X.F modules/mod_wf_distribute.F modules/mod_com.F modules/mod_FFT.F modules/mod_QP.F modules/mod_wrapper.F modules/mod_matrix_operate.F modules/mod_magnetic.F modules/mod_D_lattice.F modules/mod_ELPH.F modules/mod_global_XC.F modules/mod_collision.F bse/K_exchange.F bse/K_Haydock.F bse/K_DISTRIBUTED.F bse/K_filling.F bse/K_BSmat_by_V.F bse/K_driver.F bse/K_eps_interpolate.F bse/K_solvers.F bse/K_output_file.F bse/K_scattering.F bse/K_inversion.F bse/K_eh_setup.F bse/K_diagonalization.F bse/K.F reels/loss_bulk.F reels/average_epsm1_q.F reels/epsinv.F reels/reelsdriver.F reels/calc_loss_function.F ypp/ypp_init.F ypp/RT_split_Polarization.F ypp/RT_X_effective.F ypp/RT_databases.F ypp/plot_xcrysden.F ypp/excitons_non_collinear.F ypp/electrons_current.F ypp/RT_driver.F ypp/RT_coefficients_Fourier.F ypp/reels_ypp.F ypp/RT_coefficients_Inversion.F ypp/electrons_bands.F ypp/RT_initialize.F ypp/mod_YPP.F ypp/ras_loc_ypp.F ypp/plot_cube.F ypp/ELPH_eliashberg_dos.F ypp/excitons_collinear.F ypp/RT_paths.F ypp/ras_trans_ypp.F ypp/RT_X_qssin.F ypp/ypp_init_load.F ypp/electrons_dos_and_charge.F ypp/ELPH_databases.F ypp/RT_1D_Fourier_Transform.F ypp/RT_X_LRR_real_field.F ypp/ELPH_general_gFsq.F ypp/qpdb_setup.F ypp/excitons_driver.F ypp/electrons_charge.F ypp/RT_X_inversion.F ypp/qpdb_init.F ypp/ELPH_excitonic_gkkp.F ypp/electrons_driver.F ypp/RT_fix_symmetries.F ypp/ras_generate_epsdb.F ypp/ras_ypp.F ypp/excitons_sort_and_report.F ypp/ypp_i.F ypp/k_grids.F ypp/RT_damp_it.F ypp/plot_gnuplot.F ypp/plot_check_and_launch.F ypp/electrons_angular_momentum.F ypp/ELPH_atomic_amplitude.F ypp/k_special.F ypp/k_random.F driver/a2y.h driver/editor.h.in driver/codever.h.in driver/c2y.h driver/e2y.h driver/yambo.h driver/ypp.h driver/yambo.h_gpl driver/p2y.h driver/ypp.h_gpl driver/yambo_driver.F driver/driver.c sbin/make_message.pl.in sbin/yambo_versions_update.tcsh sbin/make_makefile.sh.in sbin/objects_debug.sh.in
+
+	Bugs:
+	- In k_lattice. This is an old issue related to the search of the unit vectors of the BZ grid. I already had changed this part in 2010 but,
+	  apparently, it does not work always, like in the surface case of the Fantastic Dimensions tutorial. Therefore I decided to merge the old
+	  and new method in a new procedure that, hopefully, will work always.
+
+	Changes:
+	- Global change of GPL header years. Now changed in 2000-2012 (WoW! 12 years already).
+
+	Patch sent by: Andrea
+
+2011-12-29 12:09:26 r1003 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac qp/ELPH_Sigma_c.F coulomb/rim_spherical.F real_time/RT_ELPH_Kernel.F real_time/RT_driver.F real_time/RT_initialize.F real_time/RT_ELPH_initialize.F modules/mod_real_time.F ypp/ELPH_atomic_amplitude.F
+
+	Bugs:
+	- [ELPH] Potential bug in rim_spherical.F. To check consequences on the calculation of the polaronic corrections.
+
+	Additions:
+	- [RT] Model of the el-ph interaction based on the HEG, using the GaAs parameters.
+
+	Patch sent by: Andrea
+
+2011-12-28 12:21:58 r1002 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac pol_function/Dipole_check_shifted_grids.F pol_function/Dipole_shifted_grids.F interface/init_load.F interface/init.F real_time/RT_ELPH_Kernel.F modules/mod_X_output.F ypp/ypp_init.F ypp/mod_YPP.F ypp/ypp_init_load.F ypp/k_grids.F driver/ypp.h
+
+	Changes:
+	- Partial Fix of optical calculations using shifted grids. Eps0 calculated with the shifted grids agree with the calculation with
+	  the non-local part of the pseudo. There is still  a large prefactor (~70) I could not find the reason of. Also the
+	  generation of the grids by ypp has been changed.
+	  *** this piece of code is still to test and improve ***
+
+	Patch sent by: Andrea
+
+2011-12-27 16:48:07 r1001 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bugs fixed in El-ph dynamics
+
+2011-12-23 16:50:32 r1000 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	1000's commit. Happy Xmas and happy new year to all
+
+2011-12-22 15:37:06 r999 attacc
+
+	Small bug in configure for fftw
+
+2011-12-22 12:23:54 r998 attacc
+
+	Version 3.2.4
+
+	*  qp/XCo_local.F
+
+	Bugs:
+	 -[SPIN] Removed useless lood (Davide)
+
+2011-12-19 12:14:55 r997 attacc
+
+	Version 3.2.4
+
+	*  configure config/fftw.m4
+
+	Additions:
+	 -Possibility to link FFT different from FFTW for example MKL one
+	  see  http://localhost/yambo_web_page/doc/compiling.php
+
+2011-12-15 14:31:12 r996 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac real_time/RT_ELPH_Kernel.F real_time/RT_ELPH_Kernel.F_ORI real_time/RT_generalized_KBA.F real_time/RT_ELPH_initialize.F real_time/RT_generalized_KBA.F_ORI io/ioELPH.F modules/mod_real_time.F ypp/electrons_driver.F
+
+	Bugs:
+	- [RT] Electron-phonon dynamics was causing the decay of all electronic levels. This was due to an incorrect
+	       nesting of the band indexes in the ELPH kernel.
+
+	Additions:
+	- [RT] Analytic fit of the phonon bands of bulk hbn
+
+	Changes:
+	- [RT] Implmentation of time integration removed. The version in rev. 969 (with a smal patch) is
+	  the only one working with a diagonal-only interaction. It was useless to keep the time integration
+	  as it is terribly slow.
+
+	Patch sent by: Andrea
+
+2011-12-14 09:52:10 r995 attacc
+
+	Version 3.2.4
+
+	*  qp/QP_ppa_cohsex.F bse/K.F
+
+	Bugs:
+	 -Typos in Bethe-Salpter output (Davide)
+	 -[SC] Bus in COHSEX with spin (Davide)
+
+2011-12-13 23:00:59 r994 attacc
+
+	Small bug in RT_effective
+
+2011-12-13 16:37:49 r993 attacc
+
+	fixed compilation with gfortran
+
+2011-12-13 14:54:37 r992 attacc
+
+	Version 3.2.4
+
+	*  p2y/pw_wfc_module.F real_time/RT_output.F ypp/RT_X_effective.F ypp/RT_coefficients_Fourier.F
+
+	Bugs:
+	 -[P2Y] Fixed double precision
+
+	Changes:
+	 -[RT] High order Xhi is ploted for all directions, with error bar
+
+2011-12-10 14:12:54 r991 attacc
+
+	Version 3.2.4
+
+	*  qp/ELPH_Hamiltonian.F interface/QP_ctl_load.F real_time/DephMatrix_setup.F
+
+	Bugs:
+	 -[RT] Small problems in DP precision
+
+2011-12-09 17:58:32 r990 gruning
+
+	Version 3.2.4
+
+	*  qp_ctl/mod_QP_CTL.F interface/QP_ctl_switch.F real_time/RT_driver.F real_time/RT_scale_DIP_by_QP.F real_time/.objects modules/mod_QP.F
+
+	Bugs: [RT] removed dipole scaling introduced in rev 972 (theoretically wrong)
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+2011-12-09 15:53:18 r989 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_average_operator.F
+
+	Changes:
+	 -[RT] Small improvment for SC_bands(1)/=1
+
+2011-12-08 17:36:39 r988 attacc
+
+	Version 3.2.4
+
+	*  xc_functionals/el_density.F qp_ctl/OCCUPATIONS_IO_and_interpolate.F common/pert_inversion.F real_time/RT_Collision.F real_time/RT_driver.F real_time/RT_current_AND_polarization.F real_time/RT_observables.F real_time/RT_Integrator.F real_time/RT_update.F real_time/RT_start_and_restart.F real_time/RT_average_operator.F sc/SC_bare_Hamiltonian.F io/io_SC_components.F modules/mod_real_time.F modules/mod_SC.F modules/mod_pars.F ypp/RT_databases.F
+
+	Changes:
+	 -[RT] G_lesser dimensions changed to G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,mem_steps)
+	       *) speed up calculations, use less memory and disk space
+	       *) old RT databased are not compatible with this version
+	       *) ELPH not changed, set SC_bands(1)=1 for compatibility
+
+	 -Added wrapper in pert_inversion.F
+
+2011-12-06 12:13:19 r987 attacc
+
+	Version 3.2.4
+
+	*  ypp/RT_X_effective.F ypp/RT_fix_symmetries.F
+
+	Bugs:
+	 -[RT] Time interval not read correctly when calculating X2
+
+	Changes:
+	 -[RT] RT_fix_symmetries uses a bit less memory
+
+2011-12-01 11:06:27 r986 gruning
+
+	Version 3.2.4
+
+	*  xc_functionals/XC_libxc_driver.F
+
+	Bugs: [QP] Libxc did not work for nspin=2 (patch by Davide S.)
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+2011-11-30 13:57:12 r985 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_apply_field.F real_time/RT_initialize.F
+
+	Additions:
+	 -[RT] Intraband terms (if =/0) are used in length gauge
+
+2011-11-29 17:34:06 r984 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Too many m (Elena)
+
+2011-11-24 17:07:53 r983 attacc
+
+	Version 3.2.4
+
+	*  bz_ops/k_the_nearest.F
+
+	Bugs:
+	 -Bug searching the nearest k-point without symmetries, be_carefull=.FALSE (David)
+
+2011-11-23 11:39:17 r982 attacc
+
+	Version 3.2.4
+
+	*  pol_function/Dipole_transverse.F ypp/electrons_dos_and_charge.F
+
+	Bugs:
+	 -[SC/RT] Fixed Vnl in <p> (Davide)
+	 -Fixed compilation for the GPL (David)
+
+2011-11-21 13:02:08 r981 attacc
+
+	Version 3.2.4
+
+	*  qp_ctl/OCCUPATIONS_IO_and_interpolate.F pol_function/Dipole_transverse.F communicate/REPORT_Occupations.F sc/MAG_A_phase.F modules/mod_units.F modules/mod_SC.F modules/mod_collision.F ypp/plot_xcrysden.F ypp/excitons_driver.F ypp/plot_gnuplot.F ypp/ELPH_atomic_amplitude.F
+
+	Bugs:
+	 -Memory leaks in GoWo fixed
+	 -[SC/RT] Dipoles are deallocated (Davide)
+	 -Changed the singer "Armstrong" for the unit "Angstroms" (Davide)
+	 -[SC/RT] Commutator removed from <p> definition (Davide)
+
+2011-11-17 17:53:07 r980 attacc
+
+	Version 3.2.4
+
+	*  sc/SC_WF_and_dipole_dimensions.F
+
+	Changes:
+	 -[RT] Number of G-vectors decreased when l_sc_srpa=.false. and l_sc_exx=.false.
+
+2011-11-17 10:17:48 r979 attacc
+
+	Small bug in QP report
+
+2011-11-16 18:16:34 r978 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_initialize.F real_time/RT_Rabi_Function.F modules/mod_electrons.F modules/mod_R_lattice.F modules/mod_par_indexes.F modules/mod_par_proc.F modules/mod_QP.F
+
+	Bugs:
+	 -Fixed leaks using null() functions
+
+2011-11-16 14:57:33 r977 attacc
+
+	 -fixed previous commit
+
+2011-11-16 12:44:21 r976 attacc
+
+	Version 3.2.4
+
+	*  qp/QP_driver.F qp_ctl/mod_QP_CTL.F bz_ops/bz_samp_indexes.F interface/init.F real_time/.objects modules/mod_electrons.F modules/mod_R_lattice.F modules/mod_par_indexes.F modules/mod_par_proc.F modules/mod_QP.F modules/mod_collision.F
+
+	Bugs:
+	 -Memory leaks due to nullify of pointers fixed
+	 -[RT] Fixed compilation with ELPH
+
+2011-11-15 19:35:34 r975 gruning
+
+	Version 3.2.4
+
+	*  real_time/RT_Rabi_Function.F
+
+	Bugs:
+	-
+	Additions: [RT] report HHG minimal critical frequency and maximum cutoff frequency
+	-
+	Changes:
+	-
+
+2011-11-15 14:26:28 r974 attacc
+
+	Version 3.2.4
+
+	*  config/Makefile.in_gpl qp_ctl/mod_QP_CTL.F common/.objects_gpl interface/QP_ctl_load.F io/.objects_gpl bse/K_solvers.F bse/.objects_gpl ypp/ypp_init.F ypp/electrons_driver.F
+
+	Bugs:
+	 -Fixed flags and compilation problems for the GPL
+
+	Changes:
+	 -ERIM for the BSE moved in GPL
+
+2011-11-14 15:58:42 r973 gruning
+
+	Version 3.2.4
+
+	*  real_time/RT_scale_DIP_by_QP.F
+
+	Bugs: [RT] in the previous commit (rev 972) this file was missing
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+2011-11-14 14:18:06 r972 gruning
+
+	Version 3.2.4
+
+	*  qp_ctl/mod_QP_CTL.F interface/QP_ctl_load.F interface/QP_ctl_switch.F real_time/RT_driver.F real_time/RT_initialize.F real_time/.objects modules/mod_QP.F
+
+	Bugs: [RT] real_time/RT_initialize.F: E_RIM warning message was appearing also when E_RIM was not used and it was not clear what was swithced off (either E_RIM or damping)
+	-
+	Additions: [QP/RT] If specified in the input the dipoles are now normalized by LDA/QP energy as suggested in Levine, Allan PRL 63, 1719
+	-
+	Changes:
+	-
+
+2011-11-05 16:40:05 r971 gruning
+
+	Version 3.2.4
+
+	*  real_time/RT_initialize.F real_time/.objects modules/mod_real_time.F
+
+	Bugs: [RT] Missing preprocessor options, yambo_rt did not compile
+	-
+	Additions:
+	-
+	Changes:
+	-
+
+2011-11-05 00:40:40 r970 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac xc_functionals/XC_potential_driver.F pol_function/X_s.F setup/G_shells_finder.F interface/QP_ctl_load.F + real_time/RT_elph_Kernel.F real_time/RT_Collision.F real_time/RT_ELPH_Kernel.F_ORI real_time/RT_initialize.F real_time/RT_generalized_KBA.F real_time/RT_ELPH_initialize.F real_time/.objects real_time/RT_generalized_KBA.F_ORI modules/mod_real_time.F
+
+	Bugs:
+	- In G_shells_finder.F (Davide)
+	- In QP_ctl_load.F (Andrea)
+
+	Additions:
+	- [RT] RT_ELPH_initialize.F
+
+	Changes:
+	- [RT] ELPH_Kernel extended to non-diagonal el-ph scatterings. Iterative approach only implemented.
+	  Full time-integration to do. Still some small differences with previous diagonal-only code. Old
+	  source added for checking purposes.
+
+	Patch sent by: Andrea
+
+2011-11-04 14:53:47 r969 attacc
+
+	forgot a line
+
+2011-11-04 10:58:41 r968 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_average_operator.F modules/mod_real_time.F
+
+	Changes:
+	 -[RT] Removed ERIM form real-time (to be done in a smarter way)
+
+2011-11-03 15:24:04 r967 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_update.F
+
+	Bugs:
+	 -[RT] Small intent for Xen variable
+
+2011-11-02 15:04:22 r966 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc a2y/a2y_wf.F config/configure.ac pol_function/X_os.F pol_function/O_kerr.F pol_function/X_s.F real_time/RT_elph_Kernel.F modules/mod_KERR.F modules/mod_matrix_operate.F
+
+	Bugs:
+	- HGH psp: fixed bug reading pp_table with more than 1 atomic species for HGH psps
+
+	Changes:
+	- modules/mod_matrix_operate.F: new function m3inv_c which inverts a complex matrix
+	-[KERR] pol_function/X_s.F: for kerr calculations computes (1-Xo_xx*v)^-2 instead of X_xx
+	-[KERR] modules/mod_KERR.F pol_function/X_os.F: computes the head and the left and right wings separately.
+	                                                Needed in order to include local field effects
+	-[KERR] pol_function/O_kerr.F: The code is now ready to compute the off-diagonal dielectric matrix and the kerr
+	                               parameters in presence of local fields.
+
+	I've checked that eps_ij=(1-Xo*v) is equal to eps_ij = eps_m1^(-1) = (1+X*v) with X=X+Xo*v*X with only the term G=0.
+
+	Patch sent by: Davide
+
+2011-11-01 20:11:09 r965 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_average_operator.F
+
+	Bugs:
+	 -[RT] bug in E_RIM in real-time
+
+2011-10-28 19:03:33 r964 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_initialize.F
+
+	Changes:
+	 -[RT] Fixed incompatibility between damping and E_RIM
+
+2011-10-28 16:42:27 r963 attacc
+
+	Version 3.2.4
+
+	*  interpolate/bz_interp_coeff.F real_time/RT_average_operator.F
+
+	ugs:
+	 -[RT] Fixed case when BZ_RIM_nbands < SC_bands(2)
+
+2011-10-28 14:07:34 r962 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac real_time/RT_elph_Kernel.F real_time/RT_G_retarded.F real_time/RT_initialize.F real_time/RT_Integrator.F modules/mod_real_time.F
+
+	Changes:
+	- [RT] Iterative approach to handle the memory dependence of the el-ph Kernel succesfully implemented. No memory
+	  of the G_lesser needed as the trick is based on the knowledge of G^{<}(t) and of the el-ph kernel S^{<}(t-delta)
+
+	Patch sent by: Andrea
+
+2011-10-27 15:48:01 r961 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc p2y/mod_p2y.F p2y/p2y_i.F config/configure.ac qp_ctl/OCCUPATIONS_IO_and_interpolate.F wf_and_fft/WF_rotate.F pol_function/O_driver.F setup/setup.F interface/init_load.F interface/init.F sc/SC_start_and_restart.F sc/SC_driver.F sc/.objects sc/V_Mean_Potential.F sc/SC_History.F io/variables_SC.F io/io_SC_components.F io/ioGROT.F modules/std_presets.F modules/mod_SC.F ypp/ypp_init.F ypp/mod_YPP.F ypp/ypp_init_load.F ypp/electrons_driver.F ypp/plot_gnuplot.F driver/ypp.h
+
+	Bugs:
+	- [P2Y] Small fixes to make the PW_EXPORT version still working.
+	- Small bug fix in O_driver for out-of-the BZ calculations (PJ + Claudio)
+
+	Additions:
+	- [SC] Evaluation of the effective mean potential corresponding to a non-local
+	  self-energy (see PRL 71, 2793 or PRL 80, 4265).
+	- [SC] I/O of the mean potential.
+	- [YPP_SC] Plot of the mean potential.
+
+	Changes:
+	- The inversion map of the RL is not save in the gops databases. This is to avoid
+	  the calculation of the map that can be cumbersome in large systems.
+
+	Patch sent by: Andrea
+
+2011-10-27 13:06:42 r960 attacc
+
+	Version 3.2.4
+
+	*  configure config/Makefile.in real_time/RT_current_AND_polarization.F real_time/RT_output.F real_time/RT_average_operator.F
+
+	Bugs:
+	 -[RT] Array out of bounds writing occupations in RT_output.F
+
+	Changes:
+	 -[RT] E_RIM in real-time parallelized and speeded up
+	 - yambo_Pwdiago project removed
+
+2011-10-27 00:35:24 r959 attacc
+
+	Version 3.2.4
+
+	*  real_time/RT_elph_Kernel.F real_time/RT_driver.F real_time/RT_current_AND_polarization.F real_time/RT_initialize.F real_time/RT_propagate_fields.F real_time/RT_start_and_restart.F real_time/RT_average_operator.F io/io_P_and_P2.F modules/mod_real_time.F
+
+	Bugs:
+	 -[RT] Wrong dimension of DIP_P in real-time
+	 -[ELPH] compilation problem with gfortran in real_time/RT_elph_Kernel.F
+
+	Additions:
+	 -[RT] E_RIM works also in real-time
+
+2011-10-24 19:16:26 r958 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug-fix in RT_elph_Kernel.F
+
+2011-10-21 13:30:01 r957 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug fix in KERR project
+
+2011-10-20 18:08:29 r956 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	GLOBAL COPYRIGHT YEAR RANGE change
+
+2011-10-20 18:02:51 r955 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  configure include/version.inc config/configure.ac qp/COLLISIONS_IO_eval.F qp/COLLISIONS_IO_store.F qp/COLLISIONS_IO_compose.F interface/init.F real_time/RT_initialize.F sc/XC_switch.F sc/SC_driver.F io/ioBS.F io/ioBS_DISTRIBUTED.F io/ioX.F io/ioBS_Fxc.F io/variables_BS.F io/variables_X.F io/COLLISIONS_IO_load.F io/io_COLLISIONS.F io/.objects io/.objects_gpl modules/mod_BS.F modules/std_presets.F modules/mod_collisions_IO.F modules/mod_X.F
+
+	Bugs:
+	- [RT,SC] Misprint in the HARTREE-FOCK potential kind
+	- [RT] When the collisions are used XCfrozen is imposed to be FALSE. If Hfrozen is TRUE
+	  a warning message is delivered.
+	- [SC] SC_bands(1) must be 1. Values different from 1 still to be checked.
+
+	Additions:
+	- Added a routine (variables_X) to handle the description strings of the response function
+
+	Changes:
+	- [RT] The new description strings of the response function are now stored in the COLLISION
+	  databases
+
+	Patch sent by: Andrea
+
+2011-10-20 14:34:12 r954 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  pol_function/X_os.F pol_function/O_driver.F pol_function/Dipole_dip_dot_field.F pol_function/O_kerr.F pol_function/O_kerr_shadow.F interface/init_load.F interface/init.F
+
+	Bugs:
+	-[KERR] pol_function/O_kerr.F: fixed bug in the contruction of the new X_mat
+	-
+	Changes:
+	- [KERR] pol_function/X_os.F: removed useless command
+	- [KERR] pol_function/O_driver.F, pol_function/O_kerr_shadow.F: fixed output headers for o.kerr and o.off files
+	- [KERR] pol_function/Dipole_dip_dot_field.F: changed convention for epsilon_xy <--> epsilon_yx in agreement with the literature
+
+	Patch sent by: Davide
+
+2011-10-20 12:44:19 r953 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.4
+
+	*  qp/QP_ppa_cohsex.F common/OCCUPATIONS_Fermi.F pol_function/X_os.F pol_function/O_kerr.F pol_function/.objects pol_function/O_kerr_shadow.F real_time/RT_elph_Kernel.F real_time/RT_Collision.F real_time/RT_G_retarded.F real_time/RT_initialize.F real_time/RT_generalized_KBA.F io/io_SC_components.F modules/mod_real_time.F ChangeLog
+
+	Bugs:
+	- [RT] In RT_G_retarded.F caused by the change of sign of the interpolated lifetime
+
+	Additions:
+	- [RT] S_matrix added in view of a possible iterative solution of the time evolution in presence of a BK kernel
+	  with memory. Iterative solution based on a simlpe ansatz on the G_retarded time-dependence. Full time
+	  dependence of G_lesser kept to perform tests.
+	- [RT] Working version of the el-ph kernel of the BKE (RT_elph_Kernel.F).
+	  Routine checked against simple model using IP dynamics and G_lesser frozen.
+	  Time dependence seems ok. Not sure about +/- and I flowing around.
+	- [RT] Working version of the Generaized Baym-Kadanoff Ansatz routine. Occupation
+	  factors fixed and both possible time-orderings coded.
+	- [RT] Negative max_rt_steps_disk gives no I/O at all.
+
+	Changes:
+	- [RT] Added different names of G_lesser databases written at different times.
+	- ChangeLog updated
+	- [KERR] New implementation of yambo_kerr (at IP level) finalized and checked against old implementation on Iron.
+	  Fixed problems with the Drude term and the computation of the kerr parameters inside yambo.
+	  There is still a difference in the computation of the off-diagonal part of epsilon. The new results seems closer
+	  to reference theoretical and experimental data. More tests are needed. (Davide)
+
+	Patch sent by: Andrea & Davide
+
 2011-10-18 16:04:51 r952 attacc
 
 	Version 3.2.4

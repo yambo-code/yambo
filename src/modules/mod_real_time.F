@@ -21,8 +21,9 @@
 !
 module real_time
  !
- use SC,        ONLY:G_lesser,SC_R
- use pars,      ONLY:DP,SP,schlen
+ use SC,         ONLY:G_lesser,SC_R
+ use pars,       ONLY:DP,SP,schlen
+ use par_proc_m, ONLY:pp_indexes
  !
  implicit none
  !
@@ -46,7 +47,6 @@ module real_time
  ! To include the induced field in the coupling and current
  !
  logical           :: l_RT_induced_field
- !
  ! 
  ! Diagonalization (QP analysis)
  !
@@ -104,6 +104,12 @@ module real_time
  !
  real(SP) :: NE_MEM_treshold
  integer  :: NE_MEM_steps
+ !
+ ! ... Window on the k-points/bands allowed to follow the dynamics ...
+ !
+ real(SP)             :: RT_energy_window(2)
+ logical, allocatable :: RT_k_point(:)
+ type(pp_indexes)     :: RT_px
  !
  ! Macroscopic induced current ... 
  !--------------------------------
@@ -251,6 +257,7 @@ module real_time
      use QP_m,           ONLY:QP_nk,QP_n_states,QP_Vnl_xc
      use R_lattice,      ONLY:nqbz
      use collisions_IO,  ONLY:collisions_IO_alloc
+     use par_proc_m,     ONLY:pp_indexes_reset
 #if defined _ELPH
      use ELPH,           ONLY:ph_modes
 #endif
@@ -327,6 +334,8 @@ module real_time
      !
      call collisions_IO_alloc()
      !
+     call pp_indexes_reset(RT_px)
+     !
    end subroutine RT_alloc
    
    subroutine RT_free
@@ -337,6 +346,7 @@ module real_time
      use QP_m,           ONLY:QP_Vnl_xc
      use xc_functionals, ONLY:E_xc
      use collisions_IO,  ONLY:collisions_IO_free
+     use par_proc_m,     ONLY:pp_indexes_reset
      !
      call SC_free()
      !
@@ -415,6 +425,8 @@ module real_time
      endif
      !
      call collisions_IO_free() 
+     !
+     call pp_indexes_reset(RT_px) 
      !
    end subroutine RT_free
    !

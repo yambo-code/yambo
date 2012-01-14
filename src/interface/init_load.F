@@ -55,7 +55,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
 &                        RT_diagonalization_steps,SwitchOnTime,max_rt_steps_disk,NE_tot_time,NE_Hxc_jumps,&
-&                        RT_ave_dephasing,NE_MEM_treshold
+&                        RT_ave_dephasing,NE_MEM_treshold,RT_energy_window
  use fields,        ONLY:Efield
 #endif
 #if defined _MAGNETIC
@@ -281,15 +281,17 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! Real Time dynamics
  !
 #if defined _RT
- call it(defs,'RTstep',    '[RT] Real Time step length',RT_step,unit=Time_unit)
- call it(defs,'NEsteps',   '[RT] Non-equilibrium Time steps',NE_steps)
- call it(defs,'MemTresh',  '[RT] Treshold on the decay of the retarded GF',NE_MEM_Treshold)
- call it(defs,'HXCjumps',  '[RT] Steps jumped between two Hartree+XC updates',NE_Hxc_jumps,Verb_level=V_real_time)
- call it(defs,'NETime',    '[RT] Non-equilibrium  max Time (alternative to NEsteps)',NE_tot_time,unit=Time_unit)
- call it(defs,'ThermSteps','[RT Therm] Thermal Steps',Thermal_steps,Verb_level=V_real_time)
- call it(defs,'Integrator',   '[RT] Integrator (RK2 | EULER | EXACT | RK2EXACT) ',Integrator_name)
- call it(defs,'RADLifeTime',  '[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit)
- call it(defs,'PhLifeTime',   '[RT] Phase Relaxation Time',Phase_LifeTime,unit=Time_unit)
+ call it(defs,'RTstep',     '[RT] Real Time step length',RT_step,unit=Time_unit)
+ call it(defs,'NEsteps',    '[RT] Non-equilibrium Time steps',NE_steps)
+ call it(defs,'MemTresh',   '[RT] Treshold on the decay of the retarded GF',NE_MEM_Treshold)
+ call it(defs,'HXCjumps',   '[RT] Steps jumped between two Hartree+XC updates',NE_Hxc_jumps,Verb_level=V_real_time)
+ call it(defs,'NETime',     '[RT] Non-equilibrium  max Time (alternative to NEsteps)',NE_tot_time,unit=Time_unit)
+ call it(defs,'ThermSteps', '[RT Therm] Thermal Steps',Thermal_steps,Verb_level=V_real_time)
+ call it(defs,'Integrator', '[RT] Integrator (RK2 | EULER | EXACT | RK2EXACT) ',Integrator_name)
+ call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit)
+ call it(defs,'PhLifeTime', '[RT] Phase Relaxation Time',Phase_LifeTime,unit=Time_unit)
+ call it(defs,'RTwindow',   '[RT] Energy window to define the states that are evolved',RT_energy_window,&
+&                            Verb_level=V_real_time,unit=E_unit)
  call it('f',defs,'RTfreezeH', '[RT] Hartree not updated during RT')
  call it('f',defs,'RTfreezeXC','[RT] XC potential/self-energy not updated during RT')
  !

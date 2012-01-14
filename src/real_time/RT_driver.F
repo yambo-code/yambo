@@ -149,9 +149,13 @@ subroutine RT_driver(en,Xen,X,k,Xk,q,Xw)
  ! IP calculation => No need of WFs and Density
  !
  if(l_NE_simulate_IP) then  
-    call WF_free()
-    call mem_est("rho_reference rho")
-    deallocate(rho_n,rho_reference)
+   !
+   call WF_free()
+   !
+   call mem_est("rho_reference rho")
+   !
+   deallocate(rho_n,rho_reference)
+   !
  endif
  !
  ! Initialize output files

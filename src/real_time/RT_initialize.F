@@ -34,9 +34,10 @@ subroutine RT_initialize(Xen,q)
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,    &
 &                         l_RT_induced_field,NE_Hxc_jumps,l_NE_simulate_TDDFT,      &
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
-&                         Phase_LifeTime,RT_ave_dephasing,NE_MEM_Treshold,NE_MEM_steps
+&                         Phase_LifeTime,RT_ave_dephasing,NE_MEM_Treshold,NE_MEM_steps, &
+&                         RT_k_point
  use D_lattice,      ONLY:DL_vol
- use R_lattice,      ONLY:bz_samp
+ use R_lattice,      ONLY:bz_samp,nkibz
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,&
 &                         theta_function_iTo_ref,i_Pump,i_Probe,EtoT,Efield_strength
  use X_m,            ONLY:use_X_RIM
@@ -177,8 +178,13 @@ subroutine RT_initialize(Xen,q)
  !
 #endif
  !
+ ! States Selection
+ ! ================
+ !
+ call RT_states(Xen)
+ !
  ! LOG
- !=====
+ ! ===
  !
  call section('=','Messaging')
  !
@@ -189,6 +195,7 @@ subroutine RT_initialize(Xen,q)
  call msg( 'r', '[RT] Memory depth           [fs]:',T_memory/FS2AUT)
  call msg( 'r', '[RT] Memory steps               :',NE_MEM_steps)
  call msg( 'r', '[RT] Thermalization steps       :',Thermal_steps)
+ call msg( 'r', '[RT] K-points evolved      [o/o]:',real(count(RT_k_point))/real(nkibz)*100.)
  call msg( 'r', '[RT] Step length            [fs]:',RT_step/FS2AUT)
  call msg( 'r', '[RT] Damping (Phase)    [fs/meV]:',(/Phase_LifeTime/FS2AUT,HBAR_eVfs/Phase_LifeTime*FS2AUT*1000./))
  call msg( 'r', '[RT] Damping (Radiative)[fs/meV]:',(/RAD_LifeTime/FS2AUT,   HBAR_eVfs/RAD_LifeTime*FS2AUT*1000./))

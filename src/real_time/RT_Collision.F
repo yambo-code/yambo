@@ -55,19 +55,18 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  use R_lattice,      ONLY:bz_samp
  use SC,             ONLY:SC_bands,V_hartree_sc,Ho,H_nl_sc,rho_n,V_xc_sc,local_V,it_now,SC_R
  use QP_m,           ONLY:QP_nk,QP_Vnl_xc,QP_Sc
- use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_with_fields,RAD_LifeTime,full_rho,           &
+ use real_time,      ONLY:I1_lesser,I2_lesser,l_NE_with_fields,RAD_LifeTime,full_rho,          &
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
-&                         G_lesser_reference,Phase_LifeTime,NE_Hxc_jumps,       &
+&                         G_lesser_reference,Phase_LifeTime,NE_Hxc_jumps,                      &
 &                         RT_is_dumped,l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start, &
-&                         RT_Deph_Matrix,l_RT_needs_XC0
+&                         RT_Deph_Matrix,l_RT_needs_XC0,RT_px
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
- use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
- use par_indexes_m,  ONLY:par_indexes  
  use SC,             ONLY:SC_xc_functional,SC_nbands
  use xc_functionals, ONLY:XC_LDA_C_PZ
+ use par_proc_m,     ONLY:pp_redux_wait 
  !
  implicit none
  !
@@ -81,7 +80,6 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  !
  logical          :: XC_needs_density
  integer          :: i1,i2,ik
- type(pp_indexes) :: px
  !
  ! Density (needed bu Hartree and local XCs)
  !=========
@@ -136,12 +134,9 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
     enddo
  endif
  !
- call pp_indexes_reset(px)
- call par_indexes(px,(/QP_nk/))
- !
  do ik=1,QP_nk 
    !
-   if (.not.px%element_1D(ik)) cycle
+   if (.not.RT_px%element_1D(ik)) cycle
    !
    ! Here I fill H_nl_sc (which defined I1 and I2) with...
    !
@@ -265,7 +260,6 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  if(allocated(SC_R)) call pp_redux_wait(SC_R(:,:,:,1))
  call pp_redux_wait(I1_lesser)
  call pp_redux_wait(I2_lesser)
- call pp_indexes_reset(px) 
  !
 end subroutine RT_Collision
 

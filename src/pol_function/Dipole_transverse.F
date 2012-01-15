@@ -30,7 +30,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
  use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid,pp_indexes_reset
  use par_indexes_m,       ONLY:par_indexes
  use D_lattice,           ONLY:alat,n_atomic_species,n_atoms_species
- use pseudo,              ONLY:pp_kbv_dim,pp_n_l_times_proj_max,PP_free,pp_table,Vnl,pp_n_l_comp
+ use pseudo,              ONLY:pp_kbv_dim,pp_n_l_times_proj_max,PP_free,pp_table, &
+&                              Vnl,pp_n_l_comp,kbv_spin
  use R_lattice,           ONLY:g_vec,bz_samp
  use X_m,                 ONLY:X_t,DIP_iR,Dipole_bands_ordered,P_square,DIP_P
  use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD,RD_CL,RD,OP_RD_CL
@@ -81,14 +82,17 @@ subroutine Dipole_transverse(Xen,Xk,X)
        do i_pp = 1, pp_n_l_times_proj_max
          il = pp_table(1,is,i_pp)
          pp_spin = pp_table(3,is,i_pp)
-         if(pp_spin>1) cycle
+         if (pp_spin==0) cycle
          do im = 1,2*(il-1)+1
            pp_kbv_dim=pp_kbv_dim+1
          enddo
        enddo
      enddo
    enddo
-   allocate(kbv(wf_ng,pp_kbv_dim,4),stat=alloc_err)
+   !
+   allocate(kbv(wf_ng,pp_kbv_dim,7),stat=alloc_err)
+   allocate(kbv_spin(pp_kbv_dim))
+   !
    call mem_est("KBV",(/size(kbv)/),errors=(/alloc_err/))
  endif
  !
@@ -223,6 +227,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          call M_by_V('C',wf_ng,wf_dim,(1._SP,0._SP),wf_xyz,wf_ng,wf(:,icfft),1,(0._SP,0._SP),rho,1)
          !
          if (ioKB_err==0) call Dipole_kb_sum(ivfft,icfft,rho(:3),kbv)
+         if (ioKB_err==0 .and. n_spinor==2) call Dipole_kb_sum_SO(iv,ic,ik,i_spin,rho(:3),kbv)
          if(io_Vnl_err==0) rho(1:3) = rho(1:3) + Vnl(1:3,ic,iv,ik,1)*0.5
          !
          !=====
@@ -312,6 +317,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  if (ioKB_err==0) then
    deallocate(kbv,pp_n_l_comp)
    if (allocated(pp_table)) deallocate(pp_table)
+   if (allocated(kbv_spin)) deallocate(kbv_spin)
    call PP_free()
    call mem_est("KBV pp_n_l_comp pp_table")
  else if (io_Vnl_err==0) then

@@ -30,16 +30,16 @@ subroutine Dipole_kb_pp_comp(ik,i_spin,Xk,kbv)
  use R_lattice,     ONLY:b,g_vec,bz_samp
  use D_lattice,     ONLY:n_atomic_species,atom_pos,n_atoms_species
  use pseudo,        ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_n_l_comp,pp_kbs,&
-&                        pp_kb,pp_kbd,pp_table,pp_n_l_max
+&                        pp_kb,pp_kbd,pp_table,pp_n_l_max,kbv_spin
  use wave_func,     ONLY:wf,wf_ng
  implicit none
  type(bz_samp) :: Xk
- complex(SP)   :: kbv(wf_ng,pp_kbv_dim,4)
+ complex(SP)   :: kbv(wf_ng,pp_kbv_dim,7)
  integer       :: ik,i_spin
  ! 
  ! Work Space
  !
- integer     :: ig,igm,i1,is,ia,il,i_pp,im,pp_spin
+ integer     :: ig,igm,i1,is,ia,il,i_pp,im,pp_spin  !,i_proj
  complex(SP) :: Ylm(pp_n_l_max,2*pp_n_l_max+1),&
 &               dYlm(2,pp_n_l_max,2*pp_n_l_max+1),c1(n_atomic_species),c2(4)
  real(SP)    :: Ygrad(2,3),v1(3),v2(3),r1,r2
@@ -58,16 +58,35 @@ subroutine Dipole_kb_pp_comp(ik,i_spin,Xk,kbv)
        r2 = dot_product(v2,atom_pos(:,ia,is))
        c1(is) = cmplx(cos(r2),sin(r2))
        do i_pp=1,pp_n_l_times_proj_max
-         il = pp_table(1,is,i_pp)
+         il =      pp_table(1,is,i_pp)
+         !i_proj  = pp_table(2,is,i_pp)
          pp_spin = pp_table(3,is,i_pp)
-         if(pp_spin>1) cycle
+         if (pp_spin==0) cycle
+         !
          do im = 1,2*(il-1)+1
            i1=i1+1
+           kbv_spin(i1)=pp_spin
+           !
            c2(1)=sqrt(4.*pi/(2.*(il-1.)+1.))*Ylm(il,im)
            c2(2:4)=sqrt(4.*pi/(2.*(il-1.)+1.))*&
 &                    (dYlm(1,il,im)*Ygrad(1,:)+dYlm(2,il,im)*Ygrad(2,:))
-           kbv(ig,i1,1)=c2(1)*pp_kbs(is,i_pp)*pp_kb(ig,is,i_pp,i_spin)*c1(is)
-           kbv(ig,i1,2:4)=c1(is)*(v1(:)/r1*pp_kbd(ig,is,i_pp,i_spin)*c2(1)+pp_kb(ig,is,i_pp,i_spin)*c2(2:4))
+           !
+           kbv(ig,i1,1)=c2(1)*&
+&                        pp_kb(ig,is,i_pp,i_spin)*c1(is)
+           kbv(ig,i1,2:4)=c1(is)*pp_kbs(is,i_pp)*&
+&            (v1(:)/r1*pp_kbd(ig,is,i_pp,i_spin)*c2(1)+pp_kb(ig,is,i_pp,i_spin)*c2(2:4))
+           !
+           ! SO component
+           !
+           if(pp_spin==2) then
+             kbv(ig,i1,5)=-(0.,1.)*c1(is)*&
+&                               (v1(2)*c2(3)-v1(3)*c2(2))*pp_kb(ig,is,i_pp,i_spin)
+             kbv(ig,i1,6)=+(0.,1.)*c1(is)*&
+&                               (v1(1)*c2(3)-v1(3)*c2(1))*pp_kb(ig,is,i_pp,i_spin)
+             kbv(ig,i1,7)=-(0.,1.)*c1(is)*&
+&                               (v1(1)*c2(2)-v1(2)*c2(1))*pp_kb(ig,is,i_pp,i_spin)
+           endif
+           !
          enddo
        enddo
      enddo

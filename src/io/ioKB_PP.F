@@ -32,7 +32,7 @@ integer function ioKB_PP(ID)
  use IO_m,             ONLY:io_connect,io_disconnect,io_sec, &
 &                           io_elemental,io_bulk,io_header,io_fragmented,&
 &                           read_is_on,write_is_on,ver_is_gt_or_eq,io_extension
- use electrons,        ONLY:n_spin
+ use electrons,        ONLY:n_sp_pol
  use fragments,        ONLY:io_fragment
  implicit none
  integer,       intent(in) :: ID
@@ -139,7 +139,7 @@ integer function ioKB_PP(ID)
  ! 
  ! GPL_EXCLUDE_START SPIN_IGNORE
  !
- do i_spin=1,n_spin
+ do i_spin=1,n_sp_pol
    ! 
    ! GPL_EXCLUDE_END SPIN_IGNORE
    !

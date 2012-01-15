@@ -28,10 +28,10 @@ subroutine Dipole_kb_sum(ivfft,icfft,rho,kbv)
  use pars,          ONLY:SP,DP
  use wrapper,       ONLY:Vstar_dot_V,V_dot_V,V_by_V_plus_V
  use wave_func,     ONLY:wf,wf_ng
- use pseudo,        ONLY:pp_kbv_dim
+ use pseudo,        ONLY:pp_kbv_dim,kbv_spin
  implicit none
  integer    :: ivfft,icfft
- complex(SP):: rho(3),kbv(wf_ng,pp_kbv_dim,4)
+ complex(SP):: rho(3),kbv(wf_ng,pp_kbv_dim,7)
  ! 
  ! Work Space
  !
@@ -42,6 +42,8 @@ subroutine Dipole_kb_sum(ivfft,icfft,rho,kbv)
  Kv=(0.,0.)
  !
  do i1=1,pp_kbv_dim
+   !
+   if(kbv_spin(i1)==2) cycle
    !
    Cv=V_dot_V(wf_ng,wf(:,ivfft),kbv(:,i1,1))
    Cc=V_dot_V(wf_ng,wf(:,icfft),kbv(:,i1,1))

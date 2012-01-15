@@ -35,6 +35,7 @@ module pseudo
  integer :: pp_n_l_max
  integer :: pp_n_l_times_proj_max
  integer :: pp_kbv_dim
+ integer,  allocatable:: kbv_spin(:)
  integer,  allocatable:: pp_table(:,:,:)
  integer,  allocatable:: pp_n_l_comp(:)
  real(SP), allocatable:: pp_kbs(:,:)

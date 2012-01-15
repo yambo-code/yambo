@@ -33,7 +33,7 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
  use par_indexes_m, ONLY:par_indexes
  use functions,     ONLY:bose_f,bose_decay
- use electrons,     ONLY:levels
+ use electrons,     ONLY:levels,spin_occ,spin
  use R_lattice,     ONLY:qindx_S,bz_samp
  !
  implicit none
@@ -44,7 +44,7 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
  !
  ! WorkSpace
  !
- integer         :: i1,i2,ib,is(2),os(2)
+ integer         :: i1,i2,ib,is(2),os(3)
  type(pp_indexes):: px
  real(SP)        :: tsign
  complex(SP)     :: QP_W_here(QP_n_W_freqs)
@@ -68,32 +68,33 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
    !
    is=(/QP_table(i1,1),QP_table(i1,3)/)   ! (nk) QP
    os(2)=k%sstar(qindx_S(is(2),iqbz,1),1) ! (nk) intermediate state
+   os(3)=spin(QP_table(i1,:))
    !
    do ib=QP_n_G_bands(1),QP_n_G_bands(2)
      if (.not.px%element_1D(ib)) cycle
      !
      os(1)=ib
      !
-     ! 1st term: (2-f_os+fbose)
+     ! 1st term: (spin_occ-f_os+fbose)
      !
      forall(i2=1:Xw%n(1)) QP_W_here(i2)=QP_W(i1,ib,i2)*&
-&                         (2.-E%f(os(1),os(2),1)+bose_f(real(Xw%p(i2))))*&
+&                         (spin_occ-E%f(os(1),os(2),os(3))+bose_f(real(Xw%p(i2))))*&
 &                         bose_decay(real(Xw%p(i2)))
      !
      call Kramers_Kronig(QP_W_here,real(Xw%p(:)),QP_n_W_freqs,dSc,&
 &            real(Sc_W(i1)%p(:))-cmplx(0.,tsign,SP)*aimag(Sc_W(i1)%p(:)),&
 &            Sc_W(i1)%n(1),&
-&            E%E(os(1),os(2),1)+tsign*cmplx(0.,QP_G_damp,SP))
+&            E%E(os(1),os(2),os(3))+tsign*cmplx(0.,QP_G_damp,SP))
      !
      ! 2nd term: (f_os+fbose)
      !
      forall(i2=1:Xw%n(1)) QP_W_here(i2)=QP_W(i1,ib,i2)*&
-&                         (E%f(os(1),os(2),1)+bose_f(real(Xw%p(i2))))*&
+&                         (E%f(os(1),os(2),os(3))+bose_f(real(Xw%p(i2))))*&
 &                         bose_decay(real(Xw%p(i2)))
      !
      call Kramers_Kronig(-QP_W_here,real(Xw%p(:)),QP_n_W_freqs,dSc,&
 &            -real(Sc_W(i1)%p(:))+cmplx(0.,1.,SP)*aimag(Sc_W(i1)%p(:)),Sc_W(i1)%n(1),&
-&            -E%E(os(1),os(2),1)-cmplx(0.,QP_G_damp,SP))
+&            -E%E(os(1),os(2),os(3))-cmplx(0.,QP_G_damp,SP))
      !
    enddo
    !

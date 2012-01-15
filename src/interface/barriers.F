@@ -49,7 +49,7 @@ subroutine barriers()
  use pars,       ONLY:schlen
  use D_lattice,  ONLY:i_time_rev,i_space_inv
  use BS,         ONLY:BSS_mode
- use electrons,  ONLY:n_spin,n_met_bands,n_full_bands,n_spinor
+ use electrons,  ONLY:n_spin,n_met_bands,n_full_bands,n_spinor,n_sp_pol
  use QP_m,       ONLY:QP_solver
  use it_m,       ONLY:switch_off_runlevel
  implicit none
@@ -184,13 +184,14 @@ subroutine barriers()
  !
  ! GPL_EXCLUDE_START SPIN_INGORE
  !
- if (n_spin>1) then
-   call switch_off_runlevel('all',on_name=&
+ if (n_sp_pol>1)&
+&  call switch_off_runlevel('all',on_name=&
 &       'chi optics HF_and_locXC bse em1s em1d ppa gw0 bss alda_fxc bs_fxc cohsex magnetic scpot '//&
 &       trim(always_runlevels))
-   if (n_spinor>1) call switch_off_runlevel('scpot',on_name=' ')
-   if (gw0_raxis) call switch_off_runlevel('all',on_name=' ')
- endif 
+ !
+ if (n_spinor>1)&
+&  call switch_off_runlevel('all',on_name='chi optics bse bss em1s em1d alda_fxc bs_fxc scpot HF_and_locXC'//&
+&       trim(always_runlevels))
  !
  ! GPL_EXCLUDE_END SPIN_INGORE
  !

@@ -28,7 +28,7 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  use functions,     ONLY:bose_f,h2ht,e2et
  use com,           ONLY:error
  use frequency,     ONLY:w_samp,bg_npts,cg_npts,cg_pt,rg_index_bg
- use electrons,     ONLY:levels
+ use electrons,     ONLY:levels,spin
  use R_lattice,     ONLY:qindx_S,bz_samp
  !
  implicit none
@@ -40,7 +40,7 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  ! Work Space
  !
  integer :: iqbz,iqibz,ob,ib,ik,ok,ob_max,ob_min,i1,&
-&           n_of_transitions(q%nibz),i_or,i2
+&           n_of_transitions(q%nibz),i_or,i2,isp,osp
  real(SP)             :: F
  real(SP),allocatable :: X_freqs(:,:)
  real(SP),external    :: FREQUENCIES_damping
@@ -55,8 +55,8 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  !
  ! 2 conditions:
  !
- ! [1] E(ib,ik)-E(ob,ok)>0 & 2-f(ok,ob)+bose(E(ik,ib)-E(ok,ob))>0
- ! [2] E(ib,ik)-E(ob,ok)<0 & f(ok,ob)+bose(E(ok,ob)-E(ik,ib))>0
+ ! [1] E(ib,ik,isp)-E(ob,ok,osp)>0 & spin_occ-f(ok,ob,osp)+bose(E(ik,ib,isp)-E(ok,ob,osp))>0
+ ! [2] E(ib,ik,isp)-E(ob,ok,osp)<0 & f(ok,ob,isp)+bose(E(ok,ob)-E(ik,ib,isp))>0
  !
  QP_life_transitions=0
  !
@@ -71,12 +71,14 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
      do i2=1,QP_n_states
        ib=QP_table(i2,1)
        ik=QP_table(i2,3)
+       isp=spin(QP_table(i2,:))
        ok=k%sstar(qindx_S(ik,iqbz,1),1)
+       osp=isp ! Davide:to be checked !
        do ob=QP_n_G_bands(1),QP_n_G_bands(2)
-         i_or=IOR(e2et((/ib,ik/),(/ob,ok/),E,F),h2ht((/ib,ik/),(/ob,ok/),E,F))
+         i_or=IOR(e2et((/ib,ik,isp/),(/ob,ok,osp/),E,F),h2ht((/ib,ik,isp/),(/ob,ok,osp/),E,F))
          if (i_or==0) cycle
          n_of_transitions(iqibz)=n_of_transitions(iqibz)+1
-         if (i1==2) X_freqs(iqibz,n_of_transitions(iqibz))=abs(E%E(ib,ik,1)-E%E(ob,ok,1))
+         if (i1==2) X_freqs(iqibz,n_of_transitions(iqibz))=abs(E%E(ib,ik,isp)-E%E(ob,ok,osp))
          ob_min=min(ob_min,ob)
          ob_max=max(ob_max,ob)
        enddo

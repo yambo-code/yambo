@@ -56,12 +56,14 @@ subroutine RT_fix_symmetries(E,k)
  !
  integer               :: ik_save,iv(2),ierr,ib,i_wf,i_spin,&
 &                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik
+ integer               :: spatial_nsym
  integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:)
  real(SP)              :: v1(3),v2(3),m(3,3)
  real(SP)              :: B_cart(3)
  integer               :: det,nsym_save,igfft,ig,ic
  real(SP), allocatable :: pp_kb_store(:,:,:,:,:),pp_kbd_store(:,:,:,:,:)
- logical               :: Rm_all_symm,use_E_field,use_B_field,reject_symmetry,Rm_TR,S_contains_TR(nsym)
+ logical               :: Rm_all_symm,use_E_field,use_B_field,reject_symmetry,Rm_TR,&
+&                         S_contains_TR(nsym),Trev_2_spatial=.false.
  type(bz_samp)         :: k_save
  type(levels)          :: en_sc,en_sc_expanded
  character(lchlen)     :: core_io_path_save,fragment_name
@@ -84,12 +86,24 @@ subroutine RT_fix_symmetries(E,k)
  allocate(wf_DP(fft_size),wf_DP_rot(fft_size))
  call mem_est("wf_DP wf_DP_rot",(/size(wf_DP),size(wf_DP_rot)/),elements_kind=(/DP,DP/))
  !
+ if (Rm_all_symm) then
+   call section('*',"== Remove all Symmetries ==")
+   use_E_field=.false.
+   use_B_field=.false.
+   Rm_TR=.false.
+   E_field=0.
+   B_field=0.
+ endif
  !
- if (use_E_field) call section('*',"== Electric Fields in real time: BZ sampling remapping ==")
- if (use_B_field) call section('*',"== Magnetic field: BZ sampling remapping ==")
- if (Rm_all_symm) call section('*',"== Remove all Symmetries ==")
+ if (use_E_field) call section('*',"== Electric Fields: BZ sampling remapping ==")
+ if (use_B_field) then
+   call section('*',"== Magnetic fields: BZ sampling remapping ==")
+   B_cart(1)=B_field*sin(B_theta)*cos(B_psi)
+   B_cart(2)=B_field*sin(B_theta)*sin(B_psi) 
+   B_cart(3)=B_field*cos(B_theta)
+ endif
  !
- if (Rm_TR.and.i_time_rev==0) return
+ if (i_time_rev==0) Rm_TR=.false.
  if (Rm_TR)       call section('*',"== Remove Time Reversal ==")
  !
  if (.not.any((/use_B_field,use_E_field,Rm_all_symm,Rm_TR/))) return 
@@ -162,46 +176,67 @@ subroutine RT_fix_symmetries(E,k)
  ! Remove Symmetries
  !
  nsym_save      =nsym
- nsym=nsym/(1+i_time_rev)
- call msg('s',trim(intc(nsym))//' spatial symmetries reduced to ...')
- i_time_rev=0 
- !
- if (use_B_field) then
-   det=0.
-   B_cart(1)=B_field*sin(B_theta)*cos(B_psi)
-   B_cart(2)=B_field*sin(B_theta)*sin(B_psi) 
-   B_cart(3)=B_field*cos(B_theta)
+ spatial_nsym=nsym/(1+i_time_rev)
+ if(Rm_TR) then   ! No time reversal 
+   if(i_space_inv==1.and.inv_index>spatial_nsym) then
+     call msg('s',trim(intc(spatial_nsym))//' T-rev are now spatial symm')
+     spatial_nsym=2*spatial_nsym
+     nsym=spatial_nsym
+     Trev_2_spatial=.true.
+   else
+     nsym=nsym/(1+i_time_rev)
+   endif
+   i_time_rev=0
  endif
+ !
+ call msg('s',trim(intc(spatial_nsym))//' spatial symmetries reduced to ...')
  !
  if(Rm_all_symm) then
    nsym=1
- else  if (.not.Rm_TR) then
+   spatial_nsym=1
+   i_time_rev=0
+ else
    is=2
+   !
    do while (is<=nsym)
      !
+     reject_symmetry=.false.
      if (use_E_field) then
        v1(:) = matmul( dl_sop(:,:,is), E_field(1,:) )      
        v2(:) = matmul( dl_sop(:,:,is), E_field(2,:) )      
-       reject_symmetry=v_norm(v1(:)-E_field(1,:))>1.E-5.or.v_norm(v2(:)-E_field(2,:))>1.E-5
-     else if (use_B_field) then
+       ! Spatial symmetries leave E invariant
+       if(is<=spatial_nsym) reject_symmetry=v_norm(v1(:)-E_field(1,:))>1.E-5.or.v_norm(v2(:)-E_field(2,:))>1.E-5
+       ! T-rev symmetries send E into -E
+       if(is> spatial_nsym) reject_symmetry=v_norm(v1(:)+E_field(1,:))>1.E-5.or.v_norm(v2(:)+E_field(2,:))>1.E-5
+     endif
+     if (use_B_field.and..not.reject_symmetry) then
        det=0
        v1(:) = matmul( dl_sop(:,:,is), B_cart )       
        if(all( abs(v1(:)-B_cart(:))<epsilon(1.)) ) det=+1
        if(all( abs(v1(:)+B_cart(:))<epsilon(1.)) ) det=-1
        reject_symmetry=(det==0)
-       !
-       if (det/=0) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/det - 1.)>1.E-5)
+       if(.not.reject_symmetry) then
+         ! We check what happens in the plane perpendicular to B: 
+         ! 1) Spatial symmetries are rotations
+         if(is<=spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/det - 1.)>1.E-5)
+         ! 2) T-rev symmetries are rotation moltiplied for the inversion
+         if(is> spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/det + 1.)>1.E-5)       
+       endif
      endif
      !
      if(reject_symmetry) then
        dl_sop(:,:,is:nsym-1)=dl_sop(:,:,is+1:nsym)
        nsym=nsym-1
+       if(is<=spatial_nsym) spatial_nsym=spatial_nsym-1      
      else
        is=is+1
      endif
      !
    enddo
  endif
+ !
+ call msg('l'," "//trim(intc(spatial_nsym)))
+ if(i_time_rev==1) call msg('s',"There are "//trim(intc(nsym-spatial_nsym))//" T-rev derived symmetries")
  !
  allocate(dl_sop_tmp(3,3,nsym))
  dl_sop_tmp(1:3,1:3,1:nsym)=dl_sop(1:3,1:3,1:nsym)
@@ -210,12 +245,17 @@ subroutine RT_fix_symmetries(E,k)
  dl_sop=dl_sop_tmp
  deallocate(dl_sop_tmp)
  !
- call msg('l'," "//trim(intc(nsym)))
- !
  call set_real_printed_length(f_length=7,g_length=8)
- do is=1,nsym
-   call msg('s','[S'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))  
+ call msg('s','[Symm] Spatial simmetries now are:')  
+ do is=1,spatial_nsym
+   call msg('s','[S'//trim(intc(is))//']',reshape(dl_sop(:,:,is)*1.001,(/9/)))
  enddo
+ if (i_time_rev==1) then
+   call msg('s','[Symm] T-rev derived simmetries now are:')  
+   do is=spatial_nsym+1,nsym
+     call msg('s','[Tr-S'//trim(intc(is))//']',reshape(dl_sop(:,:,is)*1.001,(/9/)))  
+   enddo
+ endif
  call set_real_printed_length()
  !
  ! Remap Inversion symmetry index
@@ -226,6 +266,15 @@ subroutine RT_fix_symmetries(E,k)
    if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./)) ) inv_index=is
  enddo
  if (inv_index<0) i_space_inv=0
+ !
+ if(i_time_rev==1 .and. inv_index>0) then
+   if(inv_index<=spatial_nsym) then
+     i_space_inv=0
+     call msg('s','[SYMs] Spatial inversion '//trim(intc(inv_index))//' is a symmetry')
+   else
+     call msg('s','[SYMs] Spatial inversion '//trim(intc(inv_index))//' is NOT a symmetry')
+   endif
+ endif
  !
  ! Check group table
  !
@@ -259,6 +308,7 @@ subroutine RT_fix_symmetries(E,k)
      endif
    enddo
  enddo
+ !
  main_loop: do ik=1,k%nibz 
    if ( kpoints_map(2, ik )/=1 ) then
      do i1=ik+1,k%nibz

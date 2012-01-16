@@ -34,8 +34,7 @@ subroutine RT_initialize(Xen,q)
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,    &
 &                         l_RT_induced_field,NE_Hxc_jumps,l_NE_simulate_TDDFT,      &
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
-&                         Phase_LifeTime,RT_ave_dephasing,NE_MEM_Treshold,NE_MEM_steps, &
-&                         RT_k_point
+&                         Phase_LifeTime,RT_ave_dephasing,NE_MEM_Treshold,NE_MEM_steps
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp,nkibz
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,&
@@ -49,7 +48,8 @@ subroutine RT_initialize(Xen,q)
  !
  ! Work space
  !
- integer                  :: i1,rest
+ integer                  :: i1,rest,nk_todo
+ integer, external        :: RT_states
  character(5)             :: MSG_ch
  real(SP)                 :: Fluence,T_memory
  !
@@ -181,7 +181,9 @@ subroutine RT_initialize(Xen,q)
  ! States Selection
  ! ================
  !
- call RT_states(Xen)
+ nk_todo=RT_states(Xen)
+ !
+ if (nk_todo==0) call error('Too narrow energy window on evolved k-points')
  !
  ! LOG
  ! ===
@@ -195,7 +197,7 @@ subroutine RT_initialize(Xen,q)
  call msg( 'r', '[RT] Memory depth           [fs]:',T_memory/FS2AUT)
  call msg( 'r', '[RT] Memory steps               :',NE_MEM_steps)
  call msg( 'r', '[RT] Thermalization steps       :',Thermal_steps)
- call msg( 'r', '[RT] K-points evolved      [o/o]:',real(count(RT_k_point))/real(nkibz)*100.)
+ call msg( 'r', '[RT] K-points evolved      [o/o]:',real(nk_todo)/real(nkibz)*100.)
  call msg( 'r', '[RT] Step length            [fs]:',RT_step/FS2AUT)
  call msg( 'r', '[RT] Damping (Phase)    [fs/meV]:',(/Phase_LifeTime/FS2AUT,HBAR_eVfs/Phase_LifeTime*FS2AUT*1000./))
  call msg( 'r', '[RT] Damping (Radiative)[fs/meV]:',(/RAD_LifeTime/FS2AUT,   HBAR_eVfs/RAD_LifeTime*FS2AUT*1000./))

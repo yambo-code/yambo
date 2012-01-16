@@ -311,7 +311,7 @@ integer function io_SC_components(what,E_sc,ID)
      call io_bulk(ID,R2=RT_k)
    endif
    !
-   call io_bulk(ID,VAR="RT_occupations_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2),RT_nk/))
+   call io_bulk(ID,VAR="RT_occupations_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
    call io_bulk(ID,R2=RT_occupations)
    !
  endif

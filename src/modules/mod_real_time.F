@@ -108,7 +108,6 @@ module real_time
  ! ... Window on the k-points/bands allowed to follow the dynamics ...
  !
  real(SP)             :: RT_energy_window(2)
- logical, allocatable :: RT_k_point(:)
  type(pp_indexes)     :: RT_px
  !
  ! Macroscopic induced current ... 
@@ -257,7 +256,6 @@ module real_time
      use QP_m,           ONLY:QP_nk,QP_n_states,QP_Vnl_xc
      use R_lattice,      ONLY:nqbz
      use collisions_IO,  ONLY:collisions_IO_alloc
-     use par_proc_m,     ONLY:pp_indexes_reset
 #if defined _ELPH
      use ELPH,           ONLY:ph_modes
 #endif
@@ -285,7 +283,7 @@ module real_time
      allocate(G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,NE_MEM_steps))
      call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
      !
-     allocate(RT_occupations(1:SC_bands(2),QP_nk))
+     allocate(RT_occupations(SC_bands(1):SC_bands(2),QP_nk))
      call mem_est("RT_occupations",(/size(RT_occupations)/),(/SP/))
      !
      if(l_RT_needs_XC0) then
@@ -333,8 +331,6 @@ module real_time
      endif
      !
      call collisions_IO_alloc()
-     !
-     call pp_indexes_reset(RT_px)
      !
    end subroutine RT_alloc
    

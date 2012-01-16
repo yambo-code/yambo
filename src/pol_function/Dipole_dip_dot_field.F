@@ -25,7 +25,8 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  use drivers,        ONLY:l_optics
 #if defined _KERR
  use drivers,        ONLY:l_kerr
- use KERR,           ONLY:DIP_q_dot_iR_kerr,KERR_alloc,KERR_alloc
+ use KERR,           ONLY:DIP_q_dot_iR_kerr,KERR_alloc,KERR_alloc, &
+&                         Dip_P_symm,chi_nn,chi_jj
 #endif
 #if defined _RAS
  use ras_module,     ONLY:transloc, lras
@@ -35,7 +36,7 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
  use fields,         ONLY:global_gauge
- use X_m,            ONLY:DIP_q_dot_iR,X_alloc,X_t,DIP_iR
+ use X_m,            ONLY:DIP_q_dot_iR,X_alloc,X_t,DIP_iR,DIP_P
  use vec_operate,    ONLY:v_norm
  !
  implicit none
@@ -61,7 +62,8 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  field_dir=field_dir*q0_def_norm/v_norm(field_dir)
  !
 #if defined _KERR
- if(l_kerr) then
+ if(chi_jj) field_dir=field_dir/q0_def_norm
+ if(l_kerr) then ! if field=(0,1,0) dipole=(1,0,0) OK  p_x=\aplha_xy E_y
    if(field_dir(2).ne.0) then
      dipole_dir(1)=-1.
      dipole_dir(2)=-dipole_dir(1)*(field_dir(1)/field_dir(2))
@@ -84,6 +86,13 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  DIP_q_dot_iR = (0.0_SP,0.0_SP)
  !
 #if defined _KERR
+ if(chi_jj) then
+   i1=1
+   if(l_kerr) i1=2
+   call KERR_alloc('DIP_P_symm',(/i1,X%ib(2),Xen%nbm,Xk%nbz/))
+   DIP_P_symm = 0.0_SP
+ endif
+ !
  if(l_kerr) then
    call KERR_alloc('DIP_q_dot_iR',(/X%ib(2),Xen%nbm,Xk%nbz/))
    DIP_q_dot_iR_kerr = (0.0_SP,0.0_SP)
@@ -126,8 +135,15 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
 &                                        dot_product( DIP_iR(:,ic,iv,ik,i_spin), field_dir_rot ) 
          !
 #if defined _KERR
+         if(chi_jj) then
+           DIP_P_symm(1,ic,iv,i1,i_spin) = dot_product(field_dir_rot, DIP_P(:,ic,iv,ik,i_spin))
+           if ( is > nsym/(i_time_rev+1) ) DIP_P_symm(1,ic,iv,i1,i_spin) = &
+&                                        dot_product( DIP_P(:,ic,iv,ik,i_spin), field_dir_rot )
+         endif
+         !
          if(l_kerr) then
            DIP_q_dot_iR_kerr(ic,iv,i1,i_spin) = dot_product(dipole_dir_rot, DIP_iR(:,ic,iv,ik,i_spin))
+           if(chi_jj) DIP_P_symm(2,ic,iv,i1,i_spin) = dot_product(dipole_dir_rot, DIP_P(:,ic,iv,ik,i_spin))
          endif
 #endif
          !
@@ -140,8 +156,10 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
      enddo
      DIP_q_dot_iR(iv,iv,i1,:) = (1.0_SP,0.0_SP)
 #if defined _KERR
+     if(chi_jj) DIP_P_symm(1,iv,iv,i1,:) = (1.0_SP,0.0_SP)
      if(l_kerr) then
        DIP_q_dot_iR_kerr(iv,iv,i1,:) = (1.0_SP,0.0_SP)
+       if(chi_jj) DIP_P_symm(2,iv,iv,i1,:) = (1.0_SP,0.0_SP)
      endif
 #endif
    enddo

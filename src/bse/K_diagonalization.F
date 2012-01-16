@@ -26,10 +26,14 @@ subroutine K_diagonalization(iq,W)
  !
  use pars,           ONLY:SP,DP,pi
  use wrapper,        ONLY:M_by_M,Vstar_dot_V,V_dot_V
- use X_m,            ONLY:X_epsilon
+ use X_m,            ONLY:X_epsilon,X_drude
  use BS,             ONLY:BS_mat,BS_K_dim,BSS_rhoq0,BS_K_coupling,&
 &                         BSS_write_eig_2_db,BS_eh_f,BS_not_const_eh_f,&
 &                         BS_eh_W,K_BSmat_by_V,BS_eh_E
+#if defined _KERR
+ use KERR,           ONLY:BSS_rhoq0_kerr,chi_nn,chi_jj
+ use drivers,        ONLY:l_kerr
+#endif
  use memory_m,       ONLY:mem_est
  use electrons,      ONLY:spin_occ
  use matrix_operate, ONLY:mat_dia_inv,DIAGO,USE_LK,USE_SLK,INV
@@ -57,6 +61,9 @@ subroutine K_diagonalization(iq,W)
  ! Residuals & Energies
  !
  complex(SP), allocatable ::BS_R(:) 
+#if defined _KERR
+ complex(SP), allocatable ::BS_R_kerr(:) 
+#endif
  complex(SP), allocatable ::BS_E(:)
  !
  ! Resonant K
@@ -69,12 +76,19 @@ subroutine K_diagonalization(iq,W)
  complex(SP), allocatable ::BS_V_right(:,:)
  complex(SP), allocatable ::BS_R_left(:)
  complex(SP), allocatable ::BS_R_right(:)
+#if defined _KERR
+ complex(SP), allocatable ::BS_R_right_kerr(:)
+#endif
  complex(SP), allocatable ::BS_overlap(:,:)
  !
  ! I/O
  !
  integer              ::io_err,ID
  integer, external    ::ioBSS_diago
+ !
+#if defined _KERR
+ real(SP)             :: factor,factor_jj
+#endif
  !  
  ! Sectioning
  !
@@ -98,6 +112,12 @@ subroutine K_diagonalization(iq,W)
  !
  allocate(BS_R(BS_H_dim),BS_E(BS_H_dim))
  call mem_est("BS_R BS_E",(/BS_H_dim,BS_H_dim/))
+#if defined _KERR
+ if(l_kerr) then
+   allocate(BS_R_kerr(BS_H_dim))
+   call mem_est("BS_R_kerr",(/BS_H_dim/))
+ endif
+#endif
  !
  if (K_is_not_hermitian) then
    allocate(BS_V_left(BS_H_dim,BS_H_dim),BS_V_right(BS_H_dim,BS_H_dim))
@@ -105,6 +125,12 @@ subroutine K_diagonalization(iq,W)
    allocate(BS_R_left(BS_H_dim),BS_R_right(BS_H_dim),BS_overlap(BS_H_dim,BS_H_dim))
    call mem_est("BS_R_left BS_R_right BS_overlap",(/BS_H_dim,BS_H_dim,size(BS_overlap)/))
    BS_overlap=(0.,0.)
+#if defined _KERR
+   if(l_kerr) then
+     allocate(BS_R_right_kerr(BS_H_dim))
+     call mem_est("BS_R_right_kerr",(/BS_H_dim/))
+  endif
+#endif
  else
    allocate(BS_E_real(BS_H_dim))
    call mem_est("BS_E_real",(/BS_H_dim/),(/SP/))
@@ -204,13 +230,22 @@ subroutine K_diagonalization(iq,W)
      !
      do i1=1,BS_H_dim
        BS_R_right(i1)=cmplx(0.,0.,SP)
+#if defined _KERR
+       if(l_kerr) BS_R_right_kerr(i1)=cmplx(0.,0.,SP)
+#endif
        if (.not.px%element_1D(i1)) cycle
        !
        BS_R_right(i1)=Vstar_dot_V(BS_H_dim,BSS_rhoq0,BS_V_right(:,i1))
+#if defined _KERR
+       if(l_kerr) BS_R_right_kerr(i1)=Vstar_dot_V(BS_H_dim,BSS_rhoq0_kerr,BS_V_right(:,i1))
+#endif
        !
        call live_timing(steps=1)
      enddo
      call pp_redux_wait(BS_R_right)
+#if defined _KERR
+     if(l_kerr) call pp_redux_wait(BS_R_right_kerr)
+#endif
      call live_timing
      !
      ! [2] BS_R(i)= <i_K|j><j|q0> 
@@ -272,6 +307,9 @@ subroutine K_diagonalization(iq,W)
      !
      do i1=1,BS_H_dim
        BS_R(i1)=BS_R_left(i1)*BS_R_right(i1)
+#if defined _KERR
+       if(l_kerr) BS_R_kerr(i1)=BS_R_left(i1)*BS_R_right_kerr(i1)
+#endif
      enddo
      !
    else
@@ -284,17 +322,26 @@ subroutine K_diagonalization(iq,W)
      !
      call live_timing('BSK   residuals',px%n_of_elements(myid+1))
      BS_R=(0.,0.)
+#if defined _KERR
+     if(l_kerr) BS_R_kerr=(0.,0.)
+#endif
      !
      do i1=1,BS_K_dim
        if (.not.px%element_1D(i1)) cycle
        !
        BS_R(i1)=Vstar_dot_V(BS_K_dim,BSS_rhoq0,BS_mat(:,i1))
+#if defined _KERR
+       if(l_kerr) BS_R_kerr(i1)=Vstar_dot_V(BS_K_dim,BS_mat(i1,:),BSS_rhoq0_kerr)
+#endif
        !
        call live_timing(steps=1)
      enddo
      call live_timing
      !
      call pp_redux_wait(BS_R)
+#if defined _KERR
+     if(l_kerr) call pp_redux_wait(BS_R_kerr)
+#endif
      !
    endif
  endif
@@ -307,6 +354,13 @@ subroutine K_diagonalization(iq,W)
  X_epsilon(1,:)=(0.,0.)
  X_epsilon(2,:)=(0.,0.)
  X_epsilon(3,:)=X_epsilon(3,:)/real(ncpu,SP)
+#if defined _KERR
+ if(l_kerr) then
+   X_epsilon(4,:)=X_epsilon(4,:)/real(ncpu,SP)
+   X_epsilon(5,:)=(0.,0.)
+ endif
+#endif
+ !
  call live_timing('BSK res epsilon',px%n_of_elements(myid+1))
  do i1=1,BS_H_dim
    if (.not.px%element_1D(i1)) cycle
@@ -327,19 +381,44 @@ subroutine K_diagonalization(iq,W)
   endif
 #endif
    !
+#if defined _KERR
+   if(l_kerr) then
+     if (K_is_not_hermitian)      X_epsilon(5,:)=X_epsilon(5,:)-BS_R_kerr(i1)/(W%p(:)-BS_E(i1))
+     if (.not.K_is_not_hermitian) X_epsilon(5,:)=X_epsilon(5,:)-BS_R(i1)*BS_R_kerr(i1)/(W%p(:)-BS_E(i1))
+   endif
+#endif
+   !
    call live_timing(steps=1)
  enddo
  call live_timing
  call pp_redux_wait(X_epsilon)
  !
+#if defined _KERR
+ factor=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
+ factor_jj=X_epsilon(3,1)
+ !
+ if(chi_nn) X_epsilon(2,:)=1.+(X_epsilon(2,:)+X_drude(:))*factor/   q_norm(1)**2
+ if(chi_jj) X_epsilon(2,:)=1.+(X_epsilon(2,:)-factor_jj)*factor/real(W%p(:))**2 &
+&                                            +X_drude(:)*factor
+ !
+ if(l_kerr) then
+   if(chi_nn) X_epsilon(5,:)=X_epsilon(5,:)*factor/   q_norm(1)**2
+   if(chi_jj) X_epsilon(5,:)=X_epsilon(5,:)*factor/real(W%p(:))**2
+ endif
+#else
  X_epsilon(2,:)=1.+X_epsilon(2,:)*&
 &                  real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/(q_norm(1))**2
+#endif
  !
  X_epsilon(1,:)=W%p(:)
  !
  ! I write the output file 
  !
  call K_output_file(iq,2)
+ !
+#if defined _KERR
+ if(l_kerr) call K_kerr_output()
+#endif
  !
  ! Diagonalization DB (OUT)
  !
@@ -354,9 +433,21 @@ subroutine K_diagonalization(iq,W)
  call mem_est("BS_mat")
  deallocate(BS_R,BS_E)
  call mem_est("BS_R BS_E")
+#if defined _KERR
+ if(l_kerr) then
+   deallocate(BS_R_kerr)
+   call mem_est("BS_R_kerr")
+ endif
+#endif
  if (K_is_not_hermitian) then
    deallocate(BS_V_left,BS_V_right,BS_R_left,BS_R_right)
    call mem_est("BS_V_left BS_V_right BS_R_left BS_R_right")
+#if defined _KERR
+   if(l_kerr) then
+     deallocate(BS_R_right_kerr)
+     call mem_est("BS_R_right_kerr")
+   endif
+#endif
  else
    deallocate(BS_E_real)
    call mem_est("BS_E_real")

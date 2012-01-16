@@ -440,6 +440,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse)/)))  call initactivate(1,'NonPDirs')
  !
+ ! KERR
+ !
+#if defined _KERR
+ if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse)/)))  call initactivate(1,'EvalKerr')
+ if (l_optics.and.l_bse)  call initactivate(1,'Xjj KrmKrn')
+#endif
+ if (l_optics.and.l_bse)  call initactivate(1,'DrudeW')
+ !
  !RIM
  !
  if (l_rim) call initactivate(1,'RandQpts RandGvec QpgFull Em1Anys IDEm1Ref')
@@ -463,9 +471,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call X_activate('Xd',(/'QpntsR','BndsRn','NGsBlk',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
-#if defined _KERR
-   call initactivate(1,'EvalKerr')
-#endif
    !
  endif
  !

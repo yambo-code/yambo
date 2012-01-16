@@ -220,9 +220,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
 #if defined _KERR
  !
- ! Optics: Kerr
+ ! Optics or BSE: Kerr
  !
- call it('f',defs,'EvalKerr', '[OPT] Kerr parameters',verb_level=V_resp)
+ call it('f',defs,'EvalKerr', '[X/BSE] Kerr parameters',verb_level=V_resp)
+ call it('f',defs,'Xjj',      '[BSE] Compute Kerr via Xjj',verb_level=V_resp) 
  !
 #endif
  !
@@ -344,6 +345,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,&
 &                        E_unit,verb_level=V_resp)
  call it('f',defs,'SkipFullInv',  '[BSS] Skip full invertion in perturbative solver',verb_level=V_resp)
+ call it(defs,'DrudeW',  '[BSE] Drude plasmon',X(2)%Wd,E_unit,verb_level=V_resp)
  !
  ! Xx
  !

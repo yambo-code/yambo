@@ -30,6 +30,10 @@ subroutine K_output_file(iq,mode)
  use X_output,  ONLY:headers,X_setup_headers,X_setup_file_names,eps_file_name,&
 &                    eel_file_name,alpha_file_name,X_write_descriptions,&
 &                    X_write_messages_before_headers,X_write_q_plus_g
+#if defined _KERR
+ use drivers,  ONLY:l_kerr
+#endif
+ !
  implicit none
  integer    :: mode,iq
  !
@@ -43,7 +47,6 @@ subroutine K_output_file(iq,mode)
  logical           :: eval_eels
  !
  ! File Names 
- !
  !
  select case (-mode) 
    case(1)
@@ -65,6 +68,10 @@ subroutine K_output_file(iq,mode)
  ordering='r'
  if (BS_K_coupling) ordering='c'
  eval_eels= O_eels(X_epsilon(1,:),BSS_n_freqs,.TRUE.,ordering)
+ !
+#if defined _KERR
+ if(l_kerr) eval_eels=.false.
+#endif
  !
  title_mode='Ot'
  if (mode<0) title_mode='ot'

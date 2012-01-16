@@ -37,7 +37,7 @@ subroutine K_eh_setup(iq,Ken,Xk)
  use BS,           ONLY:BS_K_dim,O_v_state,O_c_state,BS_res_K_corr,&
 &                       O_n_v_states,O_n_c_states,BS_eh_E,BS_eh_f,BS_eh_en,&
 &                       BS_eh_table,BS_bands,BS_blk_dim,BS_K_coupling,&
-&                       BS_not_const_eh_f,BS_eh_W,BS_eh_Z
+&                       BS_not_const_eh_f,BS_eh_W,BS_eh_Z,BS_drude_dim
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,n_spin
  use R_lattice,    ONLY:qindx_X,bz_samp
  !
@@ -59,6 +59,7 @@ subroutine K_eh_setup(iq,Ken,Xk)
  do while(.TRUE.) 
    !
    BS_K_dim=0
+   BS_drude_dim=0
    !
    if (BS_res_K_corr) then
      O_n_v_states=0
@@ -85,7 +86,11 @@ subroutine K_eh_setup(iq,Ken,Xk)
            ! GPL_EXCLUDE_END SPIN_IGNORE
            !
            E_eh=Ken%E(ic,ik,i_sp)-Ken%E(iv,ikp,i_sp)
-           if (abs(E_eh)<1.E-5) cycle
+           if (abs(E_eh)<1.E-5) then
+             if(any((/ic/=Ken%bf,iv/=Ken%bf,ik/=Ken%kf,i_sp/=Ken%sf/)) ) cycle
+             !if(real(X%Wd)==0..and.aimag(X%Wd)==0.) cycle
+             BS_drude_dim=BS_drude_dim+1
+           endif
            !
            ! Same ordering procedure of the Xo case (see X_eh_setup.F)
            !

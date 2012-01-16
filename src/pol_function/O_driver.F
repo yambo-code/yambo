@@ -28,7 +28,8 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  use pars,          ONLY:pi,SP
  use units,         ONLY:HA2EV
 #if defined _KERR
- use KERR,          ONLY:O_kerr_shadow
+ use KERR,          ONLY:KERR_shadow
+ use drivers,       ONLY:l_kerr
 #endif
  use memory_m,      ONLY:mem_est
  use stderr,        ONLY:intc,set_real_printed_length
@@ -70,7 +71,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  call set_real_printed_length(f_length=10,g_length=10)
  !
 #if defined _KERR
- call O_kerr_shadow('setup',l_flag=eval_eels)
+ call KERR_shadow('setup',l_flag=eval_eels)
 #endif
  !
  do iq=X%iq(1),X%iq(2)
@@ -105,7 +106,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    call X_alloc('X',(/X%ng,X%ng,wv%n(2)/))
    !
 #if defined _KERR
-   call O_kerr_shadow('X_alloc',n1=X%ng,n2=wv%n(2))
+   call KERR_shadow('X_alloc',n1=X%ng,n2=wv%n(2))
 #endif
    !
    ! Frequencies (AFTER TDDFT SETUP!)
@@ -114,9 +115,14 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! Check if EELS can be evaluated
    !
-#if !defined _KERR
-   eval_eels= O_eels(wv%p,wv%n(1),.TRUE.,X%ordering)
+#if defined _KERR
+   if(.not.l_kerr) then
 #endif
+   eval_eels= O_eels(wv%p,wv%n(1),.TRUE.,X%ordering)
+#if defined _KERR
+   endif
+#endif
+   !
    if (eval_alpha) eval_alpha=eval_eels
    !
    ! OutPut files...
@@ -133,7 +139,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    if (l_bs_fxc)        call of_open_close(fxc_file_name,'ot')
    !
 #if defined _KERR
-   call O_kerr_shadow('def_files')
+   call KERR_shadow('def_files')
 #endif
    !
    ! Initial Messages
@@ -170,7 +176,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    call of_open_close(fxc_file_name)
    !
 #if defined _KERR
-   call O_kerr_shadow('close_files')
+   call KERR_shadow('close_files')
 #endif
    !
    ! e Table
@@ -183,9 +189,11 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      !
 #if defined _KERR
      !
-     call O_kerr(iq,i_G_shift,Q_plus_G_sq_modulus,frequencies_range,Xen,Xk,wv,X)
+     if(l_kerr) then
+       call O_kerr(iq,i_G_shift,Q_plus_G_sq_modulus,frequencies_range,Xen,Xk,wv,X)
+     else
      !
-#else
+#endif
      !
      call X_os(X_mat,iq,frequencies_range,Xen,Xk,wv,X)     
      !
@@ -200,6 +208,8 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      X_epsilon(2,frequencies_range(1):frequencies_range(2))=1./(X_mat(i_G_shift,i_G_shift,:)*&
 &                                                           bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1.)
      !
+#if defined _KERR
+     endif
 #endif
      !
      call of_open_close(eps_file_name,'oa')
@@ -207,7 +217,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      call of_open_close(alpha_file_name,'oa')
      !
 #if defined _KERR
-     call O_kerr_shadow('open_files')
+     call KERR_shadow('open_files')
 #endif
      !
      if (iw_group==1) then
@@ -231,7 +241,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        call msg('o eps eel alpha','#')
        !
 #if defined _KERR
-       call O_kerr_shadow('files_header',l_flag=l_skip_non_int_eps)
+       call KERR_shadow('files_header',l_flag=l_skip_non_int_eps)
 #endif
        !
      endif
@@ -246,7 +256,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        if (.not.l_skip_non_int_eps) call msg('o eps','',output_data,INDENT=-2,USE_TABS=.true.)
        !
 #if defined _KERR
-       call O_kerr_shadow('write_data',l_flag=l_skip_non_int_eps,n1=i2,n2=wv%n(1),c1=wv%p)
+       call KERR_shadow('write_data',l_flag=l_skip_non_int_eps,n1=i2,n2=0,c1=wv%p)
 #endif
        !
      enddo
@@ -255,7 +265,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      call of_open_close(alpha_file_name)
      !
 #if defined _KERR
-     call O_kerr_shadow('close_files')
+     call KERR_shadow('close_files')
 #endif
      !
    enddo
@@ -317,7 +327,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    ! CLEAN (each q)
    !
 #if defined _KERR
-     call O_kerr_shadow('X_dealloc')
+     call KERR_shadow('X_dealloc')
 #endif
    !
    call X_alloc('X')
@@ -335,7 +345,7 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  call X_alloc('DIP_q_dot_iR')
  !
 #if defined _KERR
- call O_kerr_shadow('DIP_dealloc')
+ call KERR_shadow('DIP_dealloc')
 #endif
  !
  call WF_free()

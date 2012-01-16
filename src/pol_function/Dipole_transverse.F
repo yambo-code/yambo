@@ -41,6 +41,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
 #if defined _DISTRIBUTED
  use com,                 ONLY:error
 #endif
+#if defined _KERR
+ use KERR,           ONLY:chi_jj
+#endif
  !
  implicit none
  type(bz_samp), intent(in)    :: Xk
@@ -237,6 +240,16 @@ subroutine Dipole_transverse(Xen,Xk,X)
 #if defined _SC
          DIP_P(:,ic,iv,ik,i_spin)=DIP_P(:,ic,iv,ik,i_spin)+rho(:3)
 #endif        
+#if defined _KERR
+         if(chi_jj) then
+           if (n_spinor==2) then
+             DIP_P(:,ic,iv,ik,1)=DIP_P(:,ic,iv,ik,1)+rho(:3)
+           else
+             DIP_P(:,ic,iv,ik,i_spin)=rho(:3)
+           endif
+         endif
+#endif        
+         !
          !======
          ! <iR>
          !======
@@ -302,6 +315,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
          DIP_P(:,ic,iv,ik,:) = conjg(DIP_P(:,iv,ic,ik,:))
          P_square(ic,iv,ik,:)= conjg(P_square(iv,ic,ik,:))
 #endif        
+#if defined _KERR
+         if(chi_jj) DIP_P(:,ic,iv,ik,:) = conjg(DIP_P(:,iv,ic,ik,:))
+#endif        
        enddo
      enddo
    endif
@@ -329,6 +345,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
 #if defined _SC
    call pp_redux_wait(DIP_P(:,:,:,:,i_spin))
    call pp_redux_wait(P_square(:,:,:,i_spin))
+#endif
+#if defined _KERR
+   if(chi_jj) call pp_redux_wait(DIP_P(:,:,:,:,i_spin))
 #endif
  enddo
  !

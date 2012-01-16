@@ -28,6 +28,7 @@ module BS
  !
  integer :: BS_n_g_exch
  integer :: BS_K_dim
+ integer :: BS_drude_dim
  integer :: BS_bands(2)
  integer :: BS_columns
  integer :: BS_n_g_W

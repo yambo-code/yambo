@@ -105,6 +105,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    ! NE_time=(NE_i_time-1)*RT_step
    !
    NE_i_time= int( real(Time/RT_step+1)/real(max_rt_steps_disk) ) * max_rt_steps_disk
+   if (NE_i_time==0) NE_i_time=max_rt_steps_disk
    Time=(NE_i_time-1)*RT_step
    !
    if (.not.allocated(RT_k)) then

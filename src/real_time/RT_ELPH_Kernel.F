@@ -38,14 +38,13 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  ! Iteration: in this case I ***think*** (even if I am not completely sure) that everything is ok.
  !  
  use pars,           ONLY:SP,cI,pi
- use units,          ONLY:HA2EV,FS2AUT
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
  use SC,             ONLY:SC_bands,it_now
  use parser_m,       ONLY:parser
  use real_time,      ONLY:RT_step,THETA_matrix,I1_lesser,Integrator_name,q_weight,&
 &                         G_lesser,MEM_index
- use ELPH,           ONLY:ph_freqs_sq,elph_branches,ph_modes
+ use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
  use wrapper,        ONLY:M_by_M
  !
@@ -71,15 +70,13 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  complex(SP), external :: RT_G_retarded
  !
  ! ... band index ...
- integer               :: i_n,i_np,i_e,i_m,i_nnpe,i_npne,B_dim,i_e_m,i_np_m,i_n_m
+ integer               :: i_n,i_np,i_e,i_m,B_dim,i_np_m,i_n_m
  ! ... BZ index ...
  integer               :: iqbz,iq,iqs,ik_m_q,ik_m_qs
  !
- real(SP)              :: g_q_diagonal_sq,g_q_off_diagonal_sq,alpha
+ real(SP)              :: g_q_diagonal_sq,g_q_off_diagonal_sq
  real(SP)              :: g_q_diagonal,g_q_off_diagonal
  !
- call parser('alpha',alpha)
- ! 
  B_dim=SC_bands(2)-SC_bands(1)+1
  !
  !call parser('G_diagonal_sq',g_q_diagonal_sq )
@@ -116,10 +113,9 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
      !
      N_q    = bose_f(ph_freq)+(/0.,2./)
      !
-     call get_g_diagonal(g_q_diagonal_sq,alpha)
+     call get_g_diagonal(g_q_diagonal_sq)
      !
      g_q_diagonal_sq=g_q_diagonal_sq*q_weight(iqbz)
-     !g_q_diagonal=sqrt(0.01/HA2EV)
      g_q_diagonal=sqrt(g_q_diagonal_sq)
      g_q_off_diagonal=0.
      !
@@ -191,12 +187,13 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  !
 end subroutine RT_ELPH_kernel
 !
-subroutine get_g_diagonal(g_q_diagonal_sq,alpha)
+subroutine get_g_diagonal(g_q_diagonal_sq)
   !
   use pars,           ONLY:SP,pi
   use vec_operate,    ONLY:iku_v_norm
   use ELPH,           ONLY:ph_freqs_sq
   use D_lattice,      ONLY:DL_vol
+  use RT,             ONLY:RT_alpha_frohlich
   implicit none
   !
   real(SP)::g_q_diagonal_sq,alpha,reduced_mass,alpha_tilde
@@ -205,6 +202,6 @@ subroutine get_g_diagonal(g_q_diagonal_sq,alpha)
   !
   reduced_mass=.0591
   !
-  g_q_diagonal_sq=alpha*4.*pi*sqrt( ph_freqs_sq(1,1) )**3./2. / ( sqrt(2.*reduced_mass)*DL_vol )
+  g_q_diagonal_sq=RT_alpha_frohlich*4.*pi*sqrt( ph_freqs_sq(1,1) )**3./2. / ( sqrt(2.*reduced_mass)*DL_vol )
   !
 end subroutine

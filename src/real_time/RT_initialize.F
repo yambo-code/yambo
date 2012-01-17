@@ -34,7 +34,8 @@ subroutine RT_initialize(Xen,q)
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,    &
 &                         l_RT_induced_field,NE_Hxc_jumps,l_NE_simulate_TDDFT,      &
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
-&                         Phase_LifeTime,RT_ave_dephasing,NE_MEM_Treshold,NE_MEM_steps
+&                         Phase_LifeTime,RT_ave_dephasing,NE_MEM_Treshold,          &
+&                         NE_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp,nkibz
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,&
@@ -60,6 +61,8 @@ subroutine RT_initialize(Xen,q)
  call parser('InducedField' ,l_RT_induced_field)
  call parser('RTfreezeH',    Hfrozen)
  call parser('RTfreezeXC',   XCfrozen)
+ call parser('SkipGFIO',     l_RT_skip_GF_IO)
+ call parser('SkipOCCIO',    l_RT_skip_OCC_IO)
  !
  l_NE_simulate_BSE     =.FALSE.
  l_NE_simulate_TDDFT   =.FALSE.

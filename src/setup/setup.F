@@ -252,6 +252,8 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  call REPORT_Energies(en%E,k,Xk,en%nb,(/1,k%nibz/),'E',.TRUE.)
  !
+ call get_points_along_X(k,en)
+ !
  ! Once the occupations have been evaluated I dump Xen in Ken
  !
  call E_duplicate(Xen,Ken)
@@ -279,5 +281,28 @@ subroutine setup(en,Xen,Ken,k,Xk)
  endif
  !
 #endif
+ !
+end subroutine
+!
+subroutine get_points_along_X(k,E)
+ use electrons,      ONLY:levels
+ use R_lattice,      ONLY:bz_samp
+ use units,          ONLY:HA2EV
+ !
+ implicit none
+ type(levels)    ::E
+ type(bz_samp)   ::k
+ integer         ::ik
+ !
+ call k_expand(k)
+ call k_ibz2bz(k,'cc',.TRUE.)
+ !
+ do ik=1,k%nibz
+   if (all((/ k%pt(ik,1)>0., abs(k%pt(ik,2))<1.E-5 , abs(k%pt(ik,3))<1.E-5 /)).or.&
+&      all((/ abs(k%pt(ik,:))<1.E-5/)) ) then
+     !write (100,'(5f20.10,i4)') k%pt(ik,1),E%E(1:4,ik,1)*HA2EV,ik
+   endif
+ enddo
+ !stop
  !
 end subroutine

@@ -21,10 +21,10 @@
 !
 integer function RT_states(E)
  ! 
- use electrons,      ONLY:levels
- use real_time,      ONLY:RT_energy_window,RT_px
+ use pars,           ONLY:zero_dfl,SP
+ use electrons,      ONLY:levels,spin_occ
+ use real_time,      ONLY:RT_eh_energy_max,RT_px
  use SC,             ONLY:SC_bands
- use pars,           ONLY:zero_dfl
  use R_lattice,      ONLY:nkibz
  use par_indexes_m,  ONLY:par_indexes
  use stderr,         ONLY:intc
@@ -37,74 +37,86 @@ integer function RT_states(E)
  !
  ! Work space
  !
- integer           :: ib,ik,nk_todo,ik_todo,SC_bands_new(2)
- logical           :: RT_k_point(nkibz),RT_b(SC_bands(2),nkibz)
+ integer           :: iv,ic,ib,ik,nk_todo,ik_todo,SC_bands_new(2)
+ real(SP)          :: E_eh,f_eh
+ logical           :: RT_b(SC_bands(2),nkibz),RT_k_point(nkibz)
  type(pp_indexes)  :: p_loc
  !
- RT_k_point=.FALSE.
- RT_b      =.FALSE.
+ RT_b       =.FALSE.
+ RT_k_point =.FALSE.
  !
  ! Pre-allocation of CPU tables
  !
  call pp_indexes_reset(RT_px)
  !
  call par_indexes(RT_px,(/nkibz/))
+ ! 
+ if (RT_eh_energy_max<zero_dfl) then
+   !
+   RT_states=nkibz
+   !
+   return
+   !
+ endif
  !
- if (all(RT_energy_window<zero_dfl)) then
+ do ik=1,nkibz
    !
-   RT_k_point=.TRUE.
-   !
- else
-   !
-   do ik=1,nkibz
+   do iv=SC_bands(1),E%nbm
      !
-     do ib=SC_bands(1),SC_bands(2)
+     do ic=E%nbf+1,SC_bands(2)
        !
-       if (E%E(ib,ik,1)>RT_energy_window(1) .and. E%E(ib,ik,1)<RT_energy_window(2)) then
-         !
-         RT_k_point(ik)=.TRUE.
-         RT_b(ib,ik)   =.TRUE.
-         !
-       endif
+       f_eh=E%f(iv,ik,1)*(spin_occ-E%f(ic,ik,1))
+       !
+       if (abs(f_eh)<zero_dfl    ) cycle
+       !
+       E_eh=E%E(ic,ik,1)-E%E(iv,ik,1)
+       !
+       if (E_eh<0.              ) cycle
+       if (E_eh>RT_eh_energy_max) cycle
+       !
+       RT_b(iv,ik) =.TRUE.
+       RT_b(ic,ik) =.TRUE.
        !
      enddo
      !
    enddo
    !
-   nk_todo=count(RT_k_point)
+   RT_k_point(ik)=any(RT_b(:,ik))
    !
-   call pp_indexes_reset(p_loc)
+ enddo
+ !
+ nk_todo=count(RT_k_point)
+ !
+ call pp_indexes_reset(p_loc)
+ !
+ call par_indexes(p_loc,(/nk_todo/))
+ !
+ ik_todo=0
+ !
+ do ik=1,nkibz
    !
-   call par_indexes(p_loc,(/nk_todo/))
+   RT_px%element_1D(ik)=.FALSE.
    !
-   ik_todo=0
+   if (.not.RT_k_point(ik)) cycle
    !
-   do ik=1,nkibz
-     !
-     RT_px%element_1D(ik)=.FALSE.
-     !
-     if (.not.RT_k_point(ik)) cycle
-     !
-     ik_todo=ik_todo+1
-     !
-     if (p_loc%element_1D(ik_todo)) RT_px%element_1D(ik)=.TRUE.
-     !
-   enddo
+   ik_todo=ik_todo+1
    !
-   call pp_indexes_reset(p_loc)
+   if (p_loc%element_1D(ik_todo)) RT_px%element_1D(ik)=.TRUE.
    !
-   ! Redefine SC_bands ?
+ enddo
+ !
+ call pp_indexes_reset(p_loc)
+ !
+ ! Redefine SC_bands ?
+ !
+ SC_bands_new=SC_bands
+ !
+ do ib=SC_bands(1),SC_bands(2)-1
    !
-   SC_bands_new=SC_bands
+   if (.not.any(RT_b(ib,:)).and.     any(RT_b(ib+1,:))) SC_bands_new(1)=ib+1
+   if (     any(RT_b(ib,:)).and..not.any(RT_b(ib+1,:))) SC_bands_new(2)=ib
    !
-   do ib=SC_bands(1),SC_bands(2)-1
-     !
-     if (.not.any(RT_b(ib,:)).and.     any(RT_b(ib+1,:))) SC_bands_new(1)=ib+1
-     if (     any(RT_b(ib,:)).and..not.any(RT_b(ib+1,:))) SC_bands_new(2)=ib
-     !
-   enddo
-   !
- endif
+ enddo
  !
  RT_states=nk_todo
  !
@@ -112,5 +124,5 @@ integer function RT_states(E)
    SC_bands =SC_bands_new
    call warning('Bands reduced to '//trim(intc(SC_bands(1)))//'-'//trim(intc(SC_bands(2))))
  endif
- !
+ ! 
 end function RT_states

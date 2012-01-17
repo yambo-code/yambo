@@ -107,7 +107,8 @@ module real_time
  !
  ! ... Window on the k-points/bands allowed to follow the dynamics ...
  !
- real(SP)             :: RT_energy_window(2)
+ real(SP)             :: RT_eh_energy_max
+ real(SP)             :: RT_alpha_frohlich
  type(pp_indexes)     :: RT_px
  !
  ! Macroscopic induced current ... 
@@ -127,7 +128,14 @@ module real_time
  real(SP)    :: RAD_LifeTime
  logical     :: RT_is_dumped
  !
+ ! I/O
+ !----------------
+ !
+ logical     :: l_RT_skip_GF_IO
+ logical     :: l_RT_skip_OCC_IO
+ !
  ! ELPH kernel...
+ !----------------
  !
  ! ... Q weights calculated using RIM in order to evaluate the ELPH kernel
  !
@@ -136,11 +144,13 @@ module real_time
  complex(SP), allocatable :: THETA_matrix(:,:,:,:)
  !
  ! Relaxation: Dephasing Matrix
+ !------------------------------
  !
  real(SP)    :: RT_ave_dephasing
  real(SP),    allocatable :: RT_Deph_Matrix(:,:,:)
  !
  ! GFs
+ !-----
  !
  complex(SP), allocatable :: G_lesser_reference(:,:,:)
  complex(SP), allocatable :: I1_lesser(:,:,:)

@@ -23,7 +23,8 @@ subroutine RT_databases_IO(Xen,it)
  !
  use QP_m,           ONLY:QP_nk
  use real_time,      ONLY:ID,NE_dynamics,l_NE_with_fields,NE_i_time,it_start,&
-&                         OCCUPATIONS_IO_and_interpolate
+&                         OCCUPATIONS_IO_and_interpolate,&
+&                         l_RT_skip_GF_IO,l_RT_skip_OCC_IO
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL
  use electrons,      ONLY:levels
  !
@@ -43,22 +44,27 @@ subroutine RT_databases_IO(Xen,it)
  !
  if (it==it_start.and.it_start>1) return
  !
- ! Write G_lesser (always)
+ ! Write G_lesser
+ !================
  !
- io_G=0
- COM_=NONE
- if (it==it_start) COM_=REP
- call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(5))
- io_G=io_SC_components('G' ,Xen,ID(5))
- !
- do ik = 1, QP_nk 
-   call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
-   io_G=io_SC_components('G',Xen,ID(5))
- enddo
+ if (.not.l_RT_skip_GF_IO) then
+   !
+   io_G=0
+   COM_=NONE
+   if (it==it_start) COM_=REP
+   call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(5))
+   io_G=io_SC_components('G' ,Xen,ID(5))
+   !
+   do ik = 1, QP_nk 
+     call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
+     io_G=io_SC_components('G',Xen,ID(5))
+   enddo
+   !
+ endif
  !
  ! Occupations
  !
- call OCCUPATIONS_IO_and_interpolate(Xen,'G')
+ if (.not.l_RT_skip_OCC_IO) call OCCUPATIONS_IO_and_interpolate(Xen,'G')
  !
  if(l_NE_with_fields.and.NE_dynamics) then
    !

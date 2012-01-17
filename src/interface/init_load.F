@@ -55,7 +55,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
 &                        RT_diagonalization_steps,SwitchOnTime,max_rt_steps_disk,NE_tot_time,NE_Hxc_jumps,&
-&                        RT_ave_dephasing,NE_MEM_treshold,RT_energy_window
+&                        RT_ave_dephasing,NE_MEM_treshold,RT_eh_energy_max,RT_alpha_frohlich
  use fields,        ONLY:Efield
 #endif
 #if defined _MAGNETIC
@@ -181,7 +181,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it('f',defs,'NewtDchk',   '[F GW] Test dSc/dw convergence',verb_level=V_qp)
  call it('f',defs,'ExtendOut',  '[F GW] Print all variables in the output file',verb_level=V_qp)
  !
- !
  ! BSE
  !
  call it(defs,'BSresKmod',  '[BSK] Resonant Kernel mode. (`x`;`c`;`d`)',BS_res_mode)
@@ -290,7 +289,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'Integrator', '[RT] Integrator (RK2 | EULER | EXACT | RK2EXACT) ',Integrator_name)
  call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit)
  call it(defs,'PhLifeTime', '[RT] Phase Relaxation Time',Phase_LifeTime,unit=Time_unit)
- call it(defs,'RTwindow',   '[RT] Energy window to define the states that are evolved',RT_energy_window,&
+ call it(defs,'RTmaxEn',    '[RT] Max e/h energy to define the states that are evolved',RT_eh_energy_max,&
 &                            Verb_level=V_real_time,unit=E_unit)
  call it('f',defs,'RTfreezeH', '[RT] Hartree not updated during RT')
  call it('f',defs,'RTfreezeXC','[RT] XC potential/self-energy not updated during RT')
@@ -301,9 +300,12 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'RTDiagoSteps', '[RT] Digonalize the Hamiltonian',RT_diagonalization_steps,verb_level=V_real_time)
  call it(defs,'RTAveDeph','[RT] Dephasing for all elements not included in RTDePhMatrix' &
 &                        ,RT_ave_dephasing,verb_level=V_real_time,unit=Time_unit)
+ call it(defs,'DiskSteps',   '[RT] Numer of steps stored in memory before I/O',max_rt_steps_disk,verb_level=V_real_time)
+ call it(defs,'AlphaFr',     '[RT] Frohlich alpha',RT_alpha_frohlich,verb_level=V_real_time)
  call it('f',defs,'Diamagnetic', '[RT] Include the diamagnetic term in current and coupling',verb_level=V_real_time)
  call it('f',defs,'InducedField', '[RT] Include induced field in coupling and current',verb_level=V_real_time)
- call it(defs,'DiskSteps',     '[RT] Numer of steps stored in memory before I/O',max_rt_steps_disk,verb_level=V_real_time)
+ call it('f',defs,'SkipGFIO',  '[RT] Do not write on disk the Green Functions',verb_level=V_real_time)
+ call it('f',defs,'SkipOCCIO', '[RT] Do not write on disk the Occupations',verb_level=V_real_time)
  !
  ! External fields
  !

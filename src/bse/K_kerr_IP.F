@@ -59,36 +59,25 @@ subroutine K_kerr_IP(w,drude_GreenF)
    i_sp=spin(BS_eh_table(i1,:))
    !
    if(chi_nn) BSS_rhoq0_kerr(i1)=-conjg(DIP_q_dot_iR_kerr(ic,iv,ik,i_sp))
-   if(chi_jj) BSS_rhoq0_kerr(i1)=-conjg(DIP_P_symm(2,ic,iv,ik,i_sp))
+   if(chi_jj) BSS_rhoq0_kerr(i1)= conjg(DIP_P_symm(2,ic,iv,ik,i_sp))
    !
    if (BS_K_coupling) then
      if(chi_nn) BSS_rhoq0_kerr(BS_K_dim+i1)=DIP_q_dot_iR_kerr(ic,iv,ik,i_sp)
      if(chi_jj) BSS_rhoq0_kerr(BS_K_dim+i1)=DIP_P_symm(2,ic,iv,ik,i_sp)
    endif
    !
-!   ! I did a check with X_os.F: the Drude term in the
-!   ! off--diagonal part cannot be included in this way
-!   ! Drude term
-!   if (abs(BS_eh_E(i1))<1.E-5) then
-!     X_epsilon(4,:)=X_epsilon(4,:)-aimag(BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1)))*BS_eh_f(i1)*&
-!&                                  drude_GreenF(:)
-!   else
    if (abs(BS_eh_E(i1))<1.E-5) cycle
    X_epsilon(4,:)=X_epsilon(4,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))*BS_eh_f(i1)/&
 &                                (w(:)-BS_eh_E(i1))
    if (BS_K_coupling) then
-     X_epsilon(4,:)=X_epsilon(4,:)+BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))*BS_eh_f(i1)/&
+     X_epsilon(4,:)=X_epsilon(4,:)+conjg(BSS_rhoq0(i1))*BSS_rhoq0_kerr(i1)*BS_eh_f(i1)/&
 &                                (w(:)+BS_eh_E(i1))
    endif
-!   endif
  enddo
  !
  factor=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
- factor_jj=0. ! X_epsilon(4,1)
  !
- if(chi_nn) X_epsilon(4,:)= X_epsilon(4,:)           *factor/q_norm(1)**2
- if(chi_jj) X_epsilon(4,:)=(X_epsilon(4,:)-factor_jj)*factor/     w(:)**2
-! if(chi_nn) X_epsilon(4,:)= X_epsilon(4,:)           *factor/q_norm(1)**2 *w(:)**2
-! if(chi_jj) X_epsilon(4,:)=(X_epsilon(4,:)-factor_jj)*factor
+ if(chi_nn) X_epsilon(4,:)= X_epsilon(4,:)*factor/q_norm(1)**2
+ if(chi_jj) X_epsilon(4,:)= X_epsilon(4,:)*factor/     w(:)**2 !real(w(:))**2
  !
 end subroutine

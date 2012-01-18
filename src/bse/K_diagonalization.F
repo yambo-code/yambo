@@ -31,7 +31,7 @@ subroutine K_diagonalization(iq,W)
 &                         BSS_write_eig_2_db,BS_eh_f,BS_not_const_eh_f,&
 &                         BS_eh_W,K_BSmat_by_V,BS_eh_E
 #if defined _KERR
- use KERR,           ONLY:BSS_rhoq0_kerr,chi_nn,chi_jj
+ use KERR,           ONLY:BSS_rhoq0_kerr,chi_nn,chi_jj,iw_ref
  use drivers,        ONLY:l_kerr
 #endif
  use memory_m,       ONLY:mem_est
@@ -395,15 +395,15 @@ subroutine K_diagonalization(iq,W)
  !
 #if defined _KERR
  factor=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
- factor_jj=X_epsilon(3,1)
+ factor_jj=X_epsilon(3,iw_ref)
  !
- if(chi_nn) X_epsilon(2,:)=1.+(X_epsilon(2,:)+X_drude(:))*factor/   q_norm(1)**2
- if(chi_jj) X_epsilon(2,:)=1.+(X_epsilon(2,:)-factor_jj)*factor/real(W%p(:))**2 &
+ if(chi_nn) X_epsilon(2,:)=1.+(X_epsilon(2,:)+X_drude(:))*factor/q_norm(1)**2
+ if(chi_jj) X_epsilon(2,:)=1.+(X_epsilon(2,:)-factor_jj)*factor/    W%p(:)**2  &  !real(W%p(:))**2 &
 &                                            +X_drude(:)*factor
  !
  if(l_kerr) then
-   if(chi_nn) X_epsilon(5,:)=X_epsilon(5,:)*factor/   q_norm(1)**2
-   if(chi_jj) X_epsilon(5,:)=X_epsilon(5,:)*factor/real(W%p(:))**2
+   if(chi_nn) X_epsilon(5,:)=X_epsilon(5,:)*factor/q_norm(1)**2
+   if(chi_jj) X_epsilon(5,:)=X_epsilon(5,:)*factor/   W%p(:)**2   !real(W%p(:))**2
  endif
 #else
  X_epsilon(2,:)=1.+X_epsilon(2,:)*&

@@ -27,6 +27,7 @@ module KERR
  !
  logical                  :: chi_nn
  logical                  :: chi_jj
+ integer                  :: iw_ref
  !
  ! BSE via X_nn
  complex(SP), allocatable :: DIP_q_dot_iR_kerr(:,:,:,:)

@@ -56,7 +56,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  real(SP)              :: el_dos(n_sp_pol),dos_E,delta_E,f_occ,io_Time
  integer               :: i_E,ik,ib,i_spin,i_T,n_T_steps
  character(schlen)     :: ch_ws,titles(4)
- logical               :: l_3D_plot
+ logical               :: l_TIME_plot,l_3D_plot
  !
  ! DOS
  !=====
@@ -65,16 +65,17 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    !
    call section('*','Electronic DOS')
    !
-   l_3D_plot=.FALSE.
+   l_TIME_plot=.FALSE.
+   l_3D_plot  =.FALSE.
    n_T_steps=1
    !
 #if defined _YPP_RT
    !
    call OCCUPATIONS_IO_and_interpolate(Xen,'G',k=Xk,Time=OCC_T_range(1),imposed_COM=LOG)
    !
-   l_3D_plot=allocated(RT_occupations)
+   l_TIME_plot=allocated(RT_occupations)
    !
-   if (.not.l_3D_plot) then
+   if (.not.l_TIME_plot) then
      !
      call warning('Occupations database not found in :'//trim(OCC_ctl(3))//'. Switching to standard DOS')
      !
@@ -82,9 +83,20 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      !
      call OCCUPATIONS_IO_and_interpolate(Xen,'G',k=Xk,Time=OCC_T_range(2))
      !
-     OCC_deltaT=nint(OCC_deltaT/max_rt_steps_disk/RT_step)*max_rt_steps_disk*RT_step
+     if (OCC_deltaT<max_rt_steps_disk*RT_step) then
+       ! 
+       OCC_deltaT=max_rt_steps_disk*RT_step
+       ! 
+     else
+       !
+       OCC_deltaT=nint(OCC_deltaT/max_rt_steps_disk/RT_step)*max_rt_steps_disk*RT_step
+       !
+     endif
+     !
      dos_bands=SC_bands
      n_T_steps=nint( (OCC_T_range(2)-OCC_T_range(1))/OCC_deltaT )+1
+     !
+     l_3D_plot=.not.n_T_steps==1
      !
      call msg('s','Time range [fs]:',OCC_T_range/FS2AUT)
      call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
@@ -95,11 +107,14 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    !
    call QP_apply(dos_bands,Xen,Xk,'G',msg_fmt='s')
    !
-   if (l_3D_plot) then
+   if (l_TIME_plot.and.l_3D_plot) then
+     !
 #if defined _YPP_RT
      call RT_output("open el_dos")
 #endif
-   else
+     !
+   else if (.not.l_3D_plot) then
+     !
      output_fname='el_dos'
      call of_open_close(trim(output_fname),'ot')
      if (n_sp_pol==1) then
@@ -144,7 +159,10 @@ subroutine electrons_dos_and_charge(Xk,Xen)
              !
              f_occ=Xen%f(ib,ik,i_spin)/2.
 #if defined _YPP_RT
-             if (l_3D_plot.and.i_T>1) f_occ=RT_occupations(ib,ik)/2.
+             if (l_TIME_plot) then
+               if (l_3D_plot.and.i_T>1) f_occ=RT_occupations(ib,ik)/2.
+               if (.not.l_3D_plot)      f_occ=RT_occupations(ib,ik)/2.
+             endif
 #endif
              !
              el_dos(i_spin)=el_dos(i_spin)+f_occ*&
@@ -154,9 +172,10 @@ subroutine electrons_dos_and_charge(Xk,Xen)
          enddo
        enddo
        !
-       if (l_3D_plot) then
+       if (l_TIME_plot) then
 #if defined _YPP_RT
-         call RT_output("el_dos",VALUEs=(/el_dos(1)/),E=dos_E*HA2EV,TIME=io_Time/FS2AUT)
+         if (     l_3D_plot) call RT_output("el_dos",VALUEs=(/el_dos(1)/),E=dos_E*HA2EV,TIME=io_Time/FS2AUT)
+         if (.not.l_3D_plot) call msg('o dos','',(/dos_E*HA2EV,el_dos(1)/),INDENT=-2,USE_TABS=.true.)
 #endif
        else
          if (n_sp_pol==1) call msg('o dos','',(/dos_E*HA2EV,el_dos(1)/),INDENT=-2,USE_TABS=.true.)
@@ -166,13 +185,14 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      enddo
      !
 #if defined _YPP_RT
-     if (l_3D_plot) call msg('o dos','')
+     if (l_TIME_plot.and.l_3D_plot) call msg('o dos','')
+     !
    enddo
 #endif
    !
-   if (l_3D_plot) then
+   if (l_TIME_plot.and.l_3D_plot) then
      call RT_output("close el_dos")
-   else
+   else if (.not.l_3D_plot) then
      call of_open_close(trim(output_fname))
    endif
    !

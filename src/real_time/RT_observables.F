@@ -21,14 +21,13 @@
 !
 subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
- use pars,           ONLY:SP,pi,cI
+ use pars,           ONLY:SP,pi,cI,zero_dfl
  use units,          ONLY:SPEED_OF_LIGHT,HA2EV
  use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp,nkibz
  use D_lattice,      ONLY:DL_vol
  use SC,             ONLY:V_hartree_sc,Ho,SC_bands
  use X_m,            ONLY:P_square
- use electrons,      ONLY:spin_occ
  use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen,l_NE_with_fields, &
 &                         l_NE_simulate_IP ,l_Dynamics_is_over,RT_output,NE_i_time
  use fields,         ONLY:A_vecpot
@@ -48,7 +47,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  ! WorkSpace
  !
  integer     :: i1,indexes(SC_bands(2)*nkibz)
- real(SP)    :: Energies_and_occupations(SC_bands(2)*nkibz,2)
+ real(SP)    :: Energies_and_occupations(SC_bands(2)*nkibz,2),dG_sign
  !
  ! Shadows
  !
@@ -138,22 +137,26 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  ! 
  ! In a semiconductor/isolant delta_G is defined as:
  !
- !  delta_G=\sum_c,k (-i G_lesser(c,c,k) + i G_lesser(v,v,k)) w_k
+ !  delta_G=\sum_{n=(c,v),k} (-i G_lesser(v,v,k) + i G_lesser(c,c,k)) w_k=
+ !          \sum_{n=(c,v),k} (f_vk-f_ck) w_k
  !
  ! where conduction and valence are defined with reference to the unperturbed
  ! system.
  !
- ! This definition can be extended to metals 
- !
- !  delta_G=\sum_n,k (-i) G_lesser(n,n,k) w_k ( 1 - 2 f_nk/spin_occ )
+ ! This definition is easily extended to metals 
  !
  do ik=1,en%nk
    do ib=1,SC_bands(2)
+     !
+     dG_sign=1.
+     if (en%f(ib,ik,1)<zero_dfl) dG_sign=-1.
+     !
      if (ib<SC_bands(1)) then
-       delta_G=delta_G-en%f(ib,ik,1)*k%weights(ik)*(1.-2.*en%f(ib,ik,1)/spin_occ)
+       delta_G=delta_G+dG_sign*en%f(ib,ik,1)*k%weights(ik)
      else
-       delta_G=delta_G+cI*G_lesser(ib,ib,ik)*k%weights(ik)*(1.-2.*en%f(ib,ik,1)/spin_occ)
+       delta_G=delta_G-dG_sign*cI*G_lesser(ib,ib,ik)*k%weights(ik)
      endif
+     !
    enddo
  enddo
  !

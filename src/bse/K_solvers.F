@@ -163,14 +163,14 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 #if defined _KERR
    factor=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
    if(chi_jj) then
-     iw_ref=0
+     if(all(abs(real(W_bss%p(:))))>0.01)&
+&      call error(' No w close to 0 included in your frequency grid')
+     iw_ref=1
      do iw=1,BSS_n_freqs
-       if(abs(real(W_bss%p(iw)))>0.1) cycle
-       iw_ref=1
+       if(abs(real(W_bss%p(iw)))>0.01) cycle
        if(abs(W_bss%p(iw))<abs(W_bss%p(iw_ref))) iw_ref=iw
      enddo
-     if(iw_ref==0) call error(' No w close to 0 included in your frequency grid')
-     call msg('nrs','Reference freq. for w=0 is:',real(W_bss%p(iw_ref))*HA2EV )
+     call msg('nsr','Reference freq. for w=0 is:',real(W_bss%p(iw_ref))*HA2EV )
      factor_jj=X_epsilon(3,iw_ref)
    endif
    !

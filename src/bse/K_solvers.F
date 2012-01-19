@@ -163,7 +163,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 #if defined _KERR
    factor=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
    if(chi_jj) then
-     if(all(abs(real(W_bss%p(:))))>0.01)&
+     if(all(abs(real(W_bss%p(:)))>0.01))&
 &      call error(' No w close to 0 included in your frequency grid')
      iw_ref=1
      do iw=1,BSS_n_freqs

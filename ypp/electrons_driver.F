@@ -31,7 +31,7 @@ subroutine electrons_driver(Xk,Xen)
  use YPP,            ONLY:l_density,l_mag,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,mag_dir,l_norm_to_one,&
 &                         plot_title,l_dos,l_angular_momentum,&
-&                         l_position,l_current,l_bands
+&                         l_position,l_current,l_bands,l_RT_occupations
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:two_spin_density
@@ -73,6 +73,9 @@ subroutine electrons_driver(Xk,Xen)
 #if defined _YPP_BOLTZMANN 
  if (.not.flag) flag=l_current
 #endif
+#if defined _YPP_RT 
+ if (.not.flag) flag=l_RT_occupations
+#endif
  !
  if (.not.flag) return
  !
@@ -112,6 +115,9 @@ subroutine electrons_driver(Xk,Xen)
 #endif
 #if defined _YPP_BOLTZMANN 
  if (flag) flag=.not.l_current
+#endif
+#if defined _YPP_RT 
+ if (flag) flag=.not.l_RT_occupations
 #endif
  !
  if(flag) then
@@ -360,6 +366,15 @@ subroutine electrons_driver(Xk,Xen)
      call of_open_close(trim(output_fname))
    endif
  endif
+#endif
+ !
+#if defined _YPP_RT
+ !
+ ! Real-Time occupations
+ !=======================
+ !
+ if (l_RT_occupations) call RT_occupations_analyze(Xk,Xen)
+ !
 #endif
  !
 #if defined _YPP_MAGNETIC

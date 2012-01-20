@@ -91,6 +91,11 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    RT_occupations(i1,ik)=Xen%f(i1,ik,1)
  end forall
  !
+ G_lesser(4,4,7 :7 ,1) =(0._SP,1._SP)*0.
+ G_lesser(4,4,38:44,1) =(0._SP,1._SP)*0.
+ G_lesser(5,5,7 :7 ,1) =(0._SP,1._SP)*2.
+ G_lesser(5,5,38:44,1) =(0._SP,1._SP)*2.
+ !
  ! Build Ho and save initial energies 
  !====================================
  !

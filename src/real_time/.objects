@@ -4,7 +4,7 @@ ELPH_objs =
 ELPH_objs = RT_ELPH_initialize.o RT_ELPH_Kernel.o 
 #endif
 #if defined _RT
-objs = RT_initialize.o RT_states.o RT_start_and_restart.o RT_update.o \
+objs = RT_initialize.o RT_phase_space.o RT_start_and_restart.o RT_update.o \
        RT_driver.o RT_apply_field.o RT_Collision.o RT_Integrator.o \
        RT_observables.o RT_output.o RT_propagate_fields.o \
        RT_current_AND_polarization.o \

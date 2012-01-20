@@ -220,6 +220,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  B_theta=0._SP
  B_psi=0._SP
  !
+ !OCCUPATIONS
+ !
+ l_RT_occupations=.FALSE.
+ !
  !ANALIZE RESPONSE
  !
  X_rt%time_range(:)  =(/-FS2AUT,-FS2AUT/)
@@ -371,6 +375,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        !
        ! GPL_EXCLUDE_END SPIN_IGNORE
        !
+#if defined _YPP_RT
+       l_RT_occupations   =trim(rstr_piece(i1+1))=='o'
+#endif
+       !
 #if defined _YPP_ELPH
        l_eliashberg       =trim(rstr_piece(i1+1))=='e'
 #endif
@@ -404,6 +412,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #if defined _YPP_TEST_2	     
        if (l_bands)          call initactivate(1,'bands')
 #endif	       
+#if defined _YPP_RT	     
+       if (l_RT_occupations) call initactivate(1,'occupations')
+#endif	       
      endif
    enddo
  enddo
@@ -433,6 +444,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  if (l_current) call initactivate(1,'electrons')
 #endif
 #if defined _YPP_RT
+ l_RT_occupations   = runlevel_is_on('occupations')
  l_fix_syms         = runlevel_is_on('fixsyms')
  l_RT_X             = runlevel_is_on('rtX')
 #endif
@@ -512,11 +524,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  if (l_bzrim) call initactivate(1,"BZ_RIM_path BZ_RIM_Nk cooOut OutputAlat NoWeights GammaRadius")
  !
  if (l_electrons) then
-    if (l_dos.or.l_bands) call QP_ctl_switch('G')
-    if (l_dos) then
-      call initactivate(1,"OCCdT OCCTime")
-      call initactivate(1,"DOS_bands DOSERange DOSESteps DOS_broad")
-    endif
+    if (l_dos.or.l_bands.or.l_RT_occupations) call QP_ctl_switch('G')
+    if (l_dos.or.l_RT_occupations) call initactivate(1,"OCCdT OCCTime")
+    if (l_dos) call initactivate(1,"DOS_bands DOSERange DOSESteps DOS_broad")
  endif
  !
 #if defined _YPP_MAGNETIC
@@ -591,7 +601,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  if (.not.l_QP_init) l_QP_init=l_electrons.and.l_mean_potential
 #endif
 #if defined _YPP_MAGNETIC
- if (.not.l_QP_init) l_QP_init=l_angular_momentum.or.l_position)
+ if (.not.l_QP_init) l_QP_init=l_angular_momentum.or.l_position
+#endif
+#if defined _YPP_RT
+ if (.not.l_QP_init) l_QP_init=l_RT_occupations
 #endif
  !
  if (l_QP_init) call QP_init(.FALSE.,.FALSE.)

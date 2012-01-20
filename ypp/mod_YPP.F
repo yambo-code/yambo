@@ -115,6 +115,8 @@ module YPP
  character(schlen) :: elph_dbs_path
  character(schlen) :: ph_freqs_file
  !
+ ! GPL_EXCLUDE_START RAS_IGNORE
+ !
  !RAS
  !
  logical           :: lras, lsurf, lreels, lcelleps
@@ -122,6 +124,8 @@ module YPP
  character(len=5)  :: datatype
  real(SP)          :: sshift
  real(SP)          :: d_cellin
+ !
+ ! GPL_EXCLUDE_END RAS_IGNORE
  !
  ! REELS
  !
@@ -152,17 +156,21 @@ module YPP
  !
  logical     :: l_qpdb
  !
- ! GPL_EXCLUDE_START RAS_IGNORE
+ ! GPL_EXCLUDE_START 
+ !
+ ! SC
+ !
+ logical  :: l_mean_potential
+ !
+ ! (RT) Occupations
+ !
+ logical     :: l_RT_occupations
  !
  ! (RT) Reduce Symmetries
  !
  logical     :: l_fix_syms
  real(SP)    :: E_field(2,3)
  real(SP)    :: B_field,B_theta,B_psi
- !
- ! SC
- !
- logical  :: l_mean_potential
  !
  ! (RT) optics
  !
@@ -200,7 +208,7 @@ module YPP
  !
  type(Xw_rt) :: X_rt 
  !
- ! GPL_EXCLUDE_END RAS_IGNORE
+ ! GPL_EXCLUDE_END
  !
  interface
    !
@@ -280,5 +288,45 @@ module YPP
      end select
      !
    end subroutine
+   !
+   integer function OCCUPATIONS_check(E,k)
+     use R_lattice,     ONLY:bz_samp
+     use electrons,     ONLY:levels
+     use QP_m,          ONLY:OCC_ctl
+     use real_time,     ONLY:OCCUPATIONS_IO_and_interpolate,RT_step,max_rt_steps_disk
+     use SC,            ONLY:SC_bands,RT_occupations
+     use IO_m,          ONLY:LOG
+     use com,           ONLY:warning
+     implicit none
+     type(bz_samp)      :: k
+     type(levels)       :: E
+     !
+     call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_range(1),imposed_COM=LOG)
+     !
+     if (.not.allocated(RT_occupations)) then
+       !
+       call warning('Occupations database not found in :'//trim(OCC_ctl(3))//'. Switching to standard DOS')
+       !
+       OCCUPATIONS_check=-1
+       !
+       return
+       !
+     endif
+     !
+     call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_range(2))
+     !
+     if (OCC_deltaT<max_rt_steps_disk*RT_step) then
+       ! 
+       OCC_deltaT=max_rt_steps_disk*RT_step
+       ! 
+     else
+       !
+       OCC_deltaT=nint(OCC_deltaT/max_rt_steps_disk/RT_step)*max_rt_steps_disk*RT_step
+       !
+     endif
+     !
+     OCCUPATIONS_check=nint( (OCC_T_range(2)-OCC_T_range(1))/OCC_deltaT )+1
+     !
+   end function OCCUPATIONS_check
    !
 end module YPP

@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function RT_states(E)
+integer function RT_phase_space(E)
  ! 
  use pars,           ONLY:zero_dfl,SP
  use electrons,      ONLY:levels,spin_occ
@@ -53,7 +53,7 @@ integer function RT_states(E)
  ! 
  if (RT_eh_energy_max<zero_dfl) then
    !
-   RT_states=nkibz
+   RT_phase_space=nkibz
    !
    return
    !
@@ -118,11 +118,11 @@ integer function RT_states(E)
    !
  enddo
  !
- RT_states=nk_todo
+ RT_phase_space=nk_todo
  !
  if (any((/SC_bands/=SC_bands_new/))) then
    SC_bands =SC_bands_new
    call warning('Bands reduced to '//trim(intc(SC_bands(1)))//'-'//trim(intc(SC_bands(2))))
  endif
  ! 
-end function RT_states
+end function RT_phase_space

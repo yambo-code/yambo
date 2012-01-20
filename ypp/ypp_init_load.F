@@ -92,8 +92,9 @@ subroutine ypp_init_load(defs)
  ! GPL_EXCLUDE_START 
  !
 #if defined _YPP_RT
- call it('r',defs,'fixsyms', '[R] Reduce Symmetries')
- call it('r',defs,'rtX',     '[R] Real-Time Response functions Post-Processing')
+ call it('r',defs,'occupations','[R] Analize time-dependent occupations')
+ call it('r',defs,'fixsyms',    '[R] Reduce Symmetries')
+ call it('r',defs,'rtX',        '[R] Real-Time Response functions Post-Processing')
 #endif
 #if defined _YPP_SC
  call it('r',defs,'MeanPot', '[R] Mean Potential')
@@ -113,8 +114,8 @@ subroutine ypp_init_load(defs)
  call it(defs,'DOSERange', 'Energy range',dos_E_range,unit=E_unit,verb_level=V_general) 
  call it(defs,'DOSESteps', 'Energy steps',dos_E_steps,verb_level=V_general) 
 #if defined _YPP_RT
- call it(defs,'OCCdT','NEGF Occupations time step',OCC_deltaT,unit=Time_unit,verb_level=V_real_time)
- call it(defs,'OCCTime','NEGF Occupations loading time',OCC_T_range,unit=Time_unit,verb_level=V_real_time)
+ call it(defs,'OCCdT','NEGF Occupations time step',OCC_deltaT,unit=Time_unit)
+ call it(defs,'OCCTime','NEGF Occupations loading time',OCC_T_range,unit=Time_unit)
 #endif
  !
  ! BANDS

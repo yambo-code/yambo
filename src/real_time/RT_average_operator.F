@@ -66,6 +66,9 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS)
    do i1=SC_bands(1),SC_bands(2)
      VALUE=VALUE-cI*sum(G(i1,i1,:)*k%weights(:))
    enddo
+
+write (300,'(3f20.10)') G(2,2,44)
+
    !
    return
    !

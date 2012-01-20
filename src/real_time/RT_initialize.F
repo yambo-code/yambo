@@ -50,7 +50,7 @@ subroutine RT_initialize(Xen,q)
  ! Work space
  !
  integer                  :: i1,rest,nk_todo
- integer, external        :: RT_states
+ integer, external        :: RT_phase_space
  character(5)             :: MSG_ch
  real(SP)                 :: Fluence,T_memory
  !
@@ -184,7 +184,7 @@ subroutine RT_initialize(Xen,q)
  ! States Selection
  ! ================
  !
- nk_todo=RT_states(Xen)
+ nk_todo=RT_phase_space(Xen)
  !
  if (nk_todo==0) call error('Too narrow energy window on evolved k-points')
  !

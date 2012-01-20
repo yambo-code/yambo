@@ -38,6 +38,7 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  ! Iteration: in this case I ***think*** (even if I am not completely sure) that everything is ok.
  !  
  use pars,           ONLY:SP,cI,pi
+ use units,          ONLY:FS2AUT
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
  use SC,             ONLY:SC_bands,it_now
@@ -66,7 +67,7 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  complex(SP)           :: M3(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  complex(SP)           :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  complex(SP)           :: S_mat(2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
- complex(SP)           :: Xi_eta,Xi_np
+ complex(SP)           :: Xi_eta,Xi_np,S_summed
  complex(SP), external :: RT_G_retarded
  !
  ! ... band index ...
@@ -78,12 +79,6 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  real(SP)              :: g_q_diagonal,g_q_off_diagonal
  !
  B_dim=SC_bands(2)-SC_bands(1)+1
- !
- !call parser('G_diagonal_sq',g_q_diagonal_sq )
- !call parser('G_off_diagonal_sq',g_q_off_diagonal_sq )
- !!
- !g_q_diagonal=sqrt(g_q_diagonal_sq/HA2EV)
- !g_q_off_diagonal=sqrt(g_q_off_diagonal_sq/HA2EV)
  !
  g_q_off_diagonal=0.
  !
@@ -97,6 +92,8 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  i_map( 1)=2
  !
  i_counter=0
+ !
+ S_summed=(0.,0.)
  !
  do iqbz=1,q%nbz
    !
@@ -170,6 +167,8 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
      !
      do i_s=-1,1,2
        !
+       if (ik==44) S_summed=S_summed+exp(cI*i_s*ph_freq*TIME)*(S_mat(i_map(i_s),2,2)+conjg(S_mat(i_map(-i_s),2,2)))
+       !
        do i_n=SC_bands(1),SC_bands(2)
          do i_np=SC_bands(1),SC_bands(2)
            i_n_m=i_n-SC_bands(1)+1
@@ -185,6 +184,9 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
    !
  enddo ! iq
  !
+ if (ik==44) write (100,'(3f20.10)') TIME/FS2AUT,S_summed
+ if (ik==44) write (200,'(3f20.10)') TIME/FS2AUT,G_lesser(5,5,ik,MEM_index(it_now))
+ !
 end subroutine RT_ELPH_kernel
 !
 subroutine get_g_diagonal(g_q_diagonal_sq)
@@ -193,7 +195,7 @@ subroutine get_g_diagonal(g_q_diagonal_sq)
   use vec_operate,    ONLY:iku_v_norm
   use ELPH,           ONLY:ph_freqs_sq
   use D_lattice,      ONLY:DL_vol
-  use RT,             ONLY:RT_alpha_frohlich
+  use real_time,      ONLY:RT_alpha_frohlich
   implicit none
   !
   real(SP)::g_q_diagonal_sq,alpha,reduced_mass,alpha_tilde

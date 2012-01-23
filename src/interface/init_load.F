@@ -190,7 +190,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
- call it(defs,'BSSmod',  '[BSS] Solvers `h/d/i/t`',BSS_mode,protect=.FALSE.)
+ call it(defs,'BSSmod',  '[BSS] Solvers `h/d/i/t/none`',BSS_mode,protect=.FALSE.)
  call it(defs,'BLongDir','[BSS] [cc] Electric Field',BSS_q0)
  call it(defs,'BEnRange','[BSS] Energy range',BSS_er,E_unit)
  call it(defs,'BDmRange','[BSS] Damping range',BSS_dr,E_unit)
@@ -224,6 +224,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  call it('f',defs,'EvalKerr', '[X/BSE] Kerr parameters',verb_level=V_resp)
  call it('f',defs,'Xjj',      '[BSE] Compute Kerr via Xjj',verb_level=V_resp) 
+ call it('f',defs,'KrmKrn',   '[BSE] Use Kramers Kroening relations',verb_level=V_resp)
  !
 #endif
  !

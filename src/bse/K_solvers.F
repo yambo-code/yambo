@@ -65,20 +65,22 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 #endif
  complex(SP)       ::drude_GreenF(W_bss%n(2))
  real(SP)          ::v(3)
- logical           ::run_Haydock,run_Diago,Pert_inversion
+ logical           ::run_Haydock,run_Diago,Pert_inversion,BSE_IP
  integer, external ::ioBS
  type(X_t)         ::X_oscillators
  character(schlen) ::ch
  !
  call section('*','BSE solver(s)')
  !
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)
+ if(.not.trim(BSS_mode)=='none') then
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID)
 #if defined _DISTRIBUTED
- ioBS_err=ioBS_DISTRIBUTED(iq,X_static,ID)
+   ioBS_err=ioBS_DISTRIBUTED(iq,X_static,ID)
 #else
- ioBS_err=ioBS(iq,X_static,ID)
+   ioBS_err=ioBS(iq,X_static,ID)
 #endif
- if (ioBS_err/=0) return
+   if (ioBS_err/=0) return
+ endif
  !
  ! Polarizability ?
  !
@@ -210,6 +212,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  Pert_inversion      =index(BSS_mode,'i')/=0
 #endif
  !
+ BSE_IP              =trim(BSS_mode)=='none'
+ !
  if (run_Haydock.and.associated(Ken%W)) then
    call warning('K with QP widths not supported in the Haydock solver')
    run_Haydock=.false.
@@ -229,6 +233,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  if (run_Diago)          call K_diagonalization(iq,W_bss)
  !
  if (Pert_inversion)     call K_inversion(iq,W_bss,Ken,Xk,q)
+ !
+ if (BSE_IP)             call K_solver_IP(iq,W_bss)
  !
  ! CLEAN
  !

@@ -60,7 +60,7 @@
   {"gw0",    "g","Dyson Equation solver",0,0,1,0,0}, 
   {"DESC",   " ","opt=n(ewton)/s(ecant)/g(reen)",0,0,0,0,0},
   {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0,0},                  
-  {"bss",    "y","BSE solver [opt=h/d/i/t]",0,0,1,0,0},                      
+  {"bss",    "y","BSE solver [opt=h/d/i/t/n]",0,0,1,0,0},                      
   {"acfdt",  "a","ACFDT Total Energy",0,0,0,0,0},                            
 #if defined _RT
   {"collisions_IO",  "e","Evaluate the extended Collisions",0,0,0,0,0}, 

@@ -16,4 +16,4 @@ KERR_objects = K_kerr_IP.o K_kerr_output.o
 objs =	K_driver.o K_eh_setup.o \
         $(DISTRIBUTED_objects) K_filling.o K_scattering.o K_exchange.o \
         K_solvers.o K_Haydock.o K_diagonalization.o K_inversion.o K_eps_interpolate.o \
-        K_output_file.o $(TEST_1_objects) $(KERR_objects)
+        K_IP.o K_solver_IP.o K_output_file.o $(TEST_1_objects) $(KERR_objects)

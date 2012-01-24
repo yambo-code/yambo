@@ -139,15 +139,19 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! Logicals (Drivers)
  !
- BS_res_K_corr=index(BS_res_mode,'c')/=0
- BS_res_K_exchange=index(BS_res_mode,'x')/=0
- BS_cpl_K_corr=index(BS_cpl_mode,'c')/=0
- BS_cpl_K_exchange=index(BS_cpl_mode,'x')/=0
- BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
- !
- BS_W_is_diagonal=index(BS_res_mode,'d')/=0
- !
- BS_K_is_ALDA=l_alda_fxc
+ if(trim(BSS_mode)=='none') then
+   BS_K_coupling=any((/index(BS_cpl_mode,'c')/=0,index(BS_cpl_mode,'x')/=0/)) 
+ else
+   BS_res_K_corr=index(BS_res_mode,'c')/=0
+   BS_res_K_exchange=index(BS_res_mode,'x')/=0
+   BS_cpl_K_corr=index(BS_cpl_mode,'c')/=0
+   BS_cpl_K_exchange=index(BS_cpl_mode,'x')/=0
+   BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
+   !
+   BS_W_is_diagonal=index(BS_res_mode,'d')/=0
+   !
+   BS_K_is_ALDA=l_alda_fxc
+ endif
  !
  ! Energy points
  !
@@ -168,7 +172,11 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  iq=BS_q(1)
  ! 
- call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
+ if(trim(BSS_mode)=='none') then
+   call K_IP(iq,Ken,Xk)
+ else
+   call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
+ endif
  !
  ! SOLVER
  !

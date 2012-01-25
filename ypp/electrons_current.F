@@ -28,15 +28,20 @@ subroutine electrons_current(Xk,Xen,success)
  use electrons,      ONLY:n_sp_pol,levels,Boltz_Efield,Boltz_vel,Boltz_f
  use R_lattice,      ONLY:bz_samp
  use FFT_m,          ONLY:fft_size,fft_dim
+ use pseudo,         ONLY:pp_kbv_dim,pp_n_l_comp,pp_n_l_comp_max
+ use D_lattice,      ONLY:n_atomic_species,n_atoms_species,nsym
 #if defined _YPP_MAGNETIC
- use magnetic,       ONLY:x,load_cc,free_cc
+ use magnetic,       ONLY:x,load_cc,free_cc,MAG_B,MAG_landau,new_pp,old_pp
 #endif
 #if defined _YPP_ELPH
  use R_lattice,      ONLY:nkibz
  use electrons,      ONLY:n_bands
 #endif
  use timing,         ONLY:live_timing
- use wave_func,      ONLY:WF_load,WF_free,WF_derivative_free,wf_state,wf,wf_x,wf_y,wf_z
+ use wave_func,      ONLY:WF_load,WF_free,WF_derivative_free,wf_state,wf, &
+&                         wf_x,wf_y,wf_z,wf_ng
+ use IO_m,           ONLY:OP_RD_CL,OP_RD,RD,RD_CL,io_control,REP,VERIFY,DUMP,NONE
+ use memory_m,       ONLY:mem_est
  !
  implicit none
  !
@@ -44,18 +49,24 @@ subroutine electrons_current(Xk,Xen,success)
  type(levels)  ::Xen
  logical       ::success
  !
- real(SP)     :: r(fft_size),average_current(3),average_current_diam(3)
+ real(SP)     :: r(fft_size),average_current(3),average_current_diam(3),average_current_Vnl_x(3)
 #if defined _YPP_MAGNETIC
- real(SP)     :: psi_current,psi_current_diam
+ real(SP)     :: psi_current,psi_current_diam,psi_current_Vnl_x
 #endif
  integer      :: ic,i_spin,ifft,ik,ib,i_wf
+ integer      :: ia,il,is,im
  logical      :: l_directions(3)
- real(SP), allocatable :: J(:,:,:), J_diam(:,:,:)
+ real(SP), allocatable   :: J(:,:,:), J_diam(:,:,:), J_Vnl_x(:,:,:)
+ complex(SP),allocatable :: kbv(:,:,:)
+ !
 #if defined _DOUBLE
  complex(SP)  :: zdotc
 #else
  complex(SP)  :: cdotc
 #endif
+ ! I / O
+ integer                 :: ID,ioKB_err,io_err
+ integer, external       :: ioKB_PP
  !
  l_directions=.FALSE.
  do ic=1,3
@@ -69,10 +80,51 @@ subroutine electrons_current(Xk,Xen,success)
  endif
  !
  if ( Xen%nbf == Xen%nbm ) then
-   call warning ('Gap present: current is zero')
-   success=.FALSE.
-   return
+   call warning ('Gap present: ground state persistent currents only')
+   !success=.FALSE.
+   !return
  endif
+ !
+#if defined _YPP_MAGNETIC
+ !
+ ! Vector potential -> diamagnetic current
+ !
+ ! ... initial check only  ....
+ if(MAG_B/=0)  call MAG_Hamiltonian(.true.)
+ ! ... and A 
+ if(MAG_landau) call MAG_common_build_A(.true.)
+ !
+#endif
+ !
+ ! Non-local Pseudo -> commutator in the current
+ !
+ ! Check for the KB PP DB 
+ call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
+ ioKB_err=ioKB_PP(ID)
+ !
+ call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
+ ioKB_err=ioKB_PP(ID)
+ !
+ !if(ioKB_err/=0) return
+ !
+ pp_kbv_dim=0
+ do is = 1,n_atomic_species
+   do ia = 1,n_atoms_species(is)
+     do il = 1, pp_n_l_comp(is)
+       do im = 1,2*(il-1)+1
+         pp_kbv_dim=pp_kbv_dim+1
+       enddo
+     enddo
+   enddo
+ enddo
+ !
+ call fft_setup(0,1,.true.)  ! fft_size
+ !
+ allocate(kbv(wf_ng,pp_kbv_dim,4))
+ call mem_est("kbv",(/size(kbv)/))
+ !
+ allocate(new_pp(fft_size,pp_kbv_dim),old_pp(fft_size,pp_kbv_dim))
+ call mem_est('new_pp old_pp',(/fft_size,fft_size,fft_size,fft_size/))
  !
  call section('*','Current from a Boltzmann ditribution')
  !=======================================================
@@ -96,45 +148,56 @@ subroutine electrons_current(Xk,Xen,success)
    call WF_load(0,1,(/1,Xen%nbm/),(/ik,ik/),title='-WF',impose_free_and_alloc=.TRUE.)
 #endif
    !
-   if (ik==1) call live_timing('Velocities & Current',Xk%nibz)
-   !
-   ! Velocities
-   !
-   do ib=1,Xen%nbm
-     do i_spin=1,n_sp_pol
-       i_wf=wf_state(ib,ik,i_spin)
-       if (l_directions(1)) Boltz_vel(1,ib,ik,i_spin) = real( cdotc(fft_size, wf(:,i_wf),1,wf_x(:,i_wf),1) )
-       if (l_directions(2)) Boltz_vel(2,ib,ik,i_spin) = real( cdotc(fft_size, wf(:,i_wf),1,wf_y(:,i_wf),1) )
-       if (l_directions(3)) Boltz_vel(3,ib,ik,i_spin) = real( cdotc(fft_size, wf(:,i_wf),1,wf_z(:,i_wf),1) )
+   if ( Xen%nbf /= Xen%nbm ) then
+     if (ik==1) call live_timing('Velocities & Current',Xk%nibz)
+     !
+     ! Velocities
+     !
+     do ib=1,Xen%nbm
+       do i_spin=1,n_sp_pol
+         i_wf=wf_state(ib,ik,i_spin)
+         if (l_directions(1)) Boltz_vel(1,ib,ik,i_spin) = real( cdotc(fft_size, wf(:,i_wf),1,wf_x(:,i_wf),1) )
+         if (l_directions(2)) Boltz_vel(2,ib,ik,i_spin) = real( cdotc(fft_size, wf(:,i_wf),1,wf_y(:,i_wf),1) )
+         if (l_directions(3)) Boltz_vel(3,ib,ik,i_spin) = real( cdotc(fft_size, wf(:,i_wf),1,wf_z(:,i_wf),1) )
+       enddo
      enddo
-   enddo
-   !
-   ! New (Boltzmann) occupations
-   !
-   call OCCUPATIONS_Boltzmann(Xen,Xk,ik)
+     !
+     ! New (Boltzmann) occupations
+     !
+     call OCCUPATIONS_Boltzmann(Xen,Xk,ik)
+     !
+   else
+     if (ik==1) then
+       call live_timing('Current',Xk%nibz)
+       allocate(Boltz_f(Xen%nbm,Xk%nibz,nsym,n_sp_pol))
+     endif
+     forall (ib=1:Xen%nbm , i_spin=1:n_sp_pol ) Boltz_f(ib,ik,:,i_spin)=Xen%f(ib,ik,i_spin)
+   endif
    !
    if( ik == 1) then
-     allocate(J(3,n_sp_pol,fft_size), J_diam(3,n_sp_pol,fft_size),v2plot(fft_size))
+     allocate(J(fft_size,n_sp_pol,3),J_diam(fft_size,n_sp_pol,3),J_Vnl_x(fft_size,n_sp_pol,3))
+     allocate(v2plot(fft_size))
      nr=fft_dim
      J=0._SP
      J_diam=0._SP
-     !
-     ! Vector potential -> diamagnetic current ...
-     !
-#if defined _YPP_MAGNETIC
-     !
-     ! ... initial check only  ....
-     call MAG_Hamiltonian(.true.)
-     ! ... and A 
-     call MAG_common_build_A(.true.)
-     !
-#endif
+     J_Vnl_x=0._SP
    endif
+   !
+   if (ik< Xk%nibz) call io_control(ACTION=RD   ,SEC=(/ik+1/),ID=ID)
+   if (ik==Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
+   io_err=ioKB_PP(ID)
+   !
+   !
+   ! Pseudo(k+G,k+G',i1) = kbv^*(k+G,i1,1) kbv(k+G',i1,1)   
+   ! i1 runs over atomic_species, atoms_per_specie , l_per_atom, m=-l,-l+1,...,l-1,sl
+   call Dipole_kb_pp_comp(ik,1,Xk,kbv)   ! i_spin loop to be fixed...
+   ! 
+   call MAG_pseudo_nl(kbv)
    !
    ! Current @ ik
    !==============
    !
-   call el_current(Xen,Xk,ik,J,J_diam,l_directions)
+   call el_current(Xen,Xk,ik,J,J_diam,J_Vnl_x,l_directions)
    !
    ! Local Clean
    !
@@ -152,6 +215,12 @@ subroutine electrons_current(Xk,Xen,success)
  enddo
  call live_timing()
  !
+ deallocate(kbv)
+ call mem_est('kbv')
+ !
+ deallocate(new_pp,old_pp)
+ call mem_est('new_pp old_pp')
+ !
 #if defined _MAGNETIC
  if(MAG_landau) call MAG_common_build_A(.false.)
 #endif
@@ -163,8 +232,9 @@ subroutine electrons_current(Xk,Xen,success)
  !
  do ic=1,3
    do i_spin=1,n_sp_pol
-     average_current(ic)     =sum(J(ic,i_spin,:))
-     average_current_diam(ic)=sum(J_diam(ic,i_spin,:))
+     average_current(ic)      =sum(J(:,i_spin,ic))
+     average_current_diam(ic) =sum(J_diam(:,i_spin,ic))
+     average_current_Vnl_x(ic)=sum(J_Vnl_x(:,i_spin,ic))
    enddo
  enddo
  !
@@ -174,13 +244,17 @@ subroutine electrons_current(Xk,Xen,success)
  !
  psi_current=0.
  psi_current_diam=0.
+ psi_current_Vnl_x=0.
  !
  call load_cc(.true.,.true.)
  r(:)=sqrt( x(:,1)**2+x(:,2)**2 )
  do i_spin=1,n_sp_pol
-  do ifft=1,size(J,3)
-     psi_current=psi_current+(J(2,i_spin,ifft)*x(ifft,1)-J(1,i_spin,ifft)*x(ifft,2))/r(ifft)
-     psi_current_diam=psi_current_diam+(J_diam(2,i_spin,ifft)*x(ifft,1)-J_diam(1,i_spin,ifft)*x(ifft,2))/r(ifft)
+  do ifft=1,size(J,1)
+     psi_current=psi_current+(J(ifft,i_spin,2)*x(ifft,1)-J(ifft,i_spin,1)*x(ifft,2))/r(ifft)
+     if(MAG_landau) psi_current_diam=psi_current_diam+&
+&                  (J_diam(ifft,i_spin,2)*x(ifft,1)-J_diam(ifft,i_spin,1)*x(ifft,2))/r(ifft)
+     psi_current_Vnl_x=psi_current_Vnl_x+&
+&                  (J_Vnl_x(ifft,i_spin,2)*x(ifft,1)-J_Vnl_x(ifft,i_spin,1)*x(ifft,2))/r(ifft)
    enddo
  enddo
  call free_cc()
@@ -190,20 +264,23 @@ subroutine electrons_current(Xk,Xen,success)
  ! Final Plot
  !
  l_norm_to_one=.FALSE.
- v2plot=(J(1,1,:)+J_diam(1,1,:))*AU2nAmpere
+ v2plot=(J(:,1,1)+J_diam(:,1,1))*AU2nAmpere
  !
  output_fname='el_current'
  if (use_xcrysden) output_fname='el_current.xsf'
  call of_open_close(trim(output_fname),'ot')
  call msg('o curr',"#")
- call msg('o curr','# Mean param. current x , y , z [nanoAmpere]:',average_current*AU2nAmpere,INDENT=0)
- call msg('o curr','# Mean diam.  current x , y , z [nanoAmpere]:',average_current_diam*AU2nAmpere,INDENT=0)
+ call msg('o curr','# Mean param.  current x , y , z [nanoAmpere]:',average_current*AU2nAmpere,INDENT=0)
+ call msg('o curr','# Mean diam.   current x , y , z [nanoAmpere]:',average_current_diam*AU2nAmpere,INDENT=0)
+ call msg('o curr','# Mean [x,Vnl] current x , y , z [nanoAmpere]:',average_current_Vnl_x*AU2nAmpere,INDENT=0)
  call msg('o curr',"#")
  !
 #if defined _YPP_MAGNETIC
  call msg('o curr','# Psi current                   [nanoAmpere]:',(/psi_current*AU2nAmpere/))
+ call msg('o curr','# Psi current diam              [nanoAmpere]:',(/psi_current_diam*AU2nAmpere/))
+ call msg('o curr','# Psi current [x,Vnl]           [nanoAmpere]:',(/psi_current_Vnl_x*AU2nAmpere/))
 #endif
  !
- deallocate(Boltz_vel,Boltz_f,J,J_diam)
+ deallocate(Boltz_vel,Boltz_f,J,J_diam,J_Vnl_x)
  !
 end subroutine

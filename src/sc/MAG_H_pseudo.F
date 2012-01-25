@@ -26,7 +26,7 @@ subroutine MAG_H_pseudo(Xk)
  use wrapper,       ONLY:V_dot_V
  use wave_func,     ONLY:wf,wf_ng,WF_load,WF_free,wf_state,wf_n_states
  use FFT_m,         ONLY:fft_size
- use pseudo,        ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table
+ use pseudo,        ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table,kbv_spin
  use R_lattice,     ONLY:bz_samp
  use timing,        ONLY:live_timing
  use SC,            ONLY:SC_bands,Ho
@@ -61,22 +61,24 @@ subroutine MAG_H_pseudo(Xk)
  if(ioKB_err/=0) return
  !
  pp_kbv_dim=0
-   do is = 1,n_atomic_species
-     do ia = 1,n_atoms_species(is)
-       do i_pp = 1, pp_n_l_times_proj_max
-         il = pp_table(1,is,i_pp)
-         pp_spin = pp_table(3,is,i_pp)
-         if(pp_spin>1) cycle
-         do im = 1,2*(il-1)+1
-           pp_kbv_dim=pp_kbv_dim+1
-         enddo
+ do is = 1,n_atomic_species
+   do ia = 1,n_atoms_species(is)
+     do i_pp = 1, pp_n_l_times_proj_max
+       il = pp_table(1,is,i_pp)
+       pp_spin = pp_table(3,is,i_pp)
+       if (pp_spin==0) cycle
+       do im = 1,2*(il-1)+1
+         pp_kbv_dim=pp_kbv_dim+1
        enddo
      enddo
    enddo
+ enddo
  !
  call fft_setup(0,1,.true.)  ! fft_size
  !
- allocate(kbv(wf_ng,pp_kbv_dim,4),stat=alloc_err)
+ allocate(kbv(wf_ng,pp_kbv_dim,7),stat=alloc_err)
+ allocate(kbv_spin(pp_kbv_dim))
+ !
  call mem_est("KBV",(/size(kbv)/),errors=(/alloc_err/))
  !
  allocate(new_pp(fft_size,pp_kbv_dim),old_pp(fft_size,pp_kbv_dim))
@@ -146,6 +148,7 @@ subroutine MAG_H_pseudo(Xk)
  deallocate(kbv_ks_space)
  call mem_est('kbv_ks_space')
  !
+ deallocate(kbv_spin)
  deallocate(kbv)
  call mem_est('kbv')
  !

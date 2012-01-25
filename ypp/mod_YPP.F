@@ -187,6 +187,7 @@ module YPP
  integer  :: X_order
  real(SP) :: t_jump
  real(SP) :: W_RT_induced_step
+ real(SP) :: OCC_T_ref      ! Reference time
  real(SP) :: OCC_T_range(2) ! Time range to plot the dos
  real(SP) :: OCC_deltaT     ! Time step to plot the dos
  character(schlen) :: Probe_Keyword
@@ -195,6 +196,7 @@ module YPP
  character(schlen) :: Pump_path
  character(schlen) :: Probe_path(max_n_of_paths)
  !
+ complex(SP),    allocatable :: RT_occupations_ref(:,:)
  complex(DP),    allocatable :: RT_J_t(:,:)
  complex(DP),    allocatable :: RT_P_t(:,:)
  !
@@ -288,45 +290,5 @@ module YPP
      end select
      !
    end subroutine
-   !
-   integer function OCCUPATIONS_check(E,k)
-     use R_lattice,     ONLY:bz_samp
-     use electrons,     ONLY:levels
-     use QP_m,          ONLY:OCC_ctl
-     use real_time,     ONLY:OCCUPATIONS_IO_and_interpolate,RT_step,max_rt_steps_disk
-     use SC,            ONLY:SC_bands,RT_occupations
-     use IO_m,          ONLY:LOG
-     use com,           ONLY:warning
-     implicit none
-     type(bz_samp)      :: k
-     type(levels)       :: E
-     !
-     call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_range(1),imposed_COM=LOG)
-     !
-     if (.not.allocated(RT_occupations)) then
-       !
-       call warning('Occupations database not found in :'//trim(OCC_ctl(3))//'. Switching to standard DOS')
-       !
-       OCCUPATIONS_check=-1
-       !
-       return
-       !
-     endif
-     !
-     call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_range(2))
-     !
-     if (OCC_deltaT<max_rt_steps_disk*RT_step) then
-       ! 
-       OCC_deltaT=max_rt_steps_disk*RT_step
-       ! 
-     else
-       !
-       OCC_deltaT=nint(OCC_deltaT/max_rt_steps_disk/RT_step)*max_rt_steps_disk*RT_step
-       !
-     endif
-     !
-     OCCUPATIONS_check=nint( (OCC_T_range(2)-OCC_T_range(1))/OCC_deltaT )+1
-     !
-   end function OCCUPATIONS_check
    !
 end module YPP

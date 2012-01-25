@@ -42,6 +42,7 @@ subroutine rim_spherical(Np,points,p_weight,radius,MULTIPLY_BY_Q)
  !   with Wi = 1/vol*\int_Si d3q/q^2
  !
  use pars,          ONLY:SP,pi,DP
+ use drivers,       ONLY:l_real_time
  use com,           ONLY:msg
  use timing,        ONLY:live_timing
  use vec_operate,   ONLY:v_norm
@@ -70,7 +71,8 @@ subroutine rim_spherical(Np,points,p_weight,radius,MULTIPLY_BY_Q)
  ! Filling a larger Sphere with a random grid
  !===========================================
  !
- call section('p','Spherical RIM')
+ if (l_real_time     ) call section('=','Spherical RIM')
+ if (.not.l_real_time) call section('p','Spherical RIM')
  !
  ! Random generator seed
  !

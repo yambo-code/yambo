@@ -24,7 +24,6 @@ subroutine RT_ELPH_initialize(q)
  use pars,           ONLY:SP,pi
  use drivers,        ONLY:l_ph_corr 
  use units,          ONLY:HA2EV
- use com,            ONLY:depth
  use ELPH,           ONLY:ph_modes,elph_nb,elph_nDBs,elph_nDBs_used,nq_memory,elph_branches,&
 &                         elph_global_alloc,ph_freqs_sq
  use SC,             ONLY:SC_bands
@@ -88,11 +87,6 @@ subroutine RT_ELPH_initialize(q)
 ! enddo
  !
  ph_freqs_sq=(36/1000./HA2EV)**2.
- !
- ! Reset the sections depth in order to not pop-out the messages in rim_spherical in the wrong
- ! section level
- !
- depth=0
  !
  ! RIM
  !

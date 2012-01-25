@@ -222,6 +222,9 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  !OCCUPATIONS
  !
+ OCC_T_ref=-FS2AUT
+ OCC_T_range=0.
+ OCC_deltaT=0.
  l_RT_occupations=.FALSE.
  !
  !ANALIZE RESPONSE
@@ -525,7 +528,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (l_electrons) then
     if (l_dos.or.l_bands.or.l_RT_occupations) call QP_ctl_switch('G')
-    if (l_dos.or.l_RT_occupations) call initactivate(1,"OCCdT OCCTime")
+    if (l_dos.or.l_RT_occupations) call initactivate(1,"OCCdT OCCTime OCCTref")
     if (l_dos) call initactivate(1,"DOS_bands DOSERange DOSESteps DOS_broad")
  endif
  !

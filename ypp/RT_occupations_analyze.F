@@ -27,7 +27,7 @@ subroutine RT_occupations_analyze(k,E)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
- use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT,OCCUPATIONS_check
+ use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT
  use com,            ONLY:msg,of_open_close
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate
  use SC,             ONLY:RT_occupations,SC_description,n_SC_descriptions
@@ -41,12 +41,13 @@ subroutine RT_occupations_analyze(k,E)
  integer               :: ik,ib,i_spin,i_s,i_T,n_T_steps,i_fp
  real(SP)              :: io_Time
  character(schlen)     :: titles(2)
+ integer,     external :: RT_occupations_check
  !
  call section('*','Real-Time occupations')
  !
  call QP_state_table_setup(E)
  !
- n_T_steps=OCCUPATIONS_check(E,k)
+ n_T_steps=RT_occupations_check(E,k)
  !
  if (n_T_steps<0) return
  !

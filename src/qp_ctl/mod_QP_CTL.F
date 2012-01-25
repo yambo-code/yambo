@@ -177,11 +177,10 @@ module QP_CTL_m
        if (present(qp_impose)) ch='Internal QP corrections ('//what//')'
      enddo
      !
-     if (depth>0) then
-       call section('=',trim(ch))
-     else 
-       call section('*',trim(ch))
-     endif
+     ! Sectioning
+     !
+     if (depth>0 ) call section('p',trim(ch))
+     if (depth==0) call section('*',trim(ch))
      !
      ! Interpolation neighbours is always input file controlled
      !

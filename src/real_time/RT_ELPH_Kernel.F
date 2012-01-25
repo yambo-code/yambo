@@ -93,7 +93,7 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  !
  i_counter=0
  !
- S_summed=(0.,0.)
+ !S_summed=(0.,0.)
  !
  do iqbz=1,q%nbz
    !
@@ -108,7 +108,7 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
      !
      ! N-\+ (note the different order of the +/-). 1/2 here ?
      !
-     N_q    = bose_f(ph_freq)+(/0.,2./)
+     N_q    = (bose_f(ph_freq)+(/0.,2./))/2.
      !
      call get_g_diagonal(g_q_diagonal_sq)
      !
@@ -167,7 +167,7 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
      !
      do i_s=-1,1,2
        !
-       if (ik==44) S_summed=S_summed+exp(cI*i_s*ph_freq*TIME)*(S_mat(i_map(i_s),2,2)+conjg(S_mat(i_map(-i_s),2,2)))
+!       if (ik==44) S_summed=S_summed+exp(cI*i_s*ph_freq*TIME)*(S_mat(i_map(i_s),2,2)+conjg(S_mat(i_map(-i_s),2,2)))
        !
        do i_n=SC_bands(1),SC_bands(2)
          do i_np=SC_bands(1),SC_bands(2)
@@ -184,8 +184,8 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
    !
  enddo ! iq
  !
- if (ik==44) write (100,'(3f20.10)') TIME/FS2AUT,S_summed
- if (ik==44) write (200,'(3f20.10)') TIME/FS2AUT,G_lesser(5,5,ik,MEM_index(it_now))
+ !if (ik==44) write (100,'(3f20.10)') TIME/FS2AUT,S_summed
+ !if (ik==44) write (200,'(3f20.10)') TIME/FS2AUT,G_lesser(5,5,ik,MEM_index(it_now))
  !
 end subroutine RT_ELPH_kernel
 !

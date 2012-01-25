@@ -106,7 +106,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q,Xw)
  !
  ! Core initialization
  !
- call RT_initialize(Xen,q)
+ call RT_initialize(Xen,Xk,q)
  !
  ! Core allocations
  !
@@ -115,6 +115,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q,Xw)
  ! Restart from a previous RT run or from a SC calculation
  ! 
  call section('=','Start and Restart')
+ !
  call RT_start_and_restart(Xen,Xk,k,q,X)
  !
  ! Collisions

@@ -58,7 +58,7 @@ integer function io_SC_components(what,E_sc,ID)
  !
  real(SP), allocatable :: TMP_matrix(:,:,:),E_disk(:,:,:)
  integer               :: ik,bands_to_load,ib,i_spin,i1
- logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_occupations,l_G,l_J_and_P,l_MP
+ logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_occupations,l_G,l_J_and_P,l_MP,l_T_EL
 #if defined _RT		
  integer               :: file_number,i_time,i_time_range(2)
  logical               :: IO_current
@@ -141,9 +141,18 @@ integer function io_SC_components(what,E_sc,ID)
 #if defined _SC
    if (l_occupations) l_IMPOSE_SN=.FALSE.
 #endif
+   l_T_EL=.false.
+#if defined _ELPH
+   !l_T_EL=.true.
+#endif
    !
-   if (any((/l_E,l_V,l_WF,l_occupations,&
-&            l_J_and_P,l_G,l_MP/)))  io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.)
+   if (any((/l_E,l_V,l_WF,l_occupations,l_J_and_P,l_G,l_MP/))) then
+     if (ver_is_gt_or_eq(ID,revision=1046)) then
+       io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,T_EL=l_T_EL)
+     else
+       io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.)
+     endif
+   endif
    !
    if (io_SC_components/=0) goto 1
    !

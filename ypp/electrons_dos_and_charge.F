@@ -30,14 +30,15 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  use FFT_m,          ONLY:fft_size
  use YPP,            ONLY:l_density,v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,plot_title,l_dos,dos_broadening,dos_bands,&
-&                         dos_E_range,dos_E_steps,OCCUPATIONS_check
+&                         dos_E_range,dos_E_steps,OCC_T_ref
 #if defined _YPP_RT
- use YPP,            ONLY:OCC_T_range,OCC_deltaT
+ use YPP,            ONLY:OCC_T_range,OCC_deltaT,RT_occupations_ref
 #endif
  use com,            ONLY:msg,of_open_close
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:two_spin_density
  use QP_CTL_m,       ONLY:QP_apply
+ use timing,         ONLY:live_timing
 #if defined _YPP_RT
  use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_output
  use SC,             ONLY:SC_bands,RT_occupations,SC_description,n_SC_descriptions
@@ -52,6 +53,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  real(SP), allocatable :: el_den(:)
  real(SP)              :: el_dos(n_sp_pol),dos_E,delta_E,f_occ,io_Time
  integer               :: i_E,ik,ib,i_spin,i_T,n_T_steps,i_fp
+ integer,     external :: RT_occupations_check
  character(schlen)     :: ch_ws,titles(4)
  logical               :: l_TIME_plot,l_3D_plot
  !
@@ -68,7 +70,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    !
 #if defined _YPP_RT
    !
-   n_T_steps=OCCUPATIONS_check(Xen,Xk)
+   n_T_steps=RT_occupations_check(Xen,Xk)
    !
    l_TIME_plot=n_T_steps>0
    l_3D_plot=.not.n_T_steps==1
@@ -79,6 +81,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    !
    call msg('s','Time range [fs]:',OCC_T_range/FS2AUT)
    call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
+   call msg('s','Time ref   [fs]:',OCC_T_ref/FS2AUT)
    call msg('s','Steps          :',n_T_steps)
    !
 #endif
@@ -121,13 +124,13 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    delta_E=(dos_E_range(2)-dos_E_range(1))/dos_E_steps
    !
 #if defined _YPP_RT
+   !
+   if (l_3D_plot) call live_timing('3D Plot',n_T_steps,SERIAL=.true.)
+   !
    do i_T=1,n_T_steps
      !
-     io_Time=0.
-     if (i_T >1) then
-       io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
-       call OCCUPATIONS_IO_and_interpolate(Xen,'G',k=Xk,Time=io_Time)
-     endif
+     io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
+     call OCCUPATIONS_IO_and_interpolate(Xen,'G',k=Xk,Time=io_Time)
      !
 #endif
      !
@@ -143,8 +146,8 @@ subroutine electrons_dos_and_charge(Xk,Xen)
              f_occ=Xen%f(ib,ik,i_spin)/2.
 #if defined _YPP_RT
              if (l_TIME_plot) then
-               if (l_3D_plot.and.i_T>1) f_occ=RT_occupations(ib,ik)/2.
-               if (.not.l_3D_plot)      f_occ=RT_occupations(ib,ik)/2.
+               f_occ               =RT_occupations(ib,ik)/2.
+               if (l_3D_plot) f_occ=(RT_occupations(ib,ik)-RT_occupations_ref(ib,ik))/2.
              endif
 #endif
              !
@@ -169,12 +172,14 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      !
 #if defined _YPP_RT
      if (l_TIME_plot.and.l_3D_plot) call msg('o dos','')
+     if (l_3D_plot) call live_timing(steps=1)
      !
    enddo
 #endif
    !
    if (l_TIME_plot.and.l_3D_plot) then
      call RT_output("close el_dos")
+     call live_timing()
    else if (.not.l_3D_plot) then
      call of_open_close(trim(output_fname))
    endif

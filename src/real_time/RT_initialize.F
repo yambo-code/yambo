@@ -1,4 +1,4 @@
-!
+!Xk,
 !       Copyright (C) 2000-2012 the YAMBO team 
 !            http://www.yambo-code.org
 ! 
@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_initialize(Xen,q)
+subroutine RT_initialize(Xen,Xk,q)
  ! 
  use drivers,        ONLY:l_collisions_IO,l_ph_corr 
  use SC,             ONLY:local_V,SC_bands
@@ -45,7 +45,7 @@ subroutine RT_initialize(Xen,q)
  implicit none
  !
  type(levels), intent(in) :: Xen
- type(bz_samp),intent(in) :: q
+ type(bz_samp),intent(in) :: q,Xk
  !
  ! Work space
  !
@@ -166,6 +166,7 @@ subroutine RT_initialize(Xen,q)
  ! E_RIM
  ! ==============
  ! IP phase factores averaged  with E_RIM
+ !
  use_X_RIM=BZ_RIM_nbands/=0.and.SC_bands(1)<BZ_RIM_nbands               
  if (RT_is_dumped.and.use_X_RIM) then
    call warning('E_RIM and damping not compatible. Switching off E_RIM')
@@ -181,10 +182,10 @@ subroutine RT_initialize(Xen,q)
  !
 #endif
  !
- ! States Selection
- ! ================
+ call section('=','Phase space check')
+ !                 =================
  !
- nk_todo=RT_phase_space(Xen)
+ nk_todo=RT_phase_space(Xen,q)
  !
  if (nk_todo==0) call error('Too narrow energy window on evolved k-points')
  !

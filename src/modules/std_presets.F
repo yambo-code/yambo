@@ -103,6 +103,9 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 #if defined _TEST_2
  use interpolate, ONLY:interpls,interp_coeff,max_interpls
 #endif
+#if defined _KERR
+ use KERR,        ONLY:chi_nn,chi_jj
+#endif
  !
  implicit none
  !
@@ -394,6 +397,11 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  BS_columns=0
  BSS_Vnl_included=.FALSE.
  BSS_uses_GreenF=.FALSE.
+ !
+#if defined _KERR
+ chi_nn=.true.
+ chi_jj=.false.
+#endif
  !
  ! TDDFT
  !

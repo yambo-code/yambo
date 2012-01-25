@@ -22,6 +22,7 @@
 module magnetic
  !
  use pars, ONLY:SP,schlen
+ implicit none
  !
  character(schlen) :: MAG_hamiltonian_type
  character(schlen) :: MAG_gauge               ! 'SYMM' 'X_ASYMM' 'Y_ASYMM' 'Z_ASYMM'
@@ -108,12 +109,16 @@ module magnetic
            do i_dir=1,3
              if (tmp_x(i_dir)>tmp_center(i_dir)) x(ir,:)=x(ir,:)-a(i_dir,:)
            enddo
-           do i_dir=1,3
-             if(manage_zero.and.abs(x(ir,i_dir))<10*epsilon(1.)) then
-               if(x(ir,i_dir)>=0.) x(ir,i_dir)= 10*epsilon(1.)
-               if(x(ir,i_dir)< 0.) x(ir,i_dir)=-10*epsilon(1.)
-             endif
-           enddo
+           if(manage_zero .and. sqrt(x(ir,1)**2+x(ir,2)**2)<epsilon(1.) ) then
+             do i_dir=1,2 
+               if(x(ir,i_dir)>=0.) x(ir,i_dir)= 1. !  epsilon(1.)
+               if(x(ir,i_dir)< 0.) x(ir,i_dir)=-1. ! -epsilon(1.)
+             enddo
+           endif
+           if(manage_zero.and.abs(x(ir,3))<epsilon(1.) ) then
+             if(x(ir,3)>=0.) x(ir,3)= 1.   ! epsilon(1.)
+             if(x(ir,3)< 0.) x(ir,3)=-1.   !-epsilon(1.)
+           endif
          enddo
        enddo
      enddo

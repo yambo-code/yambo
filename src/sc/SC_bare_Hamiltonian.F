@@ -77,7 +77,7 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  ! If we are using yambo_magnetic now Ho already
  ! contains H_magnetic
  !
- if(.not.l_sc_magnetic) Ho=(0._SP,0._SP)
+ if(.not.l_sc_magnetic.or. abs(MAG_B)<1.E-5) Ho=(0._SP,0._SP)
  !
 #else
  !

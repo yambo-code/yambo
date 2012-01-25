@@ -42,6 +42,9 @@ subroutine SC_start_and_restart(X,E,Xk)
  use wave_func,      ONLY:WF_load,WF_free
  use global_XC,      ONLY:SC_HF,SC_COHSEX,SC_HF
  use collisions_IO,  ONLY:V_kind
+#if defined _MAGNETIC
+ use magnetic,       ONLY:MAG_B
+#endif
  !
  implicit none
  type(bz_samp)::Xk
@@ -185,7 +188,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  !
 #if defined _MAGNETIC
  !
- if (l_sc_magnetic) then
+ if (l_sc_magnetic .and. abs(MAG_B)>1.E-5) then
    !
    ! MAG_Hamiltonian
    !=================

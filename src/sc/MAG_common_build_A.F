@@ -21,30 +21,27 @@
 !
 subroutine MAG_common_build_A(build)
  !
- !
- ! WARNING: you need to put you system at the corner of the supercell <---
- !
  ! This subroutine construct the magnetic vector potential.
- ! The field in a single supercell is supposed to be:
- ! *******************************************************************************************
- !                               [  Bz       r<=MAG_radius
- !    Bx=0   ,   By=0    ,  Bz = {                                ====> A; B=rot(A)
- !                               [   0       r> MAG_radius  
+ ! If MAG_radius==0 then the potential is constructed as if r<MAG_radius everywhere
+ ! Pay attention that the vector potential is saw-lake. There is a jump at the center
+ ! of the supercell.
  !
- ! With three possible gauges for the vector potential
- ! *****************************************************
- ! Gauge 0 --> Symmetric gauge
- !      [ -0.5*Bz y                                        [ 0.5*Bz x
- ! Ax = {                                             Ay = {                                          A_z=0
- !      [ -0.5*Bz (MAG_radius**2)*y/(x**2+y**2)            [ 0.5*Bz (MAG_radius**2)*x/(x**2+y**2)
+ ! The field in a supercell is defined by the input variables MAG_B (+ MAG_theta, MAG_phi)
  !
- ! Gauge 1 --> X_ASYMM (active only if MAG_radiu==0)
- ! Ax = -MAG_B y        Ay=  0              Az=0    
- ! Gauge 1 --> Y_ASYMM (active only if MAG_radiu==0)
- ! Ax =  0              Ay=  MAG_B x        Az=0    
- ! *******************************************************************************************
- ! The previous was the construction of the vector potential for the Bz component
- ! If we have x or y component the procedure is the same
+ ! With different possible gauges for the vector potential.
+ ! The standard oen is the symmetric gauge
+ ! Other gauges can be used in order "to kill the vector potential dependency" on specific directions;
+ ! Useful for 1D and 2D systems
+ ! EXAMPLE:
+ ! B=Bz
+ ! SYMM GAUGE:
+ !    Ax=-0.5*Bz*y
+ !    Ay=+0.5*Bz*x
+ ! If we have a CNT that grows along the x direction we need the X_ASYMM GAUGE:
+ !    Ax= 1.0*Bz*y
+ !    Ay= 0.0
+ ! The term proportional to x "has been killed"
+ !
  !
  use pars,           ONLY:SP
  use units,          ONLY:SPEED_OF_LIGHT
@@ -75,10 +72,10 @@ subroutine MAG_common_build_A(build)
  !
  ! MAG field components
  !=====================
- Bx=SPEED_OF_LIGHT*MAG_B*sin(MAG_theta)*cos(MAG_psi)
- By=SPEED_OF_LIGHT*MAG_B*sin(MAG_theta)*sin(MAG_psi)
- Bz=SPEED_OF_LIGHT*MAG_B*cos(MAG_theta)
- !
+ Bx=MAG_B*sin(MAG_theta)*cos(MAG_psi)             ! SPEED_OF_LIGHT would be needed for my old databases with A.U.+ S.I. convention 
+ By=MAG_B*sin(MAG_theta)*sin(MAG_psi)             ! to balance the 1/SPEED_OF_LIGHT in the new c.g.s. Hamiltonian (Au2Tesla was 2.5 10^5)
+ Bz=MAG_B*cos(MAG_theta)                          ! Now Au2Tesla=1.7 10^3 is defined in Yambo in the A.U. + c.g.s. convention
+ !                                                ! consistently with the new Hamiltonian
  if(allocated(x)) call free_cc()
  call load_cc(.false.,.true.)
  call module_alloc()

@@ -35,13 +35,13 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  ! [5] Initialize the fields
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_sc_contains_lda
+ use drivers,        ONLY:l_sc_contains_lda,l_ph_corr
  use com,            ONLY:msg,warning,error
  use QP_m,           ONLY:QP_nk,COHSEX_use_empties
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
- use real_time,      ONLY:G_lesser,ID,ID,NE_steps,RT_ind_J,    &
+ use real_time,      ONLY:G_lesser,ID,NE_steps,RT_ind_J,    &
 &                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,rho_reference,  &
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
 &                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,full_rho,   &
@@ -65,7 +65,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  !
  ! Work Space
  !
- integer :: ik,i1,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P
+ integer :: ik,i1,COM_,ib,io_E,io_V,io_WF,io_G,io_J_and_P,io_THETA
  logical :: RESTART,SC_DB_present
  !
  ! Initialize the Gf and potentials
@@ -90,11 +90,6 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    G_lesser(i1,i1,ik,1) =(0._SP,1._SP)*Xen%f(i1,ik,1)
    RT_occupations(i1,ik)=Xen%f(i1,ik,1)
  end forall
- !
- !G_lesser(4,4,7 :7 ,1) =(0._SP,1._SP)*0.
- !G_lesser(4,4,38:44,1) =(0._SP,1._SP)*0.
- !G_lesser(5,5,7 :7 ,1) =(0._SP,1._SP)*2.
- !G_lesser(5,5,38:44,1) =(0._SP,1._SP)*2.
  !
  ! Build Ho and save initial energies 
  !====================================
@@ -127,9 +122,15 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(5)) ! G_lesser
  io_G=io_SC_components('G' ,Xen,ID(5))
  !
+ ! ELPH Theta matrix
+ !
+ call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(7)) ! G_lesser
+ io_THETA=io_SC_components('THETA' ,Xen,ID(7))
+ !
  ! To restart from RT only the G_lesser is necessary
  !
- RESTART       = io_G ==0
+ RESTART                = io_G ==0
+ if (l_ph_corr) RESTART = io_G==0.and.io_THETA==0
  !
  SC_DB_present =  all((/io_E==0,io_WF==0,io_V==0/))
  !
@@ -312,6 +313,11 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(5))
    io_G=io_SC_components('G',Xen,ID(5))
    !
+   if (l_ph_corr) then
+     call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(7))
+     io_THETA=io_SC_components('THETA',Xen,ID(7))
+   endif
+   !
    !Note that the G_lesser must be loaded at the correct time:
    !
    NE_i_time=it_now
@@ -319,9 +325,15 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    do ik=1,QP_nk
      call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(5))
      io_G=io_SC_components('G',Xen,ID(5))
+     !
+     if (l_ph_corr) then
+       call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(7))
+       io_THETA=io_SC_components('THETA',Xen,ID(7))
+     endif
+     !
    enddo
    !
-   if(io_G==0.and.it_now<NE_steps+Thermal_steps) then
+   if(it_now<NE_steps+Thermal_steps) then
      call msg('snr','[RT] Number of steps done    [o/o]:',real(it_now)/real(NE_steps)*100._SP)
    endif
    !

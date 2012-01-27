@@ -184,7 +184,7 @@ module real_time
  !
  integer,  parameter      :: J_and_P_cache_size=18
  !
- integer                  :: ID(6)
+ integer                  :: ID(7)
  integer                  :: it_start ! restart point
  integer                  :: max_rt_steps_disk 
  integer,  allocatable    :: kpoints_map(:,:)

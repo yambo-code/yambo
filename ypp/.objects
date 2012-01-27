@@ -1,6 +1,6 @@
 #if defined _YPP_ELPH
 ELPH_objects = ELPH_databases.o ELPH_eliashberg_dos.o \
-               ELPH_general_gFsq.o ELPH_excitonic_gkkp.o ELPH_atomic_amplitude.o
+               ELPH_general_gFsq.o ELPH_excitonic_gkkp.o ELPH_atomic_amplitude.o ELPH_gkkp_analysis.o
 #endif
 #if defined _YPP_RT
 RT_objects = RT_driver.o RT_paths.o RT_databases.o RT_fix_symmetries.o RT_X_LRR_real_field.o \
@@ -22,7 +22,7 @@ bands_objects = electrons_bands.o
 #endif
 objs = mod_YPP.o  ypp_i.o ypp_init.o ypp_init_load.o \
        k_grids.o k_special.o qpdb_init.o qpdb_setup.o \
-       excitons_driver.o electrons_driver.o electrons_charge.o electrons_dos_and_charge.o \
-       plot_check_and_launch.o plot_gnuplot.o plot_xcrysden.o plot_cube.o\
+       excitons_driver.o electrons_driver.o electrons_dos_and_charge.o \
+       plot_check_and_launch.o plot_gnuplot.o plot_xcrysden.o plot_cube.o \
        excitons_sort_and_report.o excitons_collinear.o excitons_non_collinear.o $(bands_objects) \
        $(ELPH_objects) $(RAS_objects) $(RT_objects) k_random.o  $(magnetic_objects) $(boltz_objects)

@@ -24,7 +24,7 @@ integer function io_SC_components(what,E_sc,ID)
  ! what can be E WF V J_and_P G
  !
  use pars,           ONLY:SP,lchlen
- use R_lattice,      ONLY:nkibz
+ use R_lattice,      ONLY:nkibz,nqbz
  use stderr,         ONLY:intc
  use SC,             ONLY:SC_bands,rho_convergence,E_convergence,SC_nbands,&
 &                         SC_R,V_xc_sc,local_V,H_nl_sc,RT_k,RT_nk,RT_occupations,&
@@ -34,10 +34,13 @@ integer function io_SC_components(what,E_sc,ID)
 &                         manage_RD_WR_CL_IF_END,io_reset,ver_is_gt_or_eq
  use fields,         ONLY:i_Probe,i_Pump
  use real_time,      ONLY:max_rt_steps_disk,NE_i_time
+#if defined _ELPH
+ use ELPH,           ONLY:ph_modes
+#endif
 #if defined _RT
  use real_time,      ONLY:l_NE_with_fields,NE_steps,RT_P,J_and_P_cache_size, &
 &                         G_lesser,NE_dynamics,RT_ind_J,J_and_P_cache,&
-&                         G_lesser_reference,MEM_index,NE_MEM_steps
+&                         G_lesser_reference,MEM_index,NE_MEM_steps,THETA_matrix
  use fields,         ONLY:A_vecpot
  use QP_m,           ONLY:QP_nk
 #endif                                
@@ -58,7 +61,8 @@ integer function io_SC_components(what,E_sc,ID)
  !
  real(SP), allocatable :: TMP_matrix(:,:,:),E_disk(:,:,:)
  integer               :: ik,bands_to_load,ib,i_spin,i1
- logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_occupations,l_G,l_J_and_P,l_MP,l_T_EL
+ logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_occupations,l_G,l_J_and_P,l_MP,l_T_EL,&
+&                         l_THETA
 #if defined _RT		
  integer               :: file_number,i_time,i_time_range(2)
  logical               :: IO_current
@@ -72,6 +76,7 @@ integer function io_SC_components(what,E_sc,ID)
  l_G =.FALSE.
  l_J_and_P =.FALSE.
  l_occupations=what=="occupations"
+ l_THETA=what=="THETA"
 #if defined _RT		
  l_J_and_P    =what=="J_and_P"
  l_G          =what=="G"
@@ -114,7 +119,7 @@ integer function io_SC_components(what,E_sc,ID)
    !
  endif
  !
- if(l_G.or.l_occupations) then
+ if(l_G.or.l_occupations.or.l_THETA) then
    if( (mod(NE_i_time,max_rt_steps_disk)/=0.and.NE_i_time/=1) .and.NE_dynamics.and.write_is_on(ID)) then
      io_SC_components=0
      call io_reset(ID)
@@ -130,6 +135,7 @@ integer function io_SC_components(what,E_sc,ID)
 #endif
  !
  if (l_occupations) io_SC_components=io_connect(desc="RT_occupations",type=2,ID=ID)
+ if (l_THETA)       io_SC_components=io_connect(desc="RT_THETA",type=2,ID=ID)
  !
  if (io_SC_components/=0) goto 1
  !
@@ -143,11 +149,11 @@ integer function io_SC_components(what,E_sc,ID)
 #endif
    l_T_EL=.false.
 #if defined _ELPH
-   !l_T_EL=.true.
+   l_T_EL=.true.
 #endif
    !
-   if (any((/l_E,l_V,l_WF,l_occupations,l_J_and_P,l_G,l_MP/))) then
-     if (ver_is_gt_or_eq(ID,revision=1046)) then
+   if (any((/l_E,l_V,l_WF,l_occupations,l_J_and_P,l_G,l_MP,l_THETA/))) then
+     if (ver_is_gt_or_eq(ID,revision=1055)) then
        io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,T_EL=l_T_EL)
      else
        io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.)
@@ -169,7 +175,7 @@ integer function io_SC_components(what,E_sc,ID)
      !
    endif
    !
-   if (l_G.or.l_occupations) then
+   if (l_G.or.l_occupations.or.l_THETA) then
      call io_elemental(ID,VAR="Probe_and_Pump_index",VAR_SZ=2,MENU=0) 
      call io_elemental(ID,I0=i_Probe)
      call io_elemental(ID,I0=i_Pump)
@@ -193,7 +199,6 @@ integer function io_SC_components(what,E_sc,ID)
  !
  ! Potential
  !===========
-
  !
  if (l_V.and.local_V.and.ik==0.and.allocated(V_xc_sc)) then
    !
@@ -237,7 +242,7 @@ integer function io_SC_components(what,E_sc,ID)
    !
  endif
  !
- if(any((/l_E,l_V,l_WF,l_MP,l_G,l_occupations/))) then
+ if(any((/l_E,l_V,l_WF,l_MP,l_G,l_occupations,l_THETA/))) then
    !
    if (ik==0) goto 1
    !
@@ -324,6 +329,30 @@ integer function io_SC_components(what,E_sc,ID)
    call io_bulk(ID,R2=RT_occupations)
    !
  endif
+ !
+#if defined _ELPH  && defined _RT
+ !
+ if ( l_THETA ) then
+   !
+   ! ELPH Kernel THETA Matrix 
+   !==========================
+   !
+   if (io_SC_components/=0) goto 1  
+   !
+   allocate(TMP_matrix(2*nqbz*ph_modes,SC_bands(2)-SC_bands(1)+1,2))
+   !
+   do ib=1,SC_bands(2)-SC_bands(1)+1
+     if (write_is_on(ID)) call mat_c2r(THETA_matrix(:,:,ib,ik),TMP_matrix)
+     call io_bulk(ID,VAR="RT_THETA_B"//trim(intc(ib))//"_K"//trim(intc(ik)),VAR_SZ=(/2*nqbz*ph_modes,SC_bands(2)-SC_bands(1)+1,2/))
+     call io_bulk(ID,R3=TMP_matrix)
+     if (read_is_on(ID))  call mat_r2c(TMP_matrix,THETA_matrix(:,:,ib,ik))
+   enddo
+   !
+   deallocate(TMP_matrix)
+   !
+ endif
+ !
+#endif
  !
 #if defined _RT
  !

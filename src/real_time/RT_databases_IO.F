@@ -22,6 +22,7 @@
 subroutine RT_databases_IO(Xen,it)
  !
  use QP_m,           ONLY:QP_nk
+ use drivers,        ONLY:l_ph_corr
  use real_time,      ONLY:ID,NE_dynamics,l_NE_with_fields,NE_i_time,it_start,&
 &                         OCCUPATIONS_IO_and_interpolate,&
 &                         l_RT_skip_GF_IO,l_RT_skip_OCC_IO
@@ -36,7 +37,7 @@ subroutine RT_databases_IO(Xen,it)
  !
  ! Work Space
  !
- integer :: ik,io_G,io_J_and_P,COM_
+ integer :: ik,io_G,io_J_and_P,COM_,io_THETA
  !
  ! When the simulation has been restarted the first step (it==it_start)
  ! corresponds to the latest of the previous simulation. Therefore
@@ -50,14 +51,23 @@ subroutine RT_databases_IO(Xen,it)
  if (.not.l_RT_skip_GF_IO) then
    !
    io_G=0
+   io_THETA=0
    COM_=NONE
    if (it==it_start) COM_=REP
    call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(5))
    io_G=io_SC_components('G' ,Xen,ID(5))
+   if (l_ph_corr) then
+     call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(7))
+     io_THETA=io_SC_components('THETA' ,Xen,ID(7))
+   endif
    !
    do ik = 1, QP_nk 
      call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
      io_G=io_SC_components('G',Xen,ID(5))
+     if (l_ph_corr) then
+       call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(7))
+       io_THETA=io_SC_components('THETA' ,Xen,ID(7))
+     endif
    enddo
    !
  endif

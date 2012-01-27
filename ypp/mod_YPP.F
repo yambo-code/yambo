@@ -104,6 +104,7 @@ module YPP
  !EL-PH
  !
  logical :: l_gkkp
+ logical :: l_gkkp_analysis
  logical :: l_phonons
  logical :: l_eliashberg
  logical :: l_atomic_amplitude

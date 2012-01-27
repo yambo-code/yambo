@@ -69,6 +69,7 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'eliashberg',   '[R] Eliashberg')
  call it('r',defs,'phonons',      '[R] Phonons')
  call it('r',defs,'gkkp',         '[R] Electron-Phonon databases')
+ call it('r',defs,'gkkp_analysis','[R] Electron-Phonon gkkp analysis')
 #endif
 #if defined _YPP_BOLTZMANN
  call it('r',defs,'current',      '[R] Current')

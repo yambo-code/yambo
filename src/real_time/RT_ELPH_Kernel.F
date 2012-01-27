@@ -44,7 +44,7 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  use SC,             ONLY:SC_bands,it_now
  use parser_m,       ONLY:parser
  use real_time,      ONLY:RT_step,THETA_matrix,I1_lesser,Integrator_name,q_weight,&
-&                         G_lesser,MEM_index
+&                         G_lesser,MEM_index,NE_i_time
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
  use wrapper,        ONLY:M_by_M
@@ -67,7 +67,7 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  complex(SP)           :: M3(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  complex(SP)           :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  complex(SP)           :: S_mat(2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
- complex(SP)           :: Xi_eta,Xi_np,S_summed
+ complex(SP)           :: Xi_eta,Xi_np
  complex(SP), external :: RT_G_retarded
  !
  ! ... band index ...
@@ -92,8 +92,6 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  i_map( 1)=2
  !
  i_counter=0
- !
- !S_summed=(0.,0.)
  !
  do iqbz=1,q%nbz
    !
@@ -167,8 +165,6 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
      !
      do i_s=-1,1,2
        !
-!       if (ik==44) S_summed=S_summed+exp(cI*i_s*ph_freq*TIME)*(S_mat(i_map(i_s),2,2)+conjg(S_mat(i_map(-i_s),2,2)))
-       !
        do i_n=SC_bands(1),SC_bands(2)
          do i_np=SC_bands(1),SC_bands(2)
            i_n_m=i_n-SC_bands(1)+1
@@ -183,9 +179,6 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
    enddo ! ph branch
    !
  enddo ! iq
- !
- !if (ik==44) write (100,'(3f20.10)') TIME/FS2AUT,S_summed
- !if (ik==44) write (200,'(3f20.10)') TIME/FS2AUT,G_lesser(5,5,ik,MEM_index(it_now))
  !
 end subroutine RT_ELPH_kernel
 !

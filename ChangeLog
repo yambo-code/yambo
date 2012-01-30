@@ -1,3 +1,97 @@
+2012-01-30 11:22:14 r1067 Andrea Marini <andrea.marini@roma2.infn.it>
+
+2012-01-27 18:20:11 r1065 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac real_time/RT_ELPH_Kernel.F real_time/RT_databases_IO.F real_time/RT_start_and_restart.F io/io_SC_components.F modules/mod_real_time.F ypp/ypp_init.F ypp/mod_YPP.F ypp/ELPH_gkkp_analysis.F ypp/RT_occupations_check.F ypp/ypp_init_load.F ypp/electrons_charge.F ypp/ypp_i.F ypp/.objects ypp/ELPH_atomic_amplitude.F driver/ypp.h
+
+	Additions:
+	- [RT] Restart for the ELPH kernel
+	- [YPP_RT] Added option to analyze/fit and model the gkkp m.e.
+
+	Patch sent by: Andrea
+
+2012-01-25 11:29:44 r1055 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac qp_ctl/mod_QP_CTL.F coulomb/rim_spherical.F real_time/RT_ELPH_Kernel.F real_time/RT_driver.F real_time/RT_initialize.F real_time/RT_ELPH_initialize.F real_time/RT_start_and_restart.F real_time/RT_average_operator.F communicate/section.F io/io_SC_components.F ypp/ypp_init.F ypp/mod_YPP.F ypp/ypp_init_load.F ypp/electrons_dos_and_charge.F ypp/RT_occupations_analyze.F ypp/.objects
+
+	Bugs:
+	- [RT] Fixed section numbering
+
+	Additions:
+	- [RT] Temperature in RT databases
+
+	Changes:
+	- [YPP_RT] Added reference time to plot the change in the DOS
+
+	Patch sent by: Andrea
+
+2012-01-20 18:19:17 r1045 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  real_time/RT_ELPH_Kernel.F real_time/RT_initialize.F real_time/RT_states.F + real_time/.objects real_time/RT_start_and_restart.F real_time/RT_average_operator.F ypp/ypp_init.F ypp/mod_YPP.F ypp/ypp_init_load.F ypp/electrons_dos_and_charge.F ypp/electrons_driver.F + ypp/.objects driver/ypp.h
+
+	Additions:
+	- [YPP_RT] Option to plot the time-dependent occupations of selected states
+
+	Patch sent by: Andrea
+
+2012-01-19 15:53:45 r1042 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	[RT] Fixed bug in definition of dG for metals
+
+2012-01-19 15:52:45 r1041 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	[RT] Added option to plot the fixed time DOS
+
+2012-01-17 16:23:33 r1035 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac qp_ctl/OCCUPATIONS_IO_and_interpolate.F interface/init_load.F interface/init.F setup/setup.F real_time/RT_ELPH_Kernel.F real_time/RT_initialize.F real_time/RT_states.F real_time/RT_ELPH_initialize.F real_time/RT_databases_IO.F io/io_elemental.F modules/mod_real_time.F modules/std_presets.F
+
+	Bugs:
+	- [RT] Wrong setup of NE_i_time in OCCUPATIONS_IO_and_interpolate.F
+
+	Additions:
+	- [RT] Several new input variables: RTmaxEn, AlphaFr, SkipGFIO, SkipOCCIO:
+	  RTmaxEn -> RT_states
+	  AlphaFr -> Frohlich adimensional alpha
+	  SkipGFIO, SkipOCCIO -> Skip I/O if Green Functions and/or Occupations
+
+	Changes:
+	- [RT] RT_states.F is a selctor of the evolved e/h pairs. Now it has been changed in order to
+	  select the states on the basis of the available e/h energy.
+
+	Patch sent by: Andrea
+
+2012-01-16 16:21:17 r1030 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  qp_ctl/OCCUPATIONS_IO_and_interpolate.F real_time/RT_initialize.F real_time/RT_states.F io/io_SC_components.F modules/mod_real_time.F
+
+	Additions:
+	- [RT] RT_states selects states to evolve using an energy window. Eventually it reduces the total bands involved in the dynamics.
+
+	Changes:
+	- [RT] Parallel index setup moved outside RT_Collision
+	- [RT] Reduced dimensions of RT_occupations
+
+	Patch sent by: Andrea
+
+2012-01-14 17:52:38 r1018 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	devel-andrea added
+
+2012-01-12 12:50:43 r1016 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Mergering of gpl+elph branch with trunk@revision 1016
+
 2012-01-12 10:46:46 r1015 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	New version (subversion increased)

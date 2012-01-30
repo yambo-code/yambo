@@ -22,30 +22,32 @@
 subroutine ELPH_gkkp_analysis(k,en,q)
  !
  use pars,                ONLY:SP,schlen,pi
+ use drivers,             ONLY:l_real_time
  use units,               ONLY:HA2EV,HA2GHZ,HA2THZ 
  use com,                 ONLY:msg,of_open_close
  use electrons,           ONLY:levels,n_met_bands,n_full_bands
- use R_lattice,           ONLY:bz_samp
+ use R_lattice,           ONLY:bz_samp,qindx_S
  use YPP,                 ONLY:elph_steps,elph_Ef,elph_gamma_broad,&
 &                              ph_broad,l_dos,l_eliashberg
  use ELPH,                ONLY:ph_modes,elph_nb,elph_gkkp,ph_freqs_sq,&
 &                              max_ph_freq,elph_nDBs,elph_use_q_grid,&
-&                              E_k_plus_q,setup_k_plus_q_levels,elph_global_free
+&                              E_k_plus_q,setup_k_plus_q_levels,elph_global_free,ph_qpt
  use IO_m,                ONLY:io_control,OP_RD,RD_CL_IF_END,DUMP,RD_CL
+ use QP_m,                ONLY:QP_n_states,QP_table,SC_band_mixing
  use timing,              ONLY:live_timing
  use par_proc_m,          ONLY:pp_redux_wait,pp_indexes,myid
  use par_indexes_m,       ONLY:par_indexes
  use functions,           ONLY:Fermi_fnc_derivative
  use stderr,              ONLY:set_real_printed_length
+ use vec_operate,         ONLY:iku_v_norm
  implicit none
  type(levels) ::en
  type(bz_samp)::k,q
  !
  ! Work Space 
  !
-! integer           ::i1,i2,im,iq,
- integer           :: nq_todo,iq
- real(SP)          :: q_weight
+ integer           :: nq_todo,iq,ik_ibz,i_qp,ib1,ib2,ik_bz,ik_m_q,im
+ real(SP)          :: q_weight,E_nk_m_np_kmq,Ed_diff,Q_mod,Ef_diff,gkkp_sq,ph_E
 !&                    ph_dos(elph_steps),ph_energy(elph_steps),omega,e_step
 ! complex(SP)       ::d_elias_dos
 ! character(schlen) ::o_file_name,ch
@@ -69,6 +71,9 @@ subroutine ELPH_gkkp_analysis(k,en,q)
    return
  endif
  call msg('l','sane')
+ !
+ Ef_diff=0.
+ if (elph_Ef/=0.) Ef_diff=en%Efermi(1)-elph_Ef
 ! !
 ! ! Energy range
 ! !
@@ -80,11 +85,17 @@ subroutine ELPH_gkkp_analysis(k,en,q)
  nq_todo=elph_nDBs
  if (elph_use_q_grid) nq_todo=q%nibz
  !
- ! calculate q%weights
+ ! calculate q%weights ...
  !
  call k_expand(q) 
  !
- call live_timing('I/O',nq_todo,SERIAL=.TRUE.)
+ ! ... and the QP_table
+ !
+ l_real_time=.TRUE.
+ SC_band_mixing=100.
+ call QP_state_table_setup(en)
+ !
+ call live_timing('Q-loop',nq_todo,SERIAL=.TRUE.)
  !
  do iq=1,nq_todo 
    !
@@ -100,41 +111,40 @@ subroutine ELPH_gkkp_analysis(k,en,q)
    q_weight=1./real(elph_nDBs)
    if (elph_use_q_grid) q_weight=q%weights(iq)
    !
-   do i1=1,k%nbz
-!     !
-!     iibz1=k%sstar(i1,1)
-!     if (elph_use_q_grid) iibz2=k%sstar(qindx_X(iq,i1,1),1)
-!     !
-!     do ib1=1,elph_nb
-!       do ib2=1,elph_nb
-!         !        
-!         Ek  =en%E(ib1,iibz1,1)+Ef_diff
-!         !
-!         if (elph_use_q_grid) Ekmq=en%E(ib2,iibz2,1)+Ef_diff
-!         if (.not.elph_use_q_grid) Ekmq=E_k_plus_q(ib2,i1,1)+Ef_diff
-!         !
-!         weight=Fermi_fnc_derivative(Ek,  elph_gamma_broad)*&
-!&               Fermi_fnc_derivative(Ekmq,elph_gamma_broad)
-!         !      
-!         weight=weight*2./real(k%nbz)
-!         !             |
-!         !             SPIN
-!         ! The factor 2 is provided by the sum over spins
-!         !
-!         ! Note that in YAMBO 
-!         !
-!         ! gamma \propto \sum_k\sum_{ib1,ib2} \delta(e_{k,ib1}-Ef) \delta(e_{k-q,ib2}-Ef)
-!         !         | <psi_{k-q,ib2}|dvscf_q(mu)*psi_{k,ib1}> |^2
-!         !
-!         do im=1,ph_modes
-!           gamma(iq,im)=gamma(iq,im)+&
-!  &              conjg(elph_gkkp(i1,im,ib2,ib1))*elph_gkkp(i1,im,ib2,ib1)*weight
-!         enddo
-!       enddo
-!     enddo
+   Q_mod=iku_v_norm(ph_qpt(iq,:))
+   !
+   i_qp=1
+   !
+   do while (i_qp<=QP_n_states) 
+     !
+     ! n   =QP_table(i_qp,1)
+     ! n'  =QP_table(i_qp,2)
+     ! k   =QP_table(i_qp,3)
+     !
+     ib1   =QP_table(i_qp,1)
+     ib2   =QP_table(i_qp,2)
+     ik_ibz=QP_table(i_qp,3)
+     !
+     i_qp=i_qp+1
+     !
+     if (elph_use_q_grid) then
+       ik_m_q=qindx_S(ik_ibz,iq,1)
+       E_nk_m_np_kmq=en%E(ib1,ik_ibz,1)-en%E(ib2,ik_m_q,1)
+     else
+       ik_bz=sum(k%nstar(:ik_ibz-1))+1
+       E_nk_m_np_kmq=en%E(ib1,ik_ibz,1)-E_k_plus_q(ib2,ik_bz,1)-Ef_diff
+     endif
+     !
+     do im=1,ph_modes
+       !  
+       ph_E = sqrt( MAX( ph_freqs_sq(iq,im),0. ) )
+       !  
+       gkkp_sq=conjg(elph_gkkp(ik_bz,im,ib2,ib1))*elph_gkkp(ik_bz,im,ib2,ib1)
+       !  
+     enddo
+     !
    enddo
    !
-
    call live_timing(steps=1)
    !
  enddo

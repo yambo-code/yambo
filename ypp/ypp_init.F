@@ -604,7 +604,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  l_QP_init=l_plot.and.l_sp_wf
 #if defined _YPP_ELPH
- if (.not.l_QP_init) l_QP_init=l_electrons.and.l_eliashberg
+ if (.not.l_QP_init) l_QP_init=(l_electrons.and.l_eliashberg).or.l_gkkp_analysis
 #endif
 #if defined _YPP_SC
  if (.not.l_QP_init) l_QP_init=l_electrons.and.l_mean_potential

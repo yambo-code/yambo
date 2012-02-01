@@ -40,7 +40,7 @@ subroutine RT_ELPH_initialize(q)
  integer             :: iq,il
  real(SP), parameter :: Q_critical=0.4,Q_border=0.9
  real(SP)            :: FIT_coefficients(6,12) ! 1-3 around Gamma, 4-6 near the BZ border
- real(SP)            :: Q_mod,VOL_sphere,RADIUS_sphere,BARE_integral
+ real(SP)            :: Q_mod,RADIUS_sphere,BARE_integral
  !
  if (.not.l_ph_corr) return
  !
@@ -97,7 +97,6 @@ subroutine RT_ELPH_initialize(q)
  RIM_n_rand_pts=100000
  !
  RADIUS_sphere=(3.*RL_vol/nqbz/4./pi)**(1./3.)
- VOL_sphere=4./3.*pi*RADIUS_sphere**3.
  !
  call rim_spherical(nqbz,q%ptbz,q_weight,RADIUS_sphere,.FALSE.)
  !

@@ -177,7 +177,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    endif
    !
    if(chi_nn) X_epsilon(3,:)=1.+(X_epsilon(3,:)+X_drude(:))*factor/q_norm(1)**2 
-   if(chi_jj) X_epsilon(3,:)=1.+(X_epsilon(3,:)-factor_jj)*factor/W_bss%p(:)**2  &  !real(W_bss%p(:))**2 &
+   if(chi_jj) X_epsilon(3,:)=1.+(X_epsilon(3,:)-factor_jj)*factor/real(W_bss%p(:))**2 &
 &                                               +X_drude(:)*factor/q_norm(1)**2
    if(l_kerr) call K_kerr_IP(W_bss%p,drude_GreenF)
 #else

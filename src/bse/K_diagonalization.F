@@ -398,12 +398,12 @@ subroutine K_diagonalization(iq,W)
  factor_jj=X_epsilon(3,iw_ref)
  !
  if(chi_nn) X_epsilon(2,:)=1.+(X_epsilon(2,:)+X_drude(:))*factor/q_norm(1)**2
- if(chi_jj) X_epsilon(2,:)=1.+(X_epsilon(2,:)-factor_jj)*factor/    W%p(:)**2  &  !real(W%p(:))**2 &
+ if(chi_jj) X_epsilon(2,:)=1.+(X_epsilon(2,:)-factor_jj)*factor/real(W%p(:))**2 &
 &                                            +X_drude(:)*factor
  !
  if(l_kerr) then
    if(chi_nn) X_epsilon(5,:)=X_epsilon(5,:)*factor/q_norm(1)**2
-   if(chi_jj) X_epsilon(5,:)=X_epsilon(5,:)*factor/   W%p(:)**2   !real(W%p(:))**2
+   if(chi_jj) X_epsilon(5,:)=X_epsilon(5,:)*factor/real(W%p(:))**2
  endif
 #else
  X_epsilon(2,:)=1.+X_epsilon(2,:)*&

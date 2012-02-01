@@ -34,9 +34,8 @@ subroutine K_kerr_IP(w,drude_GreenF)
  implicit none
  !
  complex(SP)       :: w(BSS_n_freqs) 
- complex(SP)       :: drude_GreenF(BSS_n_freqs)          !(W_bss%n(2))
+ complex(SP)       :: drude_GreenF(BSS_n_freqs)
  real(SP)          :: factor
- complex(SP)       :: factor_jj
  !
  ! Work Space
  !
@@ -78,6 +77,6 @@ subroutine K_kerr_IP(w,drude_GreenF)
  factor=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
  !
  if(chi_nn) X_epsilon(4,:)= X_epsilon(4,:)*factor/q_norm(1)**2
- if(chi_jj) X_epsilon(4,:)= X_epsilon(4,:)*factor/     w(:)**2 !real(w(:))**2
+ if(chi_jj) X_epsilon(4,:)= X_epsilon(4,:)*factor/real(w(:))**2
  !
 end subroutine

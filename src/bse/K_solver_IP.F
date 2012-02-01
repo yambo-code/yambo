@@ -27,7 +27,7 @@ subroutine K_solver_IP(iq,W)
  use X_m,            ONLY:X_epsilon
  use BS,             ONLY:BSS_n_freqs
 #if defined _KERR
- use KERR,           ONLY:BSS_rhoq0_kerr,chi_nn,chi_jj
+ use KERR,           ONLY:chi_jj,iw_ref
  use drivers,        ONLY:l_kerr
 #endif
  use memory_m,       ONLY:mem_est
@@ -62,6 +62,12 @@ subroutine K_solver_IP(iq,W)
    eps_kk=(0.,0.)
    w_kk=real(W%p)+(0.,0.0001)/HA2EV
    eps_kk(1,:)=-1/pi*aimag(X_epsilon(3,:)) 
+#if defined _KERR
+   if (chi_jj) then
+     eps_kk(1,:)=eps_kk(1,:)*real(W%p(:))**2
+     eps_kk(1,iw_ref)=(0.,0.)
+   endif
+#endif
    !
    if ( (maxval(aimag(eps_kk(1,:)))/aimag(eps_kk(1,1))<100..or.&
 &        maxval(aimag(eps_kk(1,:)))/aimag(eps_kk(1,BSS_n_freqs))<100.)) &
@@ -76,6 +82,9 @@ subroutine K_solver_IP(iq,W)
    !eps_kk(1,BSS_n_freqs)=(0.,0.)
    !call Kramers_Kronig(eps_kk(1,:),real(winv_kk),BSS_n_freqs,eps_kk(2,:),w_kk,BSS_n_freqs,(0.,0.))
    !
+#if defined _KERR
+   if (chi_jj) eps_kk(2,:)=eps_kk(2,:)/real(W%p(:))**2
+#endif
    X_epsilon(3,:)=eps_kk(2,:)+1.
    !
 #if defined _KERR
@@ -83,12 +92,18 @@ subroutine K_solver_IP(iq,W)
    eps_kk(1,:)= 1/pi*real(X_epsilon(4,:))
    eps_kk(1,1)=(0.,0.)
    eps_kk(1,BSS_n_freqs)=(0.,0.)
+   if (chi_jj) then
+     eps_kk(1,:)=eps_kk(1,:)*real(W%p(:))**2
+     eps_kk(1,iw_ref)=(0.,0.)
+   endif
+   !
    call Kramers_Kronig(eps_kk(1,:),real(w_kk),BSS_n_freqs,eps_kk(2,:),w_kk,BSS_n_freqs,(0.,0.))
    !forall(iw=1:BSS_n_freqs) eps_kk(1,iw)=-1./pi*real(X_epsilon(4,BSS_n_freqs-iw+1))
    !eps_kk(1,1)=(0.,0.)
    !eps_kk(1,BSS_n_freqs)=(0.,0.)
    !call Kramers_Kronig(eps_kk(1,:),real(winv_kk),BSS_n_freqs,eps_kk(2,:),w_kk,BSS_n_freqs,(0.,0.))
    !
+   if (chi_jj) eps_kk(2,:)=eps_kk(2,:)/real(W%p(:))**2
    X_epsilon(4,:)=(0.,1.)*eps_kk(2,:)
    !
 #endif

@@ -177,8 +177,15 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    endif
    !
    if(chi_nn) X_epsilon(3,:)=1.+(X_epsilon(3,:)+X_drude(:))*factor/q_norm(1)**2 
-   if(chi_jj) X_epsilon(3,:)=1.+(X_epsilon(3,:)-factor_jj)*factor/real(W_bss%p(:))**2 &
-&                                               +X_drude(:)*factor/q_norm(1)**2
+   if(chi_jj) then
+     ! Make Drude term causal
+     do iw=1,iw_ref-1
+       X_drude(iw_ref-iw)=cmplx(real(X_drude(iw_ref-iw)),-aimag(X_drude(iw_ref+iw)))
+     enddo
+     X_epsilon(3,:)=1.+(X_epsilon(3,:)-factor_jj)*factor/real(W_bss%p(:))**2   &  
+&                      +X_drude(:)*factor/q_norm(1)**2
+     X_epsilon(3,iw_ref)=X_epsilon(3,iw_ref)-1
+   endif
    if(l_kerr) call K_kerr_IP(W_bss%p,drude_GreenF)
 #else
    X_epsilon(3,:)=1.+X_epsilon(3,:)*real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi/(q_norm(1))**2

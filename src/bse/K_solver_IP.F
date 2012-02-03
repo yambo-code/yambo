@@ -63,10 +63,7 @@ subroutine K_solver_IP(iq,W)
    w_kk=real(W%p)+(0.,0.0001)/HA2EV
    eps_kk(1,:)=-1/pi*aimag(X_epsilon(3,:)) 
 #if defined _KERR
-   if (chi_jj) then
-     eps_kk(1,:)=eps_kk(1,:)*real(W%p(:))**2
-     eps_kk(1,iw_ref)=(0.,0.)
-   endif
+   if (chi_jj) eps_kk(1,:)=eps_kk(1,:)*real(W%p(:))**2
 #endif
    !
    if ( (maxval(aimag(eps_kk(1,:)))/aimag(eps_kk(1,1))<100..or.&
@@ -83,7 +80,7 @@ subroutine K_solver_IP(iq,W)
    !call Kramers_Kronig(eps_kk(1,:),real(winv_kk),BSS_n_freqs,eps_kk(2,:),w_kk,BSS_n_freqs,(0.,0.))
    !
 #if defined _KERR
-   if (chi_jj) eps_kk(2,:)=eps_kk(2,:)/real(W%p(:))**2
+   if (chi_jj) eps_kk(2,:)=eps_kk(2,:)/(real(W%p(:))**2+epsilon(1.))
 #endif
    X_epsilon(3,:)=eps_kk(2,:)+1.
    !
@@ -92,10 +89,7 @@ subroutine K_solver_IP(iq,W)
    eps_kk(1,:)= 1/pi*real(X_epsilon(4,:))
    eps_kk(1,1)=(0.,0.)
    eps_kk(1,BSS_n_freqs)=(0.,0.)
-   if (chi_jj) then
-     eps_kk(1,:)=eps_kk(1,:)*real(W%p(:))**2
-     eps_kk(1,iw_ref)=(0.,0.)
-   endif
+   if (chi_jj) eps_kk(1,:)=eps_kk(1,:)*real(W%p(:))**2
    !
    call Kramers_Kronig(eps_kk(1,:),real(w_kk),BSS_n_freqs,eps_kk(2,:),w_kk,BSS_n_freqs,(0.,0.))
    !forall(iw=1:BSS_n_freqs) eps_kk(1,iw)=-1./pi*real(X_epsilon(4,BSS_n_freqs-iw+1))
@@ -103,7 +97,7 @@ subroutine K_solver_IP(iq,W)
    !eps_kk(1,BSS_n_freqs)=(0.,0.)
    !call Kramers_Kronig(eps_kk(1,:),real(winv_kk),BSS_n_freqs,eps_kk(2,:),w_kk,BSS_n_freqs,(0.,0.))
    !
-   if (chi_jj) eps_kk(2,:)=eps_kk(2,:)/real(W%p(:))**2
+   if (chi_jj) eps_kk(2,:)=eps_kk(2,:)/(real(W%p(:))**2+epsilon(1.))
    X_epsilon(4,:)=(0.,1.)*eps_kk(2,:)
    !
 #endif

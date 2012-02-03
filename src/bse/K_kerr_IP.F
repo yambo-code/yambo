@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_kerr_IP(w,drude_GreenF)
+subroutine K_kerr_IP(w)
  !
  use pars,           ONLY:SP,pi
  use memory_m,       ONLY:mem_est
@@ -68,15 +68,20 @@ subroutine K_kerr_IP(w,drude_GreenF)
    if (abs(BS_eh_E(i1))<1.E-5) cycle
    X_epsilon(4,:)=X_epsilon(4,:)-BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))*BS_eh_f(i1)/&
 &                                (w(:)-BS_eh_E(i1))
+   ! I need the term missing in the lenght gauge
+   if (chi_nn) X_epsilon(4,:)=X_epsilon(4,:)  &
+&              +BSS_rhoq0(i1)*conjg(BSS_rhoq0_kerr(i1))*BS_eh_f(i1)/w(:)
    if (BS_K_coupling) then
      X_epsilon(4,:)=X_epsilon(4,:)+conjg(BSS_rhoq0(i1))*BSS_rhoq0_kerr(i1)*BS_eh_f(i1)/&
 &                                (w(:)+BS_eh_E(i1))
+     if (chi_nn) X_epsilon(4,:)=X_epsilon(4,:)  &
+&                 -conjg(BSS_rhoq0(i1))*BSS_rhoq0_kerr(i1)*BS_eh_f(i1)/w(:)
    endif
  enddo
  !
  factor=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
  !
  if(chi_nn) X_epsilon(4,:)= X_epsilon(4,:)*factor/q_norm(1)**2
- if(chi_jj) X_epsilon(4,:)= X_epsilon(4,:)*factor/real(w(:))**2
+ if(chi_jj) X_epsilon(4,:)= X_epsilon(4,:)*factor/(real(w(:))**2+epsilon(1.))
  !
 end subroutine

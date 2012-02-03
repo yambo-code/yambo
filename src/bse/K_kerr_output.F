@@ -26,7 +26,7 @@ subroutine K_kerr_output()
  use units,         ONLY:DEG2RAD
  use KERR,          ONLY:KERR_shadow,BSS_rhoq0_kerr
  use X_m,           ONLY:X_epsilon
- use BS,            ONLY:BSS_n_freqs
+ use BS,            ONLY:BSS_n_freqs,BSS_mode
  !
  implicit none
  !
@@ -35,7 +35,8 @@ subroutine K_kerr_output()
  ! Kerr parameters
  !
  X_epsilon(6,:)=-X_epsilon(4,:)/( (X_epsilon(3,:)-1.0_SP)*sqrt(X_epsilon(3,:)) ) /DEG2RAD
- X_epsilon(7,:)=-X_epsilon(5,:)/( (X_epsilon(2,:)-1.0_SP)*sqrt(X_epsilon(2,:)) ) /DEG2RAD
+ if(.not.trim(BSS_mode)=='none') &
+&   X_epsilon(7,:)=-X_epsilon(5,:)/( (X_epsilon(2,:)-1.0_SP)*sqrt(X_epsilon(2,:)) ) /DEG2RAD
  !
  ! I write the output file 
  ! 1 - Headers

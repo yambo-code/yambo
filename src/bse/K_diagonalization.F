@@ -382,9 +382,19 @@ subroutine K_diagonalization(iq,W)
 #endif
    !
 #if defined _KERR
+   ! I need the term missing in the lenght gauge
+   if (chi_nn) then
+     if (K_is_not_hermitian)      X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)/W%p(:)
+     if (.not.K_is_not_hermitian) X_epsilon(2,:)=X_epsilon(2,:)-BS_R(i1)*conjg(BS_R(i1))/W%p(:)
+   endif
+   !
    if(l_kerr) then
      if (K_is_not_hermitian)      X_epsilon(5,:)=X_epsilon(5,:)-BS_R_kerr(i1)/(W%p(:)-BS_E(i1))
      if (.not.K_is_not_hermitian) X_epsilon(5,:)=X_epsilon(5,:)-BS_R(i1)*BS_R_kerr(i1)/(W%p(:)-BS_E(i1))
+     if (chi_nn) then
+       if (K_is_not_hermitian)      X_epsilon(5,:)=X_epsilon(5,:)-BS_R_kerr(i1)/W%p(:)
+       if (.not.K_is_not_hermitian) X_epsilon(5,:)=X_epsilon(5,:)-BS_R(i1)*BS_R_kerr(i1)/W%p(:)
+     endif
    endif
 #endif
    !
@@ -397,13 +407,14 @@ subroutine K_diagonalization(iq,W)
  factor=real(spin_occ)/(2.*pi)**3.*d3k_factor*4.*pi
  factor_jj=X_epsilon(3,iw_ref)
  !
- if(chi_nn) X_epsilon(2,:)=1.+(X_epsilon(2,:)+X_drude(:))*factor/q_norm(1)**2
- if(chi_jj) X_epsilon(2,:)=1.+(X_epsilon(2,:)-factor_jj)*factor/real(W%p(:))**2 &
-&                                            +X_drude(:)*factor
+ if(chi_nn) X_epsilon(2,:)=1.+X_epsilon(2,:)*factor/q_norm(1)**2
+ if(chi_jj) X_epsilon(2,:)=1.+(X_epsilon(2,:)-factor_jj)*factor/(real(W%p(:))**2+epsilon(1.))
+ ! Drude
+ X_epsilon(2,:)=X_epsilon(2,:)+X_drude(:)*factor/q_norm(1)**2
  !
  if(l_kerr) then
    if(chi_nn) X_epsilon(5,:)=X_epsilon(5,:)*factor/q_norm(1)**2
-   if(chi_jj) X_epsilon(5,:)=X_epsilon(5,:)*factor/real(W%p(:))**2
+   if(chi_jj) X_epsilon(5,:)=X_epsilon(5,:)*factor/(real(W%p(:))**2+epsilon(1.))
  endif
 #else
  X_epsilon(2,:)=1.+X_epsilon(2,:)*&

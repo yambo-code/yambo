@@ -63,6 +63,7 @@ subroutine K_diagonalization(iq,W)
  complex(SP), allocatable ::BS_R(:) 
 #if defined _KERR
  complex(SP), allocatable ::BS_R_kerr(:) 
+ complex(SP)              ::BSS_rhoq0_tmp(size(BSS_rhoq0_kerr))
 #endif
  complex(SP), allocatable ::BS_E(:)
  !
@@ -78,6 +79,7 @@ subroutine K_diagonalization(iq,W)
  complex(SP), allocatable ::BS_R_right(:)
 #if defined _KERR
  complex(SP), allocatable ::BS_R_right_kerr(:)
+ complex(SP), allocatable ::BS_R_left_kerr(:)
 #endif
  complex(SP), allocatable ::BS_overlap(:,:)
  !
@@ -127,8 +129,8 @@ subroutine K_diagonalization(iq,W)
    BS_overlap=(0.,0.)
 #if defined _KERR
    if(l_kerr) then
-     allocate(BS_R_right_kerr(BS_H_dim))
-     call mem_est("BS_R_right_kerr",(/BS_H_dim/))
+     allocate(BS_R_right_kerr(BS_H_dim),BS_R_left_kerr(BS_H_dim))
+     call mem_est("BS_R_right_kerr BS_R_left_kerr",(/BS_H_dim,BS_H_dim/))
   endif
 #endif
  else
@@ -230,23 +232,34 @@ subroutine K_diagonalization(iq,W)
      !
      do i1=1,BS_H_dim
        BS_R_right(i1)=cmplx(0.,0.,SP)
-#if defined _KERR
-       if(l_kerr) BS_R_right_kerr(i1)=cmplx(0.,0.,SP)
-#endif
        if (.not.px%element_1D(i1)) cycle
        !
        BS_R_right(i1)=Vstar_dot_V(BS_H_dim,BSS_rhoq0,BS_V_right(:,i1))
-#if defined _KERR
-       if(l_kerr) BS_R_right_kerr(i1)=Vstar_dot_V(BS_H_dim,BSS_rhoq0_kerr,BS_V_right(:,i1))
-#endif
        !
        call live_timing(steps=1)
      enddo
      call pp_redux_wait(BS_R_right)
-#if defined _KERR
-     if(l_kerr) call pp_redux_wait(BS_R_right_kerr)
-#endif
      call live_timing
+     !
+#if defined _KERR
+     if(l_kerr) then
+       call live_timing('BSK R KERR residuals',px%n_of_elements(myid+1))
+       !
+       BSS_rhoq0_tmp(1:BS_K_dim) =BSS_rhoq0_kerr(1:BS_K_dim)
+       BSS_rhoq0_tmp(BS_K_dim+1:)=BSS_rhoq0(BS_K_dim+1:)
+       !
+       do i1=1,BS_H_dim
+         BS_R_right_kerr(i1)=cmplx(0.,0.,SP)
+         if (.not.px%element_1D(i1)) cycle
+         !
+         BS_R_right_kerr(i1)=Vstar_dot_V(BS_H_dim,BSS_rhoq0_tmp,BS_V_right(:,i1))
+         !
+         call live_timing(steps=1)
+       enddo
+       call pp_redux_wait(BS_R_right_kerr)
+       call live_timing
+     endif
+#endif
      !
      ! [2] BS_R(i)= <i_K|j><j|q0> 
      !            = conjg( BS_V_left(k,i))*BSS_rhoq0(k)*R_k
@@ -279,6 +292,29 @@ subroutine K_diagonalization(iq,W)
      !
      call live_timing
      !
+#if defined _KERR
+     if(l_kerr) then
+       BSS_rhoq0_tmp(:BS_K_dim)  =      BSS_rhoq0(:BS_K_dim)  *BS_eh_f(:BS_K_dim)
+       BSS_rhoq0_tmp(BS_K_dim+1:)=-BSS_rhoq0_kerr(BS_K_dim+1:)*BS_eh_f(:BS_K_dim)
+       !
+       call live_timing('BSK L KERR residuals',px%n_of_elements(myid+1))
+       !
+       do i1=1,BS_H_dim
+         BS_R_kerr(i1)=cmplx(0.,0.,SP)
+         if (.not.px%element_1D(i1)) cycle
+         !
+         BS_R_kerr(i1)=Vstar_dot_V(BS_H_dim,BS_V_left(:,i1),BSS_rhoq0_tmp)
+         !
+         call live_timing(steps=1)
+       enddo
+       call pp_redux_wait(BS_R_kerr)
+       !
+       !
+       call live_timing
+       !
+     endif
+#endif
+     !
      ! [3] BS_overlap(i,j)=conjg(BS_V_left(k,i))*BS_V_right(k,j)
      !
      call live_timing('BSK overlap mat',1)
@@ -303,12 +339,28 @@ subroutine K_diagonalization(iq,W)
      call pp_redux_wait(BS_R_left)
      call live_timing
      !
+#if defined _KERR
+     if(l_kerr) then
+       call live_timing('BSK L x overlap',px%n_of_elements(myid+1))
+       do i1=1,BS_H_dim
+         BS_R_left_kerr(i1)=cmplx(0.,0.,SP)
+         if (.not.px%element_1D(i1)) cycle
+         !
+         BS_R_left_kerr(i1)=V_dot_V(BS_H_dim,BS_overlap(i1,:),BS_R_kerr)
+         !
+         call live_timing(steps=1)
+       enddo
+       call pp_redux_wait(BS_R_left_kerr)
+       call live_timing
+     endif
+#endif
+     !
      ! [5] BS_R(i)=BS_R_left(i)BS_R_right(i)
      !
      do i1=1,BS_H_dim
        BS_R(i1)=BS_R_left(i1)*BS_R_right(i1)
 #if defined _KERR
-       if(l_kerr) BS_R_kerr(i1)=BS_R_left(i1)*BS_R_right_kerr(i1)
+       if(l_kerr) BS_R_kerr(i1)=BS_R_left_kerr(i1)*BS_R_right_kerr(i1)
 #endif
      enddo
      !
@@ -322,25 +374,34 @@ subroutine K_diagonalization(iq,W)
      !
      call live_timing('BSK   residuals',px%n_of_elements(myid+1))
      BS_R=(0.,0.)
-#if defined _KERR
-     if(l_kerr) BS_R_kerr=(0.,0.)
-#endif
      !
      do i1=1,BS_K_dim
        if (.not.px%element_1D(i1)) cycle
        !
        BS_R(i1)=Vstar_dot_V(BS_K_dim,BSS_rhoq0,BS_mat(:,i1))
-#if defined _KERR
-       if(l_kerr) BS_R_kerr(i1)=Vstar_dot_V(BS_K_dim,BS_mat(i1,:),BSS_rhoq0_kerr)
-#endif
        !
        call live_timing(steps=1)
      enddo
      call live_timing
      !
      call pp_redux_wait(BS_R)
+     !
 #if defined _KERR
-     if(l_kerr) call pp_redux_wait(BS_R_kerr)
+     if(l_kerr) then
+       call live_timing('BSK KERR residuals',px%n_of_elements(myid+1))
+       BS_R_KERR=(0.,0.)
+       !
+       do i1=1,BS_K_dim
+         if (.not.px%element_1D(i1)) cycle
+         !
+         BS_R_kerr(i1)=Vstar_dot_V(BS_K_dim,BS_mat(i1,:),BSS_rhoq0_kerr)
+         !
+         call live_timing(steps=1)
+       enddo
+       call live_timing
+       !
+       call pp_redux_wait(BS_R_kerr)
+     endif
 #endif
      !
    endif

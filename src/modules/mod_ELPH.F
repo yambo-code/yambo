@@ -33,6 +33,7 @@ module ELPH
  integer   :: elph_branches(2)
  real(SP)  :: max_ph_freq
  logical   :: elph_use_q_grid
+ real(SP),    allocatable :: ph_kpt_bz(:,:)
  real(SP),    allocatable :: ph_qpt(:,:)
  real(SP),    allocatable :: ph_freqs_sq(:,:)
  real(SP),    allocatable :: elph_DW(:,:,:,:)
@@ -118,6 +119,8 @@ module ELPH
      if (.not.allocated(ph_qpt)) then
        allocate(ph_qpt(elph_nDBs,3))
        call mem_est("ph_qpt",(/size(ph_qpt)/),(/SP/))
+       allocate(ph_kpt_bz(nkbz,3))
+       call mem_est("ph_kpt_bz",(/size(ph_kpt_bz)/),(/SP/))
      endif
      !
    end subroutine
@@ -145,8 +148,8 @@ module ELPH
        call mem_est("pol_vector")
      endif
      if (allocated(ph_qpt)) then
-       deallocate(ph_qpt)
-       call mem_est("ph_qpt")
+       deallocate(ph_qpt,ph_kpt_bz)
+       call mem_est("ph_qpt ph_kpt_bz")
      endif
    end subroutine
    !

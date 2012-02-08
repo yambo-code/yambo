@@ -43,12 +43,10 @@ subroutine ELPH_gkkp_analysis(k,en,q)
  !
  ! Work Space 
  !
- integer               :: nq_todo,iq,ik_ibz,i_qp,ib1,ib2,ik_bz,ik_m_q,im,i_f,i1,i2,i_o
+ integer               :: nq_todo,iq,ik_ibz,i_qp,ib1,ib2,ik_bz,ik_m_q,im,i1,i_o
  integer,    parameter :: n_p=1000
- real(SP),   parameter :: Q_broad=0.02,E_broad=0.1
- real(SP)              :: q_weight,E_nk_m_np_kmq,ph_E,&
-&                         Q_range(n_p),E_range(n_p),Q_step,E_step
- real(SP), allocatable :: gkkp_sq(:,:,:,:),Q_mod(:),Q_data(:,:),E_data(:,:),dV_average(:,:),dV_spread(:,:)
+ real(SP)              :: q_weight,E_nk_m_np_kmq,ph_E
+ real(SP), allocatable :: gkkp_sq(:,:,:,:),Q_mod(:)
  integer , allocatable :: Q_sort_index(:),dE_sort_index(:)
  character(schlen)     :: o_file_name(2)
  !
@@ -84,8 +82,7 @@ subroutine ELPH_gkkp_analysis(k,en,q)
  call QP_state_table_setup(en)
  !
  allocate(gkkp_sq(QP_n_states,ph_modes,nq_todo,3),Q_mod(nq_todo),Q_sort_index(nq_todo))
- allocate(dE_sort_index(nq_todo),Q_data(n_p,ph_modes),E_data(n_p,ph_modes))
- allocate(dV_average(QP_n_states,ph_modes),dV_spread(QP_n_states,ph_modes),E_data(n_p,ph_modes))
+ allocate(dE_sort_index(nq_todo))
  !
  gkkp_sq=0.
  !
@@ -159,18 +156,6 @@ subroutine ELPH_gkkp_analysis(k,en,q)
  !
  call live_timing()
  !
- ! Energy and Q ranges
- !
- E_step= ( maxval(gkkp_sq(:,1,:,1))-minval(gkkp_sq(:,1,:,1)) )/float(n_p)
- do i_f=1,n_p
-   E_range(i_f)=minval(gkkp_sq(:,1,:,1))+i_f*E_step
- enddo
- !
- Q_step= maxval(Q_mod(:))/float(n_p)
- do i_f=1,n_p
-   Q_range(i_f)=i_f*Q_step
- enddo
- !
  ! Output file
  !
  call set_real_printed_length(f_length=20,g_length=20)
@@ -196,41 +181,17 @@ subroutine ELPH_gkkp_analysis(k,en,q)
      call msg("o "//o_file_name(i_o),'#','',INDENT=0)
    enddo
    !
-   if (.FALSE.) then
-     !
-     E_data=0.
-     Q_data=0.
-     !
-     do iq=1,nq_todo 
-       do im=1,ph_modes 
-         !
-         do i_f=1,n_p
-           E_data(i_f,im)= E_data(i_f,im)+gkkp_sq(i_qp,im,iq,2)*Fermi_fnc_derivative(E_range(i_f)-gkkp_sq(i_qp,1,iq,1),E_broad)
-           Q_data(i_f,im)= Q_data(i_f,im)+gkkp_sq(i_qp,im,iq,2)*Fermi_fnc_derivative(Q_range(i_f)-Q_mod(iq),Q_broad)
-         enddo
-         !
-       enddo
-     enddo
-     do i_f=1,n_p
-       call msg('o '//trim(o_file_name(1)),'',(/E_range(i_f),E_data(i_f,:)/)*HA2EV,INDENT=-2,USE_TABS=.true.)
-       call msg('o '//trim(o_file_name(2)),'',(/Q_range(i_f),Q_data(i_f,:)*HA2EV/)  ,INDENT=-2,USE_TABS=.true.)
-     enddo
-     !
-   else
-     !
-     call sort(arrin=gkkp_sq(i_qp,1,:,1),indx=dE_sort_index)
-     !
-     do iq=1,nq_todo 
-       i1=dE_sort_index(iq)
-       call msg('o '//trim(o_file_name(1)),'',(/gkkp_sq(i_qp,1,iq,1),gkkp_sq(i_qp,:,i1,2)/)*HA2EV,INDENT=-2,USE_TABS=.true.)
-       i1=Q_sort_index(iq)
-       call msg('o '//trim(o_file_name(2)),'',(/Q_mod(iq),gkkp_sq(i_qp,:,i1,2)*HA2EV/),INDENT=-2,USE_TABS=.true.)
-     enddo
-     !
-     call of_open_close(o_file_name(1))
-     call of_open_close(o_file_name(2))
-     !
-   endif
+   call sort(arrin=gkkp_sq(i_qp,1,:,1),indx=dE_sort_index)
+   !
+   do iq=1,nq_todo 
+     i1=dE_sort_index(iq)
+     call msg('o '//trim(o_file_name(1)),'',(/gkkp_sq(i_qp,1,iq,1),gkkp_sq(i_qp,:,i1,2)/)*HA2EV,INDENT=-2,USE_TABS=.true.)
+     i1=Q_sort_index(iq)
+     call msg('o '//trim(o_file_name(2)),'',(/Q_mod(iq),gkkp_sq(i_qp,:,i1,2)*HA2EV/),INDENT=-2,USE_TABS=.true.)
+   enddo
+   !
+   call of_open_close(o_file_name(1))
+   call of_open_close(o_file_name(2))
    !
  enddo
  !
@@ -239,7 +200,6 @@ subroutine ELPH_gkkp_analysis(k,en,q)
  ! CLEAN
  !
  deallocate(gkkp_sq,Q_mod,Q_sort_index,dE_sort_index)
- deallocate(Q_data,E_data)
  call elph_global_free()
  !
  contains

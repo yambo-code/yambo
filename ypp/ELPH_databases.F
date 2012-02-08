@@ -26,7 +26,7 @@ integer function ELPH_databases(k,E,q)
  use electrons,           ONLY:levels
  use ELPH,                ONLY:ph_freqs_sq,ph_modes,elph_nb,elph_use_q_grid,&
 &                              elph_global_free,max_ph_freq,elph_global_alloc,&
-&                              elph_nDBs,ph_qpt
+&                              elph_nDBs,ph_qpt,ph_kpt_bz
  use com,                 ONLY:msg,warning,file_exists,error
  use R_lattice,           ONLY:bz_samp
  use D_lattice,           ONLY:nsym
@@ -104,6 +104,10 @@ integer function ELPH_databases(k,E,q)
  ! Allocation...
  !
  call elph_global_alloc('gkkp')
+ !
+ ! Keep a copy of k-points to be used by _RT to rotate the unperturbed gkkp m.e.
+ !
+ ph_kpt_bz=k%ptbz
  !
  ! ... rebuilding of ph q-points table
  !

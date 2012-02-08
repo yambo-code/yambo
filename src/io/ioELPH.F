@@ -28,7 +28,7 @@ integer function ioELPH(ID,what)
 &                         io_mode,DUMP,ver_is_gt_or_eq
  use ELPH,           ONLY:ph_modes,elph_nb,elph_global_alloc,ph_freqs_sq,elph_gkkp,&
 &                         QP_PH_n_G_bands,max_ph_freq,elph_DW,elph_nDBs,&
-&                         elph_use_q_grid,E_k_plus_q,ph_qpt,elph_nDBs_used,&
+&                         elph_use_q_grid,E_k_plus_q,ph_qpt,ph_kpt_bz,elph_nDBs_used,&
 &                         gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f,&
 &                         pol_vector,elph_Ham_bands,elph_branches
  use stderr,         ONLY:intc
@@ -108,10 +108,18 @@ integer function ioELPH(ID,what)
    if (read_is_on(ID).and..not.allocated(ph_qpt)) then
      allocate(ph_qpt(elph_nDBs,3))
      call mem_est("ph_qpt",(/size(ph_qpt)/),(/SP/))
+     allocate(ph_kpt_bz(nkbz,3))
+     call mem_est("ph_kpt_bz",(/size(ph_kpt_bz)/),(/SP/))
+     ph_kpt_bz=0._SP
    endif
    !
    call io_bulk(ID,VAR="PH_Q",VAR_SZ=(/elph_nDBs,3/) )
    call io_bulk(ID,R2=ph_qpt(:,:))
+   !
+   if (ver_is_gt_or_eq(ID,revision=1074)) then
+     call io_bulk(ID,VAR="PH_K",VAR_SZ=(/nkbz,3/) )
+     call io_bulk(ID,R2=ph_kpt_bz(:,:))
+   endif
    !
  endif
  !

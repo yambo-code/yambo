@@ -69,7 +69,6 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'eliashberg',   '[R] Eliashberg')
  call it('r',defs,'phonons',      '[R] Phonons')
  call it('r',defs,'gkkp',         '[R] Electron-Phonon databases')
- call it('r',defs,'gkkp_analysis','[R] Electron-Phonon gkkp analysis')
 #endif
 #if defined _YPP_BOLTZMANN
  call it('r',defs,'current',      '[R] Current')
@@ -199,6 +198,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'PhBroad','Phonon broadening (Eliashberg & DOS)',ph_broad,E_unit)
  call it(defs,'EEfermi','External Fermi Level (Eliashberg)',elph_Ef,E_unit)
  call it(defs,'PhStps', 'Energy steps',elph_steps)
+ call it('f',defs,'GkkpExpand','Expand the gkkp in the whole BZ')
  !
 #endif
 #if defined _YPP_RAS

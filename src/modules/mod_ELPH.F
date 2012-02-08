@@ -27,6 +27,7 @@ module ELPH
  implicit none
  integer   :: ph_modes
  integer   :: elph_nb
+ integer   :: elph_nk_bz
  integer   :: elph_nDBs
  integer   :: elph_nDBs_used
  integer   :: nq_memory
@@ -102,11 +103,8 @@ module ELPH
      endif
      !
      if (.not.allocated(ph_freqs_sq)) then
-       if (elph_use_q_grid) then
-         allocate(ph_freqs_sq(nqibz,ph_modes))
-       else
-         allocate(ph_freqs_sq(elph_nDBs,ph_modes))
-       endif
+       allocate(ph_freqs_sq(elph_nDBs,ph_modes))
+       ph_freqs_sq=0._SP
        allocate(E_k_plus_q(elph_nb,nkbz,1))
        call mem_est("ph_freqs_sq E_k_plus_q",(/size(ph_freqs_sq),size(E_k_plus_q)/),&
 &                                            (/SP,SP/))

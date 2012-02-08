@@ -151,7 +151,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  l_phonons=.false.
  l_gkkp=.false.
- l_gkkp_analysis=.false.
+ l_gkkp_expand=.false.
  l_eliashberg=.false.
  l_atomic_amplitude=.false.
  elph_steps=200
@@ -341,10 +341,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
        if (l_atomic_amplitude) infile_editing=.false.
        if (l_eliashberg)   call initactivate(1,'eliashberg')
     endif
-     if ( trim(rstr_piece(i1)) == 'gkkp') then
-       l_gkkp_analysis    =trim(rstr_piece(i1+1))=='a'
-       if (l_gkkp_analysis) call initactivate(1,'gkkp_analysis')
-    endif
 #endif
      if ( trim(rstr_piece(i1)) == 'excitons') then
        l_wavefunction   =trim(rstr_piece(i1+1))=='w'
@@ -446,7 +442,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_eliashberg=runlevel_is_on('eliashberg')
  l_phonons   =runlevel_is_on('phonons')
  l_gkkp      =runlevel_is_on('gkkp')
- l_gkkp_analysis=runlevel_is_on('gkkp_analysis')
 #endif
 #if defined _YPP_BOLTZMANN
  l_current          = runlevel_is_on('current')
@@ -565,7 +560,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  endif
  !
 #if defined _YPP_ELPH
- if (l_gkkp.and..not.any((/l_excitons,l_gkkp_analysis/))) call initactivate(1,"DBsPATH PHfreqF")
+ if (l_gkkp.and..not.l_excitons) call initactivate(1,"DBsPATH PHfreqF GkkpExpand")
  if (l_phonons.and.l_eliashberg)   call initactivate(1,"EEfermi EfGbroad")
  if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) call initactivate(1,"PhBroad PhStps")
 #endif
@@ -604,7 +599,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  l_QP_init=l_plot.and.l_sp_wf
 #if defined _YPP_ELPH
- if (.not.l_QP_init) l_QP_init=(l_electrons.and.l_eliashberg).or.l_gkkp_analysis
+ if (.not.l_QP_init) l_QP_init=(l_electrons.and.l_eliashberg)
 #endif
 #if defined _YPP_SC
  if (.not.l_QP_init) l_QP_init=l_electrons.and.l_mean_potential

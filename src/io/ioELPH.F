@@ -21,7 +21,7 @@
 !
 integer function ioELPH(ID,what)
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,schlen
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
 &                         io_elemental,io_status,io_bulk,io_header,&
 &                         read_is_on,write_is_on,RD_CL,RD_CL_IF_END,io_action,&
@@ -30,7 +30,7 @@ integer function ioELPH(ID,what)
 &                         QP_PH_n_G_bands,max_ph_freq,elph_DW,elph_nDBs,&
 &                         elph_use_q_grid,E_k_plus_q,ph_qpt,ph_kpt_bz,elph_nDBs_used,&
 &                         gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f,&
-&                         pol_vector,elph_Ham_bands,elph_branches
+&                         pol_vector,elph_Ham_bands,elph_branches,elph_nk_bz
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:nkbz,nqibz
  use D_lattice,      ONLY:n_atoms_species
@@ -45,26 +45,29 @@ integer function ioELPH(ID,what)
  !
  !Work Space
  !
- integer                ::iq,im,ik,i1,i2,ierr
+ integer                ::iq,im,ik,i1,i2,ierr,VAR_SZ_
  real(SP), allocatable  ::elph_gkkp_disk(:,:,:),pol_vec_disk(:,:,:,:)
- character(9)           ::db_name
+ character(schlen)      ::db_name
  !
  if (what=='gkkp'.or.what=='no_gkkp') db_name='elph_gkkp'
+ if (what=='gkkp_expanded')           db_name='elph_gkkp_expanded'
  if (what=='gFsq')                    db_name='elph_gFsq'
  !
- ioELPH=io_connect(desc=db_name,type=2,ID=ID)
+ ioELPH=io_connect(desc=trim(db_name),type=2,ID=ID)
  if (ioELPH/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   ioELPH=io_header(ID,R_LATT=.true.,KPTS=.true.)
+   if (what/='gkkp_expanded') ioELPH=io_header(ID,R_LATT=.true.,KPTS=.true.)
+   if (what=='gkkp_expanded') ioELPH=io_header(ID,R_LATT=.true.,KPTS=.false.)
    if (ioELPH/=0) goto 1
    !
-   if (ver_is_gt_or_eq(ID,(/3,2,1/))) then
-     call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
-   else
-     call io_elemental(ID,VAR="PARS",VAR_SZ=4,MENU=0)
-   endif
+   VAR_SZ_=4
+   if (ver_is_gt_or_eq(ID,(/3,2,1/)    )) VAR_SZ_=5
+   if (ver_is_gt_or_eq(ID,revision=1074)) VAR_SZ_=6
+   !
+   call io_elemental(ID,VAR="PARS",VAR_SZ=VAR_SZ_,MENU=0)
+   !
    call io_elemental(ID,&
 &       VAR=" Phonon modes           :",I0=ph_modes,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,&
@@ -73,6 +76,10 @@ integer function ioELPH(ID,what)
    if ( (ver_is_gt_or_eq(ID,revision=356).and.what=='gFsq')) then
      call io_elemental(ID,&
 &       VAR="                  [used]:",I0=elph_nDBs_used,CHECK=.true.,OP=(/"=="/))
+   endif
+   if (ver_is_gt_or_eq(ID,revision=1074)) then
+     call io_elemental(ID,&
+&       VAR=" K points (BZ)          :",I0=elph_nk_bz,CHECK=.true.,OP=(/"=="/))
    endif
    !
    call io_elemental(ID,&
@@ -108,7 +115,7 @@ integer function ioELPH(ID,what)
    if (read_is_on(ID).and..not.allocated(ph_qpt)) then
      allocate(ph_qpt(elph_nDBs,3))
      call mem_est("ph_qpt",(/size(ph_qpt)/),(/SP/))
-     allocate(ph_kpt_bz(nkbz,3))
+     allocate(ph_kpt_bz(elph_nk_bz,3))
      call mem_est("ph_kpt_bz",(/size(ph_kpt_bz)/),(/SP/))
      ph_kpt_bz=0._SP
    endif
@@ -117,8 +124,10 @@ integer function ioELPH(ID,what)
    call io_bulk(ID,R2=ph_qpt(:,:))
    !
    if (ver_is_gt_or_eq(ID,revision=1074)) then
+     !
      call io_bulk(ID,VAR="PH_K",VAR_SZ=(/nkbz,3/) )
      call io_bulk(ID,R2=ph_kpt_bz(:,:))
+     !
    endif
    !
  endif
@@ -250,8 +259,7 @@ integer function ioELPH(ID,what)
  ! 
  ! ELPH_DW 
  !
- call io_bulk(ID,VAR="ELPH_DW_Q"//trim(intc(iq)),&
-&                VAR_SZ=(/ph_modes,elph_nb,elph_nb,nkbz/))
+ call io_bulk(ID,VAR="ELPH_DW_Q"//trim(intc(iq)),VAR_SZ=(/ph_modes,elph_nb,elph_nb,nkbz/))
  !
  do ik=1,nkbz
    ! 

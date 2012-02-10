@@ -59,7 +59,7 @@ integer function ioELPH(ID,what)
  if (any((/io_sec(ID,:)==1/))) then
    !
    if (what/='gkkp_expanded') ioELPH=io_header(ID,R_LATT=.true.,KPTS=.true.)
-   if (what=='gkkp_expanded') ioELPH=io_header(ID,R_LATT=.true.,KPTS=.false.)
+   if (what=='gkkp_expanded') ioELPH=io_header(ID,R_LATT=.true.,KPTS=.false.,IMPOSE_SN=.FALSE.)
    if (ioELPH/=0) goto 1
    !
    VAR_SZ_=4

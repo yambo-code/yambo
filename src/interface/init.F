@@ -356,6 +356,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _ELPH 
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  ioELPH_err=ioELPH(io_ID,'gkkp')
+ !
+ if (ioELPH_err/=0) then
+   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+   ioELPH_err=ioELPH(io_ID,'gkkp_expanded')
+ endif
 #endif
  !
  ! RT 

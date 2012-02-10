@@ -1,0 +1,155 @@
+Index: qp/ELPH_Sigma_c.F
+===================================================================
+--- qp/ELPH_Sigma_c.F	(revision 1087)
++++ qp/ELPH_Sigma_c.F	(working copy)
+@@ -41,7 +41,7 @@
+ &                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,QP_G_dr,&
+ &                        On_Mass_Shell_approx
+  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
+- use R_lattice,     ONLY:qindx_S,bz_samp,ik_is_table,RL_vol
++ use R_lattice,     ONLY:qindx_S,bz_samp,ik_is_table,RL_vol,nqbz,nkbz
+  use ELPH,          ONLY:elph_nb,ph_freqs_sq,elph_gkkp,&
+ &                        elph_global_free,QP_PH_n_G_bands,max_ph_freq,elph_DW,&
+ &                        elph_nDBs,E_k_plus_q,elph_use_q_grid,&
+@@ -59,10 +59,10 @@
+  ! WorkSpace  
+  !
+  integer          ::iq_db,iq_bz,iq_loop,iq_db_ref,iq_s,iq_ibz,ik,ok,ik_bz,okbz,ib,ob,is,il,i_qp,i2,&
+-&                   time_order_sign,ik_bz_gkkp,ib_gkkp,ob_gkkp,os,iw,nq_to_sum
++&                   time_order_sign,os,iw,nq_to_sum
+  type(w_samp)     ::Sc_W(qp%n_states)
+  type(pp_indexes) ::px
+- integer          ::io_err,ID,iv4(4)
++ integer          ::io_err,ID,iv4(4),Q_io_map(nqbz),K_io_map(nkbz)
+  integer, external::ioELPH,QP_state_extract
+  character(schlen)::ch
+  real(SP)         ::ph_E,delta_E_at_gamma,one_minus_2f_occ,f_occ,&
+@@ -124,7 +124,7 @@
+  ! ELPH DB
+  !
+  call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),ID=ID)
+- io_err=ioELPH(ID,'gkkp')
++ io_err=ioELPH(ID,'gkkp_expanded')
+  if (io_err/=0) call error('El-Ph database not found')
+  !
+  !Sc Energy points
+@@ -220,6 +220,10 @@
+  !
+  call pp_redux_wait
+  !
++ ! Remap of the gkkp m.e.
++ !
++ call ELPH_gkkp_remap(k,q,K_io_map,Q_io_map)
++ !
+  ! g^2F(w) residuals Allocation
+  !
+  call elph_global_alloc('gFsq')
+@@ -243,26 +247,8 @@
+    !
+    if (.not.any(px%element_2D(iq_ibz,:)).and.iq_db>1) cycle
+    !
+-   if (iq_db/=iabs(iq_db_ref)) then
+-     !
+-     call io_control(ACTION=RD_CL_IF_END,SEC=(/iq_db+1/),ID=ID)
+-     io_err=ioELPH(ID,'gkkp')
+-     if (io_err<0) call error('Missing Q-database')
+-     !
+-     if (.not.elph_use_q_grid) call setup_k_plus_q_levels(en%Efermi(1))
+-     !
+-     ! I call live_timing here as in ioELPH the global_alloc() can 
+-     ! send a screen message about the allocated memory that can interferee
+-     ! with the live_timing hashes
+-     !
+-     if (iq_db_ref==0) then
+-       call live_timing('El-Ph Sc [coeff]',live_timing_steps)
+-       if (.not.elph_use_q_grid) E_k_plus_q_at_gamma(:,:)=E_k_plus_q(:,:,1)
+-     endif
+-     !
+-     iq_db_ref=iq_db
+-     !
+-   endif
++   call io_control(ACTION=RD_CL_IF_END,SEC=(/Q_io_map(iq_loop)+1/),ID=ID)
++   io_err=ioELPH(ID,'gkkp_expanded')
+    !
+    if (distributed_Q.and..not.any(px%element_2D(iq_ibz,:)).and.iq_db>1) cycle
+    !
+@@ -278,44 +264,15 @@
+        !
+        if (.not.px%element_2D(iq_ibz,ob)) cycle
+        !
+-       ik_bz_gkkp=ik_bz
+-       ib_gkkp   =ib
+-       ob_gkkp   =ob
+-       !
+        if (elph_use_q_grid) then
+          okbz=qindx_S(ik,iq_bz,1)
+          ok=k%sstar(okbz,1)
+          os=k%sstar(okbz,2)
+-         ! 
+-         ! When using a uniform Q grid I cycle on the q symmetries 
+-         ! as well. To rotate the gkkp m.e. I use:
+-         ! 
+-         ! gkkp_{I_need}= <k+Rq n'|dV_{SCF}/du^{Rq nu}|k n>=
+-         !                <(R^-1 k)+q n'|dV_{SCF}/du^{q nu}|(R^-1 k) n>= 
+-         !                gkkp(ik_bz,nu,n',n)
+-         !
+-         ik_bz_gkkp=ik_is_table(ik,sop_inv(iq_s))
+-         ! 
+-         ! gkkp_{I_need}= <k+IRq n'|dV_{SCF}/du^{IRq nu}|k n>=
+-         !                [<(R^-1 S p)+q n|dV_{SCF}/du^{q nu}|(R^-1 S p) n'>]^*= 
+-         !                [gkkp(ik_bz,nu,n,n')]^*
+-         ! 
+-         ! with k + IRq = Sp 
+-         !
+-         if (iq_s>nsym/(i_time_rev+1)) then
+-           ib_gkkp   =ob
+-           ob_gkkp   =ib
+-           !                                 R^-1                 S
+-           !                                 -------------------- --
+-           ik_bz_gkkp=ik_is_table(ok,sop_tab(sop_inv(iq_s-nsym/2),os))
+-         endif
+-         !
+-         ! k is in the IBZ and q is the PW_q (=-YAMBO_q)
+-         !
+        endif
++       !
+        do il=elph_branches(1),elph_branches(2)
+          !
+-         ph_E=sqrt(abs(ph_freqs_sq(iq_ibz,il)))
++         ph_E=sqrt(abs(ph_freqs_sq(Q_io_map(iq_loop),il)))
+          !
+          ! Skip modes @ Gamma (1st point is always gamma, either with random
+          ! or uniform grids, as it is needed to evaluate the DW factor) 
+@@ -325,12 +282,11 @@
+          ! In the SE expression I have the m.e. 
+          !
+          !  <ib ik|g(q_YAMBO l r)|ob ik-q_YAMBO> = [<ob ik+q_PW|g(q_PW l r)|ib ik>]^* = 
+-         !                              elph_gkkp(ik_bz_gkkp,il,ob_gkkp,ib_gkkp)^*
++         !                                         elph_gkkp(ik_bz,il,ob,ib)^*
+          !
+          ! with q_YAMBO = - q_PW
+          !
+-         elph_gkkp_sq=conjg(elph_gkkp(ik_bz_gkkp,il,ob_gkkp,ib_gkkp))*&
+-&                           elph_gkkp(ik_bz_gkkp,il,ob_gkkp,ib_gkkp)/2./ph_E
++         elph_gkkp_sq=conjg(elph_gkkp(K_io_map(ik_bz),il,ob,ib))*elph_gkkp(K_io_map(ik_bz),il,ob,ib)/2./ph_E
+          !
+          ! Frequency Loop
+          !
+@@ -398,7 +354,7 @@
+          ! (b) Debye Waller Term
+          !
+          gsqF_dw(i_qp,iq_ibz,il)=gsqF_dw(i_qp,iq_ibz,il)-1./2.*&
+-&                                 2.*elph_DW(ik_bz,il,ib,ob)/delta_E_at_gamma*q_weight(iq_loop)/2./ph_E
++&                                 2.*elph_DW(K_io_map(ik_bz),il,ib,ob)/delta_E_at_gamma*q_weight(iq_loop)/2./ph_E
+          !                       /\
+          !                        |
+          !                        this 2 is to be consistent with AC definition (see Eq. 5, PRB 31, 2163)
+@@ -533,7 +489,7 @@
+          do il=elph_branches(1),elph_branches(2)
+            !
+            if (.not.elph_use_q_grid) ph_freq=sqrt(ph_freqs_sq(iq_loop,il))
+-           if (     elph_use_q_grid) ph_freq=sqrt(ph_freqs_sq( q%sstar(iq_loop,1) ,il))
++           if (     elph_use_q_grid) ph_freq=sqrt(ph_freqs_sq(Q_io_map(iq_loop),il))
+            !
+            do iw=1,gsqF_energy_steps
+              !

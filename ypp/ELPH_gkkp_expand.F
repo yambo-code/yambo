@@ -22,62 +22,59 @@
 subroutine ELPH_gkkp_expand(iq_bz,iq_s,k)
  !
  use pars,                ONLY:SP
- use R_lattice,           ONLY:bz_samp,ik_is_table,qindx_S
+ use R_lattice,           ONLY:bz_samp,ik_is_table,qindx_B,qindx_S
  use D_lattice,           ONLY:nsym,i_time_rev,sop_inv,sop_tab
- use ELPH,                ONLY:QP_PH_n_G_bands,ph_modes,elph_nb,elph_gkkp
+ use ELPH,                ONLY:ph_modes,elph_nb,elph_gkkp
  implicit none
  type(bz_samp) ::k
  integer       ::iq_bz,iq_s
  !
  ! Work Space 
  !
- integer       ::ik_bz,ib,ob,ok,ik_bz_gkkp,ob_gkkp,ib_gkkp,os,ik,&
-&                okbz,il
+ integer       ::ik_bz,ib,ob,ok,ik_bz_gkkp,os,ik,ok_bz,is
  complex(SP)   ::elph_gkkp_expanded(k%nbz,ph_modes,elph_nb,elph_nb)
  !
- ! GKKP m.e. rotation
+ ! GKKP m.e. rotation. Procedure copied from ELPH_Sigma_c
  !
  do ik_bz=1,k%nbz
    !
    ik=k%sstar(ik_bz,1)
+   is=k%sstar(ik_bz,2)
    !
-   do ib=1,QP_PH_n_G_bands
-     do ob=1,QP_PH_n_G_bands
-       !
-       ik_bz_gkkp=ik_bz
-       ib_gkkp   =ib
-       ob_gkkp   =ob
-       !
-       okbz=qindx_S(ik,iq_bz,1)
-       ok=k%sstar(okbz,1)
-       os=k%sstar(okbz,2)
+   do ok_bz=1,k%nbz
+     if (qindx_B(ik_bz,ok_bz,1)==iq_bz) then
+       ok=k%sstar(ok_bz,1)
+       os=k%sstar(ok_bz,2)
+       exit
+     endif
+   enddo
+   !
+   do ib=1,elph_nb
+     do ob=1,elph_nb
        ! 
        ! When using a uniform Q grid I cycle on the q symmetries 
        ! as well. To rotate the gkkp m.e. I use:
        !
        if (iq_s>nsym/(i_time_rev+1)) then
          ! 
-         ! gkkp_{I_need}= <k+IRq n'|dV_{SCF}/du^{IRq nu}|k n>=
+         ! gkkp_{I_need}= <Tk+IRq n'|dV_{SCF}/du^{IRq nu}|Tk n>=
          !                [<(R^-1 S p)+q n|dV_{SCF}/du^{q nu}|(R^-1 S p) n'>]^*= 
          !                [gkkp(ik_bz,nu,n,n')]^*
          ! 
-         ! with k + IRq = Sp 
-         !
-         ib_gkkp   =ob
-         ob_gkkp   =ib
+         ! with Tk + IRq = Sp 
          !                                 R^-1                 S
          !                                 -------------------- --
          ik_bz_gkkp=ik_is_table(ok,sop_tab(sop_inv(iq_s-nsym/2),os))
          !
-         elph_gkkp_expanded(ik_bz,:,ib,ob)=conjg(elph_gkkp(ik_bz_gkkp,:,ob_gkkp,ib_gkkp))
+         elph_gkkp_expanded(ik_bz,:,ob,ib)=conjg(elph_gkkp(ik_bz_gkkp,:,ib,ob))
          !
        else
          ! 
-         ! gkkp_{I_need}= <k+Rq n'|dV_{SCF}/du^{Rq nu}|k n>=
-         !                <(R^-1 k)+q n'|dV_{SCF}/du^{q nu}|(R^-1 k) n>= 
+         ! gkkp_{I_need}= <Tk+Rq n'|dV_{SCF}/du^{Rq nu}|Tk n>=
+         !                <(R^-1 T k)+q n'|dV_{SCF}/du^{q nu}|(R^-1 T k) n>= 
          !                gkkp(ik_bz,nu,n',n)
          !
-         ik_bz_gkkp=ik_is_table(ik,sop_inv(iq_s))
+         ik_bz_gkkp=ik_is_table(ik,sop_tab(sop_inv(iq_s),is))
          !
          elph_gkkp_expanded(ik_bz,:,ib,ob)=elph_gkkp(ik_bz_gkkp,:,ib,ob)
          !

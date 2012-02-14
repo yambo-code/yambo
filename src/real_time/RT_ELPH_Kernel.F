@@ -44,7 +44,8 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  use SC,             ONLY:SC_bands,it_now
  use parser_m,       ONLY:parser
  use real_time,      ONLY:RT_step,THETA_matrix,I1_lesser,Integrator_name,q_weight,&
-&                         G_lesser,MEM_index,NE_i_time
+&                         G_lesser,MEM_index,NE_i_time,elph_gkkp_expanded,GKKP_matrix_index,&
+&                         THETA_matrix_index
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
  use wrapper,        ONLY:M_by_M
@@ -58,7 +59,7 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  !
  ! Work Space ...
  !
- integer               :: i_s,i_map(-1:1),il,i_counter
+ integer               :: i_s,i_map(-1:1),il,i_theta,i_gkkp,ik_bz
  real(SP)              :: ph_freq,N_q(2),DELTA_T
  !
  complex(SP)           :: DELTA_matrix
@@ -75,12 +76,8 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  ! ... BZ index ...
  integer               :: iqbz,iq,iqs,ik_m_q,ik_m_qs
  !
- real(SP)              :: g_q_diagonal_sq,g_q_off_diagonal_sq
- real(SP)              :: g_q_diagonal,g_q_off_diagonal
- !
  B_dim=SC_bands(2)-SC_bands(1)+1
- !
- g_q_off_diagonal=0.
+ ik_bz=sum(k%nstar(:ik-1))+1
  !
  ! Time step
  !===========
@@ -91,14 +88,14 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  i_map( 0)=1
  i_map( 1)=2
  !
- i_counter=0
- !
  do iqbz=1,q%nbz
    !
    iq =q%sstar(iqbz,1)
    iqs=q%sstar(iqbz,2)
    ik_m_q =k%sstar(qindx_S(ik,iqbz,1),1)
    ik_m_qs=k%sstar(qindx_S(ik,iqbz,1),2)
+   !
+   i_gkkp=GKKP_matrix_index(iqbz)
    !
    do il=elph_branches(1),elph_branches(2)
      !
@@ -108,21 +105,20 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
      !
      N_q    = (bose_f(ph_freq)+(/0.,2./))/2.
      !
-     call get_g_diagonal(g_q_diagonal_sq)
-     !
-     g_q_diagonal_sq=g_q_diagonal_sq*q_weight(iqbz)
-     g_q_diagonal=sqrt(g_q_diagonal_sq)
-     g_q_off_diagonal=0.
-     !
-     !
      ! Note the m.e. in Gkkp are stored with indexes order exchanged
      !
      do i_n=SC_bands(1),SC_bands(2)
        i_n_m=i_n-SC_bands(1)+1
-       Gkkp(i_n_m,i_n_m)=g_q_diagonal 
+       !
+       Gkkp(i_n_m,i_n_m)=elph_gkkp_expanded(i_gkkp+ik_bz,il,i_n,i_n)*sqrt(q_weight(iqbz))
+       !
        do i_np=SC_bands(1),SC_bands(2)
          i_np_m=i_np-SC_bands(1)+1
-         if (i_n/=i_np) Gkkp(i_n_m,i_np_m)=g_q_off_diagonal
+         !
+         if (i_n/=i_np) then
+           Gkkp(i_n_m,i_np_m)=elph_gkkp_expanded(i_gkkp+ik_bz,il,i_np,i_n)*sqrt(q_weight(iqbz))
+         endif
+         !
        enddo 
      enddo
      !
@@ -140,7 +136,7 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
      !
      do i_s=-1,1,2
        !
-       i_counter=i_counter+1
+       i_theta=THETA_matrix_index(iqbz,il,i_map(i_s))
        !
        do i_e=1,B_dim
          !
@@ -154,12 +150,12 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
 &                       ( ( N_q(i_map(-i_s))-N_q(i_map(i_s)) )*cI*M3(i_e,i_np) +&
 &              spin_occ*( N_q(i_map(-i_s))*M2(i_e,i_np)-N_q(i_map(i_s))*M1(i_e,i_np) ) ) 
            !
-           THETA_matrix(i_counter,i_e,i_np,ik)=Xi_eta*conjg(Xi_np)*( THETA_matrix(i_counter,i_e,i_np,ik)+DELTA_T*DELTA_matrix )
+           THETA_matrix(i_theta,i_e,i_np,ik)=Xi_eta*conjg(Xi_np)*( THETA_matrix(i_theta,i_e,i_np,ik)+DELTA_T*DELTA_matrix )
            !
          enddo ! i_np
        enddo ! i_e
        !
-       call M_by_M('c','n',B_dim,Gkkp,THETA_matrix(i_counter,:,:,ik),S_mat(i_map(i_s),:,:))
+       call M_by_M('c','n',B_dim,Gkkp,THETA_matrix(i_theta,:,:,ik),S_mat(i_map(i_s),:,:))
        !
      enddo
      !
@@ -181,22 +177,3 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  enddo ! iq
  !
 end subroutine RT_ELPH_kernel
-!
-subroutine get_g_diagonal(g_q_diagonal_sq)
-  !
-  use pars,           ONLY:SP,pi
-  use vec_operate,    ONLY:iku_v_norm
-  use ELPH,           ONLY:ph_freqs_sq
-  use D_lattice,      ONLY:DL_vol
-  use real_time,      ONLY:RT_alpha_frohlich
-  implicit none
-  !
-  real(SP)::g_q_diagonal_sq,alpha,reduced_mass,alpha_tilde
-  !
-  ! GaAs (adim)
-  !
-  reduced_mass=.0591
-  !
-  g_q_diagonal_sq=RT_alpha_frohlich*4.*pi*sqrt( ph_freqs_sq(1,1) )**3./2. / ( sqrt(2.*reduced_mass)*DL_vol )
-  !
-end subroutine

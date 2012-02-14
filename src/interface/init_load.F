@@ -55,7 +55,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
 &                        RT_diagonalization_steps,SwitchOnTime,max_rt_steps_disk,NE_tot_time,NE_Hxc_jumps,&
-&                        RT_ave_dephasing,NE_MEM_treshold,RT_eh_energy_max,RT_alpha_frohlich
+&                        RT_ave_dephasing,NE_MEM_treshold,RT_eh_energy_max
  use fields,        ONLY:Efield
 #endif
 #if defined _MAGNETIC
@@ -301,7 +301,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'RTAveDeph','[RT] Dephasing for all elements not included in RTDePhMatrix' &
 &                        ,RT_ave_dephasing,verb_level=V_real_time,unit=Time_unit)
  call it(defs,'DiskSteps',   '[RT] Numer of steps stored in memory before I/O',max_rt_steps_disk,verb_level=V_real_time)
- call it(defs,'AlphaFr',     '[RT] Frohlich alpha',RT_alpha_frohlich,verb_level=V_real_time)
  call it('f',defs,'Diamagnetic', '[RT] Include the diamagnetic term in current and coupling',verb_level=V_real_time)
  call it('f',defs,'InducedField', '[RT] Include induced field in coupling and current',verb_level=V_real_time)
  call it('f',defs,'SkipGFIO',  '[RT] Do not write on disk the Green Functions',verb_level=V_real_time)

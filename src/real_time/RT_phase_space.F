@@ -22,8 +22,9 @@
 integer function RT_phase_space(E)
  ! 
  use pars,           ONLY:zero_dfl,SP
+ use drivers,        ONLY:l_ph_corr
  use electrons,      ONLY:levels,spin_occ
- use real_time,      ONLY:RT_eh_energy_max,RT_px
+ use real_time,      ONLY:RT_eh_energy_max,RT_k_px
  use SC,             ONLY:SC_bands
  use R_lattice,      ONLY:nkibz
  use par_indexes_m,  ONLY:par_indexes
@@ -47,9 +48,9 @@ integer function RT_phase_space(E)
  !
  ! Pre-allocation of CPU tables
  !
- call pp_indexes_reset(RT_px)
+ call pp_indexes_reset(RT_k_px)
  !
- call par_indexes(RT_px,(/nkibz/))
+ call par_indexes(RT_k_px,(/nkibz/))
  ! 
  if (RT_eh_energy_max<zero_dfl) then
    !
@@ -95,13 +96,21 @@ integer function RT_phase_space(E)
  !
  do ik=1,nkibz
    !
-   RT_px%element_1D(ik)=.FALSE.
-   !
-   if (.not.RT_k_point(ik)) cycle
-   !
-   ik_todo=ik_todo+1
-   !
-   if (p_loc%element_1D(ik_todo)) RT_px%element_1D(ik)=.TRUE.
+   if (RT_k_point(ik)) then
+     !
+     ik_todo=ik_todo+1
+     !
+     ! In the case of el-ph scattering the parallelization is already done on the
+     ! q-points. Nevertheless the eventually reduced range of k-points remains
+     ! defined for all CPUs.
+     !
+     if (p_loc%element_1D(ik_todo).and..not.l_ph_corr) RT_k_px%element_1D(ik)=.TRUE.
+     !
+   else
+     !
+     RT_k_px%element_1D(ik)=.FALSE.
+     !
+   endif
    !
  enddo
  !

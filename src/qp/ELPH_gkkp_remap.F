@@ -19,19 +19,18 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_gkkp_remap(k,q,k_map,q_map)
+subroutine ELPH_gkkp_remap(k,q)
  !
  use pars,           ONLY:SP
  use com,            ONLY:error
  use R_lattice,      ONLY:bz_samp
- use ELPH,           ONLY:ph_qpt,ph_kpt_bz,elph_nDBs,elph_nk_bz
+ use ELPH,           ONLY:ph_qpt,ph_kpt_bz,elph_nDBs,elph_nk_bz,K_io_map,Q_io_map
  use vec_operate,    ONLY:v_is_zero,rlu_v_is_zero,c2a
  use zeros,          ONLY:k_rlu_zero
  !
  implicit none
  !
  type(bz_samp) ::k,q
- integer       ::k_map(k%nbz),q_map(q%nbz)
  !
  ! Work Space
  !
@@ -41,30 +40,34 @@ subroutine ELPH_gkkp_remap(k,q,k_map,q_map)
  if (elph_nDBs /=q%nbz) call error('Number of q-points does not match')
  if (elph_nk_bz/=k%nbz) call error('Number of k-points does not match')
  !
+ if (.not.allocated(Q_io_map)) then
+   allocate(Q_io_map(q%nbz),K_io_map(k%nbz))
+ endif
+ !
  ! Q-points map
  !
- q_map=0
+ Q_io_map=0
  call k_ibz2bz(q,'i',.false.)
  do i1=1,q%nbz
    do i2=1,q%nbz
      call c2a(v_in=q%ptbz(i1,:)-ph_qpt(i2,:),v_out=v,mode="ki2a")
-     if (rlu_v_is_zero(v,zero_=k_rlu_zero)) q_map(i1)=i2
+     if (rlu_v_is_zero(v,zero_=k_rlu_zero)) Q_io_map(i1)=i2
    enddo
  enddo
  call k_ibz2bz(q,'d',.false.)
- if (any(q_map==0)) call error('Q-points do not match')
+ if (any(Q_io_map==0)) call error('Q-points do not match')
  !
  ! K-points map
  !
- k_map=0
+ K_io_map=0
  call k_ibz2bz(k,'i',.false.)
  do i1=1,k%nbz
    do i2=1,k%nbz
      call c2a(v_in=k%ptbz(i1,:)-ph_kpt_bz(i2,:),v_out=v,mode="ki2a")
-     if (rlu_v_is_zero(v,zero_=k_rlu_zero)) k_map(i1)=i2
+     if (rlu_v_is_zero(v,zero_=k_rlu_zero)) K_io_map(i1)=i2
    enddo
  enddo
  call k_ibz2bz(k,'i',.false.)
- if (any(k_map==0)) call error('K-points do not match')
+ if (any(K_io_map==0)) call error('K-points do not match')
  !
 end subroutine

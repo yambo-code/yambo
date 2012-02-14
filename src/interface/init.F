@@ -361,6 +361,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
    ioELPH_err=ioELPH(io_ID,'gkkp_expanded')
  endif
+ !
 #endif
  !
  ! RT 
@@ -650,7 +651,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(-1,'SCmixing')
    call initactivate(1,'Integrator RADLifeTime PhLifeTime RTmaxEn') 
    call initactivate(1,'RTstep NEsteps NETime')
-   if (l_ph_corr) call initactivate(1,'MemTresh AlphaFr')
+   if (l_ph_corr) call initactivate(1,'MemTresh')
    call initactivate(1,'HXCjumps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
    call initactivate(1,'RTfreezeH RTfreezeXC Diamagnetic InducedField SkipGFIO SkipOCCIO')
    if (l_RT_probe.or.l_RT_pump_and_probe) call Afield_activate('Probe')

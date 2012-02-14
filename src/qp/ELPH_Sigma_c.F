@@ -193,7 +193,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  ! Spherical RIM
  !===============
  !
- call rim_spherical(nq_to_sum,ph_qpt(1:nq_to_sum,1:3),q_weight,(3.*RL_vol/nq_to_sum/4./pi)**(1./3.),.TRUE.)
+ call rim_spherical(nq_to_sum,ph_qpt(1:nq_to_sum,1:3),q_weight,(3.*RL_vol/nq_to_sum/4./pi)**(1./3.),2,.TRUE.)
  !
  ! Parallelization
  !

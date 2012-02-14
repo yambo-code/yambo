@@ -57,6 +57,11 @@ module ELPH
  real(SP),allocatable :: gsqF_life_bose(:,:,:,:)
  real(SP),allocatable :: gsqF_life_f(:,:,:,:)
  !
+ ! I/O maps for expanded m.e. to be exported
+ !
+ integer, allocatable :: Q_io_map(:)
+ integer, allocatable :: K_io_map(:)
+ !
  ! el-ph Self-Energy
  !
  integer   :: QP_PH_n_G_bands
@@ -73,34 +78,43 @@ module ELPH
      !
      nq_to_allocate=elph_nDBs_used
      !
-     if (what=='gFsq'.and..not.allocated(gsqF_fan)) then
-       if (eval_G_using_KK) then
-         if (nq_memory>0) nq_to_allocate=nq_memory
-       else
-         allocate(gsqF_fan(QP_n_states,elph_nDBs_used,ph_modes,gsqF_energy_steps),stat=alloc_err)
-         call mem_est('gsqF_fan',(/size(gsqF_fan)/),(/SP/),errors=(/alloc_err/))
-         allocate(gsqF_ca_corr(QP_n_states,elph_nDBs_used,ph_modes,gsqF_energy_steps),stat=alloc_err)
-         call mem_est('gsqF_ca_corr',(/size(gsqF_ca_corr)/),(/SP/),errors=(/alloc_err/))
-         gsqF_fan=0.
-         gsqF_ca_corr=0.
-       endif
-       allocate(gsqF_dw(QP_n_states,elph_nDBs_used,ph_modes),stat=alloc_err)
-       call mem_est('gsqF_dw',(/size(gsqF_dw)/),(/SP/),errors=(/alloc_err/))
-       allocate(gsqF_life_bose(QP_n_states,nq_to_allocate,ph_modes,gsqF_energy_steps),stat=alloc_err)
-       call mem_est('gsqF_life_bose',(/size(gsqF_life_bose)/),(/SP/),errors=(/alloc_err/))
-       allocate(gsqF_life_f(QP_n_states,nq_to_allocate,ph_modes,gsqF_energy_steps),stat=alloc_err)
-       call mem_est('gsqF_life_f',(/size(gsqF_life_f)/),(/SP/),errors=(/alloc_err/))
-       gsqF_dw=0.
-       gsqF_life_bose=0.
-       gsqF_life_f=0.
-     endif
-     if (what=='gkkp'.and..not.allocated(elph_gkkp)) then
-       allocate(elph_gkkp(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err)
-       call mem_est("GKKP",(/size(elph_gkkp)/),(/2*SP/),errors=(/alloc_err/))
-       allocate(elph_DW(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err)
-       call mem_est("GKKP_DW",(/size(elph_DW)/),(/SP/),errors=(/alloc_err/))
-       allocate(f_k_plus_q(elph_nb,nkbz,1))
-     endif
+     select case (trim(what))
+       !
+       case ('gFsq')
+         !
+         if (.not.allocated(gsqF_fan)) then
+           if (eval_G_using_KK) then
+             if (nq_memory>0) nq_to_allocate=nq_memory
+           else
+             allocate(gsqF_fan(QP_n_states,elph_nDBs_used,ph_modes,gsqF_energy_steps),stat=alloc_err)
+             call mem_est('gsqF_fan',(/size(gsqF_fan)/),(/SP/),errors=(/alloc_err/))
+             allocate(gsqF_ca_corr(QP_n_states,elph_nDBs_used,ph_modes,gsqF_energy_steps),stat=alloc_err)
+             call mem_est('gsqF_ca_corr',(/size(gsqF_ca_corr)/),(/SP/),errors=(/alloc_err/))
+             gsqF_fan=0.
+             gsqF_ca_corr=0.
+           endif
+           allocate(gsqF_dw(QP_n_states,elph_nDBs_used,ph_modes),stat=alloc_err)
+           call mem_est('gsqF_dw',(/size(gsqF_dw)/),(/SP/),errors=(/alloc_err/))
+           allocate(gsqF_life_bose(QP_n_states,nq_to_allocate,ph_modes,gsqF_energy_steps),stat=alloc_err)
+           call mem_est('gsqF_life_bose',(/size(gsqF_life_bose)/),(/SP/),errors=(/alloc_err/))
+           allocate(gsqF_life_f(QP_n_states,nq_to_allocate,ph_modes,gsqF_energy_steps),stat=alloc_err)
+           call mem_est('gsqF_life_f',(/size(gsqF_life_f)/),(/SP/),errors=(/alloc_err/))
+           gsqF_dw=0.
+           gsqF_life_bose=0.
+           gsqF_life_f=0.
+         endif
+         !
+       case ('gkkp')
+         !
+         if (.not.allocated(elph_gkkp)) then
+           allocate(elph_gkkp(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err)
+           call mem_est("GKKP",(/size(elph_gkkp)/),(/2*SP/),errors=(/alloc_err/))
+           allocate(elph_DW(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err)
+           call mem_est("GKKP_DW",(/size(elph_DW)/),(/SP/),errors=(/alloc_err/))
+           allocate(f_k_plus_q(elph_nb,nkbz,1))
+         endif
+         !
+     end select
      !
      if (.not.allocated(ph_freqs_sq)) then
        allocate(ph_freqs_sq(elph_nDBs,ph_modes))

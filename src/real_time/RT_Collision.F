@@ -59,7 +59,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
 &                         G_lesser_reference,Phase_LifeTime,NE_Hxc_jumps,                      &
 &                         RT_is_dumped,l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start, &
-&                         RT_Deph_Matrix,l_RT_needs_XC0,RT_px
+&                         RT_Deph_Matrix,l_RT_needs_XC0,RT_k_px
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
@@ -136,7 +136,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  !
  do ik=1,QP_nk 
    !
-   if (.not.RT_px%element_1D(ik)) cycle
+   if (.not.RT_k_px%element_1D(ik)) cycle
    !
    ! Here I fill H_nl_sc (which defined I1 and I2) with...
    !

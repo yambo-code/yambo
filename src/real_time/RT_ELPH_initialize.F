@@ -23,12 +23,12 @@ subroutine RT_ELPH_initialize(k,q)
  ! 
  use pars,           ONLY:SP,pi
  use real_time,      ONLY:q_weight,RT_q_px,elph_gkkp_expanded,THETA_matrix,&
-&                         GKKP_matrix_index,THETA_matrix_index
+&                         GKKP_matrix_index,THETA_matrix_index,Q_io_map,K_io_map 
  use R_lattice,      ONLY:RL_vol,RIM_n_rand_pts,bz_samp
  use par_indexes_m,  ONLY:par_indexes
  use par_proc_m,     ONLY:pp_indexes_reset,myid
  use IO_m,           ONLY:io_control,OP_RD,REP,RD_CL_IF_END
- use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb,Q_io_map,K_io_map
+ use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb
  use memory_m,       ONLY:mem_est
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
@@ -52,7 +52,7 @@ subroutine RT_ELPH_initialize(k,q)
  ! Q/K grid remapping
  !====================
  !
- call ELPH_gkkp_remap(k,q)
+ call RT_ELPH_gkkp_remap(k,q)
  !
  ! Allocation
  !============

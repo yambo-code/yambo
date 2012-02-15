@@ -19,12 +19,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_gkkp_remap(k,q)
+subroutine RT_ELPH_gkkp_remap(k,q)
  !
  use pars,           ONLY:SP
  use com,            ONLY:error
  use R_lattice,      ONLY:bz_samp
- use ELPH,           ONLY:ph_qpt,ph_kpt_bz,elph_nDBs,elph_nk_bz,K_io_map,Q_io_map
+ use ELPH,           ONLY:ph_qpt,ph_kpt_bz,elph_nDBs,elph_nk_bz
+ use real_time,      ONLY:K_io_map,Q_io_map
  use vec_operate,    ONLY:v_is_zero,rlu_v_is_zero,c2a
  use zeros,          ONLY:k_rlu_zero
  !

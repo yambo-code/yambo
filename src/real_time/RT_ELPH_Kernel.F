@@ -60,7 +60,7 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  ! Work Space ...
  !
  integer               :: i_s,i_map(-1:1),il,i_theta,i_gkkp,ik_bz
- real(SP)              :: ph_freq,N_q(2),DELTA_T
+ real(SP)              :: ph_freq,N_q(2),DELTA_T,ph_E
  !
  complex(SP)           :: DELTA_matrix
  complex(SP)           :: M1(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
@@ -107,16 +107,18 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
      !
      ! Note the m.e. in Gkkp are stored with indexes order exchanged
      !
+     ph_E=sqrt(ph_freqs_sq(iqbz,il))
+     !
      do i_n=SC_bands(1),SC_bands(2)
        i_n_m=i_n-SC_bands(1)+1
        !
-       Gkkp(i_n_m,i_n_m)=elph_gkkp_expanded(i_gkkp+ik_bz,il,i_n,i_n)*sqrt(q_weight(iqbz))
+       Gkkp(i_n_m,i_n_m)=elph_gkkp_expanded(i_gkkp+ik_bz,il,i_n,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_E)
        !
        do i_np=SC_bands(1),SC_bands(2)
          i_np_m=i_np-SC_bands(1)+1
          !
          if (i_n/=i_np) then
-           Gkkp(i_n_m,i_np_m)=elph_gkkp_expanded(i_gkkp+ik_bz,il,i_np,i_n)*sqrt(q_weight(iqbz))
+           Gkkp(i_n_m,i_np_m)=elph_gkkp_expanded(i_gkkp+ik_bz,il,i_np,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_E)
          endif
          !
        enddo 

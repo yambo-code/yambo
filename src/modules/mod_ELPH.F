@@ -57,11 +57,6 @@ module ELPH
  real(SP),allocatable :: gsqF_life_bose(:,:,:,:)
  real(SP),allocatable :: gsqF_life_f(:,:,:,:)
  !
- ! I/O maps for expanded m.e. to be exported
- !
- integer, allocatable :: Q_io_map(:)
- integer, allocatable :: K_io_map(:)
- !
  ! el-ph Self-Energy
  !
  integer   :: QP_PH_n_G_bands

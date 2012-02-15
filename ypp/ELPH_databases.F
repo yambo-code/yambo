@@ -64,7 +64,7 @@ integer function ELPH_databases(k,E,q)
  !
  call parser('GkkpExpand',l_gkkp_expand)
  !
- if (l_gkkp_expand.and..not.allocated(qindx_B)) call error("Missing extnded k/q scattering database. Please run a bse setup")
+ if (l_gkkp_expand.and..not.allocated(qindx_B)) call error("Missing extended k/q scattering database. Please run a bse setup")
  !
  call msg('s','PW(ELPH) databases ...')
  !

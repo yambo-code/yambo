@@ -147,6 +147,8 @@ module real_time
  ! ... indexex ...
  integer,     allocatable :: THETA_matrix_index(:,:,:)
  integer,     allocatable :: GKKP_matrix_index(:)
+ integer,     allocatable :: Q_io_map(:)
+ integer,     allocatable :: K_io_map(:)
  !
  ! Relaxation: Dephasing Matrix
  !------------------------------
@@ -271,10 +273,6 @@ module real_time
      use QP_m,           ONLY:QP_nk,QP_n_states,QP_Vnl_xc
      use R_lattice,      ONLY:nqbz
      use collisions_IO,  ONLY:collisions_IO_alloc
-#if defined _ELPH
-     use ELPH,           ONLY:ph_modes
-#endif
-
      !
      type(levels), intent(in) :: en
      !
@@ -350,7 +348,6 @@ module real_time
      use xc_functionals, ONLY:E_xc
      use collisions_IO,  ONLY:collisions_IO_free
      use par_proc_m,     ONLY:pp_indexes_reset
-     use ELPH,           ONLY:Q_io_map,K_io_map
      !
      call SC_free()
      !

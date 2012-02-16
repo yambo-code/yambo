@@ -24,7 +24,7 @@ subroutine RT_ELPH_initialize(k,q)
  use pars,           ONLY:SP,pi
  use real_time,      ONLY:q_weight,RT_q_px,elph_gkkp_expanded,THETA_matrix,&
 &                         GKKP_matrix_index,THETA_matrix_index,Q_io_map,K_io_map 
- use R_lattice,      ONLY:RL_vol,RIM_n_rand_pts,bz_samp
+ use R_lattice,      ONLY:RL_vol,bz_samp
  use par_indexes_m,  ONLY:par_indexes
  use par_proc_m,     ONLY:pp_indexes_reset,myid
  use IO_m,           ONLY:io_control,OP_RD,REP,RD_CL_IF_END
@@ -91,7 +91,7 @@ subroutine RT_ELPH_initialize(k,q)
    !
    do ik=1,k%nbz
      !
-     elph_gkkp_expanded((i_counter-1)+ik,:,:,:)=elph_gkkp(K_io_map(ik),:,:,:)
+     elph_gkkp_expanded((i_counter-1)*k%nbz+ik,:,:,:)=elph_gkkp(K_io_map(ik),:,:,:)
      !
    enddo
    !
@@ -105,8 +105,6 @@ subroutine RT_ELPH_initialize(k,q)
  allocate(q_weight(q%nbz))
  !
  call k_ibz2bz(q,'i',.TRUE.)  
- !
- RIM_n_rand_pts=100000
  !
  RADIUS_sphere=(3.*RL_vol/q%nbz/4./pi)**(1./3.)
  !

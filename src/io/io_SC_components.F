@@ -40,7 +40,7 @@ integer function io_SC_components(what,E_sc,ID)
 #if defined _RT
  use real_time,      ONLY:l_NE_with_fields,NE_steps,RT_P,J_and_P_cache_size, &
 &                         G_lesser,NE_dynamics,RT_ind_J,J_and_P_cache,&
-&                         G_lesser_reference,MEM_index,NE_MEM_steps,THETA_matrix
+&                         G_lesser_reference,MEM_index,NE_MEM_steps,THETA_matrix,q_weight
  use fields,         ONLY:A_vecpot
  use QP_m,           ONLY:QP_nk
 #endif                                
@@ -180,6 +180,11 @@ integer function io_SC_components(what,E_sc,ID)
      call io_elemental(ID,I0=i_Probe)
      call io_elemental(ID,I0=i_Pump)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   endif
+   !
+   if (l_THETA) then
+     call io_bulk(ID,VAR="Q_weight",VAR_SZ=(/nqbz/))
+     call io_bulk(ID,R1=q_weight)
    endif
    !
    io_SC_components=io_status(ID)

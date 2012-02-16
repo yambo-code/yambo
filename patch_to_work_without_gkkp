@@ -1,0 +1,138 @@
+Index: src/real_time/RT_ELPH_Kernel.F
+===================================================================
+--- src/real_time/RT_ELPH_Kernel.F	(revision 1098)
++++ src/real_time/RT_ELPH_Kernel.F	(working copy)
+@@ -38,7 +38,7 @@
+  ! Iteration: in this case I ***think*** (even if I am not completely sure) that everything is ok.
+  !  
+  use pars,           ONLY:SP,cI,pi
+- use units,          ONLY:FS2AUT
++ use units,          ONLY:FS2AUT,HA2EV
+  use electrons,      ONLY:levels,spin_occ
+  use R_lattice,      ONLY:bz_samp,qindx_S
+  use SC,             ONLY:SC_bands,it_now
+@@ -60,7 +60,7 @@
+  ! Work Space ...
+  !
+  integer               :: i_s,i_map(-1:1),il,i_theta,i_gkkp,ik_bz
+- real(SP)              :: ph_freq,N_q(2),DELTA_T,ph_E
++ real(SP)              :: ph_freq,N_q(2),DELTA_T
+  !
+  complex(SP)           :: DELTA_matrix
+  complex(SP)           :: M1(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
+@@ -99,7 +99,7 @@
+    !
+    do il=elph_branches(1),elph_branches(2)
+      !
+-     ph_freq=sqrt(ph_freqs_sq(iq,il))
++     ph_freq=sqrt(ph_freqs_sq(iqbz,il))
+      !
+      ! N-\+ (note the different order of the +/-). 1/2 here ?
+      !
+@@ -107,18 +107,20 @@
+      !
+      ! Note the m.e. in Gkkp are stored with indexes order exchanged
+      !
+-     ph_E=sqrt(ph_freqs_sq(iqbz,il))
+-     !
+      do i_n=SC_bands(1),SC_bands(2)
+        i_n_m=i_n-SC_bands(1)+1
+        !
+-       Gkkp(i_n_m,i_n_m)=elph_gkkp_expanded(i_gkkp+ik_bz,il,i_n,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_E)
++       Gkkp(i_n_m,i_n_m)=elph_gkkp_expanded(i_gkkp+ik_bz,il,i_n,i_n)
++!*sqrt(q_weight(iqbz))
++
++!/sqrt(ph_freq)
+        !
+        do i_np=SC_bands(1),SC_bands(2)
+          i_np_m=i_np-SC_bands(1)+1
+          !
+          if (i_n/=i_np) then
+-           Gkkp(i_n_m,i_np_m)=elph_gkkp_expanded(i_gkkp+ik_bz,il,i_np,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_E)
++           Gkkp(i_n_m,i_np_m)=(0.,0.)
++!elph_gkkp_expanded(i_gkkp+ik_bz,il,i_np,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_freq)
+          endif
+          !
+        enddo 
+Index: src/real_time/RT_ELPH_initialize.F
+===================================================================
+--- src/real_time/RT_ELPH_initialize.F	(revision 1098)
++++ src/real_time/RT_ELPH_initialize.F	(working copy)
+@@ -28,10 +28,11 @@
+  use par_indexes_m,  ONLY:par_indexes
+  use par_proc_m,     ONLY:pp_indexes_reset,myid
+  use IO_m,           ONLY:io_control,OP_RD,REP,RD_CL_IF_END
+- use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb
++ use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb,elph_branches
+  use memory_m,       ONLY:mem_est
+  use SC,             ONLY:SC_bands
+  use QP_m,           ONLY:QP_nk
++use units
+  !
+  implicit none
+  !
+@@ -52,8 +53,12 @@
+  ! Q/K grid remapping
+  !====================
+  !
+- call RT_ELPH_gkkp_remap(k,q)
++ ph_modes=1
++ elph_branches=1
++ elph_nb=10
+  !
++! call RT_ELPH_gkkp_remap(k,q)
++ !
+  ! Allocation
+  !============
+  !
+@@ -64,24 +69,25 @@
+  call mem_est("THETA_matrix",(/size(THETA_matrix)/),(/2*SP/))
+  THETA_matrix=(0._SP,0._SP)
+  !
+- allocate(GKKP_matrix_index(q%nbz),THETA_matrix_index(q%nbz,ph_modes,2))
++ allocate(GKKP_matrix_index(q%nbz),THETA_matrix_index(q%nbz,ph_modes,2),ph_freqs_sq(q%nbz,ph_modes))
+  !
+  ! I/O
+  !=====
+  !
+- call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),ID=ID)
+- io_err=ioELPH(ID,'gkkp_expanded')
++ !call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),ID=ID)
++ !io_err=ioELPH(ID,'gkkp_expanded')
+  !
+  i_counter=0
+  !
+  do iq=1,q%nbz
+    !
+-   iq_io=Q_io_map(iq)
++   iq_io=iq
++!Q_io_map(iq)
+    !
+-   call io_control(ACTION=RD_CL_IF_END,SEC=(/iq_io+1/),ID=ID)
+-   io_err=ioELPH(ID,'gkkp_expanded')
++   !call io_control(ACTION=RD_CL_IF_END,SEC=(/iq_io+1/),ID=ID)
++   !io_err=ioELPH(ID,'gkkp_expanded')
+    !
+-   ph_Esq_local(iq,:)=ph_freqs_sq(iq_io,:)
++   !ph_Esq_local(iq,:)=ph_freqs_sq(iq_io,:)
+    !
+    if (.not.RT_q_px%element_1D(iq)) cycle
+    !
+@@ -91,13 +97,15 @@
+    !
+    do ik=1,k%nbz
+      !
+-     elph_gkkp_expanded((i_counter-1)+ik,:,:,:)=elph_gkkp(K_io_map(ik),:,:,:)
++     elph_gkkp_expanded((i_counter-1)*k%nbz+ik,:,:,:)=sqrt(0.001)
++!elph_gkkp(K_io_map(ik),:,:,:)
+      !
+    enddo
+    !
+  enddo
+  !
+- ph_freqs_sq=ph_Esq_local
++ ph_freqs_sq=(36/1000./HA2EV)**2.
++!ph_Esq_local
+  !
+  ! RIM
+  !=====

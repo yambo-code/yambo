@@ -38,13 +38,11 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  ! Iteration: in this case I ***think*** (even if I am not completely sure) that everything is ok.
  !  
  use pars,           ONLY:SP,cI,pi
- use units,          ONLY:FS2AUT
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
  use SC,             ONLY:SC_bands,it_now
- use parser_m,       ONLY:parser
  use real_time,      ONLY:RT_step,THETA_matrix,I1_lesser,Integrator_name,q_weight,&
-&                         G_lesser,MEM_index,NE_i_time,elph_gkkp_expanded,GKKP_matrix_index,&
+&                         G_lesser,MEM_index,elph_gkkp_expanded,GKKP_matrix_index,&
 &                         THETA_matrix_index
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
@@ -74,7 +72,7 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  ! ... band index ...
  integer               :: i_n,i_np,i_e,i_m,B_dim,i_np_m,i_n_m
  ! ... BZ index ...
- integer               :: iqbz,iq,iqs,ik_m_q,ik_m_qs
+ integer               :: iqbz,ik_m_q,ik_m_qs
  !
  B_dim=SC_bands(2)-SC_bands(1)+1
  ik_bz=sum(k%nstar(:ik-1))+1
@@ -90,8 +88,6 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  !
  do iqbz=1,q%nbz
    !
-   iq =q%sstar(iqbz,1)
-   iqs=q%sstar(iqbz,2)
    ik_m_q =k%sstar(qindx_S(ik,iqbz,1),1)
    ik_m_qs=k%sstar(qindx_S(ik,iqbz,1),2)
    !
@@ -99,7 +95,7 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
    !
    do il=elph_branches(1),elph_branches(2)
      !
-     ph_freq=sqrt(ph_freqs_sq(iq,il))
+     ph_freq=sqrt(ph_freqs_sq(iqbz,il))
      !
      ! N-\+ (note the different order of the +/-). 1/2 here ?
      !
@@ -107,18 +103,16 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
      !
      ! Note the m.e. in Gkkp are stored with indexes order exchanged
      !
-     ph_E=sqrt(ph_freqs_sq(iqbz,il))
-     !
      do i_n=SC_bands(1),SC_bands(2)
        i_n_m=i_n-SC_bands(1)+1
        !
-       Gkkp(i_n_m,i_n_m)=elph_gkkp_expanded(i_gkkp+ik_bz,il,i_n,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_E)
+       Gkkp(i_n_m,i_n_m)=elph_gkkp_expanded(i_gkkp+ik_bz,il,i_n,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_freq)
        !
        do i_np=SC_bands(1),SC_bands(2)
          i_np_m=i_np-SC_bands(1)+1
          !
          if (i_n/=i_np) then
-           Gkkp(i_n_m,i_np_m)=elph_gkkp_expanded(i_gkkp+ik_bz,il,i_np,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_E)
+           Gkkp(i_n_m,i_np_m)=elph_gkkp_expanded(i_gkkp+ik_bz,il,i_np,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_freq)
          endif
          !
        enddo 
@@ -176,6 +170,6 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
      !
    enddo ! ph branch
    !
- enddo ! iq
+ enddo ! iqbz
  !
 end subroutine RT_ELPH_kernel

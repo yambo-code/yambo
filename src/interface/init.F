@@ -44,7 +44,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         write_the_logo,file_exists,rename_file,write_to_report
  use vec_operate,    ONLY:v_norm
  use timing,         ONLY:live_timing_is_on,what_is_running
- use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_solver,&
+ use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_solver,QP_nb,QP_nk,&
 &                         QP_state,QP_reset,QP_ctl_E,QP_table
  use X_m,            ONLY:X_t,X_duplicate,X_reset
  use stderr,         ONLY:tty_size,logfile
@@ -95,7 +95,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer, external :: ioX,io_DIPOLES,ioGROT,ioQINDX,ioRIM,&
 &                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_PP,&
 &                     ioCOL_CUT
- logical           :: OSTNTS_Vnl_included
+ logical           :: OSTNTS_Vnl_included,QP_state_SAVE(k%nibz,en%nb)
  !
  integer, external :: ioE_RIM
  !
@@ -741,11 +741,27 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if ( any((/l_HF_and_locXC,l_gw0,l_life/)).and..not.l_sc_run.and..not.l_collisions_IO ) then
    !
-   ! The QP_state is read from ioxxvxc in DUMP mode.
-   ! If it is not allocated I define it on the basis 
-   ! of the input file
+   ! The QP_state can be read from ioxxvxc in DUMP mode or from the input file.
+   ! The DB value is used when a new input file is created or when the previous input file
+   ! had no QP_state fields.
    !
-   if (.not.allocated(QP_state)) call QP_state_table_setup(en)
+   ! QP_state from DB ?
+   !
+   if (allocated(QP_state)) then
+     !
+     QP_state_SAVE(1:QP_nb,1:QP_nk)=QP_state
+     deallocate(QP_state)
+     !
+   endif
+   !
+   ! QP_state from input file ?
+   !
+   call QP_state_table_setup(en)
+   !
+   if (.not.allocated(QP_state)) then
+     allocate(QP_state(QP_nb,QP_nk))
+     QP_state=QP_state_SAVE(1:QP_nb,1:QP_nk)
+   endif
    !
    ! I use it to propose the value in the input file ...
    !
@@ -753,7 +769,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    ! ... but afterword I must deallocate it to use user defined values
    !
-   deallocate(QP_state)
+   if (allocated(QP_state)) deallocate(QP_state)
    if (allocated(QP_table)) deallocate(QP_table)
    !
  endif

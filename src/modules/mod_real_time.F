@@ -108,7 +108,7 @@ module real_time
  ! ... Window on the k-points/bands allowed to follow the dynamics ...
  !
  real(SP)             :: RT_eh_energy_max
- type(pp_indexes)     :: RT_k_px
+ type(pp_indexes),SAVE:: RT_k_px
  !
  ! Macroscopic induced current ... 
  !--------------------------------
@@ -142,7 +142,7 @@ module real_time
  ! ... THETA matrix
  complex(SP), allocatable :: THETA_matrix(:,:,:,:)
  ! ... Q-parallelization  and GKKP
- type(pp_indexes)         :: RT_q_px
+ type(pp_indexes),SAVE    :: RT_q_px
  complex(SP), allocatable :: elph_gkkp_expanded(:,:,:,:)
  ! ... indexex ...
  integer,     allocatable :: THETA_matrix_index(:,:,:)

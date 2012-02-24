@@ -29,6 +29,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  use drivers
  use pars,           ONLY:schlen,lchlen
+ use parser_m,       ONLY:parser
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,E_reset,n_sp_pol
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
@@ -95,7 +96,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer, external :: ioX,io_DIPOLES,ioGROT,ioQINDX,ioRIM,&
 &                     io_HF_and_locXC,ioQP,ioBS,ioDB1,ioKB_PP,&
 &                     ioCOL_CUT
- logical           :: OSTNTS_Vnl_included,QP_state_SAVE(k%nibz,en%nb)
+ logical           :: OSTNTS_Vnl_included,QP_state_in_input_file
  !
  integer, external :: ioE_RIM
  !
@@ -749,23 +750,29 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    if (allocated(QP_state)) then
      !
-     QP_state_SAVE(1:QP_nb,1:QP_nk)=QP_state
-     deallocate(QP_state)
+     ! QP_state from input file ?
+     !
+     call parser('QPkrange',QP_state_in_input_file)
+     !
+     if (QP_state_in_input_file) then
+       !
+       deallocate(QP_state)
+       QP_nb=0
+       QP_nk=0
+       !
+       call QP_state_table_setup(en)
+       !
+     endif
+     !
+   else
+     !
+     call QP_state_table_setup(en)
      !
    endif
    !
-   ! QP_state from input file ?
-   !
-   call QP_state_table_setup(en)
-   !
-   if (.not.allocated(QP_state)) then
-     allocate(QP_state(QP_nb,QP_nk))
-     QP_state=QP_state_SAVE(1:QP_nb,1:QP_nk)
-   endif
+   call QP_init(.TRUE.,.TRUE.)
    !
    ! I use it to propose the value in the input file ...
-   !
-   call QP_init(.TRUE.,.TRUE.)
    !
    ! ... but afterword I must deallocate it to use user defined values
    !

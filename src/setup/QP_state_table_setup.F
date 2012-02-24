@@ -137,6 +137,7 @@ subroutine QP_state_table_setup(en)
          enddo
        enddo
      endif
+     !
    else
      !
      if (.not.associated(en%E)) return

@@ -31,7 +31,7 @@ integer function io_SC_components(what,E_sc,ID)
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,write_is_on,&
-&                         manage_RD_WR_CL_IF_END,io_reset,ver_is_gt_or_eq
+&                         manage_RD_WR_CL_IF_END,io_reset,ver_is_gt_or_eq,variable_is_found
  use fields,         ONLY:i_Probe,i_Pump
  use real_time,      ONLY:max_rt_steps_disk,NE_i_time
 #if defined _ELPH
@@ -152,8 +152,9 @@ integer function io_SC_components(what,E_sc,ID)
    l_T_EL=.true.
 #endif
    !
+ 
    if (any((/l_E,l_V,l_WF,l_occupations,l_J_and_P,l_G,l_MP,l_THETA/))) then
-     if (ver_is_gt_or_eq(ID,revision=1055)) then
+     if (write_is_on(ID).or.variable_is_found(ID,"TEMPERATURES")/=0) then
        io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,T_EL=l_T_EL)
      else
        io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.)

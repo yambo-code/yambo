@@ -24,7 +24,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  use units,          ONLY:BO2ANG,FS2AUT,HA2EV
  use pars,           ONLY:SP,lchlen
  use parser_m,       ONLY:parser
- use real_time,      ONLY:ID,G_lesser,NE_i_time,max_rt_steps_disk,RT_step,MEM_index
+ use real_time,      ONLY:ID,G_lesser,NE_i_time,max_rt_steps_disk,RT_step,MEM_index,NE_steps
  use SC,             ONLY:SC_bands,RT_occupations,RT_nk,RT_k 
  use IO_m,           ONLY:io_control,NONE,OP_APP_WR_CL,OP_RD,RD_CL,DUMP
  use electrons,      ONLY:levels,BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_nbands,n_sp_pol,n_met_bands,&
@@ -105,7 +105,8 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    ! NE_time=(NE_i_time-1)*RT_step
    !
    NE_i_time= int( real(Time/RT_step+1)/real(max_rt_steps_disk) ) * max_rt_steps_disk
-   if (NE_i_time==0) NE_i_time=max_rt_steps_disk
+   if (NE_i_time==0       ) NE_i_time=max_rt_steps_disk
+   if (NE_i_time> NE_steps) NE_i_time=NE_steps
    Time=(NE_i_time-1)*RT_step
    !
    if (.not.allocated(RT_k)) then

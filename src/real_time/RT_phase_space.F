@@ -56,6 +56,11 @@ integer function RT_phase_space(E)
    !
    RT_phase_space=nkibz
    !
+   ! In the case of el-ph scattering the parallelization is already done on the
+   ! q-points.
+   !
+   if (l_ph_corr) RT_k_px%element_1D=.TRUE.
+   !
    return
    !
  endif
@@ -104,7 +109,7 @@ integer function RT_phase_space(E)
      ! q-points. Nevertheless the eventually reduced range of k-points remains
      ! defined for all CPUs.
      !
-     if (p_loc%element_1D(ik_todo).and..not.l_ph_corr) RT_k_px%element_1D(ik)=.TRUE.
+     if (p_loc%element_1D(ik_todo).or.l_ph_corr) RT_k_px%element_1D(ik)=.TRUE.
      !
    else
      !

@@ -91,11 +91,6 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    RT_occupations(i1,ik)=Xen%f(i1,ik,1)
  end forall
  !
- G_lesser(4,4,5,1) =(0._SP,0._SP)
- G_lesser(4,4,11:15,1) =(0._SP,0._SP)
- G_lesser(5,5,5,1) =(0._SP,2._SP)
- G_lesser(5,5,11:15,1) =(0._SP,2._SP)
- !
  ! Build Ho and save initial energies 
  !====================================
  !
@@ -337,6 +332,8 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
      endif
      !
    enddo
+   !
+   call RT_ELPH_zeroing()
    !
    if(it_now<NE_steps+Thermal_steps) then
      call msg('snr','[RT] Number of steps done    [o/o]:',real(it_now)/real(NE_steps)*100._SP)

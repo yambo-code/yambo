@@ -29,7 +29,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  use SC,             ONLY:V_hartree_sc,Ho,SC_bands
  use X_m,            ONLY:P_square
  use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen,l_NE_with_fields, &
-&                         l_NE_simulate_IP ,l_Dynamics_is_over,RT_output,NE_i_time
+&                         l_NE_simulate_IP ,l_Dynamics_is_over,RT_output
  use fields,         ONLY:A_vecpot
  use electrons,      ONLY:levels
  use QP_m,           ONLY:QP_Vnl_xc,QP_Sc,QP_nk

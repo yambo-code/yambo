@@ -28,6 +28,10 @@ subroutine RT_databases_IO(Xen,it)
 &                         l_RT_skip_GF_IO,l_RT_skip_OCC_IO
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL
  use electrons,      ONLY:levels
+#if defined _ELPH
+ use par_proc_m,     ONLY:pp_redux_wait
+ use real_time,      ONLY:THETA_matrix
+#endif
  !
  implicit none
  !
@@ -57,16 +61,30 @@ subroutine RT_databases_IO(Xen,it)
    call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(5))
    io_G=io_SC_components('G' ,Xen,ID(5))
    if (l_ph_corr) then
+     !
      call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(7))
      io_THETA=io_SC_components('THETA' ,Xen,ID(7))
+     !
    endif
    !
    do ik = 1, QP_nk 
      call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
      io_G=io_SC_components('G',Xen,ID(5))
      if (l_ph_corr) then
+       !
+       ! The I/O of the THETA matrix is tricky when the run is parallel.
+       ! The point is that every CPU evolves a certain group of q-points.
+       ! If I do here a all-to-all each CPU will have non-zero values for 
+       ! q-points that it will not evolve. At the next call of this routine
+       ! therefore, values relative to different times will be wrongly merged.
+       !
+       call pp_redux_wait(THETA_matrix(:,:,:,ik))
+       !
        call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(7))
        io_THETA=io_SC_components('THETA' ,Xen,ID(7))
+       !
+       call RT_ELPH_zeroing()
+       !
      endif
    enddo
    !

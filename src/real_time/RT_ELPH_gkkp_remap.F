@@ -35,7 +35,7 @@ subroutine RT_ELPH_gkkp_remap(k,q)
  !
  ! Work Space
  !
- integer       ::ik1,ik2,i1,i2
+ integer       ::i1,i2
  real(SP)      ::v(3)
  !
  if (elph_nDBs /=q%nbz) call error('Number of q-points does not match')

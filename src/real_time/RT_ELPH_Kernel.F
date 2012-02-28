@@ -26,14 +26,14 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  !  
  ! EULER: 
  !  
- ! In the EULER scheme everything is extremely easy. G_lesser is G(TIME) and  
- ! I use the saved THETA_matrix (that in EULER is saved at TIME-RT_step) and the newly calculated
- ! DELTA matrix to get the new THETA_matrix.
+ !  In the EULER scheme everything is extremely easy. G_lesser is G(TIME) and  
+ !  I use the saved THETA_matrix (that in EULER is saved at TIME-RT_step) and the newly calculated
+ !  DELTA matrix to get the new THETA_matrix.
  !  
  ! RK2:  
  !  
- ! In RK2 everything is much more complicated because RT_elph_kernel is called at NE_time and
- ! at NE_time+RT_step/2 and in the two cases a different strategy ***should*** be applied.
+ !  In RK2 everything is much more complicated because RT_elph_kernel is called at NE_time and
+ !  at NE_time+RT_step/2 and in the two cases a different strategy ***should*** be applied.
  !  
  ! Iteration: in this case I ***think*** (even if I am not completely sure) that everything is ok.
  !  
@@ -113,29 +113,22 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
      !
      ! Note the m.e. in Gkkp are stored with indexes order exchanged
      !
-     M1=(0._SP,0._SP)
-     M2=(0._SP,0._SP)
-     M3=(0._SP,0._SP)
-     S_mat=(0._SP,0._SP)
-     !
-     G_k  =(0._SP,0._SP)
-     G_kmq=(0._SP,0._SP)
-     !
-     G_k  =G_lesser(:,:,ik,MEM_index(it_now))
-     G_kmq=G_lesser(:,:,ik_m_q,MEM_index(it_now))
+     G_k(:,:)  =G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,MEM_index(it_now))
+     G_kmq(:,:)=G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_m_q,MEM_index(it_now))
      !
      Gkkp=(0._SP,0._SP)
+ q_weight=1.
      !
      do i_n=SC_bands(1),SC_bands(2)
        i_n_m=i_n-SC_bands(1)+1
-       Gkkp(i_n_m,i_n_m)=elph_gkkp_expanded(i_gkkp+ik_bz,il,i_n,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_freq)
+       Gkkp(i_n_m,i_n_m)=elph_gkkp_expanded((i_gkkp-1)*k%nbz+ik_bz,il,i_n,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_freq)
        do i_np=SC_bands(1),SC_bands(2)
          i_np_m=i_np-SC_bands(1)+1
          !
          if (i_n<=n_full_bands.and.i_np> n_full_bands) cycle
          if (i_n> n_full_bands.and.i_np<=n_full_bands) cycle
          !
-         Gkkp(i_n_m,i_np_m)=elph_gkkp_expanded(i_gkkp+ik_bz,il,i_np,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_freq)
+         Gkkp(i_n_m,i_np_m)=elph_gkkp_expanded((i_gkkp-1)*k%nbz+ik_bz,il,i_np,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_freq)
          !
        enddo 
      enddo
@@ -175,7 +168,7 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
        !
        do i_n=1,B_dim
          do i_np=1,B_dim
-           S_mat_sum(i_n,i_np)=S_mat_sum(i_n,i_np)+exp(cI*i_s*ph_freq*TIME)*(S_mat(i_map(i_s),i_n,i_np)+&
+           S_mat_sum(i_n,i_np)=S_mat_sum(i_n,i_np)+exp(cI*i_s*ph_freq*TIME)*(S_mat(i_map( i_s),i_n,i_np)+&
 &                                                                      conjg(S_mat(i_map(-i_s),i_np,i_n)))
          enddo
        enddo
@@ -186,7 +179,6 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
    !
  enddo ! iqbz
  !
- !call pp_redux_wait(THETA_matrix(:,:,:,ik))
  call pp_redux_wait(S_mat_sum(:,:))
  !
  do i_n=SC_bands(1),SC_bands(2)

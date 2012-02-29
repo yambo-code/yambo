@@ -50,7 +50,7 @@ subroutine QP_ctl_load(defs,i_type)
  spin_description_ch=(/'    ','UP  ','DOWN'/)
  prefix=(/'X','K','G'/)
  description_ch(1)='Xd'
- description_ch(2)='BSK BSS'
+ description_ch(2)='BSE'
  description_ch(3)='G'
  !
  if (initmode==0) i1_range=(/1,3/)

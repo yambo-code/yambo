@@ -38,7 +38,7 @@ subroutine RT_fix_symmetries(E,k)
 &                              io_fragmented,OP_RD_CL,RD_CL,RD,DUMP,RD_CL_IF_END,WR_CL_IF_END
  use wave_func,           ONLY:ioWF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io, &
 &                              wf_ng,wf_state,WF_load,wf_state,wf,WF_free,wf_ng ,wf_nb_io_groups
- use real_time,           ONLY:kpoints_map
+ use real_time,           ONLY:kpoints_map,dl_sop_eq,nsym_eq
  use pseudo,              ONLY:pp_kb,pp_kbd,n_atomic_species,pp_n_l_times_proj_max,PP_free
  use SC,                  ONLY:local_V,SC_R,H_nl_sc,SC_bands
  use stderr,              ONLY:intc,set_real_printed_length
@@ -59,7 +59,7 @@ subroutine RT_fix_symmetries(E,k)
  integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:)
  real(SP)              :: v1(3),v2(3),m(3,3)
  real(SP)              :: B_cart(3)
- integer               :: det,nsym_save,igfft,ig,ic
+ integer               :: det,igfft,ig,ic
  real(SP), allocatable :: pp_kb_store(:,:,:,:,:),pp_kbd_store(:,:,:,:,:)
  logical               :: Rm_all_symm,use_E_field,use_B_field,reject_symmetry,Rm_TR,S_contains_TR(nsym)
  type(bz_samp)         :: k_save
@@ -161,7 +161,7 @@ subroutine RT_fix_symmetries(E,k)
  !
  ! Remove Symmetries
  !
- nsym_save      =nsym
+ nsym_eq=nsym
  nsym=nsym/(1+i_time_rev)
  call msg('s',trim(intc(nsym))//' spatial symmetries reduced to ...')
  i_time_rev=0 
@@ -172,6 +172,11 @@ subroutine RT_fix_symmetries(E,k)
    B_cart(2)=B_field*sin(B_theta)*sin(B_psi) 
    B_cart(3)=B_field*cos(B_theta)
  endif
+ !
+ ! Keep equilibrium copy of the symmetries
+ !
+ allocate(dl_sop_eq(3,3,nsym_eq))
+ dl_sop_eq=dl_sop
  !
  if(Rm_all_symm) then
    nsym=1

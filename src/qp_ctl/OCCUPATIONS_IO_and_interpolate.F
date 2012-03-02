@@ -26,7 +26,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  use parser_m,       ONLY:parser
  use real_time,      ONLY:ID,G_lesser,NE_i_time,max_rt_steps_disk,RT_step,MEM_index,NE_steps
  use SC,             ONLY:SC_bands,RT_occupations,RT_nk,RT_k 
- use IO_m,           ONLY:io_control,NONE,OP_APP_WR_CL,OP_RD,RD_CL,DUMP
+ use IO_m,           ONLY:io_control,NONE,OP_APP_WR_CL,OP_RD,RD_CL,DUMP,variable_is_found
  use electrons,      ONLY:levels,BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_nbands,n_sp_pol,n_met_bands,&
 &                         n_full_bands,nel,filled_tresh
  use com,            ONLY:jobstr,msg
@@ -35,7 +35,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  use R_lattice,      ONLY:bz_samp,nXkibz
  use D_lattice,      ONLY:DL_vol
  use timing,         ONLY:what_is_running
- use stderr,         ONLY:set_real_printed_length
+ use stderr,         ONLY:set_real_printed_length,intc
  !
  implicit none
  !
@@ -105,8 +105,18 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    ! NE_time=(NE_i_time-1)*RT_step
    !
    NE_i_time= int( real(Time/RT_step+1)/real(max_rt_steps_disk) ) * max_rt_steps_disk
-   if (NE_i_time==0       ) NE_i_time=max_rt_steps_disk
-   if (NE_i_time> NE_steps) NE_i_time=NE_steps
+   !
+   if (NE_i_time==0       ) then
+     NE_i_time=max_rt_steps_disk
+   else if (variable_is_found(ID(6),'RT_occupations_TIME'//trim(intc(NE_i_time)))==0) then
+     do i1=NE_i_time,max_rt_steps_disk,-max_rt_steps_disk 
+       if (variable_is_found(ID(6),'RT_occupations_TIME'//trim(intc(i1)))==1) then
+         NE_i_time=i1
+         exit
+       endif
+     enddo
+   endif
+   !
    Time=(NE_i_time-1)*RT_step
    !
    if (.not.allocated(RT_k)) then

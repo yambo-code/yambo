@@ -36,6 +36,12 @@ module real_time
  logical           :: l_RT_pump_and_probe  
  logical           :: l_Dynamics_is_over  
  !
+ ! Unperturbed (@ the equilibrium) symmetries
+ !
+ integer              :: nsym_eq
+ real(SP),allocatable :: dl_sop_eq(:,:,:)
+ real(SP),allocatable :: rl_sop_eq(:,:,:)
+ !
  ! Inital XC (SC or default) are requested
  !
  logical           :: l_RT_needs_XC0
@@ -135,6 +141,8 @@ module real_time
  !
  ! ELPH kernel...
  !----------------
+ !
+ real(SP)    :: Eh_pumped_pair_energy(2)
  !
  ! ... Q weights calculated using RIM in order to evaluate the ELPH kernel
  !

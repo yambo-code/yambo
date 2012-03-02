@@ -86,13 +86,14 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use collisions_IO,    ONLY:n_collisions,COLLISIONS_cutoff,COLLISIONS_path
  use collisions_CACHE, ONLY:COLLISIONS_cache_size
 #endif
-#if defined _RT
- use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Integrator_name,            &
+#if defined _RT || defined _YPP_RT
+ use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Integrator_name,nsym_eq,    &
 &                     RT_diagonalization_steps, l_NE_simulate_RPA,  &
 &                     SwitchOnTime,max_rt_steps_disk,l_RT_induced_field,&
 &                     l_RT_diagonalize,RT_is_dumped,RAD_LifeTime,Phase_LifeTime,&
 &                     NE_Hxc_jumps,NE_tot_time,NE_MEM_steps,NE_MEM_treshold,&
-&                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe,RT_eh_energy_max
+&                     l_RT_diamagnetic,l_RT_probe,l_RT_pump_and_probe,RT_eh_energy_max,&
+&                     Eh_pumped_pair_energy
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields,theta_function_iTo_ref,i_Pump,i_Probe
 #endif
 #if defined _MAGNETIC
@@ -460,6 +461,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  i_Pump=1
  i_Probe=1
+ nsym_eq=0
  do i1=1,n_ext_fields
    call Efield_reset(Efield(i1))
  enddo
@@ -490,6 +492,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  NE_MEM_steps=2  ! By default only G_lesser@t and @t+1
  RT_nk=0
  RT_eh_energy_max=0.
+ Eh_pumped_pair_energy=-1./HA2EV
  !
 #endif
  !

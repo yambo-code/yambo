@@ -117,7 +117,6 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
      G_kmq(:,:)=G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_m_q,MEM_index(it_now))
      !
      Gkkp=(0._SP,0._SP)
- q_weight=1.
      !
      do i_n=SC_bands(1),SC_bands(2)
        i_n_m=i_n-SC_bands(1)+1

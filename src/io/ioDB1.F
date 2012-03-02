@@ -21,7 +21,7 @@
 !
 integer function ioDB1(E,k,ID)
  !
- use pars,             ONLY:SP,IP
+ use pars,             ONLY:SP,IP,schlen
  use units,            ONLY:HA2EV
  use com,              ONLY:error
  use memory_m,         ONLY:mem_est
@@ -45,6 +45,10 @@ integer function ioDB1(E,k,ID)
 #if defined _SC
  use SC,               ONLY:SC_bands
 #endif
+#if defined _RT || defined _YPP_RT
+ use IO_m,             ONLY:variable_is_found
+ use real_time,        ONLY:nsym_eq,dl_sop_eq
+#endif
  !
  implicit none
  !
@@ -52,6 +56,11 @@ integer function ioDB1(E,k,ID)
  type(bz_samp) :: k
  integer       :: ID,code_version_local(3),code_revision_local
  logical       :: l_use_libxc
+ !
+ ! Work Space
+ !
+ logical           :: l_io_sym_eq
+ character(schlen) :: string
  !
  ioDB1 =io_connect(desc="db1",type=0,ID=ID)
  if (ioDB1/=0) goto 1
@@ -113,13 +122,10 @@ integer function ioDB1(E,k,ID)
 &                    VAR=' Components       [wavefunctions]:')
    call io_elemental(ID,I0=i_time_rev,CHECK=.true.,OP=(/"=="/))
    !
-   if (i_time_rev==1) then
-     call io_elemental(ID,I0=nsym,CHECK=.true.,OP=(/"=="/),&
-&                      VAR=' Symmetries       [spatial+T-rev]:')
-   else
-     call io_elemental(ID,I0=nsym,CHECK=.true.,OP=(/"=="/),&
-&                      VAR=' Symmetries             [spatial]:')
-   endif
+   string='Symmetries             [spatial]:'
+   !
+   if (i_time_rev==1) string='Symmetries       [spatial+T-rev]:'
+   call io_elemental(ID,I0=nsym,CHECK=.true.,OP=(/"=="/),VAR=' '//trim(string))
    !
    call io_elemental(ID,I0=n_spinor,CHECK=.true.,OP=(/"=="/),&
 &                    VAR=' Spinor components               :')
@@ -256,6 +262,27 @@ integer function ioDB1(E,k,ID)
  !
  call io_bulk(ID, VAR="SYMMETRY", VAR_SZ=shape(dl_sop) )
  call io_bulk(ID, R3=dl_sop)
+ !
+#if defined _RT || defined _YPP_RT
+ !
+ if (write_is_on(ID)) l_io_sym_eq=.TRUE.
+ if (read_is_on(ID) ) l_io_sym_eq=variable_is_found(ID,"N_SYMMETRIES")==1
+ !
+ if (l_io_sym_eq) then
+   !
+   ! Unperturbed Symmetry
+   !
+   call io_bulk(ID, VAR="N_SYMMETRIES", VAR_SZ=(/1/) )
+   call io_bulk(ID, I0=nsym_eq)
+   !
+   if (read_is_on(ID)) allocate(dl_sop_eq(3,3,:nsym_eq))
+   !
+   call io_bulk(ID, VAR="SYMMETRIES_EQ", VAR_SZ=shape(dl_sop_eq) )
+   call io_bulk(ID, R3=dl_sop_eq)
+   !
+ endif
+ !
+#endif
  !
  ! G-vectors
  !

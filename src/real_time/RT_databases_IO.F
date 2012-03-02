@@ -70,6 +70,7 @@ subroutine RT_databases_IO(Xen,it)
    do ik = 1, QP_nk 
      call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))
      io_G=io_SC_components('G',Xen,ID(5))
+#if defined _ELPH
      if (l_ph_corr) then
        !
        ! The I/O of the THETA matrix is tricky when the run is parallel.
@@ -86,6 +87,7 @@ subroutine RT_databases_IO(Xen,it)
        call RT_ELPH_zeroing()
        !
      endif
+#endif
    enddo
    !
  endif

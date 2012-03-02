@@ -55,7 +55,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
 &                        RT_diagonalization_steps,SwitchOnTime,max_rt_steps_disk,NE_tot_time,NE_Hxc_jumps,&
-&                        RT_ave_dephasing,NE_MEM_treshold,RT_eh_energy_max
+&                        RT_ave_dephasing,NE_MEM_treshold,RT_eh_energy_max,Eh_pumped_pair_energy
  use fields,        ONLY:Efield
 #endif
 #if defined _MAGNETIC
@@ -290,6 +290,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit)
  call it(defs,'PhLifeTime', '[RT] Phase Relaxation Time',Phase_LifeTime,unit=Time_unit)
  call it(defs,'RTmaxEn',    '[RT] Max e/h energy to define the states that are evolved',RT_eh_energy_max,&
+&                            Verb_level=V_real_time,unit=E_unit)
+ call it(defs,'RTpumpEh',   '[RT] Energy of the full and empty level to be inverted by hand',Eh_pumped_pair_energy,&
 &                            Verb_level=V_real_time,unit=E_unit)
  call it('f',defs,'RTfreezeH', '[RT] Hartree not updated during RT')
  call it('f',defs,'RTfreezeXC','[RT] XC potential/self-energy not updated during RT')

@@ -34,7 +34,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  ! [4] Initialize the bare Hartree and XC
  ! [5] Initialize the fields
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cI,cZERO,rZERO
  use units,          ONLY:HA2EV
  use drivers,        ONLY:l_sc_contains_lda,l_ph_corr
  use com,            ONLY:msg,warning,error
@@ -75,21 +75,21 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  !
  ! G_lesser(T=0,T=0)=Go and G_lesser_old(T=0,T=0)=Go
  !
- G_lesser          =(0._SP,0._SP)
- G_lesser_reference=(0._SP,0._SP)
- rho_reference     =(0._SP)
- if(allocated(full_rho)) full_rho=(0._SP,0._SP)
- V_xc_sc           =(0._SP)
- V_hartree_sc      =(0._SP)
- H_nl_sc           =(0._SP,0._SP)
+ G_lesser          =cZERO
+ G_lesser_reference=cZERO
+ rho_reference     =rZERO
+ if(allocated(full_rho)) full_rho=cZERO
+ V_xc_sc           =rZERO
+ V_hartree_sc      =rZERO
+ H_nl_sc           =cZERO
  !
  ! Set to zero current and fields
  !
- RT_P               =(0._SP,0._SP)
- RT_ind_J           =(0._SP,0._SP)
+ RT_P               =cZERO
+ RT_ind_J           =cZERO
  ! 
  forall(ib=SC_bands(1):SC_bands(2),ik=1:Xen%nk)
-   G_lesser(ib,ib,ik,1) =(0._SP,1._SP)*Xen%f(ib,ik,1)
+   G_lesser(ib,ib,ik,1) =cI*Xen%f(ib,ik,1)
    RT_occupations(ib,ik)=Xen%f(ib,ik,1)
  end forall
  !
@@ -107,8 +107,8 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
          if(abs(Xen%E(ib,ik,1)-Eh_pumped_pair_energy(1))<.1/HA2EV) i1=ib
        else
          if(abs(Xen%E(ib,ik,1)-Eh_pumped_pair_energy(2))<.1/HA2EV) then
-           G_lesser(i1,i1,ik,1) =(0._SP,0._SP)
-           G_lesser(ib,ib,ik,1) =(0._SP,2._SP)
+           G_lesser(i1,i1,ik,1) = cZERO
+           G_lesser(ib,ib,ik,1) = 2._SP*cI
            call msg('sr','[RT] Eh pair pumped `by hand` @ k'//trim(intc(ik))//&
 &                        ' bands '//trim(intc(i1))//' - '//trim(intc(ib)))
          endif

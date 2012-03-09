@@ -82,7 +82,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    call msg('s','Time range [fs]:',OCC_T_range/FS2AUT)
    call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
    call msg('s','Time ref   [fs]:',OCC_T_ref/FS2AUT)
-   call msg('s','Steps          :',n_T_steps)
+   call msg('s','Time steps     :',n_T_steps)
    !
 #endif
    !

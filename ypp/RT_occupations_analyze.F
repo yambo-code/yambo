@@ -53,7 +53,7 @@ subroutine RT_occupations_analyze(k,E)
  !
  call msg('s','Time range [fs]:',OCC_T_range/FS2AUT)
  call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
- call msg('s','Steps          :',n_T_steps)
+ call msg('s','Time steps     :',n_T_steps)
  !
  do i_T=1,n_T_steps
    !

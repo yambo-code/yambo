@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
+subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  !  
  ! In this routine I do not perform a time step. I calculate
  ! the el-ph Kernel at time TIME using an approximate iterative scheme (light but approximated).
@@ -37,60 +37,47 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
  !  
  ! Iteration: in this case I ***think*** (even if I am not completely sure) that everything is ok.
  !  
- use pars,           ONLY:SP,cI,pi
- use electrons,      ONLY:levels,spin_occ,n_full_bands
+ use pars,           ONLY:SP,cI,cZero
+ use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
- use SC,             ONLY:SC_bands,it_now
- use real_time,      ONLY:RT_step,THETA_matrix,I1_lesser,Integrator_name,q_weight,&
-&                         G_lesser,MEM_index,elph_gkkp_expanded,GKKP_matrix_index,&
-&                         THETA_matrix_index,RT_q_px
+ use SC,             ONLY:SC_bands
+ use real_time,      ONLY:I1_lesser,q_weight,elph_gkkp_expanded,GKKP_matrix_index,RT_q_px
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
- use wrapper,        ONLY:M_by_M
  use par_proc_m,     ONLY:pp_redux_wait
  !
  implicit none
  !
- type(levels),  intent(in)    :: E
- type(bz_samp), intent(in)    :: k,q
- integer,       intent(in)    :: ik
- real(SP),      intent(in)    :: TIME
+ type(levels),  intent(in) :: E
+ type(bz_samp), intent(in) :: k,q
+ integer,       intent(in) :: ik
+ real(SP),      intent(in) :: TIME
  !
  ! Work Space ...
  !
- integer               :: i_s,i_map(-1:1),il,i_theta,i_gkkp,ik_bz
- real(SP)              :: ph_freq,N_q(2),DELTA_T
+ integer               :: i_s,i_map(-1:1),il,i_gkkp,ik_bz
+ real(SP)              :: ph_freq,N_q(2)
  !
- complex(SP)           :: DELTA_matrix
- complex(SP)           :: M1(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
- complex(SP)           :: M2(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
- complex(SP)           :: M3(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  complex(SP)           :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
- complex(SP)           :: G_k(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
- complex(SP)           :: G_kmq(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
- complex(SP)           :: S_mat(2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
+ complex(SP)           :: S_mat_out_of_eq(2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
+ complex(SP)           :: S_mat_eq(2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  complex(SP)           :: S_mat_sum(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
- complex(SP)           :: Xi_eta,Xi_np
- complex(SP), external :: RT_G_retarded
  !
  ! ... band index ...
- integer               :: i_n,i_np,i_e,i_m,B_dim,i_np_m,i_n_m
+ integer               :: i_n,i_np,i_m,B_dim,i_np_m,i_n_m
  ! ... BZ index ...
  integer               :: iqbz,ik_m_q,ik_m_qs
  !
  B_dim=SC_bands(2)-SC_bands(1)+1
  ik_bz=sum(k%nstar(:ik-1))+1
  !
- ! Time step
- !===========
- DELTA_T=RT_step
- if (trim(Integrator_name)=="RK2") DELTA_T=RT_step/2.
- !
  i_map(-1)=1
  i_map( 0)=1
  i_map( 1)=2
  !
- S_mat_sum=(0.,0.)
+ S_mat_eq=cZero
+ S_mat_out_of_eq=cZero
+ S_mat_sum=cZero
  !
  do iqbz=1,q%nbz
    !
@@ -107,76 +94,50 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
      !
      if (abs(ph_freq)<epsilon(1._SP)) cycle
      !
-     ! N-\+ (note the different order of the +/-). 1/2 here ?
+     ! N+/-
      !
-     N_q    = (bose_f(ph_freq)+(/0.,2./))/2.
+     N_q    = (bose_f(ph_freq)+(/0.,spin_occ/))/spin_occ
      !
      ! Note the m.e. in Gkkp are stored with indexes order exchanged
      !
-     G_k(:,:)  =G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik,MEM_index(it_now))
-     G_kmq(:,:)=G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),ik_m_q,MEM_index(it_now))
-     !
      Gkkp=(0._SP,0._SP)
-     !
      do i_n=SC_bands(1),SC_bands(2)
        i_n_m=i_n-SC_bands(1)+1
        Gkkp(i_n_m,i_n_m)=elph_gkkp_expanded((i_gkkp-1)*k%nbz+ik_bz,il,i_n,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_freq)
        do i_np=SC_bands(1),SC_bands(2)
          i_np_m=i_np-SC_bands(1)+1
-         !
-         if (i_n<=n_full_bands.and.i_np> n_full_bands) cycle
-         if (i_n> n_full_bands.and.i_np<=n_full_bands) cycle
-         !
          Gkkp(i_n_m,i_np_m)=elph_gkkp_expanded((i_gkkp-1)*k%nbz+ik_bz,il,i_np,i_n)*sqrt(q_weight(iqbz))/sqrt(ph_freq)
-         !
        enddo 
      enddo
      !
-     call M_by_M('n','n',B_dim,G_kmq,Gkkp,M1)
+     ! EQUILIBRIUM Kernel
+     !=====================
      !
-     call M_by_M('n','n',B_dim,Gkkp,G_k,M2)
+     call RT_ELPH_eq_kernel(ik,i_map,ik_m_q,N_q,E,TIME,ph_freq,Gkkp,S_mat_eq,'EQ')
      !
-     call M_by_M('n','n',B_dim,M1,G_k,M3)
+     ! OUT-OF-EQUILIBRIUM Kernel
+     !===========================
      !
-     do i_s=-1,1,2
-       !
-       i_theta=THETA_matrix_index(iqbz,il,i_map(i_s))
-       !
-       do i_e=1,B_dim
-         !
-         Xi_eta=RT_G_retarded(E,i_e+SC_bands(1)-1,ik_m_q,0.,DELTA_T)
-         !
-         do i_np=1,B_dim
-           !
-           Xi_np=RT_G_retarded(E,i_np+SC_bands(1)-1,ik    ,0.,DELTA_T)
-           !
-           DELTA_matrix=-cI*exp(-cI*i_s*ph_freq*TIME)*&
-&                       ( ( N_q(i_map(-i_s))-N_q(i_map(i_s)) )*cI*M3(i_e,i_np) +&
-&              spin_occ*( N_q(i_map(-i_s))*M2(i_e,i_np)-N_q(i_map(i_s))*M1(i_e,i_np) ) ) 
-           !
-           THETA_matrix(i_theta,i_e,i_np,ik)=Xi_eta*conjg(Xi_np)*( THETA_matrix(i_theta,i_e,i_np,ik)+DELTA_T*DELTA_matrix )
-           !
-         enddo ! i_np
-       enddo ! i_e
-       !
-       call M_by_M('c','n',B_dim,Gkkp,THETA_matrix(i_theta,:,:,ik),S_mat(i_map(i_s),:,:))
-       !
-     enddo
+     !call RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp,S_mat_out_of_eq)
+     !
+     ! SUM-UP
+     !========
      !
      do i_s=-1,1,2
-       !
        do i_n=1,B_dim
          do i_np=1,B_dim
-           S_mat_sum(i_n,i_np)=S_mat_sum(i_n,i_np)+exp(cI*i_s*ph_freq*TIME)*(S_mat(i_map( i_s),i_n,i_np)+&
-&                                                                      conjg(S_mat(i_map(-i_s),i_np,i_n)))
+           S_mat_sum(i_n,i_np)=S_mat_sum(i_n,i_np)+&
+&                              ( S_mat_out_of_eq(i_map( i_s),i_n,i_np)+conjg(S_mat_out_of_eq(i_map(-i_s),i_np,i_n))+&
+&                                S_mat_eq(i_map( i_s),i_n,i_np)+conjg(S_mat_eq(i_map(-i_s),i_np,i_n)) )
          enddo
        enddo
-       !
      enddo ! i_s
      !
    enddo ! ph branch
    !
  enddo ! iqbz
+ !
+ if (ik==5) write (100,'(3f20.10)') TIME,S_mat_sum(2,2)
  !
  call pp_redux_wait(S_mat_sum(:,:))
  !
@@ -191,4 +152,4 @@ subroutine RT_ELPH_kernel(ik,E,k,q,TIME)
    enddo 
  enddo
  !
-end subroutine RT_ELPH_kernel
+end subroutine RT_ELPH_total_kernel

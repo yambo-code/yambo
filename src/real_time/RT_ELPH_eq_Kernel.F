@@ -19,12 +19,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_eq_kernel(ik,i_map,ik_m_q,N_q,E,TIME,ph_freq,Gkkp,S_mat,S_kind)
+subroutine RT_ELPH_eq_kernel(ik,i_map,ik_m_q,N_q,E,TIME,ph_freq,Gkkp,S_mat)
  !  
  use pars,           ONLY:SP,cI,pi,cZERO
  use electrons,      ONLY:levels,spin_occ
- use SC,             ONLY:SC_bands,it_now
- use real_time,      ONLY:G_lesser,MEM_index
+ use SC,             ONLY:SC_bands
  !
  implicit none
  !
@@ -33,13 +32,12 @@ subroutine RT_ELPH_eq_kernel(ik,i_map,ik_m_q,N_q,E,TIME,ph_freq,Gkkp,S_mat,S_kin
  real(SP),      intent(in)  :: TIME,ph_freq,N_q(2)
  complex(SP),   intent(in)  :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  complex(SP),   intent(out) :: S_mat(2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
- character(*)               :: S_kind
  !
  ! Work Space ...
  !
  integer  :: i_n,i_np,i_e,i_s,B_dim
- real(SP) :: A(2),DELTA,GAMMA_,OCCUPATIONS,&
-&            f_k(SC_bands(2)-SC_bands(1)+1),f_k_m_q(SC_bands(2)-SC_bands(1)+1),T_ref
+ real(SP) :: DELTA,GAMMA_,OCCUPATIONS,&
+&            f_k(SC_bands(2)-SC_bands(1)+1),f_k_m_q(SC_bands(2)-SC_bands(1)+1)
  !
  S_mat=cZERO
  !
@@ -48,28 +46,10 @@ subroutine RT_ELPH_eq_kernel(ik,i_map,ik_m_q,N_q,E,TIME,ph_freq,Gkkp,S_mat,S_kin
  !
  B_dim=SC_bands(2)-SC_bands(1)+1
  !
- ! Kernel kind
- !============= 
- !
- if (trim(S_kind)=="CCA") then
-   !
-   do i_n=1,B_dim
-     f_k(i_n)    =-cI*G_lesser(i_n+SC_bands(1)-1,i_n+SC_bands(1)-1,ik,MEM_index(it_now))/spin_occ
-     f_k_m_q(i_n)=-cI*G_lesser(i_n+SC_bands(1)-1,i_n+SC_bands(1)-1,ik_m_q,MEM_index(it_now))/spin_occ
-   enddo
-   !
-   T_ref=TIME
-   !
- else if (trim(S_kind)=="EQ") then
-   !
-   do i_n=1,B_dim
-     f_k(i_n)    = E%f(i_n+SC_bands(1)-1,ik,1)/spin_occ
-     f_k_m_q(i_n)= E%f(i_n+SC_bands(1)-1,ik_m_q,1)/spin_occ
-   enddo
-   !
-   T_ref=0._SP
-   !
- endif
+ do i_n=1,B_dim
+   f_k(i_n)    = E%f(i_n+SC_bands(1)-1,ik,1)/spin_occ
+   f_k_m_q(i_n)= E%f(i_n+SC_bands(1)-1,ik_m_q,1)/spin_occ
+ enddo
  !
  do i_s=-1,1,2
    !
@@ -87,8 +67,7 @@ subroutine RT_ELPH_eq_kernel(ik,i_map,ik_m_q,N_q,E,TIME,ph_freq,Gkkp,S_mat,S_kin
          !
          S_mat(i_map(i_s),i_n,i_np)=S_mat(i_map(i_s),i_n,i_np)+&
 &                                   conjg(Gkkp(i_e,i_n))*Gkkp(i_np,i_e)*OCCUPATIONS*&
-&                                   exp((cI*DELTA+GAMMA_)*(T_ref-TIME))/&
-&                                   (GAMMA_+cI*(DELTA-i_s*ph_freq))
+&                                   exp(-(cI*DELTA+GAMMA_)*TIME)/(GAMMA_+cI*(DELTA-i_s*ph_freq))
          !
        enddo
        !

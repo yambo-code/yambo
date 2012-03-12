@@ -142,6 +142,7 @@ module real_time
  ! ELPH kernel...
  !----------------
  !
+ logical     :: l_ELPH_CCA_kernel
  real(SP)    :: Eh_pumped_pair_energy(2)
  !
  ! ... Q weights calculated using RIM in order to evaluate the ELPH kernel

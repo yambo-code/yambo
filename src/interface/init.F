@@ -643,16 +643,14 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _RT
  !
- ! REAL-TIME specific: (i) Time-Evolution (ii) Collisions
- !
- ! (i) Time Evolution
+ ! REAL-TIME specific
  !
  if (l_real_time) then
    call QP_ctl_switch('G')
    call initactivate(-1,'SCmixing')
    call initactivate(1,'Integrator RADLifeTime PhLifeTime RTmaxEn RTpumpEh') 
    call initactivate(1,'RTstep NEsteps NETime')
-   if (l_ph_corr) call initactivate(1,'MemTresh RandQpts')
+   if (l_ph_corr) call initactivate(1,'MemTresh RandQpts RTCCA')
    call initactivate(1,'HXCjumps ThermSteps SwitchOnTime RTDiagoSteps DiskSteps')
    call initactivate(1,'RTfreezeH RTfreezeXC Diamagnetic InducedField SkipGFIO SkipOCCIO')
    if (l_RT_probe.or.l_RT_pump_and_probe) call Afield_activate('Probe')
@@ -662,8 +660,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'ShiftedPath')
    !
  endif
- !
- ! (ii) COLLISIONS: no additional variables required
  !
 #endif
  !

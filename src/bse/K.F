@@ -22,7 +22,7 @@
 subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! K = <2V-W>
- !
+ ! 
  use pars,         ONLY:SP,pi,IP
  use parser_m,     ONLY:parser
  use LOGO,         ONLY:pickup_a_random

@@ -25,12 +25,10 @@ subroutine RT_average_operator(VALUE,O_REAL,O_QP,O_MATRIX,G,k,en,TRANS)
  use SC,             ONLY:SC_bands,SC_nbands
  use R_lattice,      ONLY:bz_samp 
  use QP_m,           ONLY:QP_nk,QP_n_states
- use electrons,      ONLY:n_sp_pol,levels,BZ_RIM_table,BZ_RIM_nkpt,BZ_RIM_nbands
+ use electrons,      ONLY:n_sp_pol,levels
  use FFT_m,          ONLY:fft_size
  use wave_func,      ONLY:wf
  use wrapper,        ONLY:Vstar_dot_V
- use X_m,            ONLY:use_X_RIM
- use real_time,      ONLY:NE_time
  use par_proc_m,     ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
  use par_indexes_m,  ONLY:par_indexes
  !

@@ -178,12 +178,15 @@ subroutine RT_initialize(Xen,Xk,q)
  ! Electron-phonon
  ! ===============
  !
- call RT_ELPH_initialize(q)
+ if (l_ph_corr) then
+   call section('=','El-Ph matrix elements loading and setup')
+   !==========================================================
+   call RT_ELPH_initialize(Xk,q)
+ endif
  !
 #endif
  !
  call section('=','Phase space check')
- !                 =================
  !
  nk_todo=RT_phase_space(Xen,q)
  !

@@ -82,7 +82,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    call msg('s','Time range [fs]:',OCC_T_range/FS2AUT)
    call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
    call msg('s','Time ref   [fs]:',OCC_T_ref/FS2AUT)
-   call msg('s','Steps          :',n_T_steps)
+   call msg('s','Time steps     :',n_T_steps)
    !
 #endif
    !
@@ -145,10 +145,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
              !
              f_occ=Xen%f(ib,ik,i_spin)/2.
 #if defined _YPP_RT
-             if (l_TIME_plot) then
-               f_occ               =RT_occupations(ib,ik)/2.
-               if (l_3D_plot) f_occ=(RT_occupations(ib,ik)-RT_occupations_ref(ib,ik))/2.
-             endif
+             if (l_TIME_plot) f_occ=(RT_occupations(ib,ik)-RT_occupations_ref(ib,ik))/2.
 #endif
              !
              el_dos(i_spin)=el_dos(i_spin)+f_occ*&

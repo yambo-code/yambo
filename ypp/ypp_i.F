@@ -182,10 +182,9 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if ((l_gkkp.and..not.l_excitons).or.l_phonons) then
    ! =====     ========
-   if (l_gkkp.and..not.l_gkkp_analysis) i_err=ELPH_databases(k,en,q)
+   if (l_gkkp)                i_err=ELPH_databases(k,en,q)
    if (l_eliashberg.or.l_dos) call ELPH_eliashberg_dos(k,en,q)
    ! GPL_EXCLUDE_START
-   if (l_gkkp_analysis)       call ELPH_gkkp_analysis(k,en,q)
    if (l_atomic_amplitude)    call ELPH_atomic_amplitude(q)
    ! GPL_EXCLUDE_END
  endif

@@ -206,7 +206,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    call io_bulk(ID,VAR="HEAD_KPT",VAR_SZ=(/nkibz_disk,3/))
    call io_bulk(ID,R2=l_pt)
    !
-   if (read_is_on(ID).and.allocated(k_pt)) then
+   if (read_is_on(ID).and.allocated(k_pt).and.KPTS) then
      !
      call define_zeros(vector_=k_pt,zero_=local_zero)
      !
@@ -217,9 +217,11 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
        if (WARN) call warning('Wrong K-points coordinates/order')
        goto 1
      endif
+     !
    endif
    !
    deallocate(l_pt)
+   !
  endif
  !
  ! Cutoff

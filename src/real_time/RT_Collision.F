@@ -48,7 +48,6 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  ! This subroutine also fills SC_R with the full Hamiltonian if this is allocated
  !
  use pars,           ONLY:SP,cI,cONE
- use units,          ONLY:HBAR_eVfs,FS2AUT,HA2EV
  use wrapper,        ONLY:M_by_M,V_by_V_plus_V
  use electrons,      ONLY:levels
  use drivers,        ONLY:l_sc_contains_lda,l_sc_hf,l_sc_cohsex,l_ph_corr
@@ -59,7 +58,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
 &                         Thermal_steps,SwitchOnTime,RT_step,XC0_and_HARTREE0,rho_reference,   & 
 &                         G_lesser_reference,Phase_LifeTime,NE_Hxc_jumps,                      &
 &                         RT_is_dumped,l_NE_simulate_IP,Hfrozen,XCfrozen,NE_dynamics,it_start, &
-&                         RT_Deph_Matrix,l_RT_needs_XC0,RT_px
+&                         RT_Deph_Matrix,l_RT_needs_XC0,RT_k_px
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:wf
  use xc_functionals, ONLY:V_xc
@@ -136,7 +135,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
  !
  do ik=1,QP_nk 
    !
-   if (.not.RT_px%element_1D(ik)) cycle
+   if (.not.RT_k_px%element_1D(ik)) cycle
    !
    ! Here I fill H_nl_sc (which defined I1 and I2) with...
    !
@@ -198,7 +197,7 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
    !
    ! El-Ph
    !=======
-   if (l_ph_corr) call RT_ELPH_Kernel(ik,Xen,k,q,Time)
+   if (l_ph_corr) call RT_ELPH_total_Kernel(ik,Xen,k,q,Time)
    !
 #endif
    !
@@ -240,26 +239,18 @@ subroutine RT_Collision(G_input,A_input,Xen,k,q,Time)
         enddo
      endif
      !
-     ! The %W components of E are now used to define the long range damping of the G_retarded
-     !
-!     if(associated(Xen%W)) then
-!       do i1=SC_bands(1),SC_bands(2)
-!         do i2=i1+1,SC_bands(2)
-!           I1_lesser(i1,i2,ik)=I1_lesser(i1,i2,ik)-cI*(Xen%W(i1,ik,1)-Xen%W(i2,ik,1)) &
-!&                  *(G_input(i1,i2,ik)-G_lesser_reference(i1,i2,ik))*HA2EV/HBAR_eVfs/FS2AUT
-!           I1_lesser(i2,i1,ik)=I1_lesser(i2,i1,ik)+cI*(Xen%W(i2,ik,1)-Xen%W(i1,ik,1)) &
-!&                  *(G_input(i2,i1,ik)-G_lesser_reference(i2,i1,ik))*HA2EV/HBAR_eVfs/FS2AUT
-!         enddo
-!       enddo
-!     endif
-     !
    endif
    !
  enddo  !---- loop on k-points
  !
  if(allocated(SC_R)) call pp_redux_wait(SC_R(:,:,:,1))
- call pp_redux_wait(I1_lesser)
- call pp_redux_wait(I2_lesser)
+ ! 
+ ! When there is the el-ph Kernel the parallelization is done on the q-points 
+ ! 
+ if (.not.l_ph_corr) then
+   call pp_redux_wait(I1_lesser)
+   call pp_redux_wait(I2_lesser)
+ endif
  !
 end subroutine RT_Collision
 

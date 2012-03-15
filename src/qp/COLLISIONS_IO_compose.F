@@ -36,7 +36,7 @@ subroutine COLLISIONS_IO_compose(G_input)
  !
  implicit none
  !       
- complex(SP), intent(in)   :: G_input(SC_bands(2),SC_bands(2),QP_nk)
+ complex(SP), intent(in)   :: G_input(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk)
  !
  ! Work Space
  !

@@ -1,6 +1,6 @@
 #if defined _YPP_ELPH
 ELPH_objects = ELPH_databases.o ELPH_eliashberg_dos.o \
-               ELPH_general_gFsq.o ELPH_excitonic_gkkp.o ELPH_atomic_amplitude.o ELPH_gkkp_analysis.o
+               ELPH_general_gFsq.o ELPH_excitonic_gkkp.o ELPH_atomic_amplitude.o ELPH_gkkp_expand.o
 #endif
 #if defined _YPP_RT
 RT_objects = RT_driver.o RT_paths.o RT_databases.o RT_fix_symmetries.o RT_X_LRR_real_field.o \

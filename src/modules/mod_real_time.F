@@ -36,6 +36,12 @@ module real_time
  logical           :: l_RT_pump_and_probe  
  logical           :: l_Dynamics_is_over  
  !
+ ! Unperturbed (@ the equilibrium) symmetries
+ !
+ integer              :: nsym_eq
+ real(SP),allocatable :: dl_sop_eq(:,:,:)
+ real(SP),allocatable :: rl_sop_eq(:,:,:)
+ !
  ! Inital XC (SC or default) are requested
  !
  logical           :: l_RT_needs_XC0
@@ -108,8 +114,7 @@ module real_time
  ! ... Window on the k-points/bands allowed to follow the dynamics ...
  !
  real(SP)             :: RT_eh_energy_max
- real(SP)             :: RT_alpha_frohlich
- type(pp_indexes)     :: RT_px
+ type(pp_indexes),SAVE:: RT_k_px
  !
  ! Macroscopic induced current ... 
  !--------------------------------
@@ -137,11 +142,22 @@ module real_time
  ! ELPH kernel...
  !----------------
  !
+ logical     :: l_ELPH_CCA_kernel
+ real(SP)    :: Eh_pumped_pair_energy(2)
+ !
  ! ... Q weights calculated using RIM in order to evaluate the ELPH kernel
  !
  real(SP),    allocatable :: Q_weight(:)
  ! ... THETA matrix
  complex(SP), allocatable :: THETA_matrix(:,:,:,:)
+ ! ... Q-parallelization  and GKKP
+ type(pp_indexes),SAVE    :: RT_q_px
+ complex(SP), allocatable :: elph_gkkp_expanded(:,:,:,:)
+ ! ... indexex ...
+ integer,     allocatable :: THETA_matrix_index(:,:,:)
+ integer,     allocatable :: GKKP_matrix_index(:)
+ integer,     allocatable :: Q_io_map(:)
+ integer,     allocatable :: K_io_map(:)
  !
  ! Relaxation: Dephasing Matrix
  !------------------------------
@@ -266,10 +282,6 @@ module real_time
      use QP_m,           ONLY:QP_nk,QP_n_states,QP_Vnl_xc
      use R_lattice,      ONLY:nqbz
      use collisions_IO,  ONLY:collisions_IO_alloc
-#if defined _ELPH
-     use ELPH,           ONLY:ph_modes
-#endif
-
      !
      type(levels), intent(in) :: en
      !
@@ -309,14 +321,6 @@ module real_time
      !
      allocate(I2_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk))
      call mem_est("I2_lesser",(/size(I2_lesser)/),(/2*SP/))
-     !
-#if defined _ELPH   
-     if (l_ph_corr) then
-       allocate(THETA_matrix(2*nqbz*ph_modes,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1,QP_nk))
-       call mem_est("THETA_matrix",(/size(THETA_matrix)/),(/2*SP/))
-       THETA_matrix=(0._SP,0._SP)
-     endif
-#endif
      !
      allocate(G_lesser_reference(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk))
      call mem_est("Gf_l_ref",(/size(G_lesser_reference)/),(/2*SP/))
@@ -392,6 +396,12 @@ module real_time
      if (allocated(THETA_matrix)) then
        deallocate(THETA_matrix)
        call mem_est("THETA_matrix")
+       deallocate(THETA_matrix_index,GKKP_matrix_index)
+     endif
+     !
+     if (allocated(elph_gkkp_expanded)) then
+       deallocate(elph_gkkp_expanded)
+       call mem_est("GKKP_expanded")
      endif
      !
      deallocate(I2_lesser)
@@ -430,9 +440,14 @@ module real_time
        call mem_est("DephMatrix")
      endif
      !
+     if(allocated(Q_io_map)) then
+       deallocate(Q_io_map,K_io_map)
+     endif
+     !
      call collisions_IO_free() 
      !
-     call pp_indexes_reset(RT_px) 
+     call pp_indexes_reset(RT_k_px) 
+     call pp_indexes_reset(RT_q_px) 
      !
    end subroutine RT_free
    !

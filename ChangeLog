@@ -1,3 +1,265 @@
+2012-03-09 17:29:16 r1120 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac real_time/RT_ELPH_out_of_eq_Kernel.F real_time/RT_ELPH_Kernel.F real_time/RT_Collision.F + real_time/RT_ELPH_eq_Kernel.F real_time/.objects real_time/RT_start_and_restart.F modules/mod_pars.F ypp/electrons_dos_and_charge.F ypp/RT_occupations_analyze.F
+
+	Changes:
+	- [RT] Total ELPH kernel splitted in "eq" and "out-of-eq". Implemented, in the "eq" routine
+	  the Completed Collision Approximation (CCA).
+
+	Patch sent by: Andrea
+
+2012-03-02 18:02:06 r1114 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac qp_ctl/OCCUPATIONS_IO_and_interpolate.F bz_ops/k_the_nearest.F interface/QP_ctl_load.F interface/init_load.F interface/init.F setup/setup.F real_time/RT_ELPH_Kernel.F real_time/RT_databases_IO.F real_time/RT_start_and_restart.F io/ioDB1.F modules/mod_real_time.F modules/std_presets.F ypp/RT_fix_symmetries.F ypp/RT_occupations_analyze.F
+
+	Bugs:
+	- [_YPP_RT] Bug in setting the time range on the basis of the numbers read from the database
+	- [_RT] Fixed bug in the parallel all-to-all of the THETA matrix
+
+	Additions:
+	- [_RT] Added variable to control the energy of the full and empty level to be inverted by hand
+	- [_RT] Added unperturbed symmetries in the db1 database
+
+	Changes:
+	-[_RT]  k_the_nearest.F extended in order to use the unperturbed symmetries
+
+	Patch sent by: Andrea
+
+2012-02-28 12:51:51 r1110 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac real_time/RT_ELPH_gkkp_remap.F real_time/RT_ELPH_Kernel.F real_time/RT_Collision.F real_time/RT_observables.F real_time/RT_phase_space.F real_time/.objects real_time/RT_databases_IO.F real_time/RT_Rabi_Function.F real_time/RT_start_and_restart.F real_time/RT_average_operator.F real_time/RT_ELPH_zeroing.F
+
+	Bugs:
+	- [_RT] RT_ELPH_Kernel.F : wrong indexing of the gkkp m.e.
+	- [_RT] RT_ELPH_Kernel.F and RT_Collision.F.: wrong all-to-all call in the case
+	  of a parallel run
+	- [_RT] RT_phase_space.F: wrong setup of logicals
+
+	Additions:
+	- [_RT] RT_ELPH_zeroing routine to zero the THETA matrix in parallel runs
+
+	Patch sent by: Andrea
+
+2012-02-24 17:59:03 r1108 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure patch_to_work_without_gkkp include/version.inc config/configure.ac qp_ctl/OCCUPATIONS_IO_and_interpolate.F interface/init.F setup/QP_state_table_setup.F real_time/RT_ELPH_Kernel.F real_time/RT_start_and_restart.F io/io_SC_components.F modules/mod_real_time.F
+
+	Bugs:
+	- [YPP_RT] Wrong setup of time boundaries in src/interface/init.F
+
+	Changes:
+	- [YAMBO_RT] src/real_time/RT_ELPH_Kernel.F: Added separation of dynamics in occupied/empty subspaces
+	  to avoid instability caused, most probably, by the BKA.
+
+	Patch sent by: Andrea
+
+2012-02-17 18:46:11 r1102 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Bug fixes in init.F and COLLISIONS_IO
+
+2012-02-17 00:35:42 r1099 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure patch_to_work_without_gkkp include/version.inc config/configure.ac interface/init.F real_time/RT_ELPH_Kernel.F real_time/RT_ELPH_initialize.F io/io_SC_components.F
+
+	Bugs:
+	- [RT] In RT_ELPH_Kernel.F and in RT_ELPH_initialize.F. Now the code reproduces the same
+	  results of an older revision (1065) of the code.
+
+	Additions:
+	- [RT] RandQpts option added to the input file
+	- [RT] q_weight saved in THETA database to avoid spurious oscillations in the restart
+	  due to the random choice of the RIM q points
+
+	Patch sent by: Andrea
+
+2012-02-15 19:18:31 r1097 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Minor organization issues fixed
+
+2012-02-14 13:26:57 r1091 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac patch_to_make_yambo_ph_ito_work_with_rotatetd_gkkp qp/ELPH_Sigma_c.F qp/ELPH_gkkp_remap.F coulomb/rim_spherical.F interface/init_load.F interface/init.F real_time/RT_ELPH_Kernel.F real_time/RT_Collision.F real_time/RT_initialize.F real_time/RT_ELPH_initialize.F real_time/RT_phase_space.F modules/mod_real_time.F modules/mod_ELPH.F ypp/ELPH_atomic_amplitude.F
+
+	Additions:
+	- [RT] ELPH kernel extended to use the "real" GKKP m.e. obtained from an un-perturbed run
+	  rotated in the whole BZ.
+
+	Changes:
+	- [RT] Several allocations involving the ELPH problem moved in more pertinent places.
+	- [RT] Frohlich alpha removed.
+	- [RT] Implemented a parallel distribution of Q/K indexes. BY using this extension the GKKP
+	  m.e. are now stored in a saving memory mode.
+
+	Patch sent by: Andrea
+
+2012-02-10 18:06:55 r1089 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac patch_to_make_yambo_ph_ito_work_with_rotatetd_gkkp qp/ELPH_gkkp_modelization.F qp/.objects + interface/init.F io/ioELPH.F ypp/ELPH_gkkp_expand.F ypp/ELPH_databases.F
+
+	Bugs:
+	- [_YPP_PH] Bug in the rotation of the GKKP m.e. The symmetry of the k-point was
+	  not at all taken into account. The rotation was stricktly valid only for k \in IBZ
+
+	Additions:
+	- [_PH] Patch file to make ELPH_Sigma_c.F to work with the extended GKKP databases.
+	  *** WARNING *** The rotation of the GKKP m.e. works only for the Fan term.
+	- [_PH/_RT] Routine to re-map the GKKP m.e. in the perturbed q/k grid
+
+	Changes:
+	- [_RT] Removed the SN restriction of the ELPH database
+
+	Patch sent by: Andrea
+
+2012-02-08 17:44:33 r1085 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  io/io_header.F io/ioELPH.F modules/mod_ELPH.F ypp/ypp_init.F + ypp/ELPH_gkkp_analysis.F ypp/mod_YPP.F ypp/ypp_init_load.F ypp/ELPH_databases.F ypp/ypp_i.F ypp/.objects driver/ypp.h
+
+	Additions:
+	- [_PH] Tool to exapnd the gkkp m.e. to the whole BZ added (still beta state)
+
+	Patch sent by: Andrea
+
+2012-02-08 11:31:49 r1082 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac qp/ELPH_gkkp_modelization.F qp/.objects io/ioELPH.F modules/mod_ELPH.F ypp/ELPH_gkkp_analysis.F ypp/ELPH_databases.F
+
+	Additions:
+	- [PH] List of BZ k_points added to ELPH db
+	- [PH/RT] Routines to model and analyze the gkkp m.e.
+
+	Patch sent by: Andrea
+
+2012-02-01 18:18:20 r1074 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac real_time/RT_ELPH_initialize.F ypp/ELPH_gkkp_analysis.F ypp/ELPH_eliashberg_dos.F
+
+	Changes:
+	- [YPP_PH] Improved tests on possible ways of modelling the gkkp m.e.
+
+	Patch sent by: Andrea
+
+2012-01-30 18:45:57 r1070 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Few steps forward in gkkp analysis
+
+2012-01-30 11:25:38 r1068 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Update Changelog
+
+2012-01-30 11:22:14 r1067 Andrea Marini <andrea.marini@roma2.infn.it>
+
+2012-01-27 18:20:11 r1065 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac real_time/RT_ELPH_Kernel.F real_time/RT_databases_IO.F real_time/RT_start_and_restart.F io/io_SC_components.F modules/mod_real_time.F ypp/ypp_init.F ypp/mod_YPP.F ypp/ELPH_gkkp_analysis.F ypp/RT_occupations_check.F ypp/ypp_init_load.F ypp/electrons_charge.F ypp/ypp_i.F ypp/.objects ypp/ELPH_atomic_amplitude.F driver/ypp.h
+
+	Additions:
+	- [RT] Restart for the ELPH kernel
+	- [YPP_RT] Added option to analyze/fit and model the gkkp m.e.
+
+	Patch sent by: Andrea
+
+2012-01-25 11:29:44 r1055 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac qp_ctl/mod_QP_CTL.F coulomb/rim_spherical.F real_time/RT_ELPH_Kernel.F real_time/RT_driver.F real_time/RT_initialize.F real_time/RT_ELPH_initialize.F real_time/RT_start_and_restart.F real_time/RT_average_operator.F communicate/section.F io/io_SC_components.F ypp/ypp_init.F ypp/mod_YPP.F ypp/ypp_init_load.F ypp/electrons_dos_and_charge.F ypp/RT_occupations_analyze.F ypp/.objects
+
+	Bugs:
+	- [RT] Fixed section numbering
+
+	Additions:
+	- [RT] Temperature in RT databases
+
+	Changes:
+	- [YPP_RT] Added reference time to plot the change in the DOS
+
+	Patch sent by: Andrea
+
+2012-01-20 18:19:17 r1045 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  real_time/RT_ELPH_Kernel.F real_time/RT_initialize.F real_time/RT_states.F + real_time/.objects real_time/RT_start_and_restart.F real_time/RT_average_operator.F ypp/ypp_init.F ypp/mod_YPP.F ypp/ypp_init_load.F ypp/electrons_dos_and_charge.F ypp/electrons_driver.F + ypp/.objects driver/ypp.h
+
+	Additions:
+	- [YPP_RT] Option to plot the time-dependent occupations of selected states
+
+	Patch sent by: Andrea
+
+2012-01-19 15:53:45 r1042 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	[RT] Fixed bug in definition of dG for metals
+
+2012-01-19 15:52:45 r1041 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	[RT] Added option to plot the fixed time DOS
+
+2012-01-17 16:23:33 r1035 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  configure include/version.inc config/configure.ac qp_ctl/OCCUPATIONS_IO_and_interpolate.F interface/init_load.F interface/init.F setup/setup.F real_time/RT_ELPH_Kernel.F real_time/RT_initialize.F real_time/RT_states.F real_time/RT_ELPH_initialize.F real_time/RT_databases_IO.F io/io_elemental.F modules/mod_real_time.F modules/std_presets.F
+
+	Bugs:
+	- [RT] Wrong setup of NE_i_time in OCCUPATIONS_IO_and_interpolate.F
+
+	Additions:
+	- [RT] Several new input variables: RTmaxEn, AlphaFr, SkipGFIO, SkipOCCIO:
+	  RTmaxEn -> RT_states
+	  AlphaFr -> Frohlich adimensional alpha
+	  SkipGFIO, SkipOCCIO -> Skip I/O if Green Functions and/or Occupations
+
+	Changes:
+	- [RT] RT_states.F is a selctor of the evolved e/h pairs. Now it has been changed in order to
+	  select the states on the basis of the available e/h energy.
+
+	Patch sent by: Andrea
+
+2012-01-16 16:21:17 r1030 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Version 3.2.5
+
+	*  qp_ctl/OCCUPATIONS_IO_and_interpolate.F real_time/RT_initialize.F real_time/RT_states.F io/io_SC_components.F modules/mod_real_time.F
+
+	Additions:
+	- [RT] RT_states selects states to evolve using an energy window. Eventually it reduces the total bands involved in the dynamics.
+
+	Changes:
+	- [RT] Parallel index setup moved outside RT_Collision
+	- [RT] Reduced dimensions of RT_occupations
+
+	Patch sent by: Andrea
+
+2012-01-14 17:52:38 r1018 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	devel-andrea added
+
+2012-01-12 12:50:43 r1016 Andrea Marini <andrea.marini@roma2.infn.it>
+
+	Mergering of gpl+elph branch with trunk@revision 1016
+
 2012-01-12 10:46:46 r1015 Andrea Marini <andrea.marini@roma2.infn.it>
 
 	New version (subversion increased)
@@ -9664,6 +9926,4 @@
 	test 1
 
 2006-10-09 14:14:52 r1 svn
-
-	Initial import from 3.0.1_09-10-06
 

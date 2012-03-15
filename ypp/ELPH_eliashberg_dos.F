@@ -83,6 +83,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
      !             SPIN
      !             |
      dos_ef=dos_ef+2.*k%weights(i1)*Fermi_fnc_derivative(E,elph_gamma_broad)
+     !
    enddo
  enddo
  !

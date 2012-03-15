@@ -36,6 +36,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use IO_m,           ONLY:REP,DUMP,NONE
  use vec_operate,    ONLY:cross_product,c2a
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
+#if defined _RT
+ use real_time,      ONLY:rl_sop_eq,nsym_eq,dl_sop_eq
+#endif
 #if defined _SC
  use SC,             ONLY:load_SC_components,found_SC_DB
  use global_XC,      ONLY:G_kind,G_xc_functional,X_kind,&
@@ -123,6 +126,17 @@ subroutine setup(en,Xen,Ken,k,Xk)
    if (i_time_rev==1.and.is>nsym/2) cycle
    call msg('r','[S'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))  
  enddo
+#if defined _RT
+ if (nsym_eq>0) then
+   !
+   call msg('nr','[SYMs] Non perturbed symmetries                :',nsym_eq)
+   allocate(rl_sop_eq(3,3,nsym_eq))
+   do is=1,nsym_eq
+     forall (i2=1:3,i3=1:3) rl_sop_eq(i2,i3,is)=dl_sop_eq(i2,i3,is)*alat(i2)/alat(i3)
+   enddo
+   !
+ endif
+#endif
  !
  ! Time Reversal
  !

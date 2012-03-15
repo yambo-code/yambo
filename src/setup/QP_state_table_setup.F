@@ -137,6 +137,7 @@ subroutine QP_state_table_setup(en)
          enddo
        enddo
      endif
+     !
    else
      !
      if (.not.associated(en%E)) return
@@ -164,7 +165,11 @@ subroutine QP_state_table_setup(en)
  if (l_sc_run.or.l_real_time.or.l_collisions_IO) then
    !
    SC_bands_mixed=1
+   !
+#if !defined _ELPH
    if (any(.not.QP_state(1,:)).or.any(.not.QP_state(QP_nb,:))) SC_band_mixing=0.
+#endif
+   !
    if (SC_band_mixing<0..or.SC_band_mixing>100.) SC_band_mixing=0.
    if (SC_band_mixing>0.) SC_bands_mixed=nint(QP_nb*SC_band_mixing/100.)
    if (SC_bands_mixed==0) SC_bands_mixed=1

@@ -38,9 +38,9 @@ subroutine RT_Rabi_Function(E,Field)
  use pars,           ONLY:SP,cI,pi
  use units,          ONLY:HA2EV,SPEED_OF_LIGHT,AU2KWCMm2
  use electrons,      ONLY:levels
- use R_lattice,      ONLY:nkibz,bz_samp 
+ use R_lattice,      ONLY:nkibz
  use X_m,            ONLY:DIP_P,DIP_iR
- use fields,         ONLY:Efield,i_Pump,ext_field,Rabi_Factor
+ use fields,         ONLY:ext_field,Rabi_Factor
  use SC,             ONLY:SC_bands
  use com,            ONLY:msg
  use stderr,         ONLY:set_real_printed_length

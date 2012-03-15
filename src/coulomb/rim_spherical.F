@@ -19,27 +19,29 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine rim_spherical(Np,points,p_weight,radius,MULTIPLY_BY_Q)
+subroutine rim_spherical(Np,points,p_weight,radius,power,MULTIPLY_BY_Q)
  !
  ! Here I want to approx the integral
  !
  ! 1/vol \int_vol F(q) d3q = 1/vol \int_vol d3q/q^2 [q^2 F(q)] =
- !                           1/vol \sum_{Qi} \int_Si d3q/q^2 [q^2 F(q)] ~
- !                           1/vol \sum_{Qi} [Qi^2 F(Qi)] \int_Si d3q/q^2
+ !                         = 1/vol \sum_{Qi} \int_Si d3q/q^power [q^power F(q)] ~
+ !                         ~ 1/vol \sum_{Qi} [Qi^power F(Qi)] \int_Si d3q/q^power
  !
  ! with Si a sphere of radius "radius" and volume vol/Np
  !
  ! Finally I will rewrite 
  !
+ ! 1/vol \int_vol F(q) d3q ~ \sum_{Qi} Wi F(Qi)
+ !
+ ! with
+ !
  ! MULTIPLY_BY_Q=.TRUE. 
  !
- !   1/vol \int_vol F(q) d3q ~ \sum_{Qi} Wi F(Qi)
- !   with Wi = Qi^2/vol*\int_Si d3q/q^2
+ !   with Wi = Qi^power/vol*\int_Si d3q/q^power
  !
  ! MULTIPLY_BY_Q=.FALSE. 
  !
- !   1/vol \int_vol F(q) d3q ~ \sum_{Qi} Wi Qi^2 F(Qi)
- !   with Wi = 1/vol*\int_Si d3q/q^2
+ !   with Wi = 1/vol*\int_Si d3q/q^power
  !
  use pars,          ONLY:SP,pi,DP
  use drivers,       ONLY:l_real_time
@@ -50,7 +52,7 @@ subroutine rim_spherical(Np,points,p_weight,radius,MULTIPLY_BY_Q)
  use R_lattice,     ONLY:RIM_n_rand_pts
  implicit none
  !
- integer,  intent(in)    :: Np
+ integer,  intent(in)    :: Np,power
  real(SP), intent(in)    :: points(Np,3),radius
  real(SP), intent(inout) :: p_weight(Np)
  logical , intent(in)    :: MULTIPLY_BY_Q
@@ -119,11 +121,11 @@ subroutine rim_spherical(Np,points,p_weight,radius,MULTIPLY_BY_Q)
    p_weight(ip)=0.
    pt_cc=points(ip,:)*2.*pi/alat(:)
    do ir=1,RIM_n_rand_pts
-     p_weight(ip)=p_weight(ip)+1./v_norm(qr(ir,:)+pt_cc(:))**2.*box_vol/real(N_out)
+     p_weight(ip)=p_weight(ip)+1./v_norm(qr(ir,:)+pt_cc(:))**power*box_vol/real(N_out)
    enddo
    p_weight(ip)=p_weight(ip)/sphere_vol/real(Np)
    !
-   if (MULTIPLY_BY_Q) p_weight(ip)=p_weight(ip)*v_norm(pt_cc)**2
+   if (MULTIPLY_BY_Q) p_weight(ip)=p_weight(ip)*v_norm(pt_cc)**power
    !
    call live_timing(steps=1)
  enddo

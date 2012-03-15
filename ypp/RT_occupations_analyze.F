@@ -53,15 +53,14 @@ subroutine RT_occupations_analyze(k,E)
  !
  call msg('s','Time range [fs]:',OCC_T_range/FS2AUT)
  call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
- call msg('s','Steps          :',n_T_steps)
+ call msg('s','Time steps     :',n_T_steps)
  !
  do i_T=1,n_T_steps
    !
    io_Time=0.
-   if (i_T >1) then
-     io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
-     call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=io_Time)
-   endif
+   if (i_T >1) io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
+   !
+   call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=io_Time)
    !
    do i_s=1,QP_n_states
      !

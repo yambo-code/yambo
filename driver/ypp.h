@@ -83,7 +83,7 @@
 #endif
 #if defined _YPP_ELPH
   {"phonons","p","Phonon [(d)os,(e)lias,(a)mplitude]",0,0,1,0,0}, 
-  {"gkkp"  , "g","gkkp databases [(i)/o,(a)nalysis]",0,0,1,0,0}, 
+  {"gkkp"  , "g","gkkp databases",0,0,0,0,0}, 
 #endif
 #if defined _YPP_RAS
   {"surf", "a","Surface spectroscopy postprocessor [loc,trans]",0,0,1,0,0}, 

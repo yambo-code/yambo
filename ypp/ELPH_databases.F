@@ -21,16 +21,17 @@
 !
 integer function ELPH_databases(k,E,q)
  !
- use pars,                ONLY:DP,SP
+ use pars,                ONLY:DP,SP,schlen
  use stderr,              ONLY:intc
  use electrons,           ONLY:levels
  use ELPH,                ONLY:ph_freqs_sq,ph_modes,elph_nb,elph_use_q_grid,&
 &                              elph_global_free,max_ph_freq,elph_global_alloc,&
-&                              elph_nDBs,ph_qpt
+&                              elph_nDBs,ph_qpt,ph_kpt_bz,elph_nk_bz
  use com,                 ONLY:msg,warning,file_exists,error
- use R_lattice,           ONLY:bz_samp
- use D_lattice,           ONLY:nsym
- use YPP,                 ONLY:ph_freqs_file
+ use R_lattice,           ONLY:bz_samp,qindx_B
+ use D_lattice,           ONLY:nsym,n_atoms
+ use parser_m,            ONLY:parser
+ use YPP,                 ONLY:ph_freqs_file,l_gkkp_expand
  use IO_m,                ONLY:io_control,OP_APP_WR_CL,OP_RD_CL,VERIFY
  use timing,              ONLY:live_timing
  implicit none
@@ -46,26 +47,32 @@ integer function ELPH_databases(k,E,q)
  !
  !... I/O 
  !
- integer            ::idb,io_err,io_elph_err,ID
+ integer            ::idb,io_err,io_elph_err,ID,nDBs_disk
  integer, external  ::ioELPH 
  logical            ::use_ext_ph_freqs,abinit_DB
+ character(schlen)  ::db_name
  !
  !... dummies 
  !
  integer,allocatable::ikbz_is_table(:,:)
- integer            ::iq,elph_nk,iq_db(q%nbz)
+ integer            ::iq,elph_nk,iq_db(q%nbz),iq_bz,iq_s,i1
  complex(DP), allocatable :: grad_at_gamma(:,:,:,:,:)
  !
- call section("*","== Electron-Phonon Interface: Databases ==")
+ call section("*","== Electron-Phonon Interface: PW->Yambo Databases ==")
  !
  call k_ibz2bz(k,'i',.false.)
  !
- call msg('s','ELPH databases ...')
+ call parser('GkkpExpand',l_gkkp_expand)
+ !
+ if (l_gkkp_expand.and..not.allocated(qindx_B)) call error("Missing extended k/q scattering database. Please run a bse setup")
+ !
+ call msg('s','PW(ELPH) databases ...')
  !
  io_err=0
  max_ph_freq=0.
  elph_use_q_grid=.true.
  elph_nDBs=0
+ nDBs_disk=0
  iq_db=0
  ELPH_databases=0
  !
@@ -81,13 +88,37 @@ integer function ELPH_databases(k,E,q)
  enddo
  elph_nDBs=elph_nDBs-1
  if (elph_nDBs==0) then
+   ELPH_databases=-2
    call msg("l","not found")
    return
  endif
+ !
+ db_name='gkkp'
+ nDBs_disk=elph_nDBs
+ !
  if (elph_use_q_grid) then
+   !
    call msg("l",'found '//trim(intc(elph_nDBs))//' Q-grid compatible')
+   !
+   if (l_gkkp_expand) then
+     !
+     call k_ibz2bz(q,'i',.false.)
+     !
+     elph_nDBs=q%nbz
+     db_name='gkkp_expanded'
+     !
+     call msg("s",'Database expanded to the whole '//trim(intc(elph_nDBs))//' BZ Q-grid')
+     !
+   endif
+   !
  else
+   !
    call msg("l",'found '//trim(intc(elph_nDBs))//' NOT Q-grid compatible')
+   !
+   ! In this case there is no sense in expanding the gkkp
+   !
+   l_gkkp_expand=.FALSE.
+   !
  endif
  !
  ! KBZ + SYM table
@@ -98,20 +129,30 @@ integer function ELPH_databases(k,E,q)
  ! Check if DB is already done
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),MODE=VERIFY,ID=ID)
- io_elph_err=ioELPH(ID,'gkkp')
+ io_elph_err=ioELPH(ID,trim(db_name))
+ !
  if (io_elph_err==0) return
  !
  ! Allocation...
  !
  call elph_global_alloc('gkkp')
  !
+ ! Keep a copy of k-points to be used by _RT to rotate the unperturbed gkkp m.e.
+ !
+ ph_kpt_bz=k%ptbz
+ elph_nk_bz=k%nbz
+ !
  ! ... rebuilding of ph q-points table
  !
- do idb=1,elph_nDBs
-   iq=idb
-   if (elph_use_q_grid) iq=iq_db(idb)
-   ph_qpt(iq,:)=ph_qpt_(iq,:)
- enddo
+ if (l_gkkp_expand) then
+   ph_qpt=q%ptbz
+ else
+   do idb=1,elph_nDBs
+     iq=idb
+     if (elph_use_q_grid) iq=iq_db(idb)
+     ph_qpt(iq,:)=ph_qpt_(iq,:)
+   enddo
+ endif
  !
  ! Force DB fragmentation
  !
@@ -129,28 +170,58 @@ integer function ELPH_databases(k,E,q)
    read(99,*)
  endif
  !
- call live_timing('ELPH databases (WRITE)',elph_nDBs,SERIAL=.true.)
+ call live_timing('ELPH databases (WRITE)',nDBs_disk,SERIAL=.true.)
  !
- do idb=1,elph_nDBs
+ iq_bz=0
+ !
+ allocate(grad_at_gamma(k%nbz,elph_nb,elph_nb,n_atoms,3))
+ !
+ do idb=1,nDBs_disk
    !
    iq=idb
    if (elph_use_q_grid) iq=iq_db(idb)
    !
-   io_err=ELPH_databases_io(idb)
-   !
-   if (io_err==-1) then
-     call live_timing(steps=1)
-     cycle
-   endif
-   !
-   if (io_err==-4) call warning("K-grid is not fully q-connected @ Q"//trim(intc(iq)))
-   !
-   if (idb==1) then
-     call io_control(ACTION=OP_APP_WR_CL,SEC=(/1,iq+1/),ID=ID)
+   if (l_gkkp_expand) then
+     !
+     ! Note that ph_qpt is correclty pointing to the q%ptbz. But ph_freqs_sq, instead, is not
+     ! and must be re-pointed
+     !
+     do i1=1,q%nstar(iq)
+       !
+       iq_bz=iq_bz+1
+       !
+       iq_s=q%star(iq,i1)
+       io_err=ELPH_databases_io(idb)
+       !
+       ph_freqs_sq(iq_bz,:)=ph_freqs_sq(iq,:)
+       !
+       if (iq_bz==1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/1,iq_bz+1/),ID=ID)
+       if (iq_bz >1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/iq_bz+1/),ID=ID)
+       !
+       call ELPH_gkkp_expand(iq_bz,iq_s,k)
+       !
+       io_elph_err=ioELPH(ID,trim(db_name))
+       !
+     enddo
+     !
    else
-     call io_control(ACTION=OP_APP_WR_CL,SEC=(/iq+1/),ID=ID)
+     !
+     io_err=ELPH_databases_io(idb)
+     !
+     if (io_err==-1) then
+       call live_timing(steps=1)
+       cycle
+     endif
+     !
+     if (io_err==-4) call warning("K-grid is not fully q-connected @ Q"//trim(intc(iq)))
+     !
+     if (idb==1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/1,iq+1/),ID=ID)
+     if (idb/=1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/iq+1/),ID=ID)
+     !
+     io_elph_err=ioELPH(ID,trim(db_name))
+     !
    endif
-   io_elph_err=ioELPH(ID,'gkkp')
+   !
    call live_timing(steps=1)
    !
  enddo
@@ -163,12 +234,14 @@ integer function ELPH_databases(k,E,q)
  !
  call elph_global_free()
  !
+ deallocate(grad_at_gamma)
+ !
  call IO_and_Messaging_switch("-DB_is_fragmented")
  !
  contains
    !
    integer function ELPH_databases_io(idb_)
-   !------------------------------------
+   !---------------------------------------
    !
    ! s.dbph_ structure
    !
@@ -200,7 +273,7 @@ integer function ELPH_databases(k,E,q)
    !
    !Work Space
    !
-   integer           :: ib1,ib2,ig,il,nat,ia,i,j
+   integer           :: ib1,ib2,ig,il,ia,i,j
    real(SP)          :: r_v(3),ph_freq
    complex(DP)       :: F1(3)
    !
@@ -343,10 +416,7 @@ integer function ELPH_databases(k,E,q)
    ! 
    ! ELPH_gkkp 
    !
-   nat=sum(n_atoms_species)
-   !
-   allocate(gkkp_disk(elph_nb,elph_nb,ph_modes),pol_vec(ph_modes,nat,3))
-   if (idb_==1) allocate(grad_at_gamma(k%nbz,elph_nb,elph_nb,nat,3))
+   allocate(gkkp_disk(elph_nb,elph_nb,ph_modes),pol_vec(ph_modes,n_atoms,3))
    !
    ! Reading
    !
@@ -417,13 +487,13 @@ integer function ELPH_databases(k,E,q)
          ! Debye Waller Term
          !
          F1=(0._DP,0._DP)
-         do ia=1,nat
+         do ia=1,n_atoms
            F1(:)=F1(:)+grad_at_gamma(k2k_tab(ik),ib1,ib2,ia,:)*dVRY2Ha
          enddo
          !
          do i=1,3
            do j=1,3
-             do ia=1,nat
+             do ia=1,n_atoms
                do il=1,ph_modes
                  elph_DW(k2k_tab(ik),il,ib1,ib2)=elph_DW(k2k_tab(ik),il,ib1,ib2)+&
 &                2.*real(&
@@ -464,7 +534,6 @@ integer function ELPH_databases(k,E,q)
    ! CLEAN
    !
    deallocate(ph_freqs_sq_disk,gkkp_disk,pol_vec)
-   if (idb==elph_nDBs) deallocate(grad_at_gamma)
    !
 1  call io_control(ACTION=RD_CL,ID=ID)
    call io_disconnect(ID)
@@ -502,7 +571,6 @@ integer function ELPH_databases(k,E,q)
    use pars,           ONLY:SP
    use vec_operate,    ONLY:c2a
    use D_lattice,      ONLY:nsym,sop_tab
-   use memory_m,       ONLY:mem_est
    use R_lattice,      ONLY:rl_sop,nkbz,ik_is_table
    implicit none
    integer :: ikbz_is_table(nkbz,nsym)
@@ -530,9 +598,7 @@ integer function ELPH_databases(k,E,q)
        ikbz_is_table(i1,is)=ik_is_table(ikibz,sop_tab(is,ir))
      enddo
    enddo
-   deallocate(ik_is_table)
-   call mem_est("ik_is_table")
- 
+   !
    end subroutine
    !
 end function

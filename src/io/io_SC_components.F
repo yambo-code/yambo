@@ -31,7 +31,7 @@ integer function io_SC_components(what,E_sc,ID)
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,write_is_on,&
-&                         manage_RD_WR_CL_IF_END,io_reset,ver_is_gt_or_eq
+&                         manage_RD_WR_CL_IF_END,io_reset,ver_is_gt_or_eq,variable_is_found
  use fields,         ONLY:i_Probe,i_Pump
  use real_time,      ONLY:max_rt_steps_disk,NE_i_time
 #if defined _ELPH
@@ -40,7 +40,7 @@ integer function io_SC_components(what,E_sc,ID)
 #if defined _RT
  use real_time,      ONLY:l_NE_with_fields,NE_steps,RT_P,J_and_P_cache_size, &
 &                         G_lesser,NE_dynamics,RT_ind_J,J_and_P_cache,&
-&                         G_lesser_reference,MEM_index,NE_MEM_steps,THETA_matrix
+&                         G_lesser_reference,MEM_index,NE_MEM_steps,THETA_matrix,q_weight
  use fields,         ONLY:A_vecpot
  use QP_m,           ONLY:QP_nk
 #endif                                
@@ -153,7 +153,7 @@ integer function io_SC_components(what,E_sc,ID)
 #endif
    !
    if (any((/l_E,l_V,l_WF,l_occupations,l_J_and_P,l_G,l_MP,l_THETA/))) then
-     if (ver_is_gt_or_eq(ID,revision=1055)) then
+     if (write_is_on(ID).or.variable_is_found(ID,"TEMPERATURES")/=0) then
        io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,T_EL=l_T_EL)
      else
        io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.)
@@ -180,6 +180,11 @@ integer function io_SC_components(what,E_sc,ID)
      call io_elemental(ID,I0=i_Probe)
      call io_elemental(ID,I0=i_Pump)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   endif
+   !
+   if (l_THETA) then
+     call io_bulk(ID,VAR="Q_weight",VAR_SZ=(/nqbz/))
+     call io_bulk(ID,R1=q_weight)
    endif
    !
    io_SC_components=io_status(ID)

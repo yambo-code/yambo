@@ -23,7 +23,8 @@ subroutine RT_ELPH_initialize(k,q)
  ! 
  use pars,           ONLY:SP,pi
  use real_time,      ONLY:q_weight,RT_q_px,elph_gkkp_expanded,THETA_matrix,&
-&                         GKKP_matrix_index,THETA_matrix_index,Q_io_map,K_io_map 
+&                         GKKP_matrix_index,THETA_matrix_index,Q_io_map,K_io_map,&
+&                         l_ELPH_CCA_Kernel 
  use R_lattice,      ONLY:RL_vol,bz_samp
  use par_indexes_m,  ONLY:par_indexes
  use par_proc_m,     ONLY:pp_indexes_reset,myid
@@ -32,6 +33,7 @@ subroutine RT_ELPH_initialize(k,q)
  use memory_m,       ONLY:mem_est
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
+ use parser_m,       ONLY:parser
  !
  implicit none
  !
@@ -43,7 +45,13 @@ subroutine RT_ELPH_initialize(k,q)
  real(SP)            ::RADIUS_sphere,ph_Esq_local(q%nbz,ph_modes)
  integer, external   ::ioELPH
  !
+ ! Logicals
+ !==========
+ !
+ call parser('RTCCA',l_ELPH_CCA_Kernel)
+ !
  ! Pre-allocation of CPU tables
+ !==============================
  !
  call pp_indexes_reset(RT_q_px)
  !
@@ -60,11 +68,14 @@ subroutine RT_ELPH_initialize(k,q)
  allocate(elph_gkkp_expanded(k%nbz*RT_q_px%n_of_elements(myid+1),ph_modes,elph_nb,elph_nb),stat=alloc_err)
  call mem_est("GKKP_expanded",(/size(elph_gkkp_expanded)/),(/2*SP/),errors=(/alloc_err/))
  !
- allocate(THETA_matrix(2*q%nbz*ph_modes,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1,QP_nk))
- call mem_est("THETA_matrix",(/size(THETA_matrix)/),(/2*SP/))
- THETA_matrix=(0._SP,0._SP)
+ if (.not.l_ELPH_CCA_Kernel) then
+   allocate(THETA_matrix(2*q%nbz*ph_modes,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1,QP_nk))
+   call mem_est("THETA_matrix",(/size(THETA_matrix)/),(/2*SP/))
+   THETA_matrix=(0._SP,0._SP)
+   allocate(THETA_matrix_index(q%nbz,ph_modes,2))
+ endif
  !
- allocate(GKKP_matrix_index(q%nbz),THETA_matrix_index(q%nbz,ph_modes,2))
+ allocate(GKKP_matrix_index(q%nbz))
  !
  ! I/O
  !=====
@@ -112,6 +123,8 @@ subroutine RT_ELPH_initialize(k,q)
  !
  ! THETA matrix indexes
  !======================
+ !
+ if (l_ELPH_CCA_Kernel) return
  !
  i_counter=0
  !

@@ -396,6 +396,7 @@ module real_time
      if (allocated(THETA_matrix)) then
        deallocate(THETA_matrix)
        call mem_est("THETA_matrix")
+       deallocate(THETA_matrix_index,GKKP_matrix_index)
      endif
      !
      if (allocated(elph_gkkp_expanded)) then
@@ -441,10 +442,6 @@ module real_time
      !
      if(allocated(Q_io_map)) then
        deallocate(Q_io_map,K_io_map)
-     endif
-     !
-     if(allocated(THETA_matrix_index)) then
-       deallocate(THETA_matrix_index,GKKP_matrix_index)
      endif
      !
      call collisions_IO_free() 

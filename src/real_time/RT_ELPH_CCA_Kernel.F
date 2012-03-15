@@ -21,7 +21,7 @@
 !
 subroutine RT_ELPH_CCA_kernel(ik,ik_m_q,N_q,E,ph_freq,Gkkp,S_mat)
  !  
- use pars,           ONLY:SP,cI,pi,cZERO
+ use pars,           ONLY:SP,cI,pi
  use electrons,      ONLY:levels,spin_occ
  use SC,             ONLY:SC_bands,it_now
  use real_time,      ONLY:G_lesser,MEM_index
@@ -38,8 +38,6 @@ subroutine RT_ELPH_CCA_kernel(ik,ik_m_q,N_q,E,ph_freq,Gkkp,S_mat)
  !
  integer  :: i_n,i_np,B_dim
  real(SP) :: DELTA,GAMMA_,f_k,f_k_m_q,nq
- !
- S_mat=cZERO
  !
  ! Dimensions
  !============

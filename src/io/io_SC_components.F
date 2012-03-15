@@ -152,7 +152,6 @@ integer function io_SC_components(what,E_sc,ID)
    l_T_EL=.true.
 #endif
    !
- 
    if (any((/l_E,l_V,l_WF,l_occupations,l_J_and_P,l_G,l_MP,l_THETA/))) then
      if (write_is_on(ID).or.variable_is_found(ID,"TEMPERATURES")/=0) then
        io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,T_EL=l_T_EL)

@@ -61,7 +61,6 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  complex(SP)           :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  complex(SP)           :: S_mat_out_of_eq(2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  complex(SP)           :: S_mat_eq(2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
- complex(SP)           :: S_mat_CCA(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  complex(SP)           :: S_mat_sum(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  !
  ! ... band index ...
@@ -77,7 +76,6 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  i_map( 1)=2
  !
  S_mat_eq=cZero
- S_mat_CCA=cZero
  S_mat_out_of_eq=cZero
  S_mat_sum=cZero
  !
@@ -117,11 +115,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
        ! Complete Collision Approximation (CCA)
        !=======================================
        !
-       call RT_ELPH_CCA_kernel(ik,ik_m_q,N_q,E,ph_freq,Gkkp,S_mat_CCA)
-       !
-       do i_n=1,B_dim
-         S_mat_sum(i_n,i_n)=S_mat_CCA(i_n,i_n)
-       enddo
+       call RT_ELPH_CCA_kernel(ik,ik_m_q,N_q,E,ph_freq,Gkkp,S_mat_sum)
        !
      else
        !
@@ -154,18 +148,14 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
    !
  enddo ! iqbz
  !
- !if (ik==5) write (100,'(3f20.10)') TIME,S_mat_sum(2,2)
+ ! All-to-All
+ !============
  !
  call pp_redux_wait(S_mat_sum(:,:))
  !
  do i_n=SC_bands(1),SC_bands(2)
    do i_np=SC_bands(1),SC_bands(2)
-     !
-     i_n_m=i_n-SC_bands(1)+1
-     i_np_m=i_np-SC_bands(1)+1
-     !
-     I1_lesser(i_n,i_np,ik)=I1_lesser(i_n,i_np,ik)+S_mat_sum(i_n_m,i_np_m)
-     !
+     I1_lesser(i_n,i_np,ik)=I1_lesser(i_n,i_np,ik)+S_mat_sum(i_n-SC_bands(1)+1,i_np-SC_bands(1)+1)
    enddo 
  enddo
  !

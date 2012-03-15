@@ -22,6 +22,7 @@
 integer function variables_SC(ID,local_description,what)
  !
  use pars,           ONLY:lchlen
+ use drivers,        ONLY:l_ph_corr
  use units,          ONLY:AU2Tesla,DEG2RAD,FS2AUT,AU2KWCMm2,HA2EV
  use D_lattice,      ONLY:atoms_string
  use stderr,         ONLY:intc
@@ -33,10 +34,14 @@ integer function variables_SC(ID,local_description,what)
  use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,NE_time,Hfrozen,XCfrozen,              &
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
 &                         RAD_LifeTime,Phase_LifeTime,l_RT_diamagnetic,                             &
-&                         max_rt_steps_disk,l_RT_induced_field,l_NE_simulate_BSE,NE_MEM_steps
+&                         max_rt_steps_disk,l_RT_induced_field,l_NE_simulate_BSE,NE_MEM_steps,&
+&                         l_ELPH_CCA_Kernel
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
+#endif
+#if defined _ELPH
+ use ELPH,           ONLY:ph_modes
 #endif
  use global_XC,      ONLY:SC_EXX,SC_HF,SC_COHSEX,SC_EXXC
  use fields,         ONLY:global_gauge,n_ext_fields,Efield
@@ -170,6 +175,31 @@ integer function variables_SC(ID,local_description,what)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  endif
  !
+#if defined _ELPH
+ !
+ if (ver_is_gt_or_eq(ID,revision=1121)) then
+   call io_elemental(ID,VAR="ELPH_vars",VAR_SZ=4,MENU=0) 
+   i_desc=i_desc+1
+   call io_elemental(ID,L0=l_ph_corr,&
+&     VAR=" [ELPH] Electron-phonon          :", CHECK=.true.,OP=(/"=="/),&
+&     DESCRIPTION=local_description(i_desc))
+   i_desc=i_desc+1
+   call io_elemental(ID,L0=l_ELPH_CCA_Kernel,&
+&     VAR=" [ELPH] Completed Collision(CCA) :", CHECK=.true.,OP=(/"=="/),&
+&     DESCRIPTION=local_description(i_desc))
+   i_desc=i_desc+1
+   call io_elemental(ID,&
+&     VAR=" [ELPH] Phonon modes             :",I0=ph_modes,CHECK=.true.,OP=(/"=="/),&
+&     DESCRIPTION=local_description(i_desc))
+   i_desc=i_desc+1
+   call io_elemental(ID, &
+&     VAR=" [ELPH] Memory steps             :",I0=NE_MEM_steps,CHECK=.true.,OP=(/"=="/),&
+&     DESCRIPTION=local_description(i_desc))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ endif
+ !
+#endif
+ !
  if (io_status_save==0.and.io_status(ID)<0) then
    io_status(ID)=IO_INCOMPATIBLE_VAR
    if (l_NSC_shot) io_status(ID)=0
@@ -272,13 +302,6 @@ integer function variables_SC(ID,local_description,what)
    call io_elemental(ID, &
 &    VAR=" [RT] Thermalization steps       :",I0=Thermal_steps,CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
-   !
-   if (ver_is_gt_or_eq(ID,revision=944)) then
-     i_desc=i_desc+1
-     call io_elemental(ID, &
-&      VAR=" [RT] Memory steps               :",I0=NE_MEM_steps,CHECK=.true.,OP=(/"=="/),&
-&      DESCRIPTION=local_description(i_desc))
-   endif
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !

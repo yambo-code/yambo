@@ -41,7 +41,7 @@ subroutine RT_ELPH_initialize(k,q)
  !
  ! Work Space
  !
- integer             ::iq,ID,io_err,ik,i_counter,alloc_err,iq_io,il,i_s
+ integer             ::iq,ID,io_err,ik,i_counter,alloc_err,iq_io,il,i_s,i_n,i_np
  real(SP)            ::RADIUS_sphere,ph_Esq_local(q%nbz,ph_modes)
  integer, external   ::ioELPH
  !
@@ -102,7 +102,16 @@ subroutine RT_ELPH_initialize(k,q)
    !
    do ik=1,k%nbz
      !
-     elph_gkkp_expanded((i_counter-1)*k%nbz+ik,:,:,:)=elph_gkkp(K_io_map(ik),:,:,:)
+     do i_n=1,elph_nb
+       do i_np=1,elph_nb
+         !
+         ! There has been a key error in the definition of the el-ph SE of the BKE (Eq. 30_9_11.18)
+         ! where the band indexes have been exchanged. Instead of doing a global change of the notes
+         ! and of the code I decided, here, to exchange the indexes:
+         !
+         elph_gkkp_expanded((i_counter-1)*k%nbz+ik,:,i_n,i_np)=elph_gkkp(K_io_map(ik),:,i_np,i_n)
+       enddo
+     enddo
      !
    enddo
    !

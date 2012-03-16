@@ -21,7 +21,7 @@
 !
 subroutine RT_occupations_analyze(k,E)
  !
- use units,          ONLY:FS2AUT,SP
+ use units,          ONLY:FS2AUT,SP,HA2EV
  use pars,           ONLY:schlen
  Use stderr,         ONLY:intc
  use R_lattice,      ONLY:bz_samp
@@ -29,7 +29,8 @@ subroutine RT_occupations_analyze(k,E)
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT
  use com,            ONLY:msg,of_open_close
- use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate
+ use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,Hole_lifetime,Electron_lifetime,&
+&                         Phonon_lifetime,l_ELPH_CCA_kernel
  use SC,             ONLY:RT_occupations,SC_description,n_SC_descriptions
  implicit none
  !
@@ -39,8 +40,8 @@ subroutine RT_occupations_analyze(k,E)
  ! Work Space
  !
  integer               :: ik,ib,i_spin,i_s,i_T,n_T_steps,i_fp
- real(SP)              :: io_Time
- character(schlen)     :: titles(2)
+ real(SP)              :: io_Time,data_to_plot(5)
+ character(schlen)     :: titles(5)
  integer,     external :: RT_occupations_check
  !
  call section('*','Real-Time occupations')
@@ -85,12 +86,26 @@ subroutine RT_occupations_analyze(k,E)
        titles(1)='T[fs]'
        titles(2)='Occupation'
        call msg('o '//trim(output_fname),'#')
-       call msg('o '//trim(output_fname),'#',titles(:2),INDENT=0,USE_TABS=.TRUE.)
+       if (l_ELPH_CCA_kernel) then
+         titles(3)='Hole L'
+         titles(4)='Electron L'
+         titles(5)='Phonon L'
+         call msg('o '//trim(output_fname),'#',titles(:5),INDENT=0,USE_TABS=.TRUE.)
+       else
+         call msg('o '//trim(output_fname),'#',titles(:2),INDENT=0,USE_TABS=.TRUE.)
+       endif
        call msg('o '//trim(output_fname),'#')
        !
      endif
      !
-     call msg('o '//trim(output_fname),'',(/io_TIME/FS2AUT,RT_occupations(ib,ik)/2./),INDENT=-2,USE_TABS=.true.)
+     data_to_plot(:2)=(/io_TIME/FS2AUT,RT_occupations(ib,ik)/2./)
+     if (l_ELPH_CCA_kernel) then
+       data_to_plot(3:)=(/Hole_lifetime(ib,ik)*HA2EV,Electron_lifetime(ib,ik)*HA2EV,&
+&                                              Phonon_lifetime(ib,ik)*HA2EV/)
+       call msg('o '//trim(output_fname),'',data_to_plot,INDENT=-2,USE_TABS=.true.)
+     else
+       call msg('o '//trim(output_fname),'',data_to_plot(:2),INDENT=-2,USE_TABS=.true.)
+     endif
      !
      if (i_T==n_T_steps) call of_open_close(trim(output_fname))
      !

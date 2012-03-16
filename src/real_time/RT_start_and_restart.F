@@ -107,7 +107,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
          if(abs(Xen%E(ib,ik,1)-Eh_pumped_pair_energy(1))<.1/HA2EV) i1=ib
        else
          if(abs(Xen%E(ib,ik,1)-Eh_pumped_pair_energy(2))<.1/HA2EV) then
-           !G_lesser(i1,i1,ik,1) = cZERO
+           G_lesser(i1,i1,ik,1) = cZERO
            G_lesser(ib,ib,ik,1) = 2._SP*cI
            call msg('sr','[RT] Eh pair pumped `by hand` @ k'//trim(intc(ik))//&
 &                        ' bands '//trim(intc(i1))//' - '//trim(intc(ib)))

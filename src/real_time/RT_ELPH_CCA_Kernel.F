@@ -19,25 +19,24 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_CCA_kernel(ik,ik_m_q,N_q,E,ph_freq,Gkkp,S_mat)
+subroutine RT_ELPH_CCA_kernel(ik,ik_m_q,f_k,N_q,E,ph_freq,Gkkp)
  !  
  use pars,           ONLY:SP,cI,pi
  use electrons,      ONLY:levels,spin_occ
  use SC,             ONLY:SC_bands,it_now
- use real_time,      ONLY:G_lesser,MEM_index
+ use real_time,      ONLY:G_lesser,MEM_index,Hole_lifetime,Electron_lifetime,Phonon_lifetime
  !
  implicit none
  !
  type(levels),  intent(in)  :: E
  integer,       intent(in)  :: ik,ik_m_q
- real(SP),      intent(in)  :: ph_freq,N_q(2)
+ real(SP),      intent(in)  :: ph_freq,N_q(2),f_k(SC_bands(2)-SC_bands(1)+1)
  complex(SP),   intent(in)  :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
- complex(SP),   intent(out) :: S_mat(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  !
  ! Work Space ...
  !
- integer  :: i_n,i_np,B_dim
- real(SP) :: DELTA,GAMMA_,f_k,f_k_m_q,nq
+ integer  :: i_n,i_np,B_dim,i_n_shift
+ real(SP) :: DELTA,GAMMA_,f_k_m_q,nq,P_ph_abs,P_ph_emit
  !
  ! Dimensions
  !============
@@ -51,7 +50,7 @@ subroutine RT_ELPH_CCA_kernel(ik,ik_m_q,N_q,E,ph_freq,Gkkp,S_mat)
  !
  do i_n=1,B_dim
    !
-   f_k=-cI*G_lesser(i_n+SC_bands(1)-1,i_n+SC_bands(1)-1,ik,MEM_index(it_now))/spin_occ
+   i_n_shift=i_n+SC_bands(1)-1
    !
    do i_np=1,B_dim
      !
@@ -60,9 +59,22 @@ subroutine RT_ELPH_CCA_kernel(ik,ik_m_q,N_q,E,ph_freq,Gkkp,S_mat)
      DELTA  = E%E(i_np+SC_bands(1)-1,ik_m_q,1)-E%E(i_n+SC_bands(1)-1,ik,1)
      GAMMA_ = abs(E%W(i_np+SC_bands(1)-1,ik_m_q,1))+abs(E%W(i_n+SC_bands(1)-1,ik,1))
      !
-     S_mat(i_n,i_n)=S_mat(i_n,i_n)+abs(Gkkp(i_np,i_n))**2*&
-&                   ( (nq*(f_k-f_k_m_q)-f_k_m_q*(1.-f_k))*GAMMA_/(GAMMA_**2+(DELTA-ph_freq)**2)+&
-&                     (f_k*(1.-f_k_m_q)-nq*(f_k_m_q-f_k))*GAMMA_/(GAMMA_**2+(DELTA+ph_freq)**2) )
+     if (abs(DELTA)<1.E-10) cycle
+     !
+     P_ph_abs =0.
+     P_ph_emit=0.
+     !
+     ! 16/3/2012
+     !
+     ! Including "by hand" the limits on the signs of DELTA I managed to get
+     ! (finally) a converged el-ph dynamics.
+     !
+     if (DELTA>1.E-10) P_ph_abs =GAMMA_/(GAMMA_**2+(DELTA-ph_freq)**2)
+     if (DELTA<1.E-10) P_ph_emit=GAMMA_/(GAMMA_**2+(DELTA+ph_freq)**2)
+     !
+     Hole_lifetime(i_n_shift,ik)=Hole_lifetime(i_n_shift,ik)+abs(Gkkp(i_np,i_n))**2*P_ph_abs*f_k_m_q
+     Electron_lifetime(i_n_shift,ik)=Electron_lifetime(i_n_shift,ik)+abs(Gkkp(i_np,i_n))**2*P_ph_emit*(1.-f_k_m_q)
+     Phonon_lifetime(i_n_shift,ik)=Phonon_lifetime(i_n_shift,ik)+nq*(f_k(i_n)-f_k_m_q)*(P_ph_abs+P_ph_emit)
      !
    enddo
    !

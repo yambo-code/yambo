@@ -151,13 +151,19 @@ module real_time
  ! ... THETA matrix
  complex(SP), allocatable :: THETA_matrix(:,:,:,:)
  ! ... Q-parallelization  and GKKP
- type(pp_indexes),SAVE    :: RT_q_px
+ type(pp_indexes),   SAVE :: RT_q_px
  complex(SP), allocatable :: elph_gkkp_expanded(:,:,:,:)
- ! ... indexex ...
+ ! ... indexes ...
  integer,     allocatable :: THETA_matrix_index(:,:,:)
  integer,     allocatable :: GKKP_matrix_index(:)
  integer,     allocatable :: Q_io_map(:)
  integer,     allocatable :: K_io_map(:)
+ !
+ ! Hole/Electron Time-dependent life-times
+ !
+ real(SP),    allocatable :: Hole_lifetime(:,:)
+ real(SP),    allocatable :: Phonon_lifetime(:,:)
+ real(SP),    allocatable :: Electron_lifetime(:,:)
  !
  ! Relaxation: Dephasing Matrix
  !------------------------------
@@ -308,6 +314,13 @@ module real_time
      allocate(RT_occupations(SC_bands(1):SC_bands(2),QP_nk))
      call mem_est("RT_occupations",(/size(RT_occupations)/),(/SP/))
      !
+     if (l_ELPH_CCA_kernel) then
+       allocate(Hole_lifetime(SC_bands(1):SC_bands(2),QP_nk))
+       allocate(Electron_lifetime(SC_bands(1):SC_bands(2),QP_nk))
+       allocate(Phonon_lifetime(SC_bands(1):SC_bands(2),QP_nk))
+       call mem_est("RT_lifetimes",(/3*size(Hole_lifetime)/),(/SP/))
+     endif
+     !
      if(l_RT_needs_XC0) then
        allocate(XC0_and_HARTREE0(1:SC_bands(2),1:SC_bands(2),QP_nk,n_sp_pol))
        call mem_est("XC0_and_HARTREE0",(/size(XC0_and_HARTREE0)/),(/2*SP/))
@@ -380,6 +393,11 @@ module real_time
      if(allocated(SC_R)) then
        deallocate(SC_R)
        call mem_est("SC_R")
+     endif
+     !
+     if(allocated(Hole_lifetime)) then
+       deallocate(Hole_lifetime,Electron_lifetime,Phonon_lifetime)
+       call mem_est("RT_lifetimes")
      endif
      !
      deallocate(RT_occupations)

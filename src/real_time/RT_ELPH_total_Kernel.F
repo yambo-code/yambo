@@ -37,11 +37,12 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  !  
  ! Iteration: in this case I ***think*** (even if I am not completely sure) that everything is ok.
  !  
- use pars,           ONLY:SP,cI,cZero
+ use pars,           ONLY:SP,cI,cZero,rZero
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
- use SC,             ONLY:SC_bands
- use real_time,      ONLY:I1_lesser,q_weight,elph_gkkp_expanded,GKKP_matrix_index,RT_q_px,l_ELPH_CCA_kernel
+ use SC,             ONLY:SC_bands,it_now 
+ use real_time,      ONLY:I1_lesser,q_weight,elph_gkkp_expanded,GKKP_matrix_index,RT_q_px,l_ELPH_CCA_kernel,&
+&                         Hole_lifetime,Electron_lifetime,Phonon_lifetime,G_lesser,MEM_index
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use functions,      ONLY:bose_f
  use par_proc_m,     ONLY:pp_redux_wait
@@ -56,7 +57,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  ! Work Space ...
  !
  integer               :: i_s,i_map(-1:1),il,i_gkkp,ik_bz
- real(SP)              :: ph_freq,N_q(2)
+ real(SP)              :: ph_freq,N_q(2),f_k(SC_bands(2)-SC_bands(1)+1)
  !
  complex(SP)           :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  complex(SP)           :: S_mat_out_of_eq(2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
@@ -78,6 +79,14 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  S_mat_eq=cZero
  S_mat_out_of_eq=cZero
  S_mat_sum=cZero
+ if (l_ELPH_CCA_Kernel) then
+   Hole_lifetime(:,ik)    =rZero
+   Electron_lifetime(:,ik)=rZero
+   Phonon_lifetime(:,ik)=rZero
+   do i_n=1,B_dim
+     f_k(i_n)=-cI*G_lesser(i_n+SC_bands(1)-1,i_n+SC_bands(1)-1,ik,MEM_index(it_now))/spin_occ
+   enddo
+ endif
  !
  do iqbz=1,q%nbz
    !
@@ -115,7 +124,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
        ! Complete Collision Approximation (CCA)
        !=======================================
        !
-       call RT_ELPH_CCA_kernel(ik,ik_m_q,N_q,E,ph_freq,Gkkp,S_mat_sum)
+       call RT_ELPH_CCA_kernel(ik,ik_m_q,f_k,N_q,E,ph_freq,Gkkp)
        !
      else
        !
@@ -147,6 +156,16 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
    enddo ! ph branch
    !
  enddo ! iqbz
+ !
+ ! CCA kernel composition
+ !========================
+ !
+ if (l_ELPH_CCA_Kernel) then
+   do i_n=1,B_dim
+     i_n_m=i_n+SC_bands(1)-1
+     S_mat_sum(i_n,i_n)=Hole_lifetime(i_n_m,ik)*(f_k(i_n)-1.)+Electron_lifetime(i_n_m,ik)*f_k(i_n)+Phonon_lifetime(i_n_m,ik)
+   enddo
+ endif
  !
  ! All-to-All
  !============

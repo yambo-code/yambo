@@ -61,10 +61,12 @@ subroutine RT_databases_IO(Xen,it)
    call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(5))
    io_G=io_SC_components('G' ,Xen,ID(5))
    !
+#if defined _ELPH
    if (l_ph_corr.and..not.l_ELPH_CCA_Kernel) then
      call io_control(ACTION=OP_WR,COM=COM_, SEC=(/1/),ID=ID(7))
      io_THETA=io_SC_components('THETA' ,Xen,ID(7))
    endif
+#endif
    !
    do ik = 1, QP_nk 
      call io_control(ACTION=WR_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID(5))

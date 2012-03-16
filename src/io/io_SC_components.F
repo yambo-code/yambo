@@ -33,7 +33,7 @@ integer function io_SC_components(what,E_sc,ID)
 &                         io_sec,io_bulk,read_is_on,write_is_on,&
 &                         manage_RD_WR_CL_IF_END,io_reset,ver_is_gt_or_eq,variable_is_found
  use fields,         ONLY:i_Probe,i_Pump
- use real_time,      ONLY:max_rt_steps_disk,NE_i_time
+ use real_time,      ONLY:max_rt_steps_disk,NE_i_time,Hole_lifetime,Electron_lifetime,Phonon_lifetime
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes
 #endif
@@ -61,8 +61,7 @@ integer function io_SC_components(what,E_sc,ID)
  !
  real(SP), allocatable :: TMP_matrix(:,:,:),E_disk(:,:,:)
  integer               :: ik,bands_to_load,ib,i_spin,i1
- logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_occupations,l_G,l_J_and_P,l_MP,l_T_EL,&
-&                         l_THETA
+ logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_occupations,l_G,l_J_and_P,l_MP,l_T_EL,l_THETA
 #if defined _RT		
  integer               :: file_number,i_time,i_time_range(2)
  logical               :: IO_current
@@ -332,6 +331,23 @@ integer function io_SC_components(what,E_sc,ID)
    !
    call io_bulk(ID,VAR="RT_occupations_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
    call io_bulk(ID,R2=RT_occupations)
+   !
+#if defined _ELPH  && defined _RT
+   !
+   if (ver_is_gt_or_eq(ID,revision=1124).and.allocated(Hole_lifetime)) then
+     !
+     call io_bulk(ID,VAR="RT_Hole_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
+     call io_bulk(ID,R2=Hole_lifetime)
+     !
+     call io_bulk(ID,VAR="RT_Electron_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
+     call io_bulk(ID,R2=Electron_lifetime)
+     !
+     call io_bulk(ID,VAR="RT_Phonon_lifetime_TIME"//trim(intc(NE_i_time)),VAR_SZ=(/SC_bands(2)-SC_bands(1)+1,RT_nk/))
+     call io_bulk(ID,R2=Phonon_lifetime)
+     !
+   endif
+   !
+#endif
    !
  endif
  !

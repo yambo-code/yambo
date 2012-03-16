@@ -305,7 +305,6 @@ subroutine RT_driver(en,Xen,X,k,Xk,q,Xw)
  !
  ! Finalize
  !-----------
- !
  call RT_free()
  !
  call WF_free()

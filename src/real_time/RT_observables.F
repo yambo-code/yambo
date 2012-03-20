@@ -24,18 +24,17 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  use pars,           ONLY:SP,pi,cI,zero_dfl
  use units,          ONLY:SPEED_OF_LIGHT,HA2EV
  use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex
- use R_lattice,      ONLY:bz_samp,nkibz
+ use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
  use SC,             ONLY:V_hartree_sc,Ho,SC_bands
  use X_m,            ONLY:P_square
  use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen,l_NE_with_fields, &
-&                         l_NE_simulate_IP ,l_Dynamics_is_over,RT_output
+&                         l_NE_simulate_IP 
  use fields,         ONLY:A_vecpot
  use electrons,      ONLY:levels
  use QP_m,           ONLY:QP_Vnl_xc,QP_Sc,QP_nk
  use xc_functionals, ONLY:E_xc
  use global_XC,      ONLY:WF_kind,WF_xc_functional
- use vec_operate,    ONLY:sort
  !
  implicit none 
  !
@@ -46,8 +45,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  ! WorkSpace
  !
- integer     :: i1,indexes(SC_bands(2)*nkibz)
- real(SP)    :: Energies_and_occupations(SC_bands(2)*nkibz,2),dG_sign
+ real(SP)    :: dG_sign
  !
  ! Shadows
  !
@@ -82,15 +80,13 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
    !
    call RT_average_operator(VALUE=E_h,O_REAL=V_hartree_sc,G=G_lesser(:,:,:),en=en,k=k)
    !
-   E_h=E_h/2._SP
+   E_h=E_h/2.
    !
  endif
  !
  if(l_sc_hf.or.l_sc_cohsex.and..not.l_NE_simulate_IP) then
    !
    call RT_average_operator(VALUE=Ex,O_QP=QP_Vnl_xc,G=G_lesser(:,:,:),en=en,k=k)
-   !
-   Ex=Ex/2._SP
    !
  endif
  !
@@ -160,33 +156,10 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
    enddo
  enddo
  !
- if (l_Dynamics_is_over.and.l_NE_with_fields) then
-   !
-   i1=1
-   do ik=1,en%nk
-     do ib=1,SC_bands(1)-1
-       Energies_and_occupations(i1,1)=en%E(ib,ik,1)
-       Energies_and_occupations(i1,2)=en%f(ib,ik,1)
-       i1=i1+1
-     enddo
-     do ib=SC_bands(1),SC_bands(2)
-       Energies_and_occupations(i1,1)=en%E(ib,ik,1)
-       Energies_and_occupations(i1,2)=real(-cI*G_lesser(ib,ib,ik))
-       i1=i1+1
-     enddo
-   enddo
-   !
-   call sort(Energies_and_occupations(:,1),indx=indexes)
-   !
-   do i1=1,SC_bands(2)*en%nk
-     call RT_output('occ',(/Energies_and_occupations(indexes(i1),2)/),E=Energies_and_occupations(i1,1)*HA2EV)
-   enddo
-   !
- endif
- !
  ! Transfer the shadow variables
  !
- on_the_fly_operators=(/E_kin,E_ion,E_h,Ex,Exc,E_mg,Trace_Gf,delta_G/)
+ on_the_fly_operators(1:6)=(/E_kin,E_ion,E_h,Ex,Exc,E_mg/)*HA2EV
+ on_the_fly_operators(7:8)=(/Trace_Gf,delta_G/)
  !
 end subroutine RT_Observables
 

@@ -22,11 +22,11 @@
 subroutine RT_output(what,VALUEs,TIME,E)
  ! 
  use pars,           ONLY:lchlen,SP,schlen
- use com,            ONLY:msg,of_open_close,opened_of
+ use com,            ONLY:msg,of_open_close
  use SC,             ONLY:SC_description,n_SC_descriptions
  use fields,         ONLY:A_vecpot
  use stderr,         ONLY:set_real_printed_length,string_split,intc
- use real_time,      ONLY:RT_ind_J,RT_P,l_NE_simulate_IP
+ use real_time,      ONLY:RT_ind_J,RT_P
  use timing,         ONLY:what_is_running
  implicit none
  !
@@ -91,11 +91,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
  short_file_name(next_file)=trim(append_ch)//'dynamics'
  n_headings(next_file)=9
  headings(next_file,2:3)=(/"E_kin[eV]","E_ion[eV]"/)
- if(l_NE_simulate_IP) then
-   headings(next_file,4:6)=(/"       -       ","       -       ","Hartree+Vxc[eV]"/)
- else
-   headings(next_file,4:6)=(/"Hartree [eV]","Exchange[eV]","Correlat[eV]"/)
- endif
+ headings(next_file,4:6)=(/"Hartree [eV]","Exchange[eV]","Correlat[eV]"/)
  headings(next_file,7)="E_mg[eV]"
  headings(next_file,8)="N" 
  headings(next_file,9)="dG" 
@@ -129,12 +125,6 @@ subroutine RT_output(what,VALUEs,TIME,E)
  n_headings(next_file)=3
  headings(next_file,2:3)=(/'eel/Im','eel/Re'/)
  headings(next_file,1)="E [eV]"
- next_file=next_file+1
- !
- if (initialize) file_name(next_file)=trim(append_ch)//'occupations'
- short_file_name(next_file)=trim(append_ch)//'occupations'
- n_headings(next_file)=2
- headings(next_file,1:2)=(/'E  ','Occ'/)
  next_file=next_file+1
  !
  if (initialize) file_name(next_file)=trim(append_ch)//'Polarization_W'
@@ -245,7 +235,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
        data_to_dump(2:4) =real(A_vecpot%vecpot(:))
        data_to_dump(5:7) =real(A_vecpot%vecpot_vel(:))
        data_to_dump(8:10)=real(A_vecpot%vecpot_acc(:))
-     case('dynamics','YPP-eps','YPP-eels','YPP-SHG_qssin','occupations',&
+     case('dynamics','YPP-eps','YPP-eels','YPP-SHG_qssin',&
 &         'YPP-X_probe_order_0','YPP-X_probe_order_1','YPP-X_probe_order_2','YPP-X_probe_order_3',&
 &         'YPP-X_probe_order_4','YPP-X_probe_order_5','YPP-X_probe_order_6','YPP-X_probe_order_7',&
 &         'YPP-X_probe_order_8','YPP-X_probe_order_9',&

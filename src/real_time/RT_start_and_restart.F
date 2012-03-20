@@ -241,6 +241,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    call RT_update(G_lesser_reference,SC_R,-1,Xen,k,Xk,X,up_Gref=.true.)
    !
    V_xc_sc=(0._SP)
+   !
    if(l_NE_simulate_IP.or.l_NE_simulate_Irredux) V_hartree_sc=(0._SP) 
    !
    ! END RESTART FROM SC
@@ -307,7 +308,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    !
    !   XC0_and_HARTREE0  contains <mk | Vhartree(rho_full) | nk>
    !
-   ! ****NOTE**** This procedure is restruicted to the use of the same Vxc (the one
+   ! ****NOTE**** This procedure is restricted to the use of the same Vxc (the one
    ! corresponding to the GS) in the basis and in the time-evolution. To do a TDDFT
    ! using a different Vxc in the GS and in the evolution Vxc should be always stored 
    ! in XC0_and_HARTREE0
@@ -325,6 +326,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    enddo
    !
    V_xc_sc=(0._SP)
+   !
    if (l_NE_simulate_IP.or.l_NE_simulate_Irredux) V_hartree_sc=(0._SP)
    !
  endif

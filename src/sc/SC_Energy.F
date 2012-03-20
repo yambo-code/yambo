@@ -63,7 +63,7 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  E_Hartree=real_V_dot_V(fft_size,rho,(0.5_SP*V_hartree_sc(:,1)))
  E_xc_=real_V_dot_V(fft_size,rho,E_xc(:))
  !
- ! Fermi level contribution to E_totoal
+ ! Fermi level contribution to E_total
  !
  E_total=(E%Efermi(1)+E_bare_Ef)*nel
  !

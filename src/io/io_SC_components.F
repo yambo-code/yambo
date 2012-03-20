@@ -75,7 +75,7 @@ integer function io_SC_components(what,E_sc,ID)
  l_G =.FALSE.
  l_J_and_P =.FALSE.
  l_occupations=what=="occupations"
- l_THETA=what=="THETA"
+ l_THETA      =what=="THETA"
 #if defined _RT		
  l_J_and_P    =what=="J_and_P"
  l_G          =what=="G"

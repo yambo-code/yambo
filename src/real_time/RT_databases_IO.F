@@ -25,7 +25,7 @@ subroutine RT_databases_IO(Xen,it)
  use drivers,        ONLY:l_ph_corr
  use real_time,      ONLY:ID,NE_dynamics,l_NE_with_fields,NE_i_time,it_start,&
 &                         OCCUPATIONS_IO_and_interpolate,&
-&                         l_RT_skip_GF_IO,l_RT_skip_OCC_IO
+&                         l_RT_skip_GF_IO,l_RT_skip_OCC_IO,l_RT_skip_JandP_IO
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL
  use electrons,      ONLY:levels
 #if defined _ELPH
@@ -97,7 +97,7 @@ subroutine RT_databases_IO(Xen,it)
  !
  if (.not.l_RT_skip_OCC_IO) call OCCUPATIONS_IO_and_interpolate(Xen,'G')
  !
- if(l_NE_with_fields.and.NE_dynamics) then
+ if(l_NE_with_fields.and.NE_dynamics.and..not.l_RT_skip_JandP_IO) then
    !
    ! Remember that negative time = adiabatic switching
    ! no need to store current

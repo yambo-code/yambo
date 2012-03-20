@@ -33,7 +33,7 @@ integer function io_SC_components(what,E_sc,ID)
 &                         io_sec,io_bulk,read_is_on,write_is_on,&
 &                         manage_RD_WR_CL_IF_END,io_reset,ver_is_gt_or_eq,variable_is_found
  use fields,         ONLY:i_Probe,i_Pump
- use real_time,      ONLY:max_rt_steps_disk,NE_i_time,Hole_lifetime,Electron_lifetime,Phonon_lifetime
+ use real_time,      ONLY:RT_IO_steps,NE_i_time,Hole_lifetime,Electron_lifetime,Phonon_lifetime
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes
 #endif
@@ -64,7 +64,7 @@ integer function io_SC_components(what,E_sc,ID)
  logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_occupations,l_G,l_J_and_P,l_MP,l_T_EL,l_THETA
 #if defined _RT		
  integer               :: file_number,i_time,i_time_range(2)
- logical               :: IO_current
+ logical               :: do_IO
  real(SP)              :: A_vecpot_disk(3,3,2)
 #endif
  !
@@ -94,32 +94,36 @@ integer function io_SC_components(what,E_sc,ID)
  !
 #if defined _RT
  !      
- file_number=(NE_i_time-1)/max_rt_steps_disk
+ file_number=(NE_i_time-1)/RT_IO_steps
  !
- ! Write only every max_rt_steps_disk
+ ! Write only every RT_io_steps
  !
- if (l_J_and_P) then
+ if (l_J_and_P.or.l_occupations) then
    !      
    if(io_sec(ID,1)==1) then 
-     io_SC_components=io_connect(desc="RT_J_and_P",type=2,ID=ID)
+     if (l_J_and_P)     io_SC_components=io_connect(desc="RT_J_and_P",type=2,ID=ID)
+     if (l_occupations) io_SC_components=io_connect(desc="RT_occupations",type=2,ID=ID)
    else
      !      
-     IO_current=.false.
-     if(mod(NE_i_time,max_rt_steps_disk)  ==0.and.write_is_on(ID))  IO_current=.true.
-     if(mod(NE_i_time-1,max_rt_steps_disk)==0.and.read_is_on(ID))   IO_current=.true.
+     do_IO=.false.
+     if(mod(NE_i_time,RT_IO_steps)  ==0.and.write_is_on(ID))  do_IO=.true.
+     if(mod(NE_i_time-1,RT_IO_steps)==0.and.read_is_on(ID))   do_IO=.true.
      !
-     if(IO_current) then
-       io_SC_components=io_connect(desc="RT_J_and_P_"//trim(intc(file_number)),type=2,ID=ID)
+     if(do_IO) then
+       if (l_J_and_P)     io_SC_components=io_connect(desc="RT_J_and_P_"//trim(intc(file_number)),type=2,ID=ID)
+       if (l_occupations) io_SC_components=io_connect(desc="RT_occupations_"//trim(intc(file_number)),type=2,ID=ID)
      else
        io_SC_components=0
+       call io_reset(ID)
+       return
      endif
      !
    endif
    !
  endif
  !
- if(l_G.or.l_occupations.or.l_THETA) then
-   if( (mod(NE_i_time,max_rt_steps_disk)/=0.and.NE_i_time/=1) .and.NE_dynamics.and.write_is_on(ID)) then
+ if(l_G.or.l_THETA) then
+   if( (mod(NE_i_time,RT_IO_steps)/=0.and.NE_i_time/=1) .and.NE_dynamics.and.write_is_on(ID)) then
      io_SC_components=0
      call io_reset(ID)
      return
@@ -133,7 +137,6 @@ integer function io_SC_components(what,E_sc,ID)
  !
 #endif
  !
- if (l_occupations) io_SC_components=io_connect(desc="RT_occupations",type=2,ID=ID)
  if (l_THETA)       io_SC_components=io_connect(desc="RT_THETA",type=2,ID=ID)
  !
  if (io_SC_components/=0) goto 1
@@ -192,7 +195,7 @@ integer function io_SC_components(what,E_sc,ID)
  endif
  ! 
 #if defined _RT
- if(l_J_and_P) then
+ if(l_J_and_P.or.l_occupations) then
    call manage_RD_WR_CL_IF_END(ID,ik,NE_steps)
  else
 #endif
@@ -324,7 +327,7 @@ integer function io_SC_components(what,E_sc,ID)
    !
    if (io_SC_components/=0) goto 1  
    !
-   if (NE_i_time==max_rt_steps_disk.or.read_is_on(ID)) then
+   if (NE_i_time==RT_IO_steps.or.read_is_on(ID)) then
      call io_bulk(ID,VAR="RT_Kpts",VAR_SZ=(/RT_nk,3/))
      call io_bulk(ID,R2=RT_k)
    endif
@@ -444,20 +447,20 @@ integer function io_SC_components(what,E_sc,ID)
      if(write_is_on(ID)) then
        !
        do i1=1,3
-         J_and_P_cache( 2*i1-1,  mod(NE_i_time-1,max_rt_steps_disk)+1)= real(RT_ind_J(i1))
-         J_and_P_cache( 2*i1,    mod(NE_i_time-1,max_rt_steps_disk)+1)=aimag(RT_ind_J(i1))
-         J_and_P_cache(6+2*i1-1, mod(NE_i_time-1,max_rt_steps_disk)+1)= real(RT_P(i1))
-         J_and_P_cache(6+2*i1,   mod(NE_i_time-1,max_rt_steps_disk)+1)=aimag(RT_P(i1))
-         J_and_P_cache(12+2*i1-1, mod(NE_i_time-1,max_rt_steps_disk)+1)= 0.
-         J_and_P_cache(12+2*i1,   mod(NE_i_time-1,max_rt_steps_disk)+1)= 0.
+         J_and_P_cache( 2*i1-1,  mod(NE_i_time-1,RT_IO_steps)+1)= real(RT_ind_J(i1))
+         J_and_P_cache( 2*i1,    mod(NE_i_time-1,RT_IO_steps)+1)=aimag(RT_ind_J(i1))
+         J_and_P_cache(6+2*i1-1, mod(NE_i_time-1,RT_IO_steps)+1)= real(RT_P(i1))
+         J_and_P_cache(6+2*i1,   mod(NE_i_time-1,RT_IO_steps)+1)=aimag(RT_P(i1))
+         J_and_P_cache(12+2*i1-1, mod(NE_i_time-1,RT_IO_steps)+1)= 0.
+         J_and_P_cache(12+2*i1,   mod(NE_i_time-1,RT_IO_steps)+1)= 0.
        enddo
        !
      endif
      !
-     if (IO_current) then
+     if (do_IO) then
        !                                
        call io_bulk(ID,VAR="Current_Polarization_and_Potential_TIME"//trim(intc(file_number)), &
-&                      VAR_SZ=(/J_and_P_cache_size,max_rt_steps_disk/))
+&                      VAR_SZ=(/J_and_P_cache_size,RT_IO_steps/))
        !
        call io_bulk(ID,R2=J_and_P_cache)
        !
@@ -471,15 +474,15 @@ integer function io_SC_components(what,E_sc,ID)
        !
        !
        do i1=1,3
-         RT_ind_J(i1)           =cmplx(J_and_P_cache(   2*i1-1,mod(NE_i_time-1,max_rt_steps_disk)+1), &
-&                                      J_and_P_cache(   2*i1,  mod(NE_i_time-1,max_rt_steps_disk)+1),SP)
-         RT_P(i1)               =cmplx(J_and_P_cache( 6+2*i1-1,mod(NE_i_time-1,max_rt_steps_disk)+1), &
-&                                      J_and_P_cache( 6+2*i1  ,mod(NE_i_time-1,max_rt_steps_disk)+1),SP)
+         RT_ind_J(i1)           =cmplx(J_and_P_cache(   2*i1-1,mod(NE_i_time-1,RT_IO_steps)+1), &
+&                                      J_and_P_cache(   2*i1,  mod(NE_i_time-1,RT_IO_steps)+1),SP)
+         RT_P(i1)               =cmplx(J_and_P_cache( 6+2*i1-1,mod(NE_i_time-1,RT_IO_steps)+1), &
+&                                      J_and_P_cache( 6+2*i1  ,mod(NE_i_time-1,RT_IO_steps)+1),SP)
        enddo
        !
      endif 
      !
-     if(.not.IO_current) call io_reset(ID) 
+     if(.not.do_IO) call io_reset(ID) 
      !
    endif
    !

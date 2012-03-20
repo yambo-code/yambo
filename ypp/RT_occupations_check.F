@@ -26,7 +26,7 @@ integer function RT_occupations_check(E,k)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use QP_m,           ONLY:OCC_ctl
- use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_step,max_rt_steps_disk,l_ELPH_CCA_kernel,&
+ use real_time,      ONLY:OCCUPATIONS_IO_and_interpolate,RT_step,RT_IO_steps,l_ELPH_CCA_kernel,&
 &                         Hole_lifetime,Electron_lifetime,Phonon_lifetime
  use SC,             ONLY:SC_bands,RT_occupations
  use IO_m,           ONLY:LOG,NONE
@@ -72,13 +72,13 @@ integer function RT_occupations_check(E,k)
  !
  call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_range(2))
  !
- if (OCC_deltaT<max_rt_steps_disk*RT_step) then
+ if (OCC_deltaT<RT_IO_steps*RT_step) then
    ! 
-   OCC_deltaT=max_rt_steps_disk*RT_step
+   OCC_deltaT=RT_IO_steps*RT_step
    ! 
  else
    !
-   OCC_deltaT=nint(OCC_deltaT/max_rt_steps_disk/RT_step)*max_rt_steps_disk*RT_step
+   OCC_deltaT=nint(OCC_deltaT/RT_IO_steps/RT_step)*RT_IO_steps*RT_step
    !
  endif
  !

@@ -34,7 +34,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q,Xw)
  use SC,             ONLY:SC_potential,SC_bands,it_now,local_V,WF_G_max,WF_Go_indx,SC_R,rho_n,Ho
  use real_time,      ONLY:Thermal_steps,NE_steps,RT_step,G_lesser,l_NE_simulate_IP, &
 &                         l_NE_with_fields,RT_alloc,RT_free,XC0_and_HARTREE0,&
-&                         NE_i_time,Integrator_name,l_RT_diagonalize,max_rt_steps_disk,&
+&                         NE_i_time,Integrator_name,l_RT_diagonalize,RT_IO_steps,&
 &                         G_lesser_reference,RT_diagonalization_steps,rho_reference, &
 &                         it_start,RT_output,NE_time,NE_dynamics,RT_update,&
 &                         l_Dynamics_is_over,MEM_index
@@ -222,7 +222,7 @@ subroutine RT_driver(en,Xen,X,k,Xk,q,Xw)
    !===============
    if (it==Thermal_steps+NE_steps) l_Dynamics_is_over=.TRUE.
    if (stop_now(.FALSE.)) then
-      NE_steps=(int((it-Thermal_steps)/max_rt_steps_disk)+1)*max_rt_steps_disk
+      NE_steps=(int((it-Thermal_steps)/RT_IO_steps)+1)*RT_IO_steps
       l_Dynamics_is_over=.TRUE.
    endif
    !

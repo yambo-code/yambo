@@ -45,7 +45,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  use real_time,      ONLY:G_lesser,ID,NE_steps,RT_ind_J,    &
 &                         G_lesser_reference,Thermal_steps,l_NE_simulate_IP,rho_reference,  &
 &                         l_RT_needs_XC0,Hfrozen,it_start,l_NE_with_fields,XC0_and_HARTREE0,&
-&                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,full_rho,   &
+&                         l_NE_simulate_BSE,RT_P,RT_step,RT_update,full_rho,l_ELPH_CCA_Kernel,   &
 &                         l_NE_simulate_Irredux,l_NE_simulate_TDDFT,NE_i_time,Eh_pumped_pair_energy
  use fields,         ONLY:A_vecpot,A_vecpot_previous
  use SC,             ONLY:SC_bands,SC_R,E_convergence,it_now,H_nl_sc,local_V,       &
@@ -158,7 +158,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  ! To restart from RT only the G_lesser is necessary
  !
  RESTART                = io_G ==0
- if (l_ph_corr) RESTART = io_G==0.and.io_THETA==0
+ if (l_ph_corr.and..not.l_ELPH_CCA_Kernel) RESTART = io_G==0.and.io_THETA==0
  !
  SC_DB_present =  all((/io_E==0,io_WF==0,io_V==0/))
  !
@@ -335,7 +335,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
  !
  it_start=1
  !
- if(RESTART) then
+ if (RESTART) then
    !
    ! I use G_lesser(:,:,:) to reconstruct everything
    ! and I read it_now from the databases. 
@@ -343,12 +343,12 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(5))
    io_G=io_SC_components('G',Xen,ID(5))
    !
-   if (l_ph_corr) then
+   if (l_ph_corr.and..not.l_ELPH_CCA_Kernel) then
      call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(7))
      io_THETA=io_SC_components('THETA',Xen,ID(7))
    endif
    !
-   !Note that the G_lesser must be loaded at the correct time:
+   ! Note that the G_lesser must be loaded at the correct time:
    !
    NE_i_time=it_now
    !
@@ -356,7 +356,7 @@ subroutine RT_start_and_restart(Xen,Xk,k,q,X)
      call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(5))
      io_G=io_SC_components('G',Xen,ID(5))
      !
-     if (l_ph_corr) then
+     if (l_ph_corr.and..not.l_ELPH_CCA_Kernel) then
        call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(7))
        io_THETA=io_SC_components('THETA',Xen,ID(7))
      endif

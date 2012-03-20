@@ -54,8 +54,8 @@ subroutine init_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_step, NE_steps, Thermal_steps, Integrator_name, RAD_LifeTime, Phase_LifeTime,  &
-&                        RT_diagonalization_steps,SwitchOnTime,max_rt_steps_disk,NE_tot_time,NE_Hxc_jumps,&
-&                        RT_ave_dephasing,NE_MEM_treshold,RT_eh_energy_max,Eh_pumped_pair_energy
+&                        RT_diagonalization_steps,SwitchOnTime,RT_IO_steps,NE_tot_time,NE_Hxc_jumps,&
+&                        RT_ave_dephasing,NE_MEM_treshold,RT_eh_energy_max,Eh_pumped_pair_energy,RT_IO_time
  use fields,        ONLY:Efield
 #endif
 #if defined _MAGNETIC
@@ -302,9 +302,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! I/O
  !
- call it(defs,'DiskSteps',   '[RT] Numer of steps stored in memory before I/O',max_rt_steps_disk,verb_level=V_real_time)
+ call it(defs,'IOtime',        '[RT] Time between to consecutive I/O',RT_IO_time,verb_level=V_real_time)
  call it('f',defs,'SkipGFIO',  '[RT] Do not write on disk the Green Functions',verb_level=V_real_time)
  call it('f',defs,'SkipOCCIO', '[RT] Do not write on disk the Occupations',verb_level=V_real_time)
+ call it('f',defs,'SkipJPIO',  '[RT] Do not write on disk the current and polarization',verb_level=V_real_time)
  !
  ! Other parameters of RT (to be switched on using the verbosity)
  !

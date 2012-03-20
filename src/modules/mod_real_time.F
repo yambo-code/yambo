@@ -138,6 +138,7 @@ module real_time
  !
  logical     :: l_RT_skip_GF_IO
  logical     :: l_RT_skip_OCC_IO
+ logical     :: l_RT_skip_JandP_IO
  !
  ! ELPH kernel...
  !----------------
@@ -208,7 +209,8 @@ module real_time
  !
  integer                  :: ID(7)
  integer                  :: it_start ! restart point
- integer                  :: max_rt_steps_disk 
+ integer                  :: RT_IO_steps 
+ real(SP)                 :: RT_IO_time 
  integer,  allocatable    :: kpoints_map(:,:)
  real(SP), allocatable    :: J_and_P_cache(:,:)
  !
@@ -301,7 +303,7 @@ module real_time
      endif
      !
      if(l_NE_with_fields) then
-       allocate(J_and_P_cache(J_and_P_cache_size,max_rt_steps_disk))
+       allocate(J_and_P_cache(J_and_P_cache_size,RT_IO_steps))
        call mem_est('Current_Cache',(/size(J_and_P_cache)/),(/SP/))
      endif
      !

@@ -24,9 +24,9 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  use units,          ONLY:BO2ANG,FS2AUT,HA2EV
  use pars,           ONLY:SP,lchlen
  use parser_m,       ONLY:parser
- use real_time,      ONLY:ID,G_lesser,NE_i_time,max_rt_steps_disk,RT_step,MEM_index,NE_steps
+ use real_time,      ONLY:ID,G_lesser,NE_i_time,RT_IO_steps,RT_step,MEM_index,NE_steps
  use SC,             ONLY:SC_bands,RT_occupations,RT_nk,RT_k 
- use IO_m,           ONLY:io_control,NONE,OP_APP_WR_CL,OP_RD,RD_CL,DUMP,variable_is_found
+ use IO_m,           ONLY:io_control,NONE,OP_WR_CL,OP_RD,RD_CL,DUMP,variable_is_found
  use electrons,      ONLY:levels,BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_nbands,n_sp_pol,n_met_bands,&
 &                         n_full_bands,nel,filled_tresh
  use com,            ONLY:jobstr,msg
@@ -70,7 +70,9 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    ! store the header + the descriptors. Therefore in order to write
    ! those informations I pass directly NE_i_time that starts from 1.
    !
-   call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/NE_i_time/),ID=ID(6))
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(6)) 
+   io_err=io_SC_components('occupations',E,ID(6))
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(6))
    io_err=io_SC_components('occupations',E,ID(6))
    ! 
  else
@@ -104,12 +106,12 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    ! 
    ! NE_time=(NE_i_time-1)*RT_step
    !
-   NE_i_time= int( real(Time/RT_step+1)/real(max_rt_steps_disk) ) * max_rt_steps_disk
+   NE_i_time= int( real(Time/RT_step+1)/real(RT_IO_steps) ) * RT_IO_steps
    !
    if (NE_i_time==0       ) then
-     NE_i_time=max_rt_steps_disk
+     NE_i_time=RT_IO_steps
    else if (variable_is_found(ID(6),'RT_occupations_TIME'//trim(intc(NE_i_time)))==0) then
-     do i1=NE_i_time,max_rt_steps_disk,-max_rt_steps_disk 
+     do i1=NE_i_time,RT_IO_steps,-RT_IO_steps 
        if (variable_is_found(ID(6),'RT_occupations_TIME'//trim(intc(i1)))==1) then
          NE_i_time=i1
          exit

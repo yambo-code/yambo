@@ -34,7 +34,7 @@ integer function variables_SC(ID,local_description,what)
  use real_time,      ONLY:l_NE_with_fields,RT_step,NE_steps,NE_time,Hfrozen,XCfrozen,              &
 &                         Thermal_steps,Integrator_name,l_RT_diagonalize,RT_diagonalization_steps, &
 &                         RAD_LifeTime,Phase_LifeTime,l_RT_diamagnetic,                             &
-&                         max_rt_steps_disk,l_RT_induced_field,l_NE_simulate_BSE,NE_MEM_steps,&
+&                         RT_IO_steps,l_RT_induced_field,l_NE_simulate_BSE,NE_MEM_steps,&
 &                         l_ELPH_CCA_Kernel
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
@@ -322,7 +322,7 @@ integer function variables_SC(ID,local_description,what)
 &    VAR=' [RT] Diagonalization steps      :',CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
-   call io_elemental(ID,I0=max_rt_steps_disk,&
+   call io_elemental(ID,I0=RT_IO_steps,&
 &    VAR=' [RT] Cache size                 :',CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1

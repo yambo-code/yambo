@@ -31,7 +31,7 @@ subroutine RT_databases(en,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  use SC,             ONLY:SC_bands
  use timing,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG,RD_CL_IF_END
- use real_time,      ONLY:NE_steps,NE_i_time,J_and_P_cache,RT_ind_J,max_rt_steps_disk,&
+ use real_time,      ONLY:NE_steps,NE_i_time,J_and_P_cache,RT_ind_J,RT_IO_steps,&
 &                         J_and_P_cache_size,RT_P,NE_time,RT_step,&
 &                         G_lesser,G_lesser_reference
  use fields,         ONLY:Efield,n_ext_fields,Efield_strength
@@ -125,7 +125,7 @@ subroutine RT_databases(en,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
    call mem_est("RT_P_t",(/size(RT_J_t)/),(/2*SP/))
    call mem_est("RT_J_t",(/size(RT_J_t)/),(/2*SP/))
  endif
- allocate(J_and_P_cache(J_and_P_cache_size,max_rt_steps_disk))
+ allocate(J_and_P_cache(J_and_P_cache_size,RT_IO_steps))
  call mem_est("Current_Cache",(/size(J_and_P_cache)/),(/SP/))
  !
  RT_J_t        =(0._DP,0._DP)

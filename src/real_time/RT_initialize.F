@@ -30,12 +30,13 @@ subroutine RT_initialize(Xen,Xk,q)
  use electrons,      ONLY:nel,levels,BZ_RIM_nbands
  use real_time,      ONLY:l_NE_simulate_RPA,Thermal_steps,RT_step,l_NE_with_fields, &
 &                         l_NE_simulate_IP,l_RT_diagonalize,NE_steps,NE_tot_time,   &
-&                         l_RT_diamagnetic,max_rt_steps_disk,l_NE_simulate_BSE,     &
+&                         l_RT_diamagnetic,RT_IO_steps,RT_IO_time,l_NE_simulate_BSE,&
 &                         l_NE_simulate_Irredux,l_RT_needs_XC0,Hfrozen,XCfrozen,    &
 &                         l_RT_induced_field,NE_Hxc_jumps,l_NE_simulate_TDDFT,      &
 &                         RT_diagonalization_steps,RT_is_dumped,RAD_LifeTime,       &
 &                         Phase_LifeTime,RT_ave_dephasing,NE_MEM_Treshold,          &
-&                         NE_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO
+&                         NE_MEM_steps,l_RT_skip_GF_IO,l_RT_skip_OCC_IO,            &
+&                         l_RT_skip_JandP_IO
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp,nkibz
  use fields,         ONLY:global_gauge,Efield,n_ext_fields,field_is_ok,ef_i_time,&
@@ -63,6 +64,7 @@ subroutine RT_initialize(Xen,Xk,q)
  call parser('RTfreezeXC',   XCfrozen)
  call parser('SkipGFIO',     l_RT_skip_GF_IO)
  call parser('SkipOCCIO',    l_RT_skip_OCC_IO)
+ call parser('SkipJPIO',     l_RT_skip_JandP_IO)
  !
  l_NE_simulate_BSE     =.FALSE.
  l_NE_simulate_TDDFT   =.FALSE.
@@ -82,18 +84,21 @@ subroutine RT_initialize(Xen,Xk,q)
  if (NE_tot_time>0.) NE_steps=max(NE_steps,int(NE_tot_time/RT_step))
  !
  ! Set a number of steps compatible with the cache.
- ! Negative max_rt_steps_disk means no I/O
- !=================================================
+ ! Negative value forces the step to be set automatically
+ !========================================================
  !
- if(max_rt_steps_disk>0.and.mod(Thermal_steps+NE_steps,max_rt_steps_disk)/=0) then
-   rest=mod(Thermal_steps+NE_steps,max_rt_steps_disk)
+ if (RT_IO_time>0) RT_IO_steps=nint(RT_IO_time/RT_step)
+ !
+ if(RT_IO_steps>0.and.mod(Thermal_steps+NE_steps,RT_IO_steps)/=0) then
+   rest=mod(Thermal_steps+NE_steps,RT_IO_steps)
    if(NE_steps/=0) then
-     NE_steps = NE_steps+max_rt_steps_disk-rest
+     NE_steps = NE_steps+RT_IO_steps-rest
    elseif (NE_steps==0.and.Thermal_steps/=0) then
-     Thermal_steps = Thermal_steps+max_rt_steps_disk-rest
+     Thermal_steps = Thermal_steps+RT_IO_steps-rest
    endif
- else if (max_rt_steps_disk<0) then
-   max_rt_steps_disk=NE_steps+1
+ else
+   RT_IO_time=NE_tot_time/1000.
+   RT_IO_steps=nint(RT_IO_time/RT_step)
  endif
  !
  NE_tot_time=RT_step*NE_steps
@@ -210,6 +215,7 @@ subroutine RT_initialize(Xen,Xk,q)
  call msg( 'r', '[RT] Damping (Radiative)[fs/meV]:',(/RAD_LifeTime/FS2AUT,   HBAR_eVfs/RAD_LifeTime*FS2AUT*1000./))
  if(NE_steps>0) then
    call msg('rn','[RT] Simulation time        [fs]:',(/-real(Thermal_steps)*RT_step,RT_step*real(NE_steps)/)/FS2AUT)
+   call msg('r', '[RT] Time between I/O`s     [fs]:',RT_IO_time/FS2AUT)
    call msg('rn','[RT] Electron-gas plasma frequency [eV]:',sqrt(4._SP*pi*nel/DL_vol)*HA2EV)
  endif
  call msg('r', '[RT] Pump/Probe periodicity     [fs]:',EtoT(E=maxval(Efield(:)%W_step))/FS2AUT)

@@ -343,7 +343,7 @@ subroutine RT_fix_symmetries(E,k)
    !
    en_sc%nb=SC_bands(2)
    en_sc%nk=k_save%nibz
-   allocate(en_sc%E(en_sc%nb,en_sc%nk,n_spin))  
+   allocate(en_sc%E(en_sc%nb,en_sc%nk,n_sp_pol))  
    !
    nkibz=k_save%nibz
    !
@@ -640,7 +640,7 @@ end subroutine
  
 subroutine map_energies(E,E_expanded,k,kpoints_map)
  !
- use electrons,           ONLY:levels,E_reset,n_spin
+ use electrons,           ONLY:levels,E_reset,n_sp_pol
  use R_lattice,           ONLY:bz_samp
  !
  implicit none
@@ -657,7 +657,7 @@ subroutine map_energies(E,E_expanded,k,kpoints_map)
  call E_reset(E_expanded)
  E_expanded%nb=E%nb
  E_expanded%nk=k%nibz
- allocate(E_expanded%E(E%nb,k%nibz,n_spin))
+ allocate(E_expanded%E(E%nb,k%nibz,n_sp_pol))
  !
  do ik=1,k%nibz
    E_expanded%E(:,ik,:)=E%E(:,kpoints_map(1,ik),:)

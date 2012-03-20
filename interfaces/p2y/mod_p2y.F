@@ -162,7 +162,7 @@ contains
  subroutine get_dimensions(en,k)
    !
    use electrons,             ONLY : default_nel, n_spin, n_sp_pol, &
-&                                    n_spinor
+&                                    n_spinor, spin_orbit
    use R_lattice,             ONLY : ng_vec
    use D_lattice,             ONLY : input_GS_Tel, n_atomic_species
    use wave_func,             ONLY : wf_ncx 
@@ -207,7 +207,7 @@ contains
 
    call qexml_read_symmetry(nsym=nsym_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_symmetry','IOTK error',ABS(ierr))
-   call qexml_read_spin(lspinorb=lspinorb_, ierr=ierr)
+   call qexml_read_spin(lspinorb=spin_orbit, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_spin','IOTK error',ABS(ierr))
    call qexml_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,ngm=ngm_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_planewaves','IOTK error',ABS(ierr))

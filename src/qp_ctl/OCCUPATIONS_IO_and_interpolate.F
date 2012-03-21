@@ -26,10 +26,10 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  use parser_m,       ONLY:parser
  use real_time,      ONLY:ID,G_lesser,NE_i_time,RT_IO_steps,RT_step,MEM_index,NE_steps
  use SC,             ONLY:SC_bands,RT_occupations,RT_nk,RT_k 
- use IO_m,           ONLY:io_control,NONE,OP_WR_CL,OP_RD,RD_CL,DUMP,variable_is_found
+ use IO_m,           ONLY:io_control,NONE,OP_WR_CL,OP_RD_CL,DUMP
  use electrons,      ONLY:levels,BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_nbands,n_sp_pol,n_met_bands,&
 &                         n_full_bands,nel,filled_tresh
- use com,            ONLY:jobstr,msg
+ use com,            ONLY:jobstr,msg,file_exists
  use QP_m,           ONLY:OCC_ctl
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:bz_samp,nXkibz
@@ -48,7 +48,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  ! Work Space
  !
  real(SP)          :: PE_nel
- integer           :: ib,io_err,COM_,ik,i_err,ik_near,is,ik_bz,ik_r,i1,i_spin
+ integer           :: ib,io_err,COM_,ik,i_err,ik_near,is,ik_bz,ik_r,i1,i_spin,file_number
  integer, external :: io_SC_components
  character(lchlen) :: jobstr_save
  logical           :: is_def
@@ -66,10 +66,6 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
      RT_occupations(ib,:)=-real((0._SP,1._SP)*G_lesser(ib,ib,:,MEM_index(NE_i_time)))
    enddo
    ! 
-   ! Note that here as well as in ndb.GreenF the SEC is used only to
-   ! store the header + the descriptors. Therefore in order to write
-   ! those informations I pass directly NE_i_time that starts from 1.
-   !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(6)) 
    io_err=io_SC_components('occupations',E,ID(6))
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(6))
@@ -96,7 +92,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    ! 
    if (index(what_is_running,'YPP')==0) call section('p','NEGF Occupations I/O and interpolation ('//trim(what)//')')
    !  
-   call io_control(ACTION=OP_RD,COM=COM_,SEC=(/1/),MODE=DUMP,ID=ID(6))
+   call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=DUMP,ID=ID(6))
    io_err=io_SC_components('occupations',E,ID(6))
    !
    if (io_err<0) then
@@ -104,18 +100,24 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
      return
    endif
    ! 
-   ! NE_time=(NE_i_time-1)*RT_step
+   ! NE_time=(NE_i_time-1)*RT_step but I/O only when NE_i_time= N * RT_IO_steps
    !
-   NE_i_time= int( real(Time/RT_step+1)/real(RT_IO_steps) ) * RT_IO_steps
+   NE_i_time= (Time+RT_step)/RT_step
+   NE_i_time= NE_i_time-mod(NE_i_time,RT_IO_steps)
    !
    if (NE_i_time==0       ) then
      NE_i_time=RT_IO_steps
-   else if (variable_is_found(ID(6),'RT_occupations_TIME'//trim(intc(NE_i_time)))==0) then
+   else
      do i1=NE_i_time,RT_IO_steps,-RT_IO_steps 
-       if (variable_is_found(ID(6),'RT_occupations_TIME'//trim(intc(i1)))==1) then
+       !
+       file_number=(i1-1)/RT_IO_steps
+       !
+       if ( file_exists(trim(jobstr)//"/ndb.RT_occupations_"//trim(intc(file_number))).or.&
+&           file_exists(trim(jobstr)//"/db.RT_occupations_"//trim(intc(file_number))) ) then
          NE_i_time=i1
          exit
        endif
+       !
      enddo
    endif
    !
@@ -126,7 +128,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
      call mem_est("RT_occupations",(/size(RT_occupations)/),(/SP/))
    endif
    !
-   call io_control(ACTION=RD_CL,COM=COM_,SEC=(/NE_i_time/),MODE=DUMP,ID=ID(6))
+   call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/NE_i_time+1/),MODE=DUMP,ID=ID(6))
    io_err=io_SC_components('occupations',E,ID(6))
    !
    jobstr=jobstr_save

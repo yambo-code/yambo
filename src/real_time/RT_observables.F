@@ -26,7 +26,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  use drivers,        ONLY:l_sc_hf,l_sc_contains_lda,l_sc_cohsex
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
- use SC,             ONLY:V_hartree_sc,Ho,SC_bands
+ use SC,             ONLY:V_hartree_sc,Ho,SC_bands,it_now
  use X_m,            ONLY:P_square
  use real_time,      ONLY:XC0_and_HARTREE0,RT_average_operator,XCfrozen,l_NE_with_fields, &
 &                         l_NE_simulate_IP 
@@ -51,6 +51,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  integer     :: ib,ik
  complex(SP) :: E_kin,E_ion,E_h,Trace_Gf,Exc,Ex,E_mg,delta_G
+ real(SP)    :: Fluence
  !      
  E_kin    =(0._SP,0._SP)
  E_ion    =(0._SP,0._SP)
@@ -60,6 +61,7 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  Ex       =(0._SP,0._SP)
  E_mg     =(0._SP,0._SP)
  delta_G  =(0._SP,0._SP)
+ Fluence  =0._SP
  !
  ! Non-interaction kinetc energy
  !
@@ -121,7 +123,8 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  if(l_NE_with_fields) then
    !                    
-   E_mg=DL_vol/(8._SP*pi*SPEED_OF_LIGHT**2)*abs(sum(A_vecpot%vecpot))
+   !E_mg=DL_vol/(8._SP*pi*SPEED_OF_LIGHT**2)*abs(sum(A_vecpot%vecpot))
+   call RT_Fluence(Fluence,it_now)
    !
  endif
  !
@@ -158,8 +161,8 @@ subroutine RT_Observables(en,k,G_lesser,on_the_fly_operators)
  !
  ! Transfer the shadow variables
  !
- on_the_fly_operators(1:6)=(/E_kin,E_ion,E_h,Ex,Exc,E_mg/)*HA2EV
- on_the_fly_operators(7:8)=(/Trace_Gf,delta_G/)
+ on_the_fly_operators(1:5)=(/E_kin,E_ion,E_h,Ex,Exc/)*HA2EV
+ on_the_fly_operators(6:8)=(/cmplx(Fluence),Trace_Gf,delta_G/)
  !
 end subroutine RT_Observables
 

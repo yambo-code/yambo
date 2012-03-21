@@ -237,7 +237,7 @@ subroutine RT_initialize(Xen,Xk,q)
  ! Fluence
  !=========
  if (l_NE_with_fields) then
-   call RT_Fluence(Fluence)
+   call RT_Fluence(Fluence,NE_steps)
    call msg('rn','[RT] Fluence               [kJ/cm^2]:',Fluence)
  endif
  !

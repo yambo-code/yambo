@@ -92,7 +92,7 @@ subroutine RT_output(what,VALUEs,TIME,E)
  n_headings(next_file)=9
  headings(next_file,2:3)=(/"E_kin[eV]","E_ion[eV]"/)
  headings(next_file,4:6)=(/"Hartree [eV]","Exchange[eV]","Correlat[eV]"/)
- headings(next_file,7)="E_mg[eV]"
+ headings(next_file,7)="Fluence[kJ/cm^2]"
  headings(next_file,8)="N" 
  headings(next_file,9)="dG" 
  next_file=next_file+1

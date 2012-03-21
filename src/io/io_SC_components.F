@@ -30,7 +30,7 @@ integer function io_SC_components(what,E_sc,ID)
 &                         SC_R,V_xc_sc,local_V,H_nl_sc,RT_k,RT_nk,RT_occupations,&
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
-&                         io_sec,io_bulk,read_is_on,write_is_on,&
+&                         io_sec,io_bulk,read_is_on,write_is_on,io_file,&
 &                         manage_RD_WR_CL_IF_END,io_reset,ver_is_gt_or_eq,variable_is_found
  use fields,         ONLY:i_Probe,i_Pump
  use real_time,      ONLY:RT_IO_steps,NE_i_time,Hole_lifetime,Electron_lifetime,Phonon_lifetime
@@ -62,9 +62,12 @@ integer function io_SC_components(what,E_sc,ID)
  real(SP), allocatable :: TMP_matrix(:,:,:),E_disk(:,:,:)
  integer               :: ik,bands_to_load,ib,i_spin,i1
  logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_occupations,l_G,l_J_and_P,l_MP,l_T_EL,l_THETA
-#if defined _RT		
- integer               :: file_number,i_time,i_time_range(2)
+#if defined _SC		
+ integer               :: file_number,i_time
  logical               :: do_IO
+#endif
+#if defined _RT		
+ integer               :: i_time_range(2)
  real(SP)              :: A_vecpot_disk(3,3,2)
 #endif
  !
@@ -92,23 +95,20 @@ integer function io_SC_components(what,E_sc,ID)
  if (l_E)  io_SC_components=io_connect(desc="scE",type=2,ID=ID)
  if (l_V)  io_SC_components=io_connect(desc="scV",type=2,ID=ID)
  !
-#if defined _RT
+#if defined _SC
  !      
- file_number=(NE_i_time-1)/RT_IO_steps
+ ! Running NE_i_time=io_sec(ID,1)-1 => NE_time=(NE_i_time-1)*RT_step      
+ !      
+ file_number=(NE_i_Time-1)/RT_IO_steps
  !
  ! Write only every RT_io_steps
  !
  if (l_J_and_P.or.l_occupations) then
-   !      
    if(io_sec(ID,1)==1) then 
      if (l_J_and_P)     io_SC_components=io_connect(desc="RT_J_and_P",type=2,ID=ID)
      if (l_occupations) io_SC_components=io_connect(desc="RT_occupations",type=2,ID=ID)
    else
-     !      
-     do_IO=.false.
-     if(mod(NE_i_time,RT_IO_steps)  ==0.and.write_is_on(ID))  do_IO=.true.
-     if(mod(NE_i_time-1,RT_IO_steps)==0.and.read_is_on(ID))   do_IO=.true.
-     !
+     do_IO=NE_i_time==1.or.mod(NE_i_time,RT_IO_steps)==0
      if(do_IO) then
        if (l_J_and_P)     io_SC_components=io_connect(desc="RT_J_and_P_"//trim(intc(file_number)),type=2,ID=ID)
        if (l_occupations) io_SC_components=io_connect(desc="RT_occupations_"//trim(intc(file_number)),type=2,ID=ID)
@@ -117,27 +117,31 @@ integer function io_SC_components(what,E_sc,ID)
        call io_reset(ID)
        return
      endif
-     !
    endif
-   !
  endif
  !
- if(l_G.or.l_THETA) then
+#endif
+ !
+#if defined _RT
+ !
+ if (l_G.or.l_THETA) then
    if( (mod(NE_i_time,RT_IO_steps)/=0.and.NE_i_time/=1) .and.NE_dynamics.and.write_is_on(ID)) then
      io_SC_components=0
      call io_reset(ID)
      return
    endif
  endif
- if (.not.ver_is_gt_or_eq(ID,revision=944).or.NE_MEM_steps==2.or.io_sec(ID,1)==1) then
-   if (l_G)           io_SC_components=io_connect(desc="RT_GreenF",type=2,ID=ID)
- else
-   if (l_G)           io_SC_components=io_connect(desc="RT_GreenF_"//trim(intc(file_number)),type=2,ID=ID)
+ if (l_G) then
+   if (.not.ver_is_gt_or_eq(ID,revision=944).or.NE_MEM_steps==2.or.io_sec(ID,1)==1) then
+     io_SC_components=io_connect(desc="RT_GreenF",type=2,ID=ID)
+   else
+     io_SC_components=io_connect(desc="RT_GreenF_"//trim(intc(file_number)),type=2,ID=ID)
+   endif
  endif
  !
-#endif
- !
  if (l_THETA)       io_SC_components=io_connect(desc="RT_THETA",type=2,ID=ID)
+ !
+#endif
  !
  if (io_SC_components/=0) goto 1
  !
@@ -184,10 +188,12 @@ integer function io_SC_components(what,E_sc,ID)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    endif
    !
+#if defined _RT
    if (l_THETA) then
      call io_bulk(ID,VAR="Q_weight",VAR_SZ=(/nqbz/))
      call io_bulk(ID,R1=q_weight)
    endif
+#endif
    !
    io_SC_components=io_status(ID)
    if (io_SC_components/=0) goto 1
@@ -327,7 +333,7 @@ integer function io_SC_components(what,E_sc,ID)
    !
    if (io_SC_components/=0) goto 1  
    !
-   if (NE_i_time==RT_IO_steps.or.read_is_on(ID)) then
+   if (io_sec(ID,1)==1) then
      call io_bulk(ID,VAR="RT_Kpts",VAR_SZ=(/RT_nk,3/))
      call io_bulk(ID,R2=RT_k)
    endif
@@ -451,8 +457,8 @@ integer function io_SC_components(what,E_sc,ID)
          J_and_P_cache( 2*i1,    mod(NE_i_time-1,RT_IO_steps)+1)=aimag(RT_ind_J(i1))
          J_and_P_cache(6+2*i1-1, mod(NE_i_time-1,RT_IO_steps)+1)= real(RT_P(i1))
          J_and_P_cache(6+2*i1,   mod(NE_i_time-1,RT_IO_steps)+1)=aimag(RT_P(i1))
-         J_and_P_cache(12+2*i1-1, mod(NE_i_time-1,RT_IO_steps)+1)= 0.
-         J_and_P_cache(12+2*i1,   mod(NE_i_time-1,RT_IO_steps)+1)= 0.
+         J_and_P_cache(12+2*i1-1,mod(NE_i_time-1,RT_IO_steps)+1)= 0.
+         J_and_P_cache(12+2*i1,  mod(NE_i_time-1,RT_IO_steps)+1)= 0.
        enddo
        !
      endif

@@ -19,20 +19,21 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Fluence(Fluence)
+subroutine RT_Fluence(Fluence,STEPS)
  !
  use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT,AU2KWCMm2,FS2AUT
- use real_time,      ONLY:RT_step,NE_steps
+ use real_time,      ONLY:RT_step
  use fields,         ONLY:Efield,small_a,theta_function,ef_i_time,i_Pump
  !
  implicit none
+ integer , intent(in)  :: STEPS
  real(SP), intent(out) :: Fluence
  ! 
  ! Work Space
  !
  integer      :: it
- real(SP)     :: I(NE_steps),T(NE_steps)
+ real(SP)     :: I(STEPS),T(STEPS)
  complex(SP)  :: Field_time
  real(SP),external :: RIntegrate
  !
@@ -48,7 +49,7 @@ subroutine RT_Fluence(Fluence)
  !
  I=0._SP
  !
- do it=ef_i_time(i_Pump)+1,NE_steps
+ do it=ef_i_time(i_Pump)+1,STEPS
    !
    T(it)=it*RT_step
    !
@@ -74,6 +75,6 @@ subroutine RT_Fluence(Fluence)
  T=T/FS2AUT ! au -> fs
  I=I*1.E-15_SP
  !
- Fluence=RIntegrate(I,T,NE_steps)
+ Fluence=RIntegrate(I,T,STEPS)
  !
 end subroutine RT_Fluence

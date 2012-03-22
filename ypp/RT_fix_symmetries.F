@@ -26,7 +26,7 @@ subroutine RT_fix_symmetries(E,k)
  use pars,                ONLY:IP,SP,DP,lchlen
  use com,                 ONLY:msg,warning,core_io_path,more_io_path
  use memory_m,            ONLY:mem_est
- use electrons,           ONLY:levels,E_reset,n_spin,n_sp_pol
+ use electrons,           ONLY:levels,E_reset,n_spin,n_sp_pol,spin_orbit
  use vec_operate,         ONLY:v_norm,v_is_zero
  use matrix_operate,      ONLY:m3det
  use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,a,alat,&
@@ -54,8 +54,8 @@ subroutine RT_fix_symmetries(E,k)
  !
  ! Work Space
  !
- integer               :: ik_save,iv(2),ierr,ib,i_wf,i_spin,&
-&                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik
+ integer               :: ik_save,iv(2),ierr,ib,i_wf,i_spin,j_spin,&
+&                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik,is_old
  integer               :: spatial_nsym
  integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:)
  real(SP)              :: v1(3),v2(3),m(3,3)
@@ -63,7 +63,8 @@ subroutine RT_fix_symmetries(E,k)
  integer               :: det,nsym_save,igfft,ig,ic
  real(SP), allocatable :: pp_kb_store(:,:,:,:,:),pp_kbd_store(:,:,:,:,:)
  logical               :: Rm_all_symm,use_E_field,use_B_field,reject_symmetry,Rm_TR,&
-&                         S_contains_TR(nsym),Trev_2_spatial=.false.
+&                         S_contains_TR(nsym),Trev_2_spatial=.false.,do_not_flip_spin,&
+&                         S_flip_spin(nsym),B_is_M,check_rotations
  type(bz_samp)         :: k_save
  type(levels)          :: en_sc,en_sc_expanded
  character(lchlen)     :: core_io_path_save,fragment_name
@@ -81,6 +82,22 @@ subroutine RT_fix_symmetries(E,k)
  !
  call parser('RmAllSymm',Rm_all_symm)
  call parser('RmTimeRev',Rm_TR)
+ !
+ S_flip_spin(:)=.false.
+ call parser('NotFlipSpin',do_not_flip_spin)
+ ! Symmetries which flip the spin in any way are presently
+ ! not considered in yambo.
+ ! These must be removed in two situations:
+ ! 1 - you have a magnetization in the z-direction
+ ! 2 - you want to apply a magnetic field with Pauli coupling along z direction
+ ! For directions different from z you have to remove all symmetries
+ !
+ call parser('BisM',B_is_M)
+ ! If you have a system with a magnetization there are two situations
+ ! 1 - M=Mz and you want to remove the symmetries which flip the spin
+ ! 2 - M=Mz and you have spin-orbit. Then S*L (spin-orbit) is equal to B*L (Landau)
+ !     Check symmetries accordingly.
+ check_rotations=(.not.B_is_M).or.(B_is_M.and.spin_orbit)
  !
  call fft_setup(wf_ng,1,.false.)
  allocate(wf_DP(fft_size),wf_DP_rot(fft_size))
@@ -197,8 +214,10 @@ subroutine RT_fix_symmetries(E,k)
    i_time_rev=0
  else
    is=2
+   is_old=1
    !
    do while (is<=nsym)
+     is_old=is_old+1
      !
      reject_symmetry=.false.
      if (use_E_field) then
@@ -215,7 +234,11 @@ subroutine RT_fix_symmetries(E,k)
        if(all( abs(v1(:)-B_cart(:))<epsilon(1.)) ) det=+1
        if(all( abs(v1(:)+B_cart(:))<epsilon(1.)) ) det=-1
        reject_symmetry=(det==0)
-       if(.not.reject_symmetry) then
+       if(.not.reject_symmetry.and.do_not_flip_spin) then
+         reject_symmetry=(det==-1)
+         S_flip_spin(is_old)=.true.
+       endif
+       if(.not.reject_symmetry.and.check_rotations) then
          ! We check what happens in the plane perpendicular to B: 
          ! 1) Spatial symmetries are rotations
          if(is<=spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/det - 1.)>1.E-5)
@@ -560,10 +583,12 @@ subroutine RT_fix_symmetries(E,k)
        !
        wf_disk(:,ib,:,i_spin)=0._SP
        !
-       wf_disk(1,ib,1:wf_ncx,i_spin)=  real(wf_DP_rot(fft_g_table(1:wf_ncx,1)))*fft_norm
-       wf_disk(2,ib,1:wf_ncx,i_spin)= aimag(wf_DP_rot(fft_g_table(1:wf_ncx,1)))*fft_norm
+       j_spin=symmetrized_spin(i_spin,S_flip_spin(is))
        !
-       if ( S_contains_TR(is) ) wf_disk(2,ib,:,i_spin)=-wf_disk(2,ib,:,i_spin)
+       wf_disk(1,ib,1:wf_ncx,j_spin)=  real(wf_DP_rot(fft_g_table(1:wf_ncx,1)))*fft_norm
+       wf_disk(2,ib,1:wf_ncx,j_spin)= aimag(wf_DP_rot(fft_g_table(1:wf_ncx,1)))*fft_norm
+       !
+       if ( S_contains_TR(is) ) wf_disk(2,ib,:,j_spin)=-wf_disk(2,ib,:,j_spin)
        !
      enddo
    enddo
@@ -635,6 +660,23 @@ subroutine RT_fix_symmetries(E,k)
  call bz_samp_reset(k_save)
  call E_reset(E_expanded)
  call WF_free()
+ !
+ contains
+   !
+   integer function symmetrized_spin(i_spin,flip)
+     !
+     integer :: i_spin
+     logical :: flip
+     !
+     if(.not.flip) then
+       symmetrized_spin=i_spin
+       return
+     else
+       if(i_spin==1) symmetrized_spin=2
+       if(i_spin==2) symmetrized_spin=1
+     endif
+   !
+   end function
  !
 end subroutine
  

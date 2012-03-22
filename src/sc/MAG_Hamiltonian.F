@@ -37,7 +37,7 @@ subroutine MAG_Hamiltonian(initial_check_only)
  use memory_m,       ONLY:mem_est
  use com,            ONLY:warning,error
  use FFT_m,          ONLY:fft_size
- use D_lattice,      ONLY:a
+ use D_lattice,      ONLY:a,nsym
  use R_lattice,      ONLY:nkibz
  use magnetic,       ONLY:MAG_radius,MAG_B,MAG_hamiltonian_type,MAG_landau,MAG_pauli, &
 &                         MAG_gauge,A_magn_x,A_magn_y,A_magn_z,        &
@@ -99,8 +99,12 @@ subroutine MAG_Hamiltonian(initial_check_only)
      if(MAG_landau) MAG_hamiltonian_type='landau'
      if(.not.MAG_landau) call warning('No magnetic effect included in the Hamiltonian')
    endif
-   if(MAG_pauli .and. MAG_theta/=0.) &
-     call warning('The B field is not along z => the spins are assumed to be aligned to B. Please check.')
+   if(MAG_pauli .and. MAG_theta/=0.) then
+     if(nsym==1) &
+&     call warning('The B field is not along z => the spins are assumed to be aligned to B. Please check.')
+     if(nsym>1) &
+&     call error('The B field is not along z and Pauli coupling is on. Remove all symetries for that.')
+   endif
    ! Impose the symmetric gauge
    ! Impose flux to follow the a(3,:) direction 
    if(MAG_radius/=0) then

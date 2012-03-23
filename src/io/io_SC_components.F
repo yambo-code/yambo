@@ -30,7 +30,7 @@ integer function io_SC_components(what,E_sc,ID)
 &                         SC_R,V_xc_sc,local_V,H_nl_sc,RT_k,RT_nk,RT_occupations,&
 &                         SC_xc_functional,V_hartree_sc,l_NSC_shot,SC_fft_size,V_mean
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
-&                         io_sec,io_bulk,read_is_on,write_is_on,io_file,&
+&                         io_sec,io_bulk,read_is_on,write_is_on,io_file,IO_NO_DATABASE,&
 &                         manage_RD_WR_CL_IF_END,io_reset,ver_is_gt_or_eq,variable_is_found
  use fields,         ONLY:i_Probe,i_Pump
  use real_time,      ONLY:RT_IO_steps,NE_i_time,Hole_lifetime,Electron_lifetime,Phonon_lifetime
@@ -111,10 +111,11 @@ integer function io_SC_components(what,E_sc,ID)
      do_IO=NE_i_time==1.or.mod(NE_i_time,RT_IO_steps)==0
      if(do_IO) then
        if (l_J_and_P)     io_SC_components=io_connect(desc="RT_J_and_P_"//trim(intc(file_number)),type=2,ID=ID)
-       if (ver_is_gt_or_eq(ID,revision=1126)) then
-         if (l_occupations) io_SC_components=io_connect(desc="RT_occupations_"//trim(intc(file_number)),type=2,ID=ID)
-       else
-         if (l_occupations) io_SC_components=io_connect(desc="RT_occupations",type=2,ID=ID)
+       if (l_occupations) then
+         io_SC_components=io_connect(desc="RT_occupations_"//trim(intc(file_number)),type=2,ID=ID)
+         if (read_is_on(ID).and.io_SC_components==IO_NO_DATABASE) then
+           io_SC_components=io_connect(desc="RT_occupations",type=2,ID=ID)
+         endif
        endif
      else
        io_SC_components=0

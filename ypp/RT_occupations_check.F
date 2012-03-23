@@ -69,11 +69,7 @@ integer function RT_occupations_check(E,k)
    !
  endif
  !
- call IO_and_Messaging_switch("-log -report")
- !
  call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_range(2))
- !
- call IO_and_Messaging_switch("+log +report")
  !
  if (OCC_deltaT<RT_IO_steps*RT_step) then
    ! 

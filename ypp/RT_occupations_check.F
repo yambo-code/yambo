@@ -21,7 +21,6 @@
 !
 integer function RT_occupations_check(E,k)
  !
- use pars,           ONLY:zero_dfl
  use drivers,        ONLY:l_ph_corr
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels

@@ -26,7 +26,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  use parser_m,       ONLY:parser
  use real_time,      ONLY:ID,G_lesser,NE_i_time,RT_IO_steps,RT_step,MEM_index,NE_steps
  use SC,             ONLY:SC_bands,RT_occupations,RT_nk,RT_k 
- use IO_m,           ONLY:io_control,NONE,OP_WR_CL,OP_RD_CL,DUMP
+ use IO_m,           ONLY:io_control,NONE,OP_WR_CL,OP_RD,RD_CL,OP_RD_CL,DUMP,variable_is_found
  use electrons,      ONLY:levels,BZ_RIM_nkpt,BZ_RIM_table,BZ_RIM_nbands,n_sp_pol,n_met_bands,&
 &                         n_full_bands,nel,filled_tresh
  use com,            ONLY:jobstr,msg,file_exists
@@ -92,7 +92,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    ! 
    if (index(what_is_running,'YPP')==0) call section('p','NEGF Occupations I/O and interpolation ('//trim(what)//')')
    !  
-   call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=DUMP,ID=ID(6))
+   call io_control(ACTION=OP_RD,COM=COM_,SEC=(/1/),MODE=DUMP,ID=ID(6))
    io_err=io_SC_components('occupations',E,ID(6))
    !
    if (io_err<0) then
@@ -112,7 +112,8 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
        !
        file_number=(i1-1)/RT_IO_steps
        !
-       if ( file_exists(trim(jobstr)//"/ndb.RT_occupations_"//trim(intc(file_number))).or.&
+       if ( variable_is_found(ID(6),'RT_occupations_TIME'//trim(intc(i1)))==1.or.&
+&           file_exists(trim(jobstr)//"/ndb.RT_occupations_"//trim(intc(file_number))).or.&
 &           file_exists(trim(jobstr)//"/db.RT_occupations_"//trim(intc(file_number))) ) then
          NE_i_time=i1
          exit
@@ -128,6 +129,8 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
      call mem_est("RT_occupations",(/size(RT_occupations)/),(/SP/))
    endif
    !
+   call io_control(ACTION=RD_CL,COM=COM_,SEC=(/1/),MODE=DUMP,ID=ID(6))
+   io_err=io_SC_components('occupations',E,ID(6))
    call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/NE_i_time+1/),MODE=DUMP,ID=ID(6))
    io_err=io_SC_components('occupations',E,ID(6))
    !

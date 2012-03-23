@@ -27,7 +27,7 @@ subroutine k_random(Xk,Xen)
  use R_lattice,           ONLY:bz_samp,nkibz
  use parser_m,            ONLY:parser
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop
- use com,                 ONLY:msg,of_open_close
+ use com,                 ONLY:msg,of_open_close,error
  use vec_operate,         ONLY:rlu_v_norm,v_norm,c2a
  use YPP,                 ONLY:BZ_RIM_nkpts,BZ_RIM_path,gamma_radius,K_transform
  use electrons,           ONLY:levels,default_nel,n_bands,&
@@ -74,6 +74,8 @@ subroutine k_random(Xk,Xen)
  ! DB1 reloading
  !
  i_err=ioDB1_reload(RIM_E,RIM_k, trim(BZ_RIM_path) )
+ !
+ if (i_err/=0) call error('RIM database not found')
  !
  ! Symmetry restoring
  !

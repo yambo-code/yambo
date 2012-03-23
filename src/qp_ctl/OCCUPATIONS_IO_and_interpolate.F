@@ -129,9 +129,9 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
      call mem_est("RT_occupations",(/size(RT_occupations)/),(/SP/))
    endif
    !
-   call io_control(ACTION=RD_CL,COM=COM_,SEC=(/1/),MODE=DUMP,ID=ID(6))
+   call io_control(ACTION=RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID(6))
    io_err=io_SC_components('occupations',E,ID(6))
-   call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/NE_i_time+1/),MODE=DUMP,ID=ID(6))
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=DUMP,ID=ID(6))
    io_err=io_SC_components('occupations',E,ID(6))
    !
    jobstr=jobstr_save

@@ -111,7 +111,7 @@ integer function io_SC_components(what,E_sc,ID)
      do_IO=NE_i_time==1.or.mod(NE_i_time,RT_IO_steps)==0
      if(do_IO) then
        if (l_J_and_P)     io_SC_components=io_connect(desc="RT_J_and_P_"//trim(intc(file_number)),type=2,ID=ID)
-       if (.not.ver_is_gt_or_eq(ID,revision=1126)) then
+       if (ver_is_gt_or_eq(ID,revision=1126)) then
          if (l_occupations) io_SC_components=io_connect(desc="RT_occupations_"//trim(intc(file_number)),type=2,ID=ID)
        else
          if (l_occupations) io_SC_components=io_connect(desc="RT_occupations",type=2,ID=ID)

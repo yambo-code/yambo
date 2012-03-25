@@ -37,6 +37,7 @@ module pw_data
 ! Symmetry
   integer, allocatable       :: s_(:,:,:)
   integer                    :: nsym_, isym_(3,3,48)
+  integer                    :: t_rev_(48)
   logical                    :: invsym_
 
 ! Planewaves

@@ -408,7 +408,7 @@ contains
 
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
 
-   call qexml_read_symmetry(invsym=invsym_, trasl=trasl_(:,1:nsym_),s=isym_(:,:,1:nsym_), ierr=ierr)
+   call qexml_read_symmetry(invsym=invsym_, trasl=trasl_(:,1:nsym_),s=isym_(:,:,1:nsym_), t_rev=t_rev_ , ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_symmetry','IOTK error',ABS(ierr))
 
 #endif
@@ -423,8 +423,7 @@ contains
    do i1 = 1,nsym_
      isym_(:,:,i1) = transpose(isym_(:,:,i1))
    enddo
-   call symmetries_check_and_load(isym_(:,:,1:nsym_),nsym_)
-
+   call symmetries_check_and_load(isym_(:,:,1:nsym_),t_rev_,nsym_)
    !
  end subroutine get_symmetries
  !

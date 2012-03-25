@@ -21,7 +21,7 @@
 !
 subroutine RT_fix_symmetries(E,k)
  !
- use YPP,                 ONLY:E_field,B_theta,B_psi,B_field
+ use YPP,                 ONLY:E_field,B_theta,B_psi,B_field,Magnetization
  use drivers,             ONLY:l_sc_run
  use pars,                ONLY:IP,SP,DP,lchlen
  use com,                 ONLY:msg,warning,core_io_path,more_io_path
@@ -62,9 +62,9 @@ subroutine RT_fix_symmetries(E,k)
  real(SP)              :: B_cart(3)
  integer               :: det,nsym_save,igfft,ig,ic
  real(SP), allocatable :: pp_kb_store(:,:,:,:,:),pp_kbd_store(:,:,:,:,:)
- logical               :: Rm_all_symm,use_E_field,use_B_field,reject_symmetry,Rm_TR,&
+ logical               :: Rm_all_symm,use_E_field,use_B_field,has_magnetization,reject_symmetry,Rm_TR,&
 &                         S_contains_TR(nsym),Trev_2_spatial=.false.,do_not_flip_spin,&
-&                         S_flip_spin(nsym),B_is_M,check_rotations
+&                         S_flip_spin(nsym)
  type(bz_samp)         :: k_save
  type(levels)          :: en_sc,en_sc_expanded
  character(lchlen)     :: core_io_path_save,fragment_name
@@ -79,11 +79,11 @@ subroutine RT_fix_symmetries(E,k)
  use_B_field=.FALSE.
  if (any(E_field/=0.)) use_E_field=.TRUE.
  if (B_field/=0.)      use_B_field=.TRUE.
+ if (any(Magnetization/=0.))  has_magnetization=.TRUE.
  !
  call parser('RmAllSymm',Rm_all_symm)
  call parser('RmTimeRev',Rm_TR)
  !
- S_flip_spin(:)=.false.
  call parser('NotFlipSpin',do_not_flip_spin)
  ! Symmetries which flip the spin in any way are presently
  ! not considered in yambo.
@@ -91,13 +91,6 @@ subroutine RT_fix_symmetries(E,k)
  ! 1 - you have a magnetization in the z-direction
  ! 2 - you want to apply a magnetic field with Pauli coupling along z direction
  ! For directions different from z you have to remove all symmetries
- !
- call parser('BisM',B_is_M)
- ! If you have a system with a magnetization there are two situations
- ! 1 - M=Mz and you want to remove the symmetries which flip the spin
- ! 2 - M=Mz and you have spin-orbit. Then S*L (spin-orbit) is equal to B*L (Landau)
- !     Check symmetries accordingly.
- check_rotations=(.not.B_is_M).or.(B_is_M.and.spin_orbit)
  !
  call fft_setup(wf_ng,1,.false.)
  allocate(wf_DP(fft_size),wf_DP_rot(fft_size))
@@ -107,9 +100,11 @@ subroutine RT_fix_symmetries(E,k)
    call section('*',"== Remove all Symmetries ==")
    use_E_field=.false.
    use_B_field=.false.
+   has_magnetization=.false.
    Rm_TR=.false.
    E_field=0.
    B_field=0.
+   Magnetization=0.
  endif
  !
  if (use_E_field) call section('*',"== Electric Fields: BZ sampling remapping ==")
@@ -119,11 +114,13 @@ subroutine RT_fix_symmetries(E,k)
    B_cart(2)=B_field*sin(B_theta)*sin(B_psi) 
    B_cart(3)=B_field*cos(B_theta)
  endif
+ if(has_magnetization) call section('*',"== Magnetized system: BZ sampling remapping ==")
  !
  if (i_time_rev==0) Rm_TR=.false.
  if (Rm_TR)       call section('*',"== Remove Time Reversal ==")
  !
- if (.not.any((/use_B_field,use_E_field,Rm_all_symm,Rm_TR/))) return 
+ if (.not.any((/use_B_field,use_E_field,has_magnetization,Rm_all_symm,Rm_TR/))) return 
+ if (use_B_field.and.has_magnetization) call warning('Magnetic field in magnetic system!')
  !
  if (wf_nb_io/=E%nb) then
    call warning('Splitted wavefunctions still not supported')
@@ -189,6 +186,7 @@ subroutine RT_fix_symmetries(E,k)
  ! time reversal-related Symmetries
  !
  forall (is=1:nsym) S_contains_TR(is)=is>nsym/(1+i_time_rev)
+ S_flip_spin=S_contains_TR
  !
  ! Remove Symmetries
  !
@@ -228,6 +226,7 @@ subroutine RT_fix_symmetries(E,k)
        ! T-rev symmetries send E into -E
        if(is> spatial_nsym) reject_symmetry=v_norm(v1(:)+E_field(1,:))>1.E-5.or.v_norm(v2(:)+E_field(2,:))>1.E-5
      endif
+     !
      if (use_B_field.and..not.reject_symmetry) then
        det=0
        v1(:) = matmul( dl_sop(:,:,is), B_cart )       
@@ -236,14 +235,33 @@ subroutine RT_fix_symmetries(E,k)
        reject_symmetry=(det==0)
        if(.not.reject_symmetry.and.do_not_flip_spin) then
          reject_symmetry=(det==-1)
-         S_flip_spin(is_old)=.true.
+         if(det==-1) S_flip_spin(is_old)=.true.
        endif
-       if(.not.reject_symmetry.and.check_rotations) then
+       if(.not.reject_symmetry) then
          ! We check what happens in the plane perpendicular to B: 
          ! 1) Spatial symmetries are rotations
          if(is<=spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/det - 1.)>1.E-5)
          ! 2) T-rev symmetries are rotation moltiplied for the inversion
          if(is> spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/det + 1.)>1.E-5)       
+       endif
+     endif
+     !
+     if(has_magnetization.and..not.reject_symmetry) then
+       det=0
+       v1(:) = matmul( dl_sop(:,:,is), Magnetization )
+       if(all( abs(v1(:)-Magnetization(:))<epsilon(1.)) ) det=+1
+       if(all( abs(v1(:)+Magnetization(:))<epsilon(1.)) ) det=-1
+       reject_symmetry=(det==0)
+       if(.not.reject_symmetry.and.do_not_flip_spin) then
+         reject_symmetry=(det==-1)
+         if(det==-1) S_flip_spin(is_old)=.true.
+       endif
+       if(.not.reject_symmetry.and.spin_orbit) then
+         ! We check what happens in the plane perpendicular to the magnetization: 
+         ! 1) Spatial symmetries are rotations
+         if(is<=spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/det - 1.)>1.E-5)
+         ! 2) T-rev symmetries are rotation moltiplied for the inversion
+         if(is> spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/det + 1.)>1.E-5)
        endif
      endif
      !
@@ -271,12 +289,12 @@ subroutine RT_fix_symmetries(E,k)
  call set_real_printed_length(f_length=7,g_length=8)
  call msg('s','[Symm] Spatial simmetries now are:')  
  do is=1,spatial_nsym
-   call msg('s','[S'//trim(intc(is))//']',reshape(dl_sop(:,:,is)*1.001,(/9/)))
+   call msg('s','[S'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))
  enddo
  if (i_time_rev==1) then
    call msg('s','[Symm] T-rev derived simmetries now are:')  
    do is=spatial_nsym+1,nsym
-     call msg('s','[Tr-S'//trim(intc(is))//']',reshape(dl_sop(:,:,is)*1.001,(/9/)))  
+     call msg('s','[S*'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))  
    enddo
  endif
  call set_real_printed_length()

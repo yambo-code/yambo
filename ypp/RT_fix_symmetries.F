@@ -255,6 +255,7 @@ subroutine RT_fix_symmetries(E,k)
        if(.not.reject_symmetry.and.do_not_flip_spin) then
          reject_symmetry=(det==-1)
          if(det==-1) S_flip_spin(is_old)=.true.
+         if(det==+1) S_flip_spin(is_old)=.false.
        endif
        if(.not.reject_symmetry.and.spin_orbit) then
          ! We check what happens in the plane perpendicular to the magnetization: 

@@ -423,7 +423,7 @@ contains
    do i1 = 1,nsym_
      isym_(:,:,i1) = transpose(isym_(:,:,i1))
    enddo
-   call symmetries_check_and_load(isym_(:,:,1:nsym_),t_rev_,nsym_)
+   call symmetries_check_and_load(isym_(:,:,1:nsym_),nsym_,t_rev=t_rev_)
    !
  end subroutine get_symmetries
  !

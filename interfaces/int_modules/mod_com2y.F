@@ -65,7 +65,7 @@ module mod_com2y
      !
    end subroutine
    !
-   subroutine symmetries_check_and_load(int_sop,t_rev,nsym_)
+   subroutine symmetries_check_and_load(int_sop,nsym_,t_rev)
      !
      use com,       ONLY:msg,error
      use electrons, ONLY:spin_orbit

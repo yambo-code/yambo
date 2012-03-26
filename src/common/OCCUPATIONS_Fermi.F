@@ -33,9 +33,9 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !  Full report of system electronic character
  !
  use pars,          ONLY:SP,DP
- use units,         ONLY:HA2EV,HA2KEL
+ use units,         ONLY:HA2EV,HA2KEL,BO2ANG
  use drivers,       ONLY:Finite_Tel
- use D_lattice,     ONLY:Tel,Bose_Temp
+ use D_lattice,     ONLY:Tel,Bose_Temp,DL_vol
  use electrons,     ONLY:levels,nel,n_sp_pol,spin_occ,filled_tresh,&
 &                        BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spinor,n_spin
  use R_lattice,     ONLY:bz_samp
@@ -248,6 +248,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  call msg('r',  'Fermi Level        [ev]:',E%Efermi(1)*HA2EV)
  call msg('r',  'Electronic Temp. [ev K]:',(/Tel*HA2EV,Tel*HA2KEL/))
  call msg('r',  'Bosonic    Temp. [ev K]:',(/Bose_Temp*HA2EV,Bose_Temp*HA2KEL/))
+ call msg('r',  'El. density      [cm-3]:',(/nel/(DL_vol*BO2ANG**3*1.E-24)/))
  !
  call REPORT_Occupations(E,mode)
  !

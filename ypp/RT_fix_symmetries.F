@@ -23,14 +23,15 @@ subroutine RT_fix_symmetries(E,k)
  !
  use YPP,                 ONLY:E_field,B_theta,B_psi,B_field,Magnetization
  use drivers,             ONLY:l_sc_run
- use pars,                ONLY:IP,SP,DP,lchlen
+ use pars,                ONLY:IP,LP,SP,DP,lchlen
  use com,                 ONLY:msg,warning,core_io_path,more_io_path
  use memory_m,            ONLY:mem_est
  use electrons,           ONLY:levels,E_reset,n_spin,n_sp_pol,spin_orbit
  use vec_operate,         ONLY:v_norm,v_is_zero
  use matrix_operate,      ONLY:m3det
  use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,a,alat,&
-&                              i_space_inv,sop_inv,inv_index,symmetry_group_table
+&                              i_space_inv,sop_inv,inv_index,symmetry_group_table,&
+&                              S_flips_spin,symmetrized_spin
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,&
 &                              ng_closed,bz_samp_duplicate,rl_sop
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,VERIFY,&
@@ -56,15 +57,15 @@ subroutine RT_fix_symmetries(E,k)
  !
  integer               :: ik_save,iv(2),ierr,ib,i_wf,i_spin,j_spin,&
 &                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik,is_old
- integer               :: spatial_nsym
+ integer               :: spatial_nsym,old_spatial_nsym,old_trev_nsym
+ integer(LP)           :: S_flips_spin_old(96)=0
  integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:)
  real(SP)              :: v1(3),v2(3),m(3,3)
  real(SP)              :: B_cart(3)
- integer               :: det,nsym_save,igfft,ig,ic
+ integer               :: symm_M_factor,symm_B_factor,nsym_save,igfft,ig,ic
  real(SP), allocatable :: pp_kb_store(:,:,:,:,:),pp_kbd_store(:,:,:,:,:)
  logical               :: Rm_all_symm,use_E_field,use_B_field,has_magnetization,reject_symmetry,Rm_TR,&
-&                         S_contains_TR(nsym),Trev_2_spatial=.false.,do_not_flip_spin,&
-&                         S_flip_spin(nsym)
+&                         S_contains_TR(nsym),Trev_2_spatial=.false.,do_not_flip_spin
  type(bz_samp)         :: k_save
  type(levels)          :: en_sc,en_sc_expanded
  character(lchlen)     :: core_io_path_save,fragment_name
@@ -186,7 +187,6 @@ subroutine RT_fix_symmetries(E,k)
  ! time reversal-related Symmetries
  !
  forall (is=1:nsym) S_contains_TR(is)=is>nsym/(1+i_time_rev)
- S_flip_spin=S_contains_TR
  !
  ! Remove Symmetries
  !
@@ -204,7 +204,8 @@ subroutine RT_fix_symmetries(E,k)
    i_time_rev=0
  endif
  !
- call msg('s',trim(intc(spatial_nsym))//' spatial symmetries reduced to ...')
+ old_spatial_nsym=spatial_nsym
+ old_trev_nsym=nsym-spatial_nsym
  !
  if(Rm_all_symm) then
    nsym=1
@@ -228,41 +229,50 @@ subroutine RT_fix_symmetries(E,k)
      endif
      !
      if (use_B_field.and..not.reject_symmetry) then
-       det=0
+       symm_B_factor=0
        v1(:) = matmul( dl_sop(:,:,is), B_cart )       
-       if(all( abs(v1(:)-B_cart(:))<epsilon(1.)) ) det=+1
-       if(all( abs(v1(:)+B_cart(:))<epsilon(1.)) ) det=-1
-       reject_symmetry=(det==0)
-       if(.not.reject_symmetry.and.do_not_flip_spin) then
-         reject_symmetry=(det==-1)
-         if(det==-1) S_flip_spin(is_old)=.true.
+       if(all( abs(v1(:)-B_cart(:))<epsilon(1.)) ) symm_B_factor=+1
+       if(all( abs(v1(:)+B_cart(:))<epsilon(1.)) ) symm_B_factor=-1
+       reject_symmetry=(symm_B_factor==0)
+       if(symm_B_factor==-1) then
+         S_flips_spin_old(is_old)=1
+         S_flips_spin(is)=1
        endif
+       if(symm_B_factor==+1) then
+         S_flips_spin_old(is_old)=0
+         S_flips_spin(is)=0
+       endif
+       if(.not.reject_symmetry.and.do_not_flip_spin) reject_symmetry=(symm_B_factor==-1)
        if(.not.reject_symmetry) then
          ! We check what happens in the plane perpendicular to B: 
          ! 1) Spatial symmetries are rotations
-         if(is<=spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/det - 1.)>1.E-5)
+         if(is<=spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/symm_B_factor - 1.)>1.E-5)
          ! 2) T-rev symmetries are rotation moltiplied for the inversion
-         if(is> spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/det + 1.)>1.E-5)       
+         if(is> spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/symm_B_factor + 1.)>1.E-5)       
        endif
      endif
      !
      if(has_magnetization.and..not.reject_symmetry) then
-       det=0
+       symm_M_factor=0
        v1(:) = matmul( dl_sop(:,:,is), Magnetization )
-       if(all( abs(v1(:)-Magnetization(:))<epsilon(1.)) ) det=+1
-       if(all( abs(v1(:)+Magnetization(:))<epsilon(1.)) ) det=-1
-       reject_symmetry=(det==0)
-       if(.not.reject_symmetry.and.do_not_flip_spin) then
-         reject_symmetry=(det==-1)
-         if(det==-1) S_flip_spin(is_old)=.true.
-         if(det==+1) S_flip_spin(is_old)=.false.
+       if(all( abs(v1(:)-Magnetization(:))<epsilon(1.)) ) symm_M_factor=+1
+       if(all( abs(v1(:)+Magnetization(:))<epsilon(1.)) ) symm_M_factor=-1
+       reject_symmetry=(symm_M_factor==0)
+       if(symm_M_factor==-1) then
+         S_flips_spin_old(is_old)=1
+         S_flips_spin(is)=1
        endif
+       if(symm_M_factor==+1) then
+         S_flips_spin_old(is_old)=0
+         S_flips_spin(is)=0
+       endif
+       if(.not.reject_symmetry.and.do_not_flip_spin) reject_symmetry=(symm_M_factor==-1)
        if(.not.reject_symmetry.and.spin_orbit) then
          ! We check what happens in the plane perpendicular to the magnetization: 
          ! 1) Spatial symmetries are rotations
-         if(is<=spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/det - 1.)>1.E-5)
+         if(is<=spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/symm_M_factor - 1.)>1.E-5)
          ! 2) T-rev symmetries are rotation moltiplied for the inversion
-         if(is> spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/det + 1.)>1.E-5)
+         if(is> spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/symm_M_factor + 1.)>1.E-5)
        endif
      endif
      !
@@ -277,8 +287,10 @@ subroutine RT_fix_symmetries(E,k)
    enddo
  endif
  !
- call msg('l'," "//trim(intc(spatial_nsym)))
- if(i_time_rev==1) call msg('s',"There are "//trim(intc(nsym-spatial_nsym))//" T-rev derived symmetries")
+ call msg('s',trim(intc(old_spatial_nsym))//' spatial symmetries reduced to ...'//trim(intc(spatial_nsym)))
+ !
+ if(i_time_rev==1)&
+& call msg('s',trim(intc(old_trev_nsym))//' T-rev symmetries reduced to ...'//trim(intc(nsym-spatial_nsym)))
  !
  allocate(dl_sop_tmp(3,3,nsym))
  dl_sop_tmp(1:3,1:3,1:nsym)=dl_sop(1:3,1:3,1:nsym)
@@ -602,7 +614,7 @@ subroutine RT_fix_symmetries(E,k)
        !
        wf_disk(:,ib,:,i_spin)=0._SP
        !
-       j_spin=symmetrized_spin(i_spin,S_flip_spin(is))
+       j_spin=symmetrized_spin(i_spin,S_flips_spin_old(is))
        !
        wf_disk(1,ib,1:wf_ncx,j_spin)=  real(wf_DP_rot(fft_g_table(1:wf_ncx,1)))*fft_norm
        wf_disk(2,ib,1:wf_ncx,j_spin)= aimag(wf_DP_rot(fft_g_table(1:wf_ncx,1)))*fft_norm
@@ -679,23 +691,6 @@ subroutine RT_fix_symmetries(E,k)
  call bz_samp_reset(k_save)
  call E_reset(E_expanded)
  call WF_free()
- !
- contains
-   !
-   integer function symmetrized_spin(i_spin,flip)
-     !
-     integer :: i_spin
-     logical :: flip
-     !
-     if(.not.flip) then
-       symmetrized_spin=i_spin
-       return
-     else
-       if(i_spin==1) symmetrized_spin=2
-       if(i_spin==2) symmetrized_spin=1
-     endif
-   !
-   end function
  !
 end subroutine
  

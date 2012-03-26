@@ -30,7 +30,7 @@ integer function ioDB1(E,k,ID)
 &                           n_spinor,spin_orbit
  use D_lattice,        ONLY:a, alat, nsym, i_time_rev, input_GS_Tel, dl_sop, &
 &                           Tel, n_atoms_species_max,n_atomic_species,n_atoms_species,atom_pos, &
-&                           Z_species, n_atoms
+&                           Z_species, n_atoms, S_flips_spin
  use R_lattice,        ONLY:ng_vec, g_vec, bz_samp,nkibz,&
 &                           qp_states_k,nXkibz,ng_closed
  use wave_func,        ONLY:wf_ncx, wf_nc_k, wf_igk,wf_ng,wf_nb_io
@@ -167,8 +167,8 @@ integer function ioDB1(E,k,ID)
 &                      VAR=' No. of atom species             :')
    endif
    if (ver_is_gt_or_eq(ID,revision=1041)) then
-    call io_elemental(ID, VAR="spin_orbit",VAR_SZ=1,MENU=0)
-    call io_elemental(ID, L0=spin_orbit,&
+     call io_elemental(ID, VAR="spin_orbit",VAR_SZ=1,MENU=0)
+     call io_elemental(ID, L0=spin_orbit,&
 &                      VAR=' Spin Orbit interaction          : ')
    endif
    call io_elemental(ID, VAR="",VAR_SZ=0)
@@ -261,6 +261,10 @@ integer function ioDB1(E,k,ID)
  !
  call io_bulk(ID, VAR="SYMMETRY", VAR_SZ=shape(dl_sop) )
  call io_bulk(ID, R3=dl_sop)
+ if (ver_is_gt_or_eq(ID,revision=1041)) then
+   call io_bulk(ID, VAR="SYMM_KIND", VAR_SZ=shape((/S_flips_spin(:nsym)/)) )
+   call io_bulk(ID, L1=S_flips_spin(:nsym))
+ endif
  !
  ! G-vectors
  !

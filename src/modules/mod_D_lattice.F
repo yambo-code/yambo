@@ -21,7 +21,7 @@
 !
 module D_lattice
  !
- use pars,      ONLY:SP,lchlen
+ use pars,      ONLY:LP,SP,lchlen
  implicit none
  !
  ! Non periodic directions
@@ -46,6 +46,7 @@ module D_lattice
  real(SP),allocatable :: dl_sop(:,:,:)
  integer, allocatable :: sop_tab(:,:)
  integer, allocatable :: sop_inv(:)
+ integer(LP)          :: S_flips_spin(96)=0
  !
  ! Cell & atoms
  !
@@ -182,5 +183,20 @@ module D_lattice
      PT_elements(87:94)=(/'Fr','Ra','Ac','Th','Pa','U ','Np','Pu'/)
      PT_elements(95:103)=(/'Am','Cm','Bk','Cf','Es','Fm','Md','No', 'Lr'/)
    end subroutine
+   !
+   integer function symmetrized_spin(i_spin,flip)
+     !
+     integer     :: i_spin
+     integer(LP) :: flip
+     !
+     if(flip==0) then
+       symmetrized_spin=i_spin
+       return
+     else
+       if(i_spin==1) symmetrized_spin=2
+       if(i_spin==2) symmetrized_spin=1
+     endif
+     !
+   end function
    !
 end module D_lattice

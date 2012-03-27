@@ -21,6 +21,10 @@
 !
 module matrix_operate
  !
+#if defined _DISTRIBUTED
+ use mp_global,         ONLY:np_ortho,init_ortho_group
+#endif
+ !
  implicit none
  !
  integer, parameter :: USE_LK=1
@@ -30,6 +34,9 @@ module matrix_operate
  integer, parameter :: INV=5
  integer, parameter :: PARTIAL_DIAGO=6
  integer, parameter :: USE_SVD=7
+#if defined _DISTRIBUTED
+ integer, parameter :: USE_PWDIAGO=8
+#endif
  !
  integer, parameter :: min_cpu_block_size=100
  !
@@ -180,6 +187,10 @@ module matrix_operate
      use wrapper,     ONLY:M_by_M
      use pars,        ONLY:SP
      use par_proc_m,  ONLY:pp_redux_wait,ncpu,myid
+#if defined _DISTRIBUTED
+     use stderr,      ONLY:intc
+     use com,         ONLY:msg
+#endif
      integer                :: idriver,lib_in
      complex(SP)            :: M(:,:)
      complex(SP),  optional :: V_left(:,:),V_right(:,:),E_cmpl(:)
@@ -229,9 +240,14 @@ module matrix_operate
      ! Decide which to use among LK or SLK
      !
      if (ncpu==1.or.M_size/ncpu<min_cpu_block_size) lib_in_use=USE_LK 
-#if ! defined _SCALAPACK
+#if ! defined _SCALAPACK && ! defined _DISTRIBUTED
      lib_in_use=USE_LK
 #endif
+     !
+#if defined _DISTRIBUTED
+     if ((idriver/=DIAGO.or.present(E_cmpl).or.ncpu<4).and.lib_in_use==USE_PWDIAGO) lib_in_use=USE_LK
+#endif
+
      !
      ! =============== SERIAL SECTION ===============
      !
@@ -379,9 +395,21 @@ module matrix_operate
        return
      endif
      !
-#if defined _SCALAPACK
-     !
      ! =============== PARALLEL SECTION ===============
+     !
+#if defined _DISTRIBUTED
+     if (idriver==DIAGO.and.lib_in_use==USE_PWDIAGO) then    
+       !
+       CALL init_ortho_group()
+       call msg('r',"a parallel distributed memory algorithm will be used,")
+       call msg('r',"eigenstates matrixes will be distributed block like on")
+       call msg('r',"ortho sub-group = "//intc(np_ortho(1))//"*"//intc(np_ortho(2))//" procs")
+       call pcdiagh_nodist(M_size, M_size, M, M_size, E_real, M)
+       !
+     endif
+#endif
+     !
+#if defined _SALAPACK
      !
      if (lib_in_use==USE_SLK) then
        !

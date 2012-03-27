@@ -25,7 +25,7 @@ subroutine RT_occupations_analyze(k,E)
  use pars,           ONLY:schlen
  Use stderr,         ONLY:intc
  use R_lattice,      ONLY:bz_samp
- use electrons,      ONLY:levels,spin
+ use electrons,      ONLY:levels,spin,spin_occ
  use QP_m,           ONLY:QP_table,QP_n_states,QP_state
  use YPP,            ONLY:output_fname,OCC_T_range,OCC_deltaT
  use com,            ONLY:msg,of_open_close
@@ -41,6 +41,7 @@ subroutine RT_occupations_analyze(k,E)
  !
  integer               :: ik,ib,i_spin,i_s,i_T,n_T_steps,i_fp
  real(SP)              :: io_Time,data_to_plot(5)
+ real(SP), allocatable :: RT_occupations_sum(:)
  character(schlen)     :: titles(5)
  integer,     external :: RT_occupations_check
  !
@@ -55,6 +56,9 @@ subroutine RT_occupations_analyze(k,E)
  call msg('s','Time range [fs]:',OCC_T_range/FS2AUT)
  call msg('s','Time step  [fs]:',OCC_deltaT/FS2AUT)
  call msg('s','Time steps     :',n_T_steps)
+ !
+ allocate(RT_occupations_sum(n_T_steps)) 
+ RT_occupations_sum=0._SP
  !
  do i_T=1,n_T_steps
    !
@@ -98,7 +102,9 @@ subroutine RT_occupations_analyze(k,E)
        !
      endif
      !
-     data_to_plot(:2)=(/io_TIME/FS2AUT,RT_occupations(ib,ik)/2./)
+     data_to_plot(:2)=(/io_TIME/FS2AUT,RT_occupations(ib,ik)/spin_occ/)
+     RT_occupations_sum(i_T)=RT_occupations_sum(i_T)+RT_occupations(ib,ik)/spin_occ
+     !
      if (l_ELPH_CCA_kernel) then
        data_to_plot(3:)=(/Hole_lifetime(ib,ik)*HA2EV,Electron_lifetime(ib,ik)*HA2EV,&
 &                                              Phonon_lifetime(ib,ik)*HA2EV/)
@@ -111,6 +117,23 @@ subroutine RT_occupations_analyze(k,E)
      !
    enddo
    !
+ enddo
+ !
+ output_fname='YPP-RT_occupations_ALL'
+ call of_open_close(trim(output_fname),'ot')
+ do i_fp=1,n_SC_descriptions
+   call msg('o '//trim(output_fname),'#',trim(SC_description(i_fp)),INDENT=0)
+ enddo
+ titles(1)='T[fs]'
+ titles(2)='Tot. Occ.'
+ call msg('o '//trim(output_fname),'#',titles(:2),INDENT=0,USE_TABS=.TRUE.)
+ call msg('o '//trim(output_fname),'#')
+ !
+ do i_T=1,n_T_steps
+   io_Time=0.
+   if (i_T>1) io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
+   data_to_plot(:2)=(/io_TIME/FS2AUT,RT_occupations_sum(i_T)/float(QP_n_states)/)
+   call msg('o '//trim(output_fname),'',data_to_plot(:2),INDENT=-2,USE_TABS=.true.)
  enddo
  !
 end subroutine RT_occupations_analyze

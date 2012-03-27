@@ -611,7 +611,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  if (.not.l_QP_init) l_QP_init=l_RT_occupations
 #endif
  !
- if (l_QP_init) call QP_init(.FALSE.,.FALSE.)
+ if (l_QP_init) call QP_init(.FALSE.,.TRUE.)
  !
 contains
  !

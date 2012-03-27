@@ -24,7 +24,7 @@ subroutine RT_databases_IO(Xen,it)
  use QP_m,           ONLY:QP_nk
  use drivers,        ONLY:l_ph_corr
  use real_time,      ONLY:ID,NE_dynamics,l_NE_with_fields,NE_i_time,it_start,&
-&                         OCCUPATIONS_IO_and_interpolate,&
+&                         OCCUPATIONS_IO_and_interpolate,RT_IO_steps,&
 &                         l_RT_skip_GF_IO,l_RT_skip_OCC_IO,l_RT_skip_JandP_IO
  use IO_m,           ONLY:io_control,OP_WR,WR_CL_IF_END,NONE,WR,REP,OP_WR_CL
  use electrons,      ONLY:levels
@@ -46,6 +46,12 @@ subroutine RT_databases_IO(Xen,it)
  ! When the simulation has been restarted the first step (it==it_start)
  ! corresponds to the latest of the previous simulation. Therefore
  ! databases must not be written
+ !
+ if (it==it_start.and.it_start>1) return
+ !
+ ! Write every RT_IO_steps
+ !
+ if (.not. (NE_i_time==1.or.mod(NE_i_time,RT_IO_steps)==0) ) return
  !
  if (it==it_start.and.it_start>1) return
  !

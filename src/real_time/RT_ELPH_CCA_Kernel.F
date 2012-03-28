@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_CCA_kernel(ik,ik_m_q,f_k,N_q,E,ph_freq,Gkkp)
+subroutine RT_ELPH_CCA_kernel(ik,ik_m_q,f_k,Bose_f,E,ph_freq,Gkkp)
  !  
  use pars,           ONLY:SP,cI,pi
  use electrons,      ONLY:levels,spin_occ
@@ -30,13 +30,13 @@ subroutine RT_ELPH_CCA_kernel(ik,ik_m_q,f_k,N_q,E,ph_freq,Gkkp)
  !
  type(levels),  intent(in)  :: E
  integer,       intent(in)  :: ik,ik_m_q
- real(SP),      intent(in)  :: ph_freq,N_q(2),f_k(SC_bands(2)-SC_bands(1)+1)
+ real(SP),      intent(in)  :: ph_freq,Bose_f,f_k(SC_bands(2)-SC_bands(1)+1)
  complex(SP),   intent(in)  :: Gkkp(SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1)
  !
  ! Work Space ...
  !
  integer  :: i_n,i_np,B_dim,i_n_shift
- real(SP) :: DELTA,GAMMA_,f_k_m_q,nq,P_ph_abs,P_ph_emit
+ real(SP) :: DELTA,GAMMA_,f_k_m_q,P_ph_abs,P_ph_emit
  !
  ! Dimensions
  !============
@@ -45,8 +45,6 @@ subroutine RT_ELPH_CCA_kernel(ik,ik_m_q,f_k,N_q,E,ph_freq,Gkkp)
  !
  ! Kernel kind
  !============= 
- !
- nq=N_q(-1)
  !
  do i_n=1,B_dim
    !
@@ -74,7 +72,7 @@ subroutine RT_ELPH_CCA_kernel(ik,ik_m_q,f_k,N_q,E,ph_freq,Gkkp)
      !
      Hole_lifetime(i_n_shift,ik)=Hole_lifetime(i_n_shift,ik)+abs(Gkkp(i_np,i_n))**2*P_ph_abs*f_k_m_q
      Electron_lifetime(i_n_shift,ik)=Electron_lifetime(i_n_shift,ik)+abs(Gkkp(i_np,i_n))**2*P_ph_emit*(1.-f_k_m_q)
-     Phonon_lifetime(i_n_shift,ik)=Phonon_lifetime(i_n_shift,ik)+nq*(f_k(i_n)-f_k_m_q)*(P_ph_abs+P_ph_emit)
+     Phonon_lifetime(i_n_shift,ik)=Phonon_lifetime(i_n_shift,ik)+abs(Gkkp(i_np,i_n))**2*Bose_f*(f_k(i_n)-f_k_m_q)*(P_ph_abs+P_ph_emit)
      !
    enddo
    !

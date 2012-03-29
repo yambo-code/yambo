@@ -22,7 +22,7 @@
 subroutine RT_ELPH_CCA_kernel(ik,ik_m_q,f_k,Bose_f,E,ph_freq,Gkkp)
  !  
  use pars,           ONLY:SP,cI,pi
- use electrons,      ONLY:levels,spin_occ
+ use electrons,      ONLY:levels,spin_occ,n_full_bands
  use SC,             ONLY:SC_bands,it_now
  use real_time,      ONLY:G_lesser,MEM_index,Hole_lifetime,Electron_lifetime,Phonon_lifetime
  !
@@ -35,7 +35,7 @@ subroutine RT_ELPH_CCA_kernel(ik,ik_m_q,f_k,Bose_f,E,ph_freq,Gkkp)
  !
  ! Work Space ...
  !
- integer  :: i_n,i_np,B_dim,i_n_shift
+ integer  :: i_n,i_np,B_dim,i_n_shift,i_np_shift
  real(SP) :: DELTA,GAMMA_,f_k_m_q,P_ph_abs,P_ph_emit
  !
  ! Dimensions
@@ -51,13 +51,13 @@ subroutine RT_ELPH_CCA_kernel(ik,ik_m_q,f_k,Bose_f,E,ph_freq,Gkkp)
    i_n_shift=i_n+SC_bands(1)-1
    !
    do i_np=1,B_dim
+     ! 
+     i_np_shift=i_np+SC_bands(1)-1
      !
      f_k_m_q=-cI*G_lesser(i_np+SC_bands(1)-1,i_np+SC_bands(1)-1,ik_m_q,MEM_index(it_now))/spin_occ
      !
      DELTA  = E%E(i_np+SC_bands(1)-1,ik_m_q,1)-E%E(i_n+SC_bands(1)-1,ik,1)
      GAMMA_ = abs(E%W(i_np+SC_bands(1)-1,ik_m_q,1))+abs(E%W(i_n+SC_bands(1)-1,ik,1))
-     !
-     if (abs(DELTA)<1.E-10) cycle
      !
      P_ph_abs =0.
      P_ph_emit=0.
@@ -66,6 +66,20 @@ subroutine RT_ELPH_CCA_kernel(ik,ik_m_q,f_k,Bose_f,E,ph_freq,Gkkp)
      !
      ! Including "by hand" the limits on the signs of DELTA I managed to get
      ! (finally) a converged el-ph dynamics.
+     !
+     ! Updated on 29/3/2012 with more tailored constrains. Valid only in systems
+     ! with a gap.
+     !
+     ! n>=n_full_bands+1 => i_np>=n_full_bands+1 
+     !
+     ! Fermi level ----------------
+     !
+     ! n<=n_full_bands => i_np<=n_full_bands 
+     !
+     if (i_n_shift<=n_full_bands.and.i_np_shift>  n_full_bands) cycle
+     if (i_n_shift> n_full_bands.and.i_np_shift<= n_full_bands) cycle
+     !
+     if (abs(DELTA)<1.E-10) cycle
      !
      if (DELTA>1.E-10) P_ph_abs =GAMMA_/(GAMMA_**2+(DELTA-ph_freq)**2)
      if (DELTA<1.E-10) P_ph_emit=GAMMA_/(GAMMA_**2+(DELTA+ph_freq)**2)

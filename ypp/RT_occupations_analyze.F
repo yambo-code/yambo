@@ -88,12 +88,12 @@ subroutine RT_occupations_analyze(k,E)
        enddo
        !
        titles(1)='T[fs]'
-       titles(2)='Occupation'
+       titles(2)='Occ.'
        call msg('o '//trim(output_fname),'#')
        if (l_ELPH_CCA_kernel) then
-         titles(3)='Hole L'
-         titles(4)='Electron L'
-         titles(5)='Phonon L'
+         titles(3)='Hole[meV]'
+         titles(4)='El.[meV]'
+         titles(5)='Ph.[meV]'
          call msg('o '//trim(output_fname),'#',titles(:5),INDENT=0,USE_TABS=.TRUE.)
        else
          call msg('o '//trim(output_fname),'#',titles(:2),INDENT=0,USE_TABS=.TRUE.)

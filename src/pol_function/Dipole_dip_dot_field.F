@@ -33,7 +33,7 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
 #endif
  use drivers,        ONLY:l_col_cut
  use electrons,      ONLY:levels,n_sp_pol
- use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv,S_flips_spin,symmetrized_spin
+ use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
  use fields,         ONLY:global_gauge
  use X_m,            ONLY:DIP_q_dot_iR,X_alloc,X_t,DIP_iR,DIP_P
@@ -48,7 +48,7 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  !
  ! Work Space
  !
- integer                   :: ik,i1,ic,iv,is,i_spin,j_spin
+ integer                   :: ik,i1,ic,iv,is,i_spin
  real(SP)                  :: field_dir_rot(3)
 #if defined _KERR
  real(SP)                  :: dipole_dir(3),dipole_dir_rot(3)
@@ -124,13 +124,11 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
        ! 
        ! GPL_EXCLUDE_START SPIN_IGNORE
        !
-       do j_spin=1,n_sp_pol
+       do i_spin=1,n_sp_pol
          ! 
          ! GPL_EXCLUDE_END SPIN_IGNORE
          !
          ! DIP_iq_dot_r = i q . < v k | r | c k >
-         !
-         i_spin=symmetrized_spin(j_spin,S_flips_spin(is))
          !
          DIP_q_dot_iR(ic,iv,i1,i_spin) = dot_product( field_dir_rot, DIP_iR(:,ic,iv,ik,i_spin) )
          if ( is > nsym/(i_time_rev+1) ) DIP_q_dot_iR(ic,iv,i1,i_spin) =&
@@ -146,6 +144,10 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
          if(l_kerr) then
            DIP_q_dot_iR_kerr(ic,iv,i1,i_spin) = dot_product(dipole_dir_rot, DIP_iR(:,ic,iv,ik,i_spin))
            if(chi_jj) DIP_P_symm(2,ic,iv,i1,i_spin) = dot_product(dipole_dir_rot, DIP_P(:,ic,iv,ik,i_spin))
+           if ( is > nsym/(i_time_rev+1) ) then
+             DIP_q_dot_iR_kerr(ic,iv,i1,i_spin) = dot_product( DIP_iR(:,ic,iv,ik,i_spin),dipole_dir_rot)
+             if(chi_jj) DIP_P_symm(2,ic,iv,i1,i_spin) = dot_product(DIP_P(:,ic,iv,ik,i_spin),dipole_dir_rot)
+           endif
          endif
 #endif
          !

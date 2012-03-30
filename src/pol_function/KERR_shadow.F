@@ -27,7 +27,6 @@ subroutine KERR_shadow(what,l_flag,n1,n2,c1)
  use X_m,           ONLY:X_epsilon
  use X_output,      ONLY:off_file_name,kerr_file_name,X_setup_headers,headers
  use drivers,       ONLY:l_kerr,l_optics,l_bse,l_bss
- use electrons,     ONLY:spin_orbit
  use KERR,          ONLY:KERR_alloc,chi_nn,chi_jj
  use com,           ONLY:msg,of_open_close,warning,error
  use memory_m,      ONLY:mem_est
@@ -47,14 +46,9 @@ subroutine KERR_shadow(what,l_flag,n1,n2,c1)
    case('setup')
      call parser('EvalKerr',l_kerr)
      if(present(l_flag)) l_flag=.not.l_kerr
-     if(l_kerr) then
-       ! The spin_orbit variable is presently readed from abinit in a2y
-       ! However it is not written in any database
-       call warning('Assuming spin_orbit=.true.')
-       spin_orbit=.true.
-     endif
      !
      if ((l_optics.and.l_bse).or.l_bss) then
+       !call eval_minus_G()
        call parser('Xjj',chi_jj)
        chi_nn=.not.chi_jj
      endif

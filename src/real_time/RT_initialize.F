@@ -96,7 +96,7 @@ subroutine RT_initialize(Xen,Xk,q)
    elseif (NE_steps==0.and.Thermal_steps/=0) then
      Thermal_steps = Thermal_steps+RT_IO_steps-rest
    endif
- else
+ else if (RT_IO_time<0.) then
    RT_IO_time=NE_tot_time/1000.
    RT_IO_steps=nint(RT_IO_time/RT_step)
  endif

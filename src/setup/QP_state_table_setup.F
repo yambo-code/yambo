@@ -113,7 +113,7 @@ subroutine QP_state_table_setup(en)
        do i1=1,e_rng_lines
          do ik=int(QP_r_limits(i1,1)),int(QP_r_limits(i1,2)),1
            do ib=1,en%nb
-             if (en%E(ib,ik,1)<QP_r_limits(i1,4)) QP_e_nb=ib
+             if (en%E(ib,ik,1)<QP_r_limits(i1,4)) QP_e_nb=max(QP_e_nb,ib)
            enddo
          enddo
        enddo

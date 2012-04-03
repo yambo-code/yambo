@@ -135,5 +135,6 @@ subroutine RT_occupations_analyze(k,E)
    data_to_plot(:2)=(/io_TIME/FS2AUT,RT_occupations_sum(i_T)/float(QP_n_states)/)
    call msg('o '//trim(output_fname),'',data_to_plot(:2),INDENT=-2,USE_TABS=.true.)
  enddo
+ call of_open_close(trim(output_fname))
  !
 end subroutine RT_occupations_analyze

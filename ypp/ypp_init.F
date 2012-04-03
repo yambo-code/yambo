@@ -221,6 +221,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  B_theta=0._SP
  B_psi=0._SP
  !
+ !DOS
+ !
+ Fermi_fit_points=(/1.5,0.5/)
+ !
  !OCCUPATIONS
  !
  OCC_T_ref=-FS2AUT
@@ -529,7 +533,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  if (l_electrons) then
     if (l_dos.or.l_bands.or.l_RT_occupations) call QP_ctl_switch('G')
-    if (l_dos.or.l_RT_occupations) call initactivate(1,"OCCdT OCCTime OCCTref")
+    if (l_dos.or.l_RT_occupations) call initactivate(1,"TFit OCCdT OCCTime OCCTref")
     if (l_dos) call initactivate(1,"DOS_bands DOSERange DOSESteps DOS_broad")
  endif
  !

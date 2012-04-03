@@ -163,6 +163,10 @@ module YPP
  !
  logical  :: l_mean_potential
  !
+ ! (RT) DOS
+ !
+ real(SP) :: Fermi_fit_points(2)
+ !
  ! (RT) Occupations
  !
  logical     :: l_RT_occupations

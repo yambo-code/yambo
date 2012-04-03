@@ -37,6 +37,9 @@ integer function RT_occupations_check(E,k)
  !
  call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_range(1),imposed_COM=LOG)
  !
+ call RT_occupations_repair(E,k,.TRUE.)
+ stop
+ !
  if (.not.allocated(RT_occupations_ref)) then 
    !
    allocate(RT_occupations_ref(SC_bands(1):SC_bands(2),k%nibz))

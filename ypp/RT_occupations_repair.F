@@ -82,6 +82,8 @@ subroutine RT_occupations_repair(E,k,print_fermi_distro)
  !
  if (delta_Nel>0.) delta_occ=-delta_occ
  !
+ if (print_fermi_distro) call msg('s','Number viol.   :',delta_Nel)
+ !
  do while (abs(delta_nel)<1.E-5) 
    !
    do ik=1,k%nibz
@@ -143,14 +145,14 @@ subroutine RT_occupations_repair(E,k,print_fermi_distro)
      ! Temperature evaluation
      !========================
      !
-     Eo_over_T= (gamma_f(2)*E_f(1)-gamma_f(1)*E_f(2))/(E_f(2)-E_f(1))
-     T_el     = E_f(1)/(gamma_f(1)+Eo_over_T)
+     if (abs(E_f(1))<1.E-10) then
+       Eo_over_T= -gamma_f(1)
+       T_el     = E_f(2)/(gamma_f(2)+Eo_over_T)
+     else
+       Eo_over_T= (gamma_f(2)*E_f(1)-gamma_f(1)*E_f(2))/(E_f(2)-E_f(1))
+       T_el     = E_f(1)/(gamma_f(1)+Eo_over_T)
+     endif
      Eo       = Eo_over_T*T_el
-     !
-     ! Gamma-point version
-     !
-     !Eo_over_T= -gamma_f(1)
-     !T_el     = E_f(2)/(gamma_f(2)+Eo_over_T)
      !
    endif
    !

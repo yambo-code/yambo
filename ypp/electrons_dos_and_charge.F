@@ -168,6 +168,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
 #if defined _YPP_RT
      call OCCUPATIONS_IO_and_interpolate(Xen,'G',k=Xk,Time=io_Time)
+     call RT_occupations_repair(Xen,Xk,.FALSE.)
 #endif
      !
      el_dos(:,:)=0.

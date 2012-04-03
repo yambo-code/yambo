@@ -48,7 +48,7 @@ subroutine RT_occupations_repair(E,k,print_fermi_distro)
 &            first_el(SC_bands(2)*k%nibz),n_of_el(SC_bands(2)*k%nibz),n_deg_grp,&
 &            QP_table(SC_bands(2)*k%nibz,2),inx,i3
  real(SP) :: delta_Nel,Eo_sorted(SC_bands(2)*k%nibz),sym_value,gamma_f(2),E_f(2),&
-&            Eo_over_T,Eo,T_el,delta_occ,f_dist(2)
+&            Eo_over_T,Eo,T_el,f_dist(2),delta_G
  !
  n_states=SC_bands(2)*k%nibz
  !
@@ -78,28 +78,26 @@ subroutine RT_occupations_repair(E,k,print_fermi_distro)
  ! Correction of the number of electrons
  !=======================================
  !
- delta_occ=delta_Nel/real(SC_bands(2))/real(k%nibz)
- !
- if (delta_Nel>0.) delta_occ=-delta_occ
- !
  if (print_fermi_distro) call msg('s','Number viol.   :',delta_Nel)
  !
- do while (abs(delta_nel)<1.E-5) 
+ do while (abs(delta_Nel)>1.E-3) 
    !
    do ik=1,k%nibz
-     do ib=SC_bands(1),SC_bands(2)
-       if (RT_occupations(ib,ik)<abs(delta_occ)) cycle
-       if (ib>n_full_bands) then
-         RT_occupations(ib,ik)=RT_occupations(ib,ik)+delta_occ
-       else
-         RT_occupations(ib,ik)=RT_occupations(ib,ik)+delta_occ
-       endif
+     do ib=SC_bands(1),n_full_bands
+       !
+       if (RT_occupations(ib,ik)<1.E-5.or.abs(RT_occupations(ib,ik)-2.)<1.E-5) cycle
+       !
+       if (delta_Nel<0.) RT_occupations(ib,ik)=RT_occupations(ib,ik)*1.005
+       if (delta_Nel>0.) RT_occupations(ib,ik)=RT_occupations(ib,ik)*0.995
+       !
      enddo
    enddo
    !
    call eval_delta_Nel()
    !
  enddo
+ !
+ call eval_delta_G()
  !
  if (.not.print_fermi_distro) return
  !
@@ -183,6 +181,30 @@ subroutine RT_occupations_repair(E,k,print_fermi_distro)
        enddo
      enddo
      delta_Nel=delta_Nel-Nel
+     !
+   end subroutine
+   !
+   subroutine eval_delta_G()
+     !
+     use pars, ONLY:zero_dfl
+     real(SP)     ::dG_sign
+     !
+     delta_G=0._SP
+     !
+     do ik=1,E%nk
+       do ib=1,SC_bands(2)
+         !
+         dG_sign=1.
+         if (E%f(ib,ik,1)<zero_dfl) dG_sign=-1.
+         !
+         if (ib<SC_bands(1)) then
+           delta_G=delta_G+dG_sign*E%f(ib,ik,1)*k%weights(ik)
+         else
+           delta_G=delta_G+dG_sign*RT_occupations(ib,ik)*k%weights(ik)
+         endif
+         !
+       enddo
+     enddo
      !
    end subroutine
    !

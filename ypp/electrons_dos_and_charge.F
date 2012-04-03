@@ -148,6 +148,14 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    dos_norm=1./DL_vol/spin_occ
    if (l_RIM) dos_norm=dos_norm/real(sum(BZ_RIM_nkpt))
    !
+   ! Fermi distribution
+   !====================
+   !
+   if (n_T_steps==1) then
+     call OCCUPATIONS_IO_and_interpolate(Xen,'G',k=Xk,Time=OCC_T_range(1))
+     call RT_occupations_repair(Xen,Xk,.TRUE.)
+   endif
+   !
    ! Parallel setup and live_timing
    !================================
    !

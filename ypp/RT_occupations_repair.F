@@ -19,55 +19,40 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_occupations_repair(E,k,eval_T)
+subroutine RT_occupations_repair(E,k,print_fermi_distro)
  !
  ! Andrea April 2nd 2012
  ! 
  ! The el-ph interaction and other spurious numerical effects can induce small variations
  ! of the number of electrons. This, in turns, affects all related observables
  !
- use units,          ONLY:HA2EV
- use YPP,            ONLY:Fermi_fit_points
+ use units,          ONLY:HA2EV,HA2KEL
+ use YPP,            ONLY:Fermi_fit_points,output_fname
  use pars,           ONLY:SP
- use electrons,      ONLY:nel,n_full_bands
- use SC,             ONLY:SC_bands,RT_occupations
+ use electrons,      ONLY:Nel,n_full_bands
+ use SC,             ONLY:SC_bands,RT_occupations,n_SC_descriptions,SC_description
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use vec_operate,    ONLY:sort,degeneration_finder
+ use com,            ONLY:msg,of_open_close
  !
  implicit none
  !
  type(bz_samp) :: k
  type(levels)  :: E
- logical       :: eval_T
+ logical       :: print_fermi_distro
  !
  ! Work Space
  !
  integer  :: ik,ib,i_c,Eo_sorted_index(SC_bands(2)*k%nibz),n_states,i1,i2,&
 &            first_el(SC_bands(2)*k%nibz),n_of_el(SC_bands(2)*k%nibz),n_deg_grp,&
 &            QP_table(SC_bands(2)*k%nibz,2),inx,i3
- real(SP) :: Nel_summed,RT_occupations_grouped(SC_bands(2)*k%nibz),f_dist(2),&
-&            Eo_sorted(SC_bands(2)*k%nibz),sym_value,gamma_f(2),E_f(2),Eo_over_T,Eo,T_el
+ real(SP) :: delta_Nel,Eo_sorted(SC_bands(2)*k%nibz),sym_value,gamma_f(2),E_f(2),&
+&            Eo_over_T,Eo,T_el,delta_occ,f_dist(2)
  !
  n_states=SC_bands(2)*k%nibz
  !
- i_c=0
- !
- Nel_summed=0.0_SP
- do ik=1,E%nk
-   do ib=1,SC_bands(2)
-     i_c=i_c+1
-     Eo_sorted(i_c) =E%E(ib,ik,1)
-     QP_table(i_c,:)=(/ib,ik/)
-     if (ib<SC_bands(1)) then
-       Nel_summed=Nel_summed+E%f(ib,ik,1)*k%weights(ik)
-     else
-       Nel_summed=Nel_summed+RT_occupations(ib,ik)*k%weights(ik)
-     endif
-   enddo
- enddo
- !
- write (*,*) Nel_summed,Nel
+ call eval_delta_Nel()
  !
  call sort(Eo_sorted,indx=Eo_sorted_index)
  call degeneration_finder(Eo_sorted,n_states,first_el,n_of_el,n_deg_grp,0.0001/HA2EV)
@@ -90,6 +75,44 @@ subroutine RT_occupations_repair(E,k,eval_T)
    enddo
  enddo
  !
+ ! Correction of the number of electrons
+ !=======================================
+ !
+ delta_occ=delta_Nel/real(SC_bands(2))/real(k%nibz)
+ !
+ if (delta_Nel>0.) delta_occ=-delta_occ
+ !
+ do while (abs(delta_nel)<1.E-5) 
+   !
+   do ik=1,k%nibz
+     do ib=SC_bands(1),SC_bands(2)
+       if (RT_occupations(ib,ik)<abs(delta_occ)) cycle
+       if (ib>n_full_bands) then
+         RT_occupations(ib,ik)=RT_occupations(ib,ik)+delta_occ
+       else
+         RT_occupations(ib,ik)=RT_occupations(ib,ik)+delta_occ
+       endif
+     enddo
+   enddo
+   !
+   call eval_delta_Nel()
+   !
+ enddo
+ !
+ if (.not.print_fermi_distro) return
+ !
+ ! Occupation distribution
+ !=========================
+ !
+ output_fname="YPP-RT_occupation_distribution"
+ call of_open_close(trim(output_fname),'ot')
+ do i_c=1,n_SC_descriptions
+   call msg('o distribution','#',trim(SC_description(i_c)),INDENT=0)
+ enddo
+ call msg('o distribution','#')
+ call msg('o distribution','#',(/'E[eV]',' Occ.'/),INDENT=0,USE_TABS=.TRUE.)
+ call msg('o distribution','#')
+ !
  f_dist=1000.
  !
  do i2=1,2
@@ -98,9 +121,8 @@ subroutine RT_occupations_repair(E,k,eval_T)
      ib  = QP_table(inx,1)
      ik  = QP_table(inx,2)
      if (i2==2) then
-       if (ib>SC_bands(1)) then
-         if (ib<=n_full_bands) write (100,*) E%E(ib,ik,1)*HA2EV,RT_occupations(ib,ik)
-         if (ib> n_full_bands) write (100,*) E%E(ib,ik,1)*HA2EV,RT_occupations(ib,ik)
+       if (ib>SC_bands(1).and.print_fermi_distro) then
+         call msg('o '//trim(output_fname),'',(/E%E(ib,ik,1)*HA2EV,RT_occupations(ib,ik)/),INDENT=-2,USE_TABS=.true.)
        endif
      else
        if ( abs(RT_occupations(ib,ik)-Fermi_fit_points(1))<f_dist(1)) then
@@ -115,22 +137,51 @@ subroutine RT_occupations_repair(E,k,eval_T)
        endif
      endif
    enddo
+   !
    if (i2==1) then
+     !
+     ! Temperature evaluation
+     !========================
+     !
      Eo_over_T= (gamma_f(2)*E_f(1)-gamma_f(1)*E_f(2))/(E_f(2)-E_f(1))
-     T_el=E_f(1)/(gamma_f(1)+Eo_over_T)
+     T_el     = E_f(1)/(gamma_f(1)+Eo_over_T)
+     Eo       = Eo_over_T*T_el
+     !
+     ! Gamma-point version
+     !
+     !Eo_over_T= -gamma_f(1)
+     !T_el     = E_f(2)/(gamma_f(2)+Eo_over_T)
+     !
    endif
+   !
  enddo
  !
- !Eo_over_T= -gamma_f(1)
- !T_el=E_f(2)/(gamma_f(2)+Eo_over_T)
+ call of_open_close(trim(output_fname))
  !
- Eo=Eo_over_T*T_el
+ call msg('s','El. temp.[eV/K]:',T_el*(/HA2EV,HA2KEL/))
+ call msg('s','Fermi level[eV]:',Eo*HA2EV)
  !
- write (*,*) T_el*HA2EV,Eo*HA2EV
- !
- ! Temperature evaluation
- !
- !
- stop
- !
+ contains
+   !
+   subroutine eval_delta_Nel()
+     !
+     i_c=0
+     !
+     delta_Nel=0.0_SP
+     do ik=1,E%nk
+       do ib=1,SC_bands(2)
+         i_c=i_c+1
+         Eo_sorted(i_c) =E%E(ib,ik,1)
+         QP_table(i_c,:)=(/ib,ik/)
+         if (ib<SC_bands(1)) then
+           delta_Nel=delta_Nel+E%f(ib,ik,1)*k%weights(ik)
+         else
+           delta_Nel=delta_Nel+RT_occupations(ib,ik)*k%weights(ik)
+         endif
+       enddo
+     enddo
+     delta_Nel=delta_Nel-Nel
+     !
+   end subroutine
+   !
 end subroutine RT_occupations_repair

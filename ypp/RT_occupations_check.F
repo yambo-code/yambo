@@ -37,8 +37,7 @@ integer function RT_occupations_check(E,k)
  !
  call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_range(1),imposed_COM=LOG)
  !
- call RT_occupations_repair(E,k,.TRUE.)
- stop
+ call RT_occupations_repair(E,k,.FALSE.)
  !
  if (.not.allocated(RT_occupations_ref)) then 
    !
@@ -58,6 +57,8 @@ integer function RT_occupations_check(E,k)
    !
    call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_ref,imposed_COM=NONE)
    !
+   call RT_occupations_repair(E,k,.FALSE.)
+   !
    RT_occupations_ref=RT_occupations
    !
  endif
@@ -73,6 +74,8 @@ integer function RT_occupations_check(E,k)
  endif
  !
  call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_range(2))
+ !
+ call RT_occupations_repair(E,k,.FALSE.)
  !
  if (OCC_deltaT<RT_IO_steps*RT_step) then
    ! 

@@ -51,7 +51,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
  ! Work Space
  !
  real(SP), allocatable :: el_den(:)
- real(SP)              :: el_dos(dos_E_steps,n_sp_pol),dos_E,delta_E,f_occ,io_Time,dos_norm
+ real(SP)              :: el_dos(dos_E_steps,n_sp_pol),dos_E,delta_E,f_occ,io_Time,dos_norm,el_dos_max
  integer               :: i_E,ik,ib,i_spin,i_T,n_T_steps,i_fp,io_ID,io_err,ik_rand,i1
  character(schlen)     :: ch_ws,titles(4)
  logical               :: l_TIME_plot,l_3D_plot,l_RIM
@@ -112,6 +112,8 @@ subroutine electrons_dos_and_charge(Xk,Xen)
    !
    if (l_RIM) dos_bands(2)=min(dos_bands(2),BZ_RIM_nbands)
    !
+   el_dos_max=0.
+   !
    call QP_apply(dos_bands,Xen,Xk,'G',msg_fmt='s')
    !
    ! Output files headers
@@ -145,6 +147,7 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      dos_E_range(2)=maxval(Xen%E(dos_bands(1):dos_bands(2),:,:))-5.*dos_broadening
    endif
    delta_E=(dos_E_range(2)-dos_E_range(1))/dos_E_steps
+   !
    dos_norm=1./DL_vol/spin_occ
    if (l_RIM) dos_norm=dos_norm/real(sum(BZ_RIM_nkpt))
    !
@@ -214,6 +217,8 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      !
      call pp_redux_wait(el_dos)
      !
+     el_dos_max=max(el_dos_max,maxval(abs(el_dos)))
+     !
      if (l_TIME_plot.and.l_3D_plot) call msg('o dos','')
      !
      ! Output file
@@ -234,6 +239,8 @@ subroutine electrons_dos_and_charge(Xk,Xen)
      if (n_T_steps> 1) call live_timing(steps=1)
      !
    enddo
+   !
+   if (n_T_steps>1) call msg('s','DOS max value  :',el_dos_max)
    !
    if (l_TIME_plot.and.l_3D_plot) then
      call RT_output("close el_dos")

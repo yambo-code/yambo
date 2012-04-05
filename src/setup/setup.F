@@ -43,6 +43,16 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         X_perturbation,G_perturbation,K_perturbation,WF_kind,WF_xc_functional,WF_perturbation
 #endif
  !
+ ! GPL_EXCLUDE_START SPIN_IGNORE
+ !
+ use parser_m,       ONLY:parser
+ use xc_functionals, ONLY:two_spin_density
+ use electrons,      ONLY:Total_magn,eval_magn,n_spin
+ use FFT_m,          ONLY:fft_size
+ use wave_func,      ONLY:WF_load,WF_free
+ !
+ ! GPL_EXCLUDE_END SPIN_IGNORE
+ !
  implicit none
  type(levels)    ::en,Xen,Ken
  type(bz_samp)   ::k,Xk
@@ -264,6 +274,23 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  call E_duplicate(Xen,Ken)
  !
+ !
+ ! GPL_EXCLUDE_START SPIN_IGNORE
+ !
+ ! Report the value of the mean magnetization
+ !
+ call parser('EvalMagn',eval_magn)
+ if(n_spin>1.and.eval_magn) then
+   call WF_load(0,1,(/1,en%nbm/),(/1,Xk%nibz/),title='-Magn')
+   allocate(two_spin_density(fft_size,3))
+   call spin_density(en,Xk)
+   call msg('r','Total magnetization (x,y,z) [Bohr_magneton] :',real(Total_magn(:),SP))
+   deallocate(two_spin_density)
+   call WF_free()
+ endif
+ !
+ ! GPL_EXCLUDE_END SPIN_IGNORE
+
 #if defined _SC
  K_kind=X_kind
  K_xc_functional=X_xc_functional

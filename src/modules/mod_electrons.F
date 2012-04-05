@@ -47,6 +47,11 @@ module electrons
  integer  :: n_spinor
  logical  :: spin_orbit
  !
+ ! Average magnetization density
+ !
+ logical                  :: eval_magn
+ real(SP)                 :: Total_magn(3)
+ !
  ! Boltzmann occupations
  !
  real(SP)          :: Boltz_Efield(3)

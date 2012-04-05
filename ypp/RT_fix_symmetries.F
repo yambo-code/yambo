@@ -55,7 +55,7 @@ subroutine RT_fix_symmetries(E,k)
  ! Work Space
  !
  integer               :: ik_save,iv(2),ierr,ib,i_wf,i_spin,&
-&                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik,is_old
+&                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik
  integer               :: spatial_nsym,old_spatial_nsym,old_trev_nsym
  integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:)
  real(SP)              :: v1(3),v2(3),m(3,3)
@@ -84,12 +84,7 @@ subroutine RT_fix_symmetries(E,k)
  call parser('RmTimeRev',Rm_TR)
  !
  call parser('NotFlipSpin',do_not_flip_spin)
- ! Symmetries which flip the spin in any way are presently
- ! not considered in yambo.
- ! These must be removed in two situations:
- ! 1 - you have a magnetization in the z-direction
- ! 2 - you want to apply a magnetic field with Pauli coupling along z direction
- ! For directions different from z you have to remove all symmetries
+ ! Do not consider symmtries which invert the axis along the magnetization or the field B
  !
  call fft_setup(wf_ng,1,.false.)
  allocate(wf_DP(fft_size),wf_DP_rot(fft_size))
@@ -211,10 +206,8 @@ subroutine RT_fix_symmetries(E,k)
    i_time_rev=0
  else
    is=2
-   is_old=1
    !
    do while (is<=nsym)
-     is_old=is_old+1
      !
      reject_symmetry=.false.
      if (use_E_field) then

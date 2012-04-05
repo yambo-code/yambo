@@ -35,6 +35,7 @@ subroutine SC_bare_Hamiltonian(E,Xk,k)
  use xc_functionals, ONLY:V_xc
 #if defined _MAGNETIC
  use drivers,        ONLY:l_sc_magnetic
+ use magnetic,       ONLY:MAG_B
 #endif
  implicit none
  !

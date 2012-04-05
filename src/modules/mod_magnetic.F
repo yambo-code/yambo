@@ -59,17 +59,15 @@ module magnetic
  logical                  :: phase_trick
  real(SP), parameter      :: phase_radius=0.01
  integer                  :: n_loops
- !
- ! Average magnetization density
- !
- real(SP)                 :: average_el_mag(3)
- real(SP)                 :: average_el_mag_rescaling
- character(20)            :: average_el_mag_dim         ! 'Bohr_magneton'        'Bohr_magneton/Bohr'
  !                                                      ! 'Bohr_magneton/Bohr^2' 'Bohr_magneton/Bohr^3'
- ! Centered cartesian coordinates
+ ! Centered cartesian coordinates and
+ !          cylindrical coordinates
  !
  real(SP),    allocatable :: x(:,:)
  real(SP)                 :: cell_center(3)
+ real(SP),    allocatable :: cos_phi(:)
+ real(SP),    allocatable :: sin_phi(:)
+ real(SP),    allocatable :: r(:)
  !
  complex(SP), allocatable :: new_pp(:,:),old_pp(:,:)
  !
@@ -127,6 +125,32 @@ module magnetic
    !
    subroutine free_cc()
      deallocate(x)
+   end subroutine
+   !
+   subroutine load_cyl()
+     use FFT_m,       ONLY:fft_size,fft_dim
+     implicit none
+     logical          :: not_already_alloc
+     !
+     not_already_alloc=.true.
+     if(allocated(x)) not_already_alloc=.false.
+     if(not_already_alloc) call load_cc(.true.,.true.)
+     allocate(cos_phi(fft_size),sin_phi(fft_size))
+     allocate(r(fft_size))
+     !
+     r(:)=sqrt(x(:,1)**2+x(:,2)**2)
+     cos_phi(:)=x(:,1)/r(:)
+     sin_phi(:)=x(:,2)/r(:)
+     !
+!     cos_phi(:)=1.
+!     sin_phi(:)=1.
+     !
+     if(not_already_alloc)  call free_cc()
+     !
+   end subroutine
+   !
+   subroutine free_cyl()
+     deallocate(cos_phi,sin_phi,r)
    end subroutine
    !
 end module

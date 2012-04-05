@@ -409,7 +409,7 @@ module matrix_operate
      endif
 #endif
      !
-#if defined _SALAPACK
+#if defined _SCALAPACK
      !
      if (lib_in_use==USE_SLK) then
        !

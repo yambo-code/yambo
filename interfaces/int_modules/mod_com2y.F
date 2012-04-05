@@ -161,6 +161,9 @@ module mod_com2y
        double_symmetries=.not.l_inversion
      endif
      !
+     if (.not.l_inversion) call msg("l","[-I no]...")
+     if (l_inversion)      call msg("l","[-I yes]...")
+     !
      if (i_time_rev==1) call msg("l","[TR yes]")
      if (i_time_rev==0) call msg("l","[TR no]")
      !
@@ -203,8 +206,7 @@ module mod_com2y
        dl_sop(:,:,is_yambo)=matmul(sop_mat,b)/2._SP/pi
        if (double_symmetries) dl_sop(:,:,is_yambo+nsym_)=-dl_sop(:,:,is_yambo)
      enddo
-
-
+     !
      allocate(rl_sop(3,3,nsym))
      do is=1,nsym
        forall (i2=1:3,i3=1:3) rl_sop(i2,i3,is)=dl_sop(i2,i3,is)*alat(i2)/alat(i3)

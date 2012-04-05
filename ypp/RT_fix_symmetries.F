@@ -30,8 +30,7 @@ subroutine RT_fix_symmetries(E,k)
  use vec_operate,         ONLY:v_norm,v_is_zero
  use matrix_operate,      ONLY:m3det
  use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,a,alat,&
-&                              i_space_inv,sop_inv,inv_index,symmetry_group_table,&
-&                              S_flips_spin,symmetrized_spin
+&                              i_space_inv,sop_inv,inv_index,symmetry_group_table
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,&
 &                              ng_closed,bz_samp_duplicate,rl_sop
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,VERIFY,&
@@ -55,10 +54,9 @@ subroutine RT_fix_symmetries(E,k)
  !
  ! Work Space
  !
- integer               :: ik_save,iv(2),ierr,ib,i_wf,i_spin,j_spin,&
+ integer               :: ik_save,iv(2),ierr,ib,i_wf,i_spin,&
 &                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik,is_old
  integer               :: spatial_nsym,old_spatial_nsym,old_trev_nsym
- integer(LP)           :: S_flips_spin_old(96)=0
  integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:)
  real(SP)              :: v1(3),v2(3),m(3,3)
  real(SP)              :: B_cart(3)
@@ -234,14 +232,6 @@ subroutine RT_fix_symmetries(E,k)
        if(all( abs(v1(:)-B_cart(:))<epsilon(1.)) ) symm_B_factor=+1
        if(all( abs(v1(:)+B_cart(:))<epsilon(1.)) ) symm_B_factor=-1
        reject_symmetry=(symm_B_factor==0)
-       if(symm_B_factor==-1) then
-         S_flips_spin_old(is_old)=1
-         S_flips_spin(is)=1
-       endif
-       if(symm_B_factor==+1) then
-         S_flips_spin_old(is_old)=0
-         S_flips_spin(is)=0
-       endif
        if(.not.reject_symmetry.and.do_not_flip_spin) reject_symmetry=(symm_B_factor==-1)
        if(.not.reject_symmetry) then
          ! We check what happens in the plane perpendicular to B: 
@@ -258,14 +248,6 @@ subroutine RT_fix_symmetries(E,k)
        if(all( abs(v1(:)-Magnetization(:))<epsilon(1.)) ) symm_M_factor=+1
        if(all( abs(v1(:)+Magnetization(:))<epsilon(1.)) ) symm_M_factor=-1
        reject_symmetry=(symm_M_factor==0)
-       if(symm_M_factor==-1) then
-         S_flips_spin_old(is_old)=1
-         S_flips_spin(is)=1
-       endif
-       if(symm_M_factor==+1) then
-         S_flips_spin_old(is_old)=0
-         S_flips_spin(is)=0
-       endif
        if(.not.reject_symmetry.and.do_not_flip_spin) reject_symmetry=(symm_M_factor==-1)
        if(.not.reject_symmetry.and.spin_orbit) then
          ! We check what happens in the plane perpendicular to the magnetization: 
@@ -614,12 +596,10 @@ subroutine RT_fix_symmetries(E,k)
        !
        wf_disk(:,ib,:,i_spin)=0._SP
        !
-       j_spin=symmetrized_spin(i_spin,S_flips_spin_old(is))
+       wf_disk(1,ib,1:wf_ncx,i_spin)=  real(wf_DP_rot(fft_g_table(1:wf_ncx,1)))*fft_norm
+       wf_disk(2,ib,1:wf_ncx,i_spin)= aimag(wf_DP_rot(fft_g_table(1:wf_ncx,1)))*fft_norm
        !
-       wf_disk(1,ib,1:wf_ncx,j_spin)=  real(wf_DP_rot(fft_g_table(1:wf_ncx,1)))*fft_norm
-       wf_disk(2,ib,1:wf_ncx,j_spin)= aimag(wf_DP_rot(fft_g_table(1:wf_ncx,1)))*fft_norm
-       !
-       if ( S_contains_TR(is) ) wf_disk(2,ib,:,j_spin)=-wf_disk(2,ib,:,j_spin)
+       if ( S_contains_TR(is) ) wf_disk(2,ib,:,i_spin)=-wf_disk(2,ib,:,i_spin)
        !
      enddo
    enddo

@@ -61,8 +61,11 @@ subroutine Drude(iq,fr,Xen,Xk,Xw,X,drude_GreenF)
  if(.not.Drude_term) return
  !
  Drude_dim=0
- if(l_bss)                         Drude_dim=BS_drude_dim
- if((.not.l_bss).and.cg_pt(1)==0)  Drude_dim=bg_npts(1)
+ if(l_bss) then
+   Drude_dim=BS_drude_dim
+ else
+   if(cg_pt(1)==0)  Drude_dim=bg_npts(1)
+ endif
  !
  call msg('nrs','[X] Drude replaces '//trim(intc(Drude_dim))//' poles @[ev]:',(/real(X%Wd),aimag(X%Wd)/)*HA2EV)
  !

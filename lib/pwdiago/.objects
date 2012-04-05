@@ -1,0 +1,3 @@
+objs = kind.o mp_base.o mp.o  mp_global.o dspev_drv.o\
+       descriptors.o ptoolkit.o rdiagh.o rdiaghg.o error_handler.o gridsetup.o\
+       localdim.o localindex.o gridsetup.o zhpev_drv.o cdiagh.o cdiaghg.o

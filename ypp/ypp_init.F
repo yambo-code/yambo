@@ -116,7 +116,11 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  p_dir      ='1'
  mag_dir    ='X'
  p_format   ='g'
- wf_ng      =ng_vec
+#if !defined _YPP_RT
+ wf_ng=ng_vec
+ ! Notice that ng_vec can be larger than maxval(wf_igk) 
+ ! and this can cause some problem in ypp. TO BE CHECKED
+#endif
  l_exc_wf   =.false.
  l_density  =.false.
  V_value    ='RE'

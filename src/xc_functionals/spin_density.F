@@ -31,7 +31,7 @@ subroutine spin_density(en,Xk)
  use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_spin,n_spinor,n_sp_pol
- use D_lattice,      ONLY:nsym,DL_vol,dl_sop,i_time_rev
+ use D_lattice,      ONLY:nsym,DL_vol,dl_sop,i_time_rev,inv_index
  use FFT_m,          ONLY:fft_size,fft_rot_r
  use wave_func,      ONLY:wf_state,wf
  use xc_functionals, ONLY:two_spin_density
@@ -40,6 +40,7 @@ subroutine spin_density(en,Xk)
  !
  use electrons,      ONLY:Total_magn
  use D_lattice,      ONLY:DL_vol
+ use matrix_operate, ONLY:m3det
  !
  ! GPL_EXCLUDE_END SPIN_IGNORE
  !
@@ -50,7 +51,7 @@ subroutine spin_density(en,Xk)
  ! Work Space
  !
  integer :: i1,i2,ifft_up,ifft_dn
- real(SP):: cv(fft_size,3)
+ real(SP):: cv(fft_size,3),tmp_sop(3,3)
  !
  two_spin_density=0.
  cv=0.
@@ -97,8 +98,13 @@ subroutine spin_density(en,Xk)
  enddo
  !
  do i1=1,nsym
+   ! The magnetization, like the spin, is a pseudo-vector:
+   ! i.e. is invariant under spatial invertion but changes under T-rev
+   tmp_sop(:,:)=dl_sop(:,:,i1)*m3det(dl_sop(:,:,i1))
+   if( i1> nsym/(1+i_time_rev) ) tmp_sop(:,:)=-tmp_sop(:,:)
+   !
    forall(i2=1:fft_size) two_spin_density(i2,:)=two_spin_density(i2,:)+ &
-&                                real( cv(fft_rot_r(i1,i2),:)/real(nsym) )
+&                            matmul(tmp_sop,real( cv(fft_rot_r(i1,i2),:)/real(nsym) ))
  enddo
  !
  do i1=1,fft_size

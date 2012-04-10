@@ -64,6 +64,7 @@ subroutine RT_fix_symmetries(E,k)
  real(SP), allocatable :: pp_kb_store(:,:,:,:,:),pp_kbd_store(:,:,:,:,:)
  logical               :: Rm_all_symm,use_E_field,use_B_field,has_magnetization,reject_symmetry,Rm_TR,&
 &                         S_contains_TR(nsym),Trev_2_spatial=.false.,do_not_flip_spin
+ complex(SP)           :: spin_sop(2,2,nsym)
  type(bz_samp)         :: k_save
  type(levels)          :: en_sc,en_sc_expanded
  character(lchlen)     :: core_io_path_save,fragment_name
@@ -71,6 +72,7 @@ subroutine RT_fix_symmetries(E,k)
  complex(SP), allocatable :: full_H(:,:,:,:)
  real(SP),    allocatable :: wf_disk(:,:,:,:)
  real(SP),    allocatable :: dl_sop_tmp(:,:,:)
+ complex(SP), allocatable :: wf_tmp(:,:)
  complex(DP), allocatable :: wf_DP(:),wf_DP_rot(:)
  !
  !
@@ -181,12 +183,16 @@ subroutine RT_fix_symmetries(E,k)
  !
  forall (is=1:nsym) S_contains_TR(is)=is>nsym/(1+i_time_rev)
  !
+ ! Construct spin_sop in spinor-space
+ !
+ if(n_spin>1) call construct_spin_sop(spin_sop)
+ !
  ! Remove Symmetries
  !
  nsym_save      =nsym
  spatial_nsym=nsym/(1+i_time_rev)
  if(Rm_TR) then   ! No time reversal 
-   if(i_space_inv==1.and.inv_index>spatial_nsym) then
+   if(i_space_inv==1.and.inv_index>spatial_nsym.and..not.spin_orbit) then
      call msg('s',trim(intc(spatial_nsym))//' T-rev are now spatial symm')
      spatial_nsym=2*spatial_nsym
      nsym=spatial_nsym
@@ -213,9 +219,9 @@ subroutine RT_fix_symmetries(E,k)
      if (use_E_field) then
        v1(:) = matmul( dl_sop(:,:,is), E_field(1,:) )      
        v2(:) = matmul( dl_sop(:,:,is), E_field(2,:) )      
-       ! Spatial symmetries leave E invariant
+       ! Ok Spatial symmetries that leave E invariant
        if(is<=spatial_nsym) reject_symmetry=v_norm(v1(:)-E_field(1,:))>1.E-5.or.v_norm(v2(:)-E_field(2,:))>1.E-5
-       ! T-rev symmetries send E into -E
+       ! E is invariant under T-rev
        if(is> spatial_nsym) reject_symmetry=v_norm(v1(:)+E_field(1,:))>1.E-5.or.v_norm(v2(:)+E_field(2,:))>1.E-5
      endif
      !
@@ -242,8 +248,11 @@ subroutine RT_fix_symmetries(E,k)
        if(all( abs(v1(:)+Magnetization(:))<epsilon(1.)) ) symm_M_factor=-1
        reject_symmetry=(symm_M_factor==0)
        if(.not.reject_symmetry.and.do_not_flip_spin) reject_symmetry=(symm_M_factor==-1)
-       if(.not.reject_symmetry.and.spin_orbit) then
-         ! We check what happens in the plane perpendicular to the magnetization: 
+       !
+       ! Spin orbit does not break any symmetry as
+       ! L and S behave in the same way under any symm
+       if(spin_orbit.and..not.reject_symmetry) then
+         ! We check what happens in the plane perpendicular to M:
          ! 1) Spatial symmetries are rotations
          if(is<=spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/symm_M_factor - 1.)>1.E-5)
          ! 2) T-rev symmetries are rotation moltiplied for the inversion
@@ -547,6 +556,7 @@ subroutine RT_fix_symmetries(E,k)
  !
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
+ if(n_spin>1) allocate(wf_tmp(wf_ncx,n_spin))
  !
  ACTION_=OP_APP_WR_CL
  if(Fragmented_IO) ACTION_=OP_WR_CL
@@ -595,6 +605,18 @@ subroutine RT_fix_symmetries(E,k)
        if ( S_contains_TR(is) ) wf_disk(2,ib,:,i_spin)=-wf_disk(2,ib,:,i_spin)
        !
      enddo
+     !
+     if(n_spin>1) then
+!       forall(i1=1:wf_ncx) wf_tmp(i1,:)=&
+!&          matmul(spin_sop(:,:,is),cmplx(wf_disk(1,ib,i1,:),wf_disk(2,ib,i1,:)))
+       wf_tmp(:,1)=spin_sop(1,1,is)*cmplx(wf_disk(1,ib,:,1),wf_disk(2,ib,:,1))  &
+&                 +spin_sop(1,2,is)*cmplx(wf_disk(1,ib,:,2),wf_disk(2,ib,:,2))
+       wf_tmp(:,2)=spin_sop(2,1,is)*cmplx(wf_disk(1,ib,:,1),wf_disk(2,ib,:,1))  &
+&                 +spin_sop(2,2,is)*cmplx(wf_disk(1,ib,:,2),wf_disk(2,ib,:,2))
+       wf_disk(1,ib,1:wf_ncx,:)= real(wf_tmp(:,:))
+       wf_disk(2,ib,1:wf_ncx,:)= aimag(wf_tmp(:,:))
+     endif
+     !
    enddo
    !
    io_err=ioWF(ID,wf=wf_disk)
@@ -610,6 +632,7 @@ subroutine RT_fix_symmetries(E,k)
  !
  deallocate(wf_DP,wf_DP_rot,wf_disk)
  call mem_est("wf_DP wf_DP_rot wf_disk")
+ if(n_spin>1) deallocate(wf_tmp)
  !
  if(ioKB_err==0) then 
    !

@@ -65,7 +65,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !       2        2        1         1          collinear
  !
  spin_occ=2.0_SP/real(n_spin)
-
+ !
  local_Tel=Telstep
  !
  ! All energies are stored in E_sorted...

@@ -710,7 +710,7 @@ subroutine map_energies(E,E_expanded,k,kpoints_map,S_contains_TR)
  do ik=1,k%nibz
    if(n_sp_pol==1) then
      E_expanded%E(:,ik,1)=E%E(:,kpoints_map(1,ik),1)
-     continue
+     cycle
    else
      is=kpoints_map(2,ik)
      if(.not.S_contains_TR(is)) E_expanded%E(:,ik,:)=E%E(:,kpoints_map(1,ik),:)

@@ -254,7 +254,7 @@ subroutine ypp_init_load(defs)
  call it(defs,'Magnetization','Direction of the magnetization',Magnetization)
  call it('f',defs,'RmAllSymm' , 'Remove all symmetries') 
  call it('f',defs,'RmTimeRev' , 'Remove Time Reversal')
- call it('f',defs,'NotFlipSpin','Remove Symmetries which flip spin. Works only for M=Mz') 
+ call it('f',defs,'RmInvMBaxis','Remove symmtries which invert the axis parallel to M/B') 
  !
  call it(defs,'EnRngeRt','Energy range',X_rt%energy_range,unit=E_unit)
  call it(defs,'ETStpsRt','Total Energy steps',X_rt%energy_steps)

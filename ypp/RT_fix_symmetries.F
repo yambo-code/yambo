@@ -63,7 +63,7 @@ subroutine RT_fix_symmetries(E,k)
  integer               :: symm_M_factor,symm_B_factor,nsym_save,igfft,ig,ic
  real(SP), allocatable :: pp_kb_store(:,:,:,:,:),pp_kbd_store(:,:,:,:,:)
  logical               :: Rm_all_symm,use_E_field,use_B_field,has_magnetization,reject_symmetry,Rm_TR,&
-&                         S_contains_TR(nsym),Trev_2_spatial=.false.,do_not_flip_spin
+&                         S_contains_TR(nsym),Trev_2_spatial=.false.,Rm_inv_BM_axis
  complex(SP)           :: spin_sop(2,2,nsym)
  type(bz_samp)         :: k_save
  type(levels)          :: en_sc,en_sc_expanded
@@ -85,7 +85,7 @@ subroutine RT_fix_symmetries(E,k)
  call parser('RmAllSymm',Rm_all_symm)
  call parser('RmTimeRev',Rm_TR)
  !
- call parser('NotFlipSpin',do_not_flip_spin)
+ call parser('RmInvMBaxis',Rm_inv_BM_axis)
  ! Do not consider symmtries which invert the axis along the magnetization or the field B
  !
  call fft_setup(wf_ng,1,.false.)
@@ -192,7 +192,8 @@ subroutine RT_fix_symmetries(E,k)
  nsym_save      =nsym
  spatial_nsym=nsym/(1+i_time_rev)
  if(Rm_TR) then   ! No time reversal 
-   if(i_space_inv==1.and.inv_index>spatial_nsym.and..not.spin_orbit) then
+   if(i_space_inv==1.and.inv_index>spatial_nsym.and.&
+&     .not.(spin_orbit.and.has_magnetization) ) then
      call msg('s',trim(intc(spatial_nsym))//' T-rev are now spatial symm')
      spatial_nsym=2*spatial_nsym
      nsym=spatial_nsym
@@ -231,7 +232,7 @@ subroutine RT_fix_symmetries(E,k)
        if(all( abs(v1(:)-B_cart(:))<epsilon(1.)) ) symm_B_factor=+1
        if(all( abs(v1(:)+B_cart(:))<epsilon(1.)) ) symm_B_factor=-1
        reject_symmetry=(symm_B_factor==0)
-       if(.not.reject_symmetry.and.do_not_flip_spin) reject_symmetry=(symm_B_factor==-1)
+       if(.not.reject_symmetry.and.Rm_inv_BM_axis) reject_symmetry=(symm_B_factor==-1)
        if(.not.reject_symmetry) then
          ! We check what happens in the plane perpendicular to B: 
          ! 1) Spatial symmetries are rotations
@@ -247,17 +248,15 @@ subroutine RT_fix_symmetries(E,k)
        if(all( abs(v1(:)-Magnetization(:))<epsilon(1.)) ) symm_M_factor=+1
        if(all( abs(v1(:)+Magnetization(:))<epsilon(1.)) ) symm_M_factor=-1
        reject_symmetry=(symm_M_factor==0)
-       if(.not.reject_symmetry.and.do_not_flip_spin) reject_symmetry=(symm_M_factor==-1)
-       !
-       ! Spin orbit does not break any symmetry as
-       ! L and S behave in the same way under any symm
+       if(.not.reject_symmetry.and.Rm_inv_BM_axis) reject_symmetry=(symm_M_factor==-1)
        if(spin_orbit.and..not.reject_symmetry) then
-         ! We check what happens in the plane perpendicular to M:
+         ! We check what happens in the plane perpendicular to M: 
          ! 1) Spatial symmetries are rotations
          if(is<=spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/symm_M_factor - 1.)>1.E-5)
          ! 2) T-rev symmetries are rotation moltiplied for the inversion
-         if(is> spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/symm_M_factor + 1.)>1.E-5)
+         if(is> spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/symm_M_factor + 1.)>1.E-5)       
        endif
+       !
      endif
      !
      if(reject_symmetry) then
@@ -366,7 +365,7 @@ subroutine RT_fix_symmetries(E,k)
  call section('=',"Energies")
  !===========================
  !
- call map_energies(E,E_expanded,k,kpoints_map)
+ call map_energies(E,E_expanded,k,kpoints_map,S_contains_TR)
  !
  if (trim(core_io_path)/=trim(more_io_path)) then
    call mk_dir(more_io_path)
@@ -388,7 +387,7 @@ subroutine RT_fix_symmetries(E,k)
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1,2/),ID=ID)
    io_SC_E_err=io_SC_components('E',en_sc,ID)
    !
-   call map_energies(en_sc,en_sc_expanded,k,kpoints_map)
+   call map_energies(en_sc,en_sc_expanded,k,kpoints_map,S_contains_TR)
    !
    nkibz=k%nibz
    !
@@ -607,12 +606,8 @@ subroutine RT_fix_symmetries(E,k)
      enddo
      !
      if(n_spin>1) then
-!       forall(i1=1:wf_ncx) wf_tmp(i1,:)=&
-!&          matmul(spin_sop(:,:,is),cmplx(wf_disk(1,ib,i1,:),wf_disk(2,ib,i1,:)))
-       wf_tmp(:,1)=spin_sop(1,1,is)*cmplx(wf_disk(1,ib,:,1),wf_disk(2,ib,:,1))  &
-&                 +spin_sop(1,2,is)*cmplx(wf_disk(1,ib,:,2),wf_disk(2,ib,:,2))
-       wf_tmp(:,2)=spin_sop(2,1,is)*cmplx(wf_disk(1,ib,:,1),wf_disk(2,ib,:,1))  &
-&                 +spin_sop(2,2,is)*cmplx(wf_disk(1,ib,:,2),wf_disk(2,ib,:,2))
+       forall(i1=1:wf_ncx) wf_tmp(i1,:)=&
+&          matmul(spin_sop(:,:,is),cmplx(wf_disk(1,ib,i1,:),wf_disk(2,ib,i1,:)))
        wf_disk(1,ib,1:wf_ncx,:)= real(wf_tmp(:,:))
        wf_disk(2,ib,1:wf_ncx,:)= aimag(wf_tmp(:,:))
      endif
@@ -690,7 +685,7 @@ subroutine RT_fix_symmetries(E,k)
  !
 end subroutine
  
-subroutine map_energies(E,E_expanded,k,kpoints_map)
+subroutine map_energies(E,E_expanded,k,kpoints_map,S_contains_TR)
  !
  use electrons,           ONLY:levels,E_reset,n_sp_pol
  use R_lattice,           ONLY:bz_samp
@@ -701,10 +696,11 @@ subroutine map_energies(E,E_expanded,k,kpoints_map)
  type(levels), intent(out)    :: E_expanded
  type(bz_samp)                :: k
  integer,       intent(in)    :: kpoints_map(2,k%nibz)
+ logical,       intent(in)    :: S_contains_TR(100)
  !
  ! Work Space
  !
- integer :: ik
+ integer :: ik,is
  !
  call E_reset(E_expanded)
  E_expanded%nb=E%nb
@@ -712,7 +708,18 @@ subroutine map_energies(E,E_expanded,k,kpoints_map)
  allocate(E_expanded%E(E%nb,k%nibz,n_sp_pol))
  !
  do ik=1,k%nibz
-   E_expanded%E(:,ik,:)=E%E(:,kpoints_map(1,ik),:)
+   if(n_sp_pol==1) then
+     E_expanded%E(:,ik,1)=E%E(:,kpoints_map(1,ik),1)
+     continue
+   else
+     is=kpoints_map(2,ik)
+     if(.not.S_contains_TR(is)) E_expanded%E(:,ik,:)=E%E(:,kpoints_map(1,ik),:)
+     ! T-rev flips invert the spin
+     if(     S_contains_TR(is)) then
+       E_expanded%E(:,ik,1)=E%E(:,kpoints_map(1,ik),2)
+       E_expanded%E(:,ik,2)=E%E(:,kpoints_map(1,ik),1)
+     endif
+   endif
  enddo
  !
 end subroutine map_energies

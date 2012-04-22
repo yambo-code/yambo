@@ -49,6 +49,7 @@
   {"dbfrag","S","DataBases fragmentation",0,0,0,0,1}, 
   {"bzgrids","k","BZ Grid generator [(k)pt,(q)pt,(s)hifted,(h)igh symmetry]",0,0,1,0,0}, 
   {"qpdb",   "q","Generate/modify a quasi-particle database",0,0,0,0,0}, 
+  {"wannier","w","Seedname of the Wannier 90 ouput",0,0,0,0,0}, 
 #if defined _YPP_SC 
   {"MeanPot",  "v","Mean Potential",0,0,0,0,0}, 
 #endif

@@ -141,6 +141,15 @@ module YPP
  real(SP)          :: qdir(3)
  integer           :: idir
  !
+ ! Wannier interface
+ !
+ logical           :: l_wannier
+ logical           :: l_write_A
+ logical           :: l_write_M
+ logical           :: l_write_U
+ character(schlen) :: seed_name
+ character(schlen) :: what_to_write
+ !
  ! BZ RIM
  !
  integer  :: BZ_RIM_nkpts

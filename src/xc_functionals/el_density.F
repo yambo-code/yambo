@@ -24,107 +24,107 @@ subroutine el_density(G_lesser,en,Xk,rho,lowest_band,force_si)
 #else
 subroutine el_density(en,Xk,rho,force_si)
 #endif
-  !
-  !Electronic density.
-  !
-  !Note that here the identity
-  !
-  ! \sum_{S_k} F(S_k r) = 1/R_k \sum_{S} F(S r) (1)
-  ! 
-  !where S_k is a symm. op. in the star of k, S is a generic symm. op.
-  !and R_k is the rank of the small group at k.
-  !
-  !Using (1) the density is calculated in two steps
-  !
-  ! rho(r) = 1/nkibz \sum_{ n k S_k } f_{n k} |wf_{n k}(S_k^-1 r)|^2=
-  !        = 1/nkibz \sum_{S} \sum_{n k} f_{n k}/R_k |wf_{n k}(S^-1 r)|^2 =
-  !        = 1/nsym \sum_{S} ( \sum_{n k} f_{n k} w_k |wf_{n k}(S^-1 r)|^2 )
-  !
-  !where we have used the relation
-  !
-  ! w_k = nsym/(nkibz * rank(k))
-  !
-  !
-  use pars,          ONLY:SP
-  use com,           ONLY:warning
-  use electrons,     ONLY:levels,n_spin,n_sp_pol
-  use R_lattice,     ONLY:bz_samp
-  use D_lattice,     ONLY:nsym,i_time_rev
-  use FFT_m,         ONLY:fft_size,fft_rot_r
-  use wave_func,     ONLY:wf_state,wf
+ !
+ !Electronic density.
+ !
+ !Note that here the identity
+ !
+ ! \sum_{S_k} F(S_k r) = 1/R_k \sum_{S} F(S r) (1)
+ ! 
+ !where S_k is a symm. op. in the star of k, S is a generic symm. op.
+ !and R_k is the rank of the small group at k.
+ !
+ !Using (1) the density is calculated in two steps
+ !
+ ! rho(r) = 1/nkibz \sum_{ n k S_k } f_{n k} |wf_{n k}(S_k^-1 r)|^2=
+ !        = 1/nkibz \sum_{S} \sum_{n k} f_{n k}/R_k |wf_{n k}(S^-1 r)|^2 =
+ !        = 1/nsym \sum_{S} ( \sum_{n k} f_{n k} w_k |wf_{n k}(S^-1 r)|^2 )
+ !
+ !where we have used the relation
+ !
+ ! w_k = nsym/(nkibz * rank(k))
+ !
+ !
+ use pars,          ONLY:SP
+ use com,           ONLY:warning
+ use electrons,     ONLY:levels,n_spin,n_sp_pol
+ use R_lattice,     ONLY:bz_samp
+ use D_lattice,     ONLY:nsym,i_time_rev
+ use FFT_m,         ONLY:fft_size,fft_rot_r
+ use wave_func,     ONLY:wf_state,wf
 #if defined _RT
-  use SC,            ONLY:SC_bands
+ use SC,            ONLY:SC_bands
 #endif
 #if defined _RT || defined _DISTRIBUTED
-  use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
-  use par_indexes_m, ONLY:par_indexes
+ use par_proc_m,    ONLY:pp_redux_wait,pp_indexes,pp_indexes_reset
+ use par_indexes_m, ONLY:par_indexes
 #endif
-  !
-  implicit none
-  type(bz_samp)::Xk
+ !
+ implicit none
+ type(bz_samp)::Xk
 #if defined _RT
-  complex(SP), intent(in), optional :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),Xk%nibz)
-  integer,     intent(in) :: lowest_band
+ complex(SP), intent(in), optional :: G_lesser(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),Xk%nibz)
+ integer,     intent(in) :: lowest_band
 #endif
-  type(levels) ::en       
-  real(SP)     ::rho(fft_size)
-  logical,     intent(in) :: force_si
-  !
-  ! Work Space 
-  !
-  integer :: i1,i2,ik,i_spin,ifft,rho_syms,ifft2
-  real(SP):: rho_no_sym(fft_size),f_occ
-  logical :: warn_done
-  integer :: iv_max,iv_min
+ type(levels) ::en       
+ real(SP)     ::rho(fft_size)
+ logical,     intent(in) :: force_si
+ !
+ ! Work Space 
+ !
+ integer :: i1,i2,ik,i_spin,ifft,rho_syms,ifft2
+ real(SP):: rho_no_sym(fft_size),f_occ
+ logical :: warn_done
+ integer :: iv_max,iv_min
 #if defined _RT || defined _DISTRIBUTED
-  type(pp_indexes) ::px
+ type(pp_indexes) ::px
 #endif
-  !
-  rho=0._SP
-  rho_no_sym=0._SP
-  warn_done=.false.
-  !
+ !
+ rho=0._SP
+ rho_no_sym=0._SP
+ warn_done=.false.
+ !
 #if defined _RT
-  iv_max=SC_bands(2)
-  iv_min=lowest_band
+ iv_max=SC_bands(2)
+ iv_min=lowest_band
 #else
-  iv_max=en%nbm
-  iv_min=1
+ iv_max=en%nbm
+ iv_min=1
 #endif
-  !
+ !
 #if defined _RT || defined _DISTRIBUTED
-  call pp_indexes_reset(px)
-  call par_indexes(px,(/Xk%nibz,iv_max/),low_range=(/1,iv_min/))
+ call pp_indexes_reset(px)
+ call par_indexes(px,(/Xk%nibz,iv_max/),low_range=(/1,iv_min/))
 #endif
-  !
-  do i1=iv_min,iv_max
-    do i2=1,Xk%nibz
-      !
+ !
+ do i1=iv_min,iv_max
+   do i2=1,Xk%nibz
+     !
 #if defined _RT || defined _DISTRIBUTED
-      if (.not.px%element_2D(i2,i1)) cycle
+     if (.not.px%element_2D(i2,i1)) cycle
 #endif
-      !        
-      i_spin=1
-      !
-      ! GPL_EXCLUDE_START SPIN_IGNORE
-      !
-      do i_spin=1,n_spin
-        !
-        if (size(wf_state,3)<i_spin) cycle
-        !
-        ! GPL_EXCLUDE_END SPIN_IGNORE
-        !
-        if (size(wf_state,1)<i1) cycle
-        if (size(wf_state,2)<i2) cycle
-        !
-        ifft=wf_state(i1,i2,i_spin)
-        !
-        if (ifft==0) then
-          if (.not.warn_done) call warning('Not enough states to calculate rho')
-          warn_done=.true.
-          cycle
-        endif
-        !
+     !        
+     i_spin=1
+     !
+     ! GPL_EXCLUDE_START SPIN_IGNORE
+     !
+     do i_spin=1,n_spin
+       !
+       if (size(wf_state,3)<i_spin) cycle
+       !
+       ! GPL_EXCLUDE_END SPIN_IGNORE
+       !
+       if (size(wf_state,1)<i1) cycle
+       if (size(wf_state,2)<i2) cycle
+       !
+       ifft=wf_state(i1,i2,i_spin)
+       !
+       if (ifft==0) then
+         if (.not.warn_done) call warning('Not enough states to calculate rho')
+         warn_done=.true.
+         cycle
+       endif
+       !
 #if defined _RT
         if(i1<SC_bands(1)) then
           f_occ=en%f(i1,i2,1)

@@ -190,12 +190,6 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  if (Bose_Temp<0.) Bose_Temp=Tel
  Finite_Tel=any((/Tel,Bose_Temp/)>=1.E-5)
  !
- ! GPL_INCLUDE_START
- !
- ! if (Finite_Tel) call warning('Non zero Temp. is still unsupported in this version')
- !
- ! GPL_INCLUDE_END
- !
  if (mode==0) return
  !
  ! build the occupations ...

@@ -61,6 +61,7 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'amplitude', '[R] Amplitude')
  call it('r',defs,'plot',         '[R] Plot')
  call it('r',defs,'density',      '[R] Density')
+ call it('r',defs,'wannier',      '[R] Wannier 90 I/O')
 #if defined _YPP_TEST_2
  call it('r',defs,'bands',        '[R] Bands')
 #endif
@@ -124,6 +125,11 @@ subroutine ypp_init_load(defs)
  call it(defs,'BANDS_range', 'Bands Range',BANDS_range) 
  call it(defs,'BKpts','Bands circuit',Kgw_1)
 #endif 
+ !
+ ! Wannier interface
+ !
+ call it(defs,'Seed','Seed name',seed_name)
+ call it(defs,'WriteAMU','What to write (A, M, U)',what_to_write)
  !
  ! BZ grids
  !

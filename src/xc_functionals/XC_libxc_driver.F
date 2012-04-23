@@ -69,9 +69,9 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  LIBXC_FUNC = XC_y2libxc(FUNCTIONAL,KIND)
  call xc_setup_fnctl(fnctl,LIBXC_FUNC,n_spin)
  !
- !===============================
+ !==========================
  ! Electronic/spin density 
- !===============================
+ !==========================
  !
 #if defined _RT
  do i1=1,n_spin
@@ -88,6 +88,13 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
 #endif
  !
  forall(i1=1:fft_size,i2=1:n_spin)  tmp_rho(i2,i1)=rho_sp(i1,i2)*real(fft_size,DP)/real(DL_vol,DP)
+ !
+ !=============================
+ ! Electronic density gradient
+ !=============================
+ !
+ if (any(fnctl(:)%family==XC_FAMILY_GGA)) then 
+ endif
  !
  !===========================
  ! Evaluate the xc functional

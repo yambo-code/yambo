@@ -72,16 +72,12 @@ module functions
      if (Eb<0.) bose_f=-spin_occ
      if (.not.Finite_Tel) return
      !
-     ! GPL_EXCLUDE_START
-     !
      if (abs(Eb)>epsilon(1.)) then
        if (abs(Eb)<=bose_E_cut*Bose_Temp) bose_f=spin_occ*Bose_Temp/Eb
        if (abs(Eb)> bose_E_cut*Bose_Temp) bose_f=spin_occ/(exp(Eb/Bose_Temp)-1.)
      else
        bose_f=spin_occ*Bose_Temp/epsilon(1.)
      endif
-     !
-     ! GPL_EXCLUDE_END
      !
    end function
    !
@@ -94,12 +90,8 @@ module functions
      real(SP)            :: bose_decay
      bose_decay=1.
      !
-     ! GPL_EXCLUDE_START
-     !
      if (.not.Finite_Tel) return
      if (abs(E)<=bose_E_cut*Tel) bose_decay=E**2./(Tel*bose_E_cut)**2.
-     !
-     ! GPL_EXCLUDE_END
      !
    end function
    !

@@ -26,6 +26,8 @@ AC_DEFUN([ACX_MPI], [
 AC_PREREQ(2.50) dnl for AC_LANG_CASE
 acx_mpi_ok=no
 
+AC_ARG_VAR(PFC,[Parallel Fortran compiler command])
+
 AC_LANG_CASE([C], [
         AC_REQUIRE([AC_PROG_CC])
         AC_ARG_VAR(MPICC,[Parallel C compiler command])

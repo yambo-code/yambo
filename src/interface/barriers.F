@@ -97,10 +97,6 @@ subroutine barriers()
  ! RUNLEVELS
  !===========
  !
- ! If the system is non magnetic you can safely comment the nex 3 lines
- ! Otherwise you have to run ypp_rt to remove the trev symmetry when SO is present
- if(i_time_rev==1.and.spin_orbit) call switch_off_runlevel('all',on_name=' ')
- !
 #if defined _RT
  call switch_off_runlevel('gw0',on_name=' ')
 #endif
@@ -202,5 +198,9 @@ subroutine barriers()
  ! MORE
  !======
  if ( (l_ppa.and.trim(QP_solver)=='s').or.l_cohsex ) QP_solver='n'
+ !
+ ! If the system is non magnetic you can safely comment the nex line
+ ! Otherwise you have to run ypp_rt to remove the trev symmetry when SO is present
+ if(i_time_rev==1.and.spin_orbit) call switch_off_runlevel('all',on_name=' ')
  !
 end subroutine

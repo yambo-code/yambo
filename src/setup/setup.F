@@ -145,6 +145,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
      call msg('nr','[SYMs] Time-reversal derived K-space symmetries:',(/nsym/2+1,nsym/))
      if(.not.spin_orbit) inv_index=nsym/2+1
      if(spin_orbit) then
+       call warning('Spin-orbit and Trev compatible only if system is not magnetic')
        do is=1,nsym/2
          if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./)) ) inv_index=is
        enddo

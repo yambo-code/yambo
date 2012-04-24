@@ -37,18 +37,17 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
  ! COM
  !
-#if defined _LIBXC
  if (KIND>0.and.FUNCTIONAL>0) then
-#else 
- if(xc_OnlyInLibxc(FUNCTIONAL)) then
-   call warning('XC functional not available. Default used instead')
-   call warning('By linking Yambo to libxc, this functional is available')
-   call msg('rsn','[xc] Requested functional:  ', xc_string(KIND,FUNCTIONAL))
-   KIND=XC_EXCHANGE_CORRELATION
-   FUNCTIONAL=XC_LDA_C_PW
-   call msg('rsn','[xc] Functional used: ', xc_string(KIND,FUNCTIONAL))
- elseif (KIND>0.and.FUNCTIONAL>0) then
-#endif
+!
+! if(xc_OnlyInLibxc(FUNCTIONAL)) then
+!   call warning('XC functional not available. Default used instead')
+!   call warning('By linking Yambo to libxc, this functional is available')
+!   call msg('rsn','[xc] Requested functional:  ', xc_string(KIND,FUNCTIONAL))
+!   KIND=XC_EXCHANGE_CORRELATION
+!   FUNCTIONAL=XC_LDA_C_PW
+!   call msg('rsn','[xc] Functional used: ', xc_string(KIND,FUNCTIONAL))
+! elseif (KIND>0.and.FUNCTIONAL>0) then
+!
    call msg('rsn','[xc] Functional ',xc_string(KIND,FUNCTIONAL))
  else if (FUNCTIONAL==XC_NOT_AVAILABLE) then
    KIND=XC_EXCHANGE_CORRELATION
@@ -56,19 +55,14 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
    call msg('rsn','[xc] Functional unknown. Used ',xc_string(KIND,FUNCTIONAL))
  endif
  !
-#if defined _LIBXC
- !
  ! Maybe also (spin)density should be calculated in the wrapper, since it does 
  ! not use anything of libxc.   
  !
  call msg('rsn','[xc] LIBXC used to calculate xc functional ')
  !
- call XC_libxc_driver(&
+ call XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
-#else
- call   XC_lda_driver(&
-#endif
-&                     en,Xk,KIND,FUNCTIONAL,ORDER)
+! call   XC_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
 end subroutine XC_potential_driver
 

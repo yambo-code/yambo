@@ -19,11 +19,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_INIT(Yambo, 3.2.5 r.1170 , yambo@yambo-code.org)
+AC_INIT(Yambo, 3.2.5 r.1172 , yambo@yambo-code.org)
 SVERSION="3"
 SPATCHLEVEL="2"
 SSUBLEVEL="5"
-SREVISION="1170"
+SREVISION="1172"
 AC_SUBST(SVERSION)
 AC_SUBST(SPATCHLEVEL)
 AC_SUBST(SSUBLEVEL)
@@ -391,7 +391,7 @@ if test -d "$with_etsf_io_include" && test -d "$with_etsf_io_lib" ; then
 fi
 # ============================================================================
 # LIBXC
-KH_PATH_LIBXC_F90
+ACX_LIBXC
 # ============================================================================
 # Prepare the REPORT file variables
 ACX_REPORT()

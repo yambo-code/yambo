@@ -50,9 +50,6 @@ if test "$compile_p2y" = "yes" ; then PW_str="X"; fi
 ETSF_str=" "
 if test "$compile_e2y" = "yes" ; then ETSF_str="X"; fi
 
-BLAS_str=" "
-if test "$compile_blas" = "yes" ; then BLAS_str="X"; fi
-
 LAPACK_str=" "
 if test "$compile_lapack" = "yes" ; then LAPACK_str="X"; fi
 

@@ -21,12 +21,12 @@
 !
 subroutine RT_fix_symmetries(E,k)
  !
- use YPP,                 ONLY:E_field,B_theta,B_psi,B_field
+ use YPP,                 ONLY:E_field,B_theta,B_psi,B_field,Magnetization
  use drivers,             ONLY:l_sc_run
- use pars,                ONLY:IP,SP,DP,lchlen
+ use pars,                ONLY:IP,LP,SP,DP,lchlen
  use com,                 ONLY:msg,warning,core_io_path,more_io_path
  use memory_m,            ONLY:mem_est
- use electrons,           ONLY:levels,E_reset,n_spin,n_sp_pol
+ use electrons,           ONLY:levels,E_reset,n_spin,n_sp_pol,spin_orbit
  use vec_operate,         ONLY:v_norm,v_is_zero
  use matrix_operate,      ONLY:m3det
  use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,a,alat,&
@@ -56,12 +56,15 @@ subroutine RT_fix_symmetries(E,k)
  !
  integer               :: ik_save,iv(2),ierr,ib,i_wf,i_spin,&
 &                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik
+ integer               :: spatial_nsym,old_spatial_nsym,old_trev_nsym
  integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:)
  real(SP)              :: v1(3),v2(3),m(3,3)
  real(SP)              :: B_cart(3)
- integer               :: det,nsym_save,igfft,ig,ic
+ integer               :: symm_M_factor,symm_B_factor,nsym_save,igfft,ig,ic
  real(SP), allocatable :: pp_kb_store(:,:,:,:,:),pp_kbd_store(:,:,:,:,:)
- logical               :: Rm_all_symm,use_E_field,use_B_field,reject_symmetry,Rm_TR,S_contains_TR(nsym)
+ logical               :: Rm_all_symm,use_E_field,use_B_field,has_magnetization,reject_symmetry,Rm_TR,&
+&                         S_contains_TR(nsym),Trev_2_spatial=.false.
+ complex(SP)           :: spin_sop(2,2,nsym)
  type(bz_samp)         :: k_save
  type(levels)          :: en_sc,en_sc_expanded
  character(lchlen)     :: core_io_path_save,fragment_name
@@ -69,6 +72,7 @@ subroutine RT_fix_symmetries(E,k)
  complex(SP), allocatable :: full_H(:,:,:,:)
  real(SP),    allocatable :: wf_disk(:,:,:,:)
  real(SP),    allocatable :: dl_sop_tmp(:,:,:)
+ complex(SP), allocatable :: wf_tmp(:,:)
  complex(DP), allocatable :: wf_DP(:),wf_DP_rot(:)
  !
  !
@@ -76,6 +80,7 @@ subroutine RT_fix_symmetries(E,k)
  use_B_field=.FALSE.
  if (any(E_field/=0.)) use_E_field=.TRUE.
  if (B_field/=0.)      use_B_field=.TRUE.
+ if (any(Magnetization/=0.))  has_magnetization=.TRUE.
  !
  call parser('RmAllSymm',Rm_all_symm)
  call parser('RmTimeRev',Rm_TR)
@@ -84,15 +89,31 @@ subroutine RT_fix_symmetries(E,k)
  allocate(wf_DP(fft_size),wf_DP_rot(fft_size))
  call mem_est("wf_DP wf_DP_rot",(/size(wf_DP),size(wf_DP_rot)/),elements_kind=(/DP,DP/))
  !
+ if (Rm_all_symm) then
+   call section('*',"== Remove all Symmetries ==")
+   use_E_field=.false.
+   use_B_field=.false.
+   has_magnetization=.false.
+   Rm_TR=.false.
+   E_field=0.
+   B_field=0.
+   Magnetization=0.
+ endif
  !
- if (use_E_field) call section('*',"== Electric Fields in real time: BZ sampling remapping ==")
- if (use_B_field) call section('*',"== Magnetic field: BZ sampling remapping ==")
- if (Rm_all_symm) call section('*',"== Remove all Symmetries ==")
+ if (use_E_field) call section('*',"== Electric Fields: BZ sampling remapping ==")
+ if (use_B_field) then
+   call section('*',"== Magnetic fields: BZ sampling remapping ==")
+   B_cart(1)=B_field*sin(B_theta)*cos(B_psi)
+   B_cart(2)=B_field*sin(B_theta)*sin(B_psi) 
+   B_cart(3)=B_field*cos(B_theta)
+ endif
+ if(has_magnetization) call section('*',"== Magnetized system: BZ sampling remapping ==")
  !
- if (Rm_TR.and.i_time_rev==0) return
+ if (i_time_rev==0) Rm_TR=.false.
  if (Rm_TR)       call section('*',"== Remove Time Reversal ==")
  !
- if (.not.any((/use_B_field,use_E_field,Rm_all_symm,Rm_TR/))) return 
+ if (.not.any((/use_B_field,use_E_field,has_magnetization,Rm_all_symm,Rm_TR/))) return 
+ if (use_B_field.and.has_magnetization) call warning('Magnetic field in magnetic system!')
  !
  if (wf_nb_io/=E%nb) then
    call warning('Splitted wavefunctions still not supported')
@@ -159,49 +180,95 @@ subroutine RT_fix_symmetries(E,k)
  !
  forall (is=1:nsym) S_contains_TR(is)=is>nsym/(1+i_time_rev)
  !
+ ! Construct spin_sop in spinor-space
+ !
+ if(n_spin>1) call RT_build_spin_sop(spin_sop)
+ !
  ! Remove Symmetries
  !
  nsym_save      =nsym
- nsym=nsym/(1+i_time_rev)
- call msg('s',trim(intc(nsym))//' spatial symmetries reduced to ...')
- i_time_rev=0 
- !
- if (use_B_field) then
-   det=0.
-   B_cart(1)=B_field*sin(B_theta)*cos(B_psi)
-   B_cart(2)=B_field*sin(B_theta)*sin(B_psi) 
-   B_cart(3)=B_field*cos(B_theta)
+ spatial_nsym=nsym/(1+i_time_rev)
+ if(Rm_TR) then   ! No time reversal 
+   if(i_space_inv==1.and.inv_index>spatial_nsym.and.&
+&     .not.(spin_orbit.and.has_magnetization) ) then
+     call msg('s',trim(intc(spatial_nsym))//' T-rev are now spatial symm')
+     spatial_nsym=2*spatial_nsym
+     nsym=spatial_nsym
+     Trev_2_spatial=.true.
+   else
+     nsym=nsym/(1+i_time_rev)
+   endif
+   i_time_rev=0
  endif
+ !
+ old_spatial_nsym=spatial_nsym
+ old_trev_nsym=nsym-spatial_nsym
  !
  if(Rm_all_symm) then
    nsym=1
- else  if (.not.Rm_TR) then
+   spatial_nsym=1
+   i_time_rev=0
+ else
    is=2
+   !
    do while (is<=nsym)
      !
+     reject_symmetry=.false.
      if (use_E_field) then
        v1(:) = matmul( dl_sop(:,:,is), E_field(1,:) )      
        v2(:) = matmul( dl_sop(:,:,is), E_field(2,:) )      
-       reject_symmetry=v_norm(v1(:)-E_field(1,:))>1.E-5.or.v_norm(v2(:)-E_field(2,:))>1.E-5
-     else if (use_B_field) then
-       det=0
+       ! Ok Spatial symmetries that leave E invariant
+       if(is<=spatial_nsym) reject_symmetry=v_norm(v1(:)-E_field(1,:))>1.E-5.or.v_norm(v2(:)-E_field(2,:))>1.E-5
+       ! E is invariant under T-rev
+       if(is> spatial_nsym) reject_symmetry=v_norm(v1(:)+E_field(1,:))>1.E-5.or.v_norm(v2(:)+E_field(2,:))>1.E-5
+     endif
+     !
+     if (use_B_field.and..not.reject_symmetry) then
+       symm_B_factor=0
        v1(:) = matmul( dl_sop(:,:,is), B_cart )       
-       if(all( abs(v1(:)-B_cart(:))<epsilon(1.)) ) det=+1
-       if(all( abs(v1(:)+B_cart(:))<epsilon(1.)) ) det=-1
-       reject_symmetry=(det==0)
+       if(all( abs(v1(:)-B_cart(:))<epsilon(1.)) ) symm_B_factor=+1
+       if(all( abs(v1(:)+B_cart(:))<epsilon(1.)) ) symm_B_factor=-1
+       reject_symmetry=(symm_B_factor==0)
+       if(.not.reject_symmetry) then
+         ! We check what happens in the plane perpendicular to B: 
+         ! 1) Spatial symmetries are rotations
+         if(is<=spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/symm_B_factor - 1.)>1.E-5)
+         ! 2) T-rev symmetries are rotation moltiplied for the inversion
+         if(is> spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/symm_B_factor + 1.)>1.E-5)       
+       endif
+     endif
+     !
+     if(has_magnetization.and..not.reject_symmetry) then
+       symm_M_factor=0
+       v1(:) = matmul( dl_sop(:,:,is), Magnetization )
+       if(all( abs(v1(:)-Magnetization(:))<epsilon(1.)) ) symm_M_factor=+1
+       if(all( abs(v1(:)+Magnetization(:))<epsilon(1.)) ) symm_M_factor=-1
+       reject_symmetry=(symm_M_factor==0)
+       if(spin_orbit.and..not.reject_symmetry) then
+         ! We check what happens in the plane perpendicular to M: 
+         ! 1) Spatial symmetries are rotations
+         if(is<=spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/symm_M_factor - 1.)>1.E-5)
+         ! 2) T-rev symmetries are rotation moltiplied for the inversion
+         if(is> spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/symm_M_factor + 1.)>1.E-5)       
+       endif
        !
-       if (det/=0) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/det - 1.)>1.E-5)
      endif
      !
      if(reject_symmetry) then
        dl_sop(:,:,is:nsym-1)=dl_sop(:,:,is+1:nsym)
        nsym=nsym-1
+       if(is<=spatial_nsym) spatial_nsym=spatial_nsym-1      
      else
        is=is+1
      endif
      !
    enddo
  endif
+ !
+ call msg('s',trim(intc(old_spatial_nsym))//' spatial symmetries reduced to ...'//trim(intc(spatial_nsym)))
+ !
+ if(i_time_rev==1)&
+& call msg('s',trim(intc(old_trev_nsym))//' T-rev symmetries reduced to ...'//trim(intc(nsym-spatial_nsym)))
  !
  allocate(dl_sop_tmp(3,3,nsym))
  dl_sop_tmp(1:3,1:3,1:nsym)=dl_sop(1:3,1:3,1:nsym)
@@ -210,12 +277,17 @@ subroutine RT_fix_symmetries(E,k)
  dl_sop=dl_sop_tmp
  deallocate(dl_sop_tmp)
  !
- call msg('l'," "//trim(intc(nsym)))
- !
  call set_real_printed_length(f_length=7,g_length=8)
- do is=1,nsym
-   call msg('s','[S'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))  
+ call msg('s','[Symm] Spatial simmetries now are:')  
+ do is=1,spatial_nsym
+   call msg('s','[S'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))
  enddo
+ if (i_time_rev==1) then
+   call msg('s','[Symm] T-rev derived simmetries now are:')  
+   do is=spatial_nsym+1,nsym
+     call msg('s','[S*'//trim(intc(is))//']',reshape(dl_sop(:,:,is),(/9/)))  
+   enddo
+ endif
  call set_real_printed_length()
  !
  ! Remap Inversion symmetry index
@@ -226,6 +298,15 @@ subroutine RT_fix_symmetries(E,k)
    if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./)) ) inv_index=is
  enddo
  if (inv_index<0) i_space_inv=0
+ !
+ if(i_time_rev==1 .and. inv_index>0) then
+   if(inv_index<=spatial_nsym) then
+     i_space_inv=0
+     call msg('s','[SYMs] Spatial inversion '//trim(intc(inv_index))//' is a symmetry')
+   else
+     call msg('s','[SYMs] Spatial inversion '//trim(intc(inv_index))//' is NOT a symmetry')
+   endif
+ endif
  !
  ! Check group table
  !
@@ -259,6 +340,7 @@ subroutine RT_fix_symmetries(E,k)
      endif
    enddo
  enddo
+ !
  main_loop: do ik=1,k%nibz 
    if ( kpoints_map(2, ik )/=1 ) then
      do i1=ik+1,k%nibz
@@ -278,7 +360,7 @@ subroutine RT_fix_symmetries(E,k)
  call section('=',"Energies")
  !===========================
  !
- call map_energies(E,E_expanded,k,kpoints_map)
+ call map_energies(E,E_expanded,k,kpoints_map,S_contains_TR)
  !
  if (trim(core_io_path)/=trim(more_io_path)) then
    call mk_dir(more_io_path)
@@ -293,14 +375,14 @@ subroutine RT_fix_symmetries(E,k)
    !
    en_sc%nb=SC_bands(2)
    en_sc%nk=k_save%nibz
-   allocate(en_sc%E(en_sc%nb,en_sc%nk,n_spin))  
+   allocate(en_sc%E(en_sc%nb,en_sc%nk,n_sp_pol))  
    !
    nkibz=k_save%nibz
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1,2/),ID=ID)
    io_SC_E_err=io_SC_components('E',en_sc,ID)
    !
-   call map_energies(en_sc,en_sc_expanded,k,kpoints_map)
+   call map_energies(en_sc,en_sc_expanded,k,kpoints_map,S_contains_TR)
    !
    nkibz=k%nibz
    !
@@ -468,6 +550,7 @@ subroutine RT_fix_symmetries(E,k)
  !
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
+ if(n_spin>1) allocate(wf_tmp(wf_ncx,n_spin))
  !
  ACTION_=OP_APP_WR_CL
  if(Fragmented_IO) ACTION_=OP_WR_CL
@@ -516,6 +599,14 @@ subroutine RT_fix_symmetries(E,k)
        if ( S_contains_TR(is) ) wf_disk(2,ib,:,i_spin)=-wf_disk(2,ib,:,i_spin)
        !
      enddo
+     !
+     if(n_spin>1) then
+       forall(i1=1:wf_ncx) wf_tmp(i1,:)=&
+&          matmul(spin_sop(:,:,is),cmplx(wf_disk(1,ib,i1,:),wf_disk(2,ib,i1,:)))
+       wf_disk(1,ib,1:wf_ncx,:)= real(wf_tmp(:,:))
+       wf_disk(2,ib,1:wf_ncx,:)= aimag(wf_tmp(:,:))
+     endif
+     !
    enddo
    !
    io_err=ioWF(ID,wf=wf_disk)
@@ -531,6 +622,7 @@ subroutine RT_fix_symmetries(E,k)
  !
  deallocate(wf_DP,wf_DP_rot,wf_disk)
  call mem_est("wf_DP wf_DP_rot wf_disk")
+ if(n_spin>1) deallocate(wf_tmp)
  !
  if(ioKB_err==0) then 
    !
@@ -588,9 +680,9 @@ subroutine RT_fix_symmetries(E,k)
  !
 end subroutine
  
-subroutine map_energies(E,E_expanded,k,kpoints_map)
+subroutine map_energies(E,E_expanded,k,kpoints_map,S_contains_TR)
  !
- use electrons,           ONLY:levels,E_reset,n_spin
+ use electrons,           ONLY:levels,E_reset,n_sp_pol
  use R_lattice,           ONLY:bz_samp
  !
  implicit none
@@ -599,18 +691,29 @@ subroutine map_energies(E,E_expanded,k,kpoints_map)
  type(levels), intent(out)    :: E_expanded
  type(bz_samp)                :: k
  integer,       intent(in)    :: kpoints_map(2,k%nibz)
+ logical,       intent(in)    :: S_contains_TR(100)
  !
  ! Work Space
  !
- integer :: ik
+ integer :: ik,is
  !
  call E_reset(E_expanded)
  E_expanded%nb=E%nb
  E_expanded%nk=k%nibz
- allocate(E_expanded%E(E%nb,k%nibz,n_spin))
+ allocate(E_expanded%E(E%nb,k%nibz,n_sp_pol))
  !
  do ik=1,k%nibz
-   E_expanded%E(:,ik,:)=E%E(:,kpoints_map(1,ik),:)
+   if(n_sp_pol==1) then
+     E_expanded%E(:,ik,1)=E%E(:,kpoints_map(1,ik),1)
+     cycle
+   endif
+   is=kpoints_map(2,ik)
+   if(.not.S_contains_TR(is)) E_expanded%E(:,ik,:)=E%E(:,kpoints_map(1,ik),:)
+   ! T-rev flips invert the spin
+   if(     S_contains_TR(is)) then
+     E_expanded%E(:,ik,1)=E%E(:,kpoints_map(1,ik),2)
+     E_expanded%E(:,ik,2)=E%E(:,kpoints_map(1,ik),1)
+   endif
  enddo
  !
 end subroutine map_energies

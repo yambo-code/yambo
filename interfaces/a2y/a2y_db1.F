@@ -35,7 +35,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  use vec_operate,           ONLY: cross_product,v_is_zero
  use defs_datatypes,        ONLY: hdr_type, wffile_type
  use xc_functionals,        ONLY: GS_xc_KIND,GS_xc_FUNCTIONAL
- use mod_xc2y,              ONLY: XC_Abinit2Yambo,XC_Libxc2Yambo
+ use mod_xc2y,              ONLY: XC_yamboID, XC_yamboID2kind
  use mod_com2y,             ONLY: print_interface_dimensions,symmetries_check_and_load,&
 &                                 alat_mult_factor,artificial_spin_pol
  implicit none
@@ -92,9 +92,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !===================
  !
  if (ahdr%ixc.ge. 0) then
-   call XC_Abinit2Yambo(ahdr%ixc,GS_xc_FUNCTIONAL,GS_xc_KIND)
- else !negative ahdr%ixc means abinit used libxc
-   call XC_Libxc2Yambo(ahdr%ixc,GS_xc_FUNCTIONAL,GS_xc_KIND)
+   GS_xc_FUNCTIONAL = XC_yamboID('abinit',abinit_func=ahdr%ixc)
+   GS_xc_KIND = XC_yamboID2kind(GS_xc_FUNCTIONAL)
  end if
  !
  ! GPL_INCLUDE_START SPIN_IGNORE

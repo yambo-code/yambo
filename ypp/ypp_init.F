@@ -229,6 +229,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  B_field=0._SP
  B_theta=0._SP
  B_psi=0._SP
+ Magnetization=0._SP
  !
  !ANALIZE RESPONSE
  !
@@ -509,7 +510,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
 #if defined _YPP_RT
  !             
- if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev")
+ if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta Magnetization RmAllSymm RmTimeRev")
  !
  if (l_RT_X) then 
    call initactivate(1,"Xorder ProbeKey PumpKey EnRngeRt ETStpsRt")

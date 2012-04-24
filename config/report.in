@@ -4,7 +4,7 @@
 # 
 # [SYS] @build_os@@@build_cpu@
 # [SRC] @srcdir_path@
-# [BIN] @prefix@/bin
+# [BIN] @exec_prefix@/bin
 # [FFT] @FFT_DESCRIPTION@
 #
 # [@DP_str@] Double precision

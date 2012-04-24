@@ -33,9 +33,9 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
 #endif
  use electrons,     ONLY:levels,n_spin
  use FFT_m,         ONLY:fft_size
- use libxc_int,     ONLY:xc_fnctl_t,XC_y2libxc,xc_setup_fnctl
  use xc_functionals,ONLY:E_xc,F_xc,V_xc,two_spin_density,&
-&                        xc_string,XC_LDA_C_KP,XC_FAMILY_LDA,XC_FAMILY_GGA
+&                        xc_string,XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl
+ use xc_f90_lib_m,  ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA
  implicit none
  type(levels) ::en
  type(bz_samp)::Xk
@@ -66,8 +66,7 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  tmp_vxc=0._DP
  tmp_dvxc=0._DP
  !
- LIBXC_FUNC = XC_y2libxc(FUNCTIONAL,KIND)
- call xc_setup_fnctl(fnctl,LIBXC_FUNC,n_spin)
+ call xc_setup_fnctl(fnctl,FUNCTIONAL,n_spin)
  !
  !==========================
  ! Electronic/spin density 

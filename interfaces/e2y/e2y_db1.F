@@ -367,9 +367,8 @@ contains
     !
     use D_lattice,            only : input_GS_Tel, n_atomic_species, n_atoms_species
     use electrons,            only : spin_orbit, default_nel
-    use xc_functionals,       only : XC_EXCHANGE_CORRELATION,GS_xc_KIND,GS_xc_FUNCTIONAL,&
-&                                  xc_string,XC_LDA_C_PW,XC_LDA_C_PZ,XC_LDA_C_WIGNER,&
-&                                  XC_LDA_C_HL,XC_LDA_C_XALPHA
+    use xc_functionals,       only : GS_xc_KIND,GS_xc_FUNCTIONAL
+    use mod_xc2y,             only : XC_yamboID, XC_yamboID2kind
     integer                       :: i1
     !
     ! Temperature (Abinit)
@@ -410,35 +409,8 @@ contains
     ! XC functional (Abinit)
     !
     call etsf_io_low_read_var(ncid, "ixc", ixc_, lstat)
-    if(lstat) then
-      select case (ixc_)
-      case (1,7)
-        GS_xc_FUNCTIONAL=XC_LDA_C_PW
-        GS_xc_KIND=XC_EXCHANGE_CORRELATION
-      case (2)
-        GS_xc_FUNCTIONAL=XC_LDA_C_PZ
-        GS_xc_KIND=XC_EXCHANGE_CORRELATION
-      case (3)
-        GS_xc_FUNCTIONAL=XC_LDA_C_PZ
-        GS_xc_KIND=XC_EXCHANGE_CORRELATION
-      case (4)
-        GS_xc_FUNCTIONAL=XC_LDA_C_WIGNER
-        GS_xc_KIND=XC_EXCHANGE_CORRELATION
-      case (5)
-        GS_xc_FUNCTIONAL=XC_LDA_C_HL
-        GS_xc_KIND=XC_EXCHANGE_CORRELATION
-      case (6)
-        GS_xc_FUNCTIONAL=XC_LDA_C_XALPHA
-        GS_xc_KIND=XC_EXCHANGE_CORRELATION
-      case default
-        GS_xc_FUNCTIONAL=-1
-        GS_xc_KIND=-1
-      end select 
-    else
-      GS_xc_FUNCTIONAL=-1
-      GS_xc_KIND=-1
-    endif
-
+    GS_xc_FUNCTIONAL = XC_yamboID('abinit',abinit_func=ixc_)
+    GS_xc_KIND = XC_yamboID2kind(GS_xc_FUNCTIONAL)
     return
   end subroutine import_miscellaneous_data
 

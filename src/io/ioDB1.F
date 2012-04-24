@@ -27,7 +27,7 @@ integer function ioDB1(E,k,ID)
  use memory_m,         ONLY:mem_est
  use LOGO,             ONLY:code_version,code_revision
  use electrons,        ONLY:levels,default_nel,n_spin,n_bands,nel,n_sp_pol,&
-&                           n_spinor
+&                           n_spinor,spin_orbit
  use D_lattice,        ONLY:a, alat, nsym, i_time_rev, input_GS_Tel, dl_sop, &
 &                           Tel, n_atoms_species_max,n_atomic_species,n_atoms_species,atom_pos, &
 &                           Z_species, n_atoms
@@ -165,6 +165,11 @@ integer function ioDB1(E,k,ID)
      call io_elemental(ID, VAR="number_of_atom_species",VAR_SZ=1,MENU=0)
      call io_elemental(ID,I0=n_atomic_species,CHECK=.true.,OP=(/"=="/),&
 &                      VAR=' No. of atom species             :')
+   endif
+   if (ver_is_gt_or_eq(ID,revision=1041)) then
+     call io_elemental(ID, VAR="spin_orbit",VAR_SZ=1,MENU=0)
+     call io_elemental(ID, L0=spin_orbit,&
+&                      VAR=' Spin Orbit interaction          : ')
    endif
    call io_elemental(ID, VAR="",VAR_SZ=0)
    !

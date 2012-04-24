@@ -93,9 +93,9 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
    !
    if(l_many_proj) then
      read(11)
-     read(11) ((pp_table(1,i1,i2),i1=1,pp_n_l_times_proj_max),i2=1,n_atomic_species)
-     read(11) ((pp_table(2,i1,i2),i1=1,pp_n_l_times_proj_max),i2=1,n_atomic_species)
-     read(11) ((pp_table(3,i1,i2),i1=1,pp_n_l_times_proj_max),i2=1,n_atomic_species)
+     read(11) ((pp_table(1,i2,i1),i1=1,pp_n_l_times_proj_max),i2=1,n_atomic_species)
+     read(11) ((pp_table(2,i2,i1),i1=1,pp_n_l_times_proj_max),i2=1,n_atomic_species)
+     read(11) ((pp_table(3,i2,i1),i1=1,pp_n_l_times_proj_max),i2=1,n_atomic_species)
      !
      pp_table(1,:,:)=pp_table(1,:,:)+1  ! l+1 , not l
      !

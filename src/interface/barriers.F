@@ -49,7 +49,7 @@ subroutine barriers()
  use pars,       ONLY:schlen
  use D_lattice,  ONLY:i_time_rev,i_space_inv
  use BS,         ONLY:BSS_mode
- use electrons,  ONLY:n_spin,n_met_bands,n_full_bands,n_spinor,n_sp_pol
+ use electrons,  ONLY:n_spin,n_met_bands,n_full_bands,n_spinor,n_sp_pol,spin_orbit
  use QP_m,       ONLY:QP_solver
  use it_m,       ONLY:switch_off_runlevel
  implicit none
@@ -96,6 +96,10 @@ subroutine barriers()
  !
  ! RUNLEVELS
  !===========
+ !
+ ! If the system is non magnetic you can safely comment the nex 3 lines
+ ! Otherwise you have to run ypp_rt to remove the trev symmetry when SO is present
+ if(i_time_rev==1.and.spin_orbit) call switch_off_runlevel('all',on_name=' ')
  !
 #if defined _RT
  call switch_off_runlevel('gw0',on_name=' ')

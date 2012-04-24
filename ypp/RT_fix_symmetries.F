@@ -78,6 +78,7 @@ subroutine RT_fix_symmetries(E,k)
  !
  use_E_field=.FALSE.
  use_B_field=.FALSE.
+ has_magnetization=.FALSE.
  if (any(E_field/=0.)) use_E_field=.TRUE.
  if (B_field/=0.)      use_B_field=.TRUE.
  if (any(Magnetization/=0.))  has_magnetization=.TRUE.
@@ -711,14 +712,13 @@ subroutine map_energies(E,E_expanded,k,kpoints_map,S_contains_TR)
    if(n_sp_pol==1) then
      E_expanded%E(:,ik,1)=E%E(:,kpoints_map(1,ik),1)
      cycle
-   else
-     is=kpoints_map(2,ik)
-     if(.not.S_contains_TR(is)) E_expanded%E(:,ik,:)=E%E(:,kpoints_map(1,ik),:)
-     ! T-rev flips invert the spin
-     if(     S_contains_TR(is)) then
-       E_expanded%E(:,ik,1)=E%E(:,kpoints_map(1,ik),2)
-       E_expanded%E(:,ik,2)=E%E(:,kpoints_map(1,ik),1)
-     endif
+   endif
+   is=kpoints_map(2,ik)
+   if(.not.S_contains_TR(is)) E_expanded%E(:,ik,:)=E%E(:,kpoints_map(1,ik),:)
+   ! T-rev flips invert the spin
+   if(     S_contains_TR(is)) then
+     E_expanded%E(:,ik,1)=E%E(:,kpoints_map(1,ik),2)
+     E_expanded%E(:,ik,2)=E%E(:,kpoints_map(1,ik),1)
    endif
  enddo
  !

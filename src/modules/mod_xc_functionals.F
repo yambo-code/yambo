@@ -86,8 +86,6 @@ module xc_functionals
      integer :: ixc
      type(xc_f90_pointer_t) :: p,info 
      !
-     call xc_f90_func_init(p,info,NOXC,1)
-     !
      do ixc=1,2
        f(ixc)%id=XC_libxcID(fun,ixc)
        if (f(ixc)%id==NOXC) cycle

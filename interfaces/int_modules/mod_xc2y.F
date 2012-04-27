@@ -42,7 +42,7 @@ module mod_xc2y
     XC_LDA_X*XC_FACTOR+XC_LDA_C_XALPHA,           & !ixc= 6
     XC_LDA_X*XC_FACTOR+XC_LDA_C_PW,               & !ixc= 7
     XC_LDA_X*XC_FACTOR,                           & !ixc= 8 
-    XC_NOT_AVAILABLE,                             & !ixc= 9 not clear what it is
+    XC_LDA_X*XC_FACTOR+XC_LDA_C_PW_RPA,           & !ixc= 9 
     XC_NOT_AVAILABLE,                             & !ixc= 10 not defined
     XC_GGA_X_PBE*XC_FACTOR+XC_GGA_C_PBE,          & !ixc= 11
     XC_GGA_X_PBE*XC_FACTOR,                       & !ixc= 12
@@ -109,8 +109,10 @@ contains
         if (.not.present(abinit_func)) return
         if (abinit_func.lt.0) then
           XC_yamboID = -abinit_func ! In this case abinit uses libxc, thus the same convention as in Yambo (except for the sign) 
-        else
+        else if (abinit_func.gt.0) then
           XC_yamboID = XC_A2Y(abinit_func) ! Standard abinit XC convention, use the map
+        else
+          XC_yamboID = NOXC
         end if
       case('pwscf_')
         if (.not.present(pw_func)) return
@@ -146,10 +148,9 @@ contains
         func = XC_libxcID(yamboID,ifunc)
         if (func == NOXC) cycle
         call xc_f90_func_init(p, info, func, XC_UNPOLARIZED) ! I put  XC_UNPOLARIZED, I think it is not relevant here
-        XC_yamboID2kind = XC_yamboID2kind + xc_f90_info_kind(info)
+        XC_yamboID2kind = XC_yamboID2kind + (xc_f90_info_kind(info) + 1) ! In yambo the type are shifted by +1 wrt libxc 
         call xc_f90_func_end(p)
       end do
-      XC_yamboID2kind = XC_yamboID2kind + 1 ! In yambo the type are shifted by +1 wrt libxc 
     end function XC_yamboID2kind
     !
 end module mod_xc2y

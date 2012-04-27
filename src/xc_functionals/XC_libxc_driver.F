@@ -35,7 +35,7 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  use FFT_m,         ONLY:fft_size
  use xc_functionals,ONLY:E_xc,F_xc,V_xc,two_spin_density,&
 &                        xc_string,XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl
- use xc_f90_lib_m,  ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA
+ use xc_f90_lib_m   !,  ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA
  implicit none
  type(levels) ::en
  type(bz_samp)::Xk

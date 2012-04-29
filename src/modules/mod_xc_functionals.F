@@ -53,7 +53,7 @@ module xc_functionals
     NOXC = 0, &    
     XC_LDA_C_KP = 99
  !
- character(*), parameter, dimension(3) :: XC_KIND_DESCR = (/'(X)','(C)','(XC)'/)
+ character(*), parameter, dimension(3) :: XC_KIND_DESCR = (/' (X)',' (C)','(XC)'/)
  !
  contains
    !

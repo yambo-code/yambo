@@ -115,7 +115,7 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
      end do
    end do
    !
-   sigma = sigma*(real(fft_size,DP)/real(DL_vol,DP))**2
+   sigma = sigma*(real(fft_size,DP)/real(DL_vol,DP))
  endif
  !
  !===========================

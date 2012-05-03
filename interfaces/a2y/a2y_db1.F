@@ -91,10 +91,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
  ! XC KIND/FUNCTIONAL
  !===================
  !
- if (ahdr%ixc.ge. 0) then
-   GS_xc_FUNCTIONAL = XC_yamboID('abinit',abinit_func=ahdr%ixc)
-   GS_xc_KIND = XC_yamboID2kind(GS_xc_FUNCTIONAL)
- end if
+ GS_xc_FUNCTIONAL = XC_yamboID('abinit',abinit_func=ahdr%ixc)
+ GS_xc_KIND = XC_yamboID2kind(GS_xc_FUNCTIONAL)
  !
  ! GPL_INCLUDE_START SPIN_IGNORE
  !n_spinor=1

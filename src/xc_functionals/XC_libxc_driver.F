@@ -27,7 +27,7 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
  use pars,          ONLY:SP,DP,PI
  use R_lattice,     ONLY:bz_samp
- use D_lattice,     ONLY:DL_vol
+ use D_lattice,     ONLY:DL_vol, alat
  use com,           ONLY:msg,warning
 #if defined _RT
  use SC,            ONLY:rho_n
@@ -104,6 +104,7 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
    !
    do is1 = 1,n_spin
      call eval_Gradient(rho_sp(:,is1),drho(:,is1,:))
+     forall (i1=1:fft_size) drho(:,is1,i1) = drho(:,is1,i1)*real(fft_size,DP)/real(DL_vol,DP)*2._SP*PI/alat(:)
    end do
    !
    do i1 = 1,fft_size
@@ -115,7 +116,6 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
      end do
    end do
    !
-   sigma = sigma*(real(fft_size,DP)/real(DL_vol,DP))
  endif
  !
  !===========================
@@ -150,27 +150,30 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
        case(2) 
          call xc_f90_lda_fxc(fnctl(ixc)%conf, fft_size, tmp_rho(1,1), tmp_dvxc(1))
          F_xc = F_xc + tmp_dvxc
-       end select
-     elseif (fnctl(ixc)%family==XC_FAMILY_GGA) then
-       select case(ORDER)
-         case(0)
-           call xc_f90_gga_exc(fnctl(ixc)%conf, fft_size, tmp_rho(1,1), sigma(1,1), tmp_exc(1))
-           E_xc = E_xc + tmp_exc    
-         case(1)
-           call xc_f90_gga_vxc(fnctl(ixc)%conf, fft_size, tmp_rho(1,1), sigma(1,1), tmp_vxc(1,1), vsigma(1,1))
-           do is1 = 1,n_spin
-             vdrho(:,:) = 0._SP 
-             do is2 = 1,n_spin
-               is = min(is2*(is1+1)/2,is1*(is2+1)/2)
-               forall(ic=1:3,i1=1:fft_size) vdrho(ic,i1) = vdrho(ic,i1) + &
-                    & 2._SP*real(vsigma(is,i1),SP)*drho(ic,is2,i1)
-             end do
-             call XC_eval_gga_potential(V_xc(:,is1),real(tmp_vxc(is1,:),SP),vdrho)
+     end select
+   elseif (fnctl(ixc)%family==XC_FAMILY_GGA) then
+     select case(ORDER)
+       case(0)
+         call xc_f90_gga_exc(fnctl(ixc)%conf, fft_size, tmp_rho(1,1), sigma(1,1), tmp_exc(1))
+         E_xc = E_xc + tmp_exc    
+       case(1)
+         call xc_f90_gga_vxc(fnctl(ixc)%conf, fft_size, tmp_rho(1,1), sigma(1,1), tmp_vxc(1,1), vsigma(1,1))
+         do is1 = 1,n_spin
+           vdrho(:,:) = 0._SP 
+           do is2 = 1,n_spin
+             is = min(is2*(is1+1)/2,is1*(is2+1)/2)
+             forall(ic=1:3,i1=1:fft_size) vdrho(ic,i1) = vdrho(ic,i1) + &
+                  & 2._SP*real(vsigma(is,i1),SP)*drho(ic,is2,i1)
            end do
-           
+           call XC_eval_gga_potential(V_xc(:,is1),real(tmp_vxc(is1,:),SP),vdrho)
+         end do
+           !
      end select
    end if
  enddo
+ !
+ if (fnctl(ixc)%family==XC_FAMILY_GGA) deallocate(sigma,drho)
+ if ((fnctl(ixc)%family==XC_FAMILY_GGA).and.(ORDER==1)) deallocate (vdrho,vsigma)
  !
 end subroutine XC_libxc_driver
 

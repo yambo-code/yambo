@@ -32,7 +32,7 @@ subroutine eval_gradient(f,f_gradient)
  use pars,          ONLY:SP,DP,cI
  use FFT_m,         ONLY:fft_size,fft_dim,fftw_plan,fft_g_table
  use R_lattice,     ONLY:g_vec
- use D_lattice,     ONLY: DL_vol
+ use D_lattice,     ONLY:alat
  use wave_func,     ONLY:wf_ng
  !
  implicit none
@@ -59,7 +59,7 @@ subroutine eval_gradient(f,f_gradient)
  !
  do ic = 1,3
    Vr = (0._SP,0._SP)
-   Vr(fft_g_table(:,1)) = V3g(ic,:)
+   Vr(fft_g_table(1:wf_ng,1)) = V3g(ic,1:wf_ng)
 #if defined _FFTW
    call dfftw_destroy_plan(fftw_plan)
    fftw_plan = 0

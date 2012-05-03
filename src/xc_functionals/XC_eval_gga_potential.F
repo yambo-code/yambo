@@ -64,6 +64,7 @@ subroutine XC_eval_gga_potential(vxc_tot,v_rho,v_drho)
     !
   end do    
   !
+  Vr = (0._DP,0._DP)
   Vr(fft_g_table(1:wf_ng,1)) = Vg(1:wf_ng)
 #if defined _FFTW
   call dfftw_destroy_plan(fftw_plan)

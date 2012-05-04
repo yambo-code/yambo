@@ -27,14 +27,6 @@ subroutine check_periodic_directions()
  use D_lattice,      ONLY:DL_vol,a,non_periodic_directions
  use vec_operate,    ONLY:v_norm
  !
- ! GPL_EXCLUDE_START SPIN_IGNORE
- !
-#if defined _SC
- use magnetic,       ONLY:average_el_mag,average_el_mag_dim,average_el_mag_rescaling
-#endif
- !
- ! GPL_EXCLUDE_END SPIN_IGNORE
- !
  implicit none
  !
  ! Work Space
@@ -51,15 +43,6 @@ subroutine check_periodic_directions()
  l_3D=all(non_p_dir/=0)
  l_2D=sum(non_p_dir)==2
  l_1D=sum(non_p_dir)==1
- !
- ! GPL_EXCLUDE_START SPIN_IGNORE
- !
-#if defined _SC
- average_el_mag_dim='Bohr_magneton/Bohr^3'
- average_el_mag_rescaling=1.
-#endif
- !
- ! GPL_EXCLUDE_END SPIN_IGNORE
  !
  if (.not.l_3D.and..not.l_2D.and..not.l_1D) return
  !
@@ -113,20 +96,6 @@ subroutine check_periodic_directions()
    call warning('Non periodic geometry and unit cell are incompatible')
    return
  endif
- !
- ! GPL_EXCLUDE_START SPIN_IGNORE
- ! 
-#if defined _SC
- ! Magnetization dimensions
- !
- average_el_mag_rescaling=eps_2_alpha
- if(alpha_dim=='length') average_el_mag_dim='Bohr_magneton/Bohr^2'
- if(alpha_dim=='area')   average_el_mag_dim='Bohr_magneton/Bohr'
- if(alpha_dim=='volume') average_el_mag_dim='Bohr_magneton'
- !
-#endif
- !
- ! GPL_EXCLUDE_END SPIN_IGNORE
  !
  call msg('r', 'Non-periodic chartesian directions :',trim(non_periodic_directions))
  call msg('r', 'Optical renormalization        [au]:',eps_2_alpha)

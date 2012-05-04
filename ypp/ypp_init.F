@@ -168,6 +168,12 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
 #endif
  !
+ ! Wannier interface
+ !
+ l_wannier=.FALSE.
+ seed_name=" "
+ what_to_write=" "
+ !
 #if defined _YPP_RAS
  !
  ! RAS & REELS
@@ -224,6 +230,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  B_field=0._SP
  B_theta=0._SP
  B_psi=0._SP
+ Magnetization=0._SP
  !
  !DOS
  !
@@ -483,6 +490,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_sp_wf    =runlevel_is_on('wavefunction').and.runlevel_is_on('electrons')
  l_density  =runlevel_is_on('density').and.runlevel_is_on('electrons')
  l_mag      =runlevel_is_on('magnetization')
+ l_wannier  =runlevel_is_on('wannier')
  if (.not.l_exc_wf) l_free_hole=.false.
  !
  ! GPL_EXCLUDE_START SPIN_IGNORE
@@ -522,7 +530,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
 #if defined _YPP_RT
  !             
- if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev")
+ if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta Magnetization RmAllSymm RmTimeRev")
  !
  if (l_RT_X) then 
    call initactivate(1,"Xorder ProbeKey PumpKey EnRngeRt ETStpsRt")
@@ -530,6 +538,10 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  endif
  ! 
 #endif
+ !
+ ! Wannier 90 interface
+ !
+ if (l_wannier) call initactivate(1,"Seed WriteAMU QPdbPath")
  !
  ! GPL_EXCLUDE_END
  !

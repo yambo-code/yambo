@@ -157,6 +157,9 @@ integer function ypp_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (l_qpdb)  call qpdb_setup(en,k)
  !
+ if (l_wannier) call WANNIER_driver(k,en)
+ !   =========
+ !
  ! GPL_EXCLUDE_START
  !
 #if defined _YPP_RT

@@ -1,0 +1,14 @@
+This library implements many of the standard xc functionals in the 
+market. For more information, please check the manual at
+
+http://www.tddft.org/programs/Libxc
+
+
+To install the library, just use the standard procedure:
+
+./configure --prefix=PATH/TO/LIBXC
+make
+make check
+make install
+
+

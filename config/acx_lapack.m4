@@ -15,8 +15,8 @@ case $with_lapack in
         *) LAPACK_LIBS="-l$with_lapack" ;;
 esac
 
-# Get fortran linker name of LAPACK function to check for.
-AC_F77_FUNC(cheev)
+# Set fortran linker name of LAPACK function to check for.
+cheev="cheev"
 
 # We cannot use LAPACK if BLAS is not found
 if test "x$acx_blas_ok" != xyes; then

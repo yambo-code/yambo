@@ -54,7 +54,7 @@ subroutine electrons_driver(Xk,Xen)
  ! Work Space
  !
  real(SP), allocatable :: el_den(:)
- integer               :: i_qp,ik,ib,ir,i_wf,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2),ik_ref
+ integer               :: i_qp,ik,ib,ibp,ir,i_wf,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2),ik_ref
  logical               :: success,flag
  character(schlen)     :: ch_ws(2)
 #if defined _YPP_SC
@@ -230,7 +230,9 @@ subroutine electrons_driver(Xk,Xen)
      endif
 #endif
      !
-     if (ib/=Xen%nb.and.abs(Xen%E(ib,ik,i_spin)-Xen%E(ib+1,ik,i_spin))<deg_energy) then
+     ibp=ib+1
+     if (ib==Xen%nb) ibp=ib
+     if (ib/=Xen%nb.and.abs(Xen%E(ib,ik,i_spin)-Xen%E(ibp,ik,i_spin))<deg_energy) then
        cycle
      else
        !

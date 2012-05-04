@@ -146,6 +146,15 @@ module YPP
  real(SP)          :: qdir(3)
  integer           :: idir
  !
+ ! Wannier interface
+ !
+ logical           :: l_wannier
+ logical           :: l_write_A
+ logical           :: l_write_M
+ logical           :: l_write_U
+ character(schlen) :: seed_name
+ character(schlen) :: what_to_write
+ !
  ! BZ RIM
  !
  integer  :: BZ_RIM_nkpts
@@ -176,6 +185,7 @@ module YPP
  logical     :: l_fix_syms
  real(SP)    :: E_field(2,3)
  real(SP)    :: B_field,B_theta,B_psi
+ real(SP)    :: Magnetization(3)
  !
  ! (RT) optics
  !

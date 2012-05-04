@@ -162,6 +162,10 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_kpt)
  call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_kpt) 
  call it(defs,'Nelectro','Electrons number',nel,verb_level=V_general)
+ call it(defs,'ElecTemp','Electronic Temperature',Tel,T_unit,verb_level=V_general)
+ call it(defs,'OccTresh','Occupation treshold (metallic bands)',filled_tresh,verb_level=V_general)
+ call it(defs,'BoseTemp','Bosonic Temperature',Bose_Temp,T_unit,verb_level=V_general)
+ call it(defs,'BoseCut', '[BOSE] Finite T Bose function cutoff',bose_E_cut,verb_level=V_general)
 #if defined _ELPH 
  call it('f',defs,'MinusQ', '[KPT] Use -{q} grid',verb_level=V_kpt)
  call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nDBs_used,verb_level=V_kpt) 
@@ -184,7 +188,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  ! BSE
  !
  call it(defs,'BSresKmod',  '[BSK] Resonant Kernel mode. (`x`;`c`;`d`)',BS_res_mode)
- call it(defs,'BScplKmod',  '[BSK] Coupling Kernel mode. (`x`;`c`;`d`;`u`)',BS_cpl_mode)
+ call it(defs,'BScplKmod',  '[BSK] Coupling Kernel mode. (`x`;`c`;`d`)',BS_cpl_mode)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
@@ -217,14 +221,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'Qdirection', '[Xd] Transferred momentum direction (iku)',q_plus_G_direction,verb_level=V_resp)
  call it(defs,'QShiftOrder', '[Xd] Pick-up the (QShiftOrder)th q+G vector',Q_Shift_Order,verb_level=V_resp)
  !
-#if defined _KERR
- !
- ! Optics: Kerr
- !
- call it('f',defs,'EvalKerr', '[OPT] Kerr parameters',verb_level=V_resp)
- !
-#endif
- !
  ! RIM
  !
  call it(defs,'Em1Anys', '[RIM] X Y Z Static Inverse dielectric matrix',&
@@ -248,21 +244,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !===================
  ! NON GPL VARIABLES
  !===================
- !
- ! GPL_EXCLUDE_END
- !
- ! GPL_EXCLUDE_START ELPH_IGNORE
- !
- ! Basics
- !
- call it(defs,'ElecTemp','Electronic Temperature',Tel,T_unit,verb_level=V_general)
- call it(defs,'BoseTemp','Bosonic Temperature',Bose_Temp,T_unit,verb_level=V_general)
- call it(defs,'OccTresh','Occupation treshold (metallic bands)',filled_tresh,verb_level=V_general)
- call it(defs,'BoseCut', '[BOSE] Finite T Bose function cutoff',bose_E_cut,verb_level=V_general)
- !
- ! GPL_EXCLUDE_END ELPH_IGNORE
- !
- ! GPL_EXCLUDE_START
  !
  ! S_xc
  !
@@ -330,7 +311,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'B_theta',       '[MAG] Magnetic field theta angle',MAG_theta,unit=Angle_unit,verb_level=V_sc)
  call it(defs,'B_Gauge',       '[MAG] Gauge ("SYMM"etric, "X_ASYMM", "Y_ASYMM" or "Z_ASYMM"etric)',MAG_gauge,verb_level=V_sc)
  call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization',verb_level=V_sc)
- call it(defs,'NonPerDir',     '[MAG] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions)
  call it(defs,'B_radius',      '[MAG] Magnetic flux radius',MAG_radius,verb_level=V_sc)
 #endif
  !

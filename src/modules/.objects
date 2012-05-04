@@ -12,9 +12,6 @@ ELPH_objects = mod_ELPH.o
 #if defined _DISTRIBUTED
 DISTRIBUTED_objects = mod_wf_distribute.o
 #endif
-#if defined _LIBXC
-LIBXC_objects = mod_libxc_int.o
-#endif
 #if defined _TEST_2
 TEST2_objects = mod_interpolate.o
 #endif
@@ -28,5 +25,4 @@ objs = mod_pars.o mod_units.o  mod_stderr.o  mod_par_proc.o \
        mod_functions.o mod_zeros.o mod_pseudo.o \
        mod_BS.o mod_QP.o mod_TDDFT.o mod_ACFDT.o $(DISTRIBUTED_objects) $(KERR_objects)\
        mod_IO.o mod_fragments.o $(ELPH_objects) mod_xc_functionals.o mod_global_XC.o \
-       $(SC_objects) $(RT_objects) $(MAGNETIC_objects) mod_X_output.o std_presets.o \
-       $(LIBXC_objects) 
+       $(SC_objects) $(RT_objects) $(MAGNETIC_objects) mod_X_output.o std_presets.o

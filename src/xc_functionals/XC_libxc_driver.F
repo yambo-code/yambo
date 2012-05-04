@@ -21,21 +21,23 @@
 !
 subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
- ! In case yambo is linked with libxc, this routine use the libxc
- ! routine to evaluate the xc functional (28/02/2010: only LDA)
+ ! After libxc is distributed together with Yambo (rev 1180)  
+ ! this routine evaluates the xc functional in yambo 
+ ! (27/04/12: LDA OK, GGA work in progress)
  !
  use pars,          ONLY:SP,DP,PI
  use R_lattice,     ONLY:bz_samp
- use D_lattice,     ONLY:DL_vol
+ use D_lattice,     ONLY:DL_vol, alat
  use com,           ONLY:msg,warning
 #if defined _RT
  use SC,            ONLY:rho_n
 #endif
  use electrons,     ONLY:levels,n_spin
  use FFT_m,         ONLY:fft_size
- use libxc_int,     ONLY:xc_fnctl_t,XC_y2libxc,xc_setup_fnctl
+ use wrapper,        ONLY:real_V_dot_V
  use xc_functionals,ONLY:E_xc,F_xc,V_xc,two_spin_density,&
-&                        xc_string,XC_LDA_C_KP,XC_FAMILY_LDA  
+&                        xc_string,XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl
+ use xc_f90_lib_m   ,  ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA
  implicit none
  type(levels) ::en
  type(bz_samp)::Xk
@@ -43,16 +45,20 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
  ! Work Space
  !
- integer  :: i1,i2,ixc,LIBXC_FUNC
+ integer  :: i1,i2,is,ic,is1,is2,ixc
  !
  ! XC routines arrays
  !
  real(SP) :: rho_sp(fft_size,n_spin),rspts(fft_size),rho_tmp(fft_size)
  real(DP) :: tmp_rho(n_spin,fft_size)
+ real(SP),allocatable:: drho(:,:,:)
+ real(DP),allocatable:: sigma(:,:)
  !
  ! note that multidimensional dvxc & vxc is allowed only in xcspol
  !
  real(DP) :: tmp_dvxc(fft_size),tmp_vxc(n_spin,fft_size),tmp_exc(fft_size)
+ real(SP),allocatable :: vdrho(:,:)
+ real(DP),allocatable:: vsigma(:,:)
  !
  ! Functional and Functional infos
  !
@@ -66,12 +72,11 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  tmp_vxc=0._DP
  tmp_dvxc=0._DP
  !
- LIBXC_FUNC = XC_y2libxc(FUNCTIONAL,KIND)
- call xc_setup_fnctl(fnctl,LIBXC_FUNC,n_spin)
+ call xc_setup_fnctl(fnctl,FUNCTIONAL,n_spin)
  !
- !===============================
+ !==========================
  ! Electronic/spin density 
- !===============================
+ !==========================
  !
 #if defined _RT
  do i1=1,n_spin
@@ -88,6 +93,30 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
 #endif
  !
  forall(i1=1:fft_size,i2=1:n_spin)  tmp_rho(i2,i1)=rho_sp(i1,i2)*real(fft_size,DP)/real(DL_vol,DP)
+ !
+ !=============================
+ ! Electronic density gradient
+ !=============================
+ !
+ if (any(fnctl(:)%family==XC_FAMILY_GGA)) then 
+   allocate(drho(3,n_spin,fft_size),sigma(n_spin*(n_spin+1)/2,fft_size))
+   if (ORDER==1) allocate(vdrho(3,fft_size),vsigma(n_spin*(n_spin+1)/2,fft_size))
+   !
+   do is1 = 1,n_spin
+     call eval_Gradient(rho_sp(:,is1),drho(:,is1,:))
+     forall (i1=1:fft_size) drho(:,is1,i1) = drho(:,is1,i1)*real(fft_size,DP)/real(DL_vol,DP)*2._SP*PI/alat(:)
+   end do
+   !
+   do i1 = 1,fft_size
+     do is1 = 1,n_spin
+       do is2 = is1,n_spin
+         is = is2*(is1+1)/2
+         sigma(is,i1) = real(real_V_dot_V(3,drho(:,is1,i1),drho(:,is2,i1)),DP)
+       end do
+     end do
+   end do
+   !
+ endif
  !
  !===========================
  ! Evaluate the xc functional
@@ -122,7 +151,29 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
          call xc_f90_lda_fxc(fnctl(ixc)%conf, fft_size, tmp_rho(1,1), tmp_dvxc(1))
          F_xc = F_xc + tmp_dvxc
      end select
+   elseif (fnctl(ixc)%family==XC_FAMILY_GGA) then
+     select case(ORDER)
+       case(0)
+         call xc_f90_gga_exc(fnctl(ixc)%conf, fft_size, tmp_rho(1,1), sigma(1,1), tmp_exc(1))
+         E_xc = E_xc + tmp_exc    
+       case(1)
+         call xc_f90_gga_vxc(fnctl(ixc)%conf, fft_size, tmp_rho(1,1), sigma(1,1), tmp_vxc(1,1), vsigma(1,1))
+         do is1 = 1,n_spin
+           vdrho(:,:) = 0._SP 
+           do is2 = 1,n_spin
+             is = min(is2*(is1+1)/2,is1*(is2+1)/2)
+             forall(ic=1:3,i1=1:fft_size) vdrho(ic,i1) = vdrho(ic,i1) + &
+                  & 2._SP*real(vsigma(is,i1),SP)*drho(ic,is2,i1)
+           end do
+           call XC_eval_gga_potential(V_xc(:,is1),real(tmp_vxc(is1,:),SP),vdrho)
+         end do
+           !
+     end select
    end if
  enddo
  !
-end subroutine
+ if (fnctl(ixc)%family==XC_FAMILY_GGA) deallocate(sigma,drho)
+ if ((fnctl(ixc)%family==XC_FAMILY_GGA).and.(ORDER==1)) deallocate (vdrho,vsigma)
+ !
+end subroutine XC_libxc_driver
+

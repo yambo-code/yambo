@@ -48,7 +48,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use timing,         ONLY:live_timing
  use collisions_IO,  ONLY:collisions_IO_alloc,collisions_IO_free
 #if defined _MAGNETIC
- use magnetic,       ONLY:average_el_mag
+ use electrons,       ONLY:Total_magn
 #endif
  !
  implicit none
@@ -375,7 +375,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &            trim(real2ch(rho_convergence))//'% - '//trim(real2ch(E_convergence*HA2EV))
      if (l_sc_contains_lda.and. local_V) dumb_ch=trim(dumb_ch)//'  E_tot(Ha)= '//trim(real2ch(E_total))
 #if defined _MAGNETIC
-     if(n_sp_pol>1) dumb_ch=trim(dumb_ch)//'  (Mz='//trim(real2ch(average_el_mag(3)))//')'
+     if(n_sp_pol>1) dumb_ch=trim(dumb_ch)//'  (Mz='//trim(real2ch(Total_magn(3)))//')'
 #endif
      !
      if (tty_size>0.or.it_now==1) then

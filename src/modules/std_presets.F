@@ -47,7 +47,8 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_RIM_nbands,BZ_RIM_tot_nkpts,&
-&                     filled_tresh, spin_orbit,Boltz_tau,Boltz_Efield
+&                     filled_tresh, spin_orbit,Boltz_tau,Boltz_Efield,        &
+&                     eval_magn
  use par_proc_m, ONLY:myid,master_cpu,ncpu,n_nodes,local_master_cpu
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,&
 &                     of_unit,write_to_of,write_to_report,max_open_ofs,&
@@ -98,8 +99,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 #endif
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
-&                      MAG_gauge,MAG_psi,MAG_theta,average_el_mag_rescaling,      &
-&                      average_el_mag_dim,phase_trick
+&                      MAG_gauge,MAG_psi,MAG_theta,phase_trick
 #endif
 #if defined _TEST_2
  use interpolate, ONLY:interpls,interp_coeff,max_interpls
@@ -252,7 +252,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  l_sc_magnetic=.false.
  l_collisions_IO=.false.
  l_elph_Hamiltonian=.false.
- l_kerr=.false.
  !
  !electrons
  !
@@ -263,6 +262,10 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  BZ_RIM_nbands=0
  BZ_RIM_tot_nkpts=0
  filled_tresh=0.00001
+ !
+ ! Magnetization
+ !
+ eval_magn=.false.
  !
  !memory
  !
@@ -509,8 +512,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  MAG_gauge='SYMM'
  MAG_psi=0.
  MAG_theta=0.
- average_el_mag_dim='Bohr_magneton/Bohr^3'
- average_el_mag_rescaling=1.
  phase_trick=.false.
  !
 #endif

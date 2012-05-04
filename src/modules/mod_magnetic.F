@@ -22,6 +22,7 @@
 module magnetic
  !
  use pars, ONLY:SP,schlen
+ implicit none
  !
  character(schlen) :: MAG_hamiltonian_type
  character(schlen) :: MAG_gauge               ! 'SYMM' 'X_ASYMM' 'Y_ASYMM' 'Z_ASYMM'
@@ -58,13 +59,6 @@ module magnetic
  logical                  :: phase_trick
  real(SP), parameter      :: phase_radius=0.01
  integer                  :: n_loops
- !
- ! Average magnetization density
- !
- real(SP)                 :: average_el_mag(3)
- real(SP)                 :: average_el_mag_rescaling
- character(20)            :: average_el_mag_dim         ! 'Bohr_magneton'        'Bohr_magneton/Bohr'
- !                                                      ! 'Bohr_magneton/Bohr^2' 'Bohr_magneton/Bohr^3'
  ! Centered cartesian coordinates
  !
  real(SP),    allocatable :: x(:,:)

@@ -23,11 +23,10 @@ cpu         = @build_cpu@
 os          = @build_os@
 mpi         = @mpi_cpp@
 netcdf      = @dnetcdf@
-libxc       = @dlibxc@
 scalapack   = @dscalapack@
 precision   = @dp_cpp@
 fft         = @FFT_CPP@
-xcpp        = @dnetcdf@ @dlibxc@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@
+xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@
 debug       = @enable_debug@
 do_blas     = @compile_blas@
 do_lapack   = @compile_lapack@
@@ -40,8 +39,8 @@ package_bugreport = @PACKAGE_BUGREPORT@
 prefix      = @prefix@
 exec_prefix = @exec_prefix@
 bindir      = @bindir@
-libdir      = @libdir@
-includedir  = @includedir@
+libdir      = @srcdir_path@/lib
+includedir  = @srcdir_path@/include
 CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
   	   sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
 	   src/external_c/.objects Makefile driver/version.h \
@@ -51,7 +50,7 @@ UTILS    = changelog
 CLEANS   = clean clean_all
 PROJECTS = yambo_ph yambo_sc yambo_ras yambo_ras_distributed yambo_reels \
 	       yambo_ras_manyk yambo_magnetic yambo_auger \
-           yambo_rt yambo_distributed yambo_kerr \
+           yambo_rt yambo_distributed \
            ypp_rt ypp_ph ypp_ras ypp_sc ypp_magnetic ypp_boltzmann ypp_test_2
 BROKEN   = yambo_manyk
 DEBUG    = yambo_test_1 yambo_test_2
@@ -92,6 +91,7 @@ changelog:
 	svn log | perl sbin/svn2cl.pl > ChangeLog
 all: $(TARGETS) $(PROJECTS) $(DEBUG)
 libs:
+	@$(mklibxc)
 	@LIBS2DO="slatec";  DIR2GO="lib" ; $(mklib)
 	@LIBS2DO="pwdiago"; DIR2GO="lib" ; $(mklib)
 	@if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; \
@@ -115,9 +115,6 @@ yambo_magnetic: libs
 yambo_distributed: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_DISTRIBUTED"; $(mksrc)
 	@X2DO="yambo_distributed"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_DISTRIBUTED";$(mkx)
-yambo_kerr: libs
-	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_KERR"; $(mksrc)
-	@X2DO="yambo_kerr"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_KERR";$(mkx)
 yambo_sc: libs
 	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_SC"; $(mksrc)
 	@X2DO="yambo_sc"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_SC";$(mkx)
@@ -193,10 +190,12 @@ ypp: libs
 #
 clean: clean_fast
 clean_fast: 
+	@$(lib_xc_clean)
 	@$(objects_clean)
 	@$(lib_mod_clean)
 	@$(xclean)
 clean_all: 
+	@$(lib_xc_distclean)
 	@$(objects_clean)
 	@$(lib_mod_netcdf_clean)
 	@$(conf_clean)
@@ -221,6 +220,16 @@ define mksrc
   ./sbin/make_makefile.sh src/$$ldir lib$$ldir.a .objects l $(xcpp) $$ADF ; \
   cd src/$$ldir ; $(make) VPATH=src/$$ldir || exit "$$?" ; cd ../../; fi \
  done
+endef
+define mklibxc
+  if test ! -f "$(libdir)/libxc.a" ; then \
+  echo " " ; \
+  echo ">>>[Making libxc]<<<" ; \
+  cd $(libdir)/libxc ; $(make) -s VPATH=$(libdir)/libxc  || exit "$$?" ; \
+  echo ">>>[Installing libxc]<<<" ; \
+  make -s install ; \
+  cd ../../; \
+  fi 
 endef
 define mklib
  for ldir in $$LIBS2DO; do \
@@ -254,9 +263,18 @@ define objects_clean
  echo "[CLEAN] Debug locks and directories ... done" ; \
  fi
 endef
+define lib_xc_clean
+ cd $(libdir)/libxc; make -s clean; cd ../..
+ echo "[CLEAN] LibXC ... done" 
+endef
+define lib_xc_distclean
+ cd $(libdir)/libxc; make -s distclean; cd ../..
+ rm -fr include/xc.h include/xc_config.h  include/xc_funcs.h lib/pkgconfig/
+ echo "[CLEAN] LibXC ... done" 
+endef
 define lib_mod_clean
  find . \( -name '*.a' -o -name '*.mod' \) -type f -print | \
-       grep -v netcdf | grep -v xc_ | grep -v libxc | grep -v iotk | grep -v typesize | xargs rm -f 
+       grep -v netcdf | grep -v xc_ | grep -v iotk | grep -v typesize | xargs rm -f 
  echo "[CLEAN] Libraries ... done" 
  echo "[CLEAN] Modules ... done" 
 endef

@@ -27,7 +27,7 @@ integer function ioDB1(E,k,ID)
  use memory_m,         ONLY:mem_est
  use LOGO,             ONLY:code_version,code_revision
  use electrons,        ONLY:levels,default_nel,n_spin,n_bands,nel,n_sp_pol,&
-&                           n_spinor
+&                           n_spinor,spin_orbit
  use D_lattice,        ONLY:a, alat, nsym, i_time_rev, input_GS_Tel, dl_sop, &
 &                           Tel, n_atoms_species_max,n_atomic_species,n_atoms_species,atom_pos, &
 &                           Z_species, n_atoms
@@ -75,18 +75,19 @@ integer function ioDB1(E,k,ID)
    !
    !  1 Serial Number 
    !  2 Major version   3 Minor version   4 Patchlevel
-   !  5 Bands                   E%nb
-   !  6 k-points                k%nibz
-   !  7 G-vectors (total)       ng_vec
-   !  8 G-vectors (wfc/shell)   wf_ncx
-   !  9 Time reversal flag      i_time_rev
-   ! 10 Symmetries              nsym
-   ! 11 Spinor cmpts            n_spinor
-   ! 12 Spins                   n_sp_pol
-   ! 13 Temperature             default_Tel
-   ! 14 Electrons               default_nel
-   ! 15 XC kind                 GS_xc_KIND
-   ! 16 XC functional           GS_xc_FUNCTIONAL 
+   !  5 Revision                code_revision    	
+   !  6 Bands                   E%nb
+   !  7 k-points                k%nibz
+   !  8 G-vectors (total)       ng_vec
+   !  9 G-vectors (wfc/shell)   wf_ncx
+   ! 10 Time reversal flag      i_time_rev
+   ! 11 Symmetries              nsym
+   ! 12 Spinor cmpts            n_spinor
+   ! 13 Spins                   n_sp_pol
+   ! 14 Temperature             default_Tel
+   ! 15 Electrons               default_nel
+   ! 16 XC kind                 GS_xc_KIND
+   ! 17 XC functional           GS_xc_FUNCTIONAL 
    !
    ! Added dimensions: (still in SEC=1)
    !
@@ -171,6 +172,11 @@ integer function ioDB1(E,k,ID)
      call io_elemental(ID, VAR="number_of_atom_species",VAR_SZ=1,MENU=0)
      call io_elemental(ID,I0=n_atomic_species,CHECK=.true.,OP=(/"=="/),&
 &                      VAR=' No. of atom species             :')
+   endif
+   if (ver_is_gt_or_eq(ID,revision=1041)) then
+     call io_elemental(ID, VAR="spin_orbit",VAR_SZ=1,MENU=0)
+     call io_elemental(ID, L0=spin_orbit,&
+&                      VAR=' Spin Orbit interaction          : ')
    endif
    call io_elemental(ID, VAR="",VAR_SZ=0)
    !

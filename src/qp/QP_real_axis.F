@@ -300,8 +300,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      do ib=QP_n_G_bands(1),QP_n_G_bands(2)
        !
        isc%os(1)=ib
-       i_or=IOR(e2et(isc%is(:2),isc%os(:2),en,life_Fe),&
-&               h2ht(isc%is(:2),isc%os(:2),en,life_Fh))
+       i_or=IOR(e2et((/isc%is(:2),isc%is(4)/),(/isc%os(:2),isc%os(4)/),en,life_Fe),&
+&               h2ht((/isc%is(:2),isc%is(4)/),(/isc%os(:2),isc%os(4)/),en,life_Fh))
        if (l_life) QP_n_W_freqs=QP_n_W_freqs+i_or
        !
        if (.not.px%element_2D(i1,ib)) cycle

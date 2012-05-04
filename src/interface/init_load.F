@@ -358,8 +358,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  !
  ! BSE
  !
- call it(defs,'BSehWind','[BSK] [o/o] E/h coupling pairs energy window',&
-&        BS_eh_win,verb_level=V_resp)
+ call it(defs,'BSehWind','[BSK] [o/o] E/h coupling pairs energy window',BS_eh_win,verb_level=V_resp)
  call it(defs,'BSEQptR', '[BSK] Transferred momenta range',BS_q,verb_level=V_resp)
  call it(defs,'BSEClmns','[BSK] Kernel Columns',BS_columns,verb_level=V_resp)
  call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,&

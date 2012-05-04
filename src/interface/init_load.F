@@ -222,14 +222,6 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'Qdirection', '[Xd] Transferred momentum direction (iku)',q_plus_G_direction,verb_level=V_resp)
  call it(defs,'QShiftOrder', '[Xd] Pick-up the (QShiftOrder)th q+G vector',Q_Shift_Order,verb_level=V_resp)
  !
-#if defined _KERR
- !
- ! Optics: Kerr
- !
- call it('f',defs,'EvalKerr', '[OPT] Kerr parameters',verb_level=V_resp)
- !
-#endif
- !
  ! RIM
  !
  call it(defs,'Em1Anys', '[RIM] X Y Z Static Inverse dielectric matrix',&

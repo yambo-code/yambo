@@ -163,12 +163,8 @@ subroutine X_s(iq,fr,X,wv)
    !
    ! X(g,gp)=Sum_gpp[tddftk]^-1_(g,gpp)*Xo(gpp,gp)
    !
-#if defined _KERR
-   X_mat(:,:,iw)=tddftk(:,:)
-#else
    X_mat(:,:,iw)=matmul(tddftk,Xo)
    forall(i1=1:X%ng,i2=1:X%ng) X_mat(i1,i2,iw)=X_mat(i1,i2,iw)*4.*pi/bare_qpg(iq,i1)/bare_qpg(iq,i2)
-#endif
    call live_timing(steps=1)
    !
  enddo

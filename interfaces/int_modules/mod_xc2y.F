@@ -46,7 +46,7 @@ module mod_xc2y
     XC_NOT_AVAILABLE,                             & !ixc= 10 not defined
     XC_GGA_X_PBE*XC_FACTOR+XC_GGA_C_PBE,          & !ixc= 11
     XC_GGA_X_PBE*XC_FACTOR,                       & !ixc= 12
-    XC_GGA_X_LB*XC_FACTOR,                       & !ixc= 13
+    XC_NOT_AVAILABLE,                             & !ixc= 13 does not seem to be the same as XC_GGA_X_LB*XC_FACTOR,
     XC_GGA_X_PBE_R*XC_FACTOR+XC_GGA_C_PBE,        &!ixc= 14 
     XC_GGA_X_RPBE*XC_FACTOR+XC_GGA_C_PBE,         &!ixc= 15 
     XC_GGA_XC_HCTH_93*XC_FACTOR,                  &!ixc= 16 
@@ -56,8 +56,8 @@ module mod_xc2y
     XC_NOT_AVAILABLE,                             &!ixc= 20
     XC_NOT_AVAILABLE,                             &!ixc= 21
     XC_NOT_AVAILABLE,                             &!ixc= 22
-    XC_GGA_X_WC*XC_FACTOR,                        &!ixc= 23 
-    XC_NOT_AVAILABLE,                             &!ixc= 24
+    XC_NOT_AVAILABLE,                             &!ixc= 23 !does not seem to be the same as XC_GGA_X_WC*XC_FACTOR
+    XC_NOT_AVAILABLE,                             &!ixc= 24 !does not seem to be the same as XC_GGA_X_C09X*XC_FACTOR
     XC_NOT_AVAILABLE,                             &!ixc= 25
     XC_GGA_XC_HCTH_147*XC_FACTOR,                 &!ixc= 26 
     XC_GGA_XC_HCTH_407*XC_FACTOR,                 &!ixc= 27 

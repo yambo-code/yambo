@@ -172,8 +172,8 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
    end if
  enddo
  !
- if (fnctl(ixc)%family==XC_FAMILY_GGA) deallocate(sigma,drho)
- if ((fnctl(ixc)%family==XC_FAMILY_GGA).and.(ORDER==1)) deallocate (vdrho,vsigma)
+ if (any(fnctl(:)%family==XC_FAMILY_GGA)) deallocate(sigma,drho)
+ if (any((fnctl(:)%family==XC_FAMILY_GGA)).and.(ORDER==1)) deallocate (vdrho,vsigma)
  !
 end subroutine XC_libxc_driver
 

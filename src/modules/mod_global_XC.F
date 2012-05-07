@@ -192,11 +192,11 @@ module global_XC
        case(0)
          global_XC_string='Hartree'
        case(1:300)
-         global_XC_string=trim(xc_string(kind,xc_functional))
+         global_XC_string=trim(xc_string(xc_functional))
        case(SC_EXX)
          global_XC_string='SC Exact Exchange'
        case(SC_EXXC)
-         global_XC_string='SC Exact Exchange +'//trim(xc_string(XC_CORRELATION,xc_functional))
+         global_XC_string='SC Exact Exchange +'//trim(xc_string(xc_functional))
        case(SC_HF)
          global_XC_string='SC Hartree Fock'
        case(SC_COHSEX)

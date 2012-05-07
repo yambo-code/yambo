@@ -69,7 +69,7 @@ subroutine p2y_db1(en,k)
  !---------------------------------------------------------------------*
  !
  call get_xc
- call msg('s','XC functional...'//xc_string(GS_xc_KIND,GS_xc_FUNCTIONAL))
+ call msg('s','XC functional...'//xc_string(GS_xc_FUNCTIONAL))
  !
  !
  !---------------------------------------------------------------------*

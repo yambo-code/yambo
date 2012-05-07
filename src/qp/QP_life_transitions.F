@@ -73,7 +73,7 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
        ik=QP_table(i2,3)
        isp=spin(QP_table(i2,:))
        ok=k%sstar(qindx_S(ik,iqbz,1),1)
-       osp=isp ! Davide:to be checked !
+       osp=isp
        do ob=QP_n_G_bands(1),QP_n_G_bands(2)
          i_or=IOR(e2et((/ib,ik,isp/),(/ob,ok,osp/),E,F),h2ht((/ib,ik,isp/),(/ob,ok,osp/),E,F))
          if (i_or==0) cycle

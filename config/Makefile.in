@@ -39,8 +39,8 @@ package_bugreport = @PACKAGE_BUGREPORT@
 prefix      = @prefix@
 exec_prefix = @exec_prefix@
 bindir      = @bindir@
-libdir      = @libdir@
-includedir  = @includedir@
+libdir      = @srcdir_path@/lib
+includedir  = @srcdir_path@/include
 CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
   	   sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
 	   src/external_c/.objects Makefile driver/version.h \
@@ -50,7 +50,7 @@ UTILS    = changelog
 CLEANS   = clean clean_all
 PROJECTS = yambo_ph yambo_sc yambo_ras yambo_ras_distributed yambo_reels \
 	       yambo_ras_manyk yambo_magnetic yambo_auger \
-           yambo_rt yambo_distributed yambo_kerr \
+           yambo_rt yambo_distributed yambo_kerr\
            ypp_rt ypp_ph ypp_ras ypp_sc ypp_magnetic ypp_boltzmann ypp_test_2
 BROKEN   = yambo_manyk
 DEBUG    = yambo_test_1 yambo_test_2
@@ -228,7 +228,7 @@ define mklibxc
   if test ! -f "$(libdir)/libxc.a" ; then \
   echo " " ; \
   echo ">>>[Making libxc]<<<" ; \
-  cd $(libdir)/libxc ; $(make) -s VPATH=lib/libxc  || exit "$$?" ; \
+  cd $(libdir)/libxc ; $(make) -s VPATH=$(libdir)/libxc  || exit "$$?" ; \
   echo ">>>[Installing libxc]<<<" ; \
   make -s install ; \
   cd ../../; \
@@ -267,11 +267,11 @@ define objects_clean
  fi
 endef
 define lib_xc_clean
- cd lib/libxc; make -s clean; cd ../..
+ cd $(libdir)/libxc; make -s clean; cd ../..
  echo "[CLEAN] LibXC ... done" 
 endef
 define lib_xc_distclean
- cd lib/libxc; make -s distclean; cd ../..
+ cd $(libdir)/libxc; make -s distclean; cd ../..
  rm -fr include/xc.h include/xc_config.h  include/xc_funcs.h lib/pkgconfig/
  echo "[CLEAN] LibXC ... done" 
 endef

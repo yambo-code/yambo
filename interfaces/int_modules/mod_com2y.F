@@ -243,7 +243,7 @@ module mod_com2y
      call msg('s',' :: Max WF components     :',wf_ncx)
      call msg('s',' :: RL vectors        (WF):',wf_ng)
      call msg('s',' :: RL vectors    (CHARGE):',ng_vec)
-     call msg('s',' :: XC potential          : ',xc_string(GS_xc_KIND,GS_xc_FUNCTIONAL))
+     call msg('s',' :: XC potential          : ',xc_string(GS_xc_FUNCTIONAL))
      call msg('s',' :: Atomic species        :',n_atomic_species)
      call msg('s',' :: Max atoms/species     :',n_atoms_species_max)
      !

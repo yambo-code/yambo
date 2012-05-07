@@ -28,12 +28,14 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels
  use com,           ONLY:msg,warning
- use xc_functionals,ONLY:XC_EXCHANGE_CORRELATION,XC_LDA_C_PW,xc_string,&
-&                        XC_NOT_AVAILABLE,xc_OnlyInLibxc
+ use libxc_funcs_m, ONLY: XC_LDA_X, XC_LDA_C_PW
+ use xc_functionals,ONLY:XC_EXCHANGE_CORRELATION,xc_string,&
+&                        XC_NOT_AVAILABLE,XC_FACTOR
  implicit none
- type(levels) ::en
- type(bz_samp)::Xk
- integer      ::KIND,FUNCTIONAL,ORDER
+ type(levels), intent(in)  ::en
+ type(bz_samp), intent(in) ::Xk
+ integer, intent(inout)    :: KIND,FUNCTIONAL
+ integer, intent(in)       :: ORDER
  !
  ! COM
  !
@@ -48,11 +50,11 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
 !   call msg('rsn','[xc] Functional used: ', xc_string(KIND,FUNCTIONAL))
 ! elseif (KIND>0.and.FUNCTIONAL>0) then
 !
-   call msg('rsn','[xc] Functional ',xc_string(KIND,FUNCTIONAL))
+   call msg('rsn','[xc] Functional ',xc_string(FUNCTIONAL))
  else if (FUNCTIONAL==XC_NOT_AVAILABLE) then
    KIND=XC_EXCHANGE_CORRELATION
-   FUNCTIONAL=XC_LDA_C_PW
-   call msg('rsn','[xc] Functional unknown. Used ',xc_string(KIND,FUNCTIONAL))
+   FUNCTIONAL=XC_LDA_X*XC_FACTOR+XC_LDA_C_PW
+   call msg('rsn','[xc] Functional unknown. Used ',xc_string(FUNCTIONAL))
  endif
  !
  ! Maybe also (spin)density should be calculated in the wrapper, since it does 
@@ -61,8 +63,6 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  call msg('rsn','[xc] LIBXC used to calculate xc functional ')
  !
  call XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
- !
-! call   XC_lda_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
 end subroutine XC_potential_driver
 

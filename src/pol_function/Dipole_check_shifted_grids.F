@@ -26,9 +26,6 @@ subroutine Dipole_check_shifted_grids( Xk_shift, Xk, ifail, num_shifted_grid )
  use com,             ONLY: msg,warning
  use vec_operate,     ONLY: v_is_zero, iku_v_norm, c2a
  use R_lattice,       ONLY: bz_samp,q0_shift_norm
-#if defined _RAS
- use ras_long,        ONLY: q_long
-#endif
  implicit none
  !
  ! Find number of shifted grids
@@ -54,19 +51,11 @@ subroutine Dipole_check_shifted_grids( Xk_shift, Xk, ifail, num_shifted_grid )
  num_shifted_grid = Xk_shift%nibz / Xk%nibz
  call msg('r','Shifted grids found: '//intc(num_shifted_grid))
   !
-#if defined _RAS
- if(.not.(num_shifted_grid.ge.1.and.num_shifted_grid.le.4)) then
-   call warning('Bad number of shifted grids (1/2/3).')
-   ifail = ifail + 1
-   return
- endif
-#else
  if(num_shifted_grid/=3) then
    call warning('Shifted grids must be 3 and parallel to the three carthesian axis')
    ifail = ifail + 1
    return
  endif
-#endif
  !
  ! Find the displacement vector for each grid
  !
@@ -111,9 +100,5 @@ subroutine Dipole_check_shifted_grids( Xk_shift, Xk, ifail, num_shifted_grid )
    call msg('r','Shifts are not uniform for all {k}.')
    ifail = ifail + 1
  endif
- !
-#if defined _RAS
- q_long = q_long_tmp
-#endif
  !
 end subroutine Dipole_check_shifted_grids

@@ -115,32 +115,6 @@ module YPP
  character(schlen) :: elph_dbs_path
  character(schlen) :: ph_freqs_file
  !
- !RAS
- !
- logical           :: lras, lsurf, lreels, lcelleps
- character(schlen) :: xdata, ydata, zdata
- character(len=5)  :: datatype
- real(SP)          :: sshift
- real(SP)          :: d_cellin
- !
- ! REELS
- !
- !
- ! Localization
- !
- logical           :: lloc
- real(SP)          :: lowerlim, upperlim
- integer           :: normdir, ngloc
- integer           :: loc_bands(2)
- integer           :: loc_kpts(2)
- !
- ! Transition Analysis
- !
- logical           :: ltrans
- real(SP)          :: Ecv_min, Ecv_max
- real(SP)          :: qdir(3)
- integer           :: idir
- !
  ! Wannier interface
  !
  logical           :: l_wannier

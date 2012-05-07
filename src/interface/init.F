@@ -55,12 +55,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use TDDFT,          ONLY:ioBS_Fxc
  use BS,             ONLY:BS_bands,BS_n_g_exch,BS_n_g_W,BSS_mode,BSS_q0,&
 &                         BS_eh_en,BS_res_mode,BS_cpl_mode
-#if defined _RAS
- use ras_module,     ONLY:lras, lreels
-#endif
-#if defined _REELS
- use reels_module,   ONLY:lreels
-#endif
 #if defined  _ELPH 
  use ELPH,           ONLY:elph_nDBs,elph_nDBs_used,elph_use_q_grid
 #endif
@@ -121,20 +115,11 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _ELPH 
  what_is_running='YAMBO_PH'
 #endif
-#if defined _RAS
- what_is_running='YAMBO_RAS'
-#endif
-#if defined _REELS
- what_is_running='YAMBO_REELS'
-#endif
 #if defined _SC
  what_is_running='YAMBO_SC'
 #endif
 #if defined _RT
  what_is_running='YAMBO_RT'
-#endif
-#if defined _MANYK && _RAS
- what_is_running='YAMBO_RAS_MANYK'
 #endif
 #if defined _MANYK 
  what_is_running='YAMBO_MANYK'
@@ -669,48 +654,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #endif
  !
- ! RAS
- !
-#if defined _RAS
- if (lras.or.lreels) then
-    call X_activate('Xd',(/'QpntsR','BndsRn','NGsBlk',&
-&                 'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
-&                 'DrudeW','EhEngy'/))
-    call initactivate(1,'FFTGvecs XfnQP_E'//&
-&     ' BulkFile BulkForm BlkShift BlkBroad Layers'//&  ! Bulk eps data
-&     ' q0x q0y'//&                                     ! Polarizations
-&     ' Cutoff CutZero CutStep ShiftedPath')               ! Cut off fn
- endif
- if (lras) then
-    call initactivate(1,&
-&     ' LocLimit LocType')               ! Analyse
- endif
- if (lreels) then
-    call initactivate(1,&
-&     ' E0 Theta0 Thetap Phi DetAngle'//&               ! Kinematics
-&     ' LossForm ImpactFt'//&                        ! Model of loss function
-&     ' DetIntMd NumIntPt'//&                           ! Det. integration
-&     ' PenDepth GausConv')                    ! General flags
- endif
-#endif
- !
- ! REELS
- !
-#if defined _REELS
- if (lreels) then
-    call X_activate('Xd',(/'QpntsR','BndsRn','NGsBlk',&
-&                 'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
-&                 'DrudeW','EhEngy'/))
-    call initactivate(1,'FFTGvecs XfnQP_E'//&
-&     ' BulkFile BulkForm BlkShift BlkBroad '//&       ! Bulk eps data
-&     ' q0x q0y NumPol'//&                             ! Polarizations
-&     ' E0 Theta0 Thetap Phi DetAngle '//&             ! Kinematics
-&     ' DetIntMd NumIntPt'//&                          ! Det. integration
-&     ' EELIntMd IntLimit EpsMix'//&                   ! REELS integration
-&     ' ETStpsLs GausConv ShiftedPath')                ! General flags
- endif
-#endif
- !
  ! Are we editing the input file ?
  !
  if (infile_editing) then
@@ -881,13 +824,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _RT
        l_collisions_IO=runlevel_is_on('collisions_IO')
 #endif
-#if defined  _RAS
-       lreels=runlevel_is_on('reels')
-       lras=runlevel_is_on('ras')
-#endif
-#if defined  _REELS
-       lreels=runlevel_is_on('reels')
-#endif
 #if defined  _ELPH  
        if (.not.CLOSE_Gs) then
          !
@@ -947,13 +883,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        call W_duplicate(Xxcw,Xw(3))
        call initactivate(2,'XfnQP_E')
      endif
-#if defined _RAS
-     X(3)%iq = 1  ! 2 components
-#endif
-#if defined _RAS || _REELS
-     X(3)%ordering = 'c'
-     Xw(3)%n = 101 ! 2 components
-#endif 
 #if defined  _ELPH 
      if (.not.l_el_corr.and..not.l_ph_corr) l_el_corr=.true.
      elph_nDBs_used=elph_nDBs
@@ -1200,16 +1129,6 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          endif
          !
        endif
-       !
-       ! RAS
-       !
-#if defined _RAS
-       if ( trim(rstr_piece(i1)) == 'sursp' )  then
-         if ( trim(rstr_piece(i1+1)) == 'r') call initactivate(1,'ras')
-         if ( trim(rstr_piece(i1+1)) == 'e') call initactivate(1,'reels')
-         if ( trim(rstr_piece(i1+1)) == 'b') call initactivate(1,'ras reels')
-       endif
-#endif
        !
        ! Sc / NEGF
        !

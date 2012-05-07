@@ -48,10 +48,10 @@ CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
 TARGETS  = all yambo interfaces ypp 
 UTILS    = changelog
 CLEANS   = clean clean_all
-PROJECTS = yambo_ph yambo_sc yambo_ras yambo_ras_distributed yambo_reels \
-	       yambo_ras_manyk yambo_magnetic yambo_auger \
+PROJECTS = yambo_ph yambo_sc \
+	       yambo_magnetic yambo_auger \
            yambo_rt yambo_distributed \
-           ypp_rt ypp_ph ypp_ras ypp_sc ypp_magnetic ypp_boltzmann ypp_test_2
+           ypp_rt ypp_ph ypp_sc ypp_magnetic ypp_boltzmann ypp_test_2
 BROKEN   = yambo_manyk
 DEBUG    = yambo_test_1 yambo_test_2
 EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(DEBUG)
@@ -63,12 +63,6 @@ BASIC_LIBS   = external_c modules xc_functionals parser communicate common io wf
 
 MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface \
                interpolate tddft pol_function qp acfdt bse
-
-PJ_RASLIBS   = $(BASIC_LIBS) ras_reels_mods coulomb bz_ops qp_ctl ras \
-               setup interface tddft pol_function qp acfdt bse
-
-PJ_REELSLIBS = $(BASIC_LIBS) ras_reels_mods coulomb bz_ops qp_ctl reels \
-               setup interface tddft pol_function qp acfdt bse
 
 PJ_SCLIBS          = $(MAIN_LIBS) sc 
 PJ_RTLIBS          = $(MAIN_LIBS) sc real_time
@@ -82,7 +76,6 @@ PJ_RTLIBS          = $(MAIN_LIBS) sc real_time
 YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface pol_function bse
 YPPSCLIBS    = $(YPPLIBS) sc
 YPPRTLIBS    = $(YPPLIBS) sc real_time
-YPPRASLIBS   = $(BASIC_LIBS) ras_reels_mods bz_ops qp_ctl setup interface ras pol_function bse
 YPPTEST2     = $(YPPLIBS) interpolate
 
 nothing: 
@@ -124,24 +117,9 @@ yambo_rt: libs
 yambo_ph: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_ELPH"; $(mksrc)
 	@X2DO="yambo_ph"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_ELPH";$(mkx)
-yambo_ras: libs
-	@LIBS2DO="$(PJ_RASLIBS)";ADF="-D_RAS"; $(mksrc)
-	@X2DO="yambo_ras"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS";$(mkx)
-yambo_ras_distributed: libs
-	@LIBS2DO="$(PJ_RASLIBS)";ADF="-D_RAS -D_DISTRIBUTED"; $(mksrc)
-	@X2DO="yambo_ras_distributed"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS -D_DISTRIBUTED";$(mkx)
-yambo_ras_manyk: libs
-	@LIBS2DO="$(PJ_RASLIBS)";ADF="-D_RAS -D_MANYK"; $(mksrc)
-	@X2DO="yambo_ras_manyk"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS -D_MANYK";$(mkx)
-yambo_reels: libs
-	@LIBS2DO="$(PJ_REELSLIBS)";ADF="-D_REELS"; $(mksrc)
-	@X2DO="yambo_reels"; XPATH="driver";XLIBS="$(PJ_REELSLIBS)";ADF="-D_REELS";$(mkx)
 ypp_ph: libs
 	@LIBS2DO="$(YPPLIBS)";ADF="-D_ELPH -D_BOLTZMANN"; $(mksrc)
 	@X2DO="ypp_ph" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_ELPH -D_YPP_BOLTZMANN";$(mkx)
-ypp_ras: libs
-	@LIBS2DO="$(YPPRASLIBS)" ; ADF="-D_YPP_RAS";$(mksrc)
-	@X2DO="ypp_ras" ;XPATH="ypp";XLIBS="$(YPPRASLIBS)"; ADF="-D_YPP_RAS";$(mkx)
 ypp_rt: libs
 	@LIBS2DO="$(YPPRTLIBS)" ; ADF="-D_SC -D_RT";$(mksrc)
 	@X2DO="ypp_rt" ;XPATH="ypp";XLIBS="$(YPPRTLIBS)"; ADF="-D_YPP_RT";$(mkx)
@@ -269,12 +247,12 @@ define lib_xc_clean
 endef
 define lib_xc_distclean
  cd $(libdir)/libxc; make -s distclean; cd ../..
- rm -fr include/xc.h include/xc_config.h  include/xc_funcs.h lib/pkgconfig/
+ rm -fr include/xc.h include/xc_config.h  include/xc_funcs.h lib/pkgconfig/ libxc/autom4te.cache/
  echo "[CLEAN] LibXC ... done" 
 endef
 define lib_mod_clean
  find . \( -name '*.a' -o -name '*.mod' \) -type f -print | \
-       grep -v netcdf | grep -v xc_ | grep -v iotk | grep -v typesize | xargs rm -f 
+       grep -v netcdf | grep -v xc_ | grep -v iotk | grep -v typesize | grep -v libxc | xargs rm -f 
  echo "[CLEAN] Libraries ... done" 
  echo "[CLEAN] Modules ... done" 
 endef

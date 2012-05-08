@@ -23,7 +23,7 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  !
  ! After libxc is distributed together with Yambo (rev 1180)  
  ! this routine evaluates the xc functional in yambo 
- ! (27/04/12: LDA OK, GGA work in progress)
+ ! (03/05/12: LDA OK, GGA OK => EXTENSIVE TESTS NEEDED) 
  !
  use pars,          ONLY:SP,DP,PI
  use R_lattice,     ONLY:bz_samp
@@ -172,8 +172,8 @@ subroutine XC_libxc_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
    end if
  enddo
  !
- if (fnctl(ixc)%family==XC_FAMILY_GGA) deallocate(sigma,drho)
- if ((fnctl(ixc)%family==XC_FAMILY_GGA).and.(ORDER==1)) deallocate (vdrho,vsigma)
+ if (any(fnctl(:)%family==XC_FAMILY_GGA)) deallocate(sigma,drho)
+ if (any((fnctl(:)%family==XC_FAMILY_GGA)).and.(ORDER==1)) deallocate (vdrho,vsigma)
  !
 end subroutine XC_libxc_driver
 

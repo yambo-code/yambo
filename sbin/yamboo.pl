@@ -26,7 +26,7 @@ $manual_preprocess_files = " ";
 $exclude_files = "yamboo.pl ";
 @core_projects = ('yambo','ypp','p2y','a2y','f2y','e2y');
 @user_projects = ('PW_DIAGO','MAGNETIC','DISTRIBUTED','SC','RT','MANYK','ELPH','POLARON',
-                  'RAS','REELS','YPP_RAS','TEST_1','YPP_ELPH','YPP_RAS','YPP_RT',
+                  'TEST_1','YPP_ELPH','YPP_RT',
                   'YPP_SC','YPP_MAGNETIC','BOLTZMANN','YPP_BOLTZMANN','DEBUG','AUGER',
                   'TEST_2');
 $user_projects_string = join(" ",@user_projects); # Append a space

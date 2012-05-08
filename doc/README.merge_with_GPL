@@ -1,4 +1,11 @@
 
+(5/4/2012)
+
+Ciao, io ho usato il comando
+svn merge svn://qe-forge.org/svn/yambo-devel/trunk/ -r xxx:HEAD   (pagina 104 della guida che ha likato Andrea)
+dove xxx=1011 è la versione del trunk con cui era sincronizzato il mio branch ed ha funzionato tutto.
+Come partenza la versione dovrebbe essere per tutti la 1011 (quella in cui Andrea ha cerato le branches).
+
 (3/26/2008)
 
 Here there are the actions to be taken to submit

@@ -163,7 +163,7 @@ subroutine XCo_driver(E,k,Xk,q)
        Vnlxc_kind='HF'
      endif
 #else
-     Vxc_kind='LDA'
+     Vxc_kind='DFT'
 #endif
      !
      ik=QP_table(1,3)

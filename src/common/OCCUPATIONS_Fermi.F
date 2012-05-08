@@ -54,7 +54,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  integer :: i1,is,ib,ik,i_trials(2),n_b_full_guess,i_Ef(2),n_total_states,group_size
  integer :: index(E%nk*E%nb*n_sp_pol,3),index_E_sorted(E%nk*E%nb*n_sp_pol)
- real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),f_met,n_of_el_from_zero(2),Ef(2),Efdist,local_Tel
+ real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),f_met,n_of_el_from_zero(2),Ef(2),Efdist
  logical :: Fermi_is_converged
  real(SP),parameter :: Telstep=0.0001/HA2EV
  real(SP),parameter :: nel_diff_zero=1.E-5
@@ -65,8 +65,6 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !       2        2        1         1          collinear
  !
  spin_occ=2.0_SP/real(n_spin)
- !
- local_Tel=Telstep
  !
  ! All energies are stored in E_sorted...
  !

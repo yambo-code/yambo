@@ -40,7 +40,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     Vnlxc_kind,Vxc_kind,l_extended_output,OCC_ctl,OCC_T_ref
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,n_atoms_species_max,n_atomic_species,&
-&                     input_Tel_commands_over_header,non_periodic_directions,lattice,Bose_Temp
+&                     input_Tel_is_negative,non_periodic_directions,lattice,Bose_Temp
  use pseudo,     ONLY:pp_n_l_times_proj_max,pp_kbv_dim
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
@@ -186,7 +186,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  !D_lattice
  !
- input_Tel_commands_over_header=.false.
+ input_Tel_is_negative=.false.
  non_periodic_directions='none'
  lattice='Unknown'
  Bose_Temp=-1./HA2EV

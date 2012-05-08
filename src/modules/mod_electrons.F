@@ -52,13 +52,6 @@ module electrons
  logical                  :: eval_magn
  real(SP)                 :: Total_magn(3)
  !
- ! Boltzmann occupations
- !
- real(SP)          :: Boltz_Efield(3)
- real(SP)          :: Boltz_tau
- real(SP), pointer :: Boltz_f(:,:,:,:)
- real(SP), pointer :: Boltz_vel(:,:,:,:)
- !
  type levels
    integer         :: nb
    integer         :: nk

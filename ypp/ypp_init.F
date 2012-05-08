@@ -214,10 +214,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
  ! ANGULAR MOMENTUM & ELECTRON DISPLACEMENT
  !
-#if defined _YPP_BOLTZMANN
- l_current=.false.
-#endif
- !
 #if defined _YPP_MAGNETIC
  !
  l_angular_momentum=.false.
@@ -407,10 +403,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_phonons   =runlevel_is_on('phonons')
  l_gkkp      =runlevel_is_on('gkkp')
 #endif
-#if defined _YPP_BOLTZMANN
- l_current          = runlevel_is_on('current')
- if (l_current) call initactivate(1,'electrons')
-#endif
 #if defined _YPP_RT
  l_fix_syms         = runlevel_is_on('fixsyms')
  l_RT_X             = runlevel_is_on('rtX')
@@ -422,9 +414,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_excitons =runlevel_is_on('excitons')
  l_electrons=runlevel_is_on('electrons')
  l_plot=any((/runlevel_is_on('wavefunction'),runlevel_is_on('magnetization'),&
-#if defined _YPP_BOLTZMANN
-&             runlevel_is_on('current'), &
-#endif
 #if defined _YPP_SC
 &             runlevel_is_on('MeanPot'), &
 #endif
@@ -507,9 +496,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  if (l_angular_momentum.or.l_position) call initactivate(1,"FFTGvecs")
  if (l_current) call initactivate(1,'PhaseTrick')
 #endif
-#if defined _YPP_BOLTZMANN
- if (l_current) call initactivate(1,"FFTGvecs Nelectro ElecTemp Tau El_Field")
-#endif
  !
  if (l_plot) then
    call initactivate(1,"Format Direction FFTGvecs") 
@@ -552,7 +538,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  if (.not.l_QP_init) l_QP_init=l_electrons.and.l_mean_potential
 #endif
 #if defined _YPP_MAGNETIC
- if (.not.l_QP_init) l_QP_init=l_angular_momentum.or.l_position)
+ if (.not.l_QP_init) l_QP_init=l_angular_momentum.or.l_position
 #endif
  !
  if (l_QP_init) call QP_init(.FALSE.,.FALSE.)

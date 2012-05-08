@@ -53,9 +53,6 @@
 #if defined _YPP_SC 
   {"MeanPot",  "v","Mean Potential",0,0,0,0,0}, 
 #endif
-#if defined _YPP_BOLTZMANN 
-  {"current",  "j","Current",0,0,0,0,0}, 
-#endif
 #if defined _YPP_ELPH 
   {"excitons", "e","Excitons  [(s)ort,(sp)in,(a)mp,(w)ave,(e)lias,(g)kkp,(m)ag]",0,0,1,0,0}, 
   {"electrons","s","Electrons [(w)ave,(d)ensity,(e)lias,(m)ag,do(s)]",0,0,1,0,0}, 

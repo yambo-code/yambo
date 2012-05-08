@@ -10,7 +10,7 @@ WF_rot_object =
 #if defined _SC
 WF_rot_object = WF_rotate.o
 #endif
-#if defined _BOLTZMANN || defined _MAGNETIC
+#if defined _MAGNETIC
 WF_der_objects = WF_derivative.o
 #endif
 DISTRIBUTED_objects =

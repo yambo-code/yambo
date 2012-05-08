@@ -48,10 +48,8 @@ CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
 TARGETS  = all yambo interfaces ypp 
 UTILS    = changelog
 CLEANS   = clean clean_all
-PROJECTS = yambo_ph yambo_sc \
-	       yambo_magnetic yambo_auger \
-           yambo_rt yambo_distributed \
-           ypp_rt ypp_ph ypp_sc ypp_magnetic ypp_boltzmann ypp_test_2
+PROJECTS = yambo_ph yambo_sc yambo_magnetic yambo_rt yambo_distributed \
+           ypp_rt ypp_ph ypp_sc ypp_magnetic ypp_test_2
 BROKEN   = yambo_manyk
 DEBUG    = yambo_test_1 yambo_test_2
 EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(DEBUG)
@@ -99,9 +97,6 @@ yambo: libs
 #
 # PROJECTS #
 # 
-yambo_auger: libs
-	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_AUGER"; $(mksrc)
-	@X2DO="yambo_auger"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_AUGER";$(mkx)
 yambo_magnetic: libs
 	@LIBS2DO="$(PJ_SCLIBS)";ADF="-D_MAGNETIC -D_SC"; $(mksrc)
 	@X2DO="yambo_magnetic"; XPATH="driver";XLIBS="$(PJ_SCLIBS)";ADF="-D_MAGNETIC -D_SC";$(mkx)
@@ -118,8 +113,8 @@ yambo_ph: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_ELPH"; $(mksrc)
 	@X2DO="yambo_ph"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_ELPH";$(mkx)
 ypp_ph: libs
-	@LIBS2DO="$(YPPLIBS)";ADF="-D_ELPH -D_BOLTZMANN"; $(mksrc)
-	@X2DO="ypp_ph" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_ELPH -D_YPP_BOLTZMANN";$(mkx)
+	@LIBS2DO="$(YPPLIBS)";ADF="-D_ELPH"; $(mksrc)
+	@X2DO="ypp_ph" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_ELPH";$(mkx)
 ypp_rt: libs
 	@LIBS2DO="$(YPPRTLIBS)" ; ADF="-D_SC -D_RT";$(mksrc)
 	@X2DO="ypp_rt" ;XPATH="ypp";XLIBS="$(YPPRTLIBS)"; ADF="-D_YPP_RT";$(mkx)
@@ -127,11 +122,8 @@ ypp_sc: libs
 	@LIBS2DO="$(YPPSCLIBS)" ; ADF="-D_SC";$(mksrc)
 	@X2DO="ypp_sc" ;XPATH="ypp";XLIBS="$(YPPSCLIBS)"; ADF="-D_YPP_SC";$(mkx)
 ypp_magnetic: libs
-	@LIBS2DO="$(YPPSCLIBS)" ; ADF="-D_SC -D_MAGNETIC -D_BOLTZMANN";$(mksrc)
-	@X2DO="ypp_magnetic" ;XPATH="ypp";XLIBS="$(YPPSCLIBS)"; ADF="-D_YPP_MAGNETIC -D_YPP_BOLTZMANN";$(mkx)
-ypp_boltzmann: libs
-	@LIBS2DO="$(YPPLIBS)" ; ADF="-D_BOLTZMANN";$(mksrc)
-	@X2DO="ypp_boltzmann" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_BOLTZMANN";$(mkx)
+	@LIBS2DO="$(YPPSCLIBS)" ; ADF="-D_SC -D_MAGNETIC";$(mksrc)
+	@X2DO="ypp_magnetic" ;XPATH="ypp";XLIBS="$(YPPSCLIBS)"; ADF="-D_YPP_MAGNETIC";$(mkx)
 ypp_test_2: libs
 	@LIBS2DO="$(YPPTEST2)" ; ADF="-D_TEST_2";$(mksrc)
 	@X2DO="ypp_test_2" ;XPATH="ypp";XLIBS="$(YPPTEST2)"; ADF="-D_YPP_TEST_2";$(mkx)

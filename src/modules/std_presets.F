@@ -47,7 +47,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_RIM_nbands,BZ_RIM_tot_nkpts,&
-&                     filled_tresh, spin_orbit,Boltz_tau,Boltz_Efield,        &
+&                     filled_tresh, spin_orbit,        &
 &                     eval_magn
  use par_proc_m, ONLY:myid,master_cpu,ncpu,n_nodes,local_master_cpu
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,&
@@ -513,15 +513,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  MAG_psi=0.
  MAG_theta=0.
  phase_trick=.false.
- !
-#endif
- !
-#if defined _BOLTZMANN || defined _MAGNETIC
- !
- ! Electric field and current
- !
- Boltz_Efield=1./AU2VMm1
- Boltz_tau=10.*FS2AUT
  !
 #endif
  !

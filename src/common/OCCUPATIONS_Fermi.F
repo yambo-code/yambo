@@ -42,9 +42,6 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  use com,           ONLY:msg,error,warning
  use vec_operate,   ONLY:sort
  use functions,     ONLY:Fermi_fnc
-#if defined _BOLTZMANN
- use com,           ONLY:write_to_report
-#endif
  implicit none
  type(levels) ::E
  type(bz_samp)::K
@@ -139,11 +136,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    do i1=i_Ef(1),i_Ef(2),1
      call ef2nel(Tel,E_sorted(i1),n_of_el_from_zero(1))
      if ( abs(n_of_el_from_zero(1)) < nel_diff_zero) then
-#if defined _BOLTZMANN || defined _MAGNETIC
-       E%Efermi(1)=(E_sorted(i1)+E_sorted(i1+1))/2.
-#else
        E%Efermi(1)=E_sorted(i1)
-#endif
        Fermi_is_converged=.true.
        exit
      endif
@@ -248,12 +241,6 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    f_met= sum(E%f(E%nbf+1:E%nbm,:,:))/real(K%nibz*(E%nbm-E%nbf))
    call msg('r','N of e- - Metallic occ.:',(/n_of_el_from_zero(1)+nel,f_met/))
  endif
- !
-#if defined _BOLTZMANN
-   if (.not.write_to_report) then
-     call msg('s',':: Fermi E/Temp. [eV/K]:',(/E%Efermi(1)*HA2EV,Tel*HA2KEL/))
-   endif
-#endif
  !
  contains
    !

@@ -1,10 +1,6 @@
-BOLTZMANN_objects=
 ELPH_objects=
 #if defined _ELPH
 ELPH_objects= Convolve.o
-#endif
-#if defined _BOLTZMANN 
-BOLTZMANN_objects= OCCUPATIONS_Boltzmann.o
 #endif
 objs = eval_G_minus_G.o \
        FREQUENCIES_damping.o FREQUENCIES_setup.o FREQUENCIES_coarse_grid.o \
@@ -12,4 +8,4 @@ objs = eval_G_minus_G.o \
        Kramers_Kronig.o $(ELPH_objects) RIntegrate.o CIntegrate.o QPartilize.o \
        OCCUPATIONS_Fermi.o OCCUPATIONS_Extend.o \
        crystal_lattice.o QP_state_extract.o \
-       pert_inversion.o pol_fit.o $(BOLTZMANN_objects)
+       pert_inversion.o pol_fit.o

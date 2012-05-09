@@ -25,11 +25,6 @@ subroutine ypp_init_load(defs)
 &                        Time_unit,Bfield_unit,Efield_unit,V_real_time
  use wave_func,     ONLY:wf_ng
  use YPP
-#if defined _YPP_BOLTZMANN
- use electrons,            ONLY: nel,Boltz_Efield,Boltz_tau
- use D_lattice,            ONLY: Tel
- use it_m,                 ONLY: T_unit
-#endif
  implicit none
  type(initdefs)::defs
  !
@@ -62,9 +57,6 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'eliashberg',   '[R] Eliashberg')
  call it('r',defs,'phonons',      '[R] Phonons')
  call it('r',defs,'gkkp',         '[R] Electron-Phonon databases')
-#endif
-#if defined _YPP_BOLTZMANN
- call it('r',defs,'current',      '[R] Current')
 #endif
 #if defined _YPP_MAGNETIC
  call it('r',defs,'angular_m',    '[R] Canonical angular momentum')
@@ -155,14 +147,6 @@ subroutine ypp_init_load(defs)
  call it(defs,'Hole', '[cc] Hole position in unit cell',r_hole)
  call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier,verb_level=V_general)
  !
-#if defined _YPP_BOLTZMANN
- ! CURRENT & BOLTZMANN
- !
- call it(defs,'ElecTemp','Electronic Temperature',Tel,T_unit)
- call it(defs,'Nelectro','Electrons number',nel)
- call it(defs,'Tau','Electronic scattering-free time',Boltz_tau,unit=Time_unit)
- call it(defs,'El_Field','Electric field',Boltz_Efield,unit=Efield_unit)
-#endif
 #if defined _YPP_MAGNETIC
  call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization')
 #endif

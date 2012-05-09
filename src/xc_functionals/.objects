@@ -1,8 +1,3 @@
-LIBXC_objects = XC_lda_driver.o 
-#if defined _BOLTZMANN 
-BOLTZMANN_objects = el_current.o
-#endif
-objs =  mod_xc_costants.o  xc_rpa_kp.o \
-        xcspol.o xcpzca.o xcwign.o xchelu.o xcxalp.o \
+objs =  xc_rpa_kp.o \
         spin_density.o el_density.o eval_Gradient.o XC_potential_driver.o\
-        XC_libxc_driver.o XC_eval_gga_potential.o $(BOLTZMANN_objects)
+        XC_libxc_driver.o XC_eval_gga_potential.o 

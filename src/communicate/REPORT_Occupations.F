@@ -24,9 +24,6 @@ subroutine REPORT_Occupations(E,mode)
  use pars,          ONLY:SP,lchlen
  use units,         ONLY:HA2EV,BO2ANG,Bohr_magneton
  use com,           ONLY:msg,warning
-#if defined _BOLTZMANN
- use com,           ONLY:write_to_report
-#endif
  use electrons,     ONLY:levels,n_sp_pol,n_spin,filled_tresh
  !
  implicit none
@@ -80,12 +77,6 @@ subroutine REPORT_Occupations(E,mode)
  !
  E%Efermi(2:)=E%Efermi(1)+(/maxval(E%E(E%nbf,:,:)),minval(E%E(E%nbf+1,:,:))/)
  if (E%nbf/=E%nbm) E%Efermi(2:)=0.
- !
-#if defined _BOLTZMANN
- if (.not.write_to_report) then
-   call msg('s',':: Full/Metallic bands :',(/E%nbf,E%nbm-E%nbf/))
- endif
-#endif
  !
  call msg('r','States summary         : Full        Metallic    Empty')
  !

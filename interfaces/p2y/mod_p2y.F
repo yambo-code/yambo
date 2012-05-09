@@ -715,7 +715,7 @@ contains
 #if defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40
    call qexml_read_xc(dft=pw_dft, ierr=ierr)
    GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
-   GS_xc_KIND = XC_yamboID2kind(GS_xc_FUNCTIONAL)
+   GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
 #endif
  end subroutine get_xc
  !

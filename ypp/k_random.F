@@ -23,7 +23,7 @@ subroutine k_random(Xk,Xen)
  !
  use pars,                ONLY:SP,DP,lchlen,schlen
  use units,               ONLY:HA2EV
- use stderr,              ONLY:set_real_printed_length
+ use stderr,              ONLY:set_real_printed_length,intc
  use R_lattice,           ONLY:bz_samp,nkibz
  use parser_m,            ONLY:parser
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop
@@ -32,7 +32,7 @@ subroutine k_random(Xk,Xen)
  use YPP,                 ONLY:BZ_RIM_nkpts,BZ_RIM_path,gamma_radius,K_transform
  use electrons,           ONLY:levels,default_nel,n_bands,&
 &                              BZ_RIM_nbands,BZ_RIM_nkpt,BZ_RIM_table,&
-&                              BZ_RIM_tot_nkpts,n_spin,BZ_RIM_max_filling
+&                              BZ_RIM_tot_nkpts,BZ_RIM_max_filling,n_sp_pol
  use timing,              ONLY:live_timing
  use IO_m,                ONLY:io_control,NONE,OP_WR_CL
  !
@@ -42,13 +42,14 @@ subroutine k_random(Xk,Xen)
  !
  ! Work Space
  !
- real(SP)     ::dummy,rand_kpt(BZ_RIM_nkpts+1,3),a_save(3,3),alat_save(3),&
+ real(SP)     ::dummy,rand_k(BZ_RIM_nkpts+1,3),a_save(3,3),alat_save(3),&
 &               gap(2)
  integer      ::i1,ikbz
  integer, external :: k_the_nearest
  character(lchlen) :: k_rand_fname
  character(schlen) :: dump
  logical           :: No_Weight
+ real(SP), allocatable :: rand_E(:,:,:)
  !
  ! Random Generator
  !
@@ -137,12 +138,12 @@ subroutine k_random(Xk,Xen)
        !
      endif
      !
-     call K_transform(rand_kpt(k_counter+1,:),'iku')
+     call K_transform(rand_k(k_counter+1,:),'iku')
      !
      if(No_Weight) then
-       write (dump,'(3f12.7)') rand_kpt(k_counter+1,:)
+       write (dump,'(3f12.7)') rand_k(k_counter+1,:)
      else
-       write (dump,'(4f12.7)') rand_kpt(k_counter+1,:),1._SP/real(BZ_RIM_nkpts)     
+       write (dump,'(4f12.7)') rand_k(k_counter+1,:),1._SP/real(BZ_RIM_nkpts)     
      endif
      call msg('o random',"",trim(dump),USE_TABS=.true.)
      !
@@ -161,6 +162,24 @@ subroutine k_random(Xk,Xen)
  !
  call section('*','BZ RIM DB')
  !
+ call msg('s',':: Electrons             :',default_nel)
+ call msg('s',':: Temperature       [ev]:',input_GS_Tel)
+ call msg('s',':: Lattice factors [a.u.]:',alat)
+ call msg('s',':: K points        [read]:',nkibz)
+ !
+ if (BZ_RIM_nkpts<nkibz) then
+   nkibz   =BZ_RIM_nkpts
+   RIM_E%nk=nkibz
+   allocate(rand_E(RIM_E%nb,nkibz,n_sp_pol))
+   rand_E(:,:,:)=RIM_E%E(:,:nkibz,:)
+   rand_k(:nkibz,:)=RIM_k%pt(:nkibz,:)
+   deallocate(RIM_E%E,RIM_k%pt)
+   allocate(RIM_E%E(RIM_E%nb,nkibz,n_sp_pol),RIM_k%pt(nkibz,3))
+   RIM_E%E(:,:,:)=rand_E(:,:,:)
+   RIM_k%pt(:,:)=rand_k(:,:)
+   deallocate(rand_E)
+ endif
+ !
  gap(1)=minval(RIM_E%E(Xen%nbf+1,:,1))-maxval(RIM_E%E(Xen%nbf,:,1)) 
  gap(2)=10000.
  do i1=1,nkibz
@@ -169,10 +188,7 @@ subroutine k_random(Xk,Xen)
    endif
  enddo
  !
- call msg('s',':: Electrons             :',default_nel)
- call msg('s',':: Temperature       [ev]:',input_GS_Tel)
- call msg('s',':: Lattice factors [a.u.]:',alat)
- call msg('s',':: K points              :',nkibz)
+ call msg('s','::                 [used]:',BZ_RIM_nkpts)
  call msg('s',':: Bands                 :',n_bands)
  call msg('s',':: Symmetries            :',nsym_RIM_DB)
  if (Xen%nbf==Xen%nbm) then
@@ -190,7 +206,7 @@ subroutine k_random(Xk,Xen)
  !
  call k_ibz2bz(RIM_k,'i',.true.)
  !
- call msg('l','done')
+ call msg('l','found '//trim(intc(RIM_k%nbz))//' points in the BZ')
  !
  add_X_grid=.true.
  !
@@ -228,7 +244,7 @@ subroutine k_random(Xk,Xen)
  !
  !  At the end I add to the Xen%E_RIM array the Xen%E energies
  !
- allocate(Xen%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_spin))
+ allocate(Xen%E_RIM(BZ_RIM_nbands,BZ_RIM_tot_nkpts,n_sp_pol))
  Xen%E_RIM(:,:RIM_k%nibz,:)=RIM_E%E(:,:,:)
  !
  if (add_X_grid) then
@@ -255,10 +271,10 @@ subroutine k_random(Xk,Xen)
    subroutine build_3D_k()
      real(DP), external :: dlaran
      do i1=1,3
-       rand_kpt(k_counter+1,i1)=(2.*dlaran(iseed(4:))-1.)
+       rand_k(k_counter+1,i1)=(2.*dlaran(iseed(4:))-1.)
      enddo
-     dummy=rlu_v_norm(rand_kpt(k_counter+1,:))
-     call c2a(v_in=rand_kpt(k_counter+1,:),mode="ka2i")
+     dummy=rlu_v_norm(rand_k(k_counter+1,:))
+     call c2a(v_in=rand_k(k_counter+1,:),mode="ka2i")
    end subroutine
    !
    subroutine build_spherical_k()
@@ -267,12 +283,12 @@ subroutine k_random(Xk,Xen)
      k_module=gamma_radius+1.
      do while ( k_module > gamma_radius) 
        do i1=1,3
-         rand_kpt(k_counter+1,i1)=gamma_radius*(2.*dlaran(iseed(4:))-1.)
+         rand_k(k_counter+1,i1)=gamma_radius*(2.*dlaran(iseed(4:))-1.)
        enddo
-       k_module=v_norm(rand_kpt(k_counter+1,:))
-       call c2a(v_in=rand_kpt(k_counter+1,:),mode="kc2a")
-       dummy=rlu_v_norm(rand_kpt(k_counter+1,:))
-       call c2a(v_in=rand_kpt(k_counter+1,:),mode="ka2i")
+       k_module=v_norm(rand_k(k_counter+1,:))
+       call c2a(v_in=rand_k(k_counter+1,:),mode="kc2a")
+       dummy=rlu_v_norm(rand_k(k_counter+1,:))
+       call c2a(v_in=rand_k(k_counter+1,:),mode="ka2i")
      enddo
    end subroutine
    !

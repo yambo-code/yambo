@@ -70,9 +70,6 @@ subroutine electrons_driver(Xk,Xen)
 #if defined _YPP_SC
  if (.not.flag) flag=l_mean_potential
 #endif
-#if defined _YPP_BOLTZMANN 
- if (.not.flag) flag=l_current
-#endif
 #if defined _YPP_RT 
  if (.not.flag) flag=l_RT_occupations
 #endif
@@ -112,9 +109,6 @@ subroutine electrons_driver(Xk,Xen)
 #endif
 #if defined _YPP_SC
  if (flag) flag=.not.l_mean_potential
-#endif
-#if defined _YPP_BOLTZMANN 
- if (flag) flag=.not.l_current
 #endif
 #if defined _YPP_RT 
  if (flag) flag=.not.l_RT_occupations
@@ -354,21 +348,6 @@ subroutine electrons_driver(Xk,Xen)
    !
    !
  endif
- !
-#if defined _YPP_BOLTZMANN 
- !
- ! Current
- !=========
- !
- if (l_current) then
-   call fft_setup(0,1,.true.)
-   call electrons_current(Xk,Xen,success)
-   if (success) then
-     call plot_check_and_launch(.false.)
-     call of_open_close(trim(output_fname))
-   endif
- endif
-#endif
  !
 #if defined _YPP_RT
  !

@@ -50,8 +50,8 @@ module xc_functionals
  integer, public, parameter :: &
     XC_FACTOR        = 1000,&
     XC_NOT_AVAILABLE = 999999, & 
-    NOXC = 0, &    
-    XC_LDA_C_KP = 99
+    NOXC             = 0, &    
+    XC_LDA_C_KP      = 99
  !
  character(*), parameter, dimension(3) :: XC_KIND_DESCR = (/'(X) ','(C) ','(XC)'/)
  !

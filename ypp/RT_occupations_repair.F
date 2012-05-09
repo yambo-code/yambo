@@ -27,8 +27,8 @@ subroutine RT_occupations_repair(E,k,print_fermi_distro)
  ! of the number of electrons. This, in turns, affects all related observables
  !
  use units,          ONLY:HA2EV,HA2KEL
- use YPP,            ONLY:Fermi_fit_points,output_fname
- use pars,           ONLY:SP
+ use YPP,            ONLY:Fermi_fit_points
+ use pars,           ONLY:SP,lchlen
  use electrons,      ONLY:Nel,n_full_bands
  use SC,             ONLY:SC_bands,RT_occupations,n_SC_descriptions,SC_description
  use R_lattice,      ONLY:bz_samp
@@ -49,6 +49,7 @@ subroutine RT_occupations_repair(E,k,print_fermi_distro)
 &            QP_table(SC_bands(2)*k%nibz,2),inx,i3
  real(SP) :: delta_Nel,Eo_sorted(SC_bands(2)*k%nibz),sym_value,gamma_f(2),E_f(2),&
 &            Eo_over_T,Eo,T_el,f_dist(2),delta_G
+ character(lchlen) ::output_fname 
  !
  n_states=SC_bands(2)*k%nibz
  !

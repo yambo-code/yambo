@@ -173,7 +173,7 @@ integer function ioDB1(E,k,ID)
      call io_elemental(ID,I0=n_atomic_species,CHECK=.true.,OP=(/"=="/),&
 &                      VAR=' No. of atom species             :')
    endif
-   if (ver_is_gt_or_eq(ID,revision=1041)) then
+   if (ver_is_gt_or_eq(ID,revision=1111)) then
      call io_elemental(ID, VAR="spin_orbit",VAR_SZ=1,MENU=0)
      call io_elemental(ID, L0=spin_orbit,&
 &                      VAR=' Spin Orbit interaction          : ')

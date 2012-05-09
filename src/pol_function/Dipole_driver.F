@@ -24,9 +24,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use drivers,        ONLY:l_optics,l_real_time,l_sc_run
  use pars,           ONLY:SP,cI
  use com,            ONLY:warning,error
-#if defined _RAS
- use ras_module,     ONLY:transloc, lras
-#endif
  use drivers,        ONLY:l_col_cut
  use electrons,      ONLY:levels,n_sp_pol
  use par_proc_m,     ONLY:pp_redux_wait
@@ -67,10 +64,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  integer, external :: io_DIPOLES
 #if defined _SC || defined _KERR
  integer, external :: io_P_and_P2
-#endif
- !
-#if !defined _RAS
- if (allocated(DIP_q_dot_iR)) return
 #endif
  !
  ! Transitions ordering
@@ -167,7 +160,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    use_trans_gauge = .true.
    !
-   ! GPL_EXCLUDE_START RAS_IGNORE
+   ! GPL_EXCLUDE_START 
    !
    ! Attempt calculation using shifted grids if requested
    !
@@ -184,7 +177,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    ! Fallback to transverse
    !
-   ! GPL_EXCLUDE_END RAS_IGNORE
+   ! GPL_EXCLUDE_END 
    !
    if (use_trans_gauge) call Dipole_transverse(Xen,Xk,X)
    !

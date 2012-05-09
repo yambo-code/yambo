@@ -8,9 +8,6 @@ RT_objects = RT_driver.o RT_paths.o RT_databases.o RT_fix_symmetries.o RT_X_LRR_
              RT_damp_it.o RT_X_effective.o RT_coefficients_Fourier.o RT_coefficients_Inversion.o RT_X_inversion.o \
              RT_split_Polarization.o
 #endif
-#if defined _YPP_RAS
-RAS_objects = ras_ypp.o ras_generate_epsdb.o reels_ypp.o ras_loc_ypp.o ras_trans_ypp.o
-#endif
 #if defined _YPP_BOLTZMANN
 boltz_objects = electrons_current.o
 #endif
@@ -26,4 +23,4 @@ objs = mod_YPP.o  ypp_i.o ypp_init.o ypp_init_load.o \
        plot_check_and_launch.o plot_gnuplot.o plot_xcrysden.o plot_cube.o\
        excitons_sort_and_report.o excitons_collinear.o excitons_non_collinear.o $(bands_objects) \
        WANNIER_driver.o \
-       $(ELPH_objects) $(RAS_objects) $(RT_objects) k_random.o  $(magnetic_objects) $(boltz_objects)
+       $(ELPH_objects) $(RT_objects) k_random.o  $(magnetic_objects) $(boltz_objects)

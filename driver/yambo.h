@@ -65,12 +65,6 @@
 #if defined _RT
   {"collisions_IO",  "e","Evaluate the extended Collisions",0,0,0,0,0}, 
 #endif
-#if defined _RAS 
-  {"sursp",  "s","Surface Spectroscopy [opt=r(as)/e(el)/b(oth)]",0,0,1,0,0}, 
-#endif
-#if defined _REELS
-  {"reels",  "r","Surface Spectroscopy (REELS)",0,0,0,0,0},                  
-#endif
 #if defined _ELPH 
   {"corrtp", "s","Correlation [opt=e(lectrons)/p(honons)/b(oth)]",0,0,1,0,0},    
   {"ElPhHam","f","Electron-Phonon Hamiltonian",0,0,0,0,0},    

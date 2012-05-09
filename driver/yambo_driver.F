@@ -39,12 +39,6 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  use electrons,     ONLY:levels,E_reset
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use frequency,     ONLY:w_samp
-#if defined _RAS 
- use ras_module,    ONLY:lras, lreels
-#endif
-#if defined _REELS 
- use reels_module,  ONLY:lreels
-#endif
  !
  implicit none
  type(levels) ::en,Xen,Ken
@@ -77,12 +71,6 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  infile=inf
  !
  call std_presets(instr,ind,od,js,com_dir)
-#ifdef _RAS
- call ras_presets()
-#endif
-#ifdef _REELS
- call reels_presets()
-#endif
  call it_reset(1)
  !
  ! not resetted in init call
@@ -148,16 +136,6 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !======================
  !
  if (l_HF_and_locXC.and..not.any((/l_sc_run,l_collisions_IO,l_real_time/))) call XCo_driver(en,k,Xk,q)
- !
- ! RAS & REELS
- !=============
- !
-#if defined _RAS
- if (lras.or.lreels) call rasdriver(Xen,Xk,q,Xw(3),X(3))
-#endif
-#if defined _REELS
- if (lreels)         call reelsdriver(Xen,Xk,q,Xw(3),X(3))
-#endif
  !
  ! OPTICS
  !========

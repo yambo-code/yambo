@@ -49,10 +49,6 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  use SC,            ONLY:it_now
  use fields,        ONLY:global_gauge
 #endif
-#if defined _RAS
- use optcut,        ONLY: loptcut, Xcut_rhoq0
- use ras_module,    ONLY: lras, lreels 
-#endif
 #if defined _DISTRIBUTED
  use WF_distribute, ONLY: Distributed_Memory,WF_states_setup
 #endif
@@ -76,9 +72,6 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  complex(SP),allocatable :: rhotw_save(:),XoR(:,:)
  integer,    external    :: X_eh_setup
  complex(SP),external    :: X_simple_GreenF
-#if defined _RAS
- complex(SP)             :: iscut
-#endif
 #if defined _KERR
  complex(SP),allocatable :: Xo_wing_tmp(:,:)
  complex(SP)             :: Xo_head_tmp(9)
@@ -117,23 +110,12 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  if(iq.ne.1) force_bare_X_G=.true.
  skip_WF_load = iq==1.and.X%ng==1
 #endif
-#if defined _RAS
- if(lras.or.lreels) then
-    skip_WF_load = iq==1.and.X%ng==1
-    force_bare_X_G=.false.
- endif
-#endif
  !
  call mem_est("Xo_WS",(/size(XoR)+2*X%ng/))
  !
  !  Optical strengths
  !=====================
  if (iq==1) call Dipole_driver(Xen, Xk, X, X%q0)
- !
-#if defined _RAS
- if (iq == 1.and.&
-&    (lras.or.lreels).and.loptcut) call Dipole_driver_cut( Xen, Xk, X, X%q0)
-#endif
  !
 #if !defined _DISTRIBUTED
  ! WF load
@@ -158,13 +140,10 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
    !
    if (self_detect_E_range) Xw%er=minmax_ehe
    !
-#if !defined _REELS
-   !
    !  This call is needed as Xw%p is deallocated inside
    !  the q-loop of X_em1
    !
    call FREQUENCIES_setup(Xw)
-#endif
    !
  endif 
  !
@@ -295,9 +274,6 @@ loop_bg: do i2 = 1,bg_npts(i1)
        !
        eh_occ = Xen%f(iv,ik,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))/&
 &               spin_occ/real(Xk%nbz)/DL_vol
-#if defined _RAS
-       if((lras.or.lreels).and.skip_WF_load) isave=(/iv,ic,ik,i_spin/)
-#endif
        if (any((/isave(1)/=iv,isave(2)/=ic,isave(3)/=ik,isave(4)/=i_spin/))) then
          call scatterBamp(isc)
          rhotw_save=isc%rhotw
@@ -309,19 +285,6 @@ loop_bg: do i2 = 1,bg_npts(i1)
        enddo
        if (is>nsym/(i_time_rev+1)) isc%rhotw=conjg(isc%rhotw)
        isc%rhotw(1)=-conjg(DIP_q_dot_iR(ic,iv,ikbz,i_spin))
-       !
-#if defined _RAS 
-       !-----------------------------------------------------------------------------
-       if(lras.or.lreels) then
-         if(loptcut) then
-           iscut= -conjg( Xcut_rhoq0(ic,iv,ikbz,i_spin) )
-         else
-           iscut= -conjg( DIP_q_dot_iR(ic,iv,ikbz,i_spin) )
-         endif
-         XoR(1,1)=XoR(1,1)+GreenF(1)*eh_occ*iscut*conjg(isc%rhotw(1))
-         cycle loop_bg   ! Only supports calculation of head
-       endif
-#endif 
        !
        ! Filling the upper triangular part of the residual here ! 
        !             ^^^^^

@@ -23,13 +23,12 @@ module mod_xc2y
  !
  use xc_f90_types_m
  use libxc_funcs_m
- use xc_f90_lib_m, ONLY:  xc_f90_func_init, xc_f90_func_end, &
-      &xc_f90_info_kind, XC_UNPOLARIZED
- use xc_functionals, ONLY: XC_FACTOR, XC_NOT_AVAILABLE, NOXC, XC_libxcID 
+ use xc_f90_lib_m,   ONLY:xc_f90_func_init, xc_f90_func_end, &
+&                         xc_f90_info_kind, XC_UNPOLARIZED
+ use xc_functionals, ONLY:XC_FACTOR, XC_NOT_AVAILABLE, NOXC, XC_libxcID 
  implicit none
  !
- integer, parameter :: N_Abinit_XC = 28, &
-      &N_PW_X = 9, N_PW_C = 12, N_PW_GX = 12, N_PW_GC = 9
+ integer, parameter :: N_Abinit_XC = 28,N_PW_X = 9, N_PW_C = 12, N_PW_GX = 12, N_PW_GC = 9
  !
  !  Map for ABINIT/ETSF_IO
  !
@@ -47,35 +46,35 @@ module mod_xc2y
     XC_GGA_X_PBE*XC_FACTOR+XC_GGA_C_PBE,          & !ixc= 11
     XC_GGA_X_PBE*XC_FACTOR,                       & !ixc= 12
     XC_NOT_AVAILABLE,                             & !ixc= 13 does not seem to be the same as XC_GGA_X_LB*XC_FACTOR,
-    XC_GGA_X_PBE_R*XC_FACTOR+XC_GGA_C_PBE,        &!ixc= 14 
-    XC_GGA_X_RPBE*XC_FACTOR+XC_GGA_C_PBE,         &!ixc= 15 
-    XC_GGA_XC_HCTH_93*XC_FACTOR,                  &!ixc= 16 
-    XC_GGA_XC_HCTH_120*XC_FACTOR,                 &!ixc= 17
-    XC_NOT_AVAILABLE,                             &!ixc= 18
-    XC_NOT_AVAILABLE,                             &!ixc= 19
-    XC_NOT_AVAILABLE,                             &!ixc= 20
-    XC_NOT_AVAILABLE,                             &!ixc= 21
-    XC_NOT_AVAILABLE,                             &!ixc= 22
-    XC_NOT_AVAILABLE,                             &!ixc= 23 !does not seem to be the same as XC_GGA_X_WC*XC_FACTOR
-    XC_NOT_AVAILABLE,                             &!ixc= 24 !does not seem to be the same as XC_GGA_X_C09X*XC_FACTOR
-    XC_NOT_AVAILABLE,                             &!ixc= 25
-    XC_GGA_XC_HCTH_147*XC_FACTOR,                 &!ixc= 26 
-    XC_GGA_XC_HCTH_407*XC_FACTOR,                 &!ixc= 27 
-    XC_NOT_AVAILABLE/)                             !ixc= 28
+    XC_GGA_X_PBE_R*XC_FACTOR+XC_GGA_C_PBE,        & !ixc= 14 
+    XC_GGA_X_RPBE*XC_FACTOR+XC_GGA_C_PBE,         & !ixc= 15 
+    XC_GGA_XC_HCTH_93*XC_FACTOR,                  & !ixc= 16 
+    XC_GGA_XC_HCTH_120*XC_FACTOR,                 & !ixc= 17
+    XC_NOT_AVAILABLE,                             & !ixc= 18
+    XC_NOT_AVAILABLE,                             & !ixc= 19
+    XC_NOT_AVAILABLE,                             & !ixc= 20
+    XC_NOT_AVAILABLE,                             & !ixc= 21
+    XC_NOT_AVAILABLE,                             & !ixc= 22
+    XC_NOT_AVAILABLE,                             & !ixc= 23 !does not seem to be the same as XC_GGA_X_WC*XC_FACTOR
+    XC_NOT_AVAILABLE,                             & !ixc= 24 !does not seem to be the same as XC_GGA_X_C09X*XC_FACTOR
+    XC_NOT_AVAILABLE,                             & !ixc= 25
+    XC_GGA_XC_HCTH_147*XC_FACTOR,                 & !ixc= 26 
+    XC_GGA_XC_HCTH_407*XC_FACTOR,                 & !ixc= 27 
+    XC_NOT_AVAILABLE/)                              !ixc= 28
  !
  ! Map for PWSCF
  ! 
-  character(len=6),parameter,dimension(N_PW_X) :: PW_X=&  
-& (/' NOX', ' SLA', ' SL1', ' RXC', ' OEP', '  HF', 'PB0X', 'B3LP', ' KZK'/)
-  character(len=6),parameter,dimension(N_PW_C) :: PW_C=&  
-& (/ ' NOC', '  PZ', ' VWN', ' LYP', '  PW', ' WIG', '  HL', ' OBZ', &
-               ' OBW', '  GL' , 'B3LP', ' KZK' /)
-  character(len=6),parameter,dimension(N_PW_GX) :: PW_GX=& 
-& (/ 'NOGX', ' B88', ' GGX', ' PBX',  ' RPB', 'HCTH', 'OPTX',&
-                'META', 'PB0X', 'B3LP',' PSX', ' WCX'/)
-  character(len=6),parameter,dimension(N_PW_GC) :: PW_GC=&!
-& (/ 'NOGC', ' P86', ' GGC', 'BLYP', ' PBC', 'HCTH', 'META',&
-                 'B3LP', ' PSC'/)
+ character(len=6),parameter,dimension(N_PW_X) :: PW_X=&  
+& (/'NOX ', 'SLA ', 'SL1 ', 'RXC ', 'OEP ', 'HF  ', 'PB0X', 'B3LP', 'KZK '/)
+ character(len=6),parameter,dimension(N_PW_C) :: PW_C=&  
+& (/ 'NOC ', 'PZ  ', 'VWN ', 'LYP ', 'PW  ', 'WIG ', 'HL  ', 'OBZ ', &
+&    'OBW ', 'GL  ' , 'B3LP', 'KZK ' /)
+ character(len=6),parameter,dimension(N_PW_GX) :: PW_GX=& 
+& (/ 'NOGX', 'B88 ', 'GGX ', 'PBX ',  'RPB ', 'HCTH', 'OPTX',&
+&    'META', 'PB0X', 'B3LP','PSX ', 'WCX '/)
+ character(len=6),parameter,dimension(N_PW_GC) :: PW_GC=&
+& (/ 'NOGC', 'P86 ', 'GGC ', 'BLYP', 'PBC ', 'HCTH', 'META','B3LP', 'PSC '/)
+ ! 
  integer,parameter,dimension(N_PW_X) :: PWX2LIBXC=&
 & (/ NOXC, XC_LDA_X*XC_FACTOR, XC_LDA_X*XC_FACTOR+XC_LDA_C_XALPHA, XC_NOT_AVAILABLE, &
 &    XC_NOT_AVAILABLE, NOXC, NOXC, XC_NOT_AVAILABLE,XC_NOT_AVAILABLE/)
@@ -91,66 +90,70 @@ module mod_xc2y
 & (/ NOXC, XC_GGA_C_P86, XC_GGA_C_PW91, XC_GGA_C_LYP, XC_GGA_C_PBE, NOXC,&
 &    XC_MGGA_C_TPSS, NOXC, XC_GGA_C_PBE_SOL/)
  !
-! Note that in libxc some functional as b3lyp and hcth are defined as one xc functional 
-! e.g. exchange and correlation are not separable!!!
-! Note as well that in libxc the GGA contains the whole functional, not only the corrections as in
-! 
-contains
-  integer function XC_yamboID(dft_program,abinit_func,pw_func)
-    character(len=6), intent(in)   :: dft_program
-    integer, intent(in),optional   :: abinit_func
-    character(256), intent(in),optional :: pw_func
-    !
-    integer ii
-    !
-    XC_yamboID = XC_NOT_AVAILABLE 
-    select case(dft_program)
-      case('abinit')
-        if (.not.present(abinit_func)) return
-        if (abinit_func.lt.0) then
-          XC_yamboID = -abinit_func ! In this case abinit uses libxc, thus the same convention as in Yambo (except for the sign) 
-        else if (abinit_func.gt.0) then
-          XC_yamboID = XC_A2Y(abinit_func) ! Standard abinit XC convention, use the map
-        else
-          XC_yamboID = NOXC
-        end if
-      case('pwscf_')
-        if (.not.present(pw_func)) return
-        do ii=1,N_PW_GX ! I scan before the GGAs
-          if (index(pw_func,PW_GX(ii)).ne.0) XC_yamboID = PWGX2LIBXC(ii)*XC_FACTOR
-        end do
-        do ii=1,N_PW_GC
-          if (index(pw_func,PW_GC(ii)).ne.0) XC_yamboID = XC_yamboID + PWGC2LIBXC(ii)
-        end do
-        if (XC_yamboID == XC_NOT_AVAILABLE) then !Only if no GGAs are found I scan LDA (this avoids 'double counting')
-          do ii=1,N_PW_X
-            if (index(pw_func,PW_X(ii)).ne.0) XC_yamboID = PWX2LIBXC(ii)
-          end do
-          do ii=1,N_PW_C
-            if (index(pw_func,PW_C(ii)).ne.0) XC_yamboID = XC_yamboID + PWC2LIBXC(ii)
-          end do
-        end if
-      case DEFAULT 
-        return
-      end select
-      !
-    end function XC_yamboID
-    !
-    integer function XC_yamboID2kind(yamboID)
-      integer, intent(in) :: yamboID 
-      !
-      type(xc_f90_pointer_t)  p, info
-      integer ifunc, func
-      !
-      if (yamboID == XC_NOT_AVAILABLE) return
-      XC_yamboID2kind = 0
-      do ifunc = 1,2
-        func = XC_libxcID(yamboID,ifunc)
-        if (func == NOXC) cycle
-        call xc_f90_func_init(p, info, func, XC_UNPOLARIZED) ! I put  XC_UNPOLARIZED, I think it is not relevant here
-        XC_yamboID2kind = XC_yamboID2kind + (xc_f90_info_kind(info) + 1) ! In yambo the type are shifted by +1 wrt libxc 
-        call xc_f90_func_end(p)
-      end do
-    end function XC_yamboID2kind
-    !
+ ! Note that in libxc some functional as b3lyp and hcth are defined as one xc functional 
+ ! e.g. exchange and correlation are not separable!!!
+ ! Note as well that in libxc the GGA contains the whole functional, not only the corrections as in
+ ! 
+ contains
+   !
+   integer function XC_yamboID(dft_program,abinit_func,pw_func)
+   character(len=6), intent(in)   :: dft_program
+   integer, intent(in),optional   :: abinit_func
+   character(256), intent(in),optional :: pw_func
+   !
+   integer ii
+   !
+   XC_yamboID = XC_NOT_AVAILABLE 
+   select case(dft_program)
+     case('abinit')
+       if (.not.present(abinit_func)) return
+       if (abinit_func.lt.0) then
+         XC_yamboID = -abinit_func ! In this case abinit uses libxc, thus the same convention as in Yambo (except for the sign) 
+       else if (abinit_func.gt.0) then
+         XC_yamboID = XC_A2Y(abinit_func) ! Standard abinit XC convention, use the map
+       else
+         XC_yamboID = NOXC
+       end if
+     case('pwscf_')
+       !
+       if (.not.present(pw_func)) return
+       !
+       do ii=1,N_PW_GX ! I scan before the GGAs
+         if (index(pw_func,trim(PW_GX(ii))).ne.0) XC_yamboID = PWGX2LIBXC(ii)*XC_FACTOR
+       end do
+       do ii=1,N_PW_GC
+         if (index(pw_func,trim(PW_GC(ii))).ne.0) XC_yamboID = XC_yamboID + PWGC2LIBXC(ii)
+       end do
+       if (XC_yamboID == XC_NOT_AVAILABLE .or. XC_yamboID == NOXC) then ! Only if no GGAs or no 
+                                                                        ! XC are found I scan LDA (this avoids 'double counting')
+         do ii=1,N_PW_X
+           if (index(pw_func,trim(PW_X(ii))).ne.0) XC_yamboID = PWX2LIBXC(ii)
+         end do
+         do ii=1,N_PW_C
+           if (index(pw_func,trim(PW_C(ii))).ne.0) XC_yamboID = XC_yamboID + PWC2LIBXC(ii)
+         end do
+       end if
+     case DEFAULT 
+       return
+     end select
+   end function XC_yamboID
+   !
+   integer function XC_yamboID2kind(yamboID)
+     integer, intent(in) :: yamboID 
+     !
+     type(xc_f90_pointer_t)  p, info
+     integer ifunc, func
+     !
+     if (yamboID == XC_NOT_AVAILABLE) return
+     XC_yamboID2kind = 0
+     do ifunc = 1,2
+       func = XC_libxcID(yamboID,ifunc)
+       if (func == NOXC) cycle
+       call xc_f90_func_init(p, info, func, XC_UNPOLARIZED) ! I put  XC_UNPOLARIZED, I think it is not relevant here
+       XC_yamboID2kind = XC_yamboID2kind + (xc_f90_info_kind(info) + 1) ! In yambo the type are shifted by +1 wrt libxc 
+       call xc_f90_func_end(p)
+     end do
+     !
+   end function XC_yamboID2kind
+   !
 end module mod_xc2y

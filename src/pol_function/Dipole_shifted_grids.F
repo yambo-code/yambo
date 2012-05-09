@@ -38,9 +38,6 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  use fields,              ONLY: grid_path 
  use memory_m,            ONLY: mem_est
  use wave_func,           ONLY: wf,wf_ng,wf_igk,wf_state,WF_load,WF_free , wf_ncx
-#if defined _RAS
- use ras_long,            ONLY: grid_dir, select_field_dir
-#endif
  implicit none
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
@@ -107,9 +104,6 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  !
  ifail = 0
  call Dipole_check_shifted_grids( Xk_shift, Xk, ifail, num_shifted_grid)
-#if defined _RAS
- call select_field_dir(ifail, field_dir, num_shifted_grid)
-#endif
  if(ifail>0) then
    call warning('Error in new grids. Switch to transverse.')
    call DB1_reset()
@@ -150,9 +144,6 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  do iq = 1, num_shifted_grid
    ik_grid = (iq-1)*Xk%nibz + 1 ! The index of the first k point for each grid
    ir = iq
-#if defined _RAS
-   ir = grid_dir(iq)
-#endif
    !
    ! Set up the parallel environment 
    !

@@ -82,9 +82,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
 #if defined _YPP_ELPH
  what_is_running='YPP_PH'
 #endif
-#if defined _YPP_RAS
- what_is_running='YPP_RAS'
-#endif
  !
  if (FINALIZE) then
    call call_init_load('GameOver')
@@ -173,35 +170,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  seed_name=" "
  what_to_write=" "
  !
-#if defined _YPP_RAS
- !
- ! RAS & REELS
- !
- call ras_presets
- xdata = 'o.eps_q001-rpa_00'
- ydata = 'o.eps_q001-rpa_00'
- zdata = 'o.eps_q001-rpa_00'
- sshift = 0.0           ! surface shift
- datatype = 'eps23'
- d_cellin = 1.0
- !
- ! Localization
- !
- normdir = 3
- lowerlim = 0
- upperlim = 1
- ngloc = 0
- loc_bands = (/ 1, n_bands /)
- loc_kpts  = (/ 1, nkibz /)
- ! 
- ! Transition analysis
- ! 
- Ecv_min = 0.0
- Ecv_max = -1.0/HA2EV
- idir = 1
- !
-#endif
- !
  ! BZ grids
  !
  coo_in="iku"
@@ -244,11 +212,13 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  !
 #endif
  !
- ! ANGULAR MOMENTUM & ELECTRON DISPLACEMENT
+ ! CURRENT
  !
 #if defined _YPP_BOLTZMANN
  l_current=.false.
 #endif
+ !
+ ! ANGULAR MOMENTUM & ELECTRON DISPLACEMENT
  !
 #if defined _YPP_MAGNETIC
  !
@@ -439,13 +409,13 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  l_phonons   =runlevel_is_on('phonons')
  l_gkkp      =runlevel_is_on('gkkp')
 #endif
-#if defined _YPP_BOLTZMANN
- l_current          = runlevel_is_on('current')
- if (l_current) call initactivate(1,'electrons')
-#endif
 #if defined _YPP_RT
  l_fix_syms         = runlevel_is_on('fixsyms')
  l_RT_X             = runlevel_is_on('rtX')
+#endif
+#if defined _YPP_BOLTZMANN
+ l_current          = runlevel_is_on('current')
+ if (l_current) call initactivate(1,'electrons')
 #endif
 #if defined _YPP_MAGNETIC
  l_angular_momentum = runlevel_is_on('angular_m').and.runlevel_is_on('electrons')
@@ -567,29 +537,6 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) call initactivate(1,"PhBroad PhStps")
 #endif
  !
-#if defined _YPP_RAS
- !
- lsurf =runlevel_is_on('surf')
- lras  =runlevel_is_on('ras')
- lreels=runlevel_is_on('reels')
- lloc  =runlevel_is_on('loc')
- ltrans=runlevel_is_on('trans')
- if(lsurf) then
-   if (lras) call initactivate(1,"XData YData "//&
-&       " BulkFile BulkForm BlkShift BlkBroad "//&
-&       " DataType SrfShift d_cell GausConv")
-   if (lreels) call initactivate(1,"XData YData ZData"//&
-&       " q0x q0y"//& 
-&       " BulkFile BulkForm BlkShift BlkBroad Layers"//&
-&       " DataType SrfShift d_cell "//&
-&       " E0 Theta0 Thetap Phi DetAngle "//&
-&       " LossForm ImpactFt DetIntMd NumIntPt GausConv")
-   if(lloc) call initactivate(1,"NormDir LowerLim UpperLim NGLoc LbndRnge KptRange WrtLocDB")
-   if(ltrans) call initactivate(1,"EcvMin EcvMax qdir")
- endif
- !
-#endif
- !
  if (infile_editing) then
    open(unit=12,file=trim(infile))
    call initinfio(defs,12)
@@ -607,7 +554,7 @@ subroutine ypp_init(instr,lnstr,FINALIZE)
  if (.not.l_QP_init) l_QP_init=l_electrons.and.l_mean_potential
 #endif
 #if defined _YPP_MAGNETIC
- if (.not.l_QP_init) l_QP_init=l_angular_momentum.or.l_position)
+ if (.not.l_QP_init) l_QP_init=l_angular_momentum.or.l_position
 #endif
  !
  if (l_QP_init) call QP_init(.FALSE.,.FALSE.)

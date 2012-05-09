@@ -22,12 +22,6 @@
 subroutine QP_external_corrections(Xen,en,Xk,k,X)
  !
  use drivers
-#if defined _RAS
- use ras_module,    ONLY:lras, lreels
-#endif
-#if defined _REELS
- use reels_module,  ONLY:lreels
-#endif
  use X_m,           ONLY:X_t
  use electrons,     ONLY:levels,n_bands
  use R_lattice,     ONLY:bz_samp
@@ -58,12 +52,6 @@ subroutine QP_external_corrections(Xen,en,Xk,k,X)
  ! - Dynamical X -
  !
  apply_QP=(l_optics.and.l_chi).or.(l_em1d.and..not.l_ppa).or.&
-#if defined _REELS
-        lreels.or.&
-#endif
-#if defined _RAS
-        lras.or.lreels.or.&
-#endif
         (l_gw0.and..not.l_ppa.and.l_el_corr).or.l_life
  if (apply_QP)  call QP_apply(X(3)%ib,Xen,Xk,"X",msg_fmt='s')
 #if defined _SC

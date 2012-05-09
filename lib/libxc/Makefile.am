@@ -37,13 +37,13 @@ ChangeLog:
 dist-hook: ChangeLog
 
 rpm: dist
-	@topdir=`rpmbuild --showrc | @GREP@ ': *_topdir' | cut -f 2`; \
-	mv -f $(PACKAGE)-$(VERSION).tar.gz $$topdir/SOURCES; \
-	cp build/$(PACKAGE).spec $$topdir/SPECS; \
-	rpmbuild -ba $$topdir/SPECS/$(PACKAGE).spec; \
-	echo "-------------------------------------------------------------"; \
-        echo "  RPMs are built, and are located under:"; \
-        echo "       $$topdir/RPMS/<arch>"; \
-        echo "       $$topdir/SRPMS"; \
-        echo "-------------------------------------------------------------"
-#       scp $(RPM_DIR)/RPMS/*/libxc*.rpm marques@www.tddft.org:/server/www/tddft.org/programs/octopus/download/
+#	@topdir=`rpmbuild --showrc | @GREP@ ': *_topdir' | cut -f 2`; \
+#	mv -f $(PACKAGE)-$(VERSION).tar.gz $$topdir/SOURCES; \
+#	cp build/$(PACKAGE).spec $$topdir/SPECS; \
+#	rpmbuild -ba $$topdir/SPECS/$(PACKAGE).spec; \
+#	echo "-------------------------------------------------------------"; \
+#        echo "  RPMs are built, and are located under:"; \
+#        echo "       $$topdir/RPMS/<arch>"; \
+#        echo "       $$topdir/SRPMS"; \
+#        echo "-------------------------------------------------------------"
+##       scp $(RPM_DIR)/RPMS/*/libxc*.rpm marques@www.tddft.org:/server/www/tddft.org/programs/octopus/download/

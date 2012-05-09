@@ -25,14 +25,6 @@ subroutine ypp_init_load(defs)
 &                        Time_unit,Bfield_unit,Efield_unit,V_real_time
  use wave_func,     ONLY:wf_ng
  use YPP
-#if defined _YPP_RAS
- use bulkeps,              ONLY: init_bulk
- use convolute,            ONLY: init_convolute
- use eels_kinematics,      ONLY: init_kinematics
- use model_loss_function,  ONLY: init_loss_function
- use surface_geometry,     ONLY: init_surface
- use eels_detector,        ONLY: init_detector
-#endif
 #if defined _YPP_BOLTZMANN
  use electrons,            ONLY: nel,Boltz_Efield,Boltz_tau
  use D_lattice,            ONLY: Tel
@@ -100,8 +92,6 @@ subroutine ypp_init_load(defs)
  call it('r',defs,'MeanPot', '[R] Mean Potential')
 #endif
  call it('r',defs,'surf',    '[R] Surface spectroscopy postprocessor')
- call it('r',defs,'ras',     '[R] RAS spectra generator')
- call it('r',defs,'reels',   '[R] REELS spectra generator')
  call it('r',defs,'loc',     '[R] State localizer')
  call it('r',defs,'trans',   '[R] Transition analyzer')
  !
@@ -202,37 +192,6 @@ subroutine ypp_init_load(defs)
  call it(defs,'PhBroad','Phonon broadening (Eliashberg & DOS)',ph_broad,E_unit)
  call it(defs,'EEfermi','External Fermi Level (Eliashberg)',elph_Ef,E_unit)
  call it(defs,'PhStps', 'Energy steps',elph_steps)
- !
-#endif
-#if defined _YPP_RAS
- !
- ! RAS
- !
- call it(defs,'XData',     'Filename of q[x] data',xdata)
- call it(defs,'YData',     'Filename of q[y] data',ydata)
- call it(defs,'ZData',     'Filename of q[z] data',zdata)
- call it(defs,'SrfShift',  'Shift of surface spectra',sshift,E_unit)
- call it(defs,'DataType',  'Form of epsilon/alpha data on input [eps/a_t/a_r+23/45]',datatype)
- call it(defs,'d_cell',    'Perpendicular component of cell',d_cellin)
- call init_bulk(defs)
- call init_convolute(defs)
- !
- call it(defs,'NormDir',   'Index of surface normal (1/2/3)',normdir)
- call it(defs,'LowerLim',  'Lower limit of localization box (frac)',lowerlim)
- call it(defs,'UpperLim',  'Upper limit of localization box (frac)',upperlim)
- call it(defs,'NGLoc',     'G-vectors for localization sum',ngloc)
- call it(defs,'LbndRnge',  'Loc bands range',loc_bands)
- call it(defs,'KptRange',  'Loc kpts range',loc_kpts)
- call it('f',defs,'WrtLocDB','Create localization database')
- !
- call it(defs,'EcvMin',  'Lower limit of transition window',Ecv_min,E_unit)
- call it(defs,'EcvMax',  'Upper limit of transition window',Ecv_max,E_unit)
- call it(defs,'PolDir',  'Index of polarization direction',idir)
- call it(defs,'qdir'  ,  '[cc] X-polarization direction', qdir )
- call init_kinematics(defs) 
- call init_loss_function(defs)
- call init_surface(defs)
- call init_detector(defs)
  !
 #endif
  !

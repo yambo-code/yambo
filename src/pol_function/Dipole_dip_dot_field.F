@@ -28,9 +28,6 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
  use KERR,           ONLY:DIP_q_dot_iR_kerr,KERR_alloc,KERR_alloc, &
 &                         Dip_P_symm,chi_nn,chi_jj
 #endif
-#if defined _RAS
- use ras_module,     ONLY:transloc, lras
-#endif
  use drivers,        ONLY:l_col_cut
  use electrons,      ONLY:levels,n_sp_pol
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
@@ -111,12 +108,6 @@ subroutine Dipole_dip_dot_field(Xen,Xk,X,field_dir)
    do iv = X%ib(1), Xen%nbm
      !
      do ic = Xen%nbf+1, X%ib(2)
-     !
-#if defined _RAS
-       if(lras) then
-         if(.not.transloc(ic,iv,ik)) cycle
-       endif
-#endif
        !
        ! GPL_INCLUDE_START SPIN_IGNORE
        ! i_spin=1

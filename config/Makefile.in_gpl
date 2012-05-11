@@ -39,8 +39,8 @@ package_bugreport = @PACKAGE_BUGREPORT@
 prefix      = @prefix@
 exec_prefix = @exec_prefix@
 bindir      = @bindir@
-libdir      = @libdir@
-includedir  = @includedir@
+libdir      = @srcdir_path@/lib
+includedir  = @srcdir_path@/include
 CFGFILES = config/setup config/Makefile config/report sbin/make_message.pl \
   	   sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
 	   src/external_c/.objects Makefile driver/version.h \
@@ -62,28 +62,13 @@ MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface \
 #
 # YPP
 #
-YPPLIBS      = $(BASIC_LIBS) bz_ops qp_ctl setup interface pol_function bse 
+YPPLIBS      = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface pol_function bse
 #
 # PROJECTS
 #
 PROJECTS = 
 #if defined _ELPH
 PROJECTS = yambo_ph ypp_ph
-#endif
-#if defined _AUGER
-PROJECTS = yambo_auger
-#endif
-#if defined _RAS
-TARGETS  = all interfaces 
-PROJECTS = yambo_ras ypp_ras
-PJ_RASLIBS   = $(BASIC_LIBS) ras_reels_mods coulomb bz_ops qp_ctl ras \
-               interface tddft pol_function qp bse
-YPPRASLIBS   = $(BASIC_LIBS) ras_reels_mods bz_ops qp_ctl ras interface bse
-#endif
-#if defined _REELS
-PROJECTS = yambo_reels
-PJ_REELSLIBS = $(BASIC_LIBS) ras_reels_mods coulomb bz_ops qp_ctl reels \
-               interface tddft pol_function qp bse
 #endif
 #if defined _SC
 PROJECTS = yambo_sc ypp_sc
@@ -93,7 +78,6 @@ PJ_SCLIBS       = $(MAIN_LIBS) sc
 PROJECTS = yambo_distributed
 #endif
 EXE      = $(TARGETS) $(PROJECTS)
-#
 #
 nothing: 
 	@$(make_message)
@@ -121,20 +105,10 @@ ypp_sc: libs
 	@LIBS2DO="$(YPPLIBS)";ADF="-D_SC"; $(mksrc)
 	@X2DO="ypp_sc" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_SC";$(mkx)
 #endif
-#if defined _AUGER
-yambo_auger: libs
-	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_AUGER"; $(mksrc)
-	@X2DO="yambo_auger"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_AUGER";$(mkx)
-#endif
 #if defined _DISTRIBUTED
 yambo_distributed: libs
 	@LIBS2DO="$(MAIN_LIBS)";ADF="-D_DISTRIBUTED"; $(mksrc)
 	@X2DO="yambo_distributed"; XPATH="driver";XLIBS="$(MAIN_LIBS)";ADF="-D_DISTRIBUTED";$(mkx)
-#endif
-#if defined _MANYK
-yambo_manyk: libs
-	@LIBS2DO="$(PJ_MANYKLIBS)";ADF="-D_MANYK"; $(mksrc)
-	@X2DO="yambo_manyk"; XPATH="driver";XLIBS="$(PJ_MANYKLIBS)";ADF="-D_MANYK";$(mkx)
 #endif
 #if defined _ELPH
 yambo_ph: libs
@@ -143,19 +117,6 @@ yambo_ph: libs
 ypp_ph: libs
 	@LIBS2DO="$(YPPLIBS)";ADF="-D_ELPH"; $(mksrc)
 	@X2DO="ypp_ph" ;XPATH="ypp";XLIBS="$(YPPLIBS)"; ADF="-D_YPP_ELPH";$(mkx)
-#endif
-#if defined _RAS
-yambo_ras: libs
-	@LIBS2DO="$(PJ_RASLIBS)";ADF="-D_RAS"; $(mksrc)
-	@X2DO="yambo_ras"; XPATH="driver";XLIBS="$(PJ_RASLIBS)";ADF="-D_RAS";$(mkx)
-ypp_ras: libs
-	@LIBS2DO="$(YPPRASLIBS)";ADF="-D_YPP_RAS"; $(mksrc)
-	@X2DO="ypp_ras" ;XPATH="ypp";XLIBS="$(YPPRASLIBS)"; ADF="-D_YPP_RAS";$(mkx)
-#endif
-#if defined _REELS
-yambo_reels: libs
-	@LIBS2DO="$(PJ_REELSLIBS)";ADF="-D_REELS"; $(mksrc)
-	@X2DO="yambo_reels"; XPATH="driver";XLIBS="$(PJ_REELSLIBS)";ADF="-D_REELS";$(mkx)
 #endif
 interfaces: libs
 	@LIBS2DO="$(2YLIBS)" ; $(mksrc)
@@ -204,7 +165,7 @@ define mklibxc
   if test ! -f "$(libdir)/libxc.a" ; then \
   echo " " ; \
   echo ">>>[Making libxc]<<<" ; \
-  cd $(libdir)/libxc ; $(make) -s VPATH=lib/libxc  || exit "$$?" ; \
+  cd $(libdir)/libxc ; $(make) -s VPATH=$(libdir)/libxc  || exit "$$?" ; \
   echo ">>>[Installing libxc]<<<" ; \
   make -s install ; \
   cd ../../; \
@@ -243,17 +204,17 @@ define objects_clean
  fi
 endef
 define lib_xc_clean
- cd lib/libxc; make -s clean; cd ../..
+ cd $(libdir)/libxc; make -s clean; cd ../..
  echo "[CLEAN] LibXC ... done" 
 endef
 define lib_xc_distclean
- cd lib/libxc; make -s distclean; cd ../..
- rm -fr include/xc.h include/xc_config.h  include/xc_funcs.h lib/pkgconfig/
+ cd $(libdir)/libxc; make -s distclean; cd ../..
+ rm -fr include/xc.h include/xc_config.h  include/xc_funcs.h lib/pkgconfig/ libxc/autom4te.cache/
  echo "[CLEAN] LibXC ... done" 
 endef
 define lib_mod_clean
  find . \( -name '*.a' -o -name '*.mod' \) -type f -print | \
-       grep -v netcdf | grep -v xc_ | grep -v iotk | grep -v typesize | xargs rm -f 
+       grep -v netcdf | grep -v xc_ | grep -v iotk | grep -v typesize | grep -v libxc | xargs rm -f 
  echo "[CLEAN] Libraries ... done" 
  echo "[CLEAN] Modules ... done" 
 endef

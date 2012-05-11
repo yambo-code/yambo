@@ -24,9 +24,10 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use pars,           ONLY:SP,pi,IP
  use memory_m,       ONLY:mem_est
  use vec_operate,    ONLY:c2a
- use D_lattice,      ONLY:a,nsym,dl_sop,sop_inv
+ use D_lattice,      ONLY:a,nsym,dl_sop,sop_inv,mag_syms,i_time_rev
  use R_lattice,      ONLY:b,g_vec,ng_vec
- use FFT_m,          ONLY:fft_dim,fft_size,fft_rot_r,fft_norm,fft_g_table,fft_multiplier,modx
+ use FFT_m,          ONLY:fft_dim,fft_size,fft_rot_r,fft_rot_r_notr,&
+&                         fft_norm,fft_g_table,fft_multiplier,modx
  use wave_func,      ONLY:wf_ng
  implicit none
  integer :: iG_max,iGo_max
@@ -34,8 +35,8 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  ! 
  ! Work Space
  !
- integer  :: i1,i2,i3,i4,iv(3),ln(3),is
- real(SP) :: v1(3),M1(3,3),M2(3,3)
+ integer  :: i1,i2,i3,i4,iv(3),iv_notr(3),ln(3),is
+ real(SP) :: v1(3),M1(3,3),M2(3,3),M1_notr(3,3),M2_notr(3,3)
  !
  if (.not.ONLY_SIZE) then
    if (allocated(fft_g_table)) then
@@ -83,6 +84,15 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    allocate(fft_rot_r(nsym,fft_size))
    call mem_est('FFT_rot',(/product(fft_rot_r)/),(/IP/))
    !
+   if(mag_syms) then
+     if (allocated(fft_rot_r_notr)) then
+       deallocate(fft_rot_r_notr)
+       call mem_est('FFT_rot_notr')
+     endif
+     allocate(fft_rot_r_notr(nsym/2,fft_size))
+     call mem_est('FFT_rot_notr',(/product(fft_rot_r_notr)/),(/IP/))
+   endif
+   !
    !Remeber
    !-------
    ! 
@@ -103,14 +113,26 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      M1=matmul(dl_sop(:,:,sop_inv(is)),transpose(a))
      M2=matmul(b,M1)/2./pi
      forall (i1=1:3,i2=1:3) M2(i1,i2)=M2(i1,i2)*fft_dim(i1)/fft_dim(i2)
+     !
+     if( is>nsym/(1+i_time_rev) .and. mag_syms ) then
+       M1_notr=matmul(-dl_sop(:,:,sop_inv(is)),transpose(a))
+       M2_notr=matmul(b,M1_notr)/2./pi
+       forall (i1=1:3,i2=1:3) M2_notr(i1,i2)=M2_notr(i1,i2)*fft_dim(i1)/fft_dim(i2)
+     endif
+     !
      do i1=0,fft_dim(1)-1
        do i2=0,fft_dim(2)-1
          do i3=0,fft_dim(3)-1
            iv=nint(matmul(M2,(/i1,i2,i3/)))
+           if(is>nsym/(1+i_time_rev) .and. mag_syms) iv_notr=nint(matmul(M2_notr,(/i1,i2,i3/)))
            i4=1+i1+i2*fft_dim(1)+i3*fft_dim(1)*fft_dim(2)
            fft_rot_r(is,i4)=1+modx(iv(1),fft_dim(1))+&
 &                          modx(iv(2),fft_dim(2))*fft_dim(1)+&
 &                          modx(iv(3),fft_dim(3))*fft_dim(1)*fft_dim(2)
+           if( is>nsym/(1+i_time_rev) .and. mag_syms )&
+&            fft_rot_r_notr(is-nsym/2,i4)=1+modx(iv_notr(1),fft_dim(1))+&
+&                                  modx(iv_notr(2),fft_dim(2))*fft_dim(1)+&
+&                                  modx(iv_notr(3),fft_dim(3))*fft_dim(1)*fft_dim(2)
          enddo
        enddo
      enddo

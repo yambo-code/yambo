@@ -47,9 +47,9 @@ subroutine barriers()
  !
  use drivers
  use pars,       ONLY:schlen
- use D_lattice,  ONLY:i_time_rev,i_space_inv
+ use D_lattice,  ONLY:i_time_rev,i_space_inv,mag_syms
  use BS,         ONLY:BSS_mode
- use electrons,  ONLY:n_spin,n_met_bands,n_full_bands,n_spinor,n_sp_pol,spin_orbit
+ use electrons,  ONLY:n_spin,n_met_bands,n_full_bands,n_spinor,n_sp_pol
  use QP_m,       ONLY:QP_solver
  use it_m,       ONLY:switch_off_runlevel
  implicit none
@@ -199,8 +199,8 @@ subroutine barriers()
  !======
  if ( (l_ppa.and.trim(QP_solver)=='s').or.l_cohsex ) QP_solver='n'
  !
- ! If the system is non magnetic you can safely comment the nex line
- ! Otherwise you have to run ypp_rt to remove the trev symmetry when SO is present
- if(i_time_rev==1.and.spin_orbit) call switch_off_runlevel('all',on_name=' ')
+ ! If the system uses magnetic symmetries then OEP is not correctly imlpemented
+ ! You have to run ypp_rt to remove the trev symmetries
+ if(mag_syms) call switch_off_runlevel('gw0',on_name=' ')
  !
 end subroutine

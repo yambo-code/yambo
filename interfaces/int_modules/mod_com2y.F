@@ -69,7 +69,7 @@ module mod_com2y
      !
      use com,       ONLY:msg,error
      use electrons, ONLY:spin_orbit
-     use D_lattice, ONLY:nsym,dl_sop,i_time_rev,a,&
+     use D_lattice, ONLY:nsym,dl_sop,i_time_rev,a,mag_syms,&
 &                        atoms_spatial_invertion,i_space_inv,alat
      use R_lattice, ONLY:b,rl_sop
      !
@@ -206,6 +206,14 @@ module mod_com2y
        dl_sop(:,:,is_yambo)=matmul(sop_mat,b)/2._SP/pi
        if (double_symmetries) dl_sop(:,:,is_yambo+nsym_)=-dl_sop(:,:,is_yambo)
      enddo
+     !
+     ! Check if we are using magnetic symmetries
+     if (i_time_rev==1) then
+       do is=1,nsym/2
+         if( any( (dl_sop(:,:,is)+dl_sop(:,:,is+nsym/2))>1.E-5 ) ) mag_syms=.true.
+       enddo
+       if (mag_syms) call msg('s','There are a magnetic field or SOC in a magnetic system with T-rev')
+     endif
      !
      allocate(rl_sop(3,3,nsym))
      do is=1,nsym

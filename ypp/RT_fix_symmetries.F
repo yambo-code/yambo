@@ -29,7 +29,7 @@ subroutine RT_fix_symmetries(E,k)
  use electrons,           ONLY:levels,E_reset,n_spin,n_sp_pol,spin_orbit
  use vec_operate,         ONLY:v_norm,v_is_zero
  use matrix_operate,      ONLY:m3det
- use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,a,alat,&
+ use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,a,alat,mag_syms,&
 &                              i_space_inv,sop_inv,inv_index,symmetry_group_table
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,&
 &                              ng_closed,bz_samp_duplicate,rl_sop
@@ -86,8 +86,16 @@ subroutine RT_fix_symmetries(E,k)
  call parser('RmAllSymm',Rm_all_symm)
  call parser('RmTimeRev',Rm_TR)
  !
- call parser('RmInvMBaxis',Rm_inv_BM_axis)
  ! Do not consider symmtries which invert the axis along the magnetization or the field B
+ call parser('RmInvMBaxis',Rm_inv_BM_axis)
+ !
+ ! Check if we are using mag symmetries
+ !
+ if ( (use_B_field.or.(spin_orbit.and.has_magnetization)).and. &
+&      i_time_rev==1.and..not.Rm_TR) mag_syms=.true.
+ if ( i_time_rev==0.or.Rm_TR ) mag_syms=.false.
+ !
+ if (mag_syms) call msg('s','There are a magnetic field or SOC in a magnetic system with T-rev')
  !
  call fft_setup(wf_ng,1,.false.)
  allocate(wf_DP(fft_size),wf_DP_rot(fft_size))

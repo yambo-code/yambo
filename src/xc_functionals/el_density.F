@@ -46,11 +46,11 @@ subroutine el_density(en,Xk,rho,force_si)
  !
  !
  use pars,          ONLY:SP
- use com,           ONLY:warning
+ use com,           ONLY:warning,error
  use electrons,     ONLY:levels,n_spin,n_sp_pol
  use R_lattice,     ONLY:bz_samp
- use D_lattice,     ONLY:nsym,i_time_rev
- use FFT_m,         ONLY:fft_size,fft_rot_r
+ use D_lattice,     ONLY:nsym,i_time_rev,mag_syms
+ use FFT_m,         ONLY:fft_size,fft_rot_r,fft_rot_r_notr
  use wave_func,     ONLY:wf_state,wf
 #if defined _RT
  use SC,            ONLY:SC_bands
@@ -69,6 +69,7 @@ subroutine el_density(en,Xk,rho,force_si)
  type(levels) ::en       
  real(SP)     ::rho(fft_size)
  logical,     intent(in) :: force_si
+ logical                 :: force_tr
  !
  ! Work Space 
  !
@@ -187,12 +188,20 @@ subroutine el_density(en,Xk,rho,force_si)
   !
   ! Simmetrization
   !
-  rho_syms=nsym/(i_time_rev+1)
-  if (force_si) rho_syms=nsym
-  do i1=1,rho_syms
-    rho(:)=rho(:)+real(rho_no_sym(fft_rot_r(i1,:)),SP)/real(nsym,SP)
-  enddo
-  !
-  if (.not.force_si) rho=rho*(1+i_time_rev)
+  if(mag_syms) then
+    if(i_time_rev==0) call error(' mag_sym but no time-rev ')
+    do i1=1,nsym/2
+      rho(:)=rho(:)+real(rho_no_sym(fft_rot_r(i1,:)),SP)/real(nsym,SP)
+      rho(:)=rho(:)+real(rho_no_sym(fft_rot_r_notr(i1,:)),SP)/real(nsym,SP)
+    enddo
+  else
+    rho_syms=nsym/(i_time_rev+1)
+    if (force_si) rho_syms=nsym
+    do i1=1,rho_syms
+      rho(:)=rho(:)+real(rho_no_sym(fft_rot_r(i1,:)),SP)/real(nsym,SP)
+    enddo
+    !
+    if (.not.force_si) rho=rho*(1+i_time_rev)
+  endif
   !
 end subroutine

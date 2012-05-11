@@ -84,14 +84,12 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    allocate(fft_rot_r(nsym,fft_size))
    call mem_est('FFT_rot',(/product(fft_rot_r)/),(/IP/))
    !
-   if(mag_syms) then
-     if (allocated(fft_rot_r_notr)) then
-       deallocate(fft_rot_r_notr)
-       call mem_est('FFT_rot_notr')
-     endif
-     allocate(fft_rot_r_notr(nsym/2,fft_size))
-     call mem_est('FFT_rot_notr',(/product(fft_rot_r_notr)/),(/IP/))
+   if (allocated(fft_rot_r_notr)) then
+     deallocate(fft_rot_r_notr)
+     call mem_est('FFT_rot_notr')
    endif
+   allocate(fft_rot_r_notr(nsym/2,fft_size))
+   call mem_est('FFT_rot_notr',(/product(fft_rot_r_notr)/),(/IP/))
    !
    !Remeber
    !-------
@@ -139,6 +137,8 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    enddo
    i4=1
  enddo
+ !
+ if(.not.mag_syms) fft_rot_r_notr=fft_rot_r
  !
  contains
    !

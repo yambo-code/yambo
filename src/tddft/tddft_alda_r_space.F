@@ -38,10 +38,11 @@ function tddft_alda_r_space(iq,ic,ik,iv,is_in,mode)
  ! iq==1 => ik(1)=ik(3) is_in(1)=is_in(3) ik(2)=ik(4) is_in(2)=is_in(4)
  !
  use pars,           ONLY:SP,pi
- use FFT_m,          ONLY:fft_size,fft_rot_r
+ use FFT_m,          ONLY:fft_size,fft_rot_r,fft_rot_r_notr
  use wave_func,      ONLY:wf,wf_state
  use xc_functionals, ONLY:F_xc
  use D_lattice,      ONLY:nsym,i_time_rev
+ use wrapper,        ONLY:V_dot_V
  implicit none
  integer     :: iq,ic(2),iv(2),ik(4),is_in(4),mode
  complex(SP) :: tddft_alda_r_space
@@ -49,7 +50,7 @@ function tddft_alda_r_space(iq,ic,ik,iv,is_in,mode)
  ! Work Space
  !
  integer     :: i1,is(4),iv1fft,ic1fft,i2fft,j2fft
- logical     :: l_s_tr(4)
+ logical     :: l_s_tr(2)
  complex(SP) :: rhotwr1(fft_size),rhotwr2(fft_size)
 #if defined _DOUBLE
  complex(SP):: zdotc,zdotu
@@ -69,7 +70,6 @@ function tddft_alda_r_space(iq,ic,ik,iv,is_in,mode)
      if (is_in(i1)>nsym/(i_time_rev+1)) is(i1)=is_in(i1)-nsym/(i_time_rev+1)
      l_s_tr(i1)=is(i1)/=is_in(i1)
    enddo
-   l_s_tr(3:4)=l_s_tr(1:2)
  endif
  !
  ! FFT indexes
@@ -91,30 +91,16 @@ function tddft_alda_r_space(iq,ic,ik,iv,is_in,mode)
  !  (iv(1),ik(1),is(1)) -->--:...:-->-- (iv(2),ik(2),is(2))
  !
  if (iq==1) then
-   rhotwr1(:)=conjg(wf(fft_rot_r(is(1),:),ic1fft))*wf(fft_rot_r(is(1),:),iv1fft)
-   if (l_s_tr(2)) then
-     rhotwr2(:)=F_xc(:)*&
-&               conjg( wf(fft_rot_r(is(2),:),i2fft) )*wf(fft_rot_r(is(2),:),j2fft)
-   else
-     rhotwr2(:)=F_xc(:)*wf(fft_rot_r(is(2),:),i2fft)*conjg(wf(fft_rot_r(is(2),:),j2fft))
-   endif
+   if (l_s_tr(1)) rhotwr1(:)=wf(fft_rot_r_notr(is(1),:),ic1fft)*conjg(wf(fft_rot_r_notr(is(1),:),iv1fft))
+   if (.not.l_s_tr(1)) rhotwr1(:)=conjg(wf(fft_rot_r(is(1),:),ic1fft))*wf(fft_rot_r(is(1),:),iv1fft)
+   !
+   if (l_s_tr(2)) rhotwr2(:)=F_xc(:)*conjg( wf(fft_rot_r_notr(is(2),:),i2fft) )*wf(fft_rot_r_notr(is(2),:),j2fft)
+   if (.not.l_s_tr(2)) rhotwr2(:)=F_xc(:)*wf(fft_rot_r(is(2),:),i2fft)*conjg(wf(fft_rot_r(is(2),:),j2fft))
  endif
  !
  ! Sum
  !
- if (l_s_tr(1)) then
-#if defined _DOUBLE
-   tddft_alda_r_space=zdotc(fft_size,rhotwr1,1,rhotwr2,1)
-#else
-   tddft_alda_r_space=cdotc(fft_size,rhotwr1,1,rhotwr2,1)
-#endif
- else
-#if defined _DOUBLE
-   tddft_alda_r_space=zdotu(fft_size,rhotwr1,1,rhotwr2,1)
-#else
-   tddft_alda_r_space=cdotu(fft_size,rhotwr1,1,rhotwr2,1)
-#endif
- endif
+ tddft_alda_r_space=V_dot_V(fft_size,rhotwr1,rhotwr2)
  !
  ! tddft_alda_r_space'd be 2*cdotc/u*real(fft_size,SP)/DL_vol/Nq 
  ! but it is multiplied by Co

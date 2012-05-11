@@ -146,7 +146,7 @@ module wave_func
    subroutine WF_free()
      use memory_m, ONLY : mem_est
      use FFT_m,    ONLY : fft_size,fft_dim,fft_dim_loaded,fft_g_table,&
-  &                       fft_rot_r,fftw_plan,fft_multiplier
+  &                       fft_rot_r,fft_rot_r_notr,fftw_plan,fft_multiplier
      if (.not.allocated(wf)) return
      !
      call mem_est('WF',quiet=QUIET_free)
@@ -157,8 +157,8 @@ module wave_func
        fft_dim=0
        fft_dim_loaded=0
        fft_multiplier=1
-       deallocate(fft_g_table,fft_rot_r)
-       call mem_est('FFT_g_tab FFT_rot')
+       deallocate(fft_g_table,fft_rot_r,fft_rot_r_notr)
+       call mem_est('FFT_g_tab FFT_rot FFT_rot_notr')
 #if defined _FFTW
        call dfftw_destroy_plan(fftw_plan)
        fftw_plan=0

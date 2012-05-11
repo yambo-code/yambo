@@ -189,12 +189,12 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
 #endif
  endif
  !
- call msg('s','== P2Y completed ==')
- call msg('s',' ')
- !
  call pwait()
  !
  call pw_close
+ !
+ call msg('s' ,' ')
+ call msg('ln',' == P2Y completed ==')
  !
  call p_finalize
  !

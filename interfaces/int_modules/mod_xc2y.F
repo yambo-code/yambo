@@ -28,7 +28,7 @@ module mod_xc2y
  use xc_functionals, ONLY:XC_FACTOR, XC_NOT_AVAILABLE, NOXC, XC_libxcID 
  implicit none
  !
- integer, parameter :: N_Abinit_XC = 28,N_PW_X = 9, N_PW_C = 12, N_PW_GX = 12, N_PW_GC = 9
+ integer, parameter :: N_Abinit_XC = 28,N_PW_X = 10, N_PW_C = 13, N_PW_GX = 12, N_PW_GC = 9
  !
  !  Map for ABINIT/ETSF_IO
  !
@@ -65,9 +65,9 @@ module mod_xc2y
  ! Map for PWSCF
  ! 
  character(len=6),parameter,dimension(N_PW_X) :: PW_X=&  
-& (/'NOX ', 'SLA ', 'SL1 ', 'RXC ', 'OEP ', 'HF  ', 'PB0X', 'B3LP', 'KZK '/)
+& (/'NOX ', 'SLA ','LDA ', 'SL1 ', 'RXC ', 'OEP ', 'HF  ', 'PB0X', 'B3LP', 'KZK '/)
  character(len=6),parameter,dimension(N_PW_C) :: PW_C=&  
-& (/ 'NOC ', 'PZ  ', 'VWN ', 'LYP ', 'PW  ', 'WIG ', 'HL  ', 'OBZ ', &
+& (/ 'NOC ', 'PZ  ','LDA ', 'VWN ', 'LYP ', 'PW  ', 'WIG ', 'HL  ', 'OBZ ', &
 &    'OBW ', 'GL  ' , 'B3LP', 'KZK ' /)
  character(len=6),parameter,dimension(N_PW_GX) :: PW_GX=& 
 & (/ 'NOGX', 'B88 ', 'GGX ', 'PBX ',  'RPB ', 'HCTH', 'OPTX',&
@@ -76,10 +76,10 @@ module mod_xc2y
 & (/ 'NOGC', 'P86 ', 'GGC ', 'BLYP', 'PBC ', 'HCTH', 'META','B3LP', 'PSC '/)
  ! 
  integer,parameter,dimension(N_PW_X) :: PWX2LIBXC=&
-& (/ NOXC, XC_LDA_X*XC_FACTOR, XC_LDA_X*XC_FACTOR+XC_LDA_C_XALPHA, XC_NOT_AVAILABLE, &
+& (/ NOXC, XC_LDA_X*XC_FACTOR, XC_LDA_X*XC_FACTOR, XC_LDA_X*XC_FACTOR+XC_LDA_C_XALPHA, XC_NOT_AVAILABLE, &
 &    XC_NOT_AVAILABLE, NOXC, NOXC, XC_NOT_AVAILABLE,XC_NOT_AVAILABLE/)
  integer,parameter,dimension(N_PW_C) :: PWC2LIBXC=&
-& (/ NOXC, XC_LDA_C_PZ, XC_LDA_C_VWN, XC_GGA_C_LYP, XC_LDA_C_PW,&
+& (/ NOXC, XC_LDA_C_PZ, XC_LDA_C_PZ, XC_LDA_C_VWN, XC_GGA_C_LYP, XC_LDA_C_PW,&
 &    XC_LDA_C_WIGNER, XC_LDA_C_HL, XC_LDA_C_OB_PZ, XC_LDA_C_OB_PW,XC_LDA_C_GL,&
 &    NOXC, XC_NOT_AVAILABLE/)
  integer,parameter,dimension(N_PW_GX) :: PWGX2LIBXC=&

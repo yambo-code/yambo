@@ -32,7 +32,7 @@ subroutine WF_spatial_invertion(en,Xk)
  use FFT_m,         ONLY:fft_size
  use wave_func,     ONLY:wf,wf_space
  use com,           ONLY:msg
- use D_lattice,     ONLY:i_time_rev,i_space_inv
+ use D_lattice,     ONLY:i_time_rev,i_space_inv,mag_syms
  use R_lattice,     ONLY:bz_samp
  implicit none
  !
@@ -60,7 +60,8 @@ subroutine WF_spatial_invertion(en,Xk)
  !
  if (i_time_rev==0) then 
    i_space_inv=0
- else
+ ! When mag_syms t_rev and space_inv are two different syms
+ else if(.not.mag_syms) then
    !
    allocate(rho_si(fft_size),rho_nsi(fft_size),cv(fft_size))
    call el_density(en,Xk,rho_si,.true.)

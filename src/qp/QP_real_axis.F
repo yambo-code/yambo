@@ -46,7 +46,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use functions,     ONLY:e2et,h2ht,bose_decay
  use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:qindx_S,bz_samp
- use D_lattice,     ONLY:nsym,i_space_inv,i_time_rev
+ use D_lattice,     ONLY:nsym,i_space_inv,i_time_rev,mag_syms
  use wave_func,     ONLY:WF_load,WF_free
  use stderr,        ONLY:intc
  !
@@ -280,7 +280,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
      !
    endif
    !
-   if (iqs>nsym/(i_time_rev+1) .and. i_space_inv == 0 .and..not.X_is_TR_rotated) then
+   if (iqs>nsym/(i_time_rev+1) .and. (i_space_inv==0.or.mag_syms) .and..not.X_is_TR_rotated) then
      X_is_TR_rotated=.true.
      do i3=1,Xw%n(1)
        forall(i1=1:X%ng,i2=1:X%ng) X_mat_ws(i2,i1)=X_mat(i1,i2,i3)

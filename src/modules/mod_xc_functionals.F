@@ -41,7 +41,7 @@ module xc_functionals
    integer         :: kind              
    integer         :: id               
    integer         :: spin_channels     
-   integer         :: flags             	
+   integer         :: flags
    character(lchlen) :: name
    type(xc_f90_pointer_t) :: conf
    type(xc_f90_pointer_t) :: info

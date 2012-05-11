@@ -36,10 +36,10 @@ subroutine scatterBamp(isc)
  use pars,           ONLY:DP
  use electrons,      ONLY:n_spinor
  use collision,      ONLY:ggwinfo
- use D_lattice,      ONLY:nsym,i_time_rev
+ use D_lattice,      ONLY:nsym,i_time_rev,mag_syms
  use R_lattice,      ONLY:g_rot
  use wave_func,      ONLY:wf,wf_state
- use FFT_m,          ONLY:fft_size,fft_rot_r,fft_dim,fftw_plan,fft_g_table
+ use FFT_m,          ONLY:fft_size,fft_rot_r,fft_rot_r_notr,fft_dim,fftw_plan,fft_g_table
  implicit none
  type(ggwinfo)::isc
  !
@@ -92,9 +92,9 @@ subroutine scatterBamp(isc)
    ifft=wf_state(ib,ik,i_sp+i_spr-1)
    offt=wf_state(ob,ok,o_sp+i_spr-1)
    !
-   rho_tw_rs(:,i_spr)=wf(fft_rot_r(is,:),ifft)
-   if (.not.litr) rho_tw_rs(:,i_spr)=conjg(rho_tw_rs(:,i_spr))
-   if (lotr)      rho_tw_rs(:,i_spr)=rho_tw_rs(:,i_spr)*conjg(wf(fft_rot_r(os,:),offt))
+   if (litr)      rho_tw_rs(:,i_spr)=wf(fft_rot_r_notr(is,:),ifft)
+   if (.not.litr) rho_tw_rs(:,i_spr)=conjg(wf(fft_rot_r(is,:),ifft))
+   if (lotr)      rho_tw_rs(:,i_spr)=rho_tw_rs(:,i_spr)*conjg(wf(fft_rot_r_notr(os,:),offt))
    if (.not.lotr) rho_tw_rs(:,i_spr)=rho_tw_rs(:,i_spr)*wf(fft_rot_r(os,:),offt)
    !
    ! FFT call

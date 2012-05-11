@@ -67,7 +67,7 @@ module mod_xc2y
  character(len=6),parameter,dimension(N_PW_X) :: PW_X=&  
 & (/'NOX ', 'SLA ','LDA ', 'SL1 ', 'RXC ', 'OEP ', 'HF  ', 'PB0X', 'B3LP', 'KZK '/)
  character(len=6),parameter,dimension(N_PW_C) :: PW_C=&  
-& (/ 'NOC ', 'PZ  ','LDA  ', 'VWN ', 'LYP ', 'PW  ', 'WIG ', 'HL  ', 'OBZ ', &
+& (/ 'NOC ', 'PZ  ','LDA ', 'VWN ', 'LYP ', 'PW  ', 'WIG ', 'HL  ', 'OBZ ', &
 &    'OBW ', 'GL  ' , 'B3LP', 'KZK ' /)
  character(len=6),parameter,dimension(N_PW_GX) :: PW_GX=& 
 & (/ 'NOGX', 'B88 ', 'GGX ', 'PBX ',  'RPB ', 'HCTH', 'OPTX',&

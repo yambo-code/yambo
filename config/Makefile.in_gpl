@@ -54,7 +54,7 @@ INTERFCS = a2y p2y e2y
 BASIC_LIBS   = external_c modules xc_functionals parser communicate common io wf_and_fft 
 
 MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_ctl setup interface \
-               interpolate tddft pol_function qp acfdt bse
+               tddft pol_function qp bse
 #
 # Interfaces
 #
@@ -79,7 +79,6 @@ PROJECTS = yambo_distributed
 #endif
 EXE      = $(TARGETS) $(PROJECTS)
 #
-<<<<<<<<<<<<<<<<<<<<
 nothing: 
 	@$(make_message)
 changelog:

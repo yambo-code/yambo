@@ -40,16 +40,6 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER)
  ! COM
  !
  if (KIND>0.and.FUNCTIONAL>0) then
-!
-! if(xc_OnlyInLibxc(FUNCTIONAL)) then
-!   call warning('XC functional not available. Default used instead')
-!   call warning('By linking Yambo to libxc, this functional is available')
-!   call msg('rsn','[xc] Requested functional:  ', xc_string(KIND,FUNCTIONAL))
-!   KIND=XC_EXCHANGE_CORRELATION
-!   FUNCTIONAL=XC_LDA_C_PW
-!   call msg('rsn','[xc] Functional used: ', xc_string(KIND,FUNCTIONAL))
-! elseif (KIND>0.and.FUNCTIONAL>0) then
-!
    call msg('rsn','[xc] Functional ',xc_string(FUNCTIONAL))
  else if (FUNCTIONAL==XC_NOT_AVAILABLE) then
    KIND=XC_EXCHANGE_CORRELATION

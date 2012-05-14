@@ -60,7 +60,7 @@ subroutine RT_fix_symmetries(E,k)
  integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:)
  real(SP)              :: v1(3),v2(3),m(3,3)
  real(SP)              :: B_cart(3)
- integer               :: symm_M_factor,symm_B_factor,nsym_save,igfft,ig,ic
+ integer               :: symm_M_factor,symm_B_factor,igfft,ig,ic
  real(SP), allocatable :: pp_kb_store(:,:,:,:,:),pp_kbd_store(:,:,:,:,:)
  logical               :: Rm_all_symm,use_E_field,use_B_field,has_magnetization,reject_symmetry,Rm_TR,&
 &                         S_contains_TR(nsym),Trev_2_spatial=.false.
@@ -187,8 +187,11 @@ subroutine RT_fix_symmetries(E,k)
  !
  ! Remove Symmetries
  !
- nsym_save      =nsym
  spatial_nsym=nsym/(1+i_time_rev)
+ !
+ old_spatial_nsym=spatial_nsym
+ old_trev_nsym=nsym-spatial_nsym
+ !
  if(Rm_TR) then   ! No time reversal 
    if(i_space_inv==1.and.inv_index>spatial_nsym.and.&
 &     .not.(spin_orbit.and.has_magnetization) ) then
@@ -201,9 +204,6 @@ subroutine RT_fix_symmetries(E,k)
    endif
    i_time_rev=0
  endif
- !
- old_spatial_nsym=spatial_nsym
- old_trev_nsym=nsym-spatial_nsym
  !
  if(Rm_all_symm) then
    nsym=1
@@ -583,7 +583,8 @@ subroutine RT_fix_symmetries(E,k)
 #else
        call fft_3d(wf_DP,fft_dim,+1)
 #endif
-       wf_DP_rot(:)=wf_DP(fft_rot_r(is,:))*dble(fft_norm)
+       if(.not.S_contains_TR(is)) wf_DP_rot(:)=wf_DP(fft_rot_r(is,:))*dble(fft_norm)
+       if(     S_contains_TR(is)) wf_DP_rot(:)=wf_DP(fft_rot_r(is-old_trev_nsym,:))*dble(fft_norm)
        !
 #if defined _FFTW
        fftw_plan=0

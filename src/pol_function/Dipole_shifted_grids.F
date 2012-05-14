@@ -38,6 +38,9 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  use fields,              ONLY: grid_path 
  use memory_m,            ONLY: mem_est
  use wave_func,           ONLY: wf,wf_ng,wf_igk,wf_state,WF_load,WF_free , wf_ncx
+#if defined _SC           
+ use SC,                  ONLY: SC_bands
+#endif
  implicit none
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
@@ -51,6 +54,9 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  character(lchlen)            :: core_io_path_save
  integer                      :: nkibz_save, wf_ncx_save, wf_ncx_shifted, nkibz_shifted
  integer                      :: wf_ng_eff, wf_ng_shifted
+#if defined _SC
+ integer                      :: SC_bands_save(2)
+#endif
  !
  ! Work Space
  !
@@ -262,6 +268,9 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
        wf_ncx_save  = wf_ncx
        wf_ng_save   = wf_ng
        core_io_path_save = core_io_path
+#if defined _SC       
+       SC_bands_save     = SC_bands
+#endif 
      else if( grid.eq.'shifted'.and. command.eq.' define') then
        nkibz_shifted  = nkibz
        wf_ncx_shifted = wf_ncx
@@ -271,6 +280,9 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
        nkibz   = nkibz_save
        wf_ncx  = wf_ncx_save
        wf_ng   = wf_ng_save
+#if defined _SC       
+       SC_bands = SC_bands_save
+#endif
      else if( grid.eq.'shifted'.and. command.eq.'  reset') then
        core_io_path = grid_path
        nkibz   = nkibz_shifted

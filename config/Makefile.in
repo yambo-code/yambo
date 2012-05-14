@@ -239,7 +239,7 @@ define lib_xc_clean
 endef
 define lib_xc_distclean
  cd $(libdir)/libxc; make -s distclean; cd ../..
- rm -fr include/xc.h include/xc_config.h  include/xc_funcs.h lib/pkgconfig/ libxc/autom4te.cache/
+ rm -fr include/xc.h include/xc_config.h  include/xc_funcs.h lib/pkgconfig/ lib/libxc/autom4te.cache/
  echo "[CLEAN] LibXC ... done" 
 endef
 define lib_mod_clean

@@ -83,7 +83,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 #if defined _SC
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,&
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,RT_nk,&
-&                     l_Mean_Potential
+&                     l_Mean_Potential,l_RT_occupations_in_use
  use collisions_IO,    ONLY:n_collisions,COLLISIONS_cutoff,COLLISIONS_path
  use collisions_CACHE, ONLY:COLLISIONS_cache_size
 #endif
@@ -448,6 +448,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  compatible_SC_DB=.FALSE.
  found_SC_DB=.FALSE.
  l_Mean_Potential=.FALSE.
+ l_RT_occupations_in_use=.FALSE.
  COLLISIONS_cutoff=0.001
  !
  ! COLLISIONS I/O

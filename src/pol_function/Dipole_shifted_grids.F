@@ -79,7 +79,7 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  !I/O and external functions
  !
  integer                      :: io_err
- integer, external            :: ioDB1_reload
+ integer, external            :: ioDB1_selective_scan
 #if defined _DOUBLE
  complex(SP)                  :: zdotc
 #else 
@@ -97,7 +97,7 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
  !
  ! Read the k-point grids from second ioDB1
  !
- io_err=ioDB1_reload(E_shift,Xk_shift,trim(grid_path))
+ io_err=ioDB1_selective_scan(E_shift,Xk_shift,trim(grid_path),'all')
  call set_parms(grid='shifted', command=' define')
  !
  if(io_err/=0) then
@@ -254,7 +254,7 @@ subroutine Dipole_shifted_grids(Xen,Xk,X,field_dir,use_trans_gauge)
      ! not rewritten.
      !
      core_io_path = core_io_path_save
-     io_err=ioDB1_reload(E_shift,Xk_shift,trim(core_io_path))
+     io_err=ioDB1_selective_scan(E_shift,Xk_shift,trim(core_io_path))
      wf_ng=wf_ng_shifted
      !
    end subroutine

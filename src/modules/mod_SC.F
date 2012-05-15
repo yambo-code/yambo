@@ -94,6 +94,7 @@ module SC
  !
  ! Real-Time occupations
  !
+ logical                  :: l_RT_occupations_in_use
  real(SP),    allocatable :: RT_occupations(:,:) 
  !
  ! K-points: In case I want to use the G_lesser to define the occupations

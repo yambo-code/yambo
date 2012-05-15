@@ -23,7 +23,6 @@ integer function ioDB1(E,k,ID)
  !
  use pars,             ONLY:SP,IP,schlen
  use units,            ONLY:HA2EV
- use com,              ONLY:error
  use memory_m,         ONLY:mem_est
  use LOGO,             ONLY:code_version,code_revision
  use electrons,        ONLY:levels,default_nel,n_spin,n_bands,nel,n_sp_pol,&
@@ -55,7 +54,6 @@ integer function ioDB1(E,k,ID)
  type(levels)  :: E
  type(bz_samp) :: k
  integer       :: ID,code_version_local(3),code_revision_local
- logical       :: l_use_libxc
  !
  ! Work Space
  !
@@ -245,7 +243,7 @@ integer function ioDB1(E,k,ID)
  !
  call io_bulk(ID,VAR="LATTICE_PARAMETER",VAR_SZ=(/3/))
  call io_bulk(ID,R1=alat)
-
+ !
  call io_bulk(ID,VAR="LATTICE_VECTORS",VAR_SZ=(/3,3/))
  call io_bulk(ID,R2=a)
  !

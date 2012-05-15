@@ -62,7 +62,7 @@ subroutine k_random(Xk,Xen)
  type(levels)      :: RIM_E
  type(bz_samp)     :: RIM_k
  integer           :: ID,i_err,nsym_save,nsym_RIM_DB
- integer, external :: ioDB1_reload,ioE_RIM
+ integer, external :: ioDB1_selective_scan,ioE_RIM
  real(SP)          :: dl_sop_save(3,3,48)
  !
  ! Saves 2 check
@@ -74,7 +74,7 @@ subroutine k_random(Xk,Xen)
  !
  ! DB1 reloading
  !
- i_err=ioDB1_reload(RIM_E,RIM_k, trim(BZ_RIM_path) )
+ i_err=ioDB1_selective_scan(RIM_E,RIM_k, trim(BZ_RIM_path) ,'all')
  !
  if (i_err/=0) call error('RIM database not found')
  !

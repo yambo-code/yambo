@@ -122,7 +122,7 @@ subroutine RT_occupations_repair(E,k,print_fermi_distro)
      ib  = QP_table(inx,1)
      ik  = QP_table(inx,2)
      if (i2==2) then
-       if (ib>SC_bands(1).and.print_fermi_distro) then
+       if (ib>=SC_bands(1).and.print_fermi_distro) then
          call msg('o '//trim(output_fname),'',(/E%E(ib,ik,1)*HA2EV,RT_occupations(ib,ik)/),INDENT=-2,USE_TABS=.true.)
        endif
      else

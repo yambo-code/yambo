@@ -19,37 +19,37 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-function tddft_alda_r_space(iq,ic,ik,iv,is_in,mode)
+function tddft_alda_r_space(iq,ic,ik,iv,is,mode)
  !
  ! Calculates the F_xc scattering 
  !
  ! mode 1
  !
- !  (ic(1),ik(1),is_in(1)) --<--:...:--<-- (ic(2),ik(2),is_in(2))
+ !  (ic(1),ik(1),is(1)) --<--:...:--<-- (ic(2),ik(2),is(2))
  !                              :Fxc:
- !  (iv(1),ik(3),is_in(3)) -->--:...:-->-- (iv(2),ik(4),is_in(4))
+ !  (iv(1),ik(3),is(3)) -->--:...:-->-- (iv(2),ik(4),is(4))
  !
  ! mode 2
  !
- !  (ic(1),ik(1),is_in(1)) --<--:...:--<-- (iv(2),ik(2),is_in(2))
+ !  (ic(1),ik(1),is(1)) --<--:...:--<-- (iv(2),ik(2),is(2))
  !                              :Fxc:
- !  (iv(1),ik(3),is_in(3)) -->--:...:-->-- (ic(2),ik(4),is_in(4))
+ !  (iv(1),ik(3),is(3)) -->--:...:-->-- (ic(2),ik(4),is(4))
  !
- ! iq==1 => ik(1)=ik(3) is_in(1)=is_in(3) ik(2)=ik(4) is_in(2)=is_in(4)
+ ! iq==1 => ik(1)=ik(3) is(1)=is(3) ik(2)=ik(4) is(2)=is(4)
  !
  use pars,           ONLY:SP,pi
- use FFT_m,          ONLY:fft_size,fft_rot_r,fft_rot_r_notr
+ use FFT_m,          ONLY:fft_size,fft_rot_r
  use wave_func,      ONLY:wf,wf_state
  use xc_functionals, ONLY:F_xc
  use D_lattice,      ONLY:nsym,i_time_rev
  use wrapper,        ONLY:V_dot_V
  implicit none
- integer     :: iq,ic(2),iv(2),ik(4),is_in(4),mode
+ integer     :: iq,ic(2),iv(2),ik(4),is(4),mode
  complex(SP) :: tddft_alda_r_space
  ! 
  ! Work Space
  !
- integer     :: i1,is(4),iv1fft,ic1fft,i2fft,j2fft
+ integer     :: i1,iv1fft,ic1fft,i2fft,j2fft
  logical     :: l_s_tr(2)
  complex(SP) :: rhotwr1(fft_size),rhotwr2(fft_size)
 #if defined _DOUBLE
@@ -64,13 +64,7 @@ function tddft_alda_r_space(iq,ic,ik,iv,is_in,mode)
  !
  ! Symmetries
  !
- if (iq==1) then
-   do i1=1,2
-     is(i1)=is_in(i1)
-     if (is_in(i1)>nsym/(i_time_rev+1)) is(i1)=is_in(i1)-nsym/(i_time_rev+1)
-     l_s_tr(i1)=is(i1)/=is_in(i1)
-   enddo
- endif
+ if (iq==1) l_s_tr(:)=(is(:2)>nsym/(i_time_rev+1))
  !
  ! FFT indexes
  !
@@ -91,10 +85,10 @@ function tddft_alda_r_space(iq,ic,ik,iv,is_in,mode)
  !  (iv(1),ik(1),is(1)) -->--:...:-->-- (iv(2),ik(2),is(2))
  !
  if (iq==1) then
-   if (l_s_tr(1)) rhotwr1(:)=wf(fft_rot_r_notr(is(1),:),ic1fft)*conjg(wf(fft_rot_r_notr(is(1),:),iv1fft))
+   if (l_s_tr(1))      rhotwr1(:)=wf(fft_rot_r(is(1),:),ic1fft)*conjg(wf(fft_rot_r(is(1),:),iv1fft))
    if (.not.l_s_tr(1)) rhotwr1(:)=conjg(wf(fft_rot_r(is(1),:),ic1fft))*wf(fft_rot_r(is(1),:),iv1fft)
    !
-   if (l_s_tr(2)) rhotwr2(:)=F_xc(:)*conjg( wf(fft_rot_r_notr(is(2),:),i2fft) )*wf(fft_rot_r_notr(is(2),:),j2fft)
+   if (l_s_tr(2))      rhotwr2(:)=F_xc(:)*conjg(wf(fft_rot_r(is(2),:),i2fft))*wf(fft_rot_r(is(2),:),j2fft)
    if (.not.l_s_tr(2)) rhotwr2(:)=F_xc(:)*wf(fft_rot_r(is(2),:),i2fft)*conjg(wf(fft_rot_r(is(2),:),j2fft))
  endif
  !

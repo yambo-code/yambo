@@ -30,7 +30,7 @@ module FFT_m
  integer              :: fft_dim_loaded(3)
  integer, allocatable :: fft_g_table(:,:)
  integer, allocatable :: fft_rot_r(:,:)
- integer, allocatable :: fft_rot_r_notr(:,:)
+ integer, allocatable :: fft_rot_r_inv(:)
  !
  ! FFTW support
  !

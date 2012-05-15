@@ -89,17 +89,16 @@ subroutine RT_fix_symmetries(E,k)
  ! Do not consider symmtries which invert the axis along the magnetization or the field B
  call parser('RmInvMBaxis',Rm_inv_BM_axis)
  !
+ call fft_setup(wf_ng,1,.false.)
+ allocate(wf_DP(fft_size),wf_DP_rot(fft_size))
+ call mem_est("wf_DP wf_DP_rot",(/size(wf_DP),size(wf_DP_rot)/),elements_kind=(/DP,DP/))
+ !
  ! Check if we are using mag symmetries
  !
  if ( (use_B_field.or.(spin_orbit.and.has_magnetization)).and. &
 &      i_time_rev==1.and..not.Rm_TR) mag_syms=.true.
  if ( i_time_rev==0.or.Rm_TR ) mag_syms=.false.
- !
  if (mag_syms) call msg('s','There are a magnetic field or SOC in a magnetic system with T-rev')
- !
- call fft_setup(wf_ng,1,.false.)
- allocate(wf_DP(fft_size),wf_DP_rot(fft_size))
- call mem_est("wf_DP wf_DP_rot",(/size(wf_DP),size(wf_DP_rot)/),elements_kind=(/DP,DP/))
  !
  if (Rm_all_symm) then
    call section('*',"== Remove all Symmetries ==")
@@ -596,8 +595,7 @@ subroutine RT_fix_symmetries(E,k)
 #else
        call fft_3d(wf_DP,fft_dim,+1)
 #endif
-       if(.not.S_contains_TR(is)) wf_DP_rot(:)=wf_DP(fft_rot_r(is,:))*dble(fft_norm)
-       if(     S_contains_TR(is)) wf_DP_rot(:)=wf_DP(fft_rot_r(is-old_trev_nsym,:))*dble(fft_norm)
+       wf_DP_rot(:)=wf_DP(fft_rot_r(is,:))*dble(fft_norm)
        !
 #if defined _FFTW
        fftw_plan=0

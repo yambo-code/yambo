@@ -133,7 +133,6 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
          isc%os = (/iv2,ik,is,1/)
          isc%qs = (/1,1,1/)
          call scatterBamp(isc)
-         if (is>nsym/(i_time_rev+1)) is=is-nsym/(i_time_rev+1)       
          rhotw_ds(:)=conjg(wf(fft_rot_r(is,:),ifft))*wf(fft_rot_r(is,:),offt)/EWeight
          rhotw_ds =rhotw_ds/(rho*real(fft_size,SP)) 
          rhotw_rs = (0._SP,0._SP)

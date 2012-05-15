@@ -97,7 +97,7 @@ subroutine barriers()
  ! RUNLEVELS
  !===========
  !
- if(i_time_rev==1.and.n_spin>1) call switch_off_runlevel('all',on_name=' ')
+ !if(i_time_rev==1.and.n_spin>1) call switch_off_runlevel('all',on_name=' ')
  !
 #if defined _RT
  call switch_off_runlevel('gw0',on_name=' ')
@@ -203,10 +203,6 @@ subroutine barriers()
  !
  ! If the system uses magnetic symmetries then OEP is not correctly imlpemented
  ! You have to run ypp_rt to remove the trev symmetries
- if(mag_syms) call switch_off_runlevel('gw0',on_name=' ')
-#if defined _ELPH
- ! Subroutins ELPH_Hamiltonian and ELPH_Sigma_c must be modified in order to work with mag_syms
- if(mag_syms) call switch_off_runlevel('all',on_name=' ')
-#endif
+ !if(mag_syms) call switch_off_runlevel('all',on_name=' ')
  !
 end subroutine

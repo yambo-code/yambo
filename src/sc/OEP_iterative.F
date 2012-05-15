@@ -123,12 +123,10 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
          end do
        end do
      end do
-     rho_sym = nsym/(i_time_rev+1)
      V_io = 0._SP
-     do is=1,rho_sym
+     do is=1,nsym
        V_io(:)=V_io(:)+real(V_resp(fft_rot_r(is,:)),SP)/real(nsym,SP)
      enddo
-     V_io = Vslt + V_io*(1._SP+real(i_time_rev,SP))
      V_io = V_io/rho
      !
      reached_treshold=maxval(abs(V_io(1:)-V_nm1(1:)))

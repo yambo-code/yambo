@@ -79,12 +79,6 @@ subroutine c2y_db1(en,k,file_name_)
  alat(2) = maxval(abs(a(2,:)))*alat_mult_factor
  alat(3) = maxval(abs(a(3,:)))*alat_mult_factor
  call crystal_lattice()
- if (trim(lattice)=='Unknown'.and.alat_mult_factor==1.) then
-   alat(1) = maxval(abs(a(1,:)))*2.
-   alat(2) = maxval(abs(a(2,:)))*2.
-   alat(3) = maxval(abs(a(3,:)))*2.
-   call crystal_lattice()
- endif
  !
  cp=cross_product(a(2,:),a(3,:))
  do i1 = 1,3

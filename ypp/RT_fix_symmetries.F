@@ -596,7 +596,8 @@ subroutine RT_fix_symmetries(E,k)
 #else
        call fft_3d(wf_DP,fft_dim,+1)
 #endif
-       wf_DP_rot(:)=wf_DP(fft_rot_r(is,:))*dble(fft_norm)
+       if(.not.S_contains_TR(is)) wf_DP_rot(:)=wf_DP(fft_rot_r(is,:))*dble(fft_norm)
+       if(     S_contains_TR(is)) wf_DP_rot(:)=wf_DP(fft_rot_r(is-old_trev_nsym,:))*dble(fft_norm)
        !
 #if defined _FFTW
        fftw_plan=0

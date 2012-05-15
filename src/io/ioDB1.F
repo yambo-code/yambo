@@ -169,8 +169,7 @@ integer function ioDB1(E,k,ID)
    endif
    if (ver_is_gt_or_eq(ID,revision=1041)) then
      call io_elemental(ID, VAR="spin_orbit",VAR_SZ=1,MENU=0)
-     call io_elemental(ID, L0=spin_orbit,&
-&                      VAR=' Spin Orbit interaction          : ')
+     call io_elemental(ID, L0=spin_orbit,VAR=' Spin Orbit interaction          : ')
    endif
    if (ver_is_gt_or_eq(ID,revision=1210)) then
      call io_elemental(ID, VAR="mag_syms",VAR_SZ=1,MENU=0)

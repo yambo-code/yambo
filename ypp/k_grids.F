@@ -318,8 +318,12 @@ subroutine k_grids(en,k,Xk,q)
        call K_transform(v,'iku')
        !
        if (formatted_) then
-         write(ch,'(3(f12.7,1x,a,1x))') v(1),'|',v(2),'|',v(3),'|'
-         write(ch,'(3(f12.7,1x))') v
+!        write(ch,'(3(f12.7,1x,a,1x))') v(1),'|',v(2),'|',v(3),'|'
+         if(No_Weight) then
+           write(ch,'(3(f12.6,1x))') v
+         else
+           write(ch,'(3(f12.6,1x),f6.3)') v,1._SP
+         endif
          call msg("s",'      ',trim(ch))
        else
          call msg("s",'      ',v)

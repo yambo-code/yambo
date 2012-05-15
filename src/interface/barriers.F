@@ -97,6 +97,8 @@ subroutine barriers()
  ! RUNLEVELS
  !===========
  !
+ if(i_time_rev==1.and.n_spin>1) call switch_off_runlevel('all',on_name=' ')
+ !
 #if defined _RT
  call switch_off_runlevel('gw0',on_name=' ')
 #endif

@@ -69,7 +69,6 @@ subroutine el_density(en,Xk,rho,force_si)
  type(levels) ::en       
  real(SP)     ::rho(fft_size)
  logical,     intent(in) :: force_si
- logical                 :: force_tr
  !
  ! Work Space 
  !

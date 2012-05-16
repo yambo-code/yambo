@@ -278,7 +278,8 @@ subroutine RT_fix_symmetries(E,k)
    enddo
  endif
  !
- call msg('s',trim(intc(old_spatial_nsym))//' spatial symmetries reduced to ...'//trim(intc(spatial_nsym)))
+ if(.not.RM_all_symm)&
+& call msg('s',trim(intc(old_spatial_nsym))//' spatial symmetries reduced to ...'//trim(intc(spatial_nsym)))
  !
  if(i_time_rev==1)&
 & call msg('s',trim(intc(old_trev_nsym))//' T-rev symmetries reduced to ...'//trim(intc(nsym-spatial_nsym)))

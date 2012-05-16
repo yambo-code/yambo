@@ -79,17 +79,18 @@ module mod_com2y
      !
      integer :: is,is_inv,is_spatial,is_trev,is_yambo,i2,i3
      logical :: l_identity,l_inversion
-     logical :: double_symmetries,mag_sym
+     logical :: double_symmetries
      real(SP):: sop_mat(3,3)
      !
+     mag_syms=.false.
      if(present(t_rev)) then
        i_time_rev=1
-       if(any(t_rev(:)==1)) mag_sym=.true.
-       if(.not.mag_sym) double_symmetries=.true.
+       if(any(t_rev(:)==1)) mag_syms=.true.
+       double_symmetries=.not.mag_syms
      else
        i_time_rev=1
-       if(     spin_orbit) i_time_rev=0
-       if(.not.spin_orbit) double_symmetries=.true.
+       if(spin_orbit) i_time_rev=0
+       double_symmetries=.not.spin_orbit
      endif
      !
      ! Space Invertion (possible only for v >= 3.0.4)
@@ -138,7 +139,7 @@ module mod_com2y
        ! If -I is a space inversion I keep both I and -I
        ! and switch off TR if there is no SO coupling
        !
-       if (i_space_inv==1.and..not.spin_orbit) i_time_rev=0
+       if (i_space_inv==1.and..not.mag_syms) i_time_rev=0
        if (i_space_inv==0) call error('-I is not a proper symmetry operation')
      endif
      !
@@ -153,7 +154,7 @@ module mod_com2y
      ! by the spatial inversion. Otherwise it cannot be removed.
      !
      if (i_time_rev==0) double_symmetries=.false.
-     if (i_time_rev==1.and.use_SI_instead_of_TR.and.i_space_inv==1.and..not.spin_orbit) then 
+     if (i_time_rev==1.and.use_SI_instead_of_TR.and.i_space_inv==1.and..not.mag_syms) then 
        i_time_rev=0
        double_symmetries=.not.l_inversion
      endif
@@ -168,6 +169,8 @@ module mod_com2y
      !
      nsym=nsym_
      if (double_symmetries) nsym=2.*nsym_
+     !
+     if (mag_syms) call msg('s','[MAG-SYMS] T-rev with (A) Magnetic field or (B) SOC and magnetization')
      !
      !From abinit help ...
      !
@@ -188,7 +191,7 @@ module mod_com2y
      is_spatial=0
      is_trev=0
      do is=1,nsym_
-       if(mag_sym) then
+       if(mag_syms) then
          ! PWscf: I need to reorder the symmetries
          if(t_rev(is)==0) then
            is_spatial=is_spatial+1
@@ -204,14 +207,6 @@ module mod_com2y
        dl_sop(:,:,is_yambo)=matmul(sop_mat,b)/2._SP/pi
        if (double_symmetries) dl_sop(:,:,is_yambo+nsym_)=-dl_sop(:,:,is_yambo)
      enddo
-     !
-     ! Check if we are using magnetic symmetries
-     if (i_time_rev==1) then
-       do is=1,nsym/2
-         if( any( (dl_sop(:,:,is)+dl_sop(:,:,is+nsym/2))>1.E-5 ) ) mag_syms=.true.
-       enddo
-       if (mag_syms) call msg('s','There are a magnetic field or SOC in a magnetic system with T-rev')
-     endif
      !
      allocate(rl_sop(3,3,nsym))
      do is=1,nsym

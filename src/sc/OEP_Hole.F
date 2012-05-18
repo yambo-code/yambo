@@ -75,10 +75,9 @@ subroutine OEP_Hole(E,k,Vslt,U_x)
    end do
  end do
  Vslt= 0._SP
- tr_syms = nsym/(i_time_rev+1)
- do i1=1,tr_syms
+ !
+ do i1=1,nsym
    Vslt(:fft_size)=Vslt(:fft_size)+real(Vslt_DP(fft_rot_r(i1,:fft_size)),SP)/real(nsym,SP)
  enddo
- Vslt=Vslt*(real(i_time_rev,SP)+1._SP)
  !
 end subroutine OEP_Hole

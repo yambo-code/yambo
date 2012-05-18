@@ -79,6 +79,7 @@ subroutine RT_fix_symmetries(E,k)
  use_E_field=.FALSE.
  use_B_field=.FALSE.
  has_magnetization=.FALSE.
+ spin_orbit=.FALSE.
  if (any(E_field/=0.)) use_E_field=.TRUE.
  if (B_field/=0.)      use_B_field=.TRUE.
  if (any(Magnetization/=0.))  has_magnetization=.TRUE.

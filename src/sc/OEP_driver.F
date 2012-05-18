@@ -69,7 +69,7 @@ subroutine OEP_driver(X,Xw,E,k,q,V_oep)
   if (l_oep_iterative.or.(.not.l_oep_exact)) then
     allocate(rho(fft_size),V_slt(fft_size),stat=alloc_err)
     if (l_oep_EWeight) then
-      call OEP_Weighted_Density(E,k,rho,.false.)
+      call OEP_Weighted_Density(E,k,rho)
     else
       call el_density(E,k,rho,.false.)
     end if

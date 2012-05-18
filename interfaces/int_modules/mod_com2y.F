@@ -69,7 +69,7 @@ module mod_com2y
      !
      use com,       ONLY:msg,error
      use electrons, ONLY:spin_orbit
-     use D_lattice, ONLY:nsym,dl_sop,i_time_rev,a,&
+     use D_lattice, ONLY:nsym,dl_sop,i_time_rev,a,mag_syms,&
 &                        atoms_spatial_invertion,i_space_inv,alat
      use R_lattice, ONLY:b,rl_sop
      !
@@ -82,14 +82,16 @@ module mod_com2y
      logical :: double_symmetries,mag_sym
      real(SP):: sop_mat(3,3)
      !
+     mag_syms=.false.
      if(present(t_rev)) then
        i_time_rev=1
-       if(any(t_rev(:)==1)) mag_sym=.true.
-       if(.not.mag_sym) double_symmetries=.true.
+       if(any(t_rev(:)==1)) mag_syms=.true.
+       double_symmetries=.not.mag_syms
      else
        i_time_rev=1
        if(     spin_orbit) i_time_rev=0
        if(.not.spin_orbit) double_symmetries=.true.
+       double_symmetries=.not.spin_orbit
      endif
      !
      ! Space Invertion (possible only for v >= 3.0.4)
@@ -138,7 +140,7 @@ module mod_com2y
        ! If -I is a space inversion I keep both I and -I
        ! and switch off TR if there is no SO coupling
        !
-       if (i_space_inv==1.and..not.spin_orbit) i_time_rev=0
+       if (i_space_inv==1.and..not.mag_syms) i_time_rev=0
        if (i_space_inv==0) call error('-I is not a proper symmetry operation')
      endif
      !
@@ -153,7 +155,7 @@ module mod_com2y
      ! by the spatial inversion. Otherwise it cannot be removed.
      !
      if (i_time_rev==0) double_symmetries=.false.
-     if (i_time_rev==1.and.use_SI_instead_of_TR.and.i_space_inv==1.and..not.spin_orbit) then 
+     if (i_time_rev==1.and.use_SI_instead_of_TR.and.i_space_inv==1.and..not.mag_syms) then 
        i_time_rev=0
        double_symmetries=.not.l_inversion
      endif
@@ -165,6 +167,8 @@ module mod_com2y
      if (i_time_rev==0) call msg("l","[TR no]")
      !
      ! Double the simmetries if TR or SI is added
+     !
+     if (mag_syms) call msg('s','[MAG-SYMS] T-rev with (A) Magnetic field or (B) SOC and magnetization')
      !
      nsym=nsym_
      if (double_symmetries) nsym=2.*nsym_
@@ -188,7 +192,7 @@ module mod_com2y
      is_spatial=0
      is_trev=0
      do is=1,nsym_
-       if(mag_sym) then
+       if(mag_syms) then
          ! PWscf: I need to reorder the symmetries
          if(t_rev(is)==0) then
            is_spatial=is_spatial+1

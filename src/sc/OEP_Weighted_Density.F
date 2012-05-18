@@ -19,7 +19,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OEP_Weighted_Density(en,Xk,rho,force_si)
+subroutine OEP_Weighted_Density(en,Xk,rho)
   !
   ! Modified el_density sub needed for Bulat Levy modified 
   ! Slater and OEP approx/procedure. 
@@ -28,8 +28,8 @@ subroutine OEP_Weighted_Density(en,Xk,rho,force_si)
   use com,           ONLY:warning
   use electrons,     ONLY:levels,n_spin,n_sp_pol
   use R_lattice,     ONLY:bz_samp
-  use D_lattice,     ONLY:nsym,i_time_rev
-  use FFT_m,         ONLY:fft_size,fft_rot_r
+  use D_lattice,     ONLY:nsym
+  use FFT_m,         ONLY:fft_size,fft_rot_r,fft_rot_r_inv
   use wave_func,     ONLY:wf_state,wf
   use SC,            ONLY:l_oep_EWeight
   !
@@ -37,7 +37,6 @@ subroutine OEP_Weighted_Density(en,Xk,rho,force_si)
   type(bz_samp)::Xk
   type(levels) ::en       
   real(SP)     ::rho(fft_size)
-  logical,     intent(in) :: force_si
   !
   ! Work Space 
   !
@@ -54,19 +53,14 @@ subroutine OEP_Weighted_Density(en,Xk,rho,force_si)
       !
       ifft=wf_state(i1,i2,1)
       EWeight = en%e(i1,i2,1)+en%Efermi(1)
-      rho_no_sym(:)=rho_no_sym(:)+en%f(i1,i2,1)*Xk%weights(i2)/&
-           &EWeight*abs(wf(:,ifft))**2
+      rho_no_sym(:)=rho_no_sym(:)+en%f(i1,i2,1)*Xk%weights(i2)/EWeight*abs(wf(:,ifft))**2
     enddo
   enddo
   !
   ! Symmetrization
   !
-  rho_syms=nsym/(i_time_rev+1)
-  if (force_si) rho_syms=nsym
-  do i1=1,rho_syms
+  do i1=1,nsym
     rho(:)=rho(:)+real(rho_no_sym(fft_rot_r(i1,:)),SP)/real(nsym,SP)
   enddo
-  !
-  if (.not.force_si) rho=rho*(1+i_time_rev)
   !
 end subroutine

@@ -79,6 +79,7 @@ subroutine RT_fix_symmetries(E,k)
  use_E_field=.FALSE.
  use_B_field=.FALSE.
  has_magnetization=.FALSE.
+ spin_orbit=.FALSE.
  if (any(E_field/=0.)) use_E_field=.TRUE.
  if (B_field/=0.)      use_B_field=.TRUE.
  if (any(Magnetization/=0.))  has_magnetization=.TRUE.
@@ -583,8 +584,7 @@ subroutine RT_fix_symmetries(E,k)
 #else
        call fft_3d(wf_DP,fft_dim,+1)
 #endif
-       if(.not.S_contains_TR(is)) wf_DP_rot(:)=wf_DP(fft_rot_r(is,:))*dble(fft_norm)
-       if(     S_contains_TR(is)) wf_DP_rot(:)=wf_DP(fft_rot_r(is-old_trev_nsym,:))*dble(fft_norm)
+       wf_DP_rot(:)=wf_DP(fft_rot_r(is,:))*dble(fft_norm)
        !
 #if defined _FFTW
        fftw_plan=0

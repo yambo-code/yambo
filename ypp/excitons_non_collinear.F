@@ -31,6 +31,7 @@ subroutine excitons_non_collinear(Xk,lambda_s,n_lambda,S_sq,S_z)
  use YPP,           ONLY:lambda,BS_H_dim
  use timing,        ONLY:live_timing
  use com,           ONLY:msg,error,warning
+ use wrapper,       ONLY:Vstar_dot_V
  !
  implicit none
  type(bz_samp)          ::Xk
@@ -79,13 +80,8 @@ subroutine excitons_non_collinear(Xk,lambda_s,n_lambda,S_sq,S_z)
         cc=(0.,0.)
         if ((iv.eq.iv1).and.(ikbz.eq.ikbz1)) then 
           !
-#if defined _DOUBLE
-          cc(1)=zdotc(fft_size,wf(fft_rot_r(is1,:),wf_state(ic1,ikibz1,1)),1,wf(fft_rot_r(is,:),wf_state(ic,ikibz,1)),1)
-          cc(2)=zdotc(fft_size,wf(fft_rot_r(is1,:),wf_state(ic1,ikibz1,2)),1,wf(fft_rot_r(is,:),wf_state(ic,ikibz,2)),1)
-#else
-          cc(1)=cdotc(fft_size,wf(fft_rot_r(is1,:),wf_state(ic1,ikibz1,1)),1,wf(fft_rot_r(is,:),wf_state(ic,ikibz,1)),1)
-          cc(2)=cdotc(fft_size,wf(fft_rot_r(is1,:),wf_state(ic1,ikibz1,2)),1,wf(fft_rot_r(is,:),wf_state(ic,ikibz,2)),1)
-#endif
+          cc(1)=Vstar_dot_V(fft_size,wf(fft_rot_r(is1,:),wf_state(ic1,ikibz1,1)),wf(fft_rot_r(is,:),wf_state(ic,ikibz,1)))
+          cc(2)=Vstar_dot_V(fft_size,wf(fft_rot_r(is1,:),wf_state(ic1,ikibz1,2)),wf(fft_rot_r(is,:),wf_state(ic,ikibz,2)))
           !
         endif
         !
@@ -93,13 +89,8 @@ subroutine excitons_non_collinear(Xk,lambda_s,n_lambda,S_sq,S_z)
         vv=(0.,0.)
         if ((ic.eq.ic1).and.(ikbz.eq.ikbz1)) then 
           !
-#if defined _DOUBLE
-          vv(1)=zdotc(fft_size,wf(fft_rot_r(is,:),wf_state(iv,ikibz,1)),1,wf(fft_rot_r(is1,:),wf_state(iv1,ikibz1,1)),1)
-          vv(2)=zdotc(fft_size,wf(fft_rot_r(is,:),wf_state(iv,ikibz,2)),1,wf(fft_rot_r(is1,:),wf_state(iv1,ikibz1,2)),1)
-#else
-          vv(1)=cdotc(fft_size,wf(fft_rot_r(is,:),wf_state(iv,ikibz,1)),1,wf(fft_rot_r(is1,:),wf_state(iv1,ikibz1,1)),1)
-          vv(2)=cdotc(fft_size,wf(fft_rot_r(is,:),wf_state(iv,ikibz,2)),1,wf(fft_rot_r(is1,:),wf_state(iv1,ikibz1,2)),1)
-#endif
+          vv(1)=Vstar_dot_V(fft_size,wf(fft_rot_r(is,:),wf_state(iv,ikibz,1)),wf(fft_rot_r(is1,:),wf_state(iv1,ikibz1,1)))
+          vv(2)=Vstar_dot_V(fft_size,wf(fft_rot_r(is,:),wf_state(iv,ikibz,2)),wf(fft_rot_r(is1,:),wf_state(iv1,ikibz1,2)))
           !
         endif
         !

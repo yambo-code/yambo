@@ -63,9 +63,8 @@ subroutine scatterBamp(isc)
  ib=isc%is(1)
  ik=isc%is(2)
  is=isc%is(3)
- if (is>nsym/(i_time_rev+1)) is=is-nsym/(i_time_rev+1)
  i_sp=isc%is(4)
- litr=(is/=isc%is(3))
+ litr=is>nsym/(i_time_rev+1)
  !
  ! | ob ok_os o_sp>   
  !
@@ -73,8 +72,7 @@ subroutine scatterBamp(isc)
  ok=isc%os(2)
  os=isc%os(3)
  o_sp=isc%os(4)
- if (os>nsym/(i_time_rev+1)) os=os-nsym/(i_time_rev+1)
- lotr=(os/=isc%os(3))
+ lotr=os>nsym/(i_time_rev+1)
  !
  ! e^[I(Rs(G-G0)).r]
  !
@@ -92,8 +90,8 @@ subroutine scatterBamp(isc)
    ifft=wf_state(ib,ik,i_sp+i_spr-1)
    offt=wf_state(ob,ok,o_sp+i_spr-1)
    !
-   rho_tw_rs(:,i_spr)=wf(fft_rot_r(is,:),ifft)
-   if (.not.litr) rho_tw_rs(:,i_spr)=conjg(rho_tw_rs(:,i_spr))
+   if (litr)      rho_tw_rs(:,i_spr)=wf(fft_rot_r(is,:),ifft)
+   if (.not.litr) rho_tw_rs(:,i_spr)=conjg(wf(fft_rot_r(is,:),ifft))
    if (lotr)      rho_tw_rs(:,i_spr)=rho_tw_rs(:,i_spr)*conjg(wf(fft_rot_r(os,:),offt))
    if (.not.lotr) rho_tw_rs(:,i_spr)=rho_tw_rs(:,i_spr)*wf(fft_rot_r(os,:),offt)
    !

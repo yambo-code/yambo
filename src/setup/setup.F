@@ -23,12 +23,12 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  use drivers,        ONLY:l_sc_run
  use pars,           ONLY:SP,pi,schlen
- use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,spin_orbit
+ use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
 &                         atoms_spatial_invertion,i_space_inv,input_Tel_commands_over_header,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
-&                         symmetry_group_table
+&                         symmetry_group_table,mag_syms
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,&
 &                         rl_sop,bz_samp,g_vec,E_of_shell
  use com,            ONLY:msg,error,warning
@@ -133,9 +133,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
  select case(i_time_rev)
    case(1)
      call msg('nr','[SYMs] Time-reversal derived K-space symmetries:',(/nsym/2+1,nsym/))
-     if(.not.spin_orbit) inv_index=nsym/2+1
-     if(spin_orbit) then
-       call warning(' Spin-orbit and Trev compatible only in non magnetic systems!')
+     if(.not.mag_syms) inv_index=nsym/2+1
+     if(mag_syms) then
+       call warning(' Magnetic symmetries and Trev are not implemented! Remove T-rev')
        do is=1,nsym/2
          if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./)) ) inv_index=is
        enddo

@@ -43,6 +43,7 @@ module D_lattice
  integer :: i_space_inv ! =1 yes SI,  =0 no SI
  integer :: inv_index   ! Index of the symmetry corresponding to -I (independently 
                         ! on the value of i_time_rev and i_space_inv
+ logical :: mag_syms
  real(SP),allocatable :: dl_sop(:,:,:)
  integer, allocatable :: sop_tab(:,:)
  integer, allocatable :: sop_inv(:)

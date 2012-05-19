@@ -23,14 +23,14 @@ subroutine RT_build_spin_sop(spin_sop)
  !
  use pars,           ONLY:SP,pi,cI,cONe,cZERO
  use matrix_operate, ONLY:m3det
- use D_lattice,      ONLY:dl_sop,nsym,i_time_rev
+ use D_lattice,      ONLY:dl_sop,nsym,i_time_rev,sop_inv
+ use electrons,      ONLY:n_sp_pol
  !
  implicit none
  !
  complex(SP)    ::spin_sop(2,2,nsym)
  complex(SP)    ::sigma_0(2,2),sigma_x(2,2),sigma_y(2,2),sigma_z(2,2),t_rev(2,2)
- !complex(SP)    ::spin_Rz_delta(2,2),spin_Ry_beta(2,2),spin_Rx_alpha(2,2)
- complex(SP)    ::spin_Rx_delta(2,2),spin_Ry_beta(2,2),spin_Rz_alpha(2,2)
+ complex(SP)    ::spin_RX_delta(2,2),spin_RY_beta(2,2),spin_RZ_alpha(2,2)
  real(SP)       ::alpha,beta,delta,tmp_sop(3,3)
  integer        ::is,i1,i2
  !
@@ -44,17 +44,27 @@ subroutine RT_build_spin_sop(spin_sop)
  t_rev=-cI*sigma_y
  !
  do is=1,nsym
-   ! Spin is invariant under spatial inversion. I need only the rotations
+   !
+   if (n_sp_pol==2) then
+     if(is<=nsym/(1+i_time_rev)) spin_sop(:,:,is)=sigma_0
+     if(is> nsym/(1+i_time_rev)) spin_sop(:,:,is)=t_rev
+     cycle
+   endif
+   !
+   ! Spin is invariant under spatial inversion. I need only the rotations.
    tmp_sop= dl_sop(:,:,is)*m3det(dl_sop(:,:,is))
    !
-   !       x,y,z       -->     X,Y,Z  "Tait–Bryan angles"
+   !           "Tait–Bryan angles"
+   !    x,y,z --> x'y'z' --> x''y''z'' -->  X,Y,Z  
+   ! R_x(delta)  R_y'(beta)   R_z''(alpha)   =  R_z(delta) R_y(beta) R_x(alpha)
+   !
    if (tmp_sop(3,1)==-1.) then
-     alpha=0.
-     beta= pi/2.
+     alpha=0._SP
+     beta= pi/2._SP
      delta=atan2(tmp_sop(1,2),tmp_sop(1,3))
    elseif (tmp_sop(3,1)==+1.) then
-     alpha=0.
-     beta=-pi/2.
+     alpha=0._SP
+     beta=-pi/2._SP
      delta=atan2(-tmp_sop(1,2),-tmp_sop(1,3))
    else
      beta=-asin(tmp_sop(3,1))
@@ -62,25 +72,24 @@ subroutine RT_build_spin_sop(spin_sop)
      delta=atan2(tmp_sop(3,2)/cos(beta),tmp_sop(3,3)/cos(beta))
    endif
    !
-   ! R_X(delta)  R_Y(beta)   R_Z(alpha)   =  R_z(delta) R_y(beta) R_x(alpha)
+   ! These are the angles of rotation of the axis which gives x-->S*x
+   ! Thus I need a minus for the rotation of the coordinates
+   alpha=-alpha/2._SP
+   beta= -beta /2._SP
+   delta=-delta/2._SP
    !
-   alpha=alpha/2.
-   beta=beta/2.
-   delta=delta/2.
+   ! Sakurai p.166, eq. 3.2.44 + pag 159 eq. 3.2.3
+   spin_RX_delta=sigma_0*cos(delta)-cI*sigma_x*sin(delta)
+   spin_RY_beta =sigma_0*cos(beta) -cI*sigma_y*sin(beta)
+   spin_RZ_alpha=sigma_0*cos(alpha)-cI*sigma_z*sin(alpha)
+   spin_sop(:,:,is)=matmul(spin_RX_delta,matmul(spin_RY_beta,spin_RZ_alpha))
    !
-   ! Sakurai p.166, eq. 3.2.44 + pag 159 eq. 3.2.3 
-   spin_Rx_delta=sigma_0*cos(delta)-cI*sigma_x*sin(delta)
-   spin_Ry_beta =sigma_0*cos(beta) -cI*sigma_y*sin(beta)
-   spin_Rz_alpha=sigma_0*cos(alpha)-cI*sigma_z*sin(alpha)
-   !
-   spin_sop(:,:,is)=matmul(spin_Rx_delta,matmul(spin_Ry_beta,spin_Rz_alpha))
-   !
-   if(is>nsym/(1+i_time_rev)) spin_sop(:,:,is)=matmul(t_rev,spin_sop(:,:,is))
+   if(is>nsym/(1+i_time_rev)) spin_sop(:,:,is)=matmul(spin_sop(:,:,is),t_rev)
    !
    do i1=1,2
      do i2=1,2
-       if(abs(aimag(spin_sop(i1,i2,is)))<1.E-5) spin_sop(i1,i2,is)=cmplx(real(spin_sop(i1,i2,is)),0.)
-       if(abs(real(spin_sop(i1,i2,is))) <1.E-5) spin_sop(i1,i2,is)=cmplx(0.,aimag(spin_sop(i1,i2,is)))
+       if(abs(aimag(spin_sop(i1,i2,is)))<1.E-5_SP) spin_sop(i1,i2,is)=cmplx( real(spin_sop(i1,i2,is)),0._SP)
+       if(abs(real(spin_sop(i1,i2,is))) <1.E-5_SP) spin_sop(i1,i2,is)=cmplx(0._SP,aimag(spin_sop(i1,i2,is)))
      enddo
    enddo
    !

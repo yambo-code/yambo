@@ -35,8 +35,8 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  ! 
  ! Work Space
  !
- integer  :: i1,i2,i3,i4,iv(3),iv_notr(3),ln(3),is,space_inv(3,3)
- real(SP) :: v1(3),M1(3,3),M2(3,3),M1_notr(3,3),M2_notr(3,3)
+ integer  :: i1,i2,i3,i4,iv(3),ln(3),is,space_inv(3,3)
+ real(SP) :: v1(3),M1(3,3),M2(3,3)
  !
  space_inv=reshape((/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./),(/3,3/))
  !

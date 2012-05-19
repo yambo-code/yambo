@@ -217,11 +217,11 @@ subroutine XCo_driver(E,k,Xk,q)
        if (i_qp==QP_n_states) call msg('rn',trim(ch))
        !
        if(.not.l_gw0) then
-         output(1)=E%E(ib,ik,spin(QP_table(i_qp,:)))*HA2EV
+         i_spin=spin(QP_table(i_qp,:))
+         output(1)=E%E(ib,ik,i_spin)*HA2EV
          output(2)=output(1)-( QP_Vxc(i_qp)-QP_Vnl_xc(i_qp) )*HA2EV
          output(3)=QP_Vnl_xc(i_qp)*HA2EV
          output(4)=QP_Vxc(i_qp)   *HA2EV
-         i_spin=spin(QP_table(i_qp,:))
          call msg('o '//trim(of_name(i_spin)),'',output,INDENT=-2,USE_TABS=.true.)
        endif
        !

@@ -26,12 +26,12 @@ subroutine RT_fix_symmetries(E,k)
  use pars,                ONLY:IP,LP,SP,DP,lchlen
  use com,                 ONLY:msg,warning,core_io_path,more_io_path
  use memory_m,            ONLY:mem_est
- use electrons,           ONLY:levels,E_reset,n_spin,n_sp_pol,spin_orbit
- use vec_operate,         ONLY:v_norm,v_is_zero
+ use electrons,           ONLY:levels,E_reset,n_spin,n_sp_pol,n_spinor
+ use vec_operate,         ONLY:v_norm,v_is_zero,sort
  use matrix_operate,      ONLY:m3det
  use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,a,alat,mag_syms,&
 &                              i_space_inv,sop_inv,inv_index,symmetry_group_table
- use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,&
+ use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,g_rot,&
 &                              ng_closed,bz_samp_duplicate,rl_sop
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,VERIFY,&
 &                              OP_APP,cp_file,rm_file,cp_directory,Fragmented_IO,mk_dir, &
@@ -45,6 +45,7 @@ subroutine RT_fix_symmetries(E,k)
  use parser_m,            ONLY:parser
  use zeros,               ONLY:k_iku_zero
  use FFT_m,               ONLY:fft_size,fft_rot_r,fft_dim,fftw_plan,fft_g_table,fft_norm
+ use timing,              ONLY:live_timing
  !
  implicit none
  type(levels)                 :: E,E_expanded
@@ -54,13 +55,14 @@ subroutine RT_fix_symmetries(E,k)
  !
  ! Work Space
  !
- integer               :: ik_save,iv(2),ierr,ib,i_wf,i_spin,&
+ integer               :: ik_save,iv(2),ierr,ib,i_wf,n_steps,i_spin,&
 &                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik
  integer               :: spatial_nsym,old_spatial_nsym,old_trev_nsym
- integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:)
+ integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:),ic_rot_table(:)
+ real(SP)              :: tmp_vec(wf_ncx)
  real(SP)              :: v1(3),v2(3),m(3,3)
  real(SP)              :: B_cart(3)
- integer               :: symm_M_factor,symm_B_factor,igfft,ig,ic
+ integer               :: symm_M_factor,symm_B_factor,igfft,ig,ig_rot,ic,ic_rot
  real(SP), allocatable :: pp_kb_store(:,:,:,:,:),pp_kbd_store(:,:,:,:,:)
  logical               :: Rm_all_symm,use_E_field,use_B_field,has_magnetization,reject_symmetry,Rm_TR,&
 &                         S_contains_TR(nsym),Trev_2_spatial=.false.,Rm_inv_BM_axis
@@ -73,7 +75,6 @@ subroutine RT_fix_symmetries(E,k)
  real(SP),    allocatable :: wf_disk(:,:,:,:)
  real(SP),    allocatable :: dl_sop_tmp(:,:,:)
  complex(SP), allocatable :: wf_tmp(:,:)
- complex(DP), allocatable :: wf_DP(:),wf_DP_rot(:)
  !
  !
  use_E_field=.FALSE.
@@ -89,15 +90,13 @@ subroutine RT_fix_symmetries(E,k)
  ! Do not consider symmtries which invert the axis along the magnetization or the field B
  call parser('RmInvMBaxis',Rm_inv_BM_axis)
  !
- call fft_setup(wf_ng,1,.false.)
- allocate(wf_DP(fft_size),wf_DP_rot(fft_size))
- call mem_est("wf_DP wf_DP_rot",(/size(wf_DP),size(wf_DP_rot)/),elements_kind=(/DP,DP/))
+ !call fft_setup(wf_ng,1,.false.)
  !
  ! Check if we are using mag symmetries
  !
- if ( (use_B_field.or.(spin_orbit.and.has_magnetization)).and. &
+ if ( (use_B_field.or.(n_spinor==2.and.has_magnetization)).and. &
 &      i_time_rev==1.and..not.Rm_TR) mag_syms=.true.
- if ( i_time_rev==0.or.Rm_TR ) mag_syms=.false.
+ if ( i_time_rev==0.or.Rm_TR.or.RM_all_symm) mag_syms=.false.
  if (mag_syms) call msg('s','There are a magnetic field or SOC in a magnetic system with T-rev')
  !
  if (Rm_all_symm) then
@@ -203,8 +202,7 @@ subroutine RT_fix_symmetries(E,k)
  old_trev_nsym=nsym-spatial_nsym
  !
  if(Rm_TR) then   ! No time reversal 
-   if(i_space_inv==1.and.inv_index>spatial_nsym.and.&
-&     .not.(spin_orbit.and.has_magnetization) ) then
+   if(i_space_inv==1.and.inv_index>spatial_nsym.and..not.mag_syms) then
      call msg('s',trim(intc(spatial_nsym))//' T-rev are now spatial symm')
      spatial_nsym=2*spatial_nsym
      nsym=spatial_nsym
@@ -243,26 +241,26 @@ subroutine RT_fix_symmetries(E,k)
        if(.not.reject_symmetry.and.Rm_inv_BM_axis) reject_symmetry=(symm_B_factor==-1)
        if(.not.reject_symmetry) then
          ! We check what happens in the plane perpendicular to B: 
-         ! 1) Spatial symmetries are rotations
+         ! 1) B is invariant under spatial inversion
          if(is<=spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/symm_B_factor - 1.)>1.E-5)
-         ! 2) T-rev symmetries are rotation moltiplied for the inversion
+         ! 2) T-rev inverts B
          if(is> spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/symm_B_factor + 1.)>1.E-5)       
        endif
      endif
      !
-     if(has_magnetization.and..not.reject_symmetry) then
+     if(has_magnetization.and.n_spinor==2.and..not.reject_symmetry) then
        symm_M_factor=0
        v1(:) = matmul( dl_sop(:,:,is), Magnetization )
        if(all( abs(v1(:)-Magnetization(:))<epsilon(1.)) ) symm_M_factor=+1
        if(all( abs(v1(:)+Magnetization(:))<epsilon(1.)) ) symm_M_factor=-1
        reject_symmetry=(symm_M_factor==0)
        if(.not.reject_symmetry.and.Rm_inv_BM_axis) reject_symmetry=(symm_M_factor==-1)
-       if(spin_orbit.and..not.reject_symmetry) then
+       if(.not.reject_symmetry) then
          ! We check what happens in the plane perpendicular to M: 
-         ! 1) Spatial symmetries are rotations
+         ! 1) M is invariant under space inv
          if(is<=spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/symm_M_factor - 1.)>1.E-5)
-         ! 2) T-rev symmetries are rotation moltiplied for the inversion
-         if(is> spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/symm_M_factor + 1.)>1.E-5)       
+         ! 2) T-rev inverts M
+         if(is> spatial_nsym) reject_symmetry= ( abs ( m3det(dl_sop(:,:,is))/symm_M_factor + 1.)>1.E-5)
        endif
        !
      endif
@@ -270,7 +268,7 @@ subroutine RT_fix_symmetries(E,k)
      if(reject_symmetry) then
        dl_sop(:,:,is:nsym-1)=dl_sop(:,:,is+1:nsym)
        nsym=nsym-1
-       if(is<=spatial_nsym) spatial_nsym=spatial_nsym-1      
+       if(is<=spatial_nsym) spatial_nsym=spatial_nsym-1
      else
        is=is+1
      endif
@@ -336,7 +334,7 @@ subroutine RT_fix_symmetries(E,k)
  call k_reduce(k)
  call msg('l'," "//trim(intc(k%nibz)))
  !
- ! Map k-point using the save BZ 
+ ! Map k-point using the save BZ
  !
  ! k_points_map(1, ? ) = ik
  ! k_points_map(2, ? ) = is
@@ -355,6 +353,9 @@ subroutine RT_fix_symmetries(E,k)
    enddo
  enddo
  !
+ ! swap ik and i1 i.e.
+ ! sort first all the points in the ibz
+ ! 
  main_loop: do ik=1,k%nibz 
    if ( kpoints_map(2, ik )/=1 ) then
      do i1=ik+1,k%nibz
@@ -363,7 +364,7 @@ subroutine RT_fix_symmetries(E,k)
          v1=k%pt(ik,:)
          kpoints_map(:,ik)=kpoints_map(:,i1)
          kpoints_map(:,i1)=iv
-         k%pt(ik,:)=k%pt(i1,:)
+         k%pt(ik,:)=k%pt(i1,:)                 
          k%pt(i1,:)=v1
          cycle main_loop
        endif
@@ -533,26 +534,40 @@ subroutine RT_fix_symmetries(E,k)
  deallocate(wf_nc_k,wf_igk)
  allocate(wf_nc_k(k%nibz),wf_igk(wf_ncx,k%nibz))
  !
- wf_igk=0
- wf_igk(1:wf_ncx,1:k_save%nibz)       = wf_igk_save(1:wf_ncx,1:k_save%nibz)
- wf_nc_k(1:k_save%nibz)               = min(ng_closed,wf_nc_k_save(1:k_save%nibz))
+ wf_igk=-1
+ do i1=1,k_save%nibz
+   ik=kpoints_map(1,i1)
+   !
+   wf_igk(1:wf_ncx,i1) = wf_igk_save(1:wf_ncx,ik)
+   wf_nc_k(i1)         = wf_nc_k_save(ik)          !min(ng_closed,wf_nc_k_save(i1))
+   !
+ enddo
  !
  deallocate(wf_igk_save,wf_nc_k_save)
  call mem_est("wf_nc_k_save wf_igk_save")
  !
  do i1=k_save%nibz+1,k%nibz 
-   !      
+   !
    ik=kpoints_map(1,i1)
+   is=kpoints_map(2,i1)
    !
-   wf_igk(1:wf_nc_k(ik),i1)=wf_igk(1:wf_nc_k(ik),ik)
+   wf_nc_k(i1)                  = wf_nc_k(ik)
+   wf_igk(1:wf_nc_k(i1),i1)= g_rot(is,wf_igk(1:wf_nc_k(ik),ik))
    !
-   if(any(wf_igk(1:wf_nc_k(ik),i1)==0)) then
-     wf_nc_k(i1)=minloc(wf_igk(:,i1),1)-1
-   else
-     wf_nc_k(i1)               = wf_nc_k(ik)
-   endif
+   !if(any(wf_igk(1:wf_nc_k(ik),i1)==-1)) then
+   !  wf_nc_k(i1)=minloc(wf_igk(:,i1),1)-1
+   !else
+   !  wf_nc_k(i1)               = wf_nc_k(ik)
+   !endif
+   !
+   tmp_vec(1:wf_nc_k(i1))=real(wf_igk(1:wf_nc_k(i1),i1))
+   call sort(tmp_vec(1:wf_nc_k(i1)))
+   wf_igk(1:wf_nc_k(i1),i1)=int(tmp_vec(1:wf_nc_k(i1)))
    !
  enddo
+ !
+ wf_ng=maxval(wf_igk)
+ !call fft_setup(wf_ng,1,.false.)
  !
  call section('=',"Final I/O")
  !============================
@@ -560,11 +575,16 @@ subroutine RT_fix_symmetries(E,k)
  core_io_path_save=core_io_path
  core_io_path=more_io_path
  !
- call msg('s',':: Rotating the wavefunctions ...')
+ !call msg('s',':: Rotating the wavefunctions ...')
+ n_steps=(k%nibz-k_save%nibz)*E%nb
+ call live_timing('WFs rotation',n_steps)
  !
+ allocate(ic_rot_table(wf_ncx))
  allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
  call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
  if(n_spin>1) allocate(wf_tmp(wf_ncx,n_spin))
+ !
+ wf_disk=(0.,0.)
  !
  ACTION_=OP_APP_WR_CL
  if(Fragmented_IO) ACTION_=OP_WR_CL
@@ -576,66 +596,56 @@ subroutine RT_fix_symmetries(E,k)
    !
    call io_control(ACTION=ACTION_,COM=NONE,SEC=(/i1+1,1/),ID=ID)
    !
+   ic_rot_table=-1
+   do ic=1,wf_nc_k(ik)
+     ig_rot=g_rot(is,wf_igk(ic,ik))
+     if(ig_rot>wf_ng) cycle
+     do ic_rot=1,wf_nc_k(i1)
+       ig=wf_igk(ic_rot,i1)
+       if(ig==ig_rot) exit
+     enddo
+     ic_rot_table(ic)=ic_rot
+   enddo
+   !
    do ib=1,E%nb
      !
      do i_spin=1,n_spin
        !
-       WF_DP=(0._DP,0._DP)
+       i_wf=wf_state(ib,ik,i_spin)
        !
        do ic=1,wf_nc_k(ik)
-         ig=wf_igk(ic,ik)     
-         if(ig>wf_ng) cycle
-         igfft=fft_g_table(ig,1)
-         i_wf=wf_state(ib,ik,i_spin)
-         wf_DP(igfft)=wf(ic,i_wf)
+         wf_disk(1,ib,ic_rot_table(ic),i_spin)=  real(wf(ic,i_wf))
+         wf_disk(2,ib,ic_rot_table(ic),i_spin)= aimag(wf(ic,i_wf))
        enddo
-       !
-#if defined _FFTW
-       fftw_plan=0
-       call fft_3d(wf_DP,fft_dim,+1,fftw_plan)
-#else
-       call fft_3d(wf_DP,fft_dim,+1)
-#endif
-       wf_DP_rot(:)=wf_DP(fft_rot_r(is,:))*dble(fft_norm)
-       !
-#if defined _FFTW
-       fftw_plan=0
-       call fft_3d(wf_DP_rot,fft_dim,-1,fftw_plan)
-#else
-       call fft_3d(wf_DP_rot,fft_dim,-1)
-#endif  
-       !
-       wf_disk(:,ib,:,i_spin)=0._SP
-       !
-       wf_disk(1,ib,1:wf_ncx,i_spin)=  real(wf_DP_rot(fft_g_table(1:wf_ncx,1)))*fft_norm
-       wf_disk(2,ib,1:wf_ncx,i_spin)= aimag(wf_DP_rot(fft_g_table(1:wf_ncx,1)))*fft_norm
        !
        if ( S_contains_TR(is) ) wf_disk(2,ib,:,i_spin)=-wf_disk(2,ib,:,i_spin)
        !
      enddo
      !
      if(n_spin>1) then
-       forall(i1=1:wf_ncx) wf_tmp(i1,:)=&
-&          matmul(spin_sop(:,:,is),cmplx(wf_disk(1,ib,i1,:),wf_disk(2,ib,i1,:)))
-       wf_disk(1,ib,1:wf_ncx,:)= real(wf_tmp(:,:))
-       wf_disk(2,ib,1:wf_ncx,:)= aimag(wf_tmp(:,:))
+       forall(ic=1:wf_nc_k(i1)) wf_tmp(ic,:)=&
+&          matmul(spin_sop(:,:,is),cmplx(wf_disk(1,ib,ic,:),wf_disk(2,ib,ic,:)))
+       wf_disk(1,ib,1:wf_ncx,:)= real(wf_tmp(:wf_ncx,:))
+       wf_disk(2,ib,1:wf_ncx,:)= aimag(wf_tmp(:wf_ncx,:))
      endif
+     !
+     call live_timing(steps=1)
      !
    enddo
    !
    io_err=ioWF(ID,wf=wf_disk)
    !
  enddo
+ !
+ call live_timing()
  ! 
  if(Fragmented_IO) then
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
    io_err=ioWF(ID)
  endif
  !
- call msg('l','done')
- !
- deallocate(wf_DP,wf_DP_rot,wf_disk)
- call mem_est("wf_DP wf_DP_rot wf_disk")
+ deallocate(ic_rot_table,wf_disk)
+ call mem_est("wf_disk")
  if(n_spin>1) deallocate(wf_tmp)
  !
  if(ioKB_err==0) then 
@@ -723,7 +733,7 @@ subroutine map_energies(E,E_expanded,k,kpoints_map,S_contains_TR)
    endif
    is=kpoints_map(2,ik)
    if(.not.S_contains_TR(is)) E_expanded%E(:,ik,:)=E%E(:,kpoints_map(1,ik),:)
-   ! T-rev flips invert the spin
+   ! T-rev flips the spin
    if(     S_contains_TR(is)) then
      E_expanded%E(:,ik,1)=E%E(:,kpoints_map(1,ik),2)
      E_expanded%E(:,ik,2)=E%E(:,kpoints_map(1,ik),1)

@@ -30,7 +30,7 @@ integer function ioDB1(E,k,ID)
 &                           n_spinor,spin_orbit
  use D_lattice,        ONLY:a, alat, nsym, i_time_rev, mag_syms, input_GS_Tel, dl_sop, &
 &                           Tel, n_atoms_species_max,n_atomic_species,n_atoms_species,atom_pos, &
-&                           Z_species, n_atoms
+&                           Z_species, n_atoms, mag_syms
  use R_lattice,        ONLY:ng_vec, g_vec, bz_samp,nkibz,&
 &                           qp_states_k,nXkibz,ng_closed
  use wave_func,        ONLY:wf_ncx, wf_nc_k, wf_igk,wf_ng,wf_nb_io
@@ -170,6 +170,10 @@ integer function ioDB1(E,k,ID)
    if (ver_is_gt_or_eq(ID,revision=1041)) then
      call io_elemental(ID, VAR="spin_orbit",VAR_SZ=1,MENU=0)
      call io_elemental(ID, L0=spin_orbit,VAR=' Spin Orbit interaction          : ')
+   endif
+   if (ver_is_gt_or_eq(ID,revision=1239)) then
+     call io_elemental(ID, VAR="mag_syms",VAR_SZ=1,MENU=0)
+     call io_elemental(ID, L0=mag_syms,VAR=' Magnetic symmetries             : ')
    endif
    if (ver_is_gt_or_eq(ID,revision=1210)) then
      call io_elemental(ID, VAR="mag_syms",VAR_SZ=1,MENU=0)

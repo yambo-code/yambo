@@ -53,8 +53,7 @@ subroutine OEP_Weighted_Density(en,Xk,rho)
       !
       ifft=wf_state(i1,i2,1)
       EWeight = en%e(i1,i2,1)+en%Efermi(1)
-      rho_no_sym(:)=rho_no_sym(:)+en%f(i1,i2,1)*Xk%weights(i2)/&
-           &EWeight*abs(wf(:,ifft))**2
+      rho_no_sym(:)=rho_no_sym(:)+en%f(i1,i2,1)*Xk%weights(i2)/EWeight*abs(wf(:,ifft))**2
     enddo
   enddo
   !

@@ -167,6 +167,8 @@ module mod_com2y
      !
      ! Double the simmetries if TR or SI is added
      !
+     if (mag_syms) call msg('s','[MAG-SYMS] T-rev with (A) Magnetic field or (B) SOC and magnetization')
+     !
      nsym=nsym_
      if (double_symmetries) nsym=2.*nsym_
      !

@@ -106,7 +106,8 @@ subroutine spin_density(en,Xk)
      forall(i2=1:fft_size) two_spin_density(i2,:)=two_spin_density(i2,:)+ &
 &                            matmul(tmp_sop,real( cv(fft_rot_r(i1,i2),:)/real(nsym) ))
    else
-     two_spin_density(:,3)=two_spin_density(:,3)+real( cv(fft_rot_r(i1,:),3)/real(nsym) )
+     if(i1<=nsym/(1+i_time_rev)) two_spin_density(:,3)=two_spin_density(:,3)+real(cv(fft_rot_r(i1,:),3)/real(nsym))
+     if(i1> nsym/(1+i_time_rev)) two_spin_density(:,3)=two_spin_density(:,3)-real(cv(fft_rot_r(i1,:),3)/real(nsym))
    endif
    !
  enddo

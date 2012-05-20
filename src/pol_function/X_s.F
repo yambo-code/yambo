@@ -35,10 +35,6 @@ subroutine X_s(iq,fr,X,wv)
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_n_mem_freqs,&
 &                        FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,ioBS_Fxc
  use IO_m,          ONLY:io_control,OP_RD_CL,NONE
-#if defined _KERR
- use drivers,       ONLY:l_kerr
- use KERR,          ONLY:Xo_head,Xo_wing_R,Xo_wing_L,X_head
-#endif
  !
  implicit none
  type(X_t)    :: X
@@ -50,10 +46,6 @@ subroutine X_s(iq,fr,X,wv)
  type(pp_indexes) ::px
  integer     :: i1,i2,iw,nw_max_par,INV_MODE
  complex(SP), allocatable :: Xom1(:,:),tddftk(:,:),Xo(:,:)
-#if defined _KERR
- complex(SP)              :: tmp_kerr
- complex(SP), allocatable :: X_mat_tmp(:,:)
-#endif
  !
  ! Fxc I/O (for the BS based kernel)
  !
@@ -62,16 +54,7 @@ subroutine X_s(iq,fr,X,wv)
  ! Setup 
  !
  call pp_indexes_reset(px)
-#if defined _KERR
- if(l_kerr) then
-   allocate(tddftk(X%ng+2,X%ng+2),Xo(X%ng+2,X%ng+2))
-   allocate(X_mat_tmp(X%ng+2,X%ng+2))
- else
-#endif
  allocate(tddftk(X%ng,X%ng),Xo(X%ng,X%ng))
-#if defined _KERR
- endif
-#endif
  call mem_est("X_WS",(/2*size(Xo)/))
  !
  ! Xo^-1 matrix (BS Fxc)
@@ -98,23 +81,7 @@ subroutine X_s(iq,fr,X,wv)
  do iw=1,wv%n(2)
    !
    INV_MODE=USE_LK
-   !
-#if defined _KERR
-   if(l_kerr) then
-     Xo(1:3,1:3)=reshape( Xo_head(:,iw), (/3,3/) )
-     if(X%ng>1) then 
-       do i1=1,3
-         Xo(i1,4:)=Xo_wing_R(i1,:,iw)
-         Xo(4:,i1)=Xo_wing_L(i1,:,iw)
-       enddo
-       Xo(4:,4:)=X_mat(2:,2:,iw)
-     endif
-   else
-#endif
    Xo=X_mat(:,:,iw)
-#if defined _KERR
-   endif
-#endif
    tddftk=(0.,0.) 
    !
    ! If the freqs remaining are not anough for all the cpu's or
@@ -122,7 +89,6 @@ subroutine X_s(iq,fr,X,wv)
    !
    if (iw>nw_max_par.or.FXC_SVD_digits>0) INV_MODE=USE_SLK
    !
-#if !defined KERR
    ! TDDFT Kernel. Different procedure depending on the kernel 
    !
    ! Kind: BS,ALDA,LRC.
@@ -182,79 +148,23 @@ subroutine X_s(iq,fr,X,wv)
      !
      if (.not.px%element_1D(iw)) cycle
      tddftk(:,:FXC_n_g_corr)=-matmul(Xo(:,:FXC_n_g_corr),FXC(:,:,1))
-     tddftk(:,:FXC_n_g_corr)=-matmul(Xo(:,:FXC_n_g_corr),FXC(:,:,1))
      !
    endif
-#endif
    !
    ! I must cycle here to allow the FXC I/O properly
    !
    if (.not.px%element_1D(iw)) cycle
    !
-#if defined _KERR
-   if(l_kerr) then
-     if(X%ng>1) then
-       do i1=X%ng,2,-1
-         do i2=X%ng,2,-1
-           tddftk(i1+2,i2+2)=tddftk(i1,i2)
-         enddo
-       enddo
-     endif
-     tmp_kerr=tddftk(1,1)
-     tddftk(:3,:3)=tmp_kerr
-     !
-     do i1=1,3
-       tddftk(:3,i1)=tddftk(:3,i1)-Xo(:3,i1)*4.*pi/bare_qpg(iq,1)**2
-       tddftk(i1,i1)=tddftk(i1,i1)+1.
-     enddo
-     !
-     if(X%ng>1) then
-       do i1=1,3
-         tddftk(4:,i1)=tddftk(4:,i1)-Xo(4:,i1)*4.*pi/bare_qpg(iq,1)**2
-       enddo
-       !
-       do i1=4,X%ng+2
-         tddftk(:,i1)=tddftk(:,i1)-Xo(:,i1)*4.*pi/bare_qpg(iq,i1-2)**2
-         tddftk(i1,i1)=tddftk(i1,i1)+1.
-       enddo
-     endif
-   else
-#endif
    do i1=1,X%ng ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
      tddftk(:,i1)=tddftk(:,i1)-Xo(:,i1)*4.*pi/bare_qpg(iq,i1)**2
      tddftk(i1,i1)=tddftk(i1,i1)+1.
    enddo
-#if defined _KERR
- endif
-#endif
-   !
    call mat_dia_inv(INV,INV_MODE,tddftk)
    !
    ! X(g,gp)=Sum_gpp[tddftk]^-1_(g,gpp)*Xo(gpp,gp)
    !
-#if defined _KERR
-   if(l_kerr) then
-     X_mat_tmp(:,:)=matmul(tddftk,Xo)
-     X_head(:,iw)=reshape(X_mat_tmp(:3,:3),(/9/))
-     !
-!    ! The follwing would be needed for the epsilon if I understood correctly
-!    ! indeed I need to integrate aroud q (see scatter_Gamp.F)
-!    ! \int_p \eps(q+p,\omega)/|q+p+G|/|q+p+G'|/(2*pi)**3
-!    ! If I understood correctly \eps(q+p,\omega)\simeq \eps(q+p,\omega) in the expression
-!    ! However when q=0 than this is not possible any more ...
-!     do i1=1,3
-!       X_mat(1,1,iw)=X_mat(1,1,iw)+X_mat_tmp(i1,i1)
-!     enddo
-!     X_mat(1,1,iw)=X_mat(1,1,iw)/3.
-!     X_mat(2:,2:,iw)=X_mat_tmp(4:,4:)
-   else
-#endif
    X_mat(:,:,iw)=matmul(tddftk,Xo)
    forall(i1=1:X%ng,i2=1:X%ng) X_mat(i1,i2,iw)=X_mat(i1,i2,iw)*4.*pi/bare_qpg(iq,i1)/bare_qpg(iq,i2)
-#if defined _KERR
-   endif
-#endif
-   !
    call live_timing(steps=1)
    !
  enddo
@@ -262,24 +172,13 @@ subroutine X_s(iq,fr,X,wv)
  call live_timing
  !
  do i1=1,nw_max_par
-#if defined _KERR
-   if(l_kerr) then
-     call pp_redux_wait(X_head(:,i1))
-   else
-#endif
    call pp_redux_wait(X_mat(:,:,i1))
-#if defined _KERR
-   endif
-#endif
  enddo
  !
  ! CLEAN
  !
  call pp_indexes_reset(px)
  deallocate(tddftk,Xo)
-#if defined _KERR
-  if(l_kerr) deallocate(X_mat_tmp)
-#endif
  if (l_bs_fxc) then
    deallocate(Xom1)
    call mem_est("Xo_m1")

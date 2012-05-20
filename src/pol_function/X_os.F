@@ -39,11 +39,6 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  use memory_m,      ONLY:mem_est
  use X_m,           ONLY:X_t,X_poles,DIP_q_dot_iR,current_iq,X_poles_tab,&
 &                        self_detect_E_range,half_X_mat_only,use_X_RIM
-#if defined _KERR
- use drivers,       ONLY:l_kerr
- use electrons,     ONLY:spin_orbit
- use KERR,          ONLY:Xo_head,Xo_wing_R,Xo_wing_L,DIP_q_dot_iR_kerr
-#endif
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_collisions_IO
  use SC,            ONLY:it_now
@@ -72,10 +67,6 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  complex(SP),allocatable :: rhotw_save(:),XoR(:,:)
  integer,    external    :: X_eh_setup
  complex(SP),external    :: X_simple_GreenF
-#if defined _KERR
- complex(SP),allocatable :: Xo_wing_tmp(:,:)
- complex(SP)             :: Xo_head_tmp(9)
-#endif
  !
  ! Defaults & Setups
  !===================
@@ -85,19 +76,6 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  Xo  = cmplx(0.,0.,SP)
  XoR = cmplx(0.,0.,SP)
  GreenF  = cmplx(0.,0.,SP)
- !
-#if defined _KERR
- if(l_kerr) then
-   Xo_head_tmp  = cmplx(0.,0.,SP)
-   Xo_head   = cmplx(0.,0.,SP)
-   if(X%ng>1) then
-     allocate(Xo_wing_tmp(3,X%ng-1))
-     Xo_wing_tmp = cmplx(0.,0.,SP)
-     Xo_wing_R   = cmplx(0.,0.,SP)
-     Xo_wing_L   = cmplx(0.,0.,SP)
-   endif
- endif
-#endif
  !
  ! Logicals  to skip wf_load and/or to use bare or RIM GF (no poles accumulation)
  !==========
@@ -185,9 +163,6 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
  if (.not.half_X_mat_only) then
    half_X_mat_only= all( aimag(Xw%p(:))<1.E-4 ).and. all( real(Xw%p(:))<1.E-4 )
  endif
-#if defined _KERR
- half_X_mat_only=.not.spin_orbit
-#endif
  !
  g2_max=X%ng
  iwmax=1
@@ -238,14 +213,6 @@ subroutine X_os(Xo,iq,fr,Xen,Xk,Xw,X)
      n_poles = sum(bg_npts(1:i1-1))
      if (.not.px%element_1D(i1)) cycle
      if (iwmax==1) XoR=(0.,0.)
-#if defined _KERR
-     if (iwmax==1.and.l_kerr) then
-       Xo_head_tmp=(0.,0.)
-       if(X%ng>1) then
-         Xo_wing_tmp=(0.,0.)
-       endif
-     endif
-#endif
      if (cg_pt(i1)==0.) then
        GreenF=drude_GreenF/real(bg_npts(i1))
      else
@@ -292,17 +259,6 @@ loop_bg: do i2 = 1,bg_npts(i1)
          call V_by_V_plus_V(g2,GreenF(1)*eh_occ*isc%rhotw(g2),conjg(isc%rhotw(:g2)),XoR(:g2,g2))
        enddo
        !
-#if defined _KERR
-       ! Evaluate head and wings for other direction
-       if(l_kerr.and.cg_pt(i1)/=0.) then
-         Xo_head_tmp(2)=Xo_head_tmp(2)+GreenF(1)*eh_occ               &
-&           *conjg(DIP_q_dot_iR(ic,iv,ikbz,i_spin))*DIP_q_dot_iR_kerr(ic,iv,ikbz,i_spin)
-         if(X%ng>1) then
-           Xo_wing_tmp(2,:)=Xo_wing_tmp(2,:)-GreenF(1)*eh_occ*  &
-&                           isc%rhotw(2:)*DIP_q_dot_iR_kerr(ic,iv,ikbz,i_spin)
-         endif
-       endif
-#endif
      enddo loop_bg
      !
      do i2=iwmax,Xw%n(2)
@@ -313,15 +269,6 @@ loop_bg: do i2 = 1,bg_npts(i1)
          if (g2<g2_max) call V_by_V_plus_V(X%ng-g2,GreenF(i2)/conjg(GreenF(1)),conjg(XoR(g2,g2+1:)),Xo(g2+1:,g2,i2))
          !
        enddo
-#if defined _KERR
-       if (l_kerr.and.cg_pt(i1)/=0.) then
-         Xo_head(2,i2) = Xo_head(2,i2)+Xo_head_tmp(2)*GreenF(i2)/GreenF(1)                     ! head
-         if(X%ng>1) then
-           Xo_wing_R(2,:,i2)  = Xo_wing_R(2,:,i2)+      Xo_wing_tmp(2,:) *GreenF(i2)/      GreenF(1)     ! right wing
-           Xo_wing_L(2,:,i2)  = Xo_wing_L(2,:,i2)+conjg(Xo_wing_tmp(2,:))*GreenF(i2)/conjg(GreenF(1))    ! left wing
-         endif
-       endif
-#endif
      enddo
      !
      call live_timing(steps=Xw%n(2)+bg_npts(i1))
@@ -379,15 +326,6 @@ loop_bg: do i2 = 1,bg_npts(i1)
  endif
  do i1=1,Xw%n(2)
    call pp_redux_wait(Xo(:,:,i1))
-#if defined _KERR
-   if (l_kerr) then
-     call pp_redux_wait(Xo_head(:,i1))
-     if(X%ng>1) then
-       call pp_redux_wait(Xo_wing_L(:,:,i1))
-       call pp_redux_wait(Xo_wing_R(:,:,i1))
-     endif
-   endif
-#endif
  enddo
  call live_timing
  !
@@ -422,9 +360,6 @@ loop_bg: do i2 = 1,bg_npts(i1)
  call pp_indexes_reset(px) 
  if (iq==1) deallocate(rhotw_save)
  deallocate(isc%rhotw,XoR)
-#if defined _KERR
- if (l_kerr.and.X%ng>1) deallocate(Xo_wing_tmp)
-#endif
  call mem_est("Xo_WS")
  call collision_reset(isc)
  !

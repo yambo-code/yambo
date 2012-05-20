@@ -27,10 +27,6 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  ! 
  use pars,          ONLY:pi,SP
  use units,         ONLY:HA2EV
-#if defined _KERR
- use KERR,          ONLY:KERR_shadow
- use drivers,       ONLY:l_kerr
-#endif
  use memory_m,      ONLY:mem_est
  use stderr,        ONLY:intc,set_real_printed_length
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc
@@ -70,10 +66,6 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  !
  call set_real_printed_length(f_length=10,g_length=10)
  !
-#if defined _KERR
- call KERR_shadow('setup',l_flag=eval_eels)
-#endif
- !
  do iq=X%iq(1),X%iq(2)
    !
    ! Check if this q is compatible with the user defined direction in chartesian coordinates
@@ -105,23 +97,13 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    call X_alloc('X',(/X%ng,X%ng,wv%n(2)/))
    !
-#if defined _KERR
-   call KERR_shadow('X_alloc',n1=X%ng,n2=wv%n(2))
-#endif
-   !
    ! Frequencies (AFTER TDDFT SETUP!)
    !
    call FREQUENCIES_setup(wv)
    !
    ! Check if EELS can be evaluated
    !
-#if defined _KERR
-   if(.not.l_kerr) then
-#endif
    eval_eels= O_eels(wv%p,wv%n(1),.TRUE.,X%ordering)
-#if defined _KERR
-   endif
-#endif
    !
    if (eval_alpha) eval_alpha=eval_eels
    !
@@ -137,10 +119,6 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    if (eval_alpha)      call of_open_close(alpha_file_name,'ot')
    if (.not.eval_alpha) alpha_file_name=' '
    if (l_bs_fxc)        call of_open_close(fxc_file_name,'ot')
-   !
-#if defined _KERR
-   call KERR_shadow('def_files')
-#endif
    !
    ! Initial Messages
    !
@@ -175,10 +153,6 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    call of_open_close(alpha_file_name)
    call of_open_close(fxc_file_name)
    !
-#if defined _KERR
-   call KERR_shadow('close_files')
-#endif
-   !
    ! e Table
    ! 1:e0 2:e 3:eel0 4:eel 5:alpha0 6:alpha 
    !
@@ -186,14 +160,6 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    do iw_group=1,wv%n(1),wv%n(2)
      !
      frequencies_range=(/iw_group,iw_group+wv%n(2)-1/)
-     !
-#if defined _KERR
-     !
-     if(l_kerr) then
-       call O_kerr(iq,i_G_shift,Q_plus_G_sq_modulus,frequencies_range,Xen,Xk,wv,X)
-     else
-     !
-#endif
      !
      call X_os(X_mat,iq,frequencies_range,Xen,Xk,wv,X)     
      !
@@ -208,17 +174,9 @@ subroutine O_driver(Xen,Xk,q,wv,X)
      X_epsilon(2,frequencies_range(1):frequencies_range(2))=1./(X_mat(i_G_shift,i_G_shift,:)*&
 &                                                           bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1.)
      !
-#if defined _KERR
-     endif
-#endif
-     !
      call of_open_close(eps_file_name,'oa')
      call of_open_close(eel_file_name,'oa')
      call of_open_close(alpha_file_name,'oa')
-     !
-#if defined _KERR
-     call KERR_shadow('open_files')
-#endif
      !
      if (iw_group==1) then
        !
@@ -240,10 +198,6 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        if (l_skip_non_int_eps)      call msg('o alpha','#',headers(:3),INDENT=0,USE_TABS=.true.)    
        call msg('o eps eel alpha','#')
        !
-#if defined _KERR
-       call KERR_shadow('files_header',l_flag=l_skip_non_int_eps)
-#endif
-       !
      endif
      !
      do i2=frequencies_range(1),frequencies_range(2)
@@ -255,18 +209,10 @@ subroutine O_driver(Xen,Xk,q,wv,X)
        if (l_skip_non_int_eps)      call msg('o eps','',output_data(:3),INDENT=-2,USE_TABS=.true.)
        if (.not.l_skip_non_int_eps) call msg('o eps','',output_data,INDENT=-2,USE_TABS=.true.)
        !
-#if defined _KERR
-       call KERR_shadow('write_data',l_flag=l_skip_non_int_eps,n1=i2,n2=0,c1=wv%p)
-#endif
-       !
      enddo
      call of_open_close(eps_file_name)
      call of_open_close(eel_file_name)
      call of_open_close(alpha_file_name)
-     !
-#if defined _KERR
-     call KERR_shadow('close_files')
-#endif
      !
    enddo
    !
@@ -326,10 +272,6 @@ subroutine O_driver(Xen,Xk,q,wv,X)
    !
    ! CLEAN (each q)
    !
-#if defined _KERR
-     call KERR_shadow('X_dealloc')
-#endif
-   !
    call X_alloc('X')
    !
    deallocate(X_epsilon)
@@ -343,10 +285,6 @@ subroutine O_driver(Xen,Xk,q,wv,X)
  ! CLEAN
  !
  call X_alloc('DIP_q_dot_iR')
- !
-#if defined _KERR
- call KERR_shadow('DIP_dealloc')
-#endif
  !
  call WF_free()
  call pp_redux_wait

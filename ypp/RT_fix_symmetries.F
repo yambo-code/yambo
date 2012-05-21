@@ -27,7 +27,7 @@ subroutine RT_fix_symmetries(E,k)
  use com,                 ONLY:msg,warning,core_io_path,more_io_path
  use memory_m,            ONLY:mem_est
  use electrons,           ONLY:levels,E_reset,n_spin,n_sp_pol,n_spinor
- use vec_operate,         ONLY:v_norm,v_is_zero,sort
+ use vec_operate,         ONLY:v_norm,v_is_zero,i_sort
  use matrix_operate,      ONLY:m3det
  use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,a,alat,mag_syms,&
 &                              i_space_inv,sop_inv,inv_index,symmetry_group_table
@@ -59,7 +59,6 @@ subroutine RT_fix_symmetries(E,k)
 &                         sop_inv_save(nsym),ID,io_err,i1,i2,is,ik
  integer               :: spatial_nsym,old_spatial_nsym,old_trev_nsym
  integer,allocatable   :: wf_nc_k_save(:),wf_igk_save(:,:),ic_rot_table(:)
- real(SP)              :: tmp_vec(wf_ncx)
  real(SP)              :: v1(3),v2(3),m(3,3)
  real(SP)              :: B_cart(3)
  integer               :: symm_M_factor,symm_B_factor,igfft,ig,ig_rot,ic,ic_rot
@@ -539,35 +538,25 @@ subroutine RT_fix_symmetries(E,k)
    ik=kpoints_map(1,i1)
    !
    wf_igk(1:wf_ncx,i1) = wf_igk_save(1:wf_ncx,ik)
-   wf_nc_k(i1)         = wf_nc_k_save(ik)          !min(ng_closed,wf_nc_k_save(i1))
+   wf_nc_k(i1)         = min(ng_closed,wf_nc_k_save(ik))
    !
  enddo
- !
- deallocate(wf_igk_save,wf_nc_k_save)
- call mem_est("wf_nc_k_save wf_igk_save")
  !
  do i1=k_save%nibz+1,k%nibz 
    !
    ik=kpoints_map(1,i1)
    is=kpoints_map(2,i1)
    !
-   wf_nc_k(i1)                  = wf_nc_k(ik)
-   wf_igk(1:wf_nc_k(i1),i1)= g_rot(is,wf_igk(1:wf_nc_k(ik),ik))
-   !
-   !if(any(wf_igk(1:wf_nc_k(ik),i1)==-1)) then
-   !  wf_nc_k(i1)=minloc(wf_igk(:,i1),1)-1
-   !else
-   !  wf_nc_k(i1)               = wf_nc_k(ik)
-   !endif
-   !
-   tmp_vec(1:wf_nc_k(i1))=real(wf_igk(1:wf_nc_k(i1),i1))
-   call sort(tmp_vec(1:wf_nc_k(i1)))
-   wf_igk(1:wf_nc_k(i1),i1)=int(tmp_vec(1:wf_nc_k(i1)))
+   wf_nc_k(i1)              = min(ng_closed,wf_nc_k_save(ik))
+   wf_igk(1:wf_nc_k(i1),i1) = g_rot(is,wf_igk_save(1:wf_nc_k(i1),ik))
+   call i_sort( wf_igk(1:wf_nc_k(i1),i1) )
    !
  enddo
  !
+ deallocate(wf_igk_save,wf_nc_k_save)
+ call mem_est("wf_nc_k_save wf_igk_save")
+ !
  wf_ng=maxval(wf_igk)
- !call fft_setup(wf_ng,1,.false.)
  !
  call section('=',"Final I/O")
  !============================
@@ -575,7 +564,6 @@ subroutine RT_fix_symmetries(E,k)
  core_io_path_save=core_io_path
  core_io_path=more_io_path
  !
- !call msg('s',':: Rotating the wavefunctions ...')
  n_steps=(k%nibz-k_save%nibz)*E%nb
  call live_timing('WFs rotation',n_steps)
  !
@@ -608,7 +596,6 @@ subroutine RT_fix_symmetries(E,k)
    enddo
    !
    do ib=1,E%nb
-     !
      do i_spin=1,n_spin
        !
        i_wf=wf_state(ib,ik,i_spin)

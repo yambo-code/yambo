@@ -88,7 +88,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  use collisions_CACHE, ONLY:COLLISIONS_cache_size
 #endif
 #if defined _RT || defined _YPP_RT
- use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Integrator_name,nsym_eq,    &
+ use real_time,  ONLY:RT_step,NE_steps, Thermal_steps, Integrator_name,    &
 &                     RT_diagonalization_steps, l_NE_simulate_RPA,  &
 &                     SwitchOnTime,RT_IO_steps,l_RT_induced_field,RT_IO_time,&
 &                     l_RT_diagonalize,RT_is_dumped,RAD_LifeTime,Phase_LifeTime,&
@@ -466,7 +466,6 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  !
  i_Pump=1
  i_Probe=1
- nsym_eq=0
  do i1=1,n_ext_fields
    call Efield_reset(Efield(i1))
  enddo

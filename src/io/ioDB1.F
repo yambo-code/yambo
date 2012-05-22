@@ -46,7 +46,6 @@ integer function ioDB1(E,k,ID)
 #endif
 #if defined _RT || defined _YPP_RT
  use IO_m,             ONLY:variable_is_found
- use real_time,        ONLY:nsym_eq,dl_sop_eq
 #endif
  !
  implicit none
@@ -270,20 +269,6 @@ integer function ioDB1(E,k,ID)
  !
  if (write_is_on(ID)) l_io_sym_eq=.TRUE.
  if (read_is_on(ID) ) l_io_sym_eq=variable_is_found(ID,"N_SYMMETRIES")==1
- !
- if (l_io_sym_eq) then
-   !
-   ! Unperturbed Symmetry
-   !
-   call io_bulk(ID, VAR="N_SYMMETRIES", VAR_SZ=(/1/) )
-   call io_bulk(ID, I0=nsym_eq)
-   !
-   if (read_is_on(ID)) allocate(dl_sop_eq(3,3,:nsym_eq))
-   !
-   call io_bulk(ID, VAR="SYMMETRIES_EQ", VAR_SZ=shape(dl_sop_eq) )
-   call io_bulk(ID, R3=dl_sop_eq)
-   !
- endif
  !
 #endif
  !

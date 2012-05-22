@@ -45,6 +45,7 @@ module QP_m
  logical           :: QP_W_partially_done
  logical           :: GWo_SC_done
  logical           :: COHSEX_use_empties
+ logical           :: PPa_terminator
  logical           :: On_Mass_Shell_approx
  logical           :: use_GreenF_to_eval_QP
  logical           :: use_GreenF_Zoom

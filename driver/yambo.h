@@ -46,9 +46,7 @@
   {"nompi",  "N","Skip MPI initialization",0,0,0,0,0}, 
   {"dbpr",   "D","DataBases properties",0,0,0,0,0},    
   {"dbfrag", "S","DataBases fragmentation",0,0,0,0,1}, 
-#if defined _DISTRIBUTED
   {"parmem", "M","Memory distribution (parallel runs)",0,0,0,0,1}, 
-#endif
   {"setup",  "i","Initialization",0,0,0,0,0},          
   {"optics", "o","Optics [opt=(c)hi/(b)se/(t)dhf]",0,0,1,0,0},    
   {"tddft",  "t","The TDDFTs [opt=(a)LDA/(b)SE/(l)RC]",0,0,1,0,0},     

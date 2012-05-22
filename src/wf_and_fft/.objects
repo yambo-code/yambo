@@ -13,10 +13,7 @@ WF_rot_object = WF_rotate.o
 #if defined _BOLTZMANN || defined _MAGNETIC
 WF_der_objects = WF_derivative.o
 #endif
-DISTRIBUTED_objects =
-#if defined _DISTRIBUTED
 DISTRIBUTED_objects = WF_states_setup.o
-#endif
 objs = fft_setup.o fft_3d.o $(FFT_object) $(FFT_more) \
        scatter_Bamp.o scatter_Gamp.o WF_spatial_invertion.o \
        WF_load.o $(WF_rot_object) $(WF_der_objects) $(DISTRIBUTED_objects)\

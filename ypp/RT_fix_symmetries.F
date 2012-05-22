@@ -110,6 +110,7 @@ subroutine RT_fix_symmetries(E,k)
  endif
  !
  if (use_E_field) call section('*',"== Electric Fields: BZ sampling remapping ==")
+ !
  if (use_B_field) then
    call section('*',"== Magnetic fields: BZ sampling remapping ==")
    B_cart(1)=B_field*sin(B_theta)*cos(B_psi)
@@ -122,6 +123,7 @@ subroutine RT_fix_symmetries(E,k)
  if (Rm_TR)       call section('*',"== Remove Time Reversal ==")
  !
  if (.not.any((/use_B_field,use_E_field,has_magnetization,Rm_all_symm,Rm_TR/))) return 
+ !
  if (use_B_field.and.has_magnetization) call warning('Magnetic field in magnetic system!')
  !
  if (wf_nb_io/=E%nb) then

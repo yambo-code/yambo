@@ -522,7 +522,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                      'DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                      'DrudeW','EhEngy','LongDr'/)) 
        !
-       if (.not.l_cohsex) call initactivate(1,'DysSolver')
+       if (.not.l_cohsex) call initactivate(1,'GWTerm DysSolver')
        if (     l_cohsex) call initactivate(1,'UseEbands')
        if (trim(QP_solver)=="g") then
          call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 

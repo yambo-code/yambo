@@ -9,9 +9,7 @@ KERR_objects = mod_KERR.o
 #if defined _ELPH 
 ELPH_objects = mod_ELPH.o
 #endif
-#if defined _DISTRIBUTED
 DISTRIBUTED_objects = mod_wf_distribute.o
-#endif
 #if defined _TEST_2
 TEST2_objects = mod_interpolate.o
 #endif

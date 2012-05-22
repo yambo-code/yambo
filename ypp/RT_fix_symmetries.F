@@ -102,10 +102,7 @@ subroutine RT_fix_symmetries(E,k)
    Magnetization=0.
  endif
  !
- if (use_E_field) then
-   call section('*',"== Electric Fields: BZ sampling remapping ==")
-   Rm_TR=.true.
- endif
+ if (use_E_field) call section('*',"== Electric Fields: BZ sampling remapping ==")
  !
  if (use_B_field) then
    call section('*',"== Magnetic fields: BZ sampling remapping ==")

@@ -143,10 +143,8 @@ integer function io_COLLISIONS(i_qp,ID,X)
      !
    endif
    !
-   call io_elemental(ID,I0=RIM_ng,&
-&       VAR=' RIM RL components               :',CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,I0=RIM_n_rand_pts,&
-&       VAR=' RIM random points               :',CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,I0=RIM_ng,VAR=' RIM RL components               :',WARN=.true.)
+   call io_elemental(ID,I0=RIM_n_rand_pts,VAR=' RIM random points               :',WARN=.true.)
    call io_elemental(ID,VAR="",VAR_SZ=0)
    !
    io_COLLISIONS=io_status(ID)

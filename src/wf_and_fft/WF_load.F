@@ -36,10 +36,8 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                        wf_state,wf_ng,wf_norm_test,wf_ncx,ioWF,WF_free,&
 &                        wf_n_states,wf_nb_io,wf_nb_io_groups,QUIET_alloc,&
 &                        QUIET_free
-#if defined _DISTRIBUTED
  use wave_func,     ONLY:states_to_load,states_loaded
  use WF_distribute, ONLY:Distributed_Memory
-#endif
  use timing,        ONLY:live_timing
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD_CL_IF_END,&
 &                        io_fragmented, io_netcdf_support, RD_CL,DUMP
@@ -99,8 +97,6 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                       s_2_load(1)>=wf_s(1),s_2_load(2)<=wf_s(2),&
 &                       wf_space==wf_space_here/))
  !
-#if defined _DISTRIBUTED
- !
  if(loaded_bounds_ok.and.allocated(states_to_load).and.allocated(states_loaded)) then
    !
    if(allocated(states_loaded)) then
@@ -122,8 +118,6 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    endif
    !
  endif
- !
-#endif
  !
  ! [2]: Check FFT size
  !
@@ -261,11 +255,9 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
          !
          if (any((/ib<wf_b(1),ib>wf_b(2),is<wf_s(1),is>wf_s(2)/))) cycle 
          !
-#if defined _DISTRIBUTED
          if(allocated(states_to_load).and.Distributed_Memory) then
            if(.not.states_to_load(ib,ikibz,is)) cycle
          endif
-#endif
          !
          wf_DP=(0._DP,0._DP)
          wf_n_states=wf_n_states+1
@@ -314,7 +306,6 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  deallocate(wf_DP)
  !
-#if defined _DISTRIBUTED
  if(allocated(states_to_load)) then
    if(allocated(states_loaded)) deallocate(states_loaded)
    allocate(states_loaded(wf_b(1):wf_b(2),wf_k(1):wf_k(2),wf_s(1):wf_s(2)))
@@ -322,7 +313,6 @@ subroutine WF_load(iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &         states_to_load(wf_b(1):wf_b(2),wf_k(1):wf_k(2),wf_s(1):wf_s(2))
    deallocate(states_to_load)
  endif
-#endif
  !
  ! Rotate in the SC basis
  !========================

@@ -154,6 +154,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'DysSolver','[GW] Dyson Equation solver (`n`,`s`,`g`)',QP_solver,protect=.FALSE.)
  call it(defs,'GEnSteps',   '[GW] G_gw energy steps',QP_Sc_steps)
  call it(defs,'GEnRnge',    '[GW] G_gw energy range (centered in the bare energy)',QP_G_er,E_unit)
+ call it('f',defs,'GWTerm',   '[GW] Use 0-order EET terminator for the self-energy',verb_level=V_qp)
  call it('f',defs,'NewtDchk',   '[F GW] Test dSc/dw convergence',verb_level=V_qp)
  call it('f',defs,'ExtendOut',  '[F GW] Print all variables in the output file',verb_level=V_qp)
  !

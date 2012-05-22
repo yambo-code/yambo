@@ -53,13 +53,10 @@ module wave_func
  !
  integer    ,allocatable:: wf_state(:,:,:)
  !
-#if defined _DISTRIBUTED
- !
  ! Parallel wave-function distribution
  !
  logical    ,allocatable:: states_loaded(:,:,:) 
  logical    ,allocatable:: states_to_load(:,:,:) 
-#endif
  !
  ! Num. of COMPONENTS at each k
  !
@@ -100,11 +97,7 @@ module wave_func
      use memory_m, ONLY : mem_est
      use FFT_m,    ONLY : fft_size,fftw_plan,fft_dim
      integer :: err
-#if defined _DISTRIBUTED
      integer :: ik,ib,is
-#endif 
-     !
-#if defined _DISTRIBUTED
      !
      ! Distributed allocation
      !
@@ -120,13 +113,10 @@ module wave_func
        enddo
        !
      else
-#endif
        !
        wf_n_states=(wf_b(2)-wf_b(1)+1)*(wf_k(2)-wf_k(1)+1)*(wf_s(2)-wf_s(1)+1)
        !
-#if defined _DISTRIBUTED
      endif
-#endif
      !
      if (wf_space=="R") allocate(wf(fft_size,wf_n_states),stat=err)
      if (wf_space=="G") allocate(wf(wf_ng,wf_n_states),stat=err)

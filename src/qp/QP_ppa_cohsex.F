@@ -28,7 +28,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use memory_m,      ONLY:mem_est
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
- use electrons,     ONLY:levels,spin_occ,spin,n_met_bands
+ use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
  use timing,        ONLY:live_timing
  use com,           ONLY:msg,error
  use drivers,       ONLY:Finite_Tel,l_ppa,l_cohsex,l_sc_run,l_sc_srpa,l_collisions_IO
@@ -39,17 +39,16 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,OP_WR_CL
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_nb,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
-&                        COHSEX_use_empties,QP_W_partially_done
+&                        COHSEX_use_empties,QP_W_partially_done,PPa_terminator
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use wave_func,     ONLY:WF_load,WF_free
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv
+ use wrapper,       ONLY:M_by_V
 #if defined _RT         
  use collisions_IO, ONLY:TEMP_COLLISIONS_v
 #endif
-#if defined _DISTRIBUTED
  use WF_distribute, ONLY:WF_states_setup
-#endif
 #if defined _SC
  use SC,            ONLY:it_now,SC_bands
  use fragments,     ONLY:fragment_status
@@ -63,12 +62,14 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  type(w_samp) ::Xw
  integer      ::GW_iter
  !
+ complex(SP), external :: eet_terminator
+ !
  ! Work Space
  !
  integer                  ::i_qp,i1,i2,i4,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
-&                           i_qp_to_start,iq_to_start
+&                           i_qp_to_start,iq_to_start,is
  real(SP),    allocatable ::PPaP(:,:)
- complex(SP), allocatable ::PPaR(:,:),E_(:),dc(:),PPaR_ws(:,:)
+ complex(SP), allocatable ::PPaR(:,:),E_(:),dc(:),PPaR_ws(:,:),eet_factor(:,:)
  type(ggwinfo)            ::isc,iscp
  type(pp_indexes)         ::px
  integer          ::iv4(4),io_err,ID, timing_states,qp_ID
@@ -77,6 +78,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  character(schlen)::ch,Sc_name
  logical          ::PPaR_is_TR_rotated
  complex(SP)      ::local_rhotw(X%ng),pre_factor
+ real(SP)         ::eet_cutoff(n_sp_pol)
 #if defined _RT         
  integer          :: ib2
 #endif
@@ -167,10 +169,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  isc%iqref=0
  isc%ngrho=X%ng
- if ((l_sc_srpa.or.l_cohsex).and..not.COHSEX_use_empties) isc%ngrho=maxval(G_m_G)
+ if (((l_sc_srpa.or.l_cohsex).and..not.COHSEX_use_empties).or.PPa_terminator) isc%ngrho=maxval(G_m_G)
  iscp%ngrho=isc%ngrho
- !
-#if defined _DISTRIBUTED
  !
  ! Quasi-particle list
  ! (all processors have all qp-states)
@@ -184,8 +184,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! Report
  !
  call WF_states_setup(b_to_load=QP_n_G_bands,report=.TRUE.)
- !
-#endif
  !
  ! WFs
  !
@@ -217,6 +215,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    allocate(PPaP(X%ng,X%ng),PPaR_ws(X%ng,X%ng),PPaR(X%ng,X%ng),stat=alloc_err)
    call mem_est("PPaP",(/size(PPaP)+2*size(PPaR_ws),2*size(PPaR)/),&
 &               (/SP/),errors=(/alloc_err/))
+   if(PPa_terminator) then
+     allocate(eet_factor(X%ng,X%ng),stat=alloc_err)
+     call mem_est("EET_factor",(/size(eet_factor)/),(/2*SP/),errors=(/alloc_err/))
+   endif
    !
  endif
  !
@@ -353,21 +355,33 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! COH (using completeness relation)
      !
-     if ((l_sc_srpa.or.l_cohsex).and..not.COHSEX_use_empties) then
+     if (((l_sc_srpa.or.l_cohsex).and..not.COHSEX_use_empties).or.PPa_terminator) then
        !
        iscs_save(1,: )=isc%os
        iscs_save(2,:3)=isc%qs
        isc%os=(/QP_table(i_qp,2),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
        isc%qs=(/1,1,1/)
        call scatterBamp(isc)
-       do ig1=1,X%ng
-         do ig2=1,X%ng
-           dc(1)=dc(1)+2.*pi*isc%rhotw(G_m_G(ig1,ig2))*PPaR(ig1,ig2)
-         enddo
-       enddo
        !
-       if (master_cpu.and..not.l_collisions_IO) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
-       dc=cmplx(0.,0.,SP)
+       if(PPa_terminator) then
+         do is=1,n_sp_pol
+           eet_cutoff(is)=minval(E%E(E%nbf+1,:,is))
+         enddo
+         eet_cutoff(1)=minval(eet_cutoff(:))
+         eet_factor=(0._SP,0._SP)
+         if(master_cpu) forall(ig1=1:X%ng,ig2=1:X%ng) &
+&          eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig1,ig2))
+       else
+         do ig1=1,X%ng
+           do ig2=1,X%ng
+             dc(1)=dc(1)+2.*pi*isc%rhotw(G_m_G(ig1,ig2))*PPaR(ig1,ig2)
+           enddo
+         enddo
+         if (master_cpu.and..not.l_collisions_IO) QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+dc(1)
+         dc=cmplx(0.,0.,SP)
+         !
+       endif
+       !
        isc%os=iscs_save(1,: )
        isc%qs=iscs_save(2,:3)
        !
@@ -406,6 +420,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        if (l_ppa) then
          !
+         if(PPa_terminator) then
+           forall(ig1=1:X%ng,ig2=1:X%ng)
+             eet_factor(ig1,ig2)=eet_factor(ig1,ig2)-isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))
+           end forall
+         endif
+         !
          forall (i4=1:QP_dSc_steps) E_(i4)=qp%E_bare(i_qp)+&
 &                                          (i4-1)*QP_dSc_delta+cmplx(0.,QP_G_damp,SP)
          !
@@ -421,11 +441,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          if(.not.l_collisions_IO) QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps)+dc(:QP_dSc_steps)
          !
        else
-#if defined _DOUBLE
-         call zgemv('N', X%ng, X%ng, (1._SP,0._SP), PPaR, X%ng, conjg(iscp%rhotw),1,(0._SP,0_SP), local_rhotw,1)
-#else 
-         call cgemv('N', X%ng, X%ng, (1._SP,0._SP), PPaR, X%ng, conjg(iscp%rhotw), 1, (0._SP,0_SP), local_rhotw,1)
-#endif
+         !
+         call M_by_V('N', X%ng, PPaR, conjg(iscp%rhotw), local_rhotw)
          !
          pre_factor=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
          !
@@ -456,7 +473,21 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
      enddo ! loop on the band ib2
 #endif
+     !
      enddo ! loop on scattering states
+     !
+     if(PPa_terminator) then
+       forall (i4=1:QP_dSc_steps) E_(i4)=qp%E_bare(i_qp)+(i4-1)*QP_dSc_delta+cmplx(0.,QP_G_damp,SP)
+       do ig1=1,X%ng
+         do ig2=1,X%ng
+           do i4=1,QP_dSc_steps
+             QP_Sc(i_qp,i4)=QP_Sc(i_qp,i4)+4./spin_occ*pi*PPaR(ig1,ig2)*eet_factor(ig1,ig2)* &
+&                     eet_terminator(E_(i4),E,isc%is,PPaP(ig1,ig2),ig1,ig2,isc%qs(2),eet_cutoff(1))
+             enddo
+           enddo
+         enddo
+     endif
+     !
 #if defined _RT
    !
    enddo Q_loop 
@@ -502,7 +533,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! CLEAN
  !
  deallocate(isc%gamp,isc%rhotw,iscp%rhotw,dc,PPaR_ws,PPaR)
- if (l_ppa) deallocate(E_,PPaP)
+ if(l_ppa) then
+   deallocate(E_,PPaP)
+   if(PPa_Terminator) then
+       deallocate(eet_factor)
+       call mem_est("EET_factor")
+   endif
+ endif
  call mem_est("ISC-GAMP GW-E")
  call X_alloc('X')
  if (l_cohsex.or.l_sc_srpa) then

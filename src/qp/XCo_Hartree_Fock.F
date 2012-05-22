@@ -40,9 +40,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  use collisions_IO, ONLY:TEMP_COLLISIONS_v
  use fragments,     ONLY:fragment_status
 #endif
-#if defined _DISTRIBUTED
  use WF_distribute, ONLY:WF_states_setup
-#endif
  !
  implicit none
  type(levels) ::E       
@@ -112,8 +110,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
    !
  endif
  !
-#if defined _DISTRIBUTED
- !
  ! Quasi-particle list
  ! (all processor have all qp-states)
  !
@@ -130,8 +126,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q)
  ! Report
  !
  call WF_states_setup(b_to_load=(/1,max(E%nbm,QP_nb)/),report=.TRUE.)
- !
-#endif
  !
  ! WFs
  !

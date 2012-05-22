@@ -37,7 +37,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
 &                        QP_nk,QP_state,QP_dSc_test,QP_reset,use_GreenF_Zoom,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_W_partially_done,&
 &                        GWo_iterations,COHSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
-&                        GF_is_causal,QP_G_amplitude_integral,l_extended_output
+&                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,PPA_terminator
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE,IO_NO_BINDING_ERROR
  use global_XC,     ONLY:QP_DB_kind,SE_COHSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON
  implicit none
@@ -49,8 +49,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  ! Work Space
  !
  type(QP_t)        ::qp
- integer           ::i1,io_QP_err,io_G_err,ID_QP,ID_G,i_spin
- integer, external ::ioQP
+ integer           ::i1,io_QP_err,io_G_err,ID_QP,ID_G,i_spin,dump_ng
+ integer, external ::ioQP,eval_G_minus_G
  !
  ! Driver Logicals
  !=================
@@ -58,6 +58,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  call parser('NewtDchk',   QP_dSc_test)
  call parser('OnMassShell',On_Mass_Shell_approx)
  call parser('UseEbands',  COHSEX_use_empties)
+ call parser('GWTerm', PPa_terminator)
  ! GPL_EXCLUDE_START
  call parser('GreenF2QP',  use_GreenF_to_eval_QP)
  use_GreenF_Zoom=QP_G_Zoom_treshold>0.
@@ -161,6 +162,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    call X_pre_setup(Xen,X)
    if (X%ng_db==0) X%ng_db=X%ng
  endif
+ !
+ if (l_ppa.and.PPa_terminator) X%ng=eval_G_minus_G(X%ng,0)
  !
  ! Local Allocations
  !===================

@@ -38,9 +38,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if defined _SC      
  use X_m,            ONLY:P_square
 #endif
-#if defined _DISTRIBUTED
  use WF_distribute,  ONLY:WF_states_setup
-#endif
  implicit none
  !
  type(bz_samp), intent(inout) :: Xk
@@ -115,8 +113,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    P_square=(0._SP,0._SP)
 #endif
    !   
-#if defined _DISTRIBUTED
-   !
    if(trim(grid_path)=='none'.and.Dipole_bands_ordered) then
      !
      ! Valence bands are loaded by all processors
@@ -132,8 +128,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      call WF_states_setup(b_to_load=(/1,X%ib(2)/),report=.true.)
      !
    endif
-   !
-#endif
    !
 #if !defined _MANYK
    call WF_load(0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space')

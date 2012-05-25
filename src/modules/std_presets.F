@@ -65,7 +65,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,&
 &                     BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
 &                     BSS_q0,Haydock_treshold,BS_K_is_ALDA,BSS_uses_RIM,BSS_damp_reference,&
-&                     BS_columns,BSS_Vnl_included,BSS_uses_GreenF
+&                     BS_columns,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_causal
@@ -383,6 +383,7 @@ subroutine std_presets(INSTR,IND,OD,JS,COM_DIR)
  BS_cpl_mode='none'
  BS_K_dim=0
  BSS_mode=' '
+ BSS_inversion_mode='m'
  BSS_n_freqs=100
  BSS_n_descs=0
  BSS_er=(/0.,10./)/HA2EV

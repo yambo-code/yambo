@@ -603,7 +603,7 @@ integer function init(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
   if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF')
   if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer')
   if (index(BSS_mode,'t')/=0)  call initactivate(1,'FxcGRLc FxcSVdig FxcMEStps FxcCausal')
-  if (index(BSS_mode,'i')/=0)  call initactivate(1,'SkipFullInv')
+  if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode')
  endif
  !
  ! DFT

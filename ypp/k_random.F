@@ -167,7 +167,7 @@ subroutine k_random(Xk,Xen)
  call msg('s',':: Lattice factors [a.u.]:',alat)
  call msg('s',':: K points        [read]:',nkibz)
  !
- if (BZ_RIM_nkpts<nkibz) then
+ if (BZ_RIM_nkpts<nkibz.and.BZ_RIM_nkpts>0) then
    nkibz   =BZ_RIM_nkpts
    RIM_E%nk=nkibz
    allocate(rand_E(RIM_E%nb,nkibz,n_sp_pol))

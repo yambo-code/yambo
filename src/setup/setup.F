@@ -49,7 +49,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! Work Space
  !
- real(SP)          :: rv(3),m(3,3),Tel_SAVE
+ real(SP)          :: rv(3),m(3,3),Tel_SAVE,E_fermi_SAVE(3)
  integer           :: i1,i2,i3,is,ia,i_err,nbf_m_SAVE(2)
  character(schlen) :: dumb_ch1,dumb_ch2
  integer, external :: k_lattice
@@ -256,19 +256,24 @@ subroutine setup(en,Xen,Ken,k,Xk)
    Tel_SAVE=Tel
    Tel=0.
    call OCCUPATIONS_Fermi(Xen,Xk,1)
-   nbf_m_SAVE=(/Xen%nbf,Xen%nbm/)
+   nbf_m_SAVE  =(/Xen%nbf,Xen%nbm/)
+   E_fermi_SAVE=Xen%Efermi
  endif
  !
  Tel=Tel_SAVE
  call OCCUPATIONS_Fermi(Xen,Xk,2)
- call OCCUPATIONS_Extend(Xen,en)
  !
  if (input_Tel_is_negative) then
+   Xen%Efermi=E_fermi_SAVE
+   en%Efermi=E_fermi_SAVE
    Xen%nbf=nbf_m_SAVE(1)
    Xen%nbm=nbf_m_SAVE(2)
    en%nbf =nbf_m_SAVE(1)
    en%nbm =nbf_m_SAVE(2)
  endif
+ !
+ call OCCUPATIONS_Extend(Xen,en)
+ !
  n_met_bands =en%nbm
  n_full_bands=en%nbf
  !

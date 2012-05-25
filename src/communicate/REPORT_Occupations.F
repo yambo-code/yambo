@@ -65,6 +65,9 @@ subroutine REPORT_Occupations(E,mode)
  E%nbf=minval(nbf_)
  E%nbm=maxval(nbm_)
  !
+ E%Efermi(2:)=E%Efermi(1)+(/maxval(E%E(E%nbf,:,:)),minval(E%E(E%nbf+1,:,:))/)
+ if (E%nbf/=E%nbm) E%Efermi(2:)=0.
+ !
  ! No Report
  !
  if (mode<=1) return
@@ -74,9 +77,6 @@ subroutine REPORT_Occupations(E,mode)
  ! E%Efermi(1) = Fermi Level
  ! E%Efermi(2) = VB max (with resepect to Efermi(1) )
  ! E%Efermi(3) = CB min (with resepect to Efermi(1) )
- !
- E%Efermi(2:)=E%Efermi(1)+(/maxval(E%E(E%nbf,:,:)),minval(E%E(E%nbf+1,:,:))/)
- if (E%nbf/=E%nbm) E%Efermi(2:)=0.
  !
  call msg('r','States summary         : Full        Metallic    Empty')
  !

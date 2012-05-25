@@ -41,7 +41,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry
  use BS,            ONLY:BS_res_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,BS_columns,&
 &                        BS_n_g_W,BS_n_g_exch,BSS_mode,Haydock_treshold,BSS_n_freqs,&
-&                        BSS_dr,BSS_er,BSS_q0,BS_cpl_mode,BSS_damp_reference
+&                        BSS_dr,BSS_er,BSS_q0,BS_cpl_mode,BSS_damp_reference,BSS_inversion_mode
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
 &                        FXC_SVD_digits
  use ACFDT,         ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
@@ -167,6 +167,7 @@ subroutine init_load(defs,en,q,k,X,Xw)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
  call it(defs,'BSSmod',  '[BSS] Solvers `h/d/i/t`',BSS_mode,protect=.FALSE.)
+ call it(defs,'BSSInvMode','[BSS] Inversion solver modality `m/f/p` (mixed, full, perturbative)',BSS_inversion_mode)
  call it(defs,'BLongDir','[BSS] [cc] Electric Field',BSS_q0)
  call it(defs,'BEnRange','[BSS] Energy range',BSS_er,E_unit)
  call it(defs,'BDmRange','[BSS] Damping range',BSS_dr,E_unit)

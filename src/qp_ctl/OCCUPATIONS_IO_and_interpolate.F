@@ -29,7 +29,7 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
  use IO_m,           ONLY:io_control,NONE,OP_WR_CL,OP_RD,RD_CL,OP_RD_CL,DUMP,variable_is_found
  use electrons,      ONLY:levels,BZ_RIM_nbands,n_sp_pol,n_met_bands,&
 &                         n_full_bands,nel,E_reset,BZ_RIM_tot_nkpts
- use com,            ONLY:jobstr,msg,file_exists,warning
+ use com,            ONLY:jobstr,msg,file_exists,warning,error
  use QP_m,           ONLY:OCC_ctl
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:bz_samp,nXkibz,bz_samp_reset
@@ -110,29 +110,32 @@ subroutine OCCUPATIONS_IO_and_interpolate(E,what,k,Time,imposed_COM)
    io_err_occ=io_SC_components('occupations',E,ID(6))
    !
    if (io_err_occ<0) then
-     call warning ('Occupations database not found in '//trim(jobstr))
+     call warning ('Occupations database not found in folder: '//trim(jobstr))
      jobstr=jobstr_save
      return
+   else
+     call msg('s','Occupations database read from folder: '//trim(jobstr))
    endif
    ! 
    ! DB1 I/O 
    !=========
-   ! 
-   call E_reset(RT_db1_E) 
-   call bz_samp_reset(RT_db1_k)
    !
-   io_err_E=ioDB1_selective_scan(RT_db1_E,RT_db1_k,trim(jobstr),'nk')
-   if (io_err_E<0) then
-     call warning ('DB1 database not found in '//trim(jobstr))
-     jobstr=jobstr_save
-     return
-   else
-     io_err_E=ioDB1_selective_scan(RT_db1_E,RT_db1_k,trim(jobstr),'nb')
+   if (index(what_is_running,'YPP')==0) then
+     ! 
+     call E_reset(RT_db1_E) 
+     call bz_samp_reset(RT_db1_k)
      !
-     allocate(RT_db1_E%E(RT_db1_E%nb,RT_db1_k%nibz,n_sp_pol), RT_db1_k%pt(RT_db1_k%nibz,3))
-     !
-     io_err_E=ioDB1_selective_scan(RT_db1_E,RT_db1_k,trim(jobstr),'E')
-     io_err_E=ioDB1_selective_scan(RT_db1_E,RT_db1_k,trim(jobstr),'K')
+     io_err_E=ioDB1_selective_scan(RT_db1_E,RT_db1_k,trim(jobstr),'nk')
+     if (io_err_E<0) then
+       call error ('DB1 database not found in '//trim(jobstr))
+     else
+       io_err_E=ioDB1_selective_scan(RT_db1_E,RT_db1_k,trim(jobstr),'nb')
+       !
+       allocate(RT_db1_E%E(RT_db1_E%nb,RT_db1_k%nibz,n_sp_pol), RT_db1_k%pt(RT_db1_k%nibz,3))
+       !
+       io_err_E=ioDB1_selective_scan(RT_db1_E,RT_db1_k,trim(jobstr),'E')
+       io_err_E=ioDB1_selective_scan(RT_db1_E,RT_db1_k,trim(jobstr),'K')
+     endif
      !
    endif
    !

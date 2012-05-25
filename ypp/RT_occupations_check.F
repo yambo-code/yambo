@@ -29,13 +29,15 @@ integer function RT_occupations_check(E,k)
 &                         Hole_lifetime,Electron_lifetime,Phonon_lifetime
  use SC,             ONLY:SC_bands,RT_occupations
  use IO_m,           ONLY:LOG,NONE
- use com,            ONLY:warning
+ use com,            ONLY:warning,error
  use YPP,            ONLY:RT_occupations_ref,OCC_T_ref,OCC_deltaT,OCC_T_range
  implicit none
  type(bz_samp)      :: k
  type(levels)       :: E
  !
  call OCCUPATIONS_IO_and_interpolate(E,'G',k=k,Time=OCC_T_range(1),imposed_COM=LOG)
+ !
+ if (.not.allocated(RT_occupations)) call error('OCCUPATIONS database not found')
  !
  call RT_occupations_repair(E,k,.FALSE.)
  !

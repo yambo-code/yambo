@@ -1,3 +1,8 @@
+(25/5/2012)
+
+In order to create patches to the trunk use 
+
+svn diff svn://qe-forge.org/svn/yambo-devel/trunk svn://qe-forge.org/svn/yambo-devel/branches/devel-andrea
 
 (5/4/2012)
 
